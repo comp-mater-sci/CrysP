@@ -88,20 +88,36 @@ C
 C     Reading the parameter file contents
 C
       CALL RDLINES (u0, 6)
-      READ (u0,'(62X,A8)') inppref
-	READ (u0,'(62X,I2)') crys
-	READ (u0,'(62X,I2)') typrel
-      READ (u0,'(62X,A8)') outpref
-      READ (u0,'(62X,A40)') outinfo
-      READ (u0,'(62X,I2,2X,I2)') imag, idn
-	READ (u0,'(62X,F8.5)') deps 
-	READ (u0,'(62X,I2)') nsteps
-      READ (u0,'(62X,3(F9.5,1X))') dfm(1,1), dfm(1,2), dfm(1,3)
-	READ (u0,'(62X,3(F9.5,1X))') dfm(2,1), dfm(2,2), dfm(2,3)
-	READ (u0,'(62X,3(F9.5,1X))') dfm(3,1), dfm(3,2), dfm(3,3)
-      READ (u0,'(62X,I2,1X,F5.2)') idm, phi0
+      READ (u0,*) inppref
+	READ (u0,*) crys
+	READ (u0,*) typrel
+      READ (u0,*) outpref
+      READ (u0,*) outinfo
+      READ (u0,*) imag, idn
+      READ (u0,*) idm, phi0
+c Read the deformation conditions
+	READ (u0,*) deps 
+	READ (u0,*) nsteps
+      READ (u0,*) dfm(1,1), dfm(1,2), dfm(1,3)
+	READ (u0,*) dfm(2,1), dfm(2,2), dfm(2,3)
+	READ (u0,*) dfm(3,1), dfm(3,2), dfm(3,3)
 	CLOSE (u0) 
 C
+      write (*,*) inppref
+	write (*,*) crys
+	write (*,*) typrel
+      write (*,*) outpref
+      write (*,*) outinfo
+      write (*,*) imag, idn
+      write (*,*) idm, phi0
+
+	write (*,*) deps 
+	write (*,*) nsteps
+	write (*,'(3(F9.5,1X))') dfm(1,1), dfm(1,2), dfm(1,3)
+	write (*,'(3(F9.5,1X))') dfm(2,1), dfm(2,2), dfm(2,3)
+	write (*,'(3(F9.5,1X))') dfm(3,1), dfm(3,2), dfm(3,3)
+
+
       inputCf = TRIM(inppref) // '.C'
       taybatf = TRIM(inppref) // '.bat'
       reabatf = TRIM(outpref) // '.bat'
