@@ -81,7 +81,7 @@ C      data NUNRC/13,14/
       DATA N,NC,LC    /5,1,300/
       data nrstep/0/
       END
-      SUBROUTINE SIMUL(IW,JPAR,EPS,NFILE0,NUNIT,INSG0)
+      SUBROUTINE SIMUL(IW,JPAR,EPS,NFILE0,NUNIT,INSG0,IREASON)
       implicit double precision (a-h,o-z)
 C
 C     IW=2 is meant for outputting the final texture.
@@ -96,6 +96,9 @@ C     Modifications december 2000
 C     - if NSYM eq 1, FK1b is in initialised to values FK1
 C     - in instruction 40, "0" is replaced by NSYM
 C
+C	20090425 jg: parameter IREASON was added. 
+C
+
 
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
       COMMON /ES1/ IMP3
@@ -133,7 +136,37 @@ C      double precision SPANV,RHO,XM,XEPS,DELTAT
       data convf/0.5729577951308232D+02/
 C      data criter/0.00025/
       data FS/9*1.0D0/ 
-      SAVE
+C <gmetex comm>
+#ifdef GMETEX_COMM
+	double precision inp_array(*)
+	POINTER(inpptr,inp_array)
+	integer inp_arrlen
+	double precision out_array(*)
+	POINTER(outptr,out_array)
+	integer out_arrlen
+	integer ctrl_array(*)
+	POINTER(ctrlptr,ctrl_array)
+	integer ctrl_arrlen
+	integer info
+	! Interfaces
+	interface
+c
+		integer(kind=INT_PTR_KIND()) 
+     &	function  COMM_GET_DARRAY(id, nelem)
+			integer id			! [input]
+			integer	nelem		! [output] lenght of the array 
+         end function COMM_GET_DARRAY	
+c
+		integer(kind=INT_PTR_KIND()) 
+     &	function  COMM_GET_IARRAY(id, nelem)
+			integer id			! [input]
+			integer	nelem		! [output] lenght of the array 
+         end function COMM_GET_IARRAY	
+c
+	end interface
+#endif
+C </gmetex comm>
+	! Body of forclient      SAVE
 C      write (*,406) IW
 C      write (IMP,406) IW
 C 406  format (' SIMUL - IW=',I5,' (2 is for final output only)')
@@ -163,7 +196,7 @@ C
       read (KLEC,99) IPR
       read (KLEC,94) ETAFAK
       read (KLEC,94) ATTENF
-  99  FORMAT (2I5)
+  99  FORMAT (3I5)
   94  format (3F10.0)
       WRITE (IMP,101) NLIST,NFILE1,NFILTW,NTEN,NSYM,IGLIJ,
      1 IPR,ETAFAK,ATTENF
@@ -225,6 +258,75 @@ C 456  format (' Relaxation Allowed')
       if (IPR.gt.0) write (IMP,130) SG0,ALFAK
  130  format (' SG0=',d15.5,'  ALFA Factor:',d15.5)
       CALL TAYLOR(2,NTEN,NSYM,EPS,0,IROT,Ftot)
+C
+C <gmetex comm>
+#ifdef GMETEX_COMM
+C jg 20090425  Gmetex communication code was added.
+C	
+C	 Begin the loop over the data form control block 
+C
+	ICTRL = 1
+	do 9898 while (ICTRL .NE. 0)
+C	By defaut, the outer loop doesn't affect the execution of code.
+C	ICTRL is active only if IREASON = 1 	
+	ICTRL = 0
+	if (IREASON .EQ. 1) then
+C	Put the communitation stuff here
+C	-->
+C	Determine stop condition
+C	Example: infinite loop
+c	ICTRL = 0 
+C	Modify Displacement gradient tensor (3x3 matrix) DG
+c	Example: shrink by factor 2.
+c	DG= 0.5 * DG
+	! Wait for incoming data
+	write(*,*) 'Waiting for communication'
+	call COMM_WAIT(info)
+	if (info .NE. 0) then
+		! Emit error message
+		write(*,*) 'Error: Wait operation failed.'
+		stop
+	endif
+	! Request the block for exclusive use
+	call COMM_ACQUIRE(info)
+	! Get access to control data:
+	ctrlptr = COMM_GET_IARRAY(1,ctrl_arrlen)
+	! If assertion fails: do emergency halt, pointer cannot be zero.
+9800	format('Error: Either pointer or array size is incorrect.')
+	if ( (ctrlptr .EQ. 0) .OR. (ctrl_arrlen .LT. 2) ) then
+		! Emit error message
+		write(*,9800) 
+		stop
+	endif
+	ICTRL = ctrl_array(1)  !  
+	NSTP  =  ctrl_array(2) !
+	write(*,*) 'Contiunue flag: ', ICTRL
+	write(*,*) 'Requested steps: ', NSTP
+	! Get access to input data:
+	inpptr = COMM_GET_DARRAY(1,inp_arrlen)
+	! If assertion fails: do emergency halt, pointer cannot be zero.
+	if ((inpptr .EQ. 0) .OR. (inp_arrlen .NE. 9) ) then
+		! Emit error message
+		write(*,9800) 
+		stop
+	endif
+	! Modify Displacement gradient tensor (3x3 matrix) DG
+	write(*,*) 'New displacement gradient tensor:'
+	kk = 1
+	do ii=1,3
+		do jj=1,3
+			DG(ii,jj) = inp_array(kk)
+			kk = kk +1
+		end do
+		write(*,'(3F10.5)') DG(ii,:)
+	enddo
+	! The work with block is done, release it.
+	call COMM_RELEASE(info)
+C	
+C	<--
+	endif ! IREASON
+#endif /* GMETEX_COMM */
+C </gmetex comm>
 C
 C     Main Loop over the Steps
 C
@@ -568,7 +670,13 @@ C     End of loop over steps
   57  continue
    4  IRCMOD=IRCMOD+1
       if (IRCMOD.le.nrcmod) GOTO 78
-   8  CONTINUE                                                          
+   8  CONTINUE 
+C <gmetex comm>
+#ifdef GMETEX_COMM
+C jg 20090425 
+9898  end do ! Outer loop                                                       
+#endif
+C </gmetex comm>
   22  RETURN
   32  JW=-IW                                                            
       GOTO 22                                                           

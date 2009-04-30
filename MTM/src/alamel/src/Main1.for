@@ -28,6 +28,32 @@ C      COMMON /RCFILS/ NUNRC(2)
       character * 8 codsim
       DATA MPOINT /8000/,NUNIT/2/
       SAVE
+C <gmetex comm>
+#ifdef GMETEX_COMM
+C	20090425 jg: gmetex communication.. 
+C	20090425 jg: variables needed by gmetex communication.
+C	20090425 jg: parameter IREASON was added SIMUL calls  
+  	integer gminfo, gmid
+CC	End of declaration section
+#endif 
+C </gmetex comm>
+C	
+C <gmetex comm>
+#ifdef GMETEX_COMM
+C	20090425 jg: gmetex communication.. 
+	! Initalize communication with external control program.
+	! COMM_INIT must be called prior to the first call to 
+	! any of COMM_* routines.
+	gminfo = 0
+	gmid = 1
+  	call COMM_INIT(gmid, gminfo)
+	if (gminfo .NE. 0) then
+		write(*,*) 'Cannot initialize communication, exiting now.'
+		call exit(1)
+	endif
+#endif 
+C </gmetex comm>
+
 C     UNIT NUNIT = Temporary file
       open(unit=NUNIT,file='Temp1',status='replace',form='unformatted')
 C     UNIT IDISK1 = Temporary file
@@ -85,7 +111,7 @@ C      WRITE (*,100) K, (FK1(I),I=K,L)
 C
 C     Initialisation of SIMUL
 C
-      CALL SIMUL(0,1,EPS,1,NUNIT,0)
+      CALL SIMUL(0,1,EPS,1,NUNIT,0, 0) ! call for IREASON=0
 C
 C     Initialisation of SG0 (average von Mises stress)
 C
@@ -103,7 +129,7 @@ C
          WRITE (IMP,109) (DG(I,K),K=1,3)
          WRITE (*,109) (DG(I,K),K=1,3)
       enddo
-      CALL SIMUL(1,1,EPS,NFILE0,NUNIT,1)
+      CALL SIMUL(1,1,EPS,NFILE0,NUNIT,1, 0)
 C
 C     Come back to initial texture
 C
@@ -133,7 +159,9 @@ C
       WRITE (*,109) (DG(I,K),K=1,3)
  109  FORMAT (1x,3F10.5)
   35  CONTINUE
-      CALL SIMUL(1,1,EPS,NFILE0,NUNIT,0)
+
+C	20090425 jg: parameter IREASON was added. 
+      CALL SIMUL(1,1,EPS,NFILE0,NUNIT,0, 1) ! call for IREASON=1
    2  CONTINUE
 C
 C     Output of last "current situation"
@@ -141,6 +169,6 @@ C
       write (IMP,110)
       write (*,110)
  110  format (//,' Final call of SIMUL (for output only)')
-      CALL SIMUL(2,1,EPS,NFILE0,NUNIT,0)
+      CALL SIMUL(2,1,EPS,NFILE0,NUNIT,0, 0)
       STOP
       END
