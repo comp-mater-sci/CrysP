@@ -166,7 +166,10 @@ c
 	end interface
 #endif
 C </gmetex comm>
-	! Body of forclient      SAVE
+	SAVE
+C ------------------------------------------------------------------------
+C      CODE SECTION
+C ------------------------------------------------------------------------
 C      write (*,406) IW
 C      write (IMP,406) IW
 C 406  format (' SIMUL - IW=',I5,' (2 is for final output only)')
@@ -267,7 +270,7 @@ C	 Begin the loop over the data form control block
 C
 	ICTRL = 1
 	do 9898 while (ICTRL .NE. 0)
-C	By defaut, the outer loop doesn't affect the execution of code.
+C	By defaut, the outer loop does not affect the execution of code.
 C	ICTRL is active only if IREASON = 1 	
 	ICTRL = 0
 	if (IREASON .EQ. 1) then
