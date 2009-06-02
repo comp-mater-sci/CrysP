@@ -99,6 +99,7 @@ C
 
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
       COMMON /ES1/ IMP3
+	COMMON /OUTMIC/nomic
       COMMON /IGLIJS/ FK1(96),NUNGL,NGLS,cc(96)
       COMMON /STAP/ SG,GMM                                              
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
@@ -140,6 +141,13 @@ C 406  format (' SIMUL - IW=',I5,' (2 is for final output only)')
 C
 C     NRCMOD is set to 1 (Self-Consistent algorithm is switched off)
 C
+c <jg>:
+	if (IW .EQ.2) then
+		write (nomic,9393) NPOINT,TITEL
+ 9393 format(I5,5x,A)
+	endif
+c </jg>
+
       NRCMOD=1
       i=NPOINT/2
       if (2*i.eq.npoint) goto 36
@@ -435,6 +443,17 @@ C
       write (IMP1,400) IOR,GEWF,fi1,PHI,fi2,GMM0,
      1 ((Fb(i,j,laml),i=1,3),j=1,3),(GAXESb(j,laml),j=1,3),GLR
  400  format (I6,f10.5,2X,3f10.5,2X,f10.5,3(2X,3F10.6),2(2x,3f10.5))
+c <jg>
+	if (IW .EQ. 2) then
+		write(nomic,9394)  fi1,PHI,fi2, 1 ,GEWF, GMM0
+ 9394 format (3F10.3,10X,I5,5X,2F10.3)
+c in leesor   
+c  20  READ (NDAT1,96) PHI2,PHI,PHI1,STAP,NSTAP,GEW,GAMMA
+c  96  FORMAT (4F10.0,I5,5X,2F10.0)                                      
+
+c
+  	endif
+c </jg>
   41  if (IW.gt.1) goto 23
 C
 C      5 NEXT INSTRUCTIONS ADDED FOR LAMEL MODEL:

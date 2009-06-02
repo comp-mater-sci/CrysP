@@ -19,6 +19,7 @@ C     NDAT2=
 C
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
       COMMON /ES1/ IMP3
+	COMMON /OUTMIC/nomic
       COMMON /IGLIJS/ FK1(96),NUNGL,NGLS,CC(96)
 C      COMMON /RCFILS/ NUNRC(2)
       COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3),
@@ -26,6 +27,8 @@ C      COMMON /RCFILS/ NUNRC(2)
       common /CEIGEN/ IOR,ISTP,JBLOC,RELEXP
       character * 12 fnam1,fnam2,cods1
       character * 8 codsim
+	integer nomic
+	data nomic /122/
       DATA MPOINT /8000/,NUNIT/2/
       SAVE
 C     UNIT NUNIT = Temporary file
@@ -63,6 +66,12 @@ C     UNIT IMP3 = PRINTER
       write (*,93) fnam2
 C     UNIT LEC = SLIP SYSTEMS
       open (unit=LEC,file=fnam2,status='old')
+c <jg>: Open file for output SMT 
+      cods1(L+1:L+4)='.smt'
+	open(unit=nomic,file=cods1,status='replace',action='write')
+c </jg>
+
+
       READ(KLEC,96) NKAART
       write (*,97) NKAART
   97  format (' number of lines with tau-crit values:',i3)
