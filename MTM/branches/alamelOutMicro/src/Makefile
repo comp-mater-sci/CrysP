@@ -1,7 +1,7 @@
 FC=ifort
 #FC=gfortran
 
-FFLAGS= -mixed_str_len_arg -extend-source 80 -warn all -O3
+FFLAGS= -extend-source 80 -warn all -O3 -fast 
 
 #FFLAGS= -pg   -O3
 #FFLAGS= -O3
