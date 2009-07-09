@@ -1,1 +1,1 @@
-main1.i01                           Name of parameter file
+main2.i01                           Name of parameter file
