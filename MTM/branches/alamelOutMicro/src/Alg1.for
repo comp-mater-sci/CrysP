@@ -54,7 +54,7 @@ C
  210  FORMAT (8I4,4X,2F10.0)
   508 WRITE (IMP,211) I,NGL,NTW,DI1
  211  FORMAT (1H ,I4,10X,2I5,10X,5I5)
-      IF (I.NE.0) STOP                                                  
+      IF (I.NE.0) STOP 5                                                
       M=NGL+NTW                                                         
       DO 500 I1=1,M                                                     
       READ (R,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
@@ -82,7 +82,7 @@ C
       IF (M11.LE.96.OR.M.LE.48) GOTO 515
       WRITE (IMP,222) M11,M
   222 FORMAT (' TAYLOR - PROBLEMS WITH DIMENSIONS',2I10)                
-      STOP                                                              
+      STOP 5                                                            
   515 IF (NGL.EQ.0) GOTO 42                                             
       DO 1 I=1,NGL                                                      
       K=I+M                                                             
@@ -144,7 +144,7 @@ C
       WRITE (IMP,202)                                                   
  202  FORMAT (' TAYLOR - SUM OF DIAGONAL ELEMENTS OF DISPLACEMENT GRADIE
      1NT MUST BE ZERO')                                                 
-      STOP                                                              
+      STOP 5                                                            
 CC     OMREKENING DISPLACEMENT GRADIENT.
  3000 do 45 i=1,3
       do 45 j=1,3
@@ -352,7 +352,7 @@ C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
       WRITE (IMP,107) X                                                 
  107  FORMAT (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,
      1'   SHOULD BE LESS THAN 1')                                       
-       STOP                                                             
+       STOP 5                                                           
   85  CALL RANDOM_NUMBER(RNDM)
       DO 86 I=1,NTW                                                     
       IF (RNDM.LT.GAMMA(I)) GOTO 87                                     
@@ -418,5 +418,5 @@ C  28  A1(I,J)=-A1(I,J)
 C  27  CONTINUE
 C      RETURN
   26  WRITE (IMP,106)                                                   
-  52  STOP                                                              
+  52  STOP                                                             
       END                                                               

@@ -37,13 +37,15 @@ C     UNIT IDISK1 = Temporary file
       open(unit=IDISK1,file='Temp2',status='replace',form='unformatted')
 C     UNIT KLEC = CONTROL FILE
       open (unit=KLEC,file='MAIN1.CTL',status='old')
+c <jg>
   90  format (a)
-      read (KLEC,90) fnam1
-      write (*,93) fnam1
+c      read (KLEC,90) fnam1
+c      write (*,93) fnam1
   93  format(' Input file:',a)
-      close (unit=KLEC)
+c      close (unit=KLEC)
 C     UNIT KLEC = PARAMETER FILE
-      open (unit=KLEC,file=fnam1,status='old')
+c      open (unit=KLEC,file=fnam1,status='old')
+c </jg>
       read (KLEC,90) codsim
       write (*,92) codsim
   92  format (' Code for this simulation: ',a)
@@ -68,7 +70,7 @@ C     UNIT LEC = SLIP SYSTEMS
       open (unit=LEC,file=fnam2,status='old')
 c <jg>: Open file for output SMT 
       cods1(L+1:L+4)='.smt'
-	open(unit=nomic,file=cods1,status='replace',action='write')
+      open(unit=nomic,file=cods1,status='replace',action='write')
 c </jg>
 
 
@@ -136,7 +138,7 @@ C
  101  format (' SIMUL CALL NR.',I5,'   Output parameter',I5,/,
      1' Displacement gradient:')
       DO 35 I=1,3
-      READ (KLEC,95) (DG(I,K),K=1,3)
+      READ (KLEC,*) (DG(I,K),K=1,3)
   95  FORMAT (3F10.0)
       WRITE (IMP,109) (DG(I,K),K=1,3)
       WRITE (*,109) (DG(I,K),K=1,3)
@@ -151,5 +153,6 @@ C
       write (*,110)
  110  format (//,' Final call of SIMUL (for output only)')
       CALL SIMUL(2,1,EPS,NFILE0,NUNIT,0)
+	close(nomic)
       STOP
       END
