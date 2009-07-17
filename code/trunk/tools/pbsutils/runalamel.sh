@@ -12,11 +12,6 @@ INPUTPREFIX="texinp"
 
 E_NOFILE=33
 
-##
-# Remark for future development: it is possible to write almost entire MAIN1.CTL file using
-# "Here-document" feature. Note that macro substitution is sufficient for this purpose...
-
-
 #
 # Check if input files are present
 #
@@ -24,29 +19,11 @@ if [ ! -f "$DEFFILE" ] ; then
 	echo "Cannot find $DEFFILE"
 	exit $E_NOFILE
 fi
-
-
 #
-# Define two functions
+# Read deffile into variable
 #
-
-function writeCURLines ()
-{
-cat >>"$CTLFILE" <<End-of-CUR-Line
-    2     (Leesor) Type of data set for input texture (1 for SMT-file)
-$INPUTPREFIX.cur                                                    NAME OF INPUT TEXTURE FILE
-End-of-CUR-Line
-}
-
-function writeSMTLines ()
-{
-cat >>"$CTLFILE" <<End-of-SMT-Line
-    1     (Leesor) Type of data set for input texture (1 for SMT-file)
-$INPUTPREFIX.smt                                                    NAME OF INPUT TEXTURE FILE
-End-of-SMT-Line
-
-}
-
+DEFTENS=`cat $DEFFILE`
+#echo "$DEFTENS"
 #
 # Check runway: start from CUR or SMT
 #
@@ -56,7 +33,9 @@ if [ -e "$OUTPREFIX.CUR"  ] ; then
 	# Remark: if script fails, next time it will start from SMT
 	# 
 	mv -f "$OUTPREFIX.CUR"  "$INPUTPREFIX.cur"
+	INPUT="$INPUTPREFIX.cur"
 	RUNWAY="CUR"
+	RUNMODE="2"
 else
 	if [ ! -e "$INPUTPREFIX.smt" ] ; then
 		echo "Input SMT file doesn't exist"
@@ -64,14 +43,15 @@ else
 	fi	 
 	echo "Starting from SMT file"
 	RUNWAY="SMT"
+	INPUT="$INPUTPREFIX.smt"
+	RUNMODE="1"
 fi
 
-
-
 #
-# Write prologue
+# Do the actual work
 #
-cat >"$CTLFILE" <<End-of-prologue
+
+cat >"$CTLFILE" <<End-of-CTL-File
 $OUTPREFIX                                Name of output files (give no extension)
 bcc.pre                             Slip system file
    16                  No. of lines with tau-crit values (Stored in FK1):
@@ -108,20 +88,8 @@ micro1.smt                                                     NAME OF MICROSTRU
 micros
 1.486     2.476     8.357       VOCE TAU-III-1, TAU-III-S, T-IV-S
 2.75      0.55                  VOCE THETA-1, THETA-T
-End-of-prologue
-#
-# Write CUR/SMT for the first time  
-#
-if [ "$RUNWAY" == "CUR" ] ; 
-then
-	writeCURLines
-else
-	writeSMTLines
-fi
-#
-#  Write mid-part1
-#
-cat >>"$CTLFILE" <<End-of-Mid1
+    $RUNMODE     (Leesor) Type of data set for input texture (1 for SMT-file)
+$INPUT                                                    NAME OF INPUT TEXTURE FILE
     1     (Leesor) Chosen Block (in input data set)
     0     (Main) If =1: output for this block is required   INITIALISATION OF SG0
 0.025     0.0       0.0       Displacement gradient for this block
@@ -129,41 +97,35 @@ cat >>"$CTLFILE" <<End-of-Mid1
 0.0       0.0       -0.025
     1     (SIMUL) NUMBER OF SIMULATION STEPS PER CALL     (INITIALISATION OF SG0)
     0    0(SIMUL) 1: relaxation allowed, for relx 1 and 2 (INITIALISATION OF SG0)
-End-of-Mid1
-#
-# Write CUR/SMT for the second time  
-#
-if [ "$RUNWAY" == "CUR" ] ; 
-then
-	writeCURLines
-else
-	writeSMTLines
-fi
-#
-#  Write mid-part2
-#
-cat >>"$CTLFILE" <<End-of-Mid2
+    $RUNMODE     (Leesor) Type of data set for input texture (1 for SMT-file)
+$INPUT                                                    NAME OF INPUT TEXTURE FILE
     1     (Leesor) Chosen Block (in input data set)
     1     (Main) If =1: output for this block is required.
-End-of-Mid2
-#
-#  Write deformation data 
-#
-cat "$DEFFILE" >> "$CTLFILE" 
-#
-# Write epilogue
-#
-cat >>"$CTLFILE" <<End-of-epilogue
+$DEFTENS 
     1     (SIMUL) NUMBER OF SIMULATION STEPS PER CALL      (This is for a true simulation)
     1    1(SIMUL) 1: relaxation allowed, for relx 1 and 2  (This is for a true simulation)
     1     (SIMUL) NUMBER OF SIMULATION STEPS PER CALL      (Fake call of SIMUL - for output only)
     0    0(SIMUL) 1: relaxation allowed, for relx 1 and 2  (Fake call of SIMUL - for output only)
-End-of-epilogue
+End-of-CTL-File
 
 #
 # Run ALAMEL code
 #
 "$ALAMELCMD"
+#
+# Check error code. If non-zero, try recover from error
+#
+if [ ! "$?" == 0  ] ; then
+	echo Nonzero code from ALAMEL,
+	rm -f "$OUTPREFIX.CUR"  "$INPUTPREFIX.cur" 
+	NILINES=`wc -l "$INPUTPREFIX.smt"`
+	NOLINES=`wc -l "$OUTPREFIX.smt"`
+	echo "$NILINES  $NOLINES"  
+	if [ "$NILINES" == "$NOLINES"  ] ; then
+		echo trying output smt
+	fi
+fi
+
 #
 # Return info code
 #
