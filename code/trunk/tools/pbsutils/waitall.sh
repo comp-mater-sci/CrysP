@@ -3,15 +3,34 @@
 
 
 NARGS=1  # Two args to script expected.
-SLEEPTIME="5s" # polling interval 
+SLEEPTIME="15s" # polling interval 
 
 E_BADARGS=20
 E_BADJOBNAME=21
 
 PBSSTRING=".beopbs-c"
 
-#QUERYCMD="cat qstatlist.txt"
+#QUERYCMD="cat qstatlist.txt" 
 QUERYCMD="qstat"
+
+VERBOSE=1
+
+NPROCS=-1
+
+getNumProcs () {
+	QUERYPROCS=`$QUERYCMD` 
+	if [ ! "$?" == 0 ] ; then
+		# cannot determine number of processes
+		# possibly communication with pbs server is temporarily lost?
+		NPROCS=-1
+
+	else
+		NPROCS=`echo "$QUERYPROCS"  | grep "$1" | wc -l`
+		[ "$VERBOSE" == "1" ] &&  echo "The number of processes left:  $NPROCS" 
+	fi
+	return $NPROCS
+}
+
 
 
 MYNAME=`basename $0`
@@ -38,14 +57,14 @@ fi
 #	echo $jobid
 #done
 
-#NLIST=`$QUERYCMD`
+# Set initial condition for loop
+getNumProcs "$1"
 
-NPROCS=`$QUERYCMD | grep "$1" | wc -l`
-echo "There are $NPROCS processes left" 
 while (( NPROCS != 0  ))
 do
 	sleep "$SLEEPTIME"
-	NPROCS=`$QUERYCMD | grep "$1" | wc -l`
-	echo "There are $NPROCS processes left" 
+	getNumProcs "$1" 
 done
+
+exit 0
 

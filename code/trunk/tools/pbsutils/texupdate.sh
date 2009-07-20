@@ -1,12 +1,13 @@
 #!/bin/bash
 #PBS -l ncpus=1
 #PBS -l walltime=0:30:00
+#PBS -u u0061564
 
 ### This is PBS script
 ###
 
 ## Global configuration section
-UTILDIR="/home/jerzy/TEXEVOL"
+UTILDIR="$HOME/TEXEVOL"
 BINDIR="$UTILDIR/bin"
 SCRIPTDIR="$UTILDIR/scripts"
 DATADIR="$UTILDIR/data"
@@ -22,9 +23,10 @@ FACETCONF="Facet.par"
 TMPLDIR="$DATADIR"
 
 TESTMODE=0
-GREEDYMODE=0
+GREEDYMODE=1
 
 E_SIMERR=100
+E_BADFILE=33
 
 ##############################################################
 
@@ -251,6 +253,7 @@ fi
 ##
 if [ $? -ne 0  ] ; then
 	echo "Simulation exited with non-zero exit code"
+	return  $E_SIMERR 
 fi
 
 echo "Current dir :" `pwd`
@@ -261,6 +264,10 @@ echo $TMPDIR
 # Finalize execution
 # Transport the results
 copylist "$TMPDIR" "$OUTLST" "$TARGETDIR"
+if [ ! "$?" == "0" ] ; then
+	echo "Transport of facet results failed; see messages above."
+	return $E_BADFILE
+fi	
 
 # Perform sanity
 if [ "$TESTMODE" == 0 ] ; then
@@ -278,6 +285,14 @@ return 0
 # End of function runFacet
 ############################################################
 
+makeSnapshot () {
+
+	ARCHIVE="snap_`date "+%Y%m%d_%k%M%S"`.tgz"
+	FILELIST="defdata.dat  fac2sep.par texout.CUR texout.smt element.Q00"
+	tar czf "$ARCHIVE" $FILELIST
+
+}
+# End of function makeSnapshot
 
 ############################################################
 ############################################################
@@ -302,6 +317,12 @@ if [ ! "$?" == "0" ] ; then
 	echo "Execution of runFacet finished with error"
 	exit $E_SIMERR 
 fi
+
+if [ "$GREEDYMODE" == "1" ] ; then
+	echo "Entering makeSnapshot"
+	makeSnapshot
+fi
+
 echo "Completed."
 
 exit 0
