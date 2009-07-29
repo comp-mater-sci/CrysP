@@ -287,7 +287,7 @@ return 0
 
 makeSnapshot () {
 
-	ARCHIVE="snap_`date "+%Y%m%d_%k%M%S"`.tgz"
+	ARCHIVE="snap_`date "+%Y%m%d_%H%M%S"`.tgz"
 	FILELIST="defdata.dat  fac2sep.par texout.CUR texout.smt element.Q00"
 	tar czf "$ARCHIVE" $FILELIST
 
