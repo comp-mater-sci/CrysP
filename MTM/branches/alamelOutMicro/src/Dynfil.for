@@ -38,19 +38,32 @@ C     Allocation of "temporary file" to memory
       implicit double precision (a-h,o-z)
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
       DIMENSION TA(3,3),A(3,3),A1(3,3)
-      character*12 fnam1
+c <jg>
+      integer pathlength
+      parameter (pathlength=512)
+      character (LEN=pathlength) fnam1
+      integer iblank
+c </jg>      
+!      character*12 fnam1 !jg
       SAVE
       data convf/0.5729577951308232D+02/
       DATA A  / 8 * 0.0D0 , 1.0D0  /
       FPI=1.0D0/convf
       read (KLEC,88) fnam1
   88  format (a)
-      write (*,103) fnam1
-      write (IMP,103) fnam1
+c <jg>
+      iblank = INDEX(fnam1,' ')
+      if ((iblank.GT.0).AND.(iblank.LT.pathlength)) then
+           fnam1(iblank:pathlength)=' '
+           fnam1 = TRIM(fnam1)
+      end if
+c </jg>
+      write (*,103) TRIM(fnam1)
+      write (IMP,103) TRIM(fnam1)
  103  format (' GRFIL - Input Texture File:',a)
   99  FORMAT (I5)
 C     UNIT NDAT1= INITIAL MICROSTRUCTURE
-      open (unit=NDAT1,file=fnam1,status='old')
+      open (unit=NDAT1,file=TRIM(fnam1),status='old')
 C
       read (NDAT1,94) NGrElm,TitMic
   94  format(I5,5x,A)
@@ -120,7 +133,14 @@ C
       COMMON /NRSTEP/ nrstep
       DIMENSION T(3,3),TA(3,3),A(3,3),F(3,3),FALG(3,3),ZERO(3,3),
      1 GAXES(3),GEULR(3),CIJ(3,3),TAXES(3,3)
-      character*12 fnam1,dom
+      character*12 dom
+!      character*12 fnam1,dom !
+c <jg>
+      integer pathlength
+      parameter (pathlength=512)
+      character (LEN=pathlength) fnam1
+      integer iblank
+c </jg>      
       character*40 Titel
 C      dimension TG(3,3)
       SAVE
@@ -138,8 +158,15 @@ C     2          0.0D0,0.0D0,1.0D0/
       read (KLEC,99) NDAT
       read (KLEC,88) fnam1
   88  format (a)
-      write (*,103) fnam1
-      write (IMP,103) fnam1
+c <jg>
+      iblank = INDEX(fnam1,' ')
+      if ((iblank.GT.0).AND.(iblank.LT.pathlength)) then
+           fnam1(iblank:pathlength)=' '
+           fnam1 = TRIM(fnam1)
+      end if
+c </jg>
+      write (*,103) TRIM(fnam1)
+      write (IMP,103) TRIM(fnam1)
  103  format (' LEESOR - Input Texture File:',a)
       read (KLEC,99) NSTP
   99  FORMAT (I5)
@@ -148,7 +175,7 @@ C     2          0.0D0,0.0D0,1.0D0/
  100  FORMAT (' LEESOR - READS A TEXTURE FILE Type (NDAT) is:'
      1 ,I5,' CHOSEN BLOCK:',I5)
 C     UNIT NDAT1= INPUT TEXTURE
-      if (nbyp.eq.0) open (unit=NDAT1,file=fnam1,status='old')
+      if (nbyp.eq.0) open (unit=NDAT1,file=TRIM(fnam1),status='old')
       nbyp=1
       if (ndat.gt.1) goto 33
 C

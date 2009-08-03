@@ -25,8 +25,12 @@ C      COMMON /RCFILS/ NUNRC(2)
       COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3),
      1ITW,IPR,DELTAW,GEWF,NLIST
       common /CEIGEN/ IOR,ISTP,JBLOC,RELEXP
-      character * 12 fnam1,fnam2,cods1
+!      character * 12 fnam1,fnam2,cods1
+        integer pathlength
+        parameter (pathlength=512)
+      character (LEN=pathlength) fnam1,fnam2,cods1 ! jg
       character * 8 codsim
+      integer iblank
 	integer nomic
 	data nomic /122/
       DATA MPOINT /8000/,NUNIT/2/
@@ -65,9 +69,16 @@ C     UNIT IMP2 = PRINTER
 C     UNIT IMP3 = PRINTER
       open (unit=IMP3,file=cods1,status='replace')
       read (KLEC,90) fnam2
-      write (*,93) fnam2
+c <jg>
+      iblank = INDEX(fnam2,' ')
+      if ((iblank.GT.0).AND.(iblank.LT.pathlength)) then
+        fnam2(iblank:pathlength)=' '
+        fnam2 = TRIM(fnam2)
+      end if 
+c </jg>      
+      write (*,93) TRIM(fnam2)
 C     UNIT LEC = SLIP SYSTEMS
-      open (unit=LEC,file=fnam2,status='old')
+      open (unit=LEC,file=TRIM(fnam2),status='old')
 c <jg>: Open file for output SMT 
       cods1(L+1:L+4)='.smt'
       open(unit=nomic,file=cods1,status='replace',action='write')
