@@ -3,7 +3,13 @@
 
 
 NARGS=1  # Two args to script expected.
-SLEEPTIME="15s" # polling interval 
+SLEEPTIME="15" # polling interval 
+
+SLEEPINIT="180"
+SLEEPMIN="15"
+NTSTEP=1
+WAITTIME=0
+WAITTHRESHOLD=900   # set 15min as threshold
 
 E_BADARGS=20
 E_BADJOBNAME=21
@@ -62,7 +68,17 @@ getNumProcs "$1"
 
 while (( NPROCS != 0  ))
 do
-	sleep "$SLEEPTIME"
+	(( NTSTEP += 1 ))
+	# Estimate sleeptime
+	if [ "$WAITTIME" -lt "$WAITTHRESHOLD"  ] ; then
+		SLEEPTIME=$SLEEPINIT
+	else
+		SLEEPTIME=$SLEEPMIN
+	fi
+	[ "$VERBOSE" == "2" ] &&  echo "Sleeping for $SLEEPTIME"
+	sleep "${SLEEPTIME}s"
+	(( WAITTIME += SLEEPTIME ))
+	[ "$VERBOSE" == "2" ] &&  echo "Waiting for $WAITTIME"
 	getNumProcs "$1" 
 done
 

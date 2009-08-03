@@ -80,13 +80,13 @@ if [ -e "$OUTPREFIX.CUR"  ] ; then
 	RUNWAY="CUR"
 	RUNMODE="2"
 else
-	if [ ! -e "$INPUTPREFIX.smt" ] ; then
+	INPUT="$DATADIR/$INPUTPREFIX.smt"
+	if [ ! -e "$INPUT" ] ; then
 		echo "Input SMT file doesn't exist"
 		exit "$E_NOFILE"
 	fi	 
 	echo "Starting from SMT file"
 	RUNWAY="SMT"
-	INPUT="$INPUTPREFIX.smt"
 	RUNMODE="1"
 fi
 
@@ -96,7 +96,7 @@ fi
 
 cat >"$CTLFILE" <<End-of-CTL-File
 $OUTPREFIX                                Name of output files (give no extension)
-bcc.pre                             Slip system file
+$DATADIR/bcc.pre                             Slip system file
    16                  No. of lines with tau-crit values (Stored in FK1):
 1.0       1.0       1.0       1.0       1.0       1.0
 1.0       1.0       1.0       1.0       1.0       1.0
@@ -115,7 +115,7 @@ bcc.pre                             Slip system file
 1.0       1.0       1.0       1.0       1.0       1.0
 1.0       1.0       1.0       1.0       1.0       1.0
     1     (Main1) NBLOC
-micro1.smt                                                     NAME OF MICROSTRUCTURE FILE
+$DATADIR/micro1.smt                              NAME OF MICROSTRUCTURE FILE
     1     (SIMUL) NLIST (Make an output listing 0 or 1)
     1     (SIMUL) NFILE (Make output files 0 or 1)
     0     (SIMUL) NFILTW (Make output files 0 or 1)

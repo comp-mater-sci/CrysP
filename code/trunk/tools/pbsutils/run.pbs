@@ -1,0 +1,37 @@
+#!/bin/bash
+#PBS -l ncpus=1
+#PBS -l walltime=2:30:00
+
+# Assume that libdir is the current dir
+
+CURRENTDIR=`pwd`
+
+ALIBDIR=$CURRENTDIR
+
+echo $ALIBDIR
+
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ALIBDIR
+
+echo $LD_LIBRARY_PATH
+
+FACETDIR=aba_facet.dir
+# Prepare aba_facet.dir
+echo "$CURRENTDIR" > $FACETDIR
+echo "$CURRENTDIR" >> $FACETDIR
+echo "results" >> $FACETDIR
+
+
+JOBNAME=uniaxial_tex
+#JOBNAME=CupDrawing
+
+#ABAQUS_WORKDIR=$CURRENTDIR
+GMETEX_WORKDIR=$CURRENTDIR
+
+export LD_LIBRARY_PATH
+export JOBNAME
+#export ABAQUS_WORKDIR
+export GMETEX_WORKDIR
+
+abaqus interactive job=$JOBNAME user=vumat_facet
+
+
