@@ -404,11 +404,15 @@ C 988  format (' ratlon',d15.8)
       else
          WDOT1=WDOT/x
       endif
+c <jg>
+#ifndef NORESFILE
       write (IMP2,150) ior,WDOT,WDOT1,TAU,WDOT1/TAU,ratlon,
      1 rhossa(1,1),rhossa(2,2),rhossa(3,3),
      2 rhossa(2,3),rhossa(3,1),rhossa(1,2),
      3 rhoasa(2,3),rhoasa(3,1),rhoasa(1,2),
      4 ssam(1,1),ssam(2,2),ssam(3,3),ssam(2,3),ssam(3,1),ssam(1,2)
+#endif
+c <jg>      
   150 format (i5,5f10.6,5x,6f10.6,5x,3f10.6,5x,6f10.6)
    61 RETURN
 C      DO 27 I=1,N

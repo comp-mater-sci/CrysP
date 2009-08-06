@@ -19,7 +19,9 @@ C     NDAT2=
 C
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
       COMMON /ES1/ IMP3
-	COMMON /OUTMIC/nomic
+c <jg>      
+	COMMON /OUTMIC/NUMIC,NUCUB
+c </jg>        
       COMMON /IGLIJS/ FK1(96),NUNGL,NGLS,CC(96)
 C      COMMON /RCFILS/ NUNRC(2)
       COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3),
@@ -31,14 +33,14 @@ C      COMMON /RCFILS/ NUNRC(2)
       character (LEN=pathlength) fnam1,fnam2,cods1 ! jg
       character * 8 codsim
       integer iblank
-	integer nomic
-	data nomic /122/
+	integer NUMIC,NUCUB
+	data NUMIC/122/,NUCUB/123/
       DATA MPOINT /8000/,NUNIT/2/
       SAVE
 C     UNIT NUNIT = Temporary file
-      open(unit=NUNIT,file='Temp1',status='replace',form='unformatted')
+      open(unit=NUNIT,file='Temp1',status='SCRATCH',form='unformatted')
 C     UNIT IDISK1 = Temporary file
-      open(unit=IDISK1,file='Temp2',status='replace',form='unformatted')
+      open(unit=IDISK1,file='Temp2',status='SCRATCH',form='unformatted')
 C     UNIT KLEC = CONTROL FILE
       open (unit=KLEC,file='MAIN1.CTL',status='old')
 c <jg>
@@ -59,12 +61,18 @@ c </jg>
 C     UNIT IMP = PRINTER
       open (unit=IMP,file=cods1,status='replace')
       write (IMP,92) codsim
+c <jg>
+#ifndef NOCURFILE
       cods1(L+1:L+4)='.CUR'
 C     UNIT IMP1 = PRINTER
       open (unit=IMP1,file=cods1,status='replace')
+#endif
+#ifndef NORESFILE
       cods1(L+1:L+4)='.RES'
 C     UNIT IMP2 = PRINTER
       open (unit=IMP2,file=cods1,status='replace')
+#endif
+c </jg>
       cods1(L+1:L+4)='.TWN'
 C     UNIT IMP3 = PRINTER
       open (unit=IMP3,file=cods1,status='replace')
@@ -81,9 +89,13 @@ C     UNIT LEC = SLIP SYSTEMS
       open (unit=LEC,file=TRIM(fnam2),status='old')
 c <jg>: Open file for output SMT 
       cods1(L+1:L+4)='.smt'
-      open(unit=nomic,file=cods1,status='replace',action='write')
+      open(unit=NUMIC,file=cods1,status='replace',action='write')
+#ifdef WITHCUBFILE
+      cods1(L+1:L+4)='.cub'
+      open(unit=NUCUB,file=cods1,status='replace',
+     &     form='UNFORMATTED',action='write')
+#endif
 c </jg>
-
 
       READ(KLEC,96) NKAART
       write (*,97) NKAART
@@ -164,6 +176,11 @@ C
       write (*,110)
  110  format (//,' Final call of SIMUL (for output only)')
       CALL SIMUL(2,1,EPS,NFILE0,NUNIT,0)
-	close(nomic)
+c <jg>
+      close(NUMIC)
+#ifdef WITHCUBFILE        
+      close(NUCUB)
+#endif
+c </jg>
       STOP
       END

@@ -99,7 +99,9 @@ C
 
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
       COMMON /ES1/ IMP3
-	COMMON /OUTMIC/nomic
+c <jg>
+      COMMON /OUTMIC/NUMIC,NUCUB
+c </jg>
       COMMON /IGLIJS/ FK1(96),NUNGL,NGLS,cc(96)
       COMMON /STAP/ SG,GMM                                              
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
@@ -143,7 +145,7 @@ C     NRCMOD is set to 1 (Self-Consistent algorithm is switched off)
 C
 c <jg>:
 	if (IW .EQ.2) then
-		write (nomic,9393) NPOINT,TITEL
+		write (NUMIC,9393) NPOINT,TITEL
  9393 format(I5,5x,A)
 	endif
 c </jg>
@@ -190,8 +192,14 @@ c </jg>
   98  format (A)
       write (IMP,97) TITEL
   97  format (' Title of the new simulation: ',A)
+c <jg>
+#ifndef NOCURFILE
       write (IMP1,98) TITEL
+#endif      
+#ifndef NORESFILE
       write (IMP2,98) TITEL
+#endif
+c </jg>
 C     read the parameters of the work hardening model
       X=FTAU(-1000.0D00)
       TAU=1.0
@@ -294,20 +302,28 @@ C     INSTRUCTION ADDED IN LAMEL model:
       if (ISTP.gt.1) goto 44
       IF (NLIST.EQ.2) WRITE (IMP,112) ISTP
  112  FORMAT (//' DEFORMATION STEP ',I5,//)
+c <jg>
+#ifndef NOCURFILE
       write (IMP1,402)
  402  format (/,' Def. Step    ','Number of orientations',27X,
      1 2X,'F(1,1)',4X,'F(2,1)',4X,'F(3,1)',4X,
      2 2X,'F(1,2)',4X,'F(2,2)',4X,'F(3,2)',4X,
      3 2X,'F(1,3)',4X,'F(2,3)',4X,'F(3,3)',
      4 6X,'a',9X,'b',9x,'c',9x,'G-phi1',4x,'G-PHI',4x,'G-phi2')
+#endif
+#ifndef NORESFILE
       write (IMP2,404) nrstep+1,NPOINT
  404  format (' Def. Step ',i5,'  Number of orientations',i5,/,8x,
      1 ' WDOT  ','WDOT/STR.RAT.','  TAU     ','   M      ','STR.RAT. '
      2 ,5x,24X,'RHO-SYMMETRIC',24x,8x,'RHO-ROTATIONAL',8x,
      3 24x,'STRESS',/,1x,219('*'))
+#endif
+c </jg>
       do 48 i=1,3
       GLR(i)=GEULR(i)*convf
   48  continue
+c <jg>
+#ifndef NOCURFILE
       write (IMP1,403) nrstep,NPOINT,F,GAXES,GLR
  403  format(I6,5X,i5,44x,3(2X,3F10.6),2(2x,3f10.5))
       write (IMP1,401)
@@ -316,6 +332,14 @@ C     INSTRUCTION ADDED IN LAMEL model:
      2             2X,'F(1,2)',4X,'F(2,2)',4X,'F(3,2)',4X,
      3             2X,'F(1,3)',4X,'F(2,3)',4X,'F(3,3)',
      4 6X,'a',9X,'b',9x,'c',9x,'G-phi1',4x,'G-PHI',4x,'G-phi2')
+#endif
+#ifdef WITHCUBFILE
+      if (IW.eq.2) then
+        write (NUCUB) nrstep,NPOINT,F,GAXES,GLR
+        write (*,*) 'Header to CUB', nrstep,NPOINT,F,GAXES,GLR
+      endif  
+#endif
+C </jg>
 C  44  if (IRCMOD.lt.NRCMOD) goto 10
 C      if (IDUBLE.lt.2) goto 10
   44  call MATPROD(Ftot,F,FMicro,3,3,3)
@@ -440,16 +464,28 @@ C
       do 47 i=1,3
       GLR(i)=GEULRb(i,laml)*convf
   47  continue
+c <jg>
+#ifndef NOCURFILE
       write (IMP1,400) IOR,GEWF,fi1,PHI,fi2,GMM0,
      1 ((Fb(i,j,laml),i=1,3),j=1,3),(GAXESb(j,laml),j=1,3),GLR
  400  format (I6,f10.5,2X,3f10.5,2X,f10.5,3(2X,3F10.6),2(2x,3f10.5))
+#endif
+#ifdef WITHCUBFILE
+      if (IW .EQ. 2) then 
+        ! Write binary record; 
+        ! The only difference between CUR and CUB record format is
+        ! that the leading ordinal number is skipped in CUB. 
+         write (NUCUB) GEWF,fi1,PHI,fi2,GMM0,
+     1   ((Fb(i,j,laml),i=1,3),j=1,3),(GAXESb(j,laml),j=1,3),GLR
+      endif
+#endif
 c <jg> ! Write .SMT file.
 	if (IW .EQ. 2) then
 ! include additional data
 !		write(nomic,9394)  fi2,PHI,fi1, 1 ,GEWF, GMM0
 ! 9394 format (3F10.3,10X,I5,5X,2F10.3)
 ! follow 'bare' smt format
-		write(nomic,9395)  fi2,PHI,fi1, 1 , 1.0
+		write(NUMIC,9395)  fi2,PHI,fi1, 1 , 1.0
  9395 format (3F10.3,10X,I5,5X,F10.1)
 c Compare the format with those used in leesor:   
 c  20  READ (NDAT1,96) PHI2,PHI,PHI1,STAP,NSTAP,GEW,GAMMA

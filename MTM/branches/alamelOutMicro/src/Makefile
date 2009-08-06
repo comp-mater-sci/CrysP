@@ -1,7 +1,13 @@
 FC=ifort
 #FC=gfortran
 
-FFLAGS= -extend-source 80 -warn all -O3 -fast -opt-report
+## Preprocessor flags:
+##  * NORESFILE : no <prefix>.RES file is generated
+##  * WITHCUBFILE  :  generate <prefix>.CUB file
+##
+##
+
+FFLAGS= -fpp -extend-source 80 -O3 -ipo -vec-report0  -DNORESFILE -DNOCURFILE -DWITHCUBFILE # -warn all  -opt-report0
 
 #FFLAGS= -pg   -O3
 #FFLAGS= -O3
@@ -22,7 +28,7 @@ PROG=alamel
 .PHONY=clean
 
 $(PROG)	:	$(OBJS)
-	$(FC)  $(FLDFLAGS) -o $@ $(OBJS) 
+	$(FC) $(FFLAGS)  $(FLDFLAGS) -o $@ $(OBJS) 
 
 %.o : %.for
 	$(FC) -c $(FFLAGS) $< -o $@

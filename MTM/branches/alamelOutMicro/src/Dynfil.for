@@ -136,6 +136,7 @@ C
       character*12 dom
 !      character*12 fnam1,dom !
 c <jg>
+      integer iuerr  ! Error code for I/O operations
       integer pathlength
       parameter (pathlength=512)
       character (LEN=pathlength) fnam1
@@ -175,9 +176,29 @@ c </jg>
  100  FORMAT (' LEESOR - READS A TEXTURE FILE Type (NDAT) is:'
      1 ,I5,' CHOSEN BLOCK:',I5)
 C     UNIT NDAT1= INPUT TEXTURE
-      if (nbyp.eq.0) open (unit=NDAT1,file=TRIM(fnam1),status='old')
+c <jg>      
+#ifdef WITHCUBFILE
+      if (nbyp.eq.0) then
+         ! Choose which type of file should be used,
+         ! .cub file is represented with code "3"
+         if (ndat.eq.3) then
+               open (unit=NDAT1,file=TRIM(fnam1),
+     &               status='old',form='UNFORMATTED')
+         else
+               open (unit=NDAT1,file=TRIM(fnam1),status='old')
+         endif
+         !!! Debug, remove after testing !!
+         open(unit=119,file='verify.dat',status='replace')
+      endif
+      nbyp=1
+      if (ndat.eq.3) goto 14
+      if (ndat.gt.1) goto 33
+#else      
+      if (nbyp.eq.0)  open (unit=NDAT1,file=TRIM(fnam1),status='old')
       nbyp=1
       if (ndat.gt.1) goto 33
+#endif
+c </jg>      
 C
 C     "Manual-made" type of input texture (.SMT-file)
 C
@@ -200,12 +221,17 @@ C
       write (IMP,102) TITEL
       write (*,102) TITEL
   102 format(' Title on CUR-type-input file:',A)
+      
   14  LPOINT=MPOINT+1
       J=4
       NPOINT=1
       NSTAP=1
       STAP=0.0D0
       TOTGEW=0.D0
+c <jg>
+#ifdef WITHCUBFILE
+      if (NDAT.eq.3) goto 933
+#endif
       IF (NDAT.EQ.1) GOTO 6
       IF (NSTP.EQ.0) GOTO 19
       DO 7 I=1,NSTP
@@ -228,6 +254,26 @@ C
       write (IMP,104) NS,NREC
  104  format (' Input block nr.',i5,3x,'  Number of crystallites',i5)
       read (NDAT1,91) DOM
+c <jg>
+#ifdef WITHCUBFILE
+      goto 923 ! skip the part related to CUB file
+ 933  continue
+      write (*,*) 'Binary CUB-type-input file'
+      read (NDAT1,iostat=iuerr) NS,NREC,FALG,GAXES,GEULR
+      if (iuerr .ne. 0) then
+         write(*,*) 'Error in header of CUB file'
+         call EXIT(17)
+      endif        
+      write (*,105) NS,NREC
+      write (IMP,105) NS,NREC
+      !!! Debug >>
+      write (119,105) NS,NREC
+      write (119,*) 'F: ',FALG,'Axes: ',GAXES,'Eulr: ',GEULR
+      !! << debug
+ 105  format (' Input step nr.',i5,3x,'  Number of crystallites',i5)
+ 923  continue 
+#endif
+c <jg>
       do 23 K=1,3
       GEULR(K)=GEULR(K)*FPI
   23  continue
@@ -238,8 +284,31 @@ C      write (nunit) nrstep,FALG,GAXES,GEULR,CIJ,TG
    6  I=0
       do 11 j=1,NREC
       if (NDAT.eq.1) goto 20
+c <jg>
+#ifdef WITHCUBFILE
+      if (NDAT.eq.3) then
+      ! Read binary record; 
+      ! The only difference between CUR and CUB record format is
+      ! that the leading ordinal number is skipped in CUB. 
+      READ(NDAT1,iostat=iuerr) GEW,PHI1,PHI,PHI2,GAMMA,F,GAXES,GEULR
+      if (iuerr .ne. 0) then
+         write(*,*) 'Error in CUB file record'
+         call EXIT(17)
+      endif        
+      I = j  ! unnecessary, but introduced for full output compliance
+      else
+      ! Normal CUR file        
+        READ (NDAT1,97) I,GEW,PHI1,PHI,PHI2,GAMMA,F,GAXES,GEULR
+      endif
+#else
       READ (NDAT1,97) I,GEW,PHI1,PHI,PHI2,GAMMA,F,GAXES,GEULR
+#endif
+c <jg>
   97  FORMAT (I6,F10.0,2x,3f10.0,2x,F10.0,5(2x,3f10.0))
+!! Debug, remove after testing!!
+      write (119,400) I,GEW,PHI1,PHI,PHI2,GAMMA,F,GAXES,GEULR
+ 400  format(I6,f10.5,2X,3f10.5,2X,f10.5,3(2X,3F10.6),2(2x,3f10.5))
+!!! <-- debug
       do 24 K=1,3
       GEULR(K)=GEULR(K)*FPI
   24  continue
