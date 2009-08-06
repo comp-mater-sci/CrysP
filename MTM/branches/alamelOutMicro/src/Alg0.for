@@ -336,7 +336,6 @@ c <jg>
 #ifdef WITHCUBFILE
       if (IW.eq.2) then
         write (NUCUB) nrstep,NPOINT,F,GAXES,GLR
-        write (*,*) 'Header to CUB', nrstep,NPOINT,F,GAXES,GLR
       endif  
 #endif
 C </jg>

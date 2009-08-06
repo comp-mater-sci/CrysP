@@ -187,8 +187,6 @@ c <jg>
          else
                open (unit=NDAT1,file=TRIM(fnam1),status='old')
          endif
-         !!! Debug, remove after testing !!
-         open(unit=119,file='verify.dat',status='replace')
       endif
       nbyp=1
       if (ndat.eq.3) goto 14
@@ -266,10 +264,6 @@ c <jg>
       endif        
       write (*,105) NS,NREC
       write (IMP,105) NS,NREC
-      !!! Debug >>
-      write (119,105) NS,NREC
-      write (119,*) 'F: ',FALG,'Axes: ',GAXES,'Eulr: ',GEULR
-      !! << debug
  105  format (' Input step nr.',i5,3x,'  Number of crystallites',i5)
  923  continue 
 #endif
@@ -305,10 +299,6 @@ c <jg>
 #endif
 c <jg>
   97  FORMAT (I6,F10.0,2x,3f10.0,2x,F10.0,5(2x,3f10.0))
-!! Debug, remove after testing!!
-      write (119,400) I,GEW,PHI1,PHI,PHI2,GAMMA,F,GAXES,GEULR
- 400  format(I6,f10.5,2X,3f10.5,2X,f10.5,3(2X,3F10.6),2(2x,3f10.5))
-!!! <-- debug
       do 24 K=1,3
       GEULR(K)=GEULR(K)*FPI
   24  continue
