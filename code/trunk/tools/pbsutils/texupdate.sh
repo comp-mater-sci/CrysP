@@ -11,49 +11,50 @@ UTILDIR="$HOME/TEXEVOL"
 BINDIR="$UTILDIR/bin"
 SCRIPTDIR="$UTILDIR/scripts"
 DATADIR="$UTILDIR/data"
-
-RESULTFILE="fac2sep.par"
-
+#
+# Name of result file 
+RESULTFILE="element.Q00"
+#
 # Configuration section for ALAMEL
 ALAMELCMD="$BINDIR/alamel" 
-
+DEFFILE="defdata.dat"
+OUTPREFIX="texout"
+INPUTPREFIX="texinp"
+#
+#
 # Configuration section for Facet
 FACETBIN="$BINDIR/facet"
 FACETCONF="Facet.par"
 TMPLDIR="$DATADIR"
-
-TESTMODE=0
+#
+# Configuration of "greedy mode" and function makeSnapshot
 GREEDYMODE=1
-
+SNAPFILELIST="defdata.dat ${OUTPREFIX}.cub  ${OUTPREFIX}.smt ${RESULTFILE}"
+#
+# Configuration of housekeeping
+CLEANUP=1
+CLEANUPLIST="${OUTPREFIX}.smt ${OUTPREFIX}.LST ${OUTPREFIX}.TWN ${INPUTPREFIX}.cub"
+#
+# Special testmode: some actions are skipped
+TESTMODE=0
+#
+### Error codes 
 E_SIMERR=100
-E_BADFILE=33
+E_NOFILE=33
 
 ##############################################################
-
-
-
+#
+#
 remarkTestMode () {
 	echo "***** Test mode, action $1 skipped *****" 
 }
-
-
+#
 #
 #
 ##########################################################
 runAlamel () {
-
-
-DEFFILE="defdata.dat"
-
-
+# Name of ALAMEL config file to be built
 CTLFILE="MAIN1.CTL"
-
-OUTPREFIX="texout"
-
-INPUTPREFIX="texinp"
-
-E_NOFILE=33
-
 #
 # Check if input files are present
 #
@@ -68,17 +69,28 @@ fi
 DEFTENS=`cat $DEFFILE`
 #echo "$DEFTENS"
 #
-# Check runway: start from CUR or SMT
-#
-if [ -e "$OUTPREFIX.CUR"  ] ; then
-	echo "Starting from CUR file"
-	# Rename the file: change extension into .cur
-	# Remark: if script fails, next time it will start from SMT
+# Check runway: start from CUB or SMT
+# 
+# Older version: CUR file used as startpoint
+#if [ -e "$OUTPREFIX.CUR"  ] ; then
+#	echo "Starting from CUR file"
+#	# Rename the file: change extension into .cur
+#	# Remark: if script fails, next time it will start from SMT
+#	# 
+#	mv -f "$OUTPREFIX.CUR"  "$INPUTPREFIX.cur"
+#	INPUT="$INPUTPREFIX.cur"
+#	RUNWAY="CUR"
+#	RUNMODE="2"
+
+if [ -e "$OUTPREFIX.cub"  ] ; then
+	echo "Starting from CUB file"
+	# Rename the file: change filename into inputprefix.cub
+	# Remark: if script fails, next time it will start from _INITIAL_ SMT
 	# 
-	mv -f "$OUTPREFIX.CUR"  "$INPUTPREFIX.cur"
-	INPUT="$INPUTPREFIX.cur"
-	RUNWAY="CUR"
-	RUNMODE="2"
+	INPUT="$INPUTPREFIX.cub"
+	mv -f "$OUTPREFIX.cub"  "$INPUT"
+	RUNWAY="CUB"
+	RUNMODE="3"
 else
 	INPUT="$DATADIR/$INPUTPREFIX.smt"
 	if [ ! -e "$INPUT" ] ; then
@@ -155,20 +167,28 @@ End-of-CTL-File
 # Run ALAMEL code
 #
 "$ALAMELCMD"
-#
-# Check error code. If non-zero, try recover from error
-#
 INFOCODE=$?
-if [ ! "$?" == 0  ] ; then
-	echo Nonzero code from ALAMEL,
-	rm -f "$OUTPREFIX.CUR"  "$INPUTPREFIX.cur" 
-	NILINES=`wc -l "$INPUTPREFIX.smt"`
-	NOLINES=`wc -l "$OUTPREFIX.smt"`
-	echo "$NILINES  $NOLINES"  
-	if [ "$NILINES" == "$NOLINES"  ] ; then
-		echo trying output smt
+#
+# Clean on successful exit; otherwise left the data for post-mortem analysis
+if [ "$INFOCODE" == "0" ] ; then
+	# do minimal cleanup if starting from CUB:
+	if [ "$RUNMODE" -ne "1" ] ; then
+		rm -f "$INPUT"
 	fi
 fi
+#
+# Check error code. If non-zero, try recover from error
+# TODO: recovery procedure
+#if [ ! "$?" == 0  ] ; then
+#	echo Nonzero code from ALAMEL,
+#	rm -f "$OUTPREFIX.cub"  "$INPUTPREFIX.cub" 
+#	NILINES=`wc -l "$INPUTPREFIX.smt"`
+#	NOLINES=`wc -l "$OUTPREFIX.smt"`
+#	echo "$NILINES  $NOLINES"  
+#	if [ "$NILINES" == "$NOLINES"  ] ; then
+#		echo trying output smt
+#	fi
+#fi
 
 #
 # Return info code
@@ -224,9 +244,10 @@ ind402o.par
 micro1.smt   
 mod402o.par"
 INPLIST="texout.smt"
-# List of files that must be transferred to target location
-OUTLST="element.Q00"
-OUTFILE="element.Q00"
+# List of files that must be transferred from scratch dir to target location
+#OUTLST="element.Q00"
+OUTLST="$RESULTFILE"
+#OUTFILE="element.Q00"
 #
 
 # Prepare execution
@@ -266,7 +287,7 @@ echo $TMPDIR
 copylist "$TMPDIR" "$OUTLST" "$TARGETDIR"
 if [ ! "$?" == "0" ] ; then
 	echo "Transport of facet results failed; see messages above."
-	return $E_BADFILE
+	return $E_NOFILE
 fi	
 
 # Perform sanity
@@ -277,7 +298,9 @@ else
 fi
 ## Go back to initial directory, copy result file.
 cd "$TARGETDIR"
-cp  "$OUTFILE"  "$RESULTFILE"
+#
+## Since OUTFILE and RESULTFILE are the same now, it is not necessary to do any copy
+#cp  "$OUTFILE"  "$RESULTFILE"
 
 return 0
 
@@ -286,14 +309,23 @@ return 0
 ############################################################
 
 makeSnapshot () {
-
-	ARCHIVE="snap_`date "+%Y%m%d_%H%M%S"`.tgz"
-	FILELIST="defdata.dat  fac2sep.par texout.CUR texout.smt element.Q00"
-	tar czf "$ARCHIVE" $FILELIST
-
+	# SNAPFILELIST is defined in header
+	if [ -n "$SNAPFILELIST" ] ; then
+		ARCHIVE="snap_`date "+%Y%m%d_%H%M%S"`.tgz"
+		tar czf "$ARCHIVE" $SNAPFILELIST
+	fi
 }
 # End of function makeSnapshot
-
+#
+#
+makeCleanup () {
+	# CLEANUPLIST is defined in header
+	if [ -n "$CLEANUPLIST" ] ; then
+		rm -f ${CLEANUPLIST}
+	fi
+}
+# End of function makeCleanup
+#
 ############################################################
 ############################################################
 # Body of the script 
@@ -322,6 +354,13 @@ if [ "$GREEDYMODE" == "1" ] ; then
 	echo "Entering makeSnapshot"
 	makeSnapshot
 fi
+
+if [ "$CLEANUP" == "1" ] ; then
+	echo "Entering makeCleanup"
+	makeCleanup
+fi
+
+
 
 echo "Completed."
 
