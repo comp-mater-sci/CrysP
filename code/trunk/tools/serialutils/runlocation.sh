@@ -4,9 +4,14 @@ UTILDIR="$HOME/TEXEVOL"
 BINDIR="$UTILDIR/bin"
 SCRIPTDIR="$UTILDIR/scripts"
 
+RESULTFILE="/data/home/u0061564/Abaqus/cupdrawing/cd_gm_te1/element.Q00"
+#RESULTFILE="fac2sep.par"
+
+TESTMODE="1"
+
 LOGFILE="runlocation.log"
 
-NARGS=1  # One arg to script expected.
+NARGS=2  # One arg to script expected.
 E_BADARGS=20
 E_BADLOC=21
 E_PBSERR=150
@@ -17,7 +22,7 @@ echo "Execution of runlocation script"
 echo "Starting $1" >>  "$LOGFILE"
 
 # Check number of parameters
-if [ $# -ne "$NARGS" ]
+if [ "$#" -lt "$NARGS" ]
 then
         echo "Usage: `basename $0` path_to_location"
         exit $E_BADARGS
@@ -31,7 +36,7 @@ fi
 
 if [ "$TESTMODE" == "1" ] ; then
 	echo "Doing TRICK"
-	cp fac2sep.par "$1"
+	cp -f "$RESULTFILE"  "$1"
 	INFO=$?
 	cd "$1"
 else
