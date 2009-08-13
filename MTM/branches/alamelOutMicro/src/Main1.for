@@ -21,6 +21,8 @@ C
       COMMON /ES1/ IMP3
 c <jg>      
 	COMMON /OUTMIC/NUMIC,NUCUB
+      double precision resid
+      integer iiter
 c </jg>        
       COMMON /IGLIJS/ FK1(96),NUNGL,NGLS,CC(96)
 C      COMMON /RCFILS/ NUNRC(2)
@@ -167,6 +169,15 @@ C
       WRITE (*,109) (DG(I,K),K=1,3)
  109  FORMAT (1x,3F10.5)
   35  CONTINUE
+c >>> jg: preempt round-off errors due to IO format
+      resid = DG(1,1)+DG(2,2)+DG(3,3)
+      if (dabs(resid) .GT. 1.D-9) then
+            resid = resid / 3.D0
+            do iiter=1,3
+                  DG(iiter,iiter) = DG(iiter,iiter)-resid
+            enddo
+      endif
+c <<< 
       CALL SIMUL(1,1,EPS,NFILE0,NUNIT,0)
    2  CONTINUE
 C
