@@ -3,13 +3,23 @@
 
 
 NARGS=1  # Two args to script expected.
-SLEEPTIME="15" # polling interval 
 
-SLEEPINIT="180"
+# Settings suitable for parallel verision of software
+SLEEPTIME="10" # polling interval, it will be overridden 
+SLEEPINIT="315"
 SLEEPMIN="15"
 NTSTEP=1
 WAITTIME=0
-WAITTHRESHOLD=900   # set 15min as threshold
+WAITTHRESHOLD=310   # set 5:10 min as threshold
+
+### Settings for serial version of the facet software
+#SLEEPTIME="15" # polling interval 
+#SLEEPINIT="180"
+#SLEEPMIN="15"
+#NTSTEP=1
+#WAITTIME=0
+#WAITTHRESHOLD=900   # set 15min as threshold
+
 
 E_BADARGS=20
 E_BADJOBNAME=21
@@ -32,7 +42,7 @@ getNumProcs () {
 
 	else
 		NPROCS=`echo "$QUERYPROCS"  | grep "$1" | wc -l`
-		[ "$VERBOSE" == "1" ] &&  echo "The number of processes left:  $NPROCS" 
+		[ "$VERBOSE" -ge "2" ] &&  echo "The number of processes left:  $NPROCS" 
 	fi
 	return $NPROCS
 }
@@ -65,6 +75,7 @@ fi
 
 # Set initial condition for loop
 getNumProcs "$1"
+ [ "$VERBOSE" -ge "1" ] &&  echo "The number of processes to wait for:  $NPROCS" 
 
 while (( NPROCS != 0  ))
 do
@@ -75,12 +86,14 @@ do
 	else
 		SLEEPTIME=$SLEEPMIN
 	fi
-	[ "$VERBOSE" == "2" ] &&  echo "Sleeping for $SLEEPTIME"
+	[ "$VERBOSE" -ge "2" ] &&  echo "Sleeping for $SLEEPTIME"
 	sleep "${SLEEPTIME}s"
 	(( WAITTIME += SLEEPTIME ))
-	[ "$VERBOSE" == "2" ] &&  echo "Waiting for $WAITTIME"
+	[ "$VERBOSE" -ge "2" ] &&  echo "Waiting for $WAITTIME"
 	getNumProcs "$1" 
 done
+
+ [ "$VERBOSE" -ge "1" ] &&  echo "Total waittime: ${WAITTIME}s"
 
 exit 0
 

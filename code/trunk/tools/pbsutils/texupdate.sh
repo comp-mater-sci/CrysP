@@ -237,7 +237,7 @@ TARGETDIR=`pwd`
 
 INPDIR="$TARGETDIR"
 # List of files that must be copied to scrach location from template
-TINPLIST="Facet.par
+TINPLIST="${FACETCONF}
 bcc.dat      
 bcc.pre      
 ind402o.par  
