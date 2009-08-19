@@ -1,8 +1,12 @@
 #!/bin/bash
-#PBS -l ncpus=1
-#PBS -l walltime=0:30:00
-#PBS -u u0061564
-
+#PBS -l nodes=1:ppn=2
+#PBS -l walltime=0:08:00
+#*PBS -m a
+#*PBS -M jerzy.gawad@cs.kuleuven.be
+#*PBS -r n
+#PBS -e /dev/null
+#PBS -o /dev/null
+#
 ### This is PBS script
 ###
 
@@ -13,7 +17,7 @@ SCRIPTDIR="$UTILDIR/scripts"
 DATADIR="$UTILDIR/data"
 #
 # Name of result file 
-RESULTFILE="element.Q00"
+RESULTFILE="elem.Q00"
 #
 # Configuration section for ALAMEL
 ALAMELCMD="$BINDIR/alamel" 
@@ -23,8 +27,8 @@ INPUTPREFIX="texinp"
 #
 #
 # Configuration section for Facet
-FACETBIN="$BINDIR/facet"
-FACETCONF="Facet.par"
+FACETBIN="$BINDIR/facetpar"
+FACETCONF="Facetpar.par"
 TMPLDIR="$DATADIR"
 #
 # Configuration of "greedy mode" and function makeSnapshot
@@ -37,6 +41,8 @@ CLEANUPLIST="${OUTPREFIX}.smt ${OUTPREFIX}.LST ${OUTPREFIX}.TWN ${INPUTPREFIX}.c
 #
 # Special testmode: some actions are skipped
 TESTMODE=0
+# Set verbosity of output to stdout
+VERBOSE=2
 #
 ### Error codes 
 E_SIMERR=100
@@ -240,7 +246,6 @@ INPDIR="$TARGETDIR"
 TINPLIST="${FACETCONF}
 bcc.dat      
 bcc.pre      
-ind402o.par  
 micro1.smt   
 mod402o.par"
 INPLIST="texout.smt"
@@ -259,11 +264,14 @@ TMPDIR=`mktemp -d /scratch/facet.XXXXX` || exit 1
 copylist "$TMPLDIR" "$TINPLIST" "$TMPDIR"
 # Copy from workdir
 copylist "$TARGETDIR" "$INPLIST" "$TMPDIR"
-
-echo "Executing in scrach dir: $TMPDIR"
+# Jump into scratch location
 cd $TMPDIR
-echo `pwd`
-ls 
+#
+if [ "$VERBOSE" -ge "2" ] ; then
+	echo "Executing in scrach dir: $TMPDIR"
+	ls -x
+fi
+
 # Call simulation 
 if [ "$TESTMODE" == 0 ] ; then
 	$FACETBIN $FACETCONF
@@ -277,11 +285,11 @@ if [ $? -ne 0  ] ; then
 	return  $E_SIMERR 
 fi
 
-echo "Current dir :" `pwd`
-ls `pwd`
-
-echo $TMPDIR
-
+if [ "$VERBOSE" -ge "2" ] ; then
+	echo "Current dir :" `pwd`
+	ls -x `pwd`
+	echo $TMPDIR
+fi
 # Finalize execution
 # Transport the results
 copylist "$TMPDIR" "$OUTLST" "$TARGETDIR"
