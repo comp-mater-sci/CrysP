@@ -5,9 +5,9 @@
 NARGS=1  # Two args to script expected.
 
 # Settings suitable for parallel verision of software
-SLEEPTIME="10" # polling interval, it will be overridden 
+SLEEPTIME="20" # polling interval, it will be overridden 
 SLEEPINIT="315"
-SLEEPMIN="15"
+SLEEPMIN="30"
 NTSTEP=1
 WAITTIME=0
 WAITTHRESHOLD=310   # set 5:10 min as threshold
@@ -39,9 +39,8 @@ getNumProcs () {
 		# cannot determine number of processes
 		# possibly communication with pbs server is temporarily lost?
 		NPROCS=-1
-
 	else
-		NPROCS=`echo "$QUERYPROCS"  | grep "$1" | wc -l`
+		NPROCS=`echo "$QUERYPROCS"  | grep "$1" | awk ' BEGIN {sum=0} { if ( $5 != "E") {sum++;} } END{print sum;}' `
 		[ "$VERBOSE" -ge "2" ] &&  echo "The number of processes left:  $NPROCS" 
 	fi
 	return $NPROCS
@@ -66,15 +65,10 @@ then
 	echo "The job in PBS queue cannot monitor another job with the same name."
 	exit "$E_BADJOBNAME"
 fi
-
-#JOBLIST=`$QUERYCMD  | grep runfacet | awk '{ print $1 }'`
-#echo "Current jobs"
-#for jobid in $JOBLIST ; do
-#	echo $jobid
-#done
-
+# Use parameter 1 as name of PBS jobs
+PROCNAME="$1"
 # Set initial condition for loop
-getNumProcs "$1"
+getNumProcs "$PROCNAME"
  [ "$VERBOSE" -ge "1" ] &&  echo "The number of processes to wait for:  $NPROCS" 
 
 while (( NPROCS != 0  ))
@@ -90,7 +84,7 @@ do
 	sleep "${SLEEPTIME}s"
 	(( WAITTIME += SLEEPTIME ))
 	[ "$VERBOSE" -ge "2" ] &&  echo "Waiting for $WAITTIME"
-	getNumProcs "$1" 
+	getNumProcs "$PROCNAME" 
 done
 
  [ "$VERBOSE" -ge "1" ] &&  echo "Total waittime: ${WAITTIME}s"
