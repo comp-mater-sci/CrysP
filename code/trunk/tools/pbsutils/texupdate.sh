@@ -9,7 +9,12 @@
 #
 ### This is PBS script
 ###
-
+#### Mark the start of job
+DIRTYMARK="unclean"
+###
+builtin echo "1" > ${DIRTYMARK}
+###
+##
 ## Global configuration section
 UTILDIR="$HOME/TEXEVOL"
 BINDIR="$UTILDIR/bin"
@@ -21,19 +26,23 @@ RESULTFILE="elem.Q00"
 #
 # Configuration section for ALAMEL
 ALAMELCMD="$BINDIR/alamel" 
+# Name of ALAMEL config file to be built
+CTLFILE="MAIN1.CTL"
 DEFFILE="defdata.dat"
 OUTPREFIX="texout"
 INPUTPREFIX="texinp"
+TEXFILE="${OUTPREFIX}.cub"
 #
 #
 # Configuration section for Facet
 FACETBIN="$BINDIR/facetpar"
 FACETCONF="Facetpar.par"
 TMPLDIR="$DATADIR"
-#
+# Number of processors used by Facet (note: it should be in connection with "ppn" resource specification if runs under PBS.
+FACETNPROCS=2
 # Configuration of "greedy mode" and function makeSnapshot
 GREEDYMODE=1
-SNAPFILELIST="defdata.dat ${OUTPREFIX}.cub  ${OUTPREFIX}.smt ${RESULTFILE}"
+SNAPFILELIST="${DEFFILE} ${TEXFILE} ${OUTPREFIX}.smt ${RESULTFILE}"
 #
 # Configuration of housekeeping
 CLEANUP=1
@@ -42,13 +51,15 @@ CLEANUPLIST="${OUTPREFIX}.smt ${OUTPREFIX}.LST ${OUTPREFIX}.TWN ${INPUTPREFIX}.c
 # Special testmode: some actions are skipped
 TESTMODE=0
 # Set verbosity of output to stdout
-VERBOSE=2
+VERBOSE=0
 #
 ### Error codes 
 E_SIMERR=100
 E_NOFILE=33
-
+#
 ##############################################################
+STEPID=0
+SEQNID=0
 #
 #
 remarkTestMode () {
@@ -59,9 +70,6 @@ remarkTestMode () {
 #
 ##########################################################
 runAlamel () {
-# Name of ALAMEL config file to be built
-CTLFILE="MAIN1.CTL"
-#
 # Check if input files are present
 #
 if [ ! -f "$DEFFILE" ] ; then
@@ -72,7 +80,9 @@ fi
 #
 # Read deffile into variable
 #
-DEFTENS=`cat $DEFFILE`
+DEFTENS=`tail -n 3 $DEFFILE`
+read STEPID SEQNID < $DEFFILE 
+echo "Transaction $STEPID $SEQNID"
 #echo "$DEFTENS"
 #
 # Check runway: start from CUB or SMT
@@ -87,9 +97,10 @@ DEFTENS=`cat $DEFFILE`
 #	INPUT="$INPUTPREFIX.cur"
 #	RUNWAY="CUR"
 #	RUNMODE="2"
-
+#  
+# Note: TEXFILE is actually $OUTPREFIX.cub
 if [ -e "$OUTPREFIX.cub"  ] ; then
-	echo "Starting from CUB file"
+	[ "$VERBOSE" -ge "1" ] && echo "Starting from CUB file"
 	# Rename the file: change filename into inputprefix.cub
 	# Remark: if script fails, next time it will start from _INITIAL_ SMT
 	# 
@@ -100,10 +111,10 @@ if [ -e "$OUTPREFIX.cub"  ] ; then
 else
 	INPUT="$DATADIR/$INPUTPREFIX.smt"
 	if [ ! -e "$INPUT" ] ; then
-		echo "Input SMT file doesn't exist"
+		echo "Input SMT file ${INPUT} doesn't exist"
 		exit "$E_NOFILE"
 	fi	 
-	echo "Starting from SMT file"
+	[ "$VERBOSE" -ge "2" ] && echo "Starting from SMT file"
 	RUNWAY="SMT"
 	RUNMODE="1"
 fi
@@ -168,34 +179,29 @@ $DEFTENS
     1     (SIMUL) NUMBER OF SIMULATION STEPS PER CALL      (Fake call of SIMUL - for output only)
     0    0(SIMUL) 1: relaxation allowed, for relx 1 and 2  (Fake call of SIMUL - for output only)
 End-of-CTL-File
-
 #
-# Run ALAMEL code
-#
-"$ALAMELCMD"
-INFOCODE=$?
+# Check if CTL file was written to the disk.
+# Remark: in case of disasterous error, this check may not be done.
+INFOCODE="$E_NOFILE"
+if [ -s "$CTLFILE" ] ; then
+      # Run ALAMEL code
+      #
+      "$ALAMELCMD"
+      INFOCODE=$?
+fi
 #
 # Clean on successful exit; otherwise left the data for post-mortem analysis
-if [ "$INFOCODE" == "0" ] ; then
+if [ "$INFOCODE" == "0" ] && [ -s "$TEXFILE"  ] ;
+then
 	# do minimal cleanup if starting from CUB:
 	if [ "$RUNMODE" -ne "1" ] ; then
 		rm -f "$INPUT"
 	fi
+else
+      # This is serious error, it doesn't make sense to continue.
+      # Do cleanup (??)
+      INFOCODE="$E_SIMERR"
 fi
-#
-# Check error code. If non-zero, try recover from error
-# TODO: recovery procedure
-#if [ ! "$?" == 0  ] ; then
-#	echo Nonzero code from ALAMEL,
-#	rm -f "$OUTPREFIX.cub"  "$INPUTPREFIX.cub" 
-#	NILINES=`wc -l "$INPUTPREFIX.smt"`
-#	NOLINES=`wc -l "$OUTPREFIX.smt"`
-#	echo "$NILINES  $NOLINES"  
-#	if [ "$NILINES" == "$NOLINES"  ] ; then
-#		echo trying output smt
-#	fi
-#fi
-
 #
 # Return info code
 #
@@ -256,7 +262,7 @@ OUTLST="$RESULTFILE"
 #
 
 # Prepare execution
-echo "Target dir: $TARGETDIR"
+[ "$VERBOSE" -ge "2" ] && echo "Target dir: $TARGETDIR"
 # Create temporary on scratch
 TMPDIR=`mktemp -d /scratch/facet.XXXXX` || exit 1
 
@@ -274,7 +280,7 @@ fi
 
 # Call simulation 
 if [ "$TESTMODE" == 0 ] ; then
-	$FACETBIN $FACETCONF
+	"$FACETBIN"  "$FACETCONF" "$FACETNPROCS"
 else
 	remarkTestMode "$FACETBIN $FACETCONF"	
 	touch "$OUTLST"
@@ -307,8 +313,6 @@ fi
 ## Go back to initial directory, copy result file.
 cd "$TARGETDIR"
 #
-## Since OUTFILE and RESULTFILE are the same now, it is not necessary to do any copy
-#cp  "$OUTFILE"  "$RESULTFILE"
 
 return 0
 
@@ -319,7 +323,7 @@ return 0
 makeSnapshot () {
 	# SNAPFILELIST is defined in header
 	if [ -n "$SNAPFILELIST" ] ; then
-		ARCHIVE="snap_`date "+%Y%m%d_%H%M%S"`.tgz"
+		ARCHIVE="snap_${STEPID}_${SEQNID}_`date "+%Y%m%d_%H%M%S"`.tgz"
 		tar czf "$ARCHIVE" $SNAPFILELIST
 	fi
 }
@@ -340,37 +344,49 @@ makeCleanup () {
 
 ## Print some diagnostic info
 
-echo "Starting: `basename $0` on node `hostname`"
+[ "$VERBOSE" -ge "1" ] && echo "Starting: `basename $0` on node `hostname`"
+# Remove previous result file
+rm -f ${RESULTFILE}
 
-
-echo "Entering runAlamel" 
+[ "$VERBOSE" -ge "2" ] && echo "Entering runAlamel" 
 runAlamel 
-
+#
 if [ ! "$?" == "0" ] ; then
 	echo "Execution of runAlamel finished with error"
 	exit $E_SIMERR 
 fi
-
-echo "Entering runFacet" 
+#
+[ "$VERBOSE" -ge "2" ] && echo "Entering runFacet" 
 runFacet
+#
 if [ ! "$?" == "0" ] ; then
 	echo "Execution of runFacet finished with error"
 	exit $E_SIMERR 
 fi
-
-if [ "$GREEDYMODE" == "1" ] ; then
-	echo "Entering makeSnapshot"
-	makeSnapshot
+#
+# Check the conditions to mark location "non-dirty"
+#
+if    [ -e "$TEXFILE" ] \
+   && [ -s "$TEXFILE" ] \
+   && [ -s "$CTLFILE"  ] \
+   && [ -s "$RESULTFILE" ] \
+   && [ "$RESULTFILE" -nt "$TEXFILE"  ] \
+   && [ "$CTLFILE" -ot "$TEXFILE"  ] ;
+then
+      # It is OK to make snapshot, the results appear to be correct.
+      if [ "$GREEDYMODE" == "1" ] ; then
+	      [ "$VERBOSE" -ge "2" ] && echo "Entering makeSnapshot"
+	      makeSnapshot
+      fi
+      # remove mark      
+      rm -f ${DIRTYMARK}
 fi
-
+#
 if [ "$CLEANUP" == "1" ] ; then
-	echo "Entering makeCleanup"
+	[ "$VERBOSE" -ge "2" ] && echo "Entering makeCleanup"
 	makeCleanup
 fi
-
-
-
 echo "Completed."
-
+#
 exit 0
 
