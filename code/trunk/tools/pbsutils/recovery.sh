@@ -57,7 +57,7 @@ R_ERROR="-1"
 ######################################################################
 #########  FUNCTIONS
 clean () {
-     echo " rm -rf $1/*.smt $1/$DIRTYMARK"
+     rm -rf $1/*.cub  $1/*.smt $1/$DIRTYMARK $1/${CTLFILE} $1/${TEXFILE} $1/*.LST $1/*.TWN $1/${RESULTFILE}
 }
 
 # 
@@ -103,12 +103,17 @@ read STEPID SEQNID < $FDEFFILE
 #
 #
 if  [ "$STEPID" -ne "$CSTEP" ]; then
-      echo "$DEFFILE contains different step number: $STEPID, should be $CSTEP" 
+      echo "File $DEFFILE contains different step number: $STEPID, should be $CSTEP - recovery failed." 
 	exit $E_BADARGS
 fi
-
+#
 ECODE="$E_NOFILE"
 ACTION=""
+#
+# Cleaning
+#
+clean "$LOCATION"
+#
 if [ "$PSTEP" -ne "0" ] ; 
 then
       # Determine the name of snapshot file
@@ -124,7 +129,6 @@ then
       fi
 else
       # There is no need to proceed anything, just restart from initial state 
-      clean "$LOCATION"
       ECODE="$E_OK"
 fi
 
