@@ -46,14 +46,16 @@ C     UNIT IDISK1 = Temporary file
 C     UNIT KLEC = CONTROL FILE
       open (unit=KLEC,file='MAIN1.CTL',status='old')
 c <jg>
-  90  format (a)
-c      read (KLEC,90) fnam1
-c      write (*,93) fnam1
   93  format(' Input file:',a)
-c      close (unit=KLEC)
+#ifndef MAINDIRECT
+      read (KLEC,90) fnam1
+      write (*,93) fnam1
+      close (unit=KLEC)
 C     UNIT KLEC = PARAMETER FILE
-c      open (unit=KLEC,file=fnam1,status='old')
+      open (unit=KLEC,file=fnam1,status='old')
+#endif
 c </jg>
+  90  format (a)
       read (KLEC,90) codsim
       write (*,92) codsim
   92  format (' Code for this simulation: ',a)

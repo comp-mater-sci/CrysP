@@ -3,11 +3,19 @@ FC=ifort
 
 ## Preprocessor flags:
 ##  * NORESFILE : no <prefix>.RES file is generated
+##  * NOCURFILE : no <prefix>.CUR file is generated
 ##  * WITHCUBFILE  :  generate <prefix>.CUB file
-##
+##  * MAINDIRECT  : assume that MAIN1.CTL contains actual configuration
 ##
 
-FFLAGS= -fpp -extend-source 80 -O3 -ipo -vec-report0  -DNORESFILE -DNOCURFILE -DWITHCUBFILE # -warn all  -opt-report0
+# Configuration suitable for batch-mode, single step execution
+ALAMELCFG= -DMAINDIRECT -DNORESFILE -DNOCURFILE -DWITHCUBFILE
+#
+# Configuration suitable for output-rich, multiple-step execution
+#ALAMELCFG= -DMAINDIRECT 
+
+
+FFLAGS= -fpp -extend-source 80 -O3 -ipo -vec-report0 $(ALAMELCFG) # -warn all  -opt-report0
 
 #FFLAGS= -pg   -O3
 #FFLAGS= -O3
