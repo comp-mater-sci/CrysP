@@ -1,0 +1,17 @@
+MATERIAL: steel dc01
+
+Content of this directory:
+
+Texture description:
+* sid1655.c - oryginal C file obtained from lab (experimental data)
+* sid1655f.c - C file with "F" symmetry imposed (triclinic)
+* sid1655f.smt - discrete set of orientations (5000)
+
+Input files:
+* Facetpar.par - input file to facet program 
+
+Yield surface description
+* elem.Q00 - quantic expression coefficients +
+                                             + - correspond to sid1655f.smt
+* elem.F00 - facet model coefficients        +
+ 
