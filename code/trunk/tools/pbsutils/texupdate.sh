@@ -1,9 +1,10 @@
 #!/bin/bash
 #PBS -l nodes=1:ppn=2
-#PBS -l walltime=0:08:00
+#PBS -l walltime=0:07:00
+#PBS -r n
+#
 #*PBS -m a
 #*PBS -M jerzy.gawad@cs.kuleuven.be
-#*PBS -r n
 #*PBS -e /dev/null
 #*PBS -o /dev/null
 #
@@ -48,7 +49,7 @@ SNAPFILELIST="${DEFFILE} ${TEXFILE} ${RESULTFILE}"
 # Special testmode: some actions are skipped
 TESTMODE=0
 # Set verbosity of output to stdout
-VERBOSE=2
+VERBOSE=0
 #
 ### Error codes 
 E_OK=0
