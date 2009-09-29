@@ -1,0 +1,67 @@
+#!/bin/bash
+#PBS -l ncpus=1
+#PBS -l walltime=36:00:00
+#PBS -m abe
+#PBS -M jerzy.gawad@cs.kuleuven.be
+#PBS -r n
+##################################################################
+# Configuration section
+#
+JOBNAME=CupDrawing
+#
+LOGFILE=${JOBNAME}_log.log
+#
+# Set runmode:
+# Normal analysis
+RUNMODE="analysis"
+#
+# Restart of analysis, if so, OLDJOBNAME must be defined
+# RUNMODE="restart"
+# OLDJOBNAME=CupDrawing
+#
+##################################################################
+# Setup of environment
+#
+# Assume that libdir is the current dir
+CURRENTDIR=`pwd`
+#
+ALIBDIR=$CURRENTDIR
+#
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ALIBDIR
+#
+GMETEX_WORKDIR=$CURRENTDIR
+# Export 
+export LD_LIBRARY_PATH
+export JOBNAME
+export GMETEX_WORKDIR
+#
+# Prepare execution
+# 
+FACETDIR="aba_facet.dir"
+# Prepare aba_facet.dir
+echo "$CURRENTDIR" > $FACETDIR
+echo "$CURRENTDIR" >> $FACETDIR
+echo "results" >> $FACETDIR
+#
+#
+# Protect the previous results: copy it to backup direcory
+if [ -e $LOGFILE ] ; then
+	BACKUPDIR="backup_`date "+%Y%m%d_%H%M%S"`"
+	mkdir "$BACKUPDIR"
+	cp ${JOBNAME}.* "$LOGFILE" gmetex.{log,state,restart} texupdate.dat results.{tay,out,oum,nt6}  "$BACKUPDIR"
+fi
+#
+# Run ABAQUS
+#
+case "$RUNMODE" in
+	analysis) 
+			abaqus interactive job=$JOBNAME user=vumat_facet  &>  "$LOGFILE"
+			;;
+	restart)	
+			abaqus interactive job=$JOBNAME oldjob=$OLDJOBNAME user=vumat_facet  &>  "$LOGFILE"
+			;;
+	*)
+		echo "Invalid runmode"
+		;;
+esac
+
