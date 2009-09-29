@@ -18,13 +18,10 @@ SNAPPREF="snap_"
 #
 DEFFILE="defdata.dat"
 OUTPREFIX="texout"
-INPUTPREFIX="texinp"
 TEXFILE="${OUTPREFIX}.cub"
 #
 SNAPFILELIST="${TEXFILE}"
 #
-#
-CTLFILE="MAIN1.CTL"
 # Place where the scripts reside
 SCRIPTDIR="$HOME/TEXEVOL/scripts"
 #
@@ -57,9 +54,8 @@ R_ERROR="-1"
 ######################################################################
 #########  FUNCTIONS
 clean () {
-     rm -rf $1/*.cub  $1/*.smt $1/$DIRTYMARK $1/${CTLFILE} $1/${TEXFILE} $1/*.LST $1/*.TWN $1/${RESULTFILE}
+      rm -f "$FDIRTYMARK" 
 }
-
 # 
 #
 #####################################################################
@@ -86,6 +82,8 @@ PSEQ="$5"
 [ "$VERBOSE" -ge "1" ] && echo "Recovery for $LOCATION started."
 #
 FDEFFILE="${LOCATION}/${DEFFILE}"
+FTEXFILE="${LOCATION}/${TEXFILE}"
+FDIRTYMARK="${LOCATION}/${DIRTYMARK}"
 #
 # Check if input files are present
 #
@@ -108,27 +106,48 @@ if  [ "$STEPID" -ne "$CSTEP" ]; then
 fi
 #
 ECODE="$E_NOFILE"
-ACTION=""
+ACTION="Failed - missing file."
 #
 # Cleaning
 #
-clean "$LOCATION"
+rm -f "$LOCATION/$RESULTFILE"
 #
 if [ "$PSTEP" -ne "0" ] ; 
 then
       # Determine the name of snapshot file
-      SNAPSHOT=$(ls -1 ${LOCATION}/${SNAPPREF}${PSTEP}_${PSEQ}*)
+      SNAPSHOT=$(ls -1 -t ${LOCATION}/${SNAPPREF}${PSTEP}_${PSEQ}* | head -1)
       [ "$VERBOSE" -ge "1" ] && echo "Snapshot for ${PSTEP} ${PSEQ} : $SNAPSHOT"
-      if [ -n "$SNAPSHOT" ] ; then
-            tar xzf "$SNAPSHOT" -C "$LOCATION" "$SNAPFILELIST"
-            if [ "$?" == "0" ] ; then
-                  ECODE="$E_OK"
-                  ACTION="Snapshot ${PSTEP} ${PSEQ} restored."
-                  rm -f "$DIRTYMARK"
-            fi
+	# Examine the content of the location  
+	if    [ -n "$SNAPSHOT" ] \
+	   &&	[ -s  "$FTEXFILE" ] \
+	   && [ "$FTEXFILE" -ot "$FDEFFILE" ] \
+         && [ -s "$SNAPSHOT" ] \
+	   && [ "$FTEXFILE" -ot "$SNAPSHOT" ] ;
+ 	then
+		ACTION="Location seems to be OK".
+		ECODE="$E_OK"
+		clean
+      else
+		# Recover from snapshot
+		if [ -n "$SNAPSHOT" ] ; then
+      	      tar xzf "$SNAPSHOT" -C "$LOCATION" "$SNAPFILELIST"
+           		 if [ "$?" == "0" ] ; then
+                 		ECODE="$E_OK"
+                  	ACTION="Snapshot ${PSTEP} ${PSEQ} restored."
+				clean
+            	fi
+	    fi
       fi
 else
-      # There is no need to proceed anything, just restart from initial state 
+      # There is no need to restore anything, just restart from initial state 
+	# Make sure that there is no TEXFILE - texupdate will start from it if can find it.
+	if [ -e "$FTEXFILE" ] ; 
+	then
+		  rm -f "$FTEXFILE" 
+	fi
+	# Clean
+	clean
+	ACTION="Cleaning only."
       ECODE="$E_OK"
 fi
 

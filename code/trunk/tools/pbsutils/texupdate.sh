@@ -4,8 +4,8 @@
 #*PBS -m a
 #*PBS -M jerzy.gawad@cs.kuleuven.be
 #*PBS -r n
-#PBS -e /dev/null
-#PBS -o /dev/null
+#*PBS -e /dev/null
+#*PBS -o /dev/null
 #
 ### This is PBS script
 ###
@@ -32,6 +32,7 @@ DEFFILE="defdata.dat"
 OUTPREFIX="texout"
 INPUTPREFIX="texinp"
 TEXFILE="${OUTPREFIX}.cub"
+SMTFILE="${OUTPREFIX}.smt"
 #
 #
 # Configuration section for Facet
@@ -40,20 +41,17 @@ FACETCONF="Facetpar.par"
 TMPLDIR="$DATADIR"
 # Number of processors used by Facet (note: it should be in connection with "ppn" resource specification if runs under PBS.
 FACETNPROCS=2
-# Configuration of "greedy mode" and function makeSnapshot
-GREEDYMODE=1
-SNAPFILELIST="${DEFFILE} ${TEXFILE} ${OUTPREFIX}.smt ${RESULTFILE}"
 #
-# Configuration of housekeeping
-CLEANUP=1
-CLEANUPLIST="${OUTPREFIX}.smt ${OUTPREFIX}.LST ${OUTPREFIX}.TWN ${INPUTPREFIX}.cub"
+# Configuration of Snapshot
+SNAPFILELIST="${DEFFILE} ${TEXFILE} ${RESULTFILE}"
 #
 # Special testmode: some actions are skipped
 TESTMODE=0
 # Set verbosity of output to stdout
-VERBOSE=0
+VERBOSE=2
 #
 ### Error codes 
+E_OK=0
 E_SIMERR=100
 E_NOFILE=33
 #
@@ -70,42 +68,19 @@ remarkTestMode () {
 #
 ##########################################################
 runAlamel () {
-# Check if input files are present
-#
-if [ ! -f "$DEFFILE" ] ; then
-	echo "Cannot find $DEFFILE"
-	exit $E_NOFILE
-fi
-
-#
 # Read deffile into variable
 #
 DEFTENS=`tail -n 3 $DEFFILE`
-read STEPID SEQNID < $DEFFILE 
-echo "Transaction $STEPID $SEQNID"
-#echo "$DEFTENS"
 #
 # Check runway: start from CUB or SMT
 # 
-# Older version: CUR file used as startpoint
-#if [ -e "$OUTPREFIX.CUR"  ] ; then
-#	echo "Starting from CUR file"
-#	# Rename the file: change extension into .cur
-#	# Remark: if script fails, next time it will start from SMT
-#	# 
-#	mv -f "$OUTPREFIX.CUR"  "$INPUTPREFIX.cur"
-#	INPUT="$INPUTPREFIX.cur"
-#	RUNWAY="CUR"
-#	RUNMODE="2"
-#  
-# Note: TEXFILE is actually $OUTPREFIX.cub
-if [ -e "$OUTPREFIX.cub"  ] ; then
+if [ -e "$TEXFILE"  ] ; then
 	[ "$VERBOSE" -ge "1" ] && echo "Starting from CUB file"
 	# Rename the file: change filename into inputprefix.cub
 	# Remark: if script fails, next time it will start from _INITIAL_ SMT
 	# 
 	INPUT="$INPUTPREFIX.cub"
-	mv -f "$OUTPREFIX.cub"  "$INPUT"
+	mv -f "$TEXFILE"  "$INPUT"
 	RUNWAY="CUB"
 	RUNMODE="3"
 else
@@ -118,11 +93,9 @@ else
 	RUNWAY="SMT"
 	RUNMODE="1"
 fi
-
 #
 # Do the actual work
 #
-
 cat >"$CTLFILE" <<End-of-CTL-File
 $OUTPREFIX                                Name of output files (give no extension)
 $DATADIR/bcc.pre                             Slip system file
@@ -186,32 +159,29 @@ INFOCODE="$E_NOFILE"
 if [ -s "$CTLFILE" ] ; then
       # Run ALAMEL code
       #
-      "$ALAMELCMD"
+      "$ALAMELCMD" > /dev/null
       INFOCODE=$?
 fi
 #
-# Clean on successful exit; otherwise left the data for post-mortem analysis
-if [ "$INFOCODE" == "0" ] && [ -s "$TEXFILE"  ] ;
+# Check post-conditons 
+if [ "$INFOCODE" == "0" ] \
+   && [ -s "$TEXFILE"  ] \
+   && [ -s "$SMTFILE" ] \
+   && [ -s "$CTLFILE"  ] \
+   && [ "$CTLFILE" -ot "$TEXFILE"  ] ;
 then
-	# do minimal cleanup if starting from CUB:
-	if [ "$RUNMODE" -ne "1" ] ; then
-		rm -f "$INPUT"
-	fi
+	INFOCODE="$E_OK"
 else
-      # This is serious error, it doesn't make sense to continue.
-      # Do cleanup (??)
+	echo "ALAMEL run post-conditions failed"
       INFOCODE="$E_SIMERR"
 fi
 #
 # Return info code
 #
 return $INFOCODE
-
 }
 # End of function runAlamel
 ##########################################################
-
-
 
 ############################################################
 # copylist accepts 3 parameters:
@@ -223,12 +193,12 @@ return $INFOCODE
 ############################################################
 copylist ()
 {
-	ERRCODE=0
+	local ERRCODE=0
 	for fname in $2 ; do
 		SRC=$1/$fname
 		#echo "$SRC => $3"
 		if [ -e "$SRC"  ] ; then
-			cp -f "$SRC" "$3"
+			cp -p -f "$SRC" "$3"
 		else
 			# Emit warning message
 			echo "Cannot copy $SRC: file not found"
@@ -239,14 +209,18 @@ copylist ()
 }
 # End of function copylist
 ############################################################
-
-
-############################################################
-runFacet () {
-
+###
+prepareExecution () {
+local retcode="$E_NOFILE"
+# Check if input files are present
+#
+if [ ! -f "$DEFFILE" ] ; then
+	echo "Cannot find $DEFFILE"
+	exit $E_NOFILE
+fi
 # Store current location
 TARGETDIR=`pwd`
-
+#
 INPDIR="$TARGETDIR"
 # List of files that must be copied to scrach location from template
 TINPLIST="${FACETCONF}
@@ -254,30 +228,49 @@ bcc.dat
 bcc.pre      
 micro1.smt   
 mod402o.par"
-INPLIST="texout.smt"
-# List of files that must be transferred from scratch dir to target location
-#OUTLST="element.Q00"
-OUTLST="$RESULTFILE"
-#OUTFILE="element.Q00"
 #
-
+# List of files that must be copied to scrach  from location
+MINPLIST="$DEFFILE"
+# List of files that may be copied to scratch from location
+OINPLIST="${TEXFILE}"
+#
 # Prepare execution
 [ "$VERBOSE" -ge "2" ] && echo "Target dir: $TARGETDIR"
 # Create temporary on scratch
 TMPDIR=`mktemp -d /scratch/facet.XXXXX` || exit 1
-
 # Copy from template
-copylist "$TMPLDIR" "$TINPLIST" "$TMPDIR"
-# Copy from workdir
-copylist "$TARGETDIR" "$INPLIST" "$TMPDIR"
+copylist "$TMPLDIR" "$TINPLIST" "$TMPDIR" 
+# Copy from workdir - mandatory step
+copylist "$TARGETDIR" "$MINPLIST" "$TMPDIR"
+# Copy from workdir - optional step
+if [ -e "$TEXFILE"  ] ; then
+	copylist "$TARGETDIR" "$OINPLIST" "$TMPDIR"
+fi
+#
 # Jump into scratch location
+#
 cd $TMPDIR
 #
 if [ "$VERBOSE" -ge "2" ] ; then
 	echo "Executing in scrach dir: $TMPDIR"
 	ls -x
 fi
-
+#
+# Extract transaction data from the deffile
+#
+read STEPID SEQNID < $DEFFILE 
+if [ "$?" == "0" ] ; then
+	echo "Transaction $STEPID $SEQNID"
+	retcode="$E_OK"
+else
+	retcode="$E_NOFILE"
+fi
+return $retcode
+#
+}
+##################################################################
+##
+runFacet () {
 # Call simulation 
 if [ "$TESTMODE" == 0 ] ; then
 	"$FACETBIN"  "$FACETCONF" "$FACETNPROCS"
@@ -286,7 +279,7 @@ else
 	touch "$OUTLST"
 fi
 ##
-if [ $? -ne 0  ] ; then
+if [ "$?" -ne "0"  ] ; then
 	echo "Simulation exited with non-zero exit code"
 	return  $E_SIMERR 
 fi
@@ -296,58 +289,71 @@ if [ "$VERBOSE" -ge "2" ] ; then
 	ls -x `pwd`
 	echo $TMPDIR
 fi
+return "$E_OK"
+}
+############################################################
 # Finalize execution
+finalizeExecution () {
+local retcode="$E_NOFILE"
+# Name of snapshot file
+SNAPSHOTFILE="snap_${STEPID}_${SEQNID}_`date "+%Y%m%d_%H%M%S"`.tgz"
+## List of files that must be transferred from scratch dir to target location
+OUTLST="$RESULTFILE 
+$TEXFILE  
+$SNAPSHOTFILE"
+# Check if  all required results are in place.
+if    [ -s "$TEXFILE" ] \
+   && [ -s "$CTLFILE"  ] \
+   && [ -s "$RESULTFILE" ] \
+   && [ "$RESULTFILE" -nt "$TEXFILE"  ] \
+   && [ "$CTLFILE" -ot "$TEXFILE"  ] ;
+then
+      # It is OK to make snapshot, the results appear to be correct.
+	# SNAPFILELIST is defined in header
+	if [ -n "$SNAPFILELIST" ] ; then
+	      [ "$VERBOSE" -ge "2" ] && echo "Creating snapshot $SNAPSHOTFILE"
+		tar czf "$SNAPSHOTFILE" $SNAPFILELIST
+	fi
+fi
+#
 # Transport the results
 copylist "$TMPDIR" "$OUTLST" "$TARGETDIR"
 if [ ! "$?" == "0" ] ; then
 	echo "Transport of facet results failed; see messages above."
 	return $E_NOFILE
+else
+	retcode="$E_OK"  
 fi	
-
 # Perform sanity
 if [ "$TESTMODE" == 0 ] ; then
 	rm -rf $TMPDIR
 else
 	remarkTestMode "rm -rf $TMPDIR"	
 fi
-## Go back to initial directory, copy result file.
+## Go back to initial directory
 cd "$TARGETDIR"
 #
-
-return 0
-
+return "$retcode"
 }  
 # End of function runFacet
 ############################################################
-
-makeSnapshot () {
-	# SNAPFILELIST is defined in header
-	if [ -n "$SNAPFILELIST" ] ; then
-		ARCHIVE="snap_${STEPID}_${SEQNID}_`date "+%Y%m%d_%H%M%S"`.tgz"
-		tar czf "$ARCHIVE" $SNAPFILELIST
-	fi
-}
-# End of function makeSnapshot
 #
-#
-makeCleanup () {
-	# CLEANUPLIST is defined in header
-	if [ -n "$CLEANUPLIST" ] ; then
-		rm -f ${CLEANUPLIST}
-	fi
-}
-# End of function makeCleanup
-#
-############################################################
 ############################################################
 # Body of the script 
-
+#
 ## Print some diagnostic info
-
+#
 [ "$VERBOSE" -ge "1" ] && echo "Starting: `basename $0` on node `hostname`"
 # Remove previous result file
 rm -f ${RESULTFILE}
-
+RETCODE="$E_NOFILE"
+#
+prepareExecution
+if [ ! "$?" == "0" ] ; then
+	echo "prepareExecution finished with error"
+	exit $E_SIMERR 
+fi
+#
 [ "$VERBOSE" -ge "2" ] && echo "Entering runAlamel" 
 runAlamel 
 #
@@ -364,29 +370,21 @@ if [ ! "$?" == "0" ] ; then
 	exit $E_SIMERR 
 fi
 #
+finalizeExecution
+# 
+# Now we are in TARGET dir.
 # Check the conditions to mark location "non-dirty"
-#
-if    [ -e "$TEXFILE" ] \
-   && [ -s "$TEXFILE" ] \
-   && [ -s "$CTLFILE"  ] \
+#  -> remark: minimize number of checks, its a network file system.
+if    [ "$?" == "$E_OK" ] \
+   &&	[ -s "$TEXFILE" ] \
    && [ -s "$RESULTFILE" ] \
-   && [ "$RESULTFILE" -nt "$TEXFILE"  ] \
-   && [ "$CTLFILE" -ot "$TEXFILE"  ] ;
+   && [ -s "$SNAPSHOTFILE" ] ;
 then
-      # It is OK to make snapshot, the results appear to be correct.
-      if [ "$GREEDYMODE" == "1" ] ; then
-	      [ "$VERBOSE" -ge "2" ] && echo "Entering makeSnapshot"
-	      makeSnapshot
-      fi
       # remove mark      
       rm -f ${DIRTYMARK}
-fi
-#
-if [ "$CLEANUP" == "1" ] ; then
-	[ "$VERBOSE" -ge "2" ] && echo "Entering makeCleanup"
-	makeCleanup
+	RETCODE="$E_OK"
 fi
 echo "Completed."
 #
-exit 0
+exit $RETCODE
 

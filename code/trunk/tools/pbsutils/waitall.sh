@@ -28,11 +28,15 @@ PBSSTRING=".beopbs-c"
 
 #QUERYCMD="cat qstatlist.txt" 
 QUERYCMD="qstat"
-
+#
+# Prefix of pbsjob, useful if name must be changed manually
+JOBPREFIX=""
+#
+#
 VERBOSE=1
-
+#
 NPROCS=-1
-
+#
 getNumProcs () {
 	QUERYPROCS=`$QUERYCMD` 
 	if [ ! "$?" == 0 ] ; then
@@ -65,8 +69,8 @@ then
 	echo "The job in PBS queue cannot monitor another job with the same name."
 	exit "$E_BADJOBNAME"
 fi
-# Use parameter 1 as name of PBS jobs
-PROCNAME="$1"
+#
+PROCNAME="${JOBPREFIX}$1"
 # Set initial condition for loop
 getNumProcs "$PROCNAME"
  [ "$VERBOSE" -ge "1" ] &&  echo "The number of processes to wait for:  $NPROCS" 
