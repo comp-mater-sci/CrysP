@@ -325,14 +325,14 @@ if [ ! "$?" == "0" ] ; then
 else
 	retcode="$E_OK"  
 fi	
+## Go back to initial directory
+cd "$TARGETDIR"
 # Perform sanity
 if [ "$TESTMODE" == 0 ] ; then
 	rm -rf $TMPDIR
 else
 	remarkTestMode "rm -rf $TMPDIR"	
 fi
-## Go back to initial directory
-cd "$TARGETDIR"
 #
 return "$retcode"
 }  
