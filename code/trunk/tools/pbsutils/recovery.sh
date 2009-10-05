@@ -30,7 +30,7 @@ SCRIPTDIR="$HOME/TEXEVOL/scripts"
 LOGFILE="recovery.log"
 #
 # Verbosity level 0..3
-VERBOSE=1
+VERBOSE=2
 #
 #
 NARGS=5  # Two arguments for the script are mandatory. More arguments may be provided. 
@@ -84,6 +84,7 @@ PSEQ="$5"
 FDEFFILE="${LOCATION}/${DEFFILE}"
 FTEXFILE="${LOCATION}/${TEXFILE}"
 FDIRTYMARK="${LOCATION}/${DIRTYMARK}"
+FRESULTFILE="$LOCATION/$RESULTFILE"
 #
 # Check if input files are present
 #
@@ -105,12 +106,25 @@ if  [ "$STEPID" -ne "$CSTEP" ]; then
 	exit $E_BADARGS
 fi
 #
+# Report presence of files
+#
+if [ "$VERBOSE" -ge "2" ] ;
+then
+	echo -n "Location contains: "  
+	[ -e "$FDEFFILE" ] && echo -n "$DEFFILE " 
+	[ -e "$FTEXFILE" ] && echo -n "$TEXFILE "
+	[ -e "$FDIRTYMARK" ] && echo -n "$DIRTYMARK "
+	[ -e "$FRESULTFILE" ] && echo -n "$RESULTFILE "
+	echo ""
+fi
+#
+#
 ECODE="$E_NOFILE"
 ACTION="Failed - missing file."
 #
 # Cleaning
 #
-rm -f "$LOCATION/$RESULTFILE"
+rm -f "$FRESULTFILE"
 #
 if [ "$PSTEP" -ne "0" ] ; 
 then

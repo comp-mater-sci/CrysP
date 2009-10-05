@@ -49,7 +49,7 @@ SNAPFILELIST="${DEFFILE} ${TEXFILE} ${RESULTFILE}"
 # Special testmode: some actions are skipped
 TESTMODE=0
 # Set verbosity of output to stdout
-VERBOSE=0
+VERBOSE=1
 #
 ### Error codes 
 E_OK=0
@@ -59,7 +59,7 @@ E_NOFILE=33
 ##############################################################
 STEPID=0
 SEQNID=0
-#
+
 #
 remarkTestMode () {
 	echo "***** Test mode, action $1 skipped *****" 
@@ -238,7 +238,21 @@ OINPLIST="${TEXFILE}"
 # Prepare execution
 [ "$VERBOSE" -ge "2" ] && echo "Target dir: $TARGETDIR"
 # Create temporary on scratch
-TMPDIR=`mktemp -d /scratch/facet.XXXXX` || exit 1
+#
+TMPDIR=$(mktemp -d /scratch/facet.XXXXXX)
+if [ "$?" -ne "0" ] || [ ! -d "$TMPDIR" ] ;
+then
+	echo "Cannot create scratch"
+	if  [ "$VERBOSE" -ge "1" ] ;
+	then
+		builtin echo "Scratch error on `/bin/hostname` " > "$DIAGERR"
+		/bin/df /scratch  >> "$DIAGERR"
+		/bin/ls -d /scratch/facet* >> "$DIAGERR"
+		#exit 1
+	fi	
+	return "$E_NOFILE"
+fi
+#
 # Copy from template
 copylist "$TMPLDIR" "$TINPLIST" "$TMPDIR" 
 # Copy from workdir - mandatory step
@@ -348,6 +362,15 @@ return "$retcode"
 # Remove previous result file
 rm -f ${RESULTFILE}
 RETCODE="$E_NOFILE"
+##
+# Special diagnostic file
+#
+if [ -n "$PBS_O_WORKDIR" ] ;
+then
+	DIAGERR="$PBS_O_WORKDIR/error_$PBS_JOBID"  
+else
+	DIAGERR="`pwd`/error_$$"  
+fi
 #
 prepareExecution
 if [ ! "$?" == "0" ] ; then
