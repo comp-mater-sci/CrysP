@@ -239,7 +239,7 @@ OINPLIST="${TEXFILE}"
 [ "$VERBOSE" -ge "2" ] && echo "Target dir: $TARGETDIR"
 # Create temporary on scratch
 #
-TMPDIR=$(mktemp -d /scratch/facet.XXXXXX)
+TMPDIR=$(/bin/mktemp -d /scratch/facet.XXXXXXX)
 if [ "$?" -ne "0" ] || [ ! -d "$TMPDIR" ] ;
 then
 	echo "Cannot create scratch"
@@ -248,6 +248,7 @@ then
 		builtin echo "Scratch error on `/bin/hostname` " > "$DIAGERR"
 		/bin/df /scratch  >> "$DIAGERR"
 		/bin/ls -d /scratch/facet* >> "$DIAGERR"
+		which mktemp >> "$DIAGERR"
 		#exit 1
 	fi	
 	return "$E_NOFILE"
