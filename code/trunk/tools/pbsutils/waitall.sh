@@ -74,6 +74,7 @@ PROCNAME="${JOBPREFIX}$1"
 # Set initial condition for loop
 getNumProcs "$PROCNAME"
  [ "$VERBOSE" -ge "1" ] &&  echo "The number of processes to wait for:  $NPROCS" 
+ [ "$VERBOSE" -ge "1" ] &&  echo "Jobname is:  $PROCNAME" 
 
 while (( NPROCS != 0  ))
 do

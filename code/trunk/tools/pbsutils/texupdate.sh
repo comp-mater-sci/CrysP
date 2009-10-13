@@ -50,6 +50,8 @@ SNAPFILELIST="${DEFFILE} ${TEXFILE} ${RESULTFILE}"
 TESTMODE=0
 # Set verbosity of output to stdout
 VERBOSE=1
+# Set diagnostics flag
+DIAGS=1
 #
 ### Error codes 
 E_OK=0
@@ -59,7 +61,9 @@ E_NOFILE=33
 ##############################################################
 STEPID=0
 SEQNID=0
-
+#
+# Set PATH
+export PATH=/bin:/usr/bin
 #
 remarkTestMode () {
 	echo "***** Test mode, action $1 skipped *****" 
@@ -368,14 +372,15 @@ RETCODE="$E_NOFILE"
 #
 if [ -n "$PBS_O_WORKDIR" ] ;
 then
-	DIAGERR="$PBS_O_WORKDIR/error_$PBS_JOBID"  
+	DIAGERR="$PBS_O_WORKDIR/diag_$PBS_JOBID"  
 else
-	DIAGERR="`pwd`/error_$$"  
+	DIAGERR="`pwd`/diag_$$"  
 fi
 #
 prepareExecution
 if [ ! "$?" == "0" ] ; then
 	echo "prepareExecution finished with error"
+	[ "$DIAGS" -ge "1" ] && builtin echo "prepareExecution finished with error" >> "$DIAGERR"
 	exit $E_SIMERR 
 fi
 #
@@ -384,6 +389,7 @@ runAlamel
 #
 if [ ! "$?" == "0" ] ; then
 	echo "Execution of runAlamel finished with error"
+	[ "$DIAGS" -ge "1" ] && builtin echo "Execution of runAlamel finished with error" >> "$DIAGERR"
 	exit $E_SIMERR 
 fi
 #
@@ -392,6 +398,7 @@ runFacet
 #
 if [ ! "$?" == "0" ] ; then
 	echo "Execution of runFacet finished with error"
+	[ "$DIAGS" -ge "1" ] && builtin echo "Execution of runFacet finished with error" >> "$DIAGERR" 
 	exit $E_SIMERR 
 fi
 #
@@ -408,6 +415,10 @@ then
       # remove mark      
       rm -f ${DIRTYMARK}
 	RETCODE="$E_OK"
+else
+      builtin echo "Execution of finalizeExecution finished with error"
+      [ "$DIAGS" -ge "1" ] && builtin echo "Execution of finalizeExecution finished with error" >> "$DIAGERR"
+      RETCODE="$E_SIMERR"
 fi
 echo "Completed."
 #
