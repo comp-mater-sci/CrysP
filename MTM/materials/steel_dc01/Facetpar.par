@@ -7,8 +7,8 @@
 --------------------------------------------------- FORMULATION OPTIONS ---------------------------------------------------
 
 (F01) Purpose of calculation & prefix of output files      [I02,4X,A8] :: 02    elem 
-(F02) Reference code (if F01=0) or Model data (if F01=1)   [A8 or A40] :: FEMDEMO1
-(F03) Sample information to write in output files                [A60] :: IF STEEL, TI=5.69
+(F02) Reference code (if F01=0) or Model data (if F01=1)   [A8 or A40] :: sid1655
+(F03) Sample information to write in output files                [A60] :: steel DC01,sid1655
 (F04) Texture description type & its filename             [I02,4X,A12] :: 01    sid1655f.smt        
 (F05) Type of slip systems & Number of orientations       [I02,4X,I05] :: 01    5000
 (F06) Relaxations to be applied and software choice       [I02,4X,I02] :: 00    01
@@ -21,12 +21,12 @@
                                                                                                                      
 ----------------------------------------------------- PLOTTING OPTIONS ----------------------------------------------------
                                                                                      
-(P01) Yield Locus plot switch                                    [I02] :: 00
+(P01) Yield Locus plot switch                                    [I02] :: 01
 (P02) Euler angles for pi-plane plot                      [3(F6.2,1X)] :: 000.00 000.00 000.00
 (P03) Plot range for beta-4 angle                   [2(F6.2,1X),4X,I4] :: 000.00 360.00    0361
 (P04) Stress component on X-axis for XY-plot              [6(F3.1,5X)] :: 1.0     0.0     0.0     0.0     0.0     0.0      
 (P05) Stress component on Y-axis for XY-plot              [6(F3.1,5X)] :: 0.0     1.0     0.0     0.0     0.0     0.0    
-(P06) R-value plot switch and stress ratio               [I02,2X,F5.2] :: 00  00.00
+(P06) R-value plot switch and stress ratio               [I02,2X,F5.2] :: 01  00.00
 (P07) Euler angles for polar R-plot                       [3(F6.2,1X)] :: 000.00 000.00 000.00
 (P08) Plot range for R-plot                         [2(F6.2,1X),4X,I4] :: 000.00 360.00    0361
 (P09) Superimpose stress points on  pi-plot               [I03,6X,A40] :: 000      <filename>
