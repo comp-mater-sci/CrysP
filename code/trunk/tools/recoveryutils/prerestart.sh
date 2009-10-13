@@ -214,6 +214,13 @@ fi
 # Remove temporary files
 rm -f "$TMPLOCS" "$TMPLOCF" 
 #
+# Remove dirtymarks (they are not harmful, but...)
+if [ "$DRYRUN" == "0" ] ;
+then
+	  echo -n "Removing dirtymarks..."
+	  find . -name "unclean" -exec rm {} \;
+	  echo "Done."
+fi	  
 #
 echo -e "\n ****    Report    **** \n"
 echo Locations processed: $index
