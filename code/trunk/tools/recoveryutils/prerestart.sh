@@ -20,6 +20,8 @@ OLDPREFIX="old_"
 CUBFILE="texout.cub"
 RESFILE="elem.Q00"
 DEFFILE="defdata.dat"
+# List of the files to extract from snapshot
+SNAPRECOVER="$CUBFILE $RESFILE $DEFFILE"
 
 MYNAME=`basename $0`
 
@@ -169,7 +171,7 @@ do
 		      ((nrecov++))
 			[ "$VERBOSE" -ge "1" ] && echo "Snapshot $nrecov: $CSNAPSHOT"
 			if [ "$DRYRUN" == "0" ] ;then
-				  tar xzf "$CSNAPSHOT" -C "$LOCATION"
+				  tar xzf "$CSNAPSHOT" -C "$LOCATION" $SNAPRECOVER
 			  	  FDEFFILE="$LOCATION/$DEFFILE"
 				  read dstep dseq  < <( head -1 "$FDEFFILE" )
 				  if [ "$dstep" -eq "$cstep" ] && [ "$dseq" -eq "$cseq" ] ; then
