@@ -112,6 +112,8 @@ fi
 #
 declare -a header 
 header=( `head -3 $INPUT` )
+# The header consists of 3 lines, so the first dataline is 4
+FIRSTDATA=4
 #
 NLOC=${header[0]}
 NSEQ=${header[1]} 
@@ -190,7 +192,7 @@ do
 		((nmissing++))
 	fi
 #	echo $loc1 $loc2 $cstep $cseq $pstep $pseq
-done < <( tail -n $NLOC $INPUT )
+done < <( tail -n "+$FIRSTDATA" $INPUT )
 #
 # Stage 2: analyze filesystem, compare it with content of input file
 # Difference between filesystem and input file is superfluous (incoherent)
