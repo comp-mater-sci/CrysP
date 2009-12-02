@@ -4,9 +4,14 @@ if "%1" == "" goto noparams
 if "%2" == "" goto noparams
 if "%3" == "" goto noparams
 
+if "%4" == "B" echo    1    2    4    1 IMAG, IDN, IDM, IPR(O: no listing 1: listing)   > fcurodf.i01
+if "%4" == "F" echo    2    1    4    1 IMAG, IDN, IDM, IPR(O: no listing 1: listing)   > fcurodf.i01
+
+
+
 del /Q resp.txt
 
-echo    1    2    4    1 IMAG, IDN, IDM, IPR(O: no listing 1: listing)   > fcurodf.i01
+
 echo    %1                 Number of extraction runs   >> fcurodf.i01
 
 
@@ -28,7 +33,7 @@ for /L %%I in (1,1,%1) do (
 goto stop
 
 :noparams
-echo Usage: %0 number_of_runs comment  curfile
+echo Usage: %0 number_of_runs comment  curfile symmetry{B or F} 
 goto stop
 
 :stop
