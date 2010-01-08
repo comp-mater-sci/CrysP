@@ -32,6 +32,7 @@ echo off
 :noparams
 echo The script requires one parameter: name of .C file (without extension)
 echo Use file pltodf_o.i01 to customize the output.
+exit /B 1
 goto stop
 
 :nofiles
