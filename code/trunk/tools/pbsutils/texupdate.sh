@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -l nodes=1:ppn=2
-#PBS -l walltime=0:07:00
+#PBS -l walltime=0:09:00
 #PBS -r n
 #
 #*PBS -m a
@@ -24,6 +24,7 @@ DATADIR="$UTILDIR/data"
 #
 # Name of result file 
 RESULTFILE="elem.Q00"
+MMMFILE="elem.MMM"
 #
 # Configuration section for ALAMEL
 ALAMELCMD="$BINDIR/alamel" 
@@ -38,13 +39,13 @@ SMTFILE="${OUTPREFIX}.smt"
 #
 # Configuration section for Facet
 FACETBIN="$BINDIR/facetpar"
-FACETCONF="Facetpar.par"
+FACETCONF="Facetconf.par"
 TMPLDIR="$DATADIR"
 # Number of processors used by Facet (note: it should be in connection with "ppn" resource specification if runs under PBS.
 FACETNPROCS=2
 #
 # Configuration of Snapshot
-SNAPFILELIST="${DEFFILE} ${TEXFILE} ${RESULTFILE}"
+SNAPFILELIST="${DEFFILE} ${TEXFILE} ${RESULTFILE} ${MMMFILE}"
 #
 # Special testmode: some actions are skipped
 TESTMODE=0

@@ -1,17 +1,16 @@
 #!/bin/bash
-
-
-
-NARGS=1  # Two args to script expected.
-
-# Settings suitable for parallel verision of software
-SLEEPTIME="20" # polling interval, it will be overridden 
-SLEEPINIT="315"
-SLEEPMIN="30"
-NTSTEP=1
-WAITTIME=0
-WAITTHRESHOLD=310   # set 5:10 min as threshold
-
+#
+# Parameters of the algorithm
+#
+# Settings suitable for parallel version of software, 1241 modes, VIC 
+SLEEPINIT="1830"    # set 30min 30s as an initial sleeptime
+SLEEPMIN="30"	    # set 30s as a polling interval. 		
+WAITTHRESHOLD=1800   # set 30 min as a threshold
+# Settings suitable for parallel version, 201 modes, VIC
+#SLEEPINIT="315"
+#SLEEPMIN="30"
+#WAITTHRESHOLD=310   # set 5:10 min as threshold
+#
 ### Settings for serial version of the facet software
 #SLEEPTIME="15" # polling interval 
 #SLEEPINIT="180"
@@ -19,19 +18,21 @@ WAITTHRESHOLD=310   # set 5:10 min as threshold
 #NTSTEP=1
 #WAITTIME=0
 #WAITTHRESHOLD=900   # set 15min as threshold
-
-
-E_BADARGS=20
-E_BADJOBNAME=21
-
-PBSSTRING=".beopbs-c"
-
+#
+# Portability settings
+#
+#PBSSTRING=".beopbs-c"
 #QUERYCMD="cat qstatlist.txt" 
 QUERYCMD="qstat"
 #
+# Other settings, rarely changed.
+#
+NARGS=1  # Two args to script expected.
+E_BADARGS=20
+E_BADJOBNAME=21
+#
 # Prefix of pbsjob, useful if name must be changed manually
 JOBPREFIX=""
-#
 #
 VERBOSE=1
 #
@@ -75,7 +76,11 @@ PROCNAME="${JOBPREFIX}$1"
 getNumProcs "$PROCNAME"
  [ "$VERBOSE" -ge "1" ] &&  echo "The number of processes to wait for:  $NPROCS" 
  [ "$VERBOSE" -ge "1" ] &&  echo "Jobname is:  $PROCNAME" 
-
+# Initialize the variables that control the loop
+SLEEPTIME="$SLEEPINIT" # set the polling interval, it will be overridden inside the loop
+NTSTEP=1
+WAITTIME=0
+#
 while (( NPROCS != 0  ))
 do
 	(( NTSTEP += 1 ))
