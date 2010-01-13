@@ -3,9 +3,9 @@
 # Parameters of the algorithm
 #
 # Settings suitable for parallel version of software, 1241 modes, VIC 
-SLEEPINIT="1830"    # set 30min 30s as an initial sleeptime
+SLEEPINIT="180"    # set 30min 30s as an initial sleeptime
 SLEEPMIN="30"	    # set 30s as a polling interval. 		
-WAITTHRESHOLD=1800   # set 30 min as a threshold
+WAITTHRESHOLD=170   # set 30 min as a threshold
 # Settings suitable for parallel version, 201 modes, VIC
 #SLEEPINIT="315"
 #SLEEPMIN="30"
@@ -23,7 +23,7 @@ WAITTHRESHOLD=1800   # set 30 min as a threshold
 #
 #PBSSTRING=".beopbs-c"
 #QUERYCMD="cat qstatlist.txt" 
-QUERYCMD="qstat"
+QUERYCMD="qstat -u $USER"
 #
 # Other settings, rarely changed.
 #
@@ -45,7 +45,7 @@ getNumProcs () {
 		# possibly communication with pbs server is temporarily lost?
 		NPROCS=-1
 	else
-		NPROCS=`echo "$QUERYPROCS"  | grep "$1" | awk ' BEGIN {sum=0} { if ( $5 != "E") {sum++;} } END{print sum;}' `
+		NPROCS=`echo "$QUERYPROCS"  | grep "$1" | awk ' BEGIN {sum=0} { if ( ($10 != "E") && ($10 != "C") ) {sum++;} } END{print sum;}' `
 		[ "$VERBOSE" -ge "2" ] &&  echo "The number of processes left:  $NPROCS" 
 	fi
 	return $NPROCS

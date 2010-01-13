@@ -1,12 +1,12 @@
 #!/bin/bash
-#PBS -l nodes=1:ppn=2
-#PBS -l walltime=0:09:00
+#PBS -l nodes=1:ppn=4
+#PBS -l walltime=0:04:00
 #PBS -r n
-#
-#*PBS -m a
+#PBS -m n
 #*PBS -M jerzy.gawad@cs.kuleuven.be
-#*PBS -e /dev/null
-#*PBS -o /dev/null
+#PBS -z
+#PBS -e /dev/null
+#PBS -o /dev/null
 #
 ### This is PBS script
 ###
@@ -21,6 +21,8 @@ UTILDIR="$HOME/TEXEVOL"
 BINDIR="$UTILDIR/bin"
 SCRIPTDIR="$UTILDIR/scripts"
 DATADIR="$UTILDIR/data"
+#
+SCRATCH="/node_scratch/facet.XXXXXXX"
 #
 # Name of result file 
 RESULTFILE="elem.Q00"
@@ -42,7 +44,7 @@ FACETBIN="$BINDIR/facetpar"
 FACETCONF="Facetconf.par"
 TMPLDIR="$DATADIR"
 # Number of processors used by Facet (note: it should be in connection with "ppn" resource specification if runs under PBS.
-FACETNPROCS=2
+FACETNPROCS=4
 #
 # Configuration of Snapshot
 SNAPFILELIST="${DEFFILE} ${TEXFILE} ${RESULTFILE} ${MMMFILE}"
@@ -50,7 +52,7 @@ SNAPFILELIST="${DEFFILE} ${TEXFILE} ${RESULTFILE} ${MMMFILE}"
 # Special testmode: some actions are skipped
 TESTMODE=0
 # Set verbosity of output to stdout
-VERBOSE=1
+VERBOSE=0
 # Set diagnostics flag
 DIAGS=1
 #
@@ -244,7 +246,7 @@ OINPLIST="${TEXFILE}"
 [ "$VERBOSE" -ge "2" ] && echo "Target dir: $TARGETDIR"
 # Create temporary on scratch
 #
-TMPDIR=$(/bin/mktemp -d /scratch/facet.XXXXXXX)
+TMPDIR=$(/bin/mktemp -d "$SCRATCH" )
 if [ "$?" -ne "0" ] || [ ! -d "$TMPDIR" ] ;
 then
 	echo "Cannot create scratch"
