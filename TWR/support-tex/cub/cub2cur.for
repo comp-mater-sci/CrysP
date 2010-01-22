@@ -11,7 +11,7 @@
       ! Check number of parameters, 2 are required, 
       ! the remaining parametrers are percieved as title of simulation
       argc = COMMAND_ARGUMENT_COUNT()
-      if ( argc <= 2 ) then
+      if ( argc < 2 ) then
             write(*,*) 'arguments: cubfile curfile'
             call exit(10)
       endif
