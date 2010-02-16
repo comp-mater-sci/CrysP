@@ -12,10 +12,11 @@
       ! the remaining parametrers are percieved as title of simulation
       argc = COMMAND_ARGUMENT_COUNT()
       if ( argc < 2 ) then
-            write(*,*) 'arguments: cubfile curfile'
+            write(*,*) 'arguments: cubfile curfile [title]'
             call exit(10)
       endif
       ! Form title
+      title=''
       do i=3,argc
             call GET_COMMAND_ARGUMENT(i,buf,status=iuerr)
             if (i == 3 ) then
@@ -44,7 +45,8 @@
       open (unit=ncurunit,file=TRIM(fnamcur),
      &               status='unknown',form='FORMATTED')
       ! Mangle title
-      micros%TITLE = trim(title)
+      if (len_trim(title) > 0 ) micros%TITLE = trim(title)
+      
       call writeCur(ncurunit,micros,iuerr)     
       if (iuerr /= 0) then
             write(*,*) 'Error writing CUR file.'

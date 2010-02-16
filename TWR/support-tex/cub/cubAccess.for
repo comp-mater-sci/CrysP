@@ -11,7 +11,7 @@
       
       ! microstructure description 
       type microsDesc
-            character(len=ctitlelen)            :: TITLE        ! Title of microstructure
+            character(len=ctitlelen)            :: TITLE =''    ! Title of microstructure
             integer                             :: NS           ! Step number
             double precision,dimension(3)       :: GAXES,GEULR  ! Frame description   (?)
             double precision,dimension(3,3)     :: FALG         ! Frame description 2 (?)   
@@ -33,6 +33,8 @@
       !! End of declaration section
       !
       iuerr = 0
+      ! Set empty string as a title
+      MICROS%TITLE=''
       write (*,*) 'Binary CUB-type-input file'
       read (NUNIT,iostat=iuerr) 
      &      MICROS%NS,
