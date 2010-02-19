@@ -61,15 +61,18 @@ FROMSNAP="texout.cub elem.MMM"
 
 OPFILE="$OUTDIR/$PREFIX" 
 local LOGFILE="${OUTDIR}/${PREFIX}.log"
+
+
 SNAPPATTERN="snap_[1-9]*_[1-9]*.tgz"
 NSNAPS=$(countSnapshots "$LOCATION" "$SNAPPATTERN")
 
+echo "Input data in location: $LOCATION" 
+echo "Number of snapshots to process: $NSNAPS" | tee -a "${LOGFILE}"
+#
 if [ "$NSNAPS" == "0" ] ; then
 	echo "Error: Location $LOCATION does not contain any snapshot."
 	return 1
 fi
-
-echo "Number of snapshots to process: $NSNAPS" | tee -a "${LOGFILE}"
 
 SNAPLIST=$(sortSnapshots $LOCATION $SNAPPREFIX)
 
@@ -80,10 +83,15 @@ YLPCFG=$(basename "$YLPCONFIG")
 
 # Initialize output cur file (write a title)
 OUTCURFILE="${OPFILE}.CUR"
-
-echo $OUTCURFILE
-echo "$LOCATION" > ${OUTCURFILE}
-
+if [ "$EXTRACTCUR" -ge 1 ] ; then
+	echo $OUTCURFILE
+	echo "$LOCATION" > ${OUTCURFILE}
+fi
+# Initialize output file for residual values
+local ERRPLOT="${OUTDIR}/${PREFIX}_err.dat"
+local AVRRES=""
+local MAXRES=""
+echo "#step  Ravr  Rmax" >  "${ERRPLOT}"
 ## Clean output files if present
 
 
@@ -128,6 +136,12 @@ for  snap in $SNAPLIST ; do
 	echo " " >>  "$SPLOTFILE"
 	mv "$DATAFILE" "$OUTDIR"
 	# 
+	markProgress
+	#
+	# Extract the residual values
+	AVRRES="$(grep -a "^Average residual (square norm)" elem.LS1 | cut -d\) -f 2)"
+	MAXRES="$(grep -a "^  Maximal residual (magnitude)" elem.LS1 | cut -d\) -f 2)"
+	echo "$defstep $AVRRES $MAXRES"  >>  "${ERRPLOT}"
 	markProgress
 	#
 	# TODO: implement it in different way
@@ -242,7 +256,7 @@ OUTPREFIX="$3"
 YLPCONFIG="$4"
 TEXLEVEL="$5"
 PLOTTITLE="$6"
-
+[ -n "$7" ] && REFQPLOT="$7"
 
 # Sanitize the input
 if [ ! -d "$SNAPDIR" ] ; then
@@ -274,7 +288,7 @@ echo "Output dir: $COUTDIR"
 # $4 - yrange (for q-values)
 #
 PLOTFILE="${COUTDIR}/${OUTPREFIX}_q.plt"
-initPlotfile "$PLOTFILE" "$PLOTTITLE" 
+initPlotfile "$PLOTFILE" "$PLOTTITLE" "$REFQPLOT"
 
 SPLOTFILE="$COUTDIR/$OUTPREFIX.q3d" 
 PLOT3DFILE="${COUTDIR}/${OUTPREFIX}_q3D.plt"
