@@ -7,7 +7,7 @@ if "%1" == "" goto noparams
 rem Check prequisities
 
 
-mfactor1 2 1 %1.C
+call mfactor1 2 1 %1.C
 
 mv mfactor.l01 mfactor_%1.L01
 

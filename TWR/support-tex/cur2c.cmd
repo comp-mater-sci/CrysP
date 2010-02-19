@@ -16,11 +16,11 @@ if not exist %2 goto noinput
 if "%3" == "B" echo    1    2    4    1 IMAG, IDN, IDM, IPR(O: no listing 1: listing)   > fcurodf.i01
 if "%3" == "F" echo    2    1    4    1 IMAG, IDN, IDM, IPR(O: no listing 1: listing)   > fcurodf.i01
 
-set COMMENT=%5 %6 %7 %8 %9
+set COMMENT=%4 %5 %6 %7 %8 %9
 
 
 
-del /Q resp.txt
+if exist resp.txt  del /Q resp.txt
 
 
 echo    %1                 Number of extraction runs   >> fcurodf.i01
@@ -35,12 +35,6 @@ for /L %%I in (1,1,%1) do (
 
 FCURODF.EXE fcurodf.i01 fcurodf.l01 %2 create6.b01 create6.b02 < resp.txt
 
-for /L %%I in (1,1,%1) do (
-     call c2ps.cmd step%%I
-     if "%4" == "pdf" call ps2pdf  step%%I.ps
-)
-
-
 goto stop
 
 :nofiles
@@ -53,7 +47,9 @@ echo Input file %2 not found.
 goto stop
 
 :noparams
-echo Usage: %0 number_of_runs  curfile symmetry{B or F} format{pdf or ps} [comment ...]
+echo Usage: %0 number_of_runs  curfile symmetry{B or F} [comment ...]
+echo.
+echo Requirements: create6.b01 create6.b02
 goto stop
 
 :stop
