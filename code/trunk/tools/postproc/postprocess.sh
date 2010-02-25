@@ -155,7 +155,7 @@ for  snap in $SNAPLIST ; do
 	#rm -f elem.LS3 elem.MMM
 	#
 	if [ -n "$PLOTFILE" ] ; then
-		echo -n  "'$DATAFILE' using 1:2  title 'step $step' " >> "$PLOTFILE"
+		echo -n  "'$DATAFILE' using 1:3  title 'step $step' " >> "$PLOTFILE"
 		[ "$defstep" -lt "$NSNAPS" ] &&	echo ", \\" >> "$PLOTFILE"
 	fi
 	# Return to previous directory
