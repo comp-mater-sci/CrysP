@@ -1,6 +1,6 @@
 #!/bin/bash
-#PBS -l nodes=1:ppn=2
-#PBS -l walltime=0:06:00
+#PBS -l nodes=1:ppn=8
+#PBS -l walltime=0:03:00
 #PBS -r n
 #PBS -m n
 #*PBS -M jerzy.gawad@cs.kuleuven.be
@@ -22,7 +22,13 @@ BINDIR="$UTILDIR/bin"
 SCRIPTDIR="$UTILDIR/scripts"
 DATADIR="$UTILDIR/data"
 #
-SCRATCH="${VSC_SCRATCH_NODE}/texevol.XXXXXXXX"
+if [ -n "$PBS_O_WORKDIR" ] ;
+then
+	SCRATCH="${VSC_SCRATCH_NODE}/texevol.XXXXXXXX"
+else
+	
+	SCRATCH="/tmp/texevol.XXXXXXXX"
+fi
 #
 # Name of result file 
 RESULTFILE="elem.Q00"
@@ -44,7 +50,7 @@ FACETBIN="$BINDIR/facetpar"
 FACETCONF="Facetconf.par"
 TMPLDIR="$DATADIR"
 # Number of processors used by Facet (note: it should be in connection with "ppn" resource specification if runs under PBS.
-FACETNPROCS=4
+FACETNPROCS=8
 #
 # Configuration of Snapshot
 SNAPFILELIST="${DEFFILE} ${TEXFILE} ${RESULTFILE} ${MMMFILE}"
@@ -60,6 +66,7 @@ DIAGS=1
 E_OK=0
 E_SIMERR=100
 E_NOFILE=33
+E_COMPLETED=200
 #
 ##############################################################
 STEPID=0
@@ -226,6 +233,36 @@ if [ ! -f "$DEFFILE" ] ; then
 	echo "Cannot find $DEFFILE"
 	exit $E_NOFILE
 fi
+#
+# Extract transaction data from the deffile
+#
+read STEPID SEQNID < $DEFFILE 
+if [ "$?" == "0" ] ; then
+	echo "Transaction $STEPID $SEQNID"
+	retcode="$E_OK"
+else
+	retcode="$E_NOFILE"
+fi
+# Check if previous snapshot exists
+SNAPSHOTFILE=$(ls -1 -t snap_${STEPID}_* 2> /dev/null | head -n 1 )
+if [ -n "$SNAPSHOTFILE" ] ;
+then
+	[ "$VERBOSE" -ge 1 ] && echo "Found snapshot: $SNAPSHOTFILE"
+	# Verify if the snapshot contains all the data
+	tar tzf "$SNAPSHOTFILE"  $SNAPFILELIST > /dev/null
+	if [ "$?" == "0" ] ; 
+	then
+		[ "$VERBOSE" -ge 1 ] && echo "Extracting the data from $SNAPSHOTFILE"
+		tar xzf "$SNAPSHOTFILE" "$RESULTFILE" "$TEXFILE"
+		retcode="$E_COMPLETED"
+		return $retcode
+	else
+		echo "Error: the snapshot $SNAPSHOTFILE does not contain the files expected." 
+	fi
+fi 
+#
+# Continue the preparations to simulation start.
+#
 # Store current location
 TARGETDIR=`pwd`
 #
@@ -278,16 +315,6 @@ if [ "$VERBOSE" -ge "2" ] ; then
 	echo "Executing in scrach dir: $TMPDIR"
 	ls -x
 fi
-#
-# Extract transaction data from the deffile
-#
-read STEPID SEQNID < $DEFFILE 
-if [ "$?" == "0" ] ; then
-	echo "Transaction $STEPID $SEQNID"
-	retcode="$E_OK"
-else
-	retcode="$E_NOFILE"
-fi
 return $retcode
 #
 }
@@ -296,7 +323,12 @@ return $retcode
 runFacet () {
 # Call simulation 
 if [ "$TESTMODE" == 0 ] ; then
-	"$FACETBIN"  "$FACETCONF" "$FACETNPROCS"
+	if [ "$VERBOSE" -ge "1" ] ; then 
+		eval "$FACETBIN" "$FACETCONF" "$FACETNPROCS"
+	else
+		# Send the output to /dev/null
+		eval "$FACETBIN" "$FACETCONF" "$FACETNPROCS" > /dev/null
+	fi
 else
 	remarkTestMode "$FACETBIN $FACETCONF"	
 	touch "$OUTLST"
@@ -381,37 +413,48 @@ else
 fi
 #
 prepareExecution
-if [ ! "$?" == "0" ] ; then
-	echo "prepareExecution finished with error"
-	[ "$DIAGS" -ge "1" ] && builtin echo "prepareExecution finished with error" >> "$DIAGERR"
-	exit $E_SIMERR 
-fi
-#
-[ "$VERBOSE" -ge "2" ] && echo "Entering runAlamel" 
-runAlamel 
-#
-if [ ! "$?" == "0" ] ; then
-	echo "Execution of runAlamel finished with error"
-	[ "$DIAGS" -ge "1" ] && builtin echo "Execution of runAlamel finished with error" >> "$DIAGERR"
-	exit $E_SIMERR 
-fi
-#
-[ "$VERBOSE" -ge "2" ] && echo "Entering runFacet" 
-runFacet
-#
-if [ ! "$?" == "0" ] ; then
-	echo "Execution of runFacet finished with error"
-	[ "$DIAGS" -ge "1" ] && builtin echo "Execution of runFacet finished with error" >> "$DIAGERR" 
-	exit $E_SIMERR 
-fi
-#
-finalizeExecution
-# 
+PREINFO="$?"
+case "$PREINFO" in
+	"$E_COMPLETED" )
+		[ "$VERBOSE" -ge "2" ] && echo "The results have been recovered from the snapshot." 
+		FININFO="$E_OK"
+		;;
+	"$E_OK" )
+		#
+		[ "$VERBOSE" -ge "2" ] && echo "Entering runAlamel" 
+		runAlamel 
+		#
+		if [ ! "$?" == "0" ] ; then
+			echo "Execution of runAlamel finished with error"
+			[ "$DIAGS" -ge "1" ] && builtin echo "Execution of runAlamel finished with error" >> "$DIAGERR"
+			exit $E_SIMERR 
+		fi
+		#
+		[ "$VERBOSE" -ge "2" ] && echo "Entering runFacet" 
+		runFacet
+		#
+		if [ ! "$?" == "0" ] ; then
+			echo "Execution of runFacet finished with error"
+			[ "$DIAGS" -ge "1" ] && builtin echo "Execution of runFacet finished with error" >> "$DIAGERR" 
+			exit $E_SIMERR 
+		fi
+		#
+		finalizeExecution
+		FININFO="$?"
+		#
+		;;
+
+	* )	
+		echo "prepareExecution finished with error"
+		[ "$DIAGS" -ge "1" ] && builtin echo "prepareExecution finished with error" >> "$DIAGERR"
+		exit $E_SIMERR 
+esac
+ 
 # Now we are in TARGET dir.
 # Check the conditions to mark location "non-dirty"
 #  -> remark: minimize number of checks, its a network file system.
-if    [ "$?" == "$E_OK" ] \
-   &&	[ -s "$TEXFILE" ] \
+if    [ "$FININFO" == "$E_OK" ] \
+   && [ -s "$TEXFILE" ] \
    && [ -s "$RESULTFILE" ] \
    && [ -s "$SNAPSHOTFILE" ] ;
 then
