@@ -1,6 +1,6 @@
 #!/bin/bash
-#PBS -l nodes=1:ppn=4
-#PBS -l walltime=0:04:00
+#PBS -l nodes=1:ppn=2
+#PBS -l walltime=0:06:00
 #PBS -r n
 #PBS -m n
 #*PBS -M jerzy.gawad@cs.kuleuven.be
@@ -22,7 +22,7 @@ BINDIR="$UTILDIR/bin"
 SCRIPTDIR="$UTILDIR/scripts"
 DATADIR="$UTILDIR/data"
 #
-SCRATCH="/node_scratch/facet.XXXXXXX"
+SCRATCH="${VSC_SCRATCH_NODE}/texevol.XXXXXXXX"
 #
 # Name of result file 
 RESULTFILE="elem.Q00"
@@ -176,11 +176,11 @@ if [ "$INFOCODE" == "0" ] \
    && [ -s "$TEXFILE"  ] \
    && [ -s "$SMTFILE" ] \
    && [ -s "$CTLFILE"  ] \
-   && [ "$CTLFILE" -ot "$TEXFILE"  ] ;
+   && [ ! "$CTLFILE" -nt "$TEXFILE"  ] ;
 then
 	INFOCODE="$E_OK"
 else
-	echo "ALAMEL run post-conditions failed"
+      [ "$DIAGS" -ge "1" ] && builtin echo "ALAMEL run post-conditions failed" >> "$DIAGERR"
       INFOCODE="$E_SIMERR"
 fi
 #
@@ -329,7 +329,7 @@ if    [ -s "$TEXFILE" ] \
    && [ -s "$CTLFILE"  ] \
    && [ -s "$RESULTFILE" ] \
    && [ "$RESULTFILE" -nt "$TEXFILE"  ] \
-   && [ "$CTLFILE" -ot "$TEXFILE"  ] ;
+   && [ ! "$CTLFILE" -nt "$TEXFILE"  ] ;
 then
       # It is OK to make snapshot, the results appear to be correct.
 	# SNAPFILELIST is defined in header
