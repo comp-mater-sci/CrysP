@@ -130,9 +130,12 @@ for  snap in $SNAPLIST ; do
 	# Process qrs values, prepare output files,
 	# build 3D evolution plot
 	DATAFILE="qrsvalues_${defstep}.dat"
-	
-	AWKPROG='{print '"$defstep"' " " $1 " " $2; }'
-	tail -n 365 elem.LS3 | head -n +361 |  awk '{print  $4 " " $6 " " $7 " " $8;}'  | tee "$DATAFILE" | awk "$AWKPROG" >> "$SPLOTFILE"
+	# Form the AWK program. Only defstep variable is substituted here.
+	AWKPROG='{print '"$defstep"' " " $1 " " $3; }'
+	# Write header
+	head -n 13  elem.LS3 | tail -n 1 | awk '{print "#"$4 " " $5 " " $6 " " $7 }' >  "$DATAFILE" 
+	# Write data to datafile and to 3d-plot file.
+	tail -n 365 elem.LS3 | head -n +361 |  awk '{print  $4 " " $5 " " $6 " " $7;}'  | tee -a "$DATAFILE" | awk "$AWKPROG" >> "$SPLOTFILE"
 	echo " " >>  "$SPLOTFILE"
 	mv "$DATAFILE" "$OUTDIR"
 	# 
