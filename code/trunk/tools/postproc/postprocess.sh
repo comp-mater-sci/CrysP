@@ -56,8 +56,9 @@ local SPLOTFILE="$6"
 local EXTRACTCUR="$7"
 
 
-FROMSNAP="texout.cub elem.MMM"
-
+FROMSNAP="texout.cub ${PREFIX}.MMM"
+NQVALS=$(grep "^(P08)" ${YLPCONFIG} | sed -e 's/^.*:://' | awk '{print $3}' )
+(( NQLINES=NQVALS+4 ))
 
 OPFILE="$OUTDIR/$PREFIX" 
 local LOGFILE="${OUTDIR}/${PREFIX}.log"
@@ -129,21 +130,21 @@ for  snap in $SNAPLIST ; do
 	fi	
 	# Process qrs values, prepare output files,
 	# build 3D evolution plot
-	DATAFILE="qrsvalues_${defstep}.dat"
+	DATAFILE="${PREFIX}_${defstep}.qrs"
 	# Form the AWK program. Only defstep variable is substituted here.
 	AWKPROG='{print '"$defstep"' " " $1 " " $3; }'
 	# Write header
-	head -n 13  elem.LS3 | tail -n 1 | awk '{print "#"$4 " " $5 " " $6 " " $7 }' >  "$DATAFILE" 
+	head -n 13  ${PREFIX}.LS3 | tail -n 1 | awk '{print "#"$4 " " $5 " " $6 " " $7 }' >  "$DATAFILE" 
 	# Write data to datafile and to 3d-plot file.
-	tail -n 365 elem.LS3 | head -n +361 |  awk '{print  $4 " " $5 " " $6 " " $7;}'  | tee -a "$DATAFILE" | awk "$AWKPROG" >> "$SPLOTFILE"
+	tail -n ${NQLINES} ${PREFIX}.LS3 | head -n +${NQVALS} |  awk '{print  $4 " " $5 " " $6 " " $7;}'  | tee -a "$DATAFILE" | awk "$AWKPROG" >> "$SPLOTFILE"
 	echo " " >>  "$SPLOTFILE"
 	mv "$DATAFILE" "$OUTDIR"
 	# 
 	markProgress
 	#
 	# Extract the residual values
-	AVRRES="$(grep -a "^Average residual (square norm)" elem.LS1 | cut -d\) -f 2)"
-	MAXRES="$(grep -a "^  Maximal residual (magnitude)" elem.LS1 | cut -d\) -f 2)"
+	AVRRES="$(grep -a "^Average residual (square norm)" ${PREFIX}.LS1 | cut -d\) -f 2)"
+	MAXRES="$(grep -a "^  Maximal residual (magnitude)" ${PREFIX}.LS1 | cut -d\) -f 2)"
 	echo "$defstep $AVRRES $MAXRES"  >>  "${ERRPLOT}"
 	markProgress
 	#
