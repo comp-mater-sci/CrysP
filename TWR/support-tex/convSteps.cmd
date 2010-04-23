@@ -26,14 +26,21 @@ echo /^^\/Helvetica findfont    185 scalefont setfont.* 1846 M  270.0 R (PAGE) s
 echo /^^\/Helvetica findfont    185 scalefont setfont.* 1023 M  270.0 R ( 1) show -270.0 R/d >> %SEDFILE%
 
 
-
 for /L %%i in (%2,1,%3) do (
-echo %PREFIX%%%i
+set OUTPREFIX=%PREFIX%%%i
+echo !OUTPREFIX!
 set LIST=!LIST! %PREFIX%%%i.png
 sed -f %SEDFILE% %PREFIX%%%i.ps > tmp_step%%i.ps
 
-convert -density 300x300 tmp_step%%i.ps -trim  -units PixelsPerInch -density 300 -quality 90 -depth 3 +repage %PREFIX%%%i.png
-convert  %PREFIX%%%i.png -crop 1834x540+23+129  +repage %PREFIX%%%iu.png
+convert -density 300x300 tmp_step%%i.ps -trim  -units PixelsPerInch -density 300 -quality 100 -depth 3 +repage !OUTPREFIX!.png
+convert  !OUTPREFIX!.png -crop 1839x550+0+129  +repage -quality 100 -depth 3  !OUTPREFIX!_u.png
+convert  !OUTPREFIX!.png -crop 1839x625+0+54  +repage -quality 100 -depth 3  !OUTPREFIX!_l.png
+
+
+rem convert -density 600x600 !OUTPREFIX!.ps -trim  -units PixelsPerInch -density 300 -quality 90 -depth %BITDEPTH% +repage -density 300 !OUTPREFIX!.png
+rem convert  !OUTPREFIX!.png -crop 3715x1127+0+230 -depth %BITDEPTH%  +repage !OUTPREFIX!_u.png
+rem convert  !OUTPREFIX!.png -crop 3715x1257+0+100 -colors 8 -depth !BITDEPTH! -define png:bit-depth=8 -density 200 +repage !OUTPREFIX!_l.png
+
 
 )
 del /f tmp_step*.ps
