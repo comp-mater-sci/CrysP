@@ -1,21 +1,39 @@
 #!/bin/bash
 
-# Purpose of the utility: a fast recalculation of the material evolution provided that the some of the inputs are preimposed (are available in the snapshots).
-# The outcome of the utility is a recalculated set of snapshots.
-#
-# The input data for the utility is a set of snapshots. Depending on the run mode, the kind of data extracted from the snapshot may vary.
-#
-# The following run modes are available:
-# * ylp		: calculation of yield surface if the texture is known 
-#      The utility will grab the CUB file and will convert it to the SMT format. 
-#      This file will be used as an input in the multilevel model calculations. 
-#  * ylpmmm	:  calculation of the yield surface if the multilevel model results are known. 
-#	The utility will retreive the MMM file from the snapshots, Then it will recalculate facet expression. Note: the user shoul consider if the postprocessor utility is more convinent to achieve the same result. 
-#  * 
-# - texylp	: the utility will retrieve from the snapshot: the deformation data and the CUB file.  	
-# *** 
+printHelp()
+{
+cat <<End-of-help
+ Purpose of the utility: a fast recalculation of the material evolution, provided 
+ that some of the inputs can be preimposed (i.e. they are available in the snapshots).
+ The outcome of the utility is a recalculated set of snapshots.
+
+ The utility will search for a configuration file: 'config.sh'. 	
+
+ The input data for the utility is a directory containing a set of snapshots. 
+ Depending on the run mode, the kind of data extracted from the snapshot may vary.
+ Some run modes may require additional arguments. 
+
+ The following run modes are available:
+ * ylp		: calculation of yield surface if the texture is known 
+      The utility will grab the CUB file and will convert it to the SMT format. 
+      This file will be used as an input in the multilevel model calculations. 
+  * texylp	: the utility will retrieve the deformation data from the snapshot. 
+		The utilty will start texupdate script, which must be provided by the user.  	 
+
+ To be (possibly) implemented in future releases: 
+  * ylpmmm	:  calculation of the yield surface if the multilevel model results are known. 
+	The utility will retreive the MMM file from the snapshots, then it will recalculate facet expression. 
+	Note: the user should consider whether the postprocessor utility is more convinent to 
+	      for this task. Basically, the same result should be achieved. 
+End-of-help
+}
 
 
+# shortcut for help option
+if [ "$1" == "help" ] ; then
+	printHelp
+	exit 0;
+fi
 
 
 import() {
@@ -27,7 +45,8 @@ import() {
 	fi
 }
 
-import "locproc.sh"
+#import "locproc.sh"
+import "${HOME}/experimental/snapmangle/locproc.sh"
 import "config.sh"
 
 
@@ -52,7 +71,7 @@ for file in $TINPLIST ; do
 	cp -f "${DATADIR}/${file}" "$LOCDIR"
 done
 $CUB2SMTCMD $INPCUB texout.smt bare		
-$YLPEVOLCMD "$YLPCFG" "2"  
+$YLPEVOLCMD "$YLPCFG" "${NPROC-2}"  
 }
 
 makeSnapshot() {
@@ -71,20 +90,43 @@ fi
 
 
 
+runTexYlpCalc() {
+local STEP="$1"
+local DEFSTEP="$2"
+local CTMPDIR="$3" 
+local OUTDIR="$4" 
+local TEXUPDATECMD="$5"
+
+# Simply run the texupdate command.
+eval $TEXUPDATECMD 
+# Check if the command has produced the snapshot
+local snapfile=$(ls -1 ${SNAPPREFIX}${STEP}* 2> /dev/null)
+if [ -n "$snapfile" ] ; then
+	mv "$snapfile" "$OUTDIR"
+else
+	echo "Cannot find snapshot for step $step" 
+fi
+}
+
+
 
 HELPMSG="
-	`basename "$0"` runway snapdir outdir outprefix Facet_config [configfile]
+	`basename "$0"` runway snapdir outdir outprefix [Facet_config | texupdate] [configfile]
+	or
+	`basename "$0"` help
 
 Parameters:
-	runway -  ylp 
+	runway -  ylp, texylp 
 	snapdir - directory that contains snapshots to process
 	outdir - output directory
 	prefix - prefix for filenames
-	Facet_config - Facet configuration file
+	Facet_config - Facet configuration file (if runway is ylp)
+	texupdate - path to texupdate executable (if runway is texylp)	
 	configfile - utility configuration file
 \n
 Remarks:
-* The requsitions on the snapshot content depend on the runway parameter. In general, the snapshots must contain files of the following types: MMM, CUB, defdata.dat\n"
+* The requsitions on the snapshot content depend on the runway parameter. 
+  In general, the snapshots must contain files of the following types: MMM, CUB, defdata.dat\n"
 
 if [ "$#" -lt 2 ] ; then
 	echo -e "$HELPMSG"
@@ -95,10 +137,28 @@ RUNWAY="$1"
 SNAPDIR="$2"
 OUTDIR="$3"
 PREFIX="$4"
-YLPCONFIG="$5"
 CONFIG="$6" 
+# verify runmode
+case "$RUNWAY" in
+	ylp)	
+		;;
+	texylp)
+		;;
+	help)
+		# shortcut for help option
+		printHelp
+		exit 0;
+		;;
+	*)	
+		echo "Unknown runway"
+		exit 1;
+		;;	
+esac
 
-#import "$CONFIG"
+# Overrvide default config settings
+if [ -n "$CONFIG" && -f "$CONFIG" ] ; then
+	import "$CONFIG"
+fi
 
 # Sanitize the input
 if [ ! -d "$SNAPDIR" ] ; then
@@ -106,15 +166,10 @@ if [ ! -d "$SNAPDIR" ] ; then
 	exit 1
 fi
 # 
-if [ ! -f "$YLPCONFIG" ] ; then
-	echo "Facet config file does not exist"
-	exit 1
-fi
 
 # Canonize paths 
 LOCATION=$(readlink -f "$SNAPDIR")
 
-CYLPCONFIG=$(readlink -f "$YLPCONFIG")
 
 mkdir -p $OUTDIR
 COUTDIR=$(readlink -f "$OUTDIR")
@@ -125,7 +180,16 @@ echo "Output dir: $COUTDIR"
 # TODO: use getopt/getopts instead.
 
 case "$RUNWAY" in
-	ylp)	FROMSNAP="${DEFFILE} ${TEXFILE} " 
+	ylp)	
+		YLPCONFIG="$5"
+		if [ ! -f "$YLPCONFIG" ] ; then
+			echo "Facet config file does not exist"
+			exit 1
+		fi
+		# Canonical form 
+		CYLPCONFIG=$(readlink -f "$YLPCONFIG")
+		# 
+		FROMSNAP="${DEFFILE} ${TEXFILE} " 
 		INPTEX=${TEXFILE}
 		TINPLIST="bcc.dat
 			bcc.pre
@@ -133,7 +197,20 @@ case "$RUNWAY" in
 			mod402o.par"
 
 		;;
-	*)	echo "Unknown runway"
+
+	texylp)
+		TEXUPDATE="$5"
+		if [ ! -f "$TEXUPDATE" ] || [ ! -x  "$TEXUPDATE" ] ; then
+			echo "texupdate file $5 does not exist or is not executable"
+			exit 1 
+		fi
+		# Cannonize the path
+		CTEXUPDATE=$(readlink -f "$TEXUPDATE")
+		FROMSNAP="${DEFFILE}"
+		;;
+	*)	
+		echo "Unknown runway"
+		exit 1
 		;;	
 esac
 
@@ -168,8 +245,10 @@ CTMPDIR=$(readlink -f "$TMPDIR")
 echo $TMPDIR
 echo $CTMPDIR
 
-cp "$CYLPCONFIG" "$TMPDIR"
-YLPCFG=$(basename "$YLPCONFIG") 
+if [ "$RUNWAY" == "ylp" ] ; then
+	cp "$CYLPCONFIG" "$TMPDIR"
+	YLPCFG=$(basename "$YLPCONFIG") 
+fi
 
 CWD=$(pwd)
 cd "$TMPDIR"
@@ -186,16 +265,17 @@ for  snap in $SNAPLIST ; do
 	## Valid for ylp runway
 	case "$RUNWAY" in
 	ylp)	runYlpCalc "$CTMPDIR" "$YLPCFG" "$INPTEX" 
+		## Stage
+		#	
+		makeSnapshot "$step" "$defstep" "$COUTDIR" "$SNAPFILELIST"
+		;;
+
+	texylp)	
+		runTexYlpCalc "$step" "$defstep" "$CTMPDIR" "$COUTDIR" "$CTEXUPDATE"
 		;;
 	*)	
 		;;	
 	esac
-	## Stage
-	#	
-	makeSnapshot "$step" "$defstep" "$COUTDIR" "$SNAPFILELIST"
-	# Execute facet identification		
-	# enter temporary directory
-	#$YLPEVOLCMD "$YLPCFG"  >> "$LOGFILE" &> /dev/null
 	if [ "$?" == "0" ] ; then
 		markProgress
 	fi	
