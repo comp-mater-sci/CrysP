@@ -3,18 +3,20 @@
 printHelp()
 {
 cat <<End-of-help
+ Utility name: recalcYL 
+
  Purpose of the utility: a fast recalculation of the material evolution, provided 
  that some of the inputs can be preimposed (i.e. they are available in the snapshots).
  The outcome of the utility is a recalculated set of snapshots.
 
- The utility will search for a configuration file: 'config.sh'. 	
+ The utility will search for a configuration file: 'recalcYL.conf'. 	
 
  The input data for the utility is a directory containing a set of snapshots. 
  Depending on the run mode, the kind of data extracted from the snapshot may vary.
  Some run modes may require additional arguments. 
 
  The following run modes are available:
- * ylp		: calculation of yield surface if the texture is known 
+  * ylp		: calculation of yield surface if the texture is known 
       The utility will grab the CUB file and will convert it to the SMT format. 
       This file will be used as an input in the multilevel model calculations. 
   * texylp	: the utility will retrieve the deformation data from the snapshot. 
@@ -45,9 +47,8 @@ import() {
 	fi
 }
 
-#import "locproc.sh"
 import "${HOME}/experimental/snapmangle/locproc.sh"
-import "config.sh"
+import "recalcYL.conf"
 
 
 markProgress() {
@@ -133,13 +134,13 @@ if [ "$#" -lt 2 ] ; then
 	exit 1
 fi
 
-RUNWAY="$1"
+RUNMODE="$1"
 SNAPDIR="$2"
 OUTDIR="$3"
 PREFIX="$4"
 CONFIG="$6" 
 # verify runmode
-case "$RUNWAY" in
+case "$RUNMODE" in
 	ylp)	
 		;;
 	texylp)
@@ -179,7 +180,7 @@ echo "Output dir: $COUTDIR"
 
 # TODO: use getopt/getopts instead.
 
-case "$RUNWAY" in
+case "$RUNMODE" in
 	ylp)	
 		YLPCONFIG="$5"
 		if [ ! -f "$YLPCONFIG" ] ; then
@@ -245,7 +246,7 @@ CTMPDIR=$(readlink -f "$TMPDIR")
 echo $TMPDIR
 echo $CTMPDIR
 
-if [ "$RUNWAY" == "ylp" ] ; then
+if [ "$RUNMODE" == "ylp" ] ; then
 	cp "$CYLPCONFIG" "$TMPDIR"
 	YLPCFG=$(basename "$YLPCONFIG") 
 fi
@@ -263,7 +264,7 @@ for  snap in $SNAPLIST ; do
 	# Extract requested datafiles
 	tar -xzf $snap -C "$CTMPDIR" $FROMSNAP 
 	## Valid for ylp runway
-	case "$RUNWAY" in
+	case "$RUNMODE" in
 	ylp)	runYlpCalc "$CTMPDIR" "$YLPCFG" "$INPTEX" 
 		## Stage
 		#	
