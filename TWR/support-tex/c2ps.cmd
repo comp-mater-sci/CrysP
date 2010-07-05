@@ -26,21 +26,23 @@ if not exist pltodf_c.i01 (
 	echo     0                    IEVOD: if =0: Ordinary case  >  pltodf_c.i01
 )
 
-calcodf pltodf_c.i01 create6.b01 create6.b02 %1.c aodf.001
-odfplt pltodf_o.i01 pltodf_o.l01 aodf.001 %1.001 | tee %1_c2ps.log
+set FNAME=%~n1
 
-rem plotscr vga color %1.001
+calcodf pltodf_c.i01 create6.b01 create6.b02 !FNAME!.c aodf.001
+odfplt pltodf_o.i01 pltodf_o.l01 aodf.001 !FNAME!.001 | tee !FNAME!_c2ps.log
 
-PLOTPSC.EXE plotter color %1.001
+PLOTPSC.EXE plotter color !FNAME!.001
 
-move p01.ps %1.ps
+move p01.ps !FNAME!.ps
+
+rm !FNAME!.001
 
 goto stop
 
 echo off
 
 :noparams
-echo The script requires one parameter: name of .C file (without extension)
+echo The script requires one parameter: name of .C file (with or without extension).
 echo Use file pltodf_o.i01 to customize the output.
 set RETCODE=1
 goto stop
