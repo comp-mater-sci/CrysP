@@ -22,11 +22,9 @@ BINDIR="$UTILDIR/bin"
 SCRIPTDIR="$UTILDIR/scripts"
 DATADIR="$UTILDIR/data"
 #
-if [ -n "$PBS_O_WORKDIR" ] ;
-then
+if [ -n "$PBS_O_WORKDIR" ] ; then
 	SCRATCH="${VSC_SCRATCH_NODE}/texevol.XXXXXXXX"
 else
-	
 	SCRATCH="/tmp/texevol.XXXXXXXX"
 fi
 #
@@ -37,8 +35,7 @@ MMMFILE="elem.MMM"
 # Configuration section for ALAMEL
 ALAMELCMD="$BINDIR/alamel" 
 # Select mmm model: ALAMEL of FC
-#ALAMELMODEL="ALAMEL"
-ALAMELMODEL="FC"
+ALAMELMODEL="ALAMEL"
 # Name of ALAMEL config file to be built
 CTLFILE="MAIN1.CTL"
 DEFFILE="defdata.dat"
@@ -52,15 +49,16 @@ SMTFILE="${OUTPREFIX}.smt"
 FACETBIN="$BINDIR/facetpar"
 FACETCONF="Facetconf.par"
 TMPLDIR="$DATADIR"
-# Number of processors used by Facet (note: it should be in connection with "ppn" resource specification if runs under PBS.
+# Number of processors used by Facet (note: it should be in accordance with "ppn" resource specification if runs under PBS.
 FACETNPROCS=8
 #
 # Configuration of Snapshot
+# List of files to put into stapshot
 SNAPFILELIST="${DEFFILE} ${TEXFILE} ${RESULTFILE} ${MMMFILE}"
 #
 # Special testmode: some actions are skipped
 TESTMODE=0
-# Set verbosity of output to stdout
+# Set verbosity of output to stdout: 0..3
 VERBOSE=0
 # Set diagnostics flag
 DIAGS=1
@@ -261,13 +259,11 @@ else
 fi
 # Check if previous snapshot exists
 SNAPSHOTFILE=$(ls -1 -t snap_${STEPID}_* 2> /dev/null | head -n 1 )
-if [ -n "$SNAPSHOTFILE" ] ;
-then
+if [ -n "$SNAPSHOTFILE" ] ; then
 	[ "$VERBOSE" -ge 1 ] && echo "Found snapshot: $SNAPSHOTFILE"
 	# Verify if the snapshot contains all the data
 	tar tzf "$SNAPSHOTFILE"  $SNAPFILELIST > /dev/null
-	if [ "$?" == "0" ] ; 
-	then
+	if [ "$?" == "0" ] ; then
 		[ "$VERBOSE" -ge 1 ] && echo "Extracting the data from $SNAPSHOTFILE"
 		tar xzf "$SNAPSHOTFILE" "$RESULTFILE" "$TEXFILE"
 		retcode="$E_COMPLETED"
@@ -277,22 +273,22 @@ then
 	fi
 fi 
 #
-# Continue the preparations to simulation start.
+# Continue the preparations to the start of simulation.
 #
-# Store current location
+# Store the current location
 TARGETDIR=`pwd`
 #
 INPDIR="$TARGETDIR"
-# List of files that must be copied to scrach location from template
+# List of files that must be copied to the scrach location from template
 TINPLIST="${FACETCONF}
 bcc.dat      
 bcc.pre      
 micro1.smt   
 mod402o.par"
 #
-# List of files that must be copied to scrach  from location
+# List of files that must be copied to the scrach from source location
 MINPLIST="$DEFFILE"
-# List of files that may be copied to scratch from location
+# List of files that may be copied to the scratch from source location
 OINPLIST="${TEXFILE}"
 #
 # Prepare execution
@@ -300,11 +296,9 @@ OINPLIST="${TEXFILE}"
 # Create temporary on scratch
 #
 TMPDIR=$(/bin/mktemp -d "$SCRATCH" )
-if [ "$?" -ne "0" ] || [ ! -d "$TMPDIR" ] ;
-then
+if [ "$?" -ne "0" ] || [ ! -d "$TMPDIR" ] ; then
 	echo "Cannot create scratch"
-	if  [ "$VERBOSE" -ge "1" ] ;
-	then
+	if  [ "$VERBOSE" -ge "1" ] ; then
 		builtin echo "Scratch error on `/bin/hostname` " > "$DIAGERR"
 		/bin/df /scratch  >> "$DIAGERR"
 		/bin/ls -d /scratch/facet* >> "$DIAGERR"
@@ -421,8 +415,7 @@ RETCODE="$E_NOFILE"
 ##
 # Special diagnostic file
 #
-if [ -n "$PBS_O_WORKDIR" ] ;
-then
+if [ -n "$PBS_O_WORKDIR" ] ; then
 	DIAGERR="$PBS_O_WORKDIR/diag_$PBS_JOBID"  
 else
 	DIAGERR="`pwd`/diag_$$"  
