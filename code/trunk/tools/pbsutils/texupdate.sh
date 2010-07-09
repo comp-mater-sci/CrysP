@@ -111,6 +111,7 @@ else
 	RUNWAY="SMT"
 	RUNMODE="1"
 fi
+# Select relaxations to apply
 case "$ALAMELMODEL" in
 	ALAMEL)
 		RLX='1    1'
@@ -119,8 +120,8 @@ case "$ALAMELMODEL" in
 		RLX='0    0'
 		;;
 	*)	
-		print "runAlamel: Unsupported multilevel model request, using ALAMEL"
-		RLX='1    1'
+		echo "runAlamel: Unsupported multilevel model request"
+		return  "$E_SIMERR"
 		;;
 esac
 #
