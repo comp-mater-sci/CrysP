@@ -36,6 +36,9 @@ MMMFILE="elem.MMM"
 #
 # Configuration section for ALAMEL
 ALAMELCMD="$BINDIR/alamel" 
+# Select mmm model: ALAMEL of FC
+#ALAMELMODEL="ALAMEL"
+ALAMELMODEL="FC"
 # Name of ALAMEL config file to be built
 CTLFILE="MAIN1.CTL"
 DEFFILE="defdata.dat"
@@ -108,6 +111,18 @@ else
 	RUNWAY="SMT"
 	RUNMODE="1"
 fi
+case "$ALAMELMODEL" in
+	ALAMEL)
+		RLX='1    1'
+		;;
+	FC)
+		RLX='0    0'
+		;;
+	*)	
+		print "runAlamel: Unsupported multilevel model request, using ALAMEL"
+		RLX='1    1'
+		;;
+esac
 #
 # Do the actual work
 #
@@ -163,7 +178,7 @@ $INPUT                                                    NAME OF INPUT TEXTURE 
     1     (Main) If =1: output for this block is required.
 $DEFTENS 
     1     (SIMUL) NUMBER OF SIMULATION STEPS PER CALL      (This is for a true simulation)
-    1    1(SIMUL) 1: relaxation allowed, for relx 1 and 2  (This is for a true simulation)
+    $RLX  (SIMUL) 1: relaxation allowed, for relx 1 and 2  (This is for a true simulation)
     1     (SIMUL) NUMBER OF SIMULATION STEPS PER CALL      (Fake call of SIMUL - for output only)
     0    0(SIMUL) 1: relaxation allowed, for relx 1 and 2  (Fake call of SIMUL - for output only)
 End-of-CTL-File
