@@ -1,3 +1,4 @@
+#!/bin/bash
 ## Global configuration section
 UTILDIR="$HOME/TEXEVOL"
 BINDIR="$UTILDIR/bin"
@@ -16,10 +17,8 @@ TEXFILE="texout.cub"
 # Configuration of Snapshot
 SNAPFILELIST="${DEFFILE} ${TEXFILE} ${RESULTFILE} ${MMMFILE}"
 
-
-SCRATCH="/tmp/recalcYL.XXXXXX"
-#SCRATCH="${VSC_SCRATCH_NODE}/recalcYL.XXXXXX"
-
 # Number of processors for multilevel facet calculations (default 2)
-NPROC=4
+NPROC=2
+
+export PATH=$BINDIR:$PATH
 

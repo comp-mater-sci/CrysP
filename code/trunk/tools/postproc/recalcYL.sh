@@ -37,28 +37,18 @@ if [ "$1" == "help" ] ; then
 	exit 0;
 fi
 
+#
+# Initialize PostTex features.
+if [ -n  "${POSTTEX_ROOT}" ] ; then
+        . "${POSTTEX_ROOT}/conf/init.sh"
+else
+        echo "Error: POSTTEX_ROOT variable undefined."
+        exit 1
+fi
 
-import() {
-	if [ ! -f "$1" ] ; then
-		echo "Import failed: cannot find $1" 
-		exit 1
-	else
-		 . "$1"
-	fi
-}
-
-import "${HOME}/experimental/snapmangle/locproc.sh"
+import "locproc.sh"
+import "utils.sh"
 import "recalcYL.conf"
-
-
-markProgress() {
-	if [ -z "$1" ] ; then
-		echo -n "." 
-	else
-		echo -n "x"
-	fi
-}
-
 
 
 runYlpCalc() {
@@ -112,12 +102,12 @@ fi
 
 
 HELPMSG="
-	`basename "$0"` runway snapdir outdir outprefix [Facet_config | texupdate] [configfile]
+	`basename "$0"` runmode snapdir outdir outprefix [Facet_config | texupdate] [configfile]
 	or
 	`basename "$0"` help
 
 Parameters:
-	runway -  ylp, texylp 
+	runmode -  ylp, texylp 
 	snapdir - directory that contains snapshots to process
 	outdir - output directory
 	prefix - prefix for filenames
@@ -158,7 +148,7 @@ esac
 
 # Overrvide default config settings
 if [ -n "$CONFIG" && -f "$CONFIG" ] ; then
-	import "$CONFIG"
+	. "$CONFIG"
 fi
 
 # Sanitize the input

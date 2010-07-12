@@ -1,39 +1,16 @@
 #!/bin/bash
-
-
-import() {
-	if [ ! -f "$1" ] ; then
-		echo "Import failed: cannot find $1" 
-		exit 1
-	else
-		 . "$1"
-	fi
-}
+#
+# Initialize PostTex features.
+if [ -n  "${POSTTEX_ROOT}" ] ; then   
+	. "${POSTTEX_ROOT}/conf/init.sh" 
+else
+	echo "Error: POSTTEX_ROOT variable undefined."
+	exit 1
+fi
 
 import "locproc.sh"
-
-markProgress() {
-	if [ -z "$1" ] ; then
-		echo -n "." 
-	else
-		echo -n "x"
-	fi
-}
-
-
-### -->> This section should be moved to a config file  
-## Global configuration section
-UTILDIR="$HOME/TEXEVOL"
-BINDIR="$UTILDIR/bin"
-SCRIPTDIR="$UTILDIR/scripts"
-DATADIR="$UTILDIR/data"
-
-YLPEVOLCMD="$HOME/jgprojects/TWRMTMProject/MTM/branches/facet-ALAMEL/facetpar"
-### <<--
-
-export PATH=$BINDIR:$PATH
-
-SNAPPREFIX="snap_"
+import "utils.sh"
+import "postprocess.conf"
 
 
 # Parameters
@@ -54,7 +31,7 @@ local YLPCONFIG="$4"
 local PLOTFILE="$5"
 local SPLOTFILE="$6"
 local EXTRACTCUR="$7"
-
+local BIAXFILE="$8"
 
 FROMSNAP="texout.cub ${PREFIX}.MMM"
 NQVALS=$(grep "^(P08)" ${YLPCONFIG} | sed -e 's/^.*:://' | awk '{print $3}' )
@@ -159,6 +136,15 @@ for  snap in $SNAPLIST ; do
 		echo -n  "'$DATAFILE' using 1:3  title 'step $step' " >> "$PLOTFILE"
 		[ "$defstep" -lt "$NSNAPS" ] &&	echo ", \\" >> "$PLOTFILE"
 	fi
+	#
+	# Prepare output for 3D plots in biaxial state of stress
+	OUTBIAXDATA="${PREFIX}_${defstep}.DSQ"
+	mv "${PREFIX}.DSQ" "${OUTDIR}/$OUTBIAXDATA" 
+	
+	echo "set output \"${PREFIX}_${defstep}.pdf\"" >> ${BIAXFILE}
+	echo "splot './$OUTBIAXDATA' with pm3d nocontour, './$OUTBIAXDATA' with lines palette nosurface;" >> ${BIAXFILE}
+	echo "set output"  >> ${BIAXFILE}
+	#
 	# Return to previous directory
 	cd "$CWD"
 	markProgress
@@ -232,6 +218,40 @@ End-of-CTL-File
 
 }
 
+init3DBiaxPlotfile() {
+local PLOTFILE="$1"
+local PLOTTITLE="$2"
+cat >"$PLOTFILE" <<End-of-CTL-File
+set title "$PLOTTITLE"
+
+set palette color model RGB; 
+set palette rgbformulae 22,13,-36;
+set cntrparam bspline; set cntrparam points 8;
+set contour base;set surface;set hidden3d;
+unset key;set view 70, 160, 1.0, 1.0;
+set xlabel "Angle to RD, deg"  offset 0,-2
+set ylabel "{/Symbol s}_t / {/Symbol s}_r" offset 0,-1.7
+set zlabel "q-value" rotate by 90;set ztics out;
+set xtics 45 out border offset 0.0,-0.5; set mxtics 3;
+set ytics out border offset 0.5,0.0
+set xrange [  0.00:180.00] reverse;
+
+# nasty trick
+zmin=0.3
+zmax=1.0
+dz=0.1
+set ytics 0.1
+set zrange [zmin:zmax]
+set cbrange [zmin:zmax]
+set cntrparam levels incremental zmin, dz, zmax
+
+# set terminal gif enhanced font "Arial, 18"  animate delay 15 optimize size 1200,800
+set terminal pdfcairo enhanced font "Arial,14" color
+
+End-of-CTL-File
+
+}
+
 
 HELPMSG="Parameters:
 	snapdir - directory that contains snapshots to process
@@ -240,7 +260,7 @@ HELPMSG="Parameters:
 	Facet_config - Facet configuration file
 	texture_extraction (0 - no extraction, 1 - overall evolution, 2 - details for every step)
 	plot_title - title to be put on the plot
-	initial_qdata - raw format of qrs data
+	config_file - local config file to override the global settings
 \n
 Remarks:
 * snapshots must contain MMM file
@@ -249,7 +269,7 @@ Remarks:
 
 
 if [ "$#" -lt 2 ] ; then
-	echo -e "\n" `basename "$0"` snapdir outdir outprefix Facet_config texture_extraction plot_title [initial_qdata] "\n"
+	echo -e "\n" `basename "$0"` snapdir outdir outprefix Facet_config texture_extraction plot_title [config_file] "\n"
 	echo -e "$HELPMSG"
 	exit 1
 fi
@@ -260,7 +280,9 @@ OUTPREFIX="$3"
 YLPCONFIG="$4"
 TEXLEVEL="$5"
 PLOTTITLE="$6"
-[ -n "$7" ] && REFQPLOT="$7"
+# 
+# Read config file if specified in command line:
+[ -n "$7" ] && [ -f "$7" ] && . "$7"
 
 # Sanitize the input
 if [ ! -d "$SNAPDIR" ] ; then
@@ -298,8 +320,10 @@ SPLOTFILE="$COUTDIR/$OUTPREFIX.q3d"
 PLOT3DFILE="${COUTDIR}/${OUTPREFIX}_q3D.plt"
 init3DPlotfile $PLOT3DFILE "$PLOTTITLE" "$SPLOTFILE"
 
+PLOT3DBIAXFILE="${COUTDIR}/${OUTPREFIX}_biax3D.plt"
+init3DBiaxPlotfile "$PLOT3DBIAXFILE" "$PLOTTITLE" 
 #exit 0
-postprocessLocation "$CSNAPDIR" "$COUTDIR" "${OUTPREFIX}" "${CYLPCONFIG}" "$PLOTFILE" "$SPLOTFILE" "$TEXLEVEL"
+postprocessLocation "$CSNAPDIR" "$COUTDIR" "${OUTPREFIX}" "${CYLPCONFIG}" "$PLOTFILE" "$SPLOTFILE" "$TEXLEVEL" "$PLOT3DBIAXFILE"
 
 if [ "$?" == "0" ] ; then
 	echo "Finished."
