@@ -15,7 +15,7 @@ ALAMELCFG= -DMAINDIRECT -DNORESFILE -DNOCURFILE -DWITHCUBFILE
 #ALAMELCFG= -DMAINDIRECT 
 
 
-FFLAGS= -fpp -extend-source 80 -O3 -ipo -vec-report0 $(ALAMELCFG) # -warn all  -opt-report0
+FFLAGS= -fpp -extend-source 80 -align dcommon -O3 -ipo -fast -vec-report0 $(ALAMELCFG) # -warn all  -opt-report0
 
 #FFLAGS= -pg   -O3
 #FFLAGS= -O3
