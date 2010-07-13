@@ -17,16 +17,19 @@ cat <<End-of-help
 
  The following run modes are available:
   * ylp		: calculation of yield surface if the texture is known 
-      The utility will grab the CUB file and will convert it to the SMT format. 
-      This file will be used as an input in the multilevel model calculations. 
+                  At any step the utility will grab the CUB file from snapshot and
+                  will convert it to the SMT format.  This file will be used as an input 
+                  in the multilevel model calculations. 
+     
   * texylp	: the utility will retrieve the deformation data from the snapshot. 
-		The utilty will start texupdate script, which must be provided by the user.  	 
+		  The utilty will start texupdate script, which must be provided by the user.  	 
 
  To be (possibly) implemented in future releases: 
   * ylpmmm	:  calculation of the yield surface if the multilevel model results are known. 
-	The utility will retreive the MMM file from the snapshots, then it will recalculate facet expression. 
-	Note: the user should consider whether the postprocessor utility is more convinent to 
-	      for this task. Basically, the same result should be achieved. 
+	           The utility will retreive the MMM file from the snapshots, then it will 
+                   recalculate the Facet expression. 
+	           Note: the user should consider whether the postprocessor utility is more 
+	           convinent for this task. Basically, the same result should be achieved. 
 End-of-help
 }
 
