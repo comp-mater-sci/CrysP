@@ -33,8 +33,8 @@ set LIST=!LIST! %PREFIX%%%i.png
 sed -f %SEDFILE% %PREFIX%%%i.ps > tmp_step%%i.ps
 
 convert -density 300x300 tmp_step%%i.ps -trim  -units PixelsPerInch -density 300 -quality 100 -depth 3 +repage !OUTPREFIX!.png
-convert  !OUTPREFIX!.png -crop 1839x550+0+129  +repage -quality 100 -depth 3  !OUTPREFIX!_u.png
-convert  !OUTPREFIX!.png -crop 1839x625+0+54  +repage -quality 100 -depth 3  !OUTPREFIX!_l.png
+convert  !OUTPREFIX!.png -crop 1859x550+0+129  +repage -quality 100 -depth 3  !OUTPREFIX!_u.png
+convert  !OUTPREFIX!.png -crop 1869x625+0+54  +repage -quality 100 -depth 3  !OUTPREFIX!_l.png
 
 
 rem convert -density 600x600 !OUTPREFIX!.ps -trim  -units PixelsPerInch -density 300 -quality 90 -depth %BITDEPTH% +repage -density 300 !OUTPREFIX!.png
