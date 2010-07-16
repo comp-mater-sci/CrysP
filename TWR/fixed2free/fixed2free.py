@@ -9,7 +9,7 @@ verbose=0
 
 commentLinePattern = re.compile(r"^[Cc]{2,}\s")
 commentChar = re.compile(r"[Cc]")
-excommentPattern = re.compile(r"!")
+fixedCommentPattern = re.compile(r"^[CcDd*]")
 def fixComment(cline):
     if fixedCommentPattern.match(cline):
         # This is old-style comment. Fix it.    
@@ -33,7 +33,7 @@ def convert(fixedFname, freeFname, alignCont = 72):
     import re
     commentPattern = re.compile(r"^[cCdD*!]")
     cntPattern = re.compile(r"^( {5}|\t)\S")
-    excommentPattern = re.compile(r"[^'\"]*![^'\"]*")
+    excommentPattern = re.compile(r"!")
     # excommentPattern = re.compile(r"!.*$")
     try:
             with open(fixedFname,'r') as inp, open(freeFname,'w') as out:
