@@ -1,10 +1,15 @@
 import re
+"""
+Converts fixed-form Fortran source into free-from
 
+Known bugs:
+ - the exclamation mark (!) is improperly recognized as Fortran90 comment even if it is a part of string.
+"""
 verbose=0
 
 commentLinePattern = re.compile(r"^[Cc]{2,}\s")
 commentChar = re.compile(r"[Cc]")
-fixedCommentPattern = re.compile(r"^[CcDd*]")
+excommentPattern = re.compile(r"!")
 def fixComment(cline):
     if fixedCommentPattern.match(cline):
         # This is old-style comment. Fix it.    
@@ -28,7 +33,7 @@ def convert(fixedFname, freeFname, alignCont = 72):
     import re
     commentPattern = re.compile(r"^[cCdD*!]")
     cntPattern = re.compile(r"^( {5}|\t)\S")
-    excommentPattern = re.compile(r"!")
+    excommentPattern = re.compile(r"[^'\"]*![^'\"]*")
     # excommentPattern = re.compile(r"!.*$")
     try:
             with open(fixedFname,'r') as inp, open(freeFname,'w') as out:
@@ -71,7 +76,7 @@ def convert(fixedFname, freeFname, alignCont = 72):
                                             prevline = (splt[0].ljust(alignCont) + ' & ' +  '!' + splt[1])
                                             #print('out<< ' + prevline)
                                     else:
-                                            prevline =  prevline[:len(prevline)-1].ljust(alignCont)  + ' & ' + '\n'
+                                            prevline =  prevline[:len(prevline)-1].ljust(alignCont)  + ' &\n'
                             # emit the previous line, there will be no further interest in it        
                             out.writelines(prevline)
                             # emit deferred comment blocks
