@@ -5,7 +5,7 @@ BINDIR="$UTILDIR/bin"
 SCRIPTDIR="$UTILDIR/scripts"
 DATADIR="$UTILDIR/data"
 
-YLPEVOLCMD="$HOME/jgprojects/TWRMTMProject/MTM/branches/facet-ALAMEL/facetpar"
+YLPEVOLCMD="${BINDIR}/facetpar"
 CUB2SMTCMD="${BINDIR}/cub2smt" 
 SNAPPREFIX="snap_"
 
