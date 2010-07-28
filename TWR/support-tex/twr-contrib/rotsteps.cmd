@@ -44,7 +44,7 @@ echo %COMMENT% Step %%i   >>  rottex%%i.i01
 rottex.exe rottex%%i.i01 rottex%%i.l01 WAGNER.B04 %PREFIX%%%i.c R%PREFIX%%%i.c
 )
 
-del /Q /F R%PREFIX%*.001
+if exist R%PREFIX%*.001  del /Q /F R%PREFIX%*.001
 
 goto stop
 

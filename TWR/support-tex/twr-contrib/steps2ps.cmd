@@ -12,7 +12,8 @@ set LOGFILE=%PREFIX%_steps2ps.log
 for /L %%i in (%2,1,%3)  do (
 	call c2ps %PREFIX%%%i | grep "MAXIMAL VALUE OF ODF WAS" | tee -a %LOGFILE%
 )
-del /F %PREFIX%*.001
+
+if exist %PREFIX%*.001 del /Q /F %PREFIX%*.001
 
 goto stop
 

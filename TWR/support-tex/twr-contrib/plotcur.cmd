@@ -20,7 +20,7 @@ set COMMENT=%5 %6 %7 %8 %9
 
 
 
-del /Q resp.txt
+if exist resp.txt del /Q resp.txt
 
 
 echo    %1                 Number of extraction runs   >> fcurodf.i01

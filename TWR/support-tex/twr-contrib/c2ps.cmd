@@ -35,7 +35,7 @@ PLOTPSC.EXE plotter color !FNAME!.001
 
 move p01.ps !FNAME!.ps
 
-rm !FNAME!.001
+if exist !FNAME!.001 del /Q /F !FNAME!.001
 
 goto stop
 

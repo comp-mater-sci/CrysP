@@ -22,7 +22,8 @@ for /L %%i in (1,1,4) do (
 )
 rem Build  the comment 
 set COMMENT=%1
-for %%i in (%2 %3 %4 %5 %6 %7 %8 %9) do (
+shift /1
+for %%i in (%1 %2 %3 %4 %5 %6 %7 %8 %9) do (
 	set COMMENT=!COMMENT! %%i
 	shift /1
 )
@@ -31,8 +32,6 @@ for %%i in (%1 %2 %3 %4 %5 %6 %7 %8 %9) do (
 	set COMMENT=!COMMENT! %%i
 	shift /1
 )
-
-echo %COMMENT%
 
 call cur2c %MAXSTEP% %CURFILE% %CLASS% %COMMENT%
 
