@@ -1,0 +1,10 @@
+    2    0              INPUT PARAMETER FOR PLOTIT: PLOTTER, KORIEN=0
+    1    5    4    2    1    1    1    1  color codes
+    0    0    0     pagefeed, paper type, character size
+pagefeed: 0 for plotter with automatic paper loader,1 for other plotter. 
+    Set this parameter to 1 if you want to generate separate files
+    for each page of output.
+
+paper type: 0 for DIN A4, 1 for Letter (8.5 x 11 in.)
+splitfile: default=0  If it is 1: large output files (single pages!) 
+   will be split
