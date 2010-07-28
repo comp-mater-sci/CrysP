@@ -1,26 +1,32 @@
 #!/bin/bash
-#PBS -l ncpus=1
-#PBS -l walltime=36:00:00
+#PBS -l nodes=1:ppn=8
+#PBS -l walltime=24:00:00
 #PBS -m abe
 #PBS -M jerzy.gawad@cs.kuleuven.be
 #PBS -r n
 ##################################################################
 # Configuration section
 #
-JOBNAME=CupDrawing
+JOBNAME=${1:-"CupDrawing"}
 #
-LOGFILE=${JOBNAME}_log.log
 #
 # Set runmode:
 # Normal analysis
-RUNMODE="analysis"
+RUNMODE=${2:-"analysis"}
 #
 # Restart of analysis, if so, OLDJOBNAME must be defined
-# RUNMODE="restart"
-# OLDJOBNAME=CupDrawing
+#RUNMODE="restart"
+#JOBNAME=CupDrawingRestart
+#OLDJOBNAME=CupDrawing
+#
+## Recovery of the analysis
+#RUNMODE="recover"
+#
 #
 ##################################################################
 # Setup of environment
+#
+LOGFILE=${JOBNAME}_log.log
 #
 # Assume that libdir is the current dir
 CURRENTDIR=`pwd`
@@ -48,17 +54,25 @@ echo "results" >> $FACETDIR
 if [ -e $LOGFILE ] ; then
 	BACKUPDIR="backup_`date "+%Y%m%d_%H%M%S"`"
 	mkdir "$BACKUPDIR"
-	cp ${JOBNAME}.* "$LOGFILE" gmetex.{log,state,restart} texupdate.dat results.{tay,out,oum,nt6}  "$BACKUPDIR"
+	cp ${JOBNAME}.* "$LOGFILE" gmetex.{log,state,restart} texupdate.dat results.{tay,out,oum,nt6,tck,crd}  "$BACKUPDIR"
+	# Remove lock
+	rm -f "${JOBNAME}.lck"
 fi
 #
 # Run ABAQUS
 #
 case "$RUNMODE" in
+	datacheck) 
+			abaqus interactive datacheck job=$JOBNAME user=vumat_facet  &>  "$LOGFILE"
+			;;
 	analysis) 
 			abaqus interactive job=$JOBNAME user=vumat_facet  &>  "$LOGFILE"
 			;;
 	restart)	
 			abaqus interactive job=$JOBNAME oldjob=$OLDJOBNAME user=vumat_facet  &>  "$LOGFILE"
+			;;
+	recover)	
+			abaqus interactive recover job=$JOBNAME user=vumat_facet  &>  "$LOGFILE"
 			;;
 	*)
 		echo "Invalid runmode"
