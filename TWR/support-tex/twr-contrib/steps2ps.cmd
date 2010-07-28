@@ -1,4 +1,6 @@
 @echo off
+rem $Id$
+
 setlocal ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
 if "%1" == "" goto noparams

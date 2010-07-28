@@ -1,4 +1,5 @@
 @echo off
+rem $Id$
 
 rem enable extensions
 SETLOCAL ENABLEDELAYEDEXPANSION
@@ -12,7 +13,7 @@ for %%I in (%*) do (
 	set LSTFILE=mfactor_%%~nI.L01 
 	set DATFILE=mfqrs_%%~nI.dat
 	echo %%~nxI : !LSTFILE! !DATFILE!
-	mv -f mfactor.l01 !LSTFILE!
+	move /Y mfactor.l01 !LSTFILE!
 	echo #alpha q r M > !DATFILE!
 	grep "^ ALFA" !LSTFILE! | gawk  "{print $2, $4, $6, $8}" >> !DATFILE!
 )

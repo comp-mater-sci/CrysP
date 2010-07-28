@@ -1,3 +1,6 @@
+@echo off
+rem $Id$
+
 set PWD=%CD%
 for %%K in (*.c) do (
 	echo %%K  %%~nK

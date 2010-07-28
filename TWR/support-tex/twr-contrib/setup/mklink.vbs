@@ -1,4 +1,6 @@
+' $Id$
 '
+' The script will create LNK file for MTM-FHM toolset
 ' One argument is needed: 
 ' 1) path to the shell script with and initial configuration of support tools 
 If WScript.Arguments.Count >= 1 Then

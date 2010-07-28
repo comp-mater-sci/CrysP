@@ -1,4 +1,5 @@
 @echo off
+rem $Id$
 
 if "%1" == "" goto noparams
 
