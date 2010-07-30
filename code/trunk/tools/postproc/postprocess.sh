@@ -175,6 +175,7 @@ YRANGE="$4"
 # gnuplot settings
 
 cat >"$PLOTFILE" <<End-of-CTL-File
+reset
 set title "$PLOTTITLE"
 set key outside vertical box;
 set style data linespoints;
@@ -199,6 +200,7 @@ local PLOTFILE="$1"
 local PLOTTITLE="$2"
 local PLOTDATA=$(basename $3)
 cat >"$PLOTFILE" <<End-of-CTL-File
+reset
 set title "$PLOTTITLE"
 unset key
 set yrange [0:180]
@@ -222,6 +224,7 @@ init3DBiaxPlotfile() {
 local PLOTFILE="$1"
 local PLOTTITLE="$2"
 cat >"$PLOTFILE" <<End-of-CTL-File
+reset
 set title "$PLOTTITLE"
 
 set palette color model RGB; 
@@ -236,7 +239,7 @@ set xtics 45 out border offset 0.0,-0.5; set mxtics 3;
 set ytics out border offset 0.5,0.0
 set xrange [  0.00:180.00] reverse;
 
-# nasty trick
+# Update scale for Z axis if needed
 zmin=0.3
 zmax=1.0
 dz=0.1
@@ -246,7 +249,7 @@ set cbrange [zmin:zmax]
 set cntrparam levels incremental zmin, dz, zmax
 
 # set terminal gif enhanced font "Arial, 18"  animate delay 15 optimize size 1200,800
-set terminal pdfcairo enhanced font "Arial,14" color
+set terminal pdfcairo enhanced font "Arial,14" color size 22cm,22cm
 
 End-of-CTL-File
 
