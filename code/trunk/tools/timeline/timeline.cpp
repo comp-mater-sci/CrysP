@@ -71,10 +71,284 @@ struct timeline
 typedef	timeline<size_t>	masterTimeline;		
 typedef timeline<timePoint>	slaveTimeline;
 
-void writeFrame(std::ostream & out, size_t valid_from, size_t validity_range, 
-				std::string frame_buffer1, std::string frame_buffer2, bool mark_newframe = true);
+typedef std::pair<slaveTimeline,std::string> namedSlaveLine;
+typedef std::vector<namedSlaveLine> slaveLineContainer;
+
+enum OutputOrder
+{
+	masterFirst,
+	slavesFirst
+};
 
 
+class OutputWriter{
+public:
+
+	OutputWriter(const std::string & master_label, const OutputOrder & order = masterFirst)
+	:	m_master_label(master_label),
+		m_lastframe(0),
+		m_order(order)
+	{
+
+	}
+
+	virtual void writeToCurrent(std::ostream & out, size_t master_frame_id, slaveLineContainer & v_slaveTimelines, bool is_modified)
+	{
+		// Start frame
+		startFrame(out, master_frame_id, is_modified);
+		writeFrame(out,master_frame_id,v_slaveTimelines,is_modified);
+		endFrame(out, master_frame_id, is_modified);	
+		// Update the state variables
+		m_lastframe = master_frame_id;
+	}
+
+	virtual void initialize(std::ostream & out)
+	{ /* Empty */ }
+
+	virtual void finalize(std::ostream & out, size_t master_frame_id, slaveLineContainer & v_slaveTimelines, bool is_slave_updated)
+	{ /* Empty */ }
+
+protected:
+	// Opens new frame, writes all necessary markups for new frame
+	//!> It can mangle frame buffer
+	virtual void startFrame(std::ostream & out, size_t master_frame_id, bool is_modified)
+	{
+		out << "<Frame range=[" << m_lastframe << ':' << master_frame_id << "]>\n";
+		m_frame_buffer.clear();
+	}
+
+	//!> Closes the current frame, writes all necessary markups for closure of the frame
+	//!> It can mangle frame buffer
+	virtual void endFrame(std::ostream & out, size_t master_frame_id, bool is_modified)
+	{
+		out << m_frame_buffer;
+		out << "</Frame>\n";
+		m_frame_buffer.clear();
+	}
+
+	virtual void writeFrame(std::ostream & out, 
+							size_t master_frame_id, 
+							slaveLineContainer & v_slaveTimelines,
+							bool is_slave_updated)
+	{
+	
+		switch (m_order)
+		{
+		case masterFirst:
+			writeMaster(out,master_frame_id);
+			writeSlaves(out,v_slaveTimelines);
+			break;
+		case  slavesFirst:
+			writeSlaves(out,v_slaveTimelines);
+			writeMaster(out,master_frame_id);
+			break;
+
+		}
+	}
+
+	virtual void writeMaster(std::ostream &, size_t master_frame_id )
+	{
+		using boost::format;
+		try
+		{
+			m_frame_buffer += (format(m_master_label) % master_frame_id).str();
+		}
+		catch(boost::io::format_error & )
+		{
+			// Quasi-normal error condition: master_label doesn't contain format string
+			m_frame_buffer += m_master_label;
+		}
+		m_frame_buffer += "\n";
+	}
+
+	virtual void writeSlaves(std::ostream & out, slaveLineContainer & v_slaveTimelines )
+	{
+		BOOST_FOREACH(namedSlaveLine i, v_slaveTimelines)
+		{
+			writeSlave(out, i);
+		}
+	}
+
+
+	virtual void writeSlave(std::ostream &, const namedSlaveLine &i )
+	{
+		using boost::format;
+		try
+		{
+			m_frame_buffer += (format(i.second) % i.first.m_current).str();
+		}
+		catch(boost::io::format_error &)
+		{
+			// Quasi-normal error condition: slave label doesn't contain format string
+			m_frame_buffer += i.second;
+		}
+		m_frame_buffer += '\n';
+	}
+
+	std::string m_frame_buffer; 
+	std::string m_master_label;
+
+	size_t		m_lastframe;	//!< Previous frame id
+
+	OutputOrder m_order;
+};
+
+
+
+/*! Output format: compatible with LaTeX animate package, animateinline environment.
+	Requirement: master frame label must contain %d format field.
+
+	This is a special case of output format, it allows "external" iterations over 
+	master states if a configuration of slave states is kept fixed for some time.
+*/
+class AnimateOutputWriter : public OutputWriter
+{
+public:
+	AnimateOutputWriter(const std::string & master_label, const OutputOrder & order = masterFirst)
+	:	OutputWriter(master_label,order)
+		
+	{
+
+	}
+
+	void writeToCurrent(std::ostream & out, size_t master_frame_id, slaveLineContainer & v_slaveTimelines, bool is_modified)
+	{
+		if (is_modified)
+		{
+			// flush pending frame
+			if (master_frame_id > 0)
+				OutputWriter::writeToCurrent(out,master_frame_id,v_slaveTimelines,is_modified);
+			
+			// start new pending frame (buffer only):
+			//  Write slave state to the buffer
+			OutputWriter::writeSlaves(out,v_slaveTimelines);
+			m_slave_buffer = m_frame_buffer;
+			m_frame_buffer.clear();
+			m_lastframe  = master_frame_id;
+		}
+	}
+
+	void finalize(std::ostream & out, size_t master_frame_id, slaveLineContainer & v_slaveTimelines, bool is_slave_updated)
+	{ 
+		if (m_lastframe < master_frame_id)
+				OutputWriter::writeToCurrent(out,master_frame_id,v_slaveTimelines,true);
+	}
+
+
+protected:
+
+	std::string		m_slave_buffer;
+
+	void startFrame(std::ostream & out, size_t master_frame_id, bool is_modified)
+	{
+		
+		size_t validity_range = master_frame_id - m_lastframe;
+
+		out << "% *** begin at frame " << m_lastframe << " ***\n" ;
+		out << "% valid for " << validity_range << " frames (from " << m_lastframe 
+			<< " to " << m_lastframe + validity_range - 1 << ")\n";
+		// for any frame except the first one, request explicitly new frame  
+		if (m_lastframe != 0)
+			out << "\\newframe\n";
+		out << "\\multiframe{" <<  validity_range << "}{i=" << m_lastframe << "+1}{%"<< std::endl;
+	}
+
+	void writeMaster(std::ostream & out, size_t master_frame_id )
+	{
+		out << "\\begin{minipage}{0.5\\textwidth}\n";
+		OutputWriter::writeMaster(out,master_frame_id);
+		out << m_frame_buffer;
+		m_frame_buffer.clear();
+		out << "\\end{minipage}%\n";
+		
+	}
+
+	 	
+	void writeSlaves(std::ostream & out, slaveLineContainer & v_slaveTimelines )
+	{
+		out << "\\begin{minipage}{0.5\\textwidth}\n";
+		// Just flush the buffer to the out
+		out << m_slave_buffer;
+		m_frame_buffer.clear();
+		out << "\\end{minipage}%\n";
+	}
+
+
+	void endFrame(std::ostream & out, size_t master_frame_id, bool is_modified)
+	{
+		out << "}\n"  // end of multiframe
+			<< "% *** end  of frame ***\n%%%%%"<<std::endl;
+	}
+
+};
+
+/*! Output format: compatible with LaTeX beamer package.
+
+*/
+class FrameOutputWriter	:	public OutputWriter
+{
+public:
+	FrameOutputWriter(const std::string & master_label, const OutputOrder & order = masterFirst)
+	: OutputWriter(master_label,order)
+	{
+
+	}
+protected:
+
+	
+	void startFrame(std::ostream & out, size_t master_frame_id, bool is_modified)
+	{
+		out << "% *** frame span:" << m_lastframe << " to " << master_frame_id  << " ***\n";
+		out << "\\begin{frame}[fragile]\n";
+		// minipage for slave/master
+		if (m_order == slavesFirst)
+		{
+			// start minipage for slaves
+			out << "\\begin{minipage}{0.5\\textwidth}\n";
+		}
+		// Clear buffer
+		m_frame_buffer.clear();
+	}
+
+	void writeMaster(std::ostream & out, size_t master_frame_id )
+	{
+		if (m_order == slavesFirst)
+		{
+			out << m_frame_buffer;
+			m_frame_buffer.clear();
+			out << "\\end{minipage}%\n";
+			// close slave minipage 
+		}
+		out << "\\begin{minipage}{0.5\\textwidth}\n";
+		OutputWriter::writeMaster(out,master_frame_id);
+		out << m_frame_buffer;
+		m_frame_buffer.clear();
+		out << "\\end{minipage}%\n";
+		if (m_order == masterFirst)
+		{
+			// start minipage for slaves
+			out << "\\begin{minipage}{0.5\\textwidth}\n";
+		}
+	}
+
+
+	//!> Closes the current frame, writes all necessary markups for closure of the frame
+	//!> It can mangle frame buffer
+	virtual void endFrame(std::ostream & out, size_t master_frame_id, bool is_modified)
+	{
+		if (m_order == masterFirst)
+		{
+			out << m_frame_buffer;
+			m_frame_buffer.clear();
+			out << "\\end{minipage}\n";
+			// close slave minipage 
+		}
+		out << "\\end{frame}\n";
+		out << "% *** end  of frame ***\n%%%%%"<<std::endl;
+		m_frame_buffer.clear();
+	}
+
+};
 
 
 int main(int argc, char * argv[])
@@ -106,9 +380,9 @@ int main(int argc, char * argv[])
 	bfs::path slave_path;
 	string master_label, slave_label;
 
-	config_stream >> master_path  
-				  >> master_label
-				  >> iverbose >> n_slaves;
+	config_stream >> master_path;
+	getline(config_stream,master_label);
+	config_stream >> iverbose >> n_slaves;
 	verbose = (iverbose != 0);
 
 
@@ -120,8 +394,9 @@ int main(int argc, char * argv[])
 		copy(master.m_timeline.begin(),master.m_timeline.end(),ostream_iterator<size_t>(cout,"\n"));
 	master_line.close();
 
-	typedef std::pair<slaveTimeline,std::string> namedSlaveLine;
-	std::vector<namedSlaveLine>  v_slaveTimelines;
+	slaveLineContainer  v_slaveTimelines;
+
+	
 
 	ifstream slave_line;
 	timePoint zero_time;
@@ -151,69 +426,37 @@ int main(int argc, char * argv[])
 	}
 
 	// loop over master timeline
-	string frame_buffer; 
+	
+	// create output writer object
+	
+	//OutputWriter fw(master_label,slavesFirst);
+	//FrameOutputWriter fw(master_label,slavesFirst);
+	AnimateOutputWriter fw(master_label,slavesFirst);
+	//AnimateOutputWriter fw(master_label,masterFirst);
+	fw.initialize(cout);
+	//AnimateOutputWriter fw(master_label);
 
-	bool is_modified = true;
+	bool any_slave_modified = true;
 	size_t lastframe = 0;
-	for (size_t k = 0 ; k < master.size(); k++)
+	for (size_t master_frame = 0 ; master_frame < master.size(); master_frame++)
 	{
-		size_t step = master.m_timeline[k];
+		size_t step = master.m_timeline[master_frame];
 		if (verbose)
-			cout << "master frame " << k << " "  << step << endl;
-
-		
-		// loop over slave timelines
+			cout << "%%% master frame " << master_frame << " "  << step << endl;
+		// Advance slave lines up to the current step
+		// Test if any slave state was actually advanced.	
 		BOOST_FOREACH(namedSlaveLine & i, v_slaveTimelines)
 		{
-			is_modified |= i.first.moveTo(step);
+			any_slave_modified |= i.first.moveTo(step);
 		}
-		if (is_modified)
-		{
-			// close the previous frame
-			if (k > 0 )
-			{
-				writeFrame(cout,lastframe, k - lastframe, frame_buffer, master_label);
-
-			}
-			lastframe = k;
-			// new validity frame is requested
-			// start new frame
-			frame_buffer.clear();
-			BOOST_FOREACH(namedSlaveLine i, v_slaveTimelines)
-			{
-				frame_buffer += (format(i.second) % i.first.m_current).str();
-				frame_buffer += '\n';
-			}
-		}
-		is_modified = false;
+		fw.writeToCurrent(cout, master_frame, v_slaveTimelines,any_slave_modified);
+		any_slave_modified = false;
 	}
 
-	if (lastframe < master.size())
-	{
-		writeFrame(cout,lastframe, master.size() - lastframe, frame_buffer, master_label, false);
-	}
+	fw.finalize(cout,master.size(),v_slaveTimelines,any_slave_modified);
 
 	return 0;
 }
 
-void writeFrame( std::ostream & out, size_t valid_from, size_t validity_range, 
-				std::string frame_buffer1, std::string frame_buffer2, bool mark_newframe )
-{
-	using namespace std;
-	out << "% *** begin at frame " << valid_from << " ***" << endl;
-	out << "% valid for " << validity_range << " frames (from " << valid_from 
-		<< " to " << valid_from + validity_range - 1 << ")" << endl;
-	out << "\\multiframe{" <<  validity_range << "}{i=" << valid_from << "+1}{%"<< endl;
-	// minipage for slave
-	out << "\\begin{minipage}{0.5\\textwidth}\n"
- 		 << frame_buffer1 
-		 << "\\end{minipage}" << endl;
-	// minipage for master
-	out << "\\begin{minipage}{0.5\\textwidth}\n"
-		 << frame_buffer2 << '\n'
-		 << "\\end{minipage}\n";
-	out << "}\n"
-		<< (mark_newframe ? "\\newframe\n" : "")
-		<< "% *** end  of frame ***\n%%%%%"<<endl;
 
-}
+
