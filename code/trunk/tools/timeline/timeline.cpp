@@ -57,7 +57,7 @@ struct timeline
 	int							read(std::istream & in)
 	{
 		size_t cntr;
-		typename value_type step;
+		value_type step;
 		while(in.good())
 		{
 			in >> cntr >> step;

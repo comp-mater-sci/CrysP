@@ -6,10 +6,10 @@
 #pragma once
 
 #include "targetver.h"
-
+#ifdef _WIN32_WINNT
 #include <stdio.h>
 #include <tchar.h>
-
+#endif
 
 
 // TODO: reference additional headers your program requires here
