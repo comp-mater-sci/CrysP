@@ -10,6 +10,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
+#include <boost/program_options.hpp>
 
 struct timePoint{
 	timePoint() : m_step(0), m_variable(0.0,0.0) {}
@@ -354,19 +355,74 @@ protected:
 int main(int argc, char * argv[])
 {
 	using namespace std;
-	if (argc < 2)
-	{
-		cout << "\nOne parameter is required: name of config file.\n";
-		return (-1);
-	}
+	
 	namespace bfs = boost::filesystem;
 	using boost::format;
 	using boost::io::group;
+	typedef int errcode;
+	namespace po = boost::program_options;
 
+	errcode info = 0;	
+	po::options_description all_options("General options");
+
+	all_options.add_options()
+		("animate",		"Output for animate package")
+		("frame",		"Output for regular beamer" )
+		("plain",		"Plain output")
+		;
+	all_options.add_options()
+		("help,h",		"Print help information")
+		("input-file,f",po::value<std::string>(), "Input file")
+		;
+
+	po::variables_map vm;        
+
+	try
+	{	
+		po::store(po::parse_command_line(argc, argv, all_options), vm);
+		po::notify(vm);    
+	}
+	catch (boost::program_options::error e) 
+	{
+		cerr<<e.what()<<endl;
+		return 1;
+	}
+	catch (std::exception e) 
+	{
+		cerr<<e.what()<<endl;
+		return 1;
+	}
+
+	if ((argc < 3) || (vm.empty()) || (info = (errcode)vm.count("help")) ) 
+	{
+		all_options.print(cout);
+		return (info == 0 ? 1 : 0);
+	}
+
+	if (vm.count("input-file") == 0)
+	{
+		cerr<<"No input file specified.\n";
+		return 1;
+	}
+	string config_fname = vm["input-file"].as<std::string>();
+	size_t mode_args = vm.count("plain") + vm.count("frame") + vm.count("animate");
+	if (mode_args == 0)
+	{
+		cerr << "No run mode parameter.";
+		return 1;
+	}
+	if (mode_args > 1)
+	{
+		cerr << "Too many mode parameters, one is expected, " <<mode_args << " are given" << endl;;
+		return 1;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
 	bool verbose = false;
-	int iverbose = 0;
+	int itmp = 0;
 
-	ifstream config_stream(argv[1]);
+	ifstream config_stream(config_fname.c_str());
 	if (config_stream.fail())
 	{
 		cerr << "Cannot open config file " << argv[1] << endl;
@@ -379,12 +435,24 @@ int main(int argc, char * argv[])
 	size_t n_slaves;
 	bfs::path slave_path;
 	string master_label, slave_label;
+	string master_pos;
+	OutputOrder order = masterFirst;
 
 	config_stream >> master_path;
 	getline(config_stream,master_label);
-	config_stream >> iverbose >> n_slaves;
-	verbose = (iverbose != 0);
-
+	config_stream >> master_pos;
+	if (master_pos == "master")
+		order = masterFirst;
+	else 
+	if (master_pos == "slaves")
+		order = slavesFirst;
+	else
+	{
+		std::cerr << "Bad line in config file:" << master_pos << std::endl;
+		return 1;
+	}
+	config_stream >> itmp >> n_slaves;
+	verbose = (itmp != 0);
 
 	ifstream master_line(master_path.external_file_string().c_str());
 
@@ -426,14 +494,28 @@ int main(int argc, char * argv[])
 	}
 
 	// loop over master timeline
-	
+	OutputWriter * ptr_writer = NULL;
 	// create output writer object
+	if (vm.count("plain"))
+		ptr_writer =  new OutputWriter(master_label,order);
+	else
+	if (vm.count("frame"))
+		ptr_writer =  new FrameOutputWriter(master_label,order);	
+	else
+	if (vm.count("animate"))
+		ptr_writer =  new FrameOutputWriter(master_label,order);	
 	
+	if (!ptr_writer)
+	{
+		cerr << "Cannot determine output type" << endl;
+		return 1;
+	}
+
 	//OutputWriter fw(master_label,slavesFirst);
 	//FrameOutputWriter fw(master_label,slavesFirst);
-	AnimateOutputWriter fw(master_label,slavesFirst);
+	//AnimateOutputWriter fw(master_label,slavesFirst);
 	//AnimateOutputWriter fw(master_label,masterFirst);
-	fw.initialize(cout);
+	ptr_writer->initialize(cout);
 	//AnimateOutputWriter fw(master_label);
 
 	bool any_slave_modified = true;
@@ -449,11 +531,11 @@ int main(int argc, char * argv[])
 		{
 			any_slave_modified |= i.first.moveTo(step);
 		}
-		fw.writeToCurrent(cout, master_frame, v_slaveTimelines,any_slave_modified);
+		ptr_writer->writeToCurrent(cout, master_frame, v_slaveTimelines,any_slave_modified);
 		any_slave_modified = false;
 	}
 
-	fw.finalize(cout,master.size(),v_slaveTimelines,any_slave_modified);
+	ptr_writer->finalize(cout,master.size(),v_slaveTimelines,any_slave_modified);
 
 	return 0;
 }
