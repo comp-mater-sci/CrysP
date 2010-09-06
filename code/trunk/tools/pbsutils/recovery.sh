@@ -3,7 +3,7 @@
 ##### Configuration of the script
 #
 ### Global configuration section
-UTILDIR="$HOME/TEXEVOL"
+UTILDIR="${GMETEX_WORKDIR}"
 BINDIR="$UTILDIR/bin"
 SCRIPTDIR="$UTILDIR/scripts"
 DATADIR="$UTILDIR/data"
@@ -22,8 +22,6 @@ TEXFILE="${OUTPREFIX}.cub"
 #
 SNAPFILELIST="${TEXFILE}"
 #
-# Place where the scripts reside
-SCRIPTDIR="$HOME/TEXEVOL/scripts"
 #
 # Name of logfile. If empty, log will not be used.
 # TODO: implement logging (low importance...)

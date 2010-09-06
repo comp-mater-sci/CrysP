@@ -8,6 +8,8 @@
 #PBS -e /dev/null
 #PBS -o /dev/null
 #
+# $Id$
+#
 ### This is PBS script
 ###
 #### Mark the start of job
@@ -17,10 +19,18 @@ builtin echo "1" > ${DIRTYMARK}
 ###
 ##
 ## Global configuration section
-UTILDIR="$HOME/TEXEVOL"
+#UTILDIR="$HOME/TEXEVOL"
+# It is convenient to make a local utildir by setting e.g.:
+UTILDIR="${GMETEX_WORKDIR}"
 BINDIR="$UTILDIR/bin"
 SCRIPTDIR="$UTILDIR/scripts"
 DATADIR="$UTILDIR/data"
+#
+# Terminate instantly if UTILDIR variable is empty
+if [ -z "$UTILDIR" ] ; then
+	echo "Error: incorrect configuration (check variable UTILDIR)"
+	exit 33	 
+fi 
 #
 if [ -n "$PBS_O_WORKDIR" ] ; then
 	SCRATCH="${VSC_SCRATCH_NODE}/texevol.XXXXXXXX"
@@ -38,6 +48,7 @@ ALAMELCMD="$BINDIR/alamel"
 ALAMELMODEL="ALAMEL"
 # Name of ALAMEL config file to be built
 CTLFILE="MAIN1.CTL"
+SLIPFILE="bcc.pre"
 DEFFILE="defdata.dat"
 OUTPREFIX="texout"
 INPUTPREFIX="texinp"
@@ -51,6 +62,12 @@ FACETCONF="Facetconf.par"
 TMPLDIR="$DATADIR"
 # Number of processors used by Facet (note: it should be in accordance with "ppn" resource specification if runs under PBS.
 FACETNPROCS=8
+#
+# List of files that must be copied to the scrach location from template
+TINPLIST="${FACETCONF}
+${SLIPFILE}
+micro1.smt   
+mod402o.par"
 #
 # Configuration of Snapshot
 # List of files to put into stapshot
@@ -74,7 +91,7 @@ STEPID=0
 SEQNID=0
 #
 # Set PATH
-export PATH=/bin:/usr/bin
+export PATH=/bin:/usr/bin:${BINDIR}:${SCRIPTDIR}
 #
 remarkTestMode () {
 	echo "***** Test mode, action $1 skipped *****" 
@@ -100,7 +117,7 @@ if [ -e "$TEXFILE"  ] ; then
 	RUNWAY="CUB"
 	RUNMODE="3"
 else
-	INPUT="$DATADIR/$INPUTPREFIX.smt"
+	INPUT="${DATADIR}/$INPUTPREFIX.smt"
 	if [ ! -e "$INPUT" ] ; then
 		echo "Input SMT file ${INPUT} doesn't exist"
 		exit "$E_NOFILE"
@@ -127,7 +144,7 @@ esac
 #
 cat >"$CTLFILE" <<End-of-CTL-File
 $OUTPREFIX                                Name of output files (give no extension)
-$DATADIR/bcc.pre                             Slip system file
+${TMPDIR}/${SLIPFILE}                      Slip system file
    16                  No. of lines with tau-crit values (Stored in FK1):
 1.0       1.0       1.0       1.0       1.0       1.0
 1.0       1.0       1.0       1.0       1.0       1.0
@@ -146,7 +163,7 @@ $DATADIR/bcc.pre                             Slip system file
 1.0       1.0       1.0       1.0       1.0       1.0
 1.0       1.0       1.0       1.0       1.0       1.0
     1     (Main1) NBLOC
-$DATADIR/micro1.smt                              NAME OF MICROSTRUCTURE FILE
+${TMPDIR}/micro1.smt                              NAME OF MICROSTRUCTURE FILE
     1     (SIMUL) NLIST (Make an output listing 0 or 1)
     1     (SIMUL) NFILE (Make output files 0 or 1)
     0     (SIMUL) NFILTW (Make output files 0 or 1)
@@ -279,12 +296,6 @@ fi
 TARGETDIR=`pwd`
 #
 INPDIR="$TARGETDIR"
-# List of files that must be copied to the scrach location from template
-TINPLIST="${FACETCONF}
-bcc.dat      
-bcc.pre      
-micro1.smt   
-mod402o.par"
 #
 # List of files that must be copied to the scrach from source location
 MINPLIST="$DEFFILE"
@@ -310,8 +321,14 @@ fi
 #
 # Copy from template
 copylist "$TMPLDIR" "$TINPLIST" "$TMPDIR" 
+if [ "$?" -ne "0" ] ; then
+	return "$E_NOFILE"
+fi
 # Copy from workdir - mandatory step
 copylist "$TARGETDIR" "$MINPLIST" "$TMPDIR"
+if [ "$?" -ne "0" ] ; then
+	return "$E_NOFILE"
+fi
 # Copy from workdir - optional step
 if [ -e "$TEXFILE"  ] ; then
 	copylist "$TARGETDIR" "$OINPLIST" "$TMPDIR"
