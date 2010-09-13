@@ -503,7 +503,7 @@ int main(int argc, char * argv[])
 		ptr_writer =  new FrameOutputWriter(master_label,order);	
 	else
 	if (vm.count("animate"))
-		ptr_writer =  new FrameOutputWriter(master_label,order);	
+		ptr_writer =  new AnimateOutputWriter(master_label,order);	
 	
 	if (!ptr_writer)
 	{
