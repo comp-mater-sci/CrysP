@@ -10,6 +10,7 @@ if "%3" == "" goto noparams
 
 set PREFIX=%1
 set LOGFILE=%PREFIX%_steps2ps.log
+if exist %LOGFILE% del %LOGFILE%
 
 for /L %%i in (%2,1,%3)  do (
 	call c2ps %PREFIX%%%i | grep "MAXIMAL VALUE OF ODF WAS" | tee -a %LOGFILE%
