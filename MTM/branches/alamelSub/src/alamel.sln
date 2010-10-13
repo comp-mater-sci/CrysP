@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "alamel", "alamel.vfproj", "{366442E9-62A5-4E17-A166-62B52266222D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{366442E9-62A5-4E17-A166-62B52266222D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{366442E9-62A5-4E17-A166-62B52266222D}.Debug|Win32.Build.0 = Debug|Win32
+		{366442E9-62A5-4E17-A166-62B52266222D}.Release|Win32.ActiveCfg = Release|Win32
+		{366442E9-62A5-4E17-A166-62B52266222D}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
