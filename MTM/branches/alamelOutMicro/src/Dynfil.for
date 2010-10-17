@@ -26,6 +26,20 @@ C     following array is actually allocated in the subroutine GRFIL:
       end module MICROSTR
 
 
+      !> This subroutine extracts the first word from str, fills remaining part with spaces and
+      !> removes all leading blanks.
+      subroutine stripComment(str,strlen)
+      implicit none
+      integer :: strlen
+      character(len=strlen) :: str
+      integer iblank
+      !
+      str = trim(str)
+      iblank = index(str,' ')
+      if ((iblank.GT.0).AND.(iblank.LT.strlen)) then
+           str(iblank:strlen)=' '
+      end if
+      end subroutine
 
 
 
@@ -42,7 +56,6 @@ c <jg>
       integer pathlength
       parameter (pathlength=512)
       character (LEN=pathlength) fnam1
-      integer iblank
 c </jg>      
 !      character*12 fnam1 !jg
       SAVE
@@ -52,11 +65,7 @@ c </jg>
       read (KLEC,88) fnam1
   88  format (a)
 c <jg>
-      iblank = INDEX(fnam1,' ')
-      if ((iblank.GT.0).AND.(iblank.LT.pathlength)) then
-           fnam1(iblank:pathlength)=' '
-           fnam1 = TRIM(fnam1)
-      end if
+      call stripComment(fnam1,len(fnam1))
 c </jg>
       write (*,103) TRIM(fnam1)
       write (IMP,103) TRIM(fnam1)
@@ -140,7 +149,6 @@ c <jg>
       integer pathlength
       parameter (pathlength=512)
       character (LEN=pathlength) fnam1
-      integer iblank
 c </jg>      
       character*40 Titel
 C      dimension TG(3,3)
@@ -160,11 +168,7 @@ C     2          0.0D0,0.0D0,1.0D0/
       read (KLEC,88) fnam1
   88  format (a)
 c <jg>
-      iblank = INDEX(fnam1,' ')
-      if ((iblank.GT.0).AND.(iblank.LT.pathlength)) then
-           fnam1(iblank:pathlength)=' '
-           fnam1 = TRIM(fnam1)
-      end if
+      call stripComment(fnam1,len(fnam1))
 c </jg>
       write (*,103) TRIM(fnam1)
       write (IMP,103) TRIM(fnam1)
