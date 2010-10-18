@@ -81,8 +81,17 @@ C      data NUNRC/13,14/
       DATA N,NC,LC    /5,1,300/
       data nrstep/0/
       END
+      
+#ifdef ALAMEL_SUBROUTINE
+      SUBROUTINE SIMUL(IW,JPAR,EPS,NFILE0,NUNIT,INSG0,acnf)
+      use alamelConfig
+      implicit double precision (a-h,o-z)
+      !
+      type(alamelConfigData)	:: acnf
+#else
       SUBROUTINE SIMUL(IW,JPAR,EPS,NFILE0,NUNIT,INSG0)
       implicit double precision (a-h,o-z)
+#endif         
 C
 C     IW=2 is meant for outputting the final texture.
 C
@@ -164,6 +173,20 @@ c </jg>
       WRITE (IMP,100)  JPAR
  100  FORMAT (//,' INITIALISATION OF SUBROUTINE SIMUL',/,
      1' PARAMETER J =',I5)
+#ifdef ALAMEL_SUBROUTINE
+      NLIST  = acnf%output_config%NLIST
+      NFILE1 = acnf%output_config%NFILE
+      NFILTW = acnf%output_config%NFILTW
+      NTEN   = acnf%output_config%NTEN
+      IGLIJ  = acnf%output_config%IGLIJ 
+      IPR    = acnf%output_config%IPR
+      !
+      ETAFAK = acnf%simul_init%ETAFAK
+      ATTENF = acnf%simul_init%ATTENF
+      FMicro = acnf%simul_init%FMicro
+      !
+      TITEL  = acnf%jobtitle
+#else
       read (KLEC,99) NLIST
       read (KLEC,99) NFILE1
       read (KLEC,99) NFILTW
@@ -173,7 +196,6 @@ c </jg>
       read (KLEC,99) IPR
       read (KLEC,94) ETAFAK
       read (KLEC,94) ATTENF
-  99  FORMAT (2I5)
   94  format (3F10.0)
       WRITE (IMP,101) NLIST,NFILE1,NFILTW,NTEN,NSYM,IGLIJ,
      1 IPR,ETAFAK,ATTENF
@@ -189,9 +211,11 @@ c </jg>
       enddo
  106  format ('F_Microstructure=',3f12.6)  
   16  read (KLEC,98) TITEL
-  98  format (A)
       write (IMP,97) TITEL
+#endif
   97  format (' Title of the new simulation: ',A)
+  98  format (A)
+  99  FORMAT (2I5)
 c <jg>
 #ifndef NOCURFILE
       write (IMP1,98) TITEL
@@ -225,12 +249,18 @@ C      IF (IPR.NE.2) IPR=1
       endif
       RETURN
   30  NFILE=NFILE0*NFILE1
+#ifdef ALAMEL_SUBROUTINE
+      NSTP = acnf%simulCalls(current_call)%nsteps
+      ICRAT1 = acnf%simulCalls(current_call)%rlx1
+      ICRAT2 = acnf%simulCalls(current_call)%rlx2
+#else
       read (KLEC,99) NSTP
       write (IMP,115) NSTP
  115  format (//,' S I M U L         NR. STEPS=',I5,//)
       read (KLEC,99) ICRAT1,ICRAT2
       write (IMP,104) ICRAT1,ICRAT2
  104  format (' ICRAT:',2I5)
+#endif
       swrlx(1)=(ICRAT1.eq.1)
       swrlx(2)=(ICRAT2.eq.1)
       swrlx(3)=.false.

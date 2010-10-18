@@ -43,8 +43,12 @@ C     following array is actually allocated in the subroutine GRFIL:
 
 
 
-
-      SUBROUTINE GRFIL  
+#ifdef ALAMEL_SUBROUTINE
+      SUBROUTINE GRFIL(acnf)
+      use alamelConfig
+#else
+      SUBROUTINE GRFIL
+#endif  
 C     Reading of "microstructure" (Euler angles defining 
 C       grain boundary segments)
 C     Allocation of "temporary file" to memory
@@ -56,12 +60,18 @@ c <jg>
       integer pathlength
       parameter (pathlength=512)
       character (LEN=pathlength) fnam1
-c </jg>      
+c </jg>
+#ifdef ALAMEL_SUBROUTINE
+      type(alamelConfigData)	:: acnf
+#endif    
 !      character*12 fnam1 !jg
       SAVE
       data convf/0.5729577951308232D+02/
       DATA A  / 8 * 0.0D0 , 1.0D0  /
       FPI=1.0D0/convf
+#ifdef ALAMEL_SUBROUTINE
+      fnam1 = acnf%micros_fname  
+#else
       read (KLEC,88) fnam1
   88  format (a)
 c <jg>
@@ -69,6 +79,7 @@ c <jg>
 c </jg>
       write (*,103) TRIM(fnam1)
       write (IMP,103) TRIM(fnam1)
+#endif
  103  format (' GRFIL - Input Texture File:',a)
   99  FORMAT (I5)
 C     UNIT NDAT1= INITIAL MICROSTRUCTURE
@@ -131,10 +142,15 @@ C
 
 
 
-
-
+#ifdef ALAMEL_SUBROUTINE
+      SUBROUTINE LEESOR(NUNIT,MPOINT,acnf)
+      use alamelConfig
+      implicit double precision (a-h,o-z)
+      type(alamelConfigData)	:: acnf
+#else
       SUBROUTINE LEESOR(NUNIT,MPOINT)
       implicit double precision (a-h,o-z)
+#endif
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
       COMMON /TEXTUR/ DUM1(29),NO,DG(3,3),
      1ITW,IPR,GMMA,GEWF,NLIST
@@ -164,6 +180,11 @@ C     1          0.0D0,1.0D0,0.0D0,
 C     2          0.0D0,0.0D0,1.0D0/
       data GAXES/1.0D0,1.0D0,1.0D0/,GEULR/0.0D0,0.0D0,0.0D0/
       FPI=1.0D0/convf
+#ifdef ALAMEL_SUBROUTINE
+      NDAT = acnf%texture%input_type
+      fnam1 = trim(acnf%texture%input_fname)
+      NSTP = acnf%texture%block
+#else      
       read (KLEC,99) NDAT
       read (KLEC,88) fnam1
   88  format (a)
@@ -179,6 +200,7 @@ c </jg>
       WRITE (*,100) NDAT,NSTP
  100  FORMAT (' LEESOR - READS A TEXTURE FILE Type (NDAT) is:'
      1 ,I5,' CHOSEN BLOCK:',I5)
+#endif     
 C     UNIT NDAT1= INPUT TEXTURE
 c <jg>      
 #ifdef WITHCUBFILE

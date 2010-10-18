@@ -1,0 +1,36 @@
+#ifdef ALAMEL_SUBROUTINE
+      use alamelConfig
+#else
+     
+#endif     
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#ifdef ALAMEL_SUBROUTINE
+      
+#endif     
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#ifdef ALAMEL_SUBROUTINE
+      use alamelConfig
+      
+      type(alamelConfigData)	:: acnf
+#else
+     
+#endif
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#ifdef ALAMEL_SUBROUTINE
+      type(alamelConfigData)	:: acnf
+#endif     
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+#ifdef ALAMEL_SUBROUTINE
+        
+#else
+      
+#endif 
