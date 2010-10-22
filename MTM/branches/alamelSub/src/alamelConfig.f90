@@ -41,8 +41,12 @@ implicit none
       end type
     
       type hardeningData
-            !> Parameters of Voce hardening law
-            double precision                          :: TIII1 = 0.0, TIIIS = 0.0 ,TIVS =0.0, THIII1 = 0.0 , THT = 0.0
+            !> Parameters of Voce hardening law. Some 'reasonable' defaults are used.
+            double precision                          :: TIII1  = 1.486     
+            double precision                          :: TIIIS  = 2.476     
+            double precision                          :: TIVS   = 8.357 
+            double precision                          :: THIII1 = 2.75      
+            double precision                          :: THT    = 0.55
       end type
 
       type simulData
@@ -61,22 +65,36 @@ implicit none
             character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
             type(slipSystemData)                      :: slipsystem
             type(outputConfig)                        :: output_config
-            type(hardeningData)                       :: hardening_data
+            type(hardeningData)                       :: hardening
             type(textureData)                         :: texture
             type(simulData)                           :: simul_init
             ! 
             integer                                   :: nSimulCalls = 0           !< Corresponds to NBLOC config data
             type(simulStepData),dimension(:),allocatable  :: simulCalls
             !
-            type(simulStepData)                       :: initSimulCall = simulStepData(.false., 0, 1, 0, 0, &
-                                                            reshape([ 2.5D-2, 0.D0, 0.D0,  &
-                                                                      0.D0, 2.5D-2, 0.D0,  &
-                                                                      0.D0, 0.D0, 2.5D-2], &
-                                                                    [ 3, 3 ]))
             ! Iterator over stepData
             integer                                   :: current_call = 0                                                        
       end type
 
+
+      type alamelResultData
+            !> Macroscopic stress
+            !>
+            !> Layout of memory [3,3,N] where N is number of calls to alamel
+            double precision,dimension(:,:,:),allocatable   :: stress_tensors
+            !
+            double precision,dimension(:),allocatable       :: taylor_factors
+            double precision,dimension(:),allocatable       :: average_stress
+            double precision,dimension(:),allocatable       :: effective_strains
+            
+      end type
+
+      ! Definition of singleton objects
+       
+      type(alamelConfigData)	:: acnf
+      
+      type(alamelResultData)  :: ares
+      
 
 contains
 
@@ -84,29 +102,60 @@ contains
       !>
       !> This subroutine must be called prior to any modifications in 
       !> alamelConfigData object.
-      subroutine initConfig(acnf,ntau,ncalls)
+      subroutine initConfig(cnf,ntau,ncalls,info)
       implicit none
-      type(alamelConfigData),intent(out)  :: acnf
+      type(alamelConfigData),intent(out)  :: cnf
       !
       integer,intent(in)      :: ntau
       integer,intent(in)      :: ncalls
+      integer,intent(out)     :: info
       !
-      acnf%slipsystem%ntau = ntau
+      info = 1
+      cnf%slipsystem%ntau = ntau
       if ((ntau > 0) ) then
-            allocate(acnf%slipsystem%taucrit(ntau))
+            allocate(cnf%slipsystem%taucrit(ntau),stat=info)
+            if (info /= 0) return
             ! Fill taucrit array with 1.D0
-            acnf%slipsystem%taucrit = 1.D0
-            acnf%slipsystem%nsym = 1
+            cnf%slipsystem%taucrit = 1.D0
+            cnf%slipsystem%nsym = 1
       else
-            acnf%slipsystem%nsym = 0
+            cnf%slipsystem%nsym = 0
       endif
       !
-      if (ncalls > 0) then
-            acnf%nSimulCalls = ncalls      
-            allocate(acnf%simulCalls(acnf%nSimulCalls))
-      endif      
+      if (ncalls >= 0) then
+            cnf%nSimulCalls = ncalls      
+            allocate(cnf%simulCalls(0:cnf%nSimulCalls),stat=info)
+            if (info /= 0) return
+            cnf%simulCalls(0) = simulStepData(.true., 0, 1, 0, 0, &
+                                                reshape([ 2.5D-2, 0.D0,  0.D0,   &
+                                                          0.D0,   0.D0,  0.D0,   &
+                                                          0.D0,   0.D0, -2.5D-2], &
+                                                        [ 3, 3 ]))
+            info = 0      
+      endif
       !  
       end subroutine
+
+      !> Initialization of datastructures for storing outputs
+      subroutine initResults(res,ncalls,info)
+      implicit none
+      type(alamelResultData),intent(out)        :: res
+      integer,intent(in)                        :: ncalls
+      integer,intent(out)                       :: info
+      !
+      info = 1
+      if (ncalls >= 0) then
+            allocate(res%stress_tensors(3,3,0:ncalls),       &
+                     res%taylor_factors(0:ncalls),           &
+                     res%average_stress(0:ncalls),           &
+                     res%effective_strains(0:ncalls),        &
+                     stat=info)
+            if (info == 0) then
+                   res%stress_tensors = 0.D0
+            endif      
+      endif
+      end subroutine
+
 
 end module
 

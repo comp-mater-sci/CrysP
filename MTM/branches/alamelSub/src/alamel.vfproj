@@ -4,7 +4,7 @@
 		<Platform Name="Win32"/></Platforms>
 	<Configurations>
 		<Configuration Name="Debug|Win32" OutputDirectory="ifort\$(ConfigurationName)" IntermediateDirectory="ifort\$(ConfigurationName)">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" PreprocessorDefinitions="MAINDIRECT;ALAMEL_SUBROUTINE" Interfaces="true" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" Traceback="true" BoundsCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" PreprocessorDefinitions="MAINDIRECT;ALAMEL_SUBROUTINE;NORESFILE;NOCURFILE;NOTWNFILE;NOLSTFILE;WITHSMTFILE;" Interfaces="true" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" Traceback="true" BoundsCheck="true" UninitializedVariablesCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateManifest="false" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -14,7 +14,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release|Win32" OutputDirectory="ifort\$(ConfigurationName)" IntermediateDirectory="ifort\$(ConfigurationName)">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" BufferedIO="true" InterproceduralOptimizations="ipoMultiFile" Preprocess="preprocessYes" PreprocessorDefinitions="MAINDIRECT;" CommonElementAlignment="alignCommonEightBytes"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" BufferedIO="true" InterproceduralOptimizations="ipoMultiFile" Preprocess="preprocessYes" PreprocessorDefinitions="MAINDIRECT;ALAMEL_SUBROUTINE;NORESFILE;NOCURFILE;NOTWNFILE;NOLSTFILE" CommonElementAlignment="alignCommonEightBytes"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateManifest="false" SubSystem="subSystemConsole"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>

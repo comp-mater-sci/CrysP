@@ -90,8 +90,10 @@ c </jg>
 C     UNIT LEC = SLIP SYSTEMS
       open (unit=LEC,file=TRIM(fnam2),status='old')
 c <jg>: Open file for output SMT 
+#ifdef WITHSMTFILE
       cods1(L+1:L+4)='.smt'
       open(unit=NUMIC,file=cods1,status='replace',action='write')
+#endif      
 #ifdef WITHCUBFILE
       cods1(L+1:L+4)='.cub'
       open(unit=NUCUB,file=cods1,status='replace',
@@ -200,10 +202,17 @@ c </jg>
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #else
 ! Simplified version of alamel, suitable for calls as a subroutine
-	!> 
-      subroutine ALAMEL(acnf)
+	!> Subroutine ALAMEL
+	!>
+	!> \param ireason: 
+	!>    * 1 - initialization of data structures and initialization of sg0
+	!>    * 2 - initialization of sg0
+	!>    * 3 - regular call 
+	!>    * 4 - request for output (if compiled with support for output)     
+      subroutine ALAMEL(ireason)
       use alamelConfig
       use alamelInterface
+      use UDYNFIL
       implicit double precision (a-h,o-z)
 c      Several simulations (usually several-steps each),
 C      following each other.
@@ -228,7 +237,7 @@ c <jg>
 	COMMON /OUTMIC/NUMIC,NUCUB
       double precision resid
       integer iiter
-      type(alamelConfigData)	:: acnf
+      integer ireason
 c </jg>        
       COMMON /IGLIJS/ FK1(96),NUNGL,NGLS,CC(96)
 C      COMMON /RCFILS/ NUNRC(2)
@@ -246,33 +255,26 @@ C      COMMON /RCFILS/ NUNRC(2)
       DATA MPOINT /8000/,NUNIT/2/
       SAVE
 
-      
-      
+      if (ireason < 2) then      
+
 C     UNIT NUNIT = Temporary file
       open(unit=NUNIT,status='SCRATCH',form='unformatted')
 C     UNIT IDISK1 = Temporary file
-      open(unit=IDISK1,status='SCRATCH',form='unformatted')
+C      open(unit=IDISK1,status='SCRATCH',form='unformatted')
 C     UNIT KLEC = CONTROL FILE
-      open (unit=KLEC,file='MAIN1.CTL',status='old')
-c <jg>
-  93  format(' Input file:',a)
-#ifndef MAINDIRECT
-      read (KLEC,90) fnam1
-      write (*,93) fnam1
-      close (unit=KLEC)
-C     UNIT KLEC = PARAMETER FILE
-      open (unit=KLEC,file=fnam1,status='old')
-#endif
-c </jg>
+C      open (unit=KLEC,file='MAIN1.CTL',status='old')
+C
   90  format (a)
       codsim = trim(acnf%output_prefix)
   92  format (' Code for this simulation: ',a)
       L=LEN_TRIM(codsim)
       cods1=codsim
+#ifndef NOLSTFILE      
       cods1(L+1:L+4)='.LST'
 C     UNIT IMP = PRINTER
       open (unit=IMP,file=cods1,status='replace')
       write (IMP,92) codsim
+#endif
 c <jg>
 #ifndef NOCURFILE
       cods1(L+1:L+4)='.CUR'
@@ -285,21 +287,15 @@ C     UNIT IMP2 = PRINTER
       open (unit=IMP2,file=cods1,status='replace')
 #endif
 c </jg>
+#ifndef NOTWNFILE
       cods1(L+1:L+4)='.TWN'
 C     UNIT IMP3 = PRINTER
       open (unit=IMP3,file=cods1,status='replace')
-      fnam2 = trim(acnf%slipsystem%input_fname)  
+#endif  
+      fnam2 = trim(acnf%slipsystem%input_fname)
 C     UNIT LEC = SLIP SYSTEMS
       open (unit=LEC,file=TRIM(fnam2),status='old')
-c <jg>: Open file for output SMT 
-      cods1(L+1:L+4)='.smt'
-      open(unit=NUMIC,file=cods1,status='replace',action='write')
-#ifdef WITHCUBFILE
-      cods1(L+1:L+4)='.cub'
-      open(unit=NUCUB,file=cods1,status='replace',
-     &     form='UNFORMATTED',action='write')
-#endif
-c </jg>
+
       ! nsym decides how  the slip systems are dealt with 
       if (acnf%slipsystem%nsym == 0) then
             FK1 = 1.D0
@@ -309,27 +305,37 @@ c </jg>
       NBLOC = acnf%nSimulCalls
   99  format (i5)
 
-      CALL GRFIL(acnf)  
+      CALL GRFIL()  
 
 C
 C     Initialisation of SIMUL
 C
-      CALL SIMUL(0,1,EPS,1,NUNIT,0,acnf)
+      CALL SIMUL(0,1,EPS,1,NUNIT,0)
+      ! go back to initial texture, initialize UDynfil
+      CALL LEESOR(NUNIT,MPOINT)
+      
+      endif  ! ireason < 2
+            
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      if (ireason < 3) then
+            NFILE0 = acnf%simulCalls(0)%do_output
+            DG = acnf%simulCalls(0)%dgf
+
 C
 C     Initialisation of SG0 (average von Mises stress)
 C
-      CALL LEESOR(NUNIT,MPOINT,acnf)
-C     Reading of NFILE0: if 1, make output record; if 0, no output record
-C
+            CALL SIMUL(1,1,EPS,NFILE0,NUNIT,1)
+            !
+            !     Come back to initial texture
+            !
+            !CALL LEESOR(NUNIT,MPOINT)
+            !
+            call useUDyn() !! AKA: call fleesor()
+      endif ! ireason < 3
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      if (ireason == 3) then
       
-      NFILE0 = acnf%initSimulCall%do_output
-      DG = acnf%initSimulCall%dgf
-      
-      CALL SIMUL(1,1,EPS,NFILE0,NUNIT,1,acnf)
-C
-C     Come back to initial texture
-C
-      CALL LEESOR(NUNIT,MPOINT,acnf)
       DO 2 JBLOC=1,NBLOC
 C
 C     Simulation of a certain number of steps.
@@ -339,8 +345,8 @@ C     after the 1st step.
 C
 	acnf%current_call = JBLOC
 
-      NFILE0 = acnf%simulCalls(current_call)%do_output
-      DG = acnf%simulCalls(current_call)%dgf
+      NFILE0 = acnf%simulCalls(acnf%current_call)%do_output
+      DG = acnf%simulCalls(acnf%current_call)%dgf
 
 c >>> jg: preempt round-off errors due to IO format
       resid = DG(1,1)+DG(2,2)+DG(3,3)
@@ -351,25 +357,47 @@ c >>> jg: preempt round-off errors due to IO format
             enddo
       endif
 c <<< 
-      if (acnf%simulCalls(current_call)%keep_texture) then
-            CALL LEESOR(NUNIT,MPOINT,acnf)
-      endif
       
-      CALL SIMUL(1,1,EPS,NFILE0,NUNIT,0,acnf)
+      CALL SIMUL(1,1,EPS,NFILE0,NUNIT,0)
+      
+      if (acnf%simulCalls(acnf%current_call)%keep_texture) then
+            !      CALL LEESOR(NUNIT,MPOINT)
+            call useUDyn()  ! AKA: call fleesor
+      else
+            call updateUDyn()      
+      endif
+
    2  CONTINUE
+   
+      endif 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      
+      if (ireason == 4) then
 C
 C     Output of last "current situation"
 C
-      write (IMP,110)
-      write (*,110)
- 110  format (//,' Final call of SIMUL (for output only)')
-      CALL SIMUL(2,1,EPS,NFILE0,NUNIT,0,acnf)
-c <jg>
-      close(NUMIC)
-#ifdef WITHCUBFILE        
-      close(NUCUB)
+#ifdef WITHSMTFILE
+c <jg>: Open file for output SMT 
+            cods1(L+1:L+4)='.smt'
+            open(unit=NUMIC,file=cods1,status='replace',action='write')
+#endif      
+#ifdef WITHCUBFILE
+            cods1(L+1:L+4)='.cub'
+            open(unit=NUCUB,file=cods1,status='replace',
+     &            form='UNFORMATTED',action='write')
 #endif
 c </jg>
+            NFILE0 = 1
+            CALL SIMUL(2,1,EPS,NFILE0,NUNIT,0)
 
+#ifdef WITHSMTFILE
+            close(NUMIC)
+#endif      
+#ifdef WITHCUBFILE        
+            close(NUCUB)
+#endif
+      
+      endif
+      
 	end subroutine
 #endif

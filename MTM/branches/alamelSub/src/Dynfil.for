@@ -25,6 +25,134 @@ C     following array is actually allocated in the subroutine GRFIL:
       data vers /.true./
       end module MICROSTR
 
+      module UDYNFIL
+      use DYNFIL
+      use MICROSTR
+      ! Motivation: 
+      ! It is pointless to dump data to file and re-read them 
+      ! in following circumstances:
+      ! 1) if texture data are constant (i.e. calculation of stresses), 
+      ! 2) texture is not constant, but can be stored for future re-use.
+      !
+      ! Data that are stored in NUNIT
+      type dyndata
+            logical :: is_initialized = .false.
+            integer :: npoints = 0
+            !
+            type(grain),dimension(:),allocatable :: DFIL
+            double precision,dimension(3,3) :: FALG,CIJ0,TAX0
+            double precision,dimension(3) :: GAXES,GEULR
+            integer :: NRSTEP
+            ! WtLam from MICROSTR
+            double precision,dimension(:), allocatable :: WtLam
+      end type
+      
+      type(dyndata),save :: UDyn      
+      
+      contains
+      
+      subroutine initializeUDyn(NUNIT,npoints)      
+      implicit none
+      integer,intent(in) :: NUNIT
+      integer,intent(in) :: npoints
+      !
+      integer :: i, istat
+      double precision :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),F(3,3), 
+     &                    T(3,3),ZERO(3,3), FI1,PHI,FI2, GEW,GAM
+      !
+      if (UDyn%is_initialized) return
+      
+      allocate(UDyn%DFIL(npoints),UDyn%WtLam(npoints),stat=istat)
+      if (istat /= 0) then
+         write(*,*) 'InitializeUDyn: Cannot allocate memory'
+         ! todo: less severe error handling
+         stop 5
+      endif 
+      UDyn%is_initialized = .true.
+      UDyn%npoints = npoints
+      ! make sure the unit is at 0 position
+      rewind(nunit)
+      ! code below is borrowed from DYNFIL1
+      read (nunit) UDyn%nrstep,UDyn%FALG,UDyn%GAXES, UDyn%GEULR,
+     &             UDyn%CIJ0,UDyn%TAX0
+      do i=1,npoints
+         read(NUNIT) FI1,PHI,FI2,T,GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO
+         UDyn%DFIL(i)%tFI1=FI1
+         UDyn%DFIL(i)%tPHI=PHI
+         UDyn%DFIL(i)%tFI2=FI2
+         UDyn%DFIL(i)%tGEW=GEW
+         UDyn%DFIL(i)%tGAM=GAM
+         UDyn%DFIL(i)%tAXES=AXES
+         UDyn%DFIL(i)%tEULR=EULR
+         UDyn%DFIL(i)%tT=T
+         UDyn%DFIL(i)%tF=F
+         UDyn%DFIL(i)%tCIJ=CIJ
+         UDyn%DFIL(i)%tTAX=TAX
+         UDyn%DFIL(i)%tZERO=ZERO
+         !!    
+         UDyn%DFIL(i)%tRHO=ZERO
+         UDyn%WtLam(i)=GEW
+      end do
+      rewind nunit
+           
+      end subroutine
+
+
+      !> Update stored state by current content of Dynfil structures    
+      subroutine updateUDyn()
+      implicit none
+      integer :: npoints, i
+      !
+      if (UDyn%is_initialized == .false.) then
+            write(*,*) 'updateUDyn: call to uninitialized UDyn'
+            stop 5
+      endif
+      !
+      npoints = UDyn%npoints
+      !
+      UDyn%nrstep = nrstep
+      UDyn%FALG = FALG
+      UDyn%GAXES = GAXES
+      UDyn%GEULR = GEULR
+      UDyn%CIJ0 = CIJ0
+      UDyn%TAX0 = TAX0
+      !
+      do i=1,npoints
+         UDyn%DFIL(i)  = DFIL(i)
+         UDyn%WtLam(i) = WtLam(i)
+      end do
+      !
+      end subroutine
+      
+      !> Restore contents of UDyn into Dynfil structures
+      subroutine useUDyn()
+      implicit none
+      integer :: npoints, i
+      
+      if (UDyn%is_initialized == .false.) then
+            write(*,*) 'useUDyn: call to uninitialized UDyn'
+            stop 5
+      endif
+      npoints = UDyn%npoints
+      !
+      nrstep = UDyn%nrstep
+      FALG   = UDyn%FALG
+      GAXES  = UDyn%GAXES
+      GEULR  = UDyn%GEULR
+      CIJ0   = UDyn%CIJ0
+      TAX0   = UDyn%TAX0
+      
+      do i=1,npoints
+         DFIL(i)  = UDyn%DFIL(i)
+         WtLam(i) = UDyn%WtLam(i)
+      end do
+      
+      
+      end subroutine
+      
+      end module
+
+
 
       !> This subroutine extracts the first word from str, fills remaining part with spaces and
       !> removes all leading blanks.
@@ -43,11 +171,9 @@ C     following array is actually allocated in the subroutine GRFIL:
 
 
 
-#ifdef ALAMEL_SUBROUTINE
-      SUBROUTINE GRFIL(acnf)
-      use alamelConfig
-#else
       SUBROUTINE GRFIL
+#ifdef ALAMEL_SUBROUTINE
+      use alamelConfig
 #endif  
 C     Reading of "microstructure" (Euler angles defining 
 C       grain boundary segments)
@@ -61,9 +187,6 @@ c <jg>
       parameter (pathlength=512)
       character (LEN=pathlength) fnam1
 c </jg>
-#ifdef ALAMEL_SUBROUTINE
-      type(alamelConfigData)	:: acnf
-#endif    
 !      character*12 fnam1 !jg
       SAVE
       data convf/0.5729577951308232D+02/
@@ -77,8 +200,11 @@ c </jg>
 c <jg>
       call stripComment(fnam1,len(fnam1))
 c </jg>
+#ifndef NOLSTFILE
       write (*,103) TRIM(fnam1)
       write (IMP,103) TRIM(fnam1)
+#endif
+!      
 #endif
  103  format (' GRFIL - Input Texture File:',a)
   99  FORMAT (I5)
@@ -87,15 +213,22 @@ C     UNIT NDAT1= INITIAL MICROSTRUCTURE
 C
       read (NDAT1,94) NGrElm,TitMic
   94  format(I5,5x,A)
+#ifndef NOLSTFILE  
       write (*,93) NGrElm,TitMic
       write (IMP,93) NGrElm,TitMic
   93  format (' Number of orientations in MICROSTRUCTURE file:',I5,/,
      1' Titel on  file: ',A)
+#endif     
       ALLOCATE(TmatGr(3,3,NGrElm),STAT=jok)
       if (jok.eq.0) then
+#ifndef NOLSTFILE      
                       write (IMP,101)
+#endif
+                      continue                        
                     else
+#ifndef NOLSTFILE                    
                       write (IMP,102)
+#endif                      
                       stop
                     endif
  101  format (' GRFIL ',
@@ -142,15 +275,12 @@ C
 
 
 
-#ifdef ALAMEL_SUBROUTINE
-      SUBROUTINE LEESOR(NUNIT,MPOINT,acnf)
-      use alamelConfig
-      implicit double precision (a-h,o-z)
-      type(alamelConfigData)	:: acnf
-#else
       SUBROUTINE LEESOR(NUNIT,MPOINT)
-      implicit double precision (a-h,o-z)
+#ifdef ALAMEL_SUBROUTINE
+      use alamelConfig
+      use UDYNFIL, only: InitializeUDyn
 #endif
+      implicit double precision (a-h,o-z)
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
       COMMON /TEXTUR/ DUM1(29),NO,DG(3,3),
      1ITW,IPR,GMMA,GEWF,NLIST
@@ -191,15 +321,20 @@ C     2          0.0D0,0.0D0,1.0D0/
 c <jg>
       call stripComment(fnam1,len(fnam1))
 c </jg>
+#ifndef NOLSTFILE         
       write (*,103) TRIM(fnam1)
       write (IMP,103) TRIM(fnam1)
  103  format (' LEESOR - Input Texture File:',a)
+#endif
       read (KLEC,99) NSTP
   99  FORMAT (I5)
+#ifndef NOLSTFILE         
       WRITE (IMP,100) NDAT,NSTP
       WRITE (*,100) NDAT,NSTP
  100  FORMAT (' LEESOR - READS A TEXTURE FILE Type (NDAT) is:'
      1 ,I5,' CHOSEN BLOCK:',I5)
+#endif     
+!
 #endif     
 C     UNIT NDAT1= INPUT TEXTURE
 c <jg>      
@@ -228,10 +363,12 @@ C     "Manual-made" type of input texture (.SMT-file)
 C
       read (NDAT1,94) NREC,TITEL
   94  format(I5,5x,A)
+#ifndef NOLSTFILE         
       write (*,93) NREC,TITEL
       write (IMP,93) NREC,TITEL
   93  format (' Number of orientations in SMT-type input file:',I5,/,
      1' Titel on input file: ',A)
+#endif
       call TMATRIX(TAXES,GEULR(1),GEULR(2),GEULR(3))
       call Transf(GAXES,CIJ,TAXES)
 C      write (nunit) nrstep,FALG,GAXES,GEULR,CIJ,TG
@@ -242,10 +379,11 @@ C     Input texture made during a previous simulation (.CUR-file)
 C
   33  read (NDAT1,92) TITEL
   92  format (A)
+#ifndef NOLSTFILE         
       write (IMP,102) TITEL
       write (*,102) TITEL
   102 format(' Title on CUR-type-input file:',A)
-      
+#endif      
   14  LPOINT=MPOINT+1
       J=4
       NPOINT=1
@@ -274,9 +412,11 @@ c <jg>
       read (NDAT1,91) DOM
       read (NDAT1,89) NS,NREC,FALG,GAXES,GEULR
   89  format (I6,5x,I5,44x,5(2x,3f10.0))
+#ifndef NOLSTFILE         
       write (*,104) NS,NREC
       write (IMP,104) NS,NREC
  104  format (' Input block nr.',i5,3x,'  Number of crystallites',i5)
+#endif
       read (NDAT1,91) DOM
 c <jg>
 #ifdef WITHCUBFILE
@@ -287,9 +427,11 @@ c <jg>
       if (iuerr .ne. 0) then
          write(*,*) 'Error in header of CUB file'
          call EXIT(17)
-      endif        
+      endif
+#ifndef NOLSTFILE         
       write (*,105) NS,NREC
       write (IMP,105) NS,NREC
+#endif
  105  format (' Input step nr.',i5,3x,'  Number of crystallites',i5)
  923  continue 
 #endif
@@ -380,14 +522,21 @@ C      WRITE (NUNIT) FI1,PHI,PHI2,T,GEW,GAM,F,GAXES,GEULR,CIJ,TG,ZERO
   28  CONTINUE
   34  CONTINUE
   11  CONTINUE                                                          
-      NPOINT=NPOINT-1                                                   
+      NPOINT=NPOINT-1
+#ifndef NOLSTFILE         
       WRITE (IMP,107) NPOINT,TOTGEW
  107  FORMAT (' NUMBER OF ORIENTATIONS=',I6,'   SUM OF ALL WEIGHT ',
      1 'FACTORS=',F15.7,/)
+#endif
       rewind NUNIT
       rewind NDAT1
       J=1
       call DYNFIL1(nunit,npoint,MPOINT)
+#ifdef ALAMEL_SUBROUTINE
+      ! Use NUNIT as a source of data.
+      ! It could be avoided, but the code above would be obfuscated even more than it is now...
+      call InitializeUDyn(NUNIT,npoint)
+#endif      
       RETURN
       END SUBROUTINE LEESOR
 
@@ -424,7 +573,9 @@ C     Allocation of "temporary file" to memory
      1 ZERO(3,3)
       if (npoint.gt.MPOINT) then
                               iok=1
+#ifndef NOLSTFILE         
                               write (IMP,102)
+#endif                              
                               goto 1
                             endif
       if (iok.eq.0) then
@@ -432,16 +583,24 @@ C     Allocation of "temporary file" to memory
                       DEALLOCATE(DFIL,STAT=jok)
                       if (jok.ne.0.or.i.ne.0) then
                                       write (*,100)
+#ifndef NOLSTFILE         
                                       write (IMP,100)
+#endif
                                       stop
                                     endif
                     endif
  100  format(' DYNFIL1 - De-allocation of WtLAM/DFIL-array failed')
       ALLOCATE (WtLam(npoint),STAT=jok)
       if (jok.eq.0) then
+#ifndef NOLSTFILE         
                       write (IMP,201)
+#endif                      
+                      continue
                     else
+#ifndef NOLSTFILE         
                       write (IMP,202)
+#endif
+                      write (*,202)
                       stop
                     endif
  201  format (' DYNFIL1 ',
@@ -450,9 +609,14 @@ C     Allocation of "temporary file" to memory
      1 'Allocation of memory to WtLam failed')
       ALLOCATE(DFIL(npoint),STAT=iok)
       if (iok.eq.0) then
+#ifndef NOLSTFILE         
                       write (IMP,101)
+#endif
+                      continue
                     else
+#ifndef NOLSTFILE         
                       write (IMP,102)
+#endif
                       goto 1
                     endif
  101  format (' DYNFIL - ',

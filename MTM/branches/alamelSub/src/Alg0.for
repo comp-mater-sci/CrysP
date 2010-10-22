@@ -5,6 +5,9 @@ C     2) They will be multiplied with TAU, calculated from GAMMA
 C        using the FTAU function.
 C
       FUNCTION FTAU(GAMMA)
+#ifdef ALAMEL_SUBROUTINE
+      use alamelConfig
+#endif         
 C      Double Precision FTAU 
       implicit double precision (a-h,o-z)
       double precision GAMMA
@@ -12,10 +15,18 @@ C      Double Precision FTAU
       SAVE
 C     check wether model parameters must be read:
       if (GAMMA.gt.-1000.0) goto 1
+#ifdef ALAMEL_SUBROUTINE
+      TIII1 = acnf%hardening%TIII1
+      TIIIS = acnf%hardening%TIIIS
+      TIVS  = acnf%hardening%TIVS
+      THIII1= acnf%hardening%THIII1
+      THT   = acnf%hardening%THT
+#else
 C     Read the parameters of the work hardening model:
       read (KLEC,99) TIII1,TIIIS,TIVS
       read (KLEC,99) THIII1,THT
   99  format (3f10.0)
+#ifndef NOLSTFILE
       write (IMP,100) TIII1,TIIIS,TIVS,THIII1,THT
  100  format(' Work hardening model = DOUBLE VOCE-model',/,
      2 ' TAU-III-1=  ',f20.8,/,
@@ -23,11 +34,16 @@ C     Read the parameters of the work hardening model:
      4 ' TAU-IV-S =  ',f20.8,/,
      3 ' THETA-III-1=',f20.8,/,
      3 ' THETA-T=    ',f20.8)
+#endif
+!     
+#endif     
       if (TIIIS.gt.TIII1.and.THIII1.gt.THT) goto 3
+#ifndef NOLSTFILE
       write (IMP,101)
  101  format (' ALG0 - FTAU - reading data - TAU-III-S must be'
      1 ,' larger than TAU-III-1',
      2 /, '     also, THETA-III-1 must be larger than THETA-T')
+#endif
       stop
 C     Calculation of transition-gamma
    3  THIII=THIII1/(1.0-TIII1/TIIIS)
@@ -39,8 +55,10 @@ C     Calculation of theta-IV-0
       THIV=THT/(1.0-TAUT/TIVS)
 C     Calculation of TAU-IV-0
       TIV0=TIVS+(TAUT-TIVS)*exp(THIV*GAMMAT/TIVS)
+#ifndef NOLSTFILE
       write (IMP,102) GAMMAT,TAUT,THIV,TIV0
  102  format (' GAMMA-T, TAU-T, THETA-IV-0, TAU-IV-0',/,4d15.5)
+#endif
       FTAU=0.0
       goto 2
 C     Implementation of the VOCE-model
@@ -82,16 +100,11 @@ C      data NUNRC/13,14/
       data nrstep/0/
       END
       
-#ifdef ALAMEL_SUBROUTINE
-      SUBROUTINE SIMUL(IW,JPAR,EPS,NFILE0,NUNIT,INSG0,acnf)
-      use alamelConfig
-      implicit double precision (a-h,o-z)
-      !
-      type(alamelConfigData)	:: acnf
-#else
       SUBROUTINE SIMUL(IW,JPAR,EPS,NFILE0,NUNIT,INSG0)
-      implicit double precision (a-h,o-z)
+#ifdef ALAMEL_SUBROUTINE
+      use alamelConfig
 #endif         
+      implicit double precision (a-h,o-z)
 C
 C     IW=2 is meant for outputting the final texture.
 C
@@ -153,10 +166,12 @@ C
 C     NRCMOD is set to 1 (Self-Consistent algorithm is switched off)
 C
 c <jg>:
+#ifdef WITHSMTFILE
 	if (IW .EQ.2) then
 		write (NUMIC,9393) NPOINT,TITEL
  9393 format(I5,5x,A)
 	endif
+#endif	
 c </jg>
 
       NRCMOD=1
@@ -170,9 +185,11 @@ c </jg>
       stop
   36  IF (IW) 32,33,30
   33  call  random_seed
+#ifndef NOLSTFILE
       WRITE (IMP,100)  JPAR
  100  FORMAT (//,' INITIALISATION OF SUBROUTINE SIMUL',/,
      1' PARAMETER J =',I5)
+#endif
 #ifdef ALAMEL_SUBROUTINE
       NLIST  = acnf%output_config%NLIST
       NFILE1 = acnf%output_config%NFILE
@@ -197,6 +214,7 @@ c </jg>
       read (KLEC,94) ETAFAK
       read (KLEC,94) ATTENF
   94  format (3F10.0)
+#ifndef NOLSTFILE
       WRITE (IMP,101) NLIST,NFILE1,NFILTW,NTEN,NSYM,IGLIJ,
      1 IPR,ETAFAK,ATTENF
       WRITE (*,101) NLIST,NFILE1,NFILTW,NTEN,NSYM,IGLIJ,
@@ -205,13 +223,19 @@ c </jg>
      1,' NLIST=',I5,5X,'NFILE=',I5,5X,'NFILTW=',i5,/,
      1' NTEN=',I5,5X ,'NSYM=',I5,/,' IGLIJ=',I5,5x,'IPR=',I5,
      1 '    ETAFAK=',F10.5,'   ATTENF=',F10.5,/)
+#endif
       do i=1,3
          read (KLEC,94)(FMicro(i,j),j=1,3)
+#ifndef NOLSTFILE
          write (IMP,106)(FMicro(i,j),j=1,3)
+##endif
       enddo
  106  format ('F_Microstructure=',3f12.6)  
   16  read (KLEC,98) TITEL
+#ifndef NOLSTFILE
       write (IMP,97) TITEL
+#endif
+! 
 #endif
   97  format (' Title of the new simulation: ',A)
   98  format (A)
@@ -243,23 +267,30 @@ C      stop
         enddo
       endif
 C      IF (IPR.NE.2) IPR=1
+#ifndef NOTWNFILE
       if (NFILTW.eq.1) then
           write (IMP3,98) TITEL
           write (IMP3,99) NPOINT
       endif
+#endif      
       RETURN
   30  NFILE=NFILE0*NFILE1
 #ifdef ALAMEL_SUBROUTINE
-      NSTP = acnf%simulCalls(current_call)%nsteps
-      ICRAT1 = acnf%simulCalls(current_call)%rlx1
-      ICRAT2 = acnf%simulCalls(current_call)%rlx2
+      NSTP = acnf%simulCalls(acnf%current_call)%nsteps
+      ICRAT1 = acnf%simulCalls(acnf%current_call)%rlx1
+      ICRAT2 = acnf%simulCalls(acnf%current_call)%rlx2
 #else
       read (KLEC,99) NSTP
+#ifndef NOLSTFILE
       write (IMP,115) NSTP
  115  format (//,' S I M U L         NR. STEPS=',I5,//)
+#endif
       read (KLEC,99) ICRAT1,ICRAT2
+#ifndef NOLSTFILE
       write (IMP,104) ICRAT1,ICRAT2
  104  format (' ICRAT:',2I5)
+#endif
+!
 #endif
       swrlx(1)=(ICRAT1.eq.1)
       swrlx(2)=(ICRAT2.eq.1)
@@ -312,13 +343,16 @@ C
       GMM=0.
 C      read (nunit) nrstep,F,GAXES,GEULR,CIJ,TG
        call dynfil2(nunit,nrstep,F,GAXES,GEULR,CIJ,TG)
+#ifndef NOLSTFILE         
       write (*,96) ISTP,GAXES
       write (IMP,96) ISTP,GAXES
   96  format(' Step nr.',i5,5X,3f12.5)
+#endif
       if (IROT.eq.0.or.IW.gt.1) goto 70
 C
 C     Instruction added for the LAMEL model:
 C
+#ifndef NOLSTFILE         
       if (IGLIJ.eq.1) write (IMP,3456) WRTOT, DG
  3456 format (' WRTOT=',d12.3,/,' DG=',3(T10,3d12.3,/))
 C
@@ -326,6 +360,7 @@ C     Get the 5x5 transformation matrix MACRO to morfol. GRAIN AXES
 C
       if (IGLIJ.eq.1) write (IMP,3458) TG
  3458 format (' TG=',3(T10,3d12.3,/))
+#endif
   70  if (IDUBLE.eq.2.and.IRCMOD.gt.IRCM0) goto 44
       if (nfile.eq.0.or.ISTP.gt.1.or.IRCMOD.gt.IRCM0) goto 44
 C     INSTRUCTION ADDED IN LAMEL model:
@@ -376,12 +411,14 @@ C      if (IDUBLE.lt.2) goto 10
       CALL MINV(FTINV,3,DMINV,L1MINV,L2MINV,9)
       CMICRO=CMic0
       call UPDATC(CMICRO,FTINV)
+#ifndef NOLSTFILE         
       if (IGLIJ.eq.1) then 
           do i=1,3 
              write (IMP,407) (Ftot(j,i),j=1,3)
           enddo
       endif
  407      format (' Ftot ',3d15.7)
+#endif
       if (IROT.ne.1) goto 10
       nrstep=nrstep+1
       call Ftensor(DG,F1,F2)
@@ -404,15 +441,19 @@ C
   10  laml=1
       laml1=2
       ifil4=0
+#ifndef NOTWNFILE      
       if (NFILTW.eq.1) write (IMP3,399)
  399  format(1x)
+#endif  
       DO 23 IOR=1,NPOINT
 C      if (IOR.eq.1193.and.ISTP.eq.6) IPR=2
 C      if (IOR.eq.1195.and.istp.eq.6) stop
       if (IPR.ne.2) goto 2626
+#ifndef NOLSTFILE         
       write (IMP,2627) IOR
       write (*,2627) IOR
  2627 format (' IOR=',i5)
+#endif
 C      if (IOR.eq.261.and.istp.eq.8) IPR=2
 C      if (IOR.gt.261.and.istp.eq.8) stop
 C      IPR=1
@@ -509,6 +550,7 @@ c <jg>
       endif
 #endif
 c <jg> ! Write .SMT file.
+#ifdef WITHSMTFILE
 	if (IW .EQ. 2) then
 ! include additional data
 !		write(nomic,9394)  fi2,PHI,fi1, 1 ,GEWF, GMM0
@@ -521,6 +563,7 @@ c  20  READ (NDAT1,96) PHI2,PHI,PHI1,STAP,NSTAP,GEW,GAMMA
 c  96  FORMAT (4F10.0,I5,5X,2F10.0)                                      
 c
   	endif
+#endif  	
 c </jg>
   41  if (IW.gt.1) goto 23
 C
@@ -549,8 +592,11 @@ C      if (iend.eq.0) goto 49
       call taylr1(IGLIJ,ISTP,IOR,IRELX,0,IEND,NFILE,TAU)
       stop
 C  49  write (nunrc(JDUBLE)) SPANV,RHOSsa,RHO
-   49 if (NFILTW.eq.1) write (IMP3,398) ITW
+   49 continue
+#ifndef NOTWNFILE 
+      if (NFILTW.eq.1) write (IMP3,398) ITW
  398  format (I3)
+#endif
       do 51 i=1,3
       do 51 j=i,3
       STOT(i,j)=STOT(i,j)+Ssam(i,j)*GEWF
@@ -621,30 +667,55 @@ C      call STR5(vec1,SHsam)
       SG=SG/TOTGEW
       if (IPR.lt.2) goto 53
       if (IDUBLE.eq.1) goto 77
+#ifndef NOLSTFILE
       write (IMP,121)
  121  format (//' Macroscopic stress:',/)
       do 54 i=1,3
       write (IMP,122) (SHsam(i,j),j=1,3)
  122  format (3f15.5)
   54  continue
+#endif
   77  if (IDUBLE.eq.2) goto 53
       RHOVM=0.0
+#ifndef NOLSTFILE
       write (IMP,124)
  124  format (/' Average Relaxation:',/)
+#endif
       do 58 i=1,3
+#ifndef NOLSTFILE
       write (IMP,122) (RHOSm(i,j),j=1,3)
+#endif
       do 58 j=1,3
       RHOVM=RHOVM+RHOSm(i,j)**2
   58  continue
       RHOVM=SQRT(2.0*RHOVM/3.0)
+#ifndef NOLSTFILE      
       write (IMP,123)
  123  format (/)
+#endif 
   53  if (IRCMOD.lt.NRCMOD.or.IDUBLE.eq.1) goto 57
 C      REWIND IDISK1
       call DYNFIL6(IDISK1)
       CALL COPYT(IDISK1,NUNIT)
       JW=0
+#ifndef NOLSTFILE      
       WRITE (IMP,105) ISTP,SG,GMM,EPS
+#endif      
+#ifdef ALAMEL_SUBROUTINE
+      ares%stress_tensors(:,:,acnf%current_call) = SHsam
+      ares%taylor_factors(acnf%current_call) = GMM
+      ares%average_stress(acnf%current_call) = SG
+      ares%effective_strains(acnf%current_call) = EPS
+#ifndef NOLSTFILE      
+      write (IMP,'(/,A)')'MACROSCOPIC STRESS TENSOR:'
+      do i=1,3
+            write (IMP,'(3(F15.10,X))') (SHsam(i,j),j=1,3)
+      enddo
+      write (IMP,'(A)') 
+#endif      
+!
+#endif     
+      
  105  FORMAT (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VAL
      1UE=',F10.5,'  EFF. STRAIN EPS USED=',F10.5) 
       SG0=SG

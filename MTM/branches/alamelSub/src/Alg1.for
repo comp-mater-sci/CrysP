@@ -37,8 +37,11 @@ C     IRELX te onderdrukken
       SAVE
       i=IRELX
       GOTO (1000,2000,3000),IRICHT
- 1000 WRITE (IMP,216)
+ 1000 continue
+#ifndef NOLSTFILE      
+      WRITE (IMP,216)
  216  FORMAT (/,' SUBROUTINE TAYLOR - READS ITS CRYSTAL DATA',//)
+#endif 
 C
 C
 C
@@ -48,39 +51,53 @@ C
 C
   507 read (R,217) TITglij
   217 format(A)
+#ifndef NOLSTFILE
       write (IMP,221) titglij
   221 format (/,' Slip system set:',A,/)
+#endif  
       READ (R,210) I,NGL,NTW,DI1,X,Y
  210  FORMAT (8I4,4X,2F10.0)
+#ifndef NOLSTFILE
   508 WRITE (IMP,211) I,NGL,NTW,DI1
  211  FORMAT (1H ,I4,10X,2I5,10X,5I5)
+#endif 
       IF (I.NE.0) STOP 5                                                
       M=NGL+NTW                                                         
       DO 500 I1=1,M                                                     
       READ (R,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
  212  FORMAT (I4,8F20.16)
+#ifndef NOLSTFILE
       WRITE (IMP,213) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
  213   FORMAT (I3,' A ',5F10.7,' B ',3F10.7)
+#endif 
  500  CONTINUE
       DO 501 I=1,5                                                      
       J1=I+M                                                            
       READ (R,214) J,(B(I,L),L=1,5)
  214  FORMAT (I4,5D23.16)
+#ifndef NOLSTFILE         
       WRITE (IMP,215) J,(B(I,L),L=1,5)
  215  FORMAT (1H ,I4,10X,5D15.8)
+#endif
  501  CONTINUE
       IF (NTW.EQ.0) GOTO 504                                            
       DO 505 I=1,NTW                                                    
       J1=I+M+5                                                          
       READ (R,212) J,(B2(L,I),L=1,6),G(I)
+#ifndef NOLSTFILE
       WRITE (IMP,218) J,(B2(L,I),L=1,6),G(I)
  218  format (i4,' B2',6f10.7,' G',f10.7)
+#endif
  505  CONTINUE
  504  N1=N+1                                                            
       M11=2*NGL+NTW
       NGLS=M11
       IF (M11.LE.96.OR.M.LE.48) GOTO 515
+#ifndef NOLSTFILE
       WRITE (IMP,222) M11,M
+#endif
+! Exception: print message to the console before STOP
+      WRITE (*,222) M11,M
   222 FORMAT (' TAYLOR - PROBLEMS WITH DIMENSIONS',2I10)                
       STOP 5                                                            
   515 IF (NGL.EQ.0) GOTO 42                                             
@@ -104,13 +121,17 @@ C
       A2(i+5,j+M11)=x8
   31  continue
       RETURN
- 2000 IF (IGLIJ.EQ.0) GOTO 70                                           
+ 2000 IF (IGLIJ.EQ.0) GOTO 70
+#ifndef NOLSTFILE                                            
       WRITE (IMP,203)                                                   
+#endif      
       DO 71 I=1,3                                                       
       DO 72 J=1,3                                                       
       TDC(I,J)=(DG(I,J)+DG(J,I))*0.5                                    
   72  TRC(I,J)=(DG(I,J)-DG(J,I))*0.5                                    
+#ifndef NOLSTFILE
       WRITE (IMP,204) (DG(I,J),J=1,3),(TDC(I,J),J=1,3),(TRC(I,J),J=1,3) 
+#endif      
   71  CONTINUE                                                          
  203  FORMAT (' TAYLOR - DISPLACEMENT GRADIENT WHICH WILL BE USED FOR TH
      1E SIMULATION',//T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,    
@@ -126,7 +147,9 @@ C     Normalisation of TDC (which is used in CLUSTER1 in PANCAK2)
       enddo
       if (X.lt.1.0D-6) then
          write (*,205) X
+#ifndef NOLSTFILE         
          write (IMP,205) X
+#endif
          stop
       endif
  205  format (' Taylor - symmetric part of strain step is too small'
@@ -140,8 +163,10 @@ C     Normalisation of TDC (which is used in CLUSTER1 in PANCAK2)
 C      
       X=ABS(DG(1,1)+DG(2,2)+DG(3,3))
       IF (X.LE.1.0D-6) RETURN                                           
-      WRITE (*,202)                                                   
+      WRITE (*,202)
+#ifndef NOLSTFILE         
       WRITE (IMP,202)                                                   
+#endif
  202  FORMAT (' TAYLOR - SUM OF DIAGONAL ELEMENTS OF DISPLACEMENT GRADIE
      1NT MUST BE ZERO')                                                 
       STOP 5                                                            
