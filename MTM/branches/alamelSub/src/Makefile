@@ -53,4 +53,7 @@ clean:
 
 # Explicit dependencies
 mainSub.o	:	alamelConfig.o alamelInterface.o
-Main1.o		:	Dynfil.o alamelConfig.o
+Main1.o		:	Dynfil.o alamelConfig.o alamelInterface.o
+Alg0.o		:	alamelConfig.o
+Alg0.o		: 	Dynfil.o
+
