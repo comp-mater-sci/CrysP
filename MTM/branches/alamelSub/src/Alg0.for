@@ -228,7 +228,7 @@ c </jg>
          read (KLEC,94)(FMicro(i,j),j=1,3)
 #ifndef NOLSTFILE
          write (IMP,106)(FMicro(i,j),j=1,3)
-##endif
+#endif
       enddo
  106  format ('F_Microstructure=',3f12.6)  
   16  read (KLEC,98) TITEL
