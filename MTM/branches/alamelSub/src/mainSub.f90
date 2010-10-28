@@ -1,10 +1,27 @@
 !
 ! $Id$
 !
+!>    \author Jerzy Gawad
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>
+!>    \date Date of first release: 2010-10-18
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+!
+!
+!>    \file mainSub.f90 Test program for ALAMEL subroutine
+!>    
+!
 #ifdef ALAMEL_SUBROUTINE
 
-program alamelSub
+program alamelSubTest
 use alamelConfig
+use AlamelSub
 implicit none
 
 !type(alamelConfigData) :: acnf

@@ -1,7 +1,23 @@
 !
 ! $Id$
 !
-
+!>    \author Jerzy Gawad
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>
+!>    \date Date of first release: 2010-10-17
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+!
+!
+!>    \file alamelConfig.f90 Provides configuration data for ALAMEL
+!>    
+!
+!> Basic configuration of ALAMEL in a form of formalized data structure.
 module alamelConfig
 implicit none
 

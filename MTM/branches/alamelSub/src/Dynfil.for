@@ -25,6 +25,9 @@ C     following array is actually allocated in the subroutine GRFIL:
       data vers /.true./
       end module MICROSTR
 
+
+#ifdef ALAMEL_SUBROUTINE
+
       module UDYNFIL
       use DYNFIL
       use MICROSTR
@@ -151,6 +154,9 @@ C     following array is actually allocated in the subroutine GRFIL:
       end subroutine
       
       end module
+
+#endif
+! end of: ALAMEL_SUBROUTINE defined
 
 
 

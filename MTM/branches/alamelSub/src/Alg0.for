@@ -167,11 +167,11 @@ C     NRCMOD is set to 1 (Self-Consistent algorithm is switched off)
 C
 c <jg>:
 #ifdef WITHSMTFILE
-	if (IW .EQ.2) then
-		write (NUMIC,9393) NPOINT,TITEL
+      if (IW .EQ.2) then
+            write (NUMIC,9393) NPOINT,TITEL
  9393 format(I5,5x,A)
-	endif
-#endif	
+      endif
+#endif      
 c </jg>
 
       NRCMOD=1
@@ -551,19 +551,19 @@ c <jg>
 #endif
 c <jg> ! Write .SMT file.
 #ifdef WITHSMTFILE
-	if (IW .EQ. 2) then
+      if (IW .EQ. 2) then
 ! include additional data
-!		write(nomic,9394)  fi2,PHI,fi1, 1 ,GEWF, GMM0
+!           write(nomic,9394)  fi2,PHI,fi1, 1 ,GEWF, GMM0
 ! 9394 format (3F10.3,10X,I5,5X,2F10.3)
 ! follow 'bare' smt format
-		write(NUMIC,9395)  fi2,PHI,fi1, 1 , 1.0
+            write(NUMIC,9395)  fi2,PHI,fi1, 1 , 1.0
  9395 format (3F10.3,10X,I5,5X,F10.1)
 c Compare the format with those used in leesor:   
 c  20  READ (NDAT1,96) PHI2,PHI,PHI1,STAP,NSTAP,GEW,GAMMA
 c  96  FORMAT (4F10.0,I5,5X,2F10.0)                                      
 c
-  	endif
-#endif  	
+      endif
+#endif      
 c </jg>
   41  if (IW.gt.1) goto 23
 C
