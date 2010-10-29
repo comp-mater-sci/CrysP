@@ -3,8 +3,8 @@
 	<Platforms>
 		<Platform Name="Win32"/></Platforms>
 	<Configurations>
-		<Configuration Name="Debug|Win32" OutputDirectory="ifort\$(ConfigurationName)" IntermediateDirectory="ifort\$(ConfigurationName)">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" PreprocessorDefinitions="MAINDIRECT;ALAMEL_SUBROUTINE;NORESFILE;NOCURFILE;NOTWNFILE;NOLSTFILE;WITHSMTFILE;" Interfaces="true" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" Traceback="true" BoundsCheck="true" UninitializedVariablesCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
+		<Configuration Name="Debug|Win32" OutputDirectory="$(ConfigurationName)\bin" IntermediateDirectory="$(ConfigurationName)\bin">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" PreprocessorDefinitions="MAINDIRECT;NORESFILE;WITHSMTFILE;" Interfaces="true" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" Traceback="true" BoundsCheck="true" UninitializedVariablesCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateManifest="false" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -13,8 +13,8 @@
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
-		<Configuration Name="Release|Win32" OutputDirectory="ifort\$(ConfigurationName)" IntermediateDirectory="ifort\$(ConfigurationName)">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" BufferedIO="true" InterproceduralOptimizations="ipoMultiFile" Preprocess="preprocessYes" PreprocessorDefinitions="MAINDIRECT;ALAMEL_SUBROUTINE;NORESFILE;NOCURFILE;NOTWNFILE;NOLSTFILE" CommonElementAlignment="alignCommonEightBytes"/>
+		<Configuration Name="Release|Win32" OutputDirectory="$(ConfigurationName)\bin" IntermediateDirectory="$(ConfigurationName)\bin">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" BufferedIO="true" InterproceduralOptimizations="ipoMultiFile" Preprocess="preprocessYes" PreprocessorDefinitions="MAINDIRECT;NORESFILE;WITHSMTFILE;" CommonElementAlignment="alignCommonEightBytes"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateManifest="false" SubSystem="subSystemConsole"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -30,15 +30,12 @@
 		<File RelativePath=".\stubs.txt"/></Filter>
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
-		<File RelativePath=".\alamelConfig.f90"/>
-		<File RelativePath=".\alamelInterface.f90"/>
 		<File RelativePath=".\Alg0.for"/>
 		<File RelativePath=".\Alg1.for"/>
 		<File RelativePath=".\Alg2.for"/>
 		<File RelativePath=".\Dynfil.for"/>
 		<File RelativePath=".\Lp.for"/>
 		<File RelativePath=".\Main1.for"/>
-		<File RelativePath=".\mainSub.f90"/>
 		<File RelativePath=".\Pancak2.for"/>
 		<File RelativePath=".\Sliprat.for"/>
 		<File RelativePath=".\Stelsel.for"/></Filter></Files>
