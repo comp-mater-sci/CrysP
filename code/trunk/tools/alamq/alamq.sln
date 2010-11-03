@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "alamq", "alamq.vfproj", "{EE9899D5-E095-468A-B040-C8B661886067}"
+	ProjectSection(ProjectDependencies) = postProject
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164} = {81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deps", "deps", "{F0FD6B17-398B-40AB-ACF1-03398B47494E}"
+EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libalamel", "..\..\..\..\MTM\branches\alamelSub\src\libalamel.vfproj", "{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}"
+EndProject
+Global
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN - Subversion Support for Visual Studio
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EE9899D5-E095-468A-B040-C8B661886067}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EE9899D5-E095-468A-B040-C8B661886067}.Debug|Win32.Build.0 = Debug|Win32
+		{EE9899D5-E095-468A-B040-C8B661886067}.Release|Win32.ActiveCfg = Release|Win32
+		{EE9899D5-E095-468A-B040-C8B661886067}.Release|Win32.Build.0 = Release|Win32
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.Debug|Win32.ActiveCfg = Debug|Win32
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.Debug|Win32.Build.0 = Debug|Win32
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.Release|Win32.ActiveCfg = Release|Win32
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164} = {F0FD6B17-398B-40AB-ACF1-03398B47494E}
+	EndGlobalSection
+EndGlobal

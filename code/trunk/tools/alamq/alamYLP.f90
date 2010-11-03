@@ -1,0 +1,148 @@
+module alamEval
+use nllsTR
+use AlamelSub
+use alamelConfig
+
+      type,extends(FDJacobiObjFunction) :: NormalizedV5DComp
+      
+            !NOTE: [n_X_dim] must be 5
+            !      [m_F_dim] must be 5 
+      
+
+            !double precision,dimension(5)        :: vSn = 0.D0 !< Normalized stress vector
+            !
+            !double precision,dimension(5)        :: vSml = 0.D0 !< Multilevel prediction of stress from previous call
+      contains
+            procedure :: objectiveFx => objectiveFx_NV5DComp
+      end type
+
+      !NASTY TRICK
+      double precision,dimension(5)        :: vSn = 0.D0 !< Normalized stress vector
+            !
+      double precision,dimension(5)        :: vSml = 0.D0 !< Multilevel prediction of stress from previous call
+
+
+contains
+
+      subroutine objectiveFx_NV5DComp(this,vX,vFval,info)
+      use Kutils
+      implicit none
+            class(NormalizedV5DComp)                    :: this
+            double precision,dimension(:),intent(inout) :: vX       !< Dimension must be: 5
+            double precision,dimension(:),intent(inout) :: vFval    !< Dimension must be: [m_F_dim]
+            integer,intent(out)                         :: info
+            !
+            double precision,dimension(3,3)     :: Atens
+            double precision,dimension(5)       :: vS
+            double precision                    :: norm
+            !
+            ! Transfer normalized vX into second rank tensor.
+            
+            call KVEC5D2MAT(vX/sqrt(dot_product(vX,vX)),Atens) 
+            ! Set Atens as current value for processing 
+            write(*,'(A,1X,5(F12.8))') 'eval for ', vX
+            acnf%simulCalls(1)%dgf = Atens
+            acnf%nSimulCalls = 1
+            ! Fill output data
+            ares%stress_tensors(:,:,1) = 0.D0
+            ! Call alamel
+            call ALAMEL(3)
+            ! Retrieve output stress into 5D vector
+            call KMAT2VEC5D(ares%stress_tensors(:,:,1),vS)
+            ! Transfer vS to vSml
+            !this%vSml = vS  
+            vSml = vS  !<--- FIXME !!!
+            write(*,'(A,1X,5(F12.8))') 'stress is ', vS
+            ! Normalize vS
+            norm = sqrt(dot_product(vS,vS))
+            if (norm > 0.D0) then
+                  ! vFval = this%vSn - (vS/norm)
+                  vFval = vSn - (vS/norm)   !<--- FIXME !!!
+            else
+                 ! norm is zero, so vS=0
+                 ! vFval = this%vSn
+                 vFval = vSn   !<--- FIXME !!!
+            endif
+            info = 0
+      end subroutine
+
+
+
+end module
+
+module alamYLP
+use nllsTR
+use AlamelSub
+use alamelConfig
+      
+contains
+
+      subroutine InitializeAlamel(alamelcnf)
+      implicit none
+      type(alamelConfigData),intent(in)	:: alamelcnf
+      
+      
+      
+      end subroutine
+
+      !> Calculates plastic strain rate corresponding to given deviatoric stress
+      !>
+      !> The subroutine assumes that multilevel model is already configured and initialized.
+      subroutine multilevelYLP(vS,vA,vSonA,info)
+      use alamEval
+      implicit none
+      double precision,intent(in)   :: vS(5)      !< Stress vector
+      double precision,intent(out)  :: vA(5)      !< Strain rate mode on yield locus
+      double precision,intent(out)  :: vSonA(5)   !< Stress vector corresponding to A
+      integer                       :: info      !< Exit code
+      !
+      double precision, dimension(5) :: Snormal, Anormal, vX, vF
+      ! 
+      double precision, dimension(5,5) :: mJ
+      !
+      type(NormalizedV5DComp) :: objFunc
+      type(nllsTRConf)        :: tr_config
+      double precision        :: r1,r2
+      !
+      ! Configure objective function      
+      objFunc%n_X_dim = 5
+      objFunc%m_F_dim = 5
+      objFunc%jacobi_eps=1.e-4
+      !
+      ! Normalized stress vector 
+      !objFunc%vSn = vS / sqrt(dot_product(vS,vS)) 
+      vSn = vS / sqrt(dot_product(vS,vS)) !<--- FIXME !!!
+      !
+      ! Initialize TR solver
+      call nlls_TR_init(verbose=3,ounit=6)
+      ! Use von Mises guess
+      vX = vS
+      !!!! FIXXXXXX
+      vX(3) = 0.3
+      
+      r1 = 0.D0; r2 = 0.D0
+      
+      !
+      call objFunc%jacobiMatrixFx(vX, mJ,info)
+      !
+      ! TODO: more reliable lower limit, it should lead to tr(d) > 1.e-7
+      !
+      tr_config%lo_limit = -10.0
+      tr_config%up_limit = 10.0
+      !
+      ! start TR solver
+      call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
+      !TODO: check exit status of the solver
+      !
+      ! Set output strain rate
+      vA = vX
+      ! Call objective function again to get corresponding yield stress
+      call objFunc%objectiveFx(vX,vF,info)
+      write(*,*) 'Final residual vector: ',vF
+      !vSonA = objFunc%vSml  
+      vSonA = vSml  !<--- FIXME !!!
+      !info = 0
+      
+      end subroutine
+
+end module
