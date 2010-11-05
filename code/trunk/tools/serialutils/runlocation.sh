@@ -1,25 +1,25 @@
 #!/bin/bash
-
-UTILDIR="$HOME/TEXEVOL"
+#
+# $Id$
+#
+UTILDIR="${GMETEX_WORKDIR}"
 BINDIR="$UTILDIR/bin"
 SCRIPTDIR="$UTILDIR/scripts"
-# Absolute path to the script that will be started.
+# Absolute path to the script to be started
 RUNFILE="$SCRIPTDIR/texupdate.sh"
 #
 RESULTFILE="elem.Q00"
 #RESULTFILE="fac2sep.par"
 
 TESTMODE="0"
-# Sleeptime 
-SLEEPTIME=2
 
 # Verbosity level 0..3
-VERBOSE=2
+VERBOSE=1
 #
 # This option influences failover behaviour of the script. 
 # If set to 1, the script will not return until is submits the job (it may last "forever").
-# It set to 0, the script will return if successful or if a severe error has occured.
-PERSISTENTMODE=1
+# It set to 0, the script will return if successful or if severe error has occured.
+PERSISTENTMODE=0
 #
 LOGFILE="$UTILDIR/runlocation.log"
 
@@ -36,7 +36,7 @@ ERRCODE=0
 #### Return codes, don't modify
 R_NEXT="1"
 R_OK="0"
-R_FAILURE="5"
+R_FAILURE="2"
 # Error code
 R_ERROR="255"
 #
@@ -60,7 +60,7 @@ else
 	 eval $1 > /dev/null
 	 errc="$?"
 fi	
-if [ "$errc" == 0 ] ; then
+if [ "$errc" == "0" ] ; then
 	errc="$R_OK"
 else
 	errc="$R_ERROR"
@@ -78,7 +78,7 @@ echo "Starting $1" >>  "$LOGFILE"
 # Check number of parameters
 if [ "$#" -lt "$NARGS" ]
 then
-        echo "Usage: `basename $0` path_to_location"
+        echo "Usage: `basename $0` path_to_location barrier_object "
         exit $E_BADARGS
 fi
 
@@ -90,7 +90,7 @@ fi
 
 #
 # This branch of the control flow is aimed at quick testing.
-# Instead of startinf of a simulation, the result file is copied.
+# Instead of starting a simulation, the result file is copied.
 if [ "$TESTMODE" == "1" ] ; then
 	echo "Doing TRICK"
 	cp -f "$RESULTFILE"  "$1"
@@ -113,14 +113,9 @@ do
 		CONDITION="$R_OK"
 		;;
 	"$R_ERROR" ) # Severe error, possible reasons:
-		[ "$VERBOSE" -ge "1" ] &&  echo "Cannot start job on the node ${PBS_O_HOST}, waiting for ${SLEEPTIME}s"
+		[ "$VERBOSE" -ge "1" ] &&  echo "Cannot start job from node ${PBS_O_HOST}"
 		if [ "$PERSISTENTMODE" == "1" ] ; then  
 			# Next iteration 
-			[ "$VERBOSE" -ge "1" ] &&  echo "Waiting for ${SLEEPTIME}s"
-			# Heuristic: calling sync can possibly help to avoid the errors related to network filesystem inconsistency
-			sync
-			sleep "${SLEEPTIME}s"
-			sync
 			CONDITION="$R_NEXT"
 	    	else
 			# Let the caller deal with the problem...   
