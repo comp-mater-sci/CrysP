@@ -108,7 +108,6 @@ DEFTENS=`tail -n 3 $DEFFILE`
 # Check runway: start from CUB or SMT
 # 
 if [ -e "$TEXFILE"  ] ; then
-	[ "$VERBOSE" -ge "1" ] && echo "Starting from CUB file"
 	# Rename the file: change filename into inputprefix.cub
 	# Remark: if script fails, next time it will start from _INITIAL_ SMT
 	# 
@@ -122,10 +121,10 @@ else
 		echo "Input SMT file ${INPUT} doesn't exist"
 		exit "$E_NOFILE"
 	fi	 
-	[ "$VERBOSE" -ge "2" ] && echo "Starting from SMT file"
 	RUNWAY="SMT"
 	RUNMODE="1"
 fi
+[ "$VERBOSE" -ge "2" ] && echo "Starting from ${RUNWAY} file ${INPUT}"
 # Select relaxations to apply
 case "$ALAMELMODEL" in
 	ALAMEL)
