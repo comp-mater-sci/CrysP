@@ -4,6 +4,9 @@
 #PBS -m abe
 #PBS -M jerzy.gawad@cs.kuleuven.be
 #PBS -r n
+#
+# $Id$
+#
 ##################################################################
 # Configuration section
 #

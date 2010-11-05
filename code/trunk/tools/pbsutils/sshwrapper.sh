@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# $Id$
+#
 
 QSUBCMD="qsub"
 

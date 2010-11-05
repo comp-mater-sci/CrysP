@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# $Id$
+#
 # Check number of parameters
 if [ "$#" -lt "1" ]
 then

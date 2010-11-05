@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# $Id$
+#
 #PBS -l ncpus=1
 #PBS -l walltime=0:50:00
 

@@ -1,5 +1,7 @@
 #!/bin/bash
 #
+# $Id$
+#
 # Parameters of the algorithm
 #
 # Settings suitable for parallel version of software, 1241 modes, VIC 
