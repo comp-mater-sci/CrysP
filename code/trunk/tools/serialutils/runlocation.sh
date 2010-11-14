@@ -14,12 +14,17 @@ RESULTFILE="elem.Q00"
 TESTMODE="0"
 
 # Verbosity level 0..3
-VERBOSE=1
+VERBOSE=0
 #
 # This option influences failover behaviour of the script. 
 # If set to 1, the script will not return until is submits the job (it may last "forever").
 # It set to 0, the script will return if successful or if severe error has occured.
-PERSISTENTMODE=0
+PERSISTENTMODE=1
+#
+# Notifications
+MAILADDR="jerzy.gawad@cs.kuleuven.be"
+FAILURETHRESHOLD=5
+SLEEPONTHRESHOLD=60m
 #
 LOGFILE="$UTILDIR/runlocation.log"
 
@@ -71,6 +76,20 @@ return $errc
 }
 ####
 
+
+notifyUser() {
+local location=$1
+local attempt=$2
+local nthattempt=$3
+mail -s "Failure of $(basename ${RUNFILE}) in $location" "$MAILADDR" <<End-of-Notification
+Script ${RUNFILE} failed for ${nthattempt} times (${attempt} in total) in location ${location}.
+Execution of script will be suspended for ${SLEEPONTHRESHOLD}.
+
+Urgent action is needed.
+
+End-of-Notification
+}
+
 echo "Execution of runlocation script"
 
 echo "Starting $1" >>  "$LOGFILE"
@@ -102,6 +121,8 @@ fi
 # Normal execution
 #
 # Main loop : try to start a job
+ATTEMPT=1
+NTHATTEMPT=1
 CONDITION="$R_NEXT"
 while [ "$CONDITION" == "$R_NEXT" ] ; 
 do
@@ -132,6 +153,18 @@ do
 		CONDITION="$R_NEXT"
 		;;
 	esac
+	# Detect multiple failures and notify the user
+	if [ ${NTHATTEMPT} -ge ${FAILURETHRESHOLD} ] ; then
+		notifyUser $1 ${ATTEMPT} ${NTHATTEMPT} 
+		(( NTHATTEMPT = 0 ))
+		echo Notifying the user about problems in $1
+		echo Suspending execution for ${SLEEPONTHRESHOLD}
+		sleep ${SLEEPONTHRESHOLD}
+		echo Resuming after ${SLEEPONTHRESHOLD}
+	fi
+	(( ATTEMPT++ ))
+	(( NTHATTEMPT++ ))
+	# 
 done
 # end of main loop
 #
