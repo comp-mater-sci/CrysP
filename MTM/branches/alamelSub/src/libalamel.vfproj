@@ -14,7 +14,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release|Win32" OutputDirectory="$(ConfigurationName)\lib" IntermediateDirectory="$(ConfigurationName)\lib" ConfigurationType="typeStaticLibrary" WholeProgramOptimization="true">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Preprocess="preprocessYes" PreprocessorDefinitions="ALAMEL_SUBROUTINE;NORESFILE;NOCURFILE;NOTWNFILE;NOLSTFILE;WITHCUBFILE;WITHSMTFILE;" CommonElementAlignment="alignCommonEightBytes" ModulePath="$(IntDir)\include"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" BufferedIO="true" Preprocess="preprocessYes" PreprocessorDefinitions="ALAMEL_SUBROUTINE;NORESFILE;NOCURFILE;NOTWNFILE;NOLSTFILE;WITHCUBFILE;WITHSMTFILE;" CommonElementAlignment="alignCommonEightBytes" ModulePath="$(IntDir)\include"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>

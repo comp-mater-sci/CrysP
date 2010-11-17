@@ -40,7 +40,7 @@ implicit none
       type simulStepData
             !> Flag that decides if this step leads to modification of the texture.
             logical                                   :: keep_texture = .true. 
-            integer                                   :: do_output          !< Request for output
+            integer                                   :: do_output = 0      !< Request for output
             integer                                   :: nsteps = 1         !< Number of steps per call
             integer                                   :: rlx1 = 1, rlx2 = 1 !< Selection of relaxations
             double precision, dimension(3,3)          :: dgf  = 0.D0        !< Deformation gradient tensor
