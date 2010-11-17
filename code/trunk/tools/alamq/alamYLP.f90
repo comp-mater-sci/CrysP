@@ -35,12 +35,21 @@ contains
             double precision,dimension(3,3)     :: Atens
             double precision,dimension(5)       :: vS
             double precision                    :: norm
+            integer                             :: i
             !
             ! Transfer normalized vX into second rank tensor.
             
             call KVEC5D2MAT(vX/sqrt(dot_product(vX,vX)),Atens) 
             ! Set Atens as current value for processing 
+#ifdef DIAGNOSTIC_OUTPUT                
             write(*,'(A,1X,5(F12.8))') 'eval for ', vX
+#endif        
+            !!! TESTING !!!
+            ! WARNING!! Taylor is requested below !!!
+            !acnf%simulCalls(1)%rlx1 = 0
+            !acnf%simulCalls(1)%rlx2 = 0
+            !!! TESTING !!!
+          
             acnf%simulCalls(1)%dgf = Atens
             acnf%nSimulCalls = 1
             ! Fill output data
@@ -52,12 +61,18 @@ contains
             ! Transfer vS to vSml
             !this%vSml = vS  
             vSml = vS  !<--- FIXME !!!
+#ifdef DIAGNOSTIC_OUTPUT            
             write(*,'(A,1X,5(F12.8))') 'stress is ', vS
+#endif            
             ! Normalize vS
             norm = sqrt(dot_product(vS,vS))
             if (norm > 0.D0) then
+                  vS = vS / norm
                   ! vFval = this%vSn - (vS/norm)
-                  vFval = vSn - (vS/norm)   !<--- FIXME !!!
+                  vFval = vSn - vS   !<--- FIXME !!!
+#ifdef DIAGNOSTIC_OUTPUT            
+                  write(*,'(2(F12.8,1X))') (vSn(i), vS(i),i=1,5)
+#endif            
             else
                  ! norm is zero, so vS=0
                  ! vFval = this%vSn
@@ -88,12 +103,13 @@ contains
       !> Calculates plastic strain rate corresponding to given deviatoric stress
       !>
       !> The subroutine assumes that multilevel model is already configured and initialized.
-      subroutine multilevelYLP(vS,vA,vSonA,info)
+      subroutine multilevelYLP(vS,vA,vSonA,R,info)
       use alamEval
       implicit none
       double precision,intent(in)   :: vS(5)      !< Stress vector
       double precision,intent(out)  :: vA(5)      !< Strain rate mode on yield locus
       double precision,intent(out)  :: vSonA(5)   !< Stress vector corresponding to A
+      double precision,intent(out)  :: R          !< Square norm of residual error
       integer                       :: info      !< Exit code
       !
       double precision, dimension(5) :: Snormal, Anormal, vX, vF
@@ -107,28 +123,28 @@ contains
       ! Configure objective function      
       objFunc%n_X_dim = 5
       objFunc%m_F_dim = 5
-      objFunc%jacobi_eps=1.e-4
+      objFunc%jacobi_eps=5.e-2      !! Quite good value!! Lowering it leads to lack of convergence!
       !
       ! Normalized stress vector 
       !objFunc%vSn = vS / sqrt(dot_product(vS,vS)) 
       vSn = vS / sqrt(dot_product(vS,vS)) !<--- FIXME !!!
       !
       ! Initialize TR solver
-      call nlls_TR_init(verbose=3,ounit=6)
+      call nlls_TR_init(verbose=1,ounit=6)
       ! Use von Mises guess
       vX = vS
-      !!!! FIXXXXXX
-      vX(3) = 0.3
-      
+      !      
       r1 = 0.D0; r2 = 0.D0
-      
       !
-      call objFunc%jacobiMatrixFx(vX, mJ,info)
+      !!! call objFunc%jacobiMatrixFx(vX, mJ,info)
       !
       ! TODO: more reliable lower limit, it should lead to tr(d) > 1.e-7
       !
       tr_config%lo_limit = -10.0
       tr_config%up_limit = 10.0
+      tr_config%init_step = 100.0
+      tr_config%eps = 1e-5    !<< beware!
+      tr_config%eps(2) = 1e-3  ! Norm of F: ||F||_2
       !
       ! start TR solver
       call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
@@ -138,7 +154,9 @@ contains
       vA = vX
       ! Call objective function again to get corresponding yield stress
       call objFunc%objectiveFx(vX,vF,info)
-      write(*,*) 'Final residual vector: ',vF
+      R = r2
+      write(*,'(A,1X,5E15.8)') 'Final residual vector: ',vF
+      
       !vSonA = objFunc%vSml  
       vSonA = vSml  !<--- FIXME !!!
       !info = 0
