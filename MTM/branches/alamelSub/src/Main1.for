@@ -192,7 +192,9 @@ C
  110  format (//,' Final call of SIMUL (for output only)')
       CALL SIMUL(2,1,EPS,NFILE0,NUNIT,0)
 c <jg>
+#ifdef WITHSMTFILE
       close(NUMIC)
+#endif      
 #ifdef WITHCUBFILE        
       close(NUCUB)
 #endif

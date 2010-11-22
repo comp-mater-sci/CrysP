@@ -32,10 +32,11 @@ C     following array is actually allocated in the subroutine GRFIL:
       use DYNFIL
       use MICROSTR
       ! Motivation: 
-      ! It is pointless to dump data to file and re-read them 
-      ! in following circumstances:
-      ! 1) if texture data are constant (i.e. calculation of stresses), 
-      ! 2) texture is not constant, but can be stored for future re-use.
+      ! It is pointless to dump data to a file and re-read them 
+      ! in the following circumstances:
+      ! 1) if texture data are constant (e.g. calculation of stresses for
+      !    series of strain rates), 
+      ! 2) texture is not constant, but can be stored for further re-usage.
       !
       ! Data that are stored in NUNIT
       type dyndata
