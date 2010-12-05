@@ -19,14 +19,17 @@ implicit none
       double precision                          :: R
       integer     :: info, iw
       integer     :: nslips = 16*6, nsteps = 1
-      integer     :: i,j, nfis
-      double precision,parameter :: fi2min = 0.D0, fi2max =  acos(-1.D0), rad2deg = (180.D0 / acos(-1.D0))
+      integer     :: i,j, nfis, simtype
+      double precision,parameter ::  rad2deg = (180.D0 / acos(-1.D0)), deg2rad = (acos(-1.D0) / 180.D0)
+      double precision :: fi2min = 0.D0, fi2max =  acos(-1.D0)
       double precision :: delta_fi2
       double precision,dimension(:),allocatable       :: qvalues, residuals
       !
       integer                 :: argc
       integer,parameter       :: argc_min = 1, argc_max=1
       character(len=128)      :: argv(0:argc_max)
+      integer                 :: ioerr
+      integer,parameter       :: cnfunit = 90, ofunit = 91
       !
       info = 1
       iw = 3
@@ -34,12 +37,11 @@ implicit none
       !
       argc = command_argument_count()
       if (argc < argc_min) then
-            write(*,*) 'one parameter is required: SMT-file'
+            write(*,*) 'one parameter is required: configuration file'
             stop
       endif
       call get_command_argument(1,argv(1))
       ! Print banner
-      write(*,'(/,A,1X,A,/)') 'Processing texture file', trim(argv(1))
       !     
       !
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -53,17 +55,57 @@ implicit none
       if (info /= 0) then
             write(*,*) 'Cannot initialize data structure for alamel results'
             stop
-      endif           
+      endif
+
+      ! open and read config file      
+      write(*,'(/,A,1X,A,/)') 'Processing config file', trim(argv(1))
+      open(cnfunit,file=trim(argv(1)),status='old',iostat=ioerr)
+      if (ioerr /= 0) then
+            write(*,*) 'Cannot open config file: ', trim(argv(1))
+            stop
+      endif
+      !
+      read(cnfunit,'(I2,1X,A)',iostat=ioerr) acnf%texture%input_type, acnf%texture%input_fname
+      read(cnfunit,fmt=*,iostat=ioerr)  simtype
+      read(cnfunit,'(A)' ,iostat=ioerr) acnf%output_prefix 
+      read(cnfunit,'(A)' ,iostat=ioerr) acnf%slipsystem%input_fname 
+      read(cnfunit,fmt=*,iostat=ioerr)  fi2min, fi2max,  nfis 
+      read(cnfunit,fmt=*,iostat=ioerr)  rho 
+      !read(cnfunit,'(2(F6.3,1X),I3)',iostat=ioerr)  fi2min, fi2max,  nfis 
+      !read(cnfunit,'(f6.3)',iostat=ioerr)  rho 
+      
+      ! Print configuration     
+      write(*,'(I2,1X,A)',iostat=ioerr) acnf%texture%input_type, trim(acnf%texture%input_fname)
+
+      write(*,'(A)' ,iostat=ioerr) trim(acnf%output_prefix) 
+      write(*,'(A)' ,iostat=ioerr) trim(acnf%slipsystem%input_fname)
+      if (simtype == 0) then
+            write(*,'(A)', iostat=ioerr) 'ALAMEL'
+      else
+            write(*,'(A)', iostat=ioerr) 'FC Taylor'
+            acnf%simulCalls(1)%rlx1 = 0
+            acnf%simulCalls(1)%rlx2 = 0
+      endif
+      write(*,fmt='(2(F6.3,1X),I3)',iostat=ioerr)  fi2min, fi2max,  nfis 
+      write(*,fmt='(f6.3)',iostat=ioerr)  rho 
+      ! Convert fi2min, fi2max from degs to rads
+      
+      fi2min = fi2min * deg2rad      
+      fi2max = fi2max * deg2rad      
+
+      open(unit=ofunit,file=trim(acnf%output_prefix)//'.xqrs')
+
+           
       ! Apply modifications to acnf if needed.
-      acnf%output_prefix = 'example'
-      acnf%jobtitle = 'example job'
+      !acnf%output_prefix = 'example'
+      acnf%jobtitle = trim(acnf%output_prefix)//' alamq'
       acnf%micros_fname = 'micro1.smt'
       ! configure slipsystem data
-      acnf%slipsystem%input_fname = 'fcc.pre'
+      !acnf%slipsystem%input_fname = 'fcc.pre'
       ! Texture data
       ! acnf%texture%input_fname='alum39.smt'  !! Test material
       ! acnf%texture%input_fname='alum926f.smt'  ! AA1100 
-      acnf%texture%input_fname=trim(argv(1))
+      ! acnf%texture%input_fname=trim(argv(1))
       ! >> typical dataset
       !acnf%texture%input_fname='micros.smt'
       call ALAMEL(1)
@@ -72,9 +114,9 @@ implicit none
       fi1 = 0.0
       phi = 0.0
       fi2 = 0.0
-      rho = 0.0
+      !rho = 0.0
 
-      nfis = 36
+      !nfis = 36
       !nfis = 2
 
       
@@ -83,7 +125,7 @@ implicit none
       delta_fi2 = (fi2max  - fi2min) / dble(nfis-1) 
 
       do i = 1,nfis
-            write(*,'(/,A,1X,I4,1X,A,1X,F10.6,/)')'Point:',i,'fi2 =',fi2 
+            write(*,'(/,A,1X,I4,1X,A,1X,F8.3,A,/)')'Point:',i,'fi2 =',fi2 * rad2deg, ' degs'
             ! Calculate rotation matrix
             call KROTMAT(fi1,phi,fi2,Mrot)
             !
@@ -137,13 +179,16 @@ implicit none
             write(*,'(A,T10,F10.6)') 'qvalue=', qvalue
             write(*,'(A,T10,F10.6)') 'rvalue=', rvalue
             !
+            write(ofunit,fmt='(F10.6,1X,F6.3,1X,3(F12.8,1X))') rad2deg * fi2, rho, qvalue, rvalue, residuals(i)
+
+            !
             ! Next step
             fi2 = fi2 + delta_fi2
       enddo            
 
       fi2 = 0
       do i=1,nfis
-            write(*,'(F10.6,1X,2F12.8)') rad2deg * fi2, qvalues(i), residuals(i)
+            write(*,'(F10.6,1X,2(F12.8,1X))') rad2deg * fi2, qvalues(i), residuals(i)
             fi2 = fi2 + delta_fi2
       enddo
       400 format('| Smcoord',T40,'| SmIdent',T80,'|Dmcoord')

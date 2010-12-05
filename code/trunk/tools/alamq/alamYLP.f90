@@ -155,7 +155,7 @@ contains
       ! Call objective function again to get corresponding yield stress
       call objFunc%objectiveFx(vX,vF,info)
       R = r2
-      write(*,'(A,1X,5E15.8)') 'Final residual vector: ',vF
+      write(*,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',vF
       
       !vSonA = objFunc%vSml  
       vSonA = vSml  !<--- FIXME !!!
