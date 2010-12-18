@@ -1,6 +1,14 @@
 #!/bin/bash
 # $Id$
 
+# Initialize PostTex features.
+if [ -n  "${POSTTEX_ROOT}" ] ; then   
+	. "${POSTTEX_ROOT}/conf/init.sh" 
+else
+	echo "Error: POSTTEX_ROOT variable undefined."
+	exit 1
+fi
+
 INPUT="$1"
 
 LOCROOT="$2"
@@ -12,6 +20,8 @@ PREFIX="$4"
 TEXLEVEL="$5"
 
 YLPCFG="$6"
+
+POSTPROCESS="${POSTTEX_ROOT}/postprocess.sh"
 
 HELPMSG="\ninputfile - a comma-separed file describing the locations to process. 
 Every line is a record, consisting of: 
@@ -34,7 +44,7 @@ do
 	echo $token $point $short $comment
 	echo "Output written to $outdir"
 	#./postprocess.sh snapdir outdir outprefix Facet_config texture_extraction plot_title [initial_qdata]
-	./postprocess.sh "$snapdir" "$outdir" "$PREFIX" "$YLPCFG" "$TEXLEVEL" "$comment" 
+	"${POSTPROCESS}" "$snapdir" "$outdir" "$PREFIX" "$YLPCFG" "$TEXLEVEL" "$comment" 
 done < <( awk -F, '{print $1 " " $2 " " $3 " " $4  }'  $INPUT )
 # The loop above can be implemented in much easier way as long as unlimited comment field (4) is at the end of the line
 
