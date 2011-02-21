@@ -21,10 +21,20 @@ set STEPFILES=
 for /F "tokens=*" %%A in ('seq -f "!PREFIX!%%g!SUFFIX!" !FIRSTSTEP! !LASTSTEP!') do (
 	set STEPFILES=!STEPFILES! %%A
 )
-echo !STEPFILES!
+rem echo !STEPFILES!
 
 call calcDiff.cmd !CFILE! !STEPFILES!
 
+if not ERRORLEVEL 0 (
+	set MSG=Cannot process at least one input file.
+	goto :error
+)
+
+goto :eof
+
+:error
+echo !MSG! 
+exit /B 1
 goto :eof
 
 :noparams
