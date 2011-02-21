@@ -1,32 +1,59 @@
 @echo off
 rem $Id$
 
-if "%1" == "" goto noparams
+setlocal ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
-rem Make sure that it is sane here.
-for %%f in (calcTI?.tmp) do (
-	del %%f
-)
-
+call support_path.cmd
+rem check number of parameters
+call argc.cmd %*
+set NARGS=!ERRORLEVEL!
+if !NARGS! LSS 2 goto noparams
+rem Verify user input, check existence of the files
 for %%i in (%*) do (
-	echo %%i >> calcTI1.tmp
-	printc %%i > calcTIlst.tmp 
-	head -n 2  calcTIlst.tmp | tail -1 >> calcTI2.tmp
-	grep "TEXTURE INDEX" calcTIlst.tmp | cut -d= -f2 >> calcTI3.tmp
+	if not exist %%i (
+		set MSG=Error: file %%i does not exist.
+		goto :error
+	)
 )
-rem Merge the results
-paste calcTI1.tmp calcTI2.tmp calcTI3.tmp
+
+rem Prepare control file for versch
+set /A NDIFFS=!NARGS! - 1
+set TMPCNF=calcDiff.tmp.1
+set TMPFNAMES=calcDiff.tmp.2
+set OUTFNAME=calcDiff.txt
+set isfirst=T
+for %%i in (%*) do (
+		if "!isfirst!" == "T" (
+			echo %%i > !TMPFNAMES!
+			echo %%i > !TMPCNF!
+			echo !NDIFFS! >>  !TMPCNF!
+			set isfirst=F
+		) else (
+			echo %%i >> !TMPFNAMES!
+			echo %%i >> !TMPCNF!
+		)
+		
+)
+rem Call versch
+call versch  < !TMPCNF! > nul
+rem Merge the data
+call paste !TMPFNAMES! VERSCH.L01 > !OUTFNAME!
+call cat !OUTFNAME!
 
 rem Cleanup
-for %%f in (calcTI?.tmp calcTIlst.tmp) do (
-	del %%f
-)
+del /f /q !TMPFNAMES!  !TMPFNAMES!
 
-goto stop
+goto :eof
+
+:error
+echo !MSG! 
+exit /B 1
+goto :eof
+
 
 :noparams
-echo The script requires a list of C-file names (at least one) with extensions.
+echo The script requires a list of C-file names (at least two) with extensions.
+echo calcDiff 
 exit /B 1
-goto stop
+goto :eof
 
-:stop
