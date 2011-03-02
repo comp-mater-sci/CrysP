@@ -33,12 +33,13 @@ rem build pltodf_c.i01 if not found.
 if not exist pltodf_c.i01 (
 	echo     0                    IEVOD: if =0: Ordinary case  >  pltodf_c.i01
 )
+rem Make sure that no jump out the current directory is made
+set CWD=%CD%
+call calcodf pltodf_c.i01 create6.b01 create6.b02 !INPFNAME! aodf.001
+call odfplt pltodf_o.i01 pltodf_o.l01 aodf.001 !FNAME!.001 | tee !FNAME!_c2ps.log
 
-
-calcodf pltodf_c.i01 create6.b01 create6.b02 !INPFNAME! aodf.001
-odfplt pltodf_o.i01 pltodf_o.l01 aodf.001 !FNAME!.001 | tee !FNAME!_c2ps.log
-
-PLOTPSC.EXE plotter color !FNAME!.001
+call PLOTPSC.EXE plotter color !FNAME!.001
+cd !CWD!
 
 move p01.ps !FNAME!.ps
 

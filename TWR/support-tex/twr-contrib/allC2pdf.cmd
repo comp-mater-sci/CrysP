@@ -1,7 +1,8 @@
 @echo off
 rem $Id$
 
-set PWD=%CD%
+SETLOCAL ENABLEDELAYEDEXPANSION ENABLEEXTENSIONS
+
 for %%K in (*.c) do (
 	echo %%K  %%~nK
 	c2ps %%~nK
