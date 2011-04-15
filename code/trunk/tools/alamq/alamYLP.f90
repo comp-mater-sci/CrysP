@@ -21,6 +21,7 @@ use alamelConfig
             !
       double precision,dimension(5)        :: vSml = 0.D0 !< Multilevel prediction of stress from previous call
 
+      integer                              :: alamEval_objFx_call_count = 0
 
 contains
 
@@ -36,6 +37,8 @@ contains
             double precision,dimension(5)       :: vS
             double precision                    :: norm
             integer                             :: i
+            !
+            alamEval_objFx_call_count = alamEval_objFx_call_count + 1
             !
             ! Transfer normalized vX into second rank tensor.
             
@@ -90,6 +93,11 @@ use nllsTR
 use AlamelSub
 use alamelConfig
       
+      type multilevelYLPConfig
+            double precision        :: jacobi_eps = 5.E-2
+            logical                 :: linearize = .false.
+      end type
+      
 contains
 
       subroutine InitializeAlamel(alamelcnf)
@@ -103,14 +111,16 @@ contains
       !> Calculates plastic strain rate corresponding to given deviatoric stress
       !>
       !> The subroutine assumes that multilevel model is already configured and initialized.
-      subroutine multilevelYLP(vS,vA,vSonA,R,info)
+      subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,config)
       use alamEval
       implicit none
       double precision,intent(in)   :: vS(5)      !< Stress vector
-      double precision,intent(out)  :: vA(5)      !< Strain rate mode on yield locus
+      double precision,intent(inout):: vA(5)      !< Strain rate mode on yield locus
       double precision,intent(out)  :: vSonA(5)   !< Stress vector corresponding to A
       double precision,intent(out)  :: R          !< Square norm of residual error
-      integer                       :: info      !< Exit code
+      integer                       :: info       !< Exit code
+      logical,optional,intent(in)   :: useVMGuess !< use von Mises initial guess, otherwise assume vA as an initial strain rate
+      type(multilevelYLPConfig),optional,intent(in) :: config !< Configuration parameters to be imposed to the search method
       !
       double precision, dimension(5) :: Snormal, Anormal, vX, vF
       ! 
@@ -119,6 +129,13 @@ contains
       type(NormalizedV5DComp) :: objFunc
       type(nllsTRConf)        :: tr_config
       double precision        :: r1,r2
+      logical                 :: use_vmGuess
+      !
+      if (present(useVMGuess)) then
+            use_vmGuess = useVMGuess
+      else
+            use_vmGuess = .true.
+      endif
       !
       ! Configure objective function      
       objFunc%n_X_dim = 5
@@ -132,7 +149,11 @@ contains
       ! Initialize TR solver
       call nlls_TR_init(verbose=1,ounit=6)
       ! Use von Mises guess
-      vX = vS
+      if (use_vmGuess) then
+            vX = vS
+      else
+            vX = vA
+      endif
       !      
       r1 = 0.D0; r2 = 0.D0
       !
@@ -145,6 +166,12 @@ contains
       tr_config%init_step = 100.0
       tr_config%eps = 1e-5    !<< beware!
       tr_config%eps(2) = 1e-3  ! Norm of F: ||F||_2
+      !
+      ! Override the defaults by the user's settings:
+      if (present(config)) then
+            objFunc%jacobi_eps = config%jacobi_eps
+            tr_config%constJacobi = config%linearize
+      endif
       !
       ! start TR solver
       call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
