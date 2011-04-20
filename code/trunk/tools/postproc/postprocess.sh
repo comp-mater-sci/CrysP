@@ -1,5 +1,7 @@
 #!/bin/bash
 #
+# $Id$
+#
 # Initialize PostTex features.
 if [ -n  "${POSTTEX_ROOT}" ] ; then   
 	. "${POSTTEX_ROOT}/conf/init.sh" 
@@ -33,7 +35,7 @@ local SPLOTFILE="$6"
 local EXTRACTCUR="$7"
 local BIAXFILE="$8"
 
-FROMSNAP="texout.cub ${PREFIX}.MMM"
+FROMSNAP="texout.cub ${PREFIX}.MMM ${DEFFILE}"
 NQVALS=$(grep "^(P08)" ${YLPCONFIG} | sed -e 's/^.*:://' | awk '{print $3}' )
 (( NQLINES=NQVALS+4 ))
 
@@ -72,8 +74,11 @@ local MAXRES=""
 echo "#step  Ravr  Rmax" >  "${ERRPLOT}"
 ## Clean output files if present
 
+echo "Using ${YLPEVOLCMD}"
 
 defstep=0
+acc_strain=0.0
+strain=0.0
 for  snap in $SNAPLIST ; do
 	((defstep++))
 	step=$(basename $snap | awk -F_ '{print $2;}')
@@ -97,10 +102,15 @@ for  snap in $SNAPLIST ; do
 		[ "$EXTRACTCUR" -ge "2" ] && mv "$stepcur" "$OUTDIR/$curname" && markProgress
 	fi
 	#	
-	# Execute facet identification		
 	CWD=$(pwd)
 	# enter temporary directory
 	cd "$TMPDIR"
+	markProgress
+	# Calculate strain from defdata
+	strain=$(tail -3 defdata.dat | gawk 'BEGIN{ddot=0.0}{ddot += $1*$1 + $2*$2 +$3*$3}END{print sqrt(ddot)}')
+	acc_strain=$(echo $strain $acc_strain | gawk '{sm=$1+$2}END{print sm}')
+	echo $defstep $step $strain $acc_strain  >> "${OPFILE}_defmap.txt" 
+	# Execute facet identification		
 	$YLPEVOLCMD "$YLPCFG"  >> "$LOGFILE" &> /dev/null
 	if [ "$?" == "0" ] ; then
 		markProgress
