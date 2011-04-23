@@ -93,13 +93,19 @@ for  snap in $SNAPLIST ; do
 	  	
 		# Convert CUB file into CUR format, merge it into one file.
 		title="step $defstep"
-		curname="${PREFIX}_step_${defstep}.cur"
+		curname="${PREFIX}_${defstep}.cur"
 		stepcur="$TMPDIR/$curname"
 		NORIENT=$(cub2cur "$TMPDIR/texout.cub" "$stepcur" "$title"  | grep "crystallites" | sed -e 's/^.*crystallites//' )
 		echo "Discrete texture consists of $NORIENT orientations" >> "$LOGFILE"
 		tail -n +2 "$stepcur" >> ${OUTCURFILE}
 		markProgress
 		[ "$EXTRACTCUR" -ge "2" ] && mv "$stepcur" "$OUTDIR/$curname" && markProgress
+		#  Extract SMT files
+		if [ "$EXTRACTCUR" -ge "3" ] ; then
+			local smtname="${PREFIX}_${defstep}.smt"
+			cub2smt "$TMPDIR/texout.cub" "$OUTDIR/$smtname" plain "$title" > /dev/null
+			markProgress
+		fi
 	fi
 	#	
 	CWD=$(pwd)
@@ -271,7 +277,7 @@ HELPMSG="Parameters:
 	outdir - output directory
 	prefix - prefix for filenames
 	Facet_config - Facet configuration file
-	texture_extraction (0 - no extraction, 1 - overall evolution, 2 - details for every step)
+	texture_extraction (0 - no extraction, 1 - overall evolution, 2 - details for every step, 3 - also SMT file for every step)
 	plot_title - title to be put on the plot
 	config_file - local config file to override the global settings
 \n
