@@ -71,14 +71,13 @@ fi
 local ERRPLOT="${OUTDIR}/${PREFIX}_err.dat"
 local AVRRES=""
 local MAXRES=""
-echo "#step  Ravr  Rmax" >  "${ERRPLOT}"
-## Clean output files if present
-
-echo "Using ${YLPEVOLCMD}"
-
-defstep=0
-acc_strain=0.0
-strain=0.0
+if [ "$CALCULATEANISO" == "1" ] ; then
+	echo "#step  Ravr  Rmax" >  "${ERRPLOT}"
+	echo "Using ${YLPEVOLCMD}"
+fi
+local defstep=0
+local acc_strain=0.0
+local strain=0.0
 for  snap in $SNAPLIST ; do
 	((defstep++))
 	step=$(basename $snap | awk -F_ '{print $2;}')
@@ -116,50 +115,54 @@ for  snap in $SNAPLIST ; do
 	strain=$(tail -3 defdata.dat | gawk 'BEGIN{ddot=0.0}{ddot += $1*$1 + $2*$2 +$3*$3}END{print sqrt(ddot)}')
 	acc_strain=$(echo $strain $acc_strain | gawk '{sm=$1+$2}END{print sm}')
 	echo $defstep $step $strain $acc_strain  >> "${OPFILE}_defmap.txt" 
-	# Execute facet identification		
-	$YLPEVOLCMD "$YLPCFG"  >> "$LOGFILE" &> /dev/null
-	if [ "$?" == "0" ] ; then
+	# Run YLP calculation if requested
+	if [ "$CALCULATEANISO" == "1" ] ; then
+
+		# Execute facet identification		
+		$YLPEVOLCMD "$YLPCFG"  >> "$LOGFILE" &> /dev/null
+		if [ "$?" == "0" ] ; then
+			markProgress
+		fi	
+		# Process qrs values, prepare output files,
+		# build 3D evolution plot
+		DATAFILE="${PREFIX}_${defstep}.qrs"
+		# Form the AWK program. Only defstep variable is substituted here.
+		AWKPROG='{print '"$defstep"' " " $1 " " $3; }'
+		# Write header
+		head -n 13  ${PREFIX}.LS3 | tail -n 1 | awk '{print "#"$4 " " $5 " " $6 " " $7 }' >  "$DATAFILE" 
+		# Write data to datafile and to 3d-plot file.
+		tail -n ${NQLINES} ${PREFIX}.LS3 | head -n +${NQVALS} |  awk '{print  $4 " " $5 " " $6 " " $7;}'  | tee -a "$DATAFILE" | awk "$AWKPROG" >> "$SPLOTFILE"
+		echo " " >>  "$SPLOTFILE"
+		mv "$DATAFILE" "$OUTDIR"
+		# 
 		markProgress
-	fi	
-	# Process qrs values, prepare output files,
-	# build 3D evolution plot
-	DATAFILE="${PREFIX}_${defstep}.qrs"
-	# Form the AWK program. Only defstep variable is substituted here.
-	AWKPROG='{print '"$defstep"' " " $1 " " $3; }'
-	# Write header
-	head -n 13  ${PREFIX}.LS3 | tail -n 1 | awk '{print "#"$4 " " $5 " " $6 " " $7 }' >  "$DATAFILE" 
-	# Write data to datafile and to 3d-plot file.
-	tail -n ${NQLINES} ${PREFIX}.LS3 | head -n +${NQVALS} |  awk '{print  $4 " " $5 " " $6 " " $7;}'  | tee -a "$DATAFILE" | awk "$AWKPROG" >> "$SPLOTFILE"
-	echo " " >>  "$SPLOTFILE"
-	mv "$DATAFILE" "$OUTDIR"
-	# 
-	markProgress
-	#
-	# Extract the residual values
-	AVRRES="$(grep -a "^Average residual (square norm)" ${PREFIX}.LS1 | cut -d\) -f 2)"
-	MAXRES="$(grep -a "^  Maximal residual (magnitude)" ${PREFIX}.LS1 | cut -d\) -f 2)"
-	echo "$defstep $AVRRES $MAXRES"  >>  "${ERRPLOT}"
-	markProgress
-	#
-	# TODO: implement it in different way
-#	for elem in elem.{LS1,LS3,Q00,F00} 
-#	do
-#		mv $elem "${OUTDIR}/${PREFIX}_step_${defstep}_${elem}"
-#	done
-	#rm -f elem.LS3 elem.MMM
-	#
-	if [ -n "$PLOTFILE" ] ; then
-		echo -n  "'$DATAFILE' using 1:3  title 'step $step' " >> "$PLOTFILE"
-		[ "$defstep" -lt "$NSNAPS" ] &&	echo ", \\" >> "$PLOTFILE"
+		#
+		# Extract the residual values
+		AVRRES="$(grep -a "^Average residual (square norm)" ${PREFIX}.LS1 | cut -d\) -f 2)"
+		MAXRES="$(grep -a "^  Maximal residual (magnitude)" ${PREFIX}.LS1 | cut -d\) -f 2)"
+		echo "$defstep $AVRRES $MAXRES"  >>  "${ERRPLOT}"
+		markProgress
+		#
+		# TODO: implement it in different way
+	#	for elem in elem.{LS1,LS3,Q00,F00} 
+	#	do
+	#		mv $elem "${OUTDIR}/${PREFIX}_step_${defstep}_${elem}"
+	#	done
+		#rm -f elem.LS3 elem.MMM
+		#
+		if [ -n "$PLOTFILE" ] ; then
+			echo -n  "'$DATAFILE' using 1:3  title 'step $step' " >> "$PLOTFILE"
+			[ "$defstep" -lt "$NSNAPS" ] &&	echo ", \\" >> "$PLOTFILE"
+		fi
+		#
+		# Prepare output for 3D plots in biaxial state of stress
+		OUTBIAXDATA="${PREFIX}_${defstep}.DSQ"
+		mv "${PREFIX}.DSQ" "${OUTDIR}/$OUTBIAXDATA" 
+		
+		echo "set output \"${PREFIX}_${defstep}.pdf\"" >> ${BIAXFILE}
+		echo "splot './$OUTBIAXDATA' with pm3d nocontour, './$OUTBIAXDATA' with lines palette nosurface;" >> ${BIAXFILE}
+		echo "set output"  >> ${BIAXFILE}
 	fi
-	#
-	# Prepare output for 3D plots in biaxial state of stress
-	OUTBIAXDATA="${PREFIX}_${defstep}.DSQ"
-	mv "${PREFIX}.DSQ" "${OUTDIR}/$OUTBIAXDATA" 
-	
-	echo "set output \"${PREFIX}_${defstep}.pdf\"" >> ${BIAXFILE}
-	echo "splot './$OUTBIAXDATA' with pm3d nocontour, './$OUTBIAXDATA' with lines palette nosurface;" >> ${BIAXFILE}
-	echo "set output"  >> ${BIAXFILE}
 	#
 	# Return to previous directory
 	cd "$CWD"
@@ -276,7 +279,7 @@ HELPMSG="Parameters:
 	snapdir - directory that contains snapshots to process
 	outdir - output directory
 	prefix - prefix for filenames
-	Facet_config - Facet configuration file
+	Facet_config - Facet configuration file or '-' to disable calculations of anisotropic characteristics
 	texture_extraction (0 - no extraction, 1 - overall evolution, 2 - details for every step, 3 - also SMT file for every step)
 	plot_title - title to be put on the plot
 	config_file - local config file to override the global settings
@@ -309,11 +312,15 @@ if [ ! -d "$SNAPDIR" ] ; then
 	exit 1
 fi
 
-if [ ! -f "$YLPCONFIG" ] ; then
-	echo "Facet config file does not exist"
-	exit 1
+if [ "$YLPCONFIG"  == "-" ] ; then
+	CALCULATEANISO=0
+else
+	if [ ! -f "$YLPCONFIG" ] ; then
+		echo "Facet config file does not exist"
+		exit 1
+	fi
+	CALCULATEANISO=1
 fi
-
 
 # Canonize paths 
 CSNAPDIR=$(readlink -f "$SNAPDIR")
@@ -332,15 +339,18 @@ echo "Output dir: $COUTDIR"
 # $3 - reference plot file
 # $4 - yrange (for q-values)
 #
-PLOTFILE="${COUTDIR}/${OUTPREFIX}_q.plt"
-initPlotfile "$PLOTFILE" "$PLOTTITLE" "$REFQPLOT"
 
-SPLOTFILE="$COUTDIR/$OUTPREFIX.q3d" 
-PLOT3DFILE="${COUTDIR}/${OUTPREFIX}_q3D.plt"
-init3DPlotfile $PLOT3DFILE "$PLOTTITLE" "$SPLOTFILE"
+if [ "$CALCULATEANISO" == "1" ] ; then
+	PLOTFILE="${COUTDIR}/${OUTPREFIX}_q.plt"
+	initPlotfile "$PLOTFILE" "$PLOTTITLE" "$REFQPLOT"
 
-PLOT3DBIAXFILE="${COUTDIR}/${OUTPREFIX}_biax3D.plt"
-init3DBiaxPlotfile "$PLOT3DBIAXFILE" "$PLOTTITLE" 
+	SPLOTFILE="$COUTDIR/$OUTPREFIX.q3d" 
+	PLOT3DFILE="${COUTDIR}/${OUTPREFIX}_q3D.plt"
+	init3DPlotfile $PLOT3DFILE "$PLOTTITLE" "$SPLOTFILE"
+
+	PLOT3DBIAXFILE="${COUTDIR}/${OUTPREFIX}_biax3D.plt"
+	init3DBiaxPlotfile "$PLOT3DBIAXFILE" "$PLOTTITLE" 
+fi
 #exit 0
 postprocessLocation "$CSNAPDIR" "$COUTDIR" "${OUTPREFIX}" "${CYLPCONFIG}" "$PLOTFILE" "$SPLOTFILE" "$TEXLEVEL" "$PLOT3DBIAXFILE"
 
