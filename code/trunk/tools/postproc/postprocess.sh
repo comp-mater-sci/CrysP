@@ -33,11 +33,10 @@ local YLPCONFIG="$4"
 local PLOTFILE="$5"
 local SPLOTFILE="$6"
 local EXTRACTCUR="$7"
-local BIAXFILE="$8"
+local EXTRACTMMM="$8"
+local BIAXFILE="$9"
 
 FROMSNAP="texout.cub ${PREFIX}.MMM ${DEFFILE}"
-NQVALS=$(grep "^(P08)" ${YLPCONFIG} | sed -e 's/^.*:://' | awk '{print $3}' )
-(( NQLINES=NQVALS+4 ))
 
 OPFILE="$OUTDIR/$PREFIX" 
 local LOGFILE="${OUTDIR}/${PREFIX}.log"
@@ -58,22 +57,29 @@ SNAPLIST=$(sortSnapshots $LOCATION $SNAPPREFIX)
 
 # Create temporary directory, feed it with input
 TMPDIR=$(mktemp -d postLoc.XXXXXX) 
-cp "$YLPCONFIG" "$TMPDIR"
-YLPCFG=$(basename "$YLPCONFIG") 
+#
+# Prepare data and outputs for YLP calculations and QRS output
+if [ "$CALCULATEANISO" == "1" ] ; then
+	echo "Using ${YLPEVOLCMD}"
+	echo "YLP config:  $YLPCONFIG"
+	# Initialize output file for residual values
+	local ERRPLOT="${OUTDIR}/${PREFIX}_err.dat"
+	local AVRRES=""
+	local MAXRES=""
+	echo "#step  Ravr  Rmax" >  "${ERRPLOT}"
+	# Number of q-values to be expected
+	NQVALS=$(grep "^(P08)" ${YLPCONFIG} | sed -e 's/^.*:://' | awk '{print $3}' )
+	(( NQLINES=NQVALS+4 ))
+	#
+	cp "$YLPCONFIG" "$TMPDIR"
+	YLPCFG=$(basename "$YLPCONFIG") 
+fi
 
 # Initialize output cur file (write a title)
 OUTCURFILE="${OPFILE}.CUR"
 if [ "$EXTRACTCUR" -ge 1 ] ; then
 	echo $OUTCURFILE
 	echo "$LOCATION" > ${OUTCURFILE}
-fi
-# Initialize output file for residual values
-local ERRPLOT="${OUTDIR}/${PREFIX}_err.dat"
-local AVRRES=""
-local MAXRES=""
-if [ "$CALCULATEANISO" == "1" ] ; then
-	echo "#step  Ravr  Rmax" >  "${ERRPLOT}"
-	echo "Using ${YLPEVOLCMD}"
 fi
 local defstep=0
 local acc_strain=0.0
@@ -94,15 +100,15 @@ for  snap in $SNAPLIST ; do
 		title="step $defstep"
 		curname="${PREFIX}_${defstep}.cur"
 		stepcur="$TMPDIR/$curname"
-		NORIENT=$(cub2cur "$TMPDIR/texout.cub" "$stepcur" "$title"  | grep "crystallites" | sed -e 's/^.*crystallites//' )
+		NORIENT=$(cub2cur "$TMPDIR/${TEXFILE}" "$stepcur" "$title"  | grep "crystallites" | sed -e 's/^.*crystallites//' )
 		echo "Discrete texture consists of $NORIENT orientations" >> "$LOGFILE"
 		tail -n +2 "$stepcur" >> ${OUTCURFILE}
 		markProgress
 		[ "$EXTRACTCUR" -ge "2" ] && mv "$stepcur" "$OUTDIR/$curname" && markProgress
 		#  Extract SMT files
 		if [ "$EXTRACTCUR" -ge "3" ] ; then
-			local smtname="${PREFIX}_${defstep}.smt"
-			cub2smt "$TMPDIR/texout.cub" "$OUTDIR/$smtname" plain "$title" > /dev/null
+			local smtname="${OPFILE}_${defstep}.smt"
+			cub2smt "${TMPDIR}/${TEXFILE}" "$smtname" plain "$title" > /dev/null
 			markProgress
 		fi
 	fi
@@ -112,7 +118,7 @@ for  snap in $SNAPLIST ; do
 	cd "$TMPDIR"
 	markProgress
 	# Calculate strain from defdata
-	strain=$(tail -3 defdata.dat | gawk 'BEGIN{ddot=0.0}{ddot += $1*$1 + $2*$2 +$3*$3}END{print sqrt(ddot)}')
+	strain=$(tail -3 "${DEFFILE}" | gawk 'BEGIN{ddot=0.0}{ddot += $1*$1 + $2*$2 +$3*$3}END{print sqrt(ddot)}')
 	acc_strain=$(echo $strain $acc_strain | gawk '{sm=$1+$2}END{print sm}')
 	echo $defstep $step $strain $acc_strain  >> "${OPFILE}_defmap.txt" 
 	# Run YLP calculation if requested
@@ -162,6 +168,11 @@ for  snap in $SNAPLIST ; do
 		echo "set output \"${PREFIX}_${defstep}.pdf\"" >> ${BIAXFILE}
 		echo "splot './$OUTBIAXDATA' with pm3d nocontour, './$OUTBIAXDATA' with lines palette nosurface;" >> ${BIAXFILE}
 		echo "set output"  >> ${BIAXFILE}
+	fi
+	# Extract multilevel data
+	if [ "${EXTRACTMMM}" -ge "1" ] ; then 
+		# MMM data are no longer needed by YLPCMD, we can move them to the final destination
+		mv "${MMMFILE}" "${OPFILE}_${defstep}.MMM" && markProgress
 	fi
 	#
 	# Return to previous directory
@@ -281,6 +292,7 @@ HELPMSG="Parameters:
 	prefix - prefix for filenames
 	Facet_config - Facet configuration file or '-' to disable calculations of anisotropic characteristics
 	texture_extraction (0 - no extraction, 1 - overall evolution, 2 - details for every step, 3 - also SMT file for every step)
+	multilevel_extraction (0 - no extraction, 1 - extract MMM data for every step)
 	plot_title - title to be put on the plot
 	config_file - local config file to override the global settings
 \n
@@ -291,7 +303,7 @@ Remarks:
 
 
 if [ "$#" -lt 2 ] ; then
-	echo -e "\n" `basename "$0"` snapdir outdir outprefix Facet_config texture_extraction plot_title [config_file] "\n"
+	echo -e "\n" `basename "$0"` snapdir outdir outprefix Facet_config texture_extraction mmm_extraction plot_title [config_file] "\n"
 	echo -e "$HELPMSG"
 	exit 1
 fi
@@ -301,10 +313,13 @@ OUTDIR="$2"
 OUTPREFIX="$3"
 YLPCONFIG="$4"
 TEXLEVEL="$5"
-PLOTTITLE="$6"
+MMMLEVEL="$6"
+PLOTTITLE="$7"
+#
+CONFIGFILE="$8"
 # 
 # Read config file if specified in command line:
-[ -n "$7" ] && [ -f "$7" ] && . "$7"
+[ -n "$CONFIGFILE" ] && [ -f "$CONFIGFILE" ] && . "$CONFIGFILE"
 
 # Sanitize the input
 if [ ! -d "$SNAPDIR" ] ; then
@@ -320,12 +335,13 @@ else
 		exit 1
 	fi
 	CALCULATEANISO=1
+	# Canonize path 
+	CYLPCONFIG=$(readlink -f "$YLPCONFIG")
 fi
 
 # Canonize paths 
 CSNAPDIR=$(readlink -f "$SNAPDIR")
 
-CYLPCONFIG=$(readlink -f "$YLPCONFIG")
 
 mkdir -p $OUTDIR
 COUTDIR=$(readlink -f "$OUTDIR")
@@ -352,7 +368,7 @@ if [ "$CALCULATEANISO" == "1" ] ; then
 	init3DBiaxPlotfile "$PLOT3DBIAXFILE" "$PLOTTITLE" 
 fi
 #exit 0
-postprocessLocation "$CSNAPDIR" "$COUTDIR" "${OUTPREFIX}" "${CYLPCONFIG}" "$PLOTFILE" "$SPLOTFILE" "$TEXLEVEL" "$PLOT3DBIAXFILE"
+postprocessLocation "$CSNAPDIR" "$COUTDIR" "${OUTPREFIX}" "${CYLPCONFIG}" "$PLOTFILE" "$SPLOTFILE" "$TEXLEVEL" "${MMMLEVEL}" "$PLOT3DBIAXFILE"
 
 if [ "$?" == "0" ] ; then
 	echo "Finished."
