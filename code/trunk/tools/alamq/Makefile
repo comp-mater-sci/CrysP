@@ -77,6 +77,12 @@ MKLPATH=$(MKLROOT)/lib/em64t
 FLDFLAGS += $(MKLPATH)/libmkl_solver_lp64_sequential.a -Wl,--start-group $(MKLPATH)/libmkl_intel_lp64.a $(MKLPATH)/libmkl_sequential.a $(MKLPATH)/libmkl_core.a -Wl,--end-group -lpthread
 LIBFCFLAGS += $(MKLINCLUDE) # -check bounds
 endif
+ifeq ($(BUILDHOST),vic3)
+MKLINCLUDE= -I$(MKLROOT)/include/em64t/lp64
+MKLPATH=$(MKLROOT)/lib/em64t
+FLDFLAGS += $(MKLPATH)/libmkl_solver_lp64_sequential.a -Wl,--start-group $(MKLPATH)/libmkl_intel_lp64.a $(MKLPATH)/libmkl_sequential.a $(MKLPATH)/libmkl_core.a -Wl,--end-group -lpthread
+LIBFCFLAGS += $(MKLINCLUDE) # -check bounds
+endif
 #
 #
 # Test program
