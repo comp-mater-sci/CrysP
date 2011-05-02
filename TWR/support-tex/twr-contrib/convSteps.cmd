@@ -28,29 +28,24 @@ echo /^^\/Helvetica findfont    185 scalefont setfont.* 1023 M  270.0 R ( 1) sho
 
 
 for /L %%i in (%2,1,%3) do (
-set OUTPREFIX=%PREFIX%%%i
-echo !OUTPREFIX!
-set LIST=!LIST! %PREFIX%%%i.png
-sed -f %SEDFILE% %PREFIX%%%i.ps > tmp_step%%i.ps
-
-convert -density 300x300 tmp_step%%i.ps -trim  -units PixelsPerInch -density 300 -quality 100 -depth 3 +repage !OUTPREFIX!.png
-convert  !OUTPREFIX!.png -crop 1859x550+0+129  +repage -quality 100 -depth 3  !OUTPREFIX!_u.png
-convert  !OUTPREFIX!.png -crop 1869x625+0+54  +repage -quality 100 -depth 3  !OUTPREFIX!_l.png
-
-
-rem convert -density 600x600 !OUTPREFIX!.ps -trim  -units PixelsPerInch -density 300 -quality 90 -depth %BITDEPTH% +repage -density 300 !OUTPREFIX!.png
-rem convert  !OUTPREFIX!.png -crop 3715x1127+0+230 -depth %BITDEPTH%  +repage !OUTPREFIX!_u.png
-rem convert  !OUTPREFIX!.png -crop 3715x1257+0+100 -colors 8 -depth !BITDEPTH! -define png:bit-depth=8 -density 200 +repage !OUTPREFIX!_l.png
-
-
+	set TMPPS=tmp_step%%i.ps
+	set OUTPREFIX=!PREFIX!%%i
+	echo !OUTPREFIX!
+	set LIST=!LIST! !PREFIX!%%i.png
+	rem Prepare "filtered" postscript file
+	sed -f %SEDFILE% !PREFIX!%%i.ps > !TMPPS!
+	rem Convert to png
+	call convPlot.cmd !TMPPS! !OUTPREFIX!
+	rem Sanitize after each step: 
+	del /f !TMPPS!
 )
-del /f tmp_step*.ps
-rem convert -loop 0 %LIST% -trim -depth 3 animation.gif
+rem Clean-up
+del /f %SEDFILE%
 
 if NOT "%ANIMATION%" == "" (
 echo %ANIMATION%.gif
-convert -loop 0 %LIST% -depth 3 -delay 30 %ANIMATION%.gif
 rem create the animation
+convert -loop 0 !LIST! -depth 3 -delay 30 %ANIMATION%.gif
 )
 
 goto stop
