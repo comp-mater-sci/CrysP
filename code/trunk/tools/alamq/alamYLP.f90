@@ -54,6 +54,8 @@ contains
             !!! TESTING !!!
           
             acnf%simulCalls(1)%dgf = Atens
+            acnf%simulCalls(1)%keep_texture = .true.
+            acnf%simulCalls(1)%do_output = .false.
             acnf%nSimulCalls = 1
             ! Fill output data
             ares%stress_tensors(:,:,1) = 0.D0
