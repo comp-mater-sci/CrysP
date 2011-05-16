@@ -124,7 +124,7 @@ contains
       logical,optional,intent(in)   :: useVMGuess !< use von Mises initial guess, otherwise assume vA as an initial strain rate
       type(multilevelYLPConfig),optional,intent(in) :: config !< Configuration parameters to be imposed to the search method
       !
-      double precision, dimension(5) :: Snormal, Anormal, vX, vF
+      double precision, dimension(5) :: Snormal, Anormal, vX, vF, vX_lin
       ! 
       double precision, dimension(5,5) :: mJ
       !
@@ -132,6 +132,9 @@ contains
       type(nllsTRConf)        :: tr_config
       double precision        :: r1,r2
       logical                 :: use_vmGuess
+      logical                 :: attempt_linearized,linearized_successful
+      double precision        :: r1_lin,r2_lin
+      type(nllsTRRes)         :: TR_res
       !
       if (present(useVMGuess)) then
             use_vmGuess = useVMGuess
@@ -169,21 +172,52 @@ contains
       tr_config%eps = 1e-5    !<< beware!
       tr_config%eps(2) = 1e-3  ! Norm of F: ||F||_2
       !
+      linearized_successful = .false.
+      attempt_linearized = .false.
       ! Override the defaults by the user's settings:
       if (present(config)) then
             objFunc%jacobi_eps = config%jacobi_eps
-            tr_config%constJacobi = config%linearize
+            attempt_linearized = config%linearize
       endif
       !
-      ! start TR solver
-      call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
-      !TODO: check exit status of the solver
+      ! Run linearized problem if requested
+      if (attempt_linearized) then
+            tr_config%constJacobi = .true.
+            vX_lin = vX    
+            ! Start the TR solver for linearized problem
+            ! More thorough exit status is necessary: TR_res
+            call nlls_TR_solve(objFunc,vX_lin,tr_config,r1_lin,r2_lin,info,TR_res)
+            R = r2_lin
+            ! do checks if the solution is OK:
+            ! Stop criterion: magic number "3" means: ||F(x)||_2 < eps(2)
+            if ( (r2_lin < r1_lin) .and. (TR_res%stop_criterion == 3) .and. (r2_lin <= tr_config%eps(2)) ) then
+                  vX = vX_lin
+                  linearized_successful = .true.
+            endif
+      endif
+      ! The linearized analysis is either not done or failed.
+      if (.not. linearized_successful) then
+            ! Set non-linear analysis
+            tr_config%constJacobi = .false.
+            !
+            ! start TR solver
+            call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
+            R = r2
+            !TODO: check exit status of the solver
+            if (attempt_linearized) then
+                  ! choose better of non-linear and linearized solution
+                  if (r2 > r2_lin) then
+                        vX = vX_lin
+                        R = r2_lin
+                  endif
+            endif
+      endif
       !
       ! Set output strain rate
       vA = vX
       ! Call objective function again to get corresponding yield stress
       call objFunc%objectiveFx(vX,vF,info)
-      R = r2
+      
       write(*,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',vF
       
       !vSonA = objFunc%vSml  
