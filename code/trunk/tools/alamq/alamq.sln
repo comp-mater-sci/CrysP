@@ -13,6 +13,12 @@ Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libalamel", "..\..\..\..\MT
 EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libopt", "..\fng\utils\optlib\libopt.vfproj", "{BE90F1A8-DC67-45F4-B168-5D687878EAD8}"
 EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libAlamYLP", "libAlamYLP\libAlamYLP.vfproj", "{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164} = {81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8} = {BE90F1A8-DC67-45F4-B168-5D687878EAD8}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SubversionScc) = preSolution
 		Svn-Managed = True
@@ -35,6 +41,10 @@ Global
 		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Debug|Win32.Build.0 = Debug|Win32
 		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Release|Win32.ActiveCfg = Release|Win32
 		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Release|Win32.Build.0 = Release|Win32
+		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}.Debug|Win32.Build.0 = Debug|Win32
+		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}.Release|Win32.ActiveCfg = Release|Win32
+		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
