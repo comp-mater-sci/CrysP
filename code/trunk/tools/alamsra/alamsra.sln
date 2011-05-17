@@ -1,0 +1,76 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "alamsra", "alamsra.vfproj", "{2A315D1A-42C9-4299-9100-EE84C1C75797}"
+	ProjectSection(ProjectDependencies) = postProject
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164} = {81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8} = {BE90F1A8-DC67-45F4-B168-5D687878EAD8}
+		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E} = {E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deps", "deps", "{A9CDD702-EEAD-403F-B657-02399FDC088A}"
+EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libAlamYLP", "..\alamq\libAlamYLP\libAlamYLP.vfproj", "{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164} = {81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8} = {BE90F1A8-DC67-45F4-B168-5D687878EAD8}
+	EndProjectSection
+EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libopt", "..\fng\utils\optlib\libopt.vfproj", "{BE90F1A8-DC67-45F4-B168-5D687878EAD8}"
+EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libalamel", "..\..\..\..\MTM\branches\alamelSub\src\libalamel.vfproj", "{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}"
+EndProject
+Global
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN - Subversion Support for Visual Studio
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		DebugMicro|Win32 = DebugMicro|Win32
+		Release|Win32 = Release|Win32
+		ReleaseMicro|Win32 = ReleaseMicro|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2A315D1A-42C9-4299-9100-EE84C1C75797}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2A315D1A-42C9-4299-9100-EE84C1C75797}.Debug|Win32.Build.0 = Debug|Win32
+		{2A315D1A-42C9-4299-9100-EE84C1C75797}.DebugMicro|Win32.ActiveCfg = Debug|Win32
+		{2A315D1A-42C9-4299-9100-EE84C1C75797}.DebugMicro|Win32.Build.0 = Debug|Win32
+		{2A315D1A-42C9-4299-9100-EE84C1C75797}.Release|Win32.ActiveCfg = Release|Win32
+		{2A315D1A-42C9-4299-9100-EE84C1C75797}.Release|Win32.Build.0 = Release|Win32
+		{2A315D1A-42C9-4299-9100-EE84C1C75797}.ReleaseMicro|Win32.ActiveCfg = Release|Win32
+		{2A315D1A-42C9-4299-9100-EE84C1C75797}.ReleaseMicro|Win32.Build.0 = Release|Win32
+		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}.Debug|Win32.Build.0 = Debug|Win32
+		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}.DebugMicro|Win32.ActiveCfg = Debug|Win32
+		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}.DebugMicro|Win32.Build.0 = Debug|Win32
+		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}.Release|Win32.ActiveCfg = Release|Win32
+		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}.Release|Win32.Build.0 = Release|Win32
+		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}.ReleaseMicro|Win32.ActiveCfg = Release|Win32
+		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}.ReleaseMicro|Win32.Build.0 = Release|Win32
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Debug|Win32.Build.0 = Debug|Win32
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.DebugMicro|Win32.ActiveCfg = Debug|Win32
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.DebugMicro|Win32.Build.0 = Debug|Win32
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Release|Win32.ActiveCfg = Release|Win32
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Release|Win32.Build.0 = Release|Win32
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.ReleaseMicro|Win32.ActiveCfg = Release|Win32
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.ReleaseMicro|Win32.Build.0 = Release|Win32
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.Debug|Win32.ActiveCfg = Debug|Win32
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.Debug|Win32.Build.0 = Debug|Win32
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.DebugMicro|Win32.ActiveCfg = DebugMicro|Win32
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.DebugMicro|Win32.Build.0 = DebugMicro|Win32
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.Release|Win32.ActiveCfg = Release|Win32
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.Release|Win32.Build.0 = Release|Win32
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.ReleaseMicro|Win32.ActiveCfg = ReleaseMicro|Win32
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.ReleaseMicro|Win32.Build.0 = ReleaseMicro|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E} = {A9CDD702-EEAD-403F-B657-02399FDC088A}
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8} = {A9CDD702-EEAD-403F-B657-02399FDC088A}
+		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164} = {A9CDD702-EEAD-403F-B657-02399FDC088A}
+	EndGlobalSection
+EndGlobal
