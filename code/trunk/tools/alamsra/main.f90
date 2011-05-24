@@ -132,7 +132,7 @@ implicit none
       !
       ! Open and initialize result files
       open(unit=ofunit,file=trim(acnf%output_prefix)//'.asr',status='replace')
-#define OUTHEADER 'iter','normP','Pnorm','R','plast_pot','scal_s','||SonA||','rvalue','qvalue'     
+#define OUTHEADER 'iter','normP','Pnorm','R','plast_pot','M','scal_s','||SonA||','rvalue','qvalue'     
       write(ofunit,700) OUTHEADER ! write header line
       open(unit=histunit,file=trim(acnf%output_prefix)//'_hist.asr',status='replace')
       acnf%jobtitle = trim(acnf%output_prefix)//' alamsra'
@@ -161,6 +161,8 @@ implicit none
             Sm = matmul(transpose(Mrot),matmul(St,Mrot))
             !            
             call KMAT2VEC5D(Sm,vS) 
+            ! Enforce unit length of vS
+            vS = vS / vec_norm2(vS)
             !
             !! -> Calculate corresponding strain rate vA
             call multilevelYLP(vS,vA,vSonA,R,info,.true.,ylpCnf)
@@ -201,11 +203,11 @@ implicit none
             endif
             ! 
             !! -> Report the results
-            write(ofunit,701) i, normP, Pnorm, R, plast_pot, scal_s, norm_sona, rvalue, qvalue
+            write(ofunit,701) i, normP, Pnorm, R, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, rvalue, qvalue
             !
             write(*,710)
             write(*,700) OUTHEADER ! write header line
-            write(*,701) i, normP, Pnorm, R, plast_pot, scal_s, norm_sona, rvalue, qvalue
+            write(*,701) i, normP, Pnorm, R, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, rvalue, qvalue
             write(*,710)
             !!
             ! Check termination condition
@@ -259,9 +261,9 @@ implicit none
       500 format(3(3(F10.6,1X),/))
       501 format(3(F10.6,1X),/,3(F10.6,1X),/,3(F10.6,1X))
       
-      700 format(1X,A5,1X,8(A12,1X))
-      701 format(1X,I5,1X,8(F12.6,1X))
-      710 format('|',5('-'),'|',8(12('-'),'|'))
+      700 format(1X,A5,1X,9(A12,1X))
+      701 format(1X,I5,1X,9(F12.6,1X))
+      710 format('|',5('-'),'|',9(12('-'),'|'))
       
       900 format(112('='))
 end program
