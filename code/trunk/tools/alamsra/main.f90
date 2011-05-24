@@ -7,7 +7,7 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
-!>    \date Date of first release: 2010-11-03
+!>    \date Date of first release: 2011-05-17
 !>    $Revision$
 !>    $Date$
 !>
@@ -81,7 +81,7 @@ implicit none
       call get_command_argument(1,argv(1))
       !
       ! Introduce youself ;-)
-      write(*,'(A)') 'AlamSRA, rev: $Rev$'
+      write(*,'(A)') 'AlamSRA, $Rev$'
       !
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! INITIALIZATION OF ALAMEL: it should be done in different way !!!!
