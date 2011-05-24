@@ -1,3 +1,26 @@
+!
+! $Id$
+!
+!>    \author Jerzy Gawad                                                
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>                                                             
+!>    \date Date of first release: 2010-11-03
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+!
+!
+!>    \file alamYLP.f90 The file contains modules that calculate
+!>          yield locus position directly from the ALAMEL model.      
+!>                                  
+!  
+!
+!> Objective function for minimization of difference between requested stress tensor 
+!> and stresses obtained from the ALAMEL
 module alamEval
 use nllsTR
 use AlamelSub
@@ -8,15 +31,18 @@ use alamelConfig
             !NOTE: [n_X_dim] must be 5
             !      [m_F_dim] must be 5 
       
-
+            !<--- FIXME !!!
             !double precision,dimension(5)        :: vSn = 0.D0 !< Normalized stress vector
             !
+            !<--- FIXME !!!
             !double precision,dimension(5)        :: vSml = 0.D0 !< Multilevel prediction of stress from previous call
       contains
             procedure :: objectiveFx => objectiveFx_NV5DComp
       end type
 
-      !NASTY TRICK
+      !NASTY TRICK: ifort 11.1 had troubles with member fields in extended polymorphic types. The vectors vSn and vSml 
+      ! would eventually be contained inside the NormalizedV5DComp type.
+      ! Corrections that are pertinent to this nasty trick are marked in the code with : "!<--- FIXME !!!"
       double precision,dimension(5)        :: vSn = 0.D0 !< Normalized stress vector
             !
       double precision,dimension(5)        :: vSml = 0.D0 !< Multilevel prediction of stress from previous call
@@ -90,6 +116,8 @@ contains
 
 end module
 
+
+!> Implementation of YLP function that can directly use the ALAMEL multilevel model instead of a plastic potential function.
 module alamYLP
 use nllsTR
 use AlamelSub
