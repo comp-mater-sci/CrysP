@@ -1,6 +1,25 @@
 !
 ! $Id$
 !
+!>    \author Jerzy Gawad                                                
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>                                                             
+!>    \date Date of first release: 2010-11-03
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+!
+!
+!>    \file AlamSRA program allows one to track anisotropic properties  
+!>          along deformation due to uniaxial tensile stress.
+!>
+!>    \todo AlamSRA should be extended to take cognizance of biaxial stress state, arbitraty stresses,
+!>          as well as arbitrary evolution of the texture.
+
 module alamsraHelper
 contains
 pure function vec_norm2(v)
@@ -60,6 +79,9 @@ implicit none
             stop
       endif
       call get_command_argument(1,argv(1))
+      !
+      ! Introduce youself ;-)
+      write(*,'(A)') 'AlamSRA, rev: $Rev$'
       !
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! INITIALIZATION OF ALAMEL: it should be done in different way !!!!
