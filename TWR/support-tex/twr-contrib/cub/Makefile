@@ -1,46 +1,93 @@
-
+#
+# $Id$
+#
 FC=ifort
 
-FCFLAGS=-fpp -extend-source 132 -warn all  -O3 -fast # -stand f03 
 
-OBJS=cub2cur.o cub2cubV2.o  cubAccess.o mergeCubs.o
+
+FCFLAGS=-fpp -extend-source 132 
+ifdef DEBUG
+ConfigurationName=debug
+LIBDIR=debug
+DEBUGFLAGS= -O0 -g -debug full -check all
+FCFLAGS+= $(DEBUGFLAGS)
+else
+ConfigurationName=release
+LIBDIR=release
+OPTFLAGS=-O3 -fast
+FCFLAGS+= $(OPTFLAGS)
+endif
+#
+OBJDIR=$(ConfigurationName)/obj
+INCLUDEDIR=$(ConfigurationName)/include
+BINDIR=$(ConfigurationName)/bin
+
+FCFLAGS+= -module $(INCLUDEDIR) # -stand f03 
+
+SRCS=cub2cur.for \
+cub2cubV2.for \
+cubAccess.for \
+cub2smt.f90 \
+mergeCubs.f90 
+
+
+# Build list of objects:
+# Substitute .for extension
+OBJLISTA=$(SRCS:.f90=.o)
+OBJLIST=$(OBJLISTA:.for=.o)
+# Library objects
+OBJS = $(patsubst %, $(OBJDIR)/%, $(OBJLIST))
+$(info $(OBJS))
 
 PROG1=cub2cur
 PROG2=cub2cubV2
 PROG3=cub2smt
 PROG4=mergeCubs
 
-ALLPROGS= $(PROG1) $(PROG2) $(PROG3) $(PROG4)	
+ALLPROGS= $(addprefix $(BINDIR)/, $(PROG1) $(PROG2) $(PROG3) $(PROG4))
 
-all	: $(ALLPROGS) $(OBJS)
+all	: structure $(ALLPROGS) $(OBJS)
 
-.PHONY=clean
+.PHONY=clean structure
 
-cub2cur.o   :     cubAccess.o
+structure : $(BINDIR) $(OBJDIR) $(INCLUDEDIR)
 
-cub2cubV2.o :     cubAccess.o
+$(OBJDIR)/cub2cur.o   :     $(OBJDIR)/cubAccess.o
 
-mergeCubs.o :     cubAccess.o
+$(OBJDIR)/cub2cubV2.o :     $(OBJDIR)/cubAccess.o
 
-$(PROG1)	:	$(OBJS)
-	$(FC) -o $@ $(OBJS) 
+$(OBJDIR)/mergeCubs.o :     $(OBJDIR)/cubAccess.o
 
-$(PROG2)	:	$(OBJS)
-	$(FC) -o $@ $(OBJS) 
+$(OBJDIR)/cub2smt.o	:  $(OBJDIR)/cubAccess.o
 
-$(PROG3)	:	cub2smt.o cubAccess.o
+
+$(BINDIR)/$(PROG1)	: $(addprefix $(OBJDIR)/, cubAccess.o cub2cur.o)
+	$(FC) -o $@ $^
+
+$(BINDIR)/$(PROG2)	: $(addprefix $(OBJDIR)/, cubAccess.o cub2cubV2.o)
+	$(FC) -o $@ $^
+
+$(BINDIR)/$(PROG3)	: $(addprefix $(OBJDIR)/, cubAccess.o cub2smt.o)
 	$(FC) -o $@ $^ 
 
-$(PROG4)	: cubAccess.o mergeCubs.o
+$(BINDIR)/$(PROG4)	: $(addprefix $(OBJDIR)/, cubAccess.o  mergeCubs.o)
 	$(FC) -o $@ $^
 clean :
-	rm -f  $(ALLPROGS) $(OBJS) 
-cub2smt.o	: cub2smt.f90 cubAccess.o
+	rm -f  $(ALLPROGS) $(OBJS) $(INCLUDEDIR)/*
+
+$(BINDIR) :
+	[ -d $@ ] || mkdir -p $@
+
+$(OBJDIR) :
+	[ -d $@ ] || mkdir -p $@
+
+$(INCLUDEDIR) :
+	[ -d $@ ] || mkdir -p $@
+
+
+$(OBJDIR)/%.o : %.for
 	$(FC) -c $(FCFLAGS) $< -o $@
 
-%.o : %.for
-	$(FC) -c $(FCFLAGS) $< -o $@
-
-%.o : %.f90
+$(OBJDIR)/%.o : %.f90
 	$(FC) -c $(FCFLAGS) $< -o $@
 
