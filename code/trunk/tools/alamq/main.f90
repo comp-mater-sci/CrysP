@@ -1,5 +1,23 @@
-
-
+!
+! $Id$
+!
+!>    \author Jerzy Gawad                                                
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>                                                             
+!>    \date Date of first release: 2010-11-03
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+!
+!
+!>    \file Alamq calculates plastic anisotropic properties, expressed in terms of q-values,
+!>          directly from texture data, presented in form of SMT, CUR or CUB files.
+!>
+!
 program alamq
 use AlamelSub
 use alamelConfig
@@ -45,6 +63,7 @@ implicit none
       endif
       call get_command_argument(1,argv(1))
       ! Print banner
+      write(*,'(A)') 'Alamq: $Id$'
       !     
       !
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -149,11 +168,11 @@ implicit none
       
       allocate(qvalues(nfis), residuals(nfis))
       
-      delta_fi2 = (fi2max  - fi2min) / dble(nfis-1) 
+      delta_fi2 = (fi2max  - fi2min) / dble(nfis) 
       ! use von Mises guess as a default
       useVMGuess = .true.
 
-      do i = 1,nfis
+      do i = 1,nfis + 1
             write(*,'(/,A,1X,I4,1X,A,1X,F8.3,A,/)')'Point:',i,'fi2 =',fi2 * rad2deg, ' degs'
             ! Calculate rotation matrix
             call KROTMAT(fi1,phi,fi2,Mrot)
