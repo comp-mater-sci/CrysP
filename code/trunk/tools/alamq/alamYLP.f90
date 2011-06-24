@@ -163,6 +163,7 @@ contains
       logical                 :: attempt_linearized,linearized_successful
       double precision        :: r1_lin,r2_lin
       type(nllsTRRes)         :: TR_res
+      type(SolutionPoint)     :: initState
       !
       if (present(useVMGuess)) then
             use_vmGuess = useVMGuess
@@ -214,7 +215,7 @@ contains
             vX_lin = vX    
             ! Start the TR solver for linearized problem
             ! More thorough exit status is necessary: TR_res
-            call nlls_TR_solve(objFunc,vX_lin,tr_config,r1_lin,r2_lin,info,TR_res)
+            call nlls_TR_solve(objFunc,vX_lin,tr_config,r1_lin,r2_lin,info,TR_res,SolutionInitOut=initState)
             R = r2_lin
             ! do checks if the solution is OK:
             ! Stop criterion: magic number "3" means: ||F(x)||_2 < eps(2)
@@ -229,7 +230,12 @@ contains
             tr_config%constJacobi = .false.
             !
             ! start TR solver
-            call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
+            if (attempt_linearized) then
+                  ! Profit from the initial point stored by the solver for the linearized problem
+                  call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info,SolutionInitIn=initState)
+            else                  
+                  call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
+            endif
             R = r2
             !TODO: check exit status of the solver
             if (attempt_linearized) then
@@ -240,6 +246,7 @@ contains
                   endif
             endif
       endif
+      call deleteSolutionPoint(initState,info)
       !
       ! Set output strain rate
       vA = vX
