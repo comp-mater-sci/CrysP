@@ -48,19 +48,22 @@ implicit none
       double precision,dimension(3,3)           :: Mrot = 0.0
       !
       logical                                   :: outputRequest
-      double precision                          :: angle, PNormMax, PNormIter
+      double precision                          :: angle, NormMax, PNormIter
       double precision                          :: plast_pot, scal_s, norm_sona
       double precision                          :: rvalue, qvalue
       double precision,dimension(5)             :: vA, vS,vSonA, vSonAn, vP, vD
       double precision                          :: fi1,phi,fi2
-      double precision                          :: Pnorm, normP, normD
+      double precision                          :: Pnorm, normP, normD, Tnorm
       double precision                          :: R
       integer     :: info, iw
       integer     :: nslips = 16*6, nsteps = 1
       integer     :: i,j, simtype
+      
+      integer :: scalingID
+      integer,parameter :: scaleFullTensor = 0, scaleTensileComponent = 1
 
       double precision,parameter ::  rad2deg = (180.D0 / acos(-1.D0)), deg2rad = (acos(-1.D0) / 180.D0)
-
+      double precision,parameter ::  root23 = sqrt(2.D0/3.D0)
       type(multilevelYLPConfig)     :: ylpCnf
       !
       integer                 :: argc
@@ -123,7 +126,7 @@ implicit none
       read(cnfunit,'(A)' ,iostat=ioerr) acnf%micros_fname
       read(cnfunit,'(L)' ,iostat=ioerr) outputRequest
       read(cnfunit,fmt=*,iostat=ioerr)  angle 
-      read(cnfunit,fmt=*,iostat=ioerr)  PNormMax, PNormIter 
+      read(cnfunit,fmt=*,iostat=ioerr)  scalingID, NormMax, PNormIter 
 
       read(cnfunit,fmt=*,iostat=ioerr) ylpCnf%jacobi_eps, ylpCnf%linearize
 
@@ -154,7 +157,7 @@ implicit none
       !
       ! Open and initialize result files
       open(unit=ofunit,file=trim(acnf%output_prefix)//'.asr',status='replace')
-#define OUTHEADER 'iter','normP','Pnorm','R','plast_pot','M','scal_s','||SonA||','rvalue','qvalue'     
+#define OUTHEADER 'iter','eps_vM','Pnorm','Tnorm','R','plast_pot','M','scal_s','||SonA||','rvalue','qvalue'     
       write(ofunit,700) OUTHEADER ! write header line
       open(unit=histunit,file=trim(acnf%output_prefix)//'_hist.asr',status='replace')
       acnf%jobtitle = trim(acnf%output_prefix)//' alamsra'
@@ -170,6 +173,7 @@ implicit none
       vP = 0.D0
       Pnorm = 0.D0 ! sum||P||
       normP = 0.D0 ! ||P||
+      Tnorm = 0.D0
       i = 0
       do 
             write(*,900)
@@ -225,18 +229,31 @@ implicit none
             endif
             ! 
             !! -> Report the results
-            write(ofunit,701) i, normP, Pnorm, R, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, rvalue, qvalue
+            write(ofunit,701) i, root23*normP, Pnorm, TNorm, R, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, rvalue, qvalue
             !
             write(*,710)
             write(*,700) OUTHEADER ! write header line
-            write(*,701) i, normP, Pnorm, R, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, rvalue, qvalue
+            write(*,701) i, root23*normP, Pnorm, Tnorm, R, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, rvalue, qvalue
             write(*,710)
             !!
-            ! Check termination condition
-            if (PNorm > PNormMax) exit
             !
-            !! -> Scale the vA in order to get ||vA|| = PNormIter
-            vD = vA * (PNormIter / vec_norm2(vA)) 
+            select case(scalingID)
+            case(scaleFullTensor)
+                  ! Check termination condition
+                  if (PNorm >= NormMax)  exit
+                  !
+                  !! -> Scale the vA in order to get ||vA|| = PNormIter
+                  vD = vA * (PNormIter / vec_norm2(vA)) 
+            case(scaleTensileComponent)
+                  ! Check termination condition: only tensile component
+                  if (Tnorm >= NormMax) exit
+                  !
+                  !! -> Scale the vA in order to get Dt_11 equal to PNormIter
+                  vD = vA * (PNormIter / Dt(1,1))
+            case default
+                  write(*,*) 'Unknown scalin type, full tensor will be used'
+                  vD = vA                  
+            end select
             normD = vec_norm2(vD)
             write(*,'(A,1X,F12.6)') 'Norm of vD = ', normD 
             ! Calculate strain increment for texture evolution           
@@ -262,6 +279,7 @@ implicit none
             P = P + De  
             normP = vec_norm2(vP)
             Pnorm = Pnorm + normD
+            Tnorm = Tnorm + PNormIter
             i = i + 1 
             !
             write(*,'(A)') 'Total strain:'
@@ -283,9 +301,9 @@ implicit none
       500 format(3(3(F10.6,1X),/))
       501 format(3(F10.6,1X),/,3(F10.6,1X),/,3(F10.6,1X))
       
-      700 format(1X,A5,1X,9(A12,1X))
-      701 format(1X,I5,1X,9(F12.6,1X))
-      710 format('|',5('-'),'|',9(12('-'),'|'))
+      700 format(1X,A5,1X,10(A12,1X))
+      701 format(1X,I5,1X,10(F12.6,1X))
+      710 format('|',5('-'),'|',10(12('-'),'|'))
       
       900 format(112('='))
 end program
