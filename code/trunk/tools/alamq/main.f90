@@ -114,6 +114,7 @@ implicit none
             write(*,*) 'Incorrect format of configuration file'
             stop 
       endif
+      close(cnfunit)
       ! Validate config values
       if (nfis < 2) then
             write(*,*) 'Number of intervals cannot be smaller than 2' 
@@ -166,7 +167,7 @@ implicit none
       !nfis = 2
 
       
-      allocate(qvalues(nfis), residuals(nfis))
+      allocate(qvalues(nfis+1), residuals(nfis+1))
       
       delta_fi2 = (fi2max  - fi2min) / dble(nfis) 
       ! use von Mises guess as a default
@@ -241,7 +242,7 @@ implicit none
       write(*,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
 
       fi2 = 0
-      do i=1,nfis
+      do i=1,nfis+1
             write(*,'(F10.6,1X,2(F12.8,1X))') rad2deg * fi2, qvalues(i), residuals(i)
             fi2 = fi2 + delta_fi2
       enddo
