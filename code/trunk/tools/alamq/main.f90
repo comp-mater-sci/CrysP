@@ -108,8 +108,6 @@ implicit none
       read(cnfunit,fmt=*,iostat=ioerr)  rho 
       read(cnfunit,fmt='(2L2)',iostat=ioerr)  reuse_previous, resuse_stainrate
       read(cnfunit,fmt=*,iostat=ioerr) ylpCnf%jacobi_eps, ylpCnf%linearize
-      !read(cnfunit,'(2(F6.3,1X),I3)',iostat=ioerr)  fi2min, fi2max,  nfis 
-      !read(cnfunit,'(f6.3)',iostat=ioerr)  rho 
       if (ioerr /= 0) then
             write(*,*) 'Incorrect format of configuration file'
             stop 
@@ -127,46 +125,33 @@ implicit none
       write(*,'(A)' ,iostat=ioerr) trim(acnf%output_prefix) 
       write(*,'(A)' ,iostat=ioerr) trim(acnf%slipsystem%input_fname)
       if (simtype == 0) then
-            write(*,'(A)', iostat=ioerr) 'ALAMEL'
+            write(*,fmt=301, iostat=ioerr) 'ALAMEL'
       else
-            write(*,'(A)', iostat=ioerr) 'FC Taylor'
+            write(*,fmt=301, iostat=ioerr) 'FC Taylor'
             acnf%simulCalls(1)%rlx1 = 0
             acnf%simulCalls(1)%rlx2 = 0
       endif
+      301 format('Multilevel model: ',A)
       write(*,fmt='(2(F8.3,1X),I3)',iostat=ioerr)  fi2min, fi2max,  nfis 
       write(*,fmt='(F8.3)',iostat=ioerr)  rho 
+      !
       ! Convert fi2min, fi2max from degs to rads
-      
       fi2min = fi2min * deg2rad      
       fi2max = fi2max * deg2rad      
 
       open(unit=ofunit,file=trim(acnf%output_prefix)//'.xqrs')
 
-           
-      ! Apply modifications to acnf if needed.
-      !acnf%output_prefix = 'example'
+      ! Apply modifications to acnf:
       acnf%jobtitle = trim(acnf%output_prefix)//' alamq'
-      !acnf%micros_fname = 'micro1.smt'
-      ! configure slipsystem data
-      !acnf%slipsystem%input_fname = 'fcc.pre'
-      ! Texture data
-      ! acnf%texture%input_fname='alum39.smt'  !! Test material
-      ! acnf%texture%input_fname='alum926f.smt'  ! AA1100 
-      ! acnf%texture%input_fname=trim(argv(1))
-      ! >> typical dataset
-      !acnf%texture%input_fname='micros.smt'
+      write(*,'(A,\)') 'Initializing the multilevel model...'
       call ALAMEL(1)
+      write(*,'(1X,A)') 'Done.'
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        
       fi1 = 0.0
       phi = 0.0
       fi2 = 0.0
-      !rho = 0.0
-
-      !nfis = 36
-      !nfis = 2
-
-      
+      ! Make space for the results      
       allocate(qvalues(nfis+1), residuals(nfis+1))
       
       delta_fi2 = (fi2max  - fi2min) / dble(nfis) 
