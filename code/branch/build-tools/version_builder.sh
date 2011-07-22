@@ -27,7 +27,7 @@ if [ $? == 0 ] ; then
 	echo "972  format('SVN WCrev:',T20,'${WCREV}')"
 	# Detailed info:
 	echo "990  format('Detailed SVN info:', / ,  &"
-	awk -v quote="'" 'BEGIN{FIELDWIDTHS = "1 19 255"} {printf "%c%c", quote, $1; printf "%s%c%s\n", $3, quote, ", / , &";}' < ${TMPINFO}
+	awk -v quote="'" 'BEGIN{FIELDWIDTHS = "1 18 255"} {printf "%c%c", quote, $1; printf "%s%c%s\n", $3, quote, ", / , &";}' < ${TMPINFO}
 	echo "'End of detailed SVN info.')"
 else
 	# Not SVN revision available
