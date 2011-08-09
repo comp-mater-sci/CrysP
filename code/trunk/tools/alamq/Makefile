@@ -32,6 +32,7 @@ ConfigurationName=debug
 LIBDIR=debug
 DEBUGFLAGS= -O0 -g -debug full -check all
 FCFLAGS+= $(DEBUGFLAGS)
+TRANSCONFIG=DEBUG=1
 else
 ConfigurationName=release
 LIBDIR=release
@@ -61,12 +62,14 @@ LIBALAMELDIR=../../../../MTM/branches/alamelSub/src/$(ConfigurationName)/lib
 FCFLAGS+= -I$(LIBALAMELDIR)/include
 FLDFLAGS+= $(LIBALAMELDIR)/libalamel.a
 
-LIBOPTDIR=../fng/utils/optlib/$(ConfigurationName)
+LIBOPTROOT=../fng/utils/optlib
+LIBOPTDIR=$(LIBOPTROOT)/$(ConfigurationName)
 FCFLAGS+= -I$(LIBOPTDIR)/include
 
 # Name of the library
 LIBOPTNAME=libopt.a
-FLDFLAGS+= $(LIBOPTDIR)/$(LIBOPTNAME)
+LIBOPTPATH=$(LIBOPTDIR)/$(LIBOPTNAME)
+FLDFLAGS+= $(LIBOPTPATH)
 # MKL subroutines
 #
 # Configuration on dijkstra
@@ -111,6 +114,8 @@ $(OBJDIR) :
 $(INCLUDEDIR) :
 	[ -d $@ ] || mkdir -p $@
 
-$(OBJDIR)/alamYLP.o 	:  $(OBJDIR)/vumat_libvec5.o 
-$(OBJDIR)/main.o	:  $(OBJDIR)/alamYLP.o
+$(OBJDIR)/alamYLP.o 	:  $(OBJDIR)/vumat_libvec5.o $(LIBOPTPATH)
+$(OBJDIR)/main.o	:  $(OBJDIR)/alamYLP.o $(LIBOPTPATH)
 
+$(LIBOPTPATH)		:
+	make -C $(LIBOPTROOT) $(TRANSCONFIG)
