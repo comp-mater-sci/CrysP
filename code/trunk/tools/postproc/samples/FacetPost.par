@@ -21,7 +21,7 @@
                                                                                                                      
 ----------------------------------------------------- PLOTTING OPTIONS ----------------------------------------------------
                                                                                      
-(P01) Yield Locus plot switch                                    [I02] :: 01
+(P01) Yield Locus plot switch                                    [I02] :: 03
 (P02) Euler angles for pi-plane plot                      [3(F6.2,1X)] :: 000.00 000.00 000.00
 (P03) Plot range for beta-4 angle                   [2(F6.2,1X),4X,I4] :: 000.00 360.00    0361
 (P04) Stress component on X-axis for XY-plot              [6(F3.1,5X)] :: 1.0     0.0     0.0     0.0     0.0     0.0      
