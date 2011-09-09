@@ -1,5 +1,7 @@
 #!/bin/bash
-
+#
+# $Id$
+#
 NARGS=2  # Two args to script expected.
 
 DRYRUN=1
@@ -29,15 +31,19 @@ MYNAME=`basename $0`
 nproc=0
 nrecov=0
 nunrecov=0
+ncrecov=0
 nretract=0
 nfailed=0
 nmissing=0
 nsuperfl=0
+# List of failed locations:
+lfailedops=""
 #
 #####
 retract () {
 # $1 location dir
 # $2 value
+# $3 dry-run mode
 #
 # Compose awk program
 AWKPROL=" {if ($2 "
@@ -45,6 +51,7 @@ AWKREST=' < $2)  print $2;}'
 AWKPROG="$AWKPROL$AWKREST"
 #
 #
+local isdryrun=${3:-"1"}
 local snapname
 local snapstep
 local lnretract
@@ -57,7 +64,7 @@ for snap in $1/snap_* ; do
 	then
 		  ((nretract++))
 		  ((lnretract++))
-		  if [ "$DRYRUN" == "1" ]
+		  if [ "$isdryrun" == "1" ]
 		  then
 			  [ "$VERBOSE" -ge "1" ] && echo "To be retracted: $snapstep $snap"
 		  else
@@ -79,12 +86,14 @@ fi
 # Check number of parameters
 if [ $# -lt "$NARGS" ]
 then
-       echo -e "\nUsage: $MYNAME [dryrun|update] statefile [verbose]\n"
+       echo -e "\nUsage: $MYNAME [dryrun|update|fast] statefile [verbose]\n"
        exit $E_BADARGS
 fi
 #
 MODE=$1
 INPUT=$2
+#
+NORETRACT=1
 #
 case "$MODE" in 
 "dryrun")
@@ -92,6 +101,11 @@ case "$MODE" in
 		;;
 "update")
 		DRYRUN=0
+		NORETRACT=0
+		;;
+"fast")
+		DRYRUN=0
+		NORETRACT=1
 		;;
 	*)
 		echo "Invalid mode"
@@ -170,12 +184,18 @@ do
 		then
 		      ((nrecov++))
 			[ "$VERBOSE" -ge "1" ] && echo "Snapshot $nrecov: $CSNAPSHOT"
-			if [ "$DRYRUN" == "0" ] ;then
+			if [ "$DRYRUN" == "0" ] ; then
+				  echo -n "$LOCATION"
 				  tar xzf "$CSNAPSHOT" -C "$LOCATION" $SNAPRECOVER
+				  if [ "$?" -ne "0" ] ; then
+				    	echo " -> snapshot operation failed: $CSNAPSHOT"
+					lfailedops="${lfailedops} ${LOCATION}"
+					((nfailed++))
+				  fi
 			  	  FDEFFILE="$LOCATION/$DEFFILE"
 				  read dstep dseq  < <( head -1 "$FDEFFILE" )
 				  if [ "$dstep" -eq "$cstep" ] && [ "$dseq" -eq "$cseq" ] ; then
-				  	echo "$LOCATION -> recovered."
+				  	echo " -> recovered."
 			  	  else
 				    	echo " -> failed."
 					((nfailed++))
@@ -183,11 +203,20 @@ do
 			fi
 		else
 			echo -n "$LOCATION : missing snapshot ${cstep} ${cseq}"
+			# Attempt partial match
+			PMSNAPSHOT=$(ls -1 -t ${LOCATION}/${SNAPPREF}${cstep}_* 2> /dev/null | head -1 )
+			if [ -n "$PMSNAPSHOT" ] && [ -s "$PMSNAPSHOT" ] ;  
+			then
+				echo " but conditional recovery is possible (partial match ${PMSNAPSHOT} is found)."
+				((ncrecov++))
+			else
+				echo " no partial match."
+			fi
 			((nunrecov++))
 		fi
 		#
 		#
-		retract "$LOCATION" "$cstep"
+		retract "$LOCATION" "$cstep" "$NORETRACT"
 	else
 		echo "$LOCATION not found"
 		((nunrecov++))
@@ -229,9 +258,14 @@ fi
 echo -e "\n ****    Report    **** \n"
 echo Locations processed: $index
 echo Recoverable: $nrecov
+echo Conditionally recoverable: $nunrecov
 echo Unrecoverable: $nunrecov
 echo Retractable: $nretract
 echo Superfluous: $nsuperfl
 echo Failed: $nfailed
 echo Missing: $nmissing
+if [ -n "${lfailedops}" ] ; then
+	echo Locations with recovery failure:
+	echo "${lfailedops}"
+fi
 echo -e  " **** End of Report **** \n"
