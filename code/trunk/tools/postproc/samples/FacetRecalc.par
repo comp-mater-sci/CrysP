@@ -1,5 +1,5 @@
 **************************************************** BEGIN OF Facet.par ***************************************************
-                                                                                                                      
+** $Id$                                                                                                                      
  NOTE : NONE OF THE LINES IN THIS  PARAMETER FILE  SHOULD BE DELETED.  THE DATA ENTERED AFTER THE DOUBLE-COLON (::)    
         (i.e, 75th column) IS ONLY READ BY THE PROGRAM, IF ENTERED ACCORDING TO FORMAT SPECIFIED. IT IS ADVISED NOT   
         TO MODIFY THE COLUMN LABELS. REFER TO THE USER MANUAL FOR FUTHER DETAILS.                                      

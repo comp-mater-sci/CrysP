@@ -90,6 +90,7 @@ for  snap in $SNAPLIST ; do
 	echo $defstep $step $snap >> "${OPFILE}_map.txt" 
 	echo "Processing step $defstep ($step) from $snap" | tee -a "$LOGFILE" 
 	#
+	local outprefix="${OPFILE}_${defstep}"
 	# Extract requested datafiles
 	tar -xzf $snap -C "$TMPDIR" $FROMSNAP
 	## Stage
@@ -140,7 +141,16 @@ for  snap in $SNAPLIST ; do
 		tail -n ${NQLINES} ${PREFIX}.LS3 | head -n +${NQVALS} |  awk '{print  $4 " " $5 " " $6 " " $7;}'  | tee -a "$DATAFILE" | awk "$AWKPROG" >> "$SPLOTFILE"
 		echo " " >>  "$SPLOTFILE"
 		mv "$DATAFILE" "$OUTDIR"
+		markProgress
 		# 
+		for ext in RS1 RS2 RS3 RS4 RS5 RS6 ;  do
+			local inpdat="${PREFIX}.${ext}"
+			local outdat="${outprefix}.${ext}"
+			if [ -e "${inpdat}" ] ; then
+				echo "#" $(head -n 1 ${inpdat})  > "${outdat}"
+				tail -n +10 ${inpdat} | head -n -3  >> "${outdat}"
+			fi
+		done
 		markProgress
 		#
 		# Extract the residual values

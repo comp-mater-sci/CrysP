@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# $Id$
+#
 ## Global configuration section
 UTILDIR="$HOME/TEXEVOL"
 BINDIR="$UTILDIR/bin"

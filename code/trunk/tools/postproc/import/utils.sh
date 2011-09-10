@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# $Id$
+#
 
 markProgress() {
         if [ -z "$1" ] ; then

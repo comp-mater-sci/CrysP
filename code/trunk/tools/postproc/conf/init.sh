@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# $Id$
+#
 # Colon-separed list of import directories
 POSTTEX_IMPORT="${POSTTEX_ROOT}/import"
 # Colon-separed list of imported files 

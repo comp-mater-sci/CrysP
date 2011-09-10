@@ -1,5 +1,7 @@
 #!/bin/bash
-
+#
+# $Id$
+#
 printHelp()
 {
 cat <<End-of-help
