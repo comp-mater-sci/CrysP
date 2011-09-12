@@ -2,15 +2,20 @@
 #PBS -l nodes=1:ppn=8
 #PBS -l walltime=24:00:00
 #PBS -m abe
-#PBS -M jerzy.gawad@cs.kuleuven.be
+#*PBS -M jerzy.gawad@cs.kuleuven.be
 #PBS -r n
 #
 # $Id$
 #
 ##################################################################
+# This script can be run either interactively or in unattended mode.
+# If you want to use it interactively you need to specify command line parameters "jobname" and "runmode":
+#      run_long.pbs jobname runmode
+# If you want to run it in unattended mode, please replace "default_job" in the JOBNAME statement below 
+# with your Abaqus jobname.
 # Configuration section
 #
-JOBNAME=${1:-"CupDrawing"}
+JOBNAME=${1:-"default_job"}
 #
 #
 # Set runmode:
@@ -32,7 +37,7 @@ RUNMODE=${2:-"analysis"}
 LOGFILE=${JOBNAME}_log.log
 #
 # Assume that libdir is the current dir
-CURRENTDIR=`pwd`
+CURRENTDIR=$(pwd)
 #
 ALIBDIR=$CURRENTDIR
 #
@@ -43,6 +48,9 @@ GMETEX_WORKDIR=$CURRENTDIR
 export LD_LIBRARY_PATH
 export JOBNAME
 export GMETEX_WORKDIR
+#
+# Name of user subroutine
+USERSUB=vumat_main
 #
 # Prepare execution
 # 
@@ -66,16 +74,16 @@ fi
 #
 case "$RUNMODE" in
 	datacheck) 
-			abaqus interactive datacheck job=$JOBNAME user=vumat_facet  &>  "$LOGFILE"
+			abaqus interactive datacheck job=$JOBNAME user="${USERSUB}"  &>  "$LOGFILE"
 			;;
 	analysis) 
-			abaqus interactive job=$JOBNAME user=vumat_facet  &>  "$LOGFILE"
+			abaqus interactive job=$JOBNAME user="${USERSUB}"  &>  "$LOGFILE"
 			;;
 	restart)	
-			abaqus interactive job=$JOBNAME oldjob=$OLDJOBNAME user=vumat_facet  &>  "$LOGFILE"
+			abaqus interactive job=$JOBNAME oldjob=$OLDJOBNAME user="${USERSUB}"  &>  "$LOGFILE"
 			;;
 	recover)	
-			abaqus interactive recover job=$JOBNAME user=vumat_facet  &>  "$LOGFILE"
+			abaqus interactive recover job=$JOBNAME user="${USERSUB}"  &>  "$LOGFILE"
 			;;
 	*)
 		echo "Invalid runmode"

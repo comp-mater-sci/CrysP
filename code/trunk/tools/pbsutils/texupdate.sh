@@ -243,7 +243,7 @@ copylist ()
 		SRC=$1/$fname
 		#echo "$SRC => $3"
 		if [ -e "$SRC"  ] ; then
-			cp -p -f "$SRC" "$3"
+			cp -f "$SRC" "$3"
 		else
 			# Emit warning message
 			echo "Cannot copy $SRC: file not found"
@@ -408,14 +408,19 @@ fi
 ## Go back to initial directory
 cd "$TARGETDIR"
 # Perform sanity
+cleanup
+#
+return "$retcode"
+}  
+# Clean-up function
+cleanup() {
 if [ "$TESTMODE" == 0 ] ; then
 	rm -rf $TMPDIR
 else
 	remarkTestMode "rm -rf $TMPDIR"	
 fi
-#
-return "$retcode"
-}  
+}
+
 # End of function runFacet
 ############################################################
 #
@@ -451,7 +456,8 @@ case "$PREINFO" in
 		#
 		if [ ! "$?" == "0" ] ; then
 			echo "Execution of runAlamel finished with error"
-			[ "$DIAGS" -ge "1" ] && builtin echo "Execution of runAlamel finished with error" >> "$DIAGERR"
+			[ "$DIAGS" -ge "1" ] && builtin echo "Transaction ${STEPID} ${SEQNID}: Execution of runAlamel finished with error" >> "$DIAGERR"
+			cleanup
 			exit $E_SIMERR 
 		fi
 		#
@@ -460,7 +466,8 @@ case "$PREINFO" in
 		#
 		if [ ! "$?" == "0" ] ; then
 			echo "Execution of runFacet finished with error"
-			[ "$DIAGS" -ge "1" ] && builtin echo "Execution of runFacet finished with error" >> "$DIAGERR" 
+			[ "$DIAGS" -ge "1" ] && builtin echo "Transaction ${STEPID} ${SEQNID}: Execution of runFacet finished with error" >> "$DIAGERR" 
+			cleanup
 			exit $E_SIMERR 
 		fi
 		#
@@ -471,7 +478,8 @@ case "$PREINFO" in
 
 	* )	
 		echo "prepareExecution finished with error"
-		[ "$DIAGS" -ge "1" ] && builtin echo "prepareExecution finished with error" >> "$DIAGERR"
+		[ "$DIAGS" -ge "1" ] && builtin echo "Transaction ${STEPID} ${SEQNID}: prepareExecution finished with error" >> "$DIAGERR"
+		cleanup
 		exit $E_SIMERR 
 esac
  
