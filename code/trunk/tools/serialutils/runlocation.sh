@@ -9,7 +9,6 @@ SCRIPTDIR="$UTILDIR/scripts"
 RUNFILE="$SCRIPTDIR/texupdate.sh"
 #
 RESULTFILE="elem.Q00"
-#RESULTFILE="fac2sep.par"
 
 TESTMODE="0"
 
@@ -22,7 +21,7 @@ VERBOSE=0
 PERSISTENTMODE=1
 #
 # Notifications
-MAILADDR="jerzy.gawad@cs.kuleuven.be"
+MAILADDR="your.email@yourdomain"
 FAILURETHRESHOLD=5
 SLEEPONTHRESHOLD=60m
 #
@@ -90,7 +89,7 @@ Urgent action is needed.
 End-of-Notification
 }
 
-echo "Execution of runlocation script"
+echo -n "Execution of runlocation script "
 
 echo "Starting $1" >>  "$LOGFILE"
 
@@ -172,7 +171,12 @@ done
 # Check the result, if CONDITION is different than "ok", then both methods failed.
 #
 if [ "$CONDITION" == "$R_OK" ] ; then
-	echo Texture simulation completed successfuly
+	if [ "$VERBOSE" == "0" ] ; then
+		echo "OK"
+	else
+		echo "Texture simulation completed successfuly"
+	fi
+
 else
 	echo "Cannot start $RUNFILE in location $1"
 	exit $E_PBSERR 

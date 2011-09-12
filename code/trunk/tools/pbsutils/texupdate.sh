@@ -3,14 +3,14 @@
 #PBS -l walltime=0:03:00
 #PBS -r n
 #PBS -m n
-#*PBS -M jerzy.gawad@cs.kuleuven.be
+#*PBS -M your.email@yourdomain
 #PBS -z
 #PBS -e /dev/null
 #PBS -o /dev/null
 #
 # $Id$
 #
-### This is PBS script
+### Note: this is a PBS-ready script. 
 ###
 #### Mark the start of job
 DIRTYMARK="unclean"
