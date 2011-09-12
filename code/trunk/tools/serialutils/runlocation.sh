@@ -21,7 +21,9 @@ VERBOSE=0
 PERSISTENTMODE=1
 #
 # Notifications
-MAILADDR="your.email@yourdomain"
+# If you want to be notified about failures, set MAILADDR:
+# MAILADDR="your.email@yourdomain"
+MAILADDR=""
 FAILURETHRESHOLD=5
 SLEEPONTHRESHOLD=60m
 #
@@ -80,13 +82,15 @@ notifyUser() {
 local location=$1
 local attempt=$2
 local nthattempt=$3
+if [ -n "${MAILADDR}" ] ; then
 mail -s "Failure of $(basename ${RUNFILE}) in $location" "$MAILADDR" <<End-of-Notification
 Script ${RUNFILE} failed for ${nthattempt} times (${attempt} in total) in location ${location}.
-Execution of script will be suspended for ${SLEEPONTHRESHOLD}.
+Execution of the script will be suspended for ${SLEEPONTHRESHOLD}.
 
 Urgent action is needed.
 
 End-of-Notification
+fi
 }
 
 echo -n "Execution of runlocation script "
