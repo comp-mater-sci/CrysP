@@ -111,6 +111,7 @@ implicit none
       read(cnfunit,fmt=*,iostat=ioerr)  rho 
       read(cnfunit,fmt='(2L2)',iostat=ioerr)  reuse_previous, resuse_stainrate
       read(cnfunit,fmt=*,iostat=ioerr) ylpCnf%jacobi_eps, ylpCnf%linearize
+      read(cnfunit,fmt=*,iostat=ioerr) ylpCnf%default_eps, ylpCnf%obj_func_eps
       if (ioerr /= 0) then
             write(*,*) 'Incorrect format of configuration file'
             stop 
