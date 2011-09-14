@@ -29,7 +29,7 @@ use qrsTypes
 implicit none
       ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
       ! coordinate system
-      double precision,dimension(3,3)           :: Dmcoord, Dtcoord, Smcoord,Stcoord, SmIdent
+      double precision,dimension(3,3)           :: Dmcoord, Dtcoord, Smcoord,Stcoord, SmIdent, Xmcoord_resume, Xtcoord_resume
       double precision,dimension(3,3)           :: Mrot = 0.0
       !
       double precision                          :: rho 
@@ -139,6 +139,15 @@ implicit none
       write(*,fmt='(2(F8.3,1X),I3)',iostat=ioerr)  fi2min, fi2max,  nfis 
       write(*,fmt='(F8.3)',iostat=ioerr)  rho 
       !
+      if (reuse_previous) then
+            if (resuse_stainrate) then
+                  write(*,'(A,\)') 'Strain rate'
+            else
+                  write(*,'(A,\)') 'Stress'
+            endif
+            write(*,'(1X,A)') 'from the previous solution will be re-used.'
+      endif
+      
       ! Convert fi2min, fi2max from degs to rads
       fi2min = fi2min * deg2rad      
       fi2max = fi2max * deg2rad      
@@ -181,7 +190,14 @@ implicit none
             !            
             call KMAT2VEC5D(Smcoord,vS) 
             if ((reuse_previous) .AND. (i > 1))  then
-                  if (.not. resuse_stainrate) vA = vSonA
+                  ! Reuse previously stored result in new coordinate system
+                  ! Type of result (strain rate or stress) is decided in line mared with (***)
+                  ! Rotate Xtcoord_resume to new coordinate system
+                  Xmcoord_resume = matmul(transpose(Mrot),matmul(Xtcoord_resume,Mrot))
+                  ! Set starting point
+                  call KMAT2VEC5D(Xmcoord_resume,vA)
+                  vA = vA / sqrt(dot_product(vA,vA))
+                  ! Disable Von Mises guess in multilevelYLP: vA will be used as a starting point
                   useVMGuess = .false.
             endif
             !
@@ -199,9 +215,10 @@ implicit none
             
             ! Convert AONSET vector to tensor form
             call KVEC5D2MAT(vA,Dmcoord)
+
+            call KVEC5D2MAT(vSonAn,SmIdent)
             
             if (iw >= 2) then
-                  call KVEC5D2MAT(vSonAn,SmIdent)
                   write(*,400)
                   do j=1,3
                         write(*,401) Smcoord(j,:),SmIdent(j,:),Dmcoord(j,:)
@@ -212,6 +229,17 @@ implicit none
             
             ! Rotate back to the "tensile test" coordinate system   
             Dtcoord = matmul(matmul(Mrot,Dmcoord),transpose(Mrot))
+            !
+            !(***) Prepare next iteration if re-using is requested.
+            if (reuse_previous) then
+                  ! Re-used data are always in "tensile" coordinate system (initial coordinate system) 
+                  if (resuse_stainrate) then
+                        Xtcoord_resume = Dtcoord
+                  else
+                        ! Rotate stresses to "tensile" coordinate system 
+                        Xtcoord_resume = matmul(matmul(Mrot,SmIdent),transpose(Mrot))
+                  endif
+            endif
             !            
             ! Calculate output variables
             if ( abs(Dtcoord(3,3)) >= epsilon(0.D0) ) then
