@@ -124,8 +124,16 @@ use AlamelSub
 use alamelConfig
       
       type multilevelYLPConfig
-            double precision        :: jacobi_eps = 5.E-2
+            !> Epsilon used for numerical estimation of Jacobi matrix.
+            !>
+            !> Note: this is a reasonable value. Lowering it can lead to poor convergence or lack of convergence.
+            double precision        :: jacobi_eps = 5.E-2 
+            !> Request for preliminary solution of linearized problem 
             logical                 :: linearize = .false.
+            !> Default epsilon to be set for all TR-solver convergence criteria, except ||F||_2
+            double precision        :: default_eps = 1.E-5
+            !> Epsilon to be set on norm of objective function ||F||_2
+            double precision        :: obj_func_eps = 1.E-3
       end type
       
 contains
@@ -141,7 +149,7 @@ contains
       !> Calculates plastic strain rate corresponding to given deviatoric stress
       !>
       !> The subroutine assumes that multilevel model is already configured and initialized.
-      subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,config)
+      subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig)
       use alamEval
       implicit none
       double precision,intent(in)   :: vS(5)      !< Stress vector
@@ -150,9 +158,11 @@ contains
       double precision,intent(out)  :: R          !< Square norm of residual error
       integer                       :: info       !< Exit code
       logical,optional,intent(in)   :: useVMGuess !< use von Mises initial guess, otherwise assume vA as an initial strain rate
-      type(multilevelYLPConfig),optional,intent(in) :: config !< Configuration parameters to be imposed to the search method
+      type(multilevelYLPConfig),optional,intent(in) :: YLPconfig !< Configuration parameters to be imposed to the search method
       !
+
       double precision, dimension(5) :: Snormal, Anormal, vX, vF, vX_lin
+      type(multilevelYLPConfig) :: config !< Effective configuration parameters (defaults on entry)
       ! 
       double precision, dimension(5,5) :: mJ
       !
@@ -170,11 +180,12 @@ contains
       else
             use_vmGuess = .true.
       endif
+      ! Override the defaults by the user's settings:
+      if (present(YLPconfig)) config = YLPconfig
       !
       ! Configure objective function      
       objFunc%n_X_dim = 5
       objFunc%m_F_dim = 5
-      objFunc%jacobi_eps=5.e-2      !! Quite good value!! Lowering it leads to lack of convergence!
       !
       ! Normalized stress vector 
       !objFunc%vSn = vS / sqrt(dot_product(vS,vS)) 
@@ -198,16 +209,15 @@ contains
       tr_config%lo_limit = -10.0
       tr_config%up_limit = 10.0
       tr_config%init_step = 100.0
-      tr_config%eps = 1e-5    !<< beware!
-      tr_config%eps(2) = 1e-3  ! Norm of F: ||F||_2
+      ! Impose configuration settings
+      ! Tr:
+      tr_config%eps = config%default_eps   !<< beware!
+      tr_config%eps(2) = config%obj_func_eps  ! Norm of F: ||F||_2
+      ! Obj func:
+      objFunc%jacobi_eps = config%jacobi_eps
+      attempt_linearized = config%linearize
       !
       linearized_successful = .false.
-      attempt_linearized = .false.
-      ! Override the defaults by the user's settings:
-      if (present(config)) then
-            objFunc%jacobi_eps = config%jacobi_eps
-            attempt_linearized = config%linearize
-      endif
       !
       ! Run linearized problem if requested
       if (attempt_linearized) then
@@ -249,9 +259,9 @@ contains
       call deleteSolutionPoint(initState,info)
       !
       ! Set output strain rate
-      vA = vX
+      vA = vX/sqrt(dot_product(vX,vX))
       ! Call objective function again to get corresponding yield stress
-      call objFunc%objectiveFx(vX,vF,info)
+      call objFunc%objectiveFx(vA,vF,info)
       
       write(*,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',vF
       
