@@ -39,7 +39,7 @@ implicit none
       double precision                          :: R
       integer     :: info, iw
       integer     :: nslips = 16*6, nsteps = 1
-      integer     :: i,j, nfis, simtype
+      integer     :: i,j, nfis, npoints, simtype
       logical     :: useVMGuess, reuse_previous, resuse_stainrate
       double precision,parameter ::  rad2deg = (180.D0 / acos(-1.D0)), deg2rad = (acos(-1.D0) / 180.D0)
       double precision :: fi2min = 0.D0, fi2max =  acos(-1.D0)
@@ -108,7 +108,7 @@ implicit none
       read(cnfunit,'(A)' ,iostat=ioerr) acnf%slipsystem%input_fname 
       read(cnfunit,'(A)' ,iostat=ioerr) acnf%micros_fname
       read(cnfunit,fmt=*,iostat=ioerr)  fi2min, fi2max,  nfis 
-      read(cnfunit,fmt=*,iostat=ioerr)  rho 
+      read(cnfunit,fmt=*,iostat=ioerr)  rho
       read(cnfunit,fmt='(2L2)',iostat=ioerr)  reuse_previous, resuse_stainrate
       read(cnfunit,fmt=*,iostat=ioerr) ylpCnf%jacobi_eps, ylpCnf%linearize
       read(cnfunit,fmt=*,iostat=ioerr) ylpCnf%default_eps, ylpCnf%obj_func_eps
@@ -117,12 +117,14 @@ implicit none
             stop 
       endif
       close(cnfunit)
+      !
       ! Validate config values
-      if (nfis < 2) then
-            write(*,*) 'Number of intervals cannot be smaller than 2' 
+      if (nfis < 1) then
+            write(*,*) 'Number of intervals cannot be smaller than 1' 
             stop
       endif
-      
+      !
+      npoints = nfis + 1
       ! Print configuration     
       write(*,'(I2,1X,A)',iostat=ioerr) acnf%texture%input_type, trim(acnf%texture%input_fname)
 
@@ -167,7 +169,7 @@ implicit none
       phi = 0.D0
       fi2 = 0.D0
       ! Make space for the results      
-      allocate(qrsvalues(nfis+1), residuals(nfis+1))
+      allocate(qrsvalues(npoints), residuals(npoints))
       residuals = 0.D0
       
       delta_fi2 = (fi2max  - fi2min) / dble(nfis) 
@@ -176,7 +178,7 @@ implicit none
 
 
 
-      do i = 1,nfis + 1
+      do i = 1,npoints
             write(*,'(/,A,1X,I4,1X,A,1X,F8.3,A,/)')'Point:',i,'fi2 =',fi2 * rad2deg, ' degs'
             ! Calculate rotation matrix
             call KROTMAT(fi1,phi,fi2,Mrot)
@@ -265,7 +267,7 @@ implicit none
       write(*,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
 
       fi2 = 0
-      do i=1,nfis+1
+      do i=1,npoints
             write(*,fmt=450) rad2deg * fi2, rho, qrsvalues(i), residuals(i)
             fi2 = fi2 + delta_fi2
       enddo
