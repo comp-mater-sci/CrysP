@@ -47,6 +47,7 @@ INCLUDEDIR=$(ConfigurationName)/include
 SRCS= \
 alamYLP.f90 \
 main.f90 \
+qrsTypes.f90 \
 vumat_libvec5.for
 
 # Build list of objects:
@@ -115,7 +116,7 @@ $(INCLUDEDIR) :
 	[ -d $@ ] || mkdir -p $@
 
 $(OBJDIR)/alamYLP.o 	:  $(OBJDIR)/vumat_libvec5.o $(LIBOPTPATH)
-$(OBJDIR)/main.o	:  $(OBJDIR)/alamYLP.o $(LIBOPTPATH)
+$(OBJDIR)/main.o	:  $(OBJDIR)/alamYLP.o $(OBJDIR)/qrsTypes.o $(LIBOPTPATH)
 
 $(LIBOPTPATH)		:
 	make -C $(LIBOPTROOT) $(TRANSCONFIG)
