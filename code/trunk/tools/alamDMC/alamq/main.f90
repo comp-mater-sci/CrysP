@@ -26,6 +26,8 @@ use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 use qrsTypes
+use alamUtils
+use commonConfig
 implicit none
       ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
       ! coordinate system
@@ -38,16 +40,12 @@ implicit none
       double precision                          :: SonA_len
       double precision                          :: R
       integer     :: info, iw
-      integer     :: nslips = 16*6, nsteps = 1
-      integer     :: i,j, nfis, npoints, simtype
+      integer     :: i,j, nfis, npoints
       logical     :: useVMGuess, reuse_previous, resuse_stainrate
-      double precision,parameter ::  rad2deg = (180.D0 / acos(-1.D0)), deg2rad = (acos(-1.D0) / 180.D0)
       double precision :: fi2min = 0.D0, fi2max =  acos(-1.D0)
       double precision :: delta_fi2
       double precision,dimension(:),allocatable       :: residuals
       type(qrsData),dimension(:),allocatable          :: qrsvalues
-
-      type(multilevelYLPConfig)     :: ylpCnf
       !
       integer                 :: argc
       integer,parameter       :: argc_min = 1, argc_max=1
@@ -58,6 +56,8 @@ implicit none
       info = 1
       iw = 3
       !
+      ! Print banner
+      write(*,'(A)') 'Alamq: $Id$'
       !
       argc = command_argument_count()
       if (argc < argc_min) then
@@ -65,20 +65,10 @@ implicit none
             stop
       endif
       call get_command_argument(1,argv(1))
-      ! Print banner
-      write(*,'(A)') 'Alamq: $Id$'
-      !     
       !
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! INITIALIZATION OF ALAMEL: it should be done in different way !!!!
-      call initConfig(acnf,nslips,nsteps,info)
+      call initAlamelStructures(info)
       if (info /= 0) then
-            write(*,*) 'Cannot initialize alamel config'
-            stop
-      endif
-      call initResults(ares,nsteps,info)
-      if (info /= 0) then
-            write(*,*) 'Cannot initialize data structure for alamel results'
+            write(*,*) 'Error: Cannot initialize libAlamel'
             stop
       endif
 
@@ -90,33 +80,30 @@ implicit none
             stop
       endif
       !
-      read(cnfunit,'(I2,1X,A)',iostat=ioerr) acnf%texture%input_type
-      select case(acnf%texture%input_type)
-            case(1,3)     ! SMT or CUB
-                  read(cnfunit,'(A)',iostat=ioerr) acnf%texture%input_fname
-            case(2)       ! CUR file    
-                  read(cnfunit,'(I2,1X,A)',iostat=ioerr) acnf%texture%block, acnf%texture%input_fname
-            case default
-                  write(*,*) 'Incorrect texture type: ', acnf%texture%input_type    
-      end select
-      if (ioerr /= 0) then
-            write(*,*) 'Incorrect format in the configuration file'
-            stop  
+      call readAlamelConfigSection(cnfunit,info)
+      if (info /= 0) then
+            write(*,fmt=901) 'check ALAMEL config section'
+            stop 
       endif
-      read(cnfunit,fmt=*,iostat=ioerr)  simtype
-      read(cnfunit,'(A)' ,iostat=ioerr) acnf%output_prefix 
-      read(cnfunit,'(A)' ,iostat=ioerr) acnf%slipsystem%input_fname 
-      read(cnfunit,'(A)' ,iostat=ioerr) acnf%micros_fname
+      !
+      ! Read alamq-specific parameters
       read(cnfunit,fmt=*,iostat=ioerr)  fi2min, fi2max,  nfis 
       read(cnfunit,fmt=*,iostat=ioerr)  rho
       read(cnfunit,fmt='(2L2)',iostat=ioerr)  reuse_previous, resuse_stainrate
-      read(cnfunit,fmt=*,iostat=ioerr) ylpCnf%jacobi_eps, ylpCnf%linearize
-      read(cnfunit,fmt=*,iostat=ioerr) ylpCnf%default_eps, ylpCnf%obj_func_eps
       if (ioerr /= 0) then
-            write(*,*) 'Incorrect format of configuration file'
+            write(*,fmt=901) 'check alamq specific section'
             stop 
       endif
+      !
+      ! Read multilevelYLP configuration
+      call readYLPConfigSection(cnfunit,info)
+      if (info /= 0) then
+            write(*,fmt=901) 'check YLP config section' 
+            stop 
+      endif
+      !
       close(cnfunit)
+      901 format('Incorrect format of configuration file:',1X,A)
       !
       ! Validate config values
       if (nfis < 1) then
@@ -125,29 +112,24 @@ implicit none
       endif
       !
       npoints = nfis + 1
-      ! Print configuration     
-      write(*,'(I2,1X,A)',iostat=ioerr) acnf%texture%input_type, trim(acnf%texture%input_fname)
-
-      write(*,'(A)' ,iostat=ioerr) trim(acnf%output_prefix) 
-      write(*,'(A)' ,iostat=ioerr) trim(acnf%slipsystem%input_fname)
-      if (simtype == 0) then
-            write(*,fmt=301, iostat=ioerr) 'ALAMEL'
-      else
-            write(*,fmt=301, iostat=ioerr) 'FC Taylor'
-            acnf%simulCalls(1)%rlx1 = 0
-            acnf%simulCalls(1)%rlx2 = 0
-      endif
-      301 format('Multilevel model: ',A)
-      write(*,fmt='(2(F8.3,1X),I3)',iostat=ioerr)  fi2min, fi2max,  nfis 
-      write(*,fmt='(F8.3)',iostat=ioerr)  rho 
+      ! 
+      ! Print-out summary of the configuration 
+      write(display_unit,fmt=fmtMsg2Other//'2(F8.3,1X))',iostat=ioerr) 'Angular range:', fi2min, fi2max
+      write(display_unit,fmt=fmtMsg2Int,iostat=ioerr)   'Number of points:', npoints 
+      write(display_unit,fmt=fmtMsg2Float,iostat=ioerr) 'Stress ratio', rho 
       !
+      call displayConfig(display_unit,info)
+      !
+      write(display_unit,fmt='(A,\)') 'Info:'
       if (reuse_previous) then
             if (resuse_stainrate) then
-                  write(*,'(A,\)') 'Strain rate'
+                  write(display_unit,'(1X,A,\)') 'Strain rate'
             else
-                  write(*,'(A,\)') 'Stress'
+                  write(display_unit,'(1X,A,\)') 'Stress'
             endif
-            write(*,'(1X,A)') 'from the previous solution will be re-used.'
+            write(display_unit,'(1X,A)') 'from the previous solution will be re-used.'
+      else
+            write(display_unit,'(1X,A)') 'von Mises guess will be used.'
       endif
       
       ! Convert fi2min, fi2max from degs to rads
@@ -160,9 +142,8 @@ implicit none
       
       ! Apply modifications to acnf:
       acnf%jobtitle = trim(acnf%output_prefix)//' alamq'
-      write(*,'(A,\)') 'Initializing the multilevel model...'
-      call ALAMEL(1)
-      write(*,'(1X,A)') 'Done.'
+      !
+      call initAlamel()
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        
       fi1 = 0.D0
@@ -179,6 +160,7 @@ implicit none
 
 
       do i = 1,npoints
+            write(*,900)
             write(*,'(/,A,1X,I4,1X,A,1X,F8.3,A,/)')'Point:',i,'fi2 =',fi2 * rad2deg, ' degs'
             ! Calculate rotation matrix
             call KROTMAT(fi1,phi,fi2,Mrot)
@@ -276,10 +258,12 @@ implicit none
       400 format('| Smcoord',T40,'| SmIdent',T80,'|Dmcoord')
       401 format(3(F10.6,1X),T40,3(F10.6,1X),T80,3(F10.6,1X))
       402 format(A,T10,F10.6)
-      450 format(F10.6,1X,F12.8,1X,3(F12.8,1X),F12.8) ! phi2, rho, (q,r,s,), residual
+      450 format(F10.6,1X,F6.3,1X,3(F12.8,1X),F12.8) ! phi2, rho, (q,r,s,), residual
       ! Format for header file
       500 format('#Material:',1X,A,/,'#Generated by Alamq $Revision$')
       ! Format for title line
       501 format('#Angle',T11,'rho',T24,'q-value',T37,'r-value',T50,'s-value',T63,'residual')
-      
+      ! Format for screen separator
+      900 format(112('='))
+ 
 end program

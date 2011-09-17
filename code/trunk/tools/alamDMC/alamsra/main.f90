@@ -20,16 +20,6 @@
 !>    \todo AlamSRA should be extended to take cognizance of biaxial stress state, arbitraty stresses,
 !>          as well as arbitrary evolution of the texture.
 
-module alamsraHelper
-contains
-pure function vec_norm2(v)
-implicit none
-double precision :: vec_norm2
-double precision,dimension(:),intent(in) :: v
-vec_norm2 = sqrt(dot_product(v,v))
-end function
-end module
-
 
 !> ALAMel Stress Response Analysis
 !>
@@ -40,14 +30,14 @@ use nllsTR
 use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
-use alamsraHelper
+use alamUtils
+use commonConfig
 implicit none
       ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
       ! coordinate system
       double precision,dimension(3,3)           :: P,D,De, Sm,St, SmIdent, Dt
       double precision,dimension(3,3)           :: Mrot = 0.0
       !
-      logical                                   :: outputRequest
       double precision                          :: angle, NormMax, PNormIter
       double precision                          :: plast_pot, scal_s, norm_sona
       double precision                          :: rvalue, qvalue
@@ -56,15 +46,11 @@ implicit none
       double precision                          :: Pnorm, normP, normD, Tnorm
       double precision                          :: R
       integer     :: info, iw
-      integer     :: nslips = 16*6, nsteps = 1
-      integer     :: i,j, simtype
+      integer     :: i,j 
       
       integer :: scalingID
       integer,parameter :: scaleFullTensor = 0, scaleTensileComponent = 1
 
-      double precision,parameter ::  rad2deg = (180.D0 / acos(-1.D0)), deg2rad = (acos(-1.D0) / 180.D0)
-      double precision,parameter ::  root23 = sqrt(2.D0/3.D0)
-      type(multilevelYLPConfig)     :: ylpCnf
       !
       integer                 :: argc
       integer,parameter       :: argc_min = 1, argc_max=1
@@ -75,6 +61,8 @@ implicit none
       info = 1
       iw = 3
       !
+      ! Introduce youself ;-)
+      write(*,'(A)') 'AlamSRA, $Rev$'
       !
       argc = command_argument_count()
       if (argc < argc_min) then
@@ -83,86 +71,56 @@ implicit none
       endif
       call get_command_argument(1,argv(1))
       !
-      ! Introduce youself ;-)
-      write(*,'(A)') 'AlamSRA, $Rev$'
-      !
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! INITIALIZATION OF ALAMEL: it should be done in different way !!!!
-      call initConfig(acnf,nslips,nsteps,info)
+      call initAlamelStructures(info)
       if (info /= 0) then
-            write(*,*) 'Cannot initialize alamel config'
+            write(*,*) 'Error: Cannot initialize libAlamel'
             stop
       endif
-      call initResults(ares,nsteps,info)
-      if (info /= 0) then
-            write(*,*) 'Cannot initialize data structure for alamel results'
-            stop
-      endif
-
       ! open and read config file      
       write(*,'(/,A,1X,A,/)') 'Processing config file', trim(argv(1))
       open(cnfunit,file=trim(argv(1)),status='old',iostat=ioerr)
       if (ioerr /= 0) then
-            write(*,*) 'Cannot open config file: ', trim(argv(1))
+            write(*,*) 'Error: Cannot open config file: ', trim(argv(1))
             stop
       endif
       !
-      read(cnfunit,'(I2,1X,A)',iostat=ioerr) acnf%texture%input_type
-      select case(acnf%texture%input_type)
-            case(1,3)     ! SMT or CUB
-                  read(cnfunit,'(A)',iostat=ioerr) acnf%texture%input_fname
-            case(2)       ! CUR file    
-                  read(cnfunit,'(I2,1X,A)',iostat=ioerr) acnf%texture%block, acnf%texture%input_fname
-            case default
-                  write(*,*) 'Incorrect texture type: ', acnf%texture%input_type    
-      end select
-      if (ioerr /= 0) then
-            write(*,*) 'Incorrect format in the configuration file'
-            stop  
-      endif
-      read(cnfunit,fmt=*,iostat=ioerr)  simtype
-      read(cnfunit,'(A)' ,iostat=ioerr) acnf%output_prefix 
-      read(cnfunit,'(A)' ,iostat=ioerr) acnf%slipsystem%input_fname 
-      read(cnfunit,'(A)' ,iostat=ioerr) acnf%micros_fname
-      read(cnfunit,'(L)' ,iostat=ioerr) outputRequest
-      read(cnfunit,fmt=*,iostat=ioerr)  angle 
-      read(cnfunit,fmt=*,iostat=ioerr)  scalingID, NormMax, PNormIter 
-
-      read(cnfunit,fmt=*,iostat=ioerr) ylpCnf%jacobi_eps, ylpCnf%linearize
-
-      if (ioerr /= 0) then
-            write(*,*) 'Incorrect format of configuration file'
+      ! Read Alamel configuration
+      call readAlamelConfigSection(cnfunit,info)
+      if (info /= 0) then
+            write(*,fmt=901) 'check ALAMEL config section'
             stop 
       endif
-       
-      ! Print configuration     
-      write(*,'(I2,1X,A)',iostat=ioerr) acnf%texture%input_type, trim(acnf%texture%input_fname)
-      write(*,'(A)' ,iostat=ioerr) trim(acnf%output_prefix) 
-      write(*,'(A)' ,iostat=ioerr) trim(acnf%slipsystem%input_fname)
-      if (simtype == 0) then
-            write(*,'(A)', iostat=ioerr) 'ALAMEL'
-      else
-            write(*,'(A)', iostat=ioerr) 'FC Taylor'
-            acnf%simulCalls(1)%rlx1 = 0
-            acnf%simulCalls(1)%rlx2 = 0
+      !
+      ! Read parameters specific for the alamsra program
+      read(cnfunit,fmt=*,iostat=ioerr)  angle 
+      read(cnfunit,fmt=*,iostat=ioerr)  scalingID, NormMax, PNormIter 
+      if (ioerr /= 0) then
+            write(*,fmt=901) 'check config'
+            stop 
       endif
       !
-      write(*,'(A,1X,F10.6)') 'Orientation of the sample:', angle
-      if (ylpCnf%linearize) then
-            write(*,100) 'Info: the program will first attempt to linearize the identification problems.'
-      else
-            write(*,100) 'Info: The program will attempt to solve the nonlinear problems.'
+      ! Read multilevelYLP configuration
+      call readYLPConfigSection(cnfunit,info)
+      if (info /= 0) then
+            write(*,fmt=901) 'check YLP config section' 
+            stop 
       endif
-      100 format(/,A,/)
+      
+      901 format('Incorrect format of configuration file:',1X,A)
+      ! 
+      call displayConfig(display_unit,info)
+      ! 
+      write(display_unit,fmt=fmtMsg2Other//'F10.4)') 'Orientation of the sample:', angle
       !
       ! Open and initialize result files
       open(unit=ofunit,file=trim(acnf%output_prefix)//'.asr',status='replace')
 #define OUTHEADER 'iter','eps_vM','Pnorm','Tnorm','R','plast_pot','M','scal_s','||SonA||','rvalue','qvalue'     
       write(ofunit,700) OUTHEADER ! write header line
       open(unit=histunit,file=trim(acnf%output_prefix)//'_hist.asr',status='replace')
+      ! Apply modifications to acnf:
       acnf%jobtitle = trim(acnf%output_prefix)//' alamsra'
       !
-      call ALAMEL(1)
+      call initAlamel()
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        
       fi1 = 0.0
