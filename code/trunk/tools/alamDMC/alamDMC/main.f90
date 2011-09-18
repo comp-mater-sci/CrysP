@@ -26,11 +26,14 @@ use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 use alamUtils
 use commonConfig
+!
+use alamASR
+use alamQ
+use alamSRA
+!
 implicit none
-      ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
-      ! coordinate system
-      integer                 :: info, iw
-      integer                 :: i,j
+      integer                 :: info
+      integer                 :: i
       integer                 :: argc
       integer,parameter       :: argc_min = 2, argc_max=2
       character(len=128)      :: argv(0:argc_max)
@@ -39,12 +42,11 @@ implicit none
       !
       !
       integer,parameter       :: nmodules = 3
-      character(len=20),dimension(nmodules) :: moduleNames = ['alamq','alamsra','alamasr']
+      character(len=20),dimension(nmodules) :: moduleNames = ['alamQ','alamSRA','alamASR']
       logical                 :: moduleFound = .false.
       integer                 :: moduleId = 0
       !
       info = 1
-      iw = 3
       !
       ! Print banner
       write(*,'(A)') 'AlamDMC: $Id$'
@@ -56,12 +58,15 @@ implicit none
             write(*,*) (trim(moduleNames(i)), i =1,nmodules)           
             stop
       endif
-      call get_command_argument(1,argv(1))
+      do i=1,argc_max
+            call get_command_argument(i,argv(i))
+      enddo
       ! Check module name
       moduleFound = .false.
       do moduleId = 1,nmodules
-            if (trim(argv(1)) == moduleNames(moduleId)) then
+            if (trim(argv(1)) == trim(moduleNames(moduleId))) then
                   moduleFound = .true.
+                  write(*,'(A,1X,A)') 'Selected module:',trim(moduleNames(moduleId))
                   exit
             endif
       enddo
@@ -76,10 +81,10 @@ implicit none
       endif
       !
       ! open and read config file      
-      write(*,'(/,A,1X,A,/)') 'Processing config file', trim(argv(1))
-      open(cnfunit,file=trim(argv(1)),status='old',iostat=ioerr)
+      write(*,'(/,A,1X,A,/)') 'Processing config file', trim(argv(2))
+      open(cnfunit,file=trim(argv(2)),status='old',iostat=ioerr)
       if (ioerr /= 0) then
-            write(*,*) 'Cannot open config file: ', trim(argv(1))
+            write(*,*) 'Cannot open config file: ', trim(argv(2))
             stop
       endif
       !
@@ -96,18 +101,51 @@ implicit none
             stop 
       endif
       !
-            
+      info = -1            
       select case(moduleId)
-      
       case(1) ! Alamq
-      !      call Alamq_ReadConfig(cnfunit,info)
+            call Alamq_ReadConfig(cnfunit,info)
       case(2) ! AlamSRA    
-      !      call AlamSRA_ReadConfig(cnfunit,info)
+            call AlamSRA_ReadConfig(cnfunit,info)
       case(3) ! AlamASR 
-      !      call AlamASR_ReadConfig(cnfunit,info)      
+            call AlamASR_ReadConfig(cnfunit,info)      
       end select
-
       close(cnfunit)
-      901 format('Incorrect format of configuration file:',1X,A)
+      !
+      if (info /= 0) then
+            write(*,901) 'Module configuation section'
+            stop
+      endif
+      !
+      ! OK, configuration has been finished. 
+      ! Initialize ALAMEL
+      !
+      call initAlamel()
+      ! Show general configuration of the multilevel model
+      call displayConfig(display_unit,info)
+      !
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Run the module
+      select case(moduleId)
+      case(1) ! Alamq
+            call Alamq_Run(info)
+      case(2) ! AlamSRA    
+            call AlamSRA_Run(info)
+      case(3) ! AlamASR 
+            call AlamASR_Run(info)      
+      end select
+      !
+      write(*,'(A,1X,A,1X,A,\)') 'Execution of module', trim(moduleNames(moduleId)), 'finished'
+      if (info == 0) then
+            write(*,'(1X,A)') 'succesfully.'
+      else
+            write(*,'(1X,A)') 'with errors.'
+      endif
+            
+
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
+
 
 end program
