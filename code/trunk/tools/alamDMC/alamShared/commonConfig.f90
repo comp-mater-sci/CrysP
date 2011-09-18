@@ -152,11 +152,11 @@ contains
             ! Print configuration     
             select case(acnf%texture%input_type)
                   case(1)     ! SMT or CUB
-                        write(outunit,fmt=201) 'SMT'
+                        write(outunit,fmt=200) 'SMT'
                   case(2)       ! CUR file    
-                        write(outunit,fmt=201) 'CUR'
+                        write(outunit,fmt=200) 'CUR'
                   case(3)
-                        write(outunit,fmt=201) 'CUB'                       
+                        write(outunit,fmt=200) 'CUB'                       
             end select
             write(outunit,fmt=201) trim(acnf%texture%input_fname)
             
