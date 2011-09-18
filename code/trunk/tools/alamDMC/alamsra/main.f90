@@ -91,18 +91,18 @@ implicit none
             stop 
       endif
       !
+      ! Read multilevelYLP configuration
+      call readYLPConfigSection(cnfunit,info)
+      if (info /= 0) then
+            write(*,fmt=901) 'check YLP config section' 
+            stop 
+      endif
+      !
       ! Read parameters specific for the alamsra program
       read(cnfunit,fmt=*,iostat=ioerr)  angle 
       read(cnfunit,fmt=*,iostat=ioerr)  scalingID, NormMax, PNormIter 
       if (ioerr /= 0) then
             write(*,fmt=901) 'check config'
-            stop 
-      endif
-      !
-      ! Read multilevelYLP configuration
-      call readYLPConfigSection(cnfunit,info)
-      if (info /= 0) then
-            write(*,fmt=901) 'check YLP config section' 
             stop 
       endif
       

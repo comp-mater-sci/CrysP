@@ -86,19 +86,19 @@ implicit none
             stop 
       endif
       !
+      ! Read multilevelYLP configuration
+      call readYLPConfigSection(cnfunit,info)
+      if (info /= 0) then
+            write(*,fmt=901) 'check YLP config section' 
+            stop 
+      endif
+      !
       ! Read alamq-specific parameters
       read(cnfunit,fmt=*,iostat=ioerr)  fi2min, fi2max,  nfis 
       read(cnfunit,fmt=*,iostat=ioerr)  rho
       read(cnfunit,fmt='(2L2)',iostat=ioerr)  reuse_previous, resuse_stainrate
       if (ioerr /= 0) then
             write(*,fmt=901) 'check alamq specific section'
-            stop 
-      endif
-      !
-      ! Read multilevelYLP configuration
-      call readYLPConfigSection(cnfunit,info)
-      if (info /= 0) then
-            write(*,fmt=901) 'check YLP config section' 
             stop 
       endif
       !
