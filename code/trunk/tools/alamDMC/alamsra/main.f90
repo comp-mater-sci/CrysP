@@ -110,6 +110,8 @@ implicit none
       ! 
       call displayConfig(display_unit,info)
       ! 
+      close(cnfunit)
+
       write(display_unit,fmt=fmtMsg2Other//'F10.4)') 'Orientation of the sample:', angle
       !
       ! Open and initialize result files
