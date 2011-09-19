@@ -18,11 +18,14 @@
 module commonConfig
 use alamelConfig
 use alamYLP
+use alamUtils
 
-      integer           :: nslips = 16*6
-      integer           :: nsteps = 1 
+      integer                       :: nslips = 16*6
+      integer                       :: nsteps = 1 
 
-      integer           :: simtype = 0
+      integer                       :: simtype = 0    !< Selection of multilevel model: 0 - Alamel, 1 - FC-Taylor
+
+      character(len=512)            :: outputPrefix
 
       logical           :: outputRequest = .false.
 
@@ -84,14 +87,21 @@ contains
                         write(*,*) 'Incorrect texture type: ', acnf%texture%input_type    
             end select
             if (.not. ioStatusOK(ioerr)) return
-
+            call stripComment(acnf%texture%input_fname)
+            !
             read(cnfunit,fmt=*,iostat=ioerr)  simtype
-            read(cnfunit,'(A)' ,iostat=ioerr) acnf%output_prefix 
+            read(cnfunit,'(A)' ,iostat=ioerr) outputPrefix
+            if (.not. ioStatusOK(ioerr)) return
+            call stripComment(outputPrefix)
             read(cnfunit,'(A)' ,iostat=ioerr) acnf%slipsystem%input_fname 
+            call stripComment(acnf%slipsystem%input_fname)
             read(cnfunit,'(A)' ,iostat=ioerr) acnf%micros_fname
+            call stripComment(acnf%micros_fname)
             read(cnfunit,'(L)' ,iostat=ioerr) outputRequest
             !
             if (.not. ioStatusOK(ioerr)) return
+            !
+            acnf%output_prefix = trim(outputPrefix)
             !
             if (simtype == 0) then
                   ! rlx1 and rlx2 are by default set to 1, but nonetheless...
