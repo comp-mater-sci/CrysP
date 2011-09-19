@@ -88,8 +88,6 @@ contains
       !
       ! Introduce youself ;-)
       write(*,'(A)') 'AlamASR, $Rev$'
-      ! 
-      call displayConfig(display_unit,info)
       ! Apply modifications to acnf:
       acnf%jobtitle = trim(acnf%output_prefix)//' alamasr'
       !
@@ -264,7 +262,7 @@ contains
             integer :: j, n
                   do j = 1,size(teeunits)
                         n = teeunits(j)
-                        write(n,'(A,1X,I3,1X,A,1X,I3)') 'Step:',point,'Increment:',increment 
+                        write(n,'(A,1X,I3,1X,A,1X,I3)') 'Point:',point,'Increment:',increment 
                         write(n,'(A)') 'In rotated reference frame:' 
                         call printIdentResultsT(n,Sm,SmIdent*vS_norm,SonA,D,info)
                         !
@@ -296,7 +294,7 @@ contains
                   do j = 1,size(teeunits)
                         n = teeunits(j)
                         !
-                        write(n,'(A)') 'Step strain:'
+                        write(n,'(A)') 'Increment strain:'
                         write(n,'(A,1X,F12.6)') '||P|| =', normP
                         write(n,'(A,1X,F12.6)') 'sum||De|| =', Pnorm
                         call KVEC5D2MAT(vP,tmpP)

@@ -7,7 +7,7 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
-!>    \date Date of first release: 2010-11-03
+!>    \date Date of first release: 2011-09-19
 !>    $Revision$
 !>    $Date$
 !>
@@ -53,9 +53,9 @@ implicit none
       !
       argc = command_argument_count()
       if (argc < argc_min) then
-            write(*,*) 'two parameters are required:  module_name configuration_file'
-            write(*,*) 'Available modules:'
-            write(*,*) (trim(moduleNames(i)), i =1,nmodules)           
+            write(*,'(/,A)') 'Two parameters are required:  module_name configuration_file'
+            write(*,'(A,1X)') 'Available modules:'
+            write(*,'(A,1X)') (trim(moduleNames(i)), i =1,nmodules)           
             stop
       endif
       do i=1,argc_max

@@ -122,8 +122,12 @@ contains
       ! Convert fi2min, fi2max from degs to rads
       fi2min = fi2min * deg2rad      
       fi2max = fi2max * deg2rad      
-
-      open(unit=ofunit,file=trim(acnf%output_prefix)//'.xqrs')
+      
+      open(unit=ofunit,file=trim(acnf%output_prefix)//'.xqrs',buffered='no',iostat=ioerr)
+      if (ioerr /= 0) then
+            write(display_unit,fmt=952)
+            return 
+      endif
       write(ofunit,fmt=500) trim(acnf%texture%input_fname)
       write(ofunit,fmt=501)
       
@@ -246,6 +250,14 @@ contains
       501 format('#Angle',T11,'rho',T24,'q-value',T37,'r-value',T50,'s-value',T63,'residual')
       ! Format for screen separator
       900 format(112('='))
-      end subroutine
+      
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
        
+
+      
+      end subroutine
+
+
 end module
