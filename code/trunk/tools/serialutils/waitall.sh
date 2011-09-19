@@ -1,5 +1,7 @@
 #!/bin/bash
-
+#
+# $Id$
+#
 NARGS=1  # Two args to script expected.
 SLEEPTIME="5s" # polling interval 
 

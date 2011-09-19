@@ -7,8 +7,8 @@
 #
 ### Global configuration section
 UTILDIR="${GMETEX_WORKDIR}"
-BINDIR="$UTILDIR/bin"
-SCRIPTDIR="$UTILDIR/scripts"
+BINDIR="${HMS_ROOT}/bin"
+SCRIPTDIR="${HMS_ROOT}/scripts"
 DATADIR="$UTILDIR/data"
 #
 # Name of result file 

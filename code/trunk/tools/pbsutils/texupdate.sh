@@ -22,8 +22,8 @@ builtin echo "1" > ${DIRTYMARK}
 #UTILDIR="$HOME/TEXEVOL"
 # It is convenient to make a local utildir by setting e.g.:
 UTILDIR="${GMETEX_WORKDIR}"
-BINDIR="$UTILDIR/bin"
-SCRIPTDIR="$UTILDIR/scripts"
+BINDIR="${HMS_ROOT}/bin"
+SCRIPTDIR="${HMS_ROOT}/scripts"
 DATADIR="$UTILDIR/data"
 #
 # Terminate instantly if UTILDIR variable is empty

@@ -3,8 +3,8 @@
 # $Id$
 #
 UTILDIR="${GMETEX_WORKDIR}"
-BINDIR="$UTILDIR/bin"
-SCRIPTDIR="$UTILDIR/scripts"
+BINDIR="${HMS_ROOT}/bin"
+SCRIPTDIR="${HMS_ROOT}/scripts"
 # Absolute path to the script to be started
 RUNFILE="$SCRIPTDIR/texupdate.sh"
 #
