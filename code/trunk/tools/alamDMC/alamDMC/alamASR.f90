@@ -105,12 +105,12 @@ contains
       endif
       !
       ! Open and initialize result files
-      open(unit=ofunit,file=trim(acnf%output_prefix)//'.asr',status='replace')
+      open(unit=ofunit,file=trim(outputPrefix)//'.asr',status='replace')
       !
 #define OUTHEADER 'point','iter','eps_vM','Pnorm','totalP_vM','R','plast_pot','M','scal_s','||SonA||'
       !
       write(ofunit,700) OUTHEADER ! write header line
-      open(unit=histunit,file=trim(acnf%output_prefix)//'.hsr',status='replace')
+      open(unit=histunit,file=trim(outputPrefix)//'.hsr',status='replace')
       !      
       ! Convert angle from degs to rads
       fi1 = fi1 * deg2rad

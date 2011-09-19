@@ -90,10 +90,10 @@ contains
       write(display_unit,fmt=fmtMsg2Other//'F10.4)') 'Orientation of the sample:', angle
       !
       ! Open and initialize result files
-      open(unit=ofunit,file=trim(acnf%output_prefix)//'.asr',status='replace')
+      open(unit=ofunit,file=trim(outputPrefix)//'.asr',status='replace')
 #define OUTHEADER 'iter','eps_vM','Pnorm','Tnorm','R','plast_pot','M','scal_s','||SonA||','rvalue','qvalue'     
       write(ofunit,700) OUTHEADER ! write header line
-      open(unit=histunit,file=trim(acnf%output_prefix)//'_hist.asr',status='replace')
+      open(unit=histunit,file=trim(outputPrefix)//'_hist.asr',status='replace')
       ! Apply modifications to acnf:
       acnf%jobtitle = trim(acnf%output_prefix)//' alamsra'
        

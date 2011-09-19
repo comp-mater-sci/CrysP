@@ -170,7 +170,7 @@ contains
             end select
             write(outunit,fmt=201) trim(acnf%texture%input_fname)
             
-            write(outunit,fmt=101) 'Prefix for output files:', trim(acnf%output_prefix) 
+            write(outunit,fmt=101) 'Prefix for output files:', trim(outputPrefix) 
             write(outunit,fmt=101) 'Slip systems definition:', trim(acnf%slipsystem%input_fname)
             !
             if (ylpCnf%linearize) then
