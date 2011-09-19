@@ -29,7 +29,7 @@ use commonConfig
 !
 use alamASR
 use alamQ
-use alamSRA
+use alamTSA
 !
 implicit none
       integer                 :: info
@@ -42,7 +42,7 @@ implicit none
       !
       !
       integer,parameter       :: nmodules = 3
-      character(len=20),dimension(nmodules) :: moduleNames = ['alamQ','alamSRA','alamASR']
+      character(len=20),dimension(nmodules) :: moduleNames = ['alamQ','alamTSA','alamASR']
       logical                 :: moduleFound = .false.
       integer                 :: moduleId = 0
       !
@@ -105,8 +105,8 @@ implicit none
       select case(moduleId)
       case(1) ! Alamq
             call Alamq_ReadConfig(cnfunit,info)
-      case(2) ! AlamSRA    
-            call AlamSRA_ReadConfig(cnfunit,info)
+      case(2) ! AlamTSA    
+            call AlamTSA_ReadConfig(cnfunit,info)
       case(3) ! AlamASR 
             call AlamASR_ReadConfig(cnfunit,info)      
       end select
@@ -131,8 +131,8 @@ implicit none
       select case(moduleId)
       case(1) ! Alamq
             call Alamq_Run(info)
-      case(2) ! AlamSRA    
-            call AlamSRA_Run(info)
+      case(2) ! AlamTSA    
+            call AlamTSA_Run(info)
       case(3) ! AlamASR 
             call AlamASR_Run(info)      
       end select

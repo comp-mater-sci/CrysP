@@ -30,7 +30,7 @@
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
 		<File RelativePath=".\alamASR.f90"/>
 		<File RelativePath=".\alamQ.f90"/>
-		<File RelativePath=".\alamSRA.f90"/>
+		<File RelativePath=".\alamTSA.f90"/>
 		<File RelativePath=".\main.f90"/>
 		<File RelativePath=".\qrsTypes.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>

@@ -1,13 +1,17 @@
-3       ! Number of points
-
-0.0    0.0    0.0
-0.0    0.0    0.0
-0.0    0.0    -1.0
-
-0.0    0.0    0.0
+4              # Number of points
+# Equibiaxial tension
+1.0    0.0    0.0
 0.0    1.0    0.0
 0.0    0.0    0.0
-
+# Equibiaxial compression
+-1.0    0.0    0.0
+0.0    -1.0    0.0
+0.0    0.0    0.0
+# Biaxial tension-compression
 1.0    0.0    0.0
 0.0   -1.0    0.0
+0.0    0.0    0.0
+# Biaxial compression-tension
+-1.0    0.0    0.0
+0.0    1.0    0.0
 0.0    0.0    0.0

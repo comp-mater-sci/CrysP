@@ -14,16 +14,12 @@
 !>    History of modifications: (see svn log)
 !
 !
-!>    \file AlamSRA program allows one to track anisotropic properties  
+!>    \file AlamTSA program allows one to track anisotropic properties  
 !>          along deformation due to uniaxial tensile stress.
-!>
-!>    \todo AlamSRA should be extended to take cognizance of biaxial stress state, arbitraty stresses,
-!>          as well as arbitrary evolution of the texture.
 
-
-!> ALAMel Stress Response Analysis
+!> ALAMel Tensile Stress Analysis
 !>
-module alamsra
+module alamTSA
 use AlamelSub
 use alamelConfig
 use nllsTR
@@ -42,18 +38,18 @@ implicit none
 
 contains
 
-      subroutine AlamSRA_ReadConfig(cnfunit,info)
+      subroutine AlamTSA_ReadConfig(cnfunit,info)
       implicit none
       integer,intent(in)                        :: cnfunit
       integer,intent(out)                       :: info
       !
       integer :: ioerr
             info = -1
-            ! Read parameters specific for the alamsra program
+            ! Read parameters specific for the AlamTSA program
             read(cnfunit,fmt=*,iostat=ioerr)  angle 
             read(cnfunit,fmt=*,iostat=ioerr)  scalingID, NormMax, PNormIter 
             if (ioerr /= 0) then
-                  write(*,fmt=902) 'AlamSRA'
+                  write(*,fmt=902) 'AlamTSA'
                   return
             endif
             info = 0
@@ -64,7 +60,7 @@ contains
       end subroutine
 
 
-      subroutine AlamSRA_Run(info)
+      subroutine AlamTSA_Run(info)
       implicit none
       integer,intent(out)                       :: info      
       ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
@@ -85,7 +81,7 @@ contains
       info = 1
       !
       ! Introduce youself ;-)
-      write(*,'(A)') 'AlamSRA, $Rev$'
+      write(*,'(A)') 'AlamTSA, $Rev$'
 
       write(display_unit,fmt=fmtMsg2Other//'F10.4)') 'Orientation of the sample:', angle
       !
