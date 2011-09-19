@@ -39,9 +39,10 @@ LOGFILE=${JOBNAME}_log.log
 # Assume that libdir is the current dir
 CURRENTDIR=$(pwd)
 #
-ALIBDIR=$CURRENTDIR
+ALIBDIR=${HMS_LIB:-$CURRENTDIR}
+BLIBDIR=${HMS_EXTLIB:-$CURRENTDIR}
 #
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ALIBDIR
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ALIBDIR:$BLIBDIR
 #
 GMETEX_WORKDIR=$CURRENTDIR
 # Export 
@@ -73,6 +74,9 @@ fi
 # Run ABAQUS
 #
 case "$RUNMODE" in
+	parametercheck) 
+			abaqus interactive parametercheck job=$JOBNAME &>  "$LOGFILE"
+			;;
 	datacheck) 
 			abaqus interactive datacheck job=$JOBNAME user="${USERSUB}"  &>  "$LOGFILE"
 			;;
