@@ -46,6 +46,7 @@ contains
             ! Read parameters specific for the alamASR program
             read(cnfunit,fmt=*,iostat=ioerr)  fi1, phi, fi2
             read(cnfunit,fmt='(A)',iostat=ioerr) data_fname
+            call stripComment(data_fname)
             read(cnfunit,fmt='(L2)',iostat=ioerr) update_texture 
             read(cnfunit,fmt=*,iostat=ioerr)  scalingID, NormMax, PNormIter 
             if (ioerr /= 0) then
