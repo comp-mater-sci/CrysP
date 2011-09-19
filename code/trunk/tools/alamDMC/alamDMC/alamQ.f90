@@ -130,9 +130,6 @@ contains
       endif
       write(ofunit,fmt=500) trim(acnf%texture%input_fname)
       write(ofunit,fmt=501)
-      
-      ! Apply modifications to acnf:
-      acnf%jobtitle = trim(acnf%output_prefix)//' alamq'
        
       fi1 = 0.D0
       phi = 0.D0

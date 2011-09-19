@@ -120,6 +120,8 @@ implicit none
       ! OK, configuration has been finished. 
       ! Initialize ALAMEL
       !
+      ! Apply modifications to acnf:
+      acnf%jobtitle = trim(acnf%output_prefix)//' '//trim(moduleNames(moduleId))
       call initAlamel()
       ! Show general configuration of the multilevel model
       call displayConfig(display_unit,info)

@@ -89,8 +89,6 @@ contains
       !
       ! Introduce youself ;-)
       write(*,'(A)') 'AlamASR, $Rev$'
-      ! Apply modifications to acnf:
-      acnf%jobtitle = trim(acnf%output_prefix)//' alamasr'
       !
       ! Open input file
       open(unit=dtaunit,file=trim(data_fname),status='old',form='formatted',iostat=ioerr)
