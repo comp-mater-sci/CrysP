@@ -108,7 +108,6 @@ contains
                   acnf%simulCalls(1)%rlx1 = 1
                   acnf%simulCalls(1)%rlx2 = 1
             else
-                  write(*,'(A)', iostat=ioerr) 'FC Taylor'
                   acnf%simulCalls(1)%rlx1 = 0
                   acnf%simulCalls(1)%rlx2 = 0
             endif
