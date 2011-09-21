@@ -63,7 +63,7 @@ if not "%1" == "" (
 	del /f /q !TMPCNF! !TMPTI!
 	if exist !TMPVERSCH! del /f /q !TMPVERSCH!
 	rem The file TMPFNAMES _must_ be removed
-	del /f /q !TMPFNAMES!
+	del /f /q !TMPFNAMES! PRINTC.L01 VERSCH.L01
 	set /A CNT=CNT + 1
 	rem Shift by 9 positions
 	for %%i in (%1 %2 %3 %4 %5 %6 %7 %8 %9) do shift

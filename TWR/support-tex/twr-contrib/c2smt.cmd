@@ -20,32 +20,47 @@ for %%f in ( %DEPLIST% ) do (
 
 set RETCODE=0
 
-if not exist %1.c goto nofiles
+rem construct input filename
+rem FNAME will contain bare filename
+set FNAME=%~n1
+if "%~x1" == "" (
+	set INPFNAME=!FNAME!.c
+) else (
+	set	INPFNAME=%1
+)
+rem Check if file exists
+if not exist !INPFNAME! (
+	set MISSINGFILE=!INPFNAME!
+	goto nofile
+)
+rem construct output filename
+set POUTFNAME=!FNAME!F
+set OUTFNAME=!POUTFNAME!.c
 
-printc.exe %1.c
+printc.exe !INPFNAME!
 
-move printc.l01 printc_%1.lst
+move printc.l01 printc_!FNAME!.lst
 rem build rottex.i01
 echo 00.0        00.0      00.00               PHI1/PHI/PHI2 >  rottex.i01
 echo    2    1                                IMPOSED IMAG, IMPOSED IDN  >>  rottex.i01
-echo %1F.triclinic    >>  rottex.i01
+echo !POUTFNAME!.triclinic    >>  rottex.i01
 rem build pltodf_c.i01
 echo     0                    IEVOD: if =0: Ordinary case  >  pltodf_c.i01
 
 rem Create odflam input file
 echo %2             Number of Selectors (Max. 12996) > odflam.i01
 
-rottex.exe rottex.i01 rottex.l01 WAGNER.B04 %1.c %1F.c
+rottex.exe rottex.i01 rottex.l01 WAGNER.B04 !INPFNAME! !OUTFNAME!
 
-printc.exe %1F.c
+printc.exe !OUTFNAME!
 
-move printc.l01 printc_%1F.lst
-
-
-calcodf.exe pltodf_c.i01 CREATE6.B01 CREATE6.B02 %1F.C %1F.001
+move printc.l01 printc_!POUTFNAME!.lst
 
 
-odflam.exe odflam.i01 odflam.l01 %1F.smt %1F.tx0 %1F.001
+calcodf.exe pltodf_c.i01 CREATE6.B01 CREATE6.B02 !OUTFNAME! !POUTFNAME!.001
+
+
+odflam.exe odflam.i01 odflam.l01 !POUTFNAME!.smt !POUTFNAME!.tx0 !POUTFNAME!.001
 
 goto stop
 
@@ -54,14 +69,14 @@ echo This script will extract a discrete set of orientations from a C-file and w
 echo Syntax:
 echo c2smt.cmd FILEPREFIX norient
 echo Parameters: 
-echo FILEPREFIX  - filename (without extension) of C-format texture representations 
+echo FILEPREFIX  - filename (with or without extension) of C-format texture representations 
 echo norient - number of discrete orientations (grains) to be exported from C-file.
 set RETCODE=0
 goto stop
 
 
 :nofiles
-echo One of the files doesn't exist:
+echo One of the files doesn't exist: !MISSINGFILE!
 set RETCODE=1
 goto stop
 
