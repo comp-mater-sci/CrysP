@@ -44,11 +44,18 @@ contains
       integer,intent(out)                       :: info
       !
       integer :: ioerr
+      logical :: input_ok = .false.
+            input_ok = .false.
             info = -1
             ! Read parameters specific for the AlamTSA program
             read(cnfunit,fmt=*,iostat=ioerr)  angle 
-            read(cnfunit,fmt=*,iostat=ioerr)  scalingID, NormMax, PNormIter 
-            if (ioerr /= 0) then
+            read(cnfunit,fmt=*,iostat=ioerr)  scalingID, NormMax, PNormIter
+            ! Validate input
+            select case(scalingID)
+                  case(scaleFullTensor,scaleTensileComponent)
+                        input_ok = .true.
+            end select
+            if ((ioerr /= 0) .or. (.not. input_ok)) then
                   write(*,fmt=902) 'AlamTSA'
                   return
             endif
@@ -74,6 +81,7 @@ contains
       double precision                          :: fi1,phi,fi2
       double precision                          :: Pnorm, normP, normD, Tnorm
       double precision                          :: R
+      double precision                          :: plastic_work_inc = 0.D0, plastic_work_total = 0.D0
       integer     :: i,j 
       !
       integer,parameter       :: cnfunit = 90, ofunit = 91, histunit = 92
@@ -85,11 +93,19 @@ contains
 
       write(display_unit,fmt=fmtMsg2Other//'F10.4)') 'Orientation of the sample:', angle
       !
+      select case(scalingID)
+            case(scaleFullTensor)
+                  write(display_unit,fmt=fmtMsg2Msg) 'Strain calculation:', 'scaling full tensor'
+            case(scaleTensileComponent)
+                  write(display_unit,fmt=fmtMsg2Msg) 'Strain calculation:', 'scaling tensile component'
+            case default
+                  write(*,*) 'Unknown scaling type, full tensor will be used'
+            end select
       ! Open and initialize result files
       open(unit=ofunit,file=trim(outputPrefix)//'.asr',status='replace')
-#define OUTHEADER 'iter','eps_vM','Pnorm','Tnorm','R','plast_pot','M','scal_s','||SonA||','rvalue','qvalue'     
+#define OUTHEADER 'iter','eps_vM','Pnorm','Tnorm','W','R','plast_pot','M','scal_s','||SonA||','rvalue','qvalue'     
       write(ofunit,700) OUTHEADER ! write header line
-      open(unit=histunit,file=trim(outputPrefix)//'_hist.asr',status='replace')
+      open(unit=histunit,file=trim(outputPrefix)//'.hts',status='replace')
        
       fi1 = 0.0
       phi = 0.0
@@ -100,6 +116,8 @@ contains
       Pnorm = 0.D0 ! sum||P||
       normP = 0.D0 ! ||P||
       Tnorm = 0.D0
+      plastic_work_inc = 0.D0
+      plastic_work_total = 0.D0
       i = 0
       do 
             write(*,900)
@@ -124,17 +142,8 @@ contains
             scal_s = norm_sona / vec_norm2(vS)
             ! Calculate normalized stess
             vSonAn = vSonA / vec_norm2(vSonA) 
-            write(*,('(/)'))
-            write(*,200) 'Requested stress:', vS
-            write(*,200) 'Identified scaled stress:',vSonAn
-            write(*,201) 'Norm of stress residual:', R      
-            write(*,('(/)'))
-            write(*,200) 'Stress on vA:',vSonA
-            write(*,201) 'Norm of stress on vA:', norm_sona 
-            write(*,*)
             !
-            200 format(A,T40,5F10.6)
-            201 format(A,T40,F10.6)
+            call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
             !
             call KVEC5D2MAT(vA,D)
             call KVEC5D2MAT(vSonAn,SmIdent)
@@ -155,11 +164,11 @@ contains
             endif
             ! 
             !! -> Report the results
-            write(ofunit,701) i, root23*normP, Pnorm, TNorm, R, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, rvalue, qvalue
+            write(ofunit,701) i, root23*normP, Pnorm, TNorm, plastic_work_total, R, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, rvalue, qvalue
             !
             write(*,710)
             write(*,700) OUTHEADER ! write header line
-            write(*,701) i, root23*normP, Pnorm, Tnorm, R, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, rvalue, qvalue
+            write(*,701) i, root23*normP, Pnorm, Tnorm, plastic_work_total, R, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, rvalue, qvalue
             write(*,710)
             !!
             !
@@ -190,8 +199,7 @@ contains
             write(*,*) 'Strain to be imposed for texture evolution De = '
             write(*,500) De
             write(*,*)
-            ! Write history of deformations
-            write(histunit,500) De
+            
             !
             ! Set input data for ALAMEL
             acnf%simulCalls(1)%dgf = De
@@ -206,7 +214,18 @@ contains
             normP = vec_norm2(vP)
             Pnorm = Pnorm + normD
             Tnorm = Tnorm + PNormIter
-            i = i + 1 
+            ! Calculate increment of plastic work (strain * deviatoric_stress)
+            plastic_work_inc = dot_product(vD,vS) 
+            plastic_work_total = plastic_work_total + plastic_work_inc
+            ! Write history of deformations
+            write(histunit,900)
+            write(histunit,'(A,1X,I4)') 'Step:', i
+            write(histunit,601)
+            do j=1,3
+                  write(histunit,602) De(:,j), Sm(:,j)
+            enddo
+            write(histunit,'(A,T35,F12.8)') 'Increment of plastic work:', plastic_work_inc
+            write(histunit,'(A,T35,F12.8)') 'Total of plastic work:', plastic_work_total
             !
             write(*,'(A)') 'Total strain:'
             write(*,'(A,1X,F12.6)') '||P|| =', normP
@@ -214,6 +233,7 @@ contains
             write(*,*) 'P='
             write(*,500) P
             !
+            i = i + 1 
        enddo            
 
       write(*,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
@@ -229,12 +249,20 @@ contains
       500 format(3(3(F10.6,1X),/))
       501 format(3(F10.6,1X),/,3(F10.6,1X),/,3(F10.6,1X))
       
-      700 format(1X,A5,1X,10(A12,1X))
-      701 format(1X,I5,1X,10(F12.6,1X))
-      710 format('|',5('-'),'|',10(12('-'),'|'))
+      601 format('Strain increment',T40,'Deviatoric stress')
+      602 format(3(F10.6,1X),T40,3(F10.6,1X))
+      
+
+      
+      700 format(1X,A5,1X,11(A12,1X))
+      701 format(1X,I5,1X,11(F12.6,1X))
+      710 format('|',5('-'),'|',11(12('-'),'|'))
       
       900 format(112('='))
-      
+
+#ifdef OUTHEADER
+#undef OUTHEADER
+#endif      
       end subroutine
       
 end module
