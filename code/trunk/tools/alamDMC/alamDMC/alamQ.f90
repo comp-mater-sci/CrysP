@@ -240,10 +240,10 @@ contains
                   if (left > right) exit
                   stride = right - left
                   if (stride == 0) stride = 1
-                  write(ofunit,fmt=710) phis(left), rho,                         &
-                                        avgQRS(qrsvalues(left:right:stride)),         &
-                                        0.5D0 * sum(mfactors(left:right:stride) ),    &
-                                        0.5D0 * sum(residuals(left:right:stride) )
+                  write(ofunit,fmt=710) phis(left), rho,                          &
+                                        avgQRS(qrsvalues(left:right:stride)),     &
+                                        average(mfactors(left:right:stride) ),    &
+                                        average(residuals(left:right:stride) )
                   left = left + 1
                   right = right -1
             enddo

@@ -32,6 +32,15 @@ contains
       vec_norm2 = sqrt(dot_product(v,v))
       end function
 
+      double precision pure function average(a)
+      double precision,dimension(:),intent(in) :: a
+      integer :: n
+      !
+            n = size(a)
+            if (n >= 1) average = sum(a) / dble(n)                 
+            ! Undefined for empty array
+      end function
+
       subroutine printIdentResults(outunit,vS,vA,vSonA,vSonAn,R,info)
       implicit none
       integer,intent(in)                        :: outunit
