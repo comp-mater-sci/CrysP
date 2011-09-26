@@ -36,6 +36,7 @@ implicit none
       double precision                          :: rho 
 
       logical                                   :: reuse_previous = .false., resuse_stainrate = .false.
+      logical                                   :: fold_symmetry = .false.
       
 
 
@@ -53,6 +54,7 @@ contains
             read(cnfunit,fmt=*,iostat=ioerr)  fi2min, fi2max,  nfis 
             read(cnfunit,fmt=*,iostat=ioerr)  rho
             read(cnfunit,fmt='(2L2)',iostat=ioerr)  reuse_previous, resuse_stainrate
+            read(cnfunit,fmt='(L2)',iostat=ioerr)  fold_symmetry
             if (ioerr /= 0) then
                   write(*,fmt=902) 'alamq'
                   return
@@ -83,14 +85,15 @@ contains
       !
       double precision,dimension(5)             :: vA, vS,vSonA, vSonAn
       double precision                          :: fi1,phi,fi2
-      double precision                          :: SonA_len
+      double precision                          :: SonA_len, scal_s
       double precision                          :: R
       integer     :: i,j, npoints
       logical     :: useVMGuess
       double precision :: delta_fi2
-      double precision,dimension(:),allocatable       :: residuals
+      double precision,dimension(:),allocatable       :: residuals,mfactors,phis
       type(qrsData),dimension(:),allocatable          :: qrsvalues
       !
+      integer                 :: left, right, stride
       integer                 :: ioerr
       integer,parameter       :: cnfunit = 90, ofunit = 91
       !
@@ -135,7 +138,7 @@ contains
       phi = 0.D0
       fi2 = 0.D0
       ! Make space for the results      
-      allocate(qrsvalues(npoints), residuals(npoints))
+      allocate(qrsvalues(npoints), residuals(npoints),mfactors(npoints),phis(npoints))
       residuals = 0.D0
       
       delta_fi2 = (fi2max  - fi2min) / dble(nfis) 
@@ -165,15 +168,18 @@ contains
                   Xmcoord_resume = matmul(transpose(Mrot),matmul(Xtcoord_resume,Mrot))
                   ! Set starting point
                   call KMAT2VEC5D(Xmcoord_resume,vA)
-                  vA = vA / sqrt(dot_product(vA,vA))
+                  vA = vA / vec_norm2(vA)
                   ! Disable Von Mises guess in multilevelYLP: vA will be used as a starting point
                   useVMGuess = .false.
             endif
             !
             call multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,ylpCnf)
+            phis(i) = rad2deg * fi2
             residuals(i) = R
+            mfactors(i) = ares%taylor_factors(1)
             ! Calculate normalized stess
-            SonA_len = sqrt(dot_product(vSonA,vSonA)) 
+            SonA_len = vec_norm2(vSonA)
+            scal_s = SonA_len / vec_norm2(vS)
             vSonAn = vSonA / SonA_len
             !
             call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
@@ -206,32 +212,53 @@ contains
                   qrsvalues(i)%rvalue =  Dtcoord(2,2) / Dtcoord(3,3)
                   !qv = -Dtcoord(2,2) / Dtcoord(1,1)
                   qrsvalues(i)%qvalue = qrsvalues(i)%rvalue / (1.D0 + qrsvalues(i)%rvalue)
-                  qrsvalues(i)%svalue = SonA_len
+                  qrsvalues(i)%svalue = scal_s
             else
                   info = 4
             endif
             !            
             write(display_unit,fmt=701)
             write(display_unit,fmt=700)
-            write(display_unit,fmt=710) rad2deg * fi2, rho, qrsvalues(i), ares%taylor_factors(1),residuals(i)
+            write(display_unit,fmt=710) phis(i), rho, qrsvalues(i), mfactors(i),residuals(i)
             write(display_unit,fmt=701)
             !
-            write(ofunit,fmt=710) rad2deg * fi2, rho, qrsvalues(i), ares%taylor_factors(1),residuals(i)
             !
             ! Next step
             fi2 = fi2 + delta_fi2
       enddo            
-
-      write(*,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
-
-      fi2 = 0
+      ! Write complete output to the terminal
+      write(display_unit,fmt=700)
       do i=1,npoints
-            write(*,fmt=710) rad2deg * fi2, rho, qrsvalues(i), ares%taylor_factors(1), residuals(i)
-            fi2 = fi2 + delta_fi2
+            write(*,fmt=710) phis(i), rho, qrsvalues(i), mfactors(i), residuals(i)
       enddo
-
+      ! Write output file
+      if (fold_symmetry) then
+            ! Average over symmetric positions
+            left = 1
+            right = npoints
+            do 
+                  if (left > right) exit
+                  stride = right - left
+                  if (stride == 0) stride = 1
+                  write(ofunit,fmt=710) phis(left), rho,                         &
+                                        avgQRS(qrsvalues(left:right:stride)),         &
+                                        0.5D0 * sum(mfactors(left:right:stride) ),    &
+                                        0.5D0 * sum(residuals(left:right:stride) )
+                  left = left + 1
+                  right = right -1
+            enddo
+      else
+            ! Output complete set of points
+            do i=1,npoints
+                  write(ofunit,fmt=710) phis(i), rho, qrsvalues(i), mfactors(i),residuals(i)
+            enddo
+      endif
+      !
+      deallocate(qrsvalues, residuals,mfactors,phis)
+      close(ofunit)
+      !
       info = 0
-      
+      !
       400 format('| Smcoord',T40,'| SmIdent',T80,'|Dmcoord')
       401 format(3(F10.6,1X),T40,3(F10.6,1X),T80,3(F10.6,1X))
       402 format(A,T10,F10.6)

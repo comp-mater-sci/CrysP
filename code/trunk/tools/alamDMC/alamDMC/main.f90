@@ -137,6 +137,7 @@ implicit none
             call AlamASR_Run(info)      
       end select
       !
+      write(*,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
       write(*,'(A,1X,A,1X,A,\)') 'Execution of module', trim(moduleNames(moduleId)), 'finished'
       if (info == 0) then
             write(*,'(1X,A)') 'succesfully.'

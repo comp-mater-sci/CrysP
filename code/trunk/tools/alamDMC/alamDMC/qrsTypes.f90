@@ -22,4 +22,28 @@ module qrsTypes
             double precision :: svalue = 0.D0
       end type    
 
+contains
+
+      type(qrsData) pure function avgQRS(qrsvalues)
+      implicit none
+      type(qrsData),dimension(:),intent(in)     :: qrsvalues
+      double precision :: frc
+      integer :: i,n
+      !
+            avgQRS = qrsData(0.D0, 0.D0, 0.D0)
+            n = size(qrsvalues) 
+            if (n > 0) then
+                  do i=1,n
+                       avgQRS%qvalue= avgQRS%qvalue +  qrsvalues(i)%qvalue
+                       avgQRS%rvalue= avgQRS%rvalue +  qrsvalues(i)%rvalue
+                       avgQRS%svalue= avgQRS%svalue +  qrsvalues(i)%svalue
+                  enddo
+                  frc = 1.D0 / dble(n)
+                  avgQRS%qvalue = avgQRS%qvalue * frc
+                  avgQRS%rvalue = avgQRS%rvalue * frc
+                  avgQRS%svalue = avgQRS%svalue * frc
+            endif
+      
+      end function
+
 end module

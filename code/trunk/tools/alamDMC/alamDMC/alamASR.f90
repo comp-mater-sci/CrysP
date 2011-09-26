@@ -66,14 +66,15 @@ contains
       integer,intent(out)                       :: info      
       ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
       ! coordinate system
-      double precision,dimension(3,3)           :: D, De, Sm, Smn, SonA, SmIdent, Pressure
+      double precision,dimension(3,3)           :: D, De, Se, Sm, Smn, SonA, SmIdent, Pressure
       double precision,dimension(3,3)           :: St, Stdev, StonA, StIdent, Dt
       double precision,dimension(3,3)           :: Mrot = 0.0, MI = 0.0
       !
       double precision                          :: plast_pot, scal_s, norm_sona, vS_norm
-      double precision,dimension(5)             :: vA, vS,vSonA, vSonAn, vP, vTotalP, vDe
+      double precision,dimension(5)             :: vA, vS,vSonA, vSonAn, vP, vTotalP, vDe, vSe
 
       double precision                          :: Pnorm, normP, normDe, totalPnorm
+      double precision                          :: plastic_work_inc = 0.D0, plastic_work_total = 0.D0
       double precision                          :: R
       integer     :: i,j,point = 0, npoints = 0, increment = 0
       !
@@ -105,7 +106,7 @@ contains
       ! Open and initialize result files
       open(unit=ofunit,file=trim(outputPrefix)//'.asr',status='replace')
       !
-#define OUTHEADER 'point','iter','eps_vM','Pnorm','totalP_vM','R','plast_pot','M','scal_s','||SonA||'
+#define OUTHEADER 'point','iter','eps_vM','Pnorm','totalP_vM','W','plast_pot','M','scal_s','||SonA||','R'
       !
       write(ofunit,700) OUTHEADER ! write header line
       open(unit=histunit,file=trim(outputPrefix)//'.hsr',status='replace')
@@ -119,6 +120,9 @@ contains
       !
       vTotalP = 0.D0
       totalPnorm = 0.D0
+      plastic_work_inc = 0.D0
+      plastic_work_total = 0.D0
+      !
       do  point = 1, npoints
             write(*,800)
             vP = 0.D0
@@ -209,7 +213,13 @@ contains
                   acnf%simulCalls(1)%do_output = outputRequest
                   acnf%nSimulCalls = 1
                   call ALAMEL(3)       
-                  !       
+                  !
+                  ! Get the result
+                  Se = ares%stress_tensors(:,:,1)
+                  call KMAT2VEC5D(Se,vSe)
+                  ! Calculate increment of plastic work (strain * deviatoric_stress)
+                  plastic_work_inc = dot_product(vDe,vSe) 
+                  plastic_work_total = plastic_work_total + plastic_work_inc
                   !! -> Calculate total strain
                   vP = vP + vDe
                   vTotalP = vTotalP + vDe
@@ -223,10 +233,8 @@ contains
                   !
             enddo
                   
-       enddo            
-
-      write(*,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
-
+      enddo            
+      !
       close(ofunit)
       close(histunit)
       
@@ -243,14 +251,17 @@ contains
       500 format(3(3(F10.6,1X),/))
       501 format(3(F10.6,1X),/,3(F10.6,1X),/,3(F10.6,1X))
       ! Formats for output file
-      700 format(2(1X,A5),8(A12,1X))
-      701 format(2(1X,I5),8(F12.6,1X))
-      710 format(2('|',5('-')),'|',8(12('-'),'|'))
+      700 format(2(1X,A5),9(A12,1X))
+      701 format(2(1X,I5),9(F12.6,1X))
+      710 format(2('|',5('-')),'|',9(12('-'),'|'))
       !
       
       800 format(112('='))
       801 format(112('-'))
-      
+#ifdef OUTHEADER
+#undef OUTHEADER
+#endif      
+
       ! Internal subroutines
       contains
       
@@ -299,11 +310,14 @@ contains
                         call KVEC5D2MAT(vP,tmpP)
                         write(n,'(A)') 'P='
                         write(n,500) tmpP
+                        write(n,'(A,1X,F12.6)') 'Winc =', plastic_work_inc
                         write(n,'(A)') 'Total strain:'
                         write(n,'(A,1X,F12.6)') '||Ptot|| =', totalPnorm
                         call KVEC5D2MAT(vTotalP,tmpP)
                         write(n,'(A)') 'Ptot='
                         write(n,500) tmpP
+                        write(n,'(A,1X,F12.6)') 'Wtot =', plastic_work_total
+
                   enddo
             500 format(3(3(F10.6,1X),/))
 

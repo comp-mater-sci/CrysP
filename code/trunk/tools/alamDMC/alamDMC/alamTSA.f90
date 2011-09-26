@@ -28,6 +28,7 @@ use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 use alamUtils
 use commonConfig
+use qrsTypes
 implicit none
 
       double precision                          :: angle, NormMax, PNormIter
@@ -72,17 +73,17 @@ contains
       integer,intent(out)                       :: info      
       ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
       ! coordinate system
-      double precision,dimension(3,3)           :: P,D,De, Sm,St, SmIdent, Dt
+      double precision,dimension(3,3)           :: P,D,De,Se,Sm,St, SmIdent, Dt
       double precision,dimension(3,3)           :: Mrot = 0.0
       !
       double precision                          :: plast_pot, scal_s, norm_sona
-      double precision                          :: rvalue, qvalue
-      double precision,dimension(5)             :: vA, vS,vSonA, vSonAn, vP, vD
+      type(qrsData)                             :: qrsvalue = qrsData(0.D0, 0.D0, 0.D0)
+      double precision,dimension(5)             :: vA, vS,vSonA, vSonAn, vP, vD, vSe
       double precision                          :: fi1,phi,fi2
       double precision                          :: Pnorm, normP, normD, Tnorm
       double precision                          :: R
       double precision                          :: plastic_work_inc = 0.D0, plastic_work_total = 0.D0
-      integer     :: i,j 
+      integer     :: step,j 
       !
       integer,parameter       :: cnfunit = 90, ofunit = 91, histunit = 92
       !
@@ -102,8 +103,8 @@ contains
                   write(*,*) 'Unknown scaling type, full tensor will be used'
             end select
       ! Open and initialize result files
-      open(unit=ofunit,file=trim(outputPrefix)//'.asr',status='replace')
-#define OUTHEADER 'iter','eps_vM','Pnorm','Tnorm','W','R','plast_pot','M','scal_s','||SonA||','rvalue','qvalue'     
+      open(unit=ofunit,file=trim(outputPrefix)//'.tsa',status='replace')
+#define OUTHEADER 'iter','eps_vM','Pnorm','Tnorm','W','plast_pot','M','||SonA||','q-value','r-value','s-value','R'
       write(ofunit,700) OUTHEADER ! write header line
       open(unit=histunit,file=trim(outputPrefix)//'.hts',status='replace')
        
@@ -118,7 +119,7 @@ contains
       Tnorm = 0.D0
       plastic_work_inc = 0.D0
       plastic_work_total = 0.D0
-      i = 0
+      step = 0
       do 
             write(*,900)
             !! -> Take uniaxial tensile stress, rotate it to given direction     
@@ -155,21 +156,23 @@ contains
             !! Calculate q and r in tensile reference frame
             ! Rotate back to the "tensile test" coordinate system   
             Dt = matmul(matmul(Mrot,D),transpose(Mrot))
-            if ( abs(D(3,3)) >= epsilon(0.D0) ) then
-                  rvalue =  Dt(2,2) / Dt(3,3)
-                  qvalue = rvalue / (1.D0 + rvalue)
+            ! Calculate output variables
+            if ( abs(Dt(3,3)) >= epsilon(0.D0) ) then
+                  qrsvalue%rvalue = Dt(2,2) / Dt(3,3)
+                  qrsvalue%qvalue = qrsvalue%rvalue / (1.D0 + qrsvalue%rvalue)
+                  qrsvalue%svalue = scal_s
             else
-                  rvalue = -1.0
-                  qvalue = -1.0
+                  qrsvalue = qrsData(0.D0, 0.D0, 0.D0)
+                  info = 4
             endif
             ! 
             !! -> Report the results
-            write(ofunit,701) i, root23*normP, Pnorm, TNorm, plastic_work_total, R, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, rvalue, qvalue
+            write(ofunit,701) step, root23*normP, Pnorm, TNorm, plastic_work_total, plast_pot, ares%taylor_factors(1), norm_sona, qrsvalue, R
             !
-            write(*,710)
-            write(*,700) OUTHEADER ! write header line
-            write(*,701) i, root23*normP, Pnorm, Tnorm, plastic_work_total, R, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, rvalue, qvalue
-            write(*,710)
+            write(display_unit,710)
+            write(display_unit,700) OUTHEADER ! write header line
+            write(display_unit,701) step, root23*normP, Pnorm, TNorm, plastic_work_total, plast_pot, ares%taylor_factors(1), norm_sona, qrsvalue, R
+            write(display_unit,710)
             !!
             !
             select case(scalingID)
@@ -207,7 +210,10 @@ contains
             acnf%simulCalls(1)%do_output = outputRequest
             acnf%nSimulCalls = 1
             call ALAMEL(3)       
-            !       
+            !
+            ! Get the result
+            Se = ares%stress_tensors(:,:,1)
+            call KMAT2VEC5D(Se,vSe)
             !! -> Calculate total strain
             vP = vP + vD
             P = P + De  
@@ -215,14 +221,14 @@ contains
             Pnorm = Pnorm + normD
             Tnorm = Tnorm + PNormIter
             ! Calculate increment of plastic work (strain * deviatoric_stress)
-            plastic_work_inc = dot_product(vD,vS) 
+            plastic_work_inc = dot_product(vD,vSe) 
             plastic_work_total = plastic_work_total + plastic_work_inc
             ! Write history of deformations
             write(histunit,900)
-            write(histunit,'(A,1X,I4)') 'Step:', i
+            write(histunit,'(A,1X,I4)') 'Step:', step
             write(histunit,601)
             do j=1,3
-                  write(histunit,602) De(:,j), Sm(:,j)
+                  write(histunit,602) De(:,j), Se(:,j)
             enddo
             write(histunit,'(A,T35,F12.8)') 'Increment of plastic work:', plastic_work_inc
             write(histunit,'(A,T35,F12.8)') 'Total of plastic work:', plastic_work_total
@@ -232,12 +238,11 @@ contains
             write(*,'(A,1X,F12.6)') 'sum||De|| =', Pnorm
             write(*,*) 'P='
             write(*,500) P
+            write(*,'(A,1X,F12.6)') 'Wtot =', plastic_work_total
             !
-            i = i + 1 
-       enddo            
-
-      write(*,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
-
+            step = step + 1 
+      enddo            
+      !
       close(ofunit)
       close(histunit)
 
