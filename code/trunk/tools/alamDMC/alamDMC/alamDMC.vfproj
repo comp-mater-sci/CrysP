@@ -31,6 +31,8 @@
 		<File RelativePath=".\alamASR.f90"/>
 		<File RelativePath=".\alamQ.f90"/>
 		<File RelativePath=".\alamTSA.f90"/>
+		<File RelativePath=".\alamUtils.f90"/>
+		<File RelativePath=".\commonConfig.f90"/>
 		<File RelativePath=".\main.f90"/>
 		<File RelativePath=".\qrsTypes.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>
