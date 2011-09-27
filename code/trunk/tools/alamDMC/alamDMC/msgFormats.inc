@@ -5,6 +5,14 @@
 ! 1 -- 100
 ! > 1000
 !
+! Rulers and decorations
+#ifdef MSG_GROUP_RULERS
+
+      800 format(112('='))
+      801 format(112('-'))
+	
+#endif
+
 ! Error messages
 #ifdef MSG_GROUP_ERRORS
 

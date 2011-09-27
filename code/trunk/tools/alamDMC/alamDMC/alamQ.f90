@@ -148,7 +148,7 @@ contains
 
 
       do i = 1,npoints
-            write(*,900)
+            write(*,800)
             write(*,'(/,A,1X,I4,1X,A,1X,F8.3,A,/)')'Point:',i,'fi2 =',fi2 * rad2deg, ' degs'
             ! Calculate rotation matrix
             call KROTMAT(fi1,phi,fi2,Mrot)
@@ -225,8 +225,10 @@ contains
             !
             ! Next step
             fi2 = fi2 + delta_fi2
-      enddo            
+      enddo
+      !
       ! Write complete output to the terminal
+      write(*,800)
       write(display_unit,fmt=700)
       do i=1,npoints
             write(*,fmt=710) phis(i), rho, qrsvalues(i), mfactors(i), residuals(i)
@@ -269,12 +271,11 @@ contains
       701 format('|',9('-'),'|',6('-'),'|',4(12('-'),'|'),12('-'),'|')
       710 format(F10.4, 1X ,F6.3  ,1X, 4(F12.8,1X), F12.8) ! phi2, rho, (q,r,s,M), residual
 
-      ! Format for screen separator
-      900 format(112('='))
-      
+#define MSG_GROUP_RULERS     
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
+#undef MSG_GROUP_RULERS
        
 
       

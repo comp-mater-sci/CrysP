@@ -106,7 +106,7 @@ contains
       ! Open and initialize result files
       open(unit=ofunit,file=trim(outputPrefix)//'.asr',status='replace')
       !
-#define OUTHEADER 'point','iter','eps_vM','Pnorm','totalP_vM','W','plast_pot','M','scal_s','||SonA||','R'
+#define OUTHEADER 'point','incr','eps_vM','Pnorm','totalP_vM','W','plast_pot','M','scal_s','||SonA||','R'
       !
       write(ofunit,700) OUTHEADER ! write header line
       open(unit=histunit,file=trim(outputPrefix)//'.hsr',status='replace')
@@ -184,11 +184,11 @@ contains
                   !! -> report the results to history file and to the screen
                   call outputIdentResults(teeunits)                  
                   !! -> Report the results to output file
-                  write(ofunit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, R, plast_pot, ares%taylor_factors(1), scal_s, norm_sona
+                  write(ofunit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, plastic_work_total, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, R
                   !
                   write(display_unit,710)
                   write(display_unit,700) OUTHEADER ! write header line
-                  write(display_unit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, R, plast_pot, ares%taylor_factors(1), scal_s, norm_sona
+                  write(display_unit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, plastic_work_total, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, R
                   write(display_unit,710)
                   !
                   ! Check termination condition: 
@@ -255,9 +255,13 @@ contains
       701 format(2(1X,I5),9(F12.6,1X))
       710 format(2('|',5('-')),'|',9(12('-'),'|'))
       !
+#define MSG_GROUP_RULERS     
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
+#undef MSG_GROUP_RULERS
+
       
-      800 format(112('='))
-      801 format(112('-'))
 #ifdef OUTHEADER
 #undef OUTHEADER
 #endif      

@@ -121,7 +121,7 @@ contains
       plastic_work_total = 0.D0
       step = 0
       do 
-            write(*,900)
+            write(*,800)
             !! -> Take uniaxial tensile stress, rotate it to given direction     
             St = 0.D0
             St(1,1) = dsqrt(3.D0/2.D0)
@@ -224,7 +224,7 @@ contains
             plastic_work_inc = dot_product(vD,vSe) 
             plastic_work_total = plastic_work_total + plastic_work_inc
             ! Write history of deformations
-            write(histunit,900)
+            write(histunit,800)
             write(histunit,'(A,1X,I4)') 'Step:', step
             write(histunit,601)
             do j=1,3
@@ -262,8 +262,12 @@ contains
       700 format(1X,A5,1X,11(A12,1X))
       701 format(1X,I5,1X,11(F12.6,1X))
       710 format('|',5('-'),'|',11(12('-'),'|'))
-      
-      900 format(112('='))
+
+#define MSG_GROUP_RULERS     
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
+#undef MSG_GROUP_RULERS
 
 #ifdef OUTHEADER
 #undef OUTHEADER
