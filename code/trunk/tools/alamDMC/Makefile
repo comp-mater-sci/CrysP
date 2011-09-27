@@ -17,7 +17,8 @@ ALAMDMC=$(ALAMDMCDIR)/$(ConfigurationName)/alamDMC
 LIBALAMYLPDIR=libAlamYLP
 LIBALAMYLP=$(LIBALAMYLPDIR)/$(ConfigurationName)/libalamYLP.a
 
-.PHONY=clean
+.PHONY : clean
+
 all	: $(LIBALAMYLP) $(ALAMDMC)
 
 $(ALAMDMC)	: $(LIBALAMYLP) $(LIBOPTPATH)

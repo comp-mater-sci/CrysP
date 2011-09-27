@@ -41,11 +41,12 @@ OBJLISTA=$(SRCS:.f90=.o)
 OBJLIST=$(OBJLISTA:.for=.o)
 # Library objects
 OBJS = $(patsubst %, $(OBJDIR)/%, $(OBJLIST))
-$(info $(OBJS))
+# $(info $(OBJS))
 #
 
 ALMYLPDIR=../libAlamYLP/$(ConfigurationName)
-ALAMYLPLIB=libalamYLP.a
+ALAMYLP=libalamYLP.a
+ALAMYLPLIB=$(ALMYLPDIR)/$(ALAMYLP)
 FCFLAGS+= -I$(ALMYLPDIR)/include
 FLDFLAGS+= -L$(ALMYLPDIR) -lalamYLP
 
@@ -53,7 +54,10 @@ FLDFLAGS+= $(LIBOPTPATH) $(MKLLDFLAGS)
 # Test program
 PROG=alamDMC
 
-$(ConfigurationName)/$(PROG)	: $(OBJDIR) $(INCLUDEDIR) $(OBJS)
+.PHONY : clean
+
+
+$(ConfigurationName)/$(PROG)	: $(OBJDIR) $(INCLUDEDIR) $(OBJS) $(ALAMYLPLIB)
 	$(FC) $(FCFLAGS) -I$(INCLUDEDIR) $(OBJS) -o $@  $(FLDFLAGS) 
 
 $(OBJDIR)/%.o	: %.f90
@@ -66,18 +70,12 @@ clean	: FORCE
 	-rm -f $(OBJS) $(LIB) $(INCLUDEDIR)/*.mod $(PROG) 
 FORCE	:
 
-$(LIBDIR) :
-	[ -d $@ ] || mkdir -p $@
-
-$(OBJDIR) :
-	[ -d $@ ] || mkdir -p $@
-
-$(INCLUDEDIR) :
+$(LIBDIR) $(OBJDIR) $(INCLUDEDIR) :
 	[ -d $@ ] || mkdir -p $@
 
 $(OBJDIR)/main.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, commonConfig alamQ alamASR alamTSA qrsTypes)) $(LIBOPTPATH) msgFormats.inc
-$(OBJDIR)/commonConfig.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, alamUtils )) $(LIBOPTPATH) msgFormats.inc
-$(OBJDIR)/alamQ.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, alamUtils commonConfig qrsTypes)) $(LIBOPTPATH) msgFormats.inc
-$(OBJDIR)/alamASR.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, alamUtils commonConfig qrsTypes)) $(LIBOPTPATH) msgFormats.inc
-$(OBJDIR)/alamTSA.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, alamUtils commonConfig qrsTypes)) $(LIBOPTPATH) msgFormats.inc
+$(OBJDIR)/commonConfig.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, alamUtils )) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
+$(OBJDIR)/alamQ.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, alamUtils commonConfig qrsTypes)) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
+$(OBJDIR)/alamASR.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, alamUtils commonConfig qrsTypes)) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
+$(OBJDIR)/alamTSA.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, alamUtils commonConfig qrsTypes)) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
 

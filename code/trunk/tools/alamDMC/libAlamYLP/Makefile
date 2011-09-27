@@ -32,6 +32,12 @@ SRCS= \
 alamYLP.f90 \
 vumat_libvec5.for
 
+define create-dir
+echo $(dir $@)
+[ -d $@ ] || mkdir -p $(dir $@)
+touch $@
+endef
+
 LIB=$(ConfigurationName)/libalamYLP.a
 
 # Build list of objects:
@@ -42,8 +48,11 @@ OBJLIST=$(OBJLISTA:.for=.o)
 OBJS = $(patsubst %, $(OBJDIR)/%, $(OBJLIST))
 $(info $(OBJS))
 
+.PHONY : clean
+
 #
-$(LIB)	: $(LIBDIR) $(OBJDIR) $(INCLUDEDIR) $(OBJS)
+$(LIB)	: .dirstructure $(OBJS)
+	echo $?
 	$(AR) rcs $@ $(OBJS)
 
 $(OBJDIR)/%.o	: %.f90
@@ -56,14 +65,11 @@ clean	: FORCE
 	-rm -f $(OBJS) $(LIB) $(INCLUDEDIR)/*.mod
 FORCE	:
 
-$(LIBDIR) :
-	[ -d $@ ] || mkdir -p $@
+.dirstructure : $(addsuffix /.dirstructure, $(LIBDIR) $(OBJDIR) $(INCLUDEDIR))
+	touch $@
 
-$(OBJDIR) :
-	[ -d $@ ] || mkdir -p $@
-
-$(INCLUDEDIR) :
-	[ -d $@ ] || mkdir -p $@
+$(addsuffix /.dirstructure, $(LIBDIR) $(OBJDIR) $(INCLUDEDIR)) : 
+	$(create-dir)
 
 $(OBJDIR)/alamYLP.o 	:  $(OBJDIR)/vumat_libvec5.o $(LIBOPTPATH)
 
