@@ -3,7 +3,7 @@
 # $Id$
 #
 ## Global configuration section
-UTILDIR="$HOME/TEXEVOL"
+UTILDIR="${HMS_ROOT}"
 BINDIR="$UTILDIR/bin"
 SCRIPTDIR="$UTILDIR/scripts"
 DATADIR="$UTILDIR/data"
