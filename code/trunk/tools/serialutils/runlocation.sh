@@ -20,6 +20,8 @@ VERBOSE=0
 # It set to 0, the script will return if successful or if severe error has occured.
 PERSISTENTMODE=1
 #
+# Sleeptime to be waited if temporary error is encountered.
+SLEEPTIME=5s
 # Notifications
 # If you want to be notified about failures, set MAILADDR:
 # MAILADDR="your.email@yourdomain"
@@ -147,8 +149,8 @@ do
 	        fi
 		;;
 	"$R_FAILURE" )  # Temporary failure 
-		[ "$VERBOSE" -ge "1" ] &&  echo "Temporary failure, waiting for ${SLEEPTIME}s"
-		sleep "${SLEEPTIME}s"
+		[ "$VERBOSE" -ge "1" ] &&  echo "Temporary failure, waiting for ${SLEEPTIME}"
+		sleep "${SLEEPTIME}"
 		CONDITION="$R_NEXT"
 		;;
 	* )   # Anomaly 
