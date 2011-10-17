@@ -116,12 +116,12 @@ Parameters:
 	snapdir - directory that contains snapshots to process
 	outdir - output directory
 	prefix - prefix for filenames
-	Facet_config - Facet configuration file (if runway is ylp)
-	texupdate - path to texupdate executable (if runway is texylp)	
+	Facet_config - Facet configuration file (if run mode is ylp)
+	texupdate - path to texupdate executable (if run mode is texylp)	
 	configfile - utility configuration file
 \n
 Remarks:
-* The requsitions on the snapshot content depend on the runway parameter. 
+* The requsitions on the snapshot content depend on the run mode parameter. 
   In general, the snapshots must contain files of the following types: MMM, CUB, defdata.dat\n"
 
 if [ "$#" -lt 2 ] ; then
@@ -146,7 +146,7 @@ case "$RUNMODE" in
 		exit 0;
 		;;
 	*)	
-		echo "Unknown runway"
+		echo "Unknown run mode"
 		exit 1;
 		;;	
 esac
@@ -205,7 +205,7 @@ case "$RUNMODE" in
 		FROMSNAP="${DEFFILE}"
 		;;
 	*)	
-		echo "Unknown runway"
+		echo "Unknown run mode"
 		exit 1
 		;;	
 esac
@@ -216,7 +216,7 @@ esac
 #  - create temporary directory, enter temporary it
 #  - enter Main loop:
 #	* select snapshot	
-#  	* according to the runway, extract the necessary data to the temporary
+#  	* according to the run mode, extract the necessary data to the temporary
 #	* start the appropriate function 
 #	* create a snapshot and place it in the output direcory 	
 
@@ -258,7 +258,7 @@ for  snap in $SNAPLIST ; do
 	#
 	# Extract requested datafiles
 	tar -xzf $snap -C "$CTMPDIR" $FROMSNAP 
-	## Valid for ylp runway
+	## Valid for ylp run mode
 	case "$RUNMODE" in
 	ylp)	runYlpCalc "$CTMPDIR" "$YLPCFG" "$INPTEX" 
 		## Stage
