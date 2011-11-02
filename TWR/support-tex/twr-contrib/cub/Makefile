@@ -27,6 +27,7 @@ FCFLAGS+= -module $(INCLUDEDIR) # -stand f03
 SRCS=cub2cur.for \
 cub2cubV2.for \
 cubAccess.for \
+smtAccess.f90 \
 cub2smt.f90 \
 mergeCubs.f90 
 
@@ -43,8 +44,9 @@ PROG1=cub2cur
 PROG2=cub2cubV2
 PROG3=cub2smt
 PROG4=mergeCubs
+PROG5=ori2smt
 
-ALLPROGS= $(addprefix $(BINDIR)/, $(PROG1) $(PROG2) $(PROG3) $(PROG4))
+ALLPROGS= $(addprefix $(BINDIR)/, $(PROG1) $(PROG2) $(PROG3) $(PROG4) $(PROG5))
 
 all	: structure $(ALLPROGS) $(OBJS)
 
@@ -58,7 +60,11 @@ $(OBJDIR)/cub2cubV2.o :     $(OBJDIR)/cubAccess.o
 
 $(OBJDIR)/mergeCubs.o :     $(OBJDIR)/cubAccess.o
 
-$(OBJDIR)/cub2smt.o	:  $(OBJDIR)/cubAccess.o
+$(OBJDIR)/smtAccess.o   :     $(OBJDIR)/cubAccess.o
+
+$(OBJDIR)/cub2smt.o	:  $(OBJDIR)/cubAccess.o $(OBJDIR)/smtAccess.o
+
+$(OBJDIR)/ori2smt.o	:  $(OBJDIR)/cubAccess.o $(OBJDIR)/smtAccess.o
 
 
 $(BINDIR)/$(PROG1)	: $(addprefix $(OBJDIR)/, cubAccess.o cub2cur.o)
@@ -67,11 +73,15 @@ $(BINDIR)/$(PROG1)	: $(addprefix $(OBJDIR)/, cubAccess.o cub2cur.o)
 $(BINDIR)/$(PROG2)	: $(addprefix $(OBJDIR)/, cubAccess.o cub2cubV2.o)
 	$(FC) -o $@ $^
 
-$(BINDIR)/$(PROG3)	: $(addprefix $(OBJDIR)/, cubAccess.o cub2smt.o)
+$(BINDIR)/$(PROG3)	: $(addprefix $(OBJDIR)/, cubAccess.o smtAccess.o cub2smt.o)
 	$(FC) -o $@ $^ 
 
 $(BINDIR)/$(PROG4)	: $(addprefix $(OBJDIR)/, cubAccess.o  mergeCubs.o)
 	$(FC) -o $@ $^
+
+$(BINDIR)/$(PROG5)	: $(addprefix $(OBJDIR)/, cubAccess.o smtAccess.o ori2smt.o)
+	$(FC) -o $@ $^ 
+
 clean :
 	rm -f  $(ALLPROGS) $(OBJS) $(INCLUDEDIR)/*
 

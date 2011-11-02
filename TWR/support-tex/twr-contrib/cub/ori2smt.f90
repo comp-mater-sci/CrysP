@@ -1,15 +1,52 @@
+! $Id$
 
-program cub2smt
-      use cubAccess
+subroutine readOri(nunit,micros,header,iuerr)
+use cubAccess
+implicit none       
+      integer,intent(in)                        :: nunit
+      type(microsDesc),intent(inout)            :: micros
+      character(len=ctitlelen),intent(out)      :: header
+      integer,intent(out)                       :: iuerr
+!
+      integer :: norient,ioerr = 0, i
+      character(len=ctitlelen)      :: buf
+      
+      iuerr = 1
+      header = ''
+      ioerr = 0
+      norient = 0
+      ! read two first lines
+      read(nunit,'(A)',iostat=ioerr) header
+      if (ioerr /= 0) return
+      read(nunit,'(A)',iostat=ioerr) buf 
+      ! Merge it
+      header = trim(adjustl(header)) // ' ' // trim(buf)
+      ! 3rd line
+      read(nunit,fmt=*,iostat=ioerr) norient  ! Only the first number is important
+      if ((ioerr /= 0) .or. (norient <= 0)) return
+      call allocateMicros(micros,norient,ioerr)
+      if (ioerr /= 0) return
+      do i=1,norient
+            associate (grain => micros%grains(i))
+                  read(nunit, fmt=*,iostat=ioerr) grain%PHI1, grain%PHI, grain%PHI2, grain%GEW
+            end associate
+            if (ioerr /= 0) exit
+      enddo      
+      if ((ioerr == 0) .and. (i >= norient)) iuerr = 0
+
+end subroutine
+
+
+program ori2smt
       use smtAccess
       implicit none
-      integer,parameter             :: ncubunit=110,nsmtunit=111  ! Unit numbers      
+      integer,parameter             :: noriunit=110,nsmtunit=111  ! Unit numbers      
       integer                       :: iuerr  ! Error code for I/O operations
       integer,parameter             :: pathlength=512
       character(LEN=pathlength)     :: fnamcub, fnamsmt
       integer                       :: argc,i
       type(microsDesc)              :: micros
-      character(len=ctitlelen)      :: title,buf
+      character(len=ctitlelen)      :: title,header,buf
       character(len=10)             :: stylename
       integer                       :: nstyle
       integer,parameter             :: titlearg = 4
@@ -17,7 +54,7 @@ program cub2smt
       ! the remaining parametrers are percieved as title of simulation
       argc = COMMAND_ARGUMENT_COUNT()
       if ( argc < 3 ) then
-            write(*,*) 'arguments: cubfile smtfile style [title]'
+            write(*,*) 'arguments: orifile smtfile style [title]'
             write(*,*)  'available styles: bare, plain, full'
             call exit(10)
       endif
@@ -47,22 +84,23 @@ program cub2smt
       endif
       ! Open files
       write(*,*) trim(fnamcub), ' => ',trim(fnamsmt)
-      ! Open CUB file 
-      open (unit=ncubunit,file=TRIM(fnamcub),status='old',form='UNFORMATTED')
-     
-      
-      call readCub(ncubunit,micros,iuerr)
+      ! Open ORI file 
+      open (unit=noriunit,file=TRIM(fnamcub),status='old',form='FORMATTED')
+      call readOri(noriunit,micros,header,iuerr)
       if (iuerr /= 0) then
-            write(*,*) 'Error reading CUB file.'
+            write(*,*) 'Error reading ORI file.'
             call exit(11)
       endif
-      close(ncubunit)
-      ! Open CUR file
+      close(noriunit)
+      ! Open SMT file
       open (unit=nsmtunit,file=TRIM(fnamsmt),status='unknown',form='FORMATTED')
       ! Mangle title
       if (len_trim(title) >= 1) then
-             micros%TITLE = trim(title)
+            micros%TITLE = trim(title)
             write(*,*) 'title: ', title
+      else
+            micros%TITLE = trim(header)
+            write(*,*) 'title: ', header
       endif
 
       call writeSMT(nsmtunit,micros,nstyle,iuerr)     
@@ -74,4 +112,4 @@ program cub2smt
 
 end program 
 
-      
+ 
