@@ -27,7 +27,7 @@
       type(microsDesc),intent(out)  :: MICROS
       integer,intent(out)           :: ERRCODE         
       
-      integer                       :: i
+      integer                       :: i,ngrains
       integer                       :: iuerr
       type(grainDesc)               :: tmpgrain
       !! End of declaration section
@@ -38,20 +38,22 @@
       write (*,*) 'Binary CUB-type-input file'
       read (NUNIT,iostat=iuerr) 
      &      MICROS%NS,
-     &      MICROS%NGRAINS,
+     &      ngrains,
      &      MICROS%FALG,
      &      MICROS%GAXES,
      &      MICROS%GEULR
       ! 
-      if (iuerr .ne. 0) then
+      if ((iuerr .ne. 0) .or. (ngrains <= 0) )then
             write(*,*) 'Error in header of CUB file'
             ERRCODE=(-1)
             return         
       endif
+      MICROS%NGRAINS = ngrains
       write (*,105) MICROS%NS,MICROS%NGRAINS
  105  format (' Input step nr.',i5,3x,'  Number of crystallites',i5)
-      ! Allocate the array
-      allocate(MICROS%GRAINS(MICROS%NGRAINS))
+      !
+      call allocateMicros(MICROS,ngrains,ERRCODE)
+
       !
       do 11 i=1,MICROS%NGRAINS
             ! Read binary record; 
@@ -215,6 +217,22 @@
       endif
       end subroutine writeCubV2Record
 
+      subroutine allocateMicros(MICROS,NGRAINS,ERRCODE)
+      implicit none
+      type(microsDesc),intent(inout)  :: MICROS
+      integer,intent(in)            :: NGRAINS
+      integer,intent(out)           :: ERRCODE
+      ERRCODE = 1
+      if (NGRAINS >= 0) then
+            MICROS%NGRAINS = NGRAINS
+            ! Allocate the array
+            allocate(MICROS%GRAINS(MICROS%NGRAINS))
+            ERRCODE = 0
+      else
+            MICROS%NGRAINS = NGRAINS
+      endif
+      end subroutine
+ 
       subroutine freeMicros(micros,istat)
       implicit none
       type(microsDesc),intent(inout)      ::    micros
