@@ -36,12 +36,12 @@
       ! Set empty string as a title
       MICROS%TITLE=''
       write (*,*) 'Binary CUB-type-input file'
-      read (NUNIT,iostat=iuerr) 
-     &      MICROS%NS,
-     &      ngrains,
-     &      MICROS%FALG,
-     &      MICROS%GAXES,
-     &      MICROS%GEULR
+      read (NUNIT,iostat=iuerr)                                          &
+            MICROS%NS,                                                   &
+            ngrains,                                                     &
+            MICROS%FALG,                                                 &
+            MICROS%GAXES,                                                &
+            MICROS%GEULR
       ! 
       if ((iuerr .ne. 0) .or. (ngrains <= 0) )then
             write(*,*) 'Error in header of CUB file'
@@ -59,10 +59,10 @@
             ! Read binary record; 
             ! The only difference between CUR and CUB record format is
             ! that the leading ordinal number is skipped in CUB. 
-            READ(NUNIT,iostat=iuerr) 
-     &           tmpgrain%GEW,
-     &           tmpgrain%PHI1,tmpgrain%PHI,tmpgrain%PHI2,
-     &           tmpgrain%GAMMA,tmpgrain%F,tmpgrain%GAXES,tmpgrain%GEULR
+            READ(NUNIT,iostat=iuerr)                                     &
+                 tmpgrain%GEW,                                           &
+                 tmpgrain%PHI1,tmpgrain%PHI,tmpgrain%PHI2,               &
+                 tmpgrain%GAMMA,tmpgrain%F,tmpgrain%GAXES,tmpgrain%GEULR
             if (iuerr .ne. 0) then
                   write(*,*) 'Error in CUB file record'
                   ERRCODE=(-1)
@@ -91,27 +91,27 @@
       write (NUNIT,98) MICROS%TITLE
       ! Write header
       write (NUNIT,402)
- 402  format (/,' Def. Step    ','Number of orientations',27X,
-     1 2X,'F(1,1)',4X,'F(2,1)',4X,'F(3,1)',4X,
-     2 2X,'F(1,2)',4X,'F(2,2)',4X,'F(3,2)',4X,
-     3 2X,'F(1,3)',4X,'F(2,3)',4X,'F(3,3)',
-     4 6X,'a',9X,'b',9x,'c',9x,'G-phi1',4x,'G-PHI',4x,'G-phi2')
+ 402  format (/,' Def. Step    ','Number of orientations',27X,           &
+       2X,'F(1,1)',4X,'F(2,1)',4X,'F(3,1)',4X,                           &
+       2X,'F(1,2)',4X,'F(2,2)',4X,'F(3,2)',4X,                           &
+       2X,'F(1,3)',4X,'F(2,3)',4X,'F(3,3)',                              &
+       6X,'a',9X,'b',9x,'c',9x,'G-phi1',4x,'G-PHI',4x,'G-phi2')
       ! Write frame-specific data
       !!
-      write (NUNIT,403)  ! nrstep,NPOINT,F,GAXES,GLR
-     &      MICROS%NS,
-     &      MICROS%NGRAINS,
-     &      MICROS%FALG,
-     &      MICROS%GAXES,
-     &      MICROS%GEULR
+      write (NUNIT,403)                                                  & ! nrstep,NPOINT,F,GAXES,GLR
+            MICROS%NS,                                                   &
+            MICROS%NGRAINS,                                              &
+            MICROS%FALG,                                                 &
+            MICROS%GAXES,                                                &
+            MICROS%GEULR
  403  format(I6,5X,i5,44x,3(2X,3F10.6),2(2x,3f10.5))
       ! write subheader
       write (NUNIT,401)
- 401  format (' CRYSTAL WEIGHT ',5X,'phi1',6X,'PHI',7X,'phi2',6X,
-     1'  GAMMA',5X,2X,'F(1,1)',4X,'F(2,1)',4X,'F(3,1)',4X,
-     2             2X,'F(1,2)',4X,'F(2,2)',4X,'F(3,2)',4X,
-     3             2X,'F(1,3)',4X,'F(2,3)',4X,'F(3,3)',
-     4 6X,'a',9X,'b',9x,'c',9x,'G-phi1',4x,'G-PHI',4x,'G-phi2')
+ 401  format (' CRYSTAL WEIGHT ',5X,'phi1',6X,'PHI',7X,'phi2',6X,        &
+      '  GAMMA',5X,2X,'F(1,1)',4X,'F(2,1)',4X,'F(3,1)',4X,               &
+                   2X,'F(1,2)',4X,'F(2,2)',4X,'F(3,2)',4X,               &
+                   2X,'F(1,3)',4X,'F(2,3)',4X,'F(3,3)',                  &
+       6X,'a',9X,'b',9x,'c',9x,'G-phi1',4x,'G-PHI',4x,'G-phi2')
       ! Write grain records
       do 11 i=1, MICROS%NGRAINS
       !!
@@ -134,11 +134,11 @@
       !!
       ERRCODE=0
       ! Write single record
-      write(NUNIT,400,iostat=iuerr)
-     &      ID,           ! Ordinal number is a part of CUR file format 
-     &      GRAIN%GEW,
-     &      GRAIN%PHI1,GRAIN%PHI,GRAIN%PHI2,
-     &      GRAIN%GAMMA,GRAIN%F,GRAIN%GAXES,GRAIN%GEULR
+      write(NUNIT,400,iostat=iuerr)                                      &
+            ID,                                                          & ! Ordinal number is a part of CUR file format 
+            GRAIN%GEW,                                                   &
+            GRAIN%PHI1,GRAIN%PHI,GRAIN%PHI2,                             &
+            GRAIN%GAMMA,GRAIN%F,GRAIN%GAXES,GRAIN%GEULR
       if (iuerr .ne. 0) then
             write(*,*) 'Error in CUR file record'
             ERRCODE=(-1)
@@ -176,12 +176,12 @@
       write(NUNIT,iostat=iuerr) MICROS%TITLE
       ! Write frame-specific data
       !!
-      write (NUNIT,iostat=iuerr) 
-     &      MICROS%NS,
-     &      MICROS%NGRAINS,
-     &      MICROS%FALG,
-     &      MICROS%GAXES,
-     &      MICROS%GEULR
+      write (NUNIT,iostat=iuerr)                                         &
+            MICROS%NS,                                                   &
+            MICROS%NGRAINS,                                              &
+            MICROS%FALG,                                                 &
+            MICROS%GAXES,                                                &
+            MICROS%GEULR
       if (iuerr /= 0) then
             ERRCODE=(-1)
             return
@@ -207,10 +207,10 @@
       !!
       ERRCODE=0
       ! Write single record,skip redundant data (F,GAXES,GEULR)
-      write(NUNIT,iostat=iuerr)
-     &      GRAIN%GEW,
-     &      GRAIN%PHI1,GRAIN%PHI,GRAIN%PHI2,
-     &      GRAIN%GAMMA
+      write(NUNIT,iostat=iuerr)                                          &
+            GRAIN%GEW,                                                   &
+            GRAIN%PHI1,GRAIN%PHI,GRAIN%PHI2,                             &
+            GRAIN%GAMMA
       if (iuerr .ne. 0) then
             write(*,*) 'Error in CUR file record'
             ERRCODE=(-1)

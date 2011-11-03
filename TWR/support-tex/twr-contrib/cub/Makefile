@@ -24,9 +24,9 @@ BINDIR=$(ConfigurationName)/bin
 
 FCFLAGS+= -module $(INCLUDEDIR) # -stand f03 
 
-SRCS=cub2cur.for \
-cub2cubV2.for \
-cubAccess.for \
+SRCS=cub2cur.f90 \
+cub2cubV2.f90 \
+cubAccess.f90 \
 smtAccess.f90 \
 cub2smt.f90 \
 mergeCubs.f90 

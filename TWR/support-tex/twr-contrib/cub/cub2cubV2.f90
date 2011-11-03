@@ -31,8 +31,8 @@
       
       write(*,*) trim(fnamcub), ' => ',trim(fnamcub2)
       ! Open CUB file 
-      open (unit=ncubunit,file=TRIM(fnamcub),
-     &               status='old',form='UNFORMATTED')
+      open (unit=ncubunit,file=TRIM(fnamcub),                            &
+                     status='old',form='UNFORMATTED')
       
       call readCub(ncubunit,micros,iuerr)
       if (iuerr /= 0) then
@@ -43,8 +43,8 @@
       ! Mangle title
       micros%TITLE = trim(title)
       ! Open CUBv2 file 
-      open (unit=ncubunit,file=TRIM(fnamcub2),
-     &               status='unknown',form='UNFORMATTED')
+      open (unit=ncubunit,file=TRIM(fnamcub2),                           &
+                     status='unknown',form='UNFORMATTED')
       call writeCubV2(ncubunit,micros,iuerr)
       if (iuerr /= 0) then
             write(*,*) 'Error writing CUBv2 file ',trim(fnamcub2)

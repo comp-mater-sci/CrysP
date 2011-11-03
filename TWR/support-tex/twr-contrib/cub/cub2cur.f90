@@ -32,8 +32,8 @@
       
       write(*,*) trim(fnamcub), ' => ',trim(fnamcur)
       ! Open CUB file 
-      open (unit=ncubunit,file=TRIM(fnamcub),
-     &               status='old',form='UNFORMATTED')
+      open (unit=ncubunit,file=TRIM(fnamcub),                            &
+                     status='old',form='UNFORMATTED')
       
       call readCub(ncubunit,micros,iuerr)
       if (iuerr /= 0) then
@@ -42,8 +42,8 @@
       endif
       close(ncubunit)
       ! Open CUR file
-      open (unit=ncurunit,file=TRIM(fnamcur),
-     &               status='unknown',form='FORMATTED')
+      open (unit=ncurunit,file=TRIM(fnamcur),                            &
+                     status='unknown',form='FORMATTED')
       ! Mangle title
       if (len_trim(title) > 0 ) micros%TITLE = trim(title)
       
