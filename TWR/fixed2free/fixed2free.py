@@ -36,68 +36,72 @@ def convert(fixedFname, freeFname, alignCont = 72):
     excommentPattern = re.compile(r"!")
     # excommentPattern = re.compile(r"!.*$")
     try:
-            with open(fixedFname,'r') as inp, open(freeFname,'w') as out:
-                    # Skip comments in header
-                    lineready = False
-                  
-                    for line in inp:
-                            if not(commentPattern.match(line)):
-                                    #print(line)
-                                    lineready = True
-                                    break
-                            out.writelines(fixComment(line))
-                    #
-                    if line and lineready:        
-                            prevline = line
-                            verbose > 1 and print('start>>' + prevline)
+        with open(fixedFname,'r') as inp, open(freeFname,'w') as out:
+            # Skip comments in header
+            lineready = False
+          
+            for line in inp:
+                if not(commentPattern.match(line)):
+                    #print(line)
+                    lineready = True
+                    break
+                out.writelines(fixComment(line))
+            #
+            if line and lineready:        
+                prevline = line
+                if verbose > 1:
+                    print('start>>' + prevline)
+            else:
+                # nothing to do.
+                return
+            commentBlock = []
+            # process the input file. Keep the current line and the previous line
+            for line in inp:
+                if (commentPattern.match(line)):
+                    #out.writelines(line)
+                    commentBlock.append(fixComment(line))
+                    continue
+                
+                if (cntPattern.match(line)):
+                    # print(line)
+                    # clear continuation mark
+                    line = cntPattern.sub('      ',line)
+                    # analyze the previous line
+                    # Search for exclamation-comment
+                    m = excommentPattern.search(prevline)
+                    if (m):
+                            #print('in>> ' + prevline)
+                            # A bit more complex expression
+                            # Split into statement and comment (remove leading '!')
+                            splt = excommentPattern.split(prevline,1)
+                            prevline = (splt[0].ljust(alignCont) + ' & ' +  '!' + splt[1])
+                            #print('out<< ' + prevline)
                     else:
-                            # nothing to do.
-                            return
+                            prevline =  prevline[:len(prevline)-1].ljust(alignCont)  + ' &\n'
+                # emit the previous line, there will be no further interest in it        
+                out.writelines(prevline)
+                # emit deferred comment blocks
+                if (len(commentBlock) > 0):
+                    if verbose > 1:
+                        print('Deffered comment block, # lines:',str(len(commentBlock)))
+                    for cline in commentBlock:
+                        out.writelines(cline)
                     commentBlock = []
-                    # process the input file. Keep the current line and the previous line
-                    for line in inp:
-                            if (commentPattern.match(line)):
-                                    #out.writelines(line)
-                                    commentBlock.append(fixComment(line))
-                                    continue
-                            
-                            if (cntPattern.match(line)):
-                                    # print(line)
-                                    # clear continuation mark
-                                    line = cntPattern.sub('      ',line)
-                                    # analyze the previous line
-                                    # Search for exclamation-comment
-                                    m = excommentPattern.search(prevline)
-                                    if (m):
-                                            #print('in>> ' + prevline)
-                                            # A bit more complex expression
-                                            # Split into statement and comment (remove leading '!')
-                                            splt = excommentPattern.split(prevline,1)
-                                            prevline = (splt[0].ljust(alignCont) + ' & ' +  '!' + splt[1])
-                                            #print('out<< ' + prevline)
-                                    else:
-                                            prevline =  prevline[:len(prevline)-1].ljust(alignCont)  + ' &\n'
-                            # emit the previous line, there will be no further interest in it        
-                            out.writelines(prevline)
-                            # emit deferred comment blocks
-                            if (len(commentBlock) > 0):
-                                    verbose > 1 and print('Deffered comment block, # lines:',str(len(commentBlock)))
-                                    for cline in commentBlock:
-                                            out.writelines(cline)
-                                    commentBlock = []
-                            prevline = line
+                prevline = line
 
-                    # End of main loop      
-                    # emit remaining line and comment
-                    out.writelines(prevline)
-                    # emit deferred comment blocks
-                    if (len(commentBlock) > 0):
-                        verbose > 1 and print('Deffered comment block, # lines:',str(len(commentBlock)))
-                        for cline in commentBlock:
-                            out.writelines(cline)
-                        commentBlock = []
+            # End of main loop      
+            # emit remaining line and comment
+            out.writelines(prevline)
+            # emit deferred comment blocks
+            if (len(commentBlock) > 0):
+                # OK in 3.x #verbose > 1 and print('Deffered comment block, # lines:',str(len(commentBlock)))
+                if verbose > 1:
+                    print('Deffered comment block, # lines:',str(len(commentBlock)))
+                for cline in commentBlock:
+                    out.writelines(cline)
+                commentBlock = []
     except IOError as e:
-            print(e.args)
+        print(e.args)
                 
 
 # Make it ready to act as a standalone program
