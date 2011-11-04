@@ -28,6 +28,7 @@ SRCS=cub2cur.f90 \
 cub2cubV2.f90 \
 cubAccess.f90 \
 smtAccess.f90 \
+oriAccess.f90 \
 cub2smt.f90 \
 mergeCubs.f90 
 
@@ -64,7 +65,9 @@ $(OBJDIR)/smtAccess.o   :     $(OBJDIR)/cubAccess.o
 
 $(OBJDIR)/cub2smt.o	:  $(OBJDIR)/cubAccess.o $(OBJDIR)/smtAccess.o
 
-$(OBJDIR)/ori2smt.o	:  $(OBJDIR)/cubAccess.o $(OBJDIR)/smtAccess.o
+$(OBJDIR)/ori2smt.o	:  $(OBJDIR)/cubAccess.o $(OBJDIR)/smtAccess.o $(OBJDIR)/oriAccess.o	
+
+$(OBJDIR)/oriAccess.o	:  $(OBJDIR)/cubAccess.o
 
 
 $(BINDIR)/$(PROG1)	: $(addprefix $(OBJDIR)/, cubAccess.o cub2cur.o)
@@ -79,7 +82,7 @@ $(BINDIR)/$(PROG3)	: $(addprefix $(OBJDIR)/, cubAccess.o smtAccess.o cub2smt.o)
 $(BINDIR)/$(PROG4)	: $(addprefix $(OBJDIR)/, cubAccess.o  mergeCubs.o)
 	$(FC) -o $@ $^
 
-$(BINDIR)/$(PROG5)	: $(addprefix $(OBJDIR)/, cubAccess.o smtAccess.o ori2smt.o)
+$(BINDIR)/$(PROG5)	: $(addprefix $(OBJDIR)/, cubAccess.o smtAccess.o ori2smt.o oriAccess.o)
 	$(FC) -o $@ $^ 
 
 clean :

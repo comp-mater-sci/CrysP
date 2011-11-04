@@ -1,3 +1,23 @@
+!
+! $Id$
+!
+!>    \author Jerzy Gawad
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>
+!>    \date Date of first release: 2009-10-06
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+!
+!
+!>    \file cubAccess.f90 
+!>    
+!
+
       module cubAccess
       ! Length of title string 
       integer,parameter                   :: ctitlelen = 40

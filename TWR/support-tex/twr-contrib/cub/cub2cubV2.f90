@@ -1,3 +1,23 @@
+!
+! $Id$
+!
+!>    \author Jerzy Gawad
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>
+!>    \date Date of first release: 2009-10-06
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+!
+!
+!>    \file cub2cubV2.f90 
+!>    
+!
+
       program cub2cubV2
       use cubAccess
       implicit none

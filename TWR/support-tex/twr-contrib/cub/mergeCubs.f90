@@ -1,6 +1,26 @@
 !
 ! $Id$
 !
+!>    \author Jerzy Gawad
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>
+!>    \date Date of first release: 2011-06-01
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+!
+!
+!>    \file mergeCubs.f90 
+!>    
+!
+
+!
+! $Id$
+!
 
 module mergeCubs
 use cubAccess

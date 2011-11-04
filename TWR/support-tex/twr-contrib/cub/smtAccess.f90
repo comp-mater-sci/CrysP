@@ -1,3 +1,23 @@
+!
+! $Id$
+!
+!>    \author Jerzy Gawad
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>
+!>    \date Date of first release: 2011-11-02
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+!
+!
+!>    \file smtAccess.f90 
+!>    
+!
+
 module smtAccess
       use cubAccess
 

@@ -1,3 +1,23 @@
+!
+! $Id$
+!
+!>    \author Jerzy Gawad
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>
+!>    \date Date of first release: 2010-02-16
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+!
+!
+!>    \file cub2smt.f90 
+!>    
+!
+
 
 program cub2smt
       use cubAccess
