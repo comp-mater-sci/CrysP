@@ -107,9 +107,9 @@ implicit none
 
       ! Definition of singleton objects
        
-      type(alamelConfigData)	:: acnf
+      type(alamelConfigData),save	:: acnf
       
-      type(alamelResultData)  :: ares
+      type(alamelResultData),save  :: ares
       
 
 contains
