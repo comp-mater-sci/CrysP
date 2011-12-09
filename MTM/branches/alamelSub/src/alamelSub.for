@@ -149,6 +149,8 @@ C
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if (ireason == 3) then
+            
+      NBLOC = acnf%nSimulCalls
       
       DO 2 JBLOC=1,NBLOC
 C
