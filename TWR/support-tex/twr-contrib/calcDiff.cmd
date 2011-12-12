@@ -25,6 +25,7 @@ set TMPFNAMES=calcDiff.tmp.2
 set TMPVERSCH=calcDiff.tmp.3
 set TMPTI=calcDiff.tmp.4
 set OUTFNAME=calcDiff.txt
+set FOUTFNAME=calcRelativeDiff.txt
 
 
 rem Workaround: versch cannot accept more than 9 files in one "batch" - one-digit number of files to be processed is allowed.
@@ -63,17 +64,19 @@ if not "%1" == "" (
 	del /f /q !TMPCNF! !TMPTI!
 	if exist !TMPVERSCH! del /f /q !TMPVERSCH!
 	rem The file TMPFNAMES _must_ be removed
-	del /f /q !TMPFNAMES! PRINTC.L01 VERSCH.L01
+	del /f /q !TMPFNAMES!
 	set /A CNT=CNT + 1
 	rem Shift by 9 positions
 	for %%i in (%1 %2 %3 %4 %5 %6 %7 %8 %9) do shift
 	goto :outerloop
 )
-
-
+rem Calculate normalized/relative ODF differences 
+gawk "BEGIN{cnt=0;}{if (NR == 1) TI=$2; print cnt, $1,$2,$3,$3/TI;  cnt++; }" !OUTFNAME!  > !FOUTFNAME!
 
 rem Display the results	
-call cat !OUTFNAME!
+echo.
+echo Relative differences
+call cat !FOUTFNAME!
 
 
 goto :eof
