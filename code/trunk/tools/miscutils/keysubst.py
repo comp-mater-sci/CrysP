@@ -10,7 +10,7 @@ def substitute(content,mapping):
         filtered.append(line)
     return filtered
 
-def main(argv):    
+def substFromTemplate(argv):    
     """ 
     Arguments in argv: input, output, "KEY1=VAL1" "KEY2=VAL2" ... 
     """
@@ -18,8 +18,8 @@ def main(argv):
     import sys
     
     try:
-        inp_fname = argv[1]
-        out_fname = argv[2]
+        inp_fname = argv[0]
+        out_fname = argv[1]
     except IndexError:
         print('The script substitutes keywords by associated values.\n')
         print('Arguments: input_template_file output_file ["KEY1=VAL1" "KEY2=VAL2" ...]')
@@ -37,7 +37,7 @@ def main(argv):
     # 
     mapping = {}
     # process arguments, create pairs
-    for arg in argv[3:]:
+    for arg in argv[2:]:
         key,val = arg.split('=')
         if (key != ''):
             mapping[key] = str(val)
@@ -45,6 +45,9 @@ def main(argv):
     filtered = substitute(content,mapping)
     out.writelines(filtered)
     out.close()
+
+def main(argv):
+    substFromTemplate(argv[1:])
 
 if __name__ == "__main__":
     import sys
