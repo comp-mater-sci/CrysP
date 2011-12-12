@@ -10,18 +10,20 @@ def substitute(content,mapping):
         filtered.append(line)
     return filtered
 
-if __name__ == "__main__":
+def main(argv):    
+    """ 
+    Arguments in argv: input, output, "KEY1=VAL1" "KEY2=VAL2" ... 
+    """
     import os
     import sys
-    # arguments: input, output, "KEY1=VAL1" "KEY2=VAL2" ... 
     
     try:
-        inp_fname = sys.argv[1]
-        out_fname = sys.argv[2]
+        inp_fname = argv[1]
+        out_fname = argv[2]
     except IndexError:
-        print('\nThe script substitutes keywords by associated values')
+        print('The script substitutes keywords by associated values.\n')
         print('Arguments: input_template_file output_file ["KEY1=VAL1" "KEY2=VAL2" ...]')
-        print('Keywords in the input_template are in form <keyname>')
+        print('Keywords in the input_template should be embraced in angle brackets \"<>\"\ne.g. <keyname>')
         exit()
     try:
         inp = open(inp_fname,'r')
@@ -35,7 +37,7 @@ if __name__ == "__main__":
     # 
     mapping = {}
     # process arguments, create pairs
-    for arg in sys.argv[3:]:
+    for arg in argv[3:]:
         key,val = arg.split('=')
         if (key != ''):
             mapping[key] = str(val)
@@ -44,4 +46,7 @@ if __name__ == "__main__":
     out.writelines(filtered)
     out.close()
 
+if __name__ == "__main__":
+    import sys
+    main(sys.argv)
 
