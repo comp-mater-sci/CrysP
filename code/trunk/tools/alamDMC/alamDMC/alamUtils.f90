@@ -22,9 +22,16 @@ module alamUtils
       integer,parameter       :: display_unit = 6
 
       character,parameter     :: default_comment_sign = '#'
+      
+      !> Error message to be written by the subroutine finalize 
+      character(len=128),save :: errmsg
 
 contains
-
+      !
+      ! Functions ported from FNG
+      ! -->>
+      
+      ! From fngMathUtils
       pure function vec_norm2(v)
       implicit none
       double precision :: vec_norm2
@@ -40,6 +47,20 @@ contains
             if (n >= 1) average = sum(a) / dble(n)                 
             ! Undefined for empty array
       end function
+
+      ! From fngMMMCore
+      !> Finalization code
+      subroutine finalize(errcode)
+      implicit none
+      integer,intent(in)      :: errcode
+            !
+            if (errcode /= 0) write(*,'(A)') trim(errmsg)
+            !
+            call exit(errcode)
+      end subroutine
+
+      ! <<-- Ported form FNG
+      !
 
       subroutine printIdentResults(outunit,vS,vA,vSonA,vSonAn,R,info)
       implicit none

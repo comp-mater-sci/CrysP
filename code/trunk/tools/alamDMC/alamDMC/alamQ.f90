@@ -56,7 +56,7 @@ contains
             read(cnfunit,fmt='(2L2)',iostat=ioerr)  reuse_previous, resuse_stainrate
             read(cnfunit,fmt='(L2)',iostat=ioerr)  fold_symmetry
             if (ioerr /= 0) then
-                  write(*,fmt=902) 'alamq'
+                  write(*,fmt=902) 'alamQ'
                   return
             endif
             !

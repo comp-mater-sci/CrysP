@@ -54,9 +54,8 @@ implicit none
       argc = command_argument_count()
       if (argc < argc_min) then
             write(*,'(/,A)') 'Two parameters are required:  module_name configuration_file'
-            write(*,'(A,1X)') 'Available modules:'
-            write(*,'(A,1X)') (trim(moduleNames(i)), i =1,nmodules)           
-            stop
+            call listModules()
+            call finalize(1)
       endif
       do i=1,argc_max
             call get_command_argument(i,argv(i))
@@ -70,14 +69,17 @@ implicit none
                   exit
             endif
       enddo
+
       if (.not. moduleFound) then
-            write(*,*) 'Module name cannot be identified.'
+            write(*,'(A,1X,A)') 'Unknown name of module:',trim(argv(1))
+            call listModules()
+            call finalize(1)
       endif
       !
       call initAlamelStructures(info)
       if (info /= 0) then
             write(*,*) 'Error: Cannot initialize libAlamel'
-            stop
+            call finalize(1)
       endif
       !
       ! open and read config file      
@@ -85,20 +87,20 @@ implicit none
       open(cnfunit,file=trim(argv(2)),status='old',iostat=ioerr)
       if (ioerr /= 0) then
             write(*,*) 'Cannot open config file: ', trim(argv(2))
-            stop
+            call finalize(1)
       endif
       !
       call readAlamelConfigSection(cnfunit,info)
       if (info /= 0) then
             write(*,fmt=901) 'check ALAMEL config section'
-            stop 
+            call finalize(1) 
       endif
       !
       ! Read multilevelYLP configuration
       call readYLPConfigSection(cnfunit,info)
       if (info /= 0) then
             write(*,fmt=901) 'check YLP config section' 
-            stop 
+            call finalize(1) 
       endif
       !
       info = -1            
@@ -113,8 +115,8 @@ implicit none
       close(cnfunit)
       !
       if (info /= 0) then
-            write(*,901) 'Module configuation section'
-            stop
+            write(*,901) 'Module configuration section'
+            call finalize(1)
       endif
       !
       ! OK, configuration has been finished. 
@@ -150,5 +152,14 @@ implicit none
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
 
+
+      contains 
+      
+            subroutine listModules()
+            implicit none
+            integer :: i
+                  write(*,'(A,1X)') 'Available modules:'
+                  write(*,'(A,1X)') (trim(moduleNames(i)), i =1,nmodules)           
+            end subroutine
 
 end program
