@@ -2,7 +2,7 @@
 #
 # $Id$
 #
-NARGS=2  # Two args to script expected.
+NARGS=3  # Three args are expected.
 
 DRYRUN=1
 
@@ -19,11 +19,6 @@ SNAPPREF="snap_"
 
 OLDPREFIX="old_"
 
-CUBFILE="texout.cub"
-RESFILE="elem.Q00"
-DEFFILE="defdata.dat"
-# List of the files to extract from snapshot
-SNAPRECOVER="$CUBFILE $RESFILE $DEFFILE"
 
 MYNAME=`basename $0`
 
@@ -86,12 +81,13 @@ fi
 # Check number of parameters
 if [ $# -lt "$NARGS" ]
 then
-       echo -e "\nUsage: $MYNAME [dryrun|update|fast] statefile [verbose]\n"
+       echo -e "\nUsage: $MYNAME [dryrun|update|fast] statefile <FNG|Quantic> [verbose]\n"
        exit $E_BADARGS
 fi
 #
 MODE=$1
 INPUT=$2
+TYPE=$3
 #
 NORETRACT=1
 #
@@ -113,7 +109,22 @@ case "$MODE" in
 		;;
 esac
 #
-if [ "$3" == "verbose" ] ;
+case "$TYPE" in
+"FNG")
+	RESFILE="elem.fac"
+	;;
+"Quantic")
+	RESFILE="elem.Q00"
+	;;
+esac
+#
+CUBFILE="texout.cub"
+RESFILE="elem.fac"
+DEFFILE="defdata.dat"
+# List of the files to extract from snapshot
+SNAPRECOVER="$CUBFILE $RESFILE $DEFFILE"
+#
+if [ "$4" == "verbose" ] ;
 then
 	  VERBOSE=1
 fi
