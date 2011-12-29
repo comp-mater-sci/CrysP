@@ -22,21 +22,31 @@
       ! Length of title string 
       integer,parameter                   :: ctitlelen = 40
 
+      double precision,dimension(3,3),parameter,private :: unitMatrix = reshape( & 
+                                                            [ 1.D0, 0.D0, 0.D0,  &
+                                                              0.D0, 1.D0, 0.D0,  &
+                                                              0.D0, 0.D0, 1.D0], &
+                                                            [ 3, 3 ])
+
       ! Grain description (single row in CUR/CUB file)
       type grainDesc
-            double precision                    :: GEW,PHI1,PHI,PHI2,GAMMA
-            double precision,dimension(3)       :: GAXES,GEULR
-            double precision,dimension(3,3)     :: F
+            double precision                    :: GEW = 0.D0
+            double precision                    :: PHI1 = 0.D0, PHI = 0.D0, PHI2 = 0.D0
+            double precision                    :: GAMMA = 0.D0
+            double precision,dimension(3)       :: GAXES = [1.0,1.0,1.0]
+            double precision,dimension(3)       :: GEULR = [0.0,0.0,0.0]
+            double precision,dimension(3,3)     :: F = unitMatrix
       end type
       
       ! microstructure description 
       type microsDesc
-            character(len=ctitlelen)            :: TITLE =''    ! Title of microstructure
-            integer                             :: NS           ! Step number
-            double precision,dimension(3)       :: GAXES,GEULR  ! Frame description   (?)
-            double precision,dimension(3,3)     :: FALG         ! Frame description 2 (?)   
-            integer                             :: NGRAINS      ! Number of grains    
-            type(grainDesc),dimension(:),allocatable  :: GRAINS ! Array of grains
+            character(len=ctitlelen)            :: TITLE =''    !< Title of microstructure
+            integer                             :: NS = 0       !< Step number
+            double precision,dimension(3)       :: GAXES = [1.0,1.0,1.0] !< Frame description   (?)
+            double precision,dimension(3)       :: GEULR = [0.0,0.0,0.0]
+            double precision,dimension(3,3)     :: FALG = unitMatrix     !< Frame description 2 (?)   
+            integer                             :: NGRAINS = 0           !< Number of grains    
+            type(grainDesc),dimension(:),allocatable  :: GRAINS !< Array of grains
       end type
 
       contains
