@@ -1,4 +1,5 @@
 @echo off
+rem $Id$
 rem enable extensions
 SETLOCAL ENABLEDELAYEDEXPANSION
 SETLOCAL ENABLEEXTENSIONS
