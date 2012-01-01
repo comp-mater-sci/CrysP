@@ -25,18 +25,37 @@ import "postprocess.conf"
 # $7 - extract curfile flag (level: 1 - evolution; 2 - for every step)
 #
 postprocessLocation() {
-
 local LOCATION=$1
 local OUTDIR=$2
 local PREFIX=$3
-local YLPCONFIG="$4"
-local PLOTFILE="$5"
-local SPLOTFILE="$6"
-local EXTRACTCUR="$7"
-local EXTRACTMMM="$8"
-local BIAXFILE="$9"
+local ANISOMODE="$4"
+local YLPCONFIG="$5"
+local PLOTFILE="$6"
+local SPLOTFILE="$7"
+local EXTRACTCUR="$8"
+local EXTRACTMMM="$9"
+local BIAXFILE="${10}"
 
-FROMSNAP="texout.cub ${PREFIX}.MMM ${DEFFILE}"
+FROMSNAP="texout.cub ${DEFFILE}"
+
+
+case "$ANISOMODE" in
+	"FNG")
+		MMMEXT='mmm'
+		MMMFILE=${PREFIX}.${MMMEXT} 
+		FROMSNAP="${FROMSNAP} ${MMMFILE} ${PREFIX}.fac"
+		if [ "$YLPCONFIG" == "fngS" ] ; then
+			FROMSNAP="${FROMSNAP} ${PREFIX}_D.fac"
+		fi
+		echo "FNG mode"
+		echo "To be extracted from snapshots: $FROMSNAP" 
+		;;
+	*)
+		MMMEXT='MMM'
+		MMMFILE=${PREFIX}.${MMMEXT} 
+		FROMSNAP="${FROMSNAP} ${MMMFILE} ${PREFIX}.${MMMEXT}"
+		;;
+esac
 
 OPFILE="$OUTDIR/$PREFIX" 
 local LOGFILE="${OUTDIR}/${PREFIX}.log"
@@ -58,22 +77,30 @@ SNAPLIST=$(sortSnapshots $LOCATION $SNAPPREFIX)
 # Create temporary directory, feed it with input
 TMPDIR=$(mktemp -d postLoc.XXXXXX) 
 #
+
+
+
+
 # Prepare data and outputs for YLP calculations and QRS output
-if [ "$CALCULATEANISO" == "1" ] ; then
-	echo "Using ${YLPEVOLCMD}"
-	echo "YLP config:  $YLPCONFIG"
-	# Initialize output file for residual values
-	local ERRPLOT="${OUTDIR}/${PREFIX}_err.dat"
-	local AVRRES=""
-	local MAXRES=""
-	echo "#step  Ravr  Rmax" >  "${ERRPLOT}"
-	# Number of q-values to be expected
-	NQVALS=$(grep "^(P08)" ${YLPCONFIG} | sed -e 's/^.*:://' | awk '{print $3}' )
-	(( NQLINES=NQVALS+4 ))
-	#
-	cp "$YLPCONFIG" "$TMPDIR"
-	YLPCFG=$(basename "$YLPCONFIG") 
-fi
+case "${ANISOMODE}" in
+	"Facet")
+		echo "Using ${YLPEVOLCMD}"
+		echo "YLP config:  $YLPCONFIG"
+		# Initialize output file for residual values
+		local ERRPLOT="${OUTDIR}/${PREFIX}_err.dat"
+		local AVRRES=""
+		local MAXRES=""
+		echo "#step  Ravr  Rmax" >  "${ERRPLOT}"
+		# Number of q-values to be expected
+		NQVALS=$(grep "^(P08)" ${YLPCONFIG} | sed -e 's/^.*:://' | awk '{print $3}' )
+		(( NQLINES=NQVALS+4 ))
+		#
+		cp "$YLPCONFIG" "$TMPDIR"
+		YLPCFG=$(basename "$YLPCONFIG") 
+		;;
+	"FNG")
+		;;
+esac
 
 # Initialize output cur file (write a title)
 OUTCURFILE="${OPFILE}.CUR"
@@ -123,66 +150,85 @@ for  snap in $SNAPLIST ; do
 	acc_strain=$(echo $strain $acc_strain | gawk '{sm=$1+$2}END{print sm}')
 	echo $defstep $step $strain $acc_strain  >> "${OPFILE}_defmap.txt" 
 	# Run YLP calculation if requested
-	if [ "$CALCULATEANISO" == "1" ] ; then
-
-		# Execute facet identification		
-		$YLPEVOLCMD "$YLPCFG"  >> "$LOGFILE" &> /dev/null
-		if [ "$?" == "0" ] ; then
+	case "${ANISOMODE}" in
+		"Facet")
+			# Execute facet identification		
+			$YLPEVOLCMD "$YLPCFG"  >> "$LOGFILE" &> /dev/null
+			if [ "$?" == "0" ] ; then
+				markProgress
+			fi	
+			# Process qrs values, prepare output files,
+			# build 3D evolution plot
+			DATAFILE="${PREFIX}_${defstep}.qrs"
+			# Form the AWK program. Only defstep variable is substituted here.
+			AWKPROG='{print '"$defstep"' " " $1 " " $3; }'
+			# Write header
+			head -n 13  ${PREFIX}.LS3 | tail -n 1 | awk '{print "#"$4 " " $5 " " $6 " " $7 }' >  "$DATAFILE" 
+			# Write data to datafile and to 3d-plot file.
+			tail -n ${NQLINES} ${PREFIX}.LS3 | head -n +${NQVALS} |  awk '{print  $4 " " $5 " " $6 " " $7;}'  | tee -a "$DATAFILE" | awk "$AWKPROG" >> "$SPLOTFILE"
+			echo " " >>  "$SPLOTFILE"
+			mv "$DATAFILE" "$OUTDIR"
 			markProgress
-		fi	
-		# Process qrs values, prepare output files,
-		# build 3D evolution plot
-		DATAFILE="${PREFIX}_${defstep}.qrs"
-		# Form the AWK program. Only defstep variable is substituted here.
-		AWKPROG='{print '"$defstep"' " " $1 " " $3; }'
-		# Write header
-		head -n 13  ${PREFIX}.LS3 | tail -n 1 | awk '{print "#"$4 " " $5 " " $6 " " $7 }' >  "$DATAFILE" 
-		# Write data to datafile and to 3d-plot file.
-		tail -n ${NQLINES} ${PREFIX}.LS3 | head -n +${NQVALS} |  awk '{print  $4 " " $5 " " $6 " " $7;}'  | tee -a "$DATAFILE" | awk "$AWKPROG" >> "$SPLOTFILE"
-		echo " " >>  "$SPLOTFILE"
-		mv "$DATAFILE" "$OUTDIR"
-		markProgress
-		# 
-		for ext in RS1 RS2 RS3 RS4 RS5 RS6 ;  do
-			local inpdat="${PREFIX}.${ext}"
-			local outdat="${outprefix}.${ext}"
-			if [ -e "${inpdat}" ] ; then
-				echo "#" $(head -n 1 ${inpdat})  > "${outdat}"
-				tail -n +10 ${inpdat} | head -n -3  >> "${outdat}"
+			# 
+			for ext in RS1 RS2 RS3 RS4 RS5 RS6 ;  do
+				local inpdat="${PREFIX}.${ext}"
+				local outdat="${outprefix}.${ext}"
+				if [ -e "${inpdat}" ] ; then
+					echo "#" $(head -n 1 ${inpdat})  > "${outdat}"
+					tail -n +10 ${inpdat} | head -n -3  >> "${outdat}"
+				fi
+			done
+			markProgress
+			#
+			# Extract the residual values
+			AVRRES="$(grep -a "^Average residual (square norm)" ${PREFIX}.LS1 | cut -d\) -f 2)"
+			MAXRES="$(grep -a "^  Maximal residual (magnitude)" ${PREFIX}.LS1 | cut -d\) -f 2)"
+			echo "$defstep $AVRRES $MAXRES"  >>  "${ERRPLOT}"
+			markProgress
+			#
+			# TODO: implement it in different way
+		#	for elem in elem.{LS1,LS3,Q00,F00} 
+		#	do
+		#		mv $elem "${OUTDIR}/${PREFIX}_step_${defstep}_${elem}"
+		#	done
+			#rm -f elem.LS3 elem.MMM
+			#
+			if [ -n "$PLOTFILE" ] ; then
+				echo -n  "'$DATAFILE' using 1:3  title 'step $step' " >> "$PLOTFILE"
+				[ "$defstep" -lt "$NSNAPS" ] &&	echo ", \\" >> "$PLOTFILE"
 			fi
-		done
-		markProgress
-		#
-		# Extract the residual values
-		AVRRES="$(grep -a "^Average residual (square norm)" ${PREFIX}.LS1 | cut -d\) -f 2)"
-		MAXRES="$(grep -a "^  Maximal residual (magnitude)" ${PREFIX}.LS1 | cut -d\) -f 2)"
-		echo "$defstep $AVRRES $MAXRES"  >>  "${ERRPLOT}"
-		markProgress
-		#
-		# TODO: implement it in different way
-	#	for elem in elem.{LS1,LS3,Q00,F00} 
-	#	do
-	#		mv $elem "${OUTDIR}/${PREFIX}_step_${defstep}_${elem}"
-	#	done
-		#rm -f elem.LS3 elem.MMM
-		#
-		if [ -n "$PLOTFILE" ] ; then
-			echo -n  "'$DATAFILE' using 1:3  title 'step $step' " >> "$PLOTFILE"
-			[ "$defstep" -lt "$NSNAPS" ] &&	echo ", \\" >> "$PLOTFILE"
-		fi
-		#
-		# Prepare output for 3D plots in biaxial state of stress
-		OUTBIAXDATA="${PREFIX}_${defstep}.DSQ"
-		mv "${PREFIX}.DSQ" "${OUTDIR}/$OUTBIAXDATA" 
-		
-		echo "set output \"${PREFIX}_${defstep}.pdf\"" >> ${BIAXFILE}
-		echo "splot './$OUTBIAXDATA' with pm3d nocontour, './$OUTBIAXDATA' with lines palette nosurface;" >> ${BIAXFILE}
-		echo "set output"  >> ${BIAXFILE}
-	fi
+			#
+			# Prepare output for 3D plots in biaxial state of stress
+			OUTBIAXDATA="${PREFIX}_${defstep}.DSQ"
+			mv "${PREFIX}.DSQ" "${OUTDIR}/$OUTBIAXDATA" 
+			
+			echo "set output \"${PREFIX}_${defstep}.pdf\"" >> ${BIAXFILE}
+			echo "splot './$OUTBIAXDATA' with pm3d nocontour, './$OUTBIAXDATA' with lines palette nosurface;" >> ${BIAXFILE}
+			echo "set output"  >> ${BIAXFILE}
+			;;
+
+		"FNG")
+			#echo "output: ${outprefix}"
+			#echo ${FNGPOSTCMD} "${PREFIX}.fac" "${outprefix}"
+			facfile="${PREFIX}.fac"
+			${FNGPOSTCMD} "${facfile}" --jobname "${outprefix}" --to 180.0 --refframe 0.0 0.0 "${PHI2-0.0}" > /dev/null
+			cp "$facfile" "${outprefix}.fac"
+			gawk -v stp=$defstep  '/.*Number of terms/{print stp, $1}' "${facfile}" >> "${OPFILE}_facterms.txt"
+			markProgress
+			if [ "${YLPCONFIG}" == "fngS" ] ; then
+				# Assume there is _D.fac file
+				facfile="${PREFIX}_D.fac"
+				${FNGPOSTCMD} "${facfile}" --jobname "${outprefix}_D" --to 180.0 --refframe 0.0 0.0 "${PHI2-0.0}" > /dev/null
+				cp "$facfile" "${outprefix}_D.fac"
+				gawk -v stp=$defstep  '/.*Number of terms/{print stp, $1}' "${facfile}" >> "${OPFILE}_D_facterms.txt"
+				markProgress
+			fi	
+			;;
+	esac
 	# Extract multilevel data
 	if [ "${EXTRACTMMM}" -ge "1" ] ; then 
 		# MMM data are no longer needed by YLPCMD, we can move them to the final destination
-		mv "${MMMFILE}" "${OPFILE}_${defstep}.MMM" && markProgress
+		mv "${MMMFILE}" "${OPFILE}_${defstep}.${MMMEXT}" && markProgress
 	fi
 	#
 	# Return to previous directory
@@ -300,7 +346,7 @@ HELPMSG="Parameters:
 	snapdir - directory that contains snapshots to process
 	outdir - output directory
 	prefix - prefix for filenames
-	Facet_config - Facet configuration file or '-' to disable calculations of anisotropic characteristics
+	Facet_config - Facet configuration file or fngS or fngD or '-' to disable calculations of anisotropic characteristics
 	texture_extraction (0 - no extraction, 1 - overall evolution, 2 - details for every step, 3 - also SMT file for every step)
 	multilevel_extraction (0 - no extraction, 1 - extract MMM data for every step)
 	plot_title - title to be put on the plot
@@ -336,22 +382,37 @@ if [ ! -d "$SNAPDIR" ] ; then
 	echo "Directory $SNAPDIR does not exist"
 	exit 1
 fi
+# Verify config file
 
-if [ "$YLPCONFIG"  == "-" ] ; then
-	CALCULATEANISO=0
-else
-	if [ ! -f "$YLPCONFIG" ] ; then
-		echo "Facet config file does not exist"
-		exit 1
-	fi
-	CALCULATEANISO=1
-	# Canonize path 
-	CYLPCONFIG=$(readlink -f "$YLPCONFIG")
+if [ -z ${FNGPOSTCMD} ] ; then
+	echo "Configuration error: FNG postprocessor is not set"
+	exit
 fi
 
+case "$YLPCONFIG" in
+	"-")
+		CALCULATEANISO="None"
+		;;
+	"fngD")
+		CALCULATEANISO="FNG"
+		CYLPCONFIG="fngD"
+		;;
+	"fngS")	
+		CALCULATEANISO="FNG"
+		CYLPCONFIG="fngS"
+		;;
+	*)
+		# Assume it is a name of Facet config file
+		if [ ! -f "$YLPCONFIG" ] ; then
+			echo "Facet config file does not exist"
+			exit 1
+		fi
+		CALCULATEANISO="Facet"
+		# Canonize path 
+		CYLPCONFIG=$(readlink -f "$YLPCONFIG")
+esac
 # Canonize paths 
 CSNAPDIR=$(readlink -f "$SNAPDIR")
-
 
 mkdir -p $OUTDIR
 COUTDIR=$(readlink -f "$OUTDIR")
@@ -366,7 +427,7 @@ echo "Output dir: $COUTDIR"
 # $4 - yrange (for q-values)
 #
 
-if [ "$CALCULATEANISO" == "1" ] ; then
+if [ "$CALCULATEANISO" == "Facet" ] ; then
 	PLOTFILE="${COUTDIR}/${OUTPREFIX}_q.plt"
 	initPlotfile "$PLOTFILE" "$PLOTTITLE" "$REFQPLOT"
 
@@ -378,7 +439,7 @@ if [ "$CALCULATEANISO" == "1" ] ; then
 	init3DBiaxPlotfile "$PLOT3DBIAXFILE" "$PLOTTITLE" 
 fi
 #exit 0
-postprocessLocation "$CSNAPDIR" "$COUTDIR" "${OUTPREFIX}" "${CYLPCONFIG}" "$PLOTFILE" "$SPLOTFILE" "$TEXLEVEL" "${MMMLEVEL}" "$PLOT3DBIAXFILE"
+postprocessLocation "$CSNAPDIR" "$COUTDIR" "${OUTPREFIX}" "$CALCULATEANISO" "${CYLPCONFIG}" "$PLOTFILE" "$SPLOTFILE" "$TEXLEVEL" "${MMMLEVEL}" "$PLOT3DBIAXFILE"
 
 if [ "$?" == "0" ] ; then
 	echo "Finished."

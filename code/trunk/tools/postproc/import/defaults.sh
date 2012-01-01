@@ -9,6 +9,7 @@ SCRIPTDIR="$UTILDIR/scripts"
 DATADIR="$UTILDIR/data"
 
 YLPEVOLCMD="${BINDIR}/facetpar"
+FNGPOSTCMD="${BINDIR}/fngAllPost.py"
 CUB2SMTCMD="${BINDIR}/cub2smt" 
 SNAPPREFIX="snap_"
 

@@ -27,8 +27,9 @@ POSTPROCESS="${POSTTEX_ROOT}/postprocess.sh"
 
 HELPMSG="\ninputfile - a comma-separed file describing the locations to process. 
 Every line is a record, consisting of: 
-token,point,integration point number, comment\n\nExample:\n
+token,point,integration point number, comment,rotation angle (optional)\n\nExample:\n
 9,8,1232,A 0 to RD
+12,17,1649,B 45 to RD,45.0
 "  
 
 if [ "$#" -lt 6 ] ; then
@@ -38,16 +39,19 @@ if [ "$#" -lt 6 ] ; then
 fi
 
 
-while read token point ipid  comment  
+while IFS=, read token point ipid comment angle
 do
 	short=$(echo "$comment" | sed -e 's/ //g')
 	snapdir="${LOCROOT}/location_${token}_${point}"
 	outdir="${OUTPREFIX}${short}"
-	echo $token $point $short $comment
+	rotation=${angle:-0.0}
+	echo $token $point
+	echo Short comment: \"$short\" Full comment \"$comment\" 
+	echo Rotation: $rotation
 	echo "Output written to $outdir"
 	#./postprocess.sh snapdir outdir outprefix Facet_config texture_extraction plot_title [initial_qdata]
-	"${POSTPROCESS}" "$snapdir" "$outdir" "$PREFIX" "$YLPCFG" "$TEXLEVEL" "$MMMLEVEL" "$comment" 
-done < <( awk -F, '{print $1 " " $2 " " $3 " " $4  }'  $INPUT )
+	PHI2="$rotation" "${POSTPROCESS}" "$snapdir" "$outdir" "$PREFIX" "$YLPCFG" "$TEXLEVEL" "$MMMLEVEL" "$comment" 
+done < <( cat $INPUT )
 # The loop above can be implemented in much easier way as long as unlimited comment field (4) is at the end of the line
 
 
