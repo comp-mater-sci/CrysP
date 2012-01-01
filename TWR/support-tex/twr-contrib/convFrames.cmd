@@ -25,12 +25,15 @@ set CROP=-crop !BB!
 
 set PREFIX=cframe
 echo Creating bitmap frames (it may take quite a while)...
-convert  -density 300x300 -units PixelsPerInch +map %INPFNAME%[0-%FRAMEMAX%] !CROP! -density 300 -quality 90 +repage %PREFIX%-%%%d.png
+
+
 
 for /L %%i in (0,1,%FRAMEMAX%) do (
-set OUTPREFIX=%PREFIX%%%i
-rem echo !OUTPREFIX!
-set LIST=!LIST! %PREFIX%-%%i.png
+set OUTPREFIX=%PREFIX%-%%i
+set OUTFILE=!OUTPREFIX!.png
+echo !OUTPREFIX!
+convert  -density 600x600 -units PixelsPerInch +map %INPFNAME%[%%i] !CROP! -density 300 -quality 90 -depth 4 +repage !OUTFILE!
+set LIST=!LIST! !OUTFILE!
 )
 echo Frame list:
 echo !LIST!
@@ -50,6 +53,7 @@ echo convFrames input_pdf max_frame output_prefix [delay(=3)] [bounding_box]
 echo.
 echo Note that frame count starts with 0, thus setting max_frame=0 will select the first frame.
 echo Examples of bounding box: 
-echo 1400x780+60+130 
-echo 1100x750+300+150
+echo 2455x1965+355+115
+echo The easiest way to determine the bounding box is to run the script without specifying the 
+echo bounding box. Next, open IrfanView, select the area you want to extract and read the measurements.
 goto :EOF 

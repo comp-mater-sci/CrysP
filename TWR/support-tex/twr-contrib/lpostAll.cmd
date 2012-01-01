@@ -41,12 +41,30 @@ if NOT EXIST %PLTFILE% (
 	goto :error
 )
 
-for /F "tokens=4,5,6* delims=, " %%i in (%INPFILE%) do (
-	echo %%i %%j %%k %%l
-	set ROTATION=%%j
-	set PRECOMMENT=%%i%%j%%k%%l
+set TMPFILE=lpostAll.tmp
+
+for /F "tokens=4,5 delims=," %%i in (%INPFILE%) do (
+	echo %%i > !TMPFILE!
+	for /F "usebackq tokens=1 delims= " %%I in (`sed -e "s/ //g" !TMPFILE!`) do (
+		set SHORTCOMMENT=%%I
+		set DIR=%DIRPREFIX%%%I
+	)
+	rm -f !TMPFILE!
+	echo.
+	echo %%j
+	echo.
+	rem Absent rotation field: 
+	if "%%j" == "" (
+		set ROTATION=0.0
+	) else (
+		set ROTATION=%%j
+	)
+	set PRECOMMENT=!SHORTCOMMENT!
 	set PWD=!CD!
-	set DIR=%DIRPREFIX%%%i%%j%%k%%l
+	
+	echo Directory: !DIR!
+	echo Rotation: !ROTATION!
+
 	copy /Y %PLTFILE%  !DIR!
 	cd !DIR!
 	call postAll.cmd elem %CLASS% !ROTATION!  !PRECOMMENT! !COMMENT! 
