@@ -1,0 +1,21 @@
+#!/bin/bash
+#PBS -l nodes=1:ppn=8
+#PBS -l walltime=24:00:00
+#PBS -m abe
+##PBS -M your.email@your.domain
+#PBS -r n
+##################################################################
+# $Id$
+#
+PROCESSNAME="tensileTest_parametric"
+SCRIPT="run_long.pbs"
+INPFILE="simulations.txt"
+CLEANSCRIPT="$HMS_ROOT/scripts/clean.sh" 
+MODE="--par"
+
+[ -e "$INPFILE" ] || { echo "File $INPFILE does not exist"; exit 1; } 
+
+LAUNCHER="$HMS_ROOT/scripts/launch.sh" 
+
+SLEEPTIME="2s"  "${LAUNCHER}" "$MODE" "$SCRIPT" "$PROCESSNAME" "$INPFILE" "$CLEANSCRIPT"
+
