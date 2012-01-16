@@ -6,8 +6,9 @@ $Id$
 	\author Jerzy Gawad
 	Email:  Jerzy.Gawad@cs.kuleuven.be
 
-	Organization: Katholieke Universiteit Leuven
+	Organization: Katholieke Universiteit Leuven (KU Leuven)
 	Organization unit: Dept.Comp.Sci., TWR Group
+	\copyright KU Leuven
 
 	\date Date of first release: <FIRST_RELEASE_DATE>
 	$Revision$
