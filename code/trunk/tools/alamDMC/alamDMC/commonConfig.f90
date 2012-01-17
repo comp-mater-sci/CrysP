@@ -98,6 +98,7 @@ contains
             read(cnfunit,'(A)' ,iostat=ioerr) acnf%micros_fname
             call stripComment(acnf%micros_fname)
             read(cnfunit,'(L)' ,iostat=ioerr) outputRequest
+            acnf%output_config%use_curfile = outputRequest
             !
             if (.not. ioStatusOK(ioerr)) return
             !
