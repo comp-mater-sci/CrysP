@@ -242,7 +242,11 @@ c </jg>
   99  FORMAT (2I5)
 c <jg>
 #ifndef NOCURFILE
+#ifdef ALAMEL_SUBROUTINE
+      if (acnf%output_config%use_curfile) write (IMP1,98) TITEL
+#else
       write (IMP1,98) TITEL
+#endif
 #endif      
 #ifndef NORESFILE
       write (IMP2,98) TITEL

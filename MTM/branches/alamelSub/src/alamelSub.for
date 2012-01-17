@@ -91,9 +91,11 @@ C     UNIT IMP = PRINTER
 #endif
 c <jg>
 #ifndef NOCURFILE
-      cods1(L+1:L+4)='.CUR'
+      if (acnf%output_config%use_curfile) then
+            cods1(L+1:L+4)='.CUR'
 C     UNIT IMP1 = PRINTER
-      open (unit=IMP1,file=cods1,status='replace')
+            open (unit=IMP1,file=cods1,status='replace')
+      endif
 #endif
 #ifndef NORESFILE
       cods1(L+1:L+4)='.RES'

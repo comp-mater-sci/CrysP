@@ -54,6 +54,7 @@ implicit none
             integer                                   :: nten =  1    !< (SIMUL) NTEN (Print distortion tensor 0 or 1)
             integer                                   :: iglij = 0    !< (SIMUL) IGLIJ  0 or 1 (a print switch. Only for very short runs!)
             integer                                   :: ipr = 0      !< (SIMUL) IPR  0-3 Print switch. All except Van Houtte must use 0
+            logical                                   :: use_curfile = .false.
       end type
     
       type hardeningData
