@@ -4,7 +4,7 @@
 		<Platform Name="Win32"/></Platforms>
 	<Configurations>
 		<Configuration Name="Debug|Win32" OutputDirectory="$(ConfigurationName)\lib" IntermediateDirectory="$(ConfigurationName)\lib" ConfigurationType="typeStaticLibrary" WholeProgramOptimization="true">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" PreprocessorDefinitions="ALAMEL_SUBROUTINE;NORESFILE;NOCURFILE;NOTWNFILE;NOLSTFILE;WITHCUBFILE;WITHSMTFILE;" Interfaces="true" DebugParameter="debugParameterAll" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" ModulePath="$(IntDir)\include" Traceback="true" BoundsCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" PreprocessorDefinitions="ALAMEL_SUBROUTINE;NORESFILE;NOCURFILE;NOTWNFILE;NOLSTFILE;WITHCUBFILE;WITHSMTFILE;" DebugParameter="debugParameterAll" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" ModulePath="$(IntDir)\include" Traceback="true" RuntimeChecks="rtChecksAll" BoundsCheck="true" RuntimeLibrary="rtMultiThreadedDebug" Interfaces="true"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -24,7 +24,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="DebugMicro|Win32" OutputDirectory="$(ConfigurationName)\lib" IntermediateDirectory="$(ConfigurationName)\lib" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" PreprocessorDefinitions="ALAMEL_SUBROUTINE;NORESFILE;NOTWNFILE;NOLSTFILE;WITHCUBFILE;WITHSMTFILE;" Interfaces="true" DebugParameter="debugParameterAll" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" ModulePath="$(IntDir)\include" Traceback="true" BoundsCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" PreprocessorDefinitions="ALAMEL_SUBROUTINE;NORESFILE;NOTWNFILE;NOLSTFILE;WITHCUBFILE;WITHSMTFILE;" DebugParameter="debugParameterAll" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" ModulePath="$(IntDir)\include" Traceback="true" RuntimeChecks="rtChecksAll" NullPointerCheck="true" BoundsCheck="true" UninitializedVariablesCheck="true" DescriptorDataTypeCheck="true" DescriptorDataSizeCheck="true" ArgTempCreatedCheck="true" RuntimeLibrary="rtMultiThreadedDebug" Interfaces="true"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -33,7 +33,7 @@
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
-		<Configuration Name="ReleaseMicro|Win32" OutputDirectory="$(ConfigurationName)\lib" IntermediateDirectory="$(ConfigurationName)\lib" ConfigurationType="typeStaticLibrary" WholeProgramOptimization="true">
+		<Configuration Name="ReleaseMicro|Win32" OutputDirectory="$(ConfigurationName)\lib" IntermediateDirectory="$(ConfigurationName)\lib" ConfigurationType="typeStaticLibrary">
 				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" BufferedIO="true" Preprocess="preprocessYes" PreprocessorDefinitions="ALAMEL_SUBROUTINE;NORESFILE;NOTWNFILE;NOLSTFILE;WITHCUBFILE;WITHSMTFILE;" CommonElementAlignment="alignCommonEightBytes" ModulePath="$(IntDir)\include"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
