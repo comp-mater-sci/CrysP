@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deps", "deps", "{F0FD6B17-398B-40AB-ACF1-03398B47494E}"
 EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libalamel", "..\..\..\..\MTM\branches\alamelSub\src\libalamel.vfproj", "{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}"
