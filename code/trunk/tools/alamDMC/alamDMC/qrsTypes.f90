@@ -46,4 +46,19 @@ contains
       
       end function
 
+
+      type(qrsData) pure function calculateQRS(Dt,s) result(qrsvalue)
+      implicit none
+      double precision,dimension(3,3),intent(in)      :: Dt
+      double precision,intent(in)                     :: s
+            if ( abs(Dt(3,3)) >= epsilon(0.D0) ) then
+                  qrsvalue%rvalue = Dt(2,2) / Dt(3,3)
+                  qrsvalue%qvalue = qrsvalue%rvalue / (1.D0 + qrsvalue%rvalue)
+                  qrsvalue%svalue = s
+            else
+                  qrsvalue = qrsData(0.D0, 0.D0, 0.D0)
+            endif
+      end function      
+
+      
 end module

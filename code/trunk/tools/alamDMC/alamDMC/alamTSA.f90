@@ -31,10 +31,13 @@ use commonConfig
 use qrsTypes
 implicit none
 
-      double precision                          :: angle, NormMax, PNormIter
-
-      integer                                   :: scalingID
+      double precision,save                     :: angle, NormMax, PNormIter
+      
+      !> Uniaxial stress state. Negative values denote compressive state; non-negative values are used for tensile state.
+      double precision,save                     :: stress_state = 1.D0
+      
       integer,parameter                         :: scaleFullTensor = 0, scaleTensileComponent = 1
+      integer,save                              :: scalingID = scaleFullTensor
 
 
 contains
@@ -51,11 +54,17 @@ contains
             ! Read parameters specific for the AlamTSA program
             read(cnfunit,fmt=*,iostat=ioerr)  angle 
             read(cnfunit,fmt=*,iostat=ioerr)  scalingID, NormMax, PNormIter
+            read(cnfunit,fmt=*,iostat=ioerr)  stress_state
             ! Validate input
             select case(scalingID)
                   case(scaleFullTensor,scaleTensileComponent)
                         input_ok = .true.
             end select
+            if (stress_state < 0.0) then
+                  stress_state = -1.D0
+            else
+                  stress_state = 1.0
+            endif
             if ((ioerr /= 0) .or. (.not. input_ok)) then
                   write(*,fmt=902) 'AlamTSA'
                   return
@@ -73,11 +82,11 @@ contains
       integer,intent(out)                       :: info      
       ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
       ! coordinate system
-      double precision,dimension(3,3)           :: P,D,De,Se,Sm,St, SmIdent, Dt
+      double precision,dimension(3,3)           :: P,D,De,Se,Sm,St, SmIdent, Dt, Pt_accum
       double precision,dimension(3,3)           :: Mrot = 0.0
       !
       double precision                          :: plast_pot, scal_s, norm_sona
-      type(qrsData)                             :: qrsvalue = qrsData(0.D0, 0.D0, 0.D0)
+      type(qrsData)                             :: qrsvalue = qrsData(0.D0, 0.D0, 0.D0), qrsvalue_accum = qrsData(0.D0, 0.D0, 0.D0)
       double precision,dimension(5)             :: vA, vS,vSonA, vSonAn, vP, vD, vSe
       double precision                          :: fi1,phi,fi2
       double precision                          :: Pnorm, normP, normD, Tnorm
@@ -86,12 +95,19 @@ contains
       integer     :: step,j 
       !
       integer,parameter       :: cnfunit = 90, ofunit = 91, histunit = 92
+      character(len=32)       :: description
       !
       info = 1
       !
       ! Introduce youself ;-)
       write(*,'(A)') 'AlamTSA, $Rev$'
 
+      if (stress_state > 0.0) then
+            description = 'uniaxial tensile'      
+      else
+            description = 'uniaxial compression'
+      endif
+      write(display_unit,fmt=fmtMsg2Msg) 'Test type:', description
       write(display_unit,fmt=fmtMsg2Other//'F10.4)') 'Orientation of the sample:', angle
       !
       select case(scalingID)
@@ -101,18 +117,23 @@ contains
                   write(display_unit,fmt=fmtMsg2Msg) 'Strain calculation:', 'scaling tensile component'
             case default
                   write(*,*) 'Unknown scaling type, full tensor will be used'
-            end select
+      end select
       ! Open and initialize result files
       open(unit=ofunit,file=trim(outputPrefix)//'.tsa',status='replace')
-#define OUTHEADER 'iter','eps_vM','Pnorm','Tnorm','W','plast_pot','M','||SonA||','q-value','r-value','s-value','R'
-      write(ofunit,700) OUTHEADER ! write header line
+      !      
+#define COMMONOUTHEADER 'iter','eps_vM','Pnorm','Tnorm','W','plast_pot','M','||SonA||','q-value','r-value','s-value'      
+#define OUTHEADER COMMONOUTHEADER##,'R'
+#define FILEOUTHEADER COMMONOUTHEADER##,'q-valueA','r-valueA','R'
+      !
+      write(ofunit,fmt=705) FILEOUTHEADER ! write header line
       open(unit=histunit,file=trim(outputPrefix)//'.hts',status='replace')
        
       fi1 = 0.0
       phi = 0.0
       ! Convert angle from degs to rads
       fi2 = angle * deg2rad
-      
+   
+      Pt_accum = 0.D0
       vP = 0.D0
       Pnorm = 0.D0 ! sum||P||
       normP = 0.D0 ! ||P||
@@ -124,7 +145,7 @@ contains
             write(*,800)
             !! -> Take uniaxial tensile stress, rotate it to given direction     
             St = 0.D0
-            St(1,1) = dsqrt(3.D0/2.D0)
+            St(1,1) = stress_state * dsqrt(3.D0/2.D0)
             ! Rotate from "tensile" to material coordinate system
             ! Calculate rotation matrix
             call KROTMAT(fi1,phi,fi2,Mrot)
@@ -156,22 +177,19 @@ contains
             !! Calculate q and r in tensile reference frame
             ! Rotate back to the "tensile test" coordinate system   
             Dt = matmul(matmul(Mrot,D),transpose(Mrot))
+            Pt_accum = Pt_accum + Dt
             ! Calculate output variables
-            if ( abs(Dt(3,3)) >= epsilon(0.D0) ) then
-                  qrsvalue%rvalue = Dt(2,2) / Dt(3,3)
-                  qrsvalue%qvalue = qrsvalue%rvalue / (1.D0 + qrsvalue%rvalue)
-                  qrsvalue%svalue = scal_s
-            else
-                  qrsvalue = qrsData(0.D0, 0.D0, 0.D0)
-                  info = 4
-            endif
+            qrsvalue = calculateQRS(Dt,scal_s)
+            qrsvalue_accum = calculateQRS(Pt_accum,scal_s)
             ! 
             !! -> Report the results
-            write(ofunit,701) step, root23*normP, Pnorm, TNorm, plastic_work_total, plast_pot, ares%taylor_factors(1), norm_sona, qrsvalue, R
+            write(ofunit,706) step, root23*normP, Pnorm, TNorm, plastic_work_total, plast_pot, ares%taylor_factors(1), & 
+                              norm_sona, qrsvalue, qrsvalue_accum%qvalue, qrsvalue_accum%rvalue, R
             !
             write(display_unit,710)
             write(display_unit,700) OUTHEADER ! write header line
-            write(display_unit,701) step, root23*normP, Pnorm, TNorm, plastic_work_total, plast_pot, ares%taylor_factors(1), norm_sona, qrsvalue, R
+            write(display_unit,701) step, root23*normP, Pnorm, TNorm, plastic_work_total, plast_pot, ares%taylor_factors(1), &
+                                    norm_sona, qrsvalue, R
             write(display_unit,710)
             !!
             !
@@ -186,10 +204,10 @@ contains
                   ! Check termination condition: only tensile component
                   if (Tnorm >= NormMax) exit
                   !
-                  !! -> Scale the vA in order to get Dt_11 equal to PNormIter
-                  vD = vA * (PNormIter / Dt(1,1))
+                  !! -> Scale the vA in order to get ||Dt_11|| equal to PNormIter
+                  vD = vA * (PNormIter / abs(Dt(1,1)))
             case default
-                  write(*,*) 'Unknown scalin type, full tensor will be used'
+                  write(*,*) 'Unknown scaling type, full tensor will be used'
                   vD = vA                  
             end select
             normD = vec_norm2(vD)
@@ -257,10 +275,13 @@ contains
       601 format('Strain increment',T40,'Deviatoric stress')
       602 format(3(F10.6,1X),T40,3(F10.6,1X))
       
-
-      
+      ! Format for screen output
       700 format(1X,A5,1X,11(A12,1X))
       701 format(1X,I5,1X,11(F12.6,1X))
+      ! Format for file output
+      705   format(1X,A5,1X,13(A12,1X))
+      706 format(1X,I5,1X,13(F12.6,1X))
+      
       710 format('|',5('-'),'|',11(12('-'),'|'))
 
 #define MSG_GROUP_RULERS     

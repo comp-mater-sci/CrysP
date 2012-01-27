@@ -208,14 +208,7 @@ contains
             endif
             !            
             ! Calculate output variables
-            if ( abs(Dtcoord(3,3)) >= epsilon(0.D0) ) then
-                  qrsvalues(i)%rvalue =  Dtcoord(2,2) / Dtcoord(3,3)
-                  !qv = -Dtcoord(2,2) / Dtcoord(1,1)
-                  qrsvalues(i)%qvalue = qrsvalues(i)%rvalue / (1.D0 + qrsvalues(i)%rvalue)
-                  qrsvalues(i)%svalue = scal_s
-            else
-                  info = 4
-            endif
+            qrsvalues = calculateQRS(Dtcoord,scal_s)
             !            
             write(display_unit,fmt=701)
             write(display_unit,fmt=700)

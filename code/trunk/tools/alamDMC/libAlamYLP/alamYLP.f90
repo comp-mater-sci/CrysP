@@ -60,18 +60,18 @@ contains
             integer,intent(out)                         :: info
             !
             double precision,dimension(3,3)     :: Atens
-            double precision,dimension(5)       :: vS
+            double precision,dimension(5)       :: vS, vXn
             double precision                    :: norm
             integer                             :: i
             !
             alamEval_objFx_call_count = alamEval_objFx_call_count + 1
             !
             ! Transfer normalized vX into second rank tensor.
-            
-            call KVEC5D2MAT(vX/sqrt(dot_product(vX,vX)),Atens) 
+            vXn = vX/sqrt(dot_product(vX,vX))  ! Avoid creation of on-call temporary
+            call KVEC5D2MAT(vXn,Atens) 
             ! Set Atens as current value for processing 
 #ifdef DIAGNOSTIC_OUTPUT                
-            write(*,'(A,1X,5(F12.8))') 'eval for ', vX
+            write(*,'(A,1X,5(F12.8))') 'eval for ', vXn
 #endif        
             !!! TESTING !!!
             ! WARNING!! Taylor is requested below !!!
