@@ -26,44 +26,44 @@ use nllsTR
 use AlamelSub
 use alamelConfig
 
-      type,extends(FDJacobiObjFunction) :: NormalizedV5DComp
+      !> Dimensionality of th search space for vector representation (Stress/Strain rate)
+      integer,parameter :: alamEval_vSD_dim = 5
+      !> Dimensions of second-rank tensor representation of Stress and Strain rate
+      integer,parameter :: alamEval_tSD_dim = 3 
+
+      type,extends(MKLFDJacobiObjFunction) :: NormalizedV5DComp
       
             !NOTE: [n_X_dim] must be 5
             !      [m_F_dim] must be 5 
       
-            !<--- FIXME !!!
-            !double precision,dimension(5)        :: vSn = 0.D0 !< Normalized stress vector
-            !
-            !<--- FIXME !!!
-            !double precision,dimension(5)        :: vSml = 0.D0 !< Multilevel prediction of stress from previous call
+            !> Normalized stress vector
+            double precision,dimension(alamEval_vSD_dim)        :: vSn = 0.D0 
+            
+            !> Multilevel prediction of stress from the previous call
+            double precision,dimension(alamEval_vSD_dim)        :: vSml = 0.D0 
       contains
-            procedure :: objectiveFx => objectiveFx_NV5DComp
+            procedure :: objectiveFx => objectiveEval_NV5DComp
       end type
 
-      !NASTY TRICK: ifort 11.1 had troubles with member fields in extended polymorphic types. The vectors vSn and vSml 
-      ! would eventually be contained inside the NormalizedV5DComp type.
-      ! Corrections that are pertinent to this nasty trick are marked in the code with : "!<--- FIXME !!!"
-      double precision,dimension(5)        :: vSn = 0.D0 !< Normalized stress vector
-            !
-      double precision,dimension(5)        :: vSml = 0.D0 !< Multilevel prediction of stress from previous call
-
+      !> Performance counter: number of evaluations of the objective function
       integer                              :: alamEval_objFx_call_count = 0
 
 contains
 
-      subroutine objectiveFx_NV5DComp(this,vX,vFval,info)
+      subroutine objectiveEval_NV5DComp(this,vX,vFval,info)
       use Kutils
       implicit none
-            class(NormalizedV5DComp)                    :: this
+            class(NormalizedV5DComp),intent(inout)      :: this
             double precision,dimension(:),intent(inout) :: vX       !< Dimension must be: 5
             double precision,dimension(:),intent(inout) :: vFval    !< Dimension must be: [m_F_dim]
             integer,intent(out)                         :: info
             !
-            double precision,dimension(3,3)     :: Atens
-            double precision,dimension(5)       :: vS, vXn
+            double precision,dimension(alamEval_tSD_dim,alamEval_tSD_dim)     :: Atens
+            double precision,dimension(alamEval_vSD_dim)       :: vS, vXn
             double precision                    :: norm
             integer                             :: i
             !
+            i = 0
             alamEval_objFx_call_count = alamEval_objFx_call_count + 1
             !
             ! Transfer normalized vX into second rank tensor.
@@ -90,8 +90,7 @@ contains
             ! Retrieve output stress into 5D vector
             call KMAT2VEC5D(ares%stress_tensors(:,:,1),vS)
             ! Transfer vS to vSml
-            !this%vSml = vS  
-            vSml = vS  !<--- FIXME !!!
+            this%vSml = vS  
 #ifdef DIAGNOSTIC_OUTPUT            
             write(*,'(A,1X,5(F12.8))') 'stress is ', vS
 #endif            
@@ -99,15 +98,13 @@ contains
             norm = sqrt(dot_product(vS,vS))
             if (norm > 0.D0) then
                   vS = vS / norm
-                  ! vFval = this%vSn - (vS/norm)
-                  vFval = vSn - vS   !<--- FIXME !!!
+                  vFval = this%vSn - vS
 #ifdef DIAGNOSTIC_OUTPUT            
-                  write(*,'(2(F12.8,1X))') (vSn(i), vS(i),i=1,5)
+                  write(*,'(2(F12.8,1X))') (vSn(i), vS(i),i=1,alamEval_vSD_dim)
 #endif            
             else
                  ! norm is zero, so vS=0
-                 ! vFval = this%vSn
-                 vFval = vSn   !<--- FIXME !!!
+                 vFval = this%vSn
             endif
             info = 0
       end subroutine
@@ -152,19 +149,18 @@ contains
       subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig)
       use alamEval
       implicit none
-      double precision,intent(in)   :: vS(5)      !< Stress vector
-      double precision,intent(inout):: vA(5)      !< Strain rate mode on yield locus
-      double precision,intent(out)  :: vSonA(5)   !< Stress vector corresponding to A
+      double precision,intent(in)   :: vS(alamEval_vSD_dim)      !< Stress vector
+      double precision,intent(inout):: vA(alamEval_vSD_dim)      !< Strain rate mode on yield locus
+      double precision,intent(out)  :: vSonA(alamEval_vSD_dim)   !< Stress vector corresponding to A
       double precision,intent(out)  :: R          !< Square norm of residual error
       integer                       :: info       !< Exit code
       logical,optional,intent(in)   :: useVMGuess !< use von Mises initial guess, otherwise assume vA as an initial strain rate
       type(multilevelYLPConfig),optional,intent(in) :: YLPconfig !< Configuration parameters to be imposed to the search method
       !
 
-      double precision, dimension(5) :: Snormal, Anormal, vX, vF, vX_lin
+      double precision, dimension(alamEval_vSD_dim) :: vX, vF, vX_lin
       type(multilevelYLPConfig) :: config !< Effective configuration parameters (defaults on entry)
       ! 
-      double precision, dimension(5,5) :: mJ
       !
       type(NormalizedV5DComp) :: objFunc
       type(nllsTRConf)        :: tr_config
@@ -184,12 +180,11 @@ contains
       if (present(YLPconfig)) config = YLPconfig
       !
       ! Configure objective function      
-      objFunc%n_X_dim = 5
-      objFunc%m_F_dim = 5
+      call objFunc%initFx(alamEval_vSD_dim,alamEval_vSD_dim,info)
+      if (info /= 0) return 
       !
       ! Normalized stress vector 
-      !objFunc%vSn = vS / sqrt(dot_product(vS,vS)) 
-      vSn = vS / sqrt(dot_product(vS,vS)) !<--- FIXME !!!
+      objFunc%vSn = vS / sqrt(dot_product(vS,vS)) 
       !
       ! Initialize TR solver
       call nlls_TR_init(verbose=1,ounit=6)
@@ -242,7 +237,9 @@ contains
             ! start TR solver
             if (attempt_linearized) then
                   ! Profit from the initial point stored by the solver for the linearized problem
-                  call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info,SolutionInitIn=initState)
+                  info = objFunc%state%copy(initState)
+                  tr_config%use_init_state = .true.
+                  call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
             else                  
                   call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
             endif
@@ -256,7 +253,7 @@ contains
                   endif
             endif
       endif
-      call deleteSolutionPoint(initState,info)
+      call initState%finalize()
       !
       ! Set output strain rate
       vA = vX/sqrt(dot_product(vX,vX))
@@ -265,8 +262,7 @@ contains
       
       write(*,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',vF
       
-      !vSonA = objFunc%vSml  
-      vSonA = vSml  !<--- FIXME !!!
+      vSonA = objFunc%vSml  
       !info = 0
       
       end subroutine
