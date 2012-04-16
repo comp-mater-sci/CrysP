@@ -208,7 +208,7 @@ contains
             endif
             !            
             ! Calculate output variables
-            qrsvalues = calculateQRS(Dtcoord,scal_s)
+            qrsvalues(i) = calculateQRS(Dtcoord,scal_s)
             !            
             write(display_unit,fmt=701)
             write(display_unit,fmt=700)
