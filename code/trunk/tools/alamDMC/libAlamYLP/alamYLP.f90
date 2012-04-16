@@ -54,7 +54,7 @@ contains
       use Kutils
       implicit none
             class(NormalizedV5DComp),intent(inout)      :: this
-            double precision,dimension(:),intent(inout) :: vX       !< Dimension must be: 5
+            double precision,dimension(:),intent(in)    :: vX       !< Dimension must be: 5
             double precision,dimension(:),intent(inout) :: vFval    !< Dimension must be: [m_F_dim]
             integer,intent(out)                         :: info
             !
