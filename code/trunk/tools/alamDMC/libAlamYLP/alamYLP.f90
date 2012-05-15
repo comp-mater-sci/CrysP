@@ -42,7 +42,8 @@ use alamelConfig
             !> Multilevel prediction of stress from the previous call
             double precision,dimension(alamEval_vSD_dim)        :: vSml = 0.D0 
       contains
-            procedure :: objectiveFx => objectiveEval_NV5DComp
+            !> Implementation of virtual method defined in ObjectiveFunction
+            procedure,pass(this)           :: objectiveEval => objectiveEval_NV5DComp
       end type
 
       !> Performance counter: number of evaluations of the objective function
@@ -50,12 +51,11 @@ use alamelConfig
 
 contains
 
-      subroutine objectiveEval_NV5DComp(this,vX,vFval,info)
+      subroutine objectiveEval_NV5DComp(this,vX,info)
       use Kutils
       implicit none
             class(NormalizedV5DComp),intent(inout)      :: this
             double precision,dimension(:),intent(in)    :: vX       !< Dimension must be: 5
-            double precision,dimension(:),intent(inout) :: vFval    !< Dimension must be: [m_F_dim]
             integer,intent(out)                         :: info
             !
             double precision,dimension(alamEval_tSD_dim,alamEval_tSD_dim)     :: Atens
@@ -98,13 +98,13 @@ contains
             norm = sqrt(dot_product(vS,vS))
             if (norm > 0.D0) then
                   vS = vS / norm
-                  vFval = this%vSn - vS
+                  this%state%vF = this%vSn - vS
 #ifdef DIAGNOSTIC_OUTPUT            
                   write(*,'(2(F12.8,1X))') (vSn(i), vS(i),i=1,alamEval_vSD_dim)
 #endif            
             else
                  ! norm is zero, so vS=0
-                 vFval = this%vSn
+                 this%state%vF = this%vSn
             endif
             info = 0
       end subroutine
@@ -158,7 +158,7 @@ contains
       type(multilevelYLPConfig),optional,intent(in) :: YLPconfig !< Configuration parameters to be imposed to the search method
       !
 
-      double precision, dimension(alamEval_vSD_dim) :: vX, vF, vX_lin
+      double precision, dimension(alamEval_vSD_dim) :: vX, vX_lin
       type(multilevelYLPConfig) :: config !< Effective configuration parameters (defaults on entry)
       ! 
       !
@@ -258,9 +258,9 @@ contains
       ! Set output strain rate
       vA = vX/sqrt(dot_product(vX,vX))
       ! Call objective function again to get corresponding yield stress
-      call objFunc%objectiveFx(vA,vF,info)
+      call objFunc%objectiveEval(vA,info)
       
-      write(*,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',vF
+      write(*,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',objFunc%state%vF
       
       vSonA = objFunc%vSml  
       !info = 0
