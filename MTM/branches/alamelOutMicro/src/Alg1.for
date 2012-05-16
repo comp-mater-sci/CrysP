@@ -278,12 +278,14 @@ C
       SPANT(i,j)=0.0
   74  continue
 C     Sqrt(0.5) comes from the definition of rho
-      SPANT(2,3)=RHOA(1)*SQR2
-      SPANT(3,2)=-SPANT(2,3)
-      SPANT(3,1)=RHOA(2)*SQR2
-      SPANT(1,3)=-SPANT(3,1)
-      SPANT(1,2)=RHOA(3)*SQR2
-      SPANT(2,1)=-SPANT(1,2)
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 20/4/2012
+       SPANT(2,3)=RHOA(1)*SQR2*DELTAT
+       SPANT(3,2)=-SPANT(2,3)
+       SPANT(3,1)=RHOA(2)*SQR2*DELTAT
+       SPANT(1,3)=-SPANT(3,1)
+       SPANT(1,2)=RHOA(3)*SQR2*DELTAT
+       SPANT(2,1)=-SPANT(1,2)
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 20/4/2012
       call MATPROD(bufsp,SPANT,TRF,3,3,3)
       call MATPROD(RHOAsa,buftrf,bufsp,3,3,3)
       if (IGLIJ.eq.0) goto 71
@@ -292,9 +294,11 @@ C     Sqrt(0.5) comes from the definition of rho
       do 1705 i=1,3
       write (IMP,101) (RHOAsa(i,j),j=1,3)
  1705 continue
-  71  TRC(1)=RC(3,2)-RHOA(1)*DELTAT*SQR2
-      TRC(2)=RC(1,3)-RHOA(2)*DELTAT*SQR2
-      TRC(3)=RC(2,1)-RHOA(3)*DELTAT*SQR2
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 20/4/2012
+  71   TRC(1)=RC(3,2)+RHOAsa(3,2)
+       TRC(2)=RC(1,3)+RHOAsa(1,3)
+       TRC(3)=RC(2,1)+RHOAsa(2,1)
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 20/4/2012
       DELTAW=0.0
       do 44 i=1,M11
       DELTAW=DELTAW+ABS(CC(i)*XX(i))
