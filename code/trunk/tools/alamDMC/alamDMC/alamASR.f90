@@ -66,7 +66,7 @@ contains
       integer,intent(out)                       :: info      
       ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
       ! coordinate system
-      double precision,dimension(3,3)           :: D, De, Se, Sm, Smn, SonA, SmIdent, Pressure
+      double precision,dimension(3,3)           :: D, De, Se, Sm, SonA, SmIdent, Pressure
       double precision,dimension(3,3)           :: St, Stdev, StonA, StIdent, Dt
       double precision,dimension(3,3)           :: Mrot = 0.0, MI = 0.0
       !
@@ -156,7 +156,6 @@ contains
                   cycle
             endif
             vS = vS / vS_norm
-            call KVEC5D2MAT(vS,Smn)
             ! Loop for evolution of texture            
             increment  = 1
             do 

@@ -51,14 +51,14 @@ contains
             info = -1
             ! Read parameters specific for the AlamQ module
             ! Read alamq-specific parameters
-            read(cnfunit,fmt=*,iostat=ioerr)  fi2min, fi2max,  nfis 
+            read(cnfunit,fmt=*,iostat=ioerr)  fi2min, fi2max,  nfis
+            if (ioerr /= 0) return
             read(cnfunit,fmt=*,iostat=ioerr)  rho
+            if (ioerr /= 0) return
             read(cnfunit,fmt='(2L2)',iostat=ioerr)  reuse_previous, resuse_stainrate
+            if (ioerr /= 0) return
             read(cnfunit,fmt='(L2)',iostat=ioerr)  fold_symmetry
-            if (ioerr /= 0) then
-                  write(*,fmt=902) 'alamQ'
-                  return
-            endif
+            if (ioerr /= 0) return
             !
             ! Validate config values
             if (nfis < 1) then
@@ -100,7 +100,7 @@ contains
       info = 1
       !
       ! Print banner
-      write(*,'(A)') 'Alamq: $Id$'
+      write(*,'(A)') 'Alamq: $Rev$'
       !
       !
       npoints = nfis + 1

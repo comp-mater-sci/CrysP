@@ -30,6 +30,7 @@ use commonConfig
 use alamASR
 use alamQ
 use alamTSA
+use alamYld
 !
 implicit none
       integer                 :: info
@@ -41,15 +42,15 @@ implicit none
       integer,parameter       :: cnfunit = 90, ofunit = 91
       !
       !
-      integer,parameter       :: nmodules = 3
-      character(len=20),dimension(nmodules) :: moduleNames = ['alamQ','alamTSA','alamASR']
+      integer,parameter       :: nmodules = 4
+      character(len=20),dimension(nmodules) :: moduleNames = ['alamQ','alamTSA','alamASR','alamYld']
       logical                 :: moduleFound = .false.
       integer                 :: moduleId = 0
       !
       info = 1
       !
       ! Print banner
-      write(*,'(A)') 'AlamDMC: $Id$'
+      write(*,'(A)') 'AlamDMC: $Rev$ $Date$ '
       !
       argc = command_argument_count()
       if (argc < argc_min) then
@@ -110,7 +111,9 @@ implicit none
       case(2) ! AlamTSA    
             call AlamTSA_ReadConfig(cnfunit,info)
       case(3) ! AlamASR 
-            call AlamASR_ReadConfig(cnfunit,info)      
+            call AlamASR_ReadConfig(cnfunit,info)
+      case(4) ! AlamYld
+            call AlamYld_ReadConfig(cnfunit,info)
       end select
       close(cnfunit)
       !
@@ -136,7 +139,9 @@ implicit none
       case(2) ! AlamTSA    
             call AlamTSA_Run(info)
       case(3) ! AlamASR 
-            call AlamASR_Run(info)      
+            call AlamASR_Run(info)
+      case(4) ! AlamYld
+            call AlamYld_Run(info)
       end select
       !
       write(*,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
