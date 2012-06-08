@@ -151,23 +151,22 @@ contains
                   ! Smn = Sm * scal_s
 
                   !
+                  write(display_unit,fmt=510)
                   write(display_unit,fmt=500) 'theta', 'S', 'S_rel', 'W' 
                   write(display_unit,fmt=501) theta, scal_s, scal_s_rel, plast_pot
                   write(display_unit,fmt=510)
-                  ! Output
+                  ! write output & advance theta
                   if ( (.not. doEvalUniaxial) .or. (doEvalUniaxial .and. (theta == theta_min)) ) then
                         write(ofunit,fmt=701) theta, scal_s, scal_s_rel, plast_pot, &
                                                 scal_s_rel * cos(theta), scal_s_rel * sin(theta)
                   endif
-                  !
-                  theta = theta + dtheta
-                  ! Handle             
+                        
                   if (doEvalUniaxial) then
                         doEvalUniaxial = .false.  ! No more "false iterations"
                         ! If the uniaxial case corresponds to theta_min, there is no need to repeat the calculations
-                        if (theta /= theta_min) theta = theta_min
+                        if (theta /= theta_min) theta = -dtheta
                   endif
-
+                  theta = theta + dtheta
             enddo            
             !
             close(ofunit)
@@ -177,7 +176,7 @@ contains
       200 format(28('-'))
       201 format('Theta angle =',T20,F8.3) 
       400 format(A,T40,A,T80,A)
-      500 format(4(A10,'|'))
+      500 format(1X,4(A10,'|'))
       501 format(4(F10.6,1X))
       510 format('|',4(10('-'),'|'))
       ! Formats for output file

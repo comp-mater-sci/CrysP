@@ -146,7 +146,7 @@ contains
       !> Calculates plastic strain rate corresponding to given deviatoric stress
       !>
       !> The subroutine assumes that multilevel model is already configured and initialized.
-      subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig)
+      subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig,outunit)
       use alamEval
       implicit none
       double precision,intent(in)   :: vS(alamEval_vSD_dim)      !< Stress vector
@@ -156,6 +156,7 @@ contains
       integer                       :: info       !< Exit code
       logical,optional,intent(in)   :: useVMGuess !< use von Mises initial guess, otherwise assume vA as an initial strain rate
       type(multilevelYLPConfig),optional,intent(in) :: YLPconfig !< Configuration parameters to be imposed to the search method
+      integer,intent(in),optional   :: outunit    !< Unit number for messages
       !
 
       double precision, dimension(alamEval_vSD_dim) :: vX, vX_lin
@@ -170,6 +171,8 @@ contains
       double precision        :: r1_lin,r2_lin
       type(nllsTRRes)         :: TR_res
       type(SolutionPoint)     :: initState
+      integer                 :: ounit
+      integer,parameter       :: stdout = 6
       !
       if (present(useVMGuess)) then
             use_vmGuess = useVMGuess
@@ -186,6 +189,8 @@ contains
       ! Normalized stress vector 
       objFunc%vSn = vS / sqrt(dot_product(vS,vS)) 
       !
+      ounit = stdout
+      if (present(outunit))  ounit = outunit
       ! Initialize TR solver
       call nlls_TR_init(verbose=1,ounit=6)
       ! Use von Mises guess
@@ -239,10 +244,8 @@ contains
                   ! Profit from the initial point stored by the solver for the linearized problem
                   info = objFunc%state%copy(initState)
                   tr_config%use_init_state = .true.
-                  call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
-            else                  
-                  call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
             endif
+            call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
             R = r2
             !TODO: check exit status of the solver
             if (attempt_linearized) then

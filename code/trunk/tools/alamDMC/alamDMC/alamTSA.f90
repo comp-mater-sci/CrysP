@@ -52,8 +52,10 @@ contains
             input_ok = .false.
             info = -1
             ! Read parameters specific for the AlamTSA program
-            read(cnfunit,fmt=*,iostat=ioerr)  angle 
+            read(cnfunit,fmt=*,iostat=ioerr)  angle
+            if (ioerr /= 0) return
             read(cnfunit,fmt=*,iostat=ioerr)  scalingID, NormMax, PNormIter
+            if (ioerr /= 0) return
             read(cnfunit,fmt=*,iostat=ioerr)  stress_state
             ! Validate input
             select case(scalingID)
@@ -65,10 +67,7 @@ contains
             else
                   stress_state = 1.0
             endif
-            if ((ioerr /= 0) .or. (.not. input_ok)) then
-                  write(*,fmt=902) 'AlamTSA'
-                  return
-            endif
+            if ((ioerr /= 0) .or. (.not. input_ok)) return
             info = 0
             
 #define MSG_GROUP_ERRORS
