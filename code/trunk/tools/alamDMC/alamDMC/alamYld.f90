@@ -164,7 +164,7 @@ contains
                   if (doEvalUniaxial) then
                         doEvalUniaxial = .false.  ! No more "false iterations"
                         ! If the uniaxial case corresponds to theta_min, there is no need to repeat the calculations
-                        if (theta /= theta_min) theta = -dtheta
+                        if (theta /= theta_min) theta = theta_min - dtheta
                   endif
                   theta = theta + dtheta
             enddo            
