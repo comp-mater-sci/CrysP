@@ -34,9 +34,12 @@ C     following array is actually allocated in the subroutine GRFIL:
 C     Reading of "microstructure" (Euler angles defining 
 C       grain boundary segments)
 C     Allocation of "temporary file" to memory
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 28/11/2011
+C   The output to .LST in this subroutine doesn't depend on the value of NLIST, since NLIST doesn't have value yet!
+CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       USE MICROSTR
       implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       DIMENSION TA(3,3),A(3,3),A1(3,3)
       character*12 fnam1
       SAVE
@@ -46,7 +49,10 @@ C     Allocation of "temporary file" to memory
       read (KLEC,88) fnam1
   88  format (a)
       write (*,103) fnam1
-      write (IMP,103) fnam1
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 28/10/2011
+C    Since this output is not controled by NLIST, I supressed it.
+C      write (IMP,103) fnam1
+CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
  103  format (' GRFIL - Input Texture File:',a)
   99  FORMAT (I5)
 C     UNIT NDAT1= INITIAL MICROSTRUCTURE
@@ -55,14 +61,20 @@ C
       read (NDAT1,94) NGrElm,TitMic
   94  format(I5,5x,A)
       write (*,93) NGrElm,TitMic
-      write (IMP,93) NGrElm,TitMic
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 28/10/2011
+C    Since this output is not controled by NLIST, I supressed it.
+C      write (IMP,93) NGrElm,TitMic
+CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   93  format (' Number of orientations in MICROSTRUCTURE file:',I5,/,
      1' Titel on  file: ',A)
       ALLOCATE(TmatGr(3,3,NGrElm),STAT=jok)
       if (jok.eq.0) then
-                      write (IMP,101)
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 28/10/2011
+C  Since NLIST is not assigned a value yet, I supressed it
+C                      write (IMP,101)
                     else
-                      write (IMP,102)
+C                      write (IMP,102)
+CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
                       stop
                     endif
  101  format (' GRFIL ',
@@ -113,7 +125,7 @@ C
 
       SUBROUTINE LEESOR(NUNIT,MPOINT)
       implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       COMMON /TEXTUR/ DUM1(29),NO,DG(3,3),
      1ITW,IPR,GMMA,GEWF,NLIST
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,NPOINT,TEN(3,3),TOTGEW
@@ -139,11 +151,15 @@ C     2          0.0D0,0.0D0,1.0D0/
       read (KLEC,88) fnam1
   88  format (a)
       write (*,103) fnam1
+	if(NLIST.eq.1) then
       write (IMP,103) fnam1
+	end if
  103  format (' LEESOR - Input Texture File:',a)
       read (KLEC,99) NSTP
   99  FORMAT (I5)
+      if(NLIST.eq.1) then
       WRITE (IMP,100) NDAT,NSTP
+	end if
       WRITE (*,100) NDAT,NSTP
  100  FORMAT (' LEESOR - READS A TEXTURE FILE Type (NDAT) is:'
      1 ,I5,' CHOSEN BLOCK:',I5)
@@ -157,7 +173,9 @@ C
       read (NDAT1,94) NREC,TITEL
   94  format(I5,5x,A)
       write (*,93) NREC,TITEL
+	if(NLIST.eq.1) then
       write (IMP,93) NREC,TITEL
+	end if
   93  format (' Number of orientations in SMT-type input file:',I5,/,
      1' Titel on input file: ',A)
       call TMATRIX(TAXES,GEULR(1),GEULR(2),GEULR(3))
@@ -170,7 +188,9 @@ C     Input texture made during a previous simulation (.CUR-file)
 C
   33  read (NDAT1,92) TITEL
   92  format (A)
+      if(NLIST.eq.1) then
       write (IMP,102) TITEL
+	end if
       write (*,102) TITEL
   102 format(' Title on CUR-type-input file:',A)
   14  LPOINT=MPOINT+1
@@ -198,7 +218,9 @@ C
       read (NDAT1,89) NS,NREC,FALG,GAXES,GEULR
   89  format (I6,5x,I5,44x,5(2x,3f10.0))
       write (*,104) NS,NREC
+	if(NLIST.eq.1) then
       write (IMP,104) NS,NREC
+	end if
  104  format (' Input block nr.',i5,3x,'  Number of crystallites',i5)
       read (NDAT1,91) DOM
       do 23 K=1,3
@@ -268,8 +290,10 @@ C      WRITE (NUNIT) FI1,PHI,PHI2,T,GEW,GAM,F,GAXES,GEULR,CIJ,TG,ZERO
   28  CONTINUE
   34  CONTINUE
   11  CONTINUE                                                          
-      NPOINT=NPOINT-1                                                   
+      NPOINT=NPOINT-1 
+	if(NLIST.eq.1) then                                                  
       WRITE (IMP,107) NPOINT,TOTGEW
+	end if
  107  FORMAT (' NUMBER OF ORIENTATIONS=',I6,'   SUM OF ALL WEIGHT ',
      1 'FACTORS=',F15.7,/)
       rewind NUNIT
@@ -307,29 +331,39 @@ C     Allocation of "temporary file" to memory
       USE MICROSTR
       USE dynfil
       implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
+	COMMON /TEXTUR/ DUM1(29),NO,DUM2(9),
+     1IDUM(2),DUM3(2),NLIST
       DIMENSION AXES(3),EULR(3),CIJ(3,3),TAX(3,3),F(3,3),T(3,3),
      1 ZERO(3,3)
       if (npoint.gt.MPOINT) then
                               iok=1
+	                        if(NLIST.eq.1) then
                               write (IMP,102)
-                              goto 1
+                              end if
+							goto 1
                             endif
       if (iok.eq.0) then
                       DEALLOCATE(WtLam,STAT=i)
                       DEALLOCATE(DFIL,STAT=jok)
                       if (jok.ne.0.or.i.ne.0) then
                                       write (*,100)
+	                                if(NLIST.eq.1) then
                                       write (IMP,100)
-                                      stop
+                                      end if
+									stop
                                     endif
                     endif
  100  format(' DYNFIL1 - De-allocation of WtLAM/DFIL-array failed')
       ALLOCATE (WtLam(npoint),STAT=jok)
       if (jok.eq.0) then
-                      write (IMP,201)
+                      if(NLIST.eq.1) then
+					write (IMP,201)
+	                end if
                     else
-                      write (IMP,202)
+                      if(NLIST.eq.1) then
+					write (IMP,202)
+	                end if
                       stop
                     endif
  201  format (' DYNFIL1 ',
@@ -338,9 +372,13 @@ C     Allocation of "temporary file" to memory
      1 'Allocation of memory to WtLam failed')
       ALLOCATE(DFIL(npoint),STAT=iok)
       if (iok.eq.0) then
+	                if(NLIST.eq.1) then
                       write (IMP,101)
+	                end if
                     else
-                      write (IMP,102)
+                      if(NLIST.eq.1) then
+					write (IMP,102)
+	                end if
                       goto 1
                     endif
  101  format (' DYNFIL - ',
@@ -375,7 +413,7 @@ C     Allocation of "temporary file" to memory
 C     To read the first record of the temporary file
       USE dynfil
       implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       DIMENSION AXES(3),EULR(3),CIJ(3,3),TAX(3,3),F(3,3)
       if (iok.ne.0) then
                       read (nunit) n,F,AXES,EULR,CIJ,TAX
@@ -395,7 +433,7 @@ C     To read the first record of the temporary file
 C     To write the first record of the temporary file
       USE dynfil
       implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       DIMENSION AXES(3),EULR(3),CIJ(3,3),TAX(3,3),F(3,3)
       if (iok.ne.0) then
                       write (nunit) n,F,AXES,EULR,CIJ,TAX
@@ -417,7 +455,7 @@ C     To write the first record of the temporary file
 C     To read a record of the temporary file
       USE dynfil
       implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       DIMENSION AXES(3),EULR(3),CIJ(3,3),TAX(3,3),F(3,3),T(3,3),
      1 ZERO(3,3)
       if (iok.ne.0) then
@@ -447,7 +485,7 @@ C     To read a record of the temporary file
 C     To write a record of the temporary file
       USE dynfil
       implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       DIMENSION AXES(3),EULR(3),CIJ(3,3),TAX(3,3),F(3,3),T(3,3),
      1 ZERO(3,3)
       if (iok.ne.0) then
@@ -476,7 +514,7 @@ C     To write a record of the temporary file
 C     Rewind temporary file
       USE dynfil
       implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       if (iok.ne.0) then
                       rewind nunit
                     endif
@@ -492,7 +530,7 @@ C     For IDIR=1:
 C     To write RHOS in the temporary file in memory
       USE dynfil
       implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       DIMENSION RHOS(3,3)
       if (IDIR.eq.0) then
              if (iok.ne.0) then

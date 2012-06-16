@@ -20,14 +20,13 @@ C     IMP1=output-file with successive "current situations"
 C     IMP2=output-file with successive "responses to imposed strain"
 C     IDISK1= work file
 C     NDAT1= Input-texture file     Opened in LEESOR
-C     NDAT2=
 C
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       COMMON /ES1/ IMP3
-      COMMON /IGLIJS/ FK1(2,96),NUNGL,M11,CC(2,96)
+      COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3),
      1ITW,IPR,DELTAW,GEWF,NLIST
-      common /CEIGEN/ IOR,ISTP,JBLOC,RELEXP
+      common /CEIGEN/ IOR,ISTP,JBLOC
       character * 12 fnam1,fnam2,cods1
       character * 8 codsim
       DATA MPOINT /8000/,NUNIT/2/
@@ -53,7 +52,9 @@ C     UNIT KLEC = PARAMETER FILE
       cods1(L+1:L+4)='.LST'
 C     UNIT IMP = PRINTER
       open (unit=IMP,file=cods1,status='replace')
-      write (IMP,92) codsim
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ NLIST is not assigned a value yet! so supressed it! QGX 28/10/2011
+C      write (IMP,92) codsim
+CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       cods1(L+1:L+4)='.CUR'
 C     UNIT IMP1 = PRINTER
       open (unit=IMP1,file=cods1,status='replace')
@@ -76,15 +77,16 @@ C     UNIT LEC = SLIP SYSTEMS
       K=1+6*(J-1)                                                       
       L=K+5                                                             
       READ(KLEC,98) (FK1(ISIGN,I),I=K,L)                                      
-  98  FORMAT (6F10.0)                                                   
-      WRITE (IMP,100) ISIGN,K, (FK1(ISIGN,I),I=K,L)                                 
- 100  FORMAT (1X,I1,I3,2x,6F12.4)
+  98  FORMAT (6F10.0)
+c 
    1  CONTINUE
   3   continue
       read (KLEC,99) NBLOC
   99  format (i5)
       write (*,102) NBLOC
+	if(NLIST.eq.1) then
       write (IMP,102) NBLOC
+	end if
  102  format (' NBLOC=',I5)
       CALL GRFIL  
 C
@@ -106,14 +108,17 @@ C
 C     Reading of displacement gradient
 C
 C
-      write (IMP,101) JBLOC,NFILE0
+      if(NLIST.eq.1) then
+	write (IMP,101) JBLOC,NFILE0
+	end if
       write (*,101) JBLOC,NFILE0
  101  format (' SIMUL CALL NR.',I5,'   Output parameter',I5,/,
      1' Displacement gradient:')
       DO 35 I=1,3
-      READ (KLEC,95) (DG(I,K),K=1,3)
-  95  FORMAT (3F10.0)
+      READ (KLEC,*) (DG(I,K),K=1,3)
+	if(NLIST.eq.1) then
       WRITE (IMP,109) (DG(I,K),K=1,3)
+	end if
       WRITE (*,109) (DG(I,K),K=1,3)
  109  FORMAT (1x,3F10.5)
   35  CONTINUE
@@ -122,7 +127,9 @@ C
 C
 C     Output of last "current situation"
 C
-      write (IMP,110)
+      if(NLIST.eq.1) then
+	write (IMP,110)
+	end if
       write (*,110)
  110  format (//,' Final call of SIMUL (for output only)')
       CALL SIMUL(2,EPS,NFILE0,NUNIT)

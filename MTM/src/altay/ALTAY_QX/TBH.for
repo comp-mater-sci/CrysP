@@ -36,7 +36,7 @@ C     workspace      DD (copy of strain rates in some basis)
 C     output         DTAU=abs(TAUR)-TAUC
 C
       implicit double precision (a-h,o-z) 
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       dimension A(NDIM,M),D(NDIM),BINV(NDIM,N),U(NDIM,N),IACT(NDIM),
      1 GDOT(M),SIG(NDIM),TauC(2,M),TauR(M),Dacc(NDIM),Irp(NDIM)
       logical bas(M),valid(M)
@@ -81,11 +81,17 @@ C     Calculation of stress, using generalised Schmid law
       iter=0
     4 iter=iter+1
       if (iter.le.50) goto 7
+	if(NLIST.eq.1) then
       write (IMP,250)  
+	end if
       write (*,250) 
  250  format (' TBH is looping')
       stop
-    7 if (IPR.GE.JPR) write (IMP,251) iter
+    7 if (IPR.GE.JPR) then
+      if (NLIST.eq.1) then
+      write (IMP,251) iter
+	end if
+	end if
  251  format (/,'  ITERATION NR. ',I5,/)
       call mtprd(SIG,Trp,U,1,N,N,1,NDIM) 
       do j=1,M
@@ -99,14 +105,16 @@ C     Calculation of Taylor factor
 C     Calculation of resolved shear stress
       call mtprd(TauR,SIG,A,1,N,M,1,NDIM)
       if (IPR.GE.JPR) then
+	  if (NLIST.eq.1) then
         write (IMP,205)
-        do i=1,N
+	  do i=1,N
           write (IMP,204) D(i),SIG(i)
         enddo
         write (IMP,201) FakM
         do j=1,M
           write (IMP,202) j,TauR(j)
         enddo
+	  end if
       endif
   201 format (' M-Factor:',D20.10,/,' Resolved shear stresses:')
   202 format (I5,30X,D20.10)
@@ -123,7 +131,11 @@ C     Search for most severly overstressed slip system
                         else
                          Y=-X-Tauc(2,j)
                         endif
-        if (IPR.GE.JPR) write (IMP,919) j,jn,X,Y,Y-DT
+        if (IPR.GE.JPR) then
+	  if (NLIST.eq.1) then
+	  write (IMP,919) j,jn,X,Y,Y-DT
+	  end if
+	  end if
   919 format ('j=',I5,'  jn=',I5,'  TauR(=X)',D15.5,' DTAU(=Y)',D20.10,
      1 ' Y-DT=',D20.10)
         if (abs(Y).lt.TOL) then
@@ -143,12 +155,20 @@ C     Search for most severly overstressed slip system
 C        if (.NOT.valid(j)) goto 1
 C        if (IPR.GE.JPR) write(IMP,917) j,VALID(j)
 C 917    format (I5,' valid',L8)
-        if (IPR.GE.JPR) write (IMP,920) Y,j
+        if (IPR.GE.JPR) then
+	  if (NLIST.eq.1) then
+	  write (IMP,920) Y,j
+	  end if
+	  end if
   920   format (' DT(=Y)',D15.5,'  New jn=',I5)
         DT=Y
         jn=j
     1 continue
-      if (IPR.GE.JPR.and.jn.gt.0) write (IMP,913) jn,DT,TauR(jn)
+      if (IPR.GE.JPR.and.jn.gt.0) then
+	if (NLIST.eq.1) then
+	write (IMP,913) jn,DT,TauR(jn)
+	end if
+	end if
   913 format ('Overstressed:jn DT',I5, D15.5,'   TauR(jn)',D20.10)  
 C      if (jn.eq.0.and.DT.gt.0.0D0) then
 C                                      write (IMP,910)
@@ -164,11 +184,19 @@ C     Search which active slip system must be desactivated (removed from basis)
 C     Calculate column Mprime-s*, called Aprime
       call mtprd(Aprime,U,A(1,jn),N,N,1,NDIM,NDIM)
       in=0
-      if (IPR.GE.JPR) write (IMP,203)
+      if (IPR.GE.JPR) then
+	if (NLIST.eq.1) then
+	write (IMP,203)
+	end if
+	end if
   203 format (' ACTIVE',9x,'Slip rate',11X,
      1 'Critical Resolved shear stress',11X,'Aprime')
       do 3 i=1,N
-        if (IPR.GE.JPR) write (IMP,200)Irp(i),DACC(i),Trp(i),Aprime(i)
+        if (IPR.GE.JPR) then
+	  if (NLIST.eq.1) then
+	  write (IMP,200)Irp(i),DACC(i),Trp(i),Aprime(i)
+	 end if
+	 end if
   200 format (I5,5x,D26.16,5x,D20.10,5x,D20.10)
         Z1=Aprime(i)
         if (abs(Z1).lt.TOL) goto 3  
@@ -209,7 +237,11 @@ C     Calculate column Mprime-s*, called Aprime
                      stop
                    endif
   101 FORMAT (' Subroutine TBH - solution unbounded') 
-      if (IPR.GE.JPR) write (IMP,912) in,jn,Gmin
+      if (IPR.GE.JPR) then
+	if (NLIST.eq.1) then
+	write (IMP,912) in,jn,Gmin
+	end if
+	end if
   912 format ('in jn Gmin',2I5, D15.5)
       if (abs(Gmin).gt.0.0D0) goto 5
 C      valid(jn)=.FALSE.
@@ -228,7 +260,11 @@ C     Updating of inverse of basis: U
 C     Updating of Dacc 
       DD=Dacc
       call Ust(Dacc,DD,CUst,in,N,1,N)
-      if (IPR.GE.JPR) write (IMP,929) in,Gmin,Dacc(in)
+      if (IPR.GE.JPR) then
+	if (NLIST.eq.1) then
+	write (IMP,929) in,Gmin,Dacc(in)
+	end if
+	end if
   929 format ('updated slip rate in',I5,2D15.5)
 C     Updating of basis: bas and Irp
       bas(Irp(in))=.FALSE.
@@ -245,11 +281,20 @@ C     Solution was found.
     2 do j=1,M
         Gdot(j)=0.0
       enddo
-      if (IPR.GE.JPR) write (IMP,212)
+      if (IPR.GE.JPR) then
+	if (NLIST.eq.1) then
+	write (IMP,212)
+	end if
+	end if
+c
       do i=1,N
         j=Irp(i)
         Gdot(j)=Dacc(i)
-         if (IPR.GE.JPR) write (IMP,211) j,DACC(i)
+         if (IPR.GE.JPR) then
+	   if (NLIST.eq.1) then
+	   write (IMP,211) j,DACC(i)
+	   end if
+	   end if
       enddo
   211 format (I5,5x,D20.10)
   212 format (/,'   SOLUTION ',/)

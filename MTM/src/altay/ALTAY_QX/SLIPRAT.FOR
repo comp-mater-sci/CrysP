@@ -1,4 +1,4 @@
-      Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IEND,IPR,sgnn)
+      Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn)
       IMPLICIT double precision (A-H,O-Z)
 C     September 2000
 C     To find the slip rates assuming that
@@ -10,7 +10,7 @@ C
 C     Modified in Aug 2010
 C
       COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),
      1 TLXX,TAURLP(8) 
       dimension SGNN(IDIMXX)
@@ -22,7 +22,6 @@ C
       ITR=0
       NLP=NACTIV
       NN=NACTIV
-      iend=0
       NOPL=0
 C     check whether solution is totally zero
       x=0.0
@@ -118,7 +117,11 @@ C              write (IMP,110) (IND(i),i=1,N3)
            enddo
          enddo
       enddo
-   2  if (IPR.eq.2) write (IMP,100)
+   2  if (IPR.eq.2) then
+      if (NLIST.eq.1) then
+      write (IMP,100)
+	end if
+	end if
  100  format (' Results SLIPRAT')
 C      NREDU=NACTIV-NN
       if (NOPL.eq.0) goto 6
@@ -143,11 +146,17 @@ C
          IND(i)=ISTOR(i,IOPL)
          SLPR(i)=SLSTOR(i,IOPL)
       enddo
-      if (IPR.eq.2)
-     1   write (IMP,104) IOR,NACTIV,NN,NOPL
+      if (IPR.eq.2) then
+	if (NLIST.eq.1) then
+        write (IMP,104) IOR,NACTIV,NN,NOPL
+	end if
+	end if
  104  format (I5,' Reduction of NACTIV from',I5,'   to',i5,' NOPL=',i5)
-      if (IPR.eq.2)
-     1   write (IMP,106) IOR,sumsq,(IND(i),i=1,NN)
+      if (IPR.eq.2) then
+	if (NLIST.eq.1) then
+      write (IMP,106) IOR,sumsq,(IND(i),i=1,NN)
+	end if
+	end if
  106  format (I5,d12.3,8i5)
       x=0.0
       k=0
@@ -157,13 +166,21 @@ C
          YY=Y*sgnn(j)
 C         XX(j)=Y*DELTAT*sgnn(j) 
          XX(j)=YY*DELTAT
-         if (IPR.eq.2) write (IMP,101) i,IND(i),YY
+         if (IPR.eq.2) then
+	   if (NLIST.eq.1) then
+	   write (IMP,101) i,IND(i),YY
+	   end if
+	   end if
          if (x.gt.Y) then
                        x=Y
                        k=k+1
                      endif
       enddo
-       if (X.lt.0.0d0) write (IMP,102) IOR,k,X
+       if (X.lt.0.0d0) then
+	 if (NLIST.eq.1) then 
+	 write (IMP,102) IOR,k,X
+	 end if
+	 end if
  102  format (' NEG. SL. RATE DETECTED',2I5,d15.6)
  101  format (2i5,5x,d15.6)
       return
@@ -172,8 +189,16 @@ C         XX(j)=Y*DELTAT*sgnn(j)
       do 11 i=1,NN
       IND(i)=INDLP(i)
  11   continue
-      if (IPR.eq.2) write (IMP,100)
-      if (IPR.eq.2) write (IMP,108) IOR,NN
+      if (IPR.eq.2) then
+	if (NLIST.eq.1) then
+	write (IMP,100)
+	end if
+	end if
+      if (IPR.eq.2) then
+	if (NLIST.eq.1) then
+	write (IMP,108) IOR,NN
+	end if
+	end if
  108  format (' IOR=',I5,' Linear programming solution retained ',
      1' NN=',i5)
       x=0.0
@@ -182,14 +207,22 @@ C         XX(j)=Y*DELTAT*sgnn(j)
            Y=SLIPLP(i)
            j=IND(i)
            XX(j)=Y*DELTAT
-           if (IPR.eq.2) write (IMP,101) i,IND(i),Y
+           if (IPR.eq.2) then
+	     if (NLIST.eq.1) then
+		 write (IMP,101) i,IND(i),Y
+	     end if
+	     end if
            Y=abs(Y)
            if (x.gt.Y) then
                          x=Y
                          k=k+1
                        endif
       enddo
-      if (X.lt.0.0d0) write (IMP,102) IOR,k,X
+      if (X.lt.0.0d0) then
+	if (NLIST.eq.1) then
+	write (IMP,102) IOR,k,X
+	end if
+	end if
       return
       end
       Subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
@@ -201,7 +234,7 @@ C
 C     Modified Aug 2010
 C
       COMMON /DOUBLE/ A8(5,96),BB8(5),DELTAT,RHO(5),B5(5)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       dimension sgnn(IDIMXX)
       dimension A(13,13),B(13),SLPR(8),IND(8)
       dimension AA(13,13),BA(13),VAL(13),XV(13),YV(13)
@@ -273,11 +306,13 @@ C 915  format (6D15.3)
       end
       subroutine STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
       IMPLICIT double precision (A-H,O-Z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       dimension SLPR(8),IND(8),ISTOR(0:8,48),SLSTOR(0:8,48)
       NOPL=NOPL+1
       if (NOPL.gt.NSTOR) then
+	   if (NLIST.eq.1) then
          write (IMP,100)
+	   end if
          write (*,100)
          stop
       endif
