@@ -153,7 +153,7 @@ C
  101  format (' SIMUL CALL NR.',I5,'   Output parameter',I5,/,
      1' Displacement gradient:')
       DO 35 I=1,3
-      READ (KLEC,95) (DG(I,K),K=1,3)
+      READ (KLEC,*) (DG(I,K),K=1,3)
   95  FORMAT (3F10.0)
       WRITE (IMP,109) (DG(I,K),K=1,3)
       WRITE (*,109) (DG(I,K),K=1,3)
