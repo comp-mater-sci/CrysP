@@ -14,6 +14,9 @@ C
       SUBROUTINE SIMUL(IW,EPS,NFILE0,NUNIT)
 C     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
 C     USING THE ALAMEL MODEL
+#ifdef ALTAY_SUBROUTINE
+      use altayConfig
+#endif
       implicit double precision (a-h,o-z)
 C
 C     IW=2 is meant for outputting the final texture.
@@ -44,6 +47,12 @@ C
       dimension FS(3,3)
       character*40 TITEL
       logical SWRLX
+#ifdef ALTAY_SUBROUTINE
+      ! Variables for simple stress calculations: full_model=.false.
+      ! This mode is inspired by QGX's way of calculating stresses
+      ! without a call to TAYLR1
+      double precision,dimension(3,3) :: spant,TRFT,bufsp
+#endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      DATA JW /0/
 C      DATA Cmic0 /1.0D0,0.0D0,0.0D0,
@@ -55,24 +64,40 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       SAVE
       IF (IW) 32,33,30
   33  call  random_seed
+#ifdef ALTAY_SUBROUTINE
+      NGR    = acnf%simul_init%NGR
+      ENTA   = acnf%simul_init%ENTA
+      KOST   = acnf%slipsystem%KOST
+      !
+      NLIST  = acnf%output_config%NLIST
+      NFILE1 = acnf%output_config%NFILE
+      NFILTW = acnf%output_config%NFILTW
+      IPR    = acnf%output_config%IPR
+#else
 C     Number of grains in ALAMEL cluster
       read (KLEC,99) NGR
-	read (KLEC,*) ENTA
-	if(NGR.eq.3) then
-	ITFMAS=1
-	NGR=2
-	else
-	ITFMAS=0
-	endif
+	read (KLEC,*)  ENTA
       read (KLEC,99) NLIST
       read (KLEC,99) NFILE1
       read (KLEC,99) NFILTW
       read (KLEC,99) KOST
       read (KLEC,99) IPR
-	if(NLIST.eq.1) then
-      WRITE (IMP,101) NGR,NLIST,NFILE1,NFILTW,KOST,IPR
+#endif
+      ! NGR == 3: enable MAS-AL
+      if(NGR.eq.3) then
+	      ITFMAS=1
+	      NGR=2
+	else
+      	ITFMAS=0
+	endif
+      !
+#ifndef ALTAY_SUBROUTINE
+      if(NLIST.eq.1) then
+            WRITE (IMP,101) NGR,NLIST,NFILE1,NFILTW,KOST,IPR
 	end if
+#ifndef NO_STDOUT   
       WRITE (*,101) NGR,NLIST,NFILE1,NFILTW,KOST,IPR
+#endif
  101  FORMAT (' SIMUL - PARAMETERS:',/
      1'NGR=   ',I5,/,'NLIST= ',I5,/,'NFILE1=',I5,/,'NFILTW=',i5,/,
      1'KOST=  ',I5,/,'IPR=   ',I5) 
@@ -85,8 +110,15 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
                                    stop
                                 endif
  140  format (' NGR can only take the values 1 or 2 but was',I5)   
+#endif
 C     Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
       NRL=(NGR-1)*2
+#ifdef ALTAY_SUBROUTINE
+      !
+      FMicro = acnf%simul_init%FMicro
+      !
+      TITEL  = acnf%jobtitle
+#else
       do i=1,3
          read (KLEC,94)(FMicro(i,j),j=1,3)
 	   if(NLIST.eq.1) then
@@ -104,6 +136,8 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
   97  format (' Title of the new simulation: ',A)
       write (IMP1,98) TITEL
       write (IMP2,98) TITEL
+#endif      
+      
 C     read the parameters of the work hardening model
       X=FTAU(-1000.0D00)
       TAU=1.0
@@ -125,10 +159,12 @@ C     read the parameters of the work hardening model
           enddo
         enddo
       endif
+#ifndef ALTAY_SUBROUTINE
       if (NFILTW.eq.1) then
           write (IMP3,98) TITEL
           write (IMP3,99) NPOINT
       endif
+#endif
       RETURN
   30  i=NPOINT/NGR
       if (NGR*i.eq.npoint) goto 36
@@ -139,6 +175,11 @@ C     read the parameters of the work hardening model
      2' is an even number')
       stop
   36  NFILE=NFILE0*NFILE1
+#ifdef ALTAY_SUBROUTINE
+      NSTP   = astate%simulCalls(astate%this)%input%nsteps
+      ICRAT1 = astate%simulCalls(astate%this)%input%rlx1
+      ICRAT2 = astate%simulCalls(astate%this)%input%rlx2
+#else      
       read (KLEC,99) NSTP
 	if(NLIST.eq.1) then
       write (IMP,115) NSTP
@@ -149,14 +190,12 @@ C     read the parameters of the work hardening model
       write (IMP,104) ICRAT1,ICRAT2
 	end if
  104  format (' ICRAT:',2I5)
+#endif
       swrlx(1)=(ICRAT1.eq.1)
       swrlx(2)=(ICRAT2.eq.1)
       swrlx(3)=.false.
-      if (IPR.gt.0) then
-	if(NLIST.eq.1) then
-	write (IMP,*) 'Relaxations:',swrlx(1)
-	end if
-	end if
+      if (IPR.gt.0.and.NLIST.eq.1) write (IMP,*)'Relaxations:',swrlx(1)
+      !
       CALL TAYLOR(2,KOST,EPS,Ftot)
 C
 C     Main Loop over the Steps
@@ -175,8 +214,10 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   50  continue
       SG=0.
       GMM=0.
-       call dynfil2(nunit,nrstep,F,GAXES,GEULR,CIJ,TG)
+      call dynfil2(nunit,nrstep,F,GAXES,GEULR,CIJ,TG)
+#ifndef NO_STDOUT       
       write (*,96) ISTP,GAXES
+#endif
 	if(NLIST.eq.1) then
       write (IMP,96) ISTP,GAXES
 	end if
@@ -259,8 +300,14 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       call UPDATF(F,F1)
       call UPDATC(CIJ,F2)
       call GETANG(CIJ,GAXES,GEULR,TG)
+#ifdef ALTAY_SUBROUTINE
+      ! We can choose not to update the microstructure/state
+      if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
+            call DYNFIL3(IDISK1,nrstep,F,GAXES,GEULR,CIJ,TG)
+      endif
+#else          
       call DYNFIL3(IDISK1,nrstep,F,GAXES,GEULR,CIJ,TG)
-
+#endif
 C
 C       Added for lamel model:
 C     Organisation reading temporary texture file,
@@ -313,6 +360,13 @@ C      IF (NUNGL.NE.0) READ(NUNGL) ((FK1b(K,J,L),J=1,M11),K=1,2)
       TG(i,j)=TGb(i,j,laml)
       RHOSSa(i,j)=RHOSSb(i,j,laml)
   81  continue
+#ifdef ALTAY_SUBROUTINE
+      ! Collect the TRF for calculations of stresses later on.
+      if (.not. astate%simulCalls(astate%this)%input%full_model) then
+            WDOT = 0.
+            TRFT = transpose(TRF)
+      endif
+#endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 27/10/2011
       if(laml.eq.1) then
 	qgx=GEWFb(laml)
@@ -400,8 +454,22 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   59  do 56 i=1,5
       BUFSPV(i)=SPANV(i)
   56  continue
+
+#ifdef ALTAY_SUBROUTINE
+      ! altay-subroutine allows a way of calculating stresses
+      ! without a call to TAYLR1.
+      if (.not. astate%simulCalls(astate%this)%input%full_model) then
+            call STR33(SPANT,SPANV)
+            call MATPROD(bufsp,SPANT,TRF,3,3,3)
+            call MATPROD(Ssam,TRFT,bufsp,3,3,3)
+      else
+            CALL TAYLR1(ISTP,IOR,NFILE,TAU)     
+      endif
+#else
 C      if (IOR.eq.1.and.ISTP.eq.1) IPR=2
       CALL TAYLR1(ISTP,IOR,NFILE,TAU)
+#endif      
+      
 C      if (IOR.eq.1.and.ISTP.eq.1) stop
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGC 4/11/2011
 C    IEND is always equal to 0
@@ -434,8 +502,16 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX¡¡4/11/2011
 C      if (IROT.NE.1) goto 23
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       GAMMA=GMM0+DELTAW/TAU
+#ifdef ALTAY_SUBROUTINE
+      ! We can choose not to update the texture state
+      if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
+            call DYNFIL5(IDISK1,IOR,fi1,PHI,fi2,C2,GEWF,GAMMA,
+     1                   F,GAXES,GEULR,CIJ,TG,RHOSsa)
+      endif
+#else
       call DYNFIL5(IDISK1,IOR,fi1,PHI,fi2,C2,GEWF,GAMMA,
      1 F,GAXES,GEULR,CIJ,TG,RHOSsa)
+#endif
 C      IF (NLIST.LT.2) GOTO 15
   15  CONTINUE
       IF (NFILE.eq.0.or.ISTP.gt.1) goto 20
@@ -469,11 +545,29 @@ C      call STR5(vec1,SHsam)
       SHsam(j,i)=SHsam(i,j)
       RHOSm(i,j)=RHOSm(i,j)*FS(i,j)
       RHOSm(j,i)=RHOSm(i,j)
-  65  continue
-
+65    continue
 
       GMM=GMM/TOTGEW
       SG=SG/TOTGEW
+#ifdef ALTAY_SUBROUTINE
+      ! Get the homogenized quantities:
+      astate%simulCalls(astate%this)%output%stress_tensor= SHsam
+      astate%simulCalls(astate%this)%output%taylor_factor= GMM
+      astate%simulCalls(astate%this)%output%average_stress= SG
+      astate%simulCalls(astate%this)%output%effective_strain=EPS
+      
+      !!! TESTING !!!
+      
+      write(*,'(A,1X,I)') 'This=',astate%this
+!     write(*,'(A)') 'SHsam:'
+      write(*,'(3E15.6)') (SHsam(:,i), i=1,3)
+ 
+      write(*,'(F15.6)') GMM
+      write(*,'(F15.6)') SG
+      write(*,'(F15.6)') EPS
+      write(*,'(A,F15.6)') 'normSg = ',sqrt(3./2.)*norm2(SHsam)
+      !!! TESTING !!!
+#endif
       call DYNFIL6(IDISK1)
       CALL COPYT(IDISK1,NUNIT)
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011

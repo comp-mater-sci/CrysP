@@ -1,4 +1,7 @@
       FUNCTION FTAU(GAMMA)
+#ifdef ALTAY_SUBROUTINE
+      use altayConfig
+#endif
 C      Double Precision FTAU 
       implicit double precision (a-h,o-z)
       double precision GAMMA
@@ -6,6 +9,13 @@ C      Double Precision FTAU
       SAVE
 C     check wether model parameters must be read:
       if (GAMMA.gt.-1000.0) goto 1
+#ifdef ALTAY_SUBROUTINE
+      TIII1 = acnf%hardening%TIII1
+      TIIIS = acnf%hardening%TIIIS
+      TIVS  = acnf%hardening%TIVS
+      THIII1= acnf%hardening%THIII1
+      THT   = acnf%hardening%THT
+#else
 C     Read the parameters of the work hardening model:
       read (KLEC,99) TIII1,TIIIS,TIVS
       read (KLEC,99) THIII1,THT
@@ -27,6 +37,7 @@ C     Read the parameters of the work hardening model:
      1 ,' larger than TAU-III-1',
      2 /, '     also, THETA-III-1 must be larger than THETA-T')
       stop
+#endif
 C     Calculation of transition-gamma
    3  THIII=THIII1/(1.0-TIII1/TIIIS)
       ETA=THT/THIII
@@ -50,7 +61,10 @@ C     Implementation of the VOCE-model
         FTAU=TIVS-(TIVS-TIV0)*EXP(-THIV*GAMMA/TIVS)
       endif
    2  RETURN
-      END                                                               
+      END
+      
+      
+      
       BLOCK DATA
       implicit double precision (a-h,o-z)
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)

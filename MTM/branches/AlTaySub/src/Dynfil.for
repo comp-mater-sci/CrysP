@@ -26,7 +26,21 @@ C     following array is actually allocated in the subroutine GRFIL:
       end module MICROSTR
 
 
-
+      !> This subroutine extracts the first word from str, fills
+      !> the remaining part with spaces and removes all leading blanks.
+      subroutine stripComment(str)
+      implicit none
+      character(len=*),intent(inout) :: str
+      !
+      integer :: iblank
+      !
+      str = adjustl(str)
+      ! Scan for the first blank
+      iblank = index(str,' ')
+      if (iblank.GT.0) then
+           str(iblank:)=' '
+      end if
+      end subroutine
 
 
 
@@ -37,30 +51,45 @@ C     Allocation of "temporary file" to memory
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 28/11/2011
 C   The output to .LST in this subroutine doesn't depend on the value of NLIST, since NLIST doesn't have value yet!
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+#ifdef ALTAY_SUBROUTINE
+      use altayConfig, only: acnf
+#endif
       USE MICROSTR
       implicit double precision (a-h,o-z)
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       DIMENSION TA(3,3),A(3,3),A1(3,3)
-      character*12 fnam1
+c <jg>
+      integer,parameter :: pathlength=512
+      character(len=pathlength) :: fnam1
+c </jg>
       SAVE
       data convf/0.5729577951308232D+02/
       DATA A  / 8 * 0.0D0 , 1.0D0  /
       FPI=1.0D0/convf
+#ifdef ALTAY_SUBROUTINE
+      fnam1 = acnf%micros_fname  
+#else
       read (KLEC,88) fnam1
   88  format (a)
-      write (*,103) fnam1
+c <jg>
+      call stripComment(fnam1)
+c </jg>
+      write (*,103) trim(fnam1)
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 28/10/2011
 C    Since this output is not controled by NLIST, I supressed it.
 C      write (IMP,103) fnam1
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
  103  format (' GRFIL - Input Texture File:',a)
+#endif
   99  FORMAT (I5)
 C     UNIT NDAT1= INITIAL MICROSTRUCTURE
       open (unit=NDAT1,file=fnam1,status='old')
 C
       read (NDAT1,94) NGrElm,TitMic
   94  format(I5,5x,A)
+#ifndef NO_STDOUT
       write (*,93) NGrElm,TitMic
+#endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 28/10/2011
 C    Since this output is not controled by NLIST, I supressed it.
 C      write (IMP,93) NGrElm,TitMic
@@ -68,15 +97,9 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   93  format (' Number of orientations in MICROSTRUCTURE file:',I5,/,
      1' Titel on  file: ',A)
       ALLOCATE(TmatGr(3,3,NGrElm),STAT=jok)
-      if (jok.eq.0) then
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 28/10/2011
-C  Since NLIST is not assigned a value yet, I supressed it
-C                      write (IMP,101)
-                    else
-C                      write (IMP,102)
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-                      stop
-                    endif
+      if (jok.ne.0) then
+            stop
+      endif
  101  format (' GRFIL ',
      1 'Allocation of RAM-memory was succesful')
  102  format (' GRFIL - ',
@@ -106,6 +129,11 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       A(2,1)=-S1                                                        
       A(1,2)=S1                                                         
       A(2,2)=C1 
+      !!! FIXME: instead of the code above, just:      
+      ! ! Note: FI1 is not modified/updated!
+      ! call  grainOrient(PHI1,PHI,PHI2,TA,A)
+      !
+      !!! FIXME
       CALL MATPROD(A1,TA,A,3,3,3)
       do i=1,3
          do j=1,3
@@ -118,12 +146,52 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       END SUBROUTINE GRFIL
 
 
-
+      ! Converts the Euler angles from degrees to radians. 
+      ! Returns relevant rotation matrices TA and A.
+      subroutine grainOrient(PHI1,PHI,PHI2,TA,A)
+      implicit none
+      double precision,intent(inout)   :: PHI1,PHI,PHI2
+      double precision,dimension(3,3),intent(out)     :: TA, A
+      !
+      double precision, parameter :: convf = 0.5729577951308232D+02
+      double precision, parameter :: FPI = 1.0D0/convf
+      double precision :: C,C1,C2,S,S1,S2
+      !
+      PHI=PHI*FPI
+      PHI2=PHI2*FPI
+      C=COS(PHI)
+      S=SIN(PHI)
+      C2=COS(PHI2)
+      S2=SIN(PHI2)
+      TA(1,1)=C2                                                        
+      TA(2,1)=-S2                                                      
+      TA(3,1)=0.D0                                                        
+      TA(1,2)=S2*C                                                      
+      TA(2,2)=C2*C                                                      
+      TA(3,2)=-S                                                        
+      TA(1,3)=S2*S                                                     
+      TA(2,3)=C2*S                                                      
+      TA(3,3)=C                                                         
+      !
+      A = 0.D0
+      PHI1=PHI1*FPI
+      C1=COS(PHI1)
+      S1=SIN(PHI1)
+      A(1,1)=C1                                                         
+      A(2,1)=-S1                                                        
+      A(1,2)=S1                                                         
+      A(2,2)=C1 
+      A(3,3) = 1.D0
+      !     
+      end subroutine
 
 
 
 
       SUBROUTINE LEESOR(NUNIT,MPOINT)
+#ifdef ALTAY_SUBROUTINE
+      use altayConfig, only: acnf
+#endif      
       implicit double precision (a-h,o-z)
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       COMMON /TEXTUR/ DUM1(29),NO,DG(3,3),
@@ -132,7 +200,13 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       COMMON /NRSTEP/ nrstep
       DIMENSION T(3,3),TA(3,3),A(3,3),F(3,3),FALG(3,3),ZERO(3,3),
      1 GAXES(3),GEULR(3),CIJ(3,3),TAXES(3,3)
-      character*12 fnam1,dom
+      character*12 dom
+!      character*12 fnam1,dom !
+c <jg>
+      integer iuerr  ! Error code for I/O operations
+      integer,parameter :: pathlength = 512
+      character(len=pathlength) :: fnam1
+c </jg>      
       character*40 Titel
 C      dimension TG(3,3)
       SAVE
@@ -147,12 +221,20 @@ C     1          0.0D0,1.0D0,0.0D0,
 C     2          0.0D0,0.0D0,1.0D0/
       data GAXES/1.0D0,1.0D0,1.0D0/,GEULR/0.0D0,0.0D0,0.0D0/
       FPI=1.0D0/convf
+#ifdef ALTAY_SUBROUTINE
+      NDAT = acnf%texture%input_type
+      fnam1 = trim(acnf%texture%input_fname)
+      NSTP = acnf%texture%block_id
+#else      
       read (KLEC,99) NDAT
       read (KLEC,88) fnam1
+c <jg>
+      call stripComment(fnam1)
+c </jg>
   88  format (a)
-      write (*,103) fnam1
+      write (*,103) trim(fnam1)
 	if(NLIST.eq.1) then
-      write (IMP,103) fnam1
+      write (IMP,103) trim(fnam1)
 	end if
  103  format (' LEESOR - Input Texture File:',a)
       read (KLEC,99) NSTP
@@ -163,6 +245,7 @@ C     2          0.0D0,0.0D0,1.0D0/
       WRITE (*,100) NDAT,NSTP
  100  FORMAT (' LEESOR - READS A TEXTURE FILE Type (NDAT) is:'
      1 ,I5,' CHOSEN BLOCK:',I5)
+#endif
 C     UNIT NDAT1= INPUT TEXTURE
       if (nbyp.eq.0) open (unit=NDAT1,file=fnam1,status='old')
       nbyp=1
@@ -172,12 +255,15 @@ C     "Manual-made" type of input texture (.SMT-file)
 C
       read (NDAT1,94) NREC,TITEL
   94  format(I5,5x,A)
+#ifndef NO_STDOUT      
       write (*,93) NREC,TITEL
+#endif
 	if(NLIST.eq.1) then
       write (IMP,93) NREC,TITEL
 	end if
   93  format (' Number of orientations in SMT-type input file:',I5,/,
      1' Titel on input file: ',A)
+
       call TMATRIX(TAXES,GEULR(1),GEULR(2),GEULR(3))
       call Transf(GAXES,CIJ,TAXES)
 C      write (nunit) nrstep,FALG,GAXES,GEULR,CIJ,TG
@@ -191,7 +277,9 @@ C
       if(NLIST.eq.1) then
       write (IMP,102) TITEL
 	end if
+#ifndef NO_STDOUT            
       write (*,102) TITEL
+#endif
   102 format(' Title on CUR-type-input file:',A)
   14  LPOINT=MPOINT+1
       J=4
@@ -217,7 +305,9 @@ C
       read (NDAT1,91) DOM
       read (NDAT1,89) NS,NREC,FALG,GAXES,GEULR
   89  format (I6,5x,I5,44x,5(2x,3f10.0))
+#ifndef NO_STDOUT
       write (*,104) NS,NREC
+#endif
 	if(NLIST.eq.1) then
       write (IMP,104) NS,NREC
 	end if
