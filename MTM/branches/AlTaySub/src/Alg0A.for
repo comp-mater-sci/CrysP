@@ -14,6 +14,7 @@ C
       SUBROUTINE SIMUL(IW,EPS,NFILE0,NUNIT)
 C     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
 C     USING THE ALAMEL MODEL
+      use curAccess
 #ifdef ALTAY_SUBROUTINE
       use altayConfig
 #endif
@@ -47,6 +48,9 @@ C
       dimension FS(3,3)
       character*40 TITEL
       logical SWRLX
+      
+      integer :: info
+      
 #ifdef ALTAY_SUBROUTINE
       ! Variables for simple stress calculations: full_model=.false.
       ! This mode is inspired by QGX's way of calculating stresses
@@ -69,10 +73,10 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       ENTA   = acnf%simul_init%ENTA
       KOST   = acnf%slipsystem%KOST
       !
-      NLIST  = acnf%output_config%NLIST
-      NFILE1 = acnf%output_config%NFILE
-      NFILTW = acnf%output_config%NFILTW
-      IPR    = acnf%output_config%IPR
+      NLIST  = acnf%output_config%NLIST   ! control "listing"
+      NFILE1 = acnf%output_config%NFILE   ! control "CUR"
+      NFILTW = acnf%output_config%NFILTW  ! control "TWN"
+      IPR    = acnf%output_config%IPR     ! control printing level
 #else
 C     Number of grains in ALAMEL cluster
       read (KLEC,99) NGR
@@ -129,15 +133,16 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
   99  FORMAT (2I5)
   94  format (3F10.0)
   16  read (KLEC,98) TITEL
-  98  format (A)
       if(NLIST.eq.1) then
       write (IMP,97) TITEL
 	end if
+      if (NFILE1) write (IMP2,98) TITEL
+#endif
+
   97  format (' Title of the new simulation: ',A)
-      write (IMP1,98) TITEL
-      write (IMP2,98) TITEL
-#endif      
-      
+      ! Only if CUR file is requested
+      if (NFILE1.eq.1) call writeCURTitle(IMP1,TITEL,info)
+  98  format (A)      
 C     read the parameters of the work hardening model
       X=FTAU(-1000.0D00)
       TAU=1.0
@@ -197,6 +202,8 @@ C     read the parameters of the work hardening model
       if (IPR.gt.0.and.NLIST.eq.1) write (IMP,*)'Relaxations:',swrlx(1)
       !
       CALL TAYLOR(2,KOST,EPS,Ftot)
+      ! Output the current texture
+      if (NFILE.eq.1) call writeCURBlock(IMP1,info)
 C
 C     Main Loop over the Steps
 C
@@ -249,12 +256,6 @@ C     INSTRUCTION ADDED IN LAMEL model:
       if (ISTP.gt.1) goto 44
       IF (NLIST.EQ.1) WRITE (IMP,112) ISTP
  112  FORMAT (//' DEFORMATION STEP ',I5,//)
-      write (IMP1,402)
- 402  format (/,' Def. Step    ','Number of orientations',27X,
-     1 2X,'F(1,1)',4X,'F(2,1)',4X,'F(3,1)',4X,
-     2 2X,'F(1,2)',4X,'F(2,2)',4X,'F(3,2)',4X,
-     3 2X,'F(1,3)',4X,'F(2,3)',4X,'F(3,3)',
-     4 6X,'a',9X,'b',9x,'c',9x,'G-phi1',4x,'G-PHI',4x,'G-phi2')
       write (IMP2,404) nrstep+1,NPOINT
  404  format (' Def. Step ',i5,'  Number of orientations',i5,/,8x,
      1 ' WDOT  ','WDOT/STR.RAT.','  TAU     ','   M      ','STR.RAT. '
@@ -263,18 +264,7 @@ C     INSTRUCTION ADDED IN LAMEL model:
       do 48 i=1,3
       GLR(i)=GEULR(i)*convf
   48  continue
-      write (IMP1,403) nrstep,NPOINT,F,GAXES,GLR
- 403  format(I6,5X,i5,44x,3(2X,3F10.6),2(2x,3f10.5))
-      write (IMP1,401)
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C The format was changed
- 401  format (' CRYSTAL WEIGHT ',5X,'phi1',6X,'PHI',7X,'phi2',6X,
-     1'  GAMMA')
-c     'F(1,1)',4X,'F(2,1)',4X,'F(3,1)',4X,
-c     2             2X,'F(1,2)',4X,'F(2,2)',4X,'F(3,2)',4X,
-c     3             2X,'F(1,3)',4X,'F(2,3)',4X,'F(3,3)',
-c     4 6X,'a',9X,'b',9x,'c',9x,'G-phi1',4x,'G-PHI',4x,'G-phi2')
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+C
   44  call MATPROD(Ftot,F,FMicro,3,3,3)
       FTINV=Ftot
       CALL MINV(FTINV,3,DMINV,L1MINV,L2MINV,9)
@@ -383,11 +373,6 @@ c      if (IROT.ne.1) goto 999
 	do 47 i=1,3
       GLR(i)=GEULRb(i,laml)*convf
   47  continue
-C  The format of 'CUR' file changed since Fb,GAXESb and GLR are the same for all of the grains
-      write (IMP1,400) IOR,GEWF,fi1,PHI,fi2,GMM0
-c     1 ((Fb(i,j,laml),i=1,3),j=1,3),(GAXESb(j,laml),j=1,3),GLR
-c 400  format (I6,f10.5,2X,3f10.5,2X,f10.5,3(2X,3F10.6),2(2x,3f10.5))
-  400  format (I6,f10.5,2X,3f10.5,2X,f10.5)
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C      if (NUNGL.ne.0) then
 C         Next instruction will ultimately result in some effefct if KOST=1

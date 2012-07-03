@@ -4,7 +4,7 @@
 		<Platform Name="Win32"/></Platforms>
 	<Configurations>
 		<Configuration Name="Debug|Win32" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" PreprocessorDefinitions="ALTAY_SUBROUTINE;NO_STDOUT;" F2003Semantics="true" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" InitLocalVarToNAN="true" FloatingPointStackCheck="true" Traceback="true" RuntimeChecks="rtChecksAll" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" PreprocessorDefinitions="ALTAY_SUBROUTINE;NO_STDOUT;NORESFILE" F2003Semantics="true" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" InitLocalVarToNAN="true" FloatingPointStackCheck="true" Traceback="true" RuntimeChecks="rtChecksAll" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -13,7 +13,7 @@
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/></Configuration>
 		<Configuration Name="Release|Win32" ConfigurationType="typeStaticLibrary" WholeProgramOptimization="true">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" Preprocess="preprocessYes" PreprocessorDefinitions="ALTAY_SUBROUTINE;NO_STDOUT;" F2003Semantics="true" CommonElementAlignment="alignCommonEightBytes"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" Preprocess="preprocessYes" PreprocessorDefinitions="ALTAY_SUBROUTINE;NO_STDOUT;NORESFILE" F2003Semantics="true" CommonElementAlignment="alignCommonEightBytes"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -33,10 +33,13 @@
 		<File RelativePath="..\src\altayInterface.f90"/>
 		<File RelativePath="..\src\altayRCM.f90"/>
 		<File RelativePath="..\src\altaySub.f90"/>
+		<File RelativePath="..\src\curAccess.f90"/>
 		<File RelativePath="..\src\Dynfil.for"/>
+		<File RelativePath="..\src\miscutils.f90"/>
 		<File RelativePath="..\src\Odflam.for"/>
 		<File RelativePath="..\src\Pancak2.for"/>
 		<File RelativePath="..\src\SLIPRAT.FOR"/>
+		<File RelativePath="..\src\stateOutput.f90"/>
 		<File RelativePath="..\src\Stelsel.for"/>
 		<File RelativePath="..\src\TBH.for"/></Filter>
 		<File RelativePath="..\src\todo.txt"/></Files>

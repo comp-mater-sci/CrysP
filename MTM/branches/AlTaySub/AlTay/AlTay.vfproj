@@ -13,8 +13,8 @@
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
-		<Configuration Name="Release|Win32">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Preprocess="preprocessYes" F2003Semantics="true" CommonElementAlignment="alignCommonEightBytes"/>
+		<Configuration Name="Release|Win32" WholeProgramOptimization="true">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" Preprocess="preprocessYes" F2003Semantics="true" CommonElementAlignment="alignCommonEightBytes" RuntimeChecks="rtChecksNone"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" SubSystem="subSystemConsole"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -41,8 +41,10 @@
 		<File RelativePath="..\src\Alg0A.for"/>
 		<File RelativePath="..\src\Alg1.for"/>
 		<File RelativePath="..\src\Alg2.for"/>
+		<File RelativePath="..\src\curAccess.f90"/>
 		<File RelativePath="..\src\Dynfil.for"/>
 		<File RelativePath="..\src\MainA1.for"/>
+		<File RelativePath="..\src\miscutils.f90"/>
 		<File RelativePath="..\src\Pancak2.for"/>
 		<File RelativePath="..\src\SLIPRAT.FOR"/>
 		<File RelativePath="..\src\Stelsel.for"/>
