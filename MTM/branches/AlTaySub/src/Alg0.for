@@ -72,7 +72,6 @@ C     Implementation of the VOCE-model
      1B2(6,96),G(96),DI1(5)
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       COMMON /ES1/ IMP3
-      COMMON /NRSTEP/ nrstep
 C
 C     LEC= data set with slip systems
 C     KLEC= data set with parameters
@@ -90,5 +89,4 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      DATA NUNGL /0/
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       DATA N,NC,LC    /5,1,300/
-      data nrstep/0/
       END

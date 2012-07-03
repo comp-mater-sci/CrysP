@@ -32,9 +32,6 @@ contains
       subroutine initAltay(cnf,info)
       use altayConfig, only: altayConfigData,fname_len
       use altayInterface
-!!! FIXME !!!
-!      use UDYNFIL
-!!! FIXME !!!
       implicit none
       !
       type(altayConfigData),intent(in)    :: cnf
@@ -80,51 +77,43 @@ contains
             ! UNIT NUNIT = Temporary file
             open(unit=NUNIT,status='SCRATCH',form='unformatted')
 !
-  
             codsim = trim(cnf%output_prefix)
             L=len_trim(codsim)
             cods1=codsim
-#ifndef NOLSTFILE      
-            cods1(L+1:L+4)='.LST'
-      !     UNIT IMP = PRINTER
-            open (unit=IMP,file=cods1,status='replace')
+#ifndef NOLSTFILE
+            if (cnf%output_config%nlist /= 0) then
+                  cods1(L+1:L+4)='.LST'
+                  ! UNIT IMP = PRINTER
+                  open (unit=IMP,file=cods1,status='replace')
+            endif
 #endif
 !
+#ifndef NORESFILE
+            if (cnf%output_config%nlist /= 0) then
+                  cods1(L+1:L+4)='.RES'
+                  open (unit=IMP2,file=cods1,status='replace')
+            endif
+#endif
+!
+#ifndef NOTWNFILE
+            if (cnf%output_config%nfiltw /= 0) then
+                  cods1(L+1:L+4)='.TWN'
+                  open (unit=IMP3,file=cods1,status='replace')
+            endif
+#endif  
+      fnam2 = trim(cnf%slipsystem%input_fname)
+!     UNIT LEC = SLIP SYSTEMS
+      open (unit=LEC,file=TRIM(fnam2),status='old')
+!
 #ifndef NOCURFILE
-            if (cnf%output_config%use_curfile) then
+            if (cnf%output_config%nfile) then
+            ! if (cnf%output_config%use_curfile) then
                   cods1(L+1:L+4)='.CUR'
                   ! IMP1=output file with successive "current situations"
                   open (unit=IMP1,file=cods1,status='replace')
             endif
 #endif
-!
-#ifndef NORESFILE
-            cods1(L+1:L+4)='.RES'
-            open (unit=IMP2,file=cods1,status='replace')
-#endif
-!
-#ifndef NOTWNFILE
-            cods1(L+1:L+4)='.TWN'
-            open (unit=IMP3,file=cods1,status='replace')
-#endif  
-      fnam2 = trim(cnf%slipsystem%input_fname)
-!     UNIT LEC = SLIP SYSTEMS
-      open (unit=LEC,file=TRIM(fnam2),status='old')
 
-      !!! FIXME !!!
-/*      
-      ! nsym decides how  the slip systems are dealt with 
-      if (cnf%slipsystem%nsym == 0) then
-            FK1 = 1.D0
-      else
-            FK1(1:cnf%slipsystem%ntau) = cnf%slipsystem%taucrit
-      endif
-*/
-      !!! FIXME !!!
-      
-      !!!! FIXME ????
-      ! NBLOC = cnf%nSimulCalls
-      !!!! FIXME ????
 
       CALL GRFIL()  
 
@@ -132,12 +121,12 @@ contains
       ! Initialisation of SIMUL
       !
       EPS = 0.D0
-      CALL SIMUL(0,EPS,1,NUNIT)
-      ! Go back to initial texture, initialize UDynfil
+      CALL SIMUL(0,EPS,1)
+      ! Go back to initial texture
       CALL LEESOR(NUNIT,MPOINT)
-      !!! FIXME !!! ???? - do I need this anymore?
-      ! call useUDyn() !! AKA: call fleesor()
-      !!! FIXME !!!  
+      !
+      ! No need for the slip system definition anymore.
+      close(LEC)
       info = 0            
       
       end subroutine
@@ -209,7 +198,7 @@ contains
             endif
             
             ! Run simul.
-            call SIMUL(1,steps%eps,NFILE0,NUNIT)
+            call SIMUL(1,steps%eps,NFILE0)
 
       !!! FIXME !!!  
 /*
@@ -235,16 +224,9 @@ contains
 
 /*      
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      
-      if (ireason == 4) then
 !
 !     Output of last "current situation"
 !
-#ifdef WITHSMTFILE
-! <jg>: Open file for output SMT 
-            cods1(L+1:L+4)='.smt'
-            open(unit=NUMIC,file=cods1,status='replace',action='write')
-#endif      
 #ifdef WITHCUBFILE
             cods1(L+1:L+4)='.cub'
             open(unit=NUCUB,file=cods1,status='replace',                 &
@@ -253,10 +235,6 @@ contains
 ! </jg>
             NFILE0 = 1
             CALL SIMUL(2,1,EPS,NFILE0,NUNIT,0)
-
-#ifdef WITHSMTFILE
-            close(NUMIC)
-#endif      
 #ifdef WITHCUBFILE        
             close(NUCUB)
 #endif

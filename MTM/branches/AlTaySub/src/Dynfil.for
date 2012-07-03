@@ -1,16 +1,184 @@
-      MODULE DYNFIL
+      module DYNFIL
       implicit none
+      
       TYPE :: grain
          double precision :: tFI1,tPHI,tFI2,tGEW,tGAM
          double precision, dimension(3) :: tAXES,tEULR
          double precision, dimension(3,3) :: tT,tF,tCIJ,tTAX,tZERO,tRHO
       END TYPE grain
+      
+      type :: matFrame
+            double precision,dimension(3,3) :: FALG,CIJ0,TAX0
+            double precision,dimension(3) :: GAXES,GEULR
+      end type
+
 C     following array is actually allocated in the subroutine DYNFIL1:
       type(grain),dimension(:),allocatable,save :: DFIL
+
       
-      double precision,dimension(3,3),save :: FALG,CIJ0,TAX0
-      double precision,dimension(3),save :: GAXES,GEULR
-      integer,save :: NRSTEP
+      type(matFrame),save :: mf
+      
+      integer,save :: NRSTEP = 0
+      
+      contains
+      
+      !> Initialize the memory block for the state variables 
+      !> (texture, grain axes etc.)
+      subroutine DYNFIL1(nunit,npoint,MPOINT,istat)
+      implicit double precision (a-h,o-z)
+      integer,intent(in)      :: nunit
+      integer,intent(in)      :: npoint
+      integer,intent(in)      :: MPOINT
+      integer,intent(out)     :: istat
+      !
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
+	COMMON /TEXTUR/ DUM1(29),NO,DUM2(9),
+     1IDUM(2),DUM3(2),NLIST
+      DIMENSION AXES(3),EULR(3),CIJ(3,3),TAX(3,3),F(3,3),T(3,3),
+     1 ZERO(3,3)
+      integer :: LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
+      integer :: NO,IDUM,NLIST
+      integer :: i
+      !      
+      ! Make sure the old content is deallocated
+      istat = 1
+      if (allocated(DFIL)) deallocate(DFIL)
+      if ((npoint > MPOINT).or.(npoint <= 0)) then
+            ! Error handling
+            if(NLIST.eq.1) write(IMP,100)
+            return
+      endif
+      ! Allocate the storage
+      allocate(DFIL(npoint),stat=istat)
+      if (istat /= 0) then
+            ! Error handling
+            if(NLIST.eq.1) write(IMP,101)
+            return
+      endif
+ 100  format(' DYNFIL1 - requested number of grains exceeds limits.')
+ 101  format(' DYNFIL1 - allocation of memory failed.')
+      !!! FIXME !!!
+      rewind nunit
+      read (nunit) nrstep,mf%FALG,mf%GAXES,mf%GEULR,mf%CIJ0,mf%TAX0
+      do i=1,npoint
+         read(NUNIT) FI1,PHI,FI2,T,GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO
+         DFIL(i)%tFI1=FI1
+         DFIL(i)%tPHI=PHI
+         DFIL(i)%tFI2=FI2
+         DFIL(i)%tGEW=GEW
+         DFIL(i)%tGAM=GAM
+         DFIL(i)%tAXES=AXES
+         DFIL(i)%tEULR=EULR
+         DFIL(i)%tT=T
+         DFIL(i)%tF=F
+         DFIL(i)%tCIJ=CIJ
+         DFIL(i)%tTAX=TAX
+         DFIL(i)%tZERO=ZERO
+         DFIL(i)%tRHO=ZERO
+      end do
+      rewind nunit
+      
+      !!! FIXME !!!
+      istat = 0
+      !
+      end subroutine DYNFIL1
+
+
+      !> To read the first record of the storage
+      subroutine DYNFIL2(n,F,AXES,EULR,CIJ,TAX)
+      integer,intent(out)     :: n
+      double precision,intent(out) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),
+     & F(3,3)
+      !
+            n=nrstep
+            F=mf%FALG
+            AXES=mf%GAXES
+            EULR=mf%GEULR
+            CIJ=mf%CIJ0
+            TAX=mf%TAX0
+      !
+      end subroutine DYNFIL2
+
+      !> To write the first record of the storage
+      subroutine DYNFIL3(n,F,AXES,EULR,CIJ,TAX)
+      integer,intent(in)     :: n
+      double precision,intent(in) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),
+     & F(3,3)
+      !
+            nrstep=n
+            mf%FALG=F
+            mf%GAXES=AXES
+            mf%GEULR=EULR
+            mf%CIJ0=CIJ
+            mf%TAX0=TAX
+      !
+      end subroutine DYNFIL3
+
+      !> To read a record of the storage
+      subroutine DYNFIL4(i,FI1,PHI,FI2,T,
+     1                  GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO)
+      implicit none
+      integer,intent(in) :: i
+      double precision,intent(out) :: FI1,PHI,FI2,GEW,GAM
+      double precision,intent(out) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),
+     1 F(3,3),T(3,3),ZERO(3,3)
+      !
+            FI1=DFIL(i)%tFI1
+            PHI=DFIL(i)%tPHI
+            FI2=DFIL(i)%tFI2
+            GEW=DFIL(i)%tGEW
+            GAM=DFIL(i)%tGAM
+            AXES=DFIL(i)%tAXES
+            EULR=DFIL(i)%tEULR
+            T=DFIL(i)%tT
+            F=DFIL(i)%tF
+            CIJ=DFIL(i)%tCIJ
+            TAX=DFIL(i)%tTAX
+            ZERO=DFIL(i)%tZERO
+      !
+      end subroutine DYNFIL4
+
+
+      !> To write a record of the storage
+      subroutine DYNFIL5(i,FI1,PHI,FI2,T,
+     1                  GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO)
+      implicit none
+      integer,intent(in) :: i
+      double precision,intent(in) :: FI1,PHI,FI2,GEW,GAM
+      double precision,intent(in) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),
+     1 F(3,3),T(3,3),ZERO(3,3)
+      !
+            DFIL(i)%tFI1=FI1
+            DFIL(i)%tPHI=PHI
+            DFIL(i)%tFI2=FI2
+            DFIL(i)%tGEW=GEW
+            DFIL(i)%tGAM=GAM
+            DFIL(i)%tAXES=AXES
+            DFIL(i)%tEULR=EULR
+            DFIL(i)%tT=T
+            DFIL(i)%tF=F
+            DFIL(i)%tCIJ=CIJ
+            DFIL(i)%tTAX=TAX
+            DFIL(i)%tZERO=ZERO
+      !
+      end subroutine DYNFIL5
+
+      !> For IDIR=0:
+      !> To read RHOS from the temporary file in memory
+      !> For IDIR=1:
+      !> To write RHOS in the temporary file in memory
+      subroutine DYNFIL7(i,IDIR,RHOS)
+      implicit none
+      integer,intent(in) :: i, IDIR
+      double precision :: RHOS(3,3)
+      !
+            if (IDIR.eq.0) then
+                  RHOS=DFIL(i)%tRHO
+            else
+                  DFIL(i)%tRHO=RHOS
+            endif
+      !
+      end subroutine DYNFIL7
       
       end module DYNFIL
 
@@ -179,13 +347,13 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #ifdef ALTAY_SUBROUTINE
       use altayConfig, only: acnf
 #endif
+      use dynfil
       use miscutils
       implicit double precision (a-h,o-z)
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       COMMON /TEXTUR/ DUM1(29),NO,DG(3,3),
      1ITW,IPR,GMMA,GEWF,NLIST
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,NPOINT,TEN(3,3),TOTGEW
-      COMMON /NRSTEP/ nrstep
       DIMENSION T(3,3),TA(3,3),A(3,3),F(3,3),FALG(3,3),ZERO(3,3),
      1 GAXES(3),GEULR(3),CIJ(3,3),TAXES(3,3)
       character*12 dom
@@ -209,6 +377,8 @@ C     1          0.0D0,1.0D0,0.0D0,
 C     2          0.0D0,0.0D0,1.0D0/
       data GAXES/1.0D0,1.0D0,1.0D0/,GEULR/0.0D0,0.0D0,0.0D0/
       FPI=1.0D0/convf
+C     UNIT NUNIT = Temporary file
+      open(unit=NUNIT,status='SCRATCH',form='unformatted')
 #ifdef ALTAY_SUBROUTINE
       NDAT = acnf%texture%input_type
       fnam1 = trim(acnf%texture%input_fname)
@@ -374,173 +544,11 @@ C      WRITE (NUNIT) FI1,PHI,PHI2,T,GEW,GAM,F,GAXES,GEULR,CIJ,TG,ZERO
 	end if
  107  FORMAT (' NUMBER OF ORIENTATIONS=',I6,'   SUM OF ALL WEIGHT ',
      1 'FACTORS=',F15.7,/)
-      rewind NUNIT
-      rewind NDAT1
       J=1
       call DYNFIL1(nunit,npoint,MPOINT,info)
+      close(nunit)
       RETURN
       END SUBROUTINE LEESOR
 
 
 
-      !> Initialize the memory block for the state variables 
-      !> (texture, grain axes etc.)
-      subroutine DYNFIL1(nunit,npoint,MPOINT,istat)
-C     Allocation of "temporary file" to memory
-      USE MICROSTR
-      USE dynfil
-      implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-	COMMON /TEXTUR/ DUM1(29),NO,DUM2(9),
-     1IDUM(2),DUM3(2),NLIST
-      DIMENSION AXES(3),EULR(3),CIJ(3,3),TAX(3,3),F(3,3),T(3,3),
-     1 ZERO(3,3)
-      integer :: istat
-      
-      ! Make sure the old content is deallocated
-      istat = 1
-      if (allocated(DFIL)) deallocate(DFIL)
-      if ((npoint > MPOINT).or.(npoint <= 0)) then
-            ! Error handling
-            if(NLIST.eq.1) write(IMP,100)
-            return
-      endif
-      ! Allocate the storage
-      allocate(DFIL(npoint),stat=istat)
-      if (istat /= 0) then
-            ! Error handling
-            if(NLIST.eq.1) write(IMP,101)
-            return
-      endif
- 100  format(' DYNFIL1 - requested number of grains exceeds limits.')
- 101  format(' DYNFIL1 - allocation of memory failed.')
-      !!! FIXME !!!
-      read (nunit) nrstep,FALG,GAXES,GEULR,CIJ0,TAX0
-      do i=1,npoint
-         read(NUNIT) FI1,PHI,FI2,T,GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO
-         DFIL(i)%tFI1=FI1
-         DFIL(i)%tPHI=PHI
-         DFIL(i)%tFI2=FI2
-         DFIL(i)%tGEW=GEW
-         DFIL(i)%tGAM=GAM
-         DFIL(i)%tAXES=AXES
-         DFIL(i)%tEULR=EULR
-         DFIL(i)%tT=T
-         DFIL(i)%tF=F
-         DFIL(i)%tCIJ=CIJ
-         DFIL(i)%tTAX=TAX
-         DFIL(i)%tZERO=ZERO
-         DFIL(i)%tRHO=ZERO
-      end do
-      rewind nunit
-      
-      !!! FIXME !!!
-      istat = 0
-      !
-      end subroutine DYNFIL1
-
-
-
-      subroutine DYNFIL2(n,F,AXES,EULR,CIJ,TAX)
-C     To read the first record of the storage
-      USE dynfil
-      implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      DIMENSION AXES(3),EULR(3),CIJ(3,3),TAX(3,3),F(3,3)
-      !
-            n=nrstep
-            F=FALG
-            AXES=GAXES
-            EULR=GEULR
-            CIJ=CIJ0
-            TAX=TAX0
-      !
-      end subroutine DYNFIL2
-
-
-      subroutine DYNFIL3(n,F,AXES,EULR,CIJ,TAX)
-C     To write the first record of the storage
-      USE dynfil
-      implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      DIMENSION AXES(3),EULR(3),CIJ(3,3),TAX(3,3),F(3,3)
-      !
-            nrstep=n
-            FALG=F
-            GAXES=AXES
-            GEULR=EULR
-            CIJ0=CIJ
-            TAX0=TAX
-      !
-      end subroutine DYNFIL3
-
-
-
-      subroutine DYNFIL4(i,FI1,PHI,FI2,T,
-     1                  GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO)
-C     To read a record of the storage
-      USE dynfil
-      implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      DIMENSION AXES(3),EULR(3),CIJ(3,3),TAX(3,3),F(3,3),T(3,3),
-     1 ZERO(3,3)
-      !
-            FI1=DFIL(i)%tFI1
-            PHI=DFIL(i)%tPHI
-            FI2=DFIL(i)%tFI2
-            GEW=DFIL(i)%tGEW
-            GAM=DFIL(i)%tGAM
-            AXES=DFIL(i)%tAXES
-            EULR=DFIL(i)%tEULR
-            T=DFIL(i)%tT
-            F=DFIL(i)%tF
-            CIJ=DFIL(i)%tCIJ
-            TAX=DFIL(i)%tTAX
-            ZERO=DFIL(i)%tZERO
-      !
-      end subroutine DYNFIL4
-
-
-
-      subroutine DYNFIL5(i,FI1,PHI,FI2,T,
-     1                  GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO)
-C     To write a record of the storage
-      USE dynfil
-      implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      DIMENSION AXES(3),EULR(3),CIJ(3,3),TAX(3,3),F(3,3),T(3,3),
-     1 ZERO(3,3)
-      !
-            DFIL(i)%tFI1=FI1
-            DFIL(i)%tPHI=PHI
-            DFIL(i)%tFI2=FI2
-            DFIL(i)%tGEW=GEW
-            DFIL(i)%tGAM=GAM
-            DFIL(i)%tAXES=AXES
-            DFIL(i)%tEULR=EULR
-            DFIL(i)%tT=T
-            DFIL(i)%tF=F
-            DFIL(i)%tCIJ=CIJ
-            DFIL(i)%tTAX=TAX
-            DFIL(i)%tZERO=ZERO
-      !
-      end subroutine DYNFIL5
-
-
-      subroutine DYNFIL7(i,IDIR,RHOS)
-C     For IDIR=0:
-C     To read RHOS from the temporary file in memory
-C     For IDIR=1:
-C     To write RHOS in the temporary file in memory
-      USE dynfil
-      implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      DIMENSION RHOS(3,3)
-      !
-            if (IDIR.eq.0) then
-                  RHOS=DFIL(i)%tRHO
-            else
-                  DFIL(i)%tRHO=RHOS
-            endif
-      !
-      end subroutine DYNFIL7

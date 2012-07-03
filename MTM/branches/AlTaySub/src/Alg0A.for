@@ -11,10 +11,11 @@ C        for the critical resolved shear stresse
 C     2) They will be multiplied with TAU, calculated from GAMMA
 C        using the FTAU function.
 C
-      SUBROUTINE SIMUL(IW,EPS,NFILE0,NUNIT)
+      SUBROUTINE SIMUL(IW,EPS,NFILE0)
 C     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
 C     USING THE ALAMEL MODEL
       use curAccess
+      use dynfil
 #ifdef ALTAY_SUBROUTINE
       use altayConfig
 #endif
@@ -34,7 +35,6 @@ C
       COMMON /EULERA/ fi1,PHI,fi2
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
      1 WR,SWRLX(3)
-      COMMON /NRSTEP/ nrstep
       COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),
      1 gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),
      2 CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),

@@ -25,9 +25,9 @@ contains
       !
             npoint = size(DFIL)
 
-            GLR=GEULR*convf
+            GLR=mf%GEULR*convf
             write (IMP1,402)
-            write (IMP1,403) nrstep,NPOINT,FALG,GAXES,GLR
+            write (IMP1,403) NRSTEP,npoint,mf%FALG,mf%GAXES,GLR
             write (IMP1,401)
             !
             do i=1,npoint

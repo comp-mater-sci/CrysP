@@ -18,7 +18,7 @@ C     KLEC= data set with parameters
 C     IMP= printer
 C     IMP1=output-file with successive "current situations"
 C     IMP2=output-file with successive "responses to imposed strain"
-C     IDISK1= work file
+C     IDISK1= work file (obsolete, not used)
 C     NDAT1= Input-texture file     Opened in LEESOR
 C
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
@@ -31,10 +31,6 @@ C
       character * 8 codsim
       DATA MPOINT /8000/,NUNIT/2/
       SAVE
-C     UNIT NUNIT = Temporary file
-      open(unit=NUNIT,file='Temp1',status='replace',form='unformatted')
-C     UNIT IDISK1 = Temporary file
-      open(unit=IDISK1,file='Temp2',status='replace',form='unformatted')
 C     UNIT KLEC = CONTROL FILE
       open (unit=KLEC,file='MAINA1.CTL',status='old')
   90  format (a)
@@ -92,7 +88,7 @@ c
 C
 C     Initialisation of SIMUL
 C
-      CALL SIMUL(0,EPS,1,NUNIT) 
+      CALL SIMUL(0,EPS,1) 
       CALL LEESOR(NUNIT,MPOINT)
       DO 2 JBLOC=1,NBLOC
 C
@@ -122,7 +118,7 @@ C
       WRITE (*,109) (DG(I,K),K=1,3)
  109  FORMAT (1x,3F10.5)
   35  CONTINUE
-      CALL SIMUL(1,EPS,NFILE0,NUNIT)
+      CALL SIMUL(1,EPS,NFILE0)
    2  CONTINUE
 C
 C     Output of last "current situation"
@@ -132,6 +128,6 @@ C
 	end if
       write (*,110)
  110  format (//,' Final call of SIMUL (for output only)')
-      CALL SIMUL(2,EPS,NFILE0,NUNIT)
+      CALL SIMUL(2,EPS,NFILE0)
       STOP
       END
