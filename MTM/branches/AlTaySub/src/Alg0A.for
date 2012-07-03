@@ -221,7 +221,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   50  continue
       SG=0.
       GMM=0.
-      call dynfil2(nunit,nrstep,F,GAXES,GEULR,CIJ,TG)
+      call dynfil2(nrstep,F,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT       
       write (*,96) ISTP,GAXES
 #endif
@@ -293,10 +293,10 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #ifdef ALTAY_SUBROUTINE
       ! We can choose not to update the microstructure/state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL3(IDISK1,nrstep,F,GAXES,GEULR,CIJ,TG)
+            call DYNFIL3(nrstep,F,GAXES,GEULR,CIJ,TG)
       endif
 #else          
-      call DYNFIL3(IDISK1,nrstep,F,GAXES,GEULR,CIJ,TG)
+      call DYNFIL3(nrstep,F,GAXES,GEULR,CIJ,TG)
 #endif
 C
 C       Added for lamel model:
@@ -327,7 +327,7 @@ C      IGLIJ=0
  2626 do 80 L=laml,laml1
       if (ifil4.eq.NPOINT) goto 80
       ifil4=ifil4+1
-      call DYNFIL4(nunit,ifil4,fi10b(L),PHI0b(L),fi20b(L),
+      call DYNFIL4(ifil4,fi10b(L),PHI0b(L),fi20b(L),
      1 TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L),GAXESb(1,L),
      2 GEULRb(1,L),CIJb(1,1,L),TGb(1,1,L),RHOSSb(1,1,L))
 C
@@ -490,11 +490,11 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #ifdef ALTAY_SUBROUTINE
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL5(IDISK1,IOR,fi1,PHI,fi2,C2,GEWF,GAMMA,
+            call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GAMMA,
      1                   F,GAXES,GEULR,CIJ,TG,RHOSsa)
       endif
 #else
-      call DYNFIL5(IDISK1,IOR,fi1,PHI,fi2,C2,GEWF,GAMMA,
+      call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GAMMA,
      1 F,GAXES,GEULR,CIJ,TG,RHOSsa)
 #endif
 C      IF (NLIST.LT.2) GOTO 15
@@ -510,8 +510,6 @@ C
 C     End of loop over crystals
 C
   23  CONTINUE
-C      REWIND NUNIT  
-      call DYNFIL6(NUNIT)
 C     NEXT INSTRUCTION ADDED FOR LAMEL MODEL
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      if (IROT.eq.0) goto 62
@@ -553,8 +551,6 @@ C      call STR5(vec1,SHsam)
       write(*,'(A,F15.6)') 'normSg = ',sqrt(3./2.)*norm2(SHsam)
       !!! TESTING !!!
 #endif
-      call DYNFIL6(IDISK1)
-      CALL COPYT(IDISK1,NUNIT)
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      JW=0
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
