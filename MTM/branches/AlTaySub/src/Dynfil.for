@@ -25,23 +25,9 @@ C     following array is actually allocated in the subroutine GRFIL:
       data vers /.true./
       end module MICROSTR
 
+      
 
-      !> This subroutine extracts the first word from str, fills
-      !> the remaining part with spaces and removes all leading blanks.
-      subroutine stripComment(str)
-      implicit none
-      character(len=*),intent(inout) :: str
-      !
-      integer :: iblank
-      !
-      str = adjustl(str)
-      ! Scan for the first blank
-      iblank = index(str,' ')
-      if (iblank.GT.0) then
-           str(iblank:)=' '
-      end if
-      end subroutine
-
+      
 
 
       SUBROUTINE GRFIL  
@@ -55,6 +41,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       use altayConfig, only: acnf
 #endif
       USE MICROSTR
+      use miscutils
       implicit double precision (a-h,o-z)
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       DIMENSION TA(3,3),A(3,3),A1(3,3)
@@ -191,7 +178,8 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       SUBROUTINE LEESOR(NUNIT,MPOINT)
 #ifdef ALTAY_SUBROUTINE
       use altayConfig, only: acnf
-#endif      
+#endif
+      use miscutils
       implicit double precision (a-h,o-z)
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       COMMON /TEXTUR/ DUM1(29),NO,DG(3,3),
@@ -203,7 +191,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       character*12 dom
 !      character*12 fnam1,dom !
 c <jg>
-      integer iuerr  ! Error code for I/O operations
       integer,parameter :: pathlength = 512
       character(len=pathlength) :: fnam1
 c </jg>      
