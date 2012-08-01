@@ -23,15 +23,20 @@
 !>                                  
 !                                                
 
+#include "altayRCM.fpp"
+
 module altaySub
 
+      integer,parameter :: altaySub_OK = 0
+      integer,parameter :: altaySub_Err = -1, altaySub_Exception = -2, altaySub_IOErr = -3
 
 contains
 
-      
+      !> Initialize 
       subroutine initAltay(cnf,info)
       use altayConfig, only: altayConfigData,fname_len
       use altayInterface
+      use altayRCM
       implicit none
       !
       type(altayConfigData),intent(in)    :: cnf
@@ -60,7 +65,7 @@ contains
       !
       character(len=fname_len) :: fnam1,fnam2, cods1 
       character(len=8)  :: codsim
-      integer :: iblank
+      integer :: iblank, ierr
       
       
       
@@ -73,9 +78,7 @@ contains
       integer :: L
       double precision :: EPS
       !
-      
-            ! UNIT NUNIT = Temporary file
-            open(unit=NUNIT,status='SCRATCH',form='unformatted')
+            info = altaySub_IOErr
 !
             codsim = trim(cnf%output_prefix)
             L=len_trim(codsim)
@@ -101,9 +104,11 @@ contains
                   open (unit=IMP3,file=cods1,status='replace')
             endif
 #endif  
-      fnam2 = trim(cnf%slipsystem%input_fname)
-!     UNIT LEC = SLIP SYSTEMS
-      open (unit=LEC,file=TRIM(fnam2),status='old')
+            fnam2 = trim(cnf%slipsystem%input_fname)
+            ! UNIT LEC = SLIP SYSTEMS
+            open (unit=LEC,file=TRIM(fnam2),status='old',iostat=ierr)
+            
+            if (ierr /= 0) return
 !
 #ifndef NOCURFILE
             if (cnf%output_config%nfile) then
@@ -114,16 +119,20 @@ contains
             endif
 #endif
 
-
-      CALL GRFIL()  
-
+      info = altaySub_Exception
+      
+      CALL GRFIL()
+      RCM_HANDLE(info)
       !
       ! Initialisation of SIMUL
       !
       EPS = 0.D0
       CALL SIMUL(0,EPS,1)
+      RCM_HANDLE(info)
+      
       ! Go back to initial texture
       CALL LEESOR(NUNIT,MPOINT)
+      RCM_HANDLE(info)
       !
       ! No need for the slip system definition anymore.
       close(LEC)
@@ -158,14 +167,11 @@ contains
       subroutine runSteps(steps,info)
       use altayConfig, only: altayStateData
       use altayInterface
-      !!! FIXME !!!  
-      ! use UDYNFIL
-      !!! FIXME !!!  
-
+      use altayRCM
       implicit none
       type(altayStateData),intent(inout)        :: steps
       integer,intent(out)                       :: info
-      
+      ! We need this common block just for the DG tensor.
       COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3), ITW,IPR,DELTAW,GEWF,NLIST
       double precision :: DUM1,DG, DELTAW,GEWF
       integer :: IDUM1,ITW,IPR,NLIST
@@ -174,13 +180,10 @@ contains
       integer :: i,j
       double precision :: resid
       
-      !!! FIXME !!!
-      integer,parameter :: MPOINT = 8000, NUNIT = 2
-      !!! FIXME !!!
       !
       ! TODO: check validity of the inputs (priority: size of the array!!)
      
-      info = 1
+      info = altaySub_Exception
       
       do i = 1, steps%nSimulCalls
             steps%this = i
@@ -199,53 +202,29 @@ contains
             
             ! Run simul.
             call SIMUL(1,steps%eps,NFILE0)
-
-      !!! FIXME !!!  
-/*
-            if (cnf%simulCalls(i)%keep_texture) then
-                  !      CALL LEESOR(NUNIT,MPOINT)
-                  call useUDyn()  ! AKA: call fleesor
-            else
-                  call updateUDyn()      
-            endif
-*/
-      !!! FIXME !!!  
+            RCM_HANDLE(info)
 
       enddo
       
-
+      info = altaySub_OK
       
       end subroutine
 
       
-      subroutine outputCurrentTexture(info)
+      subroutine outputCurrentTexture(iounit,fmt_id,info)
       implicit none
+      integer,intent(in)            :: iounit   !< I/O unit
+      integer,intent(in)            :: fmt_id   !< Format ID: 1 - SMT, 2 - CUR, 3 - CUB)
       integer,intent(out)           :: info
+      !
+            info = altaySub_Err
+            ! TODO: write code for the available formats
+            select case(fmt_id)
 
-/*      
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-!     Output of last "current situation"
-!
-#ifdef WITHCUBFILE
-            cods1(L+1:L+4)='.cub'
-            open(unit=NUCUB,file=cods1,status='replace',                 &
-                  form='UNFORMATTED',action='write')
-#endif
-! </jg>
-            NFILE0 = 1
-            CALL SIMUL(2,1,EPS,NFILE0,NUNIT,0)
-#ifdef WITHCUBFILE        
-            close(NUCUB)
-#endif
-      
-      endif
-*/      
-      
-      
-            info = 1
-      
-      
+            case default
+                  info = altaySub_Err
+            end select
+      !
       end subroutine
       
       
@@ -254,7 +233,7 @@ contains
       implicit none
       integer,intent(out)           :: info
       
-            info = 1
+            info = altaySub_Err
             
       end subroutine
       

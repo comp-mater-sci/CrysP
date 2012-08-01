@@ -1,8 +1,14 @@
+#ifdef ALTAY_SUBROUTINE
+#include "altayRCM.fpp"
+#endif
 C MODIFICATIONS AUG 2010
 C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY 
 C
       SUBROUTINE TAYLOR (IRICHT, KOST,BBVM,Ftot)
+#ifdef ALTAY_SUBROUTINE
+      use altayRCM
+#endif
       implicit double precision (a-h,o-z)
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
@@ -48,16 +54,26 @@ C
       WRITE (IMP,211) I,NGL,NTW,DI1
 	end if
  211  FORMAT (1H ,I4,10X,2I5,10X,5I5)
-      IF (I.NE.0) STOP                                                  
+#ifndef ALTAY_SUBROUTINE
+      IF (I.NE.0) STOP
+#else
+      if (I.NE.0) then
+      RCM_RAISE(1,'TAYLOR','wrong slip system set',RCM_RTN)
+      endif
+#endif
       M=NGL+NTW
       M11=M
       if (M11.gt.MMAX)then
-                     write (*,5001) M11,MMAX
-                     if(NLIST.eq.1) then
-				   write (IMP,5001) M11,MMAX
-	               end if
-                     stop
-                    endif
+#ifndef ALTAY_SUBROUTINE
+            write (*,5001) M11,MMAX
+            if(NLIST.eq.1) then
+			write (IMP,5001) M11,MMAX
+	      end if
+            stop
+#else
+            RCM_RAISE(1,'TAYLOR','Too large slip system set',RCM_RTN)
+#endif
+      endif
  5001 format(' TAYLOR - NGL+NTW=',I5,' LARGER THAN  MMAX=',I5) 
       DO 500 I1=1,M11                                                     
       READ (R,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
@@ -127,11 +143,16 @@ C     Normalisation of TDC (which is used in CLUSTER1 in PANCAK2)
          enddo
       enddo
       if (X.lt.1.0D-20) then
+#ifndef ALTAY_SUBROUTINE
          write (*,205) X
 	   if(NLIST.eq.1) then
          write (IMP,205) X
 	   end if
          stop
+#else
+         RCM_RAISE(1,'TAYLOR',
+     &  'Symmetric part of the strain step is too small',RCM_RTN)
+#endif
       endif
  205  format (' Taylor - symmetric part of strain step is too small'
      1 ,d20.8)
@@ -144,6 +165,7 @@ C     Normalisation of TDC (which is used in CLUSTER1 in PANCAK2)
 C      
       X=ABS(DG(1,1)+DG(2,2)+DG(3,3))
       IF (X.LE.2.0D-5) RETURN                                           
+#ifndef ALTAY_SUBROUTINE
       WRITE (*,202)
 	if(NLIST.eq.1) then                                                   
       WRITE (IMP,202)
@@ -151,6 +173,10 @@ C
  202  FORMAT (' TAYLOR - SUM OF DIAGONAL ELEMENTS OF DISPLACEMENT GRADIE
      1NT MUST BE ZERO')                                                 
       STOP                                                              
+#else
+      RCM_RAISE(1,'TAYLOR',
+     &'Non-zero trace of the displacement gradient',RCM_RTN)
+#endif
 CC     OMREKENING DISPLACEMENT GRADIENT.
  3000 do 45 i=1,3
       do 45 j=1,3
@@ -160,11 +186,17 @@ C      write (*,1234)
 C 1234 format (' Just before Pancak2')
        CALL Pancak2(KOST,NGL,B,DI1,DG,TDC,SPANV,WR,SWRLX,
      1 BBVM,XXLP,IPR,Ftot,GEWF)
+#ifdef ALTAY_SUBROUTINE
+      RCM_GUARD
+#endif
 C      write (*,1235)
 C 1235 format (' Just after Pancak2')
       RETURN
       END                                                               
       SUBROUTINE TAYLR1(ISTP,IOR,NFILE,TAU)
+#ifdef ALTAY_SUBROUTINE
+      use altayRCM
+#endif
       implicit double precision (a-h,o-z)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
      1ITW,IPR,DELTAW,GEWF,NLIST
@@ -363,12 +395,17 @@ C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
       VOLFR(I)=X                                                        
   84  CONTINUE                                                          
        IF (X.LE.1.) GOTO 85  
-	 if(NLIST.eq.1) then                                           
+#ifndef ALTAY_SUBROUTINE
+       if(NLIST.eq.1) then                                           
       WRITE (IMP,107) X   
 	end if                                              
  107  FORMAT (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,
      1'   SHOULD BE LESS THAN 1')                                       
-       STOP                                                             
+       STOP
+#else       
+      RCM_RAISE(1,'TAYLR1',
+     x'Total volume fraction of twins exceeds unity',RCM_RTN)
+#endif
   85  CALL RANDOM_NUMBER(RNDM)
       DO 86 I=1,NTW                                                     
       IF (RNDM.LT.VOLFR(I)) GOTO 87                                     
@@ -428,6 +465,11 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
    61 RETURN
   26  WRITE (IMP,106)
  106  FORMAT (1H ,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBL
-     1EM')                                                              
-  52  STOP                                                              
+     1EM')
+#ifndef ALTAY_SUBROUTINE
+  52  STOP
+#else
+      RCM_RAISE(1,'TAYLR1',
+     x'No upper limit for linear programming problem',RCM_RTN)
+#endif
       END                                                               

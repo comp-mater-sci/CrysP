@@ -1,9 +1,15 @@
+#ifdef ALTAY_SUBROUTINE
+#include "altayRCM.fpp"
+#endif
 C MODIFICATIONS AUG 2010
 C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 C
       Subroutine Pancak2(KOST,NGL,B,DI1,DG,TDC,spanv,WR,
      1 SWRLX,BBVM,XX,IPR,Ftot,GEWF)
+#ifdef ALTAY_SUBROUTINE
+      use altayRCM
+#endif      
       USE MICROSTR
       implicit double precision (a-h,o-z)
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
@@ -57,9 +63,13 @@ C     NRL= number of relaxations    NGR= number of grains
       SAVE
 
 	if (laml.ne.1.and.laml.ne.2) then
+#ifndef ALTAY_SUBROUTINE
 	write(*,*) 'laml=', laml
 	stop
-	endif
+#else
+      RCM_RAISE(1,'Pancak2','Wrong selection of lamels',RCM_RTN)
+#endif      
+      endif
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (IOR.eq.1) IGrElm=0 
       TWOSQ3=sqrt(2.0/3.0)
@@ -282,13 +292,17 @@ c
 c
 
       if (IPR.lt.4) goto 220
+#ifndef ALTAY_SUBROUTINE
 	if(NLIST.eq.1) then
       write (IMP,221) IPR,IOR,ISTP,NBLOC
 	end if
       write (*,221) IPR,IOR,ISTP,NBLOC
  221  format (' Pancak2 ',
      1 ' IPR IOR, ISTP, NBLOC=',4I5)
-      if (IPR.ge.4) stop 
+      if (IPR.ge.4) stop
+#else
+      RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
+#endif
   220    DTAU1=DTAU 
          TAUR1=TAUR  
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011	     
@@ -360,7 +374,12 @@ C
          write (*,222) IPR,IOR,ISTP,NBLOC
  222     format (' Pancak2 222 - Problem with TBH',/,
      1   ' IPR IOR, ISTP, NBLOC=',4I5)
+#ifndef ALTAY_SUBROUTINE
           stop  
+#else
+          RCM_RAISE(1,'Pancak2','Problem with TBH',RCM_RTN)
+
+#endif         
       endif
 C     GAMR will contain the relaxed shears:
  204  if (NRL.gt.0) then
@@ -451,20 +470,28 @@ C 912  format (' NACTIV, i',2I5)
       if (NACTIV.le.8) THEN
                            INDACT(NACTIV)=i
                         ELSE
+#ifndef ALTAY_SUBROUTINE
                            if(NLIST.eq.1) then
 						 write (IMP,306)
 	                     end if
                            write (*,306)
                            stop
+#else
+      RCM_RAISE(1,'Pancak2','Too many active slip systems',RCM_RTN)
+#endif                        
                         endif
  306  format (' PANCAK2 - 306 - TOO MANY ACTIVE SLIP SYSTEMS')
  305  continue
       if (NACTIV.eq.0) then
+#ifndef ALTAY_SUBROUTINE      
                            if(NLIST.eq.1) then
 						 write (IMP,307)
 	                     end if
                            write (*,307)
                            stop
+#else
+      RCM_RAISE(1,'Pancak2','No active slip systems found',RCM_RTN)
+#endif
                        endif
  307  format (' PANCAK2 - 307 - No active slip systems found')
       do 310 NLP=1,NACTIV

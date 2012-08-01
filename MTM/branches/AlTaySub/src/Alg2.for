@@ -1,3 +1,6 @@
+#ifdef ALTAY_SUBROUTINE
+#include "altayRCM.fpp"
+#endif
       SUBROUTINE MATPROD(C,A,B,N1,N2,N3)
 C     MATRIX C=MATRIX A*MATRIX B                                        
       implicit double precision (a-h,o-z)
@@ -205,6 +208,9 @@ C
       return
       end
       Subroutine GETANG(CIJ,prval,GEULR,TMAT)
+#ifdef ALTAY_SUBROUTINE
+      use altayRCM
+#endif      
       IMPLICIT double precision (A-H,O-Z)
 C
 C     find half-lengths of ellipsoid axes from CIJ matrix
@@ -222,6 +228,9 @@ C
       e(i,i)=e(i,i)-CIJTR
    30 continue
       call eigenv(e,prval,prdir,enrm,axisym)
+#ifdef ALTAY_SUBROUTINE
+      RCM_GUARD
+#endif      
       do 36 i=1,3
       prval(i)=prval(i)+CIJTR
    36 continue
@@ -237,6 +246,9 @@ C
       return
       end
       Subroutine eigenv(e,prval,prdir,enrm,axisym)
+#ifdef ALTAY_SUBROUTINE
+      use altayRCM
+#endif
       IMPLICIT double precision (A-H,O-Z)
 C     Principal values of symmetric tensor with zero trace
 C     The eigenvectors are normalized.
@@ -258,6 +270,7 @@ C
       do 6 j=1,3
       xx=abs(e(i,j)-e(j,i))
       if (xx.lt.0.5e-5) goto 7
+#ifndef ALTAY_SUBROUTINE      
       write (*,104)
   104 format (' Eigenv  - the input tensor is not symmetric')
       do 50 ii=1,3
@@ -265,6 +278,10 @@ C
   110 format (3f16.8)
    50 continue
       stop
+#else
+      RCM_RAISE(1,'eigenv','The input tensor is not symmetric',RCM_RTN)
+#endif
+      
     7 a=a+e(i,j)**2
     6 continue
     5 continue
@@ -393,6 +410,9 @@ C
       return
       end
       subroutine canoni(a,b,X,theta,pi)
+#ifdef ALTAY_SUBROUTINE
+      use altayRCM
+#endif
       IMPLICIT double precision (A-H,O-Z)
 c
 c     should find the roots of an equation
@@ -406,9 +426,14 @@ c
       roota=sqrt(a**3/27.0d0)
       delta=0.5*b/roota
       if (abs(delta).lt.(1.0d0+1.0d-6)) goto 1
-    2 write (*,100)
+    2 continue
+#ifndef ALTAY_SUBROUTINE
+      write (*,100)
   100 format(' Subroutine CANONI - 2 Roots seem to be complex')
       stop
+#else
+      RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
+#endif      
     1 if (delta.gt.1.0) delta=1.0
       if (delta.lt.-1.0) delta=-1.0
       theta=acos(delta)

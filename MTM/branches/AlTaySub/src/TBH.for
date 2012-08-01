@@ -1,3 +1,6 @@
+#ifdef ALTAY_SUBROUTINE
+#include "altayRCM.fpp"
+#endif
 C     SUBROUTINE LINEAR PROGRAMMING TAYLOR-BISHOP-HILL STYLE
        Subroutine TBH(IPR,NDIM,N,M,A,D,
      1 TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,
@@ -35,6 +38,9 @@ C     workspace      UU (copy of inverse of basis)
 C     workspace      DD (copy of strain rates in some basis)
 C     output         DTAU=abs(TAUR)-TAUC
 C
+#ifdef ALTAY_SUBROUTINE
+      use altayRCM
+#endif
       implicit double precision (a-h,o-z) 
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       dimension A(NDIM,M),D(NDIM),BINV(NDIM,N),U(NDIM,N),IACT(NDIM),
@@ -44,8 +50,12 @@ C
      1 DTAU(M)
       data JPR /2/,TOL/1.0d-10/
       if (N.gt.NDIM) then
+#ifndef ALTAY_SUBROUTINE
                        write (*,100) N,NDIM
                       stop
+#else
+      RCM_RAISE(1,'TBH','Bad input: N>NDIM',RCM_RTN)
+#endif      
                      endif
  100  format (' Subroutine TBH - N=',I5,'  is > NDIM=',I5,
      1 '   this is an error in the calling program')
@@ -81,12 +91,17 @@ C     Calculation of stress, using generalised Schmid law
       iter=0
     4 iter=iter+1
       if (iter.le.50) goto 7
-	if(NLIST.eq.1) then
+#ifndef ALTAY_SUBROUTINE
+      if(NLIST.eq.1) then
       write (IMP,250)  
 	end if
       write (*,250) 
  250  format (' TBH is looping')
       stop
+#else
+      RCM_RAISE(1,'TBH','Too many iterations.',RCM_RTN)
+#endif
+      
     7 if (IPR.GE.JPR) then
       if (NLIST.eq.1) then
       write (IMP,251) iter
@@ -233,8 +248,12 @@ C     Calculate column Mprime-s*, called Aprime
                         endif
     3 continue
       if (in.eq.0) then
+#ifndef ALTAY_SUBROUTINE
                      write (*,101) 
                      stop
+#else
+      RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
+#endif      
                    endif
   101 FORMAT (' Subroutine TBH - solution unbounded') 
       if (IPR.GE.JPR) then

@@ -1,3 +1,6 @@
+#ifdef ALTAY_SUBROUTINE
+#include "altayRCM.fpp"
+#endif
 C ALAMEL V3
 C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
@@ -18,6 +21,7 @@ C     USING THE ALAMEL MODEL
       use dynfil
 #ifdef ALTAY_SUBROUTINE
       use altayConfig
+      use altayRCM
 #endif
       implicit double precision (a-h,o-z)
 C
@@ -53,7 +57,7 @@ C
       
 #ifdef ALTAY_SUBROUTINE
       ! Variables for simple stress calculations: full_model=.false.
-      ! This mode is inspired by QGX's way of calculating stresses
+      ! This operation mode is inspired by QGX's way of calculating stresses
       ! without a call to TAYLR1
       double precision,dimension(3,3) :: spant,TRFT,bufsp
 #endif
@@ -105,16 +109,21 @@ C     Number of grains in ALAMEL cluster
  101  FORMAT (' SIMUL - PARAMETERS:',/
      1'NGR=   ',I5,/,'NLIST= ',I5,/,'NFILE1=',I5,/,'NFILTW=',i5,/,
      1'KOST=  ',I5,/,'IPR=   ',I5) 
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE 
-      if (NGR.lt.1.or.NGR.gt.2) then 
-                                   write (*,140) NGR
-	                             if(NLIST.eq.1) then
-                                   write (IMP,140) NGR
-	                             end if
-                                   stop
-                                endif
- 140  format (' NGR can only take the values 1 or 2 but was',I5)   
 #endif
+CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE 
+      if (NGR.lt.1.or.NGR.gt.2) then
+#ifndef ALTAY_SUBROUTINE
+            write (*,140) NGR
+	      if(NLIST.eq.1) then
+            write (IMP,140) NGR
+	      end if
+            stop
+#else
+            RCM_RAISE(1,'SIMUL','incorrect value of NGR',RCM_RTN)
+#endif
+      endif
+ 140  format (' NGR can only take the values 1 or 2 but was',I5)   
+
 C     Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
       NRL=(NGR-1)*2
 #ifdef ALTAY_SUBROUTINE
@@ -147,6 +156,9 @@ C     read the parameters of the work hardening model
       X=FTAU(-1000.0D00)
       TAU=1.0
       CALL TAYLOR(1,KOST,EPS,Ftot)
+#ifdef ALTAY_SUBROUTINE
+      RCM_GUARD
+#endif
       if  (KOST.eq.1) then
         do L=1,NGR
            do i=1,M11
@@ -172,13 +184,19 @@ C     read the parameters of the work hardening model
 #endif
       RETURN
   30  i=NPOINT/NGR
-      if (NGR*i.eq.npoint) goto 36
-      write (6,405) NPOINT
-      write (*,405) NPOINT
+      if (NGR*i.ne.npoint) then
+#ifndef ALTAY_SUBROUTINE      
+            write (6,405) NPOINT
+            write (*,405) NPOINT
  405  format (' Subroutine SIMUL',/' The LAMEL version works only if',
      1' the number of orientations NPOINT=',I5,/,
      2' is an even number')
-      stop
+            stop
+#else
+            RCM_RAISE(1,'SIMUL',
+     1      'The number of grains must be an even number',RCM_RTN)
+#endif
+      endif
   36  NFILE=NFILE0*NFILE1
 #ifdef ALTAY_SUBROUTINE
       NSTP   = astate%simulCalls(astate%this)%input%nsteps
@@ -202,6 +220,9 @@ C     read the parameters of the work hardening model
       if (IPR.gt.0.and.NLIST.eq.1) write (IMP,*)'Relaxations:',swrlx(1)
       !
       CALL TAYLOR(2,KOST,EPS,Ftot)
+#ifdef ALTAY_SUBROUTINE
+      RCM_GUARD
+#endif
       ! Output the current texture
       if (NFILE.eq.1) call writeCURBlock(IMP1,info)
 C
@@ -396,7 +417,12 @@ C                  during the previous computation.
 C
 C      write (*,3210)
 C 3210 format (' Just before Taylor')
- 999    IF (IW.le.1) CALL  TAYLOR(3,KOST,EPS,Ftot)
+ 999  if (IW.le.1) then
+            CALL  TAYLOR(3,KOST,EPS,Ftot)
+#ifdef ALTAY_SUBROUTINE
+            RCM_GUARD
+#endif            
+      endif
 C      write (*,3211)
 c 3211 format (' Just after Taylor')
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 2/1/2011     
@@ -448,7 +474,8 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
             call MATPROD(bufsp,SPANT,TRF,3,3,3)
             call MATPROD(Ssam,TRFT,bufsp,3,3,3)
       else
-            CALL TAYLR1(ISTP,IOR,NFILE,TAU)     
+            CALL TAYLR1(ISTP,IOR,NFILE,TAU)
+            RCM_GUARD
       endif
 #else
 C      if (IOR.eq.1.and.ISTP.eq.1) IPR=2
