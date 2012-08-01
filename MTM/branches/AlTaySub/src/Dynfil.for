@@ -22,6 +22,39 @@ C     following array is actually allocated in the subroutine DYNFIL1:
       
       contains
       
+      !> Allocate the memory block for the state variables
+      subroutine DYNFIL0(npoint,MPOINT,istat)
+      implicit none
+      integer,intent(in)      :: npoint
+      integer,intent(in)      :: MPOINT
+      integer,intent(out)     :: istat
+      !
+      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
+      COMMON /TEXTUR/ DUM1(29),NO,DUM2(9),
+     1IDUM(2),DUM3(2),NLIST
+      integer :: LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
+      integer :: NO,IDUM,NLIST
+      double precision :: DUM1,DUM2,DUM3
+
+      ! Make sure the old content is deallocated
+      istat = 1
+      if (allocated(DFIL)) deallocate(DFIL)
+      if ((npoint > MPOINT).or.(npoint <= 0)) then
+            ! Error handling
+            if(NLIST.eq.1) write(IMP,100)
+            return
+      endif
+      ! Allocate the storage
+      allocate(DFIL(npoint),stat=istat)
+      if (istat /= 0) then
+            ! Error handling
+            if(NLIST.eq.1) write(IMP,101)
+      endif
+      !
+ 100  format(' DYNFIL0 - requested number of grains exceeds limits.')
+ 101  format(' DYNFIL0 - allocation of memory failed.')
+      end subroutine
+      
       !> Initialize the memory block for the state variables 
       !> (texture, grain axes etc.)
       subroutine DYNFIL1(nunit,npoint,MPOINT,istat)
@@ -40,23 +73,7 @@ C     following array is actually allocated in the subroutine DYNFIL1:
       integer :: NO,IDUM,NLIST
       integer :: i
       !      
-      ! Make sure the old content is deallocated
-      istat = 1
-      if (allocated(DFIL)) deallocate(DFIL)
-      if ((npoint > MPOINT).or.(npoint <= 0)) then
-            ! Error handling
-            if(NLIST.eq.1) write(IMP,100)
-            return
-      endif
-      ! Allocate the storage
-      allocate(DFIL(npoint),stat=istat)
-      if (istat /= 0) then
-            ! Error handling
-            if(NLIST.eq.1) write(IMP,101)
-            return
-      endif
- 100  format(' DYNFIL1 - requested number of grains exceeds limits.')
- 101  format(' DYNFIL1 - allocation of memory failed.')
+      if (.not. allocated(DFIL)) call DYNFIL0(npoint,MPOINT,istat)
       !!! FIXME !!!
       rewind nunit
       read (nunit) nrstep,mf%FALG,mf%GAXES,mf%GEULR,mf%CIJ0,mf%TAX0
@@ -77,7 +94,6 @@ C     following array is actually allocated in the subroutine DYNFIL1:
          DFIL(i)%tRHO=ZERO
       end do
       rewind nunit
-      
       !!! FIXME !!!
       istat = 0
       !
