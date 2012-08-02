@@ -1,14 +1,47 @@
-      FUNCTION FTAU(GAMMA)
+      module altayHard
+      implicit none
+      
+      
+      integer,parameter :: hard_none = 0, hard_voce = 1, hard_pebp =11
+      
+      !> Configuration parameters of Voce hardening law. Some 'reasonable' defaults are used.
+      double precision                          :: TIII1  = 1.486     
+      double precision                          :: TIIIS  = 2.476     
+      double precision                          :: TIVS   = 8.357 
+      double precision                          :: THIII1 = 2.75      
+      double precision                          :: THT    = 0.55
+
+      !> Pre-calculated parameters of Voce hardening law.
+      double precision,private  :: GAMMAT = 0.0, THIII = 0.0, ETA = 0.0,
+     x                             TAUT =  0.0, THIV =  0.0,TIV0 = 0.0
+                  
+      contains
+      
+      
+      subroutine readHardParams(inunit,KOST,info)
 #ifdef ALTAY_SUBROUTINE
       use altayConfig
 #endif
-C      Double Precision FTAU 
-      implicit double precision (a-h,o-z)
-      double precision GAMMA
+      use KOST1x
+      implicit double precision (a-h,o-z),integer(i-n)
+      integer,intent(in)      :: inunit
+      integer,intent(in)      :: KOST
+      integer,intent(out)     :: info
+      !
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      SAVE
-C     check wether model parameters must be read:
-      if (GAMMA.gt.-1000.0) goto 1
+      !
+      info = -1
+      !
+      
+      !!! FIXME !!! <- simple workaround 
+      NLIST = 0  ! this variable must not be set here!
+      !!! FIXME !!!
+      
+      
+      select case(KOST)
+      !
+      case(0,1)
+            ! Just for non-hardening and isotropic, Voce-type hardening
 #ifdef ALTAY_SUBROUTINE
       TIII1 = acnf%hardening%TIII1
       TIIIS = acnf%hardening%TIIIS
@@ -17,8 +50,10 @@ C     check wether model parameters must be read:
       THT   = acnf%hardening%THT
 #else
 C     Read the parameters of the work hardening model:
-      read (KLEC,99) TIII1,TIIIS,TIVS
-      read (KLEC,99) THIII1,THT
+      read (inunit,99,iostat=info) TIII1,TIIIS,TIVS
+      if (info /= 0) return
+      read (inunit,99,iostat=info) THIII1,THT
+      if (info /= 0) return
   99  format (3f10.0)
       if(NLIST.eq.1) then
       write (IMP,100) TIII1,TIIIS,TIVS,THIII1,THT
@@ -38,6 +73,28 @@ C     Read the parameters of the work hardening model:
      2 /, '     also, THETA-III-1 must be larger than THETA-T')
       stop
 #endif
+    3 continue
+      info = 0
+      call precalculateVoceParams()
+      if(NLIST.eq.1) then
+      write (IMP,102) GAMMAT,TAUT,THIV,TIV0
+	end if
+ 102  format (' GAMMA-T, TAU-T, THETA-IV-0, TAU-IV-0',/,4d15.5)
+      !
+      case(11)
+            info = InitModuleKOST1x(inunit,KOST,LEC)
+      !
+      case default
+            ! Unsupported hardening model is requested
+            info = -1
+      !      
+      end select
+      !
+      end subroutine
+      
+      subroutine precalculateVoceParams()
+      implicit none
+      ! All the variables are inherited by host association.
 C     Calculation of transition-gamma
    3  THIII=THIII1/(1.0-TIII1/TIIIS)
       ETA=THT/THIII
@@ -48,21 +105,30 @@ C     Calculation of theta-IV-0
       THIV=THT/(1.0-TAUT/TIVS)
 C     Calculation of TAU-IV-0
       TIV0=TIVS+(TAUT-TIVS)*exp(THIV*GAMMAT/TIVS)
-	if(NLIST.eq.1) then
-      write (IMP,102) GAMMAT,TAUT,THIV,TIV0
-	end if
- 102  format (' GAMMA-T, TAU-T, THETA-IV-0, TAU-IV-0',/,4d15.5)
-      FTAU=0.0
-      goto 2
-C     Implementation of the VOCE-model
-   1  if (GAMMA.le.GAMMAT) then
-        FTAU=TIIIS-(TIIIS-TIII1)*EXP(-THIII*GAMMA/TIIIS)
-      else
-        FTAU=TIVS-(TIVS-TIV0)*EXP(-THIV*GAMMA/TIVS)
-      endif
-   2  RETURN
-      END
+      end subroutine
       
+      
+      double precision function FTAU(GAMMA,KOST)
+      implicit none
+      double precision,intent(in)   :: GAMMA
+      integer,intent(in)            :: KOST
+      !
+      select case(KOST)
+      case(hard_none,hard_PEBP)
+            FTAU = 1.0
+      case(hard_Voce)
+C     Implementation of the VOCE-model
+            if (GAMMA.le.GAMMAT) then
+              FTAU=TIIIS-(TIIIS-TIII1)*EXP(-THIII*GAMMA/TIIIS)
+            else
+              FTAU=TIVS-(TIVS-TIV0)*EXP(-THIV*GAMMA/TIVS)
+            endif
+      case default
+            FTAU = 1.0
+      end select
+      end function
+      
+      end module
       
       
       BLOCK DATA

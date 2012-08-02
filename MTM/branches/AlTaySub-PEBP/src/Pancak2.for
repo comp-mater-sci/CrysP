@@ -11,6 +11,7 @@ C
       use altayRCM
 #endif      
       USE MICROSTR
+      use altayHard
       implicit double precision (a-h,o-z)
       COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),
@@ -183,9 +184,9 @@ C
 C      TLCOST=TLC0
       if (KOST.eq.1) then
          GMMA=GMMAb(IL)
-         TAU=FTAU(GMMA)
 C         TLCOST=TLCOST*TAU
       endif
+      TAU=FTAU(GMMA,KOST)
       DO 92 I=1,M11
       j=I+K1
       do jsgn=1,2
