@@ -36,11 +36,12 @@
 		<File RelativePath="..\src\altaySub.f90"/>
 		<File RelativePath="..\src\curAccess.f90"/>
 		<File RelativePath="..\src\Dynfil.for"/>
+		<File RelativePath="..\src\KOST1x.f90"/>
+		<File RelativePath="..\src\KOST1xState.f90"/>
 		<File RelativePath="..\src\miscutils.f90"/>
 		<File RelativePath="..\src\Odflam.for"/>
 		<File RelativePath="..\src\Pancak2.for"/>
 		<File RelativePath="..\src\SLIPRAT.FOR"/>
-		<File RelativePath="..\src\stateOutput.f90"/>
 		<File RelativePath="..\src\Stelsel.for"/>
 		<File RelativePath="..\src\TBH.for"/></Filter>
 		<File RelativePath="..\src\todo.txt"/></Files>
