@@ -1,6 +1,6 @@
       MODULE KOST1x
 !     v1.0 by P. Eyckens, MTM, KU Leuven, 17 July 2012.
-!     v1.1 by P. Eyckens, MTM, and J. Gawad, CS, KULeuven, 1 August 2012.
+!     v1.1 by P. Eyckens, MTM, and J. Gawad, CS, KULeuven, 2 August 2012.
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST= 11
@@ -17,7 +17,7 @@
 !      while in the PhD, it is mentioned that a Runge-Kutta method is used.
 !      Differences in results (in LST-, CUR-, RES-files) between both methods 
 !      are only marginal. Explicit integration requires less operations and is
-!      off course also more accurate.
+!      more accurate.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       IMPLICIT NONE
@@ -51,8 +51,8 @@
       END TYPE StatVar
 
       INTERFACE InitModuleKOST1x !Generic Interface
-            MODULE PROCEDURE InitKOST1x,Init11
-       !MODULE PROCEDURE Init12 !for future variant with different/more parameters
+        MODULE PROCEDURE Init_file,Init_PAR11
+       !MODULE PROCEDURE Init_PAR12 !for future variant with different/more parameters
       END INTERFACE
                   
       PUBLIC                                                             &
@@ -60,9 +60,12 @@
             InitModuleKOST1x,                                            &
             GetInitStatVar,                                              &
             MakeInc,                                                     &
+			ReadSVfile,         &
+			WriteSVfile,        &
       !derived types:
             PAR11,                                                       &
-            StatVar,CBBtype
+            StatVar,            &
+			CBBtype
 
       !Remaining declarations all PRIVATE:
       TYPE(PAR11), SAVE :: P
@@ -107,19 +110,16 @@
       CONTAINS
 
       !CONTAINed by MODULE KOST1x:
-      integer FUNCTION Init11(KOSTtry,PREunit,PARtry) result(iError)
-      !This function NEEDS to be called:
-      !    * before any other procedure of this module.
-      !    * while the PRE-file is open (unit nr. given by PREunit)
+      integer FUNCTION Init_PAR11(P11try,KOSTtry,LEC) result(iError)
       !Before EXITing, this function REWINDs the PRE-file but does not CLOSE it.
       !This procedure returns an error code (iError):  
-      !      0 , no error
-      !     -1 , in case of unsupported value for KOSTtry
-      !     -2 , in case of incorrect PRE-file
+      !      0 : no error
+      !     -5 : incorrect value of KOSTtry for the inputted parameter-type
+      !     -2 : incorrect PRE-file
+	  !     -3 : (at least one) parameter out of boundaries
+      TYPE(PAR11),INTENT(IN) :: P11try 
       integer    ,INTENT(IN) :: KOSTtry !proposed value of KOST
-      integer    ,INTENT(IN) :: PREunit !unit number of PRE-file
-      TYPE(PAR11),INTENT(IN) :: PARtry 
-      !integer    ,INTENT(OUT):: iError
+      integer    ,INTENT(IN) :: LEC !unit number of PRE-file
 
       character(LEN=64) :: line1
       integer           :: s,i
@@ -127,45 +127,46 @@
       InitOK=.FALSE.
             
       !Check KOSTtry
-      select case (KOSTtry)
-        case (11) !original Peeters hardening
-          iKOST=KOSTtry !=11; iKOST: PRIVATE to this module.
-        case default
-          iError=-1
+      if (KOSTtry /= 11) then
+          iError=-5
           return 
-      end select
+      end if
+          iKOST=KOSTtry !=11; iKOST: PRIVATE to this module.
 
       !Check PRE-file
-      rewind (unit=PREunit)
-      read (PREunit,FMT='(A)') line1
-      rewind (unit=PREunit)
+      rewind (unit=LEC)
+      read (LEC,FMT='(A)') line1
+      rewind (unit=LEC)
       if(.NOT.(line1(1:3).EQ.'BCC' .AND. line1(59:62).EQ.'{BP}')) then
         iError=-2
         return 
       end if
 
-      !Check and save the parameters
-!     if (PARtry%b    > 0.    .AND. PARtry%b    <= 1.e-8    .AND.
-!     &     PARtry%G    > 1.    .AND. PARtry%G    <= 1.e-8    .AND.
+      !Check and save the parameters in P (private to this module)
+      if(P11try%b    >  0.    .AND. P11try%b    <= 1.e-8    .AND.& ! [m]
+         P11try%G    >= 10.e3 .AND. P11try%G    <= 500.e3   .AND.& ! [MPa]
+	     P11try%alfa >  0.    .AND. P11try%alfa <= 5.       .AND.& ! [/]
+         P11try%f    >= 0.    .AND. P11try%f    <= 1.       .AND.& ! [/]
+         P11try%tau0 >= 0.    .AND. P11try%tau0 <= 1.e4     .AND.& ! [MPa]
+         P11try%I    >= 0.    .AND. P11try%I    <= 10.      .AND.& ! [/]
+         P11try%Iwd  >= 0.    .AND. P11try%Iwd  <= 10.      .AND.& ! [/]
+         P11try%Iwp  >= 0.    .AND. P11try%Iwp  <= 10.      .AND.& ! [/]
+         P11try%R    >  0.    .AND. P11try%R    <= 1.e-6    .AND.& ! [m]
+         P11try%Rwd  >  0.    .AND. P11try%Rwd  <= 1.e-6    .AND.& ! [m]
+         P11try%Rncg >  0.    .AND. P11try%Rncg <= 1.e-6    .AND.& ! [m]
+         P11try%Rwp  >  0.    .AND. P11try%Rwp  <= 1.e-6    .AND.& ! [m]
+         P11try%Rrev >  0.    .AND. P11try%Rrev <= 1.e-6    .AND.& ! [m]
+         P11try%R2   >  0.    .AND. P11try%R2   <= 1.e-6    .AND.& ! [m]
+         P11try%beta1>= 0.    .AND. P11try%beta1<= 100.     .AND.& ! [/]
+         P11try%beta2>= 0.    .AND. P11try%beta2<= 100.          & ! [/]
+	      )then
+		    P=P11try
+		  else
+            iError=-3
+            return 
+	  end if
 
-      P%b=  PARtry%b
-      P%G=  PARtry%G
-      P%alfa=     PARtry%alfa
-      P%f=  PARtry%f
-      P%tau0=     PARtry%tau0
-      P%I=  PARtry%I
-      P%R=  PARtry%R
-      P%Iwd=      PARtry%Iwd
-      P%Rwd=      PARtry%Rwd
-      P%Rncg=     PARtry%Rncg
-      P%beta1=PARtry%beta1
-      P%beta2=PARtry%beta2
-      P%Iwp=      PARtry%Iwp
-      P%Rwp=      PARtry%Rwp
-      P%Rrev=     PARtry%Rrev
-      P%R2= PARtry%R2
-
-      !Calculate dependent material parameters
+      !Calculate dependent hardening parameters
       P%RHOcbSAT=P%I  * P%I  /( P%R  * P%R  )
       P%RHOwdSAT=P%Iwd* P%Iwd/( P%Rwd* P%Rwd)
       P%RHOwpSAT=(sqrt((P%Iwp/P%Rwp)**4 +                                &
@@ -184,19 +185,21 @@
           eff(s,i)=DOT_PRODUCT( bDirSS(s,:) , CBBnormal(i,:) )  
         end do
       end do
-      effslashb       = eff/P%b  
-      alfa_G_b= P%alfa* P%G* P%b 
-      alfa_G_b_eff    = alfa_G_b*eff       
+      effslashb       = eff / P%b  
+      alfa_G_b= P%alfa* P%G * P%b 
+      alfa_G_b_eff    = alfa_G_b * eff       
       alfa_G_b_ABSeff = ABS(alfa_G_b_eff)  
 
-      !If control passes here, it initialization is done without errors
+      !If control passes here, initialization is done without errors
       InitOK=.TRUE. !PRIVATE to this module
       iError=0      !OUT
 
-      END FUNCTION Init11
+      END FUNCTION Init_PAR11
 
-      
-      integer function InitKOST1x(inunit,KOST,LEC) result(info)
+
+
+      !CONTAINed by MODULE KOST1x:
+      integer FUNCTION Init_file(inunit,KOST,LEC) result(info)
       implicit none
       integer,intent(in)      :: inunit
       integer,intent(in)      :: KOST     !< Id of the model version.
@@ -208,49 +211,47 @@
       case(11)
             ! Read parameters of PE-BP hardening model
             if (ReadPar11(inunit,PARtry) == 0) then
-                  info = Init11(KOST,LEC,PARtry)
+                  info = Init_PAR11(PARtry,KOST,LEC)
             endif
       case default
-            info = -1
+            info = -1 !Unsupported value of KOST
       end select
       !
-      end function
-      
+      end FUNCTION Init_file
 
-      integer function ReadPar11(inunit,P)
+
+      
+      !CONTAINed by MODULE KOST1x:
+      integer FUNCTION ReadPar11(inunit,Pf)
       implicit none
       integer,intent(in)      :: inunit   !< IO unit number
-      TYPE(PAR11),INTENT(OUT) :: P        !< Parameters to be read from a formatted file.
+      TYPE(PAR11),INTENT(OUT) :: Pf       !< Parameters to be read from a formatted file.
       !
-      ReadPar11 = -1
-      read(inunit,fmt=100,err=666,end=666) P%b
-      read(inunit,fmt=100,err=666,end=666) P%G
-      read(inunit,fmt=100,err=666,end=666) P%alfa
-      read(inunit,fmt=100,err=666,end=666) P%f
-      read(inunit,fmt=100,err=666,end=666) P%tau0
-      read(inunit,fmt=100,err=666,end=666) P%I
-      read(inunit,fmt=100,err=666,end=666) P%R
-      read(inunit,fmt=100,err=666,end=666) P%Iwd
-      read(inunit,fmt=100,err=666,end=666) P%Rwd
-      read(inunit,fmt=100,err=666,end=666) P%Rncg
-      read(inunit,fmt=100,err=666,end=666) P%beta1
-      read(inunit,fmt=100,err=666,end=666) P%beta2
-      read(inunit,fmt=100,err=666,end=666) P%Iwp
-      read(inunit,fmt=100,err=666,end=666) P%Rwp
-      read(inunit,fmt=100,err=666,end=666) P%Rrev
-      read(inunit,fmt=100,err=666,end=666) P%R2
+      read(inunit,fmt=100,err=666,end=666) Pf%b
+      read(inunit,fmt=100,err=666,end=666) Pf%G
+      read(inunit,fmt=100,err=666,end=666) Pf%alfa
+      read(inunit,fmt=100,err=666,end=666) Pf%f
+      read(inunit,fmt=100,err=666,end=666) Pf%tau0
+      read(inunit,fmt=100,err=666,end=666) Pf%I
+      read(inunit,fmt=100,err=666,end=666) Pf%R
+      read(inunit,fmt=100,err=666,end=666) Pf%Iwd
+      read(inunit,fmt=100,err=666,end=666) Pf%Rwd
+      read(inunit,fmt=100,err=666,end=666) Pf%Rncg
+      read(inunit,fmt=100,err=666,end=666) Pf%beta1
+      read(inunit,fmt=100,err=666,end=666) Pf%beta2
+      read(inunit,fmt=100,err=666,end=666) Pf%Iwp
+      read(inunit,fmt=100,err=666,end=666) Pf%Rwp
+      read(inunit,fmt=100,err=666,end=666) Pf%Rrev
+      read(inunit,fmt=100,err=666,end=666) Pf%R2
+100   format(F12.5)
       ! Do extra validation tests here to check the contents of the structure P
       ! ...
       ReadPar11 = 0
-      !
       return
-
       !
-100   format(F12.5)
-      
-666   continue ! IO error handling      
+666   ReadPar11 = -4 !Error in reading from file    
       !
-      end function
+      end FUNCTION ReadPar11
       
       
 
@@ -260,16 +261,16 @@
       ! state variables for an annealed & undeformed substructure (SV0)
       ! an error code (iError):  
       !      0 , no error
-      !     -1 , in case this module is not correctly initialized
+      !     -10, in case this module is not correctly initialized
 
       TYPE(StatVar),INTENT(OUT) :: SV0
       integer,      INTENT(OUT) :: iError
 
-      iError=0
       if(.NOT.InitOK) then
-            iError=-1
+            iError=-10
             return
       end if
+      iError=0
 
       SV0%RHOcb               = P%RHOcbMIN
       SV0%CBB(:)%RHOwd        = P%RHOwdMIN
@@ -294,7 +295,7 @@
       ! state variables at end of the increment (SVb)
       ! an error code (iError):  
       !      0 , no error
-      !     -1 , in case this module is not correctly initialized
+      !     -10, in case this module is not correctly initialized
       TYPE(StatVar),INTENT(IN)       :: SVa
       double precision,INTENT(IN), DIMENSION(24) :: sliprate
       double precision,INTENT(IN)                      :: deltaT
@@ -309,12 +310,12 @@
       integer :: j 
       double precision :: fl,wd
 
-      iError=0
       if(.NOT.InitOK) then
             SVb=SVa
-            iError=-1
+            iError=-10
             return
       end if
+      iError=0
 
       !! Calc. quantities of slip rates and slips
       !! Identify currently generated and non-currently generated walls
@@ -375,7 +376,7 @@
 
       CONTAINS
 
-      !CONTAINed by FUNCTION SVb:
+      !CONTAINed by SUBROUTINE MakeInc:
       FUNCTION F_GAMMAdot(sr) 
       ! Calculate the total slip rates on each of the six (110)-planes
       double precision, DIMENSION(24), INTENT(IN)  :: sr !Slip Rate
@@ -392,7 +393,7 @@
 
 
 
-      !CONTAINed by FUNCTION SVb:
+      !CONTAINed by SUBROUTINE MakeInc:
       FUNCTION sort110planes(PlaneSlip)
       !For the six total PlaneSlips on the (110)-planes:
       !The plane of the largest PlaneSlip is identified by sort110planes(1).
@@ -432,9 +433,8 @@
 
 
 
-      !CONTAINed by FUNCTION SVb:
+      !CONTAINed by SUBROUTINE MakeInc:
       double precision FUNCTION F_KocksMeck(RHO_a,delta_g,II,RR) !PE27062012-2
-!     implicit none
       !Returns RHO_b, the value of RHO at the end of an interval (a,b) 
       ! for the following differential equation:
       !
@@ -460,7 +460,7 @@
 
 
 
-      !CONTAINed by FUNCTION SVb:
+      !CONTAINed by SUBROUTINE MakeInc:
       SUBROUTINE UPD_cur_wp(rdr,RHOwp_a,RHOwp_b,RHObausch)
       integer, INTENT(IN):: rdr
       double precision ,INTENT(IN)   :: RHOwp_a 
@@ -506,7 +506,7 @@
 
 
 
-      !CONTAINed by FUNCTION SVb:
+      !CONTAINed by SUBROUTINE MakeInc:
       FUNCTION RungeKutta(wpini)
       !This function returns the 4th order Runge-Kutta approximation
       !of the differential equation given by 
@@ -539,7 +539,7 @@
 
 
 
-      !CONTAINed by FUNCTION SVb:     
+      !CONTAINed by SUBROUTINE MakeInc:
       FUNCTION dwp_dt(wp)
       double precision, INTENT(IN) :: wp
       double precision             :: dwp_dt !OUT
@@ -554,7 +554,7 @@
 
 
 
-      !CONTAINed by FUNCTION SVb:
+      !CONTAINed by SUBROUTINE MakeInc:
       SUBROUTINE UPD_ncg_wp(RHOwp_a,RHOwp_b) 
       double precision, INTENT(IN)  :: RHOwp_a 
       double precision, INTENT(OUT) :: RHOwp_b 
@@ -576,7 +576,7 @@
 
 
 
-      !CONTAINed by FUNCTION SVb:
+      !CONTAINed by SUBROUTINE MakeInc:
       SUBROUTINE UPD_ncg_wd(rdr,SV_a,SV_b)
       integer,INTENT(IN )       :: rdr
       TYPE(StatVar), INTENT(IN) :: SV_a
@@ -626,7 +626,7 @@
 
 
 
-      !CONTAINed by FUNCTION SVb:
+      !CONTAINed by SUBROUTINE MakeInc:
       SUBROUTINE UPD_cb(RHObausch,SUMabsGam,RHO_a,RHO_b) 
       double precision, INTENT(IN)  :: RHObausch,SUMabsGam
       double precision, INTENT(IN)  :: RHO_a 
@@ -653,7 +653,7 @@
 
 
 
-      !CONTAINed by FUNCTION SVb:
+      !CONTAINed by SUBROUTINE MakeInc:
       FUNCTION F_CRSS(SV_b) 
       TYPE(StatVar), INTENT(IN) :: SV_b 
       double precision, DIMENSION(2,24):: F_CRSS !OUT
@@ -697,5 +697,72 @@
       END FUNCTION F_CRSS
 
       END SUBROUTINE MakeInc
+
+
+
+      !CONTAINed by MODULE KOST1x:
+      integer FUNCTION ReadSVfile(unit,SV) result(iError)
+      integer,      INTENT(IN)  :: unit
+	  TYPE(StatVar),INTENT(OUT) :: SV
+
+      !local variables declarations
+      integer i,j
+
+      read(unit,fmt=101,err=666,end=666) SV%RHOcb
+      do i=1,6 !one line per WALL
+        read(unit,fmt=102,err=666,end=666)SV%CBB(i)%RHOwd,        &
+                                          SV%CBB(i)%RHOwp,        &
+                                          SV%CBB(i)%RHOwdHOM,     &
+                                          SV%CBB(i)%accGAMMA_new, &
+                                          SV%CBB(i)%RHOwd_ini    
+      end do
+      read(unit,fmt=103,err=666,end=666) SV%ActiveCBB(1),SV%ActiveCBB(2)
+      do i=1,2 !first line for positive sense, 2nd line for negative sense
+        read(unit,fmt=104,err=666,end=666)(SV%CRSS(i,j),j=1,24)
+      end do
+      iError = 0
+      return
+101   format(   F12.5 )
+102   format( 5(F12.5))
+103   format( 2(I3   ))
+104   format(24(F12.5))
+      !
+666   iError = -4 !Error in reading from file    
+      !
+      END FUNCTION ReadSVfile
+
+
+
+      !CONTAINed by MODULE KOST1x:
+      integer FUNCTION WriteSVfile(unit,SV) result(iError)
+      integer,      INTENT(IN)  :: unit
+	  TYPE(StatVar),INTENT(IN)  :: SV
+
+      !local variables declarations
+      integer i,j
+
+      write(unit,fmt=101,err=666) SV%RHOcb
+      do i=1,6 !one line per WALL
+        write(unit,fmt=102,err=666)SV%CBB(i)%RHOwd,        &
+                                   SV%CBB(i)%RHOwp,        &
+                                   SV%CBB(i)%RHOwdHOM,     &
+                                   SV%CBB(i)%accGAMMA_new, &
+                                   SV%CBB(i)%RHOwd_ini    
+      end do
+      write(unit,fmt=103,err=666) SV%ActiveCBB(1),SV%ActiveCBB(2)
+      do i=1,2 !first line for positive sense, 2nd line for negative sense
+        write(unit,fmt=104,err=666)(SV%CRSS(i,j),j=1,24)
+      end do
+      iError = 0
+      return
+	  !
+101   format(   F12.5 )
+102   format( 5(F12.5))
+103   format( 2(I3   ))
+104   format(24(F12.5))
+      !
+666   iError = -4 !Error in reading from file    
+      !
+      END FUNCTION WriteSVfile
 
       END MODULE KOST1x
