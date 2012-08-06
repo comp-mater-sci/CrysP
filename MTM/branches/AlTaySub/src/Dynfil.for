@@ -1,24 +1,38 @@
       module DYNFIL
       implicit none
+
+      double precision,dimension(3,3),parameter :: unitMatrix = reshape(
+     &[ 1.D0, 0.D0, 0.D0,
+     &  0.D0, 1.D0, 0.D0,
+     &  0.D0, 0.D0, 1.D0], [ 3, 3 ])
       
       TYPE :: grain
-         double precision :: tFI1,tPHI,tFI2,tGEW,tGAM
-         double precision, dimension(3) :: tAXES,tEULR
-         double precision, dimension(3,3) :: tT,tF,tCIJ,tTAX,tZERO,tRHO
+            double precision :: tFI1 = 0.D0,tPHI = 0.D0, tFI2 = 0.D0
+            double precision :: tGEW = 1.D0 ,tGAM = 0.D0
+            double precision, dimension(3) :: tAXES = 1.D0, tEULR = 0.D0
+            double precision, dimension(3,3) :: tT = 0.D0
+            double precision, dimension(3,3) :: tF = unitMatrix
+            double precision, dimension(3,3) :: tCIJ = unitMatrix
+            double precision, dimension(3,3) :: tTAX = unitMatrix
+            double precision, dimension(3,3) :: tZERO = 0.D0,tRHO = 0.D0
       END TYPE grain
       
       type :: matFrame
-            double precision,dimension(3,3) :: FALG,CIJ0,TAX0
-            double precision,dimension(3) :: GAXES,GEULR
+            double precision,dimension(3,3) :: FALG = unitMatrix
+            double precision,dimension(3,3) :: CIJ0 = unitMatrix
+            double precision,dimension(3,3) :: TAX0 = unitMatrix
+            double precision,dimension(3) :: GAXES = 1.D0,GEULR = 0.D0
       end type
 
 C     following array is actually allocated in the subroutine DYNFIL1:
       type(grain),dimension(:),allocatable,save :: DFIL
 
+      type(matFrame),save     :: mf
+
+      character(len=40),save  :: filetitle = ''
       
-      type(matFrame),save :: mf
+      integer,save            :: NRSTEP = 0
       
-      integer,save :: NRSTEP = 0
       
       contains
       
