@@ -38,18 +38,12 @@ C     following array is actually allocated in the subroutine DYNFIL1:
       
       !> Allocate the memory block for the state variables
       subroutine DYNFIL0(npoint,MPOINT,istat)
+      use IOConfig
       implicit none
       integer,intent(in)      :: npoint
       integer,intent(in)      :: MPOINT
       integer,intent(out)     :: istat
       !
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      COMMON /TEXTUR/ DUM1(29),NO,DUM2(9),
-     1IDUM(2),DUM3(2),NLIST
-      integer :: LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      integer :: NO,IDUM,NLIST
-      double precision :: DUM1,DUM2,DUM3
-
       ! Make sure the old content is deallocated
       istat = 1
       if (allocated(DFIL)) deallocate(DFIL)
@@ -72,19 +66,15 @@ C     following array is actually allocated in the subroutine DYNFIL1:
       !> Initialize the memory block for the state variables 
       !> (texture, grain axes etc.)
       subroutine DYNFIL1(nunit,npoint,MPOINT,istat)
+      use IOConfig
       implicit double precision (a-h,o-z)
       integer,intent(in)      :: nunit
       integer,intent(in)      :: npoint
       integer,intent(in)      :: MPOINT
       integer,intent(out)     :: istat
       !
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-	COMMON /TEXTUR/ DUM1(29),NO,DUM2(9),
-     1IDUM(2),DUM3(2),NLIST
       DIMENSION AXES(3),EULR(3),CIJ(3,3),TAX(3,3),F(3,3),T(3,3),
      1 ZERO(3,3)
-      integer :: LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      integer :: NO,IDUM,NLIST
       integer :: i
       !      
       if (.not. allocated(DFIL)) call DYNFIL0(npoint,MPOINT,istat)
@@ -240,8 +230,8 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #endif
       USE MICROSTR
       use miscutils
+      use IOConfig
       implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       DIMENSION TA(3,3),A(3,3),A1(3,3)
 c <jg>
       integer,parameter :: pathlength=512
@@ -379,10 +369,8 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #endif
       use dynfil
       use miscutils
+      use IOConfig
       implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      COMMON /TEXTUR/ DUM1(29),NO,DG(3,3),
-     1ITW,IPR,GMMA,GEWF,NLIST
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,NPOINT,TEN(3,3),TOTGEW
       DIMENSION T(3,3),TA(3,3),A(3,3),F(3,3),FALG(3,3),ZERO(3,3),
      1 GAXES(3),GEULR(3),CIJ(3,3),TAXES(3,3)

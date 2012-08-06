@@ -9,10 +9,10 @@ C
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif
+      use IOConfig
       implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
-     1ITW,IPR,DELTAW,GEWF,NLIST
+     1ITW,DELTAW,GEWF
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON/TLR1/ N,M,N1,NGL,NTW,NC,LC,B1(3,96),B(5,5),
      1B2(6,96),G(96),DI1(5)
@@ -197,10 +197,10 @@ C 1235 format (' Just after Pancak2')
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif
+      use IOConfig
       implicit double precision (a-h,o-z)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
-     1ITW,IPR,DELTAW,GEWF,NLIST
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
+     1ITW,DELTAW,GEWF
       COMMON/TLR1/ N,M,N1,NGL,NTW,NC,LC,B1(3,96),B(5,5),
      1B2(6,96),G(96),DI1(5)
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)

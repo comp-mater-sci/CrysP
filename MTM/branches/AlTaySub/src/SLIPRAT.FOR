@@ -1,4 +1,5 @@
       Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn)
+      use IOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
       IMPLICIT double precision (A-H,O-Z)
 C     September 2000
 C     To find the slip rates assuming that
@@ -10,7 +11,6 @@ C
 C     Modified in Aug 2010
 C
       COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),
      1 TLXX,TAURLP(8) 
       dimension SGNN(IDIMXX)
@@ -226,6 +226,7 @@ C         XX(j)=Y*DELTAT*sgnn(j)
       return
       end
       Subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
+      use IOConfig
       IMPLICIT double precision (A-H,O-Z)
 C     December 2000
 C     The  normalisation by DELTAT of the september 2000 version has been
@@ -234,7 +235,6 @@ C
 C     Modified Aug 2010
 C
       COMMON /DOUBLE/ A8(5,96),BB8(5),DELTAT,RHO(5),B5(5)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       dimension sgnn(IDIMXX)
       dimension A(13,13),B(13),SLPR(8),IND(8)
       dimension AA(13,13),BA(13),VAL(13),XV(13),YV(13)
@@ -305,8 +305,8 @@ C 915  format (6D15.3)
       return
       end
       subroutine STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+      use IOConfig
       IMPLICIT double precision (A-H,O-Z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       dimension SLPR(8),IND(8),ISTOR(0:8,48),SLSTOR(0:8,48)
       NOPL=NOPL+1
       if (NOPL.gt.NSTOR) then

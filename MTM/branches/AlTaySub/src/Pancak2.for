@@ -10,9 +10,9 @@ C
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
-      USE MICROSTR
+      use MICROSTR
+      use IOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
       implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),
      1 gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),
      2 CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),
@@ -505,11 +505,11 @@ C 912  format (' NACTIV, i',2I5)
       END        
       
                                                              
-                                                                                                                                                                           
+
       Subroutine CLUSTER1(TDC,GRPAR,GEWF,TGrb,alfa,
      1 WINT,Tprinc,IPR)
+      use IOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
       implicit double precision (a-h,o-z)
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
       dimension AXX(3,3),GRPAR(3,3),TGRB(3,3),
      1 C1(3,3),PrDir(3,3),TDC(3,3),TDCGr(3,3),
      2 vec1(3),vec2(3),Tprinc(3,3),AL(3),AA(3)

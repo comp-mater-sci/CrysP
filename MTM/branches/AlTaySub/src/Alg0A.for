@@ -23,18 +23,16 @@ C     USING THE ALAMEL MODEL
       use altayConfig
       use altayRCM
 #endif
+      use IOConfig
       implicit double precision (a-h,o-z)
 C
 C     IW=2 is meant for outputting the final texture.
 C
-
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      COMMON /ES1/ IMP3
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON /DOUBLE/ XM(5,96),XEPS(5),DELTAT,RHO(5),B5(5)
       COMMON /STAP/ SG,GMM                                              
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
-     1ITW,IPR,DELTAW,GEWF,NLIST
+     1ITW,DELTAW,GEWF
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,NPOINT,TEN(3,3),TOTGEW        
       COMMON /EULERA/ fi1,PHI,fi2
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
@@ -57,8 +55,8 @@ C
       
 #ifdef ALTAY_SUBROUTINE
       ! Variables for simple stress calculations: full_model=.false.
-      ! This operation mode is inspired by QGX's way of calculating stresses
-      ! without a call to TAYLR1
+      ! This operation mode is inspired by QGX's way of calculating
+      ! stresses without a call to TAYLR1
       double precision,dimension(3,3) :: spant,TRFT,bufsp
 #endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
@@ -81,6 +79,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       NFILE1 = acnf%output_config%NFILE   ! control "CUR"
       NFILTW = acnf%output_config%NFILTW  ! control "TWN"
       IPR    = acnf%output_config%IPR     ! control printing level
+      NRES   = acnf%output_config%NRES    ! control "RES"
 #else
 C     Number of grains in ALAMEL cluster
       read (KLEC,99) NGR
@@ -145,7 +144,7 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
       if(NLIST.eq.1) then
       write (IMP,97) TITEL
 	end if
-      if (NFILE1) write (IMP2,98) TITEL
+      if ((NFILE1).and.(NRES.gt.0)) write (IMP2,98) TITEL
 #endif
 
   97  format (' Title of the new simulation: ',A)
@@ -277,7 +276,7 @@ C     INSTRUCTION ADDED IN LAMEL model:
       if (ISTP.gt.1) goto 44
       IF (NLIST.EQ.1) WRITE (IMP,112) ISTP
  112  FORMAT (//' DEFORMATION STEP ',I5,//)
-      write (IMP2,404) nrstep+1,NPOINT
+      if (NRES.gt.0) write (IMP2,404) nrstep+1,NPOINT
  404  format (' Def. Step ',i5,'  Number of orientations',i5,/,8x,
      1 ' WDOT  ','WDOT/STR.RAT.','  TAU     ','   M      ','STR.RAT. '
      2 ,5x,24X,'RHO-SYMMETRIC',24x,8x,'RHO-ROTATIONAL',8x,
@@ -474,7 +473,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
             call MATPROD(bufsp,SPANT,TRF,3,3,3)
             call MATPROD(Ssam,TRFT,bufsp,3,3,3)
       else
-            CALL TAYLR1(ISTP,IOR,NFILE,TAU)
+            CALL TAYLR1(ISTP,IOR,NRES,TAU)
             RCM_GUARD
       endif
 #else

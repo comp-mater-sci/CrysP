@@ -43,6 +43,7 @@
 		<File RelativePath="..\src\Alg2.for"/>
 		<File RelativePath="..\src\curAccess.f90"/>
 		<File RelativePath="..\src\Dynfil.for"/>
+		<File RelativePath="..\src\ioconfig.f90"/>
 		<File RelativePath="..\src\MainA1.for"/>
 		<File RelativePath="..\src\miscutils.f90"/>
 		<File RelativePath="..\src\Pancak2.for"/>

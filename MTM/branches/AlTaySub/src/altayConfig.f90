@@ -83,9 +83,10 @@ implicit none
       
       type :: outputConfig
             integer                                   :: nlist = 0    !< (SIMUL) NLIST (Make an output listing 0 or 1)
-            integer                                   :: nfile = 0    !< (SIMUL) NFILE (Make output files 0 or 1)
+            integer                                   :: nfile = 0    !< (SIMUL) NFILE (Make output files 0 or 1) (CUR output)
             integer                                   :: nfiltw = 0   !< (SIMUL) NFILTW (Make output files 0 or 1)
             integer                                   :: ipr = 0      !< (SIMUL) IPR  0-3 Print switch. All except Van Houtte must use 0
+            integer                                   :: nres = 0     !< (SIMUL) NRES (Make output for 
             logical                                   :: use_curfile = .false.
             logical                                   :: use_cubfile = .false.
       end type

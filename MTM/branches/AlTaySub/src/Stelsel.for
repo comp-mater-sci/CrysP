@@ -47,7 +47,6 @@ C
 
       Subroutine STELSEL(N,M,A,R,TOL,VAL,XV,YV)
       IMPLICIT double precision (A-H,O-Z)
-C      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1,NDAT2
       dimension A(M,M),R(M),VAL(M),XV(M),YV(M)
 C
 C     to solve the system of equations A * X = R using

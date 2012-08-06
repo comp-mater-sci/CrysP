@@ -37,26 +37,12 @@ contains
       use altayConfig, only: altayConfigData,fname_len
       use altayInterface
       use altayRCM
+      use IOConfig
       implicit none
       !
       type(altayConfigData),intent(in)    :: cnf
       integer,intent(out)                 :: info
 !
-!     LEC= data set with slip systems
-!     KLEC= data set with parameters
-!     IMP= printer
-!     IMP1=output file with successive "current situations"
-!     IMP2=output file with successive "responses to imposed strain"
-!     IMP3=output file with "twinning" stuff (.TWN)
-!     IDISK1= work file
-!     NDAT1= Input-texture file     Opened in LEESOR
-!
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      integer  :: LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      COMMON /ES1/ IMP3
-      integer  ::  IMP3  
-      !
-      ! COMMON /OUTMIC/NUMIC,NUCUB
       double precision :: resid
       integer :: iiter
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
@@ -92,7 +78,7 @@ contains
 #endif
 !
 #ifndef NORESFILE
-            if (cnf%output_config%nlist /= 0) then
+            if (cnf%output_config%nres /= 0) then
                   cods1(L+1:L+4)='.RES'
                   open (unit=IMP2,file=cods1,status='replace')
             endif
@@ -168,13 +154,14 @@ contains
       use altayConfig, only: altayStateData
       use altayInterface
       use altayRCM
+      use IOConfig
       implicit none
       type(altayStateData),intent(inout)        :: steps
       integer,intent(out)                       :: info
       ! We need this common block just for the DG tensor.
-      COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3), ITW,IPR,DELTAW,GEWF,NLIST
+      COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3),ITW,DELTAW,GEWF
       double precision :: DUM1,DG, DELTAW,GEWF
-      integer :: IDUM1,ITW,IPR,NLIST
+      integer :: IDUM1,ITW
       integer :: NFILE0
       !
       integer :: i,j
