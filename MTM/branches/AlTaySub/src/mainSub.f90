@@ -23,6 +23,7 @@ program alamelSubTest
 use altayConfig
 use altaySub
 use verifySub
+use testTexAccess
 implicit none
 
 
@@ -58,6 +59,9 @@ integer :: nsteps, info
       ! call verifyMMMmode(modelAlamel)
 
       call verifyAltayExample()
+      
+      
+      ! call testCURAccess()
       
 end program
 

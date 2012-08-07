@@ -118,7 +118,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 	      end if
             stop
 #else
-            RCM_RAISE(1,'SIMUL','incorrect value of NGR',RCM_RTN)
+            RCM_RAISE(1,'SIMUL','Incorrect value of NGR',RCM_RTN)
 #endif
       endif
  140  format (' NGR can only take the values 1 or 2 but was',I5)   
@@ -149,7 +149,7 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
 
   97  format (' Title of the new simulation: ',A)
       ! Only if CUR file is requested
-      if (NFILE1.eq.1) call writeCURTitle(IMP1,TITEL,info)
+      if (NFILE1.eq.1) call CURwriteTitle(IMP1,TITEL,info)
   98  format (A)      
 C     read the parameters of the work hardening model
       X=FTAU(-1000.0D00)
@@ -223,7 +223,7 @@ C     read the parameters of the work hardening model
       RCM_GUARD
 #endif
       ! Output the current texture
-      if (NFILE.eq.1) call writeCURBlock(IMP1,info)
+      if (NFILE.eq.1) call CURwriteBlock(IMP1,info)
 C
 C     Main Loop over the Steps
 C
@@ -311,6 +311,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       call UPDATC(CIJ,F2)
       call GETANG(CIJ,GAXES,GEULR,TG)
 #ifdef ALTAY_SUBROUTINE
+      RCM_GUARD
       ! We can choose not to update the microstructure/state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
             call DYNFIL3(nrstep,F,GAXES,GEULR,CIJ,TG)

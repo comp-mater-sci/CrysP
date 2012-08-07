@@ -1,7 +1,7 @@
 module verifySub
 use altaySub
 use altayConfig
-
+use altayRCM
 contains
       
       subroutine verifyMMMmode(modelId)
@@ -63,17 +63,26 @@ contains
       implicit none
       double precision    :: t1 = 0.0, t2 = 0.0
       integer :: i, nsteps,info
+      
+      integer :: imp1 = 7, istdout = 6
+      
 
+            info = -1
             acnf%simul_init%ngr = 1
+            acnf%output_config%nfile = 1 ! switch on creation of the CUR file
+            ! acnf%output_config%nres = 1 ! switch on creation of the RES file
             
             ! Initialize the altay with the configuration data      
             call initAltay(acnf,info)
-      
+            if ((info /= 0) .or. RCM_catch(istdout)) then
+                 write(*,*) 'Cannot initialize AlTay module'
+                 stop
+            endif
             nsteps = 4
             
             call initStepData(nsteps,astate,info)
-            if (info /= 0) then
-                  write(*,*) 'Cannot initialize data structure for alamel results'
+            if ((info /= 0).or. RCM_catch(istdout)) then
+                  write(*,*) 'Cannot initialize data structure for AlTay results'
                   stop
             endif      
 
@@ -90,6 +99,7 @@ contains
                   astate%simulCalls(i)%input%rlx1 = 1
             
                   astate%simulCalls(i)%input%nsteps = 10
+                  astate%simulCalls(i)%input%do_output = .true.
             enddo
 
       
@@ -97,10 +107,14 @@ contains
             call cpu_time(t1)
 
             call runSteps(astate,info)
+            if ((info /= 0).or. RCM_catch(istdout)) then
+                  write(*,*) 'Execution error has been detected in processing steps.'
+                  stop
+            endif      
     
             call cpu_time(t2)
 
-
+            
 
       !      do i=0,nsteps
       !            write(*,'(3(3(F10.6,1X),/))') ares%stress_tensors(:,:,i) !/ ares%average_stress(i)
@@ -113,8 +127,8 @@ contains
             write(*,100) nsteps, t2 - t1 
             write(*,101) (t2 - t1) / dble(nsteps)  
 
-      100 format('Calculation time for ',I5,' calls: ',F12.3,1X,'secs.') 
-      101 format('Average: ',F6.3,1X, 'secs. per call')
+      100 format('Calculation time for ',I5,' calls: ',F15.6,1X,'secs.') 
+      101 format('Average: ',F15.6,1X, 'secs. per call')
       end subroutine
       
 end module

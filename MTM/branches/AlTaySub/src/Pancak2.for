@@ -264,6 +264,9 @@ C the CRSS of the two pseudo slip systems are CrssP1 and CrssP2
 C cos1 and cos2 are related with the cosine between the imposed strain rate and 
 C the symmetry part of the relaxations
 C W1 and W2 are the rate of plastic work by Taylor for grain1 and grain2
+#ifdef ALTAY_SUBROUTINE
+      RCM_GUARD
+#endif
       IF(ITFMAS.eq.1) then
       W1=0.0
 	w2=0.0
@@ -362,6 +365,9 @@ C                  (2 sets of stresses, one for each crystal)
 C Fakm: rate of plastic work of the 2 crsytals together
 C Taur (output) resolved shear stress (can be + or -)        
 C DTAU (output)=abs(Taur)-Tauc 
+#ifdef ALTAY_SUBROUTINE
+      RCM_GUARD
+#endif
 C      if (IOR.eq.1967.and.ISTP.eq.11.and.NBLOC.eq.3) stop
 
 C

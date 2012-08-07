@@ -291,6 +291,9 @@ C
       b=e(1,1)*e(2,3)**2+e(2,2)*e(3,1)**2+e(3,3)*e(1,2)**2-
      1 2.0*e(1,2)*e(2,3)*e(3,1)-e(1,1)*e(2,2)*e(3,3)
       call canoni(a,b,x,theta,pi)
+#ifdef ALTAY_SUBROUTINE
+      RCM_GUARD
+#endif      
       pmax=abs(x(1))
       imax=1
       do 10 i=2,3

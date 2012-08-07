@@ -84,7 +84,12 @@ c
       write (IMP,102) NBLOC
 	end if
  102  format (' NBLOC=',I5)
-      CALL GRFIL  
+      CALL GRFIL(ierr)
+      if (ierr.ne.0) then
+      write(*,215)
+      stop
+ 215  format('Error condition is returned by GRFIL')
+      endif
 C
 C     Initialisation of SIMUL
 C

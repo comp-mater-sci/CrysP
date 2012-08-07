@@ -1,5 +1,11 @@
+#ifdef ALTAY_SUBROUTINE
+#include "altayRCM.fpp"
+#endif
       Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn)
       use IOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
+#ifdef ALTAY_SUBROUTINE
+      use altayRCM
+#endif      
       IMPLICIT double precision (A-H,O-Z)
 C     September 2000
 C     To find the slip rates assuming that
@@ -42,6 +48,9 @@ C     end of check
   3   call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
       if (ineg.eq.0) then
            call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+#ifdef ALTAY_SUBROUTINE
+           RCM_GUARD
+#endif
            if (NN.le.5) goto 2
       endif
       if (NN.le.5) goto 6
@@ -62,8 +71,12 @@ C
        NN=N1
        do I1=1,N0
           call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
-          if (ineg.eq.0)
-     1  call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+          if (ineg.eq.0) then
+             call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+#ifdef ALTAY_SUBROUTINE
+             RCM_GUARD
+#endif 
+          endif
 C          write (IMP,110) (IND(i),i=1,N1)
  110   format (10i5)
           J=N0-I1
@@ -86,8 +99,12 @@ C
             j=j+1
    5        continue
             call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
-            if (ineg.eq.0)
-     1       call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+            if (ineg.eq.0) then
+                call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+#ifdef ALTAY_SUBROUTINE
+                RCM_GUARD
+#endif
+            endif
 C            write (IMP,110) (IND(i),i=1,N2)
          enddo
       enddo
@@ -111,8 +128,12 @@ C
    7          continue
               call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
 C              if (ineg.eq.0) goto 2
-               if (ineg.eq.0)
-     1             call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+              if (ineg.eq.0) then
+                  call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+#ifdef ALTAY_SUBROUTINE
+                  RCM_GUARD
+#endif
+              endif 
 C              write (IMP,110) (IND(i),i=1,N3)
            enddo
          enddo
@@ -306,15 +327,23 @@ C 915  format (6D15.3)
       end
       subroutine STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
       use IOConfig
+#ifdef ALTAY_SUBROUTINE
+      use altayRCM
+#endif      
       IMPLICIT double precision (A-H,O-Z)
       dimension SLPR(8),IND(8),ISTOR(0:8,48),SLSTOR(0:8,48)
       NOPL=NOPL+1
       if (NOPL.gt.NSTOR) then
+#ifndef ALTAY_SUBROUTINE
 	   if (NLIST.eq.1) then
          write (IMP,100)
 	   end if
          write (*,100)
          stop
+#else
+         RCM_RAISE(1,'STORE',
+     1   'Too small dimension NSTOR in SLIPRAT',RCM_RTN)
+#endif
       endif
  100  format (' STORE - increase dimension NSTOR in SLIPRAT,STORE')
       ISTOR(0,NOPL)=NN

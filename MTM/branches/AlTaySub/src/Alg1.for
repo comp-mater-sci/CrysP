@@ -58,7 +58,7 @@ C
       IF (I.NE.0) STOP
 #else
       if (I.NE.0) then
-      RCM_RAISE(1,'TAYLOR','wrong slip system set',RCM_RTN)
+      RCM_RAISE(1,'TAYLOR','Improper slip system set',RCM_RTN)
       endif
 #endif
       M=NGL+NTW
@@ -247,6 +247,9 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C  11  write (*,1771) IOR
 C 1771 format (I5)
   11  call SLIPRAT(M11,96,GAMMA,ior,IPR,SGNN)
+#ifdef ALTAY_SUBROUTINE
+      RCM_GUARD
+#endif      
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C  13  if (IGLIJ.eq.1) then
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -469,7 +472,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #ifndef ALTAY_SUBROUTINE
   52  STOP
 #else
-      RCM_RAISE(1,'TAYLR1',
+  52  RCM_RAISE(1,'TAYLR1',
      x'No upper limit for linear programming problem',RCM_RTN)
 #endif
       END                                                               

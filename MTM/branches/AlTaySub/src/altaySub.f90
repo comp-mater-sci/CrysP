@@ -42,21 +42,13 @@ contains
       !
       type(altayConfigData),intent(in)    :: cnf
       integer,intent(out)                 :: info
-!
-      double precision :: resid
-      integer :: iiter
-      COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
-      double precision :: FK1, M11, CC
-      
       !
-      character(len=fname_len) :: fnam1,fnam2, cods1 
+      character(len=fname_len) :: fnam2, cods1 
       character(len=8)  :: codsim
-      integer :: iblank, ierr
+      integer :: ierr
+      integer,parameter :: extlen = 4
       
-      
-      
-      !DATA MPOINT /8000/,NUNIT/2/
-      integer,parameter :: MPOINT = 8000, NUNIT = 2
+     integer,parameter :: MPOINT = 8000, NUNIT = 2
       
       !data NUMIC/122/,NUCUB/123/
       integer,parameter :: NUMIC = 122, NUCUB = 123
@@ -68,7 +60,9 @@ contains
 !
             codsim = trim(cnf%output_prefix)
             L=len_trim(codsim)
-            cods1=codsim
+            ! Precaution against buffer overflow:
+            if (L+extlen > fname_len) L = fname_len - extlen
+            cods1=codsim(1:L)
 #ifndef NOLSTFILE
             if (cnf%output_config%nlist /= 0) then
                   cods1(L+1:L+4)='.LST'
@@ -105,25 +99,27 @@ contains
             endif
 #endif
 
-      info = altaySub_Exception
+            info = altaySub_Exception
       
-      CALL GRFIL()
-      RCM_HANDLE(info)
-      !
-      ! Initialisation of SIMUL
-      !
-      EPS = 0.D0
-      CALL SIMUL(0,EPS,1)
-      RCM_HANDLE(info)
+            CALL GRFIL(info)
+            if (info /= 0) return
+            RCM_HANDLE(info)
       
-      ! Go back to initial texture
-      CALL LEESOR(NUNIT,MPOINT)
-      RCM_HANDLE(info)
-      !
-      ! No need for the slip system definition anymore.
-      close(LEC)
-      info = 0            
+            !
+            ! Initialisation of SIMUL
+            !
+            EPS = 0.D0
+            CALL SIMUL(0,EPS,1)
+            RCM_HANDLE(info)
       
+            ! Get the initial texture
+            CALL LEESOR(NUNIT,MPOINT)
+            RCM_HANDLE(info)
+            !
+            ! No need for the slip system definition anymore.
+            close(LEC)
+            info = 0            
+      !
       end subroutine
       
       
@@ -170,31 +166,33 @@ contains
       !
       ! TODO: check validity of the inputs (priority: size of the array!!)
      
-      info = altaySub_Exception
+            info = altaySub_Exception
       
-      do i = 1, steps%nSimulCalls
-            steps%this = i
-            !
-            NFILE0 = steps%simulCalls(i)%input%do_output
-            DG = steps%simulCalls(i)%input%dgf
+            do i = 1, steps%nSimulCalls
+                  steps%this = i
+                  !
+                  NFILE0 = steps%simulCalls(i)%input%do_output
+                  DG = steps%simulCalls(i)%input%dgf
 
-            ! preempt round-off errors due to IO format
-            resid = DG(1,1)+DG(2,2)+DG(3,3)
-            if (dabs(resid) .GT. 1.D-9) then
-                  resid = resid / 3.D0
-                  do j=1,3
-                        DG(j,j) = DG(j,j) - resid
-                  enddo
-            endif
+                  ! preempt round-off errors due to IO format
+                  resid = DG(1,1)+DG(2,2)+DG(3,3)
+                  if (dabs(resid) .GT. 1.D-9) then
+                        resid = resid / 3.D0
+                        do j=1,3
+                              DG(j,j) = DG(j,j) - resid
+                        enddo
+                  endif
             
-            ! Run simul.
-            call SIMUL(1,steps%eps,NFILE0)
-            RCM_HANDLE(info)
+                  ! Run simul.
+                  call SIMUL(1,steps%eps,NFILE0)
+                  if (RCM_signal()) then
+                        RCM_RAISE(info,'runSteps','SIMUL has thrown exception',RCM_RTN) 
+                  endif
 
-      enddo
+            enddo
       
-      info = altaySub_OK
-      
+            info = altaySub_OK
+      !
       end subroutine
 
       

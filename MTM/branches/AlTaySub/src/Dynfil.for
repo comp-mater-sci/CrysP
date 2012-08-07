@@ -218,7 +218,7 @@ C     following array is actually allocated in the subroutine GRFIL:
       
 
 
-      SUBROUTINE GRFIL  
+      SUBROUTINE GRFIL(ierr)
 C     Reading of "microstructure" (Euler angles defining 
 C       grain boundary segments)
 C     Allocation of "temporary file" to memory
@@ -234,12 +234,15 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       implicit double precision (a-h,o-z)
       DIMENSION TA(3,3),A(3,3),A1(3,3)
 c <jg>
+      integer,intent(out) :: ierr
       integer,parameter :: pathlength=512
       character(len=pathlength) :: fnam1
 c </jg>
       SAVE
       data convf/0.5729577951308232D+02/
       DATA A  / 8 * 0.0D0 , 1.0D0  /
+c
+      ierr = -1
       FPI=1.0D0/convf
 #ifdef ALTAY_SUBROUTINE
       fnam1 = acnf%micros_fname  
@@ -258,7 +261,8 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #endif
   99  FORMAT (I5)
 C     UNIT NDAT1= INITIAL MICROSTRUCTURE
-      open (unit=NDAT1,file=fnam1,status='old')
+      open (unit=NDAT1,file=fnam1,status='old',iostat=ierr)
+      if (ierr /= 0) return
 C
       read (NDAT1,94) NGrElm,TitMic
   94  format(I5,5x,A)
@@ -271,10 +275,8 @@ C      write (IMP,93) NGrElm,TitMic
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   93  format (' Number of orientations in MICROSTRUCTURE file:',I5,/,
      1' Titel on  file: ',A)
-      ALLOCATE(TmatGr(3,3,NGrElm),STAT=jok)
-      if (jok.ne.0) then
-            stop
-      endif
+      ALLOCATE(TmatGr(3,3,NGrElm),STAT=ierr)
+      if (ierr.ne.0) return
  101  format (' GRFIL ',
      1 'Allocation of RAM-memory was succesful')
  102  format (' GRFIL - ',
@@ -317,6 +319,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       enddo                                                       
   11  CONTINUE                                                          
       CLOSE (unit=NDAT1)
+      ierr = 0
       RETURN
       END SUBROUTINE GRFIL
 
