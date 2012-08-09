@@ -106,8 +106,12 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX
       call cluster1(TDC,GRPAR,GEWF,TGRB,alfa,
      1  WINT,Tprinc,IPR)
 	else
-	call cluster1(TDC,GRPAR,qq,TGRB,alfa,
-     1  WINT,Tprinc,IPR)
+      ! let Tprinc be equal to the identity matrix.
+	do i=1,3
+         do j=1,3 
+            Tprinc(i,j)=(i/j)*(j/i) 
+         enddo
+      enddo
 	end if
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       do 33 i=M2+1,M12
