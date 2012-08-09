@@ -1,10 +1,13 @@
+!
+! $Id$
+!      
 module curAccess
-   
+use dynfil  
 
 contains
 
+      !> Write title line of the CUR format.
       subroutine CURwriteTitle(imp1,title,info)
-      use dynfil
       implicit none
       integer,intent(in)      :: imp1  !< IO unit number
       character(len=*)        :: title !< Title line
@@ -14,9 +17,9 @@ contains
       !
       end subroutine
 
+      
       ! Write the current contents of the dynfil
       subroutine CURwriteBlock(imp1,info)
-      use dynfil
       implicit none
       integer,intent(in)      :: imp1 !< IO unit number
       integer,intent(out)     :: info !< exit code: 0 on success
@@ -51,6 +54,7 @@ contains
  403  format(I6,5X,i5,44x,3(2X,3F10.6),2(2x,3f10.5))
       !      
       end subroutine
+
       
       subroutine CURreadTitle(inp,title,info)
       implicit none
@@ -59,36 +63,40 @@ contains
       integer,intent(out)     :: info
       !
             read(inp,'(A)',iostat=info) title
+            filetitle = title 
       !
       end subroutine
+
       
       subroutine CURreadBlock(inp,offset,MPOINT,info)
       use dynfil
       implicit none
       integer,intent(in)      :: inp      !< IO unit
       integer,intent(in)      :: offset   !< Number of blocks to be skipped
-      integer,intent(in)      :: MPOINT   !< Maximal number of points in a block to be skipped
+      integer,intent(in)      :: MPOINT   !< Maximal number of points in a block
       integer,intent(out)     :: info     !< Exit code
       !
       integer :: npoint, i, j, tmp
+      double precision,dimension(3,3) :: TA, A
       double precision,parameter :: convf = acos(-1.D0) / 180.D0
+      character(len=10) :: buf
       
       ! Recon first: get the number of records
-      read(inp,fmt=401,iostat=info) 
+      read(inp,fmt=402,iostat=info) buf,buf
       read(inp,fmt=403,iostat=info) NRSTEP,npoint,mf%FALG,mf%GAXES,mf%GEULR
       if (info /= 0) return
-      read(inp,fmt=401,iostat=info)
+      read(inp,fmt=401,iostat=info) buf
       if (info /= 0) return
-      
+      ! Skip N=offset blocks:
       ofs: do i = 1,offset
-            read(inp,fmt=401)
             do j = 1, npoint
-                  read(inp,fmt=4000,iostat=info)
+                  read(inp,fmt=401,iostat=info) buf
                   if (info /= 0) exit ofs
             enddo
-            read(inp,fmt=402,iostat=info)
+            read(inp,fmt=402,iostat=info) buf,buf
             read(inp,fmt=403,iostat=info) NRSTEP,npoint,mf%FALG,mf%GAXES,mf%GEULR
-            read(inp,fmt=401,iostat=info)
+            if (info /= 0) exit
+            read(inp,fmt=401,iostat=info) buf
       enddo ofs
       if (info /= 0) return
       !
@@ -97,7 +105,7 @@ contains
       call Transf(mf%GAXES,mf%CIJ0,mf%TAX0)  ! Check it!!!
       
       ! Request allocation of the memory
-      call DYNFIL0(npoint,MPOINT,info)
+      call DYNFIL0(npoint,MPOINT,.false.,info)
       ! Process the crystals in the block      
       do i=1,npoint
             read(inp,400,iostat=info) tmp,DFIL(i)%tGEW,     &
@@ -109,14 +117,16 @@ contains
             ! Convert the grain orientatios from degrees to radians
             DFIL(i)%tfi1 = DFIL(i)%tfi1 * convf
             DFIL(i)%tPHI = DFIL(i)%tPHI * convf
-            DFIL(i)%tPHI = DFIL(i)%tfi2 * convf
+            DFIL(i)%tfi2 = DFIL(i)%tfi2 * convf
+            !
+            call orientMat(DFIL(i)%tfi1,DFIL(i)%tPHI,DFIL(i)%tfi2,TA,A)
+            CALL MATPROD(DFIL(i)%tT,TA,A,3,3,3)
             !
             ! Backward compatibility with type(grain):
             ! initialize the remaining components with mf data
                   
             DFIL(i)%tAXES = mf%GAXES 
             DFIL(i)%tEULR = mf%GEULR
-            DFIL(i)%tT   = 0.D0           !!! FIXME !!! <- this component should be initialized!
             DFIL(i)%tF   = mf%FALG
             DFIL(i)%tCIJ = mf%CIJ0
             DFIL(i)%tTAX = mf%TAX0
@@ -127,10 +137,11 @@ contains
       
       !
  400  format (I6,f10.5,2X,3f10.5,2X,f10.5)
- 401  format(/)   ! ignore one record
- 402  format(/,/) ! ignore two lines
+ 401  format(A)     ! ignore one record
+ 402  format(A,/,A) ! ignore two lines
  403  format(I6,5X,i5,44x,3(2X,3F10.6),2(2x,3f10.5))      
 4000  format(/)   ! Fake 400  
+!4001  format(A10)      
       end subroutine
       
       

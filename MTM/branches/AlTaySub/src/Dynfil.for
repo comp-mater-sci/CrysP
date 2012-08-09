@@ -36,26 +36,46 @@ C     following array is actually allocated in the subroutine DYNFIL1:
       
       contains
       
-      !> Allocate the memory block for the state variables
-      subroutine DYNFIL0(npoint,MPOINT,istat)
+      !> Allocate the memory block for the state variables.
+      subroutine DYNFIL0(npoint,mpoint,keepstate,istat)
       use IOConfig
       implicit none
       integer,intent(in)      :: npoint
-      integer,intent(in)      :: MPOINT
+      integer,intent(in)      :: mpoint
+      !> Flag: if .true., the contents of the DFIL will be preserved
+      !> on reallocation.
+      logical,intent(in)      :: keepstate      
       integer,intent(out)     :: istat
       !
-      ! Make sure the old content is deallocated
+      type(grain),dimension(:),allocatable :: tmp
+      integer :: ntransf
+      !
       istat = 1
-      if (allocated(DFIL)) deallocate(DFIL)
-      if ((npoint > MPOINT).or.(npoint <= 0)) then
+      if ((npoint > mpoint).or.(npoint <= 0)) then
             ! Error handling
             if(NLIST.eq.1) write(IMP,100)
             return
       endif
-      ! Allocate the storage
-      allocate(DFIL(npoint),stat=istat)
+      ! 
+      if (.not. allocated(DFIL)) then
+            allocate(DFIL(npoint),stat=istat)
+      else  
+            ! DFIL is previously allocated
+            if (keepstate) then
+                  ! Transfer npoints 
+                  allocate(tmp(npoint),stat=istat)
+                  if (istat == 0) then
+                        ntransf = min(npoint,size(DFIL))
+                        tmp(1:ntransf) = DFIL(1:ntransf)
+                        call move_alloc(tmp,DFIL)
+                  endif
+            else
+                  deallocate(DFIL)
+                  allocate(DFIL(npoint),stat=istat)
+            endif
+      endif
+      ! Error handling
       if (istat /= 0) then
-            ! Error handling
             if(NLIST.eq.1) write(IMP,101)
       endif
       !
@@ -77,7 +97,10 @@ C     following array is actually allocated in the subroutine DYNFIL1:
      1 ZERO(3,3)
       integer :: i
       !      
-      if (.not. allocated(DFIL)) call DYNFIL0(npoint,MPOINT,istat)
+      if (.not. allocated(DFIL)) then 
+            call DYNFIL0(npoint,MPOINT,.false.,istat)
+            if (istat /= 0) return
+      endif
       !!! FIXME !!!
       rewind nunit
       read (nunit) nrstep,mf%FALG,mf%GAXES,mf%GEULR,mf%CIJ0,mf%TAX0
@@ -104,7 +127,7 @@ C     following array is actually allocated in the subroutine DYNFIL1:
       end subroutine DYNFIL1
 
 
-      !> To read the first record of the storage
+      !> Extract the global material data
       subroutine DYNFIL2(n,F,AXES,EULR,CIJ,TAX)
       integer,intent(out)     :: n
       double precision,intent(out) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),
@@ -119,7 +142,7 @@ C     following array is actually allocated in the subroutine DYNFIL1:
       !
       end subroutine DYNFIL2
 
-      !> To write the first record of the storage
+      !> Write the global material data
       subroutine DYNFIL3(n,F,AXES,EULR,CIJ,TAX)
       integer,intent(in)     :: n
       double precision,intent(in) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),
@@ -134,7 +157,7 @@ C     following array is actually allocated in the subroutine DYNFIL1:
       !
       end subroutine DYNFIL3
 
-      !> To read a record of the storage
+      !> Get the record data for i-th grain
       subroutine DYNFIL4(i,FI1,PHI,FI2,T,
      1                  GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO)
       implicit none
@@ -159,7 +182,7 @@ C     following array is actually allocated in the subroutine DYNFIL1:
       end subroutine DYNFIL4
 
 
-      !> To write a record of the storage
+      !> Put the record data for i-th grain
       subroutine DYNFIL5(i,FI1,PHI,FI2,T,
      1                  GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO)
       implicit none
@@ -324,9 +347,9 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       END SUBROUTINE GRFIL
 
 
-      ! Converts the Euler angles from degrees to radians. 
-      ! Returns relevant rotation matrices TA and A.
-      subroutine grainOrient(PHI1,PHI,PHI2,TA,A)
+      ! Calculate relevant rotation matrices TA and A.
+      ! PHI1,PHI,PHI2 are Euler angles in radians.
+      subroutine orientMat(PHI1,PHI,PHI2,TA,A)
       implicit none
       double precision,intent(inout)   :: PHI1,PHI,PHI2
       double precision,dimension(3,3),intent(out)     :: TA, A
@@ -335,12 +358,15 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       double precision, parameter :: FPI = 1.0D0/convf
       double precision :: C,C1,C2,S,S1,S2
       !
-      PHI=PHI*FPI
-      PHI2=PHI2*FPI
+!      PHI1=PHI1*FPI
+!      PHI=PHI*FPI
+!      PHI2=PHI2*FPI
+
       C=COS(PHI)
       S=SIN(PHI)
       C2=COS(PHI2)
       S2=SIN(PHI2)
+      !
       TA(1,1)=C2                                                        
       TA(2,1)=-S2                                                      
       TA(3,1)=0.D0                                                        
@@ -352,7 +378,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       TA(3,3)=C                                                         
       !
       A = 0.D0
-      PHI1=PHI1*FPI
       C1=COS(PHI1)
       S1=SIN(PHI1)
       A(1,1)=C1                                                         

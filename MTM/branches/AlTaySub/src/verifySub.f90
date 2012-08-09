@@ -2,6 +2,7 @@ module verifySub
 use altaySub
 use altayConfig
 use altayRCM
+use curAccess
 contains
       
       subroutine verifyMMMmode(modelId)
@@ -68,9 +69,9 @@ contains
       
 
             info = -1
-            acnf%simul_init%ngr = 1
+            acnf%simul_init%ngr = 2
             acnf%output_config%nfile = 1 ! switch on creation of the CUR file
-            ! acnf%output_config%nres = 1 ! switch on creation of the RES file
+            acnf%output_config%nres = 1 ! switch on creation of the RES file
             
             ! Initialize the altay with the configuration data      
             call initAltay(acnf,info)
@@ -114,7 +115,7 @@ contains
     
             call cpu_time(t2)
 
-            
+            call CURwriteBlock(imp1,info)
 
       !      do i=0,nsteps
       !            write(*,'(3(3(F10.6,1X),/))') ares%stress_tensors(:,:,i) !/ ares%average_stress(i)
