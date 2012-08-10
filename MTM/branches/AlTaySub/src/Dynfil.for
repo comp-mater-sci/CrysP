@@ -596,5 +596,12 @@ C      WRITE (NUNIT) FI1,PHI,PHI2,T,GEW,GAM,F,GAXES,GEULR,CIJ,TG,ZERO
       RETURN
       END SUBROUTINE LEESOR
 
-
+      subroutine xleesor()
+      use DYNFIL
+      implicit double precision (a-h,o-z)
+      COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,NPOINT,TEN(3,3),TOTGEW
+      ! Fetch the number of grains
+      NPOINT = size(DFIL)
+      end subroutine
+      
 

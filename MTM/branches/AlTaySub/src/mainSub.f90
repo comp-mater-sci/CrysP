@@ -31,14 +31,6 @@ integer :: i,j
 integer :: nsteps, info
       
       ! Main program - preinitialization + shared configuration
-
-      ! Call initConfig to create dynamic structures
-      call initConfig(acnf,info)
-      if (info /= 0) then
-            write(*,*) 'Cannot initialize alamel config'
-            stop
-      endif
-      
       !
       ! Apply as many modifications to acnf as needed.
       acnf%output_prefix = 'example'
@@ -53,12 +45,18 @@ integer :: nsteps, info
       ! >> small dataset
       !acnf%texture%input_fname='alum39.smt'
       ! >> typical dataset
-      acnf%texture%input_fname='A612LM.SMT'
+      !acnf%texture%input_fname='A612LM.SMT'
 
+      acnf%texture%input_fname= 'example_0.CUR'
+      acnf%texture%input_type = 2
+      !acnf%texture%input_fname= 'example_0.CUB'
+      !acnf%texture%input_type = 3
+      acnf%texture%block_id = 0
+      
       ! call MMM test
       ! call verifyMMMmode(modelAlamel)
 
-      call verifyAltayExample()
+      call verifyAltayExample
       
       
       ! call testCURAccess()

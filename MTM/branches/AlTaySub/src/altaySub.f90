@@ -27,9 +27,13 @@
 
 module altaySub
 
+      !>@{ \name Error codes in altaySub
       integer,parameter :: altaySub_OK = 0
-      integer,parameter :: altaySub_Err = -1, altaySub_Exception = -2, altaySub_IOErr = -3
-
+      integer,parameter :: altaySub_Err = -1
+      integer,parameter :: altaySub_Exception = -2
+      integer,parameter :: altaySub_IOErr = -3
+      !>@}
+      
 contains
 
       !> Initialize 
@@ -38,6 +42,7 @@ contains
       use altayInterface
       use altayRCM
       use IOConfig
+      use TexFormats
       implicit none
       !
       type(altayConfigData),intent(in)    :: cnf
@@ -111,14 +116,18 @@ contains
             EPS = 0.D0
             CALL SIMUL(0,EPS,1)
             RCM_HANDLE(info)
-      
-            ! Get the initial texture
-            CALL LEESOR(NUNIT,MPOINT)
-            RCM_HANDLE(info)
+
             !
             ! No need for the slip system definition anymore.
             close(LEC)
-            info = 0            
+#ifdef USE_LEESOR
+            ! Get the initial texture
+            CALL LEESOR(NUNIT,MPOINT)
+            RCM_HANDLE(info)
+#else
+            call loadTexture(cnf%texture%input_type,NDAT1,trim(cnf%texture%input_fname),cnf%texture%block_id,info)
+            call xleesor()
+#endif
       !
       end subroutine
       
@@ -139,6 +148,7 @@ contains
             ! Allocate the structures
             allocate(steps%simulCalls(nsteps),stat=ierr)
             steps%nSimulCalls = nsteps
+            steps%this = 0
             ! No need to specifically initialize other components,
             ! since there are initializers provided in the datatype.
             info = ierr
@@ -196,32 +206,7 @@ contains
       end subroutine
 
       
-      subroutine outputCurrentTexture(iounit,fmt_id,info)
-      implicit none
-      integer,intent(in)            :: iounit   !< I/O unit
-      integer,intent(in)            :: fmt_id   !< Format ID: 1 - SMT, 2 - CUR, 3 - CUB)
-      integer,intent(out)           :: info
-      !
-            info = altaySub_Err
-            ! TODO: write code for the available formats
-            select case(fmt_id)
 
-            case default
-                  info = altaySub_Err
-            end select
-      !
-      end subroutine
-      
-      
-      
-      subroutine outputCurrentState(info)
-      implicit none
-      integer,intent(out)           :: info
-      
-            info = altaySub_Err
-            
-      end subroutine
-      
       
       
       
