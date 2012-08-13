@@ -65,6 +65,8 @@ contains
       integer :: i, nsteps,info
 
             acnf%simul_init%ngr = 1
+      
+            acnf%slipsystem%kost = 1 ! Use hardening
             
             ! Initialize the altay with the configuration data      
             call initAltay(acnf,info)

@@ -121,6 +121,11 @@ contains
 
       info = altaySub_Exception
       
+      select case (cnf%slipsystem%kost)
+      case(1)
+            FK1 = cnf%slipsystem%taucrit
+      end select
+      
       CALL GRFIL()
       RCM_HANDLE(info)
       !

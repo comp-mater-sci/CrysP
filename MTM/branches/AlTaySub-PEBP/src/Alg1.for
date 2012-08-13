@@ -197,6 +197,9 @@ C 1235 format (' Just after Pancak2')
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif
+#ifdef PEBP_ENABLED      
+      use KOST1xState
+#endif
       implicit double precision (a-h,o-z)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
      1ITW,IPR,DELTAW,GEWF,NLIST
@@ -222,6 +225,11 @@ C
       COMMON /RHO/ RHOS(5),RHOA(5)
       INTEGER DI1
       data SQR2/0.7071067811865476D+00/
+#ifdef PEBP_ENABLED      
+      integer :: info
+      double precision :: ddt = 1.D0
+#endif
+
       SAVE
       WACC1=0.0
       WACC2=0.0
@@ -247,6 +255,15 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C  11  write (*,1771) IOR
 C 1771 format (I5)
   11  call SLIPRAT(M11,96,GAMMA,ior,IPR,SGNN)
+#ifdef PEBP_ENABLED
+      ! ddt = deltaT
+      call KS_updateState(IOR,GAMMA,ddt,info)
+#endif
+#ifdef PEBP_DTAACQ
+      APE1 = 219
+      write(APE1,fmt=998) ior, GAMMA(1:24)
+ 998  format(I5,1X,24(E15.7,1X))    
+#endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C  13  if (IGLIJ.eq.1) then
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -455,7 +472,10 @@ C
       endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   QGX 4/18/2012
 C add the normalization factor for rhossa
-      write (IMP2,150) ior,WDOT,WDOT1,TAU,WDOT1/TAU,ratlon,
+!!! FIXME !!!
+!       write (IMP2,150) ior,WDOT,WDOT1,TAU,WDOT1/TAU,ratlon,
+!!! FIXME !!!
+      write (IMP2,*) ior,WDOT,WDOT1,TAU,WDOT1/TAU,ratlon,
      1 rhossa(1,1)*DELTAT,rhossa(2,2)*DELTAT,rhossa(3,3)*DELTAT,
      2 rhossa(2,3)*DELTAT,rhossa(3,1)*DELTAT,rhossa(1,2)*DELTAT,
      3 rhoasa(2,3),rhoasa(3,1),rhoasa(1,2),

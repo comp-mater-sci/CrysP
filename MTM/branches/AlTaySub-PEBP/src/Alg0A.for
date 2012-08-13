@@ -157,7 +157,7 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
   98  format (A)      
 C     read the parameters of the work hardening model
       ! X=FTAU(-1000.0D00)
-      call readHardParams(KLEC,KOST,info)
+      call readHardParams(KLEC,KOST,info) ! TODO: check the exit code!
       TAU=1.0
       CALL TAYLOR(1,KOST,EPS,Ftot)
 #ifdef ALTAY_SUBROUTINE
@@ -230,7 +230,10 @@ C     read the parameters of the work hardening model
       ! Output the current texture
       if (NFILE.eq.1) then
             call writeCURBlock(IMP1,info)
+            IMP4=234 ! TODO,FIXME: pass IMP4 somehow
+#ifdef PEBP_ENABLED
             if (info == 0) info = KS_writeState(IMP4) !TODO: define & open IMP4 !!!!
+#endif
       endif
 C
 C     Main Loop over the Steps

@@ -4,6 +4,8 @@ C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 C NGLS is replaced by M11
 C
       PROGRAM MAINA1
+      use KOST1xState
+      use DYNFIL
       implicit double precision (a-h,o-z)
 c      Several simulations (usually several-steps each),
 C      following each other.
@@ -60,6 +62,21 @@ C     UNIT IMP2 = PRINTER
       cods1(L+1:L+4)='.TWN'
 C     UNIT IMP3 = PRINTER
       open (unit=IMP3,file=cods1,status='replace')
+#ifdef PEBP_ENABLED
+      ! PEBP model
+      !
+      IMP4=234
+      cods1(L+1:L+4)='.BPM'
+C     UNIT IMP3 = PRINTER
+      open (unit=IMP4,file=cods1,status='replace')
+#endif      
+      
+#ifdef PEBP_DTAACQ
+      APE1 = 219
+      cods1(L+1:L+4)='.APE'
+      open (unit=APE1,file=cods1,status='replace')
+#endif
+
       read (KLEC,90) fnam2
       write (*,93) fnam2
 C     UNIT LEC = SLIP SYSTEMS
@@ -90,6 +107,20 @@ C     Initialisation of SIMUL
 C
       CALL SIMUL(0,EPS,1) 
       CALL LEESOR(NUNIT,MPOINT)
+
+      
+#ifdef PEBP_ENABLED
+      ! PEBP model
+      !
+      !
+      NREC = size(DFIL)
+      if (KS_initState(NREC) /= 0) then
+            write(IMP,'(A)') 'Cannot initialize KOST1x state variables'
+            stop
+      endif
+#endif
+      ! 
+      
       DO 2 JBLOC=1,NBLOC
 C
 C     Simulation of a certain number of steps.

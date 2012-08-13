@@ -132,16 +132,16 @@
           return 
       end if
           iKOST=KOSTtry !=11; iKOST: PRIVATE to this module.
-
+/*
       !Check PRE-file
       rewind (unit=LEC)
       read (LEC,FMT='(A)') line1
       rewind (unit=LEC)
-      if(.NOT.(line1(1:3).EQ.'BCC' .AND. line1(59:62).EQ.'{BP}')) then
+      if ( (index(line1,'BCC') == 0) .or. (index(line1,'{BP}') == 0)) then
         iError=-2
         return 
       end if
-
+*/
       !Check and save the parameters in P (private to this module)
       if(P11try%b    >  0.    .AND. P11try%b    <= 1.e-8    .AND.& ! [m]
          P11try%G    >= 10.e3 .AND. P11try%G    <= 500.e3   .AND.& ! [MPa]
@@ -580,7 +580,7 @@
       SUBROUTINE UPD_ncg_wd(rdr,SV_a,SV_b)
       integer,INTENT(IN )       :: rdr
       TYPE(StatVar), INTENT(IN) :: SV_a
-      TYPE(StatVar), INTENT(OUT):: SV_b
+      TYPE(StatVar), INTENT(INOUT):: SV_b
 
       !inherited variables:
       !P%b, P%Rncg, P%beta1, P%beta2, P%RHOwdMIN  
@@ -703,10 +703,10 @@
       !CONTAINed by MODULE KOST1x:
       integer FUNCTION ReadSVfile(unit,SV) result(iError)
       integer,      INTENT(IN)  :: unit
-	  TYPE(StatVar),INTENT(OUT) :: SV
+      TYPE(StatVar),INTENT(OUT) :: SV
 
       !local variables declarations
-      integer i,j
+      integer :: i,j
 
       read(unit,fmt=101,err=666,end=666) SV%RHOcb
       do i=1,6 !one line per WALL
@@ -722,10 +722,10 @@
       end do
       iError = 0
       return
-101   format(   F12.5 )
-102   format( 5(F12.5))
-103   format( 2(I3   ))
-104   format(24(F12.5))
+101   format(   E15.8 )
+102   format( 5(E15.8))
+103   format( 2(I5   ))
+104   format(24(E15.8))
       !
 666   iError = -4 !Error in reading from file    
       !
@@ -736,30 +736,30 @@
       !CONTAINed by MODULE KOST1x:
       integer FUNCTION WriteSVfile(unit,SV) result(iError)
       integer,      INTENT(IN)  :: unit
-	  TYPE(StatVar),INTENT(IN)  :: SV
+      TYPE(StatVar),INTENT(IN)  :: SV
 
       !local variables declarations
-      integer i,j
+      integer :: i,j
 
       write(unit,fmt=101,err=666) SV%RHOcb
       do i=1,6 !one line per WALL
-        write(unit,fmt=102,err=666)SV%CBB(i)%RHOwd,        &
-                                   SV%CBB(i)%RHOwp,        &
-                                   SV%CBB(i)%RHOwdHOM,     &
-                                   SV%CBB(i)%accGAMMA_new, &
-                                   SV%CBB(i)%RHOwd_ini    
+            write(unit,fmt=102,err=666)SV%CBB(i)%RHOwd,        &
+                                    SV%CBB(i)%RHOwp,        &
+                                    SV%CBB(i)%RHOwdHOM,     &
+                                    SV%CBB(i)%accGAMMA_new, &
+                                    SV%CBB(i)%RHOwd_ini    
       end do
       write(unit,fmt=103,err=666) SV%ActiveCBB(1),SV%ActiveCBB(2)
       do i=1,2 !first line for positive sense, 2nd line for negative sense
-        write(unit,fmt=104,err=666)(SV%CRSS(i,j),j=1,24)
+            write(unit,fmt=104,err=666)(SV%CRSS(i,j),j=1,24)
       end do
       iError = 0
       return
 	  !
-101   format(   F12.5 )
-102   format( 5(F12.5))
-103   format( 2(I3   ))
-104   format(24(F12.5))
+101   format(   E15.8 )
+102   format( 5(E15.8))
+103   format( 2(I5   ))
+104   format(24(E15.8))
       !
 666   iError = -4 !Error in reading from file    
       !
