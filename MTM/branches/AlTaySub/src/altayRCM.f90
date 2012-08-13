@@ -40,7 +40,7 @@ private
       integer,save :: RCM_stack_top = 0
       
       interface RCM_catch
-            module procedure :: RCM_catch_exception, RCM_catch_message, RCM_catch_print
+            module procedure RCM_catch_exception, RCM_catch_message, RCM_catch_print
       end interface
       
       public :: RCM_empty, RCM_signal, RCM_topError, RCM_throw, RCM_catch,  RCM_clean
