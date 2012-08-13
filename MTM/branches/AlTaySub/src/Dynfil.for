@@ -24,13 +24,18 @@
             double precision,dimension(3) :: GAXES = 1.D0,GEULR = 0.D0
       end type
 
-C     following array is actually allocated in the subroutine DYNFIL1:
+      !> State variable: array of grains/orientations.
+      !>
+      !> The array is actually allocated in the subroutine DYNFIL0.
       type(grain),dimension(:),allocatable,save :: DFIL
 
+      !> State variable: material (frame) global geometry
       type(matFrame),save     :: mf
 
+      !> State variable: title of the input texture file 
       character(len=40),save  :: filetitle = ''
       
+      !> State variable: step number.
       integer,save            :: NRSTEP = 0
       
       
@@ -40,11 +45,14 @@ C     following array is actually allocated in the subroutine DYNFIL1:
       subroutine DYNFIL0(npoint,mpoint,keepstate,istat)
       use IOConfig
       implicit none
+      !> Number of points (elements) to be allocated
       integer,intent(in)      :: npoint
+      !> Maximal number of points that are allowed
       integer,intent(in)      :: mpoint
       !> Flag: if .true., the contents of the DFIL will be preserved
       !> on reallocation.
-      logical,intent(in)      :: keepstate      
+      logical,intent(in)      :: keepstate
+      !> Exit code: 0 on success
       integer,intent(out)     :: istat
       !
       type(grain),dimension(:),allocatable :: tmp
@@ -59,8 +67,13 @@ C     following array is actually allocated in the subroutine DYNFIL1:
       ! 
       if (.not. allocated(DFIL)) then
             allocate(DFIL(npoint),stat=istat)
-      else  
+      else
             ! DFIL is previously allocated
+            if (size(DFIL) == npoint) then
+                  ! Nothing to do.
+                  istat = 0
+                  return
+            endif
             if (keepstate) then
                   ! Transfer npoints 
                   allocate(tmp(npoint),stat=istat)
@@ -101,7 +114,6 @@ C     following array is actually allocated in the subroutine DYNFIL1:
             call DYNFIL0(npoint,MPOINT,.false.,istat)
             if (istat /= 0) return
       endif
-      !!! FIXME !!!
       rewind nunit
       read (nunit) nrstep,mf%FALG,mf%GAXES,mf%GEULR,mf%CIJ0,mf%TAX0
       do i=1,npoint
@@ -121,7 +133,6 @@ C     following array is actually allocated in the subroutine DYNFIL1:
          DFIL(i)%tRHO=ZERO
       end do
       rewind nunit
-      !!! FIXME !!!
       istat = 0
       !
       end subroutine DYNFIL1
@@ -222,6 +233,38 @@ C     following array is actually allocated in the subroutine DYNFIL1:
             endif
       !
       end subroutine DYNFIL7
+
+      !> Set the computed fields in grain structure.
+      !>
+      !> The following fields are modified:
+      !>  - tT is calculated from Euler angles as defined by the tfi1,
+      !>    tPHI and tfi2 fields
+      !>  - tAXES,tEULR,tF,tCIJ,tTAX - inherit corresponding properties 
+      !>    from mf
+      !>  - tZERO and tRHO - are zeroed.
+      subroutine initFields(mf,gr)
+      implicit none
+      type(matFrame),intent(in)     :: mf
+      type(grain),intent(inout)     :: gr
+      !
+      double precision,dimension(3,3) :: TA, A
+      !
+            call orientMat(gr%tfi1,gr%tPHI,gr%tfi2,TA,A)
+            CALL MATPROD(gr%tT,TA,A,3,3,3)
+            !
+            ! Backward compatibility with type(gr):
+            ! initialize the remaining components with mf data...
+            gr%tAXES = mf%GAXES 
+            gr%tEULR = mf%GEULR
+            gr%tF   = mf%FALG
+            gr%tCIJ = mf%CIJ0
+            gr%tTAX = mf%TAX0
+            ! ... and zero all the rest.
+            gr%tZERO = 0.D0
+            gr%tRHO  = 0.D0
+      !
+      end subroutine
+      
       
       end module DYNFIL
 

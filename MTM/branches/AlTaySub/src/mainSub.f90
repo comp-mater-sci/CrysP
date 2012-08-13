@@ -45,10 +45,11 @@ integer :: nsteps, info
       ! >> small dataset
       !acnf%texture%input_fname='alum39.smt'
       ! >> typical dataset
-      !acnf%texture%input_fname='A612LM.SMT'
-
-      acnf%texture%input_fname= 'example_0.CUR'
-      acnf%texture%input_type = 2
+      acnf%texture%input_fname='A612LM.SMT'
+      acnf%texture%input_type = 1
+      !
+      !acnf%texture%input_fname= 'example_0.CUR'
+      !acnf%texture%input_type = 2
       !acnf%texture%input_fname= 'example_0.CUB'
       !acnf%texture%input_type = 3
       acnf%texture%block_id = 0
@@ -56,10 +57,12 @@ integer :: nsteps, info
       ! call MMM test
       ! call verifyMMMmode(modelAlamel)
 
-      call verifyAltayExample
+      call verifyAltayExample()
       
       
-      ! call testCURAccess()
+      ! call testTexAccessModules()
+      
+      ! call testSMTAccess()
       
 end program
 

@@ -4,8 +4,10 @@
 
 module TexFormats
 use dynfil
+use smtAccess
 use curAccess
 use cubAccess
+
 implicit none
 
       !>@{ \name Named constants for supported texture file formats (aka FormatID)
@@ -32,11 +34,19 @@ contains
             if (openTextureFile(nunit,fname,texfmt,'r') /= 0) return
             !
             select case(texfmt)
-            case(2)     ! CUR
+            case(TF_SMT)
+                  call SMTreadHeader(nunit,TF_MaxPoints,filetitle,info)
+                  if (info /= 0) return
+                  call SMTreadBlock(nunit,TF_MaxPoints,info)
+            !
+            case(TF_CUR)
                   call CURreadTitle(nunit,filetitle,info)
+                  if (info /= 0) return
                   call CURreadBlock(nunit,iblock,TF_MaxPoints,info)
-            case(3)
+            !
+            case(TF_CUB)
                   call CURreadTitle(nunit,filetitle,info)
+                  if (info /= 0) return
                   call CUBreadBlock(nunit,TF_MaxPoints,info)
             end select
       !
@@ -47,9 +57,9 @@ contains
       integer function openTextureFile(iounit,fname,texfmt,mode) result(info)
       implicit none
       integer,intent(in)            :: iounit   !< I/O unit
-      character(len=*)              :: fname    !< File name to be open
+      character(len=*),intent(in)   :: fname    !< File name to be opened
       integer,intent(in)            :: texfmt   !< Format ID
-      character(len=1),intent(in)   :: mode     !< Mode: r / w 
+      character(len=1),intent(in)   :: mode     !< Mode: ['r'|'w'] 
       !
       character(len=10) :: stat
       !
@@ -75,16 +85,25 @@ contains
       !
       end function
       
-      subroutine outputCurrentTexture(iounit,texfmt,info)
+      subroutine outputCurrentTexture(iounit,texfmt,full,info)
       implicit none
       integer,intent(in)            :: iounit   !< I/O unit
       integer,intent(in)            :: texfmt   !< Format ID
+      !< If true, both header and block are written, otherwise only the block output is written out.
+      logical,intent(in)            :: full     
       integer,intent(out)           :: info
       !
             info = -1
             ! TODO: write code for the available formats
             select case(texfmt)
-
+            case(TF_SMT)
+                  if (full) call SMTwriteHeader(iounit,filetitle,info)
+                  if (info == 0) call SMTwriteBlock(iounit,info)
+            case(TF_CUR)
+                  if (full) call CURwriteTitle(iounit,filetitle,info)
+                  if (info == 0) call CURwriteBlock(iounit,info)
+            case(TF_CUB)
+                  call CUBwriteBlock(iounit,info)
             case default
                   info = -1
             end select
