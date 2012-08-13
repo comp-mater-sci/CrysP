@@ -44,7 +44,7 @@
 ! Simply define dummy macros.
 
 #ifndef RCM_RAISE
-#define RCM_RAISE(c,m,a) continue
+#define RCM_RAISE(c,f,m,a) continue
 #endif
 
 #ifndef RCM_GUARD
