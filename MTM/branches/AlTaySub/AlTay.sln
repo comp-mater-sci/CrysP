@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "AlTay", "AlTay\AlTay.vfproj", "{8663D4BD-D460-4394-871E-0FF3EAB14C60}"
 EndProject
-Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "altaySub", "altaySub\altaySub.vfproj", "{0F32BCF4-74C8-4668-A57A-410531D6D860}"
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libaltay", "libaltay\libaltay.vfproj", "{0F32BCF4-74C8-4668-A57A-410531D6D860}"
 EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "altaySubTest", "altaySubTest\altaySubTest.vfproj", "{CAE224CD-DBFA-4FE3-8AF8-3F4563ADA4F9}"
 	ProjectSection(ProjectDependencies) = postProject
