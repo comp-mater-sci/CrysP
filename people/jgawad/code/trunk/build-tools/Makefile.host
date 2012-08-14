@@ -1,0 +1,41 @@
+######################################################################
+#
+# Determine which config profile should be used
+#
+HOSTNAME := $(shell hostname)
+HOSTALIAS := $(shell hostname -f)
+#
+# Probe: VIC3
+ifeq ($(findstring vic3, $(HOSTALIAS)),vic3)
+BUILDHOST=vic3
+endif
+#
+# Probe: VIC
+# Map login hosts to cluster name. 
+ifeq ($(findstring lo-03-0, $(HOSTNAME)),lo-03-0) 
+BUILDHOST=vic
+endif
+#
+# Probe: dijkstra
+ifeq ($(HOSTNAME),dijkstra)
+BUILDHOST=dijkstra
+endif
+##
+### Add your own configuration between the lines
+# ---------------------------------------------
+#
+# ---------------------------------------------
+#
+### ... or define file that acts as 'plugin': make.host
+#
+ifndef BUILDHOST
+-include make.host
+endif
+#
+## Buildhost must be defined now
+ifndef BUILDHOST
+$(error Cannot determine host configuration)
+endif
+
+######################################################################
+		
