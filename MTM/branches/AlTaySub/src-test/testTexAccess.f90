@@ -1,3 +1,7 @@
+!
+! $Id$
+!
+
 #include "assert.fpp"
       
 module testTexAccess

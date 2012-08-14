@@ -20,7 +20,7 @@
 
 !> \remark The module is derived from alamelConfig, taken from alamelSub project.
 !> However, the differences in the API are drastic. For this reason, the API is 
-!> intentionally made even more incompatibile (e.g. changes in name of datastructures)
+!> intentionally made even more incompatibile (e.g. changes in the names of datastructures)
 !> to force the users of alamelSub to make a deliberate, conscious and well-thought decision of 
 !> upgrading their code to the altaySub.
 
@@ -31,15 +31,31 @@ implicit none
 
       integer,parameter  :: fname_len = 512 !< Length of filenames
 
-      !>@{ \name Named constants for identifiers of the supported models
+      !> \name Named constants for identifiers of the supported models
+      !>@{ 
       integer,parameter :: modelFCTaylor = 1, modelAlamel = 2, modelMASAL = 3
       
       !>@}
       
       type :: slipSystemData
-            character(len=fname_len)                  :: input_fname = '' !< File containing definitions of slipsystems
-            double precision,dimension(2,96)          :: taucrit = 1.D0   !< CRSS - the data layout must correspond to FK1
-            integer                                   :: kost =  0        !< (SIMUL) KOST If =0: TAUC are set to 1; if=1: values from FK1 used.
+            
+            !> Name of the file containing definitions of slipsystems
+            character(len=fname_len)                  :: input_fname = ''
+
+            !> Selector of the model for hardening of slipsystems. 
+            !> 
+            !> Acceptable values depend on availability of CRSS (aka TAUC) hardening models 
+            !> that are implemented in the code:
+            !>   - kost == 0: TAUC are set to 1.0, no hardening of slip systems.
+            !>   - kost == 1: values from FK1 used, isotropic Voce equation is used for hardening. 
+            !>     \sa { crss_ratios 
+            integer                                   :: kost =  0
+
+            !> Array of CRSS ratios. 
+            !>
+            !> The data layout must correspond to FK1.
+            double precision,dimension(2,96)          :: crss_ratios = 1.D0
+            
       end type
 
       type :: textureData
@@ -53,15 +69,26 @@ implicit none
       type :: simulStepInputData
             !> Flag that decides if this step leads to modification of the texture.
             logical                                   :: keep_texture = .true.
+            
             !> Flag that decides if the full model is to be employed.
             !>   If set .false.: 1) a simplified formula is used for calculations of the microscopic stress
             !>                   2) texture is NOT updated, so "keep_texture" must be set, too.
             logical                                   :: full_model = .true.
             
-            integer                                   :: do_output = 0      !< Request for output
-            integer                                   :: nsteps = 1         !< Number of steps per call
-            integer                                   :: rlx1 = 1, rlx2 = 1 !< Selection of relaxations
-            double precision,dimension(3,3)           :: dgf  = 0.D0        !< Deformation gradient tensor
+            !> Flag that decides if the texture should be written out as an output of the step.
+            !>
+            !> \remark This flag takes effect if outputConfig::nfile is non-zero. \sa outputConfig::nfile
+            logical                                   :: do_output = .false.
+            
+            !> Number of steps per call
+            integer                                   :: nsteps = 1
+            
+            !> Selection of relaxations
+            integer                                   :: rlx1 = 1, rlx2 = 1
+            
+            !> Deformation gradient tensor to be imposed.
+            double precision,dimension(3,3)           :: dgf  = 0.D0 
+            
       end type
 
       
@@ -90,9 +117,9 @@ implicit none
             logical                                   :: use_curfile = .false.
             logical                                   :: use_cubfile = .false.
       end type
-    
-      type :: hardeningData
-            !> Parameters of Voce hardening law. Some 'reasonable' defaults are used.
+
+      !> Parameters of Voce hardening law. Some 'reasonable' defaults are used.
+      type :: hardeningVoceData
             double precision                          :: TIII1  = 1.486     
             double precision                          :: TIIIS  = 2.476     
             double precision                          :: TIVS   = 8.357 
@@ -100,10 +127,26 @@ implicit none
             double precision                          :: THT    = 0.55
       end type
 
+      !> Parameters of available hardening models.
+      type :: hardeningData
+            
+            !> Parameters of Voce hardening law.
+            type(hardeningVoceData)       :: paramsVoce
+            
+      end type
+      
+      !> 
       type :: simulData
             
+            !> Model selection. At the same time it controls number of grains in the cluster.
+            !>
+            !> Possible values are:
+            !>   - 1 - FC Taylor
+            !>   - 2 - Alamel
+            !>   - 3 - MAS-AL
             integer                                   :: NGR = 2
             
+            !> It is relevant only in MAS-AL
             double precision                          :: ENTA = 1.D0
             
             double precision, dimension(3,3)          :: FMicro = reshape(       & 
@@ -113,10 +156,9 @@ implicit none
                                                             [ 3, 3 ])
       end type
 
+      !> Root-level configuration structure.
       type :: altayConfigData
-            
-            integer                                   :: model_selection = modelAlamel
-            
+            !> 
             character(len=fname_len)                  :: output_prefix = 'alamel'
             character(len=fname_len)                  :: jobtitle      = 'alamel'
             character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
@@ -149,33 +191,6 @@ implicit none
       
 
 contains
-
-      !> Initialization of alamel configuration.
-      !>
-      !> This subroutine must be called prior to any modifications in 
-      !> alamelConfigData object.
-      subroutine initConfig(cnf,info)
-      implicit none
-      type(altayConfigData),intent(inout)  :: cnf
-      !
-      integer,intent(out)     :: info
-      !
-            info = 0
-      !  
-      end subroutine
-
-      
-      
-      !> Initialization of datastructures for storing inputs and outputs for a set of calls to the model
-      subroutine initCallStructures(ncalls,state,info)
-      implicit none
-      integer,intent(in)                        :: ncalls
-      type(altayStateData),intent(inout)        :: state
-      integer,intent(out)                       :: info
-      !
-            info = 1
-      !
-      end subroutine
 
 
       subroutine setStepType(stp,modelId,info)

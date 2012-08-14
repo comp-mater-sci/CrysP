@@ -14,7 +14,7 @@
 !>    History of modifications: (see svn log)
 !
 !
-!>    \file alamelInterface.f90 The file contains automatically generated inferfaces
+!>    \file altayInterface.f90 The file contains automatically generated inferfaces
 !>          that simplify consistency check at compile time.      
 !>                                  
 !               

@@ -10,11 +10,11 @@ C      Double Precision FTAU
 C     check wether model parameters must be read:
       if (GAMMA.gt.-1000.0) goto 1
 #ifdef ALTAY_SUBROUTINE
-      TIII1 = acnf%hardening%TIII1
-      TIIIS = acnf%hardening%TIIIS
-      TIVS  = acnf%hardening%TIVS
-      THIII1= acnf%hardening%THIII1
-      THT   = acnf%hardening%THT
+      TIII1 = acnf%hardening%paramsVoce%TIII1
+      TIIIS = acnf%hardening%paramsVoce%TIIIS
+      TIVS  = acnf%hardening%paramsVoce%TIVS
+      THIII1= acnf%hardening%paramsVoce%THIII1
+      THT   = acnf%hardening%paramsVoce%THT
 #else
 C     Read the parameters of the work hardening model:
       read (KLEC,99) TIII1,TIIIS,TIVS

@@ -78,10 +78,10 @@ contains
       !> Throws an exception and puts it on the stack.
       subroutine RCM_throw(ec,fx,msg,action)
       implicit none
-      integer,intent(in)            :: ec !< Error code
-      character(len=*),intent(in)   :: fx !< Name of the function that raised the exception.
-      character(len=*),intent(in)   :: msg 
-      integer,intent(in)            :: action !< action identifier
+      integer,intent(in)            :: ec       !< Error code
+      character(len=*),intent(in)   :: fx       !< Name of the function that raised the exception.
+      character(len=*),intent(in)   :: msg      !< Message associated to the exception.
+      integer,intent(in)            :: action   !< Action identifier
       ! 
       type(RCMException),dimension(:),allocatable :: tmp_stack
       integer :: old_size

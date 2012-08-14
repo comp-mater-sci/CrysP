@@ -41,7 +41,7 @@ C
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif
-      use IOConfig, IIPR => IPR ! Rename global IPR switch to avoid conflict
+      use IOConfig,IIPR=>IPR!Rename global IPR switch to avoid conflict
       implicit double precision (a-h,o-z) 
       dimension A(NDIM,M),D(NDIM),BINV(NDIM,N),U(NDIM,N),IACT(NDIM),
      1 GDOT(M),SIG(NDIM),TauC(2,M),TauR(M),Dacc(NDIM),Irp(NDIM)

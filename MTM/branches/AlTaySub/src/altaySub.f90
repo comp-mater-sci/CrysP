@@ -19,49 +19,54 @@
 !>      "procedure-like".                  
 !>    * The code inside this file was initially a part of Main1.for      
 !
-!>    \file alamelSub.for ALAMEL as a subroutine
-!>                                  
-!                                                
+!>    \file altaySub.f90 ALAMEL as a subroutine
 
 #include "altayRCM.fpp"
 
+!> API for "AlTay as a subroutine"
 module altaySub
 
-      !>@{ \name Error codes in altaySub
+      !> \name Named constants for error codes in altaySub
+      !>@{ 
       integer,parameter :: altaySub_OK = 0
       integer,parameter :: altaySub_Err = -1
       integer,parameter :: altaySub_Exception = -2
       integer,parameter :: altaySub_IOErr = -3
+      integer,parameter :: altaySub_BadVal = -10
+      integer,parameter :: altaySub_BadDim = -11
       !>@}
       
 contains
 
-      !> Initialize 
+      !> Initialize the module.
       subroutine initAltay(cnf,info)
-      use altayConfig, only: altayConfigData,fname_len
+      use altayConfig, only: altayConfigData,fname_len,acnf
       use altayInterface
       use altayRCM
       use IOConfig
       use TexFormats
       implicit none
       !
-      type(altayConfigData),intent(in)    :: cnf
-      integer,intent(out)                 :: info
+      type(altayConfigData),intent(in)    :: cnf      !< configuration data 
+      integer,intent(out)                 :: info     !< exit code (0 on success)
       !
       character(len=fname_len) :: fnam2, cods1 
       character(len=8)  :: codsim
       integer :: ierr
       integer,parameter :: extlen = 4
       
-     integer,parameter :: MPOINT = 8000, NUNIT = 2
+      integer,parameter :: MPOINT = 8000, NUNIT = 2
       
-      !data NUMIC/122/,NUCUB/123/
-      integer,parameter :: NUMIC = 122, NUCUB = 123
+      COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96) ! Needed for FK1
+      double precision :: FK1,M11,CC
       
       integer :: L
       double precision :: EPS
       !
             info = altaySub_IOErr
+            
+            ! Set the singleton object to the cnf
+            acnf = cnf
 !
             codsim = trim(cnf%output_prefix)
             L=len_trim(codsim)
@@ -106,6 +111,11 @@ contains
 
             info = altaySub_Exception
       
+            ! Set the data for CRSS calculations
+            if (cnf%slipsystem%kost == 1) then
+                  FK1 = cnf%slipsystem%crss_ratios                                    
+            endif
+            
             CALL GRFIL(info)
             if (info /= 0) return
             RCM_HANDLE(info)
@@ -138,9 +148,9 @@ contains
       subroutine initStepData(nsteps,steps,info)
       use altayConfig, only: altayStateData
       implicit none
-      integer,intent(in)                  :: nsteps
-      type(altayStateData),intent(out)    :: steps
-      integer,intent(out)                 :: info !< Exit code: 0 on success
+      integer,intent(in)                  :: nsteps   !< Number of steps to be created
+      type(altayStateData),intent(out)    :: steps    !< Definiton of the steps.
+      integer,intent(out)                 :: info     !< Exit code: 0 on success
       !
       integer :: ierr
             info = 1
@@ -155,15 +165,15 @@ contains
       !
       end subroutine
       
-      
+      !> Run the AlTay for the set of steps
       subroutine runSteps(steps,info)
       use altayConfig, only: altayStateData
       use altayInterface
       use altayRCM
       use IOConfig
       implicit none
-      type(altayStateData),intent(inout)        :: steps
-      integer,intent(out)                       :: info
+      type(altayStateData),intent(inout)        :: steps !< Definiton of the steps.
+      integer,intent(out)                       :: info  !< Exit code: 0 on success.
       ! We need this common block just for the DG tensor.
       COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3),ITW,DELTAW,GEWF
       double precision :: DUM1,DG, DELTAW,GEWF
@@ -181,7 +191,12 @@ contains
             do i = 1, steps%nSimulCalls
                   steps%this = i
                   !
-                  NFILE0 = steps%simulCalls(i)%input%do_output
+                  if (steps%simulCalls(i)%input%do_output) then
+                        NFILE0 = 1
+                  else
+                        NFILE0 = 0
+                  endif
+                  
                   DG = steps%simulCalls(i)%input%dgf
 
                   ! preempt round-off errors due to IO format

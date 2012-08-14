@@ -1,3 +1,7 @@
+!
+! $Id$
+!
+
 module verifySub
 use altaySub
 use altayConfig

@@ -27,9 +27,7 @@ use testTexAccess
 implicit none
 
 
-integer :: i,j
-integer :: nsteps, info
-      
+     
       ! Main program - preinitialization + shared configuration
       !
       ! Apply as many modifications to acnf as needed.

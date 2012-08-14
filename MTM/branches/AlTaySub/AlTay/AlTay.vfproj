@@ -47,7 +47,7 @@
 		<File RelativePath="..\src\MainA1.for"/>
 		<File RelativePath="..\src\miscutils.f90"/>
 		<File RelativePath="..\src\Pancak2.for"/>
-		<File RelativePath="..\src\SLIPRAT.FOR"/>
+		<File RelativePath="..\src\Sliprat.for"/>
 		<File RelativePath="..\src\Stelsel.for"/>
 		<File RelativePath="..\src\TBH.for"/></Filter></Files>
 	<Globals/></VisualStudioProject>
