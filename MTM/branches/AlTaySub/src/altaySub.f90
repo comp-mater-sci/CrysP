@@ -51,14 +51,15 @@ contains
       integer,intent(out)                 :: info     !< exit code (0 on success)
       !
       character(len=fname_len) :: fnam2, cods1 
-      character(len=8)  :: codsim
+      character(len=fname_len) :: codsim
       integer :: ierr
       integer,parameter :: extlen = 4
       
       integer,parameter :: MPOINT = 8000, NUNIT = 2
       
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96) ! Needed for FK1
-      double precision :: FK1,M11,CC
+      double precision :: FK1,CC
+      integer :: M11
       
       integer :: L
       double precision :: EPS
@@ -167,7 +168,7 @@ contains
       
       !> Run the AlTay for the set of steps
       subroutine runSteps(steps,info)
-      use altayConfig, only: altayStateData
+      use altayConfig, only: altayStateData,astate
       use altayInterface
       use altayRCM
       use IOConfig
@@ -182,12 +183,22 @@ contains
       !
       integer :: i,j
       double precision :: resid
-      
       !
-      ! TODO: check validity of the inputs (priority: size of the array!!)
-     
+      logical :: input_ok
+      !
+            ! Validate input
+            info = altaySub_BadVal
+            input_ok = .false.
+            if (allocated(steps%simulCalls)) then
+                  input_ok = (size(steps%simulCalls) == steps%nSimulCalls)
+            endif
+            if (.not. input_ok) return
+            !
+            ! Assign steps with astate
+            astate = steps
+            !            
             info = altaySub_Exception
-      
+            !
             do i = 1, steps%nSimulCalls
                   steps%this = i
                   !

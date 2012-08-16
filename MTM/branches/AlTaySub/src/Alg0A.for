@@ -198,9 +198,10 @@ C     read the parameters of the work hardening model
       endif
   36  NFILE=NFILE0*NFILE1
 #ifdef ALTAY_SUBROUTINE
-      NSTP   = astate%simulCalls(astate%this)%input%nsteps
-      ICRAT1 = astate%simulCalls(astate%this)%input%rlx1
-      ICRAT2 = astate%simulCalls(astate%this)%input%rlx2
+      NSTP     = astate%simulCalls(astate%this)%input%nsteps
+      swrlx(1) = astate%simulCalls(astate%this)%input%rlx1
+      swrlx(2) = astate%simulCalls(astate%this)%input%rlx2
+      swrlx(3) =.false.
 #else      
       read (KLEC,99) NSTP
 	if(NLIST.eq.1) then
@@ -212,11 +213,12 @@ C     read the parameters of the work hardening model
       write (IMP,104) ICRAT1,ICRAT2
 	end if
  104  format (' ICRAT:',2I5)
-#endif
+
       swrlx(1)=(ICRAT1.eq.1)
       swrlx(2)=(ICRAT2.eq.1)
       swrlx(3)=.false.
       if (IPR.gt.0.and.NLIST.eq.1) write (IMP,*)'Relaxations:',swrlx(1)
+#endif
       !
       CALL TAYLOR(2,KOST,EPS,Ftot)
 #ifdef ALTAY_SUBROUTINE
@@ -565,9 +567,10 @@ C      call STR5(vec1,SHsam)
       astate%simulCalls(astate%this)%output%taylor_factor= GMM
       astate%simulCalls(astate%this)%output%average_stress= SG
       astate%simulCalls(astate%this)%output%effective_strain=EPS
-      
+
+#ifdef EXTENDED_TESTING      
+#warning 'Testing code is left'
       !!! TESTING !!!
-      
       write(*,'(A,1X,I)') 'This=',astate%this
 !     write(*,'(A)') 'SHsam:'
       write(*,'(3E15.6)') (SHsam(:,i), i=1,3)
@@ -577,6 +580,8 @@ C      call STR5(vec1,SHsam)
       write(*,'(F15.6)') EPS
       write(*,'(A,F15.6)') 'normSg = ',sqrt(3./2.)*norm2(SHsam)
       !!! TESTING !!!
+#endif
+
 #endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      JW=0

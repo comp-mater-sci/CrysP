@@ -84,7 +84,7 @@ implicit none
             integer                                   :: nsteps = 1
             
             !> Selection of relaxations
-            integer                                   :: rlx1 = 1, rlx2 = 1
+            logical                                   :: rlx1 = .true., rlx2 = .true.
             
             !> Deformation gradient tensor to be imposed.
             double precision,dimension(3,3)           :: dgf  = 0.D0 
@@ -158,7 +158,8 @@ implicit none
 
       !> Root-level configuration structure.
       type :: altayConfigData
-            !> 
+            !>
+            integer                                   :: model_id      = modelAlamel
             character(len=fname_len)                  :: output_prefix = 'alamel'
             character(len=fname_len)                  :: jobtitle      = 'alamel'
             character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
@@ -183,7 +184,7 @@ implicit none
       end type
       
 
-      ! Definition of singleton objects
+      ! Definition of the singleton objects
        
       type(altayConfigData),save	:: acnf
       
@@ -201,11 +202,11 @@ contains
             info = 0
             select case(modelId)
             case(modelFCTaylor)
-                  stp%rlx1 = 0 
-                  stp%rlx2 = 0
+                  stp%rlx1 = .false. 
+                  stp%rlx2 = .false.
             case(modelAlamel,modelMASAL) 
-                  stp%rlx1 = 1 
-                  stp%rlx2 = 1
+                  stp%rlx1 = .true. 
+                  stp%rlx2 = .true.
             case default
                   info = -1
             end select
