@@ -3,22 +3,22 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deps", "deps", "{F0FD6B17-398B-40AB-ACF1-03398B47494E}"
 EndProject
-Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libalamel", "..\..\..\..\MTM\branches\alamelSub\src\libalamel.vfproj", "{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}"
-EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libopt", "..\fng\utils\optlib\libopt.vfproj", "{BE90F1A8-DC67-45F4-B168-5D687878EAD8}"
 EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libAlamYLP", "libAlamYLP\libAlamYLP.vfproj", "{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}"
 	ProjectSection(ProjectDependencies) = postProject
-		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164} = {81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}
 		{BE90F1A8-DC67-45F4-B168-5D687878EAD8} = {BE90F1A8-DC67-45F4-B168-5D687878EAD8}
+		{0F32BCF4-74C8-4668-A57A-410531D6D860} = {0F32BCF4-74C8-4668-A57A-410531D6D860}
 	EndProjectSection
 EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "alamDMC", "alamDMC\alamDMC.vfproj", "{5CDAD474-1A24-4AF1-848F-FA43F6EEE8AB}"
 	ProjectSection(ProjectDependencies) = postProject
-		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164} = {81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}
 		{BE90F1A8-DC67-45F4-B168-5D687878EAD8} = {BE90F1A8-DC67-45F4-B168-5D687878EAD8}
+		{0F32BCF4-74C8-4668-A57A-410531D6D860} = {0F32BCF4-74C8-4668-A57A-410531D6D860}
 		{E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E} = {E4A7A5F8-156C-4CDF-BD7F-F815421EDC2E}
 	EndProjectSection
+EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libaltay", "..\..\..\..\..\..\MTM\branches\AlTaySub\libaltay\libaltay.vfproj", "{0F32BCF4-74C8-4668-A57A-410531D6D860}"
 EndProject
 Global
 	GlobalSection(SubversionScc) = preSolution
@@ -30,10 +30,6 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.Debug|Win32.ActiveCfg = DebugMicro|Win32
-		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.Debug|Win32.Build.0 = DebugMicro|Win32
-		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.Release|Win32.ActiveCfg = ReleaseMicro|Win32
-		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164}.Release|Win32.Build.0 = ReleaseMicro|Win32
 		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Debug|Win32.ActiveCfg = Debug|Win32
 		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Debug|Win32.Build.0 = Debug|Win32
 		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Release|Win32.ActiveCfg = Release|Win32
@@ -46,12 +42,16 @@ Global
 		{5CDAD474-1A24-4AF1-848F-FA43F6EEE8AB}.Debug|Win32.Build.0 = Debug|Win32
 		{5CDAD474-1A24-4AF1-848F-FA43F6EEE8AB}.Release|Win32.ActiveCfg = Release|Win32
 		{5CDAD474-1A24-4AF1-848F-FA43F6EEE8AB}.Release|Win32.Build.0 = Release|Win32
+		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Debug|Win32.Build.0 = Debug|Win32
+		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Release|Win32.ActiveCfg = Release|Win32
+		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{81CA2E0C-BD7D-4DA4-BD31-6CB47E774164} = {F0FD6B17-398B-40AB-ACF1-03398B47494E}
 		{BE90F1A8-DC67-45F4-B168-5D687878EAD8} = {F0FD6B17-398B-40AB-ACF1-03398B47494E}
+		{0F32BCF4-74C8-4668-A57A-410531D6D860} = {F0FD6B17-398B-40AB-ACF1-03398B47494E}
 	EndGlobalSection
 EndGlobal

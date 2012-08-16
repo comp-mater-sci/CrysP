@@ -18,14 +18,15 @@
 !>
 !
 program alamDMC
-use AlamelSub
-use alamelConfig
 use nllsTR
 use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 use alamUtils
+use altaySub
+use altayConfig, only: altayConfigData
 use commonConfig
+use commonUtils
 !
 use alamASR
 use alamQ
@@ -46,6 +47,8 @@ implicit none
       character(len=20),dimension(nmodules) :: moduleNames = ['alamQ','alamTSA','alamASR','alamYld']
       logical                 :: moduleFound = .false.
       integer                 :: moduleId = 0
+      !
+      type(altayConfigData)	:: cnf
       !
       info = 1
       !
@@ -77,13 +80,7 @@ implicit none
             call finalize(1)
       endif
       !
-      call initAlamelStructures(info)
-      if (info /= 0) then
-            write(*,*) 'Error: Cannot initialize libAlamel'
-            call finalize(1)
-      endif
-      !
-      ! open and read config file      
+      ! open and read the config file      
       write(*,'(/,A,1X,A,/)') 'Processing config file', trim(argv(2))
       open(cnfunit,file=trim(argv(2)),status='old',iostat=ioerr)
       if (ioerr /= 0) then
@@ -91,7 +88,7 @@ implicit none
             call finalize(1)
       endif
       !
-      call readAlamelConfigSection(cnfunit,info)
+      call readAlamelConfigSection(cnfunit,cnf,info)
       if (info /= 0) then
             write(*,fmt=901) 'check ALAMEL config section'
             call finalize(1) 
@@ -108,6 +105,7 @@ implicit none
       select case(moduleId)
       case(1) ! Alamq
             call Alamq_ReadConfig(cnfunit,info)
+            cnf%output_config%nfile = 0   ! Override the request for texture output.
       case(2) ! AlamTSA    
             call AlamTSA_ReadConfig(cnfunit,info)
       case(3) ! AlamASR 
@@ -125,9 +123,16 @@ implicit none
       ! OK, configuration has been finished. 
       ! Initialize ALAMEL
       !
-      ! Apply modifications to acnf:
-      acnf%jobtitle = trim(acnf%output_prefix)//' '//trim(moduleNames(moduleId))
-      call initAlamel()
+      cnf%jobtitle = trim(cnf%output_prefix)//' '//trim(moduleNames(moduleId))
+      write(*,fmt=30) 'Initializing the multilevel model...'
+      call initAltay(cnf,info)
+      if (info == 0) then
+            write(*,fmt=31) 'Done.'
+      else
+            write(*,fmt=31) 'Failed.'
+            write(*,'(A)')  'Fatal error: cannot initialize the multilevel model.'
+           call finalize(1)
+      endif
       ! Show general configuration of the multilevel model
       call displayConfig(display_unit,info)
       !
@@ -151,7 +156,10 @@ implicit none
       else
             write(*,'(1X,A)') 'with errors.'
       endif
-            
+
+      30 format(A,\)
+      31 format(1X,A)
+
 
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"

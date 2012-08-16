@@ -16,8 +16,6 @@
 !> ALAMel Arbitrary Stress Response
 !>
 module alamYld
-use AlamelSub
-use alamelConfig
 use nllsTR
 use Kutils
 use alamYLP

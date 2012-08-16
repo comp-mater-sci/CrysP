@@ -23,14 +23,16 @@
 !> and stresses obtained from the ALAMEL
 module alamEval
 use nllsTR
-use AlamelSub
-use alamelConfig
+
 
       !> Dimensionality of th search space for vector representation (Stress/Strain rate)
       integer,parameter :: alamEval_vSD_dim = 5
       !> Dimensions of second-rank tensor representation of Stress and Strain rate
       integer,parameter :: alamEval_tSD_dim = 3 
 
+   
+      !> Objective function: difference between the searched-for normalized stress and the normalized
+      !> stress given by the multilevel model.
       type,extends(MKLFDJacobiObjFunction) :: NormalizedV5DComp
       
             !NOTE: [n_X_dim] must be 5
@@ -40,10 +42,17 @@ use alamelConfig
             double precision,dimension(alamEval_vSD_dim)        :: vSn = 0.D0 
             
             !> Multilevel prediction of stress from the previous call
-            double precision,dimension(alamEval_vSD_dim)        :: vSml = 0.D0 
+            double precision,dimension(alamEval_vSD_dim)        :: vSml = 0.D0
+            
+            !> Flag: request for simulation outputs other than just deviatoric stress.
+            !>
+            !> The full model is not needed for calculation of stresses.
+            logical                                             :: full_model = .false.
+            
       contains
             !> Implementation of virtual method defined in ObjectiveFunction
             procedure,pass(this)           :: objectiveEval => objectiveEval_NV5DComp
+            
       end type
 
       !> Performance counter: number of evaluations of the objective function
@@ -53,6 +62,8 @@ contains
 
       subroutine objectiveEval_NV5DComp(this,vX,info)
       use Kutils
+      use altaySub
+      use altayConfig
       implicit none
             class(NormalizedV5DComp),intent(inout)      :: this
             double precision,dimension(:),intent(in)    :: vX       !< Dimension must be: 5
@@ -63,39 +74,43 @@ contains
             double precision                    :: norm
             integer                             :: i
             !
+            info = -1
             i = 0
             alamEval_objFx_call_count = alamEval_objFx_call_count + 1
             !
             ! Transfer normalized vX into second rank tensor.
-            vXn = vX/sqrt(dot_product(vX,vX))  ! Avoid creation of on-call temporary
+            norm = norm2(vX)
+            if (norm < epsilon(0.D0)) return
+            vXn = vX/norm
             call KVEC5D2MAT(vXn,Atens) 
             ! Set Atens as current value for processing 
 #ifdef DIAGNOSTIC_OUTPUT                
             write(*,'(A,1X,5(F12.8))') 'eval for ', vXn
 #endif        
-            !!! TESTING !!!
-            ! WARNING!! Taylor is requested below !!!
-            !acnf%simulCalls(1)%rlx1 = 0
-            !acnf%simulCalls(1)%rlx2 = 0
-            !!! TESTING !!!
-          
-            acnf%simulCalls(1)%dgf = Atens
-            acnf%simulCalls(1)%keep_texture = .true.
-            acnf%simulCalls(1)%do_output = .false.
-            acnf%nSimulCalls = 1
-            ! Fill output data
-            ares%stress_tensors(:,:,1) = 0.D0
-            ! Call alamel
-            call ALAMEL(3)
+            ! Re-initialize with a request for just one single step
+            call initStepData(1,astate,info)
+            if (info /= 0) return
+            !
+            associate (input => astate%simulCalls(1)%input)
+                  input%dgf = Atens
+                  input%keep_texture = .true.
+                  input%full_model = this%full_model
+                  input%do_output = .false.
+                  call setStepType(input,acnf%model_id,info)
+            end associate            
+            ! Call the simulation
+            call runSteps(astate,info)
+            if (info /= 0) return
+            !
             ! Retrieve output stress into 5D vector
-            call KMAT2VEC5D(ares%stress_tensors(:,:,1),vS)
+            call KMAT2VEC5D(astate%simulCalls(1)%output%stress_tensor,vS)
             ! Transfer vS to vSml
             this%vSml = vS  
 #ifdef DIAGNOSTIC_OUTPUT            
             write(*,'(A,1X,5(F12.8))') 'stress is ', vS
 #endif            
             ! Normalize vS
-            norm = sqrt(dot_product(vS,vS))
+            norm = norm2(vS)
             if (norm > 0.D0) then
                   vS = vS / norm
                   this%state%vF = this%vSn - vS
@@ -108,17 +123,12 @@ contains
             endif
             info = 0
       end subroutine
-
-
-
+      
 end module
 
 
 !> Implementation of YLP function that can directly use the ALAMEL multilevel model instead of a plastic potential function.
 module alamYLP
-use nllsTR
-use AlamelSub
-use alamelConfig
       
       type multilevelYLPConfig
             !> Epsilon used for numerical estimation of Jacobi matrix.
@@ -135,18 +145,14 @@ use alamelConfig
       
 contains
 
-      subroutine InitializeAlamel(alamelcnf)
-      implicit none
-      type(alamelConfigData),intent(in)	:: alamelcnf
-      
-      
-      
-      end subroutine
 
       !> Calculates plastic strain rate corresponding to given deviatoric stress
       !>
       !> The subroutine assumes that multilevel model is already configured and initialized.
       subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig,outunit)
+      use nllsTR
+      use altaySub
+      use altayConfig
       use alamEval
       implicit none
       double precision,intent(in)   :: vS(alamEval_vSD_dim)      !< Stress vector
@@ -173,6 +179,7 @@ contains
       type(SolutionPoint)     :: initState
       integer                 :: ounit
       integer,parameter       :: stdout = 6
+      double precision        :: norm
       !
       if (present(useVMGuess)) then
             use_vmGuess = useVMGuess
@@ -185,9 +192,13 @@ contains
       ! Configure objective function      
       call objFunc%initFx(alamEval_vSD_dim,alamEval_vSD_dim,info)
       if (info /= 0) return 
+      info  = -1
       !
-      ! Normalized stress vector 
-      objFunc%vSn = vS / sqrt(dot_product(vS,vS)) 
+      !Get normalized stress vector
+      norm = norm2(vS)
+      if (norm < epsilon(0.D0)) return
+      objFunc%vSn = vS / norm
+      objFunc%full_model = .false.
       !
       ounit = stdout
       if (present(outunit))  ounit = outunit
@@ -259,8 +270,12 @@ contains
       call initState%finalize()
       !
       ! Set output strain rate
-      vA = vX/sqrt(dot_product(vX,vX))
-      ! Call objective function again to get corresponding yield stress
+      info  = -1
+      norm = norm2(vX)
+      if (norm < epsilon(0.D0)) return
+      vA = vX / norm
+      ! Call objective function again to get corresponding yield stress and other quantities
+      objFunc%full_model = .true.
       call objFunc%objectiveEval(vA,info)
       
       write(*,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',objFunc%state%vF
