@@ -17,18 +17,23 @@ AR=xiar
 DOXYGEN=doxygen
 #
 ######################################################################
-# Use per-host configuration plugin
 # 
+# ROOTDIR = root of the repository
 ifndef ROOTDIR
-ROOTDIR=../..
+ROOTDIR=../../../../../..
 endif
 
-include $(ROOTDIR)/build-tools/Makefile.host
+TOOLSDIR=$(ROOTDIR)/code/trunk/build-tools/
+
+# Use per-host configuration plugin
+include $(TOOLSDIR)/Makefile.host
 $(info Configuration for $(BUILDHOST))
+include $(TOOLSDIR)/Makefile.knownhosts
+include $(TOOLSDIR)/Makefile.utils
 #
 ######################################################################
 
-FCFLAGS=-fpp -module $(INCLUDEDIR) 
+FCFLAGS=-fpp -module $(INCLUDEDIR) -standard-semantics
 
 ifdef DEBUG
 ConfigurationName=debug
@@ -48,11 +53,12 @@ OBJDIR=$(ConfigurationName)/obj
 INCLUDEDIR=$(ConfigurationName)/include
 
 ## Dependencies:
-LIBALAMELDIR=../../$(ROOTDIR)/MTM/branches/alamelSub/src/$(ConfigurationName)/lib
-FCFLAGS+= -I$(LIBALAMELDIR)/include
-FLDFLAGS+= $(LIBALAMELDIR)/libalamel.a
+LIBALTAYDIR=$(ROOTDIR)/MTM/branches/AlTaySub/$(ConfigurationName)/lib
+LIBALTAYPATH=$(LIBALTAYDIR)/libaltay.a
+FCFLAGS+= -I$(LIBALTAYDIR)/include
+FLDFLAGS+= $(LIBALTAYPATH)
 
-LIBOPTROOT=$(TOOLSDIR)/fng/utils/optlib
+LIBOPTROOT=$(ROOTDIR)/code/trunk/tools/fng/utils/optlib
 LIBOPTDIR=$(LIBOPTROOT)/$(ConfigurationName)
 FCFLAGS+= -I$(LIBOPTDIR)/include
 
@@ -60,21 +66,4 @@ FCFLAGS+= -I$(LIBOPTDIR)/include
 LIBOPTNAME=libopt.a
 LIBOPTPATH=$(LIBOPTDIR)/$(LIBOPTNAME)
 FLDFLAGS+= $(LIBOPTPATH)
-# MKL subroutines
-#
-# Configuration on dijkstra
-# 
-ifeq ($(BUILDHOST),dijkstra)
-MKLINCLUDE= -I$(MKLROOT)/include/$(MKL_TARGET_ARCH)/lp64
-MKLPATH=$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
-MKLLDFLAGS += $(MKLPATH)/libmkl_solver_lp64_sequential.a -Wl,--start-group $(MKLPATH)/libmkl_intel_lp64.a $(MKLPATH)/libmkl_sequential.a $(MKLPATH)/libmkl_core.a -Wl,--end-group -lpthread
-LIBFCFLAGS += $(MKLINCLUDE) # -check bounds
-endif
-ifeq ($(BUILDHOST),vic3)
-MKLINCLUDE= -I$(MKLROOT)/include/$(MKL_TARGET_ARCH)/lp64
-MKLPATH=$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
-MKLLDFLAGS += $(MKLPATH)/libmkl_solver_lp64_sequential.a -Wl,--start-group $(MKLPATH)/libmkl_intel_lp64.a $(MKLPATH)/libmkl_sequential.a $(MKLPATH)/libmkl_core.a -Wl,--end-group -lpthread
-LIBFCFLAGS += $(MKLINCLUDE) # -check bounds
-endif
-#
 
