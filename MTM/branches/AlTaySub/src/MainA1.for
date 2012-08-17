@@ -4,6 +4,7 @@ C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 C NGLS is replaced by M11
 C
       PROGRAM MAINA1
+      use miscutils
       implicit double precision (a-h,o-z)
 c      Several simulations (usually several-steps each),
 C      following each other.
@@ -27,22 +28,33 @@ C
       COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3),
      1ITW,IPR,DELTAW,GEWF,NLIST
       common /CEIGEN/ IOR,ISTP,JBLOC
+#ifndef MAINDIRECT
+      integer,parameter :: pathlength = 512
+      character(len=pathlength) :: fnam1,fnam2,cods1
+      character(len=pathlength) :: codsim
+#else
       character * 12 fnam1,fnam2,cods1
       character * 8 codsim
+#endif
       DATA MPOINT /8000/,NUNIT/2/
       SAVE
 C     UNIT KLEC = CONTROL FILE
       open (unit=KLEC,file='MAINA1.CTL',status='old')
   90  format (a)
+#ifndef MAINDIRECT
       read (KLEC,90) fnam1
       write (*,93) fnam1
-  93  format(' Input file:',a)
       close (unit=KLEC)
 C     UNIT KLEC = PARAMETER FILE
       open (unit=KLEC,file=fnam1,status='old')
+#endif
       read (KLEC,90) codsim
+#ifdef MAINDIRECT
+      call stripComment(codsim)
+#endif
       write (*,92) codsim
   92  format (' Code for this simulation: ',a)
+  93  format(' Input file:',a)
       L=LEN_TRIM(codsim)
       cods1=codsim
       cods1(L+1:L+4)='.LST'
@@ -80,9 +92,9 @@ c
       read (KLEC,99) NBLOC
   99  format (i5)
       write (*,102) NBLOC
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       write (IMP,102) NBLOC
-	end if
+      end if
  102  format (' NBLOC=',I5)
       CALL GRFIL(ierr)
       if (ierr.ne.0) then
@@ -110,27 +122,37 @@ C     Reading of displacement gradient
 C
 C
       if(NLIST.eq.1) then
-	write (IMP,101) JBLOC,NFILE0
-	end if
+      write (IMP,101) JBLOC,NFILE0
+      end if
       write (*,101) JBLOC,NFILE0
  101  format (' SIMUL CALL NR.',I5,'   Output parameter',I5,/,
      1' Displacement gradient:')
       DO 35 I=1,3
       READ (KLEC,*) (DG(I,K),K=1,3)
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       WRITE (IMP,109) (DG(I,K),K=1,3)
-	end if
+      end if
       WRITE (*,109) (DG(I,K),K=1,3)
  109  FORMAT (1x,3F10.5)
   35  CONTINUE
+#ifdef MAINDIRECT
+C     Preempt rounding errors
+      resid = DG(1,1)+DG(2,2)+DG(3,3)
+      if (dabs(resid) .GT. 1.D-9) then
+            resid = resid / 3.D0
+            do i=1,3
+                  DG(i,i) = DG(i,i)-resid
+            enddo
+      endif
+#endif
       CALL SIMUL(1,EPS,NFILE0)
    2  CONTINUE
 C
 C     Output of last "current situation"
 C
       if(NLIST.eq.1) then
-	write (IMP,110)
-	end if
+      write (IMP,110)
+      end if
       write (*,110)
  110  format (//,' Final call of SIMUL (for output only)')
       CALL SIMUL(2,EPS,NFILE0)
