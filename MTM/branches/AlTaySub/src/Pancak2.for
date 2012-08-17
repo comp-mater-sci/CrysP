@@ -62,10 +62,10 @@ C     NRL= number of relaxations    NGR= number of grains
       data GETAL/1.0D6/,TOL/1.0d-6/
       SAVE
 
-	if (laml.ne.1.and.laml.ne.2) then
+      if (laml.ne.1.and.laml.ne.2) then
 #ifndef ALTAY_SUBROUTINE
-	write(*,*) 'laml=', laml
-	stop
+      write(*,*) 'laml=', laml
+      stop
 #else
       RCM_RAISE(1,'Pancak2','Wrong selection of lamels',RCM_RTN)
 #endif      
@@ -88,7 +88,7 @@ C
       if (IGrElm.gt.NGrElm) IGrElm=1
       call MATPROD(GRPAR,FTot,TmatGr(1,1,IGrElm),3,3,3)
       if (IPR.gt.1) then
-	    if(NLIST.eq.1) then
+          if(NLIST.eq.1) then
           write (IMP,409) IGrElm
  409      format (' IGrElm = ',i5) 
           do i=1,3 
@@ -100,19 +100,19 @@ C
           enddo
  408      format (' GRPAR  ',3d15.7)
       endif 
-	end if 
+      end if 
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX
       If (NGR.eq.2) then
       call cluster1(TDC,GRPAR,GEWF,TGRB,alfa,
      1  WINT,Tprinc,IPR)
-	else
+      else
       ! let Tprinc be equal to the identity matrix.
-	do i=1,3
+      do i=1,3
          do j=1,3 
             Tprinc(i,j)=(i/j)*(j/i) 
          enddo
       enddo
-	end if
+      end if
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       do 33 i=M2+1,M12
       do 33 jsgn=1,2
@@ -230,21 +230,21 @@ C     UITVOEREN VAN DE SIMPLEX-SUBROUTINE
   88  IF (IPR.EQ.2) then
       if(NLIST.eq.1) then 
       WRITE (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
-	end if
-	end if
+      end if
+      end if
  218  FORMAT(/' COST FUNCTION',/,(2x,12F10.4))
       IF (IPR.EQ.2) then
-	if (NLIST.eq.1) then
-	WRITE (IMP,219) (BB(I),I=1,N)
-	end if
-	end if
+      if (NLIST.eq.1) then
+      WRITE (IMP,219) (BB(I),I=1,N)
+      end if
+      end if
  219  format (' right hand side',/,(2x,10F10.4),/)
 C     First call of Simplex (full constraints)
       if (IPR.eq.2) then
-	if(NLIST.eq.1) then
-	write (IMP,400) IOR,ISTP,NBLOC
-	end if
-	end if
+      if(NLIST.eq.1) then
+      write (IMP,400) IOR,ISTP,NBLOC
+      end if
+      end if
  400  format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
       Call TBH(IPR,NDIM,N,M2,A1,BB,
      1 CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,
@@ -273,36 +273,36 @@ C W1 and W2 are the rate of plastic work by Taylor for grain1 and grain2
 #endif
       IF(ITFMAS.eq.1) then
       W1=0.0
-	w2=0.0
-	Do imas=1,5,1
+      w2=0.0
+      Do imas=1,5,1
 c
-	w1=w1+UBUF(imas)*BB(imas)*DELTAT
-	W2=w2+UBUF(imas+5)*BB(imas+5)*DELTAT
-	enddo
+      w1=w1+UBUF(imas)*BB(imas)*DELTAT
+      W2=w2+UBUF(imas+5)*BB(imas+5)*DELTAT
+      enddo
       do iee=1,5,1
-	rhos(iee)=a1(iee,M2+1)
-	enddo
-	cos1=0.0
-	do iee=1,5,1
-	cos1=cos1+rhos(iee)*BB(iee)*sqrt(2.0/3.0)
-	enddo
-	do iee=1,5,1
-	rhos(iee)=a1(iee,M2+2)
-	enddo
-	cos2=0.0
-	do iee=1,5,1
-	cos2=cos2+rhos(iee)*BB(iee)*sqrt(2.0/3.0)
-	enddo
-	CrssP1=dabs((w1-w2)*cos1*sqrt(2.0/3.0)/DELTAT)*ENTA
-	CrssP2=dabs((w1-w2)*cos2*sqrt(2.0/3.0)/DELTAT)*ENTA
-	endif
+      rhos(iee)=a1(iee,M2+1)
+      enddo
+      cos1=0.0
+      do iee=1,5,1
+      cos1=cos1+rhos(iee)*BB(iee)*sqrt(2.0/3.0)
+      enddo
+      do iee=1,5,1
+      rhos(iee)=a1(iee,M2+2)
+      enddo
+      cos2=0.0
+      do iee=1,5,1
+      cos2=cos2+rhos(iee)*BB(iee)*sqrt(2.0/3.0)
+      enddo
+      CrssP1=dabs((w1-w2)*cos1*sqrt(2.0/3.0)/DELTAT)*ENTA
+      CrssP2=dabs((w1-w2)*cos2*sqrt(2.0/3.0)/DELTAT)*ENTA
+      endif
 c
 
       if (IPR.lt.4) goto 220
 #ifndef ALTAY_SUBROUTINE
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       write (IMP,221) IPR,IOR,ISTP,NBLOC
-	end if
+      end if
       write (*,221) IPR,IOR,ISTP,NBLOC
  221  format (' Pancak2 ',
      1 ' IPR IOR, ISTP, NBLOC=',4I5)
@@ -312,7 +312,7 @@ c
 #endif
   220    DTAU1=DTAU 
          TAUR1=TAUR  
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011	     
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011         
 C      if (IROT.eq.0) goto 89
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (NRL.eq.0) then
@@ -322,35 +322,35 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
                       goto 89
                     endif
       IF(ITFMAS.eq.1) then
-	  if (swrlx(1)) then  
+        if (swrlx(1)) then  
         CCC(1,M2+1)=CrssP1
         CCC(2,M2+1)=CrssP1
-	  endif
-	  if (swrlx(2)) then  
+        endif
+        if (swrlx(2)) then  
         CCC(1,M2+2)=CrssP2
         CCC(2,M2+2)=CrssP2
-	  endif
-	else	
-	  do 86 IRL=1,NRL
+        endif
+      else  
+        do 86 IRL=1,NRL
         if (.not.swrlx(IRL)) goto 86
         j=M2+IRL  
         CCC(1,j)=TAURL(IRL)
         CCC(2,j)=TAURL(IRL)
   86    continue 
-	endif
+      endif
 C
       IF (IPR.EQ.2) then
-	if(NLIST.eq.1) then 
-	WRITE (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
-	end if
-	end if
+      if(NLIST.eq.1) then 
+      WRITE (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
+      end if
+      end if
 C     Second call of Simplex (relaxed constraints)
 C      if (IOR.eq.1967.and.ISTP.eq.11.and.NBLOC.eq.3) IPR=2
       if (IPR.eq.2) then
-	if (NLIST.eq.1) then
-	write (IMP,401)
-	end if
-	end if
+      if (NLIST.eq.1) then
+      write (IMP,401)
+      end if
+      end if
  401  format (' Second call of TBH')
       Call TBH(IPR,N,N,M12,A1,BB,
      1 CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,
@@ -378,9 +378,9 @@ C
 
 
       if (IPR.ge.4) then
-	   if(NLIST.eq.1) then
+         if(NLIST.eq.1) then
          write (IMP,222) IPR,IOR,ISTP,NBLOC
-	   end if
+         end if
          write (*,222) IPR,IOR,ISTP,NBLOC
  222     format (' Pancak2 222 - Problem with TBH',/,
      1   ' IPR IOR, ISTP, NBLOC=',4I5)
@@ -414,8 +414,8 @@ C     If all grains have a non-zero slip, do the following:
  213  if (IPR.gt.0.and.NRL.gt.0) then
       if(NLIST.eq.1) then 
       write (IMP,780) gamr
-	end if
-	end if
+      end if
+      end if
  780  format (' RELAXATIONS: GAMMA 13, 23, 12 =',3d12.4)
    2  continue
 C
@@ -427,8 +427,8 @@ C
       do jsgn=1,2
          CC(jsgn,j)=CCC(jsgn,j+jj)
       enddo
- 203  continue	
-	ii=5*(laml-1)
+ 203  continue    
+      ii=5*(laml-1)
       do 201 i=1,5
 C     If one grain does not deform, note that stress UBUF has come
 C      from the fullconstraints solution.
@@ -454,10 +454,10 @@ c
       WR=WR+spanv(i)*BB(i+ii)
   304 continue
       if (IPR.EQ.2) then
-	if (NLIST.eq.1) then 
-	write (IMP,777) WR
-	end if
-	end if
+      if (NLIST.eq.1) then 
+      write (IMP,777) WR
+      end if
+      end if
   777 format (' Rate of Plastic work:',d10.4)
 C     (Modification June 2001: note that if one of the grains does
 C      not deform at all, the stress and the active slip systems
@@ -482,8 +482,8 @@ C 912  format (' NACTIV, i',2I5)
                         ELSE
 #ifndef ALTAY_SUBROUTINE
                            if(NLIST.eq.1) then
-						 write (IMP,306)
-	                     end if
+                                     write (IMP,306)
+                           end if
                            write (*,306)
                            stop
 #else
@@ -495,8 +495,8 @@ C 912  format (' NACTIV, i',2I5)
       if (NACTIV.eq.0) then
 #ifndef ALTAY_SUBROUTINE      
                            if(NLIST.eq.1) then
-						 write (IMP,307)
-	                     end if
+                                     write (IMP,307)
+                           end if
                            write (*,307)
                            stop
 #else
@@ -526,10 +526,10 @@ C 912  format (' NACTIV, i',2I5)
       data PrDir/8*0.0d0,1.0d0/
       SAVE
       if (IPR.gt.0) then
-	if (NLIST.eq.1) then
-	write (IMP,100)
-	end if
-	end if
+      if (NLIST.eq.1) then
+      write (IMP,100)
+      end if
+      end if
  100  format (//,' CLUSTER1')
 C     Calculation of volume affected by the surface
       do i=1,3
@@ -602,10 +602,10 @@ C 123         format ('Case 3',3d15.5)
         endif
       endif
       if (IPR.gt.0) then
-	if (NLIST.eq.1) then
-	write (IMP,103) GEWF
-	end if
-	end if 
+      if (NLIST.eq.1) then
+      write (IMP,103) GEWF
+      end if
+      end if 
 C      write (*,103) GEWF
  103  format (/,' GEWF ',3d15.7,/) 
 
@@ -642,10 +642,10 @@ C       Normalisation
               TGrb(i,j)=AXX(j,i)
            enddo
            if (IPR.gt.0) then
-		 if(NLIST.eq.1) then 
-		 write (IMP,102) (TGrb(i,j),j=1,3)
-	     end if
-	     end if
+             if(NLIST.eq.1) then 
+             write (IMP,102) (TGrb(i,j),j=1,3)
+           end if
+           end if
   102      format (' TGrb ',3d15.7)            
         enddo
 
@@ -689,9 +689,9 @@ C 104  format ('C2',3d20.8)
       CALL MATPROD(Tprinc,AXX,TGrb,3,3,3)
       if (IPR.eq.2) THEN
          do i=1,3
-	      if(NLIST.eq.1) then
+            if(NLIST.eq.1) then
             write (IMP,116) (Tprinc(i,j),j=1,3)
-	      end if
+            end if
          enddo
       endif
  116  format (' Tprinc',3d15.8)
@@ -699,10 +699,10 @@ C     ALFA and WINT have to do with the (abandoned) Type III relaxation
       ALFA=0.5
       WINT=1.0D06
       if (IPR.gt.2) then
-	if (NLIST.eq.1) then 
-	write (IMP,115) WINT
-	end if
-	end if
+      if (NLIST.eq.1) then 
+      write (IMP,115) WINT
+      end if
+      end if
  115  format (' CRSSR for Type III relaxation:',d15.5)
       RETURN
       END                                                               

@@ -141,8 +141,8 @@ C              write (IMP,110) (IND(i),i=1,N3)
    2  if (IPR.eq.2) then
       if (NLIST.eq.1) then
       write (IMP,100)
-	end if
-	end if
+      end if
+      end if
  100  format (' Results SLIPRAT')
 C      NREDU=NACTIV-NN
       if (NOPL.eq.0) goto 6
@@ -168,16 +168,16 @@ C
          SLPR(i)=SLSTOR(i,IOPL)
       enddo
       if (IPR.eq.2) then
-	if (NLIST.eq.1) then
+      if (NLIST.eq.1) then
         write (IMP,104) IOR,NACTIV,NN,NOPL
-	end if
-	end if
+      end if
+      end if
  104  format (I5,' Reduction of NACTIV from',I5,'   to',i5,' NOPL=',i5)
       if (IPR.eq.2) then
-	if (NLIST.eq.1) then
+      if (NLIST.eq.1) then
       write (IMP,106) IOR,sumsq,(IND(i),i=1,NN)
-	end if
-	end if
+      end if
+      end if
  106  format (I5,d12.3,8i5)
       x=0.0
       k=0
@@ -188,20 +188,20 @@ C
 C         XX(j)=Y*DELTAT*sgnn(j) 
          XX(j)=YY*DELTAT
          if (IPR.eq.2) then
-	   if (NLIST.eq.1) then
-	   write (IMP,101) i,IND(i),YY
-	   end if
-	   end if
+         if (NLIST.eq.1) then
+         write (IMP,101) i,IND(i),YY
+         end if
+         end if
          if (x.gt.Y) then
                        x=Y
                        k=k+1
                      endif
       enddo
        if (X.lt.0.0d0) then
-	 if (NLIST.eq.1) then 
-	 write (IMP,102) IOR,k,X
-	 end if
-	 end if
+       if (NLIST.eq.1) then 
+       write (IMP,102) IOR,k,X
+       end if
+       end if
  102  format (' NEG. SL. RATE DETECTED',2I5,d15.6)
  101  format (2i5,5x,d15.6)
       return
@@ -211,15 +211,15 @@ C         XX(j)=Y*DELTAT*sgnn(j)
       IND(i)=INDLP(i)
  11   continue
       if (IPR.eq.2) then
-	if (NLIST.eq.1) then
-	write (IMP,100)
-	end if
-	end if
+      if (NLIST.eq.1) then
+      write (IMP,100)
+      end if
+      end if
       if (IPR.eq.2) then
-	if (NLIST.eq.1) then
-	write (IMP,108) IOR,NN
-	end if
-	end if
+      if (NLIST.eq.1) then
+      write (IMP,108) IOR,NN
+      end if
+      end if
  108  format (' IOR=',I5,' Linear programming solution retained ',
      1' NN=',i5)
       x=0.0
@@ -229,10 +229,10 @@ C         XX(j)=Y*DELTAT*sgnn(j)
            j=IND(i)
            XX(j)=Y*DELTAT
            if (IPR.eq.2) then
-	     if (NLIST.eq.1) then
-		 write (IMP,101) i,IND(i),Y
-	     end if
-	     end if
+           if (NLIST.eq.1) then
+             write (IMP,101) i,IND(i),Y
+           end if
+           end if
            Y=abs(Y)
            if (x.gt.Y) then
                          x=Y
@@ -240,10 +240,10 @@ C         XX(j)=Y*DELTAT*sgnn(j)
                        endif
       enddo
       if (X.lt.0.0d0) then
-	if (NLIST.eq.1) then
-	write (IMP,102) IOR,k,X
-	end if
-	end if
+      if (NLIST.eq.1) then
+      write (IMP,102) IOR,k,X
+      end if
+      end if
       return
       end
       Subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
@@ -335,9 +335,9 @@ C 915  format (6D15.3)
       NOPL=NOPL+1
       if (NOPL.gt.NSTOR) then
 #ifndef ALTAY_SUBROUTINE
-	   if (NLIST.eq.1) then
+         if (NLIST.eq.1) then
          write (IMP,100)
-	   end if
+         end if
          write (*,100)
          stop
 #else

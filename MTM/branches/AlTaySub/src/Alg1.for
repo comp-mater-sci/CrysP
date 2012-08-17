@@ -37,7 +37,7 @@ C
       GOTO (1000,2000,3000),IRICHT
  1000 if(NLIST.eq.1) then
       WRITE (IMP,216)
-	end if
+      end if
  216  FORMAT (/,' SUBROUTINE TAYLOR - READS ITS CRYSTAL DATA',//)
 C
       R=LEC
@@ -46,13 +46,13 @@ C
   217 format(A)
       if(NLIST.eq.1) then
       write (IMP,221) titglij
-	end if
+      end if
   221 format (/,' Slip system set:',A,/)
       READ (R,210) I,NGL,NTW,DI1,X,Y
  210  FORMAT (8I4,4X,2F10.0)
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       WRITE (IMP,211) I,NGL,NTW,DI1
-	end if
+      end if
  211  FORMAT (1H ,I4,10X,2I5,10X,5I5)
 #ifndef ALTAY_SUBROUTINE
       IF (I.NE.0) STOP
@@ -67,8 +67,8 @@ C
 #ifndef ALTAY_SUBROUTINE
             write (*,5001) M11,MMAX
             if(NLIST.eq.1) then
-			write (IMP,5001) M11,MMAX
-	      end if
+                  write (IMP,5001) M11,MMAX
+            end if
             stop
 #else
             RCM_RAISE(1,'TAYLOR','Too large slip system set',RCM_RTN)
@@ -80,7 +80,7 @@ C
  212  FORMAT (I4,8F20.16)
       if(NLIST.eq.1) then
       WRITE (IMP,213) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
-	end if
+      end if
  213   FORMAT (I3,' A ',5F10.7,' B ',3F10.7)
  500  CONTINUE
       DO 501 I=1,5                                                      
@@ -88,15 +88,15 @@ C
  214  FORMAT (I4,5D23.16)
       if(NLIST.eq.1) then
       WRITE (IMP,215) J,(B(I,L),L=1,5)
-	end if
+      end if
  215  FORMAT (1H ,I4,10X,5D15.8)
  501  CONTINUE
       IF (NTW.EQ.0) GOTO 504                                            
       DO 505 I=1,NTW                                                    
       READ (R,212) J,(B2(L,I),L=1,6),G(I)
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       WRITE (IMP,218) J,(B2(L,I),L=1,6),G(I)
-	end if
+      end if
  218  format (i4,' B2',6f10.7,' G',f10.7)
  505  CONTINUE
  504  N1=N+1 
@@ -121,14 +121,14 @@ C 2000 IF (IGLIJ.EQ.0) GOTO 70
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then                                         
       WRITE (IMP,203)
-	end if                                                   
+      end if                                                   
       DO 71 I=1,3                                                       
       DO 72 J=1,3                                                       
       TDC(I,J)=(DG(I,J)+DG(J,I))*0.5                                    
   72  TRC(I,J)=(DG(I,J)-DG(J,I))*0.5 
       if(NLIST.eq.1) then                                   
       WRITE (IMP,204) (DG(I,J),J=1,3),(TDC(I,J),J=1,3),(TRC(I,J),J=1,3) 
-	end if
+      end if
   71  CONTINUE                                                          
  203  FORMAT (' TAYLOR - DISPLACEMENT GRADIENT WHICH WILL BE USED FOR TH
      1E SIMULATION',//T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,    
@@ -145,9 +145,9 @@ C     Normalisation of TDC (which is used in CLUSTER1 in PANCAK2)
       if (X.lt.1.0D-20) then
 #ifndef ALTAY_SUBROUTINE
          write (*,205) X
-	   if(NLIST.eq.1) then
+         if(NLIST.eq.1) then
          write (IMP,205) X
-	   end if
+         end if
          stop
 #else
          RCM_RAISE(1,'TAYLOR',
@@ -167,9 +167,9 @@ C
       IF (X.LE.2.0D-5) RETURN                                           
 #ifndef ALTAY_SUBROUTINE
       WRITE (*,202)
-	if(NLIST.eq.1) then                                                   
+      if(NLIST.eq.1) then                                                   
       WRITE (IMP,202)
-	end if                                                   
+      end if                                                   
  202  FORMAT (' TAYLOR - SUM OF DIAGONAL ELEMENTS OF DISPLACEMENT GRADIE
      1NT MUST BE ZERO')                                                 
       STOP                                                              
@@ -234,14 +234,14 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      if (IGLIJ.eq.0) goto 11
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       write (IMP,100)
-	end if
+      end if
  100  format (' Bishop-Hill stress (crystal system):')
       do 10 i=1,3
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       write (IMP,101) (SPANT(i,j),j=1,3)
-	end if
+      end if
  101  format(3d20.7)
   10  continue
 C  11  write (*,1771) IOR
@@ -255,15 +255,15 @@ C  13  if (IGLIJ.eq.1) then
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
       write (IMP,103) ISTP,IOR,fi1,PHI,fi2
-	end if
+      end if
 
 C  13  write (IMP,103) ISTP,IOR,fi1,PHI,fi2
  103  format (' ISTP,IOR',2I5,' phi1, PHI, phi2:',3F15.6)
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      if (iend.ne.1) goto 34
-C	if(NLIST.eq.1) then
+C     if(NLIST.eq.1) then
 C      write (IMP,102) ISTP,IOR,fi1,PHI,fi2
-C	end if
+C     end if
 C 102  format (' Taylr1 - Problem with SLIPRAT - ISTP,IOR',2I5,/,
 C     1' Euler angles phi1, PHI, phi2:',3F15.6)
 C      return
@@ -282,13 +282,13 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      if (IGLIJ.eq.0) goto 77
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-	write (IMP,1701)
-	end if
+      write (IMP,1701)
+      end if
  1701 format(/,' RHOSsa')
       do 1700 i=1,3
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       write (IMP,101) (RHOSsa(i,j),j=1,3)
-	end if
+      end if
  1700 continue
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C   77 if (IROT.eq.0) return
@@ -298,7 +298,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       SPANT(i,j)=0.0
   74  continue
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 20/4/2012
-	 SPANT(2,3)=RHOA(1)*SQR2*DELTAT
+       SPANT(2,3)=RHOA(1)*SQR2*DELTAT
        SPANT(3,2)=-SPANT(2,3)
        SPANT(3,1)=RHOA(2)*SQR2*DELTAT
        SPANT(1,3)=-SPANT(3,1)
@@ -310,13 +310,13 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      if (IGLIJ.eq.0) goto 71
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-	write (IMP,1706)
-	end if
+      write (IMP,1706)
+      end if
  1706 format (/,' RHOAsa')
       do 1705 i=1,3
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       write (IMP,101) (RHOAsa(i,j),j=1,3)
-	end if
+      end if
  1705 continue
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 20/4/2012
 c 71   TRC(1)=RC(3,2)-RHOA(1)*DELTAT*SQR2
@@ -342,12 +342,12 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 4/11/2011
 C      IF (IGLIJ.EQ.0) GOTO 90
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       WRITE (IMP,301) DELTAW
-	end if
+      end if
  301  FORMAT (//,1H ,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
       if(NLIST.eq.1) then
-	DO 302 I=1,M
+      DO 302 I=1,M
  302  WRITE (IMP,303) I,gamma(I)
       end if
 C
@@ -355,9 +355,9 @@ C
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011                                        
 C      IF (IGLIJ.NE.0) then
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-	if(NLIST.eq.1) then
-	WRITE (IMP,109) DELTAT,WDOT,(GAMMA(I)/DELTAT,I=1,M)
-	end if
+      if(NLIST.eq.1) then
+      WRITE (IMP,109) DELTAT,WDOT,(GAMMA(I)/DELTAT,I=1,M)
+      end if
 
  109  FORMAT (' DELTAT=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,
      1 '  SLIP RATES',/,(T2,10F10.5))
@@ -367,9 +367,9 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      IF (IGLIJ.NE.0) then
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-	if(NLIST.eq.1) then
-	WRITE (IMP,305) ROT
-	end if
+      if(NLIST.eq.1) then
+      WRITE (IMP,305) ROT
+      end if
                                
   305 FORMAT (' ROTATIONS',3F12.6)
 C      DO 58 K=1,M                                                       
@@ -401,7 +401,7 @@ C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
 #ifndef ALTAY_SUBROUTINE
        if(NLIST.eq.1) then                                           
       WRITE (IMP,107) X   
-	end if                                              
+      end if                                              
  107  FORMAT (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,
      1'   SHOULD BE LESS THAN 1')                                       
        STOP

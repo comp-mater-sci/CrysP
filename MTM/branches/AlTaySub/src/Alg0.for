@@ -22,7 +22,7 @@ C     Read the parameters of the work hardening model:
   99  format (3f10.0)
       if(NLIST.eq.1) then
       write (IMP,100) TIII1,TIIIS,TIVS,THIII1,THT
-	end if
+      end if
  100  format(' Work hardening model = DOUBLE VOCE-model',/,
      2 ' TAU-III-1=  ',f20.8,/,
      1 ' TAU-III-S = ',F20.8,/,
@@ -31,8 +31,8 @@ C     Read the parameters of the work hardening model:
      3 ' THETA-T=    ',f20.8)
       if (TIIIS.gt.TIII1.and.THIII1.gt.THT) goto 3
       if(NLIST.eq.1) then
-	write (IMP,101)
-	end if
+      write (IMP,101)
+      end if
  101  format (' ALG0 - FTAU - reading data - TAU-III-S must be'
      1 ,' larger than TAU-III-1',
      2 /, '     also, THETA-III-1 must be larger than THETA-T')
@@ -48,9 +48,9 @@ C     Calculation of theta-IV-0
       THIV=THT/(1.0-TAUT/TIVS)
 C     Calculation of TAU-IV-0
       TIV0=TIVS+(TAUT-TIVS)*exp(THIV*GAMMAT/TIVS)
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       write (IMP,102) GAMMAT,TAUT,THIV,TIV0
-	end if
+      end if
  102  format (' GAMMA-T, TAU-T, THETA-IV-0, TAU-IV-0',/,4d15.5)
       FTAU=0.0
       goto 2

@@ -83,7 +83,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #else
 C     Number of grains in ALAMEL cluster
       read (KLEC,99) NGR
-	read (KLEC,*)  ENTA
+      read (KLEC,*)  ENTA
       read (KLEC,99) NLIST
       read (KLEC,99) NFILE1
       read (KLEC,99) NFILTW
@@ -92,16 +92,16 @@ C     Number of grains in ALAMEL cluster
 #endif
       ! NGR == 3: enable MAS-AL
       if(NGR.eq.3) then
-	      ITFMAS=1
-	      NGR=2
-	else
-      	ITFMAS=0
-	endif
+            ITFMAS=1
+            NGR=2
+      else
+            ITFMAS=0
+      endif
       !
 #ifndef ALTAY_SUBROUTINE
       if(NLIST.eq.1) then
             WRITE (IMP,101) NGR,NLIST,NFILE1,NFILTW,KOST,IPR
-	end if
+      end if
 #ifndef NO_STDOUT   
       WRITE (*,101) NGR,NLIST,NFILE1,NFILTW,KOST,IPR
 #endif
@@ -113,9 +113,9 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (NGR.lt.1.or.NGR.gt.2) then
 #ifndef ALTAY_SUBROUTINE
             write (*,140) NGR
-	      if(NLIST.eq.1) then
+            if(NLIST.eq.1) then
             write (IMP,140) NGR
-	      end if
+            end if
             stop
 #else
             RCM_RAISE(1,'SIMUL','Incorrect value of NGR',RCM_RTN)
@@ -133,9 +133,9 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
 #else
       do i=1,3
          read (KLEC,94)(FMicro(i,j),j=1,3)
-	   if(NLIST.eq.1) then
+         if(NLIST.eq.1) then
          write (IMP,106)(FMicro(i,j),j=1,3)
-	   end if
+         end if
       enddo
  106  format ('F_Microstructure=',3f12.6)
   99  FORMAT (2I5)
@@ -143,7 +143,7 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
   16  read (KLEC,98) TITEL
       if(NLIST.eq.1) then
       write (IMP,97) TITEL
-	end if
+      end if
       if ((NFILE1).and.(NRES.gt.0)) write (IMP2,98) TITEL
 #endif
 
@@ -204,14 +204,14 @@ C     read the parameters of the work hardening model
       swrlx(3) =.false.
 #else      
       read (KLEC,99) NSTP
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       write (IMP,115) NSTP
-	end if
+      end if
  115  format (//,' S I M U L         NR. STEPS=',I5,//)
       read (KLEC,99) ICRAT1,ICRAT2
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       write (IMP,104) ICRAT1,ICRAT2
-	end if
+      end if
  104  format (' ICRAT:',2I5)
 
       swrlx(1)=(ICRAT1.eq.1)
@@ -247,19 +247,19 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #ifndef NO_STDOUT       
       write (*,96) ISTP,GAXES
 #endif
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       write (IMP,96) ISTP,GAXES
-	end if
+      end if
   96  format(' Step nr.',i5,5X,3f12.5)
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      if (IROT.eq.0.or.IW.gt.1) goto 70
-	if (IW.gt.1) goto 70
+      if (IW.gt.1) goto 70
 C      if (IGLIJ.eq.1) then
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-	write (IMP,3456) DG
-	end if
+      write (IMP,3456) DG
+      end if
  3456 format ('DG=',3(T10,3d12.3,/))
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C
@@ -268,10 +268,10 @@ C
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      if (IGLIJ.eq.1) then
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-	if(NLIST.eq.1) then
-	write (IMP,3458) TG
-	end if
-	
+      if(NLIST.eq.1) then
+      write (IMP,3458) TG
+      end if
+      
  3458 format (' TG=',3(T10,3d12.3,/))
   70  if (nfile.eq.0.or.ISTP.gt.1) goto 44
 C     INSTRUCTION ADDED IN LAMEL model:
@@ -297,11 +297,11 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      if (IGLIJ.eq.1) then 
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-	if (NLIST.eq.1) then
+      if (NLIST.eq.1) then
           do i=1,3 
              write (IMP,407) (Ftot(j,i),j=1,3)
           enddo
-	end if
+      end if
       
  407      format (' Ftot ',3d15.7)
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
@@ -382,18 +382,18 @@ C      IF (NUNGL.NE.0) READ(NUNGL) ((FK1b(K,J,L),J=1,M11),K=1,2)
 #endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 27/10/2011
       if(laml.eq.1) then
-	qgx=GEWFb(laml)
-	GEWF=qgx
-	else
-	GEWF=qgx
-	end if
-	IF (NFILE.eq.0.or.ISTP.gt.1) goto 999
+      qgx=GEWFb(laml)
+      GEWF=qgx
+      else
+      GEWF=qgx
+      end if
+      IF (NFILE.eq.0.or.ISTP.gt.1) goto 999
 C
 C     Output file with current condition (as it was before call of Taylor!)
 C
 c      if (IROT.ne.1) goto 999
       
-	do 47 i=1,3
+      do 47 i=1,3
       GLR(i)=GEULRb(i,laml)*convf
   47  continue
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -428,12 +428,12 @@ C 3210 format (' Just before Taylor')
 C      write (*,3211)
 c 3211 format (' Just after Taylor')
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 2/1/2011     
-C this modification is to suit for the output of stress	
-	if(laml.eq.1) then
-	ssqgx=GEWF
-	else
-	GEWF=ssqgx
-	end if
+C this modification is to suit for the output of stress     
+      if(laml.eq.1) then
+      ssqgx=GEWF
+      else
+      GEWF=ssqgx
+      end if
 cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       TOTGEW=TOTGEW+GEWF
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 27/10/2011
@@ -450,7 +450,7 @@ C     Output file with current condition (as it was before call of Taylor!)
 C
 c      if (IROT.ne.1) goto 41
       
-c	do 47 i=1,3
+c     do 47 i=1,3
 c      GLR(i)=GEULRb(i,laml)*convf
 c  47  continue
 c      write (IMP1,400) IOR,GEWF,fi1,PHI,fi2,GMM0,
@@ -500,7 +500,7 @@ C      IGLIJ=1
 C      IPR=2
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C      call taylr1(ISTP,IOR,IEND,NFILE,TAU)
-C	write(*,*) 'IEND=', IEND
+C     write(*,*) 'IEND=', IEND
 C      stop
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
    49 if (NFILTW.eq.1) write (IMP3,398) ITW
@@ -587,8 +587,8 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      JW=0
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-	WRITE (IMP,105) ISTP,SG,GMM,EPS
-	end if
+      WRITE (IMP,105) ISTP,SG,GMM,EPS
+      end if
  105  FORMAT (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VAL
      1UE=',F10.5,'  EFF. STRAIN EPS USED=',F10.5) 
   62  continue

@@ -480,15 +480,15 @@ c <jg>
 c </jg>
   88  format (a)
       write (*,103) trim(fnam1)
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       write (IMP,103) trim(fnam1)
-	end if
+      end if
  103  format (' LEESOR - Input Texture File:',a)
       read (KLEC,99) NSTP
   99  FORMAT (I5)
       if(NLIST.eq.1) then
       WRITE (IMP,100) NDAT,NSTP
-	end if
+      end if
       WRITE (*,100) NDAT,NSTP
  100  FORMAT (' LEESOR - READS A TEXTURE FILE Type (NDAT) is:'
      1 ,I5,' CHOSEN BLOCK:',I5)
@@ -505,9 +505,9 @@ C
 #ifndef NO_STDOUT      
       write (*,93) NREC,TITEL
 #endif
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       write (IMP,93) NREC,TITEL
-	end if
+      end if
   93  format (' Number of orientations in SMT-type input file:',I5,/,
      1' Titel on input file: ',A)
 
@@ -523,7 +523,7 @@ C
   92  format (A)
       if(NLIST.eq.1) then
       write (IMP,102) TITEL
-	end if
+      end if
 #ifndef NO_STDOUT            
       write (*,102) TITEL
 #endif
@@ -555,9 +555,9 @@ C
 #ifndef NO_STDOUT
       write (*,104) NS,NREC
 #endif
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       write (IMP,104) NS,NREC
-	end if
+      end if
  104  format (' Input block nr.',i5,3x,'  Number of crystallites',i5)
       read (NDAT1,91) DOM
       do 23 K=1,3
@@ -628,9 +628,9 @@ C      WRITE (NUNIT) FI1,PHI,PHI2,T,GEW,GAM,F,GAXES,GEULR,CIJ,TG,ZERO
   34  CONTINUE
   11  CONTINUE                                                          
       NPOINT=NPOINT-1 
-	if(NLIST.eq.1) then                                                  
+      if(NLIST.eq.1) then                                                  
       WRITE (IMP,107) NPOINT,TOTGEW
-	end if
+      end if
  107  FORMAT (' NUMBER OF ORIENTATIONS=',I6,'   SUM OF ALL WEIGHT ',
      1 'FACTORS=',F15.7,/)
       J=1
