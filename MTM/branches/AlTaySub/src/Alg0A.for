@@ -19,6 +19,11 @@ C     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
 C     USING THE ALAMEL MODEL
       use curAccess
       use dynfil
+      use altayHard
+#ifdef PEBP_ENABLED   
+      use KOST1x
+      use KOST1xState
+#endif
 #ifdef ALTAY_SUBROUTINE
       use altayConfig
       use altayRCM
@@ -152,7 +157,7 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
       if (NFILE1.eq.1) call CURwriteTitle(IMP1,TITEL,info)
   98  format (A)      
 C     read the parameters of the work hardening model
-      X=FTAU(-1000.0D00)
+      call readHardParams(KLEC,KOST,info)
       TAU=1.0
       CALL TAYLOR(1,KOST,EPS,Ftot)
 #ifdef ALTAY_SUBROUTINE
@@ -226,6 +231,9 @@ C     read the parameters of the work hardening model
 #endif
       ! Output the current texture
       if (NFILE.eq.1) call CURwriteBlock(IMP1,info)
+#ifdef PEBP_ENABLED
+      if (NAPE1.eq.1) info = KS_writeState(IMP4)
+#endif
 C
 C     Main Loop over the Steps
 C
@@ -363,7 +371,7 @@ C      IF (NUNGL.NE.0) READ(NUNGL) ((FK1b(K,J,L),J=1,M11),K=1,2)
       if (laml1.gt.NGR) laml1=1
       laml=laml1
       GMM0=GMMAb(laml)
-      if (KOST.eq.1) TAU=FTAU(GMM0)
+      TAU=FTAU(GMM0,KOST)
       fi1=fi1b(laml)
       PHI=PHIb(laml)
       fi2=fi2b(laml)
@@ -484,6 +492,8 @@ C      if (IOR.eq.1.and.ISTP.eq.1) IPR=2
       CALL TAYLR1(ISTP,IOR,NFILE,TAU)
 #endif      
       
+      
+
 C      if (IOR.eq.1.and.ISTP.eq.1) stop
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGC 4/11/2011
 C    IEND is always equal to 0

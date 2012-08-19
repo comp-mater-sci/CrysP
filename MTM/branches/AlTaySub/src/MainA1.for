@@ -5,6 +5,7 @@ C NGLS is replaced by M11
 C
       PROGRAM MAINA1
       use miscutils
+      use IOConfig
       implicit double precision (a-h,o-z)
 c      Several simulations (usually several-steps each),
 C      following each other.
@@ -22,20 +23,12 @@ C     IMP2=output-file with successive "responses to imposed strain"
 C     IDISK1= work file (obsolete, not used)
 C     NDAT1= Input-texture file     Opened in LEESOR
 C
-      COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      COMMON /ES1/ IMP3
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
-      COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3),
-     1ITW,IPR,DELTAW,GEWF,NLIST
+      COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3),ITW,DELTAW,GEWF
       common /CEIGEN/ IOR,ISTP,JBLOC
-#ifndef MAINDIRECT
       integer,parameter :: pathlength = 512
       character(len=pathlength) :: fnam1,fnam2,cods1
-      character(len=pathlength) :: codsim
-#else
-      character * 12 fnam1,fnam2,cods1
-      character * 8 codsim
-#endif
+      character(len=pathlength-4) :: codsim
       DATA MPOINT /8000/,NUNIT/2/
       SAVE
 C     UNIT KLEC = CONTROL FILE
@@ -43,16 +36,15 @@ C     UNIT KLEC = CONTROL FILE
   90  format (a)
 #ifndef MAINDIRECT
       read (KLEC,90) fnam1
-      write (*,93) fnam1
+      call stripComment(fnam1)
+      write (*,93) trim(fnam1)
       close (unit=KLEC)
 C     UNIT KLEC = PARAMETER FILE
       open (unit=KLEC,file=fnam1,status='old')
 #endif
       read (KLEC,90) codsim
-#ifdef MAINDIRECT
       call stripComment(codsim)
-#endif
-      write (*,92) codsim
+      write (*,92) trim(codsim)
   92  format (' Code for this simulation: ',a)
   93  format(' Input file:',a)
       L=LEN_TRIM(codsim)
@@ -73,7 +65,8 @@ C     UNIT IMP2 = PRINTER
 C     UNIT IMP3 = PRINTER
       open (unit=IMP3,file=cods1,status='replace')
       read (KLEC,90) fnam2
-      write (*,93) fnam2
+      call stripComment(fnam2)
+      write (*,93) trim(fnam2)
 C     UNIT LEC = SLIP SYSTEMS
       open (unit=LEC,file=fnam2,status='old')
       READ(KLEC,96) NLINES

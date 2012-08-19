@@ -12,6 +12,7 @@ C
 #endif      
       use MICROSTR
       use IOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
+      use altayHard
       implicit double precision (a-h,o-z)
       COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),
      1 gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),
@@ -187,9 +188,9 @@ C
 C      TLCOST=TLC0
       if (KOST.eq.1) then
          GMMA=GMMAb(IL)
-         TAU=FTAU(GMMA)
 C         TLCOST=TLCOST*TAU
       endif
+      TAU=FTAU(GMMA,KOST)
       DO 92 I=1,M11
       j=I+K1
       do jsgn=1,2

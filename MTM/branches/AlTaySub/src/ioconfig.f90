@@ -36,6 +36,10 @@ implicit none
       
       !> NDAT1= input texture file
       integer :: NDAT1 = 9
+
+#ifdef PEBP_ENABLED
+      integer :: APE1 = 110
+#endif
       
       !>@}
       
@@ -54,6 +58,11 @@ implicit none
       !>
       !> This value control amount of output that is sent to IMP2 unit.
       integer :: NRES = 0
+      
+#ifdef PEBP_ENABLED
+      !> Control of the state file in PEBP (KOST11 module)
+      integer :: NAPE1 = 0
+#endif
       !>@}
 
 end module
