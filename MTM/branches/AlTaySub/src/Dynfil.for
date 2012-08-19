@@ -570,8 +570,9 @@ C      write (nunit) nrstep,FALG,GAXES,GEULR,CIJ,TG
    6  I=0
       do 11 j=1,NREC
       if (NDAT.eq.1) goto 20
-      READ (NDAT1,97) I,GEW,PHI1,PHI,PHI2,GAMMA,F,GAXES,GEULR
-  97  FORMAT (I6,F10.0,2x,3f10.0,2x,F10.0,5(2x,3f10.0))
+      READ (NDAT1,97) I,GEW,PHI1,PHI,PHI2,GAMMA
+  97  FORMAT (I6,F10.0,2x,3f10.0,2x,F10.0)
+      F = FALG
       do 24 K=1,3
       GEULR(K)=GEULR(K)*FPI
   24  continue
