@@ -30,16 +30,17 @@ implicit none
 
       !> IMP3=output-file with twinning information
       integer :: IMP3 = 11
+
+#ifdef PEBP_ENABLED
+      !> IMP4= output file for state variables of KOST11
+      integer :: IMP4 = 110
+#endif
       
       !> IDISK1= work file
       integer :: IDISK1 = 12
       
       !> NDAT1= input texture file
       integer :: NDAT1 = 9
-
-#ifdef PEBP_ENABLED
-      integer :: APE1 = 110
-#endif
       
       !>@}
       
@@ -61,7 +62,7 @@ implicit none
       
 #ifdef PEBP_ENABLED
       !> Control of the state file in PEBP (KOST11 module)
-      integer :: NAPE1 = 0
+      integer :: NPEBP = 0
 #endif
       !>@}
 

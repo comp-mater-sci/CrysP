@@ -13,6 +13,10 @@ C
       use MICROSTR
       use IOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
       use altayHard
+      use altayHard
+#ifdef PEBP_ENABLED
+      use KOST1xState
+#endif
       implicit double precision (a-h,o-z)
       COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),
      1 gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),
@@ -61,6 +65,9 @@ C     NDIM=dimension A
 C     NRL= number of relaxations    NGR= number of grains
       data TAURL/2*0.0d0/
       data GETAL/1.0D6/,TOL/1.0d-6/
+#ifdef PEBP_ENABLED      
+      integer :: info
+#endif
       SAVE
 
       if (laml.ne.1.and.laml.ne.2) then
@@ -196,11 +203,24 @@ C         TLCOST=TLCOST*TAU
       do jsgn=1,2
          CCC(jsgn,j)=1.0
       enddo
+#ifdef PEBP_ENABLED
+      select case(KOST)
+      case(1)
+            do jsgn=1,2
+                  CCC(jsgn,j)=FK1b(jsgn,I,IL)*TAU
+            enddo
+      case(11)
+            ! FIXME: there is no need to run KS_getCRSS within loop 92
+            ! Note: PEBP can work only for bcc (24 slip systems)
+            call KS_getCRSS(IOR,CCC(:,1:24),info)
+      end select
+#else
       if (KOST.EQ.1) then
                        do jsgn=1,2
                          CCC(jsgn,j)=FK1b(jsgn,I,IL)*TAU
                        enddo
       endif
+#endif
 C     set Tau_crit for antitwinning direction equal to
 C     GETAL times Tau_crit for twinning direction 
       if (I.gt.NGL) then

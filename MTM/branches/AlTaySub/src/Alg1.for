@@ -197,6 +197,9 @@ C 1235 format (' Just after Pancak2')
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif
+#ifdef PEBP_ENABLED      
+      use KOST1xState
+#endif
       use IOConfig
       implicit double precision (a-h,o-z)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
@@ -222,6 +225,11 @@ C
       COMMON /RHO/ RHOS(5),RHOA(5)
       INTEGER DI1
       data SQR2/0.7071067811865476D+00/
+#ifdef PEBP_ENABLED      
+      integer :: info
+      double precision :: ddt = 1.D0
+#endif
+
       SAVE
       WACC1=0.0
       WACC2=0.0
@@ -250,6 +258,10 @@ C 1771 format (I5)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif      
+#ifdef PEBP_ENABLED
+      ddt = deltaT
+      call KS_updateState(IOR,GAMMA,ddt,info)
+#endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C  13  if (IGLIJ.eq.1) then
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE

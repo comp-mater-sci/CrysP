@@ -45,6 +45,9 @@ contains
       use altayRCM
       use IOConfig
       use TexFormats
+#ifdef PEBP_ENABLED
+      use KOST1xState
+#endif
       implicit none
       !
       type(altayConfigData),intent(in)    :: cnf      !< configuration data 
@@ -109,7 +112,15 @@ contains
                   open (unit=IMP1,file=cods1,status='replace')
             endif
 #endif
-
+!
+#if defined(PEBP_ENABLED) .and. .not. defined(NOBEPFILE)
+            if (cnf%output_config%npebp) then 
+                  ! PEBP model
+                  cods1(L+1:L+4)='.BPM'
+                  ! UNIT IMP4 = state variables of PEBP KOST11
+                  open (unit=IMP4,file=cods1,status='replace')
+            endif
+#endif
             info = altaySub_Exception
       
             ! Set the data for CRSS calculations
@@ -138,7 +149,15 @@ contains
 #else
             call loadTexture(cnf%texture%input_type,NDAT1,trim(cnf%texture%input_fname),cnf%texture%block_id,info)
             call xleesor()
+            if (info /= 0) return
 #endif
+#ifdef PEBP_ENABLED
+            ! PEBP model
+            if (cnf%slipsystem%kost == 11) then
+                  info = KS_initState(size(DFIL))
+            endif      
+#endif
+
       !
       end subroutine
       

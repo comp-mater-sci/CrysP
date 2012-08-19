@@ -57,7 +57,6 @@ C
       logical SWRLX
       
       integer :: info
-      
 #ifdef ALTAY_SUBROUTINE
       ! Variables for simple stress calculations: full_model=.false.
       ! This operation mode is inspired by QGX's way of calculating
@@ -85,6 +84,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       NFILTW = acnf%output_config%NFILTW  ! control "TWN"
       IPR    = acnf%output_config%IPR     ! control printing level
       NRES   = acnf%output_config%NRES    ! control "RES"
+      NPEBP  = acnf%output_config%NPEBP   ! control "BEP"
 #else
 C     Number of grains in ALAMEL cluster
       read (KLEC,99) NGR
@@ -232,7 +232,7 @@ C     read the parameters of the work hardening model
       ! Output the current texture
       if (NFILE.eq.1) call CURwriteBlock(IMP1,info)
 #ifdef PEBP_ENABLED
-      if (NAPE1.eq.1) info = KS_writeState(IMP4)
+      if (NPEBP.eq.1) info = KS_writeState(IMP4)
 #endif
 C
 C     Main Loop over the Steps
