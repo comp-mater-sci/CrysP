@@ -39,6 +39,9 @@ module altaySub
 contains
 
       !> Initialize the module.
+      !>
+      !> This subroutine must be called prior to any call to other
+      !> module subroutines.
       subroutine initAltay(cnf,info)
       use altayConfig, only: altayConfigData,fname_len,acnf
       use altayInterface
@@ -139,9 +142,7 @@ contains
             CALL SIMUL(0,EPS,1)
             RCM_HANDLE(info)
 
-            !
-            ! No need for the slip system definition anymore.
-            close(LEC)
+
 #ifdef USE_LEESOR
             ! Get the initial texture
             CALL LEESOR(NUNIT,MPOINT)
@@ -157,9 +158,42 @@ contains
                   info = KS_initState(size(DFIL))
             endif      
 #endif
-
+            !
+            ! No need for the slip system definition anymore.
+            close(LEC)
       !
       end subroutine
+      
+      !> Finalizes the module and releases the resources.
+      subroutine finalizeAltay(info)
+      use altayConfig, only: altayConfigData,fname_len,acnf
+      use altayInterface
+      use IOConfig
+      use MICROSTR, only: TmatGr
+      use DYNFIL
+#ifdef PEBP_ENABLED
+      use KOST1xState
+#endif
+      implicit none
+      integer,intent(out)                 :: info     !< exit code (0 on success)
+      !
+            ! Close all units.
+            close(LEC)
+            close(KLEC)
+            close(IMP)
+            close(IMP1)
+            close(IMP2)
+            close(IMP3)
+#ifdef PEBP_ENABLED
+            close(IMP4) 
+#endif
+            ! TODO: deallocate TmatGr (GRFIL) in module MICROSTR
+            if (allocated(TmatGr)) deallocate(TmatGr)
+            call DYNFIL_finalize(info)
+            ! TODO: finalize KOST1xState
+      !
+      end subroutine
+      
       
       
       !> Initialization of input and output data for the steps.

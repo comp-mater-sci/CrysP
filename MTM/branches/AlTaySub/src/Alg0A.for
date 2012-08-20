@@ -20,8 +20,7 @@ C     USING THE ALAMEL MODEL
       use curAccess
       use dynfil
       use altayHard
-#ifdef PEBP_ENABLED   
-      use KOST1x
+#ifdef PEBP_ENABLED
       use KOST1xState
 #endif
 #ifdef ALTAY_SUBROUTINE
@@ -187,7 +186,21 @@ C     read the parameters of the work hardening model
       endif
 #endif
       RETURN
-  30  i=NPOINT/NGR
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  30  continue
+#ifdef ALTAY_SUBROUTINE
+      ! Per-call selection of the model: NGR & NRL must be set
+      NGR = acnf%simul_init%NGR
+      if(NGR.eq.3) then
+            ITFMAS=1
+            NGR=2
+      else
+            ITFMAS=0
+      endif
+      ! Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
+      NRL=(NGR-1)*2
+#endif
+      i=NPOINT/NGR
       if (NGR*i.ne.npoint) then
 #ifndef ALTAY_SUBROUTINE      
             write (6,405) NPOINT

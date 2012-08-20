@@ -96,6 +96,21 @@
  101  format(' DYNFIL0 - allocation of memory failed.')
       end subroutine
       
+      !> Finalizes the module. The subroutine puts the module variables 
+      !> into initial state and deallocates the storage.
+      subroutine DYNFIL_finalize(info)
+      implicit none
+      integer,intent(out)     :: info
+      !
+            info = 0
+            mf = matFrame()
+            filetitle = ''
+            NRSTEP = 0
+            if (allocated(DFIL)) deallocate(DFIL,stat=info)
+      !
+      end subroutine
+      
+      
       !> Initialize the memory block for the state variables 
       !> (texture, grain axes etc.)
       subroutine DYNFIL1(nunit,npoint,MPOINT,istat)

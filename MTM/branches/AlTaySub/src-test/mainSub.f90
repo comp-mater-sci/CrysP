@@ -25,7 +25,7 @@ use altaySub
 use verifySub
 use testTexAccess
 implicit none
-
+integer :: info
 
      
       ! Main program - preinitialization + shared configuration
@@ -55,12 +55,28 @@ implicit none
       ! call MMM test
       ! call verifyMMMmode(modelAlamel)
 
-      call verifyAltayExample()
+      
       
       
       ! call testTexAccessModules()
       
       ! call testSMTAccess()
+      
+      
+      acnf%output_prefix = 'example'
+      acnf%jobtitle = 'example job'
+      acnf%micros_fname = 'micro1.smt'
+      acnf%slipsystem%input_fname = 'fcc.pre'
+      !acnf%texture%input_fname='example.cur'
+      !acnf%texture%input_type = 2
+      acnf%texture%block_id = 1
+      
+      !call verifyAltayMultimodel()
+      
+      
+      call verifyMultiCall()
+
+      
       
 end program
 

@@ -13,7 +13,7 @@
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/></Configuration>
 		<Configuration Name="Release|Win32" ConfigurationType="typeStaticLibrary" WholeProgramOptimization="true">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeFull" BufferedIO="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\src\" PreprocessorDefinitions="ALTAY_SUBROUTINE;NO_STDOUT;RCM_ENABLED;" F2003Semantics="true" DebugParameter="debugParameterAll" CommonElementAlignment="alignCommonEightBytes" Traceback="true"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeFull" BufferedIO="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\src\" PreprocessorDefinitions="ALTAY_SUBROUTINE;NO_STDOUT;RCM_ENABLED;PEBP_ENABLED;" F2003Semantics="true" DebugParameter="debugParameterAll" CommonElementAlignment="alignCommonEightBytes" Traceback="true"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
