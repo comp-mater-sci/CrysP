@@ -55,7 +55,7 @@ LIB_INCLUDEDIR=$(LIB_DIR)/include
 
 # Configuration suitable for altay as subroutine
 #LIB_CFG= -DALTAY_SUBROUTINE -DNORESFILE -DNOCURFILE -DNOTWNFILE -DNOLSTFILE -DWITHCUBFILE -DWITHSMTFILE
-LIB_CFG= -DALTAY_SUBROUTINE -DRCM_ENABLED -DNO_STDOUT
+LIB_CFG= -DALTAY_SUBROUTINE -DRCM_ENABLED -DNO_STDOUT -DPEBP_ENABLED
 #
 LIB_SRCS= \
 Alg0A.for \
@@ -76,7 +76,9 @@ TBH.for \
 cubAccess.f90 \
 curAccess.f90 \
 smtAccess.f90 \
-texFormats.f90
+texFormats.f90 \
+KOST1x.f90 \
+KOST1xState.f90
 
 
 LIB_SRCDIR=src
@@ -104,7 +106,7 @@ PROG=$(PROG_DIR)/$(PROG_NAME)
 PROG_OBJDIR=$(PROG_DIR)/obj
 PROG_INCLUDEDIR=$(PROG_DIR)/include
 # Configuration suitable for output-rich, multiple-step execution
-PROG_CFG= -DMAINDIRECT 
+PROG_CFG= -DMAINDIRECT -DPEBP_ENABLED
 #
 PROG_SRCS= \
 Alg0A.for \
@@ -119,6 +121,8 @@ Pancak2.for \
 Sliprat.for \
 Stelsel.for \
 TBH.for \
+KOST1x.f90 \
+KOST1xState.f90 \
 MainA1.for
 
 # Build list of objects:
@@ -197,27 +201,27 @@ $(OUT_DIRS)	:
 $(PROG)	:  $(PROG_OBJS)| $(PROG_DIR) $(PROG_OBJDIR) $(PROG_INCLUDEDIR)
 	$(FC) -o $@ $(PROG_FCFLAGS) $(PROG_LDFLAGS) $(PROG_OBJS) 
 
-$(PROG_OBJDIR)/%.o	: $(PROG_SRCDIR)/%.for
+$(PROG_OBJDIR)/%.o	: $(PROG_SRCDIR)/%.for | $(PROG_DIRS)
 	$(FC) -o $@ -c $< $(PROG_FCFLAGS) $(FFLAGS_FIXED)  
 
-$(PROG_OBJDIR)/%.o	: $(PROG_SRCDIR)/%.f90
+$(PROG_OBJDIR)/%.o	: $(PROG_SRCDIR)/%.f90 | $(PROG_DIRS)
 	$(FC) -o $@ -c $< $(PROG_FCFLAGS)
 
 #
 # Lib section
-$(LIB)	:$(LIB_OBJS) | $(LIB_DIR) $(LIB_OBJDIR) $(LIB_INCLUDEDIR) 
+$(LIB)	:$(LIB_OBJS) | $(LIB_DIRS)
 	$(AR) rcs $(LIB) $(LIB_OBJS)
 
-$(LIB_OBJDIR)/%.o	: $(LIB_SRCDIR)/%.f90
+$(LIB_OBJDIR)/%.o	: $(LIB_SRCDIR)/%.f90 | $(LIB_DIRS)
 	$(FC) $(LIB_FCFLAGS) -c $< -o $@
 
-$(LIB_OBJDIR)/%.o	: $(LIB_SRCDIR)/%.for
+$(LIB_OBJDIR)/%.o	: $(LIB_SRCDIR)/%.for | $(LIB_DIRS)
 	$(FC) $(LIB_FCFLAGS) $(FFLAGS_FIXED) -c $< -o $@
 
 
 #
 # Testprog section
-$(TPROG_OBJDIR)/%.o	: $(TPROG_SRCDIR)/%.f90  $(LIB)
+$(TPROG_OBJDIR)/%.o	: $(TPROG_SRCDIR)/%.f90  $(LIB) | $(TPROG_DIRS)
 	$(FC) $(TPROG_FCFLAGS) -c $< -o $@
 
 
@@ -237,8 +241,8 @@ RCMINCLUDE = src/altayRCM.fpp
 #
 #$(LIB_OBJDIR)/.o	: $(addprefix $(LIB_OBJDIR)/, )	
 $(LIB_OBJDIR)/altaySub.o	: $(addprefix $(LIB_OBJDIR)/,altayConfig.o altayInterface.o altayRCM.o ioconfig.o texFormats.o) $(RCMINCLUDE)
-$(LIB_OBJDIR)/Alg0.o		: $(addprefix $(LIB_OBJDIR)/,altayConfig.o ioconfig.o)
-$(LIB_OBJDIR)/Alg0A.o		: $(addprefix $(LIB_OBJDIR)/,curAccess.o Dynfil.o altayConfig.o altayRCM.o ioconfig.o) $(RCMINCLUDE)
+$(LIB_OBJDIR)/Alg0.o		: $(addprefix $(LIB_OBJDIR)/,KOST1x.o altayConfig.o ioconfig.o)
+$(LIB_OBJDIR)/Alg0A.o		: $(addprefix $(LIB_OBJDIR)/,Alg0.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o altayRCM.o ioconfig.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Alg1.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o ioconfig.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Alg2.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Dynfil.o		: $(addprefix $(LIB_OBJDIR)/,altayConfig.o ioconfig.o miscutils.o)
@@ -249,6 +253,7 @@ $(LIB_OBJDIR)/smtAccess.o	: $(addprefix $(LIB_OBJDIR)/,Dynfil.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Sliprat.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o ioconfig.o)
 $(LIB_OBJDIR)/TBH.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o ioconfig.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/texFormats.o	: $(addprefix $(LIB_OBJDIR)/,Dynfil.o curAccess.o cubAccess.o smtAccess.o)
+$(LIB_OBJDIR)/KOST1xState.o	: $(addprefix $(LIB_OBJDIR)/,KOST1x.o)
 
 # Explicit dependencies for test program
 #
@@ -256,8 +261,19 @@ $(LIB_OBJDIR)/texFormats.o	: $(addprefix $(LIB_OBJDIR)/,Dynfil.o curAccess.o cub
 $(TPROG_OBJDIR)/mainSub.o	: $(addprefix $(TPROG_OBJDIR)/, testTexAccess.o verifySub.o)
 # Explicit dependencies for standalone program
 #
-#$(PROG_OBJDIR)/.o	: $(addprefix $(PROG_OBJDIR)/, )	
-$(PROG_OBJDIR)/Main1A.o	: $(addprefix $(PROG_OBJDIR)/, Dynfil.o curAccess.o ioconfig.o)
-$(PROG_OBJDIR)/Alg0A.o	: $(addprefix $(PROG_OBJDIR)/, Dynfil.o curAccess.o ioconfig.o)
-$(PROG_OBJDIR)/Dynfil.o	: $(addprefix $(PROG_OBJDIR)/, ioconfig.o miscutils.o)
+$(PROG_OBJDIR)/altaySub.o	: $(addprefix $(PROG_OBJDIR)/,altayConfig.o altayInterface.o ioconfig.o texFormats.o) $(RCMINCLUDE)
+$(PROG_OBJDIR)/Alg0.o		: $(addprefix $(PROG_OBJDIR)/,KOST1x.o altayConfig.o ioconfig.o)
+$(PROG_OBJDIR)/Alg0A.o		: $(addprefix $(PROG_OBJDIR)/,Alg0.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o ioconfig.o) $(RCMINCLUDE)
+$(PROG_OBJDIR)/Alg1.o		: $(addprefix $(PROG_OBJDIR)/,ioconfig.o) $(RCMINCLUDE)
+#$(PROG_OBJDIR)/Alg2.o		: $(addprefix $(PROG_OBJDIR)/,) $(RCMINCLUDE)
+$(PROG_OBJDIR)/Dynfil.o		: $(addprefix $(PROG_OBJDIR)/,altayConfig.o ioconfig.o miscutils.o)
+$(PROG_OBJDIR)/Pancak2.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o ioconfig.o) $(RCMINCLUDE)
+$(PROG_OBJDIR)/cubAccess.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o)
+$(PROG_OBJDIR)/curAccess.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o)
+$(PROG_OBJDIR)/smtAccess.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o) $(RCMINCLUDE)
+$(PROG_OBJDIR)/Sliprat.o	: $(addprefix $(PROG_OBJDIR)/,ioconfig.o)
+$(PROG_OBJDIR)/TBH.o		: $(addprefix $(PROG_OBJDIR)/,ioconfig.o) $(RCMINCLUDE)
+$(PROG_OBJDIR)/texFormats.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o curAccess.o cubAccess.o smtAccess.o)
+$(PROG_OBJDIR)/KOST1xState.o	: $(addprefix $(PROG_OBJDIR)/,KOST1x.o)
+
 
