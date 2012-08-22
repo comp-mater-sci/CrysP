@@ -48,6 +48,7 @@ contains
       use altayRCM
       use IOConfig
       use TexFormats
+      use altayHard,only: hard_none,hard_voce,hard_pebp
 #ifdef PEBP_ENABLED
       use KOST1xState
 #endif
@@ -127,7 +128,7 @@ contains
             info = altaySub_Exception
       
             ! Set the data for CRSS calculations
-            if (cnf%slipsystem%kost == 1) then
+            if (cnf%slipsystem%kost == hard_voce) then
                   FK1 = cnf%slipsystem%crss_ratios                                    
             endif
             
@@ -154,7 +155,7 @@ contains
 #endif
 #ifdef PEBP_ENABLED
             ! PEBP model
-            if (cnf%slipsystem%kost == 11) then
+            if (cnf%slipsystem%kost == hard_PEBP) then
                   info = KS_initState(size(DFIL))
             endif      
 #endif
