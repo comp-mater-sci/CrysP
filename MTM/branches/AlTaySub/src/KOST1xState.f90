@@ -60,12 +60,12 @@ contains
       
       double precision,dimension(:,:),intent(out)     :: Mcrss    !< 
       !
-            info = -1
+            info = KS_ErrBadDims
             if (size(KS_state) < i) return
             if ( any(shape(Mcrss) /= shape(KS_state(i)%CRSS)) ) return
             ! Extract the CRSSes
             Mcrss = KS_state(i)%CRSS
-            info = 0
+            info = KS_OK
       !      
       end subroutine
       
@@ -78,12 +78,19 @@ contains
       !
             info = -1
             n = size(KS_state)
+            write(iounit,fmt=100) n
+            write(iounit,fmt=110)
             do i = 1, n
-                  ! TODO: here we place a call to function KOST1x::writeState that 
-                  ! sends one line output to iounit.
+                  write(iounit,fmt=200) i      
                   if (WriteSVfile(iounit,KS_state(i))) exit
             enddo
-            if (i > n) info = 0 
+            write(iounit,fmt=111)
+            if (i > n) info = KS_OK 
+            
+100         format(I5,1X,' # of points in KOST11 block')
+110         format('-->')
+111         format('<--')
+200         format(I5)
       !
       end function
 
@@ -92,17 +99,25 @@ contains
       implicit none
       integer,intent(in)                              :: iounit   !< I/O unit number
       !
-      integer :: i, n
+      integer :: i, n, nf, tmp, ioerr
+      character(len=5) :: tmp_str      
       !
-            info = -1
+            info = KS_ErrIO
             n = size(KS_state)
+            nf = 0
+            read(iounit,fmt=100,iostat=ioerr) nf
+            if ((nf /= n) .or. (ioerr /= 0)) return
+            read(iounit,fmt=110) tmp_str
             do i = 1, n
-                  ! TODO: here we place a call to function KOST1x::writeState that 
-                  ! sends one line output to iounit.
-                  if (readSVfile(iounit,KS_state(i))) exit
+                  read(iounit,fmt=200,iostat=ioerr) tmp
+                  if ( (ioerr /= 0) .or. (readSVfile(iounit,KS_state(i)))) exit
             enddo
-            if (i > n) info = 0 
-      !
+            read(iounit,fmt=111,iostat=ioerr) tmp_str
+            if ((i > n) .and. (ioerr == 0)) info = KS_OK 
+100         format(I5)
+110         format(A)
+111         format(A)
+200         format(I5)      !
       end function
 
       

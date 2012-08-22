@@ -93,6 +93,8 @@ C     Number of grains in ALAMEL cluster
       read (KLEC,99) NFILTW
       read (KLEC,99) KOST
       read (KLEC,99) IPR
+      NRES = NFILE1  ! IMP2 and IMP3 are controlled only by NFILE1 
+      if (KOST == hard_PEBP) NPEBP  = NFILE1
 #endif
       ! NGR == 3: enable MAS-AL
       if(NGR.eq.3) then
@@ -162,23 +164,24 @@ C     read the parameters of the work hardening model
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
-      if  (KOST.eq.1) then
-        do L=1,NGR
-           do i=1,M11
-              do j=1,2   
-                 FK1b(j,i,L)=FK1(j,i)
-              enddo
-           enddo
-        enddo
-      else
-        do L=1,NGR
-          do i=1,M11
-              do j=1,2   
-                 FK1b(j,i,L)=1.0
-              enddo
-          enddo
-        enddo
-      endif
+      select case(KOST)
+      case(hard_voce)
+            do L=1,NGR
+                  do i=1,M11
+                        do j=1,2   
+                              FK1b(j,i,L)=FK1(j,i)
+                        enddo
+                  enddo
+            enddo
+      case(hard_none)
+            do L=1,NGR
+                  do i=1,M11
+                        do j=1,2   
+                              FK1b(j,i,L)=1.0
+                        enddo
+                  enddo
+            enddo
+      end select      
 #ifndef ALTAY_SUBROUTINE
       if (NFILTW.eq.1) then
           write (IMP3,98) TITEL
@@ -245,7 +248,9 @@ C     read the parameters of the work hardening model
       ! Output the current texture
       if (NFILE.eq.1) call CURwriteBlock(IMP1,info)
 #ifdef PEBP_ENABLED
-      if (NPEBP.eq.1) info = KS_writeState(IMP4)
+      if ((KOST == hard_PEBP).and.(NPEBP.eq.1)) then
+            info = KS_writeState(IMP4)
+      endif
 #endif
 C
 C     Main Loop over the Steps
@@ -301,8 +306,8 @@ C     INSTRUCTION ADDED IN LAMEL model:
  112  FORMAT (//' DEFORMATION STEP ',I5,//)
       if (NRES.gt.0) write (IMP2,404) nrstep+1,NPOINT
  404  format (' Def. Step ',i5,'  Number of orientations',i5,/,8x,
-     1 ' WDOT  ','WDOT/STR.RAT.','  TAU     ','   M      ','STR.RAT. '
-     2 ,5x,24X,'RHO-SYMMETRIC',24x,8x,'RHO-ROTATIONAL',8x,
+     1 ' WDOT',4X,'WDOT/STR.RAT.','  TAU     ','   M      ','STR.RAT. '
+     2 ,5x,33X,'RHO-SYMMETRIC',24x,22x,'RHO-ROTATIONAL',8x,
      3 24x,'STRESS',/,1x,219('*'))
       do 48 i=1,3
       GLR(i)=GEULR(i)*convf

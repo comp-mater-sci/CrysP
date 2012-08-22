@@ -15,7 +15,10 @@
       !> Pre-calculated parameters of Voce hardening law.
       double precision,private  :: GAMMAT = 0.0, THIII = 0.0, ETA = 0.0,
      x                             TAUT =  0.0, THIV =  0.0,TIV0 = 0.0
-                  
+
+      ! Workaround: KOST that is not accessible other ways
+      integer,save :: KOST_global = 0
+      
       contains
       
       
@@ -85,6 +88,8 @@ C     Read the parameters of the work hardening model:
             info = -1
       !      
       end select
+      !
+      KOST_global = KOST
       !
       end subroutine
       

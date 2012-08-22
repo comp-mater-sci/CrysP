@@ -70,6 +70,15 @@
             StatVar,            &
 			CBBtype
 
+      !> \name Exit codes from KOST1x subroutines and functions:
+      !>@{
+      integer,PARAMETER,PUBLIC :: KS_OK = 0           !< OK
+      integer,PARAMETER,PUBLIC :: KS_Error = -1       !< General error (not covered by any specific error code).
+      integer,PARAMETER,PUBLIC :: KS_ErrBadDims = -2  !< At least one parameter out of boundaries
+      integer,PARAMETER,PUBLIC :: KS_ErrBadValue = -5 !< At least one input parameter has unacceptable value
+      integer,PARAMETER,PUBLIC :: KS_ErrIO = -15      !< Error during an IO operation
+      !>@}
+            
       !Remaining declarations all PRIVATE:
       TYPE(PAR11), SAVE :: P
       logical, SAVE :: InitOK=.FALSE.
@@ -210,6 +219,7 @@
       !
       TYPE(PAR11) :: PARtry
       !
+      info = KS_Error
       select case(KOST)
       case(11)
             ! Read parameters of PE-BP hardening model
@@ -217,7 +227,7 @@
                   info = Init_PAR11(PARtry,KOST,LEC)
             endif
       case default
-            info = -1 !Unsupported value of KOST
+            info = KS_ErrBadValue !Unsupported value of KOST
       end select
       !
       end FUNCTION Init_file
@@ -326,13 +336,17 @@
       ! 'Gam'   ~ small-caps gamma: for a slip system
       ! 'GAMMA' ~ large-caps GAMMA: for a wall
 
-
+      
       SUMabsGamDot=sum(abs(sliprate))
-!     SUMabsGamDot=0.
-!     do j=1,24      
-!       SUMabsGamDot=SUMabsGamDot+ abs(sliprate(j))
-!     end do
       SUMabsGam=SUMabsGamDot*deltaT
+      !
+      if (SUMabsGam < epsilon(0.D0)) then
+            ! No slip rate in the current grain => no deformation, no update of the state
+            SVb=SVa
+            ! Issue error only on negative time increment.
+            if (deltaT < 0.D0) iError = -5
+            return
+      endif
 
       GAMMAdot=F_GAMMAdot(sliprate) 
       GAMMA=GAMMAdot*deltaT

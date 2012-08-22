@@ -13,7 +13,6 @@ C
       use MICROSTR
       use IOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
       use altayHard
-      use altayHard
 #ifdef PEBP_ENABLED
       use KOST1xState
 #endif
@@ -193,40 +192,39 @@ C
       BBVM2(IL)=deltat
       K1=M11*(IL-1)
 C      TLCOST=TLC0
-      if (KOST.eq.1) then
+      if (KOST.eq.hard_voce) then
          GMMA=GMMAb(IL)
 C         TLCOST=TLCOST*TAU
       endif
       TAU=FTAU(GMMA,KOST)
-      DO 92 I=1,M11
-      j=I+K1
-      do jsgn=1,2
-         CCC(jsgn,j)=1.0
-      enddo
-#ifdef PEBP_ENABLED
       select case(KOST)
-      case(1)
+      case(hard_none,hard_voce)
+            DO 92 I=1,M11
+            j=I+K1
             do jsgn=1,2
-                  CCC(jsgn,j)=FK1b(jsgn,I,IL)*TAU
+               CCC(jsgn,j)=1.0
             enddo
-      case(11)
-            ! FIXME: there is no need to run KS_getCRSS within loop 92
+            if (KOST.EQ.hard_voce) then
+                  do jsgn=1,2
+                        CCC(jsgn,j)=FK1b(jsgn,I,IL)*TAU
+                  enddo
+            endif
+C           set Tau_crit for antitwinning direction equal to
+C           GETAL times Tau_crit for twinning direction 
+            if (I.gt.NGL) then
+                CCC(2,j)=CCC(1,j)*GETAL
+            endif
+  92        continue
+#ifdef PEBP_ENABLED
+      case(hard_pebp)
             ! Note: PEBP can work only for bcc (24 slip systems)
-            call KS_getCRSS(IOR,CCC(:,1:24),info)
-      end select
-#else
-      if (KOST.EQ.1) then
-                       do jsgn=1,2
-                         CCC(jsgn,j)=FK1b(jsgn,I,IL)*TAU
-                       enddo
-      endif
+            call KS_getCRSS(IOR,CCC(:,1:M11),info)
+            ! TODO, FIXME: check the grain numbering scheme that is used
+            ! in SIMUL.
+            ! If ALAMEL is chosen: take the CRSS from the neighboring grain
+            ! if (NGR == 2) call KS_getCRSS(IOR+1,CCC(:,M11+1:NGR*M11),info)
 #endif
-C     set Tau_crit for antitwinning direction equal to
-C     GETAL times Tau_crit for twinning direction 
-      if (I.gt.NGL) then
-          CCC(2,j)=CCC(1,j)*GETAL
-      endif
-  92  continue
+      end select
 C   92 write (IMP,914) i,j,CCC(1,j),CCC(2,j)
  914  format (' i,j',2i5, ' CCC ',2d16.4)
       DO 15 J=1,5

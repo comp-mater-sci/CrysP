@@ -8,6 +8,7 @@ C
       use IOConfig
       use KOST1xState
       use DYNFIL
+      use altayHard,only: KOST_global
       implicit double precision (a-h,o-z)
 c      Several simulations (usually several-steps each),
 C      following each other.
@@ -113,10 +114,13 @@ C
 #ifdef PEBP_ENABLED
       ! PEBP model
       NREC = size(DFIL)
-      if (KS_initState(NREC) /= 0) then
-            write(IMP,'(A)') 'Cannot initialize KOST1x state variables'
-            stop
+      if (KOST_global == 11) then
+            if (KS_initState(NREC) /= 0) then
+                  write(IMP,fmt=600) 
+                  stop
+            endif
       endif
+ 600  format('Cannot initialize KOST1x state variables')       
 #endif
       ! 
       
