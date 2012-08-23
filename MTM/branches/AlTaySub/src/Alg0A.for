@@ -334,7 +334,9 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      if (IROT.ne.1) goto 10
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       nrstep=nrstep+1
-      call Ftensor(DG,F1,F2)
+      ! Here DG = [L]*dt, where [L] is the velocity gradient 
+      ! and the time step dt = 1.0
+      call Ftensor(DG,F1,F2) 
       call UPDATF(F,F1)
       call UPDATC(CIJ,F2)
       call GETANG(CIJ,GAXES,GEULR,TG)

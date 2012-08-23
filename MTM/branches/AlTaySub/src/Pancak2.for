@@ -180,6 +180,8 @@ C     Insert the relaxations as columns in A1-matrix
       j=i+L1
       BB(j)=B5(i)
   30  continue
+      ! deltat is in essence von Mises equivalent strain rate.
+      ! Step increment time is implicitly assumed to be dt = 1.0
       deltat=SQRT(2.0D0*deltat/3.0D0)
 C
 C     Calculation of time increment by dividing von Mises equivalent

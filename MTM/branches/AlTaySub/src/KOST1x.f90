@@ -680,10 +680,10 @@
 !     alfa_G_b_eff,alfa_G_b_ABSeff ->inherited
 
       !local variables declarations
-      double precision tau_CB,CRSS_0_CB
+      double precision :: tau_CB,CRSS_0_CB
       double precision,DIMENSION(2,24)::tau_CBB
-      integer j,s,i
-      double precision signfac
+      integer :: j,s,i
+      double precision :: signfac
       double precision,DIMENSION(6)::wpcontr,wdcontr
  
        !CRSS within cells & CBs
@@ -698,16 +698,16 @@
         do s=1,24 
           !wp- and wd-contributions from all CBBs i
           do i=1,6
-              wpcontr(i)=sqrt(abs(SV_b%CBB(i)%RHOwp)) *                  &
-                       signfac * alfa_G_b_eff(s,i) *                     &
-                               SV_b%CBB(i)%RHOwp / abs(SV_b%CBB(i)%RHOwp) 
+                  wpcontr(i)=sqrt(abs(SV_b%CBB(i)%RHOwp)) *             &
+                       signfac * alfa_G_b_eff(s,i) *                    &
+                       sign(1.D0,SV_b%CBB(i)%RHOwp) ! sign returns +/-1 depending on the sign of the second argument
             if (wpcontr(i) .LT. 0.0) wpcontr(i)=0.0
             wdcontr(i)=sqrt(SV_b%CBB(i)%RHOwd)*alfa_G_b_ABSeff(s,i)
           end do
           !CRSS within CBB = wp- and wd-contributions for all 6 walls
           tau_CBB(j,s)=sum(wpcontr)+sum(wdcontr) 
           !C.R.S.S. for the "two-phase composite"
-          F_CRSS(j,s)= CRSS_0_CB + (1.0-P%f)*tau_CBB(j,s) 
+          F_CRSS(j,s)= CRSS_0_CB + (1.D0-P%f)*tau_CBB(j,s) 
         end do
       end do
 

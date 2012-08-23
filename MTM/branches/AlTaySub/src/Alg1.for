@@ -227,7 +227,7 @@ C
       data SQR2/0.7071067811865476D+00/
 #ifdef PEBP_ENABLED      
       integer :: info
-      double precision :: ddt = 1.D0
+      double precision :: ddt
 #endif
 
       SAVE
@@ -260,7 +260,9 @@ C 1771 format (I5)
 #endif      
 #ifdef PEBP_ENABLED
       if (KOST == hard_PEBP) then
-            ddt = deltaT
+            ! Here we explicitly set time increment to the value
+            ! that is implicitly assumed in Pancak2.
+            ddt = 1.D0
             call KS_updateState(IOR,GAMMA,ddt,info)
       endif
 #endif
