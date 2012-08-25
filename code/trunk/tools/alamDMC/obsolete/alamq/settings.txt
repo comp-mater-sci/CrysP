@@ -1,7 +1,0 @@
-
-
-Include alamelSub and optlib:
-
-..\..\..\..\MTM\branches\alamelSub\src\$(ConfigurationName)\lib\include;..\fng\utils\optlib\$(ConfigurationName)\include
-
-
