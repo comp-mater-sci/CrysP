@@ -27,6 +27,10 @@
 
 !> Basic configuration of AlTay in a form of formalized data structures.
 module altayConfig
+! Import configuration structures from AlTay modules
+use hardVoce, only: VoceConfig
+use KOST1x, only: PAR11
+
 implicit none
 
       integer,parameter  :: fname_len = 512 !< Length of filenames
@@ -119,20 +123,15 @@ implicit none
             logical                                   :: use_cubfile = .false.
       end type
 
-      !> Parameters of Voce hardening law. Some 'reasonable' defaults are used.
-      type :: hardeningVoceData
-            double precision                          :: TIII1  = 1.486     
-            double precision                          :: TIIIS  = 2.476     
-            double precision                          :: TIVS   = 8.357 
-            double precision                          :: THIII1 = 2.75      
-            double precision                          :: THT    = 0.55
-      end type
 
       !> Parameters of available hardening models.
       type :: hardeningData
             
             !> Parameters of Voce hardening law.
-            type(hardeningVoceData)       :: paramsVoce
+            type(VoceConfig)        :: VoceCnf
+
+            !> Parameters of PEBP models (KOST1x)
+            type(PAR11)             :: PEBPCnf
             
       end type
       

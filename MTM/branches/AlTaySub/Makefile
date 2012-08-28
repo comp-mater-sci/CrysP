@@ -43,6 +43,30 @@ fxx2o = $(subst .for,.o, $(filter %.for,$(1))) $(subst .f90,.o, $(filter %.f90,$
 # Builds (relative) object paths from a list of .for or .90 files
 fxx2opaths = $(patsubst %, $(2)/%,$(call fxx2o,$(1)))
 
+# Group of core source files
+CORE_SRCS = \
+Alg0A.for \
+Alg0.for  \
+Alg1.for \
+Alg2.for \
+Dynfil.for \
+ioconfig.f90 \
+miscutils.f90 \
+Pancak2.for \
+Sliprat.for \
+Stelsel.for \
+TBH.for \
+cubAccess.f90 \
+curAccess.f90 \
+smtAccess.f90 \
+texFormats.f90 \
+hardVoce.f90 \
+altayHard.f90 \
+KOST1x.f90 \
+KOST1xState.f90
+
+
+
 #####################################################################
 # CONFIGURATION OF LIBRARY
 #
@@ -58,27 +82,11 @@ LIB_INCLUDEDIR=$(LIB_DIR)/include
 LIB_CFG= -DALTAY_SUBROUTINE -DRCM_ENABLED -DNO_STDOUT -DPEBP_ENABLED
 #
 LIB_SRCS= \
-Alg0A.for \
-Alg0.for  \
-Alg1.for \
-Alg2.for \
+$(CORE_SRCS) \
 altayConfig.f90  \
 altayInterface.f90 \
 altayRCM.f90 \
-altaySub.f90 \
-Dynfil.for \
-ioconfig.f90 \
-miscutils.f90 \
-Pancak2.for \
-Sliprat.for \
-Stelsel.for \
-TBH.for \
-cubAccess.f90 \
-curAccess.f90 \
-smtAccess.f90 \
-texFormats.f90 \
-KOST1x.f90 \
-KOST1xState.f90
+altaySub.f90
 
 
 LIB_SRCDIR=src
@@ -109,20 +117,7 @@ PROG_INCLUDEDIR=$(PROG_DIR)/include
 PROG_CFG= -DMAINDIRECT -DPEBP_ENABLED
 #
 PROG_SRCS= \
-Alg0A.for \
-Alg0.for  \
-Alg1.for \
-Alg2.for \
-Dynfil.for \
-ioconfig.f90 \
-miscutils.f90 \
-curAccess.f90 \
-Pancak2.for \
-Sliprat.for \
-Stelsel.for \
-TBH.for \
-KOST1x.f90 \
-KOST1xState.f90 \
+$(CORE_SRCS) \
 MainA1.for
 
 # Build list of objects:
@@ -241,8 +236,7 @@ RCMINCLUDE = src/altayRCM.fpp
 #
 #$(LIB_OBJDIR)/.o	: $(addprefix $(LIB_OBJDIR)/, )	
 $(LIB_OBJDIR)/altaySub.o	: $(addprefix $(LIB_OBJDIR)/,altayConfig.o altayInterface.o altayRCM.o ioconfig.o texFormats.o) $(RCMINCLUDE)
-$(LIB_OBJDIR)/Alg0.o		: $(addprefix $(LIB_OBJDIR)/,KOST1x.o altayConfig.o ioconfig.o)
-$(LIB_OBJDIR)/Alg0A.o		: $(addprefix $(LIB_OBJDIR)/,Alg0.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o altayRCM.o ioconfig.o) $(RCMINCLUDE)
+$(LIB_OBJDIR)/Alg0A.o		: $(addprefix $(LIB_OBJDIR)/,KOST1x.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o altayRCM.o ioconfig.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Alg1.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o ioconfig.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Alg2.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Dynfil.o		: $(addprefix $(LIB_OBJDIR)/,altayConfig.o ioconfig.o miscutils.o)
@@ -254,7 +248,8 @@ $(LIB_OBJDIR)/Sliprat.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o ioconfig.o)
 $(LIB_OBJDIR)/TBH.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o ioconfig.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/texFormats.o	: $(addprefix $(LIB_OBJDIR)/,Dynfil.o curAccess.o cubAccess.o smtAccess.o)
 $(LIB_OBJDIR)/KOST1xState.o	: $(addprefix $(LIB_OBJDIR)/,KOST1x.o)
-
+$(LIB_OBJDIR)/altayHard.o	: $(addprefix $(LIB_OBJDIR)/,ioconfig.o altayConfig.o hardVoce.o KOST1x.o)
+$(LIB_OBJDIR)/hardVoce.o	: $(addprefix $(LIB_OBJDIR)/,ioconfig.o )
 # Explicit dependencies for test program
 #
 
@@ -275,5 +270,5 @@ $(PROG_OBJDIR)/Sliprat.o	: $(addprefix $(PROG_OBJDIR)/,ioconfig.o)
 $(PROG_OBJDIR)/TBH.o		: $(addprefix $(PROG_OBJDIR)/,ioconfig.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/texFormats.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o curAccess.o cubAccess.o smtAccess.o)
 $(PROG_OBJDIR)/KOST1xState.o	: $(addprefix $(PROG_OBJDIR)/,KOST1x.o)
-
-
+$(PROG_OBJDIR)/altayHard.o	: $(addprefix $(PROG_OBJDIR)/,ioconfig.o hardVoce.o KOST1x.o)
+$(PROG_OBJDIR)/hardVoce.o	: $(addprefix $(PROG_OBJDIR)/,ioconfig.o )
