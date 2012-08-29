@@ -3,8 +3,16 @@
 !
       MODULE KOST1x
 !     v1.0 by P. Eyckens, MTM, KU Leuven, 17 July 2012.
-!     v1.1 by P. Eyckens, MTM, and J. Gawad, CS, KULeuven, 2 August 2012.
-!     v1.2 by P. Eyckens, MTM, and J. Gawad, CS, KULeuven, 29 August 2012:
+!     v1.1 by P. Eyckens, MTM, and J. Gawad, CS, KU Leuven, 2 August 2012.
+!     v1.2 by J. Gawad, CS, KU Leuven, 13 August 2012:
+!      -> Small fixes to IO format statements in ReadSVfile/WriteSVfile
+!      -> Pre-examination of slip system definition file is corrected, but
+!         afterwards it is commented out.
+!     v1.3 by P. Eyckens, MTM, and J. Gawad, CS, KU Leuven, 22 August 2012:
+!       -> Named constants are added for exit codes. Note: the constants are 
+!          not used in a consistent way yet.
+!       -> Zero-slip conditions are explicitly handled in MakeInc.
+!     v1.4 by P. Eyckens, MTM, and J. Gawad, CS, KU Leuven, 29 August 2012:
 !       -> Bug Fixes:
 !           * [proc. F_CRSS] Changed interpretation of parameter P%f: 
 !              NOW:    volume fraction of Cell Block Boundaries.
