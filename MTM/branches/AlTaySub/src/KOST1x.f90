@@ -4,7 +4,21 @@
       MODULE KOST1x
 !     v1.0 by P. Eyckens, MTM, KU Leuven, 17 July 2012.
 !     v1.1 by P. Eyckens, MTM, and J. Gawad, CS, KULeuven, 2 August 2012.
-
+!     v1.2 by P. Eyckens, MTM, and J. Gawad, CS, KULeuven, 29 August 2012:
+!       -> Bug Fixes:
+!           * [proc. F_CRSS] Changed interpretation of parameter P%f: 
+!              NOW:    volume fraction of Cell Block Boundaries.
+!              BEFORE: volume fraction of Cell Blocks.  
+!              Modification: P%f <-> (1.-P%f)
+!           * [proc. Getinitstatvar] Fixed CRSS of an annealed state:
+!              NOW:    invoking F_CRSS (includes tau_0 and contributions from CBs and CBBs)
+!              BEFORE: Set CRSS to tau_0 (so not including contributions from CBs and CBBs)
+!       -> Modifications:
+!           * [proc. Init_PAR11] Avoid extremely large values for the dislocation densities:
+!              NOW:    PRIVATE parameter set P has units: MPa; nm (nanometer)
+!                        => Unit disl. densities: [nm^(-2)] ; e.g. rho = 1.D1
+!              BEFORE: PRIVATE parameter set P has units: MPa; m (meter)
+!                        => Unit disl. densities: [ m^(-2)] ; e.g. rho = 1.D13
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST= 11
 !     --------
@@ -58,15 +72,15 @@
        !MODULE PROCEDURE Init_PAR12 !for future variant with different/more parameters
       END INTERFACE
                   
-      PUBLIC                                                             &
+      PUBLIC                    &
       !procedures:  
-            InitModuleKOST1x,                                            &
-            GetInitStatVar,                                              &
-            MakeInc,                                                     &
+            InitModuleKOST1x,   &
+            GetInitStatVar,     &
+            MakeInc,            &
 			ReadSVfile,         &
 			WriteSVfile,        &
       !derived types:
-            PAR11,                                                       &
+            PAR11,              &
             StatVar,            &
 			CBBtype
 
@@ -80,15 +94,15 @@
       !>@}
             
       !Remaining declarations all PRIVATE:
-      TYPE(PAR11), SAVE :: P
+      TYPE(PAR11), SAVE :: P !unit system: MPa; nm(nanometer)
       logical, SAVE :: InitOK=.FALSE.
       integer, SAVE :: iKOST=0
       integer, PRIVATE :: i !running index
       double precision, SAVE :: alfa_G_b 
-      double precision, SAVE, DIMENSION(24,6)::     eff = 0.,         &
-                                          effslashb = 0.,   &
-                                          alfa_G_b_eff = 0.,&
-                                          alfa_G_b_ABSeff = 0.
+      double precision, SAVE, DIMENSION(24,6):: eff             = 0.D0 ,&
+                                                effslashb       = 0.D0 ,&
+                                                alfa_G_b_eff    = 0.D0 ,&
+                                                alfa_G_b_ABSeff = 0.D0
 
       double precision, PARAMETER :: MINfrac= 2.0E-3
       double precision, PARAMETER :: LOWfrac=10.0E-3
@@ -132,9 +146,11 @@
       TYPE(PAR11),INTENT(IN) :: P11try 
       integer    ,INTENT(IN) :: KOSTtry !proposed value of KOST
       integer    ,INTENT(IN) :: LEC !unit number of PRE-file
-
+      
+      !local variables declarations:
       character(LEN=64) :: line1
       integer           :: s,i
+      double precision, PARAMETER :: TENpow6 = 1.D6
       
       InitOK=.FALSE.
             
@@ -144,7 +160,7 @@
           return 
       end if
           iKOST=KOSTtry !=11; iKOST: PRIVATE to this module.
-/*
+/* !remove??
       !Check PRE-file
       rewind (unit=LEC)
       read (LEC,FMT='(A)') line1
@@ -153,8 +169,8 @@
         iError=-2
         return 
       end if
-*/
-      !Check and save the parameters in P (private to this module)
+*/ !remove??
+      !Check the input parameters                                  ! Units of input parameters:
       if(P11try%b    >  0.    .AND. P11try%b    <= 1.e-8    .AND.& ! [m]
          P11try%G    >= 10.e3 .AND. P11try%G    <= 500.e3   .AND.& ! [MPa]
 	     P11try%alfa >  0.    .AND. P11try%alfa <= 5.       .AND.& ! [/]
@@ -172,7 +188,16 @@
          P11try%beta1>= 0.    .AND. P11try%beta1<= 100.     .AND.& ! [/]
          P11try%beta2>= 0.    .AND. P11try%beta2<= 100.          & ! [/]
 	      )then
+            !Save the parameters in P (private to this module)          
 		    P=P11try
+            !change of units if different (units of P are: MPa; nm(nanometer))
+            P%b    = P%b    * TENpow6 ![m] -> [nm]
+            P%R    = P%R    * TENpow6 ![m] -> [nm]
+            P%Rwd  = P%Rwd  * TENpow6 ![m] -> [nm]
+            P%Rncg = P%Rncg * TENpow6 ![m] -> [nm]            
+            P%Rwp  = P%Rwp  * TENpow6 ![m] -> [nm]
+            P%Rrev = P%Rrev * TENpow6 ![m] -> [nm]
+            P%R2   = P%R2   * TENpow6 ![m] -> [nm]            
 		  else
             iError=-3
             return 
@@ -181,8 +206,8 @@
       !Calculate dependent hardening parameters
       P%RHOcbSAT=P%I  * P%I  /( P%R  * P%R  )
       P%RHOwdSAT=P%Iwd* P%Iwd/( P%Rwd* P%Rwd)
-      P%RHOwpSAT=(sqrt((P%Iwp/P%Rwp)**4 +                                &
-                 4.*(P%Iwp*P%Iwd/(P%Rwp*P%Rwd))**2) +                    &
+      P%RHOwpSAT=(sqrt((P%Iwp/P%Rwp)**4 +               &
+                 4.*(P%Iwp*P%Iwd/(P%Rwp*P%Rwd))**2) +   &
                  (P%Iwp/P%Rwp)**2)/2.  
 
       P%RHOcbMIN=  MINfrac * P%RHOcbSAT
@@ -292,7 +317,8 @@
       SV0%CBB(:)%accGAMMA_new = 0.
       SV0%CBB(:)%RHOwd_ini    = P%RHOwdMIN
       SV0%ActiveCBB(:)        = 0
-      SV0%CRSS(:,:)           = P%tau0
+      !OLD !!SV0%CRSS(:,:)           = P%tau0
+      SV0%CRSS                = F_CRSS(SV0)
 
       END SUBROUTINE GetInitStatVar
 
@@ -668,11 +694,13 @@
 
       END SUBROUTINE UPD_cb
 
+      END SUBROUTINE MakeInc
+      
+      
 
-
-      !CONTAINed by SUBROUTINE MakeInc:
-      FUNCTION F_CRSS(SV_b) 
-      TYPE(StatVar), INTENT(IN) :: SV_b 
+      !CONTAINed by MODULE KOST1x:
+      FUNCTION F_CRSS(SV) 
+      TYPE(StatVar), INTENT(IN) :: SV 
       double precision, DIMENSION(2,24):: F_CRSS !OUT
 
 !     P%tau0,P%f  ->inherited
@@ -687,10 +715,10 @@
       double precision,DIMENSION(6)::wpcontr,wdcontr
  
        !CRSS within cells & CBs
-      tau_CB=alfa_G_b*sqrt(SV_b%RHOcb) 
+      tau_CB=alfa_G_b*sqrt(SV%RHOcb) 
       
       !contributions from tau_0 and CBs to CRSS
-      CRSS_0_CB=P%tau0 +  P%f*tau_CB
+      CRSS_0_CB=P%tau0 +  (1.D0-P%f)*tau_CB
 
       !Calc. CRSS for each slip system s, for the sense of slip j
       do j=1,2 
@@ -698,22 +726,20 @@
         do s=1,24 
           !wp- and wd-contributions from all CBBs i
           do i=1,6
-                  wpcontr(i)=sqrt(abs(SV_b%CBB(i)%RHOwp)) *             &
+                  wpcontr(i)=sqrt(abs(SV%CBB(i)%RHOwp)) *             &
                        signfac * alfa_G_b_eff(s,i) *                    &
-                       sign(1.D0,SV_b%CBB(i)%RHOwp) ! sign returns +/-1 depending on the sign of the second argument
+                       sign(1.D0,SV%CBB(i)%RHOwp) ! sign returns +/-1 depending on the sign of the second argument
             if (wpcontr(i) .LT. 0.0) wpcontr(i)=0.0
-            wdcontr(i)=sqrt(SV_b%CBB(i)%RHOwd)*alfa_G_b_ABSeff(s,i)
+            wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*alfa_G_b_ABSeff(s,i)
           end do
           !CRSS within CBB = wp- and wd-contributions for all 6 walls
           tau_CBB(j,s)=sum(wpcontr)+sum(wdcontr) 
           !C.R.S.S. for the "two-phase composite"
-          F_CRSS(j,s)= CRSS_0_CB + (1.D0-P%f)*tau_CBB(j,s) 
+          F_CRSS(j,s)= CRSS_0_CB + P%f*tau_CBB(j,s) 
         end do
       end do
 
       END FUNCTION F_CRSS
-
-      END SUBROUTINE MakeInc
 
 
 
