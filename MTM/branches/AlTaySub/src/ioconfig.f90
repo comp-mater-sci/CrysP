@@ -35,7 +35,10 @@ implicit none
       !> IMP4= output file for state variables of KOST11
       integer :: IMP4 = 110
 #endif
-      
+
+      !> IMP5= output of stress-strain or slip-stress 
+      integer :: IMP5 = 111
+
       !> IDISK1= work file
       integer :: IDISK1 = 12
       
@@ -64,6 +67,10 @@ implicit none
       !> Control of the state file in PEBP (KOST11 module)
       integer :: NPEBP = 0
 #endif
+      
+      !> Control of the output with homogenized strain-stress (IMP5)
+      integer :: NMSS = 0
+
       !>@}
 
 end module

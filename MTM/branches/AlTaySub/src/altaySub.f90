@@ -125,6 +125,12 @@ contains
                   open (unit=IMP4,file=cods1,status='replace')
             endif
 #endif
+            if (acnf%output_config%NMSS /= 0) then
+                  cods1(L+1:L+4)='.MSS'
+                  ! UNIT IMP5 = homogenized strain-stress
+                  open (unit=IMP5,file=cods1,status='replace')
+            endif
+            !
             info = altaySub_Exception
       
             ! Set the data for CRSS calculations

@@ -72,7 +72,12 @@ C     UNIT IMP3 = PRINTER
       cods1(L+1:L+4)='.BPM'
 C     UNIT IMP4 = state variables of PEBP KOST11
       open (unit=IMP4,file=cods1,status='replace')
-#endif      
+#endif
+      ! 
+      cods1(L+1:L+4)='.MSS'
+C     UNIT IMP5 = homogenized strain-stress
+      open (unit=IMP5,file=cods1,status='replace')
+
       read (KLEC,90) fnam2
       call stripComment(fnam2)
       write (*,93) trim(fnam2)

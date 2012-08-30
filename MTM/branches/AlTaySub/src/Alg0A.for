@@ -56,6 +56,13 @@ C
       logical SWRLX
       
       integer :: info
+      ! HEPS: homogenized von Mises equivalent strain (per step)
+      ! HEPSCALL: homogenized vM strain (per call)
+      ! HEPSTOT: homogenized vM strain (cummulative over calls)
+      double precision :: HEPS=0.D0,HEPSCALL=0.D0,HEPSTOT=0.D0
+      ! Macroscopically imposed vM equivalent strain per step and 
+      ! accumulated over the calls.
+      double precision :: MEPS=0.D0,MEPSTOT=0.D0 
 #ifdef ALTAY_SUBROUTINE
       ! Variables for simple stress calculations: full_model=.false.
       ! This operation mode is inspired by QGX's way of calculating
@@ -84,6 +91,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       IPR    = acnf%output_config%IPR     ! control printing level
       NRES   = acnf%output_config%NRES    ! control "RES"
       NPEBP  = acnf%output_config%NPEBP   ! control "BEP"
+      NMSS   = acnf%output_config%NMSS    ! control "MSS"
 #else
 C     Number of grains in ALAMEL cluster
       read (KLEC,99) NGR
@@ -94,7 +102,8 @@ C     Number of grains in ALAMEL cluster
       read (KLEC,99) KOST
       read (KLEC,99) IPR
       NRES = NFILE1  ! IMP2 and IMP3 are controlled only by NFILE1 
-      if (KOST == hard_PEBP) NPEBP  = NFILE1
+      if (KOST == hard_PEBP) NPEBP  = NLIST
+      NMSS = NLIST
 #endif
       ! NGR == 3: enable MAS-AL
       if(NGR.eq.3) then
@@ -131,7 +140,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 
 C     Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
       NRL=(NGR-1)*2
-#ifdef ALTAY_SUBROUTINE
+#ifdef ALTY_SUBROUTINE
       !
       FMicro = acnf%simul_init%FMicro
       !
@@ -252,6 +261,7 @@ C     read the parameters of the work hardening model
             info = KS_writeState(IMP4)
       endif
 #endif
+      HEPSCALL = 0.D0
 C
 C     Main Loop over the Steps
 C
@@ -269,6 +279,8 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   50  continue
       SG=0.
       GMM=0.
+      HEPS=0.D0
+      MEPS=sqrt(2./3.)*0.5*sqrt(sum((DG+transpose(DG))**2))
       call dynfil2(nrstep,F,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT       
       write (*,96) ISTP,GAXES
@@ -542,6 +554,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   51  continue
   63  SG=SG+WDOT*GEWF
       GMM=GMM+WDOT*GEWF/TAU
+      HEPS = HEPS + EPS * GEWF
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX¡¡4/11/2011
 C      if (IROT.NE.1) goto 23
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -591,12 +604,24 @@ C      call STR5(vec1,SHsam)
 
       GMM=GMM/TOTGEW
       SG=SG/TOTGEW
+      !
+      HEPS = HEPS / TOTGEW
+      HEPSCALL = HEPSCALL + HEPS
+      HEPSTOT = HEPSTOT + HEPS
+      MEPSTOT = MEPSTOT + MEPS
+      if (NMSS /= 0) then
+      write(IMP5,555) MEPS*ISTP,MEPSTOT,
+     1HEPSCALL,HEPSTOT, sqrt(3./2.*sum(SHsam*SHsam)),
+     2SHsam(1,1),SHsam(2,2),SHsam(3,3),SHsam(2,3),SHsam(3,1),SHsam(1,2)
+      endif
+ 555  format(5(E15.6,1X),5X,6(E15.6,1X))
+
 #ifdef ALTAY_SUBROUTINE
       ! Get the homogenized quantities:
       astate%simulCalls(astate%this)%output%stress_tensor= SHsam
       astate%simulCalls(astate%this)%output%taylor_factor= GMM
       astate%simulCalls(astate%this)%output%average_stress= SG
-      astate%simulCalls(astate%this)%output%effective_strain=EPS
+      astate%simulCalls(astate%this)%output%effective_strain = HEPSCALL
 
 #ifdef EXTENDED_TESTING      
 #warning 'Testing code is left'

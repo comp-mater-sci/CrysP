@@ -203,12 +203,13 @@ C         TLCOST=TLCOST*TAU
       case(hard_none,hard_voce)
             DO 92 I=1,M11
             j=I+K1
-            do jsgn=1,2
-               CCC(jsgn,j)=1.0
-            enddo
             if (KOST.EQ.hard_voce) then
                   do jsgn=1,2
                         CCC(jsgn,j)=FK1b(jsgn,I,IL)*TAU
+                  enddo
+            else
+                  do jsgn=1,2
+                        CCC(jsgn,j)=1.0
                   enddo
             endif
 C           set Tau_crit for antitwinning direction equal to

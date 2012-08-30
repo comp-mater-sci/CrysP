@@ -119,6 +119,7 @@ implicit none
             integer                                   :: ipr = 0      !< (SIMUL) IPR  0-3 Print switch. All except Van Houtte must use 0
             integer                                   :: nres = 0     !< (SIMUL) NRES (Make output for stresses with per-grain resolution)
             integer                                   :: npebp = 0    !< (SIMUL) NPEBP (Make state variable file for BP (KOST1x) model)
+            integer                                   :: nmss = 0     !< (SIMUL) NMSS (output of macroscopic homogenized strain-stress)
             logical                                   :: use_curfile = .false.
             logical                                   :: use_cubfile = .false.
       end type
