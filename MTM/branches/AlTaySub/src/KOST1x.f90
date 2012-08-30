@@ -85,12 +85,12 @@
             InitModuleKOST1x,   &
             GetInitStatVar,     &
             MakeInc,            &
-			ReadSVfile,         &
-			WriteSVfile,        &
+            ReadSVfile,         &
+            WriteSVfile,        &
       !derived types:
             PAR11,              &
             StatVar,            &
-			CBBtype
+            CBBtype
 
       !> \name Exit codes from KOST1x subroutines and functions:
       !>@{
@@ -98,7 +98,9 @@
       integer,PARAMETER,PUBLIC :: KS_Error = -1       !< General error (not covered by any specific error code).
       integer,PARAMETER,PUBLIC :: KS_ErrBadDims = -2  !< At least one parameter out of boundaries
       integer,PARAMETER,PUBLIC :: KS_ErrBadValue = -5 !< At least one input parameter has unacceptable value
+      integer,PARAMETER,PUBLIC :: KS_ErrOutOfRange = -6 !< At least one input parameter has a value outside acceptable range
       integer,PARAMETER,PUBLIC :: KS_ErrIO = -15      !< Error during an IO operation
+      integer,PARAMETER,PUBLIC :: KS_ErrUninitialized = -50 !< Call to module procedures without proper initialization of the module
       !>@}
             
       !Remaining declarations all PRIVATE:
@@ -143,15 +145,16 @@
 
       CONTAINS
 
-      !CONTAINed by MODULE KOST1x:
+      !> Initialization of KOST1x with KOST11 model.
+      !>
+      !> \return This procedure returns an error code (iError):  
+      !>    * KS_OK : no error
+      !>    * KS_ErrBadValue : incorrect value of KOSTtry for the inputted parameter-type
+      !>    * KS_ErrOutOfRange : (at least one) parameter out of boundaries
+      !>    * KS_ErrIO : slipsystem file (read from LEC) does not meet requirements about its format
+      !> \note CONTAINed by MODULE KOST1x
       integer FUNCTION Init_PAR11(P11try,KOSTtry,LEC) result(iError)
-      !Before EXITing, this function REWINDs the PRE-file but does not CLOSE it.
-      !This procedure returns an error code (iError):  
-      !      0 : no error
-      !     -5 : incorrect value of KOSTtry for the inputted parameter-type
-      !     -2 : incorrect PRE-file
-	  !     -3 : (at least one) parameter out of boundaries
-      TYPE(PAR11),INTENT(IN) :: P11try 
+      TYPE(PAR11),INTENT(IN) :: P11try
       integer    ,INTENT(IN) :: KOSTtry !proposed value of KOST
       integer    ,INTENT(IN) :: LEC !unit number of PRE-file
       
@@ -164,24 +167,22 @@
             
       !Check KOSTtry
       if (KOSTtry /= 11) then
-          iError=-5
+          iError = KS_ErrBadValue
           return 
       end if
           iKOST=KOSTtry !=11; iKOST: PRIVATE to this module.
-/* !remove??
       !Check PRE-file
       rewind (unit=LEC)
       read (LEC,FMT='(A)') line1
       rewind (unit=LEC)
       if ( (index(line1,'BCC') == 0) .or. (index(line1,'{BP}') == 0)) then
-        iError=-2
+        iError = KS_ErrIO 
         return 
       end if
-*/ !remove??
       !Check the input parameters                                  ! Units of input parameters:
       if(P11try%b    >  0.    .AND. P11try%b    <= 1.e-8    .AND.& ! [m]
          P11try%G    >= 10.e3 .AND. P11try%G    <= 500.e3   .AND.& ! [MPa]
-	     P11try%alfa >  0.    .AND. P11try%alfa <= 5.       .AND.& ! [/]
+         P11try%alfa >  0.    .AND. P11try%alfa <= 5.       .AND.& ! [/]
          P11try%f    >= 0.    .AND. P11try%f    <= 1.       .AND.& ! [/]
          P11try%tau0 >= 0.    .AND. P11try%tau0 <= 1.e4     .AND.& ! [MPa]
          P11try%I    >= 0.    .AND. P11try%I    <= 10.      .AND.& ! [/]
@@ -195,9 +196,9 @@
          P11try%R2   >  0.    .AND. P11try%R2   <= 1.e-6    .AND.& ! [m]
          P11try%beta1>= 0.    .AND. P11try%beta1<= 100.     .AND.& ! [/]
          P11try%beta2>= 0.    .AND. P11try%beta2<= 100.          & ! [/]
-	      )then
+          )then
             !Save the parameters in P (private to this module)          
-		    P=P11try
+            P=P11try
             !change of units if different (units of P are: MPa; nm(nanometer))
             P%b    = P%b    * TENpow6 ![m] -> [nm]
             P%R    = P%R    * TENpow6 ![m] -> [nm]
@@ -206,10 +207,10 @@
             P%Rwp  = P%Rwp  * TENpow6 ![m] -> [nm]
             P%Rrev = P%Rrev * TENpow6 ![m] -> [nm]
             P%R2   = P%R2   * TENpow6 ![m] -> [nm]            
-		  else
-            iError=-3
+          else
+            iError = KS_ErrOutOfRange
             return 
-	  end if
+      end if
 
       !Calculate dependent hardening parameters
       P%RHOcbSAT=P%I  * P%I  /( P%R  * P%R  )
@@ -237,7 +238,7 @@
 
       !If control passes here, initialization is done without errors
       InitOK=.TRUE. !PRIVATE to this module
-      iError=0      !OUT
+      iError=KS_OK      !OUT
 
       END FUNCTION Init_PAR11
 
@@ -292,10 +293,10 @@
 100   format(F12.5)
       ! Do extra validation tests here to check the contents of the structure P
       ! ...
-      ReadPar11 = 0
+      ReadPar11 = KS_OK
       return
       !
-666   ReadPar11 = -4 !Error in reading from file    
+666   ReadPar11 = KS_ErrIO !Error in reading from file    
       !
       end FUNCTION ReadPar11
       
@@ -306,17 +307,17 @@
       !This procedure returns:
       ! state variables for an annealed & undeformed substructure (SV0)
       ! an error code (iError):  
-      !      0 , no error
-      !     -10, in case this module is not correctly initialized
+      !      KS_OK , no error
+      !      KS_ErrUninitialized, in case this module is not correctly initialized
 
       TYPE(StatVar),INTENT(OUT) :: SV0
       integer,      INTENT(OUT) :: iError
 
       if(.NOT.InitOK) then
-            iError=-10
+            iError = KS_ErrUninitialized
             return
       end if
-      iError=0
+      iError=KS_OK
 
       SV0%RHOcb               = P%RHOcbMIN
       SV0%CBB(:)%RHOwd        = P%RHOwdMIN
@@ -341,8 +342,9 @@
       !This procedure returns:
       ! state variables at end of the increment (SVb)
       ! an error code (iError):  
-      !      0 , no error
-      !     -10, in case this module is not correctly initialized
+      !   *  KS_OK , no error
+	  !   *  KS_ErrBadValue, if negative deltaT is provided
+      !   *  KS_ErrUninitialized, in case this module is not correctly initialized
       TYPE(StatVar),INTENT(IN)       :: SVa
       double precision,INTENT(IN), DIMENSION(24) :: sliprate
       double precision,INTENT(IN)                      :: deltaT
@@ -359,10 +361,10 @@
 
       if(.NOT.InitOK) then
             SVb=SVa
-            iError=-10
+            iError = KS_ErrUninitialized
             return
       end if
-      iError=0
+      iError = KS_OK
 
       !! Calc. quantities of slip rates and slips
       !! Identify currently generated and non-currently generated walls
@@ -378,7 +380,7 @@
             ! No slip rate in the current grain => no deformation, no update of the state
             SVb=SVa
             ! Issue error only on negative time increment.
-            if (deltaT < 0.D0) iError = -5
+            if (deltaT < 0.D0) iError = KS_ErrBadValue
             return
       endif
 
@@ -771,14 +773,14 @@
       do i=1,2 !first line for positive sense, 2nd line for negative sense
         read(unit,fmt=104,err=666,end=666)(SV%CRSS(i,j),j=1,24)
       end do
-      iError = 0
+      iError = KS_OK
       return
 101   format(   E15.8 )
 102   format( 5(E15.8))
 103   format( 2(I5   ))
 104   format(24(E15.8))
       !
-666   iError = -4 !Error in reading from file    
+666   iError = KS_ErrIO !Error in reading from file    
       !
       END FUNCTION ReadSVfile
 
@@ -804,15 +806,15 @@
       do i=1,2 !first line for positive sense, 2nd line for negative sense
             write(unit,fmt=104,err=666)(SV%CRSS(i,j),j=1,24)
       end do
-      iError = 0
+      iError = KS_OK
       return
-	  !
+      !
 101   format(   E15.8 )
 102   format( 5(E15.8))
 103   format( 2(I5   ))
 104   format(24(E15.8))
       !
-666   iError = -4 !Error in reading from file    
+666   iError = KS_ErrIO !Error in reading from file    
       !
       END FUNCTION WriteSVfile
 
