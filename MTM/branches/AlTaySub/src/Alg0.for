@@ -1,4 +1,4 @@
-      BLOCK DATA
+      BLOCK DATA Alg0
       implicit double precision (a-h,o-z)
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON/TLR1/ N,M,N1,NGL,NTW,NC,LC,B1(3,96),B(5,5),
