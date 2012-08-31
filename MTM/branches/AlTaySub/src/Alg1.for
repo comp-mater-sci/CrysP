@@ -487,7 +487,8 @@ C add the normalization factor for rhossa
      4 ssam(1,1),ssam(2,2),ssam(3,3),ssam(2,3),ssam(3,1),ssam(1,2)
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 ! 150 format (i5,5f10.6,5x,6f10.6,5x,3f10.6,5x,6f10.6)
-  150 format (i5,5(E12.5),5x,6(E12.5),5x,3(E12.5),5x,6(E12.5,1X))
+  150 format(i5,5(E12.5,1X),5x,6(E12.5,1X),5x,3(E12.5,1X),
+     1       5x,6(E12.5,1X))
    61 RETURN
   26  WRITE (IMP,106)
  106  FORMAT (1H ,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBL

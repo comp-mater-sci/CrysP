@@ -158,12 +158,11 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
   99  FORMAT (2I5)
   94  format (3F10.0)
   16  read (KLEC,98) TITEL
+#endif      
       if(NLIST.eq.1) then
       write (IMP,97) TITEL
       end if
-      if ((NFILE1.gt.0).and.(NRES.gt.0)) write (IMP2,98) TITEL
-#endif
-
+      if (NRES.gt.0) write (IMP2,98) TITEL
   97  format (' Title of the new simulation: ',A)
       ! Only if CUR file is requested
       if (NFILE1.eq.1) call CURwriteTitle(IMP1,TITEL,info)
@@ -319,10 +318,10 @@ C     INSTRUCTION ADDED IN LAMEL model:
       IF (NLIST.EQ.1) WRITE (IMP,112) ISTP
  112  FORMAT (//' DEFORMATION STEP ',I5,//)
       if (NRES.gt.0) write (IMP2,404) nrstep+1,NPOINT
- 404  format (' Def. Step ',i5,'  Number of orientations',i5,/,8x,
-     1 ' WDOT',4X,'WDOT/STR.RAT.','  TAU     ','   M      ','STR.RAT. '
-     2 ,5x,33X,'RHO-SYMMETRIC',24x,22x,'RHO-ROTATIONAL',8x,
-     3 24x,'STRESS',/,1x,219('*'))
+ 404  format (' Def. Step ',i5,'  Number of orientations',i5,/,
+     1 T11,'WDOT',T20,'WDOT/STR.RAT.',T38,'TAU',T52,'M',T62,'STR.RAT.',
+     2 T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS',/,
+     3 1x,278('*'))
       do 48 i=1,3
       GLR(i)=GEULR(i)*convf
   48  continue
