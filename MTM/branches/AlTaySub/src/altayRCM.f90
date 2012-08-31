@@ -94,7 +94,8 @@ contains
                   ! expand the stack:
                   call move_alloc(RCM_stack,tmp_stack)
                   allocate(RCM_stack(old_size + RCM_stack_slice))
-                  RCM_stack(1:old_size) = tmp_stack(1:old_size) ! explicit shape&size aren't really needed, but for sake of clarity...
+                  ! explicit shape&size aren't really needed, but for sake of clarity...
+                  RCM_stack(1:old_size) = tmp_stack(1:old_size) 
                   deallocate(tmp_stack)
             endif
             ! The stack is ready for setting the top.

@@ -25,9 +25,9 @@ implicit none
       end type
 
       ! Two instances of the model parameters:
-      type(VoceConfig)      :: voceCnf
+      type(VoceConfig),save      :: voceCnf
       
-      type(VoceParams)      :: vocePar
+      type(VoceParams),save      :: vocePar
       
 contains
 

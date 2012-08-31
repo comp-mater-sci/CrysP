@@ -52,7 +52,7 @@ implicit none
             !> that are implemented in the code:
             !>   - kost == 0: TAUC are set to 1.0, no hardening of slip systems.
             !>   - kost == 1: values from FK1 used, isotropic Voce equation is used for hardening. 
-            !>     \sa { crss_ratios 
+            !>     \sa crss_ratios 
             integer                                   :: kost =  0
 
             !> Array of CRSS ratios. 
@@ -74,6 +74,10 @@ implicit none
             !> Flag that decides if this step leads to modification of the texture.
             logical                                   :: keep_texture = .true.
             
+            !> Flag that decides if this step leads to an update of the state components
+            !> (other than texture)
+            logical                                   :: keep_state = .true.
+            
             !> Flag that decides if the full model is to be employed.
             !>   If set .false.: 1) a simplified formula is used for calculations of the microscopic stress
             !>                   2) texture is NOT updated, so "keep_texture" must be set, too.
@@ -81,6 +85,8 @@ implicit none
             
             !> Flag that decides if the texture should be written out as an output of the step.
             !>
+            !> \note The texture is actually written out for initial configuration that is available
+            !> at the beginning of the step.
             !> \remark This flag takes effect if outputConfig::nfile is non-zero. \sa outputConfig::nfile
             logical                                   :: do_output = .false.
             
@@ -103,6 +109,9 @@ implicit none
             double precision                    :: taylor_factor = 0.D0
             !> Macroscopic average stress
             double precision                    :: average_stress = 0.D0
+            !> Macroscopic (homogenized) effective von Mises stress
+            double precision                    :: effective_stress = 0.D0
+            !> Macroscopic (homogenized) effective von Mises strain
             double precision                    :: effective_strain = 0.D0
       end type
 
@@ -113,13 +122,20 @@ implicit none
       
       
       type :: outputConfig
-            integer                                   :: nlist = 0    !< (SIMUL) NLIST (Make an output listing 0 or 1)
-            integer                                   :: nfile = 0    !< (SIMUL) NFILE (Make output files 0 or 1) (CUR output)
-            integer                                   :: nfiltw = 0   !< (SIMUL) NFILTW (Make output files 0 or 1)
-            integer                                   :: ipr = 0      !< (SIMUL) IPR  0-3 Print switch. All except Van Houtte must use 0
-            integer                                   :: nres = 0     !< (SIMUL) NRES (Make output for stresses with per-grain resolution)
-            integer                                   :: npebp = 0    !< (SIMUL) NPEBP (Make state variable file for BP (KOST1x) model)
-            integer                                   :: nmss = 0     !< (SIMUL) NMSS (output of macroscopic homogenized strain-stress)
+            !> (SIMUL) NLIST (Make an output listing 0 or 1)
+            integer                                   :: nlist = 0
+            !> (SIMUL) NFILE (Make output files 0 or 1) (CUR output)
+            integer                                   :: nfile = 0
+            !> (SIMUL) NFILTW (Make output files 0 or 1)
+            integer                                   :: nfiltw = 0
+            !> (SIMUL) IPR  0-3 Print switch
+            integer                                   :: ipr = 0
+            !> (SIMUL) NRES (Make output for stresses with per-grain resolution)
+            integer                                   :: nres = 0
+            !> (SIMUL) NPEBP (Make state variable file for BP (KOST1x) model)
+            integer                                   :: npebp = 0
+            !> (SIMUL) NMSS (output of macroscopic homogenized strain-stress)
+            integer                                   :: nmss = 0
             logical                                   :: use_curfile = .false.
             logical                                   :: use_cubfile = .false.
       end type
@@ -187,7 +203,7 @@ implicit none
 
       ! Definition of the singleton objects
        
-      type(altayConfigData),save	:: acnf
+      type(altayConfigData),save    :: acnf
       
       type(altayStateData),save     :: astate
       

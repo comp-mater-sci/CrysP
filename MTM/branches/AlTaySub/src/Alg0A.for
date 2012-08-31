@@ -58,7 +58,7 @@ C
       integer :: info
       ! HEPS: homogenized von Mises equivalent strain (per step)
       ! HEPSCALL: homogenized vM strain (per call)
-      ! HEPSTOT: homogenized vM strain (cummulative over calls)
+      ! HEPSTOT: homogenized vM strain (cumulative over calls)
       double precision :: HEPS=0.D0,HEPSCALL=0.D0,HEPSTOT=0.D0
       ! Macroscopically imposed vM equivalent strain per step and 
       ! accumulated over the calls.
@@ -105,6 +105,8 @@ C     Number of grains in ALAMEL cluster
       if (KOST == hard_PEBP) NPEBP  = NLIST
       NMSS = NLIST
 #endif
+      HEPSTOT=0.D0
+      MEPSTOT=0.D0
       ! NGR == 3: enable MAS-AL
       if(NGR.eq.3) then
             ITFMAS=1
@@ -159,7 +161,7 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
       if(NLIST.eq.1) then
       write (IMP,97) TITEL
       end if
-      if ((NFILE1).and.(NRES.gt.0)) write (IMP2,98) TITEL
+      if ((NFILE1.gt.0).and.(NRES.gt.0)) write (IMP2,98) TITEL
 #endif
 
   97  format (' Title of the new simulation: ',A)
@@ -354,7 +356,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       call GETANG(CIJ,GAXES,GEULR,TG)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
-      ! We can choose not to update the microstructure/state
+      ! We can choose not to update the texture data
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
             call DYNFIL3(nrstep,F,GAXES,GEULR,CIJ,TG)
       endif
@@ -610,9 +612,10 @@ C      call STR5(vec1,SHsam)
       HEPSTOT = HEPSTOT + HEPS
       MEPSTOT = MEPSTOT + MEPS
       if (NMSS /= 0) then
-      write(IMP5,555) MEPS*ISTP,MEPSTOT,
-     1HEPSCALL,HEPSTOT, sqrt(3./2.*sum(SHsam*SHsam)),
-     2SHsam(1,1),SHsam(2,2),SHsam(3,3),SHsam(2,3),SHsam(3,1),SHsam(1,2)
+            write(IMP5,555) MEPS*ISTP,MEPSTOT,HEPSCALL,HEPSTOT,
+     &      sqrt(3./2.*sum(SHsam*SHsam)),
+     &      SHsam(1,1),SHsam(2,2),SHsam(3,3),
+     &      SHsam(2,3),SHsam(3,1),SHsam(1,2)
       endif
  555  format(5(E15.6,1X),5X,6(E15.6,1X))
 
@@ -621,22 +624,9 @@ C      call STR5(vec1,SHsam)
       astate%simulCalls(astate%this)%output%stress_tensor= SHsam
       astate%simulCalls(astate%this)%output%taylor_factor= GMM
       astate%simulCalls(astate%this)%output%average_stress= SG
+      astate%simulCalls(astate%this)%output%effective_stress = 
+     &  sqrt(3.D0/2.D0)*norm2(SHsam)
       astate%simulCalls(astate%this)%output%effective_strain = HEPSCALL
-
-#ifdef EXTENDED_TESTING      
-#warning 'Testing code is left'
-      !!! TESTING !!!
-      write(*,'(A,1X,I)') 'This=',astate%this
-!     write(*,'(A)') 'SHsam:'
-      write(*,'(3E15.6)') (SHsam(:,i), i=1,3)
- 
-      write(*,'(F15.6)') GMM
-      write(*,'(F15.6)') SG
-      write(*,'(F15.6)') EPS
-      write(*,'(A,F15.6)') 'normSg = ',sqrt(3./2.)*norm2(SHsam)
-      !!! TESTING !!!
-#endif
-
 #endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      JW=0

@@ -109,7 +109,7 @@ contains
             if (ierr /= 0) return
 !
 #ifndef NOCURFILE
-            if (cnf%output_config%nfile) then
+            if (cnf%output_config%nfile /= 0) then
             ! if (cnf%output_config%use_curfile) then
                   cods1(L+1:L+4)='.CUR'
                   ! IMP1=output file with successive "current situations"
@@ -118,7 +118,7 @@ contains
 #endif
 !
 #if defined(PEBP_ENABLED) .and. .not. defined(NOBEPFILE)
-            if (cnf%output_config%npebp) then 
+            if (cnf%output_config%npebp /= 0) then 
                   ! PEBP model
                   cods1(L+1:L+4)='.BPM'
                   ! UNIT IMP4 = state variables of PEBP KOST11

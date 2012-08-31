@@ -196,6 +196,7 @@ C 1235 format (' Just after Pancak2')
       SUBROUTINE TAYLR1(ISTP,IOR,NFILE,TAU)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
+      use altayConfig, only: astate
 #endif
 #ifdef PEBP_ENABLED      
       use KOST1xState
@@ -263,7 +264,12 @@ C 1771 format (I5)
             ! Here we explicitly set time increment to the value
             ! that is implicitly assumed in Pancak2.
             ddt = 1.D0
+#ifdef ALTAY_SUBROUTINE
+            if (.not. astate%simulCalls(astate%this)%input%keep_state)
+     &      call KS_updateState(IOR,GAMMA,ddt,info)
+#else
             call KS_updateState(IOR,GAMMA,ddt,info)
+#endif
       endif
 #endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011

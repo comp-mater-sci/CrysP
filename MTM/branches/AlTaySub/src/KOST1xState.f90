@@ -82,7 +82,7 @@ contains
             write(iounit,fmt=110)
             do i = 1, n
                   write(iounit,fmt=200) i      
-                  if (WriteSVfile(iounit,KS_state(i))) exit
+                  if (WriteSVfile(iounit,KS_state(i)) /= KS_OK) exit
             enddo
             write(iounit,fmt=111)
             if (i > n) info = KS_OK 
@@ -110,7 +110,7 @@ contains
             read(iounit,fmt=110) tmp_str
             do i = 1, n
                   read(iounit,fmt=200,iostat=ioerr) tmp
-                  if ( (ioerr /= 0) .or. (readSVfile(iounit,KS_state(i)))) exit
+                  if ( (ioerr /= 0) .or. (readSVfile(iounit,KS_state(i)) /= KS_OK)) exit
             enddo
             read(iounit,fmt=111,iostat=ioerr) tmp_str
             if ((i > n) .and. (ioerr == 0)) info = KS_OK 
