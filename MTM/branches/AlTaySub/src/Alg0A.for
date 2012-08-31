@@ -142,7 +142,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 
 C     Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
       NRL=(NGR-1)*2
-#ifdef ALTY_SUBROUTINE
+#ifdef ALTAY_SUBROUTINE
       !
       FMicro = acnf%simul_init%FMicro
       !
