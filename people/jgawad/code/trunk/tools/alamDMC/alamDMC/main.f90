@@ -44,13 +44,14 @@ implicit none
       !
       !
       integer,parameter       :: nmodules = 4
-      character(len=20),dimension(nmodules) :: moduleNames = ['alamQ','alamTSA','alamASR','alamYld']
+      character(len=20),dimension(nmodules) :: moduleNames = [character(len=20) :: 'alamQ','alamTSA','alamASR','alamYld']
       logical                 :: moduleFound = .false.
       integer                 :: moduleId = 0
       !
-      type(altayConfigData)	:: cnf
+      type(altayConfigData)   :: cnf
       !
       info = 1
+      ioerr = 0
       !
       ! Print banner
       write(*,'(A)') 'AlamDMC: $Rev$ $Date$ '
@@ -106,6 +107,7 @@ implicit none
       case(1) ! Alamq
             call Alamq_ReadConfig(cnfunit,info)
             cnf%output_config%nfile = 0   ! Override the request for texture output.
+            outputRequest = .false.       ! idem.
       case(2) ! AlamTSA    
             call AlamTSA_ReadConfig(cnfunit,info)
       case(3) ! AlamASR 
@@ -131,10 +133,19 @@ implicit none
       else
             write(*,fmt=31) 'Failed.'
             write(*,'(A)')  'Fatal error: cannot initialize the multilevel model.'
-           call finalize(1)
+            call finalize(1)
       endif
       ! Show general configuration of the multilevel model
       call displayConfig(display_unit,info)
+      !
+      ! Output the initial state variables (texture etc) if requested.
+      if (outputRequest) then
+            call outputTexture(info)
+            if (info /= 0) then
+                  write(*,*) 'Error: cannot write initial state'
+                  call finalize(1)
+            endif
+      endif
       !
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Run the module
@@ -157,6 +168,11 @@ implicit none
             write(*,'(1X,A)') 'with errors.'
       endif
 
+      call finalizeAltay(info)
+      if (info /= 0) then
+            write(*,'(A)') 'Problems have been encountered while finalizing libaltay'
+      endif
+      
       30 format(A,\)
       31 format(1X,A)
 

@@ -61,7 +61,8 @@ contains
                   cnf%dgf = D
                   cnf%keep_texture = .false.
                   cnf%full_model = .true.
-                  cnf%do_output = output_flag
+                  cnf%do_output_init = .false.
+                  cnf%do_output_final = output_flag
             end associate
             call runSteps(astate,info)
             if (info /= 0) return
@@ -75,5 +76,13 @@ contains
 #undef MSG_GROUP_ERRORS
       end subroutine
       
+      subroutine outputTexture(info)
+      use altaySub
+      implicit none
+      integer,intent(out)     :: info
+      !
+            call outputCurrentTexture(info)
+      !
+      end subroutine
       
 end module

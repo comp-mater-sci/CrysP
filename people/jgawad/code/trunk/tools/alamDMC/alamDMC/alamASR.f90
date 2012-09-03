@@ -192,11 +192,13 @@ contains
                   !! -> report the results to history file and to the screen
                   call outputIdentResults(teeunits)                  
                   !! -> Report the results to output file
-                  write(ofunit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, plastic_work_total, plast_pot, taylor_factor, scal_s, norm_sona, R
+                  write(ofunit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, &
+                                    plastic_work_total, plast_pot, taylor_factor, scal_s, norm_sona, R
                   !
                   write(display_unit,710)
                   write(display_unit,700) OUTHEADER ! write header line
-                  write(display_unit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, plastic_work_total, plast_pot, taylor_factor, scal_s, norm_sona, R
+                  write(display_unit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, &
+                                          plastic_work_total, plast_pot, taylor_factor, scal_s, norm_sona, R
                   write(display_unit,710)
                   !
                   ! Check termination condition: 

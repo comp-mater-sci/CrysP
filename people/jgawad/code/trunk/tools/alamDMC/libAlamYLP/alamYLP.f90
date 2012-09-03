@@ -94,8 +94,10 @@ contains
             associate (input => astate%simulCalls(1)%input)
                   input%dgf = Atens
                   input%keep_texture = .true.
+                  input%keep_state = .true.
                   input%full_model = this%full_model
-                  input%do_output = .false.
+                  input%do_output_init = .false.
+                  input%do_output_final = .false.
                   call setStepType(input,acnf%model_id,info)
             end associate            
             ! Call the simulation
@@ -141,6 +143,13 @@ module alamYLP
             double precision        :: default_eps = 1.E-5
             !> Epsilon to be set on norm of objective function ||F||_2
             double precision        :: obj_func_eps = 1.E-3
+            
+            !> Request for usage of full multilevel model in the search phase
+            logical                 :: search_full_model = .false.
+            
+            !> Request for a full multilevel call in the very last evaluation 
+            !> of the objective function.
+            logical                 :: evaluate_full_model = .true.
       end type
       
 contains
@@ -198,7 +207,7 @@ contains
       norm = norm2(vS)
       if (norm < epsilon(0.D0)) return
       objFunc%vSn = vS / norm
-      objFunc%full_model = .false.
+      objFunc%full_model = config%search_full_model
       !
       ounit = stdout
       if (present(outunit))  ounit = outunit
@@ -274,8 +283,8 @@ contains
       norm = norm2(vX)
       if (norm < epsilon(0.D0)) return
       vA = vX / norm
-      ! Call objective function again to get corresponding yield stress and other quantities
-      objFunc%full_model = .true.
+      ! Call objective function again to get corresponding yield stress and other quantities.
+      objFunc%full_model = config%evaluate_full_model
       call objFunc%objectiveEval(vA,info)
       
       write(*,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',objFunc%state%vF

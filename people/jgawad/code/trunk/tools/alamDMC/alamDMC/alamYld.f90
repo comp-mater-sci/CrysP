@@ -98,7 +98,8 @@ contains
             Sy(2,2) = 1.D0  
             iunilen = root23
             doEvalUniaxial = scaleByUniaxial
-      
+            ! Fix the configuration: no need for anything except for stress.
+            ylpCnf%evaluate_full_model = .false.
             ! Loop over the range of theta angles
             theta = theta_min
             do while (theta <= theta_max)

@@ -19,15 +19,11 @@ module commonConfig
 use alamYLP
 use alamUtils
 
-      integer                       :: nsteps = 1 
+      character(len=512),save       :: outputPrefix = ''
 
-      integer                       :: simtype = 0    !< Selection of multilevel model: 0 - Alamel, 1 - FC-Taylor
+      logical,save                  :: outputRequest = .false.
 
-      character(len=512)            :: outputPrefix
-
-      logical                       :: outputRequest = .false.
-
-      type(multilevelYLPConfig)     :: ylpCnf
+      type(multilevelYLPConfig),save:: ylpCnf
 
       character(len=20),parameter   :: fmtMsg2Msg   = '(A,T35,A)'
       character(len=20),parameter   :: fmtMsg2Int   = '(A,T35,I4)'
@@ -44,12 +40,13 @@ contains
       use altayConfig
       implicit none
       integer,intent(in)                  :: cnfunit
-      type(altayConfigData),intent(inout)	:: cnf
+      type(altayConfigData),intent(inout) :: cnf
       integer,intent(out)                 :: info
       !
-      integer                       :: ioerr
+      integer                       :: ioerr, simtype
       !
             info = -1
+            simtype = -1; ioerr = -1;
             !
             read(cnfunit,'(I2,1X,A)',iostat=ioerr) cnf%texture%input_type
             if (.not. ioStatusOK(ioerr)) return
@@ -130,11 +127,12 @@ contains
       !
             info = -1
             
-            if (simtype == 0) then
+            select case (acnf%model_id)
+            case(modelAlamel)
                   write(*,fmt=202) 'ALAMEL'
-            else
+            case(modelFCTaylor)
                   write(*,fmt=202) 'FC Taylor'
-            endif
+            end select
             !
       
             ! Print configuration     

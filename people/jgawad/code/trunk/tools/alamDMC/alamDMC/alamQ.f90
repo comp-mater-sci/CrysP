@@ -125,7 +125,7 @@ contains
       fi2min = fi2min * deg2rad      
       fi2max = fi2max * deg2rad      
       
-      open(unit=ofunit,file=trim(outputPrefix)//'.xqrs',buffered='no',iostat=ioerr)
+      open(unit=ofunit,file=trim(outputPrefix)//'.xqrs',iostat=ioerr)
       if (ioerr /= 0) then
             write(display_unit,fmt=952)
             return 
