@@ -73,7 +73,7 @@ contains
       external :: Alg0
       !
             info = altaySub_IOErr
-            
+            ierr = 0
             ! Set the singleton object to the cnf
             acnf = cnf
 !
@@ -174,7 +174,7 @@ contains
       
       !> Finalizes the module and releases the resources.
       subroutine finalizeAltay(info)
-      use altayConfig, only: altayConfigData,fname_len,acnf
+      use altayConfig, only: altayConfigData,fname_len,acnf, astate
       use altayInterface
       use IOConfig
       use MICROSTR, only: TmatGr
@@ -195,10 +195,17 @@ contains
 #ifdef PEBP_ENABLED
             close(IMP4) 
 #endif
+            close(IMP5)
             ! TODO: deallocate TmatGr (GRFIL) in module MICROSTR
             if (allocated(TmatGr)) deallocate(TmatGr)
             call DYNFIL_finalize(info)
             ! TODO: finalize KOST1xState
+            !
+            ! Finalize altayConfig
+            if (allocated(astate%simulCalls)) then
+                  deallocate(astate%simulCalls)
+                  astate%nSimulCalls = 0
+            endif
       !
       end subroutine
       
@@ -263,7 +270,7 @@ contains
             do i = 1, steps%nSimulCalls
                   steps%this = i
                   !
-                  if (steps%simulCalls(i)%input%do_output) then
+                  if (steps%simulCalls(i)%input%do_output_init) then
                         NFILE0 = 1
                   else
                         NFILE0 = 0
@@ -286,6 +293,7 @@ contains
                         RCM_RAISE(info,'runSteps','SIMUL has thrown exception',RCM_RTN) 
                   endif
 
+                  if (steps%simulCalls(i)%input%do_output_final) call outputCurrentTexture(info)
             enddo
       
             info = altaySub_OK
@@ -293,6 +301,19 @@ contains
       end subroutine
 
       
+      subroutine outputCurrentTexture(info)
+      use IOConfig
+      use curAccess
+      use altayConfig, only: acnf
+      implicit none
+      integer,intent(out)           :: info
+      !
+            info = altaySub_OK
+            if (acnf%output_config%nfile == 1) then
+                  call CURwriteBlock(IMP1,info)
+            endif
+      !
+      end subroutine
 
       
       

@@ -83,12 +83,19 @@ implicit none
             !>                   2) texture is NOT updated, so "keep_texture" must be set, too.
             logical                                   :: full_model = .true.
             
-            !> Flag that decides if the texture should be written out as an output of the step.
+            !> Flag that decides if the initial texture should be written out as a CUR output of the step.
             !>
             !> \note The texture is actually written out for initial configuration that is available
             !> at the beginning of the step.
             !> \remark This flag takes effect if outputConfig::nfile is non-zero. \sa outputConfig::nfile
-            logical                                   :: do_output = .false.
+            logical                                   :: do_output_init = .false.
+
+            !> Flag that decides if the final texture (as it is at the end of the call) should be written out 
+            !> as a a CUR output of the step.
+            !>
+            !> \remark This flag takes effect if outputConfig::nfile is non-zero. \sa outputConfig::nfile
+            logical                                   :: do_output_final = .false.
+
             
             !> Number of steps per call
             integer                                   :: nsteps = 1

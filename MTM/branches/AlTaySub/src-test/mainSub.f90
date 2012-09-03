@@ -19,6 +19,8 @@
 !
 #ifdef ALTAY_SUBROUTINE
 
+#include "assert.fpp"
+
 program alamelSubTest
 use altayConfig
 use altaySub
@@ -31,8 +33,8 @@ integer :: info
       ! Main program - preinitialization + shared configuration
       !
       ! Apply as many modifications to acnf as needed.
-      acnf%output_prefix = 'example'
-      acnf%jobtitle = 'example job'
+      acnf%output_prefix = 'T612V4'
+      acnf%jobtitle = 'T612 Taylor V4'
       acnf%micros_fname = 'micro1.smt'
       ! configure slipsystem data
       !acnf%slipsystem%input_fname = 'bcc.pre'
@@ -56,15 +58,13 @@ integer :: info
       ! call verifyMMMmode(modelAlamel)
 
       
-      
+      call verifyAltayExample(modelAlamel)
       
       ! call testTexAccessModules()
       
       ! call testSMTAccess()
       
       
-      acnf%output_prefix = 'example'
-      acnf%jobtitle = 'example job'
       acnf%micros_fname = 'micro1.smt'
       acnf%slipsystem%input_fname = 'fcc.pre'
       !acnf%texture%input_fname='example.cur'
@@ -74,9 +74,10 @@ integer :: info
       !call verifyAltayMultimodel()
       
       
-      call verifyMultiCall()
+      !call verifyMultiCall()
 
-      
+      call finalizeAltay(info)
+      ASSERT(info == 0)
       
 end program
 

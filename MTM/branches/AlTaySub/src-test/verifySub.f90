@@ -36,20 +36,24 @@ contains
       end function
 
 
-      subroutine verifyMMMmode(modelId)
+      subroutine verifyMMMmode(model_id)
       implicit none
-      integer,intent(in)      :: modelId
+      integer,intent(in)      :: model_id
       
       character(len=fname_len) :: modfile = 'mod402o.par'
       integer,parameter :: nunit = 150
       double precision    :: t1 = 0.0, t2 = 0.0
       integer :: i, nsteps,info
       !
+            info = setModelType(model_id)
+            ASSERT(info == 0)
+      
             open(unit=nunit,file=modfile,status='old')
             nsteps = 201
             
             ! Initialize the altay with the configuration data      
             call initAltay(acnf,info)
+            ASSERT(info == 0)
       
             call initStepData(nsteps,astate,info)
             if (info /= 0) then
@@ -62,11 +66,13 @@ contains
                   astate%simulCalls(i)%input%full_model = .false.
                   read(nunit,401) astate%simulCalls(i)%input%dgf
                   call setStepType(astate%simulCalls(i)%input,modelAlamel,info)
+                  ASSERT(info == 0)
             enddo
             401 format(9(F8.5,1X))
             
             call cpu_time(t1)
             call runSteps(astate,info)
+            ASSERT(info == 0)
             call cpu_time(t2)
 
             do i = 1, nsteps
@@ -96,7 +102,7 @@ contains
       integer(kind=8)     :: it1, it2, itres
       integer :: i, nsteps,info
       
-      integer :: imp1 = 7, istdout = 6
+      integer,parameter :: istdout = 6
       
 
             info = -1
@@ -125,13 +131,16 @@ contains
             do i=1,nsteps
                   ! astate%simulCalls(i)%input%full_model = .true.
                   astate%simulCalls(i)%input%keep_texture = .false.
+                  astate%simulCalls(i)%input%keep_state = .false.
                   astate%simulCalls(i)%input%dgf = exampleDG
                   call setStepType(astate%simulCalls(i)%input,acnf%model_id,info)
                   ASSERT(info == 0)
                   astate%simulCalls(i)%input%nsteps = 10
-                  astate%simulCalls(i)%input%do_output = .true.
+                  astate%simulCalls(i)%input%do_output_init = .true.
             enddo
 
+            ! Patch the last call: request final CUR output
+            astate%simulCalls(nsteps)%input%do_output_final = .true.
       
             call system_clock(it1, itres)
             call cpu_time(t1)
@@ -144,10 +153,6 @@ contains
     
             call cpu_time(t2)
             call system_clock(it2)
-            
-
-            call CURwriteBlock(imp1,info)
-            ASSERT(info == 0)
 
             write(*,100) nsteps, t2 - t1 
             write(*,101) (t2 - t1) / dble(nsteps)  
@@ -214,7 +219,7 @@ contains
                         astate%simulCalls(i)%input%keep_texture = .false.
                         astate%simulCalls(i)%input%dgf = exampleDG
                         astate%simulCalls(i)%input%nsteps = 1
-                        astate%simulCalls(i)%input%do_output = .true.
+                        astate%simulCalls(i)%input%do_output_init = .true.
                   enddo
                   call cpu_time(t1)
 
