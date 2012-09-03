@@ -43,10 +43,10 @@ contains
       type(altayConfigData),intent(inout) :: cnf
       integer,intent(out)                 :: info
       !
-      integer                       :: ioerr, simtype
+      integer                       :: ioerr, simtype, model_id
       !
             info = -1
-            simtype = -1; ioerr = -1;
+            simtype = -1; ioerr = -1; model_id = -1
             !
             read(cnfunit,'(I2,1X,A)',iostat=ioerr) cnf%texture%input_type
             if (.not. ioStatusOK(ioerr)) return
@@ -62,6 +62,7 @@ contains
             call stripComment(cnf%texture%input_fname)
             !
             read(cnfunit,fmt=*,iostat=ioerr)  simtype
+            if (.not. ioStatusOK(ioerr)) return
             read(cnfunit,'(A)' ,iostat=ioerr) outputPrefix
             if (.not. ioStatusOK(ioerr)) return
             call stripComment(outputPrefix)
@@ -75,19 +76,18 @@ contains
             !
             cnf%output_prefix = trim(outputPrefix)
             !
+            info = 0
             select case(simtype)
             case(0)     ! 0 - alamel
-                  cnf%model_id = modelAlamel
-                  cnf%simul_init%ngr = 2
+                  model_id = modelAlamel
             case(1)     ! 1 - FC Taylor
-                  cnf%model_id = modelFCTaylor
-                  cnf%simul_init%ngr = 1
+                  model_id = modelFCTaylor
             case(2)     ! 2 - MAS-Al
-                  cnf%model_id = modelMASAL
-                  cnf%simul_init%ngr = 3
+                  model_id = modelMASAL
+            case default
+                  info = -1
             end select
-            !
-            info = 0
+            if (info == 0) call setModelType(cnf,model_id,info)
       !
       end subroutine
 

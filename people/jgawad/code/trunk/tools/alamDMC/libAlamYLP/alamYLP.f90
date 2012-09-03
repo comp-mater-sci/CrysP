@@ -74,6 +74,8 @@ contains
             double precision                    :: norm
             integer                             :: i
             !
+            integer,parameter :: istp = 1
+            !
             info = -1
             i = 0
             alamEval_objFx_call_count = alamEval_objFx_call_count + 1
@@ -88,10 +90,10 @@ contains
             write(*,'(A,1X,5(F12.8))') 'eval for ', vXn
 #endif        
             ! Re-initialize with a request for just one single step
-            call initStepData(1,astate,info)
+            call initStepData(istp,astate,info)
             if (info /= 0) return
             !
-            associate (input => astate%simulCalls(1)%input)
+            associate (input => astate%simulCalls(istp)%input)
                   input%dgf = Atens
                   input%keep_texture = .true.
                   input%keep_state = .true.
@@ -105,7 +107,7 @@ contains
             if (info /= 0) return
             !
             ! Retrieve output stress into 5D vector
-            call KMAT2VEC5D(astate%simulCalls(1)%output%stress_tensor,vS)
+            call KMAT2VEC5D(astate%simulCalls(istp)%output%stress_tensor,vS)
             ! Transfer vS to vSml
             this%vSml = vS  
 #ifdef DIAGNOSTIC_OUTPUT            

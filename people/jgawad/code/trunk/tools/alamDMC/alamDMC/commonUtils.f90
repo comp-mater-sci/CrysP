@@ -69,19 +69,20 @@ contains
             call initStepData(istp,astate,info)
             if (info /= 0) return
             ! Set input data for AlTay
-            associate (cnf => astate%simulCalls(istp)%input)
-                  cnf%dgf = D
-                  cnf%keep_texture = .false.
-                  cnf%full_model = .true.
-                  cnf%do_output_init = .false.
-                  cnf%do_output_final = output_flag
+            associate (input => astate%simulCalls(istp)%input)
+                  input%dgf = D
+                  input%keep_texture = .false.
+                  input%full_model = .true.
+                  input%do_output_init = .false.
+                  input%do_output_final = output_flag
+                  call setStepType(input,acnf%model_id,info)
             end associate
             call runSteps(astate,info)
             if (info /= 0) return
             !
             ! Get the result
-            S = astate%simulCalls(1)%output%stress_tensor(:,:)
-            M = astate%simulCalls(1)%output%taylor_factor
+            S = astate%simulCalls(istp)%output%stress_tensor(:,:)
+            M = astate%simulCalls(istp)%output%taylor_factor
 
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
