@@ -18,22 +18,7 @@ double precision,dimension(3,3),parameter :: exampleDG = reshape(       &
 
 contains
 
-      integer function setModelType(model_id)
-      integer,intent(in)      :: model_id
-      !
-            setModelType = 0
-            select case(model_id)
-            case(modelAlamel)
-                  acnf%simul_init%ngr = 2
-            case(modelFCTaylor)
-                  acnf%simul_init%ngr = 1
-            case default
-                  write(*,*) 'Wrong model id'
-                  setModelType = -1
-            end select
-            acnf%model_id = modelAlamel
-      !
-      end function
+      
 
 
       subroutine verifyMMMmode(model_id)
@@ -45,7 +30,7 @@ contains
       double precision    :: t1 = 0.0, t2 = 0.0
       integer :: i, nsteps,info
       !
-            info = setModelType(model_id)
+            call setModelType(acnf,model_id,info)
             ASSERT(info == 0)
       
             open(unit=nunit,file=modfile,status='old')
@@ -107,7 +92,7 @@ contains
 
             info = -1
             
-            info = setModelType(model_id)
+            call setModelType(acnf,model_id,info)
             ASSERT(info == 0)
 
             acnf%output_config%nfile = 1 ! switch on creation of the CUR file
@@ -185,9 +170,7 @@ contains
       
             info = -1
             ! Configuration of the test
-            acnf%simul_init%ngr = model_types(1)
-            !acnf%simul_init%ngr = modelFCTaylor ! Let's initialize it as it were FC Taylor
-            acnf%model_id = modelAlamel
+            call setModelType(acnf,model_types(1),info)
             nsteps = 1
             !
             acnf%output_config%nfile = 1 ! switch on creation of the CUR file
@@ -204,7 +187,8 @@ contains
 
             do k =  1, nmodels
                   
-                  acnf%simul_init%ngr = model_types(k)
+                  call setModelType(acnf,model_types(k),info)
+                  ASSERT(info == 0) 
                   
                   call initStepData(nsteps,astate,info)
                   if ((info /= 0).or. RCM_catch(istdout)) then

@@ -217,7 +217,7 @@ implicit none
 
 contains
 
-
+      !> Configure the stp object for using selected model type.
       subroutine setStepType(stp,modelId,info)
       type(simulStepInputData),intent(inout)    :: stp
       integer,intent(in)                        :: modelId
@@ -236,5 +236,29 @@ contains
             end select
       !
       end subroutine
+
+      !> Configure the cnf object for using selected model type.
+      subroutine setModelType(cnf,modelId,info)
+      type(altayConfigData),intent(inout)       :: cnf
+      integer,intent(in)                        :: modelId
+      integer,intent(out)                       :: info
+      !
+            select case(modelId)
+            case(modelFCTaylor)
+                  cnf%simul_init%ngr = 1
+            case(modelAlamel)
+                  cnf%simul_init%ngr = 2
+            case(modelMASAL)
+                  cnf%simul_init%ngr = 3
+            case default
+                  info = -1
+                  return
+            end select
+            ! OK, supported model
+            cnf%model_id = modelId
+            info = 0
+      !
+      end subroutine
+      
 end module
 
