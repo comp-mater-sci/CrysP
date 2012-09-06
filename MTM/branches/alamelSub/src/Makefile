@@ -24,7 +24,7 @@ DOXYGEN=doxygen
 #
 # Generic Fortran compiler options, valid for all configurations
 #
-FFLAGS= -fpp -align dcommon -vec-report0 
+FFLAGS= -fpp -align dcommon -vec-report0 -standard-semantics # -assume std_mod_proc_name
 FFLAGS_FIXED= -extend-source 80 
 
 ifdef DEBUG
