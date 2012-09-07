@@ -5,7 +5,7 @@
 ## Note that only one toolset can be used 
 ######################################################################
 #### Toolset:
-ROOTDIR=../../../../../../..
+ROOTDIR=../../../../..
 
 include ../Makefile.tools
 
