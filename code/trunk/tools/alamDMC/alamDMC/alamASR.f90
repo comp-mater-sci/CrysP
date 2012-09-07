@@ -16,14 +16,13 @@
 !> ALAMel Arbitrary Stress Response
 !>
 module alamASR
-use AlamelSub
-use alamelConfig
 use nllsTR
 use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 use alamUtils
 use commonConfig
+use commonUtils
 implicit none
 
       double precision                          :: fi1 = 0.D0, phi = 0.D0 , fi2 = 0.D0
@@ -76,6 +75,7 @@ contains
       double precision                          :: Pnorm, normP, normDe, totalPnorm
       double precision                          :: plastic_work_inc = 0.D0, plastic_work_total = 0.D0
       double precision                          :: R
+      double precision                          :: taylor_factor
       integer     :: i,j,point = 0, npoints = 0, increment = 0
       !
       integer                 :: ioerr
@@ -144,7 +144,7 @@ contains
             do j=1,3
                   write(*,411) St(j,:),Stdev(j,:),Pressure(j,:)
             enddo
-            ! Rotate from original reference frame to superimposed coordinate system
+            ! Rotate from the original reference frame to the superimposed coordinate system
             !
             Sm = matmul(transpose(Mrot),matmul(Stdev,Mrot))
             !            
@@ -162,7 +162,16 @@ contains
                   call outputSeparator(teeunits)
                   !! -> Calculate corresponding strain rate vA
                   call multilevelYLP(vS,vA,vSonA,R,info,.true.,ylpCnf)
+                  if (info /= 0) then
+                        write(display_unit,fmt=960)
+                        exit
+                  endif
                   !
+                  call getTaylorFactor(1,taylor_factor,info)
+                  if (info /= 0) then
+                        write(display_unit,fmt=980)
+                        exit
+                  endif
                   plast_pot = dot_product(vA, vSonA)
                   ! Calculate normalized stess
                   norm_sona = vec_norm2(vSonA)
@@ -183,11 +192,13 @@ contains
                   !! -> report the results to history file and to the screen
                   call outputIdentResults(teeunits)                  
                   !! -> Report the results to output file
-                  write(ofunit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, plastic_work_total, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, R
+                  write(ofunit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, &
+                                    plastic_work_total, plast_pot, taylor_factor, scal_s, norm_sona, R
                   !
                   write(display_unit,710)
                   write(display_unit,700) OUTHEADER ! write header line
-                  write(display_unit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, plastic_work_total, plast_pot, ares%taylor_factors(1), scal_s, norm_sona, R
+                  write(display_unit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, &
+                                          plastic_work_total, plast_pot, taylor_factor, scal_s, norm_sona, R
                   write(display_unit,710)
                   !
                   ! Check termination condition: 
@@ -206,15 +217,12 @@ contains
                   ! Write history of deformations
                   call outputImposedStrain(teeunits)
                   !
-                  ! Set input data for ALAMEL
-                  acnf%simulCalls(1)%dgf = De
-                  acnf%simulCalls(1)%keep_texture = .false.
-                  acnf%simulCalls(1)%do_output = outputRequest
-                  acnf%nSimulCalls = 1
-                  call ALAMEL(3)       
-                  !
-                  ! Get the result
-                  Se = ares%stress_tensors(:,:,1)
+                  ! Update the texture
+                  call makeTextureUpdateStep(De,Se,taylor_factor,outputRequest,info)
+                  if (info /= 0) then
+                        write(*,fmt=970) 
+                        exit
+                  endif
                   call KMAT2VEC5D(Se,vSe)
                   ! Calculate increment of plastic work (strain * deviatoric_stress)
                   plastic_work_inc = dot_product(vDe,vSe) 
@@ -230,8 +238,9 @@ contains
                   !
                   call outputStrainProgress(teeunits)
                   !
+                  info = 0
             enddo
-                  
+            if (info /= 0) exit                  
       enddo            
       !
       close(ofunit)

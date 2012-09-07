@@ -19,8 +19,6 @@
 !>
 !
 module alamQ
-use AlamelSub
-use alamelConfig
 use nllsTR
 use Kutils
 use alamYLP
@@ -28,6 +26,7 @@ use alamEval, only: alamEval_objFx_call_count
 use qrsTypes
 use alamUtils
 use commonConfig
+use commonUtils
 implicit none
 
       double precision                          :: fi2min = 0.D0
@@ -87,7 +86,7 @@ contains
       double precision                          :: fi1,phi,fi2
       double precision                          :: SonA_len, scal_s
       double precision                          :: R
-      integer     :: i,j, npoints
+      integer     :: i,j, k, npoints
       logical     :: useVMGuess
       double precision :: delta_fi2
       double precision,dimension(:),allocatable       :: residuals,mfactors,phis
@@ -126,12 +125,12 @@ contains
       fi2min = fi2min * deg2rad      
       fi2max = fi2max * deg2rad      
       
-      open(unit=ofunit,file=trim(outputPrefix)//'.xqrs',buffered='no',iostat=ioerr)
+      open(unit=ofunit,file=trim(outputPrefix)//'.xqrs',iostat=ioerr)
       if (ioerr /= 0) then
             write(display_unit,fmt=952)
             return 
       endif
-      write(ofunit,fmt=500) trim(acnf%texture%input_fname)
+      ! write(ofunit,fmt=500) trim(acnf%texture%input_fname)
       write(ofunit,fmt=700)
        
       fi1 = 0.D0
@@ -174,9 +173,17 @@ contains
             endif
             !
             call multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,ylpCnf)
+            if (info /= 0) then
+                  write(display_unit,fmt=960)
+                  exit
+            endif
             phis(i) = rad2deg * fi2
             residuals(i) = R
-            mfactors(i) = ares%taylor_factors(1)
+            call getTaylorFactor(1,mfactors(i),info)
+            if (info /= 0) then
+                  write(*,980)
+                  exit
+            endif
             ! Calculate normalized stess
             SonA_len = vec_norm2(vSonA)
             scal_s = SonA_len / vec_norm2(vS)
@@ -190,7 +197,8 @@ contains
             
             write(*,400)
             do j=1,3
-                  write(*,401) Smcoord(j,:),SmIdent(j,:),Dmcoord(j,:)
+                  ! would be just:  write(*,401) Smcoord(j,:),SmIdent(j,:),Dmcoord(j,:)
+                  write(*,401) (Smcoord(j,k),k=1,3), (SmIdent(j,k),k=1,3), (Dmcoord(j,k), k=1,3)
             enddo
             
             ! Rotate back to the "tensile test" coordinate system   
@@ -218,7 +226,11 @@ contains
             !
             ! Next step
             fi2 = fi2 + delta_fi2
+            info = 0
       enddo
+      ! 
+      ! End of the main loop, check what's the status of the last operation
+      if (info /= 0) return
       !
       ! Write complete output to the terminal
       write(*,800)

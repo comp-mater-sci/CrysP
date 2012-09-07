@@ -16,20 +16,14 @@
 !> This module contains subroutines, data structures and common variables 
 !> for shared configuration features of all alamDMC programs
 module commonConfig
-use alamelConfig
 use alamYLP
 use alamUtils
 
-      integer                       :: nslips = 16*6
-      integer                       :: nsteps = 1 
+      character(len=512),save       :: outputPrefix = ''
 
-      integer                       :: simtype = 0    !< Selection of multilevel model: 0 - Alamel, 1 - FC-Taylor
+      logical,save                  :: outputRequest = .false.
 
-      character(len=512)            :: outputPrefix
-
-      logical           :: outputRequest = .false.
-
-      type(multilevelYLPConfig)     :: ylpCnf
+      type(multilevelYLPConfig),save:: ylpCnf
 
       character(len=20),parameter   :: fmtMsg2Msg   = '(A,T35,A)'
       character(len=20),parameter   :: fmtMsg2Int   = '(A,T35,I4)'
@@ -41,80 +35,60 @@ use alamUtils
 
 contains
       
-      subroutine initAlamelStructures(info)
+ 
+      subroutine readAlamelConfigSection(cnfunit,cnf,info)
+      use altayConfig
       implicit none
-      integer,intent(out)           :: info
-            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            ! INITIALIZATION OF ALAMEL: it should be done in different way !!!!
-            info = -1
-            call initConfig(acnf,nslips,nsteps,info)
-            if (info /= 0) then
-                  write(*,*) 'Cannot initialize alamel config'
-                  return
-            endif
-            call initResults(ares,nsteps,info)
-            if (info /= 0) then
-                  write(*,*) 'Cannot initialize data structure for alamel results'
-                  return
-            endif
-            info = 0
-      end subroutine
-
-      subroutine initAlamel()
-      implicit none
-            write(*,'(A,\)') 'Initializing the multilevel model...'
-            call ALAMEL(1)
-            write(*,'(1X,A)') 'Done.'
-      end subroutine
-
-
-      subroutine readAlamelConfigSection(cnfunit,info)
-      implicit none
-      integer,intent(in)            :: cnfunit
-      integer,intent(out)           :: info
+      integer,intent(in)                  :: cnfunit
+      type(altayConfigData),intent(inout) :: cnf
+      integer,intent(out)                 :: info
       !
-      integer                       :: ioerr
+      integer                       :: ioerr, simtype, model_id
       !
             info = -1
+            simtype = -1; ioerr = -1; model_id = -1
             !
-            read(cnfunit,'(I2,1X,A)',iostat=ioerr) acnf%texture%input_type
-            select case(acnf%texture%input_type)
+            read(cnfunit,'(I2,1X,A)',iostat=ioerr) cnf%texture%input_type
+            if (.not. ioStatusOK(ioerr)) return
+            select case(cnf%texture%input_type)
                   case(1,3)     ! SMT or CUB
-                        read(cnfunit,'(A)',iostat=ioerr) acnf%texture%input_fname
+                        read(cnfunit,'(A)',iostat=ioerr) cnf%texture%input_fname
                   case(2)       ! CUR file    
-                        read(cnfunit,'(I2,1X,A)',iostat=ioerr) acnf%texture%block, acnf%texture%input_fname
+                        read(cnfunit,'(I2,1X,A)',iostat=ioerr) cnf%texture%block_id, cnf%texture%input_fname
                   case default
-                        write(*,*) 'Incorrect texture type: ', acnf%texture%input_type    
+                        write(*,*) 'Incorrect texture type: ', cnf%texture%input_type    
             end select
             if (.not. ioStatusOK(ioerr)) return
-            call stripComment(acnf%texture%input_fname)
+            call stripComment(cnf%texture%input_fname)
             !
             read(cnfunit,fmt=*,iostat=ioerr)  simtype
+            if (.not. ioStatusOK(ioerr)) return
             read(cnfunit,'(A)' ,iostat=ioerr) outputPrefix
             if (.not. ioStatusOK(ioerr)) return
             call stripComment(outputPrefix)
-            read(cnfunit,'(A)' ,iostat=ioerr) acnf%slipsystem%input_fname 
-            call stripComment(acnf%slipsystem%input_fname)
-            read(cnfunit,'(A)' ,iostat=ioerr) acnf%micros_fname
-            call stripComment(acnf%micros_fname)
+            read(cnfunit,'(A)' ,iostat=ioerr) cnf%slipsystem%input_fname 
+            call stripComment(cnf%slipsystem%input_fname)
+            read(cnfunit,'(A)' ,iostat=ioerr) cnf%micros_fname
+            call stripComment(cnf%micros_fname)
             read(cnfunit,'(L)' ,iostat=ioerr) outputRequest
-            acnf%output_config%use_curfile = outputRequest
-            !
             if (.not. ioStatusOK(ioerr)) return
+            if (outputRequest)   cnf%output_config%nfile = 1
             !
-            acnf%output_prefix = trim(outputPrefix)
+            cnf%output_prefix = trim(outputPrefix)
             !
-            if (simtype == 0) then
-                  ! rlx1 and rlx2 are by default set to 1, but nonetheless...
-                  acnf%simulCalls(1)%rlx1 = 1
-                  acnf%simulCalls(1)%rlx2 = 1
-            else
-                  acnf%simulCalls(1)%rlx1 = 0
-                  acnf%simulCalls(1)%rlx2 = 0
-            endif
-
             info = 0
-      
+            select case(simtype)
+            case(0)     ! 0 - alamel
+                  model_id = modelAlamel
+            case(1)     ! 1 - FC Taylor
+                  model_id = modelFCTaylor
+            case(2)     ! 2 - MAS-Al
+                  model_id = modelMASAL
+            case default
+                  info = -1
+            end select
+            if (info == 0) call setModelType(cnf,model_id,info)
+      !
       end subroutine
 
 
@@ -146,17 +120,19 @@ contains
 
 
       subroutine displayConfig(outunit,info)
+      use altayConfig
       implicit none
       integer,intent(in)            :: outunit
       integer,intent(out)           :: info
       !
             info = -1
             
-            if (simtype == 0) then
+            select case (acnf%model_id)
+            case(modelAlamel)
                   write(*,fmt=202) 'ALAMEL'
-            else
+            case(modelFCTaylor)
                   write(*,fmt=202) 'FC Taylor'
-            endif
+            end select
             !
       
             ! Print configuration     
