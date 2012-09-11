@@ -24,12 +24,18 @@ use alamUtils
 use commonConfig
 implicit none
 
+private
       double precision                          :: theta_min = 0.D0, theta_max = 360.D0
       double precision                          :: dtheta = 10.D0      
       
-      logical                                   :: scaleByUniaxial = .true.
-      logical                                   :: useS33 = .false.
+      logical                                   :: scaleByFirstBase = .true.
       
+      integer,parameter                         :: nbase = 3
+      double precision,dimension(6,nbase)       :: base_vectors = 0.D0
+      
+      logical                                   :: normalizeSm
+      
+      public AlamYld_ReadConfig, AlamYld_Run
 contains
 
       subroutine AlamYld_ReadConfig(cnfunit,info)
@@ -37,14 +43,27 @@ contains
       integer,intent(in)                        :: cnfunit
       integer,intent(out)                       :: info
       !
-      integer :: ioerr
+      integer :: ioerr,i
+      double precision :: norm
+      logical :: normalize
             info = -1
             ! Read parameters specific for the alamASR program
             read(cnfunit,fmt=*,iostat=ioerr)  theta_min, theta_max, dtheta
             if (ioerr /= 0) return
-            read(cnfunit,fmt='(L)',iostat=ioerr) scaleByUniaxial
+            read(cnfunit,fmt='(L)',iostat=ioerr) scaleByFirstBase
             if (ioerr /= 0) return
-            read(cnfunit,fmt='(L)',iostat=ioerr) useS33
+            base_vectors = 0.D0
+            do i=1,nbase
+                  normalize = .false.
+                  read(cnfunit,fmt=*,iostat=ioerr) normalize, base_vectors(:,i)
+                  if (ioerr /= 0)  exit
+                  if (normalize) then 
+                        norm = norm2(base_vectors(:,i))
+                        if (norm > 0.D0) base_vectors(:,i)  = base_vectors(:,i) / norm
+                  endif
+            enddo
+            if (ioerr /= 0) return
+            read(cnfunit,fmt='(L)',iostat=ioerr) normalizeSm
             !
             ! Check if the requested range description
             if (theta_min + dtheta < theta_min) return
@@ -67,46 +86,47 @@ contains
       integer,intent(out)                       :: info      
       
       ! Base tensors
-      double precision,dimension(3,3)           :: sX, sY, Sm
+      double precision,dimension(3,3)           :: Sm
       double precision                          :: theta
       double precision                          :: iunilen ! Inverse of the length of uniaxial tensile stress
-      logical                                   :: doEvalUniaxial
+      logical                                   :: doEvalBase1
       !
       double precision                          :: plast_pot, scal_s, norm_sona, vS_norm, scal_s_rel
       double precision,dimension(5)             :: vA, vS,vSonA, vSonAn
       double precision                          :: R
       !
-      integer                 :: ioerr
+      integer                 :: ioerr,i
       integer,parameter       :: cnfunit = 90, ofunit = 91
+      character(len=6),dimension(nbase)    :: veclabels = [ character(len=6) :: 'base','base','offset' ]
       !
             info = 1
             !
             ! Introduce youself ;-)
-            write(*,'(A)') 'AlamYld, $Rev$'
+            write(display_unit,'(A)') 'AlamYld, $Rev$'
+            do i=1,nbase
+                  write(display_unit,'(A,1x,A,6(F6.2,1X))') veclabels(i),'vector:',base_vectors(:,i)
+            enddo
+            write(display_unit,'(A,1X,L1)') 'Normalization of the full Sm tensor:',normalizeSm
             ! Open the main output file
-            open(unit=ofunit,file=trim(outputPrefix)//'.xyld',buffered='no',iostat=ioerr)
+            open(unit=ofunit,file=trim(outputPrefix)//'.xyld',iostat=ioerr)
             if (ioerr /= 0) then
                   write(display_unit,fmt=952)
                   return 
             endif
-            write(ofunit,fmt=700) '#Theta', 'scal_S', 'scal_S_rel', 'W', 'S1_rel', 'S2_rel'
+            write(ofunit,fmt=700) '#Theta', 'scal_S', 'scal_S_rel', '||SonA||', 'W', 'S1_rel', 'S2_rel'
             !
-            ! Make both base tensors unitary and orthogonal.
-            Sx = 0.D0
-            Sx(1,1) = 1.D0 
-            Sy = 0.D0
-            Sy(2,2) = 1.D0  
-            iunilen = root23
-            doEvalUniaxial = scaleByUniaxial
-            ! Fix the configuration: no need for anything except for stress.
+            iunilen = 1.D0
+            doEvalBase1 = scaleByFirstBase
+            ! Fix the configuration: no need for anything except for the stresses.
             ylpCnf%evaluate_full_model = .false.
+            !
             ! Loop over the range of theta angles
             theta = theta_min
             do while (theta <= theta_max)
                   write(*,800)
                   ! Trick: we run evaluation of the uniaxial case as a "fake iteration".
                   ! If the uniaxial case corresponds with the first theta point, it will be reused.
-                  if (doEvalUniaxial) then
+                  if (doEvalBase1) then
                         theta = 0.D0
                   endif
                   !
@@ -114,13 +134,10 @@ contains
                   write(display_unit,fmt=201) (theta * rad2deg)
                   write(display_unit,fmt=200)
             
-                  !call KROTMAT(0.D0,0.D0,theta,Mrot)
-                  !Sm = matmul(transpose(Mrot),matmul(Sx + Sy,Mrot))
-            
-                  Sm = Sx * cos(theta) + Sy * sin(theta)
-                  ! Make Sm tensor traceless/deviatoric
-                  if (useS33) Sm(3,3) = - Sm(1,1) - Sm(2,2)
-
+                  ! Combine the base vectors
+                  Sm = Vec6ToMat33(base_vectors(:,1)*cos(theta) + base_vectors(:,2)*sin(theta) + base_vectors(:,3))
+                  if (normalizeSm) Sm = Sm / norm2(Sm)
+                  ! Convert to 5D space, note that Sm becomes deviatoric after this call: 
                   call KMAT2VEC5D(Sm,vS) 
                   ! Enforce unit length of vS
                   vS_norm = vec_norm2(vS)
@@ -142,7 +159,7 @@ contains
                   ! Print vector form
                   call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
 
-                  if (doEvalUniaxial) then
+                  if (doEvalBase1) then
                         iunilen = 1.D0 / scal_s
                   endif
                   scal_s_rel = scal_s * iunilen
@@ -152,16 +169,16 @@ contains
                   !
                   write(display_unit,fmt=510)
                   write(display_unit,fmt=500) 'theta', 'S', 'S_rel', 'W' 
-                  write(display_unit,fmt=501) theta, scal_s, scal_s_rel, plast_pot
+                  write(display_unit,fmt=501) theta*rad2deg, scal_s, scal_s_rel, plast_pot
                   write(display_unit,fmt=510)
                   ! write output & advance theta
-                  if ( (.not. doEvalUniaxial) .or. (doEvalUniaxial .and. (theta == theta_min)) ) then
-                        write(ofunit,fmt=701) theta, scal_s, scal_s_rel, plast_pot, &
-                                                scal_s_rel * cos(theta), scal_s_rel * sin(theta)
+                  if ( (.not. doEvalBase1) .or. (doEvalBase1 .and. (theta == theta_min)) ) then
+                        write(ofunit,fmt=701) theta, scal_s, scal_s_rel, norm_sona, plast_pot, &
+                                              scal_s_rel * cos(theta), scal_s_rel * sin(theta)
                   endif
                         
-                  if (doEvalUniaxial) then
-                        doEvalUniaxial = .false.  ! No more "false iterations"
+                  if (doEvalBase1) then
+                        doEvalBase1 = .false.  ! No more "false iterations"
                         ! If the uniaxial case corresponds to theta_min, there is no need to repeat the calculations
                         if (theta /= theta_min) theta = theta_min - dtheta
                   endif
@@ -176,11 +193,11 @@ contains
       201 format('Theta angle =',T20,F8.3) 
       400 format(A,T40,A,T80,A)
       500 format(1X,4(A10,'|'))
-      501 format(4(F10.6,1X))
+      501 format(F10.3,1X,3(F10.6,1X))
       510 format('|',4(10('-'),'|'))
       ! Formats for output file
-      700 format(6(A12,1X)) 
-      701 format(6(F12.6,1X))
+      700 format(7(A12,1X)) 
+      701 format(7(F12.6,1X))
       
       !
 #define MSG_GROUP_RULERS     
