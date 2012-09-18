@@ -8,6 +8,15 @@ implicit none
       type(StatVar),allocatable,dimension(:),private,save    :: KS_state
       
 contains
+      
+      !> Query the number of elements in the state array.
+      integer function KS_getStateSize()
+      implicit none
+      !
+            KS_getStateSize = 0
+            if (allocated(KS_state)) KS_getStateSize = size(KS_state)
+      !
+      end function
 
       !> Allocate memory to the KS_state array.
       !>

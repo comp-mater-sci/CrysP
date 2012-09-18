@@ -222,10 +222,24 @@ C           GETAL times Tau_crit for twinning direction
       case(hard_pebp)
             ! Note: PEBP can work only for bcc (24 slip systems)
             call KS_getCRSS(IOR,CCC(:,1:M11),info)
-            ! TODO, FIXME: check the grain numbering scheme that is used
-            ! in SIMUL.
-            ! If ALAMEL is chosen: take the CRSS from the neighboring grain
-            ! if (NGR == 2) call KS_getCRSS(IOR+1,CCC(:,M11+1:NGR*M11),info)
+            ! if ALAMEL is chosen: take the CRSS from 
+            ! the neighboring grain
+            if (NGR == 2) then 
+                  ! Mimic the order of visiting the grains that is used
+                  ! in the main loop:
+                  if (IOR == KS_getStateSize()) then
+                        ISHIFT = 0
+                  else
+                        if (mod(IOR,2) == 0) then
+                              ISHIFT = -1 
+                        else
+                              ISHIFT = 1
+                        endif
+                  endif
+                  ! Put CRSS into the section of CCC that corresponds to
+                  ! the second grain.
+                  call KS_getCRSS(IOR+ISHIFT,CCC(:,M11+1:NGR*M11),info)
+            endif
 #endif
       end select
 C   92 write (IMP,914) i,j,CCC(1,j),CCC(2,j)

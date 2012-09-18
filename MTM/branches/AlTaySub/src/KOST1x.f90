@@ -27,6 +27,9 @@
 !                        => Unit disl. densities: [nm^(-2)] ; e.g. rho = 1.D1
 !              BEFORE: PRIVATE parameter set P has units: MPa; m (meter)
 !                        => Unit disl. densities: [ m^(-2)] ; e.g. rho = 1.D13
+!    v1.5 by P. Eyckens, MTM, and J. Gawad, CS, KU Leuven, 18 September 2012:
+!       -> Bug fix: retrieval of sign in the function dwp_dt is actually implemented
+!                   by means of "sign(x)" instead of "x/|x|"
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST= 11
 !     --------
@@ -601,7 +604,7 @@
       !fl, wd
       !P%Iwp, P%Rwp
 
-      dwp_dt=(P%Iwp*sqrt(wd+abs(wp))*fl/abs(fl) - P%Rwp*wp) * abs(fl)
+      dwp_dt=(sign(1.D0,fl)*P%Iwp*sqrt(wd+abs(wp)) - P%Rwp*wp) * abs(fl)
 
       END FUNCTION dwp_dt
 
