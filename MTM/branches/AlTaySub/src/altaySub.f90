@@ -130,6 +130,7 @@ contains
                   cods1(L+1:L+4)='.MSS'
                   ! UNIT IMP5 = homogenized strain-stress
                   open (unit=IMP5,file=cods1,status='replace')
+                  call writeMSSHeader(IMP5)
             endif
             !
             info = altaySub_Exception

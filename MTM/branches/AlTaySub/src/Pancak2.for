@@ -225,20 +225,11 @@ C           GETAL times Tau_crit for twinning direction
             ! if ALAMEL is chosen: take the CRSS from 
             ! the neighboring grain
             if (NGR == 2) then 
-                  ! Mimic the order of visiting the grains that is used
-                  ! in the main loop:
-                  if (IOR == KS_getStateSize()) then
-                        ISHIFT = 0
-                  else
-                        if (mod(IOR,2) == 0) then
-                              ISHIFT = -1 
-                        else
-                              ISHIFT = 1
-                        endif
-                  endif
                   ! Put CRSS into the section of CCC that corresponds to
                   ! the second grain.
-                  call KS_getCRSS(IOR+ISHIFT,CCC(:,M11+1:NGR*M11),info)
+                  ! This code is never executed for the "even" grains,
+                  ! incl. the very last grain, which makes "IOR+1" safe.
+                  call KS_getCRSS(IOR+1,CCC(:,M11+1:NGR*M11),info)
             endif
 #endif
       end select

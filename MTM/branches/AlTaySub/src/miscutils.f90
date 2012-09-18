@@ -21,5 +21,13 @@ contains
       end subroutine
 
 
-
+      subroutine writeMSSHeader(ounit)
+      implicit none
+      integer,intent(in)      :: ounit
+      !
+            write(ounit,fmt=554) 
+      554   format(T5,'Eps_vM',T21,'Eps_vM^Tot',T37,'Eps_HvM',T53,'Eps_HvM^Tot',T69,'Sigma_HvM', &
+                   T90,'Sigma_11',T106,'Sigma_22',T122,'Sigma_33',T138,'Sigma_23',T154,'Sigma_31',T170,'Sigma_12')
+      !
+      end subroutine
 end module
