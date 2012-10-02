@@ -42,7 +42,7 @@
 #ifdef PEBP_ENABLED     
       case(hard_pebp)
 #ifdef ALTAY_SUBROUTINE
-            info = InitModuleKOST1x(acnf%hardening%PEBPCnf,KOST,LEC)
+            info = InitModuleKOST1x(acnf%hardening%PEBPCnf%params,KOST,LEC)
 #else            
             info = InitModuleKOST1x(inunit,KOST,LEC)
 #endif

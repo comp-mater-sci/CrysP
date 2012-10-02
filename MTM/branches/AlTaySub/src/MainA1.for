@@ -29,9 +29,13 @@ C
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3),ITW,DELTAW,GEWF
       common /CEIGEN/ IOR,ISTP,JBLOC
-      integer,parameter :: pathlength = 512
       character(len=pathlength) :: fnam1,fnam2,cods1
       character(len=pathlength-4) :: codsim
+#ifdef PEBP_ENABLED      
+      character(len=pathlength) :: fname_pebp
+      logical :: read_state
+      integer :: nblock
+#endif
       DATA MPOINT /8000/,NUNIT/2/
       SAVE
 C     UNIT KLEC = CONTROL FILE
@@ -125,8 +129,21 @@ C
                   write(IMP,fmt=600) 
                   stop
             endif
+            read_state = .false.
+            nblock = 0
+            read(KLEC,66) read_state, nblock, fname_pebp
+            if (read_state) then
+                  call stripComment(fname_pebp)
+                  info = KS_readState_file(fname_pebp,IPEBPSTAT,nblock)
+                  if (info /= 0) then 
+                        write(IMP,fmt=601)
+                        stop
+                  endif
+            endif
       endif
- 600  format('Cannot initialize KOST1x state variables')       
+ 66   format(L2,I5,A)      
+ 600  format('Cannot initialize KOST1x state variables')
+ 601  format('Cannot read KOST1x state variables')
 #endif
       ! 
       

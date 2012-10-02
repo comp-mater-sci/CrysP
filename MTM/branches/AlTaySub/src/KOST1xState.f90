@@ -7,6 +7,10 @@ implicit none
 
       type(StatVar),allocatable,dimension(:),private,save    :: KS_state
       
+      interface KS_readState
+            module procedure KS_readState_unit, KS_readState_file
+      end interface
+      
 contains
       
       !> Query the number of elements in the state array.
@@ -28,18 +32,29 @@ contains
       !
       integer :: i
       !
-            info = -1
+            info = KS_ErrBadDims
             if (norient > 0) allocate(KS_state(norient),stat=info)
             if (info /= 0) return
             ! All elements of the KS_state array must have the same initial state.
             call GetInitStatVar(KS_state(1),info)
-            if (info /= 0) return
+            if (info /= KS_OK) return
             do i = 2, norient
                   KS_state(i) = KS_state(1)
             enddo
       !
       end function
 
+      integer function KS_finalize() result(info)
+      implicit none
+      integer :: memstat
+      !
+            info = KS_OK
+            if (allocated(KS_state)) then 
+                  deallocate(KS_state,stat=memstat)
+                  if (memstat /= 0) info = KS_Error
+            endif
+      !
+      end function
     
       !> Update the state variables of the PEBP model for i-th grain.
       subroutine KS_updateState(i,sliprate,deltaT,info)
@@ -51,7 +66,7 @@ contains
       !
       type(StatVar) :: SV_tmp
       !
-            info = -1
+            info = KS_ErrBadDims
             if (size(KS_state) < i) return
             !
             call MakeInc(KS_state(i),sliprate,deltaT,SV_tmp,info)
@@ -85,7 +100,7 @@ contains
       !
       integer :: i, n
       !
-            info = -1
+            info = KS_ErrIO
             n = size(KS_state)
             write(iounit,fmt=100) n
             write(iounit,fmt=110)
@@ -104,24 +119,35 @@ contains
       end function
 
       !>
-      integer function KS_readState(iounit) result(info)
+      integer function KS_readState_unit(iounit,nblock) result(info)
       implicit none
       integer,intent(in)                              :: iounit   !< I/O unit number
+      integer,optional,intent(in)                     :: nblock   !< Number of blocks to be skipped
       !
-      integer :: i, n, nf, tmp, ioerr
-      character(len=5) :: tmp_str      
+      integer :: i, n, nf, tmp, ioerr, iblock
+      character(len=5) :: tmp_str
+      logical :: is_dummy
       !
-            info = KS_ErrIO
+            info = KS_ErrUninitialized
+            if (.not. allocated(KS_state)) return
             n = size(KS_state)
+            if (n < 1) return
+            info = KS_ErrIO
             nf = 0
-            read(iounit,fmt=100,iostat=ioerr) nf
-            if ((nf /= n) .or. (ioerr /= 0)) return
-            read(iounit,fmt=110) tmp_str
-            do i = 1, n
-                  read(iounit,fmt=200,iostat=ioerr) tmp
-                  if ( (ioerr /= 0) .or. (readSVfile(iounit,KS_state(i)) /= KS_OK)) exit
+            is_dummy = .true.
+            do iblock = 0, nblock
+                  if (iblock == nblock) is_dummy = .false.
+                  read(iounit,fmt=100,iostat=ioerr) nf
+                  if ((nf /= n) .or. (ioerr /= 0)) return
+                  read(iounit,fmt=110) tmp_str
+                  do i = 1, n
+                        read(iounit,fmt=200,iostat=ioerr) tmp
+                        if (ioerr /= 0) return
+                        if (ReadSVfile(iounit,KS_state(i),is_dummy) /= KS_OK) return
+                  enddo
+                  read(iounit,fmt=111,iostat=ioerr) tmp_str
+                  if (.not.is_dummy) exit
             enddo
-            read(iounit,fmt=111,iostat=ioerr) tmp_str
             if ((i > n) .and. (ioerr == 0)) info = KS_OK 
 100         format(I5)
 110         format(A)
@@ -129,5 +155,19 @@ contains
 200         format(I5)      !
       end function
 
+      integer function KS_readState_file(fname,iounit,nblock) result(info)
+      implicit none
+      character(len=*),intent(in)                     :: fname    !< Filename
+      integer,intent(in)                              :: iounit   !< I/O unit number
+      integer,optional,intent(in)                     :: nblock   !< Number of blocks to be skipped
+      !
+            open(unit=iounit,file=fname,status='old',iostat=info)
+            if (info == 0) then 
+                  info = KS_readState_unit(iounit,nblock)
+            else
+                  info = KS_ErrIO
+            endif
+      !
+      end function
        
 end module

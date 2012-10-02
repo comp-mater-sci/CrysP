@@ -316,7 +316,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       DIMENSION TA(3,3),A(3,3),A1(3,3)
 c <jg>
       integer,intent(out) :: ierr
-      integer,parameter :: pathlength=512
       character(len=pathlength) :: fnam1
 c </jg>
       SAVE
@@ -463,7 +462,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       character*12 dom
 !      character*12 fnam1,dom !
 c <jg>
-      integer,parameter :: pathlength = 512
       character(len=pathlength) :: fnam1
       integer :: info
 c </jg>      

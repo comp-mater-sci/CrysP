@@ -30,6 +30,13 @@
 !    v1.5 by P. Eyckens, MTM, and J. Gawad, CS, KU Leuven, 18 September 2012:
 !       -> Bug fix: retrieval of sign in the function dwp_dt is actually implemented
 !                   by means of "sign(x)" instead of "x/|x|"
+!    v1.6 by J. Gawad, CS, KU Leuven, 01 October 2012:
+!       -> Extension to the ReadSVfile function: depending on the new parameter "dummy", 
+!          the function can simply read necessary number of lines but skip the interpretation 
+!          of the contents.
+!       -> LEC argumenf of Init_PAR11 and Init_file is declared as optional
+!       -> the utility function ReadPar11 is declared as public.
+!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST= 11
 !     --------
@@ -86,6 +93,7 @@
       PUBLIC                    &
       !procedures:  
             InitModuleKOST1x,   &
+            ReadPar11,          &
             GetInitStatVar,     &
             MakeInc,            &
             ReadSVfile,         &
@@ -159,7 +167,7 @@
       integer FUNCTION Init_PAR11(P11try,KOSTtry,LEC) result(iError)
       TYPE(PAR11),INTENT(IN) :: P11try
       integer    ,INTENT(IN) :: KOSTtry !proposed value of KOST
-      integer    ,INTENT(IN) :: LEC !unit number of PRE-file
+      integer,optional,INTENT(IN) :: LEC !unit number of PRE-file
       
       !local variables declarations:
       character(LEN=64) :: line1
@@ -173,15 +181,17 @@
           iError = KS_ErrBadValue
           return 
       end if
-          iKOST=KOSTtry !=11; iKOST: PRIVATE to this module.
-      !Check PRE-file
-      rewind (unit=LEC)
-      read (LEC,FMT='(A)') line1
-      rewind (unit=LEC)
-      if ( (index(line1,'BCC') == 0) .or. (index(line1,'{BP}') == 0)) then
-        iError = KS_ErrIO 
-        return 
-      end if
+      iKOST=KOSTtry !=11; iKOST: PRIVATE to this module.
+      if (present(LEC)) then
+            !Check PRE-file
+            rewind (unit=LEC)
+            read (LEC,FMT='(A)') line1
+            rewind (unit=LEC)
+            if ( (index(line1,'BCC') == 0) .or. (index(line1,'{BP}') == 0)) then
+                  iError = KS_ErrIO 
+                  return 
+            end if
+      endif
       !Check the input parameters                                  ! Units of input parameters:
       if(P11try%b    >  0.    .AND. P11try%b    <= 1.e-8    .AND.& ! [m]
          P11try%G    >= 10.e3 .AND. P11try%G    <= 500.e3   .AND.& ! [MPa]
@@ -252,7 +262,7 @@
       implicit none
       integer,intent(in)      :: inunit
       integer,intent(in)      :: KOST     !< Id of the model version.
-      integer,intent(in)      :: LEC      
+      integer,optional,intent(in)   :: LEC      
       !
       TYPE(PAR11) :: PARtry
       !
@@ -757,27 +767,43 @@
 
 
       !CONTAINed by MODULE KOST1x:
-      integer FUNCTION ReadSVfile(unit,SV) result(iError)
+      !> Perform an IO formatted read operation on StatVar 
+      !>
+      !> \param dummy if true, the function performs a fake read operation of by simply skipping the same number of lines
+      !> as the ReadSVfile would normally read. The resulting SV becomes initialized to default values.
+      integer FUNCTION ReadSVfile(unit,SV,dummy) result(iError)
       integer,      INTENT(IN)  :: unit
       TYPE(StatVar),INTENT(OUT) :: SV
+      logical,optional,intent(in)   :: dummy
 
       !local variables declarations
       integer :: i,j
-
-      read(unit,fmt=101,err=666,end=666) SV%RHOcb
-      do i=1,6 !one line per WALL
-        read(unit,fmt=102,err=666,end=666)SV%CBB(i)%RHOwd,        &
-                                          SV%CBB(i)%RHOwp,        &
-                                          SV%CBB(i)%RHOwdHOM,     &
-                                          SV%CBB(i)%accGAMMA_new, &
-                                          SV%CBB(i)%RHOwd_ini    
-      end do
-      read(unit,fmt=103,err=666,end=666) SV%ActiveCBB(1),SV%ActiveCBB(2)
-      do i=1,2 !first line for positive sense, 2nd line for negative sense
-        read(unit,fmt=104,err=666,end=666)(SV%CRSS(i,j),j=1,24)
-      end do
+      logical :: is_dummy
+      character(len=5)             :: tmpstr
+      !
+      is_dummy = .false.
+      if (present(dummy)) is_dummy = dummy
+      if (is_dummy) then
+            do i=1,10
+                  read(unit,fmt=100,err=666,end=666) tmpstr
+            enddo
+      else            
+            read(unit,fmt=101,err=666,end=666) SV%RHOcb
+            do i=1,6 !one line per WALL
+              read(unit,fmt=102,err=666,end=666)SV%CBB(i)%RHOwd,        &
+                                                SV%CBB(i)%RHOwp,        &
+                                                SV%CBB(i)%RHOwdHOM,     &
+                                                SV%CBB(i)%accGAMMA_new, &
+                                                SV%CBB(i)%RHOwd_ini    
+            end do
+            read(unit,fmt=103,err=666,end=666) SV%ActiveCBB(1),SV%ActiveCBB(2)
+            do i=1,2 !first line for positive sense, 2nd line for negative sense
+              read(unit,fmt=104,err=666,end=666)(SV%CRSS(i,j),j=1,24)
+            end do
+      endif
       iError = KS_OK
       return
+100   format(A5)
 101   format(   E15.8 )
 102   format( 5(E15.8))
 103   format( 2(I5   ))
@@ -787,8 +813,8 @@
       !
       END FUNCTION ReadSVfile
 
-
-
+      
+      
       !CONTAINed by MODULE KOST1x:
       integer FUNCTION WriteSVfile(unit,SV) result(iError)
       integer,      INTENT(IN)  :: unit

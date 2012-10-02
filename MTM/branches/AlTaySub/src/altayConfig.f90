@@ -147,6 +147,19 @@ implicit none
             logical                                   :: use_cubfile = .false.
       end type
 
+      type :: PEBPConfig
+            type(PAR11)                   :: params
+            
+            !> Flag that decides if state variables should be read from file.
+            logical                       :: read_state = .false.
+            
+            !> Name of file that contains state variables
+            character(len=fname_len)      :: input_fname = ''
+            
+            !> Number of blocks to be skipped while reading the input file
+            integer                       :: block_id = 0
+            
+      end type
 
       !> Parameters of available hardening models.
       type :: hardeningData
@@ -155,7 +168,7 @@ implicit none
             type(VoceConfig)        :: VoceCnf
 
             !> Parameters of PEBP models (KOST1x)
-            type(PAR11)             :: PEBPCnf
+            type(PEBPConfig)        :: PEBPCnf
             
       end type
       

@@ -49,6 +49,7 @@ contains
       use IOConfig
       use TexFormats
       use altayHard,only: hard_none,hard_voce,hard_pebp
+      use miscutils
 #ifdef PEBP_ENABLED
       use KOST1xState
 #endif
@@ -165,6 +166,11 @@ contains
             ! PEBP model
             if (cnf%slipsystem%kost == hard_PEBP) then
                   info = KS_initState(size(DFIL))
+                  if (info /= 0) return
+                  if (acnf%hardening%PEBPCnf%read_state) then 
+                        ! Load state variables
+                        info = KS_readState(acnf%hardening%PEBPCnf%input_fname,IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
+                  endif
             endif      
 #endif
             !
@@ -200,8 +206,10 @@ contains
             ! TODO: deallocate TmatGr (GRFIL) in module MICROSTR
             if (allocated(TmatGr)) deallocate(TmatGr)
             call DYNFIL_finalize(info)
-            ! TODO: finalize KOST1xState
-            !
+            if (info /= 0) return
+#ifdef PEBP_ENABLED
+            info = KS_finalize()
+#endif
             ! Finalize altayConfig
             if (allocated(astate%simulCalls)) then
                   deallocate(astate%simulCalls)
