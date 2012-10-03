@@ -36,6 +36,9 @@
 !          of the contents.
 !       -> LEC argumenf of Init_PAR11 and Init_file is declared as optional
 !       -> the utility function ReadPar11 is declared as public.
+!    v1.6.1 by J. Gawad, CS, KU Leuven, 03 October 2012:
+!       -> space separator is added in in multi-number IO operations to prevent 
+!          stiching of negative values
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST= 11
@@ -805,9 +808,9 @@
       return
 100   format(A5)
 101   format(   E15.8 )
-102   format( 5(E15.8))
-103   format( 2(I5   ))
-104   format(24(E15.8))
+102   format( 5(E15.8,1X))
+103   format( 2(I5,1X   ))
+104   format(24(E15.8,1X))
       !
 666   iError = KS_ErrIO !Error in reading from file    
       !
@@ -839,9 +842,9 @@
       return
       !
 101   format(   E15.8 )
-102   format( 5(E15.8))
-103   format( 2(I5   ))
-104   format(24(E15.8))
+102   format( 5(E15.8,1X))
+103   format( 2(I5,1X   ))
+104   format(24(E15.8,1X))
       !
 666   iError = KS_ErrIO !Error in reading from file    
       !
