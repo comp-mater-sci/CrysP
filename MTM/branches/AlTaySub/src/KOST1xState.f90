@@ -158,7 +158,7 @@ contains
       integer function KS_readState_file(fname,iounit,nblock) result(info)
       implicit none
       character(len=*),intent(in)                     :: fname    !< Filename
-      integer,intent(in)                              :: iounit   !< I/O unit number
+      integer,intent(in)                              :: iounit   !< I/O unit number to be used by the function
       integer,optional,intent(in)                     :: nblock   !< Number of blocks to be skipped
       !
             open(unit=iounit,file=fname,status='old',iostat=info)
@@ -167,6 +167,7 @@ contains
             else
                   info = KS_ErrIO
             endif
+            close(iounit)
       !
       end function
        

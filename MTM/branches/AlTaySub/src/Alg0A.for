@@ -90,8 +90,8 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       NFILTW = acnf%output_config%NFILTW  ! control "TWN"
       IPR    = acnf%output_config%IPR     ! control printing level
       NRES   = acnf%output_config%NRES    ! control "RES"
-      NPEBP  = acnf%output_config%NPEBP   ! control "BEP"
-      NMSS   = acnf%output_config%NMSS    ! control "MSS"
+      NPEBP1  = acnf%output_config%NPEBP   ! control "BEP"
+      NMSS1   = acnf%output_config%NMSS    ! control "MSS"
 #else
 C     Number of grains in ALAMEL cluster
       read (KLEC,99) NGR
@@ -228,6 +228,9 @@ C     read the parameters of the work hardening model
 #endif
       endif
   36  NFILE=NFILE0*NFILE1
+      NPEBP=NFILE0*NPEBP1   ! control "BEP"
+      NMSS= NFILE0*NMSS1    ! control "MSS"
+
 #ifdef ALTAY_SUBROUTINE
       NSTP     = astate%simulCalls(astate%this)%input%nsteps
       swrlx(1) = astate%simulCalls(astate%this)%input%rlx1

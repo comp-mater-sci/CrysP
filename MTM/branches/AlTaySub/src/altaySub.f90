@@ -135,24 +135,22 @@ contains
             endif
             !
             info = altaySub_Exception
-      
+            !
             ! Set the data for CRSS calculations
             if (cnf%slipsystem%kost == hard_voce) then
-                  FK1 = cnf%slipsystem%crss_ratios                                    
+                  FK1 = cnf%slipsystem%crss_ratios
             endif
             
             CALL GRFIL(info)
             if (info /= 0) return
             RCM_HANDLE(info)
-      
             !
             ! Initialisation of SIMUL
             !
             EPS = 0.D0
             CALL SIMUL(0,EPS,1)
             RCM_HANDLE(info)
-
-
+            !
 #ifdef USE_LEESOR
             ! Get the initial texture
             CALL LEESOR(NUNIT,MPOINT)
@@ -295,14 +293,14 @@ contains
                               DG(j,j) = DG(j,j) - resid
                         enddo
                   endif
-            
+
                   ! Run simul.
                   call SIMUL(1,steps%eps,NFILE0)
                   if (RCM_signal()) then
                         RCM_RAISE(info,'runSteps','SIMUL has thrown exception',RCM_RTN) 
                   endif
 
-                  if (steps%simulCalls(i)%input%do_output_final) call outputCurrentTexture(info)
+                  if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
             enddo
       
             info = altaySub_OK
@@ -310,16 +308,22 @@ contains
       end subroutine
 
       
-      subroutine outputCurrentTexture(info)
+      subroutine outputCurrentState(info)
       use IOConfig
       use curAccess
       use altayConfig, only: acnf
+      use altayHard, only: hard_PEBP
+      use KOST1xState
       implicit none
       integer,intent(out)           :: info
       !
             info = altaySub_OK
             if (acnf%output_config%nfile == 1) then
                   call CURwriteBlock(IMP1,info)
+            endif
+            !
+            if ((acnf%slipsystem%kost == hard_PEBP) .and.(acnf%output_config%npebp == 1)) then
+                  info = KS_writeState(IMP4)
             endif
       !
       end subroutine
