@@ -162,7 +162,6 @@ contains
             Sm = matmul(transpose(Mrot),matmul(St,Mrot))
             !
             call KMAT2VEC5D(Sm,vS) ! Note: as of this call, Sm is deviatoric
-            write(*,*) norm2(Sm)
             ! Enforce unit length of vS
             vS = vS / vec_norm2(vS)
             !
@@ -274,7 +273,7 @@ contains
             write(*,'(A,1X,F12.6)') 'sum||De|| =', Pnorm
             write(*,*) 'P='
             write(*,500) P
-            write(*,'(A,1X,F12.6)') 'Wtot =', plastic_work_total
+            write(*,'(A,1X,E12.5)') 'Wtot =', plastic_work_total
             !
             step = step + 1 
       enddo            
@@ -284,8 +283,8 @@ contains
 
       info = 0
       
-      400 format('| Smcoord',T40,'| SmIdent',T80,'|Dmcoord')
-      401 format(3(E10.3,1X),T40,3(E10.3,1X),T80,3(E10.3,1X))
+      400 format('|Smcoord',T42,'|SmIdent',T86,'|Dmcoord')
+      401 format(3(E11.4,1X),T42,3(E11.4,1X),T86,3(E11.4,1X))
 
       500 format(3(3(E10.3,1X),/))
       501 format(3(E10.3,1X),/,3(E10.3,1X),/,3(E10.3,1X))
@@ -295,10 +294,10 @@ contains
       
       ! Format for screen output
       700 format(1X,A5,1X,11(A12,1X))
-      701 format(1X,I5,1X,11(E12.6,1X))
+      701 format(1X,I5,1X,11(E12.5,1X))
       ! Format for file output
       705   format(1X,A5,1X,13(A12,1X))
-      706 format(1X,I5,1X,13(E12.6,1X))
+      706 format(1X,I5,1X,13(E12.5,1X))
       
       710 format('|',5('-'),'|',11(12('-'),'|'))
 

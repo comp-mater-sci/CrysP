@@ -109,7 +109,9 @@ implicit none
       select case(moduleId)
       case(1) ! Alamq
             call Alamq_ReadConfig(Qcnf,cnfunit,info)
-            cnf%output_config%nfile = 0   ! Override the request for texture output.
+            ! Override the requests for outputs: 
+            cnf%output_config%nfile = 0   ! texture
+            cnf%output_config%npebp = 0   ! KOST1x state
             outputRequest = .false.       ! idem.
       case(2) ! AlamTSA    
             call AlamTSA_ReadConfig(TSAcnf,cnfunit,info)

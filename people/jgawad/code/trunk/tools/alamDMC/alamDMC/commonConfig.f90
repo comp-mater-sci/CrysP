@@ -45,7 +45,6 @@ contains
       integer,intent(out)                 :: info
       !
       integer                       :: ioerr, simtype, model_id
-      character(len=5)              :: tmp_str
       !
             info = -1
             simtype = -1; ioerr = -1; model_id = -1
@@ -80,15 +79,21 @@ contains
             if (.not. ioStatusOK(ioerr)) return
             select case(cnf%slipsystem%kost)
             case(hard_none)
-                  ! Read two lines (no action needed)
-                  read(cnfunit,'(A)',iostat=ioerr) tmp_str
-                  read(cnfunit,'(A)',iostat=ioerr) tmp_str
+                  ! no action needed
+                  continue
             case(hard_Voce)
-                  ! Read the two lines: interpret the first one
-                  read(cnfunit,fmt=*,iostat=ioerr) cnf%hardening%VoceCnf 
-                  read(cnfunit,'(A)',iostat=ioerr) tmp_str
+                  ! Read one line
+                  read(cnfunit,fmt=*,iostat=ioerr) cnf%hardening%VoceCnf
             case(hard_pebp)
                   call readPEPBhardening(cnfunit,cnf%hardening%PEBPCnf,info)
+                  if (info /= 0) return
+                  if (outputRequest) then
+                        cnf%output_config%npebp = 1
+                        !cnf%output_config%nmss = 1 
+                  endif
+            case default
+                  info = -1
+                  return
             end select
             if (.not. ioStatusOK(ioerr)) return
             !
@@ -123,7 +128,7 @@ contains
       integer                       :: tmp,nparunit
       !
             info = -1
-            read(cnfunit,fmt=*,iostat=ioerr) tmp_fname
+            read(cnfunit,fmt='(A)',iostat=ioerr) tmp_fname
             call stripComment(tmp_fname)
             ! Interpret the fname
             open(newunit=nparunit,file=tmp_fname,iostat=ioerr)
@@ -131,7 +136,7 @@ contains
             info = ReadPar11(nparunit,hc%params)
             close(nparunit)
             if (info /= 0) return
-            read(cnfunit,fmt=*,iostat=ioerr) tmp, tmp_fname
+            read(cnfunit,fmt='(I5,A)',iostat=ioerr) tmp, tmp_fname
             if (ioerr /= 0) return
             if (tmp >= 0) then
                   hc%read_state = .true.

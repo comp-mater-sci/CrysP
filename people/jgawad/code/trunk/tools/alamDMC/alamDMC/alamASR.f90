@@ -251,13 +251,13 @@ contains
       400 format(A,T40,A,T80,A)
       
       410 format('| SmScaled',T40,'| SmIdent',T80,'|SonA')
-      411 format(3(F10.6,1X),T40,'|',3(F10.6,1X),'|',T80,3(F10.6,1X))
+      411 format(3(E12.5,1X),T40,'|',3(E12.5,1X),'|',T80,3(E12.5,1X))
 
       420 format('| Dm')
-      421 format(3(F10.6,1X))
+      421 format(3(E12.5,1X))
 
-      500 format(3(3(F10.6,1X),/))
-      501 format(3(F10.6,1X),/,3(F10.6,1X),/,3(F10.6,1X))
+      500 format(3(3(E12.5,1X),/))
+      501 format(3(E12.5,1X),/,3(E12.5,1X),/,3(E12.5,1X))
       ! Formats for output file
       700 format(2(1X,A5),9(A12,1X))
       701 format(2(1X,I5),9(F12.6,1X))
@@ -304,7 +304,7 @@ contains
                         write(n,500) De
                         write(n,*)
                   enddo
-            500 format(3(3(F10.6,1X),/))
+            500 format(3(3(E12.5,1X),/))
 
             end subroutine
             
@@ -331,7 +331,7 @@ contains
                         write(n,'(A,1X,F12.6)') 'Wtot =', plastic_work_total
 
                   enddo
-            500 format(3(3(F10.6,1X),/))
+            500 format(3(3(E12.5,1X),/))
 
                   
             end subroutine

@@ -192,7 +192,7 @@ contains
       201 format('Theta angle =',T20,F8.3) 
       400 format(A,T40,A,T80,A)
       500 format(1X,4(A10,'|'))
-      501 format(F10.3,1X,3(F10.6,1X))
+      501 format(F10.3,1X,3(E12.5,1X))
       510 format('|',4(10('-'),'|'))
       ! Formats for output file
       700 format(8(A12,1X)) 

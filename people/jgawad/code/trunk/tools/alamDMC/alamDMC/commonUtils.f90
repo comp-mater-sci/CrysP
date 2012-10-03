@@ -95,7 +95,7 @@ contains
       implicit none
       integer,intent(out)     :: info
       !
-            call outputCurrentTexture(info)
+            call outputCurrentState(info)
       !
       end subroutine
       

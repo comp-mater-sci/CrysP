@@ -88,8 +88,8 @@ contains
             write(outunit,201) 'Norm of stress on vA:', vec_norm2(vSonA) 
             write(outunit,('(/)'))
             !
-            200 format(A,T40,5F10.6)
-            201 format(A,T40,F10.6)
+            200 format(A,T40,5E12.5)
+            201 format(A,T40,E12.5)
             info = 0
       end subroutine
 
@@ -129,11 +129,11 @@ contains
             write(outunit,421) D
             info = 0
             
-            410 format('| Sm',T40,'| SmIdent*||Sm||',T80,'|SonA')
-            411 format(3(F10.6,1X),T40,'|',3(F10.6,1X),'|',T80,3(F10.6,1X))
+            410 format('| Sm',T45,'| SmIdent*||Sm||',T90,'|SonA')
+            411 format(3(E12.5,1X),T45,'|',3(E12.5,1X),'|',T90,3(E12.5,1X))
 
             420 format('| D')
-            421 format(3(F10.6,1X))
+            421 format(3(E12.5,1X))
       end subroutine
 
       
