@@ -72,6 +72,7 @@ contains
             associate (input => astate%simulCalls(istp)%input)
                   input%dgf = D
                   input%keep_texture = .false.
+                  input%keep_state = .false.
                   input%full_model = .true.
                   input%do_output_init = .false.
                   input%do_output_final = output_flag

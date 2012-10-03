@@ -18,8 +18,8 @@
 module commonConfig
 use alamYLP
 use alamUtils
-
-      character(len=512),save       :: outputPrefix = ''
+use altayConfig, only: fname_len
+      character(len=fname_len),save       :: outputPrefix = ''
 
       logical,save                  :: outputRequest = .false.
 
@@ -38,12 +38,14 @@ contains
  
       subroutine readAlamelConfigSection(cnfunit,cnf,info)
       use altayConfig
+      use altayHard, only: hard_none, hard_voce, hard_pebp
       implicit none
       integer,intent(in)                  :: cnfunit
       type(altayConfigData),intent(inout) :: cnf
       integer,intent(out)                 :: info
       !
       integer                       :: ioerr, simtype, model_id
+      character(len=5)              :: tmp_str
       !
             info = -1
             simtype = -1; ioerr = -1; model_id = -1
@@ -74,6 +76,22 @@ contains
             if (.not. ioStatusOK(ioerr)) return
             if (outputRequest)   cnf%output_config%nfile = 1
             !
+            read(cnfunit,fmt=*,iostat=ioerr) cnf%slipsystem%kost
+            if (.not. ioStatusOK(ioerr)) return
+            select case(cnf%slipsystem%kost)
+            case(hard_none)
+                  ! Read two lines (no action needed)
+                  read(cnfunit,'(A)',iostat=ioerr) tmp_str
+                  read(cnfunit,'(A)',iostat=ioerr) tmp_str
+            case(hard_Voce)
+                  ! Read the two lines: interpret the first one
+                  read(cnfunit,fmt=*,iostat=ioerr) cnf%hardening%VoceCnf 
+                  read(cnfunit,'(A)',iostat=ioerr) tmp_str
+            case(hard_pebp)
+                  call readPEPBhardening(cnfunit,cnf%hardening%PEBPCnf,info)
+            end select
+            if (.not. ioStatusOK(ioerr)) return
+            !
             cnf%output_prefix = trim(outputPrefix)
             !
             info = 0
@@ -91,6 +109,40 @@ contains
       !
       end subroutine
 
+      
+      subroutine readPEPBhardening(cnfunit,hc,info)
+      use altayConfig
+      use KOST1x, only: ReadPar11
+      implicit none
+      integer,intent(in)                  :: cnfunit
+      type(PEBPConfig),intent(out)        :: hc
+      integer,intent(out)                 :: info
+      !
+      integer                       :: ioerr
+      character(len=fname_len)      :: tmp_fname
+      integer                       :: tmp,nparunit
+      !
+            info = -1
+            read(cnfunit,fmt=*,iostat=ioerr) tmp_fname
+            call stripComment(tmp_fname)
+            ! Interpret the fname
+            open(newunit=nparunit,file=tmp_fname,iostat=ioerr)
+            if (ioerr /= 0) return
+            info = ReadPar11(nparunit,hc%params)
+            close(nparunit)
+            if (info /= 0) return
+            read(cnfunit,fmt=*,iostat=ioerr) tmp, tmp_fname
+            if (ioerr /= 0) return
+            if (tmp >= 0) then
+                  hc%read_state = .true.
+                  call stripComment(tmp_fname)
+                  hc%input_fname = tmp_fname
+                  hc%block_id = tmp
+            endif
+            info = 0
+      !
+      end subroutine
+      
 
       subroutine readYLPConfigSection(cnfunit,info)
       implicit none

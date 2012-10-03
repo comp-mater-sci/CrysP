@@ -285,20 +285,20 @@ contains
       info = 0
       
       400 format('| Smcoord',T40,'| SmIdent',T80,'|Dmcoord')
-      401 format(3(F10.6,1X),T40,3(F10.6,1X),T80,3(F10.6,1X))
+      401 format(3(E10.3,1X),T40,3(E10.3,1X),T80,3(E10.3,1X))
 
-      500 format(3(3(F10.6,1X),/))
-      501 format(3(F10.6,1X),/,3(F10.6,1X),/,3(F10.6,1X))
+      500 format(3(3(E10.3,1X),/))
+      501 format(3(E10.3,1X),/,3(E10.3,1X),/,3(E10.3,1X))
       
       601 format('Strain increment',T40,'Deviatoric stress')
-      602 format(3(F10.6,1X),T40,3(F10.6,1X))
+      602 format(3(E10.3,1X),T40,3(E10.3,1X))
       
       ! Format for screen output
       700 format(1X,A5,1X,11(A12,1X))
-      701 format(1X,I5,1X,11(F12.6,1X))
+      701 format(1X,I5,1X,11(E12.6,1X))
       ! Format for file output
       705   format(1X,A5,1X,13(A12,1X))
-      706 format(1X,I5,1X,13(F12.6,1X))
+      706 format(1X,I5,1X,13(E12.6,1X))
       
       710 format('|',5('-'),'|',11(12('-'),'|'))
 
