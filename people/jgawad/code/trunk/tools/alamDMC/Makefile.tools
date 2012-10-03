@@ -1,0 +1,69 @@
+#
+# $Id$
+#
+#### Selection of toolset
+## Note that only one toolset can be used 
+######################################################################
+#### Toolset:
+# Intel toolset
+#
+# Intel Fortran compiler
+FC=ifort
+#
+# Intel library manager 
+AR=xiar
+#
+# Documentation generator
+DOXYGEN=doxygen
+#
+######################################################################
+# 
+# ROOTDIR = root of the repository
+ifndef ROOTDIR
+ROOTDIR=../../../..
+endif
+
+TOOLSDIR=$(ROOTDIR)/code/trunk/build-tools/
+
+# Use per-host configuration plugin
+include $(TOOLSDIR)/Makefile.host
+$(info Configuration for $(BUILDHOST))
+include $(TOOLSDIR)/Makefile.knownhosts
+include $(TOOLSDIR)/Makefile.utils
+#
+######################################################################
+
+FCFLAGS=-fpp -module $(INCLUDEDIR) -standard-semantics
+
+ifdef DEBUG
+ConfigurationName=debug
+LIBDIR=debug
+DEBUGFLAGS= -O0 -g -debug full -check all
+FCFLAGS+= $(DEBUGFLAGS)
+TRANSCONFIG=DEBUG=1
+else
+ConfigurationName=release
+LIBDIR=release
+OPTFLAGS=-O3 -fast
+FCFLAGS+= $(OPTFLAGS)
+endif
+#
+######################################################################
+OBJDIR=$(ConfigurationName)/obj
+INCLUDEDIR=$(ConfigurationName)/include
+
+## Dependencies:
+LIBALTAYDIR=$(ROOTDIR)/MTM/branches/AlTaySub/$(ConfigurationName)/lib
+LIBALTAYPATH=$(LIBALTAYDIR)/libaltay.a
+FCFLAGS+= -I$(LIBALTAYDIR)/include
+FLDFLAGS+= $(LIBALTAYPATH)
+
+LIBOPTROOT=$(ROOTDIR)/code/trunk/tools/fng/utils/optlib
+LIBOPTDIR=$(LIBOPTROOT)/$(ConfigurationName)
+FCFLAGS+= -I$(LIBOPTDIR)/include
+
+# Name of the library
+LIBOPTNAME=libopt.a
+LIBOPTPATH=$(LIBOPTDIR)/$(LIBOPTNAME)
+FLDFLAGS+= $(LIBOPTPATH)
+
