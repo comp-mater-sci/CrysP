@@ -29,6 +29,7 @@ C
       common /CEIGEN/ IOR,ISTP,NBLOC
       COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),
      1 TLXX,TAURLP(8)
+	  dimension base1(5),base2(5)
       dimension buftrf(3,3),C1(3,3),C2(3,3),
      1 DG(3,3),TDC(3,3),TDCb(3,3,2),TRCb(3,3,2),
      2 B(5,5),BBVM2(2),relax(3,3,3),buftg(3,3),DACC(10),
@@ -95,7 +96,7 @@ C
       if (IGrElm.gt.NGrElm) IGrElm=1
       call MATPROD(GRPAR,FTot,TmatGr(1,1,IGrElm),3,3,3)
       if (IPR.gt.1) then
-          if(NLIST.eq.1) then
+        if(NLIST.eq.1) then
           write (IMP,409) IGrElm
  409      format (' IGrElm = ',i5) 
           do i=1,3 
@@ -106,12 +107,11 @@ C
              write (IMP,408) (GRPAR(j,i),j=1,3)
           enddo
  408      format (' GRPAR  ',3d15.7)
-      endif 
+        endif 
       end if 
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX
       If (NGR.eq.2) then
-      call cluster1(TDC,GRPAR,GEWF,TGRB,alfa,
-     1  WINT,Tprinc,IPR)
+      call cluster1(TDC,GRPAR,GEWF,Tprinc,Cofcos,Cofsin)
       else
       ! let Tprinc be equal to the identity matrix.
       do i=1,3
@@ -120,7 +120,8 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX
          enddo
       enddo
       end if
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+
+CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       do 33 i=M2+1,M12
       do 33 jsgn=1,2
   33  CCC(jsgn,i)=0.0
@@ -290,56 +291,169 @@ C                  (2 sets of stresses, one for each crystal)
 C Fakm: rate of plastic work of the 2 crsytals together
 C Taur (output) resolved shear stress (can be + or -)        
 C DTAU (output)=abs(Taur)-Tauc 
-C MAS-AL part  QGX
-C the CRSS of the two pseudo slip systems are CrssP1 and CrssP2
-C cos1 and cos2 are related with the cosine between the imposed strain rate and 
-C the symmetry part of the relaxations
-C W1 and W2 are the rate of plastic work by Taylor for grain1 and grain2
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
       IF(ITFMAS.eq.1) then
-      W1=0.0
-      w2=0.0
-      Do imas=1,5,1
+C  Calculate the pseudo-CRSS for the relaxation-1
+C  BB(10) is the normalized imposed strain vector in crystal frame
+C  UBUF(10) is the BISHOP-HILL stress by TAYLOR, in crystal frame
+C
+	if(Cofsin.eq.0.0 .and. Cofcos.eq.0.0) then !Both relaxations are orthogonal
+	CrssP1=0.0
+	CrssP2=0.0
+	goto 345
+	elseif(dabs(Cofcos).lt.0.000000001) then
+	write(*,*) 'Cofcos=0 Somewhere is worong in the code'
+	else
+C$%$%$%$$%$$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%%$%$%  18/09/2012
+	if(dabs(Cofsin).lt.0.0000000001) then
+C base2 along direction-2, but base-2 is not necessary to calculate
 c
-      w1=w1+UBUF(imas)*BB(imas)*DELTAT
-      W2=w2+UBUF(imas+5)*BB(imas+5)*DELTAT
-      enddo
-      do iee=1,5,1
-      rhos(iee)=a1(iee,M2+1)
-      enddo
-      cos1=0.0
-      do iee=1,5,1
-      cos1=cos1+rhos(iee)*BB(iee)*sqrt(2.0/3.0)
-      enddo
-      do iee=1,5,1
-      rhos(iee)=a1(iee,M2+2)
-      enddo
-      cos2=0.0
-      do iee=1,5,1
-      cos2=cos2+rhos(iee)*BB(iee)*sqrt(2.0/3.0)
-      enddo
-      CrssP1=dabs((w1-w2)*cos1*sqrt(2.0/3.0)/DELTAT)*ENTA
-      CrssP2=dabs((w1-w2)*cos2*sqrt(2.0/3.0)/DELTAT)*ENTA
-      endif
+	dlength2=sqrt(BB(1)*BB(1)+
+     #BB(2)*BB(2)+
+     #BB(3)*BB(3)+
+     #BB(4)*BB(4)+
+     #BB(5)*BB(5))
+c  for grain-1
+	base1(1)=BB(1)/dlength2
+	base1(2)=BB(2)/dlength2
+	base1(3)=BB(3)/dlength2
+	base1(4)=BB(4)/dlength2
+	base1(5)=BB(5)/dlength2
+C  then calculate the stress component in grain-1
+      sg1c1=UBUF(1)*base1(1)+
+     #      UBUF(2)*base1(2)+
+     #      UBUF(3)*base1(3)+
+     #      UBUF(4)*base1(4)+
+     #      UBUF(5)*base1(5)
+C
+C now calculate the component for grain-2
 c
-
-      if (IPR.lt.4) goto 220
+	dlength2=sqrt(BB(6)*BB(6)+
+     #BB(7)*BB(7)+
+     #BB(8)*BB(8)+
+     #BB(9)*BB(9)+
+     #BB(10)*BB(10))
+c  for grain-2
+	base1(1)= BB(6)/dlength2
+	base1(2)= BB(7)/dlength2
+	base1(3)= BB(8)/dlength2
+	base1(4)= BB(9)/dlength2
+	base1(5)=BB(10)/dlength2
+c 		
+C  then calculate the stress component in grain-2
+      sg2c1=UBUF(6)*base1(1)+
+     #      UBUF(7)*base1(2)+
+     #      UBUF(8)*base1(3)+
+     #      UBUF(9)*base1(4)+
+     #     UBUF(10)*base1(5)
+c
+	CrssP1=dabs(Cofcos*(sg2c1-sg1c1)/sqrt(2.0))
+	CrssP2=0.0
+	goto 345
+	endif
+C$%$%$%$%$$%$%$%$%$%$%$%$%%$%$%$%$%$%$%$%$%$%$%$%$  18/09/2012
+c  calculate the direction of basis-2
+	do iee=1,5,1
+	rhos(iee)=a1(iee,M2+1)
+C  rhos(5) is the direction of relaxation-1 in the frame of grain-1
+	enddo
+	dlength1=sqrt(rhos(1)*rhos(1)+
+     #rhos(2)*rhos(2)+
+     #rhos(3)*rhos(3)+
+     #rhos(4)*rhos(4)+
+     #rhos(5)*rhos(5))
+	dlength2=sqrt(BB(1)*BB(1)+
+     #BB(2)*BB(2)+
+     #BB(3)*BB(3)+
+     #BB(4)*BB(4)+
+     #BB(5)*BB(5))
+c  for grain-1
+	base1(1)=BB(1)/dlength2
+	base1(2)=BB(2)/dlength2
+	base1(3)=BB(3)/dlength2
+	base1(4)=BB(4)/dlength2
+	base1(5)=BB(5)/dlength2
+	base2(1)=(rhos(1)/dlength1-Cofcos*base1(1))/Cofsin
+	base2(2)=(rhos(2)/dlength1-Cofcos*base1(2))/Cofsin
+	base2(3)=(rhos(3)/dlength1-Cofcos*base1(3))/Cofsin
+	base2(4)=(rhos(4)/dlength1-Cofcos*base1(4))/Cofsin
+	base2(5)=(rhos(5)/dlength1-Cofcos*base1(5))/Cofsin
+C  then calculate the stress component in grain-1
+      sg1c1=UBUF(1)*base1(1)+
+     #      UBUF(2)*base1(2)+
+     #      UBUF(3)*base1(3)+
+     #      UBUF(4)*base1(4)+
+     #      UBUF(5)*base1(5)
+	sg1c2=UBUF(1)*base2(1)+
+     #      UBUF(2)*base2(2)+
+     #      UBUF(3)*base2(3)+
+     #      UBUF(4)*base2(4)+
+     #      UBUF(5)*base2(5)
+C
+C now calculate the component for grain-2
+c
+c    calculate the direction of basis-2
+	do iee=1,5,1
+	rhos(iee)=-a1(iee+5,M2+1)
+C  here take the inverse direction of relaxation-1 in grain-2
+C  because we must use the same base
+	enddo
+	dlength1=sqrt(rhos(1)*rhos(1)+
+     #rhos(2)*rhos(2)+
+     #rhos(3)*rhos(3)+
+     #rhos(4)*rhos(4)+
+     #rhos(5)*rhos(5))
+	dlength2=sqrt(BB(6)*BB(6)+
+     #BB(7)*BB(7)+
+     #BB(8)*BB(8)+
+     #BB(9)*BB(9)+
+     #BB(10)*BB(10))
+c  for grain-2
+	base1(1)= BB(6)/dlength2
+	base1(2)= BB(7)/dlength2
+	base1(3)= BB(8)/dlength2
+	base1(4)= BB(9)/dlength2
+	base1(5)=BB(10)/dlength2
+c 		
+	base2(1)=(rhos(1)/dlength1-Cofcos*base1(1))/Cofsin
+	base2(2)=(rhos(2)/dlength1-Cofcos*base1(2))/Cofsin
+	base2(3)=(rhos(3)/dlength1-Cofcos*base1(3))/Cofsin
+	base2(4)=(rhos(4)/dlength1-Cofcos*base1(4))/Cofsin
+	base2(5)=(rhos(5)/dlength1-Cofcos*base1(5))/Cofsin
+C  then calculate the stress component in grain-2
+      sg2c1=UBUF(6)*base1(1)+
+     #      UBUF(7)*base1(2)+
+     #      UBUF(8)*base1(3)+
+     #      UBUF(9)*base1(4)+
+     #     UBUF(10)*base1(5)
+	sg2c2=UBUF(6)*base2(1)+
+     #      UBUF(7)*base2(2)+
+     #      UBUF(8)*base2(3)+
+     #      UBUF(9)*base2(4)+
+     #     UBUF(10)*base2(5)
+c
+	CrssP1=dabs(Cofcos*(sg2c1-sg1c1)/sqrt(2.0))
+	CrssP2=0.0
+	endif
+	endif
+CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+  345 if (IPR.lt.4) goto 220
 #ifndef ALTAY_SUBROUTINE
-      if(NLIST.eq.1) then
+	if(NLIST.eq.1) then
       write (IMP,221) IPR,IOR,ISTP,NBLOC
-      end if
+	end if
       write (*,221) IPR,IOR,ISTP,NBLOC
  221  format (' Pancak2 ',
      1 ' IPR IOR, ISTP, NBLOC=',4I5)
-      if (IPR.ge.4) stop
+      if (IPR.ge.4) stop 
 #else
       RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
 #endif
   220    DTAU1=DTAU 
          TAUR1=TAUR  
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011         
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011	     
 C      if (IROT.eq.0) goto 89
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (NRL.eq.0) then
@@ -348,36 +462,37 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
                       STRSS=UBUF
                       goto 89
                     endif
-      IF(ITFMAS.eq.1) then
-        if (swrlx(1)) then  
-        CCC(1,M2+1)=CrssP1
-        CCC(2,M2+1)=CrssP1
-        endif
-        if (swrlx(2)) then  
-        CCC(1,M2+2)=CrssP2
-        CCC(2,M2+2)=CrssP2
-        endif
-      else  
-        do 86 IRL=1,NRL
+C@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$$@$@$@$@$@$@$@$@$@$ QGX 18/4/2012 
+	IF(ITFMAS.eq.1) then
+	  if (swrlx(1)) then  
+        CCC(1,M2+1)=CrssP1*ENTA
+        CCC(2,M2+1)=CrssP1*ENTA
+	  endif
+	  if (swrlx(2)) then  
+        CCC(1,M2+2)=CrssP2*ENTA
+        CCC(2,M2+2)=CrssP2*ENTA
+	  endif
+	else	
+	  do 86 IRL=1,NRL
         if (.not.swrlx(IRL)) goto 86
         j=M2+IRL  
         CCC(1,j)=TAURL(IRL)
         CCC(2,j)=TAURL(IRL)
   86    continue 
-      endif
-C
+	endif
+CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       IF (IPR.EQ.2) then
-      if(NLIST.eq.1) then 
-      WRITE (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
-      end if
-      end if
+	if(NLIST.eq.1) then 
+	WRITE (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
+	end if
+	end if
 C     Second call of Simplex (relaxed constraints)
 C      if (IOR.eq.1967.and.ISTP.eq.11.and.NBLOC.eq.3) IPR=2
       if (IPR.eq.2) then
-      if (NLIST.eq.1) then
-      write (IMP,401)
-      end if
-      end if
+	if (NLIST.eq.1) then
+	write (IMP,401)
+	end if
+	end if
  401  format (' Second call of TBH')
       Call TBH(IPR,N,N,M12,A1,BB,
      1 CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,
@@ -400,14 +515,13 @@ C DTAU (output)=abs(Taur)-Tauc
       RCM_GUARD
 #endif
 C      if (IOR.eq.1967.and.ISTP.eq.11.and.NBLOC.eq.3) stop
-
 C
 
 
       if (IPR.ge.4) then
-         if(NLIST.eq.1) then
+	   if(NLIST.eq.1) then
          write (IMP,222) IPR,IOR,ISTP,NBLOC
-         end if
+	   end if
          write (*,222) IPR,IOR,ISTP,NBLOC
  222     format (' Pancak2 222 - Problem with TBH',/,
      1   ' IPR IOR, ISTP, NBLOC=',4I5)
@@ -441,8 +555,8 @@ C     If all grains have a non-zero slip, do the following:
  213  if (IPR.gt.0.and.NRL.gt.0) then
       if(NLIST.eq.1) then 
       write (IMP,780) gamr
-      end if
-      end if
+	end if
+	end if
  780  format (' RELAXATIONS: GAMMA 13, 23, 12 =',3d12.4)
    2  continue
 C
@@ -454,8 +568,8 @@ C
       do jsgn=1,2
          CC(jsgn,j)=CCC(jsgn,j+jj)
       enddo
- 203  continue    
-      ii=5*(laml-1)
+ 203  continue	
+	ii=5*(laml-1)
       do 201 i=1,5
 C     If one grain does not deform, note that stress UBUF has come
 C      from the fullconstraints solution.
@@ -475,16 +589,18 @@ C 776  format (' B5  ',i5,e15.8,   'spanv  ',d15.8,' i+ii',i5)
       RHOS(i)=-x8
       RHOA(i)=-y8
  201  continue
-c 
+C
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 11/4/2012
+c  HERE WR is work rate!  QGX 11/4/2011
       WR=0.0
       do 304 i=1,5
       WR=WR+spanv(i)*BB(i+ii)
   304 continue
       if (IPR.EQ.2) then
-      if (NLIST.eq.1) then 
-      write (IMP,777) WR
-      end if
-      end if
+	if (NLIST.eq.1) then 
+	write (IMP,777) WR
+	end if
+	end if
   777 format (' Rate of Plastic work:',d10.4)
 C     (Modification June 2001: note that if one of the grains does
 C      not deform at all, the stress and the active slip systems
@@ -540,17 +656,21 @@ C 912  format (' NACTIV, i',2I5)
  310  continue
       RETURN
       END        
-      
-                                                             
-
-      Subroutine CLUSTER1(TDC,GRPAR,GEWF,TGrb,alfa,
-     1 WINT,Tprinc,IPR)
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc      
+      Subroutine CLUSTER1(TDC,GRPAR,GEWF,Tprinc,Cofcos,Cofsin)
+C   IF both relaxations are orthogonal:
+C      Cofcos=0 and Cofsin=0 is returned
+C   ELSE:
+C      Cofcos and Cofsin are the cosine and sine of the angle for relaxation-1
+C
+C   relaxation-2 is always the orthogonal one.
+C   TDC is the normalized von-Mise equivalent strain
       use IOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
       implicit double precision (a-h,o-z)
-      dimension AXX(3,3),GRPAR(3,3),TGRB(3,3),
+      dimension AXX(3,3),GRPAR(3,3),
      1 C1(3,3),PrDir(3,3),TDC(3,3),TDCGr(3,3),
      2 vec1(3),vec2(3),Tprinc(3,3),AL(3),AA(3)
-      data PrDir/8*0.0d0,1.0d0/
+	  dimension relaxI(3,3),relaxII(3,3)
       SAVE
       if (IPR.gt.0) then
       if (NLIST.eq.1) then
@@ -559,11 +679,9 @@ C 912  format (' NACTIV, i',2I5)
       end if
  100  format (//,' CLUSTER1')
 C     Calculation of volume affected by the surface
-      do i=1,3
-C        write (*,119) (GRPAR(i,k),k=1,3)
-C 119    format (3d15.5)
+      do i=1,3,1
         x=0.0
-          do j=1,3 
+          do j=1,3,1 
             X=X+GRPAR(j,i)**2
           enddo
         AL(i)=sqrt(X)
@@ -577,8 +695,6 @@ C     Box product
          u=u+GRPAR(i,1)*vec1(i)
       enddo
       u=abs(u)*0.25/(AL(1)*AL(2)*AL(3))
-C      write (*,120) u,AL(1),AL(2),AL(3)
-C 120  format (' u=',4d15.5)
 C     The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3;
 C      for very flattened grains, it should tend to 1.
 C 
@@ -594,8 +710,6 @@ C     Case 1: is AL(3) the longest?
            AA(2)=AL(1)
            AA(3)=AL(2)
         endif
-C             write (*,121) AA
-C 121         format ('Case 1',3d15.5)
         GEWF=u*(2.0*(AA(2)-AA(3))*AA(3)**2+4.0*AA(3)**3/3.0)
       else 
 C       Case 2: is AL(3) the shortest?
@@ -608,8 +722,6 @@ C       Case 2: is AL(3) the shortest?
              AA(1)=AL(2)
              AA(2)=AL(1)
           endif
-C             write (*,122) AA
-C 122         format ('Case 2',3d15.5)
           GEWF=u*(4.0*(AA(1)-AA(3))*(AA(2)-AA(3))*AA(3)
      1        +2.0*(AA(2)-AA(3))*AA(3)**2+2.0*(AA(1)-AA(3))*AA(3)**2
      2        +4.0*AA(3)**3/3.0)
@@ -623,8 +735,6 @@ C         Case 3: AL(3) is neither shortest nor longest
              AA(1)=AL(2)
              AA(3)=AL(1)
           endif
-C             write (*,123) AA
-C 123         format ('Case 3',3d15.5)
           GEWF=u*(2.0*(AA(1)-AA(3))*AA(3)**2+4.0*AA(3)**3/3.0)
         endif
       endif
@@ -666,71 +776,219 @@ C       Normalisation
         enddo
         do i=1,3
            do j=1,3
-              TGrb(i,j)=AXX(j,i)
-           enddo
+              Tprinc(i,j)=AXX(j,i)
+           enddo           
            if (IPR.gt.0) then
              if(NLIST.eq.1) then 
-             write (IMP,102) (TGrb(i,j),j=1,3)
+             write (IMP,102) (Tprinc(i,j),j=1,3)
            end if
            end if
   102      format (' TGrb ',3d15.7)            
         enddo
-
+C@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@##@# QGX 17/9/2012
+      pi=atan(1.0)*4.0
+	dlength=sqrt(TDC(1,1)*TDC(1,1)+
+     #TDC(1,2)*TDC(1,2)+
+     #TDC(1,3)*TDC(1,3)+
+     #TDC(2,1)*TDC(2,1)+
+     #TDC(2,2)*TDC(2,2)+
+     #TDC(2,3)*TDC(2,3)+
+     #TDC(3,1)*TDC(3,1)+
+     #TDC(3,2)*TDC(3,2)+
+     #TDC(3,3)*TDC(3,3))
 C     Transform TDC to the "Grb" reference frame 
       CALL MATPROD(C1,TDC,AXX,3,3,3)
-      CALL MATPROD(TDCGr,TGrb,C1,3,3,3) 
-C     Calculate velocity of end tip of a vector with
-C     unit length and positioned normal to the 
-C     grain boundary segment at the origin of thre frame.
-      do i=1,2
-         vec1(i)=0.0
-      enddo 
-      vec1(3)=1.0
-      call MATPROD(vec2,TDCGr,vec1,3,3,1)
-C     Calculate angle between projection of velocity vector 
-C       on Grain Boundary Segment and axis 1
-      Sphi=vec2(2)
-      Cphi=vec2(1)
-      if (abs(Sphi).lt.1.0d-6.and.abs(Cphi).lt.1.0d-6) then
-         phi=0.0
-      else
-         phi=ATAN2(Sphi,Cphi)
-      endif  
-C      write (*,105) vec2,phi*180.0/pi
-C 105  format ('vec2',3d15.5,f10.1)
-C     Transformation to a frame in which the projection of the 
-C       deformed vector is axis 1      
-      y=cos(phi)
-      PrDir(1,1)=y
-      x=sin(phi)
-      PrDir(1,2)=-x
-      PrDir(2,1)=x
-      PrDir(2,2)=y
-      AXX=PrDir
-      AXX(1,2)=x
-      AXX(2,1)=-x
-C      CALL MATPROD(C1,TDCGr,PrDir,3,3,3)
-C      CALL MATPROD(C2,AXX,C1,3,3,3)
-C      write (*,104) ((C2(i,j),j=1,3),i=1,3)
-C 104  format ('C2',3d20.8)
-      CALL MATPROD(Tprinc,AXX,TGrb,3,3,3)
-      if (IPR.eq.2) THEN
-         do i=1,3
-            if(NLIST.eq.1) then
-            write (IMP,116) (Tprinc(i,j),j=1,3)
-            end if
-         enddo
-      endif
- 116  format (' Tprinc',3d15.8)
-C     ALFA and WINT have to do with the (abandoned) Type III relaxation
-      ALFA=0.5
-      WINT=1.0D06
-      if (IPR.gt.2) then
-      if (NLIST.eq.1) then 
-      write (IMP,115) WINT
-      end if
-      end if
- 115  format (' CRSSR for Type III relaxation:',d15.5)
-      RETURN
-      END                                                               
+      CALL MATPROD(TDCGr,Tprinc,C1,3,3,3) 
+c   
+	relaxI=0.0
+	relaxI(1,3)=1.0
+	relaxI(3,1)=1.0
+	relaxII=0.0
+	relaxII(2,3)=1.0
+	relaxII(3,2)=1.0
+c
+	dot1=0.0
+	do i=1,3,1
+	do j=1,3,1
+	dot1=dot1+relaxI(i,j)*TDCGr(i,j)
+	enddo
+	enddo
+      dot1=dot1/sqrt(2.0)/dlength
 
+	dot2=0.0
+	do i=1,3,1
+	do j=1,3,1
+	dot2=dot2+relaxII(i,j)*TDCGr(i,j)
+	enddo
+	enddo
+	dot2=dot2/sqrt(2.0)/dlength
+c 
+	if(dabs(dot1).lt.0.000001.and.dabs(dot2).lt.0.000001) then
+c both relaxations are orthogonal
+	Cofcos=0.0
+	Cofsin=0.0
+	goto 333
+	elseif(dabs(dot1).lt.0.000001) then
+	   if(dabs(dot2-1.0).lt.0.00001) then
+C  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
+C  new axe-1 be old axe-2
+c  new axe-2 be minus old axe-1
+	vec1(1)=AXX(1,2)
+	vec1(2)=AXX(2,2)
+	vec1(3)=AXX(3,2)
+	vec2(1)=-AXX(1,1)
+	vec2(2)=-AXX(2,1)
+	vec2(3)=-AXX(3,1)
+c update AXX
+	AXX(1,1)=vec1(1)
+	AXX(2,1)=vec1(2)
+	AXX(3,1)=vec1(3)
+	AXX(1,2)=vec2(1)
+	AXX(2,2)=vec2(2)
+	AXX(3,2)=vec2(3)
+c update Tprinc
+	do i=1,3,1
+	do j=1,3,1
+	Tprinc(i,j)=AXX(j,i)
+	enddo
+	enddo	   
+	   Cofcos=1.0
+	   Cofsin=0.0
+	   goto 333	  
+	   endif
+C  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
+C  new axe-1 be old axe-2
+c  new axe-2 be minus old axe-1
+	vec1(1)=AXX(1,2)
+	vec1(2)=AXX(2,2)
+	vec1(3)=AXX(3,2)
+	vec2(1)=-AXX(1,1)
+	vec2(2)=-AXX(2,1)
+	vec2(3)=-AXX(3,1)
+c update AXX
+	AXX(1,1)=vec1(1)
+	AXX(2,1)=vec1(2)
+	AXX(3,1)=vec1(3)
+	AXX(1,2)=vec2(1)
+	AXX(2,2)=vec2(2)
+	AXX(3,2)=vec2(3)
+c update Tprinc
+	do i=1,3,1
+	do j=1,3,1
+	Tprinc(i,j)=AXX(j,i)
+	enddo
+	enddo
+C     Transform TDC to the new "Grb" reference frame 
+      CALL MATPROD(C1,TDC,AXX,3,3,3)
+      CALL MATPROD(TDCGr,Tprinc,C1,3,3,3) 
+C   make sure relaxation-2 is orthogonal	
+	dot2=0.0
+	do i=1,3,1
+	do j=1,3,1
+	dot2=dot2+relaxII(i,j)*TDCGr(i,j)
+	enddo
+	enddo	
+	if(dabs(dot2).gt.0.00000000000001) then
+	write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
+	stop
+	endif
+C calculate the cosine for relaxation-1
+	dot1=0.0
+	do i=1,3,1
+	do j=1,3,1
+	dot1=dot1+relaxI(i,j)*TDCGr(i,j)
+	enddo
+	enddo
+c   normalize
+	dot1=dot1/sqrt(2.0)/dlength
+c
+	Cofcos=dot1
+	Cofsin=sqrt(1.0-dot1*dot1)
+	goto 333
+	elseif(dabs(dot2).lt.0.000001) then
+C Relaxation-2 is already a orthogonal one
+C calculate the cosine for relaxation-1
+c
+         if(dabs(dot1-1.0).lt.0.00001) then
+	   Cofcos=1.0
+	   Cofsin=0.0
+	   goto 333
+	   else	
+	   Cofcos=dot1
+	   Cofsin=sqrt(1.0-dot1*dot1)   
+	   goto 333
+	   endif
+	else
+C   need to rotate by a angle < 90
+	tgangle=dot2/dot1
+	x=1.0/sqrt(1.0+tgangle*tgangle)
+	y=tgangle/sqrt(1.0+tgangle*tgangle)
+	PrDir=0.0
+	PrDir(1,1)=x
+      PrDir(1,2)=y
+      PrDir(2,1)=-y
+      PrDir(2,2)=x
+	PrDir(3,3)=1.0
+c 
+C   Prdir(1,) is vector-1 in the GB frame
+C   Prdir(2,) is vector-2 in the GB frame
+c   Transform these two vector in the Sample's frame
+c
+	vec1=0.0
+	do i=1,3,1
+	do j=1,3,1
+	vec1(i)=vec1(i)+AXX(i,j)*PrDir(1,j)
+	enddo
+	enddo
+	vec2=0.0
+	do i=1,3,1
+	do j=1,3,1
+	vec2(i)=vec2(i)+AXX(i,j)*PrDir(2,j)
+	enddo
+	enddo
+c
+	AXX(1,1)=vec1(1)
+	AXX(2,1)=vec1(2)
+	AXX(3,1)=vec1(3)
+	AXX(1,2)=vec2(1)
+	AXX(2,2)=vec2(2)
+	AXX(3,2)=vec2(3)
+c update Tprinc
+	do i=1,3,1
+	do j=1,3,1
+	Tprinc(i,j)=AXX(j,i)
+	enddo
+	enddo
+C 
+C Transform TDC to the new "Grb" reference frame 
+      CALL MATPROD(C1,TDC,AXX,3,3,3)
+      CALL MATPROD(TDCGr,Tprinc,C1,3,3,3) 
+c  make sure relaxation-2 is orthogonal	
+	dot2=0.0
+	do i=1,3,1
+	do j=1,3,1
+	dot2=dot2+relaxII(i,j)*TDCGr(i,j)
+	enddo
+	enddo	
+	if(dabs(dot2).gt.0.00000000000001) then
+	write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
+	stop
+	else
+	endif	
+c	
+	dot1=0.0
+	do i=1,3,1
+	do j=1,3,1
+	dot1=dot1+relaxI(i,j)*TDCGr(i,j)
+	enddo
+	enddo
+c normalize
+	dot1=dot1/sqrt(2.0)/dlength
+c
+	Cofcos=dot1
+	Cofsin=sqrt(1.0-dot1*dot1)
+	goto 333
+	endif
+CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+ 333  RETURN
+      END               
