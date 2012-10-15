@@ -337,12 +337,11 @@
 
       SV0%RHOcb               = P%RHOcbMIN
       SV0%CBB(:)%RHOwd        = P%RHOwdMIN
-      SV0%CBB(:)%RHOwp        = P%RHOwpMIN
+      SV0%CBB(:)%RHOwp        = 0.
       SV0%CBB(:)%RHOwdHOM     = P%RHOwdMIN
       SV0%CBB(:)%accGAMMA_new = 0.
       SV0%CBB(:)%RHOwd_ini    = P%RHOwdMIN
       SV0%ActiveCBB(:)        = 0
-      !OLD !!SV0%CRSS(:,:)           = P%tau0
       SV0%CRSS                = F_CRSS(SV0)
 
       END SUBROUTINE GetInitStatVar
