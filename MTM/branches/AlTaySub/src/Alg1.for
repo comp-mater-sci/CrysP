@@ -368,10 +368,10 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       WRITE (IMP,301) DELTAW
       end if
  301  FORMAT (//,1H ,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
-      if(NLIST.eq.1) then
-      DO 302 I=1,M
- 302  WRITE (IMP,303) I,gamma(I)
-      end if
+!      if(NLIST.eq.1) then
+!      DO 302 I=1,M
+! 302  WRITE (IMP,303) I,gamma(I)
+!      end if
 C
  303  FORMAT (1H ,I5,(12F10.6))  
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011                                        

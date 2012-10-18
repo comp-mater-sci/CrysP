@@ -552,12 +552,10 @@ C     If all grains have a non-zero slip, do the following:
       DTAU1=DTAU
       TAUR1=TAUR
       UBUF=STRSS
- 213  if (IPR.gt.0.and.NRL.gt.0) then
-      if(NLIST.eq.1) then 
-      write (IMP,780) gamr
+ 213  if(NLIST.eq.1) then 
+        write (IMP,780) gamr
 	end if
-	end if
- 780  format (' RELAXATIONS: GAMMA 13, 23, 12 =',3d12.4)
+ 780  format (' RELAXATIONS:                   ',2d12.4)      
    2  continue
 C
 C     From here on, output is produced for grain number "laml"
