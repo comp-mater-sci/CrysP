@@ -90,8 +90,8 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       NFILTW = acnf%output_config%NFILTW  ! control "TWN"
       IPR    = acnf%output_config%IPR     ! control printing level
       NRES   = acnf%output_config%NRES    ! control "RES"
-      NPEBP1  = acnf%output_config%NPEBP   ! control "BEP"
-      NMSS1   = acnf%output_config%NMSS    ! control "MSS"
+      NPEBP  = acnf%output_config%NPEBP   ! control "BEP"
+      NMSS   = acnf%output_config%NMSS    ! control "MSS"
 #else
 C     Number of grains in ALAMEL cluster
       read (KLEC,99) NGR
@@ -101,8 +101,9 @@ C     Number of grains in ALAMEL cluster
       read (KLEC,99) NFILTW
       read (KLEC,99) KOST
       read (KLEC,99) IPR
-      NRES = NFILE1  ! IMP2 and IMP3 are controlled only by NFILE1 
-      if (KOST == hard_PEBP) NPEBP  = NLIST
+      NRES = NFILE1  ! IMP2 and IMP3 are controlled only by NFILE1
+      NPEBP = 0
+      if (KOST == hard_PEBP) NPEBP  = NFILE1
       NMSS = NLIST
 #endif
       HEPSTOT=0.D0
@@ -228,8 +229,8 @@ C     read the parameters of the work hardening model
 #endif
       endif
   36  NFILE=NFILE0*NFILE1
-      NPEBP=NFILE0*NPEBP1   ! control "BEP"
-      NMSS= NFILE0*NMSS1    ! control "MSS"
+      NPEBPx=NFILE0*NPEBP   ! control "BEP" (effective value)
+      NMSSx= NFILE0*NMSS    ! control "MSS" (effective value)
 
 #ifdef ALTAY_SUBROUTINE
       NSTP     = astate%simulCalls(astate%this)%input%nsteps
@@ -261,7 +262,7 @@ C     read the parameters of the work hardening model
       ! Output the current texture
       if (NFILE.eq.1) call CURwriteBlock(IMP1,info)
 #ifdef PEBP_ENABLED
-      if ((KOST == hard_PEBP).and.(NPEBP.eq.1)) then
+      if ((KOST == hard_PEBP).and.(NPEBPx.eq.1)) then
             info = KS_writeState(IMP4)
       endif
 #endif
@@ -613,7 +614,7 @@ C      call STR5(vec1,SHsam)
       HEPSCALL = HEPSCALL + HEPS
       HEPSTOT = HEPSTOT + HEPS
       MEPSTOT = MEPSTOT + MEPS
-      if (NMSS /= 0) then
+      if (NMSSx /= 0) then
             write(IMP5,555) MEPS*ISTP,MEPSTOT,HEPSCALL,HEPSTOT,
      &      sqrt(3./2.*sum(SHsam*SHsam)),
      &      SHsam(1,1),SHsam(2,2),SHsam(3,3),
