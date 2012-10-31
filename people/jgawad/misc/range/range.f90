@@ -1,12 +1,23 @@
-module range
+module fngRange
+implicit none
 private
 
       type :: rangeDouble
       private
-            double precision  :: rbegin = 0.D0
-            double precision  :: rend = 0.D0
-            double precision  :: rstep = 0.D0
-            logical           :: rlast = .true.
+            double precision  :: value = 0.D0
+            
+            double precision  :: endpoint = 0.D0
+            
+            !> Number of points to be processed.
+            !>
+            !> Possible values:
+            !>     * npoints is zero: If with_endpoint is true, the value rend is returned. Otherwise, no point is returned
+            !>     * npoints < 0: no point is returned.
+            integer           :: npoints = 0
+            
+            double precision  :: step = 0.D0
+            
+            logical           :: with_endpoint = .true. 
       contains
             procedure,pass(r) :: next => next_rangeDouble
       end type
@@ -23,28 +34,34 @@ public :: rangeDouble, next
       
 contains
 
-
-      elemental function rangeDouble_init(rbegin,rend,rstep,intervals,last) result(res)
+      !> Constructor of rangeDouble object.
+      elemental function rangeDouble_init(rbegin,rend,rstep,npoints,endpoint) result(res)
       implicit none
       type(rangeDouble)                         :: res
       double precision,intent(in)               :: rbegin
       double precision,intent(in)               :: rend
       double precision,intent(in),optional      :: rstep
-      integer,intent(in),optional               :: intervals
-      logical,intent(in),optional               :: last
+      !> Number of points inside the range.
+      !>
+      !> This parameter is ignored if rstep is also provided.
+      integer,intent(in),optional               :: npoints
+      logical,intent(in),optional               :: endpoint
       !
-            res%rbegin = rbegin
-            res%rend = rend
+            res%value = rbegin
+            res%endpoint = rend
             if (present(rstep)) then
-                  res%rstep = rstep
+                  res%step = rstep
+                  res%npoints = (merge(ceiling((rend-rbegin)/rstep),0,(abs(rstep) > epsilon(0.D0))))
             else
-                  if (present(intervals)) then
-                        res%rstep = merge((rend-rbegin)/dble(intervals),rend+rend,(intervals > 0))
-                  else
-                        res%rstep = rend
+                  res%step = rend
+                  if (present(npoints)) then
+                        if (npoints > 0) then
+                              res%npoints = npoints
+                              res%step = (rend-rbegin)/dble(npoints)
+                        endif
                   endif
             endif
-            if (present(last)) res%rlast = last
+            if (present(endpoint)) res%with_endpoint = endpoint
       !
       end function
 
@@ -57,24 +74,20 @@ contains
       double precision :: tmp
       !
             next = .false.
-            ! The step cannot be non-advancing
-            if (abs(r%rstep) < epsilon(0.D0)) return
-            !
-            if (r%rstep > 0.D0) then
-                  next = merge((r%rbegin <= r%rend),(r%rbegin < r%rend),r%rlast)
+            ! Terminate if either no points are left.
+            if  (r%npoints < 0) return
+            ! There can be some points to be processed:
+            if (r%npoints > 0) then
+                  ! The regular points
+                  value = r%value
+                  r%value = r%value + r%step
+                  next = .true.
             else
-                  next = merge((r%rbegin >= r%rend),(r%rbegin > r%rend),r%rlast)
+                  ! Consider the endpoint:
+                  next = r%with_endpoint
+                  if (next) value = r%endpoint
             endif
-            if (next) then
-                  ! Calculate the associated value
-                  value = r%rbegin
-                  r%rbegin = r%rbegin + r%rstep
-                  if (r%rstep > 0.D0) then
-                        if ((r%rbegin > r%rend) .and. (r%rlast)) r%rbegin = r%rend
-                  else
-                        if ((r%rbegin < r%rend) .and. (r%rlast)) r%rbegin = r%rend
-                  endif
-            endif
+            r%npoints = r%npoints - 1
       !
       end function
       
