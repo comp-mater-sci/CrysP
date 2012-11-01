@@ -886,10 +886,12 @@ C   make sure relaxation-2 is orthogonal
 	dot2=dot2+relaxII(i,j)*TDCGr(i,j)
 	enddo
 	enddo	
+#ifdef ENABLE_CHECK_ORTHORLX         
 	if(dabs(dot2).gt.0.00000000000001) then
 	write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
 	stop
 	endif
+#endif
 C calculate the cosine for relaxation-1
 	dot1=0.0
 	do i=1,3,1
@@ -967,12 +969,14 @@ c  make sure relaxation-2 is orthogonal
 	do j=1,3,1
 	dot2=dot2+relaxII(i,j)*TDCGr(i,j)
 	enddo
-	enddo	
+      enddo
+#ifdef ENABLE_CHECK_ORTHORLX      
 	if(dabs(dot2).gt.0.00000000000001) then
 	write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
 	stop
 	else
-	endif	
+      endif	
+#endif
 c	
 	dot1=0.0
 	do i=1,3,1
