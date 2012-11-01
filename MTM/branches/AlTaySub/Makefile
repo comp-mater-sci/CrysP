@@ -60,6 +60,7 @@ cubAccess.f90 \
 curAccess.f90 \
 smtAccess.f90 \
 texFormats.f90 \
+texFormatConstants.f90 \
 hardVoce.f90 \
 altayHard.f90 \
 KOST1x.f90 \
@@ -246,7 +247,7 @@ $(LIB_OBJDIR)/curAccess.o	: $(addprefix $(LIB_OBJDIR)/,Dynfil.o)
 $(LIB_OBJDIR)/smtAccess.o	: $(addprefix $(LIB_OBJDIR)/,Dynfil.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Sliprat.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o ioconfig.o)
 $(LIB_OBJDIR)/TBH.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o ioconfig.o) $(RCMINCLUDE)
-$(LIB_OBJDIR)/texFormats.o	: $(addprefix $(LIB_OBJDIR)/,Dynfil.o curAccess.o cubAccess.o smtAccess.o)
+$(LIB_OBJDIR)/texFormats.o	: $(addprefix $(LIB_OBJDIR)/,texFormatConstants.o Dynfil.o curAccess.o cubAccess.o smtAccess.o)
 $(LIB_OBJDIR)/KOST1xState.o	: $(addprefix $(LIB_OBJDIR)/,KOST1x.o)
 $(LIB_OBJDIR)/altayHard.o	: $(addprefix $(LIB_OBJDIR)/,ioconfig.o altayConfig.o hardVoce.o KOST1x.o)
 $(LIB_OBJDIR)/hardVoce.o	: $(addprefix $(LIB_OBJDIR)/,ioconfig.o )
@@ -268,7 +269,7 @@ $(PROG_OBJDIR)/curAccess.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o)
 $(PROG_OBJDIR)/smtAccess.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/Sliprat.o	: $(addprefix $(PROG_OBJDIR)/,ioconfig.o)
 $(PROG_OBJDIR)/TBH.o		: $(addprefix $(PROG_OBJDIR)/,ioconfig.o) $(RCMINCLUDE)
-$(PROG_OBJDIR)/texFormats.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o curAccess.o cubAccess.o smtAccess.o)
+$(PROG_OBJDIR)/texFormats.o	: $(addprefix $(PROG_OBJDIR)/,texFormatConstants.o Dynfil.o curAccess.o cubAccess.o smtAccess.o)
 $(PROG_OBJDIR)/KOST1xState.o	: $(addprefix $(PROG_OBJDIR)/,KOST1x.o)
 $(PROG_OBJDIR)/altayHard.o	: $(addprefix $(PROG_OBJDIR)/,ioconfig.o hardVoce.o KOST1x.o)
 $(PROG_OBJDIR)/hardVoce.o	: $(addprefix $(PROG_OBJDIR)/,ioconfig.o )

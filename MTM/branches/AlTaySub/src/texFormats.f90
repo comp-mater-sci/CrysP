@@ -2,21 +2,15 @@
 ! $Id$
 !
 
+!> Dispatcher subroutines for IO operation on texture data files.
 module TexFormats
+use TexFormatConstants
 use dynfil
 use smtAccess
 use curAccess
 use cubAccess
 
 implicit none
-
-      !>@{ \name Named constants for supported texture file formats (aka FormatID)
-      integer,parameter :: TF_SMT  = 1
-      integer,parameter :: TF_CUR  = 2
-      integer,parameter :: TF_CUB  = 3
-      integer,parameter :: TF_HDF5 = 5
-
-      !>@}
       
       integer,parameter :: TF_MaxPoints = 30000
       

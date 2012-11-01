@@ -18,10 +18,10 @@
 !>    
 !
 
-!> \remark The module is derived from alamelConfig, taken from alamelSub project.
+!> \remark The module is derived from the module alamelConfig, taken from the alamelSub project.
 !> However, the differences in the API are drastic. For this reason, the API is 
 !> intentionally made even more incompatibile (e.g. changes in the names of datastructures)
-!> to force the users of alamelSub to make a deliberate, conscious and well-thought decision of 
+!> to force the users of the alamelSub to make a deliberate, conscious and well-thought decision of 
 !> upgrading their code to the altaySub.
 
 
@@ -30,6 +30,7 @@ module altayConfig
 ! Import configuration structures from AlTay modules
 use hardVoce, only: VoceConfig
 use KOST1x, only: PAR11
+use TexFormatConstants
 
 implicit none
 
@@ -63,8 +64,10 @@ implicit none
       end type
 
       type :: textureData
-            !> Type of texture representaion: 1 - SMT, 2 - CUR, 3 - CUB
-            integer                                   :: input_type = 1     
+            !> Type of texture representation
+            !>
+            !> See TexFormatConstants for the list of possible values. \sa TexFormatConstants
+            integer                                   :: input_type = TF_SMT     
             character(len=fname_len)                  :: input_fname = ''
             integer                                   :: block_id = 1
       end type
