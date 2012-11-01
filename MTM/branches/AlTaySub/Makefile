@@ -26,6 +26,7 @@ DOXYGEN=doxygen
 #
 FFLAGS= -fpp -align dcommon -vec-report0 -standard-semantics # -assume std_mod_proc_name
 FFLAGS_FIXED= -extend-source 80 
+FFLAGS_FREE= -stand f08
 
 ifdef DEBUG
 OUTDIR=debug
@@ -201,7 +202,7 @@ $(PROG_OBJDIR)/%.o	: $(PROG_SRCDIR)/%.for | $(PROG_DIRS)
 	$(FC) -o $@ -c $< $(PROG_FCFLAGS) $(FFLAGS_FIXED)  
 
 $(PROG_OBJDIR)/%.o	: $(PROG_SRCDIR)/%.f90 | $(PROG_DIRS)
-	$(FC) -o $@ -c $< $(PROG_FCFLAGS)
+	$(FC) -o $@ -c $< $(PROG_FCFLAGS) $(FFLAGS_FREE)
 
 #
 # Lib section
@@ -209,20 +210,20 @@ $(LIB)	:$(LIB_OBJS) | $(LIB_DIRS)
 	$(AR) rcs $(LIB) $(LIB_OBJS)
 
 $(LIB_OBJDIR)/%.o	: $(LIB_SRCDIR)/%.f90 | $(LIB_DIRS)
-	$(FC) $(LIB_FCFLAGS) -c $< -o $@
+	$(FC) -c $< -o $@ $(LIB_FCFLAGS) $(FFLAGS_FREE)
 
 $(LIB_OBJDIR)/%.o	: $(LIB_SRCDIR)/%.for | $(LIB_DIRS)
-	$(FC) $(LIB_FCFLAGS) $(FFLAGS_FIXED) -c $< -o $@
+	$(FC) -c $< -o $@ $(LIB_FCFLAGS) $(FFLAGS_FIXED)
 
 
 #
 # Testprog section
 $(TPROG_OBJDIR)/%.o	: $(TPROG_SRCDIR)/%.f90  $(LIB) | $(TPROG_DIRS)
-	$(FC) $(TPROG_FCFLAGS) -c $< -o $@
+	$(FC) -c $< -o $@ $(TPROG_FCFLAGS) $(FFLAGS_FREE)
 
 
 $(TPROG) 	:  $(LIB) $(TPROG_OBJS) | $(TPROG_DIR) $(TPROG_OBJDIR) $(TPROG_INCLUDEDIR) 
-	$(FC) $(TPROG_FCFLAGS) $^ -o $@ $(LIB) $(FLDFLAGS) 
+	$(FC) -o $@ $(TPROG_FCFLAGS) $^ $(LIB) $(FLDFLAGS) 
 
 
 
@@ -233,11 +234,18 @@ clean	: FORCE
 FORCE	:
 
 RCMINCLUDE = src/altayRCM.fpp
+
+#
+# Explicit dependency: settings
+#
+$(LIB_OBJS) $(PROG_OBJS) $(TPROG_OBJS)	: Makefile
+
+#
 # Explicit dependencies for library
 #
 #$(LIB_OBJDIR)/.o	: $(addprefix $(LIB_OBJDIR)/, )	
 $(LIB_OBJDIR)/altaySub.o	: $(addprefix $(LIB_OBJDIR)/,altayConfig.o altayInterface.o altayRCM.o ioconfig.o texFormats.o) $(RCMINCLUDE)
-$(LIB_OBJDIR)/Alg0A.o		: $(addprefix $(LIB_OBJDIR)/,KOST1x.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o altayRCM.o ioconfig.o) $(RCMINCLUDE)
+$(LIB_OBJDIR)/Alg0A.o		: $(addprefix $(LIB_OBJDIR)/,altayHard.o KOST1x.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o altayRCM.o ioconfig.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Alg1.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o ioconfig.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Alg2.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Dynfil.o		: $(addprefix $(LIB_OBJDIR)/,altayConfig.o ioconfig.o miscutils.o)
@@ -251,15 +259,16 @@ $(LIB_OBJDIR)/texFormats.o	: $(addprefix $(LIB_OBJDIR)/,texFormatConstants.o Dyn
 $(LIB_OBJDIR)/KOST1xState.o	: $(addprefix $(LIB_OBJDIR)/,KOST1x.o)
 $(LIB_OBJDIR)/altayHard.o	: $(addprefix $(LIB_OBJDIR)/,ioconfig.o altayConfig.o hardVoce.o KOST1x.o)
 $(LIB_OBJDIR)/hardVoce.o	: $(addprefix $(LIB_OBJDIR)/,ioconfig.o )
+$(LIB_OBJDIR)/altayConfig.o	: $(addprefix $(LIB_OBJDIR)/,texFormatConstants.o hardVoce.o KOST1x.o)
+#
 # Explicit dependencies for test program
 #
-
 $(TPROG_OBJDIR)/mainSub.o	: $(addprefix $(TPROG_OBJDIR)/, testTexAccess.o verifySub.o)
+#
 # Explicit dependencies for standalone program
 #
 $(PROG_OBJDIR)/altaySub.o	: $(addprefix $(PROG_OBJDIR)/,altayConfig.o altayInterface.o ioconfig.o texFormats.o) $(RCMINCLUDE)
-$(PROG_OBJDIR)/Alg0.o		: $(addprefix $(PROG_OBJDIR)/,KOST1x.o altayConfig.o ioconfig.o)
-$(PROG_OBJDIR)/Alg0A.o		: $(addprefix $(PROG_OBJDIR)/,Alg0.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o ioconfig.o) $(RCMINCLUDE)
+$(PROG_OBJDIR)/Alg0A.o		: $(addprefix $(PROG_OBJDIR)/,altayHard.o KOST1x.o Alg0.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o ioconfig.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/Alg1.o		: $(addprefix $(PROG_OBJDIR)/,ioconfig.o) $(RCMINCLUDE)
 #$(PROG_OBJDIR)/Alg2.o		: $(addprefix $(PROG_OBJDIR)/,) $(RCMINCLUDE)
 $(PROG_OBJDIR)/Dynfil.o		: $(addprefix $(PROG_OBJDIR)/,altayConfig.o ioconfig.o miscutils.o)
@@ -273,3 +282,7 @@ $(PROG_OBJDIR)/texFormats.o	: $(addprefix $(PROG_OBJDIR)/,texFormatConstants.o D
 $(PROG_OBJDIR)/KOST1xState.o	: $(addprefix $(PROG_OBJDIR)/,KOST1x.o)
 $(PROG_OBJDIR)/altayHard.o	: $(addprefix $(PROG_OBJDIR)/,ioconfig.o hardVoce.o KOST1x.o)
 $(PROG_OBJDIR)/hardVoce.o	: $(addprefix $(PROG_OBJDIR)/,ioconfig.o )
+$(PROG_OBJDIR)/altayConfig.o	: $(addprefix $(PROG_OBJDIR)/,texFormatConstants.o hardVoce.o KOST1x.o)
+
+
+
