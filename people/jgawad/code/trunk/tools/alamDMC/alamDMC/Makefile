@@ -4,10 +4,16 @@
 #### Selection of toolset
 ## Note that only one toolset can be used 
 ######################################################################
-#### Toolset:
+ifndef ROOTDIR
 ROOTDIR=../../../../..
+endif
 
-include ../Makefile.tools
+ifndef SolutionDir
+SolutionDir=..
+endif
+
+#### Toolset:
+include $(SolutionDir)/Makefile.tools
 
 #
 ######################################################################
@@ -37,13 +43,14 @@ FCFLAGS+= -I$(ALMYLPDIR)/include
 FLDFLAGS+= -L$(ALMYLPDIR) -lalamYLP
 
 FLDFLAGS+= $(LIBOPTPATH) $(MKLLDFLAGS)
-# Test program
-PROG=alamDMC
+# Name of the executable binary program
+PROGNAME=alamDMC
+
+PROG=$(ConfigurationName)/$(PROGNAME)
 
 .PHONY : clean dirstructure
 
-
-$(ConfigurationName)/$(PROG)	: $(OBJDIR) $(INCLUDEDIR) $(OBJS) $(ALAMYLPLIB)
+$(PROG)	: $(OBJDIR) $(INCLUDEDIR) $(OBJS) $(ALAMYLPLIB)
 	$(FC) $(FCFLAGS) -I$(INCLUDEDIR) $(OBJS) -o $@  $(FLDFLAGS) 
 
 $(OBJDIR)/%.o	: %.f90 | dirstructure

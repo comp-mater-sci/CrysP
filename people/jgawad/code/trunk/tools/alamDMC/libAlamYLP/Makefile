@@ -4,10 +4,13 @@
 #### Selection of toolset
 ## Note that only one toolset can be used 
 ######################################################################
-#### Toolset:
-ROOTDIR=../../../../..
 
-include ../Makefile.tools
+ifndef ROOTDIR
+ROOTDIR=../../../../..
+endif
+
+#### Toolset:
+include $(SolutionDir)/Makefile.tools
 
 #
 ######################################################################

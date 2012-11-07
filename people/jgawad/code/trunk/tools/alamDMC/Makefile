@@ -6,9 +6,19 @@
 ######################################################################
 #### Toolset:
 # 
-ROOTDIR=../../../..
-TOOLSDIR=..
+ROOTDIR=$(shell readlink -f "../../../../../..")
+
+SolutionDir=$(shell pwd)
+
+$(info $(ROOTDIR))
+
+
+#### Toolset:
 include Makefile.tools
+
+export ROOTDIR 
+export SolutionDir
+
 #
 ######################################################################
 #
@@ -22,14 +32,14 @@ LIBALAMYLP=$(LIBALAMYLPDIR)/$(ConfigurationName)/libalamYLP.a
 all	: $(LIBALAMYLP) $(ALAMDMC)
 
 $(ALAMDMC)	: $(LIBALAMYLP) $(LIBOPTPATH)
-	make -C $(ALAMDMCDIR) $(TRANSCONFIG)
+	$(MAKE) -C $(ALAMDMCDIR) $(TRANSCONFIG)
 
 $(LIBALAMYLP)	: $(LIBOPTPATH)
-	make -C libAlamYLP $(TRANSCONFIG)
+	$(MAKE) -C libAlamYLP $(TRANSCONFIG)
 
 $(LIBOPTPATH)		:
-	make -C $(LIBOPTROOT) $(TRANSCONFIG)
+	$(MAKE) -C $(LIBOPTROOT) $(TRANSCONFIG)
 
 clean	:
-	make -C $(ALAMDMCDIR) $@
-	make -C $(LIBALAMYLPDIR) $@
+	$(MAKE) -C $(ALAMDMCDIR) $@
+	$(MAKE) -C $(LIBALAMYLPDIR) $@

@@ -23,7 +23,9 @@ ifndef ROOTDIR
 ROOTDIR=../../../..
 endif
 
+ifndef
 TOOLSDIR=$(ROOTDIR)/code/trunk/build-tools/
+endif
 
 # Use per-host configuration plugin
 include $(TOOLSDIR)/Makefile.host
