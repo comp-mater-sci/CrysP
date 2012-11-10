@@ -101,7 +101,7 @@ contains
                   input%do_output_init = .false.
                   input%do_output_final = .false.
                   call setStepType(input,acnf%model_id,info)
-            end associate            
+            end associate
             ! Call the simulation
             call runSteps(astate,info)
             if (info /= 0) return
@@ -162,8 +162,6 @@ contains
       !> The subroutine assumes that multilevel model is already configured and initialized.
       subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig,outunit)
       use nllsTR
-      use altaySub
-      use altayConfig
       use alamEval
       implicit none
       double precision,intent(in)   :: vS(alamEval_vSD_dim)      !< Stress vector

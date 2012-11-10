@@ -14,14 +14,8 @@
 !
 !> Various utility subroutines and functions
 module alamUtils
+use fngMathUtils
 
-      double precision,parameter :: pi = acos(-1.D0)
-
-      double precision,parameter ::  rad2deg = (180.D0 / pi), deg2rad = (pi / 180.D0)
-
-      double precision,parameter ::  root23 = sqrt(2.D0/3.D0)
-
-      double precision,parameter ::  root32 = sqrt(3.D0/2.D0)
       
       integer,parameter       :: display_unit = 6
 
@@ -40,14 +34,6 @@ contains
       !
       ! Functions ported from FNG
       ! -->>
-      
-      ! From fngMathUtils
-      pure function vec_norm2(v)
-      implicit none
-      double precision :: vec_norm2
-      double precision,dimension(:),intent(in) :: v
-      vec_norm2 = sqrt(dot_product(v,v))
-      end function
 
       double precision pure function average(a)
       double precision,dimension(:),intent(in) :: a
@@ -88,7 +74,7 @@ contains
             write(outunit,201) 'Norm of stress on vA:', vec_norm2(vSonA) 
             write(outunit,('(/)'))
             !
-            200 format(A,T40,5E12.5)
+            200 format(A,T40,5(E12.5,1X))
             201 format(A,T40,E12.5)
             info = 0
       end subroutine

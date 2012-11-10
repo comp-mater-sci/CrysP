@@ -19,6 +19,10 @@ module commonConfig
 use alamYLP
 use alamUtils
 use altayConfig, only: fname_len
+use fngRange
+use fngLinearMap
+use fngNamedRange
+
       character(len=fname_len),save       :: outputPrefix = ''
 
       logical,save                  :: outputRequest = .false.
@@ -31,11 +35,12 @@ use altayConfig, only: fname_len
 
       character(len=20),parameter   :: fmtMsg2Any   = '(A,T35)'
       character(len=20),parameter   :: fmtMsg2Other = '(A,T35,'  ! Note: user is responsible for finishing the format string      
+
+
       
 
 contains
-      
- 
+
       subroutine readAlamelConfigSection(cnfunit,cnf,info)
       use altayConfig
       use altayHard, only: hard_none, hard_voce, hard_pebp
@@ -162,6 +167,7 @@ contains
             if (ioStatusOK(ioerr)) info = 0
       end subroutine
 
+      
 
 
       logical function ioStatusOK(ioerr)
@@ -175,6 +181,87 @@ contains
             ioStatusOK = .true.
       end function
 
+      !> Factory function that returns an instance appropriate range type depending on 
+      !> the the input read from the  cnfunit IO unit
+      function rangeFromConfig(cnfunit,info) result(inst)
+      implicit none
+      class(range_type),pointer     :: inst
+      integer,intent(in)            :: cnfunit
+      integer,intent(out)           :: info
+      !
+      !
+      character(len=32) :: keyword
+      type(bias_t),dimension(:),allocatable :: vBiases
+      double precision :: rbegin, rend, ratio, rstep
+      integer :: i, ierr, id, nranges, npoints
+      !
+            info = -1
+            nullify(inst)
+            keyword = ''
+            id = -1
+            ! Read the keyword
+            read(cnfunit,*,iostat=ierr) keyword
+            if (.not. ioStatusOK(ierr)) return
+            if (resolveName(range_name_map,trim(keyword),id)) then
+            
+                  select case(id)
+                  case(range_uniform_id)
+                        ! Read: begin end step
+                        read(cnfunit,*,iostat=ierr) rbegin, rend, rstep
+                        if (.not. ioStatusOK(ierr)) return
+                        allocate(uniformRange :: inst)
+                        select type(inst)
+                        type is (uniformRange)
+                              inst = uniformRange(rbegin, rend, rstep)
+                        end select
+                  !
+                  case(range_biased_id)
+                        ! Read: begin end ratio
+                        read(cnfunit,*,iostat=ierr) rbegin, rend, ratio, npoints
+                        if (.not. ioStatusOK(ierr)) return
+                        allocate(biasedRange :: inst)
+                        select type(inst)
+                        type is (biasedRange)
+                              inst = biasedRange(rbegin, rend, ratio, npoints)      
+                        end select
+                        !
+                  !
+                  case(range_doublebiased_id)
+                        ! Read: begin end ratio npoints
+                        read(cnfunit,*,iostat=ierr) rbegin, rend, ratio, npoints
+                        if (.not. ioStatusOK(ierr)) return
+                        ! 
+                        allocate(multiBiasedRange :: inst)
+                        select type(inst)
+                        type is (multiBiasedRange)
+                              inst = centralBiasedRange(rbegin, rend, ratio, npoints)      
+                        end select
+                  !
+                  case(range_multibiased_id)
+                        ! Read: begin nranges
+                        read(cnfunit,*,iostat=ierr) rbegin, nranges
+                        if (.not. ioStatusOK(ierr)) return
+                        ! Read: definitions of biases 
+                        if (nranges > 0) then
+                              allocate(vBiases(nranges))
+                              do i = 1, nranges
+                                    read(cnfunit,*,iostat=ierr) vBiases(i)
+                                    if (.not. ioStatusOK(ierr)) return
+                              enddo
+                        endif
+                        allocate(multiBiasedRange :: inst)
+                        select type(inst)
+                        type is (multiBiasedRange)
+                              inst = multiBiasedRange(rbegin,vBiases)      
+                        end select
+                  !
+                  end select
+            endif
+            
+            info = 0
+      !
+      end function
+      
 
       subroutine displayConfig(outunit,info)
       use altayConfig

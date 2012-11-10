@@ -26,13 +26,12 @@ implicit none
 
 private
 
-      integer,parameter                         :: nbase = 3
+      integer,parameter                               :: nbase = 3
       type :: YldConfig
             
-            double precision                          :: theta_min = 0.D0, theta_max = 360.D0
-            double precision                          :: dtheta = 10.D0      
-      
-            double precision                          :: w_min = 1.D0, w_max = 1.D0, dw = 0.D0
+            class(range_type),pointer                 :: ptr_theta_range
+            
+            class(range_type),pointer                 :: ptr_w_range
             
             double precision,dimension(nSymTensComps,nbase)       :: base_vectors = 0.D0
       
@@ -57,8 +56,8 @@ contains
       logical :: normalize
             info = -1
             ! Read parameters specific for the alamASR program
-            read(cnfunit,fmt=*,iostat=ioerr)  cnf%theta_min, cnf%theta_max, cnf%dtheta
-            if (ioerr /= 0) return
+            cnf%ptr_theta_range => rangeFromConfig(cnfunit,info)
+            if ( (info /= 0) .or. (.not. associated(cnf%ptr_theta_range)) ) return
             cnf%base_vectors = 0.D0
             do i=1,nbase
                   normalize = .false.
@@ -72,18 +71,10 @@ contains
             if (ioerr /= 0) return
             read(cnfunit,fmt='(L)',iostat=ioerr) cnf%normalizeSm
             if (ioerr /= 0) return
-            read(cnfunit,fmt=*,iostat=ioerr) cnf%w_min, cnf%w_max, cnf%dw
-            if (ioerr /= 0) return
+            cnf%ptr_w_range => rangeFromConfig(cnfunit,info)
+            if ( (info /= 0) .or. (.not. associated(cnf%ptr_w_range)) ) return
             read(cnfunit,fmt=*,iostat=ioerr) cnf%do_scaling, cnf%scaling_vector
             if (ioerr /= 0) return
-            !
-            ! Check if the requested range description
-            if (cnf%theta_min + cnf%dtheta < cnf%theta_min) return
-            !
-            ! Convert the angles into radians
-            cnf%theta_min = cnf%theta_min * deg2rad
-            cnf%theta_max = cnf%theta_max * deg2rad
-            cnf%dtheta = cnf%dtheta * deg2rad
             !
             info = 0
             
@@ -113,6 +104,7 @@ contains
       character(len=6),dimension(nbase)    :: veclabels = [ character(len=6) :: 'base','base','offset' ]
       !
             info = 1
+            if (.not. (associated(cnf%ptr_theta_range) .and. associated(cnf%ptr_w_range)))  return
             !
             ! Introduce youself ;-)
             write(display_unit,'(A)') 'AlamYld, $Rev$'
@@ -152,18 +144,17 @@ contains
                   iunilen = 1.D0 / scal_s
             endif
             !
-            w = cnf%w_min
-            do while (w < cnf%w_max)
-            !
+            do while (cnf%ptr_w_range%next(w))
+                  !
                   ! Loop over the range of theta angles
-                  theta = cnf%theta_min
-                  do while (theta <= cnf%theta_max)
+                  do while (cnf%ptr_theta_range%next(theta))
                         write(*,800)
                         !
                         write(display_unit,fmt=200)
-                        write(display_unit,fmt=201) (theta * rad2deg)
+                        write(display_unit,fmt=201) theta
                         write(display_unit,fmt=200)
-            
+                        !
+                        theta = deg2rad(theta) 
                         ! Combine the base vectors
                         Sm = Vec6ToMat33(cnf%base_vectors(:,1)*cos(theta) + cnf%base_vectors(:,2)*sin(theta) & 
                                          + w*cnf%base_vectors(:,3))
@@ -172,16 +163,15 @@ contains
                         !
                         write(display_unit,fmt=510)
                         write(display_unit,fmt=500) 'theta', 'S', 'S_rel', 'W' 
-                        write(display_unit,fmt=501) theta*rad2deg, scal_s, scal_s_rel, plast_pot
+                        write(display_unit,fmt=501) rad2deg(theta), scal_s, scal_s_rel, plast_pot
                         write(display_unit,fmt=510)
 
                         ! write output & advance theta
                         write(ofunit,fmt=701)   theta, scal_s, scal_s_rel, norm_sona, plast_pot, &
                                                 scal_s_rel * cos(theta), scal_s_rel * sin(theta), w
-                        theta = theta + cnf%dtheta
+                        
                   enddo
                   write(ofunit,'(A)') ''
-                  w = w + cnf%dw
             enddo
             !
             close(ofunit)
@@ -191,9 +181,9 @@ contains
       200 format(28('-'))
       201 format('Theta angle =',T20,F8.3) 
       400 format(A,T40,A,T80,A)
-      500 format(1X,4(A10,'|'))
-      501 format(F10.3,1X,3(E12.5,1X))
-      510 format('|',4(10('-'),'|'))
+      500 format(1X, A10,    '|',3(A12,'|'))
+      501 format(1X, F10.3,  1X, 3(E12.5,1X))
+      510 format('|',10('-'),'|',3(12('-'),'|'))
       ! Formats for output file
       700 format(8(A12,1X)) 
       701 format(8(F12.6,1X))

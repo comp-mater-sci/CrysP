@@ -138,7 +138,7 @@ contains
       fi1 = 0.0
       phi = 0.0
       ! Convert angle from degs to rads
-      fi2 = cnf%angle * deg2rad
+      fi2 = deg2rad(cnf%angle)
    
       Pt_accum = 0.D0
       vP = 0.D0
@@ -254,7 +254,7 @@ contains
             P = P + De  
             normP = vec_norm2(vP)
             Pnorm = Pnorm + normD
-            Tnorm = Tnorm + cnf%PNormIter
+            Tnorm = Tnorm + abs(De(1,1))
             ! Calculate increment of plastic work (strain * deviatoric_stress)
             plastic_work_inc = dot_product(vD,vSe) 
             plastic_work_total = plastic_work_total + plastic_work_inc

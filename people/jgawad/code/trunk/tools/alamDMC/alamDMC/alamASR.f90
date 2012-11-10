@@ -81,7 +81,12 @@ contains
       integer                 :: ioerr
       integer,parameter       :: cnfunit = 90, ofunit = 91, histunit = 92, dtaunit = 93
       integer,dimension(2),parameter :: teeunits = [display_unit,histunit]
-      !
+      
+      character(len=14),dimension(23) :: file_column_labels = [ character(len=14) ::  &
+            'point','incr','eps_vM','Pnorm','totalP_vM','W','plast_pot','M','scal_s','||SonA||','R', & 
+            'SonA_11','SonA_22','SonA_33','SonA_12','SonA_23','SonA_13','A_11','A_22','A_33','A_12','A_23','A_13' ]
+      character(len=14),dimension(9) :: display_column_labels = [ character(len=14) ::  &
+            'point','incr','eps_vM','Pnorm','totalP_vM','W','scal_s','||SonA||','R' ]
       info = 1
       !
       do i=1,3
@@ -105,16 +110,15 @@ contains
       !
       ! Open and initialize result files
       open(unit=ofunit,file=trim(outputPrefix)//'.asr',status='replace')
+      write(ofunit,700)  (trim(file_column_labels(i)), i=1,size(file_column_labels)) ! write header line
       !
-#define OUTHEADER 'point','incr','eps_vM','Pnorm','totalP_vM','W','plast_pot','M','scal_s','||SonA||','R'
-      !
-      write(ofunit,700) OUTHEADER ! write header line
+
       open(unit=histunit,file=trim(outputPrefix)//'.hsr',status='replace')
       !      
       ! Convert angle from degs to rads
-      fi1 = fi1 * deg2rad
-      phi = phi * deg2rad
-      fi2 = fi2 * deg2rad
+      fi1 = deg2rad(fi1) 
+      phi = deg2rad(phi)
+      fi2 = deg2rad(fi2)
       ! Calculate rotation matrix
       call KROTMAT(fi1,phi,fi2,Mrot)
       !
@@ -193,13 +197,14 @@ contains
                   call outputIdentResults(teeunits)                  
                   !! -> Report the results to output file
                   write(ofunit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, &
-                                    plastic_work_total, plast_pot, taylor_factor, scal_s, norm_sona, R
+                                    plastic_work_total, plast_pot, taylor_factor, scal_s, norm_sona, R, &
+                                    Mat33ToVec6(StonA),Mat33ToVec6(D)
                   !
-                  write(display_unit,710)
-                  write(display_unit,700) OUTHEADER ! write header line
-                  write(display_unit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, &
-                                          plastic_work_total, plast_pot, taylor_factor, scal_s, norm_sona, R
-                  write(display_unit,710)
+                  write(display_unit,610)
+                  write(display_unit,600) (trim(display_column_labels(i)), i=1,size(display_column_labels)) ! write header line
+                  write(display_unit,601) point, increment , root23*normP, Pnorm, root23*totalPnorm, &
+                                          plastic_work_total, scal_s, norm_sona, R 
+                  write(display_unit,610)
                   !
                   ! Check termination condition: 
                   ! skip the rest if no texure update is requested, or if requested strain is exceeded.
@@ -259,9 +264,13 @@ contains
       500 format(3(3(E12.5,1X),/))
       501 format(3(E12.5,1X),/,3(E12.5,1X),/,3(E12.5,1X))
       ! Formats for output file
-      700 format(2(1X,A5),9(A12,1X))
-      701 format(2(1X,I5),9(F12.6,1X))
-      710 format(2('|',5('-')),'|',9(12('-'),'|'))
+      700 format(2(1X,A5),9(A14,1X),5X,12(A14,1X))
+      701 format(2(1X,I5),9(F14.6,1X),5X,12(F14.6,1X))
+      ! Formats for the display
+      600 format(2(1X,A5),7(A14,1X))
+      601 format(2(1X,I5),7(F14.6,1X))
+      610 format(2('|',5('-')),'|',7(14('-'),'|'))
+      ! Header of the file output
       !
 #define MSG_GROUP_RULERS     
 #define MSG_GROUP_ERRORS
@@ -273,6 +282,7 @@ contains
 #ifdef OUTHEADER
 #undef OUTHEADER
 #endif      
+
 
       ! Internal subroutines
       contains
