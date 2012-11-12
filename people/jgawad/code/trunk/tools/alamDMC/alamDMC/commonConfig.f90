@@ -234,7 +234,7 @@ contains
                         allocate(multiBiasedRange :: inst)
                         select type(inst)
                         type is (multiBiasedRange)
-                              inst = centralBiasedRange(rbegin, rend, ratio, npoints)      
+                              inst = doubleBiasedRange(rbegin, rend, ratio, npoints)      
                         end select
                   !
                   case(range_multibiased_id)
