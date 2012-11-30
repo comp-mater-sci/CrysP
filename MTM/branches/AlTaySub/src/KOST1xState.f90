@@ -135,6 +135,7 @@ contains
             info = KS_ErrIO
             nf = 0
             is_dummy = .true.
+            call ReadHeadSVfile(iounit)
             do iblock = 0, nblock
                   if (iblock == nblock) is_dummy = .false.
                   read(iounit,fmt=100,iostat=ioerr) nf

@@ -39,6 +39,10 @@
 !    v1.6.1 by J. Gawad, CS, KU Leuven, 03 October 2012:
 !       -> space separator is added in in multi-number IO operations to prevent 
 !          stiching of negative values
+!    v1.7 by P. Eyckens, MTM, KU Leuven, 30 november 2012:
+!       -> addition of the public procedures:
+!             WriteHeadSVfile 
+!             ReadHeadSVfile.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST= 11
@@ -99,8 +103,10 @@
             ReadPar11,          &
             GetInitStatVar,     &
             MakeInc,            &
-            ReadSVfile,         &
+            WriteHeadSVfile,    &
+            ReadHeadSVfile,     &          
             WriteSVfile,        &
+            ReadSVfile,         & 
       !derived types:
             PAR11,              &
             StatVar,            &
@@ -849,4 +855,58 @@
       !
       END FUNCTION WriteSVfile
 
+
+      
+      
+      !CONTAINed by MODULE KOST1x:
+      SUBROUTINE WriteHeadSVfile(unit)
+      integer,      INTENT(IN)  :: unit
+      
+      !local variables declarations
+      integer :: iError
+      
+      write(unit,fmt=100,err=666)"# CB         : [1]RHOcb                                                    "
+      write(unit,fmt=100,err=666)"# CBB1(01-1) : [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
+      write(unit,fmt=100,err=666)"# CBB2(-101) : [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  " 
+      write(unit,fmt=100,err=666)"# CBB3(1-10) : [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
+      write(unit,fmt=100,err=666)"# CBB4(0-1-1): [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
+      write(unit,fmt=100,err=666)"# CBB5(101)  : [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
+      write(unit,fmt=100,err=666)"# CBB6(-1-10): [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
+      write(unit,fmt=100,err=666)"# ActiveCBBs : [1]ID_ActiveCBB_highest_slip [2]ID_ActiveCBB_2ndhighest_slip"
+      write(unit,fmt=100,err=666)"# CRSS+sense : [1]CRSS(1+) [2]CRSS(2+) ...  [23]CRSS(23+) [24]CRSS(24+)    "
+      write(unit,fmt=100,err=666)"# CRSS-sense : [1]CRSS(1-) [2]CRSS(2-) ...  [23]CRSS(23-) [24]CRSS(24-)    "      
+      write(unit,fmt=100,err=666)"#--------------------------------------------------------------------------"
+      write(unit,fmt=100,err=666)"# units:  RHOx:          micrometer^(-2)                                   "
+      write(unit,fmt=100,err=666)"#         accGAMMA_new:  /                                                 "
+      write(unit,fmt=100,err=666)"#         CRSS:          MPa                                               "      
+      write(unit,fmt=100,err=666)"#--------------------------------------------------------------------------"
+      iError = KS_OK
+      return
+      !
+100   format(A76)
+666   iError = KS_ErrIO !Error in reading from file
+      !
+      END SUBROUTINE WriteHeadSVfile
+      
+      
+      
+      SUBROUTINE ReadHeadSVfile(unit)
+      integer,      INTENT(IN)  :: unit
+      
+      !local variables declarations
+      integer :: iError, i
+      character :: tmp
+      
+      do i=1,15
+        read(unit,fmt=100,err=666) tmp !read 15 lines
+      end do
+      
+      iError = KS_OK
+      return
+      !
+100   format(A76)
+666   iError = KS_ErrIO !Error in reading from file
+      !
+      END SUBROUTINE ReadHeadSVfile
+      
       END MODULE KOST1x

@@ -76,6 +76,7 @@ C     UNIT IMP3 = PRINTER
       cods1(L+1:L+4)='.BPM'
 C     UNIT IMP4 = state variables of PEBP KOST11
       open (unit=IMP4,file=cods1,status='replace')
+      call WriteHeadSVfile(IMP4)
 #endif
       ! 
       cods1(L+1:L+4)='.MSS'
