@@ -1,0 +1,86 @@
+      program KOST1xTest
+    
+      use KOST1x    
+      
+      implicit none
+          
+      integer :: i, iError
+      integer, parameter :: iParFile=22, iOutFile=23
+      integer, parameter :: iKOST=11 !ID number of implement hardening. Currently only one option available:
+                                     !  iKOST=11: Peeters hardening. Cf.  B. Peeters , MTM, KU Leuven, 2002.
+      double precision :: delta_T
+      double precision, dimension(24) ::   sliprate
+      double precision, dimension(2,24) :: CurCRSS
+      
+      Type(StatVar) :: CurState !A derived type defined in module, containing all state variables of a single grain.
+      Type(StatVar) :: SV_inc_start, SV_inc_end
+      
+      
+      !Initialization of module:
+      open(unit=iParFile,file='par.txt',status='old') !open parameter file.
+      iError = InitModuleKOST1x(iParFile,iKOST)
+      if (iError /= 0) then
+           write(*,*)"Error initializing module KOST1x. Error code:", iError
+           stop
+      endif 
+      
+      !Retrieve the state variables for an annealed state.
+      call GetInitStatVar(CurState,iError)
+        !        OUT: CurState  
+      if (iError /= 0) then
+           write(*,*)"Error retrieving annealed state. Error code:", iError
+           stop
+      endif
+      
+      !Let's write this annealed state to file.
+      open(unit=iOutFile,file='out.txt',status='replace')
+      call WriteHeadSVfile(iOutFile) !First, write an explicatory header in this file
+      write(iOutFile,*) "The annealed state looks as follows:"
+      iError = WriteSVfile(iOutFile,CurState)
+      if (iError /= 0) then
+           write(*,*)"Error writing output. Error code:", iError
+           stop
+      endif
+      
+      !Somehow, we know that the slip rates on the individual slip systems should be as follows:
+      sliprate(1:24)=0.0
+       !s.s. 3, 4, 5, 20 and 21 are active
+      sliprate(3) =0.05 !unit: second^(-1)
+      sliprate(4) =0.05
+      sliprate(5) =0.10
+      sliprate(20)=0.10
+      sliprate(21)=0.15
+      
+      !Now we make 5 increments of 0.1second each, assuming these slip rates are valid throughout. 
+      ! The state variables in 'CurState' will progressively be updated.
+      delta_T=0.1 !time increment. unit: second
+      SV_inc_start = CurState !set the state variables at start of 1st inc.
+      do i=1,5 
+        write(iOutFile,*) "Increment number ", i
+        call MakeInc(SV_inc_start,sliprate,delta_T,SV_inc_end,iError)
+        !         IN: SV_inc_start, sliprate, delta_T
+        !        OUT: SV_inc_end, iError
+        if (iError /= 0) then
+           write(*,*)"Error updating state variables. Error code:", iError
+           stop
+        endif        
+        CurState=SV_inc_end !update
+        SV_inc_start=SV_inc_end !init. next inc.
+      end do
+      
+      !After these 5 increments, lets write the new state to file
+      write(iOutFile,*) "The current state looks as follows:"
+      iError = WriteSVfile(iOutFile,CurState)
+      if (iError /= 0) then
+           write(*,*)"Error writing output. Error code:", iError
+           stop
+      endif
+      
+      !Critical Reseolved Shear Stresses (CRSS) can be accessed directly in any StatVar:
+      CurCRSS = 0. ! init.
+      CurCRSS = CurState%CRSS
+      Write(iOutFile,*)"Here is a print-out of CRSSs:"
+      Write(iOutFile,*)"CRSS in positive sense: ", CurCRSS(1,:)
+      Write(iOutFile,*)"CRSS in negative sense: ", CurCRSS(2,:)
+      
+      end program KOST1xTest
