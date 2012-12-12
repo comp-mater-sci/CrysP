@@ -15,16 +15,12 @@
 !> Various utility subroutines and functions
 module alamUtils
 use fngMathUtils
-
+use fngRuntime
       
       integer,parameter       :: display_unit = 6
 
       character,parameter     :: default_comment_sign = '#'
-      
-      !> Error message to be written by the subroutine finalize 
-      character(len=128),save :: errmsg
-
-      
+     
       ! Meta-data
       
       integer,parameter       :: nSymTensComps = 6
@@ -43,20 +39,6 @@ contains
             if (n >= 1) average = sum(a) / dble(n)                 
             ! Undefined for empty array
       end function
-
-      ! From fngMMMCore
-      !> Finalization code
-      subroutine finalize(errcode)
-      implicit none
-      integer,intent(in)      :: errcode
-            !
-            if (errcode /= 0) write(*,'(A)') trim(errmsg)
-            !
-            call exit(errcode)
-      end subroutine
-
-      ! <<-- Ported form FNG
-      !
 
       subroutine printIdentResults(outunit,vS,vA,vSonA,vSonAn,R,info)
       implicit none
@@ -122,42 +104,4 @@ contains
             421 format(3(E12.5,1X))
       end subroutine
 
-      
-      
-      !> The function converts Voigh-style vector into symmetrical rank-two tensors.
-      !> Ordering of the terms in the vector: 11, 22, 33, 12, 23, 13
-      pure function Vec6ToMat33(vec) result(mat)
-      implicit none
-      double precision,dimension(6),intent(in)  :: vec
-      double precision,dimension(3,3)           :: mat
-
-      !
-            mat(1,1) = vec(1)
-            mat(2,2) = vec(2)
-            mat(3,3) = vec(3)
-            mat(1,2) = vec(4)
-            mat(2,3) = vec(5)
-            mat(1,3) = vec(6)
-            mat(2,1) = mat(1,2)
-            mat(3,1) = mat(1,3)
-            mat(3,2) = mat(2,3)
-      !
-      end function
-
-      pure function Mat33ToVec6(mat) result(vec)
-      implicit none
-      double precision,dimension(3,3),intent(in)      :: mat
-      double precision,dimension(6)                   :: vec
-      !
-            vec(1) = mat(1,1)
-            vec(2) = mat(2,2)
-            vec(3) = mat(3,3)
-            vec(4) = mat(1,2)
-            vec(5) = mat(2,3)
-            vec(6) = mat(1,3)
-      !
-      end function
-
-      
-      
 end module
