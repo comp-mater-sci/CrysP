@@ -23,31 +23,38 @@ use alamEval, only: alamEval_objFx_call_count
 use alamUtils
 use commonConfig
 use commonUtils
+use fngMathUtils
+use fngPath
+use fngAlgorithm
 implicit none
 
-      double precision                          :: fi1 = 0.D0, phi = 0.D0 , fi2 = 0.D0
-      character(len=512)                        :: data_fname
-      logical                                   :: update_texture = .false.
-      integer                                   :: scalingID = 0
-      double precision                          :: NormMax, PNormIter
-
-      integer,parameter :: scaleFullTensor = 0, scaleTensileComponent = 1
-
+      type :: ASRConfig
+            type(EulerAngles)                         :: rotframe
+            character(len=max_pathlen)                :: data_fname = ''
+            logical                                   :: update_texture = .false.
+            integer                                   :: scalingID = 0
+            double precision                          :: NormMax = 0.D0
+            double precision                          :: NormIter = 0.D0
+      end type
+      
+      integer,parameter :: scaleStrainTensor = 0, scalePlasticWork = 1
+     
 contains
 
-      subroutine AlamASR_ReadConfig(cnfunit,info)
+      subroutine AlamASR_ReadConfig(cnf,cnfunit,info)
       implicit none
+      class(ASRConfig),intent(inout)            :: cnf
       integer,intent(in)                        :: cnfunit
       integer,intent(out)                       :: info
       !
       integer :: ioerr
             info = -1
             ! Read parameters specific for the alamASR program
-            read(cnfunit,fmt=*,iostat=ioerr)  fi1, phi, fi2
-            read(cnfunit,fmt='(A)',iostat=ioerr) data_fname
-            call stripComment(data_fname)
-            read(cnfunit,fmt='(L2)',iostat=ioerr) update_texture 
-            read(cnfunit,fmt=*,iostat=ioerr)  scalingID, NormMax, PNormIter 
+            read(cnfunit,fmt=*,iostat=ioerr)  cnf%rotframe
+            read(cnfunit,fmt='(A)',iostat=ioerr) cnf%data_fname
+            call stripComment(cnf%data_fname)
+            read(cnfunit,fmt='(L2)',iostat=ioerr) cnf%update_texture 
+            read(cnfunit,fmt=*,iostat=ioerr)  cnf%scalingID, cnf%NormMax, cnf%NormIter
             if (ioerr /= 0) then
                   write(*,fmt=902) 'AlamASR'
                   return
@@ -60,8 +67,9 @@ contains
       end subroutine
 
 
-      subroutine AlamASR_Run(info)
+      subroutine AlamASR_Run(cnf,info)
       implicit none
+      class(ASRConfig),intent(inout)            :: cnf
       integer,intent(out)                       :: info      
       ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
       ! coordinate system
@@ -76,19 +84,22 @@ contains
       double precision                          :: plastic_work_inc = 0.D0, plastic_work_total = 0.D0
       double precision                          :: R
       double precision                          :: taylor_factor
+      double precision                          :: control_variable
       integer     :: i,j,point = 0, npoints = 0, increment = 0
       !
       integer                 :: ioerr
       integer,parameter       :: cnfunit = 90, ofunit = 91, histunit = 92, dtaunit = 93
       integer,dimension(2),parameter :: teeunits = [display_unit,histunit]
       
-      character(len=14),dimension(23) :: file_column_labels = [ character(len=14) ::  &
+      integer,parameter :: ncolumn_labels = 23, column_width = 15, short_column_width = 7
+      character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = [ character(len=14) ::  &
             'point','incr','eps_vM','Pnorm','totalP_vM','W','plast_pot','M','scal_s','||SonA||','R', & 
             'SonA_11','SonA_22','SonA_33','SonA_12','SonA_23','SonA_13','A_11','A_22','A_33','A_12','A_23','A_13' ]
       character(len=14),dimension(9) :: display_column_labels = [ character(len=14) ::  &
             'point','incr','eps_vM','Pnorm','totalP_vM','W','scal_s','||SonA||','R' ]
       info = 1
       !
+      MI = 0.D0
       do i=1,3
             MI(i,i) = 1.D0
       enddo
@@ -97,9 +108,9 @@ contains
       write(*,'(A)') 'AlamASR, $Rev$'
       !
       ! Open input file
-      open(unit=dtaunit,file=trim(data_fname),status='old',form='formatted',iostat=ioerr)
+      open(unit=dtaunit,file=trim(cnf%data_fname),status='old',form='formatted',iostat=ioerr)
       if ( ioerr /= 0) then
-            write(*,*) 'Cannot open data file: ', trim(data_fname)
+            write(*,*) 'Cannot open data file: ', trim(cnf%data_fname)
             stop
       endif
       read(dtaunit,fmt='(I5)',iostat=ioerr) npoints
@@ -110,22 +121,20 @@ contains
       !
       ! Open and initialize result files
       open(unit=ofunit,file=trim(outputPrefix)//'.asr',status='replace')
-      write(ofunit,700)  (trim(file_column_labels(i)), i=1,size(file_column_labels)) ! write header line
+      ! write header lines
+      write(ofunit,701) (centered(i,short_column_width), i = 1,2), (centered(i,column_width), i = 3, ncolumn_labels)
+      write(ofunit,700) (file_column_labels(i)(1:short_column_width), i=1,2), (centered(file_column_labels(i)), i=3,ncolumn_labels) 
       !
-
       open(unit=histunit,file=trim(outputPrefix)//'.hsr',status='replace')
       !      
-      ! Convert angle from degs to rads
-      fi1 = deg2rad(fi1) 
-      phi = deg2rad(phi)
-      fi2 = deg2rad(fi2)
       ! Calculate rotation matrix
-      call KROTMAT(fi1,phi,fi2,Mrot)
+      Mrot = rotmat(deg2rad(cnf%rotframe))
       !
       vTotalP = 0.D0
       totalPnorm = 0.D0
       plastic_work_inc = 0.D0
       plastic_work_total = 0.D0
+      control_variable = 0.D0
       !
       do  point = 1, npoints
             write(*,800)
@@ -136,7 +145,7 @@ contains
             St = 0.D0
             read(dtaunit,*) ! Read separator line
             do j=1,3
-                  read(dtaunit,*) St(j,:)
+                  read(dtaunit,*) St(:,j) ! to be symmetrized, so column/row does not matter.
             enddo
             ! Make sure the tensor is symmetrical
             St = 0.5*(St + transpose(St)) 
@@ -146,7 +155,7 @@ contains
             write(*,'(A)') 'Input stress tensor, original reference frame'
             write(*,400) 'Total stress', 'Deviatoric', 'Pressure'
             do j=1,3
-                  write(*,411) St(j,:),Stdev(j,:),Pressure(j,:)
+                  write(*,411) St(:,j),Stdev(:,j),Pressure(:,j)
             enddo
             ! Rotate from the original reference frame to the superimposed coordinate system
             !
@@ -196,22 +205,32 @@ contains
                   !! -> report the results to history file and to the screen
                   call outputIdentResults(teeunits)                  
                   !! -> Report the results to output file
-                  write(ofunit,701) point, increment , root23*normP, Pnorm, root23*totalPnorm, &
+                  write(ofunit,710) point, increment , root23*normP, Pnorm, root23*totalPnorm, &
                                     plastic_work_total, plast_pot, taylor_factor, scal_s, norm_sona, R, &
                                     Mat33ToVec6(StonA),Mat33ToVec6(D)
-                  !
+                  ! write the header line
                   write(display_unit,610)
-                  write(display_unit,600) (trim(display_column_labels(i)), i=1,size(display_column_labels)) ! write header line
+                  write(display_unit,600) (trim(display_column_labels(i)), i=1,size(display_column_labels)) 
                   write(display_unit,601) point, increment , root23*normP, Pnorm, root23*totalPnorm, &
                                           plastic_work_total, scal_s, norm_sona, R 
                   write(display_unit,610)
                   !
+                  ! Calculate strain increment; set a value for the control variable
+                  select case(cnf%scalingId)
+                  case(scaleStrainTensor)
+                        !! -> Scale the vA in order to get ||vA|| = NormIter
+                        vDe = vA * (cnf%NormIter / vec_norm2(vA))
+                        control_variable = PNorm
+                        continue
+                  case(scalePlasticWork)
+                        vDe = vA * (cnf%NormIter / plast_pot)
+                        control_variable = plastic_work_total
+                        continue
+                  end select
                   ! Check termination condition: 
-                  ! skip the rest if no texure update is requested, or if requested strain is exceeded.
-                  if ((.not. update_texture) .or. (PNorm >= NormMax)) exit
+                  ! skip the rest if no texure update is requested, or if requested control threshold is exceeded.
+                  if ((.not. cnf%update_texture) .or. (control_variable >= cnf%NormMax)) exit
                   !
-                  !! -> Scale the vA in order to get ||vA|| = PNormIter
-                  vDe = vA * (PNormIter / vec_norm2(vA))
                   normDe = vec_norm2(vDe)
                   write(*,'(A,1X,F12.6)') 'Norm of vDe = ', normDe 
                   ! Calculate strain increment for texture evolution           
@@ -264,8 +283,9 @@ contains
       500 format(3(3(E12.5,1X),/))
       501 format(3(E12.5,1X),/,3(E12.5,1X),/,3(E12.5,1X))
       ! Formats for output file
-      700 format(2(1X,A5),9(A14,1X),5X,12(A14,1X))
-      701 format(2(1X,I5),9(F14.6,1X),5X,12(F14.6,1X))
+      700 format(1X, 2(A7,1X),9(A18,  1X),5X,12(A18,1X))
+      701 format('#',2(A7,1X),9(A18,  1X),5X,12(A18,1X))
+      710 format(1X, 2(I7,1X),9(E18.9,1X),5X,12(E18.9,1X))
       ! Formats for the display
       600 format(2(1X,A5),7(A14,1X))
       601 format(2(1X,I5),7(F14.6,1X))

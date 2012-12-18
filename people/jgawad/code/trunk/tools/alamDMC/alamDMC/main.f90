@@ -33,112 +33,102 @@ use alamQ
 use alamTSA
 use alamYld
 !
+use fngRuntime
+!
 implicit none
-      integer                 :: info
-      integer                 :: i
-      integer                 :: argc
-      integer,parameter       :: argc_min = 2, argc_max=2
-      character(len=128)      :: argv(0:argc_max)
-      integer                 :: ioerr
+      
+      
       integer,parameter       :: cnfunit = 90, ofunit = 91
       !
       !
-      integer,parameter       :: nmodules = 4
-      character(len=20),dimension(nmodules) :: moduleNames = [character(len=20) :: 'alamQ','alamTSA','alamASR','alamYld']
+      integer,parameter       :: ncommands = 4
+      integer,parameter       :: Q_id = 1, TSA_id = 2, ASR_id = 3, Yld_id = 4
+      type(MapItem),dimension(ncommands)  :: command_map =  [ MapItem('alamQ',Q_id), MapItem('alamTSA',TSA_id), &
+                                                              MapItem('alamASR',ASR_id), MapItem('alamYld',Yld_id) ]
+      integer,parameter       :: argc_min = 2, argc_max=2, command_argpos = 1
+      type(commandLine)       :: cmdline
+      
       logical                 :: moduleFound = .false.
-      integer                 :: moduleId = 0
+      character(len=32)       :: moduleName = ''
       !
       type(altayConfigData)   :: cnf
       type(TSAConfig)         :: TSAcnf
       type(YldConfig)         :: Yldcnf
       type(QConfig)           :: Qcnf
+      type(ASRConfig)         :: ASRcnf
+      !
+      integer                 :: info, ioerr
       !
       info = 1
       ioerr = 0
       !
-      ! Print banner
-      write(*,'(A)') 'AlamDMC: $Rev$ $Date$ '
-      !
-      argc = command_argument_count()
-      if (argc < argc_min) then
-            write(*,'(/,A)') 'Two parameters are required:  module_name configuration_file'
-            call listModules()
-            call finalize(1)
-      endif
-      do i=1,argc_max
-            call get_command_argument(i,argv(i))
-      enddo
-      ! Check module name
+      cmdline = commandLine('AlamDMC ' //'$Rev$',description='Parameters: command configuration_file')
+      call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.)
       moduleFound = .false.
-      do moduleId = 1,nmodules
-            if (trim(argv(1)) == trim(moduleNames(moduleId))) then
-                  moduleFound = .true.
-                  write(*,'(A,1X,A)') 'Selected module:',trim(moduleNames(moduleId))
-                  exit
-            endif
-      enddo
-
-      if (.not. moduleFound) then
-            write(*,'(A,1X,A)') 'Unknown name of module:',trim(argv(1))
-            call listModules()
-            call finalize(1)
+      if (info == fngSuccess) moduleFound = resolveId(command_map, cmdline%command_id,moduleName)
+      if ((info /= fngSuccess) .or. (.not. moduleFound)) then
+            errmsg = 'Error in processing the command line'
+            call finalize(stopcode_inputerror)
       endif
+      ! Print banner
+      write(*,'(A)') 'AlamDMC: $Rev$'
       !
       ! open and read the config file      
-      write(*,'(/,A,1X,A,/)') 'Processing config file', trim(argv(2))
-      open(cnfunit,file=trim(argv(2)),status='old',iostat=ioerr)
+      write(*,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(2))
+      open(cnfunit,file=trim(cmdline%argv(2)),status='old',iostat=ioerr)
       if (ioerr /= 0) then
-            write(*,*) 'Cannot open config file: ', trim(argv(2))
-            call finalize(1)
+            write(*,*) 'Cannot open config file: ', trim(cmdline%argv(2))
+            call finalize(stopcode_inputerror)
       endif
       !
       call readAlamelConfigSection(cnfunit,cnf,info)
       if (info /= 0) then
-            write(*,fmt=901) 'check ALAMEL config section'
-            call finalize(1) 
+            write(errmsg,fmt=901) 'check ALAMEL config section'
+            call finalize(stopcode_runtimeerror) 
       endif
       !
       ! Read multilevelYLP configuration
       call readYLPConfigSection(cnfunit,info)
       if (info /= 0) then
-            write(*,fmt=901) 'check YLP config section' 
-            call finalize(1) 
+            write(errmsg,fmt=901) 'check YLP config section' 
+            call finalize(stopcode_runtimeerror) 
       endif
       !
       info = -1            
-      select case(moduleId)
-      case(1) ! Alamq
+      select case(cmdline%command_id)
+      case(Q_id) ! Alamq
             call Alamq_ReadConfig(Qcnf,cnfunit,info)
             ! Override the requests for outputs: 
             cnf%output_config%nfile = 0   ! texture
             cnf%output_config%npebp = 0   ! KOST1x state
             outputRequest = .false.       ! idem.
-      case(2) ! AlamTSA    
+      case(TSA_id) ! AlamTSA    
             call AlamTSA_ReadConfig(TSAcnf,cnfunit,info)
-      case(3) ! AlamASR 
-            call AlamASR_ReadConfig(cnfunit,info)
-      case(4) ! AlamYld
+      case(ASR_id) ! AlamASR 
+            call AlamASR_ReadConfig(ASRcnf,cnfunit,info)
+      case(Yld_id) ! AlamYld
             call AlamYld_ReadConfig(Yldcnf,cnfunit,info)
       end select
       close(cnfunit)
       !
       if (info /= 0) then
-            write(*,901) 'Module configuration section'
-            call finalize(1)
+            write(errmsg,901) 'Module configuration section'
+            call finalize(stopcode_runtimeerror)
       endif
       !
       ! OK, configuration has been finished. 
       ! Initialize ALAMEL
       !
-      cnf%jobtitle = trim(cnf%output_prefix)//' '//trim(moduleNames(moduleId))
+      
+      cnf%jobtitle = trim(cnf%output_prefix)//' '//trim(moduleName)
       write(*,fmt=30) 'Initializing the multilevel model...'
       call initAltay(cnf,info)
       if (info == 0) then
             write(*,fmt=31) 'Done.'
       else
             write(*,fmt=31) 'Failed.'
-            write(*,'(A)')  'Fatal error: cannot initialize the multilevel model.'
-            call finalize(1)
+            write(errmsg,'(A)')  'Fatal error: cannot initialize the multilevel model.'
+            call finalize(stopcode_runtimeerror)
       endif
        
       ! Show general configuration of the multilevel model
@@ -148,26 +138,26 @@ implicit none
       if (outputRequest) then
             call outputTexture(info)
             if (info /= 0) then
-                  write(*,*) 'Error: cannot write initial state'
-                  call finalize(1)
+                  write(errmsg,'(A)') 'Error: cannot write initial state'
+                  call finalize(stopcode_runtimeerror)
             endif
       endif
       !
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Run the module
-      select case(moduleId)
-      case(1) ! Alamq
+      select case(cmdline%command_id)
+      case(Q_id) ! Alamq
             call Alamq_Run(Qcnf,info)
-      case(2) ! AlamTSA    
+      case(TSA_id) ! AlamTSA    
             call AlamTSA_Run(TSAcnf,info)
-      case(3) ! AlamASR 
-            call AlamASR_Run(info)
-      case(4) ! AlamYld
+      case(ASR_id) ! AlamASR 
+            call AlamASR_Run(ASRcnf,info)
+      case(Yld_id) ! AlamYld
             call AlamYld_Run(Yldcnf,info)
       end select
       !
       write(*,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
-      write(*,'(A,1X,A,1X,A,\)') 'Execution of module', trim(moduleNames(moduleId)), 'finished'
+      write(*,'(A,1X,A,1X,A,\)') 'Execution of module', trim(moduleName), 'finished'
       if (info == 0) then
             write(*,'(1X,A)') 'succesfully.'
       else
@@ -186,15 +176,5 @@ implicit none
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-
-
-      contains 
       
-            subroutine listModules()
-            implicit none
-            integer :: i
-                  write(*,'(A,1X)') 'Available modules:'
-                  write(*,'(A,1X)') (trim(moduleNames(i)), i =1,nmodules)           
-            end subroutine
-
 end program
