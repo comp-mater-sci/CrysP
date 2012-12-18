@@ -29,7 +29,7 @@ C
       common /CEIGEN/ IOR,ISTP,NBLOC
       COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),
      1 TLXX,TAURLP(8)
-	  dimension base1(5),base2(5)
+	  dimension ccc2(2,194)
       dimension buftrf(3,3),C1(3,3),C2(3,3),
      1 DG(3,3),TDC(3,3),TDCb(3,3,2),TRCb(3,3,2),
      2 B(5,5),BBVM2(2),relax(3,3,3),buftg(3,3),DACC(10),
@@ -294,151 +294,7 @@ C DTAU (output)=abs(Taur)-Tauc
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
-      IF(ITFMAS.eq.1) then
-C  Calculate the pseudo-CRSS for the relaxation-1
-C  BB(10) is the normalized imposed strain vector in crystal frame
-C  UBUF(10) is the BISHOP-HILL stress by TAYLOR, in crystal frame
 C
-	if(Cofsin.eq.0.0 .and. Cofcos.eq.0.0) then !Both relaxations are orthogonal
-	CrssP1=0.0
-	CrssP2=0.0
-	goto 345
-	elseif(dabs(Cofcos).lt.0.000000001) then
-	write(*,*) 'Cofcos=0 Somewhere is worong in the code'
-	else
-C$%$%$%$$%$$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%%$%$%  18/09/2012
-	if(dabs(Cofsin).lt.0.0000000001) then
-C base2 along direction-2, but base-2 is not necessary to calculate
-c
-	dlength2=sqrt(BB(1)*BB(1)+
-     #BB(2)*BB(2)+
-     #BB(3)*BB(3)+
-     #BB(4)*BB(4)+
-     #BB(5)*BB(5))
-c  for grain-1
-	base1(1)=BB(1)/dlength2
-	base1(2)=BB(2)/dlength2
-	base1(3)=BB(3)/dlength2
-	base1(4)=BB(4)/dlength2
-	base1(5)=BB(5)/dlength2
-C  then calculate the stress component in grain-1
-      sg1c1=UBUF(1)*base1(1)+
-     #      UBUF(2)*base1(2)+
-     #      UBUF(3)*base1(3)+
-     #      UBUF(4)*base1(4)+
-     #      UBUF(5)*base1(5)
-C
-C now calculate the component for grain-2
-c
-	dlength2=sqrt(BB(6)*BB(6)+
-     #BB(7)*BB(7)+
-     #BB(8)*BB(8)+
-     #BB(9)*BB(9)+
-     #BB(10)*BB(10))
-c  for grain-2
-	base1(1)= BB(6)/dlength2
-	base1(2)= BB(7)/dlength2
-	base1(3)= BB(8)/dlength2
-	base1(4)= BB(9)/dlength2
-	base1(5)=BB(10)/dlength2
-c 		
-C  then calculate the stress component in grain-2
-      sg2c1=UBUF(6)*base1(1)+
-     #      UBUF(7)*base1(2)+
-     #      UBUF(8)*base1(3)+
-     #      UBUF(9)*base1(4)+
-     #     UBUF(10)*base1(5)
-c
-	CrssP1=dabs(Cofcos*(sg2c1-sg1c1)/sqrt(2.0))
-	CrssP2=0.0
-	goto 345
-	endif
-C$%$%$%$%$$%$%$%$%$%$%$%$%%$%$%$%$%$%$%$%$%$%$%$%$  18/09/2012
-c  calculate the direction of basis-2
-	do iee=1,5,1
-	rhos(iee)=a1(iee,M2+1)
-C  rhos(5) is the direction of relaxation-1 in the frame of grain-1
-	enddo
-	dlength1=sqrt(rhos(1)*rhos(1)+
-     #rhos(2)*rhos(2)+
-     #rhos(3)*rhos(3)+
-     #rhos(4)*rhos(4)+
-     #rhos(5)*rhos(5))
-	dlength2=sqrt(BB(1)*BB(1)+
-     #BB(2)*BB(2)+
-     #BB(3)*BB(3)+
-     #BB(4)*BB(4)+
-     #BB(5)*BB(5))
-c  for grain-1
-	base1(1)=BB(1)/dlength2
-	base1(2)=BB(2)/dlength2
-	base1(3)=BB(3)/dlength2
-	base1(4)=BB(4)/dlength2
-	base1(5)=BB(5)/dlength2
-	base2(1)=(rhos(1)/dlength1-Cofcos*base1(1))/Cofsin
-	base2(2)=(rhos(2)/dlength1-Cofcos*base1(2))/Cofsin
-	base2(3)=(rhos(3)/dlength1-Cofcos*base1(3))/Cofsin
-	base2(4)=(rhos(4)/dlength1-Cofcos*base1(4))/Cofsin
-	base2(5)=(rhos(5)/dlength1-Cofcos*base1(5))/Cofsin
-C  then calculate the stress component in grain-1
-      sg1c1=UBUF(1)*base1(1)+
-     #      UBUF(2)*base1(2)+
-     #      UBUF(3)*base1(3)+
-     #      UBUF(4)*base1(4)+
-     #      UBUF(5)*base1(5)
-	sg1c2=UBUF(1)*base2(1)+
-     #      UBUF(2)*base2(2)+
-     #      UBUF(3)*base2(3)+
-     #      UBUF(4)*base2(4)+
-     #      UBUF(5)*base2(5)
-C
-C now calculate the component for grain-2
-c
-c    calculate the direction of basis-2
-	do iee=1,5,1
-	rhos(iee)=-a1(iee+5,M2+1)
-C  here take the inverse direction of relaxation-1 in grain-2
-C  because we must use the same base
-	enddo
-	dlength1=sqrt(rhos(1)*rhos(1)+
-     #rhos(2)*rhos(2)+
-     #rhos(3)*rhos(3)+
-     #rhos(4)*rhos(4)+
-     #rhos(5)*rhos(5))
-	dlength2=sqrt(BB(6)*BB(6)+
-     #BB(7)*BB(7)+
-     #BB(8)*BB(8)+
-     #BB(9)*BB(9)+
-     #BB(10)*BB(10))
-c  for grain-2
-	base1(1)= BB(6)/dlength2
-	base1(2)= BB(7)/dlength2
-	base1(3)= BB(8)/dlength2
-	base1(4)= BB(9)/dlength2
-	base1(5)=BB(10)/dlength2
-c 		
-	base2(1)=(rhos(1)/dlength1-Cofcos*base1(1))/Cofsin
-	base2(2)=(rhos(2)/dlength1-Cofcos*base1(2))/Cofsin
-	base2(3)=(rhos(3)/dlength1-Cofcos*base1(3))/Cofsin
-	base2(4)=(rhos(4)/dlength1-Cofcos*base1(4))/Cofsin
-	base2(5)=(rhos(5)/dlength1-Cofcos*base1(5))/Cofsin
-C  then calculate the stress component in grain-2
-      sg2c1=UBUF(6)*base1(1)+
-     #      UBUF(7)*base1(2)+
-     #      UBUF(8)*base1(3)+
-     #      UBUF(9)*base1(4)+
-     #     UBUF(10)*base1(5)
-	sg2c2=UBUF(6)*base2(1)+
-     #      UBUF(7)*base2(2)+
-     #      UBUF(8)*base2(3)+
-     #      UBUF(9)*base2(4)+
-     #     UBUF(10)*base2(5)
-c
-	CrssP1=dabs(Cofcos*(sg2c1-sg1c1)/sqrt(2.0))
-	CrssP2=0.0
-	endif
-	endif
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   345 if (IPR.lt.4) goto 220
 #ifndef ALTAY_SUBROUTINE
 	if(NLIST.eq.1) then
@@ -462,17 +318,13 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
                       STRSS=UBUF
                       goto 89
                     endif
-C@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$$@$@$@$@$@$@$@$@$@$ QGX 18/4/2012 
+C@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$$@$@$@$@$@$@$@$@$@$ QGX 15/11/2012 
 	IF(ITFMAS.eq.1) then
-	  if (swrlx(1)) then  
-        CCC(1,M2+1)=CrssP1*ENTA
-        CCC(2,M2+1)=CrssP1*ENTA
-	  endif
-	  if (swrlx(2)) then  
-        CCC(1,M2+2)=CrssP2*ENTA
-        CCC(2,M2+2)=CrssP2*ENTA
-	  endif
-	else	
+        CCC(1,M2+1)=GETAL
+        CCC(2,M2+1)=GETAL
+        CCC(1,M2+2)=0.0
+        CCC(2,M2+2)=0.0
+	else  !ALAMEL running
 	  do 86 IRL=1,NRL
         if (.not.swrlx(IRL)) goto 86
         j=M2+IRL  
@@ -532,6 +384,36 @@ C
 
 #endif         
       endif
+C@#@#@#@#@#@#@#@#@@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@#@@#@# QGX 15/11/2012
+C   loop
+c   
+      IF(ITFMAS.eq.1) then 
+	iter=0
+  999 iter=iter+1
+	call Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,STRSS,M11,ca1,ca2)
+	ccc=ccc2 ! use the Fake CRSS, they are scaled by SDD model
+c
+	CCC(1,M2+1)=dabs(ENTA*Cofcos*(ca1+ca2)/2.0)
+      CCC(2,M2+1)=dabs(ENTA*Cofcos*(ca1+ca2)/2.0)
+C  Third call of TBH
+	Call TBH(IPR,N,N,M12,A1,BB,
+     1 CCC,UU,UU2,DI,DI2,Dacc,XX,STRSS,FakM,
+     2 Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
+C output for current iteration must be the input for the next iteration
+	UU=UU2
+	DI=DI2
+c
+	if(iter.le.0) then
+	goto 999
+	else
+	endif	
+CVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+	UU=UU2
+	DI=DI2
+	else
+	goto 204
+	endif
+CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C     GAMR will contain the relaxed shears:
  204  if (NRL.gt.0) then
                        do IRL=1,NRL
@@ -549,7 +431,7 @@ C     Check whether 1 grain does not deform at all.
       if (XXTOT.lt.TOLXX) goto 213
    40 continue
 C     If all grains have a non-zero slip, do the following:
-      DTAU1=DTAU
+  99  DTAU1=DTAU
       TAUR1=TAUR
       UBUF=STRSS
  213  if(NLIST.eq.1) then 
@@ -589,7 +471,7 @@ C 776  format (' B5  ',i5,e15.8,   'spanv  ',d15.8,' i+ii',i5)
  201  continue
 C
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 11/4/2012
-c  HERE WR is work rate!  QGX 11/4/2011
+c  HERE WR is useless!  QGX 11/4/2011
       WR=0.0
       do 304 i=1,5
       WR=WR+spanv(i)*BB(i+ii)
@@ -857,6 +739,7 @@ c update Tprinc
 C  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
 C  new axe-1 be old axe-2
 c  new axe-2 be minus old axe-1
+c  The angle is only between relaxation-1 and D0. It is nothing related with relaxation-2.
 	vec1(1)=AXX(1,2)
 	vec1(2)=AXX(2,2)
 	vec1(3)=AXX(3,2)
@@ -887,7 +770,7 @@ C   make sure relaxation-2 is orthogonal
 	enddo
 	enddo	
 #ifdef ENABLE_CHECK_ORTHORLX         
-	if(dabs(dot2).gt.0.00000000000001) then
+	if(dabs(dot2).gt.0.0001) then
 	write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
 	stop
 	endif
@@ -919,7 +802,7 @@ c
 	   goto 333
 	   endif
 	else
-C   need to rotate by a angle < 90
+C   need to rotate by a angle < 90 (this angle could be positive or negative)
 	tgangle=dot2/dot1
 	x=1.0/sqrt(1.0+tgangle*tgangle)
 	y=tgangle/sqrt(1.0+tgangle*tgangle)
@@ -971,7 +854,7 @@ c  make sure relaxation-2 is orthogonal
 	enddo
       enddo
 #ifdef ENABLE_CHECK_ORTHORLX      
-	if(dabs(dot2).gt.0.00000000000001) then
+	if(dabs(dot2).gt.0.0001) then
 	write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
 	stop
 	else
@@ -994,3 +877,105 @@ c
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
  333  RETURN
       END               
+
+
+
+
+
+	subroutine Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,UBUF,M11,ca1,ca2)     
+C   Cofsin, Cofcos         -- input
+C   BB(10), UBUF(10)       -- input
+C   M11                    -- input
+C  BB(10) is direction of the relaxation-1
+C  UBUF(10) is the BISHOP-HILL stress from TBH routine, in crystal frame
+	implicit double precision (a-h,o-z)
+	Real*8, INTENT(IN) :: ccc
+	Integer, INTENT(IN) :: M11
+	Real*8, INTENT(out) :: ccc2
+	Real*8, INTENT(out) :: ca1
+	Real*8, INTENT(out) :: ca2
+	Real*8, INTENT(IN) :: Cofcos
+	Real*8, INTENT(IN) :: Cofsin
+	Real*8, INTENT(IN) :: BB
+	Real*8, INTENT(IN) :: UBUF
+	dimension BB(10),base1(5),UBUF(10),ccc(2,194),ccc2(2,194)
+C
+	if(Cofsin.eq.0.0 .and. Cofcos.eq.0.0) then
+C  update CRSS
+	ccc2=ccc
+	
+	elseif(dabs(Cofcos).lt.0.000000001) then
+	write(*,*) 'Cofcos=0. Somewhere is worong in the code'
+	stop
+	else
+c   we only need the component 1 along the imposed strain mode
+	dlength2=sqrt(BB(1)*BB(1)+
+     #BB(2)*BB(2)+
+     #BB(3)*BB(3)+
+     #BB(4)*BB(4)+
+     #BB(5)*BB(5))
+c  for grain-1
+	base1(1)=BB(1)/dlength2
+	base1(2)=BB(2)/dlength2
+	base1(3)=BB(3)/dlength2
+	base1(4)=BB(4)/dlength2
+	base1(5)=BB(5)/dlength2
+C  then calculate the stress component in grain-1
+      sg1c1=UBUF(1)*base1(1)+
+     #      UBUF(2)*base1(2)+
+     #      UBUF(3)*base1(3)+
+     #      UBUF(4)*base1(4)+
+     #      UBUF(5)*base1(5)
+C
+C now calculate the component for grain-2
+c
+	dlength2=sqrt(BB(6)*BB(6)+
+     #BB(7)*BB(7)+
+     #BB(8)*BB(8)+
+     #BB(9)*BB(9)+
+     #BB(10)*BB(10))
+c  for grain-2
+	base1(1)= BB(6)/dlength2
+	base1(2)= BB(7)/dlength2
+	base1(3)= BB(8)/dlength2
+	base1(4)= BB(9)/dlength2
+	base1(5)=BB(10)/dlength2
+c 		
+C  then calculate the stress component in grain-2
+c
+      sg2c1=UBUF(6)*base1(1)+
+     #      UBUF(7)*base1(2)+
+     #      UBUF(8)*base1(3)+
+     #      UBUF(9)*base1(4)+
+     #     UBUF(10)*base1(5)
+c from here we use the new method to update the CRSS 
+	zeta=sg1c1/sg2c1
+    	write(39,fmt='(3(f12.8,2x))') sg1c1,sg2c1,zeta
+C  check if it is negative
+	if(zeta.lt.0.0) then
+	write(*,*) 'Zeta is negative, somewhere is wrong'
+	stop
+	endif
+ 	enta1=sqrt(1.0/zeta)
+ 	enta2=sqrt(zeta)
+c 	enta1=2.0/(1.0+zeta)
+c 	enta2=2.0*zeta/(1.0+zeta)
+	Crssg1=Cofcos*Cofcos*enta1+Cofsin*Cofsin
+	Crssg2=Cofcos*Cofcos*enta2+Cofsin*Cofsin
+	ca1=Crssg1
+	ca2=Crssg2	
+C  update the CRSS for grain-1
+	Do i=1,M11,1
+	Do j=1,2,1
+	   CCC2(j,i)=Crssg1*CCC(j,i)
+	enddo
+	enddo
+c   update the CRSS for grain-2
+	Do i=1,M11,1
+	Do j=1,2,1
+	   CCC2(j,i+M11)=Crssg2*CCC(j,i+M11)
+	enddo
+	enddo
+	endif
+      return
+	end             
