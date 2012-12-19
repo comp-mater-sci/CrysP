@@ -216,7 +216,7 @@ contains
                   enddo
             enddo
             !
-            call writeYldResults(ofunit,yldRes,info)
+            call writeYldResults(ofunit,yldRes,info,write_header=.true.)
             !            
             close(ofunit)
       
