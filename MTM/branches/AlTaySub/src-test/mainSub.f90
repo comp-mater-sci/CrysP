@@ -58,7 +58,9 @@ integer :: info
       ! call verifyMMMmode(modelAlamel)
 
       
-      call verifyAltayExample(modelAlamel)
+      !call verifyAltayExample(modelAlamel)
+      
+      call verifyKost11Example(modelAlamel)
       
       ! call testTexAccessModules()
       

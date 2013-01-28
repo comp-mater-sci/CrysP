@@ -14,7 +14,17 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release|Win32" WholeProgramOptimization="true">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeFull" BufferedIO="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\src-test" PreprocessorDefinitions="ALTAY_SUBROUTINE" F2003Semantics="true" DebugParameter="debugParameterAll" CommonElementAlignment="alignCommonEightBytes" Traceback="true"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" BufferedIO="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\src-test" PreprocessorDefinitions="ALTAY_SUBROUTINE" F2003Semantics="true" CommonElementAlignment="alignCommonEightBytes"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" SubSystem="subSystemConsole"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Release-Amplifier|Win32" WholeProgramOptimization="true">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeFull" BufferedIO="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\src-test" PreprocessorDefinitions="ALTAY_SUBROUTINE" F2003Semantics="true" DebugParameter="debugParameterAll" CommonElementAlignment="alignCommonEightBytes" RuntimeChecks="rtChecksNone"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>

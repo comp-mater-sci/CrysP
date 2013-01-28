@@ -250,4 +250,84 @@ contains
       !      
       end subroutine      
       
+      
+      subroutine verifyKost11Example(model_id)
+      use KOST1x
+      implicit none
+      integer,intent(in)      :: model_id
+      integer :: i, nsteps,nparunit,info
+      
+      integer,parameter :: istdout = 6
+      
+
+            info = -1
+            
+            call setModelType(acnf,model_id,info)
+            ASSERT(info == 0)
+
+            
+            acnf%output_config%nfile = 1 ! switch on creation of the CUR file
+            acnf%output_config%nres = 1 ! switch on creation of the RES file
+            acnf%output_config%nmss = 1 ! switch on creation of the MMS file
+            
+            ! Set KOST11 module
+            acnf%slipsystem%KOST = 11
+            ! It must be a bcc material
+            acnf%slipsystem%input_fname = 'bccbp.pre'
+            ! Texture data:
+            acnf%texture%input_fname = 'DC06F250.SMT'
+            
+            open(newunit=nparunit,file='PAR11.par',iostat=info)
+            ASSERT(info == 0)
+            info = ReadPar11(nparunit,acnf%hardening%PEBPCnf%params)
+            ASSERT(info == 0)
+            
+            
+            ! Initialize the altay with the configuration data      
+            call initAltay(acnf,info)
+            if ((info /= 0) .or. RCM_catch(istdout)) then
+                 write(*,*) 'Cannot initialize AlTay module'
+                 stop
+            endif
+            
+            nsteps = 2
+            
+            call initStepData(nsteps,astate,info)
+            if ((info /= 0).or. RCM_catch(istdout)) then
+                  write(*,*) 'Cannot initialize data structure for AlTay results'
+                  stop
+            endif      
+
+      
+            do i=1,nsteps
+                  astate%simulCalls(i)%input%full_model = .true.
+                  astate%simulCalls(i)%input%keep_texture = .false.
+                  astate%simulCalls(i)%input%keep_state = .false.
+                  call setStepType(astate%simulCalls(i)%input,acnf%model_id,info)
+                  ASSERT(info == 0)
+                  astate%simulCalls(i)%input%do_output_init = .true.
+            enddo
+
+            ! Patch the input:
+            ! Shear with strain reversal
+            astate%simulCalls(1)%input%dgf = reshape([ 0.D0,  0.D0,  0.D0,    &
+                                                       2D-3,  0.D0,  0.D0,    &
+                                                       0.D0,  0.D0,  0.D0], [ 3, 3 ])
+            astate%simulCalls(1)%input%nsteps = 25
+            astate%simulCalls(2)%input%dgf = -astate%simulCalls(1)%input%dgf
+            astate%simulCalls(2)%input%nsteps = 400
+            
+            ! Patch the last call: request final CUR output
+            astate%simulCalls(nsteps)%input%do_output_final = .true.
+     
+
+            call runSteps(astate,info)
+            if ((info /= 0).or. RCM_catch(istdout)) then
+                  write(*,*) 'Execution error has been detected in processing steps.'
+                  stop
+            endif      
+      
+      end subroutine
+      
+      
 end module
