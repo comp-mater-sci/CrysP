@@ -9,6 +9,9 @@ C
       use KOST1xState
       use DYNFIL
       use altayHard,only: KOST_global
+#ifndef USE_LEESOR
+      use TexFormats
+#endif
       implicit double precision (a-h,o-z)
 c      Several simulations (usually several-steps each),
 C      following each other.
@@ -31,23 +34,33 @@ C
       common /CEIGEN/ IOR,ISTP,JBLOC
       character(len=pathlength) :: fnam1,fnam2,cods1
       character(len=pathlength-4) :: codsim
+      integer :: info
+#ifndef USE_LEESOR
+      integer :: tex_type, tex_nblock
+      character(len=pathlength) :: tex_fname
+#endif
 #ifdef PEBP_ENABLED      
       character(len=pathlength) :: fname_pebp
       logical :: read_state
       integer :: nblock
 #endif
+#ifdef FINALCUB_ENABLED
+      integer,parameter :: icubunit = 444
+#endif
       DATA MPOINT /8000/,NUNIT/2/
       SAVE
 C     UNIT KLEC = CONTROL FILE
-      open (unit=KLEC,file='MAINA1.CTL',status='old')
   90  format (a)
 #ifndef MAINDIRECT
+      open (unit=KLEC,file='MAINA1.CTL',status='old')
       read (KLEC,90) fnam1
       call stripComment(fnam1)
       write (*,93) trim(fnam1)
       close (unit=KLEC)
 C     UNIT KLEC = PARAMETER FILE
       open (unit=KLEC,file=fnam1,status='old')
+#else
+      open (unit=KLEC,file='MAIN.CTL',status='old')
 #endif
       read (KLEC,90) codsim
       call stripComment(codsim)
@@ -109,8 +122,8 @@ c
       write (IMP,102) NBLOC
       end if
  102  format (' NBLOC=',I5)
-      CALL GRFIL(ierr)
-      if (ierr.ne.0) then
+      CALL GRFIL(info)
+      if (info.ne.0) then
       write(*,215)
       stop
  215  format('Error condition is returned by GRFIL')
@@ -119,8 +132,20 @@ C
 C     Initialisation of SIMUL
 C
       CALL SIMUL(0,EPS,1) 
+      ! Get the initial texture
+#ifndef USE_LEESOR
+      ! Read the same inputs as LEESOR would read:
+      read(KLEC,99) tex_type
+      read(KLEC,'(A)') tex_fname
+      read(KLEC,99) tex_nblock
+      call stripComment(tex_fname)
+      ! 
+      call loadTexture(tex_type,NDAT1,trim(tex_fname),tex_nblock,info)
+      call xleesor()
+#else
+      ! Legacy way of reading texture data.
       CALL LEESOR(NUNIT,MPOINT)
-
+#endif
       
 #ifdef PEBP_ENABLED
       ! PEBP model
@@ -138,6 +163,7 @@ C
                   info = KS_readState_file(fname_pebp,IPEBPSTAT,nblock)
                   if (info /= 0) then 
                         write(IMP,fmt=601)
+                        write(*,fmt=601)
                         stop
                   endif
             endif
@@ -191,6 +217,12 @@ C     Preempt rounding errors
 C
 C     Output of last "current situation"
 C
+#ifdef FINALCUB_ENABLED
+      info = openTextureFile(icubunit,trim(codsim)//'.cub',TF_CUB,'w')
+      if (info == 0) then 
+            call outputCurrentTexture(icubunit,TF_CUB,.true.,info)
+      endif
+#endif
       if(NLIST.eq.1) then
       write (IMP,110)
       end if
