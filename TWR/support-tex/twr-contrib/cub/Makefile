@@ -16,6 +16,7 @@ ConfigurationName=release
 LIBDIR=release
 OPTFLAGS=-O3 -fast
 FCFLAGS+= $(OPTFLAGS)
+FCLDFLAGS+= $(OPTFLAGS) 
 endif
 #
 OBJDIR=$(ConfigurationName)/obj
@@ -71,19 +72,19 @@ $(OBJDIR)/oriAccess.o	:  $(OBJDIR)/cubAccess.o
 
 
 $(BINDIR)/$(PROG1)	: $(addprefix $(OBJDIR)/, cubAccess.o cub2cur.o)
-	$(FC) -o $@ $^
+	$(FC) $(FCLDFLAGS) -o $@ $^
 
 $(BINDIR)/$(PROG2)	: $(addprefix $(OBJDIR)/, cubAccess.o cub2cubV2.o)
-	$(FC) -o $@ $^
+	$(FC) $(FCLDFLAGS) -o $@ $^
 
 $(BINDIR)/$(PROG3)	: $(addprefix $(OBJDIR)/, cubAccess.o smtAccess.o cub2smt.o)
-	$(FC) -o $@ $^ 
+	$(FC) $(FCLDFLAGS) -o $@ $^ 
 
 $(BINDIR)/$(PROG4)	: $(addprefix $(OBJDIR)/, cubAccess.o  mergeCubs.o)
-	$(FC) -o $@ $^
+	$(FC) $(FCLDFLAGS) -o $@ $^
 
 $(BINDIR)/$(PROG5)	: $(addprefix $(OBJDIR)/, cubAccess.o smtAccess.o ori2smt.o oriAccess.o)
-	$(FC) -o $@ $^ 
+	$(FC) $(FCLDFLAGS) -o $@ $^ 
 
 clean :
 	rm -f  $(ALLPROGS) $(OBJS) $(INCLUDEDIR)/*

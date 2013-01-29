@@ -168,12 +168,12 @@
             ID,                                                          & ! Ordinal number is a part of CUR file format 
             GRAIN%GEW,                                                   &
             GRAIN%PHI1,GRAIN%PHI,GRAIN%PHI2,                             &
-            GRAIN%GAMMA,GRAIN%F,GRAIN%GAXES,GRAIN%GEULR
+            GRAIN%GAMMA
       if (iuerr .ne. 0) then
             write(*,*) 'Error in CUR file record'
             ERRCODE=(-1)
       endif
- 400  format (I6,f10.5,2X,3f10.5,2X,f10.5,3(2X,3F10.6),2(2x,3f10.5))
+ 400  format (I6,f10.5,2X,3f10.5,2X,f10.5)
       end subroutine writeCurRecord
 
       !
