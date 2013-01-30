@@ -67,15 +67,15 @@ def substFromTemplate(argv):
 
 def keylist2mapping(keys):
     """Translates keys, which is a list of key=val pairs, into a dictionary"""
-    mapping = {}
+    result = {}
     for key in keys:
         try:
             k,v = key.split('=')
             if (k != ''):
-                mapping[k] = str(v)
+                result[k] = str(v)
         except ValueError:
             raise ValueError(('Cannot process the keyword "' + key + '"'))
-    return mapping
+    return result
 
 
 def main(argv):
@@ -83,20 +83,29 @@ def main(argv):
     import sys
     #
     parser = argparse.ArgumentParser(prog='keysubst',description='The program performs keyword substitution.')
-    parser.add_argument('-i','--input',type=argparse.FileType('r'),default='-')
-    parser.add_argument('-o','--output',type=argparse.FileType('w'),default='-')
-    parser.add_argument('--method',choices=['brackets','vars'],default='vars')
-    parser.add_argument('-v','--verbose',action='store_true',default=False)
-    parser.add_argument('keys',nargs='+')
+    parser.add_argument('-i','--input',type=argparse.FileType('r'),default='-',
+                        help='input template file OR "-" for stdin (default)')
+    parser.add_argument('-o','--output',type=argparse.FileType('w'),default='-',
+                        help='output file name OR "-" for stdout (default)')
+    parser.add_argument('-k','--keyfile',type=argparse.FileType('r'),
+                        help='input file containing key=value pairs')
+    parser.add_argument('--method',choices=['brackets','vars'],default='vars',
+                        help='convention for keys in the template file. brackets: the keys are embraced within "<>".  vars: the keys start with the "$" character (default)')
+    parser.add_argument('-v','--verbose',action='store_true',default=False,
+                        help='print diagnostic information')
+    parser.add_argument('keys',nargs='+',
+                        help='list of key=value pairs. The keys provided here will override the keys found in the keyfile')
     #
-    #if len(argv) <= 1:
-    #    parser.print_usage()
-    #    return    
     try:
         args = parser.parse_args(argv)
         if (args.verbose):
             sys.stderr.write(str(args.keys)+'\n')
-        mapping = keylist2mapping(args.keys)
+        mapping = {}
+        # Process the keyfile. All the newline characters at the end of the lines must be removed.
+        if (args.keyfile):
+            mapping = keylist2mapping((kvpair.strip() for kvpair in args.keyfile.readlines()))
+        # Process the key-val pairs from the command line, override the keyfile if deems so.
+        mapping.update(keylist2mapping(args.keys))
         if (args.verbose):
             sys.stderr.write(str(mapping)+'\n')
         #
