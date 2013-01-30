@@ -66,12 +66,15 @@ def substFromTemplate(argv):
         exit(1)
 
 def keylist2mapping(keys):
-    """Translates list of key=va; pairs into a dictionary"""
+    """Translates keys, which is a list of key=val pairs, into a dictionary"""
     mapping = {}
     for key in keys:
-        k,v = key.split('=')
-        if (k != ''):
-            mapping[k] = str(v)
+        try:
+            k,v = key.split('=')
+            if (k != ''):
+                mapping[k] = str(v)
+        except ValueError:
+            raise ValueError(('Cannot process the keyword "' + key + '"'))
     return mapping
 
 
@@ -91,9 +94,11 @@ def main(argv):
     #    return    
     try:
         args = parser.parse_args(argv)
+        if (args.verbose):
+            sys.stderr.write(str(args.keys)+'\n')
         mapping = keylist2mapping(args.keys)
         if (args.verbose):
-            sys.stderr.write(str(mapping))
+            sys.stderr.write(str(mapping)+'\n')
         #
         content = args.input.readlines()
         result = []
@@ -113,8 +118,6 @@ if __name__ == "__main__":
         #main(testargv.split())
         #substFromTemplate(['templateb.tmpl','outb.txt','key1=value1', 'key2=value2', 'key3=value3'])
         main(sys.argv[1:])
-    except:
-        try:
-            sys.exit(1)
-        except:
-            pass # to suppress SystemExit error message frot the Python runtime
+    except Exception as e:
+        print ('keysubst: ' + str(e))
+        sys.exit(2)
