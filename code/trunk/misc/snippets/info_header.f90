@@ -13,9 +13,5 @@
 !>    $Date$
 !>
 !>    History of modifications: (see svn log)
-!
-!
+!>
 !>    \file <FILENAME> 
-!>    
-!
-
