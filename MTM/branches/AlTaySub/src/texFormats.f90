@@ -39,7 +39,7 @@ contains
                   call CURreadBlock(nunit,iblock,TF_MaxPoints,info)
             !
             case(TF_CUB)
-                  call CURreadTitle(nunit,filetitle,info)
+                  call CUBreadTitle(nunit,filetitle,info)
                   if (info /= 0) return
                   call CUBreadBlock(nunit,TF_MaxPoints,info)
             end select
