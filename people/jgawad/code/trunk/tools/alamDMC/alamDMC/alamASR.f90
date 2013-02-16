@@ -7,7 +7,7 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
-!>    \date Date of first release: 2011-07-18
+!>    \date Date of the initial release: 2011-07-18
 !>    $Revision$
 !>    $Date$
 !>
@@ -21,6 +21,7 @@ use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 use alamUtils
+use dmcBasicModule
 use commonConfig
 use commonUtils
 use fngMathUtils
@@ -28,35 +29,42 @@ use fngPath
 use fngAlgorithm
 implicit none
 
-      type :: ASRConfig
+      type,extends(BasicModule) :: ASRModule
             type(EulerAngles)                         :: rotframe
             character(len=max_pathlen)                :: data_fname = ''
             logical                                   :: update_texture = .false.
             integer                                   :: scalingID = 0
             double precision                          :: NormMax = 0.D0
             double precision                          :: NormIter = 0.D0
+      contains
+      
+            procedure,pass(this)    :: readConfig => ASRModule_ReadConfig
+            
+            procedure,pass(this)    :: run => ASRModule_run
+            
       end type
       
       integer,parameter :: scaleStrainTensor = 0, scalePlasticWork = 1
      
 contains
 
-      subroutine AlamASR_ReadConfig(cnf,cnfunit,info)
+      integer function ASRModule_ReadConfig(this,cnfunit) result(info) 
       implicit none
-      class(ASRConfig),intent(inout)            :: cnf
+      class(ASRModule),intent(inout)            :: this
       integer,intent(in)                        :: cnfunit
-      integer,intent(out)                       :: info
       !
       integer :: ioerr
+      !
+            if (BasicModule_ReadConfig(this,cnfunit) /= 0) return
             info = -1
-            ! Read parameters specific for the alamASR program
-            read(cnfunit,fmt=*,iostat=ioerr)  cnf%rotframe
-            read(cnfunit,fmt='(A)',iostat=ioerr) cnf%data_fname
-            call stripComment(cnf%data_fname)
-            read(cnfunit,fmt='(L2)',iostat=ioerr) cnf%update_texture 
-            read(cnfunit,fmt=*,iostat=ioerr)  cnf%scalingID, cnf%NormMax, cnf%NormIter
+            ! Read parameters specific for the ASRModule
+            read(cnfunit,fmt=*,iostat=ioerr)  this%rotframe
+            read(cnfunit,fmt='(A)',iostat=ioerr) this%data_fname
+            call stripComment(this%data_fname)
+            read(cnfunit,fmt='(L2)',iostat=ioerr) this%update_texture 
+            read(cnfunit,fmt=*,iostat=ioerr)  this%scalingID, this%NormMax, this%NormIter
             if (ioerr /= 0) then
-                  write(*,fmt=902) 'AlamASR'
+                  write(*,fmt=902) 'ASRModule'
                   return
             endif
             info = 0
@@ -64,12 +72,12 @@ contains
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-      end subroutine
+      end function
 
 
-      subroutine AlamASR_Run(cnf,info)
+      subroutine ASRModule_Run(this,info)
       implicit none
-      class(ASRConfig),intent(inout)            :: cnf
+      class(ASRModule),intent(inout)            :: this
       integer,intent(out)                       :: info      
       ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
       ! coordinate system
@@ -97,6 +105,7 @@ contains
             'SonA_11','SonA_22','SonA_33','SonA_12','SonA_23','SonA_13','A_11','A_22','A_33','A_12','A_23','A_13' ]
       character(len=14),dimension(9) :: display_column_labels = [ character(len=14) ::  &
             'point','incr','eps_vM','Pnorm','totalP_vM','W','scal_s','||SonA||','R' ]
+      !
       info = 1
       !
       MI = 0.D0
@@ -105,12 +114,12 @@ contains
       enddo
       !
       ! Introduce youself ;-)
-      write(*,'(A)') 'AlamASR, $Rev$'
+      write(*,'(A)') 'ASR, $Rev$'
       !
       ! Open input file
-      open(unit=dtaunit,file=trim(cnf%data_fname),status='old',form='formatted',iostat=ioerr)
+      open(unit=dtaunit,file=trim(this%data_fname),status='old',form='formatted',iostat=ioerr)
       if ( ioerr /= 0) then
-            write(*,*) 'Cannot open data file: ', trim(cnf%data_fname)
+            write(*,*) 'Cannot open data file: ', trim(this%data_fname)
             stop
       endif
       read(dtaunit,fmt='(I5)',iostat=ioerr) npoints
@@ -120,15 +129,15 @@ contains
       endif
       !
       ! Open and initialize result files
-      open(unit=ofunit,file=trim(outputPrefix)//'.asr',status='replace')
+      open(unit=ofunit,file=trim(this%output%outputPrefix)//'.asr',status='replace')
       ! write header lines
       write(ofunit,701) (centered(i,short_column_width), i = 1,2), (centered(i,column_width), i = 3, ncolumn_labels)
       write(ofunit,700) (file_column_labels(i)(1:short_column_width), i=1,2), (centered(file_column_labels(i)), i=3,ncolumn_labels) 
       !
-      open(unit=histunit,file=trim(outputPrefix)//'.hsr',status='replace')
+      open(unit=histunit,file=trim(this%output%outputPrefix)//'.hsr',status='replace')
       !      
       ! Calculate rotation matrix
-      Mrot = rotmat(deg2rad(cnf%rotframe))
+      Mrot = rotmat(deg2rad(this%rotframe))
       !
       vTotalP = 0.D0
       totalPnorm = 0.D0
@@ -174,7 +183,7 @@ contains
             do 
                   call outputSeparator(teeunits)
                   !! -> Calculate corresponding strain rate vA
-                  call multilevelYLP(vS,vA,vSonA,R,info,.true.,ylpCnf)
+                  call multilevelYLP(vS,vA,vSonA,R,info,.true.,this%ylp)
                   if (info /= 0) then
                         write(display_unit,fmt=960)
                         exit
@@ -216,20 +225,20 @@ contains
                   write(display_unit,610)
                   !
                   ! Calculate strain increment; set a value for the control variable
-                  select case(cnf%scalingId)
+                  select case(this%scalingId)
                   case(scaleStrainTensor)
                         !! -> Scale the vA in order to get ||vA|| = NormIter
-                        vDe = vA * (cnf%NormIter / vec_norm2(vA))
+                        vDe = vA * (this%NormIter / vec_norm2(vA))
                         control_variable = PNorm
                         continue
                   case(scalePlasticWork)
-                        vDe = vA * (cnf%NormIter / plast_pot)
+                        vDe = vA * (this%NormIter / plast_pot)
                         control_variable = plastic_work_total
                         continue
                   end select
                   ! Check termination condition: 
                   ! skip the rest if no texure update is requested, or if requested control threshold is exceeded.
-                  if ((.not. cnf%update_texture) .or. (control_variable >= cnf%NormMax)) exit
+                  if ((.not. this%update_texture) .or. (control_variable >= this%NormMax)) exit
                   !
                   normDe = vec_norm2(vDe)
                   write(*,'(A,1X,F12.6)') 'Norm of vDe = ', normDe 
@@ -242,7 +251,7 @@ contains
                   call outputImposedStrain(teeunits)
                   !
                   ! Update the texture
-                  call makeTextureUpdateStep(De,Se,taylor_factor,outputRequest,info)
+                  call makeTextureUpdateStep(De,Se,taylor_factor,this%output%outputRequest,info)
                   if (info /= 0) then
                         write(*,fmt=970) 
                         exit

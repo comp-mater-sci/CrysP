@@ -7,32 +7,29 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
-!>    \date Date of first release: 2011-05-17
+!>    \date Date of the initial release: 2011-05-17
 !>    $Revision$
 !>    $Date$
 !>
 !>    History of modifications: (see svn log)
 !
 !
-!>    \file AlamTSA program allows one to track anisotropic properties  
-!>          along deformation due to uniaxial tensile stress.
-
-!> ALAMel Tensile Stress Analysis
-!>
+!> alamTSA (ALAMel Tensile Stress Analysis)  allows one to track anisotropic properties  
+!> along deformation due to uniaxial tensile stress.
 module alamTSA
 use nllsTR
 use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 use alamUtils
-use commonConfig
+use dmcBasicModule
 use commonUtils
 use qrsTypes
 implicit none
 
       integer,parameter                         :: scaleFullTensor = 0, scaleTensileComponent = 1
 
-      type :: TSAConfig
+      type,extends(BasicModule) :: TSAModule
             double precision  :: angle = 0.D0, NormMax = 0.D0, PNormIter = 0.D0
 
             integer           :: scalingID = scaleFullTensor
@@ -43,47 +40,55 @@ implicit none
             !> Stress ratio
             double precision  :: rho = 0.D0 
 
+      contains
+      
+            procedure,pass(this)    :: readConfig => TSAModule_ReadConfig
+            
+            procedure,pass(this)    :: run => TSAModule_run
+
+            
       end type
 
 contains
 
-      subroutine AlamTSA_ReadConfig(cnf,cnfunit,info)
+      integer function TSAModule_ReadConfig(this,cnfunit) result(info)
       implicit none
       integer,intent(in)                        :: cnfunit
-      type(TSAConfig),intent(out)               :: cnf
-      integer,intent(out)                       :: info
+      class(TSAModule),intent(inout)            :: this
       !
       integer :: ioerr
       logical :: input_ok = .false.
+      !
+            if (BasicModule_ReadConfig(this,cnfunit) /= 0) return
             input_ok = .false.
             info = -1
-            ! Read parameters specific for the AlamTSA program
-            read(cnfunit,fmt=*,iostat=ioerr)  cnf%angle
+            ! Read parameters specific for the TSAModule program
+            read(cnfunit,fmt=*,iostat=ioerr)  this%angle
             if (ioerr /= 0) return
-            read(cnfunit,fmt=*,iostat=ioerr)  cnf%scalingID, cnf%NormMax, cnf%PNormIter
+            read(cnfunit,fmt=*,iostat=ioerr)  this%scalingID, this%NormMax, this%PNormIter
             if (ioerr /= 0) return
-            read(cnfunit,fmt=*,iostat=ioerr)  cnf%stress_state
+            read(cnfunit,fmt=*,iostat=ioerr)  this%stress_state
             if (ioerr /= 0) return
-            read(cnfunit,fmt=*,iostat=ioerr)  cnf%rho
+            read(cnfunit,fmt=*,iostat=ioerr)  this%rho
             if (ioerr /= 0) return
             ! Validate input
-            select case(cnf%scalingID)
+            select case(this%scalingID)
                   case(scaleFullTensor,scaleTensileComponent)
                         input_ok = .true.
             end select
-            cnf%stress_state = merge(-1.D0,1.D0,(cnf%stress_state < 0.0))
+            this%stress_state = merge(-1.D0,1.D0,(this%stress_state < 0.0))
             if ((ioerr /= 0) .or. (.not. input_ok)) return
             info = 0
             
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-      end subroutine
+      end function
 
 
-      subroutine AlamTSA_Run(cnf,info)
+      subroutine TSAModule_Run(this,info)
       implicit none
-      type(TSAConfig),intent(in)                :: cnf
+      class(TSAModule),intent(inout)            :: this
       integer,intent(out)                       :: info      
       ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
       ! coordinate system
@@ -100,24 +105,24 @@ contains
       double precision                          :: taylor_factor
       integer     :: step,j 
       !
-      integer,parameter       :: cnfunit = 90, ofunit = 91, histunit = 92
+      integer,parameter       :: thisunit = 90, ofunit = 91, histunit = 92
       character(len=32)       :: description
       !
       info = 1
       !
       ! Introduce youself ;-)
-      write(*,'(A)') 'AlamTSA, $Rev$'
+      write(*,'(A)') 'TSAModule, $Rev$'
 
-      if (cnf%stress_state > 0.0) then
+      if (this%stress_state > 0.0) then
             description = 'uniaxial tensile'      
       else
             description = 'uniaxial compression'
       endif
       write(display_unit,fmt=fmtMsg2Msg) 'Test type:', description
-      write(display_unit,fmt=fmtMsg2Other//'F10.4)') 'Orientation of the sample:', cnf%angle
-      write(display_unit,fmt=fmtMsg2Other//'F10.4)') 'Stress ratio:', cnf%rho
+      write(display_unit,fmt=fmtMsg2Other//'F10.4)') 'Orientation of the sample:', this%angle
+      write(display_unit,fmt=fmtMsg2Other//'F10.4)') 'Stress ratio:', this%rho
       !
-      select case(cnf%scalingID)
+      select case(this%scalingID)
             case(scaleFullTensor)
                   write(display_unit,fmt=fmtMsg2Msg) 'Strain calculation:', 'scaling full tensor'
             case(scaleTensileComponent)
@@ -126,19 +131,19 @@ contains
                   write(*,*) 'Unknown scaling type, full tensor will be used'
       end select
       ! Open and initialize result files
-      open(unit=ofunit,file=trim(outputPrefix)//'.tsa',status='replace')
+      open(unit=ofunit,file=trim(this%output%outputPrefix)//'.tsa',status='replace')
       !      
 #define COMMONOUTHEADER 'iter','eps_vM','Pnorm','Tnorm','W','plast_pot','M','||SonA||','q-value','r-value','s-value'      
 #define OUTHEADER COMMONOUTHEADER##,'R'
 #define FILEOUTHEADER COMMONOUTHEADER##,'q-valueA','r-valueA','R'
       !
       write(ofunit,fmt=705) FILEOUTHEADER ! write header line
-      open(unit=histunit,file=trim(outputPrefix)//'.hts',status='replace')
+      open(unit=histunit,file=trim(this%output%outputPrefix)//'.hts',status='replace')
        
       fi1 = 0.0
       phi = 0.0
       ! Convert angle from degs to rads
-      fi2 = deg2rad(cnf%angle)
+      fi2 = deg2rad(this%angle)
    
       Pt_accum = 0.D0
       vP = 0.D0
@@ -152,8 +157,8 @@ contains
             write(*,800)
             !! -> Take uniaxial/slightly biaxial tensile stress, rotate it to given direction     
             St = 0.D0
-            St(1,1) = cnf%stress_state * sqrt(3.D0/2.D0)/dsqrt(cnf%rho**2-cnf%rho+1)
-            St(2,2) = cnf%rho*St(1,1)
+            St(1,1) = this%stress_state * sqrt(3.D0/2.D0)/dsqrt(this%rho**2-this%rho+1)
+            St(2,2) = this%rho*St(1,1)
             
             ! Rotate from "tensile" to material coordinate system
             ! Calculate rotation matrix
@@ -166,7 +171,7 @@ contains
             vS = vS / vec_norm2(vS)
             !
             !! -> Calculate corresponding strain rate vA
-            call multilevelYLP(vS,vA,vSonA,R,info,.true.,ylpCnf)
+            call multilevelYLP(vS,vA,vSonA,R,info,.true.,this%ylp)
             if (info /= 0) then
                   write(display_unit,fmt=960)
                   exit
@@ -214,19 +219,19 @@ contains
             write(display_unit,710)
             !!
             !
-            select case(cnf%scalingID)
+            select case(this%scalingID)
             case(scaleFullTensor)
                   ! Check termination condition
-                  if (PNorm >= cnf%NormMax)  exit
+                  if (PNorm >= this%NormMax)  exit
                   !
                   !! -> Scale the vA in order to get ||vA|| = PNormIter
-                  vD = vA * (cnf%PNormIter / vec_norm2(vA)) 
+                  vD = vA * (this%PNormIter / vec_norm2(vA)) 
             case(scaleTensileComponent)
                   ! Check termination condition: only tensile component
-                  if (Tnorm >= cnf%NormMax) exit
+                  if (Tnorm >= this%NormMax) exit
                   !
                   !! -> Scale the vA in order to get ||Dt_11|| equal to PNormIter
-                  vD = vA * (cnf%PNormIter / abs(Dt(1,1)))
+                  vD = vA * (this%PNormIter / abs(Dt(1,1)))
             case default
                   write(*,*) 'Unknown scaling type, full tensor will be used'
                   vD = vA                  
@@ -243,7 +248,7 @@ contains
             write(*,*)
             !
             ! Update the texture
-            call makeTextureUpdateStep(De,Se,taylor_factor,outputRequest,info)
+            call makeTextureUpdateStep(De,Se,taylor_factor,this%output%outputRequest,info)
             if (info /= 0) then
                   write(*,fmt=970) 
                   exit

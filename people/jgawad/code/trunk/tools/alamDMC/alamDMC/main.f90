@@ -7,7 +7,7 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
-!>    \date Date of first release: 2011-09-19
+!>    \date Date of the initial release: 2011-09-19
 !>    $Revision$
 !>    $Date$
 !>
@@ -43,19 +43,15 @@ implicit none
       !
       integer,parameter       :: ncommands = 4
       integer,parameter       :: Q_id = 1, TSA_id = 2, ASR_id = 3, Yld_id = 4
-      type(MapItem),dimension(ncommands)  :: command_map =  [ MapItem('alamQ',Q_id), MapItem('alamTSA',TSA_id), &
-                                                              MapItem('alamASR',ASR_id), MapItem('alamYld',Yld_id) ]
+      type(MapItem),dimension(ncommands)  :: command_map =  [ MapItem('Q',Q_id), MapItem('TSA',TSA_id), &
+                                                              MapItem('ASR',ASR_id), MapItem('Yld',Yld_id) ]
       integer,parameter       :: argc_min = 2, argc_max=2, command_argpos = 1
       type(commandLine)       :: cmdline
       
       logical                 :: moduleFound = .false.
       character(len=32)       :: moduleName = ''
       !
-      type(altayConfigData)   :: cnf
-      type(TSAConfig)         :: TSAcnf
-      type(YldConfig)         :: Yldcnf
-      type(QConfig)           :: Qcnf
-      type(ASRConfig)         :: ASRcnf
+      class(BasicModule),pointer     :: the_module => null()      
       !
       integer                 :: info, ioerr
       !
@@ -81,80 +77,46 @@ implicit none
             call finalize(stopcode_inputerror)
       endif
       !
-      call readAlamelConfigSection(cnfunit,cnf,info)
-      if (info /= 0) then
-            write(errmsg,fmt=901) 'check ALAMEL config section'
-            call finalize(stopcode_runtimeerror) 
-      endif
       !
-      ! Read multilevelYLP configuration
-      call readYLPConfigSection(cnfunit,info)
-      if (info /= 0) then
-            write(errmsg,fmt=901) 'check YLP config section' 
-            call finalize(stopcode_runtimeerror) 
-      endif
-      !
-      info = -1            
+      info = -1
+      ! Create a module of appropriate type and read its configuration:
       select case(cmdline%command_id)
       case(Q_id) ! Alamq
-            call Alamq_ReadConfig(Qcnf,cnfunit,info)
-            ! Override the requests for outputs: 
-            cnf%output_config%nfile = 0   ! texture
-            cnf%output_config%npebp = 0   ! KOST1x state
-            outputRequest = .false.       ! idem.
-      case(TSA_id) ! AlamTSA    
-            call AlamTSA_ReadConfig(TSAcnf,cnfunit,info)
-      case(ASR_id) ! AlamASR 
-            call AlamASR_ReadConfig(ASRcnf,cnfunit,info)
+            allocate(QModule :: the_module)
+      case(TSA_id) ! AlamTSA
+            allocate(TSAModule :: the_module)
+      case(ASR_id) ! AlamASR
+            allocate(ASRModule :: the_module)
       case(Yld_id) ! AlamYld
-            call AlamYld_ReadConfig(Yldcnf,cnfunit,info)
+            allocate(YldModule :: the_module)
       end select
-      close(cnfunit)
-      !
-      if (info /= 0) then
-            write(errmsg,901) 'Module configuration section'
+      
+      if (.not. associated(the_module)) then
+            write(errmsg,'(A)')  'Internal error: cannot instantiate requested module.'
             call finalize(stopcode_runtimeerror)
       endif
       !
-      ! OK, configuration has been finished. 
-      ! Initialize ALAMEL
+      info = the_module%ReadConfig(cnfunit)
+      close(cnfunit)
+      if (info /= 0) then
+            call finalize(stopcode_runtimeerror)
+      endif
+      !
+      ! OK, the configuration stage has been finished. 
+      ! Initialize the micro-scale model
       !
       
-      cnf%jobtitle = trim(cnf%output_prefix)//' '//trim(moduleName)
-      write(*,fmt=30) 'Initializing the multilevel model...'
-      call initAltay(cnf,info)
-      if (info == 0) then
-            write(*,fmt=31) 'Done.'
-      else
-            write(*,fmt=31) 'Failed.'
+      if (the_module%initialize() /= 0) then
             write(errmsg,'(A)')  'Fatal error: cannot initialize the multilevel model.'
             call finalize(stopcode_runtimeerror)
       endif
        
       ! Show general configuration of the multilevel model
-      call displayConfig(display_unit,info)
-      !
-      ! Output the initial state variables (texture etc) if requested.
-      if (outputRequest) then
-            call outputTexture(info)
-            if (info /= 0) then
-                  write(errmsg,'(A)') 'Error: cannot write initial state'
-                  call finalize(stopcode_runtimeerror)
-            endif
-      endif
+      call the_module%printConfig(display_unit,info)
       !
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Run the module
-      select case(cmdline%command_id)
-      case(Q_id) ! Alamq
-            call Alamq_Run(Qcnf,info)
-      case(TSA_id) ! AlamTSA    
-            call AlamTSA_Run(TSAcnf,info)
-      case(ASR_id) ! AlamASR 
-            call AlamASR_Run(ASRcnf,info)
-      case(Yld_id) ! AlamYld
-            call AlamYld_Run(Yldcnf,info)
-      end select
+      call the_module%run(info)
       !
       write(*,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
       write(*,'(A,1X,A,1X,A,\)') 'Execution of module', trim(moduleName), 'finished'
@@ -169,8 +131,6 @@ implicit none
             write(*,'(A)') 'Problems have been encountered while finalizing libaltay'
       endif
       
-      30 format(A,\)
-      31 format(1X,A)
 
 
 #define MSG_GROUP_ERRORS

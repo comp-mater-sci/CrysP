@@ -7,7 +7,7 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
-!>    \date Date of first release: 2012-06-06
+!>    \date Date of the initial release: 2012-06-06
 !>    $Revision$
 !>    $Date$
 !>
@@ -22,14 +22,16 @@ use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 use alamUtils
 use commonConfig
+use dmcBasicModule
 use fngAlgorithm
 use fngErrcodes
+use fngRange
 implicit none
 
 private
 
       integer,parameter                               :: nbase = 3
-      type :: YldConfig
+      type,extends(BasicModule) :: YldModule
             
             class(range_type),pointer                 :: ptr_theta_range
             
@@ -42,9 +44,16 @@ private
             double precision,dimension(nSymTensComps) :: scaling_vector = 0.D0
       
             logical                                   :: normalizeSm = .false.
+            
+      contains
+      
+            procedure,pass(this)    :: readConfig => YldModule_ReadConfig
+            
+            procedure,pass(this)    :: run => YldModule_run
+            
       end type
       
-      public YldConfig,AlamYld_ReadConfig, AlamYld_Run
+      public YldModule
       
       
       type :: yldResult
@@ -62,48 +71,54 @@ private
       
 contains
 
-      subroutine AlamYld_ReadConfig(cnf,cnfunit,info)
+      integer function YldModule_ReadConfig(this,cnfunit) result(info)
       implicit none
-      class(YldConfig),intent(inout)            :: cnf
+      class(YldModule),intent(inout)            :: this
       integer,intent(in)                        :: cnfunit
-      integer,intent(out)                       :: info
       !
       integer :: ioerr,i
       double precision :: norm
       logical :: normalize
+      !
+            if (BasicModule_ReadConfig(this,cnfunit) /= 0) return
             info = -1
             ! Read parameters specific for the alamASR program
-            cnf%ptr_theta_range => rangeFromConfig(cnfunit,info)
-            if ( (info /= 0) .or. (.not. associated(cnf%ptr_theta_range)) ) return
-            cnf%base_vectors = 0.D0
+            this%ptr_theta_range => rangeFromConfig(cnfunit,info)
+            if ( (info /= 0) .or. (.not. associated(this%ptr_theta_range)) ) return
+            this%base_vectors = 0.D0
             do i=1,nbase
                   normalize = .false.
-                  read(cnfunit,fmt=*,iostat=ioerr) normalize, cnf%base_vectors(:,i)
+                  read(cnfunit,fmt=*,iostat=ioerr) normalize, this%base_vectors(:,i)
                   if (ioerr /= 0)  exit
                   if (normalize) then 
-                        norm = norm2(cnf%base_vectors(:,i))
-                        if (norm > 0.D0) cnf%base_vectors(:,i)  = cnf%base_vectors(:,i) / norm
+                        norm = norm2(this%base_vectors(:,i))
+                        if (norm > 0.D0) this%base_vectors(:,i)  = this%base_vectors(:,i) / norm
                   endif
             enddo
             if (ioerr /= 0) return
-            read(cnfunit,fmt='(L)',iostat=ioerr) cnf%normalizeSm
+            read(cnfunit,fmt='(L)',iostat=ioerr) this%normalizeSm
             if (ioerr /= 0) return
-            cnf%ptr_w_range => rangeFromConfig(cnfunit,info)
-            if ( (info /= 0) .or. (.not. associated(cnf%ptr_w_range)) ) return
-            read(cnfunit,fmt=*,iostat=ioerr) cnf%do_scaling, cnf%scaling_vector
+            this%ptr_w_range => rangeFromConfig(cnfunit,info)
+            if ( (info /= 0) .or. (.not. associated(this%ptr_w_range)) ) return
+            read(cnfunit,fmt=*,iostat=ioerr) this%do_scaling, this%scaling_vector
             if (ioerr /= 0) return
+            !
+            ! Override the requests for outputs: 
+            this%altay%output_config%nfile = 0   ! texture
+            this%altay%output_config%npebp = 0   ! KOST1x state
+            this%output%outputRequest = .false.       ! idem.
             !
             info = 0
             
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-      end subroutine
+      end function
 
 
-      subroutine AlamYld_Run(cnf,info)
+      subroutine YldModule_Run(this,info)
       implicit none
-      class(YldConfig),intent(inout)            :: cnf
+      class(YldModule),intent(inout)            :: this
       integer,intent(out)                       :: info      
       
       ! Base tensors
@@ -125,35 +140,35 @@ contains
       double precision,parameter :: beta = 0.D0
       !
             info = 1
-            if (.not. (associated(cnf%ptr_theta_range) .and. associated(cnf%ptr_w_range)))  return
+            if (.not. (associated(this%ptr_theta_range) .and. associated(this%ptr_w_range)))  return
             !
             ! Introduce youself ;-)
             write(display_unit,'(A)') 'AlamYld, $Rev$'
             do i=1,nbase
-                  write(display_unit,'(A,1x,A,6(F6.2,1X))') veclabels(i),'vector:',cnf%base_vectors(:,i)
+                  write(display_unit,'(A,1x,A,6(F6.2,1X))') veclabels(i),'vector:',this%base_vectors(:,i)
             enddo
             !
-            npoints = cnf%ptr_theta_range%size()
+            npoints = this%ptr_theta_range%size()
             if (npoints <= 0) then
                   write(display_unit,fmt='(A)') 'Cannot run using empty range.'
                   return 
             endif
             !
-            write(display_unit,'(A,1X,L1)') 'Normalization of the full Sm tensor:',cnf%normalizeSm
-            if (cnf%do_scaling)   write(display_unit,'(A,1X,6(F6.2,1X))') 'Scaling by yield stress for:', cnf%scaling_vector
+            write(display_unit,'(A,1X,L1)') 'Normalization of the full Sm tensor:',this%normalizeSm
+            if (this%do_scaling)   write(display_unit,'(A,1X,6(F6.2,1X))') 'Scaling by yield stress for:', this%scaling_vector
             ! Open the main output file
-            open(unit=ofunit,file=trim(outputPrefix)//'.xyld',iostat=ioerr)
+            open(unit=ofunit,file=trim(this%output%outputPrefix)//'.xyld',iostat=ioerr)
             if (ioerr /= 0) then
                   write(display_unit,fmt=952)
                   return 
             endif
             !
             ! Fix the configuration: no need for anything except for the stresses.
-            ylpCnf%evaluate_full_model = .false.
+            this%ylp%evaluate_full_model = .false.
             !
             iunilen = 1.D0
-            if (cnf%do_scaling) then
-                  Sm =  Vec6ToMat33(cnf%scaling_vector)
+            if (this%do_scaling) then
+                  Sm =  Vec6ToMat33(this%scaling_vector)
                   if (norm2(Sm) < epsilon(0.D0)) then
                         write(display_unit,fmt=900) 'Norm of the input stress for scaling cannot be zero'
                         return
@@ -173,11 +188,11 @@ contains
             !
             allocate(yldRes(npoints))
             !
-            do while (cnf%ptr_w_range%next(w))
+            do while (this%ptr_w_range%next(w))
                   !
                   ! Loop over the range of theta angles
                   i = 1
-                  do while (cnf%ptr_theta_range%next(theta))
+                  do while (this%ptr_theta_range%next(theta))
                         write(*,800)
                         !
                         write(display_unit,fmt=200)
@@ -186,8 +201,8 @@ contains
                         !
                         theta = deg2rad(theta) 
                         ! Combine the base vectors
-                        Sm = Vec6ToMat33(cnf%base_vectors(:,1)*cos(theta) + cnf%base_vectors(:,2)*sin(theta) & 
-                                         + w*cnf%base_vectors(:,3))
+                        Sm = Vec6ToMat33(this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) & 
+                                         + w*this%base_vectors(:,3))
                         !                  
                         if (findSolution() /= 0) cycle
                         !
@@ -247,7 +262,7 @@ contains
                         write(display_unit,fmt=900) 'Norm of the stress cannot be zero, skipping'
                         return
                   endif      
-                  if (cnf%normalizeSm) Sm = Sm / Sm_norm
+                  if (this%normalizeSm) Sm = Sm / Sm_norm
             
                   ! Convert to 5D space, note that Sm becomes deviatoric after this call: 
                   call KMAT2VEC5D(Sm,vS) 
@@ -256,7 +271,7 @@ contains
                   vS = vS / vS_norm
 
                   !! -> Calculate corresponding strain rate vA
-                  call multilevelYLP(vS,vA,vSonA,R,info,.true.,ylpCnf)
+                  call multilevelYLP(vS,vA,vSonA,R,info,.true.,this%ylp)
                   !
                   plast_pot = dot_product(vA, vSonA)
                   ! Calculate normalized stess

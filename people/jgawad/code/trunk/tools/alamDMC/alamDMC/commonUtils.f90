@@ -7,7 +7,7 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
-!>    \date Date of first release: 2012-08-16
+!>    \date Date of the initial release: 2012-08-16
 !>    $Revision$
 !>    $Date$
 !>

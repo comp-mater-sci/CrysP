@@ -7,17 +7,15 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
-!>    \date Date of first release: 2010-11-03
+!>    \date Date of the initial release: 2010-11-03
 !>    $Revision$
 !>    $Date$
 !>
 !>    History of modifications: (see svn log)
 !
 !
-!>    \file Alamq calculates plastic anisotropic properties, expressed in terms of q-values,
-!>          directly from texture data, presented in form of SMT, CUR or CUB files.
-!>
-!
+!> alamQ calculates plastic anisotropic properties, expressed in terms of q-values,
+!> directly from texture data, presented in form of SMT, CUR or CUB files.
 module alamQ
 use nllsTR
 use Kutils
@@ -25,14 +23,16 @@ use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 use qrsTypes
 use alamUtils
+use dmcBasicModule
 use commonConfig
 use commonUtils
-use fngMathUtils 
+use fngMathUtils
+use fngRange
 
 
 implicit none
 
-      type :: QConfig
+      type,extends(BasicModule) :: QModule
             class(range_type),pointer                 :: ptr_range
             
             double precision                          :: rho = 0.D0
@@ -42,45 +42,57 @@ implicit none
             logical                                   :: reuse_previous = .false.
             logical                                   :: resuse_stainrate = .false.
             logical                                   :: fold_symmetry = .false.
+            
+      contains
+      
+            procedure,pass(this)    :: readConfig => QModule_ReadConfig
+            
+            procedure,pass(this)    :: run => QModule_run
+            
       end type
 
 
 contains
 
-      subroutine AlamQ_ReadConfig(cnf,cnfunit,info)
+      integer function QModule_ReadConfig(this,cnfunit) result(info)
       implicit none
-      class(QConfig),intent(inout)              :: cnf
+      class(QModule),intent(inout)              :: this
       integer,intent(in)                        :: cnfunit
-      integer,intent(out)                       :: info
       !
       integer :: ioerr
-      
+      !
+            if (BasicModule_ReadConfig(this,cnfunit) /= 0) return
             info = -1
-            ! Read parameters specific for the AlamQ module
-            ! Read alamq-specific parameters
-            cnf%ptr_range => rangeFromConfig(cnfunit,info)
-            if ( (info /= 0) .or. (.not. associated(cnf%ptr_range)) ) return
+            ! Read parameters specific for the QModule module
+            ! Read QModule-specific parameters
+            this%ptr_range => rangeFromConfig(cnfunit,info)
+            if ( (info /= 0) .or. (.not. associated(this%ptr_range)) ) return
             info = -1
-            read(cnfunit,fmt=*,iostat=ioerr)  cnf%rho
+            read(cnfunit,fmt=*,iostat=ioerr)  this%rho
             if (ioerr /= 0) return
-            read(cnfunit,fmt=*,iostat=ioerr)  cnf%calculate_MFactor
+            read(cnfunit,fmt=*,iostat=ioerr)  this%calculate_MFactor
             if (ioerr /= 0) return
-            read(cnfunit,fmt='(2L2)',iostat=ioerr)  cnf%reuse_previous, cnf%resuse_stainrate
+            read(cnfunit,fmt='(2L2)',iostat=ioerr)  this%reuse_previous, this%resuse_stainrate
             if (ioerr /= 0) return
-            read(cnfunit,fmt='(L2)',iostat=ioerr)  cnf%fold_symmetry
+            read(cnfunit,fmt='(L2)',iostat=ioerr)  this%fold_symmetry
             if (ioerr /= 0) return
+            !
+            ! Override the requests for outputs: 
+            this%altay%output_config%nfile = 0   ! texture
+            this%altay%output_config%npebp = 0   ! KOST1x state
+            this%output%outputRequest = .false.       ! idem.
             !
             info = 0
             
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-      end subroutine
+      end function
 
 
-      subroutine AlamQ_Run(cnf,info)
+      subroutine QModule_Run(this,info)
       implicit none
-      class(QConfig),intent(inout)              :: cnf
+      class(QModule),intent(inout)              :: this
       integer,intent(out)                       :: info
 
       ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
@@ -104,19 +116,19 @@ contains
       info = 1
       !
       ! Print banner
-      write(display_unit,'(A)') 'Alamq: $Rev$'
+      write(display_unit,'(A)') 'QModule: $Rev$'
       !
       !
-      npoints = cnf%ptr_range%size()
+      npoints = this%ptr_range%size()
       ! 
       ! Print-out summary of the configuration 
-!      write(display_unit,fmt=fmtMsg2Other//'2(F8.3,1X))',iostat=ioerr) 'Angular range:', cnf%fi2min, cnf%fi2max
+!      write(display_unit,fmt=fmtMsg2Other//'2(F8.3,1X))',iostat=ioerr) 'Angular range:', this%fi2min, this%fi2max
       write(display_unit,fmt=fmtMsg2Int,iostat=ioerr)   'Number of points:', npoints 
-      write(display_unit,fmt=fmtMsg2Float,iostat=ioerr) 'Stress ratio', cnf%rho 
+      write(display_unit,fmt=fmtMsg2Float,iostat=ioerr) 'Stress ratio', this%rho 
       !
       write(display_unit,fmt='(A,\)') 'Info:'
-      if (cnf%reuse_previous) then
-            if (cnf%resuse_stainrate) then
+      if (this%reuse_previous) then
+            if (this%resuse_stainrate) then
                   write(display_unit,'(1X,A,\)') 'Strain rate'
             else
                   write(display_unit,'(1X,A,\)') 'Stress'
@@ -126,7 +138,7 @@ contains
             write(display_unit,'(1X,A)') 'von Mises guess will be used.'
       endif
      
-      open(unit=ofunit,file=trim(outputPrefix)//'.xqrs',iostat=ioerr)
+      open(unit=ofunit,file=trim(this%output%outputPrefix)//'.xqrs',iostat=ioerr)
       if (ioerr /= 0) then
             write(display_unit,fmt=952)
             return 
@@ -137,7 +149,7 @@ contains
       ! Apply correction to the configuration of the search procedure:
       ! there will be no need to use the full model in the last call unless 
       ! the average Taylor factor is requested.
-      ylpCnf%evaluate_full_model  = cnf%calculate_MFactor
+      this%ylp%evaluate_full_model  = this%calculate_MFactor
       
 
       ! Make space for the results      
@@ -151,7 +163,7 @@ contains
       ! use von Mises guess as a default
       useVMGuess = .true.
       i = 0
-      do while (cnf%ptr_range%next(fi2))
+      do while (this%ptr_range%next(fi2))
             i = i + 1            
             write(*,800)
             write(*,'(/,A,1X,I4,1X,A,1X,F8.3,A,/)')'Point:',i,'fi2 =',fi2, ' degs'
@@ -163,15 +175,15 @@ contains
             call KROTMAT(fi1,phi,fi2,Mrot)
             ! Set Stcoord in such way that deviatoric part is of unit length
             Stcoord = 0.D0
-            Stcoord(1,1) = dsqrt(3.D0/2.D0)*1.D0/dsqrt(cnf%rho**2-cnf%rho+1)
-            Stcoord(2,2) = cnf%rho*Stcoord(1,1)
+            Stcoord(1,1) = dsqrt(3.D0/2.D0)*1.D0/dsqrt(this%rho**2-this%rho+1)
+            Stcoord(2,2) = this%rho*Stcoord(1,1)
 
             ! Rotate from "tensile" to material coordinate system
             Smcoord = rotateSRTensorTo(Stcoord, Mrot)
             
             !            
             call KMAT2VEC5D(Smcoord,vS) 
-            if ((cnf%reuse_previous) .AND. (i > 1))  then
+            if ((this%reuse_previous) .AND. (i > 1))  then
                   ! Reuse previously stored result in new coordinate system
                   ! Type of result (strain rate or stress) is decided in line mared with (***)
                   ! Rotate Xtcoord_resume to new coordinate system
@@ -183,7 +195,7 @@ contains
                   useVMGuess = .false.
             endif
             !
-            call multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,ylpCnf)
+            call multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,this%ylp)
             if (info /= 0) then
                   write(display_unit,fmt=960)
                   exit
@@ -191,7 +203,7 @@ contains
             
             residuals(i) = R
             ! 
-            if (cnf%calculate_MFactor) then
+            if (this%calculate_MFactor) then
                   call getTaylorFactor(1,mfactors(i),info)
                   if (info /= 0) then
                         write(*,980)
@@ -219,9 +231,9 @@ contains
             Dtcoord = rotateSRTensorFrom(Dmcoord, Mrot)
             !
             !(***) Prepare next iteration if re-using is requested.
-            if (cnf%reuse_previous) then
+            if (this%reuse_previous) then
                   ! Re-used data are always in "tensile" coordinate system (initial coordinate system) 
-                  if (cnf%resuse_stainrate) then
+                  if (this%resuse_stainrate) then
                         Xtcoord_resume = Dtcoord
                   else
                         ! Rotate stresses to "tensile" coordinate system 
@@ -234,7 +246,7 @@ contains
             !            
             write(display_unit,fmt=701)
             write(display_unit,fmt=700)
-            write(display_unit,fmt=710) phis(i), cnf%rho, qrsvalues(i), mfactors(i),residuals(i)
+            write(display_unit,fmt=710) phis(i), this%rho, qrsvalues(i), mfactors(i),residuals(i)
             write(display_unit,fmt=701)
             !
             info = 0
@@ -247,10 +259,10 @@ contains
       write(*,800)
       write(display_unit,fmt=700)
       do i=1,npoints
-            write(*,fmt=710) phis(i), cnf%rho, qrsvalues(i), mfactors(i), residuals(i)
+            write(*,fmt=710) phis(i), this%rho, qrsvalues(i), mfactors(i), residuals(i)
       enddo
       ! Write output file
-      if (cnf%fold_symmetry) then
+      if (this%fold_symmetry) then
             ! Average over symmetric positions
             left = 1
             right = npoints
@@ -258,7 +270,7 @@ contains
                   if (left > right) exit
                   stride = right - left
                   if (stride == 0) stride = 1
-                  write(ofunit,fmt=710) phis(left), cnf%rho,                      &
+                  write(ofunit,fmt=710) phis(left), this%rho,                      &
                                         avgQRS(qrsvalues(left:right:stride)),     &
                                         average(mfactors(left:right:stride) ),    &
                                         average(residuals(left:right:stride) )
@@ -268,7 +280,7 @@ contains
       else
             ! Output complete set of points
             do i=1,npoints
-                  write(ofunit,fmt=710) phis(i), cnf%rho, qrsvalues(i), mfactors(i),residuals(i)
+                  write(ofunit,fmt=710) phis(i), this%rho, qrsvalues(i), mfactors(i),residuals(i)
             enddo
       endif
       !
@@ -280,7 +292,7 @@ contains
       400 format('| Smcoord',T40,'| SmIdent',T80,'|Dmcoord')
       401 format(3(F10.6,1X),T40,3(F10.6,1X),T80,3(F10.6,1X))
       ! Format for header file
-      500 format('#Material:',1X,A,/,'#Generated by Alamq $Revision$')
+      500 format('#Material:',1X,A,/,'#Generated by QModule $Revision$')
       ! Format for title line
       700 format('#Angle',T15,'rho',T24,'q-value',T37,'r-value',T50,'s-value',T62,'M-factor',T75,'residual')
       701 format('|',9('-'),'|',6('-'),'|',4(12('-'),'|'),12('-'),'|')
