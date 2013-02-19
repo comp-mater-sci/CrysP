@@ -27,6 +27,7 @@ use commonUtils
 use fngMathUtils
 use fngPath
 use fngAlgorithm
+use fngLog
 implicit none
 
       type,extends(BasicModule) :: ASRModule
@@ -55,7 +56,8 @@ contains
       !
       integer :: ioerr
       !
-            if (BasicModule_ReadConfig(this,cnfunit) /= 0) return
+            info = BasicModule_ReadConfig(this,cnfunit) 
+            if (info /= 0) return
             info = -1
             ! Read parameters specific for the ASRModule
             read(cnfunit,fmt=*,iostat=ioerr)  this%rotframe
@@ -64,7 +66,7 @@ contains
             read(cnfunit,fmt='(L2)',iostat=ioerr) this%update_texture 
             read(cnfunit,fmt=*,iostat=ioerr)  this%scalingID, this%NormMax, this%NormIter
             if (ioerr /= 0) then
-                  write(*,fmt=902) 'ASRModule'
+                  write(display_unit,fmt=902) 'ASRModule'
                   return
             endif
             info = 0
@@ -114,17 +116,17 @@ contains
       enddo
       !
       ! Introduce youself ;-)
-      write(*,'(A)') 'ASR, $Rev$'
+      write(display_unit,'(A)') 'ASR, $Rev$'
       !
       ! Open input file
       open(unit=dtaunit,file=trim(this%data_fname),status='old',form='formatted',iostat=ioerr)
       if ( ioerr /= 0) then
-            write(*,*) 'Cannot open data file: ', trim(this%data_fname)
+            write(display_unit,*) 'Cannot open data file: ', trim(this%data_fname)
             stop
       endif
       read(dtaunit,fmt='(I5)',iostat=ioerr) npoints
       if ((ioerr /= 0) .or. (npoints <= 0)) then
-            write(*,*) 'Wrong header of data file'
+            write(display_unit,*) 'Wrong header of data file'
             stop
       endif
       !
@@ -146,7 +148,7 @@ contains
       control_variable = 0.D0
       !
       do  point = 1, npoints
-            write(*,800)
+            write(display_unit,800)
             vP = 0.D0
             Pnorm = 0.D0 ! sum||P||
             normP = 0.D0 ! ||P||
@@ -161,11 +163,13 @@ contains
             Pressure = ((St(1,1) + St(2,2) + St(3,3))/3.0) * MI
             Stdev = St - Pressure
             !!! Print the input data:
-            write(*,'(A)') 'Input stress tensor, original reference frame'
-            write(*,400) 'Total stress', 'Deviatoric', 'Pressure'
-            do j=1,3
-                  write(*,411) St(:,j),Stdev(:,j),Pressure(:,j)
-            enddo
+            if (doLogging(fngLogInfo,this%output%verbosity)) then
+                  write(display_unit,'(A)') 'Input stress tensor, original reference frame'
+                  write(display_unit,400) 'Total stress', 'Deviatoric', 'Pressure'
+                  do j=1,3
+                        write(display_unit,411) St(:,j),Stdev(:,j),Pressure(:,j)
+                  enddo
+            endif
             ! Rotate from the original reference frame to the superimposed coordinate system
             !
             Sm = matmul(transpose(Mrot),matmul(Stdev,Mrot))
@@ -174,7 +178,7 @@ contains
             ! Enforce unit length of vS
             vS_norm = vec_norm2(vS)
             if (abs(vS_norm) < epsilon(0.D0)) then
-                  write(*,*) 'Norm of the stress cannot be zero, skipping'
+                  write(display_unit,*) 'Norm of the stress cannot be zero, skipping'
                   cycle
             endif
             vS = vS / vS_norm
@@ -183,7 +187,7 @@ contains
             do 
                   call outputSeparator(teeunits)
                   !! -> Calculate corresponding strain rate vA
-                  call multilevelYLP(vS,vA,vSonA,R,info,.true.,this%ylp)
+                  call multilevelYLP(vS,vA,vSonA,R,info,.true.,this%ylp,verbose=this%output%verbosity)
                   if (info /= 0) then
                         write(display_unit,fmt=960)
                         exit
@@ -206,7 +210,7 @@ contains
                   call KVEC5D2MAT(vSonAn,SmIdent)
                   !
                   ! Print vector form
-                  call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
+                  if (doLogging(fngLogDebug,this%output%verbosity)) call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
                   !
                   StonA = matmul(matmul(Mrot,SonA),transpose(Mrot))
                   StIdent = matmul(matmul(Mrot,SmIdent),transpose(Mrot))
@@ -217,12 +221,14 @@ contains
                   write(ofunit,710) point, increment , root23*normP, Pnorm, root23*totalPnorm, &
                                     plastic_work_total, plast_pot, taylor_factor, scal_s, norm_sona, R, &
                                     Mat33ToVec6(StonA),Mat33ToVec6(D)
-                  ! write the header line
-                  write(display_unit,610)
-                  write(display_unit,600) (trim(display_column_labels(i)), i=1,size(display_column_labels)) 
-                  write(display_unit,601) point, increment , root23*normP, Pnorm, root23*totalPnorm, &
-                                          plastic_work_total, scal_s, norm_sona, R 
-                  write(display_unit,610)
+                  if (doLogging(fngLogInfo,this%output%verbosity)) then
+                        ! write the header line
+                        write(display_unit,610)
+                        write(display_unit,600) (trim(display_column_labels(i)), i=1,size(display_column_labels)) 
+                        write(display_unit,601) point, increment , root23*normP, Pnorm, root23*totalPnorm, &
+                                                plastic_work_total, scal_s, norm_sona, R 
+                        write(display_unit,610)
+                  endif
                   !
                   ! Calculate strain increment; set a value for the control variable
                   select case(this%scalingId)
@@ -241,7 +247,7 @@ contains
                   if ((.not. this%update_texture) .or. (control_variable >= this%NormMax)) exit
                   !
                   normDe = vec_norm2(vDe)
-                  write(*,'(A,1X,F12.6)') 'Norm of vDe = ', normDe 
+                  if (doLogging(fngLogInfo,this%output%verbosity)) write(display_unit,'(A,1X,F12.6)') 'Norm of vDe = ', normDe 
                   ! Calculate strain increment for texture evolution           
                   call KVEC5D2MAT(vDe,De)
                   !
@@ -253,7 +259,7 @@ contains
                   ! Update the texture
                   call makeTextureUpdateStep(De,Se,taylor_factor,this%output%outputRequest,info)
                   if (info /= 0) then
-                        write(*,fmt=970) 
+                        write(display_unit,fmt=970) 
                         exit
                   endif
                   call KMAT2VEC5D(Se,vSe)

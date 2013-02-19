@@ -44,12 +44,11 @@ module dmcAbstractModule
                   class(AbstractModule),intent(inout) :: this
             end function
       
-            subroutine IF_AbstractModule_printConfig(this,outunit,info)
+            integer function IF_AbstractModule_printConfig(this,outunit) 
             import :: AbstractModule
                   class(AbstractModule),intent(in)    :: this
                   integer,intent(in)                  :: outunit
-                  integer,intent(out)                 :: info
-            end subroutine
+            end function
             
             integer function IF_AbstractModule_readConfig(this,cnfunit)
             import :: AbstractModule

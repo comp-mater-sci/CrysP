@@ -25,6 +25,7 @@ use alamUtils
 use dmcBasicModule
 use commonUtils
 use qrsTypes
+use fngLog
 implicit none
 
       integer,parameter                         :: scaleFullTensor = 0, scaleTensileComponent = 1
@@ -46,6 +47,7 @@ implicit none
             
             procedure,pass(this)    :: run => TSAModule_run
 
+            procedure,pass(this)    :: printConfig => TSAModule_printConfig
             
       end type
 
@@ -59,7 +61,8 @@ contains
       integer :: ioerr
       logical :: input_ok = .false.
       !
-            if (BasicModule_ReadConfig(this,cnfunit) /= 0) return
+            info = BasicModule_ReadConfig(this,cnfunit)
+            if (info /= 0) return
             input_ok = .false.
             info = -1
             ! Read parameters specific for the TSAModule program
@@ -85,6 +88,43 @@ contains
 #undef MSG_GROUP_ERRORS
       end function
 
+      
+      integer function TSAModule_printConfig(this,outunit) result (info)
+      implicit none
+      class(TSAModule),intent(in)         :: this
+      integer,intent(in)                  :: outunit
+      !
+      character(len=32)       :: description
+      !
+            info = BasicModule_printConfig(this,outunit)
+            if (info /= 0) return
+            info = -1
+            ! Introduce youself ;-)
+            write(outunit,'(A)') 'TSAModule, $Rev$'
+            !
+            if (doLogging(fngLogInfo,this%output%verbosity)) then 
+                  if (this%stress_state > 0.0) then
+                        description = 'uniaxial tensile'      
+                  else
+                        description = 'uniaxial compression'
+                  endif
+                  write(outunit,fmt=fmtMsg2Msg) 'Test type:', description
+                  write(outunit,fmt=fmtMsg2Other//'F10.4)') 'Orientation of the sample:', this%angle
+                  write(outunit,fmt=fmtMsg2Other//'F10.4)') 'Stress ratio:', this%rho
+                  !
+                  select case(this%scalingID)
+                        case(scaleFullTensor)
+                              write(outunit,fmt=fmtMsg2Msg) 'Strain calculation:', 'scaling full tensor'
+                        case(scaleTensileComponent)
+                              write(outunit,fmt=fmtMsg2Msg) 'Strain calculation:', 'scaling tensile component'
+                        case default
+                              write(outunit,*) 'Unknown scaling type, full tensor will be used'
+                  end select
+            endif
+            info = 0
+      !
+      end function
+      
 
       subroutine TSAModule_Run(this,info)
       implicit none
@@ -106,30 +146,11 @@ contains
       integer     :: step,j 
       !
       integer,parameter       :: thisunit = 90, ofunit = 91, histunit = 92
-      character(len=32)       :: description
+      
       !
       info = 1
       !
-      ! Introduce youself ;-)
-      write(*,'(A)') 'TSAModule, $Rev$'
 
-      if (this%stress_state > 0.0) then
-            description = 'uniaxial tensile'      
-      else
-            description = 'uniaxial compression'
-      endif
-      write(display_unit,fmt=fmtMsg2Msg) 'Test type:', description
-      write(display_unit,fmt=fmtMsg2Other//'F10.4)') 'Orientation of the sample:', this%angle
-      write(display_unit,fmt=fmtMsg2Other//'F10.4)') 'Stress ratio:', this%rho
-      !
-      select case(this%scalingID)
-            case(scaleFullTensor)
-                  write(display_unit,fmt=fmtMsg2Msg) 'Strain calculation:', 'scaling full tensor'
-            case(scaleTensileComponent)
-                  write(display_unit,fmt=fmtMsg2Msg) 'Strain calculation:', 'scaling tensile component'
-            case default
-                  write(*,*) 'Unknown scaling type, full tensor will be used'
-      end select
       ! Open and initialize result files
       open(unit=ofunit,file=trim(this%output%outputPrefix)//'.tsa',status='replace')
       !      
@@ -154,7 +175,7 @@ contains
       plastic_work_total = 0.D0
       step = 0
       do 
-            write(*,800)
+            if (doLogging(fngLogDebug,this%output%verbosity))  write(display_unit,800)
             !! -> Take uniaxial/slightly biaxial tensile stress, rotate it to given direction     
             St = 0.D0
             St(1,1) = this%stress_state * sqrt(3.D0/2.D0)/dsqrt(this%rho**2-this%rho+1)
@@ -171,7 +192,7 @@ contains
             vS = vS / vec_norm2(vS)
             !
             !! -> Calculate corresponding strain rate vA
-            call multilevelYLP(vS,vA,vSonA,R,info,.true.,this%ylp)
+            call multilevelYLP(vS,vA,vSonA,R,info,.true.,this%ylp,verbose=this%output%verbosity)
             if (info /= 0) then
                   write(display_unit,fmt=960)
                   exit
@@ -183,15 +204,19 @@ contains
             ! Calculate normalized stess
             vSonAn = vSonA / vec_norm2(vSonA) 
             !
-            call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
+            if (doLogging(fngLogInfo,this%output%verbosity)) call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
             !
             call KVEC5D2MAT(vA,D)
             call KVEC5D2MAT(vSonAn,SmIdent)
-            write(*,400)
-            do j=1,3
-                  write(*,401) Sm(j,:),SmIdent(j,:),D(j,:)
-            enddo
-            write(*,*)
+            !
+            if (doLogging(fngLogDebug,this%output%verbosity)) then
+                  write(display_unit,400)
+                  do j=1,3
+                        write(display_unit,401) Sm(j,:),SmIdent(j,:),D(j,:)
+                  enddo
+                  write(display_unit,*)
+            endif
+            
             !! Calculate q and r in tensile reference frame
             ! Rotate back to the "tensile test" coordinate system   
             Dt = matmul(matmul(Mrot,D),transpose(Mrot))
@@ -203,7 +228,7 @@ contains
             taylor_factor = 0.D0
             call getTaylorFactor(1,taylor_factor,info)
             if (info /= 0) then
-                  write(*,fmt=980) 
+                  write(display_unit,fmt=980) 
                   exit
             endif
             !! -> Report the results
@@ -211,12 +236,14 @@ contains
                               taylor_factor, & 
                               norm_sona, qrsvalue, qrsvalue_accum%qvalue, qrsvalue_accum%rvalue, R
             !
-            write(display_unit,710)
-            write(display_unit,700) OUTHEADER ! write header line
-            write(display_unit,701) step, root23*normP, Pnorm, TNorm, plastic_work_total, plast_pot, &
-                                    taylor_factor, &
-                                    norm_sona, qrsvalue, R
-            write(display_unit,710)
+            if (doLogging(fngLogInfo,this%output%verbosity)) then
+                  write(display_unit,710)
+                  write(display_unit,700) OUTHEADER ! write header line
+                  write(display_unit,701) step, root23*normP, Pnorm, TNorm, plastic_work_total, plast_pot, &
+                                          taylor_factor, &
+                                          norm_sona, qrsvalue, R
+                  write(display_unit,710)
+            endif
             !!
             !
             select case(this%scalingID)
@@ -233,24 +260,26 @@ contains
                   !! -> Scale the vA in order to get ||Dt_11|| equal to PNormIter
                   vD = vA * (this%PNormIter / abs(Dt(1,1)))
             case default
-                  write(*,*) 'Unknown scaling type, full tensor will be used'
+                  write(display_unit,*) 'Unknown scaling type, full tensor will be used'
                   vD = vA                  
             end select
             normD = vec_norm2(vD)
-            write(*,'(A,1X,F12.6)') 'Norm of vD = ', normD 
+            if (doLogging(fngLogDebug,this%output%verbosity)) write(display_unit,'(A,1X,F12.6)') 'Norm of vD = ', normD 
             ! Calculate strain increment for texture evolution           
             call KVEC5D2MAT(vD,De)
             !
             !! -> Impose De as ALAMEL input, advance the state of texture
             !
-            write(*,*) 'Strain to be imposed for texture evolution De = '
-            write(*,500) De
-            write(*,*)
+            if (doLogging(fngLogInfo,this%output%verbosity)) then
+                  write(display_unit,*) 'Strain to be imposed for texture evolution De = '
+                  write(display_unit,500) De
+                  write(display_unit,*)
+            endif
             !
             ! Update the texture
             call makeTextureUpdateStep(De,Se,taylor_factor,this%output%outputRequest,info)
             if (info /= 0) then
-                  write(*,fmt=970) 
+                  write(display_unit,fmt=970) 
                   exit
             endif
             call KMAT2VEC5D(Se,vSe)
@@ -273,12 +302,14 @@ contains
             write(histunit,'(A,T35,F12.8)') 'Increment of plastic work:', plastic_work_inc
             write(histunit,'(A,T35,F12.8)') 'Total of plastic work:', plastic_work_total
             !
-            write(*,'(A)') 'Total strain:'
-            write(*,'(A,1X,F12.6)') '||P|| =', normP
-            write(*,'(A,1X,F12.6)') 'sum||De|| =', Pnorm
-            write(*,*) 'P='
-            write(*,500) P
-            write(*,'(A,1X,E12.5)') 'Wtot =', plastic_work_total
+            if (doLogging(fngLogErr,this%output%verbosity)) then
+                  write(display_unit,'(A)') 'Total strain:'
+                  write(display_unit,'(A,1X,F12.6)') '||P|| =', normP
+                  write(display_unit,'(A,1X,F12.6)') 'sum||De|| =', Pnorm
+                  write(display_unit,*) 'P='
+                  write(display_unit,500) P
+                  write(display_unit,'(A,1X,E12.5)') 'Wtot =', plastic_work_total
+            endif
             !
             step = step + 1 
       enddo            

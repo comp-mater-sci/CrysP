@@ -75,12 +75,12 @@ contains
                   !cnf%output_config%nmss = 1 
             endif
             !
-            write(*,fmt=30) 'Initializing the multilevel model...'
+            write(display_unit,fmt=30) 'Initializing the multilevel model...'
             call initAltay(this%altay,info)
             if (info == 0) then
-                  write(*,fmt=31) 'Done.'
+                  write(display_unit,fmt=31) 'Done.'
             else
-                  write(*,fmt=31) 'Failed.'
+                  write(display_unit,fmt=31) 'Failed.'
             endif
             30 format(A,\)
             31 format(1X,A)
@@ -131,20 +131,19 @@ contains
       
       
       
-      subroutine BasicModule_printConfig(this,outunit,info)
+      integer function BasicModule_printConfig(this,outunit) result(info)
       use altayConfig
       implicit none
       class(BasicModule),intent(in)       :: this
       integer,intent(in)                  :: outunit
-      integer,intent(out)                 :: info
       !
             info = -1
             
             select case (this%altay%model_id)
             case(modelAlamel)
-                  write(*,fmt=202) 'ALAMEL'
+                  write(display_unit,fmt=202) 'ALAMEL'
             case(modelFCTaylor)
-                  write(*,fmt=202) 'FC Taylor'
+                  write(display_unit,fmt=202) 'FC Taylor'
             end select
             !
       
@@ -162,9 +161,9 @@ contains
             write(outunit,fmt=101) 'Slip systems definition:', trim(this%altay%slipsystem%input_fname)
             !
             if (this%ylp%linearize) then
-                  write(*,100) 'Info: the program will first attempt to linearize the identification problems.'
+                  write(display_unit,100) 'Info: the program will first attempt to linearize the identification problems.'
             else
-                  write(*,100) 'Info: The program will attempt to solve the nonlinear problems.'
+                  write(display_unit,100) 'Info: The program will attempt to solve the nonlinear problems.'
             endif
             !
             info = 0
@@ -177,7 +176,7 @@ contains
             201 format('Input texture file:', T35,A)
             202 format('Multilevel model:', T35,A)
       !
-      end subroutine
+      end function
       
 
       !
@@ -226,7 +225,7 @@ contains
                   case(2)       ! CUR file    
                         read(cnfunit,'(I2,1X,A)',iostat=ioerr) cnf%texture%block_id, cnf%texture%input_fname
                   case default
-                        write(*,*) 'Incorrect texture type: ', cnf%texture%input_type    
+                        write(display_unit,*) 'Incorrect texture type: ', cnf%texture%input_type    
             end select
             if (.not. ioStatusOK(ioerr)) return
             call stripComment(cnf%texture%input_fname)
@@ -289,7 +288,7 @@ contains
             read(cnfunit,fmt='(A)',iostat=ioerr) tmp_fname
             call stripComment(tmp_fname)
             ! Interpret the fname
-            open(newunit=nparunit,file=tmp_fname,iostat=ioerr)
+            open(newunit=nparunit,file=tmp_fname,status='old',iostat=ioerr)
             if (ioerr /= 0) return
             info = ReadPar11(nparunit,hc%params)
             close(nparunit)

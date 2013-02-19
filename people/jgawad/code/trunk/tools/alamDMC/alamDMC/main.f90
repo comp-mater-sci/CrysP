@@ -67,13 +67,13 @@ implicit none
             call finalize(stopcode_inputerror)
       endif
       ! Print banner
-      write(*,'(A)') 'AlamDMC: $Rev$'
+      write(display_unit,'(A)') 'AlamDMC: $Rev$'
       !
       ! open and read the config file      
-      write(*,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(2))
+      write(display_unit,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(2))
       open(cnfunit,file=trim(cmdline%argv(2)),status='old',iostat=ioerr)
       if (ioerr /= 0) then
-            write(*,*) 'Cannot open config file: ', trim(cmdline%argv(2))
+            write(display_unit,*) 'Cannot open config file: ', trim(cmdline%argv(2))
             call finalize(stopcode_inputerror)
       endif
       !
@@ -112,23 +112,23 @@ implicit none
       endif
        
       ! Show general configuration of the multilevel model
-      call the_module%printConfig(display_unit,info)
+      info = the_module%printConfig(display_unit)
       !
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Run the module
       call the_module%run(info)
       !
-      write(*,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
-      write(*,'(A,1X,A,1X,A,\)') 'Execution of module', trim(moduleName), 'finished'
+      write(display_unit,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
+      write(display_unit,'(A,1X,A,1X,A,\)') 'Execution of module', trim(moduleName), 'finished'
       if (info == 0) then
-            write(*,'(1X,A)') 'succesfully.'
+            write(display_unit,'(1X,A)') 'succesfully.'
       else
-            write(*,'(1X,A)') 'with errors.'
+            write(display_unit,'(1X,A)') 'with errors.'
       endif
 
       call finalizeAltay(info)
       if (info /= 0) then
-            write(*,'(A)') 'Problems have been encountered while finalizing libaltay'
+            write(display_unit,'(A)') 'Problems have been encountered while finalizing libaltay'
       endif
       
 

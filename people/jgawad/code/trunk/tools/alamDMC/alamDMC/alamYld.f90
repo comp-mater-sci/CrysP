@@ -26,6 +26,7 @@ use dmcBasicModule
 use fngAlgorithm
 use fngErrcodes
 use fngRange
+use fngLog
 implicit none
 
 private
@@ -80,7 +81,8 @@ contains
       double precision :: norm
       logical :: normalize
       !
-            if (BasicModule_ReadConfig(this,cnfunit) /= 0) return
+            info = BasicModule_ReadConfig(this,cnfunit)
+            if (info /= 0) return
             info = -1
             ! Read parameters specific for the alamASR program
             this%ptr_theta_range => rangeFromConfig(cnfunit,info)
@@ -193,11 +195,14 @@ contains
                   ! Loop over the range of theta angles
                   i = 1
                   do while (this%ptr_theta_range%next(theta))
-                        write(*,800)
-                        !
-                        write(display_unit,fmt=200)
-                        write(display_unit,fmt=201) theta
-                        write(display_unit,fmt=200)
+                        
+                        if (doLogging(fngLogDebug,this%output%verbosity)) then
+                              write(display_unit,800)
+                              !
+                              write(display_unit,fmt=200)
+                              write(display_unit,fmt=201) theta
+                              write(display_unit,fmt=200)
+                        endif
                         !
                         theta = deg2rad(theta) 
                         ! Combine the base vectors
@@ -206,11 +211,12 @@ contains
                         !                  
                         if (findSolution() /= 0) cycle
                         !
-                        write(display_unit,fmt=510)
-                        write(display_unit,fmt=500) 'theta', 'S', 'S_rel', 'W' 
-                        write(display_unit,fmt=501) rad2deg(theta), scal_s, scal_s_rel, plast_pot
-                        write(display_unit,fmt=510)
-
+                        if (doLogging(fngLogInfo,this%output%verbosity)) then
+                              write(display_unit,fmt=510)
+                              write(display_unit,fmt=500) 'theta', 'S', 'S_rel', 'W' 
+                              write(display_unit,fmt=501) rad2deg(theta), scal_s, scal_s_rel, plast_pot
+                              write(display_unit,fmt=510)
+                        endif
                         yldRes(i) = yldResult(theta, w, scal_s, scal_s_rel, norm_sona, plast_pot, &
                                               pair_double(scal_s_rel * cos(theta), scal_s_rel * sin(theta)),&
                                               pair_double(0.D0,0.D0),beta, R)
@@ -224,7 +230,7 @@ contains
                         ! Get the positions of the bracketing points:
                         posA = merge(npoints-1,i - 1,i == 1)
                         posB = merge(2,i + 1, i == npoints)
-                        ! write(*,*) posA,i,posB                        
+                        ! write(display_unit,*) posA,i,posB                        
                         call getArrow(yldRes(posA)%scal_s_rel_cart, yldRes(posB)%scal_s_rel_cart, &
                                       yldRes(i)%scal_s_rel_cart, & 
                                       1.D0,yldRes(i)%normal_cart,yldRes(i)%beta)
@@ -271,17 +277,15 @@ contains
                   vS = vS / vS_norm
 
                   !! -> Calculate corresponding strain rate vA
-                  call multilevelYLP(vS,vA,vSonA,R,info,.true.,this%ylp)
+                  call multilevelYLP(vS,vA,vSonA,R,info,.true.,this%ylp,verbose=this%output%verbosity)
                   !
                   plast_pot = dot_product(vA, vSonA)
                   ! Calculate normalized stess
                   norm_sona = vec_norm2(vSonA)
                   scal_s = norm_sona / vS_norm
                   vSonAn = vSonA / vec_norm2(vSonA) 
-
                   ! Print vector form
-                  call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
-
+                  if (this%output%verbosity > 1) call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
                   scal_s_rel = scal_s * iunilen
                   info = 0
 #define MSG_GROUP_ERRORS

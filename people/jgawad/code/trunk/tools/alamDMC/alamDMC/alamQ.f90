@@ -28,6 +28,7 @@ use commonConfig
 use commonUtils
 use fngMathUtils
 use fngRange
+use fngLog
 
 
 implicit none
@@ -47,6 +48,8 @@ implicit none
       
             procedure,pass(this)    :: readConfig => QModule_ReadConfig
             
+            procedure,pass(this)    :: printConfig => QModule_printConfig
+            
             procedure,pass(this)    :: run => QModule_run
             
       end type
@@ -61,7 +64,8 @@ contains
       !
       integer :: ioerr
       !
-            if (BasicModule_ReadConfig(this,cnfunit) /= 0) return
+            info = BasicModule_ReadConfig(this,cnfunit)
+            if (info /= 0) return
             info = -1
             ! Read parameters specific for the QModule module
             ! Read QModule-specific parameters
@@ -89,7 +93,42 @@ contains
 #undef MSG_GROUP_ERRORS
       end function
 
-
+      
+      integer function QModule_printConfig(this,outunit) result (info)
+      implicit none
+      class(QModule),intent(in)         :: this
+      integer,intent(in)                  :: outunit
+      !
+      integer :: ioerr
+      !
+            info = BasicModule_printConfig(this,outunit)
+            if (info /= 0) return
+            !
+            info = -1
+            ! Print banner
+            write(outunit,'(A)') 'QModule: $Rev$'
+            if (doLogging(fngLogInfo,this%output%verbosity)) then
+                  ! Print-out summary of the configuration 
+                  !write(display_unit,fmt=fmtMsg2Other//'2(F8.3,1X))',iostat=ioerr) 'Angular range:', this%fi2min, this%fi2max
+                  write(outunit,fmt=fmtMsg2Int,iostat=ioerr)   'Number of points:', this%ptr_range%size() 
+                  write(outunit,fmt=fmtMsg2Float,iostat=ioerr) 'Stress ratio', this%rho 
+                  !
+                  write(outunit,fmt='(A,\)') 'Info:'
+                  if (this%reuse_previous) then
+                        if (this%resuse_stainrate) then
+                              write(outunit,'(1X,A,\)') 'Strain rate'
+                        else
+                              write(outunit,'(1X,A,\)') 'Stress'
+                        endif
+                        write(outunit,'(1X,A)') 'from the previous solution will be re-used.'
+                  else
+                        write(outunit,'(1X,A)') 'von Mises guess will be used.'
+                  endif
+            endif
+            info = 0
+      !
+      end function
+      
       subroutine QModule_Run(this,info)
       implicit none
       class(QModule),intent(inout)              :: this
@@ -115,29 +154,11 @@ contains
       !
       info = 1
       !
-      ! Print banner
-      write(display_unit,'(A)') 'QModule: $Rev$'
+      
       !
       !
       npoints = this%ptr_range%size()
       ! 
-      ! Print-out summary of the configuration 
-!      write(display_unit,fmt=fmtMsg2Other//'2(F8.3,1X))',iostat=ioerr) 'Angular range:', this%fi2min, this%fi2max
-      write(display_unit,fmt=fmtMsg2Int,iostat=ioerr)   'Number of points:', npoints 
-      write(display_unit,fmt=fmtMsg2Float,iostat=ioerr) 'Stress ratio', this%rho 
-      !
-      write(display_unit,fmt='(A,\)') 'Info:'
-      if (this%reuse_previous) then
-            if (this%resuse_stainrate) then
-                  write(display_unit,'(1X,A,\)') 'Strain rate'
-            else
-                  write(display_unit,'(1X,A,\)') 'Stress'
-            endif
-            write(display_unit,'(1X,A)') 'from the previous solution will be re-used.'
-      else
-            write(display_unit,'(1X,A)') 'von Mises guess will be used.'
-      endif
-     
       open(unit=ofunit,file=trim(this%output%outputPrefix)//'.xqrs',iostat=ioerr)
       if (ioerr /= 0) then
             write(display_unit,fmt=952)
@@ -164,9 +185,11 @@ contains
       useVMGuess = .true.
       i = 0
       do while (this%ptr_range%next(fi2))
-            i = i + 1            
-            write(*,800)
-            write(*,'(/,A,1X,I4,1X,A,1X,F8.3,A,/)')'Point:',i,'fi2 =',fi2, ' degs'
+            i = i + 1
+            if (doLogging(fngLogInfo,this%output%verbosity)) then
+                  write(display_unit,800)
+                  write(display_unit,'(/,A,1X,I4,1X,A,1X,F8.3,A,/)')'Point:',i,'fi2 =',fi2, ' degs'
+            endif
             !
             phis(i) = fi2
             !
@@ -195,7 +218,7 @@ contains
                   useVMGuess = .false.
             endif
             !
-            call multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,this%ylp)
+            call multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,this%ylp,verbose=this%output%verbosity)
             if (info /= 0) then
                   write(display_unit,fmt=960)
                   exit
@@ -206,7 +229,7 @@ contains
             if (this%calculate_MFactor) then
                   call getTaylorFactor(1,mfactors(i),info)
                   if (info /= 0) then
-                        write(*,980)
+                        write(display_unit,980)
                         exit
                   endif
             endif
@@ -215,18 +238,19 @@ contains
             scal_s = SonA_len / vec_norm2(vS)
             vSonAn = vSonA / SonA_len
             !
-            call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
+            if (doLogging(fngLogInfo,this%output%verbosity)) call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
             ! Convert AONSET vector to tensor form
             call KVEC5D2MAT(vA,Dmcoord)
 
             call KVEC5D2MAT(vSonAn,SmIdent)
             
-            write(*,400)
-            do j=1,3
-                  ! would be just:  write(*,401) Smcoord(j,:),SmIdent(j,:),Dmcoord(j,:)
-                  write(*,401) (Smcoord(j,k),k=1,3), (SmIdent(j,k),k=1,3), (Dmcoord(j,k), k=1,3)
-            enddo
-            
+            if (doLogging(fngLogInfo,this%output%verbosity)) then
+                  write(display_unit,400)
+                  do j=1,3
+                        ! would be just:  write(display_unit,401) Smcoord(j,:),SmIdent(j,:),Dmcoord(j,:)
+                        write(display_unit,401) (Smcoord(j,k),k=1,3), (SmIdent(j,k),k=1,3), (Dmcoord(j,k), k=1,3)
+                  enddo
+            endif            
             ! Rotate back to the "tensile test" coordinate system  
             Dtcoord = rotateSRTensorFrom(Dmcoord, Mrot)
             !
@@ -243,11 +267,13 @@ contains
             !            
             ! Calculate output variables
             qrsvalues(i) = calculateQRS(Dtcoord,scal_s)
-            !            
-            write(display_unit,fmt=701)
-            write(display_unit,fmt=700)
-            write(display_unit,fmt=710) phis(i), this%rho, qrsvalues(i), mfactors(i),residuals(i)
-            write(display_unit,fmt=701)
+            !
+            if (doLogging(fngLogInfo,this%output%verbosity)) then
+                  write(display_unit,fmt=701)
+                  write(display_unit,fmt=700)
+                  write(display_unit,fmt=710) phis(i), this%rho, qrsvalues(i), mfactors(i),residuals(i)
+                  write(display_unit,fmt=701)
+            endif
             !
             info = 0
       enddo
@@ -255,12 +281,14 @@ contains
       ! End of the main loop, check what's the status of the last operation
       if (info /= 0) return
       !
-      ! Write complete output to the terminal
-      write(*,800)
-      write(display_unit,fmt=700)
-      do i=1,npoints
-            write(*,fmt=710) phis(i), this%rho, qrsvalues(i), mfactors(i), residuals(i)
-      enddo
+      if (doLogging(fngLogErr,this%output%verbosity)) then
+            ! Write complete output to the terminal
+            write(display_unit,800)
+            write(display_unit,fmt=700)
+            do i=1,npoints
+                  write(display_unit,fmt=710) phis(i), this%rho, qrsvalues(i), mfactors(i), residuals(i)
+            enddo
+      endif
       ! Write output file
       if (this%fold_symmetry) then
             ! Average over symmetric positions

@@ -16,6 +16,7 @@
 !> This module contains subroutines, data structures and common variables
 !> for shared configuration features of all alamDMC modules
 module commonConfig
+implicit none
 
       character(len=20),parameter   :: fmtMsg2Msg   = '(A,T35,A)'
       character(len=20),parameter   :: fmtMsg2Int   = '(A,T35,I4)'
@@ -23,16 +24,17 @@ module commonConfig
 
       character(len=20),parameter   :: fmtMsg2Any   = '(A,T35)'
       character(len=20),parameter   :: fmtMsg2Other = '(A,T35,'  ! Note: user is responsible for finishing the format string      
-
+      
 contains
 
       !> Check exit status of IO operation
       logical function ioStatusOK(ioerr)
+      use alamUtils
       implicit none
       integer,intent(in) :: ioerr
             ! Status 
             if (ioerr /= 0) then
-                  write(*,*) 'An error has occured while reading config file'
+                  write(display_unit,*) 'An error has occured while reading config file'
                   ioStatusOK = .false.  
             endif
             ioStatusOK = .true.
