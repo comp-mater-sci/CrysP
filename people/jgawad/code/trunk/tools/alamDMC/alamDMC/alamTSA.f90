@@ -26,6 +26,7 @@ use dmcBasicModule
 use commonUtils
 use qrsTypes
 use fngLog
+use fngAlgorithm
 implicit none
 
       integer,parameter                         :: scaleFullTensor = 0, scaleTensileComponent = 1
@@ -143,22 +144,27 @@ contains
       double precision                          :: R
       double precision                          :: plastic_work_inc = 0.D0, plastic_work_total = 0.D0
       double precision                          :: taylor_factor
-      integer     :: step,j 
+      integer     :: step,i,j 
       !
       integer,parameter       :: thisunit = 90, ofunit = 91, histunit = 92
-      
+      ! For file output
+      integer,parameter :: ncolumn_labels = 14, column_width = 15, short_column_width = 7
+      character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = [ character(len=column_width) ::  &
+           'iter','eps_vM','Pnorm','Tnorm','W','plast_pot','M','||SonA||','q-value','r-value','s-value', 'q-valueA', &
+           'r-valueA','R'  ]
+      ! For display output
+      integer,parameter :: ncolumn_labels_display = 12, column_width_display = 12, short_column_width_display = 5
+      character(len=column_width_display),dimension(ncolumn_labels_display) :: display_column_labels = [ character(len=14) ::  &
+         'iter','eps_vM','Pnorm','Tnorm','W','plast_pot','M','||SonA||','q-value','r-value','s-value', 'R'    ]
+
       !
       info = 1
       !
-
       ! Open and initialize result files
       open(unit=ofunit,file=trim(this%output%outputPrefix)//'.tsa',status='replace')
-      !      
-#define COMMONOUTHEADER 'iter','eps_vM','Pnorm','Tnorm','W','plast_pot','M','||SonA||','q-value','r-value','s-value'      
-#define OUTHEADER COMMONOUTHEADER##,'R'
-#define FILEOUTHEADER COMMONOUTHEADER##,'q-valueA','r-valueA','R'
+      write(ofunit,701) centered(1,short_column_width), (centered(i,column_width), i = 2, ncolumn_labels)
+      write(ofunit,700) file_column_labels(1)(1:short_column_width), (centered(file_column_labels(i)), i=2,ncolumn_labels) 
       !
-      write(ofunit,fmt=705) FILEOUTHEADER ! write header line
       open(unit=histunit,file=trim(this%output%outputPrefix)//'.hts',status='replace')
        
       fi1 = 0.0
@@ -232,17 +238,18 @@ contains
                   exit
             endif
             !! -> Report the results
-            write(ofunit,706) step, root23*normP, Pnorm, TNorm, plastic_work_total, plast_pot, &
+            write(ofunit,710) step, root23*normP, Pnorm, TNorm, plastic_work_total, plast_pot, &
                               taylor_factor, & 
                               norm_sona, qrsvalue, qrsvalue_accum%qvalue, qrsvalue_accum%rvalue, R
             !
             if (doLogging(fngLogInfo,this%output%verbosity)) then
-                  write(display_unit,710)
-                  write(display_unit,700) OUTHEADER ! write header line
-                  write(display_unit,701) step, root23*normP, Pnorm, TNorm, plastic_work_total, plast_pot, &
+                  write(display_unit,601)
+                  write(display_unit,600) display_column_labels(1)(1:short_column_width), & 
+                                          (trim(display_column_labels(i)), i=2,size(display_column_labels)) 
+                  write(display_unit,610) step, root23*normP, Pnorm, TNorm, plastic_work_total, plast_pot, &
                                           taylor_factor, &
                                           norm_sona, qrsvalue, R
-                  write(display_unit,710)
+                  write(display_unit,601)
             endif
             !!
             !
@@ -295,20 +302,20 @@ contains
             ! Write history of deformations
             write(histunit,800)
             write(histunit,'(A,1X,I4)') 'Step:', step
-            write(histunit,601)
+            write(histunit,510)
             do j=1,3
-                  write(histunit,602) De(:,j), Se(:,j)
+                  write(histunit,511) De(:,j), Se(:,j)
             enddo
             write(histunit,'(A,T35,F12.8)') 'Increment of plastic work:', plastic_work_inc
             write(histunit,'(A,T35,F12.8)') 'Total of plastic work:', plastic_work_total
             !
             if (doLogging(fngLogErr,this%output%verbosity)) then
-                  write(display_unit,'(A)') 'Total strain:'
+                  write(display_unit,'(A)') 'Total strain P:'
+                  write(display_unit,500) P
                   write(display_unit,'(A,1X,F12.6)') '||P|| =', normP
                   write(display_unit,'(A,1X,F12.6)') 'sum||De|| =', Pnorm
-                  write(display_unit,*) 'P='
-                  write(display_unit,500) P
                   write(display_unit,'(A,1X,E12.5)') 'Wtot =', plastic_work_total
+                  write(display_unit,*)
             endif
             !
             step = step + 1 
@@ -322,21 +329,27 @@ contains
       400 format('|Smcoord',T42,'|SmIdent',T86,'|Dmcoord')
       401 format(3(E11.4,1X),T42,3(E11.4,1X),T86,3(E11.4,1X))
 
-      500 format(3(3(E10.3,1X),/))
-      501 format(3(E10.3,1X),/,3(E10.3,1X),/,3(E10.3,1X))
+      500 format(2(3(E12.5,1X),/),(3(E12.5,1X)))
       
-      601 format('Strain increment',T40,'Deviatoric stress')
-      602 format(3(E10.3,1X),T40,3(E10.3,1X))
+      501 format(3(E12.5,1X),/,3(E12.5,1X),/,3(E12.5,1X))
       
-      ! Format for screen output
-      700 format(1X,A5,1X,11(A12,1X))
-      701 format(1X,I5,1X,11(E12.5,1X))
-      ! Format for file output
-      705   format(1X,A5,1X,13(A12,1X))
-      706 format(1X,I5,1X,13(E12.5,1X))
+      510 format('Strain increment',T40,'Deviatoric stress')
+      511 format(3(E10.3,1X),T40,3(E10.3,1X))
       
-      710 format('|',5('-'),'|',11(12('-'),'|'))
+      
 
+          
+      ! Formats for the display
+      600 format(1(1X,A5),11(A12,1X))
+      601 format(1('|',5('-')),'|',11(12('-'),'|'))
+      610 format(1(1X,I5),11(F12.6,1X))
+
+      ! Formats for the output file
+      700 format(1X, 1(A7,1X),13(A18,  1X))
+      701 format('#',1(A7,1X),13(A18,  1X))
+      710 format(1X, 1(I7,1X),13(E18.9,1X))
+          
+          
 #define MSG_GROUP_RULERS     
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
