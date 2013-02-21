@@ -124,7 +124,8 @@ contains
                   ! PEBP model
                   cods1(L+1:L+4)='.BPM'
                   ! UNIT IMP4 = state variables of PEBP KOST11
-                  open (unit=IMP4,file=cods1,status='replace')
+                  info = KS_openStateFile(IMP4,fname=cods1,mode='w')
+                  if (info /= 0) return
             endif
 #endif
             if (acnf%output_config%NMSS /= 0) then
@@ -167,7 +168,9 @@ contains
                   if (info /= 0) return
                   if (acnf%hardening%PEBPCnf%read_state) then 
                         ! Load state variables
-                        info = KS_readState(acnf%hardening%PEBPCnf%input_fname,IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
+                        info = KS_openStateFile(IPEBPSTAT,acnf%hardening%PEBPCnf%input_fname, mode='r')
+                        if (info /= 0) return
+                        info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
                   endif
             endif      
 #endif

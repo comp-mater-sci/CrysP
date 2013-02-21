@@ -43,6 +43,10 @@
 !       -> addition of the public procedures:
 !             WriteHeadSVfile 
 !             ReadHeadSVfile.
+!    v1.7.1 by J. Gawad, CS, and P. Eyckens, MTM, KU Leuven, 21 February 2013:
+!       -> fix to the API of the WriteHeadSVfile and ReadHeadSVfile: both are turned into functions.
+!          The previous implementation didn't include any possibility of reporting exit codes.
+!
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST= 11
@@ -859,12 +863,9 @@
       
       
       !CONTAINed by MODULE KOST1x:
-      SUBROUTINE WriteHeadSVfile(unit)
-      integer,      INTENT(IN)  :: unit
-      
-      !local variables declarations
-      integer :: iError
-      
+      integer function WriteHeadSVfile(unit) result(iError)
+      integer,intent(in)  :: unit
+      !      
       write(unit,fmt=100,err=666)"# CB         : [1]RHOcb                                                    "
       write(unit,fmt=100,err=666)"# CBB1(01-1) : [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
       write(unit,fmt=100,err=666)"# CBB2(-101) : [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  " 
@@ -886,15 +887,15 @@
 100   format(A76)
 666   iError = KS_ErrIO !Error in reading from file
       !
-      END SUBROUTINE WriteHeadSVfile
+      end function WriteHeadSVfile
       
       
       
-      SUBROUTINE ReadHeadSVfile(unit)
-      integer,      INTENT(IN)  :: unit
+      integer function ReadHeadSVfile(unit) result(iError)
+      integer,intent(in)  :: unit
       
       !local variables declarations
-      integer :: iError, i
+      integer ::  i
       character :: tmp
       
       do i=1,15
@@ -907,6 +908,6 @@
 100   format(A76)
 666   iError = KS_ErrIO !Error in reading from file
       !
-      END SUBROUTINE ReadHeadSVfile
+      end function ReadHeadSVfile
       
       END MODULE KOST1x

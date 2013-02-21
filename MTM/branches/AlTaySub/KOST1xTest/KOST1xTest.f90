@@ -1,7 +1,7 @@
       program KOST1xTest
     
       use KOST1x    
-      
+      use KOST1xState
       implicit none
           
       integer :: i, iError
@@ -33,8 +33,8 @@
       endif
       
       !Let's write this annealed state to file.
-      open(unit=iOutFile,file='out.txt',status='replace')
-      call WriteHeadSVfile(iOutFile) !First, write an explicatory header in this file
+      
+      iError = KS_openStateFile(iOutFile,'out.txt','w')
       write(iOutFile,*) "The annealed state looks as follows:"
       iError = WriteSVfile(iOutFile,CurState)
       if (iError /= 0) then

@@ -88,8 +88,7 @@ C     UNIT IMP3 = PRINTER
       ! PEBP model
       cods1(L+1:L+4)='.BPM'
 C     UNIT IMP4 = state variables of PEBP KOST11
-      open (unit=IMP4,file=cods1,status='replace')
-      call WriteHeadSVfile(IMP4)
+      info = KS_openStateFile(IMP4,cods1,'w')
 #endif
       ! 
       cods1(L+1:L+4)='.MSS'
@@ -160,7 +159,9 @@ C
             read(KLEC,66) read_state, nblock, fname_pebp
             if (read_state) then
                   call stripComment(fname_pebp)
-                  info = KS_readState_file(fname_pebp,IPEBPSTAT,nblock)
+                  info = KS_openStateFile(IPEBPSTAT,fname_pebp,mode='r')
+                  if (info /= 0) return
+                  info = KS_readState_file(IPEBPSTAT,nblock)
                   if (info /= 0) then 
                         write(IMP,fmt=601)
                         write(*,fmt=601)

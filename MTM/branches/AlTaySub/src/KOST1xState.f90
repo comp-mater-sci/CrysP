@@ -92,6 +92,39 @@ contains
             info = KS_OK
       !      
       end subroutine
+
+      !> Open state file either for reading or writing.
+      !>
+      !> The function opens the file and, if requested, performs some initialization 
+      !> actions, such as processing file header.
+      integer function KS_openStateFile(iounit,fname,mode,use_header) result(info)
+      implicit none
+      integer,intent(in)                              :: iounit   !< IO unit to be used
+      character(len=*),intent(in)                     :: fname    !< Name of the file
+      !> File opening mode: 'r' for read access or 'w' for write access
+      character,intent(in)                            :: mode
+      !> Request for processing  the file header. Default is: .true.
+      logical,optional,intent(in)                     :: use_header 
+      !
+      logical :: is_header
+      integer :: ierr
+      !
+            info = -1
+            is_header = .true.
+            if (present(use_header))  is_header = use_header
+            select case(mode)
+            case('r')
+                  open(unit=iounit,file=fname,status='old',iostat=ierr)
+                  if (ierr /= 0) return
+                  if (is_header) info = ReadHeadSVfile(iounit)
+            case('w')
+                  open(unit=iounit,file=fname,status='replace',iostat=ierr)
+                  if (ierr /= 0) return
+                  if (is_header) info = WriteHeadSVfile(iounit)
+            end select
+      !
+      end function
+      
       
       !>
       integer function KS_writeState(iounit) result(info)
@@ -135,7 +168,7 @@ contains
             info = KS_ErrIO
             nf = 0
             is_dummy = .true.
-            call ReadHeadSVfile(iounit)
+            !
             do iblock = 0, nblock
                   if (iblock == nblock) is_dummy = .false.
                   read(iounit,fmt=100,iostat=ioerr) nf
@@ -156,13 +189,14 @@ contains
 200         format(I5)      !
       end function
 
-      integer function KS_readState_file(fname,iounit,nblock) result(info)
+      integer function KS_readState_file(fname,iounit,nblock,use_header) result(info)
       implicit none
       character(len=*),intent(in)                     :: fname    !< Filename
       integer,intent(in)                              :: iounit   !< I/O unit number to be used by the function
       integer,optional,intent(in)                     :: nblock   !< Number of blocks to be skipped
+      logical,optional,intent(in)                     :: use_header
       !
-            open(unit=iounit,file=fname,status='old',iostat=info)
+            info = KS_openStateFile(iounit,fname,'r',use_header)
             if (info == 0) then 
                   info = KS_readState_unit(iounit,nblock)
             else
