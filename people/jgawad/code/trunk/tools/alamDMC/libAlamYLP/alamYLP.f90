@@ -190,6 +190,7 @@ contains
       integer                 :: ounit
       integer,parameter       :: stdout = 6
       logical                 :: log_info,log_debug
+      integer                 :: tr_verbose
       double precision        :: norm
       !
       if (present(useVMGuess)) then
@@ -197,9 +198,18 @@ contains
       else
             use_vmGuess = .true.
       endif
+      tr_verbose = 0
+      log_info = .false.
+      log_debug = .false.
       if (present(verbose)) then
-            log_info = (verbose > 1)
-            log_debug = (verbose >= 3)
+            if (verbose > 2) then
+                  log_info = .true.
+                  tr_verbose = 1
+            endif
+            if (verbose > 3) then
+                  log_debug = .true.
+                  tr_verbose = 3
+            endif
       endif
       ! Override the defaults by the user's settings:
       if (present(YLPconfig)) config = YLPconfig
@@ -218,8 +228,8 @@ contains
       ounit = stdout
       if (present(outunit))  ounit = outunit
       ! Initialize TR solver 
-      ! (note: both arguments have "optional" modifier in both the caller and callee)
-      call nlls_TR_init(verbose,outunit)
+      ! (note: outunit argument has "optional" modifier in both the caller and callee)
+      call nlls_TR_init(outunit,tr_verbose)
       ! Use von Mises guess
       if (use_vmGuess) then
             vX = vS

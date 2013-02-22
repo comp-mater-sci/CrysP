@@ -110,6 +110,8 @@ contains
                                     read(cnfunit,*,iostat=ierr) vBiases(i)
                                     if (.not. ioStatusOK(ierr)) return
                               enddo
+                        else
+                              return
                         endif
                         allocate(multiBiasedRange :: inst)
                         select type(inst)
