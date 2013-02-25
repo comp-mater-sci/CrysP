@@ -10,7 +10,7 @@ $Id$
 	Organization unit: Dept.Comp.Sci., TWR Group
 	\copyright KU Leuven
 
-	\date Date of first release: <FIRST_RELEASE_DATE>
+	\date Date of the initial release: <FIRST_RELEASE_DATE>
 	$Revision$
 	$Date$
 
