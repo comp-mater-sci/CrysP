@@ -21,13 +21,31 @@ contains
       end subroutine
 
 
-      subroutine writeMSSHeader(ounit)
+      subroutine writeMSSHeader(ounit,info)
       implicit none
       integer,intent(in)      :: ounit
+      integer,intent(out)     :: info
       !
-            write(ounit,fmt=554) 
-      554   format(T5,'Eps_vM',T21,'Eps_vM^Tot',T37,'Eps_HvM',T53,'Eps_HvM^Tot',T69,'Sigma_HvM', &
+            write(ounit,fmt=554,iostat=info) 
+      554 format(T5,'Eps_vM',T21,'Eps_vM^Tot',T37,'Eps_HvM',T53,'Eps_HvM^Tot',T69,'Sigma_HvM', &
                    T90,'Sigma_11',T106,'Sigma_22',T122,'Sigma_33',T138,'Sigma_23',T154,'Sigma_31',T170,'Sigma_12')
       !
       end subroutine
+      
+      
+      subroutine writeMSSRecord(ounit,meps,mepstot,hepscall,hepstot,shsam,info)
+      implicit none
+      integer,intent(in)                              :: ounit
+      double precision,intent(in)                     :: meps,mepstot,hepscall,hepstot
+      double precision,dimension(3,3),intent(in)      :: shsam
+      integer,intent(out)                             :: info
+      !
+            write(ounit,fmt=555,iostat=info) meps,mepstot,hepscall,hepstot,   &
+            sqrt(3./2.*sum(shsam*shsam)),                                     &
+            shsam(1,1),shsam(2,2),shsam(3,3), shsam(2,3),shsam(3,1),shsam(1,2)
+            
+      555  format(5(E15.6,1X),5X,6(E15.6,1X))
+      !
+      end subroutine
+      
 end module

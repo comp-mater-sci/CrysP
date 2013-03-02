@@ -28,6 +28,7 @@ C     USING THE ALAMEL MODEL
       use altayRCM
 #endif
       use IOConfig
+      use miscutils
       implicit double precision (a-h,o-z)
 C
 C     IW=2 is meant for outputting the final texture.
@@ -612,24 +613,32 @@ C      call STR5(vec1,SHsam)
       !
       HEPS = HEPS / TOTGEW
       HEPSCALL = HEPSCALL + HEPS
+#ifdef ALTAY_SUBROUTINE
+      ! We can choose not to update the internal state
+      if (.not.astate%simulCalls(astate%this)%input%keep_state) then  
+            HEPSTOT = HEPSTOT + HEPS
+            MEPSTOT = MEPSTOT + MEPS
+      endif
+#else
       HEPSTOT = HEPSTOT + HEPS
       MEPSTOT = MEPSTOT + MEPS
+#endif
       if (NMSSx /= 0) then
-            write(IMP5,555) MEPS*ISTP,MEPSTOT,HEPSCALL,HEPSTOT,
-     &      sqrt(3./2.*sum(SHsam*SHsam)),
-     &      SHsam(1,1),SHsam(2,2),SHsam(3,3),
-     &      SHsam(2,3),SHsam(3,1),SHsam(1,2)
+            call writeMSSRecord(IMP5,MEPS*ISTP,MEPSTOT,HEPSCALL,HEPSTOT,
+     &                          SHsam,info)
       endif
- 555  format(5(E15.6,1X),5X,6(E15.6,1X))
-
 #ifdef ALTAY_SUBROUTINE
       ! Get the homogenized quantities:
-      astate%simulCalls(astate%this)%output%stress_tensor= SHsam
-      astate%simulCalls(astate%this)%output%taylor_factor= GMM
-      astate%simulCalls(astate%this)%output%average_stress= SG
-      astate%simulCalls(astate%this)%output%effective_stress = 
-     &  sqrt(3.D0/2.D0)*norm2(SHsam)
-      astate%simulCalls(astate%this)%output%effective_strain = HEPSCALL
+      associate (callout => astate%simulCalls(astate%this)%output)
+            callout%stress_tensor= SHsam
+            callout%taylor_factor= GMM
+            callout%average_stress= SG
+            callout%effective_stress = sqrt(3.D0/2.D0)*norm2(SHsam)
+            callout%effective_strain = HEPSCALL
+            callout%effective_strain_tot = HEPSTOT
+            callout%effective_macro_strain = MEPS*ISTP
+            callout%effective_macro_strain_tot = MEPSTOT
+      end associate
 #endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      JW=0

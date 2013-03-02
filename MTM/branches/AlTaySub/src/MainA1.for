@@ -94,7 +94,7 @@ C     UNIT IMP4 = state variables of PEBP KOST11
       cods1(L+1:L+4)='.MSS'
 C     UNIT IMP5 = homogenized strain-stress
       open (unit=IMP5,file=cods1,status='replace')
-      call writeMSSHeader(IMP5)
+      call writeMSSHeader(IMP5,info)
 
       read (KLEC,90) fnam2
       call stripComment(fnam2)

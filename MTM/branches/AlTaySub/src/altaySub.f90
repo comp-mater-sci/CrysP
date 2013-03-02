@@ -132,7 +132,7 @@ contains
                   cods1(L+1:L+4)='.MSS'
                   ! UNIT IMP5 = homogenized strain-stress
                   open (unit=IMP5,file=cods1,status='replace')
-                  call writeMSSHeader(IMP5)
+                  call writeMSSHeader(IMP5,info)
             endif
             !
             info = altaySub_Exception
@@ -314,9 +314,10 @@ contains
       subroutine outputCurrentState(info)
       use IOConfig
       use curAccess
-      use altayConfig, only: acnf
+      use altayConfig, only: acnf,astate
       use altayHard, only: hard_PEBP
       use KOST1xState
+      use miscutils
       implicit none
       integer,intent(out)           :: info
       !
@@ -324,9 +325,22 @@ contains
             if (acnf%output_config%nfile == 1) then
                   call CURwriteBlock(IMP1,info)
             endif
+            if (info /= 0) return
             !
             if ((acnf%slipsystem%kost == hard_PEBP) .and.(acnf%output_config%npebp == 1)) then
                   info = KS_writeState(IMP4)
+            endif
+            if (info /= 0) return
+            !
+            if ((acnf%slipsystem%kost == hard_PEBP) .and.(acnf%output_config%nmss == 1) .and. allocated(astate%simulCalls)) then
+                  !
+                  associate (callout => astate%simulCalls(astate%this)%output)
+                        call writeMSSRecord(IMP5, &
+                                            callout%effective_macro_strain, callout%effective_macro_strain_tot, &
+                                            callout%effective_strain,callout%effective_strain_tot,callout%stress_tensor, &
+                                            info)
+                  end associate
+                  !
             endif
       !
       end subroutine
