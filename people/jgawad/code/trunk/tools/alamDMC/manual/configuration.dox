@@ -43,34 +43,43 @@ There is a common type of option that is used for defining ranges of values. The
 <ol>
 <li><a name="option_uniform">uniform</a>: uniformly distributed points within a closed interval. Note that the endpoints of the interval do belong to the range. 
 
-The first line of the option contains the keyword `uniform`. The next line must contain three fields: \confdef{range_begin,real}  \confdef{range_end,real}  \confdef{range_step,real}
+The first line of the option contains the keyword `uniform`. The next line must contain three fields: \confdef{range_begin,real}  \confdef{range_end,real}  \confdef{range_step,real}. Note that unless the length of the interval is the multiplity of \conffield{range_step}, the last step can be shorter.
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
 uniform          # uniformly distributed points
-0.0  1.5  0.7    # range [0.0,1.5], consisting of: 0.0, 0.7, 1.4 and 1.5
+0.0 180.0 40.0   # range [0,180], consisting of: 0.0 40.0 80.0 120.0 160.0 and 180.0
 ~~~~~~~~~~~~~
-<li><a name="option_biased"> biased: non-uniformly distributed points, with the density higher at one of the endpoints. 
+<li><a name="option_biased">biased</a>: non-uniformly distributed points, with the density higher at one of the endpoints. 
 
 The first line contains the keyword `biased`. The second line shall contain four fields: \confdef{range_begin,real}  \confdef{range_end,real}  \confdef{ratio,real}  \confdef{number_of_points,integer}.
 The meaning of the first two fields is identical as in the `uniform` range. The  field \conffield{ratio} is a non-negative real value, which denotes a ratio between the largest and the smallest step between the points within the range. If (0.0 < \conffield{ratio} < 1.0) then the smallest steps are located at the begining of the range; otherwise (\conffield{ratio} > 1.0) the refined steps appear at the end of the range. 
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
 biased           # unevenly distributed points, single bias
-0.0 180.0 4.0 5  # range [0.0,180], consisting of: 0.0 64.04 109.33 141.35 163.99 and 180.0
+0.0 180.0 4.0 5  # range [0,180], consisting of: 0.0 64.04 109.33 141.35 163.99 and 180.0
 ~~~~~~~~~~~~~
 
-<li> double-biased: non-uniformly distributed points, with the density either higher or lower at the endpoints. Basically, the double bias gives a sequence of points that would result from two biased ranges stitched together, with the stitching point located at the halfpoint of the interval [\conffield{range_begin},\conffield{range_end}] and the \conffield{ratio} of the second range being a reciprocal of the \conffield{ratio} in the first range. As a consequence, the highest density of points shall be located around the centre of the interval if \conffield{ratio} > 1.0. Conversely, if (0.0 < \conffield{ratio} < 1.0) the most refined steps will be put next to the endpoints of the range. Note that the mid-point of the interval is always included in the sequence of points defined by the double-biased range.   
+<li><a name="option_doublebiased">double-biased</a>: non-uniformly distributed points, with the density either higher or lower at the endpoints. Basically, the double bias gives a sequence of points that would result from two biased ranges stitched together, with the stitching point located at the halfpoint of the interval [\conffield{range_begin},\conffield{range_end}] and the \conffield{ratio} of the second range being a reciprocal of the \conffield{ratio} in the first range. As a consequence, the highest density of points shall be located around the centre of the interval if \conffield{ratio} > 1.0. Conversely, if (0.0 < \conffield{ratio} < 1.0) the most refined steps will be put next to the endpoints of the range. Note that the mid-point of the interval is always included in the sequence of points defined by the double-biased range.   
 
 The keyword `doublebiased` must be given in the first line.  The second line shall contain four fields: \confdef{range_begin,real}  \confdef{range_end,real}  \confdef{ratio,real}  \confdef{number_of_points,integer}.
 The meaning of the first two fields is identical as in the `uniform` range. The  field \conffield{ratio} is a non-negative real value that defines a ratio between the largest and the smallest step within the first half of the interval and, at the same time it defined a ratio between the smallest and the largest step in the second half of the interval.
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
 doublebiased     # unevenly distributed points, double-biased
-0.0 180.0 5.0 7  # range [0.0,180], consisting of: 0.0 54.64 79.07 90.0 100.93 125.36 and 180.0
+0.0 180.0 4.0 7  # range [0,180], consisting of: 0.0 51.43 77.14 90.0 102.86 128.57 and 180.0
 ~~~~~~~~~~~~~
-<li> multibiased: non-uniformly distributed points, with arbitrarly selected biased sub-ranges.
+<li> multi-biased: non-uniformly distributed points, with arbitrarly selected biased sub-ranges.
 
 The option requires the keyword `multibiased` in the first line. The second line consists of two fields: \confdef{range_begin,real} \confdef{number_of_ranges,integer}. The value of the field \conffield{number_of_ranges} defines how many sub-ranges shall be created; it must be at least 1. For evey subrange one line is read, each consisting of three fields: \confdef{subrange_endpoint,real} \confdef{subrange_ratio,real} \confdef{subrange_number_of_points,integer}. The endpoint of every subrange becomes a startpoint of the next subrange, except for the last one which terminates the range. The rules for the \conffield{subrange_ratio} and \conffield{subrange_number_of_points} are identical to those for \conffield{ratio} and \conffield{number_of_points} in the <a href="#option_biased">biased range</a>, respectively.
+\par Example:
+The following `multibiased` range definition  is equivalent to the example of double-biased range described in the <a href="#option_doublebiased">previous section</a>.
+~~~~~~~~~~~~~{.cfg}
+multibiased      # unevenly distributed points, multi-biased
+0.0 2            # range [0,180], consisting of: 0.0 51.43 77.14 90.0 102.86 128.57 and 180.0
+90.0  4.0   3    # subrange 1:
+180.0 0.25  3    # subrange 2:
+~~~~~~~~~~~~~
+
 </ol>
 
 \par Hint
@@ -89,10 +98,9 @@ This section discusses the general configuration part of the configuration file.
 The outputs of the program are controlled by three parameters:
  -# \confdef{output_prefix,path} is a prefix for the output files generated by the program.
  -# \confdef{state_request,logical} specifies whether the program shall incrementally writes out the material state on every deformation step. If \conffield{state_request} is `true`, the program will first write the initial state of the material. The texture data will be written to the file \conffield{output_prefix}.cur. Other outputs may vary depending on the model selected.
- -# \confdef{verbosity,integer} controls amount of output sent to the standard output (the terminal). The value can vary from 0 (zero) for minimalistic output to 4 (four) for very detailed print-outs about the calculations being performed by the program.
+ -# \confdef{verbosity,integer} controls amount of output sent to the standard output (the terminal). The value can vary from 0 (zero) for a minimalistic output to 4 (four) for very detailed print-outs about the calculations being performed by the program.
 
 \par Example:
-
 ~~~~~~~~~~~~~{.cfg}
 AKDQFF_TSA           # The output files will be stemmed from "AKDQFF_TSA.ext", where .ext is file extension.
 F                    # No output about material state is requested
@@ -101,9 +109,8 @@ F                    # No output about material state is requested
 
 \subsection config_micromech  Configuration of the micro-mechanical model
 
-Although the configuration options of the micro-scale model are not as fine-grained as it is found e.g. in the standalone AlTay program, there is still a lot possibilities of configuration.
+Although the configuration options of the micro-scale model are not as fine-grained as it is found e.g. in the standalone AlTay program, there is still a lot possibilities of adapting the model to user's needs.
 
-The 
 
 <ol>
 <li> \confdef{texture_format,integer} specifies format of texture file: 1 - SMT, 2 - CUR, 3 - CUB. The type of input influences the format of the next line.
@@ -128,8 +135,8 @@ Acceptable values of \conffield{hardening_model} are:
 	</ul>
 	
 </ol>
-\par Example:
 
+\par Example:
 ~~~~~~~~~~~~~{.cfg}
 1                    # texture is defined in the SMT format
 AKDQFF.SMT           # Name of texture file
@@ -142,12 +149,61 @@ micro1.smt           # Microstructure definition (filename)
 
 
 \subsection config_yld Configuration of the search procedure
+This part of the configuration file controls how the program will search for strain rate corresponding to the superimposed stress. The program uses a gradient-based Trust Region (TR) solver to find the strain rate \f$ A^\star \f$ that corresponds to the stress \f$ S^\star \f$:
+\f[
+A^\star = \mathrm{arg min} \left\| \frac{S(A)}{\| S(A) \|} - \frac{ S^\star }{ \| S^\star \| } \right\|
+\f]
+To minimize the objective function, the TR solver requires its Jacobian. The DMC approximates the Jacobian numerically by means of finite difference method. 
 
+<ol>
+<li> \confdef{jacobian_fd_step,real}  \confdef{search_linearize,logical} control how the Jacobian will be constructed and how the program will exploit it afterwards. The field \conffield{jacobian_fd_step} controls the lenght of strain increment that will be used for estimating the Jacobian. The field \conffield{search_linearize} instructs the program whether  it should assume in the first attempt that  the minimization problem can be considered linear. Note that if the \conffield{search_linearize} is set to True, the following apply:
+-# the linearization is done per strain increment,
+-# if the solver fails to find a plausible solution of the linearized problem, it will fall back to the non-linear problem,
+-# the non-linear problem is much more computationally expensive, since it requires several estimations of the Jacobian.
+The user is advised to use  \conffield{search_linearize} set to True whenever possible.
+<li> \confdef{TR_default_epsilon,real}  \confdef{TR_objective_norm,real} control convergence criteria used by the solver. The search for the minimum is considered successful if the square norm of the objective function does not exceed \conffield{TR_objective_norm}. 
+</ol>
+\par Example:
+~~~~~~~~~~~~~{.cfg}
+5.e-1  T             # Jacobi_eps,  linearize
+1e-5   1e-3          # Default eps for TR-solver, eps for the norm of objective function: ||F||_2 
+~~~~~~~~~~~~~
  
 \section configuration_modules Configuration of modules
 
 As stated in the previous part of the section, the generic part of the configuration file is followed by settings that are specific to a given module.
 
+\subsection config_udtc UDSA - Uniaxially-Dominated Stress Analysis
+<ol>
+<li> \confdef{rotation_angle,real}  defines rotation of the virtual tensile sample around the ND. The field \conffield{rotation_angle} is interpreted as the angle to the RD.
+<li> \confdef{scaling_type,integer} \confdef{strain_max,real} \confdef{strain_increment,real} specify how the strain increments will be calculated. 
+-# if \conffield{scaling_type} is equal to 0, the strain increment \f$ \Delta\mathbf{D} \f$ is selected is such a way that  \f$ \| \Delta\mathbf{D} \| \f$  = \conffield{strain_increment}
+-# if \conffield{scaling_type} is equal to 1, then the strain increment is selected to satisfy that \f$ \Delta\mathbf{D}_{11} =  \f$  \conffield{strain_increment}
+The program will 
+<li> \confdef{stress_state,real}  selects from among tension and compression stress state. Any negative value here implies the compressive state. Otherwise, tensile stress is assumed.
+<li> \confdef{stress_ratio_rho,real}  defines a deviation from  the purely uniaxial stress state. The imposed stress is constructed according to the formula:
+\f[
+\boldsymbol\sigma = \begin{array}{ccc} \sigma_{11}  & 0  & 0 \\ 0 & \rho\sigma_{11} & 0 \\ 0 & 0 & 0 \end{array}
+\f]
+The parameter \f$ \rho \f$ is taken from the field \conffield{stress_ratio_rho}. Note that \f$ \boldsymbol\sigma \f$ is normalized afterwards.
+</ol>
+\par Example:
+~~~~~~~~~~~~~{.cfg}
+0.0                  # Angle to RD (given in degrees)
+1  0.3  0.05         # Type of scaling, Norm of the scaled quantity  and the scaled strain increment per step 
+1.0                  # Stress state: use a negative value for compressive state or a positive values for tensile state.
+0.0                  # Stress ratio: rho = St22/St11
+~~~~~~~~~~~~~
 
+\subsection config_asr ASR - Arbitrary Stress Analysis
 
+Still under preparations...
+
+\subsection config_QRS QRS - characterisation of plastic anisotropy 
+
+Still under preparations...
+
+\subsection config_Yld Yld - Yield locus calculation 
+
+Still under preparations...
 */
