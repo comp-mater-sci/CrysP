@@ -72,7 +72,7 @@ contains
             ! 
             if ((this%altay%slipsystem%kost == hard_pebp) .and. (this%output%outputRequest)) then
                   this%altay%output_config%npebp = 1
-                  !cnf%output_config%nmss = 1 
+                  this%altay%output_config%nmss = 1
             endif
             !
             write(display_unit,fmt=30) 'Initializing the multilevel model...'
