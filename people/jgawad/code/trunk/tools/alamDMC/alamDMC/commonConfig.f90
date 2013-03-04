@@ -34,7 +34,7 @@ contains
       integer,intent(in) :: ioerr
             ! Status 
             if (ioerr /= 0) then
-                  write(display_unit,*) 'An error has occured while reading config file'
+                  write(display_unit,*) 'An error has occured while reading the config file'
                   ioStatusOK = .false.  
             endif
             ioStatusOK = .true.

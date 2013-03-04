@@ -92,7 +92,7 @@ implicit none
       end select
       
       if (.not. associated(the_module)) then
-            write(errmsg,'(A)')  'Internal error: cannot instantiate requested module.'
+            write(errmsg,'(A)')  'Internal error: cannot instantiate the requested module.'
             call finalize(stopcode_runtimeerror)
       endif
       !

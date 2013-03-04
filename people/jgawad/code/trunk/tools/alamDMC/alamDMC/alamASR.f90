@@ -121,12 +121,12 @@ contains
       ! Open input file
       open(unit=dtaunit,file=trim(this%data_fname),status='old',form='formatted',iostat=ioerr)
       if ( ioerr /= 0) then
-            write(display_unit,*) 'Cannot open data file: ', trim(this%data_fname)
+            write(display_unit,*) 'Cannot open the data file: ', trim(this%data_fname)
             stop
       endif
       read(dtaunit,fmt='(I5)',iostat=ioerr) npoints
       if ((ioerr /= 0) .or. (npoints <= 0)) then
-            write(display_unit,*) 'Wrong header of data file'
+            write(display_unit,*) 'Wrong header of the data file'
             stop
       endif
       !
@@ -164,7 +164,7 @@ contains
             Stdev = St - Pressure
             !!! Print the input data:
             if (doLogging(fngLogInfo,this%output%verbosity)) then
-                  write(display_unit,'(A)') 'Input stress tensor, original reference frame'
+                  write(display_unit,'(A)') 'Input stress tensor, in the original reference frame'
                   write(display_unit,400) 'Total stress', 'Deviatoric', 'Pressure'
                   do j=1,3
                         write(display_unit,411) St(:,j),Stdev(:,j),Pressure(:,j)
@@ -330,10 +330,10 @@ contains
                   do j = 1,size(teeunits)
                         n = teeunits(j)
                         write(n,'(A,1X,I3,1X,A,1X,I3)') 'Point:',point,'Increment:',increment 
-                        write(n,'(A)') 'In rotated reference frame:' 
+                        write(n,'(A)') 'In the rotated reference frame:' 
                         call printIdentResultsT(n,Sm,SmIdent*vS_norm,SonA,D,info)
                         !
-                        write(n,'(A)') 'In original reference frame:' 
+                        write(n,'(A)') 'In the original reference frame:' 
                         call printIdentResultsT(n,Stdev,StIdent*vS_norm,StonA,Dt,info)
                   enddo
             end subroutine

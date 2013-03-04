@@ -157,12 +157,14 @@ contains
       
       integer,parameter :: ncolumn_labels = 7, column_width = 15
       ! For file output
-      character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = [ character(len=column_width) ::  &
+      character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = &
+           [ character(len=column_width) ::  &
             'angle','rho','q-value','r-value','s-value','M-factor','residual' ]
       
       ! For display output:
       integer,parameter :: ncolumn_labels_display = 7, column_width_display = 14
-      character(len=column_width-1),dimension(ncolumn_labels_display) :: display_column_labels = [ character(len=column_width_display) ::  &
+      character(len=column_width-1),dimension(ncolumn_labels_display) :: display_column_labels = &
+            [ character(len=column_width_display) ::  &
             'angle','rho','q-value','r-value','s-value','M-factor','residual' ]
 
       
