@@ -7,20 +7,19 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
-!>    \date Date of the initial release: 2012-06-06
+!>    \date Date of the initial release: 2012-06-06 (under the name alamYld)
 !>    $Revision$
 !>    $Date$
 !>
 !>    History of modifications: (see svn log)
 !
-!> ALAMel Yield
-!>
-module alamYld
+!> Yield locus calculations
+module dmcYld
 use nllsTR
 use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
-use alamUtils
+use dmcUtils
 use commonConfig
 use dmcBasicModule
 use fngAlgorithm
@@ -84,7 +83,7 @@ contains
             info = BasicModule_ReadConfig(this,cnfunit)
             if (info /= 0) return
             info = -1
-            ! Read parameters specific for the alamASR program
+            ! Read parameters specific for the dmcASR program
             this%ptr_theta_range => rangeFromConfig(cnfunit,info)
             if ( (info /= 0) .or. (.not. associated(this%ptr_theta_range)) ) return
             this%base_vectors = 0.D0
@@ -145,7 +144,7 @@ contains
             if (.not. (associated(this%ptr_theta_range) .and. associated(this%ptr_w_range)))  return
             !
             ! Introduce youself ;-)
-            write(display_unit,'(A)') 'AlamYld, $Rev$'
+            write(display_unit,'(A)') 'dmcYld, $Rev$'
             do i=1,nbase
                   write(display_unit,'(A,1x,A,6(F6.2,1X))') veclabels(i),'vector:',this%base_vectors(:,i)
             enddo

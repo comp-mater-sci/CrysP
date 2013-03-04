@@ -18,7 +18,7 @@ use dmcAbstractModule
 use alamYLP, only: multilevelYLPConfig
 use altayConfig, only: fname_len, altayConfigData
 use commonConfig
-use alamUtils
+use dmcUtils
 
       type :: outputConfig
 

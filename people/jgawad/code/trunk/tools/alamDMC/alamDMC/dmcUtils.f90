@@ -6,14 +6,14 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
-!>    \date Date of the initial release: 2011-09-17
+!>    \date Date of the initial release: 2011-09-17 (under the name dmcUtils)
 !>    $Revision$
 !>    $Date$
 !>
 !>    History of modifications: (see svn log)
 !
 !> Various utility subroutines and functions
-module alamUtils
+module dmcUtils
 use fngMathUtils
 use fngRuntime
       

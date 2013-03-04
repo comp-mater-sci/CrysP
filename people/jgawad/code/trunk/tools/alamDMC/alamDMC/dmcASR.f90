@@ -7,20 +7,20 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
-!>    \date Date of the initial release: 2011-07-18
+!>    \date Date of the initial release: 2011-07-18 (under the name alamASR)
 !>    $Revision$
 !>    $Date$
 !>
 !>    History of modifications: (see svn log)
 !
-!> ALAMel Arbitrary Stress Response
+!> DMC Arbitrary Stress Response
 !>
-module alamASR
+module dmcASR
 use nllsTR
 use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
-use alamUtils
+use dmcUtils
 use dmcBasicModule
 use commonConfig
 use commonUtils

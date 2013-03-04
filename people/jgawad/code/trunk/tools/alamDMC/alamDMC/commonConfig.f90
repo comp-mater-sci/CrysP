@@ -29,7 +29,7 @@ contains
 
       !> Check exit status of IO operation
       logical function ioStatusOK(ioerr)
-      use alamUtils
+      use dmcUtils
       implicit none
       integer,intent(in) :: ioerr
             ! Status 

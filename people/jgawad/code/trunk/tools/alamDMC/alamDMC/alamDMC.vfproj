@@ -29,11 +29,11 @@
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
 		<File RelativePath=".\abstractModule.f90"/>
-		<File RelativePath=".\alamASR.f90"/>
-		<File RelativePath=".\alamQ.f90"/>
-		<File RelativePath=".\alamTSA.f90"/>
-		<File RelativePath=".\alamUtils.f90"/>
-		<File RelativePath=".\alamYld.f90"/>
+		<File RelativePath=".\dmcASR.f90"/>
+		<File RelativePath=".\dmcQRS.f90"/>
+		<File RelativePath=".\dmcUDSA.f90"/>
+		<File RelativePath=".\dmcUtils.f90"/>
+		<File RelativePath=".\dmcYld.f90"/>
 		<File RelativePath=".\basicModule.f90"/>
 		<File RelativePath=".\commonConfig.f90"/>
 		<File RelativePath=".\commonUtils.f90"/>

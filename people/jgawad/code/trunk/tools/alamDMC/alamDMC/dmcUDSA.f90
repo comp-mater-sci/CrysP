@@ -7,21 +7,21 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
-!>    \date Date of the initial release: 2011-05-17
+!>    \date Date of the initial release: 2011-05-17 (under the name alamTSA)
 !>    $Revision$
 !>    $Date$
 !>
 !>    History of modifications: (see svn log)
 !
 !
-!> alamTSA (ALAMel Tensile Stress Analysis)  allows one to track anisotropic properties  
-!> along deformation due to uniaxial tensile stress.
-module alamTSA
+!> dmcUDSA (Uniaxially-Dominated Stress Analysis)  allows one to track anisotropic properties  
+!> along deformation due to the uniaxial tension or compression stress.
+module dmcUDSA
 use nllsTR
 use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
-use alamUtils
+use dmcUtils
 use dmcBasicModule
 use commonUtils
 use qrsTypes
@@ -31,7 +31,7 @@ implicit none
 
       integer,parameter                         :: scaleFullTensor = 0, scaleTensileComponent = 1
 
-      type,extends(BasicModule) :: TSAModule
+      type,extends(BasicModule) :: UDSAModule
             double precision  :: angle = 0.D0, NormMax = 0.D0, PNormIter = 0.D0
 
             integer           :: scalingID = scaleFullTensor
@@ -44,20 +44,20 @@ implicit none
 
       contains
       
-            procedure,pass(this)    :: readConfig => TSAModule_ReadConfig
+            procedure,pass(this)    :: readConfig => UDSAModule_ReadConfig
             
-            procedure,pass(this)    :: run => TSAModule_run
+            procedure,pass(this)    :: run => UDSAModule_run
 
-            procedure,pass(this)    :: printConfig => TSAModule_printConfig
+            procedure,pass(this)    :: printConfig => UDSAModule_printConfig
             
       end type
 
 contains
 
-      integer function TSAModule_ReadConfig(this,cnfunit) result(info)
+      integer function UDSAModule_ReadConfig(this,cnfunit) result(info)
       implicit none
       integer,intent(in)                        :: cnfunit
-      class(TSAModule),intent(inout)            :: this
+      class(UDSAModule),intent(inout)            :: this
       !
       integer :: ioerr
       logical :: input_ok = .false.
@@ -66,7 +66,7 @@ contains
             if (info /= 0) return
             input_ok = .false.
             info = -1
-            ! Read parameters specific for the TSAModule program
+            ! Read parameters specific for the UDSAModule program
             read(cnfunit,fmt=*,iostat=ioerr)  this%angle
             if (ioerr /= 0) return
             read(cnfunit,fmt=*,iostat=ioerr)  this%scalingID, this%NormMax, this%PNormIter
@@ -90,9 +90,9 @@ contains
       end function
 
       
-      integer function TSAModule_printConfig(this,outunit) result (info)
+      integer function UDSAModule_printConfig(this,outunit) result (info)
       implicit none
-      class(TSAModule),intent(in)         :: this
+      class(UDSAModule),intent(in)         :: this
       integer,intent(in)                  :: outunit
       !
       character(len=32)       :: description
@@ -101,7 +101,7 @@ contains
             if (info /= 0) return
             info = -1
             ! Introduce youself ;-)
-            write(outunit,'(A)') 'TSAModule, $Rev$'
+            write(outunit,'(A)') 'UDSA, $Rev$'
             !
             if (doLogging(fngLogInfo,this%output%verbosity)) then 
                   if (this%stress_state > 0.0) then
@@ -127,9 +127,9 @@ contains
       end function
       
 
-      subroutine TSAModule_Run(this,info)
+      subroutine UDSAModule_Run(this,info)
       implicit none
-      class(TSAModule),intent(inout)            :: this
+      class(UDSAModule),intent(inout)            :: this
       integer,intent(out)                       :: info      
       ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
       ! coordinate system
@@ -161,7 +161,7 @@ contains
       info = 1
       !
       ! Open and initialize result files
-      open(unit=ofunit,file=trim(this%output%outputPrefix)//'.tsa',status='replace')
+      open(unit=ofunit,file=trim(this%output%outputPrefix)//'.UDSA',status='replace')
       write(ofunit,701) centered(1,short_column_width), (centered(i,column_width), i = 2, ncolumn_labels)
       write(ofunit,700) file_column_labels(1)(1:short_column_width), (centered(file_column_labels(i)), i=2,ncolumn_labels) 
       !

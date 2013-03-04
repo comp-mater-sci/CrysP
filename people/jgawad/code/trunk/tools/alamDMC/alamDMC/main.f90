@@ -22,16 +22,16 @@ use nllsTR
 use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
-use alamUtils
+use dmcUtils
 use altaySub
 use altayConfig, only: altayConfigData
 use commonConfig
 use commonUtils
 !
-use alamASR
-use alamQ
-use alamTSA
-use alamYld
+use dmcASR
+use dmcQRS
+use dmcUDSA
+use dmcYld
 !
 use fngRuntime
 !
@@ -42,8 +42,8 @@ implicit none
       !
       !
       integer,parameter       :: ncommands = 4
-      integer,parameter       :: Q_id = 1, TSA_id = 2, ASR_id = 3, Yld_id = 4
-      type(MapItem),dimension(ncommands)  :: command_map =  [ MapItem('Q',Q_id), MapItem('TSA',TSA_id), &
+      integer,parameter       :: Q_id = 1, UDSA_id = 2, ASR_id = 3, Yld_id = 4
+      type(MapItem),dimension(ncommands)  :: command_map =  [ MapItem('QRS',Q_id), MapItem('UDSA',UDSA_id), &
                                                               MapItem('ASR',ASR_id), MapItem('Yld',Yld_id) ]
       integer,parameter       :: argc_min = 2, argc_max=2, command_argpos = 1
       type(commandLine)       :: cmdline
@@ -81,13 +81,13 @@ implicit none
       info = -1
       ! Create a module of appropriate type and read its configuration:
       select case(cmdline%command_id)
-      case(Q_id) ! Alamq
-            allocate(QModule :: the_module)
-      case(TSA_id) ! AlamTSA
-            allocate(TSAModule :: the_module)
-      case(ASR_id) ! AlamASR
+      case(Q_id) ! dmcQRS
+            allocate(QRSModule :: the_module)
+      case(UDSA_id) ! dmcUDSA
+            allocate(UDSAModule :: the_module)
+      case(ASR_id) ! dmcASR
             allocate(ASRModule :: the_module)
-      case(Yld_id) ! AlamYld
+      case(Yld_id) ! dmcYld
             allocate(YldModule :: the_module)
       end select
       
