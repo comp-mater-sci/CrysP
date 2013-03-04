@@ -65,8 +65,8 @@ FORCE	:
 $(LIBDIR) $(OBJDIR) $(INCLUDEDIR) :
 	[ -d $@ ] || mkdir -p $@
 
-$(OBJDIR)/main.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, commonConfig commonUtils dmcQRS alamASR alamTSA alamYld qrsTypes)) $(LIBOPTPATH) msgFormats.inc
-$(OBJDIR)/commonConfig.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, alamUtils )) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
+$(OBJDIR)/main.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, commonConfig commonUtils dmcQRS dmcASR dmcUDSA dmcYld qrsTypes)) $(LIBOPTPATH) msgFormats.inc
+$(OBJDIR)/commonConfig.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, dmcUtils )) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
 $(OBJDIR)/basicModule.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, abstractModule commonConfig dmcUtils)) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
 $(OBJDIR)/dmcQRS.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, basicModule alamUtils commonConfig commonUtils qrsTypes)) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
 $(OBJDIR)/dmcASR.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, basicModule dmcUtils commonConfig commonUtils qrsTypes)) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
