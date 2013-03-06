@@ -58,7 +58,7 @@ implicit none
       info = 1
       ioerr = 0
       !
-      cmdline = commandLine('AlamDMC ' //'$Rev$',description='Parameters: command configuration_file')
+      cmdline = commandLine('AlamDMC ' //'$Rev$',description='Parameters: module_name configuration_file')
       call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.)
       moduleFound = .false.
       if (info == fngSuccess) moduleFound = resolveId(command_map, cmdline%command_id,moduleName)

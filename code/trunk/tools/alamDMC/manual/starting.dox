@@ -23,6 +23,6 @@ The `alamDMC` provides the following modules:
 -# `QRS`:  Calculation of q-values, r-values and s-values 
 -# `Yld`:  calculation of yield locus section.
 
-Each of the modules has its own configuration file format. Fortunately, there are substantial similarities between the configurations files. See \ref page_configuration for detailed description how to use the modules.
+Each one of the modules has its own configuration file format. Fortunately, there are substantial similarities between the configurations files. See \ref page_configuration for detailed description how to prepare the configuration files.
 
 */
