@@ -23,7 +23,9 @@ ifndef ROOTDIR
 ROOTDIR=../../../..
 endif
 
+ifndef
 TOOLSDIR=$(ROOTDIR)/code/trunk/build-tools/
+endif
 
 # Use per-host configuration plugin
 include $(TOOLSDIR)/Makefile.host
@@ -44,7 +46,9 @@ TRANSCONFIG=DEBUG=1
 else
 ConfigurationName=release
 LIBDIR=release
-OPTFLAGS=-O3 -fast
+# NOTE: -fast is considered harmful. It has long and infamous tradition
+# of spoiling the libalamel/libaltay...
+OPTFLAGS=-O3 # -fast
 FCFLAGS+= $(OPTFLAGS)
 endif
 #
@@ -58,7 +62,13 @@ LIBALTAYPATH=$(LIBALTAYDIR)/libaltay.a
 FCFLAGS+= -I$(LIBALTAYDIR)/include
 FLDFLAGS+= $(LIBALTAYPATH)
 
-LIBOPTROOT=$(ROOTDIR)/code/trunk/tools/fng/utils/optlib
+FNGROOTDIR=$(ROOTDIR)/code/trunk/tools/fng
+LIBFNGDIR=$(FNGROOTDIR)/$(ConfigurationName)/lib
+FNGCRIINCLUDE= -I$(FNGROOTDIR)/projects/libfngCRI/$(ConfigurationName)/include
+FCFLAGS+=$(FNGCRIINCLUDE)
+FLDFLAGS+= -openmp -L$(LIBFNGDIR) -lfngCRI
+
+LIBOPTROOT=$(FNGROOTDIR)/utils/optlib
 LIBOPTDIR=$(LIBOPTROOT)/$(ConfigurationName)
 FCFLAGS+= -I$(LIBOPTDIR)/include
 

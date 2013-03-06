@@ -7,7 +7,7 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
-!>    \date Date of first release: 2012-08-16
+!>    \date Date of the initial release: 2012-08-16
 !>    $Revision$
 !>    $Date$
 !>
@@ -72,6 +72,7 @@ contains
             associate (input => astate%simulCalls(istp)%input)
                   input%dgf = D
                   input%keep_texture = .false.
+                  input%keep_state = .false.
                   input%full_model = .true.
                   input%do_output_init = .false.
                   input%do_output_final = output_flag
@@ -94,7 +95,7 @@ contains
       implicit none
       integer,intent(out)     :: info
       !
-            call outputCurrentTexture(info)
+            call outputCurrentState(info)
       !
       end subroutine
       

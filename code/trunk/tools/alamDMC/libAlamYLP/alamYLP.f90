@@ -101,7 +101,7 @@ contains
                   input%do_output_init = .false.
                   input%do_output_final = .false.
                   call setStepType(input,acnf%model_id,info)
-            end associate            
+            end associate
             ! Call the simulation
             call runSteps(astate,info)
             if (info /= 0) return
@@ -119,7 +119,7 @@ contains
                   vS = vS / norm
                   this%state%vF = this%vSn - vS
 #ifdef DIAGNOSTIC_OUTPUT            
-                  write(*,'(2(F12.8,1X))') (vSn(i), vS(i),i=1,alamEval_vSD_dim)
+                  write(*,'(F12.8,1X)') (vS(i),i=1,alamEval_vSD_dim)
 #endif            
             else
                  ! norm is zero, so vS=0
@@ -160,10 +160,8 @@ contains
       !> Calculates plastic strain rate corresponding to given deviatoric stress
       !>
       !> The subroutine assumes that multilevel model is already configured and initialized.
-      subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig,outunit)
+      subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig,outunit,verbose)
       use nllsTR
-      use altaySub
-      use altayConfig
       use alamEval
       implicit none
       double precision,intent(in)   :: vS(alamEval_vSD_dim)      !< Stress vector
@@ -174,6 +172,7 @@ contains
       logical,optional,intent(in)   :: useVMGuess !< use von Mises initial guess, otherwise assume vA as an initial strain rate
       type(multilevelYLPConfig),optional,intent(in) :: YLPconfig !< Configuration parameters to be imposed to the search method
       integer,intent(in),optional   :: outunit    !< Unit number for messages
+      integer,intent(in),optional   :: verbose
       !
 
       double precision, dimension(alamEval_vSD_dim) :: vX, vX_lin
@@ -190,12 +189,27 @@ contains
       type(SolutionPoint)     :: initState
       integer                 :: ounit
       integer,parameter       :: stdout = 6
+      logical                 :: log_info,log_debug
+      integer                 :: tr_verbose
       double precision        :: norm
       !
       if (present(useVMGuess)) then
             use_vmGuess = useVMGuess
       else
             use_vmGuess = .true.
+      endif
+      tr_verbose = 0
+      log_info = .false.
+      log_debug = .false.
+      if (present(verbose)) then
+            if (verbose > 2) then
+                  log_info = .true.
+                  tr_verbose = 1
+            endif
+            if (verbose > 3) then
+                  log_debug = .true.
+                  tr_verbose = 3
+            endif
       endif
       ! Override the defaults by the user's settings:
       if (present(YLPconfig)) config = YLPconfig
@@ -213,8 +227,9 @@ contains
       !
       ounit = stdout
       if (present(outunit))  ounit = outunit
-      ! Initialize TR solver
-      call nlls_TR_init(verbose=1,ounit=6)
+      ! Initialize TR solver 
+      ! (note: outunit argument has "optional" modifier in both the caller and callee)
+      call nlls_TR_init(outunit,tr_verbose)
       ! Use von Mises guess
       if (use_vmGuess) then
             vX = vS
@@ -289,7 +304,7 @@ contains
       objFunc%full_model = config%evaluate_full_model
       call objFunc%objectiveEval(vA,info)
       
-      write(*,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',objFunc%state%vF
+      if (log_info) write(ounit,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',objFunc%state%vF
       
       vSonA = objFunc%vSml  
       !info = 0

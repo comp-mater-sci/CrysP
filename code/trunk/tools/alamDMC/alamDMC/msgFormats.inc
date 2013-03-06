@@ -16,6 +16,8 @@
 ! Error messages
 #ifdef MSG_GROUP_ERRORS
 
+      900 format('Error:',1X,A)
+
       901 format('Error: incorrect format of configuration file:', 1X, A)
       902 format('Error: incorrect format of configuration file. Check',1X,A,1X,'specific section' ) 
       

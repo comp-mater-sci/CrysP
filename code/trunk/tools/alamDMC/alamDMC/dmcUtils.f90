@@ -6,38 +6,30 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
-!>    \date Date of first release: 2011-09-17
+!>    \date Date of the initial release: 2011-09-17 (under the name dmcUtils)
 !>    $Revision$
 !>    $Date$
 !>
 !>    History of modifications: (see svn log)
 !
 !> Various utility subroutines and functions
-module alamUtils
-
-      double precision,parameter ::  rad2deg = (180.D0 / acos(-1.D0)), deg2rad = (acos(-1.D0) / 180.D0)
-
-      double precision,parameter ::  root23 = sqrt(2.D0/3.D0)
-
+module dmcUtils
+use fngMathUtils
+use fngRuntime
+      
       integer,parameter       :: display_unit = 6
 
       character,parameter     :: default_comment_sign = '#'
+     
+      ! Meta-data
       
-      !> Error message to be written by the subroutine finalize 
-      character(len=128),save :: errmsg
-
+      integer,parameter       :: nSymTensComps = 6
+      integer,parameter       :: nDevTensComps = 5
+      
 contains
       !
       ! Functions ported from FNG
       ! -->>
-      
-      ! From fngMathUtils
-      pure function vec_norm2(v)
-      implicit none
-      double precision :: vec_norm2
-      double precision,dimension(:),intent(in) :: v
-      vec_norm2 = sqrt(dot_product(v,v))
-      end function
 
       double precision pure function average(a)
       double precision,dimension(:),intent(in) :: a
@@ -47,20 +39,6 @@ contains
             if (n >= 1) average = sum(a) / dble(n)                 
             ! Undefined for empty array
       end function
-
-      ! From fngMMMCore
-      !> Finalization code
-      subroutine finalize(errcode)
-      implicit none
-      integer,intent(in)      :: errcode
-            !
-            if (errcode /= 0) write(*,'(A)') trim(errmsg)
-            !
-            call exit(errcode)
-      end subroutine
-
-      ! <<-- Ported form FNG
-      !
 
       subroutine printIdentResults(outunit,vS,vA,vSonA,vSonAn,R,info)
       implicit none
@@ -78,8 +56,8 @@ contains
             write(outunit,201) 'Norm of stress on vA:', vec_norm2(vSonA) 
             write(outunit,('(/)'))
             !
-            200 format(A,T40,5F10.6)
-            201 format(A,T40,F10.6)
+            200 format(A,T40,5(E12.5,1X))
+            201 format(A,T40,E12.5)
             info = 0
       end subroutine
 
@@ -119,49 +97,11 @@ contains
             write(outunit,421) D
             info = 0
             
-            410 format('| Sm',T40,'| SmIdent*||Sm||',T80,'|SonA')
-            411 format(3(F10.6,1X),T40,'|',3(F10.6,1X),'|',T80,3(F10.6,1X))
+            410 format('| Sm',T45,'| SmIdent*||Sm||',T90,'|SonA')
+            411 format(3(E12.5,1X),T45,'|',3(E12.5,1X),'|',T90,3(E12.5,1X))
 
             420 format('| D')
-            421 format(3(F10.6,1X))
+            421 format(3(E12.5,1X))
       end subroutine
 
-      
-      
-      !> The function converts Voigh-style vector into symmetrical rank-two tensors.
-      !> Ordering of the terms in the vector: 11, 22, 33, 12, 23, 13
-      pure function Vec6ToMat33(vec) result(mat)
-      implicit none
-      double precision,dimension(6),intent(in)  :: vec
-      double precision,dimension(3,3)           :: mat
-
-      !
-            mat(1,1) = vec(1)
-            mat(2,2) = vec(2)
-            mat(3,3) = vec(3)
-            mat(1,2) = vec(4)
-            mat(2,3) = vec(5)
-            mat(1,3) = vec(6)
-            mat(2,1) = mat(1,2)
-            mat(3,1) = mat(1,3)
-            mat(3,2) = mat(2,3)
-      !
-      end function
-
-      pure function Mat33ToVec6(mat) result(vec)
-      implicit none
-      double precision,dimension(3,3),intent(in)      :: mat
-      double precision,dimension(6)                   :: vec
-      !
-            vec(1) = mat(1,1)
-            vec(2) = mat(2,2)
-            vec(3) = mat(3,3)
-            vec(4) = mat(1,2)
-            vec(5) = mat(2,3)
-            vec(6) = mat(1,3)
-      !
-      end function
-
-      
-      
 end module
