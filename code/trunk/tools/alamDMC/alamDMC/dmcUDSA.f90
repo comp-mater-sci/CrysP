@@ -161,7 +161,7 @@ contains
       info = 1
       !
       ! Open and initialize result files
-      open(unit=ofunit,file=trim(this%output%outputPrefix)//'.UDSA',status='replace')
+      open(unit=ofunit,file=trim(this%output%outputPrefix)//'.uds',status='replace')
       write(ofunit,701) centered(1,short_column_width), (centered(i,column_width), i = 2, ncolumn_labels)
       write(ofunit,700) file_column_labels(1)(1:short_column_width), (centered(file_column_labels(i)), i=2,ncolumn_labels) 
       !
