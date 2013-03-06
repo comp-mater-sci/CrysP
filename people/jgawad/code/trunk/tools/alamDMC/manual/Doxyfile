@@ -205,11 +205,9 @@ TAB_SIZE               = 4
 # will result in a user-defined paragraph with heading "Side Effects:". 
 # You can put \n's in the value part of an alias to insert newlines.
 
-ALIASES =
-ALIASES += conffield{1}="<b><tt>\1</tt></b>"
-ALIASES += confdef{2}="\conffield{\1} (\2)"
-ALIASES += mconfdef{2}="\conffield{*\1} (\2)"
-
+ALIASES                = "conffield{1}=<b><tt>\1</tt></b>" \
+                         "confdef{2}=\conffield{\1} (\2)" \
+                         "mconfdef{2}=\conffield{*\1} (\2)"
 
 # This tag can be used to specify a number of word-keyword mappings (TCL only). 
 # A mapping has the form "name=value". For example adding 
@@ -1331,7 +1329,7 @@ MAKEINDEX_CMD_NAME     = makeindex
 # LaTeX documents. This may be useful for small projects and may help to 
 # save some trees in general.
 
-COMPACT_LATEX          = NO
+COMPACT_LATEX          = YES
 
 # The PAPER_TYPE tag can be used to set the paper type that is used 
 # by the printer. Possible values are: a4, letter, legal and 
@@ -1342,7 +1340,7 @@ PAPER_TYPE             = a4
 # The EXTRA_PACKAGES tag can be to specify one or more names of LaTeX 
 # packages that should be included in the LaTeX output.
 
-EXTRA_PACKAGES         = 
+EXTRA_PACKAGES         = amsmath
 
 # The LATEX_HEADER tag can be used to specify a personal LaTeX header for 
 # the generated latex document. The header should contain everything until 

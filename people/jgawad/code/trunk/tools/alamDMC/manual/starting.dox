@@ -19,10 +19,10 @@ alamDMC  module_name  configuration_file
 The `alamDMC` provides the following modules:
 
 -# `ASR`: Arbitrary Stress Response
--# `TSA`  Tensile Stress Analysis
--# `Q`    calculation of q-values, r-values and s-values 
--# `Yld`  calculation of yield locus section.
+-# `UDSA`: Uniaxially-Dominated Stress Analysis
+-# `QRS`:  Calculation of q-values, r-values and s-values 
+-# `Yld`:  calculation of yield locus section.
 
-Each of the modules has its own configuration file format. Fortunately, there are substantial similarities between the configurations files. See \ref page_configuration for detailed description of the configuration files.
+Each of the modules has its own configuration file format. Fortunately, there are substantial similarities between the configurations files. See \ref page_configuration for detailed description how to use the modules.
 
 */
