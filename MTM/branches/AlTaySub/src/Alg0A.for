@@ -611,6 +611,24 @@ C      call STR5(vec1,SHsam)
       GMM=GMM/TOTGEW
       SG=SG/TOTGEW
       !
+      if (NMSSx /= 0) then
+            call writeMSSRecord(IMP5,MEPS*(ISTP-1),MEPSTOT,HEPSCALL,
+     &                          HEPSTOT,SHsam,info)
+      endif
+#ifdef ALTAY_SUBROUTINE
+      ! Get the homogenized quantities:
+      associate (callout => astate%simulCalls(astate%this)%output)
+            callout%stress_tensor= SHsam
+            callout%taylor_factor= GMM
+            callout%average_stress= SG
+            callout%effective_stress = sqrt(3.D0/2.D0)*norm2(SHsam)
+            callout%effective_strain = HEPSCALL
+            callout%effective_strain_tot = HEPSTOT
+            callout%effective_macro_strain = MEPS*(ISTP-1)
+            callout%effective_macro_strain_tot = MEPSTOT
+      end associate
+#endif
+      !
       HEPS = HEPS / TOTGEW
       HEPSCALL = HEPSCALL + HEPS
 #ifdef ALTAY_SUBROUTINE
@@ -622,23 +640,6 @@ C      call STR5(vec1,SHsam)
 #else
       HEPSTOT = HEPSTOT + HEPS
       MEPSTOT = MEPSTOT + MEPS
-#endif
-      if (NMSSx /= 0) then
-            call writeMSSRecord(IMP5,MEPS*ISTP,MEPSTOT,HEPSCALL,HEPSTOT,
-     &                          SHsam,info)
-      endif
-#ifdef ALTAY_SUBROUTINE
-      ! Get the homogenized quantities:
-      associate (callout => astate%simulCalls(astate%this)%output)
-            callout%stress_tensor= SHsam
-            callout%taylor_factor= GMM
-            callout%average_stress= SG
-            callout%effective_stress = sqrt(3.D0/2.D0)*norm2(SHsam)
-            callout%effective_strain = HEPSCALL
-            callout%effective_strain_tot = HEPSTOT
-            callout%effective_macro_strain = MEPS*ISTP
-            callout%effective_macro_strain_tot = MEPSTOT
-      end associate
 #endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      JW=0
