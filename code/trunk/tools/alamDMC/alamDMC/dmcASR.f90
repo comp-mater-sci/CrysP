@@ -83,7 +83,7 @@ contains
       integer,intent(out)                       :: info      
       ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
       ! coordinate system
-      double precision,dimension(3,3)           :: D, De, Se, Sm, SonA, SmIdent, Pressure
+      double precision,dimension(3,3)           :: D, De, Se, Sm, SonA, SmIdent, Pressure, P, TotalP
       double precision,dimension(3,3)           :: St, Stdev, StonA, StIdent, Dt
       double precision,dimension(3,3)           :: Mrot = 0.0, MI = 0.0
       !
@@ -101,10 +101,11 @@ contains
       integer,parameter       :: cnfunit = 90, ofunit = 91, histunit = 92, dtaunit = 93
       integer,dimension(2),parameter :: teeunits = [display_unit,histunit]
       
-      integer,parameter :: ncolumn_labels = 23, column_width = 15, short_column_width = 7
+      integer,parameter :: ncolumn_labels = 35, column_width = 15, short_column_width = 7
       character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = [ character(len=14) ::  &
             'point','incr','eps_vM','Pnorm','totalP_vM','W','plast_pot','M','scal_s','||SonA||','R', & 
-            'SonA_11','SonA_22','SonA_33','SonA_12','SonA_23','SonA_13','A_11','A_22','A_33','A_12','A_23','A_13' ]
+            'SonA_11','SonA_22','SonA_33','SonA_12','SonA_23','SonA_13','A_11','A_22','A_33','A_12','A_23','A_13', & 
+            'P_11','P_22','P_33','P_12','P_23','P_13', 'Ptot_11','Ptot_22','Ptot_33','Ptot_12','Ptot_23','Ptot_13' ]
       character(len=14),dimension(9) :: display_column_labels = [ character(len=14) ::  &
             'point','incr','eps_vM','Pnorm','totalP_vM','W','scal_s','||SonA||','R' ]
       !
@@ -142,6 +143,7 @@ contains
       Mrot = rotmat(deg2rad(this%rotframe))
       !
       vTotalP = 0.D0
+      TotalP = 0.D0
       totalPnorm = 0.D0
       plastic_work_inc = 0.D0
       plastic_work_total = 0.D0
@@ -150,6 +152,7 @@ contains
       do  point = 1, npoints
             write(display_unit,800)
             vP = 0.D0
+            P = 0.D0
             Pnorm = 0.D0 ! sum||P||
             normP = 0.D0 ! ||P||
             !! Acquire full stress tensor St
@@ -220,7 +223,7 @@ contains
                   !! -> Report the results to output file
                   write(ofunit,710) point, increment , root23*normP, Pnorm, root23*totalPnorm, &
                                     plastic_work_total, plast_pot, taylor_factor, scal_s, norm_sona, R, &
-                                    Mat33ToVec6(StonA),Mat33ToVec6(D)
+                                    Mat33ToVec6(StonA),Mat33ToVec6(D),Mat33ToVec6(P),Mat33ToVec6(TotalP)
                   if (doLogging(fngLogInfo,this%output%verbosity)) then
                         ! write the header line
                         write(display_unit,610)
@@ -269,6 +272,8 @@ contains
                   !! -> Calculate total strain
                   vP = vP + vDe
                   vTotalP = vTotalP + vDe
+                  call KVEC5D2MAT(vP,P)
+                  call KVEC5D2MAT(vTotalP,TotalP) 
                   !
                   normP = vec_norm2(vP)
                   Pnorm = Pnorm + normDe
@@ -298,9 +303,9 @@ contains
       500 format(3(3(E12.5,1X),/))
       501 format(3(E12.5,1X),/,3(E12.5,1X),/,3(E12.5,1X))
       ! Formats for output file
-      700 format(1X, 2(A7,1X),9(A18,  1X),5X,12(A18,1X))
-      701 format('#',2(A7,1X),9(A18,  1X),5X,12(A18,1X))
-      710 format(1X, 2(I7,1X),9(E18.9,1X),5X,12(E18.9,1X))
+      700 format(1X, 2(A7,1X),9(A18,  1X),5X,24(A18,1X))
+      701 format('#',2(A7,1X),9(A18,  1X),5X,24(A18,1X))
+      710 format(1X, 2(I7,1X),9(E18.9,1X),5X,24(E18.9,1X))
       ! Formats for the display
       600 format(2(1X,A5),7(A14,1X))
       601 format(2(1X,I5),7(F14.6,1X))
