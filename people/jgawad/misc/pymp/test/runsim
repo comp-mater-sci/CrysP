@@ -1,0 +1,6 @@
+#!/bin/bash
+
+COMMFILE=outcomm.dat
+
+rm -f PPD RST CHECK* ACTIV DACTIV POLE* EULER  "${COMMFILE}"
+./crys2D  

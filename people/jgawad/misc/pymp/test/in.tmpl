@@ -1,0 +1,20 @@
+${stress_scaling}           /Scaling factor for stress output
+${strain_increment}           /Strain increment
+${vPlDeps}                   /Strain (rate) direction
+1   0         /ICASE,NPRNT
+1  /I_EVOL 0--without texture evolution; 1--with texture evolution
+1  /IDELAS 0--constant elastic moduli; 1--according to crystal elasticity
+0.0D0 /THETA
+az31.txt
+6             /Magnesium hardening
+1.D-3  15.0  0.06  1.0  10.0          /PROPS(1..5)
+80000.0  40000.0  20000.0  400.0  0.0  0.13   /PROPS(6..11)
+1.0  1.0  1.0  1.0  1.0  1.0           /PROPS(12..17)
+1.624  0.128917  0.01  35.0  1.D-3     /PROPS(18..22)
+1.0  1.0  1.0  1.0  1.0               /PROPS(23..27)
+1.D-3   15.0   60.0                   /PROPS(28..30)
+1.D-3   15.0   60.0                  /PROPS(31..33)
+1.D-3   15.0   60.0                   /PROPS(34..36)
+4  0.00  0.01 0.0D0 4.0D2         /IDMODL,DGAMDT,DEPS1DT,DEPS2DT,TINCR
+1.0D-8  0.01 0.05 0.0025 0.00001 9.0  /EPSW,EPSG,EPST,DGMAMX,DWPMAX,DSeMAX
+6 1 ${work_increment} 1    /ICMODE,INCR1,INCR2,IINFO
