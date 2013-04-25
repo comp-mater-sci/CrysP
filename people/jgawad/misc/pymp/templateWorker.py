@@ -19,7 +19,9 @@ class Task(object):
         self.cwd = '.'
         self.tmpdir = ''
         #
-        self.is_done = False
+        self.command_output = ''
+        #
+        self.result = None
 
     def __del__(self):
         try:
@@ -69,7 +71,7 @@ class Task(object):
         # Put special keywords into mapping:
         # EXEC_DIR
         full_mapping = {}
-        full_mapping['EXEC_DIR'] = self.tmpdir
+        full_mapping['WORK_DIR'] = self.tmpdir
         #
         full_mapping.update(self.mapping)
         input_data = keysubst.substituteVarKeys(self.template,full_mapping)
@@ -86,8 +88,12 @@ class Task(object):
         # and  feed it with the configuration
         stdoutdata, stderrdata = po.communicate(input_string)
 
+        if not self.config['output_path']:
+            self.command_output = stdoutdata
+        # Diagnostic -->
         print stdoutdata
-        print stderrdata 
+        print stderrdata
+        # <-- 
 
 
 
@@ -96,8 +102,7 @@ class Task(object):
         if self.config['output_path']:
             try:
                 inp = open(self.config['output_path'],'r')
-                # Read just one line
-                res = inp.readline()
+                res = inp.readlines()
                 inp.close()
                 output = []
                 if (res != ''):
@@ -133,21 +138,49 @@ class Task(object):
             raise e
 
 
+class PoolMaster(object):
 
-def worker(task):
+    def __init__(self, polltime=1, timeout = 60):
+        self.timeout = timeout
+        self.polltime = polltime
+
+    def run(self,tasks):
+        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count(),maxtasksperchild=1)
+        result = pool.map_async(dispatcher, tasks)
+
+        # Wait for the results in a semi-active way
+        result.wait(self.polltime)
+        tot_time = self.polltime
+        while (not result.ready()) and (tot_time < self.timeout):
+            tot_time += self.polltime
+            print 'after ', tot_time, ' is ready:', result.ready()
+            result.wait(self.polltime)
+        #
+        if result.ready() and result.successful():
+            res = result.get()
+            print 'Getting results', res
+            if len(res) != len(tasks):
+                e = Exception('PoolMaster Error: there are fewer results than tasks!')
+                raise e
+            # unpack the results & put them to the corresponding tasks
+            for i in range(0,len(tasks)):
+                tasks[i].result = res[i]
+
+
+def dispatcher(task):
     print ('pid = %d ' % os.getpid())
-    print task
     return task.run()
 
 
-
-
 if __name__ == "__main__":
-    import multiprocessing
+
     multiprocessing.freeze_support()
 
     config = {}
-    config['program_path'] = 'c:\\work\\TWRMTMProject\\people\\jgawad\\misc\\pymp\\test\\runsim.cmd'
+    if sys.platform == 'win32':
+        config['program_path'] = 'c:\\work\\TWRMTMProject\\people\\jgawad\\misc\\pymp\\test\\runsim.cmd'
+    else:
+        config['program_path'] = '~/jgproject/TWRMTMProject/people/jgawad/misc/pymp/test/runsim.sh'
     config['output_path'] = 'marker.dat'
 
     d = {}
@@ -155,7 +188,7 @@ if __name__ == "__main__":
     d['kocie'] = 'mysz'
 
 
-    single_run = True
+    single_run = False
     if (single_run):
 
 
@@ -167,7 +200,7 @@ if __name__ == "__main__":
 
         print task
     
-        result = worker(task)
+        result = dispatcher(task)
         print result
 
     # run sequence
@@ -187,27 +220,10 @@ if __name__ == "__main__":
 
         tasks.append(task)
 
-    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count(),maxtasksperchild=1)
-    result = pool.map_async(worker, tasks)
+    master = PoolMaster()
 
     
-    timeout = 35
-    tot_time = 0
-    
-    tmp = result.wait(timeout)
-    print(type(tmp))
-    while (not result.ready()) and (tot_time < 30):
-        tot_time += timeout
-        print 'after ', tot_time, ' is ready:', result.ready()
-        result.wait(timeout)
-    #
-    if result.ready() and result.successful():
-        res = result.get()
-        print 'Getting results', res
-    pass
-
-    for task in tasks:
-        print task.is_done
+    master.run(tasks)    
 
 
     print "bye"

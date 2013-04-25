@@ -1,6 +1,5 @@
 #!/bin/bash
 
-COMMFILE=outcomm.dat
+echo Running simulation
 
-rm -f PPD RST CHECK* ACTIV DACTIV POLE* EULER  "${COMMFILE}"
-./crys2D  
+tr -s [:cntrl:] > marker.dat
