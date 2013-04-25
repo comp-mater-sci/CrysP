@@ -14,10 +14,10 @@ def f(x):
         print tmpdir
         print ('pid = %d ' % os.getpid())
         time.sleep(2)
-        os.unlink(tmpdir)
+        # os.unlink(tmpdir)
         
-    except:
-        print 'ooops'
+    except Exception as e:
+        print e
 
     if (x != 7):
         return x*x
@@ -30,7 +30,7 @@ def fcall(x):
 def usePool():
     import multiprocessing
     multiprocessing.freeze_support()
-    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count(),maxtaskperchild=1)             
+    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count(),maxtasksperchild=1)             
     result = pool.map_async(f, range(0,20))
 
     
@@ -99,4 +99,5 @@ def useQueue():
     
     
 if __name__ == '__main__':    
-    useQueue()
+    #useQueue()
+    usePool()
