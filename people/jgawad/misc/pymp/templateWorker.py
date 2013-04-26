@@ -4,6 +4,7 @@ import sys
 import tempfile
 import keysubst
 import time
+import shutil
 
 class Task(object):
 
@@ -27,7 +28,9 @@ class Task(object):
         try:
             # Last attempt to do housholding
             if self.tmpdir and os.path.isdir(self.tmpdir):
-                os.unlink(self.tmpdir)
+                shutil.rmtree(self.tmpdir)
+        except OSError as e:
+            print e
         except:
             pass
 
@@ -62,6 +65,7 @@ class Task(object):
         self.config.update(config)
         program_path = os.path.expanduser(self.config['program_path'])
         if not os.path.exists(program_path):
+            print('Cannot find ' + program_path)
             raise OSError()
         self.config['program_path'] = os.path.realpath(program_path)
 
@@ -91,8 +95,8 @@ class Task(object):
         if not self.config['output_path']:
             self.command_output = stdoutdata
         # Diagnostic -->
-        print stdoutdata
-        print stderrdata
+        #print stdoutdata
+        #print stderrdata
         # <-- 
 
 
@@ -104,26 +108,20 @@ class Task(object):
                 inp = open(self.config['output_path'],'r')
                 res = inp.readlines()
                 inp.close()
-                output = []
-                if (res != ''):
-                    output.append(res)
-                del res
+                if len(res):
+                    output = res
             except:
-                print 'ouups'    
+                print 'Cannot harvest the results'    
         return output
         
 
     def finalize(self):
         # Finalize:
         try:
+            # Make sure we end up in the initial directory
             os.chdir(self.cwd)
-            # FIXME: there are problems with unlinking the temporary dir
-            #os.unlink(self.tmpdir)
-        except Exception as e:
+        except OSError as e:
             print e
-            raise e
-        finally:
-            os.chdir(self.cwd) # Make sure we end up in the initial directory
 
     def run(self):
         try:
@@ -165,7 +163,9 @@ class PoolMaster(object):
             # unpack the results & put them to the corresponding tasks
             for i in range(0,len(tasks)):
                 tasks[i].result = res[i]
-
+        # Destroying the pool
+        pool.terminate()
+        pool.join()
 
 def dispatcher(task):
     print ('pid = %d ' % os.getpid())
@@ -180,7 +180,7 @@ if __name__ == "__main__":
     if sys.platform == 'win32':
         config['program_path'] = 'c:\\work\\TWRMTMProject\\people\\jgawad\\misc\\pymp\\test\\runsim.cmd'
     else:
-        config['program_path'] = '~/jgproject/TWRMTMProject/people/jgawad/misc/pymp/test/runsim.sh'
+        config['program_path'] = '~/jgprojects/TWRMTMProject/people/jgawad/misc/pymp/test/runsim.sh'
     config['output_path'] = 'marker.dat'
 
     d = {}
@@ -188,7 +188,7 @@ if __name__ == "__main__":
     d['kocie'] = 'mysz'
 
 
-    single_run = False
+    single_run = True
     if (single_run):
 
 
@@ -201,29 +201,34 @@ if __name__ == "__main__":
         print task
     
         result = dispatcher(task)
-        print result
+        print('Result: ' + str(result))
 
+
+
+    parallel_run = True
     # run sequence
+    if (parallel_run):
+        tasks = []
+        for i in range(0,20):
+            d = {}
+            d['ali'] = ('object ' + str(i))
+            d['kocie'] = 'mysz'
+               
+            task = Task()
+            task.template = ['Ala ma ${ali}\n', 'Kot ma ${kocie}\n']
+            task.mapping = d
+            task.setConfig(config)
 
-    tasks = []
-    for i in range(0,20):
-        d = {}
-        d['ali'] = ('object ' + str(i))
-        d['kocie'] = 'mysz'
-           
-        task = Task()
-        task.template = ['Ala ma ${ali}\n', 'Kot ma ${kocie}\n']
-        task.mapping = d
-        task.setConfig(config)
+            print task
 
-        print task
+            tasks.append(task)
 
-        tasks.append(task)
+        master = PoolMaster()
 
-    master = PoolMaster()
+        
+        master.run(tasks)    
 
-    
-    master.run(tasks)    
-
+        for task in tasks:
+            print task.result
 
     print "bye"
