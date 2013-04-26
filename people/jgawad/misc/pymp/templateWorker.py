@@ -60,10 +60,10 @@ class Task(object):
 
     def setConfig(self,config):
         self.config.update(config)
-        program_path = self.config['program_path']
+        program_path = os.path.expanduser(self.config['program_path'])
         if not os.path.exists(program_path):
             raise OSError()
-        self.config['program_path'] = os.path.realpath(os.path.expanduser(program_path))
+        self.config['program_path'] = os.path.realpath(program_path)
 
     def execute(self):
         import os
