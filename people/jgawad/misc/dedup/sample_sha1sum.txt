@@ -1,0 +1,10 @@
+00b370b2168561de5aa555dfd396f57812485580 *./ALAMEL/1-s2.0-S0749641910001798-main.pdf
+04e6a6cadc265cceb0258943c370365e8379e657 *./Barlat/Barlat_1997_International-Journal-of-Plasticity.pdf
+1f1e8919931184668e338c2159b9674ced114677 *./Barlat/Barlat_1997_Journal-of-the-Mechanics-and-Physics-of-Solids.pdf
+4692297e208b1d9aa059198ee60c360bbb812aa2 *./Barlat/Barlat_2002_International-Journal-of-Plasticity.pdf
+36d22115f8bc128cb0b7ab7dd892e8c502d262bd *./Barlat/Barlat_2003_International-Journal-of-Plasticity.pdf
+766ab7cd547a5ddd342a62269ed86025927392e2 *./Barlat/Barlat_2003_International-Journal-of-Plasticity_1.pdf
+0b782340df050a9b1474c5f5b8adb228a96ba916 *./Barlat/Barlat_2005_International-Journal-of-Plasticity.pdf
+52c037752f826ed17e64a2466bc901980258ebdf *./Barlat/Barlat_2007_International-Journal-of-Plasticity.pdf
+ab7f10af3837ffd78b45a3271b55c8dca38b344e *./Barlat/Cazacu_2003_International-Journal-of-Engineering-Science.pdf
+2b9e0263c1171b15cacb05fcfc0a29d083027c6f *./Barlat/Cazacu_2006_International-Journal-of-Plasticity.pdf
