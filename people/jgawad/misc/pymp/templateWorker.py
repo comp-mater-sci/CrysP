@@ -1,3 +1,18 @@
+#!/usr/bin/env python
+#
+# $Id$
+#
+# Author: Jerzy Gawad
+# Email:  Jerzy.Gawad@cs.kuleuven.be
+# Organization: Katholieke Universiteit Leuven (KU Levuen)
+# Organization unit: Dept.Comp.Sci., TWR Group
+#
+# Copyright by KU Leuven. All rights reserved.
+#
+# $Revision$
+# $Date$
+#
+
 import multiprocessing
 import os 
 import sys
@@ -5,17 +20,20 @@ import tempfile
 import keysubst
 import time
 import shutil
+import harvester
 
 class Task(object):
 
-    def __init__(self):
-        self.template = []
-        self.mapping = {}
-        self.config = {}
+    def __init__(self,template=[], mapping={},config={},harvesters=[]):
+        self.template = template
+        self.mapping = mapping
+        self.harvesters = harvesters
         # configuration flags
+        self.config = {}
         self.config['program_path'] = ''
         self.config['hide_output'] = True
-        self.config['output_path'] = ''
+        self.setConfig(config)
+
         # Other members, to be set by run() and co.
         self.cwd = '.'
         self.tmpdir = ''
@@ -23,11 +41,13 @@ class Task(object):
         self.command_output = ''
         #
         self.result = None
+        #
+        self.purge_tmpdir = True
 
     def __del__(self):
         try:
             # Last attempt to do housholding
-            if self.tmpdir and os.path.isdir(self.tmpdir):
+            if self.purge_tmpdir and self.tmpdir and os.path.isdir(self.tmpdir):
                 shutil.rmtree(self.tmpdir)
         except OSError as e:
             print e
@@ -53,7 +73,7 @@ class Task(object):
             raise
 
 
-    def prepare(self):
+    def preExecute(self):
         self.prepareWorkdir()
 
 
@@ -81,19 +101,16 @@ class Task(object):
         input_data = keysubst.substituteVarKeys(self.template,full_mapping)
         input_string = ''.join(input_data)
         # Do actual work: start 
-        # Fake -->
-        output = sys.__stdout__
-        output.write(input_string)
-        # Fake <--
+        # Diagnostic -->
+        #output = sys.__stdout__
+        #output.write(input_string)
+        # Diagnostic <--
 
         # OK, the template is ready, let's run the program...
         out_redir = subprocess.PIPE if self.config['hide_output'] else None
         po = subprocess.Popen(self.config['program_path'], stdin=subprocess.PIPE, stdout=out_redir)
         # and  feed it with the configuration
-        stdoutdata, stderrdata = po.communicate(input_string)
-
-        if not self.config['output_path']:
-            self.command_output = stdoutdata
+        self.command_output, stderrdata = po.communicate(input_string)
         # Diagnostic -->
         #print stdoutdata
         #print stderrdata
@@ -101,18 +118,10 @@ class Task(object):
 
 
 
-    def harvest(self):
-        output = None
-        if self.config['output_path']:
-            try:
-                inp = open(self.config['output_path'],'r')
-                res = inp.readlines()
-                inp.close()
-                if len(res):
-                    output = res
-            except:
-                print 'Cannot harvest the results'    
-        return output
+    def postExecute(self):
+        self.result = {}
+        for harvester in self.harvesters:
+            self.result.update(harvester.harvest(self.tmpdir))
         
 
     def finalize(self):
@@ -125,14 +134,14 @@ class Task(object):
 
     def run(self):
         try:
-            self.prepare()
+            self.preExecute()
             self.execute()
-            result = self.harvest()
+            self.postExecute()
             self.finalize()
             self.is_done = True
-            return result
+            return self.result
         except Exception as e:
-            print 'That is terrible... What a shame...'
+            print 'Unexpected exception in Task::run()'
             raise e
 
 
@@ -167,68 +176,88 @@ class PoolMaster(object):
         pool.terminate()
         pool.join()
 
+
+
 def dispatcher(task):
     print ('pid = %d ' % os.getpid())
     return task.run()
+
+
+
+class SerialMaster(object):
+    def __init__(self):
+        pass
+
+    def run(self,tasks):
+        for task in tasks:
+            try:
+                task.run()
+            except Exception as e:
+                print 'Unexpected exception in SerialMaster::run()'
+                raise e
+
 
 
 if __name__ == "__main__":
 
     multiprocessing.freeze_support()
 
+    def prepareTestTasks(config, template):
+        tasks = []
+        for i in range(0,20):
+            mapping = {}
+            mapping['ali'] = ('object ' + str(i))
+            mapping['kocie'] = 'mysz'
+           
+            task = Task(template, mapping,config,harvesters=[harvester.TextFileHarvester('marker.dat')])
+            print task
+    
+            tasks.append(task)
+        return tasks
+
+
     config = {}
     if sys.platform == 'win32':
         config['program_path'] = 'c:\\work\\TWRMTMProject\\people\\jgawad\\misc\\pymp\\test\\runsim.cmd'
     else:
         config['program_path'] = '~/jgprojects/TWRMTMProject/people/jgawad/misc/pymp/test/runsim.sh'
-    config['output_path'] = 'marker.dat'
 
-    d = {}
-    d['ali'] = 'syfilis'
-    d['kocie'] = 'mysz'
 
+    mapping = {}
+    mapping['ali'] = 'syfilis'
+    mapping['kocie'] = 'mysz'
+
+    template = ['Ala ma ${ali}\n', 'Kot ma ${kocie}\n']
 
     single_run = True
     if (single_run):
-
-
-    
-        task = Task()
-        task.template = ['Ala ma ${ali}\n', 'Kot ma ${kocie}\n']
-        task.mapping = d
-        task.setConfig(config)
-
+        task = Task(template, mapping,config,harvesters=[harvester.TextFileHarvester('marker.dat')])
         print task
-    
         result = dispatcher(task)
         print('Result: ' + str(result))
+        del task
 
+    serial_run = True
+    if serial_run:
+        tasks = prepareTestTasks(config, template)
 
-
-    parallel_run = True
-    # run sequence
-    if (parallel_run):
-        tasks = []
-        for i in range(0,20):
-            d = {}
-            d['ali'] = ('object ' + str(i))
-            d['kocie'] = 'mysz'
-               
-            task = Task()
-            task.template = ['Ala ma ${ali}\n', 'Kot ma ${kocie}\n']
-            task.mapping = d
-            task.setConfig(config)
-
-            print task
-
-            tasks.append(task)
-
-        master = PoolMaster()
-
-        
+        master = SerialMaster()
         master.run(tasks)    
 
         for task in tasks:
             print task.result
+        del tasks
+
+    parallel_run = True
+    # run sequence
+    if (parallel_run):
+        tasks = prepareTestTasks(config, template)
+
+        master = PoolMaster()
+        master.run(tasks)    
+
+        for task in tasks:
+            print task.result
+        del tasks
 
     print "bye"

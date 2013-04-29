@@ -31,6 +31,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="driver.py" />
+    <Compile Include="harvester.py" />
     <Compile Include="keysubst.py" />
     <Compile Include="pymp.py" />
     <Compile Include="templateWorker.py" />
