@@ -160,7 +160,11 @@ C
             if (read_state) then
                   call stripComment(fname_pebp)
                   info = KS_openStateFile(IPEBPSTAT,fname_pebp,mode='r')
-                  if (info /= 0) return
+                  if (info /= 0) then 
+                        write(IMP,fmt=602) trim(fname_pebp)
+                        write(*,fmt=602) trim(fname_pebp)
+                        stop
+                  endif
                   info = KS_readState_file(IPEBPSTAT,nblock)
                   if (info /= 0) then 
                         write(IMP,fmt=601)
@@ -172,6 +176,7 @@ C
  66   format(L2,I5,A)      
  600  format('Cannot initialize KOST1x state variables')
  601  format('Cannot read KOST1x state variables')
+ 602  format('Cannot open KOST1x state file: ',A)     
 #endif
       ! 
       
