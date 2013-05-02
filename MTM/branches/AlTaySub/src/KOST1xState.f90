@@ -83,12 +83,14 @@ contains
       integer,intent(out)                             :: info
       
       double precision,dimension(:,:),intent(out)     :: Mcrss    !< 
+      integer l
       !
             info = KS_ErrBadDims
             if (size(KS_state) < i) return
-            if ( any(shape(Mcrss) /= shape(KS_state(i)%CRSS)) ) return
+            !if ( any(shape(Mcrss) /= shape(KS_state(i)%CRSS)) ) return
+            l= ubound(Mcrss,2) ! corresponds to the number of slip systems
             ! Extract the CRSSes
-            Mcrss = KS_state(i)%CRSS
+            Mcrss(:,1:l) = KS_state(i)%CRSS(:,1:l)
             info = KS_OK
       !      
       end subroutine

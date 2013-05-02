@@ -46,6 +46,9 @@
 !    v1.7.1 by J. Gawad, CS, and P. Eyckens, MTM, KU Leuven, 21 February 2013:
 !       -> fix to the API of the WriteHeadSVfile and ReadHeadSVfile: both are turned into functions.
 !          The previous implementation didn't include any possibility of reporting exit codes.
+!    v1.8 by P. Eyckens, MTM, KU Leuven, 2 may 2013:
+!       -> Allow to adopt the set of 12 BCC slip systems: (110)[111], cf. BCCbp1.PRE
+!          Previously, only the set of 24 BCC slip systems (110)+(112)[111] was allowed, cf. BCCbp2.PRE
 !
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -93,7 +96,7 @@
             double precision                    :: RHOcb = 0.D0
             TYPE(CBBtype), DIMENSION(6)         :: CBB 
             integer, DIMENSION(2)               :: ActiveCBB = 0
-            double precision, DIMENSION(2,24)   :: CRSS = 0.D0
+            double precision, DIMENSION(2,24)   :: CRSS = 0.D0 !Up to 24 slip systems supported
       END TYPE StatVar
 
       INTERFACE InitModuleKOST1x !Generic Interface
@@ -124,6 +127,7 @@
       integer,PARAMETER,PUBLIC :: KS_ErrBadValue = -5 !< At least one input parameter has unacceptable value
       integer,PARAMETER,PUBLIC :: KS_ErrOutOfRange = -6 !< At least one input parameter has a value outside acceptable range
       integer,PARAMETER,PUBLIC :: KS_ErrIO = -15      !< Error during an IO operation
+      integer,PARAMETER,PUBLIC :: KS_ErrNss = -16     !< Unsupported number of slip systems proposed. Supported values are: 12, 24      
       integer,PARAMETER,PUBLIC :: KS_ErrUninitialized = -50 !< Call to module procedures without proper initialization of the module
       !>@}
             
@@ -131,6 +135,9 @@
       TYPE(PAR11), SAVE :: P !unit system: MPa; nm(nanometer)
       logical, SAVE :: InitOK=.FALSE.
       integer, SAVE :: iKOST=0
+      integer, SAVE :: Nss !Number of slip systems. Supported values: 
+                           !     Nss=12: (110)[111] - 1 family
+                           !     Nss=24: (110)+(112)[111] - 2 families
       integer, PRIVATE :: i !running index
       double precision, SAVE :: alfa_G_b 
       double precision, SAVE, DIMENSION(24,6):: eff             = 0.D0 ,&
@@ -180,11 +187,11 @@
       integer FUNCTION Init_PAR11(P11try,KOSTtry,LEC) result(iError)
       TYPE(PAR11),INTENT(IN) :: P11try
       integer    ,INTENT(IN) :: KOSTtry !proposed value of KOST
-      integer,optional,INTENT(IN) :: LEC !unit number of PRE-file
+      integer    ,INTENT(IN) :: LEC !unit number of PRE-file
       
       !local variables declarations:
       character(LEN=64) :: line1
-      integer           :: s,i
+      integer           :: s,i,Idum=0,Nsstry=0
       double precision, PARAMETER :: TENpow6 = 1.D6
       
       InitOK=.FALSE.
@@ -195,16 +202,26 @@
           return 
       end if
       iKOST=KOSTtry !=11; iKOST: PRIVATE to this module.
-      if (present(LEC)) then
-            !Check PRE-file
-            rewind (unit=LEC)
-            read (LEC,FMT='(A)') line1
-            rewind (unit=LEC)
-            if ( (index(line1,'BCC') == 0) .or. (index(line1,'{BP}') == 0)) then
-                  iError = KS_ErrIO 
-                  return 
-            end if
-      endif
+  
+      !Check PRE-file #1: Does 1st comment line contain strings 'BCC4' and '{BP}'?
+      rewind (unit=LEC)
+      read (LEC,FMT='(A)') line1 !line1
+      if ( (index(line1,'BCC') == 0) .or. (index(line1,'{BP}') == 0)) then
+        iError = KS_ErrIO 
+        return 
+      end if
+      
+      !Check PRE-file #2: Is number of slip systems (Nss) supported?
+      read (LEC,FMT='(8I4)') Idum, Nsstry, Idum, Idum, Idum, Idum, Idum, Idum
+      rewind (unit=LEC)
+      select case (Nsstry)
+      case (12, 24) !supported number of slip systems
+          Nss=Nsstry
+      case default !unsupported number of slip systems specified  in LEC
+          iError = KS_ErrNss
+          return 
+      end select
+  
       !Check the input parameters                                  ! Units of input parameters:
       if(P11try%b    >  0.    .AND. P11try%b    <= 1.e-8    .AND.& ! [m]
          P11try%G    >= 10.e3 .AND. P11try%G    <= 500.e3   .AND.& ! [MPa]
@@ -275,7 +292,7 @@
       implicit none
       integer,intent(in)      :: inunit
       integer,intent(in)      :: KOST     !< Id of the model version.
-      integer,optional,intent(in)   :: LEC      
+      integer,intent(in)      :: LEC      
       !
       TYPE(PAR11) :: PARtry
       !
@@ -398,7 +415,7 @@
       ! 'GAMMA' ~ large-caps GAMMA: for a wall
 
       
-      SUMabsGamDot=sum(abs(sliprate))
+      SUMabsGamDot=sum(abs(sliprate(1:Nss)))
       SUMabsGam=SUMabsGamDot*deltaT
       !
       if (SUMabsGam < epsilon(0.D0)) then
@@ -736,7 +753,7 @@
       !CONTAINed by MODULE KOST1x:
       FUNCTION F_CRSS(SV) 
       TYPE(StatVar), INTENT(IN) :: SV 
-      double precision, DIMENSION(2,24):: F_CRSS !OUT
+      double precision, DIMENSION(2,24):: F_CRSS !OUT 
 
 !     P%tau0,P%f  ->inherited
 !     alfa_G_b ->inherited
@@ -748,8 +765,11 @@
       integer :: j,s,i
       double precision :: signfac
       double precision,DIMENSION(6)::wpcontr,wdcontr
- 
-       !CRSS within cells & CBs
+      
+      !Slip systems not allowed to become active retain initialization value of -1.0
+      F_CRSS=-1.0
+      
+      !CRSS within cells & CBs
       tau_CB=alfa_G_b*sqrt(SV%RHOcb) 
       
       !contributions from tau_0 and CBs to CRSS
@@ -758,7 +778,7 @@
       !Calc. CRSS for each slip system s, for the sense of slip j
       do j=1,2 
       signfac=3.0-2.0*j ! 1 for j=1 ; -1 for j=2
-        do s=1,24 
+        do s=1,Nss 
           !wp- and wd-contributions from all CBBs i
           do i=1,6
                   wpcontr(i)=sqrt(abs(SV%CBB(i)%RHOwp)) *             &
