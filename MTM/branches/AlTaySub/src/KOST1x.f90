@@ -49,12 +49,20 @@
 !    v1.8 by P. Eyckens, MTM, KU Leuven, 2 may 2013:
 !       -> Allow to adopt the set of 12 BCC slip systems: (110)[111], cf. BCCbp1.PRE
 !          Previously, only the set of 24 BCC slip systems (110)+(112)[111] was allowed, cf. BCCbp2.PRE
-!
+!    v1.9 by P. Eyckens, MTM, KU Leuven, 17 may 2013:
+!       -> A new option is available by putting the keyword "{ScrewSlip}" in the 1st line of PRE-file.
+!          Then, The assumption that all plastic slip is carried by purely screw dislocations in made in 
+!          the determination of the 'wall effectivity matrix' eff(s,i). It gives the relative contribution 
+!          of the CBB dislocation density of wall i onto the CRSS of slip system s.
+!          If keyword "{screw}" is omitted, it is implicitly assumed that all slip is carried by edge 
+!          dislocations (as has been done in the PhD of B. Peeters).
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     KOST= 11
-!     --------
-!     The Bart Peeters hardening model as described in:
+!     KOST=11; 
+!     PRE-file contains 24 (110)+(112)[111] slip systems; 
+!     PRE-file does not contain keyword "{ScrewSlip}" in 1st line 
+!     -----------------------------------------------------
+!     The original 'Bart Peeters hardening model', as described in:
 !     PhD B. Peeters, MTM, 2002, paragraph 3.2.2: 'Mesoscopic model'
 !     This implementation differs only in a few details:
 
@@ -134,6 +142,7 @@
       !Remaining declarations all PRIVATE:
       TYPE(PAR11), SAVE :: P !unit system: MPa; nm(nanometer)
       logical, SAVE :: InitOK=.FALSE.
+      logical, SAVE :: ScrewSlip=.FALSE.
       integer, SAVE :: iKOST=0
       integer, SAVE :: Nss !Number of slip systems. Supported values: 
                            !     Nss=12: (110)[111] - 1 family
@@ -147,10 +156,23 @@
 
       double precision, PARAMETER :: MINfrac= 2.0E-3
       double precision, PARAMETER :: LOWfrac=10.0E-3
-
+      
+      double precision, PARAMETER :: p2= 0.707106781187 !1.0/sqrt(2.0)
+      double precision, PARAMETER :: n2=-0.707106781187 
+      double precision, PARAMETER :: p3= 0.577350269190 !1.0/sqrt(3.0)
+      double precision, PARAMETER :: n3=-0.577350269190    
+      double precision, PARAMETER :: p6= 0.408248290464 !1.0/sqrt(6.0)
+      double precision, PARAMETER :: n6=-0.408248290464    
+      double precision, PARAMETER :: pd6= 0.816496580928 !2.0/sqrt(6.0)
+      double precision, PARAMETER :: nd6=-0.816496580928
+      !double precision, PARAMETER :: p1_42= 0.154303349962 !1.0/sqrt(42.0)
+      !double precision, PARAMETER :: n1_42=-0.154303349962
+      !double precision, PARAMETER :: p4_42= 0.617213399848 !4.0/sqrt(42.0)
+      !double precision, PARAMETER :: n4_42=-0.617213399848 
+      !double precision, PARAMETER :: p5_42= 0.771516749810 !5.0/sqrt(42.0)
+      !double precision, PARAMETER :: n5_42=-0.771516749810
+      
       !bDirSS(s,1:3): normalized burgers vector on slip system s
-      double precision, PARAMETER :: p3= 0.5773502 !1.0/sqrt(3.0)
-      double precision, PARAMETER :: n3=-0.5773502 !1.0/sqrt(3.0)
       double precision, SAVE, DIMENSION(24,3)::bDirSS    
       DATA (bDirSS( 1: 3,i),i=1,3) /3*p3,3*p3,3*p3/ !s.s. 1 to 3
       DATA (bDirSS( 4: 6,i),i=1,3) /3*n3,3*n3,3*p3/ !s.s. 4 to 6
@@ -161,9 +183,60 @@
       DATA (bDirSS(19:21,i),i=1,3) /3*n3,3*p3,3*p3/ !..
       DATA (bDirSS(22:24,i),i=1,3) /3*p3,3*n3,3*p3/ !s.s. 21 to 24
 
+      !mDirSS(s,1:3): normalized movement vector of SCREW on slip system s 
+      !  If nDirSS denotes slip plane normal and x the cross product, then (for SCREW):
+      !  mDirSS = bDirSS x nDirSS
+      double precision, SAVE, DIMENSION(24,3)::mDirSS    
+      DATA (mDirSS(01,i),i=1,3) /nd6,p6,p6/ !s.s. 01
+      DATA (mDirSS(02,i),i=1,3) /p6,nd6,p6/ !s.s. 02
+      DATA (mDirSS(03,i),i=1,3) /p6,p6,nd6/ !s.s. 03
+      DATA (mDirSS(04,i),i=1,3) /pd6,n6,p6/ !s.s. 04
+      DATA (mDirSS(05,i),i=1,3) /n6,pd6,p6/ !s.s. 05
+      DATA (mDirSS(06,i),i=1,3) /n6,n6,nd6/ !s.s. 06
+      DATA (mDirSS(07,i),i=1,3) /nd6,n6,n6/ !s.s. 07
+      DATA (mDirSS(08,i),i=1,3) /p6,pd6,n6/ !s.s. 08
+      DATA (mDirSS(09,i),i=1,3) /p6,n6,pd6/ !s.s. 09
+      DATA (mDirSS(10,i),i=1,3) /pd6,p6,n6/ !s.s. 10
+      DATA (mDirSS(11,i),i=1,3) /n6,nd6,n6/ !s.s. 11
+      DATA (mDirSS(12,i),i=1,3) /n6,p6,pd6/ !s.s. 12
+      DATA (mDirSS(13,i),i=1,3) /0.,p2,n2/ !s.s. 13
+      DATA (mDirSS(14,i),i=1,3) /n2,0.,p2/ !s.s. 14
+      DATA (mDirSS(15,i),i=1,3) /p2,n2,0./ !s.s. 15
+      DATA (mDirSS(16,i),i=1,3) /0.,n2,n2/ !s.s. 16
+      DATA (mDirSS(17,i),i=1,3) /p2,0.,p2/ !s.s. 17
+      DATA (mDirSS(18,i),i=1,3) /n2,p2,0./ !s.s. 18
+      DATA (mDirSS(19,i),i=1,3) /0.,n2,p2/ !s.s. 19
+      DATA (mDirSS(20,i),i=1,3) /n2,0.,n2/ !s.s. 20
+      DATA (mDirSS(21,i),i=1,3) /p2,p2,0./ !s.s. 21
+      DATA (mDirSS(22,i),i=1,3) /0.,p2,p2/ !s.s. 22
+      DATA (mDirSS(23,i),i=1,3) /p2,0.,n2/ !s.s. 23
+      DATA (mDirSS(24,i),i=1,3) /n2,n2,0./ !s.s. 24
+      !DATA (mDirSS(25,i),i=1,3) /n5_42,p4_42,p1_42/ !s.s. 25
+      !DATA (mDirSS(26,i),i=1,3) /n4_42,p5_42,n1_42/ !s.s. 26
+      !DATA (mDirSS(27,i),i=1,3) /p5_42,n1_42,n4_42/ !s.s. 27
+      !DATA (mDirSS(28,i),i=1,3) /p4_42,p1_42,n5_42/ !s.s. 28
+      !DATA (mDirSS(29,i),i=1,3) /p1_42,n5_42,p4_42/ !s.s. 29
+      !DATA (mDirSS(30,i),i=1,3) /n1_42,n4_42,p5_42/ !s.s. 30
+      !DATA (mDirSS(31,i),i=1,3) /p5_42,n4_42,p1_42/ !s.s. 31
+      !DATA (mDirSS(32,i),i=1,3) /p4_42,n5_42,n1_42/ !s.s. 32
+      !DATA (mDirSS(33,i),i=1,3) /p5_42,n1_42,p4_42/ !s.s. 33
+      !DATA (mDirSS(34,i),i=1,3) /p4_42,p1_42,p5_42/ !s.s. 34
+      !DATA (mDirSS(35,i),i=1,3) /p1_42,n5_42,n4_42/ !s.s. 35
+      !DATA (mDirSS(36,i),i=1,3) /n1_42,n4_42,n5_42/ !s.s. 36
+      !DATA (mDirSS(37,i),i=1,3) /n5_42,n4_42,p1_42/ !s.s. 37
+      !DATA (mDirSS(38,i),i=1,3) /n4_42,n5_42,n1_42/ !s.s. 38
+      !DATA (mDirSS(39,i),i=1,3) /n5_42,n1_42,p4_42/ !s.s. 39
+      !DATA (mDirSS(40,i),i=1,3) /n4_42,p1_42,p5_42/ !s.s. 40
+      !DATA (mDirSS(41,i),i=1,3) /p1_42,p5_42,p4_42/ !s.s. 41
+      !DATA (mDirSS(42,i),i=1,3) /n1_42,p4_42,p5_42/ !s.s. 42
+      !DATA (mDirSS(43,i),i=1,3) /p5_42,p4_42,p1_42/ !s.s. 43
+      !DATA (mDirSS(44,i),i=1,3) /p4_42,p5_42,n1_42/ !s.s. 44
+      !DATA (mDirSS(45,i),i=1,3) /n5_42,n1_42,n4_42/ !s.s. 45
+      !DATA (mDirSS(46,i),i=1,3) /n4_42,p1_42,n5_42/ !s.s. 46
+      !DATA (mDirSS(47,i),i=1,3) /p1_42,p5_42,n4_42/ !s.s. 47
+      !DATA (mDirSS(48,i),i=1,3) /n1_42,p4_42,n5_42/ !s.s. 48
+            
       !CBBnormal(i,1:3): normalized vector normal to CBB i
-      double precision, PARAMETER :: p2= 0.7071068 !1.0/sqrt(2.0)
-      double precision, PARAMETER :: n2=-0.7071068 !1.0/sqrt(2.0)
       double precision, SAVE, DIMENSION(6,3)::CBBnormal  
       DATA (CBBnormal(1,i),i=1,3) /0.,p2,n2/ !CBBs on (01-1)-plane
       DATA (CBBnormal(2,i),i=1,3) /n2,0.,p2/ !CBBs on (-101)-plane
@@ -190,7 +263,7 @@
       integer    ,INTENT(IN) :: LEC !unit number of PRE-file
       
       !local variables declarations:
-      character(LEN=64) :: line1
+      character(LEN=128) :: line1
       integer           :: s,i,Idum=0,Nsstry=0
       double precision, PARAMETER :: TENpow6 = 1.D6
       
@@ -203,12 +276,18 @@
       end if
       iKOST=KOSTtry !=11; iKOST: PRIVATE to this module.
   
-      !Check PRE-file #1: Does 1st comment line contain strings 'BCC4' and '{BP}'?
+      !Check PRE-file #1: Does 1st comment line contain strings 'BCC' and '{BP}'?
       rewind (unit=LEC)
       read (LEC,FMT='(A)') line1 !line1
       if ( (index(line1,'BCC') == 0) .or. (index(line1,'{BP}') == 0)) then
         iError = KS_ErrIO 
         return 
+      else !File is OK. Assumption of slip carried by screws?
+          if ( (index(line1,'{ScrewSlip}') == 0) ) then
+              ScrewSlip=.FALSE. ! Formulation of Peeters PhD. : slip carried solely by edge disl.
+          else
+              ScrewSlip=.TRUE.  ! Slip carried solely by screws =: v1.9
+          end if
       end if
       
       !Check PRE-file #2: Is number of slip systems (Nss) supported?
@@ -269,11 +348,19 @@
       P%RHOwpLOW=  LOWfrac * P%RHOwpSAT
 
       !Calculate "Wall-effectivity"-matrices
-      do s=1,24 
-        do i=1,6
-          eff(s,i)=DOT_PRODUCT( bDirSS(s,:) , CBBnormal(i,:) )  
-        end do
-      end do
+      if (ScrewSlip) then    
+          do s=1,24 
+            do i=1,6
+              eff(s,i)=DOT_PRODUCT( mDirSS(s,:) , CBBnormal(i,:) )  
+            end do
+          end do
+      else ! according to PhD Peeters    
+          do s=1,24 
+            do i=1,6
+              eff(s,i)=DOT_PRODUCT( bDirSS(s,:) , CBBnormal(i,:) )  
+            end do
+          end do
+      end if
       effslashb       = eff / P%b  
       alfa_G_b= P%alfa* P%G * P%b 
       alfa_G_b_eff    = alfa_G_b * eff       
@@ -905,7 +992,8 @@
       return
       !
 100   format(A76)
-666   iError = KS_ErrIO !Error in reading from file
+101   format(A26,L1)
+666   iError = KS_ErrIO !Error in writing to file
       !
       end function WriteHeadSVfile
       
