@@ -32,7 +32,7 @@ implicit none
       integer,parameter                         :: scaleFullTensor = 0, scaleTensileComponent = 1
 
       type,extends(BasicModule) :: UDSAModule
-            double precision  :: angle = 0.D0, NormMax = 0.D0, PNormIter = 0.D0
+            double precision  :: angle = 0.D0, NormMax = 0.D0, NormIter = 0.D0
 
             integer           :: scalingID = scaleFullTensor
             
@@ -69,7 +69,7 @@ contains
             ! Read parameters specific for the UDSAModule program
             read(cnfunit,fmt=*,iostat=ioerr)  this%angle
             if (ioerr /= 0) return
-            read(cnfunit,fmt=*,iostat=ioerr)  this%scalingID, this%NormMax, this%PNormIter
+            read(cnfunit,fmt=*,iostat=ioerr)  this%scalingID, this%NormMax, this%NormIter
             if (ioerr /= 0) return
             read(cnfunit,fmt=*,iostat=ioerr)  this%stress_state
             if (ioerr /= 0) return
@@ -131,22 +131,26 @@ contains
       implicit none
       class(UDSAModule),intent(inout)            :: this
       integer,intent(out)                       :: info      
-      ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
-      ! coordinate system
-      double precision,dimension(3,3)           :: P,D,De,Se,Sm,St, SmIdent, Dt, Pt_accum
+      ! Note about naming convention for variables:
+      !    - All variables for vectors and tensors suffixed with _t are expressed in the "tensile sample coordinate system".
+      !    - All other variables are implicitly expressed in the "material coordinate system"
+      double precision,dimension(3,3)           :: P,D,De,De_t,Se,S,S_t, SmIdent, D_t, P_t
       double precision,dimension(3,3)           :: Mrot = 0.0
       !
       double precision                          :: plast_pot, scal_s, norm_sona
       type(qrsData)                             :: qrsvalue = qrsData(0.D0, 0.D0, 0.D0), qrsvalue_accum = qrsData(0.D0, 0.D0, 0.D0)
-      double precision,dimension(5)             :: vA, vS,vSonA, vSonAn, vP, vD, vSe
+      double precision,dimension(5)             :: vA, vS,vSonA, vSonAn, vDe,vSe
       double precision                          :: fi1,phi,fi2
-      double precision                          :: Pnorm, normP, normD, Tnorm
+      double precision                          :: Pnorm, normP, Tnorm
+      double precision                          :: control_variable
+      double precision                          :: scaling_factor
       double precision                          :: R
       double precision                          :: plastic_work_inc = 0.D0, plastic_work_total = 0.D0
       double precision                          :: taylor_factor
       integer     :: step,i,j 
       !
       integer,parameter       :: thisunit = 90, ofunit = 91, histunit = 92
+      double precision,parameter :: dt = 1.D0 ! Time step length
       ! For file output
       integer,parameter :: ncolumn_labels = 14, column_width = 15, short_column_width = 7
       character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = [ character(len=column_width) ::  &
@@ -171,9 +175,28 @@ contains
       phi = 0.0
       ! Convert angle from degs to rads
       fi2 = deg2rad(this%angle)
-   
-      Pt_accum = 0.D0
-      vP = 0.D0
+
+      !---------------------------------------------------------------------------------
+      ! Prepare the input data      
+      !! -> Take uniaxial/slightly biaxial tensile stress, rotate it to given direction     
+      S_t = 0.D0
+      S_t(1,1) = this%stress_state * sqrt(3.D0/2.D0)/dsqrt(this%rho**2-this%rho+1)
+      S_t(2,2) = this%rho*S_t(1,1)
+            
+      ! Rotate from "tensile" to material coordinate system
+      ! Calculate rotation matrix
+      Mrot = rotmat(fi1,phi,fi2)
+      !
+      S = rotateSRTensorTo(S_t,Mrot)
+      !
+      call KMAT2VEC5D(S,vS) ! Note: as of this call, S is deviatoric
+      ! Enforce unit length of vS
+      vS = vS / vec_norm2(vS)
+      !---------------------------------------------------------------------------------
+      ! Initialize state & control variables
+      control_variable = 0.D0
+      !
+      P_t = 0.D0
       Pnorm = 0.D0 ! sum||P||
       normP = 0.D0 ! ||P||
       Tnorm = 0.D0
@@ -182,20 +205,6 @@ contains
       step = 0
       do 
             if (doLogging(fngLogDebug,this%output%verbosity))  write(display_unit,800)
-            !! -> Take uniaxial/slightly biaxial tensile stress, rotate it to given direction     
-            St = 0.D0
-            St(1,1) = this%stress_state * sqrt(3.D0/2.D0)/dsqrt(this%rho**2-this%rho+1)
-            St(2,2) = this%rho*St(1,1)
-            
-            ! Rotate from "tensile" to material coordinate system
-            ! Calculate rotation matrix
-            call KROTMAT(fi1,phi,fi2,Mrot)
-            !
-            Sm = matmul(transpose(Mrot),matmul(St,Mrot))
-            !
-            call KMAT2VEC5D(Sm,vS) ! Note: as of this call, Sm is deviatoric
-            ! Enforce unit length of vS
-            vS = vS / vec_norm2(vS)
             !
             !! -> Calculate corresponding strain rate vA
             call multilevelYLP(vS,vA,vSonA,R,info,.true.,this%ylp,verbose=this%output%verbosity)
@@ -218,18 +227,44 @@ contains
             if (doLogging(fngLogDebug,this%output%verbosity)) then
                   write(display_unit,400)
                   do j=1,3
-                        write(display_unit,401) Sm(j,:),SmIdent(j,:),D(j,:)
+                        write(display_unit,401) S(j,:),SmIdent(j,:),D(j,:)
                   enddo
                   write(display_unit,*)
             endif
             
-            !! Calculate q and r in tensile reference frame
             ! Rotate back to the "tensile test" coordinate system   
-            Dt = matmul(matmul(Mrot,D),transpose(Mrot))
-            Pt_accum = Pt_accum + Dt
+            D_t = rotateSRTensorFrom(D,Mrot)
+
+            !
+            ! Calculate control values
+            !
+            ! Calculate increment of plastic strain to be imposed for texture evolution: 
+            ! There are two quantities to be calculated: vDe and De_t
+            select case(this%scalingID)
+            case(scaleFullTensor)
+                  control_variable = normP
+                  !! -> Scale the vA in order to get ||vA|| = NormIter
+                  scaling_factor = (this%NormIter / vec_norm2(vA))
+                  !
+            case(scaleTensileComponent)
+                  control_variable = abs(P_t(1,1))
+                  !! -> Scale the D_t in order to get ||Dt_11|| equal to NormIter
+                  scaling_factor = (this%NormIter / abs(D_t(1,1)))
+            case default
+                  write(display_unit,*) 'Unknown scaling type, full tensor will be used'
+                  scaling_factor = 1.0
+            end select
+            !
+            De = D * scaling_factor
+            De_t = D_t * scaling_factor
+            !            
+            P_t = P_t + De_t
+            !
             ! Calculate output variables
-            qrsvalue = calculateQRS(Dt,scal_s)
-            qrsvalue_accum = calculateQRS(Pt_accum,scal_s)
+            !
+            ! Calculate q and r in tensile reference frame
+            qrsvalue = calculateQRS(D_t,scal_s)
+            qrsvalue_accum = calculateQRS(P_t,scal_s)
             ! 
             taylor_factor = 0.D0
             call getTaylorFactor(1,taylor_factor,info)
@@ -252,33 +287,13 @@ contains
                   write(display_unit,601)
             endif
             !!
-            !
-            select case(this%scalingID)
-            case(scaleFullTensor)
-                  ! Check termination condition
-                  if (PNorm >= this%NormMax)  exit
-                  !
-                  !! -> Scale the vA in order to get ||vA|| = PNormIter
-                  vD = vA * (this%PNormIter / vec_norm2(vA)) 
-            case(scaleTensileComponent)
-                  ! Check termination condition: only tensile component
-                  if (Tnorm >= this%NormMax) exit
-                  !
-                  !! -> Scale the vA in order to get ||Dt_11|| equal to PNormIter
-                  vD = vA * (this%PNormIter / abs(Dt(1,1)))
-            case default
-                  write(display_unit,*) 'Unknown scaling type, full tensor will be used'
-                  vD = vA                  
-            end select
-            normD = vec_norm2(vD)
-            if (doLogging(fngLogDebug,this%output%verbosity)) write(display_unit,'(A,1X,F12.6)') 'Norm of vD = ', normD 
-            ! Calculate strain increment for texture evolution           
-            call KVEC5D2MAT(vD,De)
+            ! Terminate if requested to do so.
+            if (control_variable >= this%NormMax)  exit
             !
             !! -> Impose De as ALAMEL input, advance the state of texture
             !
             if (doLogging(fngLogInfo,this%output%verbosity)) then
-                  write(display_unit,*) 'Strain to be imposed for texture evolution De = '
+                  write(display_unit,'(A)') 'Strain to be imposed for texture evolution De = '
                   write(display_unit,500) De
                   write(display_unit,*)
             endif
@@ -290,14 +305,15 @@ contains
                   exit
             endif
             call KMAT2VEC5D(Se,vSe)
+            call KMAT2VEC5D(De,vDe)
             !! -> Calculate total strain
-            vP = vP + vD
-            P = P + De  
-            normP = vec_norm2(vP)
-            Pnorm = Pnorm + normD
-            Tnorm = Tnorm + abs(De(1,1))
+            P = P + De
+            normP = norm2(P)
+            Pnorm = Pnorm + norm2(vDe)
+            TNorm = abs(P_t(1,1))
+            !Tnorm = Tnorm + abs(De(1,1))
             ! Calculate increment of plastic work (strain * deviatoric_stress)
-            plastic_work_inc = dot_product(vD,vSe) 
+            plastic_work_inc = dot_product(vDe,vSe) 
             plastic_work_total = plastic_work_total + plastic_work_inc
             ! Write history of deformations
             write(histunit,800)
@@ -312,6 +328,8 @@ contains
             if (doLogging(fngLogErr,this%output%verbosity)) then
                   write(display_unit,'(A)') 'Total strain P:'
                   write(display_unit,500) P
+                  write(display_unit,'(A)') 'Total strain P_t (in tensile test reference frame):'
+                  write(display_unit,500) P_t
                   write(display_unit,'(A,1X,F12.6)') '||P|| =', normP
                   write(display_unit,'(A,1X,F12.6)') 'sum||De|| =', Pnorm
                   write(display_unit,'(A,1X,E12.5)') 'Wtot =', plastic_work_total
