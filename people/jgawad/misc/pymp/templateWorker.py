@@ -17,9 +17,9 @@ import multiprocessing
 import os 
 import sys
 import tempfile
-import keysubst
 import time
 import shutil
+import string
 import harvester
 
 class Task(object):
@@ -44,13 +44,19 @@ class Task(object):
         #
         self.purge_tmpdir = True
 
-    def __del__(self):
+    def removeTempDir(self):
         try:
-            # Last attempt to do housholding
             if self.purge_tmpdir and self.tmpdir and os.path.isdir(self.tmpdir):
                 shutil.rmtree(self.tmpdir)
         except OSError as e:
             print e
+        except:
+            pass
+
+    def __del__(self):
+        try:
+            # Last attempt to do housholding
+            self.removeTempDir()
         except:
             pass
 
@@ -98,12 +104,17 @@ class Task(object):
         full_mapping['WORK_DIR'] = self.tmpdir
         #
         full_mapping.update(self.mapping)
-        input_data = keysubst.substituteVarKeys(self.template,full_mapping)
+        template = string.Template(self.template)
+        input_data = template.safe_substitute(full_mapping)
         input_string = ''.join(input_data)
         # Do actual work: start 
         # Diagnostic -->
         #output = sys.__stdout__
         #output.write(input_string)
+        #print(input_string)
+        #diagout = open('diag.in','w')
+        #diagout.write(input_string)
+        #diagout.close()
         # Diagnostic <--
 
         # OK, the template is ready, let's run the program...
@@ -115,6 +126,7 @@ class Task(object):
         #print stdoutdata
         #print stderrdata
         # <-- 
+        pass
 
 
 
@@ -129,6 +141,8 @@ class Task(object):
         try:
             # Make sure we end up in the initial directory
             os.chdir(self.cwd)
+            # Remove the temporary directory
+            self.removeTempDir()
         except OSError as e:
             print e
 
@@ -160,12 +174,16 @@ class PoolMaster(object):
         tot_time = self.polltime
         while (not result.ready()) and (tot_time < self.timeout):
             tot_time += self.polltime
-            print 'after ', tot_time, ' is ready:', result.ready()
+            # Diagnostic -->
+            # print 'after ', tot_time, ' is ready:', result.ready()
+            # <--
             result.wait(self.polltime)
         #
         if result.ready() and result.successful():
             res = result.get()
-            print 'Getting results', res
+            # Diagnostic -->
+            # print 'Getting results', res
+            # <--
             if len(res) != len(tasks):
                 e = Exception('PoolMaster Error: there are fewer results than tasks!')
                 raise e
