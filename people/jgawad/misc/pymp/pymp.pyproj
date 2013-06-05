@@ -35,8 +35,8 @@
     <Compile Include="FNGGrid.py" />
     <Compile Include="harvester.py" />
     <Compile Include="keysubst.py" />
+    <Compile Include="pympTests.py" />
     <Compile Include="pymp.py" />
-    <Compile Include="templateWorker.py" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
 </Project>

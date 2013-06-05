@@ -1,103 +1,318 @@
 #!/usr/bin/env python
+#
+# $Id$
+#
+# Author: Jerzy Gawad
+# Email:  Jerzy.Gawad@cs.kuleuven.be
+# Organization: Katholieke Universiteit Leuven (KU Levuen)
+# Organization unit: Dept.Comp.Sci., TWR Group
+#
+# Copyright by KU Leuven. All rights reserved.
+#
+# $Revision$
+# $Date$
+#
 
 import multiprocessing
 import os 
 import sys
 import tempfile
+import time
+import shutil
+import string
+import harvester
 
-def f(x):
-    import tempfile
-    import time
-    try:
-        #os.mkdir('%d'%os.getpid())
-        tmpdir = tempfile.mkdtemp(suffix='_%d'%os.getpid(),dir=os.getcwd())
-        print tmpdir
-        print ('pid = %d ' % os.getpid())
-        time.sleep(2)
-        # os.unlink(tmpdir)
+
+class Task(object):
+    def __init__(self):
+        pass
+
+
+class ExternalProgramTask(Task):
+
+    def __init__(self,templates={}, mapping={},config={},harvesters=[],use_tempdir=True):
+        """Initialization of ExternalProgramTask.
         
-    except Exception as e:
-        print e
+            Parameters:
+            \param templates - dictionary of templates. Each pair is in form: {file_name: template_string}.
+            There is a special file_name='-', that causes the substituted template to be send to standard input
+            of the back-end program.
+            \param mapping - dictionary of keywords to be substituted in templates.
+            \param config - configuration 
+        """
+        self.templates = templates
+        self.mapping = mapping
+        self.harvesters = harvesters
+        # configuration flags
+        self.config = {}
+        self.config['program_path'] = ''
+        self.config['hide_output'] = True
+        self.setConfig(config)
 
-    if (x != 7):
-        return x*x
+
+
+        # Other members, to be set by run() and co.
+        self.cwd = '.'
+        if (use_tempdir):
+            self.execdir_path = ''
+            self.purge_execdir = True
+        else:
+            self.execdir_path = '.'
+            self.purge_execdir = False
+        #
+        self.command_output = ''
+        #
+        self.result = None
+        #
+        return super(ExternalProgramTask,self).__init__()
+
+    def removeTempDir(self):
+        try:
+            if self.purge_execdir and self.execdir_path and os.path.isdir(self.execdir_path):
+                shutil.rmtree(self.execdir_path)
+        except OSError as e:
+            print e
+        except:
+            pass
+
+    def __del__(self):
+        try:
+            # Last attempt to do housholding
+            self.removeTempDir()
+        except:
+            pass
+
+
+    def __str__(self):
+        result = ('templates: ' + str(self.templates) + '\n' +
+                  'mapping: ' + str(self.mapping) + '\n' + 
+                  'config:' + str(self.config))
+        return result
+
+    def prepareWorkdir(self):
+        # Prepare execution environment
+        self.cwd = os.getcwd()
+        try:
+            #os.mkdir('%d'%os.getpid())
+            if (not self.execdir_path):
+                self.execdir_path = tempfile.mkdtemp(suffix='_%d'%os.getpid(),dir=self.cwd)
+                os.chdir(self.execdir_path)
+                print self.execdir_path
+        except OSError:
+            raise
+
+
+    def preExecute(self):
+        self.prepareWorkdir()
+
+
+    def setMapping(self,mapping):
+        self.mapping.update(mapping)
+
+
+    def setConfig(self,config):
+        self.config.update(config)
+        program_path = os.path.expanduser(self.config['program_path'])
+        if not os.path.exists(program_path):
+            print('Cannot find ' + program_path)
+            raise OSError()
+        self.config['program_path'] = os.path.realpath(program_path)
+
+    def execute(self):
+        import os
+        import subprocess
+        # Put special keywords into mapping:
+        # EXEC_DIR
+        full_mapping = {}
+        full_mapping['WORK_DIR'] = os.path.abspath(self.execdir_path)
+        #
+        full_mapping.update(self.mapping)
+        # Make input files from the template
+        stdin_input_string = None
+        for template_file,template_string in self.templates.items():
+            try:
+                template = string.Template(template_string)
+                input_data = template.safe_substitute(full_mapping)
+                input_string = ''.join(input_data)
+                if template_file == '-':
+                    stdin_input_string = input_string
+                else:
+                    outfile = open(template_file,'w')
+                    outfile.write(input_string)
+                    outfile.close()
+            except OSError as e:
+                raise e
+
+        # Do actual work: start 
+        # Diagnostic -->
+        #output = sys.__stdout__
+        #output.write(input_string)
+        #print(input_string)
+        #diagout = open('diag.in','w')
+        #diagout.write(input_string)
+        #diagout.close()
+        # Diagnostic <--
+
+        # OK, the template is ready, let's run the program...
+        out_redir = subprocess.PIPE if self.config['hide_output'] else None
+        in_redir  = subprocess.PIPE if stdin_input_string else None
+        po = subprocess.Popen(self.config['program_path'], stdin=in_redir, stdout=out_redir)
+        # and  feed it with the configuration
+        self.command_output, stderrdata = po.communicate(stdin_input_string)
+        # Diagnostic -->
+        #print stdoutdata
+        #print stderrdata
+        # <-- 
+        pass
+
+
+
+    def postExecute(self):
+        self.result = {}
+        for harvester in self.harvesters:
+            self.result.update(harvester.harvest(self.execdir_path))
         
-        
 
-def fcall(x):
-    print 'callback fx:', x
+    def finalize(self):
+        # Finalize:
+        try:
+            # Make sure we end up in the initial directory
+            os.chdir(self.cwd)
+            # Remove the temporary directory
+            self.removeTempDir()
+        except OSError as e:
+            print e
 
-def usePool():
-    import multiprocessing
+    def run(self):
+        try:
+            self.preExecute()
+            self.execute()
+            self.postExecute()
+            self.finalize()
+            self.is_done = True
+            return self.result
+        except Exception as e:
+            print 'Unexpected exception in Task::run()'
+            raise e
+
+
+class PoolMaster(object):
+
+    def __init__(self, polltime=1, timeout = 60):
+        self.timeout = timeout
+        self.polltime = polltime
+
+    def run(self,tasks):
+        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count(),maxtasksperchild=1)
+        result = pool.map_async(dispatcher, tasks)
+
+        # Wait for the results in a semi-active way
+        result.wait(self.polltime)
+        tot_time = self.polltime
+        while (not result.ready()) and (tot_time < self.timeout):
+            tot_time += self.polltime
+            # Diagnostic -->
+            # print 'after ', tot_time, ' is ready:', result.ready()
+            # <--
+            result.wait(self.polltime)
+        #
+        if result.ready() and result.successful():
+            res = result.get()
+            # Diagnostic -->
+            # print 'Getting results', res
+            # <--
+            if len(res) != len(tasks):
+                e = Exception('PoolMaster Error: there are fewer results than tasks!')
+                raise e
+            # unpack the results & put them to the corresponding tasks
+            for i in range(0,len(tasks)):
+                tasks[i].result = res[i]
+        # Destroying the pool
+        pool.terminate()
+        pool.join()
+
+
+
+def dispatcher(task):
+    print ('pid = %d ' % os.getpid())
+    return task.run()
+
+
+
+class SerialMaster(object):
+    def __init__(self):
+        pass
+
+    def run(self,tasks):
+        for task in tasks:
+            try:
+                task.run()
+            except Exception as e:
+                print 'Unexpected exception in SerialMaster::run()'
+                raise e
+
+
+
+if __name__ == "__main__":
+
     multiprocessing.freeze_support()
-    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count(),maxtasksperchild=1)             
-    result = pool.map_async(f, range(0,20))
 
+    def prepareTestTasks(config, template):
+        tasks = []
+        for i in range(0,20):
+            mapping = {}
+            mapping['ali'] = ('object ' + str(i))
+            mapping['kocie'] = 'mysz'
+           
+            task = ExternalProgramTask(template, mapping,config,harvesters=[harvester.TextFileHarvester('marker.dat')])
+            print task
     
-    timeout = 35
-    tot_time = 0
-    
-    tmp = result.wait(timeout)
-    print(type(tmp))
-    while (not result.ready()) and (tot_time < 30):
-        tot_time += timeout
-        print 'after ', tot_time, ' is ready:', result.ready()
-        result.wait(timeout)
-    #
-    if result.ready() and result.successful():
-        res = result.get()
-        print 'Getting results', res
-    pass
-    
-    #print result.ready()
-    #if (result.ready()):
-    #    print result.get()
-    #    
-    #pool = multiprocessing.Pool(processes=4)              # start 4 worker processes
-    #result = pool.apply_async(f, [10])    # evaluate "f(10)" asynchronously
-    #print result.get(timeout=1)           # prints "100" unless your computer is *very* slow
-    #result = pool.map(f, range(10))
+            tasks.append(task)
+        return tasks
 
 
-def qworker(qtask,qres):
-    import time
-    import multiprocessing
-    while not qtask.empty():
-        print 'Getting task', multiprocessing.current_process()
-        x = qtask.get()
-        time.sleep(1)
-        qres.put_nowait((x,x*x))
-        print 'Putting result'
+    config = {}
+    if sys.platform == 'win32':
+        config['program_path'] = 'runsim.cmd'
+    else:
+        config['program_path'] = 'runsim.sh'
 
-    
 
-def useQueue():
-    import multiprocessing
+    mapping = {}
+    mapping['ali'] = 'syfilis'
+    mapping['kocie'] = 'mysz'
 
-    q_tasks = multiprocessing.Queue()
-    q_results = multiprocessing.Queue()
+    templates = {'-': 'Ala ma ${ali}\nKot ma ${kocie}\n', 'datafile.txt': 'ali: ${ali}\nkocie: ${kocie}'}
 
-    for i in range(1,10): q_tasks.put(i)
+    single_run = True
+    if (single_run):
+        task = ExternalProgramTask(templates, mapping,config,harvesters=[harvester.TextFileHarvester('marker.dat')],use_tempdir=False)
+        print task
+        result = dispatcher(task)
+        print('Result: ' + str(result))
+        del task
 
-    nworkers = multiprocessing.cpu_count()
+    serial_run = True
+    if serial_run:
+        tasks = prepareTestTasks(config, templates)
 
-    workers = [ multiprocessing.Process(target=qworker, args=(q_tasks,q_results)) for i in range(0,nworkers) ]
-    # start all
-    for p in workers: 
-        p.start()
-    
-    print multiprocessing.active_children()
+        master = SerialMaster()
+        master.run(tasks)    
 
-    for p in workers: 
-        p.join(20)
-    # while not q_tasks.empty():
-    
-    
-    for k in range(0,q_results.qsize()):
-        print q_results.get()
-    
-    
-    
-if __name__ == '__main__':    
-    #useQueue()
-    usePool()
+        for task in tasks:
+            print task.result
+        del tasks
+
+    parallel_run = True
+    # run sequence
+    if (parallel_run):
+        tasks = prepareTestTasks(config, templates)
+
+        master = PoolMaster()
+        master.run(tasks)    
+
+        for task in tasks:
+            print task.result
+        del tasks
+
+    print "bye"
