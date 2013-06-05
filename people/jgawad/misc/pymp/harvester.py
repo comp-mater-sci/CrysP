@@ -14,13 +14,15 @@
 #
 
 import os
+import sys
+import shutil
 
 class Harvester(object):
     """Base abstract class for harvesters: entities that can extract data"""
     def __init__(self):
         pass
 
-    def harvest():
+    def harvest(self):
         """Returns a dictionary of items: {data_name: data}"""
         return {}
 
@@ -45,8 +47,41 @@ class TextFileHarvester(Harvester):
                 print 'Cannot harvest the results'    
         return {self.data_fname: output}
 
-if __name__ == "__main__":
-    harvester = TextFileHarvester('grid2.grd')
+class FileCopyHarvester(Harvester):
+    """Harvester for copying/moving files"""
+    def __init__(self,file_list = [],target_dir_path = '.',source_dir_path='.'):
+        self.file_list = file_list
+        self.target_dir_path = target_dir_path
+        self.source_dir_path = source_dir_path
+        if not (os.path.exists(target_dir_path) and os.path.isdir(target_dir_path)): 
+            os.mkdir(target_dir_path)
+        return super(FileCopyHarvester, self).__init__()
 
-    result = harvester.harvest()
-    print result
+    def harvest(self):
+        """Make copy of files included in the list from src_dir_path to target_dir_path"""
+        output = {}
+        for file in self.file_list:
+            try:
+                output[file] = False
+                if os.path.isabs(file):
+                    file_path = file
+                else:
+                    file_path = os.path.join(self.source_dir_path,file)
+                shutil.copy(file_path,self.target_dir_path)
+                output[file] = True
+            except:
+                pass
+            return output
+
+if __name__ == "__main__":
+    try:
+        harvester = TextFileHarvester('grid2.grd')
+        result = harvester.harvest()
+        print result
+        #
+        aFileCopyHarvester = FileCopyHarvester(['grid2.grd'],'output_dir')
+        result = aFileCopyHarvester.harvest()
+        print result
+    except Exception as e:
+        print('An exception has been raised')
+        print(e)

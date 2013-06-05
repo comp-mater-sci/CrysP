@@ -6,7 +6,7 @@
     <ProjectGuid>{eba821c1-7a33-4da8-a7ac-35b17a34b49b}</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>templateWorker.py</StartupFile>
+    <StartupFile>datafile.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>test</WorkingDirectory>
@@ -30,7 +30,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="datafile.py" />
     <Compile Include="driver.py" />
+    <Compile Include="FNGGrid.py" />
     <Compile Include="harvester.py" />
     <Compile Include="keysubst.py" />
     <Compile Include="pymp.py" />

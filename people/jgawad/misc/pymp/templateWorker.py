@@ -22,10 +22,25 @@ import shutil
 import string
 import harvester
 
-class Task(object):
 
-    def __init__(self,template=[], mapping={},config={},harvesters=[]):
-        self.template = template
+class Task(object):
+    def __init__(self):
+        pass
+
+
+class ExternalProgramTask(Task):
+
+    def __init__(self,templates={}, mapping={},config={},harvesters=[],use_tempdir=True):
+        """Initialization of ExternalProgramTask.
+        
+            Parameters:
+            \param templates - dictionary of templates. Each pair is in form: {file_name: template_string}.
+            There is a special file_name='-', that causes the substituted template to be send to standard input
+            of the back-end program.
+            \param mapping - dictionary of keywords to be substituted in templates.
+            \param config - configuration 
+        """
+        self.templates = templates
         self.mapping = mapping
         self.harvesters = harvesters
         # configuration flags
@@ -34,20 +49,27 @@ class Task(object):
         self.config['hide_output'] = True
         self.setConfig(config)
 
+
+
         # Other members, to be set by run() and co.
         self.cwd = '.'
-        self.tmpdir = ''
+        if (use_tempdir):
+            self.execdir_path = ''
+            self.purge_execdir = True
+        else:
+            self.execdir_path = '.'
+            self.purge_execdir = False
         #
         self.command_output = ''
         #
         self.result = None
         #
-        self.purge_tmpdir = True
+        return super(ExternalProgramTask,self).__init__()
 
     def removeTempDir(self):
         try:
-            if self.purge_tmpdir and self.tmpdir and os.path.isdir(self.tmpdir):
-                shutil.rmtree(self.tmpdir)
+            if self.purge_execdir and self.execdir_path and os.path.isdir(self.execdir_path):
+                shutil.rmtree(self.execdir_path)
         except OSError as e:
             print e
         except:
@@ -62,7 +84,7 @@ class Task(object):
 
 
     def __str__(self):
-        result = ('template: ' + str(self.template) + '\n' +
+        result = ('templates: ' + str(self.templates) + '\n' +
                   'mapping: ' + str(self.mapping) + '\n' + 
                   'config:' + str(self.config))
         return result
@@ -72,9 +94,10 @@ class Task(object):
         self.cwd = os.getcwd()
         try:
             #os.mkdir('%d'%os.getpid())
-            self.tmpdir = tempfile.mkdtemp(suffix='_%d'%os.getpid(),dir=self.cwd)
-            os.chdir(self.tmpdir)
-            print self.tmpdir
+            if (not self.execdir_path):
+                self.execdir_path = tempfile.mkdtemp(suffix='_%d'%os.getpid(),dir=self.cwd)
+                os.chdir(self.execdir_path)
+                print self.execdir_path
         except OSError:
             raise
 
@@ -101,12 +124,25 @@ class Task(object):
         # Put special keywords into mapping:
         # EXEC_DIR
         full_mapping = {}
-        full_mapping['WORK_DIR'] = self.tmpdir
+        full_mapping['WORK_DIR'] = os.path.abspath(self.execdir_path)
         #
         full_mapping.update(self.mapping)
-        template = string.Template(self.template)
-        input_data = template.safe_substitute(full_mapping)
-        input_string = ''.join(input_data)
+        # Make input files from the template
+        stdin_input_string = None
+        for template_file,template_string in self.templates.items():
+            try:
+                template = string.Template(template_string)
+                input_data = template.safe_substitute(full_mapping)
+                input_string = ''.join(input_data)
+                if template_file == '-':
+                    stdin_input_string = input_string
+                else:
+                    outfile = open(template_file,'w')
+                    outfile.write(input_string)
+                    outfile.close()
+            except OSError as e:
+                raise e
+
         # Do actual work: start 
         # Diagnostic -->
         #output = sys.__stdout__
@@ -119,9 +155,10 @@ class Task(object):
 
         # OK, the template is ready, let's run the program...
         out_redir = subprocess.PIPE if self.config['hide_output'] else None
-        po = subprocess.Popen(self.config['program_path'], stdin=subprocess.PIPE, stdout=out_redir)
+        in_redir  = subprocess.PIPE if stdin_input_string else None
+        po = subprocess.Popen(self.config['program_path'], stdin=in_redir, stdout=out_redir)
         # and  feed it with the configuration
-        self.command_output, stderrdata = po.communicate(input_string)
+        self.command_output, stderrdata = po.communicate(stdin_input_string)
         # Diagnostic -->
         #print stdoutdata
         #print stderrdata
@@ -133,7 +170,7 @@ class Task(object):
     def postExecute(self):
         self.result = {}
         for harvester in self.harvesters:
-            self.result.update(harvester.harvest(self.tmpdir))
+            self.result.update(harvester.harvest(self.execdir_path))
         
 
     def finalize(self):
@@ -227,7 +264,7 @@ if __name__ == "__main__":
             mapping['ali'] = ('object ' + str(i))
             mapping['kocie'] = 'mysz'
            
-            task = Task(template, mapping,config,harvesters=[harvester.TextFileHarvester('marker.dat')])
+            task = ExternalProgramTask(template, mapping,config,harvesters=[harvester.TextFileHarvester('marker.dat')])
             print task
     
             tasks.append(task)
@@ -236,20 +273,20 @@ if __name__ == "__main__":
 
     config = {}
     if sys.platform == 'win32':
-        config['program_path'] = 'c:\\work\\TWRMTMProject\\people\\jgawad\\misc\\pymp\\test\\runsim.cmd'
+        config['program_path'] = 'runsim.cmd'
     else:
-        config['program_path'] = '~/jgprojects/TWRMTMProject/people/jgawad/misc/pymp/test/runsim.sh'
+        config['program_path'] = 'runsim.sh'
 
 
     mapping = {}
     mapping['ali'] = 'syfilis'
     mapping['kocie'] = 'mysz'
 
-    template = ['Ala ma ${ali}\n', 'Kot ma ${kocie}\n']
+    templates = {'-': 'Ala ma ${ali}\nKot ma ${kocie}\n', 'datafile.txt': 'ali: ${ali}\nkocie: ${kocie}'}
 
     single_run = True
     if (single_run):
-        task = Task(template, mapping,config,harvesters=[harvester.TextFileHarvester('marker.dat')])
+        task = ExternalProgramTask(templates, mapping,config,harvesters=[harvester.TextFileHarvester('marker.dat')],use_tempdir=False)
         print task
         result = dispatcher(task)
         print('Result: ' + str(result))
@@ -257,7 +294,7 @@ if __name__ == "__main__":
 
     serial_run = True
     if serial_run:
-        tasks = prepareTestTasks(config, template)
+        tasks = prepareTestTasks(config, templates)
 
         master = SerialMaster()
         master.run(tasks)    
@@ -269,7 +306,7 @@ if __name__ == "__main__":
     parallel_run = True
     # run sequence
     if (parallel_run):
-        tasks = prepareTestTasks(config, template)
+        tasks = prepareTestTasks(config, templates)
 
         master = PoolMaster()
         master.run(tasks)    
