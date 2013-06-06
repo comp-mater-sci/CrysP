@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "BBC2008Ident", "BBC2008Ident\BBC2008Ident.vfproj", "{54F7FBDE-C92B-4D71-81BA-F4DFB9A0D3DA}"
+EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "VUMAT_BBC2008", "VUMAT_BBC2008\VUMAT_BBC2008.vfproj", "{6C32984A-0DD9-45B5-BDD5-0C752F30AD7A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{54F7FBDE-C92B-4D71-81BA-F4DFB9A0D3DA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{54F7FBDE-C92B-4D71-81BA-F4DFB9A0D3DA}.Debug|Win32.Build.0 = Debug|Win32
+		{54F7FBDE-C92B-4D71-81BA-F4DFB9A0D3DA}.Release|Win32.ActiveCfg = Release|Win32
+		{54F7FBDE-C92B-4D71-81BA-F4DFB9A0D3DA}.Release|Win32.Build.0 = Release|Win32
+		{6C32984A-0DD9-45B5-BDD5-0C752F30AD7A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6C32984A-0DD9-45B5-BDD5-0C752F30AD7A}.Debug|Win32.Build.0 = Debug|Win32
+		{6C32984A-0DD9-45B5-BDD5-0C752F30AD7A}.Release|Win32.ActiveCfg = Release|Win32
+		{6C32984A-0DD9-45B5-BDD5-0C752F30AD7A}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
