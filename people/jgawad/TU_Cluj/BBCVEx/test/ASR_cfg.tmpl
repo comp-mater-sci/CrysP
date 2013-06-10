@@ -1,0 +1,15 @@
+${jobname}           # Prefix for output   
+F                    # Request incremental output of the material state
+2                    # Verbosity level
+1                    # Type of input texture (1 - SMT, 2 - CUR, 3 - CUB)
+${texture_file}       # Name of texure file
+${modelid}           # Simulation type: 0 - Alamel, 1 - FC-Taylor
+${slipsystem_file}              # Definition of slip systems (filename)
+${microstructure_file}           # Microstructure definition (filename)
+0                    # Hardening law Id
+5.e-1  T             # Jacobi_eps, Flag: linearize
+1e-5   1e-3          # Default eps for TR-solver, eps for the norm of objective function: ||F||_2
+0.0  0.0  0.0        # Rotation angles to be preimposed
+${stress_file}           # Definition of stress steps
+T                    # Flag: Incrementally update the texture
+0  0.05  0.05        # Type of scaling, Norm of total strain  and  strain increment per step

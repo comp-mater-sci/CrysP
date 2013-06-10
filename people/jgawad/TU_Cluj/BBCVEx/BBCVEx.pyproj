@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{efa20a37-1d17-432d-a6c6-05ed5ac29527}</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>BBCVEx.py</StartupFile>
+    <SearchPath>..\..\misc\pymp\</SearchPath>
+    <WorkingDirectory>test</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>BBCVEx</Name>
+    <RootNamespace>BBCVEx</RootNamespace>
+    <IsWindowsApplication>False</IsWindowsApplication>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <CommandLineArguments>--qrstemplate=QRS_cfg.tmpl --asrtemplate=ASR_cfg.tmpl --texture_file=ALU1190F.SMT --model=ALAMEL --slipsystem_file=fcc.pre --microstructure_file=micro1.smt  --stress_file=stressbx.dat --program_path="c:\work\TWRMTMProject\code\trunk\tools\alamDMC\alamDMC\Release\alamDMC.exe" --output=elem_bbc2008vef.dat</CommandLineArguments>
+    <InterpreterPath />
+    <InterpreterArguments />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="BBCVEx.py" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
+</Project>
