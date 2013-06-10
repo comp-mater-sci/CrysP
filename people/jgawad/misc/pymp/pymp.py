@@ -30,7 +30,7 @@ class Task(object):
 
 class ExternalProgramTask(Task):
 
-    def __init__(self,templates={}, mapping={},config={},harvesters=[],use_tempdir=True):
+    def __init__(self,templates=None, keywords=None,config=None,harvesters=None,use_tempdir=True):
         """Initialization of ExternalProgramTask.
         
             Parameters:
@@ -40,14 +40,16 @@ class ExternalProgramTask(Task):
             \param mapping - dictionary of keywords to be substituted in templates.
             \param config - configuration 
         """
-        self.templates = templates
-        self.mapping = mapping
-        self.harvesters = harvesters
+        self.templates = templates or {}
+        self.mapping = keywords or {}
+        self.harvesters = harvesters or []
         # configuration flags
         self.config = {}
         self.config['program_path'] = ''
+        self.config['cmdline_prologue'] = ''
+        self.config['cmdline_epilogue'] = ''
         self.config['hide_output'] = True
-        self.setConfig(config)
+        self.setConfig(config or {})
 
 
 
@@ -156,7 +158,8 @@ class ExternalProgramTask(Task):
         # OK, the template is ready, let's run the program...
         out_redir = subprocess.PIPE if self.config['hide_output'] else None
         in_redir  = subprocess.PIPE if stdin_input_string else None
-        po = subprocess.Popen(self.config['program_path'], stdin=in_redir, stdout=out_redir)
+        command = (self.config['program_path'] + ' ' + self.config['cmdline_prologue'] + self.config['cmdline_epilogue'])
+        po = subprocess.Popen(command, stdin=in_redir, stdout=out_redir)
         # and  feed it with the configuration
         self.command_output, stderrdata = po.communicate(stdin_input_string)
         # Diagnostic -->
@@ -168,9 +171,10 @@ class ExternalProgramTask(Task):
 
 
     def postExecute(self):
-        self.result = {}
-        for harvester in self.harvesters:
-            self.result.update(harvester.harvest(self.execdir_path))
+        if self.harvesters:
+            self.result = {}
+            for harvester in self.harvesters:
+                self.result.update(harvester.harvest(self.execdir_path))
         
 
     def finalize(self):
@@ -192,7 +196,7 @@ class ExternalProgramTask(Task):
             self.is_done = True
             return self.result
         except Exception as e:
-            print 'Unexpected exception in Task::run()'
+            print('Unexpected exception in Task::run(): ' + e)
             raise e
 
 
@@ -234,7 +238,7 @@ class PoolMaster(object):
 
 
 def dispatcher(task):
-    print ('pid = %d ' % os.getpid())
+    # print ('pid = %d ' % os.getpid())
     return task.run()
 
 

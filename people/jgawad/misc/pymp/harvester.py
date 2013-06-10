@@ -26,11 +26,14 @@ class Harvester(object):
         """Returns a dictionary of items: {data_name: data}"""
         return {}
 
-class TextFileHarvester(Harvester):
-    """Harvester for plain text files"""
+
+class FileHarvester(Harvester):
     def __init__(self,data_fname):
         self.data_fname = data_fname
-        return super(TextFileHarvester, self).__init__()
+        return super(FileHarvester, self).__init__()
+
+    def processFile(self,file_path):
+        return None
 
     def harvest(self,workdir='.'):
         """Returns a dictionary of items: {data_filename: data}"""
@@ -38,14 +41,42 @@ class TextFileHarvester(Harvester):
         if self.data_fname:
             try:
                 data_path = os.path.expanduser(os.path.join(workdir,self.data_fname))
-                inp = open(data_path,'r')
-                res = inp.readlines()
-                inp.close()
-                if len(res):
-                    output = res
+                output = self.processFile(data_path)
             except:
                 print 'Cannot harvest the results'    
         return {self.data_fname: output}
+
+
+
+
+class TextFileHarvester(FileHarvester):
+    """Harvester for plain text files"""
+
+    def __init__(self,data_fname):
+        return super(TextFileHarvester, self).__init__(data_fname)
+
+    def processFile(self,file_path):
+        inp = open(file_path,'r')
+        res = inp.readlines()
+        inp.close()
+        if len(res):
+            output = res
+        else:
+            output = None
+        return output
+
+
+class DataFileHarvester(FileHarvester):
+
+    def __init__(self,data_fname):
+        return super(DataFileHarvester, self).__init__(data_fname)
+
+    def processFile(self,file_path):
+        import datafile
+        return datafile.Datafile(file_path)
+
+        
+
 
 class FileCopyHarvester(Harvester):
     """Harvester for copying/moving files"""

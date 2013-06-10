@@ -22,6 +22,7 @@ class Datafile(object):
         self.comment = '#'
         if (fname):
             self.read(fname)
+        return super(Datafile,self).__init__()
 
     def read(self,fname):
         import re
@@ -52,6 +53,13 @@ class Datafile(object):
 
 class DataView(object):
     def __init__(self,datafile,viewspec):
+        """Creates a view on selected columns of datafile
+        
+            \par[in] datafile -- Datafile object
+            \par[in] viewspec -- specification of columns. It is an ordered sequence of tuples: ('column_name',column_type)
+        """
+        if not viewspec:
+            raise ValueError('View specification cannot be empty')
         fieldnames = (k[0] for k in viewspec)
         if not (all(fieldname in datafile.headerlist for fieldname in fieldnames)):
             raise ValueError('Incorrect view specification: unknown field name')
