@@ -40,11 +40,15 @@ def subdict(dictionary,keylist):
     subdict_gen = ((key,dictionary[key]) for key in keylist if key in dictionary)
     return dict(subdict_gen)
 
+def mergedict(d1,d2):
+	d1.update(d2)
+	return d1
 
 
 def main(args):
     try:
         model_id_map = {'ALAMEL':0, 'FCTaylor':1}
+
         arg_keys = ['jobname', 'texture_file', 'model', 'slipsystem_file',
                     'microstructure_file','stress_file']
         # Recover known keys from namespace of args object
@@ -58,24 +62,35 @@ def main(args):
         alamQRS_template = readTemplate(args.qrstemplate)
         alamASR_template = readTemplate(args.asrtemplate)
 
+
         tasks = []
 
         jobname = mapping['jobname']
         program_path = os.path.expanduser(args.program_path)
+        common_config ={'program_path':program_path}
         # Create task for alamQ
         tasks.append(pymp.ExternalProgramTask(templates = {'QRS.cfg': alamQRS_template},
                                               harvesters = [QRSHarvester(data_fname=(jobname+'.xqrs'))],
-                                              config={'cmdline_prologue':'QRS QRS.cfg','program_path':program_path},
+                                              config=mergedict({'cmdline_prologue':'QRS QRS.cfg'},common_config),
                                               keywords=mapping,
                                               use_tempdir = False))
         # Create task for alamASR
         tasks.append(pymp.ExternalProgramTask(templates = {'ASR.cfg': alamASR_template},
                                               harvesters = [ASRHarvester(data_fname=(jobname+'.asr'))],
-                                              config={'cmdline_prologue':'ASR ASR.cfg','program_path':program_path},
+                                              config=mergedict({'cmdline_prologue':'ASR ASR.cfg'},common_config),
                                               keywords=mapping,
                                               use_tempdir = False))
 
-        pool_master = pymp.PoolMaster()
+        if args.yldtemplate:
+            alamYld_template = readTemplate(args.yldtemplate)
+            tasks.append(pymp.ExternalProgramTask(templates = {'Yld.cfg': alamYld_template},
+                                                  harvesters = [],
+                                                  config=mergedict({'cmdline_prologue':'Yld Yld.cfg'},common_config),
+                                                  keywords=mapping,
+                                                  use_tempdir = False))
+
+
+        pool_master = pymp.PoolMaster(timeout = 360)
         pool_master.run(tasks)
 
         for task in tasks:
@@ -97,14 +112,14 @@ def main(args):
         S0 = ars[0,2]
         #
         rvalues = ars[:,[1]]
-        scaled_uni_s = ars[:,[2]] / S0
+        ars[:,[2]] = ars[:,[2]] / S0
+        scaled_uni_s = ars[:,[2]] 
         #
         dv = tasks[1].result.values()[0]
         bx = numpy.array(list(dv))
         rvalue_bx = bx[0,2] / bx[0,1] # r_bx = A_22 / A_11
         scaled_bx_s = bx[0,0] / S0
-
-        # Write output file
+        # Write BBC input file
         fmt = "%12.6e\n"
         out = args.output
         out.write(args.jobname + '\n')
@@ -118,6 +133,15 @@ def main(args):
         out.write(fmt % rvalue_bx)
         # 
         out.write(args.structure)
+
+
+        if args.export:
+            ars_file = open((args.export + '.ars'),'w')
+            # Write output values
+            # order of fields: angle normalized_s r-value
+            for row in ars:
+                ars_file.write( (3*'%10.6f '+'\n') % (row[0], row[2], row[1]) )
+
 
     except Exception as e:
         print e
@@ -143,6 +167,8 @@ if __name__ == '__main__':
         parser.add_argument('--asrtemplate',help='template of config file for alamDMC ASR')
         parser.add_argument('--output',help='Output file or "-"',type=argparse.FileType('w'),default='-')
         parser.add_argument('--program_path',help='path to alamDMC',default=alamdmc_prog)
+        parser.add_argument('--export',help='prefix of filename for extended output',default=None)
+        parser.add_argument('--yldtemplate',help='template of config file for alamDMC yld',required=False)
         # Key/value pairs for template substitution
         parser_template_args.add_argument('--jobname',default='elem')
         parser_template_args.add_argument('--texture_file')
