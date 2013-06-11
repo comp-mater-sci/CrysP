@@ -84,7 +84,7 @@ def main(args):
         if args.yldtemplate:
             alamYld_template = readTemplate(args.yldtemplate)
             tasks.append(pymp.ExternalProgramTask(templates = {'Yld.cfg': alamYld_template},
-                                                  harvesters = [],
+                                                  harvesters = [harvester.FileHarvester(data_fname=(jobname+'.xyld'))],
                                                   config=mergedict({'cmdline_prologue':'Yld Yld.cfg'},common_config),
                                                   keywords=mapping,
                                                   use_tempdir = False))
@@ -163,19 +163,19 @@ if __name__ == '__main__':
         parser_template_args = parser.add_argument_group('template_keys')
 
         #
-        parser.add_argument('--qrstemplate',help='template of config file for alamDMC QRS')
-        parser.add_argument('--asrtemplate',help='template of config file for alamDMC ASR')
+        parser.add_argument('--qrstemplate',help='template of config file for alamDMC QRS',required=True)
+        parser.add_argument('--asrtemplate',help='template of config file for alamDMC ASR',required=True)
         parser.add_argument('--output',help='Output file or "-"',type=argparse.FileType('w'),default='-')
-        parser.add_argument('--program_path',help='path to alamDMC',default=alamdmc_prog)
+        parser.add_argument('--program_path',help='path to alamDMC',default=alamdmc_prog,required=True)
         parser.add_argument('--export',help='prefix of filename for extended output',default=None)
         parser.add_argument('--yldtemplate',help='template of config file for alamDMC yld',required=False)
         # Key/value pairs for template substitution
-        parser_template_args.add_argument('--jobname',default='elem')
-        parser_template_args.add_argument('--texture_file')
+        parser_template_args.add_argument('--jobname',default='elem',required=True)
+        parser_template_args.add_argument('--texture_file',required=True)
         parser_template_args.add_argument('--model',choices=['ALAMEL','FCTaylor'],default='ALAMEL')
-        parser_template_args.add_argument('--slipsystem_file')
-        parser_template_args.add_argument('--microstructure_file')
-        parser_template_args.add_argument('--stress_file')
+        parser_template_args.add_argument('--slipsystem_file',required=True)
+        parser_template_args.add_argument('--microstructure_file',required=True)
+        parser_template_args.add_argument('--stress_file',required=True)
         parser_template_args.add_argument('--structure',choices=['F','B'],default='F')
         #        
         main(parser.parse_args())
