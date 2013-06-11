@@ -110,6 +110,10 @@
      &  SUCCESS_MSG = "End of execution",
      &  FAILURE_MSG = "Execution interrupted due to an error"
      &          )
+      ! JG, June 11 2013 -->>
+      integer,parameter :: OUT_UNIT_PAR = 200, OUT_UNIT_RS = 201, 
+     &  OUT_UNIT_YLD = 202
+      ! <<--
 *----------------------------------------------------------------------*
 * Variables                                                            *
 *----------------------------------------------------------------------*
@@ -364,20 +368,26 @@
       if (bbc_parm(16) < 0.0d0) bbc_parm(16) = - bbc_parm(16)
       write (OUT_UNIT, FMT13) k, S, w, ((i - 1) / 8 + 1, bbc_parm(i),
      &  i = 1, 16)
+      ! JG, June 11 2013 -->>
+      ! Output to bbc2008 file
+      open (OUT_UNIT_PAR, file = trim(out_fl_nam)//'.bbc2008', 
+     &  status = 'replace', iostat = info)
+      write (OUT_UNIT_PAR, FMT13) k, S, w, ((i - 1) / 8 + 1,bbc_parm(i),
+     &  i = 1, 16)
+      close(OUT_UNIT_PAR)
+      ! <<--
 *----------------------------------------------------------------------*
 * Generate the test data.                                              *
 * Store this data in the output file.                                  *
 *----------------------------------------------------------------------*
       write (OUT_UNIT, FMT14)
-      ang = 0.0d0
-      max_ang = 90.0d0 + 0.5d0 * ANG_STEP
-      do
-        if (ang > max_ang) exit
-        call GET_FG_U (ang * DEG_TO_RAD, aux1, aux2, info)
-        if (info /= 0) exit
-        write (OUT_UNIT, FMT15) ang, 1.0d0 / aux1, aux1 / aux2 - 1.0d0
-        ang = ang + ANG_STEP
-      end do
+      ! JG, June 11 2013 -->>
+      ! call outputRS(OUT_UNIT,info)
+      open (OUT_UNIT_RS, file = trim(out_fl_nam)//'.rs', 
+     &  status = 'replace', iostat = info)
+      call outputRS(OUT_UNIT_RS,info)
+      close(OUT_UNIT_RS)
+      ! <<-
       if (info /= 0) then
         write (*, FMT03) ERR_MSG04
         write (OUT_UNIT, FMT03) ERR_MSG04
@@ -396,6 +406,46 @@
         stop
       end if
       write (OUT_UNIT, FMT16) 1.0d0 / aux1, aux1 / aux2 - 1.0d0
+      ! JG, June 11 2013 -->>
+      ! call writeYld(OUT_UNIT,info)
+      open (OUT_UNIT_YLD, file = trim(out_fl_nam)//'.yld', 
+     &  status = 'replace', iostat = info)
+      call writeYld(OUT_UNIT_YLD,info)
+      close(OUT_UNIT_YLD)
+      ! <<-- 
+      if (info /= 0) then
+        write (*, FMT03) ERR_MSG04
+        write (OUT_UNIT, FMT03) ERR_MSG04
+        write (*, FMT03) FAILURE_MSG
+        write (OUT_UNIT, FMT03) FAILURE_MSG
+      else
+        write (*, FMT03) SUCCESS_MSG
+        write (OUT_UNIT, FMT03) SUCCESS_MSG
+      end if
+      close (OUT_UNIT)
+      stop
+      
+      contains 
+      
+      subroutine outputRS(OUT_UNIT,info)
+      implicit none
+      integer,intent(in)      :: OUT_UNIT
+      integer,intent(out)     :: info
+      ang = 0.0d0
+      max_ang = 90.0d0 + 0.5d0 * ANG_STEP
+      do
+        if (ang > max_ang) exit
+        call GET_FG_U (ang * DEG_TO_RAD, aux1, aux2, info)
+        if (info /= 0) exit
+        write (OUT_UNIT, FMT15) ang, 1.0d0 / aux1, aux1 / aux2 - 1.0d0
+        ang = ang + ANG_STEP
+      end do
+      end subroutine
+
+      subroutine writeYld(OUT_UNIT,info)
+      implicit none
+      integer,intent(in)      :: OUT_UNIT
+      integer,intent(out)     :: info
       max_ang = 360.0d0 + 0.5d0 * ANG_STEP
       sig12_frac = 0.0d0
       max_sig12_frac = 1.0d0 - 0.5d0 * SIG12_FRAC_STEP
@@ -414,17 +464,9 @@
         if (info /= 0) exit
         sig12_frac = sig12_frac + SIG12_FRAC_STEP
       end do
-      if (info /= 0) then
-        write (*, FMT03) ERR_MSG04
-        write (OUT_UNIT, FMT03) ERR_MSG04
-        write (*, FMT03) FAILURE_MSG
-        write (OUT_UNIT, FMT03) FAILURE_MSG
-      else
-        write (*, FMT03) SUCCESS_MSG
-        write (OUT_UNIT, FMT03) SUCCESS_MSG
-      end if
-      close (OUT_UNIT)
-      stop
+      end subroutine
+      
+      
       end program BBC_2008_16
 *----------------------------------------------------------------------*
 *                         GET_IDENT_RSD                                *
