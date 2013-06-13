@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "fortranProjectExe", "fortranProject\fortranProjectExe.vfproj", "{5F98B389-7CA3-4FB6-9890-19A889DE3BD4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D04E017D-7D38-4899-8312-0CB8677764D5} = {D04E017D-7D38-4899-8312-0CB8677764D5}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cppProjectExe", "cppProject\cppProject.vcxproj", "{CD931990-8292-4E2E-9DA9-E70F290CC8D4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D04E017D-7D38-4899-8312-0CB8677764D5} = {D04E017D-7D38-4899-8312-0CB8677764D5}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cppProjectLib", "cppProjectLib\cppProjectLib.vcxproj", "{D04E017D-7D38-4899-8312-0CB8677764D5}"
+EndProject
+Global
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN - Subversion Support for Visual Studio
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5F98B389-7CA3-4FB6-9890-19A889DE3BD4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5F98B389-7CA3-4FB6-9890-19A889DE3BD4}.Debug|Win32.Build.0 = Debug|Win32
+		{5F98B389-7CA3-4FB6-9890-19A889DE3BD4}.Release|Win32.ActiveCfg = Release|Win32
+		{5F98B389-7CA3-4FB6-9890-19A889DE3BD4}.Release|Win32.Build.0 = Release|Win32
+		{CD931990-8292-4E2E-9DA9-E70F290CC8D4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CD931990-8292-4E2E-9DA9-E70F290CC8D4}.Debug|Win32.Build.0 = Debug|Win32
+		{CD931990-8292-4E2E-9DA9-E70F290CC8D4}.Release|Win32.ActiveCfg = Release|Win32
+		{CD931990-8292-4E2E-9DA9-E70F290CC8D4}.Release|Win32.Build.0 = Release|Win32
+		{D04E017D-7D38-4899-8312-0CB8677764D5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D04E017D-7D38-4899-8312-0CB8677764D5}.Debug|Win32.Build.0 = Debug|Win32
+		{D04E017D-7D38-4899-8312-0CB8677764D5}.Release|Win32.ActiveCfg = Release|Win32
+		{D04E017D-7D38-4899-8312-0CB8677764D5}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
