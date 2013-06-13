@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "cppLibrary.h"
 
-int _tmain(int argc, _TCHAR* argv[])
+int main(int argc, char * argv[])
 {
 
 	cppFx_simple();
