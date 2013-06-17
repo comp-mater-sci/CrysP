@@ -18,9 +18,18 @@
     <ClCompile Include="cppLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="gmetexFStringTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cppLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gmetexFString.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gmetexFStringTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

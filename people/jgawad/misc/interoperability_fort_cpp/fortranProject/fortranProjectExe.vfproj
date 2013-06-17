@@ -5,7 +5,7 @@
 	<Configurations>
 		<Configuration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" F2003Semantics="true" WarnInterfaces="true" Traceback="true" NullPointerCheck="true" BoundsCheck="true" UninitializedVariablesCheck="true" DescriptorDataTypeCheck="true" DescriptorDataSizeCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
-				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="$(SolutionDir)\$(ConfigurationName)" IgnoreDefaultLibraryNames="MSVCRTD.lib;" GenerateDebugInformation="true" SubSystem="subSystemConsole" AdditionalDependencies="cppProjectLib.lib"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="$(SolutionDir)\$(ConfigurationName)" IgnoreDefaultLibraryNames="LIBCMTD.lib" GenerateDebugInformation="true" SubSystem="subSystemConsole" InterproceduralOptimizations="false" AdditionalDependencies="cppProjectLib.lib"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
 				<Tool Name="VFCustomBuildTool"/>
@@ -28,5 +28,6 @@
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
 		<File RelativePath=".\cppLibInterface.f90"/>
+		<File RelativePath=".\gmetexFString.f90"/>
 		<File RelativePath=".\main.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>

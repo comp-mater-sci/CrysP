@@ -1,7 +1,7 @@
 
 #include <iostream>
 #include <string>
-#include <string.h>
+#include <cstring>
 
 #include "cppLibrary.h"
 
@@ -108,4 +108,15 @@ CType4 * cppFx_allocateCType4(size_t n)
 					ptr->array[i].tens[j][k] = i*10 + ++l;
 		}
 		return ptr;
+}
+
+
+size_t cppFx_CType5(const CType5 & cobj)
+{
+	std::cout <<"cppFx_CType5"  << std::endl
+			  << "cobj.n: " << cobj.n << std::endl;
+	for (size_t i = 0; i < cobj.n; i++)
+		std::cout << cobj.array[i] << ' ';
+	std::cout << std::endl;
+	return cobj.n;
 }

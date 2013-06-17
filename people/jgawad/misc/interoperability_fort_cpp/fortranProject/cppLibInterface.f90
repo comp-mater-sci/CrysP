@@ -41,6 +41,19 @@ module cppLibInterface
             module procedure CType4_helper_c2f, CType4_helper_f2c
       end interface
       
+      ! CType5 is actually a struct with fields size_t n and double * array.
+	type,bind(c) :: CType5
+		integer(c_size_t)             :: n
+            
+            type(c_ptr)                   :: array
+      end type      
+      
+      
+      
+      
+      interface CType5_double
+            module procedure CType5_double_c2f, CType5_double_f2c
+      end interface
       
       interface
             subroutine cppFx_simple() bind(c,name="cppFx_simple")
@@ -97,6 +110,13 @@ module cppLibInterface
             implicit none
             integer(c_size_t),value :: n
             end function
+
+            integer(c_size_t) function cppFx_CType5(cobj) bind(c,name='cppFx_CType5')
+            use, intrinsic    :: iso_c_binding
+            import :: CType5
+            implicit none
+            type(CType5),intent(in) :: cobj
+            end function
             
       end interface
 
@@ -114,7 +134,7 @@ contains
       
       function CType4_helper_f2c(fobj) result(cobj)
       implicit none
-      type(CType4_fort),intent(in)  :: fobj
+      type(CType4_fort),target,intent(in)  :: fobj
       type(CType4)       :: cobj
       !
             cobj%n = size(fobj%array)
@@ -122,4 +142,25 @@ contains
       !
       end function
 
+      
+      function CType5_double_c2f(cobj) result(fobj)
+      implicit none
+      type(CType5),intent(in)                   :: cobj
+      double precision,dimension(:),pointer     :: fobj
+      !
+            call c_f_pointer(cobj%array,fobj,[cobj%n])
+      !
+      end function
+      
+      function CType5_double_f2c(fobj) result(cobj)
+      implicit none
+      double precision,allocatable,target,dimension(:),intent(in)  :: fobj
+      type(CType5)       :: cobj
+      !
+            cobj%n = size(fobj)
+            cobj%array = c_loc(fobj)
+      !
+      end function
+
+      
 end module

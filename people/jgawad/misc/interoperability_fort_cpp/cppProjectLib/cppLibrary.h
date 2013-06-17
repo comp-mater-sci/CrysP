@@ -48,6 +48,17 @@
 
 
 		CType4 * cppFx_allocateCType4(size_t n);
+		
+		
+		struct CType5
+		{
+			size_t	n;
+
+			double * array;
+		};
+
+		size_t cppFx_CType5(const CType5 & cobj);
+			
 
 	}
 

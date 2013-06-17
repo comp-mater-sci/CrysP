@@ -9,12 +9,15 @@ FCLDFLAGS= -cxxlib -L../cppProjectLib -lcppProject
 
 all	: fortranProject
 
-fortranProject:	cppLibInterface.o main.o
+fortranProject:	main.o cppLibInterface.o gmetexFString.o  
 	$(FC) -o $@ $^ $(FCFLAGS) $(FCLDFLAGS)
 
 cppLibInterface.o	: cppLibInterface.f90
 	$(FC) -c $< $(FCFLAGS)
 
+gmetexFString.o	:	gmetexFString.f90	
+	$(FC) -c $< $(FCFLAGS)
+	
 main.o	: main.f90 cppLibInterface.o
 	$(FC) -c $< $(FCFLAGS)
 

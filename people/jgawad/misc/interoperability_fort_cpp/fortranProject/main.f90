@@ -26,6 +26,8 @@ implicit none
       type(CType4),pointer    :: fptr_obj4
       type(CType4_fort)       :: obj4_fort
 
+      double precision,allocatable,dimension(:),target :: obj5
+      integer(c_size_t)       :: test_retval
       
       integer :: i,j
       !
@@ -131,17 +133,49 @@ implicit none
             write(*,*) '---'
       enddo
       
+      
+      !
+      ! Test 8: call to size_t cppFx_CType5(const CType5 & cobj)
+      !
+      write(*,100) 'size_t cppFx_CType5(const CType5 & cobj)'
+      allocate(obj5(small_array_len))
+      forall (i=1:size(obj5)) obj5(i) = dble(i)
+      test_retval = cppFx_CType5(CType5_double(obj5))
+      
 100 format(10('='),/,'Test: ',A,/)            
       
 330 format(3(F10.3,1X))      
 333 format(3(3(F10.3,1X),/))
       
 end subroutine
+
       
+      
+      
+subroutine runFStringTest()
+use KGmetexFString
+implicit none
+character(len=128) :: str
+!
+      interface
+            ! void newFStringTest(FStringData &);
+            subroutine newFStringTest(fstr) bind(c,name='newFStringTest')
+            import :: FStringData
+            implicit none
+            type(FStringData) :: fstr
+            end subroutine
+      end interface
+
+
+      call newFStringTest(fstring(str))
+      write(*,*) "'",trim(str),"'"
+!
+end subroutine
       
 program fortran_main
 implicit none
-!      
+!
       call runTests()
+      call runFStringTest()
 !      
 end program
