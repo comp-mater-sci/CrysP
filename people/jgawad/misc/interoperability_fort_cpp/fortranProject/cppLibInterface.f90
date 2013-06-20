@@ -55,6 +55,14 @@ module cppLibInterface
             module procedure CType5_double_c2f, CType5_double_f2c
       end interface
       
+      
+      type,bind(c) :: TypeXNoConstructor
+	logical(c_bool)         :: m_flag
+	integer(c_size_t)       :: m_lenght
+	type(c_ptr)             :: m_array
+      end type      
+      
+      
       interface
             subroutine cppFx_simple() bind(c,name="cppFx_simple")
             end subroutine
@@ -117,7 +125,42 @@ module cppLibInterface
             implicit none
             type(CType5),intent(in) :: cobj
             end function
-            
+
+            integer(c_size_t) function cppFx_bool(arr,nelem) bind(c,name='cppFx_bool')
+            use, intrinsic    :: iso_c_binding
+            logical(c_bool),dimension(*)  :: arr
+            integer(c_size_t),value       :: nelem
+            end function
+
+            integer(c_size_t) function cppFx_TypeXNoConstructorArray(nelems, array) bind(c,name='cppFx_TypeXNoConstructorArray')
+            use, intrinsic    :: iso_c_binding
+            import :: TypeXNoConstructor
+            integer(c_size_t),value                   :: nelems
+            type(TypeXNoConstructor),dimension(*)     :: array
+            end function
+
+            integer(c_size_t) function cppFx_TypeXWithConstructorArray(nelems, array) bind(c,name='cppFx_TypeXWithConstructorArray')
+            use, intrinsic    :: iso_c_binding
+            import :: TypeXNoConstructor
+            integer(c_size_t),value                   :: nelems
+            type(TypeXNoConstructor),dimension(*)     :: array
+            end function
+ 
+      
+		integer(c_size_t) function cppFx_TypeXNoConstructor(obj) bind(c,name='cppFx_TypeXNoConstructor')
+            use, intrinsic    :: iso_c_binding
+            import :: TypeXNoConstructor
+            type(TypeXNoConstructor)     :: obj
+            end function
+      
+		integer(c_size_t) function cppFx_TypeXWithConstructor(obj) bind(c,name='cppFx_TypeXWithConstructor')
+            use, intrinsic    :: iso_c_binding
+            import :: TypeXNoConstructor
+            type(TypeXNoConstructor)     :: obj
+            end function
+
+      
+      
       end interface
 
 contains
@@ -162,5 +205,4 @@ contains
       !
       end function
 
-      
 end module

@@ -58,10 +58,51 @@
 		};
 
 		size_t cppFx_CType5(const CType5 & cobj);
-			
 
+		size_t cppFx_bool(bool [], size_t);
+		
+		
 	}
 
+	extern "C" {
+
+		struct TypeXNoConstructor
+		{
+			bool	m_flag;
+			size_t	m_lenght;
+			double * m_array;
+		};
+
+
+		struct TypeXWithConstructor
+		{
+			TypeXWithConstructor()
+			:	m_flag(false),
+				m_lenght(0),
+				m_array(NULL)
+			{
+
+			}
+
+			TypeXWithConstructor(size_t len)
+			:	m_flag(true),
+				m_lenght(len)
+			{
+				m_array = new double [len];
+			}
+
+			bool	m_flag;
+			size_t	m_lenght;
+			double * m_array;
+		};
+		
+		void test_StructSize();
+		
+		size_t cppFx_TypeXNoConstructorArray(size_t nelems, TypeXNoConstructor array[]);
+		size_t cppFx_TypeXNoConstructor(TypeXNoConstructor &);
+		size_t cppFx_TypeXWithConstructor(TypeXWithConstructor & obj);
+		size_t cppFx_TypeXWithConstructorArray(size_t nelems, TypeXWithConstructor array[]);
+	};
 
 
 #endif

@@ -120,3 +120,76 @@ size_t cppFx_CType5(const CType5 & cobj)
 	std::cout << std::endl;
 	return cobj.n;
 }
+
+size_t cppFx_bool(bool array[], size_t n_elems)
+{
+	std::cout <<"cppFx_bool"  << std::endl
+		<< "n: " << n_elems << std::endl;
+	for(size_t i = 0; i < n_elems; i++)
+		std::cout << array[i] << ' ';
+	std::cout << std::endl;
+	return n_elems;
+}
+
+size_t cppFx_TypeXNoConstructor(TypeXNoConstructor &)
+{
+
+
+	return sizeof(TypeXNoConstructor);
+}
+
+
+size_t cppFx_TypeXNoConstructorArray(size_t nelems, TypeXNoConstructor array[])
+{
+	std::cout <<"cppFx_TypeXNoConstructorArray"  << std::endl;
+	for (size_t i = 0; i < nelems; i++)
+		std::cout << "addr(arr[" << i <<"])="<< intptr_t(array+i) 
+					<< ' ' << intptr_t(&(array[i].m_flag))
+					<< ' ' << intptr_t(&(array[i].m_lenght))
+					<< ' ' << intptr_t(&(array[i].m_array)) << std::endl;
+	return sizeof(TypeXNoConstructor);
+}
+
+size_t cppFx_TypeXWithConstructorArray(size_t nelems, TypeXWithConstructor array[])
+{
+	std::cout <<"cppFx_TypeXWithConstructorArray"  << std::endl;
+	for (size_t i = 0; i < nelems; i++)
+		std::cout << "addr(arr[" << i <<"])="<< intptr_t(array+i) 
+		<< ' ' << intptr_t(&(array[i].m_flag))
+		<< ' ' << intptr_t(&(array[i].m_lenght))
+		<< ' ' << intptr_t(&(array[i].m_array)) << std::endl;
+	return sizeof(TypeXNoConstructor);
+}
+
+
+
+size_t cppFx_TypeXWithConstructor(TypeXWithConstructor & obj)
+{
+	std::cout <<"cppFx_TypeXWithConstructor"  << std::endl;
+	std::cout << "sizeof(obj): " << sizeof(obj) << std::endl;
+
+	return sizeof(TypeXWithConstructor);
+}
+
+
+void test_StructSize()
+{
+
+	TypeXNoConstructor a, a_vec[10];
+
+	TypeXWithConstructor b1, b2(10), b_vec[10];
+
+
+
+	std:: cout << "sum of sizes= " << sizeof(a.m_flag) + sizeof(a.m_lenght) + sizeof(a.m_array) << std::endl;
+	std::cout	<< "sizeof(a)=" << sizeof(a) << '\t' << sizeof(TypeXNoConstructor) << std::endl
+				<< "sizeof(b1)=" << sizeof(b1) << '\t' << sizeof(TypeXWithConstructor) << std::endl
+				<< "sizeof(b2)=" << sizeof(b2) << '\t' << sizeof(TypeXWithConstructor) << std::endl;
+
+	std::cout	<< "sizeof(a_vec)=" << sizeof(a_vec) << std::endl
+				<< "sizeof(b_vec)=" << sizeof(b_vec) << std::endl;
+
+
+	cppFx_TypeXNoConstructorArray(10, a_vec);
+
+}

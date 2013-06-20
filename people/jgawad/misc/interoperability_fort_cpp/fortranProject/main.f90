@@ -29,6 +29,8 @@ implicit none
       double precision,allocatable,dimension(:),target :: obj5
       integer(c_size_t)       :: test_retval
       
+      logical(c_bool),dimension(small_array_len),target :: vBools
+      logical,dimension(small_array_len) :: vFBools
       integer :: i,j
       !
       ! Test 1: call to void cppFx_simple(void)
@@ -132,7 +134,8 @@ implicit none
             enddo
             write(*,*) '---'
       enddo
-      
+      !------------------------------------------------------------
+
       
       !
       ! Test 8: call to size_t cppFx_CType5(const CType5 & cobj)
@@ -141,15 +144,64 @@ implicit none
       allocate(obj5(small_array_len))
       forall (i=1:size(obj5)) obj5(i) = dble(i)
       test_retval = cppFx_CType5(CType5_double(obj5))
+      !------------------------------------------------------------
+      
+      !
+      ! Test 9: call to size_t cppFx_bool(bool [], size_t)
+      write(*,100) 'size_t cppFx_bool(bool [], size_t)'
+      vBools = .true.
+      vBools(1:small_array_len:3) = .false.
+      write(*,900) (vBools(i), i=1,small_array_len)
+      write(*,*)
+      test_retval = cppFx_bool(vBools, size(vBools))
+      vFBools = vBools
+      !
       
 100 format(10('='),/,'Test: ',A,/)            
       
 330 format(3(F10.3,1X))      
 333 format(3(3(F10.3,1X),/))
-      
+900 format(L2,\)      
 end subroutine
 
+subroutine runStructSizeTest()
+use cppLibInterface
+use,intrinsic :: iso_c_binding
+implicit none
+
+type(TypeXNoConstructor) :: a, vec_a(small_array_len)
+integer(c_size_t) :: res
+integer :: i
+      write(*,*) 'runStructSizeTest'
+
+      write(*,*) 'Sum of sizes:', sizeof(a%m_flag) + sizeof(a%m_lenght) + sizeof(a%m_array)
       
+      write(*,*) 'sizeof(a):', sizeof(a)
+      
+      write(*,*) 'sizeof(vec_a):', sizeof(vec_a)
+      
+      
+      write(*,*) 'In Fortran caller:'
+      
+      do i=1,small_array_len
+		write(*,*) "addr(arr[" , i , "])=", &
+                        loc(vec_a(i)), 		&			
+                        loc(vec_a(i)%m_flag),   &
+				loc(vec_a(i)%m_lenght), &
+				loc(vec_a(i)%m_array) 
+      enddo
+400 format(A,I0,A,4(I8,1X))            
+            
+      res = cppFx_TypeXNoConstructorArray(small_array_len, vec_a) 
+      write(*,*) 'result=',res
+      res = cppFx_TypeXWithConstructorArray(small_array_len, vec_a) 
+      write(*,*) 'result=',res
+      
+      write(*,100)
+      
+100 format(20('+')) 
+      
+end subroutine
       
       
 subroutine runFStringTest()
@@ -175,6 +227,7 @@ end subroutine
 program fortran_main
 implicit none
 !
+      call runStructSizeTest()
       call runTests()
       call runFStringTest()
 !      

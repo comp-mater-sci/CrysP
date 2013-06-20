@@ -9,6 +9,8 @@ int main(int argc, char * argv[])
 
 	cppFx_simple();
 
+	test_StructSize();
+
 	return 0;
 }
 
