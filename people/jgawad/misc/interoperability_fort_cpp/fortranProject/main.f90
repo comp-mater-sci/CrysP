@@ -153,7 +153,7 @@ implicit none
       vBools(1:small_array_len:3) = .false.
       write(*,900) (vBools(i), i=1,small_array_len)
       write(*,*)
-      test_retval = cppFx_bool(vBools, size(vBools))
+      test_retval = cppFx_bool(vBools, int(size(vBools),kind=c_size_t))
       vFBools = vBools
       !
       
@@ -184,18 +184,20 @@ integer :: i
       write(*,*) 'In Fortran caller:'
       
       do i=1,small_array_len
-		write(*,*) "addr(arr[" , i , "])=", &
+		write(*,400) 'addr(arr[', i, '])=', &
                         loc(vec_a(i)), 		&			
                         loc(vec_a(i)%m_flag),   &
 				loc(vec_a(i)%m_lenght), &
 				loc(vec_a(i)%m_array) 
       enddo
-400 format(A,I0,A,4(I8,1X))            
+400 format(A,I0,A,1X,4(I0,1X))            
             
       res = cppFx_TypeXNoConstructorArray(small_array_len, vec_a) 
       write(*,*) 'result=',res
       res = cppFx_TypeXWithConstructorArray(small_array_len, vec_a) 
       write(*,*) 'result=',res
+      
+      
       
       write(*,100)
       
