@@ -470,14 +470,7 @@ C     Note that length of D = sqrt(3/2)
       x=x*2.0/3.0
       ratlon=x
 C
-      if (x.lt.5.0D-6) then
-         WDOT1=0.0
-         do i=1,5
-           WDOT1=WDOT1+B5(i)*SPANV(i)
-         enddo
-      else
-         WDOT1=WDOT/x
-      endif
+      WDOT1=WDOT*DELTAT
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   QGX 4/18/2012
 C add the normalization factor for rhossa
       write (IMP2,150) ior,WDOT,WDOT1,TAU,WDOT1/TAU,ratlon,
