@@ -473,7 +473,7 @@ C
       WDOT1=WDOT*DELTAT
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   QGX 4/18/2012
 C add the normalization factor for rhossa
-      write (IMP2,150) ior,WDOT,WDOT1,TAU,WDOT1/TAU,ratlon,
+      write (IMP2,150) ior,WDOT,WDOT1,TAU,WDOT/TAU,ratlon,
      1 rhossa(1,1)*DELTAT,rhossa(2,2)*DELTAT,rhossa(3,3)*DELTAT,
      2 rhossa(2,3)*DELTAT,rhossa(3,1)*DELTAT,rhossa(1,2)*DELTAT,
      3 rhoasa(2,3),rhoasa(3,1),rhoasa(1,2),
