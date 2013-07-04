@@ -22,6 +22,9 @@ JOBNAME=${1:-"default_job"}
 # Normal analysis
 RUNMODE=${2:-"analysis"}
 #
+#
+PRECISION=${3:-"single"}
+#
 # Restart of analysis, if so, OLDJOBNAME must be defined
 #RUNMODE="restart"
 #JOBNAME=CupDrawingRestart
@@ -34,6 +37,22 @@ RUNMODE=${2:-"analysis"}
 ##################################################################
 # Setup of environment
 #
+case "$PRECISION" in
+	"single")
+		USERSUB=vumat_main.o
+		;;
+	"double")
+		PRECISION_FLAGS="double=both"
+		USERSUB=vumat_main_d.o
+		;;
+	*)
+		echo "Invalid precision, only 'single' or 'double' is allowed"
+		exit 1
+		;;
+esac
+HMS_VUMAT_PRECISION="${PRECISION}"
+#
+ABAQUS=abaqus
 LOGFILE=${JOBNAME}_log.log
 #
 # Assume that libdir is the current dir
@@ -49,9 +68,7 @@ GMETEX_WORKDIR=$CURRENTDIR
 export LD_LIBRARY_PATH
 export JOBNAME
 export GMETEX_WORKDIR
-#
-# Name of user subroutine
-USERSUB=vumat_main
+export HMS_VUMAT_PRECISION
 #
 # Prepare execution
 # 
@@ -75,22 +92,23 @@ fi
 #
 case "$RUNMODE" in
 	parametercheck) 
-			abaqus interactive parametercheck job=$JOBNAME &>  "$LOGFILE"
+			${ABAQUS} interactive parametercheck job=$JOBNAME ${PRECISION_FLAGS} &>  "$LOGFILE"
 			;;
 	datacheck) 
-			abaqus interactive datacheck job=$JOBNAME user="${USERSUB}"  &>  "$LOGFILE"
+			${ABAQUS} interactive datacheck job=$JOBNAME user="${USERSUB}" ${PRECISION_FLAGS}  &>  "$LOGFILE"
 			;;
 	analysis) 
-			abaqus interactive job=$JOBNAME user="${USERSUB}"  &>  "$LOGFILE"
+			${ABAQUS} interactive job=$JOBNAME user="${USERSUB}" ${PRECISION_FLAGS}  &>  "$LOGFILE"
 			;;
 	restart)	
-			abaqus interactive job=$JOBNAME oldjob=$OLDJOBNAME user="${USERSUB}"  &>  "$LOGFILE"
+			${ABAQUS} interactive job=$JOBNAME oldjob=$OLDJOBNAME user="${USERSUB}" ${PRECISION_FLAGS}  &>  "$LOGFILE"
 			;;
 	recover)	
-			abaqus interactive recover job=$JOBNAME user="${USERSUB}"  &>  "$LOGFILE"
+			${ABAQUS} interactive recover job=$JOBNAME user="${USERSUB}" ${PRECISION_FLAGS} &>  "$LOGFILE"
 			;;
 	*)
 		echo "Invalid runmode"
+		exit 1
 		;;
 esac
 
