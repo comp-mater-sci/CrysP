@@ -1,0 +1,59 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "quadraticHard", "quadraticHard.vfproj", "{76735BC9-91FC-46A6-9E14-3393A54C01C3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3DAE2C65-0C11-4D04-ADC3-8E101AD55419} = {3DAE2C65-0C11-4D04-ADC3-8E101AD55419}
+		{48A894A8-DEF0-4103-8323-DA4269DB06E8} = {48A894A8-DEF0-4103-8323-DA4269DB06E8}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dependencies", "dependencies", "{C21FE79C-189A-413B-AA6A-E70FAC6FC023}"
+EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "fngCore", "..\..\..\..\code\trunk\tools\fng\projects\libfngCore\fngCore.vfproj", "{3DAE2C65-0C11-4D04-ADC3-8E101AD55419}"
+	ProjectSection(ProjectDependencies) = postProject
+		{48A894A8-DEF0-4103-8323-DA4269DB06E8} = {48A894A8-DEF0-4103-8323-DA4269DB06E8}
+	EndProjectSection
+EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "fngCRI", "..\..\..\..\code\trunk\tools\fng\projects\libfngCRI\fngCRI.vfproj", "{48A894A8-DEF0-4103-8323-DA4269DB06E8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug_abaqus|Win32 = Debug_abaqus|Win32
+		Debug|Win32 = Debug|Win32
+		Release_abaqus|Win32 = Release_abaqus|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{76735BC9-91FC-46A6-9E14-3393A54C01C3}.Debug_abaqus|Win32.ActiveCfg = Debug|Win32
+		{76735BC9-91FC-46A6-9E14-3393A54C01C3}.Debug_abaqus|Win32.Build.0 = Debug|Win32
+		{76735BC9-91FC-46A6-9E14-3393A54C01C3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{76735BC9-91FC-46A6-9E14-3393A54C01C3}.Debug|Win32.Build.0 = Debug|Win32
+		{76735BC9-91FC-46A6-9E14-3393A54C01C3}.Release_abaqus|Win32.ActiveCfg = Release|Win32
+		{76735BC9-91FC-46A6-9E14-3393A54C01C3}.Release_abaqus|Win32.Build.0 = Release|Win32
+		{76735BC9-91FC-46A6-9E14-3393A54C01C3}.Release|Win32.ActiveCfg = Release|Win32
+		{76735BC9-91FC-46A6-9E14-3393A54C01C3}.Release|Win32.Build.0 = Release|Win32
+		{3DAE2C65-0C11-4D04-ADC3-8E101AD55419}.Debug_abaqus|Win32.ActiveCfg = Debug_abaqus|Win32
+		{3DAE2C65-0C11-4D04-ADC3-8E101AD55419}.Debug_abaqus|Win32.Build.0 = Debug_abaqus|Win32
+		{3DAE2C65-0C11-4D04-ADC3-8E101AD55419}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3DAE2C65-0C11-4D04-ADC3-8E101AD55419}.Debug|Win32.Build.0 = Debug|Win32
+		{3DAE2C65-0C11-4D04-ADC3-8E101AD55419}.Release_abaqus|Win32.ActiveCfg = Release_abaqus|Win32
+		{3DAE2C65-0C11-4D04-ADC3-8E101AD55419}.Release_abaqus|Win32.Build.0 = Release_abaqus|Win32
+		{3DAE2C65-0C11-4D04-ADC3-8E101AD55419}.Release|Win32.ActiveCfg = Release|Win32
+		{3DAE2C65-0C11-4D04-ADC3-8E101AD55419}.Release|Win32.Build.0 = Release|Win32
+		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Debug_abaqus|Win32.ActiveCfg = Debug_abaqus|Win32
+		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Debug_abaqus|Win32.Build.0 = Debug_abaqus|Win32
+		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Debug|Win32.Build.0 = Debug|Win32
+		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Release_abaqus|Win32.ActiveCfg = Release_abaqus|Win32
+		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Release_abaqus|Win32.Build.0 = Release_abaqus|Win32
+		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Release|Win32.ActiveCfg = Release|Win32
+		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3DAE2C65-0C11-4D04-ADC3-8E101AD55419} = {C21FE79C-189A-413B-AA6A-E70FAC6FC023}
+		{48A894A8-DEF0-4103-8323-DA4269DB06E8} = {C21FE79C-189A-413B-AA6A-E70FAC6FC023}
+	EndGlobalSection
+EndGlobal
