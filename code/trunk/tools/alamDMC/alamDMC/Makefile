@@ -24,12 +24,6 @@ OUT_DIRS = $(LIBDIR) $(OBJDIR) $(INCLUDEDIR)
 
 SRCS= \
 main.f90 \
-qrsTypes.f90 \
-dmcUtils.f90 \
-commonConfig.f90 \
-commonUtils.f90 \
-abstractModule.f90 \
-basicModule.f90 \
 dmcASR.f90 \
 dmcQRS.f90 \
 dmcUDSA.f90 \
@@ -37,6 +31,13 @@ dmcYld.f90
 
 # Build list of objects:
 OBJS=$(call fxx2opaths,$(SRCS),$(OBJDIR))
+
+LIBALAMDMCROOT=../libAlamDMC
+LIBALAMDMCDIR=$(LIBALAMDMCROOT)/$(ConfigurationName)
+LIBALAMDMC=libalamDMC.a
+LIBALAMDMCLIB=$(LIBALAMDMCDIR)/$(LIBALAMDMC)
+FCFLAGS+= -I$(LIBALAMDMCDIR)/include -I$(LIBALAMDMCROOT)
+FLDFLAGS+= -L$(LIBALAMDMCDIR) -lalamDMC
 
 ALMYLPDIR=../libAlamYLP/$(ConfigurationName)
 ALAMYLP=libalamYLP.a
@@ -52,7 +53,7 @@ PROG=$(ConfigurationName)/$(PROGNAME)
 
 .PHONY : clean dirstructure
 
-$(PROG)	: $(OBJDIR) $(INCLUDEDIR) $(OBJS) $(ALAMYLPLIB)
+$(PROG)	: $(OBJDIR) $(INCLUDEDIR) $(OBJS) $(ALAMYLPLIB) $(LIBALAMDMCLIB)
 	$(FC) $(FCFLAGS) -I$(INCLUDEDIR) $(OBJS) -o $@  $(FLDFLAGS) 
 
 $(OBJDIR)/%.o	: %.f90 | dirstructure
@@ -65,11 +66,9 @@ FORCE	:
 $(LIBDIR) $(OBJDIR) $(INCLUDEDIR) :
 	[ -d $@ ] || mkdir -p $@
 
-$(OBJDIR)/main.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, commonConfig commonUtils dmcQRS dmcASR dmcUDSA dmcYld qrsTypes)) $(LIBOPTPATH) msgFormats.inc
-$(OBJDIR)/commonConfig.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, dmcUtils )) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
-$(OBJDIR)/basicModule.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, abstractModule commonConfig dmcUtils)) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
-$(OBJDIR)/dmcQRS.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, basicModule alamUtils commonConfig commonUtils qrsTypes)) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
-$(OBJDIR)/dmcASR.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, basicModule dmcUtils commonConfig commonUtils qrsTypes)) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
-$(OBJDIR)/dmcUDSA.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, basicModule dmcUtils commonConfig commonUtils qrsTypes)) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
-$(OBJDIR)/dmcYld.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, basicModule dmcUtils commonConfig commonUtils)) $(LIBOPTPATH) $(ALAMYLPLIB) msgFormats.inc
+$(OBJDIR)/main.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, commonConfig commonUtils dmcQRS dmcASR dmcUDSA dmcYld qrsTypes)) $(LIBOPTPATH) $(LIBALAMDMCROOT)/msgFormats.inc
+$(OBJDIR)/dmcQRS.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, basicModule alamUtils commonConfig commonUtils qrsTypes)) $(LIBOPTPATH) $(ALAMYLPLIB) $(LIBALAMDMCROOT)/msgFormats.inc
+$(OBJDIR)/dmcASR.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, basicModule dmcUtils commonConfig commonUtils qrsTypes)) $(LIBOPTPATH) $(ALAMYLPLIB) $(LIBALAMDMCROOT)/msgFormats.inc
+$(OBJDIR)/dmcUDSA.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, basicModule dmcUtils commonConfig commonUtils qrsTypes)) $(LIBOPTPATH) $(ALAMYLPLIB) $(LIBALAMDMCROOT)/msgFormats.inc
+$(OBJDIR)/dmcYld.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, basicModule dmcUtils commonConfig commonUtils)) $(LIBOPTPATH) $(ALAMYLPLIB) $(LIBALAMDMCROOT)/msgFormats.inc
 
