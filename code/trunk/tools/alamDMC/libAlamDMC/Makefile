@@ -17,6 +17,7 @@ include $(SolutionDir)/Makefile.tools
 
 #
 ######################################################################
+LIBDIR=$(ConfigurationName)
 OBJDIR=$(ConfigurationName)/obj
 INCLUDEDIR=$(ConfigurationName)/include
 
@@ -56,6 +57,8 @@ $(OBJDIR)/%.o	: %.f90 | dirstructure
 clean	: FORCE
 	-rm -f $(OBJS) $(LIB) $(INCLUDEDIR)/*.mod $(LIB) 
 FORCE	:
+
+dirstructure : | $(LIBDIR) $(OBJDIR) $(INCLUDEDIR)
 
 $(LIBDIR) $(OBJDIR) $(INCLUDEDIR) :
 	[ -d $@ ] || mkdir -p $@

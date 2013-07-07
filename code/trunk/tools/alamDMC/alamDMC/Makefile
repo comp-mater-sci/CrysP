@@ -17,10 +17,11 @@ include $(SolutionDir)/Makefile.tools
 
 #
 ######################################################################
+TargetDir=$(ConfigurationName)
 OBJDIR=$(ConfigurationName)/obj
 INCLUDEDIR=$(ConfigurationName)/include
 
-OUT_DIRS = $(LIBDIR) $(OBJDIR) $(INCLUDEDIR)
+OUT_DIRS = $(TargetDir) $(OBJDIR) $(INCLUDEDIR)
 
 SRCS= \
 main.f90 \
@@ -54,7 +55,7 @@ PROG=$(ConfigurationName)/$(PROGNAME)
 .PHONY : clean dirstructure
 
 $(PROG)	: $(OBJDIR) $(INCLUDEDIR) $(OBJS) $(ALAMYLPLIB) $(LIBALAMDMCLIB)
-	$(FC) $(FCFLAGS) -I$(INCLUDEDIR) $(OBJS) -o $@  $(FLDFLAGS) 
+	$(FC) $(FCFLAGS) -I$(INCLUDEDIR) $(OBJS) -o $@  $(FLDFLAGS) -lfngCRI
 
 $(OBJDIR)/%.o	: %.f90 | dirstructure
 	$(FC) -c $< $(FCFLAGS) -o $@
@@ -63,12 +64,14 @@ clean	: FORCE
 	-rm -f $(OBJS) $(LIB) $(INCLUDEDIR)/*.mod $(PROG) 
 FORCE	:
 
-$(LIBDIR) $(OBJDIR) $(INCLUDEDIR) :
+dirstructure : $(OUT_DIRS)
+
+$(OUT_DIRS)	:
 	[ -d $@ ] || mkdir -p $@
 
-$(OBJDIR)/main.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, commonConfig commonUtils dmcQRS dmcASR dmcUDSA dmcYld qrsTypes)) $(LIBOPTPATH) $(LIBALAMDMCROOT)/msgFormats.inc
-$(OBJDIR)/dmcQRS.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, basicModule alamUtils commonConfig commonUtils qrsTypes)) $(LIBOPTPATH) $(ALAMYLPLIB) $(LIBALAMDMCROOT)/msgFormats.inc
-$(OBJDIR)/dmcASR.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, basicModule dmcUtils commonConfig commonUtils qrsTypes)) $(LIBOPTPATH) $(ALAMYLPLIB) $(LIBALAMDMCROOT)/msgFormats.inc
-$(OBJDIR)/dmcUDSA.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, basicModule dmcUtils commonConfig commonUtils qrsTypes)) $(LIBOPTPATH) $(ALAMYLPLIB) $(LIBALAMDMCROOT)/msgFormats.inc
-$(OBJDIR)/dmcYld.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/, basicModule dmcUtils commonConfig commonUtils)) $(LIBOPTPATH) $(ALAMYLPLIB) $(LIBALAMDMCROOT)/msgFormats.inc
+$(OBJDIR)/main.o	:  $(addsuffix .o, $(addprefix $(OBJDIR)/,   dmcQRS dmcASR dmcUDSA dmcYld)) $(LIBOPTPATH) $(LIBALAMDMCROOT)/msgFormats.inc
+$(OBJDIR)/dmcQRS.o	:  $(LIBOPTPATH) $(ALAMYLPLIB) $(LIBALAMDMCROOT)/msgFormats.inc
+$(OBJDIR)/dmcASR.o	:  $(LIBOPTPATH) $(ALAMYLPLIB) $(LIBALAMDMCROOT)/msgFormats.inc
+$(OBJDIR)/dmcUDSA.o	:  $(LIBOPTPATH) $(ALAMYLPLIB) $(LIBALAMDMCROOT)/msgFormats.inc
+$(OBJDIR)/dmcYld.o	:  $(LIBOPTPATH) $(ALAMYLPLIB) $(LIBALAMDMCROOT)/msgFormats.inc
 
