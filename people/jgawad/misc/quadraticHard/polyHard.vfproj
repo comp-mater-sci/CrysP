@@ -29,6 +29,7 @@
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
 		<File RelativePath=".\polyApproximation.f90"/>
 		<File RelativePath=".\polyHard.f90"/>
+		<File RelativePath=".\polyHardUtils.f90"/>
 		<File RelativePath=".\updateData.f90"/>
 		<File RelativePath="..\..\..\..\code\branch\vumat_hardtransfer\vumat_polyhard.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>

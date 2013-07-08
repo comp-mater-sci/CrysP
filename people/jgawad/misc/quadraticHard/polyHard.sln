@@ -1,8 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "quadraticHard", "quadraticHard.vfproj", "{76735BC9-91FC-46A6-9E14-3393A54C01C3}"
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "polyHard", "polyHard.vfproj", "{76735BC9-91FC-46A6-9E14-3393A54C01C3}"
 	ProjectSection(ProjectDependencies) = postProject
+		{B26EB62B-886D-4C8B-A616-2E25BB5EC2D3} = {B26EB62B-886D-4C8B-A616-2E25BB5EC2D3}
 		{3DAE2C65-0C11-4D04-ADC3-8E101AD55419} = {3DAE2C65-0C11-4D04-ADC3-8E101AD55419}
 		{48A894A8-DEF0-4103-8323-DA4269DB06E8} = {48A894A8-DEF0-4103-8323-DA4269DB06E8}
 	EndProjectSection
@@ -34,7 +35,7 @@ Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libAlamYLP", "..\..\..\..\c
 EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libopt", "..\..\..\..\code\trunk\tools\fng\utils\optlib\libopt.vfproj", "{BE90F1A8-DC67-45F4-B168-5D687878EAD8}"
 EndProject
-Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libalamDMC", "..\..\..\..\code\trunk\tools\alamDMC\LibalamDMC\libalamDMC.vfproj", "{B26EB62B-886D-4C8B-A616-2E25BB5EC2D3}"
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libAlamDMC", "..\..\..\..\code\trunk\tools\alamDMC\LibalamDMC\libalamDMC.vfproj", "{B26EB62B-886D-4C8B-A616-2E25BB5EC2D3}"
 	ProjectSection(ProjectDependencies) = postProject
 		{48A894A8-DEF0-4103-8323-DA4269DB06E8} = {48A894A8-DEF0-4103-8323-DA4269DB06E8}
 		{BE90F1A8-DC67-45F4-B168-5D687878EAD8} = {BE90F1A8-DC67-45F4-B168-5D687878EAD8}

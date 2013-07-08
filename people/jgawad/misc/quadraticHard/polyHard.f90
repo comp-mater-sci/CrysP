@@ -43,67 +43,99 @@ end module
 program quadraticHard
 use KpolynomialHard
 use polyApproximation
+use polyHardUtils
 use updateData
 use hardFx
 use fngRuntime
 use fngVec5D
 implicit none
 
-double precision,dimension(3),target   :: vEps,vSigma, vCoeff
+double precision,dimension(:),allocatable   :: vEps,vSigma
 
-type(polynomialHardData) :: hardApprox
+type(polynomialHardData),target :: hardApprox
+type(PolyHardConfig)     :: cnf
 
-integer :: info, ierr
-type(defData) :: defdta
+integer :: info, ierr, i, npoints
+type(defData) :: def_data
 !
-double precision, parameter :: swift_K = 696860000.0, swift_n = 0.28433, swift_eps0 = 0.050875
-integer,parameter :: inunit = 100, outunit = 101
+!double precision,parameter :: swift_K = 696860000.0, swift_n = 0.28433, swift_eps0 = 0.050875
+double precision :: swift_K = 0.D0 , swift_n = 0.D0, swift_eps0 = 0.D0
+double precision :: deps
+integer :: inpunit, inunit, outunit
 !
+      type(MapItem),dimension(0)  :: command_map 
+      integer,parameter       :: argc_min = 1, argc_max=1, command_argpos = 0
+      type(commandLine)       :: cmdline
+      !
+      info = 1
+      !
+      cmdline = commandLine('polyHard' //'$Rev$',description='Parameters: configuration_file')
+      call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.)
+      ! Open config file
+      inpunit = openOrDie(fpath=cmdline%argv(1),status='old')
+      !
+      ! Open config file
+      inpunit = openOrDie(fpath=cmdline%argv(1),status='old')
+      ! Read:
+      call readPolyHardConfig(inpunit,cnf,info)
+      if (info /= 0) then
+            errmsg = 'Cannot read config file, general section'
+            call finalize(2)
+      endif
+      ! Read specific data:
+      read(inpunit,*,iostat=info) swift_K 
+      read(inpunit,*,iostat=info) swift_n
+      read(inpunit,*,iostat=info) swift_eps0
+      if (info /= 0) then
+            errmsg = 'Cannot read config file, Swift section'
+            call finalize(2)
+      endif
+      !
       ! Open and process defdata.dat file
-      open(inunit,file='defdata.dat',status='old',iostat=ierr)
-      if (ierr /= 0) then
-             errmsg = 'Cannot open defdata.dat'
-             call finalize(1)
-      endif
+      inunit = openOrDie('defdata.dat',status='old')
       !
-      open(outunit,file='elem.hard',status='replace',iostat=ierr)
-      if (ierr /= 0) then
-                  errmsg = 'Cannot open elem.hard for writing'
-                  call finalize(1)
-      endif
       !
-      call readUpdateData(inunit,defdta,info)
+      call readUpdateData(inunit,def_data,info)
       if (info /= 0) then
             errmsg = 'Error during processing defdata.dat'
             call finalize(1)
       endif
       !
-      
-      
-      vEps(1) = defdta%eps_0
-      vEps(3) = defdta%eps_1
-      ! Set coordinate of the middle-point 
-      vEps(2) = 0.5D0 * (vEps(1) + vEps(3))
       !
-      if (abs(vEps(1) - vEps(3)) > 0.D0) then      
-            ! Calculate stress values according  
-            vSigma = swift(vEps,swift_K,swift_n,swift_eps0)
-            !
-            call calculateAppoximation(vEps,vSigma,vCoeff,info)
-            !
-            hardApprox = initPolynomialHardData(2) 
-            !
-            hardApprox%valid_eps_range = vEps(1:3:2)
-            hardApprox%vCoeff = vCoeff
-            hardApprox%vD0 = tens2vec5D(defdta%tDEps)
-            hardApprox%vD0 = hardApprox%vD0 / norm2(hardApprox%vD0)
+      outunit = openOrDie('elem.hard',status='replace')
+      !     
+      !      
+      ! Prepare data points  
+      hardApprox = initPolynomialHardData(cnf%polynomial_order)
+      npoints = size(hardApprox%vCoeff)
+      !
+      call makeDatapoints(npoints,def_data%eps_0,def_data%eps_1,deps,vEps,vSigma,info)
+      !
+      if (info /= 0) then
+            errmsg = 'Cannot make proper data points'
+            call finalize(2)
+      endif
+      ! Calculate stress values according  
+      vSigma = swift(vEps,swift_K,swift_n,swift_eps0)
+      !
+      call calculateAppoximation(vEps,vSigma,hardApprox%vCoeff,info)
+      !
+      hardApprox%valid_eps_range = [ vEps(1), vEps(size(vEps)) ]
+      hardApprox%vCoeff = hardApprox%vCoeff
+      hardApprox%vD0 = tens2vec5D(def_data%tDEps)
+      hardApprox%vD0 = hardApprox%vD0 / norm2(hardApprox%vD0)
+            
+      do i = 1, size(vEps)
+            write(*,fmt=600) vEps(i), vSigma(i)
+      enddo      
+600 format(2(E15.6,1X))
+
             
             call writePolynomialHardData(outunit,hardApprox,info)
-            
-      endif
+      !            
       close(outunit)
 
-      call test()
+      ! call test()
 
 contains
 
@@ -124,12 +156,16 @@ contains
             enddo
       
             vSigmaSwift =  swift(vEpsTest,swift_K,swift_n,swift_eps0)
-            vSigmaQuadratic = quadratic(vEpsTest,vCoeff(1),vCoeff(2),vCoeff(3))
+            if (hardApprox%order == 2) then
+                  vSigmaQuadratic = quadratic(vEpsTest,hardApprox%vCoeff(1),hardApprox%vCoeff(2),hardApprox%vCoeff(3))
+            else
+                  vSigmaQuadratic = 0.D0
+            endif
       
-            vCoeffWrap%vector => vCoeff
+            vCoeffWrap%vector => hardApprox%vCoeff
             vSigmaHorner = polynomial(vEpsTest,vCoeffWrap)
             
-            vDevErr = (vSigmaSwift - vSigmaQuadratic) / vSigmaSwift 
+            vDevErr = (vSigmaSwift - vSigmaHorner) / vSigmaSwift 
             
             do i=1,ntest
                   write(*,'(4(E15.6,1X),F10.5)') vEpsTest(i), vSigmaSwift(i), vSigmaQuadratic(i), vSigmaHorner(i), vDevErr(i)
