@@ -61,7 +61,7 @@ type(defData) :: def_data
 !double precision,parameter :: swift_K = 696860000.0, swift_n = 0.28433, swift_eps0 = 0.050875
 double precision :: swift_K = 0.D0 , swift_n = 0.D0, swift_eps0 = 0.D0
 double precision :: deps
-integer :: inpunit, inunit, outunit
+integer :: inpunit, updinpunit, outunit
 !
       type(MapItem),dimension(0)  :: command_map 
       integer,parameter       :: argc_min = 1, argc_max=1, command_argpos = 0
@@ -92,18 +92,12 @@ integer :: inpunit, inunit, outunit
       endif
       !
       ! Open and process defdata.dat file
-      inunit = openOrDie('defdata.dat',status='old')
-      !
-      !
-      call readUpdateData(inunit,def_data,info)
+      updinpunit = openOrDie(fpath=cnf%input_fname,status='old')
+      call readUpdateData(updinpunit,def_data,info)
       if (info /= 0) then
             errmsg = 'Error during processing defdata.dat'
             call finalize(1)
       endif
-      !
-      !
-      outunit = openOrDie('elem.hard',status='replace')
-      !     
       !      
       ! Prepare data points  
       hardApprox = initPolynomialHardData(cnf%polynomial_order)
@@ -131,9 +125,14 @@ integer :: inpunit, inunit, outunit
 600 format(2(E15.6,1X))
 
             
-            call writePolynomialHardData(outunit,hardApprox,info)
-      !            
-      close(outunit)
+      ! Open and write .hard file
+      outunit = openOrDie(fpath=cnf%output_fname,status='replace')
+      call writePolynomialHardData(outunit,hardApprox,info)
+      if (info /= 0) then
+            errmsg = 'Cannot write output file.'
+            call finalize(2)
+      endif
+      close(outunit)      
 
       ! call test()
 

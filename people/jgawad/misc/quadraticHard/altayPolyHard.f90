@@ -59,10 +59,7 @@ integer :: inpunit, updinpunit, outunit, info
             errmsg = 'Cannot read config file, libaltay section'
             call finalize(1)
       endif
-      
-      ! Open .hard file
-      outunit = openOrDie(fpath=cnf%output_fname,status='replace')
-      
+      !
       ! Open & read updateData 
       updinpunit = openOrDie(fpath=cnf%input_fname,status='old')
       call readUpdateData(updinpunit,def_data,info)
@@ -146,7 +143,12 @@ integer :: inpunit, updinpunit, outunit, info
       !
       hardApprox%valid_eps_range = [ vEps(1), vEps(size(vEps)) ] 
       !
-      call writePolynomialHardData(outunit,hardApprox,info)     
-      close(outunit)      
+      ! Open and write .hard file
+      outunit = openOrDie(fpath=cnf%output_fname,status='replace')
+      call writePolynomialHardData(outunit,hardApprox,info)
+      if (info /= 0) then
+            errmsg = 'Cannot write output file.'
+            call finalize(2)
+      endif
 !      
 end program

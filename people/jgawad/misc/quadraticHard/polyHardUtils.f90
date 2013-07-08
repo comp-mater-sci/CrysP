@@ -39,7 +39,7 @@ contains
             if (npoints <= 0) return
             allocate(vEps(npoints),vSigma(npoints))
             !
-            deps = (eps_0 + eps_1) / dble(npoints-1)
+            deps = (eps_1 - eps_0) / dble(npoints-1)
             ! Interpolation points must be distinguishable
             if (deps < epsilon(0.D0)) return
             do i=1,npoints
