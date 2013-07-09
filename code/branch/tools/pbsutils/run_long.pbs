@@ -1,0 +1,114 @@
+#!/bin/bash
+#PBS -l nodes=1:ppn=8
+#PBS -l walltime=24:00:00
+#PBS -m abe
+#*PBS -M jerzy.gawad@cs.kuleuven.be
+#PBS -r n
+#
+# $Id$
+#
+##################################################################
+# This script can be run either interactively or in unattended mode.
+# If you want to use it interactively you need to specify command line parameters "jobname" and "runmode":
+#      run_long.pbs jobname runmode
+# If you want to run it in unattended mode, please replace "default_job" in the JOBNAME statement below 
+# with your Abaqus jobname.
+# Configuration section
+#
+JOBNAME=${1:-"default_job"}
+#
+#
+# Set runmode:
+# Normal analysis
+RUNMODE=${2:-"analysis"}
+#
+#
+PRECISION=${3:-"single"}
+#
+# Restart of analysis, if so, OLDJOBNAME must be defined
+#RUNMODE="restart"
+#JOBNAME=CupDrawingRestart
+#OLDJOBNAME=CupDrawing
+#
+## Recovery of the analysis
+#RUNMODE="recover"
+#
+#
+##################################################################
+# Setup of environment
+#
+case "$PRECISION" in
+	"single")
+		USERSUB=vumat_main.o
+		;;
+	"double")
+		PRECISION_FLAGS="double=both"
+		USERSUB=vumat_main_d.o
+		;;
+	*)
+		echo "Invalid precision, only 'single' or 'double' is allowed"
+		exit 1
+		;;
+esac
+HMS_VUMAT_PRECISION="${PRECISION}"
+#
+ABAQUS=abaqus
+LOGFILE=${JOBNAME}_log.log
+#
+# Assume that libdir is the current dir
+CURRENTDIR=$(pwd)
+#
+ALIBDIR=${HMS_LIB:-$CURRENTDIR}
+BLIBDIR=${HMS_EXTLIB:-$CURRENTDIR}
+#
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ALIBDIR:$BLIBDIR
+#
+GMETEX_WORKDIR=$CURRENTDIR
+# Export 
+export LD_LIBRARY_PATH
+export JOBNAME
+export GMETEX_WORKDIR
+export HMS_VUMAT_PRECISION
+#
+# Prepare execution
+# 
+FACETDIR="aba_facet.dir"
+# Prepare aba_facet.dir
+echo "$CURRENTDIR" > $FACETDIR
+echo "$CURRENTDIR" >> $FACETDIR
+echo "results" >> $FACETDIR
+#
+#
+# Protect the previous results: copy it to backup direcory
+if [ -e $LOGFILE ] ; then
+	BACKUPDIR="backup_`date "+%Y%m%d_%H%M%S"`"
+	mkdir "$BACKUPDIR"
+	cp ${JOBNAME}.* "$LOGFILE" gmetex.{log,state,restart} texupdate.dat results.{tay,out,oum,nt6,tck,crd}  "$BACKUPDIR"
+	# Remove lock
+	rm -f "${JOBNAME}.lck"
+fi
+#
+# Run ABAQUS
+#
+case "$RUNMODE" in
+	parametercheck) 
+			${ABAQUS} interactive parametercheck job=$JOBNAME ${PRECISION_FLAGS} &>  "$LOGFILE"
+			;;
+	datacheck) 
+			${ABAQUS} interactive datacheck job=$JOBNAME user="${USERSUB}" ${PRECISION_FLAGS}  &>  "$LOGFILE"
+			;;
+	analysis) 
+			${ABAQUS} interactive job=$JOBNAME user="${USERSUB}" ${PRECISION_FLAGS}  &>  "$LOGFILE"
+			;;
+	restart)	
+			${ABAQUS} interactive job=$JOBNAME oldjob=$OLDJOBNAME user="${USERSUB}" ${PRECISION_FLAGS}  &>  "$LOGFILE"
+			;;
+	recover)	
+			${ABAQUS} interactive recover job=$JOBNAME user="${USERSUB}" ${PRECISION_FLAGS} &>  "$LOGFILE"
+			;;
+	*)
+		echo "Invalid runmode"
+		exit 1
+		;;
+esac
+
