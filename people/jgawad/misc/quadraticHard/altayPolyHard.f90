@@ -7,7 +7,6 @@ end module
 program alTayPolyHard
 use fngPath
 use fngRuntime
-use fngVec5D
 use altayConfig
 use dmcBasicModule, only: readAlamelConfigSection
 use altaySub
@@ -15,7 +14,6 @@ use updateData
 use runtimeHelper
 use polyApproximation
 use polyHardUtils
-use KPolynomialHard
 implicit none
 
 
@@ -32,7 +30,7 @@ double precision,dimension(3,3) :: tDeltaEps
 type(polynomialHardData) :: hardApprox
 
 
-integer :: inpunit, updinpunit, outunit, info
+integer :: inpunit,  info
 !
       !
       type(MapItem),dimension(0)  :: command_map 
@@ -43,8 +41,7 @@ integer :: inpunit, updinpunit, outunit, info
       !
       cmdline = commandLine('alTayPolyHard' //'$Rev$',description='Parameters: configuration_file')
       call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.)
-
-
+      !
       ! Open config file
       inpunit = openOrDie(fpath=cmdline%argv(1),status='old')
       ! Read:
@@ -60,19 +57,16 @@ integer :: inpunit, updinpunit, outunit, info
             call finalize(1)
       endif
       !
-      ! Open & read updateData 
-      updinpunit = openOrDie(fpath=cnf%input_fname,status='old')
-      call readUpdateData(updinpunit,def_data,info)
-      if (info /= 0) then
-            errmsg = 'Cannot read file ' // trim(cnf%input_fname)
-            call finalize(1)
-      endif
-      !      
-      ! Prepare data points  
-      hardApprox = initPolynomialHardData(cnf%polynomial_order)
-      npoints = size(hardApprox%vCoeff)
+      ! Load contents to def_data, make hardApprox.
+      ! This function may terminate the program.
+      call prepareData(cnf,def_data,hardApprox,info)
       !
+      npoints = size(hardApprox%vCoeff)
       call makeDatapoints(npoints,def_data%eps_0,def_data%eps_1,deps,vEps,vSigma,info)
+      if (info /= 0) then
+            errmsg = 'Cannot make proper data points'
+            call finalize(2)
+      endif
       !
       ! Initialize AlTay
       altay_cnf%output_prefix = 'alTayPolyHard'
@@ -87,14 +81,11 @@ integer :: inpunit, updinpunit, outunit, info
       ! Prepare strain increment tensor
       deltaEps_norm = norm2(def_data%tDeps)
       if (deltaEps_norm < epsilon(0.D0)) then
-            errmsg = 'Input error: norm of strain increment cannot be zero'
+            errmsg = 'Input error: norm of strain increment must not be zero.'
             call finalize(2)
       endif
       !
       tDeltaEps = def_data%tDeps / deltaEps_norm * deps
-      !
-      hardApprox%vD0 = tens2vec5D(def_data%tDeps)
-      hardApprox%vD0 = hardApprox%vD0 / deltaEps_norm
       !
       ! Init and configure steps
       call initStepData(npoints,astate,info)
@@ -127,28 +118,11 @@ integer :: inpunit, updinpunit, outunit, info
       !
       ! Get average stresses
       vSigma = astate%simulCalls(:)%output%average_stress
-      do i = 1, npoints
-            write(*,fmt=600) vEps(i), vSigma(i)
-      enddo      
-600 format(2(E15.6,1X))
+      !
+      call makeApproximation(vEps,vSigma,hardApprox,info)
+      !
       call finalizeAltay(info)
       !
-      !
-      call calculateAppoximation(vEps,vSigma,hardApprox%vCoeff,info)
-      !
-      if (info /= 0) then
-            errmsg = 'Calculations of interpolation polynomial failed.'
-            call finalize(2)
-      endif
-      !
-      hardApprox%valid_eps_range = [ vEps(1), vEps(size(vEps)) ] 
-      !
-      ! Open and write .hard file
-      outunit = openOrDie(fpath=cnf%output_fname,status='replace')
-      call writePolynomialHardData(outunit,hardApprox,info)
-      if (info /= 0) then
-            errmsg = 'Cannot write output file.'
-            call finalize(2)
-      endif
+      call writeOutputs(cnf,hardApprox,vEps,vSigma,info)
 !      
 end program

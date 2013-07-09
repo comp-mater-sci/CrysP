@@ -26,7 +26,7 @@ contains
       double precision,intent(in)         :: x
       type(vectorWrapper),intent(in)      :: v     
       !      
-      integer :: i, nterms
+      integer :: i
       !
             polynomial = 0.D0
             do i=1,size(v%vector)
@@ -55,13 +55,13 @@ double precision,dimension(:),allocatable   :: vEps,vSigma
 type(polynomialHardData),target :: hardApprox
 type(PolyHardConfig)     :: cnf
 
-integer :: info, ierr, i, npoints
+integer :: info
 type(defData) :: def_data
 !
 !double precision,parameter :: swift_K = 696860000.0, swift_n = 0.28433, swift_eps0 = 0.050875
 double precision :: swift_K = 0.D0 , swift_n = 0.D0, swift_eps0 = 0.D0
 double precision :: deps
-integer :: inpunit, updinpunit, outunit
+integer :: inpunit
 !
       type(MapItem),dimension(0)  :: command_map 
       integer,parameter       :: argc_min = 1, argc_max=1, command_argpos = 0
@@ -71,9 +71,6 @@ integer :: inpunit, updinpunit, outunit
       !
       cmdline = commandLine('polyHard' //'$Rev$',description='Parameters: configuration_file')
       call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.)
-      ! Open config file
-      inpunit = openOrDie(fpath=cmdline%argv(1),status='old')
-      !
       ! Open config file
       inpunit = openOrDie(fpath=cmdline%argv(1),status='old')
       ! Read:
@@ -91,20 +88,11 @@ integer :: inpunit, updinpunit, outunit
             call finalize(2)
       endif
       !
-      ! Open and process defdata.dat file
-      updinpunit = openOrDie(fpath=cnf%input_fname,status='old')
-      call readUpdateData(updinpunit,def_data,info)
-      if (info /= 0) then
-            errmsg = 'Error during processing defdata.dat'
-            call finalize(1)
-      endif
-      !      
-      ! Prepare data points  
-      hardApprox = initPolynomialHardData(cnf%polynomial_order)
-      npoints = size(hardApprox%vCoeff)
+      ! Load contents to def_data, make hardApprox.
+      ! This function may terminate the program.
+      call prepareData(cnf,def_data,hardApprox,info)
       !
-      call makeDatapoints(npoints,def_data%eps_0,def_data%eps_1,deps,vEps,vSigma,info)
-      !
+      call makeDatapoints(size(hardApprox%vCoeff),def_data%eps_0,def_data%eps_1,deps,vEps,vSigma,info)
       if (info /= 0) then
             errmsg = 'Cannot make proper data points'
             call finalize(2)
@@ -112,28 +100,14 @@ integer :: inpunit, updinpunit, outunit
       ! Calculate stress values according  
       vSigma = swift(vEps,swift_K,swift_n,swift_eps0)
       !
-      call calculateAppoximation(vEps,vSigma,hardApprox%vCoeff,info)
-      !
-      hardApprox%valid_eps_range = [ vEps(1), vEps(size(vEps)) ]
-      hardApprox%vCoeff = hardApprox%vCoeff
-      hardApprox%vD0 = tens2vec5D(def_data%tDEps)
-      hardApprox%vD0 = hardApprox%vD0 / norm2(hardApprox%vD0)
-            
-      do i = 1, size(vEps)
-            write(*,fmt=600) vEps(i), vSigma(i)
-      enddo      
-600 format(2(E15.6,1X))
-
-            
-      ! Open and write .hard file
-      outunit = openOrDie(fpath=cnf%output_fname,status='replace')
-      call writePolynomialHardData(outunit,hardApprox,info)
+      call makeApproximation(vEps,vSigma,hardApprox,info)
       if (info /= 0) then
-            errmsg = 'Cannot write output file.'
+            errmsg = 'Cannot calculate polynomial interpolation.'
             call finalize(2)
       endif
-      close(outunit)      
-
+     
+      call writeOutputs(cnf,hardApprox,vEps,vSigma,info)
+      
       ! call test()
 
 contains
