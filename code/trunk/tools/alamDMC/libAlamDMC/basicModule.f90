@@ -19,6 +19,7 @@ use alamYLP, only: multilevelYLPConfig
 use altayConfig, only: fname_len, altayConfigData
 use commonConfig
 use dmcUtils
+use fngUncomment
 
       type :: outputConfig
 

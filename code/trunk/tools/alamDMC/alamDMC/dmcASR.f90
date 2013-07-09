@@ -20,7 +20,7 @@ use nllsTR
 use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
-use dmcUtils
+!use dmcUtils
 use dmcBasicModule
 use commonConfig
 use commonUtils
@@ -28,6 +28,7 @@ use fngMathUtils
 use fngPath
 use fngAlgorithm
 use fngLog
+use fngUncomment
 implicit none
 
       type,extends(BasicModule) :: ASRModule

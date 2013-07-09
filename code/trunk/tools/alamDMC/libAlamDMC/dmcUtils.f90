@@ -61,22 +61,6 @@ contains
             info = 0
       end subroutine
 
-      subroutine stripComment(line,comment_mark)
-      implicit none
-      character(len=*),intent(inout)      :: line
-      character,intent(in),optional       :: comment_mark
-      !
-      integer     :: idx
-      character   :: comment_sign
-      !
-            if (len(line) == 0) return  ! nothing to do
-            ! Set default comment sign, override if comment_mark is provided by user
-            comment_sign = default_comment_sign
-            if (present(comment_mark)) comment_sign = comment_mark
-            !
-            idx = index(line,comment_sign)
-            if (idx /= 0) line(idx:) = ' '
-      end subroutine
 
       subroutine printIdentResultsT(outunit,S,SIdent,SonA,D,info)
       implicit none
