@@ -1,7 +1,8 @@
 module polyHardUtils
 use fngPath
+use fngRuntime
 use fngVec5D
-use dmcUtils  ! for stripComment
+use fngUncomment
 use updateData
 use KPolynomialHard
 use polyApproximation

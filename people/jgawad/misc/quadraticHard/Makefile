@@ -74,6 +74,7 @@ INCLUDEDIR=$(ConfigurationName)/include
 
 build	:	$(ConfigurationName)/polyHard $(ConfigurationName)/altayPolyHard
 
+
 $(ConfigurationName)/polyHard	: polyHard.f90 $(OBJS)
 	$(FC) $<  -o $@ $(OBJS) $(FCFLAGS) $(FLDFLAGS) -lfngCore -lfngCRI
 
@@ -88,4 +89,9 @@ dirstructure : | $(OUT_DIRS)
 $(OUT_DIRS)	:
 	[ -d $@ ] || mkdir -p $@
 
-#$(OBJDIR)/
+clean	:
+	-rm $(OBJDIR)/* $(INCLUDEDIR)/*	$(ConfigurationName)/polyHard $(ConfigurationName)/altayPolyHard
+# $(OBJDIR)/
+#
+$(OBJDIR)/polyHardUtils.o 	: $(OBJDIR)/updateData.o $(OBJDIR)/vumat_polyhard.o 
+#
