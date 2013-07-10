@@ -91,6 +91,8 @@ integer :: inpunit
       ! Load contents to def_data, make hardApprox.
       ! This function may terminate the program.
       call prepareData(cnf,def_data,hardApprox,info)
+      ! Terminate if no hardening calculations are requested
+      if (def_data%req_hard == 0) call finalize(0)
       !
       call makeDatapoints(size(hardApprox%vCoeff),def_data%eps_0,def_data%eps_1,deps,vEps,vSigma,info)
       if (info /= 0) then
