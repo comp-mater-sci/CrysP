@@ -2,7 +2,7 @@
 FC=ifort
 
 ROOTDIR=../../../..
-TOOLSDIR=$(ROOTDIR)/code/trunk/build-tools/
+TOOLSDIR=$(ROOTDIR)/code/branch/build-tools/
 
 # Use per-host configuration plugin
 include $(TOOLSDIR)/Makefile.host
@@ -95,3 +95,7 @@ clean	:
 #
 $(OBJDIR)/polyHardUtils.o 	: $(OBJDIR)/updateData.o $(OBJDIR)/vumat_polyhard.o 
 #
+#
+# Make a soft link to vumat_polyhard.f90
+vumat_polyhard.f90	:	
+	[ -f $@ ] || ln -s $(ROOTDIR)/code/branch/vumat_skyfall/$@  $@
