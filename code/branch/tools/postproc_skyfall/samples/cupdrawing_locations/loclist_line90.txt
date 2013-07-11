@@ -1,0 +1,6 @@
+15,24,2064,Line 90 Level0
+15,20,2060,Line 90 Level1
+15,16,2056,Line 90 Level2
+15,11,2051,Line 90 Level3
+15,6,2046,Line 90 Level4
+15,2,2042,Line 90 Level5
