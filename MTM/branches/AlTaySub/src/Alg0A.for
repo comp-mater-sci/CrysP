@@ -323,8 +323,8 @@ C     INSTRUCTION ADDED IN LAMEL model:
       IF (NLIST.EQ.1) WRITE (IMP,112) ISTP
  112  FORMAT (//' DEFORMATION STEP ',I5,//)
       if (NRES.gt.0) write (IMP2,404) nrstep+1,NPOINT
- 404  format (' Def. Step ',i5,'  Number of orientations',i5,/,
-     1 T11,'WDOT',T20,'WDOT/STR.RAT.',T38,'TAU',T52,'M',T62,'STR.RAT.',
+ 404  format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'
+     1 ,T10,'Wdot/DvM',T27,'Wdot',T39,'tau_c',T56,'M',T64,'ratlon',
      2 T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS',/,
      3 1x,278('*'))
       do 48 i=1,3
