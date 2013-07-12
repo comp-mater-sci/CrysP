@@ -29,7 +29,7 @@ integer :: i, npoints
 double precision,dimension(3,3) :: tDeltaEps
 type(polynomialHardData) :: hardApprox
 
-
+double precision,parameter  :: unit_conversion_factor = 1.D6  ! For convension from MPa to Pa
 integer :: inpunit,  info
 !
       !
@@ -119,7 +119,7 @@ integer :: inpunit,  info
 #endif
       !
       ! Get average stresses
-      vSigma = astate%simulCalls(:)%output%average_stress
+      vSigma = astate%simulCalls(:)%output%average_stress * unit_conversion_factor
       !
       call makeApproximation(vEps,vSigma,hardApprox,info)
       !
