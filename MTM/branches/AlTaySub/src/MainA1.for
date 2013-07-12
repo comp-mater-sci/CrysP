@@ -8,7 +8,7 @@ C
       use IOConfig
       use KOST1xState
       use DYNFIL
-      use altayHard,only: KOST_global
+      use altayHard,only: KOST_global, hard_pebp
 #ifndef USE_LEESOR
       use TexFormats
 #endif
@@ -149,7 +149,7 @@ C
 #ifdef PEBP_ENABLED
       ! PEBP model
       NREC = size(DFIL)
-      if (KOST_global == 11) then
+      if (KOST_global == hard_pebp) then
             if (KS_initState(NREC) /= 0) then
                   write(IMP,fmt=600) 
                   stop
@@ -220,6 +220,11 @@ C
       info = openTextureFile(icubunit,trim(codsim)//'.cub',TF_CUB,'w')
       if (info == 0) then 
             call outputCurrentTexture(icubunit,TF_CUB,.true.,info)
+      endif
+#endif
+#if defined(PEBP_ENABLED) && defined(FINALBPM_ENABLED)
+      if ((KOST_global == hard_PEBP) .and. (NFILE0 == 0)) then
+            info = KS_writeState(IMP4)
       endif
 #endif
       if(NLIST.eq.1) then
