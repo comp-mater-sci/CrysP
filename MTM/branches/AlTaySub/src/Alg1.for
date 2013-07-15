@@ -222,7 +222,7 @@ C
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
      1 WR,SWRLX(3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SPANT(3,3),SGNN(96)
-      dimension bufsp(3,3),RHOAsa(3,3),SPNV(5),GAMMA(96)
+      dimension bufsp(3,3),RHOAsa(3,3),SPNV(5),GAMdot(96)
       COMMON /RHO/ RHOS(5),RHOA(5)
       INTEGER DI1
       data SQR2/0.7071067811865476D+00/
@@ -255,7 +255,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   10  continue
 C  11  write (*,1771) IOR
 C 1771 format (I5)
-  11  call SLIPRAT(M11,96,GAMMA,ior,IPR,SGNN)
+  11  call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif      
@@ -266,9 +266,9 @@ C 1771 format (I5)
             ddt = 1.D0
 #ifdef ALTAY_SUBROUTINE
             if (.not. astate%simulCalls(astate%this)%input%keep_state)
-     &      call KS_updateState(IOR,GAMMA,ddt,info)
+     &      call KS_updateState(IOR,GAMdot,ddt,info)
 #else
-            call KS_updateState(IOR,GAMMA,ddt,info)
+            call KS_updateState(IOR,GAMdot,ddt,info)
 #endif
       endif
 #endif
@@ -350,7 +350,7 @@ c      TRC(3)=RC(2,1)-RHOA(3)*DELTAT*SQR2
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       DELTAW=0.0
       do 44 i=1,M11 
-      XXI=GAMMA(i)
+      XXI=GAMdot(i)
       if (XXI.eq.0.0D00) goto 44
       if (XXI.GT.0.0) then
                          TAUC=CC(1,i)    
@@ -370,7 +370,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
  301  FORMAT (//,1H ,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
 !      if(NLIST.eq.1) then
 !      DO 302 I=1,M
-! 302  WRITE (IMP,303) I,gamma(I)
+! 302  WRITE (IMP,303) I,GAMdot(I)
 !      end if
 C
  303  FORMAT (1H ,I5,(12F10.6))  
@@ -378,13 +378,13 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      IF (IGLIJ.NE.0) then
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-      WRITE (IMP,109) DELTAT,WDOT,(GAMMA(I)/DELTAT,I=1,M)
+      WRITE (IMP,109) DELTAT,WDOT,(GAMdot(I)/DELTAT,I=1,M)
       end if
 
  109  FORMAT (' DELTAT=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,
      1 '  SLIP RATES',/,(T2,10F10.5))
   90  CONTINUE                                                          
-  202 CALL MATPROD(ROT,B1,GAMMA,3,M,1)
+  202 CALL MATPROD(ROT,B1,GAMdot,3,M,1)
 
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      IF (IGLIJ.NE.0) then
@@ -395,7 +395,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
                                
   305 FORMAT (' ROTATIONS',3F12.6)
 C      DO 58 K=1,M                                                       
-C      X=ABS(GAMMA(K))
+C      X=ABS(GAMdot(K))
 C  58  CONTINUE                                                          
       DO 75 J=1,3
   75  C1(J,J)=1.                                                        
@@ -416,7 +416,7 @@ C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
       X=0.                                                              
       DO 84 I=1,NTW                                                     
       J=I+NGL                                                           
-      X=X+GAMMA(J)/G(I)                                                 
+      X=X+GAMdot(J)/G(I)                                                 
       VOLFR(I)=X                                                        
   84  CONTINUE                                                          
        IF (X.LE.1.) GOTO 85  
@@ -472,7 +472,7 @@ C     Note that length of D = sqrt(3/2)
 C
       WDOT1=WDOT*DELTAT !Rate of plastic work of crystallite
       ! TAU: Reference-CRSS. If all slip systems have the same CRSS, its value is given by TAU. 
-      TOTGAMdot=sum(abs(GAMMA(1:M11)))
+      TOTGAMdot=sum(abs(GAMdot(1:M11)))
       TayFac=TOTGAMdot/DELTAT !Taylor Factor of the grain.
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   QGX 4/18/2012
 C add the normalization factor for rhossa

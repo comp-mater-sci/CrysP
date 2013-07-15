@@ -11,7 +11,7 @@ C
 C     When you set KOST=1, then 2 things will happen:
 C     1) Not the value 1.0, but the values in the input data set will be used
 C        for the critical resolved shear stresse
-C     2) They will be multiplied with TAU, calculated from GAMMA
+C     2) They will be multiplied with TAU, calculated from TOTGAM
 C        using the FTAU function.
 C
       SUBROUTINE SIMUL(IW,EPS,NFILE0)
@@ -564,15 +564,15 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX¡¡4/11/2011
 C      if (IROT.NE.1) goto 23
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      GAMMA=GMM0+DELTAW/TAU
+      TOTGAM=GMM0+DELTAW/TAU
 #ifdef ALTAY_SUBROUTINE
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GAMMA,
+            call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,TOTGAM,
      1                   F,GAXES,GEULR,CIJ,TG,RHOSsa)
       endif
 #else
-      call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GAMMA,
+      call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,TOTGAM,
      1 F,GAXES,GEULR,CIJ,TG,RHOSsa)
 #endif
 C      IF (NLIST.LT.2) GOTO 15
