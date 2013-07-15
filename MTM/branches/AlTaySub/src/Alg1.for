@@ -16,7 +16,7 @@ C
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON/TLR1/ N,M,N1,NGL,NTW,NC,LC,B1(3,96),B(5,5),
      1B2(6,96),G(96),DI1(5)
-      COMMON/TLR2/ TRC(3,3),XX(96),buftrf(3,3)
+      COMMON/TLR2/ TRC(3,3),buftrf(3,3)
       COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
      1 WR,SWRLX(3)
@@ -208,7 +208,7 @@ C 1235 format (' Just after Pancak2')
       COMMON/TLR1/ N,M,N1,NGL,NTW,NC,LC,B1(3,96),B(5,5),
      1B2(6,96),G(96),DI1(5)
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
-      COMMON/TLR2/ RC(3,3),GAMMA(96),buftrf(3,3)
+      COMMON/TLR2/ RC(3,3),buftrf(3,3)
       COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
       COMMON /EULERA/ fi1,PHI,fi2
       logical SWRLX
@@ -222,7 +222,7 @@ C
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
      1 WR,SWRLX(3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SPANT(3,3),SGNN(96)
-      dimension bufsp(3,3),RHOAsa(3,3),SPNV(5)
+      dimension bufsp(3,3),RHOAsa(3,3),SPNV(5),GAMMA(96)
       COMMON /RHO/ RHOS(5),RHOA(5)
       INTEGER DI1
       data SQR2/0.7071067811865476D+00/
@@ -230,7 +230,7 @@ C
       integer :: info
       double precision :: ddt
 #endif
-
+      double precision :: TOTGAMdot,TayFac
       SAVE
       WACC1=0.0
       WACC2=0.0
@@ -468,12 +468,15 @@ C     Scalar product between D and D+RHOS
 C     calculation of ratio of projection of D+RHOS on D, and D itself.
 C     Note that length of D = sqrt(3/2)
       x=x*2.0/3.0
-      ratlon=x
+      ratlon=x !“the ratio of the parallel strain rates”
 C
-      WDOT1=WDOT*DELTAT
+      WDOT1=WDOT*DELTAT !Rate of plastic work of crystallite
+      ! TAU: Reference-CRSS. If all slip systems have the same CRSS, its value is given by TAU. 
+      TOTGAMdot=sum(abs(GAMMA(1:M11)))
+      TayFac=TOTGAMdot/DELTAT !Taylor Factor of the grain.
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   QGX 4/18/2012
 C add the normalization factor for rhossa
-      write (IMP2,150) ior,WDOT,WDOT1,TAU,WDOT/TAU,ratlon,
+      write (IMP2,150) ior,WDOT,WDOT1,TAU,TayFac,ratlon,
      1 rhossa(1,1)*DELTAT,rhossa(2,2)*DELTAT,rhossa(3,3)*DELTAT,
      2 rhossa(2,3)*DELTAT,rhossa(3,1)*DELTAT,rhossa(1,2)*DELTAT,
      3 rhoasa(2,3),rhoasa(3,1),rhoasa(1,2),

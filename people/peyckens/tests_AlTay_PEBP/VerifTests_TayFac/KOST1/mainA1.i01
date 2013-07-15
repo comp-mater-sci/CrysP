@@ -9,9 +9,9 @@ SM0-KOST1                               Name of output files (give no extension)
 1.0       1.0       1.0       1.0       1.0       1.0
 1.0       1.0       1.0       1.0       1.0       1.0       N-lines for - sense
 1.0       1.0       1.0       1.0       1.0       1.0
-    1     (MainA1) NBLOC
+    3     (MainA1) NBLOC
 ..\micro1.smt                                                     NAME OF MICROSTRUCTURE FILE
-    2     (SIMUL) NGR : 1 for a Taylor-calculation and 2 for a ALAMEL-calculation
+    1     (SIMUL) NGR : 1 for a Taylor-calculation and 2 for a ALAMEL-calculation
   1.0     (SIMUL) ENTA (fix to the config file: jg)
     1     (SIMUL) NLIST (Make an output listing 0 or 1)
     1     (SIMUL) NFILE (Make output files 0 or 1)
@@ -28,10 +28,22 @@ SM0-KOST1
 ..\DC06F250.SMT                                                    NAME OF INPUT TEXTURE FILE
     1     (Leesor) Chosen Block (in input data set)
     1     (MainA) If =1: output for this block is required.
- 0.0000000 0.0020000 0.0000000
+ 0.0000000 0.0100000 0.0000000
  0.0000000 0.0000000 0.0000000
  0.0000000 0.0000000 0.0000000
-  200             (SIMUL) NUMBER OF SIMULATION STEPS PER CALL      (This is for a true simulation)
+   10             (SIMUL) NUMBER OF SIMULATION STEPS PER CALL      (This is for a true simulation)
+    1    1(SIMUL) 1: relaxation allowed, for relx 1 and 2  (This is for a true simulation)
+    1     (MainA) If =1: output for this block is required.
+ 0.0100000 0.0000000 0.0000000
+ 0.0000000 0.0000000 0.0000000
+ 0.0000000 0.0000000 -0.010000
+   10             (SIMUL) NUMBER OF SIMULATION STEPS PER CALL      (This is for a true simulation)
+    1    1(SIMUL) 1: relaxation allowed, for relx 1 and 2  (This is for a true simulation)
+    1     (MainA) If =1: output for this block is required.
+ 0.0000000 0.0100000 0.0000000
+ 0.0000000 0.0000000 0.0000000
+ 0.0000000 0.0000000 0.0000000
+    1             (SIMUL) NUMBER OF SIMULATION STEPS PER CALL      (This is for a true simulation)
     1    1(SIMUL) 1: relaxation allowed, for relx 1 and 2  (This is for a true simulation)
     1     (SIMUL) NUMBER OF SIMULATION STEPS PER CALL      (Fake call of SIMUL - for output only)
     0    0(SIMUL) 1: relaxation allowed, for relx 1 and 2  (Fake call of SIMUL - for output only)
