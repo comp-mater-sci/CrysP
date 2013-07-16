@@ -114,6 +114,10 @@
       integer,parameter :: OUT_UNIT_PAR = 200, OUT_UNIT_RS = 201, 
      &  OUT_UNIT_YLD = 202
       ! <<--
+      ! JG, July 13 2013 -->>
+      integer :: step
+      logical :: read_trial_sol
+      ! <<--
 *----------------------------------------------------------------------*
 * Variables                                                            *
 *----------------------------------------------------------------------*
@@ -267,6 +271,10 @@
 * Stage 1:  Define the quantities used to control the gradual distorsion
 *           of the reference yield locus.
 *
+      ! JG, July 13 2013 -->>
+      do step = 1,2
+      ! <<--
+      
       aux1 = 0.0d0
       aux2 = 0.0d0
       do i = 1, 8
@@ -298,9 +306,27 @@
 *           This initial guess corresponds to an isotropic reference
 *           yield locus.
 *
-      do i = 1, 16
-        sol(i) = 0.5d0
-      end do
+      if (step == 1) then
+            do i = 1, 16
+              sol(i) = 0.5d0
+            end do
+      else
+      ! JG, July 13 2013 -->
+            ! If it is the first failure, try to get 
+            ! another starting point: read it from the terminal
+            read_trial_sol = .false.
+            info = 0
+            read(*,'(L1)',iostat=info) read_trial_sol
+            if (read_trial_sol .and. (info==0) ) then
+              write(*,*) 'SECOND ATTEMPT'
+              do i=1,16
+                read(*,*) sol(i)
+              enddo
+            endif
+            ! Otherwise, we start identification from the previously 
+            ! found sol.
+      endif
+      ! <<--
 *
 * Stage 3:  Perform a gradual distorsion of the reference yield locus
 *           until reaching the configuration defined by the input data.
@@ -320,16 +346,27 @@
         end do
         call LMDIF1 (GET_IDENT_RSD, 16, 16, sol, rsd, conv_tol, info,
      &    i_wrk_arr, d_wrk_arr, 352)
+        write(*,*) '||Residual||:', norm2(rsd)
         if (info <= 0) exit
       end do
       if ((info < 1) .or. (info > 4)) then
-        write (*, FMT03) ERR_MSG03
-        write (OUT_UNIT, FMT03) ERR_MSG03
-        write (*, FMT03) FAILURE_MSG
-        write (OUT_UNIT, FMT03) FAILURE_MSG
-        close (OUT_UNIT)
-        stop
+            ! JG, July 13 2013 -->
+            if (step == 1) cycle
+            ! <<-
+            write (*, FMT03) ERR_MSG03
+            write (OUT_UNIT, FMT03) ERR_MSG03
+            write (*, FMT03) FAILURE_MSG
+            write (OUT_UNIT, FMT03) FAILURE_MSG
+            close (OUT_UNIT)
+            stop
+      else
+        exit            
       end if
+
+      ! JG, July 13 2013 -->
+      enddo
+      ! <<-
+
 *
 * Stage 4:  The identification has ended. The solution can be used to
 *           generate a set of BBC 2008 parameters. Store these
