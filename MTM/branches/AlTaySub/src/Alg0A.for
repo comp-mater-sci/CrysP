@@ -11,8 +11,9 @@ C
 C     When you set KOST=1, then 2 things will happen:
 C     1) Not the value 1.0, but the values in the input data set will be used
 C        for the critical resolved shear stresse
-C     2) They will be multiplied with TAU, calculated from TOTGAM
-C        using the FTAU function.
+C     2) They will be multiplied with TAU, i.e. the reference stress. 
+C        Note that TAU is the stress that is work-equivalent to the total slip rate in the
+C          grain ONLY if all active slip systems hold the same CRSS with value equal to TAU.
 C
       SUBROUTINE SIMUL(IW,EPS,NFILE0)
 C     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
@@ -35,7 +36,6 @@ C     IW=2 is meant for outputting the final texture.
 C
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON /DOUBLE/ XM(5,96),XEPS(5),DELTAT,RHO(5),B5(5)
-      COMMON /STAP/ SG,GMM                                              
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
      1ITW,DELTAW,GEWF
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,NPOINT,TEN(3,3),TOTGEW        
@@ -70,6 +70,9 @@ C
       ! stresses without a call to TAYLR1
       double precision,dimension(3,3) :: spant,TRFT,bufsp
 #endif
+      double precision :: GMMdot=0.0 !Total slip rate in current grain      
+      double precision :: Mgrain=0.0 !Taylor factor of the current grain
+      double precision :: Mavg=0.0   !Volume-averaged Taylor factor
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      DATA JW /0/
 C      DATA Cmic0 /1.0D0,0.0D0,0.0D0,
@@ -284,7 +287,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       RHOST(i,j)=0.0
   50  continue
       SG=0.
-      GMM=0.
+      Mavg=0.
       HEPS=0.D0
       MEPS=sqrt(2./3.)*0.5*sqrt(sum((DG+transpose(DG))**2))
       call dynfil2(nrstep,F,GAXES,GEULR,CIJ,TG)
@@ -324,7 +327,7 @@ C     INSTRUCTION ADDED IN LAMEL model:
  112  FORMAT (//' DEFORMATION STEP ',I5,//)
       if (NRES.gt.0) write (IMP2,404) nrstep+1,NPOINT
  404  format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'
-     1 ,T10,'Wdot/DvM',T27,'Wdot',T39,'tau_c',T56,'M',T64,'ratlon',
+     1 ,T10,'Wdot/DvM',T27,'Wdot',T37,'tau_ref',T56,'M',T64,'ratlon',
      2 T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS',/,
      3 1x,278('*'))
       do 48 i=1,3
@@ -522,12 +525,12 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
             call MATPROD(bufsp,SPANT,TRF,3,3,3)
             call MATPROD(Ssam,TRFT,bufsp,3,3,3)
       else
-            CALL TAYLR1(ISTP,IOR,NRES,TAU)
+            CALL TAYLR1(ISTP,IOR,NRES,TAU,GMMdot)
             RCM_GUARD
       endif
 #else
 C      if (IOR.eq.1.and.ISTP.eq.1) IPR=2
-      CALL TAYLR1(ISTP,IOR,NFILE,TAU)
+      CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot)
 #endif      
       
       
@@ -559,20 +562,21 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       RHOST(i,j)=RHOST(i,j)+RHOSsa(i,j)*GEWF
   51  continue
   63  SG=SG+WDOT*GEWF
-      GMM=GMM+WDOT*GEWF/TAU
+      Mgrain=GMMdot/DELTAT
+      Mavg=Mavg+Mgrain*GEWF      
       HEPS = HEPS + EPS * GEWF
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX¡¡4/11/2011
 C      if (IROT.NE.1) goto 23
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      TOTGAM=GMM0+DELTAW/TAU
+      GMM1=GMM0+GMMdot !Step time here implicitly assumed to be 1.0s
 #ifdef ALTAY_SUBROUTINE
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,TOTGAM,
+            call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,
      1                   F,GAXES,GEULR,CIJ,TG,RHOSsa)
       endif
 #else
-      call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,TOTGAM,
+      call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,
      1 F,GAXES,GEULR,CIJ,TG,RHOSsa)
 #endif
 C      IF (NLIST.LT.2) GOTO 15
@@ -608,7 +612,7 @@ C      call STR5(vec1,SHsam)
       RHOSm(j,i)=RHOSm(i,j)
 65    continue
 
-      GMM=GMM/TOTGEW
+      Mavg=Mavg/TOTGEW
       SG=SG/TOTGEW
       !
       if (NMSSx /= 0) then
@@ -619,7 +623,7 @@ C      call STR5(vec1,SHsam)
       ! Get the homogenized quantities:
       associate (callout => astate%simulCalls(astate%this)%output)
             callout%stress_tensor= SHsam
-            callout%taylor_factor= GMM
+            callout%taylor_factor= Mavg
             callout%average_stress= SG
             callout%effective_stress = sqrt(3.D0/2.D0)*norm2(SHsam)
             callout%effective_strain = HEPSCALL
@@ -645,7 +649,7 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      JW=0
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-      WRITE (IMP,105) ISTP,SG,GMM,EPS
+      WRITE (IMP,105) ISTP,SG,Mavg,EPS
       end if
  105  FORMAT (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VAL
      1UE=',F10.5,'  EFF. STRAIN EPS USED=',F10.5) 

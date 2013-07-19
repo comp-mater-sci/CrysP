@@ -193,7 +193,7 @@ C      write (*,1235)
 C 1235 format (' Just after Pancak2')
       RETURN
       END                                                               
-      SUBROUTINE TAYLR1(ISTP,IOR,NFILE,TAU)
+      SUBROUTINE TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
       use altayConfig, only: astate
@@ -230,7 +230,7 @@ C
       integer :: info
       double precision :: ddt
 #endif
-      double precision :: TOTGAMdot,TayFac
+      double precision, intent(OUT) :: TOTGAMdot
       SAVE
       WACC1=0.0
       WACC2=0.0
@@ -272,6 +272,7 @@ C 1771 format (I5)
 #endif
       endif
 #endif
+      TOTGAMdot=sum(abs(GAMdot(1:M11)))
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C  13  if (IGLIJ.eq.1) then
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -471,12 +472,11 @@ C     Note that length of D = sqrt(3/2)
       ratlon=x !“the ratio of the parallel strain rates”
 C
       WDOT1=WDOT*DELTAT !Rate of plastic work of crystallite
-      ! TAU: Reference-CRSS. If all slip systems have the same CRSS, its value is given by TAU. 
-      TOTGAMdot=sum(abs(GAMdot(1:M11)))
-      TayFac=TOTGAMdot/DELTAT !Taylor Factor of the grain.
+      ! TAU: Reference-CRSS.
+      ! TOTGAMdot/DELTAT: Taylor Factor of the grain.
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   QGX 4/18/2012
 C add the normalization factor for rhossa
-      write (IMP2,150) ior,WDOT,WDOT1,TAU,TayFac,ratlon,
+      write (IMP2,150) ior,WDOT,WDOT1,TAU,TOTGAMdot/DELTAT,ratlon,
      1 rhossa(1,1)*DELTAT,rhossa(2,2)*DELTAT,rhossa(3,3)*DELTAT,
      2 rhossa(2,3)*DELTAT,rhossa(3,1)*DELTAT,rhossa(1,2)*DELTAT,
      3 rhoasa(2,3),rhoasa(3,1),rhoasa(1,2),
