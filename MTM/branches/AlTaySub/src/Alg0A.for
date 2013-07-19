@@ -70,9 +70,9 @@ C
       ! stresses without a call to TAYLR1
       double precision,dimension(3,3) :: spant,TRFT,bufsp
 #endif
-      double precision :: GMMdot=0.0 !Total slip rate in current grain      
-      double precision :: Mgrain=0.0 !Taylor factor of the current grain
-      double precision :: Mavg=0.0   !Volume-averaged Taylor factor
+      double precision :: GMMdot !Total slip rate in current grain      
+      double precision :: Mgrain !Taylor factor of the current grain
+      double precision :: Mavg   !Volume-averaged Taylor factor
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      DATA JW /0/
 C      DATA Cmic0 /1.0D0,0.0D0,0.0D0,
@@ -386,6 +386,8 @@ C
       if (NFILTW.eq.1) write (IMP3,399)
  399  format(1x)
       DO 23 IOR=1,NPOINT
+      Mgrain=0.0
+      GAMdot=0.0
 C      if (IOR.eq.789.and.ISTP.eq.1) IPR=2
 C      if (IOR.eq.790.and.istp.eq.1) stop
 C      if (IPR.ne.2) goto 2626
