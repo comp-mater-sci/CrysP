@@ -1,0 +1,60 @@
+SM0-KOST11                              Name of output files (give no extension)
+..\bccbp.pre                             Slip system file
+    2 = N-lines: controls input of critical resoved shear stresses
+1.0       1.0       1.0       1.0       1.0       1.0       N-lines for + sense
+1.0       1.0       1.0       1.0       1.0       1.0
+1.0       1.0       1.0       1.0       1.0       1.0       N-lines for - sense
+1.0       1.0       1.0       1.0       1.0       1.0
+    3     (MainA1) NBLOC
+..\micro1.smt                                                     NAME OF MICROSTRUCTURE FILE
+    1     (SIMUL) NGR : 1 for a Taylor-calculation and 2 for a ALAMEL-calculation
+  1.0     (SIMUL) ENTA (fix to the config file: jg)
+    1     (SIMUL) NLIST (Make an output listing 0 or 1)
+    1     (SIMUL) NFILE (Make output files 0 or 1)
+    0     (SIMUL) NFILTW (Make output files 0 or 1)
+   11     (SIMUL) KOST If =0: TAUC are set to 1; if=1: values from FK1 used.
+    0     (SIMUL) IPR  0-3 Print switch. All except Van Houtte must use 0
+1.0       0.0       0.0       F_Microstructure
+0.0       1.0       0.0       F_Microstructure
+0.0       0.0       1.0       F_Microstructure
+SM0-KOST11                              
+2.48E-10                                               b
+8.16E+04                                               G
+2.00E-01                                               alpha
+0.00E+00                                               f
+6.05E+01                                               tau_0
+3.03E-02                                               I
+1.30E-09                                               R
+0.00E+00                                               I_wd
+1.00E-15                                               R_wd
+1.00E-15                                               R_ncg
+0.00E+00                                               beta_1[/]
+0.00E+00                                               beta_2[/]
+0.00E+00                                               I_wp
+1.00E-15                                               R_wp
+1.00E-15                                               R_rev
+1.00E-15                                               R_2
+    1     (Leesor) Type of data set for input texture (1 for SMT-file)
+..\DC06F250.SMT                                                    NAME OF INPUT TEXTURE FILE
+    1     (Leesor) Chosen Block (in input data set)
+F    -1  xxx.BPM      (MainA) Flag: read state (L02); chosen block in the state file (I5); file name (A)
+    1     (MainA) If =1: output for this block is required.
+ 0.0000000 0.0100000 0.0000000
+ 0.0000000 0.0000000 0.0000000
+ 0.0000000 0.0000000 0.0000000
+   10             (SIMUL) NUMBER OF SIMULATION STEPS PER CALL      (This is for a true simulation)
+    1    1(SIMUL) 1: relaxation allowed, for relx 1 and 2  (This is for a true simulation)
+    1     (MainA) If =1: output for this block is required.
+ 0.0100000 0.0000000 0.0000000
+ 0.0000000 0.0000000 0.0000000
+ 0.0000000 0.0000000 -0.010000
+   10             (SIMUL) NUMBER OF SIMULATION STEPS PER CALL      (This is for a true simulation)
+    1    1(SIMUL) 1: relaxation allowed, for relx 1 and 2  (This is for a true simulation)
+    1     (MainA) If =1: output for this block is required.
+ 0.0000000 0.0100000 0.0000000
+ 0.0000000 0.0000000 0.0000000
+ 0.0000000 0.0000000 0.0000000
+    1             (SIMUL) NUMBER OF SIMULATION STEPS PER CALL      (This is for a true simulation)
+    1    1(SIMUL) 1: relaxation allowed, for relx 1 and 2  (This is for a true simulation)
+    1     (SIMUL) NUMBER OF SIMULATION STEPS PER CALL      (Fake call of SIMUL - for output only)
+    0    0(SIMUL) 1: relaxation allowed, for relx 1 and 2  (Fake call of SIMUL - for output only)
