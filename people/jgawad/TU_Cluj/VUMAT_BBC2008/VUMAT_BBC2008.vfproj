@@ -4,16 +4,17 @@
 		<Platform Name="Win32"/></Platforms>
 	<Configurations>
 		<Configuration Name="Debug|Win32" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="C:\work\TWRMTMProject\code\trunk\vumat\$(ConfigurationName);..\libHMSIntegration\$(ConfigurationName);" DebugParameter="debugParameterAll" WarnInterfaces="true" CallingConvention="callConventionCRef" NullPointerCheck="true" BoundsCheck="true" UninitializedVariablesCheck="true" RuntimeLibrary="rtMultiThreadedDLL" StackFrameCheck="true"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
 				<Tool Name="VFCustomBuildTool"/>
 				<Tool Name="VFPreLinkEventTool"/>
 				<Tool Name="VFPreBuildEventTool"/>
-				<Tool Name="VFPostBuildEventTool"/></Configuration>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release|Win32" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="C:\work\TWRMTMProject\code\trunk\vumat\$(ConfigurationName)" CallingConvention="callConventionCRef" RuntimeLibrary="rtMultiThreadedDLL"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
