@@ -26,7 +26,8 @@ import harvester
 class Task(object):
     def __init__(self):
         pass
-
+    def run(self):
+        pass
 
 class ExternalProgramTask(Task):
 
@@ -45,14 +46,12 @@ class ExternalProgramTask(Task):
         self.harvesters = harvesters or []
         # configuration flags
         self.config = {}
-        self.config['program_path'] = ''
-        self.config['cmdline_prologue'] = []
-        self.config['cmdline_epilogue'] = []
+        self.config['executable'] = ''
+        self.config['cmdline_args'] = []
         self.config['hide_output'] = True
         self.setConfig(config or {})
-
-
-
+        if not self.config['executable']: 
+            raise ValueError('The configuration does not include executable.') 
         # Other members, to be set by run() and co.
         self.cwd = '.'
         if (use_tempdir):
@@ -66,14 +65,14 @@ class ExternalProgramTask(Task):
         #
         self.result = None
         #
-        return super(ExternalProgramTask,self).__init__()
+        super(ExternalProgramTask,self).__init__()
 
     def removeTempDir(self):
         try:
             if self.purge_execdir and self.execdir_path and os.path.isdir(self.execdir_path):
                 shutil.rmtree(self.execdir_path)
         except OSError as e:
-            print e
+            print str(e)
         except:
             pass
 
@@ -114,11 +113,19 @@ class ExternalProgramTask(Task):
 
     def setConfig(self,config):
         self.config.update(config)
-        program_path = os.path.expanduser(self.config['program_path'])
-        if not os.path.exists(program_path):
-            print('Cannot find ' + program_path)
-            raise OSError('Executable ' + program_path + ' not found')
-        self.config['program_path'] = os.path.realpath(program_path)
+        executable = os.path.expanduser(self.config['executable'])
+        fpath, fname = os.path.split(executable)
+        # Empty fpath means that a command is provided.
+        # Non-empty fpath indicates 
+        if fpath:
+            if os.path.exists(executable) and os.access(executable, os.X_OK):
+                self.config['executable'] = os.path.realpath(executable)
+            else:
+                print('Cannot find ' + executable)
+                raise OSError('Executable ' + executable + ' not found.')
+        else:
+            self.config['executable'] = fname
+
 
     def execute(self):
         import os
@@ -158,8 +165,8 @@ class ExternalProgramTask(Task):
         # OK, the template is ready, let's run the program...
         out_redir = subprocess.PIPE if self.config['hide_output'] else None
         in_redir  = subprocess.PIPE if stdin_input_string else None
-        command =[self.config['program_path'],] + self.config['cmdline_prologue'] +  self.config['cmdline_epilogue']
-        print str(command)
+        command =[self.config['executable']] + self.config['cmdline_args']
+        #
         po = subprocess.Popen(command, stdin=in_redir, stdout=out_redir)
         # and  feed it with the configuration
         self.command_output, stderrdata = po.communicate(stdin_input_string)
@@ -283,12 +290,12 @@ if __name__ == "__main__":
 
 
     config = {}
+    config['cmdline_args'] = ['marker.dat']
     if sys.platform == 'win32':
-        config['program_path'] = 'runsim.cmd'
+        config['executable'] = '.\\runsim.cmd'
     else:
-        config['program_path'] = 'runsim.sh'
-
-
+        config['executable'] = 'runsim.sh'
+    
     mapping = {}
     mapping['ali'] = 'syfilis'
     mapping['kocie'] = 'mysz'

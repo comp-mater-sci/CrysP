@@ -1,5 +1,5 @@
 @echo off
 echo Running simulation
-
-tr -s [:cntrl:] > marker.dat
-echo %CD% >> marker.dat
+if "%1" == "" exit /b 1
+tr -s [:cntrl:] > %1
+echo %CD% >> %1

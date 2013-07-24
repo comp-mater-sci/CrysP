@@ -1,6 +1,6 @@
 #!/bin/bash
 
 echo Running simulation
-
-tr -s [:cntrl:] > marker.dat
-pwd >> marker.dat
+[[ -z $1 ]] && exit 1
+tr -s [:cntrl:] > $1
+pwd >> $1
