@@ -46,8 +46,8 @@ class ExternalProgramTask(Task):
         # configuration flags
         self.config = {}
         self.config['program_path'] = ''
-        self.config['cmdline_prologue'] = ''
-        self.config['cmdline_epilogue'] = ''
+        self.config['cmdline_prologue'] = []
+        self.config['cmdline_epilogue'] = []
         self.config['hide_output'] = True
         self.setConfig(config or {})
 
@@ -117,7 +117,7 @@ class ExternalProgramTask(Task):
         program_path = os.path.expanduser(self.config['program_path'])
         if not os.path.exists(program_path):
             print('Cannot find ' + program_path)
-            raise OSError()
+            raise OSError('Executable ' + program_path + ' not found')
         self.config['program_path'] = os.path.realpath(program_path)
 
     def execute(self):
@@ -158,7 +158,8 @@ class ExternalProgramTask(Task):
         # OK, the template is ready, let's run the program...
         out_redir = subprocess.PIPE if self.config['hide_output'] else None
         in_redir  = subprocess.PIPE if stdin_input_string else None
-        command = (self.config['program_path'] + ' ' + self.config['cmdline_prologue'] + self.config['cmdline_epilogue'])
+        command =[self.config['program_path'],] + self.config['cmdline_prologue'] +  self.config['cmdline_epilogue']
+        print str(command)
         po = subprocess.Popen(command, stdin=in_redir, stdout=out_redir)
         # and  feed it with the configuration
         self.command_output, stderrdata = po.communicate(stdin_input_string)
@@ -195,8 +196,14 @@ class ExternalProgramTask(Task):
             self.finalize()
             self.is_done = True
             return self.result
+        except IOError as e:
+            print('In Task::run(): ' + str(e))
+            raise e
+        except OSError as e:
+            print('In Task::run(): ' + str(e))
+            raise e 
         except Exception as e:
-            print('Unexpected exception in Task::run(): ' + e)
+            print('Unexpected exception in  Task::run(): ' + str(e))
             raise e
 
 
