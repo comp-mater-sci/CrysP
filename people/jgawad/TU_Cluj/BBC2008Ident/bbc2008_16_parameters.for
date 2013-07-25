@@ -167,7 +167,8 @@
       if (info /= 0) then
         write (*, FMT03) ERR_MSG01
         write (*, FMT03) FAILURE_MSG
-        stop
+        !stop
+        call exit(1)
       end if
 *----------------------------------------------------------------------*
 * Read the material data from the keyboard.                            *
@@ -318,7 +319,7 @@
             info = 0
             read(*,'(L1)',iostat=info) read_trial_sol
             if (read_trial_sol .and. (info==0) ) then
-              write(*,*) 'SECOND ATTEMPT'
+              write(*,'(/,A,/)') 'SECOND ATTEMPT'
               do i=1,16
                 read(*,*) sol(i)
               enddo
@@ -358,7 +359,8 @@
             write (*, FMT03) FAILURE_MSG
             write (OUT_UNIT, FMT03) FAILURE_MSG
             close (OUT_UNIT)
-            stop
+            ! stop
+            call exit(1)
       else
         exit            
       end if
@@ -431,7 +433,8 @@
         write (*, FMT03) FAILURE_MSG
         write (OUT_UNIT, FMT03) FAILURE_MSG
         close (OUT_UNIT)
-        stop
+        ! stop
+        call exit(1)
       end if
       call GET_FG_B (aux1, aux2, info)
       if (info /= 0) then
@@ -440,7 +443,8 @@
         write (*, FMT03) FAILURE_MSG
         write (OUT_UNIT, FMT03) FAILURE_MSG
         close (OUT_UNIT)
-        stop
+        ! stop
+        call exit(1)
       end if
       write (OUT_UNIT, FMT16) 1.0d0 / aux1, aux1 / aux2 - 1.0d0
       ! JG, June 11 2013 -->>
