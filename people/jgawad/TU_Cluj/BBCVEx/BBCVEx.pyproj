@@ -7,13 +7,13 @@
     <ProjectHome>.</ProjectHome>
     <StartupFile>BBCVEx.py</StartupFile>
     <SearchPath>..\..\misc\pymp\</SearchPath>
-    <WorkingDirectory>test</WorkingDirectory>
+    <WorkingDirectory>test_xyld</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>BBCVEx</Name>
     <RootNamespace>BBCVEx</RootNamespace>
     <IsWindowsApplication>False</IsWindowsApplication>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>--jobname=elem_uniax45 --qrstemplate=QRS_cur_cfg.tmpl --asrtemplate=ASR_cur_cfg.tmpl --yldtemplate=Yld_cur_cfg.tmpl --texture_file=ALU1190F_DB6016_B_50_ALAMEL_45.CUR --model=ALAMEL --slipsystem_file=fcc.pre --microstructure_file=micro1.smt  --stress_file=stressbx.dat --program_path="c:\work\TWRMTMProject\code\trunk\tools\alamDMC\alamDMC\Release\alamDMC.exe" --steps=17 --export=out</CommandLineArguments>
+    <CommandLineArguments>--jobname=elem_uniax45 --qrstemplate=QRS_cur_cfg.tmpl --asrtemplate=ASR_cur_cfg.tmpl --yldtemplate=Yld_cur_cfg.tmpl --texture_file=ALU1190F_DB6016_B_50_ALAMEL_45.CUR --model=ALAMEL --slipsystem_file=fcc.pre --microstructure_file=micro1.smt  --stress_file=stressbx.dat  --steps=17 --export=out</CommandLineArguments>
     <InterpreterPath />
     <InterpreterArguments />
   </PropertyGroup>

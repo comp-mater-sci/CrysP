@@ -60,8 +60,8 @@ def main(args):
             pass
 
         
-        program_path = os.path.expanduser(args.program_path)
-        common_config ={'program_path':program_path}
+        executable = os.path.expanduser(args.executable)
+        common_config ={'executable':executable}
 
         name_modifier = '' if args.steps == 1 else '_%d'
 
@@ -138,7 +138,7 @@ def main(args):
                 out.write(fmt % r[0])
             out.write(fmt % rvalue_bx)
             # 
-            out.write(args.structure)
+            out.write(args.structure + '\n')
             out.close()
 
             if args.export:
@@ -165,16 +165,16 @@ if __name__ == '__main__':
     #
     exitcode = 1
     try:
-        parser = argparse.ArgumentParser('BBCVEx')
+        parser = argparse.ArgumentParser('BBCVEx', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         parser_template_args = parser.add_argument_group('template_keys')
 
         #
         parser.add_argument('--qrstemplate',help='template of config file for alamDMC QRS',required=True)
         parser.add_argument('--asrtemplate',help='template of config file for alamDMC ASR',required=True)
-        # parser.add_argument('--output',help='Output file or "-"',type=argparse.FileType('w'),default='-')
-        parser.add_argument('--program_path',help='path to alamDMC',default=alamdmc_prog,required=True)
-        parser.add_argument('--export',help='prefix of filename for extended output',default=None)
         parser.add_argument('--yldtemplate',help='template of config file for alamDMC yld',required=False)
+        parser.add_argument('--executable',help='path to alamDMC',default=alamdmc_prog,required=False)
+        parser.add_argument('--export',help='prefix of filename for the extended output',default=None)
+        # parser.add_argument('--output',help='Output file or "-"',type=argparse.FileType('w'),default='-')
         # Key/value pairs for template substitution
         parser_template_args.add_argument('--jobname',default='elem',required=True)
         parser_template_args.add_argument('--texture_file',required=True)
