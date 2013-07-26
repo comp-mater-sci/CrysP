@@ -1,0 +1,57 @@
+**************************************************** BEGIN OF Facet.par ***************************************************
+** $Id$                                                                                                                      
+ NOTE : NONE OF THE LINES IN THIS  PARAMETER FILE  SHOULD BE DELETED.  THE DATA ENTERED AFTER THE DOUBLE-COLON (::)    
+        (i.e, 75th column) IS ONLY READ BY THE PROGRAM, IF ENTERED ACCORDING TO FORMAT SPECIFIED. IT IS ADVISED NOT   
+        TO MODIFY THE COLUMN LABELS. REFER TO THE USER MANUAL FOR FUTHER DETAILS.                                      
+                                                                                                                      
+--------------------------------------------------- FORMULATION OPTIONS ---------------------------------------------------
+
+(F01) Purpose of calculation & prefix of output files      [I02,4X,A8] :: 02    elem 
+(F02) Reference code (if F01=0) or Model data (if F01=1)   [A8 or A40] :: sid1685
+(F03) Sample information to write in output files                [A60] :: steel DC01,sid1685,ALAMEL,nnls
+(F04) Texture description type & its filename             [I02,4X,A12] :: 01    texout.smt        
+(F05) Type of slip systems & Number of orientations       [I02,4X,I05] :: 01    5000
+(F06) Relaxations to be applied and software choice       [I02,4X,I02] :: 04    01
+(F07) Choice of modes representation & duplication check  [I02,4X,I02] :: 00    00      
+(F08) File with description of deformation modes                 [A12] :: mod402o.par          
+(F09) Switch to use opposite deformation modes                   [I02] :: 00 
+(F10) Potential type and Strategy if in stress space      [I02,4X,I02] :: 02    02
+(F11) Order of Facet, number of iterations, method [I03,4X,I03,4X,A10] :: 006    500    nnls
+(F12) Amount of output in the listing file & on screen    [I03,4X,I03] :: 000    000               
+                                                                                                                     
+----------------------------------------------------- PLOTTING OPTIONS ----------------------------------------------------
+                                                                                     
+(P01) Yield Locus plot switch                                    [I02] :: 00
+(P02) Euler angles for pi-plane plot                      [3(F6.2,1X)] :: 000.00 000.00 000.00
+(P03) Plot range for beta-4 angle                   [2(F6.2,1X),4X,I4] :: 000.00 360.00    0361
+(P04) Stress component on X-axis for XY-plot              [6(F3.1,5X)] :: 1.0     0.0     0.0     0.0     0.0     0.0      
+(P05) Stress component on Y-axis for XY-plot              [6(F3.1,5X)] :: 0.0     1.0     0.0     0.0     0.0     0.0    
+(P06) R-value plot switch and stress ratio               [I02,2X,F5.2] :: 01  00.00
+(P07) Euler angles for polar R-plot                       [3(F6.2,1X)] :: 000.00 000.00 000.00
+(P08) Plot range for R-plot                         [2(F6.2,1X),4X,I4] :: 000.00 360.00    0361
+(P09) Superimpose stress points on  pi-plot               [I03,6X,A40] :: 000      <filename>
+(P10) Superimpose stress points on  XY-plot               [I03,6X,A40] :: 000      <filename>
+(P11) Superimpose Taylor factors on pi-plot               [I03,6X,A40] :: 000      <filename> 
+(P12) Superimpose R-values on polar R-plot                [I03,6X,A40] :: 000      <filename> 
+                                                                                                                     
+------------------------------------- ADVANCED OPTIONS (MODIFY ONLY AFTER CONSULTATION) -----------------------------------
+----------- BELOW OPTIONS A02-A09 APPLY ONLY FOR FORTRAN ALAMEL SOFTWARE i.e, when 2nd value of Line (F06) is 01 ----------
+                                                                                                                       
+(A01) Switch to apply modified advanced options     (if 00: default)                      [I02] :: 00                  
+(A02) Stress concentration factor (Eta-factor)      (default: 3.00)                      [F5.2] :: 3.00                
+(A03) Attenuation factor (on stress concentration)  (default: 0.50)                      [F5.2] :: 0.50                
+(A04) VOCE PARAMETERS: TAU-III-1, TAU-III-S, T-IV-S (default: 1.486, 2.476, 8.357) [3(F5.3,2X)] :: 1.486  2.476  8.357     
+(A05) VOCE PARAMETERS: THETA-1, THETA-T             (default: 2.750, 0.550)        [2(F5.3,2X)] :: 2.750  0.550        
+(A06) Name of microstructure file                   (default: micro1.smt)                 [A40] :: micro1.smt          
+(A07-A09) Microstructural parameter matrix          (default: 3x3 identity matrix) [3(F5.3,2X)] :: 1.000  0.000  0.000   
+                                                                                                   0.000  1.000  0.000    
+                                                                                                   0.000  0.000  1.000    
+(A10) Angle for convergence of Legendre transformations(ang1ok) (default: 0.0002)        [F7.5] :: 0.00020                
+(A11) Maximum steps for Legendre transformations(maxstp)        (default: 200)            [I06] :: 200                   
+(A12) Order of Facet_s potential & number of solving iterations (default: Line F11)[I03,4X,I03] :: 006    004                   
+(A13) Start, End and Number of beta-1 intervals (default: 000.00  360.00  12) [2(F6.2,2X),I03)] :: 000.00  360.00  12  
+(A14) Start, End and Number of beta-2 intervals (default: 000.00  090.00  03) [2(F6.2,2X),I03)] :: 000.00  090.00  03  
+(A15) Start, End and Number of beta-3 intervals (default: 000.00  180.00  06) [2(F6.2,2X),I03)] :: 000.00  180.00  06  
+(A16) Start, End and Number of beta-4 intervals (default: 000.00  030.00  03) [2(F6.2,2X),I03)] :: 000.00  030.00  03  
+                                                                                                    
+****************************************************** END OF Facet.par ***************************************************
