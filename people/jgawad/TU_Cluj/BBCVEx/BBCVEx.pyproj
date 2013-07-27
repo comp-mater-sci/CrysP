@@ -6,14 +6,14 @@
     <ProjectGuid>{efa20a37-1d17-432d-a6c6-05ed5ac29527}</ProjectGuid>
     <ProjectHome>.</ProjectHome>
     <StartupFile>BBCVEx.py</StartupFile>
-    <SearchPath>..\..\misc\pymp\</SearchPath>
-    <WorkingDirectory>test_xyld</WorkingDirectory>
+    <SearchPath>..\..\..\..\code\trunk\hms\</SearchPath>
+    <WorkingDirectory>test_new</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>BBCVEx</Name>
     <RootNamespace>BBCVEx</RootNamespace>
     <IsWindowsApplication>False</IsWindowsApplication>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>--jobname=elem_uniax45 --qrstemplate=QRS_cur_cfg.tmpl --asrtemplate=ASR_cur_cfg.tmpl --yldtemplate=Yld_cur_cfg.tmpl --texture_file=ALU1190F_DB6016_B_50_ALAMEL_45.CUR --model=ALAMEL --slipsystem_file=fcc.pre --microstructure_file=micro1.smt  --stress_file=stressbx.dat  --steps=17 --export=out</CommandLineArguments>
+    <CommandLineArguments>--jobname=elem --qrstemplate=QRS_cfg.tmpl --asrtemplate=ASR_cfg.tmpl --texture_file=ALU1190F.SMT --model=ALAMEL --slipsystem_file=fcc.pre --microstructure_file=micro1.smt  --stress_file=stressbx.dat --executable="c:\work\TWRMTMProject\code\trunk\tools\alamDMC\alamDMC\Release\alamDMC.exe"</CommandLineArguments>
     <InterpreterPath />
     <InterpreterArguments />
   </PropertyGroup>

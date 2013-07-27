@@ -2,11 +2,8 @@
 #
 # $Id$
 #
-import argparse
-import os
-import pymp
-import datafile
-import harvester
+from pyhms.batchprocessing import pymp, harvester
+import pyhms.miscutils.datafile as datafile
 import numpy
 
 def readTemplate(template_path):
@@ -46,6 +43,7 @@ def mergedict(dict_dst,dict_src):
 
 
 def main(args):
+    import os
     try:
         model_id_map = {'ALAMEL':0, 'FCTaylor':1}
 
@@ -89,7 +87,7 @@ def main(args):
             
                 t = pymp.ExternalProgramTask(templates = {config_fname: template},
                                                 harvesters = [harvester_class(data_fname=(jobname+extension))],
-                                                config=mergedict({'cmdline_prologue': (mode + ' '+ config_fname)},common_config),
+                                                config=mergedict({'cmdline_args': [mode, config_fname]},common_config),
                                                 keywords=mergedict({'step': step, 'jobname': jobname},mapping),
                                                 use_tempdir = False)
                 tasks.append(t)
@@ -98,6 +96,7 @@ def main(args):
             taskgroups.append((jobname,tasklist))
         #
         pool_master = pymp.PoolMaster(timeout = 4800000)
+        #pool_master = pymp.SerialMaster()
         pool_master.run(tasks)
 
         for task in tasks:
@@ -156,6 +155,7 @@ def main(args):
 
 
 if __name__ == '__main__':
+    import argparse
     import sys
     
     if sys.platform in ['win32','win64']:
