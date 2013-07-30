@@ -73,7 +73,7 @@ case "$ANISOMODE" in
 		;;
 	"BBC2008")
 		echo "BBC2008 mode"
-		local bbc2008files="$(echo ${PREFIX}{.bbc2008,_bbc2008vef.datx,.rs,.xqrs,.asr})"
+		local bbc2008files="$(echo ${PREFIX}{.bbc2008,_bbc2008vef.datx,.rs,.xqrs,.asr,.yld})"
 		FROMSNAP+=" ${bbc2008files}"
 		;;
 	*)
@@ -95,9 +95,9 @@ fi
 
 echo "To be extracted from snapshots: $FROMSNAP" 
 
-REQ_TEXUPDATE_FORCE=0
-REQ_ANISOUPDATE_FORCE=0
-REQ_HARDUPDATE_FORCE=0
+#REQ_TEXUPDATE_FORCE=0
+#REQ_ANISOUPDATE_FORCE=0
+#REQ_HARDUPDATE_FORCE=0
 
 OPFILE="$OUTDIR/$PREFIX" 
 local LOGFILE="${OUTDIR}/${PREFIX}.log"
@@ -180,7 +180,15 @@ for  snap in $SNAPLIST ; do
 	acc_strain=$(echo $strain $acc_strain | gawk '{sm=$1+$2}END{print sm}')
 	echo $defstep $step $strain $acc_strain  >> "${OPFILE}_defmap.txt" 
 	# Check what was requested in the snapshot
-	local requests=($(head -7 "${DEFFILE}" | tail -3))
+	local dflen=$(cat ${DEFFILE} | wc -l)
+	declare -a requests
+	if [[ ${dflen} -ge 7 ]] ; then
+		# Skyfall format of deffile
+		requests=($(head -7 "${DEFFILE}" | tail -3))
+	else
+		# Old format of deffile
+		requests=( [0]=1 [1]=1 [2]=0 )
+	fi
 	REQ_TEXUPDATE="${REQ_TEXUPDATE_FORCE:-${requests[0]}}"
 	REQ_ANISOUPDATE="${REQ_ANISOUPDATE_FORCE:-${requests[1]}}"
 	REQ_HARDUPDATE="${REQ_HARDUPDATE_FORCE:-${requests[2]}}"
