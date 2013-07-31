@@ -44,7 +44,7 @@ sortSnapshots () {
 		echo `basename $snap | awk -F_ '{print $2;}'` 
 		done | sort -n )
 	for step in  $sortlist ; do
-		ls -1 $1/$2${step}* 
+		ls -1 $1/$2${step}_* 
 	done
 }
 #
