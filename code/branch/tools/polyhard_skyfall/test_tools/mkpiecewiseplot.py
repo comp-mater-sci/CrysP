@@ -10,24 +10,39 @@ functions = {'piecewise':'quadratic','dpiecewise':'dquadratic'}
 
 function_list = []
 
+idx_function_list = []
+
 flist = glob.glob('elem_*.hard')
 
+first_term = ''
 for id,datafile in sorted([ (int(os.path.splitext(f)[0].split('_')[1]),f) for f in flist]):
         # print datafile
         fields = open(datafile,'r').readlines()
         dd = {}
+        dd['id'] = id
         dd['A'],dd['B'],dd['C'],dd['x0'],dd['x1'] = [float(f) for f in fields[1:6]]
         #A,B,C = 
         #x0,x1 = [float(i) for i in fields[4:6]]
         # print dd['x0'], dd['x1']
         function_list.append('x >= {x0} && x < {x1} ? {{fx}}(x,{A:e},{B:e},{C:e}) : \\'.format(**dd))
         last_term = '{{fx}}(x,{A:e},{B:e},{C:e}) )'.format(**dd)
-  
-for fxname,impfxname in functions.items():
-        print (fxname + '(x) = ( \\')
-        for line in function_list:
-                print line.format(fx=impfxname)
-        print last_term.format(fx=impfxname)
-        
+        if not first_term: 
+            first_term = 'x < {x0} ? {{fx}}(x,{A:e},{B:e},{C:e}) : \\'.format(**dd)
+        #
+        idx_function_list.append('x >= {x0} && x < {x1} ? {id} : \\'.format(**dd))
+        idx_function_last = 'x >= {x1} ? {id} : 0 )'.format(**dd)
 
+if function_list:
+    for fxname,impfxname in functions.items():
+            print (fxname + '(x) = ( \\')
+            print (first_term.format(fx=impfxname))
+            for line in function_list:
+                    print line.format(fx=impfxname)
+            print last_term.format(fx=impfxname)
+
+if idx_function_list:            
+    print('pieceid(x) = ( \\')
+    for line in idx_function_list:
+        print(line)
+    print(idx_function_last)
 
