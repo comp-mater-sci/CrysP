@@ -10,9 +10,16 @@ $(info Configuration for $(BUILDHOST))
 include $(TOOLSDIR)/Makefile.knownhosts
 include $(TOOLSDIR)/Makefile.utils
 #
+FCFLAGS=-fpp -module $(INCLUDEDIR) -I$(INCLUDEDIR) -standard-semantics  -DKfngConstants=fngConstants
+#
+ifdef DEBUG
+ConfigurationName=debug
+FCFLAGS+= -g -O0 -debug all -check all -traceback
+else
 ConfigurationName=release
+FCFLAGS+= -openmp -no-ipo
+endif
 
-FCFLAGS=-fpp -module $(INCLUDEDIR) -I$(INCLUDEDIR) -standard-semantics -openmp -DKfngConstants=fngConstants
 
 OBJDIR=$(ConfigurationName)/obj
 INCLUDEDIR=$(ConfigurationName)/include
