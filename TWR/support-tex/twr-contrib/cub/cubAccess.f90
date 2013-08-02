@@ -119,7 +119,7 @@
       ! Write title
   98  format (A)
       write (NUNIT,98) MICROS%TITLE
-      ! Write header
+      ! Write the header
       write (NUNIT,402)
  402  format (/,' Def. Step    ','Number of orientations',27X,           &
        2X,'F(1,1)',4X,'F(2,1)',4X,'F(3,1)',4X,                           &
@@ -135,13 +135,9 @@
             MICROS%GAXES,                                                &
             MICROS%GEULR
  403  format(I6,5X,i5,44x,3(2X,3F10.6),2(2x,3f10.5))
-      ! write subheader
+      ! write the subheader
       write (NUNIT,401)
- 401  format (' CRYSTAL WEIGHT ',5X,'phi1',6X,'PHI',7X,'phi2',6X,        &
-      '  GAMMA',5X,2X,'F(1,1)',4X,'F(2,1)',4X,'F(3,1)',4X,               &
-                   2X,'F(1,2)',4X,'F(2,2)',4X,'F(3,2)',4X,               &
-                   2X,'F(1,3)',4X,'F(2,3)',4X,'F(3,3)',                  &
-       6X,'a',9X,'b',9x,'c',9x,'G-phi1',4x,'G-PHI',4x,'G-phi2')
+ 401  format (' CRYSTAL WEIGHT ',5X,'phi1',6X,'PHI',7X,'phi2',6X,'  GAMMA')
       ! Write grain records
       do 11 i=1, MICROS%NGRAINS
       !!
