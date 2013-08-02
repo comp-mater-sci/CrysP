@@ -34,9 +34,16 @@ DEBUGFLAGS= -O0 -g -debug full -check all -ftrapuv
 FCFLAGS+= $(DEBUGFLAGS)
 else
 OUTDIR=release
-OPTFLAGS=-O3 -fast
+OPTFLAGS=-O3 -fast -no-ipo
 FCFLAGS+= $(OPTFLAGS)
 endif
+#
+# Append extra flags
+ifdef EXTFLAGS
+     FCFLAGS+= $(EXTFLAGS)
+     FLDFLAGS+= $(EXTFLAGS)
+endif
+#
 ### Commonly used functions
 
 # Builds a list of object names from a list of .for or .f90 files
@@ -129,7 +136,7 @@ PROG_OBJS=$(call fxx2opaths,$(PROG_SRCS),$(PROG_OBJDIR))
 $(info $(PROG_OBJS))
 
 PROG_FCFLAGS= $(FCFLAGS) $(FFLAGS) $(PROG_CFG) -module $(PROG_INCLUDEDIR) 
-PROG_LDFLAGS= $(FCFLAGS)
+PROG_LDFLAGS= $(FCFLAGS) $(FLDFLAGS)
 #####################################################################
 # CONFIGURATION OF TEST PROGRAM
 
@@ -267,6 +274,7 @@ $(TPROG_OBJDIR)/mainSub.o	: $(addprefix $(TPROG_OBJDIR)/, testTexAccess.o verify
 #
 # Explicit dependencies for standalone program
 #
+$(PROG_OBJDIR)/MainA1.o		: $(addprefix $(PROG_OBJDIR)/,ioconfig.o texFormats.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/altaySub.o	: $(addprefix $(PROG_OBJDIR)/,altayConfig.o altayInterface.o ioconfig.o texFormats.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/Alg0A.o		: $(addprefix $(PROG_OBJDIR)/,altayHard.o KOST1x.o Alg0.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o ioconfig.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/Alg1.o		: $(addprefix $(PROG_OBJDIR)/,ioconfig.o) $(RCMINCLUDE)

@@ -48,7 +48,7 @@ ConfigurationName=release
 LIBDIR=release
 # NOTE: -fast is considered harmful. It has long and infamous tradition
 # of spoiling the libalamel/libaltay...
-OPTFLAGS=-O3 # -fast
+OPTFLAGS=-O3 -no-ipo # -fast
 FCFLAGS+= $(OPTFLAGS)
 endif
 #
