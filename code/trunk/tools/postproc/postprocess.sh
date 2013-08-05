@@ -14,6 +14,23 @@ import "locproc.sh"
 import "utils.sh"
 import "postprocess.conf"
 
+# Parameters:
+# $1 - list of files to be considered for the transfer
+# $2 - prefix of files that qualify for the transfer
+# $3 - output prefix 
+renameAndTransferFiles () {
+local filelist="$1"
+local prefix="$2"
+local outprefix="$3"
+#
+	for f in ${filelist} ; do
+		if [[ $(expr match "$f" "^${prefix}") -ne 0 ]] ; then
+			# echo $f -- ${outprefix}${f##${prefix}}
+			[[ -f "$f" ]] && cp "$f"  ${outprefix}${f##${prefix}}
+		fi
+	done
+}
+
 
 # Parameters
 # $1 - location directory name
@@ -35,27 +52,52 @@ local SPLOTFILE="$7"
 local EXTRACTCUR="$8"
 local EXTRACTMMM="$9"
 local BIAXFILE="${10}"
+local EXTRACTHARD="${11}"
 
-FROMSNAP="texout.cub ${DEFFILE}"
-
+FROMSNAP="${DEFFILE}"
 
 case "$ANISOMODE" in
+	"None")
+		echo "Processing anisotropy is disabled."
+		MMMEXT="mmm"
+		MMMFILE=${PREFIX}.${MMMEXT} 
+		;;
 	"FNG")
+		echo "FNG mode"
 		MMMEXT='mmm'
 		MMMFILE=${PREFIX}.${MMMEXT} 
-		FROMSNAP="${FROMSNAP} ${MMMFILE} ${PREFIX}.fac"
+		FROMSNAP="${FROMSNAP} ${PREFIX}.fac"
 		if [ "$YLPCONFIG" == "fngS" ] ; then
 			FROMSNAP="${FROMSNAP} ${PREFIX}_D.fac"
 		fi
-		echo "FNG mode"
-		echo "To be extracted from snapshots: $FROMSNAP" 
+		;;
+	"BBC2008")
+		echo "BBC2008 mode"
+		local bbc2008files="$(echo ${PREFIX}{.bbc2008,_bbc2008vef.datx,.rs,.xqrs,.asr,.yld})"
+		FROMSNAP+=" ${bbc2008files}"
 		;;
 	*)
+		echo "Legacy Facet mode"
 		MMMEXT='MMM'
 		MMMFILE=${PREFIX}.${MMMEXT} 
-		FROMSNAP="${FROMSNAP} ${MMMFILE} ${PREFIX}.${MMMEXT}"
+		FROMSNAP="${FROMSNAP} ${MMMFILE}"
 		;;
 esac
+
+[[ ${EXTRACTCUR} -ge 1 ]] && FROMSNAP+=" texout.cub"
+
+[[ ${EXTRACTMMM} -ge 1 ]] && FROMSNAP+=" ${MMMFILE}"
+
+if [[ ${EXTRACTHARD} -ge 1 ]] ; then
+	local hardfiles="${PREFIX}.hard ${PREFIX}.str"
+	FROMSNAP+=" ${hardfiles}"
+fi
+
+echo "To be extracted from snapshots: $FROMSNAP" 
+
+#REQ_TEXUPDATE_FORCE=0
+#REQ_ANISOUPDATE_FORCE=0
+#REQ_HARDUPDATE_FORCE=0
 
 OPFILE="$OUTDIR/$PREFIX" 
 local LOGFILE="${OUTDIR}/${PREFIX}.log"
@@ -77,9 +119,11 @@ SNAPLIST=$(sortSnapshots $LOCATION $SNAPPREFIX)
 # Create temporary directory, feed it with input
 TMPDIR=$(mktemp -d postLoc.XXXXXX) 
 #
-
-
-
+# Clean-up the previous incremental contents
+#
+for f in "${OPFILE}_map.txt" "${OPFILE}_defmap.txt"; do
+	[[ -f "${f}" ]] && rm -f "${f}"
+done
 
 # Prepare data and outputs for YLP calculations and QRS output
 case "${ANISOMODE}" in
@@ -120,38 +164,62 @@ for  snap in $SNAPLIST ; do
 	local outprefix="${OPFILE}_${defstep}"
 	# Extract requested datafiles
 	tar -xzf $snap -C "$TMPDIR" $FROMSNAP
-	## Stage
-	markProgress
-	if [ "$EXTRACTCUR" -ge "1" ] ; then
-	  	
-		# Convert CUB file into CUR format, merge it into one file.
-		title="step $defstep"
-		curname="${PREFIX}_${defstep}.cur"
-		stepcur="$TMPDIR/$curname"
-		NORIENT=$(cub2cur "$TMPDIR/${TEXFILE}" "$stepcur" "$title"  | grep "crystallites" | sed -e 's/^.*crystallites//' )
-		echo "Discrete texture consists of $NORIENT orientations" >> "$LOGFILE"
-		tail -n +2 "$stepcur" >> ${OUTCURFILE}
-		markProgress
-		[ "$EXTRACTCUR" -ge "2" ] && mv "$stepcur" "$OUTDIR/$curname" && markProgress
-		#  Extract SMT files
-		if [ "$EXTRACTCUR" -ge "3" ] ; then
-			local smtname="${OPFILE}_${defstep}.smt"
-			cub2smt "${TMPDIR}/${TEXFILE}" "$smtname" plain "$title" > /dev/null
-			markProgress
-		fi
+	if [[ ! -f "${TMPDIR}/${DEFFILE}" ]] ;  then 
+		echo "Warning: cannot find ${DEFFILE} in the snapshot ${snap}, so skipping it."
+		continue
 	fi
-	#	
+	markProgress
 	CWD=$(pwd)
 	# enter temporary directory
 	cd "$TMPDIR"
-	markProgress
+	#
+	# Stage 1: interpret the DEFFILE
+	#	
 	# Calculate strain from defdata
-	strain=$(tail -3 "${DEFFILE}" | gawk 'BEGIN{ddot=0.0}{ddot += $1*$1 + $2*$2 +$3*$3}END{print sqrt(ddot)}')
+	strain=$(head -4 "${DEFFILE}" | tail -3 | gawk 'BEGIN{ddot=0.0}{ddot += $1*$1 + $2*$2 +$3*$3}END{print sqrt(ddot)}')
 	acc_strain=$(echo $strain $acc_strain | gawk '{sm=$1+$2}END{print sm}')
 	echo $defstep $step $strain $acc_strain  >> "${OPFILE}_defmap.txt" 
-	# Run YLP calculation if requested
+	# Check what was requested in the snapshot
+	local dflen=$(cat ${DEFFILE} | wc -l)
+	declare -a requests
+	if [[ ${dflen} -ge 7 ]] ; then
+		# Skyfall format of deffile
+		requests=($(head -7 "${DEFFILE}" | tail -3))
+	else
+		# Old format of deffile
+		requests=( [0]=1 [1]=1 [2]=0 )
+	fi
+	REQ_TEXUPDATE="${REQ_TEXUPDATE_FORCE:-${requests[0]}}"
+	REQ_ANISOUPDATE="${REQ_ANISOUPDATE_FORCE:-${requests[1]}}"
+	REQ_HARDUPDATE="${REQ_HARDUPDATE_FORCE:-${requests[2]}}"
+	#
+	markProgress
+	#
+	# Stage 2: Extract texture data 
+	#
+	if [ "$EXTRACTCUR" -ge "1" ] ; then
+		# Convert CUB file into CUR format, merge it into one file.
+		title="step $defstep"
+		local curname="${outprefix}.cur"
+		local stepcur="${PREFIX}_${defstep}.cur"
+		NORIENT=$(cub2cur "${TEXFILE}" "$stepcur" "$title"  | grep "crystallites" | sed -e 's/^.*crystallites//' )
+		echo "Discrete texture consists of $NORIENT orientations" >> "$LOGFILE"
+		tail -n +2 "$stepcur" >> ${OUTCURFILE}
+		markProgress
+		[ "$EXTRACTCUR" -ge "2" ] && mv "$stepcur" "$curname" && markProgress
+		#  Extract SMT files
+		if [ "$EXTRACTCUR" -ge "3" ] ; then
+			local smtname="${outprefix}.smt"
+			cub2smt "${TEXFILE}" "$smtname" plain "$title" > /dev/null
+			markProgress
+		fi
+	fi
+	#
+	# Stage 3: Extract anisotropy evolution
+	#
 	case "${ANISOMODE}" in
 		"Facet")
+			# Run YLP calculation if requested
 			# Execute facet identification		
 			$YLPEVOLCMD "$YLPCFG"  >> "$LOGFILE" &> /dev/null
 			if [ "$?" == "0" ] ; then
@@ -224,11 +292,24 @@ for  snap in $SNAPLIST ; do
 				markProgress
 			fi	
 			;;
+		"BBC2008")
+			renameAndTransferFiles "${bbc2008files}" "${PREFIX}" "${outprefix}"
+			;;
 	esac
-	# Extract multilevel data
+	#
+	# Stage 4: Extract multilevel data
+	#
 	if [ "${EXTRACTMMM}" -ge "1" ] ; then 
 		# MMM data are no longer needed by YLPCMD, we can move them to the final destination
-		mv "${MMMFILE}" "${OPFILE}_${defstep}.${MMMEXT}" && markProgress
+		mv "${MMMFILE}" "${outprefix}.${MMMEXT}" && markProgress
+	fi
+	#
+	# Stage 5: Extract hardening data
+	#
+	if [[ "${EXTRACTHARD}" -ge 1 &&  "${REQ_HARDUPDATE}" -ge 1 ]] ; then
+		renameAndTransferFiles "${hardfiles}" "${PREFIX}" "${outprefix}"
+		cat "${PREFIX}.str" >> "${OPFILE}.str"
+		markProgress
 	fi
 	#
 	# Return to previous directory
@@ -346,13 +427,15 @@ HELPMSG="Parameters:
 	snapdir - directory that contains snapshots to process
 	outdir - output directory
 	prefix - prefix for filenames
-	Facet_config - Facet configuration file or fngS or fngD or '-' to disable calculations of anisotropic characteristics
+	anisotropy_extraction - Facet configuration file or fngS or fngD or BBC2008 or '-' to disable calculations of anisotropic characteristics
 	texture_extraction (0 - no extraction, 1 - overall evolution, 2 - details for every step, 3 - also SMT file for every step)
 	multilevel_extraction (0 - no extraction, 1 - extract MMM data for every step)
+	hardening_extraction (0 - no extraction, 1 - extract hardening data if available)
 	plot_title - title to be put on the plot
 	config_file - local config file to override the global settings
 \n
 Remarks:
+If the old Facet mode is used, the following has to be satisfied:
 * snapshots must contain MMM file
 * Facet_config must permit run from MMM file\n"
 
@@ -370,9 +453,10 @@ OUTPREFIX="$3"
 YLPCONFIG="$4"
 TEXLEVEL="$5"
 MMMLEVEL="$6"
-PLOTTITLE="$7"
+HARDLEVEL="$7"
+PLOTTITLE="$8"
 #
-CONFIGFILE="$8"
+CONFIGFILE="$9"
 # 
 # Read config file if specified in command line:
 [ -n "$CONFIGFILE" ] && [ -f "$CONFIGFILE" ] && . "$CONFIGFILE"
@@ -400,6 +484,9 @@ case "$YLPCONFIG" in
 	"fngS")	
 		CALCULATEANISO="FNG"
 		CYLPCONFIG="fngS"
+		;;
+	"BBC2008")
+		CALCULATEANISO="BBC2008"
 		;;
 	*)
 		# Assume it is a name of Facet config file
@@ -439,7 +526,7 @@ if [ "$CALCULATEANISO" == "Facet" ] ; then
 	init3DBiaxPlotfile "$PLOT3DBIAXFILE" "$PLOTTITLE" 
 fi
 #exit 0
-postprocessLocation "$CSNAPDIR" "$COUTDIR" "${OUTPREFIX}" "$CALCULATEANISO" "${CYLPCONFIG}" "$PLOTFILE" "$SPLOTFILE" "$TEXLEVEL" "${MMMLEVEL}" "$PLOT3DBIAXFILE"
+postprocessLocation "$CSNAPDIR" "$COUTDIR" "${OUTPREFIX}" "$CALCULATEANISO" "${CYLPCONFIG}" "$PLOTFILE" "$SPLOTFILE" "$TEXLEVEL" "${MMMLEVEL}" "$PLOT3DBIAXFILE" "$HARDLEVEL"
 
 if [ "$?" == "0" ] ; then
 	echo "Finished."

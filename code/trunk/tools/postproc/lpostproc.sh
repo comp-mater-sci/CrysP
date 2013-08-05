@@ -23,6 +23,8 @@ MMMLEVEL="$6"
 
 YLPCFG="$7"
 
+HARDLEVEL=0
+
 POSTPROCESS="${POSTTEX_ROOT}/postprocess.sh"
 
 HELPMSG="\ninputfile - a comma-separed file describing the locations to process. 
@@ -33,7 +35,7 @@ token,point,integration point number, comment,rotation angle (optional)\n\nExamp
 "  
 
 if [ "$#" -lt 6 ] ; then
-        echo -e "\n" `basename "$0"` inputfile snapdir_root outdir_pre prefix texture_extraction_level mmm_extraction_level Facet_configfile
+        echo -e "\n" `basename "$0"` inputfile snapdir_root outdir_pre prefix texture_extraction_level mmm_extraction_level aniso_extraction_type
         echo -e "$HELPMSG"
         exit 1
 fi
@@ -50,7 +52,7 @@ do
 	echo Rotation: $rotation
 	echo "Output written to $outdir"
 	#./postprocess.sh snapdir outdir outprefix Facet_config texture_extraction plot_title [initial_qdata]
-	PHI2="$rotation" "${POSTPROCESS}" "$snapdir" "$outdir" "$PREFIX" "$YLPCFG" "$TEXLEVEL" "$MMMLEVEL" "$comment" 
+	PHI2="$rotation" "${POSTPROCESS}" "$snapdir" "$outdir" "$PREFIX" "$YLPCFG" "$TEXLEVEL" "$MMMLEVEL" "$HARDLEVEL" "$comment" 
 done < <( cat $INPUT )
 # The loop above can be implemented in much easier way as long as unlimited comment field (4) is at the end of the line
 
