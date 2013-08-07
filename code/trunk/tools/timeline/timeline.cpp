@@ -12,21 +12,21 @@
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
 
-struct timePoint{
-	timePoint() : m_step(0), m_variable(0.0,0.0) {}
-	size_t	m_step;
-	std::pair<double,double> m_variable;
+struct timePoint 
+{
+	timePoint() : m_label(0), m_step(0) {}
+	size_t m_label, m_step;
 };
 
 std::istream & operator>>(std::istream & in, timePoint & x)
 {
-	in >> x.m_step >> x.m_variable.first >> x.m_variable.second;
+	in >> x.m_label >> x.m_step;
 	return in;
 }
 
 std::ostream & operator<<(std::ostream & out, const timePoint & x)
 {
-	out << x.m_step << ' ' << x.m_variable.first << ' ' << x.m_variable.second;
+	out << x.m_label << ' ' << x.m_step ;
 	return out;
 }
 
@@ -60,7 +60,7 @@ struct timeline
 		value_type step;
 		while(in.good())
 		{
-			in >> cntr >> step;
+			in >> step;
 			if (in.good())
 				m_timeline.push_back(step);
 		}
@@ -69,7 +69,7 @@ struct timeline
 };
 
 
-typedef	timeline<size_t>	masterTimeline;		
+typedef	timeline<timePoint>	masterTimeline;		
 typedef timeline<timePoint>	slaveTimeline;
 
 typedef std::pair<slaveTimeline,std::string> namedSlaveLine;
@@ -93,11 +93,11 @@ public:
 
 	}
 
-	virtual void writeToCurrent(std::ostream & out, size_t master_frame_id, slaveLineContainer & v_slaveTimelines, bool is_modified)
+	virtual void writeToCurrent(std::ostream & out, size_t master_frame_id, const timePoint & master_point,  slaveLineContainer & v_slaveTimelines, bool is_modified)
 	{
 		// Start frame
 		startFrame(out, master_frame_id, is_modified);
-		writeFrame(out,master_frame_id,v_slaveTimelines,is_modified);
+		writeFrame(out,master_point.m_label,v_slaveTimelines,is_modified);
 		endFrame(out, master_frame_id, is_modified);	
 		// Update the state variables
 		m_lastframe = master_frame_id;
@@ -106,7 +106,7 @@ public:
 	virtual void initialize(std::ostream & out)
 	{ /* Empty */ }
 
-	virtual void finalize(std::ostream & out, size_t master_frame_id, slaveLineContainer & v_slaveTimelines, bool is_slave_updated)
+	virtual void finalize(std::ostream & out, size_t master_frame_id, const timePoint & , slaveLineContainer & v_slaveTimelines, bool is_slave_updated)
 	{ /* Empty */ }
 
 protected:
@@ -128,7 +128,7 @@ protected:
 	}
 
 	virtual void writeFrame(std::ostream & out, 
-							size_t master_frame_id, 
+							size_t master_frame_label, 
 							slaveLineContainer & v_slaveTimelines,
 							bool is_slave_updated)
 	{
@@ -136,12 +136,12 @@ protected:
 		switch (m_order)
 		{
 		case masterFirst:
-			writeMaster(out,master_frame_id);
+			writeMaster(out,master_frame_label);
 			writeSlaves(out,v_slaveTimelines);
 			break;
 		case  slavesFirst:
 			writeSlaves(out,v_slaveTimelines);
-			writeMaster(out,master_frame_id);
+			writeMaster(out,master_frame_label);
 			break;
 
 		}
@@ -212,13 +212,13 @@ public:
 
 	}
 
-	void writeToCurrent(std::ostream & out, size_t master_frame_id, slaveLineContainer & v_slaveTimelines, bool is_modified)
+	void writeToCurrent(std::ostream & out, size_t master_frame_id, const timePoint & master_point, slaveLineContainer & v_slaveTimelines, bool is_modified)
 	{
 		if (is_modified)
 		{
 			// flush pending frame
 			if (master_frame_id > 0)
-				OutputWriter::writeToCurrent(out,master_frame_id,v_slaveTimelines,is_modified);
+				OutputWriter::writeToCurrent(out,master_frame_id,master_point, v_slaveTimelines,is_modified);
 			
 			// start new pending frame (buffer only):
 			//  Write slave state to the buffer
@@ -229,10 +229,10 @@ public:
 		}
 	}
 
-	void finalize(std::ostream & out, size_t master_frame_id, slaveLineContainer & v_slaveTimelines, bool is_slave_updated)
+	void finalize(std::ostream & out, size_t master_frame_id, const timePoint & master_point, slaveLineContainer & v_slaveTimelines, bool is_slave_updated)
 	{ 
 		if (m_lastframe < master_frame_id)
-				OutputWriter::writeToCurrent(out,master_frame_id,v_slaveTimelines,true);
+				OutputWriter::writeToCurrent(out,master_frame_id,master_point,v_slaveTimelines,true);
 	}
 
 
@@ -256,7 +256,7 @@ protected:
 
 	void writeMaster(std::ostream & out, size_t master_frame_id )
 	{
-		out << "\\begin{minipage}{0.5\\textwidth}\n";
+		out << "\\begin{minipage}{\\masterwidth}\n";
 		OutputWriter::writeMaster(out,master_frame_id);
 		out << m_frame_buffer;
 		m_frame_buffer.clear();
@@ -267,7 +267,7 @@ protected:
 	 	
 	void writeSlaves(std::ostream & out, slaveLineContainer & v_slaveTimelines )
 	{
-		out << "\\begin{minipage}{0.5\\textwidth}\n";
+		out << "\\begin{minipage}{\\slavewidth}\n";
 		// Just flush the buffer to the out
 		out << m_slave_buffer;
 		m_frame_buffer.clear();
@@ -305,13 +305,13 @@ protected:
 		if (m_order == slavesFirst)
 		{
 			// start minipage for slaves
-			out << "\\begin{minipage}{0.5\\textwidth}\n";
+			out << "\\begin{minipage}{\\slavewidth}\n";
 		}
 		// Clear buffer
 		m_frame_buffer.clear();
 	}
 
-	void writeMaster(std::ostream & out, size_t master_frame_id )
+	void writeMaster(std::ostream & out, size_t master_frame_label )
 	{
 		if (m_order == slavesFirst)
 		{
@@ -320,15 +320,15 @@ protected:
 			out << "\\end{minipage}%\n";
 			// close slave minipage 
 		}
-		out << "\\begin{minipage}{0.5\\textwidth}\n";
-		OutputWriter::writeMaster(out,master_frame_id);
+		out << "\\begin{minipage}{\\masterwidth}\n";
+		OutputWriter::writeMaster(out,master_frame_label);
 		out << m_frame_buffer;
 		m_frame_buffer.clear();
 		out << "\\end{minipage}%\n";
 		if (m_order == masterFirst)
 		{
 			// start minipage for slaves
-			out << "\\begin{minipage}{0.5\\textwidth}\n";
+			out << "\\begin{minipage}{\\slavewidth}\n";
 		}
 	}
 
@@ -373,6 +373,7 @@ int main(int argc, char * argv[])
 	all_options.add_options()
 		("help,h",		"Print help information")
 		("input-file,f",po::value<std::string>(), "Input file")
+		("verbose,v", "Verbose mode")
 		;
 
 	po::variables_map vm;        
@@ -419,7 +420,7 @@ int main(int argc, char * argv[])
 
 
 	//////////////////////////////////////////////////////////////////////////
-	bool verbose = false;
+	bool verbose = vm.count("verbose") > 0;
 	int itmp = 0;
 
 	ifstream config_stream(config_fname.c_str());
@@ -434,6 +435,7 @@ int main(int argc, char * argv[])
 	bfs::path master_path;
 	size_t n_slaves;
 	bfs::path slave_path;
+	std::string slave_path_str;
 	string master_label, slave_label;
 	string master_pos;
 	OutputOrder order = masterFirst;
@@ -454,12 +456,12 @@ int main(int argc, char * argv[])
 	config_stream >> itmp >> n_slaves;
 	verbose = (itmp != 0);
 
-	ifstream master_line(master_path.external_file_string().c_str());
+	ifstream master_line(master_path.string().c_str());
 
 	masterTimeline  master;
 	master.read(master_line);
 	if (verbose)
-		copy(master.m_timeline.begin(),master.m_timeline.end(),ostream_iterator<size_t>(cout,"\n"));
+		copy(master.m_timeline.begin(),master.m_timeline.end(),ostream_iterator<timePoint>(cout,"\n"));
 	master_line.close();
 
 	slaveLineContainer  v_slaveTimelines;
@@ -471,9 +473,10 @@ int main(int argc, char * argv[])
 	for(size_t i = 0; i < n_slaves; i++)
 	{
 		
-		config_stream >> slave_path;
+		config_stream >> slave_path_str;
+		slave_path = slave_path_str;
 		getline(config_stream,slave_label);
-		slave_line.open(slave_path.canonize().external_file_string().c_str());
+		slave_line.open(slave_path.normalize().string().c_str());
 		if (verbose)
 			cout << "slave " << i << " : " << slave_path << " "<< slave_label <<endl;
 		if (slave_line.fail())
@@ -522,7 +525,8 @@ int main(int argc, char * argv[])
 	size_t lastframe = 0;
 	for (size_t master_frame = 0 ; master_frame < master.size(); master_frame++)
 	{
-		size_t step = master.m_timeline[master_frame];
+		timePoint & master_point = master.m_timeline[master_frame];
+		size_t step = master_point.m_step;
 		if (verbose)
 			cout << "%%% master frame " << master_frame << " "  << step << endl;
 		// Advance slave lines up to the current step
@@ -531,11 +535,11 @@ int main(int argc, char * argv[])
 		{
 			any_slave_modified |= i.first.moveTo(step);
 		}
-		ptr_writer->writeToCurrent(cout, master_frame, v_slaveTimelines,any_slave_modified);
+		ptr_writer->writeToCurrent(cout, master_frame, master_point, v_slaveTimelines,any_slave_modified);
 		any_slave_modified = false;
 	}
 
-	ptr_writer->finalize(cout,master.size(),v_slaveTimelines,any_slave_modified);
+	ptr_writer->finalize(cout,master.size(),master.m_timeline[master.size()-1],v_slaveTimelines,any_slave_modified);
 
 	return 0;
 }
