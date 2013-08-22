@@ -40,10 +40,13 @@ set OUTFNAME=!POUTFNAME!.c
 printc.exe !INPFNAME!
 
 move printc.l01 printc_!FNAME!.lst
+rem Extract title from the printc file
+for /F "tokens=3,4* delims== " %%i in ('head -1 printc_!FNAME!.lst') do set TITLE=%%i %%j
+
 rem build rottex.i01
 echo 00.0        00.0      00.00               PHI1/PHI/PHI2 >  rottex.i01
 echo    2    1                                IMPOSED IMAG, IMPOSED IDN  >>  rottex.i01
-echo !POUTFNAME!.triclinic    >>  rottex.i01
+echo !TITLE! triclinic    >>  rottex.i01
 rem build pltodf_c.i01
 echo     0                    IEVOD: if =0: Ordinary case  >  pltodf_c.i01
 
