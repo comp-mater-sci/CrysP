@@ -1,3 +1,6 @@
+#
+# $Id$
+#
 
 FC=ifort
 
@@ -17,7 +20,7 @@ ConfigurationName=debug
 FCFLAGS+= -g -O0 -debug all -check all -traceback
 else
 ConfigurationName=release
-FCFLAGS+= -openmp -no-ipo
+FCFLAGS+= -O3 -openmp -no-ipo
 endif
 
 
@@ -31,9 +34,6 @@ polyApproximation.f90 \
 polyHardUtils.f90 \
 updateData.f90 \
 vumat_polyhard.f90
-
-#altayPolyHard.f90
-#polyHard.f90
 
 OBJS=$(SRCS:%.f90=$(OBJDIR)/%.o)
 $(info 'Object files ' $(OBJS))
@@ -77,15 +77,14 @@ OUT_DIRS = $(OBJDIR) $(INCLUDEDIR)
 $(OUT_DIRS)	:OBJDIR=$(ConfigurationName)/obj
 INCLUDEDIR=$(ConfigurationName)/include
 
+TargetPath=$(ConfigurationName)/polyHard
+
 .PHONY : clean dirstructure
 
-build	:	$(ConfigurationName)/polyHard $(ConfigurationName)/altayPolyHard
+build	:	$(ConfigurationName)/polyHard
 
 
-$(ConfigurationName)/polyHard	: polyHard.f90 $(OBJS)
-	$(FC) $<  -o $@ $(OBJS) $(FCFLAGS) $(FLDFLAGS) -lfngCore -lfngCRI
-
-$(ConfigurationName)/altayPolyHard	: altayPolyHard.f90 $(OBJS)
+$(TargetPath)	: polyHard.f90 $(OBJS)
 	$(FC) $<  -o $@ $(OBJS) $(FCFLAGS) $(FLDFLAGS) -lfngCore -lfngCRI
 
 $(OBJDIR)/%.o	: %.f90 | dirstructure
@@ -97,7 +96,7 @@ $(OUT_DIRS)	:
 	[ -d $@ ] || mkdir -p $@
 
 clean	:
-	-rm $(OBJDIR)/* $(INCLUDEDIR)/*	$(ConfigurationName)/polyHard $(ConfigurationName)/altayPolyHard
+	-rm $(OBJDIR)/* $(INCLUDEDIR)/*	$(TargetPath)
 # $(OBJDIR)/
 #
 $(OBJDIR)/polyHardUtils.o 	: $(OBJDIR)/updateData.o $(OBJDIR)/vumat_polyhard.o 

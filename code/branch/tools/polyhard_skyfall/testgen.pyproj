@@ -8,7 +8,7 @@
     <StartupFile>test_tools\testgen.py</StartupFile>
     <SearchPath>
     </SearchPath>
-    <WorkingDirectory>tests\test_DX51_sequence_coarse</WorkingDirectory>
+    <WorkingDirectory>tests\test_DX51_sequence_release_polyhard</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>testgen</Name>
     <RootNamespace>testgen</RootNamespace>

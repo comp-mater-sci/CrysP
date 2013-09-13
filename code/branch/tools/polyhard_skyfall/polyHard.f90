@@ -1,90 +1,92 @@
-! #define norm2(X) sqrt(sum(X*X))
-
-module hardFx
-
-      type :: vectorWrapper
-            double precision,dimension(:),pointer     :: vector
-      end type
-
-contains
-      
-      elemental double precision function swift(eps,K,n,eps0) result(sigma)
-      implicit none
-      double precision,intent(in) :: eps, K, n, eps0
-            sigma = K * ((eps0+eps)**n)
-      end function
-
-      elemental double precision function quadratic(x,A,B,C)
-      implicit none
-      double precision,intent(in)   :: x, A, B, C
-            quadratic = A*x*x + B*x + C
-      end function 
-
-      !> Calculates value of polynomial at x using Horner method
-      elemental double precision function polynomial(x,v)
-      implicit none
-      double precision,intent(in)         :: x
-      type(vectorWrapper),intent(in)      :: v     
-      !      
-      integer :: i
-      !
-            polynomial = 0.D0
-            do i=1,size(v%vector)
-                  polynomial = polynomial*x + v%vector(i)
-            enddo
-      !
-      end function 
-
-      
-end module
-      
-! #include "fngStdDefs.fpp"
-
-program quadraticHard
+!
+! $Id$
+!
+!>    \author Jerzy Gawad
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven (KU Leuven)
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>    \copyright KU Leuven
+!>
+!>    \date Date of the initial release: 2013-07-07
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+!>
+!
+!> The program calculates approximation of hardeninv law by means of polynomial interpolation 
+!> from discrete data points.
+program polyHard
+use fngRuntime
+use hardSwift
+use hardGeneric
+use hardAltay
 use KpolynomialHard
 use polyApproximation
 use polyHardUtils
 use updateData
-use hardFx
-use fngRuntime
-use fngVec5D
 implicit none
-
+!      
+integer,parameter       :: argc_min = 2, argc_max=2, command_argpos = 1
+type(commandLine)       :: cmdline
+!
+integer,parameter :: max_commands = 3
+! Identifiers of commands
+integer,parameter :: id_generic = 1, id_swift = 2, id_altay = 3
+!
+! Map of commands
+type(MapItem),dimension(max_commands),parameter :: command_map = [            &
+                                          MapItem('generic',id_generic),&
+                                          MapItem('swift',id_swift),      &
+                                          MapItem('altay',id_altay)]
+!
+double precision :: deps
 double precision,dimension(:),allocatable   :: vEps,vSigma
-
-type(polynomialHardData),target :: hardApprox
-type(PolyHardConfig)     :: cnf
-
-integer :: info
 type(defData) :: def_data
 !
-!double precision,parameter :: swift_K = 696860000.0, swift_n = 0.28433, swift_eps0 = 0.050875
-double precision :: swift_K = 0.D0 , swift_n = 0.D0, swift_eps0 = 0.D0
-double precision :: deps
-integer :: inpunit
+type(polynomialHardData),target :: hardApprox
+type(PolyHardConfig)     :: cnf
 !
-      type(MapItem),dimension(0)  :: command_map 
-      integer,parameter       :: argc_min = 1, argc_max=1, command_argpos = 0
-      type(commandLine)       :: cmdline
+type(genericModel) :: generic_model_cnf
+type(swiftModel) :: swift_model_cnf
+type(altayModel) :: altay_model_cnf
+!
+integer :: inpunit, info
       !
-      info = 1
+      info = fngError
       !
-      cmdline = commandLine('polyHard' //'$Rev$',description='Parameters: configuration_file')
+      cmdline = commandLine('polyHard' //'$Rev$',description='Parameters: command configuration_file')
       call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.)
       ! Open config file
-      inpunit = openOrDie(fpath=cmdline%argv(1),status='old')
-      ! Read:
+      inpunit = openOrDie(fpath=cmdline%argv(2),status='old')
+      ! Read the general section
       call readPolyHardConfig(inpunit,cnf,info)
       if (info /= 0) then
-            errmsg = 'Cannot read config file, general section'
+            write(errmsg,901) '(general section)'
             call finalize(2)
       endif
-      ! Read specific data:
-      read(inpunit,*,iostat=info) swift_K 
-      read(inpunit,*,iostat=info) swift_n
-      read(inpunit,*,iostat=info) swift_eps0
+      ! 
+      ! Process relevant sections of the configuration file
+      !
+      info = fngError
+      select case (cmdline%command_id) 
+      case(id_generic)
+            call readGenericHardConfig(generic_model_cnf, inpunit, info)
+            if (info /= 0) write(errmsg,901) '(generic section)'
+      !
+      case(id_swift)
+            call readSwiftConfig(swift_model_cnf, inpunit,info)
+            if (info /= 0) write(errmsg,901) '(Swift section)'
+      !
+      case(id_altay)
+            call readAlamelConfigSection(inpunit,altay_model_cnf%altay_cnf,info)
+            if (info /= 0) write(errmsg,901) '(altay section)'
+      !
+      case default
+            write(errmsg,900) 'internal error: incorrect execution mode'
+      end select
       if (info /= 0) then
-            errmsg = 'Cannot read config file, Swift section'
             call finalize(2)
       endif
       !
@@ -94,62 +96,68 @@ integer :: inpunit
       ! Terminate if no hardening calculations are requested
       if (def_data%req_hard == 0) call finalize(0)
       !
+      ! Create data points
       call makeDatapoints(size(hardApprox%vCoeff),def_data%eps_0,def_data%eps_1,deps,vEps,vSigma,info)
       if (info /= 0) then
-            errmsg = 'Cannot make proper data points'
+            write(errmsg,900) 'Cannot make proper data points.'
             call finalize(2)
       endif
-      ! Calculate stress values according  
-      vSigma = swift(vEps,swift_K,swift_n,swift_eps0)
+      !
+      ! Calculate stresses for the data points
+      select case (cmdline%command_id) 
+      case(id_generic)
+            ! Simply override the data points
+            if ( (size(vEps) /= size(generic_model_cnf%vEps)) .or. (size(vSigma) /= size(generic_model_cnf%vSigma)) ) then
+                  write(errmsg,900) 'Number of data points does not match polynomial order.'
+                  call finalize(2)
+            endif
+            vEps = generic_model_cnf%vEps
+            vSigma = generic_model_cnf%vSigma
+            info = fngSuccess
+      !
+      case(id_swift)
+            ! Calculate stress values according  
+            vSigma = swift(vEps,swift_model_cnf%swift_K,swift_model_cnf%swift_n,swift_model_cnf%swift_eps0)
+            info = fngSuccess
+      !
+      case(id_altay)
+            altay_model_cnf%def_data = def_data
+            call initialize(altay_model_cnf,info)
+            if (info /= 0) then
+                  write(errmsg,900) 'Cannot initialize libaltay.'
+                  call finalize(2)
+            endif
+            call getStress(altay_model_cnf,vEps,vSigma,info)
+      !
+      end select
+      !
+      if (info /= fngSuccess) then
+            write(errmsg,900) 'Cannot calculate stress response.'
+            call finalize(2)
+      endif
+      !
+      ! Calculate coefficients of the interpolation polynomial
       !
       call makeApproximation(vEps,vSigma,hardApprox,info)
       if (info /= 0) then
-            errmsg = 'Cannot calculate polynomial interpolation.'
+            write(errmsg,900) 'Cannot calculate polynomial interpolation.'
             call finalize(2)
       endif
-     
+      !
+      ! Write output files and exit.
+      !
       call writeOutputs(cnf,hardApprox,vEps,vSigma,info)
-      
-      ! call test()
-
-contains
-
-      
-      subroutine test()
-      implicit none
-      double precision,dimension(:),allocatable   :: vEpsTest, vSigmaSwift, vSigmaQuadratic, vSigmaHorner, vDevErr
-      double precision :: deps
-      integer :: ntest, i
-      type(vectorWrapper) :: vCoeffWrap
-            ntest = 20
-      
-            deps = (2.*vEps(3) - vEps(1)) / ntest
-            allocate(vEpsTest(ntest),vSigmaSwift(ntest),vSigmaQuadratic(ntest),vDevErr(ntest))
-            vEpsTest(1) = vEps(1)
-            do i=2,ntest
-                  vEpsTest(i) = vEpsTest(i-1) + deps
-            enddo
-      
-            vSigmaSwift =  swift(vEpsTest,swift_K,swift_n,swift_eps0)
-            if (hardApprox%order == 2) then
-                  vSigmaQuadratic = quadratic(vEpsTest,hardApprox%vCoeff(1),hardApprox%vCoeff(2),hardApprox%vCoeff(3))
-            else
-                  vSigmaQuadratic = 0.D0
-            endif
-      
-            vCoeffWrap%vector => hardApprox%vCoeff
-            vSigmaHorner = polynomial(vEpsTest,vCoeffWrap)
-            
-            vDevErr = (vSigmaSwift - vSigmaHorner) / vSigmaSwift 
-            
-            do i=1,ntest
-                  write(*,'(4(E15.6,1X),F10.5)') vEpsTest(i), vSigmaSwift(i), vSigmaQuadratic(i), vSigmaHorner(i), vDevErr(i)
-            enddo
-
-      
-      end subroutine
-      
-
+      !
+      if (info /= 0) then
+            write(errmsg,900) 'failed to write the result files.'
+            call finalize(2)
+      endif
+      !
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Formats for error messages
+      900 format('polyHard: Error: ', A)
+      901 format('polyHard: Error: an error is found in the config file ',A)       
+!
 end program
       
       

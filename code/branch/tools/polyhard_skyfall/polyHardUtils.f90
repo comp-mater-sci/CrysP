@@ -1,3 +1,21 @@
+!
+! $Id$
+!
+!>    \author Jerzy Gawad
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven (KU Leuven)
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>    \copyright KU Leuven
+!>
+!>    \date Date of the initial release: 2013-07-08
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+!>
+!
+!> Implementation of basic operations for polyHard 
 module polyHardUtils
 use fngPath
 use fngRuntime
@@ -142,12 +160,5 @@ contains
             info = 0
       !
       end subroutine
-
-      
-                  
-                  
-      
-      
-
                   
 end module

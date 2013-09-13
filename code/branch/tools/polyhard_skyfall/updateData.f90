@@ -1,12 +1,32 @@
+!
+! $Id$
+!
+!>    \author Jerzy Gawad
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven (KU Leuven)
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>    \copyright KU Leuven
+!>
+!>    \date Date of the initial release: 2013-07-07
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+!>
+!
+!> Parsing of HMS defdata communication files (Skyfall format).
 module updateData
 
       type :: defData
-            integer :: step,seq 
-            double precision,dimension(3,3) :: tDEps
-            integer :: req_texu 
-            integer :: req_aniso 
-            integer :: req_hard
-            double precision :: eps_0, eps_1
+            integer :: step                           !< Time increment number
+            integer :: seq                            !< Sequence number
+            double precision,dimension(3,3) :: tDEps  !< Plastic strain increment
+            integer :: req_texu                       !< Request for texture update
+            integer :: req_aniso                      !< Request for anisotropy update
+            integer :: req_hard                       !< Request for hardening update
+            double precision :: eps_0                 !< For the hardening update: lower strain limit
+            double precision :: eps_1                 !< For the hardening update: upper strain limit
       end type
 
 contains

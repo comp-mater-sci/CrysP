@@ -6,6 +6,7 @@ Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "polyHard", "polyHard.vfproj
 		{B26EB62B-886D-4C8B-A616-2E25BB5EC2D3} = {B26EB62B-886D-4C8B-A616-2E25BB5EC2D3}
 		{3DAE2C65-0C11-4D04-ADC3-8E101AD55419} = {3DAE2C65-0C11-4D04-ADC3-8E101AD55419}
 		{48A894A8-DEF0-4103-8323-DA4269DB06E8} = {48A894A8-DEF0-4103-8323-DA4269DB06E8}
+		{0F32BCF4-74C8-4668-A57A-410531D6D860} = {0F32BCF4-74C8-4668-A57A-410531D6D860}
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dependencies", "dependencies", "{C21FE79C-189A-413B-AA6A-E70FAC6FC023}"
@@ -16,14 +17,6 @@ Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "fngCore", "..\..\..\trunk\t
 	EndProjectSection
 EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "fngCRI", "..\..\..\trunk\tools\fng\projects\libfngCRI\fngCRI.vfproj", "{48A894A8-DEF0-4103-8323-DA4269DB06E8}"
-EndProject
-Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "altayPolyHard", "altayPolyHard.vfproj", "{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}"
-	ProjectSection(ProjectDependencies) = postProject
-		{B26EB62B-886D-4C8B-A616-2E25BB5EC2D3} = {B26EB62B-886D-4C8B-A616-2E25BB5EC2D3}
-		{3DAE2C65-0C11-4D04-ADC3-8E101AD55419} = {3DAE2C65-0C11-4D04-ADC3-8E101AD55419}
-		{48A894A8-DEF0-4103-8323-DA4269DB06E8} = {48A894A8-DEF0-4103-8323-DA4269DB06E8}
-		{0F32BCF4-74C8-4668-A57A-410531D6D860} = {0F32BCF4-74C8-4668-A57A-410531D6D860}
-	EndProjectSection
 EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libaltay", "..\..\..\..\MTM\branches\AlTaySub\libaltay\libaltay.vfproj", "{0F32BCF4-74C8-4668-A57A-410531D6D860}"
 EndProject
@@ -143,31 +136,6 @@ Global
 		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Release-Amplifier|Mixed Platforms.Build.0 = Release_abaqus|Win32
 		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Release-Amplifier|Win32.ActiveCfg = Release_abaqus|Win32
 		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Release-Amplifier|Win32.Build.0 = Release_abaqus|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Debug_abaqus|Any CPU.ActiveCfg = Debug|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Debug_abaqus|Mixed Platforms.ActiveCfg = Debug|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Debug_abaqus|Mixed Platforms.Build.0 = Debug|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Debug_abaqus|Win32.ActiveCfg = Debug|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Debug_abaqus|Win32.Build.0 = Debug|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Debug|Any CPU.ActiveCfg = Debug|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Debug|Mixed Platforms.Build.0 = Debug|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Debug|Win32.ActiveCfg = Debug|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Debug|Win32.Build.0 = Debug|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release_abaqus|Any CPU.ActiveCfg = Release|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release_abaqus|Mixed Platforms.ActiveCfg = Release|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release_abaqus|Mixed Platforms.Build.0 = Release|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release_abaqus|Win32.ActiveCfg = Release|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release_abaqus|Win32.Build.0 = Release|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release|Any CPU.ActiveCfg = Release|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release|Mixed Platforms.ActiveCfg = Release|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release|Mixed Platforms.Build.0 = Release|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release|Win32.ActiveCfg = Release|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release|Win32.Build.0 = Release|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release-Amplifier|Any CPU.ActiveCfg = Release|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release-Amplifier|Mixed Platforms.ActiveCfg = Release|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release-Amplifier|Mixed Platforms.Build.0 = Release|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release-Amplifier|Win32.ActiveCfg = Release|Win32
-		{1F10C4DF-2E76-4CED-BAC5-CF44D66092FF}.Release-Amplifier|Win32.Build.0 = Release|Win32
 		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Debug_abaqus|Any CPU.ActiveCfg = Debug|Win32
 		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Debug_abaqus|Mixed Platforms.ActiveCfg = Debug|Win32
 		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Debug_abaqus|Mixed Platforms.Build.0 = Debug|Win32
