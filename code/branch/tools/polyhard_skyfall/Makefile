@@ -30,6 +30,9 @@ INCLUDEDIR=$(ConfigurationName)/include
 
 
 SRCS = \
+hardAltay.f90 \
+hardGeneric.f90 \
+hardSwift.f90 \
 polyApproximation.f90 \
 polyHardUtils.f90 \
 updateData.f90 \
@@ -99,7 +102,8 @@ clean	:
 	-rm $(OBJDIR)/* $(INCLUDEDIR)/*	$(TargetPath)
 # $(OBJDIR)/
 #
-$(OBJDIR)/polyHardUtils.o 	: $(OBJDIR)/updateData.o $(OBJDIR)/vumat_polyhard.o 
+$(OBJDIR)/polyHardUtils.o 	: $(addprefix $(OBJDIR)/, hardAltay.o hardGeneric.o hardSwift.o updateData.o vumat_polyhard.o)
+$(OBJDIR)/hardAltay.o 		: $(addprefix $(OBJDIR)/, updateData.o)
 #
 #
 # Make a soft link to vumat_polyhard.f90
