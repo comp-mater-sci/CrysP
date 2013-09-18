@@ -21,13 +21,12 @@ use updateData
 use dmcBasicModule, only: readAlamelConfigSection
 use altaySub
 use altayConfig
-use fngRuntime
+use fngVec5D
 
 implicit none
 
       type :: altayModel
             type(alTayConfigData)   :: altay_cnf
-            type(defData)           :: def_data
             double precision        :: dEps_default = 0.001
             !> Conversion factor. The stresses from the AlTay will be multiplied 
             !> by this number.
@@ -52,34 +51,40 @@ contains
       !      
       end subroutine
       
-      subroutine getStress(this,vEps,vSigma,info)
+      !> 
+      subroutine getStress(this,vEps,vSigma,vStrainMode,info,errmsg)
       implicit none
       type(altayModel),intent(inout)            :: this
       double precision,dimension(:),intent(in)  :: vEps
       double precision,dimension(:),intent(out) :: vSigma
-      
+      double precision,dimension(fng_dsv_dim),intent(in)   :: vStrainMode
       integer,intent(out)                       :: info
+      character(len=*),intent(out)              :: errmsg
       !
       double precision :: deps, deltaEps_norm
       double precision,dimension(3,3) :: tDeltaEps
+      double precision,dimension(5)   :: vDeltaEps
       integer :: npoints, i
       !
             info = fngErr_BadDims
+            errmsg = ''
             if (size(vEps) /= size(vSigma)) return
             !
             npoints = size(vEps)
             ! Prepare strain increment tensor
-            deltaEps_norm = norm2(this%def_data%tDeps)
+            deltaEps_norm = norm2(vStrainMode)
             if (deltaEps_norm < epsilon(0.D0)) then
-                  errmsg = 'Input error: norm of strain increment must not be zero.'
-                  call finalize(2)
+                  info = fngErr_BadArgs
+                  errmsg = 'Input error: norm of strain direction vector must not be zero.'
+                  return
             endif
             !
             ! Init and configure steps
             call initStepData(npoints,astate,info)
             if (info /= 0) then
+                  info = fngError
                   errmsg = 'Cannot initialize data structure for alamel results'
-                  call finalize(2)
+                  return
             endif      
             !
             ! Configure steps
@@ -89,7 +94,8 @@ contains
                   ! Set the strain increment. 
                   ! For the last step use the previous value
                   if (i /= npoints) deps = abs(vEps(i+1) - vEps(i))
-                  tDeltaEps = this%def_data%tDeps / deltaEps_norm * deps
+                  vDeltaEps = vStrainMode / deltaEps_norm * deps
+                  tDeltaEps = vec5D2tens(vDeltaEps)
                   !                          
                   astate%simulCalls(i)%input%full_model = .true.
                   astate%simulCalls(i)%input%keep_texture = .false.
@@ -102,7 +108,8 @@ contains
             call runSteps(astate,info)
             if (info /= 0) then
                  errmsg = 'Multilevel model failed.' 
-                 call finalize(2) 
+                 info = fngError
+                 return
             endif
 #ifdef DIAGNOSTICS
             do i = 1, npoints

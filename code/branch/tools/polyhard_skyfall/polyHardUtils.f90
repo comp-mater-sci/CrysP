@@ -50,6 +50,7 @@ contains
             return
             ! IO error handler
             900 continue
+            info = fngErr_IORead
       !      
       end subroutine
       
@@ -64,7 +65,7 @@ contains
       !
       integer :: i
       !
-            info = -1
+            info = fngErr_BadDims
             if (npoints <= 0) return
             allocate(vEps(npoints),vSigma(npoints))
             !
@@ -75,7 +76,7 @@ contains
                   vEps(i) = eps_0 + dble(i-1)*deps
             enddo
             vSigma = 0.D0
-            info = 0
+            info = fngSuccess
       !
       end subroutine
       
@@ -87,13 +88,16 @@ contains
       type(polynomialHardData),intent(inout)          :: hardApprox
       integer,intent(out)                             :: info
       !
-            info = -1
+            info = fngError
             call calculateAppoximation(vEps,vSigma,hardApprox%vCoeff,info)
-            if (info /= 0) return
+            if (info /= 0) then
+                  info = fngError
+                  return
+            endif
             !
             hardApprox%valid_eps_range = [ vEps(1), vEps(size(vEps)) ]
             hardApprox%vCoeff = hardApprox%vCoeff
-            info = 0
+            info = fngSuccess
       !
       end subroutine
       
@@ -111,21 +115,21 @@ contains
             ! Open and process defdata.dat file
             inpunit = openOrDie(fpath=cnf%input_fname,status='old')
             call readUpdateData(inpunit,def_data,info)
-            if (info /= 0) then
+            if (info /= fngSuccess) then
                   errmsg = 'Cannot read file ' // trim(cnf%input_fname)
                   call finalize(1)
             endif
             !
-            info = -1
+            info = fngError
             ! Prepare data points  
             hardApprox = initPolynomialHardData(cnf%polynomial_order)
             !
-            hardApprox%vD0 = tens2vec5D(def_data%tDEps)
+            hardApprox%vD0 = def_data%vStrainMode
             D0_norm = norm2(hardApprox%vD0)
             if (D0_norm < epsilon(0.D0)) return
             hardApprox%vD0 = hardApprox%vD0 / D0_norm
             !
-            info = 0
+            info = fngSuccess
       !
       end subroutine
 

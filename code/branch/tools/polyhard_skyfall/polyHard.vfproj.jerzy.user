@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioUserFile ProjectCreator="Intel Fortran" Keyword="Console Application" Version="11.0" ProjectIdGuid="{76735BC9-91FC-46A6-9E14-3393A54C01C3}">
 	<Configurations>
-		<Configuration Name="Debug|Win32" CommandArguments="polyHard_Swift.cfg" WorkingDirectory="tests\test_swift2"/>
-		<Configuration Name="Release|Win32" CommandArguments="polyHard_Swift.cfg" WorkingDirectory="tests\test_swift"/></Configurations></VisualStudioUserFile>
+		<Configuration Name="Debug|Win32" CommandArguments="altay polyHard_DC06F250.cfg" WorkingDirectory="tests_newdefdata\test_pebp"/>
+		<Configuration Name="Release|Win32" CommandArguments="swift polyHard_Swift.cfg" WorkingDirectory="tests_refactored\test_swift"/></Configurations></VisualStudioUserFile>

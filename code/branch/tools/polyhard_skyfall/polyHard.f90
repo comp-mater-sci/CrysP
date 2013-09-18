@@ -73,15 +73,15 @@ integer :: inpunit, info
       select case (cmdline%command_id) 
       case(id_generic)
             call readGenericHardConfig(generic_model_cnf, inpunit, info)
-            if (info /= 0) write(errmsg,901) '(generic section)'
+            if (info /= fngSuccess) write(errmsg,901) '(generic section)'
       !
       case(id_swift)
             call readSwiftConfig(swift_model_cnf, inpunit,info)
-            if (info /= 0) write(errmsg,901) '(Swift section)'
+            if (info /= fngSuccess) write(errmsg,901) '(Swift section)'
       !
       case(id_altay)
             call readAlamelConfigSection(inpunit,altay_model_cnf%altay_cnf,info)
-            if (info /= 0) write(errmsg,901) '(altay section)'
+            if (info /= fngSuccess) write(errmsg,901) '(altay section)'
       !
       case default
             write(errmsg,900) 'internal error: incorrect execution mode'
@@ -98,7 +98,7 @@ integer :: inpunit, info
       !
       ! Create data points
       call makeDatapoints(size(hardApprox%vCoeff),def_data%eps_0,def_data%eps_1,deps,vEps,vSigma,info)
-      if (info /= 0) then
+      if (info /= fngSuccess) then
             write(errmsg,900) 'Cannot make proper data points.'
             call finalize(2)
       endif
@@ -121,18 +121,17 @@ integer :: inpunit, info
             info = fngSuccess
       !
       case(id_altay)
-            altay_model_cnf%def_data = def_data
             call initialize(altay_model_cnf,info)
             if (info /= 0) then
                   write(errmsg,900) 'Cannot initialize libaltay.'
                   call finalize(2)
             endif
-            call getStress(altay_model_cnf,vEps,vSigma,info)
+            call getStress(altay_model_cnf,vEps,vSigma,hardApprox%vD0,info,errmsg)
       !
       end select
       !
       if (info /= fngSuccess) then
-            write(errmsg,900) 'Cannot calculate stress response.'
+            write(errmsg,900) 'Cannot calculate stress response.' // errmsg
             call finalize(2)
       endif
       !

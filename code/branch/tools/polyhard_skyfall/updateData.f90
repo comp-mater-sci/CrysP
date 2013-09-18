@@ -17,16 +17,19 @@
 !
 !> Parsing of HMS defdata communication files (Skyfall format).
 module updateData
-
+use fngErrcodes
+use fngConstants, only: fng_dsv_dim
+implicit none
       type :: defData
-            integer :: step                           !< Time increment number
-            integer :: seq                            !< Sequence number
-            double precision,dimension(3,3) :: tDEps  !< Plastic strain increment
-            integer :: req_texu                       !< Request for texture update
-            integer :: req_aniso                      !< Request for anisotropy update
-            integer :: req_hard                       !< Request for hardening update
-            double precision :: eps_0                 !< For the hardening update: lower strain limit
-            double precision :: eps_1                 !< For the hardening update: upper strain limit
+            integer :: step = 0                             !< Time increment number
+            integer :: seq  = 0                             !< Sequence number
+            double precision,dimension(3,3) :: tDEps = 0.D0 !< Plastic strain increment
+            integer :: req_texu = 0                         !< Request for texture update
+            integer :: req_aniso = 0                        !< Request for anisotropy update
+            integer :: req_hard  = 0                        !< Request for hardening update
+            double precision :: eps_0 = 0.D0                !< For the hardening update: lower strain limit
+            double precision :: eps_1 = 0.D0                !< For the hardening update: upper strain limit
+            double precision,dimension(fng_dsv_dim) :: vStrainMode = 0.D0   !< Direction of the plastic strain (mode)
       end type
 
 contains
@@ -40,7 +43,7 @@ contains
       integer :: i
       double precision :: tr
       !
-            info = 0
+            info = fngSuccess
             tr = 0.D0
             read(inunit,*,iostat=info,err=900) dta%step, dta%seq
             do i=1,3
@@ -60,9 +63,12 @@ contains
             read(inunit,*,iostat=info,err=900) dta%req_hard
             read(inunit,*,iostat=info,err=900) dta%eps_0
             read(inunit,*,iostat=info,err=900) dta%eps_1
-            info = 0
+            read(inunit,*,iostat=info,err=900) dta%vStrainMode
+            info = fngSuccess
             return
-      900   info = -1
+      900   info = fngErr_IORead
+            return
+      
       !
       end subroutine
       
