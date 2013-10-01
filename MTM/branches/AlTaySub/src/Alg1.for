@@ -221,6 +221,7 @@ C     Ssam:        local stress in sample reference system
 C
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
      1 WR,SWRLX(3)
+      DIMENSION RCcryst(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SPANT(3,3),SGNN(96)
       dimension bufsp(3,3),RHOAsa(3,3),SPNV(5),GAMdot(96)
       COMMON /RHO/ RHOS(5),RHOA(5)
@@ -320,6 +321,19 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       do 74 j=1,3
       SPANT(i,j)=0.0
   74  continue
+      !Calculate RCcryst: the rigid body spin in the crystal frame 
+	do i=1,3,1                                    
+	  RCcryst(i,i)=0.0                               
+	enddo                                         
+	RCcryst(3,2)=RC(3,2)                            
+	RCcryst(1,3)=RC(1,3)                            
+	RCcryst(2,1)=RC(2,1)                            
+	RCcryst(2,3)=-RCcryst(3,2)                        
+	RCcryst(3,1)=-RCcryst(1,3)                        
+	RCcryst(1,2)=-RCcryst(2,1)                        
+	call MATPROD(bufsp,RCcryst,buftrf,3,3,3)        
+	call MATPROD(RCcryst,TRF,bufsp,3,3,3)           
+      ! RCcryst now calculated 
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 20/4/2012
        SPANT(2,3)=RHOA(1)*SQR2*DELTAT
        SPANT(3,2)=-SPANT(2,3)
@@ -345,9 +359,9 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 20/4/2012
 c 71   TRC(1)=RC(3,2)-RHOA(1)*DELTAT*SQR2
 c      TRC(2)=RC(1,3)-RHOA(2)*DELTAT*SQR2
 c      TRC(3)=RC(2,1)-RHOA(3)*DELTAT*SQR2
-   71   TRC(1)=RC(3,2)+RHOAsa(3,2)
-        TRC(2)=RC(1,3)+RHOAsa(1,3)
-        TRC(3)=RC(2,1)+RHOAsa(2,1)
+   71   TRC(1)=RCcryst(3,2)+RHOAsa(3,2)
+        TRC(2)=RCcryst(1,3)+RHOAsa(1,3)
+        TRC(3)=RCcryst(2,1)+RHOAsa(2,1)
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       DELTAW=0.0
       do 44 i=1,M11 
