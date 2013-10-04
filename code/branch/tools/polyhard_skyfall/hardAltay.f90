@@ -72,7 +72,9 @@ contains
             !
             npoints = size(vEps)
             ! Prepare strain increment tensor
-            deltaEps_norm = norm2(vStrainMode)
+            ! The strain increments are given as von Mises equivalent strain, 
+            ! so to get the scaled strain increment right, we have to multiply deltaEps_norm by sqrt(2/3)
+            deltaEps_norm = norm2(vStrainMode) * root23     
             if (deltaEps_norm < epsilon(0.D0)) then
                   info = fngErr_BadArgs
                   errmsg = 'Input error: norm of strain direction vector must not be zero.'
@@ -119,7 +121,7 @@ contains
 #endif
             !
             ! Get average stresses
-            vSigma = astate%simulCalls(:)%output%average_stress * this%unit_conversion_factor
+            vSigma = astate%simulCalls(:)%output%effective_stress * this%unit_conversion_factor
       !
       end subroutine
       
