@@ -310,7 +310,11 @@ contains
       !
       end subroutine
 
-      
+      !> Write out the current state variables.
+      !>
+      !> The call may involve IO units: IMP1 (CUR file), IMP4 (PEBP state file) and IMP5 (MSS file).
+      !> Appropriate control fields in acnf%output_config are checked to decide if the data have to
+      !> be actually written to corresponding IO units.  
       subroutine outputCurrentState(info)
       use IOConfig
       use curAccess
@@ -332,12 +336,13 @@ contains
             endif
             if (info /= 0) return
             !
-            if ((acnf%slipsystem%kost == hard_PEBP) .and.(acnf%output_config%nmss == 1) .and. allocated(astate%simulCalls)) then
+            if ((acnf%output_config%nmss == 1) .and. allocated(astate%simulCalls)) then
                   !
                   associate (callout => astate%simulCalls(astate%this)%output)
                         call writeMSSRecord(IMP5, &
                                             callout%effective_macro_strain, callout%effective_macro_strain_tot, &
                                             callout%effective_strain,callout%effective_strain_tot,callout%stress_tensor, &
+                                            callout%taylor_factor, callout%strain_rate_heterogeneity, &
                                             info)
                   end associate
                   !

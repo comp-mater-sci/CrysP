@@ -117,6 +117,9 @@ implicit none
             double precision,dimension(3,3)     :: stress_tensor = 0.D0
             !> Macroscopic (homogenized) Taylor factor
             double precision                    :: taylor_factor = 0.D0
+            !> Strain Rate Heterogeneity in polycrystal. Non-zero only for models that consider clusters of grains:
+            !> \f$ \kappa = (||d-D||) / ||D|| \f$
+            double precision                    :: strain_rate_heterogeneity = 0.D0
             !> Macroscopic stress, defined as the work conjugate to D_vM: 
             !> \f$ \sigma_{eq} = (\mathbf{S} \cdot \mathbf{D}) / D_{vM} \f$
             double precision                    :: equivalent_stress = 0.D0

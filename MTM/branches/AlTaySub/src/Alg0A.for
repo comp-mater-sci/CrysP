@@ -568,8 +568,8 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   63  SG=SG+WDOT*GEWF
       Mgrain=GMMdot/DELTAT
       Mavg=Mavg+Mgrain*GEWF
+      ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/DELTAT with DELTAT=D_vM=sqrt(2/3)*||D|| 
       srh=srh+norm2(RHOSsa)*GEWF
-         ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/DELTAT with DELTAT=D_vM=sqrt(2/3)*||D|| 
       HEPS = HEPS + EPS * GEWF
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX¡¡4/11/2011
 C      if (IROT.NE.1) goto 23
@@ -619,8 +619,8 @@ C      call STR5(vec1,SHsam)
 65    continue
 
       Mavg=Mavg/TOTGEW
+      ! DEFINITION: srh = (||d-D||) / ||D||
       srh=sqrt(2./3.)*srh/TOTGEW 
-               ! DEFINITION: srh = (||d-D||) / ||D||
       SG=SG/TOTGEW
       !
       if (NMSSx /= 0) then
@@ -632,6 +632,7 @@ C      call STR5(vec1,SHsam)
       associate (callout => astate%simulCalls(astate%this)%output)
             callout%stress_tensor= SHsam
             callout%taylor_factor= Mavg
+            callout%strain_rate_heterogeneity = srh
             callout%equivalent_stress= SG
             callout%effective_stress = sqrt(3.D0/2.D0)*norm2(SHsam)
             callout%effective_strain = HEPSCALL
