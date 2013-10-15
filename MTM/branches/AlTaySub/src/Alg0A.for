@@ -73,6 +73,7 @@ C
       double precision :: GMMdot !Total slip rate in current grain      
       double precision :: Mgrain !Taylor factor of the current grain
       double precision :: Mavg   !Volume-averaged Taylor factor
+      double precision :: srh !Strain Rate Heterogeneity in polycrystal
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      DATA JW /0/
 C      DATA Cmic0 /1.0D0,0.0D0,0.0D0,
@@ -288,6 +289,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   50  continue
       SG=0.
       Mavg=0.
+      srh=0.
       HEPS=0.D0
       MEPS=sqrt(2./3.)*0.5*sqrt(sum((DG+transpose(DG))**2))
       call dynfil2(nrstep,F,GAXES,GEULR,CIJ,TG)
@@ -565,7 +567,9 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   51  continue
   63  SG=SG+WDOT*GEWF
       Mgrain=GMMdot/DELTAT
-      Mavg=Mavg+Mgrain*GEWF      
+      Mavg=Mavg+Mgrain*GEWF
+      srh=srh+norm2(RHOSsa)*GEWF
+         ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/DELTAT with DELTAT=D_vM=sqrt(2/3)*||D|| 
       HEPS = HEPS + EPS * GEWF
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX¡¡4/11/2011
 C      if (IROT.NE.1) goto 23
@@ -615,11 +619,13 @@ C      call STR5(vec1,SHsam)
 65    continue
 
       Mavg=Mavg/TOTGEW
+      srh=sqrt(2./3.)*srh/TOTGEW 
+               ! DEFINITION: srh = (||d-D||) / ||D||
       SG=SG/TOTGEW
       !
       if (NMSSx /= 0) then
             call writeMSSRecord(IMP5,MEPS*(ISTP-1),MEPSTOT,HEPSCALL,
-     &                          HEPSTOT,SHsam,info)
+     &                          HEPSTOT,SHsam,Mavg,srh,info)
       endif
 #ifdef ALTAY_SUBROUTINE
       ! Get the homogenized quantities:
