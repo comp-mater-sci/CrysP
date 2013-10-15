@@ -117,8 +117,9 @@ implicit none
             double precision,dimension(3,3)     :: stress_tensor = 0.D0
             !> Macroscopic (homogenized) Taylor factor
             double precision                    :: taylor_factor = 0.D0
-            !> Macroscopic average stress
-            double precision                    :: average_stress = 0.D0
+            !> Macroscopic stress, defined as the work conjugate to D_vM: 
+            !> \f$ \sigma_{eq} = (\mathbf{S} \cdot \mathbf{D}) / D_{vM} \f$
+            double precision                    :: equivalent_stress = 0.D0
             !> Macroscopic (homogenized) effective von Mises stress
             double precision                    :: effective_stress = 0.D0
             !> Macroscopic (homogenized) effective von Mises strain

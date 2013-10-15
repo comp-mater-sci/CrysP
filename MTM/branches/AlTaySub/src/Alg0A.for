@@ -632,7 +632,7 @@ C      call STR5(vec1,SHsam)
       associate (callout => astate%simulCalls(astate%this)%output)
             callout%stress_tensor= SHsam
             callout%taylor_factor= Mavg
-            callout%average_stress= SG
+            callout%equivalent_stress= SG
             callout%effective_stress = sqrt(3.D0/2.D0)*norm2(SHsam)
             callout%effective_strain = HEPSCALL
             callout%effective_strain_tot = HEPSTOT
