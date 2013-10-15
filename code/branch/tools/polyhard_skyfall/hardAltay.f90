@@ -121,7 +121,7 @@ contains
 #endif
             !
             ! Get average stresses
-            vSigma = astate%simulCalls(:)%output%effective_stress * this%unit_conversion_factor
+            vSigma = astate%simulCalls(:)%output%equivalent_stress * this%unit_conversion_factor
       !
       end subroutine
       
