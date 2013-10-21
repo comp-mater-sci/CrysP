@@ -60,14 +60,10 @@ C
       ! HGAM: homogenized slip per step
       ! HGAMCALL: homogenized slip per call
       ! HGAMTOT: homogenized slip accumulated over calls
-      double precision :: HGAM=0.D0,HGAMCALL=0.D0,HGAMTOT=0.D0   
-      ! HEPS: homogenized von Mises equivalent strain (per step) ![PE:] Identified as obsolete comment
-      ! HEPSCALL: homogenized vM strain (per call)               ![PE:] Identified as obsolete comment
-      ! HEPSTOT: homogenized vM strain (cumulative over calls)   ![PE:] Identified as obsolete comment
-      double precision :: HEPS=0.D0,HEPSCALL=0.D0,HEPSTOT=0.D0   ![PE:] Identified as obsolete statement
-      ! Macroscopically imposed vM equivalent strain per step and 
-      ! accumulated over the calls.
-      double precision :: MEPS=0.D0,MEPSTOT=0.D0 
+      double precision :: HGAM=0.D0,HGAMCALL=0.D0,HGAMTOT=0.D0
+      ! Macroscopically imposed vM equivalent strain per step,  
+      ! per call and accumulated over the calls.
+      double precision :: MEPS=0.D0,MEPSCALL=0.D0,MEPSTOT=0.D0 
 #ifdef ALTAY_SUBROUTINE
       ! Variables for simple stress calculations: full_model=.false.
       ! This operation mode is inspired by QGX's way of calculating
@@ -116,7 +112,6 @@ C     Number of grains in ALAMEL cluster
       NMSS = NLIST
 #endif
       HGAMTOT=0.D0
-      HEPSTOT=0.D0 ![PE:] Identified as obsolete statement
       MEPSTOT=0.D0
       ! NGR == 3: enable MAS-AL
       if(NGR.eq.3) then
@@ -277,7 +272,7 @@ C     read the parameters of the work hardening model
       endif
 #endif
       HGAMCALL = 0.D0
-      HEPSCALL = 0.D0 ![PE:] Identified as obsolete statement
+      MEPSCALL = 0.D0
 C
 C     Main Loop over the Steps
 C
@@ -297,7 +292,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       Mavg=0.
       srh=0.
       HGAM=0.D0
-      HEPS=0.D0 ![PE:] Identified as obsolete statement
       MEPS=sqrt(2./3.)*0.5*sqrt(sum((DG+transpose(DG))**2))
       call dynfil2(nrstep,F,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT       
@@ -578,7 +572,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/DELTAT with DELTAT=D_vM=sqrt(2/3)*||D|| 
       srh=srh+norm2(RHOSsa)*GEWF
       HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s      
-      HEPS = HEPS + EPS * GEWF ![PE:] Identified as obsolete statement
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX¡¡4/11/2011
 C      if (IROT.NE.1) goto 23
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -631,8 +624,10 @@ C      call STR5(vec1,SHsam)
       srh=sqrt(2./3.)*srh/TOTGEW 
       SG=SG/TOTGEW
       !
+      MEPSCALL=MEPS*(ISTP-1)
+      !
       if (NMSSx /= 0) then
-            call writeMSSRecord(IMP5,MEPS*(ISTP-1),MEPSTOT,HGAMCALL,
+            call writeMSSRecord(IMP5,MEPSCALL,MEPSTOT,HGAMCALL,
      &                          HGAMTOT,SHsam,Mavg,srh,info)
       endif
 #ifdef ALTAY_SUBROUTINE
@@ -643,10 +638,10 @@ C      call STR5(vec1,SHsam)
             callout%strain_rate_heterogeneity = srh
             callout%equivalent_stress= SG
             callout%effective_stress = sqrt(3.D0/2.D0)*norm2(SHsam)
-            !suggestion for replacement of next statement:: callout%homogenised_slip = HGAMCALL
-            callout%effective_strain = HEPSCALL ![PE:] Identified as obsolete statement
-            !suggestion for replacement of next statement:: callout%homogenised_slip_tot = HGAMTOT            
-            callout%effective_strain_tot = HEPSTOT ![PE:] Identified as obsolete statement
+            callout%homogenised_slip = HGAMCALL
+            callout%homogenised_slip_tot = HGAMTOT            
+            callout%effective_macro_strain = MEPSCALL
+            callout%effective_macro_strain_tot = MEPSTOT
             callout%effective_macro_strain = MEPS*(ISTP-1)
             callout%effective_macro_strain_tot = MEPSTOT
       end associate
@@ -654,18 +649,14 @@ C      call STR5(vec1,SHsam)
       !
       HGAM = HGAM / TOTGEW
       HGAMCALL = HGAMCALL + HGAM
-      HEPS = HEPS / TOTGEW       ![PE:] Identified as obsolete statement
-      HEPSCALL = HEPSCALL + HEPS ![PE:] Identified as obsolete statement
 #ifdef ALTAY_SUBROUTINE
       ! We can choose not to update the internal state
       if (.not.astate%simulCalls(astate%this)%input%keep_state) then  
             HGAMTOT = HGAMTOT + HGAM 
-            HEPSTOT = HEPSTOT + HEPS ![PE:] Identified as obsolete statement
             MEPSTOT = MEPSTOT + MEPS
       endif
 #else
       HGAMTOT = HGAMTOT + HGAM
-      HEPSTOT = HEPSTOT + HEPS ![PE:] Identified as obsolete statement
       MEPSTOT = MEPSTOT + MEPS
 #endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011

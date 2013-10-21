@@ -125,10 +125,10 @@ implicit none
             double precision                    :: equivalent_stress = 0.D0
             !> Macroscopic (homogenized) effective von Mises stress
             double precision                    :: effective_stress = 0.D0
-            !> Macroscopic (homogenized) effective von Mises strain
-            double precision                    :: effective_strain = 0.D0
-            !> Macroscopic (homogenized) effective von Mises strain - total over the calls
-            double precision                    :: effective_strain_tot = 0.D0
+            !> Macroscopic (homogenized) plastic slip
+            double precision                    :: homogenised_slip = 0.D0
+            !> Macroscopic (homogenized) plastic slip - total over the calls
+            double precision                    :: homogenised_slip_tot = 0.D0
             !> Macroscopic (imposed) effective von Mises strain - total over the steps
             double precision                    :: effective_macro_strain = 0.D0
             !> Macroscopic (imposed) effective von Mises strain - total over the calls

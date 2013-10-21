@@ -341,7 +341,8 @@ contains
                   associate (callout => astate%simulCalls(astate%this)%output)
                         call writeMSSRecord(IMP5, &
                                             callout%effective_macro_strain, callout%effective_macro_strain_tot, &
-                                            callout%effective_strain,callout%effective_strain_tot,callout%stress_tensor, &
+                                            callout%homogenised_slip,callout%homogenised_slip_tot, &
+                                            callout%stress_tensor, &
                                             callout%taylor_factor, callout%strain_rate_heterogeneity, &
                                             info)
                   end associate
