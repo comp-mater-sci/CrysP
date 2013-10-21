@@ -42,7 +42,7 @@ contains
       !>
       !> This subroutine must be called prior to any call to other
       !> module subroutines.
-      subroutine initAltay(cnf,info)
+      subroutine initAltay(cnf,info,errmsg)
       use altayConfig, only: altayConfigData,fname_len,acnf
       use altayInterface
       use altayRCM
@@ -57,6 +57,7 @@ contains
       !
       type(altayConfigData),intent(in)    :: cnf      !< configuration data 
       integer,intent(out)                 :: info     !< exit code (0 on success)
+      character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= 0)
       !
       character(len=fname_len) :: fnam2, cods1 
       character(len=fname_len) :: codsim
@@ -74,6 +75,7 @@ contains
       external :: Alg0
       !
             info = altaySub_IOErr
+            if (present(errmsg)) errmsg = ''
             ierr = 0
             ! Set the singleton object to the cnf
             acnf = cnf
@@ -107,8 +109,10 @@ contains
             fnam2 = trim(cnf%slipsystem%input_fname)
             ! UNIT LEC = SLIP SYSTEMS
             open (unit=LEC,file=TRIM(fnam2),status='old',iostat=ierr)
-            
-            if (ierr /= 0) return
+            if (ierr /= 0) then
+                  if (present(errmsg)) errmsg = 'Cannot open slip system definition file: ' // trim(fnam2)
+                  return
+            endif
 !
 #ifndef NOCURFILE
             if (cnf%output_config%nfile /= 0) then
@@ -125,7 +129,10 @@ contains
                   cods1(L+1:L+4)='.BPM'
                   ! UNIT IMP4 = state variables of PEBP KOST11
                   info = KS_openStateFile(IMP4,fname=cods1,mode='w')
-                  if (info /= 0) return
+                  if (info /= 0) then
+                        if (present(errmsg)) errmsg = 'Cannot create PEBP state file: ' // trim(cods1)
+                        return
+                  endif
             endif
 #endif
             if (acnf%output_config%NMSS /= 0) then
@@ -143,14 +150,18 @@ contains
             endif
             
             CALL GRFIL(info)
-            if (info /= 0) return
-            RCM_HANDLE(info)
+            if (info /= 0) then
+                  if (present(errmsg)) errmsg = 'Cannot process the microstructure file: ' // acnf%micros_fname
+                  return
+            endif
             !
             ! Initialisation of SIMUL
             !
+            if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
             EPS = 0.D0
             CALL SIMUL(0,EPS,1)
             RCM_HANDLE(info)
+            if (present(errmsg)) errmsg = ''
             !
 #ifdef USE_LEESOR
             ! Get the initial texture
@@ -159,7 +170,10 @@ contains
 #else
             call loadTexture(cnf%texture%input_type,NDAT1,trim(cnf%texture%input_fname),cnf%texture%block_id,info)
             call xleesor()
-            if (info /= 0) return
+            if (info /= 0) then
+                  if (present(errmsg)) errmsg = 'Cannot process the texture data file: ' // trim(cnf%texture%input_fname)
+                  return
+            endif
 #endif
 #ifdef PEBP_ENABLED
             ! PEBP model
@@ -169,8 +183,15 @@ contains
                   if (acnf%hardening%PEBPCnf%read_state) then 
                         ! Load state variables
                         info = KS_openStateFile(IPEBPSTAT,acnf%hardening%PEBPCnf%input_fname, mode='r')
-                        if (info /= 0) return
+                        if (info /= 0) then
+                              if (present(errmsg)) errmsg = 'Cannot open PEBP state file: '// trim(acnf%hardening%PEBPCnf%input_fname) 
+                              return
+                        endif
                         info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
+                        if ((info /= 0) .and. present(errmsg)) then  
+                              errmsg = 'Cannot read from PEBP state file: '// trim(acnf%hardening%PEBPCnf%input_fname)
+                              return
+                        endif
                   endif
             endif      
 #endif
