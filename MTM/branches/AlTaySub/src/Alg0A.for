@@ -642,8 +642,6 @@ C      call STR5(vec1,SHsam)
             callout%homogenised_slip_tot = HGAMTOT            
             callout%effective_macro_strain = MEPSCALL
             callout%effective_macro_strain_tot = MEPSTOT
-            callout%effective_macro_strain = MEPS*(ISTP-1)
-            callout%effective_macro_strain_tot = MEPSTOT
       end associate
 #endif
       !
