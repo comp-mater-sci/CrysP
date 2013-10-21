@@ -77,11 +77,12 @@ contains
             endif
             !
             write(display_unit,fmt=30) 'Initializing the multilevel model...'
-            call initAltay(this%altay,info)
+            call initAltay(this%altay,info,errmsg)
             if (info == 0) then
                   write(display_unit,fmt=31) 'Done.'
             else
                   write(display_unit,fmt=31) 'Failed.'
+                  return
             endif
             30 format(A,\)
             31 format(1X,A)

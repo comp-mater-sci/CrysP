@@ -55,6 +55,8 @@ implicit none
       !
       integer                 :: info, ioerr
       !
+      character(len=errmsg_len) :: error_message
+      !
       info = 1
       ioerr = 0
       !
@@ -107,7 +109,12 @@ implicit none
       !
       
       if (the_module%initialize() /= 0) then
-            write(errmsg,'(A)')  'Fatal error: cannot initialize the multilevel model.'
+            if (len(errmsg) == 0) then
+                  errmsg = 'Fatal error: cannot initialize the multilevel model.'
+            else
+                  error_message = errmsg
+                  errmsg = 'Fatal error during initialization of the multilevel model: ' // trim(error_message)
+            endif
             call finalize(stopcode_runtimeerror)
       endif
        
