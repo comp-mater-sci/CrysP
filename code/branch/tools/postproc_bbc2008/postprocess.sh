@@ -308,7 +308,7 @@ for  snap in $SNAPLIST ; do
 	#
 	if [[ "${EXTRACTHARD}" -ge 1 &&  "${REQ_HARDUPDATE}" -ge 1 ]] ; then
 		renameAndTransferFiles "${hardfiles}" "${PREFIX}" "${outprefix}"
-		cat "${PREFIX}.str" >> "${OPFILE}.str"
+		gawk  -v STEP="${defstep}" '{print $1,$2,STEP,NR}' "${PREFIX}.str" >> "${OPFILE}.str"
 		markProgress
 	fi
 	#
