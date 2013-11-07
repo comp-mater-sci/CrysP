@@ -262,10 +262,7 @@
       type(matFrame),intent(in)     :: mf
       type(grain),intent(inout)     :: gr
       !
-      double precision,dimension(3,3) :: TA, A
-      !
-            call orientMat(gr%tfi1,gr%tPHI,gr%tfi2,TA,A)
-            CALL MATPROD(gr%tT,TA,A,3,3,3)
+            call Tmatrix(gr%tT,gr%tfi1,gr%tPHI,gr%tfi2)
             !
             ! Backward compatibility with type(gr):
             ! initialize the remaining components with mf data...
@@ -313,14 +310,14 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       use miscutils
       use IOConfig
       implicit double precision (a-h,o-z)
-      DIMENSION TA(3,3),A(3,3),A1(3,3)
+      DIMENSION A1(3,3)
 c <jg>
       integer,intent(out) :: ierr
       character(len=pathlength) :: fnam1
 c </jg>
       SAVE
       data convf/0.5729577951308232D+02/
-      DATA A  / 8 * 0.0D0 , 1.0D0  /
+      !!!DATA A  / 8 * 0.0D0 , 1.0D0  /
 c
       ierr = -1
       FPI=1.0D0/convf
@@ -366,32 +363,10 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   96  FORMAT (3F10.0)                                      
       PHI=PHI*FPI
       PHI2=PHI2*FPI
-      C=COS(PHI)
-      S=SIN(PHI)
-      C2=COS(PHI2)
-      S2=SIN(PHI2)
-      TA(1,1)=C2                                                        
-      TA(2,1)=-S2                                                      
-      TA(3,1)=0.D0                                                        
-      TA(1,2)=S2*C                                                      
-      TA(2,2)=C2*C                                                      
-      TA(3,2)=-S                                                        
-      TA(1,3)=S2*S                                                     
-      TA(2,3)=C2*S                                                      
-      TA(3,3)=C                                                         
       FI1=PHI1*FPI
-      C1=COS(FI1)
-      S1=SIN(FI1)
-      A(1,1)=C1                                                         
-      A(2,1)=-S1                                                        
-      A(1,2)=S1                                                         
-      A(2,2)=C1 
-      !!! FIXME: instead of the code above, just:      
-      ! ! Note: FI1 is not modified/updated!
-      ! call  grainOrient(PHI1,PHI,PHI2,TA,A)
-      !
-      !!! FIXME
-      CALL MATPROD(A1,TA,A,3,3,3)
+      
+      call Tmatrix(A1,FI1,PHI,PHI2)
+      
       do i=1,3
          do j=1,3
             TmatGr(i,j,IGrElm)=A1(j,i)
@@ -402,49 +377,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       ierr = 0
       RETURN
       END SUBROUTINE GRFIL
-
-
-      ! Calculate relevant rotation matrices TA and A.
-      ! PHI1,PHI,PHI2 are Euler angles in radians.
-      subroutine orientMat(PHI1,PHI,PHI2,TA,A)
-      implicit none
-      double precision,intent(inout)   :: PHI1,PHI,PHI2
-      double precision,dimension(3,3),intent(out)     :: TA, A
-      !
-      double precision, parameter :: convf = 0.5729577951308232D+02
-      double precision, parameter :: FPI = 1.0D0/convf
-      double precision :: C,C1,C2,S,S1,S2
-      !
-!      PHI1=PHI1*FPI
-!      PHI=PHI*FPI
-!      PHI2=PHI2*FPI
-
-      C=COS(PHI)
-      S=SIN(PHI)
-      C2=COS(PHI2)
-      S2=SIN(PHI2)
-      !
-      TA(1,1)=C2                                                        
-      TA(2,1)=-S2                                                      
-      TA(3,1)=0.D0                                                        
-      TA(1,2)=S2*C                                                      
-      TA(2,2)=C2*C                                                      
-      TA(3,2)=-S                                                        
-      TA(1,3)=S2*S                                                     
-      TA(2,3)=C2*S                                                      
-      TA(3,3)=C                                                         
-      !
-      A = 0.D0
-      C1=COS(PHI1)
-      S1=SIN(PHI1)
-      A(1,1)=C1                                                         
-      A(2,1)=-S1                                                        
-      A(1,2)=S1                                                         
-      A(2,2)=C1 
-      A(3,3) = 1.D0
-      !     
-      end subroutine
-
 
 
 

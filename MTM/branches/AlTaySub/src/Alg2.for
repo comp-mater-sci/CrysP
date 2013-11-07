@@ -160,10 +160,17 @@ C      data c1/1.3660254/,c2/0.3660254/,c3/0.707107/
       D5(5)=c3*(VGRAD(1,2)+VGRAD(2,1))
       return
       end
+      
+      ! Calculate transformation matrix T.
+      ! fi1,PHI,fi2 are Euler angles in radians.
       Subroutine Tmatrix(T,fi1,PHI,fi2)
-      IMPLICIT double precision (A-H,O-Z)
-C     To calculate T-matrix from Euler angles
-      dimension T(3,3)
+      implicit none
+      !
+      double precision,intent(in)   :: fi1,PHI,fi2
+      double precision,dimension(3,3),intent(out)     :: T
+      !
+      double precision :: C,C1,C2,S,S1,S2
+      !
       C1=COS(fi1)
       C= COS(PHI)
       C2=COS(fi2)
