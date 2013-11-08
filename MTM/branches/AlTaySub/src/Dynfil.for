@@ -311,7 +311,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       DIMENSION A1(3,3)
 
       integer,intent(out) :: ierr
-      character(len=pathlength),intent(in) :: fnam
+      character(len=*),intent(in) :: fnam
 
       SAVE
 c
