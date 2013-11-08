@@ -262,7 +262,7 @@
       type(matFrame),intent(in)     :: mf
       type(grain),intent(inout)     :: gr
       !
-            call Tmatrix(gr%tT,gr%tfi1,gr%tPHI,gr%tfi2)
+            call EulRad_2_Tmatrix(gr%tT,gr%tfi1,gr%tPHI,gr%tfi2)
             !
             ! Backward compatibility with type(gr):
             ! initialize the remaining components with mf data...
@@ -314,10 +314,8 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       character(len=pathlength),intent(in) :: fnam
 
       SAVE
-      data convf/0.5729577951308232D+02/
 c
       ierr = -1
-      FPI=1.0D0/convf
 
       ! output to NLIST 
       if(NLIST.eq.1) write (IMP,103) fnam
@@ -347,11 +345,8 @@ C
       do 11 IGrElm=1,NGrElm
       READ (NDAT1,96) PHI2,PHI,PHI1
   96  FORMAT (3F10.0)                                      
-      PHI=PHI*FPI
-      PHI2=PHI2*FPI
-      FI1=PHI1*FPI
-      
-      call Tmatrix(A1,FI1,PHI,PHI2)
+
+      call EulDeg_2_Tmatrix(A1,PHI1,PHI,PHI2)
       
       do i=1,3
          do j=1,3
@@ -442,7 +437,7 @@ C
   93  format (' Number of orientations in SMT-type input file:',I5,/,
      1' Titel on input file: ',A)
 
-      call TMATRIX(TAXES,GEULR(1),GEULR(2),GEULR(3))
+      call EulRad_2_TMATRIX(TAXES,GEULR(1),GEULR(2),GEULR(3))
       call Transf(GAXES,CIJ,TAXES)
 C      write (nunit) nrstep,FALG,GAXES,GEULR,CIJ,TG
       write (nunit) nrstep,FALG,GAXES,GEULR,CIJ,TAXES
@@ -494,7 +489,7 @@ C
       do 23 K=1,3
       GEULR(K)=GEULR(K)*FPI
   23  continue
-      call TMATRIX(TAXES,GEULR(1),GEULR(2),GEULR(3))
+      call EulRad_2_TMATRIX(TAXES,GEULR(1),GEULR(2),GEULR(3))
       call Transf(GAXES,CIJ,TAXES)
 C      write (nunit) nrstep,FALG,GAXES,GEULR,CIJ,TG
       write (nunit) nrstep,FALG,GAXES,GEULR,CIJ,TAXES
@@ -507,7 +502,7 @@ C      write (nunit) nrstep,FALG,GAXES,GEULR,CIJ,TG
       do 24 K=1,3
       GEULR(K)=GEULR(K)*FPI
   24  continue
-      call TMATRIX(TAXES,GEULR(1),GEULR(2),GEULR(3))
+      call EulRad_2_TMATRIX(TAXES,GEULR(1),GEULR(2),GEULR(3))
       call Transf(GAXES,CIJ,TAXES)
       goto 21
   20  READ (NDAT1,96) PHI2,PHI,PHI1,STAP,NSTAP,GEW,GAMMA
@@ -550,7 +545,7 @@ C     WRITE (IMP,151) NPOINT,FI1
       A(1,2)=S1                                                         
       A(2,2)=C1                                                         
       CALL MATPROD(T,TA,A,3,3,3)
-  29  call TMATRIX(TAXES,GEULR(1),GEULR(2),GEULR(3))
+  29  call EulRad_2_TMATRIX(TAXES,GEULR(1),GEULR(2),GEULR(3))
       call Transf(GAXES,CIJ,TAXES)
 C      WRITE (NUNIT) FI1,PHI,PHI2,T,GEW,GAM,F,GAXES,GEULR,CIJ,TG,ZERO
       WRITE (NUNIT) FI1,PHI,PHI2,T,GEW,GAM,F,GAXES,GEULR,CIJ,TAXES,ZERO

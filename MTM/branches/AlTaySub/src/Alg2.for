@@ -163,7 +163,7 @@ C      data c1/1.3660254/,c2/0.3660254/,c3/0.707107/
       
       ! Calculate transformation matrix T.
       ! fi1,PHI,fi2 are Euler angles in radians.
-      Subroutine Tmatrix(T,fi1,PHI,fi2)
+      Subroutine EulRad_2_Tmatrix(T,fi1,PHI,fi2)
       implicit none
       !
       double precision,intent(in)   :: fi1,PHI,fi2
@@ -188,6 +188,25 @@ C      data c1/1.3660254/,c2/0.3660254/,c3/0.707107/
       T(3,3)=C
       return
       end
+      
+      ! Calculate transformation matrix T.
+      ! fi1,PHI,fi2 are Euler angles in degrees.
+      Subroutine EulDeg_2_Tmatrix(T,fi1,PHI,fi2)      
+      implicit none
+      !
+      double precision,intent(in)   :: fi1,PHI,fi2
+      double precision,dimension(3,3),intent(out)     :: T
+      !
+      double precision, parameter :: convf= acos(-1.D0) / 180.D0 !pi/180
+      double precision :: fi1_rad,PHI_rad,fi2_rad
+      !
+      fi1_rad = fi1 * convf
+      PHI_rad = PHI * convf
+      fi2_rad = fi2 * convf
+      call EulRad_2_Tmatrix(T,fi1_rad,PHI_rad,fi2_rad)
+      return
+      end
+      
       Subroutine Transf(Gaxes,Aprime,T)
       IMPLICIT double precision (A-H,O-Z)
 C
