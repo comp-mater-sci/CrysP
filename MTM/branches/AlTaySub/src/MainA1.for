@@ -32,7 +32,7 @@ C
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3),ITW,DELTAW,GEWF
       common /CEIGEN/ IOR,ISTP,JBLOC
-      character(len=pathlength) :: fnam1,fnam2,cods1
+      character(len=pathlength) :: fnam1,fnam2,fnam3,cods1
       character(len=pathlength-4) :: codsim
       integer :: info
 #ifndef USE_LEESOR
@@ -121,16 +121,26 @@ c
       write (IMP,102) NBLOC
       end if
  102  format (' NBLOC=',I5)
-      CALL GRFIL(info)
-      if (info.ne.0) then
-      write(*,215)
-      stop
- 215  format('Error condition is returned by GRFIL')
-      endif
+      read (KLEC,88) fnam3
+  88  format (a)
+      call stripComment(fnam3)
+      write (*,103) trim(fnam3)
+ 103  format (' GRFIL - Input Texture File:',a)            
+
 C
 C     Initialisation of SIMUL
 C
       CALL SIMUL(0,EPS,1) 
+      
+      ! Initializing microstructure      
+      ! NOTE: this is done after initialisation of SIMUL, since SIMUL currently reads a.o. NLIST
+      CALL GRFIL(fnam3,info)
+      if (info.ne.0) then
+          write(*,215)
+          stop
+ 215      format('Error condition is returned by GRFIL')
+      endif      
+      
       ! Get the initial texture
 #ifndef USE_LEESOR
       ! Read the same inputs as LEESOR would read:

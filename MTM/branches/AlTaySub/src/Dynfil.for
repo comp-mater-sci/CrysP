@@ -296,49 +296,35 @@ C     following array is actually allocated in the subroutine GRFIL:
       
 
 
-      SUBROUTINE GRFIL(ierr)
+      SUBROUTINE GRFIL(fnam,ierr)
 C     Reading of "microstructure" (Euler angles defining 
 C       grain boundary segments)
 C     Allocation of "temporary file" to memory
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 28/11/2011
 C   The output to .LST in this subroutine doesn't depend on the value of NLIST, since NLIST doesn't have value yet!
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-#ifdef ALTAY_SUBROUTINE
-      use altayConfig, only: acnf
-#endif
+
       USE MICROSTR
       use miscutils
       use IOConfig
       implicit double precision (a-h,o-z)
       DIMENSION A1(3,3)
-c <jg>
+
       integer,intent(out) :: ierr
-      character(len=pathlength) :: fnam1
-c </jg>
+      character(len=pathlength),intent(in) :: fnam
+
       SAVE
       data convf/0.5729577951308232D+02/
-      !!!DATA A  / 8 * 0.0D0 , 1.0D0  /
 c
       ierr = -1
       FPI=1.0D0/convf
-#ifdef ALTAY_SUBROUTINE
-      fnam1 = acnf%micros_fname  
-#else
-      read (KLEC,88) fnam1
-  88  format (a)
-c <jg>
-      call stripComment(fnam1)
-c </jg>
-      write (*,103) trim(fnam1)
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 28/10/2011
-C    Since this output is not controled by NLIST, I supressed it.
-C      write (IMP,103) fnam1
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+
+      ! output to NLIST 
+      if(NLIST.eq.1) write (IMP,103) fnam
  103  format (' GRFIL - Input Texture File:',a)
-#endif
-  99  FORMAT (I5)
+
 C     UNIT NDAT1= INITIAL MICROSTRUCTURE
-      open (unit=NDAT1,file=fnam1,status='old',iostat=ierr)
+      open (unit=NDAT1,file=fnam,status='old',iostat=ierr)
       if (ierr /= 0) return
 C
       read (NDAT1,94) NGrElm,TitMic
@@ -346,12 +332,12 @@ C
 #ifndef NO_STDOUT
       write (*,93) NGrElm,TitMic
 #endif
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 28/10/2011
-C    Since this output is not controled by NLIST, I supressed it.
-C      write (IMP,93) NGrElm,TitMic
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+
+      ! output to NLIST 
+      if(NLIST.eq.1) write (IMP,93) NGrElm,TitMic
   93  format (' Number of orientations in MICROSTRUCTURE file:',I5,/,
      1' Titel on  file: ',A)
+
       ALLOCATE(TmatGr(3,3,NGrElm),STAT=ierr)
       if (ierr.ne.0) return
  101  format (' GRFIL ',
