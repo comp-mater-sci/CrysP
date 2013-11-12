@@ -50,6 +50,7 @@ contains
       use TexFormats
       use altayHard,only: hard_none,hard_voce,hard_pebp
       use miscutils
+      use MICROSTR
 #ifdef PEBP_ENABLED
       use KOST1xState
 #endif
@@ -225,8 +226,8 @@ contains
             close(IMP4) 
 #endif
             close(IMP5)
-            ! TODO: deallocate TmatGr (GRFIL) in module MICROSTR
-            if (allocated(TmatGr)) deallocate(TmatGr)
+            call MICROSTR_finalize(info)
+            if (info /= 0) return
             call DYNFIL_finalize(info)
             if (info /= 0) return
 #ifdef PEBP_ENABLED

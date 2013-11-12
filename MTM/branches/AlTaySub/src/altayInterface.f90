@@ -35,11 +35,6 @@ module altayInterface
               INTEGER(KIND=4) :: MPOINT
             END SUBROUTINE LEESOR
             !
-            SUBROUTINE GRFIL(FNAM,IERR)
-              CHARACTER(*), INTENT(IN) :: FNAM
-              INTEGER(KIND=4), INTENT(OUT) :: IERR
-            END SUBROUTINE GRFIL
-            !           
       end interface
 
 end module

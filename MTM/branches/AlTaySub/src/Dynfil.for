@@ -283,19 +283,12 @@
 
       MODULE MICROSTR
       implicit double precision (a-h,o-z)
-C     following array is actually allocated in the subroutine GRFIL:
       double precision, dimension(:,:,:),allocatable,save :: TmatGr
-      integer,save :: NGrElm
-      character*40, save :: TitMic
-      logical vers
-      data vers /.true./
-      end module MICROSTR
+      integer,save :: NGrElm = 0
+      character*40, save :: TitMic = ''
 
+      contains
       
-
-      
-
-
       SUBROUTINE GRFIL(fnam,ierr)
 C     Reading of "microstructure" (Euler angles defining 
 C       grain boundary segments)
@@ -304,7 +297,6 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 28/11/2011
 C   The output to .LST in this subroutine doesn't depend on the value of NLIST, since NLIST doesn't have value yet!
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 
-      USE MICROSTR
       use miscutils
       use IOConfig
       implicit double precision (a-h,o-z)
@@ -360,6 +352,19 @@ C
       END SUBROUTINE GRFIL
 
 
+      !> Finalizes the module. The subroutine puts the module variables 
+      !> into initial state and deallocates the storage.
+      subroutine MICROSTR_finalize(info)
+      implicit none
+      integer,intent(out)     :: info
+      !
+            NGrElm = 0
+            TitMic = ''
+            if (allocated(TmatGr)) deallocate(TmatGr,stat=info)
+      !
+      end subroutine
+      
+      end module MICROSTR
 
       SUBROUTINE LEESOR(NUNIT,MPOINT)
 #ifdef ALTAY_SUBROUTINE

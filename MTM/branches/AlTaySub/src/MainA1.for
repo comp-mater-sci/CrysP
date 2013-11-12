@@ -8,6 +8,7 @@ C
       use IOConfig
       use KOST1xState
       use DYNFIL
+      use MICROSTR
       use altayHard,only: KOST_global, hard_pebp
 #ifndef USE_LEESOR
       use TexFormats
