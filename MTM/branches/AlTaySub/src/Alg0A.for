@@ -48,6 +48,7 @@ C
      3 fi1b(2),phib(2),fi2b(2),
      4 fk1b(2,96,2),NGR,NRL,ENTA,ITFMAS
       common /CEIGEN/ IOR,ISTP,NBLOC
+      common /PE/ Fmicro !Temporary!!!      
       DIMENSION F(3,3),F1(3,3),GAXES(3),GEULR(3),TG(3,3),
      1 CIJ(3,3),F2(3,3),GLR(3),STOT(3,3),BUFSPV(5),
      2 RHOST(3,3),RHOSm(3,3),FMicro(3,3),Ftot(3,3),
@@ -337,7 +338,7 @@ C     INSTRUCTION ADDED IN LAMEL model:
       GLR(i)=GEULR(i)*convf
   48  continue
 C
-  44  call MATPROD(Ftot,F,FMicro,3,3,3)
+  44  Ftot=F 
       FTINV=Ftot
       CALL MINV(FTINV,3,DMINV,L1MINV,L2MINV,9)
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011

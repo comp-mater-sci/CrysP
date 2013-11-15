@@ -33,6 +33,8 @@ C
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3),ITW,DELTAW,GEWF
       common /CEIGEN/ IOR,ISTP,JBLOC
+      common /PE/ Fmicro !Temporary!!!
+      double precision, dimension(3,3) :: Fmicro
       character(len=pathlength) :: fnam1,fnam2,fnam3,cods1
       character(len=pathlength-4) :: codsim
       integer :: info
@@ -135,7 +137,7 @@ C
       
       ! Initializing microstructure      
       ! NOTE: this is done after initialisation of SIMUL, since SIMUL currently reads a.o. NLIST
-      CALL GRFIL(fnam3,info)
+      CALL GRFIL(fnam3,Fmicro,info) 
       if (info.ne.0) then
           write(*,215)
           stop

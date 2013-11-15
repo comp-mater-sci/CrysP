@@ -150,7 +150,7 @@ contains
                   FK1 = cnf%slipsystem%crss_ratios
             endif
             
-            CALL GRFIL(acnf%micros_fname,info)
+            CALL GRFIL(acnf%micros_fname,acnf%simul_init%FMicro,info)
             if (info /= 0) then
                   if (present(errmsg)) errmsg = 'Cannot process the microstructure file: ' // acnf%micros_fname
                   return

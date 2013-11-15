@@ -288,28 +288,26 @@
       integer,save :: NGrElm = 0
       character*40, save :: TitMic = ''
 
-      !F_mic is a deformation gradient that conceptually
-      ! 'deforms' a spherical grain into an ellipsoidal shape
-      double precision, dimension(3,3),save ::  
-     &  F_mic = RESHAPE( (/1,0,0,0,1,0,0,0,1/) , (/3,3/) ) 
       
       contains
       
       ! Reading of "microstructure" (Euler angles defining 
       ! grain boundary segments) in SMT-format, allocation 
       ! and assignment of the module variables.
-      SUBROUTINE GRFIL(fnam,ierr)
+      SUBROUTINE GRFIL(fnam,F_mic,ierr)
       use miscutils
       use IOConfig
       implicit none
       !
       integer,intent(out)         :: ierr
       character(len=*),intent(in) :: fnam
+      !F_mic is a deformation gradient that conceptually
+      ! 'deforms' a spherical grain into an ellipsoidal shape
+      double precision, dimension(3,3), intent(in) :: F_mic
       !
       integer          :: IGrElm
       double precision :: PHI2,PHI,PHI1
-      double precision, dimension(3,3) :: 
-     &            T = RESHAPE( (/1,0,0,0,1,0,0,0,1/) , (/3,3/) )
+      double precision, dimension(3,3) :: T 
       ! 
       ierr = -1
       !
@@ -329,14 +327,6 @@
       if(NLIST.eq.1) write (IMP,93) NGrElm,TitMic
   93  format (' Number of orientations in MICROSTRUCTURE file:' ,I5,/,
      &        ' Titel on  file: ',A)
-      !Reading diag components of F_mic "ad hoc" on the second line
-      ! if TitMic holds special value ->> TEMPORARY SOLUTION
-      if ( (index(TitMic,'{F_mic_diag}') == 1) ) then
-          read (NDAT2,96) F_mic(1,1),F_mic(2,2),F_mic(3,3)
-          ! output to NLIST 
-          if(NLIST.eq.1) write (IMP,75) F_mic(1,1),F_mic(2,2),F_mic(3,3)
-  75      format (' Diag. components F_mic:' ,3F12.4)
-      end if     
       !
       ALLOCATE(TmatGr(3,3,NGrElm),STAT=ierr)
       if (ierr.ne.0) then
@@ -371,7 +361,6 @@
       !
             NGrElm = 0
             TitMic = ''
-            F_mic = RESHAPE( (/1,0,0,0,1,0,0,0,1/) , (/3,3/) )
             if (allocated(TmatGr)) deallocate(TmatGr,stat=info)
       !
       end subroutine
