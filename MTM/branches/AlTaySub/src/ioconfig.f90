@@ -48,6 +48,9 @@ implicit none
       !> NDAT1= input texture file
       integer :: NDAT1 = 9
 
+      !> NDAT2= input microstructure file
+      integer :: NDAT2 = 10
+      
 #ifdef PEBP_ENABLED
       !> IMP4= output file for state variables of KOST11
       integer :: IPEBPSTAT = 60

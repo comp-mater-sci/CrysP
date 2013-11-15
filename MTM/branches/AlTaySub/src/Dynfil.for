@@ -282,71 +282,82 @@
 
 
       MODULE MICROSTR
-      implicit double precision (a-h,o-z)
+      implicit none
+
       double precision, dimension(:,:,:),allocatable,save :: TmatGr
       integer,save :: NGrElm = 0
       character*40, save :: TitMic = ''
 
+      !F_mic is a deformation gradient that conceptually
+      ! 'deforms' a spherical grain into an ellipsoidal shape
+      double precision, dimension(3,3),save ::  
+     &  F_mic = RESHAPE( (/1,0,0,0,1,0,0,0,1/) , (/3,3/) ) 
+      
       contains
       
+      ! Reading of "microstructure" (Euler angles defining 
+      ! grain boundary segments) in SMT-format, allocation 
+      ! and assignment of the module variables.
       SUBROUTINE GRFIL(fnam,ierr)
-C     Reading of "microstructure" (Euler angles defining 
-C       grain boundary segments)
-C     Allocation of "temporary file" to memory
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 28/11/2011
-C   The output to .LST in this subroutine doesn't depend on the value of NLIST, since NLIST doesn't have value yet!
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-
       use miscutils
       use IOConfig
-      implicit double precision (a-h,o-z)
-      DIMENSION A1(3,3)
-
-      integer,intent(out) :: ierr
+      implicit none
+      !
+      integer,intent(out)         :: ierr
       character(len=*),intent(in) :: fnam
-
-      SAVE
-c
+      !
+      integer          :: IGrElm
+      double precision :: PHI2,PHI,PHI1
+      double precision, dimension(3,3) :: 
+     &            T = RESHAPE( (/1,0,0,0,1,0,0,0,1/) , (/3,3/) )
+      ! 
       ierr = -1
-
+      !
       ! output to NLIST 
       if(NLIST.eq.1) write (IMP,103) fnam
- 103  format (' GRFIL - Input Texture File:',a)
-
-C     UNIT NDAT1= INITIAL MICROSTRUCTURE
-      open (unit=NDAT1,file=fnam,status='old',iostat=ierr)
+ 103  format (' GRFIL - Input Texture File:' ,a)
+      !
+      open (unit=NDAT2,file=fnam,status='old',iostat=ierr) 
       if (ierr /= 0) return
-C
-      read (NDAT1,94) NGrElm,TitMic
+      !
+      read (NDAT2,94) NGrElm,TitMic
   94  format(I5,5x,A)
 #ifndef NO_STDOUT
       write (*,93) NGrElm,TitMic
 #endif
-
       ! output to NLIST 
       if(NLIST.eq.1) write (IMP,93) NGrElm,TitMic
-  93  format (' Number of orientations in MICROSTRUCTURE file:',I5,/,
-     1' Titel on  file: ',A)
-
+  93  format (' Number of orientations in MICROSTRUCTURE file:' ,I5,/,
+     &        ' Titel on  file: ',A)
+      !Reading diag components of F_mic "ad hoc" on the second line
+      ! if TitMic holds special value ->> TEMPORARY SOLUTION
+      if ( (index(TitMic,'{F_mic_diag}') == 1) ) then
+          read (NDAT2,96) F_mic(1,1),F_mic(2,2),F_mic(3,3)
+          ! output to NLIST 
+          if(NLIST.eq.1) write (IMP,75) F_mic(1,1),F_mic(2,2),F_mic(3,3)
+  75      format (' Diag. components F_mic:' ,3F12.4)
+      end if     
+      !
       ALLOCATE(TmatGr(3,3,NGrElm),STAT=ierr)
-      if (ierr.ne.0) return
- 101  format (' GRFIL ',
-     1 'Allocation of RAM-memory was succesful')
- 102  format (' GRFIL - ',
-     1 'Allocation of memory failed')
-      do 11 IGrElm=1,NGrElm
-      READ (NDAT1,96) PHI2,PHI,PHI1
-  96  FORMAT (3F10.0)                                      
-
-      call EulDeg_2_Tmatrix(A1,PHI1,PHI,PHI2)
-      
-      do i=1,3
-         do j=1,3
-            TmatGr(i,j,IGrElm)=A1(j,i)
-         enddo
-      enddo                                                       
-  11  CONTINUE                                                          
-      CLOSE (unit=NDAT1)
+      if (ierr.ne.0) then
+          if(NLIST.eq.1) write(IMP,102)
+          return
+      end if 
+ 102  format (' GRFIL - Allocation of memory failed')
+      !
+      do IGrElm=1,NGrElm
+          READ (NDAT2,96) PHI2,PHI,PHI1
+  96      FORMAT (3F10.0)                                      
+          !Calc. the transformation matrix T
+          call EulDeg_2_Tmatrix(T,PHI1,PHI,PHI2)
+          !TmatGr(1:3,i,IGrElm) for i=1,2 holds two non-parallel vectors 
+          !  within the initial GB (grain boundary) plane.      
+          !TmatGr(1:3,i,IGrElm) for i=3 holds a vector out of the initial
+          !  GB plane (not necessarily perpendicular to the GB plane).
+          TmatGr(:,:,IGrElm)=MATMUL(F_mic,transpose(T))
+      enddo
+      !
+      CLOSE (unit=NDAT2)
       ierr = 0
       RETURN
       END SUBROUTINE GRFIL
@@ -360,6 +371,7 @@ C
       !
             NGrElm = 0
             TitMic = ''
+            F_mic = RESHAPE( (/1,0,0,0,1,0,0,0,1/) , (/3,3/) )
             if (allocated(TmatGr)) deallocate(TmatGr,stat=info)
       !
       end subroutine
