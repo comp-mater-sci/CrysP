@@ -207,7 +207,7 @@ contains
       use altayConfig, only: altayConfigData,fname_len,acnf, astate
       use altayInterface
       use IOConfig
-      use MICROSTR, only: TmatGr
+      use MICROSTR, only: MICROSTR_finalize
       use DYNFIL
 #ifdef PEBP_ENABLED
       use KOST1xState
