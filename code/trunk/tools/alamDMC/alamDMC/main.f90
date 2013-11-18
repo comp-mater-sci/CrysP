@@ -38,7 +38,7 @@ use fngRuntime
 implicit none
       
       
-      integer,parameter       :: cnfunit = 90, ofunit = 91
+      integer,parameter       :: cnfunit_default = 90, ofunit = 91
       !
       !
       integer,parameter       :: ncommands = 4
@@ -53,7 +53,7 @@ implicit none
       !
       class(BasicModule),pointer     :: the_module => null()      
       !
-      integer                 :: info, ioerr
+      integer                 :: info, ioerr, cnfunit
       !
       character(len=errmsg_len) :: error_message
       character(len=128)  :: progname
@@ -63,7 +63,7 @@ implicit none
       !
       write(progname,fmt=300)
       !
-      cmdline = commandLine(progname,description='Parameters: module_name configuration_file')
+      cmdline = commandLine(progname,description='parameters: command_name configuration_file')
       call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.)
       moduleFound = .false.
       if (info == fngSuccess) moduleFound = resolveId(command_map, cmdline%command_id,moduleName)
@@ -81,12 +81,7 @@ implicit none
       !
       ! open and read the config file      
       write(display_unit,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(2))
-      open(cnfunit,file=trim(cmdline%argv(2)),status='old',iostat=ioerr)
-      if (ioerr /= 0) then
-            write(display_unit,*) 'Cannot open config file: ', trim(cmdline%argv(2))
-            call finalize(stopcode_inputerror)
-      endif
-      !
+      cnfunit = openOrDie(fpath=trim(cmdline%argv(2)),status='old',unit=cnfunit_default)
       !
       info = -1
       ! Create a module of appropriate type and read its configuration:
