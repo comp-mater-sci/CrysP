@@ -56,11 +56,14 @@ implicit none
       integer                 :: info, ioerr
       !
       character(len=errmsg_len) :: error_message
+      character(len=128)  :: progname
       !
       info = 1
       ioerr = 0
       !
-      cmdline = commandLine('AlamDMC ' //'$Rev$',description='Parameters: module_name configuration_file')
+      write(progname,fmt=300)
+      !
+      cmdline = commandLine(progname,description='Parameters: module_name configuration_file')
       call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.)
       moduleFound = .false.
       if (info == fngSuccess) moduleFound = resolveId(command_map, cmdline%command_id,moduleName)
@@ -68,8 +71,13 @@ implicit none
             errmsg = 'Error in processing the command line'
             call finalize(stopcode_inputerror)
       endif
-      ! Print banner
-      write(display_unit,'(A)') 'AlamDMC: $Rev$'
+      ! Print the banner
+      write(display_unit,fmt=300) 
+#ifdef DMC_EXPERIMENTAL
+      300 format('AlamDMC $Rev$',1X,'EXPERIMENTAL')
+#else
+      300 format('AlamDMC $Rev$')
+#endif
       !
       ! open and read the config file      
       write(display_unit,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(2))
