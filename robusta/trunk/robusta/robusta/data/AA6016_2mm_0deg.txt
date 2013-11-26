@@ -1,0 +1,14 @@
+# test parameter file for SimpleSwiftVonMises
+# Material data for 0degree direction tensile test
+# Material AA6016 1mm sheet, supplied by TATA as part of M2i project
+#
+# hardening data
+'Voce_K', 185.84650741e6
+'Voce_n', 9.89055734
+'Voce_sigma0', 179.75027219e6
+'maxTrueStrain', 6.0
+#
+# elastic data
+'density',7800.
+'youngsModulus',70e9
+'poissonRatio',0.3

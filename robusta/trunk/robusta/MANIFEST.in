@@ -1,0 +1,7 @@
+include *.txt
+include *.sh
+include *.bat
+include distribute_setup.py
+recursive-include robusta *.py
+recursive-include scripts *
+recursive-include docs *
