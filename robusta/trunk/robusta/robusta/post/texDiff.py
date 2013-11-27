@@ -9,14 +9,19 @@
 from subprocess import Popen, PIPE, STDOUT, check_call
 import os
 import sys
+import shutil
+
+global ODFEXE
+global LIB
 
 if 'ROBUSTAHOME' in os.environ.keys():
-    global ODFEXE = os.path.join(os.environ['ROBUSTAHOME'], 'bin','win32')
-    global LIB = os.path.join(os.environ['ROBUSTAHOME'], 'lib','win32')
+    ODFEXE = os.path.join(os.environ['ROBUSTAHOME'], 'bin','win32')
+    LIB = os.path.join(os.environ['ROBUSTAHOME'], 'lib','win32')
     
 else:
-    global ODFEXE = os.path.abspath('c:/odf/odfexe')
-    global LIB = os.path.abspath('c:/odf')
+    ODFEXE = os.path.abspath('c:/odf/odfexe')
+    LIB = os.path.abspath('c:/odf')
+
 
 def TextureDiff(texFileName1, texFileName2, folder=os.getcwd(), verschHome=ODFEXE):
     """ return the texture difference between two textures expressed as c files.
@@ -96,8 +101,8 @@ def RotateTexture(texFileName, folder=os.getcwd(), phi1=0., PHI=0., phi2=0.,
     configFile.close()
     
     # call rottex
-    os.copyFile
-    rottexProcess = check_call(
+    shutil.copyfile(os.path.join(ODFEXE, 'rottex'), os.path.join(folder, 'rottex'))
+    rottexProcess = check_call('rottex 
     
     # return result filename
     os.chdir(initialDir)
