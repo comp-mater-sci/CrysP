@@ -1,5 +1,7 @@
 #!/bin/bash
-
+#
+# $Id$
+#
 CRYS2D=crys3D
 COMMFILE=outcomm.dat
 
@@ -9,7 +11,7 @@ rm -f PPD RST CHECK* ACTIV DACTIV POLE* EULER  "${COMMFILE}"
 
 ln -s ../RST RST
 
-if [ -n $(which timedrun 2> /dev/null) ] ; then
+if [[ -n "$(which timedrun 2> /dev/null)" ]] ; then
 	timedrun -t "${TIMEOUT}" "${CRYS2D}"
 else
 	"${CRYS2D}"
