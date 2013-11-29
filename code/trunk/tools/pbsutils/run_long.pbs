@@ -70,15 +70,6 @@ export JOBNAME
 export GMETEX_WORKDIR
 export HMS_VUMAT_PRECISION
 #
-# Prepare execution
-# 
-FACETDIR="aba_facet.dir"
-# Prepare aba_facet.dir
-echo "$CURRENTDIR" > $FACETDIR
-echo "$CURRENTDIR" >> $FACETDIR
-echo "results" >> $FACETDIR
-#
-#
 # Protect the previous results: copy it to backup direcory
 if [ -e $LOGFILE ] ; then
 	BACKUPDIR="backup_`date "+%Y%m%d_%H%M%S"`"
