@@ -6,10 +6,14 @@
     of the textures.
 """
 
+# native libraries
 from subprocess import Popen, PIPE, STDOUT, check_call
 import os
 import sys
 import shutil
+
+# third part libraries
+from scipy.optimize import minimize
 
 global ODFEXE
 global LIB
@@ -23,6 +27,37 @@ else:
     LIB = os.path.abspath('c:/odf')
 
 
+def MinimiseDiff(constFileName, moveFileName, folder=os.getcwd(),
+                 initialGuess=(0., 0., 0.)):
+    """ minimise the difference between two texture files by rotating one
+    """
+    
+    result = minimize(fun=PackedTextureDiff, x0=initialGuess, args=(constFileName,
+             moveFileName, folder), method='BFGS')
+             
+    return result
+    
+
+def PackedTextureDiff(parameters, constFileName, moveFileName, folder):
+    """ this function combines the TextureDiff and RotateTexture functions in a
+        way that scipy minimise can use them
+        
+        triclinic symmetry is assumed in the rotation
+        
+    """
+    # unpack arguments
+    (phi1, PHI, phi2) = parameters
+    #(constFileName, moveFileName, folder) = arguments
+    
+    # rotate one texture
+    tempFileName = 'minrot.c'
+    RotateTexture(texFileName=moveFileName, folder=folder, phi1=phi1, PHI=PHI,
+                  phi2=phi2, resultFileName=tempFileName)
+                  
+    # return the difference between the rotated and the other non-rotated texture
+    return TextureDiff(texFileName1=constFileName, texFileName2=tempFileName, folder=folder)
+    
+    
 def TextureDiff(texFileName1, texFileName2, folder=os.getcwd(), verschHome=ODFEXE):
     """ return the texture difference between two textures expressed as c files.
     
@@ -68,16 +103,17 @@ def RotateTexture(texFileName, folder=os.getcwd(), phi1=0., PHI=0., phi2=0.,
     os.chdir(folder)
     
     # check the input is ok, and that we are running on windows 32bit (for now)
+    if len(os.path.splitext(texFileName)[0]) > 8:
+        raise OSError('texture file name must be 8 characters or less')
+    
     if not (os.path.isfile(texFilePath)):
         raise IOError('file not found: {0}'.format(texFilePath))
     
-    if not (sys.platform=='win32' and os.path.isfile(rottexHome) and os.path.isfile(os.path.join(rottexHome,'rottex.exe'))):
+    if not (sys.platform=='win32' and os.path.isfile(os.path.join(rottexHome,'rottex.exe'))):
         raise OSError('this function requires rottex.exe to be in the given ' +
                        ' directory <{0}>. rottex.exe currently only runs in on a ' +
                        'windows 32bit OS'.format(rottexHome))
-                       
-    
-                       
+                                              
     # determine symmetry flag values
     if symmetry=='triclinic':
         imagValue = 2
@@ -96,14 +132,19 @@ def RotateTexture(texFileName, folder=os.getcwd(), phi1=0., PHI=0., phi2=0.,
         
     # build the config file for rottex
     configFile = open(os.path.join(folder, 'rottex.i00'), 'w')
-    configFile.write('{0:10.3f} {1:9.3f} {2:9.3f}\n'.format(phi1, phi2, phi3))
+    configFile.write('{0:10.3f} {1:9.3f} {2:9.3f}\n'.format(phi1, PHI, phi2))
     configFile.write('{0:5d} {1:4d}\n\n'.format(imagValue, idnValue))
     configFile.close()
-    
+        
     # call rottex
-    shutil.copyfile(os.path.join(ODFEXE, 'rottex'), os.path.join(folder, 'rottex'))
-    rottexProcess = check_call('rottex 
+    rottexLocalPath = os.path.join(folder, 'rottex.exe')
+    libLocalPath = os.path.join(folder, 'wagner.B04')
+    shutil.copyfile(os.path.join(ODFEXE, 'rottex.exe'), rottexLocalPath)
+    shutil.copyfile(os.path.join(LIB, 'wagner.B04'), libLocalPath)
     
-    # return result filename
+    rottexProcess = check_call('rottex rottex.i00 rottex.l00 wagner.B04 {0} {1}'.format(texFileName, resultFileName))
+    
+    # return to starting state
+    #os.remove(rottexLocalPath)
+    #os.remove(libLocalPath)
     os.chdir(initialDir)
-    return resultFileName
