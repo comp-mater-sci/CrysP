@@ -14,6 +14,8 @@ import shutil
 
 # third part libraries
 from scipy.optimize import minimize
+import numpy as np
+import matplotlib.pylab as plt
 
 global ODFEXE
 global LIB
@@ -27,13 +29,51 @@ else:
     LIB = os.path.abspath('c:/odf')
 
 
+def SearchSpace(constFileName, moveFileName, limPhi1=360, limPHI=1, limPhi2=1,
+                step=1., folder=os.getcwd(), resultFileName='output.txt'):
+    """ search the entire rotation space to see how closely two textures can be
+        made to coincide by rotating one of them
+    """
+    # get test values
+    noPhi1Values = int(limPhi1/step)
+    phi1Values = np.linspace(0, limPhi1, noPhi1Values)
+    
+    noPHIValues = int(limPHI/step)
+    PHIValues = np.linspace(0, limPHI, noPHIValues)
+    
+    noPhi2Values = int(limPhi2/step)
+    phi2Values = np.linspace(0, limPhi2, noPhi2Values)
+    
+    # calculate texture differences
+    difference = np.zeros((noPhi1Values*noPHIValues*noPhi2Values,4))
+    diffIndex = 0
+    
+    for phi1index in range(noPhi1Values):
+        for PHIindex in range(noPHIValues):
+            for phi2index in range(noPhi2Values):
+                
+                parameters = (phi1Values[phi1index], PHIValues[PHIindex],
+                              phi2Values[phi2index])                
+                diffValue =  PackedTextureDiff(constFileName=constFileName,
+                                                moveFileName=moveFileName,
+                                               folder=folder, parameters=parameters)
+                difference[diffIndex, :] = np.hstack((parameters, diffValue))
+                diffIndex +=1
+                
+                
+    minDiff = np.argmin(difference[:,3])
+    print 'min appears to be phi1 {0[0]:5.2f} PHI {0[1]:5.2f} phi2{0[2]:5.2f}'.format(difference[minDiff,0:3])
+    plt.plot(range(difference.shape[0]), difference[:,3])
+    plt.show()
+    
+    
 def MinimiseDiff(constFileName, moveFileName, folder=os.getcwd(),
                  initialGuess=(0., 0., 0.)):
     """ minimise the difference between two texture files by rotating one
     """
     
     result = minimize(fun=PackedTextureDiff, x0=initialGuess, args=(constFileName,
-             moveFileName, folder), method='BFGS')
+             moveFileName, folder), method='Nelder-Mead')
              
     return result
     
@@ -46,6 +86,7 @@ def PackedTextureDiff(parameters, constFileName, moveFileName, folder):
         
     """
     # unpack arguments
+    print parameters
     (phi1, PHI, phi2) = parameters
     #(constFileName, moveFileName, folder) = arguments
     
@@ -139,10 +180,17 @@ def RotateTexture(texFileName, folder=os.getcwd(), phi1=0., PHI=0., phi2=0.,
     # call rottex
     rottexLocalPath = os.path.join(folder, 'rottex.exe')
     libLocalPath = os.path.join(folder, 'wagner.B04')
-    shutil.copyfile(os.path.join(ODFEXE, 'rottex.exe'), rottexLocalPath)
-    shutil.copyfile(os.path.join(LIB, 'wagner.B04'), libLocalPath)
+    if not os.path.isfile(rottexLocalPath):
+        shutil.copyfile(os.path.join(ODFEXE, 'rottex.exe'), rottexLocalPath)
+        shutil.copyfile(os.path.join(LIB, 'wagner.B04'), libLocalPath)
     
-    rottexProcess = check_call('rottex rottex.i00 rottex.l00 wagner.B04 {0} {1}'.format(texFileName, resultFileName))
+    # rottexProcess = check_call('rottex rottex.i00 rottex.l00 wagner.B04 {0} {1}'.format(texFileName, resultFileName))
+    # rottexProcess = check_call(['rottex', 'rottex.i00', 'rottex.l00', 'wagner.B04',
+    #                            texFileName, resultFileName], shell=True)
+    batch = open('rot.bat', 'w')
+    batch.write('rottex rottex.i00 rottex.l00 wagner.B04 {0} {1}\n\n'.format(texFileName, resultFileName))
+    batch.close()
+    rottexProcess = check_call('rot.bat', shell=True)
     
     # return to starting state
     #os.remove(rottexLocalPath)
