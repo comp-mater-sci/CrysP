@@ -1,0 +1,8 @@
+--config_template=hardinput.tmpl --config=input.hard --crys3D="C:\work\UnivWaterloo_KaanInal\crys3d\trunk\Release\cryst3d.exe" --texture=az31.txt --output=harddata_initial.generic -deffile=defdata_initial.dat --initial
+
+
+--config_template=hardinput.tmpl --config=input.hard --crys3D="C:\work\UnivWaterloo_KaanInal\crys3d\trunk\Release\cryst3d.exe" --texture=az31.txt --output=harddata_next.generic --deffile=defdata_next.dat
+
+
+
+--config_template=hardinput.tmpl --config=input.hard --crys3D="C:\work\UnivWaterloo_KaanInal\crys3d\trunk\Release\cryst3d.exe" --texture=az31.txt --output=harddata_next.generic --deffile=defdata_next.dat --oldPPD=PPD_initial
