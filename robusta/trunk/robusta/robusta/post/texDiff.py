@@ -35,13 +35,13 @@ def SearchSpace(constFileName, moveFileName, limPhi1=360, limPHI=1, limPhi2=1,
         made to coincide by rotating one of them
     """
     # get test values
-    noPhi1Values = int(limPhi1/step)
+    noPhi1Values = int(limPhi1/step) - 1
     phi1Values = np.linspace(0, limPhi1, noPhi1Values)
     
-    noPHIValues = int(limPHI/step)
+    noPHIValues = int(limPHI/step) - 1
     PHIValues = np.linspace(0, limPHI, noPHIValues)
     
-    noPhi2Values = int(limPhi2/step)
+    noPhi2Values = int(limPhi2/step) - 1
     phi2Values = np.linspace(0, limPhi2, noPhi2Values)
     
     # calculate texture differences
