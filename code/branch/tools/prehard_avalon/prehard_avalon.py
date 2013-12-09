@@ -10,6 +10,20 @@ import pyhms.miscutils.datafile
 
 import pyhms.miscutils.defdata as defdata
 
+def writePolyHardConfig(outfile,args,pairs):
+    
+    config_lines = ['{deffile}    # Path to the defdata.dat data file',
+                    '{prefix}.hard # Name of output file',
+                    '{prefix}.str  # Name of output with strain-stress data',
+                    '{order}       # Order of polynomial']
+    
+    config = {}
+    config.update(vars(args))
+    config['order'] = len(pairs) - 1
+    outfile.writelines(( (line.format(**config) + '\n') for line in config_lines ))
+    writeGenericPairs(outfile,pairs)    
+
+
 def writeGenericPairs(outfile,pairs):
     '''Write iterable of pairs to the outfile. Scientific representation of floats is used.'''
     fmt = ('{0:15.7e} {1:15.7e}' + '\n')
@@ -28,15 +42,16 @@ def extrap(x, xp, yp):
 def main(argv):
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--deffile',default='defdata.dat')
-    parser.add_argument('--oldPPD',required=False)
-    parser.add_argument('--PPD',default='PPD')
-    parser.add_argument('--config_template',required=True)
-    parser.add_argument('--config',required=True)
-    parser.add_argument('--crys3D',default='crys3D')
-    parser.add_argument('--texture',required=True)
-    parser.add_argument('--initial',action='store_true')
-    parser.add_argument('--output',required=True)
+    parser.add_argument('--deffile',default='defdata.dat',help='deformation data file (in the format of Skyfall defdata.dat)')
+    parser.add_argument('--oldPPD',required=False,help='path to the PPD file that shoud be prepended to the PPD resulting from the current run')
+    parser.add_argument('--PPD',default='PPD',help='path to the PPD file')
+    parser.add_argument('--config_template',required=True,help='path to the template of crys3d configuration file')
+    parser.add_argument('--config',required=True,help='path to the crys3D configuration file (to be created)')
+    parser.add_argument('--crys3D',default='crys3D',help='path or name of crys3D executable')
+    parser.add_argument('--texture',required=True,help='path to the texture file')
+    parser.add_argument('--initial',action='store_true',help='if set, the crys3D program will start without an RST file')
+    parser.add_argument('--output',required=True,help='path to the output file')
+    parser.add_argument('--prefix',default='elem',help='Prefix for the names of polyHard files')
     args = parser.parse_args(argv)
 
     try:
@@ -70,6 +85,10 @@ def main(argv):
         #
         # Run the command    
         command = (args.crys3D + ' < ' + args.config)
+        if sys.platform in [ 'win32', 'win64' ]:
+            command += ' > nul'
+        else:
+            command += ' > /dev/null'
         info = os.system(command)
         if info != 0:
             raise OSError('Failed to execute : ' + args.crys3D)
@@ -100,17 +119,17 @@ def main(argv):
 
         # Open & write the result file 
         with open(args.output,'w') as out_file:
-            writeGenericPairs(out_file,zip(interpolation_points,interpolated_values))
+            writePolyHardConfig(out_file,args,zip(interpolation_points,interpolated_values))
     
         return 0
 
     except OSError as e:
-        sys.stderr.write(str(e))
+        sys.stderr.write(str(e) + '\n')
         return 2
 
     except Exception as e:
         sys.stderr.write('Unhandled exception:\n')
-        sys.stderr.write(str(e))
+        sys.stderr.write(str(e) + '\n')
         return 2
 
 
