@@ -11,37 +11,88 @@ from subprocess import Popen, PIPE, STDOUT, check_call
 import os
 import sys
 import shutil
+import glob
+import stat
 
 # third part libraries
 from scipy.optimize import minimize
 import numpy as np
-import matplotlib.pylab as plt
+#import matplotlib.pylab as plt
 
 global ODFEXE
 global LIB
+platform = 'lx64'
 
 if 'ROBUSTAHOME' in os.environ.keys():
-    ODFEXE = os.path.join(os.environ['ROBUSTAHOME'], 'bin','win32')
-    LIB = os.path.join(os.environ['ROBUSTAHOME'], 'lib','win32')
+    ODFEXE = os.path.join(os.environ['ROBUSTAHOME'], 'bin', platform)
+    LIB = os.path.join(os.environ['ROBUSTAHOME'], 'lib', platform)
     
 else:
     ODFEXE = os.path.abspath('c:/odf/odfexe')
     LIB = os.path.abspath('c:/odf')
 
 
-def SearchSpace(constFileName, moveFileName, limPhi1=360, limPHI=1, limPhi2=1,
-                step=1., folder=os.getcwd(), resultFileName='output.txt'):
+def ComparePairs(keyFixed='std', keyMove='hms', folder=os.getcwd()):
+    """ compare pairs of c files in the current directory by calling SearchSpace
+        on each pair
+        
+        file names should be "something_incrementnumber_keyword.c"
+        
+    """ 
+    # get the file lists
+    fixedNameList = glob.glob('*{0}*'.format(keyFixed))
+    moveNameList = glob.glob('*{0}*'.format(keyMove))
+    
+    # sort the lists so that corresponding files are in the same positions in
+    # each of the lists
+    fixedFileNums = [int(fileName.split('_')[1]) for fileName in fixedNameList]
+    fixedFileOrder = np.argsort(fixedFileNums)
+    
+    moveNameNums = [int(fileName.split('_')[1]) for fileName in moveNameList]
+    moveFileOrder = np.argsort(moveNameList)
+    
+    # check if all files have a corresponding pair
+    matches = np.array([num in fixedFileNums for num in moveNameNums])
+    noFiles = len(fixedFileNums)
+    if not (matches.all() and len(moveNameNums)==noFiles):
+        missing = np.array(moveNameList)[np.logical_not(matches)]
+        print missing, len(missing)
+        raise Exception('The files listed above are missing a match')
+        
+    # start analysis
+    minVal = np.zeros((noFiles,1))
+    for fileNum in range(noFiles):
+    
+        # files are copied to temp files in order stay within the 8 character
+        # limit for ROTTEX
+        constFileName=fixedNameList[fixedFileOrder[fileNum]]
+        moveFileName=moveNameList[moveFileOrder[fileNum]]
+        
+        shutil.copyfile(os.path.join(folder, constFileName),
+                        os.path.join(folder, 'const.c'))
+        shutil.copyfile(os.path.join(folder, moveFileName),
+                        os.path.join(folder, 'move.c'))
+
+        minVal[fileNum,1] = SearchSpace(constFileName='const.c', moveFileName='move.c',
+                    resultFileName='{0}_res.npy'.format(fixedFileNums[fixedFileOrder[fileNum]]))
+    
+    sortedNameList = np.array([fixedNameList[index] for index in fixedFileOrder])
+    np.savetxt('minVals.txt', np.hstack((sortedNameList, minVal)))
+    
+
+def SearchSpace(constFileName, moveFileName, limPhi1=180, limPHI=1, limPhi2=1,
+                step=1., folder=os.getcwd(), resultFileName='output'):
     """ search the entire rotation space to see how closely two textures can be
         made to coincide by rotating one of them
     """
     # get test values
-    noPhi1Values = int(limPhi1/step) - 1
+    noPhi1Values = int(limPhi1/step)
     phi1Values = np.linspace(0, limPhi1, noPhi1Values)
     
-    noPHIValues = int(limPHI/step) - 1
+    noPHIValues = int(limPHI/step)
     PHIValues = np.linspace(0, limPHI, noPHIValues)
     
-    noPhi2Values = int(limPhi2/step) - 1
+    noPhi2Values = int(limPhi2/step)
     phi2Values = np.linspace(0, limPhi2, noPhi2Values)
     
     # calculate texture differences
@@ -51,7 +102,7 @@ def SearchSpace(constFileName, moveFileName, limPhi1=360, limPHI=1, limPhi2=1,
     for phi1index in range(noPhi1Values):
         for PHIindex in range(noPHIValues):
             for phi2index in range(noPhi2Values):
-                
+                sys.stdout.write('.')
                 parameters = (phi1Values[phi1index], PHIValues[PHIindex],
                               phi2Values[phi2index])                
                 diffValue =  PackedTextureDiff(constFileName=constFileName,
@@ -60,11 +111,13 @@ def SearchSpace(constFileName, moveFileName, limPhi1=360, limPHI=1, limPhi2=1,
                 difference[diffIndex, :] = np.hstack((parameters, diffValue))
                 diffIndex +=1
                 
-                
+    # save the result and return the minimum for information
+    sys.stdout.write('\n')
+    np.save(resultFileName, difference)       
+    
     minDiff = np.argmin(difference[:,3])
     print 'min appears to be phi1 {0[0]:5.2f} PHI {0[1]:5.2f} phi2{0[2]:5.2f}'.format(difference[minDiff,0:3])
-    plt.plot(range(difference.shape[0]), difference[:,3])
-    plt.show()
+    return minDiff
     
     
 def MinimiseDiff(constFileName, moveFileName, folder=os.getcwd(),
@@ -86,7 +139,6 @@ def PackedTextureDiff(parameters, constFileName, moveFileName, folder):
         
     """
     # unpack arguments
-    print parameters
     (phi1, PHI, phi2) = parameters
     #(constFileName, moveFileName, folder) = arguments
     
@@ -112,16 +164,27 @@ def TextureDiff(texFileName1, texFileName2, folder=os.getcwd(), verschHome=ODFEX
     # check the input is ok, and that we are running on windows 32bit (for now)
     if not (os.path.isfile(texFilePath1) and os.path.isfile(texFilePath2)):
         raise IOError('one or more files not found: {0}\t{1}'.format(texFilePath1, texFilePath2))
-    
-    
-    if not (sys.platform=='win32' and os.path.isfile(os.path.join(verschHome,'versch.exe'))):
-        raise OSError('this function requires VERSCH.exe to be in the given ' +
-                       ' directory <{0}>. Versch.exe currently only runs in on a ' +
-                       'windows 32bit OS'.format(verschHome))
+
         
     # call Versch and feed the input stream (Versch is supposed to be interactive)
-    verschProcess = Popen([os.path.join(verschHome,'versch.exe')], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
-    verschResult = verschProcess.communicate(input='{0}\n1\n{1}\n'.format(texFileName1, texFileName2))[0]
+    if sys.platform=='win32':
+        verschProcess = Popen([os.path.join(verschHome,'VERSCH.EXE')], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+        verschResult = verschProcess.communicate(input='{0}\n1\n{1}\n'.format(texFileName1, texFileName2))[0]
+        
+    elif 'linux' in sys.platform:
+        binPath =  os.path.join(folder, 'versch_lx64.exe')
+        if not os.path.isfile(binPath):
+            shutil.copyfile(os.path.join(ODFEXE, 'versch_lx64.exe'), binPath)
+            permissions = os.stat(binPath)
+            os.chmod(binPath, permissions.st_mode or stat.S_IEXEC)
+        
+        shutil.copyfile(os.path.join(folder, texFileName1), os.path.join(folder, 'first.c'))
+        shutil.copyfile(os.path.join(folder, texFileName2), os.path.join(folder, 'second.c'))
+        
+        verschResult = check_call(os.path.join(folder, './versch_lx64.exe'))
+    else:
+        OSError('Dont know if Versch will run on platform {0}'.format(sys.platform))    
+
     
     # read the result from the output file (hard coded as 'versch.l01')
     resultFile = open('versch.l01', 'r')
@@ -149,11 +212,7 @@ def RotateTexture(texFileName, folder=os.getcwd(), phi1=0., PHI=0., phi2=0.,
     
     if not (os.path.isfile(texFilePath)):
         raise IOError('file not found: {0}'.format(texFilePath))
-    
-    if not (sys.platform=='win32' and os.path.isfile(os.path.join(rottexHome,'rottex.exe'))):
-        raise OSError('this function requires rottex.exe to be in the given ' +
-                       ' directory <{0}>. rottex.exe currently only runs in on a ' +
-                       'windows 32bit OS'.format(rottexHome))
+
                                               
     # determine symmetry flag values
     if symmetry=='triclinic':
@@ -172,25 +231,42 @@ def RotateTexture(texFileName, folder=os.getcwd(), phi1=0., PHI=0., phi2=0.,
         raise KeyError('Unknown symmetry case <{0}>'.format(symmetry))
         
     # build the config file for rottex
-    configFile = open(os.path.join(folder, 'rottex.i00'), 'w')
+    configFile = open(os.path.join(folder, 'ROTTEX.I01'), 'w')
     configFile.write('{0:10.3f} {1:9.3f} {2:9.3f}\n'.format(phi1, PHI, phi2))
     configFile.write('{0:5d} {1:4d}\n\n'.format(imagValue, idnValue))
     configFile.close()
         
     # call rottex
-    rottexLocalPath = os.path.join(folder, 'rottex.exe')
-    libLocalPath = os.path.join(folder, 'wagner.B04')
-    if not os.path.isfile(rottexLocalPath):
-        shutil.copyfile(os.path.join(ODFEXE, 'rottex.exe'), rottexLocalPath)
-        shutil.copyfile(os.path.join(LIB, 'wagner.B04'), libLocalPath)
     
-    # rottexProcess = check_call('rottex rottex.i00 rottex.l00 wagner.B04 {0} {1}'.format(texFileName, resultFileName))
-    # rottexProcess = check_call(['rottex', 'rottex.i00', 'rottex.l00', 'wagner.B04',
-    #                            texFileName, resultFileName], shell=True)
-    batch = open('rot.bat', 'w')
-    batch.write('rottex rottex.i00 rottex.l00 wagner.B04 {0} {1}\n\n'.format(texFileName, resultFileName))
-    batch.close()
-    rottexProcess = check_call('rot.bat', shell=True)
+    if sys.platform=='win32':
+
+        batch = open('rot.bat', 'w')
+        batch.write('rottex ROTTEX.I01 rottex.l00 wagner.B04 {0} {1}\n\n'.format(texFileName, resultFileName))
+        batch.close()
+        
+        rottexLocalPath = os.path.join(folder, 'rottex.exe')
+        libLocalPath = os.path.join(folder, 'wagner.B04')
+        
+        if not os.path.isfile(rottexLocalPath):
+            shutil.copyfile(os.path.join(ODFEXE, 'rottex.exe'), rottexLocalPath)
+            shutil.copyfile(os.path.join(LIB, 'wagner.B04'), libLocalPath)
+        
+        rottexProcess = check_call('rot.bat', shell=True)
+    
+    elif 'linux' in sys.platform:
+        
+        rottexLocalPath = os.path.join(folder, 'rottex_lx64.exe')
+        libLocalPath = os.path.join(folder, 'WAGNER.B04')
+        
+        if not os.path.isfile(rottexLocalPath):
+            shutil.copyfile(os.path.join(ODFEXE, 'rottex_lx64.exe'), rottexLocalPath)
+            shutil.copyfile(os.path.join(LIB, 'WAGNER.B04'), libLocalPath)
+            permissions = os.stat(rottexLocalPath)
+            os.chmod(rottexLocalPath, permissions.st_mode or stat.S_IEXEC)
+        
+        shutil.copyfile(os.path.join(folder, texFileName), os.path.join(folder, 'INPUT.C'))
+        rottexProcess = check_call('./rottex_lx64.exe')
+        os.rename('OUTPUT.C', resultFileName)
     
     # return to starting state
     #os.remove(rottexLocalPath)
