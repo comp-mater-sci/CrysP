@@ -52,6 +52,7 @@ def main(argv):
     parser.add_argument('--initial',action='store_true',help='if set, the crys3D program will start without an RST file')
     parser.add_argument('--output',required=True,help='path to the output file')
     parser.add_argument('--prefix',default='elem',help='Prefix for the names of polyHard files')
+    parser.add_argument('--stress_scaling',default=1.e6,help='Scaling factor for stresses. Default: conversion from MPa to Pa')
     args = parser.parse_args(argv)
 
     try:
@@ -110,12 +111,13 @@ def main(argv):
             #if not np.all(np.diff(data[:,0]) > 0):
             #    raise ValueError('Post-condition failed')
             pass
-        
+        scaling_factor = args.stress_scaling
         interpolation_points = np.array([def_data.eps_0, 
                                          def_data.eps_0 + 0.5*(def_data.eps_1 - def_data.eps_0), 
                                          def_data.eps_1])
-
-        interpolated_values = extrap(interpolation_points,data[:,0],data[:,1])
+        # 
+        # Scaling of stresses from the PPD (by default: conversion from MPa to Pa):
+        interpolated_values = extrap(interpolation_points,data[:,0],scaling_factor * data[:,1])
 
         # Open & write the result file 
         with open(args.output,'w') as out_file:
