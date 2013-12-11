@@ -65,11 +65,13 @@ def main(argv):
         # defdata.eps_0 = 0.0
         # defdata.eps_1 = 0.05
 
+        old_ppd = np.ndarray([0,2])
         # Open & read the old PPD file
         if not args.initial and args.oldPPD:
-            old_ppd = np.loadtxt(args.oldPPD,usecols=[0,2])
-        else:
-            old_ppd = np.ndarray([0,2])
+            try:
+                old_ppd = np.loadtxt(args.oldPPD,usecols=[0,2])
+            except IOError as e:
+                print('Warning: empty old PPD')
         #
         # Create crys3d input file from the template file:
         template = string.Template(open(args.config_template,'r').read())
@@ -131,6 +133,7 @@ def main(argv):
 
     except Exception as e:
         sys.stderr.write('Unhandled exception:\n')
+        sys.stderr.write('Type: ' + str(type(e)) + '\n')
         sys.stderr.write(str(e) + '\n')
         return 2
 
