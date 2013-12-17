@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
+import errno
 import string
 import argparse
 import math
@@ -38,6 +39,33 @@ def extrap(x, xp, yp):
     y[x > xp[-1]]= yp[-1] + (x[x>xp[-1]]-xp[-1])*(yp[-1]-yp[-2])/(xp[-1]-xp[-2])
     return y
 
+def makeStrictlyIncreasing(data,column=0):
+    '''Alter the array data by eliminating elements that are not strictly increasing with respect to the column.
+    
+    Post-condition: forall i=0,size(data): data[i+1,column] > data[i,column]
+    '''
+    if np.all(np.diff(data[:,column]) > 0):
+        return data
+    else:
+        # We have to filter out two types of points: non-monotonic and with duplicated x-coordinate.
+        mask = np.zeros(np.shape(data)[column],dtype=bool)
+        current = data[0,column]
+        mask[0] = True
+        for idx,x in enumerate(data[1:,column],1):
+            if x > current:
+                mask[idx] = True
+                current = x
+
+        return data[mask]
+
+def filterOutNegative(data,column):
+    mask = data[:,column] > 0
+    if np.all(mask):
+        return data
+    else:
+        return data[mask]
+
+        
 
 def main(argv):
 
@@ -53,6 +81,7 @@ def main(argv):
     parser.add_argument('--output',required=True,help='path to the output file')
     parser.add_argument('--prefix',default='elem',help='Prefix for the names of polyHard files')
     parser.add_argument('--stress_scaling',default=1.e6,help='Scaling factor for stresses. Default: conversion from MPa to Pa')
+    parser.add_argument('--dryrun', action='store_true',default=False,help='Suppress launching the crys3d and use PPD as it is found in the directory')
     args = parser.parse_args(argv)
 
     try:
@@ -67,11 +96,15 @@ def main(argv):
 
         old_ppd = np.ndarray([0,2])
         # Open & read the old PPD file
+
         if not args.initial and args.oldPPD:
             try:
                 old_ppd = np.loadtxt(args.oldPPD,usecols=[0,2])
+                old_ppd = makeStrictlyIncreasing(filterOutNegative(old_ppd,column=1))
             except IOError as e:
-                print('Warning: empty old PPD')
+                sys.stderr.write('Warning: empty old PPD\n')
+        else:
+            old_ppd = np.ndarray([0,2])
         #
         # Create crys3d input file from the template file:
         template = string.Template(open(args.config_template,'r').read())
@@ -86,33 +119,30 @@ def main(argv):
         with open(args.config,'w') as config_file:
             config_file.write(template.safe_substitute(params))
         #
-        # Run the command    
-        command = (args.crys3D + ' < ' + args.config)
-        if sys.platform in [ 'win32', 'win64' ]:
-            command += ' > nul'
-        else:
-            command += ' > /dev/null'
-        info = os.system(command)
-        if info != 0:
-            raise OSError('Failed to execute : ' + args.crys3D)
+        if not args.dryrun:
+            # Run the command    
+            command = (args.crys3D + ' < ' + args.config)
+            if sys.platform in [ 'win32', 'win64' ]:
+                command += ' > nul'
+            else:
+                command += ' > /dev/null'
+            info = os.system(command)
+            if info != 0:
+                raise OSError('Failed to execute : ' + args.crys3D)
 
         new_ppd = np.loadtxt(args.PPD,usecols=[0,2])
-        # Merge old PPD with new PPD
-        data = np.vstack((old_ppd,new_ppd))
-        if not np.all(np.diff(data[:,0]) > 0):
-            # We have to filter out two types of points: non-monotonic and with duplicated x-coordinate.
-            mask = np.zeros(np.shape(data)[0],dtype=bool)
-            current = data[0,0]
-            mask[0] = True
-            for idx,x in enumerate(data[1:,0],1):
-                if x > current:
-                    mask[idx] = True
-                    current = x
+        new_ppd = makeStrictlyIncreasing(filterOutNegative(new_ppd,column=1))
+        # Conditionally merge the old PPD with the new PPD
+        if len(old_ppd) and len(new_ppd) and (old_ppd[-1,0] <  new_ppd[0,0]):
+            data = np.vstack((old_ppd,new_ppd))
+            data = makeStrictlyIncreasing(data)
+        else:
+            data = new_ppd
+        # Post-condition: linear approximation requires at least two data points,
+        # so "data" must contain at least two rows.
+        if len(data) < 2:
+            raise ValueError('Working PPD set must contain at least two data rows')
 
-            data = data[mask]
-            #if not np.all(np.diff(data[:,0]) > 0):
-            #    raise ValueError('Post-condition failed')
-            pass
         scaling_factor = args.stress_scaling
         interpolation_points = np.array([def_data.eps_0, 
                                          def_data.eps_0 + 0.5*(def_data.eps_1 - def_data.eps_0), 
@@ -127,9 +157,16 @@ def main(argv):
     
         return 0
 
-    except OSError as e:
+    except (OSError,ValueError) as e:
         sys.stderr.write(str(e) + '\n')
         return 2
+
+    except IOError as e:
+        if e.args[0] == errno.ENOENT:
+            sys.stderr.write('Cannot find file or directory: {fname}\n'.format(fname=e.filename))
+        else:
+            sys.stderr.write('IO error: ' + str(e) + '\n') 
+        return 2 
 
     except Exception as e:
         sys.stderr.write('Unhandled exception:\n')
