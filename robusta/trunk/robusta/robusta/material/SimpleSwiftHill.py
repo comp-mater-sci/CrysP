@@ -56,8 +56,8 @@ class SimpleSwiftHill(GenericMaterial):
         add tabular data for plastic true stress/ true strain based on Swift coefficients
         """
         import warnings
-        topLevelModelName = self.GetValue('TopLevelModelName')
-        modelHandle = self.GetGlobal(topLevelModelName)
+        #topLevelModelName = self.GetValue('TopLevelModelName')
+        modelHandle = self.ModelHandle()
         newMaterialName = self.GetValue('materialName')
 
         # get Swift law parameters

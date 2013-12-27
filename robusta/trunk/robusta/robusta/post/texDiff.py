@@ -32,6 +32,70 @@ else:
     LIB = os.path.abspath('c:/odf')
 
 
+def GetTexIndex(refKeyword='hms', folder=os.getcwd()):
+    """ go through a list of c files containing the given keyword and return
+        their texture indices
+        
+        c files should have the format prefix_filenumber_keyword.c
+        
+        requires the printc binary to be in the given folder (this needs to be
+        cleaned up)
+    """
+    printc = './printc_lx64.exe'
+    
+    fileList = glob.glob('*{0}*.c'.format(refKeyword))
+    fileNumbers = [int(name.split('_')[1]) for name in fileList]
+    
+    fileSortIndices = np.argsort(fileNumbers)
+    noFiles = len(fileList)
+    
+    results = np.zeros((noFiles, 1))
+    
+    currentDir = os.getcwd()
+    os.chdir(folder)
+    
+    for index in range(noFiles):
+    
+        fileName = fileList[fileSortIndices[index]]
+        shutil.copyfile(os.path.join(folder, fileName),
+                        os.path.join(folder, 'input.c'))
+                        
+        check_call(printc)
+        
+        outputFile = open('printc.l01', 'r')
+        results[index] = float(outputFile.readlines()[-1].strip().split(' ')[-1])
+        outputFile.close()
+        
+    os.chdir(currentDir)
+    return (np.array(fileList)[fileSortIndices], results)
+    
+
+def GetVerschValFromNpy(folder=os.getcwd()):
+    """ read the value calculated by Versch and stored in npy files in the
+        given folder (current folder by default). The values returned are the
+        minimum in each file
+        
+        file names should follow the format number_label.npy
+        
+        returns the list of file names and the corresponding list of minimum
+        Versch values
+    """
+    fileList = glob.glob('*.npy')
+    fileNumbers = [int(name.split('_')[0]) for name in fileList]
+    
+    fileSortIndices = np.argsort(fileNumbers)
+    noFiles = len(fileList)
+    
+    results = np.zeros((noFiles, 1))
+    
+    for index in range(noFiles):
+        
+        fileName = fileList[fileSortIndices[index]]
+        results[index] = np.min(np.load(fileName)[:,3])
+        
+    return (np.array(fileList)[fileSortIndices], results)
+        
+
 def ComparePairs(keyFixed='std', keyMove='hms', folder=os.getcwd()):
     """ compare pairs of c files in the current directory by calling SearchSpace
         on each pair
@@ -49,39 +113,42 @@ def ComparePairs(keyFixed='std', keyMove='hms', folder=os.getcwd()):
     fixedFileOrder = np.argsort(fixedFileNums)
     
     moveNameNums = [int(fileName.split('_')[1]) for fileName in moveNameList]
-    moveFileOrder = np.argsort(moveNameList)
+    moveFileOrder = np.argsort(moveNameNums)
     
     # check if all files have a corresponding pair
     matches = np.array([num in fixedFileNums for num in moveNameNums])
     noFiles = len(fixedFileNums)
     if not (matches.all() and len(moveNameNums)==noFiles):
         missing = np.array(moveNameList)[np.logical_not(matches)]
-        print missing, len(missing)
+        print missing, len(missing), noFiles, len(moveNameNums)
         raise Exception('The files listed above are missing a match')
         
     # start analysis
-    minVal = np.zeros((noFiles,1))
+    minFile = open('minVals.txt', 'w')
+    minFile.write('File1,File2,minRotation\n')
     for fileNum in range(noFiles):
     
         # files are copied to temp files in order stay within the 8 character
         # limit for ROTTEX
-        constFileName=fixedNameList[fixedFileOrder[fileNum]]
-        moveFileName=moveNameList[moveFileOrder[fileNum]]
+        constFileName = fixedNameList[fixedFileOrder[fileNum]]
+        moveFileName = moveNameList[moveFileOrder[fileNum]]        
+        print 'Comparing {0} and {1}:'.format(constFileName, moveFileName)
         
         shutil.copyfile(os.path.join(folder, constFileName),
                         os.path.join(folder, 'const.c'))
         shutil.copyfile(os.path.join(folder, moveFileName),
                         os.path.join(folder, 'move.c'))
 
-        minVal[fileNum,1] = SearchSpace(constFileName='const.c', moveFileName='move.c',
-                    resultFileName='{0}_res.npy'.format(fixedFileNums[fixedFileOrder[fileNum]]))
-    
-    sortedNameList = np.array([fixedNameList[index] for index in fixedFileOrder])
-    np.savetxt('minVals.txt', np.hstack((sortedNameList, minVal)))
+        # write results to file
+        minVal = SearchSpace(constFileName='const.c', moveFileName='move.c',
+                             resultFileName='{0}_res.npy'.format(fixedFileNums[fixedFileOrder[fileNum]]))
+        minFile.write('{0},{1},{2}\n'.format(constFileName, moveFileName,minVal))
+
+    minFile.close()
     
 
 def SearchSpace(constFileName, moveFileName, limPhi1=180, limPHI=1, limPhi2=1,
-                step=1., folder=os.getcwd(), resultFileName='output'):
+                step=1.0, folder=os.getcwd(), resultFileName='output'):
     """ search the entire rotation space to see how closely two textures can be
         made to coincide by rotating one of them
     """
@@ -100,9 +167,12 @@ def SearchSpace(constFileName, moveFileName, limPhi1=180, limPHI=1, limPhi2=1,
     diffIndex = 0
     
     for phi1index in range(noPhi1Values):
+        
         for PHIindex in range(noPHIValues):
+            
             for phi2index in range(noPhi2Values):
                 sys.stdout.write('.')
+                sys.stdout.flush()
                 parameters = (phi1Values[phi1index], PHIValues[PHIindex],
                               phi2Values[phi2index])                
                 diffValue =  PackedTextureDiff(constFileName=constFileName,
@@ -112,7 +182,7 @@ def SearchSpace(constFileName, moveFileName, limPhi1=180, limPHI=1, limPhi2=1,
                 diffIndex +=1
                 
     # save the result and return the minimum for information
-    sys.stdout.write('\n')
+    print '\n'
     np.save(resultFileName, difference)       
     
     minDiff = np.argmin(difference[:,3])
