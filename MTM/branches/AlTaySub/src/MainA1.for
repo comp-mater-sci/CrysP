@@ -140,7 +140,7 @@ C
       CALL GRFIL(fnam3,Fmicro,info) 
       if (info.ne.0) then
           write(*,215)
-          stop
+          call exit(stopcode_ioerror)
  215      format('Error condition is returned by GRFIL')
       endif      
       
@@ -153,6 +153,12 @@ C
       call stripComment(tex_fname)
       ! 
       call loadTexture(tex_type,NDAT1,trim(tex_fname),tex_nblock,info)
+      if (info /= 0) then
+            write(*,fmt=9980) trim(tex_fname)
+            call exit(stopcode_ioerror)
+ 9980 format('An error has occurred while processing texture data file:'
+     &       ,1X,A)
+      endif
       call xleesor()
 #else
       ! Legacy way of reading texture data.
@@ -165,7 +171,7 @@ C
       if (KOST_global == hard_pebp) then
             if (KS_initState(NREC) /= 0) then
                   write(IMP,fmt=600) 
-                  stop
+                  call exit(stopcode_runtimeerror)
             endif
             read_state = .false.
             nblock = 0
@@ -176,7 +182,7 @@ C
                   if (info /= 0) then 
                         write(IMP,fmt=601) trim(fname_pebp)
                         write(*,fmt=601) trim(fname_pebp)
-                        stop
+                        call exit(stopcode_ioerror)
                   endif
             endif
       endif

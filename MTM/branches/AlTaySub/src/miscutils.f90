@@ -1,5 +1,23 @@
 !> Container for miscellaneous utility routines.
 module miscutils
+      
+      !>@{ \name Exit codes that are returned to the OS on various stop contitions
+      
+      ! This piece of code has been ported from fngRuntime
+      
+      !> OK, succsssful termination
+      integer,parameter :: stopcode_OK = 0
+      
+      !> Error, input parameters are wrong
+      integer,parameter :: stopcode_inputerror = 1
+      
+      !> Error, an IO operation has failed. 
+      integer,parameter :: stopcode_ioerror = 2
+      
+      !> Run-time error condition occured.
+      integer,parameter :: stopcode_runtimeerror = 10
+      !>@}
+
 
 contains
 
