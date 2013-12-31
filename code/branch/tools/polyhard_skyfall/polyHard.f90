@@ -93,6 +93,10 @@ integer :: inpunit, info
       ! Load contents to def_data, make hardApprox.
       ! This function may terminate the program.
       call prepareData(cnf,def_data,hardApprox,info)
+      if (info /= fngSuccess) then
+            write(errmsg,900) 'Invalid contents of ' // trim(cnf%input_fname)
+            call finalize(2)
+      endif
       ! Terminate if no hardening calculations are requested
       if (def_data%req_hard == 0) call finalize(0)
       !
