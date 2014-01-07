@@ -6,6 +6,7 @@
 headerText = 'CRYSTAL WEIGHT      phi1      PHI       phi2        GAMMA'
 smtFlavour = 'type 2'
 excludeList = ['']
+outputFilePrefix = ''
 
 # import native modules
 import os
@@ -48,8 +49,7 @@ for curFileName in curFileList:
             defStepNumber = int(float(infoLine[0]))
             
             # open the output file and add the header
-            outFile = open('{0}-{1}.smt'.format(os.path.splitext(curFileName)[0],
-                           defStepNumber), 'w')
+            outFile = open('{0}{1}.smt'.format(outputFilePrefix, defStepNumber), 'w')
                            
             if smtFlavour=='type 1':
                 outFile.write(' {0} {1}\n'.format(noCrystals, label))
