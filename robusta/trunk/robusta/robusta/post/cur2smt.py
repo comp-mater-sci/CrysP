@@ -13,6 +13,9 @@ import os
 import sys
 import glob
 
+# import third party modules
+import numpy as np
+
 # get file list
 curFileList = [name for name in glob.glob('*.CUR') if not name in excludeList]
 
@@ -41,6 +44,9 @@ for curFileName in curFileList:
         # for each header line export the data as an smt file
         for index in range(numTextureFiles):
             
+            sys.stdout.write('.')
+            sys.stdout.flush()
+            
             # get the header info for the current texture
             headerLine = headerLines[index]
             infoLine = [item.strip() for item in rawData[headerLine-1].split(' ') \
@@ -49,19 +55,17 @@ for curFileName in curFileList:
             defStepNumber = int(float(infoLine[0]))
             
             # open the output file and add the header
-            outFile = open('{0}{1}.smt'.format(outputFilePrefix, defStepNumber), 'w')
-                           
+            outFileName = '{0}{1}.smt'.format(outputFilePrefix, defStepNumber)        
+            outFile = open(outFileName, 'w')                           
             if smtFlavour=='type 1':
                 outFile.write(' {0} {1}\n'.format(noCrystals, label))
                 
             elif smtFlavour=='type 2':
                 outFile.write(' 1\n {0}\n {1}\n'.format(label, noCrystals))
-                
-            # write the data
-            for line in rawData[headerLine+1:headerLine+noCrystals+1]:
-                parsedLine = [float(item.strip()) for item in line.split(' ') \
-                              if not item=='']
-                outFile.write(' {0:9.3f} {1:9.3f} {2:9.3f}              1 {3:16.3f}\n'.format(
-                              parsedLine[4], parsedLine[3], parsedLine[2], parsedLine[1]))
-                              
+            
+            # convert the data to an array and reformat/write it to the output file
+            data = np.genfromtxt(rawData[headerLine+1:headerLine+noCrystals+1], delimiter=(6,10,12,10,10,12))
+            np.savetxt(fname=outFile, X=data[:,[4,3,2,1]], fmt=' %9.3f %9.3f %9.3f              1 %14.5f')
+                        
             outFile.close()
+        print '\ndone\n'
