@@ -62,11 +62,14 @@ class HmsArchive(GenericRobusta):
             self.ScanIPFolder(IPfolderName=folder)
 
 
-    def ScanIPFolder(self, IPfolderName):
+    def ScanIPFolder(self, IPfolderName=None):
         """ scan the named IP folder and get the  list of increments/ data file
             numbers available
         """
-        if not IPfolderName in self.GetValue('IPdataFolderList'):
+        if IPfolderName is None:
+            IPfolderName = self.GetValue('IPdataFolderList')[0]
+        
+        elif not IPfolderName in self.GetValue('IPdataFolderList'):
             raise KeyError('{0} is not in the list of IP data folders'.format(IPfolderName))
         
         # get the integration point number from the folder name
@@ -181,7 +184,7 @@ class HmsArchive(GenericRobusta):
                                     if not i==''] for j in range(1,4,1)])
             strainComponents = {'E11':strainMatrix[0,0], 'E22':strainMatrix[1,1],
                                 'E33':strainMatrix[2,2], 'E12':strainMatrix[0,1],
-                                'E13':strainMatrix[0,2], 'E33':strainMatrix[2,2]}
+                                'E13':strainMatrix[0,2], 'E23':strainMatrix[1,2]}
             strainDataForIP.update({incrementNumber:strainComponents})
             
             
@@ -191,7 +194,7 @@ class HmsArchive(GenericRobusta):
         self.SetValue('IPdata', IPdata)
 
 
-    def WriteStrainIncrementForIP(IPnumber, fileName='strain_incs.txt', folder=None,
+    def WriteStrainIncrementForIP(self, IPnumber, fileName='strain_incs.txt', folder=None,
                                   components=['E11','E22','E33','E12','E13','E23'],
                                   delimiter=','):
         """ export the strain data for the given integration point number
@@ -201,18 +204,22 @@ class HmsArchive(GenericRobusta):
         if folder is None:
             folder = self.GetValue('simRootFolder')
             
-        fileID = open(os.path.join(folder, fileName))
+        fileID = open(os.path.join(folder, fileName), 'w')
         
         # write the header
         fileID.write('Strain output for IP {0}.\n'.format(IPnumber))
-        numColumns = len(components)
-        textFormat = '{0}' + delimiter.join(['{1['+str(i)+']}' \
-                             for i in range(numColumns)]) + '{0}\n'.format(delimiter)
-        floatFormat = '{0}' + delimiter.join(['{1['+str(i)+']}' \
-                             for i in range(numColumns)]) + '{0}\n'.format(delimiter)
-        fileID.write(formatString.format(components))
+        numColumns = len(components)               
+        formatString = '{0}' + delimiter + delimiter.join(['{1['+str(i)+']}' \
+                       for i in range(numColumns)]) + '{0}\n'.format(delimiter)
+        fileID.write(formatString.format('incNum', components))
         
         # write the data and close the file
-        data = self.GetValue('IPdata')[IPnumber]
+        data = self.GetValue('IPdata')[IPnumber]['strain']
+        incrementNums = data.keys()
+        
+        for incNum in incrementNums:
+            dataForInc = data[incNum]
+            itemList = [dataForInc[compName] for compName in components]
+            fileID.write(formatString.format(incNum, itemList))
         
         fileID.close()
