@@ -87,12 +87,6 @@ C     UNIT IMP2 = PRINTER
       cods1(L+1:L+4)='.TWN'
 C     UNIT IMP3 = PRINTER
       open (unit=IMP3,file=cods1,status='replace')
-#ifdef PEBP_ENABLED
-      ! PEBP model
-      cods1(L+1:L+4)='.BPM'
-C     UNIT IMP4 = state variables of PEBP KOST11
-      info = KS_openStateFile(IMP4,cods1,'w')
-#endif
       ! 
       cods1(L+1:L+4)='.MSS'
 C     UNIT IMP5 = homogenized strain-stress
@@ -169,6 +163,10 @@ C
       ! PEBP model
       NREC = size(DFIL)
       if (KOST_global == hard_pebp) then
+            cods1(L+1:L+4)='.BPM'
+            ! UNIT IMP4 = state variables of PEBP KOST11
+            info = KS_openStateFile(IMP4,cods1,'w')
+            !
             if (KS_initState(NREC) /= 0) then
                   write(IMP,fmt=600) 
                   call exit(stopcode_runtimeerror)
