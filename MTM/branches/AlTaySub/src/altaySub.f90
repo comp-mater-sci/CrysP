@@ -50,7 +50,7 @@ contains
       use TexFormats
       use altayHard,only: hard_none,hard_voce,hard_pebp
       use miscutils
-      use MICROSTR
+      use microstr
 #ifdef PEBP_ENABLED
       use KOST1xState
 #endif
@@ -207,7 +207,7 @@ contains
       use altayConfig, only: altayConfigData,fname_len,acnf, astate
       use altayInterface
       use IOConfig
-      use MICROSTR, only: MICROSTR_finalize
+      use microstr, only: MICROSTR_finalize
       use DYNFIL
 #ifdef PEBP_ENABLED
       use KOST1xState

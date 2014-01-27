@@ -60,7 +60,7 @@ integer :: info
       
       !call verifyAltayExample(modelAlamel)
       
-      call verifyKost11Example(modelAlamel)
+      ! call verifyKost11Example(modelAlamel)
       
       ! call testTexAccessModules()
       
@@ -76,7 +76,7 @@ integer :: info
       !call verifyAltayMultimodel()
       
       
-      !call verifyMultiCall()
+      call verifyMultiCall()
 
       call finalizeAltay(info)
       ASSERT(info == 0)

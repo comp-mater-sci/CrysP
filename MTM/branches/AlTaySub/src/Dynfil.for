@@ -1,10 +1,7 @@
       module DYNFIL
+      use miscutils, only: unitMatrix
       implicit none
 
-      double precision,dimension(3,3),parameter :: unitMatrix = reshape(
-     &[ 1.D0, 0.D0, 0.D0,
-     &  0.D0, 1.D0, 0.D0,
-     &  0.D0, 0.D0, 1.D0], [ 3, 3 ])
       
       TYPE :: grain
             double precision :: tFI1 = 0.D0,tPHI = 0.D0, tFI2 = 0.D0
