@@ -7,7 +7,7 @@ from abaqus import *
 # import robusta classes
 from robusta.material.VoceVonMises import *             # materials
 from robusta.geom.Annulus import *                      # geometries
-from robusta.geom.Rhombus import *                      # geometries
+from robusta.geom.Rectangle import *                      # geometries
 from robusta.part.DiscreteRigid import *                # parts
 from robusta.part.Deformable import *                   # parts
 from robusta.mesh.HomogenousMesh import *               # meshes
@@ -16,13 +16,13 @@ from robusta.job.GenericJob import *
 from robusta.config import *
 
 def build(modelName='rolling_sim', materialDataFolder=defaultMaterialDataFolder,
-          materialDataFileName='AA6016_1mm_0deg.txt', topRollRadius=200.,
-          botRollRadius=200., sheetThick=5.0, reductionPercent=50,
+          materialDataFileName='AA6016_1mm_0deg.txt', topRollRadius=100.,
+          botRollRadius=150., sheetThick=5.0, reductionPercent=25,
           rollMass=defaultPointMass, sheetWidth=defaultPartSizeZ,
           sheetLength=None, rollWidthScale=1.5, rollSpeed=10.,
           rollSpeedRatio=1.0, topRollFriction=0.4, botRollFriction=0.4,
           contactStiffness=2.5e10, rollElementSize = defaultElementSize,
-          sheetElementSize=2.0, sheetMoveTime=0.001, contactStepTime=0.1,
+          sheetElementSize=0.4, sheetMoveTime=0.001, contactStepTime=0.1,
           rollingStepTime=4, sheetLengthRatio=1.5, sheetDepth=defaultPartSizeZ):
 
     # dependent parameter values
@@ -56,7 +56,7 @@ def build(modelName='rolling_sim', materialDataFolder=defaultMaterialDataFolder,
                                centre=default2DCentre)
     bottomRollGeometry.SetExtrusionLength(sheetDepth*rollWidthScale)
 
-    sheetGeometry = Rhombus('sheet', modelName)
+    sheetGeometry = Rectangle('sheet', modelName)
     sheetGeometry.MakeSketch(height=sheetThick, width=sheetLength, centre=sheet2DCentre)
     sheetGeometry.SetExtrusionLength(sheetDepth)
 

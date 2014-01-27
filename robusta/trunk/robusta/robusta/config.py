@@ -30,7 +30,7 @@ defaultIterationLimit = 100             # an number of iterations limit for misc
 #defaultMaterialDataFolder = '/home/diarmuid/SYNC/LAPTOP_BACKUPS/Backup-laptop my docs-2013-10-25_13-00/home/diarmuid/LAPTOP/all/Code_and_Packages/Mine/packages/Copyright_KUL/robusta/robusta/test'
 #root = os.path.abspath('C:/Users/Administrator/Documents')
 root = '/home/diarmuid/LAPTOP'
-defaultMaterialDataFolder = os.path.join(root, 'all/Code_and_Packages/Mine/packages/Copyright_KUL/robusta/robusta/data')
+defaultMaterialDataFolder = os.path.join(root, '/home/diarmuid/WORKING_COPIES/robusta/robusta/robusta/data')
 defaultMaterialFile = 'AA6016_1mm_0deg.txt'
 
 # ---- Geometry [ABAQUS]----
