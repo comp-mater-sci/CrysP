@@ -80,8 +80,8 @@ C     NRL= number of relaxations    NGR= number of grains
       endif
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (IOR.eq.1) IGrElm=0 
-      TWOSQ3=sqrt(2.0/3.0)
-      TAU=1.0
+      TWOSQ3=sqrt(2.D0/3.D0)
+      TAU=1.D0
 C     N is number of rows of A1;   NU number of rows of UU2
       TLXX=TOLXX 
       N=5*NGR
@@ -153,8 +153,8 @@ C     ... and now to crystal frame:
       CALL MATPROD(C3,TRFb(1,1,IL),C1,3,3,3)
       do 83 j=1,3
       do 83 i=1,3
-      RLS(i,j,IRL,IL)=(C3(I,J)+C3(J,I))*0.5
-      RLA(i,j)=(C3(I,J)-C3(J,I))*0.5
+      RLS(i,j,IRL,IL)=(C3(I,J)+C3(J,I))*0.5D0
+      RLA(i,j)=(C3(I,J)-C3(J,I))*0.5D0
   83  continue
       B3(L1+1,IRL)=PLUMIN(IL,IRL)*RLA(2,3)/sqr2
       B3(L1+2,IRL)=PLUMIN(IL,IRL)*RLA(3,1)/sqr2
@@ -171,8 +171,8 @@ C     Insert the relaxations as columns in A1-matrix
   87  continue
       DO 80 I=1,3
       DO 81 J=1,3                                                       
-      TDCb(I,J,IL)=(C2(I,J)+C2(J,I))*0.5
-  81  TRCb(I,J,IL)=(C2(I,J)-C2(J,I))*0.5
+      TDCb(I,J,IL)=(C2(I,J)+C2(J,I))*0.5D0
+  81  TRCb(I,J,IL)=(C2(I,J)-C2(J,I))*0.5D0
   80  CONTINUE                                                          
       call STR5(B5,TDCb(1,1,IL))
       deltat=0.0
@@ -210,7 +210,7 @@ C         TLCOST=TLCOST*TAU
                   enddo
             else
                   do jsgn=1,2
-                        CCC(jsgn,j)=1.0
+                        CCC(jsgn,j)=1.D0
                   enddo
             endif
 C           set Tau_crit for antitwinning direction equal to
@@ -392,8 +392,8 @@ c
 	call Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,STRSS,M11,ca1,ca2)
 	ccc=ccc2 ! use the Fake CRSS, they are scaled by SDD model
 c
-	CCC(1,M2+1)=dabs(ENTA*Cofcos*(ca1+ca2)/2.0)
-      CCC(2,M2+1)=dabs(ENTA*Cofcos*(ca1+ca2)/2.0)
+	CCC(1,M2+1)=dabs(ENTA*Cofcos*(ca1+ca2)/2.D0)
+      CCC(2,M2+1)=dabs(ENTA*Cofcos*(ca1+ca2)/2.D0)
 C  Third call of TBH
 	Call TBH(IPR,N,N,M12,A1,BB,
      1 CCC,UU,UU2,DI,DI2,Dacc,XX,STRSS,FakM,
@@ -569,11 +569,11 @@ C     Box product
       vec1(1)=GRPAR(2,2)*GRPAR(3,3)-GRPAR(3,2)*GRPAR(2,3)
       vec1(2)=GRPAR(3,2)*GRPAR(1,3)-GRPAR(1,2)*GRPAR(3,3)            
       vec1(3)=GRPAR(1,2)*GRPAR(2,3)-GRPAR(2,2)*GRPAR(1,3)
-      u=0.0
+      u=0.0D0
       do i=1,3
          u=u+GRPAR(i,1)*vec1(i)
       enddo
-      u=abs(u)*0.25/(AL(1)*AL(2)*AL(3))
+      u=abs(u)*0.25D0/(AL(1)*AL(2)*AL(3))
 C     The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3;
 C      for very flattened grains, it should tend to 1.
 C 
@@ -589,7 +589,7 @@ C     Case 1: is AL(3) the longest?
            AA(2)=AL(1)
            AA(3)=AL(2)
         endif
-        GEWF=u*(2.0*(AA(2)-AA(3))*AA(3)**2+4.0*AA(3)**3/3.0)
+        GEWF=u*(2.0D0*(AA(2)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.0D0)
       else 
 C       Case 2: is AL(3) the shortest?
         if (AL(3).le.AL(1).and.AL(3).le.AL(2)) then
@@ -601,9 +601,9 @@ C       Case 2: is AL(3) the shortest?
              AA(1)=AL(2)
              AA(2)=AL(1)
           endif
-          GEWF=u*(4.0*(AA(1)-AA(3))*(AA(2)-AA(3))*AA(3)
-     1        +2.0*(AA(2)-AA(3))*AA(3)**2+2.0*(AA(1)-AA(3))*AA(3)**2
-     2        +4.0*AA(3)**3/3.0)
+          GEWF=u*(4.D0*(AA(1)-AA(3))*(AA(2)-AA(3))*AA(3)
+     1        +2.0D0*(AA(2)-AA(3))*AA(3)**2+2.0D0*(AA(1)-AA(3))*AA(3)**2
+     2        +4.D0*AA(3)**3/3.D0)
         else
 C         Case 3: AL(3) is neither shortest nor longest      
           AA(2)=AL(3)
@@ -614,7 +614,7 @@ C         Case 3: AL(3) is neither shortest nor longest
              AA(1)=AL(2)
              AA(3)=AL(1)
           endif
-          GEWF=u*(2.0*(AA(1)-AA(3))*AA(3)**2+4.0*AA(3)**3/3.0)
+          GEWF=u*(2.D0*(AA(1)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.D0)
         endif
       endif
       if (IPR.gt.0) then
@@ -665,7 +665,7 @@ C       Normalisation
   102      format (' TGrb ',3d15.7)            
         enddo
 C@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@##@# QGX 17/9/2012
-      pi=atan(1.0)*4.0
+      pi=atan(1.D0)*4.D0
 	dlength=sqrt(TDC(1,1)*TDC(1,1)+
      #TDC(1,2)*TDC(1,2)+
      #TDC(1,3)*TDC(1,3)+
@@ -680,11 +680,11 @@ C     Transform TDC to the "Grb" reference frame
       CALL MATPROD(TDCGr,Tprinc,C1,3,3,3) 
 c   
 	relaxI=0.0
-	relaxI(1,3)=1.0
-	relaxI(3,1)=1.0
+	relaxI(1,3)=1.D0
+	relaxI(3,1)=1.D0
 	relaxII=0.0
-	relaxII(2,3)=1.0
-	relaxII(3,2)=1.0
+	relaxII(2,3)=1.D0
+	relaxII(3,2)=1.D0
 c
 	dot1=0.0
 	do i=1,3,1
@@ -692,7 +692,7 @@ c
 	dot1=dot1+relaxI(i,j)*TDCGr(i,j)
 	enddo
 	enddo
-      dot1=dot1/sqrt(2.0)/dlength
+      dot1=dot1/sqrt(2.0D0)/dlength
 
 	dot2=0.0
 	do i=1,3,1
@@ -700,7 +700,7 @@ c
 	dot2=dot2+relaxII(i,j)*TDCGr(i,j)
 	enddo
 	enddo
-	dot2=dot2/sqrt(2.0)/dlength
+	dot2=dot2/sqrt(2.0D0)/dlength
 c 
 	if(dabs(dot1).lt.0.000001.and.dabs(dot2).lt.0.000001) then
 c both relaxations are orthogonal
@@ -708,7 +708,7 @@ c both relaxations are orthogonal
 	Cofsin=0.0
 	goto 333
 	elseif(dabs(dot1).lt.0.000001) then
-	   if(dabs(dot2-1.0).lt.0.00001) then
+	   if(dabs(dot2-1.D0).lt.0.00001) then
 C  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
 C  new axe-1 be old axe-2
 c  new axe-2 be minus old axe-1
@@ -731,8 +731,8 @@ c update Tprinc
 	Tprinc(i,j)=AXX(j,i)
 	enddo
 	enddo	   
-	   Cofcos=1.0
-	   Cofsin=0.0
+	   Cofcos=1.D0
+	   Cofsin=0.D0
 	   goto 333	  
 	   endif
 C  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
@@ -782,35 +782,35 @@ C calculate the cosine for relaxation-1
 	enddo
 	enddo
 c   normalize
-	dot1=dot1/sqrt(2.0)/dlength
+	dot1=dot1/sqrt(2.0D0)/dlength
 c
 	Cofcos=dot1
-	Cofsin=sqrt(1.0-dot1*dot1)
+	Cofsin=sqrt(1.0D0-dot1*dot1)
 	goto 333
 	elseif(dabs(dot2).lt.0.000001) then
 C Relaxation-2 is already a orthogonal one
 C calculate the cosine for relaxation-1
 c
-         if(dabs(dot1-1.0).lt.0.00001) then
-	   Cofcos=1.0
-	   Cofsin=0.0
+         if(dabs(dot1-1.0D0).lt.0.00001) then
+	   Cofcos=1.0D0
+	   Cofsin=0.0D0
 	   goto 333
 	   else	
 	   Cofcos=dot1
-	   Cofsin=sqrt(1.0-dot1*dot1)   
+	   Cofsin=sqrt(1.0D0-dot1*dot1)   
 	   goto 333
 	   endif
 	else
 C   need to rotate by a angle < 90 (this angle could be positive or negative)
 	tgangle=dot2/dot1
-	x=1.0/sqrt(1.0+tgangle*tgangle)
-	y=tgangle/sqrt(1.0+tgangle*tgangle)
+	x=1.D0/sqrt(1.D0+tgangle*tgangle)
+	y=tgangle/sqrt(1.D0+tgangle*tgangle)
 	PrDir=0.0
 	PrDir(1,1)=x
       PrDir(1,2)=y
       PrDir(2,1)=-y
       PrDir(2,2)=x
-	PrDir(3,3)=1.0
+	PrDir(3,3)=1.0D0
 c 
 C   Prdir(1,) is vector-1 in the GB frame
 C   Prdir(2,) is vector-2 in the GB frame
@@ -867,10 +867,10 @@ c
 	enddo
 	enddo
 c normalize
-	dot1=dot1/sqrt(2.0)/dlength
+	dot1=dot1/sqrt(2.0D0)/dlength
 c
 	Cofcos=dot1
-	Cofsin=sqrt(1.0-dot1*dot1)
+	Cofsin=sqrt(1.0D0-dot1*dot1)
 	goto 333
 	endif
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -899,10 +899,10 @@ C  UBUF(10) is the BISHOP-HILL stress from TBH routine, in crystal frame
 	Real*8, INTENT(IN) :: UBUF
 	dimension BB(10),base1(5),UBUF(10),ccc(2,194),ccc2(2,194)
 C
-	if(Cofsin.eq.0.0 .and. Cofcos.eq.0.0) then
+	if((abs(Cofsin) < epsilon(0.D0)) .and. (abs(Cofcos) < epsilon(0.D0))) 
+     &then
 C  update CRSS
 	ccc2=ccc
-	
 	elseif(dabs(Cofcos).lt.0.000000001) then
 	write(*,*) 'Cofcos=0. Somewhere is worong in the code'
 	stop
@@ -949,13 +949,12 @@ c
      #     UBUF(10)*base1(5)
 c from here we use the new method to update the CRSS 
 	zeta=sg1c1/sg2c1
-    	write(39,fmt='(3(f12.8,2x))') sg1c1,sg2c1,zeta
 C  check if it is negative
-	if(zeta.lt.0.0) then
+	if(zeta.lt.0.D0) then
 	write(*,*) 'Zeta is negative, somewhere is wrong'
 	stop
 	endif
- 	enta1=sqrt(1.0/zeta)
+ 	enta1=sqrt(1.D0/zeta)
  	enta2=sqrt(zeta)
 c 	enta1=2.0/(1.0+zeta)
 c 	enta2=2.0*zeta/(1.0+zeta)
