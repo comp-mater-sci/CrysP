@@ -56,6 +56,10 @@
 !          of the CBB dislocation density of wall i onto the CRSS of slip system s.
 !          If keyword "{screw}" is omitted, it is implicitly assumed that all slip is carried by edge 
 !          dislocations (as has been done in the PhD of B. Peeters).
+!    v1.9.1 by J. Gawad, CS, and P. Eyckens, MTM, KU Leuven, 27 Jan 2014:
+!       -> Several corrections to floating point operations that involve implicit single precision constants
+!       -> Some module parameters are calculated at compile time instead of getting initialized 
+!          by approximate values.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST=11; 
@@ -154,17 +158,17 @@
                                                 alfa_G_b_eff    = 0.D0 ,&
                                                 alfa_G_b_ABSeff = 0.D0
 
-      double precision, PARAMETER :: MINfrac= 2.0E-3
-      double precision, PARAMETER :: LOWfrac=10.0E-3
+      double precision, PARAMETER :: MINfrac= 2.0D-3
+      double precision, PARAMETER :: LOWfrac=10.0D-3
       
-      double precision, PARAMETER :: p2= 0.707106781187 !1.0/sqrt(2.0)
-      double precision, PARAMETER :: n2=-0.707106781187 
-      double precision, PARAMETER :: p3= 0.577350269190 !1.0/sqrt(3.0)
-      double precision, PARAMETER :: n3=-0.577350269190    
-      double precision, PARAMETER :: p6= 0.408248290464 !1.0/sqrt(6.0)
-      double precision, PARAMETER :: n6=-0.408248290464    
-      double precision, PARAMETER :: pd6= 0.816496580928 !2.0/sqrt(6.0)
-      double precision, PARAMETER :: nd6=-0.816496580928
+      double precision, PARAMETER :: p2= 1.D0/sqrt(2.D0)
+      double precision, PARAMETER :: n2= -p2 
+      double precision, PARAMETER :: p3= 1.D0/sqrt(3.D0)
+      double precision, PARAMETER :: n3= -p3    
+      double precision, PARAMETER :: p6= 1.D0/sqrt(6.D0)
+      double precision, PARAMETER :: n6= -p6    
+      double precision, PARAMETER :: pd6= 2.D0/sqrt(6.D0)
+      double precision, PARAMETER :: nd6= -pd6
       !double precision, PARAMETER :: p1_42= 0.154303349962 !1.0/sqrt(42.0)
       !double precision, PARAMETER :: n1_42=-0.154303349962
       !double precision, PARAMETER :: p4_42= 0.617213399848 !4.0/sqrt(42.0)
@@ -338,8 +342,8 @@
       P%RHOcbSAT=P%I  * P%I  /( P%R  * P%R  )
       P%RHOwdSAT=P%Iwd* P%Iwd/( P%Rwd* P%Rwd)
       P%RHOwpSAT=(sqrt((P%Iwp/P%Rwp)**4 +               &
-                 4.*(P%Iwp*P%Iwd/(P%Rwp*P%Rwd))**2) +   &
-                 (P%Iwp/P%Rwp)**2)/2.  
+                 4.D0*(P%Iwp*P%Iwd/(P%Rwp*P%Rwd))**2) +   &
+                 (P%Iwp/P%Rwp)**2)/2.D0  
 
       P%RHOcbMIN=  MINfrac * P%RHOcbSAT
       P%RHOwdMIN=  MINfrac * P%RHOwdSAT  
@@ -634,8 +638,8 @@
 !     local variable declarations
       double precision x
 
-      x=exp(-0.5*RR*delta_g/P%b)
-      x=II/RR*(1.-x)+sqrt(RHO_a)*x
+      x=exp(-0.5D0*RR*delta_g/P%b)
+      x=II/RR*(1.D0-x)+sqrt(RHO_a)*x
       F_KocksMeck=x*x
 
       END FUNCTION F_KocksMeck
@@ -712,10 +716,10 @@
       double precision, DIMENSION(4) :: K
 
       K(1)=deltaT*dwp_dt(wpini        )
-      K(2)=deltaT*dwp_dt(wpini+K(1)/2.)
-      K(3)=deltaT*dwp_dt(wpini+K(2)/2.)
+      K(2)=deltaT*dwp_dt(wpini+K(1)/2.D0)
+      K(3)=deltaT*dwp_dt(wpini+K(2)/2.D0)
       K(4)=deltaT*dwp_dt(wpini+K(3)   )
-      RungeKutta=wpini+(K(1)+2.*K(2)+2.*K(3)+K(4))/6.
+      RungeKutta=wpini+(K(1)+2.D0*K(2)+2.D0*K(3)+K(4))/6.D0
 
       END FUNCTION RungeKutta
 
@@ -821,7 +825,7 @@
       double precision Reffective
 
       if(RHObausch .GT. 0.0) then
-        Reffective=P%R + P%R2*RHObausch/(2.*P%RHOwpSAT)  
+        Reffective=P%R + P%R2*RHObausch/(2.D0*P%RHOwpSAT)  
         if (P%I*sqrt(RHO_a) - Reffective*RHO_a .LE. 0.0) then
           RHO_b=RHO_a !Keep as is. 
         else
@@ -854,7 +858,7 @@
       double precision,DIMENSION(6)::wpcontr,wdcontr
       
       !Slip systems not allowed to become active retain initialization value of -1.0
-      F_CRSS=-1.0
+      F_CRSS=-1.D0
       
       !CRSS within cells & CBs
       tau_CB=alfa_G_b*sqrt(SV%RHOcb) 
@@ -864,7 +868,7 @@
 
       !Calc. CRSS for each slip system s, for the sense of slip j
       do j=1,2 
-      signfac=3.0-2.0*j ! 1 for j=1 ; -1 for j=2
+      signfac=3.D0-2.D0*dble(j) ! 1 for j=1 ; -1 for j=2
         do s=1,Nss 
           !wp- and wd-contributions from all CBBs i
           do i=1,6
