@@ -124,8 +124,8 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       end if                                                   
       DO 71 I=1,3                                                       
       DO 72 J=1,3                                                       
-      TDC(I,J)=(DG(I,J)+DG(J,I))*0.5                                    
-  72  TRC(I,J)=(DG(I,J)-DG(J,I))*0.5 
+      TDC(I,J)=(DG(I,J)+DG(J,I))*0.5D0                                    
+  72  TRC(I,J)=(DG(I,J)-DG(J,I))*0.5D0 
       if(NLIST.eq.1) then                                   
       WRITE (IMP,204) (DG(I,J),J=1,3),(TDC(I,J),J=1,3),(TRC(I,J),J=1,3) 
       end if
@@ -156,7 +156,7 @@ C     Normalisation of TDC (which is used in CLUSTER1 in PANCAK2)
       endif
  205  format (' Taylor - symmetric part of strain step is too small'
      1 ,d20.8)
-      X=sqrt(2.0*X/3.0)
+      X=sqrt(2.D0*X/3.D0)
       do i=1,3
          do j=1,3
             TDC(i,j)=TDC(i,j)/X
@@ -413,7 +413,7 @@ C      DO 58 K=1,M
 C      X=ABS(GAMdot(K))
 C  58  CONTINUE                                                          
       DO 75 J=1,3
-  75  C1(J,J)=1.                                                        
+  75  C1(J,J)=1.D0                                                      
       C1(3,2)=ROT(1)-TRC(1)                                             
       C1(1,3)=ROT(2)-TRC(2)                                             
       C1(2,1)=ROT(3)-TRC(3)                                         
@@ -421,7 +421,7 @@ C  58  CONTINUE
       C1(3,1)=-C1(1,3)                                                  
       C1(1,2)=-C1(2,1)                                                  
 C     NIEUWE STAND UITWENDIG ASSENSTELSEL.                          
-      CALL MATPROD(C2,C1,TRF,3,3,3)                                        
+      CALL MATPROD(C2,C1,TRF,3,3,3)                                     
 C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX                            
       ROTM= SQRT(C1(3,2)**2+C1(1,3)**2+C1(2,1)**2)
       call EULER1(C2,fi1,PHI,fi2)
@@ -431,7 +431,7 @@ C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
       X=0.                                                              
       DO 84 I=1,NTW                                                     
       J=I+NGL                                                           
-      X=X+GAMdot(J)/G(I)                                                 
+      X=X+GAMdot(J)/G(I)                                                
       VOLFR(I)=X                                                        
   84  CONTINUE                                                          
        IF (X.LE.1.) GOTO 85  
@@ -476,13 +476,13 @@ C
       do 60 i=1,3
       do 60 j=1,3
 C     Picking up of D in sample system:
-      y=0.5*(DG(i,j)+DG(j,i))/DELTAT
+      y=0.5D0*(DG(i,j)+DG(j,i))/DELTAT
 C     Scalar product between D and D+RHOS
       x=x+(y+rhossa(i,j))*y
   60  continue
 C     calculation of ratio of projection of D+RHOS on D, and D itself.
 C     Note that length of D = sqrt(3/2)
-      x=x*2.0/3.0
+      x=x*2.D0/3.D0
       ratlon=x !“the ratio of the parallel strain rates”
 C
       WDOT1=WDOT*DELTAT !Rate of plastic work of crystallite

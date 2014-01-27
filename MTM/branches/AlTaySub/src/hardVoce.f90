@@ -77,14 +77,14 @@ contains
                   stop
 #endif
             endif
-            p%THIII=c%THIII1/(1.0-c%TIII1/c%TIIIS)
+            p%THIII=c%THIII1/(1.D0-c%TIII1/c%TIIIS)
             if ((abs(p%THIII) < epsilon(0.D0)) .or. (abs(c%TIIIS) < epsilon(0.D0))) return      
             p%ETA=c%THT/p%THIII
             p%GAMMAT=-c%TIIIS*LOG(p%ETA*c%TIIIS/(c%TIIIS-c%TIII1))/p%THIII
             ! Calculation of transition TAU
             p%TAUT=c%TIIIS-(c%TIIIS-c%TIII1)*exp(-p%THIII*p%GAMMAT/c%TIIIS)
             ! Calculation of theta-IV-0
-            p%THIV=c%THT/(1.0-p%TAUT/c%TIVS)
+            p%THIV=c%THT/(1.D0-p%TAUT/c%TIVS)
             ! Calculation of TAU-IV-0
             p%TIV0=c%TIVS+(p%TAUT-c%TIVS)*exp(p%THIV*p%GAMMAT/c%TIVS)
             info = 0

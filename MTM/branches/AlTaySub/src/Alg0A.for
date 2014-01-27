@@ -176,7 +176,7 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
   98  format (A)      
 C     read the parameters of the work hardening model
       call readHardParams(KLEC,KOST,info)
-      TAU=1.0
+      TAU=1.D0
       CALL TAYLOR(1,KOST,EPS,Ftot)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
@@ -194,7 +194,7 @@ C     read the parameters of the work hardening model
             do L=1,NGR
                   do i=1,M11
                         do j=1,2   
-                              FK1b(j,i,L)=1.0
+                              FK1b(j,i,L)=1.D0
                         enddo
                   enddo
             enddo
@@ -293,7 +293,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       Mavg=0.
       srh=0.
       HGAM=0.D0
-      MEPS=sqrt(2./3.)*0.5*sqrt(sum((DG+transpose(DG))**2))
+      MEPS=sqrt(2.D0/3.D0)*0.5D0*sqrt(sum((DG+transpose(DG))**2))
       call dynfil2(nrstep,F,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT       
       write (*,96) ISTP,GAXES
@@ -622,7 +622,7 @@ C      call STR5(vec1,SHsam)
 
       Mavg=Mavg/TOTGEW
       ! DEFINITION: srh = (||d-D||) / ||D||
-      srh=sqrt(2./3.)*srh/TOTGEW 
+      srh=sqrt(2.D0/3.D0)*srh/TOTGEW 
       SG=SG/TOTGEW
       !
       MEPSCALL=MEPS*(ISTP-1)

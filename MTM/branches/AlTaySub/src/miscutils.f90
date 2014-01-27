@@ -60,7 +60,7 @@ contains
       integer,intent(out)                             :: info
       !
             write(ounit,fmt=555,iostat=info) meps,mepstot,hgamcall,hgamtot,   &
-            sqrt(3./2.*sum(shsam*shsam)),                                     &
+            sqrt(3.D0/2.D0*sum(shsam*shsam)),                                     &
             shsam(1,1),shsam(2,2),shsam(3,3), shsam(2,3),shsam(3,1),shsam(1,2), &
             mavg,srh
             

@@ -201,7 +201,7 @@ CU    USES pythag
 2       if(m.ne.l)then
           if(iter.eq.100)pause 'too many iterations in tqli'
           iter=iter+1
-          g=(d(l+1)-d(l))/(2.*e(l))
+          g=(d(l+1)-d(l))/(2.D0*e(l))
           r=pythag(g,1.0d00)
           g=d(m)-d(l)+e(l)/(g+sign(r,g))
           s=1.
@@ -220,7 +220,7 @@ CU    USES pythag
             s=f/r
             c=g/r
             g=d(i+1)-p
-            r=(d(i)-g)*s+2.*c*b
+            r=(d(i)-g)*s+2.D0*c*b
             p=s*r
             d(i+1)=g+p
             g=c*r-b
@@ -248,12 +248,12 @@ C  (C) Copr. 1986-92 Numerical Recipes Software D04-4-+5Z5{..
       absa=abs(a)
       absb=abs(b)
       if(absa.gt.absb)then
-        pythag=absa*sqrt(1.+(absb/absa)**2)
+        pythag=absa*sqrt(1.D0+(absb/absa)**2)
       else
         if(absb.eq.0.)then
           pythag=0.
         else
-          pythag=absb*sqrt(1.+(absa/absb)**2)
+          pythag=absb*sqrt(1.D0+(absa/absb)**2)
         endif
       endif
       return

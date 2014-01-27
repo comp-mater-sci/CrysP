@@ -26,7 +26,7 @@ C
       y=F2(1,1)*(F2(2,2)*F2(3,3)-F2(2,3)*F2(3,2))
       y=y-F2(1,2)*(F2(2,1)*F2(3,3)-F2(2,3)*F2(3,1))
       y=y+F2(1,3)*(F2(2,1)*F2(3,2)-F2(2,2)*F2(3,1))
-      y=y**(1.0/3.0)
+      y=y**(1.D0/3.D0)
       do 1 i=1,3
       do 11 j=1,3
       F2(i,j)=F2(i,j)/y
@@ -60,7 +60,7 @@ C
       y=X(1,1)*(X(2,2)*X(3,3)-X(2,3)*X(3,2))
       y=y-X(1,2)*(X(2,1)*X(3,3)-X(2,3)*X(3,1))
       y=y+X(1,3)*(X(2,1)*X(3,2)-X(2,2)*X(3,1))
-      y=y**(1.0/3.0)
+      y=y**(1.D0/3.D0)
       do 1 i=1,3
       do 11 j=1,3
       F(i,j)=X(i,j)/y
@@ -90,8 +90,8 @@ C
       F1(i,j)=X(i,j)
       F2(i,j)=Y(i,j)
    2  continue
-      X(i,i)=X(i,i)+1.0
-      Y(i,i)=Y(i,i)+1.0
+      X(i,i)=X(i,i)+1.D0
+      Y(i,i)=Y(i,i)+1.D0
       F1(i,i)=X(i,i)
       F2(i,i)=Y(i,i)
    1  continue
@@ -217,7 +217,7 @@ C     This version assumes that A is a diagonal matrix
 C
       dimension Gaxes(3),A(3),Aprime(3,3),T(3,3),X(3,3)
       do 2 k=1,3
-      A(k)=1.0/Gaxes(k)**2
+      A(k)=1.D0/Gaxes(k)**2
    2  continue
       do 1 k=1,3
       do 1 j=1,3
@@ -246,7 +246,7 @@ C
       dimension CIJ(3,3),TMAT(3,3),GEULR(3)
       Dimension prval(3),prdir(3,3),e(3,3)
       logical axisym
-      CIJTR=(CIJ(1,1)+CIJ(2,2)+CIJ(3,3))/3.0
+      CIJTR=(CIJ(1,1)+CIJ(2,2)+CIJ(3,3))/3.D0
       do 30 i=1,3
       DO 31 j=1,3
       e(i,j)=CIJ(i,j)
@@ -264,7 +264,7 @@ C
       if (prval(2).gt.prval(3)) call verwis(3,2,prval,prdir)
       if (prval(1).gt.prval(2)) call verwis(1,2,prval,prdir)
       do 37 i=1,3
-      prval(i)=1.0/sqrt(prval(i))
+      prval(i)=1.D0/sqrt(prval(i))
       do 37 j=1,3
       TMAT(i,j)=prdir(j,i)
    37 continue
@@ -313,9 +313,9 @@ C
     5 continue
       enrm=sqrt(a)
       if (enrm.lt.0.5e-5) goto 33
-      a=a*0.5
+      a=a*0.5D0
       b=e(1,1)*e(2,3)**2+e(2,2)*e(3,1)**2+e(3,3)*e(1,2)**2-
-     1 2.0*e(1,2)*e(2,3)*e(3,1)-e(1,1)*e(2,2)*e(3,3)
+     1 2.D0*e(1,2)*e(2,3)*e(3,1)-e(1,1)*e(2,2)*e(3,3)
       call canoni(a,b,x,theta,pi)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
@@ -333,8 +333,8 @@ C
       prval(1)=x(jmax)
       kmax=6-imax-jmax
       prval(2)=x(kmax)
-      eta=(theta+(imax-1)*2*pi)/3.0
-      if (eta.gt.pi) eta=eta-2.0*pi
+      eta=(theta+(imax-1)*2.D0*pi)/3.D0
+      if (eta.gt.pi) eta=eta-2.D0*pi
 C
 C     Correction on the order of the eigenvalues
 C
@@ -344,7 +344,7 @@ C
       prval(1)=xx
    11 axisym=abs(prval(2)-prval(1)).lt.0.5e-5
       if (.not.axisym) goto 9
-      prval(1)=0.5*(prval(1)+prval(2))
+      prval(1)=0.5D0*(prval(1)+prval(2))
       prval(2)=prval(1)
     9 do 12 ipr=3,2,-1
       do 13 i=1,3
@@ -384,7 +384,7 @@ C     the minor with the max. value has been identified
       if (j1.gt.3) j1=1
       j2=j1+1
       if (j2.gt.3) j2=1
-      prdir(jmax,ipr)=1.0
+      prdir(jmax,ipr)=1.D0
       pmax=-(y(i1,jmax)*y(i2,j2)-y(i2,jmax)*y(i1,j2))
       prdir(j1,ipr)=pmax/pp
       pmax=-(y(i1,j1)*y(i2,jmax)-y(i2,j1)*y(i1,jmax))
@@ -418,7 +418,7 @@ C
       do 35 j=1,3
       prdir(i,j)=0.0
    35 continue
-      prdir(i,i)=1.0
+      prdir(i,i)=1.D0
    34 continue
       goto 21
       end
@@ -453,7 +453,7 @@ c
       dimension x(3)
       if (a.lt.0.5e-11) goto 2
       roota=sqrt(a**3/27.0d0)
-      delta=0.5*b/roota
+      delta=0.5D0*b/roota
       if (abs(delta).lt.(1.0d0+1.0d-6)) goto 1
     2 continue
 #ifndef ALTAY_SUBROUTINE
@@ -463,13 +463,13 @@ c
 #else
       RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
 #endif      
-    1 if (delta.gt.1.0) delta=1.0
-      if (delta.lt.-1.0) delta=-1.0
+    1 if (delta.gt.1.0) delta=1.D0
+      if (delta.lt.-1.0) delta=-1.D0
       theta=acos(delta)
-      delta=-2.0*sqrt(a/3.0)
-      x(1)=delta*cos(theta/3.0)
-      x(2)=delta*cos((theta+2.0*pi)/3.0)
-      x(3)=delta*cos((theta+4.0*pi)/3.0)
+      delta=-2.D0*sqrt(a/3.D0)
+      x(1)=delta*cos(theta/3.D0)
+      x(2)=delta*cos((theta+2.D0*pi)/3.D0)
+      x(3)=delta*cos((theta+4.D0*pi)/3.D0)
       return
       end
       subroutine verwis(i1,i2,prval,prdir)
@@ -526,7 +526,7 @@ C        ...............................................................
 C                                                                       
 C        SEARCH FOR LARGEST ELEMENT                                     
 C                                                                       
-      D=1.0                                                             
+      D=1.D0                                                             
       NK=-N                                                             
       DO 80 K=1,N                                                       
       NK=NK+N                                                           
@@ -609,7 +609,7 @@ C
 C                                                                       
 C        REPLACE PIVOT BY RECIPROCAL                                    
 C                                                                       
-      A(KK)=1.0/BIGA                                                    
+      A(KK)=1.D0/BIGA                                                    
    80 CONTINUE                                                          
 C                                                                       
 C        FINAL ROW AND COLUMN INTERCHANGE                               

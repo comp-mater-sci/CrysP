@@ -34,8 +34,8 @@ C     check whether solution is totally zero
       do i=1,NLP 
           x=x+abs(SLIPLP(i))
           j=INDACT(i)
-          sgnn(j)=1.0
-          if (TAURLP(i).lt.0.0d0) sgnn(j)=-1.0
+          sgnn(j)=1.D0
+          if (TAURLP(i).lt.0.0d0) sgnn(j)=-1.D0
 C      write (IMP,911)  i,j,INDACT(i),indlp(i),SLIPLP(i),TAURLP(i)
 C 911  format (' SLIPRAT i=',I5,'  j=',I5,'   INDACT(i)=',i5,'  INDLP='
 C     1,I5,/,'              SLIPLP(i)=',D12.4,' TAURLP(i)=',D12.4)
@@ -285,7 +285,7 @@ C     Set up system of equations
       enddo
       do i=1,NN
          is=IND(i)
-         A(i,i)=2.0
+         A(i,i)=2.D0
          B(i)=0.0
          do j=1,5
             j1=NN+j
