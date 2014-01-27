@@ -29,7 +29,7 @@ C
       common /CEIGEN/ IOR,ISTP,NBLOC
       COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),
      1 TLXX,TAURLP(8)
-	  dimension ccc2(2,194)
+        dimension ccc2(2,194)
       dimension buftrf(3,3),C1(3,3),C2(3,3),
      1 DG(3,3),TDC(3,3),TDCb(3,3,2),TRCb(3,3,2),
      2 B(5,5),BBVM2(2),relax(3,3,3),buftg(3,3),DACC(10),
@@ -275,9 +275,9 @@ C DTAU (output)=abs(Taur)-Tauc
 C
   345 if (IPR.lt.4) goto 220
 #ifndef ALTAY_SUBROUTINE
-	if(NLIST.eq.1) then
+      if(NLIST.eq.1) then
       write (IMP,221) IPR,IOR,ISTP,NBLOC
-	end if
+      end if
       write (*,221) IPR,IOR,ISTP,NBLOC
  221  format (' Pancak2 ',
      1 ' IPR IOR, ISTP, NBLOC=',4I5)
@@ -287,7 +287,7 @@ C
 #endif
   220    DTAU1=DTAU 
          TAUR1=TAUR  
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011	     
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011         
 C      if (IROT.eq.0) goto 89
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (NRL.eq.0) then
@@ -297,32 +297,32 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
                       goto 89
                     endif
 C@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$$@$@$@$@$@$@$@$@$@$ QGX 15/11/2012 
-	IF(ITFMAS.eq.1) then
+      IF(ITFMAS.eq.1) then
         CCC(1,M2+1)=GETAL
         CCC(2,M2+1)=GETAL
         CCC(1,M2+2)=0.0
         CCC(2,M2+2)=0.0
-	else  !ALAMEL running
-	  do 86 IRL=1,NRL
+      else  !ALAMEL running
+        do 86 IRL=1,NRL
         if (.not.swrlx(IRL)) goto 86
         j=M2+IRL  
         CCC(1,j)=TAURL(IRL)
         CCC(2,j)=TAURL(IRL)
   86    continue 
-	endif
+      endif
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       IF (IPR.EQ.2) then
-	if(NLIST.eq.1) then 
-	WRITE (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
-	end if
-	end if
+      if(NLIST.eq.1) then 
+      WRITE (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
+      end if
+      end if
 C     Second call of Simplex (relaxed constraints)
 C      if (IOR.eq.1967.and.ISTP.eq.11.and.NBLOC.eq.3) IPR=2
       if (IPR.eq.2) then
-	if (NLIST.eq.1) then
-	write (IMP,401)
-	end if
-	end if
+      if (NLIST.eq.1) then
+      write (IMP,401)
+      end if
+      end if
  401  format (' Second call of TBH')
       Call TBH(IPR,N,N,M12,A1,BB,
      1 CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,
@@ -349,9 +349,9 @@ C
 
 
       if (IPR.ge.4) then
-	   if(NLIST.eq.1) then
+         if(NLIST.eq.1) then
          write (IMP,222) IPR,IOR,ISTP,NBLOC
-	   end if
+         end if
          write (*,222) IPR,IOR,ISTP,NBLOC
  222     format (' Pancak2 222 - Problem with TBH',/,
      1   ' IPR IOR, ISTP, NBLOC=',4I5)
@@ -366,31 +366,31 @@ C@#@#@#@#@#@#@#@#@@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@#@@#
 C   loop
 c   
       IF(ITFMAS.eq.1) then 
-	iter=0
+      iter=0
   999 iter=iter+1
-	call Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,STRSS,M11,ca1,ca2)
-	ccc=ccc2 ! use the Fake CRSS, they are scaled by SDD model
+      call Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,STRSS,M11,ca1,ca2)
+      ccc=ccc2 ! use the Fake CRSS, they are scaled by SDD model
 c
-	CCC(1,M2+1)=dabs(ENTA*Cofcos*(ca1+ca2)/2.D0)
+      CCC(1,M2+1)=dabs(ENTA*Cofcos*(ca1+ca2)/2.D0)
       CCC(2,M2+1)=dabs(ENTA*Cofcos*(ca1+ca2)/2.D0)
 C  Third call of TBH
-	Call TBH(IPR,N,N,M12,A1,BB,
+      Call TBH(IPR,N,N,M12,A1,BB,
      1 CCC,UU,UU2,DI,DI2,Dacc,XX,STRSS,FakM,
      2 Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
 C output for current iteration must be the input for the next iteration
-	UU=UU2
-	DI=DI2
+      UU=UU2
+      DI=DI2
 c
-	if(iter.le.0) then
-	goto 999
-	else
-	endif	
+      if(iter.le.0) then
+      goto 999
+      else
+      endif 
 CVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-	UU=UU2
-	DI=DI2
-	else
-	goto 204
-	endif
+      UU=UU2
+      DI=DI2
+      else
+      goto 204
+      endif
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C     GAMR will contain the relaxed shears:
  204  if (NRL.gt.0) then
@@ -414,7 +414,7 @@ C     If all grains have a non-zero slip, do the following:
       UBUF=STRSS
  213  if(NLIST.eq.1) then 
         write (IMP,780) gamr
-	end if
+      end if
  780  format (' RELAXATIONS:                   ',2d12.4)      
    2  continue
 C
@@ -426,8 +426,8 @@ C
       do jsgn=1,2
          CC(jsgn,j)=CCC(jsgn,j+jj)
       enddo
- 203  continue	
-	ii=5*(laml-1)
+ 203  continue    
+      ii=5*(laml-1)
       do 201 i=1,5
 C     If one grain does not deform, note that stress UBUF has come
 C      from the fullconstraints solution.
@@ -455,10 +455,10 @@ c  HERE WR is useless!  QGX 11/4/2011
       WR=WR+spanv(i)*BB(i+ii)
   304 continue
       if (IPR.EQ.2) then
-	if (NLIST.eq.1) then 
-	write (IMP,777) WR
-	end if
-	end if
+      if (NLIST.eq.1) then 
+      write (IMP,777) WR
+      end if
+      end if
   777 format (' Rate of Plastic work:',d10.4)
 C     (Modification June 2001: note that if one of the grains does
 C      not deform at all, the stress and the active slip systems
@@ -520,44 +520,44 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 
 
-	subroutine Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,UBUF,M11,ca1,ca2)     
+      subroutine Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,UBUF,M11,ca1,ca2)     
 C   Cofsin, Cofcos         -- input
 C   BB(10), UBUF(10)       -- input
 C   M11                    -- input
 C  BB(10) is direction of the relaxation-1
 C  UBUF(10) is the BISHOP-HILL stress from TBH routine, in crystal frame
-	implicit double precision (a-h,o-z)
-	Real*8, INTENT(IN) :: ccc
-	Integer, INTENT(IN) :: M11
-	Real*8, INTENT(out) :: ccc2
-	Real*8, INTENT(out) :: ca1
-	Real*8, INTENT(out) :: ca2
-	Real*8, INTENT(IN) :: Cofcos
-	Real*8, INTENT(IN) :: Cofsin
-	Real*8, INTENT(IN) :: BB
-	Real*8, INTENT(IN) :: UBUF
-	dimension BB(10),base1(5),UBUF(10),ccc(2,194),ccc2(2,194)
+      implicit double precision (a-h,o-z)
+      Real*8, INTENT(IN) :: ccc
+      Integer, INTENT(IN) :: M11
+      Real*8, INTENT(out) :: ccc2
+      Real*8, INTENT(out) :: ca1
+      Real*8, INTENT(out) :: ca2
+      Real*8, INTENT(IN) :: Cofcos
+      Real*8, INTENT(IN) :: Cofsin
+      Real*8, INTENT(IN) :: BB
+      Real*8, INTENT(IN) :: UBUF
+      dimension BB(10),base1(5),UBUF(10),ccc(2,194),ccc2(2,194)
 C
-	if((abs(Cofsin) < epsilon(0.D0)) .and. (abs(Cofcos) < epsilon(0.D0))) 
-     &then
+      if((abs(Cofsin) < epsilon(0.D0)) .and. 
+     &   (abs(Cofcos) < epsilon(0.D0))) then 
 C  update CRSS
-	ccc2=ccc
-	elseif(dabs(Cofcos).lt.0.000000001) then
-	write(*,*) 'Cofcos=0. Somewhere is worong in the code'
-	stop
-	else
+      ccc2=ccc
+      elseif(dabs(Cofcos).lt.0.000000001) then
+      write(*,*) 'Cofcos=0. Somewhere is worong in the code'
+      stop
+      else
 c   we only need the component 1 along the imposed strain mode
-	dlength2=sqrt(BB(1)*BB(1)+
+      dlength2=sqrt(BB(1)*BB(1)+
      #BB(2)*BB(2)+
      #BB(3)*BB(3)+
      #BB(4)*BB(4)+
      #BB(5)*BB(5))
 c  for grain-1
-	base1(1)=BB(1)/dlength2
-	base1(2)=BB(2)/dlength2
-	base1(3)=BB(3)/dlength2
-	base1(4)=BB(4)/dlength2
-	base1(5)=BB(5)/dlength2
+      base1(1)=BB(1)/dlength2
+      base1(2)=BB(2)/dlength2
+      base1(3)=BB(3)/dlength2
+      base1(4)=BB(4)/dlength2
+      base1(5)=BB(5)/dlength2
 C  then calculate the stress component in grain-1
       sg1c1=UBUF(1)*base1(1)+
      #      UBUF(2)*base1(2)+
@@ -567,18 +567,18 @@ C  then calculate the stress component in grain-1
 C
 C now calculate the component for grain-2
 c
-	dlength2=sqrt(BB(6)*BB(6)+
+      dlength2=sqrt(BB(6)*BB(6)+
      #BB(7)*BB(7)+
      #BB(8)*BB(8)+
      #BB(9)*BB(9)+
      #BB(10)*BB(10))
 c  for grain-2
-	base1(1)= BB(6)/dlength2
-	base1(2)= BB(7)/dlength2
-	base1(3)= BB(8)/dlength2
-	base1(4)= BB(9)/dlength2
-	base1(5)=BB(10)/dlength2
-c 		
+      base1(1)= BB(6)/dlength2
+      base1(2)= BB(7)/dlength2
+      base1(3)= BB(8)/dlength2
+      base1(4)= BB(9)/dlength2
+      base1(5)=BB(10)/dlength2
+c           
 C  then calculate the stress component in grain-2
 c
       sg2c1=UBUF(6)*base1(1)+
@@ -587,32 +587,32 @@ c
      #      UBUF(9)*base1(4)+
      #     UBUF(10)*base1(5)
 c from here we use the new method to update the CRSS 
-	zeta=sg1c1/sg2c1
+      zeta=sg1c1/sg2c1
 C  check if it is negative
-	if(zeta.lt.0.D0) then
-	write(*,*) 'Zeta is negative, somewhere is wrong'
-	stop
-	endif
- 	enta1=sqrt(1.D0/zeta)
- 	enta2=sqrt(zeta)
-c 	enta1=2.0/(1.0+zeta)
-c 	enta2=2.0*zeta/(1.0+zeta)
-	Crssg1=Cofcos*Cofcos*enta1+Cofsin*Cofsin
-	Crssg2=Cofcos*Cofcos*enta2+Cofsin*Cofsin
-	ca1=Crssg1
-	ca2=Crssg2	
+      if(zeta.lt.0.D0) then
+      write(*,*) 'Zeta is negative, somewhere is wrong'
+      stop
+      endif
+      enta1=sqrt(1.D0/zeta)
+      enta2=sqrt(zeta)
+c     enta1=2.0/(1.0+zeta)
+c     enta2=2.0*zeta/(1.0+zeta)
+      Crssg1=Cofcos*Cofcos*enta1+Cofsin*Cofsin
+      Crssg2=Cofcos*Cofcos*enta2+Cofsin*Cofsin
+      ca1=Crssg1
+      ca2=Crssg2  
 C  update the CRSS for grain-1
-	Do i=1,M11,1
-	Do j=1,2,1
-	   CCC2(j,i)=Crssg1*CCC(j,i)
-	enddo
-	enddo
+      Do i=1,M11,1
+      Do j=1,2,1
+         CCC2(j,i)=Crssg1*CCC(j,i)
+      enddo
+      enddo
 c   update the CRSS for grain-2
-	Do i=1,M11,1
-	Do j=1,2,1
-	   CCC2(j,i+M11)=Crssg2*CCC(j,i+M11)
-	enddo
-	enddo
-	endif
+      Do i=1,M11,1
+      Do j=1,2,1
+         CCC2(j,i+M11)=Crssg2*CCC(j,i+M11)
+      enddo
+      enddo
+      endif
       return
-	end             
+      end             

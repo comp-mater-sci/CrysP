@@ -322,17 +322,17 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       SPANT(i,j)=0.0
   74  continue
       !Calculate RCcryst: the rigid body spin in the crystal frame 
-	do i=1,3,1                                    
-	  RCcryst(i,i)=0.0                               
-	enddo                                         
-	RCcryst(3,2)=RC(3,2)                            
-	RCcryst(1,3)=RC(1,3)                            
-	RCcryst(2,1)=RC(2,1)                            
-	RCcryst(2,3)=-RCcryst(3,2)                        
-	RCcryst(3,1)=-RCcryst(1,3)                        
-	RCcryst(1,2)=-RCcryst(2,1)                        
-	call MATPROD(bufsp,RCcryst,buftrf,3,3,3)        
-	call MATPROD(RCcryst,TRF,bufsp,3,3,3)           
+      do i=1,3,1                                    
+        RCcryst(i,i)=0.0                               
+      enddo                                         
+      RCcryst(3,2)=RC(3,2)                            
+      RCcryst(1,3)=RC(1,3)                            
+      RCcryst(2,1)=RC(2,1)                            
+      RCcryst(2,3)=-RCcryst(3,2)                        
+      RCcryst(3,1)=-RCcryst(1,3)                        
+      RCcryst(1,2)=-RCcryst(2,1)                        
+      call MATPROD(bufsp,RCcryst,buftrf,3,3,3)        
+      call MATPROD(RCcryst,TRF,bufsp,3,3,3)           
       ! RCcryst now calculated 
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 20/4/2012
        SPANT(2,3)=RHOA(1)*SQR2*DELTAT

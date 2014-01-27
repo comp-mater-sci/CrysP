@@ -247,190 +247,190 @@ contains
             102      format (' TGrb ',3d15.7)            
             enddo
             !@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@##@# QGX 17/9/2012
-	      dlength=norm2(TDC)
+            dlength=norm2(TDC)
             !     Transform TDC to the "Grb" reference frame
             CALL MATPROD(C1,TDC,AXX,3,3,3)
             CALL MATPROD(TDCGr,Tprinc,C1,3,3,3) 
             !   
-	      relaxI=0.0
-	      relaxI(1,3)=1.D0
-	      relaxI(3,1)=1.D0
-	      relaxII=0.0
-	      relaxII(2,3)=1.D0
-	      relaxII(3,2)=1.D0
+            relaxI=0.0
+            relaxI(1,3)=1.D0
+            relaxI(3,1)=1.D0
+            relaxII=0.0
+            relaxII(2,3)=1.D0
+            relaxII(3,2)=1.D0
             !
-	      dot1=0.0
-	      do i=1,3,1
-	      do j=1,3,1
-	      dot1=dot1+relaxI(i,j)*TDCGr(i,j)
-	      enddo
-	      enddo
+            dot1=0.0
+            do i=1,3,1
+            do j=1,3,1
+            dot1=dot1+relaxI(i,j)*TDCGr(i,j)
+            enddo
+            enddo
             dot1=dot1/sqrt(2.0D0)/dlength
 
-	      dot2=0.0
-	      do i=1,3,1
-	      do j=1,3,1
-	      dot2=dot2+relaxII(i,j)*TDCGr(i,j)
-	      enddo
-	      enddo
-	      dot2=dot2/sqrt(2.0D0)/dlength
+            dot2=0.0
+            do i=1,3,1
+            do j=1,3,1
+            dot2=dot2+relaxII(i,j)*TDCGr(i,j)
+            enddo
+            enddo
+            dot2=dot2/sqrt(2.0D0)/dlength
             ! 
-	      if(dabs(dot1).lt.0.000001.and.dabs(dot2).lt.0.000001) then
+            if(dabs(dot1).lt.0.000001.and.dabs(dot2).lt.0.000001) then
                   ! both relaxations are orthogonal
-	            Cofcos=0.0
-	            Cofsin=0.0
-	            return
-	      elseif(dabs(dot1).lt.0.000001) then
-	            if(dabs(dot2-1.D0).lt.0.00001) then
+                  Cofcos=0.0
+                  Cofsin=0.0
+                  return
+            elseif(dabs(dot1).lt.0.000001) then
+                  if(dabs(dot2-1.D0).lt.0.00001) then
                         !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
                         !  new axe-1 be old axe-2
                         !  new axe-2 be minus old axe-1
-	                  vec1(1)=AXX(1,2)
-	                  vec1(2)=AXX(2,2)
-	                  vec1(3)=AXX(3,2)
-	                  vec2(1)=-AXX(1,1)
-	                  vec2(2)=-AXX(2,1)
-	                  vec2(3)=-AXX(3,1)
+                        vec1(1)=AXX(1,2)
+                        vec1(2)=AXX(2,2)
+                        vec1(3)=AXX(3,2)
+                        vec2(1)=-AXX(1,1)
+                        vec2(2)=-AXX(2,1)
+                        vec2(3)=-AXX(3,1)
                         ! update AXX
-	                  AXX(1,1)=vec1(1)
-	                  AXX(2,1)=vec1(2)
-	                  AXX(3,1)=vec1(3)
-	                  AXX(1,2)=vec2(1)
-	                  AXX(2,2)=vec2(2)
-	                  AXX(3,2)=vec2(3)
+                        AXX(1,1)=vec1(1)
+                        AXX(2,1)=vec1(2)
+                        AXX(3,1)=vec1(3)
+                        AXX(1,2)=vec2(1)
+                        AXX(2,2)=vec2(2)
+                        AXX(3,2)=vec2(3)
                         ! update Tprinc
                         Tprinc = transpose(AXX)
                         Cofcos=1.D0
                         Cofsin=0.D0
-                        return	  
-	            endif
+                        return        
+                  endif
             !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
             !  new axe-1 be old axe-2
             !  new axe-2 be minus old axe-1
             !  The angle is only between relaxation-1 and D0. It is nothing related with relaxation-2.
-	      vec1(1)=AXX(1,2)
-	      vec1(2)=AXX(2,2)
-	      vec1(3)=AXX(3,2)
-	      vec2(1)=-AXX(1,1)
-	      vec2(2)=-AXX(2,1)
-	      vec2(3)=-AXX(3,1)
+            vec1(1)=AXX(1,2)
+            vec1(2)=AXX(2,2)
+            vec1(3)=AXX(3,2)
+            vec2(1)=-AXX(1,1)
+            vec2(2)=-AXX(2,1)
+            vec2(3)=-AXX(3,1)
             ! update AXX
-	      AXX(1,1)=vec1(1)
-	      AXX(2,1)=vec1(2)
-	      AXX(3,1)=vec1(3)
-	      AXX(1,2)=vec2(1)
-	      AXX(2,2)=vec2(2)
-	      AXX(3,2)=vec2(3)
+            AXX(1,1)=vec1(1)
+            AXX(2,1)=vec1(2)
+            AXX(3,1)=vec1(3)
+            AXX(1,2)=vec2(1)
+            AXX(2,2)=vec2(2)
+            AXX(3,2)=vec2(3)
             ! update Tprinc
-	      Tprinc = transpose(AXX)
+            Tprinc = transpose(AXX)
             !     Transform TDC to the new "Grb" reference frame 
             CALL MATPROD(C1,TDC,AXX,3,3,3)
             CALL MATPROD(TDCGr,Tprinc,C1,3,3,3) 
-            !   make sure relaxation-2 is orthogonal	
-	      dot2=0.0
-	      do i=1,3,1
-	            do j=1,3,1
-      	            dot2=dot2+relaxII(i,j)*TDCGr(i,j)
-	            enddo
-	      enddo	
+            !   make sure relaxation-2 is orthogonal  
+            dot2=0.0
+            do i=1,3,1
+                  do j=1,3,1
+                        dot2=dot2+relaxII(i,j)*TDCGr(i,j)
+                  enddo
+            enddo 
 #ifdef ENABLE_CHECK_ORTHORLX         
-	      if(dabs(dot2).gt.0.0001) then
-	            write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
-	            stop
-	      endif
+            if(dabs(dot2).gt.0.0001) then
+                  write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
+                  stop
+            endif
 #endif
             ! calculate the cosine for relaxation-1
-	      dot1=0.0
-	      do i=1,3,1
-	            do j=1,3,1
-      	            dot1=dot1+relaxI(i,j)*TDCGr(i,j)
-	            enddo
-	      enddo
+            dot1=0.0
+            do i=1,3,1
+                  do j=1,3,1
+                        dot1=dot1+relaxI(i,j)*TDCGr(i,j)
+                  enddo
+            enddo
             !   normalize
-	      dot1=dot1/sqrt(2.0D0)/dlength
+            dot1=dot1/sqrt(2.0D0)/dlength
             !
-	      Cofcos=dot1
-	      Cofsin=sqrt(1.0D0-dot1*dot1)
-	      return
-	      elseif(dabs(dot2).lt.0.000001) then
+            Cofcos=dot1
+            Cofsin=sqrt(1.0D0-dot1*dot1)
+            return
+            elseif(dabs(dot2).lt.0.000001) then
                   ! Relaxation-2 is already a orthogonal one
                   ! calculate the cosine for relaxation-1
                   !
                   if(dabs(dot1-1.0D0).lt.0.00001) then
-	                  Cofcos=1.0D0
-	                  Cofsin=0.0D0
-	            else	
-	                  Cofcos=dot1
-	                  Cofsin=sqrt(1.0D0-dot1*dot1)   
+                        Cofcos=1.0D0
+                        Cofsin=0.0D0
+                  else  
+                        Cofcos=dot1
+                        Cofsin=sqrt(1.0D0-dot1*dot1)   
                   endif
                   return
             else
                   !   need to rotate by a angle < 90 (this angle could be positive or negative)
-	            tgangle=dot2/dot1
-	            x=1.D0/sqrt(1.D0+tgangle*tgangle)
-	            y=tgangle/sqrt(1.D0+tgangle*tgangle)
-	            PrDir=0.0
-	            PrDir(1,1)=x
+                  tgangle=dot2/dot1
+                  x=1.D0/sqrt(1.D0+tgangle*tgangle)
+                  y=tgangle/sqrt(1.D0+tgangle*tgangle)
+                  PrDir=0.0
+                  PrDir(1,1)=x
                   PrDir(1,2)=y
                   PrDir(2,1)=-y
                   PrDir(2,2)=x
-	            PrDir(3,3)=1.0D0
+                  PrDir(3,3)=1.0D0
                   ! 
                   !   Prdir(1,) is vector-1 in the GB frame
                   !   Prdir(2,) is vector-2 in the GB frame
                   !   Transform these two vector in the Sample's frame
                   !
-	            vec1=0.0
-	            do i=1,3,1
-	                  do j=1,3,1
-      	                  vec1(i)=vec1(i)+AXX(i,j)*PrDir(1,j)
-	                  enddo
-	            enddo
-	            vec2=0.0
-	            do i=1,3,1
-	                  do j=1,3,1
-      	                  vec2(i)=vec2(i)+AXX(i,j)*PrDir(2,j)
-	                  enddo
-	            enddo
+                  vec1=0.0
+                  do i=1,3,1
+                        do j=1,3,1
+                              vec1(i)=vec1(i)+AXX(i,j)*PrDir(1,j)
+                        enddo
+                  enddo
+                  vec2=0.0
+                  do i=1,3,1
+                        do j=1,3,1
+                              vec2(i)=vec2(i)+AXX(i,j)*PrDir(2,j)
+                        enddo
+                  enddo
                   !
-	            AXX(1,1)=vec1(1)
-	            AXX(2,1)=vec1(2)
-	            AXX(3,1)=vec1(3)
-	            AXX(1,2)=vec2(1)
-	            AXX(2,2)=vec2(2)
-	            AXX(3,2)=vec2(3)
+                  AXX(1,1)=vec1(1)
+                  AXX(2,1)=vec1(2)
+                  AXX(3,1)=vec1(3)
+                  AXX(1,2)=vec2(1)
+                  AXX(2,2)=vec2(2)
+                  AXX(3,2)=vec2(3)
                   ! update Tprinc
-	            Tprinc = transpose(AXX)
+                  Tprinc = transpose(AXX)
                   ! 
                   ! Transform TDC to the new "Grb" reference frame 
                   CALL MATPROD(C1,TDC,AXX,3,3,3)
                   CALL MATPROD(TDCGr,Tprinc,C1,3,3,3) 
-                  !  make sure relaxation-2 is orthogonal	
-	            dot2=0.0
-	            do i=1,3,1
-	                  do j=1,3,1
-	                        dot2=dot2+relaxII(i,j)*TDCGr(i,j)
-	                  enddo
+                  !  make sure relaxation-2 is orthogonal   
+                  dot2=0.0
+                  do i=1,3,1
+                        do j=1,3,1
+                              dot2=dot2+relaxII(i,j)*TDCGr(i,j)
+                        enddo
                   enddo
 #ifdef ENABLE_CHECK_ORTHORLX      
-	            if(dabs(dot2).gt.0.0001) then
-	                  write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
-	                  stop
-                  endif	
+                  if(dabs(dot2).gt.0.0001) then
+                        write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
+                        stop
+                  endif 
 #endif
-                  !	
-	            dot1=0.0
-	            do i=1,3,1
-	                  do j=1,3,1
-      	                  dot1=dot1+relaxI(i,j)*TDCGr(i,j)
-	                  enddo
-	            enddo
+                  !     
+                  dot1=0.0
+                  do i=1,3,1
+                        do j=1,3,1
+                              dot1=dot1+relaxI(i,j)*TDCGr(i,j)
+                        enddo
+                  enddo
                   ! normalize
-	            dot1=dot1/sqrt(2.0D0)/dlength
+                  dot1=dot1/sqrt(2.0D0)/dlength
                   !
-	            Cofcos=dot1
-	            Cofsin=sqrt(1.0D0-dot1*dot1)
-	      endif
+                  Cofcos=dot1
+                  Cofsin=sqrt(1.0D0-dot1*dot1)
+            endif
       !
       end subroutine               
 
