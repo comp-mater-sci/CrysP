@@ -51,8 +51,7 @@ C
       common /PE/ Fmicro !Temporary!!!      
       DIMENSION F(3,3),F1(3,3),GAXES(3),GEULR(3),TG(3,3),
      1 CIJ(3,3),F2(3,3),GLR(3),STOT(3,3),BUFSPV(5),
-     2 RHOST(3,3),RHOSm(3,3),FMicro(3,3),Ftot(3,3),
-     3 L1MINV(3),L2MINV(3),FTINV(3,3)
+     2 RHOST(3,3),RHOSm(3,3),FMicro(3,3)
       dimension FS(3,3)
       character*40 TITEL
       logical SWRLX
@@ -177,7 +176,7 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
 C     read the parameters of the work hardening model
       call readHardParams(KLEC,KOST,info)
       TAU=1.D0
-      CALL TAYLOR(1,KOST,EPS,Ftot)
+      CALL TAYLOR(1,KOST,EPS,F)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -261,7 +260,7 @@ C     read the parameters of the work hardening model
       if (IPR.gt.0.and.NLIST.eq.1) write (IMP,*)'Relaxations:',swrlx(1)
 #endif
       !
-      CALL TAYLOR(2,KOST,EPS,Ftot)
+      CALL TAYLOR(2,KOST,EPS,F)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -338,23 +337,14 @@ C     INSTRUCTION ADDED IN LAMEL model:
       GLR(i)=GEULR(i)*convf
   48  continue
 C
-  44  Ftot=F 
-      FTINV=Ftot
-      CALL MINV(FTINV,3,DMINV,L1MINV,L2MINV,9)
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C      CMICRO=CMic0
-C      call UPDATC(CMICRO,FTINV)
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C      if (IGLIJ.eq.1) then 
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+  44  continue
       if (NLIST.eq.1) then
           do i=1,3 
-             write (IMP,407) (Ftot(j,i),j=1,3)
+             write (IMP,407) (F(j,i),j=1,3)
           enddo
       end if
       
- 407      format (' Ftot ',3d15.7)
+ 407      format (' F ',3d15.7)
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      if (IROT.ne.1) goto 10
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -475,7 +465,7 @@ C
 C      write (*,3210)
 C 3210 format (' Just before Taylor')
  999  if (IW.le.1) then
-            CALL  TAYLOR(3,KOST,EPS,Ftot)
+            CALL  TAYLOR(3,KOST,EPS,F)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
 #endif            
