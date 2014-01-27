@@ -94,9 +94,9 @@ C     Updating of microstructure
 C
       IGrElm=IGrElm+1
       if (IGrElm.gt.NGrElm) IGrElm=1
-      call MATPROD(GRPAR,FTot,TmatGr(1,1,IGrElm),3,3,3)
+      GRPAR = matmul(FTot,TmatGr(:,:,IGrElm))
       if (IPR.gt.1) then
-        if(NLIST.eq.1) then
+         if(NLIST.eq.1) then
           write (IMP,409) IGrElm
  409      format (' IGrElm = ',i5) 
           do i=1,3 
