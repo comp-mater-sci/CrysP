@@ -17,6 +17,7 @@ Global
 		Debug|Win32 = Debug|Win32
 		Intel_SSA|Win32 = Intel_SSA|Win32
 		Release|Win32 = Release|Win32
+		Release-Amplifier|Win32 = Release-Amplifier|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{8663D4BD-D460-4394-871E-0FF3EAB14C60}.Debug|Win32.ActiveCfg = Debug|Win32
@@ -25,18 +26,24 @@ Global
 		{8663D4BD-D460-4394-871E-0FF3EAB14C60}.Intel_SSA|Win32.Build.0 = Intel_SSA|Win32
 		{8663D4BD-D460-4394-871E-0FF3EAB14C60}.Release|Win32.ActiveCfg = Release|Win32
 		{8663D4BD-D460-4394-871E-0FF3EAB14C60}.Release|Win32.Build.0 = Release|Win32
+		{8663D4BD-D460-4394-871E-0FF3EAB14C60}.Release-Amplifier|Win32.ActiveCfg = Release-Amplifier|Win32
+		{8663D4BD-D460-4394-871E-0FF3EAB14C60}.Release-Amplifier|Win32.Build.0 = Release-Amplifier|Win32
 		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Debug|Win32.ActiveCfg = Debug|Win32
 		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Debug|Win32.Build.0 = Debug|Win32
 		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Intel_SSA|Win32.ActiveCfg = Release|Win32
 		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Intel_SSA|Win32.Build.0 = Release|Win32
 		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Release|Win32.ActiveCfg = Release|Win32
 		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Release|Win32.Build.0 = Release|Win32
+		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Release-Amplifier|Win32.ActiveCfg = Release-Amplifier|Win32
+		{0F32BCF4-74C8-4668-A57A-410531D6D860}.Release-Amplifier|Win32.Build.0 = Release-Amplifier|Win32
 		{CAE224CD-DBFA-4FE3-8AF8-3F4563ADA4F9}.Debug|Win32.ActiveCfg = Debug|Win32
 		{CAE224CD-DBFA-4FE3-8AF8-3F4563ADA4F9}.Debug|Win32.Build.0 = Debug|Win32
 		{CAE224CD-DBFA-4FE3-8AF8-3F4563ADA4F9}.Intel_SSA|Win32.ActiveCfg = Release|Win32
 		{CAE224CD-DBFA-4FE3-8AF8-3F4563ADA4F9}.Intel_SSA|Win32.Build.0 = Release|Win32
 		{CAE224CD-DBFA-4FE3-8AF8-3F4563ADA4F9}.Release|Win32.ActiveCfg = Release|Win32
 		{CAE224CD-DBFA-4FE3-8AF8-3F4563ADA4F9}.Release|Win32.Build.0 = Release|Win32
+		{CAE224CD-DBFA-4FE3-8AF8-3F4563ADA4F9}.Release-Amplifier|Win32.ActiveCfg = Release-Amplifier|Win32
+		{CAE224CD-DBFA-4FE3-8AF8-3F4563ADA4F9}.Release-Amplifier|Win32.Build.0 = Release-Amplifier|Win32
 		{2B264244-038A-41E7-B17D-73CD11B3D3EE}.Debug|Win32.ActiveCfg = Debug|Win32
 		{2B264244-038A-41E7-B17D-73CD11B3D3EE}.Debug|Win32.Build.0 = Debug|Win32
 		{2B264244-038A-41E7-B17D-73CD11B3D3EE}.Intel_SSA|Win32.ActiveCfg = Release|Win32

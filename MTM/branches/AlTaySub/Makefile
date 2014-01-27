@@ -58,6 +58,7 @@ Alg0.for  \
 Alg1.for \
 Alg2.for \
 Dynfil.for \
+microstr.f90 \
 ioconfig.f90 \
 miscutils.f90 \
 Pancak2.for \
@@ -256,7 +257,7 @@ $(LIB_OBJDIR)/Alg0A.o		: $(addprefix $(LIB_OBJDIR)/,altayHard.o KOST1x.o KOST1xS
 $(LIB_OBJDIR)/Alg1.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o ioconfig.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Alg2.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Dynfil.o		: $(addprefix $(LIB_OBJDIR)/,altayConfig.o ioconfig.o miscutils.o)
-$(LIB_OBJDIR)/Pancak2.o		: $(addprefix $(LIB_OBJDIR)/,Dynfil.o altayRCM.o ioconfig.o) $(RCMINCLUDE)
+$(LIB_OBJDIR)/Pancak2.o		: $(addprefix $(LIB_OBJDIR)/,Dynfil.o altayRCM.o ioconfig.o microstr.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/cubAccess.o	: $(addprefix $(LIB_OBJDIR)/,Dynfil.o)
 $(LIB_OBJDIR)/curAccess.o	: $(addprefix $(LIB_OBJDIR)/,Dynfil.o)
 $(LIB_OBJDIR)/smtAccess.o	: $(addprefix $(LIB_OBJDIR)/,Dynfil.o) $(RCMINCLUDE)
@@ -280,7 +281,7 @@ $(PROG_OBJDIR)/Alg0A.o		: $(addprefix $(PROG_OBJDIR)/,altayHard.o KOST1x.o Alg0.
 $(PROG_OBJDIR)/Alg1.o		: $(addprefix $(PROG_OBJDIR)/,ioconfig.o) $(RCMINCLUDE)
 #$(PROG_OBJDIR)/Alg2.o		: $(addprefix $(PROG_OBJDIR)/,) $(RCMINCLUDE)
 $(PROG_OBJDIR)/Dynfil.o		: $(addprefix $(PROG_OBJDIR)/,altayConfig.o ioconfig.o miscutils.o)
-$(PROG_OBJDIR)/Pancak2.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o ioconfig.o) $(RCMINCLUDE)
+$(PROG_OBJDIR)/Pancak2.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o ioconfig.o microstr.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/cubAccess.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o)
 $(PROG_OBJDIR)/curAccess.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o)
 $(PROG_OBJDIR)/smtAccess.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o) $(RCMINCLUDE)
