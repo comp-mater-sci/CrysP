@@ -199,9 +199,10 @@ C 1235 format (' Just after Pancak2')
       use altayConfig, only: astate
 #endif
 #ifdef PEBP_ENABLED      
-      use KOST1xState
+      use KOST1xState, KOST => iKOST
 #endif
       use IOConfig
+      use altayHard, only: hard_none, hard_voce, hard_pebp
       implicit double precision (a-h,o-z)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
      1ITW,DELTAW,GEWF

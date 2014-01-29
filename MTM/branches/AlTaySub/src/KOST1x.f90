@@ -143,11 +143,11 @@
       integer,PARAMETER,PUBLIC :: KS_ErrUninitialized = -50 !< Call to module procedures without proper initialization of the module
       !>@}
             
+      integer, SAVE, PUBLIC :: iKOST=0
       !Remaining declarations all PRIVATE:
       TYPE(PAR11), SAVE :: P !unit system: MPa; nm(nanometer)
       logical, SAVE :: InitOK=.FALSE.
       logical, SAVE :: ScrewSlip=.FALSE.
-      integer, SAVE :: iKOST=0
       integer, SAVE :: Nss !Number of slip systems. Supported values: 
                            !     Nss=12: (110)[111] - 1 family
                            !     Nss=24: (110)+(112)[111] - 2 families
