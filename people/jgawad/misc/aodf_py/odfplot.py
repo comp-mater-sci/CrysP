@@ -1,10 +1,24 @@
-
+import os
 import numpy as np
 import aodfimport
 
-def plotODF(odf,color):
+# ------------------ taken from the example 
+# http://matplotlib.org/examples/pylab_examples/contour_label_demo.html
+# Define a class that forces representation of float to look a certain way
+# This remove trailing zero so '1.0' becomes '1'
+class _nf(float):
+        def __repr__(self):
+            str = '%.1f' % (self.__float__(),)
+            if str[-1]=='0':
+                return '%.0f' % self.__float__()
+            else:
+                return '%.1f' % self.__float__()
+
+
+def plotODF(odf,fname,formats=None,color=True):
     import matplotlib
     import matplotlib.pyplot as plt
+
 
     x_start, x_end = (odf.axes[1][0], odf.axes[1][-1])
     y_start, y_end = (odf.axes[0][0], odf.axes[0][-1])
@@ -49,26 +63,26 @@ def plotODF(odf,color):
     #plt.show() 
 
 
-    # ------------------ taken from the example 
-    # http://matplotlib.org/examples/pylab_examples/contour_label_demo.html
-    # Define a class that forces representation of float to look a certain way
-    # This remove trailing zero so '1.0' becomes '1'
-    class nf(float):
-         def __repr__(self):
-             str = '%.1f' % (self.__float__(),)
-             if str[-1]=='0':
-                 return '%.0f' % self.__float__()
-             else:
-                 return '%.1f' % self.__float__()
+    
 
-    # Recast levels to new class
-    CS.levels = [nf(val) for val in CS.levels ]
+    # Recast levels to _nf class
+    CS.levels = [_nf(val) for val in CS.levels ]
 
     plt.clabel(CS, CS.levels, inline=True, fmt='%r', fontsize=10)
 
+    barefname,ext = os.path.splitext(fname)
+    graphics_formats = formats or (ext and [ext.strip('.')]) or []
+    
+    for fmt in graphics_formats:
+        fig.savefig('{fname}.{ext}'.format(fname=barefname,ext=fmt),dpi=300,bbox_inches='tight')
+
     plt.show()
+    plt.close()
+
+
 
 if __name__ == '__main__':
-    odf = aodfimport.readAODF('AODF.001')
-    plotODF(odf,True)
+    odf = aodfimport.readAODF('alum1112.aodf')
+    plotODF(odf,'figure_1',formats=['pdf','png','svg'],color=True)
+    # plotODF(odf,'figure_1.pdf',color=True)
     pass
