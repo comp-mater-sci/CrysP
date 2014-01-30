@@ -108,7 +108,10 @@ C     Number of grains in ALAMEL cluster
       read (KLEC,99) IPR
       NRES = NFILE1  ! IMP2 and IMP3 are controlled only by NFILE1
       NPEBP = 0
-      if (KOST == hard_PEBP) NPEBP  = NFILE1
+      select case(KOST)
+      case(hard_BP,hard_PEBPscrew)
+          NPEBP  = NFILE1
+      endselect
       NMSS = NLIST
 #endif
       HGAMTOT=0.D0
@@ -267,9 +270,10 @@ C     read the parameters of the work hardening model
       ! Output the current texture
       if (NFILE.eq.1) call CURwriteBlock(IMP1,info)
 #ifdef PEBP_ENABLED
-      if ((KOST == hard_PEBP).and.(NPEBPx.eq.1)) then
-            info = KS_writeState(IMP4)
-      endif
+      select case(KOST)
+      case(hard_BP,hard_PEBPscrew)
+          if (NPEBPx.eq.1) info = KS_writeState(IMP4)
+      endselect
 #endif
       HGAMCALL = 0.D0
       MEPSCALL = 0.D0

@@ -22,7 +22,7 @@
 !              NOW:    invoking F_CRSS (includes tau_0 and contributions from CBs and CBBs)
 !              BEFORE: Set CRSS to tau_0 (so not including contributions from CBs and CBBs)
 !       -> Modifications:
-!           * [proc. Init_PAR11] Avoid extremely large values for the dislocation densities:
+!           * [proc. Init_PAR] Avoid extremely large values for the dislocation densities:
 !              NOW:    PRIVATE parameter set P has units: MPa; nm (nanometer)
 !                        => Unit disl. densities: [nm^(-2)] ; e.g. rho = 1.D1
 !              BEFORE: PRIVATE parameter set P has units: MPa; m (meter)
@@ -34,8 +34,8 @@
 !       -> Extension to the ReadSVfile function: depending on the new parameter "dummy", 
 !          the function can simply read necessary number of lines but skip the interpretation 
 !          of the contents.
-!       -> LEC argumenf of Init_PAR11 and Init_file is declared as optional
-!       -> the utility function ReadPar11 is declared as public.
+!       -> LEC argumenf of Init_PAR and Init_file is declared as optional
+!       -> the utility function ReadPar is declared as public.
 !    v1.6.1 by J. Gawad, CS, KU Leuven, 03 October 2012:
 !       -> space separator is added in in multi-number IO operations to prevent 
 !          stiching of negative values
@@ -54,12 +54,14 @@
 !          Then, The assumption that all plastic slip is carried by purely screw dislocations in made in 
 !          the determination of the 'wall effectivity matrix' eff(s,i). It gives the relative contribution 
 !          of the CBB dislocation density of wall i onto the CRSS of slip system s.
-!          If keyword "{screw}" is omitted, it is implicitly assumed that all slip is carried by edge 
+!          If keyword "{ScrewSlip}" is omitted, it is implicitly assumed that all slip is carried by edge 
 !          dislocations (as has been done in the PhD of B. Peeters).
 !    v1.9.1 by J. Gawad, CS, and P. Eyckens, MTM, KU Leuven, 27 Jan 2014:
 !       -> Several corrections to floating point operations that involve implicit single precision constants
 !       -> Some module parameters are calculated at compile time instead of getting initialized 
 !          by approximate values.
+!    v1.10 by P. Eyckens, MTM, KU Leuven, 30january 2014:
+!       -> Refactoring of module: the "{ScrewSlip}"-option for KOST=11 is converted to KOST=12. 
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST=11; 
@@ -84,7 +86,7 @@
       IMPLICIT NONE
       PRIVATE 
 
-      TYPE :: PAR11 
+      TYPE :: PAR 
             !PUBLIC components
             double precision :: b,G,alfa,f,tau0
             double precision :: I,R,Iwd,Rwd,Rncg,beta1,beta2
@@ -92,7 +94,7 @@
             double precision :: RHOcbSAT,RHOwdSAT,RHOwpSAT
             double precision :: RHOcbMIN,RHOwdMIN,RHOwpMIN
             double precision :: RHOwpLOW
-      END TYPE PAR11
+      END TYPE PAR
       
       TYPE :: CBBtype
             !PUBLIC components
@@ -112,14 +114,13 @@
       END TYPE StatVar
 
       INTERFACE InitModuleKOST1x !Generic Interface
-        MODULE PROCEDURE Init_file,Init_PAR11
-       !MODULE PROCEDURE Init_PAR12 !for future variant with different/more parameters
+        MODULE PROCEDURE Init_file,Init_PAR
       END INTERFACE
                   
       PUBLIC                    &
       !procedures:  
             InitModuleKOST1x,   &
-            ReadPar11,          &
+            ReadPar,            &
             GetInitStatVar,     &
             MakeInc,            &
             WriteHeadSVfile,    &
@@ -127,7 +128,7 @@
             WriteSVfile,        &
             ReadSVfile,         & 
       !derived types:
-            PAR11,              &
+            PAR,                &
             StatVar,            &
             CBBtype
 
@@ -145,9 +146,8 @@
             
       integer, SAVE, PUBLIC :: iKOST=0
       !Remaining declarations all PRIVATE:
-      TYPE(PAR11), SAVE :: P !unit system: MPa; nm(nanometer)
+      TYPE(PAR), SAVE :: P !unit system: MPa; nm(nanometer)
       logical, SAVE :: InitOK=.FALSE.
-      logical, SAVE :: ScrewSlip=.FALSE.
       integer, SAVE :: Nss !Number of slip systems. Supported values: 
                            !     Nss=12: (110)[111] - 1 family
                            !     Nss=24: (110)+(112)[111] - 2 families
@@ -175,70 +175,71 @@
       !double precision, PARAMETER :: n4_42=-0.617213399848 
       !double precision, PARAMETER :: p5_42= 0.771516749810 !5.0/sqrt(42.0)
       !double precision, PARAMETER :: n5_42=-0.771516749810
-      
-      !bDirSS(s,1:3): normalized burgers vector on slip system s
-      double precision, SAVE, DIMENSION(24,3)::bDirSS    
-      DATA (bDirSS( 1: 3,i),i=1,3) /3*p3,3*p3,3*p3/ !s.s. 1 to 3
-      DATA (bDirSS( 4: 6,i),i=1,3) /3*n3,3*n3,3*p3/ !s.s. 4 to 6
-      DATA (bDirSS( 7: 9,i),i=1,3) /3*n3,3*p3,3*p3/ !..
-      DATA (bDirSS(10:12,i),i=1,3) /3*p3,3*n3,3*p3/ !..
-      DATA (bDirSS(13:15,i),i=1,3) /3*p3,3*p3,3*p3/ !..
-      DATA (bDirSS(16:18,i),i=1,3) /3*n3,3*n3,3*p3/ !..
-      DATA (bDirSS(19:21,i),i=1,3) /3*n3,3*p3,3*p3/ !..
-      DATA (bDirSS(22:24,i),i=1,3) /3*p3,3*n3,3*p3/ !s.s. 21 to 24
 
-      !mDirSS(s,1:3): normalized movement vector of SCREW on slip system s 
-      !  If nDirSS denotes slip plane normal and x the cross product, then (for SCREW):
-      !  mDirSS = bDirSS x nDirSS
-      double precision, SAVE, DIMENSION(24,3)::mDirSS    
-      DATA (mDirSS(01,i),i=1,3) /nd6,p6,p6/ !s.s. 01
-      DATA (mDirSS(02,i),i=1,3) /p6,nd6,p6/ !s.s. 02
-      DATA (mDirSS(03,i),i=1,3) /p6,p6,nd6/ !s.s. 03
-      DATA (mDirSS(04,i),i=1,3) /pd6,n6,p6/ !s.s. 04
-      DATA (mDirSS(05,i),i=1,3) /n6,pd6,p6/ !s.s. 05
-      DATA (mDirSS(06,i),i=1,3) /n6,n6,nd6/ !s.s. 06
-      DATA (mDirSS(07,i),i=1,3) /nd6,n6,n6/ !s.s. 07
-      DATA (mDirSS(08,i),i=1,3) /p6,pd6,n6/ !s.s. 08
-      DATA (mDirSS(09,i),i=1,3) /p6,n6,pd6/ !s.s. 09
-      DATA (mDirSS(10,i),i=1,3) /pd6,p6,n6/ !s.s. 10
-      DATA (mDirSS(11,i),i=1,3) /n6,nd6,n6/ !s.s. 11
-      DATA (mDirSS(12,i),i=1,3) /n6,p6,pd6/ !s.s. 12
-      DATA (mDirSS(13,i),i=1,3) /0.,p2,n2/ !s.s. 13
-      DATA (mDirSS(14,i),i=1,3) /n2,0.,p2/ !s.s. 14
-      DATA (mDirSS(15,i),i=1,3) /p2,n2,0./ !s.s. 15
-      DATA (mDirSS(16,i),i=1,3) /0.,n2,n2/ !s.s. 16
-      DATA (mDirSS(17,i),i=1,3) /p2,0.,p2/ !s.s. 17
-      DATA (mDirSS(18,i),i=1,3) /n2,p2,0./ !s.s. 18
-      DATA (mDirSS(19,i),i=1,3) /0.,n2,p2/ !s.s. 19
-      DATA (mDirSS(20,i),i=1,3) /n2,0.,n2/ !s.s. 20
-      DATA (mDirSS(21,i),i=1,3) /p2,p2,0./ !s.s. 21
-      DATA (mDirSS(22,i),i=1,3) /0.,p2,p2/ !s.s. 22
-      DATA (mDirSS(23,i),i=1,3) /p2,0.,n2/ !s.s. 23
-      DATA (mDirSS(24,i),i=1,3) /n2,n2,0./ !s.s. 24
-      !DATA (mDirSS(25,i),i=1,3) /n5_42,p4_42,p1_42/ !s.s. 25
-      !DATA (mDirSS(26,i),i=1,3) /n4_42,p5_42,n1_42/ !s.s. 26
-      !DATA (mDirSS(27,i),i=1,3) /p5_42,n1_42,n4_42/ !s.s. 27
-      !DATA (mDirSS(28,i),i=1,3) /p4_42,p1_42,n5_42/ !s.s. 28
-      !DATA (mDirSS(29,i),i=1,3) /p1_42,n5_42,p4_42/ !s.s. 29
-      !DATA (mDirSS(30,i),i=1,3) /n1_42,n4_42,p5_42/ !s.s. 30
-      !DATA (mDirSS(31,i),i=1,3) /p5_42,n4_42,p1_42/ !s.s. 31
-      !DATA (mDirSS(32,i),i=1,3) /p4_42,n5_42,n1_42/ !s.s. 32
-      !DATA (mDirSS(33,i),i=1,3) /p5_42,n1_42,p4_42/ !s.s. 33
-      !DATA (mDirSS(34,i),i=1,3) /p4_42,p1_42,p5_42/ !s.s. 34
-      !DATA (mDirSS(35,i),i=1,3) /p1_42,n5_42,n4_42/ !s.s. 35
-      !DATA (mDirSS(36,i),i=1,3) /n1_42,n4_42,n5_42/ !s.s. 36
-      !DATA (mDirSS(37,i),i=1,3) /n5_42,n4_42,p1_42/ !s.s. 37
-      !DATA (mDirSS(38,i),i=1,3) /n4_42,n5_42,n1_42/ !s.s. 38
-      !DATA (mDirSS(39,i),i=1,3) /n5_42,n1_42,p4_42/ !s.s. 39
-      !DATA (mDirSS(40,i),i=1,3) /n4_42,p1_42,p5_42/ !s.s. 40
-      !DATA (mDirSS(41,i),i=1,3) /p1_42,p5_42,p4_42/ !s.s. 41
-      !DATA (mDirSS(42,i),i=1,3) /n1_42,p4_42,p5_42/ !s.s. 42
-      !DATA (mDirSS(43,i),i=1,3) /p5_42,p4_42,p1_42/ !s.s. 43
-      !DATA (mDirSS(44,i),i=1,3) /p4_42,p5_42,n1_42/ !s.s. 44
-      !DATA (mDirSS(45,i),i=1,3) /n5_42,n1_42,n4_42/ !s.s. 45
-      !DATA (mDirSS(46,i),i=1,3) /n4_42,p1_42,n5_42/ !s.s. 46
-      !DATA (mDirSS(47,i),i=1,3) /p1_42,p5_42,n4_42/ !s.s. 47
-      !DATA (mDirSS(48,i),i=1,3) /n1_42,p4_42,n5_42/ !s.s. 48
+      !EdgeDir(s,1:3): normalized movement vector of EDGE disl. on slip system s
+      !               (it equals the normalized burgers vector of slip system s)
+      double precision, SAVE, DIMENSION(24,3)::EdgeDir    
+      DATA (EdgeDir( 1: 3,i),i=1,3) /3*p3,3*p3,3*p3/ !s.s. 1 to 3
+      DATA (EdgeDir( 4: 6,i),i=1,3) /3*n3,3*n3,3*p3/ !s.s. 4 to 6
+      DATA (EdgeDir( 7: 9,i),i=1,3) /3*n3,3*p3,3*p3/ !..
+      DATA (EdgeDir(10:12,i),i=1,3) /3*p3,3*n3,3*p3/ !..
+      DATA (EdgeDir(13:15,i),i=1,3) /3*p3,3*p3,3*p3/ !..
+      DATA (EdgeDir(16:18,i),i=1,3) /3*n3,3*n3,3*p3/ !..
+      DATA (EdgeDir(19:21,i),i=1,3) /3*n3,3*p3,3*p3/ !..
+      DATA (EdgeDir(22:24,i),i=1,3) /3*p3,3*n3,3*p3/ !s.s. 21 to 24
+
+      !ScrewDir(s,1:3): normalized movement vector of SCREW disl. on slip system s 
+      !  If nDirSS(s,:) denotes slip plane normal vector and x the cross product, then:
+      !      ScrewDir(s,:) = EdgeDir(s,:) x nDirSS(s,:)
+      double precision, SAVE, DIMENSION(24,3)::ScrewDir    
+      DATA (ScrewDir(01,i),i=1,3) /nd6,p6,p6/ !s.s. 01
+      DATA (ScrewDir(02,i),i=1,3) /p6,nd6,p6/ !s.s. 02
+      DATA (ScrewDir(03,i),i=1,3) /p6,p6,nd6/ !s.s. 03
+      DATA (ScrewDir(04,i),i=1,3) /pd6,n6,p6/ !s.s. 04
+      DATA (ScrewDir(05,i),i=1,3) /n6,pd6,p6/ !s.s. 05
+      DATA (ScrewDir(06,i),i=1,3) /n6,n6,nd6/ !s.s. 06
+      DATA (ScrewDir(07,i),i=1,3) /nd6,n6,n6/ !s.s. 07
+      DATA (ScrewDir(08,i),i=1,3) /p6,pd6,n6/ !s.s. 08
+      DATA (ScrewDir(09,i),i=1,3) /p6,n6,pd6/ !s.s. 09
+      DATA (ScrewDir(10,i),i=1,3) /pd6,p6,n6/ !s.s. 10
+      DATA (ScrewDir(11,i),i=1,3) /n6,nd6,n6/ !s.s. 11
+      DATA (ScrewDir(12,i),i=1,3) /n6,p6,pd6/ !s.s. 12
+      DATA (ScrewDir(13,i),i=1,3) /0.,p2,n2/ !s.s. 13
+      DATA (ScrewDir(14,i),i=1,3) /n2,0.,p2/ !s.s. 14
+      DATA (ScrewDir(15,i),i=1,3) /p2,n2,0./ !s.s. 15
+      DATA (ScrewDir(16,i),i=1,3) /0.,n2,n2/ !s.s. 16
+      DATA (ScrewDir(17,i),i=1,3) /p2,0.,p2/ !s.s. 17
+      DATA (ScrewDir(18,i),i=1,3) /n2,p2,0./ !s.s. 18
+      DATA (ScrewDir(19,i),i=1,3) /0.,n2,p2/ !s.s. 19
+      DATA (ScrewDir(20,i),i=1,3) /n2,0.,n2/ !s.s. 20
+      DATA (ScrewDir(21,i),i=1,3) /p2,p2,0./ !s.s. 21
+      DATA (ScrewDir(22,i),i=1,3) /0.,p2,p2/ !s.s. 22
+      DATA (ScrewDir(23,i),i=1,3) /p2,0.,n2/ !s.s. 23
+      DATA (ScrewDir(24,i),i=1,3) /n2,n2,0./ !s.s. 24
+      !DATA (ScrewDir(25,i),i=1,3) /n5_42,p4_42,p1_42/ !s.s. 25
+      !DATA (ScrewDir(26,i),i=1,3) /n4_42,p5_42,n1_42/ !s.s. 26
+      !DATA (ScrewDir(27,i),i=1,3) /p5_42,n1_42,n4_42/ !s.s. 27
+      !DATA (ScrewDir(28,i),i=1,3) /p4_42,p1_42,n5_42/ !s.s. 28
+      !DATA (ScrewDir(29,i),i=1,3) /p1_42,n5_42,p4_42/ !s.s. 29
+      !DATA (ScrewDir(30,i),i=1,3) /n1_42,n4_42,p5_42/ !s.s. 30
+      !DATA (ScrewDir(31,i),i=1,3) /p5_42,n4_42,p1_42/ !s.s. 31
+      !DATA (ScrewDir(32,i),i=1,3) /p4_42,n5_42,n1_42/ !s.s. 32
+      !DATA (ScrewDir(33,i),i=1,3) /p5_42,n1_42,p4_42/ !s.s. 33
+      !DATA (ScrewDir(34,i),i=1,3) /p4_42,p1_42,p5_42/ !s.s. 34
+      !DATA (ScrewDir(35,i),i=1,3) /p1_42,n5_42,n4_42/ !s.s. 35
+      !DATA (ScrewDir(36,i),i=1,3) /n1_42,n4_42,n5_42/ !s.s. 36
+      !DATA (ScrewDir(37,i),i=1,3) /n5_42,n4_42,p1_42/ !s.s. 37
+      !DATA (ScrewDir(38,i),i=1,3) /n4_42,n5_42,n1_42/ !s.s. 38
+      !DATA (ScrewDir(39,i),i=1,3) /n5_42,n1_42,p4_42/ !s.s. 39
+      !DATA (ScrewDir(40,i),i=1,3) /n4_42,p1_42,p5_42/ !s.s. 40
+      !DATA (ScrewDir(41,i),i=1,3) /p1_42,p5_42,p4_42/ !s.s. 41
+      !DATA (ScrewDir(42,i),i=1,3) /n1_42,p4_42,p5_42/ !s.s. 42
+      !DATA (ScrewDir(43,i),i=1,3) /p5_42,p4_42,p1_42/ !s.s. 43
+      !DATA (ScrewDir(44,i),i=1,3) /p4_42,p5_42,n1_42/ !s.s. 44
+      !DATA (ScrewDir(45,i),i=1,3) /n5_42,n1_42,n4_42/ !s.s. 45
+      !DATA (ScrewDir(46,i),i=1,3) /n4_42,p1_42,n5_42/ !s.s. 46
+      !DATA (ScrewDir(47,i),i=1,3) /p1_42,p5_42,n4_42/ !s.s. 47
+      !DATA (ScrewDir(48,i),i=1,3) /n1_42,p4_42,n5_42/ !s.s. 48
             
       !CBBnormal(i,1:3): normalized vector normal to CBB i
       double precision, SAVE, DIMENSION(6,3)::CBBnormal  
@@ -253,7 +254,7 @@
 
       CONTAINS
 
-      !> Initialization of KOST1x with KOST11 model.
+      !> Initialization of KOST1x.
       !>
       !> \return This procedure returns an error code (iError):  
       !>    * KS_OK : no error
@@ -261,8 +262,9 @@
       !>    * KS_ErrOutOfRange : (at least one) parameter out of boundaries
       !>    * KS_ErrIO : slipsystem file (read from LEC) does not meet requirements about its format
       !> \note CONTAINed by MODULE KOST1x
-      integer FUNCTION Init_PAR11(P11try,KOSTtry,LEC) result(iError)
-      TYPE(PAR11),INTENT(IN) :: P11try
+      integer FUNCTION Init_PAR(Ptry,KOSTtry,LEC) result(iError)
+      use miscutils, only: pi
+      TYPE(PAR),INTENT(IN)   :: Ptry    !proposed parameter set
       integer    ,INTENT(IN) :: KOSTtry !proposed value of KOST
       integer    ,INTENT(IN) :: LEC !unit number of PRE-file
       
@@ -274,11 +276,13 @@
       InitOK=.FALSE.
             
       !Check KOSTtry
-      if (KOSTtry /= 11) then
+      select case (KOSTtry)
+      case (11,12) !supported
+          iKOST=KOSTtry !iKOST: PRIVATE to this module.
+      case default !unsupported
           iError = KS_ErrBadValue
           return 
-      end if
-      iKOST=KOSTtry !=11; iKOST: PRIVATE to this module.
+      end select
   
       !Check PRE-file #1: Does 1st comment line contain strings 'BCC' and '{BP}'?
       rewind (unit=LEC)
@@ -286,14 +290,8 @@
       if ( (index(line1,'BCC') == 0) .or. (index(line1,'{BP}') == 0)) then
         iError = KS_ErrIO 
         return 
-      else !File is OK. Assumption of slip carried by screws?
-          if ( (index(line1,'{ScrewSlip}') == 0) ) then
-              ScrewSlip=.FALSE. ! Formulation of Peeters PhD. : slip carried solely by edge disl.
-          else
-              ScrewSlip=.TRUE.  ! Slip carried solely by screws =: v1.9
-          end if
-      end if
-      
+      end if !File is OK. 
+
       !Check PRE-file #2: Is number of slip systems (Nss) supported?
       read (LEC,FMT='(8I4)') Idum, Nsstry, Idum, Idum, Idum, Idum, Idum, Idum
       rewind (unit=LEC)
@@ -305,26 +303,26 @@
           return 
       end select
   
-      !Check the input parameters                                  ! Units of input parameters:
-      if(P11try%b    >  0.    .AND. P11try%b    <= 1.e-8    .AND.& ! [m]
-         P11try%G    >= 10.e3 .AND. P11try%G    <= 500.e3   .AND.& ! [MPa]
-         P11try%alfa >  0.    .AND. P11try%alfa <= 5.       .AND.& ! [/]
-         P11try%f    >= 0.    .AND. P11try%f    <= 1.       .AND.& ! [/]
-         P11try%tau0 >= 0.    .AND. P11try%tau0 <= 1.e4     .AND.& ! [MPa]
-         P11try%I    >= 0.    .AND. P11try%I    <= 10.      .AND.& ! [/]
-         P11try%Iwd  >= 0.    .AND. P11try%Iwd  <= 10.      .AND.& ! [/]
-         P11try%Iwp  >= 0.    .AND. P11try%Iwp  <= 10.      .AND.& ! [/]
-         P11try%R    >  0.    .AND. P11try%R    <= 1.e-6    .AND.& ! [m]
-         P11try%Rwd  >  0.    .AND. P11try%Rwd  <= 1.e-6    .AND.& ! [m]
-         P11try%Rncg >  0.    .AND. P11try%Rncg <= 1.e-6    .AND.& ! [m]
-         P11try%Rwp  >  0.    .AND. P11try%Rwp  <= 1.e-6    .AND.& ! [m]
-         P11try%Rrev >  0.    .AND. P11try%Rrev <= 1.e-6    .AND.& ! [m]
-         P11try%R2   >  0.    .AND. P11try%R2   <= 1.e-6    .AND.& ! [m]
-         P11try%beta1>= 0.    .AND. P11try%beta1<= 100.     .AND.& ! [/]
-         P11try%beta2>= 0.    .AND. P11try%beta2<= 100.          & ! [/]
+      !Check the input parameters                              ! Units of input parameters:
+      if(Ptry%b    >  0.    .AND. Ptry%b    <= 1.e-8    .AND.& ! [m]
+         Ptry%G    >= 10.e3 .AND. Ptry%G    <= 500.e3   .AND.& ! [MPa]
+         Ptry%alfa >  0.    .AND. Ptry%alfa <= 5.       .AND.& ! [/]
+         Ptry%f    >= 0.    .AND. Ptry%f    <= 1.       .AND.& ! [/]
+         Ptry%tau0 >= 0.    .AND. Ptry%tau0 <= 1.e4     .AND.& ! [MPa]
+         Ptry%I    >= 0.    .AND. Ptry%I    <= 10.      .AND.& ! [/]
+         Ptry%Iwd  >= 0.    .AND. Ptry%Iwd  <= 10.      .AND.& ! [/]
+         Ptry%Iwp  >= 0.    .AND. Ptry%Iwp  <= 10.      .AND.& ! [/]
+         Ptry%R    >  0.    .AND. Ptry%R    <= 1.e-6    .AND.& ! [m]
+         Ptry%Rwd  >  0.    .AND. Ptry%Rwd  <= 1.e-6    .AND.& ! [m]
+         Ptry%Rncg >  0.    .AND. Ptry%Rncg <= 1.e-6    .AND.& ! [m]
+         Ptry%Rwp  >  0.    .AND. Ptry%Rwp  <= 1.e-6    .AND.& ! [m]
+         Ptry%Rrev >  0.    .AND. Ptry%Rrev <= 1.e-6    .AND.& ! [m]
+         Ptry%R2   >  0.    .AND. Ptry%R2   <= 1.e-6    .AND.& ! [m]
+         Ptry%beta1>= 0.    .AND. Ptry%beta1<= 100.     .AND.& ! [/]
+         Ptry%beta2>= 0.    .AND. Ptry%beta2<= 100.          & ! [/]
           )then
             !Save the parameters in P (private to this module)          
-            P=P11try
+            P=Ptry
             !change of units if different (units of P are: MPa; nm(nanometer))
             P%b    = P%b    * TENpow6 ![m] -> [nm]
             P%R    = P%R    * TENpow6 ![m] -> [nm]
@@ -352,19 +350,20 @@
       P%RHOwpLOW=  LOWfrac * P%RHOwpSAT
 
       !Calculate "Wall-effectivity"-matrices
-      if (ScrewSlip) then    
+      select case(iKOST)
+      case(12) ! "ScrewSlip": introduced in v.1.9; invokable through KOST=12 in v.1.10    
           do s=1,24 
             do i=1,6
-              eff(s,i)=DOT_PRODUCT( mDirSS(s,:) , CBBnormal(i,:) )  
+              eff(s,i)=DOT_PRODUCT( ScrewDir(s,:) , CBBnormal(i,:) )  
             end do
           end do
-      else ! according to PhD Peeters    
+      case(11) ! according to PhD Peeters    
           do s=1,24 
             do i=1,6
-              eff(s,i)=DOT_PRODUCT( bDirSS(s,:) , CBBnormal(i,:) )  
+              eff(s,i)=DOT_PRODUCT( EdgeDir(s,:) , CBBnormal(i,:) )  
             end do
           end do
-      end if
+      end select
       effslashb       = eff / P%b  
       alfa_G_b= P%alfa* P%G * P%b 
       alfa_G_b_eff    = alfa_G_b * eff       
@@ -374,7 +373,7 @@
       InitOK=.TRUE. !PRIVATE to this module
       iError=KS_OK      !OUT
 
-      END FUNCTION Init_PAR11
+      END FUNCTION Init_PAR
 
 
 
@@ -385,14 +384,15 @@
       integer,intent(in)      :: KOST     !< Id of the model version.
       integer,intent(in)      :: LEC      
       !
-      TYPE(PAR11) :: PARtry
+      TYPE(PAR) :: PARtry
       !
       info = KS_Error
       select case(KOST)
-      case(11)
+      case(11,12)
+            ! Supported value of KOST
             ! Read parameters of PE-BP hardening model
-            if (ReadPar11(inunit,PARtry) == 0) then
-                  info = Init_PAR11(PARtry,KOST,LEC)
+            if (ReadPar(inunit,KOST,PARtry) == 0) then
+                  info = Init_PAR(PARtry,KOST,LEC)
             endif
       case default
             info = KS_ErrBadValue !Unsupported value of KOST
@@ -403,10 +403,11 @@
 
       
       !CONTAINed by MODULE KOST1x:
-      integer FUNCTION ReadPar11(inunit,Pf)
+      integer FUNCTION ReadPar(inunit,KOST,Pf)
       implicit none
       integer,intent(in)      :: inunit   !< IO unit number
-      TYPE(PAR11),INTENT(OUT) :: Pf       !< Parameters to be read from a formatted file.
+      integer,intent(in)      :: KOST     !< model identifier
+      TYPE(PAR),INTENT(OUT) :: Pf       !< Parameters to be read from a formatted file.
       !
       read(inunit,fmt=100,err=666,end=666) Pf%b
       read(inunit,fmt=100,err=666,end=666) Pf%G
@@ -425,15 +426,14 @@
       read(inunit,fmt=100,err=666,end=666) Pf%Rrev
       read(inunit,fmt=100,err=666,end=666) Pf%R2
 100   format(F12.5)
-      ! Do extra validation tests here to check the contents of the structure P
-      ! ...
-      ReadPar11 = KS_OK
+      !
+      ReadPar = KS_OK
       return
       !
-666   ReadPar11 = KS_ErrIO !Error in reading from file    
+666   ReadPar = KS_ErrIO !Error in reading from file    
       !
-      end FUNCTION ReadPar11
-      
+      end FUNCTION ReadPar
+   
       
 
       !CONTAINed by MODULE KOST1x:

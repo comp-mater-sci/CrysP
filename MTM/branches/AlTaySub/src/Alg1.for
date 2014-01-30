@@ -202,7 +202,7 @@ C 1235 format (' Just after Pancak2')
       use KOST1xState, KOST => iKOST
 #endif
       use IOConfig
-      use altayHard, only: hard_none, hard_voce, hard_pebp
+      use altayHard, only: hard_none, hard_voce, hard_BP,hard_PEBPscrew
       implicit double precision (a-h,o-z)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
      1ITW,DELTAW,GEWF
@@ -262,7 +262,8 @@ C 1771 format (I5)
       RCM_GUARD
 #endif      
 #ifdef PEBP_ENABLED
-      if (KOST == hard_PEBP) then
+      select case(KOST)
+      case(hard_BP,hard_PEBPscrew)
             ! Here we explicitly set time increment to the value
             ! that is implicitly assumed in Pancak2.
             ddt = 1.D0
@@ -272,7 +273,7 @@ C 1771 format (I5)
 #else
             call KS_updateState(IOR,GAMdot,ddt,info)
 #endif
-      endif
+      endselect
 #endif
       TOTGAMdot=sum(abs(GAMdot(1:M11)))
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011

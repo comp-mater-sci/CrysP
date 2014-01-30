@@ -9,7 +9,7 @@ C
       use KOST1xState
       use DYNFIL
       use MICROSTR
-      use altayHard,only: KOST_global, hard_pebp
+      use altayHard,only: KOST_global, hard_BP, hard_PEBPscrew
 #ifndef USE_LEESOR
       use TexFormats
 #endif
@@ -162,7 +162,8 @@ C
 #ifdef PEBP_ENABLED
       ! PEBP model
       NREC = size(DFIL)
-      if (KOST_global == hard_pebp) then
+      select case(KOST_global)
+      case(hard_BP,hard_PEBPscrew)
             cods1(L+1:L+4)='.BPM'
             ! UNIT IMP4 = state variables of PEBP KOST11
             info = KS_openStateFile(IMP4,cods1,'w')
@@ -183,7 +184,7 @@ C
                         call exit(stopcode_ioerror)
                   endif
             endif
-      endif
+      endselect
  66   format(L2,I5,A)      
  600  format('Cannot initialize KOST1x state variables')
  601  format('Cannot read KOST1x state variables from file: ',A)
@@ -240,9 +241,10 @@ C
       endif
 #endif
 #if defined(PEBP_ENABLED) && defined(FINALBPM_ENABLED)
-      if ((KOST_global == hard_PEBP) .and. (NFILE0 == 0)) then
-            info = KS_writeState(IMP4)
-      endif
+      select case(KOST_global)
+      case(hard_BP,hard_PEBPscrew)
+          if(NFILE0 == 0) info = KS_writeState(IMP4)
+      endselect
 #endif
       if(NLIST.eq.1) then
       write (IMP,110)

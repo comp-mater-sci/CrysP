@@ -48,7 +48,7 @@ contains
       use altayRCM
       use IOConfig
       use TexFormats
-      use altayHard,only: hard_none,hard_voce,hard_pebp
+      use altayHard,only: hard_none,hard_voce,hard_BP,hard_PEBPscrew
       use miscutils
       use microstr
 #ifdef PEBP_ENABLED
@@ -178,7 +178,8 @@ contains
 #endif
 #ifdef PEBP_ENABLED
             ! PEBP model
-            if (cnf%slipsystem%kost == hard_PEBP) then
+            select case(cnf%slipsystem%kost)
+            case(hard_BP,hard_PEBPscrew)
                   info = KS_initState(size(DFIL))
                   if (info /= 0) return
                   if (acnf%hardening%PEBPCnf%read_state) then 
@@ -194,7 +195,7 @@ contains
                               return
                         endif
                   endif
-            endif      
+            endselect      
 #endif
             !
             ! No need for the slip system definition anymore.
@@ -341,7 +342,7 @@ contains
       use IOConfig
       use curAccess
       use altayConfig, only: acnf,astate
-      use altayHard, only: hard_PEBP
+      use altayHard, only: hard_BP,hard_PEBPscrew
       use KOST1xState
       use miscutils
       implicit none
@@ -353,9 +354,12 @@ contains
             endif
             if (info /= 0) return
             !
-            if ((acnf%slipsystem%kost == hard_PEBP) .and.(acnf%output_config%npebp == 1)) then
-                  info = KS_writeState(IMP4)
-            endif
+            select case(acnf%slipsystem%kost)
+            case(hard_BP,hard_PEBPscrew)
+                if (acnf%output_config%npebp == 1) then
+                      info = KS_writeState(IMP4)
+                endif
+            endselect
             if (info /= 0) return
             !
             if ((acnf%output_config%nmss == 1) .and. allocated(astate%simulCalls)) then
