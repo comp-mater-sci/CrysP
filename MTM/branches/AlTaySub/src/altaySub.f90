@@ -48,7 +48,7 @@ contains
       use altayRCM
       use IOConfig
       use TexFormats
-      use altayHard,only: hard_none,hard_voce,hard_BP,hard_PEBPscrew
+      use altayHard,only: hard_none,hard_voce,hard_BP,hard_PEBPscrew,hard_PEBPloop
       use miscutils
       use microstr
 #ifdef PEBP_ENABLED
@@ -179,7 +179,7 @@ contains
 #ifdef PEBP_ENABLED
             ! PEBP model
             select case(cnf%slipsystem%kost)
-            case(hard_BP,hard_PEBPscrew)
+            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                   info = KS_initState(size(DFIL))
                   if (info /= 0) return
                   if (acnf%hardening%PEBPCnf%read_state) then 
@@ -342,7 +342,7 @@ contains
       use IOConfig
       use curAccess
       use altayConfig, only: acnf,astate
-      use altayHard, only: hard_BP,hard_PEBPscrew
+      use altayHard, only: hard_BP,hard_PEBPscrew,hard_PEBPloop
       use KOST1xState
       use miscutils
       implicit none
@@ -355,7 +355,7 @@ contains
             if (info /= 0) return
             !
             select case(acnf%slipsystem%kost)
-            case(hard_BP,hard_PEBPscrew)
+            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                 if (acnf%output_config%npebp == 1) then
                       info = KS_writeState(IMP4)
                 endif

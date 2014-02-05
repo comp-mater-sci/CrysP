@@ -109,7 +109,7 @@ C     Number of grains in ALAMEL cluster
       NRES = NFILE1  ! IMP2 and IMP3 are controlled only by NFILE1
       NPEBP = 0
       select case(KOST)
-      case(hard_BP,hard_PEBPscrew)
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
           NPEBP  = NFILE1
       endselect
       NMSS = NLIST
@@ -271,7 +271,7 @@ C     read the parameters of the work hardening model
       if (NFILE.eq.1) call CURwriteBlock(IMP1,info)
 #ifdef PEBP_ENABLED
       select case(KOST)
-      case(hard_BP,hard_PEBPscrew)
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
           if (NPEBPx.eq.1) info = KS_writeState(IMP4)
       endselect
 #endif

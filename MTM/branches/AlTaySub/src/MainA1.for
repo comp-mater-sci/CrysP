@@ -9,7 +9,8 @@ C
       use KOST1xState
       use DYNFIL
       use MICROSTR
-      use altayHard,only: KOST_global, hard_BP, hard_PEBPscrew
+      use altayHard,only: KOST_global, hard_BP, hard_PEBPscrew, 
+     &                    hard_PEBPloop
 #ifndef USE_LEESOR
       use TexFormats
 #endif
@@ -163,7 +164,7 @@ C
       ! PEBP model
       NREC = size(DFIL)
       select case(KOST_global)
-      case(hard_BP,hard_PEBPscrew)
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
             cods1(L+1:L+4)='.BPM'
             ! UNIT IMP4 = state variables of PEBP KOST11
             info = KS_openStateFile(IMP4,cods1,'w')
@@ -242,7 +243,7 @@ C
 #endif
 #if defined(PEBP_ENABLED) && defined(FINALBPM_ENABLED)
       select case(KOST_global)
-      case(hard_BP,hard_PEBPscrew)
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
           if(NFILE0 == 0) info = KS_writeState(IMP4)
       endselect
 #endif

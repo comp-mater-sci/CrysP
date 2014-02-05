@@ -3,7 +3,7 @@
       implicit none
       
       
-      integer,parameter :: hard_none = 0, hard_voce = 1, hard_BP =11, hard_PEBPscrew = 12
+      integer,parameter :: hard_none = 0, hard_voce = 1, hard_BP =11, hard_PEBPscrew = 12, hard_PEBPloop = 13
       
       ! Workaround: KOST that is not accessible other ways
       integer,save :: KOST_global = 0
@@ -40,7 +40,7 @@
             call precalculateVoceParams(voceCnf,vocePar,info)
       !
 #ifdef PEBP_ENABLED     
-      case(hard_BP,hard_PEBPscrew)
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
 #ifdef ALTAY_SUBROUTINE
             info = InitModuleKOST1x(acnf%hardening%PEBPCnf%params,KOST,LEC)
 #else            
@@ -68,7 +68,7 @@
       integer,intent(in)            :: KOST
       !
       select case(KOST)
-      case(hard_none,hard_BP,hard_PEBPscrew)
+      case(hard_none,hard_BP,hard_PEBPscrew,hard_PEBPloop)
             FTAU = 1.D0
       case(hard_Voce)
             FTAU = hardVoceFtau(GAMMA)

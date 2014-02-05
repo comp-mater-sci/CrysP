@@ -62,6 +62,12 @@
 !          by approximate values.
 !    v1.10 by P. Eyckens, MTM, KU Leuven, 30january 2014:
 !       -> Refactoring of module: the "{ScrewSlip}"-option for KOST=11 is converted to KOST=12. 
+!    v1.11 by P. Eyckens, MTM, KU Leuven, 4 february 2014:
+!       -> "Addition of "LoopSlip" model, invoked through KOST=13.
+!          Slip is assumed to be carried through dislocation loops with equal slip realized by edge and screw segments.
+!            This has a consequence for wall effectivity matrix eff(s,i) and contribution of walls on CRSS
+!          In this version, description of polarization of CBBs is not elaborated in lign with "LoopSlip" assumption.
+!            It is therefor advised to switch of contribution of polarization of wall to CRSS, by setting I_wp=0.0 
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST=11; 
@@ -189,8 +195,8 @@
       DATA (EdgeDir(22:24,i),i=1,3) /3*p3,3*n3,3*p3/ !s.s. 21 to 24
 
       !ScrewDir(s,1:3): normalized movement vector of SCREW disl. on slip system s 
-      !  If nDirSS(s,:) denotes slip plane normal vector and x the cross product, then:
-      !      ScrewDir(s,:) = EdgeDir(s,:) x nDirSS(s,:)
+      !  If NormSS(s,:) denotes slip plane normal vector and x the cross product, then:
+      !      ScrewDir(s,:) = EdgeDir(s,:) x NormSS(s,:)
       double precision, SAVE, DIMENSION(24,3)::ScrewDir    
       DATA (ScrewDir(01,i),i=1,3) /nd6,p6,p6/ !s.s. 01
       DATA (ScrewDir(02,i),i=1,3) /p6,nd6,p6/ !s.s. 02
@@ -240,7 +246,34 @@
       !DATA (ScrewDir(46,i),i=1,3) /n4_42,p1_42,n5_42/ !s.s. 46
       !DATA (ScrewDir(47,i),i=1,3) /p1_42,p5_42,n4_42/ !s.s. 47
       !DATA (ScrewDir(48,i),i=1,3) /n1_42,p4_42,n5_42/ !s.s. 48
-            
+
+      !NormDir(s,1:3): normalized slip plane normal vector of slip system s 
+      double precision, SAVE, DIMENSION(24,3)::NormDir    
+      DATA (NormDir(01,i),i=1,3) /0.,p2,n2/ !s.s. 01
+      DATA (NormDir(02,i),i=1,3) /n2,0.,p2/ !s.s. 02
+      DATA (NormDir(03,i),i=1,3) /p2,n2,0./ !s.s. 03
+      DATA (NormDir(04,i),i=1,3) /0.,n2,n2/ !s.s. 04
+      DATA (NormDir(05,i),i=1,3) /p2,0.,p2/ !s.s. 05
+      DATA (NormDir(06,i),i=1,3) /n2,p2,0./ !s.s. 06
+      DATA (NormDir(07,i),i=1,3) /0.,p2,n2/ !s.s. 07
+      DATA (NormDir(08,i),i=1,3) /p2,0.,p2/ !s.s. 08
+      DATA (NormDir(09,i),i=1,3) /n2,n2,0./ !s.s. 09
+      DATA (NormDir(10,i),i=1,3) /0.,n2,n2/ !s.s. 10
+      DATA (NormDir(11,i),i=1,3) /n2,0.,p2/ !s.s. 11
+      DATA (NormDir(12,i),i=1,3) /p2,p2,0./ !s.s. 12
+      DATA (NormDir(13,i),i=1,3) /pd6,n6,n6/ !s.s. 13
+      DATA (NormDir(14,i),i=1,3) /n6,pd6,n6/ !s.s. 14
+      DATA (NormDir(15,i),i=1,3) /n6,n6,pd6/ !s.s. 15
+      DATA (NormDir(16,i),i=1,3) /nd6,p6,n6/ !s.s. 16
+      DATA (NormDir(17,i),i=1,3) /p6,nd6,n6/ !s.s. 17
+      DATA (NormDir(18,i),i=1,3) /p6,p6,pd6/ !s.s. 18
+      DATA (NormDir(19,i),i=1,3) /nd6,n6,n6/ !s.s. 19
+      DATA (NormDir(20,i),i=1,3) /p6,pd6,n6/ !s.s. 20
+      DATA (NormDir(21,i),i=1,3) /p6,n6,pd6/ !s.s. 21
+      DATA (NormDir(22,i),i=1,3) /pd6,p6,n6/ !s.s. 22
+      DATA (NormDir(23,i),i=1,3) /n6,nd6,n6/ !s.s. 23
+      DATA (NormDir(24,i),i=1,3) /n6,p6,pd6/ !s.s. 24
+     
       !CBBnormal(i,1:3): normalized vector normal to CBB i
       double precision, SAVE, DIMENSION(6,3)::CBBnormal  
       DATA (CBBnormal(1,i),i=1,3) /0.,p2,n2/ !CBBs on (01-1)-plane
@@ -277,7 +310,7 @@
             
       !Check KOSTtry
       select case (KOSTtry)
-      case (11,12) !supported
+      case (11,12,13) !supported
           iKOST=KOSTtry !iKOST: PRIVATE to this module.
       case default !unsupported
           iError = KS_ErrBadValue
@@ -351,6 +384,17 @@
 
       !Calculate "Wall-effectivity"-matrices
       select case(iKOST)
+      case(13) ! "LoopSlip": introduced in v.1.11; invokable through KOST=13    
+          do s=1,24 
+            do i=1,6
+              eff(s,i)=DOT_PRODUCT( NormDir(s,:) , CBBnormal(i,:) )  
+              if (abs(eff(s,i)) >= 0.99999D0) then !treat as "1" or "-1"
+                  eff(s,i)=0.0D0
+              else
+                  eff(s,i)=sqrt(1.0D0-(eff(s,i))**2)
+              endif
+            end do
+          end do
       case(12) ! "ScrewSlip": introduced in v.1.9; invokable through KOST=12 in v.1.10    
           do s=1,24 
             do i=1,6
@@ -388,7 +432,7 @@
       !
       info = KS_Error
       select case(KOST)
-      case(11,12)
+      case(11,12,13)
             ! Supported value of KOST
             ! Read parameters of PE-BP hardening model
             if (ReadPar(inunit,KOST,PARtry) == 0) then

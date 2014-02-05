@@ -199,7 +199,7 @@ C           GETAL times Tau_crit for twinning direction
             endif
   92        continue
 #ifdef PEBP_ENABLED
-      case(hard_BP,hard_PEBPscrew)
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
             call KS_getCRSS(IOR,CCC(:,1:M11),info)
             ! if ALAMEL is chosen: take the CRSS from 
             ! the neighboring grain
