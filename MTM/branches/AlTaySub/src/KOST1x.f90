@@ -296,7 +296,6 @@
       !>    * KS_ErrIO : slipsystem file (read from LEC) does not meet requirements about its format
       !> \note CONTAINed by MODULE KOST1x
       integer FUNCTION Init_PAR(Ptry,KOSTtry,LEC) result(iError)
-      use miscutils, only: pi
       TYPE(PAR),INTENT(IN)   :: Ptry    !proposed parameter set
       integer    ,INTENT(IN) :: KOSTtry !proposed value of KOST
       integer    ,INTENT(IN) :: LEC !unit number of PRE-file
