@@ -29,7 +29,7 @@
 module altayConfig
 ! Import configuration structures from AlTay modules
 use hardVoce, only: VoceConfig
-use KOST1x, only: PAR11
+use KOST1x, only: PAR
 use TexFormatConstants
 
 implicit none
@@ -161,7 +161,7 @@ implicit none
       end type
 
       type :: PEBPConfig
-            type(PAR11)                   :: params
+            type(PAR)                   :: params
             
             !> Flag that decides if state variables should be read from file.
             logical                       :: read_state = .false.

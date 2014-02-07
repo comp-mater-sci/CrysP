@@ -5,9 +5,12 @@
       implicit none
           
       integer :: i, iError
-      integer, parameter :: iParFile=22, iOutFile=23
-      integer, parameter :: iKOST=11 !ID number of implement hardening. Currently only one option available:
-                                     !  iKOST=11: Peeters hardening. Cf.  B. Peeters , MTM, KU Leuven, 2002.
+      integer, parameter :: iParFile=22, iOutFile=23, iSlipFile=24
+      integer, parameter :: KOST=11 !ID number of hardening model. 
+      					!KOST=11 !original Peeters hardening model (edge disl. slip); Cf.  PhD thesis B. Peeters , MTM, KU Leuven, 2002.
+      					!KOST=12 !modified: screw disl. slip
+      					!KOST=13 !modified: slip by dislocation loops
+
       double precision :: delta_T
       double precision, dimension(24) ::   sliprate
       double precision, dimension(2,24) :: CurCRSS
@@ -18,7 +21,8 @@
       
       !Initialization of module:
       open(unit=iParFile,file='par.txt',status='old') !open parameter file.
-      iError = InitModuleKOST1x(iParFile,iKOST)
+      open(unit=iSlipFile,file='BCCBP.PRE',status='old') !open slip system file.
+      iError = InitModuleKOST1x(iParFile,KOST,iSlipFile)
       if (iError /= 0) then
            write(*,*)"Error initializing module KOST1x. Error code:", iError
            stop

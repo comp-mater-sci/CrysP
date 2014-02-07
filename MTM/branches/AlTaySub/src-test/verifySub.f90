@@ -279,7 +279,7 @@ contains
             
             open(newunit=nparunit,file='PAR11.par',iostat=info)
             ASSERT(info == 0)
-            info = ReadPar11(nparunit,acnf%hardening%PEBPCnf%params)
+            info = ReadPar(nparunit,acnf%slipsystem%KOST,acnf%hardening%PEBPCnf%params)
             ASSERT(info == 0)
             
             
