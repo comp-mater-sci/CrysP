@@ -8,6 +8,7 @@ import glob
 # import third party modules
 import numpy as np
 import matplotlib.pylab as plt
+from scipy.linalg import sqrtm as matSqrt
 
 def Calc2DDefGrad(x, y, u, v):
     """ return a deformation gradient based on least squares fitting of a plane
@@ -206,8 +207,93 @@ def GetAvgE():
     np.save('stats_summary.txt', data[np.argsort(fileSequenceNums), :])
 
 
-def PlotAvgE(name):
+def SavePlotAvgE(name='stats_summary.txt.npy'):
     """ plot the strain trends in the named file
     """
+    strainData = np.load(name)
+
+    gamma = strainData[:,1]*-1
+    e11 = strainData[:,0]
+    e22 = strainData[:,3]
+
+    fig = plt.figure()
+    plt.plot(gamma, e11, label='E_11')
+    plt.plot(gamma, e22, label='E_22')
+    plt.plot(gamma, (gamma*gamma*2), label='gamma^2')
+
+    plt.legend()
+    plt.savefig('summary_plot.png')
     
+
+def GetRFromAllNpy(pattern='F_*.npy'):
+    """ calculate the rotation tensor R from F=RU by loading every numpy file
+        matching the given pattern
+    """
     
+    fileList = glob.glob(pattern)
+    
+    for fileName in fileList:
+    
+        F = np.load(fileName)
+        R = np.zeros(F.shape)
+        
+        for index in range(F.shape[0]):
+        
+            F_index = F[index,:].reshape((2,2))                        
+            
+            # get U from matrix square root of Ft.F
+            Usquare= np.dot(F_index.transpose(), F_index)
+            U = matSqrt(Usquare)
+            
+            # get R from F=RU
+            R_index = np.dot(F_index, np.linalg.inv(U))
+            R[index,:] = R_index.reshape((4,))
+            
+        # save the results
+        name = fileName.replace('F','R')
+        np.save(name, R)
+
+
+def CalcThetaFromAllNpy(EPattern='E_*.npy', RPattern='R_*.npy', save=False):
+    """ calculates the angle theta of the frame rotation as a function of gamma
+    
+        expects file names of the form letter_xxxxxx_commonLabel.npy
+    """
+    # get file lists
+    rFileList = glob.glob(RPattern)
+    eFileList = glob.glob(EPattern)
+    
+    # sort the lists
+    rFileNums = [int(name.split('_')[1]) for name in rFileList]
+    eFileNums = [int(name.split('_')[1]) for name in eFileList]
+    noFiles = len(rFileNums)
+    
+    rFileList = np.array(rFileList)[np.argsort(rFileNums)]
+    eFileList = np.array(eFileList)[np.argsort(eFileNums)]
+    
+    # check all files are there
+    if not all([num in eFileNums for num in rFileNums]):
+        print rFileList
+        print eFileList
+        raise Exception('some files missing?')
+        
+    # get theta and gamma values
+    gamma = np.zeros((noFiles,1))
+    theta = np.zeros((noFiles,1))
+    for index in range(noFiles):
+    
+        R = np.load(rFileList[index])
+        E = np.load(eFileList[index])
+        
+        avgR11 = np.average(R[:,0])
+        theta[index,0] = np.degrees(np.arccos(avgR11))        
+        gamma[index,0] = np.average(E[:,1]) * 2.
+
+
+    # return result
+    result = np.hstack((gamma, theta))
+    if save:
+        np.save('theta_vs_gamma.npy', result)
+        
+    else:
+        return result
