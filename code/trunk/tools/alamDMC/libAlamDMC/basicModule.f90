@@ -59,7 +59,7 @@ contains
 
       integer function BasicModule_Initialize(this) result(info)
       use altaySub
-      use altayHard, only: hard_none, hard_voce, hard_pebp
+      use altayHard, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop
       use commonUtils
       use fngRuntime
       implicit none
@@ -71,10 +71,13 @@ contains
             this%altay%output_prefix = trim(this%output%outputPrefix)
             this%altay%jobtitle = trim(this%output%outputPrefix)
             ! 
-            if ((this%altay%slipsystem%kost == hard_pebp) .and. (this%output%outputRequest)) then
-                  this%altay%output_config%npebp = 1
-                  this%altay%output_config%nmss = 1
-            endif
+            select case(this%altay%slipsystem%kost)
+            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+                  if (this%output%outputRequest) then
+                        this%altay%output_config%npebp = 1
+                        this%altay%output_config%nmss = 1
+                  endif
+            end select
             !
             write(display_unit,fmt=30) 'Initializing the multilevel model...'
             call initAltay(this%altay,info,errmsg)
@@ -208,7 +211,7 @@ contains
       
       subroutine readAlamelConfigSection(cnfunit,cnf,info)
       use altayConfig
-      use altayHard, only: hard_none, hard_voce, hard_pebp
+      use altayHard, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop
       implicit none
       integer,intent(in)                  :: cnfunit
       type(altayConfigData),intent(inout) :: cnf
@@ -265,8 +268,8 @@ contains
             case(hard_Voce)
                   ! Read one line
                   read(cnfunit,fmt=*,iostat=ioerr) cnf%hardening%VoceCnf
-            case(hard_pebp)
-                  call readPEPBhardening(cnfunit,cnf%hardening%PEBPCnf,info)
+            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+                  call readPEPBhardening(cnfunit,cnf%slipsystem%kost,cnf%hardening%PEBPCnf,info)
                   if (info /= 0) return
             case default
                   info = -1
@@ -290,11 +293,12 @@ contains
       end subroutine
 
       
-      subroutine readPEPBhardening(cnfunit,hc,info)
+      subroutine readPEPBhardening(cnfunit,kost,hc,info)
       use altayConfig
-      use KOST1x, only: ReadPar11
+      use KOST1x, only: ReadPar
       implicit none
       integer,intent(in)                  :: cnfunit
+      integer,intent(in)                  :: kost
       type(PEBPConfig),intent(out)        :: hc
       integer,intent(out)                 :: info
       !
@@ -308,7 +312,7 @@ contains
             ! Interpret the fname
             open(newunit=nparunit,file=tmp_fname,status='old',iostat=ioerr)
             if (ioerr /= 0) return
-            info = ReadPar11(nparunit,hc%params)
+            info = ReadPar(nparunit,kost,hc%params)
             close(nparunit)
             if (info /= 0) return
             read(cnfunit,fmt='(I5,A)',iostat=ioerr) tmp, tmp_fname
