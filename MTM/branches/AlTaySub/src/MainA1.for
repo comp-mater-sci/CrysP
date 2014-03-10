@@ -36,7 +36,7 @@ C
       common /CEIGEN/ IOR,ISTP,JBLOC
       common /PE/ Fmicro !Temporary!!!
       double precision, dimension(3,3) :: Fmicro
-      character(len=pathlength) :: fnam1,fnam2,fnam3,cods1
+      character(len=pathlength) :: fnam1,fnam2,fnam3,fname_prefix
       character(len=pathlength-4) :: codsim
       integer :: info
 #ifndef USE_LEESOR
@@ -71,27 +71,21 @@ C     UNIT KLEC = PARAMETER FILE
       write (*,92) trim(codsim)
   92  format (' Code for this simulation: ',a)
   93  format(' Input file:',a)
-      L=LEN_TRIM(codsim)
-      cods1=codsim
-      cods1(L+1:L+4)='.LST'
+      fname_prefix=codsim
 C     UNIT IMP = PRINTER
-      open (unit=IMP,file=cods1,status='replace')
+      open (unit=IMP,file=trim(fname_prefix)//'.LST',status='replace')
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ NLIST is not assigned a value yet! so supressed it! QGX 28/10/2011
 C      write (IMP,92) codsim
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      cods1(L+1:L+4)='.CUR'
 C     UNIT IMP1 = PRINTER
-      open (unit=IMP1,file=cods1,status='replace')
-      cods1(L+1:L+4)='.RES'
+      open (unit=IMP1,file=trim(fname_prefix)//'.CUR',status='replace')
 C     UNIT IMP2 = PRINTER
-      open (unit=IMP2,file=cods1,status='replace')
-      cods1(L+1:L+4)='.TWN'
+      open (unit=IMP2,file=trim(fname_prefix)//'.RES',status='replace')
 C     UNIT IMP3 = PRINTER
-      open (unit=IMP3,file=cods1,status='replace')
+      open (unit=IMP3,file=trim(fname_prefix)//'.TWN',status='replace')
       ! 
-      cods1(L+1:L+4)='.MSS'
 C     UNIT IMP5 = homogenized strain-stress
-      open (unit=IMP5,file=cods1,status='replace')
+      open (unit=IMP5,file=trim(fname_prefix)//'.MSS',status='replace')
       call writeMSSHeader(IMP5,info)
 
       read (KLEC,90) fnam2
@@ -165,9 +159,8 @@ C
       NREC = size(DFIL)
       select case(KOST_global)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-            cods1(L+1:L+4)='.BPM'
             ! UNIT IMP4 = state variables of PEBP KOST11
-            info = KS_openStateFile(IMP4,cods1,'w')
+            info = KS_openStateFile(IMP4,trim(fname_prefix)//'.BPM','w')
             !
             if (KS_initState(NREC) /= 0) then
                   write(IMP,fmt=600) 
@@ -236,7 +229,8 @@ C
 C     Output of last "current situation"
 C
 #ifdef FINALCUB_ENABLED
-      info = openTextureFile(icubunit,trim(codsim)//'.cub',TF_CUB,'w')
+      info = openTextureFile(icubunit,trim(fname_prefix)//'.cub',TF_CUB,
+     &                       'w')
       if (info == 0) then 
             call outputCurrentTexture(icubunit,TF_CUB,.true.,info)
       endif
