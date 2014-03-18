@@ -13,6 +13,11 @@ ifeq ($(findstring vic3, $(HOSTALIAS)),vic3)
 BUILDHOST=vic3
 endif
 #
+# Probe: muk
+ifeq ($(findstring muk, $(HOSTALIAS)),muk)
+BUILDHOST=muk
+endif
+#
 # Probe: VIC
 # Map login hosts to cluster name. 
 ifeq ($(findstring lo-03-0, $(HOSTNAME)),lo-03-0) 
