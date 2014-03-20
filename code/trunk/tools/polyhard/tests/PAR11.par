@@ -1,0 +1,16 @@
+2.48E-10               b    [m]    Magnitude of burgers vector
+8.16E4              G    [MPa]    Shear modulus
+  0.20              alpha    [/]    Dislocation interaction parameter
+  0.20               f    [/]    Volume fraction of CBBs (Cell Block Boundaries)
+ 53.0                   tau_0    [MPa]    Initial critical resolved shear stress on all slip systems
+2.12E-2                 I    [/]    immobilization CBs
+8.89E-10                R    [m]    recovery CBs
+8.37E-1                 I_wd    [/]    immobilization CBBs
+2.66E-8                 R_wd    [m]    recovery CBBs
+2.27E-9                 R_ncg    [m]    recovery of old CBBs and polarity of old CBBs
+9.59                    beta_1[/]    1st coeff. micro shear band cut-through of old CBBs
+1.07                    beta_2[/]    2nd coeff. micro shear band cut-through of old CBBs
+5.45E-2                 I_wp    [/]    immobilization polarity CBBs
+1.44E-9                 R_wp    [m]    recovery polarity CBBs
+4.12E-9                 R_rev    [m]    recovery of polarity CBBs during bauschinger
+8.70E-9                 R_2    [m]    recovery of CBs due to reversal polarity flux
