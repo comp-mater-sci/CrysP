@@ -24,6 +24,7 @@ ConfigurationName=release
 FCFLAGS+= -O3 -openmp -no-ipo
 endif
 
+FLDFLAGS+= -static-intel
 
 OBJDIR=$(ConfigurationName)/obj
 INCLUDEDIR=$(ConfigurationName)/include
