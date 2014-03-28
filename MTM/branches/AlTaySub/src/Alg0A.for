@@ -41,7 +41,7 @@ C
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,NPOINT,TEN(3,3),TOTGEW        
       COMMON /EULERA/ fi1,PHI,fi2
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
-     1 WR,SWRLX(3)
+     1 SWRLX(3)
       COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),
      1 gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),
      2 CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),
@@ -282,10 +282,6 @@ C     Main Loop over the Steps
 C
       DO 8 ISTP=1,NSTP
 
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C       WRTOT=0.0
-c      IROT=1
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       TOTGEW=0.0
       do 50 i=1,3
       do 50 j=i,3
@@ -306,7 +302,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       end if
   96  format(' Step nr.',i5,5X,3f12.5)
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C      if (IROT.eq.0.or.IW.gt.1) goto 70
       if (IW.gt.1) goto 70
 C      if (IGLIJ.eq.1) then
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -349,9 +344,7 @@ C
       end if
       
  407      format (' F ',3d15.7)
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C      if (IROT.ne.1) goto 10
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+
       nrstep=nrstep+1
       ! Here DG = [L]*dt, where [L] is the velocity gradient 
       ! and the time step dt = 1.0
@@ -440,7 +433,6 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 
 C
 C     Output file with current condition (as it was before call of Taylor!)
 C
-c      if (IROT.ne.1) goto 999
       
       do 47 i=1,3
       GLR(i)=GEULRb(i,laml)*convf
@@ -497,7 +489,6 @@ c  34  IF (NFILE.eq.0.or.ISTP.gt.1) goto 41
 C
 C     Output file with current condition (as it was before call of Taylor!)
 C
-c      if (IROT.ne.1) goto 41
       
 c     do 47 i=1,3
 c      GLR(i)=GEULRb(i,laml)*convf
@@ -508,11 +499,6 @@ c 400  format (I6,f10.5,2X,3f10.5,2X,f10.5,3(2X,3F10.6),2(2x,3f10.5))
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 
   41  if (IW.gt.1) goto 23
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-c      if (IROT.eq.1) goto 59
-c      WRTOT=WRTOT+WR*GEWF
-c      goto 23
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   59  do 56 i=1,5
       BUFSPV(i)=SPANV(i)
   56  continue
@@ -567,9 +553,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/DELTAT with DELTAT=D_vM=sqrt(2/3)*||D|| 
       srh=srh+norm2(RHOSsa)*GEWF
       HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s      
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX¡¡4/11/2011
-C      if (IROT.NE.1) goto 23
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       GMM1=GMM0+GMMdot !Step time here implicitly assumed to be 1.0s
 #ifdef ALTAY_SUBROUTINE
       ! We can choose not to update the texture state
@@ -595,10 +578,7 @@ C     End of loop over crystals
 C
   23  CONTINUE
 C     NEXT INSTRUCTION ADDED FOR LAMEL MODEL
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C      if (IROT.eq.0) goto 62
-c      IF (NUNGL.NE.0) REWIND NUNGL   
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE                                   
+                                 
       if (IW.gt.1) goto 22
       do 52 i=1,3
       do 52 j=i,3

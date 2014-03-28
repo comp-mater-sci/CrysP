@@ -19,7 +19,7 @@ C
       COMMON/TLR2/ TRC(3,3),buftrf(3,3)
       COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
-     1 WR,SWRLX(3)
+     1 SWRLX(3)
       DIMENSION TDC(3,3),Ftot(3,3)
       character*72 TITGLIJ
 C
@@ -184,7 +184,7 @@ CC     OMREKENING DISPLACEMENT GRADIENT.
   45  continue
 C      write (*,1234)
 C 1234 format (' Just before Pancak2')
-       CALL Pancak2(KOST,NGL,B,DI1,DG,TDC,SPANV,WR,SWRLX,
+       CALL Pancak2(KOST,NGL,B,DI1,DG,TDC,SPANV,SWRLX,
      1 BBVM,XXLP,IPR,Ftot,GEWF)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
@@ -222,7 +222,7 @@ C     SPANT,SPANV: local stress in crystal reference system
 C     Ssam:        local stress in sample reference system
 C
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
-     1 WR,SWRLX(3)
+     1 SWRLX(3)
       DIMENSION RCcryst(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SPANT(3,3),SGNN(96)
       dimension bufsp(3,3),RHOAsa(3,3),SPNV(5),GAMdot(96)
@@ -317,9 +317,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       write (IMP,101) (RHOSsa(i,j),j=1,3)
       end if
  1700 continue
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C   77 if (IROT.eq.0) return
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       do 74 i=1,3
       do 74 j=1,3
       SPANT(i,j)=0.0

@@ -5,7 +5,7 @@ C MODIFICATIONS AUG 2010
 C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 C
-      Subroutine Pancak2(KOST,NGL,B,DI1,DG,TDC,spanv,WR,
+      Subroutine Pancak2(KOST,NGL,B,DI1,DG,TDC,spanv,
      1 SWRLX,BBVM,XX,IPR,Ftot,GEWF)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -287,9 +287,7 @@ C
 #endif
   220    DTAU1=DTAU 
          TAUR1=TAUR  
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011         
-C      if (IROT.eq.0) goto 89
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+
       if (NRL.eq.0) then
                       UU=UU2
                       DI=DI2
@@ -448,18 +446,14 @@ C 776  format (' B5  ',i5,e15.8,   'spanv  ',d15.8,' i+ii',i5)
       RHOA(i)=-y8
  201  continue
 C
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 11/4/2012
-c  HERE WR is useless!  QGX 11/4/2011
-      WR=0.0
-      do 304 i=1,5
-      WR=WR+spanv(i)*BB(i+ii)
-  304 continue
-      if (IPR.EQ.2) then
-      if (NLIST.eq.1) then 
-      write (IMP,777) WR
+      if (IPR.EQ.2 .AND. NLIST.eq.1) then 
+        WR=0.0
+        do i=1,5
+            WR=WR+spanv(i)*BB(i+ii)
+        end do             
+        write (IMP,777) WR
       end if
-      end if
-  777 format (' Rate of Plastic work:',d10.4)
+  777 format (' spanv . BB          :',d10.4)
 C     (Modification June 2001: note that if one of the grains does
 C      not deform at all, the stress and the active slip systems
 C       of the full constraintssolution are used.)
