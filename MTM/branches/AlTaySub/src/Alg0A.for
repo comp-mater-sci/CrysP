@@ -36,8 +36,8 @@ C     IW=2 is meant for outputting the final texture.
 C
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON /DOUBLE/ XM(5,96),XEPS(5),DELTAT,RHO(5),B5(5)
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
-     1ITW,DELTAW,GEWF
+      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ROTM,NO,DG(3,3),
+     1ITW,GEWF
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,NPOINT,TEN(3,3),TOTGEW        
       COMMON /EULERA/ fi1,PHI,fi2
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
@@ -74,6 +74,9 @@ C
       double precision :: Mgrain !Taylor factor of the current grain
       double precision :: Mavg   !Volume-averaged Taylor factor
       double precision :: srh !Strain Rate Heterogeneity in polycrystal
+      double precision :: SeqGrain=0.D0 ! Equivalent stress in crystal, defined as..
+                                    !  plastic work rate in crystal normalized by..
+                                    !  (macro) von Mises equivalent strain rate
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      DATA JW /0/
 C      DATA Cmic0 /1.0D0,0.0D0,0.0D0,
@@ -288,7 +291,7 @@ C
       STOT(i,j)=0.0
       RHOST(i,j)=0.0
   50  continue
-      SG=0.
+      SeqAvg=0.
       Mavg=0.
       srh=0.
       HGAM=0.D0
@@ -329,9 +332,9 @@ C     INSTRUCTION ADDED IN LAMEL model:
  112  FORMAT (//' DEFORMATION STEP ',I5,//)
       if (NRES.gt.0) write (IMP2,404) nrstep+1,NPOINT
  404  format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'
-     1 ,T10,'Wdot/DvM',T27,'Wdot',T37,'tau_ref',T56,'M',T64,'ratlon',
-     2 T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS',/,
-     3 1x,278('*'))
+     1 ,T7,'EquivStress',T23,'WorkRate',T37,'tau_ref',T56,'M',T64,
+     2 'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS'
+     3 ,/,1x,278('*'))
       do 48 i=1,3
       GLR(i)=GEULR(i)*convf
   48  continue
@@ -418,7 +421,7 @@ C      IF (NUNGL.NE.0) READ(NUNGL) ((FK1b(K,J,L),J=1,M11),K=1,2)
 #ifdef ALTAY_SUBROUTINE
       ! Collect the TRF for calculations of stresses later on.
       if (.not. astate%simulCalls(astate%this)%input%full_model) then
-            WDOT = 0.
+            SeqGrain = 0.
             TRFT = transpose(TRF)
       endif
 #endif
@@ -511,12 +514,12 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
             call MATPROD(bufsp,SPANT,TRF,3,3,3)
             call MATPROD(Ssam,TRFT,bufsp,3,3,3)
       else
-            CALL TAYLR1(ISTP,IOR,NRES,TAU,GMMdot)
+            CALL TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain)
             RCM_GUARD
       endif
 #else
 C      if (IOR.eq.1.and.ISTP.eq.1) IPR=2
-      CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot)
+      CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain)
 #endif      
       
       
@@ -547,7 +550,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       STOT(i,j)=STOT(i,j)+Ssam(i,j)*GEWF
       RHOST(i,j)=RHOST(i,j)+RHOSsa(i,j)*GEWF
   51  continue
-  63  SG=SG+WDOT*GEWF
+  63  SeqAvg=SeqAvg+SeqGrain*GEWF
       Mgrain=GMMdot/DELTAT
       Mavg=Mavg+Mgrain*GEWF
       ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/DELTAT with DELTAT=D_vM=sqrt(2/3)*||D|| 
@@ -597,7 +600,7 @@ C      call STR5(vec1,SHsam)
       Mavg=Mavg/TOTGEW
       ! DEFINITION: srh = (||d-D||) / ||D||
       srh=sqrt(2.D0/3.D0)*srh/TOTGEW 
-      SG=SG/TOTGEW
+      SeqAvg=SeqAvg/TOTGEW
       !
       MEPSCALL=MEPS*(ISTP-1)
       !
@@ -611,7 +614,7 @@ C      call STR5(vec1,SHsam)
             callout%stress_tensor= SHsam
             callout%taylor_factor= Mavg
             callout%strain_rate_heterogeneity = srh
-            callout%equivalent_stress= SG
+            callout%equivalent_stress= SeqAvg
             callout%effective_stress = sqrt(3.D0/2.D0)*norm2(SHsam)
             callout%homogenised_slip = HGAMCALL
             callout%homogenised_slip_tot = HGAMTOT            
@@ -636,7 +639,7 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      JW=0
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-      WRITE (IMP,105) ISTP,SG,Mavg,EPS
+      WRITE (IMP,105) ISTP,SeqAvg,Mavg,EPS
       end if
  105  FORMAT (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VAL
      1UE=',F10.5,'  EFF. STRAIN EPS USED=',F10.5) 

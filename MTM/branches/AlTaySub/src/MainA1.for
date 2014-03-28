@@ -32,7 +32,7 @@ C     IDISK1= work file (obsolete, not used)
 C     NDAT1= Input-texture file     Opened in LEESOR
 C
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
-      COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3),ITW,DELTAW,GEWF
+      COMMON /TEXTUR/ DUM1(28),IDUM1,DG(3,3),ITW,GEWF
       common /CEIGEN/ IOR,ISTP,JBLOC
       common /PE/ Fmicro !Temporary!!!
       double precision, dimension(3,3) :: Fmicro

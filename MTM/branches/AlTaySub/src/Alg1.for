@@ -11,8 +11,8 @@ C
 #endif
       use IOConfig
       implicit double precision (a-h,o-z)
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
-     1ITW,DELTAW,GEWF
+      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ROTM,NO,DG(3,3),
+     1ITW,GEWF
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON/TLR1/ N,M,N1,NGL,NTW,NC,LC,B1(3,96),B(5,5),
      1B2(6,96),G(96),DI1(5)
@@ -193,7 +193,7 @@ C      write (*,1235)
 C 1235 format (' Just after Pancak2')
       RETURN
       END                                                               
-      SUBROUTINE TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot)
+      SUBROUTINE TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
       use altayConfig, only: astate
@@ -205,8 +205,8 @@ C 1235 format (' Just after Pancak2')
       use altayHard, only: hard_none, hard_voce, hard_BP, 
      &                     hard_PEBPscrew, hard_PEBPloop
       implicit double precision (a-h,o-z)
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),WDOT,ROTM,NO,DG(3,3),
-     1ITW,DELTAW,GEWF
+      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ROTM,NO,DG(3,3),
+     1ITW,GEWF
       COMMON/TLR1/ N,M,N1,NGL,NTW,NC,LC,B1(3,96),B(5,5),
      1B2(6,96),G(96),DI1(5)
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
@@ -214,6 +214,9 @@ C 1235 format (' Just after Pancak2')
       COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
       COMMON /EULERA/ fi1,PHI,fi2
       logical SWRLX
+      double precision, intent(out):: Seq ! Equivalent stress in crystal, defined as..
+                                    !  plastic work rate in crystal normalized by..
+                                    !  (macro) von Mises equivalent strain rate
 C
 C     SHsam:    macroscopic stress in sample reference system
 C     SH:   macroscopic stress in crystal reference system
@@ -363,24 +366,23 @@ c      TRC(3)=RC(2,1)-RHOA(3)*DELTAT*SQR2
         TRC(2)=RCcryst(1,3)+RHOAsa(1,3)
         TRC(3)=RCcryst(2,1)+RHOAsa(2,1)
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      DELTAW=0.0
-      do 44 i=1,M11 
-      XXI=GAMdot(i)
-      if (XXI.eq.0.0D00) goto 44
-      if (XXI.GT.0.0) then
-                         TAUC=CC(1,i)    
-                      else
-                         TAUC=-CC(2,i)
-                      endif
-      DELTAW=DELTAW+TAUC*XXI
-  44  continue
-      WDOT=DELTAW/DELTAT
+      WorkRate=0.0
+      do i=1,M11 
+          if (GAMdot(i).GT.0.0) then
+              !positive slip rate
+              WorkRate= WorkRate + CC(1,i)*GAMdot(i)
+          else
+              !negative or 0 slip rate
+              WorkRate= WorkRate - CC(2,i)*GAMdot(i)
+          endif
+      end do
+      Seq=WorkRate/DELTAT
   43  J=M
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 4/11/2011
 C      IF (IGLIJ.EQ.0) GOTO 90
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-      WRITE (IMP,301) DELTAW
+      WRITE (IMP,301) WorkRate
       end if
  301  FORMAT (//,1H ,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
 !      if(NLIST.eq.1) then
@@ -393,7 +395,7 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      IF (IGLIJ.NE.0) then
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-      WRITE (IMP,109) DELTAT,WDOT,(GAMdot(I)/DELTAT,I=1,M)
+      WRITE (IMP,109) DELTAT,Seq,(GAMdot(I)/DELTAT,I=1,M)
       end if
 
  109  FORMAT (' DELTAT=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,
@@ -485,12 +487,11 @@ C     Note that length of D = sqrt(3/2)
       x=x*2.D0/3.D0
       ratlon=x !“the ratio of the parallel strain rates”
 C
-      WDOT1=WDOT*DELTAT !Rate of plastic work of crystallite
       ! TAU: Reference-CRSS.
       ! TOTGAMdot/DELTAT: Taylor Factor of the grain.
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   QGX 4/18/2012
 C add the normalization factor for rhossa
-      write (IMP2,150) ior,WDOT,WDOT1,TAU,TOTGAMdot/DELTAT,ratlon,
+      write (IMP2,150) ior,Seq,WorkRate,TAU,TOTGAMdot/DELTAT,ratlon,
      1 rhossa(1,1)*DELTAT,rhossa(2,2)*DELTAT,rhossa(3,3)*DELTAT,
      2 rhossa(2,3)*DELTAT,rhossa(3,1)*DELTAT,rhossa(1,2)*DELTAT,
      3 rhoasa(2,3),rhoasa(3,1),rhoasa(1,2),
