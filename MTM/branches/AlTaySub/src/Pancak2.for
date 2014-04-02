@@ -5,7 +5,7 @@ C MODIFICATIONS AUG 2010
 C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 C
-      Subroutine Pancak2(KOST,NGL,B,DI1,DG,TDC,spanv,
+      Subroutine Pancak2(KOST,NGL,B,DI1,DG,TDC,spanv,Scrys,
      1 SWRLX,BBVM,XX,IPR,Ftot,GEWF)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -29,6 +29,7 @@ C
       common /CEIGEN/ IOR,ISTP,NBLOC
       COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),
      1 TLXX,TAURLP(8)
+      double precision, dimension(3,3), intent(out):: Scrys
         dimension ccc2(2,194)
       dimension buftrf(3,3),C1(3,3),C2(3,3),
      1 DG(3,3),TDC(3,3),TDCb(3,3,2),TRCb(3,3,2),
@@ -445,6 +446,7 @@ C 776  format (' B5  ',i5,e15.8,   'spanv  ',d15.8,' i+ii',i5)
       RHOS(i)=-x8
       RHOA(i)=-y8
  201  continue
+      call STR33(Scrys,spanv)
 C
       if (IPR.EQ.2 .AND. NLIST.eq.1) then 
         WR=0.0

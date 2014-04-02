@@ -33,6 +33,8 @@ C
 C
 C     DVM = von Mises equivalent strain rate
 C
+      !Local stress in crystal reference system
+      double precision, dimension(3,3):: Scrys=0.0d0 
       SAVE
       GOTO (1000,2000,3000),IRICHT
  1000 if(NLIST.eq.1) then
@@ -184,8 +186,20 @@ CC     OMREKENING DISPLACEMENT GRADIENT.
   45  continue
 C      write (*,1234)
 C 1234 format (' Just before Pancak2')
-       CALL Pancak2(KOST,NGL,B,DI1,DG,TDC,SPANV,SWRLX,
+       CALL Pancak2(KOST,NGL,B,DI1,DG,TDC,SPANV,Scrys,SWRLX,
      1 BBVM,XXLP,IPR,Ftot,GEWF)
+      !Report Scrys to LST-file
+ 100  format (' Bishop-Hill stress (crystal system):')
+ 101  format(3d20.7)       
+      if(NLIST.eq.1) then
+          write (IMP,100)
+          do i=1,3
+              write (IMP,101) (Scrys(i,j),j=1,3)
+          end do
+      end if
+      !Transform stress from local frame (Scrys) to sample frame (Ssam) 
+       call MATPROD(bufsp,Scrys,TRF,3,3,3)
+       call MATPROD(Ssam,buftrf,bufsp,3,3,3)       
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -221,14 +235,13 @@ C
 C     SHsam:    macroscopic stress in sample reference system
 C     SH:   macroscopic stress in crystal reference system
 C     SPANH: macroscopic stress in crystal reference system
-C     SPANT,SPANV: local stress in crystal reference system
 C     Ssam:        local stress in sample reference system
 C
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
      1 SWRLX(3)
       DIMENSION RCcryst(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SPANT(3,3),SGNN(96)
-      dimension bufsp(3,3),RHOAsa(3,3),SPNV(5),GAMdot(96)
+      dimension bufsp(3,3),RHOAsa(3,3),GAMdot(96)
       COMMON /RHO/ RHOS(5),RHOA(5)
       INTEGER DI1
       data SQR2/0.7071067811865476D+00/
@@ -240,25 +253,11 @@ C
       SAVE
       WACC1=0.0
       WACC2=0.0
-  46  do 49 i=1,N
-      SPNV(i)=SPANV(i)
-  49  continue
 c      pause
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      call STR33(SPANT,SPNV)
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      if (IGLIJ.eq.0) goto 11
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if(NLIST.eq.1) then
-      write (IMP,100)
-      end if
- 100  format (' Bishop-Hill stress (crystal system):')
-      do 10 i=1,3
-      if(NLIST.eq.1) then
-      write (IMP,101) (SPANT(i,j),j=1,3)
-      end if
- 101  format(3d20.7)
-  10  continue
 C  11  write (*,1771) IOR
 C 1771 format (I5)
   11  call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN)
@@ -299,13 +298,11 @@ C     1' Euler angles phi1, PHI, phi2:',3F15.6)
 C      return
 c  51  continue
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-  34   call MATPROD(bufsp,SPANT,TRF,3,3,3)
-      call MATPROD(Ssam,buftrf,bufsp,3,3,3)
 C
 C     Transformation of relaxation
-C     From here on, SPANT is corrupted
+C     From here on, SPANT is an intermediate tensor variable
 C
-      call STR33(SPANT,RHOS)
+      call STR33(SPANT,RHOS) ! SPANT= SymMatrix(RHOS) 
       call MATPROD(bufsp,SPANT,TRF,3,3,3)
       call MATPROD(RHOSsa,buftrf,bufsp,3,3,3)
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
@@ -500,6 +497,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 ! 150 format (i5,5f10.6,5x,6f10.6,5x,3f10.6,5x,6f10.6)
   150 format(i5,5(E12.5,1X),5x,6(E12.5,1X),5x,3(E12.5,1X),
      1       5x,6(E12.5,1X))
+ 101  format(3d20.7)      
    61 RETURN
   26  WRITE (IMP,106)
  106  FORMAT (1H ,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBL

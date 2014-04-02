@@ -111,6 +111,30 @@ C
 
 
 
+      function SymMatrix(vec)
+      !implicit none
+      double precision, dimension(5),  intent(in) :: vec
+      double precision, dimension(3,3)            :: SymMatrix !out
+      double precision, parameter :: 
+     &      sq22=   sqrt(0.5d0),               !0.7071068
+     &      const3= (sqrt(3.0d0)+3.0d0)/6.0d0, !0.7886751
+     &      const4= (3.0d0-sqrt(3.0d0))/6.0d0  !0.2113249          
+      !
+      SymMatrix(2,2)=  const3*vec(1)-const4*vec(2)
+      SymMatrix(3,3)= -const4*vec(1)+const3*vec(2)
+      !
+      SymMatrix(1,1)= -SymMatrix(2,2)-SymMatrix(3,3)
+      !
+      SymMatrix(2,3)= sq22*vec(3)
+      SymMatrix(3,1)= sq22*vec(4)
+      SymMatrix(1,2)= sq22*vec(5)
+      !
+      SymMatrix(3,2)= SymMatrix(2,3)   
+      SymMatrix(1,3)= SymMatrix(3,1)       
+      SymMatrix(2,1)= SymMatrix(1,2)       
+      !      
+      end function SymMatrix
+      
 
       Subroutine STR33(A,V)
       implicit double precision (a-h,o-z)

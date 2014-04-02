@@ -50,7 +50,7 @@ C
       common /CEIGEN/ IOR,ISTP,NBLOC
       common /PE/ Fmicro !Temporary!!!      
       DIMENSION F(3,3),F1(3,3),GAXES(3),GEULR(3),TG(3,3),
-     1 CIJ(3,3),F2(3,3),GLR(3),STOT(3,3),BUFSPV(5),
+     1 CIJ(3,3),F2(3,3),GLR(3),STOT(3,3),
      2 RHOST(3,3),RHOSm(3,3),FMicro(3,3)
       dimension FS(3,3)
       character*40 TITEL
@@ -502,15 +502,12 @@ c 400  format (I6,f10.5,2X,3f10.5,2X,f10.5,3(2X,3F10.6),2(2x,3f10.5))
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 
   41  if (IW.gt.1) goto 23
-  59  do 56 i=1,5
-      BUFSPV(i)=SPANV(i)
-  56  continue
 
 #ifdef ALTAY_SUBROUTINE
       ! altay-subroutine allows a way of calculating stresses
       ! without a call to TAYLR1.
       if (.not. astate%simulCalls(astate%this)%input%full_model) then
-            call STR33(SPANT,SPANV)
+            call STR33(SPANT,SPANV) 
             call MATPROD(bufsp,SPANT,TRF,3,3,3)
             call MATPROD(Ssam,TRFT,bufsp,3,3,3)
       else
@@ -522,27 +519,6 @@ C      if (IOR.eq.1.and.ISTP.eq.1) IPR=2
       CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain)
 #endif      
       
-      
-
-C      if (IOR.eq.1.and.ISTP.eq.1) stop
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGC 4/11/2011
-C    IEND is always equal to 0
-C      if (iend.ne.1) goto 49
-C      if (iend.eq.0) goto 49
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C      if (IGLIJ.eq.1.and.IPR.eq.2) stop
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-C      do 55 i=1,5
-C      SPANV(i)=BUFSPV(i)
-C  55  continue
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C      IGLIJ=1
-C      IPR=2
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-C      call taylr1(ISTP,IOR,IEND,NFILE,TAU)
-C     write(*,*) 'IEND=', IEND
-C      stop
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
    49 if (NFILTW.eq.1) write (IMP3,398) ITW
  398  format (I3)
       do 51 i=1,3
@@ -588,7 +564,6 @@ C     NEXT INSTRUCTION ADDED FOR LAMEL MODEL
       SHsam(i,j)=STOT(i,j)/TOTGEW
       RHOSm(i,j)=RHOST(i,j)/TOTGEW
   52  continue
-C      call STR5(vec1,SHsam)
   66  do 65 i=1,2
       do 65 j=i+1,3
       SHsam(i,j)=SHsam(i,j)*FS(i,j)
