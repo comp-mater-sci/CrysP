@@ -70,9 +70,7 @@
 !            It is therefor advised to switch of contribution of polarization of wall to CRSS, by setting I_wp=0.0 
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     KOST=11; 
-!     PRE-file contains 24 (110)+(112)[111] slip systems; 
-!     PRE-file does not contain keyword "{ScrewSlip}" in 1st line 
+!     KOST=11 & PRE-file contains 24 (110)+(112)[111] slip systems; 
 !     -----------------------------------------------------
 !     The original 'Bart Peeters hardening model', as described in:
 !     PhD B. Peeters, MTM, 2002, paragraph 3.2.2: 'Mesoscopic model'
@@ -82,7 +80,7 @@
 !      with tanh() [tangent hyperbolic]. This replacement was also found
 !      in the original source code by B. Peeters.
 
-!     (2) Eq. (3.17) (evolution equation of RHO) is integrated here explicitly,
+!     (2) Eq. (3.17) (evolution equation of RHO) is integrated here analyticaly,
 !      while in the PhD, it is mentioned that a Runge-Kutta method is used.
 !      Differences in results (in LST-, CUR-, RES-files) between both methods 
 !      are only marginal. Explicit integration requires less operations and is

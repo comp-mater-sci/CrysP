@@ -15,7 +15,7 @@
       double precision, dimension(24) ::   sliprate
       double precision, dimension(2,24) :: CurCRSS
       
-      Type(StatVar) :: CurState !A derived type defined in module, containing all state variables of a single grain.
+      Type(StatVar) :: CurState !A derived type defined in module KOST1x, containing all state variables of a single grain.
       Type(StatVar) :: SV_inc_start, SV_inc_end
       
       
@@ -37,7 +37,6 @@
       endif
       
       !Let's write this annealed state to file.
-      
       iError = KS_openStateFile(iOutFile,'out.txt','w')
       write(iOutFile,*) "The annealed state looks as follows:"
       iError = WriteSVfile(iOutFile,CurState)
@@ -55,7 +54,7 @@
       sliprate(20)=0.10
       sliprate(21)=0.15
       
-      !Now we make 5 increments of 0.1second each, assuming these slip rates are valid throughout. 
+      !Now we make 5 time increments of 0.1second each, assuming these slip rates remain constant. 
       ! The state variables in 'CurState' will progressively be updated.
       delta_T=0.1 !time increment. unit: second
       SV_inc_start = CurState !set the state variables at start of 1st inc.
