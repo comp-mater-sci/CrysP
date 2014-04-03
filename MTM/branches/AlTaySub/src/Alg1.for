@@ -11,16 +11,18 @@ C
 #endif
       use IOConfig
       implicit double precision (a-h,o-z)
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ROTM,NO,DG(3,3),
+      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,DG(3,3),
      1ITW,GEWF
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON/TLR1/ N,M,N1,NGL,NTW,NC,LC,B1(3,96),B(5,5),
      1B2(6,96),G(96),DI1(5)
-      COMMON/TLR2/ TRC(3,3),buftrf(3,3)
+      COMMON/TLR2/ TRC(3,3),buftrf(3,3),RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
      1 SWRLX(3)
       DIMENSION TDC(3,3),Ftot(3,3)
+      double precision, dimension(3,3):: bufsp(3,3), RHOScrys(3,3)
+      double precision, dimension(3,3):: RHOAcrys(3,3), RHOAsa(3,3) 
       character*72 TITGLIJ
 C
 C     Extra arrays nodig voor lineare programmatie op 2 korrels tegelijk
@@ -186,10 +188,10 @@ CC     OMREKENING DISPLACEMENT GRADIENT.
   45  continue
 C      write (*,1234)
 C 1234 format (' Just before Pancak2')
-       CALL Pancak2(KOST,NGL,B,DI1,DG,TDC,SPANV,Scrys,SWRLX,
-     1 BBVM,XXLP,IPR,Ftot,GEWF)
+       CALL Pancak2(KOST,NGL,B,DI1,DG,TDC,SPANV,Scrys,RHOScrys,RHOAcrys,
+     1 SWRLX,BBVM,XXLP,IPR,Ftot,GEWF)
       !Report Scrys to LST-file
- 100  format (' Bishop-Hill stress (crystal system):')
+ 100  format(' Bishop-Hill stress (crystal system):')
  101  format(3d20.7)       
       if(NLIST.eq.1) then
           write (IMP,100)
@@ -198,8 +200,29 @@ C 1234 format (' Just before Pancak2')
           end do
       end if
       !Transform stress from local frame (Scrys) to sample frame (Ssam) 
-       call MATPROD(bufsp,Scrys,TRF,3,3,3)
-       call MATPROD(Ssam,buftrf,bufsp,3,3,3)       
+      call MATPROD(bufsp,Scrys,TRF,3,3,3)
+      call MATPROD(Ssam,buftrf,bufsp,3,3,3)   
+      !Transform relaxation strain rate tensor from local frame (RHOScrys) 
+      !                                         to sample frame (RHOSsa)
+      call MATPROD(bufsp,RHOScrys,TRF,3,3,3)
+      call MATPROD(RHOSsa,buftrf,bufsp,3,3,3)
+      !Transform relaxation spin tensor from local frame (RHOAcrys) to sample frame (RHOAsa)
+      call MATPROD(bufsp,RHOAcrys,TRF,3,3,3)
+      call MATPROD(RHOAsa,buftrf,bufsp,3,3,3)
+      !Report RHOSsa and RHOAsa to LST-file
+ 1701 format(/,' RHOSsa')
+ 1706 format(/,' RHOAsa')
+      if(NLIST.eq.1) then
+          write (IMP,1701)
+          do i=1,3 
+              write (IMP,101) (RHOSsa(i,j),j=1,3)
+          end do 
+          write (IMP,1706)
+          do i=1,3
+              write (IMP,101) (RHOAsa(i,j),j=1,3)
+          end do          
+      end if
+      
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -219,12 +242,12 @@ C 1235 format (' Just after Pancak2')
       use altayHard, only: hard_none, hard_voce, hard_BP, 
      &                     hard_PEBPscrew, hard_PEBPloop
       implicit double precision (a-h,o-z)
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ROTM,NO,DG(3,3),
+      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,DG(3,3),
      1ITW,GEWF
       COMMON/TLR1/ N,M,N1,NGL,NTW,NC,LC,B1(3,96),B(5,5),
      1B2(6,96),G(96),DI1(5)
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
-      COMMON/TLR2/ RC(3,3),buftrf(3,3)
+      COMMON/TLR2/ RC(3,3),buftrf(3,3),RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
       COMMON /EULERA/ fi1,PHI,fi2
       logical SWRLX
@@ -240,11 +263,10 @@ C
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
      1 SWRLX(3)
       DIMENSION RCcryst(3,3)
-      DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SPANT(3,3),SGNN(96)
+      DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
       dimension bufsp(3,3),RHOAsa(3,3),GAMdot(96)
-      COMMON /RHO/ RHOS(5),RHOA(5)
       INTEGER DI1
-      data SQR2/0.7071067811865476D+00/
+C      data SQR2/0.7071067811865476D+00/
 #ifdef PEBP_ENABLED      
       integer :: info
       double precision :: ddt
@@ -299,28 +321,6 @@ C      return
 c  51  continue
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C
-C     Transformation of relaxation
-C     From here on, SPANT is an intermediate tensor variable
-C
-      call STR33(SPANT,RHOS) ! SPANT= SymMatrix(RHOS) 
-      call MATPROD(bufsp,SPANT,TRF,3,3,3)
-      call MATPROD(RHOSsa,buftrf,bufsp,3,3,3)
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C      if (IGLIJ.eq.0) goto 77
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if(NLIST.eq.1) then
-      write (IMP,1701)
-      end if
- 1701 format(/,' RHOSsa')
-      do 1700 i=1,3
-      if(NLIST.eq.1) then
-      write (IMP,101) (RHOSsa(i,j),j=1,3)
-      end if
- 1700 continue
-      do 74 i=1,3
-      do 74 j=1,3
-      SPANT(i,j)=0.0
-  74  continue
       !Calculate RCcryst: the rigid body spin in the crystal frame 
       do i=1,3,1                                    
         RCcryst(i,i)=0.0                               
@@ -334,27 +334,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       call MATPROD(bufsp,RCcryst,buftrf,3,3,3)        
       call MATPROD(RCcryst,TRF,bufsp,3,3,3)           
       ! RCcryst now calculated 
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 20/4/2012
-       SPANT(2,3)=RHOA(1)*SQR2*DELTAT
-       SPANT(3,2)=-SPANT(2,3)
-       SPANT(3,1)=RHOA(2)*SQR2*DELTAT
-       SPANT(1,3)=-SPANT(3,1)
-       SPANT(1,2)=RHOA(3)*SQR2*DELTAT
-       SPANT(2,1)=-SPANT(1,2)
-      call MATPROD(bufsp,SPANT,TRF,3,3,3)
-      call MATPROD(RHOAsa,buftrf,bufsp,3,3,3)
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C      if (IGLIJ.eq.0) goto 71
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if(NLIST.eq.1) then
-      write (IMP,1706)
-      end if
- 1706 format (/,' RHOAsa')
-      do 1705 i=1,3
-      if(NLIST.eq.1) then
-      write (IMP,101) (RHOAsa(i,j),j=1,3)
-      end if
- 1705 continue
+
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 20/4/2012
 c 71   TRC(1)=RC(3,2)-RHOA(1)*DELTAT*SQR2
 c      TRC(2)=RC(1,3)-RHOA(2)*DELTAT*SQR2

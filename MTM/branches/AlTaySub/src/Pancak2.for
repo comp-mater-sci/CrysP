@@ -5,7 +5,7 @@ C MODIFICATIONS AUG 2010
 C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 C
-      Subroutine Pancak2(KOST,NGL,B,DI1,DG,TDC,spanv,Scrys,
+      Subroutine Pancak2(KOST,NGL,B,DI1,DG,TDC,spanv,S33,RHOS33,RHOA33,
      1 SWRLX,BBVM,XX,IPR,Ftot,GEWF)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -25,11 +25,11 @@ C
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON /DOUBLE/ A8(5,96),BB8(5),DELTAT,RHO(5),B5(5)
       common /extra/ A1(10,194),UU(10,10)
-      COMMON /RHO/ RHOS(5),RHOA(5)
       common /CEIGEN/ IOR,ISTP,NBLOC
       COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),
      1 TLXX,TAURLP(8)
-      double precision, dimension(3,3), intent(out):: Scrys
+      double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
+      double precision,dimension(5):: RHOS, RHOA 
         dimension ccc2(2,194)
       dimension buftrf(3,3),C1(3,3),C2(3,3),
      1 DG(3,3),TDC(3,3),TDCb(3,3,2),TRCb(3,3,2),
@@ -446,7 +446,16 @@ C 776  format (' B5  ',i5,e15.8,   'spanv  ',d15.8,' i+ii',i5)
       RHOS(i)=-x8
       RHOA(i)=-y8
  201  continue
-      call STR33(Scrys,spanv)
+      call STR33(S33,spanv)
+      call STR33(RHOS33,RHOS) 
+      !Conversion of RHOA to dim(3,3)
+      RHOA33=0.0d0
+      RHOA33(2,3)= RHOA(1)*sqr2*deltat
+      RHOA33(3,1)= RHOA(2)*sqr2*deltat
+      RHOA33(1,2)= RHOA(3)*sqr2*deltat
+      RHOA33(3,2)= -RHOA33(2,3)
+      RHOA33(1,3)= -RHOA33(3,1)
+      RHOA33(2,1)= -RHOA33(1,2)
 C
       if (IPR.EQ.2 .AND. NLIST.eq.1) then 
         WR=0.0

@@ -36,7 +36,7 @@ C     IW=2 is meant for outputting the final texture.
 C
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON /DOUBLE/ XM(5,96),XEPS(5),DELTAT,RHO(5),B5(5)
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ROTM,NO,DG(3,3),
+      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,DG(3,3),
      1ITW,GEWF
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,NPOINT,TEN(3,3),TOTGEW        
       COMMON /EULERA/ fi1,PHI,fi2
