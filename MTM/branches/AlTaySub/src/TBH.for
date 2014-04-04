@@ -1,6 +1,10 @@
 #ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
 #endif
+      module altayTBH
+      
+      contains
+      
 C     SUBROUTINE LINEAR PROGRAMMING TAYLOR-BISHOP-HILL STYLE
        Subroutine TBH(IPR,NDIM,N,M,A,D,
      1 TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,
@@ -318,7 +322,7 @@ c
   211 format (I5,5x,D20.10)
   212 format (/,'   SOLUTION ',/)
       return
-      end  
+      end subroutine
       
       
       
@@ -334,7 +338,7 @@ C     MATRIX C=MATRIX Ustar*MATRIX B
         enddo
       enddo
       return
-      end
+      end subroutine
       
       
       
@@ -352,7 +356,10 @@ C     MATRIX C=MATRIX A*MATRIX B
  2    CONTINUE                                                          
  1    CONTINUE                                                          
       RETURN                                                            
-      END                                                               
+      END SUBROUTINE
+
+      end module
+      
 
       
      

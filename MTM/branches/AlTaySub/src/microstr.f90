@@ -1,7 +1,8 @@
 !> $Id$
       
 !> Microstructure representation in AlTay
-module microstr
+module altayMesostructure
+use altayAlgorithms
 implicit none
 
       !> Transformation matrix associated to the grain boundary reference frame 
@@ -437,4 +438,5 @@ contains
       
       
       
-end module microstr
+end module
+    

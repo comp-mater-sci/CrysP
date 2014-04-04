@@ -1,6 +1,10 @@
 #ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
 #endif
+      module altaySimul
+      
+      contains
+      
 C ALAMEL V3
 C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
@@ -19,8 +23,10 @@ C
 C     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
 C     USING THE ALAMEL MODEL
       use curAccess
-      use dynfil
+      use altayDYNFIL
       use altayHard
+      use altayTaylor
+      use altayAlgorithms
 #ifdef PEBP_ENABLED
       use KOST1xState
 #endif
@@ -630,4 +636,6 @@ C      GOTO 22
   32  return
 C  this never happen!
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE                                                           
-      END                                                               
+      END SUBROUTINE
+      
+      end module

@@ -58,12 +58,12 @@ Alg0.for  \
 Alg1.for \
 Alg2.for \
 Dynfil.for \
+macroKinematic.f90 \
 microstr.f90 \
 ioconfig.f90 \
 miscutils.f90 \
 Pancak2.for \
 Sliprat.for \
-Stelsel.for \
 TBH.for \
 cubAccess.f90 \
 curAccess.f90 \

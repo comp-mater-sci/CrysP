@@ -1,6 +1,10 @@
 #ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
 #endif
+      module altayPancake
+      
+      contains
+      
 C MODIFICATIONS AUG 2010
 C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
@@ -10,9 +14,10 @@ C
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
-      use MICROSTR
+      use altayMesostructure
       use IOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
       use altayHard
+      use altayTBH
 #ifdef PEBP_ENABLED
       use KOST1xState
 #endif
@@ -518,7 +523,7 @@ C 912  format (' NACTIV, i',2I5)
                       TAURLP(NLP)=TAUR1(j+jj) 
  310  continue
       RETURN
-      END        
+      END SUBROUTINE        
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc      
 
 
@@ -620,4 +625,6 @@ c   update the CRSS for grain-2
       enddo
       endif
       return
-      end             
+      end subroutine
+
+      end module

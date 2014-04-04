@@ -24,12 +24,6 @@ module altayInterface
       ! Remark: automatically generated interfaces are used.
       interface
             !
-            SUBROUTINE SIMUL(IW,EPS,NFILE0)
-              INTEGER(KIND=4) :: IW
-              REAL(KIND=8) :: EPS
-              INTEGER(KIND=4) :: NFILE0
-            END SUBROUTINE SIMUL
-            !
             SUBROUTINE LEESOR(NUNIT,MPOINT)
               INTEGER(KIND=4) :: NUNIT
               INTEGER(KIND=4) :: MPOINT

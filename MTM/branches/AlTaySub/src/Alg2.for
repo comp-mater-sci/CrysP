@@ -1,6 +1,10 @@
 #ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
 #endif
+      module altayAlgorithms
+      
+      contains
+      
       SUBROUTINE MATPROD(C,A,B,N1,N2,N3)
 C     MATRIX C=MATRIX A*MATRIX B                                        
       implicit double precision (a-h,o-z)
@@ -15,7 +19,8 @@ C     MATRIX C=MATRIX A*MATRIX B
  2    CONTINUE                                                          
  1    CONTINUE                                                          
       RETURN                                                            
-      END                                                               
+      END SUBROUTINE
+      !
       subroutine UPDATC(CIJ,F2)
       implicit double precision (a-h,o-z)
 C     Updating of CIJ matrix of ellipsoid
@@ -49,7 +54,8 @@ C
   12  continue
    2  continue
       return
-      end
+      end subroutine
+      !
       subroutine UPDATF(F,F1)
       implicit double precision (a-h,o-z)
       dimension F(3,3),F1(3,3),X(3,3)
@@ -67,7 +73,8 @@ C
   11  continue
    1  continue
       return
-      end
+      end subroutine
+      !
       subroutine Ftensor(DG,F1,F2)
       implicit double precision (a-h,o-z)
 C
@@ -106,11 +113,9 @@ C
    3  continue
   23  continue
       return
-      end
-  
+      end subroutine
 
-
-
+      !
       function SymMatrix(vec)
       !implicit none
       double precision, dimension(5),  intent(in) :: vec
@@ -164,7 +169,8 @@ C      data sq22/0.7071068/,const3/0.7886751/,const4/0.2113249/
       A(1,2)=X1
       A(2,1)=X1
       return
-      end
+      end subroutine
+      !
       Subroutine STR5(D5,VGRAD)
       IMPLICIT double precision (A-H,O-Z)
       dimension D5(5),VGRAD(3,3)
@@ -183,7 +189,7 @@ C      data c1/1.3660254/,c2/0.3660254/,c3/0.707107/
       D5(4)=c3*(VGRAD(3,1)+VGRAD(1,3))
       D5(5)=c3*(VGRAD(1,2)+VGRAD(2,1))
       return
-      end
+      end subroutine
       
       ! Calculate transformation matrix T.
       ! fi1,PHI,fi2 are Euler angles in radians.
@@ -211,7 +217,7 @@ C      data c1/1.3660254/,c2/0.3660254/,c3/0.707107/
       T(3,2)=-C1*S
       T(3,3)=C
       return
-      end
+      end subroutine
       
       ! Calculate transformation matrix T.
       ! fi1,PHI,fi2 are Euler angles in degrees.
@@ -229,7 +235,7 @@ C      data c1/1.3660254/,c2/0.3660254/,c3/0.707107/
       fi2_rad = fi2 * convf
       call EulRad_2_Tmatrix(T,fi1_rad,PHI_rad,fi2_rad)
       return
-      end
+      end subroutine
       
       Subroutine Transf(Gaxes,Aprime,T)
       IMPLICIT double precision (A-H,O-Z)
@@ -256,7 +262,8 @@ C
       Aprime(i,j)=y
    3  continue
       return
-      end
+      end subroutine
+      !
       Subroutine GETANG(CIJ,prval,GEULR,TMAT)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -294,7 +301,8 @@ C
    37 continue
       call EULER1(TMAT,GEULR(1),GEULR(2),GEULR(3))
       return
-      end
+      end subroutine
+      !
       Subroutine eigenv(e,prval,prdir,enrm,axisym)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -445,7 +453,8 @@ C
       prdir(i,i)=1.D0
    34 continue
       goto 21
-      end
+      end subroutine
+      !
       subroutine normaliz(prdir,xx)
       IMPLICIT double precision (A-H,O-Z)
       dimension prdir(3)
@@ -461,7 +470,8 @@ C
       prdir(i)=prdir(i)/xx
    22 continue
       return
-      end
+      end subroutine
+      !
       subroutine canoni(a,b,X,theta,pi)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -495,7 +505,8 @@ c
       x(2)=delta*cos((theta+2.D0*pi)/3.D0)
       x(3)=delta*cos((theta+4.D0*pi)/3.D0)
       return
-      end
+      end subroutine
+      !
       subroutine verwis(i1,i2,prval,prdir)
       IMPLICIT double precision (A-H,O-Z)
       dimension prval(3),prdir(3,3)
@@ -508,7 +519,8 @@ c
       prdir(i,i2)=x
    1  continue
       return
-      end
+      end subroutine
+      !
       Subroutine EULER1(T,fi1,PHI,fi2)
       IMPLICIT double precision (A-H,O-Z)
 C     To calculate Euler angles from T-matrix
@@ -526,7 +538,8 @@ C     To calculate Euler angles from T-matrix
    2  fi1=ATAN2(-T(2,1)/X,T(2,2)/X)
       fi2=0.0
    3  return
-      end
+      end subroutine
+      !
       SUBROUTINE MINV(A,N,D,L,M,NXXX)                                   
       DIMENSION A(NXXX),L(N),M(N)                                       
 C                                                                       
@@ -662,4 +675,272 @@ C
   130 A(JI) =HOLD                                                       
       GO TO 100                                                         
   150 RETURN                                                            
-      END
+      END SUBROUTINE
+      
+      !
+      
+           Subroutine Kleinkwa(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
+C     N1=number of equations
+C     N2=number of unknowns
+C     A=coefficient matrix
+C     B=right hand sides
+C     BA=solution on output
+C     AA,VAL,XV,YV=work space
+C     RES=residu (sum of squares)
+C     M1,M2=dimensions
+C
+C     We make it a set with a symmetrical matrix, because
+C     we want to use STELSEL to solve it.
+C
+      IMPLICIT double precision (A-H,O-Z)
+      dimension  A(M1,M2),AA(M2,M2),B(M2),BA(M2)
+      dimension VAL(M2),XV(M2),YV(M2)
+      do 7 kk=1,N2
+      x=0.0
+      do 25 i=1,N1
+      x=x+A(i,kk)*B(i)
+  25  continue
+      BA(kk)=x
+      do 8 j=1,N2
+      y=0.0
+      do 9 i=1,N1
+      y=y+A(i,kk)*A(i,j)
+   9  continue
+      AA(kk,j)=y
+   8  continue
+   7  continue
+      call STELSEL(N2,M2,AA,BA,TOL,VAL,XV,YV)
+      RES=0.0
+      do 1 i=1,N1
+      y=0.0
+      do 2 j=1,N2
+      y=y+A(i,j)*BA(j)
+   2  continue
+      RES=RES+(y-B(i))**2
+   1  continue
+      return
+      end subroutine
+
+
+
+
+
+
+      Subroutine STELSEL(N,M,A,R,TOL,VAL,XV,YV)
+      IMPLICIT double precision (A-H,O-Z)
+      dimension A(M,M),R(M),VAL(M),XV(M),YV(M)
+C
+C     to solve the system of equations A * X = R using
+C     eigenvalues and eigenvectors
+C
+C     This method is known as "Singular Value Decomposition Method".
+C
+C     A s a symmetrical matrix (NxN). Modified during the process.
+C
+C     The output X is actually stored in R, which is hence modified.
+C
+C     On return, A (NxN) contains the eigenvectors
+C     VAL (N) contains eigenvalues
+C     XV, YV : workspace
+C
+C      write (IMP,203) TOL
+C 203  format (' TOL',d20.10)
+C      do 50 i=1,N
+C      write (IMP,201) r(i),(A(i,j),j=1,N)
+C 201  format (d12.4,5x,5d12.4)
+C  50  continue
+      call tred2(a,N,M,VAL,XV)
+      call tqli(VAL,XV,N,M,a)
+      do 1 j=1,N
+      y=0.0d00
+      do 2 i=1,N
+      y=y+A(i,j)*R(i)
+   2  continue
+      z=VAL(j)
+C      write (IMP,202) j,z
+C 202  format (' VAL(j)',i5,d20.10)
+      if (abs(z).lt.tol) then
+           z=0.0d0
+      else
+           z=y/z
+      endif
+C      write (IMP,202) j,z
+      YV(j)=z
+   1  continue
+      do 3 i=1,N
+      y=0.0d00
+      do 4 j=1,N
+      y=y+A(i,j)*YV(j)
+   4  continue
+      R(i)=y
+   3  continue
+      return
+      end subroutine
+      !
+      SUBROUTINE tred2(a,n,np,d,e)
+      implicit double precision (a-h,o-z)
+      INTEGER n,np
+      double precision a(np,np),d(np),e(np)
+      INTEGER i,j,k,l
+      double precision f,g,h,hh,scale
+      do 18 i=n,2,-1
+        l=i-1
+        h=0.
+        scale=0.
+        if(l.gt.1)then
+          do 11 k=1,l
+            scale=scale+abs(a(i,k))
+11        continue
+          if(scale.eq.0.)then
+            e(i)=a(i,l)
+          else
+            do 12 k=1,l
+              a(i,k)=a(i,k)/scale
+              h=h+a(i,k)**2
+12          continue
+            f=a(i,l)
+            g=-sign(sqrt(h),f)
+            e(i)=scale*g
+            h=h-f*g
+            a(i,l)=f-g
+            f=0.
+            do 15 j=1,l
+C     Omit following line if finding only eigenvalues
+              a(j,i)=a(i,j)/h
+              g=0.
+              do 13 k=1,j
+                g=g+a(j,k)*a(i,k)
+13            continue
+              do 14 k=j+1,l
+                g=g+a(k,j)*a(i,k)
+14            continue
+              e(j)=g/h
+              f=f+e(j)*a(i,j)
+15          continue
+            hh=f/(h+h)
+            do 17 j=1,l
+              f=a(i,j)
+              g=e(j)-hh*f
+              e(j)=g
+              do 16 k=1,j
+                a(j,k)=a(j,k)-f*e(k)-g*a(i,k)
+16            continue
+17          continue
+          endif
+        else
+          e(i)=a(i,l)
+        endif
+        d(i)=h
+18    continue
+C     Omit following line if finding only eigenvalues.
+      d(1)=0.
+      e(1)=0.
+      do 24 i=1,n
+C     Delete lines from here ...
+        l=i-1
+        if(d(i).ne.0.)then
+          do 22 j=1,l
+            g=0.
+            do 19 k=1,l
+              g=g+a(i,k)*a(k,j)
+19          continue
+            do 21 k=1,l
+              a(k,j)=a(k,j)-g*a(k,i)
+21          continue
+22        continue
+        endif
+C     ... to here when finding only eigenvalues.
+        d(i)=a(i,i)
+C     Also delete lines from here ...
+        a(i,i)=1.
+        do 23 j=1,l
+          a(i,j)=0.
+          a(j,i)=0.
+23      continue
+C     ... to here when finding only eigenvalues.
+24    continue
+      return
+      END SUBROUTINE
+      !
+C  (C) Copr. 1986-92 Numerical Recipes Software D04-4-+5Z5{..
+      SUBROUTINE tqli(d,e,n,np,z)
+      implicit double precision (a-h,o-z)
+      INTEGER n,np
+      double precision d(np),e(np),z(np,np)
+      INTEGER i,iter,k,l,m
+      double precision b,c,dd,f,g,p,r,s
+      do 11 i=2,n
+        e(i-1)=e(i)
+11    continue
+      e(n)=0.
+      do 15 l=1,n
+        iter=0
+1       do 12 m=l,n-1
+          dd=abs(d(m))+abs(d(m+1))
+          if (abs(e(m))+dd.eq.dd) goto 2
+12      continue
+        m=n
+2       if(m.ne.l)then
+          if(iter.eq.100)pause 'too many iterations in tqli'
+          iter=iter+1
+          g=(d(l+1)-d(l))/(2.D0*e(l))
+          r=pythag(g,1.0d00)
+          g=d(m)-d(l)+e(l)/(g+sign(r,g))
+          s=1.
+          c=1.
+          p=0.
+          do 14 i=m-1,l,-1
+            f=s*e(i)
+            b=c*e(i)
+            r=pythag(f,g)
+            e(i+1)=r
+            if(r.eq.0.)then
+              d(i+1)=d(i+1)-p
+              e(m)=0.
+              goto 1
+            endif
+            s=f/r
+            c=g/r
+            g=d(i+1)-p
+            r=(d(i)-g)*s+2.D0*c*b
+            p=s*r
+            d(i+1)=g+p
+            g=c*r-b
+C     Omit lines from here ...
+            do 13 k=1,n
+              f=z(k,i+1)
+              z(k,i+1)=s*z(k,i)+c*f
+              z(k,i)=c*z(k,i)-s*f
+13          continue
+C     ... to here when finding only eigenvalues.
+14        continue
+          d(l)=d(l)-p
+          e(l)=g
+          e(m)=0.
+          goto 1
+        endif
+15    continue
+      return
+      END SUBROUTINE
+C  (C) Copr. 1986-92 Numerical Recipes Software D04-4-+5Z5{..
+      double precision FUNCTION pythag(a,b)
+      implicit double precision (a-h,o-z)
+      double precision,intent(in) :: a,b
+      double precision absa,absb
+      absa=abs(a)
+      absb=abs(b)
+      if(absa.gt.absb)then
+        pythag=absa*sqrt(1.D0+(absb/absa)**2)
+      else
+        if(absb.eq.0.)then
+          pythag=0.
+        else
+          pythag=absb*sqrt(1.D0+(absa/absb)**2)
+        endif
+      endif
+      return
+      END FUNCTION
+      
+      
+      end module
+      

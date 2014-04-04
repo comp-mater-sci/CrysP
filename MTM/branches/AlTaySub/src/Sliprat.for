@@ -1,6 +1,11 @@
 #ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
 #endif
+
+      module altaySliprate
+
+      contains
+      
       Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn)
       use IOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
 #ifdef ALTAY_SUBROUTINE
@@ -245,9 +250,11 @@ C         XX(j)=Y*DELTAT*sgnn(j)
       end if
       end if
       return
-      end
+      end subroutine
+      !
       Subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
       use IOConfig
+      use altayAlgorithms, only: KLEINKWA
       IMPLICIT double precision (A-H,O-Z)
 C     December 2000
 C     The  normalisation by DELTAT of the september 2000 version has been
@@ -324,7 +331,8 @@ C 103  format (' MINSQU INEG',i5,'  RES',d15.6,'  sumsq',d15.6)
 C      write (IMP,915) (SLPR(i),i=1,NN)
 C 915  format (6D15.3)
       return
-      end
+      end subroutine
+      !
       subroutine STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
       use IOConfig
 #ifdef ALTAY_SUBROUTINE
@@ -353,4 +361,7 @@ C 915  format (6D15.3)
          SLSTOR(i,NOPL)=SLPR(i)
       enddo
       return
-      end
+      end subroutine
+
+      end module
+      

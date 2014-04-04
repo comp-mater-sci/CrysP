@@ -1,5 +1,5 @@
 module smtAccess
-use DYNFIL
+use altayDynfil
 implicit none
 
 contains
@@ -39,7 +39,7 @@ contains
       end subroutine
       
       subroutine SMTwriteBlock(iounit,info)
-      use dynfil
+      use altayDynfil
       implicit none
       integer,intent(in)      :: iounit   !< IO unit
       integer,intent(out)     :: info     !< Exit code
@@ -63,7 +63,7 @@ contains
       end subroutine      
 
       subroutine SMTreadBlock(iounit,mpoint,info)
-      use dynfil
+      use altayDynfil
       implicit none
       integer,intent(in)      :: iounit      !< IO unit
       integer,intent(in)      :: mpoint   !< Maximal number of points in a block

@@ -2,7 +2,8 @@
 ! $Id$
 !      
 module curAccess
-use dynfil
+use altayDynfil
+use altayAlgorithms
 
 contains
 

@@ -1,5 +1,6 @@
-      module DYNFIL
+      module altayDynfil
       use miscutils, only: unitMatrix
+      use altayAlgorithms
       implicit none
 
       
@@ -275,13 +276,13 @@
       end subroutine
       
       
-      end module DYNFIL
+      end module
 
       SUBROUTINE LEESOR(NUNIT,MPOINT)
 #ifdef ALTAY_SUBROUTINE
       use altayConfig, only: acnf
 #endif
-      use dynfil
+      use altayDYNFIL
       use miscutils
       use IOConfig
       implicit double precision (a-h,o-z)
@@ -483,7 +484,7 @@ C      WRITE (NUNIT) FI1,PHI,PHI2,T,GEW,GAM,F,GAXES,GEULR,CIJ,TG,ZERO
       END SUBROUTINE LEESOR
 
       subroutine xleesor()
-      use DYNFIL
+      use altayDYNFIL
       implicit double precision (a-h,o-z)
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,NPOINT,TEN(3,3),TOTGEW
       ! Fetch the number of grains

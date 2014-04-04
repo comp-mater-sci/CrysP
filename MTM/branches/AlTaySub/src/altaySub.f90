@@ -45,12 +45,13 @@ contains
       subroutine initAltay(cnf,info,errmsg)
       use altayConfig, only: altayConfigData,fname_len,acnf
       use altayInterface
+      use altaySimul
       use altayRCM
       use IOConfig
       use TexFormats
       use altayHard,only: hard_none,hard_voce,hard_BP,hard_PEBPscrew,hard_PEBPloop
       use miscutils
-      use microstr
+      use altayMesostructure
 #ifdef PEBP_ENABLED
       use KOST1xState
 #endif
@@ -206,10 +207,9 @@ contains
       !> Finalizes the module and releases the resources.
       subroutine finalizeAltay(info)
       use altayConfig, only: altayConfigData,fname_len,acnf, astate
-      use altayInterface
       use IOConfig
-      use microstr, only: MICROSTR_finalize
-      use DYNFIL
+      use altayMesostructure, only: MICROSTR_finalize
+      use altayDynfil
 #ifdef PEBP_ENABLED
       use KOST1xState
 #endif
@@ -271,6 +271,7 @@ contains
       subroutine runSteps(steps,info)
       use altayConfig, only: altayStateData,astate
       use altayInterface
+      use altaySimul
       use altayRCM
       use IOConfig
       implicit none

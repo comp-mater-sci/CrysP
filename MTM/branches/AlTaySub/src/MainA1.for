@@ -7,8 +7,9 @@ C
       use miscutils
       use IOConfig
       use KOST1xState
-      use DYNFIL
-      use MICROSTR
+      use altayDynfil
+      use altayMesostructure
+      use altaySimul
       use altayHard,only: KOST_global, hard_BP, hard_PEBPscrew, 
      &                    hard_PEBPloop
 #ifndef USE_LEESOR

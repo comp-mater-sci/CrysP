@@ -1,6 +1,11 @@
 #ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
 #endif
+      module altayTaylor
+      use altayAlgorithms
+      
+      contains
+      
 C MODIFICATIONS AUG 2010
 C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY 
@@ -10,6 +15,7 @@ C
       use altayRCM
 #endif
       use IOConfig
+      use altayPancake
       implicit double precision (a-h,o-z)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,DG(3,3),
      1ITW,GEWF
@@ -229,7 +235,8 @@ C 1234 format (' Just before Pancak2')
 C      write (*,1235)
 C 1235 format (' Just after Pancak2')
       RETURN
-      END                                                               
+      END SUBROUTINE
+      !
       SUBROUTINE TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -239,6 +246,7 @@ C 1235 format (' Just after Pancak2')
       use KOST1xState, KOST => iKOST
 #endif
       use IOConfig
+      use altaySliprate
       use altayHard, only: hard_none, hard_voce, hard_BP, 
      &                     hard_PEBPscrew, hard_PEBPloop
       implicit double precision (a-h,o-z)
@@ -488,4 +496,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   52  RCM_RAISE(1,'TAYLR1',
      x'No upper limit for linear programming problem',RCM_RTN)
 #endif
-      END                                                               
+      END SUBROUTINE
+      
+      end module
