@@ -54,7 +54,6 @@ fxx2opaths = $(patsubst %, $(2)/%,$(call fxx2o,$(1)))
 # Group of core source files
 CORE_SRCS = \
 Alg0A.for \
-Alg0.for  \
 Alg1.for \
 Alg2.for \
 Dynfil.for \
@@ -278,7 +277,7 @@ $(TPROG_OBJDIR)/mainSub.o	: $(addprefix $(TPROG_OBJDIR)/, testTexAccess.o verify
 #
 $(PROG_OBJDIR)/MainA1.o		: $(addprefix $(PROG_OBJDIR)/,ioconfig.o texFormats.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/altaySub.o	: $(addprefix $(PROG_OBJDIR)/,altayConfig.o altayInterface.o ioconfig.o texFormats.o) $(RCMINCLUDE)
-$(PROG_OBJDIR)/Alg0A.o		: $(addprefix $(PROG_OBJDIR)/,altayHard.o KOST1x.o Alg0.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o ioconfig.o) $(RCMINCLUDE)
+$(PROG_OBJDIR)/Alg0A.o		: $(addprefix $(PROG_OBJDIR)/,altayHard.o KOST1x.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o ioconfig.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/Alg1.o		: $(addprefix $(PROG_OBJDIR)/,ioconfig.o) $(RCMINCLUDE)
 #$(PROG_OBJDIR)/Alg2.o		: $(addprefix $(PROG_OBJDIR)/,) $(RCMINCLUDE)
 $(PROG_OBJDIR)/Dynfil.o		: $(addprefix $(PROG_OBJDIR)/,altayConfig.o ioconfig.o miscutils.o)

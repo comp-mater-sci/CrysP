@@ -4,6 +4,12 @@
       module altayTaylor
       use altayAlgorithms
       
+      integer,parameter,private :: N = 5, N1 = N + 1 
+      
+      integer,private           :: M,NGL,NTW
+      double precision,private  :: B1(3,96),B(5,5),B2(6,96),G(96)
+      integer,private           :: DI1(5)
+     
       contains
       
 C MODIFICATIONS AUG 2010
@@ -20,8 +26,6 @@ C
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,DG(3,3),
      1ITW,GEWF
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
-      COMMON/TLR1/ N,M,N1,NGL,NTW,NC,LC,B1(3,96),B(5,5),
-     1B2(6,96),G(96),DI1(5)
       COMMON/TLR2/ TRC(3,3),buftrf(3,3),RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
@@ -36,7 +40,7 @@ C
       common /extra/ A2(10,194),UU(10,10)
       dimension XXLP(194)
       logical SWRLX
-      INTEGER DI1,R 
+      INTEGER R 
       DATA MMAX/96/ ! dimension of A1 and other arrays 
 C
 C     DVM = von Mises equivalent strain rate
@@ -109,7 +113,7 @@ C
       end if
  218  format (i4,' B2',6f10.7,' G',f10.7)
  505  CONTINUE
- 504  N1=N+1 
+ 504  CONTINUE
 C      IF (KOST.EQ.1) GOTO 502
 C      DO 503 I=1,M11
 C      do 503 J=1,2                                                    
@@ -252,8 +256,6 @@ C 1235 format (' Just after Pancak2')
       implicit double precision (a-h,o-z)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,DG(3,3),
      1ITW,GEWF
-      COMMON/TLR1/ N,M,N1,NGL,NTW,NC,LC,B1(3,96),B(5,5),
-     1B2(6,96),G(96),DI1(5)
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON/TLR2/ RC(3,3),buftrf(3,3),RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
@@ -273,7 +275,6 @@ C
       DIMENSION RCcryst(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
       dimension bufsp(3,3),RHOAsa(3,3),GAMdot(96)
-      INTEGER DI1
 C      data SQR2/0.7071067811865476D+00/
 #ifdef PEBP_ENABLED      
       integer :: info
