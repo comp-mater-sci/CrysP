@@ -56,7 +56,7 @@ C
       common /CEIGEN/ IOR,ISTP,NBLOC
       common /PE/ Fmicro !Temporary!!!      
       DIMENSION F(3,3),F1(3,3),GAXES(3),GEULR(3),TG(3,3),
-     1 CIJ(3,3),F2(3,3),GLR(3),STOT(3,3),
+     1 CIJ(3,3),F2(3,3),STOT(3,3),
      2 RHOST(3,3),RHOSm(3,3),FMicro(3,3)
       dimension FS(3,3)
       character*40 TITEL
@@ -285,13 +285,10 @@ C
 C     Main Loop over the Steps
 C
       steploop: DO 8 ISTP=1,NSTP
-
+      !
       TOTGEW=0.0
-      do 50 i=1,3
-      do 50 j=i,3
-      STOT(i,j)=0.0
-      RHOST(i,j)=0.0
-  50  continue
+      STOT = 0.D0
+      RHOST = 0.D0
       SeqAvg=0.
       Mavg=0.
       srh=0.
@@ -327,8 +324,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       
  3458 format (' TG=',3(T10,3d12.3,/))
   70  if (nfile.eq.0.or.ISTP.gt.1) goto 44
-C     INSTRUCTION ADDED IN LAMEL model:
-      if (ISTP.gt.1) goto 44
       IF (NLIST.EQ.1) WRITE (IMP,112) ISTP
  112  FORMAT (//' DEFORMATION STEP ',I5,//)
       if (NRES.gt.0) write (IMP2,404) nrstep+1,NPOINT
@@ -336,19 +331,15 @@ C     INSTRUCTION ADDED IN LAMEL model:
      1 ,T7,'EquivStress',T23,'WorkRate',T37,'tau_ref',T56,'M',T64,
      2 'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS'
      3 ,/,1x,278('*'))
-      do 48 i=1,3
-      GLR(i)=GEULR(i)*convf
-  48  continue
-C
+      !
   44  continue
       if (NLIST.eq.1) then
           do i=1,3 
              write (IMP,407) (F(j,i),j=1,3)
           enddo
+ 407  format (' F ',3d15.7)
       end if
-      
- 407      format (' F ',3d15.7)
-
+      !
       nrstep=nrstep+1
       ! Here DG = [L]*dt, where [L] is the velocity gradient 
       ! and the time step dt = 1.0
@@ -410,12 +401,10 @@ C      IF (NUNGL.NE.0) READ(NUNGL) ((FK1b(K,J,L),J=1,M11),K=1,2)
       fi1=fi1b(laml)
       PHI=PHIb(laml)
       fi2=fi2b(laml)
-      do 81 j=1,3
-      do 81 i=1,3
-      TRF(i,j)=TRFb(i,j,laml)
-      TG(i,j)=TGb(i,j,laml)
-      RHOSSa(i,j)=RHOSSb(i,j,laml)
-  81  continue
+      !
+      TRF = TRFb(:,:,laml)
+      TG = TGb(:,:,laml)
+      RHOSSa = RHOSSb(:,:,laml)
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 27/10/2011
       if(laml.eq.1) then
       qgx=GEWFb(laml)
@@ -424,12 +413,6 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 
       GEWF=qgx
       end if
       IF (NFILE.eq.0.or.ISTP.gt.1) goto 999
-C
-C     Output file with current condition (as it was before call of Taylor!)
-C
-      do 47 i=1,3
-      GLR(i)=GEULRb(i,laml)*convf
-  47  continue
 C 
 C     In case of NGR=2:
 C        LAML=1: TAYLOR
@@ -472,19 +455,18 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #endif      
    49 if (NFILTW.eq.1) write (IMP3,398) ITW
  398  format (I3)
-      do 51 i=1,3
-      do 51 j=i,3
-      STOT(i,j)=STOT(i,j)+Ssam(i,j)*GEWF
-      RHOST(i,j)=RHOST(i,j)+RHOSsa(i,j)*GEWF
-  51  continue
-  63  SeqAvg=SeqAvg+SeqGrain*GEWF
-      Mgrain=GMMdot/DELTAT
-      Mavg=Mavg+Mgrain*GEWF
+      !
+      STOT = STOT + Ssam*GEWF
+      RHOST = RHOST + RHOSsa*GEWF
+      !      
+  63  SeqAvg = SeqAvg + SeqGrain*GEWF
+      Mgrain = GMMdot / DELTAT
+      Mavg = Mavg + Mgrain*GEWF
       ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/DELTAT with DELTAT=D_vM=sqrt(2/3)*||D|| 
-      srh=srh+norm2(RHOSsa)*GEWF
+      srh = srh + norm2(RHOSsa)*GEWF
       HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s      
-      GMM1=GMM0+GMMdot !Step time here implicitly assumed to be 1.0s
-      Wtot=Wtot+WorkRate !Step time here implicitly assumed to be 1.0s
+      GMM1 = GMM0 + GMMdot !Step time here implicitly assumed to be 1.0s
+      Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
 #ifdef ALTAY_SUBROUTINE
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
@@ -509,11 +491,9 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       ! Finish processing if IW > 1
       if (IW.gt.1) exit
       !
-      do 52 i=1,3
-      do 52 j=i,3
-      SHsam(i,j)=STOT(i,j)/TOTGEW
-      RHOSm(i,j)=RHOST(i,j)/TOTGEW
-  52  continue
+      SHsam = STOT / TOTGEW
+      RHOSm = RHOST / TOTGEW
+      !
   66  do 65 i=1,2
       do 65 j=i+1,3
       SHsam(i,j)=SHsam(i,j)*FS(i,j)
