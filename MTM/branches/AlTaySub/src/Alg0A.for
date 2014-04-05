@@ -70,12 +70,6 @@ C
       ! Macroscopically imposed vM equivalent strain per step,  
       ! per call and accumulated over the calls.
       double precision :: MEPS=0.D0,MEPSCALL=0.D0,MEPSTOT=0.D0 
-#ifdef ALTAY_SUBROUTINE
-      ! Variables for simple stress calculations: full_model=.false.
-      ! This operation mode is inspired by QGX's way of calculating
-      ! stresses without a call to TAYLR1
-      double precision,dimension(3,3) :: spant,TRFT,bufsp
-#endif
       double precision :: GMMdot !Total slip rate in current grain      
       double precision :: Mgrain !Taylor factor of the current grain
       double precision :: Mavg   !Volume-averaged Taylor factor
@@ -433,13 +427,6 @@ C      IF (NUNGL.NE.0) READ(NUNGL) ((FK1b(K,J,L),J=1,M11),K=1,2)
       TG(i,j)=TGb(i,j,laml)
       RHOSSa(i,j)=RHOSSb(i,j,laml)
   81  continue
-#ifdef ALTAY_SUBROUTINE
-      ! Collect the TRF for calculations of stresses later on.
-      if (.not. astate%simulCalls(astate%this)%input%full_model) then
-            SeqGrain = 0.
-            TRFT = transpose(TRF)
-      endif
-#endif
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 27/10/2011
       if(laml.eq.1) then
       qgx=GEWFb(laml)
@@ -517,13 +504,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 
   41  if (IW.gt.1) goto 23
 #ifdef ALTAY_SUBROUTINE
-      ! altay-subroutine allows a way of calculating stresses
-      ! without a call to TAYLR1.
-      if (.not. astate%simulCalls(astate%this)%input%full_model) then
-            call STR33(SPANT,SPANV) 
-            call MATPROD(bufsp,SPANT,TRF,3,3,3)
-            call MATPROD(Ssam,TRFT,bufsp,3,3,3)
-      else
+      if (astate%simulCalls(astate%this)%input%full_model) then
             CALL TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate)
             RCM_GUARD
       endif
