@@ -93,7 +93,6 @@ LIB_CFG= -DALTAY_SUBROUTINE -DRCM_ENABLED -DNO_STDOUT -DPEBP_ENABLED
 LIB_SRCS= \
 $(CORE_SRCS) \
 altayConfig.f90  \
-altayInterface.f90 \
 altayRCM.f90 \
 altaySub.f90
 
@@ -251,7 +250,7 @@ $(LIB_OBJS) $(PROG_OBJS) $(TPROG_OBJS)	: Makefile
 # Explicit dependencies for library
 #
 #$(LIB_OBJDIR)/.o	: $(addprefix $(LIB_OBJDIR)/, )	
-$(LIB_OBJDIR)/altaySub.o	: $(addprefix $(LIB_OBJDIR)/,altayConfig.o altayInterface.o altayRCM.o ioconfig.o texFormats.o) $(RCMINCLUDE)
+$(LIB_OBJDIR)/altaySub.o	: $(addprefix $(LIB_OBJDIR)/,altayConfig.o altayRCM.o ioconfig.o texFormats.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Alg0A.o		: $(addprefix $(LIB_OBJDIR)/,altayHard.o KOST1x.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o altayRCM.o ioconfig.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Alg1.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o ioconfig.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Alg2.o		: $(addprefix $(LIB_OBJDIR)/,altayRCM.o) $(RCMINCLUDE)
@@ -276,7 +275,7 @@ $(TPROG_OBJDIR)/mainSub.o	: $(addprefix $(TPROG_OBJDIR)/, testTexAccess.o verify
 # Explicit dependencies for standalone program
 #
 $(PROG_OBJDIR)/MainA1.o		: $(addprefix $(PROG_OBJDIR)/,ioconfig.o texFormats.o) $(RCMINCLUDE)
-$(PROG_OBJDIR)/altaySub.o	: $(addprefix $(PROG_OBJDIR)/,altayConfig.o altayInterface.o ioconfig.o texFormats.o) $(RCMINCLUDE)
+$(PROG_OBJDIR)/altaySub.o	: $(addprefix $(PROG_OBJDIR)/,altayConfig.o ioconfig.o texFormats.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/Alg0A.o		: $(addprefix $(PROG_OBJDIR)/,altayHard.o KOST1x.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o ioconfig.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/Alg1.o		: $(addprefix $(PROG_OBJDIR)/,ioconfig.o) $(RCMINCLUDE)
 #$(PROG_OBJDIR)/Alg2.o		: $(addprefix $(PROG_OBJDIR)/,) $(RCMINCLUDE)

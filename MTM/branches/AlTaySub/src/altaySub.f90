@@ -44,7 +44,6 @@ contains
       !> module subroutines.
       subroutine initAltay(cnf,info,errmsg)
       use altayConfig, only: altayConfigData,fname_len,acnf
-      use altayInterface
       use altaySimul
       use altayRCM
       use IOConfig
@@ -65,8 +64,6 @@ contains
       character(len=fname_len) :: codsim
       integer :: ierr
       integer,parameter :: extlen = 4
-      
-      integer,parameter :: MPOINT = 8000, NUNIT = 2
       
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96) ! Needed for FK1
       double precision :: FK1,CC
@@ -164,18 +161,13 @@ contains
             RCM_HANDLE(info)
             if (present(errmsg)) errmsg = ''
             !
-#ifdef USE_LEESOR
             ! Get the initial texture
-            CALL LEESOR(NUNIT,MPOINT)
-            RCM_HANDLE(info)
-#else
             call loadTexture(cnf%texture%input_type,NDAT1,trim(cnf%texture%input_fname),cnf%texture%block_id,info)
-            call xleesor()
             if (info /= 0) then
                   if (present(errmsg)) errmsg = 'Cannot process the texture data file: ' // trim(cnf%texture%input_fname)
                   return
             endif
-#endif
+            !
 #ifdef PEBP_ENABLED
             ! PEBP model
             select case(cnf%slipsystem%kost)
@@ -269,7 +261,6 @@ contains
       !> Run the AlTay for the set of steps
       subroutine runSteps(steps,info)
       use altayConfig, only: altayStateData,astate
-      use altayInterface
       use altaySimul
       use altayRCM
       use IOConfig

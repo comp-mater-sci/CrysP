@@ -44,7 +44,7 @@ C
       COMMON /DOUBLE/ XM(5,96),XEPS(5),DELTAT,RHO(5),B5(5)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,DG(3,3),
      1ITW,GEWF
-      COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,NPOINT,TEN(3,3),TOTGEW        
+      COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,TEN(3,3),TOTGEW        
       COMMON /EULERA/ fi1,PHI,fi2
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
      1 SWRLX(3)
@@ -61,7 +61,7 @@ C
       dimension FS(3,3)
       character*40 TITEL
       logical SWRLX
-      
+      integer :: NPOINT
       integer :: info
       ! HGAM: homogenized slip per step
       ! HGAMCALL: homogenized slip per call
@@ -83,6 +83,8 @@ C
       data convf/0.5729577951308232D+02/
       data FS/9*1.0D0/ 
       SAVE
+      !
+      NPOINT = size(DFIL)
       !
       IF (IW) 32,33,30
   33  call  random_seed

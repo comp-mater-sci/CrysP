@@ -69,11 +69,10 @@ contains
       end subroutine
 
       
-      subroutine CURreadBlock(iounit,offset,MPOINT,info)
+      subroutine CURreadBlock(iounit,offset,info)
       implicit none
       integer,intent(in)      :: iounit      !< IO unit
       integer,intent(in)      :: offset   !< Number of blocks to be skipped
-      integer,intent(in)      :: MPOINT   !< Maximal number of points in a block
       integer,intent(out)     :: info     !< Exit code
       !
       integer :: npoint, i, j, tmp
@@ -104,7 +103,8 @@ contains
             call Transf(mf%GAXES,mf%CIJ0,mf%TAX0)  ! Check it!!!
       
             ! Request allocation of the memory
-            call DYNFIL0(npoint,MPOINT,.false.,info)
+            call DYNFIL0(npoint,.false.,info)
+            if (info /= 0) return
             ! Process the crystals in the block      
             do i=1,npoint
                   read(iounit,400,iostat=info) tmp,DFIL(i)%tGEW,     &

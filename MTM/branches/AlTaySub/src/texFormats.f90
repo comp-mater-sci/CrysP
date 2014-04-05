@@ -12,7 +12,6 @@ use cubAccess
 
 implicit none
       
-      integer,parameter :: TF_MaxPoints = 30000
       
 contains
       
@@ -29,19 +28,19 @@ contains
             !
             select case(texfmt)
             case(TF_SMT)
-                  call SMTreadHeader(nunit,TF_MaxPoints,filetitle,info)
+                  call SMTreadHeader(nunit,filetitle,info)
                   if (info /= 0) return
-                  call SMTreadBlock(nunit,TF_MaxPoints,info)
+                  call SMTreadBlock(nunit,info)
             !
             case(TF_CUR)
                   call CURreadTitle(nunit,filetitle,info)
                   if (info /= 0) return
-                  call CURreadBlock(nunit,iblock,TF_MaxPoints,info)
+                  call CURreadBlock(nunit,iblock,info)
             !
             case(TF_CUB)
                   call CUBreadTitle(nunit,filetitle,info)
                   if (info /= 0) return
-                  call CUBreadBlock(nunit,TF_MaxPoints,info)
+                  call CUBreadBlock(nunit,info)
             end select
       !
       end subroutine

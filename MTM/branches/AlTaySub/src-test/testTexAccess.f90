@@ -18,14 +18,13 @@ contains
       character(len=128)  :: title
       integer :: info
       integer,parameter :: nu = 300, no = 301
-      integer,parameter :: maxorient = 8000
       !
             ! Test 1: read 1st block (0 blocks to be skipped)
             open(unit=nu,file='example.CUR',status='old',iostat=info)
             ASSERT(info == 0)
             call CURreadTitle(nu,title,info)
             ASSERT(info == 0)
-            call CURreadBlock(nu,0,maxorient,info)
+            call CURreadBlock(nu,0,info)
             ASSERT(info == 0)
       
             ! Test 2: write out the CUR
@@ -50,7 +49,7 @@ contains
             ASSERT(info == 0)
             call CUBreadTitle(no,title,info)
             ASSERT(info == 0)
-            call CUBreadBlock(no,maxorient,info)
+            call CUBreadBlock(no,info)
             ASSERT(info == 0)
             close(no)
       
@@ -80,7 +79,7 @@ contains
             rewind(nu)
             call CURreadTitle(nu,title,info)
             ASSERT(info == 0)
-            call CURreadBlock(nu,1,8000,info)
+            call CURreadBlock(nu,1,info)
             ASSERT(info == 0)
             
             open(unit=no,file='example_1.CUR',status='replace',iostat=info)
@@ -107,14 +106,13 @@ contains
       character(len=128)  :: title
       integer :: info
       integer,parameter :: nu = 300, no = 301
-      integer,parameter :: maxorient = 8000
             
             ! Test 1: read the SMT file
             open(unit=nu,file='A612LM.SMT',status='old',iostat=info)
             ASSERT(info == 0)
-            call SMTreadHeader(nu,maxorient,title,info)
+            call SMTreadHeader(nu,title,info)
             ASSERT(info == 0)
-            call SMTreadBlock(nu,maxorient,info)
+            call SMTreadBlock(nu,info)
             ASSERT(info == 0)
             close(nu)
             
@@ -130,9 +128,9 @@ contains
             ! Test 3: process a hand-made SMT file with NSTAP
             open(unit=nu,file='handmade.SMT',status='old',iostat=info)
             ASSERT(info == 0)
-            call SMTreadHeader(nu,maxorient,title,info)
+            call SMTreadHeader(nu,title,info)
             ASSERT(info == 0)
-            call SMTreadBlock(nu,maxorient,info)
+            call SMTreadBlock(nu,info)
             ASSERT(info == 0)
             close(nu)
             ! Test 3a: write out the SMT            

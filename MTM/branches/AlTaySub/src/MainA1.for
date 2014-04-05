@@ -12,14 +12,10 @@ C
       use altaySimul
       use altayHard,only: KOST_global, hard_BP, hard_PEBPscrew, 
      &                    hard_PEBPloop
-#ifndef USE_LEESOR
       use TexFormats
-#endif
       implicit double precision (a-h,o-z)
 c      Several simulations (usually several-steps each),
 C      following each other.
-C
-C      LEESOR is called once.
 C
 C      There is a "last block with Current situation"
 C      (without simulation, only for output to the CUR-file).
@@ -30,7 +26,7 @@ C     IMP= printer
 C     IMP1=output-file with successive "current situations"
 C     IMP2=output-file with successive "responses to imposed strain"
 C     IDISK1= work file (obsolete, not used)
-C     NDAT1= Input-texture file     Opened in LEESOR
+C     NDAT1= Input-texture file
 C
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON /TEXTUR/ DUM1(27),IDUM1,DG(3,3),ITW,GEWF
@@ -40,10 +36,8 @@ C
       character(len=pathlength) :: fnam1,fnam2,fnam3,fname_prefix
       character(len=pathlength-4) :: codsim
       integer :: info
-#ifndef USE_LEESOR
       integer :: tex_type, tex_nblock
       character(len=pathlength) :: tex_fname
-#endif
 #ifdef PEBP_ENABLED      
       character(len=pathlength) :: fname_pebp
       logical :: read_state
@@ -52,7 +46,6 @@ C
 #ifdef FINALCUB_ENABLED
       integer,parameter :: icubunit = 444
 #endif
-      DATA MPOINT /8000/,NUNIT/2/
       SAVE
 C     UNIT KLEC = CONTROL FILE
   90  format (a)
@@ -138,8 +131,6 @@ C
       endif      
       
       ! Get the initial texture
-#ifndef USE_LEESOR
-      ! Read the same inputs as LEESOR would read:
       read(KLEC,99) tex_type
       read(KLEC,'(A)') tex_fname
       read(KLEC,99) tex_nblock
@@ -152,11 +143,6 @@ C
  9980 format('An error has occurred while processing texture data file:'
      &       ,1X,A)
       endif
-      call xleesor()
-#else
-      ! Legacy way of reading texture data.
-      CALL LEESOR(NUNIT,MPOINT)
-#endif
       
 #ifdef PEBP_ENABLED
       ! PEBP model

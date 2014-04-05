@@ -4,10 +4,9 @@ implicit none
 
 contains
       
-      subroutine SMTreadHeader(iounit,mpoint,title,info)
+      subroutine SMTreadHeader(iounit,title,info)
       implicit none
       integer,intent(in)      :: iounit
-      integer,intent(in)      :: mpoint
       character(len=*)        :: title
       integer,intent(out)     :: info
       !
@@ -16,10 +15,10 @@ contains
             info = -1
             nrec = 0
             read (iounit,94,iostat=ioerr) nrec,title
-            if ((ioerr == 0) .and. (nrec > 0) .and. (nrec < mpoint)) then
+            if ((ioerr == 0) .and. (nrec > 0)) then
                   filetitle = title
                   ! Pre-allocate the storage. Chances are that there will be no need to reallocate it.
-                  call DYNFIL0(nrec,mpoint,.false.,info)
+                  call DYNFIL0(nrec,.false.,info)
             endif
       94  format(I5,5x,A)
       !
@@ -62,11 +61,10 @@ contains
       97 format (3F10.3,10X,I5,5X,F10.5) 
       end subroutine      
 
-      subroutine SMTreadBlock(iounit,mpoint,info)
+      subroutine SMTreadBlock(iounit,info)
       use altayDynfil
       implicit none
       integer,intent(in)      :: iounit      !< IO unit
-      integer,intent(in)      :: mpoint   !< Maximal number of points in a block
       integer,intent(out)     :: info     !< Exit code
       !
       double precision,parameter :: convf =  acos(-1.D0) / 180.D0
@@ -98,7 +96,7 @@ contains
                         ! More than one grain per record. This path is more complex,
                         ! but is very infrequently followed.
                         ngrains = ngrains + NSTAP - 1
-                        call DYNFIL0(ngrains,mpoint,.true.,info)
+                        call DYNFIL0(ngrains,.true.,info)
                         if (info /= 0) exit
                         i0 = i - 1 ! Store the index of the "parent" grain
                         do k=1,NSTAP-1

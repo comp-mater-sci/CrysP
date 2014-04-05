@@ -61,10 +61,9 @@ contains
       end subroutine
 
       !> Read a CUB file block into DYNFIL::DFIL
-      subroutine CUBreadBlock(iounit,mpoint,info)
+      subroutine CUBreadBlock(iounit,info)
       implicit none
       integer,intent(in)      :: iounit      !< IO unit
-      integer,intent(in)      :: mpoint   !< Maximal number of points in a block
       integer,intent(out)     :: info     !< Exit code
       !
       integer :: npoint, i, ii,jj
@@ -77,7 +76,8 @@ contains
             call Transf(mf%GAXES,mf%CIJ0,mf%TAX0)  ! Check it!!!
       
             ! Request allocation of the memory
-            call DYNFIL0(npoint,mpoint,.false.,info)
+            call DYNFIL0(npoint,.false.,info)
+            if (info /= 0) return
             ! Process the crystals in the block      
             do i=1,npoint
                   read(iounit,iostat=info)   DFIL(i)%tGEW,      &
