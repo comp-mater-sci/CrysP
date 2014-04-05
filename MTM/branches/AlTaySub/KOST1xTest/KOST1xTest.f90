@@ -1,7 +1,7 @@
       program KOST1xTest
     
       use KOST1x    
-      use KOST1xState
+      use altayKOST1xState
       implicit none
           
       integer :: i, iError
