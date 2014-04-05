@@ -1,7 +1,7 @@
 !
 ! $Id$
 !
-module KOST1xState
+module altayKOST1xState
 use KOST1x
 implicit none
 

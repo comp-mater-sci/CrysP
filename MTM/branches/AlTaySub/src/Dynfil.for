@@ -1,5 +1,5 @@
       module altayDynfil
-      use miscutils, only: unitMatrix
+      use altayMiscutils, only: unitMatrix
       use altayAlgorithms
       implicit none
 
@@ -41,7 +41,7 @@
       
       !> Allocate the memory block for the state variables.
       subroutine DYNFIL0(npoint,keepstate,istat)
-      use IOConfig
+      use altayIOConfig
       implicit none
       !> Number of points (elements) to be allocated
       integer,intent(in)      :: npoint

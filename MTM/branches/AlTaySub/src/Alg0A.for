@@ -22,20 +22,20 @@ C
       SUBROUTINE SIMUL(IW,EPS,NFILE0)
 C     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
 C     USING THE ALAMEL MODEL
-      use curAccess
+      use altayCurAccess
       use altayDYNFIL
       use altayHard
       use altayTaylor
       use altayAlgorithms
 #ifdef PEBP_ENABLED
-      use KOST1xState
+      use altayKOST1xState
 #endif
 #ifdef ALTAY_SUBROUTINE
       use altayConfig
       use altayRCM
 #endif
-      use IOConfig
-      use miscutils
+      use altayIOConfig
+      use altayMiscutils
       implicit double precision (a-h,o-z)
 C
 C     IW=2 is meant for outputting the final texture.

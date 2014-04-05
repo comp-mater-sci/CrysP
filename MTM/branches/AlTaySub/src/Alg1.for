@@ -20,7 +20,7 @@ C
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif
-      use IOConfig
+      use altayIOConfig
       use altayPancake
       implicit double precision (a-h,o-z)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,DG(3,3),
@@ -247,9 +247,9 @@ C 1235 format (' Just after Pancak2')
       use altayConfig, only: astate
 #endif
 #ifdef PEBP_ENABLED      
-      use KOST1xState, KOST => iKOST
+      use altayKOST1xState, KOST => iKOST
 #endif
-      use IOConfig
+      use altayIOConfig
       use altaySliprate
       use altayHard, only: hard_none, hard_voce, hard_BP, 
      &                     hard_PEBPscrew, hard_PEBPloop

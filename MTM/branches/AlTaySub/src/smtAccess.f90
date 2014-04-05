@@ -1,4 +1,4 @@
-module smtAccess
+module altaySmtAccess
 use altayDynfil
 implicit none
 

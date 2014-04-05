@@ -1,6 +1,6 @@
 
 !> Implementation of Voce hardening law
-module hardVoce
+module altayHardVoce
 implicit none
 
       !> Configuration parameters of Voce hardening law. 
@@ -32,7 +32,7 @@ implicit none
 contains
 
       subroutine readVoceConfig(inunit,c,info)
-      use IOConfig
+      use altayIOConfig
       implicit none
       integer,intent(in)                  :: inunit
       type(VoceConfig),intent(out)        :: c
@@ -59,7 +59,7 @@ contains
 
 
       subroutine precalculateVoceParams(c,p,info)
-      use IOConfig
+      use altayIOConfig
       implicit none
       type(VoceConfig),intent(in)         :: c
       type(VoceParams),intent(out)        :: p

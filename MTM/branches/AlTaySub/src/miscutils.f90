@@ -1,5 +1,5 @@
 !> Container for miscellaneous utility routines.
-module miscutils
+module altayMiscutils
 implicit none
 
       !>@{ \name Exit codes that are returned to the OS on various stop contitions
@@ -76,34 +76,22 @@ contains
       !
       end subroutine
       
-      !> Open raport file and write out the header line.
-      subroutine openReportFile(outunit,fname,info)
-      implicit none
-      integer,intent(in) :: outunit !< I/O unit number to be used for raport
-      character(len=*),intent(in)   :: fname !< Path to the report file
-      integer,intent(out) :: info
-      !
-            info = -1
-            if (info == 0) then
-            endif      
-      !
-      end subroutine
-
-      
+      !> Write header line to the report file
       subroutine writeReportHeader(outunit,info)
       implicit none
-      integer,intent(in)      :: outunit
-      integer,intent(out) :: info
+      integer,intent(in)      :: outunit !< I/O unit number to be used for raport
+      integer,intent(out)     :: info
       !
             write(outunit,fmt=100,iostat=info)
             100 format(T8,'phi1',T23,'PHI',T38,'phi2',T55'W')
       !
       end subroutine
       
+      !> Write data line to the report file
       subroutine writeReportRecord(outunit,fi1,PHI,fi2,Wtot,info)
       implicit none
-      integer,intent(in)      :: outunit
-      double precision,intent(in) :: fi1,PHI,fi2,Wtot
+      integer,intent(in)            :: outunit !< I/O unit number to be used for raport
+      double precision,intent(in)   :: fi1,PHI,fi2,Wtot
       integer,intent(out) :: info
       !
             write(outunit,fmt=100,iostat=info) fi1, PHI, fi2, Wtot

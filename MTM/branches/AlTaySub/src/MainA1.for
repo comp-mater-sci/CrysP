@@ -4,15 +4,15 @@ C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 C NGLS is replaced by M11
 C
       PROGRAM MAINA1
-      use miscutils
-      use IOConfig
-      use KOST1xState
+      use altayMiscutils
+      use altayIOConfig
+      use altayKOST1xState
       use altayDynfil
       use altayMesostructure
       use altaySimul
       use altayHard,only: KOST_global, hard_BP, hard_PEBPscrew, 
      &                    hard_PEBPloop
-      use TexFormats
+      use altayTexFormats
       implicit double precision (a-h,o-z)
 c      Several simulations (usually several-steps each),
 C      following each other.

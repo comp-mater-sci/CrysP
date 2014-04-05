@@ -2,7 +2,7 @@
 !> as well as other IO-related entities, such as IO unit numbers.
 !>
 !> \note The module replaces /ES/ and /ES1/ common blocks and a subset of /TEXTUR/ block. 
-module IOConfig
+module altayIOConfig
 implicit none
 
       !> Maximal length of any path (filenames, directrories etc.)

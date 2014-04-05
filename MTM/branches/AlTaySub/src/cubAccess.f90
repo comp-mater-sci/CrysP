@@ -5,7 +5,7 @@
 !>
 !> \note The content of CUB file is no longer one-to-one mappable to CUR, since the CUR format has changed.
 
-module cubAccess
+module altayCubAccess
 use altayDynfil
 use altayAlgorithms
 implicit none

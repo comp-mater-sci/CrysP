@@ -1,7 +1,7 @@
 !
 ! $Id$
 !      
-module curAccess
+module altayCurAccess
 use altayDynfil
 use altayAlgorithms
 

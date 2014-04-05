@@ -3,7 +3,7 @@
 !
 
 !> Provides named constants for supported file formats of texture data.
-module TexFormatConstants
+module altayTexFormatConstants
 implicit none
 
       !>@{ \name Named constants for supported texture file formats (aka FormatID)

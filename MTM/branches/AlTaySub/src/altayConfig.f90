@@ -28,9 +28,9 @@
 !> Basic configuration of AlTay in a form of formalized data structures.
 module altayConfig
 ! Import configuration structures from AlTay modules
-use hardVoce, only: VoceConfig
+use altayHardVoce, only: VoceConfig
 use KOST1x, only: PAR
-use TexFormatConstants
+use altayTexFormatConstants
 
 implicit none
 
@@ -66,7 +66,7 @@ implicit none
       type :: textureData
             !> Type of texture representation
             !>
-            !> See TexFormatConstants for the list of possible values. \sa TexFormatConstants
+            !> See altayTexFormatConstants for the list of possible values. \sa altayTexFormatConstants
             integer                                   :: input_type = TF_SMT     
             character(len=fname_len)                  :: input_fname = ''
             integer                                   :: block_id = 1

@@ -12,8 +12,8 @@
       
       
       subroutine readHardParams(inunit,KOST,info)
-      use IOConfig
-      use hardVoce
+      use altayIOConfig
+      use altayHardVoce
 #ifdef ALTAY_SUBROUTINE
       use altayConfig
 #endif
@@ -62,7 +62,7 @@
       
       
       double precision function FTAU(GAMMA,KOST)
-      use hardVoce
+      use altayHardVoce
       implicit none
       double precision,intent(in)   :: GAMMA
       integer,intent(in)            :: KOST

@@ -7,7 +7,7 @@
       contains
       
       Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn)
-      use IOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
+      use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
@@ -253,7 +253,7 @@ C         XX(j)=Y*DELTAT*sgnn(j)
       end subroutine
       !
       Subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
-      use IOConfig
+      use altayIOConfig
       use altayAlgorithms, only: KLEINKWA
       IMPLICIT double precision (A-H,O-Z)
 C     December 2000
@@ -334,7 +334,7 @@ C 915  format (6D15.3)
       end subroutine
       !
       subroutine STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-      use IOConfig
+      use altayIOConfig
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      

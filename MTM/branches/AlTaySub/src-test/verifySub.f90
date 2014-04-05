@@ -8,7 +8,7 @@ module verifySub
 use altaySub
 use altayConfig
 use altayRCM
-use curAccess
+use altayCurAccess
 
 double precision,dimension(3,3),parameter :: exampleDG = reshape(       &
                                              [ 2.5D-2,  0.D0,  0.D0,    &

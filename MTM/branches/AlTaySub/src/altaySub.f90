@@ -46,13 +46,13 @@ contains
       use altayConfig, only: altayConfigData,fname_len,acnf
       use altaySimul
       use altayRCM
-      use IOConfig
-      use TexFormats
+      use altayIOConfig
+      use altayTexFormats
       use altayHard,only: hard_none,hard_voce,hard_BP,hard_PEBPscrew,hard_PEBPloop
-      use miscutils
+      use altayMiscutils
       use altayMesostructure
 #ifdef PEBP_ENABLED
-      use KOST1xState
+      use altayKOST1xState
 #endif
       implicit none
       !
@@ -198,11 +198,11 @@ contains
       !> Finalizes the module and releases the resources.
       subroutine finalizeAltay(info)
       use altayConfig, only: altayConfigData,fname_len,acnf, astate
-      use IOConfig
+      use altayIOConfig
       use altayMesostructure, only: MICROSTR_finalize
       use altayDynfil
 #ifdef PEBP_ENABLED
-      use KOST1xState
+      use altayKOST1xState
 #endif
       implicit none
       integer,intent(out)                 :: info     !< exit code (0 on success)
@@ -263,7 +263,7 @@ contains
       use altayConfig, only: altayStateData,astate
       use altaySimul
       use altayRCM
-      use IOConfig
+      use altayIOConfig
       implicit none
       type(altayStateData),intent(inout)        :: steps !< Definiton of the steps.
       integer,intent(out)                       :: info  !< Exit code: 0 on success.
@@ -330,12 +330,12 @@ contains
       !> Appropriate control fields in acnf%output_config are checked to decide if the data have to
       !> be actually written to corresponding IO units.  
       subroutine outputCurrentState(info)
-      use IOConfig
-      use curAccess
+      use altayIOConfig
+      use altayCurAccess
       use altayConfig, only: acnf,astate
       use altayHard, only: hard_BP,hard_PEBPscrew,hard_PEBPloop
-      use KOST1xState
-      use miscutils
+      use altayKOST1xState
+      use altayMiscutils
       implicit none
       integer,intent(out)           :: info
       !

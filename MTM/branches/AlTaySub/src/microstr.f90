@@ -19,8 +19,8 @@ contains
       ! grain boundary segments) in SMT-format, allocation 
       ! and assignment of the module variables.
       subroutine GRFIL(fnam,F_mic,ierr)
-      use miscutils
-      use IOConfig
+      use altayMiscutils
+      use altayIOConfig
       implicit none
       !
       integer,intent(out)         :: ierr
@@ -99,8 +99,8 @@ contains
       !
       !   relaxation-2 is always the orthogonal one.
       !   TDC is the normalized von-Mise equivalent strain
-      use IOConfig, only: IPR,NLIST,IMP
-      use miscutils, only: unitMatrix, pi
+      use altayIOConfig, only: IPR,NLIST,IMP
+      use altayMiscutils, only: unitMatrix, pi
       implicit none
       integer,intent(in)                              :: NGR
       integer,intent(in)                              :: IGrElm

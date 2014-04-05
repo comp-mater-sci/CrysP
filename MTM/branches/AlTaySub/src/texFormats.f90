@@ -3,12 +3,12 @@
 !
 
 !> Dispatcher subroutines for IO operation on texture data files.
-module TexFormats
-use TexFormatConstants
+module altayTexFormats
+use altayTexFormatConstants
 use altayDynfil
-use smtAccess
-use curAccess
-use cubAccess
+use altaySmtAccess
+use altayCurAccess
+use altayCubAccess
 
 implicit none
       

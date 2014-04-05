@@ -15,11 +15,11 @@ C
       use altayRCM
 #endif      
       use altayMesostructure
-      use IOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
+      use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
       use altayHard
       use altayTBH
 #ifdef PEBP_ENABLED
-      use KOST1xState
+      use altayKOST1xState
 #endif
       implicit double precision (a-h,o-z)
       COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),

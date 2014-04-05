@@ -10,9 +10,9 @@ module testTexAccess
 contains 
 
       subroutine testTexAccessModules()
-      use curAccess
-      use cubAccess
-      use smtAccess
+      use altayCurAccess
+      use altayCubAccess
+      use altaySmtAccess
       implicit none
       
       character(len=128)  :: title
@@ -98,9 +98,9 @@ contains
       
       
       subroutine testSMTAccess()
-      use curAccess
-      use cubAccess
-      use smtAccess
+      use altayCurAccess
+      use altayCubAccess
+      use altaySmtAccess
       implicit none
       
       character(len=128)  :: title
