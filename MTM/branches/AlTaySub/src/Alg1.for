@@ -241,7 +241,7 @@ C 1235 format (' Just after Pancak2')
       RETURN
       END SUBROUTINE
       !
-      SUBROUTINE TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq)
+      SUBROUTINE TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
       use altayConfig, only: astate
@@ -264,6 +264,8 @@ C 1235 format (' Just after Pancak2')
       double precision, intent(out):: Seq ! Equivalent stress in crystal, defined as..
                                     !  plastic work rate in crystal normalized by..
                                     !  (macro) von Mises equivalent strain rate
+      !> Rate of plastic work per unit volume in the crystal
+      double precision, intent(out) :: WorkRate
 C
 C     SHsam:    macroscopic stress in sample reference system
 C     SH:   macroscopic stress in crystal reference system

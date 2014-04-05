@@ -1,6 +1,7 @@
 !> Container for miscellaneous utility routines.
 module miscutils
-      
+implicit none
+
       !>@{ \name Exit codes that are returned to the OS on various stop contitions
       
       ! This piece of code has been ported from fngRuntime
@@ -72,6 +73,41 @@ contains
             mavg,srh
             
       555  format(5(E15.6,1X),5X,8(E15.6,1X))
+      !
+      end subroutine
+      
+      !> Open raport file and write out the header line.
+      subroutine openReportFile(outunit,fname,info)
+      implicit none
+      integer,intent(in) :: outunit !< I/O unit number to be used for raport
+      character(len=*),intent(in)   :: fname !< Path to the report file
+      integer,intent(out) :: info
+      !
+            info = -1
+            if (info == 0) then
+            endif      
+      !
+      end subroutine
+
+      
+      subroutine writeReportHeader(outunit,info)
+      implicit none
+      integer,intent(in)      :: outunit
+      integer,intent(out) :: info
+      !
+            write(outunit,fmt=100,iostat=info)
+            100 format(T8,'phi1',T23,'PHI',T38,'phi2',T55'W')
+      !
+      end subroutine
+      
+      subroutine writeReportRecord(outunit,fi1,PHI,fi2,Wtot,info)
+      implicit none
+      integer,intent(in)      :: outunit
+      double precision,intent(in) :: fi1,PHI,fi2,Wtot
+      integer,intent(out) :: info
+      !
+            write(outunit,fmt=100,iostat=info) fi1, PHI, fi2, Wtot
+            100 format(3(F15.7),E15.7)
       !
       end subroutine
       

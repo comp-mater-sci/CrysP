@@ -83,6 +83,9 @@ C
       double precision :: SeqGrain=0.D0 ! Equivalent stress in crystal, defined as..
                                     !  plastic work rate in crystal normalized by..
                                     !  (macro) von Mises equivalent strain rate
+      double precision :: WorkRate ! Rate of plastic work per unit 
+                                   ! volume in the crystal
+      double precision :: Wtot ! Total plastic work per unit volume in crystal
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      DATA JW /0/
 C      DATA Cmic0 /1.0D0,0.0D0,0.0D0,
@@ -103,7 +106,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       NFILE1 = acnf%output_config%NFILE   ! control "CUR"
       NFILTW = acnf%output_config%NFILTW  ! control "TWN"
       IPR    = acnf%output_config%IPR     ! control printing level
-      NRES   = acnf%output_config%NRES    ! control "RES"
+      NRES   = acnf%output_config%NRES    ! control "RES" and "RPT"
       NPEBP  = acnf%output_config%NPEBP   ! control "BEP"
       NMSS   = acnf%output_config%NMSS    ! control "MSS"
 #else
@@ -278,6 +281,9 @@ C     read the parameters of the work hardening model
 #endif
       ! Output the current texture
       if (NFILE.eq.1) call CURwriteBlock(IMP1,info)
+#ifndef ALTAY_SUBROUTINE
+      if ((NRES >= 1).and.(IW <= 1)) call writeReportHeader(IMP6,info)
+#endif      
 #ifdef PEBP_ENABLED
       select case(KOST)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
@@ -388,6 +394,9 @@ C
       DO 23 IOR=1,NPOINT
       Mgrain=0.0
       GAMdot=0.0
+      WorkRate = 0.D0
+      SeqGrain = 0.D0
+      Wtot = 0.0
 C      if (IOR.eq.789.and.ISTP.eq.1) IPR=2
 C      if (IOR.eq.790.and.istp.eq.1) stop
 C      if (IPR.ne.2) goto 2626
@@ -442,7 +451,6 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 
 C
 C     Output file with current condition (as it was before call of Taylor!)
 C
-      
       do 47 i=1,3
       GLR(i)=GEULRb(i,laml)*convf
   47  continue
@@ -508,7 +516,6 @@ c 400  format (I6,f10.5,2X,3f10.5,2X,f10.5,3(2X,3F10.6),2(2x,3f10.5))
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 
   41  if (IW.gt.1) goto 23
-
 #ifdef ALTAY_SUBROUTINE
       ! altay-subroutine allows a way of calculating stresses
       ! without a call to TAYLR1.
@@ -517,14 +524,13 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
             call MATPROD(bufsp,SPANT,TRF,3,3,3)
             call MATPROD(Ssam,TRFT,bufsp,3,3,3)
       else
-            CALL TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain)
+            CALL TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate)
             RCM_GUARD
       endif
 #else
 C      if (IOR.eq.1.and.ISTP.eq.1) IPR=2
-      CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain)
+      CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain,WorkRate)
 #endif      
-      
    49 if (NFILTW.eq.1) write (IMP3,398) ITW
  398  format (I3)
       do 51 i=1,3
@@ -539,16 +545,23 @@ C      if (IOR.eq.1.and.ISTP.eq.1) IPR=2
       srh=srh+norm2(RHOSsa)*GEWF
       HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s      
       GMM1=GMM0+GMMdot !Step time here implicitly assumed to be 1.0s
+      Wtot=Wtot+WorkRate !Step time here implicitly assumed to be 1.0s
 #ifdef ALTAY_SUBROUTINE
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
             call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,
-     1                   F,GAXES,GEULR,CIJ,TG,RHOSsa)
+     1                   F,GAXES,GEULR,CIJ,TG,RHOSsa) 
       endif
 #else
       call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,
-     1 F,GAXES,GEULR,CIJ,TG,RHOSsa)
+     1             F,GAXES,GEULR,CIJ,TG,RHOSsa)
 #endif
+      ! 
+#ifndef ALTAY_SUBROUTINE
+      ! Output the plastic work of the grain (in its initial configuration)
+      if (NRES >= 1) call writeReportRecord(IMP6,fi1b(laml),PHIb(laml),
+     &                                      fi2b(laml),Wtot,info)
+#endif      
 C      IF (NLIST.LT.2) GOTO 15
   15  CONTINUE
       IF (NFILE.eq.0.or.ISTP.gt.1) goto 20

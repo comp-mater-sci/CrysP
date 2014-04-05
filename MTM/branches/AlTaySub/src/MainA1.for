@@ -88,7 +88,10 @@ C     UNIT IMP3 = PRINTER
 C     UNIT IMP5 = homogenized strain-stress
       open (unit=IMP5,file=trim(fname_prefix)//'.MSS',status='replace')
       call writeMSSHeader(IMP5,info)
-
+      !
+      open(unit=IMP6,file=trim(fname_prefix)//'.RPT',status='replace',
+     &     iostat=info)
+      !                      
       read (KLEC,90) fnam2
       call stripComment(fnam2)
       write (*,93) trim(fnam2)

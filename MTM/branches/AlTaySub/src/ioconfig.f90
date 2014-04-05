@@ -41,6 +41,9 @@ implicit none
 
       !> IMP5= output of stress-strain or slip-stress 
       integer :: IMP5 = 111
+      
+      !> IMP6= output of report file
+      integer :: IMP6 = 112
 
       !> IDISK1= work file
       integer :: IDISK1 = 12
