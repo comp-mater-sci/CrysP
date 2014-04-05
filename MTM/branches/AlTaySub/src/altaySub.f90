@@ -277,8 +277,8 @@ contains
       type(altayStateData),intent(inout)        :: steps !< Definiton of the steps.
       integer,intent(out)                       :: info  !< Exit code: 0 on success.
       ! We need this common block just for the DG tensor.
-      COMMON /TEXTUR/ DUM1(29),IDUM1,DG(3,3),ITW,DELTAW,GEWF
-      double precision :: DUM1,DG, DELTAW,GEWF
+      COMMON /TEXTUR/ DUM1(27),IDUM1,DG(3,3),ITW,GEWF
+      double precision :: DUM1,DG,GEWF
       integer :: IDUM1,ITW
       integer :: NFILE0
       !
