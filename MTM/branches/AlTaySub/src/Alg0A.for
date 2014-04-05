@@ -80,15 +80,10 @@ C
       double precision :: WorkRate ! Rate of plastic work per unit 
                                    ! volume in the crystal
       double precision :: Wtot ! Total plastic work per unit volume in crystal
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C      DATA JW /0/
-C      DATA Cmic0 /1.0D0,0.0D0,0.0D0,
-C     1            0.0D0,1.0D0,0.0D0,
-C     2            0.0D0,0.0D0,1.0D0/
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       data convf/0.5729577951308232D+02/
       data FS/9*1.0D0/ 
       SAVE
+      !
       IF (IW) 32,33,30
   33  call  random_seed
 #ifdef ALTAY_SUBROUTINE
@@ -289,7 +284,7 @@ C     read the parameters of the work hardening model
 C
 C     Main Loop over the Steps
 C
-      DO 8 ISTP=1,NSTP
+      steploop: DO 8 ISTP=1,NSTP
 
       TOTGEW=0.0
       do 50 i=1,3
@@ -385,22 +380,16 @@ C
       ifil4=0
       if (NFILTW.eq.1) write (IMP3,399)
  399  format(1x)
-      DO 23 IOR=1,NPOINT
+      !
+      ! Begin the loop over grains/clusters
+      !
+      clusterloop: DO 23 IOR=1,NPOINT
       Mgrain=0.0
       GAMdot=0.0
       WorkRate = 0.D0
       SeqGrain = 0.D0
       Wtot = 0.0
-C      if (IOR.eq.789.and.ISTP.eq.1) IPR=2
-C      if (IOR.eq.790.and.istp.eq.1) stop
-C      if (IPR.ne.2) goto 2626
-C      write (IMP,2627) istp,IOR
-C      write (*,2627) istp,IOR
- 2627 format ('ISTP=',I5,'   IOR=',i5)
-C      if (IOR.eq.261.and.istp.eq.8) IPR=2
-C      if (IOR.gt.261.and.istp.eq.8) stop
-C      IPR=1
-C      IGLIJ=0
+      !
  2626 do 80 L=laml,laml1
       if (ifil4.eq.NPOINT) goto 80
       ifil4=ifil4+1
@@ -441,16 +430,6 @@ C
       do 47 i=1,3
       GLR(i)=GEULRb(i,laml)*convf
   47  continue
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-C      if (NUNGL.ne.0) then
-C         Next instruction will ultimately result in some effefct if KOST=1
-C          do i=1,M11
-C             do j=1,2
-C                FK1(j,i)=FK1b(j,i,laml)*TAU
-C             enddo
-C          enddo
-C      endif 
-C
 C 
 C     In case of NGR=2:
 C        LAML=1: TAYLOR
@@ -470,8 +449,6 @@ C 3210 format (' Just before Taylor')
             RCM_GUARD
 #endif            
       endif
-C      write (*,3211)
-c 3211 format (' Just after Taylor')
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 2/1/2011     
 C this modification is to suit for the output of stress     
       if(laml.eq.1) then
@@ -481,35 +458,16 @@ C this modification is to suit for the output of stress
       end if
 cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       TOTGEW=TOTGEW+GEWF
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 27/10/2011
-C      IF (JW.EQ.0) GOTO 41
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-C  35  IF (JW.NE.2) GMM0=0.
-
-
-
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 27/10/2011
-c  34  IF (NFILE.eq.0.or.ISTP.gt.1) goto 41
-C
-C     Output file with current condition (as it was before call of Taylor!)
-C
-      
-c     do 47 i=1,3
-c      GLR(i)=GEULRb(i,laml)*convf
-c  47  continue
-c      write (IMP1,400) IOR,GEWF,fi1,PHI,fi2,GMM0,
-c     1 ((Fb(i,j,laml),i=1,3),j=1,3),(GAXESb(j,laml),j=1,3),GLR
-c 400  format (I6,f10.5,2X,3f10.5,2X,f10.5,3(2X,3F10.6),2(2x,3f10.5))
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-
-  41  if (IW.gt.1) goto 23
+      !
+      ! Skip the rest of the loop if IF > 1
+  41  if (IW.gt.1) cycle
+      !
 #ifdef ALTAY_SUBROUTINE
       if (astate%simulCalls(astate%this)%input%full_model) then
             CALL TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate)
             RCM_GUARD
       endif
 #else
-C      if (IOR.eq.1.and.ISTP.eq.1) IPR=2
       CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain,WorkRate)
 #endif      
    49 if (NFILTW.eq.1) write (IMP3,398) ITW
@@ -543,22 +501,14 @@ C      if (IOR.eq.1.and.ISTP.eq.1) IPR=2
       if (NRES >= 1) call writeReportRecord(IMP6,fi1b(laml),PHIb(laml),
      &                                      fi2b(laml),Wtot,info)
 #endif      
-C      IF (NLIST.LT.2) GOTO 15
-  15  CONTINUE
-      IF (NFILE.eq.0.or.ISTP.gt.1) goto 20
-C
-C     Plaats hier output van "vervormingsstap"
-C     (ALLEEN zo ISTP=1)
-C
-  20  CONTINUE
-C  9  CONTINUE
-C
-C     End of loop over crystals
-C
-  23  CONTINUE
-C     NEXT INSTRUCTION ADDED FOR LAMEL MODEL
-                                 
-      if (IW.gt.1) goto 22
+      !
+      ! End of the loop over crystals
+      !
+  23  enddo clusterloop
+      !
+      ! Finish processing if IW > 1
+      if (IW.gt.1) exit
+      !
       do 52 i=1,3
       do 52 j=i,3
       SHsam(i,j)=STOT(i,j)/TOTGEW
@@ -610,26 +560,18 @@ C     NEXT INSTRUCTION ADDED FOR LAMEL MODEL
       HGAMTOT = HGAMTOT + HGAM
       MEPSTOT = MEPSTOT + MEPS
 #endif
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C      JW=0
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
       WRITE (IMP,105) ISTP,SeqAvg,Mavg,EPS
       end if
  105  FORMAT (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VAL
      1UE=',F10.5,'  EFF. STRAIN EPS USED=',F10.5) 
-  62  continue
-C
-C     End of loop over steps
-  57  continue
-   8  CONTINUE                                                          
+      !
+      ! End of the loop over steps
+      !
+   8  enddo steploop
+      !
   22  RETURN
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C  32  JW=-IW                                                            
-C      GOTO 22
   32  return
-C  this never happen!
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE                                                           
       END SUBROUTINE
       
       end module
