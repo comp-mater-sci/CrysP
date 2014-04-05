@@ -74,7 +74,6 @@ contains
       
       integer :: L
       double precision :: EPS
-      external :: Alg0
       !
             info = altaySub_IOErr
             if (present(errmsg)) errmsg = ''
