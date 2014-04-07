@@ -286,5 +286,18 @@ contains
       !
       end subroutine
       
+      !> Verify if integer value modelId represents any supported AlTay model.
+      pure logical function isValidModelType(modelId)
+      implicit none
+      integer,intent(in) :: modelId
+      !
+            isValidModelType = .false.
+            select case(modelId)
+            case(modelFCTaylor,modelAlamel,modelMASAL)
+                  ! OK, supported model
+                  isValidModelType = .true.
+            end select
+      end function
+      
 end module
 
