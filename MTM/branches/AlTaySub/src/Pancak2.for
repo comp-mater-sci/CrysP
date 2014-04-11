@@ -18,6 +18,7 @@ C
       use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
       use altayHard
       use altayTBH
+      use altayAlgorithms
 #ifdef PEBP_ENABLED
       use altayKOST1xState
 #endif
@@ -144,7 +145,7 @@ C     ... and now to crystal frame:
       B3(L1+1,IRL)=PLUMIN(IL,IRL)*RLA(2,3)/sqr2
       B3(L1+2,IRL)=PLUMIN(IL,IRL)*RLA(3,1)/sqr2
       B3(L1+3,IRL)=PLUMIN(IL,IRL)*RLA(1,2)/sqr2
-      call STR5(B5,RLS(1,1,IRL,IL))
+      B5= Vector5D(RLS(1:3,1:3,IRL,IL)) ! sym.(3,3) -> (5)
 C     Insert the relaxations as columns in A1-matrix
       j=M2+IRL
       do 84 i=1,5
@@ -159,7 +160,7 @@ C     Insert the relaxations as columns in A1-matrix
       TDCb(I,J,IL)=(C2(I,J)+C2(J,I))*0.5D0
   81  TRCb(I,J,IL)=(C2(I,J)-C2(J,I))*0.5D0
   80  CONTINUE                                                          
-      call STR5(B5,TDCb(1,1,IL))
+      B5= Vector5D(TDCb(1:3,1:3,IL)) ! sym.(3,3) -> (5)
       deltat=0.0
       do 30 i=1,5
       deltat=deltat+B5(i)**2
@@ -451,8 +452,8 @@ C 776  format (' B5  ',i5,e15.8,   'spanv  ',d15.8,' i+ii',i5)
       RHOS(i)=-x8
       RHOA(i)=-y8
  201  continue
-      call STR33(S33,spanv)
-      call STR33(RHOS33,RHOS) 
+      S33=    SymMatrix(spanv) ! (5) -> sym.(3,3)
+      RHOS33= SymMatrix(RHOS)  ! (5) -> sym.(3,3) 
       !Conversion of RHOA to dim(3,3)
       RHOA33=0.0d0
       RHOA33(2,3)= RHOA(1)*sqr2*deltat

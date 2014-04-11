@@ -115,9 +115,11 @@ C
       return
       end subroutine
 
-      !
+      !> Transform a 5D-vector in deviatoric (stress/strain-rate) space
+      !> to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
+      !> Note: The reverse transformation is done by function 'Vector5D'.
       function SymMatrix(vec)
-      !implicit none
+      implicit none
       double precision, dimension(5),  intent(in) :: vec
       double precision, dimension(3,3)            :: SymMatrix !out
       double precision, parameter :: 
@@ -139,58 +141,30 @@ C
       SymMatrix(2,1)= SymMatrix(1,2)       
       !      
       end function SymMatrix
-      
-
-      Subroutine STR33(A,V)
-      implicit double precision (a-h,o-z)
-C     To make a 3 x 3 tensor from a 5-dim. vector
-C     dev. stress space or strain space
-      dimension A(3,3),V(5)
-      logical eerste
-      SAVE
-      data eerste/.true./
-C      data sq22/0.7071068/,const3/0.7886751/,const4/0.2113249/
-      if (eerste) then
-            eerste=.false.
-            sq22=sqrt(0.5d0)
-            const3=(SQRT(3.0d0)+3.0d0)/6.0d0
-            const4=(3.0d0-SQRT(3.0d0))/6.0d0
-      endif
-      A(2,2)=CONST3*V(1)-CONST4*V(2)
-      A(3,3)=-CONST4*V(1)+CONST3*V(2)
-      A(1,1)=-A(2,2)-A(3,3)
-      X1=SQ22*V(3)
-      A(2,3)=X1
-      A(3,2)=X1
-      X1=SQ22*V(4)
-      A(3,1)=X1
-      A(1,3)=X1
-      X1=SQ22*V(5)
-      A(1,2)=X1
-      A(2,1)=X1
-      return
-      end subroutine
       !
-      Subroutine STR5(D5,VGRAD)
-      IMPLICIT double precision (A-H,O-Z)
-      dimension D5(5),VGRAD(3,3)
-      SAVE
-C      data c1/1.3660254/,c2/0.3660254/,c3/0.707107/
-      logical spring
-      data spring /.false./
-      if (spring) goto 1
-      spring=.true.
-      c1=0.5d00*(sqrt(3.0d00)+1)
-      c2=C1-1.0d00
-      C3=sqrt(0.5d00)
-   1  D5(1)=c1*VGRAD(2,2)+c2*VGRAD(3,3)
-      D5(2)=c2*VGRAD(2,2)+c1*VGRAD(3,3)
-      D5(3)=c3*(VGRAD(2,3)+VGRAD(3,2))
-      D5(4)=c3*(VGRAD(3,1)+VGRAD(1,3))
-      D5(5)=c3*(VGRAD(1,2)+VGRAD(2,1))
-      return
-      end subroutine
-      
+      !> Transform a (3,3)-matrix representation of a traceless 2nd rank tensor
+      !> to 5D-vector representation in deviatoric (stress/strain-rate) space.
+      !> Notes:
+      !>    - Only the symmetric part of 2nd rank tensor is transformed.
+      !>    - The reverse transformation is done by function 'SymMatrix'.
+      function Vector5D(mat)
+      implicit none
+      double precision, dimension(3,3), intent(in) :: mat
+      double precision, dimension(5)               :: Vector5D !out
+      double precision, parameter :: 
+     &      c1= 0.5d0*(sqrt(3.0d0)+1.0d0), 
+     &      c2= c1-1.0d0,
+     &      c3= sqrt(0.5d0)
+      !
+      Vector5D(1)= c1*mat(2,2) + c2*mat(3,3)
+      Vector5D(2)= c2*mat(2,2) + c1*mat(3,3)
+      !
+      Vector5D(3)= c3* (mat(2,3)+mat(3,2))
+      Vector5D(4)= c3* (mat(3,1)+mat(1,3))
+      Vector5D(5)= c3* (mat(1,2)+mat(2,1))
+      !      
+      end function Vector5D
+      !
       ! Calculate transformation matrix T.
       ! fi1,PHI,fi2 are Euler angles in radians.
       Subroutine EulRad_2_Tmatrix(T,fi1,PHI,fi2)
