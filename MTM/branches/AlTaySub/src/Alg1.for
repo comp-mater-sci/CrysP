@@ -28,7 +28,7 @@ C
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON/TLR2/ TRC(3,3),buftrf(3,3),RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
-      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
+      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),
      1 SWRLX(3)
       DIMENSION TDC(3,3),Ftot(3,3)
       double precision, dimension(3,3):: bufsp(3,3), RHOScrys(3,3)
@@ -198,7 +198,7 @@ CC     OMREKENING DISPLACEMENT GRADIENT.
   45  continue
 C      write (*,1234)
 C 1234 format (' Just before Pancak2')
-       CALL Pancak2(KOST,NGL,B,DI1,DG,TDC,SPANV,Scrys,RHOScrys,RHOAcrys,
+       CALL Pancak2(KOST,NGL,B,DI1,DG,TDC,Scrys,RHOScrys,RHOAcrys,
      1 SWRLX,BBVM,XXLP,IPR,Ftot,GEWF)
       !Report Scrys to LST-file
  100  format(' Bishop-Hill stress (crystal system):')
@@ -272,7 +272,7 @@ C     SH:   macroscopic stress in crystal reference system
 C     SPANH: macroscopic stress in crystal reference system
 C     Ssam:        local stress in sample reference system
 C
-      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),SPANV(5),RHOSsa(3,3),
+      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),
      1 SWRLX(3)
       DIMENSION RCcryst(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
