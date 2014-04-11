@@ -131,6 +131,7 @@
             ReadHeadSVfile,     &          
             WriteSVfile,        &
             ReadSVfile,         & 
+            GetStateDerivedVar, &
       !derived types:
             PAR,                &
             StatVar,            &
@@ -164,6 +165,8 @@
 
       double precision, PARAMETER :: MINfrac= 2.0D-3
       double precision, PARAMETER :: LOWfrac=10.0D-3
+      
+      double precision, PARAMETER :: TENpow6 = 1.D6      
       
       double precision, PARAMETER :: p2= 1.D0/sqrt(2.D0)
       double precision, PARAMETER :: n2= -p2 
@@ -301,7 +304,6 @@
       !local variables declarations:
       character(LEN=128) :: line1
       integer           :: s,i,Idum=0,Nsstry=0
-      double precision, PARAMETER :: TENpow6 = 1.D6
       
       InitOK=.FALSE.
             
@@ -1062,5 +1064,38 @@
 666   iError = KS_ErrIO !Error in reading from file
       !
       end function ReadHeadSVfile
+      
+      
+      
+      !CONTAINed by MODULE KOST1x:
+      SUBROUTINE GetStateDerivedVar(SV,rho_CBs,rho_CBBs,rho_polCBBs,rho_avg,iError)
+      !This procedure returns:
+      ! A number of state-derived variables (calculated from SV)
+      ! an error code (iError):  
+      !      KS_OK , no error
+      !      KS_ErrUninitialized, in case this module is not correctly initialized
+
+      TYPE(StatVar),   INTENT(IN)  :: SV
+      double precision,INTENT(OUT) :: rho_CBs     !Dislocation density of cell boundaries; unit: m^(-2)
+      double precision,INTENT(OUT) :: rho_CBBs    !Dislocation density of cell block boundaries; unit: m^(-2)
+      double precision,INTENT(OUT) :: rho_polCBBs !Dislocation density of polarized dislocations at cell block boundaries; unit: m^(-2)
+      double precision,INTENT(OUT) :: rho_avg     !Average dislocation density; unit: m^(-2)
+      integer,         INTENT(OUT) :: iError
+
+      iError= KS_Error !init
+      if(.NOT.InitOK) then
+            iError = KS_ErrUninitialized
+            return
+      end if
+      
+      rho_CBs     = SV%RHOcb                        * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
+      rho_CBBs    = sum(    SV%CBB(:)%RHOwd ) /6.D0 * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
+      rho_polCBBs = sum(abs(SV%CBB(:)%RHOwp)) /6.D0 * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
+      rho_avg     = (1.D0-P%f)*rho_CBs + P%f*(rho_CBBs+rho_PolCBBs)
+         !Note: Number of CBBs is 6 (currently hard-coded)
+         
+      iError=KS_OK
+      
+      END SUBROUTINE GetStateDerivedVar
       
       END MODULE KOST1x
