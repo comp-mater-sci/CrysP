@@ -18,11 +18,7 @@
       Type(StatVar) :: CurState !A derived type defined in module KOST1x, containing all state variables of a single grain.
       Type(StatVar) :: SV_inc_start, SV_inc_end
       
-      !Some variables derived from the state which can be extracted from module KOST1x through dedicated subroutine:
-      double precision rho_CBs     !Dislocation density of cell boundaries; unit: m^(-2)
-      double precision rho_CBBs    !Dislocation density of cell block boundaries; unit: m^(-2)
-      double precision rho_polCBBs !Dislocation density of polarized dislocations at cell block boundaries; unit: m^(-2)
-      double precision rho_avg     !Average dislocation density; unit: m^(-2)
+      Type(StateDerivedVars) :: SDV
       
       !Initialization of module:
       open(unit=iParFile,file='par.txt',status='old') !open parameter file.
@@ -92,16 +88,16 @@
       Write(iOutFile,*)"CRSS in negative sense: ", CurCRSS(2,:)
       
       !Some state-derived variables can be extracted for a particular state (in casu CurState):
-      call GetStateDerivedVar(CurState,rho_CBs,rho_CBBs,rho_polCBBs,rho_avg,iError)
+      call GetStateDerivedVar(CurState,SDV,iError)
       if (iError /= 0) then
            write(*,*)"Error extracting state-derived variables. Error code:", iError
            stop
       endif
       Write(iOutFile,*)     "These dislocation densities were extracted from the state: CurState"
-      Write(iOutFile,fmt=10)" ..in the cell boundaries of the grain:                                 ", rho_CBs,    " /m^2"
-      Write(iOutFile,fmt=10)" ..in the cell block boundaries of the grain:                           ", rho_CBBs,   " /m^2"
-      Write(iOutFile,fmt=10)" ..of polarized dislocations at the cell block boundaries of the grain: ", rho_polCBBs," /m^2"
-      Write(iOutFile,fmt=10)" ..in the grain (volume-average):                                       ", rho_avg,    " /m^2"
+      Write(iOutFile,fmt=10)" ..in the cell boundaries of the grain:                                 ", SDV%rho_CBs,    " /m^2"
+      Write(iOutFile,fmt=10)" ..in the cell block boundaries of the grain:                           ", SDV%rho_CBBs,   " /m^2"
+      Write(iOutFile,fmt=10)" ..of polarized dislocations at the cell block boundaries of the grain: ", SDV%rho_polCBBs," /m^2"
+      Write(iOutFile,fmt=10)" ..in the grain (volume-average):                                       ", SDV%rho_avg,    " /m^2"
 
 10    format(A72,e10.3,A5)
       

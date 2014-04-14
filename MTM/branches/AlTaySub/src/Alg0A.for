@@ -80,6 +80,9 @@ C
       double precision :: WorkRate ! Rate of plastic work per unit 
                                    ! volume in the crystal
       double precision :: Wtot ! Total plastic work per unit volume in crystal
+#ifdef PEBP_ENABLED
+      type(StateDerivedVars) :: pebpSDV, pebpSDVavg
+#endif
       data convf/0.5729577951308232D+02/
       data FS/9*1.0D0/ 
       SAVE
@@ -296,6 +299,10 @@ C
       srh=0.
       HGAM=0.D0
       MEPS=sqrt(2.D0/3.D0)*0.5D0*sqrt(sum((DG+transpose(DG))**2))
+#ifdef PEBP_ENABLED
+      pebpSDVavg = StateDerivedVars()
+#endif      
+      
       call dynfil2(nrstep,F,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT       
       write (*,96) ISTP,GAXES
@@ -469,6 +476,13 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s      
       GMM1 = GMM0 + GMMdot !Step time here implicitly assumed to be 1.0s
       Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
+#ifdef PEBP_ENABLED
+      select case(KOST)
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+           call KS_getSDV(IOR,pebpSDV,info)
+           pebpSDVavg = pebpSDVavg + pebpSDV * GEWF
+      endselect
+#endif
 #ifdef ALTAY_SUBROUTINE
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
@@ -515,6 +529,12 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
             call writeMSSRecord(IMP5,MEPSCALL,MEPSTOT,HGAMCALL,
      &                          HGAMTOT,SHsam,Mavg,srh,info)
       endif
+#ifdef PEBP_ENABLED
+      select case(KOST)
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+           pebpSDVavg = pebpSDVavg * (1.D0/TOTGEW)
+      endselect
+#endif      
 #ifdef ALTAY_SUBROUTINE
       ! Get the homogenized quantities:
       associate (callout => astate%simulCalls(astate%this)%output)

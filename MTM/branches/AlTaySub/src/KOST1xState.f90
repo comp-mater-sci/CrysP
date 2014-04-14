@@ -95,6 +95,19 @@ contains
       !      
       end subroutine
 
+      !> Retrieve state-derived variables for the i-th grain.
+      subroutine KS_getSDV(i,SDV,info)
+      implicit none
+      integer,intent(in)                              :: i    !< Grain identifier
+      type(StateDerivedVars), intent(out)             :: SDV
+      integer,intent(out)                             :: info !< exit code
+      !
+            info = KS_ErrBadDims
+            if (size(KS_state) < i) return
+            call GetStateDerivedVar(KS_state(i),SDV,info)
+      !
+      end subroutine
+      
       !> Open state file either for reading or writing.
       !>
       !> The function opens the file and, if requested, performs some initialization 

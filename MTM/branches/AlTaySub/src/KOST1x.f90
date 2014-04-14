@@ -68,6 +68,14 @@
 !            This has a consequence for wall effectivity matrix eff(s,i) and contribution of walls on CRSS
 !          In this version, description of polarization of CBBs is not elaborated in lign with "LoopSlip" assumption.
 !            It is therefor advised to switch of contribution of polarization of wall to CRSS, by setting I_wp=0.0 
+!    v1.12 by P. Eyckens, MTM, KU Leuven, 11 April 2014, and J. Gawad, CS, KU Leuven, 14 April 2014:
+!       -> Addition of subroutine GetStateDerivedVar, which calculates state-dependent variables of the PEBP model, 
+!          i.e. 4 dislocation densities. They are calculated from inputted derived type StatVar. 
+!          See in-line comments for specific meaning. 
+!          Foreseen application of this subroutine: visualisation of state-derived variables of the PEBP multi-scale 
+!          model in HMS simulation of forming process - the dislocation densities still need to be volume-averaged 
+!          over the polycrystal.
+!      -> Addition of data type for StateDerivedVars and trivial algebraic operations on objects of that type.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST=11 & PRE-file contains 24 (110)+(112)[111] slip systems; 
@@ -117,6 +125,25 @@
             double precision, DIMENSION(2,24)   :: CRSS = 0.D0 !Up to 24 slip systems supported
       END TYPE StatVar
 
+      TYPE :: StateDerivedVars
+            !> Dislocation density of cell boundaries; unit: m^(-2)
+            double precision :: rho_CBs = 0.D0
+            !> Dislocation density of cell block boundaries; unit: m^(-2)
+            double precision :: rho_CBBs = 0.D0
+            !> Dislocation density of polarized dislocations at cell block boundaries; unit: m^(-2)
+            double precision :: rho_polCBBs = 0.D0
+            !> Average dislocation density; unit: m^(-2)
+            double precision :: rho_avg = 0.D0    
+      END TYPE 
+      
+      INTERFACE OPERATOR(+)
+            MODULE PROCEDURE  StateDerivedVar_plus
+      END INTERFACE
+      
+      INTERFACE OPERATOR(*)
+            MODULE PROCEDURE  StateDerivedVar_times
+      END INTERFACE
+      
       INTERFACE InitModuleKOST1x !Generic Interface
         MODULE PROCEDURE Init_file,Init_PAR
       END INTERFACE
@@ -132,10 +159,14 @@
             WriteSVfile,        &
             ReadSVfile,         & 
             GetStateDerivedVar, &
+      !operators
+            operator(+),        &
+            operator(*),        &
       !derived types:
             PAR,                &
             StatVar,            &
-            CBBtype
+            CBBtype,            &
+            StateDerivedVars
 
       !> \name Exit codes from KOST1x subroutines and functions:
       !>@{
@@ -1068,18 +1099,13 @@
       
       
       !CONTAINed by MODULE KOST1x:
-      SUBROUTINE GetStateDerivedVar(SV,rho_CBs,rho_CBBs,rho_polCBBs,rho_avg,iError)
-      !This procedure returns:
-      ! A number of state-derived variables (calculated from SV)
-      ! an error code (iError):  
-      !      KS_OK , no error
-      !      KS_ErrUninitialized, in case this module is not correctly initialized
-
+      SUBROUTINE GetStateDerivedVar(SV,SDV,iError)
       TYPE(StatVar),   INTENT(IN)  :: SV
-      double precision,INTENT(OUT) :: rho_CBs     !Dislocation density of cell boundaries; unit: m^(-2)
-      double precision,INTENT(OUT) :: rho_CBBs    !Dislocation density of cell block boundaries; unit: m^(-2)
-      double precision,INTENT(OUT) :: rho_polCBBs !Dislocation density of polarized dislocations at cell block boundaries; unit: m^(-2)
-      double precision,INTENT(OUT) :: rho_avg     !Average dislocation density; unit: m^(-2)
+      !> An object of type StateDerivedVars, which contains state-derived variables calculated from SV
+      TYPE(StateDerivedVars), INTENT(OUT) :: SDV
+      !> Exit code:  
+      !> - KS_OK , no error
+      !> - KS_ErrUninitialized, in case this module is not correctly initialized
       integer,         INTENT(OUT) :: iError
 
       iError= KS_Error !init
@@ -1088,14 +1114,39 @@
             return
       end if
       
-      rho_CBs     = SV%RHOcb                        * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
-      rho_CBBs    = sum(    SV%CBB(:)%RHOwd ) /6.D0 * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
-      rho_polCBBs = sum(abs(SV%CBB(:)%RHOwp)) /6.D0 * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
-      rho_avg     = (1.D0-P%f)*rho_CBs + P%f*(rho_CBBs+rho_PolCBBs)
-         !Note: Number of CBBs is 6 (currently hard-coded)
+      SDV%rho_CBs     = SV%RHOcb                        * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
+      SDV%rho_CBBs    = sum(    SV%CBB(:)%RHOwd ) /6.D0 * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
+      SDV%rho_polCBBs = sum(abs(SV%CBB(:)%RHOwp)) /6.D0 * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
+      SDV%rho_avg     = (1.D0-P%f)*SDV%rho_CBs + P%f*(SDV%rho_CBBs+SDV%rho_PolCBBs)
+      !Note: Number of CBBs is 6 (currently hard-coded)
          
       iError=KS_OK
       
       END SUBROUTINE GetStateDerivedVar
-      
+    
+      !> Calculate component-wise sum of two StateDerivedVars objects 
+      elemental function StateDerivedVar_plus(first,second) result(res)
+      type(StateDerivedVars),intent(in) :: first,second
+      type(StateDerivedVars) :: res
+      !
+      res%rho_CBs = first%rho_CBs + second%rho_CBs
+      res%rho_CBBs = first%rho_CBBs + second%rho_CBBs
+      res%rho_polCBBs = first%rho_polCBBs + second%rho_polCBBs
+      res%rho_avg = first%rho_avg + second%rho_avg
+      !
+      end function StateDerivedVar_plus
+    
+      !> Multiply all components of SDV by the scalar
+      elemental function StateDerivedVar_times(SDV,scalar) result(res)
+      type(StateDerivedVars),intent(in) :: SDV
+      double precision,intent(in)       :: scalar
+      type(StateDerivedVars) :: res
+      !
+      res%rho_CBs = scalar * SDV%rho_CBs
+      res%rho_CBBs = scalar * SDV%rho_CBBs
+      res%rho_polCBBs = scalar * SDV%rho_polCBBs
+      res%rho_avg = scalar * SDV%rho_avg
+      !
+      end function StateDerivedVar_times
+    
       END MODULE KOST1x
