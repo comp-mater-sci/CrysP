@@ -76,6 +76,8 @@
 !          model in HMS simulation of forming process - the dislocation densities still need to be volume-averaged 
 !          over the polycrystal.
 !      -> Addition of data type for StateDerivedVars and trivial algebraic operations on objects of that type.
+!   v1.13 J. Gawad, CS, KU Leuven, 24 April 2014:
+!       -> New function is added: writeSDV, which outputs either state-derived variables or a relevant header line.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST=11 & PRE-file contains 24 (110)+(112)[111] slip systems; 
@@ -159,6 +161,7 @@
             WriteSVfile,        &
             ReadSVfile,         & 
             GetStateDerivedVar, &
+            WriteSDV,     &
       !operators
             operator(+),        &
             operator(*),        &
@@ -1148,5 +1151,29 @@
       res%rho_avg = scalar * SDV%rho_avg
       !
       end function StateDerivedVar_times
+
+      !> Output state-derived variables (SDV) or/and a header line.
+      integer function writeSDV(unit,SDV,header) result(info)
+      integer,intent(in)                :: unit
+      logical,intent(in),optional       :: header
+      type(StateDerivedVars),intent(in),optional :: SDV
+      !
+      integer :: ierr
+      !
+      info = KS_ErrIO
+      if (present(header)) then
+          if (header) write(unit,fmt=100,iostat=ierr)
+          if (ierr /= 0) return
+      endif
+      if (present(SDV)) then
+          write(unit,fmt=101,iostat=ierr) SDV
+          if (ierr /= 0) return
+      endif  
+      info = KS_OK
+      ! 
+      100 format(T4,'rho_CBs',T20,'rho_CBBs',T36,'rho_polCBBs',T52,'rho_avg')
+      101 format(4(E15.7,1X))
+      !
+      end function
     
       END MODULE KOST1x
