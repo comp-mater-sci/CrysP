@@ -44,7 +44,7 @@ implicit none
       
       !> IMP6= output of report file
       integer :: IMP6 = 112
-
+      
       !> IDISK1= work file
       integer :: IDISK1 = 12
       
@@ -55,8 +55,11 @@ implicit none
       integer :: NDAT2 = 10
       
 #ifdef PEBP_ENABLED
-      !> IMP4= output file for state variables of KOST11
+      !> IPEBPSTAT= input file for state variables of KOST11
       integer :: IPEBPSTAT = 60
+      
+      !> Output file for state-derived variables of KOST11
+      integer :: IPEBPSDV = 61
 #endif
 
       

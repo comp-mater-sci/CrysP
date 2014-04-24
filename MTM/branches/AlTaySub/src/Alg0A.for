@@ -29,6 +29,7 @@ C     USING THE ALAMEL MODEL
       use altayAlgorithms
 #ifdef PEBP_ENABLED
       use altayKOST1xState
+      use KOST1x
 #endif
 #ifdef ALTAY_SUBROUTINE
       use altayConfig
@@ -212,6 +213,14 @@ C     read the parameters of the work hardening model
           write (IMP3,98) TITEL
           write (IMP3,99) NPOINT
       endif
+#endif
+      !
+      ! Various IO/initialization calls
+      !
+#ifndef ALTAY_SUBROUTINE
+#ifdef PEBP_ENABLED
+      if (NPEBP /= 0) info = writeSDV(IPEBPSDV,header=.true.)
+#endif
 #endif
       RETURN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -534,6 +543,9 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
            pebpSDVavg = pebpSDVavg * (1.D0/TOTGEW)
       endselect
+#ifndef ALTAY_SUBROUTINE
+      if (NPEBPx /= 0) info = writeSDV(IPEBPSDV,pebpSDVavg)
+#endif
 #endif      
 #ifdef ALTAY_SUBROUTINE
       ! Get the homogenized quantities:
