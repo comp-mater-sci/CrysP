@@ -232,7 +232,11 @@ C
 #if defined(PEBP_ENABLED) && defined(FINALBPM_ENABLED)
       select case(KOST_global)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+#ifndef INTERMEDIATEBPM_DISABLED
           if(NFILE0 == 0) info = KS_writeState(IMP4)
+#else
+          info = KS_writeState(IMP4)
+#endif
       endselect
 #endif
       if(NLIST.eq.1) then

@@ -287,7 +287,7 @@ C     read the parameters of the work hardening model
 #ifndef ALTAY_SUBROUTINE
       if ((NRES >= 1).and.(IW <= 1)) call writeReportHeader(IMP6,info)
 #endif      
-#ifdef PEBP_ENABLED
+#if defined(PEBP_ENABLED) && .not. defined(INTERMEDIATEBPM_DISABLED)
       select case(KOST)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
           if (NPEBPx.eq.1) info = KS_writeState(IMP4)
