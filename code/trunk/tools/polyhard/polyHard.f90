@@ -135,7 +135,7 @@ integer :: inpunit, info
       end select
       !
       if (info /= fngSuccess) then
-            write(errmsg,900) 'Cannot calculate stress response.' // errmsg
+            write(errmsg,900) 'Cannot calculate stress response.'
             call finalize(2)
       endif
       !
