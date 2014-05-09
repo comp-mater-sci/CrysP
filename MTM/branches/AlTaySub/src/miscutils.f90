@@ -27,8 +27,22 @@ implicit none
 
       double precision,parameter :: pi = acos(-1.D0)
 
-contains
+    contains
 
+      !> Terminate the analysis and return exit code
+      !> 
+      !> STOP statement does not necessarily set exit code.
+      !> Typical use case for premature termination:
+      !> call terminate(stopcode_runtimeerror)
+      subroutine terminate(exit_code)
+      implicit none
+      integer,intent(in)        :: exit_code
+      !
+          if (exit_code /= stopcode_OK) write(*,'(A)') 'AlTay terminated due to an error.'
+          call exit(exit_code)
+      !
+      end subroutine
+    
       !> This subroutine extracts the first word from str, fills
       !> the remaining part with spaces and removes all leading blanks.
       subroutine stripComment(str)

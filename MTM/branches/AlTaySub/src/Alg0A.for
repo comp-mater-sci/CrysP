@@ -2,6 +2,7 @@
 #include "altayRCM.fpp"
 #endif
       module altaySimul
+      use altayMiscutils, only: terminate, stopcode_runtimeerror
       
       contains
       
@@ -149,7 +150,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
             if(NLIST.eq.1) then
             write (IMP,140) NGR
             end if
-            stop
+            call terminate(stopcode_runtimeerror)
 #else
             RCM_RAISE(1,'SIMUL','Incorrect value of NGR',RCM_RTN)
 #endif
@@ -245,7 +246,7 @@ C     read the parameters of the work hardening model
  405  format (' Subroutine SIMUL',/' The LAMEL version works only if',
      1' the number of orientations NPOINT=',I5,/,
      2' is an even number')
-            stop
+            call terminate(stopcode_runtimeerror)
 #else
             RCM_RAISE(1,'SIMUL',
      1      'The number of grains must be an even number',RCM_RTN)

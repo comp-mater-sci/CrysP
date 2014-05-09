@@ -1,6 +1,7 @@
 
 !> Implementation of Voce hardening law
 module altayHardVoce
+use altayMiscutils, only: terminate, stopcode_runtimeerror
 implicit none
 
       !> Configuration parameters of Voce hardening law. 
@@ -74,7 +75,7 @@ contains
                   if(NLIST.eq.1) write (IMP,101)
        101  format (' ALG0 - FTAU - reading data - TAU-III-S must be larger than TAU-III-1',/, &
                     'also, THETA-III-1 must be larger than THETA-T')
-                  stop
+                  call terminate(stopcode_runtimeerror)
 #endif
             endif
             p%THIII=c%THIII1/(1.D0-c%TIII1/c%TIIIS)

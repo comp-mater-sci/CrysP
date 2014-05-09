@@ -2,6 +2,7 @@
 #include "altayRCM.fpp"
 #endif
       module altayTBH
+      use altayMiscutils, only: terminate, stopcode_runtimeerror
       
       contains
       
@@ -56,7 +57,7 @@ C
       if (N.gt.NDIM) then
 #ifndef ALTAY_SUBROUTINE
                        write (*,100) N,NDIM
-                      stop
+                      call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'TBH','Bad input: N>NDIM',RCM_RTN)
 #endif      
@@ -101,7 +102,7 @@ C     Calculation of stress, using generalised Schmid law
       end if
       write (*,250) 
  250  format (' TBH is looping')
-      stop
+      call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'TBH','Too many iterations.',RCM_RTN)
 #endif
@@ -254,7 +255,7 @@ C     Calculate column Mprime-s*, called Aprime
       if (in.eq.0) then
 #ifndef ALTAY_SUBROUTINE
                      write (*,101) 
-                     stop
+                     call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
 #endif      

@@ -3,6 +3,7 @@
 #endif
 
       module altaySliprate
+      use altayMiscutils, only: terminate, stopcode_runtimeerror
 
       contains
       
@@ -347,7 +348,7 @@ C 915  format (6D15.3)
          write (IMP,100)
          end if
          write (*,100)
-         stop
+         call terminate(stopcode_runtimeerror)
 #else
          RCM_RAISE(1,'STORE',
      1   'Too small dimension NSTOR in SLIPRAT',RCM_RTN)

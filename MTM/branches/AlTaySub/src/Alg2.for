@@ -2,6 +2,7 @@
 #include "altayRCM.fpp"
 #endif
       module altayAlgorithms
+      use altayMiscutils, only: terminate, stopcode_runtimeerror
       
       contains
       
@@ -309,7 +310,7 @@ C
       write (*,110) (e(ii,jj),jj=1,3)
   110 format (3f16.8)
    50 continue
-      stop
+      call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'eigenv','The input tensor is not symmetric',RCM_RTN)
 #endif
@@ -467,7 +468,7 @@ c
 #ifndef ALTAY_SUBROUTINE
       write (*,100)
   100 format(' Subroutine CANONI - 2 Roots seem to be complex')
-      stop
+      call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
 #endif      

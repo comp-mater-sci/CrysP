@@ -3,6 +3,7 @@
 #endif
       module altayTaylor
       use altayAlgorithms
+      use altayMiscutils, only: terminate, stopcode_runtimeerror
       
       integer,parameter,private :: N = 5, N1 = N + 1 
       
@@ -69,7 +70,7 @@ C
       end if
  211  FORMAT (1H ,I4,10X,2I5,10X,5I5)
 #ifndef ALTAY_SUBROUTINE
-      IF (I.NE.0) STOP
+      IF (I.NE.0) call terminate(stopcode_runtimeerror)
 #else
       if (I.NE.0) then
       RCM_RAISE(1,'TAYLOR','Improper slip system set',RCM_RTN)
@@ -83,7 +84,7 @@ C
             if(NLIST.eq.1) then
                   write (IMP,5001) M11,MMAX
             end if
-            stop
+            call terminate(stopcode_runtimeerror)
 #else
             RCM_RAISE(1,'TAYLOR','Too large slip system set',RCM_RTN)
 #endif
@@ -162,7 +163,7 @@ C     Normalisation of TDC (which is used in CLUSTER1 in PANCAK2)
          if(NLIST.eq.1) then
          write (IMP,205) X
          end if
-         stop
+         call terminate(stopcode_runtimeerror)
 #else
          RCM_RAISE(1,'TAYLOR',
      &  'Symmetric part of the strain step is too small',RCM_RTN)
@@ -186,7 +187,7 @@ C
       end if                                                   
  202  FORMAT (' TAYLOR - SUM OF DIAGONAL ELEMENTS OF DISPLACEMENT GRADIE
      1NT MUST BE ZERO')                                                 
-      STOP                                                              
+      call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'TAYLOR',
      &'Non-zero trace of the displacement gradient',RCM_RTN)
@@ -431,7 +432,7 @@ C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
       end if                                              
  107  FORMAT (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,
      1'   SHOULD BE LESS THAN 1')                                       
-       STOP
+       call terminate(stopcode_runtimeerror)
 #else       
       RCM_RAISE(1,'TAYLR1',
      x'Total volume fraction of twins exceeds unity',RCM_RTN)
@@ -494,7 +495,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
  106  FORMAT (1H ,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBL
      1EM')
 #ifndef ALTAY_SUBROUTINE
-  52  STOP
+  52  call terminate(stopcode_runtimeerror)
 #else
   52  RCM_RAISE(1,'TAYLR1',
      x'No upper limit for linear programming problem',RCM_RTN)

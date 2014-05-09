@@ -2,6 +2,7 @@
 #include "altayRCM.fpp"
 #endif
       module altayPancake
+      use altayMiscutils, only: terminate, stopcode_runtimeerror
       
       contains
       
@@ -80,7 +81,7 @@ C     NRL= number of relaxations    NGR= number of grains
       if (laml.ne.1.and.laml.ne.2) then
 #ifndef ALTAY_SUBROUTINE
       write(*,*) 'laml=', laml
-      stop
+      call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'Pancak2','Wrong selection of lamels',RCM_RTN)
 #endif      
@@ -288,7 +289,7 @@ C
       write (*,221) IPR,IOR,ISTP,NBLOC
  221  format (' Pancak2 ',
      1 ' IPR IOR, ISTP, NBLOC=',4I5)
-      if (IPR.ge.4) stop 
+      if (IPR.ge.4) call terminate(stopcode_runtimeerror) 
 #else
       RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
 #endif
@@ -361,7 +362,7 @@ C
  222     format (' Pancak2 222 - Problem with TBH',/,
      1   ' IPR IOR, ISTP, NBLOC=',4I5)
 #ifndef ALTAY_SUBROUTINE
-          stop  
+          call terminate(stopcode_runtimeerror)  
 #else
           RCM_RAISE(1,'Pancak2','Problem with TBH',RCM_RTN)
 
@@ -497,7 +498,7 @@ C 912  format (' NACTIV, i',2I5)
                                      write (IMP,306)
                            end if
                            write (*,306)
-                           stop
+                           call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'Pancak2','Too many active slip systems',RCM_RTN)
 #endif                        
@@ -510,7 +511,7 @@ C 912  format (' NACTIV, i',2I5)
                                      write (IMP,307)
                            end if
                            write (*,307)
-                           stop
+                           call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'Pancak2','No active slip systems found',RCM_RTN)
 #endif
@@ -555,7 +556,7 @@ C  update CRSS
       ccc2=ccc
       elseif(dabs(Cofcos).lt.0.000000001) then
       write(*,*) 'Cofcos=0. Somewhere is worong in the code'
-      stop
+      call terminate(stopcode_runtimeerror)
       else
 c   we only need the component 1 along the imposed strain mode
       dlength2=sqrt(BB(1)*BB(1)+
@@ -602,7 +603,7 @@ c from here we use the new method to update the CRSS
 C  check if it is negative
       if(zeta.lt.0.D0) then
       write(*,*) 'Zeta is negative, somewhere is wrong'
-      stop
+      call terminate(stopcode_runtimeerror)
       endif
       enta1=sqrt(1.D0/zeta)
       enta2=sqrt(zeta)

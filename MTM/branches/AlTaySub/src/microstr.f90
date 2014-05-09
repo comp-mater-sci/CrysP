@@ -3,6 +3,7 @@
 !> Microstructure representation in AlTay
 module altayMesostructure
 use altayAlgorithms
+use altayMiscutils, only: terminate, stopcode_runtimeerror
 implicit none
 
       !> Transformation matrix associated to the grain boundary reference frame 
@@ -337,7 +338,7 @@ contains
 #ifdef ENABLE_CHECK_ORTHORLX         
             if(dabs(dot2).gt.0.0001) then
                   write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
-                  stop
+                  call terminate(stopcode_runtimeerror)
             endif
 #endif
             ! calculate the cosine for relaxation-1
@@ -416,7 +417,7 @@ contains
 #ifdef ENABLE_CHECK_ORTHORLX      
                   if(dabs(dot2).gt.0.0001) then
                         write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
-                        stop
+                        call terminate(stopcode_runtimeerror)
                   endif 
 #endif
                   !     
