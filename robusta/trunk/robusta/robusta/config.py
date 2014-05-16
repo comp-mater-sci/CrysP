@@ -28,9 +28,9 @@ defaultIterationLimit = 100             # an number of iterations limit for misc
 
 # ---- Default File Names & Locations [General] ----
 #defaultMaterialDataFolder = '/home/diarmuid/SYNC/LAPTOP_BACKUPS/Backup-laptop my docs-2013-10-25_13-00/home/diarmuid/LAPTOP/all/Code_and_Packages/Mine/packages/Copyright_KUL/robusta/robusta/test'
-root = os.path.join('C:\\','Users','Administrator','Documents','all','Code_and_Packages','working_copies','robusta')
+#root = os.path.join('C:\\','Users','Administrator','Documents','all','Code_and_Packages','working_copies','robusta')
 #root = '/home/diarmuid/LAPTOP'
-#root = '/home/diarmuid/WORKING_COPIES/robusta'
+root = '/home/diarmuid/WORKING_COPIES/robusta'
 defaultMaterialDataFolder = os.path.join(root, 'robusta','data')
 defaultMaterialFile = 'AA6016_1mm_0deg.txt'
 
