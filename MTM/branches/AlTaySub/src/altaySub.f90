@@ -52,7 +52,7 @@ contains
       use altayMiscutils
       use altayMesostructure
 #ifdef PEBP_ENABLED
-      use altayKOST1xState
+      use AltayDSHstate
 #endif
       implicit none
       !
@@ -202,7 +202,7 @@ contains
       use altayMesostructure, only: MICROSTR_finalize
       use altayDynfil
 #ifdef PEBP_ENABLED
-      use altayKOST1xState
+      use AltayDSHstate
 #endif
       implicit none
       integer,intent(out)                 :: info     !< exit code (0 on success)
@@ -334,7 +334,7 @@ contains
       use altayCurAccess
       use altayConfig, only: acnf,astate
       use altayHard, only: hard_BP,hard_PEBPscrew,hard_PEBPloop
-      use altayKOST1xState
+      use AltayDSHstate
       use altayMiscutils
       implicit none
       integer,intent(out)           :: info

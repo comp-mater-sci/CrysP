@@ -28,9 +28,10 @@ C     USING THE ALAMEL MODEL
       use altayHard
       use altayTaylor
       use altayAlgorithms
+      !use altayHardLaw_Simple
 #ifdef PEBP_ENABLED
-      use altayKOST1xState
-      use KOST1x
+      use AltayDSHstate
+      use altayHardLaw_DSH
 #endif
 #ifdef ALTAY_SUBROUTINE
       use altayConfig
@@ -54,7 +55,7 @@ C
      1 gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),
      2 CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),
      3 fi1b(2),phib(2),fi2b(2),
-     4 fk1b(2,96,2),NGR,NRL,ENTA,ITFMAS
+     4 NGR,NRL,ENTA,ITFMAS
       common /CEIGEN/ IOR,ISTP,NBLOC
       common /PE/ Fmicro !Temporary!!!      
       DIMENSION F(3,3),F1(3,3),GAXES(3),GEULR(3),TG(3,3),
@@ -185,30 +186,11 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
       if (NFILE1.eq.1) call CURwriteTitle(IMP1,TITEL,info)
   98  format (A)      
 C     read the parameters of the work hardening model
-      call readHardParams(KLEC,KOST,info)
-      TAU=1.D0
+      call InitModuleAltayHard(KLEC,KOST,info)
       CALL TAYLOR(1,KOST,EPS,F)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
-      select case(KOST)
-      case(hard_voce)
-            do L=1,NGR
-                  do i=1,M11
-                        do j=1,2   
-                              FK1b(j,i,L)=FK1(j,i)
-                        enddo
-                  enddo
-            enddo
-      case(hard_none)
-            do L=1,NGR
-                  do i=1,M11
-                        do j=1,2   
-                              FK1b(j,i,L)=1.D0
-                        enddo
-                  enddo
-            enddo
-      end select      
 #ifndef ALTAY_SUBROUTINE
       if (NFILTW.eq.1) then
           write (IMP3,98) TITEL
@@ -410,7 +392,6 @@ C
       fi1b(L)=fi10b(L)*convf
       PHIb(L)=PHI0b(L)*convf
       fi2b(L)=fi20b(L)*convf
-C      IF (NUNGL.NE.0) READ(NUNGL) ((FK1b(K,J,L),J=1,M11),K=1,2)
   80  continue
       laml1=laml1+1
       if (laml1.gt.NGR) laml1=1

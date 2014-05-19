@@ -28,8 +28,8 @@
 !> Basic configuration of AlTay in a form of formalized data structures.
 module altayConfig
 ! Import configuration structures from AlTay modules
-use altayHardVoce, only: VoceConfig
-use KOST1x, only: PAR
+use altayHardLaw_Simple, only: VoceConfig
+use altayHardLaw_DSH, only: PAR
 use altayTexFormatConstants
 
 implicit none
@@ -152,7 +152,7 @@ implicit none
             integer                                   :: ipr = 0
             !> (SIMUL) NRES (Make output for stresses with per-grain resolution)
             integer                                   :: nres = 0
-            !> (SIMUL) NPEBP (Make state variable file for BP (KOST1x) model)
+            !> (SIMUL) NPEBP (Make state variable file for DSH model)
             integer                                   :: npebp = 0
             !> (SIMUL) NMSS (output of macroscopic homogenized strain-stress)
             integer                                   :: nmss = 0
@@ -180,7 +180,7 @@ implicit none
             !> Parameters of Voce hardening law.
             type(VoceConfig)        :: VoceCnf
 
-            !> Parameters of PEBP models (KOST1x)
+            !> Parameters of Dislocation Substructural Hardening models (PEBP variants)
             type(PEBPConfig)        :: PEBPCnf
             
       end type

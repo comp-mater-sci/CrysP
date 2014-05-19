@@ -1,8 +1,8 @@
 !
 ! $Id$
 !
-module altayKOST1xState
-use KOST1x
+module AltayDSHstate
+use altayHardLaw_DSH
 implicit none
 
       type(StatVar),allocatable,dimension(:),private,save    :: KS_state

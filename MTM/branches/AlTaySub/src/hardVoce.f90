@@ -1,10 +1,18 @@
 
-!> Implementation of Voce hardening law
-module altayHardVoce
+!> Implementation of 'simple' hardening laws, i.e. with only 1 internal variable: accumulated slip in grain.
+!> Available laws:
+!>  - DoubleVoce 
+module altayHardLaw_Simple
 use altayMiscutils, only: terminate, stopcode_runtimeerror
 implicit none
+      
+      integer, private, parameter :: &
+            IDdoublevoce  =      0
 
-      !> Configuration parameters of Voce hardening law. 
+      
+      integer, private, save :: hardID = -1
+
+      !> Configuration parameters of DoubleVoce hardening law. 
       !> Some 'reasonable' defaults are used.
       type :: VoceConfig
             double precision  :: TIII1  = 1.486     
@@ -15,20 +23,28 @@ implicit none
       end type
 
 
-      !> Pre-calculated parameters of Voce hardening law.
+      !> Parameters of DoubleVoce hardening law, private to this module.
       type :: VoceParams
-            double precision  :: GAMMAT = 0.0
-            double precision  :: THIII  = 0.0
-            double precision  :: ETA    = 0.0
-            double precision  :: TAUT   = 0.0
-            double precision  :: THIV   = 0.0
-            double precision  :: TIV0   = 0.0
+            double precision  :: TIII1  = 0.D0     
+            double precision  :: TIIIS  = 0.D0     
+            double precision  :: TIVS   = 0.D0 
+            double precision  :: GAMMAT = 0.D0
+            double precision  :: THIII  = 0.D0
+            double precision  :: ETA    = 0.D0
+            double precision  :: TAUT   = 0.D0
+            double precision  :: THIV   = 0.D0
+            double precision  :: TIV0   = 0.D0
       end type
 
-      ! Two instances of the model parameters:
-      type(VoceConfig),save      :: voceCnf
+
+      ! Instances of the model parameters:
+      type(VoceConfig),public,save      :: voceCnf
       
-      type(VoceParams),save      :: vocePar
+      type(VoceParams),private,save     :: vocePar
+      
+      interface InitModuleAltayHardLaw_Simple !Generic Interface
+        module procedure init_voce
+      end interface      
       
 contains
 
@@ -59,13 +75,13 @@ contains
 
 
 
-      subroutine precalculateVoceParams(c,p,info)
+      subroutine init_voce(c,info)
       use altayIOConfig
       implicit none
       type(VoceConfig),intent(in)         :: c
-      type(VoceParams),intent(out)        :: p
       integer,intent(out)                 :: info
-      ! Calculation of transition-gamma
+      !
+      type(VoceParams) :: p !trial parameter set
       info = -1
       ! Check validity of inputs:
             if (.not.(c%TIIIS.gt.c%TIII1.and.c%THIII1.gt.c%THT)) then
@@ -73,7 +89,7 @@ contains
                   return
 #else
                   if(NLIST.eq.1) write (IMP,101)
-       101  format (' ALG0 - FTAU - reading data - TAU-III-S must be larger than TAU-III-1',/, &
+       101  format ('TAU-III-S must be larger than TAU-III-1',/, &
                     'also, THETA-III-1 must be larger than THETA-T')
                   call terminate(stopcode_runtimeerror)
 #endif
@@ -81,6 +97,7 @@ contains
             p%THIII=c%THIII1/(1.D0-c%TIII1/c%TIIIS)
             if ((abs(p%THIII) < epsilon(0.D0)) .or. (abs(c%TIIIS) < epsilon(0.D0))) return      
             p%ETA=c%THT/p%THIII
+            ! Calculation of transition-gamma
             p%GAMMAT=-c%TIIIS*LOG(p%ETA*c%TIIIS/(c%TIIIS-c%TIII1))/p%THIII
             ! Calculation of transition TAU
             p%TAUT=c%TIIIS-(c%TIIIS-c%TIII1)*exp(-p%THIII*p%GAMMAT/c%TIIIS)
@@ -88,22 +105,34 @@ contains
             p%THIV=c%THT/(1.D0-p%TAUT/c%TIVS)
             ! Calculation of TAU-IV-0
             p%TIV0=c%TIVS+(p%TAUT-c%TIVS)*exp(p%THIV*p%GAMMAT/c%TIVS)
-            info = 0
+            ! 
+            p%TIII1= c%TIII1     
+            p%TIIIS= c%TIIIS     
+            p%TIVS = c%TIVS
             !      
             if(NLIST.eq.1) write (IMP,102) p%GAMMAT,p%TAUT,p%THIV,p%TIV0
        102  format (' GAMMA-T, TAU-T, THETA-IV-0, TAU-IV-0',/,4d15.5)
+      ! Set local identifier for hardening law:
+      hardID = IDdoublevoce
+      ! Save the trial parameter set p
+      vocePar=p
+      ! Succesful initialization:
+      info = 0
       end subroutine
 
       
-      double precision function hardVoceFtau(GAMMA) result(FTAU)
+      double precision function hardFtau(GAMMA) result(TAU)
       implicit none
       double precision,intent(in)         :: GAMMA
-      ! Implementation of the VOCE-model
-      if (GAMMA.le.vocePar%GAMMAT) then
-            FTAU=voceCnf%TIIIS-(voceCnf%TIIIS-voceCnf%TIII1)*EXP(-vocePar%THIII*GAMMA/voceCnf%TIIIS)
-      else
-            FTAU=voceCnf%TIVS-(voceCnf%TIVS-vocePar%TIV0)*EXP(-vocePar%THIV*GAMMA/voceCnf%TIVS)
-      endif
+      select case (hardID)
+      case (IDdoublevoce)
+        ! Implementation of the Double-Voce-model
+        if (GAMMA.le.vocePar%GAMMAT) then
+          TAU=vocePar%TIIIS-(vocePar%TIIIS-vocePar%TIII1)*EXP(-vocePar%THIII*GAMMA/vocePar%TIIIS)
+        else
+          TAU=vocePar%TIVS-(vocePar%TIVS-vocePar%TIV0)*EXP(-vocePar%THIV*GAMMA/vocePar%TIVS)
+        endif
+      end select
       end function
       
 end module

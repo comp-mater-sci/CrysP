@@ -20,15 +20,16 @@ C
       use altayHard
       use altayTBH
       use altayAlgorithms
+      !use altayHardLaw_Simple
 #ifdef PEBP_ENABLED
-      use altayKOST1xState
+      use AltayDSHstate
 #endif
       implicit double precision (a-h,o-z)
       COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),
      1 gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),
      2 CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),
      3 fi1b(2),phib(2),fi2b(2),
-     4 fk1b(2,96,2),NGR,NRL,ENTA,ITFMAS
+     4 NGR,NRL,ENTA,ITFMAS
       COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
       COMMON /DOUBLE/ A8(5,96),BB8(5),DELTAT,RHO(5),B5(5)
       common /extra/ A1(10,194),UU(10,10)
@@ -181,31 +182,26 @@ C
   44  continue
       BBVM2(IL)=deltat
       K1=M11*(IL-1)
-C      TLCOST=TLC0
-      if (KOST.eq.hard_voce) then
-         GMMA=GMMAb(IL)
-C         TLCOST=TLCOST*TAU
-      endif
-      TAU=FTAU(GMMA,KOST)
       select case(KOST)
       case(hard_none,hard_voce)
-            DO 92 I=1,M11
-            j=I+K1
-            if (KOST.EQ.hard_voce) then
-                  do jsgn=1,2
-                        CCC(jsgn,j)=FK1b(jsgn,I,IL)*TAU
-                  enddo
+        do I=1,M11
+            !construct CCC
+            if (KOST == hard_none ) then
+              ! CRSS of all slip systems equal to 1. (& not dependent on FK1)
+              CCC= 1.D0 
             else
-                  do jsgn=1,2
-                        CCC(jsgn,j)=1.D0
-                  enddo
-            endif
+              TAU= FTAU(GMMAb(IL),KOST)
+              j=I+K1
+              do jsgn=1,2
+                CCC(jsgn,j)=FK1(jsgn,I) * TAU  
+              enddo
+            end if
 C           set Tau_crit for antitwinning direction equal to
 C           GETAL times Tau_crit for twinning direction 
             if (I.gt.NGL) then
                 CCC(2,j)=CCC(1,j)*GETAL
             endif
-  92        continue
+        end do
 #ifdef PEBP_ENABLED
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
             call KS_getCRSS(IOR,CCC(:,1:M11),info)

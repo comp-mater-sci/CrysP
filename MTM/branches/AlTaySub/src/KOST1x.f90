@@ -1,7 +1,7 @@
 !
 ! $Id$
 !
-      MODULE KOST1x
+      MODULE altayHardLaw_DSH
 !     v1.0 by P. Eyckens, MTM, KU Leuven, 17 July 2012.
 !     v1.1 by P. Eyckens, MTM, and J. Gawad, CS, KU Leuven, 2 August 2012.
 !     v1.2 by J. Gawad, CS, KU Leuven, 13 August 2012:
@@ -146,13 +146,13 @@
             MODULE PROCEDURE  StateDerivedVar_times
       END INTERFACE
       
-      INTERFACE InitModuleKOST1x !Generic Interface
+      INTERFACE InitModuleAltayHardLaw_DSH !Generic Interface
         MODULE PROCEDURE Init_file,Init_PAR
       END INTERFACE
                   
       PUBLIC                    &
       !procedures:  
-            InitModuleKOST1x,   &
+            InitModuleAltayHardLaw_DSH,   &
             ReadPar,            &
             GetInitStatVar,     &
             MakeInc,            &
@@ -171,7 +171,7 @@
             CBBtype,            &
             StateDerivedVars
 
-      !> \name Exit codes from KOST1x subroutines and functions:
+      !> \name Exit codes from altayHardLaw_DSH subroutines and functions:
       !>@{
       integer,PARAMETER,PUBLIC :: KS_OK = 0           !< OK
       integer,PARAMETER,PUBLIC :: KS_Error = -1       !< General error (not covered by any specific error code).
@@ -322,14 +322,14 @@
 
       CONTAINS
 
-      !> Initialization of KOST1x.
+      !> Initialization of altayHardLaw_DSH.
       !>
       !> \return This procedure returns an error code (iError):  
       !>    * KS_OK : no error
       !>    * KS_ErrBadValue : incorrect value of KOSTtry for the inputted parameter-type
       !>    * KS_ErrOutOfRange : (at least one) parameter out of boundaries
       !>    * KS_ErrIO : slipsystem file (read from LEC) does not meet requirements about its format
-      !> \note CONTAINed by MODULE KOST1x
+      !> \note CONTAINed by MODULE altayHardLaw_DSH
       integer FUNCTION Init_PAR(Ptry,KOSTtry,LEC) result(iError)
       TYPE(PAR),INTENT(IN)   :: Ptry    !proposed parameter set
       integer    ,INTENT(IN) :: KOSTtry !proposed value of KOST
@@ -454,7 +454,7 @@
 
 
 
-      !CONTAINed by MODULE KOST1x:
+      !CONTAINed by MODULE altayHardLaw_DSH:
       integer FUNCTION Init_file(inunit,KOST,LEC) result(info)
       implicit none
       integer,intent(in)      :: inunit
@@ -479,7 +479,7 @@
 
 
       
-      !CONTAINed by MODULE KOST1x:
+      !CONTAINed by MODULE altayHardLaw_DSH:
       integer FUNCTION ReadPar(inunit,KOST,Pf)
       implicit none
       integer,intent(in)      :: inunit   !< IO unit number
@@ -513,7 +513,7 @@
    
       
 
-      !CONTAINed by MODULE KOST1x:
+      !CONTAINed by MODULE altayHardLaw_DSH:
       SUBROUTINE GetInitStatVar(SV0,iError)
       !This procedure returns:
       ! state variables for an annealed & undeformed substructure (SV0)
@@ -543,7 +543,7 @@
 
 
 
-      !CONTAINed by MODULE KOST1x:
+      !CONTAINed by MODULE altayHardLaw_DSH:
       SUBROUTINE MakeInc(SVa,sliprate,deltaT,SVb,iError)
       !This procedure requires as input:
       ! state variable at beginning of increment (SVa)
@@ -918,7 +918,7 @@
       
       
 
-      !CONTAINed by MODULE KOST1x:
+      !CONTAINed by MODULE altayHardLaw_DSH:
       FUNCTION F_CRSS(SV) 
       TYPE(StatVar), INTENT(IN) :: SV 
       double precision, DIMENSION(2,24):: F_CRSS !OUT 
@@ -966,7 +966,7 @@
 
 
 
-      !CONTAINed by MODULE KOST1x:
+      !CONTAINed by MODULE altayHardLaw_DSH:
       !> Perform an IO formatted read operation on StatVar 
       !>
       !> \param dummy if true, the function performs a fake read operation of by simply skipping the same number of lines
@@ -1015,7 +1015,7 @@
 
       
       
-      !CONTAINed by MODULE KOST1x:
+      !CONTAINed by MODULE altayHardLaw_DSH:
       integer FUNCTION WriteSVfile(unit,SV) result(iError)
       integer,      INTENT(IN)  :: unit
       TYPE(StatVar),INTENT(IN)  :: SV
@@ -1050,7 +1050,7 @@
 
       
       
-      !CONTAINed by MODULE KOST1x:
+      !CONTAINed by MODULE altayHardLaw_DSH:
       integer function WriteHeadSVfile(unit) result(iError)
       integer,intent(in)  :: unit
       !      
@@ -1101,7 +1101,7 @@
       
       
       
-      !CONTAINed by MODULE KOST1x:
+      !CONTAINed by MODULE altayHardLaw_DSH:
       SUBROUTINE GetStateDerivedVar(SV,SDV,iError)
       TYPE(StatVar),   INTENT(IN)  :: SV
       !> An object of type StateDerivedVars, which contains state-derived variables calculated from SV
@@ -1176,4 +1176,4 @@
       !
       end function
     
-      END MODULE KOST1x
+      END MODULE altayHardLaw_DSH

@@ -115,10 +115,6 @@ C
  218  format (i4,' B2',6f10.7,' G',f10.7)
  505  CONTINUE
  504  CONTINUE
-C      IF (KOST.EQ.1) GOTO 502
-C      DO 503 I=1,M11
-C      do 503 J=1,2                                                    
-C 503  FK1(J,I)=1.
  502  do 30 j=1,194
       do 30 i=1,10
       A2(i,j)=0.0
@@ -248,12 +244,11 @@ C 1235 format (' Just after Pancak2')
       use altayConfig, only: astate
 #endif
 #ifdef PEBP_ENABLED      
-      use altayKOST1xState, KOST => iKOST
+      use AltayDSHstate, KOST => iKOST
 #endif
       use altayIOConfig
       use altaySliprate
-      use altayHard, only: hard_none, hard_voce, hard_BP, 
-     &                     hard_PEBPscrew, hard_PEBPloop
+      use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
       implicit double precision (a-h,o-z)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,DG(3,3),
      1ITW,GEWF

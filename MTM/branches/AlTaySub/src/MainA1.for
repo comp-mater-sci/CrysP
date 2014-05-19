@@ -6,7 +6,7 @@ C
       PROGRAM MAINA1
       use altayMiscutils
       use altayIOConfig
-      use altayKOST1xState
+      use AltayDSHstate
       use altayDynfil
       use altayMesostructure
       use altaySimul
@@ -174,8 +174,8 @@ C
             endif
       endselect
  66   format(L2,I5,A)      
- 600  format('Cannot initialize KOST1x state variables')
- 601  format('Cannot read KOST1x state variables from file: ',A)
+ 600  format('Cannot initialize DSH state variables')
+ 601  format('Cannot read DSH state variables from file: ',A)
 #endif
       ! 
       

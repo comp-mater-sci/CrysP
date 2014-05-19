@@ -2,8 +2,12 @@
       module altayHard
       implicit none
       
-      
-      integer,parameter :: hard_none = 0, hard_voce = 1, hard_BP =11, hard_PEBPscrew = 12, hard_PEBPloop = 13
+      integer,parameter ::          &
+            hard_none =          0, & 
+            hard_voce =          1, &
+            hard_BP =           11, &
+            hard_PEBPscrew =    12, &
+            hard_PEBPloop =     13
       
       ! Workaround: KOST that is not accessible other ways
       integer,save :: KOST_global = 0
@@ -11,14 +15,14 @@
       contains
       
       
-      subroutine readHardParams(inunit,KOST,info)
+      subroutine InitModuleAltayHard(inunit,KOST,info)
       use altayIOConfig
-      use altayHardVoce
+      use altayHardLaw_Simple
 #ifdef ALTAY_SUBROUTINE
       use altayConfig
 #endif
 #ifdef PEBP_ENABLED
-      use KOST1x
+      use altayHardLaw_DSH
 #endif
       implicit none
       integer,intent(in)      :: inunit
@@ -37,14 +41,15 @@
             call readVoceConfig(inunit,voceCnf,info)
             if (info /= 0) return
 #endif
-            call precalculateVoceParams(voceCnf,vocePar,info)
+            call InitModuleAltayHardLaw_Simple(voceCnf,info)
+
       !
 #ifdef PEBP_ENABLED     
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
 #ifdef ALTAY_SUBROUTINE
-            info = InitModuleKOST1x(acnf%hardening%PEBPCnf%params,KOST,LEC)
+            info = InitModuleAltayHardLaw_DSH(acnf%hardening%PEBPCnf%params,KOST,LEC)
 #else            
-            info = InitModuleKOST1x(inunit,KOST,LEC)
+            info = InitModuleAltayHardLaw_DSH(inunit,KOST,LEC)
 #endif
 #endif
       !
@@ -62,7 +67,7 @@
       
       
       double precision function FTAU(GAMMA,KOST)
-      use altayHardVoce
+      use altayHardLaw_Simple
       implicit none
       double precision,intent(in)   :: GAMMA
       integer,intent(in)            :: KOST
@@ -71,7 +76,7 @@
       case(hard_none,hard_BP,hard_PEBPscrew,hard_PEBPloop)
             FTAU = 1.D0
       case(hard_Voce)
-            FTAU = hardVoceFtau(GAMMA)
+            FTAU = hardFtau(GAMMA)
       case default
             FTAU = 1.D0
       end select
