@@ -5,6 +5,8 @@
       integer,parameter ::          &
             hard_none =          0, & 
             hard_voce =          1, &
+            hard_swiftK =        2, &
+            hard_swiftS =        3, &
             hard_BP =           11, &
             hard_PEBPscrew =    12, &
             hard_PEBPloop =     13
@@ -42,7 +44,26 @@
             if (info /= 0) return
 #endif
             call InitModuleAltayHardLaw_Simple(voceCnf,info)
-
+      !
+      case(hard_swiftK)
+            ! Swift-K hardening
+#ifdef ALTAY_SUBROUTINE
+            !swiftKCnf = ??? <-------------- 
+#else
+            call readSwiftKConfig(inunit,swiftKCnf,info)
+            if (info /= 0) return
+#endif
+            call InitModuleAltayHardLaw_Simple(swiftKCnf,info)
+      !
+      case(hard_swiftS)
+            ! Swift-S hardening
+#ifdef ALTAY_SUBROUTINE
+            !swiftSCnf = ??? <-------------- 
+#else
+            call readSwiftSConfig(inunit,swiftSCnf,info)
+            if (info /= 0) return
+#endif
+            call InitModuleAltayHardLaw_Simple(swiftSCnf,info)
       !
 #ifdef PEBP_ENABLED     
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
@@ -75,7 +96,7 @@
       select case(KOST)
       case(hard_none,hard_BP,hard_PEBPscrew,hard_PEBPloop)
             FTAU = 1.D0
-      case(hard_Voce)
+      case(hard_voce,hard_swiftK,hard_swiftS)
             FTAU = hardFtau(GAMMA)
       case default
             FTAU = 1.D0

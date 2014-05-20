@@ -1,13 +1,16 @@
 
-!> Implementation of 'simple' hardening laws, i.e. with only 1 internal variable: accumulated slip in grain.
+!> Implementation of 'simple' hardening laws TAU(GAMMA), i.e. with only 1 internal variable: accumulated slip in grain GAMMA.
 !> Available laws:
 !>  - DoubleVoce 
+!>  - SwiftK: Swift law with K-factor     :: TAU = K * (gamma0+GAMMA)**n
+!>  - SwiftS: Swift law with initial crsS :: TAU = crss0 * (1.+GAMMA/gammaA0)**n
 module altayHardLaw_Simple
 use altayMiscutils, only: terminate, stopcode_runtimeerror
 implicit none
       
       integer, private, parameter :: &
-            IDdoublevoce  =      0
+            IDdoublevoce  =      0,  &
+            IDswift =            1
 
       
       integer, private, save :: hardID = -1
@@ -22,7 +25,22 @@ implicit none
             double precision  :: THT    = 0.55
       end type
 
+      !> Configuration parameters of SwiftK hardening law. 
+      !> Some 'reasonable' defaults are used.
+      type :: SwiftKConfig
+            double precision  :: K      = 398.1D0 !-> crss0 = 100.     
+            double precision  :: gamma0 = 1.D-3     
+            double precision  :: n      = 0.2D0 
+      end type
 
+      !> Configuration parameters of SwiftS hardening law. 
+      !> Some 'reasonable' defaults are used.
+      type :: SwiftSConfig
+            double precision  :: crss0  = 100.0D0      
+            double precision  :: gamma0 = 1.D-3     
+            double precision  :: n      = 0.2D0 
+      end type
+      
       !> Parameters of DoubleVoce hardening law, private to this module.
       type :: VoceParams
             double precision  :: TIII1  = 0.D0     
@@ -36,14 +54,23 @@ implicit none
             double precision  :: TIV0   = 0.D0
       end type
 
+      !> Parameters of Swift hardening law, private to this module.
+      type :: SwiftParams
+            double precision  :: K      = 0.D0     
+            double precision  :: gamma0 = 0.D0     
+            double precision  :: n      = 0.D0
+      end type
 
-      ! Instances of the model parameters:
+      ! Instances of the model configurations/parameters:
       type(VoceConfig),public,save      :: voceCnf
-      
+      type(SwiftKConfig),public,save    :: swiftKCnf
+      type(SwiftSConfig),public,save    :: swiftSCnf
+      !
       type(VoceParams),private,save     :: vocePar
+      type(SwiftParams),private,save    :: swiftPar
       
       interface InitModuleAltayHardLaw_Simple !Generic Interface
-        module procedure init_voce
+        module procedure init_voce, init_swiftK, init_swiftS
       end interface      
       
 contains
@@ -73,7 +100,55 @@ contains
       !
       end subroutine
 
+      subroutine readSwiftKConfig(inunit,c,info)
+      use altayIOConfig
+      implicit none
+      integer,intent(in)                  :: inunit
+      type(SwiftKConfig),intent(out)      :: c
+      integer,intent(out)                 :: info
+      !
+      info = -1
+      ! Read the parameters of the work hardening model:
+      read (inunit,99,iostat=info) c%K
+      if (info /= 0) return
+      read (inunit,99,iostat=info) c%gamma0
+      if (info /= 0) return
+      read (inunit,99,iostat=info) c%n
+      if (info /= 0) return      
+  99        format (3f10.0)
+      if(NLIST.eq.1) write (IMP,200) c%K,c%gamma0,c%n
+ 200        format(' Work hardening model = SWIFT-K model',/, &
+                   ' K      = ',f20.8,/, &
+                   ' gamma0 = ',f20.8,/, &
+                   ' n      = ',f20.8)
+      info = 0
+      !
+      end subroutine
 
+      subroutine readSwiftSConfig(inunit,c,info)
+      use altayIOConfig
+      implicit none
+      integer,intent(in)                  :: inunit
+      type(SwiftSConfig),intent(out)      :: c
+      integer,intent(out)                 :: info
+      !
+      info = -1
+      ! Read the parameters of the work hardening model:
+      read (inunit,99,iostat=info) c%crss0
+      if (info /= 0) return
+      read (inunit,99,iostat=info) c%gamma0
+      if (info /= 0) return
+      read (inunit,99,iostat=info) c%n
+      if (info /= 0) return      
+  99        format (3f10.0)
+      if(NLIST.eq.1) write (IMP,200) c%crss0,c%gamma0,c%n
+ 200        format(' Work hardening model = SWIFT-S model',/, &
+                   ' crss0  = ',f20.8,/, &
+                   ' gamma0 = ',f20.8,/, &
+                   ' n      = ',f20.8)
+      info = 0
+      !
+      end subroutine
 
       subroutine init_voce(c,info)
       use altayIOConfig
@@ -120,6 +195,71 @@ contains
       info = 0
       end subroutine
 
+      subroutine init_swiftK(c,info)
+      use altayIOConfig
+      implicit none
+      type(swiftKConfig),intent(in)       :: c
+      integer,intent(out)                 :: info
+      !
+      type(SwiftParams) :: p
+      info = -1
+      ! Check validity of inputs:
+      if (.not.(c%K.gt.0.D0 .and. c%gamma0.gt.0.D0 .and. c%n.gt.0.D0)) then
+#ifdef ALTAY_SUBROUTINE
+            return
+#else
+            if(NLIST.eq.1) write (IMP,101)
+       101      format ('All 3 input parameters of SwiftK must be greater than 0.')
+            call terminate(stopcode_runtimeerror)
+#endif
+      endif
+      ! Assign Swift parameters
+      p%K=c%K
+      p%gamma0=c%gamma0
+      p%n=c%n
+      ! 
+      if(NLIST.eq.1) write (IMP,103) p%K,p%gamma0,p%n
+       103  format ('Swift: K, gamma0, n: ',/,3d15.5)
+      ! Set local identifier for hardening law:
+      hardID = IDswift
+      ! Save the trial parameter set p
+      SwiftPar=p
+      ! Succesful initialization:
+      info = 0
+      end subroutine
+
+      subroutine init_swiftS(c,info)
+      use altayIOConfig
+      implicit none
+      type(swiftSConfig),intent(in)       :: c
+      integer,intent(out)                 :: info
+      !
+      type(SwiftParams) :: p
+      info = -1
+      ! Check validity of inputs:
+      if (.not.(c%crss0.gt.0.D0 .and. c%gamma0.gt.0.D0 .and. c%n.gt.0.D0)) then
+#ifdef ALTAY_SUBROUTINE
+            return
+#else
+            if(NLIST.eq.1) write (IMP,101)
+       101      format ('All 3 input parameters of SwiftS must be greater than 0.')
+            call terminate(stopcode_runtimeerror)
+#endif
+      endif
+      ! Assign Swift parameters
+      p%K=c%crss0/(c%gamma0**c%n)
+      p%gamma0=c%gamma0
+      p%n=c%n
+      ! 
+      if(NLIST.eq.1) write (IMP,103) p%K,p%gamma0,p%n
+       103  format ('Swift: K, gamma0, n: ',/,3d15.5)
+      ! Set local identifier for hardening law:
+      hardID = IDswift
+      ! Save the trial parameter set p
+      SwiftPar=p
+      ! Succesful initialization:
+      info = 0
+      end subroutine
       
       double precision function hardFtau(GAMMA) result(TAU)
       implicit none
@@ -132,6 +272,8 @@ contains
         else
           TAU=vocePar%TIVS-(vocePar%TIVS-vocePar%TIV0)*EXP(-vocePar%THIV*GAMMA/vocePar%TIVS)
         endif
+      case (IDswift)
+        TAU = swiftPar%K * (swiftPar%GAMMA0+GAMMA)**(swiftPar%n)
       end select
       end function
       

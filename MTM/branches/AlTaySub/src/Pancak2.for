@@ -20,7 +20,6 @@ C
       use altayHard
       use altayTBH
       use altayAlgorithms
-      !use altayHardLaw_Simple
 #ifdef PEBP_ENABLED
       use AltayDSHstate
 #endif
@@ -183,7 +182,7 @@ C
       BBVM2(IL)=deltat
       K1=M11*(IL-1)
       select case(KOST)
-      case(hard_none,hard_voce)
+      case(hard_none,hard_voce,hard_swiftK,hard_swiftS)
         do I=1,M11
             !construct CCC
             if (KOST == hard_none ) then

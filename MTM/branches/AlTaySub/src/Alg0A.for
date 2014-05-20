@@ -28,7 +28,6 @@ C     USING THE ALAMEL MODEL
       use altayHard
       use altayTaylor
       use altayAlgorithms
-      !use altayHardLaw_Simple
 #ifdef PEBP_ENABLED
       use AltayDSHstate
       use altayHardLaw_DSH
