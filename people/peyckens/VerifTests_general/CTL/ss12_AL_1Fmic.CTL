@@ -1,4 +1,4 @@
-ss12_AL_1                          Name of output files (give no extension)
+ss12_AL_1Fmic                          Name of output files (give no extension)
 ..\BCCbp1.pre                             Slip system file
     2 = N-lines: controls input of critical resoved shear stresses
 1.0       1.0       1.0       1.0       1.0       1.0       N-lines for + sense

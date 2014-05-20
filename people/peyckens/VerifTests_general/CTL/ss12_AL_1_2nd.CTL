@@ -1,4 +1,4 @@
-ss12_AL_1                          Name of output files (give no extension)
+ss12_AL_1_2nd                          Name of output files (give no extension)
 ..\BCCbp1.pre                             Slip system file
     2 = N-lines: controls input of critical resoved shear stresses
 1.0       1.0       1.0       1.0       1.0       1.0       N-lines for + sense
@@ -20,9 +20,9 @@ ss12_AL_1                          Name of output files (give no extension)
 DC06F250SM0_BP
 10.00     100.00    100.00      TAU-III-1	TAU-III-s	TAU-IV-s
 235.88    117.94                THETA-1	THETA-T
-    1     (Leesor) Type of data set for input texture (1 for SMT-file)
-..\4grains.SMT                                                    NAME OF INPUT TEXTURE FILE
-    1     (Leesor) Chosen Block (in input data set)
+    2     (Leesor) Type of data set for input texture (1 for SMT-file)
+ss12_AL_1.CUR                             NAME OF INPUT TEXTURE FILE
+    2     (Leesor) Chosen Block (in input data set)
     1     (MainA) If =1: output for this block is required.
  0.0000000 0.0000000 0.0000000
  0.0100000 0.0000000 0.0000000
