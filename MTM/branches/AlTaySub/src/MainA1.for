@@ -10,7 +10,7 @@ C
       use altayDynfil
       use altayMesostructure
       use altaySimul
-      use altayHard,only: KOST_global, hard_BP, hard_PEBPscrew, 
+      use altayHard,only: HardLawID, hard_BP, hard_PEBPscrew, 
      &                    hard_PEBPloop
       use altayTexFormats
       implicit double precision (a-h,o-z)
@@ -32,6 +32,7 @@ C
       COMMON /TEXTUR/ DUM1(27),IDUM1,DG(3,3),ITW,GEWF
       common /CEIGEN/ IOR,ISTP,JBLOC
       common /PE/ Fmicro !Temporary!!!
+      common /tempPE/ crss_ratiosIN(2,96)      
       double precision, dimension(3,3) :: Fmicro
       character(len=pathlength) :: fnam1,fnam2,fnam3,fname_prefix
       character(len=pathlength-4) :: codsim
@@ -102,7 +103,7 @@ C     UNIT LEC = SLIP SYSTEMS
       DO 1 J=1,NLINES                                                   
       K=1+6*(J-1)                                                       
       L=K+5                                                             
-      READ(KLEC,98) (FK1(ISIGN,I),I=K,L)                                      
+      READ(KLEC,98) (crss_ratiosIN(ISIGN,I),I=K,L)
   98  FORMAT (6F10.0)
 c 
    1  CONTINUE
@@ -151,7 +152,7 @@ C
 #ifdef PEBP_ENABLED
       ! PEBP model
       NREC = size(DFIL)
-      select case(KOST_global)
+      select case(HardLawID)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
             ! UNIT IMP4 = state variables of PEBP KOST11
             info = KS_openStateFile(IMP4,trim(fname_prefix)//'.BPM','w')
@@ -230,7 +231,7 @@ C
       endif
 #endif
 #if defined(PEBP_ENABLED) && defined(FINALBPM_ENABLED)
-      select case(KOST_global)
+      select case(HardLawID)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
 #ifndef INTERMEDIATEBPM_DISABLED
           if(NFILE0 == 0) info = KS_writeState(IMP4)

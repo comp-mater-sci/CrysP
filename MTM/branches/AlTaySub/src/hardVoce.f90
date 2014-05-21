@@ -261,19 +261,19 @@ contains
       info = 0
       end subroutine
       
-      double precision function hardFtau(GAMMA) result(TAU)
+      double precision function RefTau(GAMMA)
       implicit none
       double precision,intent(in)         :: GAMMA
       select case (hardID)
       case (IDdoublevoce)
         ! Implementation of the Double-Voce-model
         if (GAMMA.le.vocePar%GAMMAT) then
-          TAU=vocePar%TIIIS-(vocePar%TIIIS-vocePar%TIII1)*EXP(-vocePar%THIII*GAMMA/vocePar%TIIIS)
+          RefTau=vocePar%TIIIS-(vocePar%TIIIS-vocePar%TIII1)*EXP(-vocePar%THIII*GAMMA/vocePar%TIIIS)
         else
-          TAU=vocePar%TIVS-(vocePar%TIVS-vocePar%TIV0)*EXP(-vocePar%THIV*GAMMA/vocePar%TIVS)
+          RefTau=vocePar%TIVS-(vocePar%TIVS-vocePar%TIV0)*EXP(-vocePar%THIV*GAMMA/vocePar%TIVS)
         endif
       case (IDswift)
-        TAU = swiftPar%K * (swiftPar%GAMMA0+GAMMA)**(swiftPar%n)
+        RefTau = swiftPar%K * (swiftPar%GAMMA0+GAMMA)**(swiftPar%n)
       end select
       end function
       

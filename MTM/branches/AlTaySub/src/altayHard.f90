@@ -1,18 +1,25 @@
       !> Dispatcher of hardening models
       module altayHard
       implicit none
+
+      !Following identifier sets CRSS == 1.0 for all slip systems (independent of the inputted "crss_ratios"):
+      integer,parameter :: hard_none =          0 
+      !Following identifiers invoke module altayHardLaw_Simple for the reference-crss "RefTau".
+      ! CRSS for each individual slip system is multiplied with inputted "crss_ratios". 
+      ! Note that "RefTau" is work-equivalent to the total slip rate ONLY IF all "crss_ratios" == 1.
+      integer,parameter :: hard_voce =          1, &
+                           hard_swiftK =        2, &
+                           hard_swiftS =        3
+      !Following identifiers invoke module altayHardLaw_DSH, resulting in generally different CRSS for the slip systems.
+      ! The reference-crss "RefTau" is arbitrarily set to 1.
+      integer,parameter :: hard_BP =           11, &
+                           hard_PEBPscrew =    12, &
+                           hard_PEBPloop =     13
       
-      integer,parameter ::          &
-            hard_none =          0, & 
-            hard_voce =          1, &
-            hard_swiftK =        2, &
-            hard_swiftS =        3, &
-            hard_BP =           11, &
-            hard_PEBPscrew =    12, &
-            hard_PEBPloop =     13
+      !Hardening law identifier of the initialized module
+      integer,save :: HardLawID = 0
       
-      ! Workaround: KOST that is not accessible other ways
-      integer,save :: KOST_global = 0
+      double precision,dimension(2,96),private,save :: crss_ratios
       
       contains
       
@@ -27,6 +34,10 @@
       use altayHardLaw_DSH
 #endif
       implicit none
+      !
+      common /tempPE/ crss_ratiosIN !for stand-alone altay
+      double precision,dimension(2,96) :: crss_ratiosIN
+      !
       integer,intent(in)      :: inunit
       integer,intent(in)      :: KOST
       integer,intent(out)     :: info
@@ -80,29 +91,58 @@
       !      
       end select
       !
-      KOST_global = KOST
+      HardLawID = KOST
+      !
+#ifdef ALTAY_SUBROUTINE
+      !following line of code yet to be tested!!!
+      !crss_ratios = acnf%slipsystem%crss_ratios 
+#else            
+      crss_ratios = crss_ratiosIN
+#endif      
       !
       end subroutine
       
-
-      
-      
-      double precision function FTAU(GAMMA,KOST)
+      double precision function FTAU(GAMMA)
       use altayHardLaw_Simple
       implicit none
       double precision,intent(in)   :: GAMMA
-      integer,intent(in)            :: KOST
       !
-      select case(KOST)
+      select case(HardLawID)
       case(hard_none,hard_BP,hard_PEBPscrew,hard_PEBPloop)
             FTAU = 1.D0
       case(hard_voce,hard_swiftK,hard_swiftS)
-            FTAU = hardFtau(GAMMA)
+            FTAU = RefTau(GAMMA)
       case default
             FTAU = 1.D0
       end select
       !
       end function
+      
+      subroutine getCRSS(ior,gamma,CRSSmatrix,info)
+      use altayHardLaw_Simple
+#ifdef PEBP_ENABLED
+      use altayHardLaw_DSH
+      use AltayDSHstate
+#endif
+      implicit none
+      integer,intent(in)                           :: ior
+      double precision,intent(in)                  :: gamma         
+      double precision,dimension(2,96),intent(out) :: CRSSmatrix
+      integer, intent(out)                         :: info
+      !
+      select case(HardLawID)
+      case(hard_none)
+        CRSSmatrix = 1.D0 ! CRSS of all slip systems equal to 1. (& not dependent on crss_ratios)         
+      case(hard_voce,hard_swiftK,hard_swiftS)
+        CRSSmatrix = crss_ratios * FTAU(gamma)
+#ifdef PEBP_ENABLED
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+        call KS_getCRSS(ior,CRSSmatrix,info)
+#endif
+      case default
+        info = -1
+      end select
+      end subroutine
       
       end module
       

@@ -47,6 +47,7 @@ C     first index op PLUMIN = nr. of grain
 C     second index = nr. of relaxation
       dimension spanv(5),XX(194),STRSS(10),BB(10)
       dimension CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194)
+      dimension CRSSmatrix(2,96)
       logical SWRLX(3),bas(194),VALID(194)
 C     rlm is unit relaxation tensor in macroscopic frame
 C     rls and rla in crystal frame (symmetric and anti-sym. part)
@@ -89,7 +90,6 @@ C     NRL= number of relaxations    NGR= number of grains
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (IOR.eq.1) IGrElm=0 
       TWOSQ3=sqrt(2.D0/3.D0)
-      TAU=1.D0
 C     N is number of rows of A1;   NU number of rows of UU2
       TLXX=TOLXX 
       N=5*NGR
@@ -181,40 +181,21 @@ C
   44  continue
       BBVM2(IL)=deltat
       K1=M11*(IL-1)
-      select case(KOST)
-      case(hard_none,hard_voce,hard_swiftK,hard_swiftS)
-        do I=1,M11
-            !construct CCC
-            if (KOST == hard_none ) then
-              ! CRSS of all slip systems equal to 1. (& not dependent on FK1)
-              CCC= 1.D0 
-            else
-              TAU= FTAU(GMMAb(IL),KOST)
-              j=I+K1
-              do jsgn=1,2
-                CCC(jsgn,j)=FK1(jsgn,I) * TAU  
-              enddo
-            end if
-C           set Tau_crit for antitwinning direction equal to
-C           GETAL times Tau_crit for twinning direction 
-            if (I.gt.NGL) then
-                CCC(2,j)=CCC(1,j)*GETAL
-            endif
-        end do
-#ifdef PEBP_ENABLED
-      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-            call KS_getCRSS(IOR,CCC(:,1:M11),info)
-            ! if ALAMEL is chosen: take the CRSS from 
-            ! the neighboring grain
-            if (NGR == 2) then 
-                  ! Put CRSS into the section of CCC that corresponds to
-                  ! the second grain.
-                  ! This code is never executed for the "even" grains,
-                  ! incl. the very last grain, which makes "IOR+1" safe.
-                  call KS_getCRSS(IOR+1,CCC(:,M11+1:NGR*M11),info)
-            endif
-#endif
-      end select
+      !
+      ! Retrieve the CRSSmatrix
+      !    IOR+IL-1  = sequence number of current grain 
+      !    GMMAb(IL) = the GAMMA of current grain
+      call getCRSS(IOR+IL-1,GMMAb(IL),CRSSmatrix,info) 
+      !
+      ! Assign CRSSmatrix to proper section of CCC
+      CCC(:,1+K1:M11+K1)=CRSSmatrix(:,1:M11)  
+      !
+      ! Set Tau_crit for antitwinning direction equal to
+      ! GETAL times Tau_crit for twinning direction       
+      do I=NGL+1,M11 ! this do-loop will only be executed for NTW>0
+          CCC(2,I+K1)=CCC(1,I+K1)*GETAL
+      end do
+      !
 C   92 write (IMP,914) i,j,CCC(1,j),CCC(2,j)
  914  format (' i,j',2i5, ' CCC ',2d16.4)
       DO 15 J=1,5

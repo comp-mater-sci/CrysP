@@ -13,12 +13,6 @@ C  All comments about modifications of the source have been removed
 C for clarity 
 C See "annotated source codes" if you need these
 C
-C     When you set KOST=1, then 2 things will happen:
-C     1) Not the value 1.0, but the values in the input data set will be used
-C        for the critical resolved shear stresse
-C     2) They will be multiplied with TAU, i.e. the reference stress. 
-C        Note that TAU is the stress that is work-equivalent to the total slip rate in the
-C          grain ONLY if all active slip systems hold the same CRSS with value equal to TAU.
 C
       SUBROUTINE SIMUL(IW,EPS,NFILE0)
 C     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
@@ -396,7 +390,7 @@ C
       if (laml1.gt.NGR) laml1=1
       laml=laml1
       GMM0=GMMAb(laml)
-      TAU=FTAU(GMM0,KOST)
+      TAU=FTAU(GMM0)
       fi1=fi1b(laml)
       PHI=PHIb(laml)
       fi2=fi2b(laml)
