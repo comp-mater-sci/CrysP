@@ -48,7 +48,7 @@
 		<Filter Name="Header Files" Filter="fi;fd"/>
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
-		<File RelativePath="..\src\KOST1x.f90"/>
-		<File RelativePath="..\src\KOST1xState.f90"/>
+		<File RelativePath="..\src\altayHardLawDSH.f90"/>
+		<File RelativePath="..\src\altayDSHState.f90"/>
 		<File RelativePath=".\KOST1xTest.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>

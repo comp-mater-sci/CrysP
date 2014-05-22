@@ -1,6 +1,16 @@
-      !> Dispatcher of hardening models
-      module altayHard
-      implicit none
+!> Dispatcher of hardening models
+module altayHard
+use altayHardTypes
+use altayIOConfig, only: LEC
+use altayHardLaw_Simple
+#ifdef ALTAY_SUBROUTINE
+use altayConfig
+#endif
+#ifdef PEBP_ENABLED
+use altayHardLaw_DSH
+use AltayDSHstate
+#endif
+implicit none
 
       !Following identifier sets CRSS == 1.0 for all slip systems (independent of the inputted "crss_ratios"):
       integer,parameter :: hard_none =          0 
@@ -19,27 +29,17 @@
       !Hardening law identifier of the initialized module
       integer,save :: HardLawID = 0
       
-      double precision,dimension(2,96),private,save :: crss_ratios
       
-      contains
+      type(CRSS),private,save :: crss_ratios
+      
+contains
       
       
-      subroutine InitModuleAltayHard(inunit,KOST,info)
-      use altayIOConfig
-      use altayHardLaw_Simple
-#ifdef ALTAY_SUBROUTINE
-      use altayConfig
-#endif
-#ifdef PEBP_ENABLED
-      use altayHardLaw_DSH
-#endif
+      subroutine InitModuleAltayHard(inunit,KOST,crss_init,info)
       implicit none
-      !
-      common /tempPE/ crss_ratiosIN !for stand-alone altay
-      double precision,dimension(2,96) :: crss_ratiosIN
-      !
       integer,intent(in)      :: inunit
       integer,intent(in)      :: KOST
+      type(CRSS),intent(in)   :: crss_init
       integer,intent(out)     :: info
       !
       info = -1
@@ -97,7 +97,7 @@
       !following line of code yet to be tested!!!
       !crss_ratios = acnf%slipsystem%crss_ratios 
 #else            
-      crss_ratios = crss_ratiosIN
+      crss_ratios = crss_init
 #endif      
       !
       end subroutine
@@ -119,30 +119,25 @@
       end function
       
       subroutine getCRSS(ior,gamma,CRSSmatrix,info)
-      use altayHardLaw_Simple
-#ifdef PEBP_ENABLED
-      use altayHardLaw_DSH
-      use AltayDSHstate
-#endif
       implicit none
       integer,intent(in)                           :: ior
       double precision,intent(in)                  :: gamma         
-      double precision,dimension(2,96),intent(out) :: CRSSmatrix
+      type(CRSS),intent(out)                       :: CRSSmatrix
       integer, intent(out)                         :: info
       !
       select case(HardLawID)
       case(hard_none)
-        CRSSmatrix = 1.D0 ! CRSS of all slip systems equal to 1. (& not dependent on crss_ratios)         
+            CRSSmatrix%crss = 1.D0 ! CRSS of all slip systems equal to 1. (& not dependent on crss_ratios)         
       case(hard_voce,hard_swiftK,hard_swiftS)
-        CRSSmatrix = crss_ratios * FTAU(gamma)
+            CRSSmatrix%crss = crss_ratios%crss * FTAU(gamma)
 #ifdef PEBP_ENABLED
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-        call KS_getCRSS(ior,CRSSmatrix,info)
+            call KS_getCRSS(ior,CRSSmatrix,info)
 #endif
       case default
         info = -1
       end select
       end subroutine
       
-      end module
+end module
       

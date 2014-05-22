@@ -6,12 +6,13 @@ C
       PROGRAM MAINA1
       use altayMiscutils
       use altayIOConfig
-      use AltayDSHstate
+      use altayDSHstate
       use altayDynfil
       use altayMesostructure
       use altaySimul
       use altayHard,only: HardLawID, hard_BP, hard_PEBPscrew, 
      &                    hard_PEBPloop
+      use altayHardTypes
       use altayTexFormats
       implicit double precision (a-h,o-z)
 c      Several simulations (usually several-steps each),
@@ -32,7 +33,6 @@ C
       COMMON /TEXTUR/ DUM1(27),IDUM1,DG(3,3),ITW,GEWF
       common /CEIGEN/ IOR,ISTP,JBLOC
       common /PE/ Fmicro !Temporary!!!
-      common /tempPE/ crss_ratiosIN(2,96)      
       double precision, dimension(3,3) :: Fmicro
       character(len=pathlength) :: fnam1,fnam2,fnam3,fname_prefix
       character(len=pathlength-4) :: codsim
@@ -103,7 +103,7 @@ C     UNIT LEC = SLIP SYSTEMS
       DO 1 J=1,NLINES                                                   
       K=1+6*(J-1)                                                       
       L=K+5                                                             
-      READ(KLEC,98) (crss_ratiosIN(ISIGN,I),I=K,L)
+      READ(KLEC,98) (crss_ratiosIN%crss(ISIGN,I),I=K,L)
   98  FORMAT (6F10.0)
 c 
    1  CONTINUE

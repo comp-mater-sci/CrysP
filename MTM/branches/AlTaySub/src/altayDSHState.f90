@@ -1,8 +1,9 @@
 !
 ! $Id$
 !
-module AltayDSHstate
+module altayDSHState
 use altayHardLaw_DSH
+use altayHardTypes
 implicit none
 
       type(StatVar),allocatable,dimension(:),private,save    :: KS_state
@@ -81,16 +82,15 @@ contains
       implicit none
       integer,intent(in)                              :: i        !< Grain identifier
       integer,intent(out)                             :: info
-      
-      double precision,dimension(:,:),intent(out)     :: Mcrss    !< 
+      type(CRSS),intent(out)                          :: Mcrss    !< 
       integer l
       !
             info = KS_ErrBadDims
             if (size(KS_state) < i) return
             !if ( any(shape(Mcrss) /= shape(KS_state(i)%CRSS)) ) return
-            l= ubound(Mcrss,2) ! corresponds to the number of slip systems
+            l = min(24, ubound(Mcrss%crss,2)) ! corresponds to the number of slip systems
             ! Extract the CRSSes
-            Mcrss(:,1:l) = KS_state(i)%CRSS(:,1:l)
+            Mcrss%crss(:,1:l) = KS_state(i)%CRSS(:,1:l)
             info = KS_OK
       !      
       end subroutine

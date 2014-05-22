@@ -18,6 +18,7 @@ C
       use altayMesostructure
       use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
       use altayHard
+      use altayHardTypes
       use altayTBH
       use altayAlgorithms
 #ifdef PEBP_ENABLED
@@ -47,7 +48,7 @@ C     first index op PLUMIN = nr. of grain
 C     second index = nr. of relaxation
       dimension spanv(5),XX(194),STRSS(10),BB(10)
       dimension CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194)
-      dimension CRSSmatrix(2,96)
+      type (CRSS) :: CRSSmatrix
       logical SWRLX(3),bas(194),VALID(194)
 C     rlm is unit relaxation tensor in macroscopic frame
 C     rls and rla in crystal frame (symmetric and anti-sym. part)
@@ -188,7 +189,7 @@ C
       call getCRSS(IOR+IL-1,GMMAb(IL),CRSSmatrix,info) 
       !
       ! Assign CRSSmatrix to proper section of CCC
-      CCC(:,1+K1:M11+K1)=CRSSmatrix(:,1:M11)  
+      CCC(:,1+K1:M11+K1)=CRSSmatrix%crss(:,1:M11)  
       !
       ! Set Tau_crit for antitwinning direction equal to
       ! GETAL times Tau_crit for twinning direction       

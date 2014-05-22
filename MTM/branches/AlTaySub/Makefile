@@ -69,10 +69,11 @@ curAccess.f90 \
 smtAccess.f90 \
 texFormats.f90 \
 texFormatConstants.f90 \
-hardVoce.f90 \
+altayHardLawSimple.f90 \
 altayHard.f90 \
-KOST1x.f90 \
-KOST1xState.f90
+altayHardTypes.f90 \
+altayHardLawDSH.f90 \
+altayDSHState.f90
 
 
 
@@ -251,7 +252,7 @@ $(LIB_OBJS) $(PROG_OBJS) $(TPROG_OBJS)	: Makefile
 #
 #$(LIB_OBJDIR)/.o	: $(addprefix $(LIB_OBJDIR)/, )	
 $(LIB_OBJDIR)/altaySub.o	: $(addprefix $(LIB_OBJDIR)/,altayConfig.o altayRCM.o ioconfig.o texFormats.o) $(RCMINCLUDE)
-$(LIB_OBJDIR)/Alg0A.o		: $(addprefix $(LIB_OBJDIR)/,miscutils.o altayHard.o KOST1x.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o Alg1.o altayRCM.o ioconfig.o) $(RCMINCLUDE)
+$(LIB_OBJDIR)/Alg0A.o		: $(addprefix $(LIB_OBJDIR)/,miscutils.o altayHard.o altayHardLawDSH.o altayDSHState.o curAccess.o Dynfil.o altayConfig.o Alg1.o altayRCM.o ioconfig.o altayHardTypes.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Alg1.o		: $(addprefix $(LIB_OBJDIR)/,miscutils.o altayRCM.o ioconfig.o Alg2.o Pancak2.o Sliprat.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Alg2.o		: $(addprefix $(LIB_OBJDIR)/,miscutils.o altayRCM.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Dynfil.o		: $(addprefix $(LIB_OBJDIR)/,altayConfig.o ioconfig.o miscutils.o Alg2.o)
@@ -263,10 +264,10 @@ $(LIB_OBJDIR)/smtAccess.o	: $(addprefix $(LIB_OBJDIR)/,Dynfil.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/Sliprat.o		: $(addprefix $(LIB_OBJDIR)/,miscutils.o altayRCM.o ioconfig.o)
 $(LIB_OBJDIR)/TBH.o		: $(addprefix $(LIB_OBJDIR)/,miscutils.o altayRCM.o ioconfig.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/texFormats.o	: $(addprefix $(LIB_OBJDIR)/,texFormatConstants.o Dynfil.o curAccess.o cubAccess.o smtAccess.o)
-$(LIB_OBJDIR)/KOST1xState.o	: $(addprefix $(LIB_OBJDIR)/,KOST1x.o)
-$(LIB_OBJDIR)/altayHard.o	: $(addprefix $(LIB_OBJDIR)/,ioconfig.o altayConfig.o hardVoce.o KOST1x.o)
-$(LIB_OBJDIR)/hardVoce.o	: $(addprefix $(LIB_OBJDIR)/,miscutils.o ioconfig.o )
-$(LIB_OBJDIR)/altayConfig.o	: $(addprefix $(LIB_OBJDIR)/,texFormatConstants.o hardVoce.o KOST1x.o)
+$(LIB_OBJDIR)/altayDSHState.o	: $(addprefix $(LIB_OBJDIR)/,altayHardLawDSH.o altayHardTypes.o)
+$(LIB_OBJDIR)/altayHard.o	: $(addprefix $(LIB_OBJDIR)/,ioconfig.o altayConfig.o altayHardLawSimple.o altayHardLawDSH.o)
+$(LIB_OBJDIR)/altayHardLawSimple.o	: $(addprefix $(LIB_OBJDIR)/,miscutils.o ioconfig.o )
+$(LIB_OBJDIR)/altayConfig.o	: $(addprefix $(LIB_OBJDIR)/,texFormatConstants.o altayHardLawSimple.o altayHardLawDSH.o)
 #
 # Explicit dependencies for test program
 #
@@ -274,9 +275,9 @@ $(TPROG_OBJDIR)/mainSub.o	: $(addprefix $(TPROG_OBJDIR)/, testTexAccess.o verify
 #
 # Explicit dependencies for standalone program
 #
-$(PROG_OBJDIR)/MainA1.o		: $(addprefix $(PROG_OBJDIR)/,ioconfig.o texFormats.o) $(RCMINCLUDE)
+$(PROG_OBJDIR)/MainA1.o		: $(addprefix $(PROG_OBJDIR)/,ioconfig.o texFormats.o microstr.o Dynfil.o miscutils.o Alg0A.o altayHard.o altayHardTypes.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/altaySub.o	: $(addprefix $(PROG_OBJDIR)/,altayConfig.o ioconfig.o texFormats.o) $(RCMINCLUDE)
-$(PROG_OBJDIR)/Alg0A.o		: $(addprefix $(PROG_OBJDIR)/,miscutils.o altayHard.o KOST1x.o KOST1xState.o curAccess.o Dynfil.o altayConfig.o Alg1.o ioconfig.o) $(RCMINCLUDE)
+$(PROG_OBJDIR)/Alg0A.o		: $(addprefix $(PROG_OBJDIR)/,miscutils.o altayHard.o altayHardLawDSH.o altayDSHState.o curAccess.o Dynfil.o altayConfig.o Alg1.o ioconfig.o altayHardTypes.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/Alg1.o		: $(addprefix $(PROG_OBJDIR)/,miscutils.o ioconfig.o Alg2.o Pancak2.o Sliprat.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/Alg2.o		: $(addprefix $(PROG_OBJDIR)/,miscutils.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/Dynfil.o		: $(addprefix $(PROG_OBJDIR)/,altayConfig.o ioconfig.o miscutils.o Alg2.o)
@@ -288,10 +289,10 @@ $(PROG_OBJDIR)/smtAccess.o	: $(addprefix $(PROG_OBJDIR)/,Dynfil.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/Sliprat.o	: $(addprefix $(PROG_OBJDIR)/,miscutils.o ioconfig.o)
 $(PROG_OBJDIR)/TBH.o		: $(addprefix $(PROG_OBJDIR)/,miscutils.o ioconfig.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/texFormats.o	: $(addprefix $(PROG_OBJDIR)/,texFormatConstants.o Dynfil.o curAccess.o cubAccess.o smtAccess.o)
-$(PROG_OBJDIR)/KOST1xState.o	: $(addprefix $(PROG_OBJDIR)/,KOST1x.o)
-$(PROG_OBJDIR)/altayHard.o	: $(addprefix $(PROG_OBJDIR)/,ioconfig.o hardVoce.o KOST1x.o)
-$(PROG_OBJDIR)/hardVoce.o	: $(addprefix $(PROG_OBJDIR)/,miscutils.o ioconfig.o )
-$(PROG_OBJDIR)/altayConfig.o	: $(addprefix $(PROG_OBJDIR)/,texFormatConstants.o hardVoce.o KOST1x.o)
+$(PROG_OBJDIR)/altayDSHState.o	: $(addprefix $(PROG_OBJDIR)/,altayHardLawDSH.o altayHardTypes.o)
+$(PROG_OBJDIR)/altayHard.o	: $(addprefix $(PROG_OBJDIR)/,ioconfig.o altayHardLawSimple.o altayHardLawDSH.o)
+$(PROG_OBJDIR)/altayHardLawSimple.o	: $(addprefix $(PROG_OBJDIR)/,miscutils.o ioconfig.o )
+$(PROG_OBJDIR)/altayConfig.o	: $(addprefix $(PROG_OBJDIR)/,texFormatConstants.o altayHardLawSimple.o altayHardLawDSH.o)
 
 
 

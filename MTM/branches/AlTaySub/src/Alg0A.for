@@ -3,7 +3,12 @@
 #endif
       module altaySimul
       use altayMiscutils, only: terminate, stopcode_runtimeerror
-      
+      use altayHardTypes
+
+      ! Initial rations of CRSS, set in MAINA1.
+      ! It is used only by the stand-alone AlTay
+      type(CRSS) :: crss_ratiosIN
+
       contains
       
 C ALAMEL V3
@@ -179,7 +184,7 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
       if (NFILE1.eq.1) call CURwriteTitle(IMP1,TITEL,info)
   98  format (A)      
 C     read the parameters of the work hardening model
-      call InitModuleAltayHard(KLEC,KOST,info)
+      call InitModuleAltayHard(KLEC,KOST,crss_ratiosIN,info)
       CALL TAYLOR(1,KOST,EPS,F)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD

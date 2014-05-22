@@ -92,13 +92,14 @@
 		<File RelativePath="..\src\Alg1.for"/>
 		<File RelativePath="..\src\Alg2.for"/>
 		<File RelativePath="..\src\altayHard.f90"/>
+		<File RelativePath="..\src\altayHardTypes.f90"/>
 		<File RelativePath="..\src\cubAccess.f90"/>
 		<File RelativePath="..\src\curAccess.f90"/>
 		<File RelativePath="..\src\Dynfil.for"/>
-		<File RelativePath="..\src\hardVoce.f90"/>
+		<File RelativePath="..\src\altayHardLawSimple.f90"/>
 		<File RelativePath="..\src\ioconfig.f90"/>
-		<File RelativePath="..\src\KOST1x.f90"/>
-		<File RelativePath="..\src\KOST1xState.f90"/>
+		<File RelativePath="..\src\altayHardLawDSH.f90"/>
+		<File RelativePath="..\src\altayDSHState.f90"/>
 		<File RelativePath="..\src\macroKinematic.f90"/>
 		<File RelativePath="..\src\MainA1.for"/>
 		<File RelativePath="..\src\microstr.f90"/>
