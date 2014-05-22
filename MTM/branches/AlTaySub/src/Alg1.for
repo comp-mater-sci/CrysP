@@ -26,7 +26,7 @@ C
       implicit double precision (a-h,o-z)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,DG(3,3),
      1ITW,GEWF
-      COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
+      COMMON /IGLIJS/ M11,CC(2,96)
       COMMON/TLR2/ TRC(3,3),buftrf(3,3),RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),
@@ -252,7 +252,7 @@ C 1235 format (' Just after Pancak2')
       implicit double precision (a-h,o-z)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,DG(3,3),
      1ITW,GEWF
-      COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
+      COMMON /IGLIJS/ M11,CC(2,96)
       COMMON/TLR2/ RC(3,3),buftrf(3,3),RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
       COMMON /EULERA/ fi1,PHI,fi2

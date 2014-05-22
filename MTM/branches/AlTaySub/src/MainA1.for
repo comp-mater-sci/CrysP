@@ -29,7 +29,7 @@ C     IMP2=output-file with successive "responses to imposed strain"
 C     IDISK1= work file (obsolete, not used)
 C     NDAT1= Input-texture file
 C
-      COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
+      COMMON /IGLIJS/ M11,CC(2,96)
       COMMON /TEXTUR/ DUM1(27),IDUM1,DG(3,3),ITW,GEWF
       common /CEIGEN/ IOR,ISTP,JBLOC
       common /PE/ Fmicro !Temporary!!!

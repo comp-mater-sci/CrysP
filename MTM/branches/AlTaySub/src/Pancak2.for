@@ -30,7 +30,7 @@ C
      2 CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),
      3 fi1b(2),phib(2),fi2b(2),
      4 NGR,NRL,ENTA,ITFMAS
-      COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96)
+      COMMON /IGLIJS/ M11,CC(2,96)
       COMMON /DOUBLE/ A8(5,96),BB8(5),DELTAT,RHO(5),B5(5)
       common /extra/ A1(10,194),UU(10,10)
       common /CEIGEN/ IOR,ISTP,NBLOC
