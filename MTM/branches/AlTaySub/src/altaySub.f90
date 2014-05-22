@@ -48,7 +48,7 @@ contains
       use altayRCM
       use altayIOConfig
       use altayTexFormats
-      use altayHard,only: hard_none,hard_voce,hard_BP,hard_PEBPscrew,hard_PEBPloop
+      use altayHard,only: hard_none,hard_voce,hard_BP,hard_PEBPscrew,hard_PEBPloop,InitModuleAltayHard
       use altayMiscutils
       use altayMesostructure
 #ifdef PEBP_ENABLED
@@ -64,10 +64,6 @@ contains
       character(len=fname_len) :: codsim
       integer :: ierr
       integer,parameter :: extlen = 4
-      
-      COMMON /IGLIJS/ FK1(2,96),M11,CC(2,96) ! Needed for FK1
-      double precision :: FK1,CC
-      integer :: M11
       
       integer :: L
       double precision :: EPS
@@ -143,10 +139,11 @@ contains
             info = altaySub_Exception
             !
             ! Set the data for CRSS calculations
-            if (cnf%slipsystem%kost == hard_voce) then
-                  FK1 = cnf%slipsystem%crss_ratios
+            call InitModuleAltayHard(cnf%hardening, info) 
+            if (info /= 0) then
+                  if (present(errmsg)) errmsg = 'Cannot initialize hardening law'
+                  return
             endif
-            
             CALL GRFIL(acnf%micros_fname,acnf%simul_init%FMicro,info)
             if (info /= 0) then
                   if (present(errmsg)) errmsg = 'Cannot process the microstructure file: ' // acnf%micros_fname
@@ -170,7 +167,7 @@ contains
             !
 #ifdef PEBP_ENABLED
             ! PEBP model
-            select case(cnf%slipsystem%kost)
+            select case(cnf%hardening%HardLawID)
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                   info = KS_initState(size(DFIL))
                   if (info /= 0) return
@@ -345,7 +342,7 @@ contains
             endif
             if (info /= 0) return
             !
-            select case(acnf%slipsystem%kost)
+            select case(acnf%hardening%HardLawID)
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                 if (acnf%output_config%npebp == 1) then
                       info = KS_writeState(IMP4)

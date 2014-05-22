@@ -1,7 +1,7 @@
       program KOST1xTest
     
-      use KOST1x    
-      use altayKOST1xState
+      use altayHardLaw_DSH    
+      use altayDSHState
       implicit none
           
       integer :: i, iError
@@ -23,7 +23,7 @@
       !Initialization of module:
       open(unit=iParFile,file='par.txt',status='old') !open parameter file.
       open(unit=iSlipFile,file='BCCBP.PRE',status='old') !open slip system file.
-      iError = InitModuleKOST1x(iParFile,KOST,iSlipFile)
+      iError = InitModuleAltayHardLaw_DSH(iParFile,KOST,iSlipFile)
       if (iError /= 0) then
            write(*,*)"Error initializing module KOST1x. Error code:", iError
            stop

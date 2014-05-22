@@ -95,7 +95,7 @@ C
 #ifdef ALTAY_SUBROUTINE
       NGR    = acnf%simul_init%NGR
       ENTA   = acnf%simul_init%ENTA
-      KOST   = acnf%slipsystem%KOST
+      KOST   = acnf%hardening%HardLawID
       !
       NLIST  = acnf%output_config%NLIST   ! control "listing"
       NFILE1 = acnf%output_config%NFILE   ! control "CUR"
@@ -184,7 +184,9 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
       if (NFILE1.eq.1) call CURwriteTitle(IMP1,TITEL,info)
   98  format (A)      
 C     read the parameters of the work hardening model
+#ifndef ALTAY_SUBROUTINE
       call InitModuleAltayHard(KLEC,KOST,crss_ratiosIN,info)
+#endif
       CALL TAYLOR(1,KOST,EPS,F)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD

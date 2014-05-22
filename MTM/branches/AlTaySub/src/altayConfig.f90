@@ -28,7 +28,8 @@
 !> Basic configuration of AlTay in a form of formalized data structures.
 module altayConfig
 ! Import configuration structures from AlTay modules
-use altayHardLaw_Simple, only: VoceConfig
+use altayHardTypes
+use altayHardLaw_Simple, only: VoceConfig, SwiftKConfig, SwiftSConfig
 use altayHardLaw_DSH, only: PAR
 use altayTexFormatConstants
 
@@ -43,24 +44,8 @@ implicit none
       !>@}
       
       type :: slipSystemData
-            
             !> Name of the file containing definitions of slipsystems
             character(len=fname_len)                  :: input_fname = ''
-
-            !> Selector of the model for hardening of slipsystems. 
-            !> 
-            !> Acceptable values depend on availability of CRSS (aka TAUC) hardening models 
-            !> that are implemented in the code:
-            !>   - kost == 0: TAUC are set to 1.0, no hardening of slip systems.
-            !>   - kost == 1: values from FK1 used, isotropic Voce equation is used for hardening. 
-            !>     \sa crss_ratios 
-            integer                                   :: kost =  0
-
-            !> Array of CRSS ratios. 
-            !>
-            !> The data layout must correspond to FK1.
-            double precision,dimension(2,96)          :: crss_ratios = 1.D0
-            
       end type
 
       type :: textureData
@@ -176,9 +161,25 @@ implicit none
 
       !> Parameters of available hardening models.
       type :: hardeningData
-            
+            !> Selector of the model for hardening of slipsystems. 
+            !> 
+            !> Acceptable values depend on availability of CRSS (aka TAUC) hardening models 
+            !> that are implemented in the code.
+            !> See module altayHard for details about available hardening laws.
+            !> \sa crss_ratios 
+            integer                 :: HardLawID = hard_None
+
+            !> Initial values of CRSS ratios
+            type(CRSS)              :: crss_ratios
+
             !> Parameters of Voce hardening law.
             type(VoceConfig)        :: VoceCnf
+            
+            !> Parameters of Swift hardening law ('engineering-type')
+            type(SwiftKConfig)      :: SwiftKCnf
+            
+            !> Parameters of Swift hardening law ('scientific-type')
+            type(SwiftSConfig)      :: SwiftSCnf
 
             !> Parameters of Dislocation Substructural Hardening models (PEBP variants)
             type(PEBPConfig)        :: PEBPCnf

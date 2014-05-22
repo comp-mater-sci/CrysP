@@ -252,7 +252,8 @@ contains
       
       
       subroutine verifyKost11Example(model_id)
-      use KOST1x
+      use altayHardLaw_DSH
+      use altayHardTypes
       implicit none
       integer,intent(in)      :: model_id
       integer :: i, nsteps,nparunit,info
@@ -271,7 +272,7 @@ contains
             acnf%output_config%nmss = 1 ! switch on creation of the MMS file
             
             ! Set KOST11 module
-            acnf%slipsystem%KOST = 11
+            acnf%hardening%HardLawID = hard_BP
             ! It must be a bcc material
             acnf%slipsystem%input_fname = 'bccbp.pre'
             ! Texture data:
@@ -279,7 +280,7 @@ contains
             
             open(newunit=nparunit,file='PAR11.par',iostat=info)
             ASSERT(info == 0)
-            info = ReadPar(nparunit,acnf%slipsystem%KOST,acnf%hardening%PEBPCnf%params)
+            info = ReadPar(nparunit,acnf%hardening%HardLawID,acnf%hardening%PEBPCnf%params)
             ASSERT(info == 0)
             
             

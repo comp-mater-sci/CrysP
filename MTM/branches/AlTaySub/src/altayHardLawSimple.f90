@@ -6,14 +6,8 @@
 !>  - SwiftS: Swift law with initial crsS :: TAU = crss0 * (1.+GAMMA/gammaA0)**n
 module altayHardLaw_Simple
 use altayMiscutils, only: terminate, stopcode_runtimeerror
+use altayHardTypes
 implicit none
-      
-      integer, private, parameter :: &
-            IDdoublevoce  =      0,  &
-            IDswift =            1
-
-      
-      integer, private, save :: hardID = -1
 
       !> Configuration parameters of DoubleVoce hardening law. 
       !> Some 'reasonable' defaults are used.
@@ -187,8 +181,6 @@ contains
             !      
             if(NLIST.eq.1) write (IMP,102) p%GAMMAT,p%TAUT,p%THIV,p%TIV0
        102  format (' GAMMA-T, TAU-T, THETA-IV-0, TAU-IV-0',/,4d15.5)
-      ! Set local identifier for hardening law:
-      hardID = IDdoublevoce
       ! Save the trial parameter set p
       vocePar=p
       ! Succesful initialization:
@@ -220,8 +212,6 @@ contains
       ! 
       if(NLIST.eq.1) write (IMP,103) p%K,p%gamma0,p%n
        103  format ('Swift: K, gamma0, n: ',/,3d15.5)
-      ! Set local identifier for hardening law:
-      hardID = IDswift
       ! Save the trial parameter set p
       SwiftPar=p
       ! Succesful initialization:
@@ -253,27 +243,26 @@ contains
       ! 
       if(NLIST.eq.1) write (IMP,103) p%K,p%gamma0,p%n
        103  format ('Swift: K, gamma0, n: ',/,3d15.5)
-      ! Set local identifier for hardening law:
-      hardID = IDswift
       ! Save the trial parameter set p
       SwiftPar=p
       ! Succesful initialization:
       info = 0
       end subroutine
       
-      double precision function RefTau(GAMMA)
+      double precision function RefTau(hardID,GAMMA)
       implicit none
+      integer,intent(in)                  :: hardID
       double precision,intent(in)         :: GAMMA
       select case (hardID)
-      case (IDdoublevoce)
-        ! Implementation of the Double-Voce-model
-        if (GAMMA.le.vocePar%GAMMAT) then
-          RefTau=vocePar%TIIIS-(vocePar%TIIIS-vocePar%TIII1)*EXP(-vocePar%THIII*GAMMA/vocePar%TIIIS)
-        else
-          RefTau=vocePar%TIVS-(vocePar%TIVS-vocePar%TIV0)*EXP(-vocePar%THIV*GAMMA/vocePar%TIVS)
-        endif
-      case (IDswift)
-        RefTau = swiftPar%K * (swiftPar%GAMMA0+GAMMA)**(swiftPar%n)
+      case (hard_Voce)
+            ! Implementation of the Double-Voce-model
+            if (GAMMA.le.vocePar%GAMMAT) then
+                  RefTau=vocePar%TIIIS-(vocePar%TIIIS-vocePar%TIII1)*EXP(-vocePar%THIII*GAMMA/vocePar%TIIIS)
+            else
+                  RefTau=vocePar%TIVS-(vocePar%TIVS-vocePar%TIV0)*EXP(-vocePar%THIV*GAMMA/vocePar%TIVS)
+            endif
+      case (hard_swiftK,hard_swiftS)
+            RefTau = swiftPar%K * (swiftPar%GAMMA0+GAMMA)**(swiftPar%n)
       end select
       end function
       
