@@ -397,7 +397,7 @@ C
       if (laml1.gt.NGR) laml1=1
       laml=laml1
       GMM0=GMMAb(laml)
-      TAU=FTAU(GMM0)
+      call getTau(GMM0,TAU,info)
       fi1=fi1b(laml)
       PHI=PHIb(laml)
       fi2=fi2b(laml)

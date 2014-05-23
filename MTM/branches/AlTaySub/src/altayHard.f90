@@ -12,8 +12,8 @@ use altayDSHstate
 #endif
 implicit none
       
-      !Hardening law identifier of the initialized module
-      integer,save :: HardLawID = hard_None
+      !> Hardening law identifier of the initialized module
+      integer,save :: HardLawID = hard_invalid
       
       type(CRSS),private,save :: crss_ratios
       
@@ -28,22 +28,27 @@ implicit none
 contains
       
       
-      subroutine InitModuleAltayHard_file(inunit,KOST,crss_init,info)
+      subroutine InitModuleAltayHard_file(inunit,HardLaw,crss_init,info)
       implicit none
       integer,intent(in)      :: inunit
-      integer,intent(in)      :: KOST
+      integer,intent(in)      :: HardLaw
       type(CRSS),intent(in)   :: crss_init
       integer,intent(out)     :: info
       !
+      ! Instances of the model configurations/parameters:
+      type(VoceConfig)   :: voceCnf
+      type(SwiftKConfig) :: swiftKCnf
+      type(SwiftSConfig) :: swiftSCnf
+      !
       info = -1
       !
-      select case(KOST)
+      select case(HardLaw)
       !
       case(hard_none,hard_voce)
             ! Just for non-hardening and isotropic, Voce-type hardening
             call readVoceConfig(inunit,voceCnf,info)
             if (info /= 0) return
-            call InitModuleAltayHardLaw_Simple(voceCnf,info)
+            if (HardLaw == hard_voce) call InitModuleAltayHardLaw_Simple(voceCnf,info)
       !
       case(hard_swiftK)
             ! Swift-K hardening
@@ -59,7 +64,7 @@ contains
       !
 #ifdef PEBP_ENABLED     
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-            info = InitModuleAltayHardLaw_DSH(inunit,KOST,LEC)
+            info = InitModuleAltayHardLaw_DSH(inunit,HardLaw,LEC)
 #endif
       !
       case default
@@ -68,7 +73,7 @@ contains
       !      
       end select
       !
-      HardLawID = KOST
+      HardLawID = HardLaw
       crss_ratios = crss_init
       !
       end subroutine
@@ -81,13 +86,12 @@ contains
       integer,intent(out)                 :: info
       !
       info = -1
-      ! Set the module members
-      HardLawID = config%HardLawID
-      crss_ratios = config%crss_ratios 
       !
       select case(config%HardLawID)
       !
-      case(hard_none,hard_voce)
+      case(hard_none)
+            info = 0
+      case(hard_voce)
             ! Just for non-hardening and isotropic, Voce-type hardening
             call InitModuleAltayHardLaw_Simple(config%VoceCnf,info)
       !
@@ -110,27 +114,35 @@ contains
             info = -1
       !
       end select
+      if (info /= 0) return
+      ! Finalize the configuration:
+      ! Set the module members
+      HardLawID = config%HardLawID
+      crss_ratios = config%crss_ratios 
       !
       end subroutine
 #endif
       
       
-      
-      double precision function FTAU(GAMMA)
+      subroutine getTau(gamma, tau, info)
       use altayHardLaw_Simple
       implicit none
-      double precision,intent(in)   :: GAMMA
+      double precision,intent(in)   :: gamma
+      double precision,intent(out)  :: tau
+      integer,intent(out)           :: info
       !
+      info = 0
       select case(HardLawID)
       case(hard_none,hard_BP,hard_PEBPscrew,hard_PEBPloop)
-            FTAU = 1.D0
+            tau = 1.D0
       case(hard_voce,hard_swiftK,hard_swiftS)
-            FTAU = RefTau(HardLawID,GAMMA)
+            call getRefTau(HardLawID, gamma, tau, info)
       case default
-            FTAU = 1.D0
+            tau = 1.D0
+            info = -1
       end select
       !
-      end function
+      end subroutine
       
       subroutine getCRSS(ior,gamma,CRSSmatrix,info)
       implicit none
@@ -139,17 +151,19 @@ contains
       type(CRSS),intent(out)                       :: CRSSmatrix
       integer, intent(out)                         :: info
       !
+      double precision :: tau
       select case(HardLawID)
       case(hard_none)
             CRSSmatrix%crss = 1.D0 ! CRSS of all slip systems equal to 1. (& not dependent on crss_ratios)         
       case(hard_voce,hard_swiftK,hard_swiftS)
-            CRSSmatrix%crss = crss_ratios%crss * FTAU(gamma)
+            call getTau(gamma, tau, info)
+            if (info == 0) CRSSmatrix%crss = crss_ratios%crss * tau
 #ifdef PEBP_ENABLED
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
             call KS_getCRSS(ior,CRSSmatrix,info)
 #endif
       case default
-        info = -1
+            info = -1
       end select
       end subroutine
       

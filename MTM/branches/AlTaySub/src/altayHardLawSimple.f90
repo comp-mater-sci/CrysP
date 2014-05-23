@@ -54,18 +54,15 @@ implicit none
             double precision  :: gamma0 = 0.D0     
             double precision  :: n      = 0.D0
       end type
-
-      ! Instances of the model configurations/parameters:
-      type(VoceConfig),public,save      :: voceCnf
-      type(SwiftKConfig),public,save    :: swiftKCnf
-      type(SwiftSConfig),public,save    :: swiftSCnf
       !
       type(VoceParams),private,save     :: vocePar
       type(SwiftParams),private,save    :: swiftPar
       
       interface InitModuleAltayHardLaw_Simple !Generic Interface
-        module procedure init_voce, init_swiftK, init_swiftS
+            module procedure init_voce, init_swiftK, init_swiftS
       end interface      
+      
+      integer,save,private :: configured_law_id = hard_invalid
       
 contains
 
@@ -181,6 +178,7 @@ contains
             !      
             if(NLIST.eq.1) write (IMP,102) p%GAMMAT,p%TAUT,p%THIV,p%TIV0
        102  format (' GAMMA-T, TAU-T, THETA-IV-0, TAU-IV-0',/,4d15.5)
+      configured_law_id = hard_voce
       ! Save the trial parameter set p
       vocePar=p
       ! Succesful initialization:
@@ -212,6 +210,7 @@ contains
       ! 
       if(NLIST.eq.1) write (IMP,103) p%K,p%gamma0,p%n
        103  format ('Swift: K, gamma0, n: ',/,3d15.5)
+      configured_law_id = hard_swiftK
       ! Save the trial parameter set p
       SwiftPar=p
       ! Succesful initialization:
@@ -243,27 +242,39 @@ contains
       ! 
       if(NLIST.eq.1) write (IMP,103) p%K,p%gamma0,p%n
        103  format ('Swift: K, gamma0, n: ',/,3d15.5)
+      configured_law_id = hard_swiftS
       ! Save the trial parameter set p
       SwiftPar=p
       ! Succesful initialization:
       info = 0
       end subroutine
       
-      double precision function RefTau(hardID,GAMMA)
+      subroutine getRefTau(hardID,gamma,RefTau,info)
       implicit none
       integer,intent(in)                  :: hardID
-      double precision,intent(in)         :: GAMMA
-      select case (hardID)
-      case (hard_Voce)
-            ! Implementation of the Double-Voce-model
-            if (GAMMA.le.vocePar%GAMMAT) then
-                  RefTau=vocePar%TIIIS-(vocePar%TIIIS-vocePar%TIII1)*EXP(-vocePar%THIII*GAMMA/vocePar%TIIIS)
-            else
-                  RefTau=vocePar%TIVS-(vocePar%TIVS-vocePar%TIV0)*EXP(-vocePar%THIV*GAMMA/vocePar%TIVS)
-            endif
-      case (hard_swiftK,hard_swiftS)
-            RefTau = swiftPar%K * (swiftPar%GAMMA0+GAMMA)**(swiftPar%n)
-      end select
-      end function
+      double precision,intent(in)         :: gamma
+      double precision,intent(out)        :: RefTau
+      integer,intent(out)                 :: info
+      !
+            info = -1
+            if (hardID /= configured_law_id) return
+            info = 0
+            select case (hardID)
+            case (hard_Voce)
+                  ! Implementation of the Double-Voce-model
+                  if (gamma.le.vocePar%GAMMAT) then
+                        RefTau=vocePar%TIIIS-(vocePar%TIIIS-vocePar%TIII1)*EXP(-vocePar%THIII*gamma/vocePar%TIIIS)
+                  else
+                        RefTau=vocePar%TIVS-(vocePar%TIVS-vocePar%TIV0)*EXP(-vocePar%THIV*gamma/vocePar%TIVS)
+                  endif
+            case (hard_swiftK,hard_swiftS)
+                  RefTau = swiftPar%K * (swiftPar%GAMMA0+gamma)**(swiftPar%n)
+            case default
+                  ! The hardening law is not provided by this module.
+                  RefTau = 0.D0
+                  info = -1
+            end select
+      !
+      end subroutine
       
 end module
