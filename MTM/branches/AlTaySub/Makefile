@@ -265,8 +265,8 @@ $(LIB_OBJDIR)/Sliprat.o		: $(addprefix $(LIB_OBJDIR)/,miscutils.o altayRCM.o ioc
 $(LIB_OBJDIR)/TBH.o		: $(addprefix $(LIB_OBJDIR)/,miscutils.o altayRCM.o ioconfig.o) $(RCMINCLUDE)
 $(LIB_OBJDIR)/texFormats.o	: $(addprefix $(LIB_OBJDIR)/,texFormatConstants.o Dynfil.o curAccess.o cubAccess.o smtAccess.o)
 $(LIB_OBJDIR)/altayDSHState.o	: $(addprefix $(LIB_OBJDIR)/,altayHardLawDSH.o altayHardTypes.o)
-$(LIB_OBJDIR)/altayHard.o	: $(addprefix $(LIB_OBJDIR)/,ioconfig.o altayConfig.o altayHardLawSimple.o altayHardLawDSH.o)
-$(LIB_OBJDIR)/altayHardLawSimple.o	: $(addprefix $(LIB_OBJDIR)/,miscutils.o ioconfig.o )
+$(LIB_OBJDIR)/altayHard.o	: $(addprefix $(LIB_OBJDIR)/,ioconfig.o altayConfig.o altayHardLawSimple.o altayHardLawDSH.o altayHardTypes.o altayDSHState.o)
+$(LIB_OBJDIR)/altayHardLawSimple.o	: $(addprefix $(LIB_OBJDIR)/,miscutils.o ioconfig.o altayHardTypes.o)
 $(LIB_OBJDIR)/altayConfig.o	: $(addprefix $(LIB_OBJDIR)/,texFormatConstants.o altayHardLawSimple.o altayHardLawDSH.o)
 #
 # Explicit dependencies for test program
@@ -290,8 +290,8 @@ $(PROG_OBJDIR)/Sliprat.o	: $(addprefix $(PROG_OBJDIR)/,miscutils.o ioconfig.o)
 $(PROG_OBJDIR)/TBH.o		: $(addprefix $(PROG_OBJDIR)/,miscutils.o ioconfig.o) $(RCMINCLUDE)
 $(PROG_OBJDIR)/texFormats.o	: $(addprefix $(PROG_OBJDIR)/,texFormatConstants.o Dynfil.o curAccess.o cubAccess.o smtAccess.o)
 $(PROG_OBJDIR)/altayDSHState.o	: $(addprefix $(PROG_OBJDIR)/,altayHardLawDSH.o altayHardTypes.o)
-$(PROG_OBJDIR)/altayHard.o	: $(addprefix $(PROG_OBJDIR)/,ioconfig.o altayHardLawSimple.o altayHardLawDSH.o)
-$(PROG_OBJDIR)/altayHardLawSimple.o	: $(addprefix $(PROG_OBJDIR)/,miscutils.o ioconfig.o )
+$(PROG_OBJDIR)/altayHard.o	: $(addprefix $(PROG_OBJDIR)/,ioconfig.o altayHardLawSimple.o altayHardLawDSH.o altayHardTypes.o altayDSHState.o)
+$(PROG_OBJDIR)/altayHardLawSimple.o	: $(addprefix $(PROG_OBJDIR)/,miscutils.o ioconfig.o altayHardTypes.o)
 $(PROG_OBJDIR)/altayConfig.o	: $(addprefix $(PROG_OBJDIR)/,texFormatConstants.o altayHardLawSimple.o altayHardLawDSH.o)
 
 
