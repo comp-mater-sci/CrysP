@@ -71,7 +71,7 @@ contains
             this%altay%output_prefix = trim(this%output%outputPrefix)
             this%altay%jobtitle = trim(this%output%outputPrefix)
             ! 
-            select case(this%altay%slipsystem%kost)
+            select case(this%altay%hardening%HardLawID)
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                   if (this%output%outputRequest) then
                         this%altay%output_config%npebp = 1
@@ -259,17 +259,21 @@ contains
             if (.not. ioStatusOK(ioerr)) return
 #endif
             !
-            read(cnfunit,fmt=*,iostat=ioerr) cnf%slipsystem%kost
+            read(cnfunit,fmt=*,iostat=ioerr) cnf%hardening%HardLawID
             if (.not. ioStatusOK(ioerr)) return
-            select case(cnf%slipsystem%kost)
+            select case(cnf%hardening%HardLawID)
             case(hard_none)
                   ! no action needed
                   continue
             case(hard_Voce)
                   ! Read one line
                   read(cnfunit,fmt=*,iostat=ioerr) cnf%hardening%VoceCnf
+            case(hard_SwiftK)
+                  read(cnfunit,fmt=*,iostat=ioerr) cnf%hardening%SwiftKCnf
+            case(hard_SwiftS)
+                  read(cnfunit,fmt=*,iostat=ioerr) cnf%hardening%SwiftSCnf
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-                  call readPEPBhardening(cnfunit,cnf%slipsystem%kost,cnf%hardening%PEBPCnf,info)
+                  call readPEPBhardening(cnfunit,cnf%hardening%HardLawID,cnf%hardening%PEBPCnf,info)
                   if (info /= 0) return
             case default
                   info = -1
@@ -295,7 +299,7 @@ contains
       
       subroutine readPEPBhardening(cnfunit,kost,hc,info)
       use altayConfig
-      use KOST1x, only: ReadPar
+      use altayHardLaw_DSH, only: ReadPar
       implicit none
       integer,intent(in)                  :: cnfunit
       integer,intent(in)                  :: kost
