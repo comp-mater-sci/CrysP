@@ -218,10 +218,8 @@ contains
       integer,intent(out)                 :: info
       !
       integer                       :: ioerr, simtype, model_id
-#ifdef DMC_EXPERIMENTAL
       logical                       :: flag
       integer                       :: i
-#endif
       !
             info = -1
             simtype = -1; ioerr = -1; model_id = -1
@@ -246,7 +244,6 @@ contains
             read(cnfunit,'(A)' ,iostat=ioerr) cnf%micros_fname
             call stripComment(cnf%micros_fname)
             if (.not. ioStatusOK(ioerr)) return
-#ifdef DMC_EXPERIMENTAL
             ! Process advanced microstructure characterization
             flag = .false.
             read(cnfunit,fmt=*,iostat=ioerr) flag
@@ -257,7 +254,6 @@ contains
                   enddo
             endif
             if (.not. ioStatusOK(ioerr)) return
-#endif
             !
             read(cnfunit,fmt=*,iostat=ioerr) cnf%hardening%HardLawID
             if (.not. ioStatusOK(ioerr)) return
