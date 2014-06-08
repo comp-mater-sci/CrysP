@@ -4,7 +4,9 @@
       module altaySimul
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayHardTypes
-
+      use altayMacroKinematic, only: MaKi_TotalDefGrad, 
+     &                               SetNewInc_MacroKinematic
+      
       ! Initial rations of CRSS, set in MAINA1.
       ! It is used only by the stand-alone AlTay
       type(CRSS) :: crss_ratiosIN
@@ -56,8 +58,8 @@ C
      4 NGR,NRL,ENTA,ITFMAS
       common /CEIGEN/ IOR,ISTP,NBLOC
       common /PE/ Fmicro !Temporary!!!      
-      DIMENSION F(3,3),F1(3,3),GAXES(3),GEULR(3),TG(3,3),
-     1 CIJ(3,3),F2(3,3),STOT(3,3),
+      DIMENSION GAXES(3),GEULR(3),TG(3,3),
+     1 CIJ(3,3),STOT(3,3),
      2 RHOST(3,3),RHOSm(3,3),FMicro(3,3)
       dimension FS(3,3)
       character*40 TITEL
@@ -187,7 +189,7 @@ C     read the parameters of the work hardening model
 #ifndef ALTAY_SUBROUTINE
       call InitModuleAltayHard(KLEC,KOST,crss_ratiosIN,info)
 #endif
-      CALL TAYLOR(1,KOST,EPS,F)
+      CALL TAYLOR(1,KOST,EPS)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -261,7 +263,7 @@ C     read the parameters of the work hardening model
       if (IPR.gt.0.and.NLIST.eq.1) write (IMP,*)'Relaxations:',swrlx(1)
 #endif
       !
-      CALL TAYLOR(2,KOST,EPS,F)
+      CALL TAYLOR(2,KOST,EPS)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -295,7 +297,7 @@ C
       pebpSDVavg = StateDerivedVars()
 #endif      
       
-      call dynfil2(nrstep,F,GAXES,GEULR,CIJ,TG)
+      call dynfil2(nrstep,MaKi_TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT       
       write (*,96) ISTP,GAXES
 #endif
@@ -336,7 +338,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   44  continue
       if (NLIST.eq.1) then
           do i=1,3 
-             write (IMP,407) (F(j,i),j=1,3)
+             write (IMP,407) (MaKi_TotalDefGrad(j,i),j=1,3)
           enddo
  407  format (' F ',3d15.7)
       end if
@@ -344,18 +346,18 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       nrstep=nrstep+1
       ! Here DG = [L]*dt, where [L] is the velocity gradient 
       ! and the time step dt = 1.0
-      call Ftensor(DG,F1,F2) 
-      call UPDATF(F,F1)
-      call UPDATC(CIJ,F2)
+      call SetNewInc_MacroKinematic(DG)
+      !
+      call UPDATC(CIJ) 
       call GETANG(CIJ,GAXES,GEULR,TG)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
       ! We can choose not to update the texture data
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL3(nrstep,F,GAXES,GEULR,CIJ,TG)
+            call DYNFIL3(nrstep,MaKi_TotalDefGrad,GAXES,GEULR,CIJ,TG)
       endif
 #else          
-      call DYNFIL3(nrstep,F,GAXES,GEULR,CIJ,TG)
+      call DYNFIL3(nrstep,MaKi_TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #endif
 C
 C       Added for lamel model:
@@ -427,7 +429,7 @@ C
 C      write (*,3210)
 C 3210 format (' Just before Taylor')
  999  if (IW.le.1) then
-            CALL  TAYLOR(3,KOST,EPS,F)
+            CALL  TAYLOR(3,KOST,EPS)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
 #endif            
@@ -478,11 +480,11 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
             call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,
-     1                   F,GAXES,GEULR,CIJ,TG,RHOSsa) 
+     1                   MaKi_TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa) 
       endif
 #else
       call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,
-     1             F,GAXES,GEULR,CIJ,TG,RHOSsa)
+     1             MaKi_TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
 #endif
       ! 
 #ifndef ALTAY_SUBROUTINE

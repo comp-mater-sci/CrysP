@@ -92,7 +92,7 @@ contains
 
       
       
-      subroutine CLUSTER1(NGR,IGrElm,FTot,TDC,GEWF,Tprinc,Cofcos,Cofsin)
+      subroutine CLUSTER1(NGR,IGrElm,TDC,GEWF,Tprinc,Cofcos,Cofsin)
       !   IF both relaxations are orthogonal:
       !      Cofcos=0 and Cofsin=0 is returned
       !   ELSE:
@@ -102,10 +102,10 @@ contains
       !   TDC is the normalized von-Mise equivalent strain
       use altayIOConfig, only: IPR,NLIST,IMP
       use altayMiscutils, only: unitMatrix, pi
+      use altayMacroKinematic, only: MaKi_TotalDefGrad
       implicit none
       integer,intent(in)                              :: NGR
       integer,intent(in)                              :: IGrElm
-      double precision,dimension(3,3),intent(in)      :: FTot
       double precision,dimension(3,3),intent(in)      :: TDC
       double precision,intent(inout)                  :: GEWF
       double precision,dimension(3,3),intent(out)     :: Tprinc
@@ -125,7 +125,7 @@ contains
                   return
             end if
             !
-            GRPAR = matmul(FTot,TmatGr(:,:,IGrElm))
+            GRPAR = matmul(MaKi_TotalDefGrad,TmatGr(:,:,IGrElm))
             if ((IPR.gt.1) .and.(NLIST.eq.1)) then
                   write (IMP,409) IGrElm
                   409 format (' IGrElm = ',i5) 

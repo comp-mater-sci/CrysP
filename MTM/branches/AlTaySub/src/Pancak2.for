@@ -10,8 +10,8 @@ C MODIFICATIONS AUG 2010
 C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 C
-      Subroutine Pancak2(KOST,NGL,B,DI1,DG,TDC,S33,RHOS33,RHOA33,
-     1 SWRLX,BBVM,XX,IPR,Ftot,GEWF)
+      Subroutine Pancak2(KOST,NGL,B,DI1,TDC,S33,RHOS33,RHOA33,
+     1 SWRLX,BBVM,XX,IPR,GEWF)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
@@ -21,6 +21,7 @@ C
       use altayHardTypes
       use altayTBH
       use altayAlgorithms
+      use altayMacroKinematic, only: MaKi_VelGrad
 #ifdef PEBP_ENABLED
       use AltayDSHstate
 #endif
@@ -40,10 +41,10 @@ C
       double precision,dimension(5):: RHOS, RHOA 
         dimension ccc2(2,194)
       dimension buftrf(3,3),C1(3,3),C2(3,3),
-     1 DG(3,3),TDC(3,3),TDCb(3,3,2),TRCb(3,3,2),
+     1 TDC(3,3),TDCb(3,3,2),TRCb(3,3,2),
      2 B(5,5),BBVM2(2),relax(3,3,3),buftg(3,3),DACC(10),
      3 rls(3,3,3,2),rla(3,3),rlm(3,3,3),C3(3,3),TRP(10),APRIME(10),
-     4 B3(10,3),PLUMIN(2,3),Ftot(3,3),CUst(10)
+     4 B3(10,3),PLUMIN(2,3),CUst(10)
 C     first index op PLUMIN = nr. of grain
 C     second index = nr. of relaxation
       dimension spanv(5),XX(194),STRSS(10),BB(10)
@@ -105,7 +106,7 @@ C
       if (IGrElm.gt.NGrElm) IGrElm=1
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX
       
-      call cluster1(NGR,IGrElm,FTot,TDC,GEWF,Tprinc,Cofcos,Cofsin)
+      call cluster1(NGR,IGrElm,TDC,GEWF,Tprinc,Cofcos,Cofsin)
       
 
 
@@ -129,7 +130,7 @@ C     OMREKENING DISPLACEMENT GRADIENT.
       buftrf(i,j)=TRFb(j,i,IL)
       buftg(i,j)=Tprinc(j,i)
   45  continue
-      CALL MATPROD(C1,DG,buftrf,3,3,3)
+      CALL MATPROD(C1,MaKi_VelGrad,buftrf,3,3,3)
       CALL MATPROD(C2,TRFb(1,1,IL),C1,3,3,3)
       if (NRL.eq.0) goto 87
       do 82 IRL=1,NRL

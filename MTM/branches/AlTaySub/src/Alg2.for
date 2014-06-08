@@ -3,7 +3,8 @@
 #endif
       module altayAlgorithms
       use altayMiscutils, only: terminate, stopcode_runtimeerror
-      
+      use altayMacroKinematic, 
+     &         only: F2 => MaKi_DeltaDefGrad_inverse !for subr. UPDATC
       contains
       
       SUBROUTINE MATPROD(C,A,B,N1,N2,N3)
@@ -22,13 +23,14 @@ C     MATRIX C=MATRIX A*MATRIX B
       RETURN                                                            
       END SUBROUTINE
       !
-      subroutine UPDATC(CIJ,F2)
+      subroutine UPDATC(CIJ) 
       implicit double precision (a-h,o-z)
+
 C     Updating of CIJ matrix of ellipsoid
 C     F2 is the inverse of the F-tensor which describes the strain
 C     increment. To be sure, it is first normalised.
 C
-      dimension CIJ(3,3),F2(3,3),X(3,3)
+      dimension CIJ(3,3),X(3,3)
       y=F2(1,1)*(F2(2,2)*F2(3,3)-F2(2,3)*F2(3,2))
       y=y-F2(1,2)*(F2(2,1)*F2(3,3)-F2(2,3)*F2(3,1))
       y=y+F2(1,3)*(F2(2,1)*F2(3,2)-F2(2,2)*F2(3,1))
@@ -57,65 +59,6 @@ C
       return
       end subroutine
       !
-      subroutine UPDATF(F,F1)
-      implicit double precision (a-h,o-z)
-      dimension F(3,3),F1(3,3),X(3,3)
-      call MATPROD(X,F1,F,3,3,3)
-C
-C     y is the determinant of X
-C
-      y=X(1,1)*(X(2,2)*X(3,3)-X(2,3)*X(3,2))
-      y=y-X(1,2)*(X(2,1)*X(3,3)-X(2,3)*X(3,1))
-      y=y+X(1,3)*(X(2,1)*X(3,2)-X(2,2)*X(3,1))
-      y=y**(1.D0/3.D0)
-      do 1 i=1,3
-      do 11 j=1,3
-      F(i,j)=X(i,j)/y
-  11  continue
-   1  continue
-      return
-      end subroutine
-      !
-      subroutine Ftensor(DG,F1,F2)
-      implicit double precision (a-h,o-z)
-C
-C     DG = approximate displacement gradient (input)
-C     DG is in fact the velocity gradient * time increment
-C
-C     F1 is the "F tensor" (deformation gradient ?)
-C     which corresponds to such velocity gradient
-C     and such time increment
-C
-C     F2 is the inverse of F1
-C
-C
-      dimension DG(3,3),F1(3,3),F2(3,3),X(3,3),Y(3,3),A(3,3),B(3,3)
-      data n/10/
-      do 1 i=1,3
-      do 2 j=1,3
-      X(i,j)=DG(i,j)/n
-      Y(i,j)=-DG(i,j)/n
-      F1(i,j)=X(i,j)
-      F2(i,j)=Y(i,j)
-   2  continue
-      X(i,i)=X(i,i)+1.D0
-      Y(i,i)=Y(i,i)+1.D0
-      F1(i,i)=X(i,i)
-      F2(i,i)=Y(i,i)
-   1  continue
-      do 23 k=2,n
-      call MATprod(A,X,F1,3,3,3)
-      call MATprod(B,Y,F2,3,3,3)
-      do 3 i=1,3
-      do 13 j=1,3
-      F1(i,j)=A(i,j)
-      F2(i,j)=B(i,j)
-  13  continue
-   3  continue
-  23  continue
-      return
-      end subroutine
-
       !> Transform a 5D-vector in deviatoric (stress/strain-rate) space
       !> to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
       !> Note: The reverse transformation is done by function 'Vector5D'.
