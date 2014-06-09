@@ -10,7 +10,7 @@ C MODIFICATIONS AUG 2010
 C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 C
-      Subroutine Pancak2(KOST,NGL,B,DI1,TDC,S33,RHOS33,RHOA33,
+      Subroutine Pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,
      1 SWRLX,BBVM,XX,IPR,GEWF)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -41,7 +41,7 @@ C
       double precision,dimension(5):: RHOS, RHOA 
         dimension ccc2(2,194)
       dimension buftrf(3,3),C1(3,3),C2(3,3),
-     1 TDC(3,3),TDCb(3,3,2),TRCb(3,3,2),
+     1 TDCb(3,3,2),TRCb(3,3,2),
      2 B(5,5),BBVM2(2),relax(3,3,3),buftg(3,3),DACC(10),
      3 rls(3,3,3,2),rla(3,3),rlm(3,3,3),C3(3,3),TRP(10),APRIME(10),
      4 B3(10,3),PLUMIN(2,3),CUst(10)
@@ -106,7 +106,7 @@ C
       if (IGrElm.gt.NGrElm) IGrElm=1
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX
       
-      call cluster1(NGR,IGrElm,TDC,GEWF,Tprinc,Cofcos,Cofsin)
+      call cluster1(NGR,IGrElm,GEWF,Tprinc,Cofcos,Cofsin)
       
 
 

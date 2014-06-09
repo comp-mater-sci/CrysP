@@ -92,21 +92,22 @@ contains
 
       
       
-      subroutine CLUSTER1(NGR,IGrElm,TDC,GEWF,Tprinc,Cofcos,Cofsin)
+      subroutine CLUSTER1(NGR,IGrElm,GEWF,Tprinc,Cofcos,Cofsin)
       !   IF both relaxations are orthogonal:
       !      Cofcos=0 and Cofsin=0 is returned
       !   ELSE:
       !      Cofcos and Cofsin are the cosine and sine of the angle for relaxation-1
       !
       !   relaxation-2 is always the orthogonal one.
-      !   TDC is the normalized von-Mise equivalent strain
+      !   TDC is the normalized von-Mise equivalent strain rate
       use altayIOConfig, only: IPR,NLIST,IMP
       use altayMiscutils, only: unitMatrix, pi
-      use altayMacroKinematic, only: MaKi_TotalDefGrad
+      use altayMacroKinematic, only: MaKi_TotalDefGrad, &
+                                     TDC => MaKi_StrainModevM
+    
       implicit none
       integer,intent(in)                              :: NGR
       integer,intent(in)                              :: IGrElm
-      double precision,dimension(3,3),intent(in)      :: TDC
       double precision,intent(inout)                  :: GEWF
       double precision,dimension(3,3),intent(out)     :: Tprinc
       double precision,intent(out)                    :: Cofcos

@@ -8,6 +8,12 @@ double precision, dimension(3,3), public, save :: MaKi_VelGrad = 0.0D0
 !> Strain Rate, i.e. symmetric part of the velocity gradient
 double precision, dimension(3,3), public, save :: MaKi_StrainRate = 0.0D0
 
+!> von Mises equivalent strain rate
+double precision,                 public, save :: MaKi_vMeqStrainRate = 0.0D0
+
+!> Strain Mode normalized by von Mises equivalent strain rate
+double precision, dimension(3,3), public, save :: MaKi_StrainModevM = 0.0D0
+
 !> Spin, i.e. anti-symmetric part of the velocity gradient 
 double precision, dimension(3,3), public, save :: MaKi_Spin = 0.0D0
 
@@ -19,6 +25,9 @@ double precision, dimension(3,3), public, save :: MaKi_DeltaDefGrad = unitMatrix
 
 !> Inverse of Delta Deformation Gradient
 double precision, dimension(3,3), public, save :: MaKi_DeltaDefGrad_inverse = unitMatrix
+
+!> Delta von Mises equivalent strain (from start to end of current increment)
+double precision,                 public, save :: MaKi_DeltavMeqStrain = 0.0D0
 
 contains   
 
@@ -32,12 +41,18 @@ contains
       Maki_StrainRate = (MaKi_VelGrad+transpose(MaKi_VelGrad))/2.D0
       MaKi_Spin       = (MaKi_VelGrad-transpose(MaKi_VelGrad))/2.D0
       !
+      MaKi_vMeqStrainRate = sqrt(2.0D0/3.0D0) * norm2(Maki_StrainRate)
+      MaKi_StrainModevM   = Maki_StrainRate / MaKi_vMeqStrainRate
+      !
       end subroutine
 
       subroutine SetNewInc_MacroKinematic()
+      double precision, parameter :: deltaTime= 1.0D0
       !
       call Ftensor(MaKi_VelGrad,MaKi_DeltaDefGrad,MaKi_DeltaDefGrad_inverse) 
       call UPDATF(MaKi_TotalDefGrad,MaKi_DeltaDefGrad)
+      !
+      MaKi_DeltavMeqStrain  = MaKi_vMeqStrainRate * deltaTime
       !
       end subroutine
 

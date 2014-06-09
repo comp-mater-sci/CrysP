@@ -5,7 +5,7 @@
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayHardTypes
       use altayMacroKinematic, only: MaKi_VelGrad,
-     &                               Maki_StrainRate,
+     &                               MaKi_DeltavMeqStrain,
      &                               MaKi_TotalDefGrad, 
      &                               SetNewInc_MacroKinematic
       
@@ -294,7 +294,6 @@ C
       Mavg=0.
       srh=0.
       HGAM=0.D0
-      MEPS=sqrt(2.D0/3.D0)*sqrt(sum(Maki_StrainRate**2))
 #ifdef PEBP_ENABLED
       pebpSDVavg = StateDerivedVars()
 #endif      
@@ -344,6 +343,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       nrstep=nrstep+1
       !
       call SetNewInc_MacroKinematic()
+      MEPS=MaKi_DeltavMeqStrain
       !
       call UPDATC(CIJ) 
       call GETANG(CIJ,GAXES,GEULR,TG)

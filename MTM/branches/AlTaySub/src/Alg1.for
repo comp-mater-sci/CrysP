@@ -33,7 +33,6 @@ C
       COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),
      1 SWRLX(3)
-      DIMENSION TDC(3,3)
       double precision, dimension(3,3):: bufsp(3,3), RHOScrys(3,3)
       double precision, dimension(3,3):: RHOAcrys(3,3), RHOAsa(3,3) 
       character*72 TITGLIJ
@@ -135,7 +134,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then                                         
       WRITE (IMP,203)
       end if     
-      TDC=Maki_StrainRate
       TRC=MaKi_Spin
       do I=1,3                                                       
           if(NLIST.eq.1) then                                   
@@ -149,18 +147,11 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
      2'ANTISYMMETRICAL PART',/)                                         
  204  FORMAT (1H ,3(3F10.5,10X))
    70  continue
-C     Normalisation of TDC (which is used in CLUSTER1 in PANCAK2)
-      X=0.0d0
-      do i=1,3
-         do j=1,3
-            X=X+TDC(i,j)**2
-         enddo
-      enddo
-      if (X.lt.1.0D-20) then
+      if (norm2(Maki_StrainRate).lt.1.0D-10) then
 #ifndef ALTAY_SUBROUTINE
-         write (*,205) X
+         write (*,205) norm2(Maki_StrainRate)
          if(NLIST.eq.1) then
-         write (IMP,205) X
+              write (IMP,205) norm2(Maki_StrainRate)
          end if
          call terminate(stopcode_runtimeerror)
 #else
@@ -170,12 +161,6 @@ C     Normalisation of TDC (which is used in CLUSTER1 in PANCAK2)
       endif
  205  format (' Taylor - symmetric part of strain step is too small'
      1 ,d20.8)
-      X=sqrt(2.D0*X/3.D0)
-      do i=1,3
-         do j=1,3
-            TDC(i,j)=TDC(i,j)/X
-         enddo
-      enddo
 C      
       RETURN
 CC     OMREKENING DISPLACEMENT GRADIENT.
@@ -185,7 +170,7 @@ CC     OMREKENING DISPLACEMENT GRADIENT.
   45  continue
 C      write (*,1234)
 C 1234 format (' Just before Pancak2')
-       CALL Pancak2(KOST,NGL,B,DI1,TDC,Scrys,RHOScrys,RHOAcrys,
+       CALL Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,
      1 SWRLX,BBVM,XXLP,IPR,GEWF)
       !Report Scrys to LST-file
  100  format(' Bishop-Hill stress (crystal system):')
