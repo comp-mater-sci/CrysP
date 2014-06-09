@@ -4,7 +4,9 @@
       module altaySimul
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayHardTypes
-      use altayMacroKinematic, only: MaKi_TotalDefGrad, 
+      use altayMacroKinematic, only: MaKi_VelGrad,
+     &                               Maki_StrainRate,
+     &                               MaKi_TotalDefGrad, 
      &                               SetNewInc_MacroKinematic
       
       ! Initial rations of CRSS, set in MAINA1.
@@ -45,7 +47,7 @@ C     IW=2 is meant for outputting the final texture.
 C
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON /DOUBLE/ XM(5,96),XEPS(5),DELTAT,RHO(5),B5(5)
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,DG(3,3),
+      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,
      1ITW,GEWF
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,TEN(3,3),TOTGEW        
       COMMON /EULERA/ fi1,PHI,fi2
@@ -292,7 +294,7 @@ C
       Mavg=0.
       srh=0.
       HGAM=0.D0
-      MEPS=sqrt(2.D0/3.D0)*0.5D0*sqrt(sum((DG+transpose(DG))**2))
+      MEPS=sqrt(2.D0/3.D0)*sqrt(sum(Maki_StrainRate**2))
 #ifdef PEBP_ENABLED
       pebpSDVavg = StateDerivedVars()
 #endif      
@@ -307,14 +309,10 @@ C
   96  format(' Step nr.',i5,5X,3f12.5)
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
       if (IW.gt.1) goto 70
-C      if (IGLIJ.eq.1) then
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-      write (IMP,3456) DG
+          write (IMP,3456) MaKi_VelGrad
       end if
  3456 format ('DG=',3(T10,3d12.3,/))
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C
 C     Get the 5x5 transformation matrix MACRO to morfol. GRAIN AXES
 C
@@ -344,9 +342,8 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       end if
       !
       nrstep=nrstep+1
-      ! Here DG = [L]*dt, where [L] is the velocity gradient 
-      ! and the time step dt = 1.0
-      call SetNewInc_MacroKinematic(DG)
+      !
+      call SetNewInc_MacroKinematic()
       !
       call UPDATC(CIJ) 
       call GETANG(CIJ,GAXES,GEULR,TG)

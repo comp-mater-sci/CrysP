@@ -5,6 +5,12 @@ implicit none
 !> Velocity Gradient
 double precision, dimension(3,3), public, save :: MaKi_VelGrad = 0.0D0
 
+!> Strain Rate, i.e. symmetric part of the velocity gradient
+double precision, dimension(3,3), public, save :: MaKi_StrainRate = 0.0D0
+
+!> Spin, i.e. anti-symmetric part of the velocity gradient 
+double precision, dimension(3,3), public, save :: MaKi_Spin = 0.0D0
+
 !> Total Deformation Gradient (from undeformed state to the end of current increment)
 double precision, dimension(3,3), public, save :: MaKi_TotalDefGrad = unitMatrix !For simulations with predeformation, it is re-initialized with call to dynfil2 subroutine. 
 
@@ -16,26 +22,32 @@ double precision, dimension(3,3), public, save :: MaKi_DeltaDefGrad_inverse = un
 
 contains   
 
-      subroutine SetNewInc_MacroKinematic(VelGrad)
+      !Save the public variable Maki_VelGrad & derived quantities
+      subroutine SetVelGrad_MacroKinematic(VelGrad)
       double precision, dimension(3,3), intent(in)    :: VelGrad
       !
-      MaKi_VelGrad = VelGrad
+      !Explicitly make the velocity gradient traceless
+      MaKi_VelGrad = VelGrad - UnitMatrix * (VelGrad(1,1)+VelGrad(2,2)+VelGrad(3,3))/3.D0
+      !
+      Maki_StrainRate = (MaKi_VelGrad+transpose(MaKi_VelGrad))/2.D0
+      MaKi_Spin       = (MaKi_VelGrad-transpose(MaKi_VelGrad))/2.D0
+      !
+      end subroutine
+
+      subroutine SetNewInc_MacroKinematic()
       !
       call Ftensor(MaKi_VelGrad,MaKi_DeltaDefGrad,MaKi_DeltaDefGrad_inverse) 
       call UPDATF(MaKi_TotalDefGrad,MaKi_DeltaDefGrad)
       !
       end subroutine
 
-      subroutine Ftensor(DG,F1,F2)
+      subroutine Ftensor(Ldt,F1,F2)
       
-      double precision, dimension(3,3), intent(in)  :: DG
+      double precision, dimension(3,3), intent(in)  :: Ldt ! = the velocity gradient * time increment
       double precision, dimension(3,3), intent(out) :: F1
       double precision, dimension(3,3), intent(out) :: F2
 !
-!     DG = approximate displacement gradient (input)
-!     DG is in fact the velocity gradient * time increment
-!
-!     F1 is the "F tensor" (deformation gradient ?)
+!     F1 is the deformation gradient tensor
 !     which corresponds to such velocity gradient
 !     and such time increment
 !
@@ -46,8 +58,8 @@ contains
       integer, parameter :: n=10
       integer :: k
 
-      X = unitMatrix + DG/n 
-      Y = unitMatrix - DG/n 
+      X = unitMatrix + Ldt/n 
+      Y = unitMatrix - Ldt/n 
       F1= X
       F2= Y
       do k=2,n

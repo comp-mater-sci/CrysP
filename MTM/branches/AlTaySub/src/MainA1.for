@@ -14,6 +14,7 @@ C
      &                    hard_PEBPloop
       use altayHardTypes
       use altayTexFormats
+      use altayMacroKinematic, only: SetVelGrad_MacroKinematic 
       implicit double precision (a-h,o-z)
 c      Several simulations (usually several-steps each),
 C      following each other.
@@ -30,10 +31,10 @@ C     IDISK1= work file (obsolete, not used)
 C     NDAT1= Input-texture file
 C
       COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON /TEXTUR/ DUM1(27),IDUM1,DG(3,3),ITW,GEWF
+      COMMON /TEXTUR/ DUM1(27),IDUM1,ITW,GEWF
       common /CEIGEN/ IOR,ISTP,JBLOC
       common /PE/ Fmicro !Temporary!!!
-      double precision, dimension(3,3) :: Fmicro
+      double precision, dimension(3,3) :: Fmicro, DG
       character(len=pathlength) :: fnam1,fnam2,fnam3,fname_prefix
       character(len=pathlength-4) :: codsim
       integer :: info
@@ -208,16 +209,10 @@ C
       WRITE (*,109) (DG(I,K),K=1,3)
  109  FORMAT (1x,3F10.5)
   35  CONTINUE
-#ifdef MAINDIRECT
-C     Preempt rounding errors
-      resid = DG(1,1)+DG(2,2)+DG(3,3)
-      if (dabs(resid) .GT. 1.D-9) then
-            resid = resid / 3.D0
-            do i=1,3
-                  DG(i,i) = DG(i,i)-resid
-            enddo
-      endif
-#endif
+      ! Here DG = [L]*dt, where [L] is the velocity gradient 
+      ! and the time step dt = 1.0
+      call SetVelGrad_MacroKinematic(DG)
+      !
       CALL SIMUL(1,EPS,NFILE0)
    2  CONTINUE
 C

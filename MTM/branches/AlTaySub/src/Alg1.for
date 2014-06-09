@@ -4,7 +4,9 @@
       module altayTaylor
       use altayAlgorithms
       use altayMiscutils, only: terminate, stopcode_runtimeerror
-      
+      use altayMacroKinematic, only: MaKi_VelGrad,
+     &                               MaKi_StrainRate,
+     &                               MaKi_Spin      
       integer,parameter,private :: N = 5, N1 = N + 1 
       
       integer,private           :: M,NGL,NTW
@@ -24,7 +26,7 @@ C
       use altayIOConfig
       use altayPancake
       implicit double precision (a-h,o-z)
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,DG(3,3),
+      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,
      1ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON/TLR2/ TRC(3,3),buftrf(3,3),RHOAsa
@@ -132,15 +134,16 @@ C 2000 IF (IGLIJ.EQ.0) GOTO 70
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then                                         
       WRITE (IMP,203)
-      end if                                                   
-      DO 71 I=1,3                                                       
-      DO 72 J=1,3                                                       
-      TDC(I,J)=(DG(I,J)+DG(J,I))*0.5D0                                    
-  72  TRC(I,J)=(DG(I,J)-DG(J,I))*0.5D0 
-      if(NLIST.eq.1) then                                   
-      WRITE (IMP,204) (DG(I,J),J=1,3),(TDC(I,J),J=1,3),(TRC(I,J),J=1,3) 
-      end if
-  71  CONTINUE                                                          
+      end if     
+      TDC=Maki_StrainRate
+      TRC=MaKi_Spin
+      do I=1,3                                                       
+          if(NLIST.eq.1) then                                   
+              WRITE (IMP,204) (MaKi_VelGrad(I,J),J=1,3),
+     &                        (Maki_StrainRate(I,J),J=1,3),
+     &                        (MaKi_Spin(I,J),J=1,3) 
+          end if
+      end do
  203  FORMAT (' TAYLOR - DISPLACEMENT GRADIENT WHICH WILL BE USED FOR TH
      1E SIMULATION',//T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,    
      2'ANTISYMMETRICAL PART',/)                                         
@@ -174,20 +177,7 @@ C     Normalisation of TDC (which is used in CLUSTER1 in PANCAK2)
          enddo
       enddo
 C      
-      X=ABS(DG(1,1)+DG(2,2)+DG(3,3))
-      IF (X.LE.2.0D-5) RETURN                                           
-#ifndef ALTAY_SUBROUTINE
-      WRITE (*,202)
-      if(NLIST.eq.1) then                                                   
-      WRITE (IMP,202)
-      end if                                                   
- 202  FORMAT (' TAYLOR - SUM OF DIAGONAL ELEMENTS OF DISPLACEMENT GRADIE
-     1NT MUST BE ZERO')                                                 
-      call terminate(stopcode_runtimeerror)
-#else
-      RCM_RAISE(1,'TAYLOR',
-     &'Non-zero trace of the displacement gradient',RCM_RTN)
-#endif
+      RETURN
 CC     OMREKENING DISPLACEMENT GRADIENT.
  3000 do 45 i=1,3
       do 45 j=1,3
@@ -250,7 +240,7 @@ C 1235 format (' Just after Pancak2')
       use altaySliprate
       use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
       implicit double precision (a-h,o-z)
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,DG(3,3),
+      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,
      1ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON/TLR2/ RC(3,3),buftrf(3,3),RHOAsa
@@ -462,7 +452,7 @@ C
       do 60 i=1,3
       do 60 j=1,3
 C     Picking up of D in sample system:
-      y=0.5D0*(DG(i,j)+DG(j,i))/DELTAT
+      y=Maki_StrainRate(i,j)/DELTAT
 C     Scalar product between D and D+RHOS
       x=x+(y+rhossa(i,j))*y
   60  continue

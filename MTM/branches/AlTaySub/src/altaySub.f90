@@ -261,13 +261,10 @@ contains
       use altaySimul
       use altayRCM
       use altayIOConfig
+      use altayMacroKinematic, only: SetVelGrad_MacroKinematic
       implicit none
       type(altayStateData),intent(inout)        :: steps !< Definiton of the steps.
       integer,intent(out)                       :: info  !< Exit code: 0 on success.
-      ! We need this common block just for the DG tensor.
-      COMMON /TEXTUR/ DUM1(27),IDUM1,DG(3,3),ITW,GEWF
-      double precision :: DUM1,DG,GEWF
-      integer :: IDUM1,ITW
       integer :: NFILE0
       !
       integer :: i,j
@@ -297,16 +294,8 @@ contains
                         NFILE0 = 0
                   endif
                   
-                  DG = steps%simulCalls(i)%input%dgf
-
-                  ! preempt round-off errors due to IO format
-                  resid = DG(1,1)+DG(2,2)+DG(3,3)
-                  if (dabs(resid) .GT. 1.D-9) then
-                        resid = resid / 3.D0
-                        do j=1,3
-                              DG(j,j) = DG(j,j) - resid
-                        enddo
-                  endif
+                  !Set the macro velocity gradient in module MacroKinematic
+                  call SetVelGrad_MacroKinematic(steps%simulCalls(i)%input%dgf)
 
                   ! Run simul.
                   call SIMUL(1,steps%eps,NFILE0)
