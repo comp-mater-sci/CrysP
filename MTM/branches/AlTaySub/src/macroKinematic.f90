@@ -8,6 +8,12 @@ double precision, dimension(3,3), public, save :: MaKi_VelGrad = 0.0D0
 !> Strain Rate, i.e. symmetric part of the velocity gradient
 double precision, dimension(3,3), public, save :: MaKi_StrainRate = 0.0D0
 
+!> Norm of strain rate
+double precision,                 public, save :: MaKi_NormStrainRate = 0.0D0
+
+!> Strain Mode normalized by the norm of strain rate
+double precision, dimension(3,3), public, save :: MaKi_StrainMode = 0.0D0
+
 !> von Mises equivalent strain rate
 double precision,                 public, save :: MaKi_vMeqStrainRate = 0.0D0
 
@@ -41,7 +47,9 @@ contains
       Maki_StrainRate = (MaKi_VelGrad+transpose(MaKi_VelGrad))/2.D0
       MaKi_Spin       = (MaKi_VelGrad-transpose(MaKi_VelGrad))/2.D0
       !
-      MaKi_vMeqStrainRate = sqrt(2.0D0/3.0D0) * norm2(Maki_StrainRate)
+      MaKi_NormStrainRate = norm2(Maki_StrainRate)
+      MaKi_StrainMode     = Maki_StrainRate / MaKi_NormStrainRate
+      MaKi_vMeqStrainRate = sqrt(2.0D0/3.0D0) * MaKi_NormStrainRate
       MaKi_StrainModevM   = Maki_StrainRate / MaKi_vMeqStrainRate
       !
       end subroutine

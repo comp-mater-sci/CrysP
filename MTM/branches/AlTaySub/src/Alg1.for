@@ -6,6 +6,8 @@
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayMacroKinematic, only: MaKi_VelGrad,
      &                               MaKi_StrainRate,
+     &                               MaKi_StrainMode,
+     &                               MaKi_vMeqStrainRate,
      &                               MaKi_Spin      
       integer,parameter,private :: N = 5, N1 = N + 1 
       
@@ -30,7 +32,7 @@ C
      1ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON/TLR2/ TRC(3,3),buftrf(3,3),RHOAsa
-      COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
+      COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),
      1 SWRLX(3)
       double precision, dimension(3,3):: bufsp(3,3), RHOScrys(3,3)
@@ -229,7 +231,7 @@ C 1235 format (' Just after Pancak2')
      1ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON/TLR2/ RC(3,3),buftrf(3,3),RHOAsa
-      COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
+      COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       COMMON /EULERA/ fi1,PHI,fi2
       logical SWRLX
       double precision, intent(out):: Seq ! Equivalent stress in crystal, defined as..
@@ -237,6 +239,7 @@ C 1235 format (' Just after Pancak2')
                                     !  (macro) von Mises equivalent strain rate
       !> Rate of plastic work per unit volume in the crystal
       double precision, intent(out) :: WorkRate
+      double precision :: Mgrain
 C
 C     SHsam:    macroscopic stress in sample reference system
 C     SH:   macroscopic stress in crystal reference system
@@ -245,9 +248,10 @@ C     Ssam:        local stress in sample reference system
 C
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),
      1 SWRLX(3)
-      DIMENSION RCcryst(3,3)
+      DIMENSION RCcryst(3,3),rhossaTot(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
       dimension bufsp(3,3),RHOAsa(3,3),GAMdot(96)
+      real, dimension(3,3) :: test !!single precision!!
 C      data SQR2/0.7071067811865476D+00/
 #ifdef PEBP_ENABLED      
       integer :: info
@@ -316,15 +320,10 @@ C
       call MATPROD(bufsp,RCcryst,buftrf,3,3,3)        
       call MATPROD(RCcryst,TRF,bufsp,3,3,3)           
       ! RCcryst now calculated 
-
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 20/4/2012
-c 71   TRC(1)=RC(3,2)-RHOA(1)*DELTAT*SQR2
-c      TRC(2)=RC(1,3)-RHOA(2)*DELTAT*SQR2
-c      TRC(3)=RC(2,1)-RHOA(3)*DELTAT*SQR2
+      
    71   TRC(1)=RCcryst(3,2)+RHOAsa(3,2)
         TRC(2)=RCcryst(1,3)+RHOAsa(1,3)
         TRC(3)=RCcryst(2,1)+RHOAsa(2,1)
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       WorkRate=0.0
       do i=1,M11 
           if (GAMdot(i).GT.0.0) then
@@ -335,7 +334,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
               WorkRate= WorkRate - CC(2,i)*GAMdot(i)
           endif
       end do
-      Seq=WorkRate/DELTAT
+      Seq=WorkRate/MaKi_vMeqStrainRate
   43  J=M
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 4/11/2011
 C      IF (IGLIJ.EQ.0) GOTO 90
@@ -354,10 +353,11 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      IF (IGLIJ.NE.0) then
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-      WRITE (IMP,109) DELTAT,Seq,(GAMdot(I)/DELTAT,I=1,M)
+      WRITE (IMP,109) MaKi_vMeqStrainRate,Seq,
+     &                (GAMdot(I)/MaKi_vMeqStrainRate,I=1,M)
       end if
 
- 109  FORMAT (' DELTAT=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,
+ 109  FORMAT ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,
      1 '  SLIP RATES',/,(T2,10F10.5))
   90  CONTINUE                                                          
   202 CALL MATPROD(ROT,B1,GAMdot,3,M,1)
@@ -433,30 +433,22 @@ C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
       call EULER1(C2,fi1,PHI,fi2)
   31  if (nfile.eq.0.or.istp.gt.1) goto 61
 C
-      x=0.0
-      do 60 i=1,3
-      do 60 j=1,3
-C     Picking up of D in sample system:
-      y=Maki_StrainRate(i,j)/DELTAT
-C     Scalar product between D and D+RHOS
-      x=x+(y+rhossa(i,j))*y
-  60  continue
-C     calculation of ratio of projection of D+RHOS on D, and D itself.
-C     Note that length of D = sqrt(3/2)
-      x=x*2.D0/3.D0
-      ratlon=x !“the ratio of the parallel strain rates”
+      !“the ratio of the parallel strain rates”
+      ! Maki_StrainMode & rhossa: expressed in same (sample) reference frame
+      ratlon= sum( (Maki_StrainMode+sqrt(2.0D0/3.0D0)*rhossa) *
+     &              Maki_StrainMode                            ) 
 C
       ! TAU: Reference-CRSS.
-      ! TOTGAMdot/DELTAT: Taylor Factor of the grain.
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   QGX 4/18/2012
-C add the normalization factor for rhossa
-      write (IMP2,150) ior,Seq,WorkRate,TAU,TOTGAMdot/DELTAT,ratlon,
-     1 rhossa(1,1)*DELTAT,rhossa(2,2)*DELTAT,rhossa(3,3)*DELTAT,
-     2 rhossa(2,3)*DELTAT,rhossa(3,1)*DELTAT,rhossa(1,2)*DELTAT,
+      ! Taylor Factor of the grain:
+      Mgrain = TOTGAMdot / MaKi_vMeqStrainRate
+      ! Total, i.e. non-normalized, rhossa:
+      rhossaTot = rhossa * MaKi_vMeqStrainRate
+      !
+      write (IMP2,150) ior,Seq,WorkRate,TAU,Mgrain,ratlon,
+     1 rhossaTot(1,1),rhossaTot(2,2),rhossaTot(3,3),
+     2 rhossaTot(2,3),rhossaTot(3,1),rhossaTot(1,2),
      3 rhoasa(2,3),rhoasa(3,1),rhoasa(1,2),
      4 ssam(1,1),ssam(2,2),ssam(3,3),ssam(2,3),ssam(3,1),ssam(1,2)
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-! 150 format (i5,5f10.6,5x,6f10.6,5x,3f10.6,5x,6f10.6)
   150 format(i5,5(E12.5,1X),5x,6(E12.5,1X),5x,3(E12.5,1X),
      1       5x,6(E12.5,1X))
  101  format(3d20.7)      

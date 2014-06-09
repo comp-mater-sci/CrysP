@@ -46,7 +46,7 @@ C
 C     IW=2 is meant for outputting the final texture.
 C
       COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON /DOUBLE/ XM(5,96),XEPS(5),DELTAT,RHO(5),B5(5)
+      COMMON /DOUBLE/ XM(5,96),XEPS(5),RHO(5),B5(5)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,
      1ITW,GEWF
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,TEN(3,3),TOTGEW        
@@ -459,9 +459,9 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       RHOST = RHOST + RHOSsa*GEWF
       !      
   63  SeqAvg = SeqAvg + SeqGrain*GEWF
-      Mgrain = GMMdot / DELTAT
+      Mgrain = GMMdot /  MaKi_vMeqStrainRate
       Mavg = Mavg + Mgrain*GEWF
-      ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/DELTAT with DELTAT=D_vM=sqrt(2/3)*||D|| 
+      ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/MaKi_vMeqStrainRate 
       srh = srh + norm2(RHOSsa)*GEWF
       HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s      
       GMM1 = GMM0 + GMMdot !Step time here implicitly assumed to be 1.0s

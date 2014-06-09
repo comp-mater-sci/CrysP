@@ -12,6 +12,7 @@
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
+      use altayMacroKinematic, only: MaKi_vMeqStrainRate
       IMPLICIT double precision (A-H,O-Z)
 C     September 2000
 C     To find the slip rates assuming that
@@ -22,7 +23,7 @@ C       rates must be minimal.
 C
 C     Modified in Aug 2010
 C
-      COMMON /DOUBLE/ A1(5,96),BB8(5),DELTAT,RHO(5),B5(5)
+      COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),
      1 TLXX,TAURLP(8) 
       dimension SGNN(IDIMXX)
@@ -191,8 +192,7 @@ C
          j=IND(i)
          Y=SLPR(i)
          YY=Y*sgnn(j)
-C         XX(j)=Y*DELTAT*sgnn(j) 
-         XX(j)=YY*DELTAT
+         XX(j)=YY*MaKi_vMeqStrainRate
          if (IPR.eq.2) then
          if (NLIST.eq.1) then
          write (IMP,101) i,IND(i),YY
@@ -233,7 +233,7 @@ C         XX(j)=Y*DELTAT*sgnn(j)
       do i=1,NN
            Y=SLIPLP(i)
            j=IND(i)
-           XX(j)=Y*DELTAT
+           XX(j)=Y*MaKi_vMeqStrainRate
            if (IPR.eq.2) then
            if (NLIST.eq.1) then
              write (IMP,101) i,IND(i),Y
@@ -258,12 +258,12 @@ C         XX(j)=Y*DELTAT*sgnn(j)
       use altayAlgorithms, only: KLEINKWA
       IMPLICIT double precision (A-H,O-Z)
 C     December 2000
-C     The  normalisation by DELTAT of the september 2000 version has been
+C     The  normalisation by DELTAT (now: MaKi_vMeqStrainRate) of the september 2000 version has been
 C     removed here. Is now done in PANCAK2.
 C
 C     Modified Aug 2010
 C
-      COMMON /DOUBLE/ A8(5,96),BB8(5),DELTAT,RHO(5),B5(5)
+      COMMON /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
       dimension sgnn(IDIMXX)
       dimension A(13,13),B(13),SLPR(8),IND(8)
       dimension AA(13,13),BA(13),VAL(13),XV(13),YV(13)

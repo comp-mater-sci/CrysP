@@ -21,7 +21,8 @@ C
       use altayHardTypes
       use altayTBH
       use altayAlgorithms
-      use altayMacroKinematic, only: MaKi_VelGrad
+      use altayMacroKinematic, only: MaKi_VelGrad,
+     &                               MaKi_vMeqStrainRate
 #ifdef PEBP_ENABLED
       use AltayDSHstate
 #endif
@@ -32,7 +33,7 @@ C
      3 fi1b(2),phib(2),fi2b(2),
      4 NGR,NRL,ENTA,ITFMAS
       COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON /DOUBLE/ A8(5,96),BB8(5),DELTAT,RHO(5),B5(5)
+      COMMON /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
       common /extra/ A1(10,194),UU(10,10)
       common /CEIGEN/ IOR,ISTP,NBLOC
       COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),
@@ -164,24 +165,19 @@ C     Insert the relaxations as columns in A1-matrix
   81  TRCb(I,J,IL)=(C2(I,J)-C2(J,I))*0.5D0
   80  CONTINUE                                                          
       B5= Vector5D(TDCb(1:3,1:3,IL)) ! sym.(3,3) -> (5)
-      deltat=0.0
       do 30 i=1,5
-      deltat=deltat+B5(i)**2
       j=i+L1
       BB(j)=B5(i)
   30  continue
-      ! deltat is in essence von Mises equivalent strain rate.
-      ! Step increment time is implicitly assumed to be dt = 1.0
-      deltat=SQRT(2.0D0*deltat/3.0D0)
 C
 C     Calculation of time increment by dividing von Mises equivalent
 C     strain by von Mises equivalent strain rate
 C
       do 44 j=1,5
-      B5(j)=B5(j)/deltat
+      B5(j)=B5(j)/MaKi_vMeqStrainRate
       B8(j,IL)=B5(j)
   44  continue
-      BBVM2(IL)=deltat
+      BBVM2(IL)=MaKi_vMeqStrainRate
       K1=M11*(IL-1)
       !
       ! Retrieve the CRSSmatrix
@@ -435,9 +431,9 @@ C 776  format (' B5  ',i5,e15.8,   'spanv  ',d15.8,' i+ii',i5)
       RHOS33= SymMatrix(RHOS)  ! (5) -> sym.(3,3) 
       !Conversion of RHOA to dim(3,3)
       RHOA33=0.0d0
-      RHOA33(2,3)= RHOA(1)*sqr2*deltat
-      RHOA33(3,1)= RHOA(2)*sqr2*deltat
-      RHOA33(1,2)= RHOA(3)*sqr2*deltat
+      RHOA33(2,3)= RHOA(1)*sqr2*MaKi_vMeqStrainRate
+      RHOA33(3,1)= RHOA(2)*sqr2*MaKi_vMeqStrainRate
+      RHOA33(1,2)= RHOA(3)*sqr2*MaKi_vMeqStrainRate
       RHOA33(3,2)= -RHOA33(2,3)
       RHOA33(1,3)= -RHOA33(3,1)
       RHOA33(2,1)= -RHOA33(1,2)
