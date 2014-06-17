@@ -61,20 +61,22 @@ contains
       double precision, dimension(3,3):: Ldt= 0.0D0
       !
       Ldt= MaKi_VelGrad*deltaTime
-      call MatrixExponent(Ldt,MaKi_DeltaDefGrad,MaKi_DeltaDefGrad_inverse,info) 
-      call UPDATF(MaKi_TotalDefGrad,MaKi_DeltaDefGrad)
+      call MatrixExponentSmallNorm(Ldt,MaKi_DeltaDefGrad,MaKi_DeltaDefGrad_inverse,info) 
+      !
+      !Update MaKi_TotalDefGrad
+      MaKi_TotalDefGrad= matmul(MaKi_TotalDefGrad,MaKi_DeltaDefGrad)
       !
       MaKi_DeltavMeqStrain  = MaKi_vMeqStrainRate * deltaTime
       !
       end subroutine
 
-      subroutine MatrixExponent(A,expA,InvExpA,info)
+      subroutine MatrixExponentSmallNorm(A,expA,InvExpA,info)
       double precision, dimension(3,3), intent(in)  :: A
       double precision, dimension(3,3), intent(out) :: ExpA    !The matrix exponent of A: ExpA = exp(A)
       double precision, dimension(3,3), intent(out) :: InvExpA !The inverse of ExpA:      InvExpA = (exp(A))^(-1)
       integer,                          intent(out) :: info
       !
-      !For a given (3,3)-matrix A with ||A|| < 1,
+      !For a given (3,3)-matrix A with small norm, i.e. ||A|| < 1,
       !this subroutine computes the matrix exponent of A (ExpA) based on the Taylor Series Expansion (see also [1]):
       !  exp(A) == I + A + A^2/(2!) + A^3/(3!) + ... + A^n/(n!) + ...
       !     with I the (3,3) unit matrix.
@@ -114,23 +116,5 @@ contains
       !
       end subroutine
 
-      subroutine UPDATF(F,F1)
-      implicit none 
-      double precision, dimension(3,3), intent(inout)  :: F
-      double precision, dimension(3,3), intent(in)     :: F1
-
-      double precision, dimension(3,3) ::  X 
-      double precision ::  y
-      
-      X=matmul(F,F1)
-    
-      !y is the determinant of X
-      y= X(1,1)*(X(2,2)*X(3,3)-X(2,3)*X(3,2))  &
-        -X(1,2)*(X(2,1)*X(3,3)-X(2,3)*X(3,1))  &
-        +X(1,3)*(X(2,1)*X(3,2)-X(2,2)*X(3,1))
-
-      F = X !!!PE!/ y**(1.D0/3.D0) 
-
-      end subroutine
           
 end module
