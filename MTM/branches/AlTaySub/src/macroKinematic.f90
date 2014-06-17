@@ -102,7 +102,7 @@ contains
       double precision, dimension(3,3) ::  X 
       double precision ::  y
       
-      X=matmul(F1,F) !call MATPROD(X,DeltaDefGrad,TotalDefGrad,3,3,3) !!!!Shouldn't be TotalDefGrad*DeltaDefGrad instead ???
+      X=matmul(F,F1)
     
       !y is the determinant of X
       y= X(1,1)*(X(2,2)*X(3,3)-X(2,3)*X(3,2))  &
