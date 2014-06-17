@@ -267,9 +267,7 @@ contains
       integer,intent(out)                       :: info  !< Exit code: 0 on success.
       integer :: NFILE0
       !
-      integer :: i,j
-      double precision :: resid
-      !
+      integer :: i
       logical :: input_ok
       !
             ! Validate input
