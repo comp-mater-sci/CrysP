@@ -54,44 +54,64 @@ contains
       !
       end subroutine
 
-      subroutine SetNewInc_MacroKinematic()
-      double precision, parameter :: deltaTime= 1.0D0
+      subroutine SetNewInc_MacroKinematic(info)
+      integer, intent(out) :: info
       !
-      call Ftensor(MaKi_VelGrad,MaKi_DeltaDefGrad,MaKi_DeltaDefGrad_inverse) 
+      double precision, parameter:: deltaTime= 1.0D0
+      double precision, dimension(3,3):: Ldt= 0.0D0
+      !
+      Ldt= MaKi_VelGrad*deltaTime
+      call MatrixExponent(Ldt,MaKi_DeltaDefGrad,MaKi_DeltaDefGrad_inverse,info) 
       call UPDATF(MaKi_TotalDefGrad,MaKi_DeltaDefGrad)
       !
       MaKi_DeltavMeqStrain  = MaKi_vMeqStrainRate * deltaTime
       !
       end subroutine
 
-      subroutine Ftensor(Ldt,F1,F2)
-      
-      double precision, dimension(3,3), intent(in)  :: Ldt ! = the velocity gradient * time increment
-      double precision, dimension(3,3), intent(out) :: F1
-      double precision, dimension(3,3), intent(out) :: F2
-!
-!     F1 is the deformation gradient tensor
-!     which corresponds to such velocity gradient
-!     and such time increment
-!
-!     F2 is the inverse of F1
-!
-!
-      double precision, dimension(3,3) :: X,Y,A,B
-      integer, parameter :: n=10
-      integer :: k
-
-      X = unitMatrix + Ldt/n 
-      Y = unitMatrix - Ldt/n 
-      F1= X
-      F2= Y
-      do k=2,n
-        A = matmul(X,F1)
-        B = matmul(Y,F2)
-        F1= A
-        F2= B
-      end do 
-      
+      subroutine MatrixExponent(A,expA,InvExpA,info)
+      double precision, dimension(3,3), intent(in)  :: A
+      double precision, dimension(3,3), intent(out) :: ExpA    !The matrix exponent of A: ExpA = exp(A)
+      double precision, dimension(3,3), intent(out) :: InvExpA !The inverse of ExpA:      InvExpA = (exp(A))^(-1)
+      integer,                          intent(out) :: info
+      !
+      !For a given (3,3)-matrix A with ||A|| < 1,
+      !this subroutine computes the matrix exponent of A (ExpA) based on the Taylor Series Expansion (see also [1]):
+      !  exp(A) == I + A + A^2/(2!) + A^3/(3!) + ... + A^n/(n!) + ...
+      !     with I the (3,3) unit matrix.
+      !
+      !The inverse of the matrix exponent (InvExpA) is calculated as Taylor Series Expansion of -A, since:
+      !  exp(-A) * exp(A) = exp(-A+A) = exp(0) = I
+      !
+      ![1] Moler, C. and Van Loan, C., "Nineteen Dubious ways to compute the exponential of a matrix", Siam Review, vol 20, No 4, 1978.
+      !
+      double precision, dimension(3,3) :: Term= unitMatrix 
+      double precision, parameter      :: NormTerm_cutoff= 1.0D-10 !Treshold to cut off Taylor Series Expansion
+      integer                          :: k= 0 !The current term in Taylor Series Expansion
+      integer, parameter               :: k_max= 10 !Upper limit of terms in Taylor Series Expansion to be calculated
+      !
+      !Implemented algorithm is reliable on the condition that ||A|| < 1; if not, catastrophic cancellation in floating point arithmetic 
+      ! can lead to totally erroneous results [1].
+      if (norm2(A)>1.0D0) then
+          info= -1
+          return
+      else
+          info= 0
+      end if
+      !
+      !For the '0-th term in Taylor Series Expansion', the approximation of Taylor Series Expansion is
+      k= 0
+      Term= unitMatrix
+      ExpA= Term
+      InvExpA= Term
+      !
+      !Add terms to Taylor Series Expansion until ||Term|| becomes negligeable or upper limit in number of terms reached
+      do while ( (norm2(Term)>NormTerm_cutoff) .AND. (k<k_max) )
+          k= k+1
+          Term= matmul(Term,A) / k
+          ExpA= ExpA + Term
+          InvExpA= InvExpA + Term * (-1.D0)**k
+      end do
+      !
       end subroutine
 
       subroutine UPDATF(F,F1)
@@ -109,7 +129,7 @@ contains
         -X(1,2)*(X(2,1)*X(3,3)-X(2,3)*X(3,1))  &
         +X(1,3)*(X(2,1)*X(3,2)-X(2,2)*X(3,1))
 
-      F = X / y**(1.D0/3.D0) 
+      F = X !!!PE!/ y**(1.D0/3.D0) 
 
       end subroutine
           

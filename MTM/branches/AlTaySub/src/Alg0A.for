@@ -342,7 +342,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       !
       nrstep=nrstep+1
       !
-      call SetNewInc_MacroKinematic()
+      call SetNewInc_MacroKinematic(info)
       MEPS=MaKi_DeltavMeqStrain
       !
       call UPDATC(CIJ) 
