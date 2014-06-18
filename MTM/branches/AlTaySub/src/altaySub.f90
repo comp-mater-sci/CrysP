@@ -17,7 +17,8 @@
 !>    * This module is based on ALAMEL main program code by PVH and co-workers.
 !>    * Several modifications have been introduced by JG to make this code more
 !>      "procedure-like".                  
-!>    * The code inside this file was initially a part of Main1.for      
+!>    * The code inside this file was initially based on Main1.for.
+!>      Now it is only loosely related to its predecessor.
 !
 !>    \file altaySub.f90 ALAMEL as a subroutine
 
@@ -48,8 +49,7 @@ contains
       use altayRCM
       use altayIOConfig
       use altayTexFormats
-      use altayHard,only: hard_none,hard_voce,hard_BP,hard_PEBPscrew,hard_PEBPloop,InitModuleAltayHard
-      use altayMiscutils
+      use altayHard,only: hard_BP,hard_PEBPscrew,hard_PEBPloop,InitModuleAltayHard
       use altayMesostructure
 #ifdef PEBP_ENABLED
       use AltayDSHstate
@@ -57,113 +57,64 @@ contains
       implicit none
       !
       type(altayConfigData),intent(in)    :: cnf      !< configuration data 
-      integer,intent(out)                 :: info     !< exit code (0 on success)
-      character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= 0)
+      integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
+      character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
       !
-      character(len=fname_len) :: fnam2, cods1 
-      character(len=fname_len) :: codsim
       integer :: ierr
-      integer,parameter :: extlen = 4
-      
-      integer :: L
       double precision :: EPS
       !
-            info = altaySub_IOErr
             if (present(errmsg)) errmsg = ''
             ierr = 0
             ! Set the singleton object to the cnf
             acnf = cnf
-!
-            codsim = trim(cnf%output_prefix)
-            L=len_trim(codsim)
-            ! Precaution against buffer overflow:
-            if (L+extlen > fname_len) L = fname_len - extlen
-            cods1=codsim(1:L)
-#ifndef NOLSTFILE
-            if (cnf%output_config%nlist /= 0) then
-                  cods1(L+1:L+4)='.LST'
-                  ! UNIT IMP = PRINTER
-                  open (unit=IMP,file=cods1,status='replace')
-            endif
-#endif
-!
-#ifndef NORESFILE
-            if (cnf%output_config%nres /= 0) then
-                  cods1(L+1:L+4)='.RES'
-                  open (unit=IMP2,file=cods1,status='replace')
-            endif
-#endif
-!
-#ifndef NOTWNFILE
-            if (cnf%output_config%nfiltw /= 0) then
-                  cods1(L+1:L+4)='.TWN'
-                  open (unit=IMP3,file=cods1,status='replace')
-            endif
-#endif  
-            fnam2 = trim(cnf%slipsystem%input_fname)
+            !
+            ! Open input files
+            !
             ! UNIT LEC = SLIP SYSTEMS
-            open (unit=LEC,file=TRIM(fnam2),status='old',iostat=ierr)
+            open (unit=LEC,file=trim(cnf%slipsystem%input_fname),status='old',iostat=ierr)
             if (ierr /= 0) then
-                  if (present(errmsg)) errmsg = 'Cannot open slip system definition file: ' // trim(fnam2)
+                  if (present(errmsg)) errmsg = 'Cannot open slip system definition file: ' // trim(cnf%slipsystem%input_fname)
+                  info = altaySub_IOErr
                   return
             endif
-!
-#ifndef NOCURFILE
-            if (cnf%output_config%nfile /= 0) then
-            ! if (cnf%output_config%use_curfile) then
-                  cods1(L+1:L+4)='.CUR'
-                  ! IMP1=output file with successive "current situations"
-                  open (unit=IMP1,file=cods1,status='replace')
-            endif
-#endif
-!
-#if defined(PEBP_ENABLED) .and. .not. defined(NOBEPFILE)
-            if (cnf%output_config%npebp /= 0) then 
-                  ! PEBP model
-                  cods1(L+1:L+4)='.BPM'
-                  ! UNIT IMP4 = state variables of PEBP KOST11
-                  info = KS_openStateFile(IMP4,fname=cods1,mode='w')
-                  if (info /= 0) then
-                        if (present(errmsg)) errmsg = 'Cannot create PEBP state file: ' // trim(cods1)
-                        return
-                  endif
-            endif
-#endif
-            if (acnf%output_config%NMSS /= 0) then
-                  cods1(L+1:L+4)='.MSS'
-                  ! UNIT IMP5 = homogenized strain-stress
-                  open (unit=IMP5,file=cods1,status='replace')
-                  call writeMSSHeader(IMP5,info)
-            endif
-            !
-            info = altaySub_Exception
-            !
-            ! Set the data for CRSS calculations
-            call InitModuleAltayHard(cnf%hardening, info) 
-            if (info /= 0) then
-                  if (present(errmsg)) errmsg = 'Cannot initialize hardening law'
-                  return
-            endif
+            ! Load microstructure data
             CALL GRFIL(acnf%micros_fname,acnf%simul_init%FMicro,info)
             if (info /= 0) then
-                  if (present(errmsg)) errmsg = 'Cannot process the microstructure file: ' // acnf%micros_fname
+                  if (present(errmsg)) errmsg = 'Cannot process the microstructure file: ' // trim(acnf%micros_fname)
+                  info = altaySub_IOErr
                   return
             endif
-            !
-            ! Initialisation of SIMUL
-            !
-            if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
-            EPS = 0.D0
-            CALL SIMUL(0,EPS,1)
-            RCM_HANDLE(info)
-            if (present(errmsg)) errmsg = ''
             !
             ! Get the initial texture
             call loadTexture(cnf%texture%input_type,NDAT1,trim(cnf%texture%input_fname),cnf%texture%block_id,info)
             if (info /= 0) then
                   if (present(errmsg)) errmsg = 'Cannot process the texture data file: ' // trim(cnf%texture%input_fname)
+                  info = altaySub_IOErr
                   return
             endif
+            !
+            ! Open output files
+            !
+            call openOutputFiles(cnf, info, errmsg)
+            if (info /= altaySub_OK) return
+            !
+            ! Initialize altay modules
+            !
+            ! Set the data for CRSS calculations
+            call InitModuleAltayHard(cnf%hardening, info) 
+            if (info /= 0) then
+                  if (present(errmsg)) errmsg = 'Cannot initialize hardening law'
+                  info = altaySub_Err
+                  return
+            endif
+            !
+            ! Initialisation of SIMUL
+            if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
+            info = altaySub_Exception
+            EPS = 0.D0
+            CALL SIMUL(0,EPS,1)
+            RCM_HANDLE(info)
+            if (present(errmsg)) errmsg = ''
             !
 #ifdef PEBP_ENABLED
             ! PEBP model
@@ -189,6 +140,7 @@ contains
             !
             ! No need for the slip system definition anymore.
             close(LEC)
+            info = altaySub_OK
       !
       end subroutine
       
@@ -215,12 +167,15 @@ contains
             close(IMP4) 
 #endif
             close(IMP5)
+            close(IMP6)
             call MICROSTR_finalize(info)
             if (info /= 0) return
             call DYNFIL_finalize(info)
             if (info /= 0) return
 #ifdef PEBP_ENABLED
             info = KS_finalize()
+            close(IPEBPSTAT)
+            close(IPEBPSDV)
 #endif
             ! Finalize altayConfig
             if (allocated(astate%simulCalls)) then
@@ -230,7 +185,82 @@ contains
       !
       end subroutine
       
-      
+      subroutine openOutputFiles(cnf, info, errmsg)
+      use altayConfig, only: altayConfigData,fname_len
+      use altayIOConfig
+      use altayMiscutils
+#ifdef PEBP_ENABLED
+      use AltayDSHstate
+#endif
+      implicit none
+      type(altayConfigData),intent(in)    :: cnf      !< configuration data 
+      integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
+      character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
+      !
+      character(len=fname_len) :: fname_prefix, fname
+      !
+            fname_prefix = cnf%output_prefix
+            info = altaySub_IOErr
+#ifndef NOLSTFILE
+            ! UNIT IMP = PRINTER
+            if (cnf%output_config%nlist /= 0) then
+                  fname = trim(fname_prefix)//'.LST'
+                  open(unit=IMP,file=fname,status='replace',err=9999)
+            endif
+#endif
+!
+#ifndef NORESFILE
+            if (cnf%output_config%nres /= 0) then
+                  fname = trim(fname_prefix)//'.RES'
+                  open(unit=IMP2,file=fname,status='replace',err=9999)
+            endif
+#endif
+!
+#ifndef NOTWNFILE
+            if (cnf%output_config%nfiltw /= 0) then
+                  fname = trim(fname_prefix)//'.TWN'
+                  open (unit=IMP3,file=fname,status='replace',err=9999)
+            endif
+#endif
+!
+#ifndef NOCURFILE
+            if (cnf%output_config%nfile /= 0) then
+                  fname = trim(fname_prefix)//'.CUR'
+                  ! IMP1=output file with successive "current situations"
+                  open (unit=IMP1,file=fname,status='replace',err=9999)
+            endif
+#endif
+            if (cnf%output_config%NMSS /= 0) then
+                  fname = trim(fname_prefix)//'.MSS'
+                  ! UNIT IMP5 = homogenized strain-stress
+                  open (unit=IMP5,file=fname,status='replace',err=9999)
+                  call writeMSSHeader(IMP5,info)
+            endif
+!
+#if defined(PEBP_ENABLED) .and. .not. defined(NOBEPFILE)
+            if (cnf%output_config%npebp /= 0) then 
+                  ! PEBP model
+                  ! UNIT IMP4 = state variables of PEBP
+                  fname = trim(fname_prefix)//'.BPM'
+                  info = KS_openStateFile(IMP4,fname=fname,mode='w')
+                  if (info /= 0) then
+                        if (present(errmsg)) errmsg = 'Cannot create PEBP state file: ' // fname
+                        info = altaySub_IOErr
+                        return
+                  endif
+            endif
+#endif
+            !
+            ! Successful end of processing
+            info = altaySub_OK
+            return
+            !
+            ! Error handler
+            9999 continue
+            info = altaySub_IOErr
+            if (present(errmsg)) errmsg = 'Cannot open file '//trim(fname)
+      !
+      end subroutine
       
       !> Initialization of input and output data for the steps.
       !>
