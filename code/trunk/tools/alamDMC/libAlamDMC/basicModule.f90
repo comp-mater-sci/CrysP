@@ -59,7 +59,7 @@ contains
 
       integer function BasicModule_Initialize(this) result(info)
       use altaySub
-      use altayHard, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop
+      use altayHardTypes, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop
       use commonUtils
       use fngRuntime
       implicit none
@@ -71,13 +71,15 @@ contains
             this%altay%output_prefix = trim(this%output%outputPrefix)
             this%altay%jobtitle = trim(this%output%outputPrefix)
             ! 
-            select case(this%altay%hardening%HardLawID)
-            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-                  if (this%output%outputRequest) then
+            if (this%output%outputRequest) then
+                  select case(this%altay%hardening%HardLawID)
+                  case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                         this%altay%output_config%npebp = 1
-                        this%altay%output_config%nmss = 1
-                  endif
-            end select
+                  case default
+                        this%altay%output_config%npebp = 0
+                  end select
+                  this%altay%output_config%nmss = 1
+            endif
             !
             write(display_unit,fmt=30) 'Initializing the multilevel model...'
             call initAltay(this%altay,info,errmsg)
