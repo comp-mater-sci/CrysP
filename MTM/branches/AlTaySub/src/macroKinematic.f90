@@ -54,11 +54,18 @@ contains
       !
       end subroutine
 
-      subroutine SetNewInc_MacroKinematic(info)
-      integer, intent(out) :: info
+      subroutine SetNewInc_MacroKinematic(info,deltaTime_in)
+      integer,                    intent(out) :: info
+      double precision, optional, intent (in) :: deltaTime_in
       !
-      double precision, parameter:: deltaTime= 1.0D0
+      double precision                :: deltaTime= 1.0D0
       double precision, dimension(3,3):: Ldt= 0.0D0
+      !
+      if(present(deltaTime_in)) then
+          deltaTime= deltaTime_in
+      else
+          deltaTime= 1.0D0
+      end if
       !
       Ldt= MaKi_VelGrad*deltaTime
       call MatrixExponentSmallNorm(Ldt,MaKi_DeltaDefGrad,MaKi_DeltaDefGrad_inverse,info) 
