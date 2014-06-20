@@ -3,8 +3,6 @@
 #endif
       module altayAlgorithms
       use altayMiscutils, only: terminate, stopcode_runtimeerror
-      use altayMacroKinematic, 
-     &         only: F2 => MaKi_DeltaDefGrad_inverse !for subr. UPDATC
       contains
       
       SUBROUTINE MATPROD(C,A,B,N1,N2,N3)
@@ -23,14 +21,16 @@ C     MATRIX C=MATRIX A*MATRIX B
       RETURN                                                            
       END SUBROUTINE
       !
-      subroutine UPDATC(CIJ) 
+      subroutine UPDATC(CIJ,Finv) 
       implicit double precision (a-h,o-z)
-
+      double precision, dimension(3,3), intent(in):: Finv
+      double precision, dimension(3,3)            :: F2
+      dimension CIJ(3,3),X(3,3)
+      F2= Finv
 C     Updating of CIJ matrix of ellipsoid
 C     F2 is the inverse of the F-tensor which describes the strain
 C     increment. To be sure, it is first normalised.
 C
-      dimension CIJ(3,3),X(3,3)
       y=F2(1,1)*(F2(2,2)*F2(3,3)-F2(2,3)*F2(3,2))
       y=y-F2(1,2)*(F2(2,1)*F2(3,3)-F2(2,3)*F2(3,1))
       y=y+F2(1,3)*(F2(2,1)*F2(3,2)-F2(2,2)*F2(3,1))

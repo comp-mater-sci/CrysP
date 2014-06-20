@@ -19,17 +19,16 @@ type DeformationRate
     double precision, dimension(3,3) :: Spin = 0.0D0
 end type DeformationRate
 
-!> Total Deformation Gradient (from undeformed state to the end of current increment)
-double precision, dimension(3,3), public, save :: MaKi_TotalDefGrad = unitMatrix !For simulations with predeformation, it is re-initialized with call to dynfil2 subroutine. 
-
-!> Delta Deformation Gradient (from start to end of current increment)
-double precision, dimension(3,3), public, save :: MaKi_DeltaDefGrad = unitMatrix
-
-!> Inverse of Delta Deformation Gradient
-double precision, dimension(3,3), public, save :: MaKi_DeltaDefGrad_inverse = unitMatrix
-
-!> Delta von Mises equivalent strain (from start to end of current increment)
-double precision,                 public, save :: MaKi_DeltavMeqStrain = 0.0D0
+type DeformationState
+    !> Total Deformation Gradient (from undeformed state to the end of current increment)
+    double precision, dimension(3,3) :: TotalDefGrad = unitMatrix !For simulations with predeformation, it is re-initialized with call to dynfil2 subroutine.   
+    !> Incremental Deformation Gradient (from start to end of current increment)
+    double precision, dimension(3,3) :: IncrDefGrad = unitMatrix
+    !> Inverse of Incremental Deformation Gradient
+    double precision, dimension(3,3) :: IncrDefGrad_inverse = unitMatrix
+    !> Incremental von Mises equivalent strain (from start to end of current increment)
+    double precision                 :: IncrvMeqStrain = 0.0D0
+end type DeformationState
 
 contains   
 
@@ -51,8 +50,9 @@ contains
       !
       end subroutine
 
-      subroutine SetNewInc_MacroKinematic(thisRate,info,deltaTime_in)
-      type(DeformationRate), intent(in):: thisRate
+      subroutine Update_DeformationState(thisRate,thisState,info,deltaTime_in)
+      type(DeformationRate), intent(in)    :: thisRate
+      type(DeformationState),intent(inout) :: thisState      
       integer,                    intent(out) :: info
       double precision, optional, intent (in) :: deltaTime_in
       !
@@ -66,12 +66,12 @@ contains
       end if
       !
       Ldt= thisRate%VelGrad * deltaTime
-      call MatrixExponentSmallNorm(Ldt,MaKi_DeltaDefGrad,MaKi_DeltaDefGrad_inverse,info) 
+      call MatrixExponentSmallNorm(Ldt,thisState%IncrDefGrad,thisState%IncrDefGrad_inverse,info) 
       !
-      !Update MaKi_TotalDefGrad
-      MaKi_TotalDefGrad= matmul(MaKi_TotalDefGrad,MaKi_DeltaDefGrad)
+      !Update thisState%TotalDefGrad
+      thisState%TotalDefGrad = matmul(thisState%TotalDefGrad,thisState%IncrDefGrad)
       !
-      MaKi_DeltavMeqStrain  = thisRate%vMeqStrainRate * deltaTime
+      thisState%IncrvMeqStrain = thisRate%vMeqStrainRate * deltaTime
       !
       end subroutine
 

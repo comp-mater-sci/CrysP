@@ -42,7 +42,7 @@ C     USING THE ALAMEL MODEL
       !
       implicit double precision (a-h,o-z)
       ! optional argument for IW=1 or 2:
-      type(DeformationRate),intent(in),optional :: MacroDefRate
+      type(DeformationRate),intent(in),optional :: MacroDefRate !inout
 C
 C     IW=2 is meant for outputting the final texture.
 C
@@ -69,6 +69,7 @@ C
       logical SWRLX
       integer :: NPOINT
       integer :: info
+      type(DeformationState) :: MacroDefState
       ! HGAM: homogenized slip per step
       ! HGAMCALL: homogenized slip per call
       ! HGAMTOT: homogenized slip accumulated over calls
@@ -299,7 +300,7 @@ C
       pebpSDVavg = StateDerivedVars()
 #endif      
       
-      call dynfil2(nrstep,MaKi_TotalDefGrad,GAXES,GEULR,CIJ,TG)
+      call dynfil2(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT       
       write (*,96) ISTP,GAXES
 #endif
@@ -336,26 +337,26 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   44  continue
       if (NLIST.eq.1) then
           do i=1,3 
-             write (IMP,407) (MaKi_TotalDefGrad(j,i),j=1,3)
+             write (IMP,407) (MacroDefState%TotalDefGrad(j,i),j=1,3)
           enddo
  407  format (' F ',3d15.7)
       end if
       !
       nrstep=nrstep+1
       !
-      call SetNewInc_MacroKinematic(MacroDefRate,info)
-      MEPS=MaKi_DeltavMeqStrain
+      call Update_DeformationState(MacroDefRate,MacroDefState,info)
+      MEPS=MacroDefState%IncrvMeqStrain
       !
-      call UPDATC(CIJ) 
+      call UPDATC(CIJ,MacroDefState%IncrDefGrad_inverse) 
       call GETANG(CIJ,GAXES,GEULR,TG)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
       ! We can choose not to update the texture data
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL3(nrstep,MaKi_TotalDefGrad,GAXES,GEULR,CIJ,TG)
+            call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
       endif
 #else          
-      call DYNFIL3(nrstep,MaKi_TotalDefGrad,GAXES,GEULR,CIJ,TG)
+      call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #endif
 C
 C       Added for lamel model:
@@ -427,7 +428,7 @@ C
 C      write (*,3210)
 C 3210 format (' Just before Taylor')
  999  if (IW.le.1) then
-            CALL  TAYLOR(3,KOST,EPS,MacroDefRate)
+            CALL  TAYLOR(3,KOST,EPS,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
 #endif            
@@ -480,11 +481,11 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
             call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,
-     1                   MaKi_TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa) 
+     1                   MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa) 
       endif
 #else
       call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,
-     1             MaKi_TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
+     1             MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
 #endif
       ! 
 #ifndef ALTAY_SUBROUTINE

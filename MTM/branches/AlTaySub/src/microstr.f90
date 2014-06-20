@@ -92,7 +92,7 @@ contains
 
       
       
-      subroutine CLUSTER1(NGR,IGrElm,MacroDefRate,GEWF,Tprinc,Cofcos,Cofsin)
+      subroutine CLUSTER1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,Cofcos,Cofsin)
       !   IF both relaxations are orthogonal:
       !      Cofcos=0 and Cofsin=0 is returned
       !   ELSE:
@@ -107,7 +107,8 @@ contains
       implicit none
       integer,intent(in)                              :: NGR
       integer,intent(in)                              :: IGrElm
-      type(DeformationRate),intent(in)  :: MacroDefRate     
+      type(DeformationRate),intent(in)                :: MacroDefRate     
+      type(DeformationState),intent(in)               :: MacroDefState
       double precision,intent(inout)                  :: GEWF
       double precision,dimension(3,3),intent(out)     :: Tprinc
       double precision,intent(out)                    :: Cofcos
@@ -127,7 +128,7 @@ contains
                   return
             end if
             !
-            GRPAR = matmul(MaKi_TotalDefGrad,TmatGr(:,:,IGrElm))
+            GRPAR = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
             if ((IPR.gt.1) .and.(NLIST.eq.1)) then
                   write (IMP,409) IGrElm
                   409 format (' IGrElm = ',i5) 

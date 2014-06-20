@@ -17,15 +17,17 @@ C MODIFICATIONS AUG 2010
 C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY 
 C
-      SUBROUTINE TAYLOR (IRICHT, KOST,BBVM, MacroDefRate)
+      SUBROUTINE TAYLOR (IRICHT, KOST,BBVM, MacroDefRate, MacroDefState)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif
       use altayIOConfig
       use altayPancake
       implicit double precision (a-h,o-z)
-      ! optional argument for IRICHT=2 or 3:
-      type(DeformationRate),intent(in),optional :: MacroDefRate !inout
+      ! optional argument - required for IRICHT=2 or 3:
+      type(DeformationRate), intent(in),optional :: MacroDefRate
+      ! optional argument - required for IRICHT=3:      
+      type(DeformationState),intent(in),optional :: MacroDefState      
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,
      1ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
@@ -171,7 +173,7 @@ CC     OMREKENING DISPLACEMENT GRADIENT.
 C      write (*,1234)
 C 1234 format (' Just before Pancak2')
        CALL Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,
-     1 SWRLX,BBVM,XXLP,IPR,GEWF,MacroDefRate)
+     1 SWRLX,BBVM,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
       !Report Scrys to LST-file
  100  format(' Bishop-Hill stress (crystal system):')
  101  format(3d20.7)       

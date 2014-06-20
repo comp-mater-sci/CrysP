@@ -11,7 +11,7 @@ C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 C
       Subroutine Pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,
-     1 SWRLX,BBVM,XX,IPR,GEWF,MacroDefRate)
+     1 SWRLX,BBVM,XX,IPR,GEWF,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
@@ -27,6 +27,7 @@ C
 #endif
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
+      type(DeformationState),intent(in):: MacroDefState      
       COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),
      1 gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),
      2 CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),
@@ -107,7 +108,8 @@ C
       if (IGrElm.gt.NGrElm) IGrElm=1
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX
       
-      call cluster1(NGR,IGrElm,MacroDefRate,GEWF,Tprinc,Cofcos,Cofsin)
+      call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,
+     &              Cofcos,Cofsin)
       
 
 
