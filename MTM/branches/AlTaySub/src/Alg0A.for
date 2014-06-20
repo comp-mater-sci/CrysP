@@ -4,10 +4,7 @@
       module altaySimul
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayHardTypes
-      use altayMacroKinematic, only: MaKi_VelGrad,
-     &                               MaKi_DeltavMeqStrain,
-     &                               MaKi_TotalDefGrad, 
-     &                               SetNewInc_MacroKinematic
+      use altayMacroKinematic
       
       ! Initial rations of CRSS, set in MAINA1.
       ! It is used only by the stand-alone AlTay
@@ -23,7 +20,8 @@ C for clarity
 C See "annotated source codes" if you need these
 C
 C
-      SUBROUTINE SIMUL(IW,EPS,NFILE0)
+      SUBROUTINE SIMUL(IW,EPS,NFILE0,MacroDefRate)
+
 C     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
 C     USING THE ALAMEL MODEL
       use altayCurAccess
@@ -41,7 +39,10 @@ C     USING THE ALAMEL MODEL
 #endif
       use altayIOConfig
       use altayMiscutils
+      !
       implicit double precision (a-h,o-z)
+      ! optional argument for IW=1 or 2:
+      type(DeformationRate),intent(in),optional :: MacroDefRate
 C
 C     IW=2 is meant for outputting the final texture.
 C
@@ -265,7 +266,7 @@ C     read the parameters of the work hardening model
       if (IPR.gt.0.and.NLIST.eq.1) write (IMP,*)'Relaxations:',swrlx(1)
 #endif
       !
-      CALL TAYLOR(2,KOST,EPS)
+      CALL TAYLOR(2,KOST,EPS,MacroDefRate)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -309,7 +310,7 @@ C
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
       if (IW.gt.1) goto 70
       if(NLIST.eq.1) then
-          write (IMP,3456) MaKi_VelGrad
+          write (IMP,3456) MacroDefRate%VelGrad
       end if
  3456 format ('DG=',3(T10,3d12.3,/))
 C
@@ -342,7 +343,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       !
       nrstep=nrstep+1
       !
-      call SetNewInc_MacroKinematic(info)
+      call SetNewInc_MacroKinematic(MacroDefRate,info)
       MEPS=MaKi_DeltavMeqStrain
       !
       call UPDATC(CIJ) 
@@ -426,7 +427,7 @@ C
 C      write (*,3210)
 C 3210 format (' Just before Taylor')
  999  if (IW.le.1) then
-            CALL  TAYLOR(3,KOST,EPS)
+            CALL  TAYLOR(3,KOST,EPS,MacroDefRate)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
 #endif            
@@ -446,11 +447,13 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       !
 #ifdef ALTAY_SUBROUTINE
       if (astate%simulCalls(astate%this)%input%full_model) then
-            CALL TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate)
+            CALL TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate,
+     &                  MacroDefRate)
             RCM_GUARD
       endif
 #else
-      CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain,WorkRate)
+      CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain,WorkRate,
+     &            MacroDefRate)
 #endif      
    49 if (NFILTW.eq.1) write (IMP3,398) ITW
  398  format (I3)
@@ -459,9 +462,9 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       RHOST = RHOST + RHOSsa*GEWF
       !      
   63  SeqAvg = SeqAvg + SeqGrain*GEWF
-      Mgrain = GMMdot /  MaKi_vMeqStrainRate
+      Mgrain = GMMdot /  MacroDefRate%vMeqStrainRate
       Mavg = Mavg + Mgrain*GEWF
-      ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/MaKi_vMeqStrainRate 
+      ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/MacroDefRate%vMeqStrainRate 
       srh = srh + norm2(RHOSsa)*GEWF
       HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s      
       GMM1 = GMM0 + GMMdot !Step time here implicitly assumed to be 1.0s

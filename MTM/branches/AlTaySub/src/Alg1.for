@@ -4,11 +4,7 @@
       module altayTaylor
       use altayAlgorithms
       use altayMiscutils, only: terminate, stopcode_runtimeerror
-      use altayMacroKinematic, only: MaKi_VelGrad,
-     &                               MaKi_StrainRate,
-     &                               MaKi_StrainMode,
-     &                               MaKi_vMeqStrainRate,
-     &                               MaKi_Spin      
+      use altayMacroKinematic
       integer,parameter,private :: N = 5, N1 = N + 1 
       
       integer,private           :: M,NGL,NTW
@@ -21,13 +17,15 @@ C MODIFICATIONS AUG 2010
 C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY 
 C
-      SUBROUTINE TAYLOR (IRICHT, KOST,BBVM)
+      SUBROUTINE TAYLOR (IRICHT, KOST,BBVM, MacroDefRate)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif
       use altayIOConfig
       use altayPancake
       implicit double precision (a-h,o-z)
+      ! optional argument for IRICHT=2 or 3:
+      type(DeformationRate),intent(in),optional :: MacroDefRate !inout
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,
      1ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
@@ -136,12 +134,12 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then                                         
       WRITE (IMP,203)
       end if     
-      TRC=MaKi_Spin
+      TRC=MacroDefRate%Spin
       do I=1,3                                                       
           if(NLIST.eq.1) then                                   
-              WRITE (IMP,204) (MaKi_VelGrad(I,J),J=1,3),
-     &                        (Maki_StrainRate(I,J),J=1,3),
-     &                        (MaKi_Spin(I,J),J=1,3) 
+              WRITE (IMP,204) (MacroDefRate%VelGrad(I,J),J=1,3),
+     &                        (MacroDefRate%StrainRate(I,J),J=1,3),
+     &                        (MacroDefRate%Spin(I,J),J=1,3) 
           end if
       end do
  203  FORMAT (' TAYLOR - DISPLACEMENT GRADIENT WHICH WILL BE USED FOR TH
@@ -149,11 +147,11 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
      2'ANTISYMMETRICAL PART',/)                                         
  204  FORMAT (1H ,3(3F10.5,10X))
    70  continue
-      if (norm2(Maki_StrainRate).lt.1.0D-10) then
+      if (MacroDefRate%NormStrainRate.lt.1.0D-10) then
 #ifndef ALTAY_SUBROUTINE
-         write (*,205) norm2(Maki_StrainRate)
+         write (*,205) MacroDefRate%NormStrainRate
          if(NLIST.eq.1) then
-              write (IMP,205) norm2(Maki_StrainRate)
+              write (IMP,205) MacroDefRate%NormStrainRate
          end if
          call terminate(stopcode_runtimeerror)
 #else
@@ -173,7 +171,7 @@ CC     OMREKENING DISPLACEMENT GRADIENT.
 C      write (*,1234)
 C 1234 format (' Just before Pancak2')
        CALL Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,
-     1 SWRLX,BBVM,XXLP,IPR,GEWF)
+     1 SWRLX,BBVM,XXLP,IPR,GEWF,MacroDefRate)
       !Report Scrys to LST-file
  100  format(' Bishop-Hill stress (crystal system):')
  101  format(3d20.7)       
@@ -215,7 +213,8 @@ C 1235 format (' Just after Pancak2')
       RETURN
       END SUBROUTINE
       !
-      SUBROUTINE TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate)
+      SUBROUTINE TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,
+     &                  MacroDefRate)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
       use altayConfig, only: astate
@@ -227,6 +226,7 @@ C 1235 format (' Just after Pancak2')
       use altaySliprate
       use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
       implicit double precision (a-h,o-z)
+      type(DeformationRate),intent(in) :: MacroDefRate
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,
      1ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
@@ -268,7 +268,7 @@ C      if (IGLIJ.eq.0) goto 11
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C  11  write (*,1771) IOR
 C 1771 format (I5)
-  11  call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN)
+  11  call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN,MacroDefRate)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif      
@@ -334,7 +334,7 @@ C
               WorkRate= WorkRate - CC(2,i)*GAMdot(i)
           endif
       end do
-      Seq=WorkRate/MaKi_vMeqStrainRate
+      Seq=WorkRate / MacroDefRate%vMeqStrainRate
   43  J=M
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 4/11/2011
 C      IF (IGLIJ.EQ.0) GOTO 90
@@ -353,8 +353,8 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      IF (IGLIJ.NE.0) then
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-      WRITE (IMP,109) MaKi_vMeqStrainRate,Seq,
-     &                (GAMdot(I)/MaKi_vMeqStrainRate,I=1,M)
+      WRITE (IMP,109) MacroDefRate%vMeqStrainRate,Seq,
+     &                (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M)
       end if
 
  109  FORMAT ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,
@@ -434,15 +434,15 @@ C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
   31  if (nfile.eq.0.or.istp.gt.1) goto 61
 C
       !“the ratio of the parallel strain rates”
-      ! Maki_StrainMode & rhossa: expressed in same (sample) reference frame
-      ratlon= sum( (Maki_StrainMode+sqrt(2.0D0/3.0D0)*rhossa) *
-     &              Maki_StrainMode                            ) 
+      ! MacroDefRate%StrainMode & rhossa: expressed in same (sample) reference frame
+      ratlon= sum( (MacroDefRate%StrainMode+sqrt(2.0D0/3.0D0)*rhossa) *
+     &              MacroDefRate%StrainMode                            ) 
 C
       ! TAU: Reference-CRSS.
       ! Taylor Factor of the grain:
-      Mgrain = TOTGAMdot / MaKi_vMeqStrainRate
+      Mgrain = TOTGAMdot / MacroDefRate%vMeqStrainRate
       ! Total, i.e. non-normalized, rhossa:
-      rhossaTot = rhossa * MaKi_vMeqStrainRate
+      rhossaTot = rhossa * MacroDefRate%vMeqStrainRate
       !
       write (IMP2,150) ior,Seq,WorkRate,TAU,Mgrain,ratlon,
      1 rhossaTot(1,1),rhossaTot(2,2),rhossaTot(3,3),

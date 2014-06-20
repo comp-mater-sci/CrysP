@@ -14,7 +14,7 @@ C
      &                    hard_PEBPloop
       use altayHardTypes
       use altayTexFormats
-      use altayMacroKinematic, only: SetVelGrad_MacroKinematic 
+      use altayMacroKinematic
       implicit double precision (a-h,o-z)
 c      Several simulations (usually several-steps each),
 C      following each other.
@@ -48,6 +48,7 @@ C
 #ifdef FINALCUB_ENABLED
       integer,parameter :: icubunit = 444
 #endif
+      type(DeformationRate) :: MacroDefRate
       SAVE
 C     UNIT KLEC = CONTROL FILE
   90  format (a)
@@ -211,9 +212,9 @@ C
   35  CONTINUE
       ! Here DG = [L]*dt, where [L] is the velocity gradient 
       ! and the time step dt = 1.0
-      call SetVelGrad_MacroKinematic(DG)
+      call Set_DeformationRate(DG,MacroDefRate)
       !
-      CALL SIMUL(1,EPS,NFILE0)
+      CALL SIMUL(1,EPS,NFILE0,MacroDefRate)
    2  CONTINUE
 C
 C     Output of last "current situation"
@@ -240,6 +241,6 @@ C
       end if
       write (*,110)
  110  format (//,' Final call of SIMUL (for output only)')
-      CALL SIMUL(2,EPS,NFILE0)
+      CALL SIMUL(2,EPS,NFILE0,MacroDefRate)
       STOP
       END

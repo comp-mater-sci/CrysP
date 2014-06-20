@@ -291,7 +291,7 @@ contains
       use altaySimul
       use altayRCM
       use altayIOConfig
-      use altayMacroKinematic, only: SetVelGrad_MacroKinematic
+      use altayMacroKinematic
       implicit none
       type(altayStateData),intent(inout)        :: steps !< Definiton of the steps.
       integer,intent(out)                       :: info  !< Exit code: 0 on success.
@@ -299,6 +299,7 @@ contains
       !
       integer :: i
       logical :: input_ok
+      type(DeformationRate) :: MacroDefRate
       !
             ! Validate input
             info = altaySub_BadVal
@@ -323,10 +324,10 @@ contains
                   endif
                   
                   !Set the macro velocity gradient in module MacroKinematic
-                  call SetVelGrad_MacroKinematic(steps%simulCalls(i)%input%dgf)
+                  call Set_DeformationRate(steps%simulCalls(i)%input%dgf,MacroDefRate)
 
                   ! Run simul.
-                  call SIMUL(1,steps%eps,NFILE0)
+                  call SIMUL(1,steps%eps,NFILE0,MacroDefRate)
                   if (RCM_signal()) then
                         RCM_RAISE(info,'runSteps','SIMUL has thrown exception',RCM_RTN) 
                   endif

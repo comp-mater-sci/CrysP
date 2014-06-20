@@ -92,7 +92,7 @@ contains
 
       
       
-      subroutine CLUSTER1(NGR,IGrElm,GEWF,Tprinc,Cofcos,Cofsin)
+      subroutine CLUSTER1(NGR,IGrElm,MacroDefRate,GEWF,Tprinc,Cofcos,Cofsin)
       !   IF both relaxations are orthogonal:
       !      Cofcos=0 and Cofsin=0 is returned
       !   ELSE:
@@ -102,16 +102,17 @@ contains
       !   TDC is the normalized von-Mise equivalent strain rate
       use altayIOConfig, only: IPR,NLIST,IMP
       use altayMiscutils, only: unitMatrix, pi
-      use altayMacroKinematic, only: MaKi_TotalDefGrad, &
-                                     TDC => MaKi_StrainModevM
+      use altayMacroKinematic
     
       implicit none
       integer,intent(in)                              :: NGR
       integer,intent(in)                              :: IGrElm
+      type(DeformationRate),intent(in)  :: MacroDefRate     
       double precision,intent(inout)                  :: GEWF
       double precision,dimension(3,3),intent(out)     :: Tprinc
       double precision,intent(out)                    :: Cofcos
       double precision,intent(out)                    :: Cofsin
+ 
       !
       double precision :: AXX(3,3),GRPAR(3,3), C1(3,3),PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
       double precision :: x, u, dlength, dot1, dot2, TGANGLE, Y
@@ -250,9 +251,9 @@ contains
             102      format (' TGrb ',3d15.7)            
             enddo
             !@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@##@# QGX 17/9/2012
-            dlength=norm2(TDC)
-            !     Transform TDC to the "Grb" reference frame
-            CALL MATPROD(C1,TDC,AXX,3,3,3)
+            dlength=norm2(MacroDefRate%StrainModevM)
+            !     Transform MacroDefRate%StrainModevM to the "Grb" reference frame
+            CALL MATPROD(C1,MacroDefRate%StrainModevM,AXX,3,3,3)
             CALL MATPROD(TDCGr,Tprinc,C1,3,3,3) 
             !   
             relaxI=0.0
@@ -326,8 +327,8 @@ contains
             AXX(3,2)=vec2(3)
             ! update Tprinc
             Tprinc = transpose(AXX)
-            !     Transform TDC to the new "Grb" reference frame 
-            CALL MATPROD(C1,TDC,AXX,3,3,3)
+            !     Transform MacroDefRate%StrainModevM to the new "Grb" reference frame 
+            CALL MATPROD(C1,MacroDefRate%StrainModevM,AXX,3,3,3)
             CALL MATPROD(TDCGr,Tprinc,C1,3,3,3) 
             !   make sure relaxation-2 is orthogonal  
             dot2=0.0
@@ -405,8 +406,8 @@ contains
                   ! update Tprinc
                   Tprinc = transpose(AXX)
                   ! 
-                  ! Transform TDC to the new "Grb" reference frame 
-                  CALL MATPROD(C1,TDC,AXX,3,3,3)
+                  ! Transform MacroDefRate%StrainModevM to the new "Grb" reference frame 
+                  CALL MATPROD(C1,MacroDefRate%StrainModevM,AXX,3,3,3)
                   CALL MATPROD(TDCGr,Tprinc,C1,3,3,3) 
                   !  make sure relaxation-2 is orthogonal   
                   dot2=0.0

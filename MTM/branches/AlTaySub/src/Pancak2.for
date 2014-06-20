@@ -11,7 +11,7 @@ C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 C
       Subroutine Pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,
-     1 SWRLX,BBVM,XX,IPR,GEWF)
+     1 SWRLX,BBVM,XX,IPR,GEWF,MacroDefRate)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
@@ -21,12 +21,12 @@ C
       use altayHardTypes
       use altayTBH
       use altayAlgorithms
-      use altayMacroKinematic, only: MaKi_VelGrad,
-     &                               MaKi_vMeqStrainRate
+      use altayMacroKinematic
 #ifdef PEBP_ENABLED
       use AltayDSHstate
 #endif
       implicit double precision (a-h,o-z)
+      type(DeformationRate),intent(in) :: MacroDefRate
       COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),
      1 gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),
      2 CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),
@@ -107,7 +107,7 @@ C
       if (IGrElm.gt.NGrElm) IGrElm=1
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX
       
-      call cluster1(NGR,IGrElm,GEWF,Tprinc,Cofcos,Cofsin)
+      call cluster1(NGR,IGrElm,MacroDefRate,GEWF,Tprinc,Cofcos,Cofsin)
       
 
 
@@ -131,7 +131,7 @@ C     OMREKENING DISPLACEMENT GRADIENT.
       buftrf(i,j)=TRFb(j,i,IL)
       buftg(i,j)=Tprinc(j,i)
   45  continue
-      CALL MATPROD(C1,MaKi_VelGrad,buftrf,3,3,3)
+      CALL MATPROD(C1,MacroDefRate%VelGrad,buftrf,3,3,3)
       CALL MATPROD(C2,TRFb(1,1,IL),C1,3,3,3)
       if (NRL.eq.0) goto 87
       do 82 IRL=1,NRL
@@ -174,10 +174,10 @@ C     Calculation of time increment by dividing von Mises equivalent
 C     strain by von Mises equivalent strain rate
 C
       do 44 j=1,5
-      B5(j)=B5(j)/MaKi_vMeqStrainRate
+      B5(j)=B5(j)/MacroDefRate%vMeqStrainRate
       B8(j,IL)=B5(j)
   44  continue
-      BBVM2(IL)=MaKi_vMeqStrainRate
+      BBVM2(IL)=MacroDefRate%vMeqStrainRate
       K1=M11*(IL-1)
       !
       ! Retrieve the CRSSmatrix
@@ -431,9 +431,9 @@ C 776  format (' B5  ',i5,e15.8,   'spanv  ',d15.8,' i+ii',i5)
       RHOS33= SymMatrix(RHOS)  ! (5) -> sym.(3,3) 
       !Conversion of RHOA to dim(3,3)
       RHOA33=0.0d0
-      RHOA33(2,3)= RHOA(1)*sqr2*MaKi_vMeqStrainRate
-      RHOA33(3,1)= RHOA(2)*sqr2*MaKi_vMeqStrainRate
-      RHOA33(1,2)= RHOA(3)*sqr2*MaKi_vMeqStrainRate
+      RHOA33(2,3)= RHOA(1)*sqr2*MacroDefRate%vMeqStrainRate
+      RHOA33(3,1)= RHOA(2)*sqr2*MacroDefRate%vMeqStrainRate
+      RHOA33(1,2)= RHOA(3)*sqr2*MacroDefRate%vMeqStrainRate
       RHOA33(3,2)= -RHOA33(2,3)
       RHOA33(1,3)= -RHOA33(3,1)
       RHOA33(2,1)= -RHOA33(1,2)

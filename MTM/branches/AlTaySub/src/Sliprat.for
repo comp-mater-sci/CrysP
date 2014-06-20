@@ -7,13 +7,14 @@
 
       contains
       
-      Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn)
+      Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn,MacroDefRate)
       use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
-      use altayMacroKinematic, only: MaKi_vMeqStrainRate
+      use altayMacroKinematic
       IMPLICIT double precision (A-H,O-Z)
+      type(DeformationRate),intent(in) :: MacroDefRate      
 C     September 2000
 C     To find the slip rates assuming that
 C     - the stress, strain rate and the active slip systems are known,
@@ -192,7 +193,7 @@ C
          j=IND(i)
          Y=SLPR(i)
          YY=Y*sgnn(j)
-         XX(j)=YY*MaKi_vMeqStrainRate
+         XX(j)=YY*MacroDefRate%vMeqStrainRate
          if (IPR.eq.2) then
          if (NLIST.eq.1) then
          write (IMP,101) i,IND(i),YY
@@ -233,7 +234,7 @@ C
       do i=1,NN
            Y=SLIPLP(i)
            j=IND(i)
-           XX(j)=Y*MaKi_vMeqStrainRate
+           XX(j)=Y*MacroDefRate%vMeqStrainRate
            if (IPR.eq.2) then
            if (NLIST.eq.1) then
              write (IMP,101) i,IND(i),Y
@@ -258,7 +259,7 @@ C
       use altayAlgorithms, only: KLEINKWA
       IMPLICIT double precision (A-H,O-Z)
 C     December 2000
-C     The  normalisation by DELTAT (now: MaKi_vMeqStrainRate) of the september 2000 version has been
+C     The  normalisation by DELTAT (now: MacroDefRate%vMeqStrainRate) of the september 2000 version has been
 C     removed here. Is now done in PANCAK2.
 C
 C     Modified Aug 2010

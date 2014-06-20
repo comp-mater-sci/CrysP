@@ -2,22 +2,26 @@ module altayMacroKinematic
 use altayMiscutils, only: unitMatrix
 implicit none 
 
-type DeformationRate
-    !> Velocity Gradient
-    double precision, dimension(3,3) :: VelGrad = 0.0D0 
-    !> Strain Rate, i.e. symmetric part of the velocity gradient
-    double precision, dimension(3,3) :: StrainRate = 0.0D0
-    !> Norm of strain rate
-    double precision                 :: NormStrainRate = 0.0D0
-    !> Strain Mode normalized by the norm of strain rate
-    double precision, dimension(3,3) :: StrainMode = 0.0D0
-    !> von Mises equivalent strain rate
-    double precision                 :: vMeqStrainRate = 0.0D0
-    !> Strain Mode normalized by von Mises equivalent strain rate
-    double precision, dimension(3,3) :: StrainModevM = 0.0D0
-    !> Spin, i.e. anti-symmetric part of the velocity gradient 
-    double precision, dimension(3,3) :: Spin = 0.0D0
-end type DeformationRate
+!> Velocity Gradient
+double precision, dimension(3,3), public, save :: MaKi_VelGrad = 0.0D0
+
+!> Strain Rate, i.e. symmetric part of the velocity gradient
+double precision, dimension(3,3), public, save :: MaKi_StrainRate = 0.0D0
+
+!> Norm of strain rate
+double precision,                 public, save :: MaKi_NormStrainRate = 0.0D0
+
+!> Strain Mode normalized by the norm of strain rate
+double precision, dimension(3,3), public, save :: MaKi_StrainMode = 0.0D0
+
+!> von Mises equivalent strain rate
+double precision,                 public, save :: MaKi_vMeqStrainRate = 0.0D0
+
+!> Strain Mode normalized by von Mises equivalent strain rate
+double precision, dimension(3,3), public, save :: MaKi_StrainModevM = 0.0D0
+
+!> Spin, i.e. anti-symmetric part of the velocity gradient 
+double precision, dimension(3,3), public, save :: MaKi_Spin = 0.0D0
 
 !> Total Deformation Gradient (from undeformed state to the end of current increment)
 double precision, dimension(3,3), public, save :: MaKi_TotalDefGrad = unitMatrix !For simulations with predeformation, it is re-initialized with call to dynfil2 subroutine. 
@@ -33,45 +37,36 @@ double precision,                 public, save :: MaKi_DeltavMeqStrain = 0.0D0
 
 contains   
 
-      !Construct the instance 'this' of type DeformationRate
-      subroutine Set_DeformationRate(VelGrad,this)
+      !Save the public variable Maki_VelGrad & derived quantities
+      subroutine SetVelGrad_MacroKinematic(VelGrad)
       double precision, dimension(3,3), intent(in)    :: VelGrad
-      type(DeformationRate)           , intent(out)   :: this
       !
       !Explicitly make the velocity gradient traceless
-      this%VelGrad = VelGrad - UnitMatrix * (VelGrad(1,1)+VelGrad(2,2)+VelGrad(3,3))/3.D0
+      MaKi_VelGrad = VelGrad - UnitMatrix * (VelGrad(1,1)+VelGrad(2,2)+VelGrad(3,3))/3.D0
       !
-      this%StrainRate = (this%VelGrad+transpose(this%VelGrad))/2.D0
-      this%Spin       = (this%VelGrad-transpose(this%VelGrad))/2.D0
+      Maki_StrainRate = (MaKi_VelGrad+transpose(MaKi_VelGrad))/2.D0
+      MaKi_Spin       = (MaKi_VelGrad-transpose(MaKi_VelGrad))/2.D0
       !
-      this%NormStrainRate = norm2(this%StrainRate)
-      this%StrainMode     = this%StrainRate / this%NormStrainRate
-      this%vMeqStrainRate = sqrt(2.0D0/3.0D0) * this%NormStrainRate
-      this%StrainModevM   = this%StrainRate / this%vMeqStrainRate
+      MaKi_NormStrainRate = norm2(Maki_StrainRate)
+      MaKi_StrainMode     = Maki_StrainRate / MaKi_NormStrainRate
+      MaKi_vMeqStrainRate = sqrt(2.0D0/3.0D0) * MaKi_NormStrainRate
+      MaKi_StrainModevM   = Maki_StrainRate / MaKi_vMeqStrainRate
       !
       end subroutine
 
-      subroutine SetNewInc_MacroKinematic(thisRate,info,deltaTime_in)
-      type(DeformationRate), intent(in):: thisRate
+      subroutine SetNewInc_MacroKinematic(info,deltaTime)
       integer,                    intent(out) :: info
-      double precision, optional, intent (in) :: deltaTime_in
+      double precision, intent (in), optional :: deltaTime
       !
-      double precision                :: deltaTime= 1.0D0
       double precision, dimension(3,3):: Ldt= 0.0D0
       !
-      if(present(deltaTime_in)) then
-          deltaTime= deltaTime_in
-      else
-          deltaTime= 1.0D0
-      end if
-      !
-      Ldt= thisRate%VelGrad * deltaTime
+      Ldt= MaKi_VelGrad !*deltaTime
       call MatrixExponentSmallNorm(Ldt,MaKi_DeltaDefGrad,MaKi_DeltaDefGrad_inverse,info) 
       !
       !Update MaKi_TotalDefGrad
       MaKi_TotalDefGrad= matmul(MaKi_TotalDefGrad,MaKi_DeltaDefGrad)
       !
-      MaKi_DeltavMeqStrain  = thisRate%vMeqStrainRate * deltaTime
+      MaKi_DeltavMeqStrain  = MaKi_vMeqStrainRate !* deltaTime
       !
       end subroutine
 
