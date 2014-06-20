@@ -353,7 +353,8 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       RCM_GUARD
       ! We can choose not to update the texture data
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
+            call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,
+     &                   CIJ,TG)
       endif
 #else          
       call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
@@ -481,7 +482,8 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
             call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,
-     1                   MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa) 
+     1                   MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,
+     2                   RHOSsa) 
       endif
 #else
       call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,
