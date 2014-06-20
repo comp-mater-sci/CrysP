@@ -20,7 +20,7 @@ C for clarity
 C See "annotated source codes" if you need these
 C
 C
-      SUBROUTINE SIMUL(IW,EPS,NFILE0,MacroDefRate)
+      SUBROUTINE SIMUL(IW,NFILE0,MacroDefRate)
 
 C     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
 C     USING THE ALAMEL MODEL
@@ -193,7 +193,7 @@ C     read the parameters of the work hardening model
 #ifndef ALTAY_SUBROUTINE
       call InitModuleAltayHard(KLEC,KOST,crss_ratiosIN,info)
 #endif
-      CALL TAYLOR(1,KOST,EPS)
+      CALL TAYLOR(1,KOST)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -267,7 +267,7 @@ C     read the parameters of the work hardening model
       if (IPR.gt.0.and.NLIST.eq.1) write (IMP,*)'Relaxations:',swrlx(1)
 #endif
       !
-      CALL TAYLOR(2,KOST,EPS,MacroDefRate)
+      CALL TAYLOR(2,KOST,MacroDefRate)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -428,7 +428,7 @@ C
 C      write (*,3210)
 C 3210 format (' Just before Taylor')
  999  if (IW.le.1) then
-            CALL  TAYLOR(3,KOST,EPS,MacroDefRate,MacroDefState)
+            CALL  TAYLOR(3,KOST,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
 #endif            
@@ -560,7 +560,7 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       MEPSTOT = MEPSTOT + MEPS
 #endif
       if(NLIST.eq.1) then
-      WRITE (IMP,105) ISTP,SeqAvg,Mavg,EPS
+      WRITE (IMP,105) ISTP,SeqAvg,Mavg,MacroDefState%IncrvMeqStrain
       end if
  105  FORMAT (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VAL
      1UE=',F10.5,'  EFF. STRAIN EPS USED=',F10.5) 

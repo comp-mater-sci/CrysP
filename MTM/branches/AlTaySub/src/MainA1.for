@@ -126,7 +126,7 @@ c
 C
 C     Initialisation of SIMUL
 C
-      CALL SIMUL(0,EPS,1) 
+      CALL SIMUL(0,1) 
       
       ! Initializing microstructure      
       ! NOTE: this is done after initialisation of SIMUL, since SIMUL currently reads a.o. NLIST
@@ -214,7 +214,7 @@ C
       ! and the time step dt = 1.0
       call Set_DeformationRate(DG,MacroDefRate)
       !
-      CALL SIMUL(1,EPS,NFILE0,MacroDefRate)
+      CALL SIMUL(1,NFILE0,MacroDefRate)
    2  CONTINUE
 C
 C     Output of last "current situation"
@@ -241,6 +241,6 @@ C
       end if
       write (*,110)
  110  format (//,' Final call of SIMUL (for output only)')
-      CALL SIMUL(2,EPS,NFILE0,MacroDefRate)
+      CALL SIMUL(2,NFILE0,MacroDefRate)
       STOP
       END

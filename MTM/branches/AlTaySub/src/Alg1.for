@@ -17,7 +17,7 @@ C MODIFICATIONS AUG 2010
 C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY 
 C
-      SUBROUTINE TAYLOR (IRICHT, KOST,BBVM, MacroDefRate, MacroDefState)
+      SUBROUTINE TAYLOR (IRICHT, KOST, MacroDefRate, MacroDefState)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif
@@ -173,7 +173,7 @@ CC     OMREKENING DISPLACEMENT GRADIENT.
 C      write (*,1234)
 C 1234 format (' Just before Pancak2')
        CALL Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,
-     1 SWRLX,BBVM,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
+     1 SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
       !Report Scrys to LST-file
  100  format(' Bishop-Hill stress (crystal system):')
  101  format(3d20.7)       

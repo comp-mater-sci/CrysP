@@ -61,7 +61,6 @@ contains
       character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
       !
       integer :: ierr
-      double precision :: EPS
       !
             if (present(errmsg)) errmsg = ''
             ierr = 0
@@ -111,8 +110,7 @@ contains
             ! Initialisation of SIMUL
             if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
             info = altaySub_Exception
-            EPS = 0.D0
-            CALL SIMUL(0,EPS,1)
+            CALL SIMUL(0,1)
             RCM_HANDLE(info)
             if (present(errmsg)) errmsg = ''
             !
@@ -327,7 +325,7 @@ contains
                   call Set_DeformationRate(steps%simulCalls(i)%input%dgf,MacroDefRate)
 
                   ! Run simul.
-                  call SIMUL(1,steps%eps,NFILE0,MacroDefRate)
+                  call SIMUL(1,NFILE0,MacroDefRate)
                   if (RCM_signal()) then
                         RCM_RAISE(info,'runSteps','SIMUL has thrown exception',RCM_RTN) 
                   endif

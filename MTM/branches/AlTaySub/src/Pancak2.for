@@ -11,7 +11,7 @@ C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 C
       Subroutine Pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,
-     1 SWRLX,BBVM,XX,IPR,GEWF,MacroDefRate,MacroDefState)
+     1 SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
@@ -44,7 +44,7 @@ C
         dimension ccc2(2,194)
       dimension buftrf(3,3),C1(3,3),C2(3,3),
      1 TDCb(3,3,2),TRCb(3,3,2),
-     2 B(5,5),BBVM2(2),relax(3,3,3),buftg(3,3),DACC(10),
+     2 B(5,5),relax(3,3,3),buftg(3,3),DACC(10),
      3 rls(3,3,3,2),rla(3,3),rlm(3,3,3),C3(3,3),TRP(10),APRIME(10),
      4 B3(10,3),PLUMIN(2,3),CUst(10)
 C     first index op PLUMIN = nr. of grain
@@ -179,7 +179,6 @@ C
       B5(j)=B5(j)/MacroDefRate%vMeqStrainRate
       B8(j,IL)=B5(j)
   44  continue
-      BBVM2(IL)=MacroDefRate%vMeqStrainRate
       K1=M11*(IL-1)
       !
       ! Retrieve the CRSSmatrix
@@ -205,7 +204,7 @@ C   92 write (IMP,914) i,j,CCC(1,j),CCC(2,j)
    1  continue 
       DO 54 I=1,N 
 C     Conversion of strain to normalized strain rate
-      BB(I)=BB(I)/BBVM2(1)
+      BB(I)=BB(I)/MacroDefRate%vMeqStrainRate
   54  CONTINUE
       if (NRL.eq.0) goto 88
       do 85 j=M2+1,M12             
@@ -402,7 +401,7 @@ C     If all grains have a non-zero slip, do the following:
 C
 C     From here on, output is produced for grain number "laml"
 C
-   3  BBVM=BBVM2(laml)
+   3  continue
       jj=M11*(laml-1)
       do 203 j=1,M11
       do jsgn=1,2
