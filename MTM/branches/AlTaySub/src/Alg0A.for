@@ -74,9 +74,8 @@ C
       ! HGAMCALL: homogenized slip per call
       ! HGAMTOT: homogenized slip accumulated over calls
       double precision :: HGAM=0.D0,HGAMCALL=0.D0,HGAMTOT=0.D0
-      ! Macroscopically imposed vM equivalent strain per step,  
-      ! per call and accumulated over the calls.
-      double precision :: MEPS=0.D0,MEPSCALL=0.D0,MEPSTOT=0.D0 
+      ! Macroscopically imposed vM equivalent strain per call.
+      double precision :: MEPSCALL=0.D0 
       double precision :: GMMdot !Total slip rate in current grain      
       double precision :: Mgrain !Taylor factor of the current grain
       double precision :: Mavg   !Volume-averaged Taylor factor
@@ -128,7 +127,6 @@ C     Number of grains in ALAMEL cluster
       NMSS = NLIST
 #endif
       HGAMTOT=0.D0
-      MEPSTOT=0.D0
       ! NGR == 3: enable MAS-AL
       if(NGR.eq.3) then
             ITFMAS=1
@@ -345,7 +343,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       nrstep=nrstep+1
       !
       call Update_DeformationState(MacroDefRate,MacroDefState,info)
-      MEPS=MacroDefState%IncrvMeqStrain
       !
       call UPDATC(CIJ,MacroDefState%IncrDefGrad_inverse) 
       call GETANG(CIJ,GAXES,GEULR,TG)
@@ -519,11 +516,12 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       srh=sqrt(2.D0/3.D0)*srh/TOTGEW 
       SeqAvg=SeqAvg/TOTGEW
       !
-      MEPSCALL=MEPS*(ISTP-1)
+      MEPSCALL= MacroDefState%IncrvMeqStrain * (ISTP-1)
       !
       if (NMSSx /= 0) then
-            call writeMSSRecord(IMP5,MEPSCALL,MEPSTOT,HGAMCALL,
-     &                          HGAMTOT,SHsam,Mavg,srh,info)
+            call writeMSSRecord(IMP5,MEPSCALL,
+     &                    MacroDefState%AccumvMeqStrain_ToStartOfInc,
+     &                    HGAMCALL,HGAMTOT,SHsam,Mavg,srh,info)
       endif
 #ifdef PEBP_ENABLED
       select case(KOST)
@@ -545,7 +543,8 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
             callout%homogenised_slip = HGAMCALL
             callout%homogenised_slip_tot = HGAMTOT            
             callout%effective_macro_strain = MEPSCALL
-            callout%effective_macro_strain_tot = MEPSTOT
+            callout%effective_macro_strain_tot = 
+     &      	MacroDefState%AccumvMeqStrain_ToStartOfInc
       end associate
 #endif
       !
@@ -555,11 +554,9 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       ! We can choose not to update the internal state
       if (.not.astate%simulCalls(astate%this)%input%keep_state) then  
             HGAMTOT = HGAMTOT + HGAM 
-            MEPSTOT = MEPSTOT + MEPS
       endif
 #else
       HGAMTOT = HGAMTOT + HGAM
-      MEPSTOT = MEPSTOT + MEPS
 #endif
       if(NLIST.eq.1) then
       WRITE (IMP,105) ISTP,SeqAvg,Mavg,MacroDefState%IncrvMeqStrain

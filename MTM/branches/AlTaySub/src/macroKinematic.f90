@@ -28,6 +28,10 @@ type DeformationState
     double precision, dimension(3,3) :: IncrDefGrad_inverse = unitMatrix
     !> Incremental von Mises equivalent strain (from start to end of current increment)
     double precision                 :: IncrvMeqStrain = 0.0D0
+    !> Accumulated von Mises equivalent strain, up to the start of current inc. (note: reference state might be different than that of TotalDefGrad)
+    double precision                 :: AccumvMeqStrain_ToStartOfInc = 0.0D0
+    !> Accumulated von Mises equivalent strain, up to the end of current inc. (note: reference state might be different than that of TotalDefGrad)
+    double precision                 :: AccumvMeqStrain_ToEndOfInc = 0.0D0    
 end type DeformationState
 
 contains   
@@ -72,6 +76,8 @@ contains
       thisState%TotalDefGrad = matmul(thisState%TotalDefGrad,thisState%IncrDefGrad)
       !
       thisState%IncrvMeqStrain = thisRate%vMeqStrainRate * deltaTime
+      thisState%AccumvMeqStrain_ToStartOfInc = thisState%AccumvMeqStrain_ToEndOfInc
+      thisState%AccumvMeqStrain_ToEndOfInc   = thisState%AccumvMeqStrain_ToEndOfInc + thisState%IncrvMeqStrain
       !
       end subroutine
 
