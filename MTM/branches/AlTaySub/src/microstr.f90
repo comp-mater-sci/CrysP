@@ -4,6 +4,7 @@
 module altayMesostructure
 use altayAlgorithms
 use altayMiscutils, only: terminate, stopcode_runtimeerror
+use fngMathUtils
 implicit none
 
       !> Transformation matrix associated to the grain boundary reference frame 
@@ -115,7 +116,7 @@ contains
       double precision,intent(out)                    :: Cofsin
  
       !
-      double precision :: AXX(3,3),GRPAR(3,3), C1(3,3),PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
+      double precision :: AXX(3,3),GRPAR(3,3), PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
       double precision :: x, u, dlength, dot1, dot2, TGANGLE, Y
       double precision :: relaxI(3,3),relaxII(3,3)
       integer :: i,j, IN, IA, IB
@@ -254,8 +255,7 @@ contains
             !@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@##@# QGX 17/9/2012
             dlength=norm2(MacroDefRate%StrainModevM)
             !     Transform MacroDefRate%StrainModevM to the "Grb" reference frame
-            CALL MATPROD(C1,MacroDefRate%StrainModevM,AXX,3,3,3)
-            CALL MATPROD(TDCGr,Tprinc,C1,3,3,3) 
+            TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
             !   
             relaxI=0.0
             relaxI(1,3)=1.D0
@@ -329,8 +329,7 @@ contains
             ! update Tprinc
             Tprinc = transpose(AXX)
             !     Transform MacroDefRate%StrainModevM to the new "Grb" reference frame 
-            CALL MATPROD(C1,MacroDefRate%StrainModevM,AXX,3,3,3)
-            CALL MATPROD(TDCGr,Tprinc,C1,3,3,3) 
+            TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc) 
             !   make sure relaxation-2 is orthogonal  
             dot2=0.0
             do i=1,3,1
@@ -408,8 +407,7 @@ contains
                   Tprinc = transpose(AXX)
                   ! 
                   ! Transform MacroDefRate%StrainModevM to the new "Grb" reference frame 
-                  CALL MATPROD(C1,MacroDefRate%StrainModevM,AXX,3,3,3)
-                  CALL MATPROD(TDCGr,Tprinc,C1,3,3,3) 
+                  TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc) 
                   !  make sure relaxation-2 is orthogonal   
                   dot2=0.0
                   do i=1,3,1

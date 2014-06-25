@@ -5,6 +5,7 @@
       use altayAlgorithms
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayMacroKinematic
+      use fngMathUtils
       integer,parameter,private :: N = 5, N1 = N + 1 
       
       integer,private           :: M,NGL,NTW
@@ -31,11 +32,11 @@ C
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,
      1ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON/TLR2/ TRC(3,3),buftrf(3,3),RHOAsa
+      COMMON/TLR2/ TRC(3,3),RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),
      1 SWRLX(3)
-      double precision, dimension(3,3):: bufsp(3,3), RHOScrys(3,3)
+      double precision, dimension(3,3):: RHOScrys(3,3)
       double precision, dimension(3,3):: RHOAcrys(3,3), RHOAsa(3,3) 
       character*72 TITGLIJ
 C
@@ -166,10 +167,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C      
       RETURN
 CC     OMREKENING DISPLACEMENT GRADIENT.
- 3000 do 45 i=1,3
-      do 45 j=1,3
-      buftrf(i,j)=TRF(j,i)
-  45  continue
+ 3000 continue
 C      write (*,1234)
 C 1234 format (' Just before Pancak2')
        CALL Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,
@@ -184,15 +182,12 @@ C 1234 format (' Just before Pancak2')
           end do
       end if
       !Transform stress from local frame (Scrys) to sample frame (Ssam) 
-      call MATPROD(bufsp,Scrys,TRF,3,3,3)
-      call MATPROD(Ssam,buftrf,bufsp,3,3,3)   
+      Ssam = rotateSRTensorTo(Scrys,TRF)      
       !Transform relaxation strain rate tensor from local frame (RHOScrys) 
       !                                         to sample frame (RHOSsa)
-      call MATPROD(bufsp,RHOScrys,TRF,3,3,3)
-      call MATPROD(RHOSsa,buftrf,bufsp,3,3,3)
+      RHOSsa = rotateSRTensorTo(RHOScrys,TRF)      
       !Transform relaxation spin tensor from local frame (RHOAcrys) to sample frame (RHOAsa)
-      call MATPROD(bufsp,RHOAcrys,TRF,3,3,3)
-      call MATPROD(RHOAsa,buftrf,bufsp,3,3,3)
+      RHOAsa = rotateSRTensorTo(RHOAcrys,TRF)
       !Report RHOSsa and RHOAsa to LST-file
  1701 format(/,' RHOSsa')
  1706 format(/,' RHOAsa')
@@ -232,7 +227,7 @@ C 1235 format (' Just after Pancak2')
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,
      1ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON/TLR2/ RC(3,3),buftrf(3,3),RHOAsa
+      COMMON/TLR2/ RC(3,3),RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       COMMON /EULERA/ fi1,PHI,fi2
       logical SWRLX
@@ -252,7 +247,7 @@ C
      1 SWRLX(3)
       DIMENSION RCcryst(3,3),rhossaTot(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
-      dimension bufsp(3,3),RHOAsa(3,3),GAMdot(96)
+      dimension RHOAsa(3,3),GAMdot(96)
       real, dimension(3,3) :: test !!single precision!!
 C      data SQR2/0.7071067811865476D+00/
 #ifdef PEBP_ENABLED      
@@ -310,18 +305,7 @@ c  51  continue
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C
       !Calculate RCcryst: the rigid body spin in the crystal frame 
-      do i=1,3,1                                    
-        RCcryst(i,i)=0.0                               
-      enddo                                         
-      RCcryst(3,2)=RC(3,2)                            
-      RCcryst(1,3)=RC(1,3)                            
-      RCcryst(2,1)=RC(2,1)                            
-      RCcryst(2,3)=-RCcryst(3,2)                        
-      RCcryst(3,1)=-RCcryst(1,3)                        
-      RCcryst(1,2)=-RCcryst(2,1)                        
-      call MATPROD(bufsp,RCcryst,buftrf,3,3,3)        
-      call MATPROD(RCcryst,TRF,bufsp,3,3,3)           
-      ! RCcryst now calculated 
+      RCcryst = rotateSRTensorFrom(RC,TRF)
       
    71   TRC(1)=RCcryst(3,2)+RHOAsa(3,2)
         TRC(2)=RCcryst(1,3)+RHOAsa(1,3)
@@ -362,7 +346,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
  109  FORMAT ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,
      1 '  SLIP RATES',/,(T2,10F10.5))
   90  CONTINUE                                                          
-  202 CALL MATPROD(ROT,B1,GAMdot,3,M,1)
+  202 ROT = matmul(B1,GAMdot)
 
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 C      IF (IGLIJ.NE.0) then
@@ -384,7 +368,7 @@ C  58  CONTINUE
       C1(3,1)=-C1(1,3)                                                  
       C1(1,2)=-C1(2,1)                                                  
 C     NIEUWE STAND UITWENDIG ASSENSTELSEL.                          
-      CALL MATPROD(C2,C1,TRF,3,3,3)                                     
+      C2 = matmul(C1,TRF)      
 C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX                            
       ROTM= SQRT(C1(3,2)**2+C1(1,3)**2+C1(2,1)**2)
       call EULER1(C2,fi1,PHI,fi2)
@@ -430,7 +414,7 @@ C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
       TDC(3,2)=X                                                        
       TDC(2,3)=X                                                        
       TDC(3,3)=B2(6,I)                                                  
-      CALL MATPROD(C2,TDC, RC,3,3,3)                                       
+      C2 = matmul(TDC,RC) 
       ITW=I
       call EULER1(C2,fi1,PHI,fi2)
   31  if (nfile.eq.0.or.istp.gt.1) goto 61

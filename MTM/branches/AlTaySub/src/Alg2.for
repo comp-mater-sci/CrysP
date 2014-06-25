@@ -5,21 +5,6 @@
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       contains
       
-      SUBROUTINE MATPROD(C,A,B,N1,N2,N3)
-C     MATRIX C=MATRIX A*MATRIX B                                        
-      implicit double precision (a-h,o-z)
-      DIMENSION A(N1,N2),B(N2,N3),C(N1,N3)
-      DO 1 I=1,N1                                                       
-      DO 2 J=1,N3                                                       
-      X=0.                                                              
-      DO 3 K=1,N2                                                       
-      X=X+A(I,K)*B(K,J)                                                 
- 3    CONTINUE                                                          
-      C(I,J)=X                                                          
- 2    CONTINUE                                                          
- 1    CONTINUE                                                          
-      RETURN                                                            
-      END SUBROUTINE
       !
       subroutine UPDATC(CIJ,Finv) 
       implicit double precision (a-h,o-z)

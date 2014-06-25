@@ -3,6 +3,7 @@
 #endif
       module altayPancake
       use altayMiscutils, only: terminate, stopcode_runtimeerror
+      use fngMathUtils
       
       contains
       
@@ -42,9 +43,9 @@ C
       double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
       double precision,dimension(5):: RHOS, RHOA 
         dimension ccc2(2,194)
-      dimension buftrf(3,3),C1(3,3),C2(3,3),
+      dimension C2(3,3),
      1 TDCb(3,3,2),TRCb(3,3,2),
-     2 B(5,5),relax(3,3,3),buftg(3,3),DACC(10),
+     2 B(5,5),relax(3,3,3),DACC(10),
      3 rls(3,3,3,2),rla(3,3),rlm(3,3,3),C3(3,3),TRP(10),APRIME(10),
      4 B3(10,3),PLUMIN(2,3),CUst(10)
 C     first index op PLUMIN = nr. of grain
@@ -127,22 +128,14 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
   53  CONTINUE                                                          
       do 1 IL=1,NGR
       L1=5*(IL-1)
-C     OMREKENING DISPLACEMENT GRADIENT.
-      do 45 i=1,3
-      do 45 j=1,3
-      buftrf(i,j)=TRFb(j,i,IL)
-      buftg(i,j)=Tprinc(j,i)
-  45  continue
-      CALL MATPROD(C1,MacroDefRate%VelGrad,buftrf,3,3,3)
-      CALL MATPROD(C2,TRFb(1,1,IL),C1,3,3,3)
+      
+      C2 = rotateSRTensorFrom(MacroDefRate%VelGrad,TRFb(:,:,IL))
       if (NRL.eq.0) goto 87
       do 82 IRL=1,NRL
 C     Transform relaxation from grain reference frame to macroscopic frame
-      CALL MATPROD(C1,RELAX(1,1,IRL),Tprinc,3,3,3)
-      CALL MATPROD(RLM(1,1,IRL),buftg,C1,3,3,3)
+      RLM(:,:,IRL) = rotateSRTensorTo(RELAX(:,:,IRL),Tprinc)
 C     ... and now to crystal frame:
-      CALL MATPROD(C1,RLM(1,1,IRL),buftrf,3,3,3)
-      CALL MATPROD(C3,TRFb(1,1,IL),C1,3,3,3)
+      C3 = rotateSRTensorFrom(RLM(:,:,IRL),TRFb(:,:,IL))
       do 83 j=1,3
       do 83 i=1,3
       RLS(i,j,IRL,IL)=(C3(I,J)+C3(J,I))*0.5D0
