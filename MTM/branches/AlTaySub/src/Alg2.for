@@ -7,41 +7,14 @@
       
       !
       subroutine UPDATC(CIJ,Finv) 
-      implicit double precision (a-h,o-z)
-      double precision, dimension(3,3), intent(in):: Finv
-      double precision, dimension(3,3)            :: F2
-      dimension CIJ(3,3),X(3,3)
-      F2= Finv
+      double precision, dimension(3,3), intent(in)   :: Finv
+      double precision, dimension(3,3), intent(inout):: CIJ
 C     Updating of CIJ matrix of ellipsoid
-C     F2 is the inverse of the F-tensor which describes the strain
-C     increment. To be sure, it is first normalised.
-C
-      y=F2(1,1)*(F2(2,2)*F2(3,3)-F2(2,3)*F2(3,2))
-      y=y-F2(1,2)*(F2(2,1)*F2(3,3)-F2(2,3)*F2(3,1))
-      y=y+F2(1,3)*(F2(2,1)*F2(3,2)-F2(2,2)*F2(3,1))
-      y=y**(1.D0/3.D0)
-      do 1 i=1,3
-      do 11 j=1,3
-      F2(i,j)=F2(i,j)/y
-  11  continue
-   1  continue
-      do 3 k=1,3
-      do 13 l=1,3
-      y=0.0
-      do 4 i=1,3
-      do 14 j=1,3
-      y=y+CIJ(i,j)*F2(i,k)*F2(j,l)
-  14  continue
-   4  continue
-      X(k,l)=y
-  13  continue
-   3  continue
-      do 2 i=1,3
-      do 12 j=1,3
-      CIJ(i,j)=X(i,j)
-  12  continue
-   2  continue
-      return
+C     Finv is the inverse of the F-tensor which describes the strain
+C     increment.
+!     CIJ = (Finv)^T * CIJ * Finv
+      CIJ = matmul(matmul(transpose(Finv),CIJ),Finv)
+      !
       end subroutine
       !
       !> Transform a 5D-vector in deviatoric (stress/strain-rate) space
