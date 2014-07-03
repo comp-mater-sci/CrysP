@@ -13,6 +13,7 @@ Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libaltay", "libaltay\libalt
 EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "altaySubTest", "altaySubTest\altaySubTest.vfproj", "{CAE224CD-DBFA-4FE3-8AF8-3F4563ADA4F9}"
 	ProjectSection(ProjectDependencies) = postProject
+		{48A894A8-DEF0-4103-8323-DA4269DB06E8} = {48A894A8-DEF0-4103-8323-DA4269DB06E8}
 		{0F32BCF4-74C8-4668-A57A-410531D6D860} = {0F32BCF4-74C8-4668-A57A-410531D6D860}
 	EndProjectSection
 EndProject
