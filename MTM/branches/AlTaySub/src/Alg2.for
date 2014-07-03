@@ -3,6 +3,7 @@
 #endif
       module altayAlgorithms
       use altayMiscutils, only: terminate, stopcode_runtimeerror
+      use fngMathUtils
       contains
       
       !
@@ -66,52 +67,6 @@ C     increment.
       Vector5D(5)= c3* (mat(1,2)+mat(2,1))
       !      
       end function Vector5D
-      !
-      ! Calculate transformation matrix T.
-      ! fi1,PHI,fi2 are Euler angles in radians.
-      Subroutine EulRad_2_Tmatrix(T,fi1,PHI,fi2)
-      implicit none
-      !
-      double precision,intent(in)   :: fi1,PHI,fi2
-      double precision,dimension(3,3),intent(out)     :: T
-      !
-      double precision :: C,C1,C2,S,S1,S2
-      !
-      C1=COS(fi1)
-      C= COS(PHI)
-      C2=COS(fi2)
-      S1=SIN(fi1)
-      S= SIN(PHI)
-      S2=SIN(fi2)
-      T(1,1)=C1*C2-S1*S2*C
-      T(1,2)=S1*C2+C1*S2*C
-      T(1,3)=S2*S
-      T(2,1)=-C1*S2-S1*C2*C
-      T(2,2)=-S1*S2+C1*C2*C
-      T(2,3)=C2*S
-      T(3,1)=S1*S
-      T(3,2)=-C1*S
-      T(3,3)=C
-      return
-      end subroutine
-      
-      ! Calculate transformation matrix T.
-      ! fi1,PHI,fi2 are Euler angles in degrees.
-      Subroutine EulDeg_2_Tmatrix(T,fi1,PHI,fi2)      
-      implicit none
-      !
-      double precision,intent(in)   :: fi1,PHI,fi2
-      double precision,dimension(3,3),intent(out)     :: T
-      !
-      double precision, parameter :: convf= acos(-1.D0) / 180.D0 !pi/180
-      double precision :: fi1_rad,PHI_rad,fi2_rad
-      !
-      fi1_rad = fi1 * convf
-      PHI_rad = PHI * convf
-      fi2_rad = fi2 * convf
-      call EulRad_2_Tmatrix(T,fi1_rad,PHI_rad,fi2_rad)
-      return
-      end subroutine
       
       Subroutine Transf(Gaxes,Aprime,T)
       IMPLICIT double precision (A-H,O-Z)
@@ -191,10 +146,6 @@ C
       dimension e(3,3),x(3),prval(3), y(3,3),prdir(3,3)
       logical axisym,eerste
       SAVE
-      data eerste/.true./
-      if (eerste) then
-         pi=4.0d0*atan(1.0d0)
-      endif
       a=0.0
       do 3 i=1,3
       a=a+e(i,i)

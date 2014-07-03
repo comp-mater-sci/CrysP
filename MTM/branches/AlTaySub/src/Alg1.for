@@ -372,7 +372,7 @@ C     NIEUWE STAND UITWENDIG ASSENSTELSEL.
 C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX                            
       ROTM= SQRT(C1(3,2)**2+C1(1,3)**2+C1(2,1)**2)
       call EULER1(C2,fi1,PHI,fi2)
-      call EulRad_2_Tmatrix(C2,fi1,PHI,fi2)
+      C2 = rotmat(fi1,PHI,fi2)
       ITW=0
       IF (NTW.EQ.0) GOTO 31                                             
       X=0.                                                              

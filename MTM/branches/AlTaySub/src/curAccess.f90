@@ -99,7 +99,7 @@ contains
             if (info /= 0) return
             !
             mf%GEULR = mf%GEULR * convf
-            call EulRad_2_TMATRIX(mf%TAX0,mf%GEULR(1),mf%GEULR(2),mf%GEULR(3))  ! Check it!!!
+            mf%TAX0 = rotmat(mf%GEULR(1),mf%GEULR(2),mf%GEULR(3))  ! Check it!!!
             call Transf(mf%GAXES,mf%CIJ0,mf%TAX0)  ! Check it!!!
       
             ! Request allocation of the memory

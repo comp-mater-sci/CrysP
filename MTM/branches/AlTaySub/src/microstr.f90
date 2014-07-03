@@ -4,7 +4,6 @@
 module altayMesostructure
 use altayAlgorithms
 use altayMiscutils, only: terminate, stopcode_runtimeerror
-use fngMathUtils
 implicit none
 
       !> Transformation matrix associated to the grain boundary reference frame 
@@ -32,7 +31,7 @@ contains
       double precision, dimension(3,3), intent(in) :: F_mic
       !
       integer          :: IGrElm
-      double precision :: PHI2,PHI,PHI1
+      type(EulerAngles) :: EulGB
       double precision, dimension(3,3) :: T 
       ! 
       ierr = -1
@@ -62,9 +61,9 @@ contains
       102  format (' GRFIL - Allocation of memory failed')
       !
       do IGrElm=1,NGrElm
-            read (NDAT2,96) PHI2,PHI,PHI1
+            read (NDAT2,96) EulGB%fi2,EulGB%PHI,EulGB%fi1
             !Calc. the transformation matrix T
-            call EulDeg_2_Tmatrix(T,PHI1,PHI,PHI2)
+            T = rotmat(deg2rad(EulGB))
             !TmatGr(1:3,i,IGrElm) for i=1,2 holds two non-parallel vectors 
             !  within the initial GB (grain boundary) plane.      
             !TmatGr(1:3,i,IGrElm) for i=3 holds a vector out of the initial

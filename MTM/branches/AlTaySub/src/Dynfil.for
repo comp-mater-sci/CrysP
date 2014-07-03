@@ -1,6 +1,6 @@
       module altayDynfil
       use altayMiscutils, only: unitMatrix
-      use altayAlgorithms
+      use fngMathUtils
       implicit none
 
       
@@ -216,7 +216,7 @@
       type(matFrame),intent(in)     :: mf
       type(grain),intent(inout)     :: gr
       !
-            call EulRad_2_Tmatrix(gr%tT,gr%tfi1,gr%tPHI,gr%tfi2)
+            gr%tT = rotmat(gr%tfi1,gr%tPHI,gr%tfi2)
             !
             ! Backward compatibility with type(gr):
             ! initialize the remaining components with mf data...
