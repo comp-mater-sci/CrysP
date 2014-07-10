@@ -84,7 +84,7 @@ case "$ANISOMODE" in
 		;;
 esac
 
-[[ ${EXTRACTCUR} -ge 1 ]] && FROMSNAP+=" texout.cub"
+[[ ${EXTRACTCUR} -ge 1 ]] && FROMSNAP+=" ${TEXFILE}.gz"
 
 [[ ${EXTRACTMMM} -ge 1 ]] && FROMSNAP+=" ${MMMFILE}"
 
@@ -202,6 +202,7 @@ for  snap in $SNAPLIST ; do
 		title="step $defstep"
 		local curname="${outprefix}.cur"
 		local stepcur="${PREFIX}_${defstep}.cur"
+		gunzip -f "${TEXFILE}.gz"
 		NORIENT=$(cub2cur "${TEXFILE}" "$stepcur" "$title"  | grep "crystallites" | sed -e 's/^.*crystallites//' )
 		echo "Discrete texture consists of $NORIENT orientations" >> "$LOGFILE"
 		tail -n +2 "$stepcur" >> ${OUTCURFILE}
