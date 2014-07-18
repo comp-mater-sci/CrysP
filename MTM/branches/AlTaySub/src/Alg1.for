@@ -237,6 +237,7 @@ C 1235 format (' Just after Pancak2')
       !> Rate of plastic work per unit volume in the crystal
       double precision, intent(out) :: WorkRate
       double precision :: Mgrain
+      type(EulerAngles):: Euler
 C
 C     SHsam:    macroscopic stress in sample reference system
 C     SH:   macroscopic stress in crystal reference system
@@ -371,8 +372,11 @@ C     NIEUWE STAND UITWENDIG ASSENSTELSEL.
       C2 = matmul(C1,TRF)      
 C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX                            
       ROTM= SQRT(C1(3,2)**2+C1(1,3)**2+C1(2,1)**2)
-      call EuleranglesTriplet(C2,fi1,PHI,fi2)
-      C2 = rotmat(fi1,PHI,fi2)
+      Euler= EuleranglesType(C2)
+      fi1=Euler%fi1 !
+      PHI=Euler%PHI !use of EulerAngles2Arr impeded
+      fi2=Euler%fi2 !   by common block /EULERA/
+      C2 = rotmat(Euler)
       ITW=0
       IF (NTW.EQ.0) GOTO 31                                             
       X=0.                                                              
@@ -416,7 +420,10 @@ C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
       TDC(3,3)=B2(6,I)                                                  
       C2 = matmul(TDC,RC) 
       ITW=I
-      call EuleranglesTriplet(C2,fi1,PHI,fi2)
+      Euler= EuleranglesType(C2)
+      fi1=Euler%fi1 !
+      PHI=Euler%PHI !use of EulerAngles2Arr impeded
+      fi2=Euler%fi2 !   by common block /EULERA/      
   31  if (nfile.eq.0.or.istp.gt.1) goto 61
 C
       !“the ratio of the parallel strain rates”

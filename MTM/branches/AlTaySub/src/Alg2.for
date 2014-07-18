@@ -108,6 +108,7 @@ C
       dimension CIJ(3,3),TMAT(3,3),GEULR(3)
       Dimension prval(3),prdir(3,3),e(3,3)
       logical axisym
+      type(EulerAngles):: CEuler
       CIJTR=(CIJ(1,1)+CIJ(2,2)+CIJ(3,3))/3.D0
       do 30 i=1,3
       DO 31 j=1,3
@@ -130,7 +131,8 @@ C
       do 37 j=1,3
       TMAT(i,j)=prdir(j,i)
    37 continue
-      call EuleranglesTriplet(TMAT,GEULR(1),GEULR(2),GEULR(3))
+      CEuler= EuleranglesType(TMAT)
+      GEULR=EulerAngles2Arr(CEuler)
       return
       end subroutine
       !
