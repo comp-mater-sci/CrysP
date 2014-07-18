@@ -16,6 +16,8 @@ Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "BBC2008Ident_original", "BB
 EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libHMSIntegration", "libHMSIntegration\libHMSIntegration.vfproj", "{17EBAC45-0F8C-40DB-8B16-A5C72AE15310}"
 EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "BBC2008Ident_June2014", "BBC2008Ident_June2014\BBC2008Ident_June2014.vfproj", "{5C62117E-3A91-49B2-A1B4-AC45299EFF1A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,6 +74,16 @@ Global
 		{17EBAC45-0F8C-40DB-8B16-A5C72AE15310}.Release|Mixed Platforms.Build.0 = Release|Win32
 		{17EBAC45-0F8C-40DB-8B16-A5C72AE15310}.Release|Win32.ActiveCfg = Release|Win32
 		{17EBAC45-0F8C-40DB-8B16-A5C72AE15310}.Release|Win32.Build.0 = Release|Win32
+		{5C62117E-3A91-49B2-A1B4-AC45299EFF1A}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{5C62117E-3A91-49B2-A1B4-AC45299EFF1A}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{5C62117E-3A91-49B2-A1B4-AC45299EFF1A}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{5C62117E-3A91-49B2-A1B4-AC45299EFF1A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5C62117E-3A91-49B2-A1B4-AC45299EFF1A}.Debug|Win32.Build.0 = Debug|Win32
+		{5C62117E-3A91-49B2-A1B4-AC45299EFF1A}.Release|Any CPU.ActiveCfg = Release|Win32
+		{5C62117E-3A91-49B2-A1B4-AC45299EFF1A}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{5C62117E-3A91-49B2-A1B4-AC45299EFF1A}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{5C62117E-3A91-49B2-A1B4-AC45299EFF1A}.Release|Win32.ActiveCfg = Release|Win32
+		{5C62117E-3A91-49B2-A1B4-AC45299EFF1A}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
