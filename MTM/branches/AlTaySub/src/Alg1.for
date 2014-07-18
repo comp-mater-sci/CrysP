@@ -371,7 +371,7 @@ C     NIEUWE STAND UITWENDIG ASSENSTELSEL.
       C2 = matmul(C1,TRF)      
 C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX                            
       ROTM= SQRT(C1(3,2)**2+C1(1,3)**2+C1(2,1)**2)
-      call EULER1(C2,fi1,PHI,fi2)
+      call EuleranglesTriplet(C2,fi1,PHI,fi2)
       C2 = rotmat(fi1,PHI,fi2)
       ITW=0
       IF (NTW.EQ.0) GOTO 31                                             
@@ -416,7 +416,7 @@ C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
       TDC(3,3)=B2(6,I)                                                  
       C2 = matmul(TDC,RC) 
       ITW=I
-      call EULER1(C2,fi1,PHI,fi2)
+      call EuleranglesTriplet(C2,fi1,PHI,fi2)
   31  if (nfile.eq.0.or.istp.gt.1) goto 61
 C
       !“the ratio of the parallel strain rates”

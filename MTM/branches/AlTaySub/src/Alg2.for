@@ -130,7 +130,7 @@ C
       do 37 j=1,3
       TMAT(i,j)=prdir(j,i)
    37 continue
-      call EULER1(TMAT,GEULR(1),GEULR(2),GEULR(3))
+      call EuleranglesTriplet(TMAT,GEULR(1),GEULR(2),GEULR(3))
       return
       end subroutine
       !
@@ -346,25 +346,6 @@ c
       prdir(i,i2)=x
    1  continue
       return
-      end subroutine
-      !
-      Subroutine EULER1(T,fi1,PHI,fi2)
-      IMPLICIT double precision (A-H,O-Z)
-C     To calculate Euler angles from T-matrix
-      Dimension T(3,3)
-      x=0.0
-      do 1 i=1,3
-      x=x+T(i,3)**2
-   1  continue
-      x=T(3,3)/SQRT(x)
-      PHI=ACOS(x)
-      if (x.eq.1.0.or.x.eq.-1.0) goto 2
-      fi1=ATAN2(T(3,1),-T(3,2))
-      fi2=ATAN2(T(1,3),T(2,3))
-      goto 3
-   2  fi1=ATAN2(-T(2,1)/X,T(2,2)/X)
-      fi2=0.0
-   3  return
       end subroutine
       !
       SUBROUTINE MINV(A,N,D,L,M,NXXX)                                   
