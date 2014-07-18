@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "BBC2008Ident", "BBC2008Ident\BBC2008Ident.vfproj", "{54F7FBDE-C92B-4D71-81BA-F4DFB9A0D3DA}"
 EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "VUMAT_BBC2008", "VUMAT_BBC2008\VUMAT_BBC2008.vfproj", "{6C32984A-0DD9-45B5-BDD5-0C752F30AD7A}"
