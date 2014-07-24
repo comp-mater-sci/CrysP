@@ -313,35 +313,8 @@
         write (OUT_UNIT, *) bbc_parm(i)
         j = jj + 1
       end do
-      do i = 1, 7
-        call GET_FG_U (u_ang(i), aux1, aux2, info)
-        if (info /= 0) exit
-        crt_y(i) = 1.0d0 / aux1
-        crt_r(i) = aux1 / aux2 - 1.0d0
-      end do
-      if (info /= 0) then
-        write (*, FMT03) ERR_MSG02
-        write (OUT_UNIT, FMT03) ERR_MSG02
-        write (*, FMT03) FAILURE_MSG
-        write (OUT_UNIT, FMT03) FAILURE_MSG
-        close (OUT_UNIT)
-        ! stop
-        call exit(1)
-      end if
-      call GET_FG_B (aux1, aux2, info)
-      if (info /= 0) then
-        write (*, FMT03) ERR_MSG02
-        write (OUT_UNIT, FMT03) ERR_MSG02
-        write (*, FMT03) FAILURE_MSG
-        write (OUT_UNIT, FMT03) FAILURE_MSG
-        close (OUT_UNIT)
-        ! stop
-        call exit(1)
-      end if
-      crt_y(8) = 1.0d0 / aux1
-      crt_r(8) = aux1 / aux2 - 1.0d0
+      call validateBBCInputParams()
       ! <<--
-
 *----------------------------------------------------------------------*
 * Perform the identification of the BBC 2008 yield criterion.          *
 *----------------------------------------------------------------------*
@@ -406,33 +379,7 @@
               read(*,*) bbc_parm(i)
               sol(i) = bbc_parm(i)
             enddo
-            do i = 1, 7
-              call GET_FG_U (u_ang(i), aux1, aux2, info)
-              if (info /= 0) exit
-              crt_y(i) = 1.0d0 / aux1
-              crt_r(i) = aux1 / aux2 - 1.0d0
-            end do
-            if (info /= 0) then
-              write (*, FMT03) ERR_MSG02
-              write (OUT_UNIT, FMT03) ERR_MSG02
-              write (*, FMT03) FAILURE_MSG
-              write (OUT_UNIT, FMT03) FAILURE_MSG
-              close (OUT_UNIT)
-              ! stop
-              call exit(1)
-            end if
-            call GET_FG_B (aux1, aux2, info)
-            if (info /= 0) then
-              write (*, FMT03) ERR_MSG02
-              write (OUT_UNIT, FMT03) ERR_MSG02
-              write (*, FMT03) FAILURE_MSG
-              write (OUT_UNIT, FMT03) FAILURE_MSG
-              close (OUT_UNIT)
-              ! stop
-              call exit(1)
-            end if
-            crt_y(8) = 1.0d0 / aux1
-            crt_r(8) = aux1 / aux2 - 1.0d0
+            call validateBBCInputParams()
             ! <<--
           endif
           ! Otherwise, we start identification from the previously 
@@ -583,6 +530,9 @@
       implicit none
       integer,intent(in)      :: OUT_UNIT
       integer,intent(out)     :: info
+      !
+      double precision :: ang, max_ang, aux1, aux2
+      !
       ang = 0.0d0
       max_ang = 90.0d0 + 0.5d0 * ANG_STEP
       do
@@ -598,6 +548,10 @@
       implicit none
       integer,intent(in)      :: OUT_UNIT
       integer,intent(out)     :: info
+      !
+      double precision :: ang, max_ang, aux1, aux2, aux3
+      double precision :: max_sig12_frac, sig12_frac
+      !
       max_ang = 360.0d0 + 0.5d0 * ANG_STEP
       sig12_frac = 0.0d0
       max_sig12_frac = 1.0d0 - 0.5d0 * SIG12_FRAC_STEP
@@ -616,6 +570,43 @@
         if (info /= 0) exit
         sig12_frac = sig12_frac + SIG12_FRAC_STEP
       end do
+      end subroutine
+      
+      
+      ! Check if the BBC parameters in /BBC_DATA/ allow evaluating 
+      ! uniaxial and biaxial r- values and yield stresses.
+      ! Set crt_y and crt_y arrays.
+      subroutine validateBBCInputParams()
+      implicit none
+      double precision :: aux1, aux2
+      integer :: info
+            do i = 1, 7
+              call GET_FG_U (u_ang(i), aux1, aux2, info)
+              if (info /= 0) exit
+              crt_y(i) = 1.0d0 / aux1
+              crt_r(i) = aux1 / aux2 - 1.0d0
+            end do
+            if (info /= 0) then
+              write (*, FMT03) ERR_MSG02
+              write (OUT_UNIT, FMT03) ERR_MSG02
+              write (*, FMT03) FAILURE_MSG
+              write (OUT_UNIT, FMT03) FAILURE_MSG
+              close (OUT_UNIT)
+              ! stop
+              call exit(1)
+            end if
+            call GET_FG_B (aux1, aux2, info)
+            if (info /= 0) then
+              write (*, FMT03) ERR_MSG02
+              write (OUT_UNIT, FMT03) ERR_MSG02
+              write (*, FMT03) FAILURE_MSG
+              write (OUT_UNIT, FMT03) FAILURE_MSG
+              close (OUT_UNIT)
+              ! stop
+              call exit(1)
+            end if
+            crt_y(8) = 1.0d0 / aux1
+            crt_r(8) = aux1 / aux2 - 1.0d0
       end subroutine
       
       
