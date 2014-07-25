@@ -211,8 +211,8 @@ contains
                   r = f / g - 1.D0
                   s = 1.D0 / f
             endif
-            rsd(j) = (1.D0 - s/(y_term(i)))**2
-            rsd(j + 1) = (1.D0 - r / r_term(i))**2
+            rsd(j) = (1.D0 - s/(y_term(i)))
+            rsd(j + 1) = (1.D0 - r / r_term(i))
             j = j + 2
       end do
       if (lcl_flag /= 0) then
@@ -227,8 +227,8 @@ contains
             r = f / g - 1.D0
             s = 1.D0 / f
       end if
-      rsd(j) = (1.D0 - s/(y_term(8)))**2
-      rsd(j + 1) = (1.D0 - r / r_term(8))**2
+      rsd(j) = (1.D0 - s/(y_term(8)))
+      rsd(j + 1) = (1.D0 - r / r_term(8))
       return
       end subroutine GET_IDENT_RSD_MOD
 
@@ -279,8 +279,8 @@ contains
                   allocate(yld_res(2* nyld))
                   j = 1
                   do i = 1, size(yld_res), 2
-                        yld_res(i) = (1.D0 - yld(j)%S / ref_yld(j)%S)**2
-                        yld_res(i+1) =  (1.D0 - cos(ref_yld(j)%beta - yld(j)%beta))**2
+                        yld_res(i) = (1.D0 - yld(j)%S / ref_yld(j)%S)
+                        yld_res(i+1) =  (1.D0 - cos(ref_yld(j)%beta - yld(j)%beta))
                         j = j + 1
                   enddo
                   
