@@ -1,4 +1,3 @@
-      include 'hybrd1_lmdif1_dp.inc'
 *----------------------------------------------------------------------*
 *                             BBC_2008_16                              *
 *                                                                      *
@@ -12,6 +11,7 @@
 *----------------------------------------------------------------------*
 *----------------------------------------------------------------------*
       program BBC_2008_16
+      use extendedYld
       implicit none
 *----------------------------------------------------------------------*
 * Symbolic constants                                                   *
@@ -31,7 +31,7 @@
      &  ERR_MSG01, ERR_MSG02, ERR_MSG03, ERR_MSG04,
      &  FMT01, FMT02, FMT03, FMT04, FMT05, FMT06, FMT07, FMT08, FMT09,
      &  FMT10, FMT11, FMT12, FMT13, FMT14, FMT15, FMT16, FMT17, FMT18,
-     &  FMT19, FMT20, SUCCESS_MSG, FAILURE_MSG
+     &  FMT19, FMT20, FMT21, FMT22, SUCCESS_MSG, FAILURE_MSG
       parameter (
      &  OUT_UNIT = 1,
      &  FL_NAM_SZ = 255, TITL_SZ = 80,
@@ -122,7 +122,9 @@
      &    F7.4///1X, 'Sections through the normalized yield surface')",
      &  FMT19 = "(//4X, 'sig11 / Y', 9X, 'sig22 / Y', 9X,
      &    'sig12 / Y'/)",
-     &  FMT20 = "(5X, F7.4, 11X, F7.4, 11X, F7.4)"
+     &  FMT20 = "(5X, F7.4, 11X, F7.4, 11X, F7.4)",
+     &  FMT21 = "(/1X,'Type the number of yield section points: ')",
+     &  FMT22 = "(/1X,'point ',I0,1X,'(theta[deg], S/Y, beta[deg]): ')"
      &          )
       parameter (
      &  SUCCESS_MSG = "End of execution",
@@ -136,6 +138,14 @@
       integer :: step
       logical :: read_trial_sol
       ! <<--
+#ifdef NEW_IDENT_SCHEME
+      !
+      integer :: nref_yld, n, m, d_work_dyn_len
+      double precision,dimension(:),allocatable :: d_work_dyn, rsd_dyn
+      integer,dimension(:),allocatable :: i_work_dyn
+      double precision,dimension(16) :: initial_guess, sol_full
+#endif
+      
 *----------------------------------------------------------------------*
 * Variables                                                            *
 *----------------------------------------------------------------------*
@@ -174,6 +184,10 @@
      &  /MAT_DATA/ y_term, r_term, u_ang
      &  /BBC_DATA/ bbc_parm, w, inv_w, w_mns_one,
      &    w_mns_one_tms_w_pow_s_mns_one, inv_dbl_k, dbl_k, dbl_k_mns_one
+#ifdef DIAGNOSTIC_OUTPUT_FILE
+      integer :: yld_unit, errcode
+      character(len=512) :: yld_fname
+#endif
 *----------------------------------------------------------------------*
 * Read the name of the output file from the keyboard.                  *
 * Open this file.                                                      *
@@ -224,6 +238,21 @@
         end do
         j = jj + 1
       end do
+      ! JG, July 2014 -->>
+#ifdef NEW_IDENT_SCHEME
+      ! Read triplets: theta, S(theta)/Y, beta(theta)
+      write (OUT_UNIT, FMT21)
+      read(*,*) nref_yld
+      allocate(ref_yld(nref_yld))
+      do i = 1, nref_yld
+            write(OUT_UNIT, FMT22)
+            read(*,*) ref_yld(i)%theta, ref_yld(i)%S, ref_yld(i)%beta
+            ! Convert input to radians
+            ref_yld(i)%theta = ref_yld(i)%theta * pi_deg
+            ref_yld(i)%beta  = ref_yld(i)%beta * pi_deg
+      enddo
+      ! <<--
+#endif      
       do
         info = 0
         write (*, FMT07)
@@ -315,6 +344,49 @@
       end do
       call validateBBCInputParams()
       ! <<--
+      ! JG, July 2014 -->>
+#ifdef DIAGNOSTIC_OUTPUT_FILE
+      open(newunit=yld_unit, file=trim(out_fl_nam)//'_yld_init.yld',
+     &     status='replace')
+      call writeYld(yld_unit, info)
+      close(yld_unit)
+      ! Write out a few control points
+      call outputYldDescription(24, 0.D0, 15.D0*pi_deg, 
+     &                          trim(out_fl_nam)//'_yld_init_beta.yld', 
+     &                          info)
+      
+#endif
+#ifdef NEW_IDENT_SCHEME
+      initial_guess = bbc_parm
+      sol_full = initial_guess
+      !
+      conv_tol = SQRT (DPMPAR (1))
+      y_term = y
+      r_term = r
+      ! Set scratch space for LMDIF1
+      n = 16
+      m = 16 + 2 * size(ref_yld) + 1
+      d_work_dyn_len = m*n+5*n+m
+      allocate(d_work_dyn(d_work_dyn_len), i_work_dyn(n),rsd_dyn(m))
+      !
+      sol_full = initial_guess
+      call LMDIF1 (GET_IDENT_RSD_EXT, m, n, sol_full, rsd_dyn, conv_tol,
+     &             info,i_work_dyn, d_work_dyn, d_work_dyn_len)
+      bbc_parm = sol_full
+#ifdef DIAGNOSTIC_OUTPUT_FILE
+      open(newunit=yld_unit, file=trim(out_fl_nam)//'_yld_full.yld',
+     &     status='replace')
+      call writeYld(yld_unit, info)
+      close(yld_unit)
+      
+      call outputYldDescription(24, 0.D0, 15.D0*pi_deg, 
+     &                          trim(out_fl_nam)//'_yld_beta_full.yld',
+     &                          info)
+#endif
+      ! Restore the initial guess for the gradual distortion algorithm
+      bbc_parm = initial_guess
+#endif
+      ! <<--
 *----------------------------------------------------------------------*
 * Perform the identification of the BBC 2008 yield criterion.          *
 *----------------------------------------------------------------------*
@@ -405,6 +477,13 @@
           end do
           call LMDIF1 (GET_IDENT_RSD, 16, 16, sol, rsd, conv_tol, info,
      &      i_wrk_arr, d_wrk_arr, 352)
+#ifdef DIAGNOSTIC_OUTPUT_FILE
+  700     format('yld_diag_step_',I0,'.yld')
+          write(yld_fname,fmt=700) jj
+          open(newunit=yld_unit, file=yld_fname,status='replace')
+          call writeYld(yld_unit, errcode)
+          close(yld_unit)
+#endif
           write(*,*) '||Residual||:', norm2(rsd)
           if (info <= 0) exit
         end do
@@ -432,37 +511,8 @@
 *           generate a set of BBC 2008 parameters. Store these
 *           parameters in the output file.
 *
-      do i = 1, 16
-        bbc_parm(i) = sol(i)
-      end do
-      if (bbc_parm(1) < 0.0d0) then
-        bbc_parm(1) = - bbc_parm(1)
-        bbc_parm(2) = - bbc_parm(2)
-      end if
-      if (bbc_parm(3) < 0.0d0) then
-        bbc_parm(3) = - bbc_parm(3)
-        bbc_parm(4) = - bbc_parm(4)
-      end if
-      if (bbc_parm(5) < 0.0d0) bbc_parm(5) = - bbc_parm(5)
-      if (bbc_parm(6) < 0.0d0) then
-        bbc_parm(6) = - bbc_parm(6)
-        bbc_parm(7) = - bbc_parm(7)
-      end if
-      if (bbc_parm(8) < 0.0d0) bbc_parm(8) = - bbc_parm(8)
-      if (bbc_parm(9) < 0.0d0) then
-        bbc_parm(9) = - bbc_parm(9)
-        bbc_parm(10) = - bbc_parm(10)
-      end if
-      if (bbc_parm(11) < 0.0d0) then
-        bbc_parm(11) = - bbc_parm(11)
-        bbc_parm(12) = - bbc_parm(12)
-      end if
-      if (bbc_parm(13) < 0.0d0) bbc_parm(13) = - bbc_parm(13)
-      if (bbc_parm(14) < 0.0d0) then
-        bbc_parm(14) = - bbc_parm(14)
-        bbc_parm(15) = - bbc_parm(15)
-      end if
-      if (bbc_parm(16) < 0.0d0) bbc_parm(16) = - bbc_parm(16)
+      call setBBC2008Params(sol)
+      
       write (OUT_UNIT, FMT15) k, S, w, ((i - 1) / 8 + 1, bbc_parm(i),
      &  i = 1, 16)
       ! JG, June 11 2013 -->>
@@ -473,6 +523,10 @@
      &  i = 1, 16)
       close(OUT_UNIT_PAR)
       ! <<--
+#ifdef DIAGNOSTIC_OUTPUT_FILE
+      call outputYldDescription(24, 0.D0, 15.*pi_deg,
+     &                          trim(out_fl_nam)//'_beta.yld', info)
+#endif
 *----------------------------------------------------------------------*
 * Generate the test data.                                              *
 * Store this data in the output file.                                  *
@@ -611,6 +665,62 @@
       
       
       end program BBC_2008_16
+      
+      
+      subroutine setBBC2008Params(sol)
+      implicit none
+      double precision,dimension(16),intent(in) :: sol
+      !
+      integer
+     &  dbl_k, dbl_k_mns_one,
+     &  i
+      double precision
+     &  bbc_parm(16), w, inv_w, w_mns_one,
+     &  w_mns_one_tms_w_pow_s_mns_one, inv_dbl_k,
+     &  l_1, l_2, m_1, m_2, n_1, n_2,
+     &  l, m, n,
+     &  l_pls_m, l_mns_m, m_pls_n, m_mns_n,
+     &  f_sum, g_sum, w_fact_1, w_fact_2
+*----------------------------------------------------------------------*
+* Common blocks                                                        *
+*----------------------------------------------------------------------*
+      common
+     &  /BBC_DATA/ bbc_parm, w, inv_w, w_mns_one,
+     &    w_mns_one_tms_w_pow_s_mns_one, inv_dbl_k, dbl_k, dbl_k_mns_one
+      !
+      do i = 1, 16
+        bbc_parm(i) = sol(i)
+      end do
+      ! 
+      if (bbc_parm(1) < 0.0d0) then
+        bbc_parm(1) = - bbc_parm(1)
+        bbc_parm(2) = - bbc_parm(2)
+      end if
+      if (bbc_parm(3) < 0.0d0) then
+        bbc_parm(3) = - bbc_parm(3)
+        bbc_parm(4) = - bbc_parm(4)
+      end if
+      if (bbc_parm(5) < 0.0d0) bbc_parm(5) = - bbc_parm(5)
+      if (bbc_parm(6) < 0.0d0) then
+        bbc_parm(6) = - bbc_parm(6)
+        bbc_parm(7) = - bbc_parm(7)
+      end if
+      if (bbc_parm(8) < 0.0d0) bbc_parm(8) = - bbc_parm(8)
+      if (bbc_parm(9) < 0.0d0) then
+        bbc_parm(9) = - bbc_parm(9)
+        bbc_parm(10) = - bbc_parm(10)
+      end if
+      if (bbc_parm(11) < 0.0d0) then
+        bbc_parm(11) = - bbc_parm(11)
+        bbc_parm(12) = - bbc_parm(12)
+      end if
+      if (bbc_parm(13) < 0.0d0) bbc_parm(13) = - bbc_parm(13)
+      if (bbc_parm(14) < 0.0d0) then
+        bbc_parm(14) = - bbc_parm(14)
+        bbc_parm(15) = - bbc_parm(15)
+      end if
+      if (bbc_parm(16) < 0.0d0) bbc_parm(16) = - bbc_parm(16)
+      end subroutine
 *----------------------------------------------------------------------*
 *                         GET_IDENT_RSD                                *
 *                                                                      *
