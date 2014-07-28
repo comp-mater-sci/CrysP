@@ -229,10 +229,9 @@ contains
                         ! Get the positions of the bracketing points:
                         posA = merge(npoints-1,i - 1,i == 1)
                         posB = merge(2,i + 1, i == npoints)
-                        ! write(display_unit,*) posA,i,posB                        
-                        call getArrow(yldRes(posA)%scal_s_rel_cart, yldRes(posB)%scal_s_rel_cart, &
-                                      yldRes(i)%scal_s_rel_cart, & 
-                                      1.D0,yldRes(i)%normal_cart,yldRes(i)%beta)
+                        ! write(display_unit,*) posA,i,posB
+                        call getNormalVector2D(yldRes(posA)%scal_s_rel_cart, yldRes(posB)%scal_s_rel_cart, &
+                                               1.D0, yldRes(i)%normal_cart, yldRes(i)%beta)
                   enddo
             enddo
             !
@@ -293,59 +292,6 @@ contains
             end function
 
 
-      end subroutine
-      
-      
-      subroutine getArrow(A,B,C,arrlen,u,beta)
-      implicit none
-      type(pair_double), intent(in) :: A,B,C !< Positions of the points: C is bracketed by A and B
-      double precision,intent(in)   :: arrlen  !< Length of the arrow
-      type(pair_double),intent(out) :: u  !< vector
-      double precision,intent(out)  :: beta !< 
-      !
-      double precision :: xdeltaAB, ydeltaAB, DCnorm
-      double precision :: pa, pb, pc, pd, s
-      type(pair_double) :: D ! Intersection of the lines
-            xdeltaAB = B%x  - A%x
-            ydeltaAB = B%y  - A%y
-            !
-            ! tan(beta) = - (xdelta)/(ydelta)
-            !             
-            if ( (abs(ydeltaAB) > epsilon(0.D0)) .and. (abs(xdeltaAB) > epsilon(0.D0))  ) then
-                  ! The most typical case
-                  beta = atan(-xdeltaAB/ydeltaAB)
-                  !
-                  pa = ydeltaAB / xdeltaAB
-                  pb = A%y - pa * A%x
-                  pc = -1.D0 / pa
-                  pd = C%y - pc * C%x  ! Cy + (-1/a)*Cx
-                  D%x = (pd - pb) / (pa - pc)
-                  D%y = pa * D%x + pb
-            else
-                  if (abs(xdeltaAB) <= epsilon(0.D0)) then
-                        ! the normal is a horizontal line
-                        beta = 0.D0
-                        beta = merge(0.D0,pi, ydeltaAB > 0) ! the sign matters
-                        D%x = A%x ! or B%x as well
-                        D%y = C%y 
-                  else
-                        ! the normal is a vertical line
-                        beta = merge(pi2,3.0*pi2, xdeltaAB > 0) ! the sign matters
-                        D%x = C%x
-                        D%y = A%y ! or B%y as well
-                  endif
-            endif
-            DCnorm = sqrt((D%x - C%x)**2 + (D%y - C%y)**2)
-            
-            if (abs(DCnorm) > epsilon(0.D0)) then
-                  s = arrlen /  DCnorm
-                  u%x = s * (C%x - D%x)
-                  u%y = s * (C%y - D%y)
-            else
-                  ! ouups, the points D and C overlap!
-                  u = pair_double(0.D0,0.D0)
-            endif
-      !      
       end subroutine
       
       
