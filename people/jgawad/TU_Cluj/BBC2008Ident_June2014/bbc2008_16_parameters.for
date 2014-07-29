@@ -140,10 +140,13 @@
       ! <<--
 #ifdef NEW_IDENT_SCHEME
       !
+      logical :: read_weights
       integer :: nref_yld, n, m, d_work_dyn_len
+      double precision :: sol_full_resnorm, sol_resnorm
       double precision,dimension(:),allocatable :: d_work_dyn, rsd_dyn
       integer,dimension(:),allocatable :: i_work_dyn
       double precision,dimension(16) :: initial_guess, sol_full
+      type(yldDesc),dimension(:),allocatable :: sol_yld
 #endif
       
 *----------------------------------------------------------------------*
@@ -241,11 +244,11 @@
       ! JG, July 2014 -->>
 #ifdef NEW_IDENT_SCHEME
       ! Read triplets: theta, S(theta)/Y, beta(theta)
-      write (OUT_UNIT, FMT21)
+      write (*, FMT21)
       read(*,*) nref_yld
       allocate(ref_yld(nref_yld))
       do i = 1, nref_yld
-            write(OUT_UNIT, FMT22)
+            write(*, FMT22) i
             read(*,*) ref_yld(i)%theta, ref_yld(i)%S, ref_yld(i)%beta
             ! Convert input to radians
             ref_yld(i)%theta = ref_yld(i)%theta * pi_deg
@@ -346,45 +349,66 @@
       ! <<--
       ! JG, July 2014 -->>
 #ifdef DIAGNOSTIC_OUTPUT_FILE
-      open(newunit=yld_unit, file=trim(out_fl_nam)//'_yld_init.yld',
-     &     status='replace')
-      call writeYld(yld_unit, info)
-      close(yld_unit)
+      call writeYld_fname(trim(out_fl_nam)//'_yld_init.yld', info)
       ! Write out a few control points
-      call outputYldDescription(24, 0.D0, 15.D0*pi_deg, 
-     &                          trim(out_fl_nam)//'_yld_init_beta.yld', 
+      call outputYldDescription(36, 0.D0, 10.D0*pi_deg, 
+     &                          trim(out_fl_nam)//'_yld_init.byld', 
      &                          info)
-      
 #endif
 #ifdef NEW_IDENT_SCHEME
-      initial_guess = bbc_parm
-      sol_full = initial_guess
-      !
-      conv_tol = SQRT (DPMPAR (1))
-      y_term = y
-      r_term = r
-      ! Set scratch space for LMDIF1
-      n = 16
-      m = 16 + 2 * size(ref_yld) + 1
-      d_work_dyn_len = m*n+5*n+m
-      allocate(d_work_dyn(d_work_dyn_len), i_work_dyn(n),rsd_dyn(m))
-      !
-      sol_full = initial_guess
-      call LMDIF1 (GET_IDENT_RSD_EXT, m, n, sol_full, rsd_dyn, conv_tol,
+      ! Use this identification path only if extra points are provided
+      if (nref_yld > 0) then
+        read_weights = .false.
+        write(*,'(A)') 'Would you like to provide weights [T/F]? :'
+        read(*,*) read_weights
+        if (read_weights) then
+              write(*,*) 'weight: uniaxial r-value: '
+              read(*,*) config%wt_unirvalue
+              write(*,*) 'weight: uniaxial yield stress: '
+              read(*,*) config%wt_unistress
+              write(*,*) 'weight: equibiaxial r-value: '
+              read(*,*) config%wt_bxrvalue
+              write(*,*) 'weight: equibiaxial yield stress: '
+              read(*,*) config%wt_bxstress
+              write(*,*) 'weight: biaxial yield stress: '
+              read(*,*) config%wt_stress
+              write(*,*) 'weight: biaxial beta angle: '
+              read(*,*) config%wt_beta
+        endif
+        initial_guess = bbc_parm
+        sol_full = initial_guess
+        !
+        conv_tol = SQRT (DPMPAR (1))
+        y_term = y
+        r_term = r
+        ! Set scratch space for LMDIF1
+        n = 16
+        m = 16 + 2 * size(ref_yld) + 1
+        ! Calculate the size of the scratch array needed by LMDIF1
+        d_work_dyn_len = m*n+5*n+m
+        allocate(d_work_dyn(d_work_dyn_len), i_work_dyn(n),rsd_dyn(m))
+        !
+        sol_full = initial_guess
+        write(*,'(/,A,/)') 'Starting full identification algorithm'
+        call LMDIF1 (GET_IDENT_RSD_EXT,m,n,sol_full,rsd_dyn, conv_tol,
      &             info,i_work_dyn, d_work_dyn, d_work_dyn_len)
-      bbc_parm = sol_full
+        sol_full_resnorm =  norm2(rsd_dyn)
+        write(*,'(A,1X,E15.6,//)') '||Residual||:', sol_full_resnorm
 #ifdef DIAGNOSTIC_OUTPUT_FILE
-      open(newunit=yld_unit, file=trim(out_fl_nam)//'_yld_full.yld',
-     &     status='replace')
-      call writeYld(yld_unit, info)
-      close(yld_unit)
-      
-      call outputYldDescription(24, 0.D0, 15.D0*pi_deg, 
-     &                          trim(out_fl_nam)//'_yld_beta_full.yld',
-     &                          info)
+        bbc_parm = sol_full
+        call writeYld_fname(trim(out_fl_nam)//'_full.yld', info)
+        call writeRS_fname(trim(out_fl_nam)//'_full.rs', info)
+        call outputYldDescription(24, 0.D0, 15.D0*pi_deg, 
+     &                          trim(out_fl_nam)//'_full.byld',info)
+        allocate(sol_yld(size(ref_yld)))
+        sol_yld%theta = ref_yld%theta
+        call getYldBBCDescription(sol_yld, info)
+        call outputYldDescription(sol_yld, 
+     &                          trim(out_fl_nam)//'_full_sel.byld',info)
 #endif
-      ! Restore the initial guess for the gradual distortion algorithm
-      bbc_parm = initial_guess
+        ! Restore the initial guess for the gradual distortion algorithm
+        bbc_parm = initial_guess
+      endif
 #endif
       ! <<--
 *----------------------------------------------------------------------*
@@ -477,13 +501,13 @@
           end do
           call LMDIF1 (GET_IDENT_RSD, 16, 16, sol, rsd, conv_tol, info,
      &      i_wrk_arr, d_wrk_arr, 352)
-#ifdef DIAGNOSTIC_OUTPUT_FILE
+      ! JG, July 2014 -->>
+#ifdef EXTENDED_DIAGNOSTIC_OUTPUT_FILE
   700     format('yld_diag_step_',I0,'.yld')
           write(yld_fname,fmt=700) jj
-          open(newunit=yld_unit, file=yld_fname,status='replace')
-          call writeYld(yld_unit, errcode)
-          close(yld_unit)
+          call writeYld_fname(yld_fname, errcode)
 #endif
+      ! <<--
           write(*,*) '||Residual||:', norm2(rsd)
           if (info <= 0) exit
         end do
@@ -504,15 +528,46 @@
 
         ! JG, July 13 2013 -->
       enddo
-      ! <<-
-
+      ! <<--
+      ! JG, July 2014 -->>
+      call setBBC2008Params(sol)
+      
+#ifdef DIAGNOSTIC_OUTPUT_FILE
+        ! Report the result of the gradual distortion algorithm.
+        call writeYld_fname(trim(out_fl_nam)//'_gda.yld', info)
+        call writeRS_fname(trim(out_fl_nam)//'_gda.rs', info)
+        call outputYldDescription(24, 0.D0, 15.D0*pi_deg, 
+     &                          trim(out_fl_nam)//'_gda.byld',info)
+#endif
+      !
+#ifdef NEW_IDENT_SCHEME
+      ! If the YLD points are provided, check how the gradual distorsion algorithm
+      ! compares to the new one in terms of the residual from the new 
+      ! objective function. Pick the solution that offers better square norm.
+      if (nref_yld > 0) then
+        y_term = y
+        r_term = r
+        rsd_dyn = 0.D0
+        call GET_IDENT_RSD_EXT(m, n, sol, rsd_dyn, info)
+        if (info >= 0) then
+          sol_resnorm = norm2(rsd_dyn)
+          write(*,'(A,E15.6)') 
+     &          'Norm of residual from gradual distortion:', sol_resnorm
+          write(*,'(A,E15.6)') 
+     &          'Norm of residual from new algorithm:', sol_full_resnorm
+          if (sol_resnorm > sol_full_resnorm) then
+            write(*,*) 'Picking the solution from the new algorithm.'
+            sol = sol_full
+          endif
+        endif
+      endif
+#endif
+      ! <<--
 *
 * Stage 4:  The identification has ended. The solution can be used to
 *           generate a set of BBC 2008 parameters. Store these
 *           parameters in the output file.
 *
-      call setBBC2008Params(sol)
-      
       write (OUT_UNIT, FMT15) k, S, w, ((i - 1) / 8 + 1, bbc_parm(i),
      &  i = 1, 16)
       ! JG, June 11 2013 -->>
@@ -524,7 +579,7 @@
       close(OUT_UNIT_PAR)
       ! <<--
 #ifdef DIAGNOSTIC_OUTPUT_FILE
-      call outputYldDescription(24, 0.D0, 15.*pi_deg,
+      call outputYldDescription(36, 0.D0, 10.*pi_deg,
      &                          trim(out_fl_nam)//'_beta.yld', info)
 #endif
 *----------------------------------------------------------------------*
@@ -533,11 +588,8 @@
 *----------------------------------------------------------------------*
       write (OUT_UNIT, FMT16)
       ! JG, June 11 2013 -->>
-      ! call outputRS(OUT_UNIT,info)
-      open (OUT_UNIT_RS, file = trim(out_fl_nam)//'.rs', 
-     &  status = 'replace', iostat = info)
-      call outputRS(OUT_UNIT_RS,info)
-      close(OUT_UNIT_RS)
+      call writeRS_unit(OUT_UNIT,info)
+      call writeRS_fname(trim(out_fl_nam)//'.rs',info)
       ! <<-
       if (info /= 0) then
         write (*, FMT03) ERR_MSG04
@@ -560,11 +612,8 @@
       end if
       write (OUT_UNIT, FMT18) 1.0d0 / aux1, aux1 / aux2 - 1.0d0
       ! JG, June 11 2013 -->>
-      ! call writeYld(OUT_UNIT,info)
-      open (OUT_UNIT_YLD, file = trim(out_fl_nam)//'.yld', 
-     &  status = 'replace', iostat = info)
-      call writeYld(OUT_UNIT_YLD,info)
-      close(OUT_UNIT_YLD)
+      call writeYld_unit(OUT_UNIT,info)
+      call writeYld_fname(trim(out_fl_nam)//'.yld',info)
       ! <<-- 
       if (info /= 0) then
         write (*, FMT03) ERR_MSG04
@@ -580,9 +629,23 @@
       
       contains 
       
-      subroutine outputRS(OUT_UNIT,info)
+      subroutine writeRS_fname(fpath, info)
       implicit none
-      integer,intent(in)      :: OUT_UNIT
+      character(len=*),intent(in) :: fpath
+      integer,intent(out)     :: info
+      !
+      integer :: out_unit
+      !
+      open(newunit=out_unit, file=fpath, status='replace',iostat=info)
+      if (info /= 0) return
+      call writeRS_unit(out_unit, info)
+      close(out_unit)
+      !
+      end subroutine
+
+      subroutine writeRS_unit(out_unit, info)
+      implicit none
+      integer,intent(in)      :: out_unit
       integer,intent(out)     :: info
       !
       double precision :: ang, max_ang, aux1, aux2
@@ -593,14 +656,28 @@
         if (ang > max_ang) exit
         call GET_FG_U (ang * DEG_TO_RAD, aux1, aux2, info)
         if (info /= 0) exit
-        write (OUT_UNIT, FMT17) ang, 1.0d0 / aux1, aux1 / aux2 - 1.0d0
+        write (out_unit, FMT17) ang, 1.0d0 / aux1, aux1 / aux2 - 1.0d0
         ang = ang + ANG_STEP
       end do
+      !
       end subroutine
 
-      subroutine writeYld(OUT_UNIT,info)
+      subroutine writeYld_fname(fpath,info)
       implicit none
-      integer,intent(in)      :: OUT_UNIT
+      character(len=*),intent(in) :: fpath
+      integer,intent(out)     :: info
+      !
+      integer :: out_unit
+      !
+      open(newunit=out_unit, file=fpath, status='replace',iostat=info)
+      if (info /= 0) return
+      call writeYld_unit(out_unit,info)
+      close(out_unit)
+      end subroutine
+      
+      subroutine writeYld_unit(out_unit,info)
+      implicit none
+      integer,intent(in)      :: out_unit
       integer,intent(out)     :: info
       !
       double precision :: ang, max_ang, aux1, aux2, aux3
@@ -618,7 +695,7 @@
           call GET_S11_S22_S12 (ang * DEG_TO_RAD, sig12_frac, aux1,
      &      aux2, aux3, info)
           if (info /= 0) exit
-          write (OUT_UNIT, FMT20) aux1, aux2, aux3
+          write (out_unit, FMT20) aux1, aux2, aux3
           ang = ang + ANG_STEP
         end do
         if (info /= 0) exit

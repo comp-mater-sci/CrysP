@@ -20,14 +20,31 @@ module extendedYld
             module procedure outputYldDescription_points, outputYldDescription_range
       end interface
       
-      ! penalty factors
-      double precision,save :: penalty_mlt = 4.D0, penalty_angle = 0.5*pi
       
-      ! regularization factor. It prevents the optimization method to propose
-      ! solutions with excessively large norm. The factor should be small, otherwise
-      ! it distorts the objective function and the search algorithms prefers solution
-      ! with small norm. the Recommended values: from 0. to 0.001.
-      double precision,save :: regularization_factor = 0.001
+      type :: IdentConfig
+            ! penalty factors
+            double precision :: penalty_mlt = 4.D0, penalty_angle = 0.5*pi
+      
+            ! regularization factor. It prevents the optimization method to propose
+            ! solutions with excessively large norm. The factor should be small, otherwise
+            ! it distorts the objective function and the search algorithms prefers solution
+            ! with small norm. the Recommended values: from 0. to 0.001.
+            double precision :: regularization_factor = 0.001
+      
+            double precision :: wt_unirvalue = 1.D0
+            
+            double precision :: wt_unistress = 1.D0
+            
+            double precision :: wt_bxrvalue = 1.0
+            
+            double precision :: wt_bxstress = 1.0
+            
+            double precision :: wt_stress = 1.D0
+            
+            double precision :: wt_beta = 4.D0
+      end type
+      
+      type(IdentConfig),save :: config
       
 contains
       
@@ -205,14 +222,14 @@ contains
       do i = 1, 7
             call GET_FG_U (u_ang(i), f, g, lcl_flag)
             if (lcl_flag /= 0) then
-                  r = r_term(i) * penalty_mlt
-                  s = y_term(i) * penalty_mlt
+                  r = r_term(i) * config%penalty_mlt
+                  s = y_term(i) * config%penalty_mlt
             else
                   r = f / g - 1.D0
                   s = 1.D0 / f
             endif
-            rsd(j) = (1.D0 - s/(y_term(i)))
-            rsd(j + 1) = (1.D0 - r / r_term(i))
+            rsd(j) = (1.D0 - s/(y_term(i))) * config%wt_unistress
+            rsd(j + 1) = (1.D0 - r / r_term(i)) * config%wt_unirvalue
             j = j + 2
       end do
       if (lcl_flag /= 0) then
@@ -221,14 +238,14 @@ contains
       end if
       call GET_FG_B (f, g, lcl_flag)
       if (lcl_flag /= 0) then
-            r = r_term(8) * penalty_mlt
-            s = y_term(8) * penalty_mlt
+            r = r_term(8) * config%penalty_mlt
+            s = y_term(8) * config%penalty_mlt
       else
             r = f / g - 1.D0
             s = 1.D0 / f
       end if
-      rsd(j) = (1.D0 - s/(y_term(8)))
-      rsd(j + 1) = (1.D0 - r / r_term(8))
+      rsd(j) = (1.D0 - s/(y_term(8))) * config%wt_bxstress
+      rsd(j + 1) = (1.D0 - r / r_term(8)) * config%wt_bxrvalue
       return
       end subroutine GET_IDENT_RSD_MOD
 
@@ -272,21 +289,21 @@ contains
                   endif
                   ! Apply penalties 
                   where (.not.yld_status)
-                        yld%S =  ref_yld%S * penalty_mlt
-                        yld%beta =  ref_yld%beta + penalty_angle
+                        yld%S =  ref_yld%S * config%penalty_mlt
+                        yld%beta =  ref_yld%beta + config%penalty_angle
                   endwhere
                   ! Calculate residuals: two per point in ref_yld
                   allocate(yld_res(2* nyld))
                   j = 1
                   do i = 1, size(yld_res), 2
-                        yld_res(i) = (1.D0 - yld(j)%S / ref_yld(j)%S)
-                        yld_res(i+1) =  (1.D0 - cos(ref_yld(j)%beta - yld(j)%beta))
+                        yld_res(i) = (1.D0 - yld(j)%S / ref_yld(j)%S) * config%wt_stress
+                        yld_res(i+1) =  (1.D0 - cos(ref_yld(j)%beta - yld(j)%beta)) * config%wt_beta
                         j = j + 1
                   enddo
                   
                   rsd(nterms+1:) = yld_res
                   ! Regularization term: the norm of the solution vector should be minimized
-                  rsd(num_rsd_term) = norm2(var) * regularization_factor
+                  rsd(num_rsd_term) = norm2(var) * config%regularization_factor
             endif
       !
       end subroutine

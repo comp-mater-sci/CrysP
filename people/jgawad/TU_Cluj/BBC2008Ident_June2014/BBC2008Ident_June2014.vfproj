@@ -14,7 +14,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release|Win32">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Preprocess="preprocessYes" PreprocessorDefinitions="DIAGNOSTIC_OUTPUT_FILE,NEW_IDENT_SCHEME"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" SubSystem="subSystemConsole"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -24,11 +24,10 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration></Configurations>
 	<Files>
-		<Filter Name="Header Files" Filter="fi;fd">
-		</Filter>
+		<Filter Name="Header Files" Filter="fi;fd"/>
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
 		<File RelativePath=".\bbc2008_16_parameters.for"/>
-		<File RelativePath=".\hybrd1_lmdif1_dp.for"/>
-		<File RelativePath=".\extendedYld.f90"/></Filter></Files>
+		<File RelativePath=".\extendedYld.f90"/>
+		<File RelativePath=".\hybrd1_lmdif1_dp.for"/></Filter></Files>
 	<Globals/></VisualStudioProject>
