@@ -13,6 +13,12 @@ ifeq ($(findstring vic3, $(HOSTALIAS)),vic3)
 BUILDHOST=vic3
 endif
 #
+# Probe: ThinKing
+ifeq ($(findstring hpc-p-login, $(HOSTNAME)),hpc-p-login)
+BUILDHOST=thinking
+endif
+#
+#
 # Probe: muk
 ifeq ($(findstring muk, $(HOSTALIAS)),muk)
 BUILDHOST=muk
