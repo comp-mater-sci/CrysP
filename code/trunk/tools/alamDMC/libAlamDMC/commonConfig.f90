@@ -56,6 +56,7 @@ contains
       type(bias_t),dimension(:),allocatable :: vBiases
       double precision :: rbegin, rend, ratio, rstep
       integer :: i, ierr, id, nranges, npoints
+      double precision,dimension(:),allocatable :: vPoints
       !
             info = -1
             nullify(inst)
@@ -117,6 +118,19 @@ contains
                         select type(inst)
                         type is (multiBiasedRange)
                               inst = multiBiasedRange(rbegin,vBiases)      
+                        end select
+                  case(range_discrete_id)
+                        npoints = 0
+                        read(cnfunit,*,iostat=ierr) npoints
+                        if ((.not. ioStatusOK(ierr)) .or. (npoints <= 0)) return
+                        allocate(vPoints(npoints))
+                        vPoints = 0.D0
+                        read(cnfunit,*,iostat=ierr) vPoints
+                        if (ierr /= 0) return
+                        allocate(discreteRange :: inst)
+                        select type(inst)
+                        type is (discreteRange)
+                              inst = discreteRange(vPoints)      
                         end select
                   !
                   end select
