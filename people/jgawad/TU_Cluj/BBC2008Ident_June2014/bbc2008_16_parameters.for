@@ -132,7 +132,7 @@
      &          )
       ! JG, June 11 2013 -->>
       integer,parameter :: OUT_UNIT_PAR = 200, OUT_UNIT_RS = 201, 
-     &  OUT_UNIT_YLD = 202
+     &  OUT_UNIT_YLD = 202, OUT_UNIT_BX = 203
       ! <<--
       ! JG, July 13 2013 -->>
       integer :: step
@@ -611,6 +611,10 @@
         call exit(1)
       end if
       write (OUT_UNIT, FMT18) 1.0d0 / aux1, aux1 / aux2 - 1.0d0
+      ! Output biaxiar s_bx and r_bx
+      open(OUT_UNIT_BX,file=trim(out_fl_nam)//'.bx',status='replace')
+      write(OUT_UNIT_BX,'(2(E12.6,1X))') 1.0d0/aux1, aux1/aux2 - 1.0d0
+      close(OUT_UNIT_BX)
       ! JG, June 11 2013 -->>
       call writeYld_unit(OUT_UNIT,info)
       call writeYld_fname(trim(out_fl_nam)//'.yld',info)
