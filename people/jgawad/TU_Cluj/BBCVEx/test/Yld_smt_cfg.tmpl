@@ -1,0 +1,28 @@
+${jobname}           # Prefix for output   
+F                    # Request incremental output of the material state
+2                    # Verbosity level
+1                    # Type of input texture (1 - SMT, 2 - CUR, 3 - CUB)
+${texture_file}       # Name of texure file
+${modelid}           # Simulation type: 0 - Alamel, 1 - FC-Taylor
+${slipsystem_file}              # Definition of slip systems (filename)
+${microstructure_file}           # Microstructure definition (filename)
+F                    # Read other microstructural parameters
+0                    # Hardening law Id
+5.e-1  T             # Jacobi_eps,  linearize
+1e-5   1e-3          # Default eps for TR-solver, eps for the norm of objective function: ||F||_2
+discrete             # Range type for theta angles
+21                   # Number of theta angles
+ 6.0  7.0  8.0      
+29.0 30.0 31.0
+44.0 45.0 46.0  
+59.0 60.0 61.0  
+82.0 83.0 84.0 
+119.0 120.0 121.0 
+329.0 330.0 331.0 
+T 1.0 0.0 0.0 0.0 0.0 0.0  # Normalization flag, The first base vector Sx, order: S11,S22,S33,S12,S23,S13
+T 0.0 1.0 0.0 0.0 0.0 0.0  # Normalization flag, The second base vector Sy, order: idem
+F 0.0 0.0 0.0 0.0 0.0 0.0  # Normalization flag, The offset vector St, order: idem
+F                    # Request for normalization of the resultant Sm
+uniform              # Type of range for the weighting factors of the offset vector
+0.0  0.0  0.0        # Range of the factors: start  end  step 
+T 1.0 0.0 0.0 0.0 0.0 0.0  # Do scaling by the stress at the vector 

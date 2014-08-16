@@ -1,4 +1,4 @@
---jobname=elem --qrstemplate=QRS_cfg.tmpl --asrtemplate=ASR_cfg.tmpl --texture_file=ALU1190F.SMT --model=ALAMEL --slipsystem_file=fcc.pre --microstructure_file=micro1.smt  --stress_file=stressbx.dat --program_path="c:\work\TWRMTMProject\code\trunk\tools\alamDMC\alamDMC\Release\alamDMC.exe"
+--jobname=elem --qrstemplate=QRS_cfg.tmpl --asrtemplate=ASR_cfg.tmpl --texture_file=ALU1190F.SMT --model=ALAMEL --slipsystem_file=fcc.pre --microstructure_file=micro1.smt  --stress_file=stressbx.dat --executable="c:\work\TWRMTMProject\code\trunk\tools\alamDMC\alamDMC\Release\alamDMC.exe"
 
 --jobname=elem_uniax0 --qrstemplate=QRS_cur_cfg.tmpl --asrtemplate=ASR_cur_cfg.tmpl --texture_file=ALU1190F_DB6016_B_50_ALAMEL_0.CUR --model=ALAMEL --slipsystem_file=fcc.pre --microstructure_file=micro1.smt  --stress_file=stressbx.dat --program_path="c:\work\TWRMTMProject\code\trunk\tools\alamDMC\alamDMC\Release\alamDMC.exe" --steps=17
 
@@ -10,3 +10,9 @@
 
 --jobname=elem_uniax45 --qrstemplate=QRS_cur_cfg.tmpl --asrtemplate=ASR_cur_cfg.tmpl --yldtemplate=Yld_cur_cfg.tmpl --texture_file=ALU1190F_DB6016_B_50_ALAMEL_45.CUR --model=ALAMEL --slipsystem_file=fcc.pre --microstructure_file=micro1.smt  --stress_file=stressbx.dat --executable="c:\work\TWRMTMProject\code\trunk\tools\alamDMC\alamDMC\Release\alamDMC.exe" --steps=17 --export=out
 
+--jobname=elem --qrstemplate=QRS_cur_cfg.tmpl --asrtemplate=ASR_cur_cfg.tmpl --yldtemplate=Yld_cur_cfg.tmpl --texture_file=ALU1190F_DB6016_B_50_ALAMEL_0.CUR --model=ALAMEL --slipsystem_file=fcc.pre --microstructure_file=micro1.smt  --stress_file=stressbx.dat --executable="c:\work\TWRMTMProject\code\trunk\tools\alamDMC\alamDMC\Release\alamDMC.exe" --steps=17 --export=out
+
+
+--jobname=elem --qrstemplate=QRS_cur_cfg.tmpl --asrtemplate=ASR_cur_cfg.tmpl --yldtemplate=Yld_cur_cfg.tmpl --texture_file=ALU1190F_DB6016_B_50_ALAMEL_0.CUR --model=ALAMEL --slipsystem_file=fcc.pre --microstructure_file=micro1.smt  --stress_file=stressbx.dat --executable="C:\Users\Jerzy\Documents\Work\TWRMTMProject\code\trunk\tools\alamDMC\alamDMC\Release\alamDMC.exe" --steps=1 --export=out
+
+--steps=18 --jobname=elem --qrstemplate=QRS_cur_cfg.tmpl --asrtemplate=ASR_cur_cfg.tmpl --yldtemplate=Yld_cur_cfg.tmpl --texture_file=elem.CUR --model=ALAMEL --slipsystem_file=fcc.pre --microstructure_file=micro1.smt  --stress_file=stressbx.dat --executable="C:\Users\Jerzy\Documents\Work\TWRMTMProject\code\trunk\tools\alamDMC\alamDMC\Release\alamDMC.exe"  --export=out

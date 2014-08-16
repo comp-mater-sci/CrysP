@@ -42,6 +42,15 @@ class ASRHarvester(harvester.DataFileHarvester):
         view = (datafile.DataView(parent_result,zip(['||SonA||','A_11','A_22'],3*[float])))
         return {parent_key: view}
 
+class YldHarvester(harvester.DataFileHarvester):
+    def __init__(self,**kwargs):
+        return super(YldHarvester,self).__init__(**kwargs)
+
+    def harvest(self, workdir = '.'):
+        parent_key, parent_result = super(YldHarvester, self).harvest(workdir).items()[0]
+        view = (datafile.DataView(parent_result,zip(['theta','S/S_0','beta'],3*[float])))
+        return {parent_key: view}
+
 
 def subdict(dictionary,keylist):
     subdict_gen = ((key,dictionary[key]) for key in keylist if key in dictionary)
@@ -50,6 +59,40 @@ def subdict(dictionary,keylist):
 def mergedict(dict_dst,dict_src):
 	dict_dst.update(dict_src)
 	return dict_dst
+
+def processYld(dataview):
+    # We assume that central difference scheme is used.
+    # Thus we consider triplets, in which only the central point is relevant
+    yld_data = numpy.array(list(dataview))[1::3,:]
+    # convert the first and the third column to degrees
+    yld_data[:,(0,2)] = numpy.degrees(yld_data[:,(0,2)])
+    return yld_data
+
+def outputYldData(out, yld_data):
+
+    yld_format = '%12.6e  '*3 + '\n'
+    # Output yld data
+    out.write(str(len(yld_data)) + '\n')
+    for x in yld_data:
+        out.write(yld_format % tuple(x))
+
+def readBBC2008params(inp):
+    
+    # Skip two lines of header, one with banner. 
+    out ={}
+    for _ in range(3):
+        inp.readline()
+    # Next three lines contain k, s and w
+    for _ in range(3):
+        k,v = [x.strip() for x in inp.readline().split(':')]
+        out[k] = v
+    params = out['params'] = []
+    labels = out['labels'] = []
+    for _ in xrange(out['s']*8):
+        k,v = [x.strip() for x in inp.readline().split(':')]
+        params.append(v)
+        labels.append(k)
+    return out
 
 
 def main(args):
@@ -62,11 +105,18 @@ def main(args):
         # Recover known keys from namespace of args object
         mapping = subdict(vars(args),arg_keys) # Essencially, vars(args) is more Pythonish args.__dict__
 
+        use_yld = False
+
         try:
             mapping['modelid'] = model_id_map[mapping['model']]
         except KeyError:
             pass
 
+        if args.bbc2008init:
+            bbc_data = readBBC2008params(args.bbc2008init)
+            initial_guess = bbc_data['params']
+        else:
+            initial_guess = 16 * [0.5]
         
         executable = os.path.expanduser(args.executable)
         common_config ={'executable':executable}
@@ -75,9 +125,11 @@ def main(args):
 
         task_types = [('QRS', '.xqrs', readTemplate(args.qrstemplate), QRSHarvester),
                       ('ASR', '.asr',  readTemplate(args.asrtemplate), ASRHarvester)]
-
         if args.yldtemplate:
-            task_types.append(('Yld', '.xyld', readTemplate(args.yldtemplate), harvester.FileHarvester))
+            task_types.append(('Yld', '.xyld', readTemplate(args.yldtemplate), YldHarvester))
+            use_yld = True
+
+        # use the guess point if provided
 
         taskgroups = []
         tasks = []
@@ -134,9 +186,15 @@ def main(args):
             bx = numpy.array(list(dv))
             rvalue_bx = bx[0,2] / bx[0,1] # r_bx = A_22 / A_11
             scaled_bx_s = bx[0,0] / S0
+            #
+            if use_yld:
+                yld_data = processYld(dataview=tasklist[2].result.values()[0])
+            else:
+                yld_data = [] # this means no yld data is actually provided.
+
             # Write BBC input file
             fmt = "%12.6e\n"
-            out = open(jobname + '_bbc2008vef.dat','w')
+            out = open(jobname + '_bbc2008vef.datx','w')
             out.write(jobname + '\n')
             out.write(jobname + ' ' + args.texture_file + ' ' + args.model +  '\n')
             for s in scaled_uni_s:
@@ -146,17 +204,30 @@ def main(args):
             for r in rvalues:
                 out.write(fmt % r[0])
             out.write(fmt % rvalue_bx)
+            #
+            outputYldData(out, yld_data)
             # 
             out.write(args.structure + '\n')
+            # Write the initial guess
+            for x in initial_guess:
+                out.write(fmt % x)
+            # Write 'F' that stands for "no weighting factors, use the defaults"
+            out.write('F\n')
             out.close()
 
             if args.export:
-                ars_file = open((args.export + jobname + '.ars'),'w')
+                ars_file = open((args.export + jobname + '.urs'),'wt')
                 # Write output values
                 # order of fields: angle normalized_s r-value
                 for row in ars:
                     ars_file.write( (3*'%10.6f '+'\n') % (row[0], row[2], row[1]) )
-
+                ars_file.close()
+                #
+                brs_file = open((args.export + jobname + '.brs'),'wt')
+                # Write output values: biaxial r-values and stresses
+                # order of fields:  normalized_s_bx r-value_bx
+                brs_file.write((2*'%10.6f '+'\n') % (scaled_bx_s, rvalue_bx ) )
+                brs_file.close()
 
     except Exception as e:
         print e
@@ -184,6 +255,9 @@ if __name__ == '__main__':
         parser.add_argument('--yldtemplate',help='template of config file for alamDMC yld',required=False)
         parser.add_argument('--executable',help='path to alamDMC',default=alamdmc_prog,required=False)
         parser.add_argument('--export',help='prefix of filename for the extended output',default=None)
+        parser.add_argument('--bbc2008init', 
+                            help='path to BBC2008 parameter file to be included as the initial guess',
+                            required=False, type=argparse.FileType('r'), default=None)
         # parser.add_argument('--output',help='Output file or "-"',type=argparse.FileType('w'),default='-')
         # Key/value pairs for template substitution
         parser_template_args.add_argument('--jobname',default='elem',required=True)
