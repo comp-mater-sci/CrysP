@@ -104,6 +104,7 @@ implicit none
       info = the_module%ReadConfig(cnfunit)
       close(cnfunit)
       if (info /= 0) then
+            write(errmsg,'(A)') 'Configuration file contains errors.'
             call finalize(stopcode_runtimeerror)
       endif
       !

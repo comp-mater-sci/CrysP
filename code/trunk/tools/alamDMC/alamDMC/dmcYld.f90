@@ -86,6 +86,7 @@ contains
             ! Read parameters specific for the dmcASR program
             this%ptr_theta_range => rangeFromConfig(cnfunit,info)
             if ( (info /= 0) .or. (.not. associated(this%ptr_theta_range)) ) return
+            info = -1
             this%base_vectors = 0.D0
             do i=1,nbase
                   normalize = .false.
