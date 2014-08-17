@@ -160,16 +160,32 @@ private
             module procedure doubleBiasedRange_init
       end interface
 
+      !> discreteRange represents an arbitrary sequence of data points, accesible via the range_type
+      !> interface, i.e. `next` and `size` methods.
+      type,extends(range_type) :: discreteRange
+      private
+            !> Sequence of points
+            double precision,dimension(:),allocatable :: sequence
+            !> Index of the previously used point inside the sequence. Zero denotes "no point has been used".
+            integer           :: lastpoint = 0
+      contains
+            procedure,pass(r) :: next => discreteRange_next
+            procedure,pass(r) :: size => discreteRange_size
+      end type
+      
+      interface discreteRange
+            module procedure discreteRange_init
+      end interface
       
       !> Generic interface for non-virtual calls to the methods "next"   
       interface next
-            module procedure uniformRange_next, biasedRange_next, multiBiasedRange_next
+            module procedure uniformRange_next, biasedRange_next, multiBiasedRange_next, discreteRange_next
       end interface
       
       
       
 !>@{ \name Public datatypes
-public :: range_type, uniformRange, biasedRange, doubleBiasedRange, multiBiasedRange
+public :: range_type, uniformRange, biasedRange, doubleBiasedRange, multiBiasedRange, discreteRange
 public :: bias_t
 !>@}
 
@@ -435,7 +451,53 @@ contains
       end function
 
 
+      !
+      !  Members of discreteRange
+      !
+
+      function discreteRange_init(values) result(res)
+      implicit none
+      type(discreteRange)                       :: res
+      double precision,dimension(:),intent(in)  :: values   !< Sequence of points
+      !
+      integer :: ierr
+      !
+            allocate(res%sequence(size(values)),stat=ierr)
+            res%sequence = values
+      !
+      end function
       
+      !> Provide the next value belonging to the range. 
+      !> It returns .false. if the end of the range is reached.
+      logical function discreteRange_next(r,value) result(next)
+      implicit none
+      class(discreteRange),intent(inout)    :: r
+      !> The value at the point belonging to the range. This is meaningful if and only if
+      !> the function returns .true.
+      double precision,intent(inout)      :: value
+      !
+            if (discreteRange_size(r) > 0) then
+                  r%lastpoint = r%lastpoint + 1
+                  value = r%sequence(r%lastpoint)
+                  next = .true.
+            else
+                  next = .false.
+            endif
+      !
+      end function
+      
+      !> Return the number of points that remain in the sequence.
+      elemental integer function discreteRange_size(r)    result(n)
+      implicit none
+      class(discreteRange),intent(in)    :: r
+      !
+            if (allocated(r%sequence)) then
+                  n = size(r%sequence) - r%lastpoint
+            else
+                  n = 0
+            endif
+      !
+      end function
       
 end module
 

@@ -33,15 +33,20 @@ use criRange
 #endif
 implicit none
 
-      integer,parameter :: range_ntypes = 4
+      integer,parameter :: range_ntypes = 5
       
-      integer,parameter :: range_uniform_id = 1, range_biased_id = 2, range_doublebiased_id = 3, range_multibiased_id = 4
+      integer,parameter ::  range_uniform_id = 1, &
+                            range_biased_id = 2, &
+                            range_doublebiased_id = 3, &
+                            range_multibiased_id = 4, &
+                            range_discrete_id = 5
       
       type(MapItem),dimension(range_ntypes) :: range_name_map = [ &
                               MapItem('uniform',range_uniform_id), &
                               MapItem('biased', range_biased_id), & 
                               MapItem('doublebiased',range_doublebiased_id), &
-                              MapItem('multibiased',range_multibiased_id) ] 
+                              MapItem('multibiased',range_multibiased_id), &
+                              MapItem('discrete', range_discrete_id)] 
 
 contains
       
@@ -63,6 +68,8 @@ contains
                         allocate(biasedRange :: instance)
                   case(range_doublebiased_id, range_multibiased_id)
                         allocate(multibiasedRange :: instance)
+                  case(range_discrete_id)
+                        allocate(discreteRange :: instance)
                   end select
             endif
       !

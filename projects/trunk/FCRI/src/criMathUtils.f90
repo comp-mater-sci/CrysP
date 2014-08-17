@@ -3,6 +3,7 @@
 !
 !>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>    \credits Philip Eyckens (EulerAnglesType)
 !>
 !>    Organization: Katholieke Universiteit Leuven (KU Leuven)
 !>    Organization unit: Dept.Comp.Sci., TWR Group
@@ -357,6 +358,43 @@ contains
       !
       end function
       
+      !> Three Euler angles in Bunge convention (ang) from rotation matrix (mat).
+      !>
+      !> The outputted Euler angles are in radians and lie within these bounds:
+      !>    ang%fi1: [0,2*pi[
+      !>    ang%PHI: [0,  pi[
+      !>    ang%fi2: [0,2*pi[   note: if PHI=0 then phi2=0
+      pure function EulerAnglesType(mat) result(ang)
+      double precision, dimension(rot_matrix_dim,rot_matrix_dim),intent(in) :: mat
+      type(EulerAngles) :: ang
+      !
+      double precision :: phi1,PHI,phi2,cosPHI
+      !
+          cosPHI = mat(3,3)
+          PHI = acos(cosPHI) !range: [0,pi]
+          !
+          if (abs(cosPHI)==1.0D0) then !case that PHI=0° or PHI=180°
+              !Set phi2 to 0.0D0, given that:
+              !  (phi1;   0°; phi2) equivalent to (phi1+phi2;    0; 0).
+              !  (phi1; 180°; phi2) equivalent to (phi1+phi2; 180°; 0).
+              phi2 = 0.0D0 
+              phi1 = atan2(-mat(2,1)/cosPHI,mat(2,2)/cosPHI) !range: [-pi,pi[
+          else 
+              phi1 = atan2(mat(3,1),-mat(3,2)) !range: [-pi,pi[
+              phi2 = atan2(mat(1,3),mat(2,3)) !range: [-pi,pi[
+          end if
+          !
+          !If needed, replace Euler angles with equivalent values within proper bounds.
+          if (PHI==pi)     PHI  = 0.0D0         ![  0,pi] -> [0,  pi[
+          if (phi1<0.0D0) phi1 = phi1+2.D0*pi   ![-pi,pi[ -> [0,2*pi[
+          if (phi2<0.0D0) phi2 = phi2+2.D0*pi   ![-pi,pi[ -> [0,2*pi[
+          !
+          ang%fi1= phi1
+          ang%PHI= PHI
+          ang%fi2= phi2         
+      !
+      end function
+      
       !> Rotates the second-rank tensor S to the reference frame given by rotation R.
       !>
       !> The result is R^T S R, which is equivalent to (R^T S) R
@@ -444,5 +482,47 @@ contains
       !
       end function
 
+      !
+      ! Some operations on double_pair
+      !
+      
+      !> Calculate vector v that is normal to the vector AB (from point A to B).
+      !> Provide the angle between the vector v and the x axis.
+      !>
+      !> v is obtained by a clockwise rotation by 90 degs applied to the AB vector.
+      subroutine getNormalVector2D(A,B,length,v,beta)
+      implicit none
+      type(pair_double), intent(in) :: A, B    !< Positions of the points: A and B
+      double precision,intent(in)   :: length  !< Length of the vector v
+      type(pair_double),intent(out) :: v       !< Normal vector
+      !> Angle between the horizontal axis and the vector u [radians]
+      !> The range of the angle is [0:2pi], thus it may vary from acute angle 
+      ! via obtuse angle to reflex angle.
+      double precision,intent(out)  :: beta
+      !
+      double precision,dimension(2) :: u
+      double precision :: u_norm
+      !
+            ! Build the secant vector 
+            u = [B%x, B%y]  - [A%x, A%y]
+            u_norm = norm2(u)
+            if (u_norm > epsilon(0.D0)) then
+                  ! Build the normal vector. Anticlockwise rotation by 90degs 
+                  ! gives [-u_y, u_x]. Apply the clockwise rotation by 90degs:
+                  u = [u(2), -u(1)]
+                  beta = acos(u(1) / u_norm)
+                  ! Let the vectors that point "downwards" have beta angle > 180deg
+                  if (u(2) < 0.D0) beta = 2.D0*pi - beta
+                  u = u / u_norm * length
+                  v = pair_double(u(1), u(2))
+            else
+                  ! ouups, the points C and A overlap!
+                  beta = 0.D0
+                  v = pair_double(0.D0,0.D0)
+            endif
+      !
+      end subroutine
+
+      
 end module
 

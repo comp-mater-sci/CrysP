@@ -27,7 +27,7 @@ implicit none
       
       integer,parameter :: criLibCRIVersion_Minor    = 1
       
-      integer,parameter :: criLibCRIVersion_SubMinor = 21
+      integer,parameter :: criLibCRIVersion_SubMinor = 26
 
 contains
 

@@ -34,7 +34,7 @@ private
       double precision,dimension(5),parameter :: test1_arr = [ 0.D0, 3.42036912822497D0, 6.13511790435691D0, 8.28981543588752D0, 10.D0], &
                                                  test2_arr = [ 0.D0, 1.71018456411249D0, 3.86488209564309D0, 6.57963087177503D0, 10.D0 ]
 
-      
+
 public :: criTestRange_main
 
 contains
@@ -42,13 +42,16 @@ contains
       !> main driver routine of criTestPath      
       logical function criTestRange_main() result(stat)
       implicit none
-      
+      !
             stat = .true.
             stat = testRange_empty() .and.  testRange_ranges()
             
             stat = stat .and. testBiasedRange_empty() .and. testBiasedRange_ranges()
             
             stat = stat .and. testMultiBiasedRange_empty() .and. testMultiBiasedRange_ranges()
+            
+            stat = stat .and. testDiscreteRange()
+      !
       end function
       
       
@@ -501,7 +504,48 @@ contains
             test = .true.
       end function
 
+      logical function testDiscreteRange() result(test)
+      implicit none
       
+      double precision,dimension(0) :: empty_array
+      double precision,dimension(5),parameter :: test_array = [1.D0,1.5D0,2.D0,2.5D0,3.D0]
+      double precision :: val
+      type(discreteRange) :: rd
+      !
+            ! Test: uninitialized range
+            _TEST('size of uninitialized discrete range', (rd%size() == 0))
+            _TEST('uninitialized discrete range', .not. rd%next(val))
+            
+            ! Test: empty initialized range
+            rd = discreteRange(empty_array)
+            _TEST('size of empty discrete range', (rd%size() == 0))
+            _TEST('empty discrete range', .not. rd%next(val))
+
+            ! Test: one-element discrete range
+            rd = discreteRange([0.D0])
+            _TEST('size of one-element discrete range', (rd%size() == 1))
+            _TEST('one-element discrete range', rd%next(val))
+            _TEST('size of one-element discrete range (after next)', (rd%size() == 0))
+                        
+            ! Test: one-element discrete range
+            rd = discreteRange([0.D0])
+            _TEST('one-element discrete range: one eval',  rd%next(val))
+            _TEST('one-element discrete range: only eval', .not. rd%next(val))
+            
+            ! Test: one-element discrete range
+            rd = discreteRange([0.D0])
+            test = test_range('one-element discrete range',rd,[0.D0])
+            _TEST('stop at the end of discrete range', .not. rd%next(val))
+            
+            ! Test: five-element discrete range
+            rd = discreteRange(test_array)
+            _TEST('size of five-element discrete range', (rd%size() == size(test_array)))
+            test = test_range('five-element discrete range',rd,test_array)
+            _TEST('stop at the end of discrete range', .not. rd%next(val))
+            
+            test = .true.
+      
+      end function
       
       
 end module
