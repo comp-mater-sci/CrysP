@@ -1,6 +1,6 @@
       module altayDynfil
       use altayMiscutils, only: unitMatrix
-      use fngMathUtils
+      use criMathUtils
       implicit none
 
       

@@ -3,7 +3,7 @@
 #endif
       module altayPancake
       use altayMiscutils, only: terminate, stopcode_runtimeerror
-      use fngMathUtils
+      use criMathUtils
       
       contains
       

@@ -3,7 +3,7 @@
 #endif
       module altayAlgorithms
       use altayMiscutils, only: terminate, stopcode_runtimeerror
-      use fngMathUtils
+      use criMathUtils
       contains
       
       !

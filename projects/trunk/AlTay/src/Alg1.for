@@ -5,7 +5,7 @@
       use altayAlgorithms
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayMacroKinematic
-      use fngMathUtils
+      use criMathUtils
       integer,parameter,private :: N = 5, N1 = N + 1 
       
       integer,private           :: M,NGL,NTW
