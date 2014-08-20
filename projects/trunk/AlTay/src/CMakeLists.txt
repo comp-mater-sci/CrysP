@@ -32,17 +32,17 @@ link_directories("${FCRI_LIBDIR}")
 
 
 set(CORESRC
-Alg0A.for 
-Alg1.for 
-Alg2.for 
-Dynfil.for 
+Alg0A.f90 
+Alg1.f90 
+Alg2.f90 
+Dynfil.f90 
 macroKinematic.f90 
 microstr.f90 
 ioconfig.f90 
 miscutils.f90 
-Pancak2.for 
-Sliprat.for 
-TBH.for 
+Pancak2.f90 
+Sliprat.f90 
+TBH.f90 
 cubAccess.f90 
 curAccess.f90 
 smtAccess.f90 
@@ -76,7 +76,7 @@ set_target_properties(${libaltay} PROPERTIES COMPILE_DEFINITIONS "ALTAY_SUBROUTI
 #
 set(PROGSRC
 ${CORESRC}
-MainA1.for
+MainA1.f90
 )
 
 add_executable(${progaltay} ${PROGSRC}) 

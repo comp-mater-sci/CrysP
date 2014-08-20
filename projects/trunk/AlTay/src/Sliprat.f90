@@ -15,18 +15,18 @@
       use altayMacroKinematic
       IMPLICIT double precision (A-H,O-Z)
       type(DeformationRate),intent(in) :: MacroDefRate      
-C     September 2000
-C     To find the slip rates assuming that
-C     - the stress, strain rate and the active slip systems are known,
-C       previously obtained by PANCAK2;
-C     - (under the above resrtrictions) the sum of the squares of the slip
-C       rates must be minimal. 
-C
-C     Modified in Aug 2010
-C
+!     September 2000
+!     To find the slip rates assuming that
+!     - the stress, strain rate and the active slip systems are known,
+!       previously obtained by PANCAK2;
+!     - (under the above resrtrictions) the sum of the squares of the slip
+!       rates must be minimal. 
+!
+!     Modified in Aug 2010
+!
       COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
-      COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),
-     1 TLXX,TAURLP(8) 
+      COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),           &
+       TLXX,TAURLP(8) 
       dimension SGNN(IDIMXX)
       dimension SLPR(8),IND(8),XX(IDIMXX),ISTOR(0:8,48),SLSTOR(0:8,48)
       data NSTOR/48/
@@ -37,19 +37,19 @@ C
       NLP=NACTIV
       NN=NACTIV
       NOPL=0
-C     check whether solution is totally zero
+!     check whether solution is totally zero
       x=0.0
       do i=1,NLP 
           x=x+abs(SLIPLP(i))
           j=INDACT(i)
           sgnn(j)=1.D0
           if (TAURLP(i).lt.0.0d0) sgnn(j)=-1.D0
-C      write (IMP,911)  i,j,INDACT(i),indlp(i),SLIPLP(i),TAURLP(i)
-C 911  format (' SLIPRAT i=',I5,'  j=',I5,'   INDACT(i)=',i5,'  INDLP='
-C     1,I5,/,'              SLIPLP(i)=',D12.4,' TAURLP(i)=',D12.4)
+!      write (IMP,911)  i,j,INDACT(i),indlp(i),SLIPLP(i),TAURLP(i)
+! 911  format (' SLIPRAT i=',I5,'  j=',I5,'   INDACT(i)=',i5,'  INDLP='
+!     1,I5,/,'              SLIPLP(i)=',D12.4,' TAURLP(i)=',D12.4)
       enddo
       if (x.lt.TLXX) goto 6
-C     end of check
+!     end of check
       do 1 i=1,NN
       IND(i)=INDACT(i)
   1   continue
@@ -62,17 +62,17 @@ C     end of check
            if (NN.le.5) goto 2
       endif
       if (NN.le.5) goto 6
-C
-C     Let us take all combinations of NN out of NACTIV
-C
-C     "Levels" in the combination search:
-C     (first level:  if NACTIV=8, find all combinations of 7 sl. syst.
-C      second level: find all combinations of 6 - etc.)
-C
+!
+!     Let us take all combinations of NN out of NACTIV
+!
+!     "Levels" in the combination search:
+!     (first level:  if NACTIV=8, find all combinations of 7 sl. syst.
+!      second level: find all combinations of 6 - etc.)
+!
       N0=NACTIV
-C
-C     First level
-C
+!
+!     First level
+!
        N1=N0-1
        ITR=1
        if (N1.lt.5) goto 6
@@ -85,14 +85,14 @@ C
              RCM_GUARD
 #endif 
           endif
-C          write (IMP,110) (IND(i),i=1,N1)
+!          write (IMP,110) (IND(i),i=1,N1)
  110   format (10i5)
           J=N0-I1
           if (J.gt.0) IND(J)=INDACT(J+1)
        enddo
-C
-C     Level 2
-C
+!
+!     Level 2
+!
       N2=N1-1
       ITR=2
       if (N2.lt.5) goto 2
@@ -113,12 +113,12 @@ C
                 RCM_GUARD
 #endif
             endif
-C            write (IMP,110) (IND(i),i=1,N2)
+!            write (IMP,110) (IND(i),i=1,N2)
          enddo
       enddo
-C
-C     Level 3
-C
+!
+!     Level 3
+!
       N3=N2-1
       ITR=3
       if (N3.lt.5) goto 2
@@ -135,14 +135,14 @@ C
               j=j+1
    7          continue
               call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
-C              if (ineg.eq.0) goto 2
+!              if (ineg.eq.0) goto 2
               if (ineg.eq.0) then
                   call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
 #ifdef ALTAY_SUBROUTINE
                   RCM_GUARD
 #endif
               endif 
-C              write (IMP,110) (IND(i),i=1,N3)
+!              write (IMP,110) (IND(i),i=1,N3)
            enddo
          enddo
       enddo
@@ -152,18 +152,18 @@ C              write (IMP,110) (IND(i),i=1,N3)
       end if
       end if
  100  format (' Results SLIPRAT')
-C      NREDU=NACTIV-NN
+!      NREDU=NACTIV-NN
       if (NOPL.eq.0) goto 6
       IOPL=0
       X=1.0d10
       do i=1,NOPL
          Y=SLSTOR(0,i)
-C
-C
-C  Y is de te minimaliseren waarde van oplossing i
-C  Uitprinten!
-C
-C
+!
+!
+!  Y is de te minimaliseren waarde van oplossing i
+!  Uitprinten!
+!
+!
          if (Y.lt.X) then
                        X=Y
                        IOPL=i
@@ -227,8 +227,8 @@ C
       write (IMP,108) IOR,NN
       end if
       end if
- 108  format (' IOR=',I5,' Linear programming solution retained ',
-     1' NN=',i5)
+ 108  format (' IOR=',I5,' Linear programming solution retained ',       &
+      ' NN=',i5)
       x=0.0
       k=0
       do i=1,NN
@@ -258,19 +258,19 @@ C
       use altayIOConfig
       use altayAlgorithms, only: KLEINKWA
       IMPLICIT double precision (A-H,O-Z)
-C     December 2000
-C     The  normalisation by DELTAT (now: MacroDefRate%vMeqStrainRate) of the september 2000 version has been
-C     removed here. Is now done in PANCAK2.
-C
-C     Modified Aug 2010
-C
+!     December 2000
+!     The  normalisation by DELTAT (now: MacroDefRate%vMeqStrainRate) of the september 2000 version has been
+!     removed here. Is now done in PANCAK2.
+!
+!     Modified Aug 2010
+!
       COMMON /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
       dimension sgnn(IDIMXX)
       dimension A(13,13),B(13),SLPR(8),IND(8)
       dimension AA(13,13),BA(13),VAL(13),XV(13),YV(13)
       DATA TOl/1.0d-10/
-C      write (IMP,102) NN,(IND(i),i=1,NN)
-C 102  format (' MINSQU NN',i5,' IND',8i5)
+!      write (IMP,102) NN,(IND(i),i=1,NN)
+! 102  format (' MINSQU NN',i5,' IND',8i5)
       if (NN.gt.5) goto 2
       N1=5
       N2=NN
@@ -286,7 +286,7 @@ C 102  format (' MINSQU NN',i5,' IND',8i5)
       goto 1
   2   N1=NN+5
       N2=N1
-C     Set up system of equations
+!     Set up system of equations
       do i=1,N1
          do j=1,N1
            A(i,j)=0.0
@@ -306,10 +306,10 @@ C     Set up system of equations
       do j=1,5
          B(NN+j)=BB8(j)
       enddo
-C     Solve by least-squares method followed by singular value decomposition
+!     Solve by least-squares method followed by singular value decomposition
    1  call Kleinkwa(N1,N2,13,13,A,B,AA,BA,VAL,XV,YV,TOL,RES)
-C      write (IMP,100) RES
-C 100  format(' MINSQU - RES',d15.6)
+!      write (IMP,100) RES
+! 100  format(' MINSQU - RES',d15.6)
       do i=1,NN
          SLPR(i)=BA(i)
       enddo
@@ -325,13 +325,13 @@ C 100  format(' MINSQU - RES',d15.6)
                        ineg=i
                      endif
       enddo
-C      write (IMP,101) (SLPR(i),i=1,NN)
-C 101  format (10F8.5)
+!      write (IMP,101) (SLPR(i),i=1,NN)
+! 101  format (10F8.5)
       if (RES.gt.(10000.0*TOL)) ineg=-1
-C      write (IMP,103) INEG,RES,sumsq
-C 103  format (' MINSQU INEG',i5,'  RES',d15.6,'  sumsq',d15.6)
-C      write (IMP,915) (SLPR(i),i=1,NN)
-C 915  format (6D15.3)
+!      write (IMP,103) INEG,RES,sumsq
+! 103  format (' MINSQU INEG',i5,'  RES',d15.6,'  sumsq',d15.6)
+!      write (IMP,915) (SLPR(i),i=1,NN)
+! 915  format (6D15.3)
       return
       end subroutine
       !
@@ -351,8 +351,8 @@ C 915  format (6D15.3)
          write (*,100)
          call terminate(stopcode_runtimeerror)
 #else
-         RCM_RAISE(1,'STORE',
-     1   'Too small dimension NSTOR in SLIPRAT',RCM_RTN)
+         RCM_RAISE(1,'STORE',                                            &
+         'Too small dimension NSTOR in SLIPRAT',RCM_RTN)
 #endif
       endif
  100  format (' STORE - increase dimension NSTOR in SLIPRAT,STORE')

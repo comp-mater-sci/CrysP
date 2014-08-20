@@ -63,9 +63,9 @@
 		<File RelativePath="..\src\altayRCM.fpp"/></Filter>
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
-		<File RelativePath="..\src\Alg0A.for"/>
-		<File RelativePath="..\src\Alg1.for"/>
-		<File RelativePath="..\src\Alg2.for"/>
+		<File RelativePath="..\src\Alg0A.f90"/>
+		<File RelativePath="..\src\Alg1.f90"/>
+		<File RelativePath="..\src\Alg2.f90"/>
 		<File RelativePath="..\src\altayConfig.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
@@ -96,7 +96,7 @@
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Debug|x64">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration></File>
-		<File RelativePath="..\src\Dynfil.for"/>
+		<File RelativePath="..\src\Dynfil.f90"/>
 		<File RelativePath="..\src\ioconfig.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
@@ -109,14 +109,14 @@
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Debug|x64">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration></File>
-		<File RelativePath="..\src\Pancak2.for"/>
-		<File RelativePath="..\src\Sliprat.for"/>
+		<File RelativePath="..\src\Pancak2.f90"/>
+		<File RelativePath="..\src\Sliprat.f90"/>
 		<File RelativePath="..\src\smtAccess.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Debug|x64">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration></File>
-		<File RelativePath="..\src\TBH.for"/>
+		<File RelativePath="..\src\TBH.f90"/>
 		<File RelativePath="..\src\texFormatConstants.f90"/>
 		<File RelativePath="..\src\texFormats.f90">
 			<FileConfiguration Name="Debug|Win32">

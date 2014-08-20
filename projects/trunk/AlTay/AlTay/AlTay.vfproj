@@ -88,9 +88,9 @@
 		<Filter Name="Header Files" Filter="fi;fd"/>
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
-		<File RelativePath="..\src\Alg0A.for"/>
-		<File RelativePath="..\src\Alg1.for"/>
-		<File RelativePath="..\src\Alg2.for"/>
+		<File RelativePath="..\src\Alg0A.f90"/>
+		<File RelativePath="..\src\Alg1.f90"/>
+		<File RelativePath="..\src\Alg2.f90"/>
 		<File RelativePath="..\src\altayDSHState.f90"/>
 		<File RelativePath="..\src\altayHard.f90"/>
 		<File RelativePath="..\src\altayHardLawDSH.f90"/>
@@ -98,16 +98,16 @@
 		<File RelativePath="..\src\altayHardTypes.f90"/>
 		<File RelativePath="..\src\cubAccess.f90"/>
 		<File RelativePath="..\src\curAccess.f90"/>
-		<File RelativePath="..\src\Dynfil.for"/>
+		<File RelativePath="..\src\Dynfil.f90"/>
 		<File RelativePath="..\src\ioconfig.f90"/>
 		<File RelativePath="..\src\macroKinematic.f90"/>
-		<File RelativePath="..\src\MainA1.for"/>
+		<File RelativePath="..\src\MainA1.f90"/>
 		<File RelativePath="..\src\microstr.f90"/>
 		<File RelativePath="..\src\miscutils.f90"/>
-		<File RelativePath="..\src\Pancak2.for"/>
-		<File RelativePath="..\src\Sliprat.for"/>
+		<File RelativePath="..\src\Pancak2.f90"/>
+		<File RelativePath="..\src\Sliprat.f90"/>
 		<File RelativePath="..\src\smtAccess.f90"/>
-		<File RelativePath="..\src\TBH.for"/>
+		<File RelativePath="..\src\TBH.f90"/>
 		<File RelativePath="..\src\texFormatConstants.f90"/>
 		<File RelativePath="..\src\texFormats.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>

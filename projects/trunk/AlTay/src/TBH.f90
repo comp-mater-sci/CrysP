@@ -6,53 +6,53 @@
       
       contains
       
-C     SUBROUTINE LINEAR PROGRAMMING TAYLOR-BISHOP-HILL STYLE
-       Subroutine TBH(IPR,NDIM,N,M,A,D,
-     1 TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,
-     2 TauR,bas,Trp,Aprime,CUst,UU,DD,DTAU,VALID)
-C    
-C     Subroutine which solves Taylor-Bishop-Hill for one crystallite
-C                    Stresses and strain rates are to be represented
-C                    by vectors
-C     input          IPR (Print parameter: if <2, no printing of  results) 
-C     input          NDIM: number of rows in arrays, must not < N
-C     input          There are M slip systems
-C     input          N is the number of independent Taylor equations
-C                    N is normally equal to 5, except for cluster models
-C     input          A=coefficient matrix of Taylor equations
-C     input          D=right-hand side of Taylor equations=imposed strain rate
-C     input          TauC=critical resolved shear stresses (all Tauc>0 )
-C                     first row:  for positive slip
-C                     second row: for negative slip
-C     input          BINV=First guess of inverse of basis, corresp. with IACT
-C                    (Basis=set of columns from A corresponding
-c                                    with the active slip sytems)
-C     output         U=Inverse of basis, corresponding with IRP        
-C     input          IACT=indices of active slip systems: first guess 
-C     output         Irp=indices of active slip systems
-C     output         Dacc=final slip rates, for the slip systems indexed in Irp
-C     output         GDOT=slip rates
-C     output         SIG=stress
-C     output         FakM=plastic work  (stress*imposed strain rate) 
-C     output         TauR (resolved shear stress)
-C     workspace      bas (logical TRUE=belongs to basis)         
-C     workspace      Trp (resolved shear stress on basis systems)
-C     workspace      Aprime (column of U * A)         
-C     workspace      CUst compact storage of U* (only one column)
-C     workspace      UU (copy of inverse of basis)         
-C     workspace      DD (copy of strain rates in some basis)
-C     output         DTAU=abs(TAUR)-TAUC
-C
+!     SUBROUTINE LINEAR PROGRAMMING TAYLOR-BISHOP-HILL STYLE
+       Subroutine TBH(IPR,NDIM,N,M,A,D,                                  &
+       TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,                          &
+       TauR,bas,Trp,Aprime,CUst,UU,DD,DTAU,VALID)
+!    
+!     Subroutine which solves Taylor-Bishop-Hill for one crystallite
+!                    Stresses and strain rates are to be represented
+!                    by vectors
+!     input          IPR (Print parameter: if <2, no printing of  results) 
+!     input          NDIM: number of rows in arrays, must not < N
+!     input          There are M slip systems
+!     input          N is the number of independent Taylor equations
+!                    N is normally equal to 5, except for cluster models
+!     input          A=coefficient matrix of Taylor equations
+!     input          D=right-hand side of Taylor equations=imposed strain rate
+!     input          TauC=critical resolved shear stresses (all Tauc>0 )
+!                     first row:  for positive slip
+!                     second row: for negative slip
+!     input          BINV=First guess of inverse of basis, corresp. with IACT
+!                    (Basis=set of columns from A corresponding
+!                                    with the active slip sytems)
+!     output         U=Inverse of basis, corresponding with IRP        
+!     input          IACT=indices of active slip systems: first guess 
+!     output         Irp=indices of active slip systems
+!     output         Dacc=final slip rates, for the slip systems indexed in Irp
+!     output         GDOT=slip rates
+!     output         SIG=stress
+!     output         FakM=plastic work  (stress*imposed strain rate) 
+!     output         TauR (resolved shear stress)
+!     workspace      bas (logical TRUE=belongs to basis)         
+!     workspace      Trp (resolved shear stress on basis systems)
+!     workspace      Aprime (column of U * A)         
+!     workspace      CUst compact storage of U* (only one column)
+!     workspace      UU (copy of inverse of basis)         
+!     workspace      DD (copy of strain rates in some basis)
+!     output         DTAU=abs(TAUR)-TAUC
+!
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif
       use altayIOConfig,IIPR=>IPR!Rename global IPR switch to avoid conflict
       implicit double precision (a-h,o-z) 
-      dimension A(NDIM,M),D(NDIM),BINV(NDIM,N),U(NDIM,N),IACT(NDIM),
-     1 GDOT(M),SIG(NDIM),TauC(2,M),TauR(M),Dacc(NDIM),Irp(NDIM)
+      dimension A(NDIM,M),D(NDIM),BINV(NDIM,N),U(NDIM,N),IACT(NDIM),     &
+       GDOT(M),SIG(NDIM),TauC(2,M),TauR(M),Dacc(NDIM),Irp(NDIM)
       logical bas(M),valid(M)
-      dimension Trp(NDIM),Aprime(NDIM),CUst(NDIM),UU(NDIM,N),DD(NDIM),
-     1 DTAU(M)
+      dimension Trp(NDIM),Aprime(NDIM),CUst(NDIM),UU(NDIM,N),DD(NDIM),   &
+       DTAU(M)
       data JPR /2/,TOL/1.0d-10/
       if (N.gt.NDIM) then
 #ifndef ALTAY_SUBROUTINE
@@ -62,8 +62,8 @@ C
       RCM_RAISE(1,'TBH','Bad input: N>NDIM',RCM_RTN)
 #endif      
                      endif
- 100  format (' Subroutine TBH - N=',I5,'  is > NDIM=',I5,
-     1 '   this is an error in the calling program')
+ 100  format (' Subroutine TBH - N=',I5,'  is > NDIM=',I5,               &
+       '   this is an error in the calling program')
       U=BINV
       Irp=IACT 
       do j=1,M
@@ -74,9 +74,9 @@ C
         j=Irp(i)
         bas(j)=.TRUE.
       enddo
-C     Calculation of slip rates in basis
+!     Calculation of slip rates in basis
       call mtprd(Dacc,U,D,N,N,1,NDIM,NDIM)
-C     Calculation of stress, using generalised Schmid law
+!     Calculation of stress, using generalised Schmid law
       do i=1,N
          j=Irp(i)
          XX=Dacc(i)
@@ -117,12 +117,12 @@ C     Calculation of stress, using generalised Schmid law
       do j=1,M
          valid(j)=.TRUE.
       enddo
-C     Calculation of Taylor factor
+!     Calculation of Taylor factor
       FakM=0.0
       do i=1,N
          FakM=FakM+SIG(i)*D(i)
       enddo
-C     Calculation of resolved shear stress
+!     Calculation of resolved shear stress
       call mtprd(TauR,SIG,A,1,N,M,1,NDIM)
       if (IPR.GE.JPR) then
         if (NLIST.eq.1) then
@@ -139,9 +139,9 @@ C     Calculation of resolved shear stress
   201 format (' M-Factor:',D20.10,/,' Resolved shear stresses:')
   202 format (I5,30X,D20.10)
   204 format (D20.10,5X,D20.10)
-  205 format (//,'***************************************************',
-     1 /,'   Strain                   Stress')
-C     Search for most severly overstressed slip system
+  205 format (//,'***************************************************',  &
+       /,'   Strain                   Stress')
+!     Search for most severly overstressed slip system
     6 DT=0.0d0
       jn=0
       do 1 j=1,M
@@ -156,8 +156,8 @@ C     Search for most severly overstressed slip system
         write (IMP,919) j,jn,X,Y,Y-DT
         end if
         end if
-  919 format ('j=',I5,'  jn=',I5,'  TauR(=X)',D15.5,' DTAU(=Y)',D20.10,
-     1 ' Y-DT=',D20.10)
+  919 format ('j=',I5,'  jn=',I5,'  TauR(=X)',D15.5,' DTAU(=Y)',D20.10,  &
+       ' Y-DT=',D20.10)
         if (abs(Y).lt.TOL) then
                              Y=0.0d0
                              if (X.ge.0.0d0) then
@@ -172,9 +172,9 @@ C     Search for most severly overstressed slip system
         if (bas(j)) goto 1   
         if (abs(X).lt.TOL) goto 1 
         if (Y.le.DT) goto 1
-C        if (.NOT.valid(j)) goto 1
-C        if (IPR.GE.JPR) write(IMP,917) j,VALID(j)
-C 917    format (I5,' valid',L8)
+!        if (.NOT.valid(j)) goto 1
+!        if (IPR.GE.JPR) write(IMP,917) j,VALID(j)
+! 917    format (I5,' valid',L8)
         if (IPR.GE.JPR) then
         if (NLIST.eq.1) then
         write (IMP,920) Y,j
@@ -190,18 +190,18 @@ C 917    format (I5,' valid',L8)
       end if
       end if
   913 format ('Overstressed:jn DT',I5, D15.5,'   TauR(jn)',D20.10)  
-C      if (jn.eq.0.and.DT.gt.0.0D0) then
-C                                      write (IMP,910)
-C                                      write (*,910)
-C                                      stop
-C                                    endif 
-C  910 format (' TBH - There are invalid slip sytems ',
-C     1'which are overstressed')
+!      if (jn.eq.0.and.DT.gt.0.0D0) then
+!                                      write (IMP,910)
+!                                      write (*,910)
+!                                      stop
+!                                    endif 
+!  910 format (' TBH - There are invalid slip sytems ',
+!     1'which are overstressed')
       if (jn.eq.0) goto 2 ! There is no overstressed slip system  
-C     There is an overstressed slip system, which we will activate now
-C     Search which active slip system must be desactivated (removed from basis)
+!     There is an overstressed slip system, which we will activate now
+!     Search which active slip system must be desactivated (removed from basis)
       X=TauR(jn)
-C     Calculate column Mprime-s*, called Aprime
+!     Calculate column Mprime-s*, called Aprime
       call mtprd(Aprime,U,A(1,jn),N,N,1,NDIM,NDIM)
       in=0
       if (IPR.GE.JPR) then
@@ -209,8 +209,8 @@ C     Calculate column Mprime-s*, called Aprime
       write (IMP,203)
       end if
       end if
-  203 format (' ACTIVE',9x,'Slip rate',11X,
-     1 'Critical Resolved shear stress',11X,'Aprime')
+  203 format (' ACTIVE',9x,'Slip rate',11X,                              &
+       'Critical Resolved shear stress',11X,'Aprime')
       do 3 i=1,N
         if (IPR.GE.JPR) then
         if (NLIST.eq.1) then
@@ -268,9 +268,9 @@ C     Calculate column Mprime-s*, called Aprime
       end if
   912 format ('in jn Gmin',2I5, D15.5)
       if (abs(Gmin).gt.0.0D0) goto 5
-C      valid(jn)=.FALSE.
-C      goto 6  
-C     Updating of inverse of basis: U 
+!      valid(jn)=.FALSE.
+!      goto 6  
+!     Updating of inverse of basis: U 
     5 Z1=Aprime(in)
       do i=1,N
         CUst(i)=-Aprime(i)
@@ -281,7 +281,7 @@ C     Updating of inverse of basis: U
       enddo  
       UU=U
       call Ust(U,UU,CUst,in,N,N,NDIM)
-C     Updating of Dacc 
+!     Updating of Dacc 
       DD=Dacc
       call Ust(Dacc,DD,CUst,in,N,1,N)
       if (IPR.GE.JPR) then
@@ -290,7 +290,7 @@ C     Updating of Dacc
       end if
       end if
   929 format ('updated slip rate in',I5,2D15.5)
-C     Updating of basis: bas and Irp
+!     Updating of basis: bas and Irp
       bas(Irp(in))=.FALSE.
       bas(jn)=.TRUE.
       Irp(in)=jn 
@@ -299,9 +299,9 @@ C     Updating of basis: bas and Irp
                              else 
                                 Trp(in)=-Tauc(2,jn)
                              endif
-C     Go back to stress calculation
+!     Go back to stress calculation
       goto 4
-C     Solution was found.
+!     Solution was found.
     2 do j=1,M
         Gdot(j)=0.0
       enddo
@@ -310,7 +310,7 @@ C     Solution was found.
       write (IMP,212)
       end if
       end if
-c
+!
       do i=1,N
         j=Irp(i)
         Gdot(j)=Dacc(i)
@@ -328,7 +328,7 @@ c
       
       
       SUBROUTINE Ust(C,B,CUst,in,N,M3,NDIM)
-C     MATRIX C=MATRIX Ustar*MATRIX B                                        
+!     MATRIX C=MATRIX Ustar*MATRIX B                                        
       implicit double precision (a-h,o-z)
       DIMENSION B(NDIM,M3),C(NDIM,M3),CUst(N)
       do j=1,M3
@@ -344,7 +344,7 @@ C     MATRIX C=MATRIX Ustar*MATRIX B
       
       
       SUBROUTINE mtprd(C,A,B,N1,N2,N3,ND1,ND2)
-C     MATRIX C=MATRIX A*MATRIX B                                        
+!     MATRIX C=MATRIX A*MATRIX B                                        
       implicit double precision (a-h,o-z)
       DIMENSION A(ND1,N2),B(ND2,N3),C(ND1,N3)
       DO 1 I=1,N1                                                       

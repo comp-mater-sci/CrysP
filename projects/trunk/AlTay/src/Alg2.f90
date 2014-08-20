@@ -10,9 +10,9 @@
       subroutine UPDATC(CIJ,Finv) 
       double precision, dimension(3,3), intent(in)   :: Finv
       double precision, dimension(3,3), intent(inout):: CIJ
-C     Updating of CIJ matrix of ellipsoid
-C     Finv is the inverse of the F-tensor which describes the strain
-C     increment.
+!     Updating of CIJ matrix of ellipsoid
+!     Finv is the inverse of the F-tensor which describes the strain
+!     increment.
 !     CIJ = (Finv)^T * CIJ * Finv
       CIJ = matmul(matmul(transpose(Finv),CIJ),Finv)
       !
@@ -25,10 +25,10 @@ C     increment.
       implicit none
       double precision, dimension(5),  intent(in) :: vec
       double precision, dimension(3,3)            :: SymMatrix !out
-      double precision, parameter :: 
-     &      sq22=   sqrt(0.5d0),               !0.7071068
-     &      const3= (sqrt(3.0d0)+3.0d0)/6.0d0, !0.7886751
-     &      const4= (3.0d0-sqrt(3.0d0))/6.0d0  !0.2113249          
+      double precision, parameter ::                                     &
+            sq22=   sqrt(0.5d0),                                         & !0.7071068
+            const3= (sqrt(3.0d0)+3.0d0)/6.0d0,                           & !0.7886751
+            const4= (3.0d0-sqrt(3.0d0))/6.0d0  !0.2113249          
       !
       SymMatrix(2,2)=  const3*vec(1)-const4*vec(2)
       SymMatrix(3,3)= -const4*vec(1)+const3*vec(2)
@@ -54,10 +54,10 @@ C     increment.
       implicit none
       double precision, dimension(3,3), intent(in) :: mat
       double precision, dimension(5)               :: Vector5D !out
-      double precision, parameter :: 
-     &      c1= 0.5d0*(sqrt(3.0d0)+1.0d0), 
-     &      c2= c1-1.0d0,
-     &      c3= sqrt(0.5d0)
+      double precision, parameter ::                                     &
+            c1= 0.5d0*(sqrt(3.0d0)+1.0d0),                               &
+            c2= c1-1.0d0,                                                &
+            c3= sqrt(0.5d0)
       !
       Vector5D(1)= c1*mat(2,2) + c2*mat(3,3)
       Vector5D(2)= c2*mat(2,2) + c1*mat(3,3)
@@ -70,12 +70,12 @@ C     increment.
       
       Subroutine Transf(Gaxes,Aprime,T)
       IMPLICIT double precision (A-H,O-Z)
-C
-C     to calculate the CIJ matrix of an ellipsoid with half axes
-C     stored in Gaxes. T defines the orientation of the axes.
-C
-C     This version assumes that A is a diagonal matrix
-C
+!
+!     to calculate the CIJ matrix of an ellipsoid with half axes
+!     stored in Gaxes. T defines the orientation of the axes.
+!
+!     This version assumes that A is a diagonal matrix
+!
       dimension Gaxes(3),A(3),Aprime(3,3),T(3,3),X(3,3)
       do 2 k=1,3
       A(k)=1.D0/Gaxes(k)**2
@@ -100,11 +100,11 @@ C
       use altayRCM
 #endif      
       IMPLICIT double precision (A-H,O-Z)
-C
-C     find half-lengths of ellipsoid axes from CIJ matrix
-C     store them in prval
-C     find Euler angles of these axes, store in GEULR
-C
+!
+!     find half-lengths of ellipsoid axes from CIJ matrix
+!     store them in prval
+!     find Euler angles of these axes, store in GEULR
+!
       dimension CIJ(3,3),TMAT(3,3),GEULR(3)
       Dimension prval(3),prdir(3,3),e(3,3)
       logical axisym
@@ -141,10 +141,10 @@ C
       use altayRCM
 #endif
       IMPLICIT double precision (A-H,O-Z)
-C     Principal values of symmetric tensor with zero trace
-C     The eigenvectors are normalized.
-C     prval contains the principal values
-C
+!     Principal values of symmetric tensor with zero trace
+!     The eigenvectors are normalized.
+!     prval contains the principal values
+!
       dimension e(3,3),x(3),prval(3), y(3,3),prdir(3,3)
       logical axisym,eerste
       SAVE
@@ -175,8 +175,8 @@ C
       enrm=sqrt(a)
       if (enrm.lt.0.5e-5) goto 33
       a=a*0.5D0
-      b=e(1,1)*e(2,3)**2+e(2,2)*e(3,1)**2+e(3,3)*e(1,2)**2-
-     1 2.D0*e(1,2)*e(2,3)*e(3,1)-e(1,1)*e(2,2)*e(3,3)
+      b=e(1,1)*e(2,3)**2+e(2,2)*e(3,1)**2+e(3,3)*e(1,2)**2-              &
+       2.D0*e(1,2)*e(2,3)*e(3,1)-e(1,1)*e(2,2)*e(3,3)
       call canoni(a,b,x,theta,pi)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
@@ -196,9 +196,9 @@ C
       prval(2)=x(kmax)
       eta=(theta+(imax-1)*2.D0*pi)/3.D0
       if (eta.gt.pi) eta=eta-2.D0*pi
-C
-C     Correction on the order of the eigenvalues
-C
+!
+!     Correction on the order of the eigenvalues
+!
       if (abs(prval(2)).lt.abs(prval(1))) goto 11
       xx=prval(2)
       prval(2)=prval(1)
@@ -236,7 +236,7 @@ C
       jmax=j
    16 continue
    15 continue
-C     the minor with the max. value has been identified
+!     the minor with the max. value has been identified
       i1=imax+1
       if (i1.gt.3) i1=1
       i2=i1+1
@@ -254,17 +254,17 @@ C     the minor with the max. value has been identified
       if (axisym) goto 17
    12 continue
       goto 19
-C
-C     Vectorial product between prdir(,3) and x3 axis
-C
+!
+!     Vectorial product between prdir(,3) and x3 axis
+!
    17 prdir(1,2)=-prdir(2,3)
       prdir(2,2)=prdir(1,3)
       prdir(3,2)=0.0
       call normaliz(prdir(1,2),xx)
       if (xx.gt.0.7) goto 19
-C
-C     Vectorial product between prdir(,3) and x2 axis
-C
+!
+!     Vectorial product between prdir(,3) and x2 axis
+!
       prdir(1,2)=prdir(3,3)
       prdir(2,2)=0.0
       prdir(3,2)=-prdir(1,3)
@@ -306,13 +306,13 @@ C
       use altayRCM
 #endif
       IMPLICIT double precision (A-H,O-Z)
-c
-c     should find the roots of an equation
-c
-c     x**3 - A x + B = 0
-c
-c     The roots are suppposed to be real.
-c
+!
+!     should find the roots of an equation
+!
+!     x**3 - A x + B = 0
+!
+!     The roots are suppposed to be real.
+!
       dimension x(3)
       if (a.lt.0.5e-11) goto 2
       roota=sqrt(a**3/27.0d0)
@@ -352,27 +352,27 @@ c
       !
       SUBROUTINE MINV(A,N,D,L,M,NXXX)                                   
       DIMENSION A(NXXX),L(N),M(N)                                       
-C                                                                       
-C        ...............................................................
-C                                                                       
-C        IF A DOUBLE PRECISION VERSION OF THIS ROUTINE IS DESIRED, THE  
-C        C IN COLUMN 1 SHOULD BE REMOVED FROM THE DOUBLE PRECISION      
-C        STATEMENT WHICH FOLLOWS.                                       
-C                                                                       
+!                                                                       
+!        ...............................................................
+!                                                                       
+!        IF A DOUBLE PRECISION VERSION OF THIS ROUTINE IS DESIRED, THE  
+!        C IN COLUMN 1 SHOULD BE REMOVED FROM THE DOUBLE PRECISION      
+!        STATEMENT WHICH FOLLOWS.                                       
+!                                                                       
       DOUBLE PRECISION A,D,BIGA,HOLD
-C                                                                       
-C        THE C MUST ALSO BE REMOVED FROM DOUBLE PRECISION STATEMENTS    
-C        APPEARING IN OTHER ROUTINES USED IN CONJUNCTION WITH THIS      
-C        ROUTINE.                                                       
-C                                                                       
-C        THE DOUBLE PRECISION VERSION OF THIS SUBROUTINE MUST ALSO      
-C        CONTAIN DOUBLE PRECISION FORTRAN FUNCTIONS.  ABS IN STATEMENT  
-C        10 MUST BE CHANGED TO DABS.                                    
-C                                                                       
-C        ...............................................................
-C                                                                       
-C        SEARCH FOR LARGEST ELEMENT                                     
-C                                                                       
+!                                                                       
+!        THE C MUST ALSO BE REMOVED FROM DOUBLE PRECISION STATEMENTS    
+!        APPEARING IN OTHER ROUTINES USED IN CONJUNCTION WITH THIS      
+!        ROUTINE.                                                       
+!                                                                       
+!        THE DOUBLE PRECISION VERSION OF THIS SUBROUTINE MUST ALSO      
+!        CONTAIN DOUBLE PRECISION FORTRAN FUNCTIONS.  ABS IN STATEMENT  
+!        10 MUST BE CHANGED TO DABS.                                    
+!                                                                       
+!        ...............................................................
+!                                                                       
+!        SEARCH FOR LARGEST ELEMENT                                     
+!                                                                       
       D=1.D0                                                             
       NK=-N                                                             
       DO 80 K=1,N                                                       
@@ -390,9 +390,9 @@ C
       L(K)=I                                                            
       M(K)=J                                                            
    20 CONTINUE                                                          
-C                                                                       
-C        INTERCHANGE ROWS                                               
-C                                                                       
+!                                                                       
+!        INTERCHANGE ROWS                                               
+!                                                                       
       J=L(K)                                                            
       IF(J-K) 35,35,25                                                  
    25 KI=K-N                                                            
@@ -402,9 +402,9 @@ C
       JI=KI-K+J                                                         
       A(KI)=A(JI)                                                       
    30 A(JI) =HOLD                                                       
-C                                                                       
-C        INTERCHANGE COLUMNS                                            
-C                                                                       
+!                                                                       
+!        INTERCHANGE COLUMNS                                            
+!                                                                       
    35 I=M(K)                                                            
       IF(I-K) 45,45,38                                                  
    38 JP=N*(I-1)                                                        
@@ -414,10 +414,10 @@ C
       HOLD=-A(JK)                                                       
       A(JK)=A(JI)                                                       
    40 A(JI) =HOLD                                                       
-C                                                                       
-C        DIVIDE COLUMN BY MINUS PIVOT (VALUE OF PIVOT ELEMENT IS        
-C        CONTAINED IN BIGA)                                             
-C                                                                       
+!                                                                       
+!        DIVIDE COLUMN BY MINUS PIVOT (VALUE OF PIVOT ELEMENT IS        
+!        CONTAINED IN BIGA)                                             
+!                                                                       
    45 IF(BIGA) 48,46,48                                                 
    46 D=0.0                                                             
       RETURN                                                            
@@ -426,9 +426,9 @@ C
    50 IK=NK+I                                                           
       A(IK)=A(IK)/(-BIGA)                                               
    55 CONTINUE                                                          
-C                                                                       
-C        REDUCE MATRIX                                                  
-C                                                                       
+!                                                                       
+!        REDUCE MATRIX                                                  
+!                                                                       
       DO 65 I=1,N                                                       
       IK=NK+I                                                           
       HOLD=A(IK)                                                        
@@ -440,27 +440,27 @@ C
    62 KJ=IJ-I+K                                                         
       A(IJ)=HOLD*A(KJ)+A(IJ)                                            
    65 CONTINUE                                                          
-C                                                                       
-C        DIVIDE ROW BY PIVOT                                            
-C                                                                       
+!                                                                       
+!        DIVIDE ROW BY PIVOT                                            
+!                                                                       
       KJ=K-N                                                            
       DO 75 J=1,N                                                       
       KJ=KJ+N                                                           
       IF(J-K) 70,75,70                                                  
    70 A(KJ)=A(KJ)/BIGA                                                  
    75 CONTINUE                                                          
-C                                                                       
-C        PRODUCT OF PIVOTS                                              
-C                                                                       
+!                                                                       
+!        PRODUCT OF PIVOTS                                              
+!                                                                       
       D=D*BIGA                                                          
-C                                                                       
-C        REPLACE PIVOT BY RECIPROCAL                                    
-C                                                                       
+!                                                                       
+!        REPLACE PIVOT BY RECIPROCAL                                    
+!                                                                       
       A(KK)=1.D0/BIGA                                                    
    80 CONTINUE                                                          
-C                                                                       
-C        FINAL ROW AND COLUMN INTERCHANGE                               
-C                                                                       
+!                                                                       
+!        FINAL ROW AND COLUMN INTERCHANGE                               
+!                                                                       
       K=N                                                               
   100 K=(K-1)                                                           
       IF(K) 150,150,105                                                 
@@ -490,18 +490,18 @@ C
       !
       
            Subroutine Kleinkwa(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
-C     N1=number of equations
-C     N2=number of unknowns
-C     A=coefficient matrix
-C     B=right hand sides
-C     BA=solution on output
-C     AA,VAL,XV,YV=work space
-C     RES=residu (sum of squares)
-C     M1,M2=dimensions
-C
-C     We make it a set with a symmetrical matrix, because
-C     we want to use STELSEL to solve it.
-C
+!     N1=number of equations
+!     N2=number of unknowns
+!     A=coefficient matrix
+!     B=right hand sides
+!     BA=solution on output
+!     AA,VAL,XV,YV=work space
+!     RES=residu (sum of squares)
+!     M1,M2=dimensions
+!
+!     We make it a set with a symmetrical matrix, because
+!     we want to use STELSEL to solve it.
+!
       IMPLICIT double precision (A-H,O-Z)
       dimension  A(M1,M2),AA(M2,M2),B(M2),BA(M2)
       dimension VAL(M2),XV(M2),YV(M2)
@@ -539,26 +539,26 @@ C
       Subroutine STELSEL(N,M,A,R,TOL,VAL,XV,YV)
       IMPLICIT double precision (A-H,O-Z)
       dimension A(M,M),R(M),VAL(M),XV(M),YV(M)
-C
-C     to solve the system of equations A * X = R using
-C     eigenvalues and eigenvectors
-C
-C     This method is known as "Singular Value Decomposition Method".
-C
-C     A s a symmetrical matrix (NxN). Modified during the process.
-C
-C     The output X is actually stored in R, which is hence modified.
-C
-C     On return, A (NxN) contains the eigenvectors
-C     VAL (N) contains eigenvalues
-C     XV, YV : workspace
-C
-C      write (IMP,203) TOL
-C 203  format (' TOL',d20.10)
-C      do 50 i=1,N
-C      write (IMP,201) r(i),(A(i,j),j=1,N)
-C 201  format (d12.4,5x,5d12.4)
-C  50  continue
+!
+!     to solve the system of equations A * X = R using
+!     eigenvalues and eigenvectors
+!
+!     This method is known as "Singular Value Decomposition Method".
+!
+!     A s a symmetrical matrix (NxN). Modified during the process.
+!
+!     The output X is actually stored in R, which is hence modified.
+!
+!     On return, A (NxN) contains the eigenvectors
+!     VAL (N) contains eigenvalues
+!     XV, YV : workspace
+!
+!      write (IMP,203) TOL
+! 203  format (' TOL',d20.10)
+!      do 50 i=1,N
+!      write (IMP,201) r(i),(A(i,j),j=1,N)
+! 201  format (d12.4,5x,5d12.4)
+!  50  continue
       call tred2(a,N,M,VAL,XV)
       call tqli(VAL,XV,N,M,a)
       do 1 j=1,N
@@ -567,14 +567,14 @@ C  50  continue
       y=y+A(i,j)*R(i)
    2  continue
       z=VAL(j)
-C      write (IMP,202) j,z
-C 202  format (' VAL(j)',i5,d20.10)
+!      write (IMP,202) j,z
+! 202  format (' VAL(j)',i5,d20.10)
       if (abs(z).lt.tol) then
            z=0.0d0
       else
            z=y/z
       endif
-C      write (IMP,202) j,z
+!      write (IMP,202) j,z
       YV(j)=z
    1  continue
       do 3 i=1,N
@@ -615,7 +615,7 @@ C      write (IMP,202) j,z
             a(i,l)=f-g
             f=0.
             do 15 j=1,l
-C     Omit following line if finding only eigenvalues
+!     Omit following line if finding only eigenvalues
               a(j,i)=a(i,j)/h
               g=0.
               do 13 k=1,j
@@ -642,11 +642,11 @@ C     Omit following line if finding only eigenvalues
         endif
         d(i)=h
 18    continue
-C     Omit following line if finding only eigenvalues.
+!     Omit following line if finding only eigenvalues.
       d(1)=0.
       e(1)=0.
       do 24 i=1,n
-C     Delete lines from here ...
+!     Delete lines from here ...
         l=i-1
         if(d(i).ne.0.)then
           do 22 j=1,l
@@ -659,20 +659,20 @@ C     Delete lines from here ...
 21          continue
 22        continue
         endif
-C     ... to here when finding only eigenvalues.
+!     ... to here when finding only eigenvalues.
         d(i)=a(i,i)
-C     Also delete lines from here ...
+!     Also delete lines from here ...
         a(i,i)=1.
         do 23 j=1,l
           a(i,j)=0.
           a(j,i)=0.
 23      continue
-C     ... to here when finding only eigenvalues.
+!     ... to here when finding only eigenvalues.
 24    continue
       return
       END SUBROUTINE
       !
-C  (C) Copr. 1986-92 Numerical Recipes Software D04-4-+5Z5{..
+!  (C) Copr. 1986-92 Numerical Recipes Software D04-4-+5Z5{..
       SUBROUTINE tqli(d,e,n,np,z)
       implicit double precision (a-h,o-z)
       INTEGER n,np
@@ -716,13 +716,13 @@ C  (C) Copr. 1986-92 Numerical Recipes Software D04-4-+5Z5{..
             p=s*r
             d(i+1)=g+p
             g=c*r-b
-C     Omit lines from here ...
+!     Omit lines from here ...
             do 13 k=1,n
               f=z(k,i+1)
               z(k,i+1)=s*z(k,i)+c*f
               z(k,i)=c*z(k,i)-s*f
 13          continue
-C     ... to here when finding only eigenvalues.
+!     ... to here when finding only eigenvalues.
 14        continue
           d(l)=d(l)-p
           e(l)=g
@@ -732,7 +732,7 @@ C     ... to here when finding only eigenvalues.
 15    continue
       return
       END SUBROUTINE
-C  (C) Copr. 1986-92 Numerical Recipes Software D04-4-+5Z5{..
+!  (C) Copr. 1986-92 Numerical Recipes Software D04-4-+5Z5{..
       double precision FUNCTION pythag(a,b)
       implicit double precision (a-h,o-z)
       double precision,intent(in) :: a,b

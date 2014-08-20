@@ -12,18 +12,18 @@
 
       contains
       
-C ALAMEL V3
-C THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
-C WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
-C  All comments about modifications of the source have been removed
-C for clarity 
-C See "annotated source codes" if you need these
-C
-C
+! ALAMEL V3
+! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
+! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
+!  All comments about modifications of the source have been removed
+! for clarity 
+! See "annotated source codes" if you need these
+!
+!
       SUBROUTINE SIMUL(IW,NFILE0,MacroDefRate)
 
-C     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
-C     USING THE ALAMEL MODEL
+!     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
+!     USING THE ALAMEL MODEL
       use altayCurAccess
       use altayDYNFIL
       use altayHard
@@ -43,27 +43,27 @@ C     USING THE ALAMEL MODEL
       implicit double precision (a-h,o-z)
       ! optional argument for IW=1 or 2:
       type(DeformationRate),intent(in),optional :: MacroDefRate !inout
-C
-C     IW=2 is meant for outputting the final texture.
-C
+!
+!     IW=2 is meant for outputting the final texture.
+!
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON /DOUBLE/ XM(5,96),XEPS(5),RHO(5),B5(5)
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,
-     1ITW,GEWF
+      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
+      ITW,GEWF
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,TEN(3,3),TOTGEW        
       COMMON /EULERA/ fi1,PHI,fi2
-      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),
-     1 SWRLX(3)
-      COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),
-     1 gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),
-     2 CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),
-     3 fi1b(2),phib(2),fi2b(2),
-     4 NGR,NRL,ENTA,ITFMAS
+      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
+       SWRLX(3)
+      COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
+       gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
+       CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),                             &
+       fi1b(2),phib(2),fi2b(2),                                          &
+       NGR,NRL,ENTA,ITFMAS
       common /CEIGEN/ IOR,ISTP,NBLOC
       common /PE/ Fmicro !Temporary!!!      
-      DIMENSION GAXES(3),GEULR(3),TG(3,3),
-     1 CIJ(3,3),STOT(3,3),
-     2 RHOST(3,3),RHOSm(3,3),FMicro(3,3)
+      DIMENSION GAXES(3),GEULR(3),TG(3,3),                               &
+       CIJ(3,3),STOT(3,3),                                               &
+       RHOST(3,3),RHOSm(3,3),FMicro(3,3)
       dimension FS(3,3)
       character*40 TITEL
       logical SWRLX
@@ -110,7 +110,7 @@ C
       NPEBP  = acnf%output_config%NPEBP   ! control "BEP"
       NMSS   = acnf%output_config%NMSS    ! control "MSS"
 #else
-C     Number of grains in ALAMEL cluster
+!     Number of grains in ALAMEL cluster
       read (KLEC,99) NGR
       read (KLEC,*)  ENTA
       read (KLEC,99) NLIST
@@ -142,11 +142,11 @@ C     Number of grains in ALAMEL cluster
 #ifndef NO_STDOUT   
       WRITE (*,101) NGR,NLIST,NFILE1,NFILTW,KOST,IPR
 #endif
- 101  FORMAT (' SIMUL - PARAMETERS:',/
-     1'NGR=   ',I5,/,'NLIST= ',I5,/,'NFILE1=',I5,/,'NFILTW=',i5,/,
-     1'KOST=  ',I5,/,'IPR=   ',I5) 
+ 101  FORMAT (' SIMUL - PARAMETERS:',/                                   &
+      'NGR=   ',I5,/,'NLIST= ',I5,/,'NFILE1=',I5,/,'NFILTW=',i5,/,       &
+      'KOST=  ',I5,/,'IPR=   ',I5) 
 #endif
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE 
+!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE 
       if (NGR.lt.1.or.NGR.gt.2) then
 #ifndef ALTAY_SUBROUTINE
             write (*,140) NGR
@@ -160,7 +160,7 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       endif
  140  format (' NGR can only take the values 1 or 2 but was',I5)   
 
-C     Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
+!     Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
       NRL=(NGR-1)*2
 #ifdef ALTAY_SUBROUTINE
       !
@@ -187,7 +187,7 @@ C     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
       ! Only if CUR file is requested
       if (NFILE1.eq.1) call CURwriteTitle(IMP1,TITEL,info)
   98  format (A)      
-C     read the parameters of the work hardening model
+!     read the parameters of the work hardening model
 #ifndef ALTAY_SUBROUTINE
       call InitModuleAltayHard(KLEC,KOST,crss_ratiosIN,info)
 #endif
@@ -229,13 +229,13 @@ C     read the parameters of the work hardening model
 #ifndef ALTAY_SUBROUTINE      
             write (6,405) NPOINT
             write (*,405) NPOINT
- 405  format (' Subroutine SIMUL',/' The LAMEL version works only if',
-     1' the number of orientations NPOINT=',I5,/,
-     2' is an even number')
+ 405  format (' Subroutine SIMUL',/' The LAMEL version works only if',   &
+      ' the number of orientations NPOINT=',I5,/,                        &
+      ' is an even number')
             call terminate(stopcode_runtimeerror)
 #else
-            RCM_RAISE(1,'SIMUL',
-     1      'The number of grains must be an even number',RCM_RTN)
+            RCM_RAISE(1,'SIMUL',                                         &
+            'The number of grains must be an even number',RCM_RTN)
 #endif
       endif
   36  NFILE=NFILE0*NFILE1
@@ -282,9 +282,9 @@ C     read the parameters of the work hardening model
 #endif
       HGAMCALL = 0.D0
       MEPSCALL = 0.D0
-C
-C     Main Loop over the Steps
-C
+!
+!     Main Loop over the Steps
+!
       steploop: DO 8 ISTP=1,NSTP
       !
       TOTGEW=0.0
@@ -306,18 +306,18 @@ C
       write (IMP,96) ISTP,GAXES
       end if
   96  format(' Step nr.',i5,5X,3f12.5)
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
       if (IW.gt.1) goto 70
       if(NLIST.eq.1) then
           write (IMP,3456) MacroDefRate%VelGrad
       end if
  3456 format ('DG=',3(T10,3d12.3,/))
-C
-C     Get the 5x5 transformation matrix MACRO to morfol. GRAIN AXES
-C
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-C      if (IGLIJ.eq.1) then
-CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+!
+!     Get the 5x5 transformation matrix MACRO to morfol. GRAIN AXES
+!
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
+!      if (IGLIJ.eq.1) then
+!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
       write (IMP,3458) TG
       end if
@@ -327,10 +327,10 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       IF (NLIST.EQ.1) WRITE (IMP,112) ISTP
  112  FORMAT (//' DEFORMATION STEP ',I5,//)
       if (NRES.gt.0) write (IMP2,404) nrstep+1,NPOINT
- 404  format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'
-     1 ,T7,'EquivStress',T23,'WorkRate',T37,'tau_ref',T56,'M',T64,
-     2 'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS'
-     3 ,/,1x,278('*'))
+ 404  format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'  &
+       ,T7,'EquivStress',T23,'WorkRate',T37,'tau_ref',T56,'M',T64,       &
+       'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS' &
+       ,/,1x,278('*'))
       !
   44  continue
       if (NLIST.eq.1) then
@@ -350,22 +350,22 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       RCM_GUARD
       ! We can choose not to update the texture data
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,
-     &                   CIJ,TG)
+            call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,  &
+                         CIJ,TG)
       endif
 #else          
       call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #endif
-C
-C       Added for lamel model:
-C     Organisation reading temporary texture file,
-C     in such way that the program TAYLOR can process the crystals
-C     by sets of 2.
-C     Taylor must therefore have "advance knowledge" of the
-C     orientation to come at the moment that it starts such
-C     computation.
-C     See also the comment before the calling of subroutine TAYLOR.
-C
+!
+!       Added for lamel model:
+!     Organisation reading temporary texture file,
+!     in such way that the program TAYLOR can process the crystals
+!     by sets of 2.
+!     Taylor must therefore have "advance knowledge" of the
+!     orientation to come at the moment that it starts such
+!     computation.
+!     See also the comment before the calling of subroutine TAYLOR.
+!
   10  laml=1
       laml1=NGR
       ifil4=0
@@ -384,10 +384,10 @@ C
  2626 do 80 L=laml,laml1
       if (ifil4.eq.NPOINT) goto 80
       ifil4=ifil4+1
-      call DYNFIL4(ifil4,fi10b(L),PHI0b(L),fi20b(L),
-     1 TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L),GAXESb(1,L),
-     2 GEULRb(1,L),CIJb(1,1,L),TGb(1,1,L),RHOSSb(1,1,L))
-C
+      call DYNFIL4(ifil4,fi10b(L),PHI0b(L),fi20b(L),                     &
+       TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L),GAXESb(1,L),              &
+       GEULRb(1,L),CIJb(1,1,L),TGb(1,1,L),RHOSSb(1,1,L))
+!
       fi1b(L)=fi10b(L)*convf
       PHIb(L)=PHI0b(L)*convf
       fi2b(L)=fi20b(L)*convf
@@ -404,7 +404,7 @@ C
       TRF = TRFb(:,:,laml)
       TG = TGb(:,:,laml)
       RHOSSa = RHOSSb(:,:,laml)
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 27/10/2011
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 27/10/2011
       if(laml.eq.1) then
       qgx=GEWFb(laml)
       GEWF=qgx
@@ -412,33 +412,33 @@ C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 
       GEWF=qgx
       end if
       IF (NFILE.eq.0.or.ISTP.gt.1) goto 999
-C 
-C     In case of NGR=2:
-C        LAML=1: TAYLOR
-C                - has the present and the next orientation available
-C                - must perform the computation of a set of 2 crystals
-C                - has to output the result for the first crystal
-C        LAML=2: TAYLOR
-C                - should not perform any computation
-C                - has to output the result of the second crystal found
-C                  during the previous computation.
-C
-C      write (*,3210)
-C 3210 format (' Just before Taylor')
+! 
+!     In case of NGR=2:
+!        LAML=1: TAYLOR
+!                - has the present and the next orientation available
+!                - must perform the computation of a set of 2 crystals
+!                - has to output the result for the first crystal
+!        LAML=2: TAYLOR
+!                - should not perform any computation
+!                - has to output the result of the second crystal found
+!                  during the previous computation.
+!
+!      write (*,3210)
+! 3210 format (' Just before Taylor')
  999  if (IW.le.1) then
             CALL  TAYLOR(3,KOST,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
 #endif            
       endif
-C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 2/1/2011     
-C this modification is to suit for the output of stress     
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 2/1/2011     
+! this modification is to suit for the output of stress     
       if(laml.eq.1) then
       ssqgx=GEWF
       else
       GEWF=ssqgx
       end if
-cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       TOTGEW=TOTGEW+GEWF
       !
       ! Skip the rest of the loop if IF > 1
@@ -446,13 +446,13 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       !
 #ifdef ALTAY_SUBROUTINE
       if (astate%simulCalls(astate%this)%input%full_model) then
-            CALL TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate,
-     &                  MacroDefRate)
+            CALL TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate,      &
+                        MacroDefRate)
             RCM_GUARD
       endif
 #else
-      CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain,WorkRate,
-     &            MacroDefRate)
+      CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain,WorkRate,           &
+                  MacroDefRate)
 #endif      
    49 if (NFILTW.eq.1) write (IMP3,398) ITW
  398  format (I3)
@@ -478,19 +478,19 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #ifdef ALTAY_SUBROUTINE
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,
-     1                   MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,
-     2                   RHOSsa) 
+            call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                   &
+                         MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,  &
+                         RHOSsa) 
       endif
 #else
-      call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,
-     1             MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
+      call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                         &
+                   MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
 #endif
       ! 
 #ifndef ALTAY_SUBROUTINE
       ! Output the plastic work of the grain (in its initial configuration)
-      if (NRES >= 1) call writeReportRecord(IMP6,fi1b(laml),PHIb(laml),
-     &                                      fi2b(laml),Wtot,info)
+      if (NRES >= 1) call writeReportRecord(IMP6,fi1b(laml),PHIb(laml),  &
+                                            fi2b(laml),Wtot,info)
 #endif      
       !
       ! End of the loop over crystals
@@ -519,9 +519,9 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       MEPSCALL= MacroDefState%IncrvMeqStrain * (ISTP-1)
       !
       if (NMSSx /= 0) then
-            call writeMSSRecord(IMP5,MEPSCALL,
-     &                    MacroDefState%AccumvMeqStrain_ToStartOfInc,
-     &                    HGAMCALL,HGAMTOT,SHsam,Mavg,srh,info)
+            call writeMSSRecord(IMP5,MEPSCALL,                           &
+                          MacroDefState%AccumvMeqStrain_ToStartOfInc,    &
+                          HGAMCALL,HGAMTOT,SHsam,Mavg,srh,info)
       endif
 #ifdef PEBP_ENABLED
       select case(KOST)
@@ -543,8 +543,8 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
             callout%homogenised_slip = HGAMCALL
             callout%homogenised_slip_tot = HGAMTOT            
             callout%effective_macro_strain = MEPSCALL
-            callout%effective_macro_strain_tot = 
-     &      	MacroDefState%AccumvMeqStrain_ToStartOfInc
+            callout%effective_macro_strain_tot =                         &
+            	MacroDefState%AccumvMeqStrain_ToStartOfInc
       end associate
 #endif
       !
@@ -561,8 +561,8 @@ cEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
       WRITE (IMP,105) ISTP,SeqAvg,Mavg,MacroDefState%IncrvMeqStrain
       end if
- 105  FORMAT (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VAL
-     1UE=',F10.5,'  EFF. STRAIN EPS USED=',F10.5) 
+ 105  FORMAT (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VAL &
+      UE=',F10.5,'  EFF. STRAIN EPS USED=',F10.5) 
       !
       ! End of the loop over steps
       !

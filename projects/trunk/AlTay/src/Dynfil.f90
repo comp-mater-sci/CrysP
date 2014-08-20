@@ -110,8 +110,8 @@
       !> Extract the global material data
       subroutine DYNFIL2(n,F,AXES,EULR,CIJ,TAX)
       integer,intent(out)     :: n
-      double precision,intent(out) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),
-     & F(3,3)
+      double precision,intent(out) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3), &
+       F(3,3)
       !
             n=nrstep
             F=mf%FALG
@@ -125,8 +125,8 @@
       !> Write the global material data
       subroutine DYNFIL3(n,F,AXES,EULR,CIJ,TAX)
       integer,intent(in)     :: n
-      double precision,intent(in) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),
-     & F(3,3)
+      double precision,intent(in) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),  &
+       F(3,3)
       !
             nrstep=n
             mf%FALG=F
@@ -138,13 +138,13 @@
       end subroutine DYNFIL3
 
       !> Get the record data for i-th grain
-      subroutine DYNFIL4(i,FI1,PHI,FI2,T,
-     1                  GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO)
+      subroutine DYNFIL4(i,FI1,PHI,FI2,T,                                &
+                        GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO)
       implicit none
       integer,intent(in) :: i
       double precision,intent(out) :: FI1,PHI,FI2,GEW,GAM
-      double precision,intent(out) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),
-     1 F(3,3),T(3,3),ZERO(3,3)
+      double precision,intent(out) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3), &
+       F(3,3),T(3,3),ZERO(3,3)
       !
             FI1=DFIL(i)%tFI1
             PHI=DFIL(i)%tPHI
@@ -163,13 +163,13 @@
 
 
       !> Put the record data for i-th grain
-      subroutine DYNFIL5(i,FI1,PHI,FI2,T,
-     1                  GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO)
+      subroutine DYNFIL5(i,FI1,PHI,FI2,T,                                &
+                        GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO)
       implicit none
       integer,intent(in) :: i
       double precision,intent(in) :: FI1,PHI,FI2,GEW,GAM
-      double precision,intent(in) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),
-     1 F(3,3),T(3,3),ZERO(3,3)
+      double precision,intent(in) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),  &
+       F(3,3),T(3,3),ZERO(3,3)
       !
             DFIL(i)%tFI1=FI1
             DFIL(i)%tPHI=PHI
