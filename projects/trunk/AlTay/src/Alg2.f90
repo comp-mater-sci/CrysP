@@ -691,7 +691,7 @@
 12      continue
         m=n
 2       if(m.ne.l)then
-          if(iter.eq.100)pause 'too many iterations in tqli'
+          if(iter.eq.100) write(*,*) 'too many iterations in tqli'
           iter=iter+1
           g=(d(l+1)-d(l))/(2.D0*e(l))
           r=pythag(g,1.0d00)

@@ -21,16 +21,19 @@ end type DeformationRate
 
 type DeformationState
     !> Total Deformation Gradient (from undeformed state to the end of current increment)
-    double precision, dimension(3,3) :: TotalDefGrad = unitMatrix !For simulations with predeformation, it is re-initialized with call to dynfil2 subroutine.   
+    !> For simulations with predeformation, it is re-initialized with call to dynfil2 subroutine. 
+    double precision, dimension(3,3) :: TotalDefGrad = unitMatrix 
     !> Incremental Deformation Gradient (from start to end of current increment)
     double precision, dimension(3,3) :: IncrDefGrad = unitMatrix
     !> Inverse of Incremental Deformation Gradient
     double precision, dimension(3,3) :: IncrDefGrad_inverse = unitMatrix
     !> Incremental von Mises equivalent strain (from start to end of current increment)
     double precision                 :: IncrvMeqStrain = 0.0D0
-    !> Accumulated von Mises equivalent strain, up to the start of current inc. (note: reference state might be different than that of TotalDefGrad)
+    !> Accumulated von Mises equivalent strain, up to the start of current inc. 
+    !> (note: reference state might be different than that of TotalDefGrad)
     double precision                 :: AccumvMeqStrain_ToStartOfInc = 0.0D0
-    !> Accumulated von Mises equivalent strain, up to the end of current inc. (note: reference state might be different than that of TotalDefGrad)
+    !> Accumulated von Mises equivalent strain, up to the end of current inc. 
+    !> (note: reference state might be different than that of TotalDefGrad)
     double precision                 :: AccumvMeqStrain_ToEndOfInc = 0.0D0    
 end type DeformationState
 

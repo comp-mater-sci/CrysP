@@ -507,15 +507,15 @@
 !  BB(10) is direction of the relaxation-1
 !  UBUF(10) is the BISHOP-HILL stress from TBH routine, in crystal frame
       implicit double precision (a-h,o-z)
-      Real*8, INTENT(IN) :: ccc
-      Integer, INTENT(IN) :: M11
-      Real*8, INTENT(out) :: ccc2
-      Real*8, INTENT(out) :: ca1
-      Real*8, INTENT(out) :: ca2
-      Real*8, INTENT(IN) :: Cofcos
-      Real*8, INTENT(IN) :: Cofsin
-      Real*8, INTENT(IN) :: BB
-      Real*8, INTENT(IN) :: UBUF
+      double precision, intent(in) :: ccc
+      integer, intent(in) :: M11
+      double precision, intent(out) :: ccc2
+      double precision, intent(out) :: ca1
+      double precision, intent(out) :: ca2
+      double precision, intent(in) :: Cofcos
+      double precision, intent(in) :: Cofsin
+      double precision, intent(in) :: BB
+      double precision, intent(in) :: UBUF
       dimension BB(10),base1(5),UBUF(10),ccc(2,194),ccc2(2,194)
 !
       if((abs(Cofsin) < epsilon(0.D0)) .and.                             &

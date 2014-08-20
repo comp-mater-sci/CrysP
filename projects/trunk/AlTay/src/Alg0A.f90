@@ -8,7 +8,7 @@
       
       ! Initial rations of CRSS, set in MAINA1.
       ! It is used only by the stand-alone AlTay
-      type(CRSS) :: crss_ratiosIN
+      type(CRSS),save :: crss_ratiosIN
 
       contains
       
@@ -65,7 +65,7 @@
        CIJ(3,3),STOT(3,3),                                               &
        RHOST(3,3),RHOSm(3,3),FMicro(3,3)
       dimension FS(3,3)
-      character*40 TITEL
+      character(len=40) :: TITEL
       logical SWRLX
       integer :: NPOINT
       integer :: info
@@ -544,7 +544,7 @@
             callout%homogenised_slip_tot = HGAMTOT            
             callout%effective_macro_strain = MEPSCALL
             callout%effective_macro_strain_tot =                         &
-            	MacroDefState%AccumvMeqStrain_ToStartOfInc
+            MacroDefState%AccumvMeqStrain_ToStartOfInc
       end associate
 #endif
       !
@@ -561,8 +561,8 @@
       if(NLIST.eq.1) then
       WRITE (IMP,105) ISTP,SeqAvg,Mavg,MacroDefState%IncrvMeqStrain
       end if
- 105  FORMAT (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VAL &
-      UE=',F10.5,'  EFF. STRAIN EPS USED=',F10.5) 
+ 105  FORMAT (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VALUE=',F10.5, &
+              '  EFF. STRAIN EPS USED=',F10.5) 
       !
       ! End of the loop over steps
       !

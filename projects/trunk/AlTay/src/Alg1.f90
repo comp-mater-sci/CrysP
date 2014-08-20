@@ -38,7 +38,7 @@
        SWRLX(3)
       double precision, dimension(3,3):: RHOScrys(3,3)
       double precision, dimension(3,3):: RHOAcrys(3,3), RHOAsa(3,3) 
-      character*72 TITGLIJ
+      character(len=72) :: TITGLIJ
 !
 !     Extra arrays nodig voor lineare programmatie op 2 korrels tegelijk
 !
@@ -72,7 +72,7 @@
       if(NLIST.eq.1) then
       WRITE (IMP,211) I,NGL,NTW,DI1
       end if
- 211  FORMAT (1H ,I4,10X,2I5,10X,5I5)
+ 211  FORMAT (1X,I4,10X,2I5,10X,5I5)
 #ifndef ALTAY_SUBROUTINE
       IF (I.NE.0) call terminate(stopcode_runtimeerror)
 #else
@@ -108,7 +108,7 @@
       if(NLIST.eq.1) then
       WRITE (IMP,215) J,(B(I,L),L=1,5)
       end if
- 215  FORMAT (1H ,I4,10X,5D15.8)
+ 215  FORMAT (1X,I4,10X,5D15.8)
  501  CONTINUE
       IF (NTW.EQ.0) GOTO 504                                            
       DO 505 I=1,NTW                                                    
@@ -145,10 +145,10 @@
                               (MacroDefRate%Spin(I,J),J=1,3) 
           end if
       end do
- 203  FORMAT (' TAYLOR - DISPLACEMENT GRADIENT WHICH WILL BE USED FOR TH &
-      E SIMULATION',//T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,     &
-      'ANTISYMMETRICAL PART',/)                                         
- 204  FORMAT (1H ,3(3F10.5,10X))
+ 203  FORMAT (' TAYLOR - DISPLACEMENT GRADIENT WHICH WILL BE USED FOR THE SIMULATION', &
+              //T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,     &
+              'ANTISYMMETRICAL PART',/)
+ 204  FORMAT (1X,3(3F10.5,10X))
    70  continue
       if (MacroDefRate%NormStrainRate.lt.1.0D-10) then
 #ifndef ALTAY_SUBROUTINE
@@ -329,13 +329,13 @@
       if(NLIST.eq.1) then
       WRITE (IMP,301) WorkRate
       end if
- 301  FORMAT (//,1H ,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
+ 301  FORMAT (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
 !      if(NLIST.eq.1) then
 !      DO 302 I=1,M
 ! 302  WRITE (IMP,303) I,GAMdot(I)
 !      end if
 !
- 303  FORMAT (1H ,I5,(12F10.6))  
+ 303  FORMAT (1X,I5,(12F10.6))  
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011                                        
 !      IF (IGLIJ.NE.0) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -447,8 +447,7 @@
  101  format(3d20.7)      
    61 RETURN
   26  WRITE (IMP,106)
- 106  FORMAT (1H ,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBL  &
-      EM')
+ 106  FORMAT (1X,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBLEM')
 #ifndef ALTAY_SUBROUTINE
   52  call terminate(stopcode_runtimeerror)
 #else

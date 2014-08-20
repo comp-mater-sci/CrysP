@@ -11,7 +11,7 @@ implicit none
       !> Shape is: [3,3,ngr], where ngr is the number of grains.
       double precision, dimension(:,:,:),allocatable,save :: TmatGr
       integer,save :: NGrElm = 0
-      character*40, save :: TitMic = ''
+      character(len=40), save :: TitMic = ''
 
       
 contains

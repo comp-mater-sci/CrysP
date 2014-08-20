@@ -124,7 +124,8 @@ contains
                         ! Load state variables
                         info = KS_openStateFile(IPEBPSTAT,acnf%hardening%PEBPCnf%input_fname, mode='r')
                         if (info /= 0) then
-                              if (present(errmsg)) errmsg = 'Cannot open PEBP state file: '// trim(acnf%hardening%PEBPCnf%input_fname) 
+                              if (present(errmsg)) errmsg = 'Cannot open PEBP state file: ' & 
+                                                            // trim(acnf%hardening%PEBPCnf%input_fname) 
                               return
                         endif
                         info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
