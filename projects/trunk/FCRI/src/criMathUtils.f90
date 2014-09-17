@@ -370,7 +370,7 @@ contains
       !
       double precision :: phi1,PHI,phi2,cosPHI
       !
-          cosPHI = mat(3,3)
+          cosPHI = mat(3,3) / sqrt( mat(1,3)**2 + mat(2,3)**2 + mat(3,3)**2 )
           PHI = acos(cosPHI) !range: [0,pi]
           !
           if (abs(cosPHI)==1.0D0) then !case that PHI=0° or PHI=180°
