@@ -82,8 +82,33 @@ def main(argv):
     parser.add_argument('--prefix',default='elem',help='Prefix for the names of polyHard files')
     parser.add_argument('--stress_scaling',default=1.e6,help='Scaling factor for stresses. Default: conversion from MPa to Pa')
     parser.add_argument('--dryrun', action='store_true',default=False,help='Suppress launching the crys3d and use PPD as it is found in the directory')
+    parser.add_argument('--defy_range', action='store_true',help='Ignore the extrapolation range in deffile and get the range from the PPD.')
     args = parser.parse_args(argv)
 
+    return run(args)
+
+
+
+def run(args):
+    '''Create polyHard input data from PPD output of crys3D
+    
+    args must contain the following fields:
+    -# deffile
+    -# oldPPD
+    -# PPD
+    -# config_template
+    -# config
+    -# crys3D
+    -# texture
+    -# output
+    -# prefix
+    -# initial
+    -# stress_scaling
+    -# dryrun
+    -# defy_range
+
+    If args.dryrun is set True, crys3D can be omitted.
+    '''
     try:
         # Open & read defdata.dat into DefData
         inp_defdata = open(args.deffile,mode='r')
@@ -142,6 +167,9 @@ def main(argv):
         # so "data" must contain at least two rows.
         if len(data) < 2:
             raise ValueError('Working PPD set must contain at least two data rows')
+
+        if args.defy_range:
+            def_data.eps_0,def_data.eps_1 = (new_ppd[0,0], new_ppd[-1,0])
 
         scaling_factor = args.stress_scaling
         interpolation_points = np.array([def_data.eps_0, 
