@@ -256,7 +256,7 @@ contains
             !> of objectiveEval should call this method at the end of its execution.
             subroutine trackableObjFunc_objectiveEval(this, vX, info)
             implicit none
-            class(trackableObjFunc)                    :: this
+            class(trackableObjFunc),intent(inout)     :: this
             double precision,dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
             integer,intent(out)                       :: info
             !
@@ -270,7 +270,7 @@ contains
             !> of jacobiMatrixEval should call this method at the end of its execution.
             subroutine trackableObjFunc_jacobiMatrixEval(this, vX, info)
             implicit none
-            class(trackableObjFunc)       :: this
+            class(trackableObjFunc),intent(inout)     :: this
             double precision,dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
             integer,intent(out)                       :: info
             !                  
@@ -282,7 +282,7 @@ contains
             !> Tracking of the evaluations
             subroutine trackableObjFunc_track(this, vX, request, info)
             implicit none
-            class(trackableObjFunc)       :: this
+            class(trackableObjFunc),intent(inout)     :: this
             double precision,dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
             integer,intent(in)                        :: request
             integer,intent(out)                       :: info
