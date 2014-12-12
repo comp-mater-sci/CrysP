@@ -4,8 +4,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(AlTay Fortran)
 
-set(CMAKE_Fortran_MODULE_DIRECTORY "../include")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "../lib")
+set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
 set(libaltay "altay")
 set(progaltay "prog_altay")
@@ -15,9 +14,7 @@ set(LibAlTay_FLAGS "-extend-source 132" "-align dcommons" "-warn nodeclarations"
 list(APPEND Fortran_FLAGS ${LibAlTay_FLAGS})
 
 list2string(Fortran_FLAGS CMAKE_Fortran_FLAGS) 
-
 list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
-
 list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
 # Dependencies
@@ -86,4 +83,12 @@ set_target_properties(${progaltay} PROPERTIES COMPILE_DEFINITIONS "MAINDIRECT;FI
 # Set different output for module files
 set_target_properties(${progaltay} PROPERTIES Fortran_MODULE_DIRECTORY "${progaltay}_modules")
 target_link_libraries(${progaltay} "CRI")
+
+#
+# Installation of the outputs in the build tree
+#
+install(TARGETS ${libaltay} DESTINATION "lib")
+install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")
+install(TARGETS ${progaltay} DESTINATION "bin")
+
 
