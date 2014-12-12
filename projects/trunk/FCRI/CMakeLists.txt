@@ -14,6 +14,9 @@ include("${COMMON_DIR}/fortran-generic.cmake")
 
 include_directories("include")
 
+set(FCRI_ROOT_DIR "${CMAKE_BINARY_DIR}/..")
+set(CMAKE_INSTALL_PREFIX "${FCRI_ROOT_DIR}")
+
 add_subdirectory(src)
 
 add_subdirectory(src-test)

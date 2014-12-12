@@ -4,8 +4,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(FCRI Fortran)
 
-set(CMAKE_Fortran_MODULE_DIRECTORY "../include")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "../lib")
+set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
 set(CRI "CRI")
 
@@ -46,4 +45,11 @@ add_library(${CRI} STATIC ${LIBSRC})
 add_library(${CRI_MT} STATIC ${LIBSRC})
 
 set_target_properties(${CRI_MT} PROPERTIES COMPILE_FLAGS "-parallel -openmp")
+
+#
+# Installation of the outputs in the build tree
+#
+install(TARGETS ${CRI} ${CRI_MT} DESTINATION "lib")
+install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")
+
 

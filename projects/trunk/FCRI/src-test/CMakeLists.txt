@@ -6,8 +6,6 @@ project(FCRI-test Fortran)
 
 set(CRI_TEST "criTest")
 
-set(CMAKE_Fortran_MODULE_DIRECTORY "../include")
-
 list(APPEND Fortran_FLAGS "-diag-disable 5268")
 
 list2string(Fortran_FLAGS CMAKE_Fortran_FLAGS) 
@@ -30,4 +28,8 @@ criTestUncomment.f90
 add_executable(${CRI_TEST} ${EXESRC})
 
 target_link_libraries(${CRI_TEST} "CRI")
+
+set_property(TARGET ${CRI_TEST} APPEND PROPERTY INCLUDE_DIRECTORIES ${CMAKE_BINARY_DIR}/include) 
+
+install(TARGETS ${CRI_TEST} DESTINATION "bin")
 
