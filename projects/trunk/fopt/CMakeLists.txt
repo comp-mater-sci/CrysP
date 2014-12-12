@@ -12,7 +12,11 @@ include("${COMMON_DIR}/utilities.cmake")
 # Provides lists: Fortran_FLAGS, Fortran_FLAGS_DEBUG, Fortran_FLAGS_RELEASE
 include("${COMMON_DIR}/fortran-generic.cmake")
 
-include_directories("include")
+set(fopt_ROOT_DIR "${CMAKE_BINARY_DIR}/..")
+set(CMAKE_INSTALL_PREFIX "${fopt_ROOT_DIR}")
+set(fopt_INCLUDE_DIRS "${fopt_ROOT_DIR}/include")
+set(fopt_LIBRARY_DIRS "${fopt_ROOT_DIR}/lib")
+
 
 add_subdirectory(src)
 

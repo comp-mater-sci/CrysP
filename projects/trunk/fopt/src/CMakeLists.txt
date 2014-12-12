@@ -2,10 +2,11 @@
 #
 cmake_minimum_required(VERSION 2.8)
 
-project(fopt Fortran)
+project(libfopt Fortran)
 
-set(CMAKE_Fortran_MODULE_DIRECTORY "../include")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "../lib")
+# Put the module files in a common directory, so other components 
+# of this project can find them.
+set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
 list2string(Fortran_FLAGS CMAKE_Fortran_FLAGS) 
 list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
@@ -19,4 +20,10 @@ objectiveFx.f90
 )
 
 add_library(fopt STATIC ${LIBSRC}) 
+
+#
+# Installation of the outputs in the build tree
+#
+install(TARGETS fopt DESTINATION "lib")
+install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")
 
