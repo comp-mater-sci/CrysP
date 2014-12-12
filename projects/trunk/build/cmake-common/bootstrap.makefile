@@ -37,7 +37,7 @@ $(OutDir) $(IntDir) :
 	
 clean	:
 	$(info Cleaning $(IntDir)) 
-	${MAKE} -C $(OutDir) $@
+	${MAKE} -C $(IntDir) $@
 
 mrproper	:
 	$(info Purging $(OutDir)) 
