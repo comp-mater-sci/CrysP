@@ -21,6 +21,8 @@ Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "KOST1xTest", "KOST1xTest\KO
 EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "fngCRI", "..\..\..\code\trunk\tools\fng\projects\libfngCRI\fngCRI.vfproj", "{48A894A8-DEF0-4103-8323-DA4269DB06E8}"
 EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "TestProgram_UserHardening", "TestProgram_UserHardening\TestProgram_UserHardening.vfproj", "{29C874F5-EE24-4736-AFB3-BBCF812C564B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug_abaqus|Win32 = Debug_abaqus|Win32
@@ -146,6 +148,24 @@ Global
 		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Release-Amplifier|Win32.ActiveCfg = Release_abaqus|x64
 		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Release-Amplifier|x64.ActiveCfg = Release_abaqus|x64
 		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Release-Amplifier|x64.Build.0 = Release_abaqus|x64
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Debug_abaqus|Win32.ActiveCfg = Debug|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Debug_abaqus|Win32.Build.0 = Debug|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Debug_abaqus|x64.ActiveCfg = Debug|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Debug|Win32.Build.0 = Debug|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Debug|x64.ActiveCfg = Debug|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Intel_SSA|Win32.ActiveCfg = Release|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Intel_SSA|Win32.Build.0 = Release|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Intel_SSA|x64.ActiveCfg = Release|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Release_abaqus|Win32.ActiveCfg = Release|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Release_abaqus|Win32.Build.0 = Release|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Release_abaqus|x64.ActiveCfg = Release|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Release|Win32.ActiveCfg = Release|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Release|Win32.Build.0 = Release|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Release|x64.ActiveCfg = Release|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Release-Amplifier|Win32.ActiveCfg = Release|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Release-Amplifier|Win32.Build.0 = Release|Win32
+		{29C874F5-EE24-4736-AFB3-BBCF812C564B}.Release-Amplifier|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
