@@ -200,20 +200,24 @@
  600  format('Cannot initialize DSH state variables')
  601  format('Cannot read DSH state variables from file: ',A)
 #endif
+#ifdef TESTING_ENABLED
       !!! TESTING -->>
-      call altayStateData_printStatus(state)
       write(*,*) 'State valid: ', altayStateData_isValid(state)
+      call altayStateData_printStatus(state)
       !!! <<-- TESTING
+#endif
 
       if (altayStateData_assemble(state) /= criSuccess) then
           write(*,*) 'catastrophic error in MAIN, call to altayStateData_assemble'
           call exit(stopcode_ioerror)
       endif
       
+#ifdef TESTING_ENABLED
       !!! TESTING -->>
-      call altayStateData_printStatus(state)
       write(*,*) 'State valid: ', altayStateData_isValid(state)
+      call altayStateData_printStatus(state)
       !!! <<-- TESTING
+#endif
       
       !
       DO 2 JBLOC=1,NBLOC

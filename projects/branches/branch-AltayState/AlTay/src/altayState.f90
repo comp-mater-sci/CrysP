@@ -79,10 +79,11 @@ contains
     !
         obj%old => obj%states(0)
         obj%new => obj%states(1)
-        
+#ifdef TESTING_ENABLED
         !!! TESTING -->>
         call altayStateData_printStatus(obj)
         !!! <<-- TESTING
+#endif
     !
     end function
     

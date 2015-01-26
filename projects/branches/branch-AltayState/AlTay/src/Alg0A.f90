@@ -311,7 +311,8 @@
 #ifdef PEBP_ENABLED
       pebpSDVavg = StateDerivedVars()
 #endif      
-      
+      !
+      assembly = TextureAssembly(state%old%texture, state%old%frame)
       call dynfil2(state%old,nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT       
       write (*,96) ISTP,GAXES
@@ -580,10 +581,11 @@
       !
       ! Advance state pointers
       info = altayStateData_advance(state)
+#ifdef TESTING_ENABLED
       !!! TESTING -->>
       call altayStateData_printStatus(state)
       !!! <<-- TESTING
-
+#endif
       !
       ! End of the loop over steps
       !
