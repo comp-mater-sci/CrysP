@@ -4,7 +4,6 @@
 !> Support for backward-compatibile CUB format.
 !>
 !> \note The content of CUB file is no longer one-to-one mappable to CUR, since the CUR format has changed.
-
 module altayCubAccess
 use criErrcodes
 use altayTexAccess
@@ -17,12 +16,12 @@ implicit none
 
 contains
     
-    !>
+    !> Read texture data in CUB format from `iounit`
     subroutine CUBread(this, iounit, info)
     implicit none
     type(TextureAssembly),intent(inout) :: this
-    integer,intent(in)                  :: iounit !< IO unit number
-    integer,intent(out)                 :: info !< exit code: 0 on success
+    integer,intent(in)                  :: iounit   !< IO unit number
+    integer,intent(out)                 :: info     !< exit code
     !
         call CUBreadTitle(this, iounit, info)
         if (info == criSuccess) then
@@ -32,12 +31,12 @@ contains
     !
     end subroutine
     
-    !>
+    !> Write texture data in CUB format to `iounit`
     subroutine CUBwrite(this, iounit, info)
     implicit none
     type(TextureAssembly),intent(in)    :: this
-    integer,intent(in)                  :: iounit !< IO unit number
-    integer,intent(out)                 :: info !< exit code: 0 on success
+    integer,intent(in)                  :: iounit   !< IO unit number
+    integer,intent(out)                 :: info     !< exit code
     !
         call CUBwriteBlock(this, iounit, info)
     !
@@ -48,22 +47,24 @@ contains
     subroutine CUBwriteBlock(this, iounit, info)
     implicit none
     type(TextureAssembly),intent(in) :: this
-    integer,intent(in)              :: iounit !< IO unit number
-    integer,intent(out)             :: info !< exit code: 0 on success
+    integer,intent(in)              :: iounit   !< IO unit number
+    integer,intent(out)             :: info     !< exit code
     !      
-    integer :: npoint, i,ii,jj
+    integer :: npoint, i,ii,jj, ioerr
     double precision,parameter :: convf = 180.D0 / acos(-1.D0)
     double precision,dimension(3) :: GLR
     !
+        info = criErr_IOWrite
         npoint = size(this%texture%grains)
         associate(mf => this%mf)
             GLR=mf%GEULR*convf
-            write (iounit) this%texture%nrstep,npoint,mf%FALG,mf%GAXES,GLR
+            write (iounit,iostat=ioerr) this%texture%nrstep,npoint,mf%FALG,mf%GAXES,GLR
         end associate
+        if (ioerr /= 0) return
         !
         do i=1,npoint
             associate(grain => this%texture%grains(i))
-                write(iounit,iostat=info) grain%tGEW,                &
+                write(iounit,iostat=ioerr) grain%tGEW,                &
                             grain%tfi1*convf,                       &
                             grain%tPHI*convf,                       &
                             grain%tfi2*convf,                       &
@@ -73,13 +74,14 @@ contains
                             (grain%tAXES(jj),jj=1,3),              &
                             grain%tEULR
             end associate
-            if (info /= 0) exit
-        enddo  
+            if (ioerr /= 0) exit
+        enddo
+        info = merge(criSuccess, criErr_IOWrite, (ioerr == 0))
     !      
     end subroutine
 
-      
-      
+
+    !> Read title
     subroutine CUBreadTitle(this,iounit,info)
     implicit none
     type(TextureAssembly),intent(inout) :: this
@@ -90,7 +92,7 @@ contains
     !
         tmp = iounit
         this%texture%title = ''
-        info = 0
+        info = criSuccess
     !
     end subroutine
 
@@ -98,10 +100,10 @@ contains
     subroutine CUBreadBlock(this, iounit, info)
     implicit none
     type(TextureAssembly),intent(inout) :: this
-    integer,intent(in)      :: iounit      !< IO unit
+    integer,intent(in)      :: iounit   !< IO unit
     integer,intent(out)     :: info     !< Exit code
     !
-    integer :: npoint, i, ii,jj
+    integer :: npoint, i, ii,jj, ioerr
     double precision,parameter :: convf = acos(-1.D0) / 180.D0
     !      
         associate(mf => this%mf)
@@ -118,7 +120,7 @@ contains
         ! Process the crystals in the block      
         do i=1,npoint
             associate(grain => this%texture%grains(i))
-                read(iounit,iostat=info)grain%tGEW,      &
+                read(iounit,iostat=ioerr)grain%tGEW,      &
                                         grain%tfi1,      &
                                         grain%tPHI,      &
                                         grain%tfi2,      &
@@ -128,7 +130,7 @@ contains
                                         (grain%tAXES(jj),jj=1,3),              &
                                         grain%tEULR
 
-                if (info /= 0) exit
+                if (ioerr /= 0) exit
                 ! Convert the grain orientatios from degrees to radians
                 grain%tfi1 = grain%tfi1 * convf
                 grain%tPHI = grain%tPHI * convf
@@ -136,7 +138,7 @@ contains
                 !
             end associate
         enddo
-        if (info /= 0) info = criErr_IORead
+        info = merge(criSuccess, criErr_IORead, (ioerr == 0))
     !
     end subroutine
 
