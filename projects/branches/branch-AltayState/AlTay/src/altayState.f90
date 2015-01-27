@@ -18,7 +18,7 @@ use criErrcodes
 use criMathUtils
 use altayMiscutils, only: unitMatrix
 use altayHardTypes
-
+use altayMaterial
 use altayHardLaw_DSH, only: DSHStateVariable => StatVar
 use altayStateTypes
 
@@ -31,6 +31,12 @@ use altayStateTypes
         
         !> Collection of crystals (grains). 
         type(TextureData)                       :: texture
+        
+        !> CRSS applicable to every grain (only for non-hardening model)
+        type(CRSSData)                          :: crss
+        
+        !> Collection of CRSS per grain (only for certain hardening models)
+        type(CRSSData), dimension(:), pointer   :: crss_array => null()
         
         !> 
         ! type(DSHStateVariable),dimension(:),allocatable :: hard_dsh
