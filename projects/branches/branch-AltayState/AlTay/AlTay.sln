@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "AlTay", "AlTay\AlTay.vfproj", "{8663D4BD-D460-4394-871E-0FF3EAB14C60}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -25,7 +25,7 @@ Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libFCRI", "..\FCRI\libFCRI\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{13A50A69-DE70-465D-8C2D-08FD05F5EA67}"
 	ProjectSection(SolutionItems) = preProject
-		readme.md = readme.md
+		readme.mkd = readme.mkd
 	EndProjectSection
 EndProject
 Global

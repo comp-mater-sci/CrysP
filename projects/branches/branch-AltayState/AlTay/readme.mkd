@@ -18,10 +18,11 @@ At some point AlTay became overcomplicated and overly uncomprehesible. In the
 meantime the Fortran language has become much more friendly and expressive. 
 Alas, the use of modern Fortran in AlTay was pretty limited.
 
-An effort for improving that has been recently initiated. It includes:
-1) restructuring the existing code, with the goal to modernize its design,
+An effort for improving that has been recently initiated. It includes:  
+
+1. restructuring the existing code, with the goal to modernize its design,
    simplify/deobfuscate it and eliminate dead code,
-2) adding new features.
+2. adding new features.
 
 Boths parts of this endaveour require some guidance how to structure the new 
 code. This brief document acts as the "good practice guide" for every new code
@@ -70,7 +71,7 @@ New developments of the AlTay should adhere to code standarts defined below.
 
 - The use of explicit literal constants (e.g. 6) is discouraged. If a constant
   appears in more than one context (this is typically the case),
-  it should be turned into a named constant. 
+  it should be turned into a named constant.
   Example: `integer,parameter :: TK_vector_dims = 6`
 
 - In general, global state variables should be avoided. More specifically:
@@ -85,38 +86,33 @@ New developments of the AlTay should adhere to code standarts defined below.
 ### Naming conventions ###
 
 - Naming convention for various elements of the code should follow the rules:
-	* names of modules: use a prefix which is a lowercase name of the library
+	* **modules**: use a prefix which is a lowercase name of the library
 	  (or its abbreviation, or another name that is distinct enough) where the
 	  module belongs to.
-
-	* names of types: you may use one of two conventions. 
-		1) if name of the type does not contain a prefix from the module it is
+	* **types**: you may use one of two conventions: 
+        1. if name of the type does not contain a prefix from the module it is
 		   enclosed in, use camel-case. Example: `type(EulerAngles)`. Type names
 		   without a prefix typically describe very generic concepts.
-		2) if the name of the type is prefixed by the name of the module where it is
+		2. if the name of the type is prefixed by the name of the module where it is
 		   defined, you must use the name of the module literally. 
 		   E.g. `type(altayStateContainer)` defined in the `altayState` module.
-
-	* constants (parameters) defined in modules: it is advisable to use the same
+	* **constants (parameters)** defined in modules: it is advisable to use the same
 	  prefix for all public parameters defined in a given module. The prefix 
 	  should have some link to the module name. The prefix should be separated by
 	  one underscore. Besides, underscores can be used if it improves readability.
-
-	* variables: In general, lowercase names should be used. Underscores can be
+	* **variables**: In general, lowercase names should be used. Underscores can be
 	  used if it improves readability. 
-
-	* preprocessor macros: use all-capitals, E.g. `PEBP_ENABLED`
-
-	* procedures: any module procedure (which applises, in fact, to almost all 
+	* **preprocessor macros**: use all-capitals, E.g. `PEBP_ENABLED`
+	* **procedures**: any module procedure (which applises, in fact, to almost all 
 	  procedures in AlTay) should be named following the pattern
 	  <prefix>_name, where the <prefix> is related either to the module name (or
 	  it is the module name itself), or the typename.
-	      -# (Rationale #1: Fortran does not support namespaces. If one imports
-		     symbols from a module by means of the `use` construct, the symbols
-	         are imported into the global namespace. Of course, clashes between
-			 identical names defined in different modules are more than likely.)
-	      -# (Rationale #2: this facilitates making type-bound procedures)
-	  E.g. `DeformationState_update`, where the typename is `DeformationState`
+      - Rationale #1: Fortran does not support namespaces. If one imports
+           symbols from a module by means of the `use` construct, the symbols
+           are imported into the global namespace. Of course, clashes between
+           identical names defined in different modules are more than likely.
+      - Rationale #2: this facilitates making type-bound procedures
+        E.g. `DeformationState_update`, where the typename is `DeformationState`
 
 ### Procedures ###
 
