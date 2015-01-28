@@ -67,15 +67,6 @@ private
     end interface
 
 
-    interface operator(+)
-        module procedure  StateDerivedVar_plus
-    end interface
-      
-    interface operator(*)
-        module procedure StateDerivedVar_times_scalar1, StateDerivedVar_times_scalar2
-    end interface
-
-
     integer,parameter :: KM_nslipsystems = 12
 
     double precision,parameter :: TENpow6 = 1.D6
@@ -103,8 +94,7 @@ contains
     !> Initialize config parameters from a pre-configured KMConfigParameters object.
     integer function KMConfigParameters_initFromType(this) result(info)
     implicit none
-    type(KMConfigParameters),intent(inout)    :: this    !
-    integer            :: s,i,Idum=0,Nsstry=0
+    type(KMConfigParameters),intent(inout)    :: this
     !
     !Check the input parameters                               ! Units of input parameters:
         if (this%b    >  0.    .AND. this%b    <= 1.e-8    .AND.& ! [m]
@@ -252,17 +242,16 @@ contains
     !
     end subroutine
     
-    !> Calculate homogenized SDV
+    !> Calculate homogenized state-derived variables
     pure subroutine KMStateDerivedVariables_homogenize(this, values, weights, info)
     implicit none
     type(KMStateDerivedVariables),intent(out)               :: this
-    !> Input SDV
+    !> Input state-derived viables
     type(KMStateDerivedVariables),dimension(:),intent(in)   :: values
     !> weights (must be of the same size as the `values`
     double precision,dimension(:),intent(in)                :: weights  
     integer,intent(out)                                     :: info
     !
-    integer :: i
     double precision :: iws ! reciprocal of the sum of weights
     !
         info = criErr_BadDims
@@ -270,11 +259,8 @@ contains
         if ((size(values) /= size(weights)) .or. (iws < epsilon(0.0))) return
         ! Do the homogenization: weighted averaging
         iws = 1.D0 / iws
-        do i = 1, size(values)
-            !DIR$ INLINE
-            this = this + weights(i) * values(i)
-        enddo
-        this = iws * this
+        this%rho = iws * dot_product(weights, values(:)%rho)
+        this%SatFracRho = iws * dot_product(weights, values(:)%SatFracRho)
         !
         info = criSuccess
     !
@@ -296,7 +282,7 @@ contains
     logical,intent(in),optional             :: header !< Process the header. Default: .false.
     logical,intent(in),optional             :: value  !< Process the value. Default: .true.
     !
-    integer :: i,j
+    integer :: i
     logical :: skip_, value_
     character(len=5)             :: tmpstr
     !
@@ -414,45 +400,5 @@ contains
         info = criSuccess
     !
     end subroutine
-    
-
-    !
-    ! Auxilliary operators that simplify notation of manipulating SDV objects
-    !
-
-
-    !> Calculate component-wise sum of two SDV objects 
-    elemental function StateDerivedVar_plus(first,second) result(res)
-    type(KMStateDerivedVariables),intent(in) :: first,second
-    type(KMStateDerivedVariables) :: res
-    !
-        res%rho = first%rho + second%rho
-        res%SatFracRho = first%SatFracRho + second%SatFracRho
-    !
-    end function
-    
-    
-    !> Multiply all components of SDV by the scalar
-    elemental function StateDerivedVar_times_scalar1(scalar, second) result(res)
-    type(KMStateDerivedVariables),intent(in) :: second
-    double precision,intent(in)       :: scalar
-    type(KMStateDerivedVariables) :: res
-    !
-        res%rho = scalar * second%rho
-        res%SatFracRho = scalar * second%SatFracRho
-    !
-    end function
-    
-    
-    !> Multiply all components of SDV by the scalar
-    elemental function StateDerivedVar_times_scalar2(first, scalar) result(res)
-    type(KMStateDerivedVariables),intent(in) :: first
-    double precision,intent(in)       :: scalar
-    type(KMStateDerivedVariables) :: res
-    !
-        res = StateDerivedVar_times_scalar1(scalar, first)
-    !
-    end function
-
 
 end module
