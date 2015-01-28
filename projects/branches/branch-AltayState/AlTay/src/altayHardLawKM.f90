@@ -20,6 +20,7 @@ private
         KMStateVariables_init,      &
         KMStateVariables_update,    &
         KMStateVariables_getCRSS,   &
+        KMStateDerivedVariables_calculate, &
         KMStateDerivedVariables_homogenize
 
 
@@ -27,7 +28,8 @@ private
     ! convenience function.
     public                          &
         KMStateVariables_read,      &
-        KMStateVariables_write
+        KMStateVariables_write,     &
+        KMStateDerivedVariables_write
 
 
     !> Configuration parameters of the Kocks-Mecking hardening law.
@@ -80,8 +82,14 @@ private
 
 
 contains
+
+    !==========================================================================
+    !
+    ! State variables
+    !
+    !==========================================================================
     
-    
+    !> Initialize config parameters from a configuration file.
     integer function KMConfigParameters_initFromFile(this, inunit) result(info)
     implicit none
     type(KMConfigParameters),intent(inout)    :: this
@@ -92,7 +100,7 @@ contains
     !
     end function
     
-    
+    !> Initialize config parameters from a pre-configured KMConfigParameters object.
     integer function KMConfigParameters_initFromType(this) result(info)
     implicit none
     type(KMConfigParameters),intent(inout)    :: this    !
@@ -185,13 +193,13 @@ contains
     !> Calculate new state variables.
     !>
     !> The procedure requires as input:
-    !> - old state variables, i.e. at the beginning of the increment  (other)
+    !> - old state variables, i.e. at the beginning of the increment (previous)
     !> - the slip rates, assumed constant throughout the increment (sliprate)
     !> - the time increment (deltaT)
-    subroutine KMStateVariables_update(this, other, params, sliprate, deltaT, info)
+    subroutine KMStateVariables_update(this, previous, params, sliprate, deltaT, info)
     implicit none
     type(KMStateVariables),intent(out)          :: this !< State variables to be updated (new)
-    type(KMStateVariables),intent(in)           :: other
+    type(KMStateVariables),intent(in)           :: previous
     type(KMConfigParameters),intent(in)         :: params
     double precision,dimension(:),intent(in)    :: sliprate
     double precision,intent(in)                 :: deltaT
@@ -208,10 +216,10 @@ contains
         !
         if (gamma < epsilon(0.D0)) then
             ! Negligeable slip rate in the current grain => no deformation, no update of the state
-            this = other
+            this = previous
         else
             ! Update dislocation density
-            this%rho = F_KocksMeck(other%rho, gamma, params%I, params%R, params%b) 
+            this%rho = F_KocksMeck(previous%rho, gamma, params%I, params%R, params%b) 
         endif
         info = criSuccess
         return
@@ -280,139 +288,137 @@ contains
     !>
     !> \Param `skip` if true, the function performs a fake read operation by simply
     !> skipping the same number of lines 
-    !> as the ReadSVfile would normally read. The resulting SV becomes initialized to default values.
-    integer function KMStateVariables_read(this, unit, skip) result(info)
+    !> as the function would normally read. The resulting SV becomes initialized to default values.
+    integer function KMStateVariables_read(this, unit, skip, header, value) result(info)
     integer,intent(in)                      :: unit
     type(KMStateVariables),intent(out)      :: this
     logical,optional,intent(in)             :: skip
+    logical,intent(in),optional             :: header !< Process the header. Default: .false.
+    logical,intent(in),optional             :: value  !< Process the value. Default: .true.
     !
     integer :: i,j
-    logical :: do_skip
+    logical :: skip_, value_
     character(len=5)             :: tmpstr
     !
-        do_skip = .false.
-        if (present(skip)) do_skip = skip
-        if (do_skip) then
-            read(unit,fmt=100,err=999,end=999) tmpstr
-        else            
-            read(unit,fmt=101,err=999,end=999) this%rho
+        if (present(header)) then
+            if (header) then
+                do i=1,3 
+                    read(unit,fmt=100,err=999) tmpstr
+                enddo
+            endif
+        endif
+        !
+        value_ = .true.
+        if (present(value)) value_ = value
+        !
+        if (value_) then
+            skip_ = .false.
+            if (present(skip)) skip_ = skip
+            if (skip_) then
+                read(unit,fmt=100,err=999,end=999) tmpstr
+            else            
+                read(unit,fmt=201,err=999,end=999) this%rho
+            endif
         endif
         info = criSuccess
         return
     100 format(A5)
-    101 format(E15.8 )
+    201 format(E15.8 )
     !
     ! Error handler:
-    999   info = criErr_IORead
+    999 info = criErr_IORead
     !
     end function
 
 
-    integer function KMStateVariables_write(this, unit) result(info)
+    integer function KMStateVariables_write(this, unit, header, value) result(info)
     type(KMStateVariables),intent(in)   :: this
     integer,intent(in)                  :: unit
+    logical,intent(in),optional         :: header !< Process the header. Default: .false.
+    logical,intent(in),optional         :: value  !< Process the value. Default: .true.
     !
-    integer :: i,j
+    logical :: value_
     !
-        write(unit,fmt=101,err=999) this%rho
+        info = criErr_IOWrite
+        if (present(header)) then
+            if (header) then
+                write(unit,fmt=101,err=999)
+                write(unit,fmt=100,err=999)"Disl.dens. [micrometer^(-2)]: [1]rho"
+                write(unit,fmt=101,err=999)
+            endif
+        endif
+        !
+        value_ = .true.
+        if (present(value)) value_ = value
+        if (value_) write(unit,fmt=201,err=999) this%rho
+        !
         info = criSuccess
         return
-        !
-    101 format(E15.8 )
+    !
+    100 format('#',1X, A68)
+    101 format('#',69('-'))
+    201 format(E15.8 )
         !
     999 info = criErr_IOWrite !Error in reading from file    
     !
     end function
-    
 
-#ifdef COMPILE_THIS
-       
-    integer function WriteHeadSVfile(unit) result(info)
-    integer,intent(in)  :: unit
-    !      
-    write(unit,fmt=100,err=999)"#-------------------------------------------------------------------------------------------"
-    write(unit,fmt=100,err=999)"# Disl.dens. [micrometer^(-2)]: [1]rho                                                      "
-    write(unit,fmt=100,err=999)"#-------------------------------------------------------------------------------------------"
-    info = i_OK
-    return
+
+    !==========================================================================
     !
-100   format(A92)
-101   format(A26,L1)
-999   info = i_ErrIO !Error in writing to file
+    ! State-Derived Variables
     !
-    end function WriteHeadSVfile
-    
-      
-    integer function ReadHeadSVfile(unit) result(info)
-    integer,intent(in)  :: unit
-      
-    !local variables declarations
-    integer ::  i
-    character :: tmp
-      
-    do i=1,15
-        read(unit,fmt=100,err=999) tmp !read 15 lines
-    end do
-      
-    info = i_OK
-    return
-    !
-100   format(A76)
-999   info = i_ErrIO !Error in reading from file
-    !
-    end function ReadHeadSVfile
-       
-       
-    subroutine GetStateDerivedVar(SV,SDV,info)
-    type(StatVar),   intent(in)  :: SV
-    !> An object of type StateDerivedVars, which contains state-derived variables calculated from SV
-    type(StateDerivedVars), intent(out) :: SDV
-    !> Exit code:  
-    !> - i_OK , no error
-    !> - i_ErrUninitialized, in case this module is not correctly initialized
-    integer,         intent(out) :: info
-
-    info= i_Error !init
-    if(.NOT.InitOK) then
-        info = i_ErrUninitialized
-        return
-    end if
-      
-    SDV%rho = SV%rho * TENpow6**2 !unit conversion [nm^(-2)] -> [m^(-2)]
-    SDV%SatFracRho = 100. * (SV%rho-P%rho_ann) / (P%rho_sat-P%rho_ann) !unit: %
-         
-    info=i_OK
-      
-    end subroutine GetStateDerivedVar
-    
+    !==========================================================================
 
 
-
-      
     !> Output state-derived variables (SDV) or/and a header line.
-    integer function writeSDV(unit,SDV,header) result(info)
-    integer,intent(in)                :: unit
-    logical,intent(in),optional       :: header
-    type(StateDerivedVars),intent(in),optional :: SDV
+    integer function KMStateDerivedVariables_write(this,unit,header,value) result(info)
+    type(KMStateDerivedVariables),intent(in)    :: this
+    integer,intent(in)                          :: unit
+    logical,intent(in),optional                 :: header
+    logical,intent(in),optional                 :: value
     !
     integer :: ierr
     !
-    info = i_ErrIO
-    if (present(header)) then
-        if (header) write(unit,fmt=100,iostat=ierr)
-        if (ierr /= 0) return
-    endif
-    if (present(SDV)) then
-        write(unit,fmt=101,iostat=ierr) SDV
-        if (ierr /= 0) return
-    endif  
-    info = i_OK
-    ! 
-    100 format(T3,'rho[m^(-2)]',T19,'SatFracRho[%]')
-    101 format(E15.7,1X,F15.2)
+        info = criErr_IOWrite
+        if (present(header)) then
+            if (header) then
+                write(unit,fmt=100,iostat=ierr)
+                if (ierr /= 0) return
+            endif
+        endif
+        if (present(value)) then
+            if (value) then
+                write(unit,fmt=101,iostat=ierr) this
+                if (ierr /= 0) return
+            endif
+        endif  
+        info = criSuccess
+        ! 
+        100 format(T3,'rho[m^(-2)]',T19,'SatFracRho[%]')
+        101 format(E15.7,1X,F15.2)
     !
     end function
-#endif
+
+
+
+    !> Calculate state-derived variables
+    elemental subroutine KMStateDerivedVariables_calculate(this,state,params,info)
+    type(KMStateDerivedVariables),intent(out)   :: this
+    type(KMStateVariables),intent(in)           :: state
+    type(KMConfigParameters),intent(in)         :: params
+    integer,         intent(out) :: info !< Exit code
+    !
+        this%rho = state%rho * TENpow6**2 !unit conversion [nm^(-2)] -> [m^(-2)]
+        this%SatFracRho = 100. * (state%rho-params%rho_ann) / (params%rho_sat-params%rho_ann) !unit: %
+        info = criSuccess
+    !
+    end subroutine
+    
+
+    !
+    ! Auxilliary operators that simplify notation of manipulating SDV objects
+    !
 
 
     !> Calculate component-wise sum of two SDV objects 
