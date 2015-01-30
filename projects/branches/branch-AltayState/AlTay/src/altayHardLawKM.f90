@@ -47,7 +47,8 @@ private
 
     !> State variables to be stored per single crystal.
     type,public :: KMStateVariables
-        double precision                            :: rho  = 0.D0
+        !> Dislocation density in grain; unit: m^(-2)
+        double precision :: rho  = 0.D0
     end type
 
 
