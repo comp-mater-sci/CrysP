@@ -2,12 +2,14 @@
     
 !     v1.0 by P. Eyckens, MTM, KU Leuven, 22 Jan 2015.
 !     v2.0 by J. Gawad, CS, KU Leuven, 27 Jan 2015
-
+!     v2.1 by J. Gawad, CS, KU Leuven, 1 Feb 2015
+!
 !> Hardening law: KocksMecking dislocation-based isotropic hardening.
 !>
 !> The prefix added to the components of this module is `KM`, which
 !> stands for Kocks-Mecking.
 module altayHardLaw_KM
+use criErrcodes
 use altayMaterial
 implicit none
 private
@@ -15,8 +17,8 @@ private
     ! Fundamental interface of the module. The host/user code should use these
     ! functions for operations on the data types defined in this module.
     public                          &
-        KMConfigParameters_init,    &
-        KMConfigParameters_read,    &
+        KMConfig_read,              &
+        KMParameters_init,          &
         KMStateVariables_init,      &
         KMStateVariables_update,    &
         KMStateVariables_getCRSS,   &
@@ -33,7 +35,7 @@ private
 
 
     !> Configuration parameters of the Kocks-Mecking hardening law.
-    type,public :: KMConfigParameters
+    type,public :: KMConfig
         double precision :: b = 1.D-10  !< Burgers vector
         double precision :: G = 1.D0    !< Shear modulus
         double precision :: alfa = 1.D0 !< Proportionality factor alpha
@@ -41,9 +43,13 @@ private
         double precision :: I = 0.D0
         double precision :: R = 0.D0
         double precision :: rho_ann = 0.D0
-        double precision :: rho_sat = 0.D0
     end type
 
+    !> Parameters of the Kocks-Mecking hardening law.
+    type,public :: KMParameters
+        type(KMConfig)   :: base
+        double precision :: rho_sat = 0.D0
+    end type
 
     !> State variables to be stored per single crystal.
     type,public :: KMStateVariables
@@ -61,10 +67,10 @@ private
     end type
 
 
-    !> Initialization procedure of the KMConfigParameters type.
-    interface KMConfigParameters_init
-        module procedure KMConfigParameters_initFromFile, &
-                         KMConfigParameters_initFromType
+    !> Initialization procedure of the KMParameters type.
+    interface KMParameters_init
+        module procedure KMParameters_initFromFile, &
+                         KMParameters_initFromConfig
     end interface
 
 
@@ -77,41 +83,46 @@ contains
 
     !==========================================================================
     !
-    ! State variables
+    ! Parameters and configuration
     !
     !==========================================================================
     
+    
     !> Initialize config parameters from a configuration file.
-    integer function KMConfigParameters_initFromFile(this, inunit) result(info)
+    integer function KMParameters_initFromFile(this, inunit) result(info)
     implicit none
-    type(KMConfigParameters),intent(inout)    :: this
-    integer,intent(in)                      :: inunit
+    type(KMParameters),intent(out)  :: this
+    integer,intent(in)              :: inunit
     !
-        info = KMConfigParameters_Read(this, inunit)
-        if (info == criSuccess) info = KMConfigParameters_initFromType(this)
+    type(KMConfig) :: config
+    !
+        info = KMConfig_read(config, inunit)
+        if (info == criSuccess) info = KMParameters_initFromConfig(this, config)
     !
     end function
     
-    !> Initialize config parameters from a pre-configured KMConfigParameters object.
-    integer function KMConfigParameters_initFromType(this) result(info)
+    !> Initialize config parameters from a KMConfig object.
+    integer function KMParameters_initFromConfig(this, config) result(info)
     implicit none
-    type(KMConfigParameters),intent(inout)    :: this
+    type(KMParameters),intent(out)    :: this
+    type(KMConfig),intent(in)               :: config
     !
     !Check the input parameters                               ! Units of input parameters:
-        if (this%b    >  0.    .AND. this%b    <= 1.e-8    .AND.& ! [m]
-            this%G    >= 10.e3 .AND. this%G    <= 500.e3   .AND.& ! [MPa]
-            this%alfa >  0.    .AND. this%alfa <= 5.       .AND.& ! [/]
-            this%tau0 >= 0.    .AND. this%tau0 <= 1.e4     .AND.& ! [MPa]
-            this%I    >= 0.    .AND. this%I    <= 10.      .AND.& ! [/]
-            this%R    >  0.    .AND. this%R    <= 1.e-6    .AND.& ! [m]
-            this%rho_ann >  0. .AND. this%rho_ann < this%I**2/this%R**2 & ! [m^(-2)]  !! i.e. rho_ann < saturation stress
+        if (config%b    >  0.    .AND. config%b    <= 1.e-8    .AND.& ! [m]
+            config%G    >= 10.e3 .AND. config%G    <= 500.e3   .AND.& ! [MPa]
+            config%alfa >  0.    .AND. config%alfa <= 5.       .AND.& ! [/]
+            config%tau0 >= 0.    .AND. config%tau0 <= 1.e4     .AND.& ! [MPa]
+            config%I    >= 0.    .AND. config%I    <= 10.      .AND.& ! [/]
+            config%R    >  0.    .AND. config%R    <= 1.e-6    .AND.& ! [m]
+            config%rho_ann >  0. .AND. config%rho_ann < config%I**2/config%R**2 & ! [m^(-2)]  !! i.e. rho_ann < saturation stress
         ) then
+            this%base = config
             !change of units if different (units of this are: MPa; nm(nanometer))
-            this%b         = this%b       * TENpow6       ![m] -> [nm]
-            this%R         = this%R       * TENpow6       ![m] -> [nm]
-            this%rho_ann   = this%rho_ann * TENpow6**(-2) ![m^(-2)] -> [nm^(-2)] 
+            this%base%b         = config%b       * TENpow6       ![m] -> [nm]
+            this%base%R         = config%R       * TENpow6       ![m] -> [nm]
+            this%base%rho_ann   = config%rho_ann * TENpow6**(-2) ![m^(-2)] -> [nm^(-2)] 
             !Calculate dependent parameters
-            this%rho_sat= this%I**2 / this%R**2
+            this%rho_sat= this%base%I**2 / this%base%R**2
             !
             info = criSuccess
         else
@@ -120,14 +131,14 @@ contains
     !
     end function
    
-    !> Read independent components of KMConfigParameters from the IO
+    !> Read independent components of KMParameters from the IO
     !> 
     !> \note This is a reference procedure. The client code may use a different
     !>       format.
-    integer function KMConfigParameters_read(this, inunit) result (info)
+    integer function KMConfig_read(this, inunit) result (info)
     implicit none
-    type(KMConfigParameters),intent(out)    :: this    !< parameters to be read from a formatted file.
-    integer,intent(in)                      :: inunit   !< IO unit number
+    type(KMConfig),intent(out)  :: this    !< parameters to be read from a formatted file.
+    integer,intent(in)          :: inunit   !< IO unit number
     !
         read(inunit,fmt=100,err=999,end=999) this%b
         read(inunit,fmt=100,err=999,end=999) this%G
@@ -145,15 +156,21 @@ contains
     !
     end function
 
+    !==========================================================================
+    !
+    ! State variables
+    !
+    !==========================================================================
+
 
     !> Initialize state variables from configuration object
     subroutine KMStateVariables_init(this, params, info)
     implicit none
     type(KMStateVariables),intent(out)  :: this
-    type(KMConfigParameters),intent(in) :: params
+    type(KMParameters),intent(in)       :: params
     integer,intent(out)                 :: info
     !
-        this%rho  = params%rho_ann
+        this%rho  = params%base%rho_ann
         info = criSuccess
     !
     end subroutine
@@ -163,14 +180,14 @@ contains
     subroutine KMStateVariables_getCRSS(this, params, crss, info)
     implicit none
     type(KMStateVariables),intent(in)   :: this
-    type(KMConfigParameters),intent(in) :: params
+    type(KMParameters),intent(in)           :: params
     type(CRSSData),intent(inout)        :: crss
     integer,intent(out)                 :: info
     !
     double precision :: crss_Tay
     !
         if (CRSSData_size(crss) >= KM_nslipsystems) then
-            crss_Tay= params%tau0 + params%alfa * params%G * params%b * sqrt(this%rho)
+            crss_Tay= params%base%tau0 + params%base%alfa * params%base%G * params%base%b * sqrt(this%rho)
             ! Note: Slip systems not allowed to become active should get value of -1.0
             crss%crss = crss_Tay
             info = criSuccess
@@ -191,7 +208,7 @@ contains
     implicit none
     type(KMStateVariables),intent(out)          :: this !< State variables to be updated (new)
     type(KMStateVariables),intent(in)           :: previous
-    type(KMConfigParameters),intent(in)         :: params
+    type(KMParameters),intent(in)         :: params
     double precision,dimension(:),intent(in)    :: sliprate
     double precision,intent(in)                 :: deltaT
     integer,intent(out)                         :: info
@@ -210,7 +227,8 @@ contains
             this = previous
         else
             ! Update dislocation density
-            this%rho = F_KocksMeck(previous%rho, gamma, params%I, params%R, params%b) 
+            this%rho = F_KocksMeck(previous%rho, gamma, params%base%I, &
+                                   params%base%R, params%base%b) 
         endif
         info = criSuccess
         return
@@ -393,11 +411,11 @@ contains
     elemental subroutine KMStateDerivedVariables_calculate(this,state,params,info)
     type(KMStateDerivedVariables),intent(out)   :: this
     type(KMStateVariables),intent(in)           :: state
-    type(KMConfigParameters),intent(in)         :: params
-    integer,         intent(out) :: info !< Exit code
+    type(KMParameters),intent(in)               :: params
+    integer,intent(out)                         :: info !< Exit code
     !
         this%rho = state%rho * TENpow6**2 !unit conversion [nm^(-2)] -> [m^(-2)]
-        this%SatFracRho = 100. * (state%rho-params%rho_ann) / (params%rho_sat-params%rho_ann) !unit: %
+        this%SatFracRho = 100. * (state%rho-params%base%rho_ann) / (params%rho_sat-params%base%rho_ann) !unit: %
         info = criSuccess
     !
     end subroutine

@@ -1,4 +1,6 @@
-!> Test program for the Kocks-Mecking hardening module 'altayHardLawKM'.
+! $Id$
+
+    !> Test program for the Kocks-Mecking hardening module 'altayHardLawKM'.
     program TestProgram_altayHardLawKM
     use altayHardLaw_KM
     use altayMaterial
@@ -18,7 +20,7 @@
     double precision                  :: delta_T= 0.0
     double precision, dimension(nss)  :: SlipRate= 0.0
     type(CRSSData)                    :: crss
-    type(KMConfigParameters)          :: Paraset
+    type(KMParameters)                :: Paraset
     type(KMStateVariables)            :: CurState, OldState, NewState
     type(KMStateDerivedVariables)     :: CurStateDerivedVars
 
@@ -27,7 +29,7 @@
     !    read from parameter input file. All parameters are supposedly  
     !    physically meanungfill, if not an error is flagged.
     open(unit=iParFile,file='Par.txt',status='old')  !open parameter file.
-    info = KMConfigParameters_init(Paraset, iParFile)
+    info = KMParameters_init(Paraset, iParFile)
     if (info /= 0) then
          write(*,*)"Error initializing parameter set. Error code:", info
          pause
