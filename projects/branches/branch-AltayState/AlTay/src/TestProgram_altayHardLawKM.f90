@@ -3,7 +3,7 @@
     !> Test program for the Kocks-Mecking hardening module 'altayHardLawKM'.
     program TestProgram_altayHardLawKM
     use altayHardLaw_KM
-    use altayMaterial
+    use altayCRSSTypes
     implicit none
 
     

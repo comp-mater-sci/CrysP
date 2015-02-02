@@ -10,7 +10,7 @@
 !> stands for Kocks-Mecking.
 module altayHardLaw_KM
 use criErrcodes
-use altayMaterial
+use altayCRSSTypes
 implicit none
 private
 
