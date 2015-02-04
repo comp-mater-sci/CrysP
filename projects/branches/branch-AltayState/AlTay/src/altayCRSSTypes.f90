@@ -2,8 +2,7 @@ module altayCRSSTypes
 use criErrcodes
 implicit none
 
-    ! TODO: should these constants be moved to a more appropriate place
-
+    ! TODO: these constants may deserve a better place to live.
     integer,parameter :: altayMaterial_fcc12 = 1, &
                          altayMaterial_bcc24 = 2, &
                          altayMaterial_bcc48 = 3, &
@@ -11,15 +10,19 @@ implicit none
 
     !> Number of slip directions per slip system. It reflect that there are
     !> "positive" and "negative" slips on a given slip system
-    integer,parameter   :: altayMaterial_n_slip_dirs = 2
+    integer,parameter   :: altayCRSSTypes_n_slip_dirs = 2
 
-    !> Critical Resolved Shear Stress
+    !> Representation of Critical Resolved Shear Stresses
     type :: CRSSData
         
         !> Array that contains the CRSS of a crystal. It is defined
         !> by n_slip_dirs (number of slip directions) and number of slip systems.
         !>
         !> The shape of the array is [n_slip_dirs, n_slip_systems]
+        !> The first index is for direction of slip system: positive and negative 
+        !> (in that order).
+        !> The second index is sequence number of pre-defined deformation systems
+        !> (either slips or twinnings).
         double precision,dimension(:,:),allocatable     :: crss
         
     end type
@@ -39,17 +42,17 @@ contains
     !
     integer :: memerr
     !
+        info = criErr_BadArgs
         if (nsystems > 0) then
-            allocate(this%crss(altayMaterial_n_slip_dirs , nsystems), &
-                     stat=memerr)
+            info  = criErr_MemAlloc
+            allocate(this%crss(altayCRSSTypes_n_slip_dirs , nsystems), &
+                     stat=memerr, source=0.D0)
             if (memerr == 0) info  = criSuccess
-        else
-            info = criErr_BadArgs
         endif
     !   
     end subroutine
     
-    integer function CRSSData_size(this) result(n)
+    elemental integer function CRSSData_size(this) result(n)
     implicit none
     type(CRSSData),intent(in)  :: this
     !
