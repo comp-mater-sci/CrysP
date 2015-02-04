@@ -20,5 +20,5 @@
  crss in negative sense [MPa]: 
   90.9   90.9   90.9   90.9   90.9   90.9   90.9   90.9   90.9   90.9   90.9   90.9
  
-  rho[m^(-2)]     SatFracRho[%]
-  0.5368769E+14           10.69
+  rho[m^(-2)]   SatFracRho[%]
+   0.5369E+14           10.69

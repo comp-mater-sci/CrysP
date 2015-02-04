@@ -3,6 +3,7 @@
 !     v1.0 by P. Eyckens, MTM, KU Leuven, 22 Jan 2015.
 !     v2.0 by J. Gawad, CS, KU Leuven, 27 Jan 2015
 !     v2.1 by J. Gawad, CS, KU Leuven, 1 Feb 2015
+!     v2.2 by P. Eyckens, MTM, KU Leuven, 4 Feb 2015
 !
 !> Hardening law: KocksMecking dislocation-based isotropic hardening.
 !>
@@ -35,30 +36,36 @@ private
 
 
     !> Configuration parameters of the Kocks-Mecking hardening law.
+    !> Units: MPa, s, m (meter)
     type,public :: KMConfig
-        double precision :: b = 1.D-10    !< Magnitude of Burgers vector
-        double precision :: G = 1.D0      !< Shear modulus
-        double precision :: alfa = 1.D0   !< Dislocation interaction parameter
-        double precision :: tau0 = 1.D0   !< Lattice friction stress
+        double precision :: b = 0.D0      !< Magnitude of Burgers vector
+        double precision :: G = 0.D0      !< Shear modulus
+        double precision :: alfa = 0.D0   !< Dislocation interaction parameter
+        double precision :: tau0 = 0.D0   !< Lattice friction stress
         double precision :: I = 0.D0      !< Immobilization coefficient
         double precision :: R = 0.D0      !< Recovery coefficient
         double precision :: rho_ann = 0.D0!< Annealed state dislocation density 
     end type
 
     !> Parameters of the Kocks-Mecking hardening law.
+    !> Units: MPa, s, micrometer
     type,public :: KMParameters
-        type(KMConfig)   :: base
-        double precision :: rho_sat = 0.D0
+        double precision :: b = 0.D0      !< Magnitude of Burgers vector
+        double precision :: alfaGb = 0.D0 !< alfa*G*b
+        double precision :: tau0 = 0.D0   !< Lattice friction stress
+        double precision :: I = 0.D0      !< Immobilization coefficient
+        double precision :: R = 0.D0      !< Recovery coefficient        
+        double precision :: rho_ann = 0.D0!< Annealed state dislocation density        
+        double precision :: rho_sat = 0.D0!< Saturation dislocation density
     end type
 
-    !> State variables to be stored per single crystal.
+    !> State variables of the crystal.
     type,public :: KMStateVariables
-        !> Dislocation density in grain; unit: m^(-2)
+        !> Dislocation density in grain; unit: micrometer^(-2)
         double precision :: rho  = 0.D0
     end type
 
-
-    !> State-derived variables per single crystal.
+    !> State-derived variables of the crystal.
     type,public :: KMStateDerivedVariables
         !> Dislocation density in grain; unit: m^(-2)
         double precision :: rho = 0.D0
@@ -88,7 +95,7 @@ contains
     !==========================================================================
     
     
-    !> Initialize config parameters from a configuration file.
+    !> Initialize KMParameters object from a configuration file.
     integer function KMParameters_initFromFile(this, inunit) result(info)
     implicit none
     type(KMParameters),intent(out)  :: this
@@ -101,7 +108,7 @@ contains
     !
     end function
     
-    !> Initialize config parameters from a KMConfig object.
+    !> Initialize KMParameters object from a KMConfig object.
     integer function KMParameters_initFromConfig(this, config) result(info)
     implicit none
     type(KMParameters),intent(out)    :: this
@@ -114,15 +121,16 @@ contains
             config%tau0 >= 0.    .AND. config%tau0 <= 1.e4     .AND.& ! [MPa]
             config%I    >= 0.    .AND. config%I    <= 10.      .AND.& ! [/]
             config%R    >  0.    .AND. config%R    <= 1.e-6    .AND.& ! [m]
-            config%rho_ann >  0. .AND. config%rho_ann < config%I**2/config%R**2 & ! [m^(-2)]  !! i.e. rho_ann < saturation stress
+            config%rho_ann >  0. .AND. config%rho_ann < config%I**2/config%R**2 & ! [m^(-2)]  
+                                      !config%rho_ann < saturation stress
         ) then
-            this%base = config
-            !change of units if different (units of this are: MPa; nm(nanometer))
-            this%base%b         = config%b       * TENpow6       ![m] -> [nm]
-            this%base%R         = config%R       * TENpow6       ![m] -> [nm]
-            this%base%rho_ann   = config%rho_ann * TENpow6**(-2) ![m^(-2)] -> [nm^(-2)] 
-            !Calculate dependent parameters
-            this%rho_sat= this%base%I**2 / this%base%R**2
+            this%b = config%b * TENpow6 ![m] -> [micrometer]
+            this%alfaGb = config%alfa * config%G * config%b * TENpow6 ![MPa.m] -> [MPa.micrometer]
+            this%tau0 = config%tau0 ![MPa] -> [MPa]
+            this%I = config%I ![/] -> [/]
+            this%R = config%R * TENpow6 ![m] -> [micrometer]
+            this%rho_ann = config%rho_ann * TENpow6**(-2) ![m^(-2)] -> [micrometer^(-2)] 
+            this%rho_sat = this%I**2 / this%R**2
             !
             info = criSuccess
         else
@@ -131,13 +139,10 @@ contains
     !
     end function
    
-    !> Read independent components of KMParameters from the IO
-    !> 
-    !> \note This is a reference procedure. The client code may use a different
-    !>       format.
+    !> Read components of KMConfig from the IO
     integer function KMConfig_read(this, inunit) result (info)
     implicit none
-    type(KMConfig),intent(out)  :: this    !< parameters to be read from a formatted file.
+    type(KMConfig),intent(out)  :: this     !< Configuration parameters to be read from a formatted file.
     integer,intent(in)          :: inunit   !< IO unit number
     !
         read(inunit,fmt=100,err=999,end=999) this%b
@@ -163,14 +168,14 @@ contains
     !==========================================================================
 
 
-    !> Initialize state variables from configuration object
+    !> Initialize state variables from KMParameters object
     subroutine KMStateVariables_init(this, params, info)
     implicit none
     type(KMStateVariables),intent(out)  :: this
     type(KMParameters),intent(in)       :: params
     integer,intent(out)                 :: info
     !
-        this%rho  = params%base%rho_ann
+        this%rho = params%rho_ann
         info = criSuccess
     !
     end subroutine
@@ -187,7 +192,8 @@ contains
     double precision :: crss_Tay
     !
         if (CRSSData_size(crss) >= KM_nslipsystems) then
-            crss_Tay= params%base%tau0 + params%base%alfa * params%base%G * params%base%b * sqrt(this%rho)
+            !> Taylor equation
+            crss_Tay= params%tau0 + params%alfaGb * sqrt(this%rho)
             ! Note: Slip systems not allowed to become active should get value of -1.0
             crss%crss = crss_Tay
             info = criSuccess
@@ -228,8 +234,8 @@ contains
             this = previous
         else
             ! Update dislocation density
-            this%rho = F_KocksMeck(previous%rho, gamma, params%base%I, &
-                                   params%base%R, params%base%b) 
+            this%rho = F_KocksMeck(previous%rho, gamma, params%I, &
+                                   params%R, params%b) 
         endif
         info = criSuccess
         return
@@ -253,9 +259,9 @@ contains
         double precision,intent(in) :: II, RR, b
         double precision :: x
         !
-        x=exp(-0.5D0*RR*delta_g/b)
-        x=II/RR*(1.D0-x)+sqrt(rho_a)*x
-        F_KocksMeck=x*x
+            x=exp(-0.5D0*RR*delta_g/b)
+            x=II/RR*(1.D0-x)+sqrt(rho_a)*x
+            F_KocksMeck=x*x
         !
         end function F_KocksMeck
     !
@@ -352,7 +358,21 @@ contains
     !==========================================================================
 
 
-    !> Output state-derived variables (SDV) or/and a header line.
+    !> Calculate state-derived variables
+    elemental subroutine KMStateDerivedVariables_calculate(this,state,params,info)
+    type(KMStateDerivedVariables),intent(out)   :: this
+    type(KMStateVariables),intent(in)           :: state
+    type(KMParameters),intent(in)               :: params
+    integer,intent(out)                         :: info !< Exit code
+    !
+        this%rho = state%rho * TENpow6**2 !unit conversion [micrometer^(-2)] -> [m^(-2)]
+        this%SatFracRho = 100. * (state%rho-params%rho_ann) / (params%rho_sat-params%rho_ann) !unit: %
+        info = criSuccess
+    !
+    end subroutine
+
+
+    !> Output state-derived variables or/and a header line.
     integer function KMStateDerivedVariables_write(this,unit,header,value) result(info)
     type(KMStateDerivedVariables),intent(in)    :: this
     integer,intent(in)                          :: unit
@@ -376,25 +396,10 @@ contains
         endif  
         info = criSuccess
         ! 
-        100 format(T3,'rho[m^(-2)]',T19,'SatFracRho[%]')
-        101 format(E15.7,1X,F15.2)
+        100 format(T3,'rho[m^(-2)]',T17,'SatFracRho[%]')
+        101 format(E13.4,1X,F15.2)
     !
     end function
-
-
-
-    !> Calculate state-derived variables
-    elemental subroutine KMStateDerivedVariables_calculate(this,state,params,info)
-    type(KMStateDerivedVariables),intent(out)   :: this
-    type(KMStateVariables),intent(in)           :: state
-    type(KMParameters),intent(in)               :: params
-    integer,intent(out)                         :: info !< Exit code
-    !
-        this%rho = state%rho * TENpow6**2 !unit conversion [nm^(-2)] -> [m^(-2)]
-        this%SatFracRho = 100. * (state%rho-params%base%rho_ann) / (params%rho_sat-params%base%rho_ann) !unit: %
-        info = criSuccess
-    !
-    end subroutine
 
         
     !> Homogenize state-derived variables
