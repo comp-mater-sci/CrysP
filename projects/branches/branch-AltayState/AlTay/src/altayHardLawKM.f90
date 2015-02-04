@@ -36,13 +36,13 @@ private
 
     !> Configuration parameters of the Kocks-Mecking hardening law.
     type,public :: KMConfig
-        double precision :: b = 1.D-10  !< Burgers vector
-        double precision :: G = 1.D0    !< Shear modulus
-        double precision :: alfa = 1.D0 !< Proportionality factor alpha
-        double precision :: tau0 = 1.D0 !< Reference shear stress
-        double precision :: I = 0.D0
-        double precision :: R = 0.D0
-        double precision :: rho_ann = 0.D0
+        double precision :: b = 1.D-10    !< Magnitude of Burgers vector
+        double precision :: G = 1.D0      !< Shear modulus
+        double precision :: alfa = 1.D0   !< Dislocation interaction parameter
+        double precision :: tau0 = 1.D0   !< Lattice friction stress
+        double precision :: I = 0.D0      !< Immobilization coefficient
+        double precision :: R = 0.D0      !< Recovery coefficient
+        double precision :: rho_ann = 0.D0!< Annealed state dislocation density 
     end type
 
     !> Parameters of the Kocks-Mecking hardening law.
@@ -105,7 +105,7 @@ contains
     integer function KMParameters_initFromConfig(this, config) result(info)
     implicit none
     type(KMParameters),intent(out)    :: this
-    type(KMConfig),intent(in)               :: config
+    type(KMConfig),intent(in)         :: config
     !
     !Check the input parameters                               ! Units of input parameters:
         if (config%b    >  0.    .AND. config%b    <= 1.e-8    .AND.& ! [m]
@@ -180,7 +180,7 @@ contains
     subroutine KMStateVariables_getCRSS(this, params, crss, info)
     implicit none
     type(KMStateVariables),intent(in)   :: this
-    type(KMParameters),intent(in)           :: params
+    type(KMParameters),intent(in)       :: params
     type(CRSSData),intent(inout)        :: crss
     integer,intent(out)                 :: info
     !
@@ -197,6 +197,7 @@ contains
         endif
     !
     end subroutine
+
     
     !> Calculate new state variables.
     !>
@@ -208,7 +209,7 @@ contains
     implicit none
     type(KMStateVariables),intent(out)          :: this !< State variables to be updated (new)
     type(KMStateVariables),intent(in)           :: previous
-    type(KMParameters),intent(in)         :: params
+    type(KMParameters),intent(in)               :: params
     double precision,dimension(:),intent(in)    :: sliprate
     double precision,intent(in)                 :: deltaT
     integer,intent(out)                         :: info
@@ -236,52 +237,27 @@ contains
     contains
 
 
-        !Returns rho_b, the value of rho at the end of an interval (a,b) 
-        ! for the following differential equation:
-        !
-        ! d(rho)    1
-        ! ------ = --- * ( II*sqrt(rho) - RR*rho )
-        !  d(g)    P%b
-        !
-        ! The value of 'P%b', the size of burgers vector, is inherited.
-        !
-        ! To calc. rho_b, following inputs are required: 
-        !   -> rho_a, the value of rho at the start of the interval (a,b)
-        !   -> delta_g = g_b - g_a, the increment in g during the interval (a,b)
+        !> Kocks-Mecking time integration function.
+        !> It returns rho_b, the value of rho at the end of an interval (a,b) 
+        !> for the following differential equation:
+        !>
+        !> d(rho)   1
+        !> ------ = - * ( II*sqrt(rho) - RR*rho )
+        !>  d(g)    b
+        !>
         double precision function F_KocksMeck(rho_a, delta_g, II, RR, b) 
-        double precision,intent(in) :: rho_a,delta_g,II,RR, b
-        !
+        !> The value of rho at the start of the interval (a,b)
+        double precision,intent(in) :: rho_a
+        !> delta_g = g_b - g_a, the increment in g during the interval (a,b)
+        double precision,intent(in) :: delta_g
+        double precision,intent(in) :: II, RR, b
         double precision :: x
         !
-            x=exp(-0.5D0*RR*delta_g/b)
-            x=II/RR*(1.D0-x)+sqrt(rho_a)*x
-            F_KocksMeck=x*x
+        x=exp(-0.5D0*RR*delta_g/b)
+        x=II/RR*(1.D0-x)+sqrt(rho_a)*x
+        F_KocksMeck=x*x
         !
         end function F_KocksMeck
-    !
-    end subroutine
-    
-    !> Calculate homogenized state-derived variables
-    pure subroutine KMStateDerivedVariables_homogenize(this, values, weights, info)
-    implicit none
-    type(KMStateDerivedVariables),intent(out)               :: this
-    !> Input state-derived viables
-    type(KMStateDerivedVariables),dimension(:),intent(in)   :: values
-    !> weights (must be of the same size as the `values`
-    double precision,dimension(:),intent(in)                :: weights  
-    integer,intent(out)                                     :: info
-    !
-    double precision :: iws ! reciprocal of the sum of weights
-    !
-        info = criErr_BadDims
-        iws = sum(weights)
-        if ((size(values) /= size(weights)) .or. (iws < epsilon(0.0))) return
-        ! Do the homogenization: weighted averaging
-        iws = 1.D0 / iws
-        this%rho = iws * dot_product(weights, values(:)%rho)
-        this%SatFracRho = iws * dot_product(weights, values(:)%SatFracRho)
-        !
-        info = criSuccess
     !
     end subroutine
     
@@ -420,4 +396,30 @@ contains
     !
     end subroutine
 
+        
+    !> Homogenize state-derived variables
+    pure subroutine KMStateDerivedVariables_homogenize(this, values, weights, info)
+    implicit none
+    type(KMStateDerivedVariables),intent(out)               :: this
+    !> Input state-derived viables
+    type(KMStateDerivedVariables),dimension(:),intent(in)   :: values
+    !> weights (must be of the same size as the `values`)
+    double precision,dimension(:),intent(in)                :: weights  
+    integer,intent(out)                                     :: info
+    !
+    double precision :: iws ! reciprocal of the sum of weights
+    !
+        info = criErr_BadDims
+        iws = sum(weights)
+        if ((size(values) /= size(weights)) .or. (iws < epsilon(0.0))) return
+        ! Do the homogenization: weighted averaging
+        iws = 1.D0 / iws
+        this%rho = iws * dot_product(weights, values(:)%rho)
+        this%SatFracRho = iws * dot_product(weights, values(:)%SatFracRho)
+        !
+        info = criSuccess
+    !
+    end subroutine
+
+    
 end module
