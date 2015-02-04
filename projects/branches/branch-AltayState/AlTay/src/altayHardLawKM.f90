@@ -90,6 +90,8 @@ private
 
     !***** START of the user code block: KM module parameters
     integer,parameter :: KM_nslipsystems = 12
+    integer,parameter :: KM_PosDir = 1
+    integer,parameter :: KM_NegDir = 2    
     double precision,parameter :: TENpow6 = 1.D6
     !*****  END  of the user code block: KM module parameters
 
@@ -209,8 +211,8 @@ contains
         if (CRSSData_size(crss) >= KM_nslipsystems) then
             !> Taylor equation
             crss_Tay= params%tau0 + params%alfaGb * sqrt(this%rho)
-            ! Note: Slip systems not allowed to become active should get value of -1.0
-            crss%crss = crss_Tay
+            !Assign crss_Tay to both directions of all slip systems
+            crss%crss(KM_PosDir:KM_NegDir,1:KM_nslipsystems) = crss_Tay
             info = criSuccess
             !
         else
