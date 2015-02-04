@@ -122,7 +122,7 @@ contains
     type(KMParameters),intent(out)    :: this
     type(KMConfig),intent(in)         :: config
     !
-        !***** START of the user code block: function KMParameters_initFromConfig
+    !***** START of the user code block: function KMParameters_initFromConfig
         !Check the configuration parameters                           ! Units:
         if (config%b    >  0.    .AND. config%b    <= 1.e-8    .AND.& ! [m]
             config%G    >= 10.e3 .AND. config%G    <= 500.e3   .AND.& ! [MPa]
@@ -145,7 +145,7 @@ contains
         else
             info = criErr_BadArgs
         endif
-        !*****  END  of the user code block: function KMParameters_initFromConfig
+    !*****  END  of the user code block: function KMParameters_initFromConfig
     !
     end function
    
@@ -155,7 +155,7 @@ contains
     type(KMConfig),intent(out)  :: this     !< Configuration parameters to be read from a formatted file.
     integer,intent(in)          :: inunit   !< IO unit number
     !
-        !***** START of the user code block: function KMConfig_read
+    !***** START of the user code block: function KMConfig_read
         read(inunit,fmt=100,err=999,end=999) this%b
         read(inunit,fmt=100,err=999,end=999) this%G
         read(inunit,fmt=100,err=999,end=999) this%alfa
@@ -169,7 +169,7 @@ contains
         return
         !
         999   info = criErr_IORead !Error in reading from file
-        !*****  END  of the user code block: function KMConfig_read
+    !*****  END  of the user code block: function KMConfig_read
     !
     end function
 
@@ -187,10 +187,10 @@ contains
     type(KMParameters),intent(in)       :: params
     integer,intent(out)                 :: info
     !
-        !***** START of the user code block: subroutine KMStateVariables_init
+    !***** START of the user code block: subroutine KMStateVariables_init
         this%rho = params%rho_ann
         info = criSuccess
-        !*****  END  of the user code block: subroutine KMStateVariables_init
+    !*****  END  of the user code block: subroutine KMStateVariables_init
     !
     end subroutine
 
