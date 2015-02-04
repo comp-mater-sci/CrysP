@@ -17,27 +17,28 @@ private
 
     ! Fundamental interface of the module. The host/user code should use these
     ! functions for operations on the data types defined in this module.
-    public                          &
-        KMConfig_read,              &
-        KMParameters_init,          &
-        KMStateVariables_init,      &
-        KMStateVariables_update,    &
-        KMStateVariables_getCRSS,   &
+    public                                 &
+        KMConfig_read,                     &
+        KMParameters_init,                 &
+        KMStateVariables_init,             &
+        KMStateVariables_update,           &
+        KMStateVariables_getCRSS,          &
         KMStateDerivedVariables_calculate, &
         KMStateDerivedVariables_homogenize
 
 
     ! Supplementary interface of the module. The host/user code may use these
     ! convenience function.
-    public                          &
-        KMStateVariables_read,      &
-        KMStateVariables_write,     &
+    public                                 &
+        KMStateVariables_read,             &
+        KMStateVariables_write,            &
         KMStateDerivedVariables_write
 
 
-    !> Configuration parameters of the Kocks-Mecking hardening law.
-    !> Units: MPa, s, m (meter)
+    !> Configuration parameters.
     type,public :: KMConfig
+        !***** START of the user code block: type KMConfig
+        !> Units: MPa, s, m (meter)
         double precision :: b = 0.D0      !< Magnitude of Burgers vector
         double precision :: G = 0.D0      !< Shear modulus
         double precision :: alfa = 0.D0   !< Dislocation interaction parameter
@@ -45,11 +46,13 @@ private
         double precision :: I = 0.D0      !< Immobilization coefficient
         double precision :: R = 0.D0      !< Recovery coefficient
         double precision :: rho_ann = 0.D0!< Annealed state dislocation density 
+        !*****  END  of the user code block: type KMConfig
     end type
 
-    !> Parameters of the Kocks-Mecking hardening law.
-    !> Units: MPa, s, micrometer
+    !> Effective parameters.
     type,public :: KMParameters
+        !***** START of the user code block: type KMParameters
+        !> Units: MPa, s, micrometer
         double precision :: b = 0.D0      !< Magnitude of Burgers vector
         double precision :: alfaGb = 0.D0 !< alfa*G*b
         double precision :: tau0 = 0.D0   !< Lattice friction stress
@@ -57,20 +60,25 @@ private
         double precision :: R = 0.D0      !< Recovery coefficient        
         double precision :: rho_ann = 0.D0!< Annealed state dislocation density        
         double precision :: rho_sat = 0.D0!< Saturation dislocation density
+        !*****  END  of the user code block: type KMParameters
     end type
 
     !> State variables of the crystal.
     type,public :: KMStateVariables
+        !***** START of the user code block: type KMStateVariables
         !> Dislocation density in grain; unit: micrometer^(-2)
         double precision :: rho  = 0.D0
+        !*****  END  of the user code block: type KMStateVariables
     end type
 
     !> State-derived variables of the crystal.
     type,public :: KMStateDerivedVariables
+        !***** START of the user code block: type KMStateDerivedVariables
         !> Dislocation density in grain; unit: m^(-2)
         double precision :: rho = 0.D0
         !> Saturation fraction of dislocation density, in percentage (%)
         double precision :: SatFracRho = 0.D0
+        !*****  END  of the user code block: type KMStateDerivedVariables
     end type
 
 
@@ -80,10 +88,10 @@ private
                          KMParameters_initFromConfig
     end interface
 
-
+    !***** START of the user code block: KM module parameters
     integer,parameter :: KM_nslipsystems = 12
-
     double precision,parameter :: TENpow6 = 1.D6
+    !*****  END  of the user code block: KM module parameters
 
 
 contains
@@ -114,7 +122,8 @@ contains
     type(KMParameters),intent(out)    :: this
     type(KMConfig),intent(in)         :: config
     !
-    !Check the input parameters                               ! Units of input parameters:
+        !***** START of the user code block: function KMParameters_initFromConfig
+        !Check the configuration parameters                           ! Units:
         if (config%b    >  0.    .AND. config%b    <= 1.e-8    .AND.& ! [m]
             config%G    >= 10.e3 .AND. config%G    <= 500.e3   .AND.& ! [MPa]
             config%alfa >  0.    .AND. config%alfa <= 5.       .AND.& ! [/]
@@ -130,12 +139,13 @@ contains
             this%I = config%I ![/] -> [/]
             this%R = config%R * TENpow6 ![m] -> [micrometer]
             this%rho_ann = config%rho_ann * TENpow6**(-2) ![m^(-2)] -> [micrometer^(-2)] 
-            this%rho_sat = this%I**2 / this%R**2
+            this%rho_sat = this%I**2 / this%R**2 ![micrometer^(-2)]
             !
             info = criSuccess
         else
             info = criErr_BadArgs
         endif
+        !*****  END  of the user code block: function KMParameters_initFromConfig
     !
     end function
    
@@ -145,6 +155,7 @@ contains
     type(KMConfig),intent(out)  :: this     !< Configuration parameters to be read from a formatted file.
     integer,intent(in)          :: inunit   !< IO unit number
     !
+        !***** START of the user code block: function KMConfig_read
         read(inunit,fmt=100,err=999,end=999) this%b
         read(inunit,fmt=100,err=999,end=999) this%G
         read(inunit,fmt=100,err=999,end=999) this%alfa
@@ -158,6 +169,7 @@ contains
         return
         !
         999   info = criErr_IORead !Error in reading from file
+        !*****  END  of the user code block: function KMConfig_read
     !
     end function
 
@@ -175,8 +187,10 @@ contains
     type(KMParameters),intent(in)       :: params
     integer,intent(out)                 :: info
     !
+        !***** START of the user code block: subroutine KMStateVariables_init
         this%rho = params%rho_ann
         info = criSuccess
+        !*****  END  of the user code block: subroutine KMStateVariables_init
     !
     end subroutine
 
@@ -189,6 +203,7 @@ contains
     type(CRSSData),intent(inout)        :: crss
     integer,intent(out)                 :: info
     !
+    !***** START of the user code block: subroutine KMStateVariables_getCRSS
     double precision :: crss_Tay
     !
         if (CRSSData_size(crss) >= KM_nslipsystems) then
@@ -201,6 +216,7 @@ contains
         else
             info = criErr_BadArgs
         endif
+    !*****  END  of the user code block: subroutine KMStateVariables_getCRSS
     !
     end subroutine
 
@@ -220,6 +236,7 @@ contains
     double precision,intent(in)                 :: deltaT
     integer,intent(out)                         :: info
     !
+    !***** START of the user code block: subroutine KMStateVariables_update
     double precision :: gamma   =0.
     !
         info = criErr_BadArgs
@@ -242,7 +259,6 @@ contains
     !
     contains
 
-
         !> Kocks-Mecking time integration function.
         !> It returns rho_b, the value of rho at the end of an interval (a,b) 
         !> for the following differential equation:
@@ -264,6 +280,7 @@ contains
             F_KocksMeck=x*x
         !
         end function F_KocksMeck
+    !*****  END  of the user code block: subroutine KMStateVariables_update
     !
     end subroutine
     
@@ -283,6 +300,7 @@ contains
     logical,intent(in),optional             :: header !< Process the header. Default: .false.
     logical,intent(in),optional             :: value  !< Process the value. Default: .true.
     !
+    !***** START of the user code block: function KMStateVariables_read
     integer :: i
     logical :: skip_, value_
     character(len=5)             :: tmpstr
@@ -314,6 +332,7 @@ contains
     !
     ! Error handler:
     999 info = criErr_IORead
+    !*****  END  of the user code block: function KMStateVariables_read
     !
     end function
 
@@ -324,6 +343,7 @@ contains
     logical,intent(in),optional         :: header !< Process the header. Default: .false.
     logical,intent(in),optional         :: value  !< Process the value. Default: .true.
     !
+    !***** START of the user code block: function KMStateVariables_write    
     logical :: value_
     !
         info = criErr_IOWrite
@@ -347,6 +367,7 @@ contains
     201 format(E15.8 )
         !
     999 info = criErr_IOWrite !Error in reading from file    
+    !*****  END  of the user code block: function KMStateVariables_write
     !
     end function
 
@@ -365,9 +386,11 @@ contains
     type(KMParameters),intent(in)               :: params
     integer,intent(out)                         :: info !< Exit code
     !
+    !***** START of the user code block: subroutine KMStateDerivedVariables_calculate
         this%rho = state%rho * TENpow6**2 !unit conversion [micrometer^(-2)] -> [m^(-2)]
         this%SatFracRho = 100. * (state%rho-params%rho_ann) / (params%rho_sat-params%rho_ann) !unit: %
         info = criSuccess
+    !*****  END  of the user code block: subroutine KMStateDerivedVariables_calculate
     !
     end subroutine
 
@@ -379,6 +402,7 @@ contains
     logical,intent(in),optional                 :: header
     logical,intent(in),optional                 :: value
     !
+    !***** START of the user code block: function KMStateDerivedVariables_write
     integer :: ierr
     !
         info = criErr_IOWrite
@@ -398,6 +422,7 @@ contains
         ! 
         100 format(T3,'rho[m^(-2)]',T17,'SatFracRho[%]')
         101 format(E13.4,1X,F15.2)
+    !*****  END  of the user code block: function KMStateDerivedVariables_write
     !
     end function
 
@@ -412,6 +437,7 @@ contains
     double precision,dimension(:),intent(in)                :: weights  
     integer,intent(out)                                     :: info
     !
+    !***** START of the user code block: subroutine KMStateDerivedVariables_homogenize
     double precision :: iws ! reciprocal of the sum of weights
     !
         info = criErr_BadDims
@@ -423,6 +449,7 @@ contains
         this%SatFracRho = iws * dot_product(weights, values(:)%SatFracRho)
         !
         info = criSuccess
+    !*****  END  of the user code block: subroutine KMStateDerivedVariables_homogenize
     !
     end subroutine
 
