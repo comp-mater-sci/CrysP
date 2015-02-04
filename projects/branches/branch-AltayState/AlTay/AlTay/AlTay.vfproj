@@ -91,10 +91,15 @@
 		<File RelativePath="..\src\Alg0A.f90"/>
 		<File RelativePath="..\src\Alg1.f90"/>
 		<File RelativePath="..\src\Alg2.f90"/>
+		<File RelativePath="..\src\altayConfig.f90"/>
 		<File RelativePath="..\src\altayCRSSTypes.f90"/>
-		<File RelativePath="..\src\altayDSHState.f90"/>
+		<File RelativePath="..\src\altayDSHState.f90">
+			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\src\altayHard.f90"/>
-		<File RelativePath="..\src\altayHardLawDSH.f90"/>
+		<File RelativePath="..\src\altayHardLawDSH.f90">
+			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\src\altayHardLawKM.f90"/>
 		<File RelativePath="..\src\altayHardLawSimple.f90"/>
 		<File RelativePath="..\src\altayHardTypes.f90"/>

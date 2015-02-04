@@ -11,7 +11,7 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,               &
+      Subroutine Pancak2(state, hardparams,NGL,B,DI1,S33,RHOS33,RHOA33,&
        SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -27,8 +27,19 @@
       use AltayDSHstate
 #endif
       implicit double precision (a-h,o-z)
-      type(DeformationRate),intent(in) :: MacroDefRate
-      type(DeformationState),intent(in):: MacroDefState      
+      type(altayStateVariables),intent(in)          :: state
+      type(HardeningModels),intent(in)              :: hardparams
+      integer,intent(in)                            :: NGL
+      double precision,dimension(5,5),intent(in)    :: B
+      integer,dimension(5),intent(in)               :: DI1
+      double precision,dimension(3,3),intent(out)   :: S33, RHOS33, RHOA33
+      logical,dimension(3),intent(in)               :: SWRLX
+      double precision,dimension(194),intent(inout) :: XX  ! TODO: check if intent(out) is more appropriate
+      integer,intent(in)                            :: IPR
+      double precision,intent(inout)                :: GEWF
+      type(DeformationRate),intent(in)              :: MacroDefRate
+      type(DeformationState),intent(in)             :: MacroDefState
+      !
       COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
        gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
        CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),                             &
@@ -40,24 +51,24 @@
       common /CEIGEN/ IOR,ISTP,NBLOC
       COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),           &
        TLXX,TAURLP(8)
-      double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
+
       double precision,dimension(5):: RHOS, RHOA 
         dimension ccc2(2,194)
       dimension C2(3,3),                                                 &
        TDCb(3,3,2),TRCb(3,3,2),                                          &
-       B(5,5),relax(3,3,3),DACC(10),                                     &
+       relax(3,3,3),DACC(10),                                            &
        rls(3,3,3,2),rla(3,3),rlm(3,3,3),C3(3,3),TRP(10),APRIME(10),      &
        B3(10,3),PLUMIN(2,3),CUst(10)
 !     first index op PLUMIN = nr. of grain
 !     second index = nr. of relaxation
-      dimension spanv(5),XX(194),STRSS(10),BB(10)
+      dimension spanv(5),STRSS(10),BB(10)
       dimension CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194)
-      type (CRSS) :: CRSSmatrix
-      logical SWRLX(3),bas(194),VALID(194)
+      type (CRSSData) :: CRSSmatrix
+      logical bas(194),VALID(194)
 !     rlm is unit relaxation tensor in macroscopic frame
 !     rls and rla in crystal frame (symmetric and anti-sym. part)
       dimension B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10)
-      integer DI1(5),DI(10),DI2(10)
+      integer DI(10),DI2(10)
       dimension GAMR(2),Tprinc(3,3),TAURL(2)
       data SQR2/0.7071067811865476D+00/,B3/30*0.0D0/,TOLXX/5.0d-6/
 !     Definition of the two relaxations, representing a
@@ -79,9 +90,7 @@
 !     NRL= number of relaxations    NGR= number of grains
       data TAURL/2*0.0d0/
       data GETAL/1.0D6/,TOL/1.0d-6/
-#ifdef PEBP_ENABLED      
       integer :: info
-#endif
       SAVE
 
       if (laml.ne.1.and.laml.ne.2) then
@@ -174,10 +183,18 @@
   44  continue
       K1=M11*(IL-1)
       !
+      ! FIXME: -->>
+      !        1) this does not comply with the design of CRSS stored as a part of state.
+      !        2) we may get serious penalty due to frequent dynamic reallocations
+      !        3) BUT: perhaps it is better to keep CRSSmatrix local (this conflicts 
+      !           with (1) and (2) in this implementation of CRSSData
+      call CRSSData_init(CRSSmatrix, M11, info)
+      ! <<--
+      !
       ! Retrieve the CRSSmatrix
       !    IOR+IL-1  = sequence number of current grain 
       !    GMMAb(IL) = the GAMMA of current grain
-      call getCRSS(IOR+IL-1,GMMAb(IL),CRSSmatrix,info) 
+      call altayHard_getCRSS(hardparams, state, IOR+IL-1,GMMAb(IL),CRSSmatrix,info)
       !
       ! Assign CRSSmatrix to proper section of CCC
       CCC(:,1+K1:M11+K1)=CRSSmatrix%crss(:,1:M11)  

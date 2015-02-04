@@ -6,11 +6,7 @@
       use altayHardTypes
       use altayMacroKinematic
       use altayState
-
-      
-      ! Initial rations of CRSS, set in MAINA1.
-      ! It is used only by the stand-alone AlTay
-      type(CRSS),save :: crss_ratiosIN
+      use altayMaterial
 
       contains
     
@@ -23,7 +19,7 @@
 ! See "annotated source codes" if you need these
 !
 !
-      SUBROUTINE SIMUL(state,IW,NFILE0,MacroDefRate)
+      SUBROUTINE SIMUL(config,state,material,IW,NFILE0,MacroDefRate)
 
 !     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
 !     USING THE ALAMEL MODEL
@@ -45,7 +41,9 @@
       use altayDynfilStitch
       !
       implicit double precision (a-h,o-z)
+      type(altayConfigData),intent(in)          :: config
       type(altayStateData),target,intent(inout) :: state
+      type(altayMaterialData),intent(in)        :: material
       integer,intent(in)                        :: IW
       integer,intent(in)                        :: NFILE0
       ! optional argument for IW=1 or 2:
@@ -108,35 +106,19 @@
       !
       IF (IW) 32,33,30
   33  call  random_seed
-#ifdef ALTAY_SUBROUTINE
-      NGR    = acnf%simul_init%NGR
-      ENTA   = acnf%simul_init%ENTA
-      KOST   = acnf%hardening%HardLawID
       !
-      NLIST  = acnf%output_config%NLIST   ! control "listing"
-      NFILE1 = acnf%output_config%NFILE   ! control "CUR"
-      NFILTW = acnf%output_config%NFILTW  ! control "TWN"
-      IPR    = acnf%output_config%IPR     ! control printing level
-      NRES   = acnf%output_config%NRES    ! control "RES" and "RPT"
-      NPEBP  = acnf%output_config%NPEBP   ! control "BEP"
-      NMSS   = acnf%output_config%NMSS    ! control "MSS"
-#else
-!     Number of grains in ALAMEL cluster
-      read (KLEC,99) NGR
-      read (KLEC,*)  ENTA
-      read (KLEC,99) NLIST
-      read (KLEC,99) NFILE1
-      read (KLEC,99) NFILTW
-      read (KLEC,99) KOST
-      read (KLEC,99) IPR
-      NRES = NFILE1  ! IMP2 and IMP3 are controlled only by NFILE1
-      NPEBP = 0
-      select case(KOST)
-      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-          NPEBP  = NFILE1
-      endselect
-      NMSS = NLIST
-#endif
+      NGR    = config%simul_init%NGR
+      ENTA   = config%simul_init%ENTA
+      KOST   = config%hardening%hardLawID
+      ! Note:  integers NLIST,IPR,NRES,NPEBP,NMSS are module variables of altayIOConfig
+      NLIST  = config%output_config%NLIST   ! control "listing"
+      NFILE1 = config%output_config%NFILE   ! control "CUR"
+      NFILTW = config%output_config%NFILTW  ! control "TWN"
+      IPR    = config%output_config%IPR     ! control printing level
+      NRES   = config%output_config%NRES    ! control "RES" and "RPT"
+      NPEBP  = config%output_config%NPEBP   ! control "BEP"
+      NMSS   = config%output_config%NMSS    ! control "MSS"
+      !
       HGAMTOT=0.D0
       ! NGR == 3: enable MAS-AL
       if(NGR.eq.3) then
@@ -173,23 +155,11 @@
 
 !     Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
       NRL=(NGR-1)*2
-#ifdef ALTAY_SUBROUTINE
       !
-      FMicro = acnf%simul_init%FMicro
+      FMicro = config%simul_init%FMicro
       !
-      TITEL  = acnf%jobtitle
-#else
-      do i=1,3
-         read (KLEC,94)(FMicro(i,j),j=1,3)
-         if(NLIST.eq.1) then
-         write (IMP,106)(FMicro(i,j),j=1,3)
-         end if
-      enddo
- 106  format ('F_Microstructure=',3f12.6)
-  99  FORMAT (2I5)
-  94  format (3F10.0)
-  16  read (KLEC,98) TITEL
-#endif      
+      TITEL  = config%jobtitle
+      !
       if(NLIST.eq.1) then
       write (IMP,97) TITEL
       end if
@@ -201,11 +171,9 @@
           call CURwriteTitle(assembly, IMP1,info)
       endif
   98  format (A)      
-!     read the parameters of the work hardening model
-#ifndef ALTAY_SUBROUTINE
-      call InitModuleAltayHard(KLEC,KOST,crss_ratiosIN,info)
-#endif
-      CALL TAYLOR(1,KOST)
+  99  FORMAT (2I5)
+      !
+      CALL TAYLOR(state%old, material%hardening, 1)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -279,7 +247,7 @@
       if (IPR.gt.0.and.NLIST.eq.1) write (IMP,*)'Relaxations:',swrlx(1)
 #endif
       !
-      CALL TAYLOR(2,KOST,MacroDefRate)
+      CALL TAYLOR(state%old, material%hardening, 2,MacroDefRate)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -411,7 +379,7 @@
       if (laml1.gt.NGR) laml1=1
       laml=laml1
       GMM0=GMMAb(laml)
-      call getTau(GMM0,TAU,info)
+      call altayHard_getTau(material%hardening, GMM0,TAU,info)
       fi1=fi1b(laml)
       PHI=PHIb(laml)
       fi2=fi2b(laml)
@@ -441,7 +409,7 @@
 !      write (*,3210)
 ! 3210 format (' Just before Taylor')
  999  if (IW.le.1) then
-            CALL  TAYLOR(3,KOST,MacroDefRate,MacroDefState)
+            CALL  TAYLOR(state%old, material%hardening,3,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
 #endif            

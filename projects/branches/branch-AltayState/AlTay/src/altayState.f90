@@ -18,10 +18,12 @@ use criErrcodes
 use criMathUtils
 use altayMiscutils, only: unitMatrix
 use altayHardTypes
-use altayMaterial
-use altayHardLaw_DSH, only: DSHStateVariable => StatVar
+use altayCRSSTypes
 use altayStateTypes
-
+use altayHardLaw_KM
+#ifdef PEBP_ENABLED
+use altayHardLaw_DSH, only: DSHStateVariable => StatVar
+#endif
 
     !> Container for the state variables
     type :: altayStateVariables
@@ -33,14 +35,17 @@ use altayStateTypes
         type(TextureData)                       :: texture
         
         !> CRSS applicable to every grain (only for non-hardening model)
-        type(CRSSData)                          :: crss
+        type(CRSSData)                          :: crss_ratios
         
         !> Collection of CRSS per grain (only for certain hardening models)
         type(CRSSData), dimension(:), pointer   :: crss_array => null()
-        
+
+#ifdef PEBP_ENABLED
         !> 
-        ! type(DSHStateVariable),dimension(:),allocatable :: hard_dsh
-        
+        type(DSHStateVariable),dimension(:),allocatable :: dsh_state
+#endif
+        !>
+        type(KMStateVariables),dimension(:),allocatable :: km_state
         
         ! TODO: check if it is actually needed
         ! integer,private :: active_hard_law = hard_none
@@ -149,6 +154,8 @@ contains
     implicit none
     type(altayStateData),target,intent(in)  :: this
     !
+        write(*,fmt=100)
+        write(*,*) 'State valid: ', altayStateData_isValid(this)
         write(*,*) 'associated old:', associated(this%old), 'associated new:', associated(this%new)
         if (associated(this%old) .and. associated(this%new)) then
             write(*,*) 'allocated grains, old:', allocated(this%old%texture%grains), 'allocated grains, new:', allocated(this%new%texture%grains)
@@ -156,6 +163,9 @@ contains
             write(*,*) 'new->0', associated(this%new, this%states(0)), 'new->1', associated(this%new, this%states(1)) 
         endif
         write(*,*) 'allocated grains, 0:', allocated(this%states(0)%texture%grains), 'allocated grains, 1:', allocated(this%states(1)%texture%grains)
+        write(*,fmt=100)
+        !
+        100 format(20('-'))
     !
     end subroutine
     !!! <<-- TESTING

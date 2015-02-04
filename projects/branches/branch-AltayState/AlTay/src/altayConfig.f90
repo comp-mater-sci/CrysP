@@ -29,8 +29,12 @@
 module altayConfig
 ! Import configuration structures from AlTay modules
 use altayHardTypes
+use altayCRSSTypes
 use altayHardLaw_Simple, only: VoceConfig, SwiftKConfig, SwiftSConfig
+#ifdef PEBP_ENABLED
 use altayHardLaw_DSH, only: PAR
+#endif
+use altayHardLaw_KM
 use altayTexFormatConstants
 
 implicit none
@@ -43,12 +47,12 @@ implicit none
       
       !>@}
       
-      type :: slipSystemData
+      type :: SlipSystemConfig
             !> Name of the file containing definitions of slipsystems
             character(len=fname_len)                  :: input_fname = ''
       end type
 
-      type :: textureData
+      type :: TextureConfig
             !> Type of texture representation
             !>
             !> See altayTexFormatConstants for the list of possible values. \sa altayTexFormatConstants
@@ -145,9 +149,10 @@ implicit none
             logical                                   :: use_cubfile = .false.
       end type
 
-      type :: PEBPConfig
-            type(PAR)                   :: params
-            
+      !> Configuration of state variables of the hardening model. It is 
+      !> relevant only for stateful hardening laws.
+      type :: HardeningStateConfig
+          
             !> Flag that decides if state variables should be read from file.
             logical                       :: read_state = .false.
             
@@ -156,21 +161,29 @@ implicit none
             
             !> Number of blocks to be skipped while reading the input file
             integer                       :: block_id = 0
-            
+          
       end type
-
+      
+#ifdef PEBP_ENABLED
+      type :: PEBPConfig
+            type(PAR)                   :: params
+      end type
+#endif
+      
       !> Parameters of available hardening models.
-      type :: hardeningData
+      type :: HardeningConfig
             !> Selector of the model for hardening of slipsystems. 
             !> 
             !> Acceptable values depend on availability of CRSS (aka TAUC) hardening models 
             !> that are implemented in the code.
             !> See module altayHard for details about available hardening laws.
             !> \sa crss_ratios 
-            integer                 :: HardLawID = hard_None
+            integer                 :: hardLawID = hard_None
 
+            type(HardeningStateConfig)  :: stateCnf
+            
             !> Initial values of CRSS ratios
-            type(CRSS)              :: crss_ratios
+            type(CRSSData)          :: crss_ratios
 
             !> Parameters of Voce hardening law.
             type(VoceConfig)        :: VoceCnf
@@ -180,10 +193,12 @@ implicit none
             
             !> Parameters of Swift hardening law ('scientific-type')
             type(SwiftSConfig)      :: SwiftSCnf
-
+#ifdef PEBP_ENABLED
             !> Parameters of Dislocation Substructural Hardening models (PEBP variants)
             type(PEBPConfig)        :: PEBPCnf
-            
+#endif PEBP_ENABLED
+            !> Parameters of Kocks-Mecking law
+            type(KMConfig)          :: KMCnf
       end type
       
       !> 
@@ -214,10 +229,10 @@ implicit none
             character(len=fname_len)                  :: output_prefix = 'alamel'
             character(len=fname_len)                  :: jobtitle      = 'alamel'
             character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
-            type(slipSystemData)                      :: slipsystem
+            type(SlipSystemConfig)                      :: slipsystem
             type(outputConfig)                        :: output_config
-            type(hardeningData)                       :: hardening
-            type(textureData)                         :: texture
+            type(HardeningConfig)                       :: hardening
+            type(TextureConfig)                         :: texture
             type(simulData)                           :: simul_init
             ! 
       end type
@@ -235,12 +250,6 @@ implicit none
       end type
       
 
-      ! Definition of the singleton objects
-       
-      type(altayConfigData),save    :: acnf
-      
-      type(altayOutputData),save     :: astate
-      
 
 contains
 
