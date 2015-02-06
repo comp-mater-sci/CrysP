@@ -1,28 +1,37 @@
+!
+! $Id$
+!
+!> Data structure for Critical Resolved Shear Stress (CRSS) and associated 
+!> basic operations.
+!>
+!> Constants defined in this module are prefixed with `CRSS_`.
 module altayCRSSTypes
 use criErrcodes
 implicit none
 
-    ! TODO: these constants may deserve a better place to live.
-    integer,parameter :: altayMaterial_fcc12 = 1, &
-                         altayMaterial_bcc24 = 2, &
-                         altayMaterial_bcc48 = 3, &
-                         altayMaterial_user = 99
 
     !> Number of slip directions per slip system. It reflect that there are
     !> "positive" and "negative" slips on a given slip system
-    integer,parameter   :: altayCRSSTypes_n_slip_dirs = 2
+    integer,parameter   :: CRSS_n_slip_dirs = 2
+    
+    !> Index of the "positive" slip in the first dimension of CRSSData
+    integer,parameter   :: CRSS_pos_dir_idx = 1
+
+    !> Index of the "negative" slip in the first dimension of CRSSData
+    integer,parameter   :: CRSS_neg_dir_idx = 2
 
     !> Representation of Critical Resolved Shear Stresses
     type :: CRSSData
         
         !> Array that contains the CRSS of a crystal. It is defined
-        !> by n_slip_dirs (number of slip directions) and number of slip systems.
+        !> by CRSS_n_slip_dirs (number of slip directions) and the
+        !> number of deformation systems  (either slips or twinnings).
         !>
         !> The shape of the array is [n_slip_dirs, n_slip_systems]
-        !> The first index is for direction of slip system: positive and negative 
-        !> (in that order).
-        !> The second index is sequence number of pre-defined deformation systems
-        !> (either slips or twinnings).
+        !> The first dimension is for direction of slip system: positive and 
+        !> negative (in that order).
+        !> The second dimension is sequence number of pre-defined deformation
+        !> systems.
         double precision,dimension(:,:),allocatable     :: crss
         
     end type
@@ -33,25 +42,30 @@ implicit none
     end interface
     
 contains
-    
+
+
+    !> Initializes the CRSSData object
     elemental subroutine CRSSData_init(this, nsystems, info)
     implicit none
     type(CRSSData),intent(out)  :: this
-    integer,intent(in)          :: nsystems
-    integer,intent(out)         :: info
+    integer,intent(in)          :: nsystems !< Number of deformation systems
+    integer,intent(out)         :: info !< Exit code
     !
     integer :: memerr
     !
         info = criErr_BadArgs
         if (nsystems > 0) then
             info  = criErr_MemAlloc
-            allocate(this%crss(altayCRSSTypes_n_slip_dirs , nsystems), &
+            allocate(this%crss(CRSS_n_slip_dirs , nsystems), &
                      stat=memerr, source=0.D0)
             if (memerr == 0) info  = criSuccess
         endif
     !   
     end subroutine
-    
+
+
+    !> Provides the number of deformation systems included in
+    !> the CRSSData object.
     elemental integer function CRSSData_size(this) result(n)
     implicit none
     type(CRSSData),intent(in)  :: this
