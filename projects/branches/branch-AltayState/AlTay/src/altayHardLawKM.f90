@@ -90,8 +90,7 @@ private
 
     !***** START of the user code block: KM module parameters
     integer,parameter :: KM_nslipsystems = 12
-    integer,parameter :: KM_PosDir = 1
-    integer,parameter :: KM_NegDir = 2    
+
     double precision,parameter :: TENpow6 = 1.D6
     !*****  END  of the user code block: KM module parameters
 
@@ -211,8 +210,14 @@ contains
         if (CRSSData_size(crss) >= KM_nslipsystems) then
             !> Taylor equation
             crss_Tay= params%tau0 + params%alfaGb * sqrt(this%rho)
-            !Assign crss_Tay to both directions of all slip systems
-            crss%crss(KM_PosDir:KM_NegDir,1:KM_nslipsystems) = crss_Tay
+            ! Assign crss_Tay to both directions of all slip systems
+            ! Note: you may independently impose the shear stress on the positive
+            ! and negative directions. E.g. to set only on the positive slips:
+            ! crss%crss(CRSS_pos_dir_idx,:) = crss_Tay
+            ! You may also choose individual slip systems on which you impose
+            ! the CRSS. E.g. to set CRSS on the systems from 1 to 5:
+            ! crss%crss(,1:5) = crss_Tay
+            crss%crss = crss_Tay
             info = criSuccess
             !
         else
