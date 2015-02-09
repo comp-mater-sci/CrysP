@@ -376,7 +376,7 @@
       !
       clusterloop: DO 23 IOR=1,NPOINT
       Mgrain=0.0
-      GAMdot=0.0
+      GMMdot=0.0
       WorkRate = 0.D0
       SeqGrain = 0.D0
       Wtot = 0.0
