@@ -86,6 +86,9 @@ New developments of the AlTay should adhere to code standarts defined below.
 ### Naming conventions ###
 
 - Naming convention for various elements of the code should follow the rules:
+    * **files**: unless a good motivation is provided, any source file should
+        be named after the module that is implemented within. Example: if the
+        module is named `altayTK`, the file should be named `altayTK.f90`.
 	* **modules**: use a prefix which is a lowercase name of the library
 	  (or its abbreviation, or another name that is distinct enough) where the
 	  module belongs to.
