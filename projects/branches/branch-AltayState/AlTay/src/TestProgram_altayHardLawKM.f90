@@ -15,8 +15,6 @@
     !> Number of slip systems
     integer, parameter                :: nss= 12
     integer                           :: info= 0, i= 0
-    logical                           :: WriteHeader= .false.
-    logical                           :: WriteValues= .false.
     double precision                  :: delta_T= 0.0
     double precision, dimension(nss)  :: SlipRate= 0.0
     type(CRSSData)                    :: crss
@@ -49,9 +47,8 @@
     ! 3. Opening an output text file, to write to it an output recording of 
     !    CurState (predeced by a header). 
     open(unit=iOutFile,file='out.txt',status='replace',iostat=info)
-    WriteHeader= .true.
-    WriteValues= .true.
-    info = KMStateVariables_write(CurState, iOutFile, WriteHeader, WriteValues)
+    info = KMStateVariables_write(CurState, iOutFile, header=.true., &
+                                  value=.true.)
     if (info /= 0) then
         write(*,*)"Error writing output. Error code:", info
         pause
@@ -86,10 +83,8 @@
         OldState= NewState
         !Output the state variable set after each increment 
         write(iOutFile,*) "After inc ", i
-        WriteHeader= .false.
-        WriteValues= .true.
-        info = KMStateVariables_write(CurState, iOutFile, WriteHeader, &
-                                      WriteValues) 
+        info = KMStateVariables_write(CurState, iOutFile, header=.false., &
+                                      value=.true.) 
         if (info /= 0) then
             write(*,*)"Error writing output. Error code:", info
             pause
@@ -130,10 +125,8 @@
         pause
         stop
     endif   
-    WriteHeader= .true.
-    WriteValues= .true.
     info = KMStateDerivedVariables_write(CurStateDerivedVars, iOutFile, &
-                                         WriteHeader, WriteValues)
+                                         header=.true., value=.true.)
     if (info /= 0) then
         write(*,*)"Error writing output. Error code:", info
         pause
