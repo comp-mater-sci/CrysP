@@ -1,0 +1,79 @@
+#
+# $Id$
+#
+#### Selection of toolset
+## Note that only one toolset can be used 
+######################################################################
+#### Toolset:
+# Intel toolset
+#
+# Intel Fortran compiler
+FC=ifort
+#
+# Intel library manager 
+AR=xiar
+#
+# Documentation generator
+DOXYGEN=doxygen
+#
+######################################################################
+# 
+# ROOTDIR = root of the repository
+ifndef ROOTDIR
+ROOTDIR=../../../..
+endif
+
+ifndef
+TOOLSDIR=$(ROOTDIR)/code/trunk/build-tools/
+endif
+
+# Use per-host configuration plugin
+include $(TOOLSDIR)/Makefile.host
+$(info Configuration for $(BUILDHOST))
+include $(TOOLSDIR)/Makefile.knownhosts
+include $(TOOLSDIR)/Makefile.utils
+#
+######################################################################
+
+FCFLAGS=-fpp -module $(INCLUDEDIR) -standard-semantics
+
+ifdef DEBUG
+ConfigurationName=debug
+LIBDIR=debug
+DEBUGFLAGS= -O0 -g -debug full -check all
+FCFLAGS+= $(DEBUGFLAGS)
+TRANSCONFIG=DEBUG=1
+else
+ConfigurationName=release
+LIBDIR=release
+# NOTE: -fast is considered harmful. It has long and infamous tradition
+# of spoiling the libalamel/libaltay...
+OPTFLAGS=-O3 -no-ipo # -fast
+FCFLAGS+= $(OPTFLAGS)
+endif
+#
+######################################################################
+OBJDIR=$(ConfigurationName)/obj
+INCLUDEDIR=$(ConfigurationName)/include
+
+## Dependencies:
+LIBALTAYDIR=$(ROOTDIR)/MTM/branches/AlTaySub/$(ConfigurationName)/lib
+LIBALTAYPATH=$(LIBALTAYDIR)/libaltay.a
+FCFLAGS+= -I$(LIBALTAYDIR)/include
+FLDFLAGS+= $(LIBALTAYPATH)
+
+FNGROOTDIR=$(ROOTDIR)/code/trunk/tools/fng
+LIBFNGDIR=$(FNGROOTDIR)/$(ConfigurationName)/lib
+FNGCRIINCLUDE= -I$(FNGROOTDIR)/projects/libfngCRI/$(ConfigurationName)/include
+FCFLAGS+=$(FNGCRIINCLUDE)
+FLDFLAGS+= -openmp -L$(LIBFNGDIR) -lfngCRI
+
+LIBOPTROOT=$(FNGROOTDIR)/utils/optlib
+LIBOPTDIR=$(LIBOPTROOT)/$(ConfigurationName)
+FCFLAGS+= -I$(LIBOPTDIR)/include
+
+# Name of the library
+LIBOPTNAME=libopt.a
+LIBOPTPATH=$(LIBOPTDIR)/$(LIBOPTNAME)
+FLDFLAGS+= $(LIBOPTPATH)
+
