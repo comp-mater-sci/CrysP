@@ -1,8 +1,8 @@
-# $Id: CMakeLists.txt -1   $
+# $Id$
 #
 cmake_minimum_required(VERSION 2.8)
 
-project(libfopt Fortran)
+project(fopt Fortran)
 
 # Put the module files in a common directory, so other components 
 # of this project can find them.
@@ -24,6 +24,28 @@ add_library(fopt STATIC ${LIBSRC})
 #
 # Installation of the outputs in the build tree
 #
-install(TARGETS fopt DESTINATION "lib")
+set(fopt_INCLUDE_DIR "include") # Just one directory needed in the package
+set(fopt_LIBRARY_DIR "lib")
+
+# Note: Static libraries are always treated as ARCHIVE targets.
+install(TARGETS fopt
+  EXPORT "foptTargets"
+  LIBRARY DESTINATION  ${fopt_LIBRARY_DIR}
+  ARCHIVE DESTINATION  ${fopt_LIBRARY_DIR}
+  INCLUDES DESTINATION ${fopt_INCLUDE_DIR}
+)
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")
+install(EXPORT "foptTargets" DESTINATION "cmake")
+
+# Generate package
+include(CMakePackageConfigHelpers)
+configure_package_config_file("../foptConfig.cmake.in" "foptConfig.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}
+	PATH_VARS fopt_INCLUDE_DIR fopt_LIBRARY_DIR
+	)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/foptConfig.cmake" DESTINATION ".")
+
+# Export the package
+export(PACKAGE fopt)
+
 
