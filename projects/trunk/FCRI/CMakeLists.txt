@@ -1,25 +1,16 @@
-# $Id: CMakeLists.txt 1658 2014-01-31 23:24:53Z jgawad $
+# $Id$
 #
 cmake_minimum_required(VERSION 2.8)
 
 project(FCRI Fortran)
 
+# Load typical initialization code. It sets a collection of variables.
 set(COMMON_DIR "../build/cmake-common")
-
-include("${COMMON_DIR}/basic.cmake")
-include("${COMMON_DIR}/xiar.cmake")
-include("${COMMON_DIR}/utilities.cmake")
-# Provides lists: Fortran_FLAGS, Fortran_FLAGS_DEBUG, Fortran_FLAGS_RELEASE
-include("${COMMON_DIR}/fortran-generic.cmake")
+include("${COMMON_DIR}/basic-fortran-project.cmake")
 
 include_directories("include")
-
-set(FCRI_ROOT_DIR "${CMAKE_BINARY_DIR}/..")
-set(CMAKE_INSTALL_PREFIX "${FCRI_ROOT_DIR}")
-set(FCRI_CMAKE_DIR "${CMAKE_INSTALL_PREFIX}/cmake")
 
 add_subdirectory(src)
 
 add_subdirectory(src-test)
-
 
