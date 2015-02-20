@@ -49,7 +49,34 @@ set_target_properties(${CRI_MT} PROPERTIES COMPILE_FLAGS "-parallel -openmp")
 #
 # Installation of the outputs in the build tree
 #
-install(TARGETS ${CRI} ${CRI_MT} DESTINATION "lib")
+
+set(FCRI_INCLUDE_DIRS "include" "include/fcri")
+set(FCRI_INCLUDE_DIR "include") # Just one directory needed in the package
+set(FCRI_LIBRARY_DIR "lib")
+
+# Note: Static libraries are always treated as ARCHIVE targets.
+install(TARGETS ${CRI} ${CRI_MT}
+  EXPORT "FCRITargets"
+  LIBRARY DESTINATION  ${FCRI_LIBRARY_DIR}
+  ARCHIVE DESTINATION  ${FCRI_LIBRARY_DIR}
+  INCLUDES DESTINATION ${FCRI_INCLUDE_DIRS}
+)
+
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/" DESTINATION "include/fcri" 
+	FILES_MATCHING PATTERN "*.fpp" PATTERN ".*" EXCLUDE)
+
+install(EXPORT "FCRITargets" DESTINATION "cmake")
+
+# Generate package
+include(CMakePackageConfigHelpers)
+configure_package_config_file("../FCRIConfig.cmake.in" "FCRIConfig.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}
+	PATH_VARS FCRI_INCLUDE_DIR FCRI_LIBRARY_DIR
+	)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/FCRIConfig.cmake" DESTINATION ".")
+
+# Export the package
+export(PACKAGE FCRI)
 
 

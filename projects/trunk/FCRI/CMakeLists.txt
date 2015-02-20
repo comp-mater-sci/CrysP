@@ -16,8 +16,10 @@ include_directories("include")
 
 set(FCRI_ROOT_DIR "${CMAKE_BINARY_DIR}/..")
 set(CMAKE_INSTALL_PREFIX "${FCRI_ROOT_DIR}")
+set(FCRI_CMAKE_DIR "${CMAKE_INSTALL_PREFIX}/cmake")
 
 add_subdirectory(src)
 
 add_subdirectory(src-test)
+
 
