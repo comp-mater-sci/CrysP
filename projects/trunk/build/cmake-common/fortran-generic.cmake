@@ -15,3 +15,6 @@ set(Fortran_FLAGS_DEBUG -g -O0 -check all -ftrapuv "-debug all" "-debug-paramete
 
 set(Fortran_FLAGS_RELEASE -O3 -xHost -no-prec-div)
 
+# Prevent -i_dynamic from being appended to linker flags
+set(CMAKE_SHARED_LIBRARY_LINK_Fortran_FLAGS "")
+
