@@ -25,7 +25,7 @@ DOXYGEN=doxygen
 
 INFOFILE=build-info.md
 
-CMAKELISTS=CMakeLists.txt src/CMakeLists.txt
+CMAKELISTS ?= CMakeLists.txt src/CMakeLists.txt
 
 .PHONY : all clean mrproper info doc
 
