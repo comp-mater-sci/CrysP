@@ -1,23 +1,22 @@
-# $Id: CMakeLists.txt 1658 2014-01-31 23:24:53Z jgawad $
+# $Id$
 #
 cmake_minimum_required(VERSION 2.8)
 
-project(AlTay Fortran)
+project(altay Fortran)
 
+# Load typical initialization code. It sets a collection of variables.
 set(COMMON_DIR "../build/cmake-common")
-
-include("${COMMON_DIR}/basic.cmake")
-include("${COMMON_DIR}/xiar.cmake")
-include("${COMMON_DIR}/utilities.cmake")
-# Provides lists: Fortran_FLAGS, Fortran_FLAGS_DEBUG, Fortran_FLAGS_RELEASE
-include("${COMMON_DIR}/fortran-generic.cmake")
-
-set(altay_ROOT_DIR "${CMAKE_BINARY_DIR}/..")
-set(CMAKE_INSTALL_PREFIX "${altay_ROOT_DIR}")
+include("${COMMON_DIR}/basic-fortran-project.cmake")
 
 include_directories("include")
 
+#
+# Dependencies
+#
+set(FCRI_DIR "../FCRI/${CMAKE_BUILD_TYPE}")
+find_package(FCRI REQUIRED)
+include_directories(${FCRI_INCLUDE_DIR})
+
 add_subdirectory(src)
 
-# add_subdirectory(src-test)
 
