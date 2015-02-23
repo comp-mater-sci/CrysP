@@ -56,7 +56,7 @@ FCFLAGS += -module $(INCLUDEDIR) -gen-interfaces
 #
 VUMAT_ROOTDIR=$(HOME)/jgprojects/TWRMTMProject/code/trunk/vumat
 FNG_COREDIR=$(VUMAT_ROOTDIR)/fng/projects/libfngCore
-FNG_CRIDIR=$(VUMAT_ROOTDIR)/fng/projects/libfngCore
+FNG_CRIDIR=$(VUMAT_ROOTDIR)/fng/projects/libfngCRI/$(Configuration)_abaqus
 VUMAT_DIR=$(VUMAT_ROOTDIR)/$(Configuration)$(ABAQUS_VERSION)
 FCFLAGS += \
  -I$(VUMAT_DIR)/include \
