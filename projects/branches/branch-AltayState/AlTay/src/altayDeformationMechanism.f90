@@ -35,36 +35,51 @@ private
         
         character(len=DM_title_length)      :: description = ''
         
+        !> Number of slip systems.
         integer                             :: n_slip_systems = 0
         
+        !> Number of twinning systems.
         integer                             :: n_twinning_systems = 0
         
+        !> Number of deformation systems, comprising slip and twinning systems.
         integer                             :: n_systems = 0
         
+        !> Indices of a set of DM_dev_dims independent deformation systems. 
+        !> This is a suitable starting set in the linear problem solving.
         integer,dimension(DM_dev_dims)      :: DI = 0
         
+        !> Inverse matrix of the sub-matrix of A1 consisting of the DI deformation systems.
+        !> This matrix is expected to be useful at start of linear problem solving (i.e. when
+        !> starting set DI is considered). Having this component within this derived type might 
+        !> be considered obsolete, as it can be readily derived from DI and A1 when required. 
         double precision,dimension(DM_dev_dims,DM_dev_dims) :: B = 0.D0
         
-        !>
+        !> Matrix with columns of the vector-formatted (symmetric) Schmid tensor
+        !> for all deformation systems.
         !> Shape is [DM_dev_dims x n_systems]
         double precision,dimension(:,:),allocatable :: A1
         
-        !>
-        !>
+        !> Matrix with columns of the vector-formatted 'anti-symmetric Schmid tensor'
+        !> for all deformation systems.
         !> Shape is [DM_dir_dims x n_systems]
         double precision,dimension(:,:),allocatable :: B1
         
         !> Relevant only for twinning.
-        !>
+        !> Matrix with columns of the vector-formatted components of a 2nd-ranked tensor
+        !> involved in calculation of twin crystal orientation, for all the twinning systems.
+        !> Note: the columns of this variable depend only on plane normal of the respective 
+        !>    twinning system. Should the twin plane normal be included in the 
+        !>    DeformationMechanismData type, it can readily replace functionality of this 
+        !>    component, thereby rendering this one obsolete.
         !> Shape is [DM_twin_dims x n_twinning_systems]
         double precision,dimension(:,:),allocatable :: B2
         
         !> Relevant only for twinning.
-        !>
+        !> Twinning shear for all twinning systems.
         !> Shape is [n_twinning_systems]
         double precision,dimension(:),allocatable :: G
         
-        !>
+        !> (Redundant/inappropriate component for DeformationMechanismData type)
         !> Shape is [2*DM_dev_dims x 2*n_systems]
         double precision,dimension(:,:),allocatable :: A2
         
