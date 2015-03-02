@@ -32,7 +32,7 @@ C
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,
      1ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON/TLR2/ TRC(3,3),RHOAsa
+      COMMON/TLR2/ RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),
      1 SWRLX(3)
@@ -137,7 +137,6 @@ CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then                                         
       WRITE (IMP,203)
       end if     
-      TRC=MacroDefRate%Spin
       do I=1,3                                                       
           if(NLIST.eq.1) then                                   
               WRITE (IMP,204) (MacroDefRate%VelGrad(I,J),J=1,3),
@@ -227,7 +226,7 @@ C 1235 format (' Just after Pancak2')
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,
      1ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON/TLR2/ RC(3,3),RHOAsa
+      COMMON/TLR2/ RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       COMMON /EULERA/ fi1,PHI,fi2
       logical SWRLX
@@ -246,7 +245,7 @@ C     Ssam:        local stress in sample reference system
 C
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),
      1 SWRLX(3)
-      DIMENSION RCcryst(3,3),rhossaTot(3,3)
+      DIMENSION RCC(3,3),RCcryst(3,3),rhossaTot(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
       dimension RHOAsa(3,3),GAMdot(96)
       real, dimension(3,3) :: test !!single precision!!
@@ -306,7 +305,7 @@ c  51  continue
 CEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 C
       !Calculate RCcryst: the rigid body spin in the crystal frame 
-      RCcryst = rotateSRTensorFrom(RC,TRF)
+      RCcryst = rotateSRTensorFrom(MacroDefRate%Spin,TRF)
       
    71   TRC(1)=RCcryst(3,2)+RHOAsa(3,2)
         TRC(2)=RCcryst(1,3)+RHOAsa(1,3)
@@ -404,7 +403,7 @@ C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
       GOTO 31                                                           
   87  DO 88 K=1,3                                                       
       DO 89 J=1,3                                                       
-  89   RC(K,J)=C2(K,J)                                                  
+  89  RCC(K,J)=C2(K,J)                                                  
   88  CONTINUE                                                          
       TDC(1,1)=B2(1,I)                                                  
       X=B2(2,I)                                                         
@@ -418,7 +417,7 @@ C     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
       TDC(3,2)=X                                                        
       TDC(2,3)=X                                                        
       TDC(3,3)=B2(6,I)                                                  
-      C2 = matmul(TDC,RC) 
+      C2 = matmul(TDC,RCC) 
       ITW=I
       Euler= EuleranglesType(C2)
       fi1=Euler%fi1 !
