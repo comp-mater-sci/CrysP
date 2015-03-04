@@ -56,6 +56,10 @@
 !
 #endif
 
+#if __INTEL_COMPILER >= 1310
+! Multi-module OOP bug is fixed
+#define IFORT_OOP_FLAW_FIXED
+#endif
 !
 ! Macro definitions derived from the speculations on the 
 ! compiler's capabilities
