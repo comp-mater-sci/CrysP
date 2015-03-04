@@ -88,8 +88,6 @@ install(TARGETS ${libaltay}
 )
 
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/" DESTINATION "include/fcri" 
-	FILES_MATCHING PATTERN "*.fpp" PATTERN ".*" EXCLUDE)
 
 install(EXPORT "altayTargets" DESTINATION "cmake")
 
