@@ -558,6 +558,7 @@
           if (sol_resnorm > sol_full_resnorm) then
             write(*,*) 'Picking the solution from the new algorithm.'
             sol = sol_full
+            call setBBC2008Params(sol)
           endif
         endif
       endif
