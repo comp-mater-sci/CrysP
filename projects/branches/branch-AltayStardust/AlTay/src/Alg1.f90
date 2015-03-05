@@ -247,7 +247,7 @@
        SWRLX(3)
       DIMENSION RCC(3,3),RCcryst(3,3),rhossaTot(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
-      dimension RHOAsa(3,3),GAMdot(96)
+      dimension RHOAsa(3,3),RHOAcrys(3,3),GAMdot(96)
       real, dimension(3,3) :: test !!single precision!!
 !      data SQR2/0.7071067811865476D+00/
 #ifdef PEBP_ENABLED      
@@ -306,10 +306,10 @@
 !
       !Calculate RCcryst: the rigid body spin in the crystal frame 
       RCcryst = rotateSRTensorFrom(MacroDefRate%Spin,TRF)
-      
-   71   TRC(1)=RCcryst(3,2)+RHOAsa(3,2)
-        TRC(2)=RCcryst(1,3)+RHOAsa(1,3)
-        TRC(3)=RCcryst(2,1)+RHOAsa(2,1)
+      RHOAcrys = rotateSRTensorFrom(RHOAsa,TRF)
+   71   TRC(1)=RCcryst(3,2)+RHOAcrys(3,2)
+        TRC(2)=RCcryst(1,3)+RHOAcrys(1,3)
+        TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
       WorkRate=0.0
       do i=1,M11 
           if (GAMdot(i).GT.0.0) then
