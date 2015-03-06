@@ -88,9 +88,9 @@ def readBBC2008params(inp):
         out[k] = v
     params = out['params'] = []
     labels = out['labels'] = []
-    for _ in xrange(out['s']*8):
+    for _ in xrange(int(out['s'])*8):
         k,v = [x.strip() for x in inp.readline().split(':')]
-        params.append(v)
+        params.append(float(v))
         labels.append(k)
     return out
 
@@ -238,7 +238,6 @@ def main(args):
 if __name__ == '__main__':
     import argparse
     import sys
-    
     if sys.platform in ['win32','win64']:
         alamdmc_prog = 'alamDMC.exe'
     else:
@@ -269,7 +268,8 @@ if __name__ == '__main__':
         parser_template_args.add_argument('--structure',choices=['F','B'],default='F')
         parser_template_args.add_argument('--steps',default=1,type=int)
         #        
-        main(parser.parse_args())
+        args = parser.parse_args() 
+        main(args)
 
         exitcode = 0
 
@@ -278,6 +278,8 @@ if __name__ == '__main__':
 
     except Exception as e:
         print('Unhandled exception: ' + str(e))
+        # print dir(e)
+        # print str(e.child_traceback)
 
     finally:
         sys.exit(exitcode)
