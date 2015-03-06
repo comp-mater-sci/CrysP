@@ -244,6 +244,11 @@
       !> The crystal lattice spin expressed in the crystal frame
       double precision, dimension(3,3) :: LatticeSpin_crys
       !
+      !> Symmetric part of the relaxation rate tensor in sample frame; non-normalized
+      double precision, dimension(3,3) :: RHOSsaNN(3,3)
+      !> Anti-symmetric part of the relaxation rate tensor in sample frame; non-normalized
+      double precision, dimension(3,3) :: RHOAsaNN(3,3)
+      !
 !     SHsam:    macroscopic stress in sample reference system
 !     SH:   macroscopic stress in crystal reference system
 !     SPANH: macroscopic stress in crystal reference system
@@ -251,7 +256,7 @@
 !
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
        SWRLX(3)
-      DIMENSION RCC(3,3),rhossaTot(3,3)
+      DIMENSION RCC(3,3)
       DIMENSION VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
       dimension RHOAsa(3,3),RHOAcrys(3,3),GAMdot(96)
       real, dimension(3,3) :: test !!single precision!!
@@ -363,7 +368,7 @@
       !
       RHOAcrys = rotateSRTensorFrom(RHOAsa,TRF)
       !
-      LatticeSpin_crys = MacroSpin_crys - PlasticSpin_crys + RHOAcrys
+      LatticeSpin_crys = MacroSpin_crys - PlasticSpin_crys + RHOAcrys * MacroDefRate%vMeqStrainRate 
       !   Note: in ALAMEL-paper (IJP '05), one term has opposite sign: 
       !   LatticeSpin_crys = MacroSpin_crys - PlasticSpin_crys - "RelaxationSpin_crys"
       !
@@ -438,13 +443,14 @@
       ! TAU: Reference-CRSS.
       ! Taylor Factor of the grain:
       Mgrain = TOTGAMdot / MacroDefRate%vMeqStrainRate
-      ! Total, i.e. non-normalized, rhossa:
-      rhossaTot = rhossa * MacroDefRate%vMeqStrainRate
+      ! Non-normalize the RHOSsa and RHOAsa
+      RHOSsaNN = RHOSsa * MacroDefRate%vMeqStrainRate
+      RHOAsaNN = RHOAsa * MacroDefRate%vMeqStrainRate
       !
       write (IMP2,150) ior,Seq,WorkRate,TAU,Mgrain,ratlon,               &
-       rhossaTot(1,1),rhossaTot(2,2),rhossaTot(3,3),                     &
-       rhossaTot(2,3),rhossaTot(3,1),rhossaTot(1,2),                     &
-       rhoasa(2,3),rhoasa(3,1),rhoasa(1,2),                              &
+       RHOSsaNN(1,1),RHOSsaNN(2,2),RHOSsaNN(3,3),                        &
+       RHOSsaNN(2,3),RHOSsaNN(3,1),RHOSsaNN(1,2),                        &
+       RHOAsaNN(2,3),RHOAsaNN(3,1),RHOAsaNN(1,2),                        &
        ssam(1,1),ssam(2,2),ssam(3,3),ssam(2,3),ssam(3,1),ssam(1,2)
   150 format(i5,5(E12.5,1X),5x,6(E12.5,1X),5x,3(E12.5,1X),               &
              5x,6(E12.5,1X))

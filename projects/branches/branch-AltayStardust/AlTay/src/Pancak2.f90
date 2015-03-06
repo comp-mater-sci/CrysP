@@ -421,7 +421,7 @@
  201  continue
       S33 = Vec5ToSymMat33(spanv) 
       RHOS33 = Vec5ToSymMat33(RHOS)   
-      RHOA33 = Vec3ToAntiSymMat33(RHOA(1:3)) * sqr2 * MacroDefRate%vMeqStrainRate
+      RHOA33 = Vec3ToAntiSymMat33(RHOA(1:3)) * sqr2
 !
       if (IPR.EQ.2 .AND. NLIST.eq.1) then 
         WR=0.0
