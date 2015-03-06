@@ -140,10 +140,8 @@
       do 83 i=1,3
       RLS(i,j,IRL,IL)=(C3(I,J)+C3(J,I))*0.5D0
       RLA(i,j)=(C3(I,J)-C3(J,I))*0.5D0
-  83  continue
-      B3(L1+1,IRL)=PLUMIN(IL,IRL)*RLA(2,3)/sqr2
-      B3(L1+2,IRL)=PLUMIN(IL,IRL)*RLA(3,1)/sqr2
-      B3(L1+3,IRL)=PLUMIN(IL,IRL)*RLA(1,2)/sqr2
+83    continue
+      B3(L1+1:L1+3,IRL) = PLUMIN(IL,IRL) * AntiSymMat33ToVec3(RLA) / sqr2 
       B5= Vector5D(RLS(1:3,1:3,IRL,IL)) ! sym.(3,3) -> (5)
 !     Insert the relaxations as columns in A1-matrix
       j=M2+IRL
@@ -424,13 +422,7 @@
       S33=    SymMatrix(spanv) ! (5) -> sym.(3,3)
       RHOS33= SymMatrix(RHOS)  ! (5) -> sym.(3,3) 
       !Conversion of RHOA to dim(3,3)
-      RHOA33=0.0d0
-      RHOA33(2,3)= RHOA(1)*sqr2*MacroDefRate%vMeqStrainRate
-      RHOA33(3,1)= RHOA(2)*sqr2*MacroDefRate%vMeqStrainRate
-      RHOA33(1,2)= RHOA(3)*sqr2*MacroDefRate%vMeqStrainRate
-      RHOA33(3,2)= -RHOA33(2,3)
-      RHOA33(1,3)= -RHOA33(3,1)
-      RHOA33(2,1)= -RHOA33(1,2)
+      RHOA33 = Vec3ToAntiSymMat33(RHOA(1:3)) * sqr2 * MacroDefRate%vMeqStrainRate
 !
       if (IPR.EQ.2 .AND. NLIST.eq.1) then 
         WR=0.0
