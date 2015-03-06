@@ -482,7 +482,60 @@ contains
       !
       end function
 
-              
+
+      !> The function converts a 5D-vector in deviatoric (stress/strain-rate) space
+      !> to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
+      !>
+      !> There is a reverse conversion available. \sa 
+      pure function Vec5ToSymMat33(vec) result(mat)
+      implicit none
+      double precision, dimension(5),  intent(in) :: vec
+      double precision, dimension(3,3)            :: mat
+      double precision, parameter ::           &
+          sq22=   sqrt(0.5d0),                 & !0.7071068
+          const3= (sqrt(3.0d0)+3.0d0)/6.0d0,   & !0.7886751
+          const4= (3.0d0-sqrt(3.0d0))/6.0d0      !0.2113249          
+      !
+            mat(2,2)=  const3*vec(1)-const4*vec(2)
+            mat(3,3)= -const4*vec(1)+const3*vec(2)
+            !
+            mat(1,1)= -mat(2,2)-mat(3,3)
+            !
+            mat(2,3)= sq22*vec(3)
+            mat(3,1)= sq22*vec(4)
+            mat(1,2)= sq22*vec(5)
+            !
+            mat(3,2)= mat(2,3)   
+            mat(1,3)= mat(3,1)       
+            mat(2,1)= mat(1,2)       
+      !      
+      end function Vec5ToSymMat33
+
+    
+      !> The function converts a (3,3)-matrix representation of a traceless 2nd rank tensor
+      !> to 5D-vector representation in deviatoric (stress/strain-rate) space.
+      !> Only the symmetric part of 2nd rank tensor is transformed.
+      !>
+      !> There is a reverse conversion available. \sa 
+      pure function SymMat33ToVec5(mat) result(vec)
+      implicit none
+      double precision, dimension(3,3), intent(in) :: mat
+      double precision, dimension(5)               :: vec
+      double precision, parameter ::           &
+          c1= 0.5d0*(sqrt(3.0d0)+1.0d0),       &
+          c2= c1-1.0d0,                        &
+          c3= sqrt(0.5d0)
+      !
+            vec(1)= c1*mat(2,2) + c2*mat(3,3)
+            vec(2)= c2*mat(2,2) + c1*mat(3,3)
+            !
+            vec(3)= c3* (mat(2,3)+mat(3,2))
+            vec(4)= c3* (mat(3,1)+mat(1,3))
+            vec(5)= c3* (mat(1,2)+mat(2,1))
+      !      
+    end function SymMat33ToVec5
+
+    
       !> The function converts the vector with dimension 3 into the 
       !>  anti-symmetric rank-two tensor.
       !>

@@ -17,57 +17,7 @@
       CIJ = matmul(matmul(transpose(Finv),CIJ),Finv)
       !
       end subroutine
-      !
-      !> Transform a 5D-vector in deviatoric (stress/strain-rate) space
-      !> to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
-      !> Note: The reverse transformation is done by function 'Vector5D'.
-      function SymMatrix(vec)
-      implicit none
-      double precision, dimension(5),  intent(in) :: vec
-      double precision, dimension(3,3)            :: SymMatrix !out
-      double precision, parameter ::                                     &
-            sq22=   sqrt(0.5d0),                                         & !0.7071068
-            const3= (sqrt(3.0d0)+3.0d0)/6.0d0,                           & !0.7886751
-            const4= (3.0d0-sqrt(3.0d0))/6.0d0  !0.2113249          
-      !
-      SymMatrix(2,2)=  const3*vec(1)-const4*vec(2)
-      SymMatrix(3,3)= -const4*vec(1)+const3*vec(2)
-      !
-      SymMatrix(1,1)= -SymMatrix(2,2)-SymMatrix(3,3)
-      !
-      SymMatrix(2,3)= sq22*vec(3)
-      SymMatrix(3,1)= sq22*vec(4)
-      SymMatrix(1,2)= sq22*vec(5)
-      !
-      SymMatrix(3,2)= SymMatrix(2,3)   
-      SymMatrix(1,3)= SymMatrix(3,1)       
-      SymMatrix(2,1)= SymMatrix(1,2)       
-      !      
-      end function SymMatrix
-      !
-      !> Transform a (3,3)-matrix representation of a traceless 2nd rank tensor
-      !> to 5D-vector representation in deviatoric (stress/strain-rate) space.
-      !> Notes:
-      !>    - Only the symmetric part of 2nd rank tensor is transformed.
-      !>    - The reverse transformation is done by function 'SymMatrix'.
-      function Vector5D(mat)
-      implicit none
-      double precision, dimension(3,3), intent(in) :: mat
-      double precision, dimension(5)               :: Vector5D !out
-      double precision, parameter ::                                     &
-            c1= 0.5d0*(sqrt(3.0d0)+1.0d0),                               &
-            c2= c1-1.0d0,                                                &
-            c3= sqrt(0.5d0)
-      !
-      Vector5D(1)= c1*mat(2,2) + c2*mat(3,3)
-      Vector5D(2)= c2*mat(2,2) + c1*mat(3,3)
-      !
-      Vector5D(3)= c3* (mat(2,3)+mat(3,2))
-      Vector5D(4)= c3* (mat(3,1)+mat(1,3))
-      Vector5D(5)= c3* (mat(1,2)+mat(2,1))
-      !      
-      end function Vector5D
-      
+
       Subroutine Transf(Gaxes,Aprime,T)
       IMPLICIT double precision (A-H,O-Z)
 !

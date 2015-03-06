@@ -142,7 +142,7 @@
       RLA(i,j)=(C3(I,J)-C3(J,I))*0.5D0
 83    continue
       B3(L1+1:L1+3,IRL) = PLUMIN(IL,IRL) * AntiSymMat33ToVec3(RLA) / sqr2 
-      B5= Vector5D(RLS(1:3,1:3,IRL,IL)) ! sym.(3,3) -> (5)
+      B5= SymMat33ToVec5(RLS(1:3,1:3,IRL,IL)) ! sym.(3,3) -> (5)
 !     Insert the relaxations as columns in A1-matrix
       j=M2+IRL
       do 84 i=1,5
@@ -157,7 +157,7 @@
       TDCb(I,J,IL)=(C2(I,J)+C2(J,I))*0.5D0
   81  TRCb(I,J,IL)=(C2(I,J)-C2(J,I))*0.5D0
   80  CONTINUE                                                          
-      B5= Vector5D(TDCb(1:3,1:3,IL)) ! sym.(3,3) -> (5)
+      B5= SymMat33ToVec5(TDCb(1:3,1:3,IL)) ! sym.(3,3) -> (5)
       do 30 i=1,5
       j=i+L1
       BB(j)=B5(i)
@@ -419,9 +419,8 @@
       RHOS(i)=-x8
       RHOA(i)=-y8
  201  continue
-      S33=    SymMatrix(spanv) ! (5) -> sym.(3,3)
-      RHOS33= SymMatrix(RHOS)  ! (5) -> sym.(3,3) 
-      !Conversion of RHOA to dim(3,3)
+      S33 = Vec5ToSymMat33(spanv) 
+      RHOS33 = Vec5ToSymMat33(RHOS)   
       RHOA33 = Vec3ToAntiSymMat33(RHOA(1:3)) * sqr2 * MacroDefRate%vMeqStrainRate
 !
       if (IPR.EQ.2 .AND. NLIST.eq.1) then 
