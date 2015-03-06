@@ -482,6 +482,48 @@ contains
       !
       end function
 
+              
+      !> The function converts the vector with dimension 3 into the 
+      !>  anti-symmetric rank-two tensor.
+      !>
+      !> There is a reverse conversion available. \sa AntiSymMat33ToVec3
+      pure function Vec3ToAntiSymMat33(vec) result(mat)
+      implicit none
+      double precision,dimension(3),intent(in)  :: vec
+      double precision,dimension(3,3)           :: mat
+      !
+      double precision, parameter :: minus = -1.0d0
+      !
+            mat = 0.0d0
+            mat(3,2) = vec(1)
+            mat(1,3) = vec(2)
+            mat(2,1) = vec(3)
+            mat(2,3) = minus * mat(3,2)
+            mat(3,1) = minus * mat(1,3)
+            mat(1,2) = minus * mat(2,1)
+      !
+      end function
+
+      
+      !> The function converts the anti-symmetric part of rank-two tensor into
+      !> vector representation with dimension 3. 
+      !>
+      !> There is a reverse conversion available. \sa Vec3ToAntiSymMat33
+      pure function AntiSymMat33ToVec3(mat) result(vec)
+      implicit none
+      double precision,dimension(3,3),intent(in)      :: mat
+      double precision,dimension(3)                   :: vec
+      !
+      double precision, parameter :: half = 0.5d0
+      !
+            vec(1) = half * (mat(3,2)-mat(2,3))
+            vec(2) = half * (mat(1,3)-mat(3,1))
+            vec(3) = half * (mat(2,1)-mat(1,2))
+            !note: same convention in PRETAY; e.g.: "B1(1,IS)=(R(3)*V(2)-R(2)*V(3))/2."
+      !
+    end function
+
+    
       !
       ! Some operations on double_pair
       !

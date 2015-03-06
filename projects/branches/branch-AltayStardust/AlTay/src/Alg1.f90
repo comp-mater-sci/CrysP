@@ -3,7 +3,7 @@
 #endif
       module altayTaylor
       use altayAlgorithms
-      use altayMiscutils, only: terminate, stopcode_runtimeerror
+      use altayMiscutils, only: terminate, stopcode_runtimeerror, unitMatrix
       use altayMacroKinematic
       use criMathUtils
       integer,parameter,private :: N = 5, N1 = N + 1 
@@ -237,7 +237,13 @@
       double precision, intent(out) :: WorkRate
       double precision :: Mgrain
       type(EulerAngles):: Euler
-!
+      !> The plastic spin expressed in the crystal lattice frame
+      double precision, dimension(3,3) :: PlasticSpin_crys
+      !> The macroscopic (i.e. imposed) rigid body spin expressed in the crystal frame
+      double precision, dimension(3,3) :: MacroSpin_crys
+      !> The crystal lattice spin expressed in the crystal frame
+      double precision, dimension(3,3) :: LatticeSpin_crys
+      !
 !     SHsam:    macroscopic stress in sample reference system
 !     SH:   macroscopic stress in crystal reference system
 !     SPANH: macroscopic stress in crystal reference system
@@ -245,8 +251,8 @@
 !
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
        SWRLX(3)
-      DIMENSION RCC(3,3),RCcryst(3,3),rhossaTot(3,3)
-      DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
+      DIMENSION RCC(3,3),rhossaTot(3,3)
+      DIMENSION VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
       dimension RHOAsa(3,3),RHOAcrys(3,3),GAMdot(96)
       real, dimension(3,3) :: test !!single precision!!
 !      data SQR2/0.7071067811865476D+00/
@@ -303,13 +309,6 @@
 !      return
 !  51  continue
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-!
-      !Calculate RCcryst: the rigid body spin in the crystal frame 
-      RCcryst = rotateSRTensorFrom(MacroDefRate%Spin,TRF)
-      RHOAcrys = rotateSRTensorFrom(RHOAsa,TRF)
-   71   TRC(1)=RCcryst(3,2)+RHOAcrys(3,2)
-        TRC(2)=RCcryst(1,3)+RHOAcrys(1,3)
-        TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
       WorkRate=0.0
       do i=1,M11 
           if (GAMdot(i).GT.0.0) then
@@ -347,7 +346,7 @@
        '  SLIP RATES',/,(T2,10F10.5))
   90  CONTINUE                                                          
   202 ROT = matmul(B1,GAMdot)
-
+      PlasticSpin_crys = Vec3ToAntiSymMat33(ROT)
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 !      IF (IGLIJ.NE.0) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -358,15 +357,21 @@
   305 FORMAT (' ROTATIONS',3F12.6)
 !      DO 58 K=1,M                                                       
 !      X=ABS(GAMdot(K))
-!  58  CONTINUE                                                          
-      DO 75 J=1,3
-  75  C1(J,J)=1.D0                                                      
-      C1(3,2)=ROT(1)-TRC(1)                                             
-      C1(1,3)=ROT(2)-TRC(2)                                             
-      C1(2,1)=ROT(3)-TRC(3)                                         
-      C1(2,3)=-C1(3,2)                                                  
-      C1(3,1)=-C1(1,3)                                                  
-      C1(1,2)=-C1(2,1)                                                  
+!  58  CONTINUE 
+      !
+      MacroSpin_crys = rotateSRTensorFrom(MacroDefRate%Spin,TRF)
+      !
+      RHOAcrys = rotateSRTensorFrom(RHOAsa,TRF)
+      !
+      LatticeSpin_crys = MacroSpin_crys - PlasticSpin_crys + RHOAcrys
+      !   Note: in ALAMEL-paper (IJP '05), one term has opposite sign: 
+      !   LatticeSpin_crys = MacroSpin_crys - PlasticSpin_crys - "RelaxationSpin_crys"
+      !
+      C1 = unitMatrix + transpose(LatticeSpin_crys) 
+      !   Notes: 
+      !     - implicit assumption of time increment deltat (or dt) of 1s
+      !     - 'transpose' is introduced in order to keep the content of C1 unmodified; 
+      !        The following time integration is to be elucidated.
 !     NIEUWE STAND UITWENDIG ASSENSTELSEL.                          
       C2 = matmul(C1,TRF)      
 !     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX                            
