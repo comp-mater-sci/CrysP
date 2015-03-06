@@ -517,11 +517,15 @@
           ! <<-
           write (*, FMT03) ERR_MSG03
           write (OUT_UNIT, FMT03) ERR_MSG03
+          ! Terminate the execution.
+          ! If the new algorithm is used, let it to provide the output.
+#ifndef NEW_IDENT_SCHEME
           write (*, FMT03) FAILURE_MSG
           write (OUT_UNIT, FMT03) FAILURE_MSG
           close (OUT_UNIT)
           ! stop
           call exit(1)
+#endif
         else
           exit            
         end if
@@ -560,6 +564,12 @@
             sol = sol_full
             call setBBC2008Params(sol)
           endif
+        else
+            ! The solution from the gradual distortion is so bad that it 
+            ! is not even possible to calculate the objective function.
+            ! Let's take the solution from the new algorithm.
+            sol = sol_full
+            call setBBC2008Params(sol)
         endif
       endif
 #endif
