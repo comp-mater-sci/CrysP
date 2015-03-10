@@ -29,7 +29,7 @@
       type(DeformationRate), intent(in),optional :: MacroDefRate
       ! optional argument - required for IRICHT=3:      
       type(DeformationState),intent(in),optional :: MacroDefState      
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
+      COMMON /TEXTUR/ TRF(3,3),C2(3,3),NO,                       &
       ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON/TLR2/ RHOAsa
@@ -223,16 +223,22 @@
       use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
+      COMMON /TEXTUR/ TRF(3,3),TRF_new,NO,                       &
       ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON/TLR2/ RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       COMMON /EULERA/ fi1,PHI,fi2
       logical SWRLX
-      double precision, intent(out):: Seq ! Equivalent stress in crystal, defined as..
-                                    !  plastic work rate in crystal normalized by..
-                                    !  (macro) von Mises equivalent strain rate
+      !> Equivalent stress in crystal, defined as plastic work rate in crystal
+      !> normalized by (macro) von Mises equivalent strain rate
+      double precision, intent(out):: Seq
+      !> Transformation matrix from sample frame to crystal frame at the 
+      !> end of increment. Each of its 3 rows contains a reference axis of the 
+      !> crystal reference frame (at end of increment), as expressed in the 
+      !> sample reference frame. 
+      !> Note: intent(out) attribute in further developments foreseen.
+      double precision, dimension(3,3) :: TRF_new
       !> Rate of plastic work per unit volume in the crystal
       double precision, intent(out) :: WorkRate
       double precision :: Mgrain
@@ -243,6 +249,14 @@
       double precision, dimension(3,3) :: MacroSpin_crys
       !> The crystal lattice spin expressed in the crystal frame
       double precision, dimension(3,3) :: LatticeSpin_crys
+      !> Deformation gradient of the lattice rotation from beginning to end of
+      !> increment, expressed in the crystal frame 
+      double precision, dimension(3,3) :: Fomega_crys
+      !> Transformation matrix from crystal frame at the start of increment to 
+      !> crystal frame at the end of increment. Each of its 3 rows contains a
+      !> reference axis of the crystal reference frame at end of increment, as 
+      !> expressed in the crystal reference frame at start of increment
+      double precision, dimension(3,3) :: TRF_Cold_Cnew(3,3)
       !
       !> Symmetric part of the relaxation rate tensor in sample frame; non-normalized
       double precision, dimension(3,3) :: RHOSsaNN(3,3)
@@ -372,20 +386,25 @@
       !   Note: in ALAMEL-paper (IJP '05), one term has opposite sign: 
       !   LatticeSpin_crys = MacroSpin_crys - PlasticSpin_crys - "RelaxationSpin_crys"
       !
-      C1 = unitMatrix + transpose(LatticeSpin_crys) 
+      Fomega_crys = unitMatrix + LatticeSpin_crys
       !   Notes: 
-      !     - implicit assumption of time increment deltat (or dt) of 1s
-      !     - 'transpose' is introduced in order to keep the content of C1 unmodified; 
-      !        The following time integration is to be elucidated.
-!     NIEUWE STAND UITWENDIG ASSENSTELSEL.                          
-      C2 = matmul(C1,TRF)      
-!     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX                            
-      ROTM= SQRT(C1(3,2)**2+C1(1,3)**2+C1(2,1)**2)
-      Euler= EuleranglesType(C2)
+      !    - Explicit time integration. 
+      !    - A time increment 'deltat' (or 'dt') of 1s is assumed.
+      !    - Due to approximate time integration, orthogonality of Fomega_crys 
+      !      is not exactly satisfied in general.
+      !
+      TRF_Cold_Cnew = transpose(Fomega_crys)
+      !
+      !TRF[sample->crystal_new] = TRF[crystal_old->crystal_new] * TRF[sample->crystal_old]                       
+      TRF_new = matmul(TRF_Cold_Cnew,TRF)      
+      !
+      !Ensure orthogonality of TRF_new
+      Euler= EuleranglesType(TRF_new)
       fi1=Euler%fi1 !
       PHI=Euler%PHI !use of EulerAngles2Arr impeded
       fi2=Euler%fi2 !   by common block /EULERA/
-      C2 = rotmat(Euler)
+      TRF_new = rotmat(Euler)
+      !
       ITW=0
       IF (NTW.EQ.0) GOTO 31                                             
       X=0.                                                              
@@ -413,7 +432,7 @@
       GOTO 31                                                           
   87  DO 88 K=1,3                                                       
       DO 89 J=1,3                                                       
-  89  RCC(K,J)=C2(K,J)                                                  
+  89  RCC(K,J)=TRF_new(K,J)                                                  
   88  CONTINUE                                                          
       TDC(1,1)=B2(1,I)                                                  
       X=B2(2,I)                                                         
@@ -427,9 +446,9 @@
       TDC(3,2)=X                                                        
       TDC(2,3)=X                                                        
       TDC(3,3)=B2(6,I)                                                  
-      C2 = matmul(TDC,RCC) 
+      TRF_new = matmul(TDC,RCC) 
       ITW=I
-      Euler= EuleranglesType(C2)
+      Euler= EuleranglesType(TRF_new)
       fi1=Euler%fi1 !
       PHI=Euler%PHI !use of EulerAngles2Arr impeded
       fi2=Euler%fi2 !   by common block /EULERA/      

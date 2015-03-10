@@ -48,7 +48,7 @@
 !
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON /DOUBLE/ XM(5,96),XEPS(5),RHO(5),B5(5)
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
+      COMMON /TEXTUR/ TRF(3,3),C2(3,3),NO,                       &
       ITW,GEWF
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,TEN(3,3),TOTGEW        
       COMMON /EULERA/ fi1,PHI,fi2
