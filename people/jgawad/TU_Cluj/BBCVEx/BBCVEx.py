@@ -57,8 +57,8 @@ def subdict(dictionary,keylist):
     return dict(subdict_gen)
 
 def mergedict(dict_dst,dict_src):
-	dict_dst.update(dict_src)
-	return dict_dst
+    dict_dst.update(dict_src)
+    return dict_dst
 
 def processYld(dataview):
     # We assume that central difference scheme is used.
@@ -156,9 +156,12 @@ def main(args):
                 tasklist.append(t)
             #
             taskgroups.append((jobname,tasklist))
+        # Create pool master
+        if (args.serial):
+            pool_master = pymp.SerialMaster()
+        else:
+            pool_master = pymp.PoolMaster(timeout = 4800000)
         #
-        pool_master = pymp.PoolMaster(timeout = 4800000)
-        #pool_master = pymp.SerialMaster()
         pool_master.run(tasks)
 
         for task in tasks:
@@ -257,6 +260,8 @@ if __name__ == '__main__':
         parser.add_argument('--bbc2008init', 
                             help='path to BBC2008 parameter file to be included as the initial guess',
                             required=False, type=argparse.FileType('r'), default=None)
+        parser.add_argument('--serial', help='run the VEF jobs serially', required=False,
+                            action='store_true')
         # parser.add_argument('--output',help='Output file or "-"',type=argparse.FileType('w'),default='-')
         # Key/value pairs for template substitution
         parser_template_args.add_argument('--jobname',default='elem',required=True)
