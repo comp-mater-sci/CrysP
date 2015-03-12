@@ -5,6 +5,102 @@
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use criMathUtils
       contains
+     
+
+      !> The function converts a 5D-vector in deviatoric (stress/strain-rate) space
+      !> to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
+      !>
+      !> There is a reverse conversion available. \sa SymMat33ToVec5
+      pure function Vec5ToSymMat33(vec) result(mat)
+      implicit none
+      double precision, dimension(5),  intent(in) :: vec
+      double precision, dimension(3,3)            :: mat
+      double precision, parameter ::           &
+          sq22=   sqrt(0.5d0),                 & !0.7071068
+          const3= (sqrt(3.0d0)+3.0d0)/6.0d0,   & !0.7886751
+          const4= (3.0d0-sqrt(3.0d0))/6.0d0      !0.2113249          
+      !
+      mat(2,2)=  const3*vec(1)-const4*vec(2)
+      mat(3,3)= -const4*vec(1)+const3*vec(2)
+      !
+      mat(1,1)= -mat(2,2)-mat(3,3)
+      !
+      mat(2,3)= sq22*vec(3)
+      mat(3,1)= sq22*vec(4)
+      mat(1,2)= sq22*vec(5)
+      !
+      mat(3,2)= mat(2,3)   
+      mat(1,3)= mat(3,1)       
+      mat(2,1)= mat(1,2)       
+      !      
+      end function Vec5ToSymMat33
+
+    
+      !> The function converts a (3,3)-matrix representation of a traceless 2nd rank tensor
+      !> to 5D-vector representation in deviatoric (stress/strain-rate) space.
+      !> Only the symmetric part of 2nd rank tensor is transformed.
+      !>
+      !> There is a reverse conversion available. \sa Vec5ToSymMat33
+      pure function SymMat33ToVec5(mat) result(vec)
+      implicit none
+      double precision, dimension(3,3), intent(in) :: mat
+      double precision, dimension(5)               :: vec
+      double precision, parameter ::           &
+          c1= 0.5d0*(sqrt(3.0d0)+1.0d0),       &
+          c2= c1-1.0d0,                        &
+          c3= sqrt(0.5d0)
+      !
+      vec(1)= c1*mat(2,2) + c2*mat(3,3)
+      vec(2)= c2*mat(2,2) + c1*mat(3,3)
+      !
+      vec(3)= c3* (mat(2,3)+mat(3,2))
+      vec(4)= c3* (mat(3,1)+mat(1,3))
+      vec(5)= c3* (mat(1,2)+mat(2,1))
+      !      
+      end function SymMat33ToVec5
+      
+      
+         
+      !> The function converts the vector with dimension 3 into the 
+      !>  anti-symmetric rank-two tensor. 
+      !>
+      !> There is a reverse conversion available. \sa AntiSymMat33ToVec3
+      pure function Vec3ToAntiSymMat33(vec) result(mat)
+      implicit none
+      double precision,dimension(3),intent(in)  :: vec
+      double precision,dimension(3,3)           :: mat
+      !
+      double precision, parameter :: minus = -1.0d0
+      !
+      mat = 0.0d0
+      mat(3,2) = vec(1)
+      mat(1,3) = vec(2)
+      mat(2,1) = vec(3)
+      mat(2,3) = minus * mat(3,2)
+      mat(3,1) = minus * mat(1,3)
+      mat(1,2) = minus * mat(2,1)
+      !
+      end function
+
+      
+      !> The function converts the anti-symmetric part of rank-two tensor into
+      !> vector representation with dimension 3. 
+      !>
+      !> There is a reverse conversion available. \sa Vec3ToAntiSymMat33
+      pure function AntiSymMat33ToVec3(mat) result(vec)
+      implicit none
+      double precision,dimension(3,3),intent(in)      :: mat
+      double precision,dimension(3)                   :: vec
+      !
+      double precision, parameter :: half = 0.5d0
+      !
+      vec(1) = half * (mat(3,2)-mat(2,3))
+      vec(2) = half * (mat(1,3)-mat(3,1))
+      vec(3) = half * (mat(2,1)-mat(1,2))
+      !note: same convention in PRETAY; e.g.: "B1(1,IS)=(R(3)*V(2)-R(2)*V(3))/2."
+      !
+      end function
+
       
       !
       subroutine UPDATC(CIJ,Finv) 
@@ -18,6 +114,8 @@
       !
       end subroutine
 
+ 
+      
       Subroutine Transf(Gaxes,Aprime,T)
       IMPLICIT double precision (A-H,O-Z)
 !
