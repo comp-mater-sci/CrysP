@@ -31,7 +31,6 @@
 !     NDAT1= Input-texture file
 !
       COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON /TEXTUR/ DUM1(18),IDUM1,ITW,GEWF
       common /CEIGEN/ IOR,ISTP,JBLOC
       common /PE/ Fmicro !Temporary!!!
       double precision, dimension(3,3) :: Fmicro, DG

@@ -7,7 +7,7 @@
 
       contains
       
-      Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn,MacroDefRate)
+      Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,MacroDefRate)
       use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
 #ifdef ALTAY_SUBROUTINE
       use altayRCM

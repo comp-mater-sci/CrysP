@@ -48,12 +48,11 @@
 !
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON /DOUBLE/ XM(5,96),XEPS(5),RHO(5),B5(5)
-      COMMON /TEXTUR/ TRF(3,3),C2(3,3),NO,                       &
-      ITW,GEWF
+      COMMON /TEXTUR/ TRF(3,3),C2(3,3)
+      COMMON /SIMUL_TAYLOR/ GEWF, SHsam(3,3), SWRLX(3)
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,TEN(3,3),TOTGEW        
       COMMON /EULERA/ fi1,PHI,fi2
-      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
-       SWRLX(3)
+      COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
       COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
        gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
        CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),                             &
@@ -454,7 +453,7 @@
       CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain,WorkRate,           &
                   MacroDefRate)
 #endif      
-   49 if (NFILTW.eq.1) write (IMP3,398) ITW
+!   49 if (NFILTW.eq.1) write (IMP3,398) ITW
  398  format (I3)
       !
       STOT = STOT + Ssam*GEWF

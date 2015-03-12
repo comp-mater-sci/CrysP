@@ -29,13 +29,14 @@
       type(DeformationRate), intent(in),optional :: MacroDefRate
       ! optional argument - required for IRICHT=3:      
       type(DeformationState),intent(in),optional :: MacroDefState      
-      COMMON /TEXTUR/ TRF(3,3),C2(3,3),NO,                       &
-      ITW,GEWF
+      COMMON /TEXTUR/ TRF(3,3),C2(3,3)
+      !     SHsam:    macroscopic stress in sample reference system
+      !     Ssam:        local stress in sample reference system
+      COMMON /SIMUL_TAYLOR/ GEWF, SHsam(3,3), SWRLX(3)
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON/TLR2/ RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
-      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
-       SWRLX(3)
+      COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
       double precision, dimension(3,3):: RHOScrys(3,3)
       double precision, dimension(3,3):: RHOAcrys(3,3), RHOAsa(3,3) 
       character(len=72) :: TITGLIJ
@@ -223,13 +224,11 @@
       use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
-      COMMON /TEXTUR/ TRF(3,3),TRF_new,NO,                       &
-      ITW,GEWF
-      COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON/TLR2/ RHOAsa
-      COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
-      COMMON /EULERA/ fi1,PHI,fi2
-      logical SWRLX
+      COMMON /TEXTUR/ TRF(3,3),TRF_new !-> input, resp., output
+      COMMON /IGLIJS/ M11,CC(2,96) !-> input
+      COMMON/TLR2/ RHOAsa !-> input
+      COMMON /EULERA/ fi1,PHI,fi2 !-> output
+      COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3) !-> input      
       !> Equivalent stress in crystal, defined as plastic work rate in crystal
       !> normalized by (macro) von Mises equivalent strain rate
       double precision, intent(out):: Seq
@@ -263,34 +262,18 @@
       !> Anti-symmetric part of the relaxation rate tensor in sample frame; non-normalized
       double precision, dimension(3,3) :: RHOAsaNN(3,3)
       !
-!     SHsam:    macroscopic stress in sample reference system
-!     SH:   macroscopic stress in crystal reference system
-!     SPANH: macroscopic stress in crystal reference system
-!     Ssam:        local stress in sample reference system
-!
-      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
-       SWRLX(3)
       DIMENSION RCC(3,3)
-      DIMENSION VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
+      DIMENSION VOLFR(96),ROT(3),TDC(3,3)
       dimension RHOAsa(3,3),RHOAcrys(3,3),GAMdot(96)
-      real, dimension(3,3) :: test !!single precision!!
-!      data SQR2/0.7071067811865476D+00/
 #ifdef PEBP_ENABLED      
       integer :: info
       double precision :: ddt
 #endif
       double precision, intent(OUT) :: TOTGAMdot
+      !
       SAVE
-      WACC1=0.0
-      WACC2=0.0
-!      pause
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!      if (IGLIJ.eq.0) goto 11
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-!  11  write (*,1771) IOR
-! 1771 format (I5)
-  11  call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN,MacroDefRate)
+      !
+      call SLIPRAT(M11,96,GAMdot,ior,IPR,MacroDefRate)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif      
@@ -308,26 +291,14 @@
 #endif
       endselect
 #endif
+      !
       TOTGAMdot=sum(abs(GAMdot(1:M11)))
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!  13  if (IGLIJ.eq.1) then
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+      !
       if(NLIST.eq.1) then
-      write (IMP,103) ISTP,IOR,fi1,PHI,fi2
+          write (IMP,103) ISTP,IOR,fi1,PHI,fi2
       end if
-
-!  13  write (IMP,103) ISTP,IOR,fi1,PHI,fi2
  103  format (' ISTP,IOR',2I5,' phi1, PHI, phi2:',3F15.6)
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!      if (iend.ne.1) goto 34
-!     if(NLIST.eq.1) then
-!      write (IMP,102) ISTP,IOR,fi1,PHI,fi2
-!     end if
-! 102  format (' Taylr1 - Problem with SLIPRAT - ISTP,IOR',2I5,/,
-!     1' Euler angles phi1, PHI, phi2:',3F15.6)
-!      return
-!  51  continue
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+      !
       WorkRate=0.0
       do i=1,M11 
           if (GAMdot(i).GT.0.0) then
@@ -339,44 +310,25 @@
           endif
       end do
       Seq=WorkRate / MacroDefRate%vMeqStrainRate
-  43  J=M
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 4/11/2011
-!      IF (IGLIJ.EQ.0) GOTO 90
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+      !
       if(NLIST.eq.1) then
-      WRITE (IMP,301) WorkRate
+          WRITE (IMP,301) WorkRate
       end if
  301  FORMAT (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
-!      if(NLIST.eq.1) then
-!      DO 302 I=1,M
-! 302  WRITE (IMP,303) I,GAMdot(I)
-!      end if
-!
- 303  FORMAT (1X,I5,(12F10.6))  
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011                                        
-!      IF (IGLIJ.NE.0) then
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+      !
       if(NLIST.eq.1) then
-      WRITE (IMP,109) MacroDefRate%vMeqStrainRate,Seq,                   &
+          WRITE (IMP,109) MacroDefRate%vMeqStrainRate,Seq,                   &
                       (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M)
       end if
-
  109  FORMAT ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
        '  SLIP RATES',/,(T2,10F10.5))
-  90  CONTINUE                                                          
-  202 ROT = matmul(B1,GAMdot)
+      !                                                          
+      ROT = matmul(B1,GAMdot)
       PlasticSpin_crys = Vec3ToAntiSymMat33(ROT)
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!      IF (IGLIJ.NE.0) then
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-      WRITE (IMP,305) ROT
+          WRITE (IMP,305) ROT
       end if
-                               
-  305 FORMAT (' ROTATIONS',3F12.6)
-!      DO 58 K=1,M                                                       
-!      X=ABS(GAMdot(K))
-!  58  CONTINUE 
+305   FORMAT (' ROTATIONS',3F12.6)
       !
       MacroSpin_crys = rotateSRTensorFrom(MacroDefRate%Spin,TRF)
       !
@@ -405,7 +357,6 @@
       fi2=Euler%fi2 !   by common block /EULERA/
       TRF_new = rotmat(Euler)
       !
-      ITW=0
       IF (NTW.EQ.0) GOTO 31                                             
       X=0.                                                              
       DO 84 I=1,NTW                                                     
@@ -447,19 +398,18 @@
       TDC(2,3)=X                                                        
       TDC(3,3)=B2(6,I)                                                  
       TRF_new = matmul(TDC,RCC) 
-      ITW=I
       Euler= EuleranglesType(TRF_new)
       fi1=Euler%fi1 !
       PHI=Euler%PHI !use of EulerAngles2Arr impeded
       fi2=Euler%fi2 !   by common block /EULERA/      
+      !
   31  if (nfile.eq.0.or.istp.gt.1) goto 61
-!
+      !
       !“the ratio of the parallel strain rates”
       ! MacroDefRate%StrainMode & rhossa: expressed in same (sample) reference frame
       ratlon= sum( (MacroDefRate%StrainMode+sqrt(2.0D0/3.0D0)*rhossa) *  &
                     MacroDefRate%StrainMode                            ) 
-!
-      ! TAU: Reference-CRSS.
+      !
       ! Taylor Factor of the grain:
       Mgrain = TOTGAMdot / MacroDefRate%vMeqStrainRate
       ! Non-normalize the RHOSsa and RHOAsa
@@ -473,8 +423,9 @@
        ssam(1,1),ssam(2,2),ssam(3,3),ssam(2,3),ssam(3,1),ssam(1,2)
   150 format(i5,5(E12.5,1X),5x,6(E12.5,1X),5x,3(E12.5,1X),               &
              5x,6(E12.5,1X))
- 101  format(3d20.7)      
+      !
    61 RETURN
+      !Below lines with identifiers 26 and 52 are apparently never called.
   26  WRITE (IMP,106)
  106  FORMAT (1X,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBLEM')
 #ifndef ALTAY_SUBROUTINE
