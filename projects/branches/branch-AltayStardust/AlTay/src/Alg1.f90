@@ -3,7 +3,8 @@
 #endif
       module altayTaylor
       use altayAlgorithms
-      use altayMiscutils, only: terminate, stopcode_runtimeerror, unitMatrix
+      use altayMiscutils, only: terminate, stopcode_runtimeerror, unitMatrix, &
+                                writeRESRecord
       use altayMacroKinematic
       use criMathUtils
       integer,parameter,private :: N = 5, N1 = N + 1 
@@ -403,26 +404,17 @@
       PHI=Euler%PHI !use of EulerAngles2Arr impeded
       fi2=Euler%fi2 !   by common block /EULERA/      
       !
-  31  if (nfile.eq.0.or.istp.gt.1) goto 61
-      !
-      !“the ratio of the parallel strain rates”
-      ! MacroDefRate%StrainMode & rhossa: expressed in same (sample) reference frame
-      ratlon= sum( (MacroDefRate%StrainMode+sqrt(2.0D0/3.0D0)*rhossa) *  &
-                    MacroDefRate%StrainMode                            ) 
-      !
+31    if (nfile.eq.0.or.istp.gt.1) goto 61
+      !      
       ! Taylor Factor of the grain:
       Mgrain = TOTGAMdot / MacroDefRate%vMeqStrainRate
+      !
       ! Non-normalize the RHOSsa and RHOAsa
       RHOSsaNN = RHOSsa * MacroDefRate%vMeqStrainRate
       RHOAsaNN = RHOAsa * MacroDefRate%vMeqStrainRate
       !
-      write (IMP2,150) ior,Seq,WorkRate,TAU,Mgrain,ratlon,               &
-       RHOSsaNN(1,1),RHOSsaNN(2,2),RHOSsaNN(3,3),                        &
-       RHOSsaNN(2,3),RHOSsaNN(3,1),RHOSsaNN(1,2),                        &
-       RHOAsaNN(2,3),RHOAsaNN(3,1),RHOAsaNN(1,2),                        &
-       ssam(1,1),ssam(2,2),ssam(3,3),ssam(2,3),ssam(3,1),ssam(1,2)
-  150 format(i5,5(E12.5,1X),5x,6(E12.5,1X),5x,3(E12.5,1X),               &
-             5x,6(E12.5,1X))
+      call writeRESRecord(IMP2,ior,Seq,WorkRate,tau,Mgrain,ratlon(MacroDefRate,rhossa), &
+                                rhossaNN,rhoasaNN,ssam,info)
       !
    61 RETURN
       !Below lines with identifiers 26 and 52 are apparently never called.

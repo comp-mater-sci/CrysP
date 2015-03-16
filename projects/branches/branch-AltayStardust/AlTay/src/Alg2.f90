@@ -3,6 +3,7 @@
 #endif
       module altayAlgorithms
       use altayMiscutils, only: terminate, stopcode_runtimeerror
+      use altayMacroKinematic
       use criMathUtils
       contains
      
@@ -101,6 +102,20 @@
       !
       end function
 
+      
+      !> function that returns “the ratio of the parallel strain rates”
+      pure double precision function ratlon(MacroDefRate,rhossa)
+      implicit none
+      type(DeformationRate), intent(in)               :: MacroDefRate
+      double precision,dimension(3,3),intent(in)      :: rhossa
+      !
+      ! MacroDefRate%StrainMode & rhossa: expressed in same (sample) reference frame
+      ratlon= sum( (MacroDefRate%StrainMode + root23*rhossa) *  &
+                    MacroDefRate%StrainMode                            )
+      !
+      end function
+      
+      
       
       !
       subroutine UPDATC(CIJ,Finv) 
