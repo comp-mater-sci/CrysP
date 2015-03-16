@@ -19,13 +19,6 @@ implicit none
       integer,parameter :: stopcode_runtimeerror = 10
       !>@}
 
-      
-      double precision,dimension(3,3),parameter :: unitMatrix = reshape( &
-           [ 1.D0, 0.D0, 0.D0,     &
-             0.D0, 1.D0, 0.D0,     &
-             0.D0, 0.D0, 1.D0], [ 3, 3 ])
-
-      double precision,parameter :: pi = acos(-1.D0)
 
     contains
 

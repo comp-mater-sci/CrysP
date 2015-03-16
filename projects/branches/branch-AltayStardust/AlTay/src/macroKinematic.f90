@@ -1,5 +1,5 @@
 module altayMacroKinematic
-use altayMiscutils, only: unitMatrix
+use criMathUtils, only: unit_sr_Matrix
 implicit none 
 
 type DeformationRate
@@ -22,11 +22,11 @@ end type DeformationRate
 type DeformationState
     !> Total Deformation Gradient (from undeformed state to the end of current increment)
     !> For simulations with predeformation, it is re-initialized with call to dynfil2 subroutine. 
-    double precision, dimension(3,3) :: TotalDefGrad = unitMatrix 
+    double precision, dimension(3,3) :: TotalDefGrad = unit_sr_matrix 
     !> Incremental Deformation Gradient (from start to end of current increment)
-    double precision, dimension(3,3) :: IncrDefGrad = unitMatrix
+    double precision, dimension(3,3) :: IncrDefGrad = unit_sr_matrix
     !> Inverse of Incremental Deformation Gradient
-    double precision, dimension(3,3) :: IncrDefGrad_inverse = unitMatrix
+    double precision, dimension(3,3) :: IncrDefGrad_inverse = unit_sr_matrix
     !> Incremental von Mises equivalent strain (from start to end of current increment)
     double precision                 :: IncrvMeqStrain = 0.0D0
     !> Accumulated von Mises equivalent strain, up to the start of current inc. 
@@ -45,7 +45,7 @@ contains
       type(DeformationRate)           , intent(out)   :: this
       !
       !Explicitly make the velocity gradient traceless
-      this%VelGrad = VelGrad - UnitMatrix * (VelGrad(1,1)+VelGrad(2,2)+VelGrad(3,3))/3.D0
+      this%VelGrad = VelGrad - unit_sr_matrix * (VelGrad(1,1)+VelGrad(2,2)+VelGrad(3,3))/3.D0
       !
       this%StrainRate = (this%VelGrad+transpose(this%VelGrad))/2.D0
       this%Spin       = (this%VelGrad-transpose(this%VelGrad))/2.D0
@@ -100,7 +100,7 @@ contains
       !
       ![1] Moler, C. and Van Loan, C., "Nineteen Dubious ways to compute the exponential of a matrix", Siam Review, vol 20, No 4, 1978.
       !
-      double precision, dimension(3,3) :: Term= unitMatrix 
+      double precision, dimension(3,3) :: Term= unit_sr_matrix 
       double precision, parameter      :: NormTerm_cutoff= 1.0D-10 !Treshold to cut off Taylor Series Expansion
       integer                          :: k= 0 !The current term in Taylor Series Expansion
       integer, parameter               :: k_max= 10 !Upper limit of terms in Taylor Series Expansion to be calculated
@@ -116,7 +116,7 @@ contains
       !
       !For the '0-th term in Taylor Series Expansion', the approximation of Taylor Series Expansion is
       k= 0
-      Term= unitMatrix
+      Term= unit_sr_matrix
       ExpA= Term
       InvExpA= Term
       !

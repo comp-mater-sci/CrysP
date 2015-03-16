@@ -1,5 +1,4 @@
       module altayDynfil
-      use altayMiscutils, only: unitMatrix
       use criMathUtils
       implicit none
 
@@ -9,16 +8,16 @@
             double precision :: tGEW = 1.D0 ,tGAM = 0.D0
             double precision, dimension(3) :: tAXES = 1.D0, tEULR = 0.D0
             double precision, dimension(3,3) :: tT = 0.D0
-            double precision, dimension(3,3) :: tF = unitMatrix
-            double precision, dimension(3,3) :: tCIJ = unitMatrix
-            double precision, dimension(3,3) :: tTAX = unitMatrix
+            double precision, dimension(3,3) :: tF = unit_sr_matrix
+            double precision, dimension(3,3) :: tCIJ = unit_sr_matrix
+            double precision, dimension(3,3) :: tTAX = unit_sr_matrix
             double precision, dimension(3,3) :: tZERO = 0.D0,tRHO = 0.D0
       END TYPE grain
       
       type :: matFrame
-            double precision,dimension(3,3) :: FALG = unitMatrix
-            double precision,dimension(3,3) :: CIJ0 = unitMatrix
-            double precision,dimension(3,3) :: TAX0 = unitMatrix
+            double precision,dimension(3,3) :: FALG = unit_sr_matrix
+            double precision,dimension(3,3) :: CIJ0 = unit_sr_matrix
+            double precision,dimension(3,3) :: TAX0 = unit_sr_matrix
             double precision,dimension(3) :: GAXES = 1.D0,GEULR = 0.D0
       end type
 

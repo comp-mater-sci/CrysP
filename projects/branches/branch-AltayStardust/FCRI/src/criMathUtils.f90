@@ -55,6 +55,12 @@ module criMathUtils
       
       !> Array dimension for 3D rotation matrix (rot_matrix_dim x rot_matrix_dim)
       integer,parameter                   :: rot_matrix_dim = 3
+      
+      !> Matrix form of the unit second rank tensor
+      double precision,dimension(3,3),parameter :: unit_sr_Matrix = reshape( &
+           [ 1.D0, 0.D0, 0.D0,     &
+             0.D0, 1.D0, 0.D0,     &
+             0.D0, 0.D0, 1.D0], [ sr_tensor_dim, sr_tensor_dim ])
       !>@}
 
       !> \interface ocross_product Vector-Vector ocross product operator

@@ -101,7 +101,7 @@ contains
       !   relaxation-2 is always the orthogonal one.
       !   TDC is the normalized von-Mise equivalent strain rate
       use altayIOConfig, only: IPR,NLIST,IMP
-      use altayMiscutils, only: unitMatrix, pi
+      use criMathUtils, only: unit_sr_Matrix, pi
       use altayMacroKinematic
     
       implicit none
@@ -124,7 +124,7 @@ contains
             Cofsin = 0.D0
             !
             if (NGR.eq.1) then      ! let Tprinc be equal to the identity matrix.
-                  Tprinc = unitMatrix
+                  Tprinc = unit_sr_Matrix
                   return
             end if
             !

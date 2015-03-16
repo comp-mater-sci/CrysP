@@ -3,7 +3,7 @@
 #endif
       module altayTaylor
       use altayAlgorithms
-      use altayMiscutils, only: terminate, stopcode_runtimeerror, unitMatrix, &
+      use altayMiscutils, only: terminate, stopcode_runtimeerror, &
                                 writeRESRecord
       use altayMacroKinematic
       use criMathUtils
@@ -339,7 +339,7 @@
       !   Note: in ALAMEL-paper (IJP '05), one term has opposite sign: 
       !   LatticeSpin_crys = MacroSpin_crys - PlasticSpin_crys - "RelaxationSpin_crys"
       !
-      Fomega_crys = unitMatrix + LatticeSpin_crys
+      Fomega_crys = unit_sr_matrix + LatticeSpin_crys
       !   Notes: 
       !    - Explicit time integration. 
       !    - A time increment 'deltat' (or 'dt') of 1s is assumed.
