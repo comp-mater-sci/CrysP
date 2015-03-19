@@ -243,20 +243,6 @@
       double precision, intent(out) :: WorkRate
       double precision :: Mgrain
       type(EulerAngles):: Euler
-      !> The plastic spin expressed in the crystal lattice frame
-      double precision, dimension(3,3) :: PlasticSpin_crys
-      !> The macroscopic (i.e. imposed) rigid body spin expressed in the crystal frame
-      double precision, dimension(3,3) :: MacroSpin_crys
-      !> The crystal lattice spin expressed in the crystal frame
-      double precision, dimension(3,3) :: LatticeSpin_crys
-      !> Deformation gradient of the lattice rotation from beginning to end of
-      !> increment, expressed in the crystal frame 
-      double precision, dimension(3,3) :: Fomega_crys
-      !> Transformation matrix from crystal frame at the start of increment to 
-      !> crystal frame at the end of increment. Each of its 3 rows contains a
-      !> reference axis of the crystal reference frame at end of increment, as 
-      !> expressed in the crystal reference frame at start of increment
-      double precision, dimension(3,3) :: TRF_Cold_Cnew(3,3)
       !
       !> Symmetric part of the relaxation rate tensor in sample frame; non-normalized
       double precision, dimension(3,3) :: RHOSsaNN(3,3)
@@ -325,38 +311,18 @@
        '  SLIP RATES',/,(T2,10F10.5))
       !                                                          
       ROT = matmul(B1,GAMdot)
-      PlasticSpin_crys = Vec3ToAntiSymMat33(ROT)
       if(NLIST.eq.1) then
           WRITE (IMP,305) ROT
       end if
 305   FORMAT (' ROTATIONS',3F12.6)
       !
-      MacroSpin_crys = rotateSRTensorFrom(MacroDefRate%Spin,TRF)
+      ddt = 1.0 !A time increment of 1s is assumed.
+      call update_crystal_trafo_fromSlip(TRF_new,TRF,GAMdot,B1,MacroDefRate,RHOAsa,ddt,info)
       !
-      RHOAcrys = rotateSRTensorFrom(RHOAsa,TRF)
-      !
-      LatticeSpin_crys = MacroSpin_crys - PlasticSpin_crys + RHOAcrys * MacroDefRate%vMeqStrainRate 
-      !   Note: in ALAMEL-paper (IJP '05), one term has opposite sign: 
-      !   LatticeSpin_crys = MacroSpin_crys - PlasticSpin_crys - "RelaxationSpin_crys"
-      !
-      Fomega_crys = unit_sr_matrix + LatticeSpin_crys
-      !   Notes: 
-      !    - Explicit time integration. 
-      !    - A time increment 'deltat' (or 'dt') of 1s is assumed.
-      !    - Due to approximate time integration, orthogonality of Fomega_crys 
-      !      is not exactly satisfied in general.
-      !
-      TRF_Cold_Cnew = transpose(Fomega_crys)
-      !
-      !TRF[sample->crystal_new] = TRF[crystal_old->crystal_new] * TRF[sample->crystal_old]                       
-      TRF_new = matmul(TRF_Cold_Cnew,TRF)      
-      !
-      !Ensure orthogonality of TRF_new
       Euler= EuleranglesType(TRF_new)
       fi1=Euler%fi1 !
       PHI=Euler%PHI !use of EulerAngles2Arr impeded
       fi2=Euler%fi2 !   by common block /EULERA/
-      TRF_new = rotmat(Euler)
       !
       IF (NTW.EQ.0) GOTO 31                                             
       X=0.                                                              
@@ -428,4 +394,82 @@
 #endif
       END SUBROUTINE
       
+
+      subroutine update_crystal_trafo_fromSlip(this,previous, &
+                         sliprates,B1,MacroDefRate,rho_a_sam,dt,info)
+      use criErrcodes
+      implicit none
+      !
+      !> Transformation matrix from sample frame to crystal frame at the 
+      !> end of increment. Each of its 3 rows contains a reference axis of the 
+      !> crystal reference frame (at end of increment), as expressed in the 
+      !> sample reference frame. 
+      double precision, intent(out), dimension(3,3) :: this
+      !> Transformation matrix from sample frame to crystal frame at the 
+      !> start of increment. Each of its 3 rows contains a reference axis of the 
+      !> crystal reference frame (at start of increment), as expressed in the 
+      !> sample reference frame.       
+      double precision, intent(in),  dimension(3,3) :: previous
+      double precision, intent(in),  dimension(96)  :: sliprates
+      double precision, intent(in),  dimension(3,96):: B1
+      type(DeformationRate), intent(in)             :: MacroDefRate
+      !> The normalized relaxation spin expressed in the sample frame
+      double precision, intent(in),  dimension(3,3) :: rho_a_sam    
+      !> Time increment
+      double precision, intent(in)                  :: dt
+      integer, intent(out)                          :: info
+      !
+      double precision, dimension(3) :: plasticspin_crys_vector
+      !
+      !> The plastic spin expressed in the crystal lattice frame
+      double precision, dimension(3,3) :: plasticspin_crys
+      !> The macroscopic (i.e. imposed) rigid body spin expressed in the crystal frame
+      double precision, dimension(3,3) :: macrospin_crys
+      !> The normalized relaxation spin expressed in the crystal frame
+      double precision, dimension(3,3) :: rho_a_crys
+      !> The crystal lattice spin expressed in the crystal frame
+      double precision, dimension(3,3) :: latticespin_crys
+      !> Deformation gradient of the lattice rotation from beginning to end of
+      !> increment, expressed in the crystal frame 
+      double precision, dimension(3,3) :: F_omega_crys
+      !> Transformation matrix from crystal frame at the start of increment to 
+      !> crystal frame at the end of increment. Each of its 3 rows contains a
+      !> reference axis of the crystal reference frame at end of increment, as 
+      !> expressed in the crystal reference frame at start of increment
+      double precision, dimension(3,3) :: trafo_cold_cnew(3,3)
+      !> Set of Euler angles corresponding to transformation matrix 'this'
+      type(EulerAngles) :: Euler
+      
+      
+      plasticspin_crys_vector = matmul(B1,sliprates)
+      !
+      plasticspin_crys = Vec3ToAntiSymMat33(PlasticSpin_crys_vector)
+      !
+      macrospin_crys = rotateSRTensorFrom(MacroDefRate%Spin,previous)
+      !
+      rho_a_crys = rotateSRTensorFrom(rho_a_sam,previous)
+      !
+      latticespin_crys = macrospin_crys - plasticspin_crys + rho_a_crys * MacroDefRate%vMeqStrainRate 
+      !   Note: in ALAMEL-paper (IJP '05), one term has opposite sign: 
+      !   LatticeSpin_crys = MacroSpin_crys - PlasticSpin_crys - "RelaxationSpin_crys"
+      !
+      F_omega_crys = unit_sr_matrix + latticespin_crys * dt
+      !   Notes: 
+      !    - Explicit time integration. 
+      !    - Due to approximate time integration, orthogonality of Fomega_crys 
+      !      is not exactly satisfied in general.
+      !
+      trafo_cold_cnew = transpose(F_omega_crys)
+      !
+      !trafo[sample->crystal_new] = trafo[crystal_old->crystal_new] * trafo[sample->crystal_old]                       
+      this = matmul(trafo_cold_cnew,previous)
+      !
+      !Ensure orthogonality
+      Euler = EuleranglesType(this)
+      this = rotmat(Euler)
+      !
+      info = criSuccess
+      !
+      end subroutine
+
       end module
