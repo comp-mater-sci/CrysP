@@ -249,8 +249,7 @@
       !> Anti-symmetric part of the relaxation rate tensor in sample frame; non-normalized
       double precision, dimension(3,3) :: RHOAsaNN(3,3)
       !
-      DIMENSION RCC(3,3)
-      DIMENSION VOLFR(96),ROT(3),TDC(3,3)
+      DIMENSION ROT(3)
       dimension RHOAsa(3,3),RHOAcrys(3,3),GAMdot(96)
 #ifdef PEBP_ENABLED      
       integer :: info
@@ -325,46 +324,8 @@
       fi2=Euler%fi2 !   by common block /EULERA/
       !
       IF (NTW.EQ.0) GOTO 31                                             
-      X=0.                                                              
-      DO 84 I=1,NTW                                                     
-      J=I+NGL                                                           
-      X=X+GAMdot(J)/G(I)                                                
-      VOLFR(I)=X                                                        
-  84  CONTINUE                                                          
-       IF (X.LE.1.) GOTO 85  
-#ifndef ALTAY_SUBROUTINE
-       if(NLIST.eq.1) then                                           
-      WRITE (IMP,107) X   
-      end if                                              
- 107  FORMAT (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,              &
-      '   SHOULD BE LESS THAN 1')                                       
-       call terminate(stopcode_runtimeerror)
-#else       
-      RCM_RAISE(1,'TAYLR1',                                              &
-      'Total volume fraction of twins exceeds unity',RCM_RTN)
-#endif
-  85  CALL RANDOM_NUMBER(RNDM)
-      DO 86 I=1,NTW                                                     
-      IF (RNDM.LT.VOLFR(I)) GOTO 87                                     
-  86  CONTINUE                                                          
-      GOTO 31                                                           
-  87  DO 88 K=1,3                                                       
-      DO 89 J=1,3                                                       
-  89  RCC(K,J)=TRF_new(K,J)                                                  
-  88  CONTINUE                                                          
-      TDC(1,1)=B2(1,I)                                                  
-      X=B2(2,I)                                                         
-      TDC(2,1)=X                                                        
-      TDC(1,2)=X                                                        
-      X=B2(3,I)                                                         
-      TDC(3,1)=X                                                        
-      TDC(1,3)=X                                                        
-      TDC(2,2)=B2(4,I)                                                  
-      X=B2(5,I)                                                         
-      TDC(3,2)=X                                                        
-      TDC(2,3)=X                                                        
-      TDC(3,3)=B2(6,I)                                                  
-      TRF_new = matmul(TDC,RCC) 
+      call update_crystal_trafo_fromTwin(TRF_new,NTW,NGL,NLIST,IMP,GAMdot,G)
+      !
       Euler= EuleranglesType(TRF_new)
       fi1=Euler%fi1 !
       PHI=Euler%PHI !use of EulerAngles2Arr impeded
@@ -469,6 +430,65 @@
       this = rotmat(Euler)
       !
       info = criSuccess
+      !
+      end subroutine
+
+
+      
+      subroutine update_crystal_trafo_fromTwin(TRF, &
+                         NTW,NGL,NLIST,IMP,GAMdot,G)
+      !use criErrcodes
+      implicit none
+      double precision, intent(inout), dimension(3,3) :: TRF
+      integer, intent(in) :: NTW, NGL, NLIST, IMP
+      double precision, intent(in),  dimension(96)  :: GAMdot, G
+      !
+      double precision :: X, RNDM
+      integer :: I, J, K
+      double precision, dimension(96) :: VOLFR
+      double precision, dimension(3,3) :: RCC, TDC
+      !
+      X=0.                                                              
+      DO 84 I=1,NTW                                                     
+      J=I+NGL                                                           
+      X=X+GAMdot(J)/G(I)                                                
+      VOLFR(I)=X                                                        
+  84  CONTINUE                                                          
+       IF (X.LE.1.) GOTO 85  
+#ifndef ALTAY_SUBROUTINE
+      if(NLIST.eq.1) then                                           
+      WRITE (IMP,107) X   
+      end if                                              
+ 107  FORMAT (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,              &
+      '   SHOULD BE LESS THAN 1')                                       
+       call terminate(stopcode_runtimeerror)
+#else       
+      RCM_RAISE(1,'TAYLR1',                                              &
+      'Total volume fraction of twins exceeds unity',RCM_RTN)
+#endif
+  85  CALL RANDOM_NUMBER(RNDM)
+      DO 86 I=1,NTW                                                     
+      IF (RNDM.LT.VOLFR(I)) GOTO 87                                     
+  86  CONTINUE                                                          
+      GOTO 31                                                           
+  87  DO 88 K=1,3                                                       
+      DO 89 J=1,3                                                       
+  89  RCC(K,J)=TRF(K,J)                                                  
+  88  CONTINUE                                                          
+      TDC(1,1)=B2(1,I)                                                  
+      X=B2(2,I)                                                         
+      TDC(2,1)=X                                                        
+      TDC(1,2)=X                                                        
+      X=B2(3,I)                                                         
+      TDC(3,1)=X                                                        
+      TDC(1,3)=X                                                        
+      TDC(2,2)=B2(4,I)                                                  
+      X=B2(5,I)                                                         
+      TDC(3,2)=X                                                        
+      TDC(2,3)=X                                                        
+      TDC(3,3)=B2(6,I)                                                  
+      TRF = matmul(TDC,RCC) 
+31    CONTINUE
       !
       end subroutine
 
