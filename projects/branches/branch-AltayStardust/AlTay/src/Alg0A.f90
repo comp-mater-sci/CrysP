@@ -57,7 +57,7 @@
        gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
        CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),                             &
        fi1b(2),phib(2),fi2b(2),                                          &
-       NGR,NRL,ENTA,ITFMAS
+       NGR,NRL
       common /CEIGEN/ IOR,ISTP,NBLOC
       common /PE/ Fmicro !Temporary!!!      
       DIMENSION GAXES(3),GEULR(3),TG(3,3),                               &
@@ -98,7 +98,6 @@
   33  call  random_seed
 #ifdef ALTAY_SUBROUTINE
       NGR    = acnf%simul_init%NGR
-      ENTA   = acnf%simul_init%ENTA
       KOST   = acnf%hardening%HardLawID
       !
       NLIST  = acnf%output_config%NLIST   ! control "listing"
@@ -126,13 +125,6 @@
       NMSS = NLIST
 #endif
       HGAMTOT=0.D0
-      ! NGR == 3: enable MAS-AL
-      if(NGR.eq.3) then
-            ITFMAS=1
-            NGR=2
-      else
-            ITFMAS=0
-      endif
       !
 #ifndef ALTAY_SUBROUTINE
       if(NLIST.eq.1) then
@@ -214,12 +206,6 @@
 #ifdef ALTAY_SUBROUTINE
       ! Per-call selection of the model: NGR & NRL must be set
       NGR = acnf%simul_init%NGR
-      if(NGR.eq.3) then
-            ITFMAS=1
-            NGR=2
-      else
-            ITFMAS=0
-      endif
       ! Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
       NRL=(NGR-1)*2
 #endif

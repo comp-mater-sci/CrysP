@@ -92,7 +92,7 @@ contains
 
       
       
-      subroutine CLUSTER1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,Cofcos,Cofsin)
+      subroutine CLUSTER1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc) 
       !   IF both relaxations are orthogonal:
       !      Cofcos=0 and Cofsin=0 is returned
       !   ELSE:
@@ -111,13 +111,12 @@ contains
       type(DeformationState),intent(in)               :: MacroDefState
       double precision,intent(inout)                  :: GEWF
       double precision,dimension(3,3),intent(out)     :: Tprinc
-      double precision,intent(out)                    :: Cofcos
-      double precision,intent(out)                    :: Cofsin
  
       !
+      double precision :: Cofcos,Cofsin      
       double precision :: AXX(3,3),GRPAR(3,3), PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
       double precision :: x, u, dlength, dot1, dot2, TGANGLE, Y
-      double precision :: relaxI(3,3),relaxII(3,3)
+      double precision :: relaxI(3,3),relaxII(3,3),TGRB(3,3)
       integer :: i,j, IN, IA, IB
       !
             Cofcos = 0.D0
@@ -242,15 +241,57 @@ contains
             enddo
             do i=1,3
                   do j=1,3
-                        Tprinc(i,j)=AXX(j,i)
+                        Tprinc(i,j)=AXX(j,i) !!TGRB(i,j)=AXX(j,i)
                   enddo           
                   if (IPR.gt.0) then
                         if(NLIST.eq.1) then 
-                        write (IMP,102) (Tprinc(i,j),j=1,3)
+                        write (IMP,102) (Tprinc(i,j),j=1,3) !!(TGRB(i,j),j=1,3)
                   end if
             end if
             102      format (' TGrb ',3d15.7)            
             enddo
+            
+!!     Transform TDC to the "Grb" reference frame  
+!      CALL MATPROD(C1,TDC,AXX,3,3,3)
+!      CALL MATPROD(TDCGr,TGrb,C1,3,3,3) 
+!!     Calculate velocity of end tip of a vector with
+!!     unit length and positioned normal to the 
+!!     grain boundary segment at the origin of thre frame.
+!      do i=1,2
+!         vec1(i)=0.0
+!      enddo 
+!      vec1(3)=1.0
+!      call MATPROD(vec2,TDCGr,vec1,3,3,1)
+!!     Calculate angle between projection of velocity vector 
+!!       on Grain Boundary Segment and axis 1
+!      Sphi=vec2(2)
+!      Cphi=vec2(1)
+!      if (abs(Sphi).lt.1.0d-6.and.abs(Cphi).lt.1.0d-6) then
+!         phi=0.0
+!      else
+!         phi=ATAN2(Sphi,Cphi)
+!      endif  
+!!     Transformation to a frame in which the projection of the 
+!!       deformed vector is axis 1      
+!      y=cos(phi)
+!      PrDir(1,1)=y
+!      x=sin(phi)
+!      PrDir(1,2)=-x
+!      PrDir(2,1)=x
+!      PrDir(2,2)=y
+!      AXX=PrDir
+!      AXX(1,2)=x
+!      AXX(2,1)=-x
+!      CALL MATPROD(Tprinc,AXX,TGrb,3,3,3)
+!      if (IPR.eq.2) THEN
+!         do i=1,3
+!            if(NLIST.eq.1) then
+!            write (IMP,116) (Tprinc(i,j),j=1,3)
+!            end if
+!         enddo
+!      endif
+! 116  format (' Tprinc',3d15.8)
+            
             !@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@##@# QGX 17/9/2012
             dlength=norm2(MacroDefRate%StrainModevM)
             !     Transform MacroDefRate%StrainModevM to the "Grb" reference frame

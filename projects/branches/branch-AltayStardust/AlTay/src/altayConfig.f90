@@ -197,9 +197,6 @@ implicit none
             !>   - 3 - MAS-AL
             integer                                   :: NGR = 2
             
-            !> It is relevant only in MAS-AL
-            double precision                          :: ENTA = 1.D0
-            
             double precision, dimension(3,3)          :: FMicro = reshape(       & 
                                                             [ 1.D0, 0.D0, 0.D0,  &
                                                               0.D0, 1.D0, 0.D0,  &
