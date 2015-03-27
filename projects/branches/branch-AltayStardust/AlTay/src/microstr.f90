@@ -91,60 +91,31 @@ contains
       end subroutine
 
       
-      
-      subroutine CLUSTER1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc) 
-      !   IF both relaxations are orthogonal:
-      !      Cofcos=0 and Cofsin=0 is returned
-      !   ELSE:
-      !      Cofcos and Cofsin are the cosine and sine of the angle for relaxation-1
-      !
-      !   relaxation-2 is always the orthogonal one.
-      !   TDC is the normalized von-Mise equivalent strain rate
+      !> Calculation of a 'weight' factor associated to the volume of the cluster
+      subroutine mesostr_clusterweightfactor(NGR,IGrElm,MacroDefState,GEWF,info) 
       use altayIOConfig, only: IPR,NLIST,IMP
-      use criMathUtils, only: unit_sr_Matrix, pi
       use altayMacroKinematic
     
       implicit none
       integer,intent(in)                              :: NGR
       integer,intent(in)                              :: IGrElm
-      type(DeformationRate),intent(in)                :: MacroDefRate     
       type(DeformationState),intent(in)               :: MacroDefState
-      double precision,intent(inout)                  :: GEWF
-      double precision,dimension(3,3),intent(out)     :: Tprinc
- 
+      double precision,intent(out)                    :: GEWF
+      integer,intent(out)                             :: info
       !
-      double precision :: Cofcos,Cofsin      
-      double precision :: AXX(3,3),GRPAR(3,3), PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
-      double precision :: x, u, dlength, dot1, dot2, TGANGLE, Y
-      double precision :: relaxI(3,3),relaxII(3,3),TGRB(3,3)
-      integer :: i,j, IN, IA, IB
+      double precision :: GRPAR(3,3),x,vec1(3),AL(3),u,AA(3)
+      integer :: i,j
       !
-            Cofcos = 0.D0
-            Cofsin = 0.D0
-            !
-            if (NGR.eq.1) then      ! let Tprinc be equal to the identity matrix.
-                  Tprinc = unit_sr_Matrix
-                  return
-            end if
-            !
+      !
+      !
+      !
+      info = -1
+      select case (NGR)
+          case (1) !Taylor
+            GEWF = 1.0D0
+            info = 0
+          case (2) !Alamel
             GRPAR = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
-            if ((IPR.gt.1) .and.(NLIST.eq.1)) then
-                  write (IMP,409) IGrElm
-                  409 format (' IGrElm = ',i5) 
-                  do i=1,3 
-                        write (IMP,407) (TmatGr(j,i,IGrElm),j=1,3)
-                  enddo
-                  407 format (' TmatGr ',3d15.7)
-                  do i=1,3 
-                        write (IMP,408) (GRPAR(j,i),j=1,3)
-                  enddo
-                  408 format (' GRPAR  ',3d15.7)
-            endif 
-            !
-            if ((IPR.gt.0) .and. (NLIST.eq.1) )then
-                  write (IMP,100)
-                  100  format (//,' CLUSTER1')
-            end if
             !     Calculation of volume affected by the surface
             do i=1,3,1
                   x=0.0
@@ -208,12 +179,70 @@ contains
             if ((IPR.gt.0) .and. (NLIST.eq.1)) then
                   write (IMP,103) GEWF
             end if 
-            !      write (*,103) GEWF
-             103  format (/,' GEWF ',3d15.7,/) 
+103         format (/,' GEWF ',3d15.7,/) 
+            info = 0
+      end select
+      !
+      end subroutine               
+
+      
+            
+      subroutine CLUSTER1(NGR,IGrElm,MacroDefRate,MacroDefState,Tprinc) 
+      !   IF both relaxations are orthogonal:
+      !      Cofcos=0 and Cofsin=0 is returned
+      !   ELSE:
+      !      Cofcos and Cofsin are the cosine and sine of the angle for relaxation-1
+      !
+      !   relaxation-2 is always the orthogonal one.
+      !   TDC is the normalized von-Mise equivalent strain rate
+      use altayIOConfig, only: IPR,NLIST,IMP
+      use criMathUtils, only: unit_sr_Matrix, pi
+      use altayMacroKinematic
+    
+      implicit none
+      integer,intent(in)                              :: NGR
+      integer,intent(in)                              :: IGrElm
+      type(DeformationRate),intent(in)                :: MacroDefRate     
+      type(DeformationState),intent(in)               :: MacroDefState
+      double precision,dimension(3,3),intent(out)     :: Tprinc
+ 
+      !
+      double precision :: Cofcos,Cofsin      
+      double precision :: AXX(3,3),GRPAR(3,3), PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3)
+      double precision :: x, dlength, dot1, dot2, TGANGLE, Y
+      double precision :: relaxI(3,3),relaxII(3,3),TGRB(3,3)
+      integer :: i,j, IA, IB
+      !
+            Cofcos = 0.D0
+            Cofsin = 0.D0
+            !
+            if (NGR.eq.1) then      ! let Tprinc be equal to the identity matrix.
+                  Tprinc = unit_sr_Matrix
+                  return
+            end if
+            !
+            GRPAR = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
+            if ((IPR.gt.1) .and.(NLIST.eq.1)) then
+                  write (IMP,409) IGrElm
+                  409 format (' IGrElm = ',i5) 
+                  do i=1,3 
+                        write (IMP,407) (TmatGr(j,i,IGrElm),j=1,3)
+                  enddo
+                  407 format (' TmatGr ',3d15.7)
+                  do i=1,3 
+                        write (IMP,408) (GRPAR(j,i),j=1,3)
+                  enddo
+                  408 format (' GRPAR  ',3d15.7)
+            endif 
+            !
+            if ((IPR.gt.0) .and. (NLIST.eq.1) )then
+                  write (IMP,100)
+                  100  format (//,' CLUSTER1')
+            end if
+ 
 
             !     Construction of orientation matrices for frames associated to the
             !     interfaces
-            IN=3  
             IA=1
             IB=2
             do i=1,3
@@ -475,10 +504,8 @@ contains
                   Cofsin=sqrt(1.0D0-dot1*dot1)
             endif
       !
-      end subroutine               
+      end subroutine
 
-      
-      
       
 end module
     

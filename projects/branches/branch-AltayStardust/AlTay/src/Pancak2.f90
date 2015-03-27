@@ -12,7 +12,7 @@
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
       Subroutine Pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,               &
-       SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
+       SWRLX,XX,IPR,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
@@ -30,7 +30,7 @@
       type(DeformationRate),intent(in) :: MacroDefRate
       type(DeformationState),intent(in):: MacroDefState      
       COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
-       gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
+       GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
        CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),                             &
        fi1b(2),phib(2),fi2b(2),                                          &
        NGR,NRL
@@ -108,8 +108,7 @@
       if (IGrElm.gt.NGrElm) IGrElm=1
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX
       
-      call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
-      
+      call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,Tprinc)
 
 
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE

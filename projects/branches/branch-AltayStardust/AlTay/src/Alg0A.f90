@@ -5,6 +5,7 @@
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayHardTypes
       use altayMacroKinematic
+      use altayMesostructure
       
       ! Initial rations of CRSS, set in MAINA1.
       ! It is used only by the stand-alone AlTay
@@ -49,12 +50,12 @@
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON /DOUBLE/ XM(5,96),XEPS(5),RHO(5),B5(5)
       COMMON /TEXTUR/ TRF(3,3),C2(3,3)
-      COMMON /SIMUL_TAYLOR/ GEWF, SHsam(3,3), SWRLX(3)
+      COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3)
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,TEN(3,3),TOTGEW        
       COMMON /EULERA/ fi1,PHI,fi2
       COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
       COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
-       gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
+       GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
        CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),                             &
        fi1b(2),phib(2),fi2b(2),                                          &
        NGR,NRL
@@ -62,12 +63,15 @@
       common /PE/ Fmicro !Temporary!!!      
       DIMENSION GAXES(3),GEULR(3),TG(3,3),                               &
        CIJ(3,3),STOT(3,3),                                               &
-       RHOST(3,3),RHOSm(3,3),FMicro(3,3)
+       RHOST(3,3),RHOSm(3,3),FMicro(3,3),gewfb(2)
       dimension FS(3,3)
       character(len=40) :: TITEL
       logical SWRLX
       integer :: NPOINT
       integer :: info
+      !> sequence number of the cluster
+      integer :: i_cluster
+      double precision :: GEWF = 1.0D0
       type(DeformationState) :: MacroDefState
       ! HGAM: homogenized slip per step
       ! HGAMCALL: homogenized slip per call
@@ -360,6 +364,9 @@
       ! Begin the loop over grains/clusters
       !
       clusterloop: DO 23 IOR=1,NPOINT
+      !
+      i_cluster = floor(IOR/2.0D0 + 0.6D0)
+      !
       Mgrain=0.0
       GMMdot=0.0
       WorkRate = 0.D0
@@ -389,13 +396,6 @@
       TRF = TRFb(:,:,laml)
       TG = TGb(:,:,laml)
       RHOSSa = RHOSSb(:,:,laml)
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 27/10/2011
-      if(laml.eq.1) then
-      qgx=GEWFb(laml)
-      GEWF=qgx
-      else
-      GEWF=qgx
-      end if
       IF (NFILE.eq.0.or.ISTP.gt.1) goto 999
 ! 
 !     In case of NGR=2:
@@ -416,14 +416,9 @@
             RCM_GUARD
 #endif            
       endif
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 2/1/2011     
-! this modification is to suit for the output of stress     
-      if(laml.eq.1) then
-      ssqgx=GEWF
-      else
-      GEWF=ssqgx
-      end if
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+      !
+      call mesostr_clusterweightfactor(NGR,i_cluster,MacroDefState,GEWF,info)
+      !
       TOTGEW=TOTGEW+GEWF
       !
       ! Skip the rest of the loop if IF > 1
