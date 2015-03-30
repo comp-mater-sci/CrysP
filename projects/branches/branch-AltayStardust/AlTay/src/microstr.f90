@@ -92,8 +92,13 @@ contains
       end subroutine
 
       
-      !> Calculation of a 'weight' factor associated to the volume of the cluster
-      subroutine mesostr_clusterweightfactor(NGR,IGrElm,MacroDefState,GEWF,info) 
+      !> Calculation of a weight factor associated to the cluster, i.e.
+      !>   - for Taylor: weight = 1.0
+      !>   - for Alamel: weight is suspectedly given by the "Appendix A" in: 
+      !>                   "P. Van Houtte et al, IJP 21, pp. 589-624 (2005), 
+      !>                   doi: 10.1016/j.ijplas.2004.04.011",
+      !>                   or a variant of the described algorithm.
+      subroutine mesostr_clusterweightfactor(NGR,IGrElm,MacroDefState,weight,info) 
       use altayIOConfig, only: IPR,NLIST,IMP
       use altayMacroKinematic
       !
@@ -101,13 +106,14 @@ contains
       integer,intent(in)                              :: NGR
       integer,intent(in)                              :: IGrElm
       type(DeformationState),intent(in)               :: MacroDefState
-      double precision,intent(out)                    :: GEWF
+      double precision,intent(out)                    :: weight
       integer,intent(out)                             :: info
       !
       double precision, dimension(3,3) :: deformedaxes
-      double precision, dimension(3)   :: vec1, AL, AA
-      double precision                 :: x, u
-      integer                          :: i, j
+      double precision, dimension(3)   :: AL, AA
+      double precision                 :: Vpar, u
+      integer                          :: i
+      integer, parameter               :: i1 = 1, i3 = 3            
       !
       !
       !
@@ -115,78 +121,76 @@ contains
       info = -1
       select case (NGR)
           case (1) !Taylor
-            GEWF = 1.0D0
-            info = 0
+              weight = 1.0D0
+              info = 0
           case (2) !Alamel
-            deformedaxes = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
-            !     Calculation of volume affected by the surface
-            do i=1,3,1
-                  x=0.0
-                  do j=1,3,1 
-                        X=X+deformedaxes(j,i)**2
-                  enddo
-                  AL(i)=sqrt(X)
-            enddo 
-            !     Box product
-            vec1(1)=deformedaxes(2,2)*deformedaxes(3,3)-deformedaxes(3,2)*deformedaxes(2,3)
-            vec1(2)=deformedaxes(3,2)*deformedaxes(1,3)-deformedaxes(1,2)*deformedaxes(3,3)            
-            vec1(3)=deformedaxes(1,2)*deformedaxes(2,3)-deformedaxes(2,2)*deformedaxes(1,3)
-            u=0.0D0
-            do i=1,3
-                  u=u+deformedaxes(i,1)*vec1(i)
-            enddo
-            u=abs(u)*0.25D0/(AL(1)*AL(2)*AL(3))
-            !     The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3;
-            !      for very flattened grains, it should tend to 1.
-            ! 
-            !     re-order the basisvectors so that AA(1)>=AA(2)>=AA(3)
-            !     find out which one of these corresponds to the original AL(3)
-            !     Case 1: is AL(3) the longest? 
-            if (AL(2).le.AL(3).and.AL(1).le.AL(3)) then
+              deformedaxes = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
+              !Calculation of volume affected by the surface
+              do i=1,3,1
+                  AL(i) = vec_norm2(deformedaxes(i1:i3,i))
+              enddo 
+              !calculate volume of parallelepiped defined by the 3 column 
+              ! vectors of deformedaxes, using dot & vector products
+              Vpar = abs( dot_product( deformedaxes(i1:i3,1), &
+                ovector_product( deformedaxes(i1:i3,2) , deformedaxes(i1:i3,3) ) ) )
+              !
+              u = Vpar * 0.25D0 / (AL(1)*AL(2)*AL(3))
+              !Note: The factor 0.25 is there so that for equiaxed grains, weight 
+              !below becomes 1/3; for very flattened grains, it should tend to 1.
+              ! 
+              !re-order the basisvectors so that AA(1)>=AA(2)>=AA(3)
+              !find out which one of these corresponds to the original AL(3)
+              !Case 1----- is AL(3) the longest? 
+              if (AL(2).le.AL(3).and.AL(1).le.AL(3)) then
                   AA(1)=AL(3)
                   if(AL(2).ge.AL(1))then
-                        AA(2)=AL(2)
-                        AA(3)=AL(1)
+                      AA(2)=AL(2)
+                      AA(3)=AL(1)
                   else
-                        AA(2)=AL(1)
-                        AA(3)=AL(2)
+                      AA(2)=AL(1)
+                      AA(3)=AL(2)
                   endif
-                  GEWF=u*(2.0D0*(AA(2)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.0D0)
-            else 
-                  !       Case 2: is AL(3) the shortest?
+                  weight=u*(2.0D0*(AA(2)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.0D0)
+              else 
+              !Case 2----- is AL(3) the shortest?
                   if (AL(3).le.AL(1).and.AL(3).le.AL(2)) then
-                        AA(3)=AL(3)
-                        if(AL(1).ge.AL(2))then
-                              AA(1)=AL(1)
-                              AA(2)=AL(2)
-                        else
-                              AA(1)=AL(2)
-                              AA(2)=AL(1)
-                        endif
-                        GEWF=u*(4.D0*(AA(1)-AA(3))*(AA(2)-AA(3))*AA(3)  &
+                      AA(3)=AL(3)
+                      if(AL(1).ge.AL(2))then
+                          AA(1)=AL(1)
+                          AA(2)=AL(2)
+                      else
+                          AA(1)=AL(2)
+                          AA(2)=AL(1)
+                      endif
+                      weight=u*(4.D0*(AA(1)-AA(3))*(AA(2)-AA(3))*AA(3)  &
                               +2.0D0*(AA(2)-AA(3))*AA(3)**2+2.0D0*(AA(1)-AA(3))*AA(3)**2 &
                               +4.D0*AA(3)**3/3.D0)
-                    else
-                        !         Case 3: AL(3) is neither shortest nor longest      
-                        AA(2)=AL(3)
-                        if(AL(1).ge.AL(2))then
-                              AA(1)=AL(1)
-                              AA(3)=AL(2)
-                        else
-                              AA(1)=AL(2)
-                              AA(3)=AL(1)
-                        endif
-                        GEWF=u*(2.D0*(AA(1)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.D0)
-                    endif
-            endif
-            if ((IPR.gt.0) .and. (NLIST.eq.1)) then
-                  write (IMP,103) GEWF
-            end if 
-103         format (/,' GEWF ',3d15.7,/) 
-            info = 0
+                  else
+                  !Case 3----- AL(3) is neither shortest nor longest      
+                      AA(2)=AL(3)
+                      if(AL(1).ge.AL(2))then
+                          AA(1)=AL(1)
+                          AA(3)=AL(2)
+                      else
+                          AA(1)=AL(2)
+                          AA(3)=AL(1)
+                      endif
+                      weight=u*(2.D0*(AA(1)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.D0)
+                  endif
+              endif
+              !
+              if ((IPR.gt.0) .and. (NLIST.eq.1)) then
+                  write (IMP,103) weight
+              end if 
+              103 format (/,' GEWF ',3d15.7,/) 
+              !
+              info = 0
+              !
           case default
-            info = criErr_BadArgs
-            return
+              !
+              info = criErr_BadArgs
+              return
+              !
       end select
       !
       end subroutine               
