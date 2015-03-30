@@ -108,7 +108,7 @@
       if (IGrElm.gt.NGrElm) IGrElm=1
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX
       
-      call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,Tprinc)
+      call mesostr_clustertrafo(NGR,IGrElm,MacroDefRate,MacroDefState,Tprinc,info)
 
 
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE

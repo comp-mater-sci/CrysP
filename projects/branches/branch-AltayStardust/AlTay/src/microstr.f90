@@ -4,6 +4,7 @@
 module altayMesostructure
 use altayAlgorithms
 use altayMiscutils, only: terminate, stopcode_runtimeerror
+use criErrcodes
 implicit none
 
       !> Transformation matrix associated to the grain boundary reference frame 
@@ -95,7 +96,7 @@ contains
       subroutine mesostr_clusterweightfactor(NGR,IGrElm,MacroDefState,GEWF,info) 
       use altayIOConfig, only: IPR,NLIST,IMP
       use altayMacroKinematic
-    
+      !
       implicit none
       integer,intent(in)                              :: NGR
       integer,intent(in)                              :: IGrElm
@@ -103,8 +104,10 @@ contains
       double precision,intent(out)                    :: GEWF
       integer,intent(out)                             :: info
       !
-      double precision :: GRPAR(3,3),x,vec1(3),AL(3),u,AA(3)
-      integer :: i,j
+      double precision, dimension(3,3) :: deformedaxes
+      double precision, dimension(3)   :: vec1, AL, AA
+      double precision                 :: x, u
+      integer                          :: i, j
       !
       !
       !
@@ -115,22 +118,22 @@ contains
             GEWF = 1.0D0
             info = 0
           case (2) !Alamel
-            GRPAR = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
+            deformedaxes = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
             !     Calculation of volume affected by the surface
             do i=1,3,1
                   x=0.0
                   do j=1,3,1 
-                        X=X+GRPAR(j,i)**2
+                        X=X+deformedaxes(j,i)**2
                   enddo
                   AL(i)=sqrt(X)
             enddo 
             !     Box product
-            vec1(1)=GRPAR(2,2)*GRPAR(3,3)-GRPAR(3,2)*GRPAR(2,3)
-            vec1(2)=GRPAR(3,2)*GRPAR(1,3)-GRPAR(1,2)*GRPAR(3,3)            
-            vec1(3)=GRPAR(1,2)*GRPAR(2,3)-GRPAR(2,2)*GRPAR(1,3)
+            vec1(1)=deformedaxes(2,2)*deformedaxes(3,3)-deformedaxes(3,2)*deformedaxes(2,3)
+            vec1(2)=deformedaxes(3,2)*deformedaxes(1,3)-deformedaxes(1,2)*deformedaxes(3,3)            
+            vec1(3)=deformedaxes(1,2)*deformedaxes(2,3)-deformedaxes(2,2)*deformedaxes(1,3)
             u=0.0D0
             do i=1,3
-                  u=u+GRPAR(i,1)*vec1(i)
+                  u=u+deformedaxes(i,1)*vec1(i)
             enddo
             u=abs(u)*0.25D0/(AL(1)*AL(2)*AL(3))
             !     The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3;
@@ -181,44 +184,59 @@ contains
             end if 
 103         format (/,' GEWF ',3d15.7,/) 
             info = 0
+          case default
+            info = criErr_BadArgs
+            return
       end select
       !
       end subroutine               
 
       
-            
-      subroutine CLUSTER1(NGR,IGrElm,MacroDefRate,MacroDefState,Tprinc) 
-      !   IF both relaxations are orthogonal:
-      !      Cofcos=0 and Cofsin=0 is returned
-      !   ELSE:
-      !      Cofcos and Cofsin are the cosine and sine of the angle for relaxation-1
-      !
-      !   relaxation-2 is always the orthogonal one.
-      !   TDC is the normalized von-Mise equivalent strain rate
+      !> Calculate the transforation matrix for the cluster reference frame 
+      !> (with respect to the macro reference frame), i.e.
+      !>   - for Taylor: unity matrix.
+      !>   - for Alamel: transformation matrix of the grain boundary reference
+      !>                   frame, which has:
+      !>                    (1) Its 3rd axis normal to the grain boundary.
+      !>                    (2) Its 1st and 2nd axes such that the 2nd Alamel-type
+      !>                        relaxation (in the local (2,3)-plane) is guaranteed
+      !>                        orthogonal with respect to the currently imposed 
+      !>                        macroscopic strain mode. Note that the 1st Alamel-type 
+      !>                        relaxation can be parallel, orthogonal, or neither.
+      subroutine mesostr_clustertrafo(NGR,IGrElm,MacroDefRate,MacroDefState,T_cluster,info) 
       use altayIOConfig, only: IPR,NLIST,IMP
-      use criMathUtils, only: unit_sr_Matrix, pi
+      use criMathUtils
       use altayMacroKinematic
-    
+      !
       implicit none
       integer,intent(in)                              :: NGR
       integer,intent(in)                              :: IGrElm
       type(DeformationRate),intent(in)                :: MacroDefRate     
       type(DeformationState),intent(in)               :: MacroDefState
-      double precision,dimension(3,3),intent(out)     :: Tprinc
- 
+      double precision,dimension(3,3),intent(out)     :: T_cluster
+      integer,intent(out)                             :: info 
       !
-      double precision :: AXX(3,3), GRPAR(3,3), TDCGr(3,3), T_phi(3,3) 
-      double precision :: x, Sphi, Cphi, phi
-      integer :: i,j, IA, IB
+      double precision, dimension(3,3) :: deformedaxes, orthoaxes, T_ortho, mode_local, T_phi 
+      double precision                 :: x, Sphi, Cphi, phi
+      double precision, parameter      :: epsi = 10.D0 * epsilon(x)
+      integer                          :: i, j
+      integer, parameter               :: i1 = 1, i3 = 3      
       !
-            !
-            if (NGR.eq.1) then      ! let Tprinc be equal to the identity matrix.
-                  Tprinc = unit_sr_Matrix
-                  return
-            end if
-            !
-            GRPAR = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
-            if ((IPR.gt.1) .and.(NLIST.eq.1)) then
+      !
+      !
+      !
+      info = -1
+      select case (NGR)
+      case (1) !Taylor
+              !
+              T_cluster = unit_sr_Matrix
+              info = 0
+              !
+          case (2) !Alamel
+              !
+              deformedaxes = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
+              !
+              if ((IPR.gt.1) .and.(NLIST.eq.1)) then
                   write (IMP,409) IGrElm
                   409 format (' IGrElm = ',i5) 
                   do i=1,3 
@@ -226,81 +244,86 @@ contains
                   enddo
                   407 format (' TmatGr ',3d15.7)
                   do i=1,3 
-                        write (IMP,408) (GRPAR(j,i),j=1,3)
+                        write (IMP,408) (deformedaxes(j,i),j=1,3)
                   enddo
-                  408 format (' GRPAR  ',3d15.7)
-            endif 
-            !
-            if ((IPR.gt.0) .and. (NLIST.eq.1) )then
+                  408 format (' deformedaxes  ',3d15.7)
+              endif 
+              !
+              if ((IPR.gt.0) .and. (NLIST.eq.1) )then
                   write (IMP,100)
                   100  format (//,' CLUSTER1')
-            end if
- 
-
-            !     Construction of orientation matrices for frames associated to the
-            !     interfaces
-            IA=1
-            IB=2
-            do i=1,3
-                  AXX(i,1)=GRPAR(i,IA)
-            enddo
-            !       Orientation of interfaces containing axes IA and IB
-            !       Normal axis: (vector product)
-            AXX(1,3)=GRPAR(2,IA)*GRPAR(3,IB)-GRPAR(3,IA)*GRPAR(2,IB)
-            AXX(2,3)=GRPAR(3,IA)*GRPAR(1,IB)-GRPAR(1,IA)*GRPAR(3,IB)
-            AXX(3,3)=GRPAR(1,IA)*GRPAR(2,IB)-GRPAR(2,IA)*GRPAR(1,IB)
-            !       Orientation of 2nd axis:(vector product)
-            AXX(1,2)=AXX(2,3)*AXX(3,1)-AXX(3,3)*AXX(2,1)
-            AXX(2,2)=AXX(3,3)*AXX(1,1)-AXX(1,3)*AXX(3,1)
-            AXX(3,2)=AXX(1,3)*AXX(2,1)-AXX(2,3)*AXX(1,1)
-            !       Normalisation
-            do j=1,3
-                  x=0.0d0
-                  do i=1,3
-                        x=x+AXX(i,j)**2
-                  enddo
-                  x=sqrt(x)
-                  do i=1,3
-                        AXX(i,j)=AXX(i,j)/x
-                  enddo
-            enddo
-            do i=1,3
-                  do j=1,3
-                        Tprinc(i,j)=AXX(j,i)
-                  enddo           
-                  if (IPR.gt.0) then
-                        if(NLIST.eq.1) then 
-                        write (IMP,102) (Tprinc(i,j),j=1,3)
+              end if
+              !
+              !1st axis (1st column) in orthoaxes is 1st axis of deformedaxes
+              orthoaxes(i1:i3,1) = deformedaxes(i1:i3,1)
+              !
+              !3rd axis (3rd column) in orthoaxis is the vector product of 1st and 2nd axis of deformedaxes
+              orthoaxes(i1:i3,3) = ovector_product( deformedaxes(i1:i3,1) , deformedaxes(i1:i3,2) )
+              !
+              !2nd axis (2nd column) in orthoaxis is the vector product of 3rd and 1st axis of orthoaxes
+              orthoaxes(i1:i3,2) = ovector_product( orthoaxes(i1:i3,3) , orthoaxes(i1:i3,1) )
+              !
+              !Normalization of axes (columns) in orthoaxes
+              do i=i1,i3
+                  x = vec_norm2(orthoaxes(i1:i3,i))
+                  if (abs(x) <= epsilon(x) ) then
+                      info = criErr_NumNaN
+                      return
                   end if
-            end if
-            102      format (' TGrb ',3d15.7)            
-            enddo
-            
-          !Transform MacroDefRate%StrainModevM to the "Tprinc" reference frame
-          TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
-          !
-          Sphi=TDCGr(2,3)
-          Cphi=TDCGr(1,3)
-          !
-          if (abs(Sphi).lt.1.0d-6.and.abs(Cphi).lt.1.0d-6) then
-              phi=0.0
-          else
-              phi=ATAN2(Sphi,Cphi)
-          endif  
-          !
-          !Additional transformation matrix to a GB reference frame for which 
-          ! the 2nd relaxation is allways perpendicular to the imposed strain mode
-          T_phi= 0.D0
-          T_phi(1,1)= cos(phi)
-          T_phi(2,2)= cos(phi)
-          T_phi(3,3)= 1.D0
-          T_phi(1,2)= sin(phi)
-          T_phi(2,1)= -sin(phi)
-          !Update Tprinc        
-          Tprinc = matmul(T_phi,Tprinc)
+                  orthoaxes(i1:i3,i) = orthoaxes(i1:i3,i) / x
+              enddo  
+              !
+              !The corresponding transformation matrix is given by the transpose
+              T_ortho = transpose(orthoaxes)
+              !           
+              if ( (IPR.gt.0) .and. (NLIST.eq.1) ) then 
+                  do i=1,3
+                      write (IMP,102) (T_ortho(i,j),j=1,3)
+                  end do
+              end if
+              102 format (' TGrb ',3d15.7)         
+              !
+              !Transform MacroDefRate%StrainModevM to the T_ortho reference frame
+              mode_local = rotateSRTensorFrom(MacroDefRate%StrainModevM,T_ortho)
+              !
+              !Imposed shear deformation out of the grain boundary plane is
+              ! found in the (1,3)- and (2,3)-components.
+              Sphi=mode_local(2,3)
+              Cphi=mode_local(1,3)
+              !Note: Sphi^2 + Cphi^2 <= 1.0
+              !
+              if (abs(Sphi).lt.epsi.and.abs(Cphi).lt.epsi) then
+                  !This need not trigger any exception.
+                  !For any choice of phi, both relaxation will be orthogonal.
+                  phi = 0.0D0
+              else
+                  phi = atan2(Sphi,Cphi)
+              endif  
+              !
+              !T_phi is the additional transformation matrix to a cluster reference
+              !frame for which the 2nd relaxation is allways perpendicular to the 
+              !imposed strain mode.
+              T_phi= 0.D0
+              T_phi(1,1)= cos(phi)
+              T_phi(2,2)= cos(phi)
+              T_phi(3,3)= 1.D0
+              T_phi(1,2)= sin(phi)
+              T_phi(2,1)= -sin(phi)
+              !
+              !T_cluster is the transformation matrix T_ortho followed by T_phi       
+              T_cluster = matmul(T_phi,T_ortho)
+              !
+          case default
+              !
+              info = criErr_BadArgs
+              return
+              !
+      end select
       !
       end subroutine
 
+      
+      
       
 end module
     
