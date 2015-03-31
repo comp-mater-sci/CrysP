@@ -132,7 +132,7 @@ contains
               !calculate volume of parallelepiped defined by the 3 column 
               ! vectors of deformedaxes, using dot & vector products
               Vpar = abs( dot_product( deformedaxes(i1:i3,1), &
-                ovector_product( deformedaxes(i1:i3,2) , deformedaxes(i1:i3,3) ) ) )
+                vector_product( deformedaxes(i1:i3,2) , deformedaxes(i1:i3,3) ) ) )
               !
               u = Vpar * 0.25D0 / (AL(1)*AL(2)*AL(3))
               !Note: The factor 0.25 is there so that for equiaxed grains, weight 
@@ -262,10 +262,10 @@ contains
               orthoaxes(i1:i3,1) = deformedaxes(i1:i3,1)
               !
               !3rd axis (3rd column) in orthoaxis is the vector product of 1st and 2nd axis of deformedaxes
-              orthoaxes(i1:i3,3) = ovector_product( deformedaxes(i1:i3,1) , deformedaxes(i1:i3,2) )
+              orthoaxes(i1:i3,3) = vector_product( deformedaxes(i1:i3,1) , deformedaxes(i1:i3,2) )
               !
               !2nd axis (2nd column) in orthoaxis is the vector product of 3rd and 1st axis of orthoaxes
-              orthoaxes(i1:i3,2) = ovector_product( orthoaxes(i1:i3,3) , orthoaxes(i1:i3,1) )
+              orthoaxes(i1:i3,2) = vector_product( orthoaxes(i1:i3,3) , orthoaxes(i1:i3,1) )
               !
               !Normalization of axes (columns) in orthoaxes
               do i=i1,i3

@@ -71,10 +71,10 @@ module criMathUtils
             module procedure ocross_product_dp, ocross_product_int
       end interface ocross_product
 
-      !> \interface ovector_product Vector-Vector ovector product operator
-      interface ovector_product
-            module procedure ovector_product_dp
-      end interface ovector_product
+      !> \interface vector_product Vector-Vector ovector product operator
+      interface vector_product
+            module procedure vector_product_dp
+      end interface vector_product
 
       !> Representation of Euler angles: Bunge notation
       type EulerAngles
@@ -262,15 +262,15 @@ contains
 #endif
      
       !> Calculation of the vector product of two double precision vectors with size 3.
-      pure function ovector_product_dp(a,b)
+      pure function vector_product_dp(a,b)
       implicit none
       double precision,dimension(3),intent(in)        :: a,b
-      double precision,dimension(3)                   :: ovector_product_dp
+      double precision,dimension(3)                   :: vector_product_dp
       integer :: i
       !
-            ovector_product_dp(1) = a(2)*b(3) - a(3)*b(2)
-            ovector_product_dp(2) = a(3)*b(1) - a(1)*b(3)
-            ovector_product_dp(3) = a(1)*b(2) - a(2)*b(1)            
+            vector_product_dp(1) = a(2)*b(3) - a(3)*b(2)
+            vector_product_dp(2) = a(3)*b(1) - a(1)*b(3)
+            vector_product_dp(3) = a(1)*b(2) - a(2)*b(1)            
       !
       end function
     
