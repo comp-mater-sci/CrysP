@@ -54,11 +54,13 @@
       COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,TEN(3,3),TOTGEW        
       COMMON /EULERA/ fi1,PHI,fi2
       COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
-      COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
-       GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
-       CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),                             &
-       fi1b(2),phib(2),fi2b(2),                                          &
+      COMMON /LAMEL/ laml,TRFb(3,3,2),        &
+       GMMAb(2),              &
        NGR,NRL
+      dimension fi10b(2),phi0b(2),fi20b(2)
+      dimension Fb(3,3,2),GAXESb(3,2),GEULRb(3,2)
+      dimension CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2)
+      dimension fi1b(2),phib(2),fi2b(2)
       common /CEIGEN/ IOR,ISTP,NBLOC
       common /PE/ Fmicro !Temporary!!!      
       DIMENSION GAXES(3),GEULR(3),TG(3,3),                               &
