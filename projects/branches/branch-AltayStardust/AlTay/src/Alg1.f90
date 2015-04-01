@@ -36,7 +36,7 @@
       COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3)
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON/TLR2/ RHOAsa
-      COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
+      COMMON /DOUBLE/ A1(5,96),BB8(5)
       COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
       double precision, dimension(3,3):: RHOScrys(3,3)
       double precision, dimension(3,3):: RHOAcrys(3,3), RHOAsa(3,3) 
@@ -44,7 +44,7 @@
 !
 !     Extra arrays nodig voor lineare programmatie op 2 korrels tegelijk
 !
-      common /extra/ A2(10,194),UU(10,10)
+      common /extra/ A2(10,194)
       dimension XXLP(194)
       logical SWRLX
       INTEGER R 

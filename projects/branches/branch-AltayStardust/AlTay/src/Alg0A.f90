@@ -47,11 +47,8 @@
 !
 !     IW=2 is meant for outputting the final texture.
 !
-      COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON /DOUBLE/ XM(5,96),XEPS(5),RHO(5),B5(5)
       COMMON /TEXTUR/ TRF(3,3),C2(3,3)
       COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3)
-      COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,TEN(3,3),TOTGEW        
       COMMON /EULERA/ fi1,PHI,fi2
       COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
       COMMON /LAMEL/ laml,TRFb(3,3,2),        &

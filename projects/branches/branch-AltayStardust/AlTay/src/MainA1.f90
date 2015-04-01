@@ -30,7 +30,6 @@
 !     IDISK1= work file (obsolete, not used)
 !     NDAT1= Input-texture file
 !
-      COMMON /IGLIJS/ M11,CC(2,96)
       common /CEIGEN/ IOR,ISTP,JBLOC
       common /PE/ Fmicro !Temporary!!!
       double precision, dimension(3,3) :: Fmicro, DG

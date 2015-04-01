@@ -33,10 +33,10 @@
        GMMAb(2),              &
        NGR,NRL
       COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
-      common /extra/ A1(10,194),UU(10,10)
+      COMMON /DOUBLE/ A1(5,96),BB8(5)
+      common /extra/ A2(10,194)
       common /CEIGEN/ IOR,ISTP,NBLOC
-      COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),           &
+      COMMON /ACTIVE/ NACTIV,INDACT(8),INDLP(8),SLIPLP(8),           &
        TLXX,TAURLP(8)
       double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
       double precision,dimension(5):: RHOS, RHOA 
@@ -44,7 +44,7 @@
        TDCb(3,3,2),TRCb(3,3,2),                                          &
        B(5,5),relax(3,3,3),DACC(10),                                     &
        rls(3,3,3,2),rla(3,3),rlm(3,3,3),C3(3,3),TRP(10),APRIME(10),      &
-       B3(10,3),PLUMIN(2,3),CUst(10)
+       B3(10,3),PLUMIN(2,3),CUst(10),B5(5),UU(10,10)
 !     first index op PLUMIN = nr. of grain
 !     second index = nr. of relaxation
       dimension spanv(5),XX(194),STRSS(10),BB(10)
@@ -54,7 +54,7 @@
 !     rlm is unit relaxation tensor in macroscopic frame
 !     rls and rla in crystal frame (symmetric and anti-sym. part)
       dimension B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10)
-      integer DI1(5),DI(10),DI2(10)
+      integer DI1(5),DI(10),DI2(10),NLP
       dimension GAMR(2),Tprinc(3,3),TAURL(2)
       data SQR2/0.7071067811865476D+00/,B3/30*0.0D0/,TOLXX/5.0d-6/
 !     Definition of the two relaxations, representing a
@@ -92,7 +92,7 @@
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (IOR.eq.1) IGrElm=0 
       TWOSQ3=sqrt(2.D0/3.D0)
-!     N is number of rows of A1;   NU number of rows of UU2
+!     N is number of rows of A2;   NU number of rows of UU2
       TLXX=TOLXX 
       N=5*NGR
       NU=N
@@ -138,12 +138,12 @@
 83    continue
       B3(L1+1:L1+3,IRL) = PLUMIN(IL,IRL) * AntiSymMat33ToVec3(RLA) / sqr2 
       B5= SymMat33ToVec5(RLS(1:3,1:3,IRL,IL)) ! sym.(3,3) -> (5)
-!     Insert the relaxations as columns in A1-matrix
+!     Insert the relaxations as columns in A2-matrix
       j=M2+IRL
       do 84 i=1,5
       i1=i+L1
       x=B5(i)*PLUMIN(IL,IRL)
-      A1(i1,j)=x
+      A2(i1,j)=x
   84  continue
   82  continue 
   87  continue
@@ -221,11 +221,11 @@
       end if
       end if
  400  format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
-      Call TBH(IPR,NDIM,N,M2,A1,BB,                                      &
+      Call TBH(IPR,NDIM,N,M2,A2,BB,                                      &
        CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,                              &
        Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID) 
 ! CCC (input): critical resolved shear stresses (Tauc)
-! UU (input): initial inverse of "basis" = columns of A1
+! UU (input): initial inverse of "basis" = columns of A2
 !      corresponding to thoses slip systems which are active
 !      according to first guess 
 ! UU2 (output): inverse of final "basis" (active slip systems)
@@ -282,11 +282,11 @@
       end if
       end if
  401  format (' Second call of TBH')
-      Call TBH(IPR,N,N,M12,A1,BB,                                        &
+      Call TBH(IPR,N,N,M12,A2,BB,                                        &
        CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,                             &
        Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
 ! CCC (input): critical resolved shear stresses (Tauc)
-! UU2 (input): initial inverse of "basis" = columns of A1
+! UU2 (input): initial inverse of "basis" = columns of A2
 !      corresponding to thoses slip systems which are active
 !      according to first guess 
 ! UU (output): inverse of final "basis" (active slip systems)
@@ -368,7 +368,7 @@
       y8=0.0
       if (NRL.gt.0) then
                      do IRL=1,NRL
-                       x8=x8+A1(i+ii,M2+IRL)*gamr(IRL)
+                       x8=x8+A2(i+ii,M2+IRL)*gamr(IRL)
                        y8=y8+B3(i+ii,IRL)*gamr(IRL)
                      enddo
                     endif

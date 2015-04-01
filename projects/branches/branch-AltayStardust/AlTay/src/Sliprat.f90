@@ -24,9 +24,9 @@
 !
 !     Modified in Aug 2010
 !
-      COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
-      COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),           &
+      COMMON /ACTIVE/ NACTIV,INDACT(8),INDLP(8),SLIPLP(8),           &
        TLXX,TAURLP(8) 
+      integer NLP
       dimension SGNN(IDIMXX)
       dimension SLPR(8),IND(8),XX(IDIMXX),ISTOR(0:8,48),SLSTOR(0:8,48)
       data NSTOR/48/
@@ -264,7 +264,7 @@
 !
 !     Modified Aug 2010
 !
-      COMMON /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
+      COMMON /DOUBLE/ A1(5,96),BB8(5)
       dimension sgnn(IDIMXX)
       dimension A(13,13),B(13),SLPR(8),IND(8)
       dimension AA(13,13),BA(13),VAL(13),XV(13),YV(13)
@@ -277,7 +277,7 @@
       do i=1,N2
          is=IND(i)
          do j=1,5
-            A(j,i)=sgnn(is)*A8(j,is)
+            A(j,i)=sgnn(is)*A1(j,is)
          enddo
       enddo
       do j=1,5
@@ -298,7 +298,7 @@
          B(i)=0.0
          do j=1,5
             j1=NN+j
-            x=sgnn(is)*A8(j,is)
+            x=sgnn(is)*A1(j,is)
             A(i,j1)=-x
             A(j1,i)=x
          enddo
