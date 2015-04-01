@@ -58,13 +58,13 @@
        GMMAb(2),              &
        NGR,NRL
       dimension fi10b(2),phi0b(2),fi20b(2)
-      dimension Fb(3,3,2),GAXESb(3,2),GEULRb(3,2)
-      dimension CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2)
+      dimension Fb(3,3,2)
+      dimension RHOSSb(3,3,2)
       dimension fi1b(2),phib(2),fi2b(2)
       common /CEIGEN/ IOR,ISTP,NBLOC
       common /PE/ Fmicro !Temporary!!!      
-      DIMENSION GAXES(3),GEULR(3),TG(3,3),                               &
-       CIJ(3,3),STOT(3,3),                                               &
+      DIMENSION                                &
+       STOT(3,3),                                               &
        RHOST(3,3),RHOSm(3,3),FMicro(3,3),gewfb(2)
       dimension FS(3,3)
       character(len=40) :: TITEL
@@ -289,12 +289,12 @@
       pebpSDVavg = StateDerivedVars()
 #endif      
       
-      call dynfil2(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
+      call dynfil2(nrstep,MacroDefState%TotalDefGrad)
 #ifndef NO_STDOUT       
-      write (*,96) ISTP,GAXES
+      write (*,96) ISTP
 #endif
       if(NLIST.eq.1) then
-      write (IMP,96) ISTP,GAXES
+      write (IMP,96) ISTP
       end if
   96  format(' Step nr.',i5,5X,3f12.5)
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
@@ -309,11 +309,7 @@
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 !      if (IGLIJ.eq.1) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if(NLIST.eq.1) then
-      write (IMP,3458) TG
-      end if
-      
- 3458 format (' TG=',3(T10,3d12.3,/))
+
   70  if (nfile.eq.0.or.ISTP.gt.1) goto 44
       IF (NLIST.EQ.1) WRITE (IMP,112) ISTP
  112  FORMAT (//' DEFORMATION STEP ',I5,//)
@@ -335,17 +331,14 @@
       !
       call Update_DeformationState(MacroDefRate,MacroDefState,info)
       !
-      call UPDATC(CIJ,MacroDefState%IncrDefGrad_inverse) 
-      call GETANG(CIJ,GAXES,GEULR,TG)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
       ! We can choose not to update the texture data
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,  &
-                         CIJ,TG)
+            call DYNFIL3(nrstep,MacroDefState%TotalDefGrad)
       endif
 #else          
-      call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
+      call DYNFIL3(nrstep,MacroDefState%TotalDefGrad)
 #endif
 !
 !       Added for lamel model:
@@ -379,8 +372,7 @@
       if (ifil4.eq.NPOINT) goto 80
       ifil4=ifil4+1
       call DYNFIL4(ifil4,fi10b(L),PHI0b(L),fi20b(L),                     &
-       TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L),GAXESb(1,L),              &
-       GEULRb(1,L),CIJb(1,1,L),TGb(1,1,L),RHOSSb(1,1,L))
+       TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L),RHOSSb(1,1,L))
 !
       fi1b(L)=fi10b(L)*convf
       PHIb(L)=PHI0b(L)*convf
@@ -396,7 +388,6 @@
       fi2=fi2b(laml)
       !
       TRF = TRFb(:,:,laml)
-      TG = TGb(:,:,laml)
       RHOSSa = RHOSSb(:,:,laml)
       IF (NFILE.eq.0.or.ISTP.gt.1) goto 999
 ! 
@@ -461,12 +452,12 @@
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
             call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                   &
-                         MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,  &
+                         MacroDefState%TotalDefGrad,  &
                          RHOSsa) 
       endif
 #else
       call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                         &
-                   MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
+                   MacroDefState%TotalDefGrad,RHOSsa)
 #endif
       ! 
 #ifndef ALTAY_SUBROUTINE

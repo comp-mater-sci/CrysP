@@ -6,19 +6,13 @@
       TYPE :: grain
             double precision :: tFI1 = 0.D0,tPHI = 0.D0, tFI2 = 0.D0
             double precision :: tGEW = 1.D0 ,tGAM = 0.D0
-            double precision, dimension(3) :: tAXES = 1.D0, tEULR = 0.D0
             double precision, dimension(3,3) :: tT = 0.D0
             double precision, dimension(3,3) :: tF = unit_sr_matrix
-            double precision, dimension(3,3) :: tCIJ = unit_sr_matrix
-            double precision, dimension(3,3) :: tTAX = unit_sr_matrix
             double precision, dimension(3,3) :: tZERO = 0.D0,tRHO = 0.D0
       END TYPE grain
       
       type :: matFrame
             double precision,dimension(3,3) :: FALG = unit_sr_matrix
-            double precision,dimension(3,3) :: CIJ0 = unit_sr_matrix
-            double precision,dimension(3,3) :: TAX0 = unit_sr_matrix
-            double precision,dimension(3) :: GAXES = 1.D0,GEULR = 0.D0
       end type
 
       !> State variable: array of grains/orientations.
@@ -107,55 +101,40 @@
       
 
       !> Extract the global material data
-      subroutine DYNFIL2(n,F,AXES,EULR,CIJ,TAX)
+      subroutine DYNFIL2(n,F)
       integer,intent(out)     :: n
-      double precision,intent(out) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3), &
-       F(3,3)
+      double precision,intent(out) :: F(3,3)
       !
             n=nrstep
             F=mf%FALG
-            AXES=mf%GAXES
-            EULR=mf%GEULR
-            CIJ=mf%CIJ0
-            TAX=mf%TAX0
       !
       end subroutine DYNFIL2
 
       !> Write the global material data
-      subroutine DYNFIL3(n,F,AXES,EULR,CIJ,TAX)
+      subroutine DYNFIL3(n,F)
       integer,intent(in)     :: n
-      double precision,intent(in) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),  &
-       F(3,3)
+      double precision,intent(in) :: F(3,3)
       !
             nrstep=n
             mf%FALG=F
-            mf%GAXES=AXES
-            mf%GEULR=EULR
-            mf%CIJ0=CIJ
-            mf%TAX0=TAX
       !
       end subroutine DYNFIL3
 
       !> Get the record data for i-th grain
       subroutine DYNFIL4(i,FI1,PHI,FI2,T,                                &
-                        GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO)
+                        GEW,GAM,F,ZERO)
       implicit none
       integer,intent(in) :: i
       double precision,intent(out) :: FI1,PHI,FI2,GEW,GAM
-      double precision,intent(out) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3), &
-       F(3,3),T(3,3),ZERO(3,3)
+      double precision,intent(out) :: F(3,3),T(3,3),ZERO(3,3)
       !
             FI1=DFIL(i)%tFI1
             PHI=DFIL(i)%tPHI
             FI2=DFIL(i)%tFI2
             GEW=DFIL(i)%tGEW
             GAM=DFIL(i)%tGAM
-            AXES=DFIL(i)%tAXES
-            EULR=DFIL(i)%tEULR
             T=DFIL(i)%tT
             F=DFIL(i)%tF
-            CIJ=DFIL(i)%tCIJ
-            TAX=DFIL(i)%tTAX
             ZERO=DFIL(i)%tZERO
       !
       end subroutine DYNFIL4
@@ -163,24 +142,19 @@
 
       !> Put the record data for i-th grain
       subroutine DYNFIL5(i,FI1,PHI,FI2,T,                                &
-                        GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO)
+                        GEW,GAM,F,ZERO)
       implicit none
       integer,intent(in) :: i
       double precision,intent(in) :: FI1,PHI,FI2,GEW,GAM
-      double precision,intent(in) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),  &
-       F(3,3),T(3,3),ZERO(3,3)
+      double precision,intent(in) :: F(3,3),T(3,3),ZERO(3,3)
       !
             DFIL(i)%tFI1=FI1
             DFIL(i)%tPHI=PHI
             DFIL(i)%tFI2=FI2
             DFIL(i)%tGEW=GEW
             DFIL(i)%tGAM=GAM
-            DFIL(i)%tAXES=AXES
-            DFIL(i)%tEULR=EULR
             DFIL(i)%tT=T
             DFIL(i)%tF=F
-            DFIL(i)%tCIJ=CIJ
-            DFIL(i)%tTAX=TAX
             DFIL(i)%tZERO=ZERO
       !
       end subroutine DYNFIL5
@@ -207,7 +181,7 @@
       !> The following fields are modified:
       !>  - tT is calculated from Euler angles as defined by the tfi1,
       !>    tPHI and tfi2 fields
-      !>  - tAXES,tEULR,tF,tCIJ,tTAX - inherit corresponding properties 
+      !>  - tF - inherit corresponding properties 
       !>    from mf
       !>  - tZERO and tRHO - are zeroed.
       subroutine initFields(mf,gr)
@@ -219,11 +193,7 @@
             !
             ! Backward compatibility with type(gr):
             ! initialize the remaining components with mf data...
-            gr%tAXES = mf%GAXES 
-            gr%tEULR = mf%GEULR
             gr%tF   = mf%FALG
-            gr%tCIJ = mf%CIJ0
-            gr%tTAX = mf%TAX0
             ! ... and zero all the rest.
             gr%tZERO = 0.D0
             gr%tRHO  = 0.D0

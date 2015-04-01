@@ -21,12 +21,10 @@ contains
       !      
       integer :: npoint, i,ii,jj
       double precision,parameter :: convf = 180.D0 / acos(-1.D0)
-      double precision,dimension(3) :: GLR
       
       !
             npoint = size(DFIL)
-            GLR=mf%GEULR*convf
-            write (iounit) NRSTEP,npoint,mf%FALG,mf%GAXES,GLR
+            write (iounit) NRSTEP,npoint,mf%FALG
             !
             do i=1,npoint
                   write(iounit,iostat=info) DFIL(i)%tGEW,                &
@@ -35,9 +33,7 @@ contains
                               DFIL(i)%tfi2*convf,                       &
                               DFIL(i)%tGAM,                             &
                               ! Remaining components that are not present in CUR anymore:
-                              ((DFIL(i)%tF(ii,jj),ii=1,3),jj=1,3),     &
-                              (DFIL(i)%tAXES(jj),jj=1,3),              &
-                              DFIL(i)%tEULR
+                              ((DFIL(i)%tF(ii,jj),ii=1,3),jj=1,3)
                   if (info /= 0) exit
             enddo  
       !      
@@ -69,11 +65,8 @@ contains
       integer :: npoint, i, ii,jj
       double precision,parameter :: convf = acos(-1.D0) / 180.D0
       !      
-            read(iounit,iostat=info) NRSTEP,npoint,mf%FALG,mf%GAXES,mf%GEULR
+            read(iounit,iostat=info) NRSTEP,npoint,mf%FALG
             if (info /= 0) return
-            mf%GEULR = mf%GEULR * convf
-            mf%TAX0 = rotmat(mf%GEULR(1),mf%GEULR(2),mf%GEULR(3))  ! Check it!!!
-            call Transf(mf%GAXES,mf%CIJ0,mf%TAX0)  ! Check it!!!
       
             ! Request allocation of the memory
             call DYNFIL0(npoint,.false.,info)
@@ -86,9 +79,7 @@ contains
                                           DFIL(i)%tfi2,      &
                                           DFIL(i)%tGAM,      &
                                           ! Remaining components that are not present in CUR anymore:
-                                          ((DFIL(i)%tF(ii,jj),ii=1,3),jj=1,3),     &
-                                          (DFIL(i)%tAXES(jj),jj=1,3),              &
-                                          DFIL(i)%tEULR
+                                          ((DFIL(i)%tF(ii,jj),ii=1,3),jj=1,3)
 
                   if (info /= 0) exit
                   ! Convert the grain orientatios from degrees to radians
