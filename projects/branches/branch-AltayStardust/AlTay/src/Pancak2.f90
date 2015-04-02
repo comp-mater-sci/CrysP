@@ -23,7 +23,7 @@
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
       Subroutine Pancak2(solution,KOST,NGL,B,DI1,S33,RHOS33,RHOA33,               &
-       SWRLX,XX,IPR,MacroDefRate,MacroDefState)
+       SWRLX,XX,IPR,MacroDefRate,MacroDefState,A1)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
@@ -40,12 +40,12 @@
       implicit double precision (a-h,o-z)
       type(Pancak2Solution),intent(out):: solution
       type(DeformationRate),intent(in) :: MacroDefRate
-      type(DeformationState),intent(in):: MacroDefState      
+      type(DeformationState),intent(in):: MacroDefState    
+      double precision,dimension(5,96),intent(in):: A1
       COMMON /LAMEL/ laml,TRFb(3,3,2),        &
        GMMAb(2),              &
        NGR,NRL
       COMMON /IGLIJS/ M11,CC(2,96)
-      common /extra/ A2(10,194)
       common /CEIGEN/ IOR,ISTP,NBLOC
       double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
       !> Number of active systems founds so far by the search algorithm
@@ -67,6 +67,7 @@
       dimension B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10)
       integer DI1(5),DI(10),DI2(10),NLP
       dimension GAMR(2),Tprinc(3,3),TAURL(2)
+      double precision, dimension(10,194) :: A2
       data SQR2/0.7071067811865476D+00/,B3/30*0.0D0/
 !     Definition of the two relaxations, representing a
 !     13-simple shear and a 23-simple shear, respectively:
@@ -109,6 +110,10 @@
       M2=NGR*M11
       M12=NGR*M11+NRL
       if (laml.eq.2) goto 3
+      !Construct A2
+      A2 = 0.0d0
+      A2( 1:5  ,     1:M11   ) = A1
+      A2( 6:10 , 1+M11:2*M11 ) = A1
 !
 !     Updating of microstructure
 !

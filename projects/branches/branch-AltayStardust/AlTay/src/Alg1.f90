@@ -47,10 +47,6 @@
       double precision, dimension(3,3):: RHOScrys(3,3)
       double precision, dimension(3,3):: RHOAcrys(3,3), RHOAsa(3,3) 
       character(len=72) :: TITGLIJ
-!
-!     Extra arrays nodig voor lineare programmatie op 2 korrels tegelijk
-!
-      common /extra/ A2(10,194)
       dimension XXLP(194)
       logical SWRLX
       INTEGER R 
@@ -126,17 +122,6 @@
       end if
  218  format (i4,' B2',6f10.7,' G',f10.7)
  505  CONTINUE
- 504  CONTINUE
- 502  do 30 j=1,194
-      do 30 i=1,10
-      A2(i,j)=0.0
-  30  continue
-      do 31 j=1,M11
-      do 31 i=1,5
-      x8=A1(i,j)
-      A2(i,j)=x8
-      A2(i+5,j+M11)=x8
-  31  continue
       RETURN
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011 
 ! 2000 IF (IGLIJ.EQ.0) GOTO 70  
@@ -178,7 +163,7 @@
 !      write (*,1234)
 ! 1234 format (' Just before Pancak2')
        CALL Pancak2(Pancak2_solution,KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys, &
-       SWRLX,XXLP,IPR,MacroDefRate,MacroDefState)
+       SWRLX,XXLP,IPR,MacroDefRate,MacroDefState,A1)
       !Report Scrys to LST-file
  100  format(' Bishop-Hill stress (crystal system):')
  101  format(3d20.7)       
