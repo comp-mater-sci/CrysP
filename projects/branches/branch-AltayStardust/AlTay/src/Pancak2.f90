@@ -5,13 +5,23 @@
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use criMathUtils
       
+      integer, parameter, public ::          Pancak2_max_activesystems = 8
+      double precision, parameter, public :: Pancak2_tolerance = 5.0d-6
+      
+      type Pancak2Solution
+          integer                                                :: nactiv = 0
+          integer,dimension(Pancak2_max_activesystems)           :: indact = 0
+          double precision, dimension(Pancak2_max_activesystems) :: sliplp = 0.0d0
+          double precision, dimension(Pancak2_max_activesystems) :: taurlp = 0.0d0
+      end type Pancak2Solution
+      
       contains
       
 ! MODIFICATIONS AUG 2010
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,               &
+      Subroutine Pancak2(solution,KOST,NGL,B,DI1,S33,RHOS33,RHOA33,               &
        SWRLX,XX,IPR,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -27,6 +37,7 @@
       use AltayDSHstate
 #endif
       implicit double precision (a-h,o-z)
+      type(Pancak2Solution),intent(out):: solution
       type(DeformationRate),intent(in) :: MacroDefRate
       type(DeformationState),intent(in):: MacroDefState      
       COMMON /LAMEL/ laml,TRFb(3,3,2),        &
@@ -36,9 +47,9 @@
       COMMON /DOUBLE/ A1(5,96),BB8(5)
       common /extra/ A2(10,194)
       common /CEIGEN/ IOR,ISTP,NBLOC
-      COMMON /ACTIVE/ NACTIV,INDACT(8),INDLP(8),SLIPLP(8),           &
-       TLXX,TAURLP(8)
       double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
+      !> Number of active systems founds so far by the search algorithm
+      integer nactiv_sofar
       double precision,dimension(5):: RHOS, RHOA 
       dimension C2(3,3),                                                 &
        TDCb(3,3,2),TRCb(3,3,2),                                          &
@@ -56,7 +67,7 @@
       dimension B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10)
       integer DI1(5),DI(10),DI2(10),NLP
       dimension GAMR(2),Tprinc(3,3),TAURL(2)
-      data SQR2/0.7071067811865476D+00/,B3/30*0.0D0/,TOLXX/5.0d-6/
+      data SQR2/0.7071067811865476D+00/,B3/30*0.0D0/
 !     Definition of the two relaxations, representing a
 !     13-simple shear and a 23-simple shear, respectively:
       data relax /0.0D0, 0.0D0, 0.0D0,                                   &
@@ -93,7 +104,6 @@
       if (IOR.eq.1) IGrElm=0 
       TWOSQ3=sqrt(2.D0/3.D0)
 !     N is number of rows of A2;   NU number of rows of UU2
-      TLXX=TOLXX 
       N=5*NGR
       NU=N
       M2=NGR*M11
@@ -335,7 +345,7 @@
        j=j+1  
        XXTOT=XXTOT+ABS(xx(j))
       enddo
-      if (XXTOT.lt.TOLXX) goto 213
+      if (XXTOT.lt.Pancak2_tolerance) goto 213
    40 continue
 !     If all grains have a non-zero slip, do the following:
   99  DTAU1=DTAU
@@ -397,17 +407,15 @@
 !        write (IMP,308) i,DTAU1(j),XX(j)
 !      enddo
 ! 308  format ('PANCAK2  i,DTAU1, XX',i5,2d12.4)
-      NACTIV=0
+      nactiv_sofar=0
       do 305 i=1,M11
       j=i+jj
 !     If one grain does not deform, then DTAU1 comes from the full
 !     constraints solution.
       if (ABS(DTAU1(j)).gt.TOL) goto 305
-      NACTIV=NACTIV+1
-!      write (IMP,912) NACTIV,i
-! 912  format (' NACTIV, i',2I5)
-      if (NACTIV.le.8) THEN
-                           INDACT(NACTIV)=i
+      nactiv_sofar=nactiv_sofar+1
+      if ( nactiv_sofar .le. Pancak2_max_activesystems) THEN
+                           solution%indact(nactiv_sofar)=i
                         ELSE
 #ifndef ALTAY_SUBROUTINE
                            if(NLIST.eq.1) then
@@ -420,8 +428,11 @@
 #endif                        
                         endif
  306  format (' PANCAK2 - 306 - TOO MANY ACTIVE SLIP SYSTEMS')
- 305  continue
-      if (NACTIV.eq.0) then
+305   continue
+      !
+      solution%nactiv = nactiv_sofar
+      !
+      if (solution%nactiv.eq.0) then
 #ifndef ALTAY_SUBROUTINE      
                            if(NLIST.eq.1) then
                                      write (IMP,307)
@@ -432,14 +443,14 @@
       RCM_RAISE(1,'Pancak2','No active slip systems found',RCM_RTN)
 #endif
                        endif
- 307  format (' PANCAK2 - 307 - No active slip systems found')
-      do 310 NLP=1,NACTIV
-      j=INDACT(NLP)
-      i1=j
-                      INDLP(NLP)=i1
-                      SLIPLP(NLP)=XX(j+jj)
-                      TAURLP(NLP)=TAUR1(j+jj) 
- 310  continue
+307   format (' PANCAK2 - 307 - No active slip systems found')
+      !
+      do i=1,solution%nactiv
+          j = solution%indact(i) + jj
+          solution%sliplp(i) = XX(j)
+          solution%taurlp(i) = TAUR1(j) 
+      end do
+      !
       RETURN
       END SUBROUTINE        
 

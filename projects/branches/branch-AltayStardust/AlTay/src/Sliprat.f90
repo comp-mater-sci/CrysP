@@ -4,17 +4,21 @@
 
       module altaySliprate
       use altayMiscutils, only: terminate, stopcode_runtimeerror
-
+      use altayPancake, only : Pancak2_tolerance, Pancak2Solution
+      !
+      type(Pancak2Solution) :: Pancak2_input
+      !
       contains
       
-      Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,MacroDefRate)
+      Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,MacroDefRate,Pancak2_input)
       use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
       use altayMacroKinematic
       IMPLICIT double precision (A-H,O-Z)
-      type(DeformationRate),intent(in) :: MacroDefRate      
+      type(DeformationRate),intent(in) :: MacroDefRate     
+      type(Pancak2Solution),intent(in) :: Pancak2_input
 !     September 2000
 !     To find the slip rates assuming that
 !     - the stress, strain rate and the active slip systems are known,
@@ -24,8 +28,6 @@
 !
 !     Modified in Aug 2010
 !
-      COMMON /ACTIVE/ NACTIV,INDACT(8),INDLP(8),SLIPLP(8),           &
-       TLXX,TAURLP(8) 
       integer NLP
       dimension SGNN(IDIMXX)
       dimension SLPR(8),IND(8),XX(IDIMXX),ISTOR(0:8,48),SLSTOR(0:8,48)
@@ -34,24 +36,21 @@
          XX(j)=0.0
       enddo
       ITR=0
-      NLP=NACTIV
-      NN=NACTIV
+      NLP=Pancak2_input%nactiv
+      NN=Pancak2_input%nactiv
       NOPL=0
 !     check whether solution is totally zero
       x=0.0
       do i=1,NLP 
-          x=x+abs(SLIPLP(i))
-          j=INDACT(i)
+          x=x+abs(Pancak2_input%sliplp(i))
+          j=Pancak2_input%indact(i)
           sgnn(j)=1.D0
-          if (TAURLP(i).lt.0.0d0) sgnn(j)=-1.D0
-!      write (IMP,911)  i,j,INDACT(i),indlp(i),SLIPLP(i),TAURLP(i)
-! 911  format (' SLIPRAT i=',I5,'  j=',I5,'   INDACT(i)=',i5,'  INDLP='
-!     1,I5,/,'              SLIPLP(i)=',D12.4,' TAURLP(i)=',D12.4)
+          if (Pancak2_input%taurlp(i).lt.0.0d0) sgnn(j)=-1.D0
       enddo
-      if (x.lt.TLXX) goto 6
+      if (x.lt.Pancak2_tolerance) goto 6
 !     end of check
       do 1 i=1,NN
-      IND(i)=INDACT(i)
+      IND(i)=Pancak2_input%indact(i)
   1   continue
   3   call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
       if (ineg.eq.0) then
@@ -63,13 +62,13 @@
       endif
       if (NN.le.5) goto 6
 !
-!     Let us take all combinations of NN out of NACTIV
+!     Let us take all combinations of NN out of Pancak2_input%nactiv
 !
 !     "Levels" in the combination search:
-!     (first level:  if NACTIV=8, find all combinations of 7 sl. syst.
+!     (first level:  if Pancak2_input%nactiv=8, find all combinations of 7 sl. syst.
 !      second level: find all combinations of 6 - etc.)
 !
-      N0=NACTIV
+      N0=Pancak2_input%nactiv
 !
 !     First level
 !
@@ -88,7 +87,7 @@
 !          write (IMP,110) (IND(i),i=1,N1)
  110   format (10i5)
           J=N0-I1
-          if (J.gt.0) IND(J)=INDACT(J+1)
+          if (J.gt.0) IND(J)=Pancak2_input%indact(J+1)
        enddo
 !
 !     Level 2
@@ -103,7 +102,7 @@
             j=1
             do 5 i=1,N0
             if (i.eq.I1.or.i.eq.I2) goto 5
-            IND(j)=INDACT(i)
+            IND(j)=Pancak2_input%indact(i)
             j=j+1
    5        continue
             call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
@@ -131,7 +130,7 @@
               j=1
               do 7 i=1,N0
               if (i.eq.I1.or.i.eq.I2.or.i.eq.I3) goto 7
-              IND(j)=INDACT(i)
+              IND(j)=Pancak2_input%indact(i)
               j=j+1
    7          continue
               call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
@@ -152,7 +151,6 @@
       end if
       end if
  100  format (' Results SLIPRAT')
-!      NREDU=NACTIV-NN
       if (NOPL.eq.0) goto 6
       IOPL=0
       X=1.0d10
@@ -177,7 +175,7 @@
       enddo
       if (IPR.eq.2) then
       if (NLIST.eq.1) then
-        write (IMP,104) IOR,NACTIV,NN,NOPL
+        write (IMP,104) IOR,Pancak2_input%nactiv,NN,NOPL
       end if
       end if
  104  format (I5,' Reduction of NACTIV from',I5,'   to',i5,' NOPL=',i5)
@@ -215,7 +213,7 @@
   6   ITR=-1
       NN=NLP
       do 11 i=1,NN
-      IND(i)=INDLP(i)
+      IND(i)=Pancak2_input%indact(i)
  11   continue
       if (IPR.eq.2) then
       if (NLIST.eq.1) then
@@ -232,7 +230,7 @@
       x=0.0
       k=0
       do i=1,NN
-           Y=SLIPLP(i)
+           Y=Pancak2_input%sliplp(i)
            j=IND(i)
            XX(j)=Y*MacroDefRate%vMeqStrainRate
            if (IPR.eq.2) then

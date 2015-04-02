@@ -7,12 +7,18 @@
                                 writeRESRecord
       use altayMacroKinematic
       use criMathUtils
+      use altayPancake, only: Pancak2Solution
+ 
       integer,parameter,private :: N = 5, N1 = N + 1 
       
       integer,private           :: M,NGL,NTW
       double precision,private  :: B1(3,96),B(5,5),B2(6,96),G(96)
       integer,private           :: DI1(5)
-     
+      
+      type(Pancak2Solution),public,save :: Pancak2_solution 
+      !> note: the save attribute is required to save the solution in-between calls
+      !> to Taylor and taylr1 from simul.
+      
       contains
       
 ! MODIFICATIONS AUG 2010
@@ -171,7 +177,7 @@
  3000 continue
 !      write (*,1234)
 ! 1234 format (' Just before Pancak2')
-       CALL Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,              &
+       CALL Pancak2(Pancak2_solution,KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys, &
        SWRLX,XXLP,IPR,MacroDefRate,MacroDefState)
       !Report Scrys to LST-file
  100  format(' Bishop-Hill stress (crystal system):')
@@ -259,7 +265,7 @@
       !
       SAVE
       !
-      call SLIPRAT(M11,96,GAMdot,ior,IPR,MacroDefRate)
+      call SLIPRAT(M11,96,GAMdot,ior,IPR,MacroDefRate,Pancak2_solution)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif      
