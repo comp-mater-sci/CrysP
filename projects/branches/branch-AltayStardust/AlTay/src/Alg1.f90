@@ -122,6 +122,7 @@
       end if
  218  format (i4,' B2',6f10.7,' G',f10.7)
  505  CONTINUE
+ 504  CONTINUE
       RETURN
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011 
 ! 2000 IF (IGLIJ.EQ.0) GOTO 70  
