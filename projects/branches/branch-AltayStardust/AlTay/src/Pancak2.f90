@@ -22,7 +22,7 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(solution,KOST,NGL,B,DI1,S33,RHOS33,RHOA33,               &
+      Subroutine Pancak2(solution,KOST,M11,NGL,B,DI1,S33,RHOS33,RHOA33,               &
        SWRLX,XX,IPR,MacroDefRate,MacroDefState,A1)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -39,13 +39,14 @@
 #endif
       implicit double precision (a-h,o-z)
       type(Pancak2Solution),intent(out):: solution
+      integer,intent(in) :: M11
       type(DeformationRate),intent(in) :: MacroDefRate
       type(DeformationState),intent(in):: MacroDefState    
       double precision,dimension(5,96),intent(in):: A1
       COMMON /LAMEL/ laml,TRFb(3,3,2),        &
        GMMAb(2),              &
        NGR,NRL
-      COMMON /IGLIJS/ M11,CC(2,96)
+      COMMON /IGLIJS/ CC(2,96)
       common /CEIGEN/ IOR,ISTP,NBLOC
       double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
       !> Number of active systems founds so far by the search algorithm

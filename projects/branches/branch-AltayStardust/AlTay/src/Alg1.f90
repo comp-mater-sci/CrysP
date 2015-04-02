@@ -17,6 +17,7 @@
       
       type(Pancak2Solution),private, save :: Pancak2_solution !cf note#1.
       double precision, dimension(5,96), private, save :: A1 !cf note#1.
+      integer, private, save :: M11 !cf note#1.
       !> note#1: the save attribute is required to save these objects 
       !> in-between calls to Taylor and taylr1 from simul.
             
@@ -41,7 +42,7 @@
       !     SHsam:    macroscopic stress in sample reference system
       !     Ssam:        local stress in sample reference system
       COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3)
-      COMMON /IGLIJS/ M11,CC(2,96)
+      COMMON /IGLIJS/ CC(2,96)
       COMMON/TLR2/ RHOAsa
       COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
       double precision, dimension(3,3):: RHOScrys(3,3)
@@ -163,7 +164,7 @@
  3000 continue
 !      write (*,1234)
 ! 1234 format (' Just before Pancak2')
-       CALL Pancak2(Pancak2_solution,KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys, &
+       CALL Pancak2(Pancak2_solution,KOST,M11,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys, &
        SWRLX,XXLP,IPR,MacroDefRate,MacroDefState,A1)
       !Report Scrys to LST-file
  100  format(' Bishop-Hill stress (crystal system):')
@@ -218,7 +219,7 @@
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
       COMMON /TEXTUR/ TRF(3,3),TRF_new !-> input, resp., output
-      COMMON /IGLIJS/ M11,CC(2,96) !-> input
+      COMMON /IGLIJS/ CC(2,96) !-> input
       COMMON/TLR2/ RHOAsa !-> input
       COMMON /EULERA/ fi1,PHI,fi2 !-> output
       COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3) !-> input      
