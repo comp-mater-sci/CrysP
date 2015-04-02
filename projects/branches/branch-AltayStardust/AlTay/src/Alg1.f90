@@ -15,10 +15,11 @@
       double precision,private  :: B1(3,96),B(5,5),B2(6,96),G(96)
       integer,private           :: DI1(5)
       
-      type(Pancak2Solution),public,save :: Pancak2_solution 
-      !> note: the save attribute is required to save the solution in-between calls
-      !> to Taylor and taylr1 from simul.
-      
+      type(Pancak2Solution),private, save :: Pancak2_solution !cf note#1.
+      double precision, dimension(5,96), private, save :: A1 !cf note#1.
+      !> note#1: the save attribute is required to save these objects 
+      !> in-between calls to Taylor and taylr1 from simul.
+            
       contains
       
 ! MODIFICATIONS AUG 2010
@@ -42,7 +43,6 @@
       COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3)
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON/TLR2/ RHOAsa
-      COMMON /DOUBLE/ A1(5,96),BB8(5)
       COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
       double precision, dimension(3,3):: RHOScrys(3,3)
       double precision, dimension(3,3):: RHOAcrys(3,3), RHOAsa(3,3) 
@@ -265,7 +265,7 @@
       !
       SAVE
       !
-      call SLIPRAT(M11,96,GAMdot,ior,IPR,MacroDefRate,Pancak2_solution)
+      call SLIPRAT(M11,96,GAMdot,ior,IPR,MacroDefRate,Pancak2_solution,A1)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif      

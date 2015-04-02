@@ -13,6 +13,7 @@
           integer,dimension(Pancak2_max_activesystems)           :: indact = 0
           double precision, dimension(Pancak2_max_activesystems) :: sliplp = 0.0d0
           double precision, dimension(Pancak2_max_activesystems) :: taurlp = 0.0d0
+          double precision, dimension(5)                         :: BB8
       end type Pancak2Solution
       
       contains
@@ -44,7 +45,6 @@
        GMMAb(2),              &
        NGR,NRL
       COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON /DOUBLE/ A1(5,96),BB8(5)
       common /extra/ A2(10,194)
       common /CEIGEN/ IOR,ISTP,NBLOC
       double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
@@ -382,7 +382,7 @@
                        y8=y8+B3(i+ii,IRL)*gamr(IRL)
                      enddo
                     endif
-      BB8(i)=B8(i,laml)-x8
+      solution%BB8(i)=B8(i,laml)-x8
       RHOS(i)=-x8
       RHOA(i)=-y8
  201  continue

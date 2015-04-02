@@ -6,11 +6,25 @@
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayPancake, only : Pancak2_tolerance, Pancak2Solution
       !
-      type(Pancak2Solution) :: Pancak2_input
+      !> component of Pancak2_input variable of sliprat; this modular 
+      !> global data ensure its available to another module procedure: MINSQU.
+      !> See note $1.
+      double precision, dimension(5), private :: BB8
       !
+      !> equals the A1_input variable of sliprat; this modular 
+      !> global data ensure its available to another module procedure: MINSQU.
+      !> See note $1.      
+      double precision, dimension(5,96), private :: A1
+      !
+      !> Note $1: A better way would be to contain MINSQU within SLIPRAT procedure; this
+      !> is however not trivial, as run-time errors are seen, presumably because 
+      !> of name clashes.
+      
+      
+      
       contains
       
-      Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,MacroDefRate,Pancak2_input)
+      Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,MacroDefRate,Pancak2_input,A1_input)
       use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -19,6 +33,7 @@
       IMPLICIT double precision (A-H,O-Z)
       type(DeformationRate),intent(in) :: MacroDefRate     
       type(Pancak2Solution),intent(in) :: Pancak2_input
+      double precision, dimension(5,96),intent(in) :: A1_input
 !     September 2000
 !     To find the slip rates assuming that
 !     - the stress, strain rate and the active slip systems are known,
@@ -32,6 +47,8 @@
       dimension SGNN(IDIMXX)
       dimension SLPR(8),IND(8),XX(IDIMXX),ISTOR(0:8,48),SLSTOR(0:8,48)
       data NSTOR/48/
+      BB8 = Pancak2_input%BB8
+      A1 = A1_input
       do j=1,M11
          XX(j)=0.0
       enddo
@@ -262,7 +279,6 @@
 !
 !     Modified Aug 2010
 !
-      COMMON /DOUBLE/ A1(5,96),BB8(5)
       dimension sgnn(IDIMXX)
       dimension A(13,13),B(13),SLPR(8),IND(8)
       dimension AA(13,13),BA(13),VAL(13),XV(13),YV(13)
