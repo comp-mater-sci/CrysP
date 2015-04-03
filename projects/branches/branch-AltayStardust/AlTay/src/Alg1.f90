@@ -42,7 +42,6 @@
       !     SHsam:    macroscopic stress in sample reference system
       !     Ssam:        local stress in sample reference system
       COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3)
-      COMMON /IGLIJS/ CC(2,96)
       COMMON/TLR2/ RHOAsa
       COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
       double precision, dimension(3,3):: RHOScrys(3,3)
@@ -219,7 +218,6 @@
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
       COMMON /TEXTUR/ TRF(3,3),TRF_new !-> input, resp., output
-      COMMON /IGLIJS/ CC(2,96) !-> input
       COMMON/TLR2/ RHOAsa !-> input
       COMMON /EULERA/ fi1,PHI,fi2 !-> output
       COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3) !-> input      
@@ -282,10 +280,10 @@
       do i=1,M11 
           if (GAMdot(i).GT.0.0) then
               !positive slip rate
-              WorkRate= WorkRate + CC(1,i)*GAMdot(i)
+              WorkRate= WorkRate + pancak2_solution%allcrss%crss(1,i)*GAMdot(i)
           else
               !negative or 0 slip rate
-              WorkRate= WorkRate - CC(2,i)*GAMdot(i)
+              WorkRate= WorkRate - pancak2_solution%allcrss%crss(2,i)*GAMdot(i)
           endif
       end do
       Seq=WorkRate / MacroDefRate%vMeqStrainRate

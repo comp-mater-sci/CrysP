@@ -4,6 +4,7 @@
       module altayPancake
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use criMathUtils
+      use altayHardTypes   
       
       integer, parameter, public ::          Pancak2_max_activesystems = 8
       double precision, parameter, public :: Pancak2_tolerance = 5.0d-6
@@ -12,7 +13,10 @@
           integer                                                :: nactiv = 0
           integer,dimension(Pancak2_max_activesystems)           :: indact = 0
           double precision, dimension(Pancak2_max_activesystems) :: sliplp = 0.0d0
+          !> CRSS of active deformation systems
           double precision, dimension(Pancak2_max_activesystems) :: taurlp = 0.0d0
+          !> CRSS of all deformation systems
+          type(crss)                                             :: allcrss
           double precision, dimension(5)                         :: BB8
       end type Pancak2Solution
       
@@ -30,7 +34,6 @@
       use altayMesostructure
       use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
       use altayHard
-      use altayHardTypes
       use altayTBH
       use altayAlgorithms
       use altayMacroKinematic
@@ -46,7 +49,6 @@
       COMMON /LAMEL/ laml,TRFb(3,3,2),        &
        GMMAb(2),              &
        NGR,NRL
-      COMMON /IGLIJS/ CC(2,96)
       common /CEIGEN/ IOR,ISTP,NBLOC
       double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
       !> Number of active systems founds so far by the search algorithm
@@ -61,7 +63,8 @@
 !     second index = nr. of relaxation
       dimension spanv(5),XX(194),STRSS(10),BB(10)
       dimension CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194)
-      type (CRSS) :: CRSSmatrix
+      !local storage of crss for the 2 grains in the cluster
+      type (CRSS), dimension(2) :: crss_cluster
       logical SWRLX(3),bas(194),VALID(194)
 !     rlm is unit relaxation tensor in macroscopic frame
 !     rls and rla in crystal frame (symmetric and anti-sym. part)
@@ -183,13 +186,13 @@
   44  continue
       K1=M11*(IL-1)
       !
-      ! Retrieve the CRSSmatrix
+      ! Retrieve the crss_cluster for IL
       !    IOR+IL-1  = sequence number of current grain 
       !    GMMAb(IL) = the GAMMA of current grain
-      call getCRSS(IOR+IL-1,GMMAb(IL),CRSSmatrix,info) 
+      call getCRSS(IOR+IL-1,GMMAb(IL),crss_cluster(IL),info) 
       !
-      ! Assign CRSSmatrix to proper section of CCC
-      CCC(:,1+K1:M11+K1)=CRSSmatrix%crss(:,1:M11)  
+      ! Assign crss_cluster to proper section of CCC
+      CCC(:,1+K1:M11+K1)=crss_cluster(IL)%crss(:,1:M11)  
       !
       ! Set Tau_crit for antitwinning direction equal to
       ! GETAL times Tau_crit for twinning direction       
@@ -367,11 +370,9 @@
 !
    3  continue
       jj=M11*(laml-1)
-      do 203 j=1,M11
-      do jsgn=1,2
-         CC(jsgn,j)=CCC(jsgn,j+jj)
-      enddo
- 203  continue    
+      !
+      !assign crss for grain 'laml' to solution
+      solution%allcrss = crss_cluster(laml)
       ii=5*(laml-1)
       do 201 i=1,5
 !     If one grain does not deform, note that stress UBUF has come
