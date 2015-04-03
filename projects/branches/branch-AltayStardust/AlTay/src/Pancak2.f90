@@ -26,7 +26,7 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(solution,KOST,M11,NGL,B,DI1,S33,RHOS33,RHOA33,               &
+      Subroutine Pancak2(solution,KOST,ior,M11,NGL,B,DI1,S33,RHOS33,RHOA33,               &
        SWRLX,XX,IPR,MacroDefRate,MacroDefState,A1)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -42,6 +42,7 @@
 #endif
       implicit double precision (a-h,o-z)
       type(Pancak2Solution),intent(out):: solution
+      integer,intent(in) :: ior
       integer,intent(in) :: M11
       type(DeformationRate),intent(in) :: MacroDefRate
       type(DeformationState),intent(in):: MacroDefState    
@@ -49,7 +50,6 @@
       COMMON /LAMEL/ laml,TRFb(3,3,2),        &
        GMMAb(2),              &
        NGR,NRL
-      common /CEIGEN/ IOR,ISTP,NBLOC
       double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
       !> Number of active systems founds so far by the search algorithm
       integer nactiv_sofar
@@ -236,10 +236,10 @@
 !     First call of Simplex (full constraints)
       if (IPR.eq.2) then
       if(NLIST.eq.1) then
-      write (IMP,400) IOR,ISTP,NBLOC
+      write (IMP,400) IOR
       end if
       end if
- 400  format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
+ 400  format (' First call of TBH   IOR',3I5)
       Call TBH(IPR,NDIM,N,M2,A2,BB,                                      &
        CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,                              &
        Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID) 
@@ -264,11 +264,11 @@
   345 if (IPR.lt.4) goto 220
 #ifndef ALTAY_SUBROUTINE
       if(NLIST.eq.1) then
-      write (IMP,221) IPR,IOR,ISTP,NBLOC
+      write (IMP,221) IPR,IOR
       end if
-      write (*,221) IPR,IOR,ISTP,NBLOC
+      write (*,221) IPR,IOR
  221  format (' Pancak2 ',                                               &
-       ' IPR IOR, ISTP, NBLOC=',4I5)
+       ' IPR IOR=',4I5)
       if (IPR.ge.4) call terminate(stopcode_runtimeerror) 
 #else
       RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
@@ -294,7 +294,6 @@
       end if
       end if
 !     Second call of Simplex (relaxed constraints)
-!      if (IOR.eq.1967.and.ISTP.eq.11.and.NBLOC.eq.3) IPR=2
       if (IPR.eq.2) then
       if (NLIST.eq.1) then
       write (IMP,401)
@@ -321,17 +320,16 @@
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
-!      if (IOR.eq.1967.and.ISTP.eq.11.and.NBLOC.eq.3) stop
 !
 
 
       if (IPR.ge.4) then
          if(NLIST.eq.1) then
-         write (IMP,222) IPR,IOR,ISTP,NBLOC
+         write (IMP,222) IPR,IOR
          end if
-         write (*,222) IPR,IOR,ISTP,NBLOC
+         write (*,222) IPR,IOR
  222     format (' Pancak2 222 - Problem with TBH',/,                    &
-         ' IPR IOR, ISTP, NBLOC=',4I5)
+         ' IPR IOR=',4I5)
 #ifndef ALTAY_SUBROUTINE
           call terminate(stopcode_runtimeerror)  
 #else

@@ -41,7 +41,7 @@
       COMMON /TEXTUR/ TRF(3,3),C2(3,3)
       !     SHsam:    macroscopic stress in sample reference system
       !     Ssam:        local stress in sample reference system
-      COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3)
+      COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3), IOR
       COMMON/TLR2/ RHOAsa
       COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
       double precision, dimension(3,3):: RHOScrys(3,3)
@@ -163,7 +163,7 @@
  3000 continue
 !      write (*,1234)
 ! 1234 format (' Just before Pancak2')
-       CALL Pancak2(Pancak2_solution,KOST,M11,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys, &
+       CALL Pancak2(Pancak2_solution,KOST,IOR,M11,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys, &
        SWRLX,XXLP,IPR,MacroDefRate,MacroDefState,A1)
       !Report Scrys to LST-file
  100  format(' Bishop-Hill stress (crystal system):')

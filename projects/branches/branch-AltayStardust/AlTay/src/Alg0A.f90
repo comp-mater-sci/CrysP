@@ -48,7 +48,7 @@
 !     IW=2 is meant for outputting the final texture.
 !
       COMMON /TEXTUR/ TRF(3,3),C2(3,3)
-      COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3)
+      COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3), IOR
       COMMON /EULERA/ fi1,PHI,fi2
       COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
       COMMON /LAMEL/ laml,TRFb(3,3,2),        &
@@ -58,7 +58,7 @@
       dimension Fb(3,3,2)
       dimension RHOSSb(3,3,2)
       dimension fi1b(2),phib(2),fi2b(2)
-      common /CEIGEN/ IOR,ISTP,NBLOC
+      common /CEIGEN/ NBLOC
       common /PE/ Fmicro !Temporary!!!      
       DIMENSION                                &
        STOT(3,3),                                               &

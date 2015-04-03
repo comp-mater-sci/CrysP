@@ -30,7 +30,7 @@
 !     IDISK1= work file (obsolete, not used)
 !     NDAT1= Input-texture file
 !
-      common /CEIGEN/ IOR,ISTP,JBLOC
+      common /CEIGEN/ JBLOC
       common /PE/ Fmicro !Temporary!!!
       double precision, dimension(3,3) :: Fmicro, DG
       character(len=pathlength) :: fnam1,fnam2,fnam3,fname_prefix
