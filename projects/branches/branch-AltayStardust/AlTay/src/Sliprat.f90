@@ -31,7 +31,7 @@
 #endif      
       use altayMacroKinematic
       IMPLICIT double precision (A-H,O-Z)
-      type(DeformationRate),intent(in) :: MacroDefRate     
+      type(DeformationRate),intent(in) :: MacroDefRate      
       type(Pancak2Solution),intent(in) :: Pancak2_input
       double precision, dimension(5,96),intent(in) :: A1_input
 !     September 2000

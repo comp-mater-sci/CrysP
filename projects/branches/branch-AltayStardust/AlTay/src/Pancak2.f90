@@ -26,7 +26,7 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(solution,KOST,ior,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,S33,RHOS33,RHOA33,               &
+      Subroutine Pancak2(solution,ior,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,S33,RHOS33,RHOA33,               &
        SWRLX,XX,IPR,MacroDefRate,MacroDefState,A1)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -41,37 +41,44 @@
       use AltayDSHstate
 #endif
       implicit double precision (a-h,o-z)
-      type(Pancak2Solution),intent(out):: solution
-      integer,intent(in) :: ior
-      integer,intent(in) :: laml
-      integer,intent(in) :: ngr
-      integer,intent(in) :: nrl      
-      integer,intent(in) :: M11
-      double precision,dimension(3,3,2),intent(in) :: TRFb
-      double precision,dimension(2),intent(in) :: GMMAb
-      type(DeformationRate),intent(in) :: MacroDefRate
-      type(DeformationState),intent(in):: MacroDefState    
-      double precision,dimension(5,96),intent(in):: A1
-      double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
+      type(Pancak2Solution),intent(out)             :: solution
+      integer,intent(in)                            :: ior
+      integer,intent(in)                            :: laml
+      integer,intent(in)                            :: ngr
+      integer,intent(in)                            :: nrl      
+      integer,intent(in)                            :: M11
+      integer,intent(in)                            :: NGL
+      double precision,dimension(3,3,2),intent(in)  :: TRFb
+      double precision,dimension(2),intent(in)      :: GMMAb
+      double precision,dimension(5,5),intent(in)    :: B
+      integer,dimension(5),intent(in)               :: DI1
+      double precision,dimension(3,3),intent(out)   :: S33, RHOS33, RHOA33
+      logical,dimension(3),intent(in)               :: SWRLX
+      double precision,dimension(194),intent(inout) :: XX  ! TODO: check if intent(out) is more appropriate
+      integer,intent(in)                            :: IPR
+      type(DeformationRate),intent(in)              :: MacroDefRate
+      type(DeformationState),intent(in)             :: MacroDefState
+      double precision,dimension(5,96),intent(in)   :: A1
+      !
       !> Number of active systems founds so far by the search algorithm
       integer nactiv_sofar
       double precision,dimension(5):: RHOS, RHOA 
       dimension C2(3,3),                                                 &
        TDCb(3,3,2),TRCb(3,3,2),                                          &
-       B(5,5),relax(3,3,3),DACC(10),                                     &
+       relax(3,3,3),DACC(10),                                            &
        rls(3,3,3,2),rla(3,3),rlm(3,3,3),C3(3,3),TRP(10),APRIME(10),      &
        B3(10,3),PLUMIN(2,3),CUst(10),B5(5),UU(10,10)
 !     first index op PLUMIN = nr. of grain
 !     second index = nr. of relaxation
-      dimension spanv(5),XX(194),STRSS(10),BB(10)
+      dimension spanv(5),STRSS(10),BB(10)
       dimension CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194)
       !local storage of crss for the 2 grains in the cluster
       type (CRSS), dimension(2) :: crss_cluster
-      logical SWRLX(3),bas(194),VALID(194)
+      logical bas(194),VALID(194)
 !     rlm is unit relaxation tensor in macroscopic frame
 !     rls and rla in crystal frame (symmetric and anti-sym. part)
       dimension B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10)
-      integer DI1(5),DI(10),DI2(10),NLP
+      integer DI(10),DI2(10),NLP
       dimension GAMR(2),Tprinc(3,3),TAURL(2)
       double precision, dimension(10,194) :: A2
       data SQR2/0.7071067811865476D+00/,B3/30*0.0D0/
@@ -94,9 +101,7 @@
 !     NRL= number of relaxations    NGR= number of grains
       data TAURL/2*0.0d0/
       data GETAL/1.0D6/,TOL/1.0d-6/
-#ifdef PEBP_ENABLED      
       integer :: info
-#endif
       SAVE
 
       if (laml.ne.1.and.laml.ne.2) then
@@ -421,7 +426,7 @@
 !     constraints solution.
       if (ABS(DTAU1(j)).gt.TOL) goto 305
       nactiv_sofar=nactiv_sofar+1
-      if ( nactiv_sofar .le. Pancak2_max_activesystems) THEN
+      if ( nactiv_sofar .le. Pancak2_max_activesystems) then
                            solution%indact(nactiv_sofar)=i
                         ELSE
 #ifndef ALTAY_SUBROUTINE
@@ -450,7 +455,7 @@
       RCM_RAISE(1,'Pancak2','No active slip systems found',RCM_RTN)
 #endif
                        endif
-307   format (' PANCAK2 - 307 - No active slip systems found')
+ 307  format (' PANCAK2 - 307 - No active slip systems found')
       !
       do i=1,solution%nactiv
           j = solution%indact(i) + jj

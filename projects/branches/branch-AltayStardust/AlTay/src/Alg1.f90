@@ -39,6 +39,10 @@
       ! optional argument - required for IRICHT=3:      
       type(DeformationState),intent(in),optional :: MacroDefState      
       COMMON /TEXTUR/ TRF(3,3),C2(3,3)
+      COMMON /IGLIJS/ M,CC(2,96) !M instead of M11 needs to be used here. Both 
+                                 ! hold same value yet M11 has SAVE attribute,
+                                 ! which is apparently incompatible with being 
+                                 ! a common block component.
       !     SHsam:    macroscopic stress in sample reference system
       !     Ssam:        local stress in sample reference system
       COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3), IOR,laml,ngr,nrl,TRFb(3,3,2),GMMAb(2)
@@ -163,7 +167,7 @@
  3000 continue
 !      write (*,1234)
 ! 1234 format (' Just before Pancak2')
-       CALL Pancak2(Pancak2_solution,KOST,IOR,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,Scrys,RHOScrys,RHOAcrys, &
+       CALL Pancak2(Pancak2_solution,IOR,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,Scrys,RHOScrys,RHOAcrys, &
        SWRLX,XXLP,IPR,MacroDefRate,MacroDefState,A1)
       !Report Scrys to LST-file
  100  format(' Bishop-Hill stress (crystal system):')
@@ -211,10 +215,10 @@
 #endif
 #ifdef PEBP_ENABLED      
       use AltayDSHstate, KOST => iKOST
+      use altayHardTypes, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
 #endif
       use altayIOConfig
       use altaySliprate
-      use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
       COMMON /TEXTUR/ TRF(3,3),TRF_new !-> input, resp., output
@@ -295,7 +299,7 @@
       !
       if(NLIST.eq.1) then
           WRITE (IMP,109) MacroDefRate%vMeqStrainRate,Seq,                   &
-                      (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M)
+                      (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M11)
       end if
  109  FORMAT ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
        '  SLIP RATES',/,(T2,10F10.5))
