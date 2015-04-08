@@ -24,13 +24,15 @@
       
       contains
       
-      Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,MacroDefRate,Pancak2_input,A1_input)
-      use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
+      Subroutine SLIPRAT(sliprates,MacroDefRate,Pancak2_input,A1_input)
+      use altayIOConfig!,IIPR=>IPR !Rename the global IPR to avoid conflict
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
       use altayMacroKinematic
       IMPLICIT double precision (A-H,O-Z)
+      !
+      double precision,dimension(96),intent(out) :: sliprates
       type(DeformationRate),intent(in) :: MacroDefRate      
       type(Pancak2Solution),intent(in) :: Pancak2_input
       double precision, dimension(5,96),intent(in) :: A1_input
@@ -43,15 +45,14 @@
 !
 !     Modified in Aug 2010
 !
+      integer, parameter :: IDIMXX = 96
       integer NLP
       dimension SGNN(IDIMXX)
-      dimension SLPR(8),IND(8),XX(IDIMXX),ISTOR(0:8,48),SLSTOR(0:8,48)
+      dimension SLPR(8),IND(8),ISTOR(0:8,48),SLSTOR(0:8,48)
       data NSTOR/48/
       BB8 = Pancak2_input%BB8
       A1 = A1_input
-      do j=1,M11
-         XX(j)=0.0
-      enddo
+      sliprates=0.0
       ITR=0
       NLP=Pancak2_input%nactiv
       NN=Pancak2_input%nactiv
@@ -192,23 +193,23 @@
       enddo
       if (IPR.eq.2) then
       if (NLIST.eq.1) then
-        write (IMP,104) IOR,Pancak2_input%nactiv,NN,NOPL
+        write (IMP,104) Pancak2_input%nactiv,NN,NOPL
       end if
       end if
- 104  format (I5,' Reduction of NACTIV from',I5,'   to',i5,' NOPL=',i5)
+ 104  format (' Reduction of NACTIV from',I5,'   to',i5,' NOPL=',i5)
       if (IPR.eq.2) then
       if (NLIST.eq.1) then
-      write (IMP,106) IOR,sumsq,(IND(i),i=1,NN)
+      write (IMP,106) sumsq,(IND(i),i=1,NN)
       end if
       end if
- 106  format (I5,d12.3,8i5)
+ 106  format (d12.3,8i5)
       x=0.0
       k=0
       do i=1,NN
          j=IND(i)
          Y=SLPR(i)
          YY=Y*sgnn(j)
-         XX(j)=YY*MacroDefRate%vMeqStrainRate
+         sliprates(j)=YY*MacroDefRate%vMeqStrainRate
          if (IPR.eq.2) then
          if (NLIST.eq.1) then
          write (IMP,101) i,IND(i),YY
@@ -221,10 +222,10 @@
       enddo
        if (X.lt.0.0d0) then
        if (NLIST.eq.1) then 
-       write (IMP,102) IOR,k,X
+       write (IMP,102) k,X
        end if
        end if
- 102  format (' NEG. SL. RATE DETECTED',2I5,d15.6)
+ 102  format (' NEG. SL. RATE DETECTED',I5,d15.6)
  101  format (2i5,5x,d15.6)
       return
   6   ITR=-1
@@ -239,17 +240,17 @@
       end if
       if (IPR.eq.2) then
       if (NLIST.eq.1) then
-      write (IMP,108) IOR,NN
+      write (IMP,108) NN
       end if
       end if
- 108  format (' IOR=',I5,' Linear programming solution retained ',       &
+ 108  format (' Linear programming solution retained ',       &
       ' NN=',i5)
       x=0.0
       k=0
       do i=1,NN
            Y=Pancak2_input%sliplp(i)
            j=IND(i)
-           XX(j)=Y*MacroDefRate%vMeqStrainRate
+           sliprates(j)=Y*MacroDefRate%vMeqStrainRate
            if (IPR.eq.2) then
            if (NLIST.eq.1) then
              write (IMP,101) i,IND(i),Y
@@ -263,7 +264,7 @@
       enddo
       if (X.lt.0.0d0) then
       if (NLIST.eq.1) then
-      write (IMP,102) IOR,k,X
+      write (IMP,102) k,X
       end if
       end if
       return

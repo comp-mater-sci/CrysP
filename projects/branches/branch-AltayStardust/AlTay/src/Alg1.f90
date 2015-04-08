@@ -254,7 +254,7 @@
       !
       SAVE
       !
-      call SLIPRAT(M11,96,GAMdot,ior,IPR,MacroDefRate,Pancak2_solution,A1)
+      call SLIPRAT(GAMdot,MacroDefRate,Pancak2_solution,A1)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif      
