@@ -19,6 +19,7 @@
 !
 #include "criStdDefs.fpp"
 #include "criTest.fpp"
+#include "criMacros.fpp"
 !
 !> Tests on the extensions to the Facet potential expression
 module criTestAlgorithm
@@ -30,11 +31,16 @@ contains
       
       logical function criTestAlgorithm_main() result(stat)
       implicit none
+
+            stat = .true. 
+            stat = stat .and. test_replaceAll()
       
-            stat = test_replaceAll()
+            stat = stat .and. test_isPresent()
       
-            stat = test_isPresent()
-      
+            stat = stat .and. test_optionalDefault()
+            
+            stat = stat .and. test_CHOOSE()
+            
       end function
 
       subroutine testBoundsAndBinarySearch()
@@ -149,5 +155,86 @@ contains
              
       !
       end function
+      
+      logical function test_optionalDefault() result(stat)
+      implicit none
+      !
+      logical :: lval
+      integer :: ival
+      
+            stat = .true.
+            
+            stat = stat .and. optionalDefault_absent()
+            
+            lval = .true.
+            ival = 1
+            
+            stat = stat .and. optionalDefault_present(ival, lval)
+      !
+      end function
+      
+      logical function optionalDefault_absent(ival, lval)
+      implicit none
+      integer,intent(in),optional :: ival
+      logical,intent(in),optional :: lval
+      !
+      logical :: ltest
+      integer :: itest
+      
+          ltest = .false.
+          _TEST('absent logical value, default returned', &
+                (optionalDefault(lval,ltest) == ltest))
+
+          itest = 20
+          _TEST('absent integer value, default returned', &
+                (optionalDefault(ival,itest) == itest))
+          
+          optionalDefault_absent = .true.
+      !
+      end function
+      
+      
+      logical function optionalDefault_present(ival, lval)
+      implicit none
+      integer,intent(in),optional :: ival
+      logical,intent(in),optional :: lval
+      !
+      logical :: ltest
+      integer :: itest
+      
+          ltest = .false.
+          _TEST('present logical value', &
+                (present(lval) .and. optionalDefault(lval,ltest) == lval))
+
+          itest = 20
+          _TEST('present integer value', &
+                (present(ival) .and. optionalDefault(ival,itest) == ival))
+
+          optionalDefault_present = .true.
+      !
+      end function
+      
+      
+      logical function test_CHOOSE()
+      implicit none
+      !
+      integer :: yes, no, res, arg 
+      !
+            arg = -1
+            yes = 10
+            no = 20
+      
+            CHOOSE(res, .true., yes, no)
+            _TEST('CHOOSE true', res == yes)
+      
+            CHOOSE(res, .false., yes, no)
+            _TEST('CHOOSE false', res == no)
+            
+            CHOOSE(res, arg >= 0, sqrt(dble(arg)), no)
+            _TEST('CHOOSE test, runtime error avoided', res == no)
+            test_CHOOSE = .true.
+      !
+      end function
+      
       
 end module
