@@ -1,4 +1,4 @@
-# $Id: CMakeLists.txt 1658 2014-01-31 23:24:53Z jgawad $
+# $Id$
 #
 cmake_minimum_required(VERSION 2.8)
 
