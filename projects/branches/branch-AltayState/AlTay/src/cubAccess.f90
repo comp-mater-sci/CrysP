@@ -10,9 +10,9 @@ use altayTexAccess
 use altayAlgorithms
 implicit none
 
-    ! TODO: reimplement CUBreadTitle so it reads other meta-data.
+    !> \todo reimplement CUBreadTitle so it reads other meta-data.
 
-    ! TODO: upgrade to OO type that extends TextureAccess
+    !> \todo upgrade to OO type that extends TextureAccess
 
 contains
     

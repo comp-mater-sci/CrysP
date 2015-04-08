@@ -17,12 +17,15 @@ implicit none
       
     contains
 
-    ! TODO: documentation
-
+    !> Read texture data from file.
+    !\todo documentation
     subroutine loadTexture(texfmt,fname,iblock,mf,texture,info,iounit)
     implicit none
-    integer,intent(in)              :: texfmt
-    character(len=*),intent(in)     :: fname
+    integer,intent(in)              :: texfmt !< Texture file format identifier
+    character(len=*),intent(in)     :: fname  !< Path to the texture file
+    !> If the texture file format permits multiple blocks of texture data, 
+    !> `iblock` provides block number inside the texture file. 
+    !> iblock must be >= 0. The first block is at iblock = 0.
     integer,intent(in)              :: iblock
     type(MaterialFrame),target,intent(out) :: mf
     type(TextureData),target,intent(out)   :: texture
@@ -94,9 +97,11 @@ implicit none
     implicit none
     integer,intent(in)            :: iounit   !< I/O unit
     integer,intent(in)            :: texfmt   !< Format ID
-    !< If true, both header and block are written, otherwise only the block output is written out.
+    
     type(MaterialFrame),target,intent(in) :: mf
     type(TextureData),target,intent(in)  :: texture
+    !> Flag: If true, both header and block are written, otherwise only 
+    !> the block output is written out.
     logical,intent(in)            :: full
     integer,intent(out)           :: info
     !
@@ -105,7 +110,7 @@ implicit none
         info = -1
         assembly = TextureAssembly(texture, mf)
         
-        ! TODO: write code for the available formats
+        !> \todo write code for the available formats
         select case(texfmt)
         case(TF_SMT)
             call SMTwrite(assembly,iounit,info)

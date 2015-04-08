@@ -33,8 +33,7 @@ implicit none
         
     end type
     
-    ! TODO: provide the actual interfaces
-    
+    !> \todo provide the actual interfaces
     abstract interface
     
         subroutine texRead_interface(this, info)

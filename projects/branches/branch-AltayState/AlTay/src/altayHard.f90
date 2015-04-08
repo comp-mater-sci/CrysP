@@ -25,7 +25,7 @@ implicit none
         
         type(KMParameters)  :: kmParams
         
-        ! TODO: proper initialization of the ratios must be implemented
+        !> \todo proper initialization of the ratios must be implemented
         type(CRSSData)      :: crss_ratios
     end type
 
@@ -35,7 +35,7 @@ implicit none
     
     contains
       
-    ! TODO: change intent of config to `out` and reinstate the line that reads 
+    !> \todo change intent of config to `out` and reinstate the line that reads 
     !       config%hardLawID
     subroutine altayHard_readConfig(inunit, config, info)
     implicit none
@@ -46,10 +46,10 @@ implicit none
     integer :: ierr
     !
         info = criErr_IORead
-        ! TODO: see todo above the subroutine, uncoment the lines -->>
-        ! read(inunit,fmt=*,iostat=ierr) config%hardLawID
-        ! if (ierr /= 0) return
-        ! <<--
+        !> \todo see todo above the subroutine, uncoment the lines -->>
+        !> read(inunit,fmt=*,iostat=ierr) config%hardLawID
+        !> if (ierr /= 0) return
+        !> <<--
         select case(config%hardLawID)
         !
         case(hard_none,hard_voce)

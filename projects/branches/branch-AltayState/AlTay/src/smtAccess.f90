@@ -3,7 +3,7 @@ use criErrcodes
 use altayTexAccess
 implicit none
 
-! TODO: upgrade to OO type that extends TextureAccess
+!> \todo upgrade to OO type that extends TextureAccess
 
 contains
     

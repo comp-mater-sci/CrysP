@@ -34,7 +34,7 @@
       integer,dimension(5),intent(in)               :: DI1
       double precision,dimension(3,3),intent(out)   :: S33, RHOS33, RHOA33
       logical,dimension(3),intent(in)               :: SWRLX
-      double precision,dimension(194),intent(inout) :: XX  ! TODO: check if intent(out) is more appropriate
+      double precision,dimension(194),intent(inout) :: XX  !> \todo check if intent(out) is more appropriate
       integer,intent(in)                            :: IPR
       double precision,intent(inout)                :: GEWF
       type(DeformationRate),intent(in)              :: MacroDefRate

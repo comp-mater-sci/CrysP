@@ -4,8 +4,10 @@ use criMathUtils
 use altayMiscutils, only: unitMatrix
 implicit none
 
+    !> Representation of a single grain/crystal.
+    !> \todo Identify & remove redundant fields.
     type :: Grain
-        ! TODO: replace tFI1, tPHI and tFI2 by EulerAngles object.
+        !> \todo replace tFI1, tPHI and tFI2 by EulerAngles object.
         double precision :: tFI1 = 0.D0,tPHI = 0.D0, tFI2 = 0.D0
         double precision :: tGEW = 1.D0 ,tGAM = 0.D0
         double precision, dimension(3) :: tAXES = 1.D0, tEULR = 0.D0
@@ -16,6 +18,9 @@ implicit none
         double precision, dimension(3,3) :: tZERO = 0.D0,tRHO = 0.D0
     end type
 
+
+    !> \todo Find a more suitable name for the data type MaterialFrame
+    !> \todo consider removal of the MaterialFrame data type
     type :: MaterialFrame
         double precision,dimension(3,3) :: FALG = unitMatrix
         double precision,dimension(3,3) :: CIJ0 = unitMatrix
@@ -26,7 +31,7 @@ implicit none
     integer,parameter,private :: textureTitle_length = 40
     
     type :: TextureData
-        ! TODO: consider either moving nrstep somewhere else or removing it completely.
+        !> \todo consider either moving nrstep somewhere else or removing it completely.
         !> Meta-data: step number
         integer                                 :: nrstep = 0
         
@@ -41,14 +46,19 @@ implicit none
     contains
     
     
-    
-    ! TODO: do we actually need this feature? Wouldn't a regular "allocate" be sufficient?
-    ! TODO: documentation
+    !> Expand/shrink the storage for crystals in the TextureData object.
+    !>
+    !> The old content is preserved if `keep_state` parameter is True.
+    !> \todo do we actually need this feature? Wouldn't a regular "allocate" be sufficient?
     integer function textureData_resize(this, newsize, keep_state) result(info)
     implicit none
-    type(TextureData),intent(inout)     :: this
+    type(TextureData),intent(inout)     :: this     !< object to be modified
+    !> new size, i.e. number of crystals that can be stored in `this`
     integer,intent(in)                  :: newsize
-    logical,intent(in),optional         :: keep_state !< Existing state to be preserved on resize. Default: .false.
+    !> Flag: if true, the existing state to be preserved on resize. Default: .false.
+    !> If the newsize is larger than the previous size, only the first `newsize`
+    !> elements will be preserved.
+    logical,intent(in),optional         :: keep_state
     !
     logical :: keep
     integer :: memstat, ntransf
@@ -112,7 +122,7 @@ implicit none
     !>  - tAXES,tEULR,tF,tCIJ,tTAX - inherit corresponding properties 
     !>    from the MaterialFrame mf
     !>  - tZERO and tRHO - are zeroed.
-    ! TODO: consider converting into elemental subroutine
+    !> \todo consider converting grain_init into elemental subroutine
     subroutine grain_init(this, mf, info)
     implicit none
     type(Grain),intent(inout)       :: this

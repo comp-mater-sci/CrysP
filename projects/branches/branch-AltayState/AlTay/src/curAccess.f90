@@ -6,7 +6,7 @@ use criErrcodes
 use altayTexAccess
 use altayAlgorithms
 
-    ! TODO: upgrade to OO type that extends TextureAccess
+    !> \todo upgrade to OO type that extends TextureAccess
 
 contains
     !> Read texture data in CUR format from iounit.

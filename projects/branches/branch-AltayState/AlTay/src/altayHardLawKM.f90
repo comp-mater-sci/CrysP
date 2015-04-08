@@ -300,8 +300,8 @@ contains
     end subroutine
     
     
-    ! TODO: consider if the read/write should operate on a single instance or 
-    !       on arrays of objects.
+    !> \todo consider if the read/write should operate on a single instance or 
+    !>       on arrays of objects.
     
     !> Perform formatted IO read operation on KMStateVariables object. 
     !>
