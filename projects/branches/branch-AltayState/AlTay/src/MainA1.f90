@@ -36,7 +36,7 @@
 !     IDISK1= work file (obsolete, not used)
 !     NDAT1= Input-texture file
 !
-      ! TODO/FIXME: get rid of this common block from here. At the moment
+      !> \todo get rid of this common block from here. At the moment
       !       we still need it for getting M11 (number of slip systems)
       COMMON /IGLIJS/ M11,CC(2,96)
       integer :: M11
@@ -154,7 +154,7 @@
       call altayStateData_printStatus(state)
       !!! <<-- TESTING
 #endif
-      info = altayStateData_update(state)
+      info = altayStateData_init(state)
 #ifdef TESTING_ENABLED
       !!! TESTING -->>
       call altayStateData_printStatus(state)

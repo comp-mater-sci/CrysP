@@ -67,9 +67,8 @@ contains
         ! Set the singleton object to the cnf
         acnf = cnf
         !
-        ! Override the state
-        ! TODO: check why the compiler complains when interface altayStateData is used here
-        state = altayStateData_init()
+        info = criErr_BadArgs
+        if (altayStateData_init(state) /= criSuccess) return
         !
         ! Open input files
         !
@@ -121,7 +120,7 @@ contains
         !
 #ifdef PEBP_ENABLED
         ! PEBP model
-        select case(cnf%hardening%HardLawID)
+        select case(cnf%hardening%hardLawID)
         case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                 info = KS_initState(size(DFIL))
                 if (info /= 0) return
@@ -368,7 +367,7 @@ contains
             if (info /= 0) return
             !
 #ifdef PEBP_ENABLED
-            select case(acnf%hardening%HardLawID)
+            select case(acnf%hardening%hardLawID)
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                 if (acnf%output_config%npebp == 1) then
                       info = KS_writeState(IMP4)
