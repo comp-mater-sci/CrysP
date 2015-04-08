@@ -31,6 +31,19 @@ module criAlgorithm
             module procedure  centered_int, centered_string   
       end interface
       
+      
+      !> Test the presence of optional value, and return a default if the optional
+      !> is not present.
+      !>
+      !> The function provides a simplified access pattern to optional parameters.
+      !> The first formal argument is declared as optional parameter, butit must always
+      !> appear as the actual parameter in a context where the actual parameter is 
+      !> declared itself as "optional".
+      interface optionalDefault
+            module procedure optionalDefault_logical, optionalDefault_integer
+      end interface
+
+
 contains
 
       !> Find out if val appears in a sorted array, using operator < for equivalence.
@@ -279,5 +292,32 @@ contains
       !
       end function
 
+#define OPTIONALDEFAULT_TEST_EXPRESSION if (present(value))then;res=value;else;res=default;endif
       
+      !> Test the presence of optional logical value, and return a default if the optional
+      !> is not present.
+      pure logical function optionalDefault_logical(value, default) result(res)
+      implicit none
+      !> The parameter to be tested for presence. The actual parameter MUST have optional attribute.
+      logical,intent(in),optional   :: value
+      logical,intent(in)            :: default  !< Default value
+      !
+            OPTIONALDEFAULT_TEST_EXPRESSION
+      !
+      end function
+      
+      !> Test the presence of optional integer value, and return a default if the optional
+      !> is not present.
+      pure integer function optionalDefault_integer(value, default) result(res)
+      implicit none
+      !> The parameter to be tested for presence. The actual parameter MUST have optional attribute.
+      integer,intent(in),optional   :: value
+      integer,intent(in)            :: default  !< Default value
+      !
+            OPTIONALDEFAULT_TEST_EXPRESSION
+      !
+      end function
+
+#undef OPTIONALDEFAULT_TEST_EXPRESSION
+            
 end module
