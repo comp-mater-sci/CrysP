@@ -32,7 +32,7 @@
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
       ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON/TLR2/ TRC(3,3),RHOAsa
+      COMMON/TLR2/ RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
        SWRLX(3)
@@ -137,7 +137,6 @@
       if(NLIST.eq.1) then                                         
       WRITE (IMP,203)
       end if     
-      TRC=MacroDefRate%Spin
       do I=1,3                                                       
           if(NLIST.eq.1) then                                   
               WRITE (IMP,204) (MacroDefRate%VelGrad(I,J),J=1,3),         &
@@ -227,7 +226,7 @@
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
       ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON/TLR2/ RC(3,3),RHOAsa
+      COMMON/TLR2/ RHOAsa
       COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       COMMON /EULERA/ fi1,PHI,fi2
       logical SWRLX
@@ -246,9 +245,9 @@
 !
       COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
        SWRLX(3)
-      DIMENSION RCcryst(3,3),rhossaTot(3,3)
+      DIMENSION RCC(3,3),RCcryst(3,3),rhossaTot(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
-      dimension RHOAsa(3,3),GAMdot(96)
+      dimension RHOAsa(3,3),RHOAcrys(3,3),GAMdot(96)
       real, dimension(3,3) :: test !!single precision!!
 !      data SQR2/0.7071067811865476D+00/
 #ifdef PEBP_ENABLED      
@@ -306,11 +305,11 @@
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 !
       !Calculate RCcryst: the rigid body spin in the crystal frame 
-      RCcryst = rotateSRTensorFrom(RC,TRF)
-      
-   71   TRC(1)=RCcryst(3,2)+RHOAsa(3,2)
-        TRC(2)=RCcryst(1,3)+RHOAsa(1,3)
-        TRC(3)=RCcryst(2,1)+RHOAsa(2,1)
+      RCcryst = rotateSRTensorFrom(MacroDefRate%Spin,TRF)
+      RHOAcrys = rotateSRTensorFrom(RHOAsa,TRF)
+   71   TRC(1)=RCcryst(3,2)+RHOAcrys(3,2)
+        TRC(2)=RCcryst(1,3)+RHOAcrys(1,3)
+        TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
       WorkRate=0.0
       do i=1,M11 
           if (GAMdot(i).GT.0.0) then
@@ -404,7 +403,7 @@
       GOTO 31                                                           
   87  DO 88 K=1,3                                                       
       DO 89 J=1,3                                                       
-  89   RC(K,J)=C2(K,J)                                                  
+  89  RCC(K,J)=C2(K,J)                                                  
   88  CONTINUE                                                          
       TDC(1,1)=B2(1,I)                                                  
       X=B2(2,I)                                                         
@@ -418,7 +417,7 @@
       TDC(3,2)=X                                                        
       TDC(2,3)=X                                                        
       TDC(3,3)=B2(6,I)                                                  
-      C2 = matmul(TDC,RC) 
+      C2 = matmul(TDC,RCC) 
       ITW=I
       Euler= EuleranglesType(C2)
       fi1=Euler%fi1 !
