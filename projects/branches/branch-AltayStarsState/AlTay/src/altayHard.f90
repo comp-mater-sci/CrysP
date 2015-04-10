@@ -121,6 +121,12 @@ implicit none
             info = criErr_BadArgs
         !
         end select
+        ! Other actions, common for several hardening models
+        select case(config%hardLawID)
+        case(hard_voce,hard_swiftK,hard_swiftS)
+            this%crss_ratios = config%crss_ratios
+        end select
+        !
         if (info == criSuccess) this%hardLawID = config%hardLawID
     !
     end subroutine
