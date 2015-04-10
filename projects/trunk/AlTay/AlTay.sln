@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "AlTay", "AlTay\AlTay.vfproj", "{8663D4BD-D460-4394-871E-0FF3EAB14C60}"
 	ProjectSection(ProjectDependencies) = postProject
