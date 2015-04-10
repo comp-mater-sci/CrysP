@@ -55,6 +55,12 @@ module criMathUtils
       
       !> Array dimension for 3D rotation matrix (rot_matrix_dim x rot_matrix_dim)
       integer,parameter                   :: rot_matrix_dim = 3
+      
+      !> Matrix form of the unit second rank tensor
+      double precision,dimension(3,3),parameter :: unit_sr_Matrix = reshape( &
+           [ 1.D0, 0.D0, 0.D0,     &
+             0.D0, 1.D0, 0.D0,     &
+             0.D0, 0.D0, 1.D0], [ sr_tensor_dim, sr_tensor_dim ])
       !>@}
 
       !> \interface ocross_product Vector-Vector ocross product operator
@@ -65,6 +71,10 @@ module criMathUtils
             module procedure ocross_product_dp, ocross_product_int
       end interface ocross_product
 
+      !> \interface vector_product Vector-Vector ovector product operator
+      interface vector_product
+            module procedure vector_product_dp
+      end interface vector_product
 
       !> Representation of Euler angles: Bunge notation
       type EulerAngles
@@ -251,6 +261,19 @@ contains
 
 #endif
      
+      !> Calculation of the vector product of two double precision vectors with size 3.
+      pure function vector_product_dp(a,b)
+      implicit none
+      double precision,dimension(3),intent(in)        :: a,b
+      double precision,dimension(3)                   :: vector_product_dp
+      integer :: i
+      !
+            vector_product_dp(1) = a(2)*b(3) - a(3)*b(2)
+            vector_product_dp(2) = a(3)*b(1) - a(1)*b(3)
+            vector_product_dp(3) = a(1)*b(2) - a(2)*b(1)            
+      !
+      end function
+    
       !> Calculates square norm of vector v
       pure double precision function vec_norm2(v)
       double precision,dimension(:),intent(in)   :: v
@@ -482,6 +505,7 @@ contains
       !
       end function
 
+    
       !
       ! Some operations on double_pair
       !
