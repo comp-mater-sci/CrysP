@@ -26,129 +26,133 @@
 
 !> API for "AlTay as a subroutine"
 module altaySub
+use criErrcodes
+implicit none
 
-      !> \name Named constants for error codes in altaySub
+      !> \name Named constants for error codes in altaySub (OBSOLETE)
       !>@{ 
-      integer,parameter :: altaySub_OK = 0
-      integer,parameter :: altaySub_Err = -1
-      integer,parameter :: altaySub_Exception = -2
-      integer,parameter :: altaySub_IOErr = -3
-      integer,parameter :: altaySub_BadVal = -10
-      integer,parameter :: altaySub_BadDim = -11
+      ! TODO: replace altaySub_Exception with a meaningful alternative
+      integer,parameter :: altaySub_Exception = criError
       !>@}
       
 contains
 
-      !> Initialize the module.
-      !>
-      !> This subroutine must be called prior to any call to other
-      !> module subroutines.
-      subroutine initAltay(cnf,info,errmsg)
-      use altayConfig, only: altayConfigData,fname_len,acnf
-      use altaySimul
-      use altayRCM
-      use altayIOConfig
-      use altayTexFormats
-      use altayHard,only: hard_BP,hard_PEBPscrew,hard_PEBPloop,InitModuleAltayHard
-      use altayMesostructure
+    !> Initialize the module.
+    !>
+    !> This subroutine must be called prior to any call to other
+    !> module subroutines.
+    subroutine initAltay(cnf, state, info, errmsg)
+    use altayConfig, only: altayConfigData,fname_len,acnf
+    use altayState
+    use altaySimul
+    use altayRCM
+    use altayIOConfig
+    use altayTexFormats
+    use altayHard,only: hard_BP,hard_PEBPscrew,hard_PEBPloop,InitModuleAltayHard
+    use altayMesostructure
 #ifdef PEBP_ENABLED
-      use AltayDSHstate
+    use AltayDSHstate
 #endif
-      implicit none
-      !
-      type(altayConfigData),intent(in)    :: cnf      !< configuration data 
-      integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
-      character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
-      !
-      integer :: ierr
-      !
-            if (present(errmsg)) errmsg = ''
-            ierr = 0
-            ! Set the singleton object to the cnf
-            acnf = cnf
-            !
-            ! Open input files
-            !
-            ! UNIT LEC = SLIP SYSTEMS
-            open (unit=LEC,file=trim(cnf%slipsystem%input_fname),status='old',iostat=ierr)
-            if (ierr /= 0) then
-                  if (present(errmsg)) errmsg = 'Cannot open slip system definition file: ' // trim(cnf%slipsystem%input_fname)
-                  info = altaySub_IOErr
-                  return
-            endif
-            ! Load microstructure data
-            CALL GRFIL(acnf%micros_fname,acnf%simul_init%FMicro,info)
-            if (info /= 0) then
-                  if (present(errmsg)) errmsg = 'Cannot process the microstructure file: ' // trim(acnf%micros_fname)
-                  info = altaySub_IOErr
-                  return
-            endif
-            !
-            ! Get the initial texture
-            call loadTexture(cnf%texture%input_type,NDAT1,trim(cnf%texture%input_fname),cnf%texture%block_id,info)
-            if (info /= 0) then
-                  if (present(errmsg)) errmsg = 'Cannot process the texture data file: ' // trim(cnf%texture%input_fname)
-                  info = altaySub_IOErr
-                  return
-            endif
-            !
-            ! Open output files
-            !
-            call openOutputFiles(cnf, info, errmsg)
-            if (info /= altaySub_OK) return
-            !
-            ! Initialize altay modules
-            !
-            ! Set the data for CRSS calculations
-            call InitModuleAltayHard(cnf%hardening, info) 
-            if (info /= 0) then
-                  if (present(errmsg)) errmsg = 'Cannot initialize hardening law'
-                  info = altaySub_Err
-                  return
-            endif
-            !
-            ! Initialisation of SIMUL
-            if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
-            info = altaySub_Exception
-            CALL SIMUL(0,1)
-            RCM_HANDLE(info)
-            if (present(errmsg)) errmsg = ''
-            !
+    implicit none
+    !
+    type(altayConfigData),intent(in)    :: cnf      !< configuration data
+    type(altayStateData),intent(out)    :: state    !< state variables
+    integer,intent(out)                 :: info     !< exit code (criSuccess on success)
+    character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= criSuccess)
+    !
+    integer :: ierr
+    !
+        if (present(errmsg)) errmsg = ''
+        ierr = 0
+        ! Set the singleton object to the cnf
+        acnf = cnf
+        !
+        info = criErr_BadArgs
+        if (altayStateData_init(state) /= criSuccess) return
+        !
+        ! Open input files
+        !
+        ! UNIT LEC = SLIP SYSTEMS
+        open (unit=LEC,file=trim(cnf%slipsystem%input_fname),status='old',iostat=ierr)
+        if (ierr /= 0) then
+            if (present(errmsg)) errmsg = 'Cannot open slip system definition file: ' // trim(cnf%slipsystem%input_fname)
+            info = criErr_IO
+            return
+        endif
+        ! Load microstructure data
+        CALL GRFIL(acnf%micros_fname,acnf%simul_init%FMicro,info)
+        if (info /= 0) then
+                if (present(errmsg)) errmsg = 'Cannot process the microstructure file: ' // trim(acnf%micros_fname)
+                info = criErr_IO
+                return
+        endif
+        !
+        ! Get the initial texture
+        call loadTexture(cnf%texture%input_type, trim(cnf%texture%input_fname), &
+                            cnf%texture%block_id, state%old%frame, state%old%texture, info)
+        if (info /= 0) then
+                if (present(errmsg)) errmsg = 'Cannot process the texture data file: ' // trim(cnf%texture%input_fname)
+                info = criErr_IO
+                return
+        endif
+        !
+        ! Open output files
+        !
+        call openOutputFiles(cnf, info, errmsg)
+        if (info /= criSuccess) return
+        !
+        ! Initialize altay modules
+        !
+        ! Set the data for CRSS calculations
+        call InitModuleAltayHard(cnf%hardening, info) 
+        if (info /= 0) then
+                if (present(errmsg)) errmsg = 'Cannot initialize hardening law'
+                info = criError
+                return
+        endif
+        !
+        ! Initialisation of SIMUL
+        if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
+        info = altaySub_Exception
+        CALL SIMUL(state,0,1)
+        RCM_HANDLE(info)
+        if (present(errmsg)) errmsg = ''
+        !
 #ifdef PEBP_ENABLED
-            ! PEBP model
-            select case(cnf%hardening%HardLawID)
-            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-                  info = KS_initState(size(DFIL))
-                  if (info /= 0) return
-                  if (acnf%hardening%PEBPCnf%read_state) then 
-                        ! Load state variables
-                        info = KS_openStateFile(IPEBPSTAT,acnf%hardening%PEBPCnf%input_fname, mode='r')
-                        if (info /= 0) then
-                              if (present(errmsg)) errmsg = 'Cannot open PEBP state file: ' & 
-                                                            // trim(acnf%hardening%PEBPCnf%input_fname) 
-                              return
-                        endif
-                        info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
-                        if ((info /= 0) .and. present(errmsg)) then  
-                              errmsg = 'Cannot read from PEBP state file: '// trim(acnf%hardening%PEBPCnf%input_fname)
-                              return
-                        endif
-                  endif
-            endselect      
+        ! PEBP model
+        select case(cnf%hardening%hardLawID)
+        case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+                info = KS_initState(size(DFIL))
+                if (info /= 0) return
+                if (acnf%hardening%PEBPCnf%read_state) then 
+                    ! Load state variables
+                    info = KS_openStateFile(IPEBPSTAT,acnf%hardening%PEBPCnf%input_fname, mode='r')
+                    if (info /= 0) then
+                            if (present(errmsg)) errmsg = 'Cannot open PEBP state file: ' & 
+                                                        // trim(acnf%hardening%PEBPCnf%input_fname) 
+                            return
+                    endif
+                    info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
+                    if ((info /= 0) .and. present(errmsg)) then  
+                            errmsg = 'Cannot read from PEBP state file: '// trim(acnf%hardening%PEBPCnf%input_fname)
+                            return
+                    endif
+                endif
+        endselect      
 #endif
-            !
-            ! No need for the slip system definition anymore.
-            close(LEC)
-            info = altaySub_OK
-      !
-      end subroutine
+        !
+        ! No need for the slip system definition anymore.
+        close(LEC)
+        !
+        info = altayStateData_assemble(state)
+    !
+    end subroutine
       
       !> Finalizes the module and releases the resources.
       subroutine finalizeAltay(info)
       use altayConfig, only: altayConfigData,fname_len,acnf, astate
       use altayIOConfig
       use altayMesostructure, only: MICROSTR_finalize
-      use altayDynfil
 #ifdef PEBP_ENABLED
       use AltayDSHstate
 #endif
@@ -168,8 +172,6 @@ contains
             close(IMP5)
             close(IMP6)
             call MICROSTR_finalize(info)
-            if (info /= 0) return
-            call DYNFIL_finalize(info)
             if (info /= 0) return
 #ifdef PEBP_ENABLED
             info = KS_finalize()
@@ -193,13 +195,13 @@ contains
 #endif
       implicit none
       type(altayConfigData),intent(in)    :: cnf      !< configuration data 
-      integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
-      character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
+      integer,intent(out)                 :: info     !< exit code (criSuccess on success)
+      character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= criSuccess)
       !
       character(len=fname_len) :: fname_prefix, fname
       !
             fname_prefix = cnf%output_prefix
-            info = altaySub_IOErr
+            info = criErr_IO
 #ifndef NOLSTFILE
             ! UNIT IMP = PRINTER
             if (cnf%output_config%nlist /= 0) then
@@ -244,19 +246,19 @@ contains
                   info = KS_openStateFile(IMP4,fname=fname,mode='w')
                   if (info /= 0) then
                         if (present(errmsg)) errmsg = 'Cannot create PEBP state file: ' // fname
-                        info = altaySub_IOErr
+                        info = criErr_IO
                         return
                   endif
             endif
 #endif
             !
             ! Successful end of processing
-            info = altaySub_OK
+            info = criSuccess
             return
             !
             ! Error handler
             9999 continue
-            info = altaySub_IOErr
+            info = criErr_IO
             if (present(errmsg)) errmsg = 'Cannot open file '//trim(fname)
       !
       end subroutine
@@ -265,10 +267,10 @@ contains
       !>
       !> 
       subroutine initStepData(nsteps,steps,info)
-      use altayConfig, only: altayStateData
+      use altayConfig, only: altayOutputData
       implicit none
       integer,intent(in)                  :: nsteps   !< Number of steps to be created
-      type(altayStateData),intent(out)    :: steps    !< Definiton of the steps.
+      type(altayOutputData),intent(out)    :: steps    !< Definiton of the steps.
       integer,intent(out)                 :: info     !< Exit code: 0 on success
       !
       integer :: ierr
@@ -285,14 +287,15 @@ contains
       end subroutine
       
       !> Run the AlTay for the set of steps
-      subroutine runSteps(steps,info)
-      use altayConfig, only: altayStateData,astate
+      subroutine runSteps(state, steps,info)
+      use altayConfig, only: altayOutputData,astate
       use altaySimul
       use altayRCM
       use altayIOConfig
       use altayMacroKinematic
       implicit none
-      type(altayStateData),intent(inout)        :: steps !< Definiton of the steps.
+      type(altayStateData),intent(inout)        :: state    !< state variables
+      type(altayOutputData),intent(inout)       :: steps !< Definiton of the steps.
       integer,intent(out)                       :: info  !< Exit code: 0 on success.
       integer :: NFILE0
       !
@@ -301,7 +304,7 @@ contains
       type(DeformationRate) :: MacroDefRate
       !
             ! Validate input
-            info = altaySub_BadVal
+            info = criErr_BadArgs
             input_ok = .false.
             if (allocated(steps%simulCalls)) then
                   input_ok = (size(steps%simulCalls) == steps%nSimulCalls)
@@ -326,15 +329,15 @@ contains
                   call Set_DeformationRate(steps%simulCalls(i)%input%dgf,MacroDefRate)
 
                   ! Run simul.
-                  call SIMUL(1,NFILE0,MacroDefRate)
+                  call SIMUL(state, 1, NFILE0, MacroDefRate)
                   if (RCM_signal()) then
                         RCM_RAISE(info,'runSteps','SIMUL has thrown exception',RCM_RTN) 
                   endif
 
-                  if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
+                  if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(state%new, info)
             enddo
       
-            info = altaySub_OK
+            info = criSuccess
       !
       end subroutine
 
@@ -343,29 +346,35 @@ contains
       !> The call may involve IO units: IMP1 (CUR file), IMP4 (PEBP state file) and IMP5 (MSS file).
       !> Appropriate control fields in acnf%output_config are checked to decide if the data have to
       !> be actually written to corresponding IO units.  
-      subroutine outputCurrentState(info)
+      subroutine outputCurrentState(statevars, info)
       use altayIOConfig
       use altayCurAccess
+      use altayState
       use altayConfig, only: acnf,astate
       use altayHard, only: hard_BP,hard_PEBPscrew,hard_PEBPloop
       use AltayDSHstate
       use altayMiscutils
       implicit none
+      type(altayStateVariables),target,intent(in) :: statevars
       integer,intent(out)           :: info
       !
-            info = altaySub_OK
+      type(TextureAssembly) :: assembly
+            info = criSuccess
             if (acnf%output_config%nfile == 1) then
-                  call CURwriteBlock(IMP1,info)
+                  assembly = TextureAssembly(statevars%texture, statevars%frame)
+                  call CURwriteBlock(assembly,IMP1,info)
             endif
             if (info /= 0) return
             !
-            select case(acnf%hardening%HardLawID)
+#ifdef PEBP_ENABLED
+            select case(acnf%hardening%hardLawID)
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                 if (acnf%output_config%npebp == 1) then
                       info = KS_writeState(IMP4)
                 endif
             endselect
             if (info /= 0) return
+#endif
             !
             if ((acnf%output_config%nmss == 1) .and. allocated(astate%simulCalls)) then
                   !

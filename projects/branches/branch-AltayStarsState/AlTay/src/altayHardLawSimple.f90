@@ -5,6 +5,7 @@
 !>  - SwiftK: Swift law with K-factor     :: TAU = K * (gamma0+GAMMA)**n
 !>  - SwiftS: Swift law with initial crsS :: TAU = crss0 * (1.+GAMMA/gammaA0)**n
 module altayHardLaw_Simple
+use criErrcodes
 use altayMiscutils, only: terminate, stopcode_runtimeerror
 use altayHardTypes
 implicit none
@@ -55,14 +56,11 @@ implicit none
             double precision  :: n      = 0.D0
       end type
       !
-      type(VoceParams),private,save     :: vocePar
-      type(SwiftParams),private,save    :: swiftPar
       
-      interface InitModuleAltayHardLaw_Simple !Generic Interface
-            module procedure init_voce, init_swiftK, init_swiftS
+      interface SwiftParams_init
+            module procedure SwiftParams_init_swiftK, SwiftParams_init_swiftS
       end interface      
-      
-      integer,save,private :: configured_law_id = hard_invalid
+
       
 contains
 
@@ -141,14 +139,14 @@ contains
       !
       end subroutine
 
-      subroutine init_voce(c,info)
+      subroutine VoceParams_init(c,p,info)
       use altayIOConfig
       implicit none
       type(VoceConfig),intent(in)         :: c
+      type(VoceParams),intent(out)        :: p
       integer,intent(out)                 :: info
       !
-      type(VoceParams) :: p !trial parameter set
-      info = -1
+      info = criErr_BadArgs
       ! Check validity of inputs:
             if (.not.(c%TIIIS.gt.c%TIII1.and.c%THIII1.gt.c%THT)) then
 #ifdef ALTAY_SUBROUTINE
@@ -178,21 +176,18 @@ contains
             !      
             if(NLIST.eq.1) write (IMP,102) p%GAMMAT,p%TAUT,p%THIV,p%TIV0
        102  format (' GAMMA-T, TAU-T, THETA-IV-0, TAU-IV-0',/,4d15.5)
-      configured_law_id = hard_voce
-      ! Save the trial parameter set p
-      vocePar=p
       ! Succesful initialization:
-      info = 0
+      info = criSuccess
       end subroutine
 
-      subroutine init_swiftK(c,info)
+      subroutine SwiftParams_init_swiftK(c,p,info)
       use altayIOConfig
       implicit none
       type(swiftKConfig),intent(in)       :: c
+      type(SwiftParams),intent(out)       :: p
       integer,intent(out)                 :: info
       !
-      type(SwiftParams) :: p
-      info = -1
+      info = criErr_BadArgs
       ! Check validity of inputs:
       if (.not.(c%K.gt.0.D0 .and. c%gamma0.gt.0.D0 .and. c%n.gt.0.D0)) then
 #ifdef ALTAY_SUBROUTINE
@@ -210,21 +205,18 @@ contains
       ! 
       if(NLIST.eq.1) write (IMP,103) p%K,p%gamma0,p%n
        103  format ('Swift: K, gamma0, n: ',/,3d15.5)
-      configured_law_id = hard_swiftK
-      ! Save the trial parameter set p
-      SwiftPar=p
       ! Succesful initialization:
-      info = 0
+      info = criSuccess
       end subroutine
 
-      subroutine init_swiftS(c,info)
+      subroutine SwiftParams_init_swiftS(c,p,info)
       use altayIOConfig
       implicit none
       type(swiftSConfig),intent(in)       :: c
+      type(SwiftParams),intent(out)       :: p
       integer,intent(out)                 :: info
       !
-      type(SwiftParams) :: p
-      info = -1
+      info = criErr_BadArgs
       ! Check validity of inputs:
       if (.not.(c%crss0.gt.0.D0 .and. c%gamma0.gt.0.D0 .and. c%n.gt.0.D0)) then
 #ifdef ALTAY_SUBROUTINE
@@ -242,39 +234,40 @@ contains
       ! 
       if(NLIST.eq.1) write (IMP,103) p%K,p%gamma0,p%n
        103  format ('Swift: K, gamma0, n: ',/,3d15.5)
-      configured_law_id = hard_swiftS
-      ! Save the trial parameter set p
-      SwiftPar=p
-      ! Succesful initialization:
-      info = 0
+      info = criSuccess
       end subroutine
-      
-      subroutine getRefTau(hardID,gamma,RefTau,info)
-      implicit none
-      integer,intent(in)                  :: hardID
-      double precision,intent(in)         :: gamma
-      double precision,intent(out)        :: RefTau
-      integer,intent(out)                 :: info
-      !
-            info = -1
-            if (hardID /= configured_law_id) return
-            info = 0
-            select case (hardID)
-            case (hard_Voce)
-                  ! Implementation of the Double-Voce-model
-                  if (gamma.le.vocePar%GAMMAT) then
-                        RefTau=vocePar%TIIIS-(vocePar%TIIIS-vocePar%TIII1)*EXP(-vocePar%THIII*gamma/vocePar%TIIIS)
-                  else
-                        RefTau=vocePar%TIVS-(vocePar%TIVS-vocePar%TIV0)*EXP(-vocePar%THIV*gamma/vocePar%TIVS)
-                  endif
-            case (hard_swiftK,hard_swiftS)
-                  RefTau = swiftPar%K * (swiftPar%GAMMA0+gamma)**(swiftPar%n)
-            case default
-                  ! The hardening law is not provided by this module.
-                  RefTau = 0.D0
-                  info = -1
-            end select
-      !
-      end subroutine
+    
+    
+    !> Calculate shear stress from the Voce law
+    pure subroutine getTau_Voce(params,gamma,tau,info)
+    implicit none
+    type(VoceParams),intent(in)         :: params
+    double precision,intent(in)         :: gamma
+    double precision,intent(out)        :: tau
+    integer,intent(out)                 :: info
+    !
+        info = criSuccess
+        ! Implementation of the Double-Voce-model
+        if (gamma <= params%GAMMAT) then
+            tau=params%TIIIS-(params%TIIIS-params%TIII1)*exp(-params%THIII*gamma/params%TIIIS)
+        else
+            tau=params%TIVS-(params%TIVS-params%TIV0)*exp(-params%THIV*gamma/params%TIVS)
+        endif
+    !
+    end subroutine
+    
+    
+    !> Calculate shear stress from the Swift law
+    pure subroutine getTau_Swift(params,gamma,tau,info)
+    implicit none
+    type(SwiftParams),intent(in)        :: params
+    double precision,intent(in)         :: gamma
+    double precision,intent(out)        :: tau
+    integer,intent(out)                 :: info
+    !
+        info = criSuccess
+        tau = params%K * (params%GAMMA0+gamma)**(params%n)
+    !
+    end subroutine
       
 end module

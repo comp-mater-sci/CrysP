@@ -5,13 +5,12 @@
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayHardTypes
       use altayMacroKinematic
-      
-      ! Initial rations of CRSS, set in MAINA1.
-      ! It is used only by the stand-alone AlTay
-      type(CRSS),save :: crss_ratiosIN
+      use altayState
+      use altayMaterial
 
       contains
-      
+    
+    
 ! ALAMEL V3
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
@@ -20,12 +19,11 @@
 ! See "annotated source codes" if you need these
 !
 !
-      SUBROUTINE SIMUL(IW,NFILE0,MacroDefRate)
+      SUBROUTINE SIMUL(config,state,material,IW,NFILE0,MacroDefRate)
 
 !     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
 !     USING THE ALAMEL MODEL
       use altayCurAccess
-      use altayDYNFIL
       use altayHard
       use altayTaylor
       use altayAlgorithms
@@ -40,7 +38,14 @@
       use altayIOConfig
       use altayMiscutils
       !
+      use altayDynfilStitch
+      !
       implicit double precision (a-h,o-z)
+      type(altayConfigData),intent(in)          :: config
+      type(altayStateData),target,intent(inout) :: state
+      type(altayMaterialData),intent(in)        :: material
+      integer,intent(in)                        :: IW
+      integer,intent(in)                        :: NFILE0
       ! optional argument for IW=1 or 2:
       type(DeformationRate),intent(in),optional :: MacroDefRate !inout
 !
@@ -89,43 +94,31 @@
 #ifdef PEBP_ENABLED
       type(StateDerivedVars) :: pebpSDV, pebpSDVavg
 #endif
+      !
+      type(TextureAssembly) :: assembly
+      !
       data convf/0.5729577951308232D+02/
       data FS/9*1.0D0/ 
       SAVE
       !
-      NPOINT = size(DFIL)
+      NPOINT = altayStateData_size(state)
+      assembly = TextureAssembly(state%old%texture, state%old%frame)
       !
       IF (IW) 32,33,30
   33  call  random_seed
-#ifdef ALTAY_SUBROUTINE
-      NGR    = acnf%simul_init%NGR
-      ENTA   = acnf%simul_init%ENTA
-      KOST   = acnf%hardening%HardLawID
       !
-      NLIST  = acnf%output_config%NLIST   ! control "listing"
-      NFILE1 = acnf%output_config%NFILE   ! control "CUR"
-      NFILTW = acnf%output_config%NFILTW  ! control "TWN"
-      IPR    = acnf%output_config%IPR     ! control printing level
-      NRES   = acnf%output_config%NRES    ! control "RES" and "RPT"
-      NPEBP  = acnf%output_config%NPEBP   ! control "BEP"
-      NMSS   = acnf%output_config%NMSS    ! control "MSS"
-#else
-!     Number of grains in ALAMEL cluster
-      read (KLEC,99) NGR
-      read (KLEC,*)  ENTA
-      read (KLEC,99) NLIST
-      read (KLEC,99) NFILE1
-      read (KLEC,99) NFILTW
-      read (KLEC,99) KOST
-      read (KLEC,99) IPR
-      NRES = NFILE1  ! IMP2 and IMP3 are controlled only by NFILE1
-      NPEBP = 0
-      select case(KOST)
-      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-          NPEBP  = NFILE1
-      endselect
-      NMSS = NLIST
-#endif
+      NGR    = config%simul_init%NGR
+      ENTA   = config%simul_init%ENTA
+      KOST   = config%hardening%hardLawID
+      ! Note:  integers NLIST,IPR,NRES,NPEBP,NMSS are module variables of altayIOConfig
+      NLIST  = config%output_config%NLIST   ! control "listing"
+      NFILE1 = config%output_config%NFILE   ! control "CUR"
+      NFILTW = config%output_config%NFILTW  ! control "TWN"
+      IPR    = config%output_config%IPR     ! control printing level
+      NRES   = config%output_config%NRES    ! control "RES" and "RPT"
+      NPEBP  = config%output_config%NPEBP   ! control "BEP"
+      NMSS   = config%output_config%NMSS    ! control "MSS"
+      !
       HGAMTOT=0.D0
       ! NGR == 3: enable MAS-AL
       if(NGR.eq.3) then
@@ -162,36 +155,25 @@
 
 !     Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
       NRL=(NGR-1)*2
-#ifdef ALTAY_SUBROUTINE
       !
-      FMicro = acnf%simul_init%FMicro
+      FMicro = config%simul_init%FMicro
       !
-      TITEL  = acnf%jobtitle
-#else
-      do i=1,3
-         read (KLEC,94)(FMicro(i,j),j=1,3)
-         if(NLIST.eq.1) then
-         write (IMP,106)(FMicro(i,j),j=1,3)
-         end if
-      enddo
- 106  format ('F_Microstructure=',3f12.6)
-  99  FORMAT (2I5)
-  94  format (3F10.0)
-  16  read (KLEC,98) TITEL
-#endif      
+      TITEL  = config%jobtitle
+      !
       if(NLIST.eq.1) then
       write (IMP,97) TITEL
       end if
       if (NRES.gt.0) write (IMP2,98) TITEL
   97  format (' Title of the new simulation: ',A)
       ! Only if CUR file is requested
-      if (NFILE1.eq.1) call CURwriteTitle(IMP1,TITEL,info)
+      if (NFILE1.eq.1) then
+          assembly%texture%title = TITEL ! FIXME: texture title should be set in a different way
+          call CURwriteTitle(assembly, IMP1,info)
+      endif
   98  format (A)      
-!     read the parameters of the work hardening model
-#ifndef ALTAY_SUBROUTINE
-      call InitModuleAltayHard(KLEC,KOST,crss_ratiosIN,info)
-#endif
-      CALL TAYLOR(1,KOST)
+  99  FORMAT (2I5)
+      !
+      CALL TAYLOR(state%old, material%hardening, 1)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -265,12 +247,12 @@
       if (IPR.gt.0.and.NLIST.eq.1) write (IMP,*)'Relaxations:',swrlx(1)
 #endif
       !
-      CALL TAYLOR(2,KOST,MacroDefRate)
+      CALL TAYLOR(state%old, material%hardening, 2,MacroDefRate)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
       ! Output the current texture
-      if (NFILE.eq.1) call CURwriteBlock(IMP1,info)
+      if (NFILE.eq.1) call CURwriteBlock(assembly,IMP1,info)
 #ifndef ALTAY_SUBROUTINE
       if ((NRES >= 1).and.(IW <= 1)) call writeReportHeader(IMP6,info)
 #endif      
@@ -297,8 +279,9 @@
 #ifdef PEBP_ENABLED
       pebpSDVavg = StateDerivedVars()
 #endif      
-      
-      call dynfil2(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
+      !
+      assembly = TextureAssembly(state%old%texture, state%old%frame)
+      call dynfil2(state%old,nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT       
       write (*,96) ISTP,GAXES
 #endif
@@ -350,11 +333,11 @@
       RCM_GUARD
       ! We can choose not to update the texture data
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,  &
+            call DYNFIL3(state%new,nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,  &
                          CIJ,TG)
       endif
 #else          
-      call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
+      call DYNFIL3(state%new,nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #endif
 !
 !       Added for lamel model:
@@ -384,7 +367,7 @@
  2626 do 80 L=laml,laml1
       if (ifil4.eq.NPOINT) goto 80
       ifil4=ifil4+1
-      call DYNFIL4(ifil4,fi10b(L),PHI0b(L),fi20b(L),                     &
+      call DYNFIL4(state%old,ifil4,fi10b(L),PHI0b(L),fi20b(L),                     &
        TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L),GAXESb(1,L),              &
        GEULRb(1,L),CIJb(1,1,L),TGb(1,1,L),RHOSSb(1,1,L))
 !
@@ -396,7 +379,7 @@
       if (laml1.gt.NGR) laml1=1
       laml=laml1
       GMM0=GMMAb(laml)
-      call getTau(GMM0,TAU,info)
+      call altayHard_getTau(material%hardening, GMM0,TAU,info)
       fi1=fi1b(laml)
       PHI=PHIb(laml)
       fi2=fi2b(laml)
@@ -426,7 +409,7 @@
 !      write (*,3210)
 ! 3210 format (' Just before Taylor')
  999  if (IW.le.1) then
-            CALL  TAYLOR(3,KOST,MacroDefRate,MacroDefState)
+            CALL  TAYLOR(state%old, material%hardening,3,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
 #endif            
@@ -478,12 +461,12 @@
 #ifdef ALTAY_SUBROUTINE
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                   &
+            call DYNFIL5(state%new,IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                   &
                          MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,  &
                          RHOSsa) 
       endif
 #else
-      call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                         &
+      call DYNFIL5(state%new,IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                         &
                    MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
 #endif
       ! 
@@ -561,8 +544,16 @@
       if(NLIST.eq.1) then
       WRITE (IMP,105) ISTP,SeqAvg,Mavg,MacroDefState%IncrvMeqStrain
       end if
- 105  FORMAT (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VALUE=',F10.5, &
+105   FORMAT (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VALUE=',F10.5, &
               '  EFF. STRAIN EPS USED=',F10.5) 
+      !
+      ! Advance state pointers
+      info = altayStateData_advance(state)
+#ifdef TESTING_ENABLED
+      !!! TESTING -->>
+      call altayStateData_printStatus(state)
+      !!! <<-- TESTING
+#endif
       !
       ! End of the loop over steps
       !
@@ -571,5 +562,5 @@
   22  RETURN
   32  return
       END SUBROUTINE
-      
+    
       end module

@@ -1,171 +1,189 @@
 !> Dispatcher of hardening models
 module altayHard
+use criErrcodes
 use altayHardTypes
-use altayIOConfig, only: LEC
+use altayCRSSTypes
+use altayState
 use altayHardLaw_Simple
-#ifdef ALTAY_SUBROUTINE
+use altayHardLaw_KM
 use altayConfig
-#endif
+!
 #ifdef PEBP_ENABLED
+use altayIOConfig, only: LEC
 use altayHardLaw_DSH
 use altayDSHstate
 #endif
 implicit none
       
-      !> Hardening law identifier of the initialized module
-      integer,save :: HardLawID = hard_invalid
-      
-      type(CRSS),private,save :: crss_ratios
-      
-      interface InitModuleAltayHard
-#ifdef ALTAY_SUBROUTINE
-            module procedure InitModuleAltayHard_file, InitModuleAltayHard_config
-#else
-            module procedure InitModuleAltayHard_file
-#endif
-      end interface
+    type :: HardeningModels
+        
+        integer             :: hardLawID = hard_none
+        
+        type(VoceParams)    :: voceParams
+        
+        type(SwiftParams)   :: swiftParams
+        
+        type(KMParameters)  :: kmParams
+        
+        !> \todo proper initialization of the ratios must be implemented
+        type(CRSSData)      :: crss_ratios
+    end type
 
-contains
+    interface HardeningModels_init
+        module procedure :: HardeningModels_initFromConfig
+    end interface
+    
+    contains
       
-      
-      subroutine InitModuleAltayHard_file(inunit,HardLaw,crss_init,info)
-      implicit none
-      integer,intent(in)      :: inunit
-      integer,intent(in)      :: HardLaw
-      type(CRSS),intent(in)   :: crss_init
-      integer,intent(out)     :: info
-      !
-      ! Instances of the model configurations/parameters:
-      type(VoceConfig)   :: voceCnf
-      type(SwiftKConfig) :: swiftKCnf
-      type(SwiftSConfig) :: swiftSCnf
-      !
-      info = -1
-      !
-      select case(HardLaw)
-      !
-      case(hard_none,hard_voce)
+    !> \todo change intent of config to `out` and reinstate the line that reads 
+    !       config%hardLawID
+    subroutine altayHard_readConfig(inunit, config, info)
+    implicit none
+    integer,intent(in)                  :: inunit
+    type(HardeningConfig),intent(inout)   :: config
+    integer,intent(out)     :: info
+    !
+    integer :: ierr
+    !
+        info = criErr_IORead
+        !> \todo see todo above the subroutine, uncoment the lines -->>
+        !> read(inunit,fmt=*,iostat=ierr) config%hardLawID
+        !> if (ierr /= 0) return
+        !> <<--
+        select case(config%hardLawID)
+        !
+        case(hard_none,hard_voce)
             ! Just for non-hardening and isotropic, Voce-type hardening
-            call readVoceConfig(inunit,voceCnf,info)
-            if (info /= 0) return
-            if (HardLaw == hard_voce) call InitModuleAltayHardLaw_Simple(voceCnf,info)
-      !
-      case(hard_swiftK)
+            call readVoceConfig(inunit,config%voceCnf,info)
+        !
+        case(hard_swiftK)
             ! Swift-K hardening
-            call readSwiftKConfig(inunit,swiftKCnf,info)
-            if (info /= 0) return
-            call InitModuleAltayHardLaw_Simple(swiftKCnf,info)
-      !
-      case(hard_swiftS)
+            call readSwiftKConfig(inunit,config%swiftKCnf,info)
+        !
+        case(hard_swiftS)
             ! Swift-S hardening
-            call readSwiftSConfig(inunit,swiftSCnf,info)
-            if (info /= 0) return
-            call InitModuleAltayHardLaw_Simple(swiftSCnf,info)
-      !
+            call readSwiftSConfig(inunit,config%swiftSCnf,info)
+        !
+        case(hard_KM)
+            ! Kocks-Mecking hardening
+            info = KMConfig_read(config%kmCnf, inunit)
+
 #ifdef PEBP_ENABLED     
-      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+        case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
             info = InitModuleAltayHardLaw_DSH(inunit,HardLaw,LEC)
 #endif
-      !
-      case default
+        !
+        case default
             ! Unsupported hardening model is requested
-            info = -1
-      !      
-      end select
-      !
-      HardLawID = HardLaw
-      crss_ratios = crss_init
-      !
-      end subroutine
+            info = criErr_IORead
+        !      
+        end select
+    !
+    end subroutine
 
-#ifdef ALTAY_SUBROUTINE
-      !> Initialize module from config data object
-      subroutine InitModuleAltayHard_config(config,info)
-      implicit none
-      type(hardeningData),intent(in)      :: config
-      integer,intent(out)                 :: info
-      !
-      info = -1
-      !
-      select case(config%HardLawID)
-      !
-      case(hard_none)
-            info = 0
-      case(hard_voce)
+    !
+    !> Initialize module from config data object
+    subroutine HardeningModels_initFromConfig(this,config, info)
+    implicit none
+    type(HardeningModels),intent(out)       :: this
+    type(HardeningConfig),intent(in)        :: config
+    integer,intent(out)                     :: info
+    !
+        info = criError
+        !
+        select case(config%hardLawID)
+        !
+        case(hard_none)
+            info = criSuccess
+        case(hard_voce)
             ! Just for non-hardening and isotropic, Voce-type hardening
-            call InitModuleAltayHardLaw_Simple(config%VoceCnf,info)
-      !
-      case(hard_swiftK)
+            call VoceParams_init(config%voceCnf, this%voceParams, info)
+        !
+        case(hard_swiftK)
             ! Swift-K hardening
-            call InitModuleAltayHardLaw_Simple(config%swiftKCnf,info)
-      !
-      case(hard_swiftS)
+            call SwiftParams_init(config%swiftKCnf, this%swiftParams, info)
+        !
+        case(hard_swiftS)
             ! Swift-S hardening
-            call InitModuleAltayHardLaw_Simple(config%swiftSCnf,info)
-      !
-#ifdef PEBP_ENABLED     
-      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-            info = InitModuleAltayHardLaw_DSH(config%PEBPCnf%params,&
-                                              config%HardLawID,LEC)
-#endif
-      !
-      case default
-            ! Unsupported hardening model is requested
-            info = -1
-      !
-      end select
-      if (info /= 0) return
-      ! Finalize the configuration:
-      ! Set the module members
-      HardLawID = config%HardLawID
-      crss_ratios = config%crss_ratios 
-      !
-      end subroutine
-#endif
-      
-      
-      subroutine getTau(gamma, tau, info)
-      use altayHardLaw_Simple
-      implicit none
-      double precision,intent(in)   :: gamma
-      double precision,intent(out)  :: tau
-      integer,intent(out)           :: info
-      !
-      info = 0
-      select case(HardLawID)
-      case(hard_none,hard_BP,hard_PEBPscrew,hard_PEBPloop)
-            tau = 1.D0
-      case(hard_voce,hard_swiftK,hard_swiftS)
-            call getRefTau(HardLawID, gamma, tau, info)
-      case default
-            tau = 1.D0
-            info = -1
-      end select
-      !
-      end subroutine
-      
-      subroutine getCRSS(ior,gamma,CRSSmatrix,info)
-      implicit none
-      integer,intent(in)                           :: ior
-      double precision,intent(in)                  :: gamma         
-      type(CRSS),intent(out)                       :: CRSSmatrix
-      integer, intent(out)                         :: info
-      !
-      double precision :: tau
-      select case(HardLawID)
-      case(hard_none)
-            CRSSmatrix%crss = 1.D0 ! CRSS of all slip systems equal to 1. (& not dependent on crss_ratios)         
-      case(hard_voce,hard_swiftK,hard_swiftS)
-            call getTau(gamma, tau, info)
-            if (info == 0) CRSSmatrix%crss = crss_ratios%crss * tau
+            call SwiftParams_init(config%swiftSCnf, this%swiftParams, info)
+        case(hard_KM)
+            ! Kocks-Mecking hardening
+            info = KMParameters_init(this%kmParams, config%kmCnf)
+        !
 #ifdef PEBP_ENABLED
-      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-            call KS_getCRSS(ior,CRSSmatrix,info)
+        case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+            info = InitModuleAltayHardLaw_DSH(config%PEBPCnf%this,&
+                                                config%hardLawID,LEC)
 #endif
-      case default
-            info = -1
-      end select
-      end subroutine
+        !
+        case default
+            ! Unsupported hardening model is requested
+            info = criErr_BadArgs
+        !
+        end select
+        if (info == criSuccess) this%hardLawID = config%hardLawID
+    !
+    end subroutine
+      
+      
+    subroutine altayHard_getTau(hardparams, gamma, tau, info)
+    implicit none
+    type(HardeningModels),intent(in)    :: hardparams
+    double precision,intent(in)         :: gamma
+    double precision,intent(out)        :: tau
+    integer,intent(out)                 :: info
+    !
+        select case(hardparams%hardLawID)
+        case(hard_none)
+            tau = 1.D0
+        !
+        case(hard_voce)
+            call getTau_Voce(hardparams%voceParams, gamma, tau, info)
+        !
+        case(hard_swiftK,hard_swiftS)
+            call getTau_Swift(hardparams%swiftParams, gamma, tau, info)
+        !
+#ifdef PEBP_ENABLED
+        case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+            tau = 1.D0
+#endif
+        case default
+            tau = 1.D0
+            info = criErr_BadArgs
+        end select
+    !
+    end subroutine
+      
+    subroutine altayHard_getCRSS(hardparams, state, grain_id, gamma,crss,info)
+    implicit none
+    type(HardeningModels),intent(in)    :: hardparams
+    type(altayStateVariables),intent(in):: state
+    integer,intent(in)                  :: grain_id
+    double precision,intent(in)         :: gamma
+    type(CRSSData),intent(inout)        :: crss
+    integer, intent(out)                :: info
+    !
+    double precision :: tau
+    select case(hardparams%hardLawID)
+    case(hard_none)
+        ! CRSS of all slip systems equal to 1. (& not dependent on crss_ratios)
+        crss%crss = 1.D0
+    !
+    case(hard_voce,hard_swiftK,hard_swiftS)
+        call altayHard_getTau(hardparams,gamma, tau, info)
+        if (info == criSuccess) crss%crss = state%crss_ratios%crss * tau
+    case(hard_KM)
+        call KMStateVariables_getCRSS(state%km_state(grain_id), &
+                                      hardparams%kmParams, crss, info)
+    !
+#ifdef PEBP_ENABLED
+    case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+        call KS_getCRSS(ior,CRSSmatrix,info)
+#endif
+    case default
+        info = -1
+    end select
+    end subroutine
       
 end module
       

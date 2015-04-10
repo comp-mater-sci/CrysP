@@ -18,17 +18,23 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY 
 !
-      SUBROUTINE TAYLOR (IRICHT, KOST, MacroDefRate, MacroDefState)
+      SUBROUTINE TAYLOR (state, hardparams, IRICHT, MacroDefRate, MacroDefState)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif
+      use altayState
+      use altayHard
       use altayIOConfig
       use altayPancake
       implicit double precision (a-h,o-z)
-      ! optional argument - required for IRICHT=2 or 3:
+      type(altayStateVariables),intent(in)          :: state
+      type(HardeningModels),intent(in)              :: hardparams
+      integer,intent(in)                            :: IRICHT
+      !> optional argument - required for IRICHT=2 or 3:
       type(DeformationRate), intent(in),optional :: MacroDefRate
-      ! optional argument - required for IRICHT=3:      
-      type(DeformationState),intent(in),optional :: MacroDefState      
+      !> optional argument - required for IRICHT=3:      
+      type(DeformationState),intent(in),optional :: MacroDefState
+      !
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
       ITW,GEWF
       COMMON /IGLIJS/ M11,CC(2,96)
@@ -169,7 +175,7 @@
  3000 continue
 !      write (*,1234)
 ! 1234 format (' Just before Pancak2')
-       CALL Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,              &
+       CALL Pancak2(state, hardparams,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys, &
        SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
       !Report Scrys to LST-file
  100  format(' Bishop-Hill stress (crystal system):')
@@ -217,10 +223,10 @@
 #endif
 #ifdef PEBP_ENABLED      
       use AltayDSHstate, KOST => iKOST
+      use altayHardTypes, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
 #endif
       use altayIOConfig
       use altaySliprate
-      use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &

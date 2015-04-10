@@ -4,18 +4,24 @@
 ! NGLS is replaced by M11
 !
       PROGRAM MAINA1
+      use altayConfig
+      use altayState
+      use altayStateTypes
+      use altayMaterial
       use altayMiscutils
       use altayIOConfig
+#ifdef PEBP_ENABLED
       use altayDSHstate
-      use altayDynfil
+#endif
       use altayMesostructure
       use altaySimul
-      use altayHard,only: HardLawID, hard_BP, hard_PEBPscrew,            &
-                          hard_PEBPloop
+      use altayCRSSTypes
       use altayHardTypes
+      use altayHard
       use altayTexFormats
       use altayMacroKinematic
-      implicit double precision (a-h,o-z)
+      use altayTexAccess
+      implicit none ! double precision (a-h,o-z)
 !      Several simulations (usually several-steps each),
 !      following each other.
 !
@@ -30,26 +36,39 @@
 !     IDISK1= work file (obsolete, not used)
 !     NDAT1= Input-texture file
 !
+      !> \todo get rid of this common block from here. At the moment
+      !       we still need it for getting M11 (number of slip systems)
       COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON /TEXTUR/ DUM1(27),IDUM1,ITW,GEWF
+      integer :: M11
+      double precision :: CC
+      !
+      integer :: IOR,ISTP,JBLOC
       common /CEIGEN/ IOR,ISTP,JBLOC
       common /PE/ Fmicro !Temporary!!!
       double precision, dimension(3,3) :: Fmicro, DG
-      character(len=pathlength) :: fnam1,fnam2,fnam3,fname_prefix
-      character(len=pathlength-4) :: codsim
+      character(len=pathlength) :: fnam1,fname_prefix
       integer :: info
-      integer :: tex_type, tex_nblock
-      character(len=pathlength) :: tex_fname
-#ifdef PEBP_ENABLED      
+      integer :: I,J,K,L
+      integer :: NLINES, ISIGN, NBLOC,  NFILE0
+
+#ifdef PEBP_ENABLED
       character(len=pathlength) :: fname_pebp
       logical :: read_state
       integer :: nblock
 #endif
 #ifdef FINALCUB_ENABLED
-      integer,parameter :: icubunit = 444
+      integer :: icubunit
 #endif
       type(DeformationRate) :: MacroDefRate
+      !
+      ! Components of the new-style data management
+      type(altayConfigData)             :: config
+      type(altayStateData),target       :: state
+      type(altayMaterialData)            :: material
+      
+      !
       SAVE
+      
 !     UNIT KLEC = CONTROL FILE
   90  format (a)
 #ifndef MAINDIRECT
@@ -63,16 +82,16 @@
 #else
       open (unit=KLEC,file='MAIN.CTL',status='old')
 #endif
-      read (KLEC,90) codsim
-      call stripComment(codsim)
-      write (*,92) trim(codsim)
+      read (KLEC,90) config%output_prefix
+      call stripComment(config%output_prefix)
+      write (*,92) trim(config%output_prefix)
   92  format (' Code for this simulation: ',a)
   93  format(' Input file:',a)
-      fname_prefix=codsim
+      fname_prefix = config%output_prefix
 !     UNIT IMP = PRINTER
       open (unit=IMP,file=trim(fname_prefix)//'.LST',status='replace')
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ NLIST is not assigned a value yet! so supressed it! QGX 28/10/2011
-!      write (IMP,92) codsim
+!      write (IMP,92) 
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 !     UNIT IMP1 = PRINTER
       open (unit=IMP1,file=trim(fname_prefix)//'.CUR',status='replace')
@@ -92,20 +111,24 @@
       open(unit=IPEBPSDV,file=trim(fname_prefix)//'.SDV',                &
            status='replace',iostat=info)
 #endif
-      read (KLEC,90) fnam2
-      call stripComment(fnam2)
-      write (*,93) trim(fnam2)
+      read (KLEC,90) config%slipsystem%input_fname
+      call stripComment(config%slipsystem%input_fname)
+      write (*,93) trim(config%slipsystem%input_fname)
 !     UNIT LEC = SLIP SYSTEMS
-      open (unit=LEC,file=fnam2,status='old')
+      open (unit=LEC,file=config%slipsystem%input_fname,status='old')
       READ(KLEC,96) NLINES
       write (*,97) NLINES
   97  format (' number of lines with tau-crit values:',i3)
   96  FORMAT (I5) 
+      ! Set the config field if needed
+      if (NLINES > 0) then
+          call CRSSData(config%hardening%crss_ratios, 6*NLINES,info)
+      endif
       DO 3 ISIGN=1,2                                                       
       DO 1 J=1,NLINES                                                   
       K=1+6*(J-1)                                                       
       L=K+5                                                             
-      READ(KLEC,98) (crss_ratiosIN%crss(ISIGN,I),I=K,L)
+      READ(KLEC,98) (config%hardening%crss_ratios%crss(ISIGN,I),I=K,L)
   98  FORMAT (6F10.0)
 ! 
    1  CONTINUE
@@ -117,40 +140,100 @@
       write (IMP,102) NBLOC
       end if
  102  format (' NBLOC=',I5)
-      read (KLEC,88) fnam3
+      read (KLEC,88) config%micros_fname
   88  format (a)
-      call stripComment(fnam3)
-      write (*,103) trim(fnam3)
- 103  format (' GRFIL - Input Texture File:',a)            
+      call stripComment(config%micros_fname)
+      write (*,103) trim(config%micros_fname)
+103   format (' GRFIL - Input Texture File:',a)            
 
 !
 !     Initialisation of SIMUL
 !
-      CALL SIMUL(0,1) 
+#ifdef TESTING_ENABLED
+      !!! TESTING -->>
+      call altayStateData_printStatus(state)
+      !!! <<-- TESTING
+#endif
+      info = altayStateData_init(state)
+#ifdef TESTING_ENABLED
+      !!! TESTING -->>
+      call altayStateData_printStatus(state)
+      !!! <<-- TESTING
+#endif
+
+      ! Read components of the config:
+      read (KLEC,99) config%simul_init%NGR
+      read (KLEC,*)  config%simul_init%ENTA
+      read (KLEC,99) config%output_config%NLIST
+      read (KLEC,99) config%output_config%NFILE
+      read (KLEC,99) config%output_config%NFILTW
+      read (KLEC,99) config%hardening%hardLawID
+      read (KLEC,99) config%output_config%IPR
+      ! Set derived fields (i.e the ones that don't have a separate switch)
+      config%output_config%NRES = config%output_config%NFILE
+      config%output_config%NMSS = config%output_config%NLIST
+      !
+#ifdef PEBP_ENABLED
+      select case(config%hardening%hardLawID)
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+          config%output_config%NPEBP  = config%output_config%NFILE
+      endselect
+#endif
+      !
+      ! Read the F tensor
+      do i=1,3
+         read (KLEC,94)(config%simul_init%FMicro(i,j),j=1,3)
+         if(config%output_config%NLIST == 1) then
+         write (IMP,106)(config%simul_init%FMicro(i,j),j=1,3)
+         end if
+      enddo
+ 106  format ('F_Microstructure=',3f12.6)
+  94  format (3F10.0)
+  16  read (KLEC,90) config%jobtitle
+      !
+      CALL SIMUL(config, state, material, 0, 1)
       
+      ! Initialize hardening
+      call altayHard_readConfig(KLEC, config%hardening, info)
+      if (info /= criSuccess) then
+            write(*,fmt=9010) 'hardening section'
+            call terminate(stopcode_inputerror)
+      endif
+      call HardeningModels_init(material%hardening,config%hardening, info)
+      if (info /= criSuccess) then
+            write(*,*) 'The hardening parameters provided contain flaws.'
+            call terminate(stopcode_inputerror)
+      endif
+      !
+      ! FIXME: this should be done in a different way
+      material%n_slip_systems = M11
+      !
+      !
       ! Initializing microstructure      
       ! NOTE: this is done after initialisation of SIMUL, since SIMUL currently reads a.o. NLIST
-      CALL GRFIL(fnam3,Fmicro,info) 
+      CALL GRFIL(config%micros_fname,Fmicro,info) 
       if (info.ne.0) then
           write(*,215)
           call exit(stopcode_ioerror)
  215      format('Error condition is returned by GRFIL')
       endif      
       
-      ! Get the initial texture
-      read(KLEC,99) tex_type
-      read(KLEC,'(A)') tex_fname
-      read(KLEC,99) tex_nblock
-      call stripComment(tex_fname)
-      ! 
-      call loadTexture(tex_type,NDAT1,trim(tex_fname),tex_nblock,info)
-      if (info /= 0) then
-            write(*,fmt=9980) trim(tex_fname)
-            call exit(stopcode_ioerror)
- 9980 format('An error has occurred while processing texture data file:' &
-             ,1X,A)
-      endif
-      
+      associate(texcnf => config%texture)
+          ! Get the initial texture
+          read(KLEC,99) texcnf%input_type
+          read(KLEC,'(A)') texcnf%input_fname
+          read(KLEC,99) texcnf%block_id
+          call stripComment(texcnf%input_fname)
+          ! 
+          call loadTexture(texcnf%input_type,trim(texcnf%input_fname),&
+                           texcnf%block_id,state%old%frame, state%old%texture, info)
+          if (info /= 0) then
+                write(*,fmt=9980) trim(texcnf%input_fname)
+                call exit(stopcode_ioerror)
+     9980 format('An error has occurred while processing texture data file:' &
+                 ,1X,A)
+          endif
+      end associate
 #ifdef PEBP_ENABLED
       ! PEBP model
       NREC = size(DFIL)
@@ -180,8 +263,24 @@
  600  format('Cannot initialize DSH state variables')
  601  format('Cannot read DSH state variables from file: ',A)
 #endif
-      ! 
+#ifdef TESTING_ENABLED
+      !!! TESTING -->>
+      call altayStateData_printStatus(state)
+      !!! <<-- TESTING
+#endif
+
+      if (altayStateData_assemble(state) /= criSuccess) then
+          write(*,fmt=9002) 'altayStateData_assemble has failed.'
+          call exit(stopcode_ioerror)
+      endif
       
+#ifdef TESTING_ENABLED
+      !!! TESTING -->>
+      call altayStateData_printStatus(state)
+      !!! <<-- TESTING
+#endif
+      
+      !
       DO 2 JBLOC=1,NBLOC
 !
 !     Simulation of a certain number of steps.
@@ -214,16 +313,17 @@
       ! and the time step dt = 1.0
       call Set_DeformationRate(DG,MacroDefRate)
       !
-      CALL SIMUL(1,NFILE0,MacroDefRate)
+      CALL SIMUL(config, state, material, 1, NFILE0, MacroDefRate)
    2  CONTINUE
 !
 !     Output of last "current situation"
 !
 #ifdef FINALCUB_ENABLED
-      info = openTextureFile(icubunit,trim(fname_prefix)//'.cub',TF_CUB, &
-                             'w')
+      call openTextureFile(trim(config%output_prefix)//'.cub',TF_CUB, &
+                           'w', icubunit, info)
       if (info == 0) then 
-            call outputCurrentTexture(icubunit,TF_CUB,.true.,info)
+            call outputCurrentTexture(icubunit,TF_CUB, &
+                                      state%old%frame, state%old%texture, .true.,info)
       endif
 #endif
 #if defined(PEBP_ENABLED) && defined(FINALBPM_ENABLED)
@@ -241,6 +341,9 @@
       end if
       write (*,110)
  110  format (//,' Final call of SIMUL (for output only)')
-      CALL SIMUL(2,NFILE0,MacroDefRate)
+      CALL SIMUL(config, state, material, 2, NFILE0, MacroDefRate)
       STOP
-      END
+      
+9002 format('Catastrophic error in MAIN:',1X,A)
+9010 format('Format error in the configuration file:',1X,A)
+END PROGRAM
