@@ -4,17 +4,38 @@
 
       module altaySliprate
       use altayMiscutils, only: terminate, stopcode_runtimeerror
-
+      use altayPancake, only : Pancak2_tolerance, Pancak2Solution
+      !
+      !> component of Pancak2_input variable of sliprat; this modular 
+      !> global data ensure its available to another module procedure: MINSQU.
+      !> See note $1.
+      double precision, dimension(5), private :: BB8
+      !
+      !> equals the A1_input variable of sliprat; this modular 
+      !> global data ensure its available to another module procedure: MINSQU.
+      !> See note $1.      
+      double precision, dimension(5,96), private :: A1
+      !
+      !> Note $1: A better way would be to contain MINSQU within SLIPRAT procedure; this
+      !> is however not trivial, as run-time errors are seen, presumably because 
+      !> of name clashes.
+      
+      
+      
       contains
       
-      Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn,MacroDefRate)
-      use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
+      Subroutine SLIPRAT(sliprates,MacroDefRate,Pancak2_input,A1_input)
+      use altayIOConfig!,IIPR=>IPR !Rename the global IPR to avoid conflict
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
       use altayMacroKinematic
       IMPLICIT double precision (A-H,O-Z)
+      !
+      double precision,dimension(96),intent(out) :: sliprates
       type(DeformationRate),intent(in) :: MacroDefRate      
+      type(Pancak2Solution),intent(in) :: Pancak2_input
+      double precision, dimension(5,96),intent(in) :: A1_input
 !     September 2000
 !     To find the slip rates assuming that
 !     - the stress, strain rate and the active slip systems are known,
@@ -24,34 +45,30 @@
 !
 !     Modified in Aug 2010
 !
-      COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
-      COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),           &
-       TLXX,TAURLP(8) 
+      integer, parameter :: IDIMXX = 96
+      integer NLP
       dimension SGNN(IDIMXX)
-      dimension SLPR(8),IND(8),XX(IDIMXX),ISTOR(0:8,48),SLSTOR(0:8,48)
+      dimension SLPR(8),IND(8),ISTOR(0:8,48),SLSTOR(0:8,48)
       data NSTOR/48/
-      do j=1,M11
-         XX(j)=0.0
-      enddo
+      BB8 = Pancak2_input%BB8
+      A1 = A1_input
+      sliprates=0.0
       ITR=0
-      NLP=NACTIV
-      NN=NACTIV
+      NLP=Pancak2_input%nactiv
+      NN=Pancak2_input%nactiv
       NOPL=0
 !     check whether solution is totally zero
       x=0.0
       do i=1,NLP 
-          x=x+abs(SLIPLP(i))
-          j=INDACT(i)
+          x=x+abs(Pancak2_input%sliplp(i))
+          j=Pancak2_input%indact(i)
           sgnn(j)=1.D0
-          if (TAURLP(i).lt.0.0d0) sgnn(j)=-1.D0
-!      write (IMP,911)  i,j,INDACT(i),indlp(i),SLIPLP(i),TAURLP(i)
-! 911  format (' SLIPRAT i=',I5,'  j=',I5,'   INDACT(i)=',i5,'  INDLP='
-!     1,I5,/,'              SLIPLP(i)=',D12.4,' TAURLP(i)=',D12.4)
+          if (Pancak2_input%taurlp(i).lt.0.0d0) sgnn(j)=-1.D0
       enddo
-      if (x.lt.TLXX) goto 6
+      if (x.lt.Pancak2_tolerance) goto 6
 !     end of check
       do 1 i=1,NN
-      IND(i)=INDACT(i)
+      IND(i)=Pancak2_input%indact(i)
   1   continue
   3   call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
       if (ineg.eq.0) then
@@ -63,13 +80,13 @@
       endif
       if (NN.le.5) goto 6
 !
-!     Let us take all combinations of NN out of NACTIV
+!     Let us take all combinations of NN out of Pancak2_input%nactiv
 !
 !     "Levels" in the combination search:
-!     (first level:  if NACTIV=8, find all combinations of 7 sl. syst.
+!     (first level:  if Pancak2_input%nactiv=8, find all combinations of 7 sl. syst.
 !      second level: find all combinations of 6 - etc.)
 !
-      N0=NACTIV
+      N0=Pancak2_input%nactiv
 !
 !     First level
 !
@@ -88,7 +105,7 @@
 !          write (IMP,110) (IND(i),i=1,N1)
  110   format (10i5)
           J=N0-I1
-          if (J.gt.0) IND(J)=INDACT(J+1)
+          if (J.gt.0) IND(J)=Pancak2_input%indact(J+1)
        enddo
 !
 !     Level 2
@@ -103,7 +120,7 @@
             j=1
             do 5 i=1,N0
             if (i.eq.I1.or.i.eq.I2) goto 5
-            IND(j)=INDACT(i)
+            IND(j)=Pancak2_input%indact(i)
             j=j+1
    5        continue
             call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
@@ -131,7 +148,7 @@
               j=1
               do 7 i=1,N0
               if (i.eq.I1.or.i.eq.I2.or.i.eq.I3) goto 7
-              IND(j)=INDACT(i)
+              IND(j)=Pancak2_input%indact(i)
               j=j+1
    7          continue
               call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
@@ -152,7 +169,6 @@
       end if
       end if
  100  format (' Results SLIPRAT')
-!      NREDU=NACTIV-NN
       if (NOPL.eq.0) goto 6
       IOPL=0
       X=1.0d10
@@ -177,23 +193,23 @@
       enddo
       if (IPR.eq.2) then
       if (NLIST.eq.1) then
-        write (IMP,104) IOR,NACTIV,NN,NOPL
+        write (IMP,104) Pancak2_input%nactiv,NN,NOPL
       end if
       end if
- 104  format (I5,' Reduction of NACTIV from',I5,'   to',i5,' NOPL=',i5)
+ 104  format (' Reduction of NACTIV from',I5,'   to',i5,' NOPL=',i5)
       if (IPR.eq.2) then
       if (NLIST.eq.1) then
-      write (IMP,106) IOR,sumsq,(IND(i),i=1,NN)
+      write (IMP,106) sumsq,(IND(i),i=1,NN)
       end if
       end if
- 106  format (I5,d12.3,8i5)
+ 106  format (d12.3,8i5)
       x=0.0
       k=0
       do i=1,NN
          j=IND(i)
          Y=SLPR(i)
          YY=Y*sgnn(j)
-         XX(j)=YY*MacroDefRate%vMeqStrainRate
+         sliprates(j)=YY*MacroDefRate%vMeqStrainRate
          if (IPR.eq.2) then
          if (NLIST.eq.1) then
          write (IMP,101) i,IND(i),YY
@@ -206,16 +222,16 @@
       enddo
        if (X.lt.0.0d0) then
        if (NLIST.eq.1) then 
-       write (IMP,102) IOR,k,X
+       write (IMP,102) k,X
        end if
        end if
- 102  format (' NEG. SL. RATE DETECTED',2I5,d15.6)
+ 102  format (' NEG. SL. RATE DETECTED',I5,d15.6)
  101  format (2i5,5x,d15.6)
       return
   6   ITR=-1
       NN=NLP
       do 11 i=1,NN
-      IND(i)=INDLP(i)
+      IND(i)=Pancak2_input%indact(i)
  11   continue
       if (IPR.eq.2) then
       if (NLIST.eq.1) then
@@ -224,17 +240,17 @@
       end if
       if (IPR.eq.2) then
       if (NLIST.eq.1) then
-      write (IMP,108) IOR,NN
+      write (IMP,108) NN
       end if
       end if
- 108  format (' IOR=',I5,' Linear programming solution retained ',       &
+ 108  format (' Linear programming solution retained ',       &
       ' NN=',i5)
       x=0.0
       k=0
       do i=1,NN
-           Y=SLIPLP(i)
+           Y=Pancak2_input%sliplp(i)
            j=IND(i)
-           XX(j)=Y*MacroDefRate%vMeqStrainRate
+           sliprates(j)=Y*MacroDefRate%vMeqStrainRate
            if (IPR.eq.2) then
            if (NLIST.eq.1) then
              write (IMP,101) i,IND(i),Y
@@ -248,7 +264,7 @@
       enddo
       if (X.lt.0.0d0) then
       if (NLIST.eq.1) then
-      write (IMP,102) IOR,k,X
+      write (IMP,102) k,X
       end if
       end if
       return
@@ -264,7 +280,6 @@
 !
 !     Modified Aug 2010
 !
-      COMMON /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
       dimension sgnn(IDIMXX)
       dimension A(13,13),B(13),SLPR(8),IND(8)
       dimension AA(13,13),BA(13),VAL(13),XV(13),YV(13)
@@ -277,7 +292,7 @@
       do i=1,N2
          is=IND(i)
          do j=1,5
-            A(j,i)=sgnn(is)*A8(j,is)
+            A(j,i)=sgnn(is)*A1(j,is)
          enddo
       enddo
       do j=1,5
@@ -298,7 +313,7 @@
          B(i)=0.0
          do j=1,5
             j1=NN+j
-            x=sgnn(is)*A8(j,is)
+            x=sgnn(is)*A1(j,is)
             A(i,j1)=-x
             A(j1,i)=x
          enddo

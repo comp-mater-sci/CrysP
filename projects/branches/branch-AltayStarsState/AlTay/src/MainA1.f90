@@ -37,15 +37,14 @@
 !     NDAT1= Input-texture file
 !
       !> \todo get rid of this common block from here. At the moment
-      !       we still need it for getting M11 (number of slip systems)
+      !>       we still need it for getting M11 (number of slip systems)
       COMMON /IGLIJS/ M11,CC(2,96)
       integer :: M11
       double precision :: CC
       !
-      integer :: IOR,ISTP,JBLOC
-      common /CEIGEN/ IOR,ISTP,JBLOC
-      common /PE/ Fmicro !Temporary!!!
-      double precision, dimension(3,3) :: Fmicro, DG
+      common /CEIGEN/ JBLOC
+      integer :: JBLOC
+      double precision, dimension(3,3) :: DG
       character(len=pathlength) :: fnam1,fname_prefix
       integer :: info
       integer :: I,J,K,L
@@ -163,7 +162,6 @@
 
       ! Read components of the config:
       read (KLEC,99) config%simul_init%NGR
-      read (KLEC,*)  config%simul_init%ENTA
       read (KLEC,99) config%output_config%NLIST
       read (KLEC,99) config%output_config%NFILE
       read (KLEC,99) config%output_config%NFILTW
@@ -211,7 +209,7 @@
       !
       ! Initializing microstructure      
       ! NOTE: this is done after initialisation of SIMUL, since SIMUL currently reads a.o. NLIST
-      CALL GRFIL(config%micros_fname,Fmicro,info) 
+      CALL GRFIL(config%micros_fname,config%simul_init%FMicro,info) 
       if (info.ne.0) then
           write(*,215)
           call exit(stopcode_ioerror)

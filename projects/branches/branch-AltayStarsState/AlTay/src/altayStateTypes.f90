@@ -1,7 +1,6 @@
 module altayStateTypes
 use criErrcodes
 use criMathUtils
-use altayMiscutils, only: unitMatrix
 implicit none
 
     !> Representation of a single grain/crystal.
@@ -10,11 +9,8 @@ implicit none
         !> \todo replace tFI1, tPHI and tFI2 by EulerAngles object.
         double precision :: tFI1 = 0.D0,tPHI = 0.D0, tFI2 = 0.D0
         double precision :: tGEW = 1.D0 ,tGAM = 0.D0
-        double precision, dimension(3) :: tAXES = 1.D0, tEULR = 0.D0
         double precision, dimension(3,3) :: tT = 0.D0
-        double precision, dimension(3,3) :: tF = unitMatrix
-        double precision, dimension(3,3) :: tCIJ = unitMatrix
-        double precision, dimension(3,3) :: tTAX = unitMatrix
+        double precision, dimension(3,3) :: tF = unit_sr_matrix
         double precision, dimension(3,3) :: tZERO = 0.D0,tRHO = 0.D0
     end type
 
@@ -22,10 +18,7 @@ implicit none
     !> \todo Find a more suitable name for the data type MaterialFrame
     !> \todo consider removal of the MaterialFrame data type
     type :: MaterialFrame
-        double precision,dimension(3,3) :: FALG = unitMatrix
-        double precision,dimension(3,3) :: CIJ0 = unitMatrix
-        double precision,dimension(3,3) :: TAX0 = unitMatrix
-        double precision,dimension(3) :: GAXES = 1.D0,GEULR = 0.D0
+        double precision,dimension(3,3) :: FALG = unit_sr_matrix
     end type
     
     integer,parameter,private :: textureTitle_length = 40
@@ -132,11 +125,7 @@ implicit none
         this%tT = rotmat(this%tfi1,this%tPHI,this%tfi2)
         !
         ! initialize the remaining components with mf data...
-        this%tAXES = mf%GAXES 
-        this%tEULR = mf%GEULR
         this%tF   = mf%FALG
-        this%tCIJ = mf%CIJ0
-        this%tTAX = mf%TAX0
         ! ... and zero all the rest.
         this%tZERO = 0.D0
         this%tRHO  = 0.D0

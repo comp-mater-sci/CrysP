@@ -1,5 +1,6 @@
 !> Container for miscellaneous utility routines.
 module altayMiscutils
+use criErrcodes
 implicit none
 
       !>@{ \name Exit codes that are returned to the OS on various stop contitions
@@ -19,13 +20,6 @@ implicit none
       integer,parameter :: stopcode_runtimeerror = 10
       !>@}
 
-      
-      double precision,dimension(3,3),parameter :: unitMatrix = reshape( &
-           [ 1.D0, 0.D0, 0.D0,     &
-             0.D0, 1.D0, 0.D0,     &
-             0.D0, 0.D0, 1.D0], [ 3, 3 ])
-
-      double precision,parameter :: pi = acos(-1.D0)
 
     contains
 
@@ -113,4 +107,29 @@ implicit none
       !
       end subroutine
       
+      !> Write data line to the RES("responses to imposed strain")-file
+      subroutine writeRESRecord(outunit,ior,Seq,WorkRate,tau,Mgrain,ratlon, &
+                                rhossaNN,rhoasaNN,ssam,info)
+      implicit none
+      integer,intent(in)            :: outunit !< I/O unit number for RES-file
+      integer,intent(in)            :: ior
+      double precision,intent(in)   :: Seq, Workrate, tau, Mgrain, ratlon
+      !> Non-normalized ('NN') matrix representations of symmetric ('s') and 
+      !> anti-symmetric ('a') parts of relaxation tensor ('rho'), expressed in 
+      !> the sample reference frame ('sa').
+      double precision,intent(in),dimension(3,3)   :: rhossaNN, rhoasaNN
+      double precision,intent(in),dimension(3,3)   :: ssam
+      integer,intent(out)           :: info
+      !
+            write (outunit,150) ior,Seq,WorkRate,tau,Mgrain,ratlon,   &
+                rhossaNN(1,1),rhossaNN(2,2),rhossaNN(3,3),                        &
+                rhossaNN(2,3),rhossaNN(3,1),rhossaNN(1,2),                        &
+                rhoasaNN(2,3),rhoasaNN(3,1),rhoasaNN(1,2),                        &
+                ssam(1,1),ssam(2,2),ssam(3,3),ssam(2,3),ssam(3,1),ssam(1,2)
+150             format(i5,5(E12.5,1X),5x,6(E12.5,1X),5x,3(E12.5,1X),               &
+             5x,6(E12.5,1X))
+            !> \fixme Add proper error handling
+            info = criSuccess
+      !
+      end subroutine
 end module

@@ -16,7 +16,6 @@ module altayState
 !
 use criErrcodes
 use criMathUtils
-use altayMiscutils, only: unitMatrix
 use altayHardTypes
 use altayCRSSTypes
 use altayStateTypes

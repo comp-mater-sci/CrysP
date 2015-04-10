@@ -7,6 +7,7 @@
       use altayMacroKinematic
       use altayState
       use altayMaterial
+      use altayMesostructure
 
       contains
     
@@ -51,29 +52,26 @@
 !
 !     IW=2 is meant for outputting the final texture.
 !
-      COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON /DOUBLE/ XM(5,96),XEPS(5),RHO(5),B5(5)
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
-      ITW,GEWF
-      COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,TEN(3,3),TOTGEW        
+      COMMON /TEXTUR/ TRF(3,3),C2(3,3)
+      COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3), IOR,laml,ngr,nrl,TRFb(3,3,2),GMMAb(2)
       COMMON /EULERA/ fi1,PHI,fi2
-      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
-       SWRLX(3)
-      COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
-       gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
-       CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),                             &
-       fi1b(2),phib(2),fi2b(2),                                          &
-       NGR,NRL,ENTA,ITFMAS
-      common /CEIGEN/ IOR,ISTP,NBLOC
-      common /PE/ Fmicro !Temporary!!!      
-      DIMENSION GAXES(3),GEULR(3),TG(3,3),                               &
-       CIJ(3,3),STOT(3,3),                                               &
-       RHOST(3,3),RHOSm(3,3),FMicro(3,3)
+      COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
+      dimension fi10b(2),phi0b(2),fi20b(2)
+      dimension Fb(3,3,2)
+      dimension RHOSSb(3,3,2)
+      dimension fi1b(2),phib(2),fi2b(2)
+      common /CEIGEN/ NBLOC
+      DIMENSION                                &
+       STOT(3,3),                                               &
+       RHOST(3,3),RHOSm(3,3),gewfb(2)
       dimension FS(3,3)
       character(len=40) :: TITEL
       logical SWRLX
       integer :: NPOINT
       integer :: info
+      !> sequence number of the cluster
+      integer :: i_cluster
+      double precision :: GEWF = 1.0D0
       type(DeformationState) :: MacroDefState
       ! HGAM: homogenized slip per step
       ! HGAMCALL: homogenized slip per call
@@ -108,7 +106,9 @@
   33  call  random_seed
       !
       NGR    = config%simul_init%NGR
-      ENTA   = config%simul_init%ENTA
+      ! Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
+      NRL=(NGR-1)*2
+      !
       KOST   = config%hardening%hardLawID
       ! Note:  integers NLIST,IPR,NRES,NPEBP,NMSS are module variables of altayIOConfig
       NLIST  = config%output_config%NLIST   ! control "listing"
@@ -120,13 +120,6 @@
       NMSS   = config%output_config%NMSS    ! control "MSS"
       !
       HGAMTOT=0.D0
-      ! NGR == 3: enable MAS-AL
-      if(NGR.eq.3) then
-            ITFMAS=1
-            NGR=2
-      else
-            ITFMAS=0
-      endif
       !
 #ifndef ALTAY_SUBROUTINE
       if(NLIST.eq.1) then
@@ -152,11 +145,6 @@
 #endif
       endif
  140  format (' NGR can only take the values 1 or 2 but was',I5)   
-
-!     Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
-      NRL=(NGR-1)*2
-      !
-      FMicro = config%simul_init%FMicro
       !
       TITEL  = config%jobtitle
       !
@@ -194,18 +182,6 @@
       RETURN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   30  continue
-#ifdef ALTAY_SUBROUTINE
-      ! Per-call selection of the model: NGR & NRL must be set
-      NGR = acnf%simul_init%NGR
-      if(NGR.eq.3) then
-            ITFMAS=1
-            NGR=2
-      else
-            ITFMAS=0
-      endif
-      ! Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
-      NRL=(NGR-1)*2
-#endif
       i=NPOINT/NGR
       if (NGR*i.ne.npoint) then
 #ifndef ALTAY_SUBROUTINE      
@@ -281,12 +257,12 @@
 #endif      
       !
       assembly = TextureAssembly(state%old%texture, state%old%frame)
-      call dynfil2(state%old,nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
+      call dynfil2(state%old,nrstep,MacroDefState%TotalDefGrad)
 #ifndef NO_STDOUT       
-      write (*,96) ISTP,GAXES
+      write (*,96) ISTP
 #endif
       if(NLIST.eq.1) then
-      write (IMP,96) ISTP,GAXES
+      write (IMP,96) ISTP
       end if
   96  format(' Step nr.',i5,5X,3f12.5)
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
@@ -301,11 +277,7 @@
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 !      if (IGLIJ.eq.1) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if(NLIST.eq.1) then
-      write (IMP,3458) TG
-      end if
-      
- 3458 format (' TG=',3(T10,3d12.3,/))
+
   70  if (nfile.eq.0.or.ISTP.gt.1) goto 44
       IF (NLIST.EQ.1) WRITE (IMP,112) ISTP
  112  FORMAT (//' DEFORMATION STEP ',I5,//)
@@ -327,17 +299,14 @@
       !
       call Update_DeformationState(MacroDefRate,MacroDefState,info)
       !
-      call UPDATC(CIJ,MacroDefState%IncrDefGrad_inverse) 
-      call GETANG(CIJ,GAXES,GEULR,TG)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
       ! We can choose not to update the texture data
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL3(state%new,nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,  &
-                         CIJ,TG)
+            call DYNFIL3(state%new,nrstep,MacroDefState%TotalDefGrad)
       endif
 #else          
-      call DYNFIL3(state%new,nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
+      call DYNFIL3(state%new,nrstep,MacroDefState%TotalDefGrad)
 #endif
 !
 !       Added for lamel model:
@@ -358,6 +327,9 @@
       ! Begin the loop over grains/clusters
       !
       clusterloop: DO 23 IOR=1,NPOINT
+      !
+      i_cluster = floor(IOR/2.0D0 + 0.6D0)
+      !
       Mgrain=0.0
       GMMdot=0.0
       WorkRate = 0.D0
@@ -368,8 +340,7 @@
       if (ifil4.eq.NPOINT) goto 80
       ifil4=ifil4+1
       call DYNFIL4(state%old,ifil4,fi10b(L),PHI0b(L),fi20b(L),                     &
-       TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L),GAXESb(1,L),              &
-       GEULRb(1,L),CIJb(1,1,L),TGb(1,1,L),RHOSSb(1,1,L))
+       TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L),RHOSSb(1,1,L))
 !
       fi1b(L)=fi10b(L)*convf
       PHIb(L)=PHI0b(L)*convf
@@ -385,15 +356,7 @@
       fi2=fi2b(laml)
       !
       TRF = TRFb(:,:,laml)
-      TG = TGb(:,:,laml)
       RHOSSa = RHOSSb(:,:,laml)
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 27/10/2011
-      if(laml.eq.1) then
-      qgx=GEWFb(laml)
-      GEWF=qgx
-      else
-      GEWF=qgx
-      end if
       IF (NFILE.eq.0.or.ISTP.gt.1) goto 999
 ! 
 !     In case of NGR=2:
@@ -414,14 +377,9 @@
             RCM_GUARD
 #endif            
       endif
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 2/1/2011     
-! this modification is to suit for the output of stress     
-      if(laml.eq.1) then
-      ssqgx=GEWF
-      else
-      GEWF=ssqgx
-      end if
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+      !
+      call mesostr_clusterweightfactor(NGR,i_cluster,MacroDefState,GEWF,info)
+      !
       TOTGEW=TOTGEW+GEWF
       !
       ! Skip the rest of the loop if IF > 1
@@ -437,7 +395,7 @@
       CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain,WorkRate,           &
                   MacroDefRate)
 #endif      
-   49 if (NFILTW.eq.1) write (IMP3,398) ITW
+!   49 if (NFILTW.eq.1) write (IMP3,398) ITW
  398  format (I3)
       !
       STOT = STOT + Ssam*GEWF
@@ -462,12 +420,12 @@
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
             call DYNFIL5(state%new,IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                   &
-                         MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,  &
+                         MacroDefState%TotalDefGrad,  &
                          RHOSsa) 
       endif
 #else
       call DYNFIL5(state%new,IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                         &
-                   MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
+                   MacroDefState%TotalDefGrad,RHOSsa)
 #endif
       ! 
 #ifndef ALTAY_SUBROUTINE

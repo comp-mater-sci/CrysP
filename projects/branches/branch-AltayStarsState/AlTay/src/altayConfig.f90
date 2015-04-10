@@ -36,6 +36,7 @@ use altayHardLaw_DSH, only: PAR
 #endif
 use altayHardLaw_KM
 use altayTexFormatConstants
+use criMathUtils
 
 implicit none
 
@@ -43,7 +44,7 @@ implicit none
 
       !> \name Named constants for identifiers of the supported models
       !>@{ 
-      integer,parameter :: modelFCTaylor = 1, modelAlamel = 2, modelMASAL = 3
+      integer,parameter :: modelFCTaylor = 1, modelAlamel = 2
       
       !>@}
       
@@ -212,14 +213,7 @@ implicit none
             !>   - 3 - MAS-AL
             integer                                   :: NGR = 2
             
-            !> It is relevant only in MAS-AL
-            double precision                          :: ENTA = 1.D0
-            
-            double precision, dimension(3,3)          :: FMicro = reshape(       & 
-                                                            [ 1.D0, 0.D0, 0.D0,  &
-                                                              0.D0, 1.D0, 0.D0,  &
-                                                              0.D0, 0.D0, 1.D0], &
-                                                            [ 3, 3 ])
+            double precision, dimension(3,3)          :: FMicro = unit_sr_matrix
       end type
 
       !> Root-level configuration structure.
@@ -264,7 +258,7 @@ contains
             case(modelFCTaylor)
                   stp%rlx1 = .false. 
                   stp%rlx2 = .false.
-            case(modelAlamel,modelMASAL) 
+            case(modelAlamel) 
                   stp%rlx1 = .true. 
                   stp%rlx2 = .true.
             case default
@@ -284,8 +278,6 @@ contains
                   cnf%simul_init%ngr = 1
             case(modelAlamel)
                   cnf%simul_init%ngr = 2
-            case(modelMASAL)
-                  cnf%simul_init%ngr = 3
             case default
                   info = -1
                   return
@@ -303,7 +295,7 @@ contains
       !
             isValidModelType = .false.
             select case(modelId)
-            case(modelFCTaylor,modelAlamel,modelMASAL)
+            case(modelFCTaylor,modelAlamel)
                   ! OK, supported model
                   isValidModelType = .true.
             end select

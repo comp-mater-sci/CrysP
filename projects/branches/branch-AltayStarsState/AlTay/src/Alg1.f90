@@ -3,15 +3,24 @@
 #endif
       module altayTaylor
       use altayAlgorithms
-      use altayMiscutils, only: terminate, stopcode_runtimeerror
+      use altayMiscutils, only: terminate, stopcode_runtimeerror, &
+                                writeRESRecord
       use altayMacroKinematic
       use criMathUtils
+      use altayPancake, only: Pancak2Solution
+ 
       integer,parameter,private :: N = 5, N1 = N + 1 
       
       integer,private           :: M,NGL,NTW
       double precision,private  :: B1(3,96),B(5,5),B2(6,96),G(96)
       integer,private           :: DI1(5)
-     
+      
+      type(Pancak2Solution),private, save :: Pancak2_solution !cf note#1.
+      double precision, dimension(5,96), private, save :: A1 !cf note#1.
+      integer, private, save :: M11 !cf note#1.
+      !> note#1: the save attribute is required to save these objects 
+      !> in-between calls to Taylor and taylr1 from simul.
+            
       contains
       
 ! MODIFICATIONS AUG 2010
@@ -35,20 +44,19 @@
       !> optional argument - required for IRICHT=3:      
       type(DeformationState),intent(in),optional :: MacroDefState
       !
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
-      ITW,GEWF
-      COMMON /IGLIJS/ M11,CC(2,96)
+      COMMON /TEXTUR/ TRF(3,3),C2(3,3)
+      COMMON /IGLIJS/ M,CC(2,96) !M instead of M11 needs to be used here. Both 
+                                 ! hold same value yet M11 has SAVE attribute,
+                                 ! which is apparently incompatible with being 
+                                 ! a common block component.
+      !     SHsam:    macroscopic stress in sample reference system
+      !     Ssam:        local stress in sample reference system
+      COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3), IOR,laml,ngr,nrl,TRFb(3,3,2),GMMAb(2)
       COMMON/TLR2/ RHOAsa
-      COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
-      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
-       SWRLX(3)
+      COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
       double precision, dimension(3,3):: RHOScrys(3,3)
       double precision, dimension(3,3):: RHOAcrys(3,3), RHOAsa(3,3) 
       character(len=72) :: TITGLIJ
-!
-!     Extra arrays nodig voor lineare programmatie op 2 korrels tegelijk
-!
-      common /extra/ A2(10,194),UU(10,10)
       dimension XXLP(194)
       logical SWRLX
       INTEGER R 
@@ -125,16 +133,6 @@
  218  format (i4,' B2',6f10.7,' G',f10.7)
  505  CONTINUE
  504  CONTINUE
- 502  do 30 j=1,194
-      do 30 i=1,10
-      A2(i,j)=0.0
-  30  continue
-      do 31 j=1,M11
-      do 31 i=1,5
-      x8=A1(i,j)
-      A2(i,j)=x8
-      A2(i+5,j+M11)=x8
-  31  continue
       RETURN
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011 
 ! 2000 IF (IGLIJ.EQ.0) GOTO 70  
@@ -175,8 +173,8 @@
  3000 continue
 !      write (*,1234)
 ! 1234 format (' Just before Pancak2')
-       CALL Pancak2(state, hardparams,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys, &
-       SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
+       CALL Pancak2(Pancak2_solution,state, hardparams,IOR,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,Scrys,RHOScrys,RHOAcrys, &
+       SWRLX,XXLP,IPR,MacroDefRate,MacroDefState,A1)
       !Report Scrys to LST-file
  100  format(' Bishop-Hill stress (crystal system):')
  101  format(3d20.7)       
@@ -229,49 +227,40 @@
       use altaySliprate
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
-      ITW,GEWF
-      COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON/TLR2/ RHOAsa
-      COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
-      COMMON /EULERA/ fi1,PHI,fi2
-      logical SWRLX
-      double precision, intent(out):: Seq ! Equivalent stress in crystal, defined as..
-                                    !  plastic work rate in crystal normalized by..
-                                    !  (macro) von Mises equivalent strain rate
+      COMMON /TEXTUR/ TRF(3,3),TRF_new !-> input, resp., output
+      COMMON/TLR2/ RHOAsa !-> input
+      COMMON /EULERA/ fi1,PHI,fi2 !-> output
+      COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3) !-> input      
+      !> Equivalent stress in crystal, defined as plastic work rate in crystal
+      !> normalized by (macro) von Mises equivalent strain rate
+      double precision, intent(out):: Seq
+      !> Transformation matrix from sample frame to crystal frame at the 
+      !> end of increment. Each of its 3 rows contains a reference axis of the 
+      !> crystal reference frame (at end of increment), as expressed in the 
+      !> sample reference frame. 
+      !> Note: intent(out) attribute in further developments foreseen.
+      double precision, dimension(3,3) :: TRF_new
       !> Rate of plastic work per unit volume in the crystal
       double precision, intent(out) :: WorkRate
       double precision :: Mgrain
       type(EulerAngles):: Euler
-!
-!     SHsam:    macroscopic stress in sample reference system
-!     SH:   macroscopic stress in crystal reference system
-!     SPANH: macroscopic stress in crystal reference system
-!     Ssam:        local stress in sample reference system
-!
-      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
-       SWRLX(3)
-      DIMENSION RCC(3,3),RCcryst(3,3),rhossaTot(3,3)
-      DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
-      dimension RHOAsa(3,3),RHOAcrys(3,3),GAMdot(96)
-      real, dimension(3,3) :: test !!single precision!!
-!      data SQR2/0.7071067811865476D+00/
+      !
+      !> Symmetric part of the relaxation rate tensor in sample frame; non-normalized
+      double precision, dimension(3,3) :: RHOSsaNN(3,3)
+      !> Anti-symmetric part of the relaxation rate tensor in sample frame; non-normalized
+      double precision, dimension(3,3) :: RHOAsaNN(3,3)
+      !
+      DIMENSION ROT(3)
+      dimension RHOAsa(3,3),GAMdot(96)
 #ifdef PEBP_ENABLED      
       integer :: info
       double precision :: ddt
 #endif
       double precision, intent(OUT) :: TOTGAMdot
+      !
       SAVE
-      WACC1=0.0
-      WACC2=0.0
-!      pause
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!      if (IGLIJ.eq.0) goto 11
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-!  11  write (*,1771) IOR
-! 1771 format (I5)
-  11  call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN,MacroDefRate)
+      !
+      call SLIPRAT(GAMdot,MacroDefRate,Pancak2_solution,A1)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif      
@@ -289,101 +278,177 @@
 #endif
       endselect
 #endif
+      !
       TOTGAMdot=sum(abs(GAMdot(1:M11)))
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!  13  if (IGLIJ.eq.1) then
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+      !
       if(NLIST.eq.1) then
-      write (IMP,103) ISTP,IOR,fi1,PHI,fi2
+          write (IMP,103) ISTP,IOR,fi1,PHI,fi2
       end if
-
-!  13  write (IMP,103) ISTP,IOR,fi1,PHI,fi2
  103  format (' ISTP,IOR',2I5,' phi1, PHI, phi2:',3F15.6)
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!      if (iend.ne.1) goto 34
-!     if(NLIST.eq.1) then
-!      write (IMP,102) ISTP,IOR,fi1,PHI,fi2
-!     end if
-! 102  format (' Taylr1 - Problem with SLIPRAT - ISTP,IOR',2I5,/,
-!     1' Euler angles phi1, PHI, phi2:',3F15.6)
-!      return
-!  51  continue
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-!
-      !Calculate RCcryst: the rigid body spin in the crystal frame 
-      RCcryst = rotateSRTensorFrom(MacroDefRate%Spin,TRF)
-      RHOAcrys = rotateSRTensorFrom(RHOAsa,TRF)
-   71   TRC(1)=RCcryst(3,2)+RHOAcrys(3,2)
-        TRC(2)=RCcryst(1,3)+RHOAcrys(1,3)
-        TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
+      !
       WorkRate=0.0
       do i=1,M11 
           if (GAMdot(i).GT.0.0) then
               !positive slip rate
-              WorkRate= WorkRate + CC(1,i)*GAMdot(i)
+              WorkRate= WorkRate + pancak2_solution%allcrss%crss(1,i)*GAMdot(i)
           else
               !negative or 0 slip rate
-              WorkRate= WorkRate - CC(2,i)*GAMdot(i)
+              WorkRate= WorkRate - pancak2_solution%allcrss%crss(2,i)*GAMdot(i)
           endif
       end do
       Seq=WorkRate / MacroDefRate%vMeqStrainRate
-  43  J=M
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 4/11/2011
-!      IF (IGLIJ.EQ.0) GOTO 90
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+      !
       if(NLIST.eq.1) then
-      WRITE (IMP,301) WorkRate
+          WRITE (IMP,301) WorkRate
       end if
  301  FORMAT (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
-!      if(NLIST.eq.1) then
-!      DO 302 I=1,M
-! 302  WRITE (IMP,303) I,GAMdot(I)
-!      end if
-!
- 303  FORMAT (1X,I5,(12F10.6))  
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011                                        
-!      IF (IGLIJ.NE.0) then
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+      !
       if(NLIST.eq.1) then
-      WRITE (IMP,109) MacroDefRate%vMeqStrainRate,Seq,                   &
-                      (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M)
+          WRITE (IMP,109) MacroDefRate%vMeqStrainRate,Seq,                   &
+                      (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M11)
       end if
-
  109  FORMAT ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
        '  SLIP RATES',/,(T2,10F10.5))
-  90  CONTINUE                                                          
-  202 ROT = matmul(B1,GAMdot)
-
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!      IF (IGLIJ.NE.0) then
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+      !                                                          
+      ROT = matmul(B1,GAMdot)
       if(NLIST.eq.1) then
-      WRITE (IMP,305) ROT
+          WRITE (IMP,305) ROT
       end if
-                               
-  305 FORMAT (' ROTATIONS',3F12.6)
-!      DO 58 K=1,M                                                       
-!      X=ABS(GAMdot(K))
-!  58  CONTINUE                                                          
-      DO 75 J=1,3
-  75  C1(J,J)=1.D0                                                      
-      C1(3,2)=ROT(1)-TRC(1)                                             
-      C1(1,3)=ROT(2)-TRC(2)                                             
-      C1(2,1)=ROT(3)-TRC(3)                                         
-      C1(2,3)=-C1(3,2)                                                  
-      C1(3,1)=-C1(1,3)                                                  
-      C1(1,2)=-C1(2,1)                                                  
-!     NIEUWE STAND UITWENDIG ASSENSTELSEL.                          
-      C2 = matmul(C1,TRF)      
-!     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX                            
-      ROTM= SQRT(C1(3,2)**2+C1(1,3)**2+C1(2,1)**2)
-      Euler= EuleranglesType(C2)
+305   FORMAT (' ROTATIONS',3F12.6)
+      !
+      ddt = 1.0 !A time increment of 1s is assumed.
+      call update_crystal_trafo_fromSlip(TRF_new,TRF,GAMdot,B1,MacroDefRate,RHOAsa,ddt,info)
+      !
+      Euler= EuleranglesType(TRF_new)
       fi1=Euler%fi1 !
       PHI=Euler%PHI !use of EulerAngles2Arr impeded
       fi2=Euler%fi2 !   by common block /EULERA/
-      C2 = rotmat(Euler)
-      ITW=0
+      !
       IF (NTW.EQ.0) GOTO 31                                             
+      call update_crystal_trafo_fromTwin(TRF_new,NTW,NGL,NLIST,IMP,GAMdot,G)
+      !
+      Euler= EuleranglesType(TRF_new)
+      fi1=Euler%fi1 !
+      PHI=Euler%PHI !use of EulerAngles2Arr impeded
+      fi2=Euler%fi2 !   by common block /EULERA/      
+      !
+31    if (nfile.eq.0.or.istp.gt.1) goto 61
+      !      
+      ! Taylor Factor of the grain:
+      Mgrain = TOTGAMdot / MacroDefRate%vMeqStrainRate
+      !
+      ! Non-normalize the RHOSsa and RHOAsa
+      RHOSsaNN = RHOSsa * MacroDefRate%vMeqStrainRate
+      RHOAsaNN = RHOAsa * MacroDefRate%vMeqStrainRate
+      !
+      call writeRESRecord(IMP2,ior,Seq,WorkRate,tau,Mgrain,ratlon(MacroDefRate,rhossa), &
+                                rhossaNN,rhoasaNN,ssam,info)
+      !
+   61 RETURN
+      !Below lines with identifiers 26 and 52 are apparently never called.
+  26  WRITE (IMP,106)
+ 106  FORMAT (1X,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBLEM')
+#ifndef ALTAY_SUBROUTINE
+  52  call terminate(stopcode_runtimeerror)
+#else
+  52  RCM_RAISE(1,'TAYLR1',                                              &
+      'No upper limit for linear programming problem',RCM_RTN)
+#endif
+      END SUBROUTINE
+      
+
+      subroutine update_crystal_trafo_fromSlip(this,previous, &
+                         sliprates,B1,MacroDefRate,rho_a_sam,dt,info)
+      use criErrcodes
+      implicit none
+      !
+      !> Transformation matrix from sample frame to crystal frame at the 
+      !> end of increment. Each of its 3 rows contains a reference axis of the 
+      !> crystal reference frame (at end of increment), as expressed in the 
+      !> sample reference frame. 
+      double precision, intent(out), dimension(3,3) :: this
+      !> Transformation matrix from sample frame to crystal frame at the 
+      !> start of increment. Each of its 3 rows contains a reference axis of the 
+      !> crystal reference frame (at start of increment), as expressed in the 
+      !> sample reference frame.       
+      double precision, intent(in),  dimension(3,3) :: previous
+      double precision, intent(in),  dimension(96)  :: sliprates
+      double precision, intent(in),  dimension(3,96):: B1
+      type(DeformationRate), intent(in)             :: MacroDefRate
+      !> The normalized relaxation spin expressed in the sample frame
+      double precision, intent(in),  dimension(3,3) :: rho_a_sam    
+      !> Time increment
+      double precision, intent(in)                  :: dt
+      integer, intent(out)                          :: info
+      !
+      double precision, dimension(3) :: plasticspin_crys_vector
+      !
+      !> The plastic spin expressed in the crystal lattice frame
+      double precision, dimension(3,3) :: plasticspin_crys
+      !> The macroscopic (i.e. imposed) rigid body spin expressed in the crystal frame
+      double precision, dimension(3,3) :: macrospin_crys
+      !> The normalized relaxation spin expressed in the crystal frame
+      double precision, dimension(3,3) :: rho_a_crys
+      !> The crystal lattice spin expressed in the crystal frame
+      double precision, dimension(3,3) :: latticespin_crys
+      !> Deformation gradient of the lattice rotation from beginning to end of
+      !> increment, expressed in the crystal frame 
+      double precision, dimension(3,3) :: F_omega_crys
+      !> Transformation matrix from crystal frame at the start of increment to 
+      !> crystal frame at the end of increment. Each of its 3 rows contains a
+      !> reference axis of the crystal reference frame at end of increment, as 
+      !> expressed in the crystal reference frame at start of increment
+      double precision, dimension(3,3) :: trafo_cold_cnew(3,3)
+      !> Set of Euler angles corresponding to transformation matrix 'this'
+      type(EulerAngles) :: Euler
+      
+      
+      plasticspin_crys_vector = matmul(B1,sliprates)
+      !
+      plasticspin_crys = Vec3ToAntiSymMat33(PlasticSpin_crys_vector)
+      !
+      macrospin_crys = rotateSRTensorFrom(MacroDefRate%Spin,previous)
+      !
+      rho_a_crys = rotateSRTensorFrom(rho_a_sam,previous)
+      !
+      latticespin_crys = macrospin_crys - plasticspin_crys + rho_a_crys * MacroDefRate%vMeqStrainRate 
+      !   Note: in ALAMEL-paper (IJP '05), one term has opposite sign: 
+      !   LatticeSpin_crys = MacroSpin_crys - PlasticSpin_crys - "RelaxationSpin_crys"
+      !
+      F_omega_crys = unit_sr_matrix + latticespin_crys * dt
+      !   Notes: 
+      !    - Explicit time integration. 
+      !    - Due to approximate time integration, orthogonality of Fomega_crys 
+      !      is not exactly satisfied in general.
+      !
+      trafo_cold_cnew = transpose(F_omega_crys)
+      !
+      !trafo[sample->crystal_new] = trafo[crystal_old->crystal_new] * trafo[sample->crystal_old]                       
+      this = matmul(trafo_cold_cnew,previous)
+      !
+      !Ensure orthogonality
+      Euler = EuleranglesType(this)
+      this = rotmat(Euler)
+      !
+      info = criSuccess
+      !
+      end subroutine
+
+
+      
+      subroutine update_crystal_trafo_fromTwin(TRF, &
+                         NTW,NGL,NLIST,IMP,GAMdot,G)
+      !use criErrcodes
+      implicit none
+      double precision, intent(inout), dimension(3,3) :: TRF
+      integer, intent(in) :: NTW, NGL, NLIST, IMP
+      double precision, intent(in),  dimension(96)  :: GAMdot, G
+      !
+      double precision :: X, RNDM
+      integer :: I, J, K
+      double precision, dimension(96) :: VOLFR
+      double precision, dimension(3,3) :: RCC, TDC
+      !
       X=0.                                                              
       DO 84 I=1,NTW                                                     
       J=I+NGL                                                           
@@ -392,7 +457,7 @@
   84  CONTINUE                                                          
        IF (X.LE.1.) GOTO 85  
 #ifndef ALTAY_SUBROUTINE
-       if(NLIST.eq.1) then                                           
+      if(NLIST.eq.1) then                                           
       WRITE (IMP,107) X   
       end if                                              
  107  FORMAT (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,              &
@@ -409,7 +474,7 @@
       GOTO 31                                                           
   87  DO 88 K=1,3                                                       
       DO 89 J=1,3                                                       
-  89  RCC(K,J)=C2(K,J)                                                  
+  89  RCC(K,J)=TRF(K,J)                                                  
   88  CONTINUE                                                          
       TDC(1,1)=B2(1,I)                                                  
       X=B2(2,I)                                                         
@@ -423,42 +488,9 @@
       TDC(3,2)=X                                                        
       TDC(2,3)=X                                                        
       TDC(3,3)=B2(6,I)                                                  
-      C2 = matmul(TDC,RCC) 
-      ITW=I
-      Euler= EuleranglesType(C2)
-      fi1=Euler%fi1 !
-      PHI=Euler%PHI !use of EulerAngles2Arr impeded
-      fi2=Euler%fi2 !   by common block /EULERA/      
-  31  if (nfile.eq.0.or.istp.gt.1) goto 61
-!
-      !“the ratio of the parallel strain rates”
-      ! MacroDefRate%StrainMode & rhossa: expressed in same (sample) reference frame
-      ratlon= sum( (MacroDefRate%StrainMode+sqrt(2.0D0/3.0D0)*rhossa) *  &
-                    MacroDefRate%StrainMode                            ) 
-!
-      ! TAU: Reference-CRSS.
-      ! Taylor Factor of the grain:
-      Mgrain = TOTGAMdot / MacroDefRate%vMeqStrainRate
-      ! Total, i.e. non-normalized, rhossa:
-      rhossaTot = rhossa * MacroDefRate%vMeqStrainRate
+      TRF = matmul(TDC,RCC) 
+31    CONTINUE
       !
-      write (IMP2,150) ior,Seq,WorkRate,TAU,Mgrain,ratlon,               &
-       rhossaTot(1,1),rhossaTot(2,2),rhossaTot(3,3),                     &
-       rhossaTot(2,3),rhossaTot(3,1),rhossaTot(1,2),                     &
-       rhoasa(2,3),rhoasa(3,1),rhoasa(1,2),                              &
-       ssam(1,1),ssam(2,2),ssam(3,3),ssam(2,3),ssam(3,1),ssam(1,2)
-  150 format(i5,5(E12.5,1X),5x,6(E12.5,1X),5x,3(E12.5,1X),               &
-             5x,6(E12.5,1X))
- 101  format(3d20.7)      
-   61 RETURN
-  26  WRITE (IMP,106)
- 106  FORMAT (1X,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBLEM')
-#ifndef ALTAY_SUBROUTINE
-  52  call terminate(stopcode_runtimeerror)
-#else
-  52  RCM_RAISE(1,'TAYLR1',                                              &
-      'No upper limit for linear programming problem',RCM_RTN)
-#endif
-      END SUBROUTINE
-      
+      end subroutine
+
       end module
