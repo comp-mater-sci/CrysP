@@ -33,11 +33,16 @@ use altayHardLaw_DSH, only: DSHStateVariable => StatVar
         !> Collection of crystals (grains). 
         type(TextureData)                       :: texture
         
+        !> \fixme: decide whether the crss_ratios should appear as the state variables
+        !> At this moment they are just parameters.
+        
         !> CRSS applicable to every grain (only for non-hardening model)
-        type(CRSSData)                          :: crss_ratios
+        ! type(CRSSData)                          :: crss_ratios
+        
+        !> \fixme: decide whether the crss_array is actually needed.
         
         !> Collection of CRSS per grain (only for certain hardening models)
-        type(CRSSData), dimension(:), pointer   :: crss_array => null()
+        ! type(CRSSData), dimension(:), pointer   :: crss_array => null()
 
 #ifdef PEBP_ENABLED
         !> State variables of the DSH hardening law.
