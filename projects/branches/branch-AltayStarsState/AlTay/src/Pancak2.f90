@@ -151,7 +151,16 @@
       DO 53 I=1,5
       DI(I)=DI1(I)
       DI(I+5)=DI1(I)+M11
-  53  CONTINUE                                                          
+53    CONTINUE    
+      !
+      !> \todo Refine the design of handling the CRSS arrays (should it be done inside 
+      !> pancak2 or outside?) 
+      !>        1) this does not comply with the design of CRSS stored as a part of state.
+      !>        2) we may get serious penalty due to frequent dynamic reallocations
+      !>        3) BUT: perhaps it is better to keep CRSSmatrix local (this conflicts 
+      !>           with (1) and (2) in this implementation of CRSSData
+      call CRSSData_init(crss_cluster, M11, infoarr)
+      !
       do 1 IL=1,NGR
       L1=5*(IL-1)
       
@@ -198,13 +207,6 @@
   44  continue
       K1=M11*(IL-1)
       !
-      !> \todo Refine the design of handling the CRSS arrays (should it be done inside 
-      !> pancak2 or outside?) 
-      !>        1) this does not comply with the design of CRSS stored as a part of state.
-      !>        2) we may get serious penalty due to frequent dynamic reallocations
-      !>        3) BUT: perhaps it is better to keep CRSSmatrix local (this conflicts 
-      !>           with (1) and (2) in this implementation of CRSSData
-      call CRSSData_init(crss_cluster, M11, infoarr)
       ! Retrieve the crss_cluster for IL
       !    IOR+IL-1  = sequence number of current grain 
       !    GMMAb(IL) = the GAMMA of current grain
