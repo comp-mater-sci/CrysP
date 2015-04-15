@@ -225,6 +225,7 @@
 #endif
       use altayIOConfig
       use altaySliprate
+      use altayCRSSTypes
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
       COMMON /TEXTUR/ TRF(3,3),TRF_new !-> input, resp., output
@@ -286,16 +287,7 @@
       end if
  103  format (' ISTP,IOR',2I5,' phi1, PHI, phi2:',3F15.6)
       !
-      WorkRate=0.0
-      do i=1,M11 
-          if (GAMdot(i).GT.0.0) then
-              !positive slip rate
-              WorkRate= WorkRate + pancak2_solution%allcrss%crss(1,i)*GAMdot(i)
-          else
-              !negative or 0 slip rate
-              WorkRate= WorkRate - pancak2_solution%allcrss%crss(2,i)*GAMdot(i)
-          endif
-      end do
+      call CRSSData_CalcWorkRate(WorkRate, pancak2_solution%allcrss, GAMdot, info)
       Seq=WorkRate / MacroDefRate%vMeqStrainRate
       !
       if(NLIST.eq.1) then

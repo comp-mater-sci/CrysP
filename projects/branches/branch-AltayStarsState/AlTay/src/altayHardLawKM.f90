@@ -218,7 +218,7 @@ contains
     !
     double precision :: crss_Tay
     !
-        if (CRSSData_size(crss) >= KM_max_slipsystems) then
+        if (CRSSData_size(crss) <= KM_max_slipsystems) then
             !> Taylor equation
             crss_Tay= params%tau0 + params%alfaGb * sqrt(this%rho)
             ! Assign crss_Tay to both directions of all slip systems

@@ -9,29 +9,32 @@ module altayCRSSTypes
 use criErrcodes
 implicit none
 
+    !> The dimension in CRSSData%crss for direction of slip systems, i.e. positive 
+    !> and negative (in the order defined by CRSS_pos_dir_idx and CRSS_neg_dir_idx).
+    integer,parameter   :: CRSS_dim_dir_slip = 1
+    
+    !> The dimension in CRSSData%crss for sequence number of slip systems
+    integer,parameter   :: CRSS_dim_seq_slip = 2
 
     !> Number of slip directions per slip system. It reflect that there are
     !> "positive" and "negative" slips on a given slip system
     integer,parameter   :: CRSS_n_slip_dirs = 2
-    
-    !> Index of the "positive" slip in the first dimension of CRSSData
+
+    !> Index of the "positive" slip in the CRSS_dim_dir dimension of CRSSData%crss
     integer,parameter   :: CRSS_pos_dir_idx = 1
 
-    !> Index of the "negative" slip in the first dimension of CRSSData
+    !> Index of the "negative" slip in the CRSS_dim_dir dimension of CRSSData%crss
     integer,parameter   :: CRSS_neg_dir_idx = 2
 
     !> Representation of Critical Resolved Shear Stresses
     type :: CRSSData
         
-        !> Array that contains the CRSS of a crystal. It is defined
-        !> by CRSS_n_slip_dirs (number of slip directions) and the
-        !> number of deformation systems  (either slips or twinnings).
-        !>
-        !> The shape of the array is [n_slip_dirs, n_slip_systems]
-        !> The first dimension is for direction of slip system: positive and 
-        !> negative (in that order).
-        !> The second dimension is sequence number of pre-defined deformation
-        !> systems.
+        !> Array that contains the CRSS of a crystal.
+        !> The shape of the array is given by CRSS_n_slip_dirs (number of slip 
+        !> directions) and the number of deformation systems  (either slips or 
+        !> twinnings).
+        !> Note: in current implementation, twinning systems are formally treated
+        !> as slip systems with a 'very large' crss in the negative direction.
         double precision,dimension(:,:),allocatable     :: crss
         
     end type
@@ -71,9 +74,38 @@ contains
     type(CRSSData),intent(in)  :: this
     !
         n = 0
-        if (allocated(this%crss)) n = size(this%crss)
+        if (allocated(this%crss)) n = size(this%crss,dim=CRSS_dim_seq_slip)
     !
     end function
     
+
+    !> Calculates (plastic) work rate from  CRSSdata object and vector of deformation rates
+    pure subroutine CRSSData_CalcWorkRate(this, crss, deformationrates, info)
+    implicit none
+    double precision, intent(out)            :: this
+    type(CRSSData),intent(in)                :: crss
+    double precision,intent(in),dimension(:) :: deformationrates
+    integer,intent(out)                      :: info !< Exit code
+    !
+    integer :: n, i
+    !
+        this = 0.0D0
+        info = criErr_BadDims
+        n = CRSSData_size(crss)
+        if (size(deformationrates) >= n) then
+            info  = criErr_NumNaN
+            !
+            do i=1,n 
+                if (deformationrates(i).GT.0.0) then !positive deformation rate
+                    this = this + deformationrates(i) * crss%crss(CRSS_pos_dir_idx,i) 
+                else                                 !negative or 0 deformation rate
+                    this = this - deformationrates(i) * crss%crss(CRSS_neg_dir_idx,i) 
+                endif
+            end do
+            !
+            if (.not.isNaN(this)) info  = criSuccess
+        endif
+    !   
+    end subroutine
     
 end module
