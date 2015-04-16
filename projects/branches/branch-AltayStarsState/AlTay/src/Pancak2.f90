@@ -11,6 +11,12 @@
       double precision, parameter, public :: Pancak2_tolerance = 5.0d-6
       
       type Pancak2Solution
+          !> local stress expressed in the sample reference frame
+          double precision, dimension(3,3)                       :: stress_sam
+          !> symmetric part of (non-normalized) relaxation tensor, in sample reference system
+          double precision, dimension(3,3)                       :: relaxationrate_sam
+          !> anti-symmetric part of (non-normalized) relaxation tensor, in sample reference system
+          double precision, dimension(3,3)                       :: relaxationspin_sam
           integer                                                :: nactiv = 0
           integer,dimension(Pancak2_max_activesystems)           :: indact = 0
           double precision, dimension(Pancak2_max_activesystems) :: sliplp = 0.0d0
@@ -27,7 +33,7 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(solution,state, hardparams,ior,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,Ssam,RHOSsaNN,RHOAsaNN,               &
+      Subroutine Pancak2(solution,state, hardparams,ior,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,  &
        SWRLX,XX,IPR,MacroDefRate,MacroDefState,A1)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -55,11 +61,6 @@
       double precision,dimension(2),intent(in)      :: GMMAb
       double precision,dimension(5,5),intent(in)    :: B
       integer,dimension(5),intent(in)               :: DI1
-      double precision,dimension(3,3),intent(out)   :: Ssam
-      !> Symmetric part of (non-normalized) relaxation tensor, in sample reference system
-      double precision,dimension(3,3),intent(out)   :: RHOSsaNN
-      !> Anti-symmetric part of (non-normalized) relaxation tensor, in sample reference system
-      double precision,dimension(3,3),intent(out)   :: RHOAsaNN
       logical,dimension(3),intent(in)               :: SWRLX
       double precision,dimension(194),intent(inout) :: XX  ! TODO: check if intent(out) is more appropriate
       integer,intent(in)                            :: IPR
@@ -433,21 +434,23 @@
  100  format(' Bishop-Hill stress (crystal system):')
 101   format(3d20.7)
       !
-      !Transform stress from local frame (S33) to sample frame (Ssam) 
-      Ssam = rotateSRTensorTo(S33,TRFb(1:3,1:3,laml))          
+      !Transform stress from local frame (S33) to sample frame (solution%stress_sam) 
+      solution%stress_sam = rotateSRTensorTo(S33,TRFb(1:3,1:3,laml))          
       !
       RHOS33 = Vec5ToSymMat33(RHOS)   
       RHOA33 = Vec3ToAntiSymMat33(RHOA(1:3)) * sqr2
       !
-      !Transform relaxation strain rate tensor from local frame (RHOScrys) 
+      !Transform relaxation strain rate tensor from local frame (RHOS33) 
       !                                         to sample frame (RHOSsa)
       RHOSsa = rotateSRTensorTo(RHOS33,TRFb(1:3,1:3,laml))
       !non-normalization
-      RHOSsaNN = RHOSsa * MacroDefRate%vMeqStrainRate
-      !Transform relaxation spin tensor from local frame (RHOAcrys) to sample frame (RHOAsa)
+      solution%relaxationrate_sam = RHOSsa * MacroDefRate%vMeqStrainRate
+      !
+      !Transform relaxation spin tensor from local frame (RHOA33) to sample frame (RHOAsa)
       RHOAsa = rotateSRTensorTo(RHOA33,TRFb(1:3,1:3,laml))
       !non-normalization
-      RHOAsaNN = RHOAsa * MacroDefRate%vMeqStrainRate
+      solution%relaxationspin_sam = RHOAsa * MacroDefRate%vMeqStrainRate
+      !
       !Report RHOSsa and RHOAsa to LST-file 
  1701 format(/,' RHOSsa')
  1706 format(/,' RHOAsa')

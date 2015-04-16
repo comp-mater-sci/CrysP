@@ -50,11 +50,8 @@
                                  ! which is apparently incompatible with being 
                                  ! a common block component.
       !     SHsam:    macroscopic stress in sample reference system
-      !     Ssam:        local stress in sample reference system
       COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3), IOR,laml,ngr,nrl,TRFb(3,3,2),GMMAb(2)
-      COMMON/TLR2/ relaxationspin_sam
       COMMON /GENRLX/ Ssam(3,3),relaxationrate_sam(3,3)
-      double precision, dimension(3,3):: relaxationspin_sam(3,3) 
       character(len=72) :: TITGLIJ
       dimension XXLP(194)
       logical SWRLX
@@ -171,10 +168,12 @@
  3000 continue
 !      write (*,1234)
 ! 1234 format (' Just before Pancak2')
-       CALL Pancak2(Pancak2_solution,state, hardparams,IOR,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,Ssam,relaxationrate_sam,relaxationspin_sam, &
+       CALL Pancak2(Pancak2_solution,state, hardparams,IOR,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1, &
        SWRLX,XXLP,IPR,MacroDefRate,MacroDefState,A1)
-
-   
+       !work-around to bring following 2 variables in scope of simul, via /GENRLX/
+       Ssam =               Pancak2_solution%stress_sam         
+       relaxationrate_sam = Pancak2_solution%relaxationrate_sam
+       !
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -199,9 +198,7 @@
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
       COMMON /TEXTUR/ TRF(3,3),TRF_new !-> input, resp., output
-      COMMON/TLR2/ relaxationspin_sam !-> input
       COMMON /EULERA/ fi1,PHI,fi2 !-> output
-      COMMON /GENRLX/ Ssam(3,3),relaxationrate_sam(3,3) !-> input      
       !> Equivalent stress in crystal, defined as plastic work rate in crystal
       !> normalized by (macro) von Mises equivalent strain rate
       double precision, intent(out):: Seq
@@ -217,7 +214,7 @@
       type(EulerAngles):: Euler
       !
       DIMENSION ROT(3)
-      dimension relaxationspin_sam(3,3),GAMdot(96)
+      dimension GAMdot(96)
 #ifdef PEBP_ENABLED      
       integer :: info
       double precision :: ddt
@@ -274,7 +271,7 @@
 305   FORMAT (' ROTATIONS',3F12.6)
       !
       ddt = 1.0 !A time increment of 1s is assumed.
-      call update_crystal_trafo_fromSlip(TRF_new,TRF,GAMdot,B1,MacroDefRate,relaxationspin_sam,ddt,info)
+      call update_crystal_trafo_fromSlip(TRF_new,TRF,GAMdot,B1,MacroDefRate,Pancak2_solution%relaxationspin_sam,ddt,info)
       !
       Euler= EuleranglesType(TRF_new)
       fi1=Euler%fi1 !
@@ -294,8 +291,8 @@
       ! Taylor Factor of the grain:
       Mgrain = TOTGAMdot / MacroDefRate%vMeqStrainRate
       !
-      call writeRESRecord(IMP2,ior,Seq,WorkRate,tau,Mgrain,ratlon(MacroDefRate,relaxationrate_sam), &
-                                relaxationrate_sam,relaxationspin_sam,ssam,info)
+      call writeRESRecord(IMP2,ior,Seq,WorkRate,tau,Mgrain,ratlon(MacroDefRate,Pancak2_solution%relaxationrate_sam), &
+                                Pancak2_solution%relaxationrate_sam,Pancak2_solution%relaxationspin_sam,Pancak2_solution%stress_sam,info)
       !
    61 RETURN
       !Below lines with identifiers 26 and 52 are apparently never called.
