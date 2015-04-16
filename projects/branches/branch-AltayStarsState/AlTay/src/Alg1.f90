@@ -64,8 +64,7 @@
 !
 !     DVM = von Mises equivalent strain rate
 !
-      !Local stress in crystal reference system
-      double precision, dimension(3,3):: Scrys=0.0d0 
+
       SAVE
       GOTO (1000,2000,3000),IRICHT
  1000 if(NLIST.eq.1) then
@@ -173,38 +172,10 @@
  3000 continue
 !      write (*,1234)
 ! 1234 format (' Just before Pancak2')
-       CALL Pancak2(Pancak2_solution,state, hardparams,IOR,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,Scrys,RHOScrys,RHOAcrys, &
+       CALL Pancak2(Pancak2_solution,state, hardparams,IOR,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,Ssam,RHOSsa,RHOAsa, &
        SWRLX,XXLP,IPR,MacroDefRate,MacroDefState,A1)
-      !Report Scrys to LST-file
- 100  format(' Bishop-Hill stress (crystal system):')
- 101  format(3d20.7)       
-      if(NLIST.eq.1) then
-          write (IMP,100)
-          do i=1,3
-              write (IMP,101) (Scrys(i,j),j=1,3)
-          end do
-      end if
-      !Transform stress from local frame (Scrys) to sample frame (Ssam) 
-      Ssam = rotateSRTensorTo(Scrys,TRF)      
-      !Transform relaxation strain rate tensor from local frame (RHOScrys) 
-      !                                         to sample frame (RHOSsa)
-      RHOSsa = rotateSRTensorTo(RHOScrys,TRF)      
-      !Transform relaxation spin tensor from local frame (RHOAcrys) to sample frame (RHOAsa)
-      RHOAsa = rotateSRTensorTo(RHOAcrys,TRF)
-      !Report RHOSsa and RHOAsa to LST-file
- 1701 format(/,' RHOSsa')
- 1706 format(/,' RHOAsa')
-      if(NLIST.eq.1) then
-          write (IMP,1701)
-          do i=1,3 
-              write (IMP,101) (RHOSsa(i,j),j=1,3)
-          end do 
-          write (IMP,1706)
-          do i=1,3
-              write (IMP,101) (RHOAsa(i,j),j=1,3)
-          end do          
-      end if
-      
+
+   
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif

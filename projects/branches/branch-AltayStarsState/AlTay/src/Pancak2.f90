@@ -27,7 +27,7 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(solution,state, hardparams,ior,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,S33,RHOS33,RHOA33,               &
+      Subroutine Pancak2(solution,state, hardparams,ior,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,Ssam,RHOSsa,RHOAsa,               &
        SWRLX,XX,IPR,MacroDefRate,MacroDefState,A1)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -55,7 +55,7 @@
       double precision,dimension(2),intent(in)      :: GMMAb
       double precision,dimension(5,5),intent(in)    :: B
       integer,dimension(5),intent(in)               :: DI1
-      double precision,dimension(3,3),intent(out)   :: S33, RHOS33, RHOA33
+      double precision,dimension(3,3),intent(out)   :: Ssam, RHOSsa, RHOAsa
       logical,dimension(3),intent(in)               :: SWRLX
       double precision,dimension(194),intent(inout) :: XX  ! TODO: check if intent(out) is more appropriate
       integer,intent(in)                            :: IPR
@@ -65,6 +65,10 @@
       !
       !> Number of active systems founds so far by the search algorithm
       integer nactiv_sofar
+      !> Local stress, in crystal reference system
+      double precision, dimension(3,3):: S33=0.0d0
+      !> Symmetric and anti-symmetric parts of relaxation tensor, in crystal reference system
+      double precision, dimension(3,3):: RHOS33, RHOA33
       double precision,dimension(5):: RHOS, RHOA 
       dimension C2(3,3),                                                 &
        TDCb(3,3,2),TRCb(3,3,2),                                          &
@@ -413,8 +417,40 @@
       RHOA(i)=-y8
  201  continue
       S33 = Vec5ToSymMat33(spanv) 
+      !Report S33 to LST-file
+      if(NLIST.eq.1) then
+          write (IMP,100)
+          do i=1,3
+              write (IMP,101) (S33(i,j),j=1,3)
+          end do
+      end if
+ 100  format(' Bishop-Hill stress (crystal system):')
+101   format(3d20.7)
+      !
+      !Transform stress from local frame (S33) to sample frame (Ssam) 
+      Ssam = rotateSRTensorTo(S33,TRFb(1:3,1:3,laml))          
+      !
       RHOS33 = Vec5ToSymMat33(RHOS)   
       RHOA33 = Vec3ToAntiSymMat33(RHOA(1:3)) * sqr2
+      !
+      !Transform relaxation strain rate tensor from local frame (RHOScrys) 
+      !                                         to sample frame (RHOSsa)
+      RHOSsa = rotateSRTensorTo(RHOS33,TRFb(1:3,1:3,laml))      
+      !Transform relaxation spin tensor from local frame (RHOAcrys) to sample frame (RHOAsa)
+      RHOAsa = rotateSRTensorTo(RHOA33,TRFb(1:3,1:3,laml))
+      !Report RHOSsa and RHOAsa to LST-file 
+ 1701 format(/,' RHOSsa')
+ 1706 format(/,' RHOAsa')
+      if(NLIST.eq.1) then
+          write (IMP,1701)
+          do i=1,3 
+              write (IMP,101) (RHOSsa(i,j),j=1,3)
+          end do 
+          write (IMP,1706)
+          do i=1,3
+              write (IMP,101) (RHOAsa(i,j),j=1,3)
+          end do          
+      end if
 !
       if (IPR.EQ.2 .AND. NLIST.eq.1) then 
         WR=0.0
