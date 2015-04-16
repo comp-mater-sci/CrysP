@@ -58,7 +58,6 @@
       COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
       dimension fi10b(2),phi0b(2),fi20b(2)
       dimension Fb(3,3,2)
-      dimension RHOSSb(3,3,2)
       dimension fi1b(2),phib(2),fi2b(2)
       common /CEIGEN/ NBLOC
       DIMENSION                                &
@@ -340,7 +339,7 @@
       if (ifil4.eq.NPOINT) goto 80
       ifil4=ifil4+1
       call DYNFIL4(state%old,ifil4,fi10b(L),PHI0b(L),fi20b(L),                     &
-       TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L),RHOSSb(1,1,L))
+       TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L))
 !
       fi1b(L)=fi10b(L)*convf
       PHIb(L)=PHI0b(L)*convf
@@ -356,7 +355,6 @@
       fi2=fi2b(laml)
       !
       TRF = TRFb(:,:,laml)
-      RHOSSa = RHOSSb(:,:,laml)
       IF (NFILE.eq.0.or.ISTP.gt.1) goto 999
 ! 
 !     In case of NGR=2:
@@ -420,12 +418,11 @@
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
             call DYNFIL5(state%new,IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                   &
-                         MacroDefState%TotalDefGrad,  &
-                         RHOSsa) 
+                         MacroDefState%TotalDefGrad) 
       endif
 #else
       call DYNFIL5(state%new,IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                         &
-                   MacroDefState%TotalDefGrad,RHOSsa)
+                   MacroDefState%TotalDefGrad)
 #endif
       ! 
 #ifndef ALTAY_SUBROUTINE

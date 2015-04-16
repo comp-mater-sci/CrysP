@@ -54,8 +54,7 @@
       COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3), IOR,laml,ngr,nrl,TRFb(3,3,2),GMMAb(2)
       COMMON/TLR2/ RHOAsa
       COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
-      double precision, dimension(3,3):: RHOScrys(3,3)
-      double precision, dimension(3,3):: RHOAcrys(3,3), RHOAsa(3,3) 
+      double precision, dimension(3,3):: RHOAsa(3,3) 
       character(len=72) :: TITGLIJ
       dimension XXLP(194)
       logical SWRLX

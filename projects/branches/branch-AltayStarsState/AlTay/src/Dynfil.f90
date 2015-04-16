@@ -40,12 +40,12 @@ contains
 
       !> Get the record data for i-th grain
       subroutine DYNFIL4(statevars,i,FI1,PHI,FI2,T,                                &
-                        GEW,GAM,F,ZERO)
+                        GEW,GAM,F)
       implicit none
       type(altayStateVariables),intent(in) :: statevars
       integer,intent(in) :: i
       double precision,intent(out) :: FI1,PHI,FI2,GEW,GAM
-      double precision,intent(out) :: F(3,3),T(3,3),ZERO(3,3)
+      double precision,intent(out) :: F(3,3),T(3,3)
       !
       associate (DFIL => statevars%texture%grains)
             FI1=DFIL(i)%tFI1
@@ -55,7 +55,6 @@ contains
             GAM=DFIL(i)%tGAM
             T=DFIL(i)%tT
             F=DFIL(i)%tF
-            ZERO=DFIL(i)%tZERO
       end associate
       !
       end subroutine DYNFIL4
@@ -63,12 +62,12 @@ contains
 
       !> Put the record data for i-th grain
       subroutine DYNFIL5(statevars,i,FI1,PHI,FI2,T,                                &
-                        GEW,GAM,F,ZERO)
+                        GEW,GAM,F)
       implicit none
       type(altayStateVariables),intent(inout) :: statevars
       integer,intent(in) :: i
       double precision,intent(in) :: FI1,PHI,FI2,GEW,GAM
-      double precision,intent(in) :: F(3,3),T(3,3),ZERO(3,3)
+      double precision,intent(in) :: F(3,3),T(3,3)
       !
       associate (DFIL => statevars%texture%grains)
             DFIL(i)%tFI1=FI1
@@ -78,7 +77,6 @@ contains
             DFIL(i)%tGAM=GAM
             DFIL(i)%tT=T
             DFIL(i)%tF=F
-            DFIL(i)%tZERO=ZERO
       end associate
       !
       end subroutine DYNFIL5
