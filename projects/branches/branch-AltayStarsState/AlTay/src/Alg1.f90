@@ -52,9 +52,9 @@
       !     SHsam:    macroscopic stress in sample reference system
       !     Ssam:        local stress in sample reference system
       COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3), IOR,laml,ngr,nrl,TRFb(3,3,2),GMMAb(2)
-      COMMON/TLR2/ RHOAsa
-      COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
-      double precision, dimension(3,3):: RHOAsa(3,3) 
+      COMMON/TLR2/ relaxationspin_sam
+      COMMON /GENRLX/ Ssam(3,3),relaxationrate_sam(3,3)
+      double precision, dimension(3,3):: relaxationspin_sam(3,3) 
       character(len=72) :: TITGLIJ
       dimension XXLP(194)
       logical SWRLX
@@ -171,7 +171,7 @@
  3000 continue
 !      write (*,1234)
 ! 1234 format (' Just before Pancak2')
-       CALL Pancak2(Pancak2_solution,state, hardparams,IOR,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,Ssam,RHOSsa,RHOAsa, &
+       CALL Pancak2(Pancak2_solution,state, hardparams,IOR,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,Ssam,relaxationrate_sam,relaxationspin_sam, &
        SWRLX,XXLP,IPR,MacroDefRate,MacroDefState,A1)
 
    
@@ -199,9 +199,9 @@
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
       COMMON /TEXTUR/ TRF(3,3),TRF_new !-> input, resp., output
-      COMMON/TLR2/ RHOAsa !-> input
+      COMMON/TLR2/ relaxationspin_sam !-> input
       COMMON /EULERA/ fi1,PHI,fi2 !-> output
-      COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3) !-> input      
+      COMMON /GENRLX/ Ssam(3,3),relaxationrate_sam(3,3) !-> input      
       !> Equivalent stress in crystal, defined as plastic work rate in crystal
       !> normalized by (macro) von Mises equivalent strain rate
       double precision, intent(out):: Seq
@@ -216,13 +216,8 @@
       double precision :: Mgrain
       type(EulerAngles):: Euler
       !
-      !> Symmetric part of the relaxation rate tensor in sample frame; non-normalized
-      double precision, dimension(3,3) :: RHOSsaNN(3,3)
-      !> Anti-symmetric part of the relaxation rate tensor in sample frame; non-normalized
-      double precision, dimension(3,3) :: RHOAsaNN(3,3)
-      !
       DIMENSION ROT(3)
-      dimension RHOAsa(3,3),GAMdot(96)
+      dimension relaxationspin_sam(3,3),GAMdot(96)
 #ifdef PEBP_ENABLED      
       integer :: info
       double precision :: ddt
@@ -279,7 +274,7 @@
 305   FORMAT (' ROTATIONS',3F12.6)
       !
       ddt = 1.0 !A time increment of 1s is assumed.
-      call update_crystal_trafo_fromSlip(TRF_new,TRF,GAMdot,B1,MacroDefRate,RHOAsa,ddt,info)
+      call update_crystal_trafo_fromSlip(TRF_new,TRF,GAMdot,B1,MacroDefRate,relaxationspin_sam,ddt,info)
       !
       Euler= EuleranglesType(TRF_new)
       fi1=Euler%fi1 !
@@ -299,12 +294,8 @@
       ! Taylor Factor of the grain:
       Mgrain = TOTGAMdot / MacroDefRate%vMeqStrainRate
       !
-      ! Non-normalize the RHOSsa and RHOAsa
-      RHOSsaNN = RHOSsa * MacroDefRate%vMeqStrainRate
-      RHOAsaNN = RHOAsa * MacroDefRate%vMeqStrainRate
-      !
-      call writeRESRecord(IMP2,ior,Seq,WorkRate,tau,Mgrain,ratlon(MacroDefRate,rhossa), &
-                                rhossaNN,rhoasaNN,ssam,info)
+      call writeRESRecord(IMP2,ior,Seq,WorkRate,tau,Mgrain,ratlon(MacroDefRate,relaxationrate_sam), &
+                                relaxationrate_sam,relaxationspin_sam,ssam,info)
       !
    61 RETURN
       !Below lines with identifiers 26 and 52 are apparently never called.
@@ -337,7 +328,7 @@
       double precision, intent(in),  dimension(96)  :: sliprates
       double precision, intent(in),  dimension(3,96):: B1
       type(DeformationRate), intent(in)             :: MacroDefRate
-      !> The normalized relaxation spin expressed in the sample frame
+      !> The relaxation spin expressed in the sample frame
       double precision, intent(in),  dimension(3,3) :: rho_a_sam    
       !> Time increment
       double precision, intent(in)                  :: dt
@@ -349,7 +340,7 @@
       double precision, dimension(3,3) :: plasticspin_crys
       !> The macroscopic (i.e. imposed) rigid body spin expressed in the crystal frame
       double precision, dimension(3,3) :: macrospin_crys
-      !> The normalized relaxation spin expressed in the crystal frame
+      !> The relaxation spin expressed in the crystal frame
       double precision, dimension(3,3) :: rho_a_crys
       !> The crystal lattice spin expressed in the crystal frame
       double precision, dimension(3,3) :: latticespin_crys
@@ -373,7 +364,7 @@
       !
       rho_a_crys = rotateSRTensorFrom(rho_a_sam,previous)
       !
-      latticespin_crys = macrospin_crys - plasticspin_crys + rho_a_crys * MacroDefRate%vMeqStrainRate 
+      latticespin_crys = macrospin_crys - plasticspin_crys + rho_a_crys
       !   Note: in ALAMEL-paper (IJP '05), one term has opposite sign: 
       !   LatticeSpin_crys = MacroSpin_crys - PlasticSpin_crys - "RelaxationSpin_crys"
       !

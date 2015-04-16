@@ -55,7 +55,7 @@
       COMMON /TEXTUR/ TRF(3,3),C2(3,3)
       COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3), IOR,laml,ngr,nrl,TRFb(3,3,2),GMMAb(2)
       COMMON /EULERA/ fi1,PHI,fi2
-      COMMON /GENRLX/ Ssam(3,3),RHOSsa(3,3)
+      COMMON /GENRLX/ Ssam(3,3),relaxationrate_sam(3,3)
       dimension fi10b(2),phi0b(2),fi20b(2)
       dimension Fb(3,3,2)
       dimension fi1b(2),phib(2),fi2b(2)
@@ -397,13 +397,13 @@
  398  format (I3)
       !
       STOT = STOT + Ssam*GEWF
-      RHOST = RHOST + RHOSsa*GEWF
+      RHOST = RHOST + relaxationrate_sam*GEWF
       !      
   63  SeqAvg = SeqAvg + SeqGrain*GEWF
       Mgrain = GMMdot /  MacroDefRate%vMeqStrainRate
       Mavg = Mavg + Mgrain*GEWF
-      ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/MacroDefRate%vMeqStrainRate 
-      srh = srh + norm2(RHOSsa)*GEWF
+      ! Normalized relaxation: ||relaxationrate_sam||/MacroDefRate%vMeqStrainRate = (||d-D||)/MacroDefRate%vMeqStrainRate 
+      srh = srh + norm2(relaxationrate_sam)/MacroDefRate%vMeqStrainRate*GEWF
       HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s      
       GMM1 = GMM0 + GMMdot !Step time here implicitly assumed to be 1.0s
       Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s

@@ -27,7 +27,7 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(solution,state, hardparams,ior,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,Ssam,RHOSsa,RHOAsa,               &
+      Subroutine Pancak2(solution,state, hardparams,ior,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,Ssam,RHOSsaNN,RHOAsaNN,               &
        SWRLX,XX,IPR,MacroDefRate,MacroDefState,A1)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -55,7 +55,11 @@
       double precision,dimension(2),intent(in)      :: GMMAb
       double precision,dimension(5,5),intent(in)    :: B
       integer,dimension(5),intent(in)               :: DI1
-      double precision,dimension(3,3),intent(out)   :: Ssam, RHOSsa, RHOAsa
+      double precision,dimension(3,3),intent(out)   :: Ssam
+      !> Symmetric part of (non-normalized) relaxation tensor, in sample reference system
+      double precision,dimension(3,3),intent(out)   :: RHOSsaNN
+      !> Anti-symmetric part of (non-normalized) relaxation tensor, in sample reference system
+      double precision,dimension(3,3),intent(out)   :: RHOAsaNN
       logical,dimension(3),intent(in)               :: SWRLX
       double precision,dimension(194),intent(inout) :: XX  ! TODO: check if intent(out) is more appropriate
       integer,intent(in)                            :: IPR
@@ -67,8 +71,10 @@
       integer nactiv_sofar
       !> Local stress, in crystal reference system
       double precision, dimension(3,3):: S33=0.0d0
-      !> Symmetric and anti-symmetric parts of relaxation tensor, in crystal reference system
+      !> Symmetric and anti-symmetric parts of normalized relaxation tensor, in crystal reference system
       double precision, dimension(3,3):: RHOS33, RHOA33
+      !> Symmetric and anti-symmetric parts of normalized relaxation tensor, in sample reference system
+      double precision, dimension(3,3):: RHOSsa, RHOAsa
       double precision,dimension(5):: RHOS, RHOA 
       dimension C2(3,3),                                                 &
        TDCb(3,3,2),TRCb(3,3,2),                                          &
@@ -435,9 +441,13 @@
       !
       !Transform relaxation strain rate tensor from local frame (RHOScrys) 
       !                                         to sample frame (RHOSsa)
-      RHOSsa = rotateSRTensorTo(RHOS33,TRFb(1:3,1:3,laml))      
+      RHOSsa = rotateSRTensorTo(RHOS33,TRFb(1:3,1:3,laml))
+      !non-normalization
+      RHOSsaNN = RHOSsa * MacroDefRate%vMeqStrainRate
       !Transform relaxation spin tensor from local frame (RHOAcrys) to sample frame (RHOAsa)
       RHOAsa = rotateSRTensorTo(RHOA33,TRFb(1:3,1:3,laml))
+      !non-normalization
+      RHOAsaNN = RHOAsa * MacroDefRate%vMeqStrainRate
       !Report RHOSsa and RHOAsa to LST-file 
  1701 format(/,' RHOSsa')
  1706 format(/,' RHOAsa')
