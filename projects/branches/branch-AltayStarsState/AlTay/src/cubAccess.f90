@@ -64,9 +64,7 @@ contains
                             grain%tfi1*convf,                       &
                             grain%tPHI*convf,                       &
                             grain%tfi2*convf,                       &
-                            grain%tGAM,                             &
-                            ! Remaining components that are not present in CUR anymore:
-                            ((grain%tF(ii,jj),ii=1,3),jj=1,3)
+                            grain%tGAM
             end associate
             if (ioerr /= 0) exit
         enddo
@@ -113,10 +111,7 @@ contains
                                         grain%tfi1,      &
                                         grain%tPHI,      &
                                         grain%tfi2,      &
-                                        grain%tGAM,      &
-                                        ! Remaining components that are not present in CUR anymore:
-                                        ((grain%tF(ii,jj),ii=1,3),jj=1,3)
-
+                                        grain%tGAM
                 if (ioerr /= 0) exit
                 ! Convert the grain orientatios from degrees to radians
                 grain%tfi1 = grain%tfi1 * convf

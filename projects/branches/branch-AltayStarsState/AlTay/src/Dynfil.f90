@@ -54,7 +54,6 @@ contains
             GEW=DFIL(i)%tGEW
             GAM=DFIL(i)%tGAM
             T=DFIL(i)%tT
-            F=DFIL(i)%tF
       end associate
       !
       end subroutine DYNFIL4
@@ -76,7 +75,6 @@ contains
             DFIL(i)%tGEW=GEW
             DFIL(i)%tGAM=GAM
             DFIL(i)%tT=T
-            DFIL(i)%tF=F
       end associate
       !
       end subroutine DYNFIL5

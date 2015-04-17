@@ -10,7 +10,6 @@ implicit none
         double precision :: tFI1 = 0.D0,tPHI = 0.D0, tFI2 = 0.D0
         double precision :: tGEW = 1.D0 ,tGAM = 0.D0
         double precision, dimension(3,3) :: tT = 0.D0
-        double precision, dimension(3,3) :: tF = unit_sr_matrix
     end type
 
 
@@ -111,7 +110,6 @@ implicit none
     !> The following fields are modified:
     !>  - tT is calculated from Euler angles as defined by the tfi1,
     !>    tPHI and tfi2 fields
-    !>  - tAXES,tEULR,tF,tCIJ,tTAX - inherit corresponding properties 
     !>    from the MaterialFrame mf
     !> \todo consider converting grain_init into elemental subroutine
     subroutine grain_init(this, mf, info)
@@ -122,8 +120,6 @@ implicit none
     !
         this%tT = rotmat(this%tfi1,this%tPHI,this%tfi2)
         !
-        ! initialize the remaining components with mf data...
-        this%tF   = mf%FALG
         info = criSuccess
     !
     end subroutine
