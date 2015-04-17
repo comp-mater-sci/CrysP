@@ -34,7 +34,7 @@
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
       Subroutine Pancak2(solution,state, hardparams,ior,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,  &
-       SWRLX,IPR,MacroDefRate,MacroDefState,A1)
+       IPR,MacroDefRate,MacroDefState,A1)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
@@ -61,7 +61,6 @@
       double precision,dimension(2),intent(in)      :: GMMAb
       double precision,dimension(5,5),intent(in)    :: B
       integer,dimension(5),intent(in)               :: DI1
-      logical,dimension(3),intent(in)               :: SWRLX
       integer,intent(in)                            :: IPR
       type(DeformationRate),intent(in)              :: MacroDefRate
       type(DeformationState),intent(in)             :: MacroDefState
@@ -315,7 +314,6 @@
                       goto 89
                     endif
         do 86 IRL=1,NRL
-        if (.not.swrlx(IRL)) goto 86
         j=M2+IRL  
         CCC(1,j)=TAURL(IRL)
         CCC(2,j)=TAURL(IRL)

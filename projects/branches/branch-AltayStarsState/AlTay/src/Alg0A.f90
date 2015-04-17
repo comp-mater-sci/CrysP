@@ -53,7 +53,7 @@
 !     IW=2 is meant for outputting the final texture.
 !
       COMMON /TEXTUR/ TRF(3,3),C2(3,3)
-      COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3), IOR,laml,ngr,nrl,TRFb(3,3,2),GMMAb(2)
+      COMMON /SIMUL_TAYLOR/ SHsam(3,3), IOR,laml,ngr,nrl,TRFb(3,3,2),GMMAb(2)
       COMMON /EULERA/ fi1,PHI,fi2
       COMMON /GENRLX/ Ssam(3,3),relaxationrate_sam(3,3)
       dimension fi10b(2),phi0b(2),fi20b(2)
@@ -65,7 +65,6 @@
        RHOST(3,3),RHOSm(3,3),gewfb(2)
       dimension FS(3,3)
       character(len=40) :: TITEL
-      logical SWRLX
       integer :: NPOINT
       integer :: info
       !> sequence number of the cluster
@@ -201,9 +200,6 @@
 
 #ifdef ALTAY_SUBROUTINE
       NSTP     = astate%simulCalls(astate%this)%input%nsteps
-      swrlx(1) = astate%simulCalls(astate%this)%input%rlx1
-      swrlx(2) = astate%simulCalls(astate%this)%input%rlx2
-      swrlx(3) =.false.
 #else      
       read (KLEC,99) NSTP
       if(NLIST.eq.1) then
@@ -216,10 +212,6 @@
       end if
  104  format (' ICRAT:',2I5)
 
-      swrlx(1)=(ICRAT1.eq.1)
-      swrlx(2)=(ICRAT2.eq.1)
-      swrlx(3)=.false.
-      if (IPR.gt.0.and.NLIST.eq.1) write (IMP,*)'Relaxations:',swrlx(1)
 #endif
       !
       CALL TAYLOR(state%old, material%hardening, 2,MacroDefRate)

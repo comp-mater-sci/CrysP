@@ -50,7 +50,6 @@ contains
             do i=1,nsteps
                   astate%simulCalls(i)%input%full_model = .false.
                   read(nunit,401) astate%simulCalls(i)%input%dgf
-                  call setStepType(astate%simulCalls(i)%input,modelAlamel,info)
                   ASSERT(info == 0)
             enddo
             401 format(9(F8.5,1X))
@@ -118,7 +117,6 @@ contains
                   astate%simulCalls(i)%input%keep_texture = .false.
                   astate%simulCalls(i)%input%keep_state = .false.
                   astate%simulCalls(i)%input%dgf = exampleDG
-                  call setStepType(astate%simulCalls(i)%input,acnf%model_id,info)
                   ASSERT(info == 0)
                   astate%simulCalls(i)%input%nsteps = 10
                   astate%simulCalls(i)%input%do_output_init = .true.
@@ -197,7 +195,6 @@ contains
                   endif      
 
                   do i=1,nsteps
-                        call setStepType(astate%simulCalls(i)%input,model_types(k),info)
                         ASSERT(info == 0)
                         astate%simulCalls(i)%input%full_model = .true.
                         astate%simulCalls(i)%input%keep_texture = .false.
@@ -304,7 +301,6 @@ contains
                   astate%simulCalls(i)%input%full_model = .true.
                   astate%simulCalls(i)%input%keep_texture = .false.
                   astate%simulCalls(i)%input%keep_state = .false.
-                  call setStepType(astate%simulCalls(i)%input,acnf%model_id,info)
                   ASSERT(info == 0)
                   astate%simulCalls(i)%input%do_output_init = .true.
             enddo
