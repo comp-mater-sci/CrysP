@@ -53,7 +53,6 @@
       COMMON /SIMUL_TAYLOR/ SHsam(3,3), SWRLX(3), IOR,laml,ngr,nrl,TRFb(3,3,2),GMMAb(2)
       COMMON /GENRLX/ Ssam(3,3),relaxationrate_sam(3,3)
       character(len=72) :: TITGLIJ
-      dimension XXLP(194)
       logical SWRLX
       INTEGER R 
       DATA MMAX/96/ ! dimension of A1 and other arrays 
@@ -169,7 +168,7 @@
 !      write (*,1234)
 ! 1234 format (' Just before Pancak2')
        CALL Pancak2(Pancak2_solution,state, hardparams,IOR,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1, &
-       SWRLX,XXLP,IPR,MacroDefRate,MacroDefState,A1)
+       SWRLX,IPR,MacroDefRate,MacroDefState,A1)
        !work-around to bring following 2 variables in scope of simul, via /GENRLX/
        Ssam =               Pancak2_solution%stress_sam         
        relaxationrate_sam = Pancak2_solution%relaxationrate_sam

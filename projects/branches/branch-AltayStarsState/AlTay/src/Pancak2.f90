@@ -34,7 +34,7 @@
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
       Subroutine Pancak2(solution,state, hardparams,ior,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,  &
-       SWRLX,XX,IPR,MacroDefRate,MacroDefState,A1)
+       SWRLX,IPR,MacroDefRate,MacroDefState,A1)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
@@ -62,7 +62,6 @@
       double precision,dimension(5,5),intent(in)    :: B
       integer,dimension(5),intent(in)               :: DI1
       logical,dimension(3),intent(in)               :: SWRLX
-      double precision,dimension(194),intent(inout) :: XX  ! TODO: check if intent(out) is more appropriate
       integer,intent(in)                            :: IPR
       type(DeformationRate),intent(in)              :: MacroDefRate
       type(DeformationState),intent(in)             :: MacroDefState
@@ -77,6 +76,7 @@
       !> Symmetric and anti-symmetric parts of normalized relaxation tensor, in sample reference system
       double precision, dimension(3,3):: RHOSsa, RHOAsa
       double precision,dimension(5):: RHOS, RHOA 
+      double precision,dimension(194) :: XX  
       dimension C2(3,3),                                                 &
        TDCb(3,3,2),TRCb(3,3,2),                                          &
        relax(3,3,3),DACC(10),                                            &
