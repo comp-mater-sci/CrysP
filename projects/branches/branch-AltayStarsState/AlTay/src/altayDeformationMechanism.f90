@@ -79,10 +79,6 @@ private
         !> Shape is [n_twinning_systems]
         double precision,dimension(:),allocatable :: G
         
-        !> (Redundant/inappropriate component for DeformationMechanismData type)
-        !> Shape is [2*DM_dev_dims x 2*n_systems]
-        double precision,dimension(:,:),allocatable :: A2
-        
         
     end type
 
@@ -402,13 +398,11 @@ contains
         ! Apparently, this works fine:
         allocate(this%A1(DM_dev_dims,this%n_systems),  &
                  this%B1(DM_dir_dims,this%n_systems),  &
-                 this%A2(2*DM_dev_dims, 2*this%n_systems),&
                  stat=memerr)
         if (memerr /= 0) return
         !
         this%A1 = 0.D0
         this%B1 = 0.D0
-        this%A2 = 0.D0
         !
         if (this%n_twinning_systems > 0) then
             allocate(this%B2(DM_twin_dims, this%n_twinning_systems), &
@@ -503,20 +497,6 @@ contains
         if (info == criSuccess) then
             !
             this%n_systems = this%n_slip_systems + this%n_twinning_systems
-            ! initialize the A2 component
-
-            ! It is a rectangular matrix:
-            !      | A1   0 |
-            ! A2 = |--------|
-            !      | 0   A1 |
-            dims = shape(this%A1)
-            allocate(this%A2(2*dims(1), 2*dims(2)),stat=memerr)
-            if (memerr /= 0) then
-                info = criErr_MemAlloc
-                return
-            endif
-            !
-            call assemblyMatrix_A00A(this%A1, this%A2, info)
         endif
     !
     end subroutine
@@ -558,8 +538,6 @@ contains
             read(inunit,fmt=104,err=900,end=900)  itmp, this%B2(:,i), this%G(i)
         enddo
         !
-        call assemblyMatrix_A00A(this%A1, this%A2, info)
-        !
     100 format(A)
     101 format(8I4)
     102 format (I4,8F20.16) 
@@ -569,31 +547,6 @@ contains
          return
     900 info = criErr_IORead
 
-    end subroutine
-    
-      
-    !> Make a matrix assembly [[A 0] [0 A]]
-    !>
-    subroutine assemblyMatrix_A00A(A, B, info)
-    implicit none
-    double precision,dimension(:,:),intent(in)  :: A
-    double precision,dimension(:,:),intent(out) :: B
-    integer,intent(out)                         :: info
-    !
-    integer,dimension(2) :: dims
-        ! check preconditions
-        info = criErr_BadArgs
-        dims = shape(A)
-        if (all(2*dims == shape(B))) then
-            ! Zeros:
-            B(dims(1)+1:,:dims(2)) = 0.D0
-            B(:dims(1),dims(2)+1:) = 0.D0
-            ! Set A matrix in the upper-right and lower-left corners of B
-            B(:dims(1),:dims(2)) = A
-            B(dims(1)+1:,dims(2)+1:) = A
-            info = criSuccess
-        endif
-    !
     end subroutine
     
       

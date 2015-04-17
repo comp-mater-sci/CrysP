@@ -527,6 +527,31 @@
       RETURN
       END SUBROUTINE        
 
+    
+      
+    !> Make a matrix assembly [[A 0] [0 A]]
+    !>
+    subroutine assemblyMatrix_A00A(A, B, info)
+    implicit none
+    double precision,dimension(:,:),intent(in)  :: A
+    double precision,dimension(:,:),intent(out) :: B
+    integer,intent(out)                         :: info
+    !
+    integer,dimension(2) :: dims
+        ! check preconditions
+        info = criErr_BadArgs
+        dims = shape(A)
+        if (all(2*dims == shape(B))) then
+            ! Zeros:
+            B(dims(1)+1:,:dims(2)) = 0.D0
+            B(:dims(1),dims(2)+1:) = 0.D0
+            ! Set A matrix in the upper-right and lower-left corners of B
+            B(:dims(1),:dims(2)) = A
+            B(dims(1)+1:,dims(2)+1:) = A
+            info = criSuccess
+        endif
+    !
+    end subroutine
 
 
       end module
