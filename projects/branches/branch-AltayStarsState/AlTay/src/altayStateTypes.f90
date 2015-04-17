@@ -11,7 +11,6 @@ implicit none
         double precision :: tGEW = 1.D0 ,tGAM = 0.D0
         double precision, dimension(3,3) :: tT = 0.D0
         double precision, dimension(3,3) :: tF = unit_sr_matrix
-        double precision, dimension(3,3) :: tRHO = 0.D0
     end type
 
 
@@ -114,7 +113,6 @@ implicit none
     !>    tPHI and tfi2 fields
     !>  - tAXES,tEULR,tF,tCIJ,tTAX - inherit corresponding properties 
     !>    from the MaterialFrame mf
-    !>  - tRHO is zeroed.
     !> \todo consider converting grain_init into elemental subroutine
     subroutine grain_init(this, mf, info)
     implicit none
@@ -126,8 +124,6 @@ implicit none
         !
         ! initialize the remaining components with mf data...
         this%tF   = mf%FALG
-        ! ... and zero all the rest.
-        this%tRHO  = 0.D0
         info = criSuccess
     !
     end subroutine
