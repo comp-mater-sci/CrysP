@@ -83,16 +83,17 @@ contains
     !
     integer :: i,ngrains
     integer,parameter :: NSTAP = 1
-    double precision,parameter :: convf = 180.D0 / acos(-1.D0)
+    type(EulerAngles) :: euler_deg_tmp
     !
         info = criErr_IOWrite
         ngrains = size(texture%grains)
         do i = 1, ngrains
             associate(grain => texture%grains(i))
-            write(iounit,97,iostat=info) grain%tfi2 * convf,        &
-                                         grain%tPHI* convf,         &
-                                         grain%tfi1* convf,         &
-                                         NSTAP,                     &
+            euler_deg_tmp = EulerAnglesRad2Deg(grain%teuler)    
+            write(iounit,97,iostat=info) euler_deg_tmp%fi2, &
+                                         euler_deg_tmp%PHI, &
+                                         euler_deg_tmp%fi1, &
+                                         NSTAP,        &
                                          grain%tGEW
             end associate
             if (info /= 0) exit
@@ -124,18 +125,16 @@ contains
             STAP=0.0D0
             associate(grain => texture%grains(i))
                 ! order: PHI2,PHI,PHI1,STAP,NSTAP,GEW,GAMMA
-                read(iounit,96,iostat=info) grain%tfi2,         &
-                                            grain%tPHI,         &
-                                            grain%tfi1,         &
+                read(iounit,96,iostat=info) grain%teuler%fi2,         &
+                                            grain%teuler%PHI,         &
+                                            grain%teuler%fi1,         &
                                             STAP,NSTAP,         &
                                             grain%tGEW,         &
                                             grain%tGAM
                 if (info /= 0) exit
                 info = criSuccess
                 ! Convert the grain orientatios from degrees to radians
-                grain%tfi1 = grain%tfi1 * convf
-                grain%tPHI = grain%tPHI * convf
-                grain%tfi2 = grain%tfi2 * convf
+                grain%teuler = EulerAnglesDeg2Rad(grain%teuler)
             end associate
             i = i + 1
             if (NSTAP > 1) then
@@ -146,7 +145,7 @@ contains
                 i0 = i - 1 ! Store the index of the "parent" grain
                 do k=1,NSTAP-1
                         texture%grains(i) = texture%grains(i0)
-                        texture%grains(i)%tfi1 = texture%grains(i0)%tfi1 + dble(k)*STAP*convf
+                        texture%grains(i)%teuler%fi1 = texture%grains(i0)%teuler%fi1 + dble(k)*STAP*convf
                         i = i + 1
                 enddo
             endif

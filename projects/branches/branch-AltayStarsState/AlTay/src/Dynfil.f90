@@ -48,9 +48,9 @@ contains
       double precision,intent(out) :: F(3,3),T(3,3)
       !
       associate (DFIL => statevars%texture%grains)
-            FI1=DFIL(i)%tFI1
-            PHI=DFIL(i)%tPHI
-            FI2=DFIL(i)%tFI2
+            FI1=DFIL(i)%teuler%FI1
+            PHI=DFIL(i)%teuler%PHI
+            FI2=DFIL(i)%teuler%FI2
             GEW=DFIL(i)%tGEW
             GAM=DFIL(i)%tGAM
             T=DFIL(i)%tT
@@ -69,9 +69,9 @@ contains
       double precision,intent(in) :: F(3,3),T(3,3)
       !
       associate (DFIL => statevars%texture%grains)
-            DFIL(i)%tFI1=FI1
-            DFIL(i)%tPHI=PHI
-            DFIL(i)%tFI2=FI2
+            DFIL(i)%teuler%FI1=FI1
+            DFIL(i)%teuler%PHI=PHI
+            DFIL(i)%teuler%FI2=FI2
             DFIL(i)%tGEW=GEW
             DFIL(i)%tGAM=GAM
             DFIL(i)%tT=T

@@ -6,8 +6,7 @@ implicit none
     !> Representation of a single grain/crystal.
     !> \todo Identify & remove redundant fields.
     type :: Grain
-        !> \todo replace tFI1, tPHI and tFI2 by EulerAngles object.
-        double precision :: tFI1 = 0.D0,tPHI = 0.D0, tFI2 = 0.D0
+        type(EulerAngles) :: teuler
         double precision :: tGEW = 1.D0 ,tGAM = 0.D0
         double precision, dimension(3,3) :: tT = 0.D0
     end type
@@ -108,9 +107,7 @@ implicit none
     !> Set the computed fields in grain structure.
     !>
     !> The following fields are modified:
-    !>  - tT is calculated from Euler angles as defined by the tfi1,
-    !>    tPHI and tfi2 fields
-    !>    from the MaterialFrame mf
+    !>  - tT is calculated from Euler angles teuler
     !> \todo consider converting grain_init into elemental subroutine
     subroutine grain_init(this, mf, info)
     implicit none
@@ -118,7 +115,7 @@ implicit none
     type(MaterialFrame),intent(in)  :: mf
     integer,intent(out)             :: info
     !
-        this%tT = rotmat(this%tfi1,this%tPHI,this%tfi2)
+        this%tT = rotmat(this%teuler) 
         !
         info = criSuccess
     !

@@ -51,7 +51,7 @@ contains
     integer,intent(out)             :: info     !< exit code
     !      
     integer :: npoint, i,ii,jj, ioerr
-    double precision,parameter :: convf = 180.D0 / acos(-1.D0)
+    type(EulerAngles) :: euler_deg_tmp
     !
         info = criErr_IOWrite
         npoint = size(this%texture%grains)
@@ -60,10 +60,11 @@ contains
         !
         do i=1,npoint
             associate(grain => this%texture%grains(i))
-                write(iounit,iostat=ioerr) grain%tGEW,                &
-                            grain%tfi1*convf,                       &
-                            grain%tPHI*convf,                       &
-                            grain%tfi2*convf,                       &
+                euler_deg_tmp = EulerAnglesRad2Deg(grain%teuler)
+                write(iounit,iostat=ioerr) grain%tGEW, &
+                            euler_deg_tmp%fi1,         &
+                            euler_deg_tmp%PHI,         &
+                            euler_deg_tmp%fi2,         &
                             grain%tGAM
             end associate
             if (ioerr /= 0) exit
@@ -96,7 +97,7 @@ contains
     integer,intent(out)     :: info     !< Exit code
     !
     integer :: npoint, i, ii,jj, ioerr
-    double precision,parameter :: convf = acos(-1.D0) / 180.D0
+    type(EulerAngles) :: euler_deg_tmp
     !      
         read(iounit,iostat=info) this%texture%nrstep,npoint,this%mf%FALG
         if (info /= 0) return
@@ -108,15 +109,13 @@ contains
         do i=1,npoint
             associate(grain => this%texture%grains(i))
                 read(iounit,iostat=ioerr)grain%tGEW,      &
-                                        grain%tfi1,      &
-                                        grain%tPHI,      &
-                                        grain%tfi2,      &
+                                        euler_deg_tmp%fi1,&
+                                        euler_deg_tmp%PHI,&
+                                        euler_deg_tmp%fi2,&
                                         grain%tGAM
                 if (ioerr /= 0) exit
                 ! Convert the grain orientatios from degrees to radians
-                grain%tfi1 = grain%tfi1 * convf
-                grain%tPHI = grain%tPHI * convf
-                grain%tfi2 = grain%tfi2 * convf
+                grain%teuler = EulerAnglesDeg2Rad(euler_deg_tmp)
                 !
             end associate
         enddo
