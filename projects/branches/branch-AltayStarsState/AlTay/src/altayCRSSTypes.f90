@@ -39,8 +39,11 @@ implicit none
         
     end type
     
+    !> \fixme: the "_" is added to the generic name as a work-around for this built error:
+    !>     "error #8515: If generic name is the same as derived type name all
+    !>      of the procedures in the interface block must be functions.   [CRSSDATA_INIT]"
     !> Initialization procedure of a CRSSData object
-    interface CRSSData
+    interface CRSSData_
         module procedure CRSSData_init
     end interface
     

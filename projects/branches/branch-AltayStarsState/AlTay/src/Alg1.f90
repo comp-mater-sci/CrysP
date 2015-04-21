@@ -8,16 +8,13 @@
       use altayMacroKinematic
       use criMathUtils
       use altayPancake, only: Pancak2Solution
+      use altayDeformationMechanism
  
       integer,parameter,private :: N = 5, N1 = N + 1 
       
-      integer,private           :: M,NGL,NTW
-      double precision,private  :: B1(3,96),B(5,5),B2(6,96),G(96)
-      integer,private           :: DI1(5)
       
       type(Pancak2Solution),private, save :: Pancak2_solution !cf note#1.
-      double precision, dimension(5,96), private, save :: A1 !cf note#1.
-      integer, private, save :: M11 !cf note#1.
+      type(DeformationMechanismData), private, save ::DM_data !cf note#1.
       !> note#1: the save attribute is required to save these objects 
       !> in-between calls to Taylor and taylr1 from simul.
             
@@ -45,16 +42,9 @@
       type(DeformationState),intent(in),optional :: MacroDefState
       !
       COMMON /TEXTUR/ TRF(3,3),C2(3,3)
-      COMMON /IGLIJS/ M,CC(2,96) !M instead of M11 needs to be used here. Both 
-                                 ! hold same value yet M11 has SAVE attribute,
-                                 ! which is apparently incompatible with being 
-                                 ! a common block component.
       !     SHsam:    macroscopic stress in sample reference system
       COMMON /SIMUL_TAYLOR/ SHsam(3,3), IOR,laml,ngr,nrl,TRFb(3,3,2),GMMAb(2)
       COMMON /GENRLX/ Ssam(3,3),relaxationrate_sam(3,3)
-      character(len=72) :: TITGLIJ
-      INTEGER R 
-      DATA MMAX/96/ ! dimension of A1 and other arrays 
 !
 !     DVM = von Mises equivalent strain rate
 !
@@ -64,68 +54,44 @@
  1000 if(NLIST.eq.1) then
       WRITE (IMP,216)
       end if
- 216  FORMAT (/,' SUBROUTINE TAYLOR - READS ITS CRYSTAL DATA',//)
-!
-      R=LEC
-!
-  507 read (R,217) TITglij
-  217 format(A)
-      if(NLIST.eq.1) then
-      write (IMP,221) titglij
-      end if
-  221 format (/,' Slip system set:',A,/)
-      READ (R,210) I,NGL,NTW,DI1,X,Y
- 210  FORMAT (8I4,4X,2F10.0)
-      if(NLIST.eq.1) then
-      WRITE (IMP,211) I,NGL,NTW,DI1
-      end if
- 211  FORMAT (1X,I4,10X,2I5,10X,5I5)
+216   FORMAT (/,' SUBROUTINE TAYLOR - READS ITS CRYSTAL DATA',//)
+      !
+      call DeformationMechanismData_readPre(DM_data, LEC, info)
+      !
+      if (DM_data%n_systems.gt.DM_max_systems)then
 #ifndef ALTAY_SUBROUTINE
-      IF (I.NE.0) call terminate(stopcode_runtimeerror)
-#else
-      if (I.NE.0) then
-      RCM_RAISE(1,'TAYLOR','Improper slip system set',RCM_RTN)
-      endif
-#endif
-      M=NGL+NTW
-      M11=M
-      if (M11.gt.MMAX)then
-#ifndef ALTAY_SUBROUTINE
-            write (*,5001) M11,MMAX
+            write (*,5001) DM_data%n_systems,DM_max_systems
             if(NLIST.eq.1) then
-                  write (IMP,5001) M11,MMAX
+                  write (IMP,5001) DM_data%n_systems,DM_max_systems
             end if
             call terminate(stopcode_runtimeerror)
 #else
             RCM_RAISE(1,'TAYLOR','Too large slip system set',RCM_RTN)
 #endif
-      endif
- 5001 format(' TAYLOR - NGL+NTW=',I5,' LARGER THAN  MMAX=',I5) 
-      DO 500 I1=1,M11                                                     
-      READ (R,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
- 212  FORMAT (I4,8F20.16)
-      if(NLIST.eq.1) then
-      WRITE (IMP,213) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
-      end if
+      endif   
+5001  format(' TAYLOR - n_systems=',I5,' LARGER THAN  DM_max_systems=',I5)       
+      !
+      if(NLIST.eq.1) then !!echo to LST
+      write (IMP,221) DM_data%description
+  221 format (/,' Slip system set:',A,/)
+      WRITE (IMP,211) 0,DM_data%n_slip_systems,DM_data%n_twinning_systems,DM_data%DI
+ 211  FORMAT (1X,I4,10X,2I5,10X,5I5)
+      DO 500 I1=1,DM_data%n_systems                                                     
+      WRITE (IMP,213) I1,(DM_data%A1(J,I1),J=1,5),(DM_data%B1(L,I1),L=1,3)
  213   FORMAT (I3,' A ',5F10.7,' B ',3F10.7)
  500  CONTINUE
       DO 501 I=1,5                                                      
-      READ (R,214) J,(B(I,L),L=1,5)
- 214  FORMAT (I4,5D23.16)
-      if(NLIST.eq.1) then
-      WRITE (IMP,215) J,(B(I,L),L=1,5)
-      end if
- 215  FORMAT (1X,I4,10X,5D15.8)
+      WRITE (IMP,215) I1-1+I,(DM_data%B(I,L),L=1,5)
+  215  FORMAT (1X,I4,10X,5D15.8)
  501  CONTINUE
-      IF (NTW.EQ.0) GOTO 504                                            
-      DO 505 I=1,NTW                                                    
-      READ (R,212) J,(B2(L,I),L=1,6),G(I)
-      if(NLIST.eq.1) then
-      WRITE (IMP,218) J,(B2(L,I),L=1,6),G(I)
-      end if
+      IF (DM_data%n_twinning_systems.EQ.0) GOTO 504                                            
+      DO 505 I=1,DM_data%n_twinning_systems                                                    
+      WRITE (IMP,218) I1+4+I,(DM_data%B2(L,I),L=1,6),DM_data%G(I)
  218  format (i4,' B2',6f10.7,' G',f10.7)
  505  CONTINUE
- 504  CONTINUE
+504   CONTINUE
+      end if !!end of echo to LST
+      !
       RETURN
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011 
 ! 2000 IF (IGLIJ.EQ.0) GOTO 70  
@@ -166,8 +132,8 @@
  3000 continue
 !      write (*,1234)
 ! 1234 format (' Just before Pancak2')
-       CALL Pancak2(Pancak2_solution,state, hardparams,IOR,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1, &
-       IPR,MacroDefRate,MacroDefState,A1)
+       CALL Pancak2(Pancak2_solution,state, hardparams,IOR,laml,ngr,nrl,TRFb,GMMAb, &
+       IPR,MacroDefRate,MacroDefState,DM_data)
        !work-around to bring following 2 variables in scope of simul, via /GENRLX/
        Ssam =               Pancak2_solution%stress_sam         
        relaxationrate_sam = Pancak2_solution%relaxationrate_sam
@@ -212,7 +178,7 @@
       type(EulerAngles):: Euler
       !
       DIMENSION ROT(3)
-      dimension GAMdot(96)
+      dimension GAMdot(DM_max_systems)
 #ifdef PEBP_ENABLED      
       integer :: info
       double precision :: ddt
@@ -221,7 +187,7 @@
       !
       SAVE
       !
-      call SLIPRAT(GAMdot,MacroDefRate,Pancak2_solution,A1)
+      call SLIPRAT(GAMdot,MacroDefRate,Pancak2_solution,DM_data)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif      
@@ -240,7 +206,7 @@
       endselect
 #endif
       !
-      TOTGAMdot=sum(abs(GAMdot(1:M11)))
+      TOTGAMdot=sum(abs(GAMdot(1:DM_data%n_systems)))
       !
       if(NLIST.eq.1) then
           write (IMP,103) ISTP,IOR,fi1,PHI,fi2
@@ -257,27 +223,27 @@
       !
       if(NLIST.eq.1) then
           WRITE (IMP,109) MacroDefRate%vMeqStrainRate,Seq,                   &
-                      (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M11)
+                      (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,DM_data%n_systems)
       end if
  109  FORMAT ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
        '  SLIP RATES',/,(T2,10F10.5))
       !                                                          
-      ROT = matmul(B1,GAMdot)
+      ROT = matmul(DM_data%B1,GAMdot)
       if(NLIST.eq.1) then
           WRITE (IMP,305) ROT
       end if
 305   FORMAT (' ROTATIONS',3F12.6)
       !
       ddt = 1.0 !A time increment of 1s is assumed.
-      call update_crystal_trafo_fromSlip(TRF_new,TRF,GAMdot,B1,MacroDefRate,Pancak2_solution%relaxationspin_sam,ddt,info)
+      call update_crystal_trafo_fromSlip(TRF_new,TRF,GAMdot,DM_data,MacroDefRate,Pancak2_solution%relaxationspin_sam,ddt,info)
       !
       Euler= EuleranglesType(TRF_new)
       fi1=Euler%fi1 !
       PHI=Euler%PHI !use of EulerAngles2Arr impeded
       fi2=Euler%fi2 !   by common block /EULERA/
       !
-      IF (NTW.EQ.0) GOTO 31                                             
-      call update_crystal_trafo_fromTwin(TRF_new,NTW,NGL,NLIST,IMP,GAMdot,G)
+      IF (DM_data%n_twinning_systems.EQ.0) GOTO 31                                             
+      call update_crystal_trafo_fromTwin(TRF_new,DM_data,NLIST,IMP,GAMdot)
       !
       Euler= EuleranglesType(TRF_new)
       fi1=Euler%fi1 !
@@ -306,7 +272,7 @@
       
 
       subroutine update_crystal_trafo_fromSlip(this,previous, &
-                         sliprates,B1,MacroDefRate,rho_a_sam,dt,info)
+                         sliprates,DM_data,MacroDefRate,rho_a_sam,dt,info)
       use criErrcodes
       implicit none
       !
@@ -320,8 +286,8 @@
       !> crystal reference frame (at start of increment), as expressed in the 
       !> sample reference frame.       
       double precision, intent(in),  dimension(3,3) :: previous
-      double precision, intent(in),  dimension(96)  :: sliprates
-      double precision, intent(in),  dimension(3,96):: B1
+      double precision, intent(in),  dimension(DM_max_systems)  :: sliprates
+      type(DeformationMechanismData), intent(in)    :: DM_data
       type(DeformationRate), intent(in)             :: MacroDefRate
       !> The relaxation spin expressed in the sample frame
       double precision, intent(in),  dimension(3,3) :: rho_a_sam    
@@ -351,7 +317,7 @@
       type(EulerAngles) :: Euler
       
       
-      plasticspin_crys_vector = matmul(B1,sliprates)
+      plasticspin_crys_vector = matmul(DM_data%B1,sliprates)
       !
       plasticspin_crys = Vec3ToAntiSymMat33(PlasticSpin_crys_vector)
       !
@@ -384,23 +350,23 @@
 
 
       
-      subroutine update_crystal_trafo_fromTwin(TRF, &
-                         NTW,NGL,NLIST,IMP,GAMdot,G)
+      subroutine update_crystal_trafo_fromTwin(TRF, DM_data,NLIST,IMP,GAMdot)
       !use criErrcodes
       implicit none
       double precision, intent(inout), dimension(3,3) :: TRF
-      integer, intent(in) :: NTW, NGL, NLIST, IMP
-      double precision, intent(in),  dimension(96)  :: GAMdot, G
+      type(DeformationMechanismData), intent(in)    :: DM_data
+      integer, intent(in) :: NLIST, IMP
+      double precision, intent(in),  dimension(DM_max_systems)  :: GAMdot
       !
       double precision :: X, RNDM
       integer :: I, J, K
-      double precision, dimension(96) :: VOLFR
+      double precision, dimension(DM_max_systems) :: VOLFR
       double precision, dimension(3,3) :: RCC, TDC
       !
       X=0.                                                              
-      DO 84 I=1,NTW                                                     
-      J=I+NGL                                                           
-      X=X+GAMdot(J)/G(I)                                                
+      DO 84 I=1,DM_data%n_twinning_systems                                                     
+      J=I+DM_data%n_slip_systems                                                           
+      X=X+GAMdot(J)/DM_data%G(I)                                                
       VOLFR(I)=X                                                        
   84  CONTINUE                                                          
        IF (X.LE.1.) GOTO 85  
@@ -416,7 +382,7 @@
       'Total volume fraction of twins exceeds unity',RCM_RTN)
 #endif
   85  CALL RANDOM_NUMBER(RNDM)
-      DO 86 I=1,NTW                                                     
+      DO 86 I=1,DM_data%n_twinning_systems                                                     
       IF (RNDM.LT.VOLFR(I)) GOTO 87                                     
   86  CONTINUE                                                          
       GOTO 31                                                           
@@ -424,18 +390,18 @@
       DO 89 J=1,3                                                       
   89  RCC(K,J)=TRF(K,J)                                                  
   88  CONTINUE                                                          
-      TDC(1,1)=B2(1,I)                                                  
-      X=B2(2,I)                                                         
+      TDC(1,1)=DM_data%B2(1,I)                                                  
+      X=DM_data%B2(2,I)                                                         
       TDC(2,1)=X                                                        
       TDC(1,2)=X                                                        
-      X=B2(3,I)                                                         
+      X=DM_data%B2(3,I)                                                         
       TDC(3,1)=X                                                        
       TDC(1,3)=X                                                        
-      TDC(2,2)=B2(4,I)                                                  
-      X=B2(5,I)                                                         
+      TDC(2,2)=DM_data%B2(4,I)                                                  
+      X=DM_data%B2(5,I)                                                         
       TDC(3,2)=X                                                        
       TDC(2,3)=X                                                        
-      TDC(3,3)=B2(6,I)                                                  
+      TDC(3,3)=DM_data%B2(6,I)                                                  
       TRF = matmul(TDC,RCC) 
 31    CONTINUE
       !

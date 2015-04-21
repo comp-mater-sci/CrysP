@@ -1,7 +1,6 @@
 ! MODIFICATIONS AUG 2010
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
-! NGLS is replaced by M11
 !
       PROGRAM MAINA1
       use altayConfig
@@ -36,11 +35,6 @@
 !     IDISK1= work file (obsolete, not used)
 !     NDAT1= Input-texture file
 !
-      !> \todo get rid of this common block from here. At the moment
-      !>       we still need it for getting M11 (number of slip systems)
-      COMMON /IGLIJS/ M11,CC(2,96)
-      integer :: M11
-      double precision :: CC
       !
       common /CEIGEN/ JBLOC
       integer :: JBLOC
@@ -121,7 +115,7 @@
   96  FORMAT (I5) 
       ! Set the config field if needed
       if (NLINES > 0) then
-          call CRSSData(config%hardening%crss_ratios, 6*NLINES,info)
+          call CRSSData_(config%hardening%crss_ratios, 6*NLINES,info)
       endif
       DO 3 ISIGN=1,2                                                       
       DO 1 J=1,NLINES                                                   
@@ -203,8 +197,6 @@
             call terminate(stopcode_inputerror)
       endif
       !
-      ! FIXME: this should be done in a different way
-      material%n_slip_systems = M11
       !
       !
       ! Initializing microstructure      

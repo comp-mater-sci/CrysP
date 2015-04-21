@@ -6,6 +6,7 @@
       use criMathUtils
       use altayHardTypes
       use altayCRSSTypes
+      use altayDeformationMechanism
       
       integer, parameter, public ::          Pancak2_max_activesystems = 8
       double precision, parameter, public :: Pancak2_tolerance = 5.0d-6
@@ -33,8 +34,8 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(solution,state, hardparams,ior,laml,ngr,nrl,M11,NGL,TRFb,GMMAb,B,DI1,  &
-       IPR,MacroDefRate,MacroDefState,A1)
+      Subroutine Pancak2(solution,state, hardparams,ior,laml,ngr,nrl,TRFb,GMMAb,  &
+       IPR,MacroDefRate,MacroDefState,DM_data)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
@@ -55,16 +56,12 @@
       integer,intent(in)                            :: laml
       integer,intent(in)                            :: ngr
       integer,intent(in)                            :: nrl      
-      integer,intent(in)                            :: M11
-      integer,intent(in)                            :: NGL
       double precision,dimension(3,3,2),intent(in)  :: TRFb
       double precision,dimension(2),intent(in)      :: GMMAb
-      double precision,dimension(5,5),intent(in)    :: B
-      integer,dimension(5),intent(in)               :: DI1
       integer,intent(in)                            :: IPR
       type(DeformationRate),intent(in)              :: MacroDefRate
       type(DeformationState),intent(in)             :: MacroDefState
-      double precision,dimension(5,96),intent(in)   :: A1
+      type(DeformationMechanismData), intent(in)    :: DM_data
       !
       !> Number of active systems founds so far by the search algorithm
       integer nactiv_sofar
@@ -133,13 +130,13 @@
 !     N is number of rows of A2;   NU number of rows of UU2
       N=5*NGR
       NU=N
-      M2=NGR*M11
-      M12=NGR*M11+NRL
+      M2=NGR*DM_data%n_systems
+      M12=NGR*DM_data%n_systems+NRL
       if (laml.eq.2) goto 3
       !Construct A2
       A2 = 0.0d0
-      A2( 1:5  ,     1:M11   ) = A1
-      A2( 6:10 , 1+M11:2*M11 ) = A1
+      A2( 1:5  ,     1:DM_data%n_systems   ) = DM_data%A1
+      A2( 6:10 , 1+DM_data%n_systems:2*DM_data%n_systems ) = DM_data%A1
 !
 !     Updating of microstructure
 !
@@ -159,8 +156,8 @@
       UU(j,i)=0.0
   31  continue
       DO 53 I=1,5
-      DI(I)=DI1(I)
-      DI(I+5)=DI1(I)+M11
+      DI(I)=DM_data%DI(I)
+      DI(I+5)=DM_data%DI(I)+DM_data%n_systems
 53    CONTINUE    
       !
       !> \todo Refine the design of handling the CRSS arrays (should it be done inside 
@@ -169,7 +166,7 @@
       !>        2) we may get serious penalty due to frequent dynamic reallocations
       !>        3) BUT: perhaps it is better to keep CRSSmatrix local (this conflicts 
       !>           with (1) and (2) in this implementation of CRSSData
-      call CRSSData_init(crss_cluster, M11, infoarr)
+      call CRSSData_init(crss_cluster, DM_data%n_systems, infoarr)
       !
       do 1 IL=1,NGR
       L1=5*(IL-1)
@@ -215,7 +212,7 @@
       B5(j)=B5(j)/MacroDefRate%vMeqStrainRate
       B8(j,IL)=B5(j)
   44  continue
-      K1=M11*(IL-1)
+      K1=DM_data%n_systems*(IL-1)
       !
       ! Retrieve the crss_cluster for IL
       !    IOR+IL-1  = sequence number of current grain 
@@ -223,11 +220,11 @@
       call altayHard_getCRSS(hardparams, state, IOR+IL-1,GMMAb(IL),crss_cluster(IL),info)
       !
       ! Assign crss_cluster to proper section of CCC
-      CCC(:,1+K1:M11+K1)=crss_cluster(IL)%crss(:,1:M11)  
+      CCC(:,1+K1:DM_data%n_systems+K1)=crss_cluster(IL)%crss(:,1:DM_data%n_systems)  
       !
       ! Set Tau_crit for antitwinning direction equal to
       ! GETAL times Tau_crit for twinning direction       
-      do I=NGL+1,M11 ! this do-loop will only be executed for NTW>0
+      do I=DM_data%n_slip_systems+1,DM_data%n_systems ! this do-loop will only be executed for DM_data%n_twinning_systems > 0
           CCC(2,I+K1)=CCC(1,I+K1)*GETAL
       end do
       !
@@ -235,7 +232,7 @@
  914  format (' i,j',2i5, ' CCC ',2d16.4)
       DO 15 J=1,5
       DO 15 I=1,5
-      UU(I+L1,J+L1)=B(I,J)
+      UU(I+L1,J+L1)=DM_data%B(I,J)
   15  continue
    1  continue 
       DO 54 I=1,N 
@@ -378,7 +375,7 @@
   89  j=0
       do 40 IG=1,NGR
       XXTOT=0.0
-      do i=1,M11
+      do i=1,DM_data%n_systems
        j=j+1  
        XXTOT=XXTOT+ABS(xx(j))
       enddo
@@ -397,7 +394,7 @@
 !     From here on, output is produced for grain number "laml"
 !
    3  continue
-      jj=M11*(laml-1)
+      jj=DM_data%n_systems*(laml-1)
       !
       !assign crss for grain 'laml' to solution
       solution%allcrss = crss_cluster(laml)
@@ -475,13 +472,13 @@
 !      not deform at all, the stress and the active slip systems
 !       of the full constraintssolution are used.)
 !
-!      do i=1,M11
+!      do i=1,DM_data%n_systems
 !        j=i+jj
 !        write (IMP,308) i,DTAU1(j),XX(j)
 !      enddo
 ! 308  format ('PANCAK2  i,DTAU1, XX',i5,2d12.4)
       nactiv_sofar=0
-      do 305 i=1,M11
+      do 305 i=1,DM_data%n_systems
       j=i+jj
 !     If one grain does not deform, then DTAU1 comes from the full
 !     constraints solution.
