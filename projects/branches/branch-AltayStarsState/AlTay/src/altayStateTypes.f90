@@ -85,10 +85,9 @@ implicit none
     
     !> Finish initialization of the grain structures. This function must be called
     !> after initial setting up the texture data.
-    subroutine textureData_init(this, mf, info)
+    subroutine textureData_init(this, info)
     implicit none
     type(TextureData),intent(inout)     :: this
-    type(MaterialFrame),intent(in)      :: mf
     integer,intent(out)                 :: info
     !
     integer :: i
@@ -96,7 +95,7 @@ implicit none
         info = criErr_BadArgs
         if (allocated(this%grains)) then
             do i=1, size(this%grains)
-                call grain_init(this%grains(i), mf, info)
+                call grain_init(this%grains(i), info)
             enddo
             info = criSuccess
         endif
@@ -109,10 +108,9 @@ implicit none
     !> The following fields are modified:
     !>  - tT is calculated from Euler angles teuler
     !> \todo consider converting grain_init into elemental subroutine
-    subroutine grain_init(this, mf, info)
+    subroutine grain_init(this, info)
     implicit none
     type(Grain),intent(inout)       :: this
-    type(MaterialFrame),intent(in)  :: mf
     integer,intent(out)             :: info
     !
         this%tT = rotmat(this%teuler) 
