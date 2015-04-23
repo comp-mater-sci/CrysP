@@ -8,7 +8,13 @@
       use altayState
       use altayMaterial
       use altayMesostructure
-
+      use altayDeformationMechanism
+      use altayPancake
+      use altaySliprate
+      !
+      type(Pancak2Solution) :: Pancak2_solution
+      type(DeformationMechanismData), save ::DM_data !SAVE attribute due to multiple calls to SIMUL
+      !
       contains
     
     
@@ -53,20 +59,19 @@
 !     IW=2 is meant for outputting the final texture.
 !
       COMMON /TEXTUR/ TRF(3,3),C2(3,3)
-      COMMON /SIMUL_TAYLOR/ SHsam(3,3), IOR,laml,ngr,nrl,TRFb(3,3,2),GMMAb(2)
       COMMON /EULERA/ fi1,PHI,fi2
-      COMMON /GENRLX/ Ssam(3,3),relaxationrate_sam(3,3)
       dimension fi10b(2),phi0b(2),fi20b(2)
       dimension Fb(3,3,2)
       dimension fi1b(2),phib(2),fi2b(2)
       common /CEIGEN/ NBLOC
       DIMENSION                                &
        STOT(3,3),                                               &
-       RHOST(3,3),RHOSm(3,3),gewfb(2)
+       RHOST(3,3),RHOSm(3,3),gewfb(2) ,TRFb(3,3,2),GMMAb(2),SHSAM(3,3),GAMdot(DM_max_systems),ROT(3)
       dimension FS(3,3)
       character(len=40) :: TITEL
       integer :: NPOINT
       integer :: info
+      double precision :: ddt
       !> sequence number of the cluster
       integer :: i_cluster
       double precision :: GEWF = 1.0D0
@@ -87,6 +92,10 @@
       double precision :: WorkRate ! Rate of plastic work per unit 
                                    ! volume in the crystal
       double precision :: Wtot ! Total plastic work per unit volume in crystal
+      !> work-around to relocate large part of TAYLR1 to within SIMUL, without repetition
+      !   (cf. ifdef ALTAY_SUBROUTINE)
+      logical :: calling_TAYLR1 = .false.
+      !
 #ifdef PEBP_ENABLED
       type(StateDerivedVars) :: pebpSDV, pebpSDVavg
 #endif
@@ -159,7 +168,47 @@
   98  format (A)      
   99  FORMAT (2I5)
       !
-      CALL TAYLOR(state%old, material%hardening, 1)
+      if(NLIST.eq.1) then
+          WRITE (IMP,216)
+      end if
+216   FORMAT (/,' SUBROUTINE SIMUL  - READS ITS CRYSTAL DATA',//)
+      !
+      call DeformationMechanismData_readPre(DM_data, LEC, info)
+      !
+      if (DM_data%n_systems.gt.DM_max_systems)then
+#ifndef ALTAY_SUBROUTINE
+            write (*,5001) DM_data%n_systems,DM_max_systems
+            if(NLIST.eq.1) then
+                  write (IMP,5001) DM_data%n_systems,DM_max_systems
+            end if
+            call terminate(stopcode_runtimeerror)
+#else
+            RCM_RAISE(1,'SIMUL ','Too large slip system set',RCM_RTN)
+#endif
+      endif   
+5001  format(' SIMUL  - n_systems=',I5,' LARGER THAN  DM_max_systems=',I5)       
+      !
+      if(NLIST.eq.1) then !!echo to LST
+      write (IMP,221) DM_data%description
+  221 format (/,' Slip system set:',A,/)
+      WRITE (IMP,211) 0,DM_data%n_slip_systems,DM_data%n_twinning_systems,DM_data%DI
+ 211  FORMAT (1X,I4,10X,2I5,10X,5I5)
+      DO 500 I1=1,DM_data%n_systems                                                     
+      WRITE (IMP,213) I1,(DM_data%A1(J,I1),J=1,5),(DM_data%B1(L,I1),L=1,3)
+ 213   FORMAT (I3,' A ',5F10.7,' B ',3F10.7)
+ 500  CONTINUE
+      DO 501 I=1,5                                                      
+      WRITE (IMP,215) I1-1+I,(DM_data%B(I,L),L=1,5)
+  215  FORMAT (1X,I4,10X,5D15.8)
+ 501  CONTINUE
+      IF (DM_data%n_twinning_systems.EQ.0) GOTO 504                                            
+      DO 505 I=1,DM_data%n_twinning_systems                                                    
+      WRITE (IMP,218) I1+4+I,(DM_data%B2(L,I),L=1,6),DM_data%G(I)
+ 218  format (i4,' B2',6f10.7,' G',f10.7)
+ 505  CONTINUE
+504   CONTINUE
+      end if !!end of echo to LST
+      !
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -214,7 +263,35 @@
 
 #endif
       !
-      CALL TAYLOR(state%old, material%hardening, 2,MacroDefRate)
+      if(NLIST.eq.1) then                                         
+          WRITE (IMP,203)
+      end if     
+      do I=1,3                                                       
+          if(NLIST.eq.1) then                                   
+              WRITE (IMP,204) (MacroDefRate%VelGrad(I,J),J=1,3),         &
+                              (MacroDefRate%StrainRate(I,J),J=1,3),      &
+                              (MacroDefRate%Spin(I,J),J=1,3) 
+          end if
+      end do
+ 203  FORMAT (' SIMUL  - DISPLACEMENT GRADIENT WHICH WILL BE USED FOR THE SIMULATION', &
+              //T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,     &
+              'ANTISYMMETRICAL PART',/)
+ 204  FORMAT (1X,3(3F10.5,10X))
+      if (MacroDefRate%NormStrainRate.lt.1.0D-10) then
+#ifndef ALTAY_SUBROUTINE
+         write (*,205) MacroDefRate%NormStrainRate
+         if(NLIST.eq.1) then
+              write (IMP,205) MacroDefRate%NormStrainRate
+         end if
+         call terminate(stopcode_runtimeerror)
+#else
+         RCM_RAISE(1,'SIMUL ',                                           &
+        'Symmetric part of the strain step is too small',RCM_RTN)
+#endif
+      endif
+ 205  format (' SIMUL  - symmetric part of strain step is too small'     &
+       ,d20.8)
+!      
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -359,10 +436,9 @@
 !                - has to output the result of the second crystal found
 !                  during the previous computation.
 !
-!      write (*,3210)
-! 3210 format (' Just before Taylor')
  999  if (IW.le.1) then
-            CALL  TAYLOR(state%old, material%hardening,3,MacroDefRate,MacroDefState)
+            CALL Pancak2(Pancak2_solution,state%old, material%hardening,IOR,laml,ngr,nrl,TRFb,GMMAb, &
+                         IPR,MacroDefRate,MacroDefState,DM_data)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
 #endif            
@@ -375,27 +451,90 @@
       ! Skip the rest of the loop if IF > 1
   41  if (IW.gt.1) cycle
       !
+      calling_TAYLR1 = .false.
 #ifdef ALTAY_SUBROUTINE
       if (astate%simulCalls(astate%this)%input%full_model) then
-            CALL TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate,      &
-                        MacroDefRate)
-            RCM_GUARD
+            calling_TAYLR1 = .true.
       endif
 #else
-      CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain,WorkRate,           &
-                  MacroDefRate)
+      calling_TAYLR1 = .true.
 #endif      
-!   49 if (NFILTW.eq.1) write (IMP3,398) ITW
+      if (calling_TAYLR1) then
+      !
+      !-> -> -> content from TAYLR1
+      !
+      call SLIPRAT(GAMdot,MacroDefRate,Pancak2_solution,DM_data)
+#ifdef ALTAY_SUBROUTINE
+      RCM_GUARD
+#endif  
+#ifdef PEBP_ENABLED
+      select case(KOST)
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+            ! Here we explicitly set time increment to the value
+            ! that is implicitly assumed in Pancak2.
+            ddt = 1.D0
+#ifdef ALTAY_SUBROUTINE
+            if (.not. astate%simulCalls(astate%this)%input%keep_state)   &
+            call KS_updateState(IOR,GAMdot,ddt,info)
+#else
+            call KS_updateState(IOR,GAMdot,ddt,info)
+#endif
+      endselect
+#endif
+      GMMdot=sum(abs(GAMdot(1:DM_data%n_systems)))
+      !
+      if(NLIST.eq.1) then
+          write (IMP,103) ISTP,IOR,fi1,PHI,fi2
+      end if
+103   format (' ISTP,IOR',2I5,' phi1, PHI, phi2:',3F15.6)  
+      !
+      call CRSSData_CalcWorkRate(WorkRate, pancak2_solution%allcrss, GAMdot, info)
+      SeqGrain=WorkRate / MacroDefRate%vMeqStrainRate
+      !
+      if(NLIST.eq.1) then
+          WRITE (IMP,301) WorkRate
+ 301  FORMAT (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
+          WRITE (IMP,109) MacroDefRate%vMeqStrainRate,SeqGrain,                   &
+                      (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,DM_data%n_systems)
+109                   FORMAT ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
+       '  SLIP RATES',/,(T2,10F10.5))
+      end if  
+      !
+      ROT = matmul(DM_data%B1,GAMdot)
+      if(NLIST.eq.1) then
+          WRITE (IMP,305) ROT
+      end if
+305   FORMAT (' ROTATIONS',3F12.6)      
+      !
+      CALL TAYLR1(GAMdot,Pancak2_solution,DM_data,MacroDefRate)
+      !
+      if (nfile.ne.0.and.istp.eq.1) then
+          ! Taylor Factor of the grain:
+          Mgrain = GMMdot / MacroDefRate%vMeqStrainRate
+          !
+          call writeRESRecord(IMP2,ior,SeqGrain,WorkRate,tau,Mgrain,ratlon(MacroDefRate,Pancak2_solution%relaxationrate_sam), &
+                                Pancak2_solution%relaxationrate_sam,Pancak2_solution%relaxationspin_sam,Pancak2_solution%stress_sam,info)
+      end if
+      !
+      !<- <- <- content from TAYLR1
+      !
+      endif      
+#ifdef ALTAY_SUBROUTINE
+      if (calling_TAYLR1) then
+            RCM_GUARD
+      endif
+#endif     
+      !
  398  format (I3)
       !
-      STOT = STOT + Ssam*GEWF
-      RHOST = RHOST + relaxationrate_sam*GEWF
+      STOT = STOT + Pancak2_solution%stress_sam*GEWF
+      RHOST = RHOST + Pancak2_solution%relaxationrate_sam*GEWF
       !      
   63  SeqAvg = SeqAvg + SeqGrain*GEWF
       Mgrain = GMMdot /  MacroDefRate%vMeqStrainRate
       Mavg = Mavg + Mgrain*GEWF
       ! Normalized relaxation: ||relaxationrate_sam||/MacroDefRate%vMeqStrainRate = (||d-D||)/MacroDefRate%vMeqStrainRate 
-      srh = srh + norm2(relaxationrate_sam)/MacroDefRate%vMeqStrainRate*GEWF
+      srh = srh + norm2(Pancak2_solution%relaxationrate_sam)/MacroDefRate%vMeqStrainRate*GEWF
       HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s      
       GMM1 = GMM0 + GMMdot !Step time here implicitly assumed to be 1.0s
       Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
