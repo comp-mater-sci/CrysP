@@ -58,11 +58,8 @@
 !
 !     IW=2 is meant for outputting the final texture.
 !
-      COMMON /TEXTUR/ TRF(3,3),C2(3,3)
-      COMMON /EULERA/ fi1,PHI,fi2
       dimension fi10b(2),phi0b(2),fi20b(2)
-      dimension Fb(3,3,2)
-      dimension fi1b(2),phib(2),fi2b(2)
+      dimension dummy33(3,3)
       common /CEIGEN/ NBLOC
       DIMENSION                                &
        STOT(3,3),                                               &
@@ -96,6 +93,7 @@
       !   (cf. ifdef ALTAY_SUBROUTINE)
       logical :: calling_TAYLR1 = .false.
       !
+      type(EulerAngles), dimension(2) :: eulerb_1_rad, eulerb_0_deg, eulerb_0_rad ! _0_: start of inc; _1_: end of inc
 #ifdef PEBP_ENABLED
       type(StateDerivedVars) :: pebpSDV, pebpSDVavg
 #endif
@@ -407,23 +405,24 @@
  2626 do 80 L=laml,laml1
       if (ifil4.eq.NPOINT) goto 80
       ifil4=ifil4+1
-      call DYNFIL4(state%old,ifil4,fi10b(L),PHI0b(L),fi20b(L),                     &
-       TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L))
+      call DYNFIL4(state%old,ifil4,fi10b(L),PHI0b(L),fi20b(L),dummy33,    &
+       GEWFb(L),GMMAb(L),dummy33)
 !
-      fi1b(L)=fi10b(L)*convf
-      PHIb(L)=PHI0b(L)*convf
-      fi2b(L)=fi20b(L)*convf
+      eulerb_0_rad(L)%fi1=fi10b(L)
+      eulerb_0_rad(L)%PHI=PHI0b(L)
+      eulerb_0_rad(L)%fi2=fi20b(L)
+      !
+      TRFb(:,:,L) = rotmat(eulerb_0_rad(L))
+      !
+      eulerb_0_deg(L) = rad2deg(eulerb_0_rad(L))
+      !
   80  continue
       laml1=laml1+1
       if (laml1.gt.NGR) laml1=1
       laml=laml1
       GMM0=GMMAb(laml)
       call altayHard_getTau(material%hardening, GMM0,TAU,info)
-      fi1=fi1b(laml)
-      PHI=PHIb(laml)
-      fi2=fi2b(laml)
       !
-      TRF = TRFb(:,:,laml)
       IF (NFILE.eq.0.or.ISTP.gt.1) goto 999
 ! 
 !     In case of NGR=2:
@@ -484,7 +483,7 @@
       GMMdot=sum(abs(GAMdot(1:DM_data%n_systems)))
       !
       if(NLIST.eq.1) then
-          write (IMP,103) ISTP,IOR,fi1,PHI,fi2
+          write (IMP,103) ISTP,IOR,eulerb_0_deg(laml)%fi1,eulerb_0_deg(laml)%PHI,eulerb_0_deg(laml)%fi2
       end if
 103   format (' ISTP,IOR',2I5,' phi1, PHI, phi2:',3F15.6)  
       !
@@ -506,7 +505,7 @@
       end if
 305   FORMAT (' ROTATIONS',3F12.6)      
       !
-      CALL TAYLR1(GAMdot,Pancak2_solution,DM_data,MacroDefRate)
+      CALL update_crystal_orientation(eulerb_1_rad(laml),eulerb_0_rad(laml),GAMdot,Pancak2_solution,DM_data,MacroDefRate,info=info)
       !
       if (nfile.ne.0.and.istp.eq.1) then
           ! Taylor Factor of the grain:
@@ -548,18 +547,17 @@
 #ifdef ALTAY_SUBROUTINE
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL5(state%new,IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                   &
-                         MacroDefState%TotalDefGrad) 
+            call DYNFIL5(state%new,IOR,eulerb_1_rad(laml)%fi1,eulerb_1_rad(laml)%PHI,eulerb_1_rad(laml)%fi2,dummy33,GEWF,GMM1,                   &
+                         dummy33) 
       endif
 #else
-      call DYNFIL5(state%new,IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                         &
-                   MacroDefState%TotalDefGrad)
+      call DYNFIL5(state%new,IOR,eulerb_1_rad(laml)%fi1,eulerb_1_rad(laml)%PHI,eulerb_1_rad(laml)%fi2,dummy33,GEWF,GMM1,                         &
+                   dummy33)
 #endif
       ! 
 #ifndef ALTAY_SUBROUTINE
       ! Output the plastic work of the grain (in its initial configuration)
-      if (NRES >= 1) call writeReportRecord(IMP6,fi1b(laml),PHIb(laml),  &
-                                            fi2b(laml),Wtot,info)
+      if (NRES >= 1) call writeReportRecord(IMP6,eulerb_0_deg(laml),Wtot,info)
 #endif      
       !
       ! End of the loop over crystals

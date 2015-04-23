@@ -1,6 +1,7 @@
 !> Container for miscellaneous utility routines.
 module altayMiscutils
 use criErrcodes
+use criMathUtils
 implicit none
 
       !>@{ \name Exit codes that are returned to the OS on various stop contitions
@@ -96,13 +97,14 @@ implicit none
       end subroutine
       
       !> Write data line to the report file
-      subroutine writeReportRecord(outunit,fi1,PHI,fi2,Wtot,info)
+      subroutine writeReportRecord(outunit,eul,Wtot,info)
       implicit none
       integer,intent(in)            :: outunit !< I/O unit number to be used for raport
-      double precision,intent(in)   :: fi1,PHI,fi2,Wtot
+      type(EulerAngles),intent(in)  :: eul
+      double precision,intent(in)   :: Wtot
       integer,intent(out) :: info
       !
-            write(outunit,fmt=100,iostat=info) fi1, PHI, fi2, Wtot
+            write(outunit,fmt=100,iostat=info) eul%fi1, eul%PHI, eul%fi2, Wtot
             100 format(3(F15.7),E15.7)
       !
       end subroutine

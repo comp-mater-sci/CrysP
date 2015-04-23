@@ -23,7 +23,6 @@ contains
         info = textureData_resize(this%texture, ngrains)
         if (info == criSuccess) then
             call SMTreadBlock(iounit, this%texture, info)
-            if (info == criSuccess) call textureData_init(this%texture, info)
         endif
     !
     end subroutine

@@ -20,7 +20,6 @@ contains
         call CURreadTitle(this, iounit, info)
         if (info == criSuccess) then
             call CURreadBlock(this, iounit, blockIdx, info)
-            if (info == criSuccess) call textureData_init(this%texture, info)
         endif
     !
     end subroutine

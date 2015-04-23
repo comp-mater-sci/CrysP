@@ -8,7 +8,6 @@ implicit none
     type :: Grain
         type(EulerAngles) :: teuler
         double precision :: tGEW = 1.D0 ,tGAM = 0.D0
-        double precision, dimension(3,3) :: tT = 0.D0
     end type
 
 
@@ -83,41 +82,6 @@ implicit none
     !
     end function
     
-    !> Finish initialization of the grain structures. This function must be called
-    !> after initial setting up the texture data.
-    subroutine textureData_init(this, info)
-    implicit none
-    type(TextureData),intent(inout)     :: this
-    integer,intent(out)                 :: info
-    !
-    integer :: i
-    !
-        info = criErr_BadArgs
-        if (allocated(this%grains)) then
-            do i=1, size(this%grains)
-                call grain_init(this%grains(i), info)
-            enddo
-            info = criSuccess
-        endif
-    !
-    end subroutine
-    
-            
-    !> Set the computed fields in grain structure.
-    !>
-    !> The following fields are modified:
-    !>  - tT is calculated from Euler angles teuler
-    !> \todo consider converting grain_init into elemental subroutine
-    subroutine grain_init(this, info)
-    implicit none
-    type(Grain),intent(inout)       :: this
-    integer,intent(out)             :: info
-    !
-        this%tT = rotmat(this%teuler) 
-        !
-        info = criSuccess
-    !
-    end subroutine
     
     
 end module

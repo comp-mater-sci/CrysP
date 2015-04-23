@@ -26,7 +26,6 @@ contains
         call CUBreadTitle(this, iounit, info)
         if (info == criSuccess) then
             call CUBreadBlock(this, iounit, info)
-            if (info == criSuccess) call textureData_init(this%texture, info)
         endif
     !
     end subroutine

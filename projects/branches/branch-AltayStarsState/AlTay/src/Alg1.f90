@@ -16,47 +16,51 @@
       contains
       
       
-      subroutine TAYLR1(GAMdot,Pancak2_solution,DM_data,MacroDefRate)
+      subroutine update_crystal_orientation(this,previous,GAMdot,Pancak2_solution,DM_data,MacroDefRate,deltat,info)
       implicit double precision (a-h,o-z)
       !
-      type(DeformationRate),intent(in) :: MacroDefRate
-      COMMON /TEXTUR/ TRF(3,3),TRF_new !-> input, resp., output
-      COMMON /EULERA/ fi1,PHI,fi2 !-> output
-      !> Transformation matrix from sample frame to crystal frame at the 
-      !> end of increment. Each of its 3 rows contains a reference axis of the 
-      !> crystal reference frame (at end of increment), as expressed in the 
-      !> sample reference frame. 
-      !> Note: intent(out) attribute in further developments foreseen.
-      double precision, dimension(3,3) :: TRF_new
-      !> Rate of plastic work per unit volume in the crystal
+      type(EulerAngles),intent(out) :: this
+      type(EulerAngles),intent(in)  :: previous
       double precision, dimension(DM_max_systems), intent(in) :: GAMdot
       type(Pancak2Solution), intent(in) :: Pancak2_solution
       type(DeformationMechanismData), intent(in) ::DM_data
+      type(DeformationRate),intent(in) :: MacroDefRate
+      !> size of time increment [s]. If not provided, an increment size of 1.0s is used.
+      double precision,intent(in), optional :: deltat
+      integer, intent(out) :: info
       !
-      type(EulerAngles):: Euler
-      integer :: info
-      double precision :: ddt
+      !> Transformation matrix from sample frame to crystal frame at the 
+      !> START of increment. Each of its 3 rows contains a reference axis of the 
+      !> crystal reference frame (at START of increment), as expressed in the 
+      !> sample reference frame. 
+      double precision, dimension(3,3) :: trafo_previous
       !
-      SAVE
+      !> Transformation matrix from sample frame to crystal frame at the 
+      !> END of increment. Each of its 3 rows contains a reference axis of the 
+      !> crystal reference frame (at END of increment), as expressed in the 
+      !> sample reference frame. 
+      double precision, dimension(3,3) :: trafo_this
       !
-      ddt = 1.0 !A time increment of 1s is assumed.
-      call update_crystal_trafo_fromSlip(TRF_new,TRF,GAMdot,DM_data,MacroDefRate,Pancak2_solution%relaxationspin_sam,ddt,info)
+      !> local variable for size of time increment.
+      double precision :: dt
       !
-      Euler= EuleranglesType(TRF_new)
-      fi1=Euler%fi1 !
-      PHI=Euler%PHI !use of EulerAngles2Arr impeded
-      fi2=Euler%fi2 !   by common block /EULERA/
+      if (present(deltat)) then
+          dt = deltat 
+      else
+          dt = 1.0D0
+      end if
       !
-      IF (DM_data%n_twinning_systems.EQ.0) GOTO 31                                             
-      call update_crystal_trafo_fromTwin(TRF_new,DM_data,NLIST,IMP,GAMdot)
+      trafo_previous = rotmat(previous)
       !
-      Euler= EuleranglesType(TRF_new)
-      fi1=Euler%fi1 !
-      PHI=Euler%PHI !use of EulerAngles2Arr impeded
-      fi2=Euler%fi2 !   by common block /EULERA/      
+      call update_crystal_trafo_fromSlip(trafo_this,trafo_previous,GAMdot,DM_data,MacroDefRate,Pancak2_solution%relaxationspin_sam,dt,info)
       !
-31    RETURN
-
+      if (DM_data%n_twinning_systems>0) then                                             
+          call update_crystal_trafo_fromTwin(trafo_this,DM_data,NLIST,IMP,GAMdot)
+      end if
+      !
+      this = EuleranglesType(trafo_this)
+      !
+      return
       end subroutine
       
 

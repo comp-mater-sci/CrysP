@@ -45,7 +45,7 @@ contains
       type(altayStateVariables),intent(in) :: statevars
       integer,intent(in) :: i
       double precision,intent(out) :: FI1,PHI,FI2,GEW,GAM
-      double precision,intent(out) :: F(3,3),T(3,3)
+      double precision,intent(out) :: F(3,3),T(3,3) !both obsolete
       !
       associate (DFIL => statevars%texture%grains)
             FI1=DFIL(i)%teuler%FI1
@@ -53,7 +53,6 @@ contains
             FI2=DFIL(i)%teuler%FI2
             GEW=DFIL(i)%tGEW
             GAM=DFIL(i)%tGAM
-            T=DFIL(i)%tT
       end associate
       !
       end subroutine DYNFIL4
@@ -66,7 +65,7 @@ contains
       type(altayStateVariables),intent(inout) :: statevars
       integer,intent(in) :: i
       double precision,intent(in) :: FI1,PHI,FI2,GEW,GAM
-      double precision,intent(in) :: F(3,3),T(3,3)
+      double precision,intent(in) :: F(3,3),T(3,3) !both obsolete
       !
       associate (DFIL => statevars%texture%grains)
             DFIL(i)%teuler%FI1=FI1
@@ -74,7 +73,6 @@ contains
             DFIL(i)%teuler%FI2=FI2
             DFIL(i)%tGEW=GEW
             DFIL(i)%tGAM=GAM
-            DFIL(i)%tT=T
       end associate
       !
       end subroutine DYNFIL5
