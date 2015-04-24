@@ -480,7 +480,7 @@
       end if
 103   format (' ISTP,IOR',2I5,' phi1, PHI, phi2:',3F15.6)  
       !
-      call CRSSData_CalcWorkRate(WorkRate, pancak2_solution%allcrss, GAMdot, info)
+      call altayCRSSTypes_CalcWorkRate(WorkRate, pancak2_solution%allcrss, GAMdot, info)
       SeqGrain=WorkRate / MacroDefRate%vMeqStrainRate
       !
       if(NLIST.eq.1) then

@@ -83,16 +83,16 @@ contains
     
 
     !> Calculates (plastic) work rate from  CRSSdata object and vector of deformation rates
-    pure subroutine CRSSData_CalcWorkRate(this, crss, deformationrates, info)
+    pure subroutine altayCRSSTypes_CalcWorkRate(workrate, crss, deformationrates, info)
     implicit none
-    double precision, intent(out)            :: this
+    double precision, intent(out)            :: workrate
     type(CRSSData),intent(in)                :: crss
     double precision,intent(in),dimension(:) :: deformationrates
     integer,intent(out)                      :: info !< Exit code
     !
     integer :: n, i
     !
-        this = 0.0D0
+        workrate = 0.0D0
         info = criErr_BadDims
         n = CRSSData_size(crss)
         if (size(deformationrates) >= n) then
@@ -100,13 +100,13 @@ contains
             !
             do i=1,n 
                 if (deformationrates(i).GT.0.0) then !positive deformation rate
-                    this = this + deformationrates(i) * crss%crss(CRSS_pos_dir_idx,i) 
+                    workrate = workrate + deformationrates(i) * crss%crss(CRSS_pos_dir_idx,i) 
                 else                                 !negative or 0 deformation rate
-                    this = this - deformationrates(i) * crss%crss(CRSS_neg_dir_idx,i) 
+                    workrate = workrate - deformationrates(i) * crss%crss(CRSS_neg_dir_idx,i) 
                 endif
             end do
             !
-            if (.not.isNaN(this)) info  = criSuccess
+            if (.not.isNaN(workrate)) info  = criSuccess
         endif
     !   
     end subroutine
