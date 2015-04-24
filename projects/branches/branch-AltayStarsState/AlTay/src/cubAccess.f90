@@ -49,7 +49,7 @@ contains
     integer,intent(in)              :: iounit   !< IO unit number
     integer,intent(out)             :: info     !< exit code
     !      
-    integer :: npoint, i,ii,jj, ioerr
+    integer :: npoint, i, ioerr
     type(EulerAngles) :: euler_deg_tmp
     !
         info = criErr_IOWrite
@@ -59,12 +59,8 @@ contains
         !
         do i=1,npoint
             associate(grain => this%texture%grains(i))
-                euler_deg_tmp = EulerAnglesRad2Deg(grain%teuler)
-                write(iounit,iostat=ioerr) grain%tGEW, &
-                            euler_deg_tmp%fi1,         &
-                            euler_deg_tmp%PHI,         &
-                            euler_deg_tmp%fi2,         &
-                            grain%tGAM
+                euler_deg_tmp = rad2deg(grain%teuler)
+                write(iounit,iostat=ioerr) grain%tGEW, euler_deg_tmp, grain%tGAM
             end associate
             if (ioerr /= 0) exit
         enddo
@@ -95,7 +91,7 @@ contains
     integer,intent(in)      :: iounit   !< IO unit
     integer,intent(out)     :: info     !< Exit code
     !
-    integer :: npoint, i, ii,jj, ioerr
+    integer :: npoint, i, ioerr
     type(EulerAngles) :: euler_deg_tmp
     !      
         read(iounit,iostat=info) this%texture%nrstep,npoint,this%mf%FALG
@@ -107,14 +103,10 @@ contains
         ! Process the crystals in the block      
         do i=1,npoint
             associate(grain => this%texture%grains(i))
-                read(iounit,iostat=ioerr)grain%tGEW,      &
-                                        euler_deg_tmp%fi1,&
-                                        euler_deg_tmp%PHI,&
-                                        euler_deg_tmp%fi2,&
-                                        grain%tGAM
+                read(iounit,iostat=ioerr)grain%tGEW,euler_deg_tmp, grain%tGAM
                 if (ioerr /= 0) exit
                 ! Convert the grain orientatios from degrees to radians
-                grain%teuler = EulerAnglesDeg2Rad(euler_deg_tmp)
+                grain%teuler = deg2rad(euler_deg_tmp)
                 !
             end associate
         enddo
