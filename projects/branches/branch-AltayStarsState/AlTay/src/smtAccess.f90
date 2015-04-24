@@ -88,7 +88,7 @@ contains
         ngrains = size(texture%grains)
         do i = 1, ngrains
             associate(grain => texture%grains(i))
-            euler_deg_tmp = EulerAnglesRad2Deg(grain%teuler)    
+            euler_deg_tmp = rad2deg(grain%teuler)    
             write(iounit,97,iostat=info) euler_deg_tmp%fi2, &
                                          euler_deg_tmp%PHI, &
                                          euler_deg_tmp%fi1, &
@@ -133,7 +133,7 @@ contains
                 if (info /= 0) exit
                 info = criSuccess
                 ! Convert the grain orientatios from degrees to radians
-                grain%teuler = EulerAnglesDeg2Rad(grain%teuler)
+                grain%teuler = deg2rad(grain%teuler)
             end associate
             i = i + 1
             if (NSTAP > 1) then

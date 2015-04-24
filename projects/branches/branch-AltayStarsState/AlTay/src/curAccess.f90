@@ -74,7 +74,7 @@ contains
         !
         do i=1,npoint
             associate(grain => this%texture%grains(i))
-                euler_deg_tmp = EulerAnglesRad2Deg(grain%teuler)
+                euler_deg_tmp = rad2deg(grain%teuler)
                 write(iounit,400,iostat=ioerr) i,grain%tGEW, &
                             euler_deg_tmp%fi1,               &
                             euler_deg_tmp%PHI,               &
@@ -157,7 +157,7 @@ contains
                                 grain%tGAM
                 if (ioerr /= 0) exit
                 ! Convert the grain orientatios from degrees to radians
-                grain%teuler = EulerAnglesDeg2Rad(euler_deg_tmp)
+                grain%teuler = deg2rad(euler_deg_tmp)
             end associate
         enddo
         info = merge(criSuccess, criErr_IORead, (ioerr == 0))
