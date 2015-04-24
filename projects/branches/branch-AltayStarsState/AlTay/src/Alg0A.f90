@@ -505,7 +505,7 @@
       end if
 305   FORMAT (' ROTATIONS',3F12.6)      
       !
-      CALL update_crystal_orientation(eulerb_1_rad(laml),eulerb_0_rad(laml),GAMdot,Pancak2_solution,DM_data,MacroDefRate,info=info)
+      CALL Grain_EulerAngles_update(eulerb_1_rad(laml),eulerb_0_rad(laml),GAMdot,Pancak2_solution,DM_data,MacroDefRate,info=info)
       !
       if (nfile.ne.0.and.istp.eq.1) then
           ! Taylor Factor of the grain:

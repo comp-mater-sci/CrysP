@@ -6,6 +6,7 @@
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayMacroKinematic
       use criMathUtils
+      use criErrcodes
       use altayPancake, only: Pancak2Solution
       use altayDeformationMechanism
 #ifdef ALTAY_SUBROUTINE
@@ -15,16 +16,19 @@
             
       contains
       
-      
-      subroutine update_crystal_orientation(this,previous,GAMdot,Pancak2_solution,DM_data,MacroDefRate,deltat,info)
-      implicit double precision (a-h,o-z)
+      !> Update the EulerAngles component of Grain type due to increment of
+      !> plastic deformation (slip and/or twinning).
+      !> The implemented algorithm is essentialy the one found in TAYLR1
+      !> subroutine of altay-v4, yet largely rewritten.
+      subroutine Grain_EulerAngles_update(this,previous,sliprates,Pancak2_solution,DM_data,MacroDefRate,deltat,info)
+      implicit none
       !
-      type(EulerAngles),intent(out) :: this
-      type(EulerAngles),intent(in)  :: previous
-      double precision, dimension(DM_max_systems), intent(in) :: GAMdot
-      type(Pancak2Solution), intent(in) :: Pancak2_solution
-      type(DeformationMechanismData), intent(in) ::DM_data
-      type(DeformationRate),intent(in) :: MacroDefRate
+      type(EulerAngles),intent(out)                           :: this
+      type(EulerAngles),intent(in)                            :: previous
+      double precision, dimension(DM_max_systems), intent(in) :: sliprates
+      type(Pancak2Solution), intent(in)                       :: Pancak2_solution
+      type(DeformationMechanismData), intent(in)              :: DM_data
+      type(DeformationRate),intent(in)                        :: MacroDefRate
       !> size of time increment [s]. If not provided, an increment size of 1.0s is used.
       double precision,intent(in), optional :: deltat
       integer, intent(out) :: info
@@ -44,6 +48,7 @@
       !> local variable for size of time increment.
       double precision :: dt
       !
+      !
       if (present(deltat)) then
           dt = deltat 
       else
@@ -52,21 +57,25 @@
       !
       trafo_previous = rotmat(previous)
       !
-      call update_crystal_trafo_fromSlip(trafo_this,trafo_previous,GAMdot,DM_data,MacroDefRate,Pancak2_solution%relaxationspin_sam,dt,info)
+      call update_crystal_trafo_fromSlip(trafo_this,trafo_previous,dt,info)
+      if (info .ne. criSuccess) return
       !
       if (DM_data%n_twinning_systems>0) then                                             
-          call update_crystal_trafo_fromTwin(trafo_this,DM_data,NLIST,IMP,GAMdot)
+          call update_crystal_trafo_fromTwin(trafo_this,info)
+          if (info .ne. criSuccess) return
       end if
       !
       this = EuleranglesType(trafo_this)
       !
       return
-      end subroutine
-      
 
-      subroutine update_crystal_trafo_fromSlip(this,previous, &
-                         sliprates,DM_data,MacroDefRate,rho_a_sam,dt,info)
-      use criErrcodes
+      
+      
+      contains
+
+      
+      !> Dislocation slip contribution to evolution of crystal transformation matrix       
+      subroutine update_crystal_trafo_fromSlip(this,previous,dt,info)
       implicit none
       !
       !> Transformation matrix from sample frame to crystal frame at the 
@@ -79,14 +88,10 @@
       !> crystal reference frame (at start of increment), as expressed in the 
       !> sample reference frame.       
       double precision, intent(in),  dimension(3,3) :: previous
-      double precision, intent(in),  dimension(DM_max_systems)  :: sliprates
-      type(DeformationMechanismData), intent(in)    :: DM_data
-      type(DeformationRate), intent(in)             :: MacroDefRate
-      !> The relaxation spin expressed in the sample frame
-      double precision, intent(in),  dimension(3,3) :: rho_a_sam    
       !> Time increment
       double precision, intent(in)                  :: dt
       integer, intent(out)                          :: info
+      !
       !
       double precision, dimension(3) :: plasticspin_crys_vector
       !
@@ -95,7 +100,7 @@
       !> The macroscopic (i.e. imposed) rigid body spin expressed in the crystal frame
       double precision, dimension(3,3) :: macrospin_crys
       !> The relaxation spin expressed in the crystal frame
-      double precision, dimension(3,3) :: rho_a_crys
+      double precision, dimension(3,3) :: relaxationspin_crys
       !> The crystal lattice spin expressed in the crystal frame
       double precision, dimension(3,3) :: latticespin_crys
       !> Deformation gradient of the lattice rotation from beginning to end of
@@ -108,19 +113,21 @@
       double precision, dimension(3,3) :: trafo_cold_cnew(3,3)
       !> Set of Euler angles corresponding to transformation matrix 'this'
       type(EulerAngles) :: Euler
-      
-      
+      !
+      !
+      info = criError
+      !      
       plasticspin_crys_vector = matmul(DM_data%B1,sliprates)
       !
       plasticspin_crys = Vec3ToAntiSymMat33(PlasticSpin_crys_vector)
       !
       macrospin_crys = rotateSRTensorFrom(MacroDefRate%Spin,previous)
       !
-      rho_a_crys = rotateSRTensorFrom(rho_a_sam,previous)
+      relaxationspin_crys = rotateSRTensorFrom(Pancak2_solution%relaxationspin_sam,previous)
       !
-      latticespin_crys = macrospin_crys - plasticspin_crys + rho_a_crys
+      latticespin_crys = macrospin_crys - plasticspin_crys + relaxationspin_crys
       !   Note: in ALAMEL-paper (IJP '05), one term has opposite sign: 
-      !   LatticeSpin_crys = MacroSpin_crys - PlasticSpin_crys - "RelaxationSpin_crys"
+      !   LatticeSpin_crys = MacroSpin_crys - PlasticSpin_crys - RelaxationSpin_crys
       !
       F_omega_crys = unit_sr_matrix + latticespin_crys * dt
       !   Notes: 
@@ -141,39 +148,41 @@
       !
       end subroutine
 
-
       
-      subroutine update_crystal_trafo_fromTwin(TRF, DM_data,NLIST,IMP,GAMdot)
-      !use criErrcodes
+      !> Twinning contribution to evolution of crystal transformation matrix 
+      subroutine update_crystal_trafo_fromTwin(TRF,info)
       implicit none
-      double precision, intent(inout), dimension(3,3) :: TRF
-      type(DeformationMechanismData), intent(in)    :: DM_data
-      integer, intent(in) :: NLIST, IMP
-      double precision, intent(in),  dimension(DM_max_systems)  :: GAMdot
+      double precision, intent(inout), dimension(3,3)           :: TRF
+      integer, intent(out)                                      :: info
       !
       double precision :: X, RNDM
       integer :: I, J, K
       double precision, dimension(DM_max_systems) :: VOLFR
       double precision, dimension(3,3) :: RCC, TDC
       !
+      !
+      info = criError
+      !
       X=0.                                                              
       DO 84 I=1,DM_data%n_twinning_systems                                                     
       J=I+DM_data%n_slip_systems                                                           
-      X=X+GAMdot(J)/DM_data%G(I)                                                
+      X=X+sliprates(J)/DM_data%G(I)                                                
       VOLFR(I)=X                                                        
   84  CONTINUE                                                          
        IF (X.LE.1.) GOTO 85  
 #ifndef ALTAY_SUBROUTINE
-      if(NLIST.eq.1) then                                           
-      WRITE (IMP,107) X   
-      end if                                              
- 107  FORMAT (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,              &
-      '   SHOULD BE LESS THAN 1')                                       
+!      if(NLIST.eq.1) then                                           
+!      WRITE (IMP,107) X   
+!      end if                                              
+! 107  FORMAT (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,              &
+!      '   SHOULD BE LESS THAN 1')                                       
        call terminate(stopcode_runtimeerror)
 #else       
       RCM_RAISE(1,'TAYLR1',                                              &
       'Total volume fraction of twins exceeds unity',RCM_RTN)
 #endif
+      return
+      !
   85  CALL RANDOM_NUMBER(RNDM)
       DO 86 I=1,DM_data%n_twinning_systems                                                     
       IF (RNDM.LT.VOLFR(I)) GOTO 87                                     
@@ -198,6 +207,12 @@
       TRF = matmul(TDC,RCC) 
 31    CONTINUE
       !
+      info = criSuccess
+      !
       end subroutine
 
+     
+      end subroutine
+
+ 
       end module
