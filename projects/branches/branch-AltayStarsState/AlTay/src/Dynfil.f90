@@ -6,6 +6,7 @@
     
 module altayDynfilStitch
 use altayState, only: altayStateVariables
+use criMathUtils
 implicit none
 
 contains
@@ -39,18 +40,15 @@ contains
       end subroutine DYNFIL3
 
       !> Get the record data for i-th grain
-      subroutine DYNFIL4(statevars,i,FI1,PHI,FI2,T,                                &
-                        GEW,GAM,F)
+      subroutine DYNFIL4(statevars, i, orientation, GEW, GAM)
       implicit none
       type(altayStateVariables),intent(in) :: statevars
       integer,intent(in) :: i
-      double precision,intent(out) :: FI1,PHI,FI2,GEW,GAM
-      double precision,intent(out) :: F(3,3),T(3,3) !both obsolete
+      type(EulerAngles),intent(out):: orientation
+      double precision,intent(out) :: GEW,GAM
       !
       associate (DFIL => statevars%texture%grains)
-            FI1=DFIL(i)%teuler%FI1
-            PHI=DFIL(i)%teuler%PHI
-            FI2=DFIL(i)%teuler%FI2
+            orientation = DFIL(i)%teuler
             GEW=DFIL(i)%tGEW
             GAM=DFIL(i)%tGAM
       end associate
@@ -59,18 +57,15 @@ contains
 
 
       !> Put the record data for i-th grain
-      subroutine DYNFIL5(statevars,i,FI1,PHI,FI2,T,                                &
-                        GEW,GAM,F)
+      subroutine DYNFIL5(statevars, i, orientation, GEW, GAM)
       implicit none
       type(altayStateVariables),intent(inout) :: statevars
       integer,intent(in) :: i
-      double precision,intent(in) :: FI1,PHI,FI2,GEW,GAM
-      double precision,intent(in) :: F(3,3),T(3,3) !both obsolete
+      type(EulerAngles),intent(in):: orientation
+      double precision,intent(in) :: GEW,GAM
       !
       associate (DFIL => statevars%texture%grains)
-            DFIL(i)%teuler%FI1=FI1
-            DFIL(i)%teuler%PHI=PHI
-            DFIL(i)%teuler%FI2=FI2
+            DFIL(i)%teuler = orientation
             DFIL(i)%tGEW=GEW
             DFIL(i)%tGAM=GAM
       end associate

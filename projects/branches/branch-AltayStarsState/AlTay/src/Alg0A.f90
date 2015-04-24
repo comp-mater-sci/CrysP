@@ -58,8 +58,6 @@
 !
 !     IW=2 is meant for outputting the final texture.
 !
-      dimension fi10b(2),phi0b(2),fi20b(2)
-      dimension dummy33(3,3)
       common /CEIGEN/ NBLOC
       DIMENSION                                &
        STOT(3,3),                                               &
@@ -405,12 +403,7 @@
  2626 do 80 L=laml,laml1
       if (ifil4.eq.NPOINT) goto 80
       ifil4=ifil4+1
-      call DYNFIL4(state%old,ifil4,fi10b(L),PHI0b(L),fi20b(L),dummy33,    &
-       GEWFb(L),GMMAb(L),dummy33)
-!
-      eulerb_0_rad(L)%fi1=fi10b(L)
-      eulerb_0_rad(L)%PHI=PHI0b(L)
-      eulerb_0_rad(L)%fi2=fi20b(L)
+      call DYNFIL4(state%old,ifil4,eulerb_0_rad(L), GEWFb(L),GMMAb(L))
       !
       TRFb(:,:,L) = rotmat(eulerb_0_rad(L))
       !
@@ -547,12 +540,10 @@
 #ifdef ALTAY_SUBROUTINE
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL5(state%new,IOR,eulerb_1_rad(laml)%fi1,eulerb_1_rad(laml)%PHI,eulerb_1_rad(laml)%fi2,dummy33,GEWF,GMM1,                   &
-                         dummy33) 
+            call DYNFIL5(state%new,IOR,eulerb_1_rad(laml),GEWF,GMM1)
       endif
 #else
-      call DYNFIL5(state%new,IOR,eulerb_1_rad(laml)%fi1,eulerb_1_rad(laml)%PHI,eulerb_1_rad(laml)%fi2,dummy33,GEWF,GMM1,                         &
-                   dummy33)
+      call DYNFIL5(state%new,IOR,eulerb_1_rad(laml), GEWF,GMM1)
 #endif
       ! 
 #ifndef ALTAY_SUBROUTINE
