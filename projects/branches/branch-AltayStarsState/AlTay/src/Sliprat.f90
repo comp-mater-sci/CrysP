@@ -4,9 +4,25 @@
 
       module altaySliprate
       use altayMiscutils, only: terminate, stopcode_runtimeerror
-      use altayPancake, only : Pancak2_tolerance, Pancak2Solution
+      use altayPancake
       use altayDeformationMechanism
-      !
+      use altayCRSSTypes
+
+      type SlipratSolution
+          !> Shear rates over all deformation systems (slip and twinning systems)
+          !> for given grain 
+          type(ShearRateData) :: shearrate
+          !> Total (sum of absolute values of) shear rate over all deformation 
+          !> systems (slip and twinning systems)
+          double precision    :: totalshearrate = 0.0D0
+          !> Taylor factor for given grain
+          double precision    :: taylorfactor = 0.0D0
+          !> Work rate for given grain
+          double precision    :: workrate = 0.0D0
+          !> von Mises equivalent stress for given grain
+          double precision    :: vMeqstress = 0.0D0
+      end type
+
       !> component of Pancak2_input variable of sliprat; this modular 
       !> global data ensure its available to another module procedure: MINSQU.
       !> See note $1.
@@ -25,7 +41,7 @@
       
       contains
       
-      Subroutine SLIPRAT(sliprates,MacroDefRate,Pancak2_input,DM_data)
+      Subroutine SLIPRAT(solution,MacroDefRate,Pancak2_input,DM_data)
       use altayIOConfig!,IIPR=>IPR !Rename the global IPR to avoid conflict
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -33,7 +49,7 @@
       use altayMacroKinematic
       IMPLICIT double precision (A-H,O-Z)
       !
-      double precision,dimension(DM_max_systems),intent(out) :: sliprates
+      type(SlipratSolution),intent(out)          :: solution
       type(DeformationRate),intent(in)           :: MacroDefRate      
       type(Pancak2Solution),intent(in)           :: Pancak2_input
       type(DeformationMechanismData), intent(in) :: DM_data
@@ -52,11 +68,14 @@
       data NSTOR/48/
       BB8 = Pancak2_input%BB8
       A1 = DM_data%A1
-      sliprates=0.0
       ITR=0
       NLP=Pancak2_input%nactiv
       NN=Pancak2_input%nactiv
       NOPL=0
+      !
+      !Allocate the (allocatable components of) solution
+      call ShearRateData(solution%shearrate,DM_data%n_systems,info)   
+      !
 !     check whether solution is totally zero
       x=0.0
       do i=1,NLP 
@@ -209,7 +228,7 @@
          j=IND(i)
          Y=SLPR(i)
          YY=Y*sgnn(j)
-         sliprates(j)=YY*MacroDefRate%vMeqStrainRate
+         solution%shearrate%shearrate(j) = YY*MacroDefRate%vMeqStrainRate
          if (IPR.eq.2) then
          if (NLIST.eq.1) then
          write (IMP,101) i,IND(i),YY
@@ -227,7 +246,7 @@
        end if
  102  format (' NEG. SL. RATE DETECTED',I5,d15.6)
  101  format (2i5,5x,d15.6)
-      return
+      goto 789
   6   ITR=-1
       NN=NLP
       do 11 i=1,NN
@@ -250,7 +269,7 @@
       do i=1,NN
            Y=Pancak2_input%sliplp(i)
            j=IND(i)
-           sliprates(j)=Y*MacroDefRate%vMeqStrainRate
+           solution%shearrate%shearrate(j) = Y*MacroDefRate%vMeqStrainRate
            if (IPR.eq.2) then
            if (NLIST.eq.1) then
              write (IMP,101) i,IND(i),Y
@@ -267,6 +286,19 @@
       write (IMP,102) k,X
       end if
       end if
+      !
+789   continue   
+      !
+      !Set all remaining components of the solution
+      solution%totalshearrate = sum(abs(solution%shearrate%shearrate))
+      !
+      solution%taylorfactor = solution%totalshearrate / MacroDefRate%vMeqStrainRate
+      !
+      call altayCRSSTypes_CalcWorkRate(solution%workrate, &
+          pancak2_input%allcrss, solution%shearrate, info)
+      !
+      solution%vMeqStress = solution%workrate / MacroDefRate%vMeqStrainRate
+      !
       return
       end subroutine
       !

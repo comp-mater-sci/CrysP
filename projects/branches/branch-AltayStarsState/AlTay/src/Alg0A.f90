@@ -13,6 +13,7 @@
       use altaySliprate
       !
       type(Pancak2Solution) :: Pancak2_solution
+      type(SlipratSolution) :: Sliprat_solution
       type(DeformationMechanismData), save ::DM_data !SAVE attribute due to multiple calls to SIMUL
       !
       contains
@@ -61,7 +62,7 @@
       common /CEIGEN/ NBLOC
       DIMENSION                                &
        STOT(3,3),                                               &
-       RHOST(3,3),RHOSm(3,3),gewfb(2) ,TRFb(3,3,2),GMMAb(2),SHSAM(3,3),GAMdot(DM_max_systems),ROT(3)
+       RHOST(3,3),RHOSm(3,3),gewfb(2) ,TRFb(3,3,2),GMMAb(2),SHSAM(3,3),ROT(3)
       dimension FS(3,3)
       character(len=40) :: TITEL
       integer :: NPOINT
@@ -77,15 +78,8 @@
       double precision :: HGAM=0.D0,HGAMCALL=0.D0,HGAMTOT=0.D0
       ! Macroscopically imposed vM equivalent strain per call.
       double precision :: MEPSCALL=0.D0 
-      double precision :: GMMdot !Total slip rate in current grain      
-      double precision :: Mgrain !Taylor factor of the current grain
       double precision :: Mavg   !Volume-averaged Taylor factor
       double precision :: srh !Strain Rate Heterogeneity in polycrystal
-      double precision :: SeqGrain=0.D0 ! Equivalent stress in crystal, defined as..
-                                    !  plastic work rate in crystal normalized by..
-                                    !  (macro) von Mises equivalent strain rate
-      double precision :: WorkRate ! Rate of plastic work per unit 
-                                   ! volume in the crystal
       double precision :: Wtot ! Total plastic work per unit volume in crystal
       !> work-around to relocate large part of TAYLR1 to within SIMUL, without repetition
       !   (cf. ifdef ALTAY_SUBROUTINE)
@@ -394,10 +388,6 @@
       !
       i_cluster = floor(IOR/2.0D0 + 0.6D0)
       !
-      Mgrain=0.0
-      GMMdot=0.0
-      WorkRate = 0.D0
-      SeqGrain = 0.D0
       Wtot = 0.0
       !
  2626 do 80 L=laml,laml1
@@ -455,7 +445,7 @@
       !
       !-> -> -> content from TAYLR1
       !
-      call SLIPRAT(GAMdot,MacroDefRate,Pancak2_solution,DM_data)
+      call SLIPRAT(sliprat_solution,MacroDefRate,Pancak2_solution,DM_data)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif  
@@ -467,45 +457,49 @@
             ddt = 1.D0
 #ifdef ALTAY_SUBROUTINE
             if (.not. astate%simulCalls(astate%this)%input%keep_state)   &
-            call KS_updateState(IOR,GAMdot,ddt,info)
+            !> The explicit interface expects as 2nd argument an array of size equal to 24.
+            !> \todo: propagate the ShearRateData type to the interface. 
+            call KS_updateState(IOR,sliprat_solution%shearrate%shearrate(1:24),ddt,info) 
 #else
-            call KS_updateState(IOR,GAMdot,ddt,info)
+            !The explicit interface expects as 2nd argument an array of size equal to 24.
+            !> \todo: propagate the ShearRateData type to the interface. 
+            call KS_updateState(IOR,sliprat_solution%shearrate%shearrate(1:24),ddt,info)
 #endif
       endselect
 #endif
-      GMMdot=sum(abs(GAMdot(1:DM_data%n_systems)))
       !
       if(NLIST.eq.1) then
           write (IMP,103) ISTP,IOR,eulerb_0_deg(laml)%fi1,eulerb_0_deg(laml)%PHI,eulerb_0_deg(laml)%fi2
       end if
 103   format (' ISTP,IOR',2I5,' phi1, PHI, phi2:',3F15.6)  
       !
-      call altayCRSSTypes_CalcWorkRate(WorkRate, pancak2_solution%allcrss, GAMdot, info)
-      SeqGrain=WorkRate / MacroDefRate%vMeqStrainRate
-      !
       if(NLIST.eq.1) then
-          WRITE (IMP,301) WorkRate
+          WRITE (IMP,301) sliprat_solution%workrate
  301  FORMAT (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
-          WRITE (IMP,109) MacroDefRate%vMeqStrainRate,SeqGrain,                   &
-                      (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,DM_data%n_systems)
+          WRITE (IMP,109) MacroDefRate%vMeqStrainRate,sliprat_solution%vMeqstress,                   &
+                      (sliprat_solution%shearrate%shearrate(I)/MacroDefRate%vMeqStrainRate,I=1,DM_data%n_systems)
 109                   FORMAT ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
        '  SLIP RATES',/,(T2,10F10.5))
       end if  
       !
-      ROT = matmul(DM_data%B1,GAMdot)
+      ROT = matmul(DM_data%B1,sliprat_solution%shearrate%shearrate)
       if(NLIST.eq.1) then
           WRITE (IMP,305) ROT
       end if
 305   FORMAT (' ROTATIONS',3F12.6)      
       !
-      CALL Grain_EulerAngles_update(eulerb_1_rad(laml),eulerb_0_rad(laml),GAMdot,Pancak2_solution,DM_data,MacroDefRate,info=info)
+      CALL Grain_EulerAngles_update(eulerb_1_rad(laml),eulerb_0_rad(laml), &
+              sliprat_solution,Pancak2_solution,DM_data,MacroDefRate,info=info)
       !
       if (nfile.ne.0.and.istp.eq.1) then
-          ! Taylor Factor of the grain:
-          Mgrain = GMMdot / MacroDefRate%vMeqStrainRate
           !
-          call writeRESRecord(IMP2,ior,SeqGrain,WorkRate,tau,Mgrain,ratlon(MacroDefRate,Pancak2_solution%relaxationrate_sam), &
-                                Pancak2_solution%relaxationrate_sam,Pancak2_solution%relaxationspin_sam,Pancak2_solution%stress_sam,info)
+          call writeRESRecord(IMP2,ior,sliprat_solution%vMeqstress, &
+              sliprat_solution%workrate, tau, &
+              sliprat_solution%taylorfactor, &
+              ratlon(MacroDefRate,Pancak2_solution%relaxationrate_sam), &
+              Pancak2_solution%relaxationrate_sam, &
+              Pancak2_solution%relaxationspin_sam, &
+              Pancak2_solution%stress_sam, info)
       end if
       !
       !<- <- <- content from TAYLR1
@@ -522,14 +516,13 @@
       STOT = STOT + Pancak2_solution%stress_sam*GEWF
       RHOST = RHOST + Pancak2_solution%relaxationrate_sam*GEWF
       !      
-  63  SeqAvg = SeqAvg + SeqGrain*GEWF
-      Mgrain = GMMdot /  MacroDefRate%vMeqStrainRate
-      Mavg = Mavg + Mgrain*GEWF
+  63  SeqAvg = SeqAvg + sliprat_solution%vMeqstress*GEWF
+      Mavg = Mavg + sliprat_solution%taylorfactor*GEWF
       ! Normalized relaxation: ||relaxationrate_sam||/MacroDefRate%vMeqStrainRate = (||d-D||)/MacroDefRate%vMeqStrainRate 
       srh = srh + norm2(Pancak2_solution%relaxationrate_sam)/MacroDefRate%vMeqStrainRate*GEWF
-      HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s      
-      GMM1 = GMM0 + GMMdot !Step time here implicitly assumed to be 1.0s
-      Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
+      HGAM = HGAM + sliprat_solution%totalshearrate*GEWF !Step time here implicitly assumed to be 1.0s      
+      GMM1 = GMM0 + sliprat_solution%totalshearrate !Step time here implicitly assumed to be 1.0s
+      Wtot = Wtot + sliprat_solution%workrate !Step time here implicitly assumed to be 1.0s
 #ifdef PEBP_ENABLED
       select case(KOST)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)

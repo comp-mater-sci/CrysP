@@ -38,11 +38,27 @@ implicit none
         double precision,dimension(:,:),allocatable     :: crss
         
     end type
+
+    
+    !> Representation of shear rates of deformation (slip and twinning) systems
+    type :: ShearRateData
+
+        !> array containing the shear rates.
+        !> The shape of the array is given by the number of
+        !> deformation systems  (either slips or twinnings).
+        double precision,dimension(:),allocatable     :: shearrate
+        
+    end type
     
     !> Initialization procedure of a CRSSData object
     interface CRSSData
         module procedure CRSSData_init
     end interface
+
+    !> Initialization procedure of a ShearRateData object
+    interface ShearRateData
+        module procedure ShearRateData_init
+    end interface 
     
 contains
 
@@ -67,6 +83,26 @@ contains
     end subroutine
 
 
+    !> Initializes the ShearRateData object
+    elemental subroutine ShearRateData_init(this, nsystems, info)
+    implicit none
+    type(ShearRateData),intent(out)  :: this
+    integer,intent(in)               :: nsystems !< Number of deformation systems
+    integer,intent(out)              :: info !< Exit code
+    !
+    integer :: memerr
+    !
+        info = criErr_BadArgs
+        if (nsystems > 0) then
+            info  = criErr_MemAlloc
+            allocate(this%shearrate(nsystems), &
+                     stat=memerr, source=0.D0)
+            if (memerr == 0) info  = criSuccess
+        endif
+    !   
+    end subroutine
+    
+
     !> Provides the number of deformation systems included in
     !> the CRSSData object.
     elemental integer function CRSSData_size(this) result(n)
@@ -78,13 +114,25 @@ contains
     !
     end function
     
+    
+    !> Provides the number of deformation systems included in
+    !> the ShearRateData object.
+    elemental integer function ShearRateData_size(this) result(n)
+    implicit none
+    type(ShearRateData),intent(in)  :: this
+    !
+        n = 0
+        if (allocated(this%shearrate)) n = size(this%shearrate)
+    !
+    end function
+    
 
     !> Calculates (plastic) work rate from  CRSSdata object and vector of deformation rates
-    pure subroutine altayCRSSTypes_CalcWorkRate(workrate, crss, deformationrates, info)
+    pure subroutine altayCRSSTypes_CalcWorkRate(workrate, crss, shearrate, info)
     implicit none
     double precision, intent(out)            :: workrate
     type(CRSSData),intent(in)                :: crss
-    double precision,intent(in),dimension(:) :: deformationrates
+    type(ShearRateData),intent(in)           :: shearrate
     integer,intent(out)                      :: info !< Exit code
     !
     integer :: n, i
@@ -92,16 +140,18 @@ contains
         workrate = 0.0D0
         info = criErr_BadDims
         n = CRSSData_size(crss)
-        if (size(deformationrates) >= n) then
+        if (ShearRateData_size(shearrate) == n) then
             info  = criErr_NumNaN
             !
-            do i=1,n 
-                if (deformationrates(i).GT.0.0) then !positive deformation rate
-                    workrate = workrate + deformationrates(i) * crss%crss(CRSS_pos_dir_idx,i) 
-                else                                 !negative or 0 deformation rate
-                    workrate = workrate - deformationrates(i) * crss%crss(CRSS_neg_dir_idx,i) 
-                endif
-            end do
+            associate (rate => shearrate%shearrate)
+                do i=1,n 
+                    if (rate(i) > 0.0D0) then !positive deformation rate
+                        workrate = workrate + rate(i) * crss%crss(CRSS_pos_dir_idx,i) 
+                    else                                 !negative or 0 deformation rate
+                        workrate = workrate - rate(i) * crss%crss(CRSS_neg_dir_idx,i) 
+                    endif
+                end do
+            end associate            
             !
             if (.not.isNaN(workrate)) info  = criSuccess
         endif

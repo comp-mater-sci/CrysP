@@ -8,6 +8,7 @@
       use criMathUtils
       use criErrcodes
       use altayPancake, only: Pancak2Solution
+      use altaySliprate, only: SlipratSolution
       use altayDeformationMechanism
 #ifdef ALTAY_SUBROUTINE
       use altayConfig
@@ -20,12 +21,12 @@
       !> plastic deformation (slip and/or twinning).
       !> The implemented algorithm is essentialy the one found in TAYLR1
       !> subroutine of altay-v4, yet largely rewritten.
-      subroutine Grain_EulerAngles_update(this,previous,sliprates,Pancak2_solution,DM_data,MacroDefRate,deltat,info)
+      subroutine Grain_EulerAngles_update(this,previous,sliprat_solution,Pancak2_solution,DM_data,MacroDefRate,deltat,info)
       implicit none
       !
       type(EulerAngles),intent(out)                           :: this
       type(EulerAngles),intent(in)                            :: previous
-      double precision, dimension(DM_max_systems), intent(in) :: sliprates
+      type(SlipratSolution), intent(in)                       :: sliprat_solution
       type(Pancak2Solution), intent(in)                       :: Pancak2_solution
       type(DeformationMechanismData), intent(in)              :: DM_data
       type(DeformationRate),intent(in)                        :: MacroDefRate
@@ -117,7 +118,7 @@
       !
       info = criError
       !      
-      plasticspin_crys_vector = matmul(DM_data%B1,sliprates)
+      plasticspin_crys_vector = matmul(DM_data%B1,sliprat_solution%shearrate%shearrate)
       !
       plasticspin_crys = Vec3ToAntiSymMat33(PlasticSpin_crys_vector)
       !
@@ -166,7 +167,7 @@
       X=0.                                                              
       DO 84 I=1,DM_data%n_twinning_systems                                                     
       J=I+DM_data%n_slip_systems                                                           
-      X=X+sliprates(J)/DM_data%G(I)                                                
+      X=X+sliprat_solution%shearrate%shearrate(J)/DM_data%G(I)                                                
       VOLFR(I)=X                                                        
   84  CONTINUE                                                          
        IF (X.LE.1.) GOTO 85  
