@@ -50,16 +50,6 @@ implicit none
         
     end type
     
-    !> Initialization procedure of a CRSSData object
-    interface CRSSData
-        module procedure CRSSData_init
-    end interface
-
-    !> Initialization procedure of a ShearRateData object
-    interface ShearRateData
-        module procedure ShearRateData_init
-    end interface 
-    
 contains
 
 

@@ -74,7 +74,7 @@
       NOPL=0
       !
       !Allocate the (allocatable components of) solution
-      call ShearRateData(solution%shearrate,DM_data%n_systems,info)   
+      call ShearRateData_init(solution%shearrate,DM_data%n_systems,info)   
       !
 !     check whether solution is totally zero
       x=0.0

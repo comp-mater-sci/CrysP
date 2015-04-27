@@ -115,7 +115,7 @@
   96  FORMAT (I5) 
       ! Set the config field if needed
       if (NLINES > 0) then
-          call CRSSData(config%hardening%crss_ratios, 6*NLINES,info)
+          call CRSSData_init(config%hardening%crss_ratios, 6*NLINES,info)
       endif
       DO 3 ISIGN=1,2                                                       
       DO 1 J=1,NLINES                                                   

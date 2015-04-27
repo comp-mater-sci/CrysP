@@ -83,7 +83,7 @@ private
     end type
 
     !> Initialization procedures for DeformationMechanismData type
-    interface DeformationMechanismData
+    interface DeformationMechanismData_init
         module procedure DeformationMechanismData_initEmpty, & 
                          DeformationMechanismData_initFromFile, &
                          DeformationMechanismData_initFromPreconfigured
