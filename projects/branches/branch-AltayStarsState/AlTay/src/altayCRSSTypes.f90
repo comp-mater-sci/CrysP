@@ -34,7 +34,8 @@ implicit none
         !> directions) and the number of deformation systems  (either slips or 
         !> twinnings).
         !> Note: in current implementation, twinning systems are formally treated
-        !> as slip systems with a 'very large' crss in the negative direction.
+        !> as slip systems. Deformation along the anti-twinning direction is prevented 
+        !> through the statement marked "notePE20150428" in Pancake module.
         double precision,dimension(:,:),allocatable     :: crss
         
     end type

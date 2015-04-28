@@ -63,6 +63,9 @@
       DIMENSION                                &
        STOT(3,3),                                               &
        RHOST(3,3),RHOSm(3,3),gewfb(2) ,TRFb(3,3,2),GMMAb(2),SHSAM(3,3),ROT(3)
+      type (CRSSData),dimension(2) :: CRSSb
+      !> \fixme: infoarr variable is added just to conform with cluster shape in elemental call to CRSSData_init
+      integer :: infoarr(2)
       dimension FS(3,3)
       character(len=40) :: TITEL
       integer :: NPOINT
@@ -198,6 +201,8 @@
  505  CONTINUE
 504   CONTINUE
       end if !!end of echo to LST
+      !
+      call CRSSData_init(CRSSb, DM_data%n_systems, infoarr)
       !
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
@@ -399,6 +404,11 @@
       !
       eulerb_0_deg(L) = rad2deg(eulerb_0_rad(L))
       !
+      ! Retrieve the CRSSb for L
+      !    IOR+L-1  = sequence number of current grain
+      !    GMMAb(L) = the GAMMA of current grain   
+      call altayHard_getCRSS(material%hardening, state%old, IOR+L-1,GMMAb(L),CRSSb(L),info)
+      !
   80  continue
       laml1=laml1+1
       if (laml1.gt.NGR) laml1=1
@@ -419,7 +429,7 @@
 !                  during the previous computation.
 !
  999  if (IW.le.1) then
-            CALL Pancak2(Pancak2_solution,state%old, material%hardening,IOR,laml,ngr,nrl,TRFb,GMMAb, &
+            CALL Pancak2(Pancak2_solution, CRSSb, IOR,laml,ngr,nrl,TRFb, &
                          IPR,MacroDefRate,MacroDefState,DM_data)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
@@ -445,7 +455,7 @@
       !
       !-> -> -> content from TAYLR1
       !
-      call SLIPRAT(sliprat_solution,MacroDefRate,Pancak2_solution,DM_data)
+      call SLIPRAT(sliprat_solution,MacroDefRate,Pancak2_solution,CRSSb(laml),DM_data)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif  

@@ -41,7 +41,7 @@
       
       contains
       
-      Subroutine SLIPRAT(solution,MacroDefRate,Pancak2_input,DM_data)
+      Subroutine SLIPRAT(solution,MacroDefRate,Pancak2_input,crss_data,DM_data)
       use altayIOConfig!,IIPR=>IPR !Rename the global IPR to avoid conflict
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -52,6 +52,7 @@
       type(SlipratSolution),intent(out)          :: solution
       type(DeformationRate),intent(in)           :: MacroDefRate      
       type(Pancak2Solution),intent(in)           :: Pancak2_input
+      type(CRSSData),intent(in)                  :: crss_data
       type(DeformationMechanismData), intent(in) :: DM_data
 !     September 2000
 !     To find the slip rates assuming that
@@ -295,7 +296,7 @@
       solution%taylorfactor = solution%totalshearrate / MacroDefRate%vMeqStrainRate
       !
       call altayCRSSTypes_CalcWorkRate(solution%workrate, &
-          pancak2_input%allcrss, solution%shearrate, info)
+          crss_data, solution%shearrate, info)
       !
       solution%vMeqStress = solution%workrate / MacroDefRate%vMeqStrainRate
       !

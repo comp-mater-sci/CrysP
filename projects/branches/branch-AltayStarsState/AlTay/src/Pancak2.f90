@@ -23,8 +23,6 @@
           double precision, dimension(Pancak2_max_activesystems) :: sliplp = 0.0d0
           !> CRSS of active deformation systems
           double precision, dimension(Pancak2_max_activesystems) :: taurlp = 0.0d0
-          !> CRSS of all deformation systems
-          type(CRSSData)                                         :: allcrss
           double precision, dimension(5)                         :: BB8
       end type Pancak2Solution
       
@@ -34,7 +32,7 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(solution,state, hardparams,ior,laml,ngr,nrl,TRFb,GMMAb,  &
+      Subroutine Pancak2(solution, CRSSb, ior,laml,ngr,nrl,TRFb,  &
        IPR,MacroDefRate,MacroDefState,DM_data)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -50,14 +48,12 @@
 #endif
       implicit double precision (a-h,o-z)
       type(Pancak2Solution),intent(out)             :: solution
-      type(altayStateVariables),intent(in)          :: state
-      type(HardeningModels),intent(in)              :: hardparams
+      type (CRSSData),dimension(2),intent(in)       :: CRSSb
       integer,intent(in)                            :: ior
       integer,intent(in)                            :: laml
       integer,intent(in)                            :: ngr
       integer,intent(in)                            :: nrl      
       double precision,dimension(3,3,2),intent(in)  :: TRFb
-      double precision,dimension(2),intent(in)      :: GMMAb
       integer,intent(in)                            :: IPR
       type(DeformationRate),intent(in)              :: MacroDefRate
       type(DeformationState),intent(in)             :: MacroDefState
@@ -82,8 +78,6 @@
 !     second index = nr. of relaxation
       dimension spanv(5),STRSS(10),BB(10)
       dimension CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194)
-      !local storage of crss for the 2 grains in the cluster
-      type (CRSSData),dimension(2) :: crss_cluster
       logical bas(194),VALID(194)
 !     rlm is unit relaxation tensor in macroscopic frame
 !     rls and rla in crystal frame (symmetric and anti-sym. part)
@@ -112,8 +106,6 @@
       data TAURL/2*0.0d0/
       data GETAL/1.0D6/,TOL/1.0d-6/
       integer :: info
-      !> \fixme: infoarr variable is added just to conform with cluster shape in elemental call to CRSSData_init
-      integer :: infoarr(2)
       SAVE
 
       if (laml.ne.1.and.laml.ne.2) then
@@ -159,14 +151,6 @@
       DI(I)=DM_data%DI(I)
       DI(I+5)=DM_data%DI(I)+DM_data%n_systems
 53    CONTINUE    
-      !
-      !> \todo Refine the design of handling the CRSS arrays (should it be done inside 
-      !> pancak2 or outside?) 
-      !>        1) this does not comply with the design of CRSS stored as a part of state.
-      !>        2) we may get serious penalty due to frequent dynamic reallocations
-      !>        3) BUT: perhaps it is better to keep CRSSmatrix local (this conflicts 
-      !>           with (1) and (2) in this implementation of CRSSData
-      call CRSSData_init(crss_cluster, DM_data%n_systems, infoarr)
       !
       do 1 IL=1,NGR
       L1=5*(IL-1)
@@ -214,18 +198,13 @@
   44  continue
       K1=DM_data%n_systems*(IL-1)
       !
-      ! Retrieve the crss_cluster for IL
-      !    IOR+IL-1  = sequence number of current grain 
-      !    GMMAb(IL) = the GAMMA of current grain
-      call altayHard_getCRSS(hardparams, state, IOR+IL-1,GMMAb(IL),crss_cluster(IL),info)
-      !
       ! Assign crss_cluster to proper section of CCC
-      CCC(:,1+K1:DM_data%n_systems+K1)=crss_cluster(IL)%crss(:,1:DM_data%n_systems)  
+      CCC(:,1+K1:DM_data%n_systems+K1)=CRSSb(IL)%crss(:,1:DM_data%n_systems)  
       !
-      ! Set Tau_crit for antitwinning direction equal to
-      ! GETAL times Tau_crit for twinning direction       
+      ! Set CCC for antitwinning direction equal to
+      ! GETAL times CCC for twinning direction       
       do I=DM_data%n_slip_systems+1,DM_data%n_systems ! this do-loop will only be executed for DM_data%n_twinning_systems > 0
-          CCC(2,I+K1)=CCC(1,I+K1)*GETAL
+          CCC(2,I+K1)=CCC(1,I+K1)*GETAL !notePE20150428
       end do
       !
 !   92 write (IMP,914) i,j,CCC(1,j),CCC(2,j)
@@ -396,8 +375,6 @@
    3  continue
       jj=DM_data%n_systems*(laml-1)
       !
-      !assign crss for grain 'laml' to solution
-      solution%allcrss = crss_cluster(laml)
       ii=5*(laml-1)
       do 201 i=1,5
 !     If one grain does not deform, note that stress UBUF has come
