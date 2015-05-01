@@ -28,7 +28,7 @@ use altayHardLaw_DSH, only: DSHStateVariable => StatVar
     !> Container for the state variables
     type :: altayStateVariables
         
-        !> \todo Find a more suitable name for the field `frame`.
+        !> \todo Replace with: type(MesostructureState)                 :: mesostructure
         type(MaterialFrame)                     :: frame
         
         !> Collection of crystals (grains). 

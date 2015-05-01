@@ -4,6 +4,7 @@ module altayGrainCluster
 use altayStateTypes
 use altayState
 use altayPancake
+use altaySliprate
 implicit none
 
     
@@ -15,6 +16,8 @@ implicit none
         
         !> CRSS of all deformation systems
         type(CRSSData),pointer         :: crss => null()
+        
+        type(SlipratSolution),pointer  :: sliprat_solution => null()
         
     end type
     
