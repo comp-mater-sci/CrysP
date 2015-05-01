@@ -16,6 +16,7 @@ module altayState
 !
 use criErrcodes
 use criMathUtils
+use altayTexAccess
 use altayHardTypes
 use altayCRSSTypes
 use altayStateTypes

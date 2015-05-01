@@ -54,7 +54,7 @@ contains
     !
         info = criErr_IOWrite
         npoint = size(this%texture%grains)
-        write (iounit,iostat=ioerr) this%texture%nrstep,npoint,this%mf%FALG
+        write (iounit,iostat=ioerr) this%mf%nstep,npoint,this%mf%FALG
         if (ioerr /= 0) return
         !
         do i=1,npoint
@@ -94,7 +94,7 @@ contains
     integer :: npoint, i, ioerr
     type(EulerAngles) :: euler_deg_tmp
     !      
-        read(iounit,iostat=info) this%texture%nrstep,npoint,this%mf%FALG
+        read(iounit,iostat=info) this%mf%nstep,npoint,this%mf%FALG
         if (info /= 0) return
         !
         ! Request allocation of the memory

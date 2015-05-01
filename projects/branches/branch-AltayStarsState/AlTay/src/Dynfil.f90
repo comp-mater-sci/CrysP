@@ -17,10 +17,10 @@ contains
       type(altayStateVariables),intent(in) :: statevars
       integer,intent(out)     :: n
       double precision,intent(out) :: F(3,3)
-       !
-       n=statevars%texture%nrstep
-       associate (mf => statevars%frame)
+      !
+      associate (mf => statevars%frame)
             F=mf%FALG
+            n=mf%nstep
       end associate
       !
       end subroutine DYNFIL2
@@ -32,9 +32,9 @@ contains
       integer,intent(in)            :: n
       double precision,intent(in)   :: F(3,3)
       !
-        statevars%texture%nrstep = n
         associate (mf => statevars%frame)
             mf%FALG=F
+            mf%nstep = n
         end associate
       !
       end subroutine DYNFIL3
