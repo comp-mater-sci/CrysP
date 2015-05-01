@@ -4,8 +4,25 @@ use criMathUtils
 implicit none
 
 
-    !> \todo Find a more suitable name for the data type MaterialFrame
-    !> \todo consider removal of the MaterialFrame data type
+    type :: MesostructureState
+        
+        double precision, dimension (3,3) :: DeformationGradient = unit_sr_matrix
+        
+        type(EulerAngles), dimension(:), allocatable   :: GrainBoundaryEuler_initial
+        
+    end type
+        
+    !> \todo is this structure usefull? keep, modify or remove?
+    type :: ClusterState
+        
+        !type(Grain),dimension(:),pointer :: grain !=> null()
+        
+        !> \todo add the appropriate grain boundary data: euler angles + weighting factor
+        !type(EulerAngles) :: GBeuler
+        
+    end type
+    
+    !> \todo Transfer to DeformationGradient component of MesostructureState type
     type :: MaterialFrame
         
         integer :: nstep = 0
