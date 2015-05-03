@@ -107,8 +107,6 @@
   33  call  random_seed
       !
       NGR    = config%simul_init%NGR
-      ! Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
-      NRL=(NGR-1)*2
       !
       KOST   = config%hardening%hardLawID
       ! Note:  integers NLIST,IPR,NRES,NPEBP,NMSS are module variables of altayIOConfig
@@ -431,7 +429,7 @@
 !
 999 if (IW.le.1) then
             call mesostr_clustertrafo(ngr,i_cluster,MacroDefRate,MacroDefState,T_cluster,info)
-            CALL Pancak2(Pancak2_solution, CRSSb, T_cluster,laml,ngr,nrl,TRFb, &
+            CALL Pancak2(Pancak2_solution, CRSSb, T_cluster,laml,ngr,TRFb, &
                          MacroDefRate,MacroDefState,DM_data)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD

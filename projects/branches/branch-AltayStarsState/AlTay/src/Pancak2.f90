@@ -32,7 +32,7 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(solution, CRSSb, Tprinc,laml,ngr,nrl,TRFb,  &
+      Subroutine Pancak2(solution, CRSSb, Tprinc,laml,ngr,TRFb,  &
        MacroDefRate,MacroDefState,DM_data)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -53,7 +53,6 @@
       double precision,dimension(3,3),intent(in)    :: Tprinc
       integer,intent(in)                            :: laml
       integer,intent(in)                            :: ngr
-      integer,intent(in)                            :: nrl      
       double precision,dimension(3,3,2),intent(in)  :: TRFb
       type(DeformationRate),intent(in)              :: MacroDefRate
       type(DeformationState),intent(in)             :: MacroDefState
@@ -102,7 +101,8 @@
                   1.0D0, 1.0D0/
       data NDIM/10/
 !     NDIM=dimension A 
-!     NRL= number of relaxations    NGR= number of grains
+      !> Number of relaxations (0 for Taylor and 2 for ALAMEL) 
+      integer :: NRL
       data TAURL/2*0.0d0/
       data GETAL/1.0D6/,TOL/1.0d-6/
       integer :: info
@@ -122,6 +122,7 @@
       N=5*NGR
       NU=N
       M2=NGR*DM_data%n_systems
+      NRL=(NGR-1)*2
       M12=NGR*DM_data%n_systems+NRL
       if (laml.eq.2) goto 3
       !Construct A2
