@@ -32,7 +32,7 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(solution, CRSSb, ior,laml,ngr,nrl,TRFb,  &
+      Subroutine Pancak2(solution, CRSSb, Tprinc,laml,ngr,nrl,TRFb,  &
        IPR,MacroDefRate,MacroDefState,DM_data)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -49,7 +49,8 @@
       implicit double precision (a-h,o-z)
       type(Pancak2Solution),intent(out)             :: solution
       type (CRSSData),dimension(2),intent(in)       :: CRSSb
-      integer,intent(in)                            :: ior
+      !> transformation matrix associated to the cluster (grain boundary)
+      double precision,dimension(3,3),intent(in)    :: Tprinc
       integer,intent(in)                            :: laml
       integer,intent(in)                            :: ngr
       integer,intent(in)                            :: nrl      
@@ -83,7 +84,7 @@
 !     rls and rla in crystal frame (symmetric and anti-sym. part)
       dimension B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10)
       integer DI(10),DI2(10)
-      dimension GAMR(2),Tprinc(3,3),TAURL(2)
+      dimension GAMR(2),TAURL(2)
       double precision, dimension(10,194) :: A2
       data SQR2/0.7071067811865476D+00/,B3/30*0.0D0/
 !     Definition of the two relaxations, representing a
@@ -117,7 +118,6 @@
 #endif      
       endif
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if (IOR.eq.1) IGrElm=0 
       TWOSQ3=sqrt(2.D0/3.D0)
 !     N is number of rows of A2;   NU number of rows of UU2
       N=5*NGR
@@ -129,17 +129,7 @@
       A2 = 0.0d0
       A2( 1:5  ,     1:DM_data%n_systems   ) = DM_data%A1
       A2( 6:10 , 1+DM_data%n_systems:2*DM_data%n_systems ) = DM_data%A1
-!
-!     Updating of microstructure
-!
-      IGrElm=IGrElm+1
-      if (IGrElm.gt.NGrElm) IGrElm=1
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX
-      
-      call mesostr_clustertrafo(NGR,IGrElm,MacroDefRate,MacroDefState,Tprinc,info)
-
-
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+      !
       do 33 i=M2+1,M12
       do 33 jsgn=1,2
   33  CCC(jsgn,i)=0.0
@@ -241,12 +231,6 @@
       end if
  219  format (' right hand side',/,(2x,10F10.4),/)
 !     First call of Simplex (full constraints)
-      if (IPR.eq.2) then
-      if(NLIST.eq.1) then
-      write (IMP,400) IOR
-      end if
-      end if
- 400  format (' First call of TBH   IOR',3I5)
       Call TBH(IPR,NDIM,N,M2,A2,BB,                                      &
        CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,                              &
        Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID) 
@@ -271,11 +255,11 @@
   345 if (IPR.lt.4) goto 220
 #ifndef ALTAY_SUBROUTINE
       if(NLIST.eq.1) then
-      write (IMP,221) IPR,IOR
+      write (IMP,221) IPR
       end if
-      write (*,221) IPR,IOR
+      write (*,221) IPR
  221  format (' Pancak2 ',                                               &
-       ' IPR IOR=',4I5)
+       ' IPR    =',4I5)
       if (IPR.ge.4) call terminate(stopcode_runtimeerror) 
 #else
       RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
@@ -331,11 +315,11 @@
 
       if (IPR.ge.4) then
          if(NLIST.eq.1) then
-         write (IMP,222) IPR,IOR
+         write (IMP,222) IPR
          end if
-         write (*,222) IPR,IOR
+         write (*,222) IPR
  222     format (' Pancak2 222 - Problem with TBH',/,                    &
-         ' IPR IOR=',4I5)
+         ' IPR    =',4I5)
 #ifndef ALTAY_SUBROUTINE
           call terminate(stopcode_runtimeerror)  
 #else

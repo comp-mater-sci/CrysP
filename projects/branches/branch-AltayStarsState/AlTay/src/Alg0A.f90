@@ -73,6 +73,7 @@
       double precision :: ddt
       !> sequence number of the cluster
       integer :: i_cluster
+      double precision, dimension(3,3) :: T_cluster
       double precision :: GEWF = 1.0D0
       type(DeformationState) :: MacroDefState
       ! HGAM: homogenized slip per step
@@ -428,8 +429,9 @@
 !                - has to output the result of the second crystal found
 !                  during the previous computation.
 !
- 999  if (IW.le.1) then
-            CALL Pancak2(Pancak2_solution, CRSSb, IOR,laml,ngr,nrl,TRFb, &
+999 if (IW.le.1) then
+            call mesostr_clustertrafo(ngr,i_cluster,MacroDefRate,MacroDefState,T_cluster,info)
+            CALL Pancak2(Pancak2_solution, CRSSb, T_cluster,laml,ngr,nrl,TRFb, &
                          IPR,MacroDefRate,MacroDefState,DM_data)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
