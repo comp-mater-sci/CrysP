@@ -32,8 +32,8 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(solution, CRSSb, Tprinc,laml,ngr, eulerb, &
-       MacroDefRate,MacroDefState,DM_data)
+      Subroutine Pancak2(laml, ngr, Tprinc, eulerb, CRSSb, DM_data,  &
+                         MacroDefRate, MacroDefState, solution)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
@@ -47,16 +47,16 @@
       use AltayDSHstate
 #endif
       implicit double precision (a-h,o-z)
-      type(Pancak2Solution),intent(out)             :: solution
-      type (CRSSData),dimension(2),intent(in)       :: CRSSb
-      !> transformation matrix associated to the cluster (grain boundary)
-      double precision,dimension(3,3),intent(in)    :: Tprinc
       integer,intent(in)                            :: laml
       integer,intent(in)                            :: ngr
-      type(EulerAngles),dimension(2),intent(in)     :: eulerb
+      !> transformation matrix associated to the cluster (grain boundary)
+      double precision,dimension(3,3),intent(in)    :: Tprinc
+      type (CRSSData),dimension(2),intent(in)       :: CRSSb
+      type(EulerAngles),dimension(2),intent(in)     :: eulerb      
+      type(DeformationMechanismData), intent(in)    :: DM_data
       type(DeformationRate),intent(in)              :: MacroDefRate
       type(DeformationState),intent(in)             :: MacroDefState
-      type(DeformationMechanismData), intent(in)    :: DM_data
+      type(Pancak2Solution),intent(out)             :: solution
       !
       !> Number of active systems founds so far by the search algorithm
       integer nactiv_sofar
