@@ -32,7 +32,7 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(solution, CRSSb, Tprinc,laml,ngr,TRFb,  &
+      Subroutine Pancak2(solution, CRSSb, Tprinc,laml,ngr, eulerb, &
        MacroDefRate,MacroDefState,DM_data)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -53,7 +53,7 @@
       double precision,dimension(3,3),intent(in)    :: Tprinc
       integer,intent(in)                            :: laml
       integer,intent(in)                            :: ngr
-      double precision,dimension(3,3,2),intent(in)  :: TRFb
+      type(EulerAngles),dimension(2),intent(in)     :: eulerb
       type(DeformationRate),intent(in)              :: MacroDefRate
       type(DeformationState),intent(in)             :: MacroDefState
       type(DeformationMechanismData), intent(in)    :: DM_data
@@ -68,6 +68,7 @@
       double precision, dimension(3,3):: RHOSsa, RHOAsa
       double precision,dimension(5):: RHOS, RHOA 
       double precision,dimension(194) :: XX  
+      double precision,dimension(3,3,2)  :: TRFb
       dimension C2(3,3),                                                 &
        TDCb(3,3,2),TRCb(3,3,2),                                          &
        relax(3,3,3),DACC(10),                                            &
@@ -144,7 +145,7 @@
       !
       do 1 IL=1,NGR
       L1=5*(IL-1)
-      
+      TRFb(:,:,IL) = rotmat(eulerb(IL))
       C2 = rotateSRTensorFrom(MacroDefRate%VelGrad,TRFb(:,:,IL))
       if (NRL.eq.0) goto 87
       do 82 IRL=1,NRL

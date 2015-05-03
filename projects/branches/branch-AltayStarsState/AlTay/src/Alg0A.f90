@@ -62,7 +62,7 @@
       common /CEIGEN/ NBLOC
       DIMENSION                                &
        STOT(3,3),                                               &
-       RHOST(3,3),RHOSm(3,3),gewfb(2) ,TRFb(3,3,2),GMMAb(2),SHSAM(3,3),ROT(3)
+       RHOST(3,3),RHOSm(3,3),gewfb(2) ,GMMAb(2),SHSAM(3,3),ROT(3)
       type (CRSSData),dimension(2) :: CRSSb
       !> \fixme: infoarr variable is added just to conform with cluster shape in elemental call to CRSSData_init
       integer :: infoarr(2)
@@ -399,8 +399,6 @@
       ifil4=ifil4+1
       call DYNFIL4(state%old,ifil4,eulerb_0_rad(L), GEWFb(L),GMMAb(L))
       !
-      TRFb(:,:,L) = rotmat(eulerb_0_rad(L))
-      !
       eulerb_0_deg(L) = rad2deg(eulerb_0_rad(L))
       !
       ! Retrieve the CRSSb for L
@@ -429,7 +427,7 @@
 !
 999 if (IW.le.1) then
             call mesostr_clustertrafo(ngr,i_cluster,MacroDefRate,MacroDefState,T_cluster,info)
-            CALL Pancak2(Pancak2_solution, CRSSb, T_cluster,laml,ngr,TRFb, &
+            CALL Pancak2(Pancak2_solution, CRSSb, T_cluster,laml,ngr, eulerb_0_rad, &
                          MacroDefRate,MacroDefState,DM_data)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
