@@ -9,6 +9,7 @@
       use altayDeformationMechanism
       
       integer, parameter, public ::          Pancak2_max_activesystems = 8
+      integer, parameter, public ::          Pancak2_max_grains = 2
       double precision, parameter, public :: Pancak2_tolerance = 5.0d-6
       
       type Pancak2Solution
@@ -51,8 +52,8 @@
       integer,intent(in)                            :: ngr
       !> transformation matrix associated to the cluster (grain boundary)
       double precision,dimension(3,3),intent(in)    :: Tprinc
-      type (CRSSData),dimension(2),intent(in)       :: CRSSb
-      type(EulerAngles),dimension(2),intent(in)     :: eulerb      
+      type (CRSSData),dimension(Pancak2_max_grains),intent(in)       :: CRSSb
+      type(EulerAngles),dimension(Pancak2_max_grains),intent(in)     :: eulerb      
       type(DeformationMechanismData), intent(in)    :: DM_data
       type(DeformationRate),intent(in)              :: MacroDefRate
       type(DeformationState),intent(in)             :: MacroDefState
@@ -68,22 +69,22 @@
       double precision, dimension(3,3):: RHOSsa, RHOAsa
       double precision,dimension(5):: RHOS, RHOA 
       double precision,dimension(194) :: XX  
-      double precision,dimension(3,3,2)  :: TRFb
+      double precision,dimension(3,3,Pancak2_max_grains)  :: TRFb
       dimension C2(3,3),                                                 &
-       TDCb(3,3,2),TRCb(3,3,2),                                          &
+       TDCb(3,3,Pancak2_max_grains),TRCb(3,3,Pancak2_max_grains),                                          &
        relax(3,3,3),DACC(10),                                            &
        rls(3,3,3,2),rla(3,3),rlm(3,3,3),C3(3,3),TRP(10),APRIME(10),      &
        B3(10,3),PLUMIN(2,3),CUst(10),B5(5),UU(10,10)
 !     first index op PLUMIN = nr. of grain
 !     second index = nr. of relaxation
       dimension spanv(5),STRSS(10),BB(10)
-      dimension CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194)
+      dimension CCC(Pancak2_max_grains,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194)
       logical bas(194),VALID(194)
 !     rlm is unit relaxation tensor in macroscopic frame
 !     rls and rla in crystal frame (symmetric and anti-sym. part)
-      dimension B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10)
+      dimension B8(5,Pancak2_max_grains),UBUF(10),UU2(10,10),UU3(10,10),DD(10)
       integer DI(10),DI2(10)
-      dimension GAMR(2),TAURL(2)
+      dimension GAMR(Pancak2_max_grains),TAURL(Pancak2_max_grains)
       double precision, dimension(10,194) :: A2
       data SQR2/0.7071067811865476D+00/,B3/30*0.0D0/
 !     Definition of the two relaxations, representing a
@@ -129,10 +130,10 @@
       !Construct A2
       A2 = 0.0d0
       A2( 1:5  ,     1:DM_data%n_systems   ) = DM_data%A1
-      A2( 6:10 , 1+DM_data%n_systems:2*DM_data%n_systems ) = DM_data%A1
+      A2( 6:10 , 1+DM_data%n_systems:Pancak2_max_grains*DM_data%n_systems ) = DM_data%A1
       !
       do 33 i=M2+1,M12
-      do 33 jsgn=1,2
+      do 33 jsgn=1,Pancak2_max_grains
   33  CCC(jsgn,i)=0.0
   32  do 31 i=1,NU
       do 31 j=1,NU
