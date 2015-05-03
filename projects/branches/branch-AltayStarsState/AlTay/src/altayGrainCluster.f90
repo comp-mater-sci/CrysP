@@ -5,11 +5,13 @@ use altayStateTypes
 use altayState
 use altayPancake
 use altaySliprate
+use altayMacroKinematic
 implicit none
 
     
     type :: GrainClusterComponent
         
+        !> todo consider adding pointer to both 'old' and 'new' states
         type(Grain),pointer            :: grain => null()
           
         type(Pancak2Solution),pointer  :: solution => null()
@@ -21,6 +23,7 @@ implicit none
         
     end type
     
+    !> todo this should not be a parameter
     integer,parameter,private :: ngrains_per_cluster = 2
     
     type :: GrainClusterSolution
@@ -171,6 +174,50 @@ implicit none
     end subroutine
     ! <<--
 #endif
+    
+    Subroutine LinProg_solver(this, DM_data, MacroDefRate, MacroDefState, info)
+        implicit none
+        type(GrainClusterSolution), intent(inout)    :: this
+        type(DeformationMechanismData), intent(in)   :: DM_data
+        type(DeformationRate), intent(in)            :: MacroDefRate
+        type(DeformationState), intent(in)           :: MacroDefState
+        integer, intent(out)                         :: info    
+        !
+        integer :: i
+        double precision, dimension(3,3)                 :: T_cluster
+        type(EulerAngles), dimension(Pancak2_max_grains) :: grain_euler
+        type(CRSSdata), dimension(Pancak2_max_grains)    :: grain_CRSS
+        !
+        !>todo: add corresponding field to GrainClusterSolution type
+        !T_cluster = this%?
+        !
+        !Initializations
+        do i = 1,Pancak2_max_grains
+            if (i <= ngrains_per_cluster) then !initialize from 'this'
+                !initialize grain_euler
+                grain_euler(i) = this%components(i)%grain%teuler
+                !initialize grain_CRSS
+                grain_CRSS(i) = this%components(i)%crss
+            else !zero initializations
+                !initialize grain_euler
+                grain_euler(i) = Arr2EulerAngles([0.D0,0.D0,0.D0])
+                !initialize grain_CRSS
+                call CRSSData_init(grain_CRSS(i), CRSSData_size(this%components(i)%crss), info)
+            end if
+        end do
+        !
+        do i = 1,ngrains_per_cluster
+            !
+            call Pancak2(i, ngrains_per_cluster, &
+                T_cluster, &
+                grain_euler, grain_CRSS, DM_data,   &
+                MacroDefRate, MacroDefState, &
+                this%components(i)%solution)
+        end do
+        !
+        info = criSuccess    
+       
+    end subroutine
     
     
 end module
