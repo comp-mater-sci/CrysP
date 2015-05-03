@@ -33,12 +33,12 @@
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
       Subroutine Pancak2(solution, CRSSb, Tprinc,laml,ngr,nrl,TRFb,  &
-       IPR,MacroDefRate,MacroDefState,DM_data)
+       MacroDefRate,MacroDefState,DM_data)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
       use altayMesostructure
-      use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
+      use altayIOConfig
       use altayHard
       use altayTBH
       use altayAlgorithms
@@ -55,7 +55,6 @@
       integer,intent(in)                            :: ngr
       integer,intent(in)                            :: nrl      
       double precision,dimension(3,3,2),intent(in)  :: TRFb
-      integer,intent(in)                            :: IPR
       type(DeformationRate),intent(in)              :: MacroDefRate
       type(DeformationState),intent(in)             :: MacroDefState
       type(DeformationMechanismData), intent(in)    :: DM_data
@@ -231,7 +230,7 @@
       end if
  219  format (' right hand side',/,(2x,10F10.4),/)
 !     First call of Simplex (full constraints)
-      Call TBH(IPR,NDIM,N,M2,A2,BB,                                      &
+      Call TBH(NDIM,N,M2,A2,BB,                                      &
        CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,                              &
        Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID) 
 ! CCC (input): critical resolved shear stresses (Tauc)
@@ -290,7 +289,7 @@
       end if
       end if
  401  format (' Second call of TBH')
-      Call TBH(IPR,N,N,M12,A2,BB,                                        &
+      Call TBH(N,N,M12,A2,BB,                                        &
        CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,                             &
        Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
 ! CCC (input): critical resolved shear stresses (Tauc)

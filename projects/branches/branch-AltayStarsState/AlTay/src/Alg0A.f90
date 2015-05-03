@@ -432,7 +432,7 @@
 999 if (IW.le.1) then
             call mesostr_clustertrafo(ngr,i_cluster,MacroDefRate,MacroDefState,T_cluster,info)
             CALL Pancak2(Pancak2_solution, CRSSb, T_cluster,laml,ngr,nrl,TRFb, &
-                         IPR,MacroDefRate,MacroDefState,DM_data)
+                         MacroDefRate,MacroDefState,DM_data)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
 #endif            

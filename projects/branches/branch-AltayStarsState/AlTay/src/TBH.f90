@@ -7,14 +7,13 @@
       contains
       
 !     SUBROUTINE LINEAR PROGRAMMING TAYLOR-BISHOP-HILL STYLE
-       Subroutine TBH(IPR,NDIM,N,M,A,D,                                  &
+       Subroutine TBH(NDIM,N,M,A,D,                                  &
        TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,                          &
        TauR,bas,Trp,Aprime,CUst,UU,DD,DTAU,VALID)
 !    
 !     Subroutine which solves Taylor-Bishop-Hill for one crystallite
 !                    Stresses and strain rates are to be represented
-!                    by vectors
-!     input          IPR (Print parameter: if <2, no printing of  results) 
+!                    by vectors 
 !     input          NDIM: number of rows in arrays, must not < N
 !     input          There are M slip systems
 !     input          N is the number of independent Taylor equations
@@ -46,7 +45,7 @@
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif
-      use altayIOConfig,IIPR=>IPR!Rename global IPR switch to avoid conflict
+      use altayIOConfig !note: IPR (Print parameter: if <2, no printing of  results)
       implicit double precision (a-h,o-z) 
       dimension A(NDIM,M),D(NDIM),BINV(NDIM,N),U(NDIM,N),IACT(NDIM),     &
        GDOT(M),SIG(NDIM),TauC(2,M),TauR(M),Dacc(NDIM),Irp(NDIM)

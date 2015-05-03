@@ -42,7 +42,7 @@
       contains
       
       Subroutine SLIPRAT(solution,MacroDefRate,Pancak2_input,crss_data,DM_data)
-      use altayIOConfig!,IIPR=>IPR !Rename the global IPR to avoid conflict
+      use altayIOConfig
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
