@@ -12,29 +12,25 @@ implicit none
 contains
 
       !> Extract the global material data
-      subroutine DYNFIL2(statevars, n,F)
+      subroutine DYNFIL2(statevars, F)
       implicit none
       type(altayStateVariables),intent(in) :: statevars
-      integer,intent(out)     :: n
       double precision,intent(out) :: F(3,3)
       !
       associate (mf => statevars%frame)
             F=mf%FALG
-            n=mf%nstep
       end associate
       !
       end subroutine DYNFIL2
 
       !> Write the global material data
-      subroutine DYNFIL3(statevars,n,F)
+      subroutine DYNFIL3(statevars,F)
       implicit none
       type(altayStateVariables),intent(inout) :: statevars
-      integer,intent(in)            :: n
       double precision,intent(in)   :: F(3,3)
       !
         associate (mf => statevars%frame)
             mf%FALG=F
-            mf%nstep = n
         end associate
       !
       end subroutine DYNFIL3

@@ -25,8 +25,6 @@ implicit none
     !> \todo Transfer to DeformationGradient component of MesostructureState type
     type :: MaterialFrame
         
-        integer :: nstep = 0
-        
         double precision,dimension(3,3) :: FALG = unit_sr_matrix
     end type
 

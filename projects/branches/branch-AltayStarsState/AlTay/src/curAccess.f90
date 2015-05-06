@@ -67,7 +67,7 @@ contains
         npoint = size(this%texture%grains)
         associate(mf => this%mf)
             write (iounit,402)
-            write (iounit,403) mf%nstep,npoint,mf%FALG
+            write (iounit,403) npoint,mf%FALG
             write (iounit,401, iostat=ioerr)
         end associate
         if (ioerr /= 0) return
@@ -87,11 +87,11 @@ contains
     !      
     400  format (I6,f10.5,2X,3f10.5,2X,f10.5)                 
     401  format (' CRYSTAL WEIGHT ',5X,'phi1',6X,'PHI',7X,'phi2',6X,'  GAMMA')
-    402  format (/,' Def. Step    ','Number of orientations',27X,          &
+    402  format (/,14X,'Number of orientations',27X,          &
         2X,'F(1,1)',4X,'F(2,1)',4X,'F(3,1)',4X,                           &
         2X,'F(1,2)',4X,'F(2,2)',4X,'F(3,2)',4X,                           &
         2X,'F(1,3)',4X,'F(2,3)',4X,'F(3,3)')
-    403  format(I6,5X,i5,44x,3(2X,3F10.6))
+    403  format(11X,i5,44x,3(2X,3F10.6))
     !      
     end subroutine
 
@@ -117,7 +117,7 @@ contains
     integer,intent(in)      :: offset   !< Number of blocks to be skipped
     integer,intent(out)     :: info     !< Exit code
     !
-    integer :: npoint, i, j, tmp, ioerr
+    integer :: npoint, i, j, tmp, ioerr, dummy
     type(EulerAngles) :: euler_deg_tmp
     character(len=10) :: buf
     !   
@@ -126,7 +126,7 @@ contains
         read(iounit,fmt=402,iostat=ioerr) buf,buf
         if (ioerr /= 0) return
         associate(mf => this%mf)
-            read(iounit,fmt=403,iostat=ioerr) mf%nstep,npoint,mf%FALG
+            read(iounit,fmt=403,iostat=ioerr) dummy,npoint,mf%FALG
             if (ioerr /= 0) return
             read(iounit,fmt=401,iostat=ioerr) buf
             if (ioerr /= 0) return
@@ -137,7 +137,7 @@ contains
                         if (ioerr /= 0) exit ofs
                     enddo
                     read(iounit,fmt=402,iostat=ioerr) buf,buf
-                    read(iounit,fmt=403,iostat=ioerr) mf%nstep,npoint,mf%FALG
+                    read(iounit,fmt=403,iostat=ioerr) dummy,npoint,mf%FALG
                     if (ioerr /= 0) exit
                     read(iounit,fmt=401,iostat=ioerr) buf
             enddo ofs

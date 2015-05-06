@@ -319,7 +319,7 @@
 #endif      
       !
       assembly = TextureAssembly(state%old%texture, state%old%frame)
-      call dynfil2(state%old,nrstep,MacroDefState%TotalDefGrad)
+      call dynfil2(state%old,MacroDefState%TotalDefGrad)
 #ifndef NO_STDOUT       
       write (*,96) ISTP
 #endif
@@ -343,8 +343,8 @@
   70  if (nfile.eq.0.or.ISTP.gt.1) goto 44
       IF (NLIST.EQ.1) WRITE (IMP,112) ISTP
  112  FORMAT (//' DEFORMATION STEP ',I5,//)
-      if (NRES.gt.0) write (IMP2,404) nrstep+1,NPOINT
- 404  format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'  &
+      if (NRES.gt.0) write (IMP2,404) NPOINT
+ 404  format (16x,'  Number of orientations',i5,/,T3,'ior'  &
        ,T7,'EquivStress',T23,'WorkRate',T37,'tau_ref',T56,'M',T64,       &
        'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS' &
        ,/,1x,278('*'))
@@ -357,7 +357,7 @@
  407  format (' F ',3d15.7)
       end if
       !
-      nrstep=nrstep+1
+      !"nrstep=nrstep+1"
       !
       call Update_DeformationState(MacroDefRate,MacroDefState,info)
       !
@@ -365,10 +365,10 @@
       RCM_GUARD
       ! We can choose not to update the texture data
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL3(state%new,nrstep,MacroDefState%TotalDefGrad)
+            call DYNFIL3(state%new,MacroDefState%TotalDefGrad)
       endif
 #else          
-      call DYNFIL3(state%new,nrstep,MacroDefState%TotalDefGrad)
+      call DYNFIL3(state%new,MacroDefState%TotalDefGrad)
 #endif
 !
 !       Added for lamel model:
@@ -427,7 +427,7 @@
 !
 999 if (IW.le.1) then
             call mesostr_clustertrafo(ngr,i_cluster,MacroDefRate,MacroDefState,T_cluster,info)
-            CALL Pancak2(laml,ngr,T_cluster,eulerb_0_rad,CRSSb,DM_data,   &
+            CALL Pancak2(laml,ngr,T_cluster,eulerb_0_rad, CRSSb,DM_data,   &
                          MacroDefRate,MacroDefState,Pancak2_solution)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
