@@ -101,7 +101,7 @@
       SAVE
       !
       NPOINT = altayStateData_size(state)
-      assembly = TextureAssembly(state%old%texture, state%old%frame)
+      assembly = TextureAssembly(state%old%texture, state%old%mesostructure)
       !
       IF (IW) 32,33,30
   33  call  random_seed
@@ -318,7 +318,7 @@
       pebpSDVavg = StateDerivedVars()
 #endif      
       !
-      assembly = TextureAssembly(state%old%texture, state%old%frame)
+      assembly = TextureAssembly(state%old%texture, state%old%mesostructure)
       call dynfil2(state%old,MacroDefState%TotalDefGrad)
 #ifndef NO_STDOUT       
       write (*,96) ISTP

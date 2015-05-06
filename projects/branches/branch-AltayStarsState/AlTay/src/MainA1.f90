@@ -216,7 +216,7 @@
           call stripComment(texcnf%input_fname)
           ! 
           call loadTexture(texcnf%input_type,trim(texcnf%input_fname),&
-                           texcnf%block_id,state%old%frame, state%old%texture, info)
+                           texcnf%block_id,state%old%mesostructure, state%old%texture, info)
           if (info /= 0) then
                 write(*,fmt=9980) trim(texcnf%input_fname)
                 call exit(stopcode_ioerror)
@@ -313,7 +313,7 @@
                            'w', icubunit, info)
       if (info == 0) then 
             call outputCurrentTexture(icubunit,TF_CUB, &
-                                      state%old%frame, state%old%texture, .true.,info)
+                                      state%old%mesostructure, state%old%texture, .true.,info)
       endif
 #endif
 #if defined(PEBP_ENABLED) && defined(FINALBPM_ENABLED)

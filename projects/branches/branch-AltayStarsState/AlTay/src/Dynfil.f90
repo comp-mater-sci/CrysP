@@ -18,7 +18,7 @@ contains
       double precision,intent(out) :: F(3,3)
       !
       associate (meso => statevars%mesostructure)
-            F=meso%DeformationGradient
+            F=meso%deformationgradient
       end associate
       !
       end subroutine DYNFIL2
@@ -30,7 +30,7 @@ contains
       double precision,intent(in)   :: F(3,3)
       !
         associate (meso => statevars%mesostructure)
-            meso%DeformationGradient=F
+            meso%deformationgradient=F
         end associate
       !
       end subroutine DYNFIL3
