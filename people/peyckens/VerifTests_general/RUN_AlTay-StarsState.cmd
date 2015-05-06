@@ -84,7 +84,7 @@ D:\svnserverC\projects\branches\branch-AltayStarsState\AlTay\AlTay\Win32\Debug\A
 
 
 
-del  *.TWN 
+del  *.TWN *.CUB
 pause
 
 
