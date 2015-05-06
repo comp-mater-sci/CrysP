@@ -21,12 +21,6 @@ implicit none
         !type(EulerAngles) :: GBeuler
         
     end type
-    
-    !> \todo Transfer to DeformationGradient component of MesostructureState type
-    type :: MaterialFrame
-        
-        double precision,dimension(3,3) :: FALG = unit_sr_matrix
-    end type
 
     
     contains

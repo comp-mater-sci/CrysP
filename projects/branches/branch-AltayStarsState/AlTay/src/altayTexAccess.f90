@@ -37,7 +37,7 @@ implicit none
         
         type(TextureData),pointer   :: texture => null()
         
-        type(MaterialFrame),pointer :: mf  => null()
+        type(MesostructureState),pointer :: meso  => null()
         
     end type
     
@@ -161,14 +161,14 @@ contains
     end function
 
     
-    function TextureAssembly_init(texture, mf) result(this)
+    function TextureAssembly_init(texture, meso) result(this)
     implicit none
     type(TextureAssembly)   :: this
     type(TextureData),target   :: texture
-    type(MaterialFrame),target :: mf
+    type(MesostructureState),target :: meso
     !
         this%texture => texture
-        this%mf => mf
+        this%meso => meso
     !
     end function
     

@@ -17,8 +17,8 @@ contains
       type(altayStateVariables),intent(in) :: statevars
       double precision,intent(out) :: F(3,3)
       !
-      associate (mf => statevars%frame)
-            F=mf%FALG
+      associate (meso => statevars%mesostructure)
+            F=meso%DeformationGradient
       end associate
       !
       end subroutine DYNFIL2
@@ -29,8 +29,8 @@ contains
       type(altayStateVariables),intent(inout) :: statevars
       double precision,intent(in)   :: F(3,3)
       !
-        associate (mf => statevars%frame)
-            mf%FALG=F
+        associate (meso => statevars%mesostructure)
+            meso%DeformationGradient=F
         end associate
       !
       end subroutine DYNFIL3

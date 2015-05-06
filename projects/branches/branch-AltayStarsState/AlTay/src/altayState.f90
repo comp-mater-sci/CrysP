@@ -28,8 +28,7 @@ use altayHardLaw_DSH, only: DSHStateVariable => StatVar
     !> Container for the state variables
     type :: altayStateVariables
         
-        !> \todo Replace with: type(MesostructureState)                 :: mesostructure
-        type(MaterialFrame)                     :: frame
+        type(MesostructureState)                     :: mesostructure
         
         !> Collection of crystals (grains). 
         type(TextureData)                       :: texture

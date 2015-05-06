@@ -65,9 +65,9 @@ contains
     !
         info = criErr_IOWrite
         npoint = size(this%texture%grains)
-        associate(mf => this%mf)
+        associate(meso => this%meso)
             write (iounit,402)
-            write (iounit,403) npoint,mf%FALG
+            write (iounit,403) npoint,meso%DeformationGradient
             write (iounit,401, iostat=ioerr)
         end associate
         if (ioerr /= 0) return
@@ -125,8 +125,8 @@ contains
         ! Recon first: get the number of records/
         read(iounit,fmt=402,iostat=ioerr) buf,buf
         if (ioerr /= 0) return
-        associate(mf => this%mf)
-            read(iounit,fmt=403,iostat=ioerr) dummy,npoint,mf%FALG
+        associate(meso => this%meso)
+            read(iounit,fmt=403,iostat=ioerr) dummy,npoint,meso%DeformationGradient
             if (ioerr /= 0) return
             read(iounit,fmt=401,iostat=ioerr) buf
             if (ioerr /= 0) return
@@ -137,7 +137,7 @@ contains
                         if (ioerr /= 0) exit ofs
                     enddo
                     read(iounit,fmt=402,iostat=ioerr) buf,buf
-                    read(iounit,fmt=403,iostat=ioerr) dummy,npoint,mf%FALG
+                    read(iounit,fmt=403,iostat=ioerr) dummy,npoint,meso%DeformationGradient
                     if (ioerr /= 0) exit
                     read(iounit,fmt=401,iostat=ioerr) buf
             enddo ofs
