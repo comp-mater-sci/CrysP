@@ -1,6 +1,5 @@
 module altayStateTypes
-use criErrcodes
-use criMathUtils
+use altayTexAccess
 implicit none
 
 

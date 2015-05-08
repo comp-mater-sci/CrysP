@@ -19,7 +19,7 @@ implicit none
 
     !> Read texture data from file.
     !\todo documentation
-    subroutine loadTexture(texfmt,fname,iblock,meso,texture,info,iounit)
+    subroutine loadTexture(texfmt,fname,iblock,mesodeformationgradient,texture,info,iounit)
     implicit none
     integer,intent(in)              :: texfmt !< Texture file format identifier
     character(len=*),intent(in)     :: fname  !< Path to the texture file
@@ -27,7 +27,7 @@ implicit none
     !> `iblock` provides block number inside the texture file. 
     !> iblock must be >= 0. The first block is at iblock = 0.
     integer,intent(in)              :: iblock
-    type(MesostructureState),target,intent(out) :: meso
+    double precision, dimension(3,3),target,intent(out) :: mesodeformationgradient
     type(TextureData),target,intent(out)   :: texture
     integer,intent(out)             :: info
     integer,intent(in),optional     :: iounit ! If provided, fname will not be opened, but the IO unit will instead be used
@@ -43,7 +43,7 @@ implicit none
             if (info /= criSuccess) return
         endif
         !
-        assembly = TextureAssembly(texture, meso)
+        assembly = TextureAssembly(texture, mesodeformationgradient)
         !
         info =criErr_BadArgs
         select case(texfmt)
@@ -93,12 +93,12 @@ implicit none
     !
     end subroutine
       
-    subroutine outputCurrentTexture(iounit,texfmt,meso,texture,full,info)
+    subroutine outputCurrentTexture(iounit,texfmt,mesodeformationgradient,texture,full,info)
     implicit none
     integer,intent(in)            :: iounit   !< I/O unit
     integer,intent(in)            :: texfmt   !< Format ID
     
-    type(MesostructureState),target,intent(in) :: meso
+    double precision, dimension(3,3),target,intent(in) :: mesodeformationgradient
     type(TextureData),target,intent(in)  :: texture
     !> Flag: If true, both header and block are written, otherwise only 
     !> the block output is written out.
@@ -108,7 +108,7 @@ implicit none
     type(TextureAssembly) :: assembly
     !
         info = -1
-        assembly = TextureAssembly(texture, meso)
+        assembly = TextureAssembly(texture, mesodeformationgradient)
         
         !> \todo write code for the available formats
         select case(texfmt)

@@ -1,5 +1,6 @@
 module altayTexAccess
-use altayStateTypes
+use criErrcodes
+use criMathUtils
 implicit none
 
     integer,parameter,private :: textureTitle_length = 40
@@ -37,7 +38,7 @@ implicit none
         
         type(TextureData),pointer   :: texture => null()
         
-        type(MesostructureState),pointer :: meso  => null()
+        double precision, dimension (:,:),pointer :: mesodeformationgradient
         
     end type
     
@@ -161,14 +162,14 @@ contains
     end function
 
     
-    function TextureAssembly_init(texture, meso) result(this)
+    function TextureAssembly_init(texture, mesodeformationgradient) result(this)
     implicit none
     type(TextureAssembly)   :: this
     type(TextureData),target   :: texture
-    type(MesostructureState),target :: meso
+    double precision,dimension(3,3),target :: mesodeformationgradient
     !
         this%texture => texture
-        this%meso => meso
+        this%mesodeformationgradient => mesodeformationgradient
     !
     end function
     
