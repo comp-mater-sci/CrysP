@@ -5,15 +5,15 @@ implicit none
     integer,parameter,private :: textureTitle_length = 40
 
 
-    !> Representation of a single grain/crystal in the context of a discrete ODF
-    type :: Grain
-        !> Euler angles 
-        type(EulerAngles) :: teuler
+    !> Representation of a single constituent of a discrete ODF
+    type :: TextureConstituent
+        !> Euler angles of the discrete ODF constituent
+        type(EulerAngles) :: euler
         
-        !> Weight of the grain
-        double precision :: tGEW = 1.D0
+        !> Weight of the discrete ODF constituent
+        double precision :: weight = 1.D0
         
-        !> Total plastic slip in the grain
+        !> Total plastic slip
         !>
         !> This field provides an average quantification of the deformation
         !> to which the grain was previously subjected.
@@ -26,9 +26,9 @@ implicit none
     type :: TextureData
         
         !> Meta-data: title/comment 
-        character(len=textureTitle_length)      :: title = ''
+        character(len=textureTitle_length)                :: title = ''
         
-        type(Grain),dimension(:),allocatable    :: grains
+        type(TextureConstituent),dimension(:),allocatable :: constituents
         
     end type
 
@@ -129,15 +129,15 @@ contains
     !
     logical :: keep
     integer :: memstat, ntransf
-    type(grain),dimension(:),allocatable  :: tmp
+    type(TextureConstituent),dimension(:),allocatable  :: tmp
     !
         keep = .false.
         if (present(keep_state)) keep = keep_state
         !
-        if (.not. allocated(this%grains)) then
-            allocate(this%grains(newsize), stat=memstat)
+        if (.not. allocated(this%constituents)) then
+            allocate(this%constituents(newsize), stat=memstat)
         else
-            if (size(this%grains) == newsize) then
+            if (size(this%constituents) == newsize) then
                     ! Nothing to do.
                     info = criSuccess
                     return
@@ -146,14 +146,14 @@ contains
                 ! Transfer npoints 
                 allocate(tmp(newsize),stat=memstat)
                 if (memstat == 0) then
-                    ntransf = min(newsize,size(this%grains))
-                    tmp(1:ntransf) = this%grains(1:ntransf)
-                    deallocate(this%grains)
-                    call move_alloc(tmp,this%grains)
+                    ntransf = min(newsize,size(this%constituents))
+                    tmp(1:ntransf) = this%constituents(1:ntransf)
+                    deallocate(this%constituents)
+                    call move_alloc(tmp,this%constituents)
                 endif
             else
-                deallocate(this%grains)
-                allocate(this%grains(newsize),stat=memstat)
+                deallocate(this%constituents)
+                allocate(this%constituents(newsize),stat=memstat)
             endif
         endif
         info = merge(criSuccess, criErr_MemAlloc, (memstat == 0))

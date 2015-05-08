@@ -53,14 +53,15 @@ contains
     type(EulerAngles) :: euler_deg_tmp
     !
         info = criErr_IOWrite
-        npoint = size(this%texture%grains)
+        npoint = size(this%texture%constituents)
         write (iounit,iostat=ioerr) 0,npoint,this%meso%DeformationGradient
         if (ioerr /= 0) return
         !
         do i=1,npoint
-            associate(grain => this%texture%grains(i))
-                euler_deg_tmp = rad2deg(grain%teuler)
-                write(iounit,iostat=ioerr) grain%tGEW, euler_deg_tmp, grain%tGAM
+            associate(textureconstituent => this%texture%constituents(i))
+                euler_deg_tmp = rad2deg(textureconstituent%euler)
+                write(iounit,iostat=ioerr) textureconstituent%weight, euler_deg_tmp, &
+                                           textureconstituent%tGAM
             end associate
             if (ioerr /= 0) exit
         enddo
@@ -102,11 +103,12 @@ contains
         if (info /= criSuccess) return
         ! Process the crystals in the block      
         do i=1,npoint
-            associate(grain => this%texture%grains(i))
-                read(iounit,iostat=ioerr)grain%tGEW,euler_deg_tmp, grain%tGAM
+            associate(textureconstituent => this%texture%constituents(i))
+                read(iounit,iostat=ioerr)textureconstituent%weight,euler_deg_tmp, &
+                                         textureconstituent%tGAM
                 if (ioerr /= 0) exit
-                ! Convert the grain orientatios from degrees to radians
-                grain%teuler = deg2rad(euler_deg_tmp)
+                ! Convert the euler angles of texture constituent from degrees to radians
+                textureconstituent%euler = deg2rad(euler_deg_tmp)
                 !
             end associate
         enddo

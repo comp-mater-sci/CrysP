@@ -118,9 +118,9 @@ contains
                associated(this%new, this%states(0))) &
            )) then
             !
-            if (allocated(this%old%texture%grains) .and. &
-                allocated(this%new%texture%grains)) then
-                is_ok = (size(this%old%texture%grains) == size(this%new%texture%grains))
+            if (allocated(this%old%texture%constituents) .and. &
+                allocated(this%new%texture%constituents)) then
+                is_ok = (size(this%old%texture%constituents) == size(this%new%texture%constituents))
             endif
             !
         endif
@@ -140,15 +140,15 @@ contains
         write(*,*) 'associated old:', associated(this%old), &
                    'associated new:', associated(this%new)
         if (associated(this%old) .and. associated(this%new)) then
-            write(*,*) 'allocated grains, old:', allocated(this%old%texture%grains), &
-                       'allocated grains, new:', allocated(this%new%texture%grains)
+            write(*,*) 'allocated grains, old:', allocated(this%old%texture%constituents), &
+                       'allocated grains, new:', allocated(this%new%texture%constituents)
             write(*,*) 'old->0', associated(this%old, this%states(0)), &
                        'old->1', associated(this%old, this%states(1)) 
             write(*,*) 'new->0', associated(this%new, this%states(0)), &
                        'new->1', associated(this%new, this%states(1)) 
         endif
-        write(*,*) 'allocated grains, 0:', allocated(this%states(0)%texture%grains), &
-                   'allocated grains, 1:', allocated(this%states(1)%texture%grains)
+        write(*,*) 'allocated grains, 0:', allocated(this%states(0)%texture%constituents), &
+                   'allocated grains, 1:', allocated(this%states(1)%texture%constituents)
         write(*,fmt=100)
         !
         100 format(20('-'))
@@ -164,7 +164,7 @@ contains
     type(altayStateData),target,intent(in)  :: this
     !
         n = 0
-        if (altayStateData_isValid(this)) n = size(this%old%texture%grains)
+        if (altayStateData_isValid(this)) n = size(this%old%texture%constituents)
     !
     end function
 

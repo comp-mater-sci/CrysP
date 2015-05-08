@@ -43,9 +43,9 @@ contains
       type(EulerAngles),intent(out):: orientation
       double precision,intent(out) :: GEW,GAM
       !
-      associate (DFIL => statevars%texture%grains)
-            orientation = DFIL(i)%teuler
-            GEW=DFIL(i)%tGEW
+      associate (DFIL => statevars%texture%constituents)
+            orientation = DFIL(i)%euler
+            GEW=DFIL(i)%weight
             GAM=DFIL(i)%tGAM
       end associate
       !
@@ -60,9 +60,9 @@ contains
       type(EulerAngles),intent(in):: orientation
       double precision,intent(in) :: GEW,GAM
       !
-      associate (DFIL => statevars%texture%grains)
-            DFIL(i)%teuler = orientation
-            DFIL(i)%tGEW=GEW
+      associate (DFIL => statevars%texture%constituents)
+            DFIL(i)%euler = orientation
+            DFIL(i)%weight=GEW
             DFIL(i)%tGAM=GAM
       end associate
       !

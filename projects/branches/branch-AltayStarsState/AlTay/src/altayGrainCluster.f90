@@ -12,7 +12,7 @@ implicit none
     type :: GrainClusterComponent
         
         !> todo consider adding pointer to both 'old' and 'new' states
-        type(Grain),pointer            :: grain => null()
+        type(TextureConstituent),pointer            :: grain => null()
           
         type(Pancak2Solution),pointer  :: solution => null()
         
@@ -42,7 +42,7 @@ implicit none
     ! -->>
     type :: GrainClusterSolutionX
         
-        type(Grain),dimension(:), pointer           :: grains => null()
+        type(TextureConstituent),dimension(:), pointer :: grains => null()
           
         type(Pancak2Solution),dimension(:), pointer :: solutions => null()
         
@@ -77,7 +77,7 @@ implicit none
             any(indices < 0) .or. (size(indices) > ngrains_per_cluster)) return
         ! Assign the pointers
         do i=1, ngrains_per_cluster
-            this%components(i)%grain => state%old%texture%grains(i)
+            this%components(i)%grain => state%old%texture%constituents(i)
             this%components(i)%solution => solution_data(i)
             this%components(i)%crss => crss_data(i)
         enddo
@@ -135,7 +135,7 @@ implicit none
     implicit none
     type(GrainClusterSolutionX),intent(out)      :: this
     type(altayStateData),intent(in),target      :: state
-    type(Grain),dimension(:),intent(in),target  :: grains
+    type(TextureConstituent),dimension(:),intent(in),target  :: grains
     integer,dimension(:),intent(in)             :: indices
     integer,intent(out)                         :: info
     !
@@ -149,8 +149,8 @@ implicit none
         ! section with a vector subscript. (Constraint C724 in Fortran 2008).
         ! See: https://software.intel.com/en-us/forums/topic/270679
         ! We cannot make assigmnent like this:
-        ! this%grains => state%old%texture%grains(indices)
-        this%grains => grains
+        ! this%grains => state%old%texture%constituents(indices)
+        this%grains => constituents
     !
     end subroutine
     
@@ -169,7 +169,7 @@ implicit none
         ! make assembly
         info = altayStateData_assemble(state)
         
-        call GrainClusterSolutionX_init(cluster, state, state%old%texture%grains(indices), indices, info)
+        call GrainClusterSolutionX_init(cluster, state, state%old%texture%constituents(indices), indices, info)
     
     end subroutine
     ! <<--
@@ -195,7 +195,7 @@ implicit none
         do i = 1,Pancak2_max_grains
             if (i <= ngrains_per_cluster) then !initialize from 'this'
                 !initialize grain_euler
-                grain_euler(i) = this%components(i)%grain%teuler
+                grain_euler(i) = this%components(i)%grain%euler
                 !initialize grain_CRSS
                 grain_CRSS(i) = this%components(i)%crss
             else !zero initializations

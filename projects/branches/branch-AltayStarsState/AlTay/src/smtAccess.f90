@@ -34,7 +34,7 @@ contains
     integer,intent(in)              :: iounit
     integer,intent(out)             :: info
     !
-        call SMTwriteHeader(iounit, size(this%texture%grains), this%texture%title, info)
+        call SMTwriteHeader(iounit, size(this%texture%constituents), this%texture%title, info)
         if (info == criSuccess) call SMTwriteBlock(iounit, this%texture, info)
     !
     end subroutine
@@ -85,15 +85,15 @@ contains
     type(EulerAngles) :: euler_deg_tmp
     !
         info = criErr_IOWrite
-        ngrains = size(texture%grains)
+        ngrains = size(texture%constituents)
         do i = 1, ngrains
-            associate(grain => texture%grains(i))
-            euler_deg_tmp = rad2deg(grain%teuler)    
+            associate(textureconstituent => texture%constituents(i))
+            euler_deg_tmp = rad2deg(textureconstituent%euler)    
             write(iounit,97,iostat=info) euler_deg_tmp%fi2, &
                                          euler_deg_tmp%PHI, &
                                          euler_deg_tmp%fi1, &
                                          NSTAP,        &
-                                         grain%tGEW
+                                         textureconstituent%weight
             end associate
             if (info /= 0) exit
         enddo
@@ -113,7 +113,7 @@ contains
     double precision :: STAP = 0.D0
     !
         ! Number of records in the SMT file
-        nrec = size(texture%grains)
+        nrec = size(texture%constituents)
         ! Number of grains (these are different things: one record
         ! in the SMT file may in principle provide multiple grains.
         ngrains = nrec
@@ -122,18 +122,18 @@ contains
         do j = 1, nrec
             NSTAP=1
             STAP=0.0D0
-            associate(grain => texture%grains(i))
+            associate(textureconstituent => texture%constituents(i))
                 ! order: PHI2,PHI,PHI1,STAP,NSTAP,GEW,GAMMA
-                read(iounit,96,iostat=info) grain%teuler%fi2,         &
-                                            grain%teuler%PHI,         &
-                                            grain%teuler%fi1,         &
+                read(iounit,96,iostat=info) textureconstituent%euler%fi2,         &
+                                            textureconstituent%euler%PHI,         &
+                                            textureconstituent%euler%fi1,         &
                                             STAP,NSTAP,         &
-                                            grain%tGEW,         &
-                                            grain%tGAM
+                                            textureconstituent%weight,         &
+                                            textureconstituent%tGAM
                 if (info /= 0) exit
                 info = criSuccess
-                ! Convert the grain orientatios from degrees to radians
-                grain%teuler = deg2rad(grain%teuler)
+                ! Convert the euler angles of texture constituent from degrees to radians
+                textureconstituent%euler = deg2rad(textureconstituent%euler)
             end associate
             i = i + 1
             if (NSTAP > 1) then
@@ -143,8 +143,8 @@ contains
                 if (textureData_resize(texture, ngrains, keep_state=.true.) /= criSuccess) exit
                 i0 = i - 1 ! Store the index of the "parent" grain
                 do k=1,NSTAP-1
-                        texture%grains(i) = texture%grains(i0)
-                        texture%grains(i)%teuler%fi1 = texture%grains(i0)%teuler%fi1 + dble(k)*STAP*convf
+                        texture%constituents(i) = texture%constituents(i0)
+                        texture%constituents(i)%euler%fi1 = texture%constituents(i0)%euler%fi1 + dble(k)*STAP*convf
                         i = i + 1
                 enddo
             endif
