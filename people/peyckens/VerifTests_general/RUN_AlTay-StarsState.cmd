@@ -5,8 +5,8 @@ cd rev
 copy ss12_AL_0.CTL Main.CTL
 D:\svnserverC\projects\branches\branch-AltayStarsState\AlTay\AlTay\Win32\Debug\AlTay.exe
 copy ss12_AL_1.CTL Main.CTL
-D:\svnserverC\projects\branches\branch-AltayStarsState\AlTay\AlTay\Win32\Debug\AlTay.exe
-copy ss12_AL_1_2nd.CTL Main.CTL
+rem   D:\svnserverC\projects\branches\branch-AltayStarsState\AlTay\AlTay\Win32\Debug\AlTay.exe
+rem   copy ss12_AL_1_2nd.CTL Main.CTL
 D:\svnserverC\projects\branches\branch-AltayStarsState\AlTay\AlTay\Win32\Debug\AlTay.exe
 copy ss12_AL_1Fmic.CTL Main.CTL
 D:\svnserverC\projects\branches\branch-AltayStarsState\AlTay\AlTay\Win32\Debug\AlTay.exe
@@ -42,8 +42,8 @@ rem -------------------------
 copy ss12_FC_0.CTL Main.CTL
 D:\svnserverC\projects\branches\branch-AltayStarsState\AlTay\AlTay\Win32\Debug\AlTay.exe
 copy ss12_FC_1.CTL Main.CTL
-D:\svnserverC\projects\branches\branch-AltayStarsState\AlTay\AlTay\Win32\Debug\AlTay.exe
-copy ss12_FC_1_2nd.CTL Main.CTL
+rem    D:\svnserverC\projects\branches\branch-AltayStarsState\AlTay\AlTay\Win32\Debug\AlTay.exe
+rem    copy ss12_FC_1_2nd.CTL Main.CTL
 D:\svnserverC\projects\branches\branch-AltayStarsState\AlTay\AlTay\Win32\Debug\AlTay.exe
 copy ss12_FC_1s.CTL Main.CTL
 D:\svnserverC\projects\branches\branch-AltayStarsState\AlTay\AlTay\Win32\Debug\AlTay.exe
