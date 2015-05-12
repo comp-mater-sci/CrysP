@@ -53,15 +53,15 @@ contains
     type(EulerAngles) :: euler_deg_tmp
     !
         info = criErr_IOWrite
-        npoint = size(this%texture%constituents)
+        npoint = size(this%texture%orientations)
         write (iounit,iostat=ioerr) 0,npoint,this%mesodeformationgradient
         if (ioerr /= 0) return
         !
         do i=1,npoint
-            associate(textureconstituent => this%texture%constituents(i))
-                euler_deg_tmp = rad2deg(textureconstituent%euler)
-                write(iounit,iostat=ioerr) textureconstituent%weight, euler_deg_tmp, &
-                                           textureconstituent%tGAM
+            associate(orientation => this%texture%orientations(i))
+                euler_deg_tmp = rad2deg(orientation%euler)
+                write(iounit,iostat=ioerr) orientation%weight, euler_deg_tmp, &
+                                           orientation%tGAM
             end associate
             if (ioerr /= 0) exit
         enddo
@@ -99,16 +99,16 @@ contains
         if (info /= 0) return
         !
         ! Request allocation of the memory
-        info = textureData_resize(this%texture, npoint)
+        info = DiscreteODF_resize(this%texture, npoint)
         if (info /= criSuccess) return
         ! Process the crystals in the block      
         do i=1,npoint
-            associate(textureconstituent => this%texture%constituents(i))
-                read(iounit,iostat=ioerr)textureconstituent%weight,euler_deg_tmp, &
-                                         textureconstituent%tGAM
+            associate(orientation => this%texture%orientations(i))
+                read(iounit,iostat=ioerr)orientation%weight,euler_deg_tmp, &
+                                         orientation%tGAM
                 if (ioerr /= 0) exit
                 ! Convert the euler angles of texture constituent from degrees to radians
-                textureconstituent%euler = deg2rad(euler_deg_tmp)
+                orientation%euler = deg2rad(euler_deg_tmp)
                 !
             end associate
         enddo

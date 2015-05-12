@@ -12,7 +12,7 @@ implicit none
     type :: GrainClusterComponent
         
         !> todo consider adding pointer to both 'old' and 'new' states
-        type(TextureConstituent),pointer            :: grain => null()
+        type(DiscreteOrientation),pointer            :: grain => null()
           
         type(Pancak2Solution),pointer  :: solution => null()
         
@@ -42,7 +42,7 @@ implicit none
     ! -->>
     type :: GrainClusterSolutionX
         
-        type(TextureConstituent),dimension(:), pointer :: grains => null()
+        type(DiscreteOrientation),dimension(:), pointer :: grains => null()
           
         type(Pancak2Solution),dimension(:), pointer :: solutions => null()
         
@@ -77,7 +77,7 @@ implicit none
             any(indices < 0) .or. (size(indices) > ngrains_per_cluster)) return
         ! Assign the pointers
         do i=1, ngrains_per_cluster
-            this%components(i)%grain => state%old%texture%constituents(i)
+            this%components(i)%grain => state%old%texture%orientations(i)
             this%components(i)%solution => solution_data(i)
             this%components(i)%crss => crss_data(i)
         enddo
@@ -103,7 +103,7 @@ implicit none
         info = altayStateData_init(state)
         ! expand texture, make 10 grains
         ngrains = 10
-        info = textureData_resize(state%old%texture, ngrains, keep_state=.false.)
+        info = DiscreteODF_resize(state%old%texture, ngrains, keep_state=.false.)
         ! make assembly
         info = altayStateData_assemble(state)
         !
@@ -135,7 +135,7 @@ implicit none
     implicit none
     type(GrainClusterSolutionX),intent(out)      :: this
     type(altayStateData),intent(in),target      :: state
-    type(TextureConstituent),dimension(:),intent(in),target  :: grains
+    type(DiscreteOrientation),dimension(:),intent(in),target  :: grains
     integer,dimension(:),intent(in)             :: indices
     integer,intent(out)                         :: info
     !
@@ -149,8 +149,8 @@ implicit none
         ! section with a vector subscript. (Constraint C724 in Fortran 2008).
         ! See: https://software.intel.com/en-us/forums/topic/270679
         ! We cannot make assigmnent like this:
-        ! this%grains => state%old%texture%constituents(indices)
-        this%grains => constituents
+        ! this%grains => state%old%texture%orientations(indices)
+        this%grains => orientations
     !
     end subroutine
     
@@ -165,11 +165,11 @@ implicit none
     
         info = altayStateData_init(state)
         ! expand texture, make 10 grains
-        info = textureData_resize(state%old%texture, 10, keep_state=.false.) 
+        info = DiscreteODF_resize(state%old%texture, 10, keep_state=.false.) 
         ! make assembly
         info = altayStateData_assemble(state)
         
-        call GrainClusterSolutionX_init(cluster, state, state%old%texture%constituents(indices), indices, info)
+        call GrainClusterSolutionX_init(cluster, state, state%old%texture%orientations(indices), indices, info)
     
     end subroutine
     ! <<--

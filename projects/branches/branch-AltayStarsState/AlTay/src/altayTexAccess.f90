@@ -3,11 +3,11 @@ use criErrcodes
 use criMathUtils
 implicit none
 
-    integer,parameter,private :: textureTitle_length = 40
+    integer,parameter,private :: ODF_title_length = 40
 
 
     !> Representation of a single constituent of a discrete ODF
-    type :: TextureConstituent
+    type :: DiscreteOrientation
         !> Euler angles of the discrete ODF constituent
         type(EulerAngles) :: euler
         
@@ -24,19 +24,22 @@ implicit none
 
 
     !> Aggregate of grains. The aggregate represents a discrite ODF.
-    type :: TextureData
+    type :: DiscreteODF
         
         !> Meta-data: title/comment 
-        character(len=textureTitle_length)                :: title = ''
+        character(len=ODF_title_length)                :: title = ''
         
-        type(TextureConstituent),dimension(:),allocatable :: constituents
+        type(DiscreteOrientation),dimension(:),allocatable :: orientations
         
     end type
 
+    interface size
+        module procedure DiscreteODF_size
+    end interface
 
     type :: TextureAssembly
         
-        type(TextureData),pointer   :: texture => null()
+        type(DiscreteODF),pointer   :: texture => null()
         
         double precision, dimension (:,:),pointer :: mesodeformationgradient
         
@@ -114,13 +117,13 @@ implicit none
       
 contains
     
-    !> Expand/shrink the storage for crystals in the TextureData object.
+    !> Expand/shrink the storage for crystals in the DiscreteODF object.
     !>
     !> The old content is preserved if `keep_state` parameter is True.
     !> \todo do we actually need this feature? Wouldn't a regular "allocate" be sufficient?
-    integer function textureData_resize(this, newsize, keep_state) result(info)
+    integer function DiscreteODF_resize(this, newsize, keep_state) result(info)
     implicit none
-    type(TextureData),intent(inout)     :: this     !< object to be modified
+    type(DiscreteODF),intent(inout)     :: this     !< object to be modified
     !> new size, i.e. number of crystals that can be stored in `this`
     integer,intent(in)                  :: newsize
     !> Flag: if true, the existing state to be preserved on resize. Default: .false.
@@ -130,15 +133,15 @@ contains
     !
     logical :: keep
     integer :: memstat, ntransf
-    type(TextureConstituent),dimension(:),allocatable  :: tmp
+    type(DiscreteOrientation),dimension(:),allocatable  :: tmp
     !
         keep = .false.
         if (present(keep_state)) keep = keep_state
         !
-        if (.not. allocated(this%constituents)) then
-            allocate(this%constituents(newsize), stat=memstat)
+        if (.not. allocated(this%orientations)) then
+            allocate(this%orientations(newsize), stat=memstat)
         else
-            if (size(this%constituents) == newsize) then
+            if (size(this%orientations) == newsize) then
                     ! Nothing to do.
                     info = criSuccess
                     return
@@ -147,25 +150,36 @@ contains
                 ! Transfer npoints 
                 allocate(tmp(newsize),stat=memstat)
                 if (memstat == 0) then
-                    ntransf = min(newsize,size(this%constituents))
-                    tmp(1:ntransf) = this%constituents(1:ntransf)
-                    deallocate(this%constituents)
-                    call move_alloc(tmp,this%constituents)
+                    ntransf = min(newsize,size(this%orientations))
+                    tmp(1:ntransf) = this%orientations(1:ntransf)
+                    deallocate(this%orientations)
+                    call move_alloc(tmp,this%orientations)
                 endif
             else
-                deallocate(this%constituents)
-                allocate(this%constituents(newsize),stat=memstat)
+                deallocate(this%orientations)
+                allocate(this%orientations(newsize),stat=memstat)
             endif
         endif
         info = merge(criSuccess, criErr_MemAlloc, (memstat == 0))
     !
     end function
 
+
+    !> Give the number of orientations in the discrete ODF
+    elemental integer function DiscreteODF_size(this) result(n)
+    implicit none
+    type(DiscreteODF),intent(in)     :: this     !< object to be modified
+    !
+        n = 0
+        if (allocated(this%orientations)) n = size(this%orientations)
+    !
+    end function
+    
     
     function TextureAssembly_init(texture, mesodeformationgradient) result(this)
     implicit none
     type(TextureAssembly)   :: this
-    type(TextureData),target   :: texture
+    type(DiscreteODF),target   :: texture
     double precision,dimension(3,3),target :: mesodeformationgradient
     !
         this%texture => texture

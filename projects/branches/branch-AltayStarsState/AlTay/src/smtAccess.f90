@@ -7,7 +7,7 @@ implicit none
 
 contains
     
-    !> Read texture data from SMT file and place the result in  textureData object.
+    !> Read texture data from SMT file and place the result in  DiscreteODF object.
     !>
     subroutine SMTread(this, iounit,  info)
     implicit none
@@ -20,7 +20,7 @@ contains
         call SMTreadHeader(iounit, this%texture%title, ngrains, info)
         if (info /= criSuccess .or. (ngrains <= 0)) return
         !
-        info = textureData_resize(this%texture, ngrains)
+        info = DiscreteODF_resize(this%texture, ngrains)
         if (info == criSuccess) then
             call SMTreadBlock(iounit, this%texture, info)
         endif
@@ -34,7 +34,7 @@ contains
     integer,intent(in)              :: iounit
     integer,intent(out)             :: info
     !
-        call SMTwriteHeader(iounit, size(this%texture%constituents), this%texture%title, info)
+        call SMTwriteHeader(iounit, size(this%texture%orientations), this%texture%title, info)
         if (info == criSuccess) call SMTwriteBlock(iounit, this%texture, info)
     !
     end subroutine
@@ -77,7 +77,7 @@ contains
     subroutine SMTwriteBlock(iounit,texture,info)
     implicit none
     integer,intent(in)            :: iounit   !< IO unit
-    type(textureData),intent(in)  :: texture
+    type(DiscreteODF),intent(in)  :: texture
     integer,intent(out)           :: info     !< Exit code
     !
     integer :: i,ngrains
@@ -85,15 +85,15 @@ contains
     type(EulerAngles) :: euler_deg_tmp
     !
         info = criErr_IOWrite
-        ngrains = size(texture%constituents)
+        ngrains = size(texture%orientations)
         do i = 1, ngrains
-            associate(textureconstituent => texture%constituents(i))
-            euler_deg_tmp = rad2deg(textureconstituent%euler)    
+            associate(orientation => texture%orientations(i))
+            euler_deg_tmp = rad2deg(orientation%euler)    
             write(iounit,97,iostat=info) euler_deg_tmp%fi2, &
                                          euler_deg_tmp%PHI, &
                                          euler_deg_tmp%fi1, &
                                          NSTAP,        &
-                                         textureconstituent%weight
+                                         orientation%weight
             end associate
             if (info /= 0) exit
         enddo
@@ -105,7 +105,7 @@ contains
     subroutine SMTreadBlock(iounit,texture,info)
     implicit none
     integer,intent(in)              :: iounit   !< IO unit
-    type(textureData),intent(inout) :: texture  !< Texture data
+    type(DiscreteODF),intent(inout) :: texture  !< Texture data
     integer,intent(out)             :: info     !< Exit code
     !
     double precision,parameter :: convf =  acos(-1.D0) / 180.D0
@@ -113,7 +113,7 @@ contains
     double precision :: STAP = 0.D0
     !
         ! Number of records in the SMT file
-        nrec = size(texture%constituents)
+        nrec = size(texture%orientations)
         ! Number of grains (these are different things: one record
         ! in the SMT file may in principle provide multiple grains.
         ngrains = nrec
@@ -122,29 +122,29 @@ contains
         do j = 1, nrec
             NSTAP=1
             STAP=0.0D0
-            associate(textureconstituent => texture%constituents(i))
+            associate(orientation => texture%orientations(i))
                 ! order: PHI2,PHI,PHI1,STAP,NSTAP,GEW,GAMMA
-                read(iounit,96,iostat=info) textureconstituent%euler%fi2,         &
-                                            textureconstituent%euler%PHI,         &
-                                            textureconstituent%euler%fi1,         &
+                read(iounit,96,iostat=info) orientation%euler%fi2,         &
+                                            orientation%euler%PHI,         &
+                                            orientation%euler%fi1,         &
                                             STAP,NSTAP,         &
-                                            textureconstituent%weight,         &
-                                            textureconstituent%tGAM
+                                            orientation%weight,         &
+                                            orientation%tGAM
                 if (info /= 0) exit
                 info = criSuccess
                 ! Convert the euler angles of texture constituent from degrees to radians
-                textureconstituent%euler = deg2rad(textureconstituent%euler)
+                orientation%euler = deg2rad(orientation%euler)
             end associate
             i = i + 1
             if (NSTAP > 1) then
                 ! More than one grain per record. This path is more complex,
                 ! but is very infrequently followed.
                 ngrains = ngrains + NSTAP - 1
-                if (textureData_resize(texture, ngrains, keep_state=.true.) /= criSuccess) exit
+                if (DiscreteODF_resize(texture, ngrains, keep_state=.true.) /= criSuccess) exit
                 i0 = i - 1 ! Store the index of the "parent" grain
                 do k=1,NSTAP-1
-                        texture%constituents(i) = texture%constituents(i0)
-                        texture%constituents(i)%euler%fi1 = texture%constituents(i0)%euler%fi1 + dble(k)*STAP*convf
+                        texture%orientations(i) = texture%orientations(i0)
+                        texture%orientations(i)%euler%fi1 = texture%orientations(i0)%euler%fi1 + dble(k)*STAP*convf
                         i = i + 1
                 enddo
             endif

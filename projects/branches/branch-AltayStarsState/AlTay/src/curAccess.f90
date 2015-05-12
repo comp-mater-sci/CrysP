@@ -64,7 +64,7 @@ contains
     type(EulerAngles) :: euler_deg_tmp
     !
         info = criErr_IOWrite
-        npoint = size(this%texture%constituents)
+        npoint = size(this%texture%orientations)
         associate(mesodeformationgradient => this%mesodeformationgradient)
             write (iounit,402)
             write (iounit,403) npoint,mesodeformationgradient
@@ -73,13 +73,13 @@ contains
         if (ioerr /= 0) return
         !
         do i=1,npoint
-            associate(textureconstituent => this%texture%constituents(i))
-                euler_deg_tmp = rad2deg(textureconstituent%euler)
-                write(iounit,400,iostat=ioerr) i,textureconstituent%weight, &
+            associate(orientation => this%texture%orientations(i))
+                euler_deg_tmp = rad2deg(orientation%euler)
+                write(iounit,400,iostat=ioerr) i,orientation%weight, &
                             euler_deg_tmp%fi1,               &
                             euler_deg_tmp%PHI,               &
                             euler_deg_tmp%fi2,               &
-                            textureconstituent%tGAM
+                            orientation%tGAM
             end associate
             if (ioerr /= 0) exit
         enddo
@@ -145,19 +145,19 @@ contains
             !
         end associate
         ! Request allocation of the memory
-        info = textureData_resize(this%texture, npoint)
+        info = DiscreteODF_resize(this%texture, npoint)
         if (info /= criSuccess) return
         ! Process the crystals in the block      
         do i=1,npoint
-            associate(textureconstituent => this%texture%constituents(i))
-                read(iounit,400,iostat=ioerr) tmp,textureconstituent%weight,     &
+            associate(orientation => this%texture%orientations(i))
+                read(iounit,400,iostat=ioerr) tmp,orientation%weight,     &
                                 euler_deg_tmp%fi1,                & 
                                 euler_deg_tmp%PHI,                & 
                                 euler_deg_tmp%fi2,                & 
-                                textureconstituent%tGAM
+                                orientation%tGAM
                 if (ioerr /= 0) exit
                 ! Convert the euler angles of texture constituent from degrees to radians
-                textureconstituent%euler = deg2rad(euler_deg_tmp)
+                orientation%euler = deg2rad(euler_deg_tmp)
             end associate
         enddo
         info = merge(criSuccess, criErr_IORead, (ioerr == 0))

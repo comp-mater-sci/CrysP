@@ -28,7 +28,7 @@ implicit none
     !> iblock must be >= 0. The first block is at iblock = 0.
     integer,intent(in)              :: iblock
     double precision, dimension(3,3),target,intent(out) :: mesodeformationgradient
-    type(TextureData),target,intent(out)   :: texture
+    type(DiscreteODF),target,intent(out)   :: texture
     integer,intent(out)             :: info
     integer,intent(in),optional     :: iounit ! If provided, fname will not be opened, but the IO unit will instead be used
     !
@@ -99,7 +99,7 @@ implicit none
     integer,intent(in)            :: texfmt   !< Format ID
     
     double precision, dimension(3,3),target,intent(in) :: mesodeformationgradient
-    type(TextureData),target,intent(in)  :: texture
+    type(DiscreteODF),target,intent(in)  :: texture
     !> Flag: If true, both header and block are written, otherwise only 
     !> the block output is written out.
     logical,intent(in)            :: full
