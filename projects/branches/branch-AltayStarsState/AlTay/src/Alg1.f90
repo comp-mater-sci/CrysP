@@ -17,7 +17,7 @@
             
       contains
       
-      !> Update the EulerAngles component of Grain type due to increment of
+      !> Update the Euler angles of an orientation due to increment of
       !> plastic deformation (slip and/or twinning).
       !> The implemented algorithm is essentialy the one found in TAYLR1
       !> subroutine of altay-v4, yet largely rewritten.
@@ -215,5 +215,24 @@
      
       end subroutine
 
- 
+      
+      !> Update the accumulated shear deformation (including both slip and twinning).
+      subroutine Grain_accumulatedshear_update(this,previous,sliprat_solution,deltat,info)
+      implicit none
+      !
+      double precision,intent(out)       :: this
+      double precision,intent(in)        :: previous
+      type(SlipratSolution), intent(in)  :: sliprat_solution
+      double precision,intent(in)        :: deltat
+      integer, intent(out)               :: info
+      !
+      info = CriError
+      !
+      this = previous + sliprat_solution%totalshearrate * deltat
+      !
+      info = CriSuccess
+      !
+      end subroutine
+      
+      
       end module

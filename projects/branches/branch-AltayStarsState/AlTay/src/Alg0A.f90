@@ -503,6 +503,8 @@
       CALL Grain_EulerAngles_update(eulerb_1_rad(laml),eulerb_0_rad(laml), &
               sliprat_solution,Pancak2_solution,DM_data,MacroDefRate,info=info)
       !
+      call Grain_accumulatedshear_update(GMM1,GMM0,sliprat_solution,1.0D0,info)
+      !
       if (nfile.ne.0.and.istp.eq.1) then
           !
           call writeRESRecord(IMP2,ior,sliprat_solution%vMeqstress, &
@@ -533,7 +535,6 @@
       ! Normalized relaxation: ||relaxationrate_sam||/MacroDefRate%vMeqStrainRate = (||d-D||)/MacroDefRate%vMeqStrainRate 
       srh = srh + norm2(Pancak2_solution%relaxationrate_sam)/MacroDefRate%vMeqStrainRate*GEWF
       HGAM = HGAM + sliprat_solution%totalshearrate*GEWF !Step time here implicitly assumed to be 1.0s      
-      GMM1 = GMM0 + sliprat_solution%totalshearrate !Step time here implicitly assumed to be 1.0s
       Wtot = Wtot + sliprat_solution%workrate !Step time here implicitly assumed to be 1.0s
 #ifdef PEBP_ENABLED
       select case(KOST)
