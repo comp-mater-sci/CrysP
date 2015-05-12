@@ -12,7 +12,7 @@ implicit none
     type :: GrainClusterComponent
         
         !> todo consider adding pointer to both 'old' and 'new' states
-        type(DiscreteOrientation),pointer            :: grain => null()
+        type(GrainState),pointer       :: grain => null()
           
         type(Pancak2Solution),pointer  :: solution => null()
         
@@ -77,7 +77,8 @@ implicit none
             any(indices < 0) .or. (size(indices) > ngrains_per_cluster)) return
         ! Assign the pointers
         do i=1, ngrains_per_cluster
-            this%components(i)%grain => state%old%texture%orientations(i)
+            !> \todo check suspected bug: On right-hand-side of assignments ONLY, should '(i)' not to be replaced with '(indices(i))'
+            this%components(i)%grain%orientation => state%old%grainstates%grainstate(i)%orientation
             this%components(i)%solution => solution_data(i)
             this%components(i)%crss => crss_data(i)
         enddo
@@ -106,6 +107,10 @@ implicit none
         info = DiscreteODF_resize(state%old%texture, ngrains, keep_state=.false.)
         ! make assembly
         info = altayStateData_assemble(state)
+        ! initialize the grain states
+        call state%old%grainstates%initialize(state%old%texture, info)
+        call state%new%grainstates%initialize(state%new%texture, info)
+        !
         !
         ! Inside call to SIMUL
         !
@@ -195,7 +200,7 @@ implicit none
         do i = 1,Pancak2_max_grains
             if (i <= ngrains_per_cluster) then !initialize from 'this'
                 !initialize grain_euler
-                grain_euler(i) = this%components(i)%grain%euler
+                grain_euler(i) = this%components(i)%grain%orientation%euler
                 !initialize grain_CRSS
                 grain_CRSS(i) = this%components(i)%crss
             else !zero initializations

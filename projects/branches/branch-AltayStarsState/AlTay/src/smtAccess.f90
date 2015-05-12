@@ -110,7 +110,7 @@ contains
     !
     double precision,parameter :: convf =  acos(-1.D0) / 180.D0
     integer :: i,j,i0,k,NSTAP,nrec,ngrains
-    double precision :: STAP = 0.D0
+    double precision :: STAP = 0.D0, dummy_dp
     !
         ! Number of records in the SMT file
         nrec = size(texture%orientations)
@@ -123,13 +123,13 @@ contains
             NSTAP=1
             STAP=0.0D0
             associate(orientation => texture%orientations(i))
-                ! order: PHI2,PHI,PHI1,STAP,NSTAP,GEW,GAMMA
+                ! order: PHI2,PHI,PHI1,STAP,NSTAP,GEW,"a dummy"
                 read(iounit,96,iostat=info) orientation%euler%fi2,         &
                                             orientation%euler%PHI,         &
                                             orientation%euler%fi1,         &
                                             STAP,NSTAP,         &
                                             orientation%weight,         &
-                                            orientation%tGAM
+                                            dummy_dp
                 if (info /= 0) exit
                 info = criSuccess
                 ! Convert the euler angles of texture constituent from degrees to radians

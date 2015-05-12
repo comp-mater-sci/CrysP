@@ -319,6 +319,10 @@
 #endif      
       !
       assembly = TextureAssembly(state%old%texture, state%old%mesostructure%deformationgradient)
+      !
+      call state%old%grainstates%initialize(state%old%texture, info)
+      call state%new%grainstates%initialize(state%new%texture, info)
+      !
       call dynfil2(state%old,MacroDefState%TotalDefGrad)
 #ifndef NO_STDOUT       
       write (*,96) ISTP

@@ -30,8 +30,11 @@ use altayHardLaw_DSH, only: DSHStateVariable => StatVar
         
         type(MesostructureState)                     :: mesostructure
         
-        !> Collection of crystals (grains). 
+        !> Orientations of discrete ODF. 
         type(DiscreteODF)                       :: texture
+        
+        !> Collection of the state of grains
+        type(GrainStateCollection)              :: grainstates
         
         !> \fixme: decide whether the crss_ratios should appear as the state variables
         !> At this moment they are just parameters.

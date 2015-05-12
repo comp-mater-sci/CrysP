@@ -61,7 +61,7 @@ contains
             associate(orientation => this%texture%orientations(i))
                 euler_deg_tmp = rad2deg(orientation%euler)
                 write(iounit,iostat=ioerr) orientation%weight, euler_deg_tmp, &
-                                           orientation%tGAM
+                                           0.0D0
             end associate
             if (ioerr /= 0) exit
         enddo
@@ -93,6 +93,7 @@ contains
     integer,intent(out)     :: info     !< Exit code
     !
     integer :: npoint, i, ioerr, dummy
+    double precision :: dummy_dp
     type(EulerAngles) :: euler_deg_tmp
     !      
         read(iounit,iostat=info) dummy,npoint,this%mesodeformationgradient
@@ -105,7 +106,7 @@ contains
         do i=1,npoint
             associate(orientation => this%texture%orientations(i))
                 read(iounit,iostat=ioerr)orientation%weight,euler_deg_tmp, &
-                                         orientation%tGAM
+                                         dummy_dp
                 if (ioerr /= 0) exit
                 ! Convert the euler angles of texture constituent from degrees to radians
                 orientation%euler = deg2rad(euler_deg_tmp)

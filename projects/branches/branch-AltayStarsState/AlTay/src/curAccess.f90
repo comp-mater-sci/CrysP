@@ -79,7 +79,7 @@ contains
                             euler_deg_tmp%fi1,               &
                             euler_deg_tmp%PHI,               &
                             euler_deg_tmp%fi2,               &
-                            orientation%tGAM
+                            0.0D0
             end associate
             if (ioerr /= 0) exit
         enddo
@@ -118,6 +118,7 @@ contains
     integer,intent(out)     :: info     !< Exit code
     !
     integer :: npoint, i, j, tmp, ioerr, dummy
+    double precision :: dummy_dp
     type(EulerAngles) :: euler_deg_tmp
     character(len=10) :: buf
     !   
@@ -154,7 +155,7 @@ contains
                                 euler_deg_tmp%fi1,                & 
                                 euler_deg_tmp%PHI,                & 
                                 euler_deg_tmp%fi2,                & 
-                                orientation%tGAM
+                                dummy_dp
                 if (ioerr /= 0) exit
                 ! Convert the euler angles of texture constituent from degrees to radians
                 orientation%euler = deg2rad(euler_deg_tmp)

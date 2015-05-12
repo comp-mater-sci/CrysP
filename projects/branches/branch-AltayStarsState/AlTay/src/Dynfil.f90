@@ -43,11 +43,11 @@ contains
       type(EulerAngles),intent(out):: orientation
       double precision,intent(out) :: GEW,GAM
       !
-      associate (DFIL => statevars%texture%orientations)
-            orientation = DFIL(i)%euler
-            GEW=DFIL(i)%weight
-            GAM=DFIL(i)%tGAM
-      end associate
+      associate (DFIL => statevars%grainstates%grainstate)
+            orientation = DFIL(i)%orientation%euler
+            GEW=DFIL(i)%orientation%weight
+            GAM=DFIL(i)%accumulatedshear
+      end associate      
       !
       end subroutine DYNFIL4
 
@@ -60,11 +60,11 @@ contains
       type(EulerAngles),intent(in):: orientation
       double precision,intent(in) :: GEW,GAM
       !
-      associate (DFIL => statevars%texture%orientations)
-            DFIL(i)%euler = orientation
-            DFIL(i)%weight=GEW
-            DFIL(i)%tGAM=GAM
-      end associate
+      associate (DFIL => statevars%grainstates%grainstate)
+            DFIL(i)%orientation%euler = orientation
+            DFIL(i)%orientation%weight=GEW
+            DFIL(i)%accumulatedshear=GAM
+      end associate 
       !
       end subroutine DYNFIL5
 

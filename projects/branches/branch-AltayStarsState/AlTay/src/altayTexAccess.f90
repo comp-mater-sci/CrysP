@@ -13,12 +13,6 @@ implicit none
         
         !> Weight of the discrete ODF constituent
         double precision :: weight = 1.D0
-        
-        !> Total plastic slip
-        !>
-        !> This field provides an average quantification of the deformation
-        !> to which the grain was previously subjected.
-        double precision :: tGAM = 0.D0
 
     end type
 
