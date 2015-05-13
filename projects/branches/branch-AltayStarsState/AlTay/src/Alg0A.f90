@@ -405,10 +405,10 @@
       !
       eulerb_0_deg(L) = rad2deg(eulerb_0_rad(L))
       !
-      ! Retrieve the CRSSb for L
-      !    IOR+L-1  = sequence number of current grain
+      ! Retrieve the CRSSb for current grain
+      !    ifil4  = sequence number of current grain
       !    GMMAb(L) = the GAMMA of current grain   
-      call altayHard_getCRSS(material%hardening, state%old, IOR+L-1,GMMAb(L),CRSSb(L),info)
+      call altayHard_getCRSS(material%hardening, state%old, ifil4,GMMAb(L),CRSSb(L),info)
       !
   80  continue
       laml1=laml1+1
