@@ -160,15 +160,15 @@ implicit none
     !
     end subroutine
       
-    subroutine altayHard_getCRSS(hardparams, state, grain_id, gamma,crss,info)
+    subroutine altayHard_getCRSS(hardparams, state, grain_id, crss,info)
     implicit none
     type(HardeningModels),intent(in)    :: hardparams
     type(altayStateVariables),intent(in):: state
     integer,intent(in)                  :: grain_id
-    double precision,intent(in)         :: gamma
     type(CRSSData),intent(inout)        :: crss
     integer, intent(out)                :: info
     !
+    double precision :: gamma    
     double precision :: tau
     select case(hardparams%hardLawID)
     case(hard_none)
@@ -176,6 +176,7 @@ implicit none
         crss%crss = 1.D0
     !
     case(hard_voce,hard_swiftK,hard_swiftS)
+        gamma = state%grainstates%grainstate(grain_id)%accumulatedshear
         call altayHard_getTau(hardparams,gamma, tau, info)
         if (info == criSuccess) crss%crss = hardparams%crss_ratios%crss * tau
     case(hard_KM)

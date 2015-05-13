@@ -405,17 +405,15 @@
       !
       eulerb_0_deg(L) = rad2deg(eulerb_0_rad(L))
       !
-      ! Retrieve the CRSSb for current grain
-      !    ifil4  = sequence number of current grain
-      !    GMMAb(L) = the GAMMA of current grain   
-      call altayHard_getCRSS(material%hardening, state%old, ifil4,GMMAb(L),CRSSb(L),info)
+      ! Retrieve the CRSSb for ifil4  = sequence number of current grain
+      call altayHard_getCRSS(material%hardening, state%old, ifil4,CRSSb(L),info)
       !
   80  continue
       laml1=laml1+1
       if (laml1.gt.NGR) laml1=1
       laml=laml1
       GMM0=GMMAb(laml)
-      call altayHard_getTau(material%hardening, GMM0,TAU,info)
+      call altayHard_getTau(material%hardening, GMM0,TAU,info) !note: usefullness of obtained TAU is limited to outputting to RES-file.
       !
       IF (NFILE.eq.0.or.ISTP.gt.1) goto 999
 ! 
