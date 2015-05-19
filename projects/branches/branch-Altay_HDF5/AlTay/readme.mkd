@@ -1,0 +1,161 @@
+
+Guidline for code development in AlTay
+======================================
+
+Version: $Rev$
+
+Author: J. Gawad (Dept. CS, KU Leuven) jerzy.gawad@cs.kuleuven.be
+
+Introduction
+------------
+
+The AlTay code has been growing organically for a couple of years. Some of its
+components are probably older than 20 years now. Multiple authors have been
+involved in the developments, including Paul Van Houtte himself, as well as
+a host of his PhD students and postdocs.
+
+At some point AlTay became overcomplicated and overly uncomprehesible. In the 
+meantime the Fortran language has become much more friendly and expressive. 
+Alas, the use of modern Fortran in AlTay was pretty limited.
+
+An effort for improving that has been recently initiated. It includes:  
+
+1. restructuring the existing code, with the goal to modernize its design,
+   simplify/deobfuscate it and eliminate dead code,
+2. adding new features.
+
+Boths parts of this endaveour require some guidance how to structure the new 
+code. This brief document acts as the "good practice guide" for every new code
+added to AlTay codebase.
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", 
+"SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be
+interpreted as described in [RFC 2119][rfc2119].
+
+[rfc2119]: https://www.ietf.org/rfc/rfc2119.txt
+
+Style guide for Fortran code
+----------------------------
+
+New developments of the AlTay should adhere to code standarts defined below.
+
+### Layout of the source code ###
+
+- Free-format source code is required.
+
+- Although Fortran standard allows a line to contain up to 132 characters (and
+  some compilers permit even more), to improve readibility the code lines 
+  should contain maximum 80 characters. 
+
+- Good indentation is crucial. Consistently use 4 spaces for indentation.
+  Tabulators must not appear as indenters.
+
+- Readability of the code is crucial. Leave at least 2 empty lines between the
+  consequtive blocks of code, such as types, procedures, interfaces etc.
+
+- All keywords should be written using lowercase letters.
+
+- All names of Fortran intrinsics (functions and modules) should be written
+  using lowercase letters.
+
+- Double-colon `::` should be used in declarations of types, variables and
+  constants, formal parameters, etc.
+
+
+
+### Design principles ###
+
+- The code must conform at least with Fortran 2003 standard.
+
+- Implicit typing must not be used. Always use `implicit none`.
+
+- The use of explicit literal constants (e.g. 6) is discouraged. If a constant
+  appears in more than one context (this is typically the case),
+  it should be turned into a named constant.
+  Example: `integer,parameter :: TK_vector_dims = 6`
+
+- In general, global state variables should be avoided. More specifically:
+      * common blocks are *forbidden* and must not be used,
+      * module variables with `save` attribute are discouraged, but they
+		may be used if necessary,
+      * local variables with `save` attribute (either explicit or implicit)
+		are _strongly discouraged_ and should not be used unless a strong
+		justification exists. If a variable with `save` is used, a relevant
+		documentation must be provided.
+
+### Naming conventions ###
+
+- Naming convention for various elements of the code should follow the rules:
+    * **files**: unless a good motivation is provided, any source file should
+        be named after the module that is implemented within. Example: if the
+        module is named `altayTK`, the file should be named `altayTK.f90`.
+	* **modules**: use a prefix which is a lowercase name of the library
+	  (or its abbreviation, or another name that is distinct enough) where the
+	  module belongs to.
+	* **types**: you may use one of two conventions: 
+        1. if name of the type does not contain a prefix from the module it is
+		   enclosed in, use camel-case. Example: `type(EulerAngles)`. Type names
+		   without a prefix typically describe very generic concepts.
+		2. if the name of the type is prefixed by the name of the module where it is
+		   defined, you must use the name of the module literally. 
+		   E.g. `type(altayStateContainer)` defined in the `altayState` module.
+	* **constants (parameters)** defined in modules: it is advisable to use the same
+	  prefix for all public parameters defined in a given module. The prefix 
+	  should have some link to the module name. The prefix should be separated by
+	  one underscore. Besides, underscores can be used if it improves readability.
+	* **variables**: In general, lowercase names should be used. Underscores can be
+	  used if it improves readability. 
+	* **preprocessor macros**: use all-capitals, E.g. `PEBP_ENABLED`
+	* **procedures**: any module procedure (which applises, in fact, to almost all 
+	  procedures in AlTay) should be named following the pattern
+	  <prefix>_name, where the <prefix> is related either to the module name (or
+	  it is the module name itself), or the typename.
+      - Rationale #1: Fortran does not support namespaces. If one imports
+           symbols from a module by means of the `use` construct, the symbols
+           are imported into the global namespace. Of course, clashes between
+           identical names defined in different modules are more than likely.
+      - Rationale #2: this facilitates making type-bound procedures
+        E.g. `DeformationState_update`, where the typename is `DeformationState`
+
+### Procedures ###
+
+- Generally, every subroutine must return exit status. The exit status should
+  be included as the last non-optional formal parameter. 
+  A conventional name for the exit status formal parameter is `info`. Named
+  constansts from the `criErrcodes` module must be used for setting its values.
+
+- Every formal parameter must be given an explicit intent (one of: `in`, `out`
+  or `inout`).
+
+- The following convention should be preferably followed in ordering the formal
+  parameters:
+	* optional parameters should be placed at the end.
+	* parameters with intent "out" should appear as the last ones, but before the
+	  optional parameter
+	* if the procedure has an "out" parameter indended for returning its exit
+	  code, it should appear as the last output parameter.
+	* if the procedure basically operates on a structure, the object of that
+	  structure should be given as the very first parameter (even though it might
+	  have the intent `inout`) and named `this`.
+	  Example:
+
+			subroutine altayTK_init(this, data_in, data_out, info, scaling)
+			implicit none
+			type(altayRun),intent(inout)				:: this
+			double precision,dimension(TK_vector_dims)	:: data_in
+			type(altayTKStateVariables),intent(out)		:: data_out
+			integer,intent(out)							:: info
+			double precision,intent(in),optional		:: scaling
+			...
+			end subroutine
+
+### Documentation and comments ###
+
+- Every publicly visible entity (module, type, procedure, named constant) must contain
+  a short documentation. Doxygen-style comments must be used. The documentation
+  line must precede the definition of the entity.
+  Example:
+
+		!> Length of field array in altayTKStateVariables
+		integer,parameter :: TK_field_length
+
