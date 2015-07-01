@@ -76,7 +76,7 @@ contains
       call MatrixExponentSmallNorm(Ldt,thisState%IncrDefGrad,thisState%IncrDefGrad_inverse,info) 
       !
       !Update thisState%TotalDefGrad
-      thisState%TotalDefGrad = matmul(thisState%TotalDefGrad,thisState%IncrDefGrad)
+      thisState%TotalDefGrad = matmul(thisState%IncrDefGrad,thisState%TotalDefGrad)
       !
       thisState%IncrvMeqStrain = thisRate%vMeqStrainRate * deltaTime
       thisState%AccumvMeqStrain_ToStartOfInc = thisState%AccumvMeqStrain_ToEndOfInc
