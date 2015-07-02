@@ -137,7 +137,7 @@
   88  format (a)
       call stripComment(config%micros_fname)
       write (*,103) trim(config%micros_fname)
-103   format (' GRFIL - Input Texture File:',a)            
+103   format (' InterfaceDataset_readfromSMTfile - Input Texture File:',a)            
 
 !
 !     Initialisation of SIMUL
@@ -198,15 +198,7 @@
       endif
       !
       !
-      !
-      ! Initializing microstructure      
-      ! NOTE: this is done after initialisation of SIMUL, since SIMUL currently reads a.o. NLIST
-      CALL GRFIL(config%micros_fname,config%simul_init%FMicro,info) 
-      if (info.ne.0) then
-          write(*,215)
-          call exit(stopcode_ioerror)
- 215      format('Error condition is returned by GRFIL')
-      endif      
+   
       
       associate(texcnf => config%texture)
           ! Get the initial texture

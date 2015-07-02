@@ -61,6 +61,8 @@ contains
     character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= criSuccess)
     !
     integer :: ierr
+    type(InterfaceDataset) :: interface_dataset
+    type(MesostructureState) :: mesostructure_state
     !
         if (present(errmsg)) errmsg = ''
         ierr = 0
@@ -79,8 +81,17 @@ contains
             info = criErr_IO
             return
         endif
-        ! Load microstructure data
-        CALL GRFIL(acnf%micros_fname,acnf%simul_init%FMicro,info)
+        !
+        ! Load mesostructure data
+        !CALL GRFIL(acnf%micros_fname,acnf%simul_init%FMicro,info) ->The old way: Sets local variables in the mesostructure module...
+        !
+        call InterfaceDataset_readfromSMTfile( interface_dataset, acnf%micros_fname, info)
+        ! interface_dataset: currently not yet exploited!
+        !
+        !Initialisation of mesostructure_state with FMicro
+        call mesostructure_state%update(config%simul_init%FMicro, info)
+        ! mesostructure_state: currently not yet exploited!
+        !
         if (info /= 0) then
                 if (present(errmsg)) errmsg = 'Cannot process the microstructure file: ' // trim(acnf%micros_fname)
                 info = criErr_IO
