@@ -62,7 +62,6 @@ contains
     !
     integer :: ierr
     type(InterfaceDataset) :: interface_dataset
-    type(MesostructureState) :: mesostructure_state
     !
         if (present(errmsg)) errmsg = ''
         ierr = 0
@@ -82,16 +81,6 @@ contains
             return
         endif
         !
-        ! Load mesostructure data
-        !CALL GRFIL(acnf%micros_fname,acnf%simul_init%FMicro,info) ->The old way: Sets local variables in the mesostructure module...
-        !
-        call InterfaceDataset_readfromSMTfile( interface_dataset, acnf%micros_fname, info)
-        ! interface_dataset: currently not yet exploited!
-        !
-        !Initialisation of mesostructure_state with FMicro
-        call mesostructure_state%update(config%simul_init%FMicro, info)
-        ! mesostructure_state: currently not yet exploited!
-        !
         if (info /= 0) then
                 if (present(errmsg)) errmsg = 'Cannot process the microstructure file: ' // trim(acnf%micros_fname)
                 info = criErr_IO
@@ -100,12 +89,19 @@ contains
         !
         ! Get the initial texture
         call loadTexture(cnf%texture%input_type, trim(cnf%texture%input_fname), &
-                            cnf%texture%block_id, state%old%frame, state%old%texture, info)
+                            cnf%texture%block_id, state%old%mesostructure%deformationgradient, state%old%texture, info)
         if (info /= 0) then
                 if (present(errmsg)) errmsg = 'Cannot process the texture data file: ' // trim(cnf%texture%input_fname)
                 info = criErr_IO
                 return
         endif
+        !
+        ! Update meso deformation gradient with input from config
+        call state%old%mesostructure%deformationgradient%update(config%simul_init%FMicro, info)
+        !
+        ! Get the interface data
+        call InterfaceDataset_readfromSMTfile( interface_dataset, acnf%micros_fname, info)
+        ! interface_dataset: currently not yet exploited, leaving altaySub broken.
         !
         ! Open output files
         !
@@ -372,7 +368,7 @@ contains
       type(TextureAssembly) :: assembly
             info = criSuccess
             if (acnf%output_config%nfile == 1) then
-                  assembly = TextureAssembly(statevars%texture, statevars%frame)
+                  assembly = TextureAssembly(statevars%texture, statevars%mesostructure%deformationgradient)
                   call CURwriteBlock(assembly,IMP1,info)
             endif
             if (info /= 0) return
