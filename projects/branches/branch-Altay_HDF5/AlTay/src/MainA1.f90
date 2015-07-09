@@ -20,6 +20,8 @@
       use altayTexFormats
       use altayMacroKinematic
       use altayTexAccess
+      use altayStatePersistence
+      use altaySimulation
       implicit none ! double precision (a-h,o-z)
 !      Several simulations (usually several-steps each),
 !      following each other.
@@ -58,6 +60,8 @@
       type(altayConfigData)             :: config
       type(altayStateData),target       :: state
       type(altayMaterialData)            :: material
+      
+      class(StatePersistenceScheme), pointer :: storage
       
       !
       SAVE
@@ -214,9 +218,22 @@
           read(KLEC,'(A)') texcnf%input_fname
           read(KLEC,99) texcnf%block_id
           call stripComment(texcnf%input_fname)
-          ! 
+          !
+          ! -->>
+#ifdef REMOVEME
           call loadTexture(texcnf%input_type,trim(texcnf%input_fname),&
                            texcnf%block_id,state%old%mesostructure%deformationgradient, state%old%texture, info)
+#endif
+          
+          ! Choose appropriate backend: texcnf%input_type
+          storage => statePersistenceFactory(texcnf)
+          call storage%loadState(state%old, info)
+          
+          ! <<--
+          
+          
+          
+          
           if (info /= 0) then
                 write(*,fmt=9980) trim(texcnf%input_fname)
                 call exit(stopcode_ioerror)
@@ -308,6 +325,7 @@
 !
 !     Output of last "current situation"
 !
+#ifdef REMOVEME
 #ifdef FINALCUB_ENABLED
       call openTextureFile(trim(config%output_prefix)//'.cub',TF_CUB, &
                            'w', icubunit, info)
@@ -315,6 +333,7 @@
             call outputCurrentTexture(icubunit,TF_CUB, &
                                       state%old%mesostructure%deformationgradient, state%old%texture, .true.,info)
       endif
+#endif
 #endif
 #if defined(PEBP_ENABLED) && defined(FINALBPM_ENABLED)
       select case(HardLawID)

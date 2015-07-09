@@ -1,10 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "AlTay", "AlTay\AlTay.vfproj", "{8663D4BD-D460-4394-871E-0FF3EAB14C60}"
 	ProjectSection(ProjectDependencies) = postProject
+		{EB96CF82-0618-44F2-8EB2-735371D33A64} = {EB96CF82-0618-44F2-8EB2-735371D33A64}
 		{48A894A8-DEF0-4103-8323-DA4269DB06E8} = {48A894A8-DEF0-4103-8323-DA4269DB06E8}
 	EndProjectSection
 EndProject
@@ -26,6 +27,11 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{13A50A69-DE70-465D-8C2D-08FD05F5EA67}"
 	ProjectSection(SolutionItems) = preProject
 		readme.mkd = readme.mkd
+	EndProjectSection
+EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libFH5", "..\FH5\libFH5\libFH5.vfproj", "{EB96CF82-0618-44F2-8EB2-735371D33A64}"
+	ProjectSection(ProjectDependencies) = postProject
+		{48A894A8-DEF0-4103-8323-DA4269DB06E8} = {48A894A8-DEF0-4103-8323-DA4269DB06E8}
 	EndProjectSection
 EndProject
 Global
@@ -119,6 +125,22 @@ Global
 		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Release-Amplifier|Win32.Build.0 = Release_abaqus|Win32
 		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Release-Amplifier|x64.ActiveCfg = Release_abaqus|x64
 		{48A894A8-DEF0-4103-8323-DA4269DB06E8}.Release-Amplifier|x64.Build.0 = Release_abaqus|x64
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Debug|Win32.Build.0 = Debug|Win32
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Debug|x64.ActiveCfg = Debug|x64
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Debug|x64.Build.0 = Debug|x64
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Intel_SSA|Win32.ActiveCfg = Release|Win32
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Intel_SSA|Win32.Build.0 = Release|Win32
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Intel_SSA|x64.ActiveCfg = Release|x64
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Intel_SSA|x64.Build.0 = Release|x64
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Release|Win32.ActiveCfg = Release|Win32
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Release|Win32.Build.0 = Release|Win32
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Release|x64.ActiveCfg = Release|x64
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Release|x64.Build.0 = Release|x64
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Release-Amplifier|Win32.ActiveCfg = Release|Win32
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Release-Amplifier|Win32.Build.0 = Release|Win32
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Release-Amplifier|x64.ActiveCfg = Release|x64
+		{EB96CF82-0618-44F2-8EB2-735371D33A64}.Release-Amplifier|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
