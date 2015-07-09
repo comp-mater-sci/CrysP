@@ -92,7 +92,7 @@ private
     !> Format of slipsystem files
     integer,parameter,public:: DM_format_pre = 1, DM_format_dat = 2
     
-    public DeformationMechanismData_readPre
+    public DeformationMechanismData_init
     !
     ! Private data corresponding to the PRE files
     !

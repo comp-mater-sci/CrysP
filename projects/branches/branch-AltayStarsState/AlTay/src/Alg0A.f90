@@ -168,7 +168,14 @@
       end if
 216   FORMAT (/,' SUBROUTINE SIMUL  - READS ITS CRYSTAL DATA',//)
       !
-      call DeformationMechanismData_readPre(DM_data, LEC, info)
+      !
+      ! initFromFile
+#ifndef ALTAY_SUBROUTINE
+      call DeformationMechanismData_init(DM_data,config%slipsystem%input_fname,DM_format_pre,info)
+#else
+      call DeformationMechanismData_init(DM_data,trim(cnf%slipsystem%input_fname),DM_format_pre,info)
+#endif
+      !
       !
       if (DM_data%n_systems.gt.DM_max_systems)then
 #ifndef ALTAY_SUBROUTINE

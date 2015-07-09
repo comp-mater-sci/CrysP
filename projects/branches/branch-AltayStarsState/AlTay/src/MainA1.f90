@@ -107,8 +107,6 @@
       read (KLEC,90) config%slipsystem%input_fname
       call stripComment(config%slipsystem%input_fname)
       write (*,93) trim(config%slipsystem%input_fname)
-!     UNIT LEC = SLIP SYSTEMS
-      open (unit=LEC,file=config%slipsystem%input_fname,status='old')
       READ(KLEC,96) NLINES
       write (*,97) NLINES
   97  format (' number of lines with tau-crit values:',i3)

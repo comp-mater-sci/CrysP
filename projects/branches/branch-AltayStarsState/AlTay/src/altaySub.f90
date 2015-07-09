@@ -73,8 +73,6 @@ contains
         !
         ! Open input files
         !
-        ! UNIT LEC = SLIP SYSTEMS
-        open (unit=LEC,file=trim(cnf%slipsystem%input_fname),status='old',iostat=ierr)
         if (ierr /= 0) then
             if (present(errmsg)) errmsg = 'Cannot open slip system definition file: ' // trim(cnf%slipsystem%input_fname)
             info = criErr_IO
@@ -148,8 +146,6 @@ contains
         endselect      
 #endif
         !
-        ! No need for the slip system definition anymore.
-        close(LEC)
         !
         info = altayStateData_assemble(state)
     !
