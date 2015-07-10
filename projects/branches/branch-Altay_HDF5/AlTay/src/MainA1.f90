@@ -219,21 +219,14 @@
           read(KLEC,99) texcnf%block_id
           call stripComment(texcnf%input_fname)
           !
-          ! -->>
-#ifdef REMOVEME
-          call loadTexture(texcnf%input_type,trim(texcnf%input_fname),&
-                           texcnf%block_id,state%old%mesostructure%deformationgradient, state%old%texture, info)
-#endif
-          
           ! Choose appropriate backend: texcnf%input_type
+          info = criError
           storage => statePersistenceFactory(texcnf)
-          call storage%loadState(state%old, info)
-          
-          ! <<--
-          
-          
-          
-          
+          if (associated(storage)) then
+              call storage%loadState(state%old, info)
+              deallocate(storage)
+          endif
+          !
           if (info /= 0) then
                 write(*,fmt=9980) trim(texcnf%input_fname)
                 call exit(stopcode_ioerror)
@@ -241,6 +234,22 @@
                  ,1X,A)
           endif
       end associate
+      
+#ifdef TESTING_ENABLED
+        block
+            class(StatePersistenceScheme), pointer :: storage
+            type(TextureConfig) :: texcnf
+            !
+            texcnf%input_type = TF_CUR
+            texcnf%input_fname = trim(config%output_prefix)//'_output.CUR'
+            storage => statePersistenceFactory(texcnf)
+            call storage%saveState(state%old, info) ! FIXME: change to state%new
+            ! let the finalizations run...
+            deallocate(storage)
+        end block
+#endif
+      
+      
 #ifdef PEBP_ENABLED
       ! PEBP model
       NREC = size(DFIL)
@@ -335,6 +344,19 @@
       endif
 #endif
 #endif
+
+    block
+        class(StatePersistenceScheme), pointer :: storage
+        type(TextureConfig) :: texcnf
+        !
+        texcnf%input_type = TF_CUB
+        texcnf%input_fname = trim(config%output_prefix)//'.CUB'
+        storage => statePersistenceFactory(texcnf)
+        call storage%saveState(state%new, info) 
+        deallocate(storage)
+    end block
+
+
 #if defined(PEBP_ENABLED) && defined(FINALBPM_ENABLED)
       select case(HardLawID)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)

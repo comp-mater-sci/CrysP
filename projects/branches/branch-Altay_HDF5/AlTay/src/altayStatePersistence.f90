@@ -22,10 +22,10 @@ implicit none
         
         class(TextureRawFileAccess),pointer     :: texture_storage
         
-        integer                                 :: input_texture_format_id = TF_SMT
+        integer                                 :: texture_format_id = TF_SMT
         
-        integer                                 :: input_texture_blockid = 0
-        
+        integer                                 :: texture_blockid = 0
+
         type(RawFileContext)                    :: texture_storage_context
         
         type(RawFileContext)                    :: hardening_storage_context
@@ -34,6 +34,8 @@ implicit none
         procedure :: initialize => NativePersistenceScheme_initialize
         procedure :: saveState => NativePersistenceScheme_saveState
         procedure :: loadState => NativePersistenceScheme_loadState
+        
+        final :: NativePersistenceScheme_finalize
         
     end type
     
@@ -84,8 +86,8 @@ contains
         info = criErr_BadArgs
         select case(fileformat)
         case(TF_SMT, TF_CUR, TF_CUB)
-            this%input_texture_format_id = fileformat
-            this%input_texture_blockid = blockid
+            this%texture_format_id = fileformat
+            this%texture_blockid = blockid
             this%texture_storage_context = RawFileContext(path)
         case default
             return
@@ -94,32 +96,57 @@ contains
     !
     end subroutine
     
+    subroutine NativePersistenceScheme_finalize(this)
+    implicit none
+    type(NativePersistenceScheme),intent(inout) :: this
+    !
+    integer :: info
+    !
+        info = this%texture_storage_context%close()
+        info = this%hardening_storage_context%close()
+    !
+    end subroutine
+    
+    
+    
     subroutine NativePersistenceScheme_saveState(this, state, info)
     implicit none
     class(NativePersistenceScheme),intent(inout) :: this
     type(altayStateVariables),intent(in)        :: state
     integer,intent(out)                         :: info
     !
-        
-        info = criSuccess
+    integer, parameter :: step_number = 0
+    !
+        ! Prepare access to the storage
+        this%texture_storage => textureAccessFactory(this%texture_format_id, &
+                                                     this%texture_storage_context, &
+                                                     readonly=.false., info=info)
+        if (.not. associated(this%texture_storage) .or. (info /= criSuccess)) return
+        ! Set other state components, if the access method allows them.
+        select type(ptr => this%texture_storage)
+        class is(TextureMetaRawFileAccess)
+            call ptr%setExtendedMetaData(state%mesostructure%deformationgradient, step_number, info)
+        end select
+        ! Do the IO
+        info = this%texture_storage%write(this%texture_blockid, state%texture)
     !
     end subroutine
         
         
     subroutine NativePersistenceScheme_loadState(this, state, info)
     implicit none
-    class(NativePersistenceScheme),intent(inout)  :: this
+    class(NativePersistenceScheme),intent(inout):: this
     type(altayStateVariables),intent(inout)     :: state
     integer,intent(out)                         :: info
     !
     integer :: step_number
     !
         ! Prepare access to the storage
-        this%texture_storage => textureAccessFactory(this%input_texture_format_id, &
+        this%texture_storage => textureAccessFactory(this%texture_format_id, &
                                                      this%texture_storage_context, &
                                                      readonly=.true., info=info)
         if (.not. associated(this%texture_storage) .or. (info /= criSuccess)) return
-        info = this%texture_storage%read(this%input_texture_blockid, state%texture) 
+        info = this%texture_storage%read(this%texture_blockid, state%texture) 
         if (info /= criSuccess) return
         ! Set other state components, if the reader offers them.
         select type(ptr => this%texture_storage)
@@ -132,13 +159,12 @@ contains
     
     subroutine HDF5PersitenceScheme_saveState(this, state, info)
     implicit none
-    class(HDF5PersitenceScheme),intent(inout)  :: this
+    class(HDF5PersitenceScheme),intent(inout)   :: this
     type(altayStateVariables),intent(in)        :: state
     integer,intent(out)                         :: info
     !
         info = criSuccess
     !
-
     end subroutine
         
         
