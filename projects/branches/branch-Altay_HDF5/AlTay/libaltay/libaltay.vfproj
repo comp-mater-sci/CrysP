@@ -32,7 +32,7 @@
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/></Configuration>
 		<Configuration Name="Debug|x64" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\src\" PreprocessorDefinitions="ALTAY_SUBROUTINE;NO_STDOUT;RCM_ENABLED;PEBP_ENABLED;" F2003Semantics="true" DebugParameter="debugParameterAll" WarnUnusedVariables="true" WarnIgnoreLOC="true" WarnTruncateSource="true" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" InitLocalVarToNAN="true" FloatingPointStackCheck="true" Traceback="true" RuntimeChecks="rtChecksAll" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\src\" PreprocessorDefinitions="ALTAY_SUBROUTINE;NO_STDOUT;RCM_ENABLED;" F2003Semantics="true" DebugParameter="debugParameterAll" WarnUnusedVariables="true" WarnIgnoreLOC="true" WarnTruncateSource="true" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" InitLocalVarToNAN="true" FloatingPointStackCheck="true" Traceback="true" RuntimeChecks="rtChecksAll" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
@@ -71,11 +71,17 @@
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Debug|x64">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration></File>
-		<File RelativePath="..\src\altayDSHState.f90"/>
+		<File RelativePath="..\src\altayCRSSTypes.f90"/>
+		<File RelativePath="..\src\altayDeformationMechanism.f90"/>
+		<File RelativePath="..\src\altayDSHState.f90">
+			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\src\altayHard.f90"/>
-		<File RelativePath="..\src\altayHardLawDSH.f90"/>
+		<File RelativePath="..\src\altayHardLawDSH.f90">
+			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/></File>
+		<File RelativePath="..\src\altayHardLawKM.f90"/>
 		<File RelativePath="..\src\altayHardLawSimple.f90"/>
 		<File RelativePath="..\src\altayHardTypes.f90"/>
+		<File RelativePath="..\src\altayMaterial.f90"/>
 		<File RelativePath="..\src\altayRCM.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>

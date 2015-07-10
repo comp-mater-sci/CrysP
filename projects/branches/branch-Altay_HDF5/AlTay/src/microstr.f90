@@ -5,91 +5,105 @@ module altayMesostructure
 use altayAlgorithms
 use altayMiscutils, only: terminate, stopcode_runtimeerror
 use criErrcodes
+use altayStateTypes, only: MesostructureState
 implicit none
 
-      !> Transformation matrix associated to the grain boundary reference frame 
-      !> in the initial state.
-      !> Shape is: [3,3,ngr], where ngr is the number of grains.
-      double precision, dimension(:,:,:),allocatable,save :: TmatGr
-      integer,save :: NGrElm = 0
-      character(len=40), save :: TitMic = ''
+    type :: srTensor
+        
+        double precision, dimension(3,3) :: matrix = unit_sr_matrix
+    
+    end type
+    
+    type :: InterfaceDataset
+        
+        !>Title of interface dataset
+        character(len=40) :: title = ''   
+        
+        !>Number of interfaces in the dataset
+        integer :: n_interfaces = 0
+        
+        !>Euler angles of each interface in the dataset. 
+        !> The corresponding 3rd axis refers to the interface normal.
+        !> It has dimension(n_interfaces).        
+        type(EulerAngles), dimension(:), allocatable :: eulerangles 
+        
+        !>Transformation matrix of each interface in the dataset. 
+        !> The 3rd column refers to the interface normal.
+        !> It has dimension(n_interfaces).
+        type(srTensor), dimension(:), allocatable :: trafo         
+    
+    contains
+    
+        procedure :: readfromSMTfile => InterfaceDataset_readfromSMTfile   
+        
+    end type
+    
 
       
-contains
-      
-      ! Reading of "microstructure" (Euler angles defining 
-      ! grain boundary segments) in SMT-format, allocation 
-      ! and assignment of the module variables.
-      subroutine GRFIL(fnam,F_mic,ierr)
+    contains
+
+      !> Reading of "microstructure" (Euler angles defining 
+      !> grain boundary segments) and initializing instance 'this' of InterfaceDataset.
+      subroutine InterfaceDataset_readfromSMTfile( this, SMTfilename, info)
       use altayMiscutils
       use altayIOConfig
       implicit none
+      class(InterfaceDataset), intent(inout)  :: this
+      character(len=*),intent(in)            :: SMTfilename
+      integer, intent(out)                   :: info
       !
-      integer,intent(out)         :: ierr
-      character(len=*),intent(in) :: fnam
-      !F_mic is a deformation gradient that conceptually
-      ! 'deforms' a spherical grain into an ellipsoidal shape
-      double precision, dimension(3,3), intent(in) :: F_mic
+      integer          :: i
       !
-      integer          :: IGrElm
-      type(EulerAngles) :: EulGB
-      double precision, dimension(3,3) :: T 
-      ! 
-      ierr = -1
+      !output to NLIST 
+      if(NLIST.eq.1) write (IMP,703) SMTfilename
+703   format (' InterfaceDataset_readfromSMTfile - Input File:' ,a)
       !
-      ! output to NLIST 
-      if(NLIST.eq.1) write (IMP,103) fnam
-      103  format (' GRFIL - Input Texture File:' ,a)
+      !Open SMT-file
+      info = criError
+      open (unit=NDAT2,file=SMTfilename,status='old',iostat=info) 
+      if (info /= 0) return
       !
-      open (unit=NDAT2,file=fnam,status='old',iostat=ierr) 
-      if (ierr /= 0) return
+      !Read 1st line
+      read (NDAT2,794) this%n_interfaces, this%title
+794   format(I5,5x,A)
       !
-      read (NDAT2,94) NGrElm,TitMic
-      94  format(I5,5x,A)
+      !output
 #ifndef NO_STDOUT
-      write (*,93) NGrElm,TitMic
+      write (*,793) this%n_interfaces, this%title
 #endif
-      ! output to NLIST 
-      if(NLIST.eq.1) write (IMP,93) NGrElm,TitMic
-      93  format (' Number of orientations in MICROSTRUCTURE file:' ,I5,/,' Titel on  file: ',A)
-    
+      if(NLIST.eq.1) write (IMP,793) this%n_interfaces, this%title
+793   format (' Number of orientations in MICROSTRUCTURE file:' ,I5,/,' Titel on  file: ',A)
       !
-      allocate(TmatGr(3,3,NGrElm),STAT=ierr)
-      if (ierr.ne.0) then
-          if(NLIST.eq.1) write(IMP,102)
+      !Allocations
+      allocate(this%eulerangles(this%n_interfaces),STAT=info)
+      if (info.ne.0) then
+          if(NLIST.eq.1) write(IMP,702)
           return
       end if 
-      102  format (' GRFIL - Allocation of memory failed')
+      allocate(this%trafo(this%n_interfaces),STAT=info)
+      if (info.ne.0) then
+          if(NLIST.eq.1) write(IMP,702)
+          return
+      end if      
+702   format (' InterfaceDataset_readfromSMTfile - Allocation of memory failed')
       !
-      do IGrElm=1,NGrElm
-            read (NDAT2,96) EulGB%fi2,EulGB%PHI,EulGB%fi1
-            !Calc. the transformation matrix T
-            T = rotmat(deg2rad(EulGB))
-            !TmatGr(1:3,i,IGrElm) for i=1,2 holds two non-parallel vectors 
-            !  within the initial GB (grain boundary) plane.      
-            !TmatGr(1:3,i,IGrElm) for i=3 holds a vector out of the initial
-            !  GB plane (not necessarily perpendicular to the GB plane).
-            TmatGr(:,:,IGrElm)=matmul(F_mic,transpose(T))
+      !Read remaining of SMT-file
+      do i= 1,this%n_interfaces
+          associate (eul => this%eulerangles(i), trafo => this%trafo(i))
+              read (NDAT2,796) eul%fi2, eul%PHI, eul%fi1
+              !Calculate the transformation matrix
+              trafo%matrix = transpose(rotmat(deg2rad(this%eulerangles(i))))
+          end associate
       enddo
-      96 format(3F10.0)
+796   format(3F10.0)
       !
+      !Close SMT-file
       close(unit=NDAT2)
-      ierr = 0
-      return
-      end subroutine GRFIL
-
-
-      !> Finalizes the module. The subroutine puts the module variables 
-      !> into initial state and deallocates the storage.
-      subroutine MICROSTR_finalize(info)
-      implicit none
-      integer,intent(out)     :: info
       !
-            NGrElm = 0
-            TitMic = ''
-            if (allocated(TmatGr)) deallocate(TmatGr,stat=info)
+      info = criSuccess
       !
       end subroutine
+    
 
       
       !> Calculation of a weight factor associated to the cluster, i.e.
@@ -98,14 +112,14 @@ contains
       !>                   "P. Van Houtte et al, IJP 21, pp. 589-624 (2005), 
       !>                   doi: 10.1016/j.ijplas.2004.04.011",
       !>                   or a variant of the described algorithm.
-      subroutine mesostr_clusterweightfactor(NGR,IGrElm,MacroDefState,weight,info) 
+      subroutine mesostr_clusterweightfactor(NGR,undeformedaxes,mesostructure_state,weight,info) 
       use altayIOConfig, only: IPR,NLIST,IMP
       use altayMacroKinematic
       !
       implicit none
       integer,intent(in)                              :: NGR
-      integer,intent(in)                              :: IGrElm
-      type(DeformationState),intent(in)               :: MacroDefState
+      type(srTensor),intent(in)                       :: undeformedaxes
+      type(MesostructureState),intent(in)             :: mesostructure_state
       double precision,intent(out)                    :: weight
       integer,intent(out)                             :: info
       !
@@ -124,7 +138,9 @@ contains
               weight = 1.0D0
               info = 0
           case (2) !Alamel
-              deformedaxes = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
+              !
+              deformedaxes = matmul(mesostructure_state%deformationgradient,undeformedaxes%matrix)
+              !
               !Calculation of volume affected by the surface
               do i=1,3,1
                   AL(i) = vec_norm2(deformedaxes(i1:i3,i))
@@ -207,16 +223,16 @@ contains
       !>                        orthogonal with respect to the currently imposed 
       !>                        macroscopic strain mode. Note that the 1st Alamel-type 
       !>                        relaxation can be parallel, orthogonal, or neither.
-      subroutine mesostr_clustertrafo(NGR,IGrElm,MacroDefRate,MacroDefState,T_cluster,info) 
+      subroutine mesostr_clustertrafo(NGR,undeformedaxes,MacroDefRate,mesostructure_state,T_cluster,info) 
       use altayIOConfig, only: IPR,NLIST,IMP
       use criMathUtils
       use altayMacroKinematic
       !
       implicit none
       integer,intent(in)                              :: NGR
-      integer,intent(in)                              :: IGrElm
+      type(srTensor),intent(in)                       :: undeformedaxes
       type(DeformationRate),intent(in)                :: MacroDefRate     
-      type(DeformationState),intent(in)               :: MacroDefState
+      type(MesostructureState),intent(in)             :: mesostructure_state      
       double precision,dimension(3,3),intent(out)     :: T_cluster
       integer,intent(out)                             :: info 
       !
@@ -238,13 +254,13 @@ contains
               !
           case (2) !Alamel
               !
-              deformedaxes = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
+              deformedaxes = matmul(mesostructure_state%deformationgradient,undeformedaxes%matrix)
               !
               if ((IPR.gt.1) .and.(NLIST.eq.1)) then
-                  write (IMP,409) IGrElm
-                  409 format (' IGrElm = ',i5) 
+                  write (IMP,409) 
+                  409 format (' ') 
                   do i=1,3 
-                        write (IMP,407) (TmatGr(j,i,IGrElm),j=1,3)
+                        write (IMP,407) (undeformedaxes%matrix(j,i),j=1,3)
                   enddo
                   407 format (' TmatGr ',3d15.7)
                   do i=1,3 

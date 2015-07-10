@@ -15,6 +15,9 @@
       type(Pancak2Solution) :: Pancak2_solution
       type(SlipratSolution) :: Sliprat_solution
       type(DeformationMechanismData), save ::DM_data !SAVE attribute due to multiple calls to SIMUL
+      type(InterfaceDataset),save :: interface_dataset !SAVE attribute due to multiple calls to SIMUL
+      type(MesostructureState),save :: mesostructure_state !save attribute required to keep the state in subsequent simul
+                                                           ! calls (continuation of deformation along new strain path)      
       !
       contains
     
@@ -165,7 +168,14 @@
       end if
 216   FORMAT (/,' SUBROUTINE SIMUL  - READS ITS CRYSTAL DATA',//)
       !
-      call DeformationMechanismData_readPre(DM_data, LEC, info)
+      !
+      ! initFromFile
+#ifndef ALTAY_SUBROUTINE
+      call DeformationMechanismData_init(DM_data,config%slipsystem%input_fname,DM_format_pre,info)
+#else
+      call DeformationMechanismData_init(DM_data,trim(cnf%slipsystem%input_fname),DM_format_pre,info)
+#endif
+      !
       !
       if (DM_data%n_systems.gt.DM_max_systems)then
 #ifndef ALTAY_SUBROUTINE
@@ -220,6 +230,22 @@
       if (NPEBP /= 0) info = writeSDV(IPEBPSDV,header=.true.)
 #endif
 #endif
+      !
+#ifndef ALTAY_SUBROUTINE
+      ! Initializing mesostructure      
+      ! 
+      !Reading of InterfaceDataset from SMT-file
+      call InterfaceDataset_readfromSMTfile( interface_dataset, config%micros_fname, info)
+      if (info.ne.0) then
+          write(*,415)
+          call exit(stopcode_ioerror)
+ 415      format('Error condition is returned by InterfaceDataset_readfromSMTfile')
+      endif   
+      !
+      !Initialisation of mesostructure_state with FMicro
+      call mesostructure_state%update(config%simul_init%FMicro, info)
+#endif
+      !
       RETURN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   30  continue
@@ -390,11 +416,19 @@
       if (NFILTW.eq.1) write (IMP3,399)
  399  format(1x)
       !
+      !Update mesostructure_state - For current increment, the mesostructure_state is updated (to end of inc...)
+      ! BEFORE cluster trafo (subr. mesostr_clustertrafo) and cluster weight factor (subr. mesostr_clusterweightfactor) are calculated !!!
+      call mesostructure_state%update(MacroDefState%IncrDefGrad, info)
+      !
       ! Begin the loop over grains/clusters
       !
       clusterloop: DO 23 IOR=1,NPOINT
       !
-      i_cluster = floor(IOR/2.0D0 + 0.6D0)
+      ! Setting of 'i_cluster' to be accounted for in a more structural and generic way
+      i_cluster = (IOR+1) / 2
+      do while (i_cluster > interface_dataset%n_interfaces)
+          i_cluster = i_cluster - interface_dataset%n_interfaces
+      end do
       !
       Wtot = 0.0
       !
@@ -428,7 +462,7 @@
 !                  during the previous computation.
 !
 999 if (IW.le.1) then
-            call mesostr_clustertrafo(ngr,i_cluster,MacroDefRate,MacroDefState,T_cluster,info)
+            call mesostr_clustertrafo(ngr,interface_dataset%trafo(i_cluster),MacroDefRate,mesostructure_state,T_cluster,info)
             CALL Pancak2(laml,ngr,T_cluster,eulerb_0_rad, CRSSb,DM_data,   &
                          MacroDefRate,MacroDefState,Pancak2_solution)
 #ifdef ALTAY_SUBROUTINE
@@ -436,7 +470,7 @@
 #endif            
       endif
       !
-      call mesostr_clusterweightfactor(NGR,i_cluster,MacroDefState,GEWF,info)
+      call mesostr_clusterweightfactor(NGR,interface_dataset%trafo(i_cluster),mesostructure_state,GEWF,info)
       !
       TOTGEW=TOTGEW+GEWF
       !

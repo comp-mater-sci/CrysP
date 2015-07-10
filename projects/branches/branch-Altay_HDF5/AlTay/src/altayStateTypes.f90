@@ -31,11 +31,10 @@ implicit none
     type :: MesostructureState
         
         double precision, dimension (3,3) :: deformationgradient = unit_sr_matrix
-        
-        !> \todo this component is not yet exploited in the datastructure. If it were to be exploited,
-        !>  it should render the SAVEd modular data structure 'TmatGr' (of altayMesostructure
-        !>  module) obsolete.
-        type(EulerAngles), dimension(:), allocatable   :: GrainBoundaryEuler_initial
+
+    contains
+    
+        procedure :: update => MesostructureState_update      
         
     end type
         
@@ -75,5 +74,18 @@ implicit none
         end do
         !
     end subroutine
+
+    subroutine MesostructureState_update( this, incremental_defgrad, info)
+    implicit none
+    class(MesostructureState), intent(inout)     :: this
+    double precision, dimension(3,3), intent(in) :: incremental_defgrad
+    integer, intent(out)                         :: info
+    !
+        info = criError
+        this%deformationgradient = matmul(incremental_defgrad,this%deformationgradient)
+        info = criSuccess
+        !
+    end subroutine
+
     
 end module
