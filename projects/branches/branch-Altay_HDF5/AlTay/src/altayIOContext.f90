@@ -13,7 +13,8 @@ implicit none
         character(len=max_pathlen)  :: path = './'
         
         integer :: iostatus = 0
-        
+    contains
+        procedure(IOContext_isOpen_interface),pass(this),deferred :: isOpen
     end type
     
     integer, parameter,private :: iounit_default = 0
@@ -25,10 +26,18 @@ implicit none
     contains
         procedure :: open => RawFileContext_open
         procedure :: close => RawFileContext_close
+        procedure :: isOpen => RawFileContext_isOpen
     end type
     
     interface RawFileContext
         module procedure RawFileContext_init
+    end interface
+    
+    abstract interface
+        logical function IOContext_isOpen_interface(this) 
+        import :: IOContext
+        class(IOContext),intent(in) :: this
+        end function
     end interface
     
 contains
@@ -80,9 +89,19 @@ contains
     integer :: info
     !
         info = 0
-        if (this%iounit /= iounit_default) close(unit=this%iounit, iostat=info)
+        if (this%isOpen()) then 
+            close(unit=this%iounit, iostat=info)
+            this%iounit = iounit_default
+        endif
         CHOOSE(info, info == 0, criSuccess, criErr_IO)
     !
     end function
     
+    logical function RawFileContext_isOpen(this) result(is_open)
+    implicit none
+    class(RawFileContext),intent(in) :: this
+    !
+        is_open = (this%iounit /= iounit_default)
+    !
+    end function
 end module
