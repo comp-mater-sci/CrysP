@@ -424,7 +424,7 @@
       !
       clusterloop: DO 23 IOR=1,NPOINT
       !
-      i_cluster = floor(IOR/2.0D0 + 0.6D0)
+      i_cluster = (IOR+1) / 2
       !
       Wtot = 0.0
       !
