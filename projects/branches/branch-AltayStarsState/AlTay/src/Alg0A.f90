@@ -424,7 +424,11 @@
       !
       clusterloop: DO 23 IOR=1,NPOINT
       !
+      ! Setting of 'i_cluster' to be accounted for in a more structural and generic way
       i_cluster = (IOR+1) / 2
+      do while (i_cluster > interface_dataset%n_interfaces)
+          i_cluster = i_cluster - interface_dataset%n_interfaces
+      end do
       !
       Wtot = 0.0
       !
