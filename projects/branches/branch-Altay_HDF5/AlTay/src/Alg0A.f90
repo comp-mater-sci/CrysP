@@ -76,6 +76,8 @@
       double precision :: ddt
       !> sequence number of the cluster
       integer :: i_cluster
+      !> index of cluster interface
+      integer :: i_interface
       double precision, dimension(3,3) :: T_cluster
       double precision :: GEWF = 1.0D0
       type(DeformationState) :: MacroDefState
@@ -424,11 +426,9 @@
       !
       clusterloop: DO 23 IOR=1,NPOINT
       !
-      ! Setting of 'i_cluster' to be accounted for in a more structural and generic way
+      ! Cluster number and interface index (relevant only in Alamel scheme)
       i_cluster = (IOR+1) / 2
-      do while (i_cluster > interface_dataset%n_interfaces)
-          i_cluster = i_cluster - interface_dataset%n_interfaces
-      end do
+      i_interface = modulo(i_cluster - 1, interface_dataset%n_interfaces) + 1
       !
       Wtot = 0.0
       !
@@ -462,7 +462,7 @@
 !                  during the previous computation.
 !
 999 if (IW.le.1) then
-            call mesostr_clustertrafo(ngr,interface_dataset%trafo(i_cluster),MacroDefRate,mesostructure_state,T_cluster,info)
+            call mesostr_clustertrafo(ngr,interface_dataset%trafo(i_interface),MacroDefRate,mesostructure_state,T_cluster,info)
             CALL Pancak2(laml,ngr,T_cluster,eulerb_0_rad, CRSSb,DM_data,   &
                          MacroDefRate,MacroDefState,Pancak2_solution)
 #ifdef ALTAY_SUBROUTINE
@@ -470,7 +470,7 @@
 #endif            
       endif
       !
-      call mesostr_clusterweightfactor(NGR,interface_dataset%trafo(i_cluster),mesostructure_state,GEWF,info)
+      call mesostr_clusterweightfactor(NGR,interface_dataset%trafo(i_interface),mesostructure_state,GEWF,info)
       !
       TOTGEW=TOTGEW+GEWF
       !
