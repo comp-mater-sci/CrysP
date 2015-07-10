@@ -125,8 +125,9 @@ contains
         read(this%iounit,fmt=402,iostat=ioerr) buf,buf
         if (ioerr /= 0) return
         associate(mesodeformationgradient => this%mesodeformationgradient)
+            npoint = 0
             read(this%iounit,fmt=403,iostat=ioerr) dummy,npoint,mesodeformationgradient
-            if (ioerr /= 0) return
+            if ((ioerr /= 0) .or. (npoint <= 0)) return
             read(this%iounit,fmt=401,iostat=ioerr) buf
             if (ioerr /= 0) return
             ! Skip N=offset blocks:

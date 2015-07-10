@@ -49,11 +49,11 @@ contains
     type(DiscreteODF),intent(in)            :: odf
     integer,intent(out)                     :: info     !< exit code
     !      
-    integer :: npoint, i, ioerr
+    integer :: i, ioerr
     type(EulerAngles) :: euler_deg_tmp
     !
         !
-        do i=1,npoint
+        do i=1,size(odf)
             associate(orientation => odf%orientations(i))
                 euler_deg_tmp = rad2deg(orientation%euler)
                 write(this%iounit,iostat=ioerr) orientation%weight, euler_deg_tmp, &
