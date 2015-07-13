@@ -20,7 +20,7 @@
       use altayTexFormats
       use altayMacroKinematic
       use altayTexAccess
-      use altayStatePersistence
+      use altayNativePersistence
       use altaySimulation
       implicit none ! double precision (a-h,o-z)
 !      Several simulations (usually several-steps each),

@@ -106,9 +106,12 @@
 		<File RelativePath="..\src\altayHardLawSimple.f90"/>
 		<File RelativePath="..\src\altayHardTypes.f90"/>
 		<File RelativePath="..\src\altayHDF5Context.f90"/>
+		<File RelativePath="..\src\altayHDF5PersitenceScheme.f90"/>
 		<File RelativePath="..\src\altayIOContext.f90"/>
 		<File RelativePath="..\src\altayMaterial.f90"/>
+		<File RelativePath="..\src\altayNativePersistenceScheme.f90"/>
 		<File RelativePath="..\src\altayODFTypes.f90"/>
+		<File RelativePath="..\src\altaySimulation.f90"/>
 		<File RelativePath="..\src\altayState.f90"/>
 		<File RelativePath="..\src\altayStatePersistence.f90"/>
 		<File RelativePath="..\src\altayStateTypes.f90"/>
@@ -124,7 +127,6 @@
 		<File RelativePath="..\src\Pancak2.f90"/>
 		<File RelativePath="..\src\Sliprat.f90"/>
 		<File RelativePath="..\src\smtAccess.f90"/>
-		<File RelativePath="..\src\altaySimulation.f90"/>
 		<File RelativePath="..\src\TBH.f90"/>
 		<File RelativePath="..\src\texFormatConstants.f90"/>
 		<File RelativePath="..\src\texFormats.f90"/></Filter></Files>
