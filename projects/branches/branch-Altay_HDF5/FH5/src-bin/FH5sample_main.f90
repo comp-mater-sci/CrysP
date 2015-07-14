@@ -6,8 +6,10 @@ integer :: info
     
     info = FH5_initialize()
 
-    ! call test_FileOpen()
+    call test_FileOpen()
 
+    call test_GroupCreate()
+    
     call test_DatasetWrite()
     
     call test_ReadAPI()

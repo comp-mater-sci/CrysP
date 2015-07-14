@@ -36,6 +36,45 @@ contains
     !
     end subroutine
     
+    subroutine test_GroupCreate()
+    implicit none
+    !
+    type(FH5File)       :: fh5_file
+    type(FH5Group)      :: fh5_L1_direct, fh5_L2_direct, fh5_L2_indirect, fh5_L3_indirect, fh5_L2a_direct
+    character(len=20),parameter :: L1_direct = '/L1', L2_direct = '/L1/L2', L2_indirect = '/I1/I2', L3_indirect = '/A1/A2/A3'
+    !
+    integer :: info
+        write(*,*) 'test_GroupCreate'
+        
+        info = fh5_file%open(path='filename.h5', mode='w')
+        
+        info = fh5_L1_direct%create(fh5_file, L1_direct)
+        info = fh5_L1_direct%close()
+        
+        info = fh5_L2_direct%create(fh5_file, L2_direct)
+        info = fh5_L2_direct%close()
+        
+        info = fh5_L2_indirect%create(fh5_file, L2_indirect, intermediate=.true.)
+        info = fh5_L2_indirect%close()
+
+        info = fh5_L3_indirect%create(fh5_file, L3_indirect, intermediate=.false.)
+        info = fh5_L3_indirect%close()
+        
+        ! Use default
+        info = fh5_L3_indirect%create(fh5_file, L3_indirect)
+        info = fh5_L3_indirect%close()
+
+
+        info = fh5_L2a_direct%create(fh5_file, L2_direct)
+        info = fh5_L2a_direct%close()
+
+        call print_open_handles(fh5_file%object_id)
+        
+        info = fh5_file%close()
+    !
+    end subroutine
+    
+    
     subroutine test_DatasetWrite()
     implicit none
     !

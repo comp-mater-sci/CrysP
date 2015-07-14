@@ -13,6 +13,7 @@ use iso_c_binding
 use hdf5
 use h5lt
 use criErrcodes
+use criPath
 use FH5Constants
 implicit none
 
@@ -72,7 +73,10 @@ implicit none
 
 
     type,extends(FH5Path) :: FH5Group
-        
+        integer(hid_t)  :: lcpl_id = id_none !< Link creation property list
+    contains
+        procedure,pass(this) :: create => FH5Group_create
+        procedure,pass(this) :: close => FH5Group_close
     end type
 
 
@@ -136,6 +140,10 @@ contains
     !
     end function
     
+    !
+    ! File interface
+    !
+    
     
     !> \param mode
     !> 'r' - Readonly, file must exist
@@ -143,6 +151,7 @@ contains
     !> 'x' - Create file in read/write mode, fail if exists
     !> 'a' - Read/write if exists, create otherwise
     integer function FH5File_open(this, path, mode) result(info)
+    implicit none
     class(FH5File),intent(inout)        :: this
     character(len=*),intent(in)         :: path
     character(len=*),intent(in)         :: mode
@@ -237,7 +246,76 @@ contains
     end subroutine
     
     
+    !
+    ! Group interface
+    !
+    
+    !> Create a group of name given by path in the location.
+    integer function FH5Group_create(this, location, path, intermediate) result(info)
+    implicit none
+    class(FH5Group),intent(inout)       :: this
+    class(FH5Path),intent(in)           :: location
+    character(len=*),intent(in)         :: path
+    !> Create intermediate directories (like 'mkdir -p')
+    logical,intent(in),optional         :: intermediate 
+    ! logical,intent(in),optional         :: exclusive
+    !
+    integer :: hdferr
+    integer :: access_flag
+    logical :: make_intermediate, link_exists
+    !
+        info = criErr_BadArgs
+        !
+        make_intermediate = .true.
+        if (present(intermediate)) make_intermediate = intermediate
+        !
+        call h5lexists_f(location%object_id, path, link_exists, hdferr)
+        ! if  return
+        if ((.not. link_exists) .or. (hdferr /= 0)) then
+            ! Attempt to make the link.
+            if (make_intermediate) then
+                call h5pcreate_f(H5P_LINK_CREATE_F, this%lcpl_id, hdferr)
+                call h5pset_create_inter_group_f(this%lcpl_id, 1, hdferr)
+            else
+                this%lcpl_id = H5P_DEFAULT_F
+            endif
+            call h5gcreate_f(location%object_id, path, this%object_id, hdferr, &
+                             lcpl_id=this%lcpl_id)
+        else
+            ! Attempt to open existing group
+            call h5gopen_f(location%object_id, path, this%object_id, hdferr) 
+        endif
+        ! Calculate the status from the last call to HDF5 API
+        CHOOSE(info, hdferr == 0, criSuccess, criError)
+    !
+    end function
+    
+
+    integer function FH5Group_close(this) result(info)
+    implicit none
+    class(FH5Group),intent(inout)     :: this
+    !
+    integer :: hdferr
+    !
+        ! Close the property list
+        if (is_valid_id(this%lcpl_id) .and. (this%lcpl_id /= H5P_DEFAULT_F)) then
+            call h5pclose_f(this%lcpl_id, hdferr)
+            this%lcpl_id = id_none
+        endif
+        
+        ! Close the group
+        if (is_valid_id(this%object_id)) then 
+            call h5gclose_f(this%object_id, hdferr)
+            this%object_id = id_none
+        endif
+        info = criSuccess
+    !
+    end function
+    
+    
+    
     integer function FH5Dataset_setCompression(this, compression, chunks) result(info)
+    implicit none
     class(FH5Dataset),intent(inout)                     :: this
     integer,intent(in),optional                         :: compression
     integer, dimension(:),intent(in),optional           :: chunks
@@ -369,6 +447,7 @@ contains
         if (hdferr /= 0) return
         call h5dwrite_f(this%object_id, mem_type_id=H5T_NATIVE_DOUBLE, buf=array, &
                         dims=this%shape, hdferr=hdferr)
+        CHOOSE(info, hdferr == 0, criSuccess, criErr_IOWrite)
     !
     end function
     
@@ -530,7 +609,48 @@ contains
     !
     end subroutine
 
-    
-    
-    
+    !> Split extended path into file path (filesystem path) and object path
+    ! (HDF5 group path)
+    !>
+    !> extpath is in the form:
+    !> file_path:object_path
+    !> Both file_path and object_path can be relative or absolute. 
+    !> Neither file_path nor object_path can be empty
+    !> If object_path is a relative path, it will be assumed that it is 
+    !> relative to the root group of the HDF5. The root group path must be
+    !> referenced as '/'. 
+    !> 
+    subroutine splitHDF5extpath(extpath, file_path, object_path, info)
+    implicit none
+    character(len=*),intent(in)         :: extpath
+    character(len=*),intent(out)        :: file_path
+    character(len=*),intent(out)        :: object_path
+    integer,intent(out)                 :: info
+    !
+    character,parameter :: xsep = ':'
+    integer :: col_pos, extpath_len
+    character(len=:),allocatable :: ep_tmp
+    !
+        ! validate the input
+        info = criErr_BadArgs
+        ep_tmp = adjustl(extpath)
+        extpath_len = len_trim(ep_tmp)
+        ! extpath must contain at least 3 characters: 
+        !  - at least one character in file_path and 
+        !  - ':' and
+        !  - object_path, which is either '/' or a character
+        if (extpath_len < 3) return
+        ! Check if xsep appears exactly once, and at least at the 2nd position,
+        ! and if the output strings are large enough to fit the results.
+        col_pos = index(ep_tmp, xsep)
+        if ((col_pos < 2) .or. &
+            (col_pos /= index(ep_tmp, xsep, back=.true.)) .or. &
+            (col_pos > len(file_path)) .or. &
+            (extpath_len - col_pos - 1) > len(object_path)) return
+        !
+        file_path = trim(ep_tmp(:col_pos-1))
+        object_path = trim(ep_tmp(col_pos+1:))
+        info = criSuccess
+    !
+    end subroutine
 end module
