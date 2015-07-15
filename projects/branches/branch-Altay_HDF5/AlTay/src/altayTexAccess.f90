@@ -20,23 +20,9 @@ implicit none
         !> Write out external data
         procedure(TexAccess_write_interface),pass(this),deferred   :: write
         !>@}
-        !>@{ \name Implementation procedures
-        
-        !> Read meta-data, such as attributes, size, shape, title, description etc.
-        procedure(TexAccess_readMetaData_interface),pass(this),deferred    :: readMetaData
-        
-        !> Read meta-data, such as attributes, size, shape, title, description etc.
-        procedure(TexAccess_writeMetaData_interface),pass(this),deferred   :: writeMetaData
-        
-        !> Read data block of DiscreteODF
-        procedure(TexAccess_readBlock_interface),pass(this),deferred    :: readBlock
-        
-        !> Write out data block of DiscreteODF
-        procedure(TexAccess_writeBlock_interface),pass(this),deferred   :: writeBlock
-        !>@{
+
     end type
     
-    !> \todo provide the actual interfaces
     abstract interface
     
         function TexAccess_read_interface(this, blockid, odf) result(info)
@@ -56,42 +42,8 @@ implicit none
             type(DiscreteODF),intent(in)            :: odf
             integer                                 :: info
         end function
-        
-        subroutine TexAccess_readMetaData_interface(this, odf, info)
-            import :: TextureAccess, DiscreteODF
-            implicit none
-            class(TextureAccess),intent(inout)      :: this
-            type(DiscreteODF),intent(inout)         :: odf
-            integer,intent(out)                     :: info
-        end subroutine
-            
-        subroutine TexAccess_writeMetaData_interface(this, odf, info)
-            import :: TextureAccess, DiscreteODF
-            implicit none
-            class(TextureAccess),intent(inout)      :: this
-            type(DiscreteODF),intent(in)            :: odf
-            integer,intent(out)                     :: info
-        end subroutine
-        
-        subroutine TexAccess_readBlock_interface(this, blockid, odf, info)
-            import :: TextureAccess, DiscreteODF
-            implicit none
-            class(TextureAccess),intent(inout)      :: this
-            integer,intent(in)                      :: blockid
-            type(DiscreteODF),intent(inout)         :: odf
-            integer,intent(out)                     :: info
-        end subroutine
-            
-        subroutine TexAccess_writeBlock_interface(this, blockid, odf, info)
-            import :: TextureAccess, DiscreteODF
-            implicit none
-            class(TextureAccess),intent(inout)      :: this
-            integer,intent(in)                      :: blockid
-            type(DiscreteODF),intent(in)            :: odf
-            integer,intent(out)                     :: info
-        end subroutine
-        
     end interface
+
     
     
     !> Class for accessing texture data that are stored in a format that can
@@ -104,11 +56,68 @@ implicit none
     contains
         procedure,pass(this) :: initialize => TextureRawFileAccess_initialize
 
-        !>@{ \name Partial implementation of the TextureAccess interface
+        !>@{ \name Deferred implementation of the TextureAccess interface
+        !>         according to the concept of metadata and datablocks
         procedure,pass(this) :: read => TextureRawFileAccess_read
         procedure,pass(this) :: write => TextureRawFileAccess_write
         !>@}
+        
+        !>@{ \name Implementation procedures
+        
+        !> Read meta-data, such as attributes, size, shape, title, description etc.
+        procedure(TexAccess_readMetaData_interface),pass(this),deferred    :: readMetaData
+        
+        !> Read meta-data, such as attributes, size, shape, title, description etc.
+        procedure(TexAccess_writeMetaData_interface),pass(this),deferred   :: writeMetaData
+        
+        !> Read data block of DiscreteODF
+        procedure(TexAccess_readBlock_interface),pass(this),deferred    :: readBlock
+        
+        !> Write out data block of DiscreteODF
+        procedure(TexAccess_writeBlock_interface),pass(this),deferred   :: writeBlock
+        !>@{
+
     end type
+    
+    
+    abstract interface
+        subroutine TexAccess_readMetaData_interface(this, odf, info)
+            import :: TextureRawFileAccess, DiscreteODF
+            implicit none
+            class(TextureRawFileAccess),intent(inout)      :: this
+            type(DiscreteODF),intent(inout)         :: odf
+            integer,intent(out)                     :: info
+        end subroutine
+            
+        subroutine TexAccess_writeMetaData_interface(this, odf, info)
+            import :: TextureRawFileAccess, DiscreteODF
+            implicit none
+            class(TextureRawFileAccess),intent(inout)      :: this
+            type(DiscreteODF),intent(in)            :: odf
+            integer,intent(out)                     :: info
+        end subroutine
+        
+        subroutine TexAccess_readBlock_interface(this, blockid, odf, info)
+            import :: TextureRawFileAccess, DiscreteODF
+            implicit none
+            class(TextureRawFileAccess),intent(inout)      :: this
+            integer,intent(in)                      :: blockid
+            type(DiscreteODF),intent(inout)         :: odf
+            integer,intent(out)                     :: info
+        end subroutine
+            
+        subroutine TexAccess_writeBlock_interface(this, blockid, odf, info)
+            import :: TextureRawFileAccess, DiscreteODF
+            implicit none
+            class(TextureRawFileAccess),intent(inout)      :: this
+            integer,intent(in)                      :: blockid
+            type(DiscreteODF),intent(in)            :: odf
+            integer,intent(out)                     :: info
+        end subroutine
+        
+    end interface
+    
+    
     
     type,abstract,extends(TextureRawFileAccess) :: TextureMetaRawFileAccess
         
