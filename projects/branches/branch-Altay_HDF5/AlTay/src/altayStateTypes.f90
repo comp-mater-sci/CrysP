@@ -57,21 +57,29 @@ implicit none
     type(DiscreteODF), intent(in), target      :: texture
     integer, intent(out)                       :: info
     !
-    !> Number of grains in the collection
+    ! Number of grains in the collection
     integer :: n_grains = 0
-    !> Running index
-    integer :: i
+    ! Running index, error code
+    integer :: i, ierr
     !
         info = criErr_BadDims
         !Allocation
         n_grains = size(texture%orientations)
-        if (.not.(n_grains > 0)) return
-        allocate(this%grainstate(n_grains), stat=info)
-        if (info/=criSuccess) return
+        if (n_grains <= 0) return
+        ! Two paths: initialize from scratch or refresh.
+        if (.not. allocated(this%grainstate)) then
+            info = criErr_MemAlloc
+            allocate(this%grainstate(n_grains), stat=ierr)
+            if (ierr /= 0) return
+        else
+            ! The size must conform with n_grains
+            if (size(this%grainstate) /= n_grains) return
+        endif
         !Pointer assignments - keep the order as is
         do i=1,n_grains
             this%grainstate(i)%orientation => texture%orientations(i)
         end do
+        info = criSuccess
         !
     end subroutine
 
