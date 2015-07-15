@@ -3,10 +3,10 @@
 !
 
 !> State persistence based on native Fortran IO operations.
-module altayNativePersistence
+module altayNativePersistenceScheme
 use criErrcodes
-use altayStatePersistence
 use altayState
+use altayStatePersistence
 use altayTexFormatConstants
 use altayTexFormats
 use altayIOContext

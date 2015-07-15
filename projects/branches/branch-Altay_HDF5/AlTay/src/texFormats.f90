@@ -6,8 +6,6 @@
 module altayTexFormats
 use criErrcodes
 use altayTexFormatConstants
-use altayStateTypes
-use altayTexAccess
 use altaySmtAccess
 use altayCurAccess
 use altayCubAccess

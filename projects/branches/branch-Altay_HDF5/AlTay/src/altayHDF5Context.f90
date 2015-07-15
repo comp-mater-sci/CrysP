@@ -1,9 +1,10 @@
 !
 ! $Id$
 !
+#ifndef HDF5_DISABLE
 module altayHDF5Context
 use altayIOContext
-use hdf5
+use FH5, only: hid_t
 
     type,extends(IOContext) :: HDF5Context
         
@@ -27,3 +28,4 @@ contains
     end function
 
 end module
+#endif
