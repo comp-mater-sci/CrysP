@@ -3,11 +3,26 @@
 
 !> Object-oriented Fortan thin wrapper for simplifying HDF5 operations.
 !>
-!> \note Automatic finalization (destructors) are disabled. Because we can't control
-!>       the order in which the finalization of objects is launched,we can't prevent 
-!>       the objects from being closed before the objects that refer to them are closed
-!>       (unless we put them in different validity scope). For this reason automatic
-!>       finalization seems to bring more harm than good.
+!> Most datatypes are provided in two different flavors in terms of automatic
+!> finalization. The module provides two versions of types:
+!>     * manually finalized: the user code has to explicitly include a call to 
+!>       `close()` method before an object becomes undefined. For instance,
+!>       `FH5File` belongs to this category.
+!>     * scoped (automatically finalized): an appropriate `close()` method is 
+!>       automatically called before an object becomes undefined. All types 
+!>       that include suffix `Scoped` in the typename belong to this category,
+!>       for example `FH5FileScoped`.
+!>       
+!> The scoped types should be used with caution. Because we can't control
+!> the order in which the automatic finalization of objects is launched, we
+!> can't prevent the objects from being closed before the objects that refer
+!> to them are closed (unless we put them in different validity scope). In 
+!> certain scenarios the automatic finalization brings more harm than good.
+!> That said, safe usage of the scoped objects include:
+!>      * unrelated automatic objects in a validity scope that is nested inside
+!>        the scope where the HDF5 object they refer to (file or group) reside.
+!>      * automatic or dynamic objects that refer to a dynamic object that lives
+!>        longer.
 module FH5
 use iso_c_binding
 use hdf5
@@ -17,7 +32,7 @@ use criPath
 use FH5Constants
 implicit none
 
-    
+    !> Any HDF5 object that can be referred by a handle.
     type :: FH5Object
         
         !> Handle to the primary HDF5 object
@@ -25,7 +40,7 @@ implicit none
         
     end type
 
-
+    
     type,extends(FH5Object),abstract :: FH5Attribute
         
         character(len=:),allocatable    :: name
@@ -45,6 +60,8 @@ implicit none
     end type
 
 
+    !> Any object that can be referenced by a name/path and may have
+    !> attributes attached.
     type,extends(FH5Object) :: FH5Path
         
     contains
@@ -60,26 +77,43 @@ implicit none
     end type
 
 
+    !> Access to HDF5 file
     type,extends(FH5Path) :: FH5File
         integer(hid_t)   :: fapl_id = id_none !< File access property list
     contains
         procedure,pass(this) :: open => FH5File_open
         
         procedure,pass(this) :: close => FH5File_close
-#ifdef FH5_DESTRUCTORS_ENABLED
-        final :: FH5File_finalize
-#endif
     end type
 
 
+    !> Scoped version of FH5File: it automatically closes the FH5File object 
+    !> when it gets destroyed.
+    type,extends(FH5File) :: FH5FileScoped
+    contains
+        final :: FH5FileScoped_finalize
+    end type
+
+
+    !> Access to HDF5 group
     type,extends(FH5Path) :: FH5Group
         integer(hid_t)  :: lcpl_id = id_none !< Link creation property list
     contains
         procedure,pass(this) :: create => FH5Group_create
+        procedure,pass(this) :: open => FH5Group_open
         procedure,pass(this) :: close => FH5Group_close
     end type
 
 
+    !> Scoped version of FH5Group: it automatically closes the FH5Group object 
+    !> when it gets destroyed.
+    type,extends(FH5Group) :: FH5GroupScoped
+    contains
+        final   :: FH5GroupScoped_final
+    end type
+
+
+    !> HDF5 dataset
     type,extends(FH5Path) :: FH5Dataset
     private
         integer(hid_t)                              :: location_id = id_none
@@ -92,14 +126,19 @@ implicit none
         
         procedure,pass(this) :: FH5Dataset_write_2D_double
         procedure,pass(this) :: FH5Dataset_read_2D_double
-
         
         generic :: write => FH5Dataset_write_2D_double
         
         generic :: read => FH5Dataset_read_2D_double
-#ifdef FH5_DESTRUCTORS_ENABLED
-        final :: FH5Dataset_finalize
-#endif
+        
+    end type
+
+
+    !> Scoped version of FH5Dataset: it automatically closes the FH5Dataset
+    !> object when it gets destroyed.
+    type,extends(FH5Dataset) :: FH5DatasetScoped
+    contains
+        final :: FH5DatasetScoped_finalize
     end type
 
 
@@ -108,12 +147,15 @@ implicit none
         module procedure FH5Dataset_initialize_r, FH5Dataset_initialize_rw
     end interface
 
-contains
+    contains
     
     !
     ! Initialization and finalization of the module: HDF5 API
     !
-    
+
+
+    !> Initialization of the HDF5 API. It must be called prior to any call
+    !> to HDF5-related functions.
     integer function FH5_initialize() result(info)
     implicit none
     integer :: hdferr
@@ -128,8 +170,10 @@ contains
         info = criSuccess
     !
     end function
-    
-    
+
+
+    !> Finalization of the HDF5 API. No call to any HDF5-related function
+    !> must be made after a call to FH5_finalize.
     integer function FH5_finalize() result(info)
     implicit none
     !
@@ -143,8 +187,9 @@ contains
     !
     ! File interface
     !
-    
-    
+
+
+    !> Open an HDF5 file.
     !> \param mode
     !> 'r' - Readonly, file must exist
     !> 'rw' - Read/write, file must exist
@@ -235,9 +280,9 @@ contains
     end function
     
     
-    subroutine FH5File_finalize(this)
+    subroutine FH5FileScoped_finalize(this)
     implicit none
-    type(FH5File),intent(inout)     :: this
+    type(FH5FileScoped),intent(inout)     :: this
     !
     integer :: info
     !
@@ -261,7 +306,6 @@ contains
     ! logical,intent(in),optional         :: exclusive
     !
     integer :: hdferr
-    integer :: access_flag
     logical :: make_intermediate, link_exists
     !
         info = criErr_BadArgs
@@ -291,6 +335,29 @@ contains
     end function
     
 
+    !> Open a group of name given by path in the location.
+    integer function FH5Group_open(this, location, path) result(info)
+    implicit none
+    class(FH5Group),intent(inout)       :: this
+    class(FH5Path),intent(in)           :: location
+    character(len=*),intent(in)         :: path
+    !
+    integer :: hdferr
+    logical :: link_exists
+    !
+        !> \todo Consider simplifying FH5Group_create: is the check
+        !>       for existence of the link __really__ useful?
+        call h5lexists_f(location%object_id, path, link_exists, hdferr)
+        if (link_exists .and. (hdferr == 0)) then
+           call h5gopen_f(location%object_id, path, this%object_id, hdferr)
+        endif
+        ! Calculate the status from the last call to HDF5 API
+        CHOOSE(info, hdferr == 0, criSuccess, criError)
+    !
+    end function
+    
+    
+    
     integer function FH5Group_close(this) result(info)
     implicit none
     class(FH5Group),intent(inout)     :: this
@@ -312,6 +379,13 @@ contains
     !
     end function
     
+    
+    subroutine FH5GroupScoped_final(this)
+    implicit none
+    type(FH5GroupScoped),intent(inout) :: this
+    integer :: info
+        info = this%close()
+    end subroutine
     
     
     integer function FH5Dataset_setCompression(this, compression, chunks) result(info)
@@ -368,15 +442,13 @@ contains
     !> Create dataset for writing
     integer function FH5Dataset_initialize_rw(this, path, shape, compression, chunks) result(info)
     implicit none
-    type(FH5Dataset) ,intent(out)                   :: this
+    class(FH5Dataset),intent(out)                   :: this
     class(FH5Path),intent(in)                       :: path
     integer,dimension(:),intent(in)                 :: shape
     integer,intent(in),optional                     :: compression
     integer,dimension(:),intent(in),optional        :: chunks
     !
     integer :: hdferr
-    logical :: is_path_valid, do_create_parents
-    !
     integer :: rank
     !
         info = criErr_BadArgs
@@ -399,7 +471,7 @@ contains
     !> Create dataset for reading
     integer function FH5Dataset_initialize_r(this, path, name) result(info)
     implicit none
-    type(FH5Dataset),intent(out)                    :: this
+    class(FH5Dataset),intent(out)                   :: this
     class(FH5Path),intent(in)                       :: path
     character(len=*),intent(in)                     :: name
     integer :: hdferr
@@ -503,9 +575,9 @@ contains
     end function
 
     
-    subroutine FH5Dataset_finalize(this)
+    subroutine FH5DatasetScoped_finalize(this)
     implicit none
-    type(FH5Dataset),intent(inout)     :: this
+    type(FH5DatasetScoped),intent(inout)     :: this
     !
     integer :: info
     !
