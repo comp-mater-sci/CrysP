@@ -154,14 +154,6 @@
       end if
       if (NRES.gt.0) write (IMP2,98) TITEL
   97  format (' Title of the new simulation: ',A)
-#ifdef REMOVEME
-      ! Only if CUR file is requested
-      if (NFILE1.eq.1) then
-          ! \fixme texture title should be set in a different way
-          state%old%texture%title = TITEL
-          call CURwriteTitle(assembly, IMP1,info)
-      endif
-#endif
   98  format (A)      
   99  FORMAT (2I5)
       !
@@ -316,10 +308,6 @@
 !      
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
-#endif
-#ifdef REMOVEME
-      ! Output the current texture
-      if (NFILE.eq.1) call CURwriteBlock(assembly,IMP1,info)
 #endif
 #ifndef ALTAY_SUBROUTINE
       if ((NRES >= 1).and.(IW <= 1)) call writeReportHeader(IMP6,info)

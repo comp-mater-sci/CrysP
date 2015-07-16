@@ -20,11 +20,11 @@ implicit none
 contains
 
 
-        function statePersistenceFactory(texcnf, readonly) result(instance)
+        function statePersistenceFactory(texcnf, as_input) result(instance)
         implicit none
         class(StatePersistenceScheme),pointer       :: instance
         type(TextureConfig),intent(in)              :: texcnf
-        logical,intent(in)                          :: readonly
+        logical,intent(in)                          :: as_input
         !
         integer :: info
         !
@@ -45,9 +45,9 @@ contains
                                             texcnf%block_id, info)
             class is(HDF5PersistenceScheme)
                 call instance%initialize(trim(texcnf%input_fname), &
-                                         groupname='default', &
-                                         is_incremental=.false., &
-                                         is_readonly=readonly, &
+                                         groupname='Step', &
+                                         is_incremental=.not.as_input, &
+                                         is_readonly=as_input, &
                                          info=info)
             end select
         !
