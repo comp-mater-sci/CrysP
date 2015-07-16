@@ -1,6 +1,6 @@
 module FH5Sample_File
 use FH5
-
+use FH5Constants
 contains
     
     subroutine makeTestArray(n, m, array, random)
@@ -92,7 +92,7 @@ contains
         
         info = fh5_dataset%write('mydata', array)
         
-        call FH5Dataset_finalize(fh5_dataset)
+        info = fh5_dataset%close()
         
         call print_open_handles(fh5_file%object_id)
         
@@ -119,7 +119,7 @@ contains
         
         info = fh5_dataset%read(rd_array)
         
-        call FH5Dataset_finalize(fh5_dataset)
+        info = fh5_dataset%close()
         
         call print_open_handles(fh5_file%object_id)
         
