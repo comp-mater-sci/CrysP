@@ -11,6 +11,7 @@
 #include "criMacros.fpp"
 module altayHDF5PersistenceScheme
 use criErrcodes
+use criAlgorithm
 use FH5
 use altayState
 use altayStatePersistence
@@ -31,7 +32,7 @@ implicit none
         !> the actual group name.
         character(len=:),allocatable    :: group_name
         
-        integer                         :: counter
+        integer                         :: counter = 0
 
         type(FH5File)                   :: file
         type(FH5Group)                  :: container
@@ -110,12 +111,18 @@ contains
     !
     type(HDF5Context) :: context
     type(HDF5Access) :: texaccess
+    integer,parameter :: max_intwidth = 32
+    character(len=len_trim(this%group_name)+max_intwidth) :: collection_name
     !
-        !> \todo Calculate the effective group name. If it is incremental,
-        !>       make sure that counter is stepped up.
+        if (this%is_incremental) then
+            collection_name = trim(this%group_name)//trim(tostring(this%counter,max_intwidth))
+        else
+            collection_name = trim(this%group_name)
+        endif
+        this%counter = this%counter + 1
         !
         ! Create group for the collection
-        info = this%collection%create(this%container, this%group_name)
+        info = this%collection%create(this%container, collection_name)
         if (info /= criSuccess) return
         !
         ! Take all components of the state and save them into the collection
