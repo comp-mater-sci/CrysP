@@ -85,9 +85,11 @@ contains
     integer, parameter :: step_number = 0
     !
         ! Prepare access to the storage
-        this%texture_storage => textureAccessFactory(this%texture_format_id, &
-                                                     this%texture_storage_context, &
-                                                     readonly=.false., info=info)
+        if (.not. associated(this%texture_storage)) then
+            this%texture_storage => textureAccessFactory(this%texture_format_id, &
+                                                         this%texture_storage_context, &
+                                                         readonly=.false., info=info)
+        endif
         if (.not. associated(this%texture_storage) .or. (info /= criSuccess)) return
         ! Set other state components, if the access method allows them.
         select type(ptr => this%texture_storage)
@@ -96,6 +98,12 @@ contains
         end select
         ! Do the IO
         info = this%texture_storage%write(this%texture_blockid, state%texture)
+        !
+        ! Finish texture storage if it uses a single-block file format.
+        select case(this%texture_format_id)
+        case(TF_SMT, TF_CUB)
+            deallocate(this%texture_storage)
+        end select
     !
     end subroutine
     
