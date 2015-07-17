@@ -49,15 +49,25 @@ contains
     type(DiscreteODF),intent(in)            :: odf
     integer,intent(out)                     :: info     !< exit code
     !      
-    integer :: i, ioerr
+    integer :: i, ioerr, npoints
     type(EulerAngles) :: euler_deg_tmp
     !
+        info = criErr_BadDims
+        npoints = size(odf)
+        ! Check whether extended attributes are set.
+        if (.not. allocated(this%accumulatedshear)) then
+            allocate(this%accumulatedshear(npoints))
+            this%accumulatedshear = 0.D0
+        else
+            if (size(this%accumulatedshear) /= npoints) return
+        endif
         !
-        do i=1,size(odf)
-            associate(orientation => odf%orientations(i))
+        do i = 1,npoints
+            associate(orientation => odf%orientations(i), &
+                      accumulatedshear => this%accumulatedshear(i))
                 euler_deg_tmp = rad2deg(orientation%euler)
                 write(this%iounit,iostat=ioerr) orientation%weight, euler_deg_tmp, &
-                                           0.0D0 !> \todo FIX to limitations of Rev. 2221
+                                                accumulatedshear
             end associate
             if (ioerr /= 0) exit
         enddo
@@ -110,18 +120,23 @@ contains
     integer,intent(out)                     :: info     !< Exit code
     !
     integer :: i, ioerr
-    double precision :: dummy_dp
     type(EulerAngles) :: euler_deg_tmp
-    !      
+    !   
+        info = criErr_BadDims
         !
         ! Request allocation of the memory
         info = DiscreteODF_resize(odf, this%ngrains)
         if (info /= criSuccess) return
+        ! Allocate space for extended attributes
+        if (allocated(this%accumulatedshear)) deallocate(this%accumulatedshear)
+        allocate(this%accumulatedshear(this%ngrains))
+        this%accumulatedshear = 0.D0
         ! Process the crystals in the block      
-        do i=1, size(odf%orientations)
-            associate(orientation => odf%orientations(i))
+        do i= 1, this%ngrains
+            associate(orientation => odf%orientations(i), &
+                      accumulatedshear => this%accumulatedshear(i))
                 read(this%iounit,iostat=ioerr) orientation%weight,euler_deg_tmp, &
-                                         dummy_dp !> \todo FIX to limitations of Rev. 2221
+                                               accumulatedshear
                 if (ioerr /= 0) exit
                 ! Convert the euler angles of texture constituent from degrees to radians
                 orientation%euler = deg2rad(euler_deg_tmp)

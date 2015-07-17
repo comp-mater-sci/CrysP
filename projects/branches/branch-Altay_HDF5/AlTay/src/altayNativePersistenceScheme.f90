@@ -94,7 +94,10 @@ contains
         ! Set other state components, if the access method allows them.
         select type(ptr => this%texture_storage)
         class is(TextureMetaRawFileAccess)
-            call ptr%setExtendedMetaData(state%mesostructure%deformationgradient, step_number, info)
+            call ptr%setExtendedMetaData(state%mesostructure%deformationgradient, &
+                                         step_number, &
+                                         state%grainstates%grainstate(:)%accumulatedshear,&
+                                         info)
         end select
         ! Do the IO
         info = this%texture_storage%write(this%texture_blockid, state%texture)
@@ -116,18 +119,32 @@ contains
     integer,intent(out)                         :: info
     !
     integer :: step_number
+    double precision,dimension(:),allocatable :: tmp_arr
     !
         ! Prepare access to the storage
         this%texture_storage => textureAccessFactory(this%texture_format_id, &
                                                      this%texture_storage_context, &
                                                      readonly=.true., info=info)
         if (.not. associated(this%texture_storage) .or. (info /= criSuccess)) return
-        info = this%texture_storage%read(this%texture_blockid, state%texture) 
+        info = this%texture_storage%read(this%texture_blockid, state%texture)
         if (info /= criSuccess) return
+        call state%grainstates%initialize(state%texture, info)
+        !
         ! Set other state components, if the reader offers them.
         select type(ptr => this%texture_storage)
         class is(TextureMetaRawFileAccess)
-            call ptr%getExtendedMetaData(state%mesostructure%deformationgradient, step_number, info)
+            ! Initialize first:
+            call ptr%getExtendedMetaData(state%mesostructure%deformationgradient, &
+                                         step_number, &
+                                         tmp_arr, &
+                                         info)
+            if ((info == criSuccess) .and. allocated(tmp_arr)) then
+                if (size(tmp_arr) == size(state%texture)) then
+                    state%grainstates%grainstate(:)%accumulatedshear = tmp_arr
+                else
+                    info = criError
+                endif
+            endif
         end select
     !
     end subroutine

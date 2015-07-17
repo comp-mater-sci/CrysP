@@ -124,8 +124,8 @@ implicit none
         integer                 :: ngrains = 0
         
         double precision, dimension(sr_tensor_dim,sr_tensor_dim) :: mesodeformationgradient = unit_sr_Matrix
-        integer                 :: step_number = 0
-        
+        integer                                     :: step_number = 0
+        double precision,dimension(:),allocatable   :: accumulatedshear
     contains
         procedure,pass(this)    :: setExtendedMetaData => TextureMetaRawFileAccess_setExtendedMetaData
         procedure,pass(this)    :: getExtendedMetaData => TextureMetaRawFileAccess_getExtendedMetaData 
@@ -178,28 +178,34 @@ contains
     end function
 
     
-    subroutine TextureMetaRawFileAccess_setExtendedMetaData(this, F, step_number, info)
+    subroutine TextureMetaRawFileAccess_setExtendedMetaData(this, F, step_number,accumulatedshear, info)
     implicit none
     class(TextureMetaRawFileAccess),intent(inout)            :: this
     double precision, dimension(sr_tensor_dim,sr_tensor_dim),intent(in) :: F
     integer,intent(in)                                      :: step_number
+    double precision,dimension(:),intent(in)                :: accumulatedshear
     integer,intent(out)                                     :: info
     !
         this%mesodeformationgradient = F
         this%step_number = step_number
+        this%accumulatedshear = accumulatedshear ! F2003 automatic allocation
         info = criSuccess
     !
     end subroutine
     
-    subroutine TextureMetaRawFileAccess_getExtendedMetaData(this, F, step_number, info)
+    subroutine TextureMetaRawFileAccess_getExtendedMetaData(this, F, step_number, accumulatedshear, info)
     implicit none
     class(TextureMetaRawFileAccess),intent(in)               :: this
     double precision, dimension(sr_tensor_dim,sr_tensor_dim),intent(inout) :: F
     integer,intent(out)                                     :: step_number
+    double precision,dimension(:),allocatable,intent(out)   :: accumulatedshear
     integer,intent(out)                                     :: info
     !
         F = this%mesodeformationgradient
         step_number = this%step_number
+        if (allocated(this%accumulatedshear)) then
+            accumulatedshear = this%accumulatedshear ! F2003 automatic allocation
+        endif
         info = criSuccess
     !
     end subroutine

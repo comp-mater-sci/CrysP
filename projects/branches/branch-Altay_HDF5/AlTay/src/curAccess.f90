@@ -61,19 +61,30 @@ contains
         npoint = size(odf)
         associate(mesodeformationgradient => this%mesodeformationgradient)
             write (this%iounit,402)
-            write (this%iounit,403) npoint,mesodeformationgradient
+            write (this%iounit,403) this%step_number, npoint, mesodeformationgradient
             write (this%iounit,401, iostat=ioerr)
         end associate
         if (ioerr /= 0) return
         !
+        ! Check whether extended attributes are set.
+        if (.not. allocated(this%accumulatedshear)) then
+            allocate(this%accumulatedshear(npoint))
+            this%accumulatedshear = 0.D0
+        else
+            info = criErr_BadDims
+            if (size(this%accumulatedshear) /= npoint) return
+        endif
+        info = criErr_IOWrite
+        !
         do i=1, npoint
-            associate(orientation => odf%orientations(i))
+            associate(orientation => odf%orientations(i), &
+                      accumulatedshear => this%accumulatedshear(i))
                 euler_deg_tmp = rad2deg(orientation%euler)
                 write(this%iounit,400,iostat=ioerr) i,orientation%weight, &
                             euler_deg_tmp%fi1,               &
                             euler_deg_tmp%PHI,               &
                             euler_deg_tmp%fi2,               &
-                            0.0D0 !> \todo FIX to limitations of Rev. 2221
+                            accumulatedshear
             end associate
             if (ioerr /= 0) exit
         enddo
@@ -85,7 +96,7 @@ contains
         2X,'F(1,1)',4X,'F(2,1)',4X,'F(3,1)',4X,                           &
         2X,'F(1,2)',4X,'F(2,2)',4X,'F(3,2)',4X,                           &
         2X,'F(1,3)',4X,'F(2,3)',4X,'F(3,3)')
-    403  format(11X,i5,44x,3(2X,3F10.6))
+    403  format(I6,5X,i5,44x,3(2X,3F10.6))
     !      
     end subroutine
 
@@ -115,8 +126,7 @@ contains
     type(DiscreteODF),intent(inout)         :: odf
     integer,intent(out)                     :: info     !< Exit code
     !
-    integer :: npoint, i, j, tmp, ioerr, dummy
-    double precision :: dummy_dp ! <-- FIXME
+    integer :: npoint, i, j, tmp, ioerr
     type(EulerAngles) :: euler_deg_tmp
     character(len=10) :: buf
     !   
@@ -126,7 +136,7 @@ contains
         if (ioerr /= 0) return
         associate(mesodeformationgradient => this%mesodeformationgradient)
             npoint = 0
-            read(this%iounit,fmt=403,iostat=ioerr) dummy,npoint,mesodeformationgradient
+            read(this%iounit,fmt=403,iostat=ioerr) this%step_number,npoint,mesodeformationgradient
             if ((ioerr /= 0) .or. (npoint <= 0)) return
             read(this%iounit,fmt=401,iostat=ioerr) buf
             if (ioerr /= 0) return
@@ -137,7 +147,7 @@ contains
                         if (ioerr /= 0) exit ofs
                     enddo
                     read(this%iounit,fmt=402,iostat=ioerr) buf,buf
-                    read(this%iounit,fmt=403,iostat=ioerr) dummy,npoint,mesodeformationgradient !> \todo FIXME: dummy contains actual information
+                    read(this%iounit,fmt=403,iostat=ioerr) this%step_number,npoint,mesodeformationgradient
                     if (ioerr /= 0) exit
                     read(this%iounit,fmt=401,iostat=ioerr) buf
             enddo ofs
@@ -147,14 +157,19 @@ contains
         ! Request allocation of the memory
         info = DiscreteODF_resize(odf, npoint)
         if (info /= criSuccess) return
+        ! Allocate space for extended attributes
+        if (allocated(this%accumulatedshear)) deallocate(this%accumulatedshear)
+        allocate(this%accumulatedshear(npoint))
+        this%accumulatedshear = 0.D0
         ! Process the crystals in the block      
         do i=1,npoint
-            associate(orientation => odf%orientations(i))
+            associate(orientation => odf%orientations(i), &
+                      accumulatedshear => this%accumulatedshear(i))
                 read(this%iounit,400,iostat=ioerr) tmp,orientation%weight,     & 
                                 euler_deg_tmp%fi1,                & 
                                 euler_deg_tmp%PHI,                & 
                                 euler_deg_tmp%fi2,                & 
-                                dummy_dp !> \todo FIX to limitations of Rev. 2221
+                                accumulatedshear
                 if (ioerr /= 0) exit
                 ! Convert the euler angles of texture constituent from degrees to radians
                 orientation%euler = deg2rad(euler_deg_tmp)
