@@ -510,6 +510,8 @@ contains
     integer,intent(out)                         :: info
     !
     type(DeformationMechanismData) :: tmp
+    ! explicit temporary just to avoid warning from runtime checks
+    double precision,dimension(size(this%B,dim=2)) :: tmp_arr 
     integer :: i, itmp
     !
         read(inunit,fmt=100,err=900,end=900) tmp%description
@@ -531,7 +533,8 @@ contains
         enddo
         ! Read B
         do i=1,dm_dev_dims
-            read(inunit,fmt=103,err=900,end=900)  itmp, this%B(i,:)
+            read(inunit,fmt=103,err=900,end=900)  itmp, tmp_arr
+            this%B(i,:) = tmp_arr
         enddo
         ! Read data for twinning systems
         do i=1, this%n_twinning_systems
