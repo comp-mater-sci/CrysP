@@ -5,8 +5,8 @@ use altayIOContext
 implicit none
 
     !> Native Fortran formatted storage in SMT format.
-    type,extends(TextureMetaRawFileAccess) :: SMTFileAccess
-        
+    type,extends(TextureRawFileAccess) :: SMTFileAccess
+        integer                 :: ngrains = 0
     contains
 
         ! Implementation procedures
