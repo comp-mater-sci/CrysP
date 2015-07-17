@@ -296,6 +296,19 @@
             call native_storage%saveState(state%old, info)
       end block
 #endif
+#ifdef TESTING_ENABLED
+      ! Only for testing: CUB file
+      block
+            class(StatePersistenceScheme), pointer :: storage
+            type(TextureConfig) :: texcnf
+            !
+            texcnf%input_type = TF_CUB
+            texcnf%input_fname = trim(config%output_prefix)//'_init.CUB'
+            storage => statePersistenceFactory(texcnf, as_input=.false.)
+            call storage%saveState(state%new, info) 
+            deallocate(storage)
+      end block
+#endif
       
       DO 2 JBLOC=1,NBLOC
 !
