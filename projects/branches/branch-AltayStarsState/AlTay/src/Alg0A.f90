@@ -99,14 +99,11 @@
       type(StateDerivedVars) :: pebpSDV, pebpSDVavg
 #endif
       !
-      type(TextureAssembly) :: assembly
-      !
       data convf/0.5729577951308232D+02/
       data FS/9*1.0D0/ 
       SAVE
       !
       NPOINT = altayStateData_size(state)
-      assembly = TextureAssembly(state%old%texture, state%old%mesostructure%deformationgradient)
       !
       IF (IW) 32,33,30
   33  call  random_seed
@@ -157,11 +154,6 @@
       end if
       if (NRES.gt.0) write (IMP2,98) TITEL
   97  format (' Title of the new simulation: ',A)
-      ! Only if CUR file is requested
-      if (NFILE1.eq.1) then
-          assembly%texture%title = TITEL ! FIXME: texture title should be set in a different way
-          call CURwriteTitle(assembly, IMP1,info)
-      endif
   98  format (A)      
   99  FORMAT (2I5)
       !
@@ -317,8 +309,6 @@
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
-      ! Output the current texture
-      if (NFILE.eq.1) call CURwriteBlock(assembly,IMP1,info)
 #ifndef ALTAY_SUBROUTINE
       if ((NRES >= 1).and.(IW <= 1)) call writeReportHeader(IMP6,info)
 #endif      
@@ -345,11 +335,6 @@
 #ifdef PEBP_ENABLED
       pebpSDVavg = StateDerivedVars()
 #endif      
-      !
-      assembly = TextureAssembly(state%old%texture, state%old%mesostructure%deformationgradient)
-      !
-      call state%old%grainstates%initialize(state%old%texture, info)
-      call state%new%grainstates%initialize(state%new%texture, info)
       !
       call dynfil2(state%old,MacroDefState%TotalDefGrad)
 #ifndef NO_STDOUT       

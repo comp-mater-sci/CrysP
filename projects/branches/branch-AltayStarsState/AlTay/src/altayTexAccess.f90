@@ -1,184 +1,213 @@
 module altayTexAccess
+use altayODFTypes
+use altayIOContext
 use criErrcodes
 use criMathUtils
+use criPath
 implicit none
 
-    integer,parameter,private :: ODF_title_length = 40
-
-
-    !> Representation of a single constituent of a discrete ODF
-    type :: DiscreteOrientation
-        !> Euler angles of the discrete ODF constituent
-        type(EulerAngles) :: euler
-        
-        !> Weight of the discrete ODF constituent
-        double precision :: weight = 1.D0
-
-    end type
-
-
-    !> Aggregate of grains. The aggregate represents a discrite ODF.
-    type :: DiscreteODF
-        
-        !> Meta-data: title/comment 
-        character(len=ODF_title_length)                :: title = ''
-        
-        type(DiscreteOrientation),dimension(:),allocatable :: orientations
-        
-    end type
-
-    interface size
-        module procedure DiscreteODF_size
-    end interface
-
-    type :: TextureAssembly
-        
-        type(DiscreteODF),pointer   :: texture => null()
-        
-        double precision, dimension (:,:),pointer :: mesodeformationgradient
-        
-    end type
     
-    interface TextureAssembly
-        module procedure TextureAssembly_init
-    end interface
-    
-    type,abstract,extends(TextureAssembly) :: TextureAccess
+    !> Abstract class for methods of accessing external texture data.
+    type,abstract :: TextureAccess
         
     contains
         
-        ! Generic high-level procedures
-        procedure(texRead_interface),pass(this),deferred    :: read
-        procedure(texWrite_interface),pass(this),deferred   :: write
- 
-        ! Implementation procedures
-        procedure(texReadMetaData_interface),pass(this),deferred    :: readMetaData
+        !>@{ \name Generic high-level procedures
+    
+        !> Read from external data
+        procedure(TexAccess_read_interface),pass(this),deferred    :: read
         
-        procedure(texWriteMetaData_interface),pass(this),deferred   :: writeMetaData
-        
-        procedure(texReadBlock_interface),pass(this),deferred    :: readBlock
-        
-        procedure(texWriteBlock_interface),pass(this),deferred   :: writeBlock
-        
+        !> Write out external data
+        procedure(TexAccess_write_interface),pass(this),deferred   :: write
+        !>@}
+
     end type
     
-    !> \todo provide the actual interfaces
     abstract interface
     
-        subroutine texRead_interface(this, info)
-            import :: TextureAccess
+        function TexAccess_read_interface(this, blockid, odf) result(info)
+            import :: TextureAccess, DiscreteODF
             implicit none
-            class(TextureAccess),intent(inout)    :: this
+            class(TextureAccess),intent(inout)      :: this
+            integer,intent(in)                      :: blockid
+            type(DiscreteODF),intent(inout)         :: odf
+            integer                                 :: info
+        end function
+            
+        function TexAccess_write_interface(this, blockid, odf) result(info)
+            import :: TextureAccess, DiscreteODF
+            implicit none
+            class(TextureAccess),intent(inout)      :: this
+            integer,intent(in)                      :: blockid
+            type(DiscreteODF),intent(in)            :: odf
+            integer                                 :: info
+        end function
+    end interface
+
+    
+    
+    !> Class for accessing texture data that are stored in a format that can
+    !> be processed by Fortran native IO operations.
+    type,abstract,extends(TextureAccess) :: TextureRawFileAccess
+        
+        !> Input/output unit
+        integer     :: iounit = 0
+        
+    contains
+        procedure,pass(this) :: initialize => TextureRawFileAccess_initialize
+
+        !>@{ \name Deferred implementation of the TextureAccess interface
+        !>         according to the concept of metadata and datablocks
+        procedure,pass(this) :: read => TextureRawFileAccess_read
+        procedure,pass(this) :: write => TextureRawFileAccess_write
+        !>@}
+        
+        !>@{ \name Implementation procedures
+        
+        !> Read meta-data, such as attributes, size, shape, title, description etc.
+        procedure(TexAccess_readMetaData_interface),pass(this),deferred    :: readMetaData
+        
+        !> Read meta-data, such as attributes, size, shape, title, description etc.
+        procedure(TexAccess_writeMetaData_interface),pass(this),deferred   :: writeMetaData
+        
+        !> Read data block of DiscreteODF
+        procedure(TexAccess_readBlock_interface),pass(this),deferred    :: readBlock
+        
+        !> Write out data block of DiscreteODF
+        procedure(TexAccess_writeBlock_interface),pass(this),deferred   :: writeBlock
+        !>@{
+
+    end type
+    
+    
+    abstract interface
+        subroutine TexAccess_readMetaData_interface(this, odf, info)
+            import :: TextureRawFileAccess, DiscreteODF
+            implicit none
+            class(TextureRawFileAccess),intent(inout)      :: this
+            type(DiscreteODF),intent(inout)         :: odf
             integer,intent(out)                     :: info
         end subroutine
             
-        subroutine texWrite_interface(this, info)
-            import :: TextureAccess
+        subroutine TexAccess_writeMetaData_interface(this, odf, info)
+            import :: TextureRawFileAccess, DiscreteODF
             implicit none
-            class(TextureAccess),intent(in)       :: this
+            class(TextureRawFileAccess),intent(inout)      :: this
+            type(DiscreteODF),intent(in)            :: odf
             integer,intent(out)                     :: info
         end subroutine
         
-        subroutine texReadMetaData_interface(this, info)
-            import :: TextureAccess
+        subroutine TexAccess_readBlock_interface(this, blockid, odf, info)
+            import :: TextureRawFileAccess, DiscreteODF
             implicit none
-            class(TextureAccess),intent(inout)    :: this
+            class(TextureRawFileAccess),intent(inout)      :: this
+            integer,intent(in)                      :: blockid
+            type(DiscreteODF),intent(inout)         :: odf
             integer,intent(out)                     :: info
         end subroutine
             
-        subroutine texWriteMetaData_interface(this, info)
-            import :: TextureAccess
+        subroutine TexAccess_writeBlock_interface(this, blockid, odf, info)
+            import :: TextureRawFileAccess, DiscreteODF
             implicit none
-            class(TextureAccess),intent(in)       :: this
-            integer,intent(out)                     :: info
-        end subroutine
-        
-        subroutine texReadBlock_interface(this, info)
-            import :: TextureAccess
-            implicit none
-            class(TextureAccess),intent(inout)    :: this
-            integer,intent(out)                     :: info
-        end subroutine
-            
-        subroutine texWriteBlock_interface(this, info)
-            import :: TextureAccess
-            implicit none
-            class(TextureAccess),intent(in)       :: this
+            class(TextureRawFileAccess),intent(inout)      :: this
+            integer,intent(in)                      :: blockid
+            type(DiscreteODF),intent(in)            :: odf
             integer,intent(out)                     :: info
         end subroutine
         
     end interface
-      
+    
+    
+    
+    type,abstract,extends(TextureRawFileAccess) :: TextureMetaRawFileAccess
+        
+        integer                 :: ngrains = 0
+        
+        double precision, dimension(sr_tensor_dim,sr_tensor_dim) :: mesodeformationgradient = unit_sr_Matrix
+        integer                                     :: step_number = 0
+        double precision,dimension(:),allocatable   :: accumulatedshear
+    contains
+        procedure,pass(this)    :: setExtendedMetaData => TextureMetaRawFileAccess_setExtendedMetaData
+        procedure,pass(this)    :: getExtendedMetaData => TextureMetaRawFileAccess_getExtendedMetaData 
+    end type
+    
+    
 contains
     
-    !> Expand/shrink the storage for crystals in the DiscreteODF object.
-    !>
-    !> The old content is preserved if `keep_state` parameter is True.
-    !> \todo do we actually need this feature? Wouldn't a regular "allocate" be sufficient?
-    integer function DiscreteODF_resize(this, newsize, keep_state) result(info)
-    implicit none
-    type(DiscreteODF),intent(inout)     :: this     !< object to be modified
-    !> new size, i.e. number of crystals that can be stored in `this`
-    integer,intent(in)                  :: newsize
-    !> Flag: if true, the existing state to be preserved on resize. Default: .false.
-    !> If the newsize is larger than the previous size, only the first `newsize`
-    !> elements will be preserved.
-    logical,intent(in),optional         :: keep_state
+    
+    subroutine TextureRawFileAccess_initialize(this, context, readonly, info)
+    class(TextureRawFileAccess),intent(inout)   :: this
+    type(RawFileContext),intent(inout)          :: context
+    logical,intent(in)                          :: readonly
+    integer,intent(out)                         :: info
     !
-    logical :: keep
-    integer :: memstat, ntransf
-    type(DiscreteOrientation),dimension(:),allocatable  :: tmp
-    !
-        keep = .false.
-        if (present(keep_state)) keep = keep_state
+        info = context%open(mode=merge('r','w',readonly))
+        if (info == criSuccess) this%iounit = context%iounit
         !
-        if (.not. allocated(this%orientations)) then
-            allocate(this%orientations(newsize), stat=memstat)
-        else
-            if (size(this%orientations) == newsize) then
-                    ! Nothing to do.
-                    info = criSuccess
-                    return
-            endif
-            if (keep) then
-                ! Transfer npoints 
-                allocate(tmp(newsize),stat=memstat)
-                if (memstat == 0) then
-                    ntransf = min(newsize,size(this%orientations))
-                    tmp(1:ntransf) = this%orientations(1:ntransf)
-                    deallocate(this%orientations)
-                    call move_alloc(tmp,this%orientations)
-                endif
-            else
-                deallocate(this%orientations)
-                allocate(this%orientations(newsize),stat=memstat)
-            endif
+    end subroutine
+   
+    
+    !> Read texture data
+    function TextureRawFileAccess_read(this, blockid, odf) result(info)
+    implicit none
+    class(TextureRawFileAccess),intent(inout)  :: this
+    integer,intent(in)                          :: blockid
+    type(DiscreteODF),intent(inout)             :: odf
+    integer                                     :: info     !< exit code
+    !
+        call this%readMetaData(odf, info)
+        if (info == criSuccess) then
+            call this%readBlock(blockid, odf, info)
         endif
-        info = merge(criSuccess, criErr_MemAlloc, (memstat == 0))
-    !
-    end function
-
-
-    !> Give the number of orientations in the discrete ODF
-    elemental integer function DiscreteODF_size(this) result(n)
-    implicit none
-    type(DiscreteODF),intent(in)     :: this     !< object to be modified
-    !
-        n = 0
-        if (allocated(this%orientations)) n = size(this%orientations)
     !
     end function
     
-    
-    function TextureAssembly_init(texture, mesodeformationgradient) result(this)
+    !> Write texture data
+    function TextureRawFileAccess_write(this, blockid, odf) result(info)
     implicit none
-    type(TextureAssembly)   :: this
-    type(DiscreteODF),target   :: texture
-    double precision,dimension(3,3),target :: mesodeformationgradient
+    class(TextureRawFileAccess),intent(inout)   :: this
+    integer,intent(in)                          :: blockid
+    type(DiscreteODF),intent(in)                :: odf
+    integer                                     :: info     !< exit code
     !
-        this%texture => texture
-        this%mesodeformationgradient => mesodeformationgradient
+        call this%writeMetaData(odf, info)
+        if (info == criSuccess) then
+            call this%writeBlock(blockid, odf, info)
+        endif
     !
     end function
+
+    
+    subroutine TextureMetaRawFileAccess_setExtendedMetaData(this, F, step_number,accumulatedshear, info)
+    implicit none
+    class(TextureMetaRawFileAccess),intent(inout)            :: this
+    double precision, dimension(sr_tensor_dim,sr_tensor_dim),intent(in) :: F
+    integer,intent(in)                                      :: step_number
+    double precision,dimension(:),intent(in)                :: accumulatedshear
+    integer,intent(out)                                     :: info
+    !
+        this%mesodeformationgradient = F
+        this%step_number = step_number
+        this%accumulatedshear = accumulatedshear ! F2003 automatic allocation
+        info = criSuccess
+    !
+    end subroutine
+    
+    subroutine TextureMetaRawFileAccess_getExtendedMetaData(this, F, step_number, accumulatedshear, info)
+    implicit none
+    class(TextureMetaRawFileAccess),intent(in)               :: this
+    double precision, dimension(sr_tensor_dim,sr_tensor_dim),intent(inout) :: F
+    integer,intent(out)                                     :: step_number
+    double precision,dimension(:),allocatable,intent(out)   :: accumulatedshear
+    integer,intent(out)                                     :: info
+    !
+        F = this%mesodeformationgradient
+        step_number = this%step_number
+        if (allocated(this%accumulatedshear)) then
+            accumulatedshear = this%accumulatedshear ! F2003 automatic allocation
+        endif
+        info = criSuccess
+    !
+    end subroutine
     
 end module

@@ -5,81 +5,86 @@ module altayCurAccess
 use criErrcodes
 use altayTexAccess
 use altayAlgorithms
+#include "criMacros.fpp"
+    
+    !> CUR format- native Fortran formatted, multiblock.
+    type,extends(TextureMetaRawFileAccess) :: CURFileAccess
+        
+        logical                 :: is_header_processed = .false.
+        
+    contains
 
-    !> \todo upgrade to OO type that extends TextureAccess
-
+        ! Implementation procedures
+        procedure,pass(this)    :: readMetaData => CURFileAccess_readMeta
+        
+        procedure,pass(this)    :: writeMetaData => CURFileAccess_writeMeta
+        
+        procedure,pass(this)    :: readBlock => CURFileAccess_readBlock
+        
+        procedure,pass(this)    :: writeBlock => CURFileAccess_writeBlock
+    end type
 contains
-    !> Read texture data in CUR format from iounit.
-    subroutine CURread(this, iounit, blockIdx, info)
-    implicit none
-    type(TextureAssembly),intent(inout) :: this
-    integer,intent(in)                  :: iounit   !< IO unit number
-    integer,intent(in)                  :: blockIdx !< Index of the block to be read. The blocks are indexed from 0.
-    integer,intent(out)                 :: info     !< exit code
-    !
-        call CURreadTitle(this, iounit, info)
-        if (info == criSuccess) then
-            call CURreadBlock(this, iounit, blockIdx, info)
-        endif
-    !
-    end subroutine
     
-    !> Write texture data in CUR format to iounit
-    subroutine CURwrite(this, iounit, full, info)
-    implicit none
-    type(TextureAssembly),intent(in)    :: this
-    integer,intent(in)                  :: iounit   !< IO unit number
-    logical,intent(in)                  :: full     !< Flag: if true, both meta-data and data will be written out. Otherwise only the data will be written out.
-    integer,intent(out)                 :: info     !< exit code
-    !
-        if (full) call CURwriteTitle(this,iounit,info)
-        if (info == 0) call CURwriteBlock(this, iounit, info)
-    !
-    end subroutine
     
-    !> Write title line of the CUR file.
-    subroutine CURwriteTitle(this,iounit,info)
+    !> Write meta-datea of the CUR file.
+    subroutine CURFileAccess_writeMeta(this, odf, info)
     implicit none
-    type(TextureAssembly),intent(in)    :: this
-    integer,intent(in)            :: iounit  !< IO unit number
-    integer,intent(out)           :: info       !< exit code
+    class(CURFileAccess),intent(inout)      :: this
+    type(DiscreteODF),intent(in)            :: odf
+    integer,intent(out)                     :: info !< exit code
     !
     integer :: ioerr
     !
-        write(iounit,fmt='(A)',iostat=ioerr) this%texture%title
-        info = merge(criSuccess, criErr_IOWrite, (ioerr == 0))
+        info = criSuccess
+        if (.not. this%is_header_processed) then
+            this%is_header_processed = .true.
+            write(this%iounit,fmt='(A)',iostat=ioerr) odf%title
+            CHOOSE(info, (ioerr == 0), criSuccess, criErr_IOWrite)
+        endif
     !
     end subroutine
 
       
     ! Write the current contents of the dynfil
-    subroutine CURwriteBlock(this, iounit, info)
+    subroutine CURFileAccess_writeBlock(this, blockid, odf, info)
     implicit none
-    type(TextureAssembly),intent(in)    :: this
-    integer,intent(in)      :: iounit   !< IO unit number
-    integer,intent(out)     :: info     !< exit code
+    class(CURFileAccess),intent(inout)      :: this
+    integer,intent(in)                      :: blockid
+    type(DiscreteODF),intent(in)            :: odf
+    integer,intent(out)                     :: info
     !
     integer :: npoint, i, ioerr
     !
     type(EulerAngles) :: euler_deg_tmp
     !
         info = criErr_IOWrite
-        npoint = size(this%texture%orientations)
+        npoint = size(odf)
         associate(mesodeformationgradient => this%mesodeformationgradient)
-            write (iounit,402)
-            write (iounit,403) npoint,mesodeformationgradient
-            write (iounit,401, iostat=ioerr)
+            write (this%iounit,402)
+            write (this%iounit,403) this%step_number, npoint, mesodeformationgradient
+            write (this%iounit,401, iostat=ioerr)
         end associate
         if (ioerr /= 0) return
         !
-        do i=1,npoint
-            associate(orientation => this%texture%orientations(i))
+        ! Check whether extended attributes are set.
+        if (.not. allocated(this%accumulatedshear)) then
+            allocate(this%accumulatedshear(npoint))
+            this%accumulatedshear = 0.D0
+        else
+            info = criErr_BadDims
+            if (size(this%accumulatedshear) /= npoint) return
+        endif
+        info = criErr_IOWrite
+        !
+        do i=1, npoint
+            associate(orientation => odf%orientations(i), &
+                      accumulatedshear => this%accumulatedshear(i))
                 euler_deg_tmp = rad2deg(orientation%euler)
-                write(iounit,400,iostat=ioerr) i,orientation%weight, &
+                write(this%iounit,400,iostat=ioerr) i,orientation%weight, &
                             euler_deg_tmp%fi1,               &
                             euler_deg_tmp%PHI,               &
                             euler_deg_tmp%fi2,               &
-                            0.0D0
+                            accumulatedshear
             end associate
             if (ioerr /= 0) exit
         enddo
@@ -91,78 +96,86 @@ contains
         2X,'F(1,1)',4X,'F(2,1)',4X,'F(3,1)',4X,                           &
         2X,'F(1,2)',4X,'F(2,2)',4X,'F(3,2)',4X,                           &
         2X,'F(1,3)',4X,'F(2,3)',4X,'F(3,3)')
-    403  format(11X,i5,44x,3(2X,3F10.6))
+    403  format(I6,5X,i5,44x,3(2X,3F10.6))
     !      
     end subroutine
 
       
-    subroutine CURreadTitle(this,iounit,info)
+    subroutine CURFileAccess_readMeta(this, odf,info)
     implicit none
-    type(TextureAssembly),intent(inout) :: this
-    integer,intent(in)      :: iounit
-    integer,intent(out)     :: info
+    class(CURFileAccess),intent(inout)      :: this
+    type(DiscreteODF),intent(inout)         :: odf
+    integer,intent(out)                     :: info
     !
     integer :: ioerr
     !
-        read(iounit,'(A)',iostat=ioerr) this%texture%title
-        info = merge(criSuccess, criErr_IORead, (ioerr == 0))
+        info = criSuccess
+        if (.not. this%is_header_processed) then
+            this%is_header_processed = .true.
+            read(this%iounit,'(A)',iostat=ioerr) odf%title
+            CHOOSE(info, (ioerr == 0), criSuccess, criErr_IOWrite)
+        endif
     !
     end subroutine
 
-          
-    subroutine CURreadBlock(this,iounit,offset,info)
+
+    subroutine CURFileAccess_readBlock(this, blockid, odf, info)
     implicit none
-    type(TextureAssembly),intent(inout) :: this
-    integer,intent(in)      :: iounit      !< IO unit
-    integer,intent(in)      :: offset   !< Number of blocks to be skipped
-    integer,intent(out)     :: info     !< Exit code
+    class(CURFileAccess),intent(inout)      :: this
+    integer,intent(in)                      :: blockid
+    type(DiscreteODF),intent(inout)         :: odf
+    integer,intent(out)                     :: info     !< Exit code
     !
-    integer :: npoint, i, j, tmp, ioerr, dummy
-    double precision :: dummy_dp
+    integer :: npoint, i, j, tmp, ioerr
     type(EulerAngles) :: euler_deg_tmp
     character(len=10) :: buf
     !   
         info = criErr_IORead
         ! Recon first: get the number of records/
-        read(iounit,fmt=402,iostat=ioerr) buf,buf
+        read(this%iounit,fmt=402,iostat=ioerr) buf,buf
         if (ioerr /= 0) return
         associate(mesodeformationgradient => this%mesodeformationgradient)
-            read(iounit,fmt=403,iostat=ioerr) dummy,npoint,mesodeformationgradient
-            if (ioerr /= 0) return
-            read(iounit,fmt=401,iostat=ioerr) buf
+            npoint = 0
+            read(this%iounit,fmt=403,iostat=ioerr) this%step_number,npoint,mesodeformationgradient
+            if ((ioerr /= 0) .or. (npoint <= 0)) return
+            read(this%iounit,fmt=401,iostat=ioerr) buf
             if (ioerr /= 0) return
             ! Skip N=offset blocks:
-            ofs: do i = 1,offset
+            ofs: do i = 1,blockid
                     do j = 1, npoint
-                        read(iounit,fmt=401,iostat=ioerr) buf
+                        read(this%iounit,fmt=401,iostat=ioerr) buf
                         if (ioerr /= 0) exit ofs
                     enddo
-                    read(iounit,fmt=402,iostat=ioerr) buf,buf
-                    read(iounit,fmt=403,iostat=ioerr) dummy,npoint,mesodeformationgradient
+                    read(this%iounit,fmt=402,iostat=ioerr) buf,buf
+                    read(this%iounit,fmt=403,iostat=ioerr) this%step_number,npoint,mesodeformationgradient
                     if (ioerr /= 0) exit
-                    read(iounit,fmt=401,iostat=ioerr) buf
+                    read(this%iounit,fmt=401,iostat=ioerr) buf
             enddo ofs
             if (ioerr /= 0) return
             !
         end associate
         ! Request allocation of the memory
-        info = DiscreteODF_resize(this%texture, npoint)
+        info = DiscreteODF_resize(odf, npoint)
         if (info /= criSuccess) return
+        ! Allocate space for extended attributes
+        if (allocated(this%accumulatedshear)) deallocate(this%accumulatedshear)
+        allocate(this%accumulatedshear(npoint))
+        this%accumulatedshear = 0.D0
         ! Process the crystals in the block      
         do i=1,npoint
-            associate(orientation => this%texture%orientations(i))
-                read(iounit,400,iostat=ioerr) tmp,orientation%weight,     &
+            associate(orientation => odf%orientations(i), &
+                      accumulatedshear => this%accumulatedshear(i))
+                read(this%iounit,400,iostat=ioerr) tmp,orientation%weight,     & 
                                 euler_deg_tmp%fi1,                & 
                                 euler_deg_tmp%PHI,                & 
                                 euler_deg_tmp%fi2,                & 
-                                dummy_dp
+                                accumulatedshear
                 if (ioerr /= 0) exit
                 ! Convert the euler angles of texture constituent from degrees to radians
                 orientation%euler = deg2rad(euler_deg_tmp)
             end associate
         enddo
-        info = merge(criSuccess, criErr_IORead, (ioerr == 0))
-      
+        CHOOSE(info, (ioerr == 0), criSuccess, criErr_IORead)
         !
     400  format (I6,f10.5,2X,3f10.5,2X,f10.5)
     401  format(A)     ! ignore one record

@@ -178,7 +178,12 @@ contains
         ! Copy the initial state. We rely on Fortran 2003 automatic allocation 
         ! (standard semantics).
         this%states(1) = this%states(0)
-        info = criSuccess
+        !
+        ! Initialize the state. It involves setting up pointers, so it has to be 
+        ! done per state.
+        call this%old%grainstates%initialize(this%old%texture, info)
+        if (info /= criSuccess) return
+        call this%new%grainstates%initialize(this%new%texture, info)
     !
     end function
     

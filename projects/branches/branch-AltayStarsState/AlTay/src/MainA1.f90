@@ -19,7 +19,7 @@
       use altayHard
       use altayTexFormats
       use altayMacroKinematic
-      use altayTexAccess
+      use altaySimulation
       implicit none ! double precision (a-h,o-z)
 !      Several simulations (usually several-steps each),
 !      following each other.
@@ -58,7 +58,11 @@
       type(altayConfigData)             :: config
       type(altayStateData),target       :: state
       type(altayMaterialData)            :: material
-      
+      ! Storage for persistent state variables
+      class(StatePersistenceScheme), pointer :: input_storage, output_storage
+#ifdef TESTING_ENABLED
+      class(StatePersistenceScheme), pointer :: native_storage
+#endif
       !
       SAVE
       
@@ -86,8 +90,6 @@
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ NLIST is not assigned a value yet! so supressed it! QGX 28/10/2011
 !      write (IMP,92) 
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-!     UNIT IMP1 = PRINTER
-      open (unit=IMP1,file=trim(fname_prefix)//'.CUR',status='replace')
 !     UNIT IMP2 = PRINTER
       open (unit=IMP2,file=trim(fname_prefix)//'.RES',status='replace')
 !     UNIT IMP3 = PRINTER
@@ -196,7 +198,11 @@
       endif
       !
       !
-   
+      ! Load state variables
+      
+      !> \todo there is no need to initilize and finalize FH5 if neither 
+      !>       input nor output data persistence scheme uses HDF5.
+      info = FH5_initialize()
       
       associate(texcnf => config%texture)
           ! Get the initial texture
@@ -204,9 +210,15 @@
           read(KLEC,'(A)') texcnf%input_fname
           read(KLEC,99) texcnf%block_id
           call stripComment(texcnf%input_fname)
-          ! 
-          call loadTexture(texcnf%input_type,trim(texcnf%input_fname),&
-                           texcnf%block_id,state%old%mesostructure%deformationgradient, state%old%texture, info)
+          !
+          ! Initialize appropriate backend: texcnf%input_type
+          info = criError
+          input_storage => statePersistenceFactory(texcnf,as_input=.true.)
+          if (associated(input_storage)) then
+              call input_storage%loadState(state%old, info)
+              deallocate(input_storage)
+          endif
+          !
           if (info /= 0) then
                 write(*,fmt=9980) trim(texcnf%input_fname)
                 call exit(stopcode_ioerror)
@@ -214,6 +226,7 @@
                  ,1X,A)
           endif
       end associate
+      
 #ifdef PEBP_ENABLED
       ! PEBP model
       NREC = size(DFIL)
@@ -259,12 +272,47 @@
       call altayStateData_printStatus(state)
       !!! <<-- TESTING
 #endif
-      
+    !
+      ! Initialize HDF5 output storage
+      !!! FIXME -->>
+      block
+           type(TextureConfig) :: texcnf
+           !
+           texcnf%input_type = TF_HDF5
+           texcnf%input_fname = trim(config%output_prefix)//'.h5:state' 
+           output_storage => statePersistenceFactory(texcnf, as_input=.false.)
+           !> \todo: if output of the initial state is requested
+           call output_storage%saveState(state%old, info) 
+      end block
+      !!! <<--
       !
+#ifdef TESTING_ENABLED
+      ! Only for testing: CUR file
+      block
+            type(TextureConfig) :: texcnf
+            texcnf%input_type = TF_CUR
+            texcnf%input_fname = trim(config%output_prefix)//'.CUR'
+            native_storage => statePersistenceFactory(texcnf, as_input=.false.)
+            call native_storage%saveState(state%old, info)
+      end block
+#endif
+#ifdef TESTING_ENABLED
+      ! Only for testing: CUB file
+      block
+            class(StatePersistenceScheme), pointer :: storage
+            type(TextureConfig) :: texcnf
+            !
+            texcnf%input_type = TF_CUB
+            texcnf%input_fname = trim(config%output_prefix)//'_init.CUB'
+            storage => statePersistenceFactory(texcnf, as_input=.false.)
+            call storage%saveState(state%new, info) 
+            deallocate(storage)
+      end block
+#endif
+      
       DO 2 JBLOC=1,NBLOC
 !
 !     Simulation of a certain number of steps.
-!     The "current situation" is printed on IMP1 in the beginning.
 !     The "response to the imposed strain" is only printed
 !     after the 1st step.
 !
@@ -294,18 +342,28 @@
       call Set_DeformationRate(DG,MacroDefRate)
       !
       CALL SIMUL(config, state, material, 1, NFILE0, MacroDefRate)
+      call output_storage%saveState(state%new, info)
+#ifdef TESTING_ENABLED
+      call native_storage%saveState(state%new, info)
+#endif
    2  CONTINUE
 !
 !     Output of last "current situation"
 !
+
 #ifdef FINALCUB_ENABLED
-      call openTextureFile(trim(config%output_prefix)//'.cub',TF_CUB, &
-                           'w', icubunit, info)
-      if (info == 0) then 
-            call outputCurrentTexture(icubunit,TF_CUB, &
-                                      state%old%mesostructure%deformationgradient, state%old%texture, .true.,info)
-      endif
+    block
+        class(StatePersistenceScheme), pointer :: storage
+        type(TextureConfig) :: texcnf
+        !
+        texcnf%input_type = TF_CUB
+        texcnf%input_fname = trim(config%output_prefix)//'.CUB'
+        storage => statePersistenceFactory(texcnf, as_input=.false.)
+        call storage%saveState(state%new, info) 
+        deallocate(storage)
+    end block
 #endif
+
 #if defined(PEBP_ENABLED) && defined(FINALBPM_ENABLED)
       select case(HardLawID)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
@@ -316,12 +374,15 @@
 #endif
       endselect
 #endif
-      if(NLIST.eq.1) then
-      write (IMP,110)
-      end if
-      write (*,110)
- 110  format (//,' Final call of SIMUL (for output only)')
-      CALL SIMUL(config, state, material, 2, NFILE0, MacroDefRate)
+      
+      deallocate(output_storage)
+#ifdef TESTING_ENABLED
+      ! Only for testing: CUR file
+      deallocate(native_storage)
+#endif
+      !> \todo FIXME This should be done in a _correct_ and elegant way
+      info = FH5_finalize()
+      
       STOP
       
 9002 format('Catastrophic error in MAIN:',1X,A)
