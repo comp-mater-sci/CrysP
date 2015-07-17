@@ -19,4 +19,8 @@
 !> result, as it is the case in `merge`
 #define CHOOSE(VAR,X,TVAL,FVAL) if(X)then;VAR=TVAL;else;VAR=FVAL;endif
 
+#define RETURN_IF(CONDITON, STATEMENT) STATEMENT; if (CONDITON) return;
+
+#define RETURN_IF_WITH(CONDITON, STATEMENT) if(CONDITON)then;STATEMENT;return;endif
+
 #endif
