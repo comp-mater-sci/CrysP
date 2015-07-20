@@ -304,7 +304,7 @@ contains
         read(inunit,fmt=100,err=900,end=900) tmp%description
         !
         do i=1,3
-            read(inunit,fmt=110,err=900,end=900) (tmp%unitcell(i,j),j=1,3)
+            read(inunit,fmt=*,err=900,end=900) (tmp%unitcell(i,j),j=1,3)
         end do
         !Input error checks:
         ! Is the unitcell matrix non-invertible?
@@ -313,8 +313,8 @@ contains
             return
         end if 
         !
-        read (inunit,fmt=111,err=900,end=900) tmp%n_slip_systems, &
-                                              tmp%n_twinning_systems
+        read (inunit,fmt=*,err=900,end=900) tmp%n_slip_systems, &
+                                            tmp%n_twinning_systems
         !
         ! Attempt to construct the output
         call DeformationMechanismData_initEmpty(this,tmp%n_slip_systems, &
@@ -326,7 +326,7 @@ contains
         !
         do i=1,this%n_systems
             !
-            read(inunit,fmt=112,err=900,end=900) &
+            read(inunit,fmt=*,err=900,end=900) &
                     (this%plane_Miller(i)%index(j),j=1,3), &
                     (this%direction_Miller(i)%index(k),k=1,3)
             !
@@ -346,7 +346,7 @@ contains
         end do
         !
         do i=1,this%n_twinning_systems
-            read(inunit,fmt=113,err=900,end=900) this%g(i)
+            read(inunit,fmt=*,err=900,end=900) this%g(i)
             !
             !Check positivity
             if (this%g(i) <= 0) then 
@@ -365,9 +365,6 @@ contains
         return  
         
     100 format(A)
-    110 format(3F20.0)
-    111 format(2I3)
-    112 format(6I3)
     113 format(F20.0)
         
     end subroutine
