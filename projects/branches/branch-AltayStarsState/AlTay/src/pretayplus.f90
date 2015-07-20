@@ -342,28 +342,28 @@ integer :: struct_id = -1
     !format: A1
 209 format(4X,'double precision,dimension(DM_dev_dims,DM_',A,'_nsystems),parameter :: ',A,'_A1 = &')
 210 format(4X,4X,'reshape([double precision :: &')
-211 format(4X,12X,5(E32.24,','),' & !system:',I3)
-2119 format(4X,12X,4(E32.24,','),E32.24,'] & !system:',I3)
+211 format(4X,12X,5(D32.24,','),' & !system:',I3)
+2119 format(4X,12X,4(D32.24,','),D32.24,'] & !system:',I3)
 212 format(4X,12X,', shape=[DM_dev_dims, DM_',A,'_nsystems])',/)
     !format: B1
 213 format(4X,'double precision,dimension(DM_dir_dims,DM_',A,'_nsystems),parameter :: ',A,'_B1 = &')
     !format: plane_vector; direction_vector; B1    
 214 format(4X,4X,'reshape([double precision :: &')
-215 format(4X,12X,3(E32.24,','),' & !system:',I3)
-2159 format(4X,12X,2(E32.24,','),E32.24,'] & !system:',I3)
+215 format(4X,12X,3(D32.24,','),' & !system:',I3)
+2159 format(4X,12X,2(D32.24,','),D32.24,'] & !system:',I3)
 216 format(4X,12X,', shape=[DM_dir_dims, DM_',A,'_nsystems])',/)
     !format: B
 220 format(4X,'double precision,dimension(DM_dev_dims,DM_dev_dims),parameter :: ',A,'_B = &')
 221 format(4X,'    reshape([double precision :: &')
-222 format(4X,12X,5(E32.24,','),' &')
-2229 format(4X,12X,4(E32.24,','),E32.24,'] &')    
+222 format(4X,12X,5(D32.24,','),' &')
+2229 format(4X,12X,4(D32.24,','),D32.24,'] &')    
 223 format(4X,12X,', shape=[DM_dev_dims, DM_dev_dims])',/)
     !format: unitcell
 301 format(4X,'double precision,dimension(DM_dir_dims,DM_dir_dims),parameter :: ',A,'_unitcell = unit_sr_Matrix',/)
 302 format(4X,'double precision,dimension(DM_dir_dims,DM_dir_dims),parameter :: ',A,'_unitcell = &')
 303 format(4X,'    reshape([double precision :: &')
-304 format(4X,12X,3(E32.24,','),' &')
-3049 format(4X,12X,2(E32.24,','),E32.24,'] &')    
+304 format(4X,12X,3(D32.24,','),' &')
+3049 format(4X,12X,2(D32.24,','),D32.24,'] &')    
 305  format(4X,12X,', shape=[DM_dir_dims, DM_dir_dims])',/)
     !format: plane_Miller
 312 format(4X,'type(MillerIndices),dimension(DM_',A,'_nsystems),parameter :: ',A,'_plane_Miller = [&')
