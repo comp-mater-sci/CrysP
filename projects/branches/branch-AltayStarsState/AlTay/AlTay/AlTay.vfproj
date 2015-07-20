@@ -15,7 +15,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release|Win32" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" WholeProgramOptimization="true">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" Preprocess="preprocessYes" PreprocessorDefinitions="MAINDIRECT;FINALCUB_ENABLED;FINALBPM_ENABLED;PEBP_ENABLED" F2003Semantics="true" CommonElementAlignment="alignCommonEightBytes" RuntimeChecks="rtChecksNone"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" Preprocess="preprocessYes" PreprocessorDefinitions="MAINDIRECT;FINALCUB_ENABLED;" F2003Semantics="true" CommonElementAlignment="alignCommonEightBytes" RuntimeChecks="rtChecksNone"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" SubSystem="subSystemConsole"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -55,7 +55,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release|x64" WholeProgramOptimization="true">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" Preprocess="preprocessYes" AdditionalIncludeDirectories="C:\Program Files\HDF_Group\HDF5\1.8.15\include;..\..\FCRI\include" PreprocessorDefinitions="MAINDIRECT;FINALCUB_ENABLED;TESTING_ENABLED;" F2003Semantics="true" CommonElementAlignment="alignCommonEightBytes" RuntimeChecks="rtChecksNone"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" Preprocess="preprocessYes" AdditionalIncludeDirectories="C:\Program Files\HDF_Group\HDF5\1.8.15\include;..\..\FCRI\include" PreprocessorDefinitions="MAINDIRECT;FINALCUB_ENABLED;" F2003Semantics="true" CommonElementAlignment="alignCommonEightBytes" RuntimeChecks="rtChecksNone"/>
 				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="C:\Program Files\HDF_Group\HDF5\1.8.15\lib" SubSystem="subSystemConsole" AdditionalDependencies="szip.lib zlib.lib hdf5_hl_fortran.lib hdf5_fortran.lib hdf5.lib"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
@@ -88,50 +88,5 @@
 		<Filter Name="Header Files" Filter="fi;fd"/>
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
-		<File RelativePath="..\src\Alg0A.f90"/>
-		<File RelativePath="..\src\Alg1.f90"/>
-		<File RelativePath="..\src\Alg2.f90"/>
-		<File RelativePath="..\src\altayConfig.f90"/>
-		<File RelativePath="..\src\altayCRSSTypes.f90"/>
-		<File RelativePath="..\src\altayDeformationMechanism.f90"/>
-		<File RelativePath="..\src\altayDeformationMechanismData_preconfigured.f90"/>
-		<File RelativePath="..\src\altayDSHState.f90">
-			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/></File>
-		<File RelativePath="..\src\altayGrainCluster.f90"/>
-		<File RelativePath="..\src\altayHard.f90"/>
-		<File RelativePath="..\src\altayHardLawDSH.f90">
-			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/></File>
-		<File RelativePath="..\src\altayHardLawKM.f90"/>
-		<File RelativePath="..\src\altayHardLawSimple.f90"/>
-		<File RelativePath="..\src\altayHardTypes.f90"/>
-		<File RelativePath="..\src\altayHDF5Context.f90"/>
-		<File RelativePath="..\src\altayHDF5PersitenceScheme.f90"/>
-		<File RelativePath="..\src\altayIOContext.f90"/>
-		<File RelativePath="..\src\altayMaterial.f90"/>
-		<File RelativePath="..\src\altayMillerIndices.f90"/>
-		<File RelativePath="..\src\altayNativePersistenceScheme.f90"/>
-		<File RelativePath="..\src\altayODFTypes.f90"/>
-		<File RelativePath="..\src\altaySimulation.f90"/>
-		<File RelativePath="..\src\altayState.f90"/>
-		<File RelativePath="..\src\altayStatePersistence.f90"/>
-		<File RelativePath="..\src\altayStateTypes.f90"/>
-		<File RelativePath="..\src\altayTexAccess.f90"/>
-		<File RelativePath="..\src\cubAccess.f90"/>
-		<File RelativePath="..\src\curAccess.f90"/>
-		<File RelativePath="..\src\Dynfil.f90"/>
-		<File RelativePath="..\src\HDF5Access.f90"/>
-		<File RelativePath="..\src\ioconfig.f90"/>
-		<File RelativePath="..\src\macroKinematic.f90"/>
-		<File RelativePath="..\src\MainA1.f90"/>
-		<File RelativePath="..\src\microstr.f90"/>
-		<File RelativePath="..\src\miscutils.f90"/>
-		<File RelativePath="..\src\Pancak2.f90"/>
-		<File RelativePath="..\src\Sliprat.f90"/>
-		<File RelativePath="..\src\smtAccess.f90"/>
-		<File RelativePath="..\src\TBH.f90"/>
-		<File RelativePath="..\src\texFormatConstants.f90"/>
-		<File RelativePath="..\src\texFormats.f90"/></Filter></Files>
+		<File RelativePath="..\src\MainA1.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>
