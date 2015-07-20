@@ -4,6 +4,7 @@
       module altayAlgorithms
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayMacroKinematic
+      use criErrcodes
       use criMathUtils
       contains
      
@@ -379,6 +380,109 @@
       return
       END FUNCTION
       
+    !Calculates the inverse of square matrix A as Ainv
+    ! If Ainv doesn't exist, info /= criSuccess is returned.
+    ! The allowed dimension of A is n=1,2,..,n_max 
+    subroutine invertmatrix(A,n,Ainv,info)
+    implicit none
+    integer,intent(in)                           :: n
+    double precision, dimension(n,n),intent(in)  :: A
+    double precision, dimension(n,n),intent(out) :: Ainv
+    integer,intent(out)                          :: info
+    !
+    integer :: j
+    double precision :: D
+    !> Near-0 threshold for determinant of matrix.
+    !> The value is taken from pretay program.
+    double precision, parameter :: D_threshold = 1.D-6
+    integer, parameter :: n_max = 5
+        !
+        if (n > n_max) then
+            info = criError
+            Ainv = 0.D0
+            return
+        end if
+        !
+        !Calculate the determinant of A
+        D = determinant(A,n)
+        !
+        if (abs(D) < D_threshold) then
+            info = criError
+            Ainv = 0.D0
+        else
+            info = criSuccess
+            Ainv = adjoint(A,n) / D
+        end if
+        !
+    end subroutine    
+    
+    !Calculates the determinant for square matrix A.
+    ! The allowed dimension of A is n=1,2,..,n_max
+    double precision pure function determinant(A,n) result(D)
+    implicit none
+    integer,intent(in)                          :: n
+    double precision, dimension(n,n),intent(in) :: A
+    !
+    integer :: j
+    integer, parameter :: n_max = 5
+        !
+        select case (n)
+        case (1)
+            D = A(1,1)
+        case (2)
+            D = A(1,1)*A(2,2)-A(1,2)*A(2,1)
+        case (3)
+            D = A(1,1) * (A(2,2)*A(3,3)-A(3,2)*A(2,3)) &
+               -A(1,2) * (A(2,1)*A(3,3)-A(3,1)*A(2,3)) &
+               +A(1,3) * (A(2,1)*A(3,2)-A(3,1)*A(2,2))
+        case (4:n_max)
+            D = 0.D0
+            ! determinant development along first row
+            do j=1,n
+                D = D + A(1,j)*cofactor(A,n,1,j)
+            enddo
+        case default
+            D = 0.D0 !shoudl be NaN or so
+        end select
+        !
+    end function
+    
+    double precision pure function cofactor(A,n,i,j)
+    implicit none
+    integer,intent(in)                          :: n
+    double precision, dimension(n,n),intent(in) :: A
+    integer,intent(in)                          :: i,j
+    !
+    integer,dimension(n-1) :: ii,jj
+    double precision, dimension(n-1,n-1) :: Ared 
+        !
+        !reduce A: remove row i and column j
+        ii = [1:i-1,i+1:n]
+        jj = [1:j-1,j+1:n]
+        Ared = A(ii,jj)
+        !
+        !calculate cofactor
+        cofactor = (-1.D0)**float(i+j) * determinant(Ared,n-1)
+        !
+    end function
+    
+    double precision function adjoint(A,n)
+    implicit none
+    integer,intent(in)                          :: n
+    double precision, dimension(n,n),intent(in) :: A
+    dimension                                   :: adjoint(n,n)
+    !
+    integer :: i,j
+        !
+        forall (i=1:n,j=1:n) adjoint(j,i) = cofactor(A,n,i,j)
+        !
+        !do (i=1,n)
+        !    do (j=1,n)
+        !        adjoint(j,i) = cofactor(A,n,i,j)
+        !    end do
+        !end do
+        !
+    end function
       
       end module
       
