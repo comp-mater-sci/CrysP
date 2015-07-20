@@ -267,9 +267,9 @@ implicit none
             call h5pclose_f(this%fapl_id, hdferr)
             this%fapl_id = id_none
         endif
-        
+#ifdef TESTING_ENABLED
         call print_open_handles(this%object_id)
-        
+#endif
         ! Close the file
         if (is_valid_id(this%object_id)) then 
             call h5fclose_f(this%object_id, hdferr)
