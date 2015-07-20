@@ -140,8 +140,8 @@
       UU(j,i)=0.0
   31  continue
       DO 53 I=1,5
-      DI(I)=DM_data%DI(I)
-      DI(I+5)=DM_data%DI(I)+DM_data%n_systems
+      DI(I)=DM_data%set0(I)
+      DI(I+5)=DM_data%set0(I)+DM_data%n_systems
 53    CONTINUE    
       !
       do 1 IL=1,NGR

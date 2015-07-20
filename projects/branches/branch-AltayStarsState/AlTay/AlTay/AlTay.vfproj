@@ -94,6 +94,7 @@
 		<File RelativePath="..\src\altayConfig.f90"/>
 		<File RelativePath="..\src\altayCRSSTypes.f90"/>
 		<File RelativePath="..\src\altayDeformationMechanism.f90"/>
+		<File RelativePath="..\src\altayDeformationMechanismData_preconfigured.f90"/>
 		<File RelativePath="..\src\altayDSHState.f90">
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
@@ -110,6 +111,7 @@
 		<File RelativePath="..\src\altayHDF5PersitenceScheme.f90"/>
 		<File RelativePath="..\src\altayIOContext.f90"/>
 		<File RelativePath="..\src\altayMaterial.f90"/>
+		<File RelativePath="..\src\altayMillerIndices.f90"/>
 		<File RelativePath="..\src\altayNativePersistenceScheme.f90"/>
 		<File RelativePath="..\src\altayODFTypes.f90"/>
 		<File RelativePath="..\src\altaySimulation.f90"/>

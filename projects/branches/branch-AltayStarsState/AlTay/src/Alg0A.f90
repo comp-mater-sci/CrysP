@@ -187,7 +187,7 @@
       if(NLIST.eq.1) then !!echo to LST
       write (IMP,221) DM_data%description
   221 format (/,' Slip system set:',A,/)
-      WRITE (IMP,211) 0,DM_data%n_slip_systems,DM_data%n_twinning_systems,DM_data%DI
+      WRITE (IMP,211) 0,DM_data%n_slip_systems,DM_data%n_twinning_systems,DM_data%set0
  211  FORMAT (1X,I4,10X,2I5,10X,5I5)
       DO 500 I1=1,DM_data%n_systems                                                     
       WRITE (IMP,213) I1,(DM_data%A1(J,I1),J=1,5),(DM_data%B1(L,I1),L=1,3)

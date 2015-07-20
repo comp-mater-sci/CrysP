@@ -5,6 +5,7 @@
       module altaySliprate
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayPancake
+      use altayDeformationMechanismData_preconfigured
       use altayDeformationMechanism
       use altayCRSSTypes
 

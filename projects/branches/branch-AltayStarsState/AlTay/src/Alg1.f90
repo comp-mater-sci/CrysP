@@ -9,6 +9,7 @@
       use criErrcodes
       use altayPancake, only: Pancak2Solution
       use altaySliprate, only: SlipratSolution
+      use altayDeformationMechanismData_preconfigured
       use altayDeformationMechanism
 #ifdef ALTAY_SUBROUTINE
       use altayConfig
