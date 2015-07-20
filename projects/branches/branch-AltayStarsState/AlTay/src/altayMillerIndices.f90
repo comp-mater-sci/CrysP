@@ -2,11 +2,11 @@ module altayMillerIndices
 
     type,public :: MillerIndices
         
-        integer,dimension(3) :: index
+        integer,dimension(3) :: index = 0
         
     contains
         
-        procedure,pass :: is0 => Miller_is0
+        procedure,pass(this) :: is0 => Miller_is0
         
     end type
     
@@ -17,7 +17,7 @@ module altayMillerIndices
     implicit none
     class(MillerIndices), intent(in) :: this
         !
-        Miller_is0 = this%index(1)==0 .and. this%index(2)==0 .and. this%index(3)==0 
+        Miller_is0 = all(this%index(:) == 0)
         !
     end function
  

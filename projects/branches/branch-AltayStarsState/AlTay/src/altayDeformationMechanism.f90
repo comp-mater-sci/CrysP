@@ -135,7 +135,7 @@ contains
     integer,intent(in)                          :: ntwin
     integer,intent(out)                         :: info
     !
-    integer :: memerr
+    integer :: memerr, i
     !
         info = criErr_BadArgs
         if ((nslip < 0) .or. (ntwin < 0) .or. (nslip+ntwin <= 0)) return
@@ -157,12 +157,10 @@ contains
                  stat=memerr)
         if (memerr /= 0) return
         !
-        this%plane_Miller(:)%index(1) = 0 !"A component cannot be an array if the encompassing structure is an array"
-        this%plane_Miller(:)%index(2) = 0
-        this%plane_Miller(:)%index(3) = 0
-        this%direction_Miller(:)%index(1) = 0
-        this%direction_Miller(:)%index(2) = 0
-        this%direction_Miller(:)%index(3) = 0 !"A component cannot be an array if the encompassing structure is an array"
+        forall (i=1:3)
+            this%plane_Miller(:)%index(i) = 0
+            this%direction_Miller(:)%index(i) = 0
+        endforall
         this%plane_vector = 0.D0
         this%direction_vector = 0.D0
         this%A1 = 0.D0
