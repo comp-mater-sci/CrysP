@@ -17,25 +17,39 @@ list2string(Fortran_FLAGS CMAKE_Fortran_FLAGS)
 list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
 list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
-set(CORESRC
-Alg0A.f90 
-Alg1.f90 
-Alg2.f90 
+set(LIBSRC
+Alg0A.f90
+Alg1.f90
+Alg2.f90
 altayConfig.f90
 altayCRSSTypes.f90
+altayDeformationMechanismData_preconfigured.f90
 altayDeformationMechanism.f90
+#altayDSHState.f90
+altayGrainCluster.f90
 altayHard.f90
-altayHardLawDSH.f90
+# altayHardLawDSH.f90
 altayHardLawKM.f90
 altayHardLawSimple.f90
 altayHardTypes.f90
+altayHDF5Context.f90
+altayHDF5PersitenceScheme.f90
+altayIOContext.f90
 altayMaterial.f90
+altayMillerIndices.f90
+altayNativePersistenceScheme.f90
+altayODFTypes.f90
+altayRCM.f90
+altaySimulation.f90
 altayState.f90
+altayStatePersistence.f90
 altayStateTypes.f90
+# altaySub.f90
 altayTexAccess.f90
 cubAccess.f90
 curAccess.f90
 Dynfil.f90
+HDF5Access.f90
 ioconfig.f90
 macroKinematic.f90
 microstr.f90
@@ -47,29 +61,22 @@ TBH.f90
 texFormatConstants.f90
 texFormats.f90
 )
-# Files temporarily excluded from the compilation:
-# FIXME: add the files to the CORESRC
-# altayDSHState.f90
 
 #
 # Library libaltay
 #
 
-set(LIBSRC 
-${CORESRC}
-altayRCM.f90 
-altaySub.f90
-)
 
 add_library(${libaltay} STATIC ${LIBSRC})
 # FIXME: add PEBP_ENABLED once altayDSHState is upgraded
-set_target_properties(${libaltay} PROPERTIES COMPILE_DEFINITIONS "ALTAY_SUBROUTINE;NO_STDOUT;RCM_ENABLED;")
-
+# FIXME: add ALTAY_SUBROUTINE once the API is fixed.
+# FIXME: remove TESTING_ENABLED once the code reached production-ready level.
+set_target_properties(${libaltay} PROPERTIES COMPILE_DEFINITIONS "NO_STDOUT;RCM_ENABLED;TESTING_ENABLED;")
+add_dependencies(${libaltay} CRI FH5)
 #
 # AlTay stand-alone
 #
 set(PROGSRC
-${CORESRC}
 MainA1.f90
 )
 
@@ -78,9 +85,16 @@ set_target_properties(${progaltay} PROPERTIES OUTPUT_NAME "altay")
 # FIXME: add PEBP_ENABLED;FINALBPM_ENABLED;INTERMEDIATEBPM_DISABLED once
 # altayDSHState is upgraded
 set_target_properties(${progaltay} PROPERTIES COMPILE_DEFINITIONS "MAINDIRECT;FINALCUB_ENABLED;")
+
+# TODO: check why I have to add the CRI, FH5 and HDF5 include directories
+# here... Should't it be chained from dependencies
+target_include_directories(${progaltay} PUBLIC
+${CMAKE_Fortran_MODULE_DIRECTORY} ${FCRI_INCLUDE_DIRS} ${FH5_INCLUDE_DIR}
+${HDF5_INCLUDE_DIR}) 
+
 # Set different output for module files
 set_target_properties(${progaltay} PROPERTIES Fortran_MODULE_DIRECTORY "${progaltay}_modules")
-target_link_libraries(${progaltay} "CRI")
+target_link_libraries(${progaltay} ${libaltay} CRI FH5 ${HDF5_LIBRARIES})
 
 #
 # Installation of the outputs in the build tree
