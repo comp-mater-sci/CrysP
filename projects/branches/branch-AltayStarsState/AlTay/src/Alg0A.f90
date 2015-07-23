@@ -169,6 +169,10 @@
 #else
       call DeformationMechanismData_init(DM_data,trim(cnf%slipsystem%input_fname),DM_format_pre,info)
 #endif
+      if (info /= criSuccess) then
+            write(*,*) 'Cannot initialize slip systems from the file ', trim(config%slipsystem%input_fname)
+            call terminate(stopcode_runtimeerror)
+      endif
       !
       !
       if (DM_data%n_systems.gt.DM_max_systems)then
