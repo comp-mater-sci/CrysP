@@ -16,3 +16,5 @@ include("${FCRI_DIR}/cmake/FCRITargets.cmake")
 
 set(FCRI_LIBRARIES CRI CRI_mt)
 
+set(FCRI_INCLUDE_DIRS ${FCRI_INCLUDE_DIR} ${FCRI_INCLUDE_DIR}/fcri)
+
