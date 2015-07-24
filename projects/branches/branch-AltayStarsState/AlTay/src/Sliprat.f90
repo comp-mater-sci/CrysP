@@ -325,22 +325,14 @@
       N2=NN
       do i=1,N2
          is=IND(i)
-         do j=1,5
-            A(j,i)=sgnn(is)*A1(j,is)
-         enddo
+         A(1:5,i)=sgnn(is)*A1(1:5,is)
       enddo
-      do j=1,5
-         B(j)=BB8(j)
-      enddo
+      B(1:5)=BB8(1:5)
       goto 1
   2   N1=NN+5
       N2=N1
 !     Set up system of equations
-      do i=1,N1
-         do j=1,N1
-           A(i,j)=0.0
-         enddo
-      enddo
+      A = 0.D0
       do i=1,NN
          is=IND(i)
          A(i,i)=2.D0
