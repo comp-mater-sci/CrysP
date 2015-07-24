@@ -1,6 +1,6 @@
 # $Id$
 #
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12)
 
 project(FH5 Fortran)
 
@@ -22,7 +22,7 @@ FH5Simple.f90
 )
 
 add_library(${FH5_NAME} STATIC ${LIBSRC})
-
+target_include_directories(${FH5_NAME} PUBLIC ${FCRI_INCLUDE_DIRS} ${HDF5_INCLUDE_DIR})
 #
 # Installation of the outputs in the build tree
 #

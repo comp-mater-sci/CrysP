@@ -1,6 +1,6 @@
 # $Id$
 #
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12)
 
 project(FCRI Fortran)
 
@@ -14,9 +14,6 @@ include_directories("include")
 #
 set(FCRI_DIR "../FCRI/${CMAKE_BUILD_TYPE}")
 find_package(FCRI REQUIRED)
-include_directories(${FCRI_INCLUDE_DIR} ${FCRI_INCLUDE_DIR}/fcri)
-set(FCRI_INCLUDE_DIRS ${FCRI_INCLUDE_DIR} ${FCRI_INCLUDE_DIR}/fcri) 
-message("${FCRI_INCLUDE_DIRS}")
 
 #
 # HDF5

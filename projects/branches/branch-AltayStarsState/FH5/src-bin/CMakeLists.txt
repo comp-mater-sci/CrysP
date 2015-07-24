@@ -1,6 +1,6 @@
 # $Id: CMakeLists.txt 1658 2014-01-31 23:24:53Z jgawad $
 #
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12)
 
 project(FH5-samples Fortran)
 
