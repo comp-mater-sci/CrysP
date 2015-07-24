@@ -162,11 +162,11 @@ implicit none
     !
         info = criError
         call h5open_f(hdferr)
-        if (hdferr) return
+        if (hdferr /= 0) return
         ! Turns off the automatic error printing from the HDF5 library.
         ! The call below corresponds to C++ Exception::dontPrint()
         call h5eset_auto_f(0, hdferr)
-        if (hdferr) return
+        if (hdferr /= 0) return
         info = criSuccess
     !
     end function
@@ -668,7 +668,8 @@ implicit none
                         H5F_OBJ_GROUP_F, &
                         H5F_OBJ_DATASET_F, &
                         H5F_OBJ_DATATYPE_F ]
-        labels = [  'H5F_OBJ_ALL_F', & 
+        labels = [ character(len=20) :: &
+                    'H5F_OBJ_ALL_F', & 
                     'H5F_OBJ_FILE_F', &
                     'H5F_OBJ_GROUP_F', &
                     'H5F_OBJ_DATASET_F', &
@@ -676,7 +677,7 @@ implicit none
         
         do i = 1, size(obj_types)
             call H5Fget_obj_count_f(file_id, obj_types(i), still_open_cnt, hdferr)
-            write(*,*) 'Still open (',labels(i) , ')', still_open_cnt
+            write(*,'(A,A,A,T40,I0)') 'Still open (',trim(labels(i)) , ')', still_open_cnt
         enddo
     !
     end subroutine

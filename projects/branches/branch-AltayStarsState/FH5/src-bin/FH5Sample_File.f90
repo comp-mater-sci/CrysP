@@ -81,7 +81,7 @@ contains
     type(FH5File)       :: fh5_file
     type(FH5Dataset)    :: fh5_dataset
     double precision,dimension(:,:),allocatable :: array
-    integer :: info, i,j, n,m
+    integer :: info
     !
         write(*,*) 'test_DatasetWrite'
         call makeTestArray(5000, 4, array, .false.)
@@ -106,7 +106,7 @@ contains
     type(FH5File)       :: fh5_file
     type(FH5Dataset)    :: fh5_dataset
     double precision,dimension(:,:),allocatable :: array, rd_array
-    integer :: info, i,j, n,m
+    integer :: info
     !
         write(*,*) 'test_DatasetRead'
         call makeTestArray(5000, 4, array, .false.)
