@@ -19,7 +19,7 @@
       use altayHard
       use altayTexFormats
       use altayMacroKinematic
-      use altaySimulation
+      use altayStatePersistenceUtils
       implicit none ! double precision (a-h,o-z)
 !      Several simulations (usually several-steps each),
 !      following each other.

@@ -50,7 +50,7 @@
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/></Configuration>
 		<Configuration Name="Release-Amplifier|x64" ConfigurationType="typeStaticLibrary" WholeProgramOptimization="true">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" MultiProcessorCompilation="true" Optimization="optimizeFull" BufferedIO="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="C:\Program Files\HDF_Group\HDF5\1.8.15\include;..\..\FCRI\include;..\src;" PreprocessorDefinitions="ALTAY_SUBROUTINE;NO_STDOUT;RCM_ENABLED;PEBP_ENABLED;" F2003Semantics="true" DebugParameter="debugParameterAll" CommonElementAlignment="alignCommonEightBytes" RuntimeChecks="rtChecksNone"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" MultiProcessorCompilation="true" Optimization="optimizeFull" BufferedIO="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="C:\Program Files\HDF_Group\HDF5\1.8.15\include;..\..\FCRI\include;..\src;" PreprocessorDefinitions="NO_STDOUT;RCM_ENABLED;" F2003Semantics="true" DebugParameter="debugParameterAll" CommonElementAlignment="alignCommonEightBytes" Traceback="true" RuntimeChecks="rtChecksNone"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
@@ -76,8 +76,8 @@
 		<File RelativePath="..\src\altayDeformationMechanismData_preconfigured.f90"/>
 		<File RelativePath="..\src\altayDSHState.f90">
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|Win32" ExcludedFromBuild="true"/></File>
@@ -85,8 +85,8 @@
 		<File RelativePath="..\src\altayHard.f90"/>
 		<File RelativePath="..\src\altayHardLawDSH.f90">
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|Win32" ExcludedFromBuild="true"/></File>
@@ -108,12 +108,13 @@
 		<File RelativePath="..\src\altaySimulation.f90"/>
 		<File RelativePath="..\src\altayState.f90"/>
 		<File RelativePath="..\src\altayStatePersistence.f90"/>
+		<File RelativePath="..\src\altayStatePersistenceUtils.f90"/>
 		<File RelativePath="..\src\altayStateTypes.f90"/>
 		<File RelativePath="..\src\altaySub.f90">
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
-			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/>
