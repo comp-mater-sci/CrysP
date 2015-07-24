@@ -1,6 +1,6 @@
 # $Id$
 #
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12)
 
 project(AlTay Fortran)
 
@@ -86,11 +86,7 @@ set_target_properties(${progaltay} PROPERTIES OUTPUT_NAME "altay")
 # altayDSHState is upgraded
 set_target_properties(${progaltay} PROPERTIES COMPILE_DEFINITIONS "MAINDIRECT;FINALCUB_ENABLED;")
 
-# TODO: check why I have to add the CRI, FH5 and HDF5 include directories
-# here... Should't it be chained from dependencies
-target_include_directories(${progaltay} PUBLIC
-${CMAKE_Fortran_MODULE_DIRECTORY} ${FCRI_INCLUDE_DIRS} ${FH5_INCLUDE_DIR}
-${HDF5_INCLUDE_DIR}) 
+target_include_directories(${progaltay} PUBLIC ${CMAKE_Fortran_MODULE_DIRECTORY})
 
 # Set different output for module files
 set_target_properties(${progaltay} PROPERTIES Fortran_MODULE_DIRECTORY "${progaltay}_modules")
