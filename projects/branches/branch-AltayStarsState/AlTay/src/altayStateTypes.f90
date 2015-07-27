@@ -63,12 +63,6 @@ implicit none
         !> Collection of the state of grains
         type(GrainStateCollection)              :: grainstates
         
-        !> \fixme: decide whether the crss_ratios should appear as the state variables
-        !> At this moment they are just parameters.
-        
-        !> CRSS applicable to every grain (only for non-hardening model)
-        ! type(CRSSData)                          :: crss_ratios
-        
         !> \fixme: decide whether the crss_array is actually needed.
         
         !> Collection of CRSS per grain (only for certain hardening models)
