@@ -57,6 +57,7 @@
       ! Components of the new-style data management
       type(altayConfigData)             :: config
       type(altayStateData),target       :: state
+      type(altayMaterialData)           :: material
       ! Storage for persistent state variables
       class(StatePersistenceScheme), pointer :: input_storage, output_storage
 #ifdef TESTING_ENABLED
@@ -189,8 +190,13 @@
             call terminate(stopcode_inputerror)
       endif
 
+      call material%init(config, info)
+      if (info /= criSuccess) then
+            write(*,*) 'material%init returned error; info=', info
+            call terminate(stopcode_inputerror)
+      endif
       !
-      CALL SIMUL(config, state,  0, 1)
+      CALL SIMUL(config, state, material, 0, 1)
 
       !
       ! Load state variables
@@ -336,7 +342,7 @@
       ! and the time step dt = 1.0
       call Set_DeformationRate(DG,MacroDefRate)
       !
-      CALL SIMUL(config, state, 1, NFILE0, MacroDefRate)
+      CALL SIMUL(config, state, material, 1, NFILE0, MacroDefRate)
       call output_storage%saveState(state%new, info)
 #ifdef TESTING_ENABLED
       call native_storage%saveState(state%new, info)

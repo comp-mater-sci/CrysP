@@ -15,8 +15,6 @@
       !
       type(Pancak2Solution) :: Pancak2_solution
       type(SlipratSolution) :: Sliprat_solution
-      ! Component of the new-style data management:
-      type(altayMaterialData),save :: material !SAVE attribute due to multiple calls to SIMUL
       !
       type(InterfaceDataset),save :: interface_dataset !SAVE attribute due to multiple calls to SIMUL
       type(MesostructureState),save :: mesostructure_state !save attribute required to keep the state in subsequent simul
@@ -33,7 +31,7 @@
 ! See "annotated source codes" if you need these
 !
 !
-      SUBROUTINE SIMUL(config,state,IW,NFILE0,MacroDefRate)
+      SUBROUTINE SIMUL(config,state,material,IW,NFILE0,MacroDefRate)
 
 !     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
 !     USING THE ALAMEL MODEL
@@ -57,6 +55,7 @@
       implicit double precision (a-h,o-z)
       type(altayConfigData),intent(in)          :: config
       type(altayStateData),target,intent(inout) :: state
+      type(altayMaterialData),intent(in)        :: material
       integer,intent(in)                        :: IW
       integer,intent(in)                        :: NFILE0
       ! optional argument for IW=1 or 2:
@@ -163,14 +162,6 @@
           WRITE (IMP,216)
       end if
 216   FORMAT (/,' SUBROUTINE SIMUL  - READS ITS CRYSTAL DATA',//)
-      !
-      !
-      !
-#ifndef ALTAY_SUBROUTINE
-      call material%init(config, info)
-#else
-      call material%init(cnf, info)
-#endif
       !
       if (material%deformationmechanism%n_systems.gt.DM_max_systems)then
 #ifndef ALTAY_SUBROUTINE
