@@ -11,10 +11,13 @@
       use altayDeformationMechanism
       use altayPancake
       use altaySliprate
+      use altayHard
       !
       type(Pancak2Solution) :: Pancak2_solution
       type(SlipratSolution) :: Sliprat_solution
-      type(DeformationMechanismData), save ::DM_data !SAVE attribute due to multiple calls to SIMUL
+      ! Component of the new-style data management:
+      type(altayMaterialData),save :: material !SAVE attribute due to multiple calls to SIMUL
+      !
       type(InterfaceDataset),save :: interface_dataset !SAVE attribute due to multiple calls to SIMUL
       type(MesostructureState),save :: mesostructure_state !save attribute required to keep the state in subsequent simul
                                                            ! calls (continuation of deformation along new strain path)      
@@ -30,7 +33,7 @@
 ! See "annotated source codes" if you need these
 !
 !
-      SUBROUTINE SIMUL(config,state,material,IW,NFILE0,MacroDefRate)
+      SUBROUTINE SIMUL(config,state,IW,NFILE0,MacroDefRate)
 
 !     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
 !     USING THE ALAMEL MODEL
@@ -54,7 +57,6 @@
       implicit double precision (a-h,o-z)
       type(altayConfigData),intent(in)          :: config
       type(altayStateData),target,intent(inout) :: state
-      type(altayMaterialData),intent(in)        :: material
       integer,intent(in)                        :: IW
       integer,intent(in)                        :: NFILE0
       ! optional argument for IW=1 or 2:
@@ -163,23 +165,18 @@
 216   FORMAT (/,' SUBROUTINE SIMUL  - READS ITS CRYSTAL DATA',//)
       !
       !
-      ! initFromFile
+      !
 #ifndef ALTAY_SUBROUTINE
-      call DeformationMechanismData_init(DM_data,config%slipsystem%input_fname,DM_format_pre,info)
+      call material%init(config, info)
 #else
-      call DeformationMechanismData_init(DM_data,trim(cnf%slipsystem%input_fname),DM_format_pre,info)
+      call material%init(cnf, info)
 #endif
-      if (info /= criSuccess) then
-            write(*,*) 'Cannot initialize slip systems from the file ', trim(config%slipsystem%input_fname)
-            call terminate(stopcode_runtimeerror)
-      endif
       !
-      !
-      if (DM_data%n_systems.gt.DM_max_systems)then
+      if (material%deformationmechanism%n_systems.gt.DM_max_systems)then
 #ifndef ALTAY_SUBROUTINE
-            write (*,5001) DM_data%n_systems,DM_max_systems
+            write (*,5001) material%deformationmechanism%n_systems,DM_max_systems
             if(NLIST.eq.1) then
-                  write (IMP,5001) DM_data%n_systems,DM_max_systems
+                  write (IMP,5001) material%deformationmechanism%n_systems,DM_max_systems
             end if
             call terminate(stopcode_runtimeerror)
 #else
@@ -189,27 +186,27 @@
 5001  format(' SIMUL  - n_systems=',I5,' LARGER THAN  DM_max_systems=',I5)       
       !
       if(NLIST.eq.1) then !!echo to LST
-      write (IMP,221) DM_data%description
+      write (IMP,221) material%deformationmechanism%description
   221 format (/,' Slip system set:',A,/)
-      WRITE (IMP,211) 0,DM_data%n_slip_systems,DM_data%n_twinning_systems,DM_data%set0
+      WRITE (IMP,211) 0,material%deformationmechanism%n_slip_systems,material%deformationmechanism%n_twinning_systems,material%deformationmechanism%set0
  211  FORMAT (1X,I4,10X,2I5,10X,5I5)
-      DO 500 I1=1,DM_data%n_systems                                                     
-      WRITE (IMP,213) I1,(DM_data%A1(J,I1),J=1,5),(DM_data%B1(L,I1),L=1,3)
+      DO 500 I1=1,material%deformationmechanism%n_systems                                                     
+      WRITE (IMP,213) I1,(material%deformationmechanism%A1(J,I1),J=1,5),(material%deformationmechanism%B1(L,I1),L=1,3)
  213   FORMAT (I3,' A ',5F10.7,' B ',3F10.7)
  500  CONTINUE
       DO 501 I=1,5                                                      
-      WRITE (IMP,215) I1-1+I,(DM_data%B(I,L),L=1,5)
+      WRITE (IMP,215) I1-1+I,(material%deformationmechanism%B(I,L),L=1,5)
   215  FORMAT (1X,I4,10X,5D15.8)
  501  CONTINUE
-      IF (DM_data%n_twinning_systems.EQ.0) GOTO 504                                            
-      DO 505 I=1,DM_data%n_twinning_systems                                                    
-      WRITE (IMP,218) I1+4+I,(DM_data%B2(L,I),L=1,6),DM_data%G(I)
+      IF (material%deformationmechanism%n_twinning_systems.EQ.0) GOTO 504                                            
+      DO 505 I=1,material%deformationmechanism%n_twinning_systems                                                    
+      WRITE (IMP,218) I1+4+I,(material%deformationmechanism%B2(L,I),L=1,6),material%deformationmechanism%G(I)
  218  format (i4,' B2',6f10.7,' G',f10.7)
  505  CONTINUE
 504   CONTINUE
       end if !!end of echo to LST
       !
-      call CRSSData_init(CRSSb, DM_data%n_systems, infoarr)
+      call CRSSData_init(CRSSb, material%deformationmechanism%n_systems, infoarr)
       !
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
@@ -452,7 +449,7 @@
 !
 999 if (IW.le.1) then
             call mesostr_clustertrafo(ngr,interface_dataset%trafo(i_interface),MacroDefRate,mesostructure_state,T_cluster,info)
-            CALL Pancak2(laml,ngr,T_cluster,eulerb_0_rad, CRSSb,DM_data,   &
+            CALL Pancak2(laml,ngr,T_cluster,eulerb_0_rad, CRSSb,material%deformationmechanism,   &
                          MacroDefRate,MacroDefState,Pancak2_solution)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
@@ -478,7 +475,7 @@
       !
       !-> -> -> content from TAYLR1
       !
-      call SLIPRAT(sliprat_solution,MacroDefRate,Pancak2_solution,CRSSb(laml),DM_data)
+      call SLIPRAT(sliprat_solution,MacroDefRate,Pancak2_solution,CRSSb(laml),material%deformationmechanism)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif  
@@ -510,19 +507,19 @@
           WRITE (IMP,301) sliprat_solution%workrate
  301  FORMAT (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
           WRITE (IMP,109) MacroDefRate%vMeqStrainRate,sliprat_solution%vMeqstress,                   &
-                      (sliprat_solution%shearrate%shearrate(I)/MacroDefRate%vMeqStrainRate,I=1,DM_data%n_systems)
+                      (sliprat_solution%shearrate%shearrate(I)/MacroDefRate%vMeqStrainRate,I=1,material%deformationmechanism%n_systems)
 109                   FORMAT ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
        '  SLIP RATES',/,(T2,10F10.5))
       end if  
       !
-      ROT = matmul(DM_data%B1,sliprat_solution%shearrate%shearrate)
+      ROT = matmul(material%deformationmechanism%B1,sliprat_solution%shearrate%shearrate)
       if(NLIST.eq.1) then
           WRITE (IMP,305) ROT
       end if
 305   FORMAT (' ROTATIONS',3F12.6)      
       !
       CALL Grain_EulerAngles_update(eulerb_1_rad(laml),eulerb_0_rad(laml), &
-              sliprat_solution,Pancak2_solution,DM_data,MacroDefRate,info=info)
+              sliprat_solution,Pancak2_solution,material%deformationmechanism,MacroDefRate,info=info)
       !
       call Grain_accumulatedshear_update(GMM1,GMM0,sliprat_solution,1.0D0,info)
       !
