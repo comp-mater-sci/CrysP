@@ -5,7 +5,6 @@ module altayMesostructure
 use altayAlgorithms
 use altayMiscutils, only: terminate, stopcode_runtimeerror
 use criErrcodes
-use altayStateTypes, only: MesostructureState
 implicit none
 
     type :: srTensor
@@ -112,14 +111,14 @@ implicit none
       !>                   "P. Van Houtte et al, IJP 21, pp. 589-624 (2005), 
       !>                   doi: 10.1016/j.ijplas.2004.04.011",
       !>                   or a variant of the described algorithm.
-      subroutine mesostr_clusterweightfactor(NGR,undeformedaxes,mesostructure_state,weight,info) 
+      subroutine mesostr_clusterweightfactor(NGR,undeformedaxes,mesostructure_deformationgradient,weight,info) 
       use altayIOConfig, only: IPR,NLIST,IMP
       use altayMacroKinematic
       !
       implicit none
       integer,intent(in)                              :: NGR
       type(srTensor),intent(in)                       :: undeformedaxes
-      type(MesostructureState),intent(in)             :: mesostructure_state
+      double precision,dimension(3,3),intent(in)      :: mesostructure_deformationgradient 
       double precision,intent(out)                    :: weight
       integer,intent(out)                             :: info
       !
@@ -139,7 +138,7 @@ implicit none
               info = 0
           case (2) !Alamel
               !
-              deformedaxes = matmul(mesostructure_state%deformationgradient,undeformedaxes%matrix)
+              deformedaxes = matmul(mesostructure_deformationgradient,undeformedaxes%matrix)
               !
               !Calculation of volume affected by the surface
               do i=1,3,1
@@ -223,7 +222,7 @@ implicit none
       !>                        orthogonal with respect to the currently imposed 
       !>                        macroscopic strain mode. Note that the 1st Alamel-type 
       !>                        relaxation can be parallel, orthogonal, or neither.
-      subroutine mesostr_clustertrafo(NGR,undeformedaxes,MacroDefRate,mesostructure_state,T_cluster,info) 
+      subroutine mesostr_clustertrafo(NGR,undeformedaxes,MacroDefRate,mesostructure_deformationgradient,T_cluster,info) 
       use altayIOConfig, only: IPR,NLIST,IMP
       use criMathUtils
       use altayMacroKinematic
@@ -232,7 +231,7 @@ implicit none
       integer,intent(in)                              :: NGR
       type(srTensor),intent(in)                       :: undeformedaxes
       type(DeformationRate),intent(in)                :: MacroDefRate     
-      type(MesostructureState),intent(in)             :: mesostructure_state      
+      double precision,dimension(3,3),intent(in)      :: mesostructure_deformationgradient      
       double precision,dimension(3,3),intent(out)     :: T_cluster
       integer,intent(out)                             :: info 
       !
@@ -254,7 +253,7 @@ implicit none
               !
           case (2) !Alamel
               !
-              deformedaxes = matmul(mesostructure_state%deformationgradient,undeformedaxes%matrix)
+              deformedaxes = matmul(mesostructure_deformationgradient,undeformedaxes%matrix)
               !
               if ((IPR.gt.1) .and.(NLIST.eq.1)) then
                   write (IMP,409) 

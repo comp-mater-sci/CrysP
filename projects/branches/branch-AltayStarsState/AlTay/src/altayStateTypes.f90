@@ -3,6 +3,7 @@ use altayTexAccess
 use criErrcodes
 use criMathUtils
 use altayTexAccess
+use altayMesostructure
 use altayHardTypes
 use altayCRSSTypes
 use altayHardLaw_KM
@@ -65,8 +66,10 @@ implicit none
     !> Container for the state variables
     type :: altayStateVariables
         
-        type(MesostructureState)                     :: mesostructure
+        type(MesostructureState)                :: mesostructure
         
+        type(InterfaceDataset)                  :: interface_dataset
+
         !> Orientations of discrete ODF. 
         type(DiscreteODF)                       :: texture
         

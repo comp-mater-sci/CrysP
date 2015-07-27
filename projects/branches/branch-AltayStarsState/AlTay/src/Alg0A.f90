@@ -448,7 +448,7 @@
 !                  during the previous computation.
 !
 999 if (IW.le.1) then
-            call mesostr_clustertrafo(ngr,interface_dataset%trafo(i_interface),MacroDefRate,mesostructure_state,T_cluster,info)
+            call mesostr_clustertrafo(ngr,interface_dataset%trafo(i_interface),MacroDefRate,mesostructure_state%deformationgradient,T_cluster,info)
             CALL Pancak2(laml,ngr,T_cluster,eulerb_0_rad, CRSSb,material%deformationmechanism,   &
                          MacroDefRate,MacroDefState,Pancak2_solution)
 #ifdef ALTAY_SUBROUTINE
@@ -456,7 +456,7 @@
 #endif            
       endif
       !
-      call mesostr_clusterweightfactor(NGR,interface_dataset%trafo(i_interface),mesostructure_state,GEWF,info)
+      call mesostr_clusterweightfactor(NGR,interface_dataset%trafo(i_interface),mesostructure_state%deformationgradient,GEWF,info)
       !
       TOTGEW=TOTGEW+GEWF
       !
