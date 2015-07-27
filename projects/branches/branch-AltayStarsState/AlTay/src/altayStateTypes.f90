@@ -1,8 +1,20 @@
 module altayStateTypes
 use altayTexAccess
+use criErrcodes
+use criMathUtils
+use altayTexAccess
+use altayHardTypes
+use altayCRSSTypes
+use altayHardLaw_KM
+#ifdef PEBP_ENABLED
+use altayHardLaw_DSH, only: DSHStateVariable => StatVar
+#endif
 implicit none
 
 
+
+
+    !> Basic state of any individual grain
     type :: GrainState
         
         !> Associated orientation
@@ -37,7 +49,41 @@ implicit none
         procedure :: update => MesostructureState_update      
         
     end type
+
+
+
+    !> Container for the state variables
+    type :: altayStateVariables
         
+        type(MesostructureState)                     :: mesostructure
+        
+        !> Orientations of discrete ODF. 
+        type(DiscreteODF)                       :: texture
+        
+        !> Collection of the state of grains
+        type(GrainStateCollection)              :: grainstates
+        
+        !> \fixme: decide whether the crss_ratios should appear as the state variables
+        !> At this moment they are just parameters.
+        
+        !> CRSS applicable to every grain (only for non-hardening model)
+        ! type(CRSSData)                          :: crss_ratios
+        
+        !> \fixme: decide whether the crss_array is actually needed.
+        
+        !> Collection of CRSS per grain (only for certain hardening models)
+        ! type(CRSSData), dimension(:), pointer   :: crss_array => null()
+
+#ifdef PEBP_ENABLED
+        !> State variables of the DSH hardening law.
+        type(DSHStateVariable),dimension(:),allocatable :: dsh_state
+#endif
+        !> State variables of the Kocks-Mecking hardening law.
+        type(KMStateVariables),dimension(:),allocatable :: km_state
+        
+    end type
+
+
     !> \todo is this structure usefull? keep, modify or remove?
     type :: ClusterState
         
@@ -45,11 +91,11 @@ implicit none
         
         !> \todo add the appropriate grain boundary data: euler angles + weighting factor
         !type(EulerAngles) :: GBeuler
-        
+
     end type
 
-    
-    contains
+
+contains
     
     subroutine GrainStateCollection_initialize( this, texture, info)
     implicit none
