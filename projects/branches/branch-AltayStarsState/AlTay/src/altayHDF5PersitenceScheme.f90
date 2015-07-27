@@ -152,9 +152,10 @@ contains
         ! State variables of the Kocks-Mecking hardening law.
         
         ! Other components
-        if (allocated(state%km_state)) then
-            continue
-        endif
+        !> \todo
+        !!if (allocated(state%km_state)) then
+        !!    continue
+        !!endif
         info = this%collection%close()
     !
     end subroutine

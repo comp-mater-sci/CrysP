@@ -180,8 +180,9 @@ implicit none
         call altayHard_getTau(hardparams,gamma, tau, info)
         if (info == criSuccess) crss%crss = hardparams%crss_ratios%crss * tau
     case(hard_KM)
-        call KMStateVariables_getCRSS(state%km_state(grain_id), &
-                                      hardparams%kmParams, crss, info)
+        !> todo: the 1st argument to be replaced with the good component of new datastructure
+        !call KMStateVariables_getCRSS(state%km_state(grain_id), &
+        !                              hardparams%kmParams, crss, info)
     !
 #ifdef PEBP_ENABLED
     case(hard_BP,hard_PEBPscrew,hard_PEBPloop)

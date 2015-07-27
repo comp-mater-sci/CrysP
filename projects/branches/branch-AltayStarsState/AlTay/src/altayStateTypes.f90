@@ -22,9 +22,19 @@ implicit none
         
         !> Accumulated shear deformation (including both slip and twinning),
         !> from a reference (virgin) state up to the current state. 
-        double precision                  :: accumulatedshear = 0.0D0
+        double precision                   :: accumulatedshear = 0.0D0
+
+#ifdef PEBP_ENABLED
+        !> State variables of the DSH hardening law.
+        type(DSHStateVariable)             :: dsh_state
+#endif
+
+        !> State variables of the Kocks-Mecking hardening law.
+        type(KMStateVariables)             :: km_state
         
-        !> \todo types related to the substructural state variables to be added.
+        !> \fixme: decide whether the crss is actually needed.
+        !> Collection of CRSS per grain (useful for some/all hardening models?)
+        ! type(CRSSData)                   :: crss   
         
     end type
     
@@ -62,19 +72,7 @@ implicit none
         
         !> Collection of the state of grains
         type(GrainStateCollection)              :: grainstates
-        
-        !> \fixme: decide whether the crss_array is actually needed.
-        
-        !> Collection of CRSS per grain (only for certain hardening models)
-        ! type(CRSSData), dimension(:), pointer   :: crss_array => null()
-
-#ifdef PEBP_ENABLED
-        !> State variables of the DSH hardening law.
-        type(DSHStateVariable),dimension(:),allocatable :: dsh_state
-#endif
-        !> State variables of the Kocks-Mecking hardening law.
-        type(KMStateVariables),dimension(:),allocatable :: km_state
-        
+                
     end type
 
 
