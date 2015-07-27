@@ -83,7 +83,7 @@ contains
     integer,parameter :: rank = 2
     integer :: rd_rank, rd_tc, errcode
     integer(HSIZE_T), dimension(rank) :: rd_dims
-    integer(HSIZE_T) :: rd_ts ! Type size
+    integer(SIZE_T) :: rd_ts ! Type size ! Note: Fortran90  uses SIZE_T here, not HSIZE_T
     !
         info = criErr_BadArgs
         !
