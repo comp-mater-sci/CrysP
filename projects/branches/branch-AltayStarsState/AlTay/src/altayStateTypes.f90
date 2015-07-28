@@ -66,20 +66,24 @@ implicit none
     !> Container for the state variables
     type :: altayStateVariables
         
-        type(MesostructureState)                :: mesostructure
+        type(MesostructureState)                :: mesostructure !YES
         
-        type(InterfaceDataset)                  :: interface_dataset
+        type(InterfaceDataset)                  :: interface_dataset ! move to within MesostructureState 
+                                                                     !   or instances to clusterstates?
 
         !> Orientations of discrete ODF. 
-        type(DiscreteODF)                       :: texture
+        type(DiscreteODF)                       :: texture !to be gone or relocated.
         
         !> Collection of the state of grains
-        type(GrainStateCollection)              :: grainstates
+        type(GrainStateCollection)              :: grainstates !YES
+        
+        !type(ClusterStateCollection)           :: clusterstates !YES
                 
     end type
 
 
-    !> \todo is this structure usefull? keep, modify or remove?
+    !> this structure is usefull
+    !> \todo: elaborate
     type :: ClusterState
         
         !type(Grain),dimension(:),pointer :: grain !=> null()
