@@ -2,22 +2,21 @@
 
 !> Material model used in AlTay
 module altayMaterial
-use altayMiscutils
 use criErrcodes
-use altayDeformationMechanism
-use altayHard
+use altayPhase
 use altayConfig
 implicit none
 
 
-    
+
     !> Data type that characterizes the material
-    !> Current implementation is for single-phase materials, so "material"=="phase"
     type :: altayMaterialData
         
-        type(DeformationMechanismData) :: deformationmechanism
-
-        type(HardeningModels)   :: hardening
+        integer                             :: n_phases = 0
+        
+        !> dimensionality = [n_phases]
+        !> Current implementation is for single-phase materials: dimensionality = [1]
+        type(altayPhaseData), dimension(1)  :: phase
 
     contains
 
@@ -34,22 +33,22 @@ implicit none
     class(altayMaterialData), intent(out):: this
     type(altayConfigData), intent(in)    :: cnf
     integer, intent(out)                 :: info
+    !
+    integer :: i = 0 !< running index
+    !integer :: status=0
+    !character(len=100) :: error
         !
-        info = 0
+        this%n_phases = 1
         !
-        ! Initialize deformationmechanism data
-        call DeformationMechanismData_init(this%deformationmechanism,cnf%deformationmechanism,info)
-        if (info /= criSuccess) then
-            write(*,*) 'Cannot initialize deformationmechanism data from configuration.'
-            call terminate(stopcode_runtimeerror)
-        endif
+        ! (Re-)allocation
+        !if (allocated(this%phase)) deallocate(this%phase)
+        !allocate(this%phase(1:this%n_phases),stat=status,errmsg=error)
         !
-        ! Initialize hardening
-        call HardeningModels_init(this%hardening,cnf%hardening, info)
-        if (info /= criSuccess) then
-            write(*,*) 'The hardening parameters provided contain flaws.'
-            call terminate(stopcode_inputerror)
-        endif
+        ! Initialize all phases
+        do i=1,this%n_phases
+            call altayPhaseData_initFromConfig(this%phase(i), cnf, info)
+            if (info /= criSuccess ) return
+        end do
         !
     end subroutine 
 

@@ -163,11 +163,11 @@
       end if
 216   FORMAT (/,' SUBROUTINE SIMUL  - READS ITS CRYSTAL DATA',//)
       !
-      if (material%deformationmechanism%n_systems.gt.DM_max_systems)then
+      if (material%phase(1)%deformationmechanism%n_systems.gt.DM_max_systems)then
 #ifndef ALTAY_SUBROUTINE
-            write (*,5001) material%deformationmechanism%n_systems,DM_max_systems
+            write (*,5001) material%phase(1)%deformationmechanism%n_systems,DM_max_systems
             if(NLIST.eq.1) then
-                  write (IMP,5001) material%deformationmechanism%n_systems,DM_max_systems
+                  write (IMP,5001) material%phase(1)%deformationmechanism%n_systems,DM_max_systems
             end if
             call terminate(stopcode_runtimeerror)
 #else
@@ -177,27 +177,27 @@
 5001  format(' SIMUL  - n_systems=',I5,' LARGER THAN  DM_max_systems=',I5)       
       !
       if(NLIST.eq.1) then !!echo to LST
-      write (IMP,221) material%deformationmechanism%description
+      write (IMP,221) material%phase(1)%deformationmechanism%description
   221 format (/,' Slip system set:',A,/)
-      WRITE (IMP,211) 0,material%deformationmechanism%n_slip_systems,material%deformationmechanism%n_twinning_systems,material%deformationmechanism%set0
+      WRITE (IMP,211) 0,material%phase(1)%deformationmechanism%n_slip_systems,material%phase(1)%deformationmechanism%n_twinning_systems,material%phase(1)%deformationmechanism%set0
  211  FORMAT (1X,I4,10X,2I5,10X,5I5)
-      DO 500 I1=1,material%deformationmechanism%n_systems                                                     
-      WRITE (IMP,213) I1,(material%deformationmechanism%A1(J,I1),J=1,5),(material%deformationmechanism%B1(L,I1),L=1,3)
+      DO 500 I1=1,material%phase(1)%deformationmechanism%n_systems                                                     
+      WRITE (IMP,213) I1,(material%phase(1)%deformationmechanism%A1(J,I1),J=1,5),(material%phase(1)%deformationmechanism%B1(L,I1),L=1,3)
  213   FORMAT (I3,' A ',5F10.7,' B ',3F10.7)
  500  CONTINUE
       DO 501 I=1,5                                                      
-      WRITE (IMP,215) I1-1+I,(material%deformationmechanism%B(I,L),L=1,5)
+      WRITE (IMP,215) I1-1+I,(material%phase(1)%deformationmechanism%B(I,L),L=1,5)
   215  FORMAT (1X,I4,10X,5D15.8)
  501  CONTINUE
-      IF (material%deformationmechanism%n_twinning_systems.EQ.0) GOTO 504                                            
-      DO 505 I=1,material%deformationmechanism%n_twinning_systems                                                    
-      WRITE (IMP,218) I1+4+I,(material%deformationmechanism%B2(L,I),L=1,6),material%deformationmechanism%G(I)
+      IF (material%phase(1)%deformationmechanism%n_twinning_systems.EQ.0) GOTO 504                                            
+      DO 505 I=1,material%phase(1)%deformationmechanism%n_twinning_systems                                                    
+      WRITE (IMP,218) I1+4+I,(material%phase(1)%deformationmechanism%B2(L,I),L=1,6),material%phase(1)%deformationmechanism%G(I)
  218  format (i4,' B2',6f10.7,' G',f10.7)
  505  CONTINUE
 504   CONTINUE
       end if !!end of echo to LST
       !
-      call CRSSData_init(CRSSb, material%deformationmechanism%n_systems, infoarr)
+      call CRSSData_init(CRSSb, material%phase(1)%deformationmechanism%n_systems, infoarr)
       !
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
@@ -417,14 +417,14 @@
       eulerb_0_deg(L) = rad2deg(eulerb_0_rad(L))
       !
       ! Retrieve the CRSSb for ifil4  = sequence number of current grain
-      call altayHard_getCRSS(material%hardening, state%old, ifil4,CRSSb(L),info)
+      call altayHard_getCRSS(material%phase(1)%hardening, state%old, ifil4,CRSSb(L),info)
       !
   80  continue
       laml1=laml1+1
       if (laml1.gt.NGR) laml1=1
       laml=laml1
       GMM0=GMMAb(laml)
-      call altayHard_getTau(material%hardening, GMM0,TAU,info) !note: usefullness of obtained TAU is limited to outputting to RES-file.
+      call altayHard_getTau(material%phase(1)%hardening, GMM0,TAU,info) !note: usefullness of obtained TAU is limited to outputting to RES-file.
       !
       IF (NFILE.eq.0.or.ISTP.gt.1) goto 999
 ! 
@@ -440,7 +440,7 @@
 !
 999 if (IW.le.1) then
             call mesostr_clustertrafo(ngr,interface_dataset%trafo(i_interface),MacroDefRate,mesostructure_state%deformationgradient,T_cluster,info)
-            CALL Pancak2(laml,ngr,T_cluster,eulerb_0_rad, CRSSb,material%deformationmechanism,   &
+            CALL Pancak2(laml,ngr,T_cluster,eulerb_0_rad, CRSSb,material%phase(1)%deformationmechanism,   &
                          MacroDefRate,MacroDefState,Pancak2_solution)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
@@ -466,7 +466,7 @@
       !
       !-> -> -> content from TAYLR1
       !
-      call SLIPRAT(sliprat_solution,MacroDefRate,Pancak2_solution,CRSSb(laml),material%deformationmechanism)
+      call SLIPRAT(sliprat_solution,MacroDefRate,Pancak2_solution,CRSSb(laml),material%phase(1)%deformationmechanism)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif  
@@ -498,19 +498,19 @@
           WRITE (IMP,301) sliprat_solution%workrate
  301  FORMAT (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
           WRITE (IMP,109) MacroDefRate%vMeqStrainRate,sliprat_solution%vMeqstress,                   &
-                      (sliprat_solution%shearrate%shearrate(I)/MacroDefRate%vMeqStrainRate,I=1,material%deformationmechanism%n_systems)
+                      (sliprat_solution%shearrate%shearrate(I)/MacroDefRate%vMeqStrainRate,I=1,material%phase(1)%deformationmechanism%n_systems)
 109                   FORMAT ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
        '  SLIP RATES',/,(T2,10F10.5))
       end if  
       !
-      ROT = matmul(material%deformationmechanism%B1,sliprat_solution%shearrate%shearrate)
+      ROT = matmul(material%phase(1)%deformationmechanism%B1,sliprat_solution%shearrate%shearrate)
       if(NLIST.eq.1) then
           WRITE (IMP,305) ROT
       end if
 305   FORMAT (' ROTATIONS',3F12.6)      
       !
       CALL Grain_EulerAngles_update(eulerb_1_rad(laml),eulerb_0_rad(laml), &
-              sliprat_solution,Pancak2_solution,material%deformationmechanism,MacroDefRate,info=info)
+              sliprat_solution,Pancak2_solution,material%phase(1)%deformationmechanism,MacroDefRate,info=info)
       !
       call Grain_accumulatedshear_update(GMM1,GMM0,sliprat_solution,1.0D0,info)
       !

@@ -40,6 +40,7 @@ altayMaterial.f90
 altayMillerIndices.f90
 altayNativePersistenceScheme.f90
 altayODFTypes.f90
+altayPhase.f90
 altayRCM.f90
 altaySimulation.f90
 altayState.f90

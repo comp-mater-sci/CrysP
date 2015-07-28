@@ -66,21 +66,19 @@
 		<File RelativePath="..\src\Alg0A.f90"/>
 		<File RelativePath="..\src\Alg1.f90"/>
 		<File RelativePath="..\src\Alg2.f90"/>
-		<File RelativePath="..\src\altayAPI.f90"/>
 		<File RelativePath="..\src\altayConfig.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Debug|x64">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration></File>
-		<File RelativePath="..\src\altayConfigReader.f90"/>
 		<File RelativePath="..\src\altayCRSSTypes.f90"/>
 		<File RelativePath="..\src\altayDeformationMechanism.f90"/>
-		<File RelativePath="..\src\altayDeformationMechanismData_preconfigured.f90"/>
 		<File RelativePath="..\src\altayDeformationMechanismConstants.f90"/>
+		<File RelativePath="..\src\altayDeformationMechanismData_preconfigured.f90"/>
 		<File RelativePath="..\src\altayDSHState.f90">
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|Win32" ExcludedFromBuild="true"/></File>
@@ -88,8 +86,8 @@
 		<File RelativePath="..\src\altayHard.f90"/>
 		<File RelativePath="..\src\altayHardLawDSH.f90">
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|Win32" ExcludedFromBuild="true"/></File>
@@ -103,6 +101,7 @@
 		<File RelativePath="..\src\altayMillerIndices.f90"/>
 		<File RelativePath="..\src\altayNativePersistenceScheme.f90"/>
 		<File RelativePath="..\src\altayODFTypes.f90"/>
+		<File RelativePath="..\src\altayPhase.f90"/>
 		<File RelativePath="..\src\altayRCM.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
@@ -116,8 +115,8 @@
 		<File RelativePath="..\src\altaySub.f90">
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
-			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/>
