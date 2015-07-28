@@ -2,7 +2,8 @@
 module altayDeformationMechanismData_preconfigured
 !
 use criMathUtils, only: unit_sr_Matrix
-use altayMillerIndices    
+use altayMillerIndices
+use altayDeformationMechanismConstants
 !
 implicit none
 public
