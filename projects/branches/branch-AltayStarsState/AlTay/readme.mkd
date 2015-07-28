@@ -24,8 +24,8 @@ An effort for improving that has been recently initiated. It includes:
    simplify/deobfuscate it and eliminate dead code,
 2. adding new features.
 
-Boths parts of this endaveour require some guidance how to structure the new 
-code. This brief document acts as the "good practice guide" for every new code
+Both parts of this endaveour require some guidance how to structure the new 
+code. This brief document acts as a "good practice guide" for every new code
 added to AlTay codebase.
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", 
@@ -106,16 +106,28 @@ New developments of the AlTay should adhere to code standarts defined below.
 	* **variables**: In general, lowercase names should be used. Underscores can be
 	  used if it improves readability. 
 	* **preprocessor macros**: use all-capitals, E.g. `PEBP_ENABLED`
-	* **procedures**: any module procedure (which applises, in fact, to almost all 
-	  procedures in AlTay) should be named following the pattern
-	  <prefix>_name, where the <prefix> is related either to the module name (or
-	  it is the module name itself), or the typename.
+	* **procedures**: 
+         1. any module procedure (which applies, in fact, to almost all 
+	        procedures in AlTay) should be named following the pattern
+	        `<prefix>_name`, where the `<prefix>` is related either to the module 
+	        name (or it is the module name itself), or the typename (see below).
+         2. a module procedure that primarily operates on a given type should be given
+            a name that follows the pattern: `<typename>_name`. Furthermore, its 
+            first parameter should be of that type and named `this`.
       - Rationale #1: Fortran does not support namespaces. If one imports
            symbols from a module by means of the `use` construct, the symbols
            are imported into the global namespace. Of course, clashes between
            identical names defined in different modules are more than likely.
-      - Rationale #2: this facilitates making type-bound procedures
+      - Rationale #2: this facilitates making type-bound procedures.
+      - Rationame #3: this facilitates making generic procedures.
         E.g. `DeformationState_update`, where the typename is `DeformationState`
+	* **interface procedures**: the names of dummy interface procedures follow the 
+       pattern is `<prefix>_name_interface`. The prefix is determined from the rules 
+       for naming procedures. If the dummy interface procedure is used for defining an
+       deferred type-bound procedure inside a type (regardless the type is abstract or 
+       not), the prefix must be set to that typename.
+       E.g. `DeformationState_update_interface`, where the typename is 
+       `DeformationState` and the procedure name is `update`.
 
 ### Procedures ###
 
@@ -134,8 +146,8 @@ New developments of the AlTay should adhere to code standarts defined below.
 	  optional parameter
 	* if the procedure has an "out" parameter indended for returning its exit
 	  code, it should appear as the last output parameter.
-	* if the procedure basically operates on a structure, the object of that
-	  structure should be given as the very first parameter (even though it might
+	* if the procedure basically operates on a given type, the object of that
+	  type should be given as the very first parameter (even though it might
 	  have the intent `inout`) and named `this`.
 	  Example:
 
