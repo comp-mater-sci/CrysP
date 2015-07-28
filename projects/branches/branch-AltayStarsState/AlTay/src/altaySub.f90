@@ -74,7 +74,7 @@ contains
         ! Open input files
         !
         if (ierr /= 0) then
-            if (present(errmsg)) errmsg = 'Cannot open slip system definition file: ' // trim(cnf%slipsystem%input_fname)
+            if (present(errmsg)) errmsg = 'Cannot open slip system definition file: ' // trim(cnf%deformationmechanism%input_fname)
             info = criErr_IO
             return
         endif

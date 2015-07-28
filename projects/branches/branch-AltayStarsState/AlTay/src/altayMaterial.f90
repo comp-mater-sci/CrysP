@@ -37,10 +37,10 @@ implicit none
         !
         info = 0
         !
-        ! Initialize DeformationMechanismData - currently, exclusively from PRE-file.
-        call DeformationMechanismData_init(this%deformationmechanism,cnf%slipsystem%input_fname,DM_format_pre,info)
+        ! Initialize deformationmechanism data
+        call DeformationMechanismData_init(this%deformationmechanism,cnf%deformationmechanism,info)
         if (info /= criSuccess) then
-            write(*,*) 'Cannot initialize slip systems from the file ', trim(cnf%slipsystem%input_fname)
+            write(*,*) 'Cannot initialize deformationmechanism data from configuration.'
             call terminate(stopcode_runtimeerror)
         endif
         !

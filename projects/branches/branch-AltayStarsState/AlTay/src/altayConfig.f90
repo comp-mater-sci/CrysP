@@ -48,8 +48,12 @@ implicit none
       
       !>@}
       
-      type :: SlipSystemConfig
-            !> Name of the file containing definitions of slipsystems
+      type :: DeformationMechanismConfig
+            !> Identifyer for source type of deformation mechanism
+            !> See altayDeformationMechanism for the list of possible values. \sa altayDeformationMechanism
+            integer                                   :: ID = -1
+
+            !> Name of the file/preconfiguration containing definition of deformation mechanism
             character(len=fname_len)                  :: input_fname = ''
       end type
 
@@ -171,7 +175,7 @@ implicit none
       
       !> Parameters of available hardening models.
       type :: HardeningConfig
-            !> Selector of the model for hardening of slipsystems. 
+            !> Selector of the model for hardening of deformation systems. 
             !> 
             !> Acceptable values depend on availability of CRSS (aka TAUC) hardening models 
             !> that are implemented in the code.
@@ -221,7 +225,7 @@ implicit none
             character(len=fname_len)                  :: output_prefix = 'alamel'
             character(len=fname_len)                  :: jobtitle      = 'alamel'
             character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
-            type(SlipSystemConfig)                      :: slipsystem
+            type(DeformationMechanismConfig)          :: deformationmechanism
             type(outputConfig)                        :: output_config
             type(HardeningConfig)                       :: hardening
             type(TextureConfig)                         :: texture

@@ -11,20 +11,20 @@ use criMathUtils
 use altayMillerIndices
 use altayDeformationMechanismData_preconfigured
 use altayAlgorithms
+use altayConfig
 implicit none
 private
 
     !> Public identifyers for initialization of DeformationMechanismData object
-    !> through altayDeformationMechanismData_preconfigured objects
-    integer,parameter,public :: DM_fcc12 = 1, &
-                                DM_bcc24 = 2, &
-                                DM_bcc48 = 3, &
-                                DM_user = 99
-    
-    !> Public identifyers for initialization of DeformationMechanismData object
-    !> from file of specific file format.
-    integer,parameter,public :: DM_format_pre = 1, &
-                                DM_format_dat = 2
+    integer,parameter,public :: &
+    !> through altayDeformationMechanismData_preconfigured objects:
+        DM_fcc12      =   1, &
+        DM_bcc24      =   2, &
+        DM_bcc48      =   3, &
+        DM_user       =  99, & !DM_user currently not exploited.
+    !> from file of specific file format:
+        DM_format_pre = 101, &
+        DM_format_dat = 102
 
     
     !> Description of deformation mechanism given in a way suitable for
@@ -117,7 +117,8 @@ private
     
     !> Initialization procedures for DeformationMechanismData type
     interface DeformationMechanismData_init
-        module procedure DeformationMechanismData_initEmpty, & 
+        module procedure DeformationMechanismData_initFromConfig, &
+                         DeformationMechanismData_initEmpty, & 
                          DeformationMechanismData_initFromFile, &
                          DeformationMechanismData_initFromPreconfigured
     end interface
@@ -127,6 +128,36 @@ private
 
    
 contains
+
+    !> Initialize module from config data object
+    subroutine DeformationMechanismData_initFromConfig(this,config,info)
+    implicit none
+    type(DeformationMechanismData),intent(out)  :: this
+    type(DeformationMechanismConfig),intent(in) :: config
+    integer,intent(out)                         :: info
+    !
+        info = criError
+        !
+        select case(config%ID)
+        !
+        case(DM_fcc12, DM_bcc24, DM_bcc48)
+            ! initialization through altayDeformationMechanismData_preconfigured object
+            call DeformationMechanismData_initFromPreconfigured &
+                    (this, config%ID, info)
+        !
+        case(DM_format_pre, DM_format_dat)
+            ! initialization from file of specific file format
+            call DeformationMechanismData_initFromFile &
+                    (this, config%input_fname, config%ID, info)
+        !
+        case default
+            ! Unsupported deformation mechanism model is requested
+            info = criErr_BadArgs
+        !
+        end select
+        !
+    end subroutine
+
 
     subroutine DeformationMechanismData_initEmpty(this,nslip,ntwin,info)
     implicit none

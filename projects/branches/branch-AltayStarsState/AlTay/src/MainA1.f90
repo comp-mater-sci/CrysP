@@ -106,9 +106,40 @@
       open(unit=IPEBPSDV,file=trim(fname_prefix)//'.SDV',                &
            status='replace',iostat=info)
 #endif
-      read (KLEC,90) config%slipsystem%input_fname
-      call stripComment(config%slipsystem%input_fname)
-      write (*,93) trim(config%slipsystem%input_fname)
+      read (KLEC,90) config%deformationmechanism%input_fname
+      call stripComment(config%deformationmechanism%input_fname)
+      write (*,93) trim(config%deformationmechanism%input_fname)
+      !
+      !Set config%deformationmechanism%ID from
+      ! interpretation of config%deformationmechanism%input_fname
+      I = 0
+      I = index(config%deformationmechanism%input_fname,'.',back=.TRUE.)
+      if (I /= 0) then
+          ! string '.' appears; assume configuration from file
+          select case (config%deformationmechanism%input_fname(I+1:I+3))
+          case ('pre','PRE')
+              config%deformationmechanism%ID = DM_format_pre
+          case ('dat','DAT')
+              config%deformationmechanism%ID = DM_format_dat
+          case default
+              config%deformationmechanism%ID = DM_user ! an unsupported value
+          end select
+      else
+          ! string '.' does not appear; assume pre-configuration
+          I = len_trim(config%deformationmechanism%input_fname)
+          if ( I < 5 ) config%deformationmechanism%ID = DM_user ! an unsupported value       
+          select case (config%deformationmechanism%input_fname(I-4:I))
+          case ('fcc12', 'FCC12')
+              config%deformationmechanism%ID = DM_fcc12
+          case ('bcc24', 'BCC24')
+              config%deformationmechanism%ID = DM_bcc24
+          case ('bcc48', 'BCC48')
+              config%deformationmechanism%ID = DM_bcc48
+          case default
+              config%deformationmechanism%ID = DM_user ! an unsupported value
+          end select
+      end if
+      !
       READ(KLEC,96) NLINES
       write (*,97) NLINES
   97  format (' number of lines with tau-crit values:',i3)
