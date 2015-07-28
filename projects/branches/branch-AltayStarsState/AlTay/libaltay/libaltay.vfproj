@@ -5,7 +5,7 @@
 		<Platform Name="x64"/></Platforms>
 	<Configurations>
 		<Configuration Name="Debug|Win32" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" MultiProcessorCompilation="true" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories=";..\..\FCRI\include;..\src;" PreprocessorDefinitions="NO_STDOUT;RCM_ENABLED;" F2003Semantics="true" DebugParameter="debugParameterAll" WarnUnusedVariables="true" WarnIgnoreLOC="true" WarnTruncateSource="true" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" InitLocalVarToNAN="true" FloatingPointStackCheck="true" Traceback="true" RuntimeChecks="rtChecksAll" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" MultiProcessorCompilation="true" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="C:\Program Files (x86)\HDF_Group\HDF5\1.8.15\include;..\..\FCRI\include;..\src;" PreprocessorDefinitions="NO_STDOUT;RCM_ENABLED;" F2003Semantics="true" DebugParameter="debugParameterAll" WarnUnusedVariables="true" WarnIgnoreLOC="true" WarnTruncateSource="true" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" InitLocalVarToNAN="true" FloatingPointStackCheck="true" Traceback="true" RuntimeChecks="rtChecksAll" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -14,7 +14,7 @@
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/></Configuration>
 		<Configuration Name="Release|Win32" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="typeStaticLibrary" WholeProgramOptimization="true">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Optimization="optimizeFull" BufferedIO="true" Preprocess="preprocessYes" AdditionalIncludeDirectories=";..\..\FCRI\include;..\src;" PreprocessorDefinitions="NO_STDOUT;RCM_ENABLED;" F2003Semantics="true" CommonElementAlignment="alignCommonEightBytes" RuntimeChecks="rtChecksNone"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Optimization="optimizeFull" BufferedIO="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="C:\Program Files (x86)\HDF_Group\HDF5\1.8.15\include;..\..\FCRI\include;..\src;" PreprocessorDefinitions="NO_STDOUT;RCM_ENABLED;" F2003Semantics="true" CommonElementAlignment="alignCommonEightBytes" RuntimeChecks="rtChecksNone"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -23,7 +23,7 @@
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/></Configuration>
 		<Configuration Name="Release-Amplifier|Win32" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="typeStaticLibrary" WholeProgramOptimization="true">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" MultiProcessorCompilation="true" Optimization="optimizeFull" BufferedIO="true" Preprocess="preprocessYes" AdditionalIncludeDirectories=";..\..\FCRI\include;..\src;" PreprocessorDefinitions="ALTAY_SUBROUTINE;NO_STDOUT;RCM_ENABLED;PEBP_ENABLED;" F2003Semantics="true" DebugParameter="debugParameterAll" CommonElementAlignment="alignCommonEightBytes" RuntimeChecks="rtChecksNone"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" MultiProcessorCompilation="true" Optimization="optimizeFull" BufferedIO="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="C:\Program Files (x86)\HDF_Group\HDF5\1.8.15\include;..\..\FCRI\include;..\src;" PreprocessorDefinitions="ALTAY_SUBROUTINE;NO_STDOUT;RCM_ENABLED;PEBP_ENABLED;" F2003Semantics="true" DebugParameter="debugParameterAll" CommonElementAlignment="alignCommonEightBytes" RuntimeChecks="rtChecksNone"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -66,14 +66,17 @@
 		<File RelativePath="..\src\Alg0A.f90"/>
 		<File RelativePath="..\src\Alg1.f90"/>
 		<File RelativePath="..\src\Alg2.f90"/>
+		<File RelativePath="..\src\altayAPI.f90"/>
 		<File RelativePath="..\src\altayConfig.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Debug|x64">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration></File>
+		<File RelativePath="..\src\altayConfigReader.f90"/>
 		<File RelativePath="..\src\altayCRSSTypes.f90"/>
 		<File RelativePath="..\src\altayDeformationMechanism.f90"/>
 		<File RelativePath="..\src\altayDeformationMechanismData_preconfigured.f90"/>
+		<File RelativePath="..\src\altayDeformationMechanismConstants.f90"/>
 		<File RelativePath="..\src\altayDSHState.f90">
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>

@@ -10,21 +10,12 @@ use criErrcodes
 use criMathUtils
 use altayMillerIndices
 use altayDeformationMechanismData_preconfigured
+use altayDeformationMechanismConstants
 use altayAlgorithms
 use altayConfig
 implicit none
 private
 
-    !> Public identifyers for initialization of DeformationMechanismData object
-    integer,parameter,public :: &
-    !> through altayDeformationMechanismData_preconfigured objects:
-        DM_fcc12      =   1, &
-        DM_bcc24      =   2, &
-        DM_bcc48      =   3, &
-        DM_user       =  99, & !DM_user currently not exploited.
-    !> from file of specific file format:
-        DM_format_pre = 101, &
-        DM_format_dat = 102
 
     
     !> Description of deformation mechanism given in a way suitable for

@@ -36,6 +36,7 @@ use altayHardLaw_DSH, only: PAR
 #endif
 use altayHardLaw_KM
 use altayTexFormatConstants
+use altayDeformationMechanismConstants
 use criMathUtils
 
 implicit none
@@ -51,7 +52,7 @@ implicit none
       type :: DeformationMechanismConfig
             !> Identifyer for source type of deformation mechanism
             !> See altayDeformationMechanism for the list of possible values. \sa altayDeformationMechanism
-            integer                                   :: ID = -1
+            integer                                   :: ID = DM_none
 
             !> Name of the file/preconfiguration containing definition of deformation mechanism
             character(len=fname_len)                  :: input_fname = ''

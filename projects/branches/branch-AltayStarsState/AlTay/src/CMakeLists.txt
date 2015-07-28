@@ -25,6 +25,7 @@ altayConfig.f90
 altayCRSSTypes.f90
 altayDeformationMechanismData_preconfigured.f90
 altayDeformationMechanism.f90
+altayDeformationMechanismConstants.f90
 #altayDSHState.f90
 altayGrainCluster.f90
 altayHard.f90
