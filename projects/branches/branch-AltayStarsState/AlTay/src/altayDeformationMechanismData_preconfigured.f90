@@ -7,16 +7,6 @@ use altayMillerIndices
 implicit none
 public
 
-
-
-    integer,parameter,public :: DM_title_length = 72
-
-    integer,parameter,public :: DM_dev_dims = 5
-    
-    integer,parameter,public :: DM_dir_dims = 3
-    
-    integer,parameter,public :: DM_twin_dims = 6
-
     !
     ! Private data
     !

@@ -23,8 +23,19 @@ implicit none
     !> Initialization from file of PRE file format
     integer,parameter :: DM_format_pre = 101
 
-    !> Initialization from file of PRE file format
+    !> Initialization from file of DAT file format
     integer,parameter :: DM_format_dat = 102
     !>@}
+
+    !> Length of a title/name of dislocation mechanism data
+    integer,parameter :: DM_title_length = 72
+
+    !> Dimension of symmetric deviatioric tensors (in vector representation)
+    integer,parameter :: DM_dev_dims = 5
+    
+    !> Dimension of other second-rank tensors (in matrix representation)
+    integer,parameter :: DM_dir_dims = 3
+    
+    integer,parameter :: DM_twin_dims = 6
 
 end module
