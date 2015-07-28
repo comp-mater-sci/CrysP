@@ -82,7 +82,12 @@ C:\twrmtm\projects\branches\branch-AltayStarsState\AlTay\AlTay\x64\Debug\AlTay.e
 copy ss12_AL_0_ERR-StrainRateSmall.CTL Main.CTL
 C:\twrmtm\projects\branches\branch-AltayStarsState\AlTay\AlTay\x64\Debug\AlTay.exe
 
-
+copy fcc12_AL_1.CTL Main.CTL
+C:\twrmtm\projects\branches\branch-AltayStarsState\AlTay\AlTay\x64\Release\AlTay.exe
+copy fcc12_AL_1-dat.CTL Main.CTL
+C:\twrmtm\projects\branches\branch-AltayStarsState\AlTay\AlTay\x64\Release\AlTay.exe
+copy fcc12_AL_1-preconf.CTL Main.CTL
+C:\twrmtm\projects\branches\branch-AltayStarsState\AlTay\AlTay\x64\Release\AlTay.exe
 
 del  *.TWN *.CUB *.h5
 pause
