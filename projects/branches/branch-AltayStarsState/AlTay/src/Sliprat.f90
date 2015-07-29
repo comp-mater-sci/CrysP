@@ -23,20 +23,6 @@
           !> von Mises equivalent stress for given grain
           double precision    :: vMeqstress = 0.0D0
       end type
-
-      !> component of Pancak2_input variable of sliprat; this modular 
-      !> global data ensure its available to another module procedure: MINSQU.
-      !> See note $1.
-      double precision, dimension(5), private :: BB8
-      !
-      !> equals the A1_input variable of sliprat; this modular 
-      !> global data ensure its available to another module procedure: MINSQU.
-      !> See note $1.      
-      double precision, dimension(:,:), allocatable, private :: A1
-      !
-      !> Note $1: A better way would be to contain MINSQU within SLIPRAT procedure; this
-      !> is however not trivial, as run-time errors are seen, presumably because 
-      !> of name clashes.
       
       
       
@@ -68,8 +54,6 @@
       dimension SGNN(DM_max_systems)
       dimension SLPR(8),IND(8),ISTOR(0:8,48),SLSTOR(0:8,48)
       data NSTOR/48/
-      BB8 = Pancak2_input%BB8
-      A1 = DM_data%A1
       ITR=0
       NLP=Pancak2_input%nactiv
       NN=Pancak2_input%nactiv
@@ -91,7 +75,7 @@
       do 1 i=1,NN
       IND(i)=Pancak2_input%indact(i)
   1   continue
-  3   call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn)
+  3   call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
       if (ineg.eq.0) then
            call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
 #ifdef ALTAY_SUBROUTINE
@@ -116,7 +100,7 @@
        if (N1.lt.5) goto 6
        NN=N1
        do I1=1,N0
-          call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn)
+          call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
           if (ineg.eq.0) then
              call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
 #ifdef ALTAY_SUBROUTINE
@@ -144,7 +128,7 @@
             IND(j)=Pancak2_input%indact(i)
             j=j+1
    5        continue
-            call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn)
+            call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
             if (ineg.eq.0) then
                 call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
 #ifdef ALTAY_SUBROUTINE
@@ -172,7 +156,7 @@
               IND(j)=Pancak2_input%indact(i)
               j=j+1
    7          continue
-              call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn)
+              call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
 !              if (ineg.eq.0) goto 2
               if (ineg.eq.0) then
                   call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
@@ -304,10 +288,20 @@
       return
       end subroutine
       !
-      Subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn)
+      !> Note $1: Sliprat subroutine is the only caller for a number of external 
+      !> procedures: "minsqu" (directly); and "store", "stelsel", "tred2" and "tqli" 
+      !> (indirectly). It is however not advisable to try to contain these procedures 
+      !> (i.e. make them internal procedures to sliprat) because of name clashes. 
+      !> Note that (1) an internal procedure has access to host entities by host 
+      !> association, and (2) all these procedures declare 'implicit double precision 
+      !> (A-H,O-Z)' statement.
+      
+      Subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,A1,BB8)
       use altayIOConfig
       use altayAlgorithms, only: KLEINKWA
       IMPLICIT double precision (A-H,O-Z)
+      double precision, dimension(:,:), intent(in) :: A1
+      double precision, dimension(5), intent(in)   :: BB8
 !     December 2000
 !     The  normalisation by DELTAT (now: MacroDefRate%vMeqStrainRate) of the september 2000 version has been
 !     removed here. Is now done in PANCAK2.
