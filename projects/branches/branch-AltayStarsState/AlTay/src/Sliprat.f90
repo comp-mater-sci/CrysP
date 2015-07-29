@@ -50,40 +50,42 @@
 !
 !     Modified in Aug 2010
 !
-      integer NLP
       dimension SGNN(DM_max_systems)
       dimension SLPR(8),IND(8),ISTOR(0:8,48),SLSTOR(0:8,48)
       data NSTOR/48/
-      ITR=0
-      NLP=Pancak2_input%nactiv
-      NN=Pancak2_input%nactiv
+      integer, dimension(1) :: iopl_array
+      !
       NOPL=0
       !
       !Allocate the (allocatable components of) solution
       call ShearRateData_init(solution%shearrate,DM_data%n_systems,info)   
       !
-!     check whether solution is totally zero
-      x=0.0
-      do i=1,NLP 
-          x=x+abs(Pancak2_input%sliplp(i))
-          j=Pancak2_input%indact(i)
-          sgnn(j)=1.D0
-          if (Pancak2_input%taurlp(i).lt.0.0d0) sgnn(j)=-1.D0
-      enddo
-      if (x.lt.Pancak2_tolerance) goto 6
-!     end of check
-      do 1 i=1,NN
-      IND(i)=Pancak2_input%indact(i)
-  1   continue
-  3   call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
-      if (ineg.eq.0) then
-           call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+      !Set sgnn
+      do concurrent (i=1:Pancak2_input%nactiv)
+          if (Pancak2_input%taurlp(i) < 0.0D0) then
+              sgnn(Pancak2_input%indact(i)) = -1.D0
+          else
+              sgnn(Pancak2_input%indact(i)) = 1.D0
+          end if
+      end do
+      !
+      !check whether solution is totally zero
+      x = sum(abs(Pancak2_input%sliplp(1:Pancak2_input%nactiv)))
+      if (x < Pancak2_tolerance) goto 6
+      !
+      IND(1:Pancak2_input%nactiv)=Pancak2_input%indact(1:Pancak2_input%nactiv)
+      !
+      call MINSQU(Pancak2_input%nactiv,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
+      !
+      if (ineg == 0) then
+           call STORE(NSTOR,NOPL,Pancak2_input%nactiv,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
 #ifdef ALTAY_SUBROUTINE
            RCM_GUARD
 #endif
-           if (NN.le.5) goto 2
+           if (Pancak2_input%nactiv <= 5) goto 2
       endif
-      if (NN.le.5) goto 6
+      !
+      if (Pancak2_input%nactiv <= 5) goto 6
 !
 !     Let us take all combinations of NN out of Pancak2_input%nactiv
 !
@@ -91,188 +93,141 @@
 !     (first level:  if Pancak2_input%nactiv=8, find all combinations of 7 sl. syst.
 !      second level: find all combinations of 6 - etc.)
 !
-      N0=Pancak2_input%nactiv
-!
 !     First level
 !
-       N1=N0-1
-       ITR=1
-       if (N1.lt.5) goto 6
-       NN=N1
-       do I1=1,N0
-          call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
-          if (ineg.eq.0) then
+       if (Pancak2_input%nactiv < 6) goto 6
+       NN=Pancak2_input%nactiv - 1
+       do I1=1,Pancak2_input%nactiv
+          call MINSQU(Pancak2_input%nactiv - 1,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
+          if (ineg == 0) then
              call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
 #ifdef ALTAY_SUBROUTINE
              RCM_GUARD
 #endif 
           endif
-!          write (IMP,110) (IND(i),i=1,N1)
- 110   format (10i5)
-          J=N0-I1
-          if (J.gt.0) IND(J)=Pancak2_input%indact(J+1)
+          J=Pancak2_input%nactiv-I1
+          if (J > 0) IND(J)=Pancak2_input%indact(J+1)
        enddo
 !
 !     Level 2
 !
-      N2=N1-1
-      ITR=2
-      if (N2.lt.5) goto 2
-      NN=N2
-      do I1=2,N0
+      if (Pancak2_input%nactiv < 7) goto 2
+      NN=Pancak2_input%nactiv - 2
+      do I1=2,Pancak2_input%nactiv
          J1=I1-1
          do I2=1,J1
             j=1
-            do 5 i=1,N0
-            if (i.eq.I1.or.i.eq.I2) goto 5
-            IND(j)=Pancak2_input%indact(i)
-            j=j+1
-   5        continue
-            call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
-            if (ineg.eq.0) then
+            do i=1,Pancak2_input%nactiv
+                if (.not. (i==I1 .or. i==I2)) then
+                    IND(j)=Pancak2_input%indact(i)
+                    j=j+1
+                end if
+            end do
+            call MINSQU(Pancak2_input%nactiv - 2,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
+            if (ineg == 0) then
                 call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
 #ifdef ALTAY_SUBROUTINE
                 RCM_GUARD
 #endif
             endif
-!            write (IMP,110) (IND(i),i=1,N2)
          enddo
       enddo
 !
 !     Level 3
 !
-      N3=N2-1
-      ITR=3
-      if (N3.lt.5) goto 2
-      NN=N3
-      do I1=3,N0
+      if (Pancak2_input%nactiv < 8) goto 2
+      NN=Pancak2_input%nactiv - 3
+      do I1=3,Pancak2_input%nactiv
          J1=I1-1
          do I2=2,J1
             J2=I2-1
             do I3=1,J2
               j=1
-              do 7 i=1,N0
-              if (i.eq.I1.or.i.eq.I2.or.i.eq.I3) goto 7
-              IND(j)=Pancak2_input%indact(i)
-              j=j+1
-   7          continue
-              call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
-!              if (ineg.eq.0) goto 2
-              if (ineg.eq.0) then
+              do i=1,Pancak2_input%nactiv
+                  if (.not. (i==I1 .or. i==I2 .or. i==I3)) then
+                    IND(j)=Pancak2_input%indact(i)
+                    j=j+1
+                  end if
+              end do
+              call MINSQU(Pancak2_input%nactiv - 3,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
+              if (ineg == 0) then
                   call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
 #ifdef ALTAY_SUBROUTINE
                   RCM_GUARD
 #endif
               endif 
-!              write (IMP,110) (IND(i),i=1,N3)
            enddo
          enddo
       enddo
-   2  if (IPR.eq.2) then
-      if (NLIST.eq.1) then
-      write (IMP,100)
-      end if
-      end if
- 100  format (' Results SLIPRAT')
-      if (NOPL.eq.0) goto 6
-      IOPL=0
-      X=1.0d10
-      do i=1,NOPL
-         Y=SLSTOR(0,i)
-!
-!
-!  Y is de te minimaliseren waarde van oplossing i
-!  Uitprinten!
-!
-!
-         if (Y.lt.X) then
-                       X=Y
-                       IOPL=i
-         endif
-      enddo
+      !
+      !---LABEL 2---
+2     continue
+      !
+      if (NOPL==0) goto 6
+      !
+      sumsq = minval(SLSTOR(0,1:NOPL))! SLSTOR(0,i) is de te minimaliseren waarde van oplossing i
+      iopl_array = minloc(SLSTOR(0,1:NOPL))
+      iopl = iopl_array(1)
+      !
       NN=ISTOR(0,IOPL)
-      sumsq=X
-      do i=1,NN
-         IND(i)=ISTOR(i,IOPL)
-         SLPR(i)=SLSTOR(i,IOPL)
-      enddo
-      if (IPR.eq.2) then
-      if (NLIST.eq.1) then
-        write (IMP,104) Pancak2_input%nactiv,NN,NOPL
+      IND(1:NN)=ISTOR(1:NN,IOPL)
+      SLPR(1:NN)=SLSTOR(1:NN,IOPL)
+      solution%shearrate%shearrate(IND(1:NN)) = sgnn(IND(1:NN))*SLPR(1:NN)*MacroDefRate%vMeqStrainRate
+      !
+      if (IPR == 2 .and. NLIST == 1) then
+          write (IMP,100)
+          write (IMP,104) Pancak2_input%nactiv,NN,NOPL
+          write (IMP,106) sumsq,(IND(i),i=1,NN)
+          do i=1,NN
+              write (IMP,101) i,IND(i),SLPR(i)*sgnn(IND(i))
+          end do
       end if
+100   format (' Results SLIPRAT')
+104   format (' Reduction of NACTIV from',I5,'   to',i5,' NOPL=',i5)
+106   format (d12.3,8i5)
+101   format (2i5,5x,d15.6)
+      if(NLIST==1) then
+          x=0.0
+          k=0
+          do i=1,NN
+              if (x > SLPR(i)) then
+                  x=SLPR(i)
+                  k=k+1
+              endif
+          enddo
+          if (X<0.0d0) write (IMP,102) k,X
       end if
- 104  format (' Reduction of NACTIV from',I5,'   to',i5,' NOPL=',i5)
-      if (IPR.eq.2) then
-      if (NLIST.eq.1) then
-      write (IMP,106) sumsq,(IND(i),i=1,NN)
-      end if
-      end if
- 106  format (d12.3,8i5)
-      x=0.0
-      k=0
-      do i=1,NN
-         j=IND(i)
-         Y=SLPR(i)
-         YY=Y*sgnn(j)
-         solution%shearrate%shearrate(j) = YY*MacroDefRate%vMeqStrainRate
-         if (IPR.eq.2) then
-         if (NLIST.eq.1) then
-         write (IMP,101) i,IND(i),YY
-         end if
-         end if
-         if (x.gt.Y) then
-                       x=Y
-                       k=k+1
-                     endif
-      enddo
-       if (X.lt.0.0d0) then
-       if (NLIST.eq.1) then 
-       write (IMP,102) k,X
-       end if
-       end if
- 102  format (' NEG. SL. RATE DETECTED',I5,d15.6)
- 101  format (2i5,5x,d15.6)
+102   format (' NEG. SL. RATE DETECTED',I5,d15.6)
+      !
       goto 789
-  6   ITR=-1
-      NN=NLP
-      do 11 i=1,NN
-      IND(i)=Pancak2_input%indact(i)
- 11   continue
-      if (IPR.eq.2) then
-      if (NLIST.eq.1) then
-      write (IMP,100)
+      !
+      !---LABEL 6---
+  6   NN = Pancak2_input%nactiv
+      IND(1:NN)=Pancak2_input%indact(1:NN)
+      solution%shearrate%shearrate(IND(1:NN)) = Pancak2_input%sliplp(1:NN)*MacroDefRate%vMeqStrainRate
+      !
+      if (IPR==2 .and. NLIST==1) then
+          write (IMP,100)
+          write (IMP,108) NN
+          do i=1,NN
+              write (IMP,101) i,IND(i),Pancak2_input%sliplp(i)
+          end do
       end if
-      end if
-      if (IPR.eq.2) then
-      if (NLIST.eq.1) then
-      write (IMP,108) NN
-      end if
-      end if
- 108  format (' Linear programming solution retained ',       &
-      ' NN=',i5)
-      x=0.0
-      k=0
-      do i=1,NN
-           Y=Pancak2_input%sliplp(i)
-           j=IND(i)
-           solution%shearrate%shearrate(j) = Y*MacroDefRate%vMeqStrainRate
-           if (IPR.eq.2) then
-           if (NLIST.eq.1) then
-             write (IMP,101) i,IND(i),Y
-           end if
-           end if
-           Y=abs(Y)
-           if (x.gt.Y) then
-                         x=Y
-                         k=k+1
-                       endif
-      enddo
-      if (X.lt.0.0d0) then
-      if (NLIST.eq.1) then
-      write (IMP,102) k,X
-      end if
+108   format (' Linear programming solution retained  NN=',i5)
+      if(NLIST==1) then
+          x=0.0
+          k=0
+          do i=1,NN
+               if (x > abs(Pancak2_input%sliplp(i))) then
+                   !looks like this branch is never followed...
+                   x=abs(Pancak2_input%sliplp(i))
+                   k=k+1
+               endif
+          enddo
+          if (X<0.0d0) write (IMP,102) k,X !looks like this statement is never followed...
       end if
       !
+      !---LABEL 789---
 789   continue   
       !
       !Set all remaining components of the solution
@@ -300,6 +255,12 @@
       Subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,A1,BB8)
       use altayIOConfig
       IMPLICIT double precision (A-H,O-Z)
+      integer, intent(in)                          :: NN
+      integer, dimension(8), intent(in)            :: IND
+      double precision, dimension(8), intent(out)  :: SLPR
+      integer, intent(out)                         :: ineg
+      double precision, intent(out)                :: sumsq
+      double precision, intent(in)                 :: sgnn
       double precision, dimension(:,:), intent(in) :: A1
       double precision, dimension(5), intent(in)   :: BB8
 !     December 2000
@@ -309,7 +270,7 @@
 !     Modified Aug 2010
 !
       dimension sgnn(DM_max_systems)
-      dimension A(13,13),B(13),SLPR(8),IND(8)
+      dimension A(13,13),B(13)
       dimension AA(13,13),BA(13),VAL(13),XV(13),YV(13)
       DATA TOl/1.0d-10/
 !      write (IMP,102) NN,(IND(i),i=1,NN)
