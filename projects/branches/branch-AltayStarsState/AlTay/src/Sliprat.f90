@@ -331,35 +331,46 @@
       return
       end subroutine
       !
-      subroutine STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-      use altayIOConfig
+    subroutine STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+    use altayIOConfig
 #ifdef ALTAY_SUBROUTINE
-      use altayRCM
+    use altayRCM
 #endif      
-      IMPLICIT double precision (A-H,O-Z)
-      dimension SLPR(8),IND(8),ISTOR(0:8,48),SLSTOR(0:8,48)
-      NOPL=NOPL+1
-      if (NOPL.gt.NSTOR) then
+    implicit none
+    integer, intent(in)                                   :: NSTOR
+    integer, intent(inout)                                :: NOPL
+    integer, intent(in)                                   :: NN
+    double precision, dimension(8), intent(in)            :: SLPR
+    integer, dimension(8), intent(in)                     :: IND
+    integer, dimension(0:8,48), intent(out)               :: ISTOR
+    double precision, dimension(0:8,48), intent(out)      :: SLSTOR
+    double precision, intent(in)                          :: SUMSQ
+    !
+    integer :: i = 0
+        !
+        NOPL=NOPL+1
+        !
+        if (NOPL.gt.NSTOR) then
 #ifndef ALTAY_SUBROUTINE
-         if (NLIST.eq.1) then
-         write (IMP,100)
-         end if
-         write (*,100)
-         call terminate(stopcode_runtimeerror)
-#else
-         RCM_RAISE(1,'STORE',                                            &
-         'Too small dimension NSTOR in SLIPRAT',RCM_RTN)
-#endif
-      endif
+            if (NLIST.eq.1) then
+                write (IMP,100)
+            end if
+            write (*,100)
+            call terminate(stopcode_runtimeerror)
  100  format (' STORE - increase dimension NSTOR in SLIPRAT,STORE')
-      ISTOR(0,NOPL)=NN
-      SLSTOR(0,NOPL)=SUMSQ
-      do i=1,NN
-         ISTOR(i,NOPL)=IND(i)
-         SLSTOR(i,NOPL)=SLPR(i)
-      enddo
-      return
-      end subroutine
+#else
+            RCM_RAISE(1,'STORE',                                            &
+            'Too small dimension NSTOR in SLIPRAT',RCM_RTN)
+#endif
+        endif
+        !
+        ISTOR(0,NOPL)=NN
+        SLSTOR(0,NOPL)=SUMSQ
+        ISTOR(1:NN,NOPL)=IND(1:NN)
+        SLSTOR(1:NN,NOPL)=SLPR(1:NN)
+        !
+        return
+        end subroutine
       !
       Subroutine Kleinkwa(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
 !     N1=number of equations
