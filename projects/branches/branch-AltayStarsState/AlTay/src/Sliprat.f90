@@ -254,27 +254,29 @@
       
       pure subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,A1,BB8)
       use altayIOConfig
-      IMPLICIT double precision (A-H,O-Z)
+      implicit none
       integer, intent(in)                          :: NN
       integer, dimension(8), intent(in)            :: IND
       double precision, dimension(8), intent(out)  :: SLPR
       integer, intent(out)                         :: ineg
       double precision, intent(out)                :: sumsq
-      double precision, intent(in)                 :: sgnn
+      double precision, intent(in)                 :: sgnn(DM_max_systems)
       double precision, dimension(:,:), intent(in) :: A1
       double precision, dimension(5), intent(in)   :: BB8
+      !
+      integer :: N1, N2, i, is, j, j1
+      integer, dimension(1) :: ineg_array
+      double precision :: A(13,13), B(13), BA(13), RES, x
+      double precision, parameter :: tol = 1.0d-10
 !     December 2000
 !     The  normalisation by DELTAT (now: MacroDefRate%vMeqStrainRate) of the september 2000 version has been
 !     removed here. Is now done in PANCAK2.
 !
 !     Modified Aug 2010
 !
-      dimension sgnn(DM_max_systems)
-      dimension A(13,13),B(13)
-      dimension AA(13,13),BA(13),VAL(13),XV(13),YV(13)
-      double precision, parameter :: tol = 1.0d-10
-!      write (IMP,102) NN,(IND(i),i=1,NN)
-! 102  format (' MINSQU NN',i5,' IND',8i5)
+
+
+      !
       !     Set up system of equations
       if (NN <= 5) then
           N1=5
@@ -303,32 +305,19 @@
              B(NN+j)=BB8(j)
           enddo
       endif
-!     Solve by least-squares method followed by singular value decomposition
-      call Kleinkwa(N1,N2,13,13,A,B,AA,BA,VAL,XV,YV,TOL,RES)
-!      write (IMP,100) RES
-! 100  format(' MINSQU - RES',d15.6)
-      do i=1,NN
-         SLPR(i)=BA(i)
-      enddo
-      sumsq=0.0d0
-      x=0.0d0
-      ineg=0
-      do i=1,NN
-         is=IND(i)
-         Y=SLPR(i) 
-         sumsq=sumsq+Y**2
-         if (x.gt.Y) then
-                       x=Y
-                       ineg=i
-                     endif
-      enddo
-!      write (IMP,101) (SLPR(i),i=1,NN)
-! 101  format (10F8.5)
-      if (RES.gt.(10000.0*TOL)) ineg=-1
-!      write (IMP,103) INEG,RES,sumsq
-! 103  format (' MINSQU INEG',i5,'  RES',d15.6,'  sumsq',d15.6)
-!      write (IMP,915) (SLPR(i),i=1,NN)
-! 915  format (6D15.3)
+      !
+      !Solve by least-squares method followed by singular value decomposition
+      call Kleinkwa(N1,N2,13,13,A,B,BA,TOL,RES)
+      !
+      SLPR(1:NN) = BA(1:NN)
+      !
+      sumsq = sum(SLPR(1:NN)**2)
+      !
+      ineg_array = minloc(SLPR(1:NN))
+      ineg = ineg_array(1)
+      if (minval(SLPR(1:NN)) > 0.0d0) ineg = 0
+      if (RES > (10000.0*TOL)) ineg = -1
+      !
       return
       end subroutine
       !
@@ -373,7 +362,7 @@
         return
         end subroutine
       !
-      pure subroutine Kleinkwa(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
+      pure subroutine Kleinkwa(N1,N2,M1,M2,A,B,BA,TOL,RES)
 !     N1=number of equations
 !     N2=number of unknowns
 !     A=coefficient matrix
@@ -386,54 +375,47 @@
 !     We make it a set with a symmetrical matrix, because
 !     we want to use STELSEL to solve it.
 !
-      IMPLICIT double precision (A-H,O-Z)
+      implicit none
       integer,intent(in)                :: N1,N2,M1,M2
-      double precision,intent(inout)    :: A(M1,M2)
-      double precision,intent(inout)    :: B(M2)
-      double precision,intent(inout)    :: AA(M2,M2)
-      double precision,intent(inout)    :: BA(M2)
-      double precision,intent(inout)    :: VAL(M2)
-      double precision,intent(inout)    :: XV(M2)
-      double precision,intent(inout)    :: YV(M2)
+      double precision,intent(in)    :: A(M1,M2)
+      double precision,intent(in)    :: B(M2)
+      double precision,intent(out)    :: BA(M2)
       double precision,intent(in)       :: TOL
       double precision,intent(out)      :: RES
       !
-      do 7 kk=1,N2
-      x=0.0
-      do 25 i=1,N1
-      x=x+A(i,kk)*B(i)
-  25  continue
-      BA(kk)=x
-      do 8 j=1,N2
-      y=0.0
-      do 9 i=1,N1
-      y=y+A(i,kk)*A(i,j)
-   9  continue
-      AA(kk,j)=y
-   8  continue
-   7  continue
-      call STELSEL(N2,M2,AA,BA,TOL,VAL,XV,YV)
+      double precision    :: AA(M2,M2)
+      double precision    :: VAL(M2)
+      double precision    :: XV(M2)
+      double precision    :: YV(M2)
+      integer :: kk, i, j
+      !
+      do kk=1,N2
+          BA(kk) = sum(A(1:N1,kk)*B(1:N1))
+          do j=1,N2
+              AA(kk,j) = sum(A(1:N1,kk)*A(1:N1,j))
+          end do
+      end do
+      !
+      call STELSEL(N2,M2,AA,BA,TOL)
+      !
       RES=0.0
-      do 1 i=1,N1
-      y=0.0
-      do 2 j=1,N2
-      y=y+A(i,j)*BA(j)
-   2  continue
-      RES=RES+(y-B(i))**2
-   1  continue
+      do i=1,N1
+          RES = RES + (sum(A(i,1:N2)*BA(1:N2))-B(i))**2
+      end do
+      !
       return
       end subroutine
       !
-      pure subroutine STELSEL(N,M,A,R,TOL,VAL,XV,YV)
+      pure subroutine STELSEL(N,M,A,R,TOL)
       implicit none
       integer,intent(in)                :: N,M
       double precision,intent(inout)    :: A(M,M)
       double precision,intent(inout)    :: R(M)
       double precision,intent(in)       :: TOL
-      double precision,intent(inout)    :: VAL(M)
-      double precision,intent(inout)    :: XV(M)
-      double precision,intent(inout)    :: YV(M)
       !
+      double precision    :: VAL(M)
+      double precision    :: XV(M)
+      double precision    :: YV(M)
       integer :: i,j
       double precision :: y, z
 !
