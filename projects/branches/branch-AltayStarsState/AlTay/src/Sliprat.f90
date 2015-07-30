@@ -252,7 +252,7 @@
       !> association, and (2) all these procedures declare 'implicit double precision 
       !> (A-H,O-Z)' statement.
       
-      Subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,A1,BB8)
+      pure subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,A1,BB8)
       use altayIOConfig
       IMPLICIT double precision (A-H,O-Z)
       integer, intent(in)                          :: NN
@@ -272,38 +272,39 @@
       dimension sgnn(DM_max_systems)
       dimension A(13,13),B(13)
       dimension AA(13,13),BA(13),VAL(13),XV(13),YV(13)
-      DATA TOl/1.0d-10/
+      double precision, parameter :: tol = 1.0d-10
 !      write (IMP,102) NN,(IND(i),i=1,NN)
 ! 102  format (' MINSQU NN',i5,' IND',8i5)
-      if (NN.gt.5) goto 2
-      N1=5
-      N2=NN
-      do i=1,N2
-         is=IND(i)
-         A(1:5,i)=sgnn(is)*A1(1:5,is)
-      enddo
-      B(1:5)=BB8(1:5)
-      goto 1
-  2   N1=NN+5
-      N2=N1
-!     Set up system of equations
-      A = 0.D0
-      do i=1,NN
-         is=IND(i)
-         A(i,i)=2.D0
-         B(i)=0.0
-         do j=1,5
-            j1=NN+j
-            x=sgnn(is)*A1(j,is)
-            A(i,j1)=-x
-            A(j1,i)=x
-         enddo
-      enddo
-      do j=1,5
-         B(NN+j)=BB8(j)
-      enddo
+      !     Set up system of equations
+      if (NN <= 5) then
+          N1=5
+          N2=NN
+          do i=1,N2
+             is=IND(i)
+             A(1:5,i)=sgnn(is)*A1(1:5,is)
+          enddo
+          B(1:5)=BB8(1:5)
+      else
+          N1=NN+5
+          N2=N1
+          A = 0.D0
+          do i=1,NN
+             is=IND(i)
+             A(i,i)=2.D0
+             B(i)=0.0
+             do j=1,5
+                j1=NN+j
+                x=sgnn(is)*A1(j,is)
+                A(i,j1)=-x
+                A(j1,i)=x
+             enddo
+          enddo
+          do j=1,5
+             B(NN+j)=BB8(j)
+          enddo
+      endif
 !     Solve by least-squares method followed by singular value decomposition
-   1  call Kleinkwa(N1,N2,13,13,A,B,AA,BA,VAL,XV,YV,TOL,RES)
+      call Kleinkwa(N1,N2,13,13,A,B,AA,BA,VAL,XV,YV,TOL,RES)
 !      write (IMP,100) RES
 ! 100  format(' MINSQU - RES',d15.6)
       do i=1,NN
@@ -372,7 +373,7 @@
         return
         end subroutine
       !
-      Subroutine Kleinkwa(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
+      pure subroutine Kleinkwa(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
 !     N1=number of equations
 !     N2=number of unknowns
 !     A=coefficient matrix
@@ -386,8 +387,17 @@
 !     we want to use STELSEL to solve it.
 !
       IMPLICIT double precision (A-H,O-Z)
-      dimension  A(M1,M2),AA(M2,M2),B(M2),BA(M2)
-      dimension VAL(M2),XV(M2),YV(M2)
+      integer,intent(in)                :: N1,N2,M1,M2
+      double precision,intent(inout)    :: A(M1,M2)
+      double precision,intent(inout)    :: B(M2)
+      double precision,intent(inout)    :: AA(M2,M2)
+      double precision,intent(inout)    :: BA(M2)
+      double precision,intent(inout)    :: VAL(M2)
+      double precision,intent(inout)    :: XV(M2)
+      double precision,intent(inout)    :: YV(M2)
+      double precision,intent(in)       :: TOL
+      double precision,intent(out)      :: RES
+      !
       do 7 kk=1,N2
       x=0.0
       do 25 i=1,N1
@@ -414,9 +424,18 @@
       return
       end subroutine
       !
-      Subroutine STELSEL(N,M,A,R,TOL,VAL,XV,YV)
-      IMPLICIT double precision (A-H,O-Z)
-      dimension A(M,M),R(M),VAL(M),XV(M),YV(M)
+      pure subroutine STELSEL(N,M,A,R,TOL,VAL,XV,YV)
+      implicit none
+      integer,intent(in)                :: N,M
+      double precision,intent(inout)    :: A(M,M)
+      double precision,intent(inout)    :: R(M)
+      double precision,intent(in)       :: TOL
+      double precision,intent(inout)    :: VAL(M)
+      double precision,intent(inout)    :: XV(M)
+      double precision,intent(inout)    :: YV(M)
+      !
+      integer :: i,j
+      double precision :: y, z
 !
 !     to solve the system of equations A * X = R using
 !     eigenvalues and eigenvectors
@@ -465,12 +484,15 @@
       return
       end subroutine
       !
-      SUBROUTINE tred2(a,n,np,d,e)
-      implicit double precision (a-h,o-z)
-      INTEGER n,np
-      double precision a(np,np),d(np),e(np)
-      INTEGER i,j,k,l
-      double precision f,g,h,hh,scale
+      pure subroutine tred2(a,n,np,d,e)
+      implicit none
+      integer,intent(in)                :: n,np
+      double precision,intent(inout)    :: a(np,np)
+      double precision,intent(out)      :: d(np)
+      double precision,intent(inout)    :: e(np)
+      INTEGER :: i,j,k,l
+      double precision :: f,g,h,hh,scale
+      !
       do 18 i=n,2,-1
         l=i-1
         h=0.
@@ -548,15 +570,19 @@
 !     ... to here when finding only eigenvalues.
 24    continue
       return
-      END SUBROUTINE
+      end subroutine
       !
 !  (C) Copr. 1986-92 Numerical Recipes Software D04-4-+5Z5{..
-      SUBROUTINE tqli(d,e,n,np,z)
-      implicit double precision (a-h,o-z)
-      INTEGER n,np
-      double precision d(np),e(np),z(np,np)
-      INTEGER i,iter,k,l,m
-      double precision b,c,dd,f,g,p,r,s
+      pure subroutine tqli(d,e,n,np,z)
+      implicit none
+      double precision,intent(inout) :: d(np)
+      double precision,intent(inout) :: e(np)
+      double precision,intent(inout) :: z(np,np)
+      integer,intent(in)             :: n,np
+      !
+      integer :: i,iter,k,l,m
+      double precision :: b,c,dd,f,g,p,r,s
+      !
       do 11 i=2,n
         e(i-1)=e(i)
 11    continue
@@ -569,7 +595,7 @@
 12      continue
         m=n
 2       if(m.ne.l)then
-          if(iter.eq.100) write(*,*) 'too many iterations in tqli'
+          ! if(iter.eq.100) write(*,*) 'too many iterations in tqli'
           iter=iter+1
           g=(d(l+1)-d(l))/(2.D0*e(l))
           r=pythag(g,1.0d00)
@@ -609,13 +635,14 @@
         endif
 15    continue
       return
-      END SUBROUTINE
+      end subroutine
       !
 !  (C) Copr. 1986-92 Numerical Recipes Software D04-4-+5Z5{..
-      double precision FUNCTION pythag(a,b)
-      implicit double precision (a-h,o-z)
+      pure double precision function pythag(a,b)
+      implicit none
       double precision,intent(in) :: a,b
-      double precision absa,absb
+      !
+      double precision :: absa,absb
       absa=abs(a)
       absb=abs(b)
       if(absa.gt.absb)then
