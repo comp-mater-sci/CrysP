@@ -89,6 +89,13 @@ C:\twrmtm\projects\branches\branch-AltayStarsState\AlTay\AlTay\x64\Release\AlTay
 copy fcc12_AL_1-preconf.CTL Main.CTL
 C:\twrmtm\projects\branches\branch-AltayStarsState\AlTay\AlTay\x64\Release\AlTay.exe
 
+copy 0FC-5000.CTL Main.CTL
+C:\twrmtm\projects\branches\branch-AltayStarsState\AlTay\AlTay\x64\Release\AlTay.exe
+copy 0Al-5000.CTL Main.CTL
+C:\twrmtm\projects\branches\branch-AltayStarsState\AlTay\AlTay\x64\Release\AlTay.exe
+copy fcc12_AL_1_ba-dc.CTL Main.CTL
+C:\twrmtm\projects\branches\branch-AltayStarsState\AlTay\AlTay\x64\Release\AlTay.exe
+
 del  *.TWN *.CUB *.h5
 pause
 
