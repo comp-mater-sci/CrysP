@@ -57,7 +57,8 @@
       ! Components of the new-style data management
       type(altayConfigData)             :: config
       type(altayStateData),target       :: state
-      type(altayMaterialData)           :: material
+      type(MaterialData)                :: material
+      type(MaterialConfig)              :: material_config !> \todo Resove this temporary fix
       ! Storage for persistent state variables
       class(StatePersistenceScheme), pointer :: input_storage, output_storage
 #ifdef TESTING_ENABLED
@@ -220,12 +221,20 @@
             write(*,fmt=9010) 'hardening section'
             call terminate(stopcode_inputerror)
       endif
-
-      call material%init(config, info)
+      !> \todo Resove temporary fix to material_config
+      ! temporary fix -->>
+      allocate(material_config%phases(1))
+      associate(phase => material_config%phases(1))
+          phase%deformation_mechanism = config%deformationmechanism
+          phase%hardening = config%hardening
+          phase%intraphase_interfaces = MesostructureConfig(config%simul_init%FMicro, config%micros_fname)
+      end associate
+      call initialize(material, material_config, info)
       if (info /= criSuccess) then
             write(*,*) 'material%init returned error; info=', info
             call terminate(stopcode_inputerror)
       endif
+      ! <<--
       !
       CALL SIMUL(config, state, material, 0, 1)
 

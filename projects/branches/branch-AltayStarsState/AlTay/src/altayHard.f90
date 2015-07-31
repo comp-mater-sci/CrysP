@@ -1,11 +1,9 @@
 !> Dispatcher of hardening models
 module altayHard
 use criErrcodes
-use altayHardTypes
+use altayHardConstants
 use altayCRSSTypes
-use altayState
-use altayHardLaw_Simple
-use altayHardLaw_KM
+use altayStateTypes
 use altayConfig
 !
 #ifdef PEBP_ENABLED
@@ -15,22 +13,8 @@ use altayDSHstate
 #endif
 implicit none
       
-    type :: HardeningModels
-        
-        integer             :: hardLawID = hard_none
-        
-        type(VoceParams)    :: voceParams
-        
-        type(SwiftParams)   :: swiftParams
-        
-        type(KMParameters)  :: kmParams
-        
-        !> \todo proper initialization of the ratios must be implemented
-        type(CRSSData)      :: crss_ratios
-    end type
-
-    interface HardeningModels_init
-        module procedure :: HardeningModels_initFromConfig
+    interface HardeningModelParams_init
+        module procedure :: HardeningModelParams_initFromConfig
     end interface
     
     contains
@@ -83,9 +67,9 @@ implicit none
 
     !
     !> Initialize module from config data object
-    subroutine HardeningModels_initFromConfig(this,config, info)
+    subroutine HardeningModelParams_initFromConfig(this,config, info)
     implicit none
-    type(HardeningModels),intent(out)       :: this
+    type(HardeningModelParams),intent(out)       :: this
     type(HardeningConfig),intent(in)        :: config
     integer,intent(out)                     :: info
     !
@@ -134,7 +118,7 @@ implicit none
       
     subroutine altayHard_getTau(hardparams, gamma, tau, info)
     implicit none
-    type(HardeningModels),intent(in)    :: hardparams
+    type(HardeningModelParams),intent(in)    :: hardparams
     double precision,intent(in)         :: gamma
     double precision,intent(out)        :: tau
     integer,intent(out)                 :: info
@@ -162,7 +146,7 @@ implicit none
       
     subroutine altayHard_getCRSS(hardparams, state, grain_id, crss,info)
     implicit none
-    type(HardeningModels),intent(in)    :: hardparams
+    type(HardeningModelParams),intent(in)    :: hardparams
     type(altayStateVariables),intent(in):: state
     integer,intent(in)                  :: grain_id
     type(CRSSData),intent(inout)        :: crss

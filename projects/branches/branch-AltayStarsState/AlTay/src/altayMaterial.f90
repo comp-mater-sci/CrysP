@@ -1,55 +1,67 @@
 ! $Id$
 
+#include "criMacros.fpp"
+
 !> Material model used in AlTay
 module altayMaterial
 use criErrcodes
-use altayPhase
+use altayMaterialTypes
 use altayConfig
+use altayHard
 implicit none
 
+    interface initialize
+        module procedure MaterialData_initFromConfig, PhaseData_initFromConfig
+    end interface
 
-
-    !> Data type that characterizes the material
-    type :: altayMaterialData
-        
-        integer                             :: n_phases = 0
-        
-        !> dimensionality = [n_phases]
-        !> Current implementation is for single-phase materials: dimensionality = [1]
-        type(altayPhaseData), dimension(1)  :: phase
-
-    contains
-
-    procedure, pass(this) :: init => altayMaterialData_initFromConfig
-
-    end type
-
-
-    contains
-
+contains
+    
     !> Initialized all components of altayMaterialData from configuration cnf
-    subroutine altayMaterialData_initFromConfig(this, cnf, info)
+    subroutine MaterialData_initFromConfig(this, cnf, info)
     implicit none
-    class(altayMaterialData), intent(out):: this
-    type(altayConfigData), intent(in)    :: cnf
-    integer, intent(out)                 :: info
+    type(MaterialData), intent(out)         :: this
+    type(MaterialConfig), intent(in)        :: cnf
+    integer, intent(out)                    :: info
     !
-    integer :: i = 0 !< running index
-    !integer :: status=0
-    !character(len=100) :: error
-        !
-        this%n_phases = 1
-        !
-        ! (Re-)allocation
-        !if (allocated(this%phase)) deallocate(this%phase)
-        !allocate(this%phase(1:this%n_phases),stat=status,errmsg=error)
+    integer :: i, nphases, memstat
+    !
+        info = criErr_BadArgs
+        CHOOSE(nphases, allocated(cnf%phases), size(cnf%phases), 0)
+        if (nphases <= 0) return
+        info = criErr_MemAlloc
+        allocate(this%phases(nphases),stat=memstat)
+        if (memstat /= 0) return
         !
         ! Initialize all phases
-        do i=1,this%n_phases
-            call altayPhaseData_initFromConfig(this%phase(i), cnf, info)
+        do i = 1, nphases
+            call PhaseData_initFromConfig(this%phases(i), cnf%phases(i), info)
             if (info /= criSuccess ) return
         end do
         !
     end subroutine 
 
+    
+    !> Initialized all components of altayPhaseData from configuration cnf
+    subroutine PhaseData_initFromConfig(this, cnf, info)
+    implicit none
+    type(PhaseData), intent(out)  :: this
+    type(PhaseConfig), intent(in)       :: cnf
+    integer, intent(out)                :: info
+        !
+        ! Initialize deformationmechanism data
+        call DeformationMechanismData_init(this%deformationmechanism,cnf%deformation_mechanism,info)
+        if (info /= criSuccess) then
+            write(*,*) 'Cannot initialize deformationmechanism data from configuration.'
+            return
+        endif
+        !
+        ! Initialize hardening
+        call HardeningModelParams_init(this%hardening,cnf%hardening, info)
+        if (info /= criSuccess) then
+            write(*,*) 'The hardening parameters provided contain flaws.'
+            return
+        endif
+        !
+    end subroutine 
+    
 end module

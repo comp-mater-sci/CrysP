@@ -1,41 +1,49 @@
 module altayStateTypes
-use altayTexAccess
 use criErrcodes
 use criMathUtils
-use altayTexAccess
 use altayMesostructure
+use altayODFTypes
+use altayMaterialTypes
 use altayHardTypes
-use altayCRSSTypes
+!use altayCRSSTypes
 use altayHardLaw_KM
 #ifdef PEBP_ENABLED
-use altayHardLaw_DSH, only: DSHStateVariable => StatVar
+use altayHardLaw_DSH, only: DSHStateVariable
 #endif
 implicit none
 
+    type :: HardeningStateVariables
+        
+#ifdef PEBP_ENABLED
+        !> State variables of the DSH hardening law.
+        type(DSHStateVariable),pointer      :: dsh_state => null()
+#endif
+
+        !> State variables of the Kocks-Mecking hardening law.
+        type(KMStateVariables),pointer      :: km_state => null()
+        
+        !> \todo: decide whether the crss is actually needed.
+        !> Collection of CRSS per grain (useful for some/all hardening models?)
+        ! type(CRSSData)                   :: crss   
+        
+    end type
 
 
 
     !> Basic state of any individual grain
     type :: GrainState
         
+        !> Phase where the grain belongs to
+        type(PhaseData),pointer             :: phase => null()
+        
         !> Associated orientation
-        type(DiscreteOrientation),pointer  :: orientation => null()
+        type(DiscreteOrientation),pointer   :: orientation => null()
         
         !> Accumulated shear deformation (including both slip and twinning),
         !> from a reference (virgin) state up to the current state. 
         double precision                   :: accumulatedshear = 0.0D0
-
-#ifdef PEBP_ENABLED
-        !> State variables of the DSH hardening law.
-        type(DSHStateVariable)             :: dsh_state
-#endif
-
-        !> State variables of the Kocks-Mecking hardening law.
-        type(KMStateVariables)             :: km_state
         
-        !> \fixme: decide whether the crss is actually needed.
-        !> Collection of CRSS per grain (useful for some/all hardening models?)
-        ! type(CRSSData)                   :: crss   
+        type(HardeningStateVariables),pointer       :: hardening_state
         
     end type
     

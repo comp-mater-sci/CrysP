@@ -3,7 +3,7 @@
 !
 module altayDSHState
 use altayHardLaw_DSH
-use altayHardTypes
+use altayHardConstants
 implicit none
 
       type(StatVar),allocatable,dimension(:),private,save    :: KS_state

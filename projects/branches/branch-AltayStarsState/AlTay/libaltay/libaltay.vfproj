@@ -66,11 +66,13 @@
 		<File RelativePath="..\src\Alg0A.f90"/>
 		<File RelativePath="..\src\Alg1.f90"/>
 		<File RelativePath="..\src\Alg2.f90"/>
+		<File RelativePath="..\src\altayAPI.f90"/>
 		<File RelativePath="..\src\altayConfig.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Debug|x64">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration></File>
+		<File RelativePath="..\src\altayConfigReader.f90"/>
 		<File RelativePath="..\src\altayCRSSTypes.f90"/>
 		<File RelativePath="..\src\altayDeformationMechanism.f90"/>
 		<File RelativePath="..\src\altayDeformationMechanismConstants.f90"/>
@@ -93,15 +95,16 @@
 			<FileConfiguration Name="Release-Amplifier|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\src\altayHardLawKM.f90"/>
 		<File RelativePath="..\src\altayHardLawSimple.f90"/>
+		<File RelativePath="..\src\altayHardConstants.f90"/>
 		<File RelativePath="..\src\altayHardTypes.f90"/>
 		<File RelativePath="..\src\altayHDF5Context.f90"/>
 		<File RelativePath="..\src\altayHDF5PersitenceScheme.f90"/>
 		<File RelativePath="..\src\altayIOContext.f90"/>
 		<File RelativePath="..\src\altayMaterial.f90"/>
+		<File RelativePath="..\src\altayMaterialTypes.f90"/>
 		<File RelativePath="..\src\altayMillerIndices.f90"/>
 		<File RelativePath="..\src\altayNativePersistenceScheme.f90"/>
 		<File RelativePath="..\src\altayODFTypes.f90"/>
-		<File RelativePath="..\src\altayPhase.f90"/>
 		<File RelativePath="..\src\altayRCM.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
@@ -153,6 +156,7 @@
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Debug|x64">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration></File>
+		<File RelativePath="..\src\altaySDVTypes.f90"/>
 		<File RelativePath="..\src\TBH.f90"/>
 		<File RelativePath="..\src\texFormatConstants.f90"/>
 		<File RelativePath="..\src\texFormats.f90">

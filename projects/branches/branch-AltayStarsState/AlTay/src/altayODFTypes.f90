@@ -2,7 +2,7 @@
 ! $Id$
 !
 !> Data type for discrete ODF and primitive operations on the type.
-module altayODfTypes
+module altayODFTypes
 use criErrcodes
 use criMathUtils
 implicit none

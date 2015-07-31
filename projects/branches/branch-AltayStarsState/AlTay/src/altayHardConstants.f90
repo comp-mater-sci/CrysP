@@ -1,6 +1,7 @@
-!> Provides common data types and constants to be used by various hardening laws.
-module altayHardTypes
-      
+!> Provides constants related to various hardening laws.
+module altayHardConstants
+implicit none
+
     !> Unspecified or not unimplemented hardening law.
     integer,parameter :: hard_invalid = -1
       

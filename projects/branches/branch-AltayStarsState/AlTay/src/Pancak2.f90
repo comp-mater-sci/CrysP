@@ -4,7 +4,7 @@
       module altayPancake
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use criMathUtils
-      use altayHardTypes
+      use altayHardConstants
       use altayCRSSTypes
       use altayDeformationMechanism
       

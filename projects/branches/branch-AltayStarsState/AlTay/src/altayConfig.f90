@@ -26,9 +26,16 @@
 
 
 !> Basic configuration of AlTay in a form of formalized data structures.
+!>
+!>
+!> Named constants defined in this module are prefixed with `CNF_`
+!> \remark The data types defined in altayConfig deliberately do not make use
+!>         of inheritance. This is set by the constraint on the content
+!>         of coarrays (CAF) that are not permitted to contain polymorphic 
+!>         objects.
 module altayConfig
 ! Import configuration structures from AlTay modules
-use altayHardTypes
+use altayHardConstants
 use altayCRSSTypes
 use altayHardLaw_Simple, only: VoceConfig, SwiftKConfig, SwiftSConfig
 #ifdef PEBP_ENABLED
@@ -38,35 +45,210 @@ use altayHardLaw_KM
 use altayTexFormatConstants
 use altayDeformationMechanismConstants
 use criMathUtils
+use criPath
 
 implicit none
 
-      integer,parameter  :: fname_len = 512 !< Length of filenames
+    integer,parameter :: CNF_ValueNone = 0
 
-      !> \name Named constants for identifiers of the supported models
-      !>@{ 
-      integer,parameter :: modelFCTaylor = 1, modelAlamel = 2
-      
-      !>@}
-      
-      type :: DeformationMechanismConfig
-            !> Identifyer for source type of deformation mechanism
-            !> See altayDeformationMechanism for the list of possible values. \sa altayDeformationMechanism
-            integer                                   :: ID = DM_none
+    integer,parameter :: CNF_jobtitle_maxlen = 256
+    
+    !> \name Named constants for identifiers of the supported models
+    !>@{ 
+    integer,parameter :: CNF_modelNone = 0
+    integer,parameter :: CNF_modelFCTaylor = 1    !< Full Constraint Taylor
+    integer,parameter :: CNF_modelAlamel = 2      !< ALAMEL (single phase)
+    integer,parameter :: CNF_modelAlamelMP = 3    !< ALAMEL (multi-phase)
+    !>@}
+    
+    
+    !> \name Named constants for identifiers of the supported models
+    !>@{ 
+    integer,parameter :: CNF_UnknownDataPersistency = -1
+    integer,parameter :: CNF_DataPersistencyNone = 0
+    integer,parameter :: CFN_NoDataPersistency = 1
+    integer,parameter :: CFN_NativeDataPersistency = 2
+    integer,parameter :: CFN_HDF5DataPersistency = 3
+    !>@}
 
-            !> Name of the file/preconfiguration containing definition of deformation mechanism
-            character(len=fname_len)                  :: input_fname = ''
-      end type
 
-      type :: TextureConfig
-            !> Type of texture representation
-            !>
-            !> See altayTexFormatConstants for the list of possible values. \sa altayTexFormatConstants
-            integer                                   :: input_type = TF_SMT     
-            character(len=fname_len)                  :: input_fname = ''
-            integer                                   :: block_id = 1
-      end type
+    !> Configuration of deformmation mechanisms
+    type :: DeformationMechanismConfig
+        !> Identifier for source type of deformation mechanism
+        !> See altayDeformationMechanism for the list of possible values. \sa altayDeformationMechanism
+        integer                                     :: id = DM_none
 
+        !> Name of the file/preconfiguration containing definition of deformation mechanism
+        !> Relevant only if id sets a file-based source of deformation mechanism data.
+        character(len=max_pathlen)                  :: input_fname = ''
+    end type
+
+
+
+    !> Configuration of texture data exchange
+    !> \todo Update the names of the fields - they are not exclusively related to input files.
+    type :: TextureConfig
+        !> Type of texture representation
+        !>
+        !> See altayTexFormatConstants for the list of possible values. \sa altayTexFormatConstants
+        integer                                   :: input_type = TF_SMT
+        character(len=max_pathlen)                :: input_fname = ''
+        integer                                   :: block_id = 1
+    end type
+
+
+    !> Configuration of state variables of the hardening model. It is 
+    !> relevant only for stateful hardening laws.
+    !> \todo To be eliminated in the future.
+    type :: HardeningStateConfig
+          
+        !> Flag that decides if state variables should be read from file.
+        logical                       :: read_state = .false.
+            
+        !> Name of file that contains state variables
+        character(len=max_pathlen)      :: input_fname = ''
+            
+        !> Number of blocks to be skipped while reading the input file
+        integer                       :: block_id = 0
+          
+    end type
+    
+    !> Parameters of available hardening models.
+    type :: HardeningConfig
+        !> Selector of the model for hardening of deformation systems. 
+        !> 
+        !> Acceptable values depend on availability of CRSS (aka TAUC) hardening models 
+        !> that are implemented in the code.
+        !> See module altayHard for details about available hardening laws.
+        !> \sa crss_ratios 
+        integer                 :: hardLawID = hard_None
+
+        type(HardeningStateConfig)  :: stateCnf
+            
+        !> Initial values of CRSS ratios
+        type(CRSSData)          :: crss_ratios
+
+        !> Parameters of Voce hardening law.
+        type(VoceConfig)        :: VoceCnf
+            
+        !> Parameters of Swift hardening law ('engineering-type')
+        type(SwiftKConfig)      :: SwiftKCnf
+            
+        !> Parameters of Swift hardening law ('scientific-type')
+        type(SwiftSConfig)      :: SwiftSCnf
+#ifdef PEBP_ENABLED
+        !> Parameters of Dislocation Substructural Hardening models (PEBP variants)
+        type(PEBPConfig)        :: PEBPCnf
+#endif PEBP_ENABLED
+        !> Parameters of Kocks-Mecking law
+        type(KMConfig)          :: KMCnf
+    end type
+    
+    type :: MesostructureConfig
+        
+        double precision, dimension(3,3)    :: FMicro = unit_sr_matrix
+        
+        character(len=max_pathlen)          :: file_path = ''
+        
+    end type
+    
+    type :: PhaseConfig
+        
+        type(DeformationMechanismConfig)    :: deformation_mechanism
+
+        type(HardeningConfig)               :: hardening
+
+        type(MesostructureConfig)           :: intraphase_interfaces
+        
+    end type
+
+
+    
+    type :: MaterialConfig
+        
+        type(PhaseConfig),dimension(:),allocatable          :: phases
+        
+        type(MesostructureConfig),dimension(:),allocatable  :: interphase_interfaces
+        
+    end type
+         
+
+    integer,parameter :: CNF_step_name_maxlen = 32
+
+    type :: AssemblyStepConfig
+        
+        
+    end type
+    
+    
+    type :: InitializationStepConfig
+        
+        integer :: data_persistency_scheme = CNF_DataPersistencyNone
+        
+        character(len=max_pathlen)      :: file_path = ''
+        
+        
+    end type
+    
+    
+    type :: AnalysisStepConfig
+        
+        integer :: model_type = CNF_modelAlamel
+        
+        logical :: advance_state = .true.
+        
+        logical :: full_model = .true.
+        
+        double precision,dimension(sr_tensor_dim,sr_tensor_dim) :: input = 0.D0
+        
+        !> Number of increments
+        integer                                   :: nincrements = 1
+
+        
+    end type
+    
+    
+    type :: OutputStepConfig
+        
+        logical                     :: store_state = .true.
+        
+        logical                     :: use_output_filters = .true.
+        
+        character(len=max_pathlen)  :: file_path = ''
+        
+    end type
+    
+    
+    
+    type :: StepConfig
+        
+        character(len=CNF_step_name_maxlen)         :: name = 'Step'
+        
+        type(AssemblyStepConfig),allocatable        :: assembly_step
+
+        type(InitializationStepConfig),allocatable  :: initialization_step
+        
+        type(AnalysisStepConfig),allocatable        :: analysis_step
+        
+        type(OutputStepConfig),allocatable          :: output_step
+        
+    end type
+    
+
+    type :: SimulationConfig
+        
+        character(len=CNF_jobtitle_maxlen)              :: jobtitle = 'default'
+        
+        type(MaterialConfig)                            :: materials
+        
+        type(StepConfig),dimension(:),allocatable       :: steps
+        
+    end type
+
+    !
+    ! OLD STYLE CONFIG. To be phased out.
+    !
+    
       
       type :: simulStepInputData
             !> Flag that decides if this step leads to modification of the texture.
@@ -153,20 +335,7 @@ implicit none
             logical                                   :: use_cubfile = .false.
       end type
 
-      !> Configuration of state variables of the hardening model. It is 
-      !> relevant only for stateful hardening laws.
-      type :: HardeningStateConfig
-          
-            !> Flag that decides if state variables should be read from file.
-            logical                       :: read_state = .false.
-            
-            !> Name of file that contains state variables
-            character(len=fname_len)      :: input_fname = ''
-            
-            !> Number of blocks to be skipped while reading the input file
-            integer                       :: block_id = 0
-          
-      end type
+
       
 #ifdef PEBP_ENABLED
       type :: PEBPConfig
@@ -174,36 +343,7 @@ implicit none
       end type
 #endif
       
-      !> Parameters of available hardening models.
-      type :: HardeningConfig
-            !> Selector of the model for hardening of deformation systems. 
-            !> 
-            !> Acceptable values depend on availability of CRSS (aka TAUC) hardening models 
-            !> that are implemented in the code.
-            !> See module altayHard for details about available hardening laws.
-            !> \sa crss_ratios 
-            integer                 :: hardLawID = hard_None
 
-            type(HardeningStateConfig)  :: stateCnf
-            
-            !> Initial values of CRSS ratios
-            type(CRSSData)          :: crss_ratios
-
-            !> Parameters of Voce hardening law.
-            type(VoceConfig)        :: VoceCnf
-            
-            !> Parameters of Swift hardening law ('engineering-type')
-            type(SwiftKConfig)      :: SwiftKCnf
-            
-            !> Parameters of Swift hardening law ('scientific-type')
-            type(SwiftSConfig)      :: SwiftSCnf
-#ifdef PEBP_ENABLED
-            !> Parameters of Dislocation Substructural Hardening models (PEBP variants)
-            type(PEBPConfig)        :: PEBPCnf
-#endif PEBP_ENABLED
-            !> Parameters of Kocks-Mecking law
-            type(KMConfig)          :: KMCnf
-      end type
       
       !> 
       type :: simulData
@@ -222,10 +362,10 @@ implicit none
       !> Root-level configuration structure.
       type :: altayConfigData
             !>
-            integer                                   :: model_id      = modelAlamel
-            character(len=fname_len)                  :: output_prefix = 'alamel'
-            character(len=fname_len)                  :: jobtitle      = 'alamel'
-            character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
+            integer                                   :: model_id      = CNF_modelAlamel
+            character(len=max_pathlen)                  :: output_prefix = 'alamel'
+            character(len=max_pathlen)                  :: jobtitle      = 'alamel'
+            character(len=max_pathlen)                  :: micros_fname  = 'micro1.smt'
             type(DeformationMechanismConfig)          :: deformationmechanism
             type(outputConfig)                        :: output_config
             type(HardeningConfig)                       :: hardening
@@ -258,9 +398,9 @@ contains
       integer,intent(out)                       :: info
       !
             select case(modelId)
-            case(modelFCTaylor)
+            case(CNF_modelFCTaylor)
                   cnf%simul_init%ngr = 1
-            case(modelAlamel)
+            case(CNF_modelAlamel)
                   cnf%simul_init%ngr = 2
             case default
                   info = -1
@@ -279,7 +419,7 @@ contains
       !
             isValidModelType = .false.
             select case(modelId)
-            case(modelFCTaylor,modelAlamel)
+            case(CNF_modelFCTaylor,CNF_modelAlamel)
                   ! OK, supported model
                   isValidModelType = .true.
             end select

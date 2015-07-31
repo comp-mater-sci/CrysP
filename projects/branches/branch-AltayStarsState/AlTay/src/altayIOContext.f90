@@ -42,11 +42,16 @@ implicit none
     
 contains
     
-    function RawFileContext_init(path) result(this)
-    character(len=*),intent(in)     :: path
-    type(RawFileContext) :: this
+    function RawFileContext_init(path, mode) result(this)
+    implicit none
+    character(len=*),intent(in)             :: path
+    character(len=*),intent(in),optional    :: mode
+    type(RawFileContext)                    :: this
+    !
+    integer :: info
     !
         this%path = path
+        if (present(mode)) info = this%open(mode)
     !
     end function
     
@@ -54,7 +59,8 @@ contains
     function RawFileContext_open(this, mode) result(info)
     implicit none
     class(RawFileContext),intent(inout) :: this
-    character(len=*),intent(in)     :: mode !< Mode. One of: ['r'='rf', 'w'='wf', 'rb', 'wb']
+    !> Access mode. One of: ['r'='rf', 'w'='wf', 'rb', 'wb'] (case sensitive)
+    character(len=*),intent(in)     :: mode 
     integer :: info
     !
     character(len=12) :: stat , form

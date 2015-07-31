@@ -7,7 +7,6 @@
 module altayHardLaw_Simple
 use criErrcodes
 use altayMiscutils, only: terminate, stopcode_runtimeerror
-use altayHardTypes
 implicit none
 
       !> Configuration parameters of DoubleVoce hardening law. 
