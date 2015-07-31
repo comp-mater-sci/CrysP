@@ -24,7 +24,9 @@
           double precision    :: vMeqstress = 0.0D0
       end type
       
-      
+      !> Maximum number of potentially active slip systems that can be 
+      !> processed by this module.
+      integer, parameter :: n_active_max = 8
       
       contains
       
@@ -34,7 +36,7 @@
       use altayRCM
 #endif      
       use altayMacroKinematic
-      implicit none !IMPLICIT double precision (A-H,O-Z)
+      implicit none
       !
       type(SlipratSolution),intent(out)          :: solution
       type(DeformationRate),intent(in)           :: MacroDefRate      
@@ -56,15 +58,14 @@
       !> as found by Pancak2, have reversed sign. Consequently, all slip systems
       !> associated to A1_sgnn are supposed to have positive slip.
       double precision, dimension(5,DM_max_systems) :: A1_sgnn = 0.d0
-      integer :: i, i1, i2, i3, j, j1, j2, k
-      integer :: nopl, iopl, ineg, nn
-      double precision :: x, sumsq
-      integer, dimension(1) :: iopl_array
+      integer :: i, i1, i2, i3, j, j1, j2
+      !> number of valid solutions found by minsqu
+      integer :: nopl
+      integer :: nn
       integer :: info
       !
-      integer :: IND(8), ISTOR(0:8,48)
-      double precision :: SLPR(8), SLSTOR(0:8,48)
-      integer, parameter :: NSTOR = 48
+      integer :: IND(n_active_max), ISTOR(0:n_active_max)
+      double precision :: SLSTOR(0:n_active_max)
       !
       NOPL = 0
       !
@@ -88,18 +89,10 @@
            Pancak2_tolerance ) goto 6
       !
       IND(1:Pancak2_input%nactiv)=Pancak2_input%indact(1:Pancak2_input%nactiv)
+      call minsqu(Pancak2_input%nactiv,IND,A1_sgnn,Pancak2_input%BB8,ISTOR,SLSTOR,NOPL)
       !
-      call MINSQU(Pancak2_input%nactiv,IND,SLPR,ineg,sumsq,A1_sgnn,Pancak2_input%BB8)
+      if (Pancak2_input%nactiv <= 5 .AND. NOPL > 0) goto 2
       !
-      if (ineg == 0) then
-           call STORE(NSTOR,NOPL,Pancak2_input%nactiv,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-#ifdef ALTAY_SUBROUTINE
-           RCM_GUARD
-#endif
-           if (Pancak2_input%nactiv <= 5) goto 2
-      endif
-      !
-      if (Pancak2_input%nactiv <= 5) goto 6
 !
 !     Let us take all combinations of NN out of Pancak2_input%nactiv
 !
@@ -109,66 +102,48 @@
 !
 !     First level
 !
-       if (Pancak2_input%nactiv < 6) goto 6
-       do I1=1,Pancak2_input%nactiv
-          call MINSQU(Pancak2_input%nactiv - 1,IND,SLPR,ineg,sumsq,A1_sgnn,Pancak2_input%BB8)
-          if (ineg == 0) then
-             call STORE(NSTOR,NOPL,Pancak2_input%nactiv - 1,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-#ifdef ALTAY_SUBROUTINE
-             RCM_GUARD
-#endif 
-          endif
+      if (Pancak2_input%nactiv < 6) goto 6
+      do I1=1,Pancak2_input%nactiv
+          call minsqu(Pancak2_input%nactiv - 1,IND,A1_sgnn,Pancak2_input%BB8,ISTOR,SLSTOR,NOPL)
           J=Pancak2_input%nactiv-I1
           if (J > 0) IND(J)=Pancak2_input%indact(J+1)
-       enddo
+      enddo
 !
 !     Level 2
 !
       if (Pancak2_input%nactiv < 7) goto 2
       do I1=2,Pancak2_input%nactiv
-         J1=I1-1
-         do I2=1,J1
-            j=1
-            do i=1,Pancak2_input%nactiv
-                if (.not. (i==I1 .or. i==I2)) then
-                    IND(j)=Pancak2_input%indact(i)
-                    j=j+1
-                end if
-            end do
-            call MINSQU(Pancak2_input%nactiv - 2,IND,SLPR,ineg,sumsq,A1_sgnn,Pancak2_input%BB8)
-            if (ineg == 0) then
-                call STORE(NSTOR,NOPL,Pancak2_input%nactiv - 2,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-#ifdef ALTAY_SUBROUTINE
-                RCM_GUARD
-#endif
-            endif
-         enddo
+          J1=I1-1
+          do I2=1,J1
+              j=1
+              do i=1,Pancak2_input%nactiv
+                  if (.not. (i==I1 .or. i==I2)) then
+                      IND(j)=Pancak2_input%indact(i)
+                      j=j+1
+                  end if
+              end do
+              call minsqu(Pancak2_input%nactiv - 2,IND,A1_sgnn,Pancak2_input%BB8,ISTOR,SLSTOR,NOPL)
+          enddo
       enddo
 !
 !     Level 3
 !
       if (Pancak2_input%nactiv < 8) goto 2
       do I1=3,Pancak2_input%nactiv
-         J1=I1-1
-         do I2=2,J1
-            J2=I2-1
-            do I3=1,J2
-              j=1
-              do i=1,Pancak2_input%nactiv
-                  if (.not. (i==I1 .or. i==I2 .or. i==I3)) then
-                    IND(j)=Pancak2_input%indact(i)
-                    j=j+1
-                  end if
-              end do
-              call MINSQU(Pancak2_input%nactiv - 3,IND,SLPR,ineg,sumsq,A1_sgnn,Pancak2_input%BB8)
-              if (ineg == 0) then
-                  call STORE(NSTOR,NOPL,Pancak2_input%nactiv - 3,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-#ifdef ALTAY_SUBROUTINE
-                  RCM_GUARD
-#endif
-              endif 
-           enddo
-         enddo
+          J1=I1-1
+          do I2=2,J1
+              J2=I2-1
+              do I3=1,J2
+                  j=1
+                  do i=1,Pancak2_input%nactiv
+                      if (.not. (i==I1 .or. i==I2 .or. i==I3)) then
+                          IND(j)=Pancak2_input%indact(i)
+                          j=j+1
+                      end if
+                  end do
+                  call minsqu(Pancak2_input%nactiv - 3,IND,A1_sgnn,Pancak2_input%BB8,ISTOR,SLSTOR,NOPL)
+              enddo
+          enddo
       enddo
       !
       !---LABEL 2---
@@ -176,39 +151,22 @@
       !
       if (NOPL==0) goto 6
       !
-      sumsq = minval(SLSTOR(0,1:NOPL))! SLSTOR(0,i) is de te minimaliseren waarde van oplossing i
-      iopl_array = minloc(SLSTOR(0,1:NOPL))
-      iopl = iopl_array(1)
-      !
-      NN=ISTOR(0,IOPL)
-      IND(1:NN)=ISTOR(1:NN,IOPL)
-      SLPR(1:NN)=SLSTOR(1:NN,IOPL)
-      solution%shearrate%shearrate(IND(1:NN)) = sgnn(IND(1:NN))*SLPR(1:NN)*MacroDefRate%vMeqStrainRate
+      NN=ISTOR(0)
+      IND(1:NN)=ISTOR(1:NN)
+      solution%shearrate%shearrate(IND(1:NN)) = sgnn(IND(1:NN))*SLSTOR(1:NN)*MacroDefRate%vMeqStrainRate
       !
       if (IPR == 2 .and. NLIST == 1) then
           write (IMP,100)
           write (IMP,104) Pancak2_input%nactiv,NN,NOPL
-          write (IMP,106) sumsq,(IND(i),i=1,NN)
+          write (IMP,106) (IND(i),i=1,NN)
           do i=1,NN
-              write (IMP,101) i,IND(i),SLPR(i)*sgnn(IND(i))
+              write (IMP,101) i,IND(i),SLSTOR(i)*sgnn(IND(i))
           end do
       end if
 100   format (' Results SLIPRAT')
 104   format (' Reduction of NACTIV from',I5,'   to',i5,' NOPL=',i5)
-106   format (d12.3,8i5)
+106   format (8i5)
 101   format (2i5,5x,d15.6)
-      if(NLIST==1) then
-          x=0.0
-          k=0
-          do i=1,NN
-              if (x > SLPR(i)) then
-                  x=SLPR(i)
-                  k=k+1
-              endif
-          enddo
-          if (X<0.0d0) write (IMP,102) k,X
-      end if
-102   format (' NEG. SL. RATE DETECTED',I5,d15.6)
       !
       goto 789
       !
@@ -225,18 +183,6 @@
           end do
       end if
 108   format (' Linear programming solution retained  NN=',i5)
-      if(NLIST==1) then
-          x=0.0
-          k=0
-          do i=1,NN
-               if (x > abs(Pancak2_input%sliplp(i))) then
-                   !looks like this branch is never followed...
-                   x=abs(Pancak2_input%sliplp(i))
-                   k=k+1
-               endif
-          enddo
-          if (X<0.0d0) write (IMP,102) k,X !looks like this statement is never followed...
-      end if
       !
       !---LABEL 789---
 789   continue   
@@ -252,31 +198,23 @@
       solution%vMeqStress = solution%workrate / MacroDefRate%vMeqStrainRate
       !
       return
-      end subroutine
-      !
-      !> Note $1: Sliprat subroutine is the only caller for a number of external 
-      !> procedures: "minsqu" and "store" (directly); "kleinkwa", "stelsel", "tred2", 
-      !> "tqli" and "pythag" (indirectly via minsqu).
-      !> It is however not advisable to try to contain these procedures 
-      !> (i.e. make them internal procedures to sliprat) because of name clashes. 
-      !> Note that (1) an internal procedure has access to host entities by host 
-      !> association, and (2) all these procedures declare 'implicit double precision 
-      !> (A-H,O-Z)' statement.
       
-      pure subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,A1_sgnn,BB8)
+      contains
+      
+      pure subroutine minsqu(NN,IND,A1_sgnn,BB8,ISTOR,SLSTOR,NOPL)
       use altayIOConfig
       implicit none
       integer, intent(in)                          :: NN
-      integer, dimension(8), intent(in)            :: IND
-      double precision, dimension(8), intent(out)  :: SLPR
-      integer, intent(out)                         :: ineg
-      double precision, intent(out)                :: sumsq
+      integer, dimension(n_active_max), intent(in) :: IND
       double precision, dimension(:,:), intent(in) :: A1_sgnn
       double precision, dimension(5), intent(in)   :: BB8
+      integer, intent(inout)                       :: ISTOR(0:n_active_max)
+      double precision, intent(inout)              :: SLSTOR(0:n_active_max)
+      integer, intent(inout)                       :: NOPL
       !
-      integer :: N1, N2, i, j
-      integer, dimension(1) :: ineg_array
-      double precision :: A(13,13), B(13), BA(13), RES, x
+      integer :: N1, N2, i, j, ineg
+      double precision, dimension(n_active_max)  :: SLPR
+      double precision :: A(13,13), B(13), BA(13), RES, sumsq
       double precision, parameter :: tol = 1.0d-10
 !     December 2000
 !     The  normalisation by DELTAT (now: MacroDefRate%vMeqStrainRate) of the september 2000 version has been
@@ -321,54 +259,30 @@
       if (minval(SLPR(1:NN)) > 0.0d0) then
           ineg = 0
       else
-          ineg_array = minloc(SLPR(1:NN))
-          ineg = ineg_array(1) !i.e. ineg equals a positive value
+          ineg = 1
       end if
       if (RES > (10000.0*TOL)) ineg = -1
       !
+      if (ineg == 0) then !A valid solution
+          if(NOPL == 0 .OR. sumsq < SLSTOR(0)) then
+              ISTOR(0) = NN
+              ISTOR(1:NN) = IND(1:NN)
+              if (NN<n_active_max) ISTOR(NN+1:n_active_max) = 0
+              !
+              SLSTOR(0) = sumsq
+              SLSTOR(1:NN) = SLPR(1:NN)
+              if (NN<n_active_max) SLSTOR(NN+1:n_active_max) = 0.d0
+          end if
+          NOPL = NOPL + 1
+      end if
+          
       return
       end subroutine
       !
-    subroutine STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-    use altayIOConfig
-#ifdef ALTAY_SUBROUTINE
-    use altayRCM
-#endif      
-    implicit none
-    integer, intent(in)                                   :: NSTOR
-    integer, intent(inout)                                :: NOPL
-    integer, intent(in)                                   :: NN
-    double precision, dimension(8), intent(in)            :: SLPR
-    integer, dimension(8), intent(in)                     :: IND
-    integer, dimension(0:8,48), intent(out)               :: ISTOR
-    double precision, dimension(0:8,48), intent(out)      :: SLSTOR
-    double precision, intent(in)                          :: SUMSQ
-    !
-    integer :: i = 0
-        !
-        NOPL=NOPL+1
-        !
-        if (NOPL.gt.NSTOR) then
-#ifndef ALTAY_SUBROUTINE
-            if (NLIST.eq.1) then
-                write (IMP,100)
-            end if
-            write (*,100)
-            call terminate(stopcode_runtimeerror)
- 100  format (' STORE - increase dimension NSTOR in SLIPRAT,STORE')
-#else
-            RCM_RAISE(1,'STORE',                                            &
-            'Too small dimension NSTOR in SLIPRAT',RCM_RTN)
-#endif
-        endif
-        !
-        ISTOR(0,NOPL)=NN
-        SLSTOR(0,NOPL)=SUMSQ
-        ISTOR(1:NN,NOPL)=IND(1:NN)
-        SLSTOR(1:NN,NOPL)=SLPR(1:NN)
-        !
-        return
-        end subroutine
+      end subroutine
+      
+      
+      !External procedures:
       !
       pure subroutine Kleinkwa(N1,N2,M1,M2,A,B,BA,TOL,RES)
 !     N1=number of equations
