@@ -1,5 +1,5 @@
 0Al-5000                       Name of output files (give no extension)
-..\BCCBP.PRE                             Slip system file
+..\BCCbp2.pre                             Slip system file
     4 = N-lines: controls input of critical resoved shear stresses
 1.0       1.0       1.0       1.0       1.0       1.0       N-lines for + sense (Format 6F10.0)
 1.0       1.0       1.0       1.0       1.0       1.0
