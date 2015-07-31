@@ -131,4 +131,16 @@ contains
       end subroutine
 
           
+      !> function that returns “the ratio of the parallel strain rates”
+      pure double precision function ratlon(MacroDefRate,relaxationrate_sam)
+      implicit none
+      type(DeformationRate), intent(in)               :: MacroDefRate
+      double precision,dimension(3,3),intent(in)      :: relaxationrate_sam
+      !
+      ! MacroDefRate%StrainMode & relaxationrate_sam: expressed in same (sample) reference frame
+      ratlon= sum( (MacroDefRate%StrainMode + relaxationrate_sam/MacroDefRate%NormStrainRate) *  &
+                    MacroDefRate%StrainMode                            )
+      !
+      end function
+      
 end module
