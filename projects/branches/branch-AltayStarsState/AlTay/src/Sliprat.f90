@@ -34,7 +34,7 @@
       use altayRCM
 #endif      
       use altayMacroKinematic
-      IMPLICIT double precision (A-H,O-Z)
+      implicit none !IMPLICIT double precision (A-H,O-Z)
       !
       type(SlipratSolution),intent(out)          :: solution
       type(DeformationRate),intent(in)           :: MacroDefRate      
@@ -50,32 +50,46 @@
 !
 !     Modified in Aug 2010
 !
-      dimension SGNN(DM_max_systems)
-      dimension SLPR(8),IND(8),ISTOR(0:8,48),SLSTOR(0:8,48)
-      data NSTOR/48/
+      !> The sign of slip (1.d0 or -1.d0) as found by Pancak2
+      double precision, dimension(DM_max_systems) :: sgnn = 0.d0
+      !> Alternative A1-matrix: the columns corresponding to negative slip 
+      !> as found by Pancak2, have reversed sign. Consequently, all slip systems
+      !> associated to A1_sgnn are supposed to have positive slip.
+      double precision, dimension(5,DM_max_systems) :: A1_sgnn = 0.d0
+      integer :: i, i1, i2, i3, j, j1, j2, k
+      integer :: nopl, iopl, ineg, nn
+      double precision :: x, sumsq
       integer, dimension(1) :: iopl_array
+      integer :: info
       !
-      NOPL=0
+      integer :: IND(8), ISTOR(0:8,48)
+      double precision :: SLPR(8), SLSTOR(0:8,48)
+      integer, parameter :: NSTOR = 48
+      !
+      NOPL = 0
       !
       !Allocate the (allocatable components of) solution
       call ShearRateData_init(solution%shearrate,DM_data%n_systems,info)   
       !
-      !Set sgnn
+      !Set sgnn & A1_sgnn
       do concurrent (i=1:Pancak2_input%nactiv)
+          j = Pancak2_input%indact(i)
           if (Pancak2_input%taurlp(i) < 0.0D0) then
-              sgnn(Pancak2_input%indact(i)) = -1.D0
+              sgnn(j) = -1.D0
           else
-              sgnn(Pancak2_input%indact(i)) = 1.D0
+              sgnn(j) = 1.D0
           end if
+          A1_sgnn(:,j) = sgnn(j) * DM_data%A1(:,j)
       end do
+
       !
       !check whether solution is totally zero
-      x = sum(abs(Pancak2_input%sliplp(1:Pancak2_input%nactiv)))
-      if (x < Pancak2_tolerance) goto 6
+      if ( sum(abs(Pancak2_input%sliplp(1:Pancak2_input%nactiv))) < &
+           Pancak2_tolerance ) goto 6
       !
       IND(1:Pancak2_input%nactiv)=Pancak2_input%indact(1:Pancak2_input%nactiv)
       !
-      call MINSQU(Pancak2_input%nactiv,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
+      call MINSQU(Pancak2_input%nactiv,IND,SLPR,ineg,sumsq,A1_sgnn,Pancak2_input%BB8)
       !
       if (ineg == 0) then
            call STORE(NSTOR,NOPL,Pancak2_input%nactiv,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
@@ -96,11 +110,10 @@
 !     First level
 !
        if (Pancak2_input%nactiv < 6) goto 6
-       NN=Pancak2_input%nactiv - 1
        do I1=1,Pancak2_input%nactiv
-          call MINSQU(Pancak2_input%nactiv - 1,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
+          call MINSQU(Pancak2_input%nactiv - 1,IND,SLPR,ineg,sumsq,A1_sgnn,Pancak2_input%BB8)
           if (ineg == 0) then
-             call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+             call STORE(NSTOR,NOPL,Pancak2_input%nactiv - 1,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
 #ifdef ALTAY_SUBROUTINE
              RCM_GUARD
 #endif 
@@ -112,7 +125,6 @@
 !     Level 2
 !
       if (Pancak2_input%nactiv < 7) goto 2
-      NN=Pancak2_input%nactiv - 2
       do I1=2,Pancak2_input%nactiv
          J1=I1-1
          do I2=1,J1
@@ -123,9 +135,9 @@
                     j=j+1
                 end if
             end do
-            call MINSQU(Pancak2_input%nactiv - 2,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
+            call MINSQU(Pancak2_input%nactiv - 2,IND,SLPR,ineg,sumsq,A1_sgnn,Pancak2_input%BB8)
             if (ineg == 0) then
-                call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+                call STORE(NSTOR,NOPL,Pancak2_input%nactiv - 2,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
 #ifdef ALTAY_SUBROUTINE
                 RCM_GUARD
 #endif
@@ -136,7 +148,6 @@
 !     Level 3
 !
       if (Pancak2_input%nactiv < 8) goto 2
-      NN=Pancak2_input%nactiv - 3
       do I1=3,Pancak2_input%nactiv
          J1=I1-1
          do I2=2,J1
@@ -149,9 +160,9 @@
                     j=j+1
                   end if
               end do
-              call MINSQU(Pancak2_input%nactiv - 3,IND,SLPR,ineg,sumsq,sgnn,DM_data%A1,Pancak2_input%BB8)
+              call MINSQU(Pancak2_input%nactiv - 3,IND,SLPR,ineg,sumsq,A1_sgnn,Pancak2_input%BB8)
               if (ineg == 0) then
-                  call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+                  call STORE(NSTOR,NOPL,Pancak2_input%nactiv - 3,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
 #ifdef ALTAY_SUBROUTINE
                   RCM_GUARD
 #endif
@@ -252,7 +263,7 @@
       !> association, and (2) all these procedures declare 'implicit double precision 
       !> (A-H,O-Z)' statement.
       
-      pure subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,A1,BB8)
+      pure subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,A1_sgnn,BB8)
       use altayIOConfig
       implicit none
       integer, intent(in)                          :: NN
@@ -260,11 +271,10 @@
       double precision, dimension(8), intent(out)  :: SLPR
       integer, intent(out)                         :: ineg
       double precision, intent(out)                :: sumsq
-      double precision, intent(in)                 :: sgnn(DM_max_systems)
-      double precision, dimension(:,:), intent(in) :: A1
+      double precision, dimension(:,:), intent(in) :: A1_sgnn
       double precision, dimension(5), intent(in)   :: BB8
       !
-      integer :: N1, N2, i, is, j, j1
+      integer :: N1, N2, i, j
       integer, dimension(1) :: ineg_array
       double precision :: A(13,13), B(13), BA(13), RES, x
       double precision, parameter :: tol = 1.0d-10
@@ -274,16 +284,13 @@
 !
 !     Modified Aug 2010
 !
-
-
       !
       !     Set up system of equations
       if (NN <= 5) then
           N1=5
           N2=NN
           do i=1,N2
-             is=IND(i)
-             A(1:5,i)=sgnn(is)*A1(1:5,is)
+             A(1:5,i) = A1_sgnn(1:5,IND(i))
           enddo
           B(1:5)=BB8(1:5)
       else
@@ -291,14 +298,11 @@
           N2=N1
           A = 0.D0
           do i=1,NN
-             is=IND(i)
              A(i,i)=2.D0
              B(i)=0.0
              do j=1,5
-                j1=NN+j
-                x=sgnn(is)*A1(j,is)
-                A(i,j1)=-x
-                A(j1,i)=x
+                A(i,NN+j) = -1.d0 * A1_sgnn(j,IND(i))
+                A(NN+j,i) = A1_sgnn(j,IND(i))
              enddo
           enddo
           do j=1,5
@@ -313,9 +317,13 @@
       !
       sumsq = sum(SLPR(1:NN)**2)
       !
-      ineg_array = minloc(SLPR(1:NN))
-      ineg = ineg_array(1)
-      if (minval(SLPR(1:NN)) > 0.0d0) ineg = 0
+      !Set ineg
+      if (minval(SLPR(1:NN)) > 0.0d0) then
+          ineg = 0
+      else
+          ineg_array = minloc(SLPR(1:NN))
+          ineg = ineg_array(1) !i.e. ineg equals a positive value
+      end if
       if (RES > (10000.0*TOL)) ineg = -1
       !
       return
