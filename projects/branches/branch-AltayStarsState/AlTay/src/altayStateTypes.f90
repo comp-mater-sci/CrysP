@@ -75,9 +75,6 @@ implicit none
     type :: altayStateVariables
         
         type(MesostructureState)                :: mesostructure !YES
-        
-        type(InterfaceDataset)                  :: interface_dataset ! move to within MesostructureState 
-                                                                     !   or instances to clusterstates?
 
         !> Orientations of discrete ODF. 
         type(DiscreteODF)                       :: texture !to be gone or relocated.

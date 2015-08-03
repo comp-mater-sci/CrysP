@@ -37,9 +37,16 @@ implicit none
         
     end type
     
+    
+    !> Description of mesostructure per a pair of phases.
+    !> This also covers the where the two phases are identical (mesostructure
+    !> of the phase itself)
+    type :: MesostructureData
+        type(InterfaceDataset)      :: interfaces
+    end type
 
       
-    contains
+contains
 
       !> Reading of "microstructure" (Euler angles defining 
       !> grain boundary segments) and initializing instance 'this' of InterfaceDataset.

@@ -16,7 +16,6 @@
       type(Pancak2Solution) :: Pancak2_solution
       type(SlipratSolution) :: Sliprat_solution
       !
-      type(InterfaceDataset),save :: interface_dataset !SAVE attribute due to multiple calls to SIMUL
       type(MesostructureState),save :: mesostructure_state !save attribute required to keep the state in subsequent simul
                                                            ! calls (continuation of deformation along new strain path)      
       !
@@ -55,7 +54,7 @@
       implicit double precision (a-h,o-z)
       type(altayConfigData),intent(in)          :: config
       type(altayStateData),target,intent(inout) :: state
-      type(MaterialData),intent(in)             :: material
+      type(MaterialData),target,intent(in)      :: material
       integer,intent(in)                        :: IW
       integer,intent(in)                        :: NFILE0
       ! optional argument for IW=1 or 2:
@@ -99,6 +98,8 @@
 #ifdef PEBP_ENABLED
       type(StateDerivedVars) :: pebpSDV, pebpSDVavg
 #endif
+      type(InterfaceDataset),pointer :: interface_dataset
+
       !
       data convf/0.5729577951308232D+02/
       data FS/9*1.0D0/ 
@@ -223,15 +224,6 @@
 #endif
       !
 #ifndef ALTAY_SUBROUTINE
-      ! Initializing mesostructure      
-      ! 
-      !Reading of InterfaceDataset from SMT-file
-      call InterfaceDataset_readfromSMTfile( interface_dataset, config%micros_fname, info)
-      if (info.ne.0) then
-          write(*,415)
-          call exit(stopcode_ioerror)
- 415      format('Error condition is returned by InterfaceDataset_readfromSMTfile')
-      endif   
       !
       !Initialisation of mesostructure_state with FMicro
       call mesostructure_state%update(config%simul_init%FMicro, info)
@@ -240,6 +232,9 @@
       RETURN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   30  continue
+
+      interface_dataset => material%phases(1)%intraphase_interfaces%interfaces
+
       i=NPOINT/NGR
       if (NGR*i.ne.npoint) then
 #ifndef ALTAY_SUBROUTINE      

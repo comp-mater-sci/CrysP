@@ -7,6 +7,7 @@ module altayMaterialTypes
 use criErrcodes
 use altayDeformationMechanism
 use altayHardTypes
+use altayMesostructure
 implicit none
 
     !> Data type that characterizes a phase
@@ -14,16 +15,18 @@ implicit none
         
         type(DeformationMechanismData) :: deformationmechanism
 
-        type(HardeningModelParams)   :: hardening
+        type(HardeningModelParams)      :: hardening
 
+        type(MesostructureData)         :: intraphase_interfaces
+        
     end type
 
 
     !> Data type that characterizes the material
     type :: MaterialData
         !> shape: [n_phases]
-        type(PhaseData), dimension(:),allocatable  :: phases
-
+        type(PhaseData), dimension(:),allocatable           :: phases
+        type(MesostructureData),dimension(:),allocatable    :: interphase_interfaces
     contains
 
         !> Provide number of phases in the material.
@@ -41,6 +44,4 @@ contains
     !
     end function
     
-
-
 end module
