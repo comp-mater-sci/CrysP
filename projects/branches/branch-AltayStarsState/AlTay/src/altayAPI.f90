@@ -3,6 +3,7 @@
 !>
 module altayAPI
 use altayConfig
+use FH5
 implicit none
 
 !> Fundamental concepts in altay API:
@@ -25,14 +26,14 @@ contains
     integer function altay_initialize() result(info)
     implicit none
     !
-        info = criSuccess
+        info = FH5_initialize()
     !
     end function
     
     integer function altay_finalize() result(info)
     implicit none
     !
-        info = criSuccess
+        info = FH5_finalize()
     !
     end function
     

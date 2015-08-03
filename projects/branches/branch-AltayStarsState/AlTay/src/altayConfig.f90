@@ -14,15 +14,6 @@
 !>    History of modifications: (see svn log)
 !
 !
-!>    \file altayConfig.f90 Provides configuration data for AlTay
-!>    
-!
-
-!> \remark The module is derived from the module alamelConfig, taken from the alamelSub project.
-!> However, the differences in the API are drastic. For this reason, the API is 
-!> intentionally made even more incompatibile (e.g. changes in the names of datastructures)
-!> to force the users of the alamelSub to make a deliberate, conscious and well-thought decision of 
-!> upgrading their code to the altaySub.
 
 
 !> Basic configuration of AlTay in a form of formalized data structures.
@@ -53,6 +44,8 @@ implicit none
 
     integer,parameter :: CNF_jobtitle_maxlen = 256
     
+    integer,parameter :: CNF_stepname_maxlen = 32
+    
     !> \name Named constants for identifiers of the supported models
     !>@{ 
     integer,parameter :: CNF_modelNone = 0
@@ -61,8 +54,11 @@ implicit none
     integer,parameter :: CNF_modelAlamelMP = 3    !< ALAMEL (multi-phase)
     !>@}
     
+    integer,parameter,private :: nsupported_models = 3
+    integer,parameter,dimension(nsupported_models) :: CNF_supported_models = [ &
+                CNF_modelFCTaylor, CNF_modelAlamel, CNF_modelAlamelMP ]
     
-    !> \name Named constants for identifiers of the supported models
+    !> \name Named constants/identifiers of the supported data persistency schemes
     !>@{ 
     integer,parameter :: CNF_UnknownDataPersistency = -1
     integer,parameter :: CNF_DataPersistencyNone = 0
@@ -72,17 +68,19 @@ implicit none
     !>@}
 
 
-    !> Configuration of deformmation mechanisms
-    type :: DeformationMechanismConfig
-        !> Identifier for source type of deformation mechanism
-        !> See altayDeformationMechanism for the list of possible values. \sa altayDeformationMechanism
-        integer                                     :: id = DM_none
+    !> Max. length of state file. This is large enough to permit extended names
+    !> such as file_path:object_path, with both file_path and object_path of 
+    !> length `max_pathlen`.
+    integer,parameter,private :: state_file_max_pathlen = 2 * max_pathlen + 1
 
-        !> Name of the file/preconfiguration containing definition of deformation mechanism
-        !> Relevant only if id sets a file-based source of deformation mechanism data.
-        character(len=max_pathlen)                  :: input_fname = ''
+
+    type :: StatePersistenceConfig
+        integer                             :: scheme_id = CFN_NoDataPersistency
+        
+        character(len=max_pathlen)          :: file_path = ''
+        
+        integer                             :: block_id = 1
     end type
-
 
 
     !> Configuration of texture data exchange
@@ -94,6 +92,19 @@ implicit none
         integer                                   :: input_type = TF_SMT
         character(len=max_pathlen)                :: input_fname = ''
         integer                                   :: block_id = 1
+    end type
+
+
+    !> Configuration of deformmation mechanisms
+    type :: DeformationMechanismConfig
+        !> Identifier for source type of deformation mechanism
+        !> See altayDeformationMechanism for the list of possible values. 
+        !> \sa altayDeformationMechanism
+        integer                                     :: id = DM_none
+
+        !> Name of the file/preconfiguration containing definition of deformation mechanism
+        !> Relevant only if id sets a file-based source of deformation mechanism data.
+        character(len=max_pathlen)                  :: input_fname = ''
     end type
 
 
@@ -173,7 +184,7 @@ implicit none
     end type
          
 
-    integer,parameter :: CNF_step_name_maxlen = 32
+    
 
     type :: AssemblyStepConfig
         
@@ -203,7 +214,6 @@ implicit none
         
         !> Number of increments
         integer                                   :: nincrements = 1
-
         
     end type
     
@@ -219,10 +229,14 @@ implicit none
     end type
     
     
-    
+    !> Aggregate of Altay step types. 
+    !>
+    !> Only one member can have the allocated status.
     type :: StepConfig
         
-        character(len=CNF_step_name_maxlen)         :: name = 'Step'
+        character(len=CNF_stepname_maxlen)          :: name = 'Step'
+        
+        logical                                     :: incremental_name = .true. 
         
         type(AssemblyStepConfig),allocatable        :: assembly_step
 
@@ -239,12 +253,28 @@ implicit none
         
         character(len=CNF_jobtitle_maxlen)              :: jobtitle = 'default'
         
-        type(MaterialConfig)                            :: materials
+        type(MaterialConfig)                            :: material
         
+        !> Description of the steps.
+        !>
+        !> This part of configuration can be deferred and provided at later stage.
+        !> In such case the field must retain unallocated state.
         type(StepConfig),dimension(:),allocatable       :: steps
         
+        type(StatePersistenceConfig)                    :: state_input
+        
+        type(StatePersistenceConfig)                    :: state_output
     end type
 
+    
+    !> Generic name of procedures that verify if a component of configuration
+    !> appears valid and internally consistent. Return .true. on success and 
+    !> .false. otherwise.
+    interface check
+        module procedure :: StepConfig_check
+    end interface
+
+    
     !
     ! OLD STYLE CONFIG. To be phased out.
     !
@@ -387,9 +417,30 @@ implicit none
       end type
       
 
-
 contains
 
+
+    !> Verify if the StepConfig fulfills the pre-requisities.
+    logical function StepConfig_check(this) result(is_ok)
+    implicit none
+    class(StepConfig),intent(in)     :: this
+    !
+    integer,parameter :: nfields = 4 !< number of fields of interest in the object
+    logical,dimension(nfields) :: is_allocated
+    !
+        is_allocated = [allocated(this%assembly_step), &
+                        allocated(this%initialization_step), &
+                        allocated(this%analysis_step), &
+                        allocated(this%output_step)]
+        ! Only one allocatable allowed
+        is_ok = sum(merge(1, 0, is_allocated)) == 1
+    !
+    end function
+    
+    
+    !
+    ! OLD STYLE CONFIG. To be phased out.
+    !
 
       !> Configure the cnf object for using selected model type.
       subroutine setModelType(cnf,modelId,info)

@@ -17,7 +17,11 @@ integer :: info
     info = config_reader%setInput(input_path)
     info = config_reader%read(config)
     
+    info = altay_initialize()
+    
     info = the_simulation%initialize(config)
     info = the_simulation%runSteps()
+    
+    info = altay_finalize()
 !
 end program

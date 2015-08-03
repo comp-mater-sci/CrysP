@@ -73,18 +73,37 @@ contains
         
         config%jobtitle = 'samplejob'
         
-        allocate(config%steps(3))
+        ! single-phase built-in fcc material
+        allocate(config%material%phases(1))
+        associate(phase => config%material%phases(1))
+            phase%deformation_mechanism%id = DM_fcc12
+            ! leave default hardening
+            phase%intraphase_interfaces%file_path = 'micro1.smt'
+        end associate
+        !
+        allocate(config%steps(0:2))
         !
         associate (steps => config%steps)
             ! Initialization step
-            allocate(steps(1)%initialization_step)
-            steps(1)%initialization_step%data_persistency_scheme = CFN_NativeDataPersistency
-            steps(1)%initialization_step%file_path = 'A612LM.SMT'
-            !
-            allocate(steps(2)%analysis_step)
-            steps(2)%analysis_step%input = 0.05 * unit_sr_matrix
-            allocate(steps(3)%output_step)
-            
+            allocate(steps(0)%initialization_step)
+            steps(1)%name = 'Step0'
+            associate(step => steps(0)%initialization_step)
+                step%data_persistency_scheme = CFN_NativeDataPersistency
+                step%file_path = 'A612LM.SMT'
+            end associate
+            ! Analysis step
+            allocate(steps(1)%analysis_step)
+            steps(1)%name = 'Step1'
+            associate(step => steps(1)%analysis_step)
+                step%input = 0.05 * unit_sr_matrix
+                step%model_type = CNF_modelAlamel
+            end associate
+            ! Output step
+            allocate(steps(2)%output_step)
+            steps(2)%name = 'Step2'
+            associate(step => steps(2)%output_step)
+                step%file_path = trim(config%jobtitle)//'.out'
+            end associate
             
         end associate
     
