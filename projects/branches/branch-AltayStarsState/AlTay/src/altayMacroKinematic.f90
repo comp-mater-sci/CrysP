@@ -67,14 +67,11 @@ contains
       integer,                    intent(out) :: info
       double precision, optional, intent (in) :: deltaTime_in
       !
-      double precision                :: deltaTime= 1.0D0
-      double precision, dimension(3,3):: Ldt= 0.0D0
+      double precision                :: deltaTime
+      double precision, dimension(3,3):: Ldt
       !
-      if(present(deltaTime_in)) then
-          deltaTime= deltaTime_in
-      else
-          deltaTime= 1.0D0
-      end if
+      deltaTime = 1.0D0
+      if(present(deltaTime_in)) deltaTime= deltaTime_in
       !
       Ldt= thisRate%VelGrad * deltaTime
       call MatrixExponentSmallNorm(Ldt,thisState%IncrDefGrad,thisState%IncrDefGrad_inverse,info) 
@@ -104,13 +101,14 @@ contains
       !
       ![1] Moler, C. and Van Loan, C., "Nineteen Dubious ways to compute the exponential of a matrix", Siam Review, vol 20, No 4, 1978.
       !
-      double precision, dimension(3,3) :: Term= unit_sr_matrix 
+      double precision, dimension(3,3) :: Term
       double precision, parameter      :: NormTerm_cutoff= 1.0D-10 !Treshold to cut off Taylor Series Expansion
-      integer                          :: k= 0 !The current term in Taylor Series Expansion
+      integer                          :: k !The current term in Taylor Series Expansion
       integer, parameter               :: k_max= 10 !Upper limit of terms in Taylor Series Expansion to be calculated
       !
       !Implemented algorithm is reliable on the condition that ||A|| < 1; if not, catastrophic cancellation in floating point arithmetic 
       ! can lead to totally erroneous results [1].
+      !
       if (norm2(A)>1.0D0) then
           info= -1
           return
@@ -119,12 +117,12 @@ contains
       end if
       !
       !For the '0-th term in Taylor Series Expansion', the approximation of Taylor Series Expansion is
-      k= 0
-      Term= unit_sr_matrix
-      ExpA= Term
-      InvExpA= Term
+      Term = unit_sr_matrix
+      ExpA = unit_sr_matrix
+      InvExpA = unit_sr_matrix
       !
       !Add terms to Taylor Series Expansion until ||Term|| becomes negligeable or upper limit in number of terms reached
+      k= 0
       do while ( (norm2(Term)>NormTerm_cutoff) .AND. (k<k_max) )
           k= k+1
           Term= matmul(Term,A) / k
