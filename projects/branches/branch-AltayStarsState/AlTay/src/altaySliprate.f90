@@ -1,3 +1,7 @@
+!
+! $Id$
+!
+
 #ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
 #endif

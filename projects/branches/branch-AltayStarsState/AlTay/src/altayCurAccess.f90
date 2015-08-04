@@ -1,6 +1,8 @@
 !
 ! $Id$
-!      
+!
+
+!> Support for CUR file format
 module altayCurAccess
 use criErrcodes
 use altayTexAccess

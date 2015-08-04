@@ -1,3 +1,7 @@
+!
+! $Id$
+!
+
 module altaySmtAccess
 use criErrcodes
 use altayTexAccess

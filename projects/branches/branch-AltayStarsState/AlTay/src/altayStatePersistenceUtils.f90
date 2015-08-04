@@ -1,4 +1,6 @@
+!
 ! $Id$
+!
 
 !> Auxiliary functions that support state persistence schemes.
 module altayStatePersistenceUtils

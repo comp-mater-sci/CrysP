@@ -1,3 +1,7 @@
+!
+! $Id$
+!
+
 #ifndef HDF5_DISABLE
 module altayHDF5Access
 use criErrcodes

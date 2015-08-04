@@ -1,3 +1,7 @@
+!
+! $Id$
+!
+
 module altayTexAccess
 use altayODFTypes
 use altayIOContext

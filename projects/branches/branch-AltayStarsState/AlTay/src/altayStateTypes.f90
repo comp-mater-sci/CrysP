@@ -1,3 +1,7 @@
+!
+! $Id$
+!
+
 module altayStateTypes
 use criErrcodes
 use criMathUtils

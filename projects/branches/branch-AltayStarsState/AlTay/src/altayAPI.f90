@@ -1,6 +1,8 @@
+!
+! $Id$
+!
+
 !> Defines API of the AlTay
-!>
-!>
 module altayAPI
 use altayConfig
 use FH5

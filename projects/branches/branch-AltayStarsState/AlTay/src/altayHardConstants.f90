@@ -1,3 +1,7 @@
+!
+! $Id$
+!
+
 !> Provides constants related to various hardening laws.
 module altayHardConstants
 implicit none

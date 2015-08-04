@@ -1,3 +1,6 @@
+!
+! $Id$
+!
 program altayV5main
 use criRuntime
 use criPath

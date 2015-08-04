@@ -1,4 +1,6 @@
+!
 ! $Id$
+!
 
 !> Top-level collection of hardening types
 module altayHardTypes

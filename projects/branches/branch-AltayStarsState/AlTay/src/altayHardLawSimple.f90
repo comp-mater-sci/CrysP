@@ -1,3 +1,6 @@
+!
+! $Id$
+!
 
 !> Implementation of 'simple' hardening laws TAU(GAMMA), i.e. with only 1 internal variable: accumulated slip in grain GAMMA.
 !> Available laws:

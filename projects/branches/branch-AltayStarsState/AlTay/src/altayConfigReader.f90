@@ -1,4 +1,6 @@
-! $Id!
+!
+! $Id$
+!
 
 !> Generic configuration reader
 module altayConfigReader

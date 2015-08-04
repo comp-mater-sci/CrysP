@@ -1,5 +1,7 @@
-!> $Id$
-      
+!
+! $Id$
+!
+
 !> Microstructure representation in AlTay
 module altayMesostructure
 use altayAlgorithms
