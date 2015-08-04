@@ -64,8 +64,8 @@
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
 		<File RelativePath="..\src\Alg0A.f90"/>
-		<File RelativePath="..\src\Alg1.f90"/>
-		<File RelativePath="..\src\Alg2.f90"/>
+		<File RelativePath="..\src\altayTaylor.f90"/>
+		<File RelativePath="..\src\altayAlgorithms.f90"/>
 		<File RelativePath="..\src\altayAPI.f90"/>
 		<File RelativePath="..\src\altayConfig.f90">
 			<FileConfiguration Name="Debug|Win32">
@@ -125,41 +125,41 @@
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\src\altayTexAccess.f90"/>
-		<File RelativePath="..\src\cubAccess.f90">
+		<File RelativePath="..\src\altayCubAccess.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Debug|x64">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration></File>
-		<File RelativePath="..\src\curAccess.f90">
+		<File RelativePath="..\src\altayCurAccess.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Debug|x64">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration></File>
 		<File RelativePath="..\src\Dynfil.f90"/>
-		<File RelativePath="..\src\HDF5Access.f90"/>
+		<File RelativePath="..\src\altayHDF5Access.f90"/>
 		<File RelativePath="..\src\ioconfig.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Debug|x64">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration></File>
-		<File RelativePath="..\src\macroKinematic.f90"/>
-		<File RelativePath="..\src\microstr.f90"/>
-		<File RelativePath="..\src\miscutils.f90">
+		<File RelativePath="..\src\altayMacroKinematic.f90"/>
+		<File RelativePath="..\src\altayMesostructure.f90"/>
+		<File RelativePath="..\src\altayMiscutils.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Debug|x64">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration></File>
-		<File RelativePath="..\src\Pancak2.f90"/>
-		<File RelativePath="..\src\Sliprat.f90"/>
-		<File RelativePath="..\src\smtAccess.f90">
+		<File RelativePath="..\src\altayPancake.f90"/>
+		<File RelativePath="..\src\altaySliprate.f90"/>
+		<File RelativePath="..\src\altaySmtAccess.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Debug|x64">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration></File>
 		<File RelativePath="..\src\altaySDVTypes.f90"/>
-		<File RelativePath="..\src\TBH.f90"/>
-		<File RelativePath="..\src\texFormatConstants.f90"/>
-		<File RelativePath="..\src\texFormats.f90">
+		<File RelativePath="..\src\altayTBH.f90"/>
+		<File RelativePath="..\src\altayTexFormatConstants.f90"/>
+		<File RelativePath="..\src\altayTexFormats.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" Diagnostics="diagnosticsShowAll"/></FileConfiguration>
 			<FileConfiguration Name="Debug|x64">
