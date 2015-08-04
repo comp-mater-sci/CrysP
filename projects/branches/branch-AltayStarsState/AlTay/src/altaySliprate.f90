@@ -236,14 +236,18 @@
           enddo
           B(1:5)=BB8(1:5)
       else
+          !> Solve a quadratic minimization problem (i.e. minimal sum-of-squares
+          !> of unknown deformation rates) with 5 linear constraints (i.e. the solution
+          !> realizes a strain rate equal to imposed local strain rate (5D-vectors)),
+          !> by solving system of linear equations with Lagrange Multipliers.
           N1=NN+5
           N2=N1
           A = 0.D0
           do i=1,NN
-             A(i,i)=2.D0
+             A(i,i)=1.D0
              B(i)=0.0
              do j=1,5
-                A(i,NN+j) = -1.d0 * A1_sgnn(j,IND(i))
+                A(i,NN+j) = A1_sgnn(j,IND(i))
                 A(NN+j,i) = A1_sgnn(j,IND(i))
              enddo
           enddo
@@ -310,9 +314,6 @@
       double precision,intent(out)      :: RES
       !
       double precision    :: AA(M2,M2)
-      double precision    :: VAL(M2)
-      double precision    :: XV(M2)
-      double precision    :: YV(M2)
       integer :: kk, i, j
       !
       do kk=1,N2
