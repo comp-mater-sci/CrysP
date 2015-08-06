@@ -205,7 +205,12 @@
       
       contains
       
+#ifdef LAPACK_ENABLED
+      subroutine minsqu(NN,IND,A1_sgnn,BB8,ISTOR,SLSTOR,NOPL)
+      use lapack95, only: sysv
+#else
       pure subroutine minsqu(NN,IND,A1_sgnn,BB8,ISTOR,SLSTOR,NOPL)
+#endif
       use altayIOConfig
       implicit none
       integer, intent(in)                          :: NN
@@ -268,7 +273,11 @@
           BA = B
       endif
       !
+#ifdef LAPACK_ENABLED
+      call sysv(AA(1:N2,1:N2),BA(1:N2))
+#else
       call STELSEL(N2,N2,AA(1:N2,1:N2),BA(1:N2),TOL)
+#endif
       !
       RES=0.0
       do i=1,N1
