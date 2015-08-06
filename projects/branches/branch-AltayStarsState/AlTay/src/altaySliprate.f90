@@ -218,7 +218,7 @@
       !
       integer :: N1, N2, i, j, ineg
       double precision, dimension(n_active_max)  :: SLPR
-      double precision :: A(13,13), B(13), BA(13), RES, sumsq
+      double precision :: A(13,13), AA(13,13), B(13), BA(13), RES, sumsq, AA_LU(13,13)
       double precision, parameter :: tol = 1.0d-10
 !     December 2000
 !     The  normalisation by DELTAT (now: MacroDefRate%vMeqStrainRate) of the september 2000 version has been
@@ -235,6 +235,13 @@
              A(1:5,i) = A1_sgnn(1:5,IND(i))
           enddo
           B(1:5)=BB8(1:5)
+          !> Do matrix multiplication for both A and B with transpose(A) on 
+          !> the left-side. This has two beneficial effects:
+          !> -The system of linear equations now has symmetric coefficient matrix AA
+          !> -For NN<5, the original overdetermined system (5 equations for NN
+          !>  variables) is replaced with a system of NN equations.
+          AA(1:N2,1:N2) = matmul(transpose(A(1:N1,1:N2)),A(1:N1,1:N2))
+          BA(1:N2) = matmul(transpose(A(1:N1,1:N2)),B(1:N1))
       else
           !> Solve a quadratic minimization problem (i.e. minimal sum-of-squares
           !> of unknown deformation rates) with 5 linear constraints (i.e. the solution
@@ -254,10 +261,19 @@
           do j=1,5
              B(NN+j)=BB8(j)
           enddo
+          !> the system of equations to be solved further on (AA*X=BB)
+          !> is identical to the 'original' one (A*X=B). Note that the 
+          !> coefficient matrix AA=A is symmetric.
+          AA = A
+          BA = B
       endif
       !
-      !Solve by least-squares method followed by singular value decomposition
-      call Kleinkwa(N1,N2,13,13,A,B,BA,TOL,RES)
+      call STELSEL(N2,N2,AA(1:N2,1:N2),BA(1:N2),TOL)
+      !
+      RES=0.0
+      do i=1,N1
+          RES = RES + (sum(A(i,1:N2)*BA(1:N2))-B(i))**2
+      end do
       !
       SLPR(1:NN) = BA(1:NN)
       !
