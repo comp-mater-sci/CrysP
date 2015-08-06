@@ -30,7 +30,7 @@
 ! See "annotated source codes" if you need these
 !
 !
-      SUBROUTINE SIMUL(config,state,material,IW,NFILE0,MacroDefRate)
+      SUBROUTINE SIMUL(config,state,material,NSTP,IW,NFILE0,MacroDefRate)
 
 !     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
 !     USING THE ALAMEL MODEL
@@ -55,6 +55,7 @@
       type(altayConfigData),intent(in)          :: config
       type(altayStateData),target,intent(inout) :: state
       type(MaterialData),target,intent(in)      :: material
+      integer,intent(in)                        :: NSTP
       integer,intent(in)                        :: IW
       integer,intent(in)                        :: NFILE0
       ! optional argument for IW=1 or 2:
@@ -252,24 +253,10 @@
   36  NFILE=NFILE0*NFILE1
       NPEBPx=NFILE0*NPEBP   ! control "BEP" (effective value)
       NMSSx= NFILE0*NMSS    ! control "MSS" (effective value)
-
-#ifdef ALTAY_SUBROUTINE
-      NSTP     = astate%simulCalls(astate%this)%input%nsteps
-#else      
-      read (KLEC,99) NSTP
-      if(NLIST.eq.1) then
-      write (IMP,115) NSTP
-      end if
- 115  format (//,' S I M U L         NR. STEPS=',I5,//)
-      read (KLEC,99) ICRAT1,ICRAT2
-      if(NLIST.eq.1) then
-      write (IMP,104) ICRAT1,ICRAT2
-      end if
- 104  format (' ICRAT:',2I5)
-
-#endif
       !
-      if(NLIST.eq.1) then                                         
+      if(NLIST.eq.1) then
+          write (IMP,115) NSTP
+ 115  format (//,' S I M U L         NR. STEPS=',I5,//)
           WRITE (IMP,203)
       end if     
       do I=1,3                                                       
@@ -653,4 +640,35 @@
   32  return
       END SUBROUTINE
     
+    subroutine openStandardOutputFiles(fname_prefix, info)
+    use criErrcodes
+    use altayIOConfig
+    use altayMiscutils
+    implicit none
+    character(len=*),intent(in)     :: fname_prefix
+    integer,intent(out)             :: info
+    !
+        ! UNIT IMP = PRINTER
+        open (unit=IMP,file=trim(fname_prefix)//'.LST',status='replace',err=9000)
+        ! UNIT IMP2 = PRINTER
+        open (unit=IMP2,file=trim(fname_prefix)//'.RES',status='replace',err=9000)
+        ! UNIT IMP3 = PRINTER
+        open (unit=IMP3,file=trim(fname_prefix)//'.TWN',status='replace',err=9000)
+        ! 
+        ! UNIT IMP5 = homogenized strain-stress
+        open (unit=IMP5,file=trim(fname_prefix)//'.MSS',status='replace',err=9000)
+        call writeMSSHeader(IMP5,info)
+        !
+        open(unit=IMP6,file=trim(fname_prefix)//'.RPT',status='replace', err=9000)
+        !
+#ifdef PEBP_ENABLED
+      open(unit=IPEBPSDV,file=trim(fname_prefix)//'.SDV',status='replace', err=9000)
+#endif
+        info = criSuccess
+        return
+        9000 info = criErr_IOOpen
+    !
+    end subroutine
+
+
       end module

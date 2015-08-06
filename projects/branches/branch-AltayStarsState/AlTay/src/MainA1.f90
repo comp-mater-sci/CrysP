@@ -39,11 +39,11 @@
       common /CEIGEN/ JBLOC
       integer :: JBLOC
       double precision, dimension(3,3) :: DG
-      character(len=pathlength) :: fnam1,fname_prefix
+      character(len=pathlength) :: fnam1
       integer :: info
       integer :: I,J,K,L
-      integer :: NLINES, ISIGN, NBLOC,  NFILE0
-
+      integer :: NLINES, ISIGN, NBLOC, NSTP, NFILE0
+      integer :: ICRAT1,ICRAT2
 #ifdef PEBP_ENABLED
       character(len=pathlength) :: fname_pebp
       logical :: read_state
@@ -85,28 +85,9 @@
       write (*,92) trim(config%output_prefix)
   92  format (' Code for this simulation: ',a)
   93  format(' Input file:',a)
-      fname_prefix = config%output_prefix
-!     UNIT IMP = PRINTER
-      open (unit=IMP,file=trim(fname_prefix)//'.LST',status='replace')
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ NLIST is not assigned a value yet! so supressed it! QGX 28/10/2011
-!      write (IMP,92) 
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-!     UNIT IMP2 = PRINTER
-      open (unit=IMP2,file=trim(fname_prefix)//'.RES',status='replace')
-!     UNIT IMP3 = PRINTER
-      open (unit=IMP3,file=trim(fname_prefix)//'.TWN',status='replace')
-      ! 
-!     UNIT IMP5 = homogenized strain-stress
-      open (unit=IMP5,file=trim(fname_prefix)//'.MSS',status='replace')
-      call writeMSSHeader(IMP5,info)
       !
-      open(unit=IMP6,file=trim(fname_prefix)//'.RPT',status='replace',   &
-           iostat=info)
+      call openStandardOutputFiles(config%output_prefix, info)
       !
-#ifdef PEBP_ENABLED
-      open(unit=IPEBPSDV,file=trim(fname_prefix)//'.SDV',                &
-           status='replace',iostat=info)
-#endif
       read (KLEC,90) config%deformationmechanism%input_fname
       call stripComment(config%deformationmechanism%input_fname)
       write (*,93) trim(config%deformationmechanism%input_fname)
@@ -236,7 +217,7 @@
       endif
       ! <<--
       !
-      CALL SIMUL(config, state, material, 0, 1)
+      CALL SIMUL(config, state, material, 0, 0, 1)
 
       !
       ! Load state variables
@@ -382,7 +363,10 @@
       ! and the time step dt = 1.0
       call Set_DeformationRate(DG,MacroDefRate)
       !
-      CALL SIMUL(config, state, material, 1, NFILE0, MacroDefRate)
+      read (KLEC,99) NSTP
+      read (KLEC,'(2I5)') ICRAT1,ICRAT2 ! Dummy, never used
+      !
+      CALL SIMUL(config, state, material, NSTP, 1, NFILE0, MacroDefRate)
       call output_storage%saveState(state%new, info)
 #ifdef TESTING_ENABLED
       call native_storage%saveState(state%new, info)
