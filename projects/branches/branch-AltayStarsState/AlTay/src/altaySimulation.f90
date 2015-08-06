@@ -392,7 +392,7 @@ contains
     class(altayStateData),intent(inout)         :: state
     !
         info = criSuccess
-        if (associated(this%storage)) call this%storage%saveState(state%old, info)
+        if (associated(this%storage)) call this%storage%saveState(state%new, info)
     !
     end function
 
