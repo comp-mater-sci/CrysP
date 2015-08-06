@@ -9,8 +9,8 @@ use altaySimulation
 use altayConfigReader
 implicit none
 !
-type(SimulationConfig) :: config
-type(Simulation) :: the_simulation
+type(SimulationConfig),target :: config
+type(Simulation),target :: the_simulation
 type(altayInputConfigReader) :: config_reader
 character(len=max_pathlen) :: input_path
 integer :: info

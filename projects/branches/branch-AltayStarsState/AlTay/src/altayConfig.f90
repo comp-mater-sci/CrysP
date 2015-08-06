@@ -259,9 +259,7 @@ implicit none
         !> In such case the field must retain unallocated state.
         type(StepConfig),dimension(:),allocatable       :: steps
         
-        ! type(StatePersistenceConfig)                    :: state_input
-        
-        ! type(StatePersistenceConfig)                    :: state_output
+        type(StatePersistenceConfig)                    :: state_output
     end type
 
     
@@ -477,18 +475,31 @@ contains
       
 #ifdef USE_ALTAYSIMUL
     !> Very imperfect translator of new config type into old config type.
-    function translateConfig(config) result(old)
+    function translateConfig(config,io_enabled) result(old)
+    use criAlgorithm
+    implicit none
     type(SimulationConfig),intent(in) :: config
+    logical,intent(in),optional        :: io_enabled !<Write out results to external files (default: true)
     type(altayConfigData) :: old
     !
-    integer :: info
+    integer :: info, i
     !
         old%jobtitle = config%jobtitle
         old%hardening = config%material%phases(1)%hardening
-        ! Nasty assumption: we assume step 1 is analysis step
+        ! Nasty trick: we take the very first analysis step
         ! and take data from there
-        call setModelType(old,config%steps(1)%analysis_step%model_type, info)
-        
+        do i = 0, ubound(config%steps,dim=1)
+            if (allocated(config%steps(i)%analysis_step)) then
+                call setModelType(old,config%steps(i)%analysis_step%model_type, info)
+                exit
+            endif
+        enddo
+        !
+        if (optionalDefault(io_enabled, .true.)) then
+            old%output_config%NLIST = 1
+            old%output_config%NFILE = 1
+            old%output_config%NRES = 1
+        endif
     !
     end function
 #endif

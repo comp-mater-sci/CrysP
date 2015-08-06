@@ -72,6 +72,10 @@ contains
     class(altayInputConfigReader),intent(inout)     :: this
     class(SimulationConfig),intent(out)              :: config
     !
+    type(AnalysisStepConfig) :: analysis_step
+    type(OutputStepConfig) :: output_step
+    integer,parameter :: max_step = 9
+    integer :: i
         
         config%jobtitle = 'T612V4'
         
@@ -82,8 +86,29 @@ contains
             ! leave default hardening
             phase%intraphase_interfaces%file_path = 'micro1.smt'
         end associate
+        
+        ! Simple data persistency
+        associate (cnf => config%state_output)
+            cnf%scheme_id = CFN_DataPersistencyNative
+            cnf%file_path = config%jobtitle
+            cnf%odf_config%format_id = TF_CUR
+            cnf%odf_config%file_name = trim(config%jobtitle)//'.CUR'
+        end associate
         !
-        allocate(config%steps(0:2))
+        ! Create steps: 
+        ! 0 - initialization
+        ! 1,3, ... - output
+        ! 2,4, ... - analysis
+        
+        ! All analysis steps are identical:
+        analysis_step%input(1,1) = 0.025
+        analysis_step%input(3,3) = -0.025
+        analysis_step%nincrements = 10
+        analysis_step%model_type = CNF_modelAlamel
+        !
+        ! All output steps are identical
+        !
+        allocate(config%steps(0:max_step))
         !
         associate (steps => config%steps)
             ! Initialization step
@@ -93,21 +118,20 @@ contains
                 input%file_path = 'A612LM.SMT'
                 input%odf_config%file_name = input%file_path
             end associate
-            ! Analysis step
-            allocate(steps(1)%analysis_step)
-            associate(step => steps(1)%analysis_step)
-                step%input = 0.05 * unit_sr_matrix
-                step%model_type = CNF_modelAlamel
-            end associate
-            ! Output step
-            allocate(steps(2)%output_step)
-            associate(step => steps(2)%output_step)
-                step%file_path = trim(config%jobtitle)//'.out'
-            end associate
-            
+            !
+            ! Set output steps
+            do i = 1, max_step, 2
+                steps(i)%output_step = output_step
+            enddo
+            ! Set Analysis steps. explicit loop is needed
+            ! lhs allocatable member is not allowed in array section:
+            ! steps(2:max_step22)%analysis_step = analysis_step
+            do i = 2, max_step, 2
+                steps(i)%analysis_step = analysis_step
+            enddo
         end associate
     
-        info = criError
+        info = criSuccess
     !
     end function
     
