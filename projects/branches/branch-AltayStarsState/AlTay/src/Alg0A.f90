@@ -501,7 +501,7 @@
       !
       call Grain_accumulatedshear_update(GMM1,GMM0,sliprat_solution,1.0D0,info)
       !
-      if (nfile.ne.0.and.istp.eq.1) then
+      if (NRES.ne.0.and.istp.eq.1) then
           !
           call writeRESRecord(IMP2,ior,sliprat_solution%vMeqstress, &
               sliprat_solution%workrate, tau, &
