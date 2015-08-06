@@ -32,7 +32,7 @@ implicit none
         type(RawFileContext)        :: context
     contains
     
-        ! FIXME:
+        !> \fixme Use actual read in place of fakeread
         ! procedure :: read => altayInputConfigReader_read
         procedure :: read => altayInputConfigReader_fakeread
         procedure :: setInput
@@ -73,7 +73,7 @@ contains
     class(SimulationConfig),intent(out)              :: config
     !
         
-        config%jobtitle = 'samplejob'
+        config%jobtitle = 'T612V4'
         
         ! single-phase built-in fcc material
         allocate(config%material%phases(1))
@@ -88,21 +88,19 @@ contains
         associate (steps => config%steps)
             ! Initialization step
             allocate(steps(0)%initialization_step)
-            steps(1)%name = 'Step0'
-            associate(step => steps(0)%initialization_step)
-                step%data_persistency_scheme = CFN_NativeDataPersistency
-                step%file_path = 'A612LM.SMT'
+            associate(input => steps(0)%initialization_step%input)
+                input%scheme_id = CFN_DataPersistencyNative
+                input%file_path = 'A612LM.SMT'
+                input%odf_config%file_name = input%file_path
             end associate
             ! Analysis step
             allocate(steps(1)%analysis_step)
-            steps(1)%name = 'Step1'
             associate(step => steps(1)%analysis_step)
                 step%input = 0.05 * unit_sr_matrix
                 step%model_type = CNF_modelAlamel
             end associate
             ! Output step
             allocate(steps(2)%output_step)
-            steps(2)%name = 'Step2'
             associate(step => steps(2)%output_step)
                 step%file_path = trim(config%jobtitle)//'.out'
             end associate

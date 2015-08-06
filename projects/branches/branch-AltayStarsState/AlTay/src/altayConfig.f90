@@ -61,11 +61,10 @@ implicit none
     
     !> \name Named constants/identifiers of the supported data persistency schemes
     !>@{ 
-    integer,parameter :: CNF_UnknownDataPersistency = -1
-    integer,parameter :: CNF_DataPersistencyNone = 0
-    integer,parameter :: CFN_NoDataPersistency = 1
-    integer,parameter :: CFN_NativeDataPersistency = 2
-    integer,parameter :: CFN_HDF5DataPersistency = 3
+    integer,parameter :: CNF_DataPersistencyUnknown = -1
+    integer,parameter :: CFN_DataPersistencyNone = 0
+    integer,parameter :: CFN_DataPersistencyNative = 1
+    integer,parameter :: CFN_DataPersistencyHDF5 = 2
     !>@}
 
 
@@ -74,26 +73,27 @@ implicit none
     !> length `max_pathlen`.
     integer,parameter,private :: state_file_max_pathlen = 2 * max_pathlen + 1
 
-
-    type :: StatePersistenceConfig
-        integer                             :: scheme_id = CFN_NoDataPersistency
-        
-        character(len=max_pathlen)          :: file_path = ''
-        
-        integer                             :: block_id = 1
-    end type
-
-
     !> Configuration of texture data exchange
-    !> \todo Update the names of the fields - they are not exclusively related to input files.
+    !> \fixme Update the names of the fields - they are not exclusively related to input files.
     type :: TextureConfig
         !> Type of texture representation
         !>
         !> See altayTexFormatConstants for the list of possible values. \sa altayTexFormatConstants
-        integer                                   :: input_type = TF_SMT
-        character(len=max_pathlen)                :: input_fname = ''
-        integer                                   :: block_id = 1
+        integer                                   :: format_id = TF_SMT
+        character(len=max_pathlen)                :: file_name = ''
+        integer                                   :: block_id = 0
     end type
+
+
+    type :: StatePersistenceConfig
+        integer                             :: scheme_id = CFN_DataPersistencyNone
+        
+        character(len=state_file_max_pathlen):: file_path = ''
+        
+        type(TextureConfig)                 :: odf_config
+    end type
+
+
 
 
     !> Configuration of deformmation mechanisms
@@ -195,10 +195,7 @@ implicit none
     
     type :: InitializationStepConfig
         
-        integer :: data_persistency_scheme = CNF_DataPersistencyNone
-        
-        character(len=max_pathlen)      :: file_path = ''
-        
+        type(StatePersistenceConfig)        :: input
         
     end type
     
@@ -262,9 +259,9 @@ implicit none
         !> In such case the field must retain unallocated state.
         type(StepConfig),dimension(:),allocatable       :: steps
         
-        type(StatePersistenceConfig)                    :: state_input
+        ! type(StatePersistenceConfig)                    :: state_input
         
-        type(StatePersistenceConfig)                    :: state_output
+        ! type(StatePersistenceConfig)                    :: state_output
     end type
 
     
@@ -477,5 +474,24 @@ contains
             end select
       end function
       
+      
+#ifdef USE_ALTAYSIMUL
+    !> Very imperfect translator of new config type into old config type.
+    function translateConfig(config) result(old)
+    type(SimulationConfig),intent(in) :: config
+    type(altayConfigData) :: old
+    !
+    integer :: info
+    !
+        old%jobtitle = config%jobtitle
+        old%hardening = config%material%phases(1)%hardening
+        ! Nasty assumption: we assume step 1 is analysis step
+        ! and take data from there
+        call setModelType(old,config%steps(1)%analysis_step%model_type, info)
+        
+    !
+    end function
+#endif
+
 end module
 

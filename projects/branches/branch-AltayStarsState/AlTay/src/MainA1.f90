@@ -247,10 +247,10 @@
       
       associate(texcnf => config%texture)
           ! Get the initial texture
-          read(KLEC,99) texcnf%input_type
-          read(KLEC,'(A)') texcnf%input_fname
+          read(KLEC,99) texcnf%format_id
+          read(KLEC,'(A)') texcnf%file_name
           read(KLEC,99) texcnf%block_id
-          call stripComment(texcnf%input_fname)
+          call stripComment(texcnf%file_name)
           !
           ! Initialize appropriate backend: texcnf%input_type
           info = criError
@@ -261,7 +261,7 @@
           endif
           !
           if (info /= 0) then
-                write(*,fmt=9980) trim(texcnf%input_fname)
+                write(*,fmt=9980) trim(texcnf%file_name)
                 call exit(stopcode_ioerror)
      9980 format('An error has occurred while processing texture data file:' &
                  ,1X,A)
@@ -274,7 +274,7 @@
       select case(HardLawID)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
             ! UNIT IMP4 = state variables of PEBP KOST11
-            info = KS_openStateFile(IMP4,trim(fname_prefix)//'.BPM','w')
+            info = KS_openStateFile(IMP4,trim(config%output_prefix)//'.BPM','w')
             !
             if (KS_initState(NREC) /= 0) then
                   write(IMP,fmt=600) 
@@ -319,8 +319,8 @@
       block
            type(TextureConfig) :: texcnf
            !
-           texcnf%input_type = TF_HDF5
-           texcnf%input_fname = trim(config%output_prefix)//'.h5:state' 
+           texcnf%format_id = TF_HDF5
+           texcnf%file_name = trim(config%output_prefix)//'.h5:state' 
            output_storage => statePersistenceFactory(texcnf, as_input=.false.)
            !> \todo: if output of the initial state is requested
            call output_storage%saveState(state%old, info) 
@@ -331,8 +331,8 @@
       ! Only for testing: CUR file
       block
             type(TextureConfig) :: texcnf
-            texcnf%input_type = TF_CUR
-            texcnf%input_fname = trim(config%output_prefix)//'.CUR'
+            texcnf%format_id = TF_CUR
+            texcnf%file_name = trim(config%output_prefix)//'.CUR'
             native_storage => statePersistenceFactory(texcnf, as_input=.false.)
             call native_storage%saveState(state%old, info)
       end block
@@ -343,8 +343,8 @@
             class(StatePersistenceScheme), pointer :: storage
             type(TextureConfig) :: texcnf
             !
-            texcnf%input_type = TF_CUB
-            texcnf%input_fname = trim(config%output_prefix)//'_init.CUB'
+            texcnf%format_id = TF_CUB
+            texcnf%file_name = trim(config%output_prefix)//'_init.CUB'
             storage => statePersistenceFactory(texcnf, as_input=.false.)
             call storage%saveState(state%new, info) 
             deallocate(storage)
@@ -397,8 +397,8 @@
         class(StatePersistenceScheme), pointer :: storage
         type(TextureConfig) :: texcnf
         !
-        texcnf%input_type = TF_CUB
-        texcnf%input_fname = trim(config%output_prefix)//'.CUB'
+        texcnf%format_id = TF_CUB
+        texcnf%file_name = trim(config%output_prefix)//'.CUB'
         storage => statePersistenceFactory(texcnf, as_input=.false.)
         call storage%saveState(state%new, info) 
         deallocate(storage)
