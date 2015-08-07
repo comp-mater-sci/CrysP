@@ -221,10 +221,11 @@
       double precision, intent(inout)              :: SLSTOR(0:n_active_max)
       integer, intent(inout)                       :: NOPL
       !
+      integer,parameter :: max_eq = 13 ! Maximal number of equations in the system being solved
       integer :: N1, N2, i, j, ineg
       double precision, dimension(n_active_max)  :: SLPR
-      double precision :: A(13,13), AA(13,13), B(13), BA(13), RES, sumsq, AA_LU(13,13)
-      double precision, parameter :: tol = 1.0d-10
+      double precision :: A(max_eq,max_eq), AA(max_eq,max_eq), B(max_eq), BA(max_eq), RES, sumsq
+      double precision, parameter :: tol = 1.0d-10, xtol = 10000.D0*tol
 !     December 2000
 !     The  normalisation by DELTAT (now: MacroDefRate%vMeqStrainRate) of the september 2000 version has been
 !     removed here. Is now done in PANCAK2.
@@ -276,7 +277,7 @@
 #ifdef LAPACK_ENABLED
       call sysv(AA(1:N2,1:N2),BA(1:N2))
 #else
-      call STELSEL(N2,N2,AA(1:N2,1:N2),BA(1:N2),TOL)
+      call STELSEL(N2,max_eq,AA,BA,TOL)
 #endif
       !
       RES=0.0
@@ -288,15 +289,8 @@
       !
       sumsq = sum(SLPR(1:NN)**2)
       !
-      !Set ineg
-      if (minval(SLPR(1:NN)) > 0.0d0) then
-          ineg = 0
-      else
-          ineg = 1
-      end if
-      if (RES > (10000.0*TOL)) ineg = -1
-      !
-      if (ineg == 0) then !A valid solution
+      if (.not.((any(SLPR(1:NN) <= 0.D0) .or. (RES > XTOL)))) then
+          !A valid solution
           if(NOPL == 0 .OR. sumsq < SLSTOR(0)) then
               ISTOR(0) = NN
               ISTOR(1:NN) = IND(1:NN)
@@ -307,7 +301,10 @@
               if (NN<n_active_max) SLSTOR(NN+1:n_active_max) = 0.d0
           end if
           NOPL = NOPL + 1
-      end if
+      else
+           ! place for checking what's wrong
+           continue
+      endif
           
       return
       end subroutine
