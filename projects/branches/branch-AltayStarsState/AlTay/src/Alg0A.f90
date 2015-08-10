@@ -382,10 +382,6 @@
       if (NFILTW.eq.1) write (IMP3,399)
  399  format(1x)
       !
-      !Update mesostructure_state - For current increment, the mesostructure_state is updated (to end of inc...)
-      ! BEFORE cluster trafo (subr. mesostr_clustertrafo) and cluster weight factor (subr. mesostr_clusterweightfactor) are calculated !!!
-      call mesostructure_state%update(MacroDefState%IncrDefGrad, info)
-      !
       ! Begin the loop over grains/clusters
       !
       clusterloop: DO 23 IOR=1,NPOINT
@@ -559,6 +555,9 @@
       !
       ! Finish processing if IW > 1
       if (IW.gt.1) exit
+      !
+      !Update mesostructure AFTER the clusterloop, on condition that state update is requested ('calling_TAYLR1')
+      if (calling_TAYLR1) call mesostructure_state%update(MacroDefState%IncrDefGrad, info) 
       !
       SHsam = STOT / TOTGEW
       RHOSm = RHOST / TOTGEW
