@@ -219,7 +219,7 @@ implicit none
             call Pancak2(i, ngrains_per_cluster, &
                 T_cluster, &
                 grain_euler, grain_CRSS, DM_data,   &
-                MacroDefRate, MacroDefState, &
+                MacroDefRate, &
                 this%components(i)%solution)
         end do
         !

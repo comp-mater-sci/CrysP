@@ -47,7 +47,7 @@
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
       Subroutine Pancak2(laml, ngr, Tprinc, eulerb, CRSSb, DM_data,  &
-                         MacroDefRate, MacroDefState, solution)
+                         MacroDefRate, solution)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
@@ -72,7 +72,6 @@
       !>       type(DeformationMechanismData),dimension(Pancak2_max_grains), intent(in)    :: DM_data
       type(DeformationMechanismData), intent(in)    :: DM_data
       type(DeformationRate),intent(in)              :: MacroDefRate
-      type(DeformationState),intent(in)             :: MacroDefState
       type(Pancak2Solution),intent(out)             :: solution
       !
       !> Number of active systems founds so far by the search algorithm

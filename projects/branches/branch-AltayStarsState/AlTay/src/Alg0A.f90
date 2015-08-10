@@ -424,7 +424,7 @@
 999 if (IW.le.1) then
             call mesostr_clustertrafo(ngr,interface_dataset%trafo(i_interface),MacroDefRate,mesostructure_state%deformationgradient,T_cluster,info)
             CALL Pancak2(laml,ngr,T_cluster,eulerb_0_rad, CRSSb,material%phases(1)%deformationmechanism,   &
-                         MacroDefRate,MacroDefState,Pancak2_solution)
+                         MacroDefRate,Pancak2_solution)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD
 #endif            
