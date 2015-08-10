@@ -68,6 +68,7 @@
        STOT(3,3),                                               &
        RHOST(3,3),RHOSm(3,3),gewfb(2) ,GMMAb(2),SHSAM(3,3),ROT(3)
       type (CRSSData),dimension(2) :: CRSSb
+      type (DeformationMechanismData),dimension(2) :: DMdatab
       !> \fixme: infoarr variable is added just to conform with cluster shape in elemental call to CRSSData_init
       integer :: infoarr(2)
       dimension FS(3,3)
@@ -423,7 +424,9 @@
 !
 999 if (IW.le.1) then
             call mesostr_clustertrafo(ngr,interface_dataset%interfaces(i_interface)%trafo,MacroDefRate,mesostructure_state%deformationgradient,T_cluster,info)
-            CALL Pancak2(laml,ngr,T_cluster,eulerb_0_rad, CRSSb,material%phases(1)%deformationmechanism,   &
+            !
+            DMdatab(:) = material%phases(1)%deformationmechanism
+            CALL Pancak2(laml,ngr,T_cluster,eulerb_0_rad, CRSSb,DMdatab,   &
                          MacroDefRate,Pancak2_solution)
 #ifdef ALTAY_SUBROUTINE
             RCM_GUARD

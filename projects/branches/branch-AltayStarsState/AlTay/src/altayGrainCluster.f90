@@ -183,10 +183,9 @@ implicit none
     ! <<--
 #endif
     
-    Subroutine LinProg_solver(this, DM_data, MacroDefRate, info)
+    Subroutine LinProg_solver(this, MacroDefRate, info)
         implicit none
         type(GrainClusterSolution), intent(inout)    :: this
-        type(DeformationMechanismData), intent(in)   :: DM_data
         type(DeformationRate), intent(in)            :: MacroDefRate
         integer, intent(out)                         :: info    
         !
@@ -194,6 +193,7 @@ implicit none
         double precision, dimension(3,3)                 :: T_cluster
         type(EulerAngles), dimension(Pancak2_max_grains) :: grain_euler
         type(CRSSdata), dimension(Pancak2_max_grains)    :: grain_CRSS
+        type(DeformationMechanismData),dimension(Pancak2_max_grains) :: grain_DM_data
         !
         !>todo: add corresponding field to GrainClusterSolution type
         !T_cluster = this%?
@@ -205,11 +205,15 @@ implicit none
                 grain_euler(i) = this%components(i)%grain%orientation%euler
                 !initialize grain_CRSS
                 grain_CRSS(i) = this%components(i)%crss
+                !initialize grain_DM_data
+                grain_DM_data(i) = this%components(i)%grain%phase%deformationmechanism
             else !zero initializations
                 !initialize grain_euler
                 grain_euler(i) = Arr2EulerAngles([0.D0,0.D0,0.D0])
                 !initialize grain_CRSS
                 call CRSSData_init(grain_CRSS(i), CRSSData_size(this%components(i)%crss), info)
+                !initialize grain_DM_data
+                call DeformationMechanismData_init(grain_DM_data(i), 0, 0, info)
             end if
         end do
         !
@@ -217,7 +221,7 @@ implicit none
             !
             call Pancak2(i, ngrains_per_cluster, &
                 T_cluster, &
-                grain_euler, grain_CRSS, DM_data,   &
+                grain_euler, grain_CRSS, grain_DM_data,   &
                 MacroDefRate, &
                 this%components(i)%solution)
         end do

@@ -46,7 +46,7 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(laml, ngr, Tprinc, eulerb, CRSSb, DM_data,  &
+      Subroutine Pancak2(laml, ngr, Tprinc, eulerb, CRSSb, DM_datab,  &
                          MacroDefRate, solution)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -67,10 +67,7 @@
       double precision,dimension(3,3),intent(in)    :: Tprinc
       type (CRSSData),dimension(Pancak2_max_grains),intent(in)       :: CRSSb
       type(EulerAngles),dimension(Pancak2_max_grains),intent(in)     :: eulerb      
-      !> \fixme Generalize DM_data for multi-phase input (grain 1 and 2 may belong
-      !>        to different phases):
-      !>       type(DeformationMechanismData),dimension(Pancak2_max_grains), intent(in)    :: DM_data
-      type(DeformationMechanismData), intent(in)    :: DM_data
+      type(DeformationMechanismData),dimension(Pancak2_max_grains), intent(in)    :: DM_datab
       type(DeformationRate),intent(in)              :: MacroDefRate
       type(Pancak2Solution),intent(out)             :: solution
       !
@@ -140,25 +137,24 @@
 !     N is number of rows of A2;   NU number of rows of UU2
       N=5*NGR
       NU=N
-      !> \fixme Generalize for multi-phase input
-      M2=NGR*DM_data%n_systems
+      select case (ngr)
+      case (1)
+          M2 = DM_datab(1)%n_systems
+      case (2)
+          M2 = DM_datab(1)%n_systems + DM_datab(2)%n_systems
+      end select
       NRL=(NGR-1)*2
-      !> \fixme Generalize for multi-phase input
-      M12=NGR*DM_data%n_systems+NRL
+      M12 = M2 + NRL
       if (laml.eq.2) goto 3
       !Construct A2
-      !> \fixme Generalize A2 for multi-phase input (grain 1 and 2 may belong
-      !>        to different phases)
-      !>
         ! Set up the system of equations for the linear programming:
         ! A = | A1_g1   0       RLX+ |
         !     | 0       A1_g2   RLX- |
         ! C = | CRSS_g1 CRSS_g2  CRSS_RLX |
         ! shape(A,dim=2) == shape(C,dim=2)
-
       A2 = 0.0d0
-      A2( 1:5  ,     1:DM_data%n_systems   ) = DM_data%A1
-      A2( 6:10 , 1+DM_data%n_systems:Pancak2_max_grains*DM_data%n_systems ) = DM_data%A1
+      A2( 1:5  , 1                      :DM_datab(1)%n_systems   ) = DM_datab(1)%A1
+      if (ngr == 2) A2( 6:10 , 1+DM_datab(1)%n_systems:M2 ) = DM_datab(2)%A1
       !
       do 33 i=M2+1,M12
       do 33 jsgn=1,Pancak2_max_grains
@@ -167,11 +163,9 @@
       do 31 j=1,NU
       UU(j,i)=0.0
 31    continue
-      !> \fixme Generalize DI for multi-phase input (grain 1 and 2 may belong
-      !>        to different phases)
       DO 53 I=1,5
-      DI(I)=DM_data%set0(I)
-      DI(I+5)=DM_data%set0(I)+DM_data%n_systems
+      DI(I)=DM_datab(1)%set0(I)
+      if (ngr == 2) DI(I+5)=DM_datab(2)%set0(I)+DM_datab(1)%n_systems
 53    CONTINUE    
       !
       do 1 IL=1,NGR
@@ -220,14 +214,14 @@
 44    continue
       !> \fixme Generalize CCC for multi-phase input (grain 1 and 2 may belong
       !>        to different phases)
-      K1=DM_data%n_systems*(IL-1)
+      K1=DM_datab(1)%n_systems*(IL-1)
       !
       ! Assign crss_cluster to proper section of CCC
-      CCC(:,1+K1:DM_data%n_systems+K1)=CRSSb(IL)%crss(:,1:DM_data%n_systems)  
+      CCC(:,1+K1:DM_datab(IL)%n_systems+K1)=CRSSb(IL)%crss(:,1:DM_datab(IL)%n_systems)  
       !
       ! Set CCC for antitwinning direction equal to
       ! GETAL times CCC for twinning direction       
-      do I=DM_data%n_slip_systems+1,DM_data%n_systems ! this do-loop will only be executed for DM_data%n_twinning_systems > 0
+      do I=DM_datab(IL)%n_slip_systems+1,DM_datab(IL)%n_systems ! this do-loop will only be executed for DM_data%n_twinning_systems > 0
           CCC(2,I+K1)=CCC(1,I+K1)*GETAL !notePE20150428
       end do
       !
@@ -235,7 +229,7 @@
  914  format (' i,j',2i5, ' CCC ',2d16.4)
       DO 15 J=1,5
       DO 15 I=1,5
-      UU(I+L1,J+L1)=DM_data%B(I,J)
+      UU(I+L1,J+L1)=DM_datab(IL)%B(I,J)
   15  continue
    1  continue 
       DO 54 I=1,N 
@@ -372,8 +366,7 @@
   89  j=0
       do 40 IG=1,NGR
       XXTOT=0.0
-      !> \fixme Generalize XXTOT for multi-phase input
-      do i=1,DM_data%n_systems
+      do i=1,DM_datab(IG)%n_systems
        j=j+1  
        XXTOT=XXTOT+ABS(xx(j))
       enddo
@@ -392,8 +385,7 @@
 !     From here on, output is produced for grain number "laml"
 !
    3  continue
-      !> \fixme Generalize jj for multi-phase input
-      jj=DM_data%n_systems*(laml-1)
+      jj=DM_datab(1)%n_systems*(laml-1)
       !
       ii=5*(laml-1)
       do 201 i=1,5
@@ -475,7 +467,7 @@
 !      enddo
 ! 308  format ('PANCAK2  i,DTAU1, XX',i5,2d12.4)
       nactiv_sofar=0
-      do 305 i=1,DM_data%n_systems
+      do 305 i=1,DM_datab(laml)%n_systems
       j=i+jj
 !     If one grain does not deform, then DTAU1 comes from the full
 !     constraints solution.
