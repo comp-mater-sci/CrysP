@@ -183,12 +183,11 @@ implicit none
     ! <<--
 #endif
     
-    Subroutine LinProg_solver(this, DM_data, MacroDefRate, MacroDefState, info)
+    Subroutine LinProg_solver(this, DM_data, MacroDefRate, info)
         implicit none
         type(GrainClusterSolution), intent(inout)    :: this
         type(DeformationMechanismData), intent(in)   :: DM_data
         type(DeformationRate), intent(in)            :: MacroDefRate
-        type(DeformationState), intent(in)           :: MacroDefState
         integer, intent(out)                         :: info    
         !
         integer :: i
