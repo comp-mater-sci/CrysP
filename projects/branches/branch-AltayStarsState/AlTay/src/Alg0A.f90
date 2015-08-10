@@ -99,7 +99,7 @@
 #ifdef PEBP_ENABLED
       type(StateDerivedVars) :: pebpSDV, pebpSDVavg
 #endif
-      type(InterfaceDataset),pointer :: interface_dataset
+      type(MesostructureData),pointer :: interface_dataset
 
       !
       data convf/0.5729577951308232D+02/
@@ -234,7 +234,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   30  continue
 
-      interface_dataset => material%phases(1)%intraphase_interfaces%interfaces
+      interface_dataset => material%phases(1)%intraphase_interfaces
 
       i=NPOINT/NGR
       if (NGR*i.ne.npoint) then
@@ -388,7 +388,7 @@
       !
       ! Cluster number and interface index (relevant only in Alamel scheme)
       i_cluster = (IOR+1) / 2
-      i_interface = modulo(i_cluster - 1, interface_dataset%n_interfaces) + 1
+      i_interface = modulo(i_cluster - 1, size(interface_dataset%interfaces)) + 1
       !
       Wtot = 0.0
       !
@@ -422,7 +422,7 @@
 !                  during the previous computation.
 !
 999 if (IW.le.1) then
-            call mesostr_clustertrafo(ngr,interface_dataset%trafo(i_interface),MacroDefRate,mesostructure_state%deformationgradient,T_cluster,info)
+            call mesostr_clustertrafo(ngr,interface_dataset%interfaces(i_interface)%trafo,MacroDefRate,mesostructure_state%deformationgradient,T_cluster,info)
             CALL Pancak2(laml,ngr,T_cluster,eulerb_0_rad, CRSSb,material%phases(1)%deformationmechanism,   &
                          MacroDefRate,Pancak2_solution)
 #ifdef ALTAY_SUBROUTINE
@@ -430,7 +430,7 @@
 #endif            
       endif
       !
-      call mesostr_clusterweightfactor(NGR,interface_dataset%trafo(i_interface),mesostructure_state%deformationgradient,GEWF,info)
+      call mesostr_clusterweightfactor(NGR,interface_dataset%interfaces(i_interface)%trafo,mesostructure_state%deformationgradient,GEWF,info)
       !
       TOTGEW=TOTGEW+GEWF
       !

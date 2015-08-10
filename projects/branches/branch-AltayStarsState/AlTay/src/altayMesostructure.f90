@@ -6,7 +6,9 @@
 module altayMesostructure
 use altayAlgorithms
 use altayMiscutils, only: terminate, stopcode_runtimeerror
+use altaySmtAccess
 use criErrcodes
+use criMathUtils
 implicit none
 
     type :: srTensor
@@ -15,27 +17,18 @@ implicit none
     
     end type
     
-    type :: InterfaceDataset
+    !> Description of inter-grain (inter/intra-phase) boundary (interface)
+    type :: InterfaceData
         
-        !>Title of interface dataset
-        character(len=40) :: title = ''   
-        
-        !>Number of interfaces in the dataset
-        integer :: n_interfaces = 0
-        
-        !>Euler angles of each interface in the dataset. 
+        !> Euler angles of each interface in the dataset. 
         !> The corresponding 3rd axis refers to the interface normal.
-        !> It has dimension(n_interfaces).        
-        type(EulerAngles), dimension(:), allocatable :: eulerangles 
+        !> It has dimension(n_interfaces).
+        type(EulerAngles) :: eulerangles
         
-        !>Transformation matrix of each interface in the dataset. 
+        !> Transformation matrix of each interface in the dataset. 
         !> The 3rd column refers to the interface normal.
         !> It has dimension(n_interfaces).
-        type(srTensor), dimension(:), allocatable :: trafo         
-    
-    contains
-    
-        procedure :: readfromSMTfile => InterfaceDataset_readfromSMTfile   
+        type(srTensor)  :: trafo
         
     end type
     
@@ -44,73 +37,57 @@ implicit none
     !> This also covers the where the two phases are identical (mesostructure
     !> of the phase itself)
     type :: MesostructureData
-        type(InterfaceDataset)      :: interfaces
+        
+        !>Title of interface dataset
+        character(len=40) :: title = ''
+
+        type(InterfaceData),dimension(:), allocatable      :: interfaces
     end type
 
+    interface initialize
+        module procedure MesostructureData_readfromSMTfile
+    end interface
+    
       
 contains
 
-      !> Reading of "microstructure" (Euler angles defining 
-      !> grain boundary segments) and initializing instance 'this' of InterfaceDataset.
-      subroutine InterfaceDataset_readfromSMTfile( this, SMTfilename, info)
-      use altayMiscutils
-      use altayIOConfig
-      implicit none
-      class(InterfaceDataset), intent(inout)  :: this
-      character(len=*),intent(in)            :: SMTfilename
-      integer, intent(out)                   :: info
-      !
-      integer          :: i
-      !
-      !output to NLIST 
-      if(NLIST.eq.1) write (IMP,703) SMTfilename
-703   format (' InterfaceDataset_readfromSMTfile - Input File:' ,a)
-      !
-      !Open SMT-file
-      info = criError
-      open (unit=NDAT2,file=SMTfilename,status='old',iostat=info) 
-      if (info /= 0) return
-      !
-      !Read 1st line
-      read (NDAT2,794) this%n_interfaces, this%title
-794   format(I5,5x,A)
-      !
-      !output
-#ifndef NO_STDOUT
-      write (*,793) this%n_interfaces, this%title
-#endif
-      if(NLIST.eq.1) write (IMP,793) this%n_interfaces, this%title
-793   format (' Number of orientations in MICROSTRUCTURE file:' ,I5,/,' Titel on  file: ',A)
-      !
-      !Allocations
-      allocate(this%eulerangles(this%n_interfaces),STAT=info)
-      if (info.ne.0) then
-          if(NLIST.eq.1) write(IMP,702)
-          return
-      end if 
-      allocate(this%trafo(this%n_interfaces),STAT=info)
-      if (info.ne.0) then
-          if(NLIST.eq.1) write(IMP,702)
-          return
-      end if      
-702   format (' InterfaceDataset_readfromSMTfile - Allocation of memory failed')
-      !
-      !Read remaining of SMT-file
-      do i= 1,this%n_interfaces
-          associate (eul => this%eulerangles(i), trafo => this%trafo(i))
-              read (NDAT2,796) eul%fi2, eul%PHI, eul%fi1
-              !Calculate the transformation matrix
-              trafo%matrix = transpose(rotmat(deg2rad(this%eulerangles(i))))
-          end associate
-      enddo
-796   format(3F10.0)
-      !
-      !Close SMT-file
-      close(unit=NDAT2)
-      !
-      info = criSuccess
-      !
-      end subroutine
+    !> Reading of "microstructure" (Euler angles defining 
+    !> grain boundary segments) and initializing instance 'this' of InterfaceDataset.
+    subroutine MesostructureData_readfromSMTfile( this, SMTfilename, info)
+    use altayMiscutils
+    use altayIOConfig
+    implicit none
+    type(MesostructureData), intent(out)    :: this
+    character(len=*),intent(in)             :: SMTfilename
+    integer, intent(out)                    :: info
+    !
+    type(RawFileContext) :: context
+    type(SMTFileAccess) :: smt_access
+    type(DiscreteODF) :: smt_data
+    integer          :: i, ierr, n_interfaces
+    !
+        context%path = SMTfilename
+        call smt_access%initialize(context, .true., info)
+        if (info /= criSuccess) return
+        info = smt_access%read(0,smt_data)
+        n_interfaces = size(smt_data)
+        if ((info /= criSuccess) .or. (n_interfaces <= 0)) return
+        this%title = smt_data%title
+        !
+        allocate(this%interfaces(n_interfaces),stat=ierr)
+        if (ierr /= 0) return
+        !
+        associate (odf => smt_data%orientations)
+            do i= 1, n_interfaces
+                this%interfaces(i)%eulerangles = odf(i)%euler
+                ! Calculate the transformation matrix
+                this%interfaces(i)%trafo%matrix = transpose(rotmat(odf(i)%euler))
+            enddo
+        end associate
+        !
+        info = criSuccess
+    !
+    end subroutine
     
 
       

@@ -89,9 +89,8 @@ contains
         endif
         !
         ! Initialize mesostructure
-        !> \todo Implement this in a simular way as it;s done for the components above
-        !>       (less intrusive way)
-        call this%intraphase_interfaces%interfaces%readfromSMTfile(cnf%intraphase_interfaces%file_path, info)
+        call initialize(this%intraphase_interfaces, cnf%intraphase_interfaces%file_path, info)
+    !
     end subroutine 
     
 end module
