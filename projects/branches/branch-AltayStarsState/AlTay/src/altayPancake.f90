@@ -31,8 +31,17 @@
           double precision, dimension(5)                         :: BB8
       end type Pancak2Solution
       
-      contains
+    contains
       
+    
+    subroutine alamelClusterSolve
+    implicit none
+    
+    
+    
+    end subroutine
+    
+    
 ! MODIFICATIONS AUG 2010
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
@@ -58,6 +67,9 @@
       double precision,dimension(3,3),intent(in)    :: Tprinc
       type (CRSSData),dimension(Pancak2_max_grains),intent(in)       :: CRSSb
       type(EulerAngles),dimension(Pancak2_max_grains),intent(in)     :: eulerb      
+      !> \fixme Generalize DM_data for multi-phase input (grain 1 and 2 may belong
+      !>        to different phases):
+      !>       type(DeformationMechanismData),dimension(Pancak2_max_grains), intent(in)    :: DM_data
       type(DeformationMechanismData), intent(in)    :: DM_data
       type(DeformationRate),intent(in)              :: MacroDefRate
       type(DeformationState),intent(in)             :: MacroDefState
@@ -93,6 +105,8 @@
       data SQR2/0.7071067811865476D+00/,B3/30*0.0D0/
 !     Definition of the two relaxations, representing a
 !     13-simple shear and a 23-simple shear, respectively:
+      !> \remark Other relaxations might be considered in the future, e.g.
+      !> Manik and Holmedal, Materials Science&Engineering A580(2013)349–354
       data relax /0.0D0, 0.0D0, 0.0D0,                                   &
                   0.0D0, 0.0D0, 0.0D0,                                   &
                   1.0D0, 0.0D0, 0.0D0,                                   &
@@ -127,11 +141,22 @@
 !     N is number of rows of A2;   NU number of rows of UU2
       N=5*NGR
       NU=N
+      !> \fixme Generalize for multi-phase input
       M2=NGR*DM_data%n_systems
       NRL=(NGR-1)*2
+      !> \fixme Generalize for multi-phase input
       M12=NGR*DM_data%n_systems+NRL
       if (laml.eq.2) goto 3
       !Construct A2
+      !> \fixme Generalize A2 for multi-phase input (grain 1 and 2 may belong
+      !>        to different phases)
+      !>
+        ! Set up the system of equations for the linear programming:
+        ! A = | A1_g1   0       RLX+ |
+        !     | 0       A1_g2   RLX- |
+        ! C = | CRSS_g1 CRSS_g2  CRSS_RLX |
+        ! shape(A,dim=2) == shape(C,dim=2)
+
       A2 = 0.0d0
       A2( 1:5  ,     1:DM_data%n_systems   ) = DM_data%A1
       A2( 6:10 , 1+DM_data%n_systems:Pancak2_max_grains*DM_data%n_systems ) = DM_data%A1
@@ -142,7 +167,9 @@
   32  do 31 i=1,NU
       do 31 j=1,NU
       UU(j,i)=0.0
-  31  continue
+31    continue
+      !> \fixme Generalize DI for multi-phase input (grain 1 and 2 may belong
+      !>        to different phases)
       DO 53 I=1,5
       DI(I)=DM_data%set0(I)
       DI(I+5)=DM_data%set0(I)+DM_data%n_systems
@@ -191,7 +218,9 @@
       do 44 j=1,5
       B5(j)=B5(j)/MacroDefRate%vMeqStrainRate
       B8(j,IL)=B5(j)
-  44  continue
+44    continue
+      !> \fixme Generalize CCC for multi-phase input (grain 1 and 2 may belong
+      !>        to different phases)
       K1=DM_data%n_systems*(IL-1)
       !
       ! Assign crss_cluster to proper section of CCC
@@ -344,6 +373,7 @@
   89  j=0
       do 40 IG=1,NGR
       XXTOT=0.0
+      !> \fixme Generalize XXTOT for multi-phase input
       do i=1,DM_data%n_systems
        j=j+1  
        XXTOT=XXTOT+ABS(xx(j))
@@ -363,6 +393,7 @@
 !     From here on, output is produced for grain number "laml"
 !
    3  continue
+      !> \fixme Generalize jj for multi-phase input
       jj=DM_data%n_systems*(laml-1)
       !
       ii=5*(laml-1)
