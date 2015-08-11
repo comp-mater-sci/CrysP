@@ -11,24 +11,38 @@
       use altayHardConstants
       use altayCRSSTypes
       use altayDeformationMechanism
+      use altayDeformationMechanismConstants, only: DM_dev_dims
       
       integer, parameter, public ::          Pancak2_max_activesystems = 8
       integer, parameter, public ::          Pancak2_max_grains = 2
       double precision, parameter, public :: Pancak2_tolerance = 5.0d-6
       
       type Pancak2Solution
+          
           !> local stress expressed in the sample reference frame
-          double precision, dimension(3,3)                       :: stress_sam
+          double precision, dimension(3,3)                       :: stress_sam = 0.0d0
+          
           !> symmetric part of (non-normalized) relaxation tensor, in sample reference system
-          double precision, dimension(3,3)                       :: relaxationrate_sam
+          double precision, dimension(3,3)                       :: relaxationrate_sam = 0.0d0
+          
           !> anti-symmetric part of (non-normalized) relaxation tensor, in sample reference system
-          double precision, dimension(3,3)                       :: relaxationspin_sam
+          double precision, dimension(3,3)                       :: relaxationspin_sam = 0.0d0
+          
+          !> number of potentially active deformation systems
           integer                                                :: nactiv = 0
+          
+          !> Indices of the potentially active slip systems
           integer,dimension(Pancak2_max_activesystems)           :: indact = 0
+          
+          !> Slip rates, normalized by von Mises equivalent strain rate, of the potentially active slip systems
           double precision, dimension(Pancak2_max_activesystems) :: sliplp = 0.0d0
-          !> CRSS of active deformation systems
+          
+          !> CRSSs of the potentially active slip systems
           double precision, dimension(Pancak2_max_activesystems) :: taurlp = 0.0d0
-          double precision, dimension(5)                         :: BB8
+          
+          !> Local strain rate (in vector format)
+          double precision, dimension(DM_dev_dims)               :: localstrainrate = 0.0d0
+          
       end type Pancak2Solution
       
     contains
@@ -403,7 +417,7 @@
                        y8=y8+B3(i+ii,IRL)*gamr(IRL)
                      enddo
                     endif
-      solution%BB8(i)=B8(i,laml)-x8
+      solution%localstrainrate(i)=B8(i,laml)-x8
       RHOS(i)=-x8
       RHOA(i)=-y8
  201  continue

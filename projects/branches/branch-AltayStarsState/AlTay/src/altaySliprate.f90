@@ -93,7 +93,7 @@
            Pancak2_tolerance ) goto 6
       !
       IND(1:Pancak2_input%nactiv)=Pancak2_input%indact(1:Pancak2_input%nactiv)
-      call minsqu(Pancak2_input%nactiv,IND,A1_sgnn,Pancak2_input%BB8,ISTOR,SLSTOR,NOPL)
+      call minsqu(Pancak2_input%nactiv,IND,A1_sgnn,Pancak2_input%localstrainrate,ISTOR,SLSTOR,NOPL)
       !
       if (Pancak2_input%nactiv <= 5 .AND. NOPL > 0) goto 2
       !
@@ -108,7 +108,7 @@
 !
       if (Pancak2_input%nactiv < 6) goto 6
       do I1=1,Pancak2_input%nactiv
-          call minsqu(Pancak2_input%nactiv - 1,IND,A1_sgnn,Pancak2_input%BB8,ISTOR,SLSTOR,NOPL)
+          call minsqu(Pancak2_input%nactiv - 1,IND,A1_sgnn,Pancak2_input%localstrainrate,ISTOR,SLSTOR,NOPL)
           J=Pancak2_input%nactiv-I1
           if (J > 0) IND(J)=Pancak2_input%indact(J+1)
       enddo
@@ -126,7 +126,7 @@
                       j=j+1
                   end if
               end do
-              call minsqu(Pancak2_input%nactiv - 2,IND,A1_sgnn,Pancak2_input%BB8,ISTOR,SLSTOR,NOPL)
+              call minsqu(Pancak2_input%nactiv - 2,IND,A1_sgnn,Pancak2_input%localstrainrate,ISTOR,SLSTOR,NOPL)
           enddo
       enddo
 !
@@ -145,7 +145,7 @@
                           j=j+1
                       end if
                   end do
-                  call minsqu(Pancak2_input%nactiv - 3,IND,A1_sgnn,Pancak2_input%BB8,ISTOR,SLSTOR,NOPL)
+                  call minsqu(Pancak2_input%nactiv - 3,IND,A1_sgnn,Pancak2_input%localstrainrate,ISTOR,SLSTOR,NOPL)
               enddo
           enddo
       enddo
@@ -206,17 +206,17 @@
       contains
       
 #ifdef LAPACK_ENABLED
-      subroutine minsqu(NN,IND,A1_sgnn,BB8,ISTOR,SLSTOR,NOPL)
+      subroutine minsqu(NN,IND,A1_sgnn,localstrainrate,ISTOR,SLSTOR,NOPL)
       use lapack95, only: sysv
 #else
-      pure subroutine minsqu(NN,IND,A1_sgnn,BB8,ISTOR,SLSTOR,NOPL)
+      pure subroutine minsqu(NN,IND,A1_sgnn,localstrainrate,ISTOR,SLSTOR,NOPL)
 #endif
       use altayIOConfig
       implicit none
       integer, intent(in)                          :: NN
       integer, dimension(n_active_max), intent(in) :: IND
       double precision, dimension(:,:), intent(in) :: A1_sgnn
-      double precision, dimension(5), intent(in)   :: BB8
+      double precision, dimension(5), intent(in)   :: localstrainrate
       integer, intent(inout)                       :: ISTOR(0:n_active_max)
       double precision, intent(inout)              :: SLSTOR(0:n_active_max)
       integer, intent(inout)                       :: NOPL
@@ -240,7 +240,7 @@
           do i=1,N2
              A(1:5,i) = A1_sgnn(1:5,IND(i))
           enddo
-          B(1:5)=BB8(1:5)
+          B(1:5)=localstrainrate(1:5)
           !> Do matrix multiplication for both A and B with transpose(A) on 
           !> the left-side. This has two beneficial effects:
           !> -The system of linear equations now has symmetric coefficient matrix AA
@@ -265,7 +265,7 @@
              enddo
           enddo
           do j=1,5
-             B(NN+j)=BB8(j)
+             B(NN+j)=localstrainrate(j)
           enddo
           !> the system of equations to be solved further on (AA*X=BB)
           !> is identical to the 'original' one (A*X=B). Note that the 
