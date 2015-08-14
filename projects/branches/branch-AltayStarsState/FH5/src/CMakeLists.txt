@@ -14,6 +14,8 @@ list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
 
 list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
+# We need *.fpp files in the current directory
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(LIBSRC 
 FH5Constants.f90  
