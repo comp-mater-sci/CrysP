@@ -12,10 +12,13 @@ use altayHardTypes
 use altayMesostructure
 implicit none
 
-    !> Data type that characterizes a phase
+    integer,parameter,private :: phasename_maxlen = 32
+    !> Data that characterize state-independent properties of a phase
     type :: PhaseData
         
-        type(DeformationMechanismData) :: deformationmechanism
+        character(len=phasename_maxlen) :: name
+        
+        type(DeformationMechanismData)  :: deformationmechanism
 
         type(HardeningModelParams)      :: hardening
 
@@ -24,7 +27,7 @@ implicit none
     end type
 
 
-    !> Data type that characterizes the material
+    !> Data that characterize state-independent properties of a material
     type :: MaterialData
         !> shape: [n_phases]
         type(PhaseData), dimension(:),allocatable           :: phases

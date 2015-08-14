@@ -6,12 +6,13 @@
 module altayTexFormatConstants
 implicit none
 
-      !>@{ \name Named constants for supported texture file formats (aka FormatID)
-      integer,parameter :: TF_SMT  = 1
-      integer,parameter :: TF_CUR  = 2
-      integer,parameter :: TF_CUB  = 3
-      integer,parameter :: TF_HDF5 = 5
+    !>@{ \name Named constants for supported texture file formats (aka FormatID)
+    integer,parameter :: TF_NONE = 0
+    integer,parameter :: TF_SMT  = 1
+    integer,parameter :: TF_CUR  = 2
+    integer,parameter :: TF_CUB  = 3
+    integer,parameter :: TF_HDF5 = 5
 
-      !>@}
+    !>@}
 
 end module

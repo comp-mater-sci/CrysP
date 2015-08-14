@@ -1,10 +1,20 @@
 !
 ! $Id$
 !
-
+#include "criMacros.fpp"
+!> Data types for state variables
+!>
+!> The state variables may contain:
+!>     * **Plain data members**. 
+!>     * **Allocatable members** describe optional state variables, or the variables
+!>       that are conditionally relevant.
+!>     * **Pointers**. They generally DO NOT describe actual state,
+!>       but are added to simplify processing or to establish link with either other
+!>       components of state or non-state data. 
 module altayStateTypes
 use criErrcodes
 use criMathUtils
+use criIterUtils
 use altayMesostructure
 use altayODFTypes
 use altayMaterialTypes
@@ -41,13 +51,13 @@ implicit none
         type(PhaseData),pointer             :: phase => null()
         
         !> Associated orientation
-        type(DiscreteOrientation),pointer   :: orientation => null()
+        type(DiscreteOrientation)           :: orientation
         
         !> Accumulated shear deformation (including both slip and twinning),
         !> from a reference (virgin) state up to the current state. 
         double precision                   :: accumulatedshear = 0.0D0
         
-        type(HardeningStateVariables),pointer       :: hardening_state
+        type(HardeningStateVariables),pointer       :: hardening_state => null()
         
     end type
     
@@ -56,12 +66,31 @@ implicit none
         
         type(GrainState), dimension(:), allocatable :: grainstate
         
-    contains
-    
-        procedure :: initialize => GrainStateCollection_initialize
-        
+        !> Auxiliary pointer to phase data.
+        !> It simplifies operations that require knowledge (1) how many
+        !> phases are present and (2) what are the pointers.
+        !> Shape is [1:nphases]
+        type(PhaseData), dimension(:),pointer       :: phases
     end type
     
+    type :: PtrInterfaceData
+        type(InterfaceData),pointer     :: ptr => null()
+    end type
+    
+    type :: ClusterState
+        
+        !> Vector of indices of the cluster components inside array of grain state.
+        integer,dimension(:),allocatable    :: idx
+        
+        type(PtrInterfaceData),allocatable      :: interfaces
+
+    end type
+
+    type :: ClusterStateCollection
+        
+        type(ClusterState),dimension(:),allocatable          :: clusters
+
+    end type
     
     type :: MesostructureState
         
@@ -69,7 +98,7 @@ implicit none
 
     contains
     
-        procedure :: update => MesostructureState_update      
+        procedure :: update => MesostructureState_update
         
     end type
 
@@ -78,65 +107,200 @@ implicit none
     !> Container for the state variables
     type :: altayStateVariables
         
-        type(MesostructureState)                :: mesostructure !YES
+        type(MesostructureState)                :: mesostructure
 
-        !> Orientations of discrete ODF. 
-        type(DiscreteODF)                       :: texture !to be gone or relocated.
-        
         !> Collection of the state of grains
-        type(GrainStateCollection)              :: grainstates !YES
+        type(GrainStateCollection)              :: grainstates
         
-        !type(ClusterStateCollection)           :: clusterstates !YES
-                
+        type(ClusterStateCollection)            :: clusterstates
+        
+        !>@{ \name Auxiliary members that are not considered as state variables
+        
+        !> Pointer to single material object.
+        type(MaterialData),pointer              :: material => null()
+        
+        !>@}
+        
     end type
 
-
-    !> this structure is usefull
-    !> \todo: elaborate
-    type :: ClusterState
-        
-        !type(Grain),dimension(:),pointer :: grain !=> null()
-        
-        !> \todo add the appropriate grain boundary data: euler angles + weighting factor
-        !type(EulerAngles) :: GBeuler
-
-    end type
+    interface initialize
+        module procedure GrainStateCollection_initialize_blocks
+    end interface
 
 
-contains
-    
-    subroutine GrainStateCollection_initialize( this, texture, info)
+    contains
+
+
+    !> Initialize grain state collection from state-independent material
+    !> properties and discrete ODFs of individual phases. The initialization
+    !> populates the grainstate field by making blocks of grains that belong
+    !> to particular phases.
+    !>
+    !> The resultant GrainStateCollection object will have the layout
+    !> implied by concatenating discrete ODFs of the phases into blocks.
+    !> For instance, if two phases are used, grainstate field of
+    !> GrainStateCollection will have the layout as depicted below:
+    !>     grain_1   -> phase_1
+    !>     ...
+    !>     grain_n   -> phase_1
+    !>     grain_n+1 -> phase_2
+    !>     ...
+    !>     grain_m   -> phase_2
+    !>
+    !> \note The block layout may be cache-inefficient. 
+    subroutine GrainStateCollection_initialize_blocks(this, odfs, material, info)
     implicit none
-    class(GrainStateCollection), intent(inout) :: this
-    type(DiscreteODF), intent(in), target      :: texture
-    integer, intent(out)                       :: info
+    type(GrainStateCollection), intent(out)     :: this
+    !> 
+    !> Order of DiscreteODF objects in the array must correspond to the
+    !> order of phases in the `material` parameter.
+    type(DiscreteODF),dimension(:),intent(in)   :: odfs
+    type(MaterialData),intent(in),target        :: material
+    integer, intent(out)                        :: info
     !
-    ! Number of grains in the collection
-    integer :: n_grains = 0
+    ! Number of grains and phases in the collection
+    integer :: n_grains, n_phases
     ! Running index, error code
-    integer :: i, ierr
+    integer :: idx, i, j, ierr
     !
         info = criErr_BadDims
-        !Allocation
-        n_grains = size(texture%orientations)
+        ! Check if the number of ODFs matches the number of phases
+        ! and if non-zero number of grains is used.
+        n_phases = material%nphases()
+        if ( (n_phases <= 0) .or. (size(odfs,dim=1) /= n_phases) .or. (any(size(odfs) <= 0))) return
+        !
+        this%phases => material%phases
+        n_grains = sum(size(odfs))
         if (n_grains <= 0) return
-        ! Two paths: initialize from scratch or refresh.
-        if (.not. allocated(this%grainstate)) then
-            info = criErr_MemAlloc
-            allocate(this%grainstate(n_grains), stat=ierr)
-            if (ierr /= 0) return
-        else
-            ! The size must conform with n_grains
-            if (size(this%grainstate) /= n_grains) return
-        endif
-        !Pointer assignments - keep the order as is
-        do i=1,n_grains
-            this%grainstate(i)%orientation => texture%orientations(i)
-        end do
+        !
+        info = criErr_MemAlloc
+        allocate(this%grainstate(n_grains), stat=ierr)
+        if (ierr /= 0) return
+        ! Set up individual grains: orientations and association with the pahse
+        idx = 1
+        do i = lbound(material%phases, dim=1), ubound(material%phases, dim=1)
+            do j = lbound(odfs(i)%orientations, dim=1), ubound(odfs(i)%orientations,dim=1)
+                this%grainstate(idx)%orientation = odfs(i)%orientations(j)
+                this%grainstate(idx)%phase => material%phases(i)
+                idx = idx + 1
+            enddo
+        enddo
         info = criSuccess
         !
     end subroutine
 
+    logical function GrainStateCollection_isValid(this) result(is_ok)
+    implicit none
+    type(GrainStateCollection), intent(in)     :: this
+    !
+        CHOOSE(is_ok, allocated(this%grainstate), (size(this%grainstate) > 0) .and. associated(this%phases), .false.)
+        CHOOSE(is_ok, is_ok, size(this%phases) > 0, .false.)
+    !
+    end function
+    
+    
+    subroutine GrainStateCollection_forwardMapping(this, map, info)
+    implicit none
+    type(GrainStateCollection), intent(in)          :: this
+    integer,dimension(:),allocatable, intent(out)   :: map
+    integer,intent(out)                             :: info
+    !
+    integer :: n_grains, ierr, i, j
+    integer :: default_idx, min_phase_idx, max_phase_idx
+    !
+        info = criSuccess
+        n_grains = size(this%grainstate)
+        ! Mark for non-existing phase
+        default_idx = lbound(this%phases, dim=1) - 1
+        min_phase_idx = lbound(this%phases, dim=1)
+        max_phase_idx = ubound(this%phases, dim=1)
+        !
+        RETURN_ON_WITH(allocate(map(n_grains), stat=ierr), ierr /= 0, info=criErr_MemAlloc)
+        if (n_grains < 1) return
+        ! Visit all grains and determine 
+        do  i = 1, n_grains
+            map(i) = default_idx
+            ! Check if the grain is associated with a particular phase
+            do j = min_phase_idx, max_phase_idx
+                if (associated(this%grainstate(i)%phase, this%phases(j))) then
+                    map(i) = j
+                    exit
+                endif
+            enddo
+            ! Verify if the match was found:
+            if (map(i) == default_idx) exit
+        enddo
+        RETURN_IF_WITH(i <= n_grains, info = criError)
+    !
+            end subroutine
+    
+            
+    !> Calculate vector of indices of objects in GrainStateCollection that are 
+    !> associated with a given phase. The vector constitutes a map: 
+    !> phase_id -> grain_indices
+    subroutine GrainStateCollection_reverseMapping(this, phase_id, map, info)
+    implicit none
+    type(GrainStateCollection), intent(in)          :: this
+    integer,intent(in)                              :: phase_id
+    integer,dimension(:),allocatable, intent(out)   :: map
+    integer,intent(out)                             :: info
+    !
+    integer :: n_grains, ierr, i, j
+    integer,dimension(:),allocatable :: idx
+    !
+        info = criSuccess
+        n_grains = size(this%grainstate)
+        ! Pre-allocate map.
+        RETURN_ON_WITH(allocate(map(n_grains), stat=ierr), ierr /= 0, info=criErr_MemAlloc)
+        ! Check if there is any work to do. If none, map of zero elements is returned.
+        if (n_grains < 1) return
+        
+        ! Note: the loop below could be implemented by which_indices, but expression 
+        ! this%grainstate(:)%phase triggers error:
+        ! "A component with POINTER attribute may NOT be to the right of an array component"
+        ! in  call which_indices(associated(this%grainstate(:)%phase, this%phases(i)), map)
+        j = 0
+        do  i = 1, n_grains
+            ! Check if the grain is associated with a particular phase
+            if (associated(this%grainstate(i)%phase, this%phases(phase_id))) then
+                j = j + 1
+                map(j) = i
+            endif
+        enddo
+        if (j < n_grains) then
+            ! shrink the map, possibly to zero elements
+            idx = map(:j)
+            map = idx
+        endif
+    !
+    end subroutine
+            
+    !> Extract DiscreteODF objects from GrainStateCollection object
+    subroutine GrainStateCollection_DiscreteODF(this, odf, phase_id, info)
+    implicit none
+    type(GrainStateCollection), intent(in)  :: this
+    type(DiscreteODF),intent(out)           :: odf
+    integer,intent(in)                      :: phase_id
+    integer,intent(out)                     :: info
+    !
+    integer :: n_grains
+    integer,dimension(:),allocatable :: reverse_map
+    !
+        info = criErr_BadArgs
+        if (.not. GrainStateCollection_isValid(this)) return
+        call GrainStateCollection_reverseMapping(this, phase_id, reverse_map, info)
+        if (info /= criSuccess) return
+        n_grains = size(reverse_map)
+        RETURN_IF(info /= criSuccess, info = DiscreteODF_resize(odf, n_grains))
+        if (n_grains > 0) then
+            odf%title = this%grainstate(reverse_map(1))%phase%name
+            odf%orientations = this%grainstate(reverse_map)%orientation
+        endif
+    !
+    end subroutine
+
+
+    
     subroutine MesostructureState_update( this, incremental_defgrad, info)
     implicit none
     class(MesostructureState), intent(inout)     :: this
@@ -149,5 +313,4 @@ contains
         !
     end subroutine
 
-    
 end module

@@ -36,6 +36,7 @@ use altayHardLaw_DSH, only: PAR
 use altayHardLaw_KM
 use altayTexFormatConstants
 use altayDeformationMechanismConstants
+use altayStatePersistenceConstants
 use criMathUtils
 use criPath
 
@@ -46,6 +47,8 @@ implicit none
     integer,parameter :: CNF_jobtitle_maxlen = 256
     
     integer,parameter :: CNF_stepname_maxlen = 32
+    
+    integer,parameter :: CNF_phasename_maxlen = 32
     
     !> \name Named constants for identifiers of the supported models
     !>@{ 
@@ -59,14 +62,13 @@ implicit none
     integer,parameter,dimension(nsupported_models) :: CNF_supported_models = [ &
                 CNF_modelFCTaylor, CNF_modelAlamel, CNF_modelAlamelMP ]
     
-    !> \name Named constants/identifiers of the supported data persistency schemes
+    !> \name Named constants/identifiers of the supported state persistency schemes
     !>@{ 
-    integer,parameter :: CNF_DataPersistencyUnknown = -1
-    integer,parameter :: CFN_DataPersistencyNone = 0
-    integer,parameter :: CFN_DataPersistencyNative = 1
-    integer,parameter :: CFN_DataPersistencyHDF5 = 2
+    integer,parameter :: CNF_StatePersistencyUnknown = -1
+    integer,parameter :: CNF_StatePersistencyNone = 0
+    integer,parameter :: CNF_StatePersistencyNative = 1
+    integer,parameter :: CNF_StatePersistencyHDF5 = 2
     !>@}
-
 
     !> Max. length of state file. This is large enough to permit extended names
     !> such as file_path:object_path, with both file_path and object_path of 
@@ -79,21 +81,44 @@ implicit none
         !> Type of texture representation
         !>
         !> See altayTexFormatConstants for the list of possible values. \sa altayTexFormatConstants
-        integer                                   :: format_id = TF_SMT
+        integer                                   :: format_id = TF_NONE
+
         character(len=max_pathlen)                :: file_name = ''
         integer                                   :: block_id = 0
     end type
 
-
-    type :: StatePersistenceConfig
-        integer                             :: scheme_id = CFN_DataPersistencyNone
+    
+    type :: PhasePersistenceConfig
         
-        character(len=state_file_max_pathlen):: file_path = ''
+        !> Refined description of texture ODF persisten data. One may use this
+        !> to override the default settings from state persistence scheme.
+        type(TextureConfig)     :: odf
         
-        type(TextureConfig)                 :: odf_config
+        ! Hardening-related parts below
     end type
 
 
+    !> Configuration of state persistence
+    type :: StatePersistenceConfig
+        
+        integer                                 :: scheme_id = CNF_StatePersistencyNone
+        
+        integer                                 :: access_mode = StatePersistence_Read
+        !> Path to the location of state persistency components.
+        !>
+        !> All paths to state persistence components are relavive to this path.
+        !> If HDF5 persistency scheme is used, the path typically points to the
+        !> HDF5 .h5 file.
+        character(len=state_file_max_pathlen)   :: path = ''
+        
+        !> Per-phase configuration of 
+        type(PhasePersistenceConfig),dimension(:),allocatable :: phases
+        
+    end type
+
+    interface StatePersistenceConfig
+        module procedure StatePersistenceConfig_init
+    end interface
 
 
     !> Configuration of deformmation mechanisms
@@ -166,6 +191,8 @@ implicit none
     
     type :: PhaseConfig
         
+        character(len=CNF_phasename_maxlen) :: name
+        
         type(DeformationMechanismConfig)    :: deformation_mechanism
 
         type(HardeningConfig)               :: hardening
@@ -184,7 +211,9 @@ implicit none
         
     end type
          
-
+    interface MaterialConfig
+        module procedure MaterialConfig_init_nphases
+    end interface
     
 
     type :: AssemblyStepConfig
@@ -412,9 +441,76 @@ implicit none
             integer                                   :: this = 0
       end type
       
-
+      
+#ifdef ENABLE_EXPERIMENTAL
+    !> Basic description of phase
+    type :: PhaseBasicConfig
+          character(len=CNF_phasename_maxlen)   :: name = ''
+          integer                               :: deformation_mechanism_id = DM_none
+          character(len=max_pathlen)            :: odf_input_name = ''
+          character(len=max_pathlen)            :: odf_output_name = ''
+          character(len=max_pathlen)            :: interfaces_input_name = ''
+    end type
+#endif
+      
 contains
 
+#ifdef ENABLE_EXPERIMENTAL
+    function SimulationConfig_basic(jobtitle, phases, input_scheme, output_scheme, info) result(this)
+    implicit none
+    type(SimulationConfig)                          :: this
+    character(len=*),intent(in)                     :: jobtitle
+    type(PhaseBasicConfig),dimension(:),intent(in)  :: phases
+    integer,intent(in)                              :: input_scheme
+    integer,intent(in)                              :: output_scheme
+    integer,intent(out)                             :: info
+    !
+    integer :: i
+    !
+        this%jobtitle = jobtitle
+        this%material = MaterialConfig(size(phases))
+        do i = 1, size(phases)
+            associate(p => this%material%phases(i), c => phases(i))
+                p%name = c%name
+                p%deformation_mechanism%id = c%deformation_mechanism_id
+                p%odf_input%file_name = c%odf_input_name
+                p%odf_output%file_name = c%odf_output_name
+                p%intraphase_interfaces%file_path = c%interfaces_input_name
+            end associate
+        enddo
+        info = criSuccess
+    !
+    end function
+#endif
+
+    pure function StatePersistenceConfig_init(scheme_id, access_mode, path, n_phases) result(this)
+    implicit none
+    integer,intent(in),optional             :: scheme_id
+    integer,intent(in),optional             :: access_mode
+    character(len=*),intent(in),optional    :: path
+    integer,intent(in)                      :: n_phases !< Number of phases. It must be >= 1
+    type(StatePersistenceConfig)            :: this
+    !
+        if (present(scheme_id)) this%scheme_id = scheme_id
+        if (present(access_mode)) this%access_mode = access_mode
+        if (present(path)) this%path = path
+        if (n_phases >= 1) allocate(this%phases(n_phases))
+    !
+    end function
+
+
+
+    !> Allocate components for n phases. 
+    pure function MaterialConfig_init_nphases(n_phases) result(res)
+    integer,intent(in)      :: n_phases !< Number of phases. It must be >= 1
+    type(MaterialConfig)  :: res
+    integer :: ierr
+    !
+        if (n_phases < 1) return
+        allocate(res%phases(n_phases),stat=ierr)
+        allocate(res%interphase_interfaces(n_phases-1), stat=ierr)
+    !
+    end function
 
     !> Verify if the StepConfig fulfills the pre-requisities.
     logical function StepConfig_check(this) result(is_ok)
@@ -432,6 +528,8 @@ contains
         is_ok = sum(merge(1, 0, is_allocated)) == 1
     !
     end function
+    
+    
     
     
     !

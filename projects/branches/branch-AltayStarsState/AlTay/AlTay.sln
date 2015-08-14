@@ -242,7 +242,7 @@ Global
 		{1951D285-905E-4FEE-B2DF-C1D879670607}.Release-Amplifier|Mixed Platforms.Build.0 = Release|Win32
 		{1951D285-905E-4FEE-B2DF-C1D879670607}.Release-Amplifier|Win32.ActiveCfg = Release|Win32
 		{1951D285-905E-4FEE-B2DF-C1D879670607}.Release-Amplifier|Win32.Build.0 = Release|Win32
-		{1951D285-905E-4FEE-B2DF-C1D879670607}.Release-Amplifier|x64.ActiveCfg = Release|Win32
+		{1951D285-905E-4FEE-B2DF-C1D879670607}.Release-Amplifier|x64.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

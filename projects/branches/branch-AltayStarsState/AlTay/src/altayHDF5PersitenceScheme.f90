@@ -13,7 +13,7 @@ module altayHDF5PersistenceScheme
 use criErrcodes
 use criAlgorithm
 use FH5
-use altayState
+use altayStateTypes
 use altayStatePersistence
 use altayHDF5Context
 use altayHDF5Access
@@ -46,6 +46,7 @@ implicit none
 
         procedure,private :: saveMesostructure=> HDF5PersistenceScheme_saveMesostructure
         procedure,private :: saveGrainstate => HDF5PersistenceScheme_saveGrainstate
+        procedure,private :: savePhaseData => HDF5PersistenceScheme_savePhaseData
         
         procedure,private :: loadMesostructure=> HDF5PersistenceScheme_loadMesostructure
         procedure,private :: loadGrainstate => HDF5PersistenceScheme_loadGrainstate
@@ -59,12 +60,12 @@ contains
 
     
     !> Open HDF5 file and location inside it.
-    subroutine HDF5PersistenceScheme_initialize(this, extpath, groupname, is_readonly, is_incremental, info)
+    subroutine HDF5PersistenceScheme_initialize(this, extpath, groupname, access_mode, is_incremental, info)
     implicit none
     class(HDF5PersistenceScheme),intent(inout)  :: this
     character(len=*),intent(in)                 :: extpath
     character(len=*),intent(in)                 :: groupname
-    logical,intent(in)                          :: is_readonly
+    integer,intent(in)                          :: access_mode
     logical,intent(in)                          :: is_incremental
     integer,intent(out)                         :: info
     !
@@ -72,14 +73,26 @@ contains
     character(len=:),allocatable :: container_path
     character(len=2) :: mode_selector
     !
+        info = criErr_BadArgs
+        if (.not. any(access_mode == StatePersistence_AccessModes)) return
+        this%access_mode = access_mode
         this%group_name = groupname
         this%is_incremental = is_incremental
         !
         call splitHDF5extpath(extpath, file_path, location_path, info)
-        if (info /= 0) return
+        if (info /= criSuccess) return
         ! Open the HDF5 file
-        CHOOSE(mode_selector, is_readonly, 'r', 'w')
+        select case(access_mode)
+        case(StatePersistence_Read)
+            mode_selector = 'r'
+        case(StatePersistence_Write)
+            mode_selector = 'w'
+        case(StatePersistence_Append)
+            mode_selector = 'rw'
+        end select
+        !
         info = this%file%open(path=file_path, mode=mode_selector)
+        if (info /= criSuccess) return
         ! Make sure the container is in place, create it.
         container_path = trim(location_path)//FH5_path_sep//altayHDF5PersistenceScheme_location_name
         info = this%container%create(this%file, container_path)
@@ -109,10 +122,9 @@ contains
     type(altayStateVariables),intent(in)        :: state
     integer,intent(out)                         :: info
     !
-    type(HDF5Context) :: context
-    type(HDF5Access) :: texaccess
     integer,parameter :: max_intwidth = 32
     character(len=len_trim(this%group_name)+max_intwidth) :: collection_name
+    integer :: phase_id
     !
         if (this%is_incremental) then
             collection_name = trim(this%group_name)//trim(tostring(this%counter,max_intwidth))
@@ -125,16 +137,11 @@ contains
         info = this%collection%create(this%container, collection_name)
         if (info /= criSuccess) return
         !
-        ! Take all components of the state and save them into the collection
-
-        ! Store the ODF data
-        !> Orientations of discrete ODF.
-        context%group_id = this%collection%object_id
-        call texaccess%initialize(context, .false., info)
-        if (info /= criSuccess) return
-        !state%texture
-        info = texaccess%write(0, odf=state%texture)
-        if (info /= criSuccess) return
+        ! Take all components of the state and save them into the collection.
+        !
+        
+        !
+        ! Part 1: Global data
         !
         ! Mesostructure:
         info = this%saveMesostructure(state%mesostructure)
@@ -143,7 +150,16 @@ contains
         !> Collection of the state of grains
         info = this%saveGrainstate(state%grainstates)
         if (info /= criSuccess) return
-        
+
+        !
+        ! Part 2: Phase data
+        do phase_id = lbound(state%material%phases,dim=1), ubound(state%material%phases,dim=1)
+            info = this%savePhaseData(state, phase_id)
+            if (info /= criSuccess) return
+        enddo
+        !
+        ! Part 3: Inter-phase data
+
 #ifdef PEBP_ENABLED
         ! State variables of the DSH hardening law.
         ! state%dsh_state
@@ -157,6 +173,7 @@ contains
         !!    continue
         !!endif
         info = this%collection%close()
+
     !
     end subroutine
 
@@ -164,12 +181,13 @@ contains
     subroutine HDF5PersistenceScheme_loadState(this, state, info)
     implicit none
     class(HDF5PersistenceScheme),intent(inout)  :: this
-    type(altayStateVariables),intent(inout)     :: state
+    type(altayStateVariables),intent(inout)    :: state
     integer,intent(out)                         :: info
     !
     type(HDF5Context) :: context
     type(HDF5Access) :: texaccess
     !
+#ifdef FIXME_ENABLE
         !
         ! Create group for the collection
         info = this%collection%open(this%container, this%group_name)
@@ -208,11 +226,61 @@ contains
         ! Other components
 
         info = this%collection%close()
+#endif
         info = criSuccess
     !
     end subroutine
     
-    
+    integer function HDF5PersistenceScheme_savePhaseData(this, state, phase_id) result(info)
+    implicit none
+    class(HDF5PersistenceScheme),intent(inout)  :: this
+    type(altayStateVariables),intent(in)        :: state
+    integer,intent(in)                          :: phase_id
+    !
+    type(FH5GroupScoped)   :: group
+    type(FH5Dataset)       :: map_dataset
+    type(HDF5Context) :: context
+    type(HDF5Access) :: texaccess
+    type(DiscreteODF) :: odf
+    integer,dimension(:),allocatable :: map
+    character(len=:),allocatable :: group_name
+        !
+        ! Create group for the phase
+        associate(phase_name => state%material%phases(phase_id)%name)
+            CHOOSE(group_name, len_trim(phase_name) > 0, phase_name, 'phase' // tostring(phase_id,3))
+            info = group%create(this%collection, group_name)
+        end associate
+        context%group_id = group%object_id
+        ! Store the ODF data
+        !
+        ! Get ODF of the phase
+        call GrainStateCollection_DiscreteODF(state%grainstates, odf, phase_id, info) 
+        if (info /= criSuccess) return
+        call texaccess%initialize(context, .false., info)
+        if (info /= criSuccess) return
+        !state%texture
+        info = texaccess%write(0, odf)
+        if (info /= criSuccess) return
+        !
+        ! Mapping from phase to state%grainstates
+        call GrainStateCollection_reverseMapping(state%grainstates,phase_id, map, info)
+#ifdef FULL_MAP
+        !> \todo Consider more compact representation: if map includes 
+        !>       consequtive numbers, it is enough to store min & max
+        !>       and put appropriate attribute on the set.
+        info = FH5Dataset_init(map_dataset, group, &
+                                shape=shape(map), &
+                                compression=FH5_compression_zip)
+        if (info /= criSuccess) return
+        info = map_dataset%write(, map)
+        if (info /= criSuccess) return
+        info = map_dataset%close()
+#else
+       info = map_dataset%make(group, 'state_map', map, &
+                               compression=FH5_compression_zip)
+#endif
+    !
+    end function
     
     integer function HDF5PersistenceScheme_saveMesostructure(this, state) result(info)
     implicit none

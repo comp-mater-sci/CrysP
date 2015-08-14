@@ -9,6 +9,7 @@ use altayMaterial
 use altayState
 use altayStatePersistence
 use altayStatePersistenceUtils
+use altayMacroKinematic
 #ifdef USE_ALTAYSIMUL
 use altaySimul
 #endif
@@ -127,7 +128,7 @@ contains
 
     integer function Simulation_initialize(this, config, step_factory) result(info)
     implicit none
-    class(Simulation),intent(inout)                 :: this
+    class(Simulation),target,intent(inout)                 :: this
     class(SimulationConfig),intent(in)              :: config
     class(StepFactory),intent(inout),target,optional:: step_factory
     ! Initialize state variables:
@@ -153,10 +154,19 @@ contains
         call initialize(this%material, this%config%material, info)
         if (info /= criSuccess) return
         !
+        ! Pre-initialize the state
+        info = altayStateData_init(this%state)
+        if (info /= criSuccess) return
+        this%state%old%material => this%material
+        this%state%new%material => this%material
+
+        !
         ! Initialize data persistency schemes
         ! info = criErr_BadArgs
+#ifdef FIXME_ENABLE
         this%output_storage => statePersistenceFactory(this%config%state_output%odf_config, &
                                                        as_input=.false.)
+#endif
         if ((info /= criSuccess) .or. .not. associated(this%output_storage)) return
         !
         ! Initialize the steps if provided in the configuration
@@ -314,9 +324,10 @@ contains
     type(altayConfigData)   :: old_config
 #endif
     !
-        info = altayStateData_init(state)
         !> \fixme The configuration should not deduce anything from the odf representation.
+#ifdef FIXME_ENABLE
         storage => statePersistenceFactory(this%config%input%odf_config, as_input=.true.)
+#endif
         if (associated(storage)) then
             call storage%loadState(state%old, info)
             deallocate(storage)

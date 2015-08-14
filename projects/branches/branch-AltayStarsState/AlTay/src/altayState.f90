@@ -20,9 +20,9 @@ implicit none
 
     !> State variables.
     !>
-    !> The user update only the state variables in the `new` field
-    !> and leave the `old` field unmodified. Once all the updates are
-    !>  introduced, the procedure altayStateData_advance must be called.
+    !> The user may only update the state variables in the `new` field
+    !> and must leave the `old` field unmodified. Once all the updates are
+    !> done, the procedure altayStateData_advance must be called.
     type :: altayStateData
         !> Current set of state variables
         type(altayStateVariables), pointer   :: old => null()
@@ -82,9 +82,9 @@ contains
                associated(this%new, this%states(0))) &
            )) then
             !
-            if (allocated(this%old%texture%orientations) .and. &
-                allocated(this%new%texture%orientations)) then
-                is_ok = (size(this%old%texture) == size(this%new%texture))
+            if (allocated(this%old%grainstates%grainstate) .and. &
+                allocated(this%new%grainstates%grainstate)) then
+                is_ok = (size(this%old%grainstates%grainstate) == size(this%new%grainstates%grainstate))
             endif
             !
         endif
@@ -104,15 +104,15 @@ contains
         write(*,*) 'associated old:', associated(this%old), &
                    'associated new:', associated(this%new)
         if (associated(this%old) .and. associated(this%new)) then
-            write(*,*) 'allocated grains, old:', allocated(this%old%texture%orientations), &
-                       'allocated grains, new:', allocated(this%new%texture%orientations)
+            write(*,*) 'allocated grains, old:', allocated(this%old%grainstates%grainstate), &
+                       'allocated grains, new:', allocated(this%new%grainstates%grainstate)
             write(*,*) 'old->0', associated(this%old, this%states(0)), &
                        'old->1', associated(this%old, this%states(1)) 
             write(*,*) 'new->0', associated(this%new, this%states(0)), &
                        'new->1', associated(this%new, this%states(1)) 
         endif
-        write(*,*) 'allocated grains, 0:', allocated(this%states(0)%texture%orientations), &
-                   'allocated grains, 1:', allocated(this%states(1)%texture%orientations)
+        write(*,*) 'allocated grains, 0:', allocated(this%states(0)%grainstates%grainstate), &
+                   'allocated grains, 1:', allocated(this%states(1)%grainstates%grainstate)
         write(*,fmt=100)
         !
         100 format(20('-'))
@@ -128,7 +128,7 @@ contains
     type(altayStateData),target,intent(in)  :: this
     !
         n = 0
-        if (altayStateData_isValid(this)) n = size(this%old%texture%orientations)
+        if (altayStateData_isValid(this)) n = size(this%old%grainstates%grainstate)
     !
     end function
 
@@ -142,9 +142,11 @@ contains
         !
         ! Initialize the state. It involves setting up pointers, so it has to be 
         ! done per state.
-        call this%old%grainstates%initialize(this%old%texture, info)
-        if (info /= criSuccess) return
-        call this%new%grainstates%initialize(this%new%texture, info)
+        !> \fixme Check altayStateData_assemble if initialization is correctly done
+        ! call this%old%grainstates%initialize(this%old%texture, info)
+        ! if (info /= criSuccess) return
+        ! call this%new%grainstates%initialize(this%new%texture, info)
+        info = criSuccess
     !
     end function
     

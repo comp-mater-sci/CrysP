@@ -34,7 +34,7 @@ implicit none
     
         !> \fixme Use actual read in place of fakeread
         ! procedure :: read => altayInputConfigReader_read
-        procedure :: read => altayInputConfigReader_fakeread
+        procedure :: read => altayInputConfigReader_fakeread_single
         procedure :: setInput
     end type
 
@@ -68,9 +68,9 @@ contains
     
     
         
-    integer function altayInputConfigReader_fakeread(this, config) result(info)
+    integer function altayInputConfigReader_fakeread_single(this, config) result(info)
     class(altayInputConfigReader),intent(inout)     :: this
-    class(SimulationConfig),intent(out)              :: config
+    class(SimulationConfig),intent(out)             :: config
     !
     type(AnalysisStepConfig) :: analysis_step
     type(OutputStepConfig) :: output_step
@@ -78,21 +78,27 @@ contains
     integer :: i
         
         config%jobtitle = 'T612V4'
-        
+        !
         ! single-phase built-in fcc material
-        allocate(config%material%phases(1))
+        !
+        config%material = MaterialConfig(1)
+        
         associate(phase => config%material%phases(1))
+            phase%name = config%jobtitle
             phase%deformation_mechanism%id = DM_fcc12
             ! leave default hardening
             phase%intraphase_interfaces%file_path = 'micro1.smt'
         end associate
         
-        ! Simple data persistency
+        ! Simple data persistency: output
         associate (cnf => config%state_output)
-            cnf%scheme_id = CFN_DataPersistencyNative
-            cnf%file_path = config%jobtitle
-            cnf%odf_config%format_id = TF_CUR
-            cnf%odf_config%file_name = trim(config%jobtitle)//'.CUR'
+            cnf = StatePersistenceConfig(CNF_StatePersistencyNative, &
+                                         StatePersistence_Write, &
+                                         path = config%jobtitle, &
+                                         n_phases = 1)
+            ! Override the defaults
+            cnf%phases(1)%odf%format_id = TF_CUR
+            cnf%phases(1)%odf%file_name = trim(config%jobtitle)
         end associate
         !
         ! Create steps: 
@@ -114,9 +120,12 @@ contains
             ! Initialization step
             allocate(steps(0)%initialization_step)
             associate(input => steps(0)%initialization_step%input)
-                input%scheme_id = CFN_DataPersistencyNative
-                input%file_path = 'A612LM.SMT'
-                input%odf_config%file_name = input%file_path
+                input = StatePersistenceConfig(CNF_StatePersistencyNative, &
+                                               StatePersistence_Read, &
+                                               n_phases=1)
+                ! ODF data - SMT format.
+                input%phases(1)%odf%format_id = TF_SMT
+                input%phases(1)%odf%file_name = 'A612LM.SMT'
             end associate
             !
             ! Set output steps
@@ -135,5 +144,88 @@ contains
     !
     end function
     
+    integer function altayInputConfigReader_fakeread_dual(this, config) result(info)
+    class(altayInputConfigReader),intent(inout)     :: this
+    class(SimulationConfig),intent(out)             :: config
+    !
+    type(AnalysisStepConfig) :: analysis_step
+    type(OutputStepConfig) :: output_step
+    integer,parameter :: max_step = 9
+    integer,parameter :: n_phases = 2
+    integer :: i
+        
+        config%jobtitle = 'T612V4'
+        !
+        ! single-phase built-in fcc material
+        !
+        config%material = MaterialConfig(n_phases)
+        ! Phase 1
+        associate(phase => config%material%phases(1))
+            phase%name = 'phase1'
+            phase%deformation_mechanism%id = DM_fcc12
+            ! leave default hardening
+            phase%intraphase_interfaces%file_path = 'micro1.smt'
+        end associate
+        ! Phase 1
+        associate(phase => config%material%phases(2))
+            phase%name = 'phase2'
+            phase%deformation_mechanism%id = DM_fcc12
+            ! leave default hardening
+            phase%intraphase_interfaces%file_path = 'micro1.smt'
+        end associate
+        
+        ! Simple data persistency: output
+        associate (cnf => config%state_output)
+            cnf = StatePersistenceConfig(CNF_StatePersistencyNative, &
+                                         StatePersistence_Write, &
+                                         path = config%jobtitle, &
+                                         n_phases = n_phases)
+            ! Override the defaults: just the format.
+            ! The name will be deduced from the phasename and format_id
+            cnf%phases(1)%odf%format_id = TF_CUR
+        end associate
+        !
+        ! Create steps: 
+        ! 0 - initialization
+        ! 1,3, ... - output
+        ! 2,4, ... - analysis
+        
+        ! All analysis steps are identical:
+        analysis_step%input(1,1) = 0.025
+        analysis_step%input(3,3) = -0.025
+        analysis_step%nincrements = 10
+        analysis_step%model_type = CNF_modelAlamel
+        !
+        ! All output steps are identical
+        !
+        allocate(config%steps(0:max_step))
+        !
+        associate (steps => config%steps)
+            ! Initialization step
+            allocate(steps(0)%initialization_step)
+            associate(input => steps(0)%initialization_step%input)
+                input = StatePersistenceConfig(CNF_StatePersistencyNative, &
+                                               StatePersistence_Read, &
+                                               n_phases=2)
+                ! ODF data - SMT format.
+                input%phases(:)%odf%format_id = TF_SMT
+                input%phases(1)%odf%file_name = 'A612LM_half1.SMT'
+                input%phases(2)%odf%file_name = 'A612LM_half2.SMT'
+            end associate
+            !
+            ! Set output steps
+            do i = 1, max_step, 2
+                steps(i)%output_step = output_step
+            enddo
+            ! Set Analysis steps. explicit loop is needed
+            ! lhs allocatable member is not allowed in array section:
+            ! steps(2:max_step22)%analysis_step = analysis_step
+            do i = 2, max_step, 2
+                steps(i)%analysis_step = analysis_step
+            enddo
+        end associate
     
+        info = criSuccess
+    !
+    end function
 end module

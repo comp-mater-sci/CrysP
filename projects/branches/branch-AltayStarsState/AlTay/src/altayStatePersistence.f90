@@ -3,13 +3,13 @@
 !
 
 module altayStatePersistence
-use criErrcodes
-use altayState
-use altayTexFormatConstants
+use altayStateTypes
+use altayMaterialTypes
+use altayStatePersistenceConstants
 implicit none
-
+    
     type,abstract :: StatePersistenceScheme
-        
+        integer     :: access_mode = StatePersistence_Read
     contains
         procedure(StatePersistenceScheme_saveState_interface),pass(this),deferred :: saveState
         procedure(StatePersistenceScheme_loadState_interface),pass(this),deferred :: loadState
@@ -34,5 +34,5 @@ implicit none
         end subroutine
 
     end interface
-
+    
 end module

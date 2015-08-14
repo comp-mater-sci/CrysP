@@ -73,7 +73,8 @@ contains
     type(PhaseData), intent(out)  :: this
     type(PhaseConfig), intent(in)       :: cnf
     integer, intent(out)                :: info
-        !
+    !
+        this%name = cnf%name
         ! Initialize deformationmechanism data
         call DeformationMechanismData_init(this%deformationmechanism,cnf%deformation_mechanism,info)
         if (info /= criSuccess) then

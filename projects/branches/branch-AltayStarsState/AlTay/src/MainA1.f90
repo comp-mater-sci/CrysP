@@ -57,8 +57,9 @@
       ! Components of the new-style data management
       type(altayConfigData)             :: config
       type(altayStateData),target       :: state
-      type(MaterialData)                :: material
+      type(MaterialData),target         :: material
       type(MaterialConfig)              :: material_config !> \todo Resove this temporary fix
+      type(StatePersistenceConfig)      :: input_storage_config !> \todo Resove this temporary fix
       ! Storage for persistent state variables
       class(StatePersistenceScheme), pointer :: input_storage, output_storage
 #ifdef TESTING_ENABLED
@@ -152,20 +153,6 @@
       write (*,103) trim(config%micros_fname)
 103   format (' InterfaceDataset_readfromSMTfile - Input Texture File:',a)            
 
-!
-!     Initialisation of SIMUL
-!
-#ifdef TESTING_ENABLED
-      !!! TESTING -->>
-      call altayStateData_printStatus(state)
-      !!! <<-- TESTING
-#endif
-      info = altayStateData_init(state)
-#ifdef TESTING_ENABLED
-      !!! TESTING -->>
-      call altayStateData_printStatus(state)
-      !!! <<-- TESTING
-#endif
 
       ! Read components of the config:
       read (KLEC,99) config%simul_init%NGR
@@ -202,43 +189,69 @@
             write(*,fmt=9010) 'hardening section'
             call terminate(stopcode_inputerror)
       endif
-      !> \todo Resove temporary fix to material_config
-      ! temporary fix -->>
-      allocate(material_config%phases(1))
-      associate(phase => material_config%phases(1))
-          phase%deformation_mechanism = config%deformationmechanism
-          phase%hardening = config%hardening
-          phase%intraphase_interfaces = MesostructureConfig(config%simul_init%FMicro, config%micros_fname)
-      end associate
-      call initialize(material, material_config, info)
-      if (info /= criSuccess) then
-            write(*,*) 'material%init returned error; info=', info
-            call terminate(stopcode_inputerror)
-      endif
-      ! <<--
       !
-      CALL SIMUL(config, state, material, 0, 0, 1)
-
-      !
-      ! Load state variables
-      
-      !> \todo there is no need to initilize and finalize FH5 if neither 
-      !>       input nor output data persistence scheme uses HDF5.
-      info = FH5_initialize()
-      
       associate(texcnf => config%texture)
           ! Get the initial texture
           read(KLEC,99) texcnf%format_id
           read(KLEC,'(A)') texcnf%file_name
           read(KLEC,99) texcnf%block_id
           call stripComment(texcnf%file_name)
+      end associate
+      !
+      ! Set material
+      !
+      material_config = MaterialConfig(1)
+      associate(phase => material_config%phases(1))
+          phase%name = config%output_prefix
+          phase%deformation_mechanism = config%deformationmechanism
+          phase%hardening = config%hardening
+          phase%intraphase_interfaces = MesostructureConfig(config%simul_init%FMicro, config%micros_fname)
+      end associate
+      !
+      call initialize(material, material_config, info)
+      if (info /= criSuccess) then
+            write(*,*) 'material%init returned error; info=', info
+            call terminate(stopcode_inputerror)
+      endif
+      !
+      ! Initialize the state
+      !
+#ifdef TESTING_ENABLED
+      call altayStateData_printStatus(state)
+#endif
+      info = altayStateData_init(state)
+      state%old%material => material
+      state%new%material => material
+
+#ifdef TESTING_ENABLED
+      call altayStateData_printStatus(state)
+#endif
+
+      !
+      ! Load state variables
+      !
+      !> \todo there is no need to initilize and finalize FH5 if neither 
+      !>       input nor output data persistence scheme uses HDF5.
+      info = FH5_initialize()
+      associate(texcnf => config%texture)
           !
           ! Initialize appropriate backend: texcnf%input_type
-          info = criError
-          input_storage => statePersistenceFactory(texcnf,as_input=.true.)
-          if (associated(input_storage)) then
+          select case(texcnf%format_id)
+          case(TF_SMT,TF_CUR,TF_CUB)
+              input_storage_config%scheme_id = CNF_StatePersistencyNative
+          case(TF_HDF5)
+              input_storage_config%scheme_id = CNF_StatePersistencyHDF5
+          end select
+          !
+          allocate(input_storage_config%phases(1))
+          input_storage_config%phases(1)%odf = texcnf
+          !
+          input_storage => statePersistenceFactory(input_storage_config, info)
+          if (associated(input_storage) .and. (info == criSuccess)) then
               call input_storage%loadState(state%old, info)
               deallocate(input_storage)
+          else
+              call terminate(stopcode_ioerror)
           endif
           !
           if (info /= 0) then
@@ -248,7 +261,12 @@
                  ,1X,A)
           endif
       end associate
-      
+
+      !
+      !     Initialisation of SIMUL
+      !
+      CALL SIMUL(config, state, material, 0, 0, 1)
+
 #ifdef PEBP_ENABLED
       ! PEBP model
       NREC = size(DFIL)
@@ -298,35 +316,44 @@
       ! Initialize HDF5 output storage
       !!! FIXME -->>
       block
-           type(TextureConfig) :: texcnf
+           type(StatePersistenceConfig) :: outcnf
+           outcnf%scheme_id = CNF_StatePersistencyHDF5
+           outcnf%access_mode=StatePersistence_Write
            !
-           texcnf%format_id = TF_HDF5
-           texcnf%file_name = trim(config%output_prefix)//'.h5:state' 
-           output_storage => statePersistenceFactory(texcnf, as_input=.false.)
+           outcnf%path = trim(config%output_prefix)//'.h5:state' 
+           output_storage => statePersistenceFactory(outcnf, info)
            !> \todo: if output of the initial state is requested
            call output_storage%saveState(state%old, info) 
       end block
       !!! <<--
       !
 #ifdef TESTING_ENABLED
+      call altayStateData_printStatus(state)
       ! Only for testing: CUR file
       block
-            type(TextureConfig) :: texcnf
-            texcnf%format_id = TF_CUR
-            texcnf%file_name = trim(config%output_prefix)//'.CUR'
-            native_storage => statePersistenceFactory(texcnf, as_input=.false.)
-            call native_storage%saveState(state%old, info)
+           type(StatePersistenceConfig) :: outcnf
+           outcnf = StatePersistenceConfig(CNF_StatePersistencyNative, &
+                                           StatePersistence_Write, &
+                                           n_phases=1)
+           outcnf%phases(1)%odf%format_id = TF_CUR
+           outcnf%phases(1)%odf%file_name = trim(config%output_prefix)//'.CUR'
+           !
+           native_storage => statePersistenceFactory(outcnf, info)
+           call native_storage%saveState(state%old, info)
       end block
 #endif
-#ifdef TESTING_ENABLED
+#ifdef EXTENDED_TESTING_ENABLED
       ! Only for testing: CUB file
       block
             class(StatePersistenceScheme), pointer :: storage
-            type(TextureConfig) :: texcnf
             !
-            texcnf%format_id = TF_CUB
-            texcnf%file_name = trim(config%output_prefix)//'_init.CUB'
-            storage => statePersistenceFactory(texcnf, as_input=.false.)
+            type(StatePersistenceConfig) :: outcnf
+            outcnf%scheme_id = CNF_StatePersistencyNative
+            outcnf%access_mode=StatePersistence_Write
+            outcnf%odf_config%format_id = TF_CUB
+            outcnf%odf_config%file_name = trim(config%output_prefix)//'_init.CUB'
+            !
+            storage => statePersistenceFactory(outcnf, material_config, info)
             call storage%saveState(state%new, info) 
             deallocate(storage)
       end block
@@ -379,11 +406,14 @@
 #ifdef FINALCUB_ENABLED
     block
         class(StatePersistenceScheme), pointer :: storage
-        type(TextureConfig) :: texcnf
+        type(StatePersistenceConfig) :: outcnf
+        outcnf = StatePersistenceConfig(CNF_StatePersistencyNative, &
+                                        StatePersistence_Write, &
+                                        n_phases=1)
+        outcnf%phases(1)%odf%format_id = TF_CUB
+        outcnf%phases(1)%odf%file_name = trim(config%output_prefix)//'.CUB'
         !
-        texcnf%format_id = TF_CUB
-        texcnf%file_name = trim(config%output_prefix)//'.CUB'
-        storage => statePersistenceFactory(texcnf, as_input=.false.)
+        storage => statePersistenceFactory(outcnf, info)
         call storage%saveState(state%new, info) 
         deallocate(storage)
     end block

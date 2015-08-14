@@ -1,49 +1,52 @@
 !
 ! $Id$
 !
+#include "criMacros.fpp"
 
 !> Auxiliary functions that support state persistence schemes.
 module altayStatePersistenceUtils
 use criErrcodes
 use altayConfig
-use altayStatePersistence
 use altayNativePersistenceScheme
 use altayHDF5PersistenceScheme
 implicit none
 
-contains
-    
-    !> \fixme StatePersistenceConfig should be used as the argument 
-    function statePersistenceFactory(texcnf, as_input) result(instance)
+    contains
+
+    function statePersistenceFactory(config, info) result(instance)
     implicit none
     class(StatePersistenceScheme),pointer       :: instance
-    type(TextureConfig),intent(in)              :: texcnf
-    logical,intent(in)                          :: as_input
+    class(StatePersistenceConfig),intent(in)    :: config
+    integer,intent(out)                         :: info
     !
-    integer :: info
+    integer :: i, ierr
+    type(NativePersistenceScheme),pointer :: ptr_native
+    type(HDF5PersistenceScheme),pointer :: ptr_hdf5
     !
         nullify(instance)
         ! Instantiate
-        select case(texcnf%format_id)
-        case(TF_SMT,TF_CUR, TF_CUB)
-            allocate(NativePersistenceScheme :: instance)
+        select case(config%scheme_id)
+        case(CNF_StatePersistencyNative)
+            RETURN_ON_WITH(allocate(ptr_native,stat=ierr), ierr/=0, info=criErr_MemAlloc)
+            call ptr_native%initialize(config%access_mode, size(config%phases), info)
+            ! Add records of individual phases
+            do i = lbound(config%phases,dim=1), ubound(config%phases,dim=1)
+                associate (tex =>config%phases(i)%odf)
+                    call ptr_native%setPhase(i, tex%format_id, tex%file_name, tex%block_id, info)
+                end associate
+            enddo
+            instance => ptr_native
+        case(CNF_StatePersistencyHDF5)
+            allocate(HDF5PersistenceScheme :: ptr_hdf5, stat=ierr)
 
-        case(TF_HDF5)
-            allocate(HDF5PersistenceScheme :: instance)
-        end select
-        !
-        ! Cast the type to get proper initialization method
-        select type(instance)
-        class is(NativePersistenceScheme)
-            call instance%initialize(texcnf%format_id, trim(texcnf%file_name), &
-                                        texcnf%block_id, info)
-        class is(HDF5PersistenceScheme)
-            !> \fixme Get rid of hard-coded constant in `groupname` argument
-            call instance%initialize(trim(texcnf%file_name), &
+             !> \fixme Get rid of hard-coded constant in `groupname` argument
+            call ptr_hdf5%initialize(trim(config%path), &
                                         groupname='Step', &
-                                        is_incremental=.not.as_input, &
-                                        is_readonly=as_input, &
+                                        is_incremental=(config%access_mode /= StatePersistence_Read), &
+                                        access_mode=config%access_mode, &
                                         info=info)
+
+            instance => ptr_hdf5
         end select
     !
     end function
