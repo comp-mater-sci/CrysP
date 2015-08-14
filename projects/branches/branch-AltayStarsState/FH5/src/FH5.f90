@@ -124,13 +124,28 @@ implicit none
         procedure,pass(this)    :: setCompression => FH5Dataset_setCompression
         procedure,pass(this)    :: close => FH5Dataset_close
         
+        procedure,pass(this) :: FH5Dataset_write_1D_double
+        procedure,pass(this) :: FH5Dataset_read_1D_double
+        procedure,pass(this) :: FH5Dataset_make_1D_double
+
         procedure,pass(this) :: FH5Dataset_write_2D_double
         procedure,pass(this) :: FH5Dataset_read_2D_double
+        procedure,pass(this) :: FH5Dataset_make_2D_double
         
-        generic :: write => FH5Dataset_write_2D_double
+        procedure,pass(this) :: FH5Dataset_write_1D_integer
+        procedure,pass(this) :: FH5Dataset_read_1D_integer
+        procedure,pass(this) :: FH5Dataset_make_1D_integer
+
+        procedure,pass(this) :: FH5Dataset_write_2D_integer
+        procedure,pass(this) :: FH5Dataset_read_2D_integer
+        procedure,pass(this) :: FH5Dataset_make_2D_integer
+
         
-        generic :: read => FH5Dataset_read_2D_double
+        generic :: write => FH5Dataset_write_1D_double, FH5Dataset_write_2D_double, FH5Dataset_write_1D_integer, FH5Dataset_write_2D_integer
         
+        generic :: read => FH5Dataset_read_1D_double, FH5Dataset_read_2D_double, FH5Dataset_read_1D_integer, FH5Dataset_read_2D_integer
+        
+        generic :: make => FH5Dataset_make_1D_double, FH5Dataset_make_2D_double, FH5Dataset_make_1D_integer, FH5Dataset_make_2D_integer
     end type
 
 
@@ -502,51 +517,47 @@ implicit none
     end function
     
     
-    integer function FH5Dataset_write_2D_double(this, name, array) result(info)
-    implicit none
-    class(FH5Dataset),intent(inout)                  :: this
-    character(len=*),intent(in)                     :: name
-    double precision,dimension(:,:)                 :: array
     
-    !
-    integer :: hdferr
-    !
-        info = criErr_IO
-        this%shape = shape(array, kind=hsize_t)
-        ! Write the dataset
-        call h5dcreate_f(this%location_id, name, H5T_NATIVE_DOUBLE, this%dataspace_id, &
-                         this%object_id, hdferr, dcpl_id=this%plist_id)
-        if (hdferr /= 0) return
-        call h5dwrite_f(this%object_id, mem_type_id=H5T_NATIVE_DOUBLE, buf=array, &
-                        dims=this%shape, hdferr=hdferr)
-        CHOOSE(info, hdferr == 0, criSuccess, criErr_IOWrite)
-    !
-    end function
+! Dataset: double precision, dimension(:) 
+#define FX_NAME_WRITE FH5Dataset_write_1D_double
+#define FX_NAME_READ FH5Dataset_read_1D_double
+#define FX_NAME_MAKE FH5Dataset_make_1D_double
+#define FORTRAN_TYPE double precision,dimension(:)
+#define RANK 1
+#define SHAPESPEC this%shape(1)
+#define HDF5_TYPE H5T_NATIVE_DOUBLE
+#include "FH5Dataset_rw.fpp"
     
+! Dataset: double precision, dimension(:,:) 
+#define FX_NAME_WRITE FH5Dataset_write_2D_double
+#define FX_NAME_READ FH5Dataset_read_2D_double
+#define FX_NAME_MAKE FH5Dataset_make_2D_double
+#define FORTRAN_TYPE double precision,dimension(:,:)
+#define RANK 2
+#define SHAPESPEC this%shape(1),this%shape(2)
+#define HDF5_TYPE H5T_NATIVE_DOUBLE
+#include "FH5Dataset_rw.fpp"
+!
+! Dataset: integer, dimension(:) 
+#define FX_NAME_WRITE FH5Dataset_write_1D_integer
+#define FX_NAME_READ FH5Dataset_read_1D_integer
+#define FX_NAME_MAKE FH5Dataset_make_1D_integer
+#define FORTRAN_TYPE integer,dimension(:)
+#define RANK 1
+#define SHAPESPEC this%shape(1)
+#define HDF5_TYPE H5T_NATIVE_INTEGER
+#include "FH5Dataset_rw.fpp"
     
-    integer function FH5Dataset_read_2D_double(this, array) result(info)
-    implicit none
-    class(FH5Dataset),intent(inout)                  :: this
-    double precision,dimension(:,:),allocatable      :: array
-    !
-    integer :: hdferr
-    integer, parameter :: rank = 2
-    !
-        info = criErr_BadArgs
-        ! Check if object state is consistent
-        if (allocated(this%shape) .and. &
-            is_valid_id(this%object_id) .and. &
-            is_valid_id(this%dataspace_id)) then
-            !
-            if (any(this%shape <= 0).or. (size(this%shape) /= rank)) return
-            !
-            allocate(array(this%shape(1),this%shape(2)))
-            call h5dread_f(this%object_id, mem_type_id=H5T_NATIVE_DOUBLE, buf=array, &
-                           dims=this%shape, hdferr=hdferr)
-            CHOOSE(info, hdferr == 0, criSuccess, criErr_IORead)
-        endif
-    end function
-    
+! Dataset: integer, dimension(:,:) 
+#define FX_NAME_WRITE FH5Dataset_write_2D_integer
+#define FX_NAME_READ FH5Dataset_read_2D_integer
+#define FX_NAME_MAKE FH5Dataset_make_2D_integer
+#define FORTRAN_TYPE integer,dimension(:,:)
+#define RANK 2
+#define SHAPESPEC this%shape(1),this%shape(2)
+#define HDF5_TYPE H5T_NATIVE_INTEGER
+#include "FH5Dataset_rw.fpp"
+
     
     integer function FH5Dataset_close(this) result(info)
     implicit none
