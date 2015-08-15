@@ -228,7 +228,7 @@
 #ifndef ALTAY_SUBROUTINE
       !
       !Initialisation of mesostructure_state with FMicro
-      call mesostructure_state%update(config%simul_init%FMicro, info)
+      call MesostructureState_update(mesostructure_state,config%simul_init%FMicro, info)
 #endif
       !
       RETURN
@@ -560,7 +560,7 @@
       if (IW.gt.1) exit
       !
       !Update mesostructure AFTER the clusterloop, on condition that state update is requested ('calling_TAYLR1')
-      if (calling_TAYLR1) call mesostructure_state%update(MacroDefState%IncrDefGrad, info) 
+      if (calling_TAYLR1) call MesostructureState_update(mesostructure_state, MacroDefState%IncrDefGrad, info) 
       !
       SHsam = STOT / TOTGEW
       RHOSm = RHOST / TOTGEW
