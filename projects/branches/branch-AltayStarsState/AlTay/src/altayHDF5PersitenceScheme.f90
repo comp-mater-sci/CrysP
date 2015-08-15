@@ -316,15 +316,15 @@ contains
         info = group%create(this%collection, 'GrainStateCollection')
         if (info /= criSuccess) return
         ! Make temporary array
-        npoints = size(state%grainstate)
+        npoints = size(state%grains)
         allocate(tmp_arr(npoints,nvariables))
-        tmp_arr(:,1) = state%grainstate(:)%accumulatedshear
+        tmp_arr(:,1) = state%grains(:)%accumulatedshear
         !
         info = FH5Dataset_init(dataset, group, &
                                shape=shape(tmp_arr), &
                                compression=FH5_compression_zip)
         if (info /= criSuccess) return
-        info = dataset%write('grainstate', tmp_arr)
+        info = dataset%write('GrainState', tmp_arr)
         if (info /= criSuccess) return
         info = dataset%close()
     !
@@ -365,19 +365,19 @@ contains
     integer :: npoints
     !
         info = criErr_BadArgs
-        if (.not. allocated(state%grainstate)) return
-        npoints = size(state%grainstate)
+        if (.not. allocated(state%grains)) return
+        npoints = size(state%grains)
         !
         info = group%open(this%collection, 'GrainStateCollection')
         if (info /= criSuccess) return
         !
-        info = FH5Dataset_init(dataset, group, 'grainstate')
+        info = FH5Dataset_init(dataset, group, 'grains')
         if (info == criSuccess) then
             if (dataset%read(tmp_arr) == criSuccess) then
                 info = criErr_BadDims
                 if (npoints /= size(tmp_arr, dim=1)) return
                 !
-                state%grainstate(:)%accumulatedshear = tmp_arr(:,1)
+                state%grains(:)%accumulatedshear = tmp_arr(:,1)
                 info = criSuccess
             endif
         endif

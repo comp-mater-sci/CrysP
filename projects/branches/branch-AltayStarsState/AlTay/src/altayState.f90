@@ -82,9 +82,9 @@ contains
                associated(this%new, this%states(0))) &
            )) then
             !
-            if (allocated(this%old%grainstates%grainstate) .and. &
-                allocated(this%new%grainstates%grainstate)) then
-                is_ok = (size(this%old%grainstates%grainstate) == size(this%new%grainstates%grainstate))
+            if (allocated(this%old%grainstates%grains) .and. &
+                allocated(this%new%grainstates%grains)) then
+                is_ok = (size(this%old%grainstates%grains) == size(this%new%grainstates%grains))
             endif
             !
         endif
@@ -104,15 +104,15 @@ contains
         write(*,*) 'associated old:', associated(this%old), &
                    'associated new:', associated(this%new)
         if (associated(this%old) .and. associated(this%new)) then
-            write(*,*) 'allocated grains, old:', allocated(this%old%grainstates%grainstate), &
-                       'allocated grains, new:', allocated(this%new%grainstates%grainstate)
+            write(*,*) 'allocated grains, old:', allocated(this%old%grainstates%grains), &
+                       'allocated grains, new:', allocated(this%new%grainstates%grains)
             write(*,*) 'old->0', associated(this%old, this%states(0)), &
                        'old->1', associated(this%old, this%states(1)) 
             write(*,*) 'new->0', associated(this%new, this%states(0)), &
                        'new->1', associated(this%new, this%states(1)) 
         endif
-        write(*,*) 'allocated grains, 0:', allocated(this%states(0)%grainstates%grainstate), &
-                   'allocated grains, 1:', allocated(this%states(1)%grainstates%grainstate)
+        write(*,*) 'allocated grains, 0:', allocated(this%states(0)%grainstates%grains), &
+                   'allocated grains, 1:', allocated(this%states(1)%grainstates%grains)
         write(*,fmt=100)
         !
         100 format(20('-'))
@@ -128,7 +128,7 @@ contains
     type(altayStateData),target,intent(in)  :: this
     !
         n = 0
-        if (altayStateData_isValid(this)) n = size(this%old%grainstates%grainstate)
+        if (altayStateData_isValid(this)) n = size(this%old%grainstates%grains)
     !
     end function
 

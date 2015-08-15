@@ -159,7 +159,7 @@ contains
         if (info /= criSuccess) return
         !
         ! Intrusive operation: we set components of grain state.
-        associate(s => state%grainstates%grainstate)
+        associate(s => state%grainstates%grains)
             j = 1
             do i = 1, storage_size
                 !> \fixme NativePersistenceScheme_loadState: deformation gradient should
@@ -231,7 +231,7 @@ contains
         ! Set other state components, if the access method allows them.
         select type(ptr => this%texture_storage)
         class is(TextureMetaRawFileAccess)
-            ! Extract the right data: we need to get indices of grainstate 
+            ! Extract the right data: we need to get indices of grains 
             ! associated to the phase
             call GrainStateCollection_reverseMapping(state%grainstates,this%phase_id, map, info)
             if (info /= criSuccess) return
@@ -239,7 +239,7 @@ contains
             !>        be loaded to the phase-wide mesostructure
             call ptr%setExtendedMetaData(state%mesostructure%deformationgradient, &
                                             step_number, &
-                                            state%grainstates%grainstate(map)%accumulatedshear,&
+                                            state%grainstates%grains(map)%accumulatedshear,&
                                             info)
         end select
         ! Do the IO

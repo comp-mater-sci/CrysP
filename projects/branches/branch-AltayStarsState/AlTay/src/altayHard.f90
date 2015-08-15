@@ -164,7 +164,7 @@ implicit none
         crss%crss = 1.D0
     !
     case(hard_voce,hard_swiftK,hard_swiftS)
-        gamma = state%grainstates%grainstate(grain_id)%accumulatedshear
+        gamma = state%grainstates%grains(grain_id)%accumulatedshear
         call altayHard_getTau(hardparams,gamma, tau, info)
         if (info == criSuccess) crss%crss = hardparams%crss_ratios%crss * tau
     case(hard_KM)

@@ -47,7 +47,7 @@ contains
       type(EulerAngles),intent(out):: orientation
       double precision,intent(out) :: GEW,GAM
       !
-      associate (DFIL => statevars%grainstates%grainstate)
+      associate (DFIL => statevars%grainstates%grains)
             orientation = DFIL(i)%orientation%euler
             GEW=DFIL(i)%orientation%weight
             GAM=DFIL(i)%accumulatedshear
@@ -64,7 +64,7 @@ contains
       type(EulerAngles),intent(in):: orientation
       double precision,intent(in) :: GEW,GAM
       !
-      associate (DFIL => statevars%grainstates%grainstate)
+      associate (DFIL => statevars%grainstates%grains)
             DFIL(i)%orientation%euler = orientation
             DFIL(i)%orientation%weight=GEW
             DFIL(i)%accumulatedshear=GAM

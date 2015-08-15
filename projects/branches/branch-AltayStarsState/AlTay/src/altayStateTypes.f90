@@ -26,15 +26,16 @@ use altayHardLaw_DSH, only: DSHStateVariable
 #endif
 implicit none
 
+    !> State variables related to hardening of a single grain
     type :: HardeningStateVariables
         
 #ifdef PEBP_ENABLED
         !> State variables of the DSH hardening law.
-        type(DSHStateVariable),pointer      :: dsh_state => null()
+        type(DSHStateVariable),allocatable      :: dsh_state
 #endif
 
         !> State variables of the Kocks-Mecking hardening law.
-        type(KMStateVariables),pointer      :: km_state => null()
+        type(KMStateVariables),allocatable      :: km_state
         
         !> \todo: decide whether the crss is actually needed.
         !> Collection of CRSS per grain (useful for some/all hardening models?)
@@ -57,41 +58,51 @@ implicit none
         !> from a reference (virgin) state up to the current state. 
         double precision                   :: accumulatedshear = 0.0D0
         
-        type(HardeningStateVariables),pointer       :: hardening_state => null()
+        type(HardeningStateVariables),allocatable       :: hardening_state
         
     end type
     
-
+    
+    !> Collection of grain state objects
     type :: GrainStateCollection
         
-        type(GrainState), dimension(:), allocatable :: grainstate
+        !> Array of grain state objects
+        type(GrainState), dimension(:), allocatable :: grains
         
-        !> Auxiliary pointer to phase data.
+        !> Auxiliary pointer to phase data used in GrainState objects.
         !> It simplifies operations that require knowledge (1) how many
         !> phases are present and (2) what are the pointers.
         !> Shape is [1:nphases]
         type(PhaseData), dimension(:),pointer       :: phases
     end type
-    
+
+
+    !> Wrapper for a pointer to InterfaceData object.
     type :: PtrInterfaceData
         type(InterfaceData),pointer     :: ptr => null()
     end type
     
+    
+    !> State variables of a single cluster
     type :: ClusterState
         
         !> Vector of indices of the cluster components inside array of grain state.
         integer,dimension(:),allocatable    :: idx
         
-        type(PtrInterfaceData),allocatable      :: interfaces
+        type(PtrInterfaceData),dimension(:),allocatable      :: interfaces
 
     end type
 
+
+    !> Collection of cluster state objects.
     type :: ClusterStateCollection
         
         type(ClusterState),dimension(:),allocatable          :: clusters
 
     end type
     
+    
+    !> State of the mesostructure
     type :: MesostructureState
         
         double precision, dimension (3,3) :: deformationgradient = unit_sr_matrix
@@ -123,17 +134,17 @@ implicit none
     end interface
 
 
-    contains
+contains
 
 
     !> Initialize grain state collection from state-independent material
     !> properties and discrete ODFs of individual phases. The initialization
-    !> populates the grainstate field by making blocks of grains that belong
+    !> populates the grains field by making blocks of grains that belong
     !> to particular phases.
     !>
     !> The resultant GrainStateCollection object will have the layout
     !> implied by concatenating discrete ODFs of the phases into blocks.
-    !> For instance, if two phases are used, grainstate field of
+    !> For instance, if two phases are used, grains field of
     !> GrainStateCollection will have the layout as depicted below:
     !>     grain_1   -> phase_1
     !>     ...
@@ -169,14 +180,14 @@ implicit none
         if (n_grains <= 0) return
         !
         info = criErr_MemAlloc
-        allocate(this%grainstate(n_grains), stat=ierr)
+        allocate(this%grains(n_grains), stat=ierr)
         if (ierr /= 0) return
         ! Set up individual grains: orientations and association with the pahse
         idx = 1
         do i = lbound(material%phases, dim=1), ubound(material%phases, dim=1)
             do j = lbound(odfs(i)%orientations, dim=1), ubound(odfs(i)%orientations,dim=1)
-                this%grainstate(idx)%orientation = odfs(i)%orientations(j)
-                this%grainstate(idx)%phase => material%phases(i)
+                this%grains(idx)%orientation = odfs(i)%orientations(j)
+                this%grains(idx)%phase => material%phases(i)
                 idx = idx + 1
             enddo
         enddo
@@ -184,16 +195,26 @@ implicit none
         !
     end subroutine
 
+
+    !> Check if GrainStateCollection object contains all necessary components.
     logical function GrainStateCollection_isValid(this) result(is_ok)
     implicit none
     type(GrainStateCollection), intent(in)     :: this
     !
-        CHOOSE(is_ok, allocated(this%grainstate), (size(this%grainstate) > 0) .and. associated(this%phases), .false.)
+        CHOOSE(is_ok, allocated(this%grains), (size(this%grains) > 0) .and. associated(this%phases), .false.)
         CHOOSE(is_ok, is_ok, size(this%phases) > 0, .false.)
     !
     end function
-    
-    
+
+
+    !> Construct forward mapping (vector of indices) between components of
+    !> GrainStateCollection and PhaseData objects. The vector constitutes a map:
+    !> grain_index -> phase_id
+    !>
+    !> The result `map` is a vector of the length eqal to the number of 
+    !> elements in `this%grains`. The vector elements are indices of phases
+    !>  in `this%phases` that are pointed to by respective elements of 
+    !> `this%grains(:)%phase`.
     subroutine GrainStateCollection_forwardMapping(this, map, info)
     implicit none
     type(GrainStateCollection), intent(in)          :: this
@@ -204,7 +225,7 @@ implicit none
     integer :: default_idx, min_phase_idx, max_phase_idx
     !
         info = criSuccess
-        n_grains = size(this%grainstate)
+        n_grains = size(this%grains)
         ! Mark for non-existing phase
         default_idx = lbound(this%phases, dim=1) - 1
         min_phase_idx = lbound(this%phases, dim=1)
@@ -217,7 +238,7 @@ implicit none
             map(i) = default_idx
             ! Check if the grain is associated with a particular phase
             do j = min_phase_idx, max_phase_idx
-                if (associated(this%grainstate(i)%phase, this%phases(j))) then
+                if (associated(this%grains(i)%phase, this%phases(j))) then
                     map(i) = j
                     exit
                 endif
@@ -227,9 +248,9 @@ implicit none
         enddo
         RETURN_IF_WITH(i <= n_grains, info = criError)
     !
-            end subroutine
-    
-            
+    end subroutine
+
+
     !> Calculate vector of indices of objects in GrainStateCollection that are 
     !> associated with a given phase. The vector constitutes a map: 
     !> phase_id -> grain_indices
@@ -244,20 +265,20 @@ implicit none
     integer,dimension(:),allocatable :: idx
     !
         info = criSuccess
-        n_grains = size(this%grainstate)
+        n_grains = size(this%grains)
         ! Pre-allocate map.
         RETURN_ON_WITH(allocate(map(n_grains), stat=ierr), ierr /= 0, info=criErr_MemAlloc)
         ! Check if there is any work to do. If none, map of zero elements is returned.
         if (n_grains < 1) return
         
         ! Note: the loop below could be implemented by which_indices, but expression 
-        ! this%grainstate(:)%phase triggers error:
+        ! this%grains(:)%phase triggers error:
         ! "A component with POINTER attribute may NOT be to the right of an array component"
-        ! in  call which_indices(associated(this%grainstate(:)%phase, this%phases(i)), map)
+        ! in  call which_indices(associated(this%grains(:)%phase, this%phases(i)), map)
         j = 0
         do  i = 1, n_grains
             ! Check if the grain is associated with a particular phase
-            if (associated(this%grainstate(i)%phase, this%phases(phase_id))) then
+            if (associated(this%grains(i)%phase, this%phases(phase_id))) then
                 j = j + 1
                 map(j) = i
             endif
@@ -288,8 +309,8 @@ implicit none
         n_grains = size(reverse_map)
         RETURN_IF(info /= criSuccess, info = DiscreteODF_resize(odf, n_grains))
         if (n_grains > 0) then
-            odf%title = this%grainstate(reverse_map(1))%phase%name
-            odf%orientations = this%grainstate(reverse_map)%orientation
+            odf%title = this%grains(reverse_map(1))%phase%name
+            odf%orientations = this%grains(reverse_map)%orientation
         endif
     !
     end subroutine
