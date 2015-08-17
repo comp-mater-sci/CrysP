@@ -31,8 +31,14 @@ implicit none
         type(srTensor)  :: trafo
         
     end type
-    
-    
+
+
+    !> Wrapper for a pointer to InterfaceData object.
+    type :: PtrInterfaceData
+        type(InterfaceData),pointer     :: ptr => null()
+    end type
+
+
     !> Description of mesostructure per a pair of phases.
     !> This also covers the where the two phases are identical (mesostructure
     !> of the phase itself)
@@ -44,6 +50,12 @@ implicit none
         type(InterfaceData),dimension(:), allocatable      :: interfaces
     end type
 
+
+    !> Wrapper for a pointer to MesostructureData object
+    type :: PtrMesostructureData
+        type(MesostructureData),pointer :: ptr => null()
+    end type
+    
     interface initialize
         module procedure MesostructureData_readfromSMTfile
     end interface

@@ -29,8 +29,16 @@ implicit none
 
     !> Data that characterize state-independent properties of a material
     type :: MaterialData
-        !> shape: [n_phases]
+        !> Description of phases in the material
+        !> Shape: [n_phases]
         type(PhaseData), dimension(:),allocatable           :: phases
+        
+        !> Description of interfaces between different phases.
+        !> Shape: [n_phases-1]
+        !>
+        !> Consecutive elements describe: (phase_i,phase_j), where phase_i < phase_j
+        !> Example: for 2-phases: [1]: (1,2)
+        !> Example: for 3-phases: [1]: (1,2), [2]: (1,3), [3]: (2,3)
         type(MesostructureData),dimension(:),allocatable    :: interphase_interfaces
     contains
 

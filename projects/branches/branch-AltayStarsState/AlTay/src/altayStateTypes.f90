@@ -77,13 +77,7 @@ implicit none
     end type
 
 
-    !> Wrapper for a pointer to InterfaceData object.
-    type :: PtrInterfaceData
-        type(InterfaceData),pointer     :: ptr => null()
-    end type
-    
-    
-    !> State variables of a single cluster
+   !> State variables of a single cluster
     type :: ClusterState
         
         !> Vector of indices of the cluster components inside array of grain state.

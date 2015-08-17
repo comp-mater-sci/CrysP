@@ -20,6 +20,7 @@
       use altayTexFormats
       use altayMacroKinematic
       use altayStatePersistenceUtils
+      use altayAssembly
       implicit none ! double precision (a-h,o-z)
 !      Several simulations (usually several-steps each),
 !      following each other.
@@ -261,7 +262,20 @@
                  ,1X,A)
           endif
       end associate
-
+#ifdef TESTING_ENABLED
+      ! This code is absolutely unnecessary here. It simply tests how
+      ! cluster assemblies are built.
+      block
+        type(AssemblyMultiPhaseDirective) :: directives(1)
+        if (config%simul_init%NGR == 1) then
+            directives(1)%phase_ids = [1]
+        else
+            directives(1)%phase_ids = [1, 1]
+        endif
+        directives(1)%number_instances = size(state%old%grainstates%grains) / config%simul_init%NGR
+        call altayAssembly_ClusterAssembly_basic(state%old, directives, info)
+      end block
+#endif
       !
       !     Initialisation of SIMUL
       !

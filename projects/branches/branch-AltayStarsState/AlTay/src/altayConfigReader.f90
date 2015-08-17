@@ -74,7 +74,7 @@ contains
     !
     type(AnalysisStepConfig) :: analysis_step
     type(OutputStepConfig) :: output_step
-    integer,parameter :: max_step = 9
+    integer,parameter :: max_step = 10
     integer :: i
         
         config%jobtitle = 'T612V4'
@@ -103,8 +103,9 @@ contains
         !
         ! Create steps: 
         ! 0 - initialization
-        ! 1,3, ... - output
-        ! 2,4, ... - analysis
+        ! 1 - assembly
+        ! 2,4, ... - output
+        ! 3,5, ... - analysis
         
         ! All analysis steps are identical:
         analysis_step%input(1,1) = 0.025
@@ -128,14 +129,23 @@ contains
                 input%phases(1)%odf%file_name = 'A612LM.SMT'
             end associate
             !
+            ! Assembly step
+            allocate(steps(1)%assembly_step)
+            associate(step => steps(1)%assembly_step)
+                ! Put directives: ALAMEL clusters
+                ! Considerable limitation: you have to know how many 
+                ! grains are available. Consider some "auto" option.
+                step%directives = [ AssemblyMultiPhaseDirective([1, 1], 1500) ]
+            end associate
+            !
             ! Set output steps
-            do i = 1, max_step, 2
+            do i = 2, max_step, 2
                 steps(i)%output_step = output_step
             enddo
             ! Set Analysis steps. explicit loop is needed
             ! lhs allocatable member is not allowed in array section:
             ! steps(2:max_step22)%analysis_step = analysis_step
-            do i = 2, max_step, 2
+            do i = 3, max_step, 2
                 steps(i)%analysis_step = analysis_step
             enddo
         end associate
@@ -150,13 +160,13 @@ contains
     !
     type(AnalysisStepConfig) :: analysis_step
     type(OutputStepConfig) :: output_step
-    integer,parameter :: max_step = 9
+    integer,parameter :: max_step = 10
     integer,parameter :: n_phases = 2
     integer :: i
         
         config%jobtitle = 'T612V4'
         !
-        ! single-phase built-in fcc material
+        ! dual-phase built-in fcc material
         !
         config%material = MaterialConfig(n_phases)
         ! Phase 1
@@ -173,7 +183,9 @@ contains
             ! leave default hardening
             phase%intraphase_interfaces%file_path = 'micro1.smt'
         end associate
-        
+        ! Interfaces between the phases:
+        config%material%interphase_interfaces = [ MesostructureConfig(FMicro=unit_sr_matrix, &
+                                                                      file_path = 'micro1.smt') ]
         ! Simple data persistency: output
         associate (cnf => config%state_output)
             cnf = StatePersistenceConfig(CNF_StatePersistencyNative, &
@@ -183,6 +195,7 @@ contains
             ! Override the defaults: just the format.
             ! The name will be deduced from the phasename and format_id
             cnf%phases(1)%odf%format_id = TF_CUR
+            cnf%phases(2)%odf%format_id = TF_CUR
         end associate
         !
         ! Create steps: 
@@ -213,14 +226,26 @@ contains
                 input%phases(2)%odf%file_name = 'A612LM_half2.SMT'
             end associate
             !
+            ! Assembly step
+            allocate(steps(1)%assembly_step)
+            associate(step => steps(1)%assembly_step)
+                ! Put directives: ALAMEL clusters
+                ! Considerable limitation: you have to know how many 
+                ! grains are available. Consider some "auto" option.
+                step%directives = [ AssemblyMultiPhaseDirective([1, 1], 500), &
+                                    AssemblyMultiPhaseDirective([1, 2], 500), &
+                                    AssemblyMultiPhaseDirective([2, 2], 500) ]
+            end associate
+
+            !
             ! Set output steps
-            do i = 1, max_step, 2
+            do i = 2, max_step, 2
                 steps(i)%output_step = output_step
             enddo
             ! Set Analysis steps. explicit loop is needed
             ! lhs allocatable member is not allowed in array section:
             ! steps(2:max_step22)%analysis_step = analysis_step
-            do i = 2, max_step, 2
+            do i = 3, max_step, 2
                 steps(i)%analysis_step = analysis_step
             enddo
         end associate

@@ -20,6 +20,8 @@ list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 set(LIBSRC
 Alg0A.f90
 altayAlgorithms.f90
+altayAssembly.f90
+altayAssemblyTypes.f90
 altayConfig.f90
 altayCRSSTypes.f90
 altayCubAccess.f90

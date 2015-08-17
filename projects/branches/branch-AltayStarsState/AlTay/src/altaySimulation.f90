@@ -10,6 +10,7 @@ use altayState
 use altayStatePersistence
 use altayStatePersistenceUtils
 use altayMacroKinematic
+use altayAssembly
 #ifdef USE_ALTAYSIMUL
 use altaySimul
 #endif
@@ -58,8 +59,17 @@ implicit none
         procedure,pass(this)    :: initialize => InitializationStep_initialize
         procedure,pass(this)    :: run => InitializationStep_run
     end type
-    
 
+
+    !> AssemblyStep sets up virtual microstructure and prepares the clusters.
+    type,extends(SimulationStep) :: AssemblyStep
+        !> \todo consider converting into a pointer
+        type(AssemblyStepConfig)          :: config
+        
+    contains
+        procedure,pass(this)    :: initialize => AssemblyStep_initialize
+        procedure,pass(this)    :: run => AssemblyStep_run
+    end type
 
     
     !> 
@@ -162,11 +172,7 @@ contains
 
         !
         ! Initialize data persistency schemes
-        ! info = criErr_BadArgs
-#ifdef FIXME_ENABLE
-        this%output_storage => statePersistenceFactory(this%config%state_output%odf_config, &
-                                                       as_input=.false.)
-#endif
+        this%output_storage => statePersistenceFactory(this%config%state_output, info)
         if ((info /= criSuccess) .or. .not. associated(this%output_storage)) return
         !
         ! Initialize the steps if provided in the configuration
@@ -224,7 +230,14 @@ contains
         ! So, only one of the conditional blocks will match.
         !
         if (allocated(step_config%assembly_step)) then
-            return
+            block
+                type(AssemblyStep),pointer :: ptr_step
+                nullify(ptr_step)
+                allocate(AssemblyStep :: ptr_step, stat=ierr)
+                if ((ierr == 0) .and. associated(ptr_step)) &
+                    info = ptr_step%initialize(step_config%assembly_step)
+                step => ptr_step
+            end block
         endif
         !
         if (allocated(step_config%initialization_step)) then
@@ -324,16 +337,12 @@ contains
     type(altayConfigData)   :: old_config
 #endif
     !
-        !> \fixme The configuration should not deduce anything from the odf representation.
-#ifdef FIXME_ENABLE
-        storage => statePersistenceFactory(this%config%input%odf_config, as_input=.true.)
-#endif
-        if (associated(storage)) then
+        storage => statePersistenceFactory(this%config%input, info)
+        if (associated(storage) .and. (info == criSuccess)) then
             call storage%loadState(state%old, info)
             deallocate(storage)
         endif
         if (info /= criSuccess) return
-        info = altayStateData_assemble(state)
         !
 #ifdef USE_ALTAYSIMUL
         call openStandardOutputFiles(config%jobtitle, info)
@@ -345,6 +354,34 @@ contains
     !
     end function
 
+
+    integer function AssemblyStep_initialize(this, config) result(info)
+    implicit none
+    class(AssemblyStep),intent(inout)     :: this
+    class(AssemblyStepConfig),intent(in)  :: config
+    !
+        this%config = config
+        info = criSuccess
+    !
+    end function
+
+
+    
+    integer function AssemblyStep_run(this, config, material, state) result(info)
+    implicit none
+    class(AssemblyStep),intent(inout)           :: this
+    class(SimulationConfig),intent(in)          :: config
+    type(MaterialData),intent(inout)            :: material
+    class(altayStateData),intent(inout)         :: state
+    !
+        if (this%config%override_existing) then
+            ! Implement the directives from the configuration
+            call altayAssembly_ClusterAssembly_basic(state%old, this%config%directives, info)
+            if (info /= criSuccess) return
+        endif
+        info = altayStateData_assemble(state)
+    !
+    end function
 
     !> Set up analysis step
     integer function AnalysisStep_initialize(this, config) result(info)

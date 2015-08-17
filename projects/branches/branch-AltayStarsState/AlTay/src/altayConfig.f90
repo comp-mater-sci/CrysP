@@ -37,6 +37,7 @@ use altayHardLaw_KM
 use altayTexFormatConstants
 use altayDeformationMechanismConstants
 use altayStatePersistenceConstants
+use altayAssemblyTypes
 use criMathUtils
 use criPath
 
@@ -218,6 +219,9 @@ implicit none
 
     type :: AssemblyStepConfig
         
+        logical :: override_existing = .true.
+        
+        type(AssemblyMultiPhaseDirective),dimension(:),allocatable :: directives
         
     end type
     
