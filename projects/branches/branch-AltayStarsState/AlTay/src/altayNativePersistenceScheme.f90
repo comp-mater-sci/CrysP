@@ -219,6 +219,20 @@ contains
         info = criSuccess
         ! Prepare access to the storage
         if (.not. associated(this%texture_storage)) then
+            ! Unless non-empty filename is provided, use phase name and change extension
+            associate (outpath => this%texture_storage_context%path)
+                if (len_trim(outpath) == 0) then
+                    outpath = state%material%phases(this%phase_id)%name
+                    select case(this%texture_format_id)
+                    case(TF_SMT)
+                        outpath = trim(outpath)//'.smt'
+                    case(TF_CUR)
+                        outpath = trim(outpath)//'.cur'
+                    case(TF_CUB)
+                        outpath = trim(outpath)//'.cub'
+                    end select
+                endif
+            end associate
             this%texture_storage => textureAccessFactory(this%texture_format_id, &
                                                          this%texture_storage_context, &
                                                          readonly=.false., info=info)

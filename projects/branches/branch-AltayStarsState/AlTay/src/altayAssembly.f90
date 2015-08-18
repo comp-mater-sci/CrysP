@@ -20,6 +20,8 @@ implicit none
         integer,dimension(:),allocatable :: map
     end type
     
+    private :: altayAssembly_ClusterAssembly_basicCheck
+    
 contains
 
     !> Construct "bamboo-type" clusters of n grains (n = [1, ...]) that contain
@@ -45,50 +47,39 @@ contains
     ! Indices of the "current" grain and number of elements
     ! Shape: [1:n_phases]
     integer,dimension(:),allocatable :: grain_idx, grain_maps_size
-    ! For the initial check only. Shape: [1:n_phases]
-    integer,dimension(:),allocatable :: required_maps_size
-    integer :: n_phases, n_intephases, n_interfaces, i, j, k, phase_id, tmp
-    integer :: n_grains, n_clusters, cluster_idx, n_cluster_grains, n_cluster_interfaces
+    integer :: n_phases, n_intephases, n_interfaces, i, j, k, phase_id, ierr, tmp
+    integer :: n_clusters, cluster_idx, n_cluster_grains, n_cluster_interfaces
     !
         info = criErr_BadArgs
         ALLOCATED_SIZE(n_phases,state%material%phases)
-        if (any(directives(:)%number_instances <= 0)) return
+        if (any(directives(:)%number_instances <= 0) .or. (n_phases < 1)) return
         ! Initial situation: we have N grains in total, N_1 in phase 1, N_2 in phase 2 etc.
-        ! Verify if the design given by the directives can be implemented. 
-        n_grains = 0
-        allocate(grain_maps_size(n_phases), source=0)
-        allocate(required_maps_size(n_phases), source=0)
-        do i = 1, size(directives)
-            ALLOCATED_SIZE(tmp, directives(i)%phase_ids) 
-            associate(phase_ids => directives(i)%phase_ids)
-                n_grains = n_grains + tmp * directives(i)%number_instances
-                do j = 1, tmp
-                    required_maps_size(phase_ids(j)) = required_maps_size(phase_ids(j)) + directives(i)%number_instances
-                enddo
-            end associate
-        enddo
         ! 
-        allocate(grain_maps(n_phases))
+        ! Set up helper structures for 
+        RETURN_ON_WITH(allocate(grain_maps(n_phases),stat=ierr), ierr/=0, info=criErr_MemAlloc)
+        RETURN_ON_WITH(allocate(grain_maps_size(n_phases), source=0,stat=ierr), ierr/=0, info=criErr_MemAlloc)
+        !
         ! Prepare data: indices of phases
         do phase_id = 1, n_phases
             call GrainStateCollection_reverseMapping(state%grainstates, phase_id, grain_maps(phase_id)%map, info)
             ALLOCATED_SIZE(grain_maps_size(phase_id), grain_maps(phase_id)%map)
         end do
-        ! Check if the number of grains in all phases permits the design
-        RETURN_IF(any(required_maps_size > grain_maps_size), info = criErr_BadArgs)
+        !
+        call altayAssembly_ClusterAssembly_basicCheck(state, directives, grain_maps_size, info)
+        if (info /= criSuccess) return
         !
         n_clusters = sum(directives(:)%number_instances)
-        allocate(state%clusterstates%clusters(n_clusters))
+        RETURN_ON_WITH(allocate(state%clusterstates%clusters(n_clusters),stat=ierr), ierr/=0, info=criErr_MemAlloc)
         
         !> \fixme altayAssembly_ClusterAssembly_basic: don't assume that phase_id starts from 1
         ALLOCATED_SIZE(n_phases, state%material%phases)
         ALLOCATED_SIZE(n_intephases, state%material%interphase_interfaces)
         n_interfaces = n_phases + n_intephases
         !
-        ! Set up helper structures
-        allocate(mesostructure_data(n_interfaces))
-        allocate(mesostructure_idx(n_interfaces),source=1)
-        allocate(mesostructure_size(n_interfaces),source=0)
+        ! Set up helper structures for the mesostructure
+        RETURN_ON_WITH(allocate(mesostructure_data(n_interfaces),stat=ierr), ierr/=0, info=criErr_MemAlloc)
+        RETURN_ON_WITH(allocate(mesostructure_idx(n_interfaces),source=1,stat=ierr), ierr/=0, info=criErr_MemAlloc)
+        RETURN_ON_WITH(allocate(mesostructure_size(n_interfaces),source=0,stat=ierr), ierr/=0, info=criErr_MemAlloc)
         do i = 1, n_phases
             mesostructure_data(i)%ptr => state%material%phases(i)%intraphase_interfaces
             ALLOCATED_SIZE(mesostructure_size(i), state%material%phases(i)%intraphase_interfaces%interfaces)
@@ -99,7 +90,8 @@ contains
             ALLOCATED_SIZE(mesostructure_size(j), state%material%interphase_interfaces(i)%interfaces)
             j = j + 1
         enddo
-
+        RETURN_IF(any(mesostructure_size < 1), info = criError)
+        !
         ! Let's start from 1st grain in each phase
         allocate(grain_idx(n_phases),source=1)
         cluster_idx = 1
@@ -143,6 +135,39 @@ contains
         ! Check post-condition: the forefront indices of all maps must reach 
         ! the end of the map (size(map) + 1)
         CHOOSE(info, any(grain_idx /= (grain_maps_size + 1)), criErr_BadDims, criSuccess)
+    !
+    end subroutine
+    
+    
+    !> Check if the state and directives allow 
+    subroutine altayAssembly_ClusterAssembly_basicCheck(state, directives, grain_maps_size, info)
+    implicit none
+    type(altayStateVariables),intent(in)                        :: state
+    type(AssemblyMultiPhaseDirective),dimension(:),intent(in)   :: directives
+    integer,dimension(:),intent(in)                             :: grain_maps_size
+    integer,intent(out)                                         :: info
+    !
+    integer :: n_grains, n_phases, n_grains_per_cluster, i, j
+    ! For the initial check only. Shape: [1:n_phases]
+    integer,dimension(:),allocatable :: required_maps_size
+    !
+        ALLOCATED_SIZE(n_phases,state%material%phases)
+        ! Verify if the design given by the directives can be implemented. 
+        n_grains = 0
+        allocate(required_maps_size(n_phases), source=0)
+        do i = 1, size(directives)
+            ! Get how many grains are needed per cluster
+            ALLOCATED_SIZE(n_grains_per_cluster, directives(i)%phase_ids) 
+            associate(phase_ids => directives(i)%phase_ids)
+                n_grains = n_grains + n_grains_per_cluster * directives(i)%number_instances
+                do j = 1, n_grains_per_cluster
+                    required_maps_size(phase_ids(j)) = required_maps_size(phase_ids(j)) + directives(i)%number_instances
+                enddo
+            end associate
+        enddo
+        ! Check if the number of grains in all phases permits the design
+        RETURN_IF(any(required_maps_size > grain_maps_size), info = criErr_BadArgs)
+        info = criSuccess
     !
     end subroutine
     
