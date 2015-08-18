@@ -51,16 +51,23 @@ contains
     type(MaterialConfig), intent(in)        :: cnf
     integer, intent(out)                    :: info
     !
-    integer :: i, nphases
+    integer :: i, nphases, ninterphases
     !
         info = criErr_BadArgs
-        CHOOSE(nphases, allocated(cnf%phases), size(cnf%phases), 0)
+        ALLOCATED_SIZE(nphases, cnf%phases)
         call MaterialData_initialize_allocate(this, nphases, info)
         if (info /= criSuccess) return
         !
         ! Initialize all phases
         do i = 1, nphases
             call PhaseData_initFromConfig(this%phases(i), cnf%phases(i), info)
+            if (info /= criSuccess ) return
+        end do
+        ALLOCATED_SIZE(ninterphases, cnf%interphase_interfaces)
+        !
+        ! Initialize all inter-phases
+        do i =1, ninterphases
+            call initialize(this%interphase_interfaces(i), cnf%interphase_interfaces(i)%file_path, info)
             if (info /= criSuccess ) return
         end do
     !
