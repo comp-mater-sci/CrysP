@@ -191,7 +191,7 @@ contains
 
 
     !> Check if GrainStateCollection object contains all necessary components.
-    logical function GrainStateCollection_isValid(this) result(is_ok)
+    pure logical function GrainStateCollection_isValid(this) result(is_ok)
     implicit none
     type(GrainStateCollection), intent(in)     :: this
     !
@@ -209,7 +209,7 @@ contains
     !> elements in `this%grains`. The vector elements are indices of phases
     !>  in `this%phases` that are pointed to by respective elements of 
     !> `this%grains(:)%phase`.
-    subroutine GrainStateCollection_forwardMapping(this, map, info)
+    pure subroutine GrainStateCollection_forwardMapping(this, map, info)
     implicit none
     type(GrainStateCollection), intent(in)          :: this
     integer,dimension(:),allocatable, intent(out)   :: map
@@ -248,7 +248,7 @@ contains
     !> Calculate vector of indices of objects in GrainStateCollection that are 
     !> associated with a given phase. The vector constitutes a map: 
     !> phase_id -> grain_indices
-    subroutine GrainStateCollection_reverseMapping(this, phase_id, map, info)
+    pure subroutine GrainStateCollection_reverseMapping(this, phase_id, map, info)
     implicit none
     type(GrainStateCollection), intent(in)          :: this
     integer,intent(in)                              :: phase_id
@@ -311,7 +311,7 @@ contains
 
 
     
-    subroutine MesostructureState_update(this, incremental_defgrad, info)
+    pure subroutine MesostructureState_update(this, incremental_defgrad, info)
     implicit none
     type(MesostructureState), intent(inout)     :: this
     double precision, dimension(3,3), intent(in) :: incremental_defgrad
