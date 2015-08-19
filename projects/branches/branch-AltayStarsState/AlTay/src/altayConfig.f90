@@ -33,7 +33,7 @@ use altayHardLaw_Simple, only: VoceConfig, SwiftKConfig, SwiftSConfig
 #ifdef PEBP_ENABLED
 use altayHardLaw_DSH, only: PAR
 #endif
-use altayHardLaw_KM
+use altayHardLaw_KM, only: KMConfig
 use altayTexFormatConstants
 use altayDeformationMechanismConstants
 use altayStatePersistenceConstants
