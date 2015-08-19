@@ -49,7 +49,7 @@ implicit none
 
 contains
 
-    integer function MaterialData_size(this) result(n)
+    pure integer function MaterialData_size(this) result(n)
     implicit none
     class(MaterialData), intent(in):: this
     !

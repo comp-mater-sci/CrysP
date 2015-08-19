@@ -68,7 +68,7 @@ contains
 
 
     !> Check consistency of altayStateData object.
-    logical function altayStateData_isValid(this) result(is_ok)
+    pure logical function altayStateData_isValid(this) result(is_ok)
     implicit none
     type(altayStateData),target,intent(in)  :: this
     !
@@ -123,7 +123,7 @@ contains
 
 
     !> Return the number of crystals in altayStateData object.
-    integer function altayStateData_size(this) result(n)
+    pure integer function altayStateData_size(this) result(n)
     implicit none
     type(altayStateData),target,intent(in)  :: this
     !

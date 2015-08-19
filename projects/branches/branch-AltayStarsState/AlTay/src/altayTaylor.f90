@@ -81,7 +81,7 @@
 
       
       !> Dislocation slip contribution to evolution of crystal transformation matrix       
-      subroutine update_crystal_trafo_fromSlip(this,previous,dt,info)
+      pure subroutine update_crystal_trafo_fromSlip(this,previous,dt,info)
       implicit none
       !
       !> Transformation matrix from sample frame to crystal frame at the 
@@ -222,7 +222,7 @@
 
       
       !> Update the accumulated shear deformation (including both slip and twinning).
-      subroutine Grain_accumulatedshear_update(this,previous,sliprat_solution,deltat,info)
+      pure subroutine Grain_accumulatedshear_update(this,previous,sliprat_solution,deltat,info)
       implicit none
       !
       double precision,intent(out)       :: this

@@ -44,7 +44,7 @@ end type DeformationState
 contains   
 
       !Construct the instance 'this' of type DeformationRate
-      subroutine Set_DeformationRate(VelGrad,this)
+      pure subroutine Set_DeformationRate(VelGrad,this)
       double precision, dimension(3,3), intent(in)    :: VelGrad
       type(DeformationRate)           , intent(out)   :: this
       !
@@ -61,7 +61,7 @@ contains
       !
       end subroutine
 
-      subroutine Update_DeformationState(thisRate,thisState,info,deltaTime_in)
+      pure subroutine Update_DeformationState(thisRate,thisState,info,deltaTime_in)
       type(DeformationRate), intent(in)    :: thisRate
       type(DeformationState),intent(inout) :: thisState      
       integer,                    intent(out) :: info
@@ -85,7 +85,7 @@ contains
       !
       end subroutine
 
-      subroutine MatrixExponentSmallNorm(A,expA,InvExpA,info)
+      pure subroutine MatrixExponentSmallNorm(A,expA,InvExpA,info)
       double precision, dimension(3,3), intent(in)  :: A
       double precision, dimension(3,3), intent(out) :: ExpA    !The matrix exponent of A: ExpA = exp(A)
       double precision, dimension(3,3), intent(out) :: InvExpA !The inverse of ExpA:      InvExpA = (exp(A))^(-1)

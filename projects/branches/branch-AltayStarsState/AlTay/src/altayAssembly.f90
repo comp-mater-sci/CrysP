@@ -29,7 +29,7 @@ contains
     !>
     !> Note that both Taylor (1 grain) and Alamel (2 grains) clusters are
     !> special cases of bamboo-type clusters.
-    subroutine altayAssembly_ClusterAssembly_basic(state, directives, info)
+    pure subroutine altayAssembly_ClusterAssembly_basic(state, directives, info)
     implicit none
     type(altayStateVariables),intent(inout),target :: state
     type(AssemblyMultiPhaseDirective),dimension(:),intent(in) :: directives
@@ -140,7 +140,7 @@ contains
     
     
     !> Check if the state and directives allow 
-    subroutine altayAssembly_ClusterAssembly_basicCheck(state, directives, grain_maps_size, info)
+    pure subroutine altayAssembly_ClusterAssembly_basicCheck(state, directives, grain_maps_size, info)
     implicit none
     type(altayStateVariables),intent(in)                        :: state
     type(AssemblyMultiPhaseDirective),dimension(:),intent(in)   :: directives
