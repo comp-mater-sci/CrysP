@@ -11,8 +11,7 @@
       use altayMacroKinematic
       use criMathUtils
       use criErrcodes
-      use altayPancake, only: Pancak2Solution
-      use altaySliprate, only: SlipratSolution
+      use altaySDVTypes, only: DeformationRateSDV, LinearProgrammingSDV
       use altayDeformationMechanismData_preconfigured
       use altayDeformationMechanism
 #ifdef ALTAY_SUBROUTINE
@@ -31,8 +30,8 @@
       !
       type(EulerAngles),intent(out)                           :: this
       type(EulerAngles),intent(in)                            :: previous
-      type(SlipratSolution), intent(in)                       :: sliprat_solution
-      type(Pancak2Solution), intent(in)                       :: Pancak2_solution
+      type(DeformationRateSDV), intent(in)                    :: sliprat_solution
+      type(LinearProgrammingSDV), intent(in)                  :: Pancak2_solution
       type(DeformationMechanismData), intent(in)              :: DM_data
       type(DeformationRate),intent(in)                        :: MacroDefRate
       !> size of time increment [s]. If not provided, an increment size of 1.0s is used.
@@ -227,7 +226,7 @@
       !
       double precision,intent(out)       :: this
       double precision,intent(in)        :: previous
-      type(SlipratSolution), intent(in)  :: sliprat_solution
+      type(DeformationRateSDV), intent(in)  :: sliprat_solution
       double precision,intent(in)        :: deltat
       integer, intent(out)               :: info
       !

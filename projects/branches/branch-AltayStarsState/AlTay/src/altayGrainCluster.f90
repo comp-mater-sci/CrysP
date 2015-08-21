@@ -9,36 +9,15 @@ use altayState
 use altayPancake
 use altaySliprate
 use altayMacroKinematic
+use altaySDVTypes
 implicit none
 
     
-    !> todo consider relocating type definition to altaySDVTypes
-    !> \todo are the pointer attributes desirable?
-    type :: GrainClusterComponent
-        
-        !> \todo consider removing this component; this componenent is usefull in view
-        !>       of LinProg_solver-interface, but redundant and even undesirable for 
-        !>       altayGrainCluster_solver
-        !> todo consider adding pointer to both 'old' and 'new' states
-        type(GrainState),pointer       :: grain => null()
-          
-        type(Pancak2Solution),pointer  :: solution => null()
-        
-        !> CRSS of all deformation systems
-        type(CRSSData),pointer         :: crss => null()
-        
-        type(SlipratSolution),pointer  :: sliprat_solution => null()
-        
-    end type
-    
-    
-    !> todo consider relocating type definition to altaySDVTypes
     type :: GrainClusterSolution
         
-        type(GrainClusterComponent),dimension(:), allocatable :: components
+        type(GrainSDV),dimension(:),allocatable :: components
         
     end type
-
 
 contains
     
@@ -80,6 +59,7 @@ contains
             info = criErr_BadDims
             return
         end select
+#ifdef GrainClusterSolution_FIXED
         !
         !Initializations
         do i = 1,Pancak2_max_grains
@@ -110,6 +90,7 @@ contains
                 MacroDefRate, &
                 this%components(i)%solution)
         end do
+#endif
         !
         info = criSuccess    
        
@@ -126,10 +107,10 @@ contains
         ! -1- Set component(s) of type CRSSData
         !     Make call(s) to altayHard_getCRSS
         !
-        ! -2- Set component of type Pancak2Solution
+        ! -2- Set component of type LinearProgrammingSDV
         call LinProg_solver(solution, cluster_state, MacroDefRate, info)
         !
-        ! -3- Set component(s) of type SlipratSolution
+        ! -3- Set component(s) of type DeformationRateSDV
         !     Make call(s) to sliprat...
         !
     end subroutine

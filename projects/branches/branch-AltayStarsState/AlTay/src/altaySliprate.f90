@@ -8,25 +8,12 @@
 
       module altaySliprate
       use altayMiscutils, only: terminate, stopcode_runtimeerror
-      use altayPancake
+      use altaySDVTypes
       use altayDeformationMechanismData_preconfigured
       use altayDeformationMechanism
       use altayCRSSTypes
+      use altayPancake, only: Pancak2_tolerance
 
-      type SlipratSolution
-          !> Shear rates over all deformation systems (slip and twinning systems)
-          !> for given grain 
-          type(ShearRateData) :: shearrate
-          !> Total (sum of absolute values of) shear rate over all deformation 
-          !> systems (slip and twinning systems)
-          double precision    :: totalshearrate = 0.0D0
-          !> Taylor factor for given grain
-          double precision    :: taylorfactor = 0.0D0
-          !> Work rate for given grain
-          double precision    :: workrate = 0.0D0
-          !> von Mises equivalent stress for given grain
-          double precision    :: vMeqstress = 0.0D0
-      end type
       
       !> Maximum number of potentially active slip systems that can be 
       !> processed by this module.
@@ -42,9 +29,9 @@
       use altayMacroKinematic
       implicit none
       !
-      type(SlipratSolution),intent(out)          :: solution
+      type(DeformationRateSDV),intent(out)          :: solution
       type(DeformationRate),intent(in)           :: MacroDefRate      
-      type(Pancak2Solution),intent(in)           :: Pancak2_input
+      type(LinearProgrammingSDV),intent(in)           :: Pancak2_input
       type(CRSSData),intent(in)                  :: crss_data
       type(DeformationMechanismData), intent(in) :: DM_data
 !     September 2000

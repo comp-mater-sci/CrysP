@@ -12,9 +12,10 @@
       use altayPancake
       use altaySliprate
       use altayHard
+      use altaySDVTypes
       !
-      type(Pancak2Solution) :: Pancak2_solution
-      type(SlipratSolution) :: Sliprat_solution
+      type(LinearProgrammingSDV) :: Pancak2_solution
+      type(DeformationRateSDV) :: Sliprat_solution
       !
       type(MesostructureState),save :: mesostructure_state !save attribute required to keep the state in subsequent simul
                                                            ! calls (continuation of deformation along new strain path)      

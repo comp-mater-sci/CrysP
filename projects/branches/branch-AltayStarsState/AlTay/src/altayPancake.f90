@@ -12,38 +12,12 @@
       use altayCRSSTypes
       use altayDeformationMechanism
       use altayDeformationMechanismConstants, only: DM_dev_dims
+      use altaySDVTypes
       
-      integer, parameter, public ::          Pancak2_max_activesystems = 8
       integer, parameter, public ::          Pancak2_max_grains = 2
       double precision, parameter, public :: Pancak2_tolerance = 5.0d-6
       
-      type Pancak2Solution
-          
-          !> local stress expressed in the sample reference frame
-          double precision, dimension(3,3)                       :: stress_sam = 0.0d0
-          
-          !> symmetric part of (non-normalized) relaxation tensor, in sample reference system
-          double precision, dimension(3,3)                       :: relaxationrate_sam = 0.0d0
-          
-          !> anti-symmetric part of (non-normalized) relaxation tensor, in sample reference system
-          double precision, dimension(3,3)                       :: relaxationspin_sam = 0.0d0
-          
-          !> number of potentially active deformation systems
-          integer                                                :: nactiv = 0
-          
-          !> Indices of the potentially active slip systems
-          integer,dimension(Pancak2_max_activesystems)           :: indact = 0
-          
-          !> Slip rates, normalized by von Mises equivalent strain rate, of the potentially active slip systems
-          double precision, dimension(Pancak2_max_activesystems) :: sliplp = 0.0d0
-          
-          !> CRSSs of the potentially active slip systems
-          double precision, dimension(Pancak2_max_activesystems) :: taurlp = 0.0d0
-          
-          !> Local strain rate (in vector format)
-          double precision, dimension(DM_dev_dims)               :: localstrainrate = 0.0d0
-          
-      end type Pancak2Solution
+
       
     contains
       
@@ -83,7 +57,7 @@
       type(EulerAngles),dimension(Pancak2_max_grains),intent(in)     :: eulerb      
       type(DeformationMechanismData),dimension(Pancak2_max_grains), intent(in)    :: DM_datab
       type(DeformationRate),intent(in)              :: MacroDefRate
-      type(Pancak2Solution),intent(out)             :: solution
+      type(LinearProgrammingSDV),intent(out)             :: solution
       !
       !> Number of active systems founds so far by the search algorithm
       integer nactiv_sofar
