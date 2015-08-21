@@ -43,31 +43,54 @@ implicit none
 contains
     
     
-    !> /todo To keep or not to keep? altayGrainCluster_solver seems to offer better interface
-    Subroutine LinProg_solver(this, MacroDefRate, info)
+    !> /todo Consider relocating to Pancak2 module.
+    Subroutine LinProg_solver(this, state, MacroDefRate, info)
     implicit none
     type(GrainClusterSolution), intent(inout)    :: this
+    type(ClusterState), intent(in)               :: state
     type(DeformationRate), intent(in)            :: MacroDefRate
     integer, intent(out)                         :: info    
     !
     integer :: i
-    integer,parameter :: ngrains_per_cluster = 2
+    integer :: ngrains_per_cluster
     double precision, dimension(3,3)                 :: T_cluster
     type(EulerAngles), dimension(Pancak2_max_grains) :: grain_euler
     type(CRSSdata), dimension(Pancak2_max_grains)    :: grain_CRSS
     type(DeformationMechanismData),dimension(Pancak2_max_grains) :: grain_DM_data
         !
-        !>todo: add corresponding field to GrainClusterSolution type
-        !T_cluster = this%?
+        !
+        ngrains_per_cluster = size(state%idx)
+        !
+        !Set T_cluster
+        select case (ngrains_per_cluster)
+        case (1) !Taylor
+            T_cluster = 0.D0 ! Irrelevant
+        case (2) !Alamel
+            if (.not.(allocated(state%interfaces))) then
+                info = criErr_NullPtr
+                return
+            end if
+            if (size(state%interfaces,dim=1) /= 1 ) then
+                info = criErr_BadDims
+                return
+            end if
+            i = lbound(state%interfaces(:),dim=1)
+            T_cluster = state%interfaces(i)%ptr%trafo%matrix
+        case default
+            info = criErr_BadDims
+            return
+        end select
         !
         !Initializations
         do i = 1,Pancak2_max_grains
             if (i <= ngrains_per_cluster) then !initialize from 'this'
                 !initialize grain_euler
+                !> \todo adopt proper acces to ???%grain%orientation%euler
                 grain_euler(i) = this%components(i)%grain%orientation%euler
                 !initialize grain_CRSS
                 grain_CRSS(i) = this%components(i)%crss
                 !initialize grain_DM_data
+                !> \todo adopt proper acces to ???%grain%phase%deformationmechanism
                 grain_DM_data(i) = this%components(i)%grain%phase%deformationmechanism
             else !zero initializations
                 !initialize grain_euler
@@ -104,7 +127,7 @@ contains
         !     Make call(s) to altayHard_getCRSS
         !
         ! -2- Set component of type Pancak2Solution
-        !     Make call(s) to PANCAK2, OR: 1 call to a pancak2-wrapper routine
+        call LinProg_solver(solution, cluster_state, MacroDefRate, info)
         !
         ! -3- Set component(s) of type SlipratSolution
         !     Make call(s) to sliprat...
