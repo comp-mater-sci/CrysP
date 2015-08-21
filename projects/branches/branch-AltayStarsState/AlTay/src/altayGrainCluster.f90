@@ -12,8 +12,13 @@ use altayMacroKinematic
 implicit none
 
     
+    !> todo consider relocating type definition to altaySDVTypes
+    !> \todo are the pointer attributes desirable?
     type :: GrainClusterComponent
         
+        !> \todo consider removing this component; this componenent is usefull in view
+        !>       of LinProg_solver-interface, but redundant and even undesirable for 
+        !>       altayGrainCluster_solver
         !> todo consider adding pointer to both 'old' and 'new' states
         type(GrainState),pointer       :: grain => null()
           
@@ -26,12 +31,11 @@ implicit none
         
     end type
     
-    !> todo this should not be a parameter
-    integer,parameter,private :: ngrains_per_cluster = 2
     
+    !> todo consider relocating type definition to altaySDVTypes
     type :: GrainClusterSolution
         
-        type(GrainClusterComponent),dimension(ngrains_per_cluster) :: components
+        type(GrainClusterComponent),dimension(:), allocatable :: components
         
     end type
 
@@ -39,6 +43,7 @@ implicit none
 contains
     
     
+    !> /todo To keep or not to keep? altayGrainCluster_solver seems to offer better interface
     Subroutine LinProg_solver(this, MacroDefRate, info)
     implicit none
     type(GrainClusterSolution), intent(inout)    :: this
@@ -46,6 +51,7 @@ contains
     integer, intent(out)                         :: info    
     !
     integer :: i
+    integer,parameter :: ngrains_per_cluster = 2
     double precision, dimension(3,3)                 :: T_cluster
     type(EulerAngles), dimension(Pancak2_max_grains) :: grain_euler
     type(CRSSdata), dimension(Pancak2_max_grains)    :: grain_CRSS
@@ -87,4 +93,23 @@ contains
     end subroutine
     
     
+    Subroutine altayGrainCluster_solver(cluster_state, MacroDefRate, solution, info)
+    implicit none
+    type(ClusterState), intent(in) :: cluster_state
+    type(DeformationRate),intent(in) :: MacroDefRate
+    type(GrainClusterSolution), intent(out) :: solution
+    integer, intent(out) :: info
+        !
+        ! -1- Set component(s) of type CRSSData
+        !     Make call(s) to altayHard_getCRSS
+        !
+        ! -2- Set component of type Pancak2Solution
+        !     Make call(s) to PANCAK2, OR: 1 call to a pancak2-wrapper routine
+        !
+        ! -3- Set component(s) of type SlipratSolution
+        !     Make call(s) to sliprat...
+        !
+    end subroutine
+
+
 end module
