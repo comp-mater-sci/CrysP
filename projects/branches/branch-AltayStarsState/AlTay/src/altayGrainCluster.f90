@@ -1,6 +1,7 @@
 !
 ! $Id$
 !
+#include "criMacros.fpp"
 
 
 module altayGrainCluster
@@ -23,92 +24,83 @@ contains
     
     
     !> /todo Consider relocating to Pancak2 module.
-    Subroutine LinProg_solver(this, state, MacroDefRate, info)
+    Subroutine LinProg_solver(this, cluster_state, grain_states, MacroDefRate, info)
     implicit none
     type(GrainClusterSolution), intent(inout)    :: this
-    type(ClusterState), intent(in)               :: state
+    type(ClusterState), intent(in)               :: cluster_state
+    type(GrainStateCollection), intent(in)       :: grain_states
     type(DeformationRate), intent(in)            :: MacroDefRate
     integer, intent(out)                         :: info    
     !
     integer :: i
-    integer :: ngrains_per_cluster
+    integer :: n_grains
+    integer :: n_interfaces
     double precision, dimension(3,3)                 :: T_cluster
     type(EulerAngles), dimension(Pancak2_max_grains) :: grain_euler
     type(CRSSdata), dimension(Pancak2_max_grains)    :: grain_CRSS
     type(DeformationMechanismData),dimension(Pancak2_max_grains) :: grain_DM_data
         !
         !
-        ngrains_per_cluster = size(state%idx)
+        ALLOCATED_SIZE(n_grains,cluster_state%idx)
         !
         !Set T_cluster
-        select case (ngrains_per_cluster)
+        select case (n_grains)
         case (1) !Taylor
             T_cluster = 0.D0 ! Irrelevant
         case (2) !Alamel
-            if (.not.(allocated(state%interfaces))) then
-                info = criErr_NullPtr
-                return
-            end if
-            if (size(state%interfaces,dim=1) /= 1 ) then
-                info = criErr_BadDims
-                return
-            end if
-            i = lbound(state%interfaces(:),dim=1)
-            T_cluster = state%interfaces(i)%ptr%trafo%matrix
+            ALLOCATED_SIZE(n_interfaces,cluster_state%interfaces)
+            RETURN_IF_WITH(n_interfaces /= 1, info = criErr_BadDims)
+            i = lbound(cluster_state%interfaces(:),dim=1)
+            T_cluster = cluster_state%interfaces(i)%ptr%trafo%matrix
         case default
             info = criErr_BadDims
             return
         end select
-#ifdef GrainClusterSolution_FIXED
         !
         !Initializations
-        do i = 1,Pancak2_max_grains
-            if (i <= ngrains_per_cluster) then !initialize from 'this'
+        do i = 1,n_grains
+            associate (grain => grain_states%grains(cluster_state%idx(i)))
                 !initialize grain_euler
-                !> \todo adopt proper acces to ???%grain%orientation%euler
-                grain_euler(i) = this%components(i)%grain%orientation%euler
+                grain_euler(i) = grain%orientation%euler
                 !initialize grain_CRSS
                 grain_CRSS(i) = this%components(i)%crss
                 !initialize grain_DM_data
-                !> \todo adopt proper acces to ???%grain%phase%deformationmechanism
-                grain_DM_data(i) = this%components(i)%grain%phase%deformationmechanism
-            else !zero initializations
-                !initialize grain_euler
-                grain_euler(i) = Arr2EulerAngles([0.D0,0.D0,0.D0])
-                !initialize grain_CRSS
-                call CRSSData_init(grain_CRSS(i), CRSSData_size(this%components(i)%crss), info)
-                !initialize grain_DM_data
-                call DeformationMechanismData_init(grain_DM_data(i), 0, 0, info)
-            end if
+                grain_DM_data(i) = grain%phase%deformationmechanism
+            end associate
         end do
         !
-        do i = 1,ngrains_per_cluster
+        do i = 1,n_grains
             !
-            call Pancak2(i, ngrains_per_cluster, &
+            call Pancak2(i, n_grains, &
                 T_cluster, &
                 grain_euler, grain_CRSS, grain_DM_data,   &
                 MacroDefRate, &
                 this%components(i)%solution)
         end do
-#endif
         !
         info = criSuccess    
        
     end subroutine
     
     
-    Subroutine altayGrainCluster_solver(cluster_state, MacroDefRate, solution, info)
+    Subroutine altayGrainCluster_solver(cluster_state, grain_states, MacroDefRate, solution, info)
     implicit none
     type(ClusterState), intent(in) :: cluster_state
+    type(GrainStateCollection), intent(in) :: grain_states
     type(DeformationRate),intent(in) :: MacroDefRate
     type(GrainClusterSolution), intent(out) :: solution
     integer, intent(out) :: info
+    !
+    integer :: i
+    integer :: n_grains
         !
+        ALLOCATED_SIZE(n_grains,cluster_state%idx)
+        
         ! -1- Set component(s) of type CRSSData
         !     Make call(s) to altayHard_getCRSS
         !
         ! -2- Set component of type LinearProgrammingSDV
-        call LinProg_solver(solution, cluster_state, MacroDefRate, info)
+        call LinProg_solver(solution, cluster_state, grain_states, MacroDefRate, info)
         !
         ! -3- Set component(s) of type DeformationRateSDV
         !     Make call(s) to sliprat...
