@@ -80,6 +80,12 @@ implicit none
     end type
     
     
+    type :: GrainClusterSolution
+        
+        type(GrainSDV),dimension(:),allocatable :: components
+        
+    end type
+    
     
     type :: HomogenizedSDV
         !> Macroscopic (homogenized) stress
