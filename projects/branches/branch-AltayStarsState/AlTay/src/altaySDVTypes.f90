@@ -22,7 +22,8 @@ implicit none
     !> \fixme get rid of this constant or at least rename it
     integer, parameter, public ::          Pancak2_max_activesystems = 8
 
-    
+
+    !> SDVs that result from linear programming
     type :: LinearProgrammingSDV
           
         !> local stress expressed in the sample reference frame
@@ -52,6 +53,8 @@ implicit none
     end type
     
     
+    !> SDV that describe per-grain deformation rate, including slip rates on slip
+    !> systems and shear on twinning systems.
     type :: DeformationRateSDV
         !> Shear rates over all deformation systems (slip and twinning systems)
         !> for given grain 
@@ -68,6 +71,7 @@ implicit none
     end type
     
     
+    !> SDV per-grain
     type :: GrainSDV
         
         !> CRSS of all deformation systems
@@ -85,8 +89,9 @@ implicit none
         type(GrainSDV),dimension(:),allocatable :: components
         
     end type
-    
-    
+
+
+    !> Homogenized quantities per volume of material.
     type :: HomogenizedSDV
         !> Macroscopic (homogenized) stress
         double precision,dimension(3,3)     :: stress_tensor = 0.D0
@@ -109,46 +114,73 @@ implicit none
         !> Macroscopic (imposed) effective von Mises strain - total over the calls
         double precision                    :: effective_macro_strain_tot = 0.D0
     end type
-    
-     
+
+
+    !> State Dependent Variables (SDV)
     type :: altaySDV
         
+        !> SDV per grain. Shape: [1:n_grains]
         type(GrainSDV),dimension(:), allocatable :: grain_sdv
-       
+
+        !> Homogenized SDV per phase. Shape: [1:n_phases]
         type(HomogenizedSDV),dimension(:),allocatable :: homogenized_phases
         
+        !> Homogenized SDV in material.
         type(HomogenizedSDV) :: homogenized_material
         
+        !> Maps (phase -> grains) per phase. Shape: [1:n_phases]
         type(MapData),dimension(:),allocatable :: phase_reverse_maps
         
     end type
-    
+
+
     interface initialize
         module procedure altaySDV_initialize
     end interface
     
 contains
-    
+
+
+    !> Initialize components of altaySDV object.
+    !>
+    !> The initialization allocates allocatable components. It also calculates
+    !> the reverse maps (phase -> grains).
     subroutine altaySDV_initialize(this, state, info)
     implicit none
-    type(altaySDV),intent(out)              :: this
-    type(altayStateVariables),intent(in)    :: state 
-    integer,intent(out)                     :: info
+    type(altaySDV),intent(out)              :: this  !< Object to initialize
+    !> State of the material (it must be already initialized)
+    type(altayStateVariables),intent(in)    :: state
+    integer,intent(out)                     :: info !< Exit code
     !
-    integer :: n_grains, n_phases, phase_id
+    integer :: n_grains, n_phases, i, ierr
     !
         info = criErr_BadArgs
+        if (.not. associated(state%material)) return
         ALLOCATED_SIZE(n_phases, state%material%phases)
         ALLOCATED_SIZE(n_grains, state%grainstates%grains)
         !
         if ((n_phases < 1) .or. (n_grains < 1)) return
-        allocate(this%grain_sdv(n_grains))
-        allocate(this%homogenized_phases(n_phases))
-        allocate(this%phase_reverse_maps(n_phases))
         !
-        do phase_id = 1, n_phases
-            call GrainStateCollection_reverseMapping(state%grainstates, phase_id, &
-                                                     this%phase_reverse_maps(phase_id)%map, info)
+        RETURN_ON_WITH(allocate(this%grain_sdv(n_grains), stat=ierr), ierr /= 0, info=criErr_MemAlloc)
+        RETURN_ON_WITH(allocate(this%homogenized_phases(n_phases), stat=ierr), ierr /= 0, info=criErr_MemAlloc)
+        RETURN_ON_WITH(allocate(this%phase_reverse_maps(n_phases), stat=ierr), ierr /= 0, info=criErr_MemAlloc)
+        !
+        ! Initialize per-phase sdv
+        do i = 1, n_phases
+            call GrainStateCollection_reverseMapping(state%grainstates, i, &
+                                                     this%phase_reverse_maps(i)%map, info)
+            if (info /= criSuccess) exit
+        enddo
+        !
+        ! Initialize per-grain sdv
+        !> \todo altaySliprate::SLIPRAT re-allocates the shearrate component
+        !>       anyway. To be checked where the allocation should take place,
+        !>       but this routine seems more appropriate (no re-allocation on every
+        !>       entry to altaySliprate::SLIPRAT)
+        do i = 1, n_grains
+            call ShearRateData_init(this%grain_sdv(i)%sliprat_solution%shearrate, &
+                                    state%grainstates%grains(i)%phase%deformationmechanism%n_systems,&
+                                    info)
             if (info /= criSuccess) exit
         enddo
     !
