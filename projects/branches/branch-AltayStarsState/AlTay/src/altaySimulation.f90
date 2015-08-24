@@ -11,6 +11,7 @@ use altayStatePersistence
 use altayStatePersistenceUtils
 use altayMacroKinematic
 use altayAssembly
+use altaySDVTypes
 #ifdef USE_ALTAYSIMUL
 use altaySimul
 #endif
@@ -29,12 +30,12 @@ implicit none
 
     abstract interface
     
-        integer function SimulationStep_run_interface(this, config, material, state) result(info)
-            import :: SimulationStep, SimulationConfig, altayStateData, MaterialData
+        integer function SimulationStep_run_interface(this, config, state, sdv) result(info)
+            import :: SimulationStep, SimulationConfig, altayStateData, altaySDV
             class(SimulationStep),intent(inout)     :: this
             class(SimulationConfig),intent(in)      :: config
-            type(MaterialData),intent(inout)        :: material
             class(altayStateData),intent(inout)     :: state
+            class(altaySDV),intent(inout)           :: sdv
         end function
         
     end interface
@@ -102,6 +103,8 @@ implicit none
         type(SimulationConfig)              :: config
         
         type(altayStateData)                :: state
+        
+        type(altaySDV)                      :: sdv
         
         type(MaterialData)                  :: material
         
@@ -295,7 +298,7 @@ contains
         ! Main loop over the steps
         do i = lbound(this%steps, dim=1), ubound(this%steps, dim=1)
             associate(step => this%steps(i)%ptr)
-                info = step%run(this%config, this%material, this%state)
+                info = step%run(this%config, this%state, this%sdv)
             end associate
             if (info /= 0) exit
         enddo
@@ -324,12 +327,13 @@ contains
 
 
     
-    integer function InitializationStep_run(this, config, material, state) result(info)
+    integer function InitializationStep_run(this, config, state, sdv) result(info)
     implicit none
-    class(InitializationStep),intent(inout)     :: this
-    class(SimulationConfig),intent(in)          :: config
-    type(MaterialData),intent(inout)            :: material
-    class(altayStateData),intent(inout)         :: state
+    class(InitializationStep),intent(inout) :: this
+    class(SimulationConfig),intent(in)      :: config
+    class(altayStateData),intent(inout)     :: state
+    class(altaySDV),intent(inout)           :: sdv
+
     !
     class(StatePersistenceScheme), pointer  :: storage
 #ifdef USE_ALTAYSIMUL
@@ -343,13 +347,16 @@ contains
             deallocate(storage)
         endif
         if (info /= criSuccess) return
+        ! Set up state dependent variables
+        call initialize(sdv, state%old, info)
+        if (info /= criSuccess) return
         !
 #ifdef USE_ALTAYSIMUL
         call openStandardOutputFiles(config%jobtitle, info)
         ! Translate to old config...
         old_config = translateConfig(config)
         ! Make initalization call
-        CALL SIMUL(old_config, state, material, 0, 0, 1)
+        CALL SIMUL(old_config, state, state%old%material, 0, 0, 1)
 #endif
     !
     end function
@@ -367,12 +374,12 @@ contains
 
 
     
-    integer function AssemblyStep_run(this, config, material, state) result(info)
+    integer function AssemblyStep_run(this, config, state, sdv) result(info)
     implicit none
     class(AssemblyStep),intent(inout)           :: this
-    class(SimulationConfig),intent(in)          :: config
-    type(MaterialData),intent(inout)            :: material
-    class(altayStateData),intent(inout)         :: state
+    class(SimulationConfig),intent(in)      :: config
+    class(altayStateData),intent(inout)     :: state
+    class(altaySDV),intent(inout)           :: sdv
     !
         if (this%config%override_existing) then
             ! Implement the directives from the configuration
@@ -397,12 +404,12 @@ contains
 
 
     
-    integer function AnalysisStep_run(this, config, material, state) result(info)
+    integer function AnalysisStep_run(this, config, state, sdv) result(info)
     implicit none
-    class(AnalysisStep),intent(inout)           :: this
-    class(SimulationConfig),intent(in)          :: config
-    type(MaterialData),intent(inout)            :: material
-    class(altayStateData),intent(inout)         :: state
+    class(AnalysisStep),intent(inout)   :: this
+    class(SimulationConfig),intent(in)  :: config
+    class(altayStateData),intent(inout) :: state
+    class(altaySDV),intent(inout)       :: sdv
     !
 #ifdef USE_ALTAYSIMUL
     ! Use old SIMUL
@@ -411,7 +418,7 @@ contains
         ! Translate to old config...
         old_config = translateConfig(config)
         !
-        CALL SIMUL(old_config, state, material, this%config%nincrements, 1, 1, this%macro_deformation_rate)
+        CALL SIMUL(old_config, state, state%old%material, this%config%nincrements, 1, 1, this%macro_deformation_rate)
         info = criSuccess
 #else
         ! Main loop over the clusters
@@ -432,12 +439,12 @@ contains
     !
     end function
             
-    integer function OutputStep_run(this, config, material, state) result(info)
+    integer function OutputStep_run(this, config, state, sdv) result(info)
     implicit none
-    class(OutputStep),intent(inout)             :: this
-    class(SimulationConfig),intent(in)          :: config
-    type(MaterialData),intent(inout)            :: material
-    class(altayStateData),intent(inout)         :: state
+    class(OutputStep),intent(inout)         :: this
+    class(SimulationConfig),intent(in)      :: config
+    class(altayStateData),intent(inout)     :: state
+    class(altaySDV),intent(inout)           :: sdv
     !
         info = criSuccess
         if (associated(this%storage)) call this%storage%saveState(state%new, info)
