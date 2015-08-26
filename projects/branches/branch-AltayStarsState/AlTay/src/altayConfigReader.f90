@@ -32,9 +32,14 @@ implicit none
         type(RawFileContext)        :: context
     contains
     
-        !> \fixme Use actual read in place of fakeread
+#ifdef TESTING_ENABLED
         ! procedure :: read => altayInputConfigReader_read
+        ! procedure :: read => altayInputConfigReader_fakeread_dual
         procedure :: read => altayInputConfigReader_fakeread_single
+#else
+        !> \fixme Use actual read in place of fakeread
+        procedure :: read => altayInputConfigReader_read
+#endif
         procedure :: setInput
     end type
 
@@ -126,7 +131,7 @@ contains
                                                n_phases=1)
                 ! ODF data - SMT format.
                 input%phases(1)%odf%format_id = TF_SMT
-                input%phases(1)%odf%file_name = 'A612LM.SMT'
+                input%phases(1)%odf%file_name = 'A612LM.smt'
             end associate
             !
             ! Assembly step
@@ -174,18 +179,18 @@ contains
             phase%name = 'phase1'
             phase%deformation_mechanism%id = DM_fcc12
             ! leave default hardening
-            phase%intraphase_interfaces%file_path = 'micro1.smt'
+            phase%intraphase_interfaces%file_path = 'micro1_1_500.smt'
         end associate
         ! Phase 1
         associate(phase => config%material%phases(2))
             phase%name = 'phase2'
             phase%deformation_mechanism%id = DM_fcc12
             ! leave default hardening
-            phase%intraphase_interfaces%file_path = 'micro1.smt'
+            phase%intraphase_interfaces%file_path = 'micro1_1_500.smt'
         end associate
         ! Interfaces between the phases:
         config%material%interphase_interfaces = [ MesostructureConfig(FMicro=unit_sr_matrix, &
-                                                                      file_path = 'micro1.smt') ]
+                                                                      file_path = 'micro1_501_1000.smt') ]
         ! Simple data persistency: output
         associate (cnf => config%state_output)
             cnf = StatePersistenceConfig(CNF_StatePersistencyNative, &
@@ -222,8 +227,8 @@ contains
                                                n_phases=2)
                 ! ODF data - SMT format.
                 input%phases(:)%odf%format_id = TF_SMT
-                input%phases(1)%odf%file_name = 'A612LM_half1.SMT'
-                input%phases(2)%odf%file_name = 'A612LM_half2.SMT'
+                input%phases(1)%odf%file_name = 'A612LM_half1.smt'
+                input%phases(2)%odf%file_name = 'A612LM_half2.smt'
             end associate
             !
             ! Assembly step
