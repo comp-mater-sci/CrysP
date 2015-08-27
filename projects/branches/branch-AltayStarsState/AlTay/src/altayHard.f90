@@ -148,23 +148,40 @@ implicit none
     !
     end subroutine
       
+    !> Queries CRSS object.
+#ifdef USE_ALTAYSIMUL
+    !> Interface for usage with altaySimul (to become obsolete)
     subroutine altayHard_getCRSS(hardparams, state, grain_id, crss,info)
     implicit none
     type(HardeningModelParams),intent(in)    :: hardparams
     type(altayStateVariables),intent(in):: state
     integer,intent(in)                  :: grain_id
+#else
+    !> "New" Interface
+    elemental subroutine altayHard_getCRSS(grain_state, crss, info)
+    implicit none
+    type(GrainState), intent(in)        :: grain_state
+#endif
     type(CRSSData),intent(inout)        :: crss
     integer, intent(out)                :: info
     !
     double precision :: gamma    
     double precision :: tau
+    !
+#ifndef USE_ALTAYSIMUL
+    associate (hardparams => grain_state%phase%hardening)
+#endif
     select case(hardparams%hardLawID)
     case(hard_none)
         ! CRSS of all slip systems equal to 1. (& not dependent on crss_ratios)
         crss%crss = 1.D0
     !
     case(hard_voce,hard_swiftK,hard_swiftS)
+#ifdef USE_ALTAYSIMUL
         gamma = state%grainstates%grains(grain_id)%accumulatedshear
+#else
+        gamma = grain_state%accumulatedshear
+#endif
         call altayHard_getTau(hardparams,gamma, tau, info)
         if (info == criSuccess) crss%crss = hardparams%crss_ratios%crss * tau
     case(hard_KM)
@@ -179,6 +196,11 @@ implicit none
     case default
         info = -1
     end select
+    !
+#ifndef USE_ALTAYSIMUL
+    end associate
+#endif
+    !
     end subroutine
       
 end module
