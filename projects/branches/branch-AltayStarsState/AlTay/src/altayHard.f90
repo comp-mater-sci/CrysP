@@ -158,7 +158,7 @@ implicit none
     integer,intent(in)                  :: grain_id
 #else
     !> "New" Interface
-    elemental subroutine altayHard_getCRSS(grain_state, crss, info)
+    subroutine altayHard_getCRSS(grain_state, crss, info)
     implicit none
     type(GrainState), intent(in)        :: grain_state
 #endif

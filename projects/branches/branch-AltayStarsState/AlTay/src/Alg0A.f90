@@ -401,8 +401,10 @@
       !
       eulerb_0_deg(L) = rad2deg(eulerb_0_rad(L))
       !
+#ifdef USE_ALTAYSIMUL
       ! Retrieve the CRSSb for ifil4  = sequence number of current grain
       call altayHard_getCRSS(material%phases(1)%hardening, state%old, ifil4,CRSSb(L),info)
+#endif
       !
   80  continue
       laml1=laml1+1
