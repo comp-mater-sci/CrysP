@@ -17,7 +17,7 @@ implicit none
 
 contains
     
-#ifndef USE_ALTAYSIMUL
+
     Subroutine altayGrainCluster_solver(cluster_state, grain_states, MacroDefRate, solution, info)
     implicit none
     type(ClusterState), intent(in) :: cluster_state
@@ -56,6 +56,5 @@ contains
         end do
         !
     end subroutine
-#endif
 
 end module
