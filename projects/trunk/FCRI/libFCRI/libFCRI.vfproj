@@ -88,8 +88,8 @@
 		<Filter Name="Header Files" Filter="fi;fd">
 		<File RelativePath="..\include\criAssert.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
@@ -97,8 +97,8 @@
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\include\criLogTemplates.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
@@ -111,8 +111,8 @@
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\include\criModules.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
@@ -120,8 +120,8 @@
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\include\criStdDefs.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
@@ -129,8 +129,8 @@
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\include\criTest.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
@@ -138,8 +138,8 @@
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\include\criToolset.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
@@ -147,8 +147,8 @@
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\include\criUncommentTemplates.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
@@ -157,6 +157,7 @@
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="src" Filter="f90;for;f;fpp;ftn;def;odl;idl">
 		<File RelativePath="..\src\criAlgorithm.f90"/>
+		<File RelativePath="..\src\criArray.f90"/>
 		<File RelativePath="..\src\criAssert.f90"/>
 		<File RelativePath="..\src\criConfigReader.f90"/>
 		<File RelativePath="..\src\criErrcodes.f90"/>
