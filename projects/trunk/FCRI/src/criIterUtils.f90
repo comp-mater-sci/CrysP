@@ -43,14 +43,14 @@ contains
     !>
     !> Examples
     !> --------
-    !> subscriptsFromMask([.false.,.false.,.false.]) is []
-    !> subscriptsFromMask([.true.,.false.,.true.]) is [1,3]
-    !> subscriptsFromMask([.true.,.false.,.true.],-1) is [-1,1]
+    !> which([.false.,.false.,.false.]) is []
+    !> which([.true.,.false.,.true.]) is [1,3]
+    !> which([.true.,.false.,.true.],-1) is [-1,1]
     !> s = [5,2,1,0,4]
-    !> s(subscriptFromMask(s > 1)) is [5,2,4]
+    !> s(which(s > 1)) is [5,2,4]
     !> DON'T DO any of these:
-    !> idx = subscriptFromMask(s > 1) is INVALID if idx is allocatable
-    !> iidx = subscriptFromMask(s > 1) puts [1,2,5] in the iidx if iidx is an automatic 
+    !> idx = which(s > 1) is INVALID if idx is allocatable
+    !> iidx = which(s > 1) puts [1,2,5] in the iidx if iidx is an automatic 
     !> array of extent that conforms with s, but gives no hint how many elements are set.
     pure function which(mask,lb) result(y)
     logical,dimension(:),intent(in) :: mask  !< Mask
@@ -75,9 +75,9 @@ contains
     !>
     !> Examples
     !> --------
-    !> call subscriptsFromMask([.false.,.false.,.false.],idx) results in idx=[]
-    !> call subscriptsFromMask([.true.,.false.,.true.],idx) results in idx=[1,3]
-    !> call subscriptsFromMask([.true.,.false.,.true.],idx,-1) is [-1,1]
+    !> call which_indices([.false.,.false.,.false.],idx) results in idx=[]
+    !> call which_indices([.true.,.false.,.true.],idx) results in idx=[1,3]
+    !> call which_indices([.true.,.false.,.true.],idx,-1) is [-1,1]
     pure subroutine which_indices(mask,indices,lb)
     logical,dimension(:),intent(in) :: mask                 !< Mask
     integer,dimension(:),allocatable,intent(out) :: indices !< vector of indices

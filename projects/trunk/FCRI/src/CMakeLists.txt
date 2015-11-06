@@ -1,6 +1,6 @@
 # $Id$
 #
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12)
 
 project(FCRI Fortran)
 
@@ -45,7 +45,7 @@ criVersion.f90
 add_library(${CRI} STATIC ${LIBSRC})
 add_library(${CRI_MT} STATIC ${LIBSRC})
 
-set_target_properties(${CRI_MT} PROPERTIES COMPILE_FLAGS "-parallel -openmp")
+target_compile_options(${CRI_MT} PUBLIC "-parallel" "-openmp")
 
 #
 # Installation of the outputs in the build tree
