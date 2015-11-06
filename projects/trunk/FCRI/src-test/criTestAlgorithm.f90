@@ -31,8 +31,11 @@ contains
       
       logical function criTestAlgorithm_main() result(stat)
       implicit none
-
+        
             stat = .true. 
+            
+            stat = stat .and. test_boundsAndBinarySearch()
+            
             stat = stat .and. test_replaceAll()
       
             stat = stat .and. test_isPresent()
@@ -43,53 +46,100 @@ contains
             
       end function
 
-      subroutine testBoundsAndBinarySearch()
+      logical function test_boundsAndBinarySearch() result(res)
       implicit none
+      integer,parameter :: n_algorithms = 3
       integer,dimension(:),allocatable :: arr, tst 
       logical,dimension(:),allocatable :: tst_val
-      logical,dimension(3) :: found
-      integer :: i, count
+      integer,dimension(:),allocatable :: tst_lb_idx, tst_ub_idx
+      integer,dimension(:),allocatable :: tst_eval
+      logical,dimension(:,:),allocatable :: tst_results, arr_results
+      logical,dimension(n_algorithms) :: found
+
+      integer :: i, count, idx
       !      
-            arr = [5,7,10,22,33,35,44,50,55,56,60,70,71,72,73,80,90,100]
-            tst = [4,5,60,90,100,200]
-            tst_val = [.false.,.true.,.true.,.true.,.true.,.false.]
-            
-            do i = 1,size(tst)
-                  write(*,*)  (binarySearch(arr,tst(i)) == tst_val(i)), &
-                              (binary_search(arr,tst(i)) == tst_val(i)),&
-                              (binary_search2(arr,tst(i)) == tst_val(i))
-            enddo
-            
-            write(*,*) '---'
-            do i=1,size(arr)
-                  write(*,*) binarySearch(arr,arr(i)),binary_search(arr,arr(i))
-            enddo
+            res = .false.
       
-            write(*,*) '---'
+            arr = [5,7,10,22,33,35,44,50,55,56,60,70,71,72,73,80,90,100]
+            tst = [1,4,5,20,60,90,91,100,200]
+            tst_val = [.false.,.false.,.true.,.false.,.true.,.true.,.false.,.true.,.false.]
             
+            tst_lb_idx = [1, 1, 1, 4, 11, 17, 18, 18, 19]
+            tst_ub_idx = [1, 1, 2, 4, 12, 18, 18, 19, 19]
+            
+            allocate(tst_results(n_algorithms, size(tst)))
+            allocate(tst_eval(size(tst_val)))
+            allocate(arr_results(n_algorithms,size(arr)))
+            
+            tst_results = .false.
+
+            
+            ! Test if the three implementations are equivalent
+            do i = 1, size(tst)
+                tst_results(:,i) = [(binarySearch(arr,tst(i)) == tst_val(i)), &
+                                    (binary_search(arr,tst(i)) == tst_val(i)), &
+                                    (binary_search2(arr,tst(i)) == tst_val(i)) ]
+            enddo
+            _TEST('binary searches give identical results on test data',all(tst_results))
+            
+            arr_results = .false.
+            do i=1,size(arr)
+                  arr_results(:,i) = [binarySearch(arr,arr(i)), &
+                                      binary_search(arr,arr(i)),& 
+                                      binary_search2(arr,arr(i))]
+            enddo
+             _TEST('binary searches locate the elements in input data',all(arr_results))
+
             count = 0
             do i=-10,arr(size(arr))+10
                   found = [ binarySearch(arr,i), binary_search(arr,i), binary_search2(arr,i)]
                   if (all(found)) then
                         count = count + 1
-                        write(*,*) i
                   endif
             enddo
-      
-            if (count /= size(arr)) write(*,*) 'Error!'
+            _TEST('search for items inside and outside range', (count == size(arr)))
+
             
-            write(*,*) '---'
+            tst_eval = 0
+            !
+            ! Test upper bound algorithm
+
+            do i=1, size(tst)
+                tst_eval(i) = lower_bound(arr,tst(i))
+            enddo
+            _TEST('lower_bound, indices', all(tst_eval == tst_lb_idx))
+            !
+            ! Manual test:
+            !do i=1, size(tst)
+            !    idx = lower_bound(arr,tst(i))
+            !    if (idx <= size(arr)) then
+            !        write(*,*) 'lb of ', tst(i), 'is ',arr(idx), ' at i=', idx
+            !    else
+            !        write(*,*) 'lb of ', tst(i), 'is outside array at i=', idx
+            !    endif
+            !enddo
             
-            write(*,*) 'lower_bound'
-            do i=1,size(tst)
-                  write(*,*) lower_bound(arr,tst(i))
+            !
+            ! Test upper bound algorithm
+            tst_eval = 0
+            do i=1, size(tst)
+                tst_eval(i) = upper_bound(arr,tst(i))
             enddo
-            write(*,*) 'upper_bound'
-            do i=1,size(tst)
-                  write(*,*) upper_bound(arr,tst(i))
-            enddo
+            _TEST('upper_bound, indices', all(tst_eval == tst_ub_idx))
+            !
+            ! Manual test
+            !do i=1,size(tst)
+            !    idx = upper_bound(arr,tst(i))
+            !    if (idx <= size(arr)) then
+            !        write(*,*) 'ub of ', tst(i), 'is ',arr(idx), ' at i=', idx
+            !    else
+            !        write(*,*) 'lb of ', tst(i), 'is outside array at i=', idx
+            !    endif
+            !enddo
+
+            res = .true.
       !      
-      end subroutine
+      end function
 
       logical function test_replaceAll()
       implicit none
