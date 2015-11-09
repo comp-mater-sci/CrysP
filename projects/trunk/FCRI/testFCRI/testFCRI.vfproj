@@ -52,6 +52,7 @@
 		<File RelativePath="..\src-test\criTestAlgorithm.f90"/>
 		<File RelativePath="..\src-test\criTestIterUtils.f90"/>
 		<File RelativePath="..\src-test\criTestMathUtils.f90"/>
+		<File RelativePath="..\src-test\criTestNumerics.f90"/>
 		<File RelativePath="..\src-test\criTestPath.f90"/>
 		<File RelativePath="..\src-test\criTestRange.f90"/>
 		<File RelativePath="..\src-test\criTestUncomment.f90"/></Filter></Files>

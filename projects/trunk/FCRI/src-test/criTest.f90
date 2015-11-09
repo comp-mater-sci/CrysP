@@ -31,11 +31,13 @@ use criTestRange
 use criTestPath
 use criTestUncomment
 use criTestIterUtils
-
+use criTestNumerics
 implicit none
+
 integer  :: info
 logical  :: l
       
+
       l = test_replaceAll()
       
       l = criTestPath_main()
@@ -47,7 +49,9 @@ logical  :: l
       l = criTestAlgorithm_main()
       
       l = criTestIterUtils_main()
-      
+
+      l = criTestNumerics_main()
+
 end program
 
 

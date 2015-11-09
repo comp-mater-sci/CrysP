@@ -34,6 +34,7 @@ criLog.f90
 criMathUtils.f90
 criMkTemp.f90
 criNamedRange.f90
+criNumerics.f90
 criPath.f90
 criRange.f90
 criRuntime.f90

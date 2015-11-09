@@ -20,6 +20,7 @@ criTest.f90
 criTestAlgorithm.f90
 criTestIterUtils.f90
 criTestMathUtils.f90
+criTestNumerics.f90
 criTestPath.f90
 criTestRange.f90
 criTestUncomment.f90
