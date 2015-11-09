@@ -106,86 +106,87 @@
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration></Configurations>
 	<Files>
 		<Filter Name="Header Files" Filter="fi;fd">
+		<File RelativePath="..\include\criAlgorithmTemplates.fpp"/>
 		<File RelativePath="..\include\criAssert.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|Win32" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\include\criLogTemplates.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|Win32" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\include\criMacros.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\include\criModules.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|Win32" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\include\criStdDefs.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|Win32" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\include\criTest.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|Win32" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\include\criToolset.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|Win32" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\include\criUncommentTemplates.fpp">
 			<FileConfiguration Name="Debug_abaqus|x64" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|Win32" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release_abaqus|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug_abaqus|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release_abaqus|Win32" ExcludedFromBuild="true"/>
-			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|x64" ExcludedFromBuild="true"/>
+			<FileConfiguration Name="Release|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Debug|x64" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/>
 			<FileConfiguration Name="Release-Amplifier|Win32" ExcludedFromBuild="true"/></File></Filter>

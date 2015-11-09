@@ -20,6 +20,7 @@
 !
 !> Various algorithms
 module criAlgorithm
+implicit none
 
       !> tostring function converts from an intrisic data type into character string.
       interface tostring
@@ -29,6 +30,31 @@ module criAlgorithm
       !> centered function centers a character string.
       interface centered
             module procedure  centered_int, centered_string   
+      end interface
+      
+      
+      !> Find the last element in array not before val, using operator <
+      interface upper_bound
+            module procedure upper_bound_int, upper_bound_double
+      end interface
+      
+      
+      !> Find the first element in array not before val, using operator <
+      interface lower_bound
+            module procedure lower_bound_int, lower_bound_double
+      end interface
+      
+      
+      !> Find out if val appears in a sorted array, using operator < for equivalence.
+      interface binary_search
+            module procedure binary_search_int, binary_search_double
+      end interface
+      
+      !> Find out if val appears in a sorted array, using operator < for equivalence. 
+      !> The function is optimized for datasets where the searched value is the most frequently
+      !> outside the range of values in the array.
+      interface binary_search2
+            module procedure binary_search2_int, binary_search2_double
       end interface
       
       
@@ -42,7 +68,6 @@ module criAlgorithm
       interface optionalDefault
             module procedure optionalDefault_logical, optionalDefault_integer
       end interface
-
 
 contains
 
@@ -82,101 +107,26 @@ contains
             enddo
       !
       end function
-      
-      !> Find the first element in array not before val, using operator <
-      integer pure function lower_bound(array,val)
-      implicit none
-      integer,dimension(:),intent(in)     :: array
-      integer,intent(in)                  :: val
-      !
-      integer :: first,dist,cnt,mid
-      !
-            first = lbound(array,dim=1)
-            dist = ubound(array,dim=1)     ! full range: [first:first+dist-1]
-            ! 
-            do while (dist > 0)
-                  cnt = dist / 2
-                  mid = first + cnt
-                  if (array(mid) < val) then
-                        first = mid + 1
-                        dist = dist - (cnt + 1)
-                  else
-                        dist = cnt      
-                  endif
-            enddo
-            lower_bound = first
-      !    
-      end function
 
-      !> Find the last element in array not before val, using operator <
-      integer pure function upper_bound(array,val)
-      implicit none
-      integer,dimension(:),intent(in)     :: array
-      integer,intent(in)                  :: val
       !
-      integer :: first,dist,cnt,mid
+      ! Instantiate parametrized functions
       !
-            first = lbound(array,dim=1)
-            dist = ubound(array,dim=1)     ! full range: [first:first+dist-1]
-            ! 
-            do while (dist > 0)
-                  cnt = dist / 2
-                  mid = first + cnt
-                  if (.not.(val < array(mid))) then
-                        first = mid + 1
-                        dist = dist - (cnt + 1)
-                  else
-                        dist = cnt      
-                  endif
-            enddo
-            upper_bound = first
-      !    
-      end function
-      
+#define _TYPE_NAME integer
+#define _LOWER_BOUND_FX_NAME lower_bound_int
+#define _UPPER_BOUND_FX_NAME upper_bound_int
+#define _BINARY_SEARCH_FX_NAME binary_search_int
+#define _BINARY_SEARCH2_FX_NAME binary_search2_int
+#include "criAlgorithmTemplates.fpp"
 
-      !> Find out if val appears in a sorted array, using operator < for equivalence.
-      !>
-      logical pure function binary_search(array,val)
-      implicit none
-      integer,dimension(:),intent(in)     :: array
-      integer,intent(in)                  :: val
-      !
-      integer :: first,last,tmp
-      !
-            binary_search = .false.
-            first = lbound(array,dim=1)
-            last = ubound(array,dim=1)
-            ! The element cannot appear in a zero-lenght array
-            if (first < last) then
-                  tmp = lower_bound(array,val)
-                  if (tmp <= last) binary_search = .not.(val < array(tmp))
-            endif
-      end function
-      
-     
-      !> Find out if val appears in a sorted array, using operator < for equivalence. 
-      !> The function is optimized for datasets where the searched value is the most frequently
-      !> outside the range of values in the array.
-      logical pure function binary_search2(array,val)
-      implicit none
-      integer,dimension(:),intent(in)     :: array
-      integer,intent(in)                  :: val
-      !
-      integer :: first,last,tmp
-      !
-            binary_search2 = .false.
-            first = lbound(array,dim=1)
-            last = ubound(array,dim=1)
-            ! The element cannot appear in a zero-lenght array
-            if (first < last) then
-                  ! For cases when the value is outside the the bounds:
-                  if (.not. ( (array(last) < val) .or. (val < array(first))) ) then
-                        tmp = lower_bound(array,val)
-                        if (tmp <= last) binary_search2 = .not.(val < array(tmp))
-                  endif
-            endif
-      end function
-      
+
+#define _TYPE_NAME double precision
+#define _LOWER_BOUND_FX_NAME lower_bound_double
+#define _UPPER_BOUND_FX_NAME upper_bound_double
+#define _BINARY_SEARCH_FX_NAME binary_search_double
+#define _BINARY_SEARCH2_FX_NAME binary_search2_double
+#include "criAlgorithmTemplates.fpp"
+
+
       !> Check if the string value val is present in the list of strings.
       logical function isPresent(val, list,index)
       implicit none
