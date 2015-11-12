@@ -45,6 +45,8 @@ contains
         
         stat = stat .and. test_barycentric_interpolate()
         
+        stat = stat .and. test_barycentricInterpolatorKnownData()
+        
         stat = stat .and. test_barycentricInterpolator()
         
     end function
@@ -398,6 +400,45 @@ contains
         
     end subroutine
     
+    
+    logical function test_barycentricInterpolatorKnownData() result(res)
+    use criMathUtils, only: pi
+    implicit none
+    !    
+    ! Known nodal data for linear interpolation:
+    integer,parameter :: nnodes = 5, nresults = 5
+    double precision,dimension(nnodes),parameter ::  &
+        xi = [0.D0, 1.D0, 3.D0, 4.D0, 6.D0], &
+        yi = [1.D0, 5.D0, 7.D0, 7.D0, 3.D0]
+    double precision,dimension(nnodes) :: yi_res
+    ! Known interpolated values at points between the nodes
+    double precision,dimension(nresults),parameter :: &
+        x_test = [0.5D0, 2.D0, 3.5D0, 4.5D0, 5.D0], &
+        y_test = [3.D0,  6.D0, 7.D0,  6.D0,  5.D0]
+    double precision,dimension(nresults) :: y_res
+    
+    !
+    integer :: i, info
+    type(BarycentricInterpolator) :: bi
+    !
+    
+        res = .false.
+        ! Set-up
+        call BarycentricInterpolator_init(bi, 1, xi, yi, info)
+        !
+        do i = 1, size(x_test)
+            y_res(i) =  BarycentricInterpolator_interpolate(bi, x_test(i))
+        enddo
+        _TEST('BarycentricInterpolator, linear on linear function', all(abs(y_test - y_res) < epsilon(0.D0)))
+        !
+        do i = 1, size(xi)
+            yi_res(i) =  BarycentricInterpolator_interpolate(bi, xi(i))
+        enddo
+         _TEST('BarycentricInterpolator, linear on linear function at nodes', all(abs(yi - yi_res) < epsilon(0.D0)))
+        res = .true.
+    
+    end function
+    
     logical function test_barycentricInterpolator() result(res)
     use criMathUtils, only: pi
     implicit none
@@ -405,6 +446,7 @@ contains
     double precision,dimension(:),allocatable :: y_test, y_res
     double precision :: xstart, xend
     !
+    
         res = .false.
         
 
@@ -420,14 +462,16 @@ contains
 
         call setUp_barycentricInterpolation(1, xstart, xend, 0.5D0, npoints, npoints, fx_quadratic, y_test, y_res)
         call printTestData()
-        _TEST("BarycentricInterpolator, linear, between nodes, crude", all(abs(y_test - y_res) < 0.5))
+        _TEST("BarycentricInterpolator, linear, between nodes, crude", all(abs(y_test - y_res) <= 6.25e-2))
         
         call setUp_barycentricInterpolation(2, xstart, xend, 0.D0, npoints, npoints, fx_quadratic, y_test, y_res)
         _TEST("BarycentricInterpolator, quadratic, on nodes, crude", all(abs(y_test - y_res) < epsilon(0.D0)))
         
         call setUp_barycentricInterpolation(2, xstart, xend, 0.5D0, npoints, npoints, fx_quadratic, y_test, y_res)
-        _TEST("BarycentricInterpolator, quadratic, between nodes, crude", all(abs(y_test - y_res) < 100.D0*epsilon(0.D0)))
+        call printTestData()
+        _TEST("BarycentricInterpolator, quadratic, between nodes, crude", all(abs(y_test - y_res) < 65.D0*epsilon(0.D0)))
 
+        
         xstart = 0.D0
         xend = 10.D0
         npoints = 100
@@ -437,9 +481,17 @@ contains
         _TEST("BarycentricInterpolator, linear, on nodes, fine", all(abs(y_test - y_res) < epsilon(0.D0)))
 
         call setUp_barycentricInterpolation(1, xstart, xend, 0.5D0, npoints, ntest_points, fx_quadratic, y_test, y_res)
-
-        _TEST("BarycentricInterpolator, linear, between nodes, fine", all(abs(y_test - y_res) < 0.1D0))
+        call printTestData()
+        _TEST("BarycentricInterpolator, linear, between nodes, fine", all(abs(y_test - y_res) < 3.D-3))
         
+        
+        call setUp_barycentricInterpolation(2, xstart, xend, 0.D0, npoints, npoints, fx_quadratic, y_test, y_res)
+        _TEST("BarycentricInterpolator, quadratic, on nodes, fine", all(abs(y_test - y_res) < epsilon(0.D0)))
+        
+        call setUp_barycentricInterpolation(2, xstart, xend, 0.5D0, npoints, ntest_points, fx_quadratic, y_test, y_res)
+        call printTestData()
+        _TEST("BarycentricInterpolator, quadratic, between nodes, fine", all(abs(y_test - y_res) < 65.D0*epsilon(0.D0)))
+
         
         !
         ! Interpolate sin(x) on [-pi,pi] with linear polynomial
@@ -451,22 +503,30 @@ contains
         
         call setUp_barycentricInterpolation(1, xstart, xend, 0.5D0, npoints, ntest_points, fx_sin, y_test, y_res)
         call printTestData()
-        _TEST("BarycentricInterpolator of sin(x), linear", all(abs(y_test - y_res) < 5.D-3))
+        _TEST("BarycentricInterpolator of sin(x), linear", all(abs(y_test - y_res) < 5.D-4))
 
         !
         ! Interpolate sin(x) on [-pi,pi] with quadratic polynomial
         !
         call setUp_barycentricInterpolation(2, xstart, xend, 0.5D0, npoints, ntest_points, fx_sin, y_test, y_res)
         call printTestData()
-        _TEST("BarycentricInterpolator of sin(x), quadratic", all(abs(y_test - y_res) < 5.D-4))
+        _TEST("BarycentricInterpolator of sin(x), quadratic", all(abs(y_test - y_res) < 2.D-5))
 
         res = .true.
         
     contains
         subroutine printTestData()
         implicit none
+#ifdef ENABLE_DIAGNOSTIC_OUTPUT
+        integer :: i
             write(*,*) 'max absolute error:', maxval(abs(y_test - y_res))
-            !write(*,*) y_test - y_res
+            !
+            write(*,*) '---'
+            do i = 1, min(size(y_test),size(y_res))
+                write(*,'(3(E15.7,1X))') y_test(i), y_res(i), y_test(i) - y_res(i)
+            enddo
+            write(*,*) '---'
+#endif
         end subroutine
         
     end function

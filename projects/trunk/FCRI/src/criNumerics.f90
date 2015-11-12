@@ -187,8 +187,9 @@ contains
             CHOOSE(res, out_bounds(left_bound), this%yi(1), this%yi(last))
             return
         else
-            ! Pick the right chunk:
-            i = min(last - this%order, lower_bound(this%xi, x))
+            ! Pick the right chunk. lower_bound will provide the position of the first element 
+            ! in that has a value greater than or equivalent to x
+            i = min(last - this%order, max(1,lower_bound(this%xi, x)-1))
             j = i + this%order
             res = barycentric_interpolation(x, this%xi(i:j), this%yi(i:j), this%wi(:,i))
         endif
