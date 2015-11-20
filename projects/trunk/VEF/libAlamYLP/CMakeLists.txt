@@ -12,6 +12,8 @@ list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
 set(alamYLP_SRCS
 alamYLP.f90 
+alamEval.f90
+alamYLPConstants.f90
 vumat_libvec5.for
 )
 

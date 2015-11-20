@@ -44,7 +44,9 @@
 		<Filter Name="Header Files" Filter="fi;fd"/>
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
+		<File RelativePath=".\alamEval.f90"/>
 		<File RelativePath="alamYLP.f90"/>
+		<File RelativePath=".\alamYLPConstants.f90"/>
 		<File RelativePath="vumat_libvec5.for">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" FixedFormLineLength="fixedLength132"/></FileConfiguration>
