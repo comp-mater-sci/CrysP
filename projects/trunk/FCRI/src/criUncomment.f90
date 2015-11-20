@@ -26,6 +26,13 @@ module criUncomment
 
       character,parameter     :: comment_sign = '#'
 
+      !> Read value from iounit and strip comments
+      !> Arguments:
+      !> \param[in] inunit The IO unit (type: integer)
+      !> \param[out] val   The value being retrieved (type: one of the supported types 
+      !>                   (integer, logical, string, double precision) OR a vector of 
+      !>                   elements of supported types)
+      !> \param[in] frmt  The format to be used in the read operation (type: character(len=*),optional)
       interface readValue
             
             module procedure read_integer,   read_vector_integer, &
