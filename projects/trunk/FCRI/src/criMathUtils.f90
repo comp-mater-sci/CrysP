@@ -56,13 +56,36 @@ module criMathUtils
       !> Array dimension for 3D rotation matrix (rot_matrix_dim x rot_matrix_dim)
       integer,parameter                   :: rot_matrix_dim = 3
       
+      !> Array dimension for symmetric 3D second-rank tensors expressed in Voigt
+      !> notation.
+      integer,parameter                   :: sr_symm_voigt_dim = 6
+
       !> Matrix form of the unit second rank tensor
-      double precision,dimension(3,3),parameter :: unit_sr_Matrix = reshape( &
+      double precision,dimension(sr_tensor_dim,sr_tensor_dim),parameter :: unit_sr_Matrix = reshape( &
            [ 1.D0, 0.D0, 0.D0,     &
              0.D0, 1.D0, 0.D0,     &
              0.D0, 0.D0, 1.D0], [ sr_tensor_dim, sr_tensor_dim ])
       !>@}
 
+      !> Type for 2nd rank tensors in matrix notation. The matrix is initially filled 
+      !> with zeros.
+      type :: SRTensor
+            !> matrix representation of the tensor (t stands for tensor)
+            double precision,dimension(sr_tensor_dim,sr_tensor_dim) :: t = 0.D0
+      end type
+      
+      type(SRTensor),parameter :: unit_sr_tensor = SRTensor(unit_sr_Matrix)
+      
+      !> Rotate the 2nd-rank tensor S to the reference frame given by rotation R.
+      interface rotateSRTensorTo
+            module procedure :: rotateSRTensorTo_matrix, rotateSRTensorTo_SRTensor
+      end interface
+      
+      !> Rotate the 2nd-rank tensor S back from the reference frame given by rotation R.
+      interface rotateSRTensorFrom
+            module procedure :: rotateSRTensorFrom_matrix, rotateSRTensorFrom_SRTensor
+      end interface
+      
       !> \interface ocross_product Vector-Vector ocross product operator
       !>
       !> The result of m = ocross_product(u,v) is equivalent to:
@@ -75,7 +98,7 @@ module criMathUtils
       interface vector_product
             module procedure vector_product_dp
       end interface vector_product
-
+      
       !> Representation of Euler angles: Bunge notation
       type EulerAngles
             double precision  :: fi1 = 0.D0 !< \f$ \phi_1 \f$
@@ -421,7 +444,7 @@ contains
       !> Rotates the second-rank tensor S to the reference frame given by rotation R.
       !>
       !> The result is R^T S R, which is equivalent to (R^T S) R
-      pure function rotateSRTensorTo(S,R) result(Srot)
+      pure function rotateSRTensorTo_matrix(S,R) result(Srot)
       implicit none
       double precision,dimension(sr_tensor_dim,sr_tensor_dim)     :: Srot
       double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)     :: S
@@ -434,7 +457,7 @@ contains
       !> Rotates the second-rank tensor S back from the reference frame given by rotation R.
       !>
       !> The result is R S R^T, which is equivalent to (R S) R^T
-      pure function rotateSRTensorFrom(S,R) result(Srot)
+      pure function rotateSRTensorFrom_matrix(S,R) result(Srot)
       implicit none
       double precision,dimension(sr_tensor_dim,sr_tensor_dim)     :: Srot
       double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)     :: S
@@ -444,6 +467,31 @@ contains
       !
       end function
       
+      !> Rotates the second-rank tensor S to the reference frame given by rotation R.
+      !>
+      !> The result is R^T S R, which is equivalent to (R^T S) R
+      pure function rotateSRTensorTo_SRTensor(S,R) result(Srot)
+      implicit none
+      type(SRTensor)                :: Srot
+      type(SRTensor),intent(in)     :: S
+      double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
+      !
+            Srot%t = rotateSRTensorTo_matrix(S%t, R)
+      !
+      end function
+      
+      !> Rotates the second-rank tensor S back from the reference frame given by rotation R.
+      !>
+      !> The result is R S R^T, which is equivalent to (R S) R^T
+      pure function rotateSRTensorFrom_SRTensor(S,R) result(Srot)
+      implicit none
+      type(SRTensor)                :: Srot
+      type(SRTensor),intent(in)     :: S
+      double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
+      !
+            Srot%t = rotateSRTensorFrom_matrix(S%t, R)
+      !
+      end function
       
       !> Calculation of the Frobenius norm (aka Hilbert–Schmidt norm) of the rectangular matrix M
       pure double precision function FrobeniusNorm(M) result(fn)
@@ -470,8 +518,8 @@ contains
       !> There is a reverse conversion available. \sa Mat33ToVec6
       pure function Vec6ToMat33(vec) result(mat)
       implicit none
-      double precision,dimension(6),intent(in)  :: vec
-      double precision,dimension(3,3)           :: mat
+      double precision,dimension(sr_symm_voigt_dim),intent(in)  :: vec
+      double precision,dimension(sr_tensor_dim,sr_tensor_dim)   :: mat
       !
             mat(1,1) = vec(1)
             mat(2,2) = vec(2)
@@ -493,8 +541,8 @@ contains
       !> There is a reverse conversion available. \sa Vec6ToMat33
       pure function Mat33ToVec6(mat) result(vec)
       implicit none
-      double precision,dimension(3,3),intent(in)      :: mat
-      double precision,dimension(6)                   :: vec
+      double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
+      double precision,dimension(sr_symm_voigt_dim)                       :: vec
       !
             vec(1) = mat(1,1)
             vec(2) = mat(2,2)
