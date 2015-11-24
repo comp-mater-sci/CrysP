@@ -42,6 +42,7 @@ contains
                   if (info /= 0) return
                   call CUBreadBlock(nunit,info)
             end select
+            close(nunit)
       !
       end subroutine
 
