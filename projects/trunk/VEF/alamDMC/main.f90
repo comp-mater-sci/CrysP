@@ -32,6 +32,7 @@ use dmcASR
 use dmcQRS
 use dmcUDSA
 use dmcYld
+use dmcEWC
 !
 use criRuntime
 !
@@ -41,10 +42,11 @@ implicit none
       integer,parameter       :: cnfunit_default = 90, ofunit = 91
       !
       !
-      integer,parameter       :: ncommands = 4
-      integer,parameter       :: Q_id = 1, UDSA_id = 2, ASR_id = 3, Yld_id = 4
+      integer,parameter       :: ncommands = 5
+      integer,parameter       :: Q_id = 1, UDSA_id = 2, ASR_id = 3, Yld_id = 4, EWC_id = 5
       type(MapItem),dimension(ncommands)  :: command_map =  [ MapItem('QRS',Q_id), MapItem('UDSA',UDSA_id), &
-                                                              MapItem('ASR',ASR_id), MapItem('Yld',Yld_id) ]
+                                                              MapItem('ASR',ASR_id), MapItem('Yld',Yld_id), &
+                                                              MapItem('EWC',EWC_id) ]
       integer,parameter       :: argc_min = 2, argc_max=2, command_argpos = 1
       type(commandLine)       :: cmdline
       
@@ -94,6 +96,8 @@ implicit none
             allocate(ASRModule :: the_module)
       case(Yld_id) ! dmcYld
             allocate(YldModule :: the_module)
+      case(EWC_id) ! dmcEWC
+            allocate(EWCModule :: the_module)
       end select
       
       if (.not. associated(the_module)) then
