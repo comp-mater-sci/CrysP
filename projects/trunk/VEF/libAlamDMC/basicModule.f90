@@ -15,11 +15,22 @@
 !> Implementation of a basic DMC computiational module.
 module dmcBasicModule
 use dmcAbstractModule
-use alamYLP, only: multilevelYLPConfig
+use alamYLP
+use alamYLPConstants
 use altayConfig, only: fname_len, altayConfigData
 use commonConfig
 use dmcUtils
 use criUncomment
+use criMathUtils
+use criAlgorithm, only: optionalDefault
+use fngVec5D
+
+      !> Size of time increment
+      !>
+      !> Note: this should be taken either from altayConfigData (if it was provided there)
+      !> or from some time incrementation procedure. Presently we always assume delta_t = 1
+      double precision,parameter          :: delta_t = 1.D0
+
 
       type :: outputConfig
 
@@ -42,7 +53,7 @@ use criUncomment
             type(multilevelYLPConfig)     :: ylp
 
             type(altayConfigData)         :: altay
-
+            
       contains
       
             procedure,pass(this)     :: initialize =>  BasicModule_initialize
@@ -51,8 +62,19 @@ use criUncomment
 
             procedure,pass(this)     :: printConfig => BasicModule_printConfig
 
+            procedure,pass(this)     :: findSolution => BasicModule_findSolution
+            
       end type
 
+      type :: YLPResult
+            double precision,dimension(alamEval_vSD_dim) :: vA = 0.D0 
+            double precision,dimension(alamEval_vSD_dim) :: vS = 0.D0 
+            double precision,dimension(alamEval_vSD_dim) :: vSonA = 0.D0 
+            double precision,dimension(alamEval_vSD_dim) :: vSonAn = 0.D0 
+            double precision :: R = 0.D0
+            double precision :: plast_pot = 0.D0
+            double precision :: scal_s = 0.D0
+      end type
 
 
 contains
@@ -186,6 +208,57 @@ contains
       end function
       
 
+    integer function BasicModule_findSolution(this,S, D, ylp_result, vM_guess) result(info)
+    implicit none
+    class(BasicModule),intent(in)   :: this
+    type(SRTensor),intent(in)       :: S
+    type(SRTEnsor),intent(inout)    :: D
+    type(YLPResult),intent(out)     :: ylp_result
+    logical,optional                :: vM_guess !< Flag: use von Mises inital guess (default: .true.)
+    !
+    double precision :: vS_norm, vA_norm, SonA_norm
+    logical :: use_vM_guess
+    !
+        info = criErr_BadArgs
+
+        ! Convert input to the 5D space and make the unit vector(s).
+        ylp_result%vS = tens2vec5D(S%t)
+        vS_norm = norm2(ylp_result%vS)
+        if (vS_norm < epsilon(0.D0)) return
+        ylp_result%vS = ylp_result%vS / vS_norm
+        !
+        use_vM_guess = optionalDefault(vM_guess, .true.)
+        if (.not. use_vM_guess) then
+            ylp_result%vA = tens2vec5D(D%t)
+            vA_norm = norm2(ylp_result%vA)
+            if (vA_norm < epsilon(0.D0)) return
+        endif
+        
+        ! Calculate the corresponding strain rate vA
+        call multilevelYLP( ylp_result%vS,    &
+                            ylp_result%vA,    &
+                            ylp_result%vSonA, &
+                            ylp_result%R,     &
+                            info,             &
+                            useVMGuess=use_vM_guess, &
+                            YLPconfig=this%ylp, &
+                            verbose=this%output%verbosity)
+        SonA_norm = norm2(ylp_result%vSonA)
+        if ((info /= 0) .or. (SonA_norm < epsilon(0.D0))) then
+            info = criError
+            return
+        endif
+        !
+        ylp_result%plast_pot = dot_product(ylp_result%vA, ylp_result%vSonA)
+        ylp_result%scal_s = SonA_norm / vS_norm
+        ! Calculate normalized stess
+        ylp_result%vSonAn = ylp_result%vSonA / SonA_norm
+        D%t = vec5D2tens(ylp_result%vA)
+        info = criSuccess
+    !
+    end function
+      
+      
       !
       ! Procedures for processing sections of the configuration file
       !
