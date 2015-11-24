@@ -61,6 +61,14 @@ implicit none
         
     end type
 
+    !> Interpolation function
+    !> \param[in] this The interpolator (the type implicates the interpolation method used)
+    !> \param[in] x The value at which the function shall be evaluated
+    !> \result The interpolated value y(x)
+    interface interpolate
+        module procedure BarycentricInterpolator_interpolate
+    end interface
+    
 contains
     
     !> Calculate evenly spaced numbers over a specified interval
