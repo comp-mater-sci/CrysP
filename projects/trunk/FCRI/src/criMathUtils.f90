@@ -127,6 +127,10 @@ module criMathUtils
             module procedure rotmat_triplet, rotmat_EulerAngles
       end interface
 
+      interface trace
+            module procedure trace_matrix, trace_SRTensor
+      end interface
+      
 #ifndef FORT_HAS_NORM2
       !> A substitute for the norm2 intrinsic for ifort 11.1 and older.
       !> 
@@ -553,8 +557,31 @@ contains
       !
       end function
 
-    
+
+      !> Calculates trace of the square n x n matrix X
+      pure double precision function trace_matrix(X) result(res)
+      implicit none
+      double precision,dimension(:,:),intent(in)    :: X
       !
+      integer :: i
+            res = 0.D0
+            do i = 1, minval(shape(X))
+                res = res + X(i,i)
+            enddo
+      !
+      end function
+
+    
+      !> Calculates trace of second-rank tensor X
+      pure double precision function trace_SRTensor(X) result(res)
+      implicit none
+      type(SRTensor),intent(in)    :: X
+      !
+           res = trace_matrix(X%t)
+      !
+      end function
+
+    !
       ! Some operations on double_pair
       !
       
