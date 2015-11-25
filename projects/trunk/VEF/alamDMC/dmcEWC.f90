@@ -214,7 +214,7 @@ contains
     integer :: i, j
     double precision :: theta
     
-    type(SRTensor)  :: S
+    type(SRTensor)  :: sigma
     
     type(EvolutionOutput) :: ref_output, output
     double precision,dimension(:,:),allocatable :: results ! Shape is: [1:n_countours,1:n_theta]
@@ -222,11 +222,15 @@ contains
     
     !> \fixme The variables below should be promoted to configuration parameters
     double precision,dimension(sr_symm_voigt_dim,2)   :: base_vectors
-    double precision,dimension(sr_symm_voigt_dim) :: S_vector
+    double precision,dimension(sr_symm_voigt_dim) :: sigma_vector
     !
-    double precision,dimension(:),allocatable :: vEquivalentStrainLevels, vPlasticWorkLevels
-    double precision,dimension(:),allocatable :: vPlasticWork, vNormSonA, vEquivalentStrain
-    
+    double precision,dimension(:),allocatable :: vEquivalentStrainLevels, &
+                                                 vPlasticWorkLevels, &
+                                                 vPlasticWork_ref, &
+                                                 vEquivalentStrain_ref, &
+                                                 vPlasticWork, &
+                                                 vScalS
+
     double precision,dimension(:),allocatable :: vTheta
     
     type(BarycentricInterpolator) :: bi
@@ -252,15 +256,15 @@ contains
 
         !
         ! Evaluate the reference mode
-        S%t = Vec6ToMat33(this%reference_stress_mode)
-        info = this%calculateStressPath(S, this%control, ref_output)
+        sigma%t = Vec6ToMat33(this%reference_stress_mode)
+        info = this%calculateStressPath(sigma, this%control, ref_output)
         if (info /= criSuccess) return
         !
         ! Calculate work levels that correspond to the requested levels of 
         ! equivalent plastic strain.
-        vEquivalentStrain = ref_output%values(:)%vm_strain_total
-        vPlasticWork = ref_output%values(:)%icv%plastic_work_total
-        call BarycentricInterpolator_init(bi, 2, vEquivalentStrain, vPlasticWork, info)
+        vEquivalentStrain_ref = ref_output%values(:)%vm_strain_total
+        vPlasticWork_ref = ref_output%values(:)%icv%plastic_work_total
+        call BarycentricInterpolator_init(bi, 2, vEquivalentStrain_ref, vPlasticWork_ref, info)
         if (info /= criSuccess) then
             info = criError
             return
@@ -286,17 +290,17 @@ contains
             theta = deg2rad(theta)
             !
             ! Calculate S by combining the base vectors
-            S_vector = base_vectors(:,1)*cos(theta) + base_vectors(:,2)*sin(theta)
-            S%t = Vec6ToMat33(S_vector)
-            
+            sigma_vector = base_vectors(:,1)*cos(theta) + base_vectors(:,2)*sin(theta)
+            sigma%t = Vec6ToMat33(sigma_vector)
+            !
             ! Re-initialize AlTay
             call finalizeAltay(info)
             call initAltay(this%altay,info) 
-            info = this%calculateStressPath(S, evolution_control, output) 
+            info = this%calculateStressPath(sigma, evolution_control, output) 
             !
             vPlasticWork = output%values(:)%icv%plastic_work_total
-            vNormSonA = output%values(:)%scal_s
-            call BarycentricInterpolator_init(bi, 2, vPlasticWork, vNormSonA, info)
+            vScalS = output%values(:)%scal_s
+            call BarycentricInterpolator_init(bi, 2, vPlasticWork, vScalS, info)
             do j = 1, size(vPlasticWorkLevels)
                 results(j,i) = interpolate(bi, vPlasticWorkLevels(j))
             enddo
@@ -306,7 +310,7 @@ contains
         !
         info = this%fileOutput(vTheta, vEquivalentStrainLevels, results)
         info = this%fileOutputMeta('contours',vEquivalentStrainLevels, vPlasticWorkLevels)
-        info = this%fileOutputMeta('reference',vEquivalentStrainLevels, vPlasticWorkLevels)
+        info = this%fileOutputMeta('reference',vEquivalentStrain_ref, vPlasticWork_ref)
         !
     end subroutine
 
@@ -370,10 +374,10 @@ contains
 
     
     !> \todo optional initial icv should be provided as a parameter
-    integer function StressDrivenEvolutionModule_calculateStressPath(this, S, control, outputs) result(info)
+    integer function StressDrivenEvolutionModule_calculateStressPath(this, sigma, control, outputs) result(info)
     implicit none
     class(StressDrivenEvolutionModule),intent(in) :: this
-    type(SRTensor),intent(in)   :: S
+    type(SRTensor),intent(in)   :: sigma
     class(IncrementationControlSettings),intent(inout) :: control
     type(EvolutionOutput),intent(out)   :: outputs
     
@@ -394,6 +398,7 @@ contains
         !
         Se%t = 0.D0
         De%t = 0.D0
+        
         !> \fixme Get rid of the big array
         ! -->>
         idx = 0
@@ -401,7 +406,7 @@ contains
         !
         do
             ! Calculate the strain rate mode
-            info = this%findSolution(S, D, ylp)
+            info = this%findSolution(sigma, D, ylp)
             if (info /= criSuccess) exit
             ! -->>
             write(*,100)
@@ -446,10 +451,10 @@ contains
             info = criSuccess
             select case(control%scaling_type)
             case(scalingStrainTensor)
-                if (norm2(icv%vP) >= control%step_size) exit
+                if (norm2(icv%vP) > control%step_size) exit
             !
             case(scalingPlasticWork)
-                if (icv%plastic_work_total >= control%step_size) exit
+                if (icv%plastic_work_total > control%step_size) exit
             !
             end select
             !

@@ -208,21 +208,28 @@ contains
       end function
       
 
-    integer function BasicModule_findSolution(this,S, D, ylp_result, vM_guess) result(info)
+    !> Calculate plastic strain rate D that corresponds to the superimposed input stress `sigma`
+    !> by performing an iterative search.
+    !>
+    !> The results of the iterative search are placed in ylp_results.
+    integer function BasicModule_findSolution(this,sigma, D, ylp_result, vM_guess) result(info)
     implicit none
     class(BasicModule),intent(in)   :: this
-    type(SRTensor),intent(in)       :: S
-    type(SRTEnsor),intent(inout)    :: D
-    type(YLPResult),intent(out)     :: ylp_result
-    logical,optional                :: vM_guess !< Flag: use von Mises inital guess (default: .true.)
+    type(SRTensor),intent(in)       :: sigma !< Input stress
+    type(SRTEnsor),intent(inout)    :: D     !< Plastic strain rate
+    type(YLPResult),intent(out)     :: ylp_result !< Results of the interative search
+    !> Flag: use von Mises inital guess (default: .true.). If false, D will be used as the
+    !> starting point for the iterative search.
+    logical,optional                :: vM_guess 
     !
-    double precision :: vS_norm, vA_norm, SonA_norm
+    double precision :: vS_norm, vA_norm, SonA_norm, pressure
     logical :: use_vM_guess
     !
         info = criErr_BadArgs
 
         ! Convert input to the 5D space and make the unit vector(s).
-        ylp_result%vS = tens2vec5D(S%t)
+        ! This also makes sure it is deviatoric.
+        ylp_result%vS = tens2vec5D(sigma%t)
         vS_norm = norm2(ylp_result%vS)
         if (vS_norm < epsilon(0.D0)) return
         ylp_result%vS = ylp_result%vS / vS_norm
