@@ -15,8 +15,10 @@ abstractModule.f90
 basicModule.f90  
 commonConfig.f90
 commonUtils.f90  
-dmcUtils.f90 
+dmcUtils.f90
+incrementationControl.f90 
 qrsTypes.f90
+stressDrivenEvolutionModule.f90
 )
 
 add_library(AlamDMC STATIC ${AlamDMC_SRCS})

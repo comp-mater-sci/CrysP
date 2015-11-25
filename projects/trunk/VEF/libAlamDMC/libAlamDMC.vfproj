@@ -54,5 +54,7 @@
 		<File RelativePath="commonConfig.f90"/>
 		<File RelativePath="commonUtils.f90"/>
 		<File RelativePath="dmcUtils.f90"/>
-		<File RelativePath="qrsTypes.f90"/></Filter></Files>
+		<File RelativePath=".\incrementationControl.f90"/>
+		<File RelativePath="qrsTypes.f90"/>
+		<File RelativePath=".\stressDrivenEvolutionModule.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>
