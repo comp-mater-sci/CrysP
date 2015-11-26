@@ -18,7 +18,6 @@
 !> along deformation due to the uniaxial tension or compression stress.
 module dmcUDSA
 use nllsTR
-use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 use dmcUtils
@@ -27,6 +26,7 @@ use commonUtils
 use qrsTypes
 use criLog
 use criAlgorithm
+use fngVec5D
 implicit none
 
       integer,parameter                         :: scaleFullTensor = 0, scaleTensileComponent = 1
@@ -189,7 +189,7 @@ contains
       !
       S = rotateSRTensorTo(S_t,Mrot)
       !
-      call KMAT2VEC5D(S,vS) ! Note: as of this call, S is deviatoric
+      vS = tens2vec5D(S)
       ! Enforce unit length of vS
       vS = vS / vec_norm2(vS)
       !---------------------------------------------------------------------------------
@@ -304,8 +304,8 @@ contains
                   write(display_unit,fmt=970) 
                   exit
             endif
-            call KMAT2VEC5D(Se,vSe)
-            call KMAT2VEC5D(De,vDe)
+            vSe = tens2vec5D(Se)
+            vDe = tens2vec5D(De)
             !! -> Calculate total strain
             P = P + De
             normP = norm2(P)

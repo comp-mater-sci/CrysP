@@ -46,10 +46,5 @@
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
 		<File RelativePath=".\alamEval.f90"/>
 		<File RelativePath="alamYLP.f90"/>
-		<File RelativePath=".\alamYLPConstants.f90"/>
-		<File RelativePath="vumat_libvec5.for">
-			<FileConfiguration Name="Debug|Win32">
-				<Tool Name="VFFortranCompilerTool" FixedFormLineLength="fixedLength132"/></FileConfiguration>
-			<FileConfiguration Name="Debug|x64">
-				<Tool Name="VFFortranCompilerTool" FixedFormLineLength="fixedLength132"/></FileConfiguration></File></Filter></Files>
+		<File RelativePath=".\alamYLPConstants.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>

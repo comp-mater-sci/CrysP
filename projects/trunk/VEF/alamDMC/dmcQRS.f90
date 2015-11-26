@@ -18,7 +18,6 @@
 !> directly from texture data, presented in form of SMT, CUR or CUB files.
 module dmcQRS
 use nllsTR
-use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 use qrsTypes
@@ -30,7 +29,7 @@ use criMathUtils
 use criRange
 use criLog
 use criAlgorithm
-
+use fngVec5D
 
 implicit none
 
@@ -220,14 +219,14 @@ contains
             Smcoord = rotateSRTensorTo(Stcoord, Mrot)
             
             !            
-            call KMAT2VEC5D(Smcoord,vS) 
+            vS = tens2vec5D(Smcoord) 
             if ((this%reuse_previous) .AND. (i > 1))  then
                   ! Reuse previously stored result in new coordinate system
                   ! Type of result (strain rate or stress) is decided in line mared with (***)
                   ! Rotate Xtcoord_resume to new coordinate system
                   Xmcoord_resume = rotateSRTensorTo(Xtcoord_resume,Mrot)
                   ! Set starting point
-                  call KMAT2VEC5D(Xmcoord_resume,vA)
+                  vA = tens2vec5D(Xmcoord_resume)
                   vA = vA / vec_norm2(vA)
                   ! Disable Von Mises guess in multilevelYLP: vA will be used as a starting point
                   useVMGuess = .false.

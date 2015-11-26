@@ -17,7 +17,6 @@
 !>
 module dmcASR
 use nllsTR
-use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 !use dmcUtils
@@ -179,7 +178,7 @@ contains
             !
             Sm = matmul(transpose(Mrot),matmul(Stdev,Mrot))
             !            
-            call KMAT2VEC5D(Sm,vS) 
+            vS = tens2vec5D(Sm)
             ! Enforce unit length of vS
             vS_norm = vec_norm2(vS)
             if (abs(vS_norm) < epsilon(0.D0)) then
@@ -267,7 +266,7 @@ contains
                         write(display_unit,fmt=970) 
                         exit
                   endif
-                  call KMAT2VEC5D(Se,vSe)
+                  vSe = tens2vec5D(Se)
                   ! Calculate increment of plastic work (strain * deviatoric_stress)
                   plastic_work_inc = dot_product(vDe,vSe) 
                   plastic_work_total = plastic_work_total + plastic_work_inc

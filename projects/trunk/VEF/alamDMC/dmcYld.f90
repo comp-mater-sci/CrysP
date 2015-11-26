@@ -16,7 +16,6 @@
 !> Yield locus calculations
 module dmcYld
 use nllsTR
-use Kutils
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 use dmcUtils
@@ -269,8 +268,8 @@ contains
                   endif      
                   if (this%normalizeSm) Sm = Sm / Sm_norm
             
-                  ! Convert to 5D space, note that Sm becomes deviatoric after this call: 
-                  call KMAT2VEC5D(Sm,vS) 
+                  ! Convert to 5D space
+                  vS = tens2vec5D(Sm)
                   ! Enforce unit length of vS
                   vS_norm = vec_norm2(vS)
                   vS = vS / vS_norm

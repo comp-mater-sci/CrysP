@@ -14,7 +14,6 @@ set(alamYLP_SRCS
 alamYLP.f90 
 alamEval.f90
 alamYLPConstants.f90
-vumat_libvec5.for
 )
 
 add_library(alamYLP STATIC ${alamYLP_SRCS})
