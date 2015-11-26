@@ -18,7 +18,6 @@
 !>
 !
 program alamDMC
-use nllsTR
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 use dmcUtils

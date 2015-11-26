@@ -17,9 +17,9 @@
 !> dmcQRS calculates plastic anisotropic properties, expressed in terms of q-values,
 !> directly from texture data, presented in form of SMT, CUR or CUB files.
 module dmcQRS
-use nllsTR
+!use nllsTR
 use alamYLP
-use alamEval, only: alamEval_objFx_call_count
+!use alamEval, only: alamEval_objFx_call_count
 use qrsTypes
 use dmcUtils
 use dmcBasicModule

@@ -16,18 +16,18 @@
 !> DMC Arbitrary Stress Response
 !>
 module dmcASR
-use nllsTR
+!use nllsTR
 use alamYLP
-use alamEval, only: alamEval_objFx_call_count
+!use alamEval, only: alamEval_objFx_call_count
 !use dmcUtils
 use dmcBasicModule
 use commonConfig
 use commonUtils
 use criMathUtils
-use criPath
+!use criPath
 use criAlgorithm
 use criLog
-use criUncomment
+!use criUncomment
 use fngVec5D
 implicit none
 

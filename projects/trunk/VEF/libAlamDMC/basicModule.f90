@@ -17,12 +17,14 @@ module dmcBasicModule
 use dmcAbstractModule
 use alamYLP
 use alamYLPConstants
-use altayConfig, only: fname_len, altayConfigData
+use altayConfig, only: altayConfigData
 use commonConfig
 use dmcUtils
+use criRuntime
 use criUncomment
 use criMathUtils
 use criAlgorithm, only: optionalDefault
+use criPath, only: max_pathlen
 use fngVec5D
 
       !> Size of time increment
@@ -34,7 +36,7 @@ use fngVec5D
 
       type :: outputConfig
 
-            character(len=fname_len)      :: outputPrefix = '' !< Prefix for the output files. 
+            character(len=max_pathlen)      :: outputPrefix = '' !< Prefix for the output files. 
 
             logical                       :: outputRequest = .false.
             
@@ -83,7 +85,6 @@ contains
       use altaySub
       use altayHardTypes, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop
       use commonUtils
-      use criRuntime
       implicit none
       class(BasicModule),intent(inout)          :: this
       !
@@ -127,7 +128,6 @@ contains
       
       
       integer function BasicModule_ReadConfig(this,cnfunit) result(info)
-      use criRuntime
       implicit none
       class(BasicModule),intent(inout)          :: this
       integer,intent(in)                        :: cnfunit
@@ -385,7 +385,7 @@ contains
       integer,intent(out)                 :: info
       !
       integer                       :: ioerr
-      character(len=fname_len)      :: tmp_fname
+      character(len=max_pathlen)      :: tmp_fname
       integer                       :: tmp,nparunit
       !
             info = -1

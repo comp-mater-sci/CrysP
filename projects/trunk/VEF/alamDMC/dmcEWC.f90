@@ -21,8 +21,6 @@ module dmcEWC
 use altaySub
 use alamYLP
 use dmcStressDrivenEvolutionModule
-! use commonConfig
-! use commonUtils
 use criMathUtils
 use criRange
 use criNumerics
