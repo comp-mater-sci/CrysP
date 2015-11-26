@@ -255,9 +255,9 @@ contains
             !
             if (doLogging(criLogInfo,this%output%verbosity)) call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
             ! Convert AONSET vector to tensor form
-            call KVEC5D2MAT(vA,Dmcoord)
+            Dmcoord = vec5D2tens(vA)
 
-            call KVEC5D2MAT(vSonAn,SmIdent)
+            SmIdent = vec5D2tens(vSonAn)
             
             if (doLogging(criLogInfo,this%output%verbosity)) then
                   write(display_unit,400)

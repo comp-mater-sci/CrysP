@@ -29,6 +29,7 @@ use criPath
 use criAlgorithm
 use criLog
 use criUncomment
+use fngVec5D
 implicit none
 
       type,extends(BasicModule) :: ASRModule
@@ -209,9 +210,9 @@ contains
                   vSonAn = vSonA / vec_norm2(vSonA) 
 
                   ! Convert stresses and strain rates to [3x3] tensors
-                  call KVEC5D2MAT(vA,D)
-                  call KVEC5D2MAT(vSonA,SonA)
-                  call KVEC5D2MAT(vSonAn,SmIdent)
+                  D = vec5D2tens(vA)
+                  SonA = vec5D2tens(vSonA)
+                  SmIdent = vec5D2tens(vSonAn)
                   !
                   ! Print vector form
                   if (doLogging(criLogDebug,this%output%verbosity)) call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
@@ -253,7 +254,7 @@ contains
                   normDe = vec_norm2(vDe)
                   if (doLogging(criLogInfo,this%output%verbosity)) write(display_unit,'(A,1X,F12.6)') 'Norm of vDe = ', normDe 
                   ! Calculate strain increment for texture evolution           
-                  call KVEC5D2MAT(vDe,De)
+                  De = vec5D2tens(vDe)
                   !
                   !! -> Impose De as ALAMEL input, advance the state of texture
                   !
@@ -273,8 +274,8 @@ contains
                   !! -> Calculate total strain
                   vP = vP + vDe
                   vTotalP = vTotalP + vDe
-                  call KVEC5D2MAT(vP,P)
-                  call KVEC5D2MAT(vTotalP,TotalP) 
+                  P = vec5D2tens(vP)
+                  TotalP = vec5D2tens(vTotalP) 
                   !
                   normP = vec_norm2(vP)
                   Pnorm = Pnorm + normDe
@@ -370,13 +371,13 @@ contains
                         write(n,'(A)') 'Increment strain:'
                         write(n,'(A,1X,F12.6)') '||P|| =', normP
                         write(n,'(A,1X,F12.6)') 'sum||De|| =', Pnorm
-                        call KVEC5D2MAT(vP,tmpP)
+                        tmpP = vec5D2tens(vP)
                         write(n,'(A)') 'P='
                         write(n,500) tmpP
                         write(n,'(A,1X,F12.6)') 'Winc =', plastic_work_inc
                         write(n,'(A)') 'Total strain:'
                         write(n,'(A,1X,F12.6)') '||Ptot|| =', totalPnorm
-                        call KVEC5D2MAT(vTotalP,tmpP)
+                        tmpP = vec5D2tens(vTotalP)
                         write(n,'(A)') 'Ptot='
                         write(n,500) tmpP
                         write(n,'(A,1X,F12.6)') 'Wtot =', plastic_work_total

@@ -19,6 +19,7 @@
 module alamEval
 use alamYLPConstants
 use nllsTR
+use fngVec5D
 implicit none
 
 
@@ -53,7 +54,6 @@ implicit none
 contains
 
       subroutine objectiveEval_NV5DComp(this,vX,info)
-      use Kutils
       use altaySub
       use altayConfig
       implicit none
@@ -76,7 +76,7 @@ contains
             norm = norm2(vX)
             if (norm < epsilon(0.D0)) return
             vXn = vX/norm
-            call KVEC5D2MAT(vXn,Atens) 
+            Atens = vec5D2tens(vXn) 
             ! Set Atens as current value for processing 
 #ifdef DIAGNOSTIC_OUTPUT                
             write(*,'(A,1X,5(F12.8))') 'eval for ', vXn
@@ -99,7 +99,7 @@ contains
             if (info /= 0) return
             !
             ! Retrieve output stress into 5D vector
-            call KMAT2VEC5D(astate%simulCalls(istp)%output%stress_tensor,vS)
+            vS = tens2vec5D(astate%simulCalls(istp)%output%stress_tensor)
             ! Transfer vS to vSml
             this%vSml = vS  
 #ifdef DIAGNOSTIC_OUTPUT            

@@ -221,8 +221,8 @@ contains
             !
             if (doLogging(criLogInfo,this%output%verbosity)) call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
             !
-            call KVEC5D2MAT(vA,D)
-            call KVEC5D2MAT(vSonAn,SmIdent)
+            D = vec5D2tens(vA)
+            SmIdent = vec5D2tens(vSonAn)
             !
             if (doLogging(criLogDebug,this%output%verbosity)) then
                   write(display_unit,400)
