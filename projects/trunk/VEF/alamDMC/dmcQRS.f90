@@ -210,7 +210,7 @@ contains
             !
             fi2 = deg2rad(fi2)
             ! Calculate rotation matrix
-            call KROTMAT(fi1,phi,fi2,Mrot)
+            Mrot = rotmat(fi1,phi,fi2)
             ! Set Stcoord in such way that deviatoric part is of unit length
             Stcoord = 0.D0
             Stcoord(1,1) = dsqrt(3.D0/2.D0)*1.D0/dsqrt(this%rho**2-this%rho+1)
