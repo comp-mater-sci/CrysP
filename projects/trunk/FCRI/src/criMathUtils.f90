@@ -78,12 +78,12 @@ module criMathUtils
       
       !> Rotate the 2nd-rank tensor S to the reference frame given by rotation R.
       interface rotateSRTensorTo
-            module procedure :: rotateSRTensorTo_matrix, rotateSRTensorTo_SRTensor
+            module procedure rotateSRTensorTo_matrix, rotateSRTensorTo_SRTensor
       end interface
       
       !> Rotate the 2nd-rank tensor S back from the reference frame given by rotation R.
       interface rotateSRTensorFrom
-            module procedure :: rotateSRTensorFrom_matrix, rotateSRTensorFrom_SRTensor
+            module procedure rotateSRTensorFrom_matrix, rotateSRTensorFrom_SRTensor
       end interface
       
       !> \interface ocross_product Vector-Vector ocross product operator

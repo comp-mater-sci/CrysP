@@ -1,9 +1,30 @@
+!
+! $Id$
+!
+!>    \author Jerzy Gawad
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven (KU Leuven)
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>    \copyright KU Leuven
+!>
+!>    \date Date of the initial release: 2015-11-06
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+!>
+!>    \file criAlgorithm.f90 
+!
+
+#include "criStdDefs.fpp"
+
 !> Various high-level operations on arrays
 module criArray
 use criErrcodes
 implicit none
 
-    contains
+contains
     
     !> Symmetry folding of arrays
     !>
@@ -65,4 +86,3 @@ implicit none
     end subroutine
     
 end module
-    

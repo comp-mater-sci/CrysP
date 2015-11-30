@@ -23,6 +23,7 @@
 ! 
 ! Add appropriate macro to rename module
 #define criAlgorithm kcriAlgorithm
+#define criArray kcriArray
 #define criAssert kcriAssert
 #define criConfigReader kcriConfigReader
 #define criErrcodes kcriErrcodes
@@ -32,6 +33,7 @@
 #define criLog kcriLog
 #define criMathUtils kcriMathUtils
 #define criMkTemp kcriMkTemp
+#define criNumerics kcriNumerics
 #define criPath kcriPath
 #define criRange kcriRange
 #define criRuntime kcriRuntime
