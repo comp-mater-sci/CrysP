@@ -28,7 +28,7 @@ use fngVec5D
 implicit none
 
 
-
+    integer,parameter,private :: n_base_vectors = 2
 
 
     type,extends(StressDrivenEvolutionModule) :: EWCModule
@@ -38,7 +38,9 @@ implicit none
         character(len=max_pathlen)              :: output_fname = ''
         
         double precision,dimension(sr_symm_voigt_dim)   :: reference_stress_mode = 0.D0
-        
+
+        double precision,dimension(sr_symm_voigt_dim,n_base_vectors)   :: base_vectors = 0.D0
+
         !> Range of angles that provide stress ratios
         class(range_type),pointer               :: ptr_theta_range => null()
         
@@ -71,13 +73,17 @@ contains
       class(EWCModule),intent(inout)            :: this
       integer,intent(in)                        :: cnfunit
       !
-      integer :: ioerr
+      integer :: ioerr, i
       !
             info = BasicModule_ReadConfig(this,cnfunit) 
             if (info /= criSuccess) return
             info = criErr_IORead
             ! Read parameters specific for the ASRModule
             read(cnfunit,fmt=*,iostat=ioerr) this%reference_frame
+            do i = 1, size(this%base_vectors,dim=2)
+                read(cnfunit,fmt=*,iostat=ioerr) this%base_vectors(:,i)
+                if (ioerr /= 0) return
+            enddo
             !
             ! Evolution along the reference stress mode
             read(cnfunit,fmt=*,iostat=ioerr) this%reference_stress_mode
@@ -118,8 +124,6 @@ contains
     double precision,dimension(:,:),allocatable :: results ! Shape is: [1:n_countours,1:n_theta]
     type(IncrementationControlSettings) :: evolution_control
     
-    !> \fixme The variables below should be promoted to configuration parameters
-    double precision,dimension(sr_symm_voigt_dim,2)   :: base_vectors
     double precision,dimension(sr_symm_voigt_dim) :: sigma_vector
     !
     double precision,dimension(:),allocatable :: vEquivalentStrainLevels, &
@@ -136,10 +140,6 @@ contains
     integer :: n_theta, n_contours
     logical :: tmp_flag
     !
-        ! Default base vectors: uniaxial s11 and s22
-        base_vectors = 0.D0
-        base_vectors(1,1) = 1.D0
-        base_vectors(2,2) = 1.D0
         !
         ! Prepare the input data: array of increments, and
         ! array of results.
@@ -188,7 +188,7 @@ contains
             theta = deg2rad(theta)
             !
             ! Calculate S by combining the base vectors
-            sigma_vector = base_vectors(:,1)*cos(theta) + base_vectors(:,2)*sin(theta)
+            sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta)
             sigma%t = Vec6ToMat33(sigma_vector)
             !
             ! Re-initialize AlTay
