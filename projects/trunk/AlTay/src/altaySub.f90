@@ -61,6 +61,7 @@ contains
       character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
       !
       integer :: ierr
+      logical :: is_exception
       !
             if (present(errmsg)) errmsg = ''
             ierr = 0
@@ -111,7 +112,17 @@ contains
             if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
             info = altaySub_Exception
             CALL SIMUL(0,1)
-            RCM_HANDLE(info)
+            ! Collect more info about the 
+            if(RCM_signal()) then
+                if (present(errmsg)) then
+                    ! Extend the level of detail if the size of errmsg permits that.
+                    if (len_trim(errmsg)+2 < len(errmsg)) is_exception = RCM_catch(info, errmsg(len_trim(errmsg)+2:))
+                else
+                    info = RCM_topError()
+                endif
+                call RCM_clean()
+                return
+            endif
             if (present(errmsg)) errmsg = ''
             !
 #ifdef PEBP_ENABLED
@@ -149,6 +160,7 @@ contains
       use altayIOConfig
       use altayMesostructure, only: MICROSTR_finalize
       use altayDynfil
+      use altayRCM
 #ifdef PEBP_ENABLED
       use AltayDSHstate
 #endif
@@ -181,6 +193,8 @@ contains
                   deallocate(astate%simulCalls)
                   astate%nSimulCalls = 0
             endif
+            ! Clean the RCM stack
+            call RCM_clean()
       !
       end subroutine
       
