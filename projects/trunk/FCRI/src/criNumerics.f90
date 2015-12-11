@@ -41,9 +41,13 @@ implicit none
         !>
         !> The interpolation nodes and the barycentric weighting factors 
         !> will be constructed from xi.
+        !> Size of xi must be at least [order + 1]
         double precision,dimension(:),allocatable   :: xi
         
         !> y coordinates of the known points.
+        !>
+        !> Size of yi must be identical as the size of xi, so the same
+        !> restrictions apply.
         double precision,dimension(:),allocatable   :: yi
         
         !> Barycentric weighting factors of the interpolation polynomials
@@ -177,16 +181,29 @@ contains
     
     !> Calculate interpolation by means of barycentric form of interpolation
     !> polynomial in Lagrange form.
+    !>
+    !> The function requires a properly initialized BarycentricInterpolator object.
+    !> Otherwise the result of the function is undefined.
     double precision pure function BarycentricInterpolator_interpolate(this, x) result(res)
     use criAlgorithm
     implicit none
+    !> Properly initialized object of type BarycentricInterpolator
     type(BarycentricInterpolator),intent(in)    :: this
+    !> The point at which the interpolated function is evaluated
     double precision,intent(in)                 :: x
     !
     integer :: i, j, last
     logical :: out_bounds(nbounds)
     !
-        last = size(this%xi)
+        ! Check the size of this%xi. We are going to speculate on the size of
+        ! this%yi later on, but the 'out-of-bounds' check must be done in a safe
+        ! way, i.e. this%xi must be allocated and this%xi(1) must be a valid
+        ! element in the array.
+        ALLOCATED_SIZE(last, this%xi)
+        if (last < 1) then
+            res = 0.D0
+            return
+        endif
         out_bounds = [x < this%xi(1), x > this%xi(last)]
         ! Check if we fall inside the range
         if (out_bounds(left_bound) .or. out_bounds(right_bound)) then
