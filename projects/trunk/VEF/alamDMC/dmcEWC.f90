@@ -83,6 +83,10 @@ contains
             do i = 1, size(this%base_vectors,dim=2)
                 read(cnfunit,fmt=*,iostat=ioerr) this%base_vectors(:,i)
                 if (ioerr /= 0) return
+                if (norm2(this%base_vectors(:,i)) < epsilon(0.D0)) then
+                    write(display_unit,fmt=900) 'Base vector must not be of length zero'
+                endif
+                this%base_vectors(:,i) = this%base_vectors(:,i) / norm2(this%base_vectors(:,i))
             enddo
             !
             ! Evolution along the reference stress mode
@@ -193,15 +197,29 @@ contains
             !
             ! Re-initialize AlTay
             call finalizeAltay(info)
-            call initAltay(this%altay,info) 
-            info = this%calculateStressPath(sigma, evolution_control, output) 
+            if (info /= 0) exit
+            call initAltay(this%altay,info)
+            if (info /= 0) exit
+            !
+            if (this%calculateStressPath(sigma, evolution_control, output) /= criSuccess) then
+                ! For a certain reason we cannot calculate this path.
+                results(:,i) = 0.D0
+                cycle
+            endif
             !
             vPlasticWork = output%values(:)%icv%plastic_work_total
             vScalS = output%values(:)%scal_s
             call BarycentricInterpolator_init(bi, 2, vPlasticWork, vScalS, info)
-            do j = 1, size(vPlasticWorkLevels)
-                results(j,i) = interpolate(bi, vPlasticWorkLevels(j))
-            enddo
+            if (info == criSuccess) then
+                do j = 1, size(vPlasticWorkLevels)
+                    results(j,i) = interpolate(bi, vPlasticWorkLevels(j))
+                enddo
+            else
+                ! something is wrong with the input data (size of arrays, content?)
+                ! Let's ignore this line.
+                results(:,i) = 0.D0
+                cycle
+            endif
             
         enddo
         if (info /= 0) return

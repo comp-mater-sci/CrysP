@@ -135,7 +135,7 @@ contains
             ! -->>
             idx = idx + 1
             call setOutputRecord(tmp_records(idx), icv%IncrementationControlVariables, ylp, taylor_factor, info)
-            if (idx >= max_records) exit
+            if ((idx >= max_records) .or. (info /= criSuccess)) exit
             ! <<--
             !
             info = criSuccess
@@ -153,6 +153,7 @@ contains
             call icv%update(vDe, vSe, info)
         !
         enddo
+        if (info /= criSuccess) return
         ! -->>
         write(*,200)
         200 format('*')
