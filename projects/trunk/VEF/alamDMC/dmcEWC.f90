@@ -16,7 +16,8 @@
 !> DMC Equi-Work Contour
 !>
 ! #include "criMacros.fpp"
-    
+
+!> Calculations of Equi-Work Contours
 module dmcEWC
 use altaySub
 use alamYLP
@@ -68,50 +69,51 @@ implicit none
      
 contains
 
-      integer function EWCModule_ReadConfig(this,cnfunit) result(info) 
-      implicit none
-      class(EWCModule),intent(inout)            :: this
-      integer,intent(in)                        :: cnfunit
-      !
-      integer :: ioerr, i
-      !
-            info = BasicModule_ReadConfig(this,cnfunit) 
-            if (info /= criSuccess) return
-            info = criErr_IORead
-            ! Read parameters specific for the ASRModule
-            read(cnfunit,fmt=*,iostat=ioerr) this%reference_frame
-            do i = 1, size(this%base_vectors,dim=2)
-                read(cnfunit,fmt=*,iostat=ioerr) this%base_vectors(:,i)
-                if (ioerr /= 0) return
-                if (norm2(this%base_vectors(:,i)) < epsilon(0.D0)) then
+    integer function EWCModule_ReadConfig(this,cnfunit) result(info) 
+    implicit none
+    class(EWCModule),intent(inout)            :: this
+    integer,intent(in)                        :: cnfunit
+    !
+    integer :: ioerr, i
+    !
+        info = BasicModule_ReadConfig(this,cnfunit) 
+        if (info /= criSuccess) return
+        info = criErr_IORead
+        ! Read parameters specific for the ASRModule
+        read(cnfunit,fmt=*,iostat=ioerr) this%reference_frame
+        do i = 1, size(this%base_vectors,dim=2)
+            read(cnfunit,fmt=*,iostat=ioerr) this%base_vectors(:,i)
+            if (ioerr /= 0) return
+            if (norm2(this%base_vectors(:,i)) < epsilon(0.D0)) then
                     write(display_unit,fmt=900) 'Base vector must not be of length zero'
-                endif
-                this%base_vectors(:,i) = this%base_vectors(:,i) / norm2(this%base_vectors(:,i))
-            enddo
-            !
-            ! Evolution along the reference stress mode
-            read(cnfunit,fmt=*,iostat=ioerr) this%reference_stress_mode
-            read(cnfunit,fmt=*,iostat=ioerr) this%control%scaling_type, this%control%step_size, this%control%increment_size
-            !
-            ! Contour lines
-            this%ptr_theta_range => rangeFromConfig(cnfunit,info)
-            if (info /= criSuccess .or. .not. associated(this%ptr_theta_range)) return
-            this%ptr_contourlevel_range => rangeFromConfig(cnfunit,info)
-            if (info /= criSuccess .or. .not. associated(this%ptr_contourlevel_range)) return
-            read(cnfunit,*,iostat=ioerr) this%n_intervals
-            ! read(cnfunit,fmt='(A)',iostat=ioerr) this%output_fname
-            ! call stripComment(this%output_fname)
-            ! read(cnfunit,fmt='(L2)',iostat=ioerr) this%report_state
-            if (ioerr /= 0) then
-                  write(display_unit,fmt=902) 'EWCModule'
-                  return
             endif
-            info = criSuccess
-            
+            this%base_vectors(:,i) = this%base_vectors(:,i) / norm2(this%base_vectors(:,i))
+        enddo
+        !
+        ! Evolution along the reference stress mode
+        read(cnfunit,fmt=*,iostat=ioerr) this%reference_stress_mode
+        read(cnfunit,fmt=*,iostat=ioerr) this%control%scaling_type, this%control%step_size, this%control%increment_size
+        !
+        ! Contour lines
+        this%ptr_theta_range => rangeFromConfig(cnfunit,info)
+        if (info /= criSuccess .or. .not. associated(this%ptr_theta_range)) return
+        this%ptr_contourlevel_range => rangeFromConfig(cnfunit,info)
+        if (info /= criSuccess .or. .not. associated(this%ptr_contourlevel_range)) return
+        read(cnfunit,*,iostat=ioerr) this%n_intervals
+        ! read(cnfunit,fmt='(A)',iostat=ioerr) this%output_fname
+        ! call stripComment(this%output_fname)
+        ! read(cnfunit,fmt='(L2)',iostat=ioerr) this%report_state
+        if (ioerr /= 0) then
+            write(display_unit,fmt=902) 'EWCModule'
+            return
+        endif
+        info = criSuccess
+        !
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-      end function
+    !
+    end function
 
 
     subroutine EWCModule_Run(this,info)
