@@ -39,6 +39,24 @@
 				<Tool Name="VFCustomBuildTool"/>
 				<Tool Name="VFPreLinkEventTool"/>
 				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/></Configuration>
+		<Configuration Name="Release-instrumented|Win32" ConfigurationType="typeStaticLibrary" WholeProgramOptimization="true">
+				<Tool Name="VFFortranCompilerTool" AdditionalOptions="/stand:f08" SuppressStartupBanner="true" DebugInformationFormat="debugLineInfoOnly" Optimization="optimizeFull" Preprocess="preprocessYes" FixedFormLineLength="fixedLength132" F2003Semantics="true" CommonElementAlignment="alignCommonEightBytes" Traceback="true" UseMkl="mklSequential"/>
+				<Tool Name="VFLibrarianTool"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/></Configuration>
+		<Configuration Name="Release-instrumented|x64" ConfigurationType="typeStaticLibrary" WholeProgramOptimization="true">
+				<Tool Name="VFFortranCompilerTool" AdditionalOptions="/stand:f08" SuppressStartupBanner="true" Optimization="optimizeFull" Preprocess="preprocessYes" FixedFormLineLength="fixedLength132" F2003Semantics="true" CommonElementAlignment="alignCommonEightBytes" UseMkl="mklSequential"/>
+				<Tool Name="VFLibrarianTool"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/></Configuration></Configurations>
 	<Files>
 		<Filter Name="Header Files" Filter="fi;fd"/>
