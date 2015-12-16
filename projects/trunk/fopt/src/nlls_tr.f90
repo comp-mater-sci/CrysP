@@ -516,11 +516,13 @@ contains
                   !!-----------------------------------------------------------------------
                   case(1)       
                         call this%objectiveEval(tmp_vX,info)
+                        if (info /= 0) exit
                         ! Grab the state
                         f1 = this%state%vF
                   !!-----------------------------------------------------------------------
                   case(2)       
                         call this%objectiveEval(tmp_vX,info)
+                        if (info /= 0) exit
                         ! Grab the state
                         f2 = this%state%vF
                   !!-----------------------------------------------------------------------
@@ -538,7 +540,7 @@ contains
       deallocate(f0,f1,f2,tmp_vX)
       ! Finalize Jacobi solver, release resources
       res = djacobi_delete(handle)
-      if (checkMKLRescode(res,'recalculation of Jacobi matrix', nllsTR_ounit) /= 0) then
+      if ((info /= 0) .or. (checkMKLRescode(res,'recalculation of Jacobi matrix', nllsTR_ounit) /= 0)) then
             info = 1
       else
             info = 0
