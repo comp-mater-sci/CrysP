@@ -166,12 +166,14 @@ contains
             ! Set non-linear analysis
             tr_config%constJacobi = .false.
             !
-            ! start TR solver
-            if (attempt_linearized) then
+            ! initState is invalid if nlls_TR_solve in the "if (attempt_linearized)" 
+            ! branch above returns info /= 0
+            if (attempt_linearized .and. (info == 0)) then
                   ! Profit from the initial point stored by the solver for the linearized problem
                   info = objFunc%state%copy(initState)
-                  tr_config%use_init_state = .true.
+                  tr_config%use_init_state = (info == 0)
             endif
+            ! start TR solver
             call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
             R = r2
             !TODO: check exit status of the solver
