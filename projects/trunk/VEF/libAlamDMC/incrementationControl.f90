@@ -26,6 +26,9 @@ implicit none
     integer,parameter :: incrementFixed = 0, &
                          incrementAuto = 1
 
+    !> Default maximal number of increments along a deformation path.
+    integer,parameter :: dmcIC_max_increments = 1000
+    
     !> Basic control variables used in evolution of material state.
     type :: IncrementationControlVariables
         
@@ -69,6 +72,11 @@ implicit none
         integer         :: scaling_type = scalingStrainTensor
         
         integer         :: incrementation_type = incrementFixed
+        
+        !> Maximal number of increments. If set to positive value, it limits
+        !> the number of increments independently of other criteria.
+        !> It is ignored if set to a negative value.
+        integer         :: max_increment_count = dmcIC_max_increments
         
         double precision :: increment_size = 0.D0
         

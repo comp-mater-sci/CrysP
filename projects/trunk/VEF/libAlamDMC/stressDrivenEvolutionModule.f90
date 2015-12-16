@@ -81,23 +81,24 @@ contains
     !>        To be replaced by list or another dynamic storage.
     integer,parameter :: max_records = 100
     type(OutputRecord),dimension(max_records) :: tmp_records
-    integer :: idx
+    integer :: increment
     !
         !
         ! Follow the evolution line along S
         !
         Se%t = 0.D0
         De%t = 0.D0
-        
-        !> \fixme Get rid of the big array
-        ! -->>
-        idx = 0
-        ! <<--
         !
+        ! main loop over deformation increments
+        increment = 0
         do
             ! Calculate the strain rate mode
             info = this%findSolution(sigma, D, ylp)
-            if (info /= criSuccess) exit
+            if (info /= criSuccess) then
+                ! re-attempt, try D from the previous increment as the starting point
+                if (increment > 0) info = this%findSolution(sigma, D, ylp, vM_guess=.false.)
+            endif
+            if (info /= 0) exit
             ! -->>
             write(*,100)
             100 format('.',\)
@@ -130,12 +131,12 @@ contains
             if (info /= 0) exit !< \fixme Literal constant in makeTextureUpdateStep
             vSe = tens2vec5D(Se%t)
             !
+            increment = increment + 1
             ! Add output record to the list
             !> \fixme Get rid of the big array
             ! -->>
-            idx = idx + 1
-            call setOutputRecord(tmp_records(idx), icv%IncrementationControlVariables, ylp, taylor_factor, info)
-            if ((idx >= max_records) .or. (info /= criSuccess)) exit
+            call setOutputRecord(tmp_records(increment), icv%IncrementationControlVariables, ylp, taylor_factor, info)
+            if ((increment >= max_records) .or. (info /= criSuccess)) exit
             ! <<--
             !
             info = criSuccess
@@ -160,7 +161,7 @@ contains
         ! <<--
         !> \fixme Get rid of the big array. It should be asArray on list.
         ! -->>
-        outputs%values = tmp_records(1:idx)
+        outputs%values = tmp_records(1:increment)
         ! <<--
     !
     end function
