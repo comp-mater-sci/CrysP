@@ -324,7 +324,10 @@ contains
             !
             ! Assign steps with astate
             astate = steps
-            !            
+            !
+            ! Clean exception stack from a previous (possibly unsuccessful)
+            ! set of calls.
+            call RCM_clean()
             info = altaySub_Exception
             !
             do i = 1, steps%nSimulCalls
