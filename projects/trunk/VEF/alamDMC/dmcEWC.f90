@@ -166,7 +166,7 @@ contains
         ! equivalent plastic strain.
         vEquivalentStrain_ref = ref_output%values(:)%vm_strain_total
         vPlasticWork_ref = ref_output%values(:)%icv%plastic_work_total
-        call BarycentricInterpolator_init(bi, 2, vEquivalentStrain_ref, vPlasticWork_ref, info)
+        call BarycentricInterpolator_init(bi, interpolation_order, vEquivalentStrain_ref, vPlasticWork_ref, info)
         if (info /= criSuccess) then
             info = criError
             return
@@ -209,7 +209,7 @@ contains
             !
             vPlasticWork = output%values(:)%icv%plastic_work_total
             vScalS = output%values(:)%scal_s
-            call BarycentricInterpolator_init(bi, 2, vPlasticWork, vScalS, info)
+            call BarycentricInterpolator_init(bi, interpolation_order, vPlasticWork, vScalS, info)
             if (info == criSuccess) then
                 do j = 1, size(vPlasticWorkLevels)
                     results(j,i) = interpolate(bi, vPlasticWorkLevels(j))
