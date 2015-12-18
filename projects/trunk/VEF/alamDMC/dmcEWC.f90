@@ -15,16 +15,21 @@
 !
 !> DMC Equi-Work Contour
 !>
-! #include "criMacros.fpp"
+#include "criMacros.fpp"
 
 !> Calculations of Equi-Work Contours
 module dmcEWC
 use altaySub
 use alamYLP
 use dmcStressDrivenEvolutionModule
+use dmcResultFileOutput
 use criMathUtils
 use criRange
 use criNumerics
+use criAlgorithm
+use criLinearMap
+use criConfigReader
+use criLog
 use fngVec5D
 implicit none
 
@@ -37,6 +42,8 @@ implicit none
         type(EulerAngles)                       :: reference_frame
         
         character(len=max_pathlen)              :: output_fname = ''
+        
+        logical                                 :: use_reference_stress_mode = .false.
         
         double precision,dimension(sr_symm_voigt_dim)   :: reference_stress_mode = 0.D0
 
@@ -64,6 +71,8 @@ implicit none
 
         procedure,pass(this)    :: fileOutputMeta => EWCModule_fileOutputMeta
         
+        procedure,pass(this)    :: printConfig => EWCModule_PrintConfig
+        
     end type
       
      
@@ -74,7 +83,12 @@ contains
     class(EWCModule),intent(inout)            :: this
     integer,intent(in)                        :: cnfunit
     !
-    integer :: ioerr, i
+    integer :: ioerr, i, id
+    !
+    ! Keywords for mode selection
+    integer,parameter :: nmodes = 2, mode_reference_id = 1, mode_direct_id = 2
+    type(MapItem),dimension(nmodes),parameter :: mode_keywords = [ MapItem('reference',mode_reference_id), &
+                                                                   MapItem('direct',mode_direct_id) ]
     !
         info = BasicModule_ReadConfig(this,cnfunit) 
         if (info /= criSuccess) return
@@ -85,14 +99,34 @@ contains
             read(cnfunit,fmt=*,iostat=ioerr) this%base_vectors(:,i)
             if (ioerr /= 0) return
             if (norm2(this%base_vectors(:,i)) < epsilon(0.D0)) then
-                    write(display_unit,fmt=900) 'Base vector must not be of length zero'
+                write(display_unit,fmt=900) 'Norm of each base vectors must not be zero'
+                return
             endif
             this%base_vectors(:,i) = this%base_vectors(:,i) / norm2(this%base_vectors(:,i))
         enddo
         !
-        ! Evolution along the reference stress mode
-        read(cnfunit,fmt=*,iostat=ioerr) this%reference_stress_mode
-        read(cnfunit,fmt=*,iostat=ioerr) this%control%scaling_type, this%control%step_size, this%control%increment_size
+        ! Check how the work levels are provided
+        if (readKeyword(cnfunit,mode_keywords,id)) then
+            select case(id)
+            case(mode_reference_id)
+                ! Evolution along the reference stress mode
+                read(cnfunit,fmt=*,iostat=ioerr) this%reference_stress_mode
+                if (norm2(this%reference_stress_mode) < epsilon(0.D0)) then
+                    write(display_unit,fmt=900) 'Norm of the reference mode must not be zero'
+                    return
+                endif
+                this%use_reference_stress_mode = .true.
+                read(cnfunit,fmt=*,iostat=ioerr) this%control%scaling_type, this%control%step_size, this%control%increment_size
+                if (ioerr /= 0) return
+            case(mode_direct_id)
+                this%use_reference_stress_mode = .false.
+            end select
+        else
+            write(display_unit,fmt=900) 'Unknown keyword for work level selection'
+            info = criErr_IORead
+            return
+        endif
+        
         !
         ! Contour lines
         this%ptr_theta_range => rangeFromConfig(cnfunit,info)
@@ -116,6 +150,29 @@ contains
     end function
 
 
+    
+    integer function EWCModule_printConfig(this,outunit) result (info)
+    implicit none
+    class(EWCModule),intent(in)         :: this
+    integer,intent(in)                  :: outunit
+    !
+    !integer :: ioerr
+    !
+        info = BasicModule_printConfig(this,outunit)
+        if (info /= 0) return
+        !
+        info = -1
+        ! Print banner
+        write(outunit,'(A)') 'EWCModule: $Rev$'
+        if (doLogging(criLogInfo,this%output%verbosity)) then
+                !> \todo Print out summary of the configuration
+                continue
+        endif
+        info = 0
+    !
+    end function
+    
+
     subroutine EWCModule_Run(this,info)
     implicit none
     class(EWCModule),intent(inout)            :: this
@@ -127,7 +184,9 @@ contains
     type(SRTensor)  :: sigma
     
     type(EvolutionOutput) :: ref_output, output
-    double precision,dimension(:,:),allocatable :: results ! Shape is: [1:n_countours,1:n_theta]
+    ! Shape or `results` is: [0:n_countours,1:n_theta]. Zeroth column
+    ! shall include the theta angles
+    double precision,dimension(:,:),allocatable,target :: results 
     type(IncrementationControlSettings) :: evolution_control
     
     double precision,dimension(sr_symm_voigt_dim) :: sigma_vector
@@ -139,7 +198,7 @@ contains
                                                  vPlasticWork, &
                                                  vScalS
 
-    double precision,dimension(:),allocatable :: vTheta
+    double precision,dimension(:),pointer :: vTheta
     
     type(BarycentricInterpolator) :: bi
     integer,parameter :: interpolation_order = 2
@@ -151,31 +210,42 @@ contains
         ! array of results.
         n_theta = this%ptr_theta_range%size()
         n_contours = this%ptr_contourlevel_range%size()
-        allocate(vTheta(n_theta))
-        allocate(results(n_contours, n_theta))
-        allocate(vPlasticWorkLevels(n_contours), vEquivalentStrainLevels(n_contours))
-        do i = 1, n_contours
-            tmp_flag = this%ptr_contourlevel_range%next(vEquivalentStrainLevels(i))
-        enddo
-
         !
-        ! Evaluate the reference mode
-        sigma%t = Vec6ToMat33(this%reference_stress_mode)
-        info = this%calculateStressPath(sigma, this%control, ref_output)
-        if (info /= criSuccess) return
+        allocate(results(0:n_contours, n_theta))
+        vTheta => results(0,:)
         !
-        ! Calculate work levels that correspond to the requested levels of 
-        ! equivalent plastic strain.
-        vEquivalentStrain_ref = ref_output%values(:)%vm_strain_total
-        vPlasticWork_ref = ref_output%values(:)%icv%plastic_work_total
-        call BarycentricInterpolator_init(bi, interpolation_order, vEquivalentStrain_ref, vPlasticWork_ref, info)
-        if (info /= criSuccess) then
-            info = criError
-            return
+        allocate(vPlasticWorkLevels(n_contours))
+        !
+        if (this%use_reference_stress_mode) then
+            ! Strain levels are provided
+            allocate(vEquivalentStrainLevels(n_contours))
+            do i = 1, n_contours
+                tmp_flag = this%ptr_contourlevel_range%next(vEquivalentStrainLevels(i))
+            enddo
+            !
+            ! Evaluate the reference mode
+            sigma%t = Vec6ToMat33(this%reference_stress_mode)
+            info = this%calculateStressPath(sigma, this%control, ref_output)
+            if (info /= criSuccess) return
+            !
+            ! Calculate work levels that correspond to the requested levels of 
+            ! equivalent plastic strain.
+            vEquivalentStrain_ref = ref_output%values(:)%vm_strain_total
+            vPlasticWork_ref = ref_output%values(:)%icv%plastic_work_total
+            call BarycentricInterpolator_init(bi, interpolation_order, vEquivalentStrain_ref, vPlasticWork_ref, info)
+            if (info /= criSuccess) then
+                info = criError
+                return
+            endif
+            do i = 1, n_contours
+                vPlasticWorkLevels(i) = interpolate(bi, vEquivalentStrainLevels(i))
+            enddo
+        else
+            ! Direct selection of the work levels
+            do i = 1, n_contours
+                tmp_flag = this%ptr_contourlevel_range%next(vPlasticWorkLevels(i))
+            enddo
         endif
-        do i = 1, n_contours
-            vPlasticWorkLevels(i) = interpolate(bi, vEquivalentStrainLevels(i))
-        enddo
         !
         ! prepare controls for evolution lines
         evolution_control%scaling_type = scalingPlasticWork
@@ -226,38 +296,52 @@ contains
         enddo
         if (info /= 0) return
         !
-        info = this%fileOutput(vTheta, vEquivalentStrainLevels, results)
-        info = this%fileOutputMeta('contours',vEquivalentStrainLevels, vPlasticWorkLevels)
-        info = this%fileOutputMeta('reference',vEquivalentStrain_ref, vPlasticWork_ref)
-        !
+        if (this%use_reference_stress_mode) then
+            info = this%fileOutput(vEquivalentStrainLevels, results)
+            info = this%fileOutputMeta('contours',vEquivalentStrainLevels, vPlasticWorkLevels)
+            info = this%fileOutputMeta('reference',vEquivalentStrain_ref, vPlasticWork_ref)
+        else
+            info = this%fileOutput(vPlasticWorkLevels, results, use_work_levels=.true.)
+        endif
+    !
     end subroutine
 
 
     !> Post-process the result and generate the output.
-    integer function EWCModule_fileOutput(this,vTheta, vLevels, results) result(info)
+    integer function EWCModule_fileOutput(this, vLevels, results, use_work_levels) result(info)
     implicit none
     class(EWCModule),intent(inout)              :: this
-    double precision,dimension(:),intent(in)    :: vTheta, vLevels
-    double precision,dimension(:,:),intent(in)  :: results
+    double precision,dimension(:),intent(in)    :: vLevels
+    double precision,dimension(0:,:),intent(in)  :: results
+    logical,optional,intent(in)                 :: use_work_levels
     !
-    character(len=64) :: fmt_res
-    integer :: iounit, ierr, i, n_theta, n_contours
+    integer :: iounit, ierr, i, n_contours, n_columns
+    integer,parameter :: output_column_width = 18
+    character(len=output_column_width),dimension(:),allocatable :: header_columns
+    character(len=output_column_width) :: tmp_str, label_str
     !
         info = criErr_BadArgs
-        n_theta = size(vTheta)
-        n_contours = size(results,dim=1)
-        if ((size(vLevels) /= n_contours) .or. (size(results,dim=2) /= n_theta)) return
+        n_contours = ubound(results,dim=1)
+        if ((size(vLevels) /= n_contours)) return
+        !
         info = criErr_IOOpen
         open(newunit=iounit, file=trim(this%output%outputPrefix)//'.ewc', status='replace', iostat=ierr)
         if (ierr /= 0) return
-        info = criErr_IOWrite
-        ! Make format strings for the header and the data
-        write(fmt_res, '(A,1X,I0,A)') '(F8.2,1X',n_contours,'(E15.6,1X))'
-        do i = 1, n_theta
-            write(iounit,fmt=fmt_res,iostat=ierr) vTheta(i), results(:,i)
-            if (ierr /= 0) exit
+        !
+        n_columns = 1 + n_contours ! Theta followed by n_contours columns
+        !
+        ! Make the headers
+        CHOOSE(label_str, optionalDefault(use_work_levels,.false.), 'S|W=', 'S|eps_vM=')
+        allocate(header_columns(n_columns))
+        header_columns(1) = centered('theta')
+        do i = 1, n_columns-1
+            ! beware: G10 is OK as long as 10 < output_column_width
+            tmp_str = trim(label_str) // trim(adjustl(tostring_double(vLevels(i), output_column_width, fmt='(G10.4)')))
+            header_columns(i+1) = centered(tmp_str)
         enddo
-        if (ierr == 0) info = criSuccess
+        !
+        info = writeResultFile(iounit, results, header_columns, [output_column_width])
+       
         close(iounit)
     !
     end function
@@ -289,5 +373,5 @@ contains
         close(iounit)
     !
     end function
-
+    
 end module
