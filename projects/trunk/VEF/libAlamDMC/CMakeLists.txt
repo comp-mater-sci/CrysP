@@ -19,6 +19,7 @@ dmcUtils.f90
 incrementationControl.f90 
 qrsTypes.f90
 stressDrivenEvolutionModule.f90
+dmcResultFileOutput.f90
 )
 
 add_library(AlamDMC STATIC ${AlamDMC_SRCS})
