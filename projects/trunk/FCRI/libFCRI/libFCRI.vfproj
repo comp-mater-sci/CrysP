@@ -5,7 +5,7 @@
 		<Platform Name="x64"/></Platforms>
 	<Configurations>
 		<Configuration Name="Debug|Win32" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" MultiProcessorCompilation="true" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT;DEBUG" F2003Semantics="true" StandardWarnings="standardWarningsF08" Diagnostics="diagnosticsShowAll" DebugParameter="debugParameterAll" WarnInterfaces="true" InitLocalVarToNAN="true" Traceback="true" RuntimeChecks="rtChecksAll" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT;DEBUG" Diagnostics="diagnosticsShowAll" DebugParameter="debugParameterAll" WarnInterfaces="true" InitLocalVarToNAN="true" Traceback="true" RuntimeChecks="rtChecksAll" BoundsCheck="true" RuntimeLibrary="rtMultiThreadedDebug" MultiProcessorCompilation="true" F2003Semantics="true" StackFrameCheck="true" StandardWarnings="standardWarningsF08"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -15,7 +15,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release|Win32" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" F2003Semantics="true" StandardWarnings="standardWarningsF08"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" MultiProcessorCompilation="true" F2003Semantics="true" StandardWarnings="standardWarningsF08"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -25,7 +25,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Debug_abaqus|Win32" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" MultiProcessorCompilation="true" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="$(ProjectDir)/..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT;DEBUG;MOD_RENAME_ABAQUS" StandardWarnings="standardWarningsF08" Diagnostics="diagnosticsShowAll" DebugParameter="debugParameterAll" WarnInterfaces="true" CallingConvention="callConventionCRef" ModulePath="$(IntDir)\include" Traceback="true" NullPointerCheck="true" BoundsCheck="true" UninitializedVariablesCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDLL"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="$(ProjectDir)..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT;DEBUG;" Diagnostics="diagnosticsShowAll" DebugParameter="debugParameterAll" WarnInterfaces="true" CallingConvention="callConventionCRef" ModulePath="$(IntDir)\include" Traceback="true" NullPointerCheck="true" BoundsCheck="true" UninitializedVariablesCheck="true" RuntimeLibrary="rtMultiThreadedDLL" MultiProcessorCompilation="true" StackFrameCheck="true" StandardWarnings="standardWarningsF08"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -35,7 +35,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release_abaqus|Win32" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Optimization="optimizeFull" InterproceduralOptimizations="ipoSingleFile" Preprocess="preprocessYes" AdditionalIncludeDirectories="$(ProjectDir)..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT;NDEBUG;MOD_RENAME_ABAQUS" StandardWarnings="standardWarningsF08" CallingConvention="callConventionCRef" ModulePath="$(IntDir)\include" RuntimeChecks="rtChecksNone" RuntimeLibrary="rtMultiThreadedDLL"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" InterproceduralOptimizations="ipoSingleFile" Preprocess="preprocessYes" AdditionalIncludeDirectories="$(ProjectDir)..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT;NDEBUG;" CallingConvention="callConventionCRef" ModulePath="$(IntDir)\include" RuntimeChecks="rtChecksNone" RuntimeLibrary="rtMultiThreadedDLL" MultiProcessorCompilation="true" StandardWarnings="standardWarningsF08"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -45,7 +45,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Debug|x64" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" MultiProcessorCompilation="true" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT;DEBUG" F2003Semantics="true" StandardWarnings="standardWarningsF08" Diagnostics="diagnosticsShowAll" DebugParameter="debugParameterAll" WarnInterfaces="true" InitLocalVarToNAN="true" Traceback="true" RuntimeChecks="rtChecksAll" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT;DEBUG" Diagnostics="diagnosticsShowAll" DebugParameter="debugParameterAll" WarnInterfaces="true" InitLocalVarToNAN="true" Traceback="true" RuntimeChecks="rtChecksAll" BoundsCheck="true" RuntimeLibrary="rtMultiThreadedDebug" MultiProcessorCompilation="true" F2003Semantics="true" StackFrameCheck="true" StandardWarnings="standardWarningsF08"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
@@ -55,7 +55,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release|x64" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" F2003Semantics="true" StandardWarnings="standardWarningsF08"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" MultiProcessorCompilation="true" F2003Semantics="true" StandardWarnings="standardWarningsF08"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
@@ -65,7 +65,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Debug_abaqus|x64" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" MultiProcessorCompilation="true" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="$(ProjectDir)..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT;DEBUG;MOD_RENAME_ABAQUS" StandardWarnings="standardWarningsF08" Diagnostics="diagnosticsShowAll" DebugParameter="debugParameterAll" WarnInterfaces="true" CallingConvention="callConventionCRef" ModulePath="$(IntDir)\include" Traceback="true" NullPointerCheck="true" BoundsCheck="true" UninitializedVariablesCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDLL"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="$(ProjectDir)..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT;DEBUG;MOD_RENAME_ABAQUS" Diagnostics="diagnosticsShowAll" DebugParameter="debugParameterAll" WarnInterfaces="true" CallingConvention="callConventionCRef" ModulePath="$(IntDir)\include" Traceback="true" NullPointerCheck="true" BoundsCheck="true" UninitializedVariablesCheck="true" RuntimeLibrary="rtMultiThreadedDLL" MultiProcessorCompilation="true" StackFrameCheck="true" StandardWarnings="standardWarningsF08"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
@@ -75,7 +75,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release_abaqus|x64" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Optimization="optimizeFull" InterproceduralOptimizations="ipoSingleFile" Preprocess="preprocessYes" AdditionalIncludeDirectories="$(ProjectDir)..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT;NDEBUG;MOD_RENAME_ABAQUS" StandardWarnings="standardWarningsF08" CallingConvention="callConventionCRef" ModulePath="$(IntDir)\include" RuntimeChecks="rtChecksNone" RuntimeLibrary="rtMultiThreadedDLL"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" InterproceduralOptimizations="ipoSingleFile" Preprocess="preprocessYes" AdditionalIncludeDirectories="$(ProjectDir)..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT;NDEBUG;MOD_RENAME_ABAQUS" CallingConvention="callConventionCRef" ModulePath="$(IntDir)\include" RuntimeChecks="rtChecksNone" RuntimeLibrary="rtMultiThreadedDLL" MultiProcessorCompilation="true" StandardWarnings="standardWarningsF08"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
@@ -85,7 +85,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release-Amplifier|Win32" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" F2003Semantics="true" StandardWarnings="standardWarningsF08"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" MultiProcessorCompilation="true" F2003Semantics="true"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -95,7 +95,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release-Amplifier|x64" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" MultiProcessorCompilation="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" F2003Semantics="true" StandardWarnings="standardWarningsF08" DebugParameter="debugParameterAll" Traceback="true" RuntimeChecks="rtChecksNone"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" DebugParameter="debugParameterAll" Traceback="true" RuntimeChecks="rtChecksNone" MultiProcessorCompilation="true" F2003Semantics="true" StandardWarnings="standardWarningsF08"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
