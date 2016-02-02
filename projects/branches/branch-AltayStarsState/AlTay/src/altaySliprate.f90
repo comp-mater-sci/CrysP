@@ -21,7 +21,7 @@
       
       contains
       
-      Subroutine SLIPRAT(solution,MacroDefRate,Pancak2_input,crss_data,DM_data)
+      Subroutine SLIPRAT(solution,MacroDefRate,Pancak2_input,crss_data,DM_data, fallback)
       use altayIOConfig
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -34,6 +34,7 @@
       type(LinearProgrammingSDV),intent(in)           :: Pancak2_input
       type(CRSSData),intent(in)                  :: crss_data
       type(DeformationMechanismData), intent(in) :: DM_data
+      logical,intent(out)                        :: fallback
 !     September 2000
 !     To find the slip rates assuming that
 !     - the stress, strain rate and the active slip systems are known,
@@ -142,6 +143,7 @@
       !
       if (NOPL==0) goto 6
       !
+      fallback = .FALSE.
       NN=ISTOR(0)
       IND(1:NN)=ISTOR(1:NN)
       solution%shearrate%shearrate(IND(1:NN)) = sgnn(IND(1:NN))*SLSTOR(1:NN)*MacroDefRate%vMeqStrainRate
@@ -162,7 +164,8 @@
       goto 789
       !
       !---LABEL 6---
-  6   NN = Pancak2_input%nactiv
+6     NN = Pancak2_input%nactiv
+      fallback = .TRUE.
       IND(1:NN)=Pancak2_input%indact(1:NN)
       solution%shearrate%shearrate(IND(1:NN)) = Pancak2_input%sliplp(1:NN)*MacroDefRate%vMeqStrainRate
       !

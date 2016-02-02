@@ -10,7 +10,11 @@
       use altayMesostructure
       use altayDeformationMechanism
       use altayPancake
+#ifdef SLIPRATESVD
+      use altaySliprateSVD
+#else
       use altaySliprate
+#endif
       use altayHard
       use altaySDVTypes
       !
@@ -96,7 +100,13 @@
       !> work-around to relocate large part of TAYLR1 to within SIMUL, without repetition
       !   (cf. ifdef ALTAY_SUBROUTINE)
       logical :: calling_TAYLR1 = .false.
-      !
+#ifdef RATES_TESTING_TWN
+      integer :: n_sign_error
+      double precision :: errornorm, rates_sos
+      !double precision, dimension(:),allocatable :: shearrr
+      logical :: fallback !<Fallback-scenario (i.e. take pancak2-solution) utilized or not
+      double precision :: fallbackfraction
+#endif      !
       type(EulerAngles), dimension(2) :: eulerb_1_rad, eulerb_0_deg, eulerb_0_rad ! _0_: start of inc; _1_: end of inc
 #ifdef PEBP_ENABLED
       type(StateDerivedVars) :: pebpSDV, pebpSDVavg
@@ -453,7 +463,56 @@
       !
       !-> -> -> content from TAYLR1
       !
-      call SLIPRAT(sliprat_solution,MacroDefRate,Pancak2_solution,CRSSb(laml),material%phases(1)%deformationmechanism)
+#ifdef SLIPRATESVD
+      call sliprateSVD(sliprat_solution,MacroDefRate,Pancak2_solution,CRSSb(laml),material%phases(1)%deformationmechanism, fallback, info)
+#else
+      call SLIPRAT(sliprat_solution,MacroDefRate,Pancak2_solution,CRSSb(laml),material%phases(1)%deformationmechanism, fallback)
+#endif
+#ifdef RATES_TESTING_TWN
+        ! RATES_TESTING_TWN output run-time testing variables to TWN-file
+        !
+        !'n_sign_error': variable for testing: the number of systems with erroneous sign of slip
+        n_sign_error = count(Pancak2_solution%taurlp(1:Pancak2_solution%NACTIV)*sliprat_solution%shearrate%shearrate(Pancak2_solution%INDACT(1:Pancak2_solution%NACTIV)) < 0.D0)
+        if (n_sign_error > 0 ) then
+            continue
+        end if
+        continue
+        !
+        !'Errornorm': variable for testing.
+        errornorm = norm2( Pancak2_solution%localstrainrate - &
+            matmul(material%phases(1)%deformationmechanism%A1, sliprat_solution%shearrate%shearrate) / &
+            MacroDefRate%vMeqStrainRate)
+        continue
+        if (errornorm < 1.E-12) then
+            errornormTH = -1.
+        else
+            errornormTH = errornorm
+        end if
+                !
+        !'rates_sos': variable for testing: the sum-of-squares of shearrates
+        rates_sos = sum(sliprat_solution%shearrate%shearrate*sliprat_solution%shearrate%shearrate)
+        !
+        !if(.not.(allocated(shearrr))) allocate(shearrr(material%phases(1)%deformationmechanism%n_slip_systems),source=0.D0)
+        !shearrr = sliprat_solution%shearrate%shearrate / MacroDefRate%vMeqStrainRate
+        !
+        
+        write (IMP3,987) sum(Pancak2_solution%sliplp*Pancak2_solution%taurlp)*MacroDefRate%vMeqStrainRate, sliprat_solution%workrate, &
+                       n_sign_error, &
+                       errornormTH, norm2(Pancak2_solution%localstrainrate), &
+                       rates_sos, &
+                       fallback
+987                    format (2(E12.4,X),I2,X,3(E12.4,X),L1)
+        !
+        if (IOR == 1) fallbackfraction = 0.
+        if (fallback) fallbackfraction = fallbackfraction + 1.
+        if (IOR == NPOINT) then
+            fallbackfraction = fallbackfraction / NPOINT
+            write (IMP3,922) "fallbackfraction=", fallbackfraction
+922         format (A, F12.4)
+        end if
+        
+        
+#endif  
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif  

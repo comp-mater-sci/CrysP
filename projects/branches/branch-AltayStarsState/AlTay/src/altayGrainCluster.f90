@@ -8,7 +8,11 @@ module altayGrainCluster
 use altayStateTypes
 use altayState
 use altayPancake
+#ifdef SLIPRATESVD
+use altaySliprateSVD
+#else
 use altaySliprate
+#endif
 use altayMacroKinematic
 use altaySDVTypes
 implicit none
@@ -29,6 +33,7 @@ contains
     integer :: i
     !> Number of grains in the cluster
     integer :: n_grains
+    logical :: fallback !<Fallback-scenario (i.e. take pancak2-solution) utilized or not
         !
         ALLOCATED_SIZE(n_grains,cluster_state%idx)
         
@@ -51,7 +56,12 @@ contains
                        sliprat_solution => solution%components(i)%sliprat_solution, &
                        DM_data          => grain_states%grains(cluster_state%idx(i))%&
                                             phase%deformationmechanism)
-                call sliprat(sliprat_solution,MacroDefRate,pancak2_solution,crss_data,DM_data)
+#ifdef SLIPRATESVD
+                call sliprateSVD(sliprat_solution,MacroDefRate,pancak2_solution, &
+                    crss_data,DM_data,fallback,info)
+#else
+                call sliprat(sliprat_solution,MacroDefRate,pancak2_solution,crss_data,DM_data,fallback)
+#endif
             end associate
         end do
         !
