@@ -100,11 +100,11 @@
       !> work-around to relocate large part of TAYLR1 to within SIMUL, without repetition
       !   (cf. ifdef ALTAY_SUBROUTINE)
       logical :: calling_TAYLR1 = .false.
+      logical :: fallback !<Fallback-scenario (i.e. take pancak2-solution) utilized or not
 #ifdef RATES_TESTING_TWN
       integer :: n_sign_error
       double precision :: errornorm, rates_sos
       !double precision, dimension(:),allocatable :: shearrr
-      logical :: fallback !<Fallback-scenario (i.e. take pancak2-solution) utilized or not
       double precision :: fallbackfraction
 #endif      !
       type(EulerAngles), dimension(2) :: eulerb_1_rad, eulerb_0_deg, eulerb_0_rad ! _0_: start of inc; _1_: end of inc
