@@ -63,7 +63,7 @@
       type(StatePersistenceConfig)      :: input_storage_config !> \todo Resove this temporary fix
       ! Storage for persistent state variables
       class(StatePersistenceScheme), pointer :: input_storage, output_storage
-#ifdef TESTING_ENABLED
+#ifdef FORCE_CUR_OUTPUT_ENABLED
       class(StatePersistenceScheme), pointer :: native_storage
 #endif
       !
@@ -342,7 +342,12 @@
       !!! <<--
       !
 #ifdef TESTING_ENABLED
+      !!! TESTING -->>
       call altayStateData_printStatus(state)
+      !!! <<-- TESTING
+#endif
+
+#ifdef FORCE_CUR_OUTPUT_ENABLED
       ! Only for testing: CUR file
       block
            type(StatePersistenceConfig) :: outcnf
@@ -409,7 +414,7 @@
       !
       CALL SIMUL(config, state, material, NSTP, 1, NFILE0, MacroDefRate)
       call output_storage%saveState(state%new, info)
-#ifdef TESTING_ENABLED
+#ifdef FORCE_CUR_OUTPUT_ENABLED
       call native_storage%saveState(state%new, info)
 #endif
    2  CONTINUE
@@ -445,8 +450,8 @@
 #endif
       
       deallocate(output_storage)
-#ifdef TESTING_ENABLED
-      ! Only for testing: CUR file
+#ifdef FORCE_CUR_OUTPUT_ENABLED
+      ! CUR file
       deallocate(native_storage)
 #endif
       !> \todo FIXME This should be done in a _correct_ and elegant way
