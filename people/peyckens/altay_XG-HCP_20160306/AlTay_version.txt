@@ -1,0 +1,5 @@
+branches\branch-AltayStarsState\AlTay\libaltay ::: rev 2464 ::: Release-x64
+	* Altay (main) preprocessor definitions enabled:: MAINDIRECT;FINALCUB_ENABLED;FORCE_CUR_OUTPUT_ENABLED
+	* libaltay preprocessor definitions enabled :: NO_STDOUT;RCM_ENABLED;USE_ALTAYSIMUL;SLIPRATESVD;RATES_AVG_TWN
+		[libaltay preprocessor definitions disabled :: RATES_TESTING_TWN]
+	* libFCRI preprocessor definitions enabled :: FLAWED_IFORT_OPT
