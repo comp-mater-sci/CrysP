@@ -356,14 +356,19 @@ contains
             ! (i)   Are the Miller indices of the deformation plane (0,0,0)?
             ! (ii)  Are the Miller indices of the deformation direction (0,0,0)?
             ! (iii) Is the system non-orthogonal?            
-            if( this%plane_Miller(i)%is0() .or. &
-                this%direction_Miller(i)%is0() .or. &
-                dot_product(this%plane_Miller(i)%index(:), &
-                            this%direction_Miller(i)%index(:)) /= 0 ) then
-                !
-                info = criErr_BadArgs
-                return
-            end if 
+            !PATCH-NOTE: These error checks are in current format only valid for
+            ! cubic metals (i.e. unit cell equals identity).
+            ! Current patch: for other metal classes, the checks are skipped.
+            if( norm2(this%unitcell - unit_sr_Matrix) < 1.0D-10 ) then
+                if( this%plane_Miller(i)%is0() .or. &
+                    this%direction_Miller(i)%is0() .or. &
+                    dot_product(this%plane_Miller(i)%index(:), &
+                                this%direction_Miller(i)%index(:)) /= 0 ) then
+                   !
+                    info = criErr_BadArgs
+                    return
+                end if 
+            end if
             !
         end do
         !
