@@ -106,7 +106,10 @@
       double precision :: errornorm, rates_sos
       !double precision, dimension(:),allocatable :: shearrr
       double precision :: fallbackfraction
-#endif      !
+#endif
+#ifdef RATES_AVG_TWN
+      type(ShearRateData) :: shearrateAvg
+#endif
       type(EulerAngles), dimension(2) :: eulerb_1_rad, eulerb_0_deg, eulerb_0_rad ! _0_: start of inc; _1_: end of inc
 #ifdef PEBP_ENABLED
       type(StateDerivedVars) :: pebpSDV, pebpSDVavg
@@ -326,6 +329,11 @@
 #ifdef PEBP_ENABLED
       pebpSDVavg = StateDerivedVars()
 #endif      
+#ifdef RATES_AVG_TWN
+        !Initialize shearrateAvg
+        call ShearRateData_init(shearrateAvg, material%phases(1)%deformationmechanism%n_systems, info)
+        if ( info /= criSuccess ) return
+#endif
       !
       call dynfil2(state%old,MacroDefState%TotalDefGrad)
 #ifndef NO_STDOUT       
@@ -598,6 +606,12 @@
            pebpSDVavg = pebpSDVavg + pebpSDV * GEWF
       endselect
 #endif
+#ifdef RATES_AVG_TWN
+      forall (i=1:material%phases(1)%deformationmechanism%n_systems)
+           shearrateAvg%shearrate(i) = shearrateAvg%shearrate(i) + abs(sliprat_solution%shearrate%shearrate(i)) * GEWF
+      endforall
+#endif
+
 #ifdef ALTAY_SUBROUTINE
       ! We can choose not to update the texture state
       if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
@@ -654,6 +668,11 @@
       if (NPEBPx /= 0) info = writeSDV(IPEBPSDV,pebpSDVavg)
 #endif
 #endif      
+#ifdef RATES_AVG_TWN
+      shearrateAvg%shearrate(:) = shearrateAvg%shearrate(:) * (1.D0/TOTGEW)
+      write (IMP3,944) shearrateAvg%shearrate(:)
+944   format (96(E12.4,X))
+#endif
 #ifdef ALTAY_SUBROUTINE
       ! Get the homogenized quantities:
       associate (callout => astate%simulCalls(astate%this)%output)
