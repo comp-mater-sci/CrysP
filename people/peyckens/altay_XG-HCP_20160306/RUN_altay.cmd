@@ -5,7 +5,7 @@ del main.ctl
 
 
 
-del *.CUB *.h5 *.LST *.RPT
+del *.CUB *.h5 *.RPT
 pause
 
 
