@@ -77,17 +77,39 @@ contains
       end function
       
       !> Returns the path without file exension (if there is any)
-      function stripExt(path)
-      use ifport
+      elemental function stripExt(path)
       implicit none
       character(len=*),intent(in)   :: path
       character(len=len(path))      :: stripExt
       !
+      character(len=len(path))   :: ext ! temporary
+      !
+            call splitExt(path, stripExt, ext)
+      !
+      end function      
+      
+      !> Split the pathname path into a pair (root, ext).
+      !>
+      !> Ext is empty or begins with a period and contains at most one period. 
+      !> Leading periods on the basename are ignored.
+      !> Semantically it should hold that (root // ext) == path, but the effect of 
+      !> leading and trailing blanks must be also considered. It is safer to assume
+      !> that:
+      !> adjustl(trim(root)) // adjustl(trim(ext)) == adjustl(path)
+      !> The procedure removes the leading blanks from root and ext, so:
+      !> len_trim(root) // len_trim(ext) == adjustl(path)
+      elemental subroutine splitExt(path, root, ext)
+      implicit none
+      character(len=*),intent(in)   :: path
+      character(len=*),intent(out)  :: root
+      character(len=*),intent(out)  :: ext
+      !
       integer :: lb,l,u,ups
       character,parameter :: dot = '.'
       !
-            lb = lnblnk(path)
-            stripExt = ''
+            lb = len_trim(path)
+            root = ''
+            ext = ''
             if (lb > 0) then
                   l = 1
                   u = index(path, dot, back=.true.)
@@ -107,11 +129,15 @@ contains
                   endif
                   if (l <= u) then 
                         ! finally: shift to the left
-                        stripExt = adjustl(path(l:u))
+                        root = adjustl(path(l:u))
+                        ups = u + 1 ! Supposed position of the dot
+                        if (ups <= lb) ext = adjustl(path(ups:lb))
+                        
                   endif
             endif
+
       !
-      end function      
+      end subroutine
       
       
       !> Construct a filename by stitching together prefix and suffix.
