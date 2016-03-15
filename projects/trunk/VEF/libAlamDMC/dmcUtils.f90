@@ -21,11 +21,6 @@ use criRuntime
 
       character,parameter     :: default_comment_sign = '#'
      
-      ! Meta-data
-      
-      integer,parameter       :: nSymTensComps = 6
-      integer,parameter       :: nDevTensComps = 5
-      
 contains
       !
       ! Functions ported from FNG

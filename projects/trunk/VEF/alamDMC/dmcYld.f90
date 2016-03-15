@@ -34,11 +34,11 @@ private
             
             class(range_type),pointer                 :: ptr_w_range
             
-            double precision,dimension(nSymTensComps,nbase)       :: base_vectors = 0.D0
+            double precision,dimension(sr_symm_voigt_dim,nbase)       :: base_vectors = 0.D0
       
             logical                                   :: do_scaling = .false.
 
-            double precision,dimension(nSymTensComps) :: scaling_vector = 0.D0
+            double precision,dimension(sr_symm_voigt_dim) :: scaling_vector = 0.D0
       
             logical                                   :: normalizeSm = .false.
             
@@ -130,6 +130,7 @@ contains
       double precision,dimension(5)             :: vA, vS,vSonA, vSonAn
       double precision                          :: R
       type(yldResult),dimension(:),allocatable  :: yldRes
+      double precision,dimension(sr_symm_voigt_dim) :: sigma_vector
       !
       integer                 :: ioerr,i,npoints
       integer,parameter       :: cnfunit = 90, ofunit = 91
@@ -203,8 +204,11 @@ contains
                         !
                         theta = deg2rad(theta) 
                         ! Combine the base vectors
-                        Sm = Vec6ToMat33(this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) & 
-                                         + w*this%base_vectors(:,3))
+                        ! Note: explicit temporary sigma_vector prevents runtime warning about
+                        !       a temporary created in a call to Vec6ToMat33
+                        sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) & 
+                                       + w*this%base_vectors(:,3)
+                        Sm = Vec6ToMat33(sigma_vector)
                         !                  
                         if (findSolution() /= 0) cycle
                         !
