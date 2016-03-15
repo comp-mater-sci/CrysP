@@ -36,16 +36,20 @@ implicit none
 
 contains
 
-            
-      function basename(path)
-      use ifport
+      !> Return basename of the pathname `path`, which is the name
+      !> of the file or directory `path` with any leading directory
+      !> components removed.
+      !>
+      !> The function is modelled after Unix command `basename` and
+      !> Python os.path.basename()
+      elemental function basename(path)
       implicit none
       character(len=*),intent(in)   :: path
       character(len=len(path))       :: basename
       !
       integer :: lb,l,u
       !
-            lb = lnblnk(path)
+            lb = len_trim(path)
             if (lb > 0) then
                   l = 1
                   u = index(path, pathsep, back=.true.)
@@ -67,7 +71,6 @@ contains
                   else
                         u = lb
                   endif
-                  ASSERT(l <= u)
                   ! finally: shift to the left
                   basename = adjustl(path(l:u))
             else
