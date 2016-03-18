@@ -21,6 +21,7 @@
 !
 subroutine ocrossTest()
 use criMathUtils
+use criTest
 implicit none
 
 integer  :: i

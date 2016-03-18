@@ -22,6 +22,7 @@
 !
 module criTestRange
 use criRange
+use criTest
 implicit none
 private      
 

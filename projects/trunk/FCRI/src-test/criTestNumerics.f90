@@ -22,6 +22,7 @@
 
 module criTestNumerics
 use criNumerics
+use criTest
 implicit none
 
 public criTestNumerics_main

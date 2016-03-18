@@ -24,6 +24,8 @@
 !> Tests on the extensions to the Facet potential expression
 module criTestAlgorithm
 use criAlgorithm
+use criTest
+implicit none
 
 public criTestAlgorithm_main
 

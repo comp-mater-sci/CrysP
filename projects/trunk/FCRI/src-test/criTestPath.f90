@@ -21,6 +21,7 @@
 module criTestPath
 use criPath
 use criAlgorithm
+use criTest
 implicit none
 private
 

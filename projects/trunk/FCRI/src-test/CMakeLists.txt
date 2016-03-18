@@ -16,7 +16,7 @@ list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
 
 set(EXESRC
-criTest.f90
+criTestDriver.f90
 criTestAlgorithm.f90
 criTestIterUtils.f90
 criTestMathUtils.f90

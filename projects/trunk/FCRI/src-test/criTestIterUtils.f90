@@ -20,6 +20,7 @@
 !> Test suite for criIterUtils    
 module criTestIterUtils
 use criIterUtils
+use criTest
 implicit none
 
     public criTestIterUtils_main

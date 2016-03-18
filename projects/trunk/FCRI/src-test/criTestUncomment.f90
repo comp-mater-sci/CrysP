@@ -20,7 +20,7 @@
 
 module criTestUncomment
 use criUncomment
-
+use criTest
 implicit none
 private
 

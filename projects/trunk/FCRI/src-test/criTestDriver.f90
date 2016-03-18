@@ -18,6 +18,7 @@
 !
 !
 #include "criStdDefs.fpp"
+#include "criTest.fpp"
 !
 #ifdef WINDOWS
 #define DIRSEP '\'
@@ -25,7 +26,8 @@
 #define DIRSEP '/'
 #endif
 
-program criTest
+program criTestDriver
+use criTest
 use criTestAlgorithm
 use criTestRange
 use criTestPath
@@ -36,8 +38,9 @@ implicit none
 
 integer  :: info
 logical  :: l
-      
 
+      call testInit()
+      
       l = test_replaceAll()
       
       l = criTestPath_main()
@@ -51,6 +54,8 @@ logical  :: l
       l = criTestIterUtils_main()
 
       l = criTestNumerics_main()
+      
+      call testSummary()
 
 end program
 

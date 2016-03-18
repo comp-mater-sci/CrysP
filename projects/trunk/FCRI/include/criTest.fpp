@@ -32,9 +32,20 @@
 #endif
 #endif
 
-! _TEST macro: testing of a condition "boolval"
 #ifndef _TEST
+
+#ifdef CRITESTFRAMEWORK_STANDALONE
+! _TEST macro: testing of a condition "boolval" and in-place reporting
+! criTest module is not needed.
 #define _TEST(name,boolval) if (boolval) then; write(*,'(A)') 'Test "'//trim(name)//'": pass'; else; write(*,'(A,1X,I0)') 'Test "'//trim(name)//'" failed, line:',__LINE__; _TEST_STOP; endif;
+
+#else
+! _TEST macro: processing handled by criTest module.
+
+#define _TEST(name,boolval) call testReport(name,boolval,__LINE__, __FILE__)
+
+#endif
 #endif
 
+! endif of CRITESTFRAMEWORK
 #endif
