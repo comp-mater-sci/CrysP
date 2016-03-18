@@ -37,6 +37,8 @@ contains
             stat = test_stripExt()
             
             stat = test_splitExt()
+
+            stat = test_pathjoin()
             
       end function
 
@@ -236,6 +238,100 @@ contains
       end function
       
       
-      
+      logical function test_pathjoin()
+      implicit none
+      character(len=max_pathlen)    :: path, path_res, path_a, path_b
+      !
+            test_pathjoin = .false.
+            ! Test:
+            path_a = ''
+            path_b = ''
+            path_res = ''
+            path = pathjoin(path_a, path_b)
+            _TEST('pathjoin, empty paths', path == path_res)
+
+            ! Test:
+            path_a = '    '
+            path_b = '    '
+            path_res = ''
+            path = pathjoin(path_a, path_b)
+            _TEST('pathjoin, blank paths', path == path_res)
+
+            ! Test:
+            path_a = ''
+            path_b = pathsep
+            path_res = pathsep
+            path = pathjoin(path_a, path_b)
+            _TEST('pathjoin, empty path + pathsep', path == path_res)
+            
+            ! Test:
+            path_a = '    '
+            path_b = pathsep
+            path_res = pathsep
+            path = pathjoin(path_a, path_b)
+            _TEST('pathjoin, blank path + pathsep', path == pathsep)
+
+            ! Test:
+            path_a = pathsep
+            path_b = ''
+            path_res = pathsep
+            path = pathjoin(path_a, path_b)
+            _TEST('pathjoin, pathsep + empty path,', path == pathsep)
+
+            ! Test:
+            path_a = pathsep
+            path_b = '    '
+            path_res = pathsep
+            path = pathjoin(path_a, path_b)
+            _TEST('pathjoin, pathsep + blank path,', path == pathsep)
+
+            ! Test:
+            path_a = pathsep
+            path_b = pathsep
+            path_res = pathsep
+            path = pathjoin(path_a, path_b)
+            _TEST('pathjoin, pathsep + pathsep', path == pathsep)
+
+            ! Test:
+            path_a = '    '//pathsep
+            path_b = ' '//pathsep
+            path_res = pathsep
+            path = pathjoin(path_a, path_b)
+            _TEST('pathjoin, blank+pathsep + blank+pathsep', path == pathsep)
+            
+            ! Test:
+            path_a = 'path1'
+            path_b = pathsep//'path2'
+            path_res = path_b
+            path = pathjoin(path_a, path_b)
+            _TEST('pathjoin, 2nd path starts with root', path == path_res)
+            
+            ! Test:
+            path_a = 'path1'
+            path_b = '     '//pathsep//'path2'
+            path_res = pathsep//'path2'
+            path = pathjoin(path_a, path_b)
+            _TEST('pathjoin, 2nd path starts with blank-trailed root', path == path_res)
+            
+
+            ! Test:
+            path_a = 'path1'//pathsep
+            path_b = 'path2'
+            path_res = 'path1'//pathsep//'path2'
+            path = 'path1'//''//'path2'
+            path = pathjoin(path_a, path_b)
+            _TEST('pathjoin, path+pathsep + path', path == path_res)
+
+            ! Test:
+            path_a = 'path1'
+            path_b = 'path2'
+            path_res = 'path1'//pathsep//'path2'
+            path = pathjoin(path_a, path_b)
+            _TEST('pathjoin, path + path', path == path_res)
+
+
+            test_pathjoin = .true.
+      !      
+      end function
       
 end module      

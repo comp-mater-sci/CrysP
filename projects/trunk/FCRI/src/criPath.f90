@@ -154,6 +154,46 @@ contains
             mkfilename = trim(adjustl(prefix))//trim(adjustl(suffix))
       !
       end function
+
+
+      !> Join two path components, inserting directory separator
+      !> as needed.
+      !>
+      !> Notable special case:
+      !> - 2nd path begins with root path, e.g.: 
+      !>   pathjoin('path1','/path2') returns '/path2'
+      elemental function pathjoin(path_a, path_b) result(path)
+      implicit none
+      character(len=*),intent(in)               :: path_a, path_b
+      character(len=len(path_a)+len(path_b))    :: path
+      !
+      logical :: a_sep, b_sep
+      integer :: a_end, b_start
+      character :: sep
+      !
+            sep = ''
+            a_sep = .false. ! does path_a _end_ with pathsep?
+            b_sep = .false. ! does path_b _begin_ with pathsep?
+            ! Get the index of first non-blank character in path_b
+            b_start = verify(path_b, ' ')
+            if (b_start > 0) b_sep = path_b(b_start:b_start) == pathsep
+            if (b_sep) then
+                  ! path_b begins with pathsep, so it is an absolute
+                  ! path starting at root. We neglect path_a in this case.
+                  path = trim(adjustl(path_b))
+                  return
+            endif
+            ! ... and the last non-blank in path_a
+            a_end = verify(path_a, ' ', back=.true.)
+            if (a_end > 0) a_sep = path_a(a_end:a_end) == pathsep
+            ! Add separator if the first path has no separator
+            if ((a_end > 0) .and. .not. a_sep) sep = pathsep
+            ! We have to trim sep to get empty string for '', otherwise it is 
+            ! a one-character string.
+            path = trim(adjustl(path_a)) // trim(sep) // trim(adjustl(path_b))
+      !
+      end function
+
       
 end module
       
