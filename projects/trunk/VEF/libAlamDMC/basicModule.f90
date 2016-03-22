@@ -20,11 +20,14 @@ use alamYLPConstants
 use altayConfig, only: altayConfigData
 use commonConfig
 use dmcUtils
+use dmcFuture
 use criRuntime
 use criUncomment
+use criConfigReader
 use criMathUtils
 use criAlgorithm, only: optionalDefault
-use criPath, only: max_pathlen
+use criPath, only: max_pathlen, splitExt
+use criLinearMap
 use fngVec5D
 
       !> Size of time increment
@@ -132,23 +135,23 @@ contains
       class(BasicModule),intent(inout)          :: this
       integer,intent(in)                        :: cnfunit
       !
-            info = -1
+            info = criErr_IORead
             !
             call readOutputConfigSection(cnfunit,this%output,info)
-            if (info /= 0) then 
+            if (info /= criSuccess) then 
                   write(errmsg,fmt=901) 'check output config section'
                   return
             endif
       
-            call readAlamelConfigSection(cnfunit,this%altay,info)
-            if (info /= 0) then
+            call readAlTayConfigSection(cnfunit,this%altay,info)
+            if (info /= criSuccess) then
                   write(errmsg,fmt=901) 'check libaltay config section'
                   return
             endif
             !
             ! Read multilevelYLP configuration
             call readYLPConfigSection(cnfunit,this%ylp,info)
-            if (info /= 0) then
+            if (info /= criSuccess) then
                   write(errmsg,fmt=901) 'check YLP config section' 
                   return
             endif
@@ -166,7 +169,7 @@ contains
       class(BasicModule),intent(in)       :: this
       integer,intent(in)                  :: outunit
       !
-            info = -1
+            info = criErr_BadArgs
             
             select case (this%altay%model_id)
             case(modelAlamel)
@@ -186,8 +189,8 @@ contains
                         write(outunit,fmt=200) 'CUB'                       
             end select
             write(outunit,fmt=201) trim(this%altay%texture%input_fname)
-            
             write(outunit,fmt=101) 'Slip systems definition:', trim(this%altay%slipsystem%input_fname)
+            write(outunit,fmt=101) 'Microstructure definition:', trim(this%altay%micros_fname)
             !
             if (this%ylp%linearize) then
                   write(display_unit,100) 'Info: the program will first attempt to linearize the identification problems.'
@@ -195,7 +198,7 @@ contains
                   write(display_unit,100) 'Info: The program will attempt to solve the nonlinear problems.'
             endif
             !
-            info = 0
+            info = criSuccess
             !
             !!!!     
             100 format(/,A,/)
@@ -278,103 +281,149 @@ contains
       !
       integer                       :: ioerr
       !     
-            info = -1
-            read(cnfunit,'(A)' ,iostat=ioerr) cnf%outputPrefix
-            if (.not. ioStatusOK(ioerr)) return
-            call stripComment(cnf%outputPrefix)
-            !
-            read(cnfunit,*,iostat=ioerr) cnf%outputRequest
-            if (.not. ioStatusOK(ioerr)) return
-            
-            read(cnfunit,*,iostat=ioerr) cnf%verbosity
-            if (ioStatusOK(ioerr)) info = 0
-      
+            info = criErr_IORead
+            if (.not. readValue(cnfunit, cnf%outputPrefix)) return
+            if (.not. readValue(cnfunit, cnf%outputRequest)) return
+            if (.not. readValue(cnfunit, cnf%verbosity)) return
+            info = criSuccess
+      !
       end subroutine
-      
-      subroutine readAlamelConfigSection(cnfunit,cnf,info)
+
+
+      !> Read configuration of libaltay
+      subroutine readAlTayConfigSection(cnfunit,cnf,info)
       use altayConfig
-      use altayHard, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop
       implicit none
       integer,intent(in)                  :: cnfunit
       type(altayConfigData),intent(inout) :: cnf
       integer,intent(out)                 :: info
       !
-      integer                       :: ioerr, simtype, model_id
-      logical                       :: flag
+      integer                       :: model_id, dm_id
+      logical                       :: use_default_microstructure
       integer                       :: i
+      character(len=max_pathlen) :: root, ext
+      type(MapItem),dimension(3) :: extensions = [MapItem('.smt',1), &
+                                                  MapItem('.cur',2), &
+                                                  MapItem('.cub',3)]
+      type(MapItem),dimension(2) :: model_types = [MapItem('ALAMEL', modelAlamel), &
+                                                   MapItem('FCTaylor', modelFCTaylor)]
+      type(MapItem),dimension(4) :: slipsystem_types = [MapItem('fcc12', DM_fcc12), &
+                                                        MapItem('bcc24', DM_bcc24), &
+                                                        MapItem('bcc48', DM_bcc48), &
+                                                        MapItem('pre', DM_format_pre)]
       !
-            info = -1
-            simtype = -1; ioerr = -1; model_id = -1
+           info = criErr_IORead
+           model_id = -1
+           dm_id = -1
             !
-            read(cnfunit,'(I2,1X,A)',iostat=ioerr) cnf%texture%input_type
-            if (.not. ioStatusOK(ioerr)) return
+            if (.not. readValue(cnfunit, cnf%texture%input_fname)) return
+            !
+            ! Deduce the input type from the extension
+            call splitExt(cnf%texture%input_fname, root, ext)
+            cnf%texture%input_type = findName(extensions, ext)
+            if (ext == '' .or. cnf%texture%input_type == 0) then
+                write(display_unit,*) 'Cannot determine texture input type from the extension'
+                info = criErr_BadArgs
+                return
+            endif
             select case(cnf%texture%input_type)
                   case(1,3)     ! SMT or CUB
-                        read(cnfunit,'(A)',iostat=ioerr) cnf%texture%input_fname
-                  case(2)       ! CUR file    
-                        read(cnfunit,'(I2,1X,A)',iostat=ioerr) cnf%texture%block_id, cnf%texture%input_fname
+                        continue
+                  case(2)       ! CUR file, the only multi-block file now.
+                       if (.not. readValue(cnfunit, cnf%texture%block_id)) return 
                   case default
-                        write(display_unit,*) 'Incorrect texture type: ', cnf%texture%input_type    
-            end select
-            if (.not. ioStatusOK(ioerr)) return
-            call stripComment(cnf%texture%input_fname)
+                        write(display_unit,*) 'Incorrect texture type'
+                        return
+                  end select
             !
-            read(cnfunit,fmt=*,iostat=ioerr)  simtype
-            if (.not. ioStatusOK(ioerr)) return
-            read(cnfunit,'(A)' ,iostat=ioerr) cnf%slipsystem%input_fname 
-            call stripComment(cnf%slipsystem%input_fname)
-            read(cnfunit,'(A)' ,iostat=ioerr) cnf%micros_fname
-            call stripComment(cnf%micros_fname)
-            if (.not. ioStatusOK(ioerr)) return
+            if (.not. readKeyword(cnfunit, model_types, model_id)) return
+            if (.not. readKeyword(cnfunit, slipsystem_types, dm_id)) return
+            !
             ! Process advanced microstructure characterization
-            flag = .false.
-            read(cnfunit,fmt=*,iostat=ioerr) flag
-            if (.not. ioStatusOK(ioerr)) return
-            if (flag) then 
+            use_default_microstructure = .true.
+            if (.not. readValue(cnfunit, use_default_microstructure)) return
+            if (.not. use_default_microstructure) then 
+                  if (.not. readValue(cnfunit, cnf%micros_fname)) return
                   do i=1,3
-                        read(cnfunit,fmt=*,iostat=ioerr) cnf%simul_init%Fmicro(:,i)
+                        if (.not. readValue(cnfunit, cnf%simul_init%Fmicro(:,i))) return
                   enddo
+            else
+                  call incurMicrostructureFile(cnf%micros_fname, info)
             endif
-            if (.not. ioStatusOK(ioerr)) return
             !
-            read(cnfunit,fmt=*,iostat=ioerr) cnf%hardening%HardLawID
-            if (.not. ioStatusOK(ioerr)) return
-            select case(cnf%hardening%HardLawID)
-            case(hard_none)
-                  ! no action needed
-                  continue
-            case(hard_Voce)
-                  ! Read one line
-                  read(cnfunit,fmt=*,iostat=ioerr) cnf%hardening%VoceCnf
-            case(hard_SwiftK)
-                  read(cnfunit,fmt=*,iostat=ioerr) cnf%hardening%SwiftKCnf
-            case(hard_SwiftS)
-                  read(cnfunit,fmt=*,iostat=ioerr) cnf%hardening%SwiftSCnf
-            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-                  call readPEPBhardening(cnfunit,cnf%hardening%HardLawID,cnf%hardening%PEBPCnf,info)
-                  if (info /= 0) return
-            case default
-                  info = -1
-                  return
-            end select
-            if (.not. ioStatusOK(ioerr)) return
-            !
-            info = 0
-            select case(simtype)
-            case(0)     ! 0 - alamel
-                  model_id = modelAlamel
-            case(1)     ! 1 - FC Taylor
-                  model_id = modelFCTaylor
-            case(2)     ! 2 - MAS-Al
-                  model_id = modelMASAL
-            case default
-                  info = -1
-            end select
-            if (info == 0) call setModelType(cnf,model_id,info)
+            call readHardeningSection(cnfunit,  cnf%hardening, info)
+            if (info /= criSuccess) return
+            ! the keyword is mapped to a proper model_id, we can instantly
+            ! set it.
+            call setModelType(cnf,model_id,info)
+            if (info /= criSuccess) return
+            ! Let's map DM_id to a file
+            call incurSlipsystemFile(dm_id, cnf%slipsystem%input_fname, info)
+            if (info /= criSuccess) return
+            ! Let's find 
+            
       !
       end subroutine
 
-      
+
+      !> Read configuration of hardening models
+      subroutine readHardeningSection(cnfunit, hardening, info)
+      use altayHard, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop, hard_SwiftK, hard_SwiftS
+      use altayConfig, only: hardeningData, VoceConfig, SwiftKConfig, SwiftSConfig
+      implicit none
+      integer,intent(in)                  :: cnfunit
+      type(hardeningData),intent(out)     :: hardening
+      integer,intent(out)                 :: info
+      !
+      double precision,dimension(5) :: tmp ! Temporary for hardening parameters.
+      logical :: use_default_hardening
+      !
+            use_default_hardening = .true.
+            if (.not. readValue(cnfunit, use_default_hardening)) return
+            if (.not. use_default_hardening) then
+                  if (.not. readValue(cnfunit, hardening%HardLawID)) return
+                  select case(hardening%HardLawID)
+                  case(hard_none)
+                        ! no action needed
+                        info = criSuccess
+                  case(hard_Voce)
+                        ! Read one line
+                        if (readValue(cnfunit, tmp(1:5))) then
+                              hardening%VoceCnf = VoceConfig(tmp(1), tmp(2), tmp(3), tmp(4), tmp(5))
+                              info = criSuccess
+                        endif
+                  !
+                  case(hard_SwiftK)
+                        ! Read one line
+                        if (readValue(cnfunit, tmp(1:3))) then
+                              hardening%SwiftKCnf = SwiftKConfig(tmp(1),tmp(2), tmp(3))
+                              info = criSuccess
+                        endif
+                  !
+                  case(hard_SwiftS)
+                        ! Read one line
+                        if (readValue(cnfunit, tmp(1:3))) then
+                              hardening%SwiftSCnf = SwiftSConfig(tmp(1),tmp(2), tmp(3))
+                              info = criSuccess
+                        endif
+                  !
+                  case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+                        call readPEPBhardening(cnfunit,hardening%HardLawID,hardening%PEBPCnf,info)
+                  case default
+                        info = criError
+                        return
+                  end select
+            else
+                  info = criSuccess
+            endif
+            !
+      end subroutine
+
+
+      !> Read configuration of PEBP hardening module.
+      !>
+      !> The current implementation reads the coefficients of the hardening law
+      !> from an external file that is specified in the configuration file.
       subroutine readPEPBhardening(cnfunit,kost,hc,info)
       use altayConfig
       use altayHardLaw_DSH, only: ReadPar
@@ -384,50 +433,127 @@ contains
       type(PEBPConfig),intent(out)        :: hc
       integer,intent(out)                 :: info
       !
-      integer                       :: ioerr
-      character(len=max_pathlen)      :: tmp_fname
-      integer                       :: tmp,nparunit
+      integer                             :: ioerr
+      character(len=max_pathlen)          :: tmp_fname
+      integer                             :: nparunit
       !
-            info = -1
-            read(cnfunit,fmt='(A)',iostat=ioerr) tmp_fname
-            call stripComment(tmp_fname)
+            info = criErr_IORead
+            if (.not. readValue(cnfunit, tmp_fname)) return
             ! Interpret the fname
             open(newunit=nparunit,file=tmp_fname,status='old',iostat=ioerr)
             if (ioerr /= 0) return
             info = ReadPar(nparunit,kost,hc%params)
             close(nparunit)
             if (info /= 0) return
-            read(cnfunit,fmt='(I5,A)',iostat=ioerr) tmp, tmp_fname
-            if (ioerr /= 0) return
-            if (tmp >= 0) then
-                  hc%read_state = .true.
-                  call stripComment(tmp_fname)
-                  hc%input_fname = tmp_fname
-                  hc%block_id = tmp
+            ! Read state file path and block id.
+            if (.not. readValue(cnfunit, hc%read_state)) return
+            if (hc%read_state) then
+                  if (.not. readValue(cnfunit,hc%input_fname)) return
+                  if (.not. readValue(cnfunit,hc%block_id)) return
             endif
-            info = 0
+            !
+            info = criSuccess
       !
       end subroutine
-      
 
+
+      !> Read configuration of the solver (libalamylp)
       subroutine readYLPConfigSection(cnfunit,cnf,info)
       implicit none
       integer,intent(in)                        :: cnfunit
       type(multilevelYLPConfig),intent(out)     :: cnf
       integer,intent(out)                       :: info
       !
-      integer                       :: ioerr
+      double precision,dimension(2) :: tmp
+      logical :: use_default_solver_settings
       !
-            info = -1
-            read(cnfunit,fmt=*,iostat=ioerr) cnf%jacobi_eps, cnf%linearize
-            if (.not. ioStatusOK(ioerr)) return
-            read(cnfunit,fmt=*,iostat=ioerr) cnf%default_eps, cnf%obj_func_eps
-            if (ioStatusOK(ioerr)) info = 0
+            info = criErr_IORead
+            use_default_solver_settings = .true.
+            if (.not. readValue(cnfunit, use_default_solver_settings)) return
+            if (.not. use_default_solver_settings) then
+                  if (.not. readValue(cnfunit, cnf%jacobi_eps)) return
+                  if (.not. readValue(cnfunit, cnf%linearize)) return
+                  if (.not. readValue(cnfunit,tmp)) return
+                  cnf%default_eps = tmp(1)
+                  cnf%obj_func_eps = tmp(2)
+            endif
+            info = criSuccess
+      !
       end subroutine
 
-      
 
+      !> Deduce the path to VEF common data files.
+      function getVEFDataDir()
+      implicit none
+      character(len=max_pathlen) :: getVEFDataDir
+      !
+      character(len=max_pathlen) :: vef_root_path
+      integer :: ierr
+      !
+            getVEFDataDir = ''
+            call get_environment_variable('VEF_ROOT', vef_root_path, status=ierr)
+            if (ierr == 0 .and. len_trim(vef_root_path) > 0) then
+                  getVEFDataDir = pathjoin(vef_root_path,'data')
+            endif
+      !
+      end function
       
       
+      !> Determines location of data file and checks its existence.
+      !>
+      !> The places where the procedure looks for the files are:
+      !> 1. $VEF_ROOT/data
+      !> 2. current directory
+      subroutine getDataPath(fname, path, info)
+      character(len=*),intent(in)   :: fname
+      character(len=*),intent(out)  :: path
+      integer,intent(out)           :: info
+      !
+      character(len=max_pathlen) :: prefix
+      integer :: ierr
+      logical :: file_exists
+      !
+            info = criErr_BadArgs
+            prefix = getVEFDataDir()
+            path = pathjoin(prefix, fname)
+            inquire(file=path, exist=file_exists, iostat=ierr)
+            if (ierr == 0 .and. file_exists) info = criSuccess
+      !
+      end subroutine
+
+
+      !> Incur the location of slip system file
+      subroutine incurSlipsystemFile(dm_id, slipsystem_path, info)
+      implicit none
+      integer,intent(in)              :: dm_id !< Deformation mechanism ID
+      character(len=*),intent(out)    :: slipsystem_path
+      integer,intent(out)             :: info
+      !
+      character(len=max_pathlen) :: fname
+      !
+            info = criErr_BadArgs
+            select case(dm_id)
+            case(DM_fcc12)
+                  fname = 'fcc.pre'
+            case(DM_bcc24)
+                  fname = 'bcc.pre'
+            case(DM_bcc48)
+                  fname = 'bcc2.pre'
+            case default
+                  return
+            end select
+            call getDataPath(fname, slipsystem_path, info)
+      !
+      end subroutine
+
+
+      !> Incur the location of the microstructure file
+      subroutine incurMicrostructureFile(micros_fname, info)
+      character(len=*),intent(out)    :: micros_fname
+      integer,intent(out)             :: info
+      !
+            call getDataPath('equiaxed.smt', micros_fname, info)
+      !
+      end subroutine
       
 end module

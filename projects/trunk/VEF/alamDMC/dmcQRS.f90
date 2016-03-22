@@ -62,35 +62,32 @@ contains
       class(QRSModule),intent(inout)              :: this
       integer,intent(in)                        :: cnfunit
       !
-      integer :: ioerr
+      logical :: use_default_settings
       !
             info = BasicModule_ReadConfig(this,cnfunit)
-            if (info /= 0) return
-            info = -1
+            if (info /= criSuccess) return
+            info = criErr_IORead
             ! Read parameters specific for the QRSModule module
-            ! Read QRSModule-specific parameters
             this%ptr_range => rangeFromConfig(cnfunit,info)
-            if ( (info /= 0) .or. (.not. associated(this%ptr_range)) ) return
-            info = -1
-            read(cnfunit,fmt=*,iostat=ioerr)  this%rho
-            if (ioerr /= 0) return
-            read(cnfunit,fmt=*,iostat=ioerr)  this%calculate_MFactor
-            if (ioerr /= 0) return
-            read(cnfunit,fmt='(2L2)',iostat=ioerr)  this%reuse_previous, this%resuse_stainrate
-            if (ioerr /= 0) return
-            read(cnfunit,fmt='(L2)',iostat=ioerr)  this%fold_symmetry
-            if (ioerr /= 0) return
+            if ( (info /= criSuccess) .or. (.not. associated(this%ptr_range)) ) return
+            !
+            if (.not. readValue(cnfunit, use_default_settings)) return
+            if (.not. use_default_settings) then
+                  info = criErr_IORead
+                  if (.not. readValue(cnfunit, this%rho)) return
+                  if (.not. readValue(cnfunit, this%calculate_MFactor)) return
+                  if (.not. readValue(cnfunit, this%reuse_previous)) return
+                  if (.not. readValue(cnfunit, this%resuse_stainrate)) return
+                  if (.not. readValue(cnfunit, this%fold_symmetry)) return
+            endif
             !
             ! Override the requests for outputs: 
             this%altay%output_config%nfile = 0   ! texture
             this%altay%output_config%npebp = 0   ! KOST1x state
             this%output%outputRequest = .false.       ! idem.
             !
-            info = 0
-            
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
+            info = criSuccess
+      !
       end function
 
       
@@ -305,6 +302,7 @@ contains
       endif
       ! Write output file
       if (this%fold_symmetry) then
+            ! \todo Use FCRI::criArray::fold_array for this task. It allows multiple folds!
             ! Average over symmetric positions
             left = 1
             right = npoints

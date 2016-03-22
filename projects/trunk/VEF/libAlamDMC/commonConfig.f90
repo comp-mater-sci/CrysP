@@ -16,6 +16,7 @@
 !> This module contains subroutines, data structures and common variables
 !> for shared configuration features of all alamDMC modules
 module commonConfig
+use criErrcodes
 implicit none
 
       character(len=20),parameter   :: fmtMsg2Msg   = '(A,T35,A)'
@@ -46,97 +47,105 @@ contains
       use criRange
       use criLinearMap
       use criNamedRange
+      use criUncomment
+      use criConfigReader
       implicit none
       class(range_type),pointer     :: inst
       integer,intent(in)            :: cnfunit
       integer,intent(out)           :: info
       !
       !
-      character(len=32) :: keyword
       type(bias_t),dimension(:),allocatable :: vBiases
-      double precision :: rbegin, rend, ratio, rstep
+
       integer :: i, ierr, id, nranges, npoints
       double precision,dimension(:),allocatable :: vPoints
+      double precision :: triplet(3)
+      double precision :: rbegin, rend, ratio, rstep
+      ! Mapping triplet members to logical view (named fields)
+      ! Note: rstep an ratio are aliases for the same memory location.
+      equivalence (rbegin,triplet(1)), (rend,triplet(2)), &
+                  (rstep,triplet(3)), (ratio,triplet(3)) 
       !
-            info = -1
+            info = criErr_IORead
             nullify(inst)
-            keyword = ''
             id = -1
             ! Read the keyword
-            read(cnfunit,*,iostat=ierr) keyword
-            if (.not. ioStatusOK(ierr)) return
-            if (resolveName(range_name_map,trim(keyword),id)) then
-            
-                  select case(id)
-                  case(range_uniform_id)
-                        ! Read: begin end step
-                        read(cnfunit,*,iostat=ierr) rbegin, rend, rstep
-                        if (.not. ioStatusOK(ierr)) return
-                        allocate(uniformRange :: inst)
-                        select type(inst)
-                        type is (uniformRange)
-                              inst = uniformRange(rbegin, rend, rstep)
-                        end select
-                  !
-                  case(range_biased_id)
-                        ! Read: begin end ratio
-                        read(cnfunit,*,iostat=ierr) rbegin, rend, ratio, npoints
-                        if (.not. ioStatusOK(ierr)) return
-                        allocate(biasedRange :: inst)
-                        select type(inst)
-                        type is (biasedRange)
-                              inst = biasedRange(rbegin, rend, ratio, npoints)      
-                        end select
-                        !
-                  !
-                  case(range_doublebiased_id)
-                        ! Read: begin end ratio npoints
-                        read(cnfunit,*,iostat=ierr) rbegin, rend, ratio, npoints
-                        if (.not. ioStatusOK(ierr)) return
-                        ! 
-                        allocate(multiBiasedRange :: inst)
-                        select type(inst)
-                        type is (multiBiasedRange)
-                              inst = doubleBiasedRange(rbegin, rend, ratio, npoints)      
-                        end select
-                  !
-                  case(range_multibiased_id)
-                        ! Read: begin nranges
-                        read(cnfunit,*,iostat=ierr) rbegin, nranges
-                        if (.not. ioStatusOK(ierr)) return
-                        ! Read: definitions of biases 
-                        if (nranges > 0) then
-                              allocate(vBiases(nranges))
-                              do i = 1, nranges
-                                    read(cnfunit,*,iostat=ierr) vBiases(i)
-                                    if (.not. ioStatusOK(ierr)) return
-                              enddo
-                        else
-                              return
-                        endif
-                        allocate(multiBiasedRange :: inst)
-                        select type(inst)
-                        type is (multiBiasedRange)
-                              inst = multiBiasedRange(rbegin,vBiases)      
-                        end select
-                  case(range_discrete_id)
-                        npoints = 0
-                        read(cnfunit,*,iostat=ierr) npoints
-                        if ((.not. ioStatusOK(ierr)) .or. (npoints <= 0)) return
-                        allocate(vPoints(npoints))
-                        vPoints = 0.D0
-                        read(cnfunit,*,iostat=ierr) vPoints
-                        if (ierr /= 0) return
-                        allocate(discreteRange :: inst)
-                        select type(inst)
-                        type is (discreteRange)
-                              inst = discreteRange(vPoints)      
-                        end select
-                  !
+            if (.not. readKeyword(cnfunit, range_name_map, id)) return
+            select case(id)
+            case(range_uniform_id)
+                  ! Read: begin end step
+                  if (.not. readValue(cnfunit, triplet)) return
+                  allocate(uniformRange :: inst)
+                  select type(inst)
+                  type is (uniformRange)
+                        inst = uniformRange(rbegin, rend, rstep)
                   end select
-            endif
-            
-            info = 0
+            !
+            case(range_biased_id)
+                  ! Read: begin end ratio
+                  if (.not. readValue(cnfunit, triplet)) return
+                  if (.not. readValue(cnfunit, npoints)) return
+                  if (npoints <= 0) return
+                  allocate(biasedRange :: inst)
+                  select type(inst)
+                  type is (biasedRange)
+                        inst = biasedRange(rbegin, rend, ratio, npoints)
+                  end select
+                  !
+            !
+            case(range_doublebiased_id)
+                  ! Read: begin end ratio npoints
+                  if (.not. readValue(cnfunit, triplet)) return
+                  if (.not. readValue(cnfunit, npoints)) return
+                  if (npoints <= 0) return
+                  ! 
+                  allocate(multiBiasedRange :: inst)
+                  select type(inst)
+                  type is (multiBiasedRange)
+                        inst = doubleBiasedRange(rbegin, rend, ratio, npoints)
+                  end select
+            !
+            case(range_multibiased_id)
+                  ! Read: begin nranges
+                  if (.not. readValue(cnfunit, rbegin)) return
+                  if (.not. readValue(cnfunit, nranges)) return
+                  if (nranges <= 0) return
+                  !
+                  allocate(vBiases(nranges))
+                  do i = 1, nranges
+                        ! We read only the elements in triplet
+                        ! that are aliased by rend and ratio
+                        if (.not. readValue(cnfunit, triplet(2:3))) return
+                        if (.not. readValue(cnfunit, npoints)) return
+                        if (npoints <= 0) return
+                        vBiases(i) = bias_t(rend, ratio, npoints)
+                  enddo
+                  allocate(multiBiasedRange :: inst)
+                  select type(inst)
+                  type is (multiBiasedRange)
+                        inst = multiBiasedRange(rbegin,vBiases)
+                  end select
+            case(range_discrete_id)
+                  npoints = 0
+                  if (.not. readValue(cnfunit, npoints)) return
+                  if (npoints <= 0) return
+                  allocate(vPoints(npoints))
+                  vPoints = 0.D0
+                  ! No comments allowed, but multiple lines can be read
+                  read(cnfunit,*,iostat=ierr) vPoints
+                  if (ierr /= 0) return
+                  allocate(discreteRange :: inst)
+                  select type(inst)
+                  type is (discreteRange)
+                        inst = discreteRange(vPoints)      
+                  end select
+            case default
+                  info = criErr_BadArgs
+                  return
+            !
+            end select
+            !
+            if (associated(inst)) info = criSuccess
       !
       end function
 

@@ -1,0 +1,24 @@
+#implements output
+#block main
+# Note: this is an automatically generated config file.
+#block commonConfig
+#end block commonConfig
+#block moduleConfig
+#end block moduleConfig
+#end block main
+#def range(r)
+#set $rpar=$r.params
+$r.type # Range type specification.
+#if $r.type == 'uniform'
+${rpar.start, width=6} ${rpar.end, width=6} ${rpar.step, width=6} # Range specification for 'uniform':  begin end step
+#elif $r.type == 'biased'
+# biased
+#elif $r.type == 'doublebiased'
+# doublebiased
+#elif $r.type == 'multibiased'
+# multibiased
+#elif $r.type == 'discrete'
+# discrete
+#end if
+#slurp
+#end def

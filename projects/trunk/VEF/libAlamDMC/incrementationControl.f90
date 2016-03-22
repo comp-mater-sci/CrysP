@@ -17,11 +17,18 @@
 module dmcIncrementationControl
 use alamYLPConstants
 use criErrcodes
+use criLinearMap, only: MapItem
 implicit none
 
     integer,parameter :: scalingStrainTensor = 0, &
                          scalingStrainTensorComponent = 1, &
                          scalingPlasticWork = 2
+
+    integer,parameter :: nscaling_types = 3
+    type(MapItem),dimension(nscaling_types) :: scaling_type_names = [&
+                                                MapItem('StrainTensor', scalingStrainTensor), &
+                                                MapItem('StrainTensorComponent', scalingStrainTensorComponent), &
+                                                MapItem('PlasticWork', scalingPlasticWork)]
 
     integer,parameter :: incrementFixed = 0, &
                          incrementAuto = 1
@@ -107,5 +114,43 @@ contains
         info = criSuccess
     !
     end subroutine
-    
+
+
+    !> Read IncrementationControlSettings from configuration file
+    subroutine IncrementationControlSettings_read(this, cnfunit, info, allowed)
+    use criConfigReader
+    use criUncomment
+    implicit none
+    type(IncrementationControlSettings),intent(out)   :: this
+    integer,intent(in)                                :: cnfunit
+    integer,intent(out)                               :: info
+    integer,dimension(:),optional                     :: allowed
+    !
+    integer :: id, i
+    logical :: is_allowed
+    !
+        info = criErr_IORead
+        if (.not. readKeyword(cnfunit, scaling_type_names, id)) return
+        ! Check for additional constraints on the scaling type
+        if (present(allowed)) then
+            ! check: if id not in allowed: return
+            info = criErr_BadArgs
+            is_allowed = .false.
+            do i = 1, size(allowed)
+                if (id == allowed(i)) then
+                    is_allowed = .true.
+                    exit
+                endif
+            enddo
+            if (.not. is_allowed) return
+        endif
+        this%scaling_type = id
+        !
+        info = criErr_IORead
+        if (.not. readValue(cnfunit, this%step_size)) return
+        if (.not. readValue(cnfunit, this%increment_size)) return
+        info = criSuccess
+    !
+    end subroutine
+
 end module

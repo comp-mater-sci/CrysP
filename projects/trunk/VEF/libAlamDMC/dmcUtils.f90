@@ -63,12 +63,12 @@ contains
       double precision,dimension(3,3),intent(in)      :: S, SIdent,SonA, D
       integer,intent(out)                             :: info
       !
-      integer :: j
+      integer :: i, j
            !
             write(outunit,*) 'Stress:'
             write(outunit,410)
             do j=1,3
-                  write(outunit,411) S(j,:), SIdent(j,:), SonA(j,:)
+                  write(outunit,411) (S(j,i),i=1,3), (SIdent(j,i),i=1,3), (SonA(j,i),i=1,3)
             enddo
             write(outunit,*)
             write(outunit,*) 'Resulting strain rate:'

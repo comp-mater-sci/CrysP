@@ -27,9 +27,9 @@ implicit none
             !> Epsilon used for numerical estimation of Jacobi matrix.
             !>
             !> Note: this is a reasonable value. Lowering it can lead to poor convergence or lack of convergence.
-            double precision        :: jacobi_eps = 5.E-2 
+            double precision        :: jacobi_eps = 5.E-2
             !> Request for preliminary solution of linearized problem 
-            logical                 :: linearize = .false.
+            logical                 :: linearize = .true.
             !> Default epsilon to be set for all TR-solver convergence criteria, except ||F||_2
             double precision        :: default_eps = 1.E-5
             !> Epsilon to be set on norm of objective function ||F||_2

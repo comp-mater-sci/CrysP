@@ -39,7 +39,7 @@ implicit none
 
     type,extends(StressDrivenEvolutionModule) :: EWCModule
         
-        type(EulerAngles)                       :: reference_frame
+        ! type(EulerAngles)                       :: reference_frame
         
         character(len=max_pathlen)              :: output_fname = ''
         
@@ -47,7 +47,10 @@ implicit none
         
         double precision,dimension(sr_symm_voigt_dim)   :: reference_stress_mode = 0.D0
 
-        double precision,dimension(sr_symm_voigt_dim,n_base_vectors)   :: base_vectors = 0.D0
+        double precision,dimension(sr_symm_voigt_dim,n_base_vectors)   :: base_vectors = reshape( &
+                                                [1., 0., 0., 0., 0., 0., & ! First base vector
+                                                 0., 1., 0., 0., 0., 0.], & ! second base vector
+                                                [sr_symm_voigt_dim, n_base_vectors])
 
         !> Range of angles that provide stress ratios
         class(range_type),pointer               :: ptr_theta_range => null()
@@ -83,7 +86,8 @@ contains
     class(EWCModule),intent(inout)            :: this
     integer,intent(in)                        :: cnfunit
     !
-    integer :: ioerr, i, id
+    integer :: i, id
+    logical :: use_default_settings
     !
     ! Keywords for mode selection
     integer,parameter :: nmodes = 2, mode_reference_id = 1, mode_direct_id = 2
@@ -93,31 +97,22 @@ contains
         info = BasicModule_ReadConfig(this,cnfunit) 
         if (info /= criSuccess) return
         info = criErr_IORead
-        ! Read parameters specific for the ASRModule
-        read(cnfunit,fmt=*,iostat=ioerr) this%reference_frame
-        do i = 1, size(this%base_vectors,dim=2)
-            read(cnfunit,fmt=*,iostat=ioerr) this%base_vectors(:,i)
-            if (ioerr /= 0) return
-            if (norm2(this%base_vectors(:,i)) < epsilon(0.D0)) then
-                write(display_unit,fmt=900) 'Norm of each base vectors must not be zero'
-                return
-            endif
-            this%base_vectors(:,i) = this%base_vectors(:,i) / norm2(this%base_vectors(:,i))
-        enddo
+        ! Read parameters specific for the EWCModule
         !
         ! Check how the work levels are provided
         if (readKeyword(cnfunit,mode_keywords,id)) then
             select case(id)
             case(mode_reference_id)
                 ! Evolution along the reference stress mode
-                read(cnfunit,fmt=*,iostat=ioerr) this%reference_stress_mode
+                if (.not. readValue(cnfunit, this%reference_stress_mode)) return
                 if (norm2(this%reference_stress_mode) < epsilon(0.D0)) then
                     write(display_unit,fmt=900) 'Norm of the reference mode must not be zero'
                     return
                 endif
                 this%use_reference_stress_mode = .true.
-                read(cnfunit,fmt=*,iostat=ioerr) this%control%scaling_type, this%control%step_size, this%control%increment_size
-                if (ioerr /= 0) return
+                call IncrementationControlSettings_read(this%control, cnfunit, info, &
+                                                        allowed=[scalingStrainTensor, scalingPlasticWork])
+                if (info /= criSuccess) return
             case(mode_direct_id)
                 this%use_reference_stress_mode = .false.
             end select
@@ -126,20 +121,25 @@ contains
             info = criErr_IORead
             return
         endif
-        
         !
         ! Contour lines
         this%ptr_theta_range => rangeFromConfig(cnfunit,info)
         if (info /= criSuccess .or. .not. associated(this%ptr_theta_range)) return
         this%ptr_contourlevel_range => rangeFromConfig(cnfunit,info)
         if (info /= criSuccess .or. .not. associated(this%ptr_contourlevel_range)) return
-        read(cnfunit,*,iostat=ioerr) this%n_intervals
-        ! read(cnfunit,fmt='(A)',iostat=ioerr) this%output_fname
-        ! call stripComment(this%output_fname)
-        ! read(cnfunit,fmt='(L2)',iostat=ioerr) this%report_state
-        if (ioerr /= 0) then
-            write(display_unit,fmt=902) 'EWCModule'
-            return
+        if (.not. readValue(cnfunit, this%n_intervals)) return
+        ! Advanced settings
+        if (.not. readValue(cnfunit, use_default_settings)) return
+        if (.not. use_default_settings) then
+            ! read(cnfunit,fmt=*,iostat=ioerr) this%reference_frame
+            do i = 1, size(this%base_vectors,dim=2)
+                if (.not. readValue(cnfunit, this%base_vectors(:,i))) return
+                if (norm2(this%base_vectors(:,i)) < epsilon(0.D0)) then
+                    write(display_unit,fmt=900) 'Norm of each base vectors must not be zero'
+                    return
+                endif
+                this%base_vectors(:,i) = this%base_vectors(:,i) / norm2(this%base_vectors(:,i))
+            enddo
         endif
         info = criSuccess
         !

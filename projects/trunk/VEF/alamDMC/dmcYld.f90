@@ -34,7 +34,12 @@ private
             
             class(range_type),pointer                 :: ptr_w_range
             
-            double precision,dimension(sr_symm_voigt_dim,nbase)       :: base_vectors = 0.D0
+            double precision,dimension(sr_symm_voigt_dim,nbase) :: base_vectors = reshape( &
+                                                [1., 0., 0., 0., 0., 0., & ! First base vector
+                                                 0., 1., 0., 0., 0., 0., & ! second base vector
+                                                 0., 0., 0., 0., 0., 0.], & ! offset vector (zeros)
+                                                [sr_symm_voigt_dim,nbase])
+            
       
             logical                                   :: do_scaling = .false.
 
@@ -45,7 +50,7 @@ private
       contains
       
             procedure,pass(this)    :: readConfig => YldModule_ReadConfig
-            
+            procedure,pass(this)    :: printConfig => YldModule_printConfig
             procedure,pass(this)    :: run => YldModule_run
             
       end type
@@ -73,34 +78,39 @@ contains
       class(YldModule),intent(inout)            :: this
       integer,intent(in)                        :: cnfunit
       !
-      integer :: ioerr,i
+      integer :: i
       double precision :: norm
-      logical :: normalize
+      logical :: normalize, use_default_settings
       !
             info = BasicModule_ReadConfig(this,cnfunit)
-            if (info /= 0) return
-            info = -1
-            ! Read parameters specific for the dmcASR program
+            if (info /= criSuccess) return
+            ! Read parameters specific for the dmcYld program
             this%ptr_theta_range => rangeFromConfig(cnfunit,info)
-            if ( (info /= 0) .or. (.not. associated(this%ptr_theta_range)) ) return
-            info = -1
-            this%base_vectors = 0.D0
-            do i=1,nbase
-                  normalize = .false.
-                  read(cnfunit,fmt=*,iostat=ioerr) normalize, this%base_vectors(:,i)
-                  if (ioerr /= 0)  exit
-                  if (normalize) then 
-                        norm = norm2(this%base_vectors(:,i))
-                        if (norm > 0.D0) this%base_vectors(:,i)  = this%base_vectors(:,i) / norm
+            if ( (info /= criSuccess) .or. (.not. associated(this%ptr_theta_range)) ) return
+            if (.not. readValue(cnfunit, use_default_settings)) return
+            if (use_default_settings) then
+                  ! use the defaults:
+                  allocate(uniformRange :: this%ptr_w_range)
+            else
+                  info = criErr_BadArgs
+                  this%base_vectors = 0.D0
+                  if (.not. readValue(cnfunit, normalize)) return
+                  do i=1,nbase
+                        if (.not. readValue(cnfunit, this%base_vectors(:,i))) return
+                        if (normalize) then
+                              norm = norm2(this%base_vectors(:,i))
+                              if (norm > 0.D0) this%base_vectors(:,i)  = this%base_vectors(:,i) / norm
+                        endif
+                  enddo
+                  !
+                  if (.not. readValue(cnfunit, this%normalizeSm)) return
+                  this%ptr_w_range => rangeFromConfig(cnfunit,info)
+                  if ( (info /= 0) .or. (.not. associated(this%ptr_w_range)) ) return
+                  if (.not. readValue(cnfunit, this%do_scaling)) return
+                  if (this%do_scaling) then
+                        if (.not. readValue(cnfunit, this%scaling_vector)) return
                   endif
-            enddo
-            if (ioerr /= 0) return
-            read(cnfunit,fmt='(L)',iostat=ioerr) this%normalizeSm
-            if (ioerr /= 0) return
-            this%ptr_w_range => rangeFromConfig(cnfunit,info)
-            if ( (info /= 0) .or. (.not. associated(this%ptr_w_range)) ) return
-            read(cnfunit,fmt=*,iostat=ioerr) this%do_scaling, this%scaling_vector
-            if (ioerr /= 0) return
+            endif
             !
             ! Override the requests for outputs: 
             this%altay%output_config%nfile = 0   ! texture
@@ -115,10 +125,40 @@ contains
       end function
 
 
+      integer function YldModule_printConfig(this, outunit) result (info)
+      implicit none
+      class(YldModule),intent(in)         :: this
+      integer,intent(in)                  :: outunit
+      !
+      character(len=6),dimension(nbase)    :: veclabels = [ character(len=6) :: 'base','base','offset' ]
+      integer :: i
+      !
+            info = BasicModule_printConfig(this, outunit)
+            if (info /= 0) return
+            info = criErr_BadArgs
+            ! Introduce youself ;-)
+            write(outunit,'(A)') 'UDSA, $Rev$'
+            !
+            if (doLogging(criLogInfo,this%output%verbosity)) then
+                  !
+                  ! Introduce youself ;-)
+                  write(display_unit,'(A)') 'dmcYld, $Rev$'
+                  do i=1,nbase
+                        write(display_unit,'(A,1x,A,6(F6.2,1X))') veclabels(i),'vector:',this%base_vectors(:,i)
+                  enddo
+                  !
+                  write(display_unit,'(A,1X,L1)') 'Normalization of the full Sm tensor:',this%normalizeSm
+                  if (this%do_scaling) write(display_unit,'(A,1X,6(F6.2,1X))') 'Scaling by yield stress for:', this%scaling_vector
+            endif
+            info = criSuccess
+      !
+      end function
+            
+            
       subroutine YldModule_Run(this,info)
       implicit none
       class(YldModule),intent(inout)            :: this
-      integer,intent(out)                       :: info      
+      integer,intent(out)                       :: info
       
       ! Base tensors
       double precision,dimension(3,3)           :: Sm
@@ -134,28 +174,19 @@ contains
       !
       integer                 :: ioerr,i,npoints
       integer,parameter       :: cnfunit = 90, ofunit = 91
-      character(len=6),dimension(nbase)    :: veclabels = [ character(len=6) :: 'base','base','offset' ]
       !
       integer :: posA, posB
       double precision,parameter :: beta = 0.D0
       !
-            info = 1
+            info = criErr_BadArgs
             if (.not. (associated(this%ptr_theta_range) .and. associated(this%ptr_w_range)))  return
-            !
-            ! Introduce youself ;-)
-            write(display_unit,'(A)') 'dmcYld, $Rev$'
-            do i=1,nbase
-                  write(display_unit,'(A,1x,A,6(F6.2,1X))') veclabels(i),'vector:',this%base_vectors(:,i)
-            enddo
             !
             npoints = this%ptr_theta_range%size()
             if (npoints <= 0) then
-                  write(display_unit,fmt='(A)') 'Cannot run using empty range.'
+                  write(display_unit,fmt='(A)') 'Cannot run using empty range of theta angles.'
                   return 
             endif
             !
-            write(display_unit,'(A,1X,L1)') 'Normalization of the full Sm tensor:',this%normalizeSm
-            if (this%do_scaling)   write(display_unit,'(A,1X,6(F6.2,1X))') 'Scaling by yield stress for:', this%scaling_vector
             ! Open the main output file
             open(unit=ofunit,file=trim(this%output%outputPrefix)//'.xyld',iostat=ioerr)
             if (ioerr /= 0) then
@@ -241,7 +272,7 @@ contains
             !            
             close(ofunit)
       
-            info = 0
+            info = criSuccess
       !
       200 format(28('-'))
       201 format('Theta angle =',T20,F8.3) 

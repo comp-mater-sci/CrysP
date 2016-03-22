@@ -1,0 +1,22 @@
+#extends configGeneric
+#block moduleConfig
+#
+# Module YLD section
+# ==================
+#filter FilterChain
+$range($yld.range)#slurp
+$yld.use_default_settings # Flag: use default yield section settings
+#if not $yld.use_default_settings
+$yld.normalize_base # normalize base tensors
+$yld.base_sigma_x # first base vector
+$yld.base_sigma_y # second base vector
+$yld.base_sigma_y # offset vector
+$yld.normalize_stress # Flag: normalize stress
+$range($yld.w_range)#slurp
+$yld.scale_section
+#if $yld.scale_section
+$yld.scaling_sigma # Stress direction used for scaling the yield section
+#end if
+#end if
+#end filter
+#end block moduleConfig

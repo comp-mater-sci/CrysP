@@ -1,0 +1,17 @@
+#extends configGeneric
+#block moduleConfig
+#
+# Module QRS section
+# ==================
+#filter FilterChain
+$range($qrs.range)#slurp
+$qrs.use_default_settings # Flag: use default uniaxial stress settings
+#if $qrs.use_default_settings == False
+$qrs.rho # stress ratio:  rho
+$qrs.calculate_MFactor # Flag: request calculations of Taylor factor (increases calculation time) 
+$qrs.reuse_previous # Flag: reuse previous solution as the starting point 
+$qrs.reuse_stainrate # Flag: reuse previously find stainrate as the starting point
+$qrs.fold_symmetry # Flag: use symmetry folding (note that it probably does't make sense to use this if a nonuniform range is used)
+#end if
+#end filter
+#end block moduleConfig

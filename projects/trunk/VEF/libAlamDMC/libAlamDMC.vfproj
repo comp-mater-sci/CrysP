@@ -71,6 +71,7 @@
 				<Tool Name="VFFortranCompilerTool" PreprocessorDefinitions=""/></FileConfiguration></File>
 		<File RelativePath="commonConfig.f90"/>
 		<File RelativePath="commonUtils.f90"/>
+		<File RelativePath=".\dmcFuture.f90"/>
 		<File RelativePath=".\dmcResultFileOutput.f90"/>
 		<File RelativePath="dmcUtils.f90"/>
 		<File RelativePath=".\incrementationControl.f90"/>

@@ -20,6 +20,7 @@ module dmcUDSA
 use alamYLP
 use dmcUtils
 use dmcBasicModule
+use dmcIncrementationControl
 use commonUtils
 use qrsTypes
 use criLog
@@ -27,15 +28,20 @@ use criAlgorithm
 use fngVec5D
 implicit none
 
-      integer,parameter                         :: scaleFullTensor = 0, scaleTensileComponent = 1
+      !> \fixme Workaround: once UDSA makes use of dmcIncrementationControl, these
+      !>        constants will no longer be needed.
+      integer,parameter                         :: scaleFullTensor = scalingStrainTensor, &
+                                                   scaleTensileComponent = scalingStrainTensorComponent
 
+      integer,parameter,private :: tension_state = 0, compression_state = 1
+      
+      
       type,extends(BasicModule) :: UDSAModule
             double precision  :: angle = 0.D0, NormMax = 0.D0, NormIter = 0.D0
 
             integer           :: scalingID = scaleFullTensor
             
-            !> Uniaxial stress state. Negative values denote compressive state; non-negative values are used for tensile state.
-            double precision  :: stress_state = 1.D0
+            integer           :: stress_state_id = tension_state
             
             !> Stress ratio
             double precision  :: rho = 0.D0 
@@ -57,34 +63,40 @@ contains
       integer,intent(in)                        :: cnfunit
       class(UDSAModule),intent(inout)            :: this
       !
-      integer :: ioerr
-      logical :: input_ok = .false.
+      logical :: use_default_settings
+      !
+      !> \fixme Temporary workaround for the forward compatibility: we use
+      !>        IncrementationControlSettings_read, but we push the settings
+      !>        back to the UDSAModule members. This must be changed in future
+      !>        but probably together with a major update to UDSAModule_run
+      type(IncrementationControlSettings) :: inc_settings
+      !
+      type(MapItem),dimension(2),parameter :: stress_states = [MapItem('compression', compression_state),&
+                                                               MapItem('tension', tension_state)]
       !
             info = BasicModule_ReadConfig(this,cnfunit)
-            if (info /= 0) return
-            input_ok = .false.
-            info = -1
+            if (info /= criSuccess) return
+            info = criErr_IORead
             ! Read parameters specific for the UDSAModule program
-            read(cnfunit,fmt=*,iostat=ioerr)  this%angle
-            if (ioerr /= 0) return
-            read(cnfunit,fmt=*,iostat=ioerr)  this%scalingID, this%NormMax, this%NormIter
-            if (ioerr /= 0) return
-            read(cnfunit,fmt=*,iostat=ioerr)  this%stress_state
-            if (ioerr /= 0) return
-            read(cnfunit,fmt=*,iostat=ioerr)  this%rho
-            if (ioerr /= 0) return
-            ! Validate input
-            select case(this%scalingID)
-                  case(scaleFullTensor,scaleTensileComponent)
-                        input_ok = .true.
-            end select
-            this%stress_state = merge(-1.D0,1.D0,(this%stress_state < 0.0))
-            if ((ioerr /= 0) .or. (.not. input_ok)) return
-            info = 0
+            if (.not. readValue(cnfunit, this%angle)) return
+            ! Read incrementation settings
+            call IncrementationControlSettings_read(inc_settings, cnfunit, info, &
+                                                    allowed = [scalingStrainTensor, scalingStrainTensorComponent])
             
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
+            if (info /= criSuccess) return
+            ! Set the members according to the incrementation settings
+            this%scalingID = inc_settings%scaling_type
+            this%NormMax = inc_settings%step_size
+            this%NormIter = inc_settings%increment_size
+            !
+            if (.not. readKeyword(cnfunit, stress_states, this%stress_state_id)) return
+            use_default_settings = .true.
+            if (.not. readValue(cnfunit, use_default_settings)) return
+            if (.not. use_default_settings) then
+                if (.not. readValue(cnfunit, this%rho)) return
+            endif
+            info = criSuccess
+      !
       end function
 
       
@@ -97,13 +109,13 @@ contains
       !
             info = BasicModule_printConfig(this,outunit)
             if (info /= 0) return
-            info = -1
+            info = criErr_BadArgs
             ! Introduce youself ;-)
             write(outunit,'(A)') 'UDSA, $Rev$'
             !
             if (doLogging(criLogInfo,this%output%verbosity)) then 
-                  if (this%stress_state > 0.0) then
-                        description = 'uniaxial tensile'      
+                  if (this%stress_state_id == tension_state) then
+                        description = 'uniaxial tensile'
                   else
                         description = 'uniaxial compression'
                   endif
@@ -120,7 +132,7 @@ contains
                               write(outunit,*) 'Unknown scaling type, full tensor will be used'
                   end select
             endif
-            info = 0
+            info = criSuccess
       !
       end function
       
@@ -128,7 +140,7 @@ contains
       subroutine UDSAModule_Run(this,info)
       implicit none
       class(UDSAModule),intent(inout)            :: this
-      integer,intent(out)                       :: info      
+      integer,intent(out)                        :: info
       ! Note about naming convention for variables:
       !    - All variables for vectors and tensors suffixed with _t are expressed in the "tensile sample coordinate system".
       !    - All other variables are implicitly expressed in the "material coordinate system"
@@ -145,7 +157,9 @@ contains
       double precision                          :: R
       double precision                          :: plastic_work_inc = 0.D0, plastic_work_total = 0.D0
       double precision                          :: taylor_factor
-      integer     :: step,i,j 
+      integer     :: step,i,j
+      !> Uniaxial stress state. Negative value denotes compressive state; non-negative values are used for tensile state.
+      double precision :: stress_direction
       !
       integer,parameter       :: thisunit = 90, ofunit = 91, histunit = 92
       double precision,parameter :: dt = 1.D0 ! Time step length
@@ -178,7 +192,8 @@ contains
       ! Prepare the input data      
       !! -> Take uniaxial/slightly biaxial tensile stress, rotate it to given direction     
       S_t = 0.D0
-      S_t(1,1) = this%stress_state * sqrt(3.D0/2.D0)/dsqrt(this%rho**2-this%rho+1)
+      stress_direction = merge(-1.D0,1.D0,(this%stress_state_id == compression_state))
+      S_t(1,1) = stress_direction * sqrt(3.D0/2.D0)/dsqrt(this%rho**2-this%rho+1)
       S_t(2,2) = this%rho*S_t(1,1)
             
       ! Rotate from "tensile" to material coordinate system
