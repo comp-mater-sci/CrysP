@@ -21,6 +21,7 @@
       901 format('Error: incorrect format of configuration file:', 1X, A)
       902 format('Error: incorrect format of configuration file. Check',1X,A,1X,'specific section' ) 
       
+      930 format('Error:',1X,A,1X,'Make sure that VEF_ROOT variable is set.')
       ! File access errors
       951 format('Error: cannot open file ', A, ' for reading.')
       952 format('Error: cannot open file ', A, ' for writing.')

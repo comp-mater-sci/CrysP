@@ -332,7 +332,7 @@ contains
                   case(2)       ! CUR file, the only multi-block file now.
                        if (.not. readValue(cnfunit, cnf%texture%block_id)) return 
                   case default
-                        write(display_unit,*) 'Incorrect texture type'
+                        write(display_unit, fmt=900) 'Incorrect texture type.'
                         return
                   end select
             !
@@ -349,6 +349,10 @@ contains
                   enddo
             else
                   call incurMicrostructureFile(cnf%micros_fname, info)
+                  if (info /= criSuccess) then
+                        write(display_unit, fmt=930) 'Cannot locate default microstructure file.'
+                        return
+                  endif
             endif
             !
             call readHardeningSection(cnfunit,  cnf%hardening, info)
@@ -359,9 +363,14 @@ contains
             if (info /= criSuccess) return
             ! Let's map DM_id to a file
             call incurSlipsystemFile(dm_id, cnf%slipsystem%input_fname, info)
-            if (info /= criSuccess) return
-            ! Let's find 
-            
+            if (info /= criSuccess) then
+                  write(display_unit, fmt=930) 'Cannot locate slipsystem file.'
+                  return
+            endif
+            !
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
       !
       end subroutine
 
