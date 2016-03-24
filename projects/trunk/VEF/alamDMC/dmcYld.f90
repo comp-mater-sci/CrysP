@@ -39,11 +39,11 @@ private
                                                  0., 1., 0., 0., 0., 0., & ! second base vector
                                                  0., 0., 0., 0., 0., 0.], & ! offset vector (zeros)
                                                 [sr_symm_voigt_dim,nbase])
-            
       
-            logical                                   :: do_scaling = .false.
+            logical                                   :: do_scaling = .true.
 
-            double precision,dimension(sr_symm_voigt_dim) :: scaling_vector = 0.D0
+            double precision,dimension(sr_symm_voigt_dim) :: scaling_vector = &
+                                                [1., 0., 0., 0., 0., 0.]
       
             logical                                   :: normalizeSm = .false.
             
