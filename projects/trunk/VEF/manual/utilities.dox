@@ -1,0 +1,61 @@
+/*!
+\page page_utilities Utilities and auxiliary tools
+
+[TOC]
+
+odfplot      {#odfplot}
+=======
+
+\verbatim
+usage: odfplot [-h] --input INPUT [--output OUTPUT]
+               [--format {pdf,png,svg,ps,eps} [{pdf,png,svg,ps,eps} ...]]
+               [--bw]
+               [--levelset {auto,autolocal,mtm6.4,mtm44,mtm12,mtm16,mtm32,mtm22} | --levels LEVELSET [LEVELSET ...]]
+               [--no-labels] [--sections SECTIONS]
+               [--style {contour,filled,MTMcontour}] [--no-colorbar]
+
+Print ODF sections
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input INPUT, -i INPUT
+                        ODF file, which is one of: C-coefficient file, aodf
+                        file or mtex file.
+  --output OUTPUT, -o OUTPUT
+                        output graphic file
+  --format {pdf,png,svg,ps,eps} [{pdf,png,svg,ps,eps} ...]
+                        format of the output file
+  --bw                  request black-and-white plot
+  --levelset {auto,autolocal,mtm6.4,mtm44,mtm12,mtm16,mtm32,mtm22}
+                        Selection of level sets
+  --levels LEVELSET [LEVELSET ...]
+                        ODF levels at which isolines are drawn
+  --no-labels
+  --sections SECTIONS
+  --style {contour,filled,MTMcontour}
+                        Style of ODF plot: contour or filled
+  --no-colorbar         Switch off the colorbar in filled plots
+\endverbatim
+
+
+odf2smt    {#odf2smt}
+=======
+
+\verbatim
+usage: odf2smt.py [-h] --input INPUT [--output OUTPUT] [--ncrystals NCRYSTALS]
+
+Calculate dicrete representative crystal orientations from ODF file
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input INPUT, -i INPUT
+                        ODF file, which can be either a C-coefficient file,
+                        AODF file, or MTEX odf file.
+  --output OUTPUT, -o OUTPUT
+                        output SMT file. If omitted, the name of input file
+                        with extension .smt will be used.
+  --ncrystals NCRYSTALS
+                        Number of crystals in the SMT file
+\endverbatim
+
+*/

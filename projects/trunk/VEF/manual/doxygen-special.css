@@ -1,0 +1,22 @@
+/* User-defined styles */
+
+pre.consoleView {
+	color: black;
+	border-style: dashed;
+	border-width: 1px;
+	border-color: navy;
+	background-color: #E0E0FF;
+	# margin: 0 2em 0 2em;
+	padding: 10px;
+	border-radius: .5em;
+}
+img.fullsize {
+	display: block;
+    margin: 0 auto;
+	width: 40%;
+}
+
+div.figure {}
+div.figcaption {
+	text-align: center;
+}
