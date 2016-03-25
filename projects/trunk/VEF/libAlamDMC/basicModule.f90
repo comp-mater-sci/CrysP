@@ -77,7 +77,7 @@ use fngVec5D
             double precision,dimension(alamEval_vSD_dim) :: vSonA = 0.D0 
             double precision,dimension(alamEval_vSD_dim) :: vSonAn = 0.D0 
             double precision :: R = 0.D0
-            double precision :: plast_pot = 0.D0
+            double precision :: dotWonA = 0.D0
             double precision :: scal_s = 0.D0
       end type
 
@@ -259,7 +259,7 @@ contains
             return
         endif
         !
-        ylp_result%plast_pot = dot_product(ylp_result%vA, ylp_result%vSonA)
+        ylp_result%dotWonA = dot_product(ylp_result%vA, ylp_result%vSonA)
         ylp_result%scal_s = SonA_norm / vS_norm
         ! Calculate normalized stess
         ylp_result%vSonAn = ylp_result%vSonA / SonA_norm

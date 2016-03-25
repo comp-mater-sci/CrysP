@@ -29,7 +29,7 @@ implicit none
         
             double precision :: P_abs_sum = 0.D0
         
-            double precision :: plastic_potential = 0.D0
+            double precision :: dotWonA = 0.D0
             double precision :: taylor_factor = 0.D0
             double precision :: scal_s = 0.D0
             double precision :: norm_SonA = 0.D0
@@ -113,7 +113,7 @@ contains
                 scaling_factor = (control%increment_size / norm2(ylp%vA))
                 !
             case(scalingPlasticWork)
-                scaling_factor = (control%increment_size / ylp%plast_pot)
+                scaling_factor = (control%increment_size / ylp%dotWonA)
             !case(scaleTensileComponent)
             !      control_variable = abs(P_t(1,1))
             !      !! -> Scale the D_t in order to get ||Dt_11|| equal to NormIter
@@ -179,7 +179,7 @@ contains
         this%vm_strain_total = root23 * norm2(icv%vP)
         this%P_abs_sum = sum(icv%vP_norms)
         !
-        this%plastic_potential = ylp%plast_pot
+        this%dotWonA = ylp%dotWonA
         this%scal_s = ylp%scal_s
         this%norm_SonA = norm2(ylp%vSonA)
         this%R = ylp%R

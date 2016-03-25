@@ -147,7 +147,7 @@ contains
       double precision,dimension(3,3)           :: P,D,De,De_t,Se,S,S_t, SmIdent, D_t, P_t
       double precision,dimension(3,3)           :: Mrot = 0.0
       !
-      double precision                          :: plast_pot, scal_s, norm_sona
+      double precision                          :: dotWonA, scal_s, norm_sona
       type(qrsData)                             :: qrsvalue = qrsData(0.D0, 0.D0, 0.D0), qrsvalue_accum = qrsData(0.D0, 0.D0, 0.D0)
       double precision,dimension(5)             :: vA, vS,vSonA, vSonAn, vDe,vSe
       double precision                          :: fi1,phi,fi2
@@ -166,12 +166,12 @@ contains
       ! For file output
       integer,parameter :: ncolumn_labels = 14, column_width = 15, short_column_width = 7
       character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = [ character(len=column_width) ::  &
-           'iter','eps_vM','Pnorm','Tnorm','W','plast_pot','M','||SonA||','q-value','r-value','s-value', 'q-valueA', &
-           'r-valueA','R'  ]
+           'iter','eps_vM','Pnorm','Tnorm','W','dotW(A)','M-factor','||S(A)||','q-value','r-value','s-value', 'q-valueA', &
+           'r-valueA','residual']
       ! For display output
       integer,parameter :: ncolumn_labels_display = 12, column_width_display = 12, short_column_width_display = 5
       character(len=column_width_display),dimension(ncolumn_labels_display) :: display_column_labels = [ character(len=14) ::  &
-         'iter','eps_vM','Pnorm','Tnorm','W','plast_pot','M','||SonA||','q-value','r-value','s-value', 'R'    ]
+         'iter','eps_vM','Pnorm','Tnorm','W','dotW(A)','M-factor','||S(A)||','q-value','r-value','s-value', 'residual']
 
       !
       info = 1
@@ -226,7 +226,7 @@ contains
                   exit
             endif
             !
-            plast_pot = dot_product(vA, vSonA)
+            dotWonA = dot_product(vA, vSonA)
             norm_sona = vec_norm2(vSonA)
             scal_s = norm_sona / vec_norm2(vS)
             ! Calculate normalized stess
@@ -286,7 +286,7 @@ contains
                   exit
             endif
             !! -> Report the results
-            write(ofunit,710) step, root23*normP, Pnorm, TNorm, plastic_work_total, plast_pot, &
+            write(ofunit,710) step, root23*normP, Pnorm, TNorm, plastic_work_total, dotWonA, &
                               taylor_factor, & 
                               norm_sona, qrsvalue, qrsvalue_accum%qvalue, qrsvalue_accum%rvalue, R
             !
@@ -294,7 +294,7 @@ contains
                   write(display_unit,601)
                   write(display_unit,600) display_column_labels(1)(1:short_column_width), & 
                                           (trim(display_column_labels(i)), i=2,size(display_column_labels)) 
-                  write(display_unit,610) step, root23*normP, Pnorm, TNorm, plastic_work_total, plast_pot, &
+                  write(display_unit,610) step, root23*normP, Pnorm, TNorm, plastic_work_total, dotWonA, &
                                           taylor_factor, &
                                           norm_sona, qrsvalue, R
                   write(display_unit,601)

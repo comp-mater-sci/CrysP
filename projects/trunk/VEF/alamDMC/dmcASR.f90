@@ -100,7 +100,7 @@ contains
       double precision,dimension(3,3)           :: St, Stdev, StonA, StIdent, Dt
       double precision,dimension(3,3)           :: Mrot = 0.0, MI = 0.0
       !
-      double precision                          :: plast_pot, scal_s, norm_sona, vS_norm
+      double precision                          :: dotWonA, scal_s, norm_sona, vS_norm
       double precision,dimension(5)             :: vA, vS,vSonA, vSonAn, vP, vTotalP, vDe, vSe
 
       double precision                          :: Pnorm, normP, normDe, totalPnorm
@@ -115,11 +115,11 @@ contains
       
       integer,parameter :: ncolumn_labels = 35, column_width = 15, short_column_width = 7
       character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = [ character(len=14) ::  &
-            'step','incr','eps_vM','Pnorm','totalP_vM','W','plast_pot','M','scal_s','||SonA||','R', & 
+            'step','incr','eps_vM','Pnorm','totalP_vM','W','dotW(A)','M','scal_s','||S(A)||','residual', & 
             'SonA_11','SonA_22','SonA_33','SonA_12','SonA_23','SonA_13','A_11','A_22','A_33','A_12','A_23','A_13', & 
             'P_11','P_22','P_33','P_12','P_23','P_13', 'Ptot_11','Ptot_22','Ptot_33','Ptot_12','Ptot_23','Ptot_13' ]
       character(len=14),dimension(9) :: display_column_labels = [ character(len=14) ::  &
-            'step','incr','eps_vM','Pnorm','totalP_vM','W','scal_s','||SonA||','R' ]
+            'step','incr','eps_vM','Pnorm','totalP_vM','W','scal_s','||S(A)||','residual' ]
       !
       info = criErr_BadArgs
       !
@@ -202,7 +202,7 @@ contains
                               write(display_unit,fmt=980)
                               exit
                         endif
-                        plast_pot = dot_product(vA, vSonA)
+                        dotWonA = dot_product(vA, vSonA)
                         ! Calculate normalized stess
                         norm_sona = vec_norm2(vSonA)
                         scal_s = norm_sona / vS_norm
@@ -225,7 +225,7 @@ contains
                         call outputIdentResults(teeunits)                  
                         !! -> Report the results to output file
                         write(ofunit,710) istep, increment , root23*normP, Pnorm, root23*totalPnorm, &
-                                          plastic_work_total, plast_pot, taylor_factor, scal_s, norm_sona, R, &
+                                          plastic_work_total, dotWonA, taylor_factor, scal_s, norm_sona, R, &
                                           Mat33ToVec6(StonA),Mat33ToVec6(D),Mat33ToVec6(P),Mat33ToVec6(TotalP)
                         if (doLogging(criLogInfo,this%output%verbosity)) then
                               ! write the header line
@@ -244,7 +244,7 @@ contains
                               control_variable = PNorm
                               continue
                         case(scalingPlasticWork)
-                              vDe = vA * (control%increment_size / plast_pot)
+                              vDe = vA * (control%increment_size / dotWonA)
                               control_variable = plastic_work_total
                               continue
                         end select

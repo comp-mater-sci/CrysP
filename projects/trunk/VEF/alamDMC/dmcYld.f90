@@ -64,11 +64,11 @@ private
             double precision :: scal_s = 0.D0
             double precision :: scal_s_rel = 0.D0
             double precision :: norm_sona = 0.D0
-            double precision :: plast_pot = 0.D0
+            double precision :: dotWonA = 0.D0
             type(pair_double) :: scal_s_rel_cart = pair_double(0.D0,0.D0)
             type(pair_double) :: normal_cart = pair_double(0.D0,0.D0)
             double precision :: beta = 0.D0
-            double precision :: R = 0.D0
+            double precision :: residual = 0.D0
       end type
       
 contains
@@ -166,7 +166,7 @@ contains
       double precision                          :: iunilen ! Inverse of the length of the deviatoric part of uniaxial tensile stress
 
       !
-      double precision                          :: plast_pot, scal_s, norm_sona, vS_norm, scal_s_rel,Sm_norm
+      double precision                          :: dotWonA, scal_s, norm_sona, vS_norm, scal_s_rel,Sm_norm
       double precision,dimension(5)             :: vA, vS,vSonA, vSonAn
       double precision                          :: R
       type(yldResult),dimension(:),allocatable  :: yldRes
@@ -245,11 +245,11 @@ contains
                         !
                         if (doLogging(criLogInfo,this%output%verbosity)) then
                               write(display_unit,fmt=510)
-                              write(display_unit,fmt=500) 'theta', 'S', 'S_rel', 'W' 
-                              write(display_unit,fmt=501) rad2deg(theta), scal_s, scal_s_rel, plast_pot
+                              write(display_unit,fmt=500) 'theta', 'S', 'S_rel', 'dotW(A)' 
+                              write(display_unit,fmt=501) rad2deg(theta), scal_s, scal_s_rel, dotWonA
                               write(display_unit,fmt=510)
                         endif
-                        yldRes(i) = yldResult(theta, w, scal_s, scal_s_rel, norm_sona, plast_pot, &
+                        yldRes(i) = yldResult(theta, w, scal_s, scal_s_rel, norm_sona, dotWonA, &
                                               pair_double(scal_s_rel * cos(theta), scal_s_rel * sin(theta)),&
                                               pair_double(0.D0,0.D0),beta, R)
                         
@@ -310,7 +310,7 @@ contains
                   !! -> Calculate corresponding strain rate vA
                   call multilevelYLP(vS,vA,vSonA,R,info,.true.,this%ylp,verbose=this%output%verbosity)
                   !
-                  plast_pot = dot_product(vA, vSonA)
+                  dotWonA = dot_product(vA, vSonA)
                   ! Calculate normalized stess
                   norm_sona = vec_norm2(vSonA)
                   scal_s = norm_sona / vS_norm
@@ -338,7 +338,7 @@ contains
       integer :: i,ierr
       integer,parameter :: column_width = 18, ncolumns = 12
       character(len=column_width),dimension(ncolumns),parameter  :: column_labels = [ character(len=column_width) :: &
-            'theta', 'w', 'S', 'S/S_0', '||S(A)||','Phi', 'S_x', 'S_y', 'delta_x', 'delta_y', 'beta', 'R']
+            'theta', 'w', 'S', 'S/S_0', '||S(A)||','dotW(A)', 'S_x', 'S_y', 'delta_S_x', 'delta_S_y', 'beta', 'residual']
       !
             info = criErr_IOWrite
             ! Write the header
