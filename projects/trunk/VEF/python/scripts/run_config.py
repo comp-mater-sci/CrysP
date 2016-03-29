@@ -23,7 +23,7 @@ _module_configs = {'qrs': configQRS,
 
 def main(input, modules):
 
-    if modules == 'all':
+    if 'all' in modules:
         modules = _all_modules
 
     data_source_generic = yaml.load(file(input,'rt'))
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         '--modules',
         choices=['all'] + _all_modules,
         nargs='+',
-        default='all',
+        default=['all'],
         help='Module configurations to be generated'
         )
     args = parser.parse_args()
