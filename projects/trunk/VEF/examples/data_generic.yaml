@@ -31,6 +31,7 @@ generic:
         attempt_linearize: T
         default_eps: 1e-5
         objective_eps: 1e-3
+        use_advanced_settings: False
     # <<--
 #####################################################################
 qrs:
@@ -45,8 +46,6 @@ qrs:
     # -->>
     rho: 0.0
     calculate_MFactor: False
-    reuse_previous: False
-    reuse_stainrate: False
     fold_symmetry: False
     # <<--
 #####################################################################
@@ -72,7 +71,7 @@ yld:
             start: 0.
             end: 0.
             step: 0.
-    use_scaling: False
+    use_scaling: True
     scaling_stress_mode: [1., 0., 0., 0., 0., 0.]
 #####################################################################
 udsa:

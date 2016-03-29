@@ -231,7 +231,7 @@ A^\star = \mathrm{arg min} \left\| \frac{S(A)}{\| S(A) \|} - \frac{ S^\star }{ \
 To minimize the objective function, the TR solver requires its Jacobian. The DMC approximates the Jacobian numerically by means of finite difference method. 
 
 <ol>
-<li>\confdef{solver_default,logical} specify if default values for solver settings should be used. If \conffield{solver_default} is False, the subsequent lines must provide options:
+<li>\confdef{solver_default,logical} specifies if default values for solver settings should be used. If \conffield{solver_default} is False, the subsequent lines must provide options:
 	<ol>
 	<li> \confdef{jacobian_fd_step,real} and \confdef{search_linearize,logical} control how the Jacobian is constructed and how the program exploits it afterwards. The field \conffield{jacobian_fd_step} controls the length of strain increment finite difference method that is be used for estimating the Jacobian. The field \conffield{search_linearize} instructs the program whether  it should assume in the first attempt that  the minimization problem can be considered linear. Note that if the \conffield{search_linearize} is set to True, the following apply:
 	-# the linearization is done per strain increment,
@@ -240,6 +240,8 @@ To minimize the objective function, the TR solver requires its Jacobian. The DMC
 	The user is advised to use \conffield{search_linearize} set to True whenever possible. The linearized problem can be solved much faster and in practice its solution rarely differs from the solution of the non-linear problem.
 	</li>
 	<li> \confdef{TR_default_epsilon,real}  \confdef{TR_objective_norm,real} control convergence criteria used by the solver. The search for the minimum is considered successful if the square norm of the objective function does not exceed \conffield{TR_objective_norm}. 
+	</li>
+	<li> \confdef{solver_advanced,logical} specifies if advanced solver settings should be read. This unlocks a multi-line option, which currently remains undocumented.
 	</li>
 	</ol>
 </li>

@@ -76,8 +76,6 @@ contains
                   info = criErr_IORead
                   if (.not. readValue(cnfunit, this%rho)) return
                   if (.not. readValue(cnfunit, this%calculate_MFactor)) return
-                  if (.not. readValue(cnfunit, this%reuse_previous)) return
-                  if (.not. readValue(cnfunit, this%resuse_stainrate)) return
                   if (.not. readValue(cnfunit, this%fold_symmetry)) return
             endif
             !

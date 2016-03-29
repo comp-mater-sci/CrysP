@@ -474,17 +474,21 @@ contains
       integer,intent(out)                       :: info
       !
       double precision,dimension(2) :: tmp
-      logical :: use_default_solver_settings
+      logical :: use_default_solver_settings, use_advanced_settings
       !
             info = criErr_IORead
             use_default_solver_settings = .true.
+            use_advanced_settings = .false.
             if (.not. readValue(cnfunit, use_default_solver_settings)) return
             if (.not. use_default_solver_settings) then
                   if (.not. readValue(cnfunit, cnf%jacobi_eps)) return
                   if (.not. readValue(cnfunit, cnf%linearize)) return
+                  ! read default_eps and obj_func_eps
                   if (.not. readValue(cnfunit,tmp)) return
                   cnf%default_eps = tmp(1)
                   cnf%obj_func_eps = tmp(2)
+                  ! read flag for advanced settings (placeholder at the moment)
+                  if (.not. readValue(cnfunit, use_advanced_settings)) return
             endif
             info = criSuccess
       !

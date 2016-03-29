@@ -7,7 +7,7 @@
 $output_prefix # Prefix for the output files
 $output_request # Flag: request incremental output of the material state
 $verbosity # Verbosity level: 0 (the lowest) - 3 (the highest)
-$input_fname # Path tot he texture file
+$input_fname # Path to the texture file
 $model_type # Model type: either ALAMEL or FCTaylor
 $slipsystems # Family of slip systems
 $use_default_microstructure # Flag: use default microstructural description
@@ -26,6 +26,7 @@ $use_default_solver_settings # Flag: use default solver settings
 $solver.jacobi_eps # Control over numerical estimation of Jacobian
 $solver.attempt_linearize # Flag: attempt to linearize the problem
 ${solver.default_eps, width=10} ${solver.objective_eps, width=9} # Default eps for TR-solver, eps for the norm of objective function: ||F||_2
+$solver.use_advanced_settings # Flag: use advanced solver settings
 #end if
 #end filter
 # End of generic section
