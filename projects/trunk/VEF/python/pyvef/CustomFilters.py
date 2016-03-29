@@ -22,7 +22,8 @@ class PlainIterableFilter(Filter):
         
 class FilterChain(Filter):
     keyword_filters = {'asTensor': TensorFilter(),
-                       'plain': PlainIterableFilter()}
+                       'plain': PlainIterableFilter(),
+                       'none': Filter()}
     filters = [WidthFilter()]
     def filter(self, val, **kw):
         # Filtering chain: keyword-activated filters first
@@ -32,6 +33,8 @@ class FilterChain(Filter):
             if key in self.keyword_filters:
                 val = self.keyword_filters[key].filter(val, **kw)
         
+        if kw.get('bypass',None):
+            return str(val)
         # and whatever comes out, pass it through the 
         # output filters
         for f in self.filters:
