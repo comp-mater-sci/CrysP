@@ -8,7 +8,7 @@ ${asr.reference_frame, plain=True} # Euler angles defining sample reference fram
 $len($asr.steps) # Number of steps
 #for $istep,$step in $enumerate($asr.steps)
 # Step $istep
-${step.stress_mode, plain=True} # Stress mode
+${step.stress_mode, plain=True} # Stress mode in Voigt notation
 $step.update_state # Flag: incrementally update state variables
 #if $step.update_state
 $step.scaling.type # Keyword: incrementation type

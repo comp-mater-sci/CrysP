@@ -10,15 +10,19 @@
 #set $rpar=$r.params
 $r.type # Range type specification.
 #if $r.type == 'uniform'
-${rpar.start, width=6} ${rpar.end, width=6} ${rpar.step, width=6} # Range specification for 'uniform':  begin end step
-#elif $r.type == 'biased'
-# biased
-#elif $r.type == 'doublebiased'
-# doublebiased
+${rpar.begin, width=6} ${rpar.end, width=6} ${rpar.step, width=6} # Range specification for 'uniform':  begin end step
+#elif $r.type in ['biased', 'doublebiased']
+${rpar.begin, width=6} ${rpar.end, width=6} ${rpar.bias, width=6} # Range specification for ${r.type, bypass=True}:  begin end bias
 #elif $r.type == 'multibiased'
-# multibiased
+$rpar.begin # Begin of the range
+$len($rpar.subranges) # Number of subranges
+#for $i,$sr in $enumerate($rpar.subranges, 1):
+${sr.end, width=10} ${sr.bias, width=9} # subrange ${i, bypass=True}: end, bias
+$sr.npoints # subrange ${i, bypass=True}: number of points 
+#end for
 #elif $r.type == 'discrete'
-# discrete
+$len($rpar.values) # number of points in the range
+${rpar.values, plain=True}
 #end if
 #slurp
 #end def

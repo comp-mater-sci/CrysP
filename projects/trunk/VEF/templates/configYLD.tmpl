@@ -4,18 +4,18 @@
 # Module YLD section
 # ==================
 #filter FilterChain
-$range($yld.range)#slurp
+$range($yld.theta_range)#slurp
 $yld.use_default_settings # Flag: use default yield section settings
 #if not $yld.use_default_settings
-$yld.normalize_base # normalize base tensors
-$yld.base_sigma_x # first base vector
-$yld.base_sigma_y # second base vector
-$yld.base_sigma_y # offset vector
+$yld.section.normalize_base # normalize base tensors
+$yld.section.base_sigma_x # first base tensor in Voigt notation
+$yld.section.base_sigma_y # second base tensor in Voigt notation
+$yld.section.base_sigma_offset # offset tensor in Voigt notation
 $yld.normalize_stress # Flag: normalize stress
-$range($yld.w_range)#slurp
-$yld.scale_section
-#if $yld.scale_section
-$yld.scaling_sigma # Stress direction used for scaling the yield section
+$range($yld.offset_range)#slurp
+$yld.use_scaling
+#if $yld.use_scaling
+$yld.scaling_stress_mode # Stress direction used for scaling the yield section
 #end if
 #end if
 #end filter

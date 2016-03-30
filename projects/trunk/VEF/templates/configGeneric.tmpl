@@ -19,7 +19,12 @@ $microstructure.Fmicro          # Deformation gradient
 #end if
 $use_default_hardening # Flag: use default hardening
 #if not $use_default_hardening
-$hardening.hardening_type # Hardening law Id (0 for no hardening)   
+$hardening.hardening_type # Hardening law Id
+#if $hardening.hardening_type == 2
+${hardening.SwiftK.K,width=6} ${hardening.SwiftK.gamma0,width=6} ${hardening.SwiftK.n,width=6} # Coefficients of SwiftK hardening law
+#elif $hardening.hardening_type == 3
+${hardening.SwiftS.crss0,width=6} ${hardening.SwiftS.gamma0,width=6} ${hardening.SwiftS.n,width=6} # Coefficients of SwiftS hardening law
+#end if
 #end if
 $use_default_solver_settings # Flag: use default solver settings
 #if not $use_default_solver_settings
