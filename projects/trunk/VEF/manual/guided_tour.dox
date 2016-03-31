@@ -21,7 +21,7 @@ most control over the virtual experiments.
 Expert mode - what's that?
 --------------------------
 
-The VEF consists of a number of programs. One of these, the `alamDMC` program, is the corner stone, since it does the core computational work. In this guided tour we will primarily demonstrate how to use `alamDMC` and how to interpret its results. We call it "expert mode" because it comes down to writing configuration files and running programs from a command line (command prompt on Windows or user shell on Linux).
+The VEF consists of a number of programs. One of these, the `alamDMC` program, is the corner stone, since it carries out most of the computational work. In this guided tour we will primarily demonstrate how to use `alamDMC` and how to interpret its results. We call it "expert mode" because it comes down to writing configuration files and running programs from a command line (command prompt on Windows or user shell on Linux). 
 
 
 Let's start!
@@ -120,6 +120,7 @@ The program will place its output in the file `sid1687f_qrs.xqrs`. Let's have a 
 the leading 5 lines of that file:
 \dontinclude sid1687f_qrs.xqrs
 \until 0.100000000E+02
+
 The initial two lines constitute a header. The first line that starts with '#' character contains column numbers. Because of the leading '#', the line is typically neglected by upstream analysis software (e.g. plotting program). The second line contains the column names.
 You will see headers similar to this one in many output files produced by the VEF.
   
@@ -130,7 +131,7 @@ Let's plot the Lankford coefficients (column `r-value` as the function of loadin
 <div class="figcaption">Lankford coefficients in different directions of uniaxial loading</div>
 </div>
 
-By convention the r-values and the yield stress are determined at 20% elongation, whereas the VEF QRS calculates the r-values of the undeformed material, which in our case has 0% elongation. We will come back to this point in [a futher part of this guided tour](#sec_udsa).
+By convention the r-values and the yield stress are determined at 20% elongation, whereas the VEF QRS calculates the r-values of the undeformed material, which in our case has 0% elongation. We will come back to this point in [a futher part of this guided tour](#gt_udsa).
 
 
 
@@ -160,7 +161,7 @@ We may now quickly inspect the content of the output file `sid1687f_yld.xyld` (t
 \dontinclude sid1687f_yld.xyld
 \until 0.85068113E+00
 
-The column `theta` contains the angles that were used for computing the yield locus section. The columns `S` and `S/S_0` include the points on the section, both in polar coordinate system of the angle `theta`. However, we are going to use use the columns `S_x` and `S_y` that contain the yield locus contour in cartesian coordinate system.
+The column `theta` contains the angles that were used for computing the yield locus section. The columns `S` and `S/S_0` include the points on the section, both in polar coordinate system of the angle `theta`. However, we are going to use use the columns `S_x` and `S_y` that contain the yield locus contour in Cartesian coordinate system.
 
 <div class="figure">
 <img class="fullsize" src="sid1687f_yld.png" alt="yield locus section (DX51D steel)">
@@ -196,14 +197,43 @@ Biaxial r-value         {#gt_ARS_rbx}
 Anisotropy evolution due to deformation     {#gt_anisotropy_evol}
 =======================================
 
-Deformation under uniaxial stress state    {#sec_udsa}
+Deformation under uniaxial stress state    {#gt_udsa}
 ---------------------------------------
+
+In the next step of this tour we will simulate uniaxial tension test. We will track the evolution of the material state up to plastic strain of 50%, which is much higher than it could be realized in an experimental setup. 
+
+The output file contains a number of columns, among them we see `r-value` and `r-valueA`, which are the instantaneous and accumulated Lankford coefficients. Let's plot these two as functions of tensile strain norm (column `Tnorm`):
+
+<div class="figure">
+<img class="fullsize" src="sid1687f_hardening_udsa_rvalues.png" alt="evolution of the r-values in tensile test (DX51D steel)">
+<div class="figcaption"> "Evolution of the r-values in tensile test(DX51D steel)</div>
+</div>
+
+
+We may now also check how the texture evolves in this tensile test. We have to first calculate ODFs from the discrete textures stored in the CUR file:
+<pre class="consoleView">
+cur2c --input sid1687f_hardening_udsa.cur
+</pre>
+This command produces a series of files: `sid1687f_hardening_udsa_1.C` to `sid1687f_hardening_udsa_.C`. We can plot ODF sections using the last one, which corresponds to the final deformation:
+<pre class="consoleView">
+odfplot --input sid1687f_hardening_udsa_.C --sections 45 --style=filled --no-labels --format=png
+</pre>
+ 
 
 We can now easily check how the yield locus shape changes due to the imposed deformation. The configuration file of the YLD module would look as follows:
 
 \includelineno sid1687f_tensile_yld.cfg
 
-Note that the input texture is now taken from the CUR file. 
+Note that we now use a deformation texture predicted by the UDSA module, as we take input texture from the CUR file.
 
+
+
+
+Deformation under arbitrary stress state    {#gt_asr}
+----------------------------------------
+
+
+Equi-work contours    {#gt_ewc}
+------------------
 
 */

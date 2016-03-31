@@ -20,7 +20,7 @@ Configuration files of the `alamDMC` program have a fixed format. The files are 
 - empty lines are typically interpreted as containing 'zero' of the type being read,
 - tabulators are not allowed as blank characters.
 
-\note Please make sure that AlamDMC config files do not contain tabulators.
+\attention Please make sure that AlamDMC configuration files do not contain tabulators.
 
 \anchor desc_alamdmc_comments
 Additionally, the configuration files can include comments that are ignored by the program. A comment starts with `#` and spans till the end of the line. A comment may start at the beginning of the line or after a data field.
@@ -42,8 +42,8 @@ The configuration file of any module consists of two main parts:
  -# general configuration settings, and 
  -# settings related to the specific module.
 
-Only the second part varies from one module to another. For instance, let's have a look at the configuration file `alamASR_AKDQFF.cfg` located in `examples` directory. The file contains:
-\includelineno  alamASR_AKDQFF.cfg
+Only the second part varies from one module to another. For instance, let's have a look at the configuration file `AKDQf_asr.cfg` located in `examples` directory. The file contains:
+\includelineno AKDQf_asr.cfg
  
 In the example above only the last four lines pertain to the specific configuration of the module. All the leading lines are related to the general configuration.
 
@@ -138,11 +138,30 @@ A uniform range can be defined by explicitly giving the step between the points.
 
 There is another commonly used type of configuration option, which allows expressing either a rotation angle of material axes or a reference frame. The option uses Euler angles in Bunge notation. This is always a single-line option, comprising three fields of the type `real`: \f$ \phi_1 \f$, \f$ \Phi \f$ and \f$ \phi_2 \f$.
 
-\subsection srtensor_option Options for expressing symmetric second rank tensors
+\subsection symsrtensor_option Options for expressing symmetric second-order tensors
 
 
-\subsection srtensor_option Options for expressing second rank tensors
+Symmetric second-order tensors are expressed in the configuration files  as vectors in Voigt notation. Let \f$ x \f$ be a symmetric second-order tensor. The ordering of the tensor terms in the vector is as follows: 
+\f$ x_{11} \f$, \f$ x_{22} \f$, \f$ x_{33} \f$, \f$ x_{12} \f$, \f$ x_{23} \f$, \f$ x_{13} \f$.
 
+\par Example:
+~~~~~~~~~~~~~{.cfg}
+1.0 0.0 0.0 0.0 0.0 0.0 # Reference stress mode
+~~~~~~~~~~~~~ 
+ 
+\subsection srtensor_option Options for expressing second-order tensors
+Second-order tensors are expressed in the configuration files as three consequent rows of values, following the order:
+- 1st row:  \f$ x_{11} \f$, \f$ x_{12} \f$, \f$ x_{13} \f$
+- 2nd row:  \f$ x_{21} \f$, \f$ x_{22} \f$, \f$ x_{23} \f$
+- 3rd row:  \f$ x_{31} \f$, \f$ x_{32} \f$, \f$ x_{33} \f$
+for \f$ x \f$ being a second-order tensor.
+
+\par Example:
+~~~~~~~~~~~~~{.cfg}
+ 0.0 0.0 1.0 # components: 11, 12, 13
+ 0.0 0.0 0.0 # components: 21, 22, 23
+ 0.0 0.0 0.0 # components: 31, 32, 33
+~~~~~~~~~~~~~ 
 
 \section configuration_general General configuration settings
 
@@ -157,9 +176,9 @@ The outputs of the program are controlled by three parameters:
 
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
-AKDQFF_UDSA          # The output files will be stemmed from "AKDQFF_UDSA.ext", where .ext is file extension.
-False                # No output about material state is requested
-1                    # only the most important information shall be printed out
+AKDQFF_UDSA          # Prefix for the output files
+True                 # Flag: request incremental output of the material state
+3                    # Verbosity level: 0 (the lowest) - 3 (the highest)
 ~~~~~~~~~~~~~
 
 \subsection config_micromech  Configuration of the micro-mechanical model
@@ -170,7 +189,7 @@ Although the configuration options of the micro-scale model are pretty much fine
 <ol>
 <li> \confdef{texture_file,path} specifies the path to texture file. The extension of the file will be interpreted to determine the format of the texture data. Currently the following extensions can be used: `smt`, `cur` and `cub` (case sensitive). The type of the  influences the format of the next line.
 </li>
-<li> If the format of texure data is `cur`, then the CUR format will be assumed. Since CUR format allows many discrete ODFs inside a single file, the next line will be read to get \confdef{texture_block,integer}, which is the index of the ODF block inside the file. The first block has index 1 (one).
+<li> If the format of texture data is `cur`, then the CUR format will be assumed. Since CUR format allows many discrete ODFs inside a single file, the next line will be read to get \confdef{texture_block,integer}, which is the index of the ODF block inside the file. The first block has index 1 (one).
 </li>
 <li> \confdef{model_type,string} specifies crystal plasticity micro-mechanical model to be used in the calculations: either `ALAMEL` or `FCTaylor` (case sensitive).
 </li>
@@ -184,7 +203,7 @@ Although the configuration options of the micro-scale model are pretty much fine
 <li> \confdef{microstructure_default,logical} specifies if the default microstructural description should be used, namely equi-axed grains with no pre-deformation imposed. If \conffield{microstructure_default} is False, the subsequent lines must provide the following options: 
 	<ol>
 	<li> \confdef{microstructure_file,path} Name of microstructure definition file.</li>
-	<li> \confdef{microstructure_F,srtensor} Deformation gradient second rank tensor.</li> 
+	<li> \confdef{microstructure_F,srtensor} Deformation gradient second-order tensor.</li> 
 	</ol>
 </li>
 <li>\confdef{hardening_default,logical} specifies if the default hardening description should be used, namely no hardening of slip systems and identical critical resolved shear stresses of all slip systems. If \conffield{hardening_default} is False, the subsequent lines must provide:
@@ -194,10 +213,18 @@ Although the configuration options of the micro-scale model are pretty much fine
 		<ul>
 			<li> 0 (zero) for non-hardening. If the non-hardening material is requested, no further line is needed.
 			</li>
-			<li> 1 (one) for Voce-type of isotropic hardening. If this hardening law is chosen, the next line must contain five real values, being parameters of Voce hardening law: \f$\tau^{III}_1\f$, \f$\tau^{III}_S\f$, \f$\tau^{IV}_S\f$, \f$\theta^{III}_1\f$, \f$\theta_T\f$ (please consult \cite AlTayManual for further explanation of the parameters)
+			<li> 1 (one) for Voce-type of isotropic hardening. If this hardening law is chosen, the next line must contain five real values, being parameters of Voce hardening law: \f$ \tau^{III}_1 \f$, \f$ \tau^{III}_S \f$, \f$ \tau^{IV}_S \f$, \f$ \theta^{III}_1 \f$, \f$ \theta_T \f$ (please consult \cite AlTayManual for further explanation of the parameters)
 			</li>
-			<li>2 (two) for Swift hardening law (variant SwiftK)</li>
-			<li>3 (three) for Swift hardening law (variant SwiftS)</li>
+			<li>2 (two) for Swift hardening law (variant SwiftK). If SwiftK is chosen, the next line must contain three real values: \f$ K \f$, \f$ \gamma_0 \f$ and \f$ n \f$, which are the parameters of Swift hardening law given by the formula:
+			\f[
+				\tau = K \left(\gamma - \gamma_0 \right)^n
+			\f]
+			</li>
+			<li>3 (three) for Swift hardening law (variant SwiftS). If SwiftS is chosen, the next line must contain three real values: \f$ crss_0 \f$, \f$ \gamma_0 \f$ and \f$ n \f$, which are the parameters of Swift hardening law expressed by the formula:
+			\f[
+				\tau = \frac{crss_0}{(\gamma_0)^n} \left(\gamma - \gamma_0 \right)^n
+			\f]
+			</li>
 			<li> 11 (eleven) for Peeters' model of anisotropic hardening. If the Peeters model is selected, two subsequent lines will be read and interpreted by the program:
 				<ul>
 					<li> \confdef{hardening_parameter_file,path} must contain a path to the file that contains parameters of Peeters' model. See reference manual of the KOST11 module to check the order of parameters in the file.
@@ -214,12 +241,12 @@ Although the configuration options of the micro-scale model are pretty much fine
 
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
-1                    # texture is defined in the SMT format
-AKDQFF.smt           # Name of texture file
-0                    # Model: 0 - Alamel
-bcc.pre              # Definition of slip systems (filename)
-micro1.smt           # Microstructure definition (filename)
-0                    # no hardening
+AKDQFF.smt           # Path to the texture file
+ALAMEL               # Model type: either ALAMEL or FCTaylor
+bcc24                # Family of slip systems
+True                 # Flag: use default microstructural description
+True                 # Flag: use default hardening
+True                 # Flag: use default solver settings
 ~~~~~~~~~~~~~
 
 
@@ -231,15 +258,18 @@ A^\star = \mathrm{arg min} \left\| \frac{S(A)}{\| S(A) \|} - \frac{ S^\star }{ \
 To minimize the objective function, the TR solver requires its Jacobian. The DMC approximates the Jacobian numerically by means of finite difference method. 
 
 <ol>
-<li>\confdef{solver_default,logical} specifies if default values for solver settings should be used. If \conffield{solver_default} is False, the subsequent lines must provide options:
+<li>\confdef{solver_default,logical} specifies if default values for solver settings should be used. If \conffield{solver_default} is False, the subsequent lines must provide the following options:
 	<ol>
-	<li> \confdef{jacobian_fd_step,real} and \confdef{search_linearize,logical} control how the Jacobian is constructed and how the program exploits it afterwards. The field \conffield{jacobian_fd_step} controls the length of strain increment finite difference method that is be used for estimating the Jacobian. The field \conffield{search_linearize} instructs the program whether  it should assume in the first attempt that  the minimization problem can be considered linear. Note that if the \conffield{search_linearize} is set to True, the following apply:
-	-# the linearization is done per strain increment,
-	-# if the solver fails to find a good quality solution of the linearized problem, it will fall back to the non-linear problem,
-	-# the non-linear problem is much more computationally expensive, since it requires several recalculations of the Jacobian.
-	The user is advised to use \conffield{search_linearize} set to True whenever possible. The linearized problem can be solved much faster and in practice its solution rarely differs from the solution of the non-linear problem.
+	<li> \confdef{jacobian_fd_step,real} controls how the Jacobian is constructed.  The field \conffield{jacobian_fd_step} specifies the length of strain increment that is be used for estimating the Jacobian by finite difference method. 
 	</li>
-	<li> \confdef{TR_default_epsilon,real}  \confdef{TR_objective_norm,real} control convergence criteria used by the solver. The search for the minimum is considered successful if the square norm of the objective function does not exceed \conffield{TR_objective_norm}. 
+	<li> \confdef{search_linearize,logical} specifies whether the program should first attempt to solve the minimization problem that is considered linear. Note that if the \conffield{search_linearize} is set to True, the following applies:
+	-# the linearization is attempted each time when strain rate corresponding to a given stress is sought,  
+	-# the linearization is done per strain increment,
+	-# if the solver fails to find a good quality solution of the linearized problem, it will fall back to the non-linear problem.
+	The non-linear problem is much more computationally expensive, since it requires several recalculations of the Jacobian.
+	Therefore, the user is advised to use \conffield{search_linearize} set to True whenever possible. The linearized problem can be solved much faster and in practice its solution rarely differs from the solution of its non-linear counterpart.
+	</li>
+	<li> \confdef{TR_default_epsilon,real} \confdef{TR_objective_norm,real} control convergence criteria used by the solver. The search for the minimum is considered successful if the square norm of the objective function does not exceed \conffield{TR_objective_norm}. 
 	</li>
 	<li> \confdef{solver_advanced,logical} specifies if advanced solver settings should be read. This unlocks a multi-line option, which currently remains undocumented.
 	</li>
@@ -248,8 +278,10 @@ To minimize the objective function, the TR solver requires its Jacobian. The DMC
 </ol>
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
-5.e-2  T             # Jacobi_eps,  linearize
-1e-5   1e-3          # Default eps for TR-solver, eps for the norm of objective function: ||F||_2 
+5.e-2              # Control over numerical estimation of Jacobian
+True               # Flag: attempt to linearize the problem
+1e-5 1e-3          # Default eps for TR-solver, eps for the norm of objective function: ||F||_2
+False              # Flag: use advanced solver settings
 ~~~~~~~~~~~~~
  
 \section configuration_modules Modules of AlamDMC
@@ -259,6 +291,11 @@ As stated in the previous part of the section, the general part of the configura
 \subsection config_udsa UDSA - Uniaxially-Dominated Stress Analysis
 
 The UDSA module provides a virtual experiment that approximates a uniaxial (or a similar) stress state in a tensile specimen.
+
+\par Example
+Please see the configuration file `AKDQf_udsa.cfg` from `examples` directory:
+\includelineno AKDQf_udsa.cfg
+
 
 <ol>
 <li> \confdef{rotation_angle,real}  defines rotation of the virtual tensile sample around the ND. The field \conffield{rotation_angle} is interpreted as the angle to the RD, expressed in degrees.
@@ -286,14 +323,18 @@ The parameter \f$ \rho \f$ is taken from the field \conffield{stress_ratio_rho}.
 
 \subsection config_asr ASR - Arbitrary Stress Analysis
 
-Still under preparations...
+\par Example
+Please see the configuration file `AKDQf_asr.cfg` from `examples` directory:
+\includelineno AKDQf_asr.cfg
+
+\todo This manual section is still under preparations.
 
 \subsection config_QRS QRS - characterization of plastic anisotropy in uniaxial tension
 
 The module `QRS` allows calculation of Lankford coefficients (r-values), normalized Lankford coefficients (q-values) and uniaxial yield stresses (s-values).
 
 Lankford coefficients (r-values) are the most basic means to characterize plastic 
-anisotopy of sheet metal. The r-value is the ratio between contraction in the width 
+anisotropy of sheet metal. The r-value is the ratio between contraction in the width 
 and thickness direction in a sample subjected to uniaxial tension in a given direction 
 \f$\alpha\f$: 
 \f[
@@ -308,24 +349,37 @@ r_\alpha = \frac{\mathbf{D}_2}{\mathbf{D}_3}
 \f] 
 where \f$\mathbf{D}_2\f$ and \f$\mathbf{D}_3\f$ are plastic strain rates in the width and thickness directions, respectively.
 
-Plastic anisotopy can be also described by means of so-called q-value, which is a normalized Lankford coefficient:
+Plastic anisotropy can be also described by means of so-called q-value, which is a normalized Lankford coefficient:
 \f[
 q_\alpha = \frac{r_\alpha}{1 + r_\alpha}
 \f]
 
 Another quantity retrieved from uniaxial testing is the yield stress. 
 
+\par Example
+Please see the configuration file `AKDQf_qrs.cfg` from `examples` directory:
+\includelineno AKDQf_qrs.cfg
 
 
 \subsection config_Yld Yld - Yield locus calculation 
 
-Let's use as an example the configuration file `alamYld_AKDQFF.cfg` from `examples` directory. The file contains:
-\includelineno  alamYld_AKDQFF.cfg
+\par Example
+Please see the configuration file `AKDQf_yld.cfg` from `examples` directory:
+\includelineno AKDQf_yld.cfg
 
 The initial lines 1 - 12 belong to the \ref configuration_general. 
+
+
 
 \subsubsection output_Yld Output files
 
 In the example presented above, the output file will be named 
+
+\subsection config_ewc EWC - Equi-Work Contours
+
+\par Example
+Please see the configuration file `AKDQf_ewc.cfg` from `examples` directory:
+\includelineno AKDQf_ewc.cfg
+
 
 */
