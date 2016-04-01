@@ -7,12 +7,12 @@ The manual includes:
 - \ref page_gettingstarted describing the installation of the VEF software.
 - \ref user_reference that presents main components of the VEF and discusses 
   how to operate it. 
-  The User reference covers:
+  The User Reference covers:
   - \ref page_expert_mode that provides a complete control over all the knobs  in the VEF software, 
   - \ref page_simple_mode that helps to carry out standard tasks with minimal
     effort, while sticking to pre-defined defaults, and
   - \ref page_utilities that facilitate a more integral use of the VEF.
-- \ref guided_tour that gives an step-by-step overview of typical use cases where the VEF is applied.
+- \ref guided_tour that gives a step-by-step overview of typical use cases where the VEF is applied.
 - \ref theory that introduces the foundations of the VEF software and crystal
   plasticity models it utilizes.
 - \ref examples that summarizes the collection of sample problems bundled with the VEF.

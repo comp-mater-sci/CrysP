@@ -4,10 +4,10 @@ Expert mode             {#page_expert_mode}
 ### Introduction
 
 In the *expert mode* you use the engine of the VEF: the AlamDMC program. The AlamDMC provides 
-a way to perform a __stress-driven__ analysis by means of micro-mechanical crystal plaststicity  
-models, such as the Full Constraint (FC) Taylor or the Alamel model. Please note that both FC Taylor and 
-Alamel model are mathematically defined as __strain-rate driven__. This means that the AlamDMC
-program has to numerically invert the micro-mechanical model, which is done by means of an interative
+a way to perform a __stress-driven__ analysis by means of micro-mechanical crystal plasticity  
+models, such as the Full Constraint (FC) Taylor model and the Alamel model. Please note that both FC Taylor and 
+Alamel models are mathematically defined as __strain-rate driven__. This means that the AlamDMC
+program has to numerically invert the micro-mechanical model, which is done through an iterative
 procedure.
 
 From this part of the user manual you will learn how to set up virtual experiments in 

@@ -14,8 +14,8 @@ Introduction         {#gt_introduction}
 ============ 
 
 Throughout this guided tour, we will walk you through the the most common VEF features. 
-This guided tour is written for the \ref page_expert_mode "expert mode" that provides 
-most control over the virtual experiments.
+This guided tour is written for the \ref page_expert_mode "expert mode" that provides the
+most elaborate control over the virtual experiments.
 
 
 Expert mode - what's that?
@@ -109,7 +109,7 @@ Here's what the configuration file tells the `alamDMC`:
 
 The QRS-specific lines give the following:
 - lines 16 - 17 provide the program with the orientations of virtual samples with respect to the reference frame. This is done by a [range specification](@ref range_option). In this example the orientations are given as a [uniform range](@ref option_uniform) of angles between the loading direction and selected material axis (see below).
-- Default settings of uniaxial tension will be used (line 18). These include, among other things, that the reference frame will be given by the material reference frame, in this case RD, TD and ND.  Therefore, the orientations of the virtual samples are given as the angle between RD and the loading direction.
+- Default settings of uniaxial tension will be used (line 18). These include, among other things, that the reference frame will be given by the material reference frame, in this case RD, TD and ND.  Therefore, the orientations of the virtual tensile samples are given as the angle between RD and the loading direction within the RD-TD plane.
 
 Let's now run the `alamDMC`  program in the command line. The program takes two arguments: name of the module `QRS` and path to the configuration file `sid1687f_qrs.cfg`: 
 <pre class="consoleView">
@@ -147,10 +147,10 @@ As we see, lines 1 - 12 are identical as in the previous section. The YLD uses t
 <div class="figcaption">Illustration of \f$\theta\f$ angle that YLD uses to select points in yield locus section. The \f$\beta\f$ angle is one of the outputs from the YLD module.</div>
 </div>
 
-In the presented example we specify a [multi-biased range](@ref option_multibiased) of \f$\theta\f$ angles, which allows us to probe the yield locus more densely in regions where the curvature of the section is expected to be high, and far more coarsely elsewhere. In our example, the denser scan of the yield locus will be around equibiaxial tension point (i.e. \f$\theta = 45^\circ \f$) and equibiaxial compression point (\f$\theta = 205^\circ \f$). However, the equibiaxial tension point will be covered by more points (see the subranges 1 and 4) than the exquibiaxial compression (see the subranges 2 and 3).
+In this example we specify a [multi-biased range](@ref option_multibiased) of \f$\theta\f$ angles, which allows us to probe the yield locus more densely in regions where the curvature of the section is expected to be high, and far more coarsely elsewhere. In our example, the denser scan of the yield locus will be around equibiaxial tension point (i.e. \f$\theta = 45^\circ \f$) and equibiaxial compression point (\f$\theta = 205^\circ \f$). However, the equibiaxial tension point will be covered by more points (see the subranges 1 and 4) than the exquibiaxial compression (see the subranges 2 and 3).
 
 The last line requests to use the defaults, which are: 
-- the section defined by \f$\sigma_{11} \f$ and \f$\sigma_{22} \f$ plane is produced,
+- the yield locus section is defined by \f$\sigma_{11} \f$ (normal stress along RD) and \f$\sigma_{22} \f$ (normal stress along TD) directions,
 - the yield locus will be scaled by yield stress corresponding to uniaxial tension along the RD.
 
 <pre class="consoleView">
@@ -168,7 +168,7 @@ The column `theta` contains the angles that were used for computing the yield lo
 <div class="figcaption">Yield locus section (DX51D steel)</div>
 </div>
 
-Additionally, we can use columns `delta_S_x` and `delta_S_y` to plot the normals to the yield locus contour:
+Additionally, we can use columns `delta_S_x` and `delta_S_y` to plot yield locus' normals (actually: the projection of yield locus normals onto the current section of stress space):
 
 <div class="figure">
 <img class="fullsize" src="sid1687f_yld_normals.png" alt="normals to the yield locus section (DX51D steel)">
@@ -200,7 +200,7 @@ Anisotropy evolution due to deformation     {#gt_anisotropy_evol}
 Deformation under uniaxial stress state    {#gt_udsa}
 ---------------------------------------
 
-In the next step of this tour we will simulate uniaxial tension test. We will track the evolution of the material state up to plastic strain of 50%, which is much higher than it could be realized in an experimental setup. 
+In the next step of this tour we will simulate uniaxial tension test. We will track the evolution of the material state up to a plastic strain of 50%, which is much higher than what may usually be realized in an experimental tensile test setup. 
 
 The output file contains a number of columns, among them we see `r-value` and `r-valueA`, which are the instantaneous and accumulated Lankford coefficients. Let's plot these two as functions of tensile strain norm (column `Tnorm`):
 
