@@ -34,6 +34,11 @@ use dmcEWC
 !
 use criRuntime
 !
+#ifdef DMC_USE_SLIS
+use,intrinsic :: iso_c_binding, only: C_NULL_CHAR
+use fslis
+#define ALAMDMC_FEATURE_UUID 'ff921f1e-fa42-11e5-97dc-ecf4bb152acb'//C_NULL_CHAR
+#endif
 implicit none
       
       
@@ -58,6 +63,11 @@ implicit none
       character(len=errmsg_len) :: error_message
       character(len=128)  :: progname
       !
+#ifdef DMC_USE_SLIS
+!      character(kind=c_char),dimension(*),parameter :: alamdmc_uuid = 'ff921f1e-fa42-11e5-97dc-ecf4bb152acb'//C_NULL_CHAR
+!      logical(kind=c_bool),parameter :: print_license = .true.
+#endif
+      !
       info = 1
       ioerr = 0
       !
@@ -77,6 +87,17 @@ implicit none
       300 format('AlamDMC $Rev$',1X,'EXPERIMENTAL')
 #else
       300 format('AlamDMC $Rev$')
+#endif
+!
+#ifdef DMC_USE_SLIS
+      if (initSlis('VEF_ROOT'//C_NULL_CHAR) /= 0) then
+            write(display_unit,fmt=900) 'Cannot access the license. Check if "license.slis" file is in your VEF_ROOT'
+            call finalize(stopcode_runtimeerror)
+      endif
+      if (.not. isLicenseValid(ALAMDMC_FEATURE_UUID, .true.)) then
+            write(display_unit,fmt=900) 'There is no valid license for AlamDMC'
+            call finalize(stopcode_runtimeerror)
+      endif
 #endif
       !
       ! open and read the config file      
