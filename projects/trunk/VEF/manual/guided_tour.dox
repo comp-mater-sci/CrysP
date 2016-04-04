@@ -72,7 +72,7 @@ As we can see from these ODF sections, the material has a prevalently strong \f$
 
 Let us now sample the ODF to get representative crystal orientations. As a rule of thumb, 
 we recommend to use at least 2000 (ideally: 3000 - 7000) orientations to get a good representation 
-of the macrotexture.
+of the macrotexture. The command [`odf2smt`](@ref odf2smt) will do the sampling:
 <pre class="consoleView">
 odf2smt --input sid1687f.odf --ncrystals 3000
 </pre>

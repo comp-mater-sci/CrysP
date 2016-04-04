@@ -58,4 +58,23 @@ optional arguments:
                         Number of crystals in the SMT file
 \endverbatim
 
+
+cur2c     {#cur2c}
+=====
+
+\verbatim
+usage: cur2c.pyo [-h] --input INPUT [--block BLOCK] --output OUTPUT
+
+'Calculate continuous C-coefficient file from discrete CUR data
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input INPUT, -i INPUT
+                        CUR file
+  --block BLOCK         'Index of the block inside CUR file (indexed from 1).
+                        If omitted, all blocks from the CUR file will be
+                        processed.
+  --output OUTPUT, -o OUTPUT
+                        output C-coefficient file
+\endverbatim
 */
