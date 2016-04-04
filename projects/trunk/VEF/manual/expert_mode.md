@@ -32,12 +32,12 @@ The `alamDMC` provides the following modules:
 -# \ref config_asr
 -# \ref config_udsa
 -# \ref config_QRS 
--# `Yld`: calculation of yield locus section.
--# `EWC`: calculation of equiwork contours.
+-# \ref config_YLD
+-# \ref config_EWC
 
-For instance, to invoke the `Yld` module, the user may run the command:
+For instance, to invoke the `YLD` module, the user may run the command:
 \verbatim
-alamDMC  Yld yld_config.cnf
+alamDMC  YLD yld_config.cnf
 \endverbatim
 
 The configuration files of the individual modules are structured in a very similar manner. See \ref page_configuration for detailed description how to prepare the configuration files, \ref configuration_general and documentation of individual \ref configuration_modules.
