@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libslis", "slis.vcxproj", "{02ACC83B-70B5-4D00-9674-8E9B3149031B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "slisadmin", "slisadmin\slisadmin.vcxproj", "{95DC6B5E-8E47-4BE7-B948-8F332F7EA5F9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02ACC83B-70B5-4D00-9674-8E9B3149031B} = {02ACC83B-70B5-4D00-9674-8E9B3149031B}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "slistest", "slistest\slistest.vcxproj", "{D6376C53-6FBE-4BE6-A34D-F2D1BCA8589C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02ACC83B-70B5-4D00-9674-8E9B3149031B} = {02ACC83B-70B5-4D00-9674-8E9B3149031B}
+	EndProjectSection
+EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libfslis", "libfslis\libfslis.vfproj", "{F951AC66-E940-489A-AC99-A6AC837F1FB7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{02ACC83B-70B5-4D00-9674-8E9B3149031B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{02ACC83B-70B5-4D00-9674-8E9B3149031B}.Debug|Win32.Build.0 = Debug|Win32
+		{02ACC83B-70B5-4D00-9674-8E9B3149031B}.Release|Win32.ActiveCfg = Release|Win32
+		{02ACC83B-70B5-4D00-9674-8E9B3149031B}.Release|Win32.Build.0 = Release|Win32
+		{95DC6B5E-8E47-4BE7-B948-8F332F7EA5F9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{95DC6B5E-8E47-4BE7-B948-8F332F7EA5F9}.Debug|Win32.Build.0 = Debug|Win32
+		{95DC6B5E-8E47-4BE7-B948-8F332F7EA5F9}.Release|Win32.ActiveCfg = Release|Win32
+		{95DC6B5E-8E47-4BE7-B948-8F332F7EA5F9}.Release|Win32.Build.0 = Release|Win32
+		{D6376C53-6FBE-4BE6-A34D-F2D1BCA8589C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D6376C53-6FBE-4BE6-A34D-F2D1BCA8589C}.Debug|Win32.Build.0 = Debug|Win32
+		{D6376C53-6FBE-4BE6-A34D-F2D1BCA8589C}.Release|Win32.ActiveCfg = Release|Win32
+		{D6376C53-6FBE-4BE6-A34D-F2D1BCA8589C}.Release|Win32.Build.0 = Release|Win32
+		{F951AC66-E940-489A-AC99-A6AC837F1FB7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F951AC66-E940-489A-AC99-A6AC837F1FB7}.Debug|Win32.Build.0 = Debug|Win32
+		{F951AC66-E940-489A-AC99-A6AC837F1FB7}.Release|Win32.ActiveCfg = Release|Win32
+		{F951AC66-E940-489A-AC99-A6AC837F1FB7}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
