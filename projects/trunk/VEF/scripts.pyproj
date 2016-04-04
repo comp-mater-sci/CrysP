@@ -7,13 +7,13 @@
     <ProjectHome>python\scripts\</ProjectHome>
     <StartupFile>run_config.py</StartupFile>
     <SearchPath>..\</SearchPath>
-    <WorkingDirectory>$(SolutionDir)examples</WorkingDirectory>
+    <WorkingDirectory>C:\Users\Jerzy\Documents\Work\TWRMTMProject\projects\trunk\VEF\templates</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <InterpreterId />
     <InterpreterVersion />
-    <CommandLineArguments>--input data_generic.yaml</CommandLineArguments>
+    <CommandLineArguments>--input data_generic.yaml --modules yld</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>

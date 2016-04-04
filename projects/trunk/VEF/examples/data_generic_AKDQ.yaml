@@ -91,7 +91,7 @@ udsa:
         total_magnitude:  0.4
         increment_magnitude: 0.01
     stress_state: tension
-    use_default_settings: True
+    use_default_settings: False
     # if use_default_settings is False, the lines below will be used:
     stress_ratio: 0.0
 #####################################################################
