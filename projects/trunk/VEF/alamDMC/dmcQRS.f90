@@ -41,7 +41,7 @@ implicit none
             logical                                   :: calculate_Mfactor = .false.
 
             logical                                   :: reuse_previous = .false.
-            logical                                   :: resuse_stainrate = .false.
+            logical                                   :: reuse_strainrate = .false.
             logical                                   :: fold_symmetry = .false.
             
       contains
@@ -62,8 +62,10 @@ contains
       class(QRSModule),intent(inout)              :: this
       integer,intent(in)                        :: cnfunit
       !
-      logical :: use_default_settings
+      logical :: use_default_settings, use_stability_improvements
       !
+            use_stability_improvements = .false.
+            use_default_settings = .false.
             info = BasicModule_ReadConfig(this,cnfunit)
             if (info /= criSuccess) return
             info = criErr_IORead
@@ -77,6 +79,11 @@ contains
                   if (.not. readValue(cnfunit, this%rho)) return
                   if (.not. readValue(cnfunit, this%calculate_MFactor)) return
                   if (.not. readValue(cnfunit, this%fold_symmetry)) return
+                  if (.not. readValue(cnfunit, use_stability_improvements)) return
+                  if (use_stability_improvements) then
+                      this%reuse_previous = .true.
+                      this%reuse_strainrate = .true.
+                  endif
             endif
             !
             ! Override the requests for outputs: 
@@ -110,7 +117,7 @@ contains
                   !
                   write(outunit,fmt='(A,\)') 'Info:'
                   if (this%reuse_previous) then
-                        if (this%resuse_stainrate) then
+                        if (this%reuse_strainrate) then
                               write(outunit,'(1X,A,\)') 'Strain rate'
                         else
                               write(outunit,'(1X,A,\)') 'Stress'
@@ -266,7 +273,7 @@ contains
             !(***) Prepare next iteration if re-using is requested.
             if (this%reuse_previous) then
                   ! Re-used data are always in "tensile" coordinate system (initial coordinate system) 
-                  if (this%resuse_stainrate) then
+                  if (this%reuse_strainrate) then
                         Xtcoord_resume = Dtcoord
                   else
                         ! Rotate stresses to "tensile" coordinate system 

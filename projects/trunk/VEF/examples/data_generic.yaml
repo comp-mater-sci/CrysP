@@ -47,6 +47,7 @@ qrs:
     rho: 0.0
     calculate_MFactor: False
     fold_symmetry: False
+    improve_stability: False
     # <<--
 #####################################################################
 yld:
