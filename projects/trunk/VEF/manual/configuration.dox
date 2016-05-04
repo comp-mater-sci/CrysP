@@ -136,7 +136,8 @@ A uniform range can be defined by explicitly giving the step between the points.
 
 \subsection euler_option  Options for expressing Euler angles.
 
-There is another commonly used type of configuration option, which allows expressing either a rotation angle of material axes or a reference frame. The option uses Euler angles in Bunge notation. This is always a single-line option, comprising three fields of the type `real`: \f$ \phi_1 \f$, \f$ \Phi \f$ and \f$ \phi_2 \f$.
+A general description of orientation (of a certain reference frame, of a crystal, etc.) is given by a set of Euler angles.
+There is one option supported, i.e. Euler angles in Bunge notation and expressed in degrees. This is always a single-line option, comprising three fields of the type `real`: \f$ \phi_1 \f$, \f$ \Phi \f$ and \f$ \phi_2 \f$.
 
 \subsection symsrtensor_option Options for expressing symmetric second-order tensors
 
@@ -292,32 +293,40 @@ The general part of the configuration file is followed by settings that are spec
 
 \subsection config_udsa UDSA - Uniaxially-Dominated Stress Analysis
 
-The UDSA module provides a virtual experiment that approximates a uniaxial (or a similar) stress state in a tensile specimen.
-
-\par Example
-Please see the configuration file `AKDQf_udsa.cfg` from `examples` directory:
-\includelineno AKDQf_udsa.cfg
-
-The tensile direction of the virtual sample is restricted to the plane defined by the 1st and 2nd material reference directions, i.e. the conventional sheet plane for sheet specimen.
+The UDSA module provides a virtual experiment under uniaxial (or similar) tensile or compressive stress state.
+The loading direction of the virtual sample is restricted to the plane defined by the 1st and 2nd material reference directions, 
+i.e. the conventional sheet plane for sheet specimen.
 
 <ol>
 <li> \confdef{rotation_angle,real} defines the orientation of the virtual tensile specimen. The \conffield{rotation_angle} is the angle between the tensile direction and the 1st material reference axis, i.e. the conventional rolling direction for sheet specimen. The field \conffield{rotation_angle} is expressed in degrees. 
 </li>
-<li> \confdef{scaling_type,string} specifies how the strain increments will be calculated. 
--# if \conffield{scaling_type} is equal to `StrainTensor`, the strain increment tensor \f$ \Delta\mathbf{D} \f$ is selected in such a way that  \f$ \| \Delta\mathbf{D} \| \f$  = \conffield{strain_increment} [(see below)](#ref strain_increment).
--# if \conffield{scaling_type} is equal to `StrainTensorComponent`, then the strain increment is selected to satisfy that the tensile strain \f$ \Delta D_{xx} =  \f$  \conffield{strain_increment}.
+<li> \confdef{scaling_type,string} specifies how the deformation increments will be calculated. If \conffield{scaling_type} is equal to 
+	<ul>
+		<li> `StrainTensor`, the strain increment tensor \f$ \Delta\mathbf{D} \f$ satisfies 
+		\f$ \| \Delta\mathbf{D} \| \f$  = \conffield{increment_magnitude}.
+		</li>
+		<li> `StrainTensorComponent`, the strain increment tensor \f$ \Delta\mathbf{D} \f$ is such that 
+		the component along the loading direction \f$ \Delta D_{xx} =  \f$  \conffield{increment_magnitude}.
+		</li>
+	</ul>
 </li>
 <li>
-\confdef{strain_max,real} provides maximal strain (as specified by \conffield{scaling_type})to be reached in the virtual test.
+\confdef{total_magnitude,real} provides maximal deformation (as specified by \conffield{scaling_type}) to be reached in the virtual test.
 </li>
 <li>
-\confdef{strain_increment,real} controls the magnitude of strain increments.
+\confdef{increment_magnitude,real} sets the magnitude of strain increments. Note that the last increment may have a smaller magnitude than specified
+	in order to reach exactly \conffield{total_magnitude}.
 </li>
-<li> \confdef{stress_state,string}  selects between tension and compression stress states. Use `compression` to request compressive state or `tension` for tensile stress state.
+<li> \confdef{stress_state,string}  selects between tension and compression stress states. Specify 
+	<ul>
+		<li> `compression` to request compressive stress state.
+		</li>
+		<li> `tension` to request tensile stress state.
+	</ul>
 </li>
 <li> \confdef{udsa_defaults,logical} specifies if defaults should be used for advanced settings. If set `False`, the following line must be provided:
 	<ol>
-		<li> \confdef{stress_ratio_rho,real}  contains a deviation \f$ \rho \f$ from the pure uniaxial stress state, as:
+		<li> \confdef{stress_ratio_rho,real} contains a deviation \f$ \rho \f$ from the pure uniaxial stress state, as:
 		\f[
 		\rho = \frac{\sigma_{yy}}{\sigma_{xx}}
 		\f]
@@ -338,7 +347,45 @@ False                # Flag: use default settings
 0.0                  # Stress ratio: rho = sigma_yy/sigma_xx
 ~~~~~~~~~~~~~
 
+\par Example
+Please see the configuration file `AKDQf_udsa.cfg` from `examples` directory:
+\includelineno AKDQf_udsa.cfg
+
+\subsubsection output_UDSA Module-specific output
+
+
 \subsection config_asr ASR - Arbitrary Stress Analysis
+
+An Arbitrary Stress Analysis prescribes stress loading in a generic form on the virtual sample. 
+
+<ol>
+<li> \confdef{reference_frame,real} specifies the orientation of the sample reference frame of the virtual specimen (reference frame associated to imposed stress state), in format specified in \ref euler_option.
+</li>
+<li> \confdef{n_steps,integer} sets the number of subsequent deformation steps, each one being specified by the configuration settings 3.-4. and their optional subsettings.
+These settings are repeated \conffield{n_steps} times in configuration file, in the same order as they are to be applied to the virtual sample.
+</li>
+<li> \confdef{stress_mode,real} specifies the imposed stress mode for given step, in format specified in \ref symsrtensor_option.
+</li>
+<li> \confdef{update_state,real} is a switch that controls update of material state for given step. When set to `false` then \conffield{stress_mode}
+is merely queried without finite deformation and without associated evolution of state. When `true` then a finite deformation has to be specified as follows:
+	<ol>
+	<li> \confdef{scaling_type,string} specifies how the deformation increments will be calculated. If \conffield{scaling_type} is equal to 
+		<ul>
+			<li> `StrainTensor`, the strain increment tensor \f$ \Delta\mathbf{D} \f$ satisfies 
+			\f$ \| \Delta\mathbf{D} \| \f$  = \conffield{increment_magnitude}.
+			</li>
+			<li> `PlasticWork`, the plastic work per increment \f$ \Delta W =  \f$  \conffield{increment_magnitude}.
+			</li>
+		</ul>
+	</li>
+	<li> \confdef{total_magnitude,real} provides maximal deformation (as specified by \conffield{scaling_type}) to be reached in the virtual test.
+	</li>
+	<li> \confdef{increment_magnitude,real} sets the magnitude of deformation increments. Note that the last increment may have a smaller magnitude than specified
+	in order to reach exactly \conffield{total_magnitude}.
+	</li>
+	</ol>
+</li>
+</ol>
 
 \par Example
 Please see the configuration file `AKDQf_asr.cfg` from `examples` directory:
@@ -346,7 +393,9 @@ Please see the configuration file `AKDQf_asr.cfg` from `examples` directory:
 
 \todo This manual section is still under preparations.
 
-\subsection config_QRS QRS - characterization of plastic anisotropy in uniaxial tension
+\subsubsection output_ASR Module-specific output
+
+\subsection config_QRS QRS - Q-, R- and S-values that characterize plastic anisotropy in uniaxial stress state
 
 The module `QRS` allows calculation of Lankford coefficients (r-values), normalized Lankford coefficients (q-values) and uniaxial yield stresses (s-values).
 
@@ -377,6 +426,7 @@ Another quantity retrieved from uniaxial testing is the yield stress.
 Please see the configuration file `AKDQf_qrs.cfg` from `examples` directory:
 \includelineno AKDQf_qrs.cfg
 
+\subsubsection output_QRS Module-specific output
 
 \subsection config_YLD YLD - Yield locus calculation 
 
@@ -388,15 +438,16 @@ The initial lines 1 - 12 belong to the \ref configuration_general.
 
 
 
-\subsubsection output_Yld Output files
+\subsubsection output_Yld Module-specific output
 
 In the example presented above, the output file will be named 
 
-\subsection config_EWC EWC - Equi-Work Contours
+\subsection config_EWC EWC - Equi-Work Contour calculation
 
 \par Example
 Please see the configuration file `AKDQf_ewc.cfg` from `examples` directory:
 \includelineno AKDQf_ewc.cfg
 
+\subsubsection output_EWC Module-specific output
 
 */
