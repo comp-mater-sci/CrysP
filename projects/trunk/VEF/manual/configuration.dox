@@ -298,7 +298,7 @@ The loading direction of the virtual sample is restricted to the plane defined b
 i.e. the conventional sheet plane for sheet specimen.
 
 <ol>
-<li> \confdef{rotation_angle,real} defines the orientation of the virtual tensile specimen. The \conffield{rotation_angle} is the angle between the tensile direction and the 1st material reference axis, i.e. the conventional rolling direction for sheet specimen. The field \conffield{rotation_angle} is expressed in degrees. 
+<li> \confdef{sample_orientation,real} defines the orientation of the virtual tensile specimen by setting angle between the tensile direction and the 1st material reference axis, i.e. the conventional rolling direction for sheet specimen. The field \conffield{sample_orientation} is expressed in degrees. 
 </li>
 <li> \confdef{scaling_type,string} specifies how the deformation increments will be calculated. If \conffield{scaling_type} is equal to 
 	<ul>
@@ -367,7 +367,7 @@ These settings are repeated \conffield{n_steps} times in configuration file, in 
 <li> \confdef{stress_mode,real} specifies the imposed stress mode for given step, in format specified in \ref symsrtensor_option.
 </li>
 <li> \confdef{update_state,real} is a switch that controls update of material state for given step. When set to `false` then \conffield{stress_mode}
-is merely queried without finite deformation and without associated evolution of state. When `true` then a finite deformation has to be specified as follows:
+is merely queried without finite deformation and without associated evolution of state. Otherwise a finite deformation has to be specified as follows:
 	<ol>
 	<li> \confdef{scaling_type,string} specifies how the deformation increments will be calculated. If \conffield{scaling_type} is equal to 
 		<ul>
