@@ -412,7 +412,7 @@ i.e. the conventional sheet plane for sheet specimen.
 i.e. the conventional rolling direction for sheet specimen. Orientations in the field \conffield{sample_orientation_range} are expressed 
 in degrees. 
 </li>
-<li> \conffield{pure_uniaxial_state} is defined <a href="#pure_uniaxial_state_anchor">here</a>.
+<li> \conffield{pure_uniaxial_state} is defined [here](@ref pure_uniaxial_state_anchor).
 </li>
 <li> \confdef{calculate_Mfactor,logical} is a flag to request calculation of average Taylor factor in module-specific outputfile. If `True`, it may
 increase calculation time for certain model assumptions.
