@@ -451,9 +451,53 @@ Another quantity retrieved from uniaxial testing is the yield stress.
 
 \subsection config_YLD YLD - Yield locus calculation 
 
+This module calculates generic 2-dimensional sections of the yield locus.
+There is no evolution of state associated with this module.
+
+<ol>
+<li> \confdef{theta_range,real} defines the range for yield locus points according to the multi-line format specified in 
+\ref range_option. Angles in the field \conffield{theta_range} are expressed in degrees and are measured from the 1st  
+section base vector towards the 2nd section base vector. 
+</li>
+<li> \confdef{section_default,logical} is a flag to request default or non-default section definition and yield locus scaling.
+If \conffield{section_default}=`True`, the yield locus section is defined by \f$\sigma_{11}\f$ (normal stress along RD) along the 1st axis, 
+and \f$\sigma_{22}\f$ (normal stress along TD) along the 2nd axis. Furthermore, the yield locus will be scaled by the yield stress 
+corresponding to uniaxial tension along the RD.
+For \conffield{section_default}=`False`, the following suboptions are required:
+	<ol>
+	<li> \confdef{normalize_base,logical}. If `True`, then the base tensors specified by the following configuration 
+	settings 2.-3.-4. are normalized so their norm-2 is equal to 1.0.
+	</li>
+	<li> \confdef{base_sigma_x,real} is the base tensor of the 1st axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
+	</li>
+	<li> \confdef{base_sigma_y,real} is the base tensor of the 2nd axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
+	</li>
+	<li> \confdef{base_sigma_offset,real} is the base tensor that determines the mode of the stress that coincides with the origen of the 
+	yield locus section, in [Voigt notation](@ref symsrtensor_option).
+	</li>
+	<li> \confdef{normalize_stress,logical}
+	</li>
+	<li> \confdef{offset_range,real}
+	</li>
+	<li> \confdef{use_scaling,logical}
+		<ol>
+		<li> \confdef{scaling_stress_mode,real} is the stress mode for which the yield point is used as scaling factor, 
+		in [Voigt notation](@ref symsrtensor_option).
+		</li>
+		</ol>
+	</li>
+	</ol>
+</li>
+</ol>
+
+
 \par Example
 Please see the configuration file `AKDQf_yld.cfg` from `examples` directory:
 \includelineno AKDQf_yld.cfg
+
+\par Example
+Please see the configuration file `sid1687f_yld.cfg` from `examples` directory:
+\includelineno sid1687f_yld.cfg
 
 The initial lines 1 - 12 belong to the \ref configuration_general. 
 
