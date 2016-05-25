@@ -509,6 +509,68 @@ In the example presented above, the output file will be named
 
 \subsection config_EWC EWC - Equi-Work Contour calculation
 
+This module produces generic sections of equi-work contours in stress space.
+Equi-work contours are constructed from a series of monotonic stress loading cases within the requested 2-dimensional section of stress space
+The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locus of the material in its initial state.
+
+<ol>
+<li> \confdef{worklevel_selection_method,string}
+	if \conffield{worklevel_selection_method} is equal to
+	<ul>
+	<li> `direct`, the equi-work contour levels are specified directly as a range of plastic work values with \conffield{contour_levels_range}.
+	</li>
+	<li> `reference`, the equi-work contour levels are selected indirectly, on the basis of a reference test. The values of plastic work 
+	used as contour levels are those for which the von Mises equivalent strain \f$ \epsilon_{vM} \f$ of the reference test are specified 
+	by \conffield{contour_levels_range}. 
+	The reference test is specified by the following suboptions: 
+		<ol>
+		<li> \confdef{stress_mode,real} specifies the imposed stress mode of the reference test, in format specified in \ref symsrtensor_option.
+		</li>
+		<li> \confdef{scaling_type,string} specifies how the deformation increments of the reference test will be calculated. If \conffield{scaling_type} is equal to 
+		<ul>
+			<li> `StrainTensor`, the strain increment tensor \f$ \Delta\mathbf{D} \f$ satisfies 
+			\f$ \| \Delta\mathbf{D} \| \f$  = \conffield{increment_magnitude}.
+			</li>
+			<li> `PlasticWork`, the plastic work per increment \f$ \Delta W =  \f$  \conffield{increment_magnitude}.
+			</li>
+		</ul>
+		</li>
+		<li> \confdef{total_magnitude,real} provides maximal deformation (as specified by \conffield{scaling_type}) 
+		to be simulated in the reference test. 
+		A proper selection of contour levels implies \conffield{total_magnitude} to be equal or greater than the largest value
+		of \conffield{contour_levels_range}.
+		</li>
+		<li> \confdef{increment_magnitude,real} sets the magnitude of deformation increments for the reference test. 
+		Note that the last increment
+		may have a smaller magnitude than specified in order to reach exactly \conffield{total_magnitude}.
+		</li>
+		</ol>
+	</li>
+	</ul>
+</li>
+<li> \confdef{contour_theta_range,real} defines the range for equi-work contour points according to the multi-line format specified in 
+\ref range_option. Angles in the field \conffield{contour_theta_range} are expressed in degrees and are measured from the 1st  
+section base vector towards the 2nd section base vector. 
+</li>
+<li> \confdef{contour_levels_range,real} defines the values for the levels of equi-work contours, according to 
+\conffield{worklevel_selection_method}.
+</li>
+<li> \confdef{points_per_contour,integer} sets the number of increments to be performed in-between two subsequent contour levels,
+ for all virtual tests that generate the equi-work contour levels.
+</li>
+<li> \confdef{use_default_settings,logical} specifies whether or not the default section in stress space is to be used. 
+If \conffield{use_default_settings}=`True`, the equi-work contour section is defined by \f$\sigma_{11}\f$ (normal stress along RD) along the 1st axis, 
+and \f$\sigma_{22}\f$ (normal stress along TD) along the 2nd axis.
+For \conffield{use_default_settings}=`False`, the following suboptions are required:
+	<ol>
+	<li>  \confdef{base_sigma_x,real} is the base tensor of the 1st axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
+	</li>
+	<li>  \confdef{base_sigma_y,real} is the base tensor of the 2nd axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
+	</li>
+	</ol>
+</li>
+</ol>
+
 \par Example
 Please see the configuration file `AKDQf_ewc.cfg` from `examples` directory:
 \includelineno AKDQf_ewc.cfg
