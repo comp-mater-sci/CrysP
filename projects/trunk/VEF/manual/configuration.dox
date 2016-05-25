@@ -183,9 +183,9 @@ True                 # Flag: request incremental output of the material state
 3                    # Verbosity level: 0 (the lowest) - 3 (the highest)
 ~~~~~~~~~~~~~
 
-\subsection config_micromech  Configuration of the micro-mechanical model
+\subsection config_multiscale  Configuration of the multi-scale model
 
-Although the configuration options of the micro-scale model are pretty much fine grained, there are reliable defaults that the user can rely on. These defaults typically cover a set of aspects and allow the user not to define the corresponding collection of configuration options. If the defaults do not fit to user's needs, it is possible to adapt the model by selectively dropping the defaults. The micro-mechanical model is configured as follows:
+Although the configuration options of the multi-scale model are pretty much fine grained, there are reliable defaults that the user can rely on. These defaults typically cover a set of aspects and allow the user not to define the corresponding collection of configuration options. If the defaults do not fit to user's needs, it is possible to adapt the model by selectively dropping the defaults. The multi-scale model is configured as follows:
 
 
 <ol>
@@ -194,7 +194,7 @@ Although the configuration options of the micro-scale model are pretty much fine
 	<li> \confdef{texture_block,integer} provides the index of the ODF block inside the CUR file. The first block has index 1 (one).</li>
 	</ol>
 </li>
-<li> \confdef{model_type,string} specifies the crystal plasticity micro-mechanical model to be used in the calculations: either `ALAMEL` or `FCTaylor` (case sensitive).
+<li> \confdef{model_type,string} specifies the multi-scale crystal plasticity model to be used in the calculations: either `ALAMEL` or `FCTaylor` (case sensitive).
 </li>
 <li> \confdef{slip_system_family,string} defines the slip system families associated to a particular crystal structure. Supported values are: 
 	<ul>
@@ -251,8 +251,8 @@ True                 # Flag: use default microstructural description
 True                 # Flag: use default hardening
 ~~~~~~~~~~~~~
 
-
-\subsection config_yld Configuration of the search procedure
+
+\subsection config_search_procedure Configuration of the search procedure
 This part of the configuration file controls how the program will search for the strain rate that corresponds to a requested stress state. A gradient-based Trust Region (TR) solver is used to find the strain rate \f$ A^\star \f$ that corresponds to the stress \f$ S^\star \f$:
 \f[
 A^\star = \mathrm{arg min} \left\| \frac{S(A)}{\| S(A) \|} - \frac{ S^\star }{ \| S^\star \| } \right\|
@@ -291,11 +291,13 @@ False              # Flag: use advanced solver settings
 
 The general part of the configuration file is followed by settings that are specific to a given module.
 
-\subsection config_udsa UDSA - Uniaxially-Dominated Stress Analysis
+\subsection config_udsa Uniaxial Stress Test Module (keyword: UDSA)
 
-The UDSA module provides a virtual experiment under uniaxial (or similar) tensile or compressive stress state.
+The Uniaxial Stress Test Module provides a virtual experiment under uniaxial (or similar) tensile or compressive stress state.
 The loading direction of the virtual sample is restricted to the plane defined by the 1st and 2nd material reference directions, 
 i.e. the conventional sheet plane for sheet specimen.
+
+\subsubsection configuration_UDSA Module-specific configuration
 
 <ol>
 <li> \confdef{sample_orientation,real} defines the orientation of the virtual tensile specimen by setting angle between the tensile direction and the 1st material reference axis, i.e. the conventional rolling direction for sheet specimen. The field \conffield{sample_orientation} is expressed in degrees. 
@@ -356,9 +358,11 @@ Please see the configuration file `AKDQf_udsa.cfg` from `examples` directory:
 \subsubsection output_UDSA Module-specific output
 
 
-\subsection config_asr ASR - Arbitrary Stress Analysis
+\subsection config_asr Multiaxial Stress Test Module (keyword: ASA)
 
-An Arbitrary Stress Analysis prescribes stress loading in a generic form on the virtual sample. 
+The Multiaxial Stress Test Module prescribes stress loading in a generic form on the virtual sample. 
+
+\subsubsection configuration_ASA Module-specific configuration
 
 <ol>
 <li> \confdef{reference_frame,real} specifies the orientation of the sample reference frame of the virtual specimen (reference frame associated to imposed stress state), in format specified in \ref euler_option.
@@ -397,14 +401,15 @@ Please see the configuration file `AKDQf_asr.cfg` from `examples` directory:
 
 \subsubsection output_ASR Module-specific output
 
-\subsection config_QRS QRS - Q-, R- and S-values that characterize plastic anisotropy in uniaxial stress state
+\subsection config_QRS Uniaxial Anisotropy Module (keyword: QRS)
 
-The module `QRS` provides Lankford coefficients (in two variants: q-values and r-values; cf. below) and normalized uniaxial yield stresses (s-values), 
+The Uniaxial Anisotropy Module provides Lankford coefficients (in two variants: q-values and r-values; cf. below) and normalized uniaxial yield stresses (s-values), 
 for a specified range of in-plane tensile directions. These properties are queried for the virtual microstructure in the given state without 
 any finite deformation imposed. There is no evolution of state associated with this module.
 The loading direction of the virtual sample is restricted to the plane defined by the 1st and 2nd material reference directions, 
 i.e. the conventional sheet plane for sheet specimen.
 
+\subsubsection configuration_QRS Module-specific configuration
 
 <ol>
 <li> \confdef{sample_orientation_range,real} defines the range for the orientation of virtual tensile specimen, in multi-line format specified in 
@@ -436,7 +441,7 @@ r_\alpha = \frac{\varepsilon_2}{\varepsilon_3}
 where \f$\varepsilon_2\f$ and \f$\varepsilon_3\f$ are the strains in the width and 
 thickness directions, respectively.
 
-The QRS module calculates the r-value as the ratio:
+The Uniaxial Anisotropy Module calculates the r-value as the ratio:
 \f[
 r_\alpha = \frac{\mathbf{D}_2}{\mathbf{D}_3}
 \f] 
@@ -449,10 +454,12 @@ q_\alpha = \frac{r_\alpha}{1 + r_\alpha}
 
 Another quantity retrieved from uniaxial testing is the yield stress. 
 
-\subsection config_YLD YLD - Yield locus calculation 
+\subsection config_YLD Yield Locus Module (keyword: YLD)
 
-This module calculates generic 2-dimensional sections of the yield locus.
+The Yield Locus Module calculates generic 2-dimensional sections of the yield locus.
 There is no evolution of state associated with this module.
+
+\subsubsection configuration_YLD Module-specific configuration
 
 <ol>
 <li> \confdef{theta_range,real} defines the range for yield locus points according to the multi-line format specified in 
@@ -507,11 +514,13 @@ The initial lines 1 - 12 belong to the \ref configuration_general.
 
 In the example presented above, the output file will be named 
 
-\subsection config_EWC EWC - Equi-Work Contour calculation
+\subsection config_EWC Equiwork Contour Module (keyword: EWC)
 
-This module produces generic sections of equi-work contours in stress space.
+The Equiwork Contour Module produces generic sections of equi-work contours in stress space.
 Equi-work contours are constructed from a series of monotonic stress loading cases within the requested 2-dimensional section of stress space
 The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locus of the material in its initial state.
+
+\subsubsection configuration_EWC Module-specific configuration
 
 <ol>
 <li> \confdef{worklevel_selection_method,string}

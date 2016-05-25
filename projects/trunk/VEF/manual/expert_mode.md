@@ -3,12 +3,13 @@ Expert mode             {#page_expert_mode}
 
 ### Introduction
 
-In the *expert mode* you use the engine of the VEF: the AlamDMC program. The AlamDMC provides 
-a way to perform a __stress-driven__ analysis by means of micro-mechanical crystal plasticity  
-models, such as the Full Constraint (FC) Taylor model and the Alamel model. Please note that both FC Taylor and 
-Alamel models are mathematically defined as __strain-rate driven__. This means that the AlamDMC
-program has to numerically invert the micro-mechanical model, which is done through an iterative
-procedure.
+In the *expert mode* you use the engine of the VEF: the AlamDMC program, which contains a number of different
+modules for virtual mechanical testing and material characterization on the basis of multi-scale crystal plasticity  
+models such as the Full Constraint (FC) Taylor model and the Alamel model.
+
+The AlamDMC enables to perform __stress-driven__ analysis on __strain-rate driven__ multi-scale models,
+such as FC Taylor and Alamel, through numerical inversion of the multi-scale model in an iterative procedure,
+see \ref config_search_procedure.
 
 From this part of the user manual you will learn how to set up virtual experiments in 
 AlamDMC and what type of results can be obtained. More in detail:
@@ -24,20 +25,22 @@ AlamDMC and what type of results can be obtained. More in detail:
 The program AlamDMC can be started from the Windows command line. General form of command 
 line parameters is:
 \verbatim
-alamDMC  module_name  configuration_file
+alamDMC  keyword  configuration_file
 \endverbatim
 
-The `alamDMC` provides the following modules:
+The `alamDMC` program provides the following modules:
 
--# \ref config_asr
--# \ref config_udsa
--# \ref config_QRS 
--# \ref config_YLD
--# \ref config_EWC
 
-For instance, to invoke the `YLD` module, the user may run the command:
+-# \ref config_udsa - the keyword stands for Uniaxially-Dominated Stress Analysis.
+-# \ref config_asr - the keyword stands for Arbitrary Stress Analysis.
+-# \ref config_QRS - the keyword stands for Q-values, R-values and S-values 
+(properties that characterize plastic anisotropy in uniaxial stress state).
+-# \ref config_YLD - the keyword stands for YieLD locus.
+-# \ref config_EWC - the keyword stands for Equi-Work Contour.
+
+For instance, to invoke the Yield Locus Module, the user may run the command:
 \verbatim
-alamDMC  YLD yld_config.cnf
+alamDMC  YLD  yld_config.cnf
 \endverbatim
 
 The configuration files of the individual modules are structured in a very similar manner. See \ref page_configuration for detailed description how to prepare the configuration files, \ref configuration_general and documentation of individual \ref configuration_modules.
