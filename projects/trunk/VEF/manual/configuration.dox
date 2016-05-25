@@ -302,11 +302,11 @@ i.e. the conventional sheet plane for sheet specimen.
 </li>
 <li> \confdef{scaling_type,string} specifies how the deformation increments will be calculated. If \conffield{scaling_type} is equal to 
 	<ul>
-		<li> `StrainTensor`, the strain increment tensor \f$ \Delta\mathbf{D} \f$ satisfies 
-		\f$ \| \Delta\mathbf{D} \| \f$  = \conffield{increment_magnitude}.
+		<li> `StrainTensor`, the strain increment tensor \f$ \Delta\mathbf{\epsilon} \f$ satisfies 
+		\f$ \| \Delta\mathbf{\epsilon} \| \f$  = \conffield{increment_magnitude}.
 		</li>
-		<li> `StrainTensorComponent`, the strain increment tensor \f$ \Delta\mathbf{D} \f$ is such that 
-		the component along the loading direction \f$ \Delta D_{xx} =  \f$  \conffield{increment_magnitude}.
+		<li> `StrainTensorComponent`, the strain increment tensor \f$ \Delta\mathbf{\epsilon} \f$ is such that 
+		the component along the loading direction \f$ \Delta \epsilon_{xx} =  \f$  \conffield{increment_magnitude}.
 		</li>
 	</ul>
 </li>
@@ -373,8 +373,8 @@ is merely queried without finite deformation and without associated evolution of
 	<ol>
 	<li> \confdef{scaling_type,string} specifies how the deformation increments will be calculated. If \conffield{scaling_type} is equal to 
 		<ul>
-			<li> `StrainTensor`, the strain increment tensor \f$ \Delta\mathbf{D} \f$ satisfies 
-			\f$ \| \Delta\mathbf{D} \| \f$  = \conffield{increment_magnitude}.
+			<li> `StrainTensor`, the strain increment tensor \f$ \Delta\mathbf{\epsilon} \f$ satisfies 
+			\f$ \| \Delta\mathbf{\epsilon} \| \f$  = \conffield{increment_magnitude}.
 			</li>
 			<li> `PlasticWork`, the plastic work per increment \f$ \Delta W =  \f$  \conffield{increment_magnitude}.
 			</li>
@@ -528,8 +528,8 @@ The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locu
 		</li>
 		<li> \confdef{scaling_type,string} specifies how the deformation increments of the reference test will be calculated. If \conffield{scaling_type} is equal to 
 		<ul>
-			<li> `StrainTensor`, the strain increment tensor \f$ \Delta\mathbf{D} \f$ satisfies 
-			\f$ \| \Delta\mathbf{D} \| \f$  = \conffield{increment_magnitude}.
+			<li> `StrainTensor`, the strain increment tensor \f$ \Delta\mathbf{\epsilon} \f$ satisfies 
+			\f$ \| \Delta\mathbf{\epsilon} \| \f$  = \conffield{increment_magnitude}.
 			</li>
 			<li> `PlasticWork`, the plastic work per increment \f$ \Delta W =  \f$  \conffield{increment_magnitude}.
 			</li>
