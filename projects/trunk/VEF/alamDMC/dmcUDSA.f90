@@ -18,13 +18,17 @@
 !> along deformation due to the uniaxial tension or compression stress.
 module dmcUDSA
 use alamYLP
+use altaySub
 use dmcUtils
-use dmcBasicModule
+use dmcStressDrivenEvolutionModule
 use dmcIncrementationControl
 use commonUtils
 use qrsTypes
 use criLog
 use criAlgorithm
+use criRange
+use criNamedRange
+use criConfigReader
 use fngVec5D
 implicit none
 
@@ -34,12 +38,28 @@ implicit none
                                                    scaleTensileComponent = scalingStrainTensorComponent
 
       integer,parameter,private :: tension_state = 0, compression_state = 1
+      type(MapItem),dimension(2),parameter :: stress_states = [MapItem('compression', compression_state),&
+                                                               MapItem('tension', tension_state)]
+     
+      integer,parameter,private :: sample_orientation_inplane_id = 1, &
+                                   sample_orientation_ND_id = 2, &
+                                   sample_orientation_arbitrary_id = 3
       
+      integer,parameter,private :: n_orientation_types = 3
+      type(MapItem),dimension(n_orientation_types),parameter,private :: sample_orientation_types = [ &
+                MapItem('inplane', sample_orientation_inplane_id), &
+                MapItem('ND', sample_orientation_ND_id), &
+                MapItem('arbitrary', sample_orientation_arbitrary_id) ]
       
-      type,extends(BasicModule) :: UDSAModule
-            double precision  :: angle = 0.D0, NormMax = 0.D0, NormIter = 0.D0
 
-            integer           :: scalingID = scaleFullTensor
+      
+      type,extends(StressDrivenEvolutionModule) :: UDSAModule
+          
+            integer           :: orientation_type_id = sample_orientation_inplane_id
+            
+            class(range_type),pointer   :: ptr_orientation_range => null()
+            
+            type(EulerAngles) :: sample_orientation
             
             integer           :: stress_state_id = tension_state
             
@@ -54,6 +74,9 @@ implicit none
 
             procedure,pass(this)    :: printConfig => UDSAModule_printConfig
             
+            procedure,private,pass(this)    :: createOutputFile => UDSAModule_createOutputFile
+            
+            procedure,pass(this)    :: outputPrefix => UDSAModule_outputPrefix
       end type
 
 contains
@@ -64,30 +87,32 @@ contains
       class(UDSAModule),intent(inout)            :: this
       !
       logical :: use_default_settings
-      !
-      !> \fixme Temporary workaround for the forward compatibility: we use
-      !>        IncrementationControlSettings_read, but we push the settings
-      !>        back to the UDSAModule members. This must be changed in future
-      !>        but probably together with a major update to UDSAModule_run
-      type(IncrementationControlSettings) :: inc_settings
-      !
-      type(MapItem),dimension(2),parameter :: stress_states = [MapItem('compression', compression_state),&
-                                                               MapItem('tension', tension_state)]
+      double precision,dimension(3) :: arr_euler      
       !
             info = BasicModule_ReadConfig(this,cnfunit)
             if (info /= criSuccess) return
             info = criErr_IORead
             ! Read parameters specific for the UDSAModule program
-            if (.not. readValue(cnfunit, this%angle)) return
+            if (.not. readKeyword(cnfunit, sample_orientation_types, this%orientation_type_id)) return
+            ! Read the sub-options
+            select case(this%orientation_type_id)
+            case(sample_orientation_inplane_id)
+                  this%ptr_orientation_range => rangeFromConfig(cnfunit, info)
+                  if (info /= criSuccess .or. .not. associated(this%ptr_orientation_range)) return
+            !
+            case(sample_orientation_ND_id)
+                  ! No sub-options
+                  this%ptr_orientation_range => rangeFactory_extended('zero') ! One-element range
+            !
+            case(sample_orientation_arbitrary_id)
+                  this%ptr_orientation_range => rangeFactory_extended('zero') ! One-element range   
+                  ! Read Euler angles
+                  if (.not. readValue(cnfunit, arr_euler)) return
+                  this%sample_orientation = Arr2EulerAngles(arr_euler)
+            end select
             ! Read incrementation settings
-            call IncrementationControlSettings_read(inc_settings, cnfunit, info, &
-                                                    allowed = [scalingStrainTensor, scalingStrainTensorComponent])
-            
+            call IncrementationControlSettings_read(this%control, cnfunit, info)
             if (info /= criSuccess) return
-            ! Set the members according to the incrementation settings
-            this%scalingID = inc_settings%scaling_type
-            this%NormMax = inc_settings%step_size
-            this%NormIter = inc_settings%increment_size
             !
             if (.not. readKeyword(cnfunit, stress_states, this%stress_state_id)) return
             use_default_settings = .true.
@@ -105,7 +130,7 @@ contains
       class(UDSAModule),intent(in)         :: this
       integer,intent(in)                  :: outunit
       !
-      character(len=32)       :: description
+      character(len=32)       :: description, orientation
       !
             info = BasicModule_printConfig(this,outunit)
             if (info /= 0) return
@@ -120,10 +145,13 @@ contains
                         description = 'uniaxial compression'
                   endif
                   write(outunit,fmt=fmtMsg2Msg) 'Test type:', description
-                  write(outunit,fmt=fmtMsg2Other//'F10.4)') 'Orientation of the sample:', this%angle
-                  write(outunit,fmt=fmtMsg2Other//'F10.4)') 'Stress ratio:', this%rho
+                  
+                  if (resolveId(sample_orientation_types, this%orientation_type_id, orientation)) then
+                        write(outunit,fmt=fmtMsg2Other//'A)') 'Orientation of the sample:', orientation
+                  endif
+                  write(outunit,fmt=fmtMsg2Other//'G0.4)') 'Stress ratio:', this%rho
                   !
-                  select case(this%scalingID)
+                  select case(this%control%scaling_type)
                         case(scaleFullTensor)
                               write(outunit,fmt=fmtMsg2Msg) 'Strain calculation:', 'scaling full tensor'
                         case(scaleTensileComponent)
@@ -141,222 +169,281 @@ contains
       implicit none
       class(UDSAModule),intent(inout)            :: this
       integer,intent(out)                        :: info
+      !
       ! Note about naming convention for variables:
-      !    - All variables for vectors and tensors suffixed with _t are expressed in the "tensile sample coordinate system".
+      !    - All variables for vectors and tensors suffixed with _t are expressed 
+      !      in the "tensile sample coordinate system".
       !    - All other variables are implicitly expressed in the "material coordinate system"
-      double precision,dimension(3,3)           :: P,D,De,De_t,Se,S,S_t, SmIdent, D_t, P_t
-      double precision,dimension(3,3)           :: Mrot = 0.0
+      type(SRTensor) :: sigma, sigma_t, S_t, D_t, P_t, P_t_end
+      double precision,dimension(rot_matrix_dim,rot_matrix_dim) :: Mrot = 0.0
+      type(EvolutionOutput) :: output
+      type(qrsData)     :: qrsvalue, qrsvalue_accum
+      type(EulerAngles) :: sample_orientation
+      double precision  :: angle, stress_direction, Tnorm, TSNorm
+      integer :: test_run, n_test_runs, increment, ierr, ofunit
       !
-      double precision                          :: dotWonA, scal_s, norm_sona
-      type(qrsData)                             :: qrsvalue = qrsData(0.D0, 0.D0, 0.D0), qrsvalue_accum = qrsData(0.D0, 0.D0, 0.D0)
-      double precision,dimension(5)             :: vA, vS,vSonA, vSonAn, vDe,vSe
-      double precision                          :: fi1,phi,fi2
-      double precision                          :: Pnorm, normP, Tnorm
-      double precision                          :: control_variable
-      double precision                          :: scaling_factor
-      double precision                          :: R
-      double precision                          :: plastic_work_inc = 0.D0, plastic_work_total = 0.D0
-      double precision                          :: taylor_factor
-      integer     :: step,i,j
-      !> Uniaxial stress state. Negative value denotes compressive state; non-negative values are used for tensile state.
-      double precision :: stress_direction
+      ! Check the preconditions
       !
-      integer,parameter       :: thisunit = 90, ofunit = 91, histunit = 92
-      double precision,parameter :: dt = 1.D0 ! Time step length
-      ! For file output
-      integer,parameter :: ncolumn_labels = 14, column_width = 15, short_column_width = 7
+      info = criErr_BadArgs
+      if (.not. associated(this%ptr_orientation_range)) return
+      
+      !
+      ! Prepare the input data      
+      ! Take uniaxial/{slightly biaxial} tensile stress, to be rotated to the given sample
+      ! orientation.
+      !
+      !> Uniaxial stress state. Negative value denotes compressive state; 
+      !> non-negative values are used for tensile state.
+      sigma_t%t = 0.D0
+      stress_direction = merge(-1.D0,1.D0,(this%stress_state_id == compression_state))
+      sigma_t%t(1,1) = stress_direction * sqrt(3.D0/2.D0)/dsqrt(this%rho**2-this%rho+1)
+      sigma_t%t(2,2) = this%rho*sigma_t%t(1,1)
+      !
+      ! Loop over test set
+      !
+      test_run = 0
+      
+      n_test_runs = this%ptr_orientation_range%size()
+      
+      test_run_loop: do while (this%ptr_orientation_range%next(angle))
+            test_run = test_run + 1
+            !
+            if (doLogging(criLogDebug,this%output%verbosity))  write(display_unit,800)
+            !
+            ! Come back to the initial material state if needed
+            ! Re-initialize altay 
+            if (n_test_runs > 1) then
+                  ! Re-initialize AlTay
+                  call finalizeAltay(info)
+                  if (info /= 0) exit
+                  this%altay%output_prefix = this%outputPrefix(angle)
+                  call initAltay(this%altay,info)
+                  if (info /= 0) exit
+            endif
+            !
+            ! Set sample orientation and make rotation matrix
+            !
+            select case(this%orientation_type_id)
+            case(sample_orientation_inplane_id)
+                  sample_orientation = EulerAngles(0.D0, 0.D0, angle)
+            case(sample_orientation_ND_id)
+                  sample_orientation = EulerAngles(90.D0, 90.D0, 90.D0)
+            case(sample_orientation_arbitrary_id)
+                  sample_orientation = this%sample_orientation
+            end select
+            sample_orientation = deg2rad(sample_orientation)
+            !
+            ! Rotate stress from "tensile" to material coordinate system
+            ! Calculate rotation matrix
+            Mrot = rotmat(sample_orientation)
+            sigma = rotateSRTensorTo(sigma_t, Mrot)
+            !
+            ! Open and initialize result files
+            !
+            if (n_test_runs > 1) then
+                  info = this%createOutputFile(ofunit, angle)
+            else
+                  info = this%createOutputFile(ofunit)
+            endif
+
+                  
+            info = this%calculateStressPath(sigma, this%control, output, Mrot)
+            if (info /= criSuccess) then
+                write(display_unit,fmt=960)
+                exit
+            endif
+            !
+            ! Process the output evolution path and produce result file
+            !
+            qrsvalue = qrsData(0.D0, 0.D0, 0.D0) 
+            qrsvalue_accum = qrsData(0.D0, 0.D0, 0.D0)
+            !
+            do increment = 1, size(output%values) - 1
+                  ! Total plastic strain at the _begining_ of the inrement.
+
+                  associate(v => output%values(increment))
+                        
+                        ! Rotate back to the "tensile test" coordinate system   
+                        D_t = rotateSRTensorFrom(v%A, Mrot)
+                        S_t = rotateSRTensorFrom(v%SonA, Mrot)
+                        
+                        ! Total deviatoric strain: 
+                        P_t%t = vec5D2tens(v%icv%vP) ! at the beginning of the increment
+                        P_t_end%t = P_t%t + v%P_inc_evol%t ! at the end of the increment
+                        P_t = rotateSRTensorFrom(P_t, Mrot)
+                        P_t_end = rotateSRTensorFrom(P_t_end, Mrot)
+                        !
+                        ! Tensile strain and stress
+                        TNorm = abs(P_t%t(1,1))
+                        TSNorm = abs(S_t%t(1,1))
+                        !
+                        ! Calculate output variables
+                        !
+                        ! Calculate q and r in tensile reference frame
+                        qrsvalue = calculateQRS(D_t%t,v%scal_s)
+                        qrsvalue_accum = calculateQRS(P_t_end%t,v%scal_s)
+                        !
+                        ! Write out the result
+                        write(ofunit,710,iostat=ierr) increment, &
+                                                      v%vm_strain, &
+                                                      v%P_abs_sum, &
+                                                      TNorm, &
+                                                      TSnorm, &
+                                                      v%icv%plastic_work_total, &
+                                                      v%dotWonA, &
+                                                      v%taylor_factor, & 
+                                                      v%norm_SonA, &
+                                                      qrsvalue, &
+                                                      qrsvalue_accum%qvalue, &
+                                                      qrsvalue_accum%rvalue, &
+                                                      v%R
+                        if (ierr /= 0) then
+                              info = criErr_IOWrite
+                              exit
+                        endif
+                  !
+                  end associate 
+            enddo            
+            !
+            close(ofunit)
+            if (info /= criSuccess) then     
+                  write(display_unit, fmt=900) 'Unable to store results for the current virtual tests'
+            endif
+      !
+      end do test_run_loop
+
+      710 format(1X, 1(I9,1X),14(E18.9,1X))
+          
+          
+#define MSG_GROUP_RULERS     
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
+#undef MSG_GROUP_RULERS
+      
+      end subroutine
+      
+ 
+      integer function UDSAModule_createOutputFile(this, iounit, tag_number) result(info)
+      implicit none
+      class(UDSAModule),intent(in)              :: this
+      integer,intent(out)                       :: iounit
+      double precision,intent(in),optional      :: tag_number
+      !
+      integer :: i, ierr
+      character(len=max_pathlen) :: datafile_path
+      !      
+      integer,parameter :: ncolumn_labels = 15, column_width = 15, short_column_width = 9
       character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = [ character(len=column_width) ::  &
-           'iter','eps_vM','Pnorm','Tnorm','W','dotW(A)','M-factor','||S(A)||','q-value','r-value','s-value', 'q-valueA', &
-           'r-valueA','residual']
+           'increment','eps_vM','Pnorm','Tnorm','S(A)_11','W','dotW(A)','M-factor','||S(A)||','q-value','r-value','s-value', &
+           'q-valueA', 'r-valueA','residual']
+      !
+
+            iounit = 0
+            info = criErr_IOWrite
+            datafile_path = this%outputPrefix(tag_number)
+            open(newunit=iounit,file=trim(datafile_path)//'.uds', status='replace', iostat=ierr)
+            if (ierr /= 0) return
+            write(iounit,701,iostat=ierr) centered(1,short_column_width), &
+                                          (centered(i,column_width), i = 2, ncolumn_labels)
+            if (ierr /= 0) return
+            write(iounit,700,iostat=ierr) file_column_labels(1)(1:short_column_width), &
+                                          (centered(file_column_labels(i)), i=2,ncolumn_labels) 
+            if (ierr == 0) info = criSuccess
+            !
+            ! Formats for the output file
+            700 format(1X, 1(A9,1X),14(A18,  1X))
+            701 format('#',1(A9,1X),14(A18,  1X))
+      !
+      end function
+      
+      
+      function UDSAModule_outputPrefix(this, tag_number) result(path)
+      implicit none
+      character(len=max_pathlen)                :: path
+      class(UDSAModule),intent(in)              :: this
+      double precision,intent(in),optional      :: tag_number
+      !
+      character(len=max_pathlen) :: datafile_tag
+      !
+            if (present(tag_number)) then
+                  ! Make a decoration string based on angle.
+                  ! Substitute '.' with '_'
+                  write(datafile_tag, '(F10.3)') tag_number
+                  datafile_tag = '_' // trim(adjustl(datafile_tag))
+                  datafile_tag = replaceAll(datafile_tag, '.', '_')
+            else
+                  datafile_tag = ''
+            endif
+            path = trim(this%output%outputPrefix)//datafile_tag
+      !  
+      end function
+      
+#ifdef UDSA_STDOUT_FIXED      
+    subroutine UDSAModule_onIncrementEnd(this, output_record)
+    implicit none
+    class(UDSAModule),intent(in) :: this
+    type(OutputRecord),intent(in)                 :: output_record
+
+      !
       ! For display output
       integer,parameter :: ncolumn_labels_display = 12, column_width_display = 12, short_column_width_display = 5
       character(len=column_width_display),dimension(ncolumn_labels_display) :: display_column_labels = [ character(len=14) ::  &
          'iter','eps_vM','Pnorm','Tnorm','W','dotW(A)','M-factor','||S(A)||','q-value','r-value','s-value', 'residual']
 
-      !
-      info = 1
-      !
-      ! Open and initialize result files
-      open(unit=ofunit,file=trim(this%output%outputPrefix)//'.uds',status='replace')
-      write(ofunit,701) centered(1,short_column_width), (centered(i,column_width), i = 2, ncolumn_labels)
-      write(ofunit,700) file_column_labels(1)(1:short_column_width), (centered(file_column_labels(i)), i=2,ncolumn_labels) 
-      !
-      open(unit=histunit,file=trim(this%output%outputPrefix)//'.hts',status='replace')
-       
-      fi1 = 0.0
-      phi = 0.0
-      ! Convert angle from degs to rads
-      fi2 = deg2rad(this%angle)
-
-      !---------------------------------------------------------------------------------
-      ! Prepare the input data      
-      !! -> Take uniaxial/slightly biaxial tensile stress, rotate it to given direction     
-      S_t = 0.D0
-      stress_direction = merge(-1.D0,1.D0,(this%stress_state_id == compression_state))
-      S_t(1,1) = stress_direction * sqrt(3.D0/2.D0)/dsqrt(this%rho**2-this%rho+1)
-      S_t(2,2) = this%rho*S_t(1,1)
-            
-      ! Rotate from "tensile" to material coordinate system
-      ! Calculate rotation matrix
-      Mrot = rotmat(fi1,phi,fi2)
-      !
-      S = rotateSRTensorTo(S_t,Mrot)
-      !
-      vS = tens2vec5D(S)
-      ! Enforce unit length of vS
-      vS = vS / vec_norm2(vS)
-      !---------------------------------------------------------------------------------
-      ! Initialize state & control variables
-      control_variable = 0.D0
-      !
-      P_t = 0.D0
-      Pnorm = 0.D0 ! sum||P||
-      normP = 0.D0 ! ||P||
-      Tnorm = 0.D0
-      plastic_work_inc = 0.D0
-      plastic_work_total = 0.D0
-      step = 0
-      do 
-            if (doLogging(criLogDebug,this%output%verbosity))  write(display_unit,800)
-            !
-            !! -> Calculate corresponding strain rate vA
-            call multilevelYLP(vS,vA,vSonA,R,info,.true.,this%ylp,verbose=this%output%verbosity)
-            if (info /= 0) then
-                  write(display_unit,fmt=960)
-                  exit
-            endif
-            !
-            dotWonA = dot_product(vA, vSonA)
-            norm_sona = vec_norm2(vSonA)
-            scal_s = norm_sona / vec_norm2(vS)
-            ! Calculate normalized stess
-            vSonAn = vSonA / vec_norm2(vSonA) 
-            !
-            if (doLogging(criLogInfo,this%output%verbosity)) call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
-            !
-            D = vec5D2tens(vA)
-            SmIdent = vec5D2tens(vSonAn)
-            !
-            if (doLogging(criLogDebug,this%output%verbosity)) then
-                  write(display_unit,400)
-                  do j=1,3
-                        write(display_unit,401) S(j,:),SmIdent(j,:),D(j,:)
-                  enddo
-                  write(display_unit,*)
-            endif
-            
-            ! Rotate back to the "tensile test" coordinate system   
-            D_t = rotateSRTensorFrom(D,Mrot)
-
-            !
-            ! Calculate control values
-            !
-            ! Calculate increment of plastic strain to be imposed for texture evolution: 
-            ! There are two quantities to be calculated: vDe and De_t
-            select case(this%scalingID)
-            case(scaleFullTensor)
-                  control_variable = normP
-                  !! -> Scale the vA in order to get ||vA|| = NormIter
-                  scaling_factor = (this%NormIter / vec_norm2(vA))
-                  !
-            case(scaleTensileComponent)
-                  control_variable = abs(P_t(1,1))
-                  !! -> Scale the D_t in order to get ||Dt_11|| equal to NormIter
-                  scaling_factor = (this%NormIter / abs(D_t(1,1)))
-            case default
-                  write(display_unit,*) 'Unknown scaling type, full tensor will be used'
-                  scaling_factor = 1.0
-            end select
-            !
-            De = D * scaling_factor
-            De_t = D_t * scaling_factor
-            !            
-            P_t = P_t + De_t
-            !
-            ! Calculate output variables
-            !
-            ! Calculate q and r in tensile reference frame
-            qrsvalue = calculateQRS(D_t,scal_s)
-            qrsvalue_accum = calculateQRS(P_t,scal_s)
-            ! 
-            taylor_factor = 0.D0
-            call getTaylorFactor(1,taylor_factor,info)
-            if (info /= 0) then
-                  write(display_unit,fmt=980) 
-                  exit
-            endif
-            !! -> Report the results
-            write(ofunit,710) step, root23*normP, Pnorm, TNorm, plastic_work_total, dotWonA, &
-                              taylor_factor, & 
-                              norm_sona, qrsvalue, qrsvalue_accum%qvalue, qrsvalue_accum%rvalue, R
-            !
-            if (doLogging(criLogInfo,this%output%verbosity)) then
-                  write(display_unit,601)
-                  write(display_unit,600) display_column_labels(1)(1:short_column_width), & 
-                                          (trim(display_column_labels(i)), i=2,size(display_column_labels)) 
-                  write(display_unit,610) step, root23*normP, Pnorm, TNorm, plastic_work_total, dotWonA, &
-                                          taylor_factor, &
-                                          norm_sona, qrsvalue, R
-                  write(display_unit,601)
-            endif
-            !!
-            ! Terminate if requested to do so.
-            if (control_variable >= this%NormMax)  exit
-            !
-            !! -> Impose De as ALAMEL input, advance the state of texture
-            !
-            if (doLogging(criLogInfo,this%output%verbosity)) then
-                  write(display_unit,'(A)') 'Strain to be imposed for texture evolution De = '
-                  write(display_unit,500) De
-                  write(display_unit,*)
-            endif
-            !
-            ! Update the texture
-            call makeTextureUpdateStep(De,Se,taylor_factor,this%output%outputRequest,info)
-            if (info /= 0) then
-                  write(display_unit,fmt=970) 
-                  exit
-            endif
-            vSe = tens2vec5D(Se)
-            vDe = tens2vec5D(De)
-            !! -> Calculate total strain
-            P = P + De
-            normP = norm2(P)
-            Pnorm = Pnorm + norm2(vDe)
-            TNorm = abs(P_t(1,1))
-            !Tnorm = Tnorm + abs(De(1,1))
-            ! Calculate increment of plastic work (strain * deviatoric_stress)
-            plastic_work_inc = dot_product(vDe,vSe) 
-            plastic_work_total = plastic_work_total + plastic_work_inc
-            ! Write history of deformations
-            write(histunit,800)
-            write(histunit,'(A,1X,I4)') 'Step:', step
-            write(histunit,510)
-            do j=1,3
-                  write(histunit,511) De(:,j), Se(:,j)
-            enddo
-            write(histunit,'(A,T35,F12.8)') 'Increment of plastic work:', plastic_work_inc
-            write(histunit,'(A,T35,F12.8)') 'Total of plastic work:', plastic_work_total
-            !
-            if (doLogging(criLogErr,this%output%verbosity)) then
-                  write(display_unit,'(A)') 'Total strain P:'
-                  write(display_unit,500) P
-                  write(display_unit,'(A)') 'Total strain P_t (in tensile test reference frame):'
-                  write(display_unit,500) P_t
-                  write(display_unit,'(A,1X,F12.6)') '||P|| =', normP
-                  write(display_unit,'(A,1X,F12.6)') 'sum||De|| =', Pnorm
-                  write(display_unit,'(A,1X,E12.5)') 'Wtot =', plastic_work_total
-                  write(display_unit,*)
-            endif
-            !
-            step = step + 1 
-      enddo            
-      !
-      close(ofunit)
-      close(histunit)
-
-      info = 0
       
+                  dotWonA = dot_product(vA, vSonA)
+                  norm_sona = vec_norm2(vSonA)
+                  scal_s = norm_sona / vec_norm2(vS)
+                  ! Calculate normalized stess
+                  vSonAn = vSonA / vec_norm2(vSonA) 
+                  !
+                  if (doLogging(criLogInfo,this%output%verbosity)) call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
+                  !
+                  D = vec5D2tens(vA)
+                  SmIdent = vec5D2tens(vSonAn)
+                  !
+                  if (doLogging(criLogDebug,this%output%verbosity)) then
+                        write(display_unit,400)
+                        do j=1,3
+                              write(display_unit,401) S(j,:),SmIdent(j,:),D(j,:)
+                        enddo
+                        write(display_unit,*)
+                  endif
+      
+                  if (doLogging(criLogInfo,this%output%verbosity)) then
+                        write(display_unit,601)
+                        write(display_unit,600) display_column_labels(1)(1:short_column_width), & 
+                                                (trim(display_column_labels(i)), i=2,size(display_column_labels)) 
+                        write(display_unit,610) step, root23*normP, Pnorm, TNorm, plastic_work_total, dotWonA, &
+                                                taylor_factor, &
+                                                norm_sona, qrsvalue, R
+                        write(display_unit,601)
+                  endif
+                  !!
+                  ! Terminate if requested to do so.
+                  if (control_variable >= this%NormMax)  exit
+                  !
+                  !! -> Impose De as ALAMEL input, advance the state of texture
+                  !
+                  if (doLogging(criLogInfo,this%output%verbosity)) then
+                        write(display_unit,'(A)') 'Strain to be imposed for texture evolution De = '
+                        write(display_unit,500) De
+                        write(display_unit,*)
+                  endif
+                  
+                  !
+                  if (doLogging(criLogErr,this%output%verbosity)) then
+                        write(display_unit,'(A)') 'Total strain P:'
+                        write(display_unit,500) P
+                        write(display_unit,'(A)') 'Total strain P_t (in tensile test reference frame):'
+                        write(display_unit,500) P_t
+                        write(display_unit,'(A,1X,F12.6)') '||P|| =', normP
+                        write(display_unit,'(A,1X,F12.6)') 'sum||De|| =', Pnorm
+                        write(display_unit,'(A,1X,E12.5)') 'Wtot =', plastic_work_total
+                        write(display_unit,*)
+                  endif
+         
       400 format('|Smcoord',T42,'|SmIdent',T86,'|Dmcoord')
       401 format(3(E11.4,1X),T42,3(E11.4,1X),T86,3(E11.4,1X))
 
@@ -365,31 +452,15 @@ contains
       501 format(3(E12.5,1X),/,3(E12.5,1X),/,3(E12.5,1X))
       
       510 format('Strain increment',T40,'Deviatoric stress')
-      511 format(3(E10.3,1X),T40,3(E10.3,1X))
-      
-      
-
-          
+      511 format(3(E10.3,1X),T40,3(E10.3,1X))               
+                  
       ! Formats for the display
       600 format(1(1X,A5),11(A12,1X))
       601 format(1('|',5('-')),'|',11(12('-'),'|'))
       610 format(1(1X,I5),11(F12.6,1X))
 
-      ! Formats for the output file
-      700 format(1X, 1(A7,1X),13(A18,  1X))
-      701 format('#',1(A7,1X),13(A18,  1X))
-      710 format(1X, 1(I7,1X),13(E18.9,1X))
-          
-          
-#define MSG_GROUP_RULERS     
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
 
-#ifdef OUTHEADER
-#undef OUTHEADER
-#endif      
       end subroutine
+#endif ! UDSA_STDOUT_FIXED    
       
 end module
