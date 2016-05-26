@@ -11,8 +11,8 @@ $ewc.reference.scaling.type # Keyword: incrementation type
 $ewc.reference.scaling.total_magnitude # Magnitude of the step
 $ewc.reference.scaling.increment_magnitude # Magnitude of the increment
 #end if
-$range($ewc.contour_theta_range) # Range theta angles at which the contours will be computed
-$range($ewc.contour_levels_range) # Range of contour levels
+$range($ewc.contour_theta_range, 'theta angles at which the contours will be computed')#slurp
+$range($ewc.contour_levels_range, 'contour levels')#slurp
 $ewc.points_per_contour # Number of data points per contour level along each evolution line
 $ewc.use_default_settings # Flag: use default settings
 #if not $ewc.use_default_settings

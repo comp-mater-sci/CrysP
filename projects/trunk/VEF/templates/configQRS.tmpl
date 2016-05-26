@@ -4,7 +4,7 @@
 # Module QRS section
 # ==================
 #filter FilterChain
-$range($qrs.range)#slurp
+$range($qrs.range, 'alpha angles')#slurp
 $qrs.use_default_settings # Flag: use default uniaxial stress settings
 #if $qrs.use_default_settings == False
 $qrs.rho # Stress ratio: rho = sigma_yy/sigma_xx
