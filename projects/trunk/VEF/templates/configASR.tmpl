@@ -6,7 +6,7 @@
 #filter FilterChain
 ${asr.reference_frame, plain=True} # Euler angles defining sample reference frame
 $len($asr.steps) # Number of steps
-#for $istep,$step in $enumerate($asr.steps)
+#for $istep,$step in $enumerate($asr.steps, 1)
 # Step $istep
 ${step.stress_mode, plain=True} # Stress mode in Voigt notation
 $step.update_state # Flag: incrementally update state variables
