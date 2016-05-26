@@ -1,4 +1,4 @@
-Expert mode             {#page_expert_mode}
+VEF expert mode             {#page_expert_mode}
 ===========
 
 ### Introduction
