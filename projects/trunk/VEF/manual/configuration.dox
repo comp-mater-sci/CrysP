@@ -251,7 +251,6 @@ True                 # Flag: use default microstructural description
 True                 # Flag: use default hardening
 ~~~~~~~~~~~~~
 
-
 \subsection config_search_procedure Configuration of the search procedure
 This part of the configuration file controls how the program will search for the strain rate that corresponds to a requested stress state. A gradient-based Trust Region (TR) solver is used to find the strain rate \f$ A^\star \f$ that corresponds to the stress \f$ S^\star \f$:
 \f[
@@ -304,10 +303,10 @@ i.e. the conventional sheet plane for sheet specimen.
 </li>
 <li> \confdef{scaling_type,string} specifies how the deformation increments will be calculated. If \conffield{scaling_type} is equal to 
 	<ul>
-		<li> `StrainTensor`, the strain increment tensor \f$ \Delta\mathbf{\epsilon} \f$ satisfies 
-		\f$ \| \Delta\mathbf{\epsilon} \| \f$  = \conffield{increment_magnitude}.
+		<li> `StrainTensor`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
+		\f$ \| \Delta\boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
 		</li>
-		<li> `StrainTensorComponent`, the strain increment tensor \f$ \Delta\mathbf{\epsilon} \f$ is such that 
+		<li> `StrainTensorComponent`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ is such that 
 		the component along the loading direction \f$ \Delta \epsilon_{xx} =  \f$  \conffield{increment_magnitude}.
 		</li>
 	</ul>
@@ -357,6 +356,52 @@ Please see the configuration file `AKDQf_udsa.cfg` from `examples` directory:
 
 \subsubsection output_UDSA Module-specific output
 
+The module-specific outputfile `<output_prefix>.uds` makes column-wise reporting of:
+<ol>
+<li> \outdef{iter} The increment number
+</li>
+<li> \outdef{eps_vM} The von Mises equivalent strain \f$ \epsilon_{vM} \f$ \n
+It is derived from the strain tensor \f$ \boldsymbol{\epsilon} \f$ as: 
+\f$ \epsilon_{vM}=\sqrt{2/3} \| \boldsymbol{\epsilon} \| \f$ 
+</li>
+<li> \outdef{Pnorm} The norm of strain tensor \f$ \| \boldsymbol{\epsilon} \| \f$
+</li>
+<li> \outdef{Tnorm} The strain in the tensile direction \f$\epsilon_{11}\f$
+</li>
+<li> \outdef{W} The accumulated plastic work \f$ W \f$
+</li>
+<li> \outdef{plast_pot} The plastic potential
+</li>
+<li> \outdef{M} The volume-average Taylor factor \f$ \overline{M} \f$
+</li> 
+<li> \outdef{SonA} The projected deviatoric stress
+</li> 
+<li> \outdef{q-value} The instantaneous q-value \f$ q_i \f$ \n
+It is defined as \f$ q_i = \frac{-D_{22}}{D_{11}} \f$ 
+where \f$D_{22}\f$ and \f$D_{11}\f$ are the strain rates in the width and tensile directions, respectively.
+It relates to the instantaneous r-value as \f$ q_i = \frac{r_i}{1+r_i} \f$.
+</li> 
+<li> \outdef{r-value} The instantaneous r-value \f$ r_i \f$ \n
+It is defined as \f$ r_i = \frac{D_{22}}{D_{33}} \f$ 
+where \f$D_{22}\f$ and \f$D_{33}\f$ are the strain rates in the width and thickness directions, respectively.
+It relates to the instantaneous q-value as \f$ r_i = \frac{q_i}{1-q_i} \f$.
+</li> 
+<li> \outdef{s-value} A normalised flow stress \f$ s \f$
+</li> 
+<li> \outdef{q-valueA} The (strain-based) q-value \f$ q \f$ \n
+It is defined as \f$ q = \frac{-\epsilon_{22}}{\epsilon_{11}} \f$ 
+where \f$\epsilon_{22}\f$ and \f$\epsilon_{11}\f$ are the strains in the width and tensile directions, respectively.
+It relates to the r-value as \f$ q = \frac{r}{1+r} \f$.
+</li> 
+<li> \outdef{r-valueA} The (strain-based) r-value \f$ r \f$ \n
+It is defined as \f$ r = \frac{\epsilon_{22}}{\epsilon_{33}} \f$ 
+where \f$\epsilon_{22}\f$ and \f$\epsilon_{33}\f$ are the strains in the width and thickness directions, respectively.
+It relates to the q-value as \f$ r = \frac{q}{1-q} \f$.
+</li> 
+<li> \outdef{R} The residual of \ref config_search_procedure "search procedure" \f$ Res \f$ \n
+As a rule-of-thumb, convergence is succesfull for \f$ Res<<10^{-2} \f$.
+</li> 
+</ol>
 
 \subsection config_asr Multiaxial Stress Test Module (keyword: ASA)
 
@@ -377,8 +422,8 @@ is merely queried without finite deformation and without associated evolution of
 	<ol>
 	<li> \confdef{scaling_type,string} specifies how the deformation increments will be calculated. If \conffield{scaling_type} is equal to 
 		<ul>
-			<li> `StrainTensor`, the strain increment tensor \f$ \Delta\mathbf{\epsilon} \f$ satisfies 
-			\f$ \| \Delta\mathbf{\epsilon} \| \f$  = \conffield{increment_magnitude}.
+			<li> `StrainTensor`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
+			\f$ \| \Delta\boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
 			</li>
 			<li> `PlasticWork`, the plastic work per increment \f$ \Delta W =  \f$  \conffield{increment_magnitude}.
 			</li>
@@ -400,6 +445,12 @@ Please see the configuration file `AKDQf_asr.cfg` from `examples` directory:
 \todo This manual section is still under preparations.
 
 \subsubsection output_ASR Module-specific output
+
+The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting of:
+<ol>
+<li> \outref{iter} 
+</li>
+</ol>
 
 \subsection config_QRS Uniaxial Anisotropy Module (keyword: QRS)
 
@@ -431,26 +482,6 @@ Please see the configuration file `AKDQf_qrs.cfg` from `examples` directory:
 \includelineno AKDQf_qrs.cfg
 
 \subsubsection output_QRS Module-specific output
-
-The r-value is the ratio between contraction in the width 
-and thickness direction in a sample subjected to uniaxial tension in a given direction 
-\f$\alpha\f$: 
-\f[
-r_\alpha = \frac{\varepsilon_2}{\varepsilon_3}
-\f] 
-where \f$\varepsilon_2\f$ and \f$\varepsilon_3\f$ are the strains in the width and 
-thickness directions, respectively.
-
-The Uniaxial Anisotropy Module calculates the r-value as the ratio:
-\f[
-r_\alpha = \frac{\mathbf{D}_2}{\mathbf{D}_3}
-\f] 
-where \f$\mathbf{D}_2\f$ and \f$\mathbf{D}_3\f$ are plastic strain rates in the width and thickness directions, respectively.
-
-Plastic anisotropy can be also described by means of so-called q-value, which is a normalized Lankford coefficient:
-\f[
-q_\alpha = \frac{r_\alpha}{1 + r_\alpha}
-\f]
 
 Another quantity retrieved from uniaxial testing is the yield stress. 
 
@@ -537,8 +568,8 @@ The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locu
 		</li>
 		<li> \confdef{scaling_type,string} specifies how the deformation increments of the reference test will be calculated. If \conffield{scaling_type} is equal to 
 		<ul>
-			<li> `StrainTensor`, the strain increment tensor \f$ \Delta\mathbf{\epsilon} \f$ satisfies 
-			\f$ \| \Delta\mathbf{\epsilon} \| \f$  = \conffield{increment_magnitude}.
+			<li> `StrainTensor`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
+			\f$ \| \Delta\boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
 			</li>
 			<li> `PlasticWork`, the plastic work per increment \f$ \Delta W =  \f$  \conffield{increment_magnitude}.
 			</li>
