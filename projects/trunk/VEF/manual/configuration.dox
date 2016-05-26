@@ -290,13 +290,13 @@ False              # Flag: use advanced solver settings
 
 The general part of the configuration file is followed by settings that are specific to a given module.
 
-\subsection config_udsa Uniaxial Stress Test Module (keyword: UDSA)
+\subsection module_udsa Uniaxial Stress Test Module (keyword: UDSA)
 
 The Uniaxial Stress Test Module provides a virtual experiment under uniaxial (or similar) tensile or compressive stress state.
 The loading direction of the virtual sample is restricted to the plane defined by the 1st and 2nd material reference directions, 
 i.e. the conventional sheet plane for sheet specimen.
 
-\subsubsection configuration_UDSA Module-specific configuration
+\subsubsection configuration_udsa Module-specific configuration
 
 <ol>
 <li> \confdef{sample_orientation,real} defines the orientation of the virtual tensile specimen by setting angle between the tensile direction and the 1st material reference axis, i.e. the conventional rolling direction for sheet specimen. The field \conffield{sample_orientation} is expressed in degrees. 
@@ -354,7 +354,7 @@ False                # Flag: use default settings
 Please see the configuration file `AKDQf_udsa.cfg` from `examples` directory:
 \includelineno AKDQf_udsa.cfg
 
-\subsubsection output_UDSA Module-specific output
+\subsubsection output_udsa Module-specific output
 
 The module-specific outputfile `<output_prefix>.uds` makes column-wise reporting of:
 <ol>
@@ -403,11 +403,11 @@ As a rule-of-thumb, convergence is succesfull for \f$ Res<<10^{-2} \f$.
 </li> 
 </ol>
 
-\subsection config_asr Multiaxial Stress Test Module (keyword: ASA)
+\subsection module_asr Multiaxial Stress Test Module (keyword: ASR)
 
 The Multiaxial Stress Test Module prescribes stress loading in a generic form on the virtual sample. 
 
-\subsubsection configuration_ASA Module-specific configuration
+\subsubsection configuration_asr Module-specific configuration
 
 <ol>
 <li> \confdef{reference_frame,real} specifies the orientation of the sample reference frame of the virtual specimen (reference frame associated to imposed stress state), in format specified in \ref euler_option.
@@ -444,7 +444,7 @@ Please see the configuration file `AKDQf_asr.cfg` from `examples` directory:
 
 \todo This manual section is still under preparations.
 
-\subsubsection output_ASR Module-specific output
+\subsubsection output_asr Module-specific output
 
 The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting of:
 <ol>
@@ -452,7 +452,7 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 </li>
 </ol>
 
-\subsection config_QRS Uniaxial Anisotropy Module (keyword: QRS)
+\subsection module_qrs Uniaxial Anisotropy Module (keyword: QRS)
 
 The Uniaxial Anisotropy Module provides Lankford coefficients (in two variants: q-values and r-values; cf. below) and normalized uniaxial yield stresses (s-values), 
 for a specified range of in-plane tensile directions. These properties are queried for the virtual microstructure in the given state without 
@@ -460,7 +460,7 @@ any finite deformation imposed. There is no evolution of state associated with t
 The loading direction of the virtual sample is restricted to the plane defined by the 1st and 2nd material reference directions, 
 i.e. the conventional sheet plane for sheet specimen.
 
-\subsubsection configuration_QRS Module-specific configuration
+\subsubsection configuration_qrs Module-specific configuration
 
 <ol>
 <li> \confdef{sample_orientation_range,real} defines the range for the orientation of virtual tensile specimen, in multi-line format specified in 
@@ -481,16 +481,16 @@ increase calculation time for certain model assumptions.
 Please see the configuration file `AKDQf_qrs.cfg` from `examples` directory:
 \includelineno AKDQf_qrs.cfg
 
-\subsubsection output_QRS Module-specific output
+\subsubsection output_qrs Module-specific output
 
 Another quantity retrieved from uniaxial testing is the yield stress. 
 
-\subsection config_YLD Yield Locus Module (keyword: YLD)
+\subsection module_yld Yield Locus Module (keyword: YLD)
 
 The Yield Locus Module calculates generic 2-dimensional sections of the yield locus.
 There is no evolution of state associated with this module.
 
-\subsubsection configuration_YLD Module-specific configuration
+\subsubsection configuration_yld Module-specific configuration
 
 <ol>
 <li> \confdef{theta_range,real} defines the range for yield locus points according to the multi-line format specified in 
@@ -541,17 +541,17 @@ The initial lines 1 - 12 belong to the \ref configuration_general.
 
 
 
-\subsubsection output_Yld Module-specific output
+\subsubsection output_yld Module-specific output
 
 In the example presented above, the output file will be named 
 
-\subsection config_EWC Equiwork Contour Module (keyword: EWC)
+\subsection module_ewc Equiwork Contour Module (keyword: EWC)
 
-The Equiwork Contour Module produces generic sections of equi-work contours in stress space.
+The Equiwork Contour Module produces generic sections of equi-work contours in stress space.
 Equi-work contours are constructed from a series of monotonic stress loading cases within the requested 2-dimensional section of stress space
 The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locus of the material in its initial state.
 
-\subsubsection configuration_EWC Module-specific configuration
+\subsubsection configuration_ewc Module-specific configuration
 
 <ol>
 <li> \confdef{worklevel_selection_method,string}
@@ -615,6 +615,6 @@ For \conffield{use_default_settings}=`False`, the following suboptions are requi
 Please see the configuration file `AKDQf_ewc.cfg` from `examples` directory:
 \includelineno AKDQf_ewc.cfg
 
-\subsubsection output_EWC Module-specific output
+\subsubsection output_ewc Module-specific output
 
 */

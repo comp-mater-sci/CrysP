@@ -31,12 +31,12 @@ alamDMC  keyword  configuration_file
 The `alamDMC` program provides the following modules:
 
 
--# \ref config_udsa - the keyword stands for Uniaxially-Dominated Stress Analysis.
--# \ref config_asr - the keyword stands for Arbitrary Stress Analysis.
--# \ref config_QRS - the keyword stands for Q-values, R-values and S-values 
+-# \ref module_udsa - the keyword stands for Uniaxially-Dominated Stress Analysis.
+-# \ref module_asr - the keyword stands for Arbitrary Stress Response.
+-# \ref module_qrs - the keyword stands for Q-values, R-values and S-values 
 (properties that characterize plastic anisotropy in uniaxial stress state).
--# \ref config_YLD - the keyword stands for YieLD locus.
--# \ref config_EWC - the keyword stands for Equi-Work Contour.
+-# \ref module_yld - the keyword stands for YieLD locus.
+-# \ref module_ewc - the keyword stands for Equi-Work Contour.
 
 For instance, to invoke the Yield Locus Module, the user may run the command:
 \verbatim
