@@ -38,6 +38,9 @@ implicit none
             type(SRTensor) :: A
             type(SRTensor) :: SonA
 
+            type(SRTensor)  :: P_inc_evol
+            type(SRTensor)  :: S_evol
+            
             type(IncrementationControlVariables) :: icv
         
     end type
@@ -57,6 +60,8 @@ implicit none
     contains
         procedure,pass(this)    :: calculateStressPath => StressDrivenEvolutionModule_calculateStressPath
         
+        procedure,pass(this)    :: onIncrementEnd => StressDrivenEvolutionModule_onIncrementEnd
+        
     end type
 
 contains
@@ -64,24 +69,28 @@ contains
     
         
     !> \todo optional initial icv should be provided as a parameter
-    integer function StressDrivenEvolutionModule_calculateStressPath(this, sigma, control, outputs) result(info)
+    integer function StressDrivenEvolutionModule_calculateStressPath(this, sigma, control, outputs, rotmat) result(info)
     implicit none
     class(StressDrivenEvolutionModule),intent(in) :: this
     type(SRTensor),intent(in)   :: sigma
     class(IncrementationControlSettings),intent(inout) :: control
     type(EvolutionOutput),intent(out)   :: outputs
-    
-    type(SRTensor) :: D, De, Se
-    double precision :: scaling_factor, taylor_factor
+    !> Rotation matrix. Relevant only if scalingStrainTensorComponent is used
+    double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in),optional  :: rotmat
+    !
+    type(SRTensor) :: D, De, Se, X_tmp
+    double precision :: scaling_factor, control_variable, taylor_factor
     type(YLPResult) :: ylp
     double precision,dimension(alamEval_vSD_dim) :: vDe, vSe
     type(IncrementationControl) :: icv
+    double precision,dimension(sr_symm_voigt_dim) :: X_tmp_voigt
     !
     !> \fixme Shortcut: array that is "lage enough" to keep the outputs. 
-    !>        To be replaced by list or another dynamic storage.
+    !>        To be replaced by a list, deque or another dynamic storage.
     integer,parameter :: max_records = 100
     type(OutputRecord),dimension(max_records) :: tmp_records
     integer :: increment
+    
     !
         !
         ! Follow the evolution line along S
@@ -99,10 +108,6 @@ contains
                 if (increment > 0) info = this%findSolution(sigma, D, ylp, vM_guess=.false.)
             endif
             if (info /= 0) exit
-            ! -->>
-            write(*,100)
-            100 format('.',\)
-            ! <<--
             !
             ! Calculate incrementation control variables
             !
@@ -110,18 +115,31 @@ contains
             select case(control%scaling_type)
             case(scalingStrainTensor)
                 !! -> Scale the vA in order to get ||vA|| = NormIter
-                scaling_factor = (control%increment_size / norm2(ylp%vA))
+                control_variable = norm2(ylp%vA)
                 !
             case(scalingPlasticWork)
-                scaling_factor = (control%increment_size / ylp%dotWonA)
-            !case(scaleTensileComponent)
-            !      control_variable = abs(P_t(1,1))
-            !      !! -> Scale the D_t in order to get ||Dt_11|| equal to NormIter
-            !      scaling_factor = (this%NormIter / abs(D_t(1,1)))
+                control_variable = ylp%dotWonA
+            !
+            case(scalingStrainTensorComponent)
+                if (present(rotmat)) then
+                    X_tmp = rotateSRTensorFrom(D,rotmat)
+                else
+                    X_tmp = D
+                endif
+                X_tmp_voigt = Mat33ToVec6(X_tmp%t)
+                control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
+            !
             case default
                 info = criErr_BadArgs
                 exit
             end select
+            !
+            if (control_variable < epsilon(0.D0)) then
+                  info = criError
+                  exit
+            endif
+            scaling_factor = (control%increment_size / control_variable)
+            
             !
             ! Calculate strain increment for material state evolution
             vDe = ylp%vA * scaling_factor
@@ -135,7 +153,12 @@ contains
             ! Add output record to the list
             !> \fixme Get rid of the big array
             ! -->>
-            call setOutputRecord(tmp_records(increment), icv%IncrementationControlVariables, ylp, taylor_factor, info)
+            call setOutputRecord(tmp_records(increment), &
+                                 icv%IncrementationControlVariables, &
+                                 ylp, &
+                                 De, Se, &
+                                 taylor_factor, &   
+                                 info)
             if ((increment >= max_records) .or. (info /= criSuccess)) exit
             ! <<--
             !
@@ -146,19 +169,26 @@ contains
             !
             case(scalingPlasticWork)
                 if (icv%plastic_work_total > control%step_size) exit
+            !    
+            case(scalingStrainTensorComponent)
+                ! Get total plastic strain in appropriate reference frame
+                ! and check the tensor component of interest.
+                X_tmp%t = vec5D2tens(icv%vP)
+                if (present(rotmat)) X_tmp = rotateSRTensorFrom(X_tmp ,rotmat)
+                X_tmp_voigt = Mat33ToVec6(X_tmp%t)
+                if (X_tmp_voigt(control%selected_tensor_component) > control%step_size) exit
             !
             end select
             !
             ! Update icv
             !
             call icv%update(vDe, vSe, info)
+            !
+            call this%onIncrementEnd(tmp_records(increment)) 
         !
         enddo
         if (info /= criSuccess) return
-        ! -->>
-        write(*,200)
-        200 format('*')
-        ! <<--
+
         !> \fixme Get rid of the big array. It should be asArray on list.
         ! -->>
         outputs%values = tmp_records(1:increment)
@@ -167,11 +197,13 @@ contains
     end function
     
         
-    subroutine setOutputRecord(this, icv, ylp, taylor_factor, info)
+    subroutine setOutputRecord(this, icv, ylp, De, Se, taylor_factor, info)
     implicit none
     type(OutputRecord),intent(out)              :: this
     type(IncrementationControlVariables),intent(in) :: icv
     type(YLPResult),intent(in)                  :: ylp
+    type(SRTensor),intent(in)                   :: De
+    type(SRTensor),intent(in)                   :: Se
     double precision,intent(in)                 :: taylor_factor
     integer,intent(out)                         :: info
     !
@@ -189,12 +221,23 @@ contains
         this%A%t = vec5D2tens(ylp%vA)
         this%SonA%t = vec5D2tens(ylp%vSonA)
 
+        this%P_inc_evol = De
+        this%S_evol = Se
+        
         this%icv = icv
         
         info = criSuccess
         
     end subroutine
     
+    subroutine StressDrivenEvolutionModule_onIncrementEnd(this, output_record)
+    implicit none
+    class(StressDrivenEvolutionModule),intent(in) :: this
+    type(OutputRecord),intent(in)                 :: output_record
+    !
+
+    !
+    end subroutine
     
 end module
     

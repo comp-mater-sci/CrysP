@@ -89,6 +89,11 @@ implicit none
         
         double precision :: step_size = 0.D0
 
+        !> If scaling_type StrainTensorComponent is used, this contains
+        !> the index of the tensor component of interest in Voigt notation. 
+        !> The default corresponds to X_11 in SR tensor X. 
+        integer         :: selected_tensor_component = 1
+        
     end type
 
     
