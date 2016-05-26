@@ -78,9 +78,9 @@ contains
     !> Rotation matrix. Relevant only if scalingStrainTensorComponent is used
     double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in),optional  :: rotmat
     !
-    type(SRTensor) :: D, De, Se, X_tmp
+    type(SRTensor) :: D, De, Se, X_tmp, D_retry
     double precision :: scaling_factor, control_variable, taylor_factor
-    type(YLPResult) :: ylp
+    type(YLPResult) :: ylp, ylp_retry
     double precision,dimension(alamEval_vSD_dim) :: vDe, vSe
     type(IncrementationControl) :: icv
     double precision,dimension(sr_symm_voigt_dim) :: X_tmp_voigt
@@ -89,7 +89,7 @@ contains
     !>        To be replaced by a list, deque or another dynamic storage.
     integer,parameter :: max_records = 100
     type(OutputRecord),dimension(max_records) :: tmp_records
-    integer :: increment
+    integer :: increment, i
     
     !
         !
@@ -101,11 +101,32 @@ contains
         ! main loop over deformation increments
         increment = 0
         do
+            !
+            increment = increment + 1
+            !
             ! Calculate the strain rate mode
             info = this%findSolution(sigma, D, ylp)
             if (info /= criSuccess) then
-                ! re-attempt, try D from the previous increment as the starting point
-                if (increment > 0) info = this%findSolution(sigma, D, ylp, vM_guess=.false.)
+                ! Re-attempt, try A from the previous increment as the starting point
+                !
+                ! Pick the most recent converged solution
+                do i = increment-1, 1, -1
+                    if (tmp_records(i)%R < this%ylp%obj_func_eps) then
+                        D_retry = tmp_records(i)%A
+                        exit
+                    endif
+                enddo
+                ! Check post-condition of the loop: i > 0 means
+                ! we have such a solution:
+                if (i > 0) then
+                    info = this%findSolution(sigma, D_retry, ylp_retry, vM_guess=.false.)
+                    ! Accept the solution only if it is better than the original one
+                    if ((info == criSuccess) .and. (ylp_retry%R < ylp%R)) then 
+                        D = D_retry
+                        ylp = ylp_retry
+                    endif
+                endif
+
             endif
             if (info /= 0) exit
             !
@@ -148,8 +169,6 @@ contains
             call makeTextureUpdateStep(De%t,Se%t,taylor_factor,this%output%outputRequest,info)
             if (info /= 0) exit !< \fixme Literal constant in makeTextureUpdateStep
             vSe = tens2vec5D(Se%t)
-            !
-            increment = increment + 1
             ! Add output record to the list
             !> \fixme Get rid of the big array
             ! -->>
