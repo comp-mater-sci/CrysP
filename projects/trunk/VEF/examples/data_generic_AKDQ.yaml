@@ -86,7 +86,12 @@ yld:
     scaling_stress_mode: [1., 0., 0., 0., 0., 0.]
 #####################################################################
 udsa:
-    sample_orientation: 0.
+    sample_orientation: 
+        orientation: inplane
+        range:
+            type: discrete
+            params:
+                values: [0.0]
     scaling:
         type: StrainTensorComponent
         total_magnitude:  0.4

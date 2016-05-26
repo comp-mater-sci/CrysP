@@ -86,13 +86,18 @@ yld:
     scaling_stress_mode: [1., 0., 0., 0., 0., 0.]
 #####################################################################
 udsa:
-    sample_orientation: 0.
+    sample_orientation: 
+        orientation: inplane
+        range:
+            type: discrete
+            params:
+                values: [0.0, 45., 90.]
     scaling:
         type: StrainTensorComponent
         total_magnitude:  0.4
         increment_magnitude: 0.01
     stress_state: tension
-    use_default_settings: False
+    use_default_settings: True
     # if use_default_settings is False, the lines below will be used:
     stress_ratio: 0.0
 #####################################################################
