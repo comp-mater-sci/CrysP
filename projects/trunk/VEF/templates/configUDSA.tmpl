@@ -4,7 +4,12 @@
 # Module UDSA section
 # ==================
 #filter FilterChain
-$udsa.sample_orientation # Orientation of the sample
+$udsa.sample_orientation.orientation # Sample orientation type
+#if $udsa.sample_orientation.orientation == 'inplane'
+$range($udsa.sample_orientation.range, 'alpha angles')#slurp
+#elif $udsa.sample_orientation.orientation == 'arbitrary'
+${udsa.sample_orientation.euler_angles, plain=True} # Euler angles that define the chosen loading direction
+#end if
 $udsa.scaling.type # Keyword: incrementation type
 $udsa.scaling.total_magnitude # Maximal deformation
 $udsa.scaling.increment_magnitude # Increment deformation
