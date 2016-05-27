@@ -292,15 +292,43 @@ The general part of the configuration file is followed by settings that are spec
 
 \subsection module_udsa Uniaxial Stress Test Module (keyword: UDSA)
 
-The Uniaxial Stress Test Module provides a virtual experiment under uniaxial (or similar) tensile or compressive stress state.
-The loading direction of the virtual sample is restricted to the plane defined by the 1st and 2nd material reference directions, 
-i.e. the conventional sheet plane for sheet specimen.
+The Uniaxial Stress Test Module provides virtual experiments under uniaxial, tensile or compressive stress states.
+The _pure_ uniaxial state imposes a total stress with exactly one non-zero principal component. 
+In this module, also some _non-pure_ uniaxial states may be imposed, namely those having two non-zero principal stress components.
+ 
+A specific _sample reference frame_ with x-, y- and z-axes is associated to the virtual sample.
+By convention, the sample x-axis is aligned with the uniaxial (or main) loading direction. 
 
 \subsubsection configuration_udsa Module-specific configuration
 
 <ol>
-<li> \confdef{sample_orientation,real} defines the orientation of the virtual tensile specimen by setting angle between the tensile direction and the 1st material reference axis, i.e. the conventional rolling direction for sheet specimen. The field \conffield{sample_orientation} is expressed in degrees. 
-</li>
+<li> \confdef{orientation_type,string} specifies the type of sample orientation. 
+The orientation may be further specified by a value-dependent option. 
+Supported values of \conffield{orientation_type} are:
+	<ul>
+	<li> `inplane` to request one or several in-plane uniaxial tests. 
+	The sample x-axis (loading direciton) is contained to the material 1-2-plane (RD-TD-plane). 
+	The sample y-axis is also contained in the material 1-2-plane.
+	The sample z-axis is aligned with the material 3-direction (ND). 
+	For \conffield{orientation_type}=`inplane`, the following option needs to be provided:
+		<ol>
+		<li> \confdef{inplane_orientation_range,real} defines a [range] (\ref range_option) for in-plane orientations to be tested.
+		The field \conffield{inplane_orientation_range} is expressed in degrees. 
+		</li>
+		</ol>
+	</li>
+	<li> `ND` to request uniaxial loading along ND.
+	In this case, the sample x-axis (loading direction) is aligned with the material 3-direction (ND).
+	The sample y-axis is aligned with the material 2-direction (TD).
+	The sample z-axis is aligned with the material 1-direction (RD).
+	</li>
+	<li> `arbitrary` to request a single test with generic orientation of the sample reference, using the suboption
+		<ol>
+		<li> \confdef{sample_arbitrary,real} specifies the orientation of the sample frame in format specified in \ref euler_option.
+		</li>
+		</ol>
+	</li>
+	</ul>
 <li> \confdef{scaling_type,string} specifies how the deformation increments will be calculated. If \conffield{scaling_type} is equal to 
 	<ul>
 		<li> `StrainTensor`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
@@ -320,20 +348,21 @@ i.e. the conventional sheet plane for sheet specimen.
 </li>
 <li> \confdef{stress_state,string}  selects between tension and compression stress states. Specify 
 	<ul>
-		<li> `compression` to request compressive stress state.
+		<li> `compression` to request compressive stress state, i.e.: \f$ \sigma_{xx} < 0 \f$.
 		</li>
-		<li> `tension` to request tensile stress state.
+		<li> `tension` to request tensile stress state, i.e.: \f$ \sigma_{xx} > 0 \f$. 
+		</li>
 	</ul>
 </li>
-<li> \confdef{pure_uniaxial_state,logical} \anchor pure_uniaxial_state_anchor specifies whether or not the uniaxial tensile state is _pure_, i.e. all but one of the 
-components of stress state are zero. If set to `False`, a non-pure uniaxial stress state is imposed, 
-and then the following line must be provided:
+<li> \confdef{pure_uniaxial_state,logical} \anchor pure_uniaxial_state_anchor specifies whether or not the stress state is _pure_, i.e. 
+having exactly one non-zero principal component.
+If set to `False`, a non-pure uniaxial stress state is imposed, in which case the following option must be specified:
 	<ol>
-		<li> \confdef{stress_ratio_rho,real} contains a deviation \f$ \rho \f$ from the pure uniaxial stress state, as:
+		<li> \confdef{stress_ratio_rho,real} contains the imposed deviation \f$ \rho \f$ from the pure uniaxial stress state, as:
 		\f[
 		\rho = \frac{\sigma_{yy}}{\sigma_{xx}}
 		\f]
-		where \f$ \sigma_{xx} \f$ is the tensile stress and \f$ \sigma_{yy} \f$ the normal stress in the direction perpendicular to the tensile/compression direction within the sheet plane (i.e. the plane containing the 1st and 2nd reference axes).
+		where \f$ \sigma_{xx} \f$ and \f$ \sigma_{yy} \f$ are the normal stresses in the sample x- and y-directions, respectively.
 		Note that \f$ \rho = 0 \f$ corresponds to the configuration \conffield{pure_uniaxial_state}=`True`.
 		</li>
 	</ol>
