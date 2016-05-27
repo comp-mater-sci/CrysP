@@ -19,6 +19,7 @@ use dmcBasicModule
 use dmcIncrementationControl
 use commonUtils
 use criMathUtils
+use criAlgorithm, only: optionalDefault
 implicit none
 
 
@@ -68,8 +69,9 @@ contains
     
     
         
-    !> \todo optional initial icv should be provided as a parameter
-    integer function StressDrivenEvolutionModule_calculateStressPath(this, sigma, control, outputs, rotmat) result(info)
+    
+    integer function StressDrivenEvolutionModule_calculateStressPath(this, sigma, control, outputs, rotmat, &
+                                                                     incrementation_control, use_icv_as_is) result(info)
     implicit none
     class(StressDrivenEvolutionModule),intent(in) :: this
     type(SRTensor),intent(in)   :: sigma
@@ -77,6 +79,15 @@ contains
     type(EvolutionOutput),intent(out)   :: outputs
     !> Rotation matrix. Relevant only if scalingStrainTensorComponent is used
     double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in),optional  :: rotmat
+    !> Incrementation control variables to override the defaults.
+    !>
+    !> Typical use is to inherit some control variables (the totals) from a previous
+    !> call to this function.
+    !> On exit, the parameter will contain updated control variables.
+    type(IncrementationControl),intent(inout),optional  :: incrementation_control
+    !> Suppress re-initialization of step-wide and increment-wide incrementation control variables
+    !> (default: false)
+    logical,intent(in),optional                         :: use_icv_as_is
     !
     type(SRTensor) :: D, De, Se, X_tmp, D_retry
     double precision :: scaling_factor, control_variable, taylor_factor
@@ -90,8 +101,12 @@ contains
     integer,parameter :: max_records = 100
     type(OutputRecord),dimension(max_records) :: tmp_records
     integer :: increment, i
-    
     !
+        ! Prepare non-default incrementation controls if requested
+        if (present(incrementation_control)) then
+            icv = incrementation_control
+            if (optionalDefault(use_icv_as_is, .false.)) call icv%initStep(info)
+        endif
         !
         ! Follow the evolution line along S
         !
@@ -184,7 +199,7 @@ contains
             info = criSuccess
             select case(control%scaling_type)
             case(scalingStrainTensor)
-                if (norm2(icv%vP) > control%step_size) exit
+                if (norm2(icv%vP_step) > control%step_size) exit
             !
             case(scalingPlasticWork)
                 if (icv%plastic_work_total > control%step_size) exit
@@ -192,7 +207,7 @@ contains
             case(scalingStrainTensorComponent)
                 ! Get total plastic strain in appropriate reference frame
                 ! and check the tensor component of interest.
-                X_tmp%t = vec5D2tens(icv%vP)
+                X_tmp%t = vec5D2tens(icv%vP_step)
                 if (present(rotmat)) X_tmp = rotateSRTensorFrom(X_tmp ,rotmat)
                 X_tmp_voigt = Mat33ToVec6(X_tmp%t)
                 if (X_tmp_voigt(control%selected_tensor_component) > control%step_size) exit
@@ -212,6 +227,8 @@ contains
         ! -->>
         outputs%values = tmp_records(1:increment)
         ! <<--
+        ! Report back the incrementation control variables if requested
+        if (present(incrementation_control)) incrementation_control = icv
     !
     end function
     
@@ -226,8 +243,8 @@ contains
     double precision,intent(in)                 :: taylor_factor
     integer,intent(out)                         :: info
     !
-        this%vm_strain = root23 * norm2(icv%vP_inc)
-        this%vm_strain_total = root23 * norm2(icv%vP)
+        this%vm_strain = root23 * norm2(icv%vP_step)
+        this%vm_strain_total = root23 * norm2(icv%vP_total)
         this%P_abs_sum = sum(icv%vP_norms)
         !
         this%dotWonA = ylp%dotWonA

@@ -267,8 +267,8 @@ contains
                         D_t = rotateSRTensorFrom(v%A, Mrot)
                         S_t = rotateSRTensorFrom(v%SonA, Mrot)
                         
-                        ! Total deviatoric strain: 
-                        P_t%t = vec5D2tens(v%icv%vP) ! at the beginning of the increment
+                        ! Total deviatoric strain (Note: the total, not per-step) 
+                        P_t%t = vec5D2tens(v%icv%vP_total) ! at the beginning of the increment
                         P_t_end%t = P_t%t + v%P_inc_evol%t ! at the end of the increment
                         P_t = rotateSRTensorFrom(P_t, Mrot)
                         P_t_end = rotateSRTensorFrom(P_t_end, Mrot)

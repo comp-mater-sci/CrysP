@@ -44,14 +44,20 @@ implicit none
         !> Plastic work in the current increment
         double precision    :: plastic_work_inc = 0.D0
         
+        !> Plastic work in the current step
+        double precision    :: plastic_work_step = 0.D0
+        
         !> Total plastic work
         double precision    :: plastic_work_total = 0.D0
         
         !> Increment of plastic strain
         double precision,dimension(alamEval_vSD_dim)    :: vP_inc = 0.D0
         
+        !> Total plastic strain in the current step
+        double precision,dimension(alamEval_vSD_dim)    :: vP_step = 0.D0
+        
         !> Total plastic strain:
-        double precision,dimension(alamEval_vSD_dim)    :: vP = 0.D0
+        double precision,dimension(alamEval_vSD_dim)    :: vP_total = 0.D0
         
         
         !> Sum of absolute plastic strain increments:
@@ -67,6 +73,8 @@ implicit none
     type,extends(IncrementationControlVariables) :: IncrementationControl
         
     contains
+
+        procedure,pass(this)        :: initStep => IncrementationControl_initStep
     
         procedure,pass(this)        :: update => IncrementationControl_update
         
@@ -107,12 +115,16 @@ contains
     !
         ! Plastic work in the current increment
         this%plastic_work_inc = dot_product(vDe,vSe)
+        ! Plastic work in the current step
+        this%plastic_work_step = this%plastic_work_step + this%plastic_work_inc
         ! Total plastic work
         this%plastic_work_total = this%plastic_work_total + this%plastic_work_inc
         ! Increment of plastic strain
         this%vP_inc = vDe
+        ! Total plastic strain in the current step
+        this%vP_step = this%vP_step + this%vP_inc
         ! Total plastic strain:
-        this%vP = this%vP + this%vP_inc
+        this%vP_total = this%vP_total + this%vP_inc
         ! Sum of absolute plastic strain increments:
         this%vP_norms = this%vP_norms + abs(this%vP_inc)
         this%increment = this%increment  + 1
@@ -120,6 +132,27 @@ contains
     !
     end subroutine
 
+    
+    !> Clean increment-wise and step-wise control fields.
+    !>
+    !> All fields except for the ones representing 'totals' are set to zero.
+    subroutine IncrementationControl_initStep(this, info)
+    implicit none
+    class(IncrementationControl),intent(inout)      :: this
+    integer,intent(out)                             :: info
+    !
+        ! Plastic work in the current increment
+        this%plastic_work_inc = 0.D0
+        ! Plastic work in the current step
+        this%plastic_work_step = 0.D0
+        ! Increment of plastic strain
+        this%vP_inc = 0.D0
+        ! Total plastic strain in the current step
+        this%vP_step = 0.D0
+        this%increment = 0
+        info = criSuccess
+    !
+    end subroutine
 
     !> Read IncrementationControlSettings from configuration file
     subroutine IncrementationControlSettings_read(this, cnfunit, info, allowed)
