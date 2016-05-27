@@ -75,22 +75,14 @@ contains
             case(range_uniform_id)
                   ! Read: begin end step
                   if (.not. readValue(cnfunit, triplet)) return
-                  allocate(uniformRange :: inst)
-                  select type(inst)
-                  type is (uniformRange)
-                        inst = uniformRange(rbegin, rend, rstep)
-                  end select
+                  allocate(inst, source=uniformRange(rbegin, rend, rstep))
             !
             case(range_biased_id)
                   ! Read: begin end ratio
                   if (.not. readValue(cnfunit, triplet)) return
                   if (.not. readValue(cnfunit, npoints)) return
                   if (npoints <= 0) return
-                  allocate(biasedRange :: inst)
-                  select type(inst)
-                  type is (biasedRange)
-                        inst = biasedRange(rbegin, rend, ratio, npoints)
-                  end select
+                  allocate(inst, source=biasedRange(rbegin, rend, ratio, npoints))
                   !
             !
             case(range_doublebiased_id)
@@ -99,11 +91,7 @@ contains
                   if (.not. readValue(cnfunit, npoints)) return
                   if (npoints <= 0) return
                   ! 
-                  allocate(multiBiasedRange :: inst)
-                  select type(inst)
-                  type is (multiBiasedRange)
-                        inst = doubleBiasedRange(rbegin, rend, ratio, npoints)
-                  end select
+                  allocate(inst, source=doubleBiasedRange(rbegin, rend, ratio, npoints))
             !
             case(range_multibiased_id)
                   ! Read: begin nranges
@@ -120,11 +108,8 @@ contains
                         if (npoints <= 0) return
                         vBiases(i) = bias_t(rend, ratio, npoints)
                   enddo
-                  allocate(multiBiasedRange :: inst)
-                  select type(inst)
-                  type is (multiBiasedRange)
-                        inst = multiBiasedRange(rbegin,vBiases)
-                  end select
+                  allocate(inst, source=multiBiasedRange(rbegin,vBiases))
+            !
             case(range_discrete_id)
                   npoints = 0
                   if (.not. readValue(cnfunit, npoints)) return
@@ -134,11 +119,8 @@ contains
                   ! No comments allowed, but multiple lines can be read
                   read(cnfunit,*,iostat=ierr) vPoints
                   if (ierr /= 0) return
-                  allocate(discreteRange :: inst)
-                  select type(inst)
-                  type is (discreteRange)
-                        inst = discreteRange(vPoints)      
-                  end select
+                  allocate(inst, source=discreteRange(vPoints))
+            !
             case default
                   info = criErr_BadArgs
                   return
