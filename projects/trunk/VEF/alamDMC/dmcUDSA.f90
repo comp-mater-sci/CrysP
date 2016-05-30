@@ -179,7 +179,7 @@ contains
       type(EvolutionOutput) :: output
       type(qrsData)     :: qrsvalue, qrsvalue_accum
       type(EulerAngles) :: sample_orientation
-      double precision  :: angle, stress_direction, Tnorm, TSNorm
+      double precision  :: angle, stress_direction, Tnorm, TSigma, TSNorm
       integer :: test_run, n_test_runs, increment, ierr, ofunit
       !
       ! Check the preconditions
@@ -273,9 +273,9 @@ contains
                         P_t = rotateSRTensorFrom(P_t, Mrot)
                         P_t_end = rotateSRTensorFrom(P_t_end, Mrot)
                         !
-                        ! Tensile strain and stress
-                        TNorm = abs(P_t%t(1,1))
-                        TSNorm = abs(S_t%t(1,1))
+                        TNorm = abs(P_t%t(1,1)) ! Tensile strain
+                        TSigma = S_t%t(1,1) - S_t%t(3,3) ! Tensile total stress
+                        TSNorm = abs(S_t%t(1,1)) ! Tensile deviatoric stress
                         !
                         ! Calculate output variables
                         !
@@ -288,6 +288,7 @@ contains
                                                       v%vm_strain, &
                                                       v%P_abs_sum, &
                                                       TNorm, &
+                                                      TSigma, &
                                                       TSnorm, &
                                                       v%icv%plastic_work_total, &
                                                       v%dotWonA, &
@@ -312,7 +313,7 @@ contains
       !
       end do test_run_loop
 
-      710 format(1X, 1(I9,1X),14(E18.9,1X))
+      710 format(1X, 1(I9,1X),15(E18.9,1X))
           
           
 #define MSG_GROUP_RULERS     
@@ -333,9 +334,9 @@ contains
       integer :: i, ierr
       character(len=max_pathlen) :: datafile_path
       !      
-      integer,parameter :: ncolumn_labels = 15, column_width = 15, short_column_width = 9
+      integer,parameter :: ncolumn_labels = 16, column_width = 15, short_column_width = 9
       character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = [ character(len=column_width) ::  &
-           'increment','eps_vM','Pnorm','Tnorm','S(A)_11','W','dotW(A)','M-factor','||S(A)||','q-value','r-value','s-value', &
+           'increment','eps_vM','Pnorm','Tnorm', 'sigma_xx', '||S(A)_xx||','W','dotW(A)','M-factor','||S(A)||','q-value','r-value','s-value', &
            'q-valueA', 'r-valueA','residual']
       !
 
@@ -352,8 +353,8 @@ contains
             if (ierr == 0) info = criSuccess
             !
             ! Formats for the output file
-            700 format(1X, 1(A9,1X),14(A18,  1X))
-            701 format('#',1(A9,1X),14(A18,  1X))
+            700 format(1X, 1(A9,1X),15(A18,  1X))
+            701 format('#',1(A9,1X),15(A18,  1X))
       !
       end function
       
