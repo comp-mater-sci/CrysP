@@ -75,10 +75,28 @@ implicit none
         procedure,pass(this)    :: printConfig => UDSAModule_printConfig
             
         procedure,private,pass(this)    :: createOutputFile => UDSAModule_createOutputFile
-            
+        
+        procedure,private,pass(this)    :: outputFile => UDSAModule_outputFile
         procedure,pass(this)    :: outputPrefix => UDSAModule_outputPrefix
     end type
 
+    
+    type :: UDSAOutputRecord
+        integer             :: increment
+        double precision    :: vm_strain = 0.D0
+        double precision    :: P_abs_sum = 0.D0
+        double precision    :: TNorm = 0.D0  ! Tensile strain
+        double precision    :: TSigma = 0.D0 ! Tensile total stress
+        double precision    :: TSNorm = 0.D0 ! Tensile deviatoric stress
+        double precision    :: plastic_work_total = 0.D0
+        double precision    :: dotWonA = 0.D0
+        double precision    :: taylor_factor = 0.D0
+        type(qrsData)       :: instantaneous_qrsvalue
+        type(qrsData)       :: cummulative_qrsvalue
+        double precision    :: residual = 0.D0
+    end type
+    
+    
 contains
 
     integer function UDSAModule_ReadConfig(this,cnfunit) result(info)
@@ -177,10 +195,10 @@ contains
     type(SRTensor) :: sigma, sigma_t, S_t, D_t, P_t, P_t_end
     double precision,dimension(rot_matrix_dim,rot_matrix_dim) :: Mrot = 0.0
     type(EvolutionOutput) :: output
-    type(qrsData)     :: qrsvalue, qrsvalue_accum
     type(EulerAngles) :: sample_orientation
-    double precision  :: angle, stress_direction, Tnorm, TSigma, TSNorm
+    double precision  :: angle, stress_direction
     integer :: test_run, n_test_runs, increment, ierr, ofunit
+    type(UDSAOutputRecord)  :: outrec
     !
     ! Check the preconditions
     !
@@ -245,6 +263,10 @@ contains
         else
             info = this%createOutputFile(ofunit)
         endif
+        if (info /= criSuccess) then
+            write(display_unit, fmt=900) 'Cannot create result file for the current virtual test'
+            exit
+        endif
 
         info = this%calculateStressPath(sigma, this%control, output, Mrot)
         if (info /= criSuccess) then
@@ -253,9 +275,6 @@ contains
         endif
         !
         ! Process the output evolution path and produce result file
-        !
-        qrsvalue = qrsData(0.D0, 0.D0, 0.D0) 
-        qrsvalue_accum = qrsData(0.D0, 0.D0, 0.D0)
         !
         do increment = 1, size(output%values) - 1
             ! Total plastic strain at the _begining_ of the inrement.
@@ -272,47 +291,36 @@ contains
                 P_t = rotateSRTensorFrom(P_t, Mrot)
                 P_t_end = rotateSRTensorFrom(P_t_end, Mrot)
                 !
-                TNorm = abs(P_t%t(1,1)) ! Tensile strain
-                TSigma = S_t%t(1,1) - S_t%t(3,3) ! Tensile total stress
-                TSNorm = abs(S_t%t(1,1)) ! Tensile deviatoric stress
-                !
                 ! Calculate output variables
                 !
                 ! Calculate q and r in tensile reference frame
-                qrsvalue = calculateQRS(D_t%t,v%scal_s)
-                qrsvalue_accum = calculateQRS(P_t_end%t,v%scal_s)
                 !
                 ! Write out the result
-                write(ofunit,710,iostat=ierr) increment, &
-                                                v%vm_strain, &
-                                                v%P_abs_sum, &
-                                                TNorm, &
-                                                TSigma, &
-                                                TSnorm, &
-                                                v%icv%plastic_work_total, &
-                                                v%dotWonA, &
-                                                v%taylor_factor, & 
-                                                v%norm_SonA, &
-                                                qrsvalue, &
-                                                qrsvalue_accum%qvalue, &
-                                                qrsvalue_accum%rvalue, &
-                                                v%R
-                if (ierr /= 0) then
-                    info = criErr_IOWrite
-                    exit
-                endif
+                outrec = UDSAOutputRecord(increment = increment, &
+                                          vm_strain = v%vm_strain, &
+                                          P_abs_sum = v%P_abs_sum, &
+                                          TNorm = abs(P_t%t(1,1)), & ! Tensile strain
+                                          TSigma = S_t%t(1,1) - S_t%t(3,3), & ! Tensile total stress
+                                          TSNorm = abs(S_t%t(1,1)), & ! Tensile deviatoric stress
+                                          plastic_work_total = v%icv%plastic_work_total, &
+                                          dotWonA = v%dotWonA, &
+                                          taylor_factor = v%taylor_factor, &
+                                          instantaneous_qrsvalue = calculateQRS(D_t%t,v%scal_s), &
+                                          cummulative_qrsvalue = calculateQRS(P_t_end%t, v%norm_SonA), &
+                                          residual =  v%R)
+                !
+                info = this%outputFile(iounit=ofunit, data_record=outrec)
             !
             end associate
         enddo
         !
         close(ofunit)
-        if (info /= criSuccess) then     
+        if (info /= criSuccess) then
             write(display_unit, fmt=900) 'Unable to store results for the current virtual tests'
         endif
     !
     end do test_run_loop
 
-    710 format(1X, 1(I9,1X),15(E18.9,1X))
 
 #define MSG_GROUP_RULERS
 #define MSG_GROUP_ERRORS
@@ -329,34 +337,60 @@ contains
     integer,intent(out)                       :: iounit
     double precision,intent(in),optional      :: tag_number
     !
-    integer :: i, ierr
+    integer :: ierr
     character(len=max_pathlen) :: datafile_path
-    !      
-    integer,parameter :: ncolumn_labels = 16, column_width = 15, short_column_width = 9
-    character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = [ character(len=column_width) ::  &
-        'increment','eps_vM','Pnorm','Tnorm', 'sigma_xx', '||S(A)_xx||','W','dotW(A)','M-factor','||S(A)||','q-value','r-value','s-value', &
-        'q-valueA', 'r-valueA','residual']
     !
-
         iounit = 0
         info = criErr_IOWrite
         datafile_path = this%outputPrefix(tag_number)
         open(newunit=iounit,file=trim(datafile_path)//'.uds', status='replace', iostat=ierr)
         if (ierr /= 0) return
-        write(iounit,701,iostat=ierr) centered(1,short_column_width), &
-                                      (centered(i,column_width), i = 2, ncolumn_labels)
-        if (ierr /= 0) return
-        write(iounit,700,iostat=ierr) file_column_labels(1)(1:short_column_width), &
-                                      (centered(file_column_labels(i)), i=2,ncolumn_labels) 
-        if (ierr == 0) info = criSuccess
+        info = this%outputFile(iounit, header=.true.)
+        !
+    end function
+    
+    
+    integer function UDSAModule_outputFile(this, iounit, data_record, header) result(info)
+    implicit none
+    class(UDSAModule),intent(in)                :: this
+    integer,intent(in)                          :: iounit
+    type(UDSAOutputRecord),intent(in),optional  :: data_record
+    logical,intent(in),optional                 :: header
+    !
+    integer :: i, ierr
+    !      
+    integer,parameter :: ncolumn_labels = 16, column_width = 15, short_column_width = 9
+    character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = [character(len=column_width) :: &
+        'increment','eps_vM','Pnorm','||eps_xx||', 'sigma_xx', '||S(A)_xx||','W','dotW(A)',&
+        'M-factor', &
+        'q-value','r-value','s-value', &    ! qrsdata
+        'q-valueA', 'r-valueA','||S(A)||',& ! qrsdata
+        'residual']
+    !
+        info = criErr_IOWrite
+        if (optionalDefault(header,.false.)) then
+            write(iounit,701,iostat=ierr) centered(1,short_column_width), &
+                                          (centered(i,column_width), i = 2, ncolumn_labels)
+            if (ierr /= 0) return
+            write(iounit,700,iostat=ierr) file_column_labels(1)(1:short_column_width), &
+                                          (centered(file_column_labels(i)), i=2,ncolumn_labels) 
+            if (ierr /= 0) return
+            info = criSuccess
+        endif
+        !
+        if (present(data_record)) then
+            write(iounit,710,iostat=ierr) data_record
+            if (ierr == 0) info = criSuccess
+        endif
         !
         ! Formats for the output file
         700 format(1X, 1(A9,1X),15(A18,  1X))
         701 format('#',1(A9,1X),15(A18,  1X))
+        710 format(1X, 1(I9,1X),15(E18.9,1X))
     !
     end function
-      
-      
+    
+    
     function UDSAModule_outputPrefix(this, tag_number) result(path)
     implicit none
     character(len=max_pathlen)                :: path
