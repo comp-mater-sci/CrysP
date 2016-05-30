@@ -32,11 +32,6 @@ use criConfigReader
 use fngVec5D
 implicit none
 
-    !> \fixme Workaround: once UDSA makes use of dmcIncrementationControl, these
-    !>        constants will no longer be needed.
-    integer,parameter                         :: scaleFullTensor = scalingStrainTensor, &
-                                                scaleTensileComponent = scalingStrainTensorComponent
-
     integer,parameter,private :: tension_state = 0, compression_state = 1
     type(MapItem),dimension(2),parameter :: stress_states = [MapItem('compression', compression_state),&
                                                             MapItem('tension', tension_state)]
@@ -170,13 +165,16 @@ contains
             write(outunit,fmt=fmtMsg2Other//'G0.4)') 'Stress ratio:', this%rho
             !
             select case(this%control%scaling_type)
-                case(scaleFullTensor)
-                    write(outunit,fmt=fmtMsg2Msg) 'Strain calculation:', 'scaling full tensor'
-                case(scaleTensileComponent)
-                    write(outunit,fmt=fmtMsg2Msg) 'Strain calculation:', 'scaling tensile component'
+                case(scalingStrainTensor)
+                    write(outunit,fmt=500) 'full tensor'
+                case(scalingStrainTensorComponent)
+                    write(outunit,fmt=500) 'tensile component'
+                case(scalingPlasticWork)
+                    write(outunit,fmt=500) 'work increment'
                 case default
                     write(outunit,*) 'Unknown scaling type, full tensor will be used'
             end select
+            500 format('Strain incrementation:',T35, 'scaling by ', A)
         endif
         info = criSuccess
     !
