@@ -16,17 +16,23 @@ The manual generally adheres to the scientific notation of variables that is
 commonly used in the field of mechanics. More specifically, the following conventions
 are followed:
 
-- Tensors are denoted with uppercase boldface roman letters, or with boldface greek letters.  
-  Examples: \f$ \mathbf{S} \f$ is deviatoric stress, \f$ \mathbf{A} \f$ is deviatoric strain rate mode,
-  \f$ \boldsymbol\sigma \f$ is the total stress and \f$ \boldsymbol\epsilon \f$ the plastic strain.
-- Vectors are denoted with lowercase boldface roman letters. Examples: \f$ \mathbf{n} \f$ is a plane normal vector.
-- Scalars, including tensor components and vector components, are denoted with lower- or uppercase, roman or greek letters. They are never boldface.
-  Examples: \f$ W \f$ is plastic work, \f$ \sigma_h \f$ is the hydrostatic stress and \f$ \sigma_{13} \f$ is a component of tensor \f$ \boldsymbol\sigma \f$.   
+- Tensors are denoted with capitalized boldface Latin letters, or with boldface Greek 
+  letters.  
+  Examples: \f$ \mathbf{S} \f$ is deviatoric stress, \f$ \mathbf{A} \f$ is deviatoric 
+  strain rate mode,   \f$ \boldsymbol\sigma \f$ is the total stress and 
+  \f$ \boldsymbol\epsilon \f$ the plastic strain.
+- Vectors are denoted with lowercase boldface Latin letters. Examples: \f$ \mathbf{n} \f$ 
+  is a plane normal vector.
+- Scalars, including tensor components and vector components, are denoted with lower- or 
+  uppercase, Latin or Greek letters. They are never boldface.
+  Examples: \f$ W \f$ is plastic work, \f$ \sigma_h \f$ is the hydrostatic stress and 
+  \f$ \sigma_{13} \f$ is a component of tensor \f$ \boldsymbol\sigma \f$.   
 
 Exceptions from these rules are clearly indicated where appropriate.
 
 Note that strain tensors (and derived quantities) mentioned in the VEF are the 
-__plastic strains__ unless stated otherwise.
+__plastic strains__ unless stated otherwise. Likewise, the stresses calculated and 
+reported by the VEF are usually the __deviatoric stresses__.
 
 ### Naming of variables in input and output files
 
@@ -37,7 +43,7 @@ One or more indices are preceded by underscore symbol (`_`), for example: `eps_1
 
 
 Reference frames, and components of vectors and tensors expressed therein 
------------------------------------------------------
+-------------------------------------------------------------------------
 
 The VEF uses two reference frames:
 
@@ -67,4 +73,5 @@ Apart from the notation related to the reference frames, the VEF also uses other
 These usually indicate:
 - a direction that characterizes a specific sample (e.g. \f$ S_0 \f$ for stress 
 in sample at 0 degrees), 
-- equivalent quantities (e.g. \f$ \epsilon_{vM} \f$ for Von Mises equivalent strain).
+- equivalent quantities (e.g. \f$ \epsilon_{vM} \f$ for Von Mises equivalent plastic 
+  strain).
