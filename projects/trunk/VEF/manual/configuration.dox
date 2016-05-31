@@ -608,7 +608,23 @@ Please see the configuration file `AKDQf_qrs.cfg` from `examples` directory:
 
 \subsubsection output_qrs Module-specific output
 
-Another quantity retrieved from uniaxial testing is the yield stress. 
+The module-specific outputfile `<output_prefix>.xqrs` makes column-wise reporting of:
+<ol>
+<li> \outdef{angle} The in-plane orientation angle, as requested in \conffield{sample_orientation_range} \n
+</li>
+<li> \outdef{rho} The requested imposed stress ratio \f$ \rho \f$, as requested in \conffield{pure_uniaxial_state}. See also \ref stress_ratio_rho \n
+</li>
+<li> \outref{q-value}
+</li>
+<li> \outref{r-value}
+</li>
+<li> \outref{s-value}
+</li>
+<li> \outref{M-factor}
+</li>
+<li> \outref{residual}
+</li>
+</ol>
 
 \subsection module_yld Yield Locus Module (keyword: YLD)
 
@@ -623,17 +639,17 @@ There is no evolution of state associated with this module.
 section base vector towards the 2nd section base vector. 
 </li>
 <li> \confdef{section_default,logical} is a flag to request default or non-default section definition and yield locus scaling.
-If \conffield{section_default}=`True`, the yield locus section is defined by \f$\sigma_{11}\f$ (normal stress along RD) along the 1st axis, 
-and \f$\sigma_{22}\f$ (normal stress along TD) along the 2nd axis. Furthermore, the yield locus will be scaled by the yield stress 
+If \conffield{section_default}=`True`, the yield locus section is defined by \f$\sigma_{11}\f$ (normal stress along RD) along the X-axis, 
+and \f$\sigma_{22}\f$ (normal stress along TD) along the Y-axis. Furthermore, the yield locus will be scaled by the yield stress 
 corresponding to uniaxial tension along the RD.
 For \conffield{section_default}=`False`, the following suboptions are required:
 	<ol>
 	<li> \confdef{normalize_base,logical}. If `True`, then the base tensors specified by the following configuration 
 	settings 2.-3.-4. are normalized so their norm-2 is equal to 1.0.
 	</li>
-	<li> \confdef{base_sigma_x,real} is the base tensor of the 1st axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
+	<li> \confdef{base_sigma_X,real} is the base tensor along the X-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
 	</li>
-	<li> \confdef{base_sigma_y,real} is the base tensor of the 2nd axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
+	<li> \confdef{base_sigma_Y,real} is the base tensor along the Y-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
 	</li>
 	<li> \confdef{base_sigma_offset,real} is the base tensor that determines the mode of the stress that coincides with the origen of the 
 	yield locus section, in [Voigt notation](@ref symsrtensor_option).
@@ -668,13 +684,41 @@ The initial lines 1 - 12 belong to the \ref configuration_general.
 
 \subsubsection output_yld Module-specific output
 
-In the example presented above, the output file will be named 
+The module-specific outputfile `<output_prefix>.xyld` makes column-wise reporting of:
+<ol>
+<li> \outdef{theta_RADIANS} The angle \f$ \theta \f$ corresponding to a yield locus point, as requested in \conffield{theta_range},
+expressed in radians \n
+</li>
+<li> \outdef{w} The multiplier for the yield locus offset tensor, as requested in \conffield{offset_range} \n
+</li>
+<li> \outdef{S} The radial coordinate of the yield locus point\n
+</li>
+<li> \outdef{S/S_0} The radial coordinate of the normalized yield locus point\n
+</li>
+<li> \outref{SonA}
+</li>
+<li> \outref{dotW}
+</li>
+<li> \outdef{S_x} The 1st cartesian coordinate of the normalized yield locus point \f$ \sigma_X \f$ \n
+</li>
+<li> \outdef{S_y} The 2nd cartesian coordinate of the normalized yield locus point \f$ \sigma_Y \f$ \n
+</li>
+<li> \outdef{delta_S_x} The 1st cartesian coordinate of the local yield locus normal \f$ A_X \f$ \n
+</li>
+<li> \outdef{delta_S_y} The 2nd cartesian coordinate of the local yield locus normal \f$ A_Y \f$ \n
+</li>
+<li> \outdef{beta} The angle \f$ \beta \f$ from X-axis to the projection of tensor \f$ \mathbf{A} \f$ into section, expressed in radians  \n
+It is given as \f$ \beta=arctan(\frac{A_Y}{A_X}) \f$.
+</li>
+<li> \outref{residual}
+</li>
+</ol>
 
 \subsection module_ewc Equiwork Contour Module (keyword: EWC)
 
 The Equiwork Contour Module produces generic sections of equi-work contours in stress space.
-Equi-work contours are constructed from a series of monotonic stress loading cases within the requested 2-dimensional section of stress space
-The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locus of the material in its initial state.
+Equi-work contour points are calculated from a series of monotonic stress loading cases within the requested 2-dimensional section of stress space.
+The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locus in the initial state of material.
 
 \subsubsection configuration_ewc Module-specific configuration
 
@@ -724,13 +768,13 @@ section base vector towards the 2nd section base vector.
  for all virtual tests that generate the equi-work contour levels.
 </li>
 <li> \confdef{use_default_settings,logical} specifies whether or not the default section in stress space is to be used. 
-If \conffield{use_default_settings}=`True`, the equi-work contour section is defined by \f$\sigma_{11}\f$ (normal stress along RD) along the 1st axis, 
-and \f$\sigma_{22}\f$ (normal stress along TD) along the 2nd axis.
+If \conffield{use_default_settings}=`True`, the equi-work contour section is defined by \f$\sigma_{11}\f$ (normal stress along RD) along the X-axis, 
+and \f$\sigma_{22}\f$ (normal stress along TD) along the Y-axis.
 For \conffield{use_default_settings}=`False`, the following suboptions are required:
 	<ol>
-	<li>  \confdef{base_sigma_x,real} is the base tensor of the 1st axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
+	<li>  \confdef{base_sigma_X,real} is the base tensor along the X-axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
 	</li>
-	<li>  \confdef{base_sigma_y,real} is the base tensor of the 2nd axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
+	<li>  \confdef{base_sigma_Y,real} is the base tensor along the Y-axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
 	</li>
 	</ol>
 </li>
@@ -742,4 +786,29 @@ Please see the configuration file `AKDQf_ewc.cfg` from `examples` directory:
 
 \subsubsection output_ewc Module-specific output
 
+The module-specific outputfile `<output_prefix>_ewc.ewc` makes column-wise reporting of:
+<ol>
+<li> \outdef{theta} The angle \f$ \theta \f$ corresponding to a equi-work contour point, as requested in \conffield{theta_range},
+expressed in degrees \n
+</li>
+<li> \outdef{S} The radial coordinate of the equi-work contour point, 
+for requested values of plastic work \f$ W \f$ (if \conffield{worklevel_selection_method}=`direct`), or
+for requested values of von Mises equivalent strain \f$ \epsilon_{vM} \f$ of the reference test
+(if \conffield{worklevel_selection_method}=`reference`)\n
+
+This column is repeated for each of requested contours.
+</li>
+</ol>
+
+If \conffield{worklevel_selection_method}=`reference`, two additional outputfiles are generated: 
+`<output_prefix>_reference.ewc` and `<output_prefix>_contours.ewc`. 
+Whereas the rows in `<output_prefix>_reference.ewc` correspond to the increments of the reference test, 
+the rows in `<output_prefix>_contours.ewc` correspond to the contour levels as requested in \conffield{increment_magnitude}.
+Both these outputfiles make column-wise reporting of:
+<ol>
+<li> \outref{eps_vM}
+</li>
+<li> \outref{W} 
+</li>
+</ol>
 */

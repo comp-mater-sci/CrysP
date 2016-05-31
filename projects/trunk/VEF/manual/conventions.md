@@ -45,10 +45,10 @@ One or more indices are preceded by underscore symbol (`_`), for example: `eps_1
 Reference frames, and components of vectors and tensors expressed therein 
 -------------------------------------------------------------------------
 
-The VEF uses two reference frames:
+The VEF uses two different reference frames in the physical, 3-dimensional space:
 
-1. **The material reference frame**: the reference frame in which the material data 
-   are given.
+ - **The material reference frame**: the reference frame in which the material data 
+   are given
 
    To denote the components of second-order tensors in the material reference frame, 
    numeral indices are used. 
@@ -56,15 +56,23 @@ The VEF uses two reference frames:
    For instance: \f$ \sigma_{11} \f$, \f$ D_{22} \f$,
    \f$ S_{13} \f$.  
 
-2. **The sample reference frame**: a local reference frame that is attached to 
+ - **The sample reference frame**: a local reference frame that is attached to 
    the virtual sample 
 
     Components of second-order tensors in the sample reference frame are indicated by  
-    using the letters x,y and z to denote the axes. Repeated axes can be omitted.
+    using the (lowercase) letters x,y and z to denote the axes. Repeated axes can be omitted.
 
     Examples: \f$ \sigma_x \f$ (or equivalent: \f$ \sigma_{xx} \f$), \f$ D_y \f$, 
     \f$ S_{xz} \f$
 
+Additionaly, the VEF exploits arbitrary 2-dimensional sections of stress space:
+ - **The stress space section reference frame**: an arbitrary reference frame 
+defined within the 6-dimensional stress space
+    
+    The two axes defining the section are generally denoted by the (capitalized) 
+	letters X and Y.
+
+	Examples: \f$ \sigma_X \f$ and \f$ \sigma_Y \f$
 
 Notation for other quantities
 -----------------------------
