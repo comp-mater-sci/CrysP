@@ -19,48 +19,71 @@
 #include "criStdDefs.fpp"
 !
 !> Implementation of a simple, expandable vector with constant amortized insertion time.
+!>
+!> Selected instantizations of the vector are provided:
+!> - xVector_integer
+!> - xVector_double
+!>
+!> \note This module uses a special feature of instantiating xVector_<valuename> typpe
+!>       for several value types at once. Normal use is much simpler, for example:
+!>            module xVectorMyType  
+!>            #define _VALUE_TYPE type(MyType)
+!>            #define _VALUE_NAME MyType
+!>            #include "criExpandableVectorTemplates.fpp"
+!>            #undef _VALUE_TYPE
+!>            #undef _VALUE_NAME
+!>            end module
 module criExpandableVector
+use criErrcodes
+implicit none
 
-      type expandableVector
-            !> Private data storage
-            integer,dimension(:),allocatable    :: xdata
-            
-            !> Provides view on contents of the vector. 
-            integer,dimension(:),pointer        :: values => null()
-      end type
+! Prevent function definitions from being included here
+#define DECLARATIONS_ONLY
+
+    !
+    ! Declarations for integer
+    !
+#define _VALUE_TYPE integer
+#define _VALUE_NAME integer
+#include "criExpandableVectorTemplates.fpp"
+#undef _VALUE_TYPE
+#undef _VALUE_NAME
+
+
+    !
+    ! Declarations for double precision
+    !
+#define _VALUE_TYPE double precision
+#define _VALUE_NAME double
+#include "criExpandableVectorTemplates.fpp"
+#undef _VALUE_TYPE
+#undef _VALUE_NAME
+
+#undef DECLARATIONS_ONLY
 
 contains
 
-      integer function vectorPush_int(v,item) result(info)
-      implicit none
-      type(expandableVector),intent(inout),target     :: v
-      integer,intent(in)                              :: item
-      !
-      integer,dimension(:),allocatable :: tmp
-      integer :: idx_last
-      !
-            
-            if (.not. allocated(v%xdata)) then
-                  idx_last = 0
-                  v%values => null()
-                  allocate(v%xdata(1),stat=info)
-                  if (info /= 0) return
-            else
-                  idx_last = size(v%values)
-                  if (idx_last == size(v%xdata)) then
-                        allocate(tmp(2*idx_last))
-                        tmp(1:idx_last) = v%xdata(1:idx_last)
-                        deallocate(v%xdata)
-                        call move_alloc(tmp,v%xdata)
-                  endif
-            endif
-            idx_last = idx_last + 1 !< Move the index
-            ! ... and place the item
-            v%xdata(idx_last) = item
-            v%values => v%xdata(1:idx_last)
-            info = 0
-      !     
-      end function
+
+! Prevent all declarations from being included here
+#define DEFINITIONS_ONLY
+    !
+    ! Definitons for integer
+    !
+#define _VALUE_TYPE integer
+#define _VALUE_NAME integer
+#include "criExpandableVectorTemplates.fpp"
+#undef _VALUE_TYPE
+#undef _VALUE_NAME
+
+    !
+    ! Definitons for double precision
+    !
+#define _VALUE_TYPE double precision
+#define _VALUE_NAME double
+#include "criExpandableVectorTemplates.fpp"
+#undef _VALUE_TYPE
+#undef _VALUE_NAME
+
+#undef DEFINITIONS_ONLY
 
 end module
-      

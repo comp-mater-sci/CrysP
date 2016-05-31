@@ -34,13 +34,14 @@ use criTestPath
 use criTestUncomment
 use criTestIterUtils
 use criTestNumerics
+use criTestExpandableVector
 implicit none
 
 integer  :: info
 logical  :: l
 
       call testInit()
-      
+
       l = test_replaceAll()
       
       l = criTestPath_main()
@@ -54,6 +55,8 @@ logical  :: l
       l = criTestIterUtils_main()
 
       l = criTestNumerics_main()
+
+      l = criTestExpandableVector_main()
       
       call testSummary()
 
