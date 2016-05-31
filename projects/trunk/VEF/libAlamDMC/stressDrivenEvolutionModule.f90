@@ -17,39 +17,16 @@
 module dmcStressDrivenEvolutionModule
 use dmcBasicModule
 use dmcIncrementationControl
+use dmcEvolutionOutputRecord
+use xVectorIncrementOutputRecord
 use commonUtils
 use criMathUtils
 use criAlgorithm, only: optionalDefault
 implicit none
 
-
-        type :: OutputRecord
-         
-            double precision :: vm_strain = 0.D0
-            double precision :: vm_strain_total = 0.D0
-        
-            double precision :: P_abs_sum = 0.D0
-        
-            double precision :: dotWonA = 0.D0
-            double precision :: taylor_factor = 0.D0
-            double precision :: scal_s = 0.D0
-            double precision :: norm_SonA = 0.D0
-            double precision :: R = 0.D0
-
-            type(SRTensor) :: A
-            type(SRTensor) :: SonA
-
-            type(SRTensor)  :: P_inc_evol
-            type(SRTensor)  :: S_evol
-            
-            type(IncrementationControlVariables) :: icv
-        
-    end type
-    
-    
     
     type :: EvolutionOutput
-        type(OutputRecord),dimension(:),allocatable      :: values
+        type(IncrementOutputRecord),dimension(:),allocatable      :: values
     end type
     
     
@@ -96,10 +73,9 @@ contains
     type(IncrementationControl) :: icv
     double precision,dimension(sr_symm_voigt_dim) :: X_tmp_voigt
     !
-    !> \fixme Shortcut: array that is "lage enough" to keep the outputs. 
-    !>        To be replaced by a list, deque or another dynamic storage.
-    integer,parameter :: max_records = 100
-    type(OutputRecord),dimension(max_records) :: tmp_records
+    type(xVector_IncrementOutputRecord) :: tmp_output
+    type(IncrementOutputRecord)         :: tmp_record
+    
     integer :: increment, i
     !
         ! Prepare non-default incrementation controls if requested
@@ -126,8 +102,8 @@ contains
                 !
                 ! Pick the most recent converged solution
                 do i = increment-1, 1, -1
-                    if (tmp_records(i)%R < this%ylp%obj_func_eps) then
-                        D_retry = tmp_records(i)%A
+                    if (tmp_output%values(i)%R < this%ylp%obj_func_eps) then
+                        D_retry = tmp_output%values(i)%A
                         exit
                     endif
                 enddo
@@ -184,19 +160,17 @@ contains
             call makeTextureUpdateStep(De%t,Se%t,taylor_factor,this%output%outputRequest,info)
             if (info /= 0) exit !< \fixme Literal constant in makeTextureUpdateStep
             vSe = tens2vec5D(Se%t)
+            !
             ! Add output record to the list
-            !> \fixme Get rid of the big array
-            ! -->>
-            call setOutputRecord(tmp_records(increment), &
+            call setOutputRecord(tmp_record, &
                                  icv%IncrementationControlVariables, &
                                  ylp, &
                                  De, Se, &
                                  taylor_factor, &   
                                  info)
-            if ((increment >= max_records) .or. (info /= criSuccess)) exit
-            ! <<--
+            info = xVector_push(tmp_output, tmp_record)
+            if (info /= criSuccess) exit
             !
-            info = criSuccess
             select case(control%scaling_type)
             case(scalingStrainTensor)
                 if (norm2(icv%vP_step) > control%step_size) exit
@@ -218,15 +192,12 @@ contains
             !
             call icv%update(vDe, vSe, info)
             !
-            call this%onIncrementEnd(tmp_records(increment)) 
+            call this%onIncrementEnd(tmp_record) 
         !
         enddo
         if (info /= criSuccess) return
 
-        !> \fixme Get rid of the big array. It should be asArray on list.
-        ! -->>
-        outputs%values = tmp_records(1:increment)
-        ! <<--
+        outputs%values = tmp_output%values
         ! Report back the incrementation control variables if requested
         if (present(incrementation_control)) incrementation_control = icv
     !
@@ -235,7 +206,7 @@ contains
         
     subroutine setOutputRecord(this, icv, ylp, De, Se, taylor_factor, info)
     implicit none
-    type(OutputRecord),intent(out)              :: this
+    type(IncrementOutputRecord),intent(out)         :: this
     type(IncrementationControlVariables),intent(in) :: icv
     type(YLPResult),intent(in)                  :: ylp
     type(SRTensor),intent(in)                   :: De
@@ -269,7 +240,7 @@ contains
     subroutine StressDrivenEvolutionModule_onIncrementEnd(this, output_record)
     implicit none
     class(StressDrivenEvolutionModule),intent(in) :: this
-    type(OutputRecord),intent(in)                 :: output_record
+    type(IncrementOutputRecord),intent(in)                 :: output_record
     !
 
     !

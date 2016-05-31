@@ -74,7 +74,9 @@
 		<File RelativePath=".\dmcFuture.f90"/>
 		<File RelativePath=".\dmcResultFileOutput.f90"/>
 		<File RelativePath="dmcUtils.f90"/>
+		<File RelativePath=".\evolutionOutputRecord.f90"/>
 		<File RelativePath=".\incrementationControl.f90"/>
 		<File RelativePath="qrsTypes.f90"/>
-		<File RelativePath=".\stressDrivenEvolutionModule.f90"/></Filter></Files>
+		<File RelativePath=".\stressDrivenEvolutionModule.f90"/>
+		<File RelativePath=".\xVectorEvolutionOutputRecord.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>

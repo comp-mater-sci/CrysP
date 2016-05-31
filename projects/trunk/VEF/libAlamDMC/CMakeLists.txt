@@ -17,10 +17,12 @@ commonConfig.f90
 commonUtils.f90
 dmcFuture.f90  
 dmcUtils.f90
+evolutionOutputRecord.f90
 incrementationControl.f90 
 qrsTypes.f90
 stressDrivenEvolutionModule.f90
 dmcResultFileOutput.f90
+xVectorEvolutionOutputRecord.f90
 )
 
 add_library(AlamDMC STATIC ${AlamDMC_SRCS})
