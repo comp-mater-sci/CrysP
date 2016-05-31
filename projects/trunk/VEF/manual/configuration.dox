@@ -143,7 +143,8 @@ There is one option supported, i.e. Euler angles in Bunge notation and expressed
 
 
 Symmetric second-order tensors are expressed in the configuration files  as vectors in Voigt notation. Let \f$ x \f$ be a symmetric second-order tensor. The ordering of the tensor terms in the vector is as follows: 
-\f$ x_{11} \f$, \f$ x_{22} \f$, \f$ x_{33} \f$, \f$ x_{12} \f$, \f$ x_{23} \f$, \f$ x_{13} \f$.
+- \f$ x_{11} \f$, \f$ x_{22} \f$, \f$ x_{33} \f$, \f$ x_{12} \f$, \f$ x_{23} \f$, \f$ x_{13} \f$; if expressed in the material (`123`) reference frame.
+- \f$ x_{xx} \f$, \f$ x_{yy} \f$, \f$ x_{zz} \f$, \f$ x_{xy} \f$, \f$ x_{yz} \f$, \f$ x_{xz} \f$; if expressed in the material (`xyz`) reference frame.
 
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
@@ -394,7 +395,7 @@ The outputfiles make column-wise reporting of:
 \todo CHECK CORRESPONDENCE TO COLUMN HEADERS PRINTED TO FILE, AND RESOLVE.
 
 <ol>
-<li> \outdef{increment} The increment number
+<li> \outdef{increment} The increment sequence number
 </li>
 <li> \outdef{eps_vM} The von Mises equivalent strain \f$ \epsilon_{vM} \f$ \n
 It is derived from the strain tensor \f$ \boldsymbol{\epsilon} \f$ as: 
@@ -465,7 +466,8 @@ The imposed stress state is described with reference to this sample reference fr
 <li> \confdef{n_steps,integer} sets the number of subsequent deformation steps, each one being specified by the configuration settings 3.-4. and their optional subsettings.
 These settings are repeated \conffield{n_steps} times in configuration file, in the same order as they are to be applied to the virtual sample.
 </li>
-<li> \confdef{stress_mode,real} specifies the imposed stress mode for given step, in format specified in \ref symsrtensor_option.
+<li> \confdef{stress_mode,real} specifies the imposed stress mode for given step, with reference to the sample (`xyz`) reference frame, and in format specified in \ref symsrtensor_option. 
+Note that the hydrostatic part of the imposed stress mode is ignored, as well as its norm.
 </li>
 <li> \confdef{update_state,real} is a switch that controls update of material state for given step. When set to `False` then \conffield{stress_mode}
 is merely queried without finite deformation and without associated evolution of state. Otherwise a finite deformation has to be specified as follows:
@@ -498,7 +500,78 @@ Please see the configuration file `AKDQf_asr.cfg` from `examples` directory:
 
 The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting of:
 <ol>
-<li> \outref{iter} 
+<li> \outdef{step} The deformation step sequence number \n
+</li>
+<li> \outdef{incr} The increment sequence number of the current deformation step \n
+</li>
+<li> \outdef{DELTAeps_vM} The von Mises equivalent strain of current step \f$ \Delta \epsilon_{vM,step} \f$ \n
+It is derived from the strain tensor of current step \f$ \Delta \boldsymbol{\epsilon}_{step} \f$ as: 
+\f$ \Delta \epsilon_{vM,step}=\sqrt{2/3} \| \Delta \boldsymbol{\epsilon}_{step} \| \f$  \n
+</li>
+<li> \outdef{DELTAeps} The norm of the strain tensor of current step \f$ \| \Delta \boldsymbol{\epsilon}_{step} \| \f$ \n
+</li>
+<li> \outref{eps_vM}
+</li>
+<li> \outref{W}
+</li>
+<li> \outref{dotW}
+</li>
+<li> \outref{M-factor}
+</li>
+<li> \outdef{scal_s} The norm of a normalized deviatoric stress \n
+</li>
+<li> \outref{SonA}  
+</li>
+<li> \outref{residual}
+</li>
+<li> \outdef{SonA_xx} A component of the deviatoric stress tensor \f$ \mathbf{S} \f$ in the sample (`xyz`) reference frame \n
+</li>
+<li> \outdef{SonA_yy} Similar to \ref SonA_xx \n
+</li>
+<li> \outdef{SonA_zz} Similar to \ref SonA_xx \n
+</li>
+<li> \outdef{SonA_xy} Similar to \ref SonA_xx \n
+</li>
+<li> \outdef{SonA_yz} Similar to \ref SonA_xx \n
+</li>
+<li> \outdef{SonA_xz} Similar to \ref SonA_xx \n
+</li>
+<li> \outdef{A_11} A component of the strain mode tensor \f$ \mathbf{A} \f$ in the material (`123`) reference frame \n
+It is derived from the strain rate tensor \f$ \mathbf{D} \f$ as \f$ \mathbf{A}=\frac{\mathbf{D}}{\| \mathbf{D} \|} \f$
+</li>
+<li> \outdef{A_22} Similar to \ref A_11 \n
+</li>
+<li> \outdef{A_33} Similar to \ref A_11 \n
+</li>
+<li> \outdef{A_12} Similar to \ref A_11 \n
+</li>
+<li> \outdef{A_23} Similar to \ref A_11 \n
+</li>
+<li> \outdef{A_13} Similar to \ref A_11 \n
+</li>
+<li> \outdef{P_11} A component of the strain tensor of current step \f$ \Delta \boldsymbol{\epsilon}_{step} \f$ in the material (`123`) reference frame \n
+</li>
+<li> \outdef{P_22} Similar to \ref P_11 \n
+</li>
+<li> \outdef{P_33} Similar to \ref P_11 \n
+</li>
+<li> \outdef{P_12} Similar to \ref P_11 \n
+</li>
+<li> \outdef{P_23} Similar to \ref P_11 \n
+</li>
+<li> \outdef{P_13} Similar to \ref P_11 \n
+</li>
+<li> \outdef{Ptot_11} A component of the strain tensor \f$ \boldsymbol{\epsilon} \f$ in the material (`123`) reference frame  \n
+</li>
+<li> \outdef{Ptot_22} Similar to \ref Ptot_11 \n
+</li>
+<li> \outdef{Ptot_33} Similar to \ref Ptot_11 \n
+</li>
+<li> \outdef{Ptot_12} Similar to \ref Ptot_11 \n
+</li>
+<li> \outdef{Ptot_23} Similar to \ref Ptot_11 \n
+</li>
+<li> \outdef{Ptot_13} Similar to \ref Ptot_11 \n
 </li>
 </ol>
 
