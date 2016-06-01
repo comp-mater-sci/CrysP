@@ -79,7 +79,7 @@ implicit none
     type :: UDSAOutputRecord
         integer             :: increment
         double precision    :: vm_strain = 0.D0
-        double precision    :: P_abs_sum = 0.D0
+        double precision    :: norm_P_abs = 0.D0
         double precision    :: TNorm = 0.D0  ! Tensile strain
         double precision    :: TSigma = 0.D0 ! Tensile total stress
         double precision    :: TSNorm = 0.D0 ! Tensile deviatoric stress
@@ -296,7 +296,7 @@ contains
                 ! Write out the result
                 outrec = UDSAOutputRecord(increment = increment, &
                                           vm_strain = v%vm_strain, &
-                                          P_abs_sum = v%P_abs_sum, &
+                                          norm_P_abs = v%norm_P_abs, &
                                           TNorm = abs(P_t%t(1,1)), & ! Tensile strain
                                           TSigma = S_t%t(1,1) - S_t%t(3,3), & ! Tensile total stress
                                           TSNorm = abs(S_t%t(1,1)), & ! Tensile deviatoric stress

@@ -62,9 +62,9 @@ implicit none
         
         !> Sum of absolute plastic strain increments:
         !> \f[
-        !>    vP_{norms} = \sum \| vE_{inc} \|
+        !>    vP_{abs} = \sum | vP_{inc} |
         !> \f]
-        double precision,dimension(alamEval_vSD_dim)    :: vP_norms
+        double precision,dimension(alamEval_vSD_dim)    :: vP_abs
         
     end type
     
@@ -126,7 +126,7 @@ contains
         ! Total plastic strain:
         this%vP_total = this%vP_total + this%vP_inc
         ! Sum of absolute plastic strain increments:
-        this%vP_norms = this%vP_norms + abs(this%vP_inc)
+        this%vP_abs = this%vP_abs + abs(this%vP_inc)
         this%increment = this%increment  + 1
         info = criSuccess
     !

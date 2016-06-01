@@ -395,9 +395,9 @@ The output files make column-wise reporting of:
 	\f] 
 	</li>
 
-	<li> \outdef{Pnorm} The accumulated absolute strain increment tensors: 
+	<li> \outdef{Pnorm} The norm of accumulated absolute plastic strain increment tensors: 
 		\f[ 
-			P_{norm} = \sum_{i=1}^{increment} \| \Delta\boldsymbol{\epsilon} \| 
+			P_{norm} = \left\| \sum_{i=1}^{increment} |\Delta\boldsymbol{\epsilon}| \right\|
 		\f]
 	</li>
 

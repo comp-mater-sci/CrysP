@@ -216,7 +216,7 @@ contains
     !
         this%vm_strain = root23 * norm2(icv%vP_step)
         this%vm_strain_total = root23 * norm2(icv%vP_total)
-        this%P_abs_sum = sum(icv%vP_norms)
+        this%norm_P_abs = norm2(icv%vP_abs)
         !
         this%dotWonA = ylp%dotWonA
         this%scal_s = ylp%scal_s
