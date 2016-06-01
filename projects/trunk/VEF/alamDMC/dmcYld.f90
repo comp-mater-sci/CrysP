@@ -249,9 +249,9 @@ contains
                               write(display_unit,fmt=501) rad2deg(theta), scal_s, scal_s_rel, dotWonA
                               write(display_unit,fmt=510)
                         endif
-                        yldRes(i) = yldResult(theta, w, scal_s, scal_s_rel, norm_sona, dotWonA, &
+                        yldRes(i) = yldResult(rad2deg(theta), w, scal_s, scal_s_rel, norm_sona, dotWonA, &
                                               pair_double(scal_s_rel * cos(theta), scal_s_rel * sin(theta)),&
-                                              pair_double(0.D0,0.D0),beta, R)
+                                              pair_double(0.D0,0.D0), beta, R)
                         
                         i = i + 1
                   enddo
@@ -265,6 +265,7 @@ contains
                         ! write(display_unit,*) posA,i,posB
                         call getNormalVector2D(yldRes(posA)%scal_s_rel_cart, yldRes(posB)%scal_s_rel_cart, &
                                                1.D0, yldRes(i)%normal_cart, yldRes(i)%beta)
+                        yldRes(i)%beta = rad2deg(yldRes(i)%beta)
                   enddo
             enddo
             !
