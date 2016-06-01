@@ -389,7 +389,7 @@ Please see the configuration file `AKDQf_udsa.cfg` from `examples` directory:
 
 The module-specific outputfile has format `<output_prefix>.uds` or `<output_prefix>_<tag>.uds`.
 The latter format is used when several orientations are requested in the option \conffield{orientation_type}=`inplane`,
-whereby `<tag>` reflects a specific \conffield{inplane_orientation_range}.
+whereby `<tag>` reflects a specific value of \conffield{inplane_orientation_range}.
 The outputfiles make column-wise reporting of:
 
 \todo CHECK CORRESPONDENCE TO COLUMN HEADERS PRINTED TO FILE, AND RESOLVE.
@@ -403,13 +403,15 @@ It is derived from the strain tensor \f$ \boldsymbol{\epsilon} \f$ as:
 </li>
 <li> \outdef{Pnorm} The norm of strain tensor \f$ \| \boldsymbol{\epsilon} \| \f$
 </li>
-<li> \outdef{Tnorm} The normal strain component along the x-axis \f$\epsilon_{xx}\f$
+<li> \outdef{eps_xx} The normal strain component along the x-axis \f$\epsilon_{xx}\f$
 </li>
-<li> \outdef{sigma_xx} The normal stress component along the x-axis \f$\sigma_{xx}\f$ \n
+<li> \outdef{sigma_xx} The normal component along the x-axis of the total stress \f$\sigma_{xx}\f$ \n
 This component of the _total_ stress  \f$\boldsymbol{\sigma}\f$ is derived from the deviatoric stress tensor \f$\mathbf{S}\f$
 as \f$ \sigma_{xx}=S_{xx}+\sigma_h=S_{xx}-S_{zz} \f$,
 in which the hydrostatic stress \f$ \sigma_h \f$ 
 is derived from the assumption that the sample is stress-free along the z-axis: \f$ \sigma_{zz}=S_{zz}+\sigma_h=0 \f$.
+</li>
+<li> \outdef{S_xx} The normal component along the x-axis of the deviatoric stress \f$S_{xx}\f$ \n
 </li>
 <li> \outdef{W} The accumulated plastic work \f$ W \f$
 </li>
@@ -419,8 +421,6 @@ is derived from the assumption that the sample is stress-free along the z-axis: 
 It is obtained from volume-averaging the sum of microscopic slip rates \f$  \dot{\gamma} \f$, 
 as \f$ \overline{M}= \frac{\overline{\sum{ |{ \dot{\gamma} }| }}}{D_{vM}} \f$.
 The von Mises equivalent strain rate \f$ D_{vM}=\sqrt{2/3} \| \mathbf{D} \| \f$ is used as normalization factor.
-</li> 
-<li> \outdef{SonA} The norm of projected deviatoric stress
 </li> 
 <li> \outdef{q-value} The instantaneous q-value \f$ q_i \f$ \n
 It is defined as \f$ q_i = \frac{-D_{22}}{D_{11}} \f$ 
@@ -443,6 +443,8 @@ It relates to the r-value as \f$ q = \frac{r}{1+r} \f$.
 It is defined as \f$ r = \frac{\epsilon_{22}}{\epsilon_{33}} \f$ 
 where \f$\epsilon_{22}\f$ and \f$\epsilon_{33}\f$ are the strains in the width and thickness directions, respectively.
 It relates to the q-value as \f$ r = \frac{q}{1-q} \f$.
+</li> 
+<li> \outdef{S} The norm of the deviatoric stress tensor \f$ \| \mathbf{S} \| \f$ \n
 </li> 
 <li> \outdef{residual} The residual of \ref config_search_procedure "search procedure" \f$ Res \f$ \n
 As a rule-of-thumb, convergence is succesfull for \f$ Res<<10^{-2} \f$.
