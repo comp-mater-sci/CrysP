@@ -140,7 +140,8 @@ contains
 
     ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
     ! coordinate system
-    double precision,dimension(3,3)           :: Dmcoord, Dtcoord, Smcoord,Stcoord, SmIdent, Xmcoord_resume, Xtcoord_resume
+    double precision,dimension(3,3)           :: Dmcoord, SmIdent, Xmcoord_resume, Xtcoord_resume
+    type(SRTensor)                            :: D_t, S_t, sigma, sigma_t, SonA
     double precision,dimension(3,3)           :: Mrot = 0.0
     !
     double precision,dimension(5)             :: vA, vS,vSonA, vSonAn
@@ -149,18 +150,18 @@ contains
     double precision                          :: R
     integer     :: i,j, k, npoints
     logical     :: useVMGuess
-    double precision,dimension(:),allocatable       :: residuals,mfactors,phis
+    double precision,dimension(:),allocatable       :: residuals,mfactors,phis, sigmas_x
     type(qrsData),dimension(:),allocatable          :: qrsvalues
     !
     integer                 :: left, right, stride
     integer                 :: ioerr
     integer,parameter       :: cnfunit = 90, ofunit = 91
     !
-    integer,parameter :: ncolumn_labels = 7, column_width = 15
+    integer,parameter :: ncolumn_labels = 8, column_width = 15
     ! For file output
     character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = &
         [ character(len=column_width) ::  &
-        'angle','rho','q-value','r-value','s-value','M-factor','residual' ]
+        'angle','rho','q-value','r-value','s-value','sigma_xx','M-factor','residual' ]
       
     ! For display output:
     integer,parameter :: ncolumn_labels_display = 7, column_width_display = 14
@@ -189,13 +190,18 @@ contains
       
 
         ! Make space for the results      
-        allocate(qrsvalues(npoints), residuals(npoints),mfactors(npoints),phis(npoints))
+        allocate(qrsvalues(npoints), residuals(npoints), sigmas_x(npoints), mfactors(npoints), phis(npoints))
         residuals = 0.D0
         mfactors = 0.D0
       
         fi1 = 0.D0
         phi = 0.D0
-      
+        !
+        ! Set sigma_t in such way that deviatoric part is of unit length
+        sigma_t%t = 0.D0
+        sigma_t%t(1,1) = dsqrt(3.D0/2.D0)*1.D0/dsqrt(this%rho**2-this%rho+1)
+        sigma_t%t(2,2) = this%rho*sigma_t%t(1,1)
+        !
         ! use von Mises guess as a default
         useVMGuess = .true.
         i = 0
@@ -211,16 +217,12 @@ contains
             fi2 = deg2rad(fi2)
             ! Calculate rotation matrix
             Mrot = rotmat(fi1,phi,fi2)
-            ! Set Stcoord in such way that deviatoric part is of unit length
-            Stcoord = 0.D0
-            Stcoord(1,1) = dsqrt(3.D0/2.D0)*1.D0/dsqrt(this%rho**2-this%rho+1)
-            Stcoord(2,2) = this%rho*Stcoord(1,1)
 
             ! Rotate from "tensile" to material coordinate system
-            Smcoord = rotateSRTensorTo(Stcoord, Mrot)
+            sigma = rotateSRTensorTo(sigma_t, Mrot)
             
             !            
-            vS = tens2vec5D(Smcoord) 
+            vS = tens2vec5D(sigma%t) 
             if ((this%reuse_previous) .AND. (i > 1))  then
                 ! Reuse previously stored result in new coordinate system
                 ! Type of result (strain rate or stress) is decided in line mared with (***)
@@ -257,23 +259,25 @@ contains
             ! Convert AONSET vector to tensor form
             Dmcoord = vec5D2tens(vA)
 
+            SonA%t = vec5D2tens(vSonA)
             SmIdent = vec5D2tens(vSonAn)
             
             if (doLogging(criLogInfo,this%output%verbosity)) then
                 write(display_unit,400)
                 do j=1,3
-                    ! would be just:  write(display_unit,401) Smcoord(j,:),SmIdent(j,:),Dmcoord(j,:)
-                    write(display_unit,401) (Smcoord(j,k),k=1,3), (SmIdent(j,k),k=1,3), (Dmcoord(j,k), k=1,3)
+                    ! would be just:  write(display_unit,401) sigma(j,:),SmIdent(j,:),Dmcoord(j,:)
+                    write(display_unit,401) (sigma%t(j,k),k=1,3), (SmIdent(j,k),k=1,3), (Dmcoord(j,k), k=1,3)
                 enddo
             endif
             ! Rotate back to the "tensile test" coordinate system  
-            Dtcoord = rotateSRTensorFrom(Dmcoord, Mrot)
+            D_t%t = rotateSRTensorFrom(Dmcoord, Mrot)
+            S_t = rotateSRTensorFrom(SonA, Mrot)
             !
             !(***) Prepare next iteration if re-using is requested.
             if (this%reuse_previous) then
                 ! Re-used data are always in "tensile" coordinate system (initial coordinate system) 
                 if (this%reuse_strainrate) then
-                    Xtcoord_resume = Dtcoord
+                    Xtcoord_resume = D_t%t
                 else
                     ! Rotate stresses to "tensile" coordinate system 
                     Xtcoord_resume = rotateSRTensorFrom(SmIdent, Mrot)
@@ -281,7 +285,8 @@ contains
             endif
             !            
             ! Calculate output variables
-            qrsvalues(i) = calculateQRS(Dtcoord,scal_s)
+            qrsvalues(i) = calculateQRS(D_t%t,scal_s)
+            sigmas_x(i) = S_t%t(1,1) - S_t%t(3,3)
             !
             if (doLogging(criLogInfo,this%output%verbosity)) then
                 write(display_unit,fmt=601) !
@@ -316,6 +321,7 @@ contains
                 if (stride == 0) stride = 1
                 write(ofunit,fmt=710) phis(left), this%rho,                     &
                                       avgQRS(qrsvalues(left:right:stride)),     &
+                                      average(sigmas_x(left:right:stride) ),    &
                                       average(mfactors(left:right:stride) ),    &
                                       average(residuals(left:right:stride) )
                 left = left + 1
@@ -324,7 +330,7 @@ contains
         else
             ! Output complete set of points
             do i=1,npoints
-                write(ofunit,fmt=710) phis(i), this%rho, qrsvalues(i), mfactors(i),residuals(i)
+                write(ofunit,fmt=710) phis(i), this%rho, qrsvalues(i), sigmas_x(i) ,mfactors(i),residuals(i)
             enddo
         endif
         !
@@ -333,7 +339,7 @@ contains
         !
         info = 0
         !
-        400 format('| Smcoord',T40,'| SmIdent',T80,'|Dmcoord')
+        400 format('| sigma',T40,'| SmIdent',T80,'|Dmcoord')
         401 format(3(F10.6,1X),T40,3(F10.6,1X),T80,3(F10.6,1X))
         ! Format for header file
         500 format('#Material:',1X,A,/,'#Generated by QRSModule $Revision$')
@@ -344,9 +350,9 @@ contains
         610 format(1X, 7(F14.6,  1X))
           
         ! Formats for output file
-        700 format(1X, 7(A18,  1X))
-        701 format('#',7(A18,  1X))
-        710 format(1X, 7(E18.9,1X))
+        700 format(1X, 8(A18,  1X))
+        701 format('#',8(A18,  1X))
+        710 format(1X, 8(E18.9,1X))
 
 #define MSG_GROUP_RULERS     
 #define MSG_GROUP_ERRORS
