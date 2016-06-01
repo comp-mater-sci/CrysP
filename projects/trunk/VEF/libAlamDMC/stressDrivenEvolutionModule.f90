@@ -184,7 +184,7 @@ contains
                 X_tmp%t = vec5D2tens(icv%vP_step)
                 if (present(rotmat)) X_tmp = rotateSRTensorFrom(X_tmp ,rotmat)
                 X_tmp_voigt = Mat33ToVec6(X_tmp%t)
-                if (X_tmp_voigt(control%selected_tensor_component) > control%step_size) exit
+                if (abs(X_tmp_voigt(control%selected_tensor_component)) > control%step_size) exit
             !
             end select
             !
