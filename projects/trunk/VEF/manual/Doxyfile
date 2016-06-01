@@ -244,6 +244,7 @@ ALIASES                = "conffield{1}=<b><tt>\1</tt></b>" \
                          "opcite{1}=&nbsp;\cite \1" \
 						 "outfield{1}=<i>\1</i> :: " \
 						 "outdef{1}=\outfield{\1} \anchor \1 &nbsp;" \
+						 "outdef{2}=\outfield{\1} \anchor \2 &nbsp;" \
 						 "outref{1}=\outfield{\1} See \ref \1 \"here\""
 
 # This tag can be used to specify a number of word-keyword mappings (TCL only).
@@ -1301,7 +1302,7 @@ GENERATE_HTMLHELP      = YES
 # written to the html output directory.
 # This tag requires that the tag GENERATE_HTMLHELP is set to YES.
 
-CHM_FILE               = C:\Users\Jerzy\Documents\Work\TWRMTMProject\projects\trunk\VEF\manual\user-manual\chm\user_manual.chm
+CHM_FILE               = user-manual\chm\user_manual.chm
 
 # The HHC_LOCATION tag can be used to specify the location (absolute path
 # including file name) of the HTML help compiler (hhc.exe). If non-empty,
