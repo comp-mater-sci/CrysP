@@ -97,7 +97,7 @@ contains
             !
             ! Calculate the strain rate mode
             info = this%findSolution(sigma, D, ylp)
-            if (info /= criSuccess) then
+            if ((info /= criSuccess) .or. (ylp%R > this%ylp%obj_func_eps)) then
                 ! Re-attempt, try A from the previous increment as the starting point
                 !
                 ! Pick the most recent converged solution
