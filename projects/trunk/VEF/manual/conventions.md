@@ -17,14 +17,17 @@ commonly used in the field of mechanics. More specifically, the following conven
 are followed:
 
 - Tensors are denoted with capitalized boldface Latin letters, or with boldface Greek 
-  letters.  
+  letters.
+  
   Examples: \f$ \mathbf{S} \f$ is deviatoric stress, \f$ \mathbf{A} \f$ is deviatoric 
   strain rate mode,   \f$ \boldsymbol\sigma \f$ is the total stress and 
   \f$ \boldsymbol\epsilon \f$ the plastic strain.
-- Vectors are denoted with lowercase boldface Latin letters. Examples: \f$ \mathbf{n} \f$ 
-  is a plane normal vector.
+- Vectors are denoted with lowercase boldface Latin letters. 
+
+  Examples: \f$ \mathbf{n} \f$ is a plane normal vector.
 - Scalars, including tensor components and vector components, are denoted with lower- or 
   uppercase, Latin or Greek letters. They are never boldface.
+  
   Examples: \f$ W \f$ is plastic work, \f$ \sigma_h \f$ is the hydrostatic stress and 
   \f$ \sigma_{13} \f$ is a component of tensor \f$ \boldsymbol\sigma \f$.   
 
@@ -39,7 +42,7 @@ reported by the VEF are usually the __deviatoric stresses__.
 In the input and output files the typesetting decorations (boldface etc.) are obviously 
 dropped. Greek letters are replaced by their full names or abbreviations, of example: 
 `sigma`, `rho`, `eps`.
-One or more indices are preceded by underscore symbol (`_`), for example: `eps_11`.
+One or more indices are preceded by underscore symbol "`_`", for example: `eps_11`.
 
 
 Reference frames, and components of vectors and tensors expressed therein 
@@ -47,16 +50,15 @@ Reference frames, and components of vectors and tensors expressed therein
 
 The VEF uses two different reference frames in the physical, 3-dimensional space:
 
- - **The material reference frame**: the reference frame in which the material data 
+1. **The material reference frame**: the reference frame in which the material data 
    are given
 
    To denote the components of second-order tensors in the material reference frame, 
    numeral indices are used. 
    
-   For instance: \f$ \sigma_{11} \f$, \f$ D_{22} \f$,
-   \f$ S_{13} \f$.  
+   Examples: \f$ \sigma_{11} \f$, \f$ D_{22} \f$, \f$ S_{13} \f$.  
 
- - **The sample reference frame**: a local reference frame that is attached to 
+2. **The sample reference frame**: a local reference frame that is attached to 
    the virtual sample 
 
     Components of second-order tensors in the sample reference frame are indicated by  
@@ -65,21 +67,24 @@ The VEF uses two different reference frames in the physical, 3-dimensional space
     Examples: \f$ \sigma_x \f$ (or equivalent: \f$ \sigma_{xx} \f$), \f$ D_y \f$, 
     \f$ S_{xz} \f$
 
-Additionaly, the VEF exploits arbitrary 2-dimensional sections of stress space:
- - **The stress space section reference frame**: an arbitrary reference frame 
-defined within the 6-dimensional stress space
-    
-    The two axes defining the section are generally denoted by the (capitalized) 
-	letters X and Y.
-
-	Examples: \f$ \sigma_X \f$ and \f$ \sigma_Y \f$
 
 Notation for other quantities
 -----------------------------
 
 Apart from the notation related to the reference frames, the VEF also uses other indices. 
 These usually indicate:
-- a direction that characterizes a specific sample (e.g. \f$ S_0 \f$ for stress 
-in sample at 0 degrees), 
-- equivalent quantities (e.g. \f$ \epsilon_{vM} \f$ for Von Mises equivalent plastic 
-  strain).
+- arbitrary 2-dimensional sections of stress space or strain rate space
+
+  The **section reference frame** is defined by two arbitrary axes within the 
+  6-dimensional stress space. The two axes defining the section are generally denoted 
+  by the (capitalized) letters X and Y.
+
+  Examples: \f$ \sigma_X \f$ and \f$ \sigma_Y \f$
+
+- a direction that characterizes a specific sample 
+
+  Examples: \f$ S_0 \f$ for stress in sample at 0 degrees)
+  
+- equivalent quantities
+
+  Examples: \f$ \epsilon_{vM} \f$ for Von Mises equivalent plastic strain
