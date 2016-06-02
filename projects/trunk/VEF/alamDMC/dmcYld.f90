@@ -171,11 +171,13 @@ contains
       double precision                          :: R
       type(yldResult),dimension(:),allocatable  :: yldRes
       double precision,dimension(sr_symm_voigt_dim) :: sigma_vector
+      class(range_type),allocatable             :: theta_range
       !
       integer                 :: ioerr,i,npoints
       integer,parameter       :: cnfunit = 90, ofunit = 91
       !
       integer :: posA, posB
+      logical :: first_run
       double precision,parameter :: beta = 0.D0
       !
             info = criErr_BadArgs
@@ -219,11 +221,14 @@ contains
             !
             allocate(yldRes(npoints))
             !
+            first_run = .true.
             do while (this%ptr_w_range%next(w))
+                  ! Clone theta range
+                  allocate(theta_range, source=this%ptr_theta_range)
                   !
                   ! Loop over the range of theta angles
                   i = 1
-                  do while (this%ptr_theta_range%next(theta))
+                  do while (theta_range%next(theta))
                         
                         if (doLogging(criLogDebug,this%output%verbosity)) then
                               write(display_unit,800)
@@ -255,7 +260,8 @@ contains
                         
                         i = i + 1
                   enddo
-
+                  deallocate(theta_range)
+                  !
                   ! Post-process the results
                   npoints = size(yldRes)
                   do i = 1, npoints
@@ -267,12 +273,12 @@ contains
                                                1.D0, yldRes(i)%normal_cart, yldRes(i)%beta)
                         yldRes(i)%beta = rad2deg(yldRes(i)%beta)
                   enddo
+                  !
+                  call writeYldResults(ofunit,yldRes,info,write_header=first_run)
+                  first_run = .false.
             enddo
             !
-            call writeYldResults(ofunit,yldRes,info,write_header=.true.)
-            !            
             close(ofunit)
-      
             info = criSuccess
       !
       200 format(28('-'))
@@ -343,26 +349,25 @@ contains
       !
             info = criErr_IOWrite
             ! Write the header
-            if (present(write_header)) then
-                  if (write_header) then
-                        write(ounit,fmt=700,iostat=ierr) (centered(i,column_width),  i = 1, ncolumns)
-                        if (ierr /= 0) return
-                        write(ounit,fmt=701,iostat=ierr) (centered(column_labels(i)),i = 1, ncolumns)
-                  endif
+            if (optionalDefault(write_header,.false.)) then
+                  write(ounit,fmt=700,iostat=ierr) (centered(i,column_width),  i = 1, ncolumns)
+                  if (ierr /= 0) return
+                  write(ounit,fmt=701,iostat=ierr) (centered(column_labels(i)),i = 1, ncolumns)
+                  if (ierr /= 0) return
             endif
             !
-            if (ierr /= 0) return
             do i = 1, size(res)
-                 write(ounit,fmt=710) res(i) 
+                 write(ounit,fmt=710,iostat=ierr) res(i) 
                  if (ierr /= 0) exit
             enddo
+            write(ounit,fmt=720)
             if (ierr == 0) info = criSuccess
             !            
             ! Formats for output file
             700 format('#',12(A15,1X)) 
             701 format(1X, 12(A15,1X)) 
             710 format(1X, 12(E15.8,1X),4(F15.8,1X))
-
+            720 format(/) ! Double empty line
       !
       end subroutine
       
