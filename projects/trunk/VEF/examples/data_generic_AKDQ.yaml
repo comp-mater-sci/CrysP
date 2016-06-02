@@ -79,9 +79,7 @@ yld:
     normalize_stress: False
     offset_range:
         # Range that produces 0
-        type: discrete
-        params:
-            values: [0.]
+        type: zero
     use_scaling: True
     scaling_stress_mode: [1., 0., 0., 0., 0., 0.]
 #####################################################################

@@ -54,10 +54,41 @@ Any _configuration option_ may belong to one of the two groups:
  -# multi-line options: depending on the values of the fields in the first line, __zero or more__ subsequent lines may follow. As in the case of the single-line options, any line may contain one or more fields.
 
 \subsection range_option  Options for expressing range of values
-A special kind of option is used for defining ranges of values. The range option is always multi-line. The first line contains \confdef{range_type,string}, which determines the interpretation of the subsequent lines. Supported values of \conffield{range_type} are: `discrete`, `uniform`, `biased`, `doublebiased` and `multibiased`, each one invoking a variant of the range option:
+A special kind of option is used for defining ranges of values. The range option is in 
+most cases multi-line. The first line contains \confdef{range_type,string}, which 
+determines the interpretation of the subsequent lines. Supported values of 
+\conffield{range_type} are: `zero`, `one`, `single`, `discrete`, `uniform`, `biased`, 
+`doublebiased` and `multibiased`, each one invoking a variant of the range option:
 <ol>
+<li> **zero**: \anchor option_zero a range that consists of a single value equal to 0.0 (zero)
 
-<li>discrete: \anchor option_discrete an explicitly specified set of values.
+The only line of the option contains the keyword `zero`.
+\par Example:
+~~~~~~~~~~~~~{.cfg}
+zero            # Equivalent to: 0.0
+~~~~~~~~~~~~~
+</li>
+
+<li> **one**: \anchor option_one a range that consists of a single value equal to 1.0 (one)
+
+The only line of the option contains the keyword `one`.
+\par Example:
+~~~~~~~~~~~~~{.cfg}
+one             # Equivalent to: 1.0
+~~~~~~~~~~~~~
+</li>
+
+<li> **single**:  \anchor option_single a single value
+
+The first line of the option contains the keyword `single`. The next line must contain one single field \confdef{value,real}.
+\par Example:
+~~~~~~~~~~~~~{.cfg}
+single             # One data point
+90.0
+~~~~~~~~~~~~~
+</li>
+
+<li> **discrete**: \anchor option_discrete an explicitly specified set of values.
 
 The first line of the option contains the keyword `discrete`. The next line must contain one field \confdef{npoints,integer}. The subsequent line(s) must provide \conffield{npoints} real values.  
 \par Example:
@@ -70,7 +101,7 @@ discrete             # Discrete data points
 
 \attention Comment lines are <em>not allowed</em> if they break a single data line containing multiple values into two or more lines. In particular, they must not be used to break `realarray` compound data.
 </li>
-<li>uniform: \anchor option_uniform uniformly distributed points within a closed interval.
+<li> **uniform**: \anchor option_uniform uniformly distributed points within a closed interval.
 
 The first line of the option contains the keyword `uniform`. The next line must contain three fields: \confdef{range_begin,real}  \confdef{range_end,real}  \confdef{range_step,real}. Note that the endpoints of the interval do belong to the range. Also note that, unless the length of the interval is a multiple of \conffield{range_step}, the last step of the range is smaller than \conffield{range_step}. Please read <a href="#hint_even_range">the hint below </a> how to ensure even distribution of points inside the range.
 \par Example:
@@ -79,7 +110,7 @@ uniform          # uniformly distributed points
 0.0 180.0 40.0   # range [0,180], consisting of: 0.0 40.0 80.0 120.0 160.0 and 180.0
 ~~~~~~~~~~~~~
 </li>
-<li>biased: \anchor option_biased non-uniformly distributed points, with the density higher at one of the endpoints. 
+<li> **biased**: \anchor option_biased non-uniformly distributed points, with the density higher at one of the endpoints. 
 
 The first line contains the keyword `biased`. The second line contains three fields: \confdef{range_begin,real}  \confdef{range_end,real}  \confdef{ratio,real}. The third line must contain a single field:   \confdef{number_of_points,integer}.
 
@@ -95,7 +126,7 @@ biased         # unevenly distributed points, single bias
 5              # number_of_points=5
 ~~~~~~~~~~~~~
 </li>
-<li>double-biased: \anchor option_doublebiased non-uniformly distributed points, with the density either higher or lower at the endpoints. 
+<li> **double-biased**: \anchor option_doublebiased non-uniformly distributed points, with the density either higher or lower at the endpoints. 
 
 The double-biased range gives basically a sequence of points that would result from two biased ranges stitched together, with the stitching point located at the half point of the interval [\conffield{range_begin},\conffield{range_end}] and the \conffield{ratio} of the second range being the reciprocal of the \conffield{ratio} in the first range. As a consequence, the highest density of points is located around the centre of the interval if \conffield{ratio} &gt; 1.0. Conversely, if (0.0 &lt;  \conffield{ratio} &lt;  1.0) the most refined steps will be put next to the endpoints of the range. Note that the mid-point of the interval is always included in the sequence of points defined by the double-biased range.   
 
@@ -111,7 +142,7 @@ doublebiased     # unevenly distributed points, double-biased
 7                # number_of_points=7
 ~~~~~~~~~~~~~
 </li>
-<li>multi-biased: \anchor option_multibiased non-uniformly distributed points, with arbitrarily selected biased sub-ranges.
+<li> **multi-biased**: \anchor option_multibiased non-uniformly distributed points, with arbitrarily selected biased sub-ranges.
 
 The option requires the keyword `multibiased` in the first line. The second line consists of one field \confdef{range_begin,real}, and the third line contains one field \confdef{number_of_ranges,integer}. The value of the field \conffield{number_of_ranges} defines how many sub-ranges are created; it must be at least 1. For every subrange two lines are read: the first line contains two fields \confdef{subrange_endpoint,real} \confdef{subrange_ratio,real} and the second line contains \confdef{subrange_number_of_points,integer}. The endpoint of every subrange becomes the start point of the next subrange, except for the last one which terminates the range. The rules for the \conffield{subrange_ratio} and \conffield{subrange_number_of_points} are identical to those for \conffield{ratio} and \conffield{number_of_points} in the <a href="#option_biased">biased range</a>, respectively.
 \par Example:

@@ -7,8 +7,13 @@
 #end block moduleConfig
 #end block main
 #def range(r, comment='')
-#set $comment_ext = ': ' + $comment if $comment else '' 
-#set $rpar=$r.params
+#set $comment_ext = ': ' + $comment if $comment else ''
+## There are ranges that not define r.params
+#try 
+	#set $rpar=$r.params
+#except
+	#pass
+#end try
 $r.type # Range type specification${comment_ext, bypass=True}
 #if $r.type == 'uniform'
 ${rpar.begin, width=6} ${rpar.end, width=6} ${rpar.step, width=6} # Range specification for 'uniform':  begin end step
@@ -24,6 +29,8 @@ $sr.npoints # subrange ${i, bypass=True}: number of points
 #elif $r.type == 'discrete'
 $len($rpar.values) # number of points in the range
 ${rpar.values, plain=True}
+#elif $r.type == 'single'
+$rpar.values[0] # One single value
 #end if
 #slurp
 #end def

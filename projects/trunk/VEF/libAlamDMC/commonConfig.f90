@@ -66,12 +66,32 @@ contains
       equivalence (rbegin,triplet(1)), (rend,triplet(2)), &
                   (rstep,triplet(3)), (ratio,triplet(3)) 
       !
+      integer,parameter :: range_single_id = 200
+      type(MapItem),dimension(1),parameter :: special_range_names_map =  [ MapItem('single', range_single_id) ]
+      integer,parameter :: all_maps_len = size(range_name_map) + &
+                                          size(range_name_extensions_map) + &
+                                          size(special_range_names_map)
+      type(MapItem),dimension(all_maps_len),parameter :: all_range_names_map = [ &
+                                                    (range_name_map(i),i=1,size(range_name_map)), &
+                                                    (range_name_extensions_map(i),i=1,size(range_name_extensions_map)), &
+                                                    (special_range_names_map(i),i=1,size(special_range_names_map))]
+      !
             info = criErr_IORead
             nullify(inst)
             id = -1
             ! Read the keyword
-            if (.not. readKeyword(cnfunit, range_name_map, id)) return
+            if (.not. readKeyword(cnfunit, all_range_names_map, id)) return
             select case(id)
+            case(range_zero_id, range_one_id)
+                  ! Nothing to read
+                  rbegin = merge(0.D0, 1.D0, id == range_zero_id)
+                  allocate(inst, source=discreteRange([rbegin]))
+            !
+            case(range_single_id)
+                  ! Read: one single value.
+                  if (.not. readValue(cnfunit, rbegin)) return
+                  allocate(inst, source=discreteRange([rbegin]))
+            !
             case(range_uniform_id)
                   ! Read: begin end step
                   if (.not. readValue(cnfunit, triplet)) return
