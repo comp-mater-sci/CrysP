@@ -248,25 +248,25 @@ Although the configuration options of the multi-scale model are pretty much fine
 		<ul>
 			<li> 0 (zero) for non-hardening slip systems. This option is equivalent to the default hardening description.
 			</li>
-			<li> 1 (one) for Voce-type of isotropic hardening. If this hardening law is chosen, the next line must contain five real values, being parameters of Voce hardening law: \f$ \tau^{III}_1 \f$, \f$ \tau^{III}_S \f$, \f$ \tau^{IV}_S \f$, \f$ \theta^{III}_1 \f$, \f$ \theta_T \f$.
+			<li> 1 (one) for Voce-type of isotropic hardening. If this hardening law is chosen, the next line must contain five real values, being parameters of Voce hardening law: \f$ \tau_0 \f$, \f$ \tau^{III}_{sat} \f$, \f$ \tau^{IV}_{sat} \f$, \f$ \theta_0 \f$, \f$ \theta_T \f$.
 			The classical Voce hardening law assumes that the hardening rate \f$ \theta=\frac{d\tau}{d\gamma} \f$ decreases linearly as a function of \f$ \tau \f$.
 			Current implementation is more generic: besides such *one-stage* hardening behavior, also *two-stage* hardening behaviour is supported.
 			The two subsequent hardening stages are denoted stages `III` and `IV`, respectively.
 			In \f$ \tau-\theta\f$-diagram, the two-stage behavior shows 2 linear parts, connected to each other at a so-called transition point. 
 			 The meaning of the Voce input parameters is as follows:
-			- \f$ \tau^{III}_1 \f$ is the initial flow stress (i.e. of the stage `III`), 
-			- \f$ \tau^{III}_S \f$ is the saturation flow stress associated to stage `III`, 
-			- \f$ \tau^{IV}_S \f$ is the saturation flow stress associated to stage `IV`, 
-			- \f$ \theta^{III}_1 \f$ is the initial hardening rate (i.e. of the stage `III`),
+			- \f$ \tau_0 \f$ is the initial flow stress (i.e. of the stage `III`), 
+			- \f$ \tau^{III}_{sat} \f$ is the saturation flow stress associated to stage `III`, 
+			- \f$ \tau^{IV}_{sat} \f$ is the saturation flow stress associated to stage `IV`, 
+			- \f$ \theta_0 \f$ is the initial hardening rate (i.e. of the stage `III`),
 			- \f$ \theta_T \f$ is the hardening rate of the transition point between stages `III` and `IV`.
 
-			The input parameters are subject to the constraints \f$ 0 < \tau^{III}_1 < \tau^{III}_S \leq \tau^{IV}_S \f$ and \f$ 0 < \theta_T < \theta^{III}_1 \f$.
-			The one-stage Voce variant is retrieved by imposing \f$ \tau^{III}_S = \tau^{IV}_S \f$ and setting \f$ \theta_T \f$ to an arbitrary value within constraint boundaries.
+			The input parameters are subject to the constraints \f$ 0 < \tau_0 < \tau^{III}_{sat} \leq \tau^{IV}_{sat} \f$ and \f$ 0 < \theta_T < \theta_0 \f$.
+			The one-stage Voce variant is retrieved by imposing \f$ \tau^{III}_{sat} = \tau^{IV}_{sat} \f$ and setting \f$ \theta_T \f$ to an arbitrary value within constraint boundaries.
 
 			The two-stage Voce hardening law is given by:
 			\f[ \begin{split}
-				& \tau = \tau^{III}_S - (\tau^{III}_S-\tau^{III}_1) \exp{\left( \frac{-\theta^{III}_1}{\tau^{III}_S-\tau^{III}_1}\gamma \right)} \quad \textrm{for} \quad \gamma\leq\gamma_T \\
-				& \tau = \tau^{IV}_S - (\tau^{IV}_S-\tau_T) \exp{\left( \frac{-\theta_T}{\tau^{IV}_S-\tau_T}(\gamma-\gamma_T) \right)} \quad \textrm{for} \quad \gamma\geq\gamma_T
+				& \tau = \tau^{III}_{sat} - (\tau^{III}_{sat}-\tau_0) \exp{\left( \frac{-\theta_0}{\tau^{III}_{sat}-\tau_0}\gamma \right)} \quad \textrm{for} \quad \gamma\leq\gamma_T \\
+				& \tau = \tau^{IV}_{sat} - (\tau^{IV}_{sat}-\tau_T) \exp{\left( \frac{-\theta_T}{\tau^{IV}_{sat}-\tau_T}(\gamma-\gamma_T) \right)} \quad \textrm{for} \quad \gamma\geq\gamma_T
 			\end{split} \f]	
 			\n
 			Here, \f$ \gamma_T \f$ and \f$ \tau_T \f$ are two dependent Voce parameters that denote the accumulated slip and the flow stress at the transition point, respectively.
