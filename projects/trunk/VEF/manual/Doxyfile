@@ -238,9 +238,11 @@ TAB_SIZE               = 4
 # "Side Effects:". You can put \n's in the value part of an alias to insert
 # newlines.
 
-ALIASES                = "conffield{1}=<b><tt>\1</tt></b>" \
-                         "confdef{2}=\conffield{\1} (\2) \anchor \1 &nbsp;" \
-                         "mconfdef{2}=\conffield{*\1} (\2)" \
+ALIASES                = "conffield_typeset{1}=<b><tt>\1</tt></b>" \
+                         "conffield{1}=\conffield_typeset{\ref \1 \"\1\"}" \
+                         "conffield{2}=\conffield_typeset{\ref \2 \"\1\"}" \
+                         "confdef{2}=\conffield_typeset{\1} (\2) \anchor \1 &nbsp;" \
+                         "confdef{3}=\conffield_typeset{\1} (\2) \anchor \3 &nbsp;" \
                          "opcite{1}=&nbsp;\cite \1" \
 						 "outfield{1}=<i>\1</i> :: " \
 						 "outdef{1}=\outfield{\1} \anchor \1 &nbsp;" \
