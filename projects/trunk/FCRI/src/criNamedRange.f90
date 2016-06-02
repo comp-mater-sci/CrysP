@@ -42,7 +42,7 @@ implicit none
                             range_discrete_id = 5
       
       
-      type(MapItem),dimension(range_ntypes) :: range_name_map = [ &
+      type(MapItem),dimension(range_ntypes),parameter :: range_name_map = [ &
                               MapItem('uniform',range_uniform_id), &
                               MapItem('biased', range_biased_id), & 
                               MapItem('doublebiased',range_doublebiased_id), &
@@ -63,7 +63,7 @@ implicit none
       !>@}
       
       !> Map of extended range names
-      type(MapItem),dimension(range_nextensions) :: range_name_extensions_map = [ &
+      type(MapItem),dimension(range_nextensions),parameter :: range_name_extensions_map = [ &
                               MapItem('zero',range_zero_id), &
                               MapItem('one', range_one_id)]
 
