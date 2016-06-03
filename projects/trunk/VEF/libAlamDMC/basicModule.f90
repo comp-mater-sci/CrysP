@@ -416,8 +416,10 @@ contains
                               info = criSuccess
                         endif
                   !
+#ifdef PEBP_ENABLED
                   case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                         call readPEPBhardening(cnfunit,hardening%HardLawID,hardening%PEBPCnf,info)
+#endif
                   case default
                         info = criError
                         return
