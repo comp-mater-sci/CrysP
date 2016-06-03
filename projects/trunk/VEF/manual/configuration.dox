@@ -323,6 +323,7 @@ Although the configuration options of the multi-scale model are pretty much fine
 <li> \confdef{slip_system_family,string} defines the slip system families associated to a particular crystal structure. Supported values are: 
 	<ul>
 		<li>`fcc12`: the 12 slip systems of {111}&lt;110&gt; family.</li>
+		<li>`bcc12`: the 12 slip systems of {110}&lt;111&gt; family.</li>
 		<li>`bcc24`: the 12 slip systems of {110}&lt;111&gt; family, plus the 12 slip systems of {112}&lt;111&gt; family.</li> 
 		<li>`bcc48`: the 12 slip systems of {110}&lt;111&gt; family, plus the 12 slip systems of {112}&lt;111&gt; family, plus the 24 slip systems of {123}&lt;111&gt; family.</li>
 	</ul>
@@ -340,6 +341,7 @@ Although the configuration options of the multi-scale model are pretty much fine
 		<ul>
 			<li> 0 (zero) for non-hardening slip systems. This option is equivalent to the default hardening description.
 			</li>
+			
 			<li> 1 (one) for Voce-type of isotropic hardening. If this hardening law is chosen, the next line must contain five real values, being parameters of Voce hardening law: \f$ \tau_0 \f$, \f$ \tau^{III}_{sat} \f$, \f$ \tau^{IV}_{sat} \f$, \f$ \theta_0 \f$, \f$ \theta_T \f$.
 			The classical Voce hardening law assumes that the hardening rate \f$ \theta=\frac{d\tau}{d\gamma} \f$ decreases linearly as a function of \f$ \tau \f$.
 			Current implementation is more generic: besides such *one-stage* hardening behavior, also *two-stage* hardening behaviour is supported.
@@ -363,21 +365,37 @@ Although the configuration options of the multi-scale model are pretty much fine
 			\n
 			Here, \f$ \gamma_T \f$ and \f$ \tau_T \f$ are two dependent Voce parameters that denote the accumulated slip and the flow stress at the transition point, respectively.
 			</li>
+			
 			<li>2 (two) for Swift hardening law (variant SwiftK). If SwiftK is chosen, the next line must contain three real values: \f$ K \f$, \f$ \gamma_0 \f$ and \f$ n \f$, which are the parameters of Swift hardening law given by the formula:
 			\f[
 				\tau = K \left(\gamma - \gamma_0 \right)^n
 			\f]
+			Only positive values of parameters are acceptable (constraints: \f$ 0 < K \f$, \f$ 0 < \gamma_0 \f$ and \f$ 0 < n \f$).
 			</li>
+			
 			<li>3 (three) for Swift hardening law (variant SwiftS). If SwiftS is chosen, the next line must contain three real values: \f$ \tau_0 \f$, \f$ \gamma_0 \f$ and \f$ n \f$, which are the parameters of Swift hardening law expressed by the formula:
 			\f[
 				\tau = \tau_0 \left(\frac{\gamma}{\gamma_0} - 1 \right)^n
 			\f]
+			Only positive values of parameters are acceptable (constraints: \f$ 0 < \tau_0 \f$, \f$ 0 < \gamma_0 \f$ and \f$ 0 < n \f$).
 			</li>
-			<li> 11 (eleven) for Peeters' model of anisotropic hardening. If the Peeters model is selected, two subsequent lines are to be provided:
+			
+			<li> 11 (eleven) for Dislocation Substructural Hardening (DSH) model (variant described in _Peeters et al. ActaMat 49: 1607-19_).
+			Slip systems that are supported in conjunction with DSH hardening, are:
+			\conffield{slip_system_family} = `bcc24`.
+			If the DSH model is selected, two subsequent lines are to be provided:
 				<ul>
-					<li> \confdef{hardening_parameter_file,path} refers to the file that contains parameters of the Peeters' model. See reference manual of the KOST11 module to check the order of parameters in the file.
+					<li> \confdef{hardening_parameter_file,path} refers to the file that contains parameters of the DSH model.
+					Please see the example parameter file `DSHparaset.txt` from `examples` directory for the ordering, units and meaning of the parameters:
+					\includelineno DSHparaset.txt
 					</li>
-					<li> \confdef{hardening_state_block,integer}   \confdef{hardening_state_file,path}  configures initialization of the material state variables of the Peeters hardening model. The field \conffield{hardening_state_block} refers to an index of material state block inside the \conffield{hardening_state_file} file. The index runs from 0, which denotes the first block in the file. If \conffield{hardening_state_block} is negative, the contents of the \conffield{hardening_state_file} file will be ignored and the material state is initialized in the annealed condition.
+					<li> \confdef{hardening_state_block,integer}   \confdef{hardening_state_file,path}  configures initialization of the material state variables 
+					associated to disclocation substructure.
+					If \conffield{hardening_state_block} has a negative value, the  state is initialized in the annealed condition
+					(and the contents of the \conffield{hardening_state_file} file will be ignored).
+					For simulation on predeformed material, \conffield{hardening_state_block} has a non-negative value:
+					it refers to an index of material state block inside the \conffield{hardening_state_file} file.
+					The index runs from 0, which denotes the first block in the file. 
 					</li>
 				</ul>
 			</li>
