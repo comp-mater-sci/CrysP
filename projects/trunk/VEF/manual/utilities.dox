@@ -1,27 +1,33 @@
 /*!
 \page page_utilities Utilities and auxiliary tools
 
+MTMFHMport user manual
+
+
 [TOC]
 
 odfplot      {#odfplot}
 =======
 
+Script to plot sections of of either a continuous texture, described by C-coefficients or discrete ODF on a regular grid.
+
 \verbatim
-usage: odfplot [-h] --input INPUT [--output OUTPUT]
+usage: odfplot [-h] --input INPUT [INPUT ...] [--output OUTPUT [OUTPUT ...]]
                [--format {pdf,png,svg,ps,eps} [{pdf,png,svg,ps,eps} ...]]
                [--bw]
                [--levelset {auto,autolocal,mtm6.4,mtm44,mtm12,mtm16,mtm32,mtm22} | --levels LEVELSET [LEVELSET ...]]
+               [--odfmin ODFMIN] [--odfmax ODFMAX] [--nlevels NLEVELS]
                [--no-labels] [--sections SECTIONS]
-               [--style {contour,filled,MTMcontour}] [--no-colorbar]
+               [--style {contour,filled,MTMcontour}] [--no-colorbar] [--title]
 
 Print ODF sections
 
 optional arguments:
   -h, --help            show this help message and exit
-  --input INPUT, -i INPUT
+  --input INPUT [INPUT ...], -i INPUT [INPUT ...]
                         ODF file, which is one of: C-coefficient file, aodf
                         file or mtex file.
-  --output OUTPUT, -o OUTPUT
+  --output OUTPUT [OUTPUT ...], -o OUTPUT [OUTPUT ...]
                         output graphic file
   --format {pdf,png,svg,ps,eps} [{pdf,png,svg,ps,eps} ...]
                         format of the output file
@@ -35,14 +41,19 @@ optional arguments:
   --style {contour,filled,MTMcontour}
                         Style of ODF plot: contour or filled
   --no-colorbar         Switch off the colorbar in filled plots
+  --title               Switch on title on the plot
+
 \endverbatim
 
 
 odf2smt    {#odf2smt}
 =======
 
+Script to construct a set of discrete grain orientations from either a continuous ODF given by C-coefficients, 
+or discrete ODF on a regular grid.
+
 \verbatim
-usage: odf2smt.py [-h] --input INPUT [--output OUTPUT] [--ncrystals NCRYSTALS]
+usage: odf2smt [-h] --input INPUT [--output OUTPUT] [--ncrystals NCRYSTALS]
 
 Calculate dicrete representative crystal orientations from ODF file
 
@@ -56,16 +67,20 @@ optional arguments:
                         with extension .smt will be used.
   --ncrystals NCRYSTALS
                         Number of crystals in the SMT file
+
 \endverbatim
 
 
 cur2c     {#cur2c}
 =====
 
-\verbatim
-usage: cur2c.pyo [-h] --input INPUT [--block BLOCK] --output OUTPUT
+Script to construct a continuous texture, described by C-coefficients, from a deformation textures 
+predicted by the VEF and stored as a set of discrete orientations (CUR format).
 
-'Calculate continuous C-coefficient file from discrete CUR data
+\verbatim
+usage: cur2c [-h] --input INPUT [--block BLOCK] --output OUTPUT
+
+Calculate continuous C-coefficient ODF from discrete CUR data
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -76,5 +91,6 @@ optional arguments:
                         processed.
   --output OUTPUT, -o OUTPUT
                         output C-coefficient file
+
 \endverbatim
 */
