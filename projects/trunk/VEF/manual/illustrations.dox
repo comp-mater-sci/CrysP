@@ -11,6 +11,8 @@
 \image html sid1687f_rvalues.png "Lankford coefficients calculated by the VEF (DX51D steel)"
 \image latex sid1687f_rvalues.png "Lankford coefficients calculated by the VEF (DX51D steel)"
 
+\image html sid1687f_tensile_stress.png "Tensile stress calculated by QRS (DX51D steel)"
+
 \image html yld_beta_illustration.png "Illustration of the angles theta and beta in yield locus sections"
 \image latex yld_beta_illustration.png "Illustration of the angles theta and beta in yield locus sections"
 

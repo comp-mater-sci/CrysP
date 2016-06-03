@@ -5,7 +5,7 @@ Author: Jerzy Gawad, Dept. Computer Science, KU Leuven
 Copyright KU Leuven (2016). All rights reserved.
 */
 
-/*!
+/*
 \htmlonly
 <script type="text/javascript" src='http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js'></script>
 <script type="text/javascript" src='jquery.zoom.min.js'></script>
@@ -15,7 +15,9 @@ Copyright KU Leuven (2016). All rights reserved.
 	});
 </script>
 \endhtmlonly
+*/
 
+/*!
 \page guided_tour Guided tour  
 
 [TOC]
@@ -70,7 +72,7 @@ odfplot --input sid1687f.odf --sections 0,45 --style=filled --no-labels
 
 This will produce two PNG files: `sid1687f_0.png` and `sid1687f_45.png`:
 
-<div>
+<div class="figure">
 	<img class="fullsize" src="sid1687f_0.png" alt="ODF section phi_2 = 0">
 	<div class="figcaption">ODF section \f$ \phi_2 = 0^\circ \f$</div>
 <br>
@@ -128,7 +130,7 @@ alamDMC QRS sid1687f_qrs.cfg
 
 The program will place its output in the file `sid1687f_qrs.xqrs`. Let's have a look at 
 the leading 5 lines of that file:
-\dontinclude sid1687f_qrs.xqrs
+\dontinclude expert/sid1687f_qrs.xqrs
 \until 0.100000000E+02
 
 The initial two lines constitute a header. The first line that starts with '#' character contains column numbers. Because of the leading '#', the line is typically neglected by upstream analysis software (e.g. plotting program). The second line contains the column names.
@@ -138,7 +140,7 @@ Let's plot the Lankford coefficients (column `r-value` as the function of loadin
 
 <div class="figure">
 	<img class="fullsize" src="sid1687f_rvalues.png" alt="Lankford coefficients at different loading directions">
-<div class="figcaption">Lankford coefficients in different directions of uniaxial loading</div>
+	<div class="figcaption">Lankford coefficients in different directions of uniaxial loading</div>
 </div>
 
 By convention the r-values and the yield stress are determined at 20% elongation, whereas the VEF QRS calculates the r-values of the undeformed material, which in our case has 0% elongation. We will come back to this point in [a further part of this guided tour](#gt_udsa).
@@ -177,9 +179,9 @@ The last line requests to use the defaults, which are:
 alamDMC YLD sid1687f_yld.cfg
 </pre>
 
-We may now quickly inspect the content of the output file `sid1687f_yld.xyld` (this file contains 12 columns, so depending on the size of your screen some lines may fold). The top five lines would look like:
-\dontinclude sid1687f_yld.xyld
-\until 0.85068113E+00
+We may now quickly inspect the content of the output file `sid1687f_yld.xyld` (the file contains 12 columns, so depending on the size of your screen some lines may fold). The top five lines will look similar to this:
+\dontinclude expert/sid1687f_yld.xyld
+\until   0.50769661E+02
 
 The column `theta` contains the angles that were used for computing the yield locus section. The columns `sigma` and `sigma/sigma_0` include the points on the section, both in polar coordinate system of the angle `theta`. However, we are going to use use the columns `sigma_x` and `sigma_y` that contain the yield locus contour in Cartesian coordinate system.
 
@@ -242,10 +244,12 @@ The output file contains a number of columns, among them we see `r-value` and `r
 <img class="fullsize" src="sid1687f_udsa_0_000_rvalues.png" alt="evolution of the r-values in tensile test (DX51D steel)">
 <img class="fullsize" src="sid1687f_udsa_45_000_rvalues.png" alt="evolution of the r-values in tensile test (DX51D steel)">
 <img class="fullsize" src="sid1687f_udsa_90_000_rvalues.png" alt="evolution of the r-values in tensile test (DX51D steel)">
-<div class="figcaption"> "Evolution of the r-values in in UDSA uniaxial tensile tests (DX51D steel)</div>
+<div class="figcaption">Evolution of the r-values in in UDSA uniaxial tensile tests (DX51D steel)</div>
 </div>
 
-It seems that the r-values in the TD directions follow a different evolution path than in the other two directions. That also means that \f$ \Delta r \f$ increases with deformation.
+First of all, the instantaneous r-values evolve much faster. They also show more irregularities, since they are calculated based on instantaneous plastic strain rate. The accumulated r-value, which is derived from plastic strain (the integrated strain rate), evolve far slower.
+
+It appears that the r-values in the TD directions follow a different evolution path than in the other two directions. That also means that \f$ \Delta r \f$ increases with deformation.
 
 The tensile stresses are reported in the column `sigma_xx` as well:
 <div class="figure">
