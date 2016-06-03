@@ -563,7 +563,7 @@ The output files make column-wise reporting of:
 		\f]
 	</li>
 
-	<li> \outdef{||eps_xx||, norm_eps_xx} The magnitude of normal strain component along 
+	<li> \outdef{eps_xx, norm_eps_xx} The magnitude of normal strain component along 
 	the x-axis: \f$ \| \epsilon_{xx} \|\f$
 	</li>
 
@@ -579,14 +579,14 @@ The output files make column-wise reporting of:
 	the sample is stress-free along the z-axis: \f$ \sigma_{zz}=S_{zz}+\sigma_h=0 \f$.
 	</li>
 
-	<li>\outdef{||S(A)_xx||, norm_SonA_xx} Magnitude of deviatoric stress component along 
+	<li>\outdef{S_xx, norm_SonA_xx} Magnitude of deviatoric stress component along 
 	the x-axis (see above)
 	</li>
 
 	<li> \outdef{W} The accumulated plastic work \f$ W \f$
 	</li>
 
-	<li> \outdef{dotW(A), dotW} The rate of plastic work \f$ \dot{W} \f$
+	<li> \outdef{dotW} The rate of plastic work \f$ \dot{W} \f$
 	</li>
 
 	<li> \outdef{M-factor} The volume-average Taylor factor \f$ \overline{M} \f$
@@ -647,8 +647,8 @@ The output files make column-wise reporting of:
 	\f$ r = \frac{q}{1-q} \f$.
 	</li>
 
-	<li> \outdef{||S(A)||, norm_SonA} The norm of the deviatoric stress tensor: 
-	\f$ \| \mathbf{S}(A) \| \f$
+	<li> \outdef{S, norm_SonA} The norm of the deviatoric stress tensor: 
+	\f$ \| \mathbf{S}(\mathbf{A}) \| \f$
 	</li> 
 
 	<li> \outdef{residual} The residual of \ref config_search_procedure "search procedure"
@@ -955,25 +955,25 @@ The module-specific outputfile `<output_prefix>.xyld` makes column-wise reportin
 	<li> \outref{dotW}
 	</li>
 	
-	<li> \outdef{sigma_x} The 1st cartesian coordinate of the normalized yield locus point 
+	<li> \outdef{sigma_x} The 1st Cartesian coordinate of the normalized yield locus point 
 	\f$ \sigma_X \f$ 
 	</li>
 	
-	<li> \outdef{sigma_y} The 2nd cartesian coordinate of the normalized yield locus point 
+	<li> \outdef{sigma_y} The 2nd Cartesian coordinate of the normalized yield locus point 
 	\f$ \sigma_Y \f$ 
 	</li>
 	
-	<li> \outdef{dsigma_x} The 1st cartesian coordinate of the local yield locus normal 
+	<li> \outdef{dsigma_x} The 1st Cartesian coordinate of the local yield locus normal 
 	\f$ A_X \f$ 
 	</li>
 	
-	<li> \outdef{dsigma_y} The 2nd cartesian coordinate of the local yield locus normal 
+	<li> \outdef{dsigma_y} The 2nd Cartesian coordinate of the local yield locus normal 
 	\f$ A_Y \f$ 
 	</li>
 	
 	<li> \outdef{beta} The angle \f$ \beta \f$ from X-axis to the projection of tensor 
 	\f$ \mathbf{A} \f$ into section, expressed in degrees.   
-	It is given as \f$ \beta=arctan(\frac{A_Y}{A_X}) \f$.
+	It is given as \f$ \beta= \arctanarctan(\frac{A_Y}{A_X}) \f$.
 	</li>
 	
 	<li> \outref{residual}

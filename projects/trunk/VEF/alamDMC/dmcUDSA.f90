@@ -359,10 +359,10 @@ contains
     !      
     integer,parameter :: ncolumn_labels = 16, column_width = 15, short_column_width = 9
     character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = [character(len=column_width) :: &
-        'increment','eps_vM','Pnorm','||eps_xx||', 'sigma_xx', '||S(A)_xx||','W','dotW(A)',&
+        'increment','eps_vM','Pnorm','eps_xx', 'sigma_xx', 'S_xx','W','dotW',&
         'M-factor', &
         'q-value','r-value','s-value', &    ! qrsdata
-        'q-valueA', 'r-valueA','||S(A)||',& ! qrsdata
+        'q-valueA', 'r-valueA','S',& ! qrsdata
         'residual']
     !
         info = criErr_IOWrite
