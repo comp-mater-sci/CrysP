@@ -1,6 +1,9 @@
 Common conventions used in the VEF     {#page_conventions}
 ==================================
 
+Common conventions used in the VEF     {#conventions}
+==================================
+
 This section describes the notation convention commonly used throughout the VEF software. 
 This includes:
 - naming convention for variables and computed quantities,
@@ -9,7 +12,7 @@ This includes:
 - order of terms in compound entities such as tensors, vectors etc.
 
 
-Naming convention for variables
+Naming convention for variables {#convention_naming}
 -------------------------------
 
 The manual generally adheres to the scientific notation of variables that is
@@ -45,7 +48,7 @@ dropped. Greek letters are replaced by their full names or abbreviations, of exa
 One or more indices are preceded by underscore symbol "`_`", for example: `eps_11`.
 
 
-Reference frames, and components of vectors and tensors expressed therein 
+Reference frames, and components of vectors and tensors expressed therein   {#convention_reference_frame}
 -------------------------------------------------------------------------
 
 The VEF uses two different reference frames in the physical, 3-dimensional space:
