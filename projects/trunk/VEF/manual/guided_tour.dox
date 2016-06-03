@@ -6,6 +6,16 @@ Copyright KU Leuven (2016). All rights reserved.
 */
 
 /*!
+\htmlonly
+<script type="text/javascript" src='http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js'></script>
+<script type="text/javascript" src='jquery.zoom.min.js'></script>
+<script>
+	$(document).ready(function(){
+		$('.zoom').zoom( {on:'grab', magnify: 0.4});
+	});
+</script>
+\endhtmlonly
+
 \page guided_tour Guided tour  
 
 [TOC]
@@ -51,20 +61,20 @@ Please see
 <a href=https://mtex-toolbox.github.io/files/doc/ODFImportExport.html#7>MTEX documentation</a> 
 how to export ODF data to generic ASCII files. 
 
-Let us use the texture data for a ferritic steel (it's DX51D, for your curiosity), given in the file `sid1687f.odf`. 
+Let us use the texture data for a ferritic steel (it's DX51D, for your curiosity), given in the file `sid1687f.odf`. It so happens the texture is expressed in the [material reference frame](@ref convention_reference_frame) where the RD, TD and ND are the first, second and third axis, respectively. By the way, this reference frame adheres to a pretty common convention used in measuring texture of rolled alloys.
 If you wish, you can first inspect the texture by plotting a set of ODF sections.
 To do so, run the command [`odfplot`](@ref odfplot):
 <pre class="consoleView">
-odfplot --input sid1687f.odf --sections 0,45 --style=filled --no-labels --format=png
+odfplot --input sid1687f.odf --sections 0,45 --style=filled --no-labels
 </pre>
 
 This will produce two PNG files: `sid1687f_0.png` and `sid1687f_45.png`:
 
 <div>
-<img class="fullsize" src="sid1687f_0.png" alt="ODF section phi_2 = 0">
-<div class="figcaption">ODF section \f$ \phi_2 = 0^\circ \f$</div>
+	<img class="fullsize" src="sid1687f_0.png" alt="ODF section phi_2 = 0">
+	<div class="figcaption">ODF section \f$ \phi_2 = 0^\circ \f$</div>
 <br>
-<img class="fullsize" src="sid1687f_45.png" alt="ODF section phi_2 = 0" width="70%">
+	<img class="fullsize" src="sid1687f_45.png" alt="ODF section phi_2 = 0">
 <div class="figcaption">ODF section \f$ \phi_2 = 45^\circ \f$</div>
 </div>
 
@@ -77,7 +87,7 @@ of the macrotexture. The command [`odf2smt`](@ref odf2smt) will do the sampling:
 odf2smt --input sid1687f.odf --ncrystals 3000
 </pre>
 The command will produce a single file `sid1687f.smt` that contains 3000 discrete orientations. 
-We will use this file will as input in all examples in this tutorial.
+We will use this file will as input in all the examples in this tutorial.
 
 
 
@@ -89,13 +99,13 @@ Uniaxial tension   {#gt_QRS}
 
 The VEF can calculate these quantities for any direction of uniaxial loading. If the undeformed material is considered, the QRS module of `alamDMC` is the most handy way to do so. 
 
-To run the `alamDMC` QRS module, we need an input file that instructs the program what to do (see [reference manual](@ref config_QRS) for full details what can be specified in QRS configuration files)). We have drafted one for you: please find file `sid1687f_qrs.cfg` in `guided_tour_directory`. Let's quickly inspect what's inside:
+To run the `alamDMC` QRS module, we need an input file that instructs the program what to do (see [reference manual](@ref module_qrs) for full details what can be specified in QRS configuration files)). We have drafted one for you: please find file `sid1687f_qrs.cfg` in `guided_tour_directory`. Let's quickly inspect what's inside:
 
 \includelineno sid1687f_qrs.cfg
 
 As you certainly noticed, there are lines that start with `#`: these are [comments](@ref desc_alamdmc_comments) that you can put in the configuration files. The comments are ignored by the program, but help us to understand the content of the file.
 
-The file has a [fixed format](@ref desc_alamdmc_format), which means the order and position of the items matter. Lines 1 - 12 contain general settings, while lines 14 - 18 are specific for the QRS module. 
+The file has a [fixed format](@ref desc_alamdmc_format), which means the order and the position of the items matter. Lines 1 - 12 contain general settings, while lines 14 - 18 are specific for the QRS module.
 
 Here's what the configuration file tells the `alamDMC`:
 - the names of output files will stem from `sid1687f_qrs` (line 4). 
@@ -107,8 +117,8 @@ Here's what the configuration file tells the `alamDMC`:
 - The crystal plasticity model will assume [bcc crystal structure with 24 slip systems](@ref slip_system_family) (line 9).
 - lines 10 - 12 instruct the program to use the defaults for [microstructural description](@ref microstructure_default), [hardening](@ref hardening_default) and [solver settings](@ref solver_default).
 
-The QRS-specific lines give the following:
-- lines 16 - 17 provide the program with the orientations of virtual samples with respect to the reference frame. This is done by a [range specification](@ref range_option). In this example the orientations are given as a [uniform range](@ref option_uniform) of angles between the loading direction and selected material axis (see below).
+The QRS-specific lines mean the following:
+- lines 16 - 17 provide the program with the orientations of virtual samples with respect to the [reference frame](@ref convention_reference_frame). This is done by a [range specification](@ref range_option). In this example the orientations are given as a [uniform range](@ref option_uniform) of angles between the loading direction and selected material axis (see below).
 - Default settings of uniaxial tension will be used (line 18). These include, among other things, that the reference frame will be given by the material reference frame, in this case RD, TD and ND.  Therefore, the orientations of the virtual tensile samples are given as the angle between RD and the loading direction within the RD-TD plane.
 
 Let's now run the `alamDMC`  program in the command line. The program takes two arguments: name of the module `QRS` and path to the configuration file `sid1687f_qrs.cfg`: 
@@ -127,17 +137,27 @@ You will see headers similar to this one in many output files produced by the VE
 Let's plot the Lankford coefficients (column `r-value` as the function of loading direction (column `angle`):
 
 <div class="figure">
-<img class="fullsize" src="sid1687f_rvalues.png" alt="Lankford coefficients in different directions of loading">
+	<img class="fullsize" src="sid1687f_rvalues.png" alt="Lankford coefficients at different loading directions">
 <div class="figcaption">Lankford coefficients in different directions of uniaxial loading</div>
 </div>
 
-By convention the r-values and the yield stress are determined at 20% elongation, whereas the VEF QRS calculates the r-values of the undeformed material, which in our case has 0% elongation. We will come back to this point in [a futher part of this guided tour](#gt_udsa).
+By convention the r-values and the yield stress are determined at 20% elongation, whereas the VEF QRS calculates the r-values of the undeformed material, which in our case has 0% elongation. We will come back to this point in [a further part of this guided tour](#gt_udsa).
 
+The column `sigma_xx` contains the tensile stresses. Let's plot this output as well:
+<div class="figure">
+	<img class="fullsize" src="sid1687f_tensile_stress.png" alt="Tensile stress at different  loading directions">
+	<div class="figcaption">Tensile stress in different directions of uniaxial loading</div>
+</div>
+
+The unit for stresses we put in the figure is referring to the fact we do not use any hardening and we make no assumptions if the stress is given in any particular unit. Again, [a later part of this guided tour](#gt_udsa) will shed some light on this issue. 
 
 
 Yield locus sections    {#gt_YLD}
 --------------------
 
+The VEF includes a module that calculates yield locus sections, which is called `YLD`.  
+
+Here is how a typical [configuration file of YLD](@ref configuration_yld) looks like (please see the file `sid1687f_yld.cfg`):
 \includelineno sid1687f_yld.cfg
 
 As we see, lines 1 - 12 are identical as in the previous section. The YLD uses the angle \f$\theta\f$ to choose which points on the locus section should be calculated. Figure below gives an illustration how \f$\theta\f$ is defined.  
@@ -157,83 +177,157 @@ The last line requests to use the defaults, which are:
 alamDMC YLD sid1687f_yld.cfg
 </pre>
 
-We may now quickly inspect the content of the output file `sid1687f_yld.xyld` (this file contains 11 columns, so depending on the size of your screen some lines may fold). The top five lines would look like:
+We may now quickly inspect the content of the output file `sid1687f_yld.xyld` (this file contains 12 columns, so depending on the size of your screen some lines may fold). The top five lines would look like:
 \dontinclude sid1687f_yld.xyld
 \until 0.85068113E+00
 
-The column `theta` contains the angles that were used for computing the yield locus section. The columns `S` and `S/S_0` include the points on the section, both in polar coordinate system of the angle `theta`. However, we are going to use use the columns `S_x` and `S_y` that contain the yield locus contour in Cartesian coordinate system.
+The column `theta` contains the angles that were used for computing the yield locus section. The columns `sigma` and `sigma/sigma_0` include the points on the section, both in polar coordinate system of the angle `theta`. However, we are going to use use the columns `sigma_x` and `sigma_y` that contain the yield locus contour in Cartesian coordinate system.
 
 <div class="figure">
 <img class="fullsize" src="sid1687f_yld.png" alt="yield locus section (DX51D steel)">
 <div class="figcaption">Yield locus section (DX51D steel)</div>
 </div>
 
-Additionally, we can use columns `delta_S_x` and `delta_S_y` to plot yield locus' normals (actually: the projection of yield locus normals onto the current section of stress space):
+Additionally, we can use columns `dsigma_x` and `dsigma_y` to plot yield locus' normals (actually: the projections of yield locus normals onto the current section of stress space):
 
 <div class="figure">
 <img class="fullsize" src="sid1687f_yld_normals.png" alt="normals to the yield locus section (DX51D steel)">
 <div class="figcaption">Normals to the yield locus section (DX51D steel)</div>
 </div>
 
-\note The normals to the yield locus contour are approximated numerically by considering also the neighbouring points. To ensure good quality of the normals, make sure that the angular resolution of \f$\theta\f$ does not exceed \f$ \approx 5^\circ \f$ in the regions of where the yield locus contour has high curvature. 
+\note The normals to the yield locus contour are approximated numerically by considering also the neighboring points. To ensure good quality of the normals, make sure that the angular resolution of \f$\theta\f$ does not exceed \f$ \approx 5^\circ \f$ in the regions of where the yield locus contour has high curvature. 
 
 
 Of course, we don't always need very detailed calculations of the yield locus. If just a few points are enough, we can easily get this done. Let's modify our example: please see the changes in lines 4, 16 and 17 in the example below:
 
 \includelineno sid1687f_coarse_yld.cfg
 
-We can see that \f$\theta\f$ is restricted to the range from 0 to 90 degrees every 15 degrees, so only 7 points will be calculated:
+We can see that \f$\theta\f$ is restricted to the range from 0&deg; to 90&deg;  every 15&deg;, so only 7 points will be calculated:
 <div class="figure">
 <img class="fullsize" src="sid1687f_coarse_yld.png" alt="yield locus section, coarse (DX51D steel)">
 <div class="figcaption">Yield locus section with limited \f$\theta\f$ range (DX51D steel)</div>
 </div>
 
 
-Biaxial r-value         {#gt_ARS_rbx}
----------------
-
-
 
 Anisotropy evolution due to deformation     {#gt_anisotropy_evol}
 =======================================
 
+So far we have used the VEF to derive plastic properties of the __material in a given state__. Now we are going to get predictions how the material state evolves, and at the same time we will see how the properties evolve with strain.
+
+
 Deformation under uniaxial stress state    {#gt_udsa}
 ---------------------------------------
 
-In the next step of this tour we will simulate uniaxial tension test. We will track the evolution of the material state up to a plastic strain of 50%, which is much higher than what may usually be realized in an experimental tensile test setup. 
+In the next step of this tour we will simulate uniaxial tension test. The [VEF module `UDSA`](@ref module_udsa)  provides a virtual uniaxial test. We will track the evolution of the material state up to a plastic strain of approximately 40%, which is much higher than what may usually be realized in an experimental tensile test setup.
 
-The output file contains a number of columns, among them we see `r-value` and `r-valueA`, which are the instantaneous and accumulated Lankford coefficients. Let's plot these two as functions of tensile strain norm (column `Tnorm`):
+Let's take the configuration file `sid1687f_udsa.cfg` that we are about to feed to the UDSA module:
+\includelineno sid1687f_udsa.cfg
+
+Again, we made no change in the generic configuration section. The module-specific part tells the VEF to simulate a process where the virtual samples are oriented in-plane of the sheet, and  "cut out" in the directions 0&deg;, 45&deg; and 90&deg; with respect to the RD. The program will simulate tension up to tensile strain 0.4. 
+
+Let's run the program:
+<pre class="consoleView">
+alamDMC UDSA sid1687f_udsa.cfg
+</pre>
+
+You will see a couple of output files produced this time, in particular `sid1687f_udsa_0_000.uds`, `sid1687f_udsa_45_000.uds` and `sid1687f_udsa_90_000.uds`. As you probably guessed from their names, the files correspond to the three directions of the virtual samples.
+
+
+
+
+The output file contains a number of columns, among them we see `r-value` and `r-valueA`, which are the instantaneous and accumulated Lankford coefficients, respectively. Let's plot these two as functions of tensile strain norm (column `eps_xx`):
 
 <div class="figure">
-<img class="fullsize" src="sid1687f_hardening_udsa_rvalues.png" alt="evolution of the r-values in tensile test (DX51D steel)">
-<div class="figcaption"> "Evolution of the r-values in tensile test(DX51D steel)</div>
+<img class="fullsize" src="sid1687f_udsa_0_000_rvalues.png" alt="evolution of the r-values in tensile test (DX51D steel)">
+<img class="fullsize" src="sid1687f_udsa_45_000_rvalues.png" alt="evolution of the r-values in tensile test (DX51D steel)">
+<img class="fullsize" src="sid1687f_udsa_90_000_rvalues.png" alt="evolution of the r-values in tensile test (DX51D steel)">
+<div class="figcaption"> "Evolution of the r-values in in UDSA uniaxial tensile tests (DX51D steel)</div>
+</div>
+
+It seems that the r-values in the TD directions follow a different evolution path than in the other two directions. That also means that \f$ \Delta r \f$ increases with deformation.
+
+The tensile stresses are reported in the column `sigma_xx` as well:
+<div class="figure">
+<img class="fullsize" src="sid1687f_udsa_0_000_tensile_stress.png" alt="tensile stress in tensile test (DX51D steel)">
+<img class="fullsize" src="sid1687f_udsa_45_000_tensile_stress.png" alt="tensile stress in tensile test (DX51D steel)">
+<img class="fullsize" src="sid1687f_udsa_90_000_tensile_stress.png" alt="tensile stress in  (DX51D steel)">
+<div class="figcaption">Evolution of the tensile stress (no strain hardening law) in UDSA uniaxial tensile tests (DX51D steel)</div>
+</div>
+
+That's weird. It seems that the samples at 45&deg; and 90&deg; initially _soften_ and then only slightly harden. Well, it's pretty normal given the fact we do not use any hardening model at all. This also means the hardening effect results exclusively from the texture evolution.
+
+It takes just a few steps to include the hardening. First, let's make a copy of `sid1687f_udsa.cfg` and name it `sid1687f_hardening_udsa.cfg`. We need to make a slight modification to its generic section: 
+-# modify the output prefix (we don't want to overwrite the results of the previous tests, do we?) and change it to: `sid1687f_hardening_udsa`
+-# change the hardening parameters: 
+    - Set the flag to use default hardening to: `False`
+    - add a line below and put there: `2`
+    - add yet another line below and put the following three values there: 
+      `42.  1.4e-2  0.24`
+
+We have just requested [Swift hardening law](@ref hardening_model) with the parameters 
+\f$ \tau_0 = 42 \f$ MPa, \f$  \gamma_0 = 1.4e-2 \f$ and \f$  n = 0.24 \f$ (if you are curious where are these numbers coming from, you are welcome to read our [tutorial on calibrating hardening laws in VEF](@ref tutorial_hardening)). 
+
+After the modifications, the new input file should look as shown in the listings below:
+\includelineno sid1687f_hardening_udsa.cfg
+
+It's time to re-run the program on our modified input file:
+<pre class="consoleView">
+alamdmc UDSA sid1687f_hardening_udsa.cfg
+</pre>
+
+Let's plot the tensile stresses now:
+<div class="figure">
+<img class="fullsize" src="sid1687f_hardening_udsa_tensile_stress.png" alt="evolution of the tensile stresses in tensile test (DX51D steel)">
+<div class="figcaption">Tensile stress evolution in tensile tests with strain hardening taken into account (DX51D steel)</div>
 </div>
 
 
 We may now also check how the texture evolves in this tensile test. We have to first calculate ODFs from the discrete textures stored in the CUR file:
 <pre class="consoleView">
-cur2c --input sid1687f_hardening_udsa.cur
+cur2c --input sid1687f_hardening_udsa_0_000.CUR -o sid1687f_hardening_udsa_0_000.C
 </pre>
-This command produces a series of files: `sid1687f_hardening_udsa_1.C` to `sid1687f_hardening_udsa_.C`. We can plot ODF sections using the last one, which corresponds to the final deformation:
+The [`cur2c`](@ref cur2c) command produces a series of files: `sid1687f_hardening_udsa_1.C` to `sid1687f_hardening_udsa_42.C`. We can plot ODF sections using the last one, which corresponds to the final deformation:
 <pre class="consoleView">
-odfplot --input sid1687f_hardening_udsa_.C --sections 45 --style=filled --no-labels --format=png
+odfplot --input sid1687f_hardening_udsa_0_000_42.C --style=filled
 </pre>
- 
+Here what it comes:
+<div class="figure">
+<img class="fullsize" src="sid1687f_hardening_udsa_0_000_42.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
+<div class="figcaption">Deformation texture at tensile strain 0.4 predicted by the UDSA (DX51D steel)</div>
+</div>
 
+*/
+
+
+/*
 We can now easily check how the yield locus shape changes due to the imposed deformation. The configuration file of the YLD module would look as follows:
-
 \includelineno sid1687f_tensile_yld.cfg
 
 Note that we now use a deformation texture predicted by the UDSA module, as we take input texture from the CUR file.
 
 
-
-
 Deformation under arbitrary stress state    {#gt_asr}
 ----------------------------------------
 
+Suppose we are interested how the material would behave if we deform it under a given stress state and subsequently impose another deformation, and possibly yet another deformation, and so on. The module ASR can do such calculation for us.
+
+Let us get input file `sid1687f_asr.cfg` from `examples` directory: 
+
+\includelineno sid1687f_asr.cfg
+
+The essential part of the file (from line 14 onwards) instructs the `alamDMC` program to apply 4 consecutive deformation modes, each of plastic strain magnitude 0.2. 
+
+<pre class="consoleView">
+cur2c --input sid1687f_asr.CUR --output sid1687f_asr_step.C
+</pre>
+
+odfplot --input sid1687f_asr_step_5.C sid1687f_asr_step_17.C --style=filled
+
+odfplot --input sid1687f_asr_step_17.C --style=filled
+
+We can also use the intermediate textures to feed other VEF modules. For example, we may now check how the yield locus evolves as the subsequent deformation modes are applied.   
 
 Equi-work contours    {#gt_ewc}
 ------------------
-
 */

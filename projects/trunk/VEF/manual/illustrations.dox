@@ -24,7 +24,14 @@
 \image latex sid1687f_coarse_yld.png "yield locus section with limited range(DX51D steel)"
 
 
-\image html sid1687f_hardening_udsa_rvalues.png "evolution of r-values and instantaneous r-values in tensile test"
-\image latex sid1687f_hardening_udsa_rvalues.png "evolution of r-values and instantaneous r-values in tensile test"
+\image html sid1687f_udsa_0_000_rvalues.png "evolution of r-values and instantaneous r-values in tensile test"
+\image html sid1687f_udsa_0_000_tensile_stress.png ""
+\image html sid1687f_udsa_45_000_rvalues.png "evolution of r-values and instantaneous r-values in tensile test"
+\image html sid1687f_udsa_45_000_tensile_stress.png ""
+\image html sid1687f_udsa_90_000_rvalues.png "evolution of r-values and instantaneous r-values in tensile test"
+\image html sid1687f_udsa_90_000_tensile_stress.png ""
+\image html sid1687f_hardening_udsa_tensile_stress.png ""
 
+
+\image html sid1687f_hardening_udsa_0_000_42.png "deformation texture predicted by the UDSA"
 */
