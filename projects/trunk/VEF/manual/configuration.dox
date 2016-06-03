@@ -894,13 +894,13 @@ corresponding to uniaxial tension along the RD.
 For \conffield{section_default}=`False`, the following suboptions are required:
 	<ol>
 	<li> \confdef{normalize_base,logical}. If `True`, then the base tensors specified by the following configuration 
-	settings 2.-3.-4. are normalized so their norm-2 is equal to 1.0.
+	settings 2.-3.-4. are normalized so their norm is equal to 1.0.
 	</li>
 	<li> \confdef{base_sigma_X,real} is the base tensor along the X-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
 	</li>
 	<li> \confdef{base_sigma_Y,real} is the base tensor along the Y-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
 	</li>
-	<li> \confdef{base_sigma_offset,real} is the base tensor that determines the mode of the stress that coincides with the origen of the 
+	<li> \confdef{base_sigma_offset,real} is the base tensor that determines the mode of the stress that coincides with the origin of the 
 	yield locus section, in [Voigt notation](@ref symsrtensor_option).
 	</li>
 	<li> \confdef{normalize_stress,logical}
@@ -935,39 +935,39 @@ The initial lines 1 - 12 belong to the \ref configuration_general.
 
 The module-specific outputfile `<output_prefix>.xyld` makes column-wise reporting of:
 <ol>
-	<li> \outdef{theta_RADIANS} The angle \f$ \theta \f$ corresponding to a yield locus 
-	point, as requested in \conffield{theta_range}, expressed in degrees 
+	<li> \outdef{theta,yldout_theta} The angle \f$ \theta \f$ corresponding to a yield locus 
+	point, as requested in \conffield{theta_range}, expressed in degrees.
 	</li>
 	
 	<li> \outdef{w} The multiplier for the yield locus offset tensor, as requested in 
 	\conffield{offset_range} 
 	</li>
 	
-	<li> \outdef{S} The radial coordinate of the yield locus point
+	<li> \outdef{sigma} The radial coordinate of the yield locus point
 	</li>
 	
-	<li> \outdef{S/S_0} The radial coordinate of the normalized yield locus point
+	<li> \outdef{sigma_scaled} The radial coordinate of the normalized yield locus point
 	</li>
 	
-	<li> \outref{norm_SonA}
+	<li> \outref{S} The norm of deviatoric stress that corresponds to plastic strain mode: \f$ \| \mathbf{S}(\mathbf{A}) \| \f$
 	</li>
 	
 	<li> \outref{dotW}
 	</li>
 	
-	<li> \outdef{S_x} The 1st cartesian coordinate of the normalized yield locus point 
+	<li> \outdef{sigma_x} The 1st cartesian coordinate of the normalized yield locus point 
 	\f$ \sigma_X \f$ 
 	</li>
 	
-	<li> \outdef{S_y} The 2nd cartesian coordinate of the normalized yield locus point 
+	<li> \outdef{sigma_y} The 2nd cartesian coordinate of the normalized yield locus point 
 	\f$ \sigma_Y \f$ 
 	</li>
 	
-	<li> \outdef{delta_S_x} The 1st cartesian coordinate of the local yield locus normal 
+	<li> \outdef{dsigma_x} The 1st cartesian coordinate of the local yield locus normal 
 	\f$ A_X \f$ 
 	</li>
 	
-	<li> \outdef{delta_S_y} The 2nd cartesian coordinate of the local yield locus normal 
+	<li> \outdef{dsigma_y} The 2nd cartesian coordinate of the local yield locus normal 
 	\f$ A_Y \f$ 
 	</li>
 	

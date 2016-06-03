@@ -345,7 +345,7 @@ contains
       integer :: i,ierr
       integer,parameter :: column_width = 18, ncolumns = 12
       character(len=column_width),dimension(ncolumns),parameter  :: column_labels = [ character(len=column_width) :: &
-            'theta', 'w', 'S', 'S/S_0', '||S(A)||','dotW(A)', 'S_x', 'S_y', 'delta_S_x', 'delta_S_y', 'beta', 'residual']
+            'theta', 'w', 'sigma', 'sigma_scaled', 'S','dotW', 'sigma_x', 'sigma_y', 'dsigma_x', 'dsigma_y', 'beta', 'residual']
       !
             info = criErr_IOWrite
             ! Write the header
