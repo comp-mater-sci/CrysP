@@ -592,9 +592,9 @@ The output files make column-wise reporting of:
 	<li> \outdef{M-factor} The volume-average Taylor factor \f$ \overline{M} \f$
 	
 	It is obtained from volume-averaging the sum of microscopic slip rates 
-	\f$  \dot{\gamma} \f$, as 
+	over all deformation systems \f$  \dot{\gamma} \f$, as 
 	\f[ 
-		\bar{M}= \frac{\overline{\sum{ |{ \dot{\gamma} }| }}}{D_{vM}} 
+		\overline{M}= \frac{\overline{ \dot{\gamma} }}{D_{vM}} 
 	\f]
 	The von Mises equivalent strain rate \f$ D_{vM}=\sqrt{2/3} \| \mathbf{D} \| \f$ is 
 	used as normalization factor.

@@ -10,6 +10,7 @@ This includes:
 - convention for reference frames,
 - convention for inputs and output,
 - order of terms in compound entities such as tensors, vectors etc.
+- notation of mathmatical operators
 
 
 Naming convention for variables {#convention_naming}
@@ -71,7 +72,7 @@ The VEF uses two different reference frames in the physical, 3-dimensional space
     \f$ S_{xz} \f$
 
 
-Notation for other quantities
+Additional index notations   {#convention_indexnotation}
 -----------------------------
 
 Apart from the notation related to the reference frames, the VEF also uses other indices. 
@@ -80,14 +81,35 @@ These usually indicate:
 
   The **section reference frame** is defined by two arbitrary axes within the 
   6-dimensional stress space. The two axes defining the section are generally denoted 
-  by the (capitalized) letters X and Y.
+  by the (capitalized) letters \f$ X \f$ and \f$ Y \f$.
 
   Examples: \f$ \sigma_X \f$ and \f$ \sigma_Y \f$
 
 - a direction that characterizes a specific sample 
 
-  Examples: \f$ S_0 \f$ for stress in sample at 0 degrees)
+  Examples: \f$ S_0 \f$ for stress in sample at 0 degrees
   
 - equivalent quantities
 
-  Examples: \f$ \epsilon_{vM} \f$ for Von Mises equivalent plastic strain
+  Examples: \f$ \epsilon_{vM} \f$ is the Von Mises equivalent plastic strain
+  
+- slip system-specific quantitites (usually denoted by index \f$ s \f$)
+  
+  Examples: \f$ \dot\gamma_s \f$ is the slip rate on slip system \f$ s \f$
+
+  
+Notation for mathematical operators   {#convention_operators}
+----------------------------------
+
+Some common mathematical operators are:
+
+<table>
+<caption id="operators_table"></caption>
+<tr><th>Operator  <th>Meaning and/or definition
+<tr><td> \f$ |x| \f$ <td> Absolute value of scalar \f$ x \f$
+<tr><td> \f$ \|\mathbf{x}\| \f$ <td> Euclidian norm of vector \f$ \mathbf{x} \f$
+<tr><td> \f$ \|\mathbf{X}\| \f$ <td> Euclidian norm of tensor \f$ \mathbf{X} \f$
+<tr><td> \f$ \dot{x} \f$ <td> 1st time derivative of \f$ x \f$
+<tr><td> \f$ \overline{x} \f$ <td> Volume-average of (local variable) \f$ x \f$
+</table>
+
