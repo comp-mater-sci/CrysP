@@ -5,19 +5,17 @@ Author: Jerzy Gawad, Dept. Computer Science, KU Leuven
 Copyright KU Leuven (2016). All rights reserved.
 */
 
-/*
+/*!
 \htmlonly
-<script type="text/javascript" src='http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js'></script>
 <script type="text/javascript" src='jquery.zoom.min.js'></script>
 <script>
-	$(document).ready(function(){
+	$( document ).ready(function(){
 		$('.zoom').zoom( {on:'grab', magnify: 0.4});
 	});
 </script>
 \endhtmlonly
-*/
 
-/*!
+
 \page guided_tour Guided tour  
 
 [TOC]
@@ -71,13 +69,17 @@ odfplot --input sid1687f.odf --sections 0,45 --style=filled --no-labels
 </pre>
 
 This will produce two PNG files: `sid1687f_0.png` and `sid1687f_45.png`:
-
 <div class="figure">
-	<img class="fullsize" src="sid1687f_0.png" alt="ODF section phi_2 = 0">
+	<span class="zoom">
+		<img class="fullsize widefigure" src="sid1687f_0.png" alt="ODF section phi_2 = 0">
+	</span>
 	<div class="figcaption">ODF section \f$ \phi_2 = 0^\circ \f$</div>
-<br>
-	<img class="fullsize" src="sid1687f_45.png" alt="ODF section phi_2 = 0">
-<div class="figcaption">ODF section \f$ \phi_2 = 45^\circ \f$</div>
+</div>
+<div class="figure">
+	<span class="zoom">
+		<img class="fullsize widefigure" src="sid1687f_45.png" alt="ODF section phi_2 = 0">
+	</span>
+	<div class="figcaption">ODF section \f$ \phi_2 = 45^\circ \f$</div>
 </div>
 
 As we can see from these ODF sections, the material has a prevalently strong \f$\gamma\f$-fiber.
@@ -297,8 +299,10 @@ odfplot --input sid1687f_hardening_udsa_0_000_42.C --style=filled
 </pre>
 Here what it comes:
 <div class="figure">
-<img class="fullsize" src="sid1687f_hardening_udsa_0_000_42.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
-<div class="figcaption">Deformation texture at tensile strain 0.4 predicted by the UDSA (DX51D steel)</div>
+	<span class="zoom">
+	<img class="fullsize widefigure" src="sid1687f_hardening_udsa_0_000_42.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
+	</span>
+	<div class="figcaption">Deformation texture at tensile strain 0.4 predicted by the UDSA (DX51D steel)</div>
 </div>
 
 */

@@ -5,8 +5,7 @@ pre.consoleView {
 	border-style: dashed;
 	border-width: 1px;
 	border-color: navy;
-	background-color: #E0E0FF;
-	# margin: 0 2em 0 2em;
+	background-color: #ADD7F1;
 	padding: 10px;
 	border-radius: .5em;
 }
@@ -14,9 +13,58 @@ img.fullsize {
 	display: block;
     margin: 0 auto;
 	width: 40%;
+	max-width: 500px;
 }
 
-div.figure {}
+div.figure {
+	margin: auto;
+    width: 60%;
+	text-align: center;
+}
+
+img.fullsize.widefigure {
+    max-width: 800px;
+	width: 85%
+}
+
 div.figcaption {
 	text-align: center;
+	font-style: italic; 
+}
+
+
+
+/* these styles are for zoom plugin */
+.zoom {
+	display:inline-block;
+	position: relative;
+}
+
+/* magnifying glass icon */
+.zoom:after {
+	content:'';
+	display:block; 
+	width:33px; 
+	height:33px; 
+	position:absolute; 
+	top:0;
+	right:0;
+	background:url(zoomicon.png);
+}
+
+.zoom img {
+	display: block;
+}
+
+.zoom img::selection { background-color: transparent; }
+
+.zoom p {
+	border:0; 
+	margin:0; 
+	padding:0; 
+	position:absolute; 
+	top:3px; 
+	right:28px; 
+	color:#555; 
+	font:bold 13px/1 sans-serif;
 }
