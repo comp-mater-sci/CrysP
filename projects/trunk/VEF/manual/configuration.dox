@@ -336,13 +336,13 @@ Although the configuration options of the multi-scale model are pretty much fine
 </li>
 <li>\confdef{hardening_default,logical} specifies if the default hardening description should be used. As default, non-hardening slip systems are assumed having a critical resolved shear stress equal to 1.0, independent of deformation. If \conffield{hardening_default} is `False`, the subsequent line must provide:
 	<ol>
-	<li> \confdef{hardening_model,integer} specifies the hardening law, in general as the dependency of the critical resolved shear stress \f$ \tau \f$ on one or more internal state variables. An example of internal state variable is the accumulated slip of a grain \f$ \gamma \f$. This is a multi-line option, which means that depending on the content of this field, zero or more subsequent lines are expected. 
+	<li> \confdef{hardening_model,integer} specifies the micro-scale hardening law, in general as the dependency of the critical resolved shear stress \f$ \tau \f$ on one or more internal state variables. An example of internal state variable is the accumulated slip of a grain \f$ \gamma \f$. This is a multi-line option, which means that depending on the content of this field, zero or more subsequent lines are expected. 
 	Supported values of \conffield{hardening_model} are:  
 		<ul>
-			<li> 0 (zero) for non-hardening slip systems. This option is equivalent to the default hardening description.
+			<li> 0 (zero) \anchor hardening_model0 for non-hardening slip systems. This option is equivalent to the default hardening description.
 			</li>
 			
-			<li> 1 (one) for Voce-type of isotropic hardening. If this hardening law is chosen, the next line must contain five real values, being parameters of Voce hardening law: \f$ \tau_0 \f$, \f$ \tau^{III}_{sat} \f$, \f$ \tau^{IV}_{sat} \f$, \f$ \theta_0 \f$, \f$ \theta_T \f$.
+			<li> 1 (one) \anchor hardening_model1 for Voce-type of isotropic hardening. If this hardening law is chosen, the next line must contain five real values, being parameters of Voce hardening law: \f$ \tau_0 \f$, \f$ \tau^{III}_{sat} \f$, \f$ \tau^{IV}_{sat} \f$, \f$ \theta_0 \f$, \f$ \theta_T \f$.
 			The classical Voce hardening law assumes that the hardening rate \f$ \theta=\frac{d\tau}{d\gamma} \f$ decreases linearly as a function of \f$ \tau \f$.
 			Current implementation is more generic: besides such *one-stage* hardening behavior, also *two-stage* hardening behaviour is supported.
 			The two subsequent hardening stages are denoted stages `III` and `IV`, respectively.
@@ -366,21 +366,21 @@ Although the configuration options of the multi-scale model are pretty much fine
 			Here, \f$ \gamma_T \f$ and \f$ \tau_T \f$ are two dependent Voce parameters that denote the accumulated slip and the flow stress at the transition point, respectively.
 			</li>
 			
-			<li>2 (two) for Swift hardening law (variant SwiftK). If SwiftK is chosen, the next line must contain three real values: \f$ K \f$, \f$ \gamma_0 \f$ and \f$ n \f$, which are the parameters of Swift hardening law given by the formula:
+			<li>2 (two) \anchor hardening_model2 for Swift hardening law (variant SwiftK). If SwiftK is chosen, the next line must contain three real values: \f$ K \f$, \f$ \gamma_0 \f$ and \f$ n \f$, which are the parameters of Swift hardening law given by the formula:
 			\f[
 				\tau = K \left(\gamma - \gamma_0 \right)^n
 			\f]
 			Only positive values of parameters are acceptable (constraints: \f$ 0 < K \f$, \f$ 0 < \gamma_0 \f$ and \f$ 0 < n \f$).
 			</li>
 			
-			<li>3 (three) for Swift hardening law (variant SwiftS). If SwiftS is chosen, the next line must contain three real values: \f$ \tau_0 \f$, \f$ \gamma_0 \f$ and \f$ n \f$, which are the parameters of Swift hardening law expressed by the formula:
+			<li>3 (three) \anchor hardening_model3 for Swift hardening law (variant SwiftS). If SwiftS is chosen, the next line must contain three real values: \f$ \tau_0 \f$, \f$ \gamma_0 \f$ and \f$ n \f$, which are the parameters of Swift hardening law expressed by the formula:
 			\f[
 				\tau = \tau_0 \left(\frac{\gamma}{\gamma_0} - 1 \right)^n
 			\f]
 			Only positive values of parameters are acceptable (constraints: \f$ 0 < \tau_0 \f$, \f$ 0 < \gamma_0 \f$ and \f$ 0 < n \f$).
 			</li>
 			
-			<li> 11 (eleven) for Dislocation Substructural Hardening (DSH) model (variant described in _Peeters et al. ActaMat 49: 1607-19_).
+			<li> 11 (eleven) \anchor hardening_model11 for Dislocation Substructural Hardening (DSH) model (variant described in _Peeters et al. ActaMat 49: 1607-19_).
 			Slip systems that are supported in conjunction with DSH hardening, are:
 			\conffield{slip_system_family} = `bcc24`.
 			If the DSH model is selected, two subsequent lines are to be provided:

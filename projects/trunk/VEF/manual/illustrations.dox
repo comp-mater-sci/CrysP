@@ -36,4 +36,11 @@
 
 
 \image html sid1687f_hardening_udsa_0_000_42.png "deformation texture predicted by the UDSA"
+
+
+
+
+\image html DX51D_uni0_exp.png "Experimental stress-strain data (DX51D steel) from 0° tensile test"
+\image html DX51D_uni0_exp-fit.png "Identification result for Swift hardening parameter set (DX51D steel)"
+
 */

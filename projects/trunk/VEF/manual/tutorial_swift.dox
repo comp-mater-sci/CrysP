@@ -1,0 +1,166 @@
+/*!
+\page tutorial_swift Identification of Swift parameters from tensile data  
+
+[TOC]
+
+Introduction  
+============ 
+
+This tutorial gives a step-by-step procedure for hardening parameter identification of a micro-scale \f$\tau(\gamma)\f$ hardening law,
+such as Swift law and single- or double-stage Voce laws.
+As example, we use stress-strain data of a uniaxial tensile test along RD to identify the micro-scale Swift law for DX51D material.
+
+\note
+A similar procedure as shown next may be followed for Voce law or any other micro-scale hardening law that prescribes \f$\tau(\gamma)\f$.
+The methodology can also be readily adapted for identification against another (single) monotonic test.
+
+The micro-scale Swift law postulates the Critical Resolved Shear Stress of a grain \f$\tau\f$ as a function of 
+a single internal state variable, being the accumulated slip \f$ \gamma \f$ of that grain, as:
+\f[
+	\tau(\gamma) = \tau_0 \left(\frac{\gamma}{\gamma_0} - 1 \right)^n
+\f]
+This heuristic hardening law has 3 parameters: \f$\tau_0\f$, \f$\gamma_0\f$ and \f$n\f$.
+
+The experimental data for identification is given in the file `\examples\DX51D_uni0_exp.txt`
+It looks as follows:
+<div class="figure">
+	<span class="zoom">
+		<img class="fullsize" src="DX51D_uni0_exp.png" alt="Experimental stress-strain data from 0° tensile test (DX51D steel)">
+	</span>
+	<div class="figcaption">Experimental stress-strain data from 0° tensile test (DX51D steel)</div>
+</div>
+
+\attention A set of micro-scale hardening parameters is identified
+under assumption of specific multi-scale model configuration,
+such as the [model type] (@ref model_type) (e.g. Alamel or Taylor) 
+and the [definition of slip systems] (@ref slip_system_family).
+Even if the hardening law is the same, the parameters are generally different
+for different multi-scale model assumptions.
+In case several variants of multi-scale model are being studied,
+it is therefore important that the identification procedure is repeated
+for every model variant.
+
+
+Basics of the identification strategy
+=====================================
+
+The identification strategy consists of three basic steps:
+<ol>
+	<li> __Non-hardening VEF simulation of the identification test__\n
+	
+	A non-hardening VEF simulation is conducted first.
+	It is hereby assumed that the Critical Resolved Shear Stress equals unity independent of the stage deformation.
+	Quantities associated to this non-hardening reference material are denoted by superscript *.
+	So we have for instance the relation \f$ \tau^* \equiv 1 \f$.
+	The tensile stress and the accumulated slip of the non-hardening material are written as \f$ \sigma^*_{xx} \f$ and \f$ \gamma^* \f$, respectively. 
+	</li>
+	<li> __Swift parameter identification through curve fitting__\n
+	
+	Parameter identification of the \f$\tau(\gamma)\f$ hardening law is based on the *approximate* relationship between the target tensile stress \f$\sigma_{xx}\f$ on one hand,
+	and quantities of the non-hardening material on the other hand:
+	\f[
+	\sigma_{xx} \approx \sigma^*_{xx} \tau(\gamma^*)
+	\f]
+	In general, this relation is only approximate since the right-hand side neglects interaction effects between grain orientations, reflected by the factor \f$ \sigma^*_{xx}\f$,
+	It has nevertheless proven to be a usefull relation in practice.
+	In case of the of Swift law, expansion of the \f$\tau(\gamma)\f$ relation leads to
+	\f[
+	\sigma_{xx} \approx \sigma^*_{xx} \tau_0 \left(\frac{\gamma^*}{\gamma_0} - 1 \right)^n
+	\f]
+	Simultaneous identification of the three Swift parameters
+	\f$\tau_0\f$, \f$\gamma_0\f$ and \f$n\f$ can be accomplished by, for instance, least-square fitting,
+	i.e. the minimization of following function of the parameters:\anchor eq_leastsquarefit
+	\f[
+	f\left(\tau_0,\gamma_0,n\right)=\sum_{i} \left[ \sigma^{exp}_{xx,i} - \sigma^*_{xx,i} \tau_0 \left(\frac{\gamma^*_{i}}{\gamma_0} - 1 \right)^n \right]^2
+	\f]
+	Note that the experimental datapoints \f$\sigma^{exp}_{xx,i}\f$ and the non-hardening simulation output data 
+	(\f$\sigma^*_{xx,i}\f$ and \f$\gamma^*_{i}\f$) need to be known for the same set of deformation levels \f$i\f$. 
+	</li>
+	<li> __Verification of parameter identification__\n
+	
+	</li>
+	As the identification relationship is approximate, it is advised to check that a satisfactory simulation accuracy 
+	is obtained for the identification test using the hardening parameters identified in previous step.
+</ol>
+
+Let's now see how these steps work out for the example at hand.
+
+Non-hardening VEF simulation of the identification test
+=======================================================
+As a first step, we need to simulate the 0° uniaxial tensile test assuming a non-hardening material model.
+For DX51D, a pre-made configuration file `sid1687f_udsa_hard0.cfg` is available in directory `\guided_tour\Swift`.
+It looks as follows:
+\includelineno sid1687f_udsa_hard0.cfg
+
+We want to identify hardening parameters for ALAMEL multi-scale model (line 8)
+with 24 BCC slip systems (line 9).
+The non-hardening behavior is accomplished by the default hardening settings (line 11),
+as can be cross-checked with @ref configuration_general.
+
+The 0°-tensile test is easily configured with the \ref module_udsa.
+We can see that, besides specifying a single, in-plane tensile test along 0° to RD (lines 16-19 and line 23),
+we request that increments be made in equal intervals of 0.018 of tensile strain (lines 20 and 22).
+This is far from a random choice; in fact it corresponds  exactly to the strain intervals
+in which the experimental data (cf. file `\examples\DX51D_uni0_exp.txt`) is available. 
+
+\par Hint 
+\anchor hint_nonequal_Strain_intervals
+Should the experimental data of your material be available in non-equal intervals of strain levels,
+[another range option] (@ref option_discrete) is likely a better choice.
+
+Now let's run the simulation:
+<pre class="consoleView">
+alamDMC UDSA sid1687f_udsa_hard0.cfg
+</pre>
+
+Swift parameter identification through curve fitting
+====================================================
+
+The output file of the non-hardening VEF simulation is provided in `sid1687f_udsa_hard0.uds` in directory `\guided_tour\Swift`.
+Let's take a look at the leading 5 lines:
+\dontinclude sid1687f_udsa_hard0.uds
+\until 0.540350518E-01
+
+We should now have all coefficients for [the least-square minimization problem] (@ref eq_leastsquarefit):
+<ul> 
+	<li> The experimental datapoints \f$\sigma^{exp}_{xx,i}\f$ for strain levels \f$i\f$ are located 
+	in `\examples\DX51D_uni0_exp.txt`.</li>
+	<li> The same experimental strain levels \f$i\f$ are also listed in column 4 of `sid1687f_udsa_hard0.uds`, 
+	so we also have the corresponding \f$\sigma^*_{xx,i}\f$ datapoints in column 5. </li>
+	<li> Wait a minute - how about the datapoints of homogenized accumulated slip \f$ \gamma^* \f$?
+	On first sight, it does not appear to be listed in the `uds`-output file...
+	But in fact we *do* know it, because for the non-hardening material with unity CRSS,
+	\f$ \gamma^* \f$ is numerically identical to the accumulated work \f$ W^* \f$,
+	which we can find back in column 7.
+	It can be derived from the rate of work of a particular grain due to slip activity 
+	on slip systems \f$s\f$, which is given by \f$ \dot{w} = \sum_{s}\tau_{s} \dot\gamma_{s} \f$. 
+	For the non-hardening material with \f$ \tau^*_{s}\equiv 1 \f$, 
+	it follows that rate of work in the grain equals the total slip rate of the grain. 
+	The identity \f$ W^* = \gamma^* \f$ is then found after time integration and volume-averaging (i.e. homogenization).</li>
+</ul>
+
+Least-square fitting results in the following parameter set:
+\f$\tau_0=43.38MPa\f$, \f$\gamma_0=1.35\space10^{-2}\f$ and \f$n=0.243\f$.
+
+Verification of parameter identification
+========================================
+
+The verification step needs only a slight modification to configuration file, 
+see file sid1687f_udsa_`SwiftS.cfg` in directory `\guided_tour\Swift`:
+\includelineno sid1687f_udsa_SwiftS.cfg
+The [Swift law variant] (@ref hardening_model3), defined in the lines 12-13.
+An additional modification is the reduction of increment size (line 24);
+this will give us a smoother stress-strain curve prediction of the virtual material.
+
+The output file generated from running this simulation
+is `sid1687f_udsa_SwiftS.uds`, also included in the directory `\guided_tour\Swift`.
+As can be seen in figure below, the stress-strain behavior of the virtual material
+compares very well to the experimental behavior:
+<div class="figure">
+	<span class="zoom">
+		<img class="fullsize" src="DX51D_uni0_exp-fit.png" alt="Identification result for Swift hardening parameter set (DX51D steel)">
+	</span>
+	<div class="figcaption">Identification result for Swift hardening parameter set (DX51D steel)</div>
+</div>
+
+*/
