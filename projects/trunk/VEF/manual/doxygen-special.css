@@ -12,13 +12,13 @@ pre.consoleView {
 img.fullsize {
 	display: block;
     margin: 0 auto;
-	width: 40%;
+	width: 75%;
 	max-width: 500px;
 }
 
 div.figure {
 	margin: auto;
-    width: 60%;
+    width: 80%;
 	text-align: center;
 }
 
