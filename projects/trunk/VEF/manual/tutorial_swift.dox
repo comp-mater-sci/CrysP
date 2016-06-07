@@ -1,4 +1,6 @@
 /*!
+\htmlinclude plugin_jquery.zoom.html
+
 \page tutorial_swift Identification of Swift parameters from tensile data  
 
 [TOC]

@@ -6,15 +6,7 @@ Copyright KU Leuven (2016). All rights reserved.
 */
 
 /*!
-\htmlonly
-<script type="text/javascript" src='jquery.zoom.min.js'></script>
-<script>
-	$( document ).ready(function(){
-		$('.zoom').zoom( {on:'grab', magnify: 0.4});
-	});
-</script>
-\endhtmlonly
-
+\htmlinclude plugin_jquery.zoom.html
 
 \page guided_tour Guided tour  
 
