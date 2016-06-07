@@ -179,12 +179,11 @@ contains
             vSe = tens2vec5D(Se%t)
             !
             ! Add output record to the list
-            call setOutputRecord(tmp_record, &
-                                 icv%IncrementationControlVariables, &
-                                 ylp, &
-                                 De, Se, &
-                                 taylor_factor, &   
-                                 info)
+            tmp_record = IncrementOutputRecord(icv%IncrementationControlVariables, &
+                                               ylp, &
+                                               De, Se, &
+                                               taylor_factor, &
+                                               info)
             info = xVector_push(tmp_output, tmp_record)
             if (info /= criSuccess) exit
             !
@@ -221,40 +220,7 @@ contains
         if (present(incrementation_control)) incrementation_control = icv
     !
     end function
-    
-        
-    subroutine setOutputRecord(this, icv, ylp, De, Se, taylor_factor, info)
-    implicit none
-    type(IncrementOutputRecord),intent(out)         :: this
-    type(IncrementationControlVariables),intent(in) :: icv
-    type(YLPResult),intent(in)                  :: ylp
-    type(SRTensor),intent(in)                   :: De
-    type(SRTensor),intent(in)                   :: Se
-    double precision,intent(in)                 :: taylor_factor
-    integer,intent(out)                         :: info
-    !
-        this%vm_strain = root23 * norm2(icv%vP_step)
-        this%vm_strain_total = root23 * norm2(icv%vP_total)
-        this%norm_P_abs = norm2(icv%vP_abs)
-        !
-        this%dotWonA = ylp%dotWonA
-        this%scal_s = ylp%scal_s
-        this%norm_SonA = norm2(ylp%vSonA)
-        this%R = ylp%R
-        
-        this%taylor_factor = taylor_factor
 
-        this%A%t = vec5D2tens(ylp%vA)
-        this%SonA%t = vec5D2tens(ylp%vSonA)
-
-        this%P_inc_evol = De
-        this%S_evol = Se
-        
-        this%icv = icv
-        
-        info = criSuccess
-        
-    end subroutine
 
 
     !> Event handler in calculateStressPath: invoked at the begining of each

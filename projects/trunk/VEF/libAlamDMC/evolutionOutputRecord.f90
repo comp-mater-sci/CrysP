@@ -15,8 +15,11 @@
 
 !> Data types for stress evolution outputs
 module dmcEvolutionOutputRecord
-use criMathUtils, only: SRTensor
+use criErrcodes
+use criMathUtils, only: SRTensor, root23
 use dmcIncrementationControl, only: IncrementationControlVariables
+use dmcBasicModule, only: YLPResult !> \fixme This dependency should be avoided by refactoring dmcBasicModule
+use fngVec5D, only: vec5D2tens
 implicit none
 
     !> Data outputed per increment of stress driven state evolution
@@ -42,5 +45,47 @@ implicit none
         type(IncrementationControlVariables) :: icv
         
     end type
+
+
+    interface IncrementOutputRecord
+        module procedure IncrementOutputRecord_init
+    end interface
     
+contains
+
+
+    !> Make IncrementOutputRecord from increment data.
+    function IncrementOutputRecord_init(icv, ylp, De, Se, taylor_factor, info) result(this)
+    implicit none
+    type(IncrementOutputRecord)                 :: this
+    type(IncrementationControlVariables),intent(in) :: icv
+    type(YLPResult),intent(in)                  :: ylp
+    type(SRTensor),intent(in)                   :: De
+    type(SRTensor),intent(in)                   :: Se
+    double precision,intent(in)                 :: taylor_factor
+    integer,intent(out)                         :: info
+    !
+        this%vm_strain = root23 * norm2(icv%vP_step)
+        this%vm_strain_total = root23 * norm2(icv%vP_total)
+        this%norm_P_abs = norm2(icv%vP_abs)
+        !
+        this%dotWonA = ylp%dotWonA
+        this%scal_s = ylp%scal_s
+        this%norm_SonA = norm2(ylp%vSonA)
+        this%R = ylp%R
+        
+        this%taylor_factor = taylor_factor
+
+        this%A%t = vec5D2tens(ylp%vA)
+        this%SonA%t = vec5D2tens(ylp%vSonA)
+
+        this%P_inc_evol = De
+        this%S_evol = Se
+        
+        this%icv = icv
+        
+        info = criSuccess
+        
+    end function
+
 end module
