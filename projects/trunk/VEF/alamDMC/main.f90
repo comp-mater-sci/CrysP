@@ -94,7 +94,7 @@ implicit none
             write(display_unit,fmt=900) 'Cannot access the license. Check if "license.slis" file is in your VEF_ROOT'
             call finalize(stopcode_runtimeerror)
       endif
-      if (.not. isLicenseValid(ALAMDMC_FEATURE_UUID, .true.)) then
+      if (.not. isLicenseValid(ALAMDMC_FEATURE_UUID, logical(.true.,kind=c_bool))) then
             write(display_unit,fmt=900) 'There is no valid license for AlamDMC'
             call finalize(stopcode_runtimeerror)
       endif
@@ -153,7 +153,7 @@ implicit none
       call the_module%run(info)
       !
       write(display_unit,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
-      write(display_unit,'(A,1X,A,1X,A,\)') 'Execution of module', trim(moduleName), 'finished'
+      write(display_unit,'(A,1X,A,1X,A)',advance='no') 'Execution of module', trim(moduleName), 'finished'
       if (info == 0) then
             write(display_unit,'(1X,A)') 'succesfully.'
       else
