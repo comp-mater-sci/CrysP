@@ -63,7 +63,9 @@ The identification strategy consists of three basic steps:
 	\f[
 	\sigma_{xx} \approx \sigma^*_{xx} \tau(\gamma^*)
 	\f]
-	In general, this relation is only approximate since the right-hand side neglects interaction effects between grain orientations, reflected by the factor \f$ \sigma^*_{xx}\f$,
+	In general, this relation is only approximate since the right-hand side neglects 
+	local interaction effects between grain orientations (reflected by the factor \f$ \sigma^*_{xx}\f$)
+	and strain hardening (given by the factor \f$\tau(\gamma^*)\f$).
 	It has nevertheless proven to be a usefull relation in practice.
 	In case of the of Swift law, expansion of the \f$\tau(\gamma)\f$ relation leads to
 	\f[
@@ -79,10 +81,10 @@ The identification strategy consists of three basic steps:
 	(\f$\sigma^*_{xx,i}\f$ and \f$\gamma^*_{i}\f$) need to be known for the same set of deformation levels \f$i\f$. 
 	</li>
 	<li> __Verification of parameter identification__\n
-	
-	</li>
+
 	As the identification relationship is approximate, it is advised to check that a satisfactory simulation accuracy 
 	is obtained for the identification test using the hardening parameters identified in previous step.
+	</li>
 </ol>
 
 Let's now see how these steps work out for the example at hand.
