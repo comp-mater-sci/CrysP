@@ -35,7 +35,12 @@
 \image html sid1687f_hardening_udsa_tensile_stress.png ""
 
 
-\image html sid1687f_hardening_udsa_0_000_42.png "deformation texture predicted by the UDSA"
+\image html sid1687f_hardening_udsa_0_000_42.png
+\image latex sid1687f_hardening_udsa_0_000_42.png
+\image html sid1687f_hardening_udsa_45_000_42.png
+\image latex sid1687f_hardening_udsa_45_000_42.png 
+\image html sid1687f_hardening_udsa_90_000_42.png 
+\image latex sid1687f_hardening_udsa_90_000_42.png 
 
 
 
