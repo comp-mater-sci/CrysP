@@ -34,23 +34,38 @@ implicit none
     type,extends(BasicModule),abstract :: StressDrivenEvolutionModule
         
         type(IncrementationControlSettings) :: control
-        
+
     contains
+
+        !> Main loop of incremental stress driven state evolution
+        !>
+        !> Under normal circumstances the subclasses do not need to override this method.
+        !> Event handlers should be used to get info and/or control how the main loop
+        !> advances.
         procedure,pass(this)    :: calculateStressPath => StressDrivenEvolutionModule_calculateStressPath
-        
+
+        !> Event handler invoked on increment start.
+        !>
+        !> A subclass can overload this to get informed about the incrementation and 
+        !> influence the incrementation.
+        procedure,pass(this)    :: onIncrementStart => StressDrivenEvolutionModule_onIncrementStart
+
+        !> Event handler invoked on increment end
+        !>
+        !> A subclass can overload this to get informed about the incrementation and 
+        !> influence the incrementation.
         procedure,pass(this)    :: onIncrementEnd => StressDrivenEvolutionModule_onIncrementEnd
         
     end type
 
 contains
-    
-    
-        
-    
+
+
+    !> Main loop of incremental stress driven state evolution
     integer function StressDrivenEvolutionModule_calculateStressPath(this, sigma, control, outputs, rotmat, &
                                                                      incrementation_control, use_icv_as_is) result(info)
     implicit none
-    class(StressDrivenEvolutionModule),intent(in) :: this
+    class(StressDrivenEvolutionModule),intent(inout) :: this
     type(SRTensor),intent(in)   :: sigma
     class(IncrementationControlSettings),intent(inout) :: control
     type(EvolutionOutput),intent(out)   :: outputs
@@ -75,7 +90,6 @@ contains
     !
     type(xVector_IncrementOutputRecord) :: tmp_output
     type(IncrementOutputRecord)         :: tmp_record
-    
     integer :: increment, i
     !
         ! Prepare non-default incrementation controls if requested
@@ -94,6 +108,9 @@ contains
         do
             !
             increment = increment + 1
+            !
+            call this%onIncrementStart(control, icv, info)
+            if (info /= criSuccess) exit
             !
             ! Calculate the strain rate mode
             info = this%findSolution(sigma, D, ylp)
@@ -191,8 +208,10 @@ contains
             ! Update icv
             !
             call icv%update(vDe, vSe, info)
+            if (info /= criSuccess) exit
             !
-            call this%onIncrementEnd(tmp_record) 
+            call this%onIncrementEnd(control, icv, tmp_record, info)
+            if (info /= criSuccess) exit
         !
         enddo
         if (info /= criSuccess) return
@@ -236,15 +255,35 @@ contains
         info = criSuccess
         
     end subroutine
-    
-    subroutine StressDrivenEvolutionModule_onIncrementEnd(this, output_record)
-    implicit none
-    class(StressDrivenEvolutionModule),intent(in) :: this
-    type(IncrementOutputRecord),intent(in)                 :: output_record
-    !
 
+
+    !> Event handler in calculateStressPath: invoked at the begining of each
+    !> increment
+    subroutine StressDrivenEvolutionModule_onIncrementStart(this, control, icv, info)
+    implicit none
+    class(StressDrivenEvolutionModule),intent(inout)    :: this
+    class(IncrementationControlSettings),intent(inout)  :: control
+    class(IncrementationControl),intent(inout)          :: icv
+    integer,intent(out)                                 :: info
+    !
+        info = criSuccess
     !
     end subroutine
-    
+
+
+    !> Event handler in calculateStressPath: invoked at the end of each
+    !> increment
+    subroutine StressDrivenEvolutionModule_onIncrementEnd(this, control, icv, output_record, info)
+    implicit none
+    class(StressDrivenEvolutionModule),intent(inout)    :: this
+    class(IncrementationControlSettings),intent(inout)  :: control
+    class(IncrementationControl),intent(inout)          :: icv
+    type(IncrementOutputRecord),intent(in)              :: output_record
+    integer,intent(out)                                 :: info
+    !
+        info = criSuccess
+    !
+    end subroutine
+
 end module
     
