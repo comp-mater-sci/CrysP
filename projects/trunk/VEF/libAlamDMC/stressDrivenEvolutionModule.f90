@@ -81,7 +81,7 @@ contains
         ! Prepare non-default incrementation controls if requested
         if (present(incrementation_control)) then
             icv = incrementation_control
-            if (optionalDefault(use_icv_as_is, .false.)) call icv%initStep(info)
+            if (.not. optionalDefault(use_icv_as_is, .false.)) call icv%initStep(info)
         endif
         !
         ! Follow the evolution line along S
