@@ -247,7 +247,8 @@ ALIASES                = "conffield_typeset{1}=<b><tt>\1</tt></b>" \
 						 "outfield{1}=<i>\1</i> :: " \
 						 "outdef{1}=\outfield{\1} \anchor \1 &nbsp;" \
 						 "outdef{2}=\outfield{\1} \anchor \2 &nbsp;" \
-						 "outref{1}=\outfield{\1} See \ref \1 \"here\""
+						 "outref{1}=\outfield{\1} See \ref \1 \"here\"" \
+						 "outref{2}=\outfield{\1} See \ref \2 \"here\""
 
 # This tag can be used to specify a number of word-keyword mappings (TCL only).
 # A mapping has the form "name=value". For example adding "class=itcl::class"

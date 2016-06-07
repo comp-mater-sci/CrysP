@@ -647,7 +647,7 @@ The output files make column-wise reporting of:
 	\f$ r = \frac{q}{1-q} \f$.
 	</li>
 
-	<li> \outdef{S, norm_SonA} The norm of the deviatoric stress tensor: 
+	<li> \outdef{S, norm_SonA} The norm of deviatoric stress that corresponds to plastic strain mode:
 	\f$ \| \mathbf{S}(\mathbf{A}) \| \f$
 	</li> 
 
@@ -713,24 +713,28 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outdef{step} The deformation step sequence number
 	</li>
 	
-	<li> \outdef{incr} The increment sequence number of the current deformation step
+	<li> \outdef{increment} The increment sequence number of the current deformation step
 	</li>
 	
-	<li> \outdef{DELTAeps_vM} The von Mises equivalent strain of current step 
-	\f$ \Delta \epsilon_{vM,step} \f$
+	<li> \outdef{eps_vM} The von Mises equivalent strain of the current step 
+	\f$ \epsilon_{vM,step} \f$
 	
-	It is derived from the strain tensor of current step 
-	\f$ \Delta \boldsymbol{\epsilon}_{step} \f$ as: 
+	It is derived from the strain tensor of current step \f$ \boldsymbol{\epsilon}_{step} \f$ as: 
 	\f[ 
-		\Delta \epsilon_{vM,step}=\sqrt{2/3} \| \Delta \boldsymbol{\epsilon}_{step} \| 
+		\epsilon_{vM,step}=\sqrt{2/3} \| \boldsymbol{\epsilon}_{step} \| 
 	\f]
 	</li>
 	
-	<li> \outdef{DELTAeps} The norm of the strain tensor of current step 
-	\f$ \| \Delta \boldsymbol{\epsilon}_{step} \| \f$
+	<li> \outref{Pnorm}
 	</li>
 	
-	<li> \outref{eps_vM}
+	<li> \outdef{eps_total_vM} The von Mises equivalent strain of the total strain along all past increments 
+	\f$ \\epsilon_{vM,step} \f$
+	
+	It is derived from the strain tensor of current step \f$ \boldsymbol{\epsilon}_{step} \f$ as: 
+	\f[ 
+		\epsilon_{vM,total}=\sqrt{2/3} \| \sum_{i=1}^{N increments} \Delta \boldsymbol{\epsilon}_{i} \| 
+	\f]
 	</li>
 	
 	<li> \outref{W}
@@ -745,29 +749,38 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outdef{scal_s} The norm of a normalized deviatoric stress 
 	</li>
 	
-	<li> \outref{norm_SonA}  
+	<li> \outref{S, norm_SonA}  
 	</li>
 	
 	<li> \outref{residual}
 	</li>
 	
-	<li> \outdef{SonA_xx} A component of the deviatoric stress tensor \f$ \mathbf{S} \f$ 
+	<li> \outdef{S_11} A component of the deviatoric stress tensor \f$ \mathbf{S} \f$ 
+	in the material (`123`) reference frame
+	</li>
+	<li> \outdef{S_22} Similar to \ref S_11 
+	</li>
+	<li> \outdef{S_33} Similar to \ref S_11 
+	</li>
+	<li> \outdef{S_12} Similar to \ref S_11 
+	</li>
+	<li> \outdef{S_23} Similar to \ref S_11 
+	</li>
+	<li> \outdef{S_13} Similar to \ref S_11 
+	</li>
+	
+	<li> \outdef{S_xx} A component of the deviatoric stress tensor \f$ \mathbf{S} \f$ 
 	in the sample (`xyz`) reference frame
 	</li>
-	
-	<li> \outdef{SonA_yy} Similar to \ref SonA_xx 
+	<li> \outdef{S_yy} Similar to \ref S_xx 
 	</li>
-	
-	<li> \outdef{SonA_zz} Similar to \ref SonA_xx 
+	<li> \outdef{S_zz} Similar to \ref S_xx 
 	</li>
-	
-	<li> \outdef{SonA_xy} Similar to \ref SonA_xx 
+	<li> \outdef{S_xy} Similar to \ref S_xx 
 	</li>
-	
-	<li> \outdef{SonA_yz} Similar to \ref SonA_xx 
+	<li> \outdef{S_yz} Similar to \ref S_xx 
 	</li>
-	
-	<li> \outdef{SonA_xz} Similar to \ref SonA_xx 
+	<li> \outdef{S_xz} Similar to \ref S_xx 
 	</li>
 	
 	<li> \outdef{A_11} A component of the strain mode tensor \f$ \mathbf{A} \f$ in 
@@ -778,7 +791,6 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 		\mathbf{A}=\frac{\mathbf{D}}{\| \mathbf{D} \|} 
 	\f]
 	</li>
-	
 	<li> \outdef{A_22} Similar to \ref A_11 
 	</li>
 	<li> \outdef{A_33} Similar to \ref A_11 
@@ -789,29 +801,75 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	</li>
 	<li> \outdef{A_13} Similar to \ref A_11 
 	</li>
-	<li> \outdef{P_11} A component of the strain tensor of current step \f$ \Delta \boldsymbol{\epsilon}_{step} \f$ in the material (`123`) reference frame 
+
+	<li> \outdef{A_xx} A component of the strain mode tensor \f$ \mathbf{A} \f$ in 
+	the sample (`xyz`) reference frame
 	</li>
-	<li> \outdef{P_22} Similar to \ref P_11 
+	<li> \outdef{A_yy} Similar to \ref A_xx 
 	</li>
-	<li> \outdef{P_33} Similar to \ref P_11 
+	<li> \outdef{A_zz} Similar to \ref A_xx 
 	</li>
-	<li> \outdef{P_12} Similar to \ref P_11 
+	<li> \outdef{A_xy} Similar to \ref A_xx 
 	</li>
-	<li> \outdef{P_23} Similar to \ref P_11 
+	<li> \outdef{A_yz} Similar to \ref A_xx 
 	</li>
-	<li> \outdef{P_13} Similar to \ref P_11 
+	<li> \outdef{A_xz} Similar to \ref A_xx 
 	</li>
-	<li> \outdef{Ptot_11} A component of the strain tensor \f$ \boldsymbol{\epsilon} \f$ in the material (`123`) reference frame  
+
+	<li> \outdef{eps_11} A component of the strain tensor of current step 
+	\f$ \Delta \boldsymbol{\epsilon}_{step} \f$ in the material (`123`) reference frame 
 	</li>
-	<li> \outdef{Ptot_22} Similar to \ref Ptot_11 
+	<li> \outdef{eps_22} Similar to \ref eps_11 
 	</li>
-	<li> \outdef{Ptot_33} Similar to \ref Ptot_11 
+	<li> \outdef{eps_33} Similar to \ref eps_11 
 	</li>
-	<li> \outdef{Ptot_12} Similar to \ref Ptot_11 
+	<li> \outdef{eps_12} Similar to \ref eps_11 
 	</li>
-	<li> \outdef{Ptot_23} Similar to \ref Ptot_11 
+	<li> \outdef{eps_23} Similar to \ref eps_11 
 	</li>
-	<li> \outdef{Ptot_13} Similar to \ref Ptot_11 
+	<li> \outdef{eps_13} Similar to \ref eps_11 
+	</li>
+
+	<li> \outdef{eps_xx} A component of the strain tensor of current step 
+	\f$ \Delta \boldsymbol{\epsilon}_{step} \f$ in the sample (`xyz`) reference frame 
+	</li>
+	<li> \outdef{eps_yy} Similar to \ref eps_xx 
+	</li>
+	<li> \outdef{eps_zz} Similar to \ref eps_xx 
+	</li>
+	<li> \outdef{eps_xy} Similar to \ref eps_xx 
+	</li>
+	<li> \outdef{eps_yz} Similar to \ref eps_xx 
+	</li>
+	<li> \outdef{eps_xz} Similar to \ref eps_xx 
+	</li>
+
+	<li> \outdef{eps_tot_11} A component of the strain tensor 
+	\f$ \boldsymbol{\epsilon} \f$ in the material (`123`) reference frame  
+	</li>
+	<li> \outdef{eps_tot_22} Similar to \ref eps_tot_11 
+	</li>
+	<li> \outdef{eps_tot_33} Similar to \ref eps_tot_11 
+	</li>
+	<li> \outdef{eps_tot_12} Similar to \ref eps_tot_11 
+	</li>
+	<li> \outdef{eps_tot_23} Similar to \ref eps_tot_11 
+	</li>
+	<li> \outdef{eps_tot_13} Similar to \ref eps_tot_11 
+	</li>
+
+	<li> \outdef{eps_tot_xx} A component of the strain tensor 
+	\f$ \boldsymbol{\epsilon} \f$ in the sample (`xyz`) reference frame   
+	</li>
+	<li> \outdef{eps_tot_yy} Similar to \ref eps_tot_xx 
+	</li>
+	<li> \outdef{eps_tot_zz} Similar to \ref eps_tot_xx 
+	</li>
+	<li> \outdef{eps_tot_xy} Similar to \ref eps_tot_xx 
+	</li>
+	<li> \outdef{eps_tot_yz} Similar to \ref eps_tot_xx 
+	</li>
+	<li> \outdef{eps_tot_xz} Similar to \ref eps_tot_xx 
 	</li>
 </ol>
 
@@ -949,7 +1007,7 @@ The module-specific outputfile `<output_prefix>.xyld` makes column-wise reportin
 	<li> \outdef{sigma_scaled} The radial coordinate of the normalized yield locus point
 	</li>
 	
-	<li> \outref{S} The norm of deviatoric stress that corresponds to plastic strain mode: \f$ \| \mathbf{S}(\mathbf{A}) \| \f$
+	<li> \outref{S, norm_SonA}
 	</li>
 	
 	<li> \outref{dotW}
@@ -973,7 +1031,7 @@ The module-specific outputfile `<output_prefix>.xyld` makes column-wise reportin
 	
 	<li> \outdef{beta} The angle \f$ \beta \f$ from X-axis to the projection of tensor 
 	\f$ \mathbf{A} \f$ into section, expressed in degrees.   
-	It is given as \f$ \beta= \arctanarctan(\frac{A_Y}{A_X}) \f$.
+	It is given as \f$ \beta= \arctan(\frac{A_Y}{A_X}) \f$.
 	</li>
 	
 	<li> \outref{residual}
@@ -1058,7 +1116,7 @@ The module-specific outputfile `<output_prefix>_ewc.ewc` makes column-wise repor
 	point, as requested in \conffield{theta_range}, expressed in degrees
 	</li>
 	
-	<li> \outdef{S} The radial coordinate of the equi-work contour point, for requested 
+	<li> \outdef{S,yld_S} The radial coordinate of the equi-work contour point, for requested 
 	values of:
 	- plastic work \f$ W \f$ (if \conffield{worklevel_selection_method}=`direct`), or
 	- von Mises equivalent strain \f$ \epsilon_{vM} \f$ of the reference test 
