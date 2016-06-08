@@ -1,10 +1,11 @@
 /*!
-\page user_reference User Reference
+\page user_reference Reference manual
 
+- \ref page_conventions
 - \ref page_expert_mode
-  -  \ref page_configuration
+  - \ref page_configuration
 - \ref page_simple_mode 
 - \ref page_utilities
-
+- \ref page_theory
 */
 

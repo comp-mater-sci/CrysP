@@ -3,15 +3,14 @@
   <!-- Navigation index tabs for HTML output -->
   <navindex>
     <tab type="mainpage" visible="yes" title="Home"/>
-    <tab type="usergroup" visible="yes" url="@ref user_reference" title="User Reference">
+    <tab type="usergroup" visible="yes" url="@ref user_reference" title="Reference Manual">
       <tab type="user" visible="yes" title="Expert mode" url="@ref page_expert_mode"/>
       <tab type="user" visible="yes" title="Simple mode" url="@ref page_simple_mode"/>
       <tab type="user" visible="yes" title="Utilities" url="@ref page_utilities"/>
+      <tab type="user" visible="yes" url="@ref page_theory" title="Theory Reference"/>
     </tab>
-    <tab type="user" visible="yes" url="@ref page_theory" title="Theory Reference"/>
     <tab type="user" visible="yes" url="@ref page_tutorials" title="Tutorials"/>
-    <tab type="user" visible="yes" url="@ref examples" title="Examples"/>
-    <tab type="user" visible="yes" url="@ref support" title="Support"/>
+    <tab type="user" visible="yes" url="@ref page_resources" title="Resources"/>
     <!-- Doxygen built-ins -->
     <tab type="pages" visible="no" title="Documentation" intro=""/>
     <tab type="modules" visible="no" title="" intro=""/>

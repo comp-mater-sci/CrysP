@@ -801,6 +801,7 @@ INPUT                  = mainpage.dox \
                          tutorials.dox \
 						 tutorial_swift.dox \
                          guided_tour.dox \
+                         resources.md \
                          examples.dox \
                          support.dox \
                          starting.dox \
