@@ -258,12 +258,12 @@ fields of the type `real`: \f$ \phi_1 \f$, \f$ \Phi \f$ and \f$ \phi_2 \f$.
 
 
 Symmetric second-order tensors are expressed in the configuration files  as vectors in 
-Voigt notation. Let \f$ x \f$ be a symmetric second-order tensor. 
+Voigt notation. Let \f$ \mathbf{X} \f$ be a symmetric second-order tensor. 
 The ordering of the tensor terms in the vector is as follows: 
-- \f$ x_{11} \f$, \f$ x_{22} \f$, \f$ x_{33} \f$, \f$ x_{12} \f$, \f$ x_{23} \f$, 
-  \f$ x_{13} \f$; if expressed in the material (`123`) reference frame.
-- \f$ x_{xx} \f$, \f$ x_{yy} \f$, \f$ x_{zz} \f$, \f$ x_{xy} \f$, \f$ x_{yz} \f$, 
-  \f$ x_{xz} \f$; if expressed in the material (`xyz`) reference frame.
+- \f$ X_{11} \f$, \f$ X_{22} \f$, \f$ X_{33} \f$, \f$ X_{12} \f$, \f$ X_{23} \f$, 
+  \f$ X_{13} \f$; if expressed in the material (`123`) reference frame.
+- \f$ X_{xx} \f$, \f$ X_{yy} \f$, \f$ X_{zz} \f$, \f$ X_{xy} \f$, \f$ X_{yz} \f$, 
+  \f$ X_{xz} \f$; if expressed in the sample (`xyz`) reference frame.
 
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
@@ -273,11 +273,11 @@ The ordering of the tensor terms in the vector is as follows:
 \subsection srtensor_option Options for expressing second-order tensors
 Second-order tensors are expressed in the configuration files as three consequent rows of 
 values, following the order:
-- 1st row:  \f$ x_{11} \f$, \f$ x_{12} \f$, \f$ x_{13} \f$
-- 2nd row:  \f$ x_{21} \f$, \f$ x_{22} \f$, \f$ x_{23} \f$
-- 3rd row:  \f$ x_{31} \f$, \f$ x_{32} \f$, \f$ x_{33} \f$
+- 1st row:  \f$ X_{11} \f$, \f$ X_{12} \f$, \f$ X_{13} \f$
+- 2nd row:  \f$ X_{21} \f$, \f$ X_{22} \f$, \f$ X_{23} \f$
+- 3rd row:  \f$ X_{31} \f$, \f$ X_{32} \f$, \f$ X_{33} \f$
 
-for \f$ x \f$ being a second-order tensor.
+for \f$ \mathbf{X} \f$ being a second-order tensor.
 
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
