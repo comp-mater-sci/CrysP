@@ -1,0 +1,697 @@
+/*!
+\page page_alamdmc_modules AlamDMC Modules 
+
+[TOC]
+
+Each AlamDMC module has its own module-specific configuration, which
+are located in the trailing part of the configuration file. 
+Furthermore, each module will generate its own specific output data.
+
+\section module_udsa Uniaxial Stress Test Module (keyword: UDSA)
+
+The Uniaxial Stress Test Module provides virtual experiments under uniaxial, tensile or compressive stress states.
+The _pure_ uniaxial state imposes a total stress with exactly one non-zero principal component. 
+In this module, also some _non-pure_ uniaxial states may be imposed, namely those having two non-zero principal stress components.
+ 
+A specific _sample reference frame_ (with x-, y- and z-axes) is associated to the virtual sample.
+The imposed stress state is described with reference to this sample reference frame.
+By convention, the sample x-axis is aligned with the uniaxial (or main) loading direction. 
+
+\subsection configuration_udsa Module-specific configuration
+
+<ol>
+<li> \confdef{orientation_type,string} specifies the type of sample orientation. 
+The exact orientation (or several orientations) may be further specified by a value-dependent option. 
+Supported values of \conffield{orientation_type} are:
+	<ul>
+	<li> `inplane` to request one or several in-plane uniaxial tests. 
+	The sample x-axis (loading direction) is contained to the material 1-2-plane (RD-TD-plane). 
+	The sample y-axis is also contained in the material 1-2-plane (RD-TD-plane).
+	The sample z-axis is aligned with the material 3-direction (ND). 
+	For \conffield{orientation_type}=`inplane`, the following option needs to be provided:
+		<ol>
+		<li> \confdef{inplane_orientation_range,real} defines a [range] (\ref range_option) for in-plane orientations to be tested.
+		The field \conffield{inplane_orientation_range} is expressed in degrees. 
+		</li>
+		</ol>
+	</li>
+	<li> `ND` to request uniaxial loading along ND.
+	In this case, the sample x-axis (loading direction) is aligned with the material 3-direction (ND).
+	The sample y-axis is aligned with the material 2-direction (TD).
+	The sample z-axis is aligned with the material 1-direction (RD).
+	</li>
+	<li> `arbitrary` to request a single test with generic orientation of the sample reference, using the suboption
+		<ol>
+		<li> \confdef{sample_arbitrary,real} specifies the orientation of the sample frame in format specified in \ref euler_option.
+		</li>
+		</ol>
+	</li>
+	</ul>
+<li> \confdef{incrementation_type,string} specifies how the deformation increments will be calculated. If \conffield{incrementation_type} is equal to 
+	<ul>
+		<li> `StrainTensor`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
+		\f$ \| \Delta\boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
+		</li>
+		<li> `StrainTensorComponent`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ is such that 
+		its normal component along the sample x-axis \f$ \Delta \epsilon_{xx} =  \f$  \conffield{increment_magnitude}.
+		</li>
+	</ul>
+</li>
+<li>
+\confdef{total_magnitude,real} provides maximal deformation (as specified by \conffield{incrementation_type}) to be reached in the virtual test.
+</li>
+<li>
+\confdef{increment_magnitude,real} sets the magnitude of strain increments. Note that the last increment may have a smaller magnitude than specified
+	in order to reach exactly \conffield{total_magnitude}.
+</li>
+<li> \confdef{stress_state,string}  selects between tension and compression stress states. Specify 
+	<ul>
+		<li> `compression` to request compressive stress state, i.e.: \f$ \sigma_{xx} < 0 \f$.
+		</li>
+		<li> `tension` to request tensile stress state, i.e.: \f$ \sigma_{xx} > 0 \f$. 
+		</li>
+	</ul>
+</li>
+<li> \confdef{pure_uniaxial_state,logical} \anchor pure_uniaxial_state_anchor specifies whether or not the stress state is _pure_, i.e. 
+having exactly one non-zero principal component.
+If set to `False`, a non-pure uniaxial stress state is imposed, in which case the following option must be specified:
+	<ol>
+		<li> \confdef{stress_ratio_rho,real} contains the imposed deviation \f$ \rho \f$ from the pure uniaxial stress state, as:
+		\f[
+		\rho = \frac{\sigma_{yy}}{\sigma_{xx}}
+		\f]
+		where \f$ \sigma_{xx} \f$ and \f$ \sigma_{yy} \f$ are the normal stresses in the sample x- and y-directions, respectively.
+		Note that \f$ \rho = 0 \f$ corresponds to the configuration \conffield{pure_uniaxial_state}=`True`.
+		</li>
+	</ol>
+</li>
+</ol>
+
+\par Example
+Please see the configuration file `AKDQf_udsa.cfg` from `examples` directory:
+\includelineno AKDQf_udsa.cfg
+
+\subsection output_udsa Module-specific output
+
+The module-specific output files are named according to the pattern `<output_prefix>.uds` 
+or `<output_prefix>_<tag>.uds`. The latter filename format is used when several 
+orientations are requested in the option \conffield{orientation_type}=`inplane`,
+whereby `<tag>` reflects a specific direction of \conffield{inplane_orientation_range}.
+The output files make column-wise reporting of:
+
+<ol>
+	<li> \outdef{increment} The increment sequence number
+	</li>
+
+	<li> \outdef{eps_vM} The von Mises equivalent strain \f$ \epsilon_{vM} \f$ 
+	
+	It is derived from the strain tensor \f$ \boldsymbol{\epsilon} \f$ as: 
+	\f[ 
+		\epsilon_{vM}=\sqrt{2/3} \| \boldsymbol{\epsilon} \| 
+	\f] 
+	</li>
+
+	<li> \outdef{Pnorm} The norm of accumulated absolute plastic strain increment tensors: 
+		\f[ 
+			P_{norm} = \left\| \sum_{i=1}^{increment} |\Delta\boldsymbol{\epsilon}| \right\|
+		\f]
+	</li>
+
+	<li> \outdef{eps_xx, norm_eps_xx} The magnitude of normal strain component along 
+	the x-axis: \f$ \| \epsilon_{xx} \|\f$
+	</li>
+
+	<li> \outdef{sigma_xx} The normal component along the x-axis of the total stress 
+	\f$\sigma_{xx}\f$
+	
+	This component of the _total_ stress  \f$\boldsymbol{\sigma}\f$ is derived from 
+	the deviatoric stress tensor \f$\mathbf{S}\f$ as: 
+	\f[ 
+		\sigma_{xx}=S_{xx}+\sigma_h=S_{xx}-S_{zz} 
+	\f]
+	in which the hydrostatic stress \f$ \sigma_h \f$ is derived from the assumption that 
+	the sample is stress-free along the z-axis: \f$ \sigma_{zz}=S_{zz}+\sigma_h=0 \f$.
+	</li>
+
+	<li>\outdef{S_xx, norm_SonA_xx} Magnitude of deviatoric stress component along 
+	the x-axis (see above)
+	</li>
+
+	<li> \outdef{W} The accumulated plastic work \f$ W \f$
+	</li>
+
+	<li> \outdef{dotW} The rate of plastic work \f$ \dot{W} \f$
+	</li>
+
+	<li> \outdef{M-factor} The volume-average Taylor factor \f$ \overline{M} \f$
+	
+	It is obtained from volume-averaging the sum of microscopic slip rates 
+	over all deformation systems \f$  \dot{\gamma} \f$, as 
+	\f[ 
+		\overline{M}= \frac{\overline{ \dot{\gamma} }}{D_{vM}} 
+	\f]
+	The von Mises equivalent strain rate \f$ D_{vM}=\sqrt{2/3} \| \mathbf{D} \| \f$ is 
+	used as normalization factor.
+	</li> 
+
+	<li> \outdef{q-value} The instantaneous q-value \f$ q_i \f$
+	
+	It is defined as 
+	\f[ 
+		q_i = \frac{-D_{22}}{D_{11}} 
+	\f] 
+	where \f$D_{22}\f$ and \f$D_{11}\f$ are the strain rates in the width and tensile 
+	directions, respectively. It relates to the instantaneous r-value as: 
+	\f[ 
+		q_i = \frac{r_i}{1+r_i} 
+	\f]
+	</li> 
+
+	<li> \outdef{r-value} The instantaneous r-value \f$ r_i \f$ 
+	
+	It is defined as \f$ r_i = \frac{D_{22}}{D_{33}} \f$ 
+	where \f$D_{22}\f$ and \f$D_{33}\f$ are the strain rates in the width and thickness 
+	directions, respectively. It relates to the instantaneous q-value as:
+	\f[ 
+		r_i = \frac{q_i}{1-q_i} 
+	\f].
+	</li> 
+
+	<li> \outdef{s-value} A normalised flow stress \f$ s \f$
+	</li> 
+
+	<li> \outdef{q-valueA} The (strain-based) q-value \f$ q \f$ 
+	
+	It is defined as \f$ q = \frac{-\epsilon_{22}}{\epsilon_{11}} \f$ 
+	where \f$\epsilon_{22}\f$ and \f$\epsilon_{11}\f$ are the strains in the width and 
+	tensile directions, respectively. It relates to the r-value as:
+	\f[ 
+		q = \frac{r}{1+r} 
+	\f]
+	</li> 
+
+	<li> \outdef{r-valueA} The (strain-based) r-value \f$ r \f$ 
+	
+	It is defined as: 
+	\f[ 
+		r = \frac{\epsilon_{22}}{\epsilon_{33}} 
+	\f] 
+	where \f$\epsilon_{22}\f$ and \f$\epsilon_{33}\f$ are the strains in the width and 
+	thickness directions, respectively. It relates to the q-value as 
+	\f$ r = \frac{q}{1-q} \f$.
+	</li>
+
+	<li> \outdef{S, norm_SonA} The norm of deviatoric stress that corresponds to plastic strain mode:
+	\f$ \| \mathbf{S}(\mathbf{A}) \| \f$
+	</li> 
+
+	<li> \outdef{residual} The residual of \ref config_search_procedure "search procedure"
+	\f$ Res \f$
+	
+	\note As a rule-of-thumb, the search procedure is supposed to reach the convergence 
+	if \f$ Res<<10^{-2} \f$.
+	</li> 
+</ol>
+
+\section module_asr Multiaxial Stress Test Module (keyword: ASR)
+
+The Multiaxial Stress Test Module prescribes a generic stress loading on a virtual sample.
+Several subsequent deformation _steps_ may be imposed; 
+each step imposes a certain (constant) stress mode for a certain deformation (which may be infinitesimally small).
+
+A specific _sample reference frame_ (with x-, y- and z-axes) is associated to the virtual sample.
+The imposed stress state is described with reference to this sample reference frame.
+
+\subsection configuration_asr Module-specific configuration
+
+<ol>
+<li> \confdef{reference_frame,real} specifies the orientation of the sample reference frame of the virtual specimen, in format specified in \ref euler_option.
+</li>
+<li> \confdef{n_steps,integer} sets the number of subsequent deformation steps, each one being specified by the configuration settings 3.-4. and their optional subsettings.
+These settings are repeated \conffield{n_steps} times in configuration file, in the same order as they are to be applied to the virtual sample.
+</li>
+<li> \confdef{stress_mode,real} specifies the imposed stress mode for given step, with reference to the sample (`xyz`) reference frame, and in format specified in \ref symsrtensor_option. 
+Note that the hydrostatic part of the imposed stress mode is ignored, as well as its norm.
+</li>
+<li> \confdef{update_state,real} is a switch that controls update of material state for given step. When set to `False` then \conffield{stress_mode}
+is merely queried without finite deformation and without associated evolution of state. Otherwise a finite deformation has to be specified as follows:
+	<ol>
+	<li> \confdef{incrementation_type,string} specifies how the deformation increments will be calculated. If \conffield{incrementation_type} is equal to 
+		<ul>
+			<li> `StrainTensor`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
+			\f$ \| \Delta\boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
+			</li>
+			<li> `PlasticWork`, the plastic work per increment \f$ \Delta W =  \f$  \conffield{increment_magnitude}.
+			</li>
+		</ul>
+	</li>
+	<li> \confdef{total_magnitude,real} provides maximal deformation (as specified by \conffield{incrementation_type}) to be reached in the virtual test.
+	</li>
+	<li> \confdef{increment_magnitude,real} sets the magnitude of deformation increments. Note that the last increment may have a smaller magnitude than specified
+	in order to reach exactly \conffield{total_magnitude}.
+	</li>
+	</ol>
+</li>
+</ol>
+
+\par Example
+Please see the configuration file `AKDQf_asr.cfg` from `examples` directory:
+\includelineno AKDQf_asr.cfg
+
+\todo This manual section is still under preparations.
+
+\subsection output_asr Module-specific output
+
+The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting of:
+<ol>
+	<li> \outdef{step} The deformation step sequence number
+	</li>
+	
+	<li> \outdef{increment} The increment sequence number of the current deformation step
+	</li>
+	
+	<li> \outdef{eps_vM} The von Mises equivalent strain of the current step 
+	\f$ \epsilon_{vM,step} \f$
+	
+	It is derived from the strain tensor of current step \f$ \boldsymbol{\epsilon}_{step} \f$ as: 
+	\f[ 
+		\epsilon_{vM,step}=\sqrt{2/3} \| \boldsymbol{\epsilon}_{step} \| 
+	\f]
+	</li>
+	
+	<li> \outref{Pnorm}
+	</li>
+	
+	<li> \outdef{eps_total_vM} The von Mises equivalent strain of the total strain along all past increments 
+	\f$ \\epsilon_{vM,step} \f$
+	
+	It is derived from the strain tensor of current step \f$ \boldsymbol{\epsilon}_{step} \f$ as: 
+	\f[ 
+		\epsilon_{vM,total}=\sqrt{2/3} \| \sum_{i=1}^{N increments} \Delta \boldsymbol{\epsilon}_{i} \| 
+	\f]
+	</li>
+	
+	<li> \outref{W}
+	</li>
+	
+	<li> \outref{dotW}
+	</li>
+	
+	<li> \outref{M-factor}
+	</li>
+	
+	<li> \outdef{scal_s} The norm of a normalized deviatoric stress 
+	</li>
+	
+	<li> \outref{S, norm_SonA}  
+	</li>
+	
+	<li> \outref{residual}
+	</li>
+	
+	<li> \outdef{S_11} A component of the deviatoric stress tensor \f$ \mathbf{S} \f$ 
+	in the material (`123`) reference frame
+	</li>
+	<li> \outdef{S_22} Similar to \ref S_11 
+	</li>
+	<li> \outdef{S_33} Similar to \ref S_11 
+	</li>
+	<li> \outdef{S_12} Similar to \ref S_11 
+	</li>
+	<li> \outdef{S_23} Similar to \ref S_11 
+	</li>
+	<li> \outdef{S_13} Similar to \ref S_11 
+	</li>
+	
+	<li> \outdef{S_xx} A component of the deviatoric stress tensor \f$ \mathbf{S} \f$ 
+	in the sample (`xyz`) reference frame
+	</li>
+	<li> \outdef{S_yy} Similar to \ref S_xx 
+	</li>
+	<li> \outdef{S_zz} Similar to \ref S_xx 
+	</li>
+	<li> \outdef{S_xy} Similar to \ref S_xx 
+	</li>
+	<li> \outdef{S_yz} Similar to \ref S_xx 
+	</li>
+	<li> \outdef{S_xz} Similar to \ref S_xx 
+	</li>
+	
+	<li> \outdef{A_11} A component of the strain mode tensor \f$ \mathbf{A} \f$ in 
+	the material (`123`) reference frame
+	
+	It is derived from the strain rate tensor \f$ \mathbf{D} \f$ as 
+	\f[ 
+		\mathbf{A}=\frac{\mathbf{D}}{\| \mathbf{D} \|} 
+	\f]
+	</li>
+	<li> \outdef{A_22} Similar to \ref A_11 
+	</li>
+	<li> \outdef{A_33} Similar to \ref A_11 
+	</li>
+	<li> \outdef{A_12} Similar to \ref A_11 
+	</li>
+	<li> \outdef{A_23} Similar to \ref A_11 
+	</li>
+	<li> \outdef{A_13} Similar to \ref A_11 
+	</li>
+
+	<li> \outdef{A_xx} A component of the strain mode tensor \f$ \mathbf{A} \f$ in 
+	the sample (`xyz`) reference frame
+	</li>
+	<li> \outdef{A_yy} Similar to \ref A_xx 
+	</li>
+	<li> \outdef{A_zz} Similar to \ref A_xx 
+	</li>
+	<li> \outdef{A_xy} Similar to \ref A_xx 
+	</li>
+	<li> \outdef{A_yz} Similar to \ref A_xx 
+	</li>
+	<li> \outdef{A_xz} Similar to \ref A_xx 
+	</li>
+
+	<li> \outdef{eps_11} A component of the strain tensor of current step 
+	\f$ \Delta \boldsymbol{\epsilon}_{step} \f$ in the material (`123`) reference frame 
+	</li>
+	<li> \outdef{eps_22} Similar to \ref eps_11 
+	</li>
+	<li> \outdef{eps_33} Similar to \ref eps_11 
+	</li>
+	<li> \outdef{eps_12} Similar to \ref eps_11 
+	</li>
+	<li> \outdef{eps_23} Similar to \ref eps_11 
+	</li>
+	<li> \outdef{eps_13} Similar to \ref eps_11 
+	</li>
+
+	<li> \outdef{eps_xx} A component of the strain tensor of current step 
+	\f$ \Delta \boldsymbol{\epsilon}_{step} \f$ in the sample (`xyz`) reference frame 
+	</li>
+	<li> \outdef{eps_yy} Similar to \ref eps_xx 
+	</li>
+	<li> \outdef{eps_zz} Similar to \ref eps_xx 
+	</li>
+	<li> \outdef{eps_xy} Similar to \ref eps_xx 
+	</li>
+	<li> \outdef{eps_yz} Similar to \ref eps_xx 
+	</li>
+	<li> \outdef{eps_xz} Similar to \ref eps_xx 
+	</li>
+
+	<li> \outdef{eps_tot_11} A component of the strain tensor 
+	\f$ \boldsymbol{\epsilon} \f$ in the material (`123`) reference frame  
+	</li>
+	<li> \outdef{eps_tot_22} Similar to \ref eps_tot_11 
+	</li>
+	<li> \outdef{eps_tot_33} Similar to \ref eps_tot_11 
+	</li>
+	<li> \outdef{eps_tot_12} Similar to \ref eps_tot_11 
+	</li>
+	<li> \outdef{eps_tot_23} Similar to \ref eps_tot_11 
+	</li>
+	<li> \outdef{eps_tot_13} Similar to \ref eps_tot_11 
+	</li>
+
+	<li> \outdef{eps_tot_xx} A component of the strain tensor 
+	\f$ \boldsymbol{\epsilon} \f$ in the sample (`xyz`) reference frame   
+	</li>
+	<li> \outdef{eps_tot_yy} Similar to \ref eps_tot_xx 
+	</li>
+	<li> \outdef{eps_tot_zz} Similar to \ref eps_tot_xx 
+	</li>
+	<li> \outdef{eps_tot_xy} Similar to \ref eps_tot_xx 
+	</li>
+	<li> \outdef{eps_tot_yz} Similar to \ref eps_tot_xx 
+	</li>
+	<li> \outdef{eps_tot_xz} Similar to \ref eps_tot_xx 
+	</li>
+</ol>
+
+\section module_qrs Uniaxial Anisotropy Module (keyword: QRS)
+
+The Uniaxial Anisotropy Module provides Lankford coefficients (in two variants: q-values and r-values; cf. below) and normalized uniaxial yield stresses (s-values), 
+for a specified range of in-plane directions, and under tensile loading. These properties are queried for the virtual microstructure in the given state without 
+any finite deformation imposed. There is no evolution of state associated with this module.
+
+For each loading case, a _sample reference frame_ (with x-, y- and z-axes) is associated to the virtual sample.
+The loading direction is aligned with the sample x-axis, by convention.
+The x-axis is contained to the material 1-2-plane (RD-TD-plane).
+The sample y-axis is also contained in the material 1-2-plane (RD-TD-plane).
+The sample z-axis is aligned with the material 3-direction (ND).
+
+\subsection configuration_qrs Module-specific configuration
+
+<ol>
+<li> \confdef{sample_orientation_range,real} defines the range for the orientation of virtual tensile specimen, in multi-line format specified in 
+\ref range_option. Orientations in the range denote the angle between the sample x-axis and the material 1-direction, and are expressed in degrees. 
+</li>
+<li> \conffield{pure_uniaxial_state} is defined [here](@ref pure_uniaxial_state_anchor).
+</li>
+<li> \confdef{calculate_Mfactor,logical} is a flag to request calculation of average Taylor factor in module-specific outputfile. If `True`, it may
+increase calculation time for certain model assumptions.
+</li>
+<li> \confdef{fold_symmetry,logical} enables or disables averaging of output variables over symmetrically equivalent positions. 
+</li>
+</ol>
+
+\par Example
+Please see the configuration file `AKDQf_qrs.cfg` from `examples` directory:
+\includelineno AKDQf_qrs.cfg
+
+\subsection output_qrs Module-specific output
+
+The module-specific outputfile `<output_prefix>.xqrs` makes column-wise reporting of:
+<ol>
+	<li> \outdef{angle} The in-plane orientation angle, as requested in \conffield{sample_orientation_range} 
+	</li>
+	
+	<li> \outdef{rho} The requested imposed stress ratio \f$ \rho \f$, as requested in \conffield{pure_uniaxial_state}. See also \ref stress_ratio_rho 
+	</li>
+	
+	<li> \outref{q-value}
+	</li>
+	
+	<li> \outref{r-value}
+	</li>
+	
+	<li> \outref{s-value}
+	</li>
+	
+	<li> \outref{sigma_xx}
+	</li>
+	
+	<li> \outref{M-factor}
+	</li>
+	
+	<li> \outref{residual}
+	</li>
+</ol>
+
+\section module_yld Yield Locus Module (keyword: YLD)
+
+The Yield Locus Module calculates generic 2-dimensional sections of the yield locus.
+There is no evolution of state associated with this module.
+
+\subsection configuration_yld Module-specific configuration
+
+<ol>
+<li> \confdef{theta_range,real} defines the range for yield locus points according to the multi-line format specified in 
+\ref range_option. Angles in the field \conffield{theta_range} are expressed in degrees and are measured from the 1st  
+section base vector towards the 2nd section base vector. 
+</li>
+<li> \confdef{section_default,logical} is a flag to request default or non-default section definition and yield locus scaling.
+If \conffield{section_default}=`True`, the yield locus section is defined by \f$\sigma_{11}\f$ (normal stress along RD) along the X-axis, 
+and \f$\sigma_{22}\f$ (normal stress along TD) along the Y-axis. Furthermore, the yield locus will be scaled by the yield stress 
+corresponding to uniaxial tension along the RD.
+For \conffield{section_default}=`False`, the following suboptions are required:
+	<ol>
+	<li> \confdef{normalize_base,logical}. If `True`, then the base tensors specified by the following configuration 
+	settings 2.-3.-4. are normalized so their norm is equal to 1.0.
+	</li>
+	<li> \confdef{base_sigma_X,real} is the base tensor along the X-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
+	</li>
+	<li> \confdef{base_sigma_Y,real} is the base tensor along the Y-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
+	</li>
+	<li> \confdef{base_sigma_offset,real} is the base tensor that determines the mode of the stress that coincides with the origin of the 
+	yield locus section, in [Voigt notation](@ref symsrtensor_option).
+	</li>
+	<li> \confdef{normalize_stress,logical}
+	</li>
+	<li> \confdef{offset_range,real}
+	</li>
+	<li> \confdef{use_scaling,logical}
+		<ol>
+		<li> \confdef{scaling_stress_mode,real} is the stress mode for which the yield point is used as scaling factor, 
+		in [Voigt notation](@ref symsrtensor_option).
+		</li>
+		</ol>
+	</li>
+	</ol>
+</li>
+</ol>
+
+
+\par Example
+Please see the configuration file `AKDQf_yld.cfg` from `examples` directory:
+\includelineno AKDQf_yld.cfg
+
+\par Example
+Please see the configuration file `sid1687f_yld.cfg` from `examples` directory:
+\includelineno sid1687f_yld.cfg
+
+The initial lines 1 - 12 belong to the \ref page_alamdmc_generic. 
+
+
+
+\subsection output_yld Module-specific output
+
+The module-specific outputfile `<output_prefix>.xyld` makes column-wise reporting of:
+<ol>
+	<li> \outdef{theta,yldout_theta} The angle \f$ \theta \f$ corresponding to a yield locus 
+	point, as requested in \conffield{theta_range}, expressed in degrees.
+	</li>
+	
+	<li> \outdef{w} The multiplier for the yield locus offset tensor, as requested in 
+	\conffield{offset_range} 
+	</li>
+	
+	<li> \outdef{sigma} The radial coordinate of the yield locus point
+	</li>
+	
+	<li> \outdef{sigma_scaled} The radial coordinate of the normalized yield locus point
+	</li>
+	
+	<li> \outref{S, norm_SonA}
+	</li>
+	
+	<li> \outref{dotW}
+	</li>
+	
+	<li> \outdef{sigma_x} The 1st Cartesian coordinate of the normalized yield locus point 
+	\f$ \sigma_X \f$ 
+	</li>
+	
+	<li> \outdef{sigma_y} The 2nd Cartesian coordinate of the normalized yield locus point 
+	\f$ \sigma_Y \f$ 
+	</li>
+	
+	<li> \outdef{dsigma_x} The 1st Cartesian coordinate of the local yield locus normal 
+	\f$ A_X \f$ 
+	</li>
+	
+	<li> \outdef{dsigma_y} The 2nd Cartesian coordinate of the local yield locus normal 
+	\f$ A_Y \f$ 
+	</li>
+	
+	<li> \outdef{beta} The angle \f$ \beta \f$ from X-axis to the projection of tensor 
+	\f$ \mathbf{A} \f$ into section, expressed in degrees.   
+	It is given as \f$ \beta= \arctan(\frac{A_Y}{A_X}) \f$.
+	</li>
+	
+	<li> \outref{residual}
+	</li>
+</ol>
+
+\section module_ewc Equiwork Contour Module (keyword: EWC)
+
+The Equiwork Contour Module produces generic sections of equi-work contours in stress space.
+Equi-work contour points are calculated from a series of monotonic stress loading cases within the requested 2-dimensional section of stress space.
+The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locus in the initial state of material.
+
+\subsection configuration_ewc Module-specific configuration
+
+<ol>
+<li> \confdef{worklevel_selection_method,string}
+	if \conffield{worklevel_selection_method} is equal to
+	<ul>
+	<li> `direct`, the equi-work contour levels are specified directly as a range of plastic work values with \conffield{contour_levels_range}.
+	</li>
+	<li> `reference`, the equi-work contour levels are selected indirectly, on the basis of a reference test. The values of plastic work 
+	used as contour levels are those for which the von Mises equivalent strain \f$ \epsilon_{vM} \f$ of the reference test are specified 
+	by \conffield{contour_levels_range}. 
+	The reference test is specified by the following suboptions: 
+		<ol>
+		<li> \confdef{stress_mode,real} specifies the imposed stress mode of the reference test, in format specified in \ref symsrtensor_option.
+		</li>
+		<li> \confdef{incrementation_type,string} specifies how the deformation increments of the reference test will be calculated. If \conffield{incrementation_type} is equal to 
+		<ul>
+			<li> `StrainTensor`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
+			\f$ \| \Delta\boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
+			</li>
+			<li> `PlasticWork`, the plastic work per increment \f$ \Delta W =  \f$  \conffield{increment_magnitude}.
+			</li>
+		</ul>
+		</li>
+		<li> \confdef{total_magnitude,real} provides maximal deformation (as specified by \conffield{incrementation_type}) 
+		to be simulated in the reference test. 
+		A proper selection of contour levels implies \conffield{total_magnitude} to be equal or greater than the largest value
+		of \conffield{contour_levels_range}.
+		</li>
+		<li> \confdef{increment_magnitude,real} sets the magnitude of deformation increments for the reference test. 
+		Note that the last increment
+		may have a smaller magnitude than specified in order to reach exactly \conffield{total_magnitude}.
+		</li>
+		</ol>
+	</li>
+	</ul>
+</li>
+<li> \confdef{contour_theta_range,real} defines the range for equi-work contour points according to the multi-line format specified in 
+\ref range_option. Angles in the field \conffield{contour_theta_range} are expressed in degrees and are measured from the 1st  
+section base vector towards the 2nd section base vector. 
+</li>
+<li> \confdef{contour_levels_range,real} defines the values for the levels of equi-work contours, according to 
+\conffield{worklevel_selection_method}.
+</li>
+<li> \confdef{points_per_contour,integer} sets the number of increments to be performed in-between two subsequent contour levels,
+ for all virtual tests that generate the equi-work contour levels.
+</li>
+<li> \confdef{use_default_settings,logical} specifies whether or not the default section in stress space is to be used. 
+If \conffield{use_default_settings}=`True`, the equi-work contour section is defined by \f$\sigma_{11}\f$ (normal stress along RD) along the X-axis, 
+and \f$\sigma_{22}\f$ (normal stress along TD) along the Y-axis.
+For \conffield{use_default_settings}=`False`, the following suboptions are required:
+	<ol>
+	<li>  \confdef{base_sigma_X,real} is the base tensor along the X-axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
+	</li>
+	<li>  \confdef{base_sigma_Y,real} is the base tensor along the Y-axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
+	</li>
+	</ol>
+</li>
+</ol>
+
+\par Example
+Please see the configuration file `AKDQf_ewc.cfg` from `examples` directory:
+\includelineno AKDQf_ewc.cfg
+
+\subsection output_ewc Module-specific output
+
+The module-specific outputfile `<output_prefix>_ewc.ewc` makes column-wise reporting of:
+<ol>
+	<li> \outdef{theta} The angle \f$ \theta \f$ corresponding to a equi-work contour 
+	point, as requested in \conffield{theta_range}, expressed in degrees
+	</li>
+	
+	<li> \outdef{S,yld_S} The radial coordinate of the equi-work contour point, for requested 
+	values of:
+	- plastic work \f$ W \f$ (if \conffield{worklevel_selection_method}=`direct`), or
+	- von Mises equivalent strain \f$ \epsilon_{vM} \f$ of the reference test 
+	  (if \conffield{worklevel_selection_method}=`reference`)
+
+	This column is repeated for each of requested contours.
+	</li>
+</ol>
+
+If \conffield{worklevel_selection_method}=`reference`, two additional output files are 
+generated: `<output_prefix>_reference.ewc` and `<output_prefix>_contours.ewc`. 
+Whereas the rows in `<output_prefix>_reference.ewc` correspond to the increments of the 
+reference test, the rows in `<output_prefix>_contours.ewc` correspond to the contour 
+levels as requested in \conffield{increment_magnitude}.
+Both these outputfiles make column-wise reporting of:
+<ol>
+	<li> \outref{eps_vM}
+	</li>
+	
+	<li> \outref{W} 
+	</li>
+</ol>
+
+*/

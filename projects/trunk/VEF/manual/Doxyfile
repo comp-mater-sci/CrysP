@@ -794,8 +794,11 @@ WARN_LOGFILE           =
 INPUT                  = mainpage.dox \
                          user_reference.dox \
                          conventions.md \
-                         configuration.dox \
                          expert_mode.md \
+						 alamdmc_usage.dox \
+						 alamdmc_format.dox \
+						 alamdmc_generic.dox \						 
+						 alamdmc_modules.dox \
                          simple_mode.md \
                          utilities.dox \
                          tutorials.dox \

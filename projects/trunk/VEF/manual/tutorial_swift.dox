@@ -99,7 +99,7 @@ It looks as follows:
 We want to identify hardening parameters for ALAMEL multi-scale model (line 8)
 with 24 BCC slip systems (line 9).
 The non-hardening behavior is accomplished by the default hardening settings (line 11),
-as can be cross-checked with @ref configuration_general.
+as can be cross-checked with @ref page_alamdmc_generic.
 
 The 0°-tensile test is easily configured with the \ref module_udsa.
 We can see that, besides specifying a single, in-plane tensile test along 0° to RD (lines 16-19 and line 23),
