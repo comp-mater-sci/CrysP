@@ -158,23 +158,20 @@ The output files make column-wise reporting of:
 	
 	It is defined as 
 	\f[ 
-		q_i = \frac{-D_{22}}{D_{11}} 
+		q_i = \frac{-D_{yy}}{D_{xx}} 
 	\f] 
-	where \f$D_{22}\f$ and \f$D_{11}\f$ are the strain rates in the width and tensile 
-	directions, respectively. It relates to the instantaneous r-value as: 
-	\f[ 
-		q_i = \frac{r_i}{1+r_i} 
-	\f]
+	where \f$D_{yy}\f$ and \f$D_{xx}\f$ are the strain rates in the width and tensile 
+	directions, respectively. It relates to the instantaneous r-value as \f$ q_i = \frac{r_i}{1+r_i} \f$.
 	</li> 
 
 	<li> \outdef{r-value} The instantaneous r-value \f$ r_i \f$ 
 	
-	It is defined as \f$ r_i = \frac{D_{22}}{D_{33}} \f$ 
-	where \f$D_{22}\f$ and \f$D_{33}\f$ are the strain rates in the width and thickness 
-	directions, respectively. It relates to the instantaneous q-value as:
+	It is defined as 
 	\f[ 
-		r_i = \frac{q_i}{1-q_i} 
-	\f].
+		r_i = \frac{D_{yy}}{D_{zz}} 
+	\f] 
+	where \f$D_{yy}\f$ and \f$D_{zz}\f$ are the strain rates in the width and thickness 
+	directions, respectively. It relates to the instantaneous q-value as \f$ r_i = \frac{q_i}{1-q_i} \f$.
 	</li> 
 
 	<li> \outdef{s-value} A normalised flow stress \f$ s \f$
@@ -182,23 +179,22 @@ The output files make column-wise reporting of:
 
 	<li> \outdef{q-valueA} The (strain-based) q-value \f$ q \f$ 
 	
-	It is defined as \f$ q = \frac{-\epsilon_{22}}{\epsilon_{11}} \f$ 
-	where \f$\epsilon_{22}\f$ and \f$\epsilon_{11}\f$ are the strains in the width and 
-	tensile directions, respectively. It relates to the r-value as:
+	It is defined as 
 	\f[ 
-		q = \frac{r}{1+r} 
-	\f]
+		q = \frac{-\epsilon_{yy}}{\epsilon_{xx}} 
+	\f] 
+	where \f$\epsilon_{yy}\f$ and \f$\epsilon_{xx}\f$ are the strains in the width and 
+	tensile directions, respectively. It relates to the r-value as \f$ q = \frac{r}{1+r} \f$.
 	</li> 
 
 	<li> \outdef{r-valueA} The (strain-based) r-value \f$ r \f$ 
 	
 	It is defined as: 
 	\f[ 
-		r = \frac{\epsilon_{22}}{\epsilon_{33}} 
+		r = \frac{\epsilon_{yy}}{\epsilon_{zz}} 
 	\f] 
-	where \f$\epsilon_{22}\f$ and \f$\epsilon_{33}\f$ are the strains in the width and 
-	thickness directions, respectively. It relates to the q-value as 
-	\f$ r = \frac{q}{1-q} \f$.
+	where \f$\epsilon_{yy}\f$ and \f$\epsilon_{zz}\f$ are the strains in the width and 
+	thickness directions, respectively. It relates to the q-value as \f$ r = \frac{q}{1-q} \f$.
 	</li>
 
 	<li> \outdef{S, norm_SonA} The norm of deviatoric stress that corresponds to plastic strain mode:
