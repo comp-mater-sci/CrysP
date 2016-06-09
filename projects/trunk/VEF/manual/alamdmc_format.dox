@@ -31,18 +31,23 @@ Additionally, the configuration files can include comments that are ignored by t
 
 Generally, the user is supposed to provide correct configuration files. Although the program attempts some rudimentary detection of errors and mistakes in the configuration file, the user is advised not to rely on that feature. 
 
-The configuration file of any module consists of two main parts:
+\section alamdmc_format_structure Configuration File Structure
 
- -# general configuration settings, and 
+The configuration file is structured in two consecutive parts, as follows:
+
+ -# generic configuration settings, and 
  -# settings related to the specific module.
 
 Only the second part varies from one module to another. For instance, let's have a look at the configuration file `AKDQf_asr.cfg` located in `examples` directory. The file contains:
 \includelineno AKDQf_asr.cfg
  
-As in the example above, a first part of the configuration file relates to the general 
-configuration, while a following part pertains to module-specific configuration.
+As in the example above, a leading part of the configuration file (up to line 21) relates to the generic 
+configuration, while a trailing part (from line 25 onwards) pertains to module-specific configuration.
 
-Basically, any line may include one or more _field_, possibly each one of different type. 
+\section alamdmc_format_configoptions Configuration Options
+
+Any line in the configuration file that is not a comment line, is a _configuration option_.
+A configuration option consists of one or more _fields_, possibly each one of different type. 
 In this manual we follow the convention that field names are typeset with the 
 \conffield_typeset{bold typewriter} fonts. A declaration of the field always involves 
 giving its type, which can be one of: `path`, `string`, `logical`, `integer`  or `real` 
@@ -51,45 +56,46 @@ We shall follow the convention that the type of the field is embraced within par
 For instance, the declaration \confdef{example_field,integer} defines a field of type 
 `integer` called \conffield_typeset{example_field}.
 
-Any _configuration option_ may belong to one of the two groups:
--# single-line options: such options always occupy exactly one line in the configuration 
+Any configuration option belongs to one of the two groups:
+-# _single-line options_: such options always occupy exactly one line in the configuration 
    file. One or more fields per line is allowed. 
--# multi-line options: depending on the values of the fields in the first line, 
+-# _multi-line options_: depending on the values of the fields in the first line, 
    __zero or more__ subsequent lines may follow. As in the case of the single-line 
    options, any line may contain one or more fields.
 
-\section alamdmc_format_configoptions Special Configuration Options   
+There are a number of recurrent configuration options that deserve some more explanation: 
    
-\subsection range_option  Options for expressing range of values
-A special kind of option is used for defining ranges of values. The range option is in 
-most cases multi-line. The first line contains \confdef{range_type,string}, which 
-determines the interpretation of the subsequent lines. Supported values of 
+\subsection range_option  Configuration option for expressing range of values
+This is a multi-line configuration option of one or more lines. The first line contains: 
+<ol>
+<li>\confdef{range_type,string}, which 
+determines the interpretation of the subsequent (zero or more) lines. Supported values of 
 \conffield{range_type} are: `zero`, `one`, `single`, `discrete`, `uniform`, `biased`, 
 `doublebiased` and `multibiased`, each one invoking a variant of the range option:
-<ol>
-<li> **zero**: \anchor option_zero a range that consists of a single value equal to 0.0 
+<ul>
+<li> \anchor option_zero `zero`: a range that consists of a single value equal to 0.0 
     (zero)
 
-The only line of the option contains the keyword `zero`.
+This variant has no subsequent lines.
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
 zero            # Equivalent to: 0.0
 ~~~~~~~~~~~~~
 </li>
 
-<li> **one**: \anchor option_one a range that consists of a single value equal to 1.0 
+<li> \anchor option_one `one`: a range that consists of a single value equal to 1.0 
     (one)
 
-The only line of the option contains the keyword `one`.
+This variant has no subsequent lines.
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
 one             # Equivalent to: 1.0
 ~~~~~~~~~~~~~
 </li>
 
-<li> **single**:  \anchor option_single a single value
+<li> \anchor option_single `single`: a range that consists of a single value
 
-The first line of the option contains the keyword `single`. The next line must contain one 
+Following the first line of the option that contains the keyword `single`, the next line must contain one 
 single field \confdef{value,real}.
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
@@ -98,9 +104,9 @@ single             # One data point
 ~~~~~~~~~~~~~
 </li>
 
-<li> **discrete**: \anchor option_discrete an explicitly specified set of values.
+<li> \anchor option_discrete `discrete`: an explicitly specified set of values
 
-The first line of the option contains the keyword `discrete`. The next line must contain 
+Following the first line of the option that contains the keyword `discrete`, the next line must contain 
 one field \confdef{npoints,integer}. The subsequent line(s) must provide 
 \conffield{npoints} real values.  
 \par Example:
@@ -113,9 +119,9 @@ discrete             # Discrete data points
 
 \attention Comment lines are <em>not allowed</em> if they break a single data line containing multiple values into two or more lines. In particular, they must not be used to break `realarray` compound data.
 </li>
-<li> **uniform**: \anchor option_uniform uniformly distributed points within a closed interval.
+<li> \anchor option_uniform `uniform`: a range of uniformly distributed points within a closed interval
 
-The first line of the option contains the keyword `uniform`. The next line must contain 
+Following the first line of the option that contains the keyword `uniform`, the next line must contain 
 three fields:
 - \confdef{range_begin,real}  
 - \confdef{range_end,real}  
@@ -132,10 +138,10 @@ uniform          # uniformly distributed points
 ~~~~~~~~~~~~~
 </li>
 
-<li> **biased**: \anchor option_biased non-uniformly distributed points, with the density
-higher at one of the endpoints. 
+<li> \anchor option_biased `biased`: a range of non-uniformly distributed points, with the density
+higher at one of the endpoints 
 
-The first line contains the keyword `biased`. The second line contains three fields: 
+Following the first line of the option that contains the keyword `biased`, the second line contains three fields: 
 - \confdef{range_begin,real,biased_range_begin} 
 - \confdef{range_end,real,biased_range_end} 
 - \confdef{ratio,real,biased_ratio}.
@@ -161,7 +167,7 @@ biased         # unevenly distributed points, single bias
 ~~~~~~~~~~~~~
 </li>
 
-<li> **double-biased**: \anchor option_doublebiased non-uniformly distributed points, 
+<li> \anchor option_doublebiased `double-biased`: non-uniformly distributed points, 
 with the density either higher or lower at the endpoints. 
 
 The double-biased range gives basically a sequence of points that would result from two 
@@ -175,7 +181,7 @@ Conversely, if (0.0 &lt;  \conffield{ratio,biased_ratio} &lt;  1.0) the most ref
 will be put next to the endpoints of the range. Note that the mid-point of the interval is 
 always included in the sequence of points defined by the double-biased range.   
 
-The keyword `doublebiased` must be given in the first line.  The second line contains 
+Following the first line of the option that contains the keyword `double-biased`, the second line contains 
 three fields: 
 - \confdef{range_begin,real,doublebiased_range_begin}
 - \confdef{range_end,real,doublebiased_range_end}
@@ -198,10 +204,10 @@ doublebiased     # unevenly distributed points, double-biased
 7                # number_of_points=7
 ~~~~~~~~~~~~~
 </li>
-<li> **multi-biased**: \anchor option_multibiased non-uniformly distributed points, with 
+<li> \anchor option_multibiased `multi-biased`: a range of non-uniformly distributed points, with 
 arbitrarily selected biased sub-ranges.
 
-The option requires the keyword `multibiased` in the first line. The second line consists 
+Following the first line of the option that contains the keyword `multibiased`, the second line consists 
 of one field \confdef{range_begin,real,multibiased_range_begin}, and the third line 
 contains one field \confdef{number_of_ranges,integer}.
 The value of the field \conffield{number_of_ranges} defines how many sub-ranges are 
@@ -233,6 +239,8 @@ multibiased      # unevenly distributed points, multi-biased
 3                # subrange 2: subrange_number_of_points=3
 ~~~~~~~~~~~~~
 </li>
+</ul>
+</li>
 </ol>
 
 \par Hint 
@@ -243,45 +251,61 @@ the last step can be selected shorter.  However, it is possible to define a unif
 with evenly distributed points. To do so, one can declare a `biased` range with 
 the \conffield{ratio,biased_ratio} equal to 1.0 and the chosen number of points. 
 
-\subsection euler_option  Options for expressing Euler angles.
+\subsection euler_option  Configuration option for expressing Euler angles.
 
 A general description of orientation (of a certain reference frame, of a crystal, etc.) is 
-given by a set of Euler angles. There is one option supported, i.e. Euler angles in Bunge 
+given by a set of Euler angles. All Euler angles are given in Bunge 
 notation and expressed in degrees. This is always a single-line option, comprising three 
-fields of the type `real`: \f$ \phi_1 \f$, \f$ \Phi \f$ and \f$ \phi_2 \f$.
+fields of the type `real`: 
+<ol>
+<li> \f$ \phi_1 \space \Phi \space \phi_2 \f$
+</li>
+</ol>
 
-\subsection symsrtensor_option Options for expressing symmetric second-order tensors
+\par Example:
+~~~~~~~~~~~~~{.cfg}
+0. 45. 0. # Goss orientation
+~~~~~~~~~~~~~ 
+
+\subsection symsrtensor_option Configuration option for expressing symmetric second-order tensors
 
 
-Symmetric second-order tensors are expressed in the configuration files  as vectors in 
-Voigt notation. Let \f$ \mathbf{X} \f$ be a symmetric second-order tensor. 
-The ordering of the tensor terms in the vector is as follows: 
-- \f$ X_{11} \f$, \f$ X_{22} \f$, \f$ X_{33} \f$, \f$ X_{12} \f$, \f$ X_{23} \f$, 
-  \f$ X_{13} \f$; if expressed in the material (`123`) reference frame.
-- \f$ X_{xx} \f$, \f$ X_{yy} \f$, \f$ X_{zz} \f$, \f$ X_{xy} \f$, \f$ X_{yz} \f$, 
-  \f$ X_{xz} \f$; if expressed in the sample (`xyz`) reference frame.
+Symmetric second-order tensors are expressed in the configuration files as vectors in 
+Voigt notation (single-line option). Let \f$ \mathbf{X} \f$ be a symmetric second-order tensor. 
+The ordering of components of \f$ \mathbf{X} \f$ is then as follows: 
+<ol>
+<li> \f$ X_{11} \space X_{22} \space X_{33} \space X_{12} \space X_{23} \space X_{13} \f$ </li>
+</ol> if \f$ \mathbf{X} \f$ is expressed in the material (`123`) reference frame.
+<ol>
+<li> \f$ X_{xx} \space X_{yy} \space X_{zz} \space X_{xy} \space X_{yz} \space X_{xz} \f$ </li>
+</ol> if \f$ \mathbf{X} \f$ is expressed in the sample (`xyz`) reference frame.
 
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
 1.0 0.0 0.0 0.0 0.0 0.0 # Reference stress mode
 ~~~~~~~~~~~~~ 
  
-\subsection srtensor_option Options for expressing second-order tensors
-Second-order tensors are expressed in the configuration files as three consequent rows of 
-values, following the order:
-- 1st row:  \f$ X_{11} \f$, \f$ X_{12} \f$, \f$ X_{13} \f$
-- 2nd row:  \f$ X_{21} \f$, \f$ X_{22} \f$, \f$ X_{23} \f$
-- 3rd row:  \f$ X_{31} \f$, \f$ X_{32} \f$, \f$ X_{33} \f$
-
-for \f$ \mathbf{X} \f$ being a second-order tensor.
+\subsection srtensor_option Configuration option for expressing second-order tensors
+Second-order tensors are expressed in the configuration files as a multi-line option of exactly three lines.
+The tensor componenents are ordered as follows:
+<ol>
+<li> \f$ X_{11} \space X_{12} \space X_{13} \f$ </li>
+<li> \f$ X_{21} \space X_{22} \space X_{23} \f$ </li>
+<li> \f$ X_{31} \space X_{32} \space X_{33} \f$ </li>
+</ol>
+for \f$ \mathbf{X} \f$ being a second-order tensor that is expressed in the material (`123`) reference frame, or
+<ol>
+<li> \f$ X_{xx} \space X_{xy} \space X_{xz} \f$ </li>
+<li> \f$ X_{yx} \space X_{yy} \space X_{yz} \f$ </li>
+<li> \f$ X_{zx} \space X_{zy} \space X_{zz} \f$ </li>
+</ol>
+for \f$ \mathbf{X} \f$ being a second-order tensor that is expressed in the sample (`xyz`) reference frame.
 
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
- 0.0 0.0 1.0 # components: 11, 12, 13
- 0.0 0.0 0.0 # components: 21, 22, 23
- 0.0 0.0 0.0 # components: 31, 32, 33
+ 0.0 0.0 1.0 # All tensor components are zero,
+ 0.0 0.0 0.0 #  except 13-component (or xz-component).
+ 0.0 0.0 0.0 #
 ~~~~~~~~~~~~~ 
-
-
 
 */
