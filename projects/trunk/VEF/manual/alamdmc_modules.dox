@@ -694,4 +694,12 @@ Both these outputfiles make column-wise reporting of:
 	</li>
 </ol>
 
+<HR>
+Quick links
+-----------
+\ref page_expert_mode
+- \ref page_alamdmc_usage
+- \ref page_alamdmc_format
+- \ref page_alamdmc_generic
+- \ref page_alamdmc_modules
 */

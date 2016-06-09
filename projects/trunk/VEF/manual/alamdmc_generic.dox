@@ -167,5 +167,13 @@ True               # Flag: attempt to linearize the problem
 1e-5 1e-3          # Default eps for TR-solver, eps for the norm of objective function: ||F||_2
 False              # Flag: use advanced solver settings
 ~~~~~~~~~~~~~
- 
+
+<HR>
+Quick links
+-----------
+\ref page_expert_mode
+- \ref page_alamdmc_usage
+- \ref page_alamdmc_format
+- \ref page_alamdmc_generic
+- \ref page_alamdmc_modules
 */

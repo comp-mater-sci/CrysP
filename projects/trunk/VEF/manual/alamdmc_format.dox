@@ -308,4 +308,13 @@ for \f$ \mathbf{X} \f$ being a second-order tensor that is expressed in the samp
  0.0 0.0 0.0 #
 ~~~~~~~~~~~~~ 
 
+<HR>
+Quick links
+-----------
+\ref page_expert_mode
+- \ref page_alamdmc_usage
+- \ref page_alamdmc_format
+- \ref page_alamdmc_generic
+- \ref page_alamdmc_modules
+
 */

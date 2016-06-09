@@ -24,4 +24,12 @@ alamDMC  YLD  yld_config.cnf
 
 The configuration files of the individual modules are structured in a very similar manner. See \ref page_alamdmc_format for detailed description how to prepare the configuration files, including \ref page_alamdmc_generic and documentation of individual \ref page_alamdmc_modules.
 
+<HR>
+Quick links
+-----------
+\ref page_expert_mode
+- \ref page_alamdmc_usage
+- \ref page_alamdmc_format
+- \ref page_alamdmc_generic
+- \ref page_alamdmc_modules
 */
