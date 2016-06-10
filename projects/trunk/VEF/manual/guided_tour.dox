@@ -162,7 +162,7 @@ Whereas the generic configuration settings (lines 4 - 12) are identical as in th
 <div class="figcaption">Illustration of \f$\theta\f$ angle that the Yield Locus Module uses to select points in yield locus section. The \f$\beta\f$ angle is one of the outputs from the module.</div>
 </div>
 
-In this example we specify a [multi-biased range](@ref option_multibiased) of \f$\theta\f$ angles, which allows us to probe the yield locus more densely in regions where the curvature of the section is expected to be high, and far more coarsely elsewhere. In our example, the denser scan of the yield locus will be around equibiaxial tension point (i.e. \f$\theta = 45^\circ \f$) and equibiaxial compression point (\f$\theta = 205^\circ \f$). However, the equibiaxial tension point will be covered by more points (see the subranges 1 and 4) than the exquibiaxial compression (see the subranges 2 and 3).
+In this example we specify a [multibiased range](@ref option_multibiased) of \f$\theta\f$ angles, which allows us to probe the yield locus more densely in regions where the curvature of the section is expected to be high, and far more coarsely elsewhere. In our example, the denser scan of the yield locus will be around equibiaxial tension point (i.e. \f$\theta = 45^\circ \f$) and equibiaxial compression point (\f$\theta = 205^\circ \f$). However, the equibiaxial tension point will be covered by more points (see the subranges 1 and 4) than the exquibiaxial compression (see the subranges 2 and 3).
 
 The last configuration option (line 27) requests to use the default module settings, which are: 
 - the yield locus section is defined by \f$\sigma_{11} \f$ (normal stress along RD) and \f$\sigma_{22} \f$ (normal stress along TD) directions,

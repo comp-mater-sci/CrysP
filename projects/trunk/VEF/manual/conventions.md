@@ -129,10 +129,7 @@ readability of the documentation concerned:
 
   \eg  \conffield_typeset{example_field} is a field name
   
-- A declaration of a configuration field (or: field declaration) always involves giving its type, 
-  which can be one of: `path`, `string`,`logical`, `integer` or `real` 
-  (trivial data types), or `srtensor`, `symsrtensor`, `realarray` (compound data types). 
-  By convention, the type of the field is embraced within parentheses. 
+- A declaration of a configuration field (or: field declaration) always involves giving its [type] (@ref field_type). By convention, the type of the field is embraced within parentheses.
 
   \eg The declaration \confdef{example_field,string} declares a field of type `string`
 
@@ -140,6 +137,7 @@ readability of the documentation concerned:
   merely seperated by spacing in the documentation, belong to the same 
   configuration option: they need to be provided on a single line of configuration file, 
   and in the same order.
+  
   \par &emsp; Example: 
   \confdef{field1,integer} \confdef{field2,real} is a configuration option 
 	consisting of two fields, the first of type `integer`, and the second of type `real`.<BR>
@@ -167,19 +165,19 @@ readability of the documentation concerned:
   A configuration file section may be documented as follows: 
 	-# \confdef{op1f,integer} is mandatory; it has no value-dependent suboptions.
 	-# \confdef{op2f,string} is mandatory. The field \conffield_typeset{op2f} has 3 supported values:	`xx`, `yy`, and `zz`.
-	 - `xx`<BR>
-  	   If \conffield{op2f}=`xx`, there are two value-dependent suboptions:
-	  -# \confdef{xx_subop2af,real} ...
-	  -# \confdef{xx_subop2bf,logical} ... 
-	   - `True`<BR>
-  	     ... 
-	   - `False`<BR>
-	     ... 
-	 - `yy`<BR>
-	   If \conffield{op2f}=`yy`, there are no suboptions.
-	 - `zz`<BR>
-	   If \conffield{op2f}=`zz`, there is one 
-	   value-dependent suboption:
-	  -# \confdef{zz_subop2af,integer} ...
+	  - `xx`<BR>
+  	    If \conffield{op2f}=`xx`, there are two value-dependent suboptions:
+	    -# \confdef{xx_subop2af,real} ...
+	    -# \confdef{xx_subop2bf,logical} ... 
+	      - `True`<BR>
+  	        ... 
+	      - `False`<BR>
+	        ... 
+	  - `yy`<BR>
+	    If \conffield{op2f}=`yy`, there are no suboptions.
+	  - `zz`<BR>
+	    If \conffield{op2f}=`zz`, there is one 
+	    value-dependent suboption:
+	    -# \confdef{zz_subop2af,integer} ...
 	-# \confdef{op3f,real} is mandatory; it has no value-dependent suboptions.
 
