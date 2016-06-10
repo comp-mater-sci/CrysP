@@ -13,7 +13,7 @@ such as Swift law and single- or double-stage Voce laws.
 As example, we use stress-strain data of a uniaxial tensile test along RD to identify the micro-scale Swift law for DX51D material.
 
 \note
-A similar procedure as shown next may be followed for Voce law or any other micro-scale hardening law that prescribes \f$\tau(\gamma)\f$.
+A similar procedure may also be followed for Voce law or any other micro-scale hardening law that prescribes \f$\tau(\gamma)\f$.
 The methodology can also be readily adapted for identification against another (single) monotonic test.
 
 The micro-scale Swift law postulates the Critical Resolved Shear Stress of a grain \f$\tau\f$ as a function of 
@@ -24,7 +24,7 @@ a single internal state variable, being the accumulated slip \f$ \gamma \f$ of t
 This heuristic hardening law has 3 parameters: \f$\tau_0\f$, \f$\gamma_0\f$ and \f$n\f$.
 
 The experimental data for identification is given in the file `\examples\DX51D_uni0_exp.txt`
-It looks as follows:
+Its contents looks as follows:
 <div class="figure">
 	<span class="zoom">
 		<img class="fullsize" src="DX51D_uni0_exp.png" alt="Experimental stress-strain data from 0° tensile test (DX51D steel)">
@@ -38,8 +38,8 @@ such as the [model type] (@ref model_type) (e.g. Alamel or Taylor)
 and the [definition of slip systems] (@ref slip_system_family).
 Even if the hardening law is the same, the parameters are generally different
 for different multi-scale model assumptions.
-In case several variants of multi-scale model are being studied,
-it is therefore important that the identification procedure is repeated
+So in case several variants of multi-scale model are being studied,
+it is important that the identification procedure is repeated
 for every model variant.
 
 
@@ -51,14 +51,13 @@ The identification strategy consists of three basic steps:
 	<li> __Non-hardening VEF simulation of the identification test__\n
 	
 	A non-hardening VEF simulation is conducted first.
-	It is hereby assumed that the Critical Resolved Shear Stress equals unity independent of the stage deformation.
-	Quantities associated to this non-hardening reference material are denoted by superscript *.
-	So we have for instance the relation \f$ \tau^* \equiv 1 \f$.
-	The tensile stress and the accumulated slip of the non-hardening material are written as \f$ \sigma^*_{xx} \f$ and \f$ \gamma^* \f$, respectively. 
+	It is hereby assumed that the Critical Resolved Shear Stress equals unity, independent of the stage deformation.
+	Quantities associated to this non-hardening reference material are tagged by superscript-star symbol (*).
+	So for instance, we have the relation \f$ \tau^* \equiv 1 \f$, and the tensile stress and accumulated slip of the non-hardening material are written as \f$ \sigma^*_{xx} \f$ and \f$ \gamma^* \f$, respectively. 
 	</li>
 	<li> __Swift parameter identification through curve fitting__\n
 	
-	Parameter identification of the \f$\tau(\gamma)\f$ hardening law is based on the *approximate* relationship between the target tensile stress \f$\sigma_{xx}\f$ on one hand,
+	Parameter identification of the \f$\tau(\gamma)\f$ hardening law is based on the *approximate* relationship between the experimental target tensile stress \f$\sigma_{xx}\f$ on one hand,
 	and quantities of the non-hardening material on the other hand:
 	\f[
 	\sigma_{xx} \approx \sigma^*_{xx} \tau(\gamma^*)
@@ -101,7 +100,7 @@ with 24 BCC slip systems (line 9).
 The non-hardening behavior is accomplished by the default hardening settings (line 11),
 as can be cross-checked with @ref page_alamdmc_generic.
 
-The 0°-tensile test is easily configured with the \ref module_udsa.
+The 0° tensile test is easily configured with the \ref module_udsa.
 We can see that, besides specifying a single, in-plane tensile test along 0° to RD (lines 16-19 and line 23),
 we request that increments be made in equal intervals of 0.018 of tensile strain (lines 20 and 22).
 This is far from a random choice; in fact it corresponds  exactly to the strain intervals
@@ -121,7 +120,7 @@ Swift parameter identification through curve fitting
 ====================================================
 
 The output file of the non-hardening VEF simulation is provided in `sid1687f_udsa_hard0.uds` in directory `\guided_tour\Swift`.
-Let's take a look at the leading 5 lines:
+Let's take a glance at the leading 5 lines:
 \dontinclude sid1687f_udsa_hard0.uds
 \until 0.540350518E-01
 
@@ -150,11 +149,10 @@ Verification of parameter identification
 ========================================
 
 The verification step needs only a slight modification to configuration file, 
-see file sid1687f_udsa_`SwiftS.cfg` in directory `\guided_tour\Swift`:
+see file `sid1687f_udsa_SwiftS.cfg` in directory `\guided_tour\Swift`:
 \includelineno sid1687f_udsa_SwiftS.cfg
-The [Swift law variant] (@ref hardening_model3), defined in the lines 12-13.
-An additional modification is the reduction of increment size (line 24);
-this will give us a smoother stress-strain curve prediction of the virtual material.
+The [Swift law variant] (@ref hardening_model3) is defined in the lines 12-13.
+Other modifications are a new output prefix (line 4) and the reduction of increment size (line 24) to give a smoother stress-strain curve prediction of the virtual material.
 
 The output file generated from running this simulation
 is `sid1687f_udsa_SwiftS.uds`, also included in the directory `\guided_tour\Swift`.
