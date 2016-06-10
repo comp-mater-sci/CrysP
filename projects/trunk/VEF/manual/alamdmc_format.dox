@@ -48,13 +48,7 @@ configuration, while a trailing part (from line 25 onwards) pertains to module-s
 
 Any line in the configuration file that is not a comment line, is a _configuration option_.
 A configuration option consists of one or more _fields_, possibly each one of different type. 
-In this manual we follow the convention that field names are typeset with the 
-\conffield_typeset{bold typewriter} fonts. A declaration of the field always involves 
-giving its type, which can be one of: `path`, `string`, `logical`, `integer`  or `real` 
-(trivial data types), or `srtensor`, `symsrtensor`, `realarray` (compound data types). 
-We shall follow the convention that the type of the field is embraced within parentheses. 
-For instance, the declaration \confdef{example_field,integer} defines a field of type 
-`integer` called \conffield_typeset{example_field}.
+There are [specific notation conventions] (@ref convention_configuration) for configuration options, fields and field declarations.
 
 Any configuration option belongs to one of the two groups:
 -# _single-line options_: such options always occupy exactly one line in the configuration 
