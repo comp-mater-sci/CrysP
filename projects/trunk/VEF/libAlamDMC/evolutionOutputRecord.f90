@@ -55,7 +55,7 @@ contains
 
 
     !> Make IncrementOutputRecord from increment data.
-    function IncrementOutputRecord_init(icv, ylp, De, Se, taylor_factor, info) result(this)
+    function IncrementOutputRecord_init(icv, ylp, De, Se, taylor_factor) result(this)
     implicit none
     type(IncrementOutputRecord)                 :: this
     type(IncrementationControlVariables),intent(in) :: icv
@@ -63,7 +63,6 @@ contains
     type(SRTensor),intent(in)                   :: De
     type(SRTensor),intent(in)                   :: Se
     double precision,intent(in)                 :: taylor_factor
-    integer,intent(out)                         :: info
     !
         this%vm_strain = root23 * norm2(icv%vP_step)
         this%vm_strain_total = root23 * norm2(icv%vP_total)
@@ -83,9 +82,7 @@ contains
         this%S_evol = Se
         
         this%icv = icv
-        
-        info = criSuccess
-        
+    !
     end function
 
 end module

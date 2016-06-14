@@ -65,9 +65,18 @@ contains
     integer function StressDrivenEvolutionModule_calculateStressPath(this, sigma, control, outputs, rotmat, &
                                                                      incrementation_control, use_icv_as_is) result(info)
     implicit none
-    class(StressDrivenEvolutionModule),intent(inout) :: this
-    type(SRTensor),intent(in)   :: sigma
+    class(StressDrivenEvolutionModule),intent(inout):: this
+    type(SRTensor),intent(in)                       :: sigma !< Imposed stress tensor
+    !> Settings that control the incrementation process
     class(IncrementationControlSettings),intent(inout) :: control
+    !> Results if the incrementation procedure. 
+    !>
+    !> On successful exit it will include  n+1 entries, where n is the number of
+    !> increments needed to reach the end of the step.
+    !> The leading n contain complete results (search for strain rate
+    !> AND strain incrementation), while the last one just the result of the search for
+    !> the strain rate. Therefore, the last entry corresponds to the state of 
+    !> the material at the end of the step.
     type(EvolutionOutput),intent(out)   :: outputs
     !> Rotation matrix. Relevant only if scalingStrainTensorComponent is used
     double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in),optional  :: rotmat
@@ -81,8 +90,8 @@ contains
     !> (default: false)
     logical,intent(in),optional                         :: use_icv_as_is
     !
-    type(SRTensor) :: D, De, Se, X_tmp, D_retry
-    double precision :: scaling_factor, control_variable, taylor_factor
+    type(SRTensor) :: D, X_tmp, D_retry
+    double precision :: scaling_factor, control_variable, stop_control_variable, taylor_factor, stretch
     type(YLPResult) :: ylp, ylp_retry
     double precision,dimension(alamEval_vSD_dim) :: vDe, vSe
     type(IncrementationControl) :: icv
@@ -91,6 +100,8 @@ contains
     type(xVector_IncrementOutputRecord) :: tmp_output
     type(IncrementOutputRecord)         :: tmp_record
     integer :: increment, i
+    logical :: stop_flag
+    double precision,parameter :: stretch_ratio = 1e-3
     !
         ! Prepare non-default incrementation controls if requested
         if (present(incrementation_control)) then
@@ -98,17 +109,16 @@ contains
             if (.not. optionalDefault(use_icv_as_is, .false.)) call icv%initStep(info)
         endif
         !
+        ! Trick: allow the increment to "stretch" a bit.
+        ! The trick is used in the stop condition of the loop to prevent starting
+        ! a new increment because stop_control_variable - control%step_size gives some
+        ! small positive value. The trick does not eliminate the main cause of that
+        ! drift, which is the accumulation of increment tensor components of different sign.
+        stretch = stretch_ratio * control%increment_size
+        !
         ! Follow the evolution line along S
-        !
-        Se%t = 0.D0
-        De%t = 0.D0
-        !
-        ! main loop over deformation increments
-        increment = 0
+        ! in the main loop over deformation increments
         do
-            !
-            increment = increment + 1
-            !
             call this%onIncrementStart(control, icv, info)
             if (info /= criSuccess) exit
             !
@@ -118,7 +128,7 @@ contains
                 ! Re-attempt, try A from the previous increment as the starting point
                 !
                 ! Pick the most recent converged solution
-                do i = increment-1, 1, -1
+                do i = icv%increment, 1, -1
                     if (tmp_output%values(i)%R < this%ylp%obj_func_eps) then
                         D_retry = tmp_output%values(i)%A
                         exit
@@ -134,65 +144,25 @@ contains
                         ylp = ylp_retry
                     endif
                 endif
-
             endif
             if (info /= 0) exit
             !
-            ! Calculate incrementation control variables
+            ! Nasty hack: drilling a hole to libaltay to get the Taylor factor
+            call getTaylorFactor(1,taylor_factor,info)
             !
-            ! Calculate increment of plastic strain to be imposed for texture evolution: 
-            select case(control%scaling_type)
-            case(scalingStrainTensor)
-                !! -> Scale the vA in order to get ||vA|| = NormIter
-                control_variable = norm2(ylp%vA)
-                !
-            case(scalingPlasticWork)
-                control_variable = ylp%dotWonA
-            !
-            case(scalingStrainTensorComponent)
-                if (present(rotmat)) then
-                    X_tmp = rotateSRTensorFrom(D,rotmat)
-                else
-                    X_tmp = D
-                endif
-                X_tmp_voigt = Mat33ToVec6(X_tmp%t)
-                control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
-            !
-            case default
-                info = criErr_BadArgs
-                exit
-            end select
-            !
-            if (control_variable < epsilon(0.D0)) then
-                  info = criError
-                  exit
-            endif
-            scaling_factor = (control%increment_size / control_variable)
-            
-            !
-            ! Calculate strain increment for material state evolution
-            vDe = ylp%vA * scaling_factor
-            De%t = vec5D2tens(vDe)
-            ! Update material state
-            call makeTextureUpdateStep(De%t,Se%t,taylor_factor,this%output%outputRequest,info)
-            if (info /= 0) exit !< \fixme Literal constant in makeTextureUpdateStep
-            vSe = tens2vec5D(Se%t)
-            !
-            ! Add output record to the list
+            ! Make output record and prepare variables for updating icv
             tmp_record = IncrementOutputRecord(icv%IncrementationControlVariables, &
                                                ylp, &
-                                               De, Se, &
-                                               taylor_factor, &
-                                               info)
-            info = xVector_push(tmp_output, tmp_record)
-            if (info /= criSuccess) exit
+                                               SRTensor(), SRTensor(), &
+                                               taylor_factor)
             !
+            ! Check if we start a/another increment
             select case(control%scaling_type)
             case(scalingStrainTensor)
-                if (norm2(icv%vP_step) > control%step_size) exit
+                stop_control_variable = norm2(icv%vP_step)
             !
             case(scalingPlasticWork)
-                if (icv%plastic_work_total > control%step_size) exit
+                stop_control_variable = icv%plastic_work_total
             !    
             case(scalingStrainTensorComponent)
                 ! Get total plastic strain in appropriate reference frame
@@ -200,9 +170,66 @@ contains
                 X_tmp%t = vec5D2tens(icv%vP_step)
                 if (present(rotmat)) X_tmp = rotateSRTensorFrom(X_tmp ,rotmat)
                 X_tmp_voigt = Mat33ToVec6(X_tmp%t)
-                if (abs(X_tmp_voigt(control%selected_tensor_component)) > control%step_size) exit
+                stop_control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
+            case default
+                ! Make sure it stops immediately
+                stop_control_variable = control%step_size + control%increment_size
             !
             end select
+            !
+            stop_flag = stop_control_variable + stretch > control%step_size
+            !
+            if (.not. stop_flag) then
+                !
+                ! Calculate incrementation control variables
+                !
+                ! Calculate increment of plastic strain to be imposed for texture evolution: 
+                select case(control%scaling_type)
+                case(scalingStrainTensor)
+                    !! -> Scale the vA in order to get ||vA|| = NormIter
+                    control_variable = norm2(ylp%vA)
+                    !
+                case(scalingPlasticWork)
+                    control_variable = ylp%dotWonA
+                !
+                case(scalingStrainTensorComponent)
+                    if (present(rotmat)) then
+                        X_tmp = rotateSRTensorFrom(D,rotmat)
+                    else
+                        X_tmp = D
+                    endif
+                    X_tmp_voigt = Mat33ToVec6(X_tmp%t)
+                    control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
+                !
+                case default
+                    info = criErr_BadArgs
+                    exit
+                end select
+                !
+                if (control_variable < epsilon(0.D0)) then
+                      info = criError
+                      exit
+                endif
+                scaling_factor = (control%increment_size / control_variable)
+                !
+                ! Calculate strain increment for material state evolution
+                vDe = ylp%vA * scaling_factor
+                tmp_record%P_inc_evol%t = vec5D2tens(vDe)
+                ! Update material state
+                call makeTextureUpdateStep(tmp_record%P_inc_evol%t, &
+                                           tmp_record%S_evol%t, &
+                                           taylor_factor,&
+                                           this%output%outputRequest, info)
+                if (info /= 0) exit !< \fixme Literal constant in makeTextureUpdateStep
+                vSe = tens2vec5D(tmp_record%S_evol%t)
+            else
+                vDe = 0.D0
+                vSe = 0.D0
+            endif
+            !
+            ! Append the output record
+            info = xVector_push(tmp_output, tmp_record)
+            if (info /= criSuccess) exit
             !
             ! Update icv
             !
@@ -210,7 +237,7 @@ contains
             if (info /= criSuccess) exit
             !
             call this%onIncrementEnd(control, icv, tmp_record, info)
-            if (info /= criSuccess) exit
+            if (stop_flag .or. (info /= criSuccess)) exit
         !
         enddo
         if (info /= criSuccess) return
