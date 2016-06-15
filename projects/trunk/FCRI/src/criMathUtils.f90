@@ -622,6 +622,39 @@ contains
       !
       end subroutine
 
-      
+
+      !> Calculate the real roots of quadratic polynomial given in form
+      !> a^2 x + b x + c = 0
+      !>
+      !> 
+      !> Provides x1 and x2. Both x1 and x2 are guaranteed to be set to a defined value,
+      !> even if no real roots exist and info /= criSuccess is returned.
+      integer function solveQuadraticPolynomial(a, b, c, x) result(n_roots)
+      implicit none
+      double precision,intent(in)   :: a, b, c
+      double precision,dimension(2),intent(out)  :: x
+      !
+      double precision :: delta
+      !
+            ! Satisfy intent(out)
+            x = 0.D0
+            n_roots = 0
+            if (abs(a) > tiny(0.D0)) then
+                  delta = b**2 - 4.D0 * a * c
+                  if (delta >= 0) then
+                        x(1) = 0.5D0 * (-b - sqrt(delta)) / a
+                        x(2) = 0.5D0 * (-b + sqrt(delta)) / a
+                        n_roots = 2
+                  endif
+            else
+                  ! Solve linear equation b x = -c
+                  if (abs(a) > epsilon(0.D0)) then
+                        x(1) = -c / b
+                        n_roots = 1
+                  endif
+            endif
+      !
+      end function
+
 end module
 
