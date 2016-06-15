@@ -111,7 +111,9 @@ contains
                 endif
                 this%use_reference_stress_mode = .true.
                 call IncrementationControlSettings_read(this%control, cnfunit, info, &
-                                                        allowed=[scalingStrainTensor, scalingPlasticWork])
+                                                        allowed=[scalingStrainTensor, &
+                                                                 scalingStrainTensorIncrement, &
+                                                                 scalingPlasticWork])
                 if (info /= criSuccess) return
             case(mode_direct_id)
                 this%use_reference_stress_mode = .false.

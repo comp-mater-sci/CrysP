@@ -99,7 +99,8 @@ contains
     !
     type(xVector_IncrementOutputRecord) :: tmp_output
     type(IncrementOutputRecord)         :: tmp_record
-    integer :: increment, i
+    integer :: increment, i, n_roots
+    double precision,dimension(2) :: xi
     logical :: stop_flag
     double precision,parameter :: stretch_ratio = 1e-3
     !
@@ -158,7 +159,7 @@ contains
             !
             ! Check if we start a/another increment
             select case(control%scaling_type)
-            case(scalingStrainTensor)
+            case(scalingStrainTensor, scalingStrainTensorIncrement)
                 stop_control_variable = norm2(icv%vP_step)
             !
             case(scalingPlasticWork)
@@ -185,9 +186,22 @@ contains
                 !
                 ! Calculate increment of plastic strain to be imposed for texture evolution: 
                 select case(control%scaling_type)
-                case(scalingStrainTensor)
-                    !! -> Scale the vA in order to get ||vA|| = NormIter
+                case(scalingStrainTensorIncrement)
                     control_variable = norm2(ylp%vA)
+                !
+                case(scalingStrainTensor)
+                    ! Find scaling factor x such as 
+                    ! ||vP_step - x vA|| - ||vP_step|| = increment_size   (*)
+                    n_roots = solveQuadraticPolynomial(a=dot_product(ylp%vA, ylp%vA), &
+                                                       b=2*dot_product(ylp%vA, icv%vP_step), &
+                                                       c=dot_product(icv%vP_step, icv%vP_step) - &
+                                                         (control%increment_size + norm2(icv%vP_step))**2, &
+                                                       x=xi)
+                    ! Up to two roots; we pick the largest one;
+                    if (n_roots > 0) control_variable = control%increment_size / maxval(xi(1:n_roots))
+                    ! If control variable is negative (the only way to satisfy (*) is 
+                    ! to decrease the strain), fall back to a less accurate scheme.
+                    if (control_variable < 0.D0) control_variable = norm2(ylp%vA)
                     !
                 case(scalingPlasticWork)
                     control_variable = ylp%dotWonA

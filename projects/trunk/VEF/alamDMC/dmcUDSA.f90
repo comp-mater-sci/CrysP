@@ -165,7 +165,7 @@ contains
             write(outunit,fmt=fmtMsg2Other//'G0.4)') 'Stress ratio:', this%rho
             !
             select case(this%control%scaling_type)
-                case(scalingStrainTensor)
+                case(scalingStrainTensor, scalingStrainTensorIncrement)
                     write(outunit,fmt=500) 'full tensor'
                 case(scalingStrainTensorComponent)
                     write(outunit,fmt=500) 'tensile component'

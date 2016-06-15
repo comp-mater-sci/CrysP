@@ -22,11 +22,13 @@ implicit none
 
     integer,parameter :: scalingStrainTensor = 0, &
                          scalingStrainTensorComponent = 1, &
-                         scalingPlasticWork = 2
+                         scalingPlasticWork = 2, &
+                         scalingStrainTensorIncrement = 3
 
-    integer,parameter :: nscaling_types = 3
+    integer,parameter :: nscaling_types = 4
     type(MapItem),dimension(nscaling_types) :: scaling_type_names = [&
                                                 MapItem('StrainTensor', scalingStrainTensor), &
+                                                MapItem('StrainTensorIncrement', scalingStrainTensorIncrement), &
                                                 MapItem('StrainTensorComponent', scalingStrainTensorComponent), &
                                                 MapItem('PlasticWork', scalingPlasticWork)]
 

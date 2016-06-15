@@ -85,7 +85,9 @@ contains
                 if (.not. readValue(cnfunit, step%update_state)) return
                 if (step%update_state) then
                     call IncrementationControlSettings_read(step%incrementation_control, cnfunit, info, &
-                                                            allowed=[scalingStrainTensor, scalingPlasticWork])
+                                                            allowed=[scalingStrainTensor, &
+                                                                     scalingStrainTensorIncrement, &
+                                                                     scalingPlasticWork])
                     if (info /= criSuccess) return
                 endif
                 end associate
@@ -222,11 +224,11 @@ contains
                                                      A_voigt, A_rot_voigt, &
                                                      P_step_voigt, P_step_rot_voigt, &
                                                      P_total_end_voigt, P_total_end_rot_voigt
-    integer,parameter :: ncolumn_labels = 2 + 9 + 4*2*6, column_width = 15, short_column_width = 9
+    integer,parameter :: ncolumn_labels = 2 + 10 + 4*2*6, column_width = 15, short_column_width = 9
     character(len=column_width),dimension(ncolumn_labels),parameter :: column_labels = &
             [ character(len=column_width) ::  &
                 'step','increment', & ! 2 fields
-                'eps_vM','Pnorm','eps_total_vM','W','dotW','M-factor','scal_s','S','residual', & ! 9 fields
+                'eps_vM', 'eps_norm','Pnorm','eps_total_vM','W','dotW','M-factor','scal_s','S','residual', & ! 10 fields
                 'S_11','S_22','S_33','S_12','S_23','S_13', & ! 6 fields  (I)
                 'S_xx','S_yy','S_zz','S_xy','S_yz','S_xz', & ! 6 fields
                 'A_11','A_22','A_33','A_12','A_23','A_13', & ! 6 fields  (II)
@@ -290,8 +292,8 @@ contains
                     P_total_end_rot_voigt = Mat33ToVec6(P_total_end%t)
                     
                     write(iounit,fmt=710,iostat=ierr) &
-                                output%step, increment, & ! 2 fields
-                                v%vm_strain, v%norm_P_abs, v%vm_strain_total, v%icv%plastic_work_total, v%dotWonA, &
+                                output%step, v%icv%increment, & ! 2 fields
+                                v%vm_strain, norm2(v%icv%vP_step), v%norm_P_abs, v%vm_strain_total, v%icv%plastic_work_total, v%dotWonA, &
                                 v%taylor_factor, v%scal_s, v%norm_SonA, v%R, & ! 9 fields
                                 SonA_voigt, SonA_rot_voigt, &
                                 A_voigt, A_rot_voigt, &
@@ -303,9 +305,9 @@ contains
             if (ierr == 0) info = criSuccess
         endif
         ! Formats for output file
-        700 format(1X, 2(A9,1X),9(A18,  1X),4(5X,12(A18,1X)))
-        701 format('#',2(A9,1X),9(A18,  1X),4(5X,12(A18,1X)))
-        710 format(1X, 2(I9,1X),9(E18.9,1X),4(5X,12(E18.9,1X)))
+        700 format(1X, 2(A9,1X),10(A18,  1X),4(5X,12(A18,1X)))
+        701 format('#',2(A9,1X),10(A18,  1X),4(5X,12(A18,1X)))
+        710 format(1X, 2(I9,1X),10(E18.9,1X),4(5X,12(E18.9,1X)))
     !
     end function
 
