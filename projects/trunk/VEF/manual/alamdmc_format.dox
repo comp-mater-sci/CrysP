@@ -184,12 +184,9 @@ multibiased      # unevenly distributed points, multibiased
 
 A general description of orientation (of a certain reference frame, of a crystal, etc.) is 
 given by a set of Euler angles. All Euler angles are given in Bunge 
-notation and expressed in degrees. This is always a single-line option, comprising three 
-fields of the type `real`: 
-<ol>
-<li> \f$ \phi_1 \space \Phi \space \phi_2 \f$
-</li>
-</ol>
+notation and expressed in degrees. It is a single-line option: 
+
+-# \confdef{eulerangles,euler} specifies a set of Euler angles as a compound datatype that consists of 3 fields (type `real`), ordered as: \f$ \phi_1 \space \mit\Phi \space \phi_2 \f$.
 
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
@@ -199,41 +196,44 @@ fields of the type `real`:
 \subsection symsrtensor_option Configuration option for expressing symmetric second-order tensors
 
 
-Symmetric second-order tensors are expressed in the configuration files as vectors in 
-Voigt notation (single-line option). Let \f$ \mathbf{X} \f$ be a symmetric second-order tensor. 
-The ordering of components of \f$ \mathbf{X} \f$ is then as follows: 
-<ol>
+Symmetric second-order tensors are expressed in the configuration files in 
+Voigt notation, as a single-line option of the compound datatype `symsrtensor` that consists of 6 `real` types. Let \f$ \mathbf{X} \f$ be a symmetric second-order tensor, then: 
+
+-# \confdef{tensor,symsrtensor,symsrtensor} lists the components of \f$ \mathbf{X} \f$ in the order: 
+<ul>
 <li> \f$ X_{11} \space X_{22} \space X_{33} \space X_{12} \space X_{23} \space X_{13} \f$ </li>
-</ol> if \f$ \mathbf{X} \f$ is expressed in the material (`123`) reference frame.
-<ol>
+</ul>
+for \f$ \mathbf{X} \f$ expressed in the material (`123`) reference frame, or:
+<ul>
 <li> \f$ X_{xx} \space X_{yy} \space X_{zz} \space X_{xy} \space X_{yz} \space X_{xz} \f$ </li>
-</ol> if \f$ \mathbf{X} \f$ is expressed in the sample (`xyz`) reference frame.
+</ul>
+for \f$ \mathbf{X} \f$ expressed in the sample (`xyz`) reference frame. 
 
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
-1.0 0.0 0.0 0.0 0.0 0.0 # Reference stress mode
+1.0 0.0 0.0 0.0 0.0 0.0 # All tensor components are zero, except 11- (or xx-)component.
 ~~~~~~~~~~~~~ 
  
 \subsection srtensor_option Configuration option for expressing second-order tensors
-Second-order tensors are expressed in the configuration files as a multi-line option of exactly three lines.
-The tensor componenents are ordered as follows:
-<ol>
-<li> \f$ X_{11} \space X_{12} \space X_{13} \f$ </li>
-<li> \f$ X_{21} \space X_{22} \space X_{23} \f$ </li>
-<li> \f$ X_{31} \space X_{32} \space X_{33} \f$ </li>
-</ol>
-for \f$ \mathbf{X} \f$ being a second-order tensor that is expressed in the material (`123`) reference frame, or
-<ol>
-<li> \f$ X_{xx} \space X_{xy} \space X_{xz} \f$ </li>
-<li> \f$ X_{yx} \space X_{yy} \space X_{yz} \f$ </li>
-<li> \f$ X_{zx} \space X_{zy} \space X_{zz} \f$ </li>
-</ol>
-for \f$ \mathbf{X} \f$ being a second-order tensor that is expressed in the sample (`xyz`) reference frame.
+Second-order tensors may be expressed as a 3-line option of the compound datatype `srtensor` that contains 3 `real` types per line:
+-# \confdef{tensor,srtensor,srtensor} gives the compononents for \f$ \mathbf{X} \f$ being a second-order tensor, ordered as follows:
+<ul>
+<li> <em>line 1: </em>\f$ X_{11} \space X_{12} \space X_{13} \f$ </li>
+<li> <em>line 2: </em>\f$ X_{21} \space X_{22} \space X_{23} \f$ </li>
+<li> <em>line 3: </em>\f$ X_{31} \space X_{32} \space X_{33} \f$ </li>
+</ul>
+if \f$ \mathbf{X} \f$ is expressed in the material (`123`) reference frame, or:
+<ul>
+<li> <em>line 1: </em>\f$ X_{xx} \space X_{xy} \space X_{xz} \f$ </li>
+<li> <em>line 2: </em>\f$ X_{yx} \space X_{yy} \space X_{yz} \f$ </li>
+<li> <em>line 3: </em>\f$ X_{zx} \space X_{zy} \space X_{zz} \f$ </li>
+</ul>
+if \f$ \mathbf{X} \f$ is expressed in the sample (`xyz`) reference frame.
 
 \par Example:
 ~~~~~~~~~~~~~{.cfg}
  0.0 0.0 1.0 # All tensor components are zero,
- 0.0 0.0 0.0 #  except 13-component (or xz-component).
+ 0.0 0.0 0.0 #  except 13- (or xz-)component.
  0.0 0.0 0.0 #
 ~~~~~~~~~~~~~ 
 
