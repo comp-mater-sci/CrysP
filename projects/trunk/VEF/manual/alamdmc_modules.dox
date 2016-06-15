@@ -47,22 +47,14 @@ Supported values of \conffield{orientation_type} are:
 		</ol>
 	</li>
 	</ul>
-<li> \confdef{incrementation_type,string} specifies how the deformation increments will be calculated. If \conffield{incrementation_type} is equal to 
-	<ul>
-		<li> `StrainTensor`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
-		\f$ \| \Delta\boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
-		</li>
-		<li> `StrainTensorComponent`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ is such that 
-		its normal component along the sample x-axis \f$ \Delta \epsilon_{xx} =  \f$  \conffield{increment_magnitude}.
-		</li>
-	</ul>
+<li> \conffield{incrementation_type} specifies how the deformation increments will be calculated. 
+      All values listed in \ref incrementation_option are permitted.
 </li>
 <li>
-\confdef{total_magnitude,real} provides maximal deformation (as specified by \conffield{incrementation_type}) to be reached in the virtual test.
+\conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) to be reached in the virtual test.
 </li>
 <li>
-\confdef{increment_magnitude,real} sets the magnitude of strain increments. Note that the last increment may have a smaller magnitude than specified
-	in order to reach exactly \conffield{total_magnitude}.
+\conffield{increment_magnitude} sets the magnitude of strain increments.
 </li>
 <li> \confdef{stress_state,string}  selects between tension and compression stress states. Specify 
 	<ul>
@@ -232,19 +224,12 @@ Note that the hydrostatic part of the imposed stress mode is ignored, as well as
 <li> \confdef{update_state,real} is a switch that controls update of material state for given step. When set to `False` then \conffield{stress_mode}
 is merely queried without finite deformation and without associated evolution of state. Otherwise a finite deformation has to be specified as follows:
 	<ol>
-	<li> \confdef{incrementation_type,string} specifies how the deformation increments will be calculated. If \conffield{incrementation_type} is equal to 
-		<ul>
-			<li> `StrainTensor`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
-			\f$ \| \Delta\boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
-			</li>
-			<li> `PlasticWork`, the plastic work per increment \f$ \Delta W =  \f$  \conffield{increment_magnitude}.
-			</li>
-		</ul>
+	<li> \conffield{incrementation_type} specifies how the deformation increments will be calculated. The only allowed values in this module are:
+		`StrainTensor`, `StrainTensorIncrement` and `PlasticWork`. See \ref incrementation_option for details. 
 	</li>
-	<li> \confdef{total_magnitude,real} provides maximal deformation (as specified by \conffield{incrementation_type}) to be reached in the virtual test.
+	<li> \conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) to be reached in the virtual test.
 	</li>
-	<li> \confdef{increment_magnitude,real} sets the magnitude of deformation increments. Note that the last increment may have a smaller magnitude than specified
-	in order to reach exactly \conffield{total_magnitude}.
+	<li> \conffield{increment_magnitude} sets the magnitude of deformation increments.
 	</li>
 	</ol>
 </li>
@@ -609,23 +594,15 @@ The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locu
 		<ol>
 		<li> \confdef{stress_mode,real} specifies the imposed stress mode of the reference test, in format specified in \ref symsrtensor_option.
 		</li>
-		<li> \confdef{incrementation_type,string} specifies how the deformation increments of the reference test will be calculated. If \conffield{incrementation_type} is equal to 
-		<ul>
-			<li> `StrainTensor`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
-			\f$ \| \Delta\boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
-			</li>
-			<li> `PlasticWork`, the plastic work per increment \f$ \Delta W =  \f$  \conffield{increment_magnitude}.
-			</li>
-		</ul>
+		<li> \conffield{incrementation_type} specifies how the deformation increments of the reference test will be calculated. The only values permitted in this module are:
+			`StrainTensor`, `StrainTensorIncrement` and `PlasticWork`. See \ref incrementation_option for details.
 		</li>
-		<li> \confdef{total_magnitude,real} provides maximal deformation (as specified by \conffield{incrementation_type}) 
+		<li> \conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) 
 		to be simulated in the reference test. 
-		A proper selection of contour levels implies \conffield{total_magnitude} to be equal or greater than the largest value
+		A proper selection of contour levels implies \conffield{step_magnitude} must be set equal or greater than the largest value
 		of \conffield{contour_levels_range}.
 		</li>
-		<li> \confdef{increment_magnitude,real} sets the magnitude of deformation increments for the reference test. 
-		Note that the last increment
-		may have a smaller magnitude than specified in order to reach exactly \conffield{total_magnitude}.
+		<li> \conffield{increment_magnitude} sets the magnitude of deformation increments for the reference test. 
 		</li>
 		</ol>
 	</li>

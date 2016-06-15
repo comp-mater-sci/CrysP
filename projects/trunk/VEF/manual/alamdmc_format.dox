@@ -237,6 +237,30 @@ if \f$ \mathbf{X} \f$ is expressed in the sample (`xyz`) reference frame.
  0.0 0.0 0.0 #
 ~~~~~~~~~~~~~ 
 
+
+\subsection incrementation_option Configuration option for strain incrementation
+
+The VEF provides several ways to control how the deformation is incremented if strain evolution of the material is analyzed.
+
+The option includes three fields.
+
+-# \confdef{incrementation_type,string} specifies how the strain increments will be calculated. If the option takes the value:
+   - `StrainTensor`: the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
+     \f$ \| \boldsymbol{\epsilon} + \Delta\boldsymbol{\epsilon} \| - \| \boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
+   - `StrainTensorIncrement`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
+     \f$ \| \Delta\boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
+   - `StrainTensorComponent`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ is such that 
+     its normal component along the sample x-axis \f$ \Delta \epsilon_{xx} =  \f$  \conffield{increment_magnitude}.
+   - `PlasticWork`, the plastic work per increment \f$ \Delta W =  \f$  \conffield{increment_magnitude}.
+   \note Some values for \conffield{incrementation_type} are only allowed in particular modules of the VEF.
+
+-# \confdef{step_magnitude,real} provides maximal deformation (as specified by \conffield{incrementation_type}) 
+   to be reached in a given deformation step. If the module allows simulating only one step (i.e. one stress path)
+   this field also provides total magnitude to be reached.   
+-# \confdef{increment_magnitude,real} sets the magnitude of deformation increments. Note that the last increment may have a slightly 
+   different magnitude than specified in order to reach exactly \conffield{step_magnitude}.
+
+
 <HR>
 Quick links
 -----------
