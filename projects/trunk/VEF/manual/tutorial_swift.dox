@@ -152,7 +152,7 @@ The verification step needs only a slight modification to configuration file,
 see file `sid1687f_udsa_SwiftS.cfg` in directory `\guided_tour\Swift`:
 \includelineno sid1687f_udsa_SwiftS.cfg
 The [Swift law variant] (@ref hardening_model3) is defined in the lines 12-13.
-Other modifications are a new output prefix (line 4) and the reduction of increment size (line 24) to give a smoother stress-strain curve prediction of the virtual material.
+Other modifications are a new output prefix (line 4), and the reduction of increment size (line 24) to generate denser points on the stress-strain curve.
 
 The output file generated from running this simulation
 is `sid1687f_udsa_SwiftS.uds`, also included in the directory `\guided_tour\Swift`.
