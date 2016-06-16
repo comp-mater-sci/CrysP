@@ -11,7 +11,7 @@ $range($udsa.sample_orientation.range, 'alpha angles')#slurp
 ${udsa.sample_orientation.euler_angles, plain=True} # Euler angles that define the chosen loading direction
 #end if
 $udsa.scaling.type # Keyword: incrementation type
-$udsa.scaling.total_magnitude # Maximal deformation
+$udsa.scaling.step_magnitude # Magnitude of the step
 $udsa.scaling.increment_magnitude # Increment deformation
 $udsa.stress_state # Stress state: 'compression' or 'tension'
 $udsa.use_default_settings # Flag: use default settings 

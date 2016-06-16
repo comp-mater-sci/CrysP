@@ -94,7 +94,7 @@ udsa:
                 values: [0.0, 45., 90.]
     scaling:
         type: StrainTensorComponent
-        total_magnitude:  0.4
+        step_magnitude:  0.4
         increment_magnitude: 0.01
     stress_state: tension
     use_default_settings: True
@@ -109,7 +109,7 @@ ewc:
         stress_mode: [1., 0., 0., 0., 0., 0.]
         scaling:
             type: StrainTensor
-            total_magnitude:  0.4
+            step_magnitude:  0.4
             increment_magnitude: 0.01
     contour_theta_range:
         type: uniform
@@ -137,26 +137,26 @@ asr:
           update_state: True
           scaling:
             type: StrainTensor
-            total_magnitude:  0.2
-            increment_magnitude: 0.05 
+            step_magnitude:  0.2
+            increment_magnitude: 0.01 
         # Equibiaxial compression
         - stress_mode: [-1., -1.0, 0., 0., 0., 0.]
           update_state: True
           scaling:
             type: StrainTensor
-            total_magnitude:  0.2
-            increment_magnitude: 0.05 
+            step_magnitude:  0.2
+            increment_magnitude: 0.01 
         # Biaxial tension-compression
         - stress_mode: [1., -1.0, 0., 0., 0., 0.]
           update_state: True
           scaling:
             type: StrainTensor
-            total_magnitude:  0.2
-            increment_magnitude: 0.05 
+            step_magnitude:  0.2
+            increment_magnitude: 0.01 
         # Biaxial compression-tension
         - stress_mode: [-1., .0, 0., 0., 0., 0.]
           update_state: True
           scaling:
             type: StrainTensor
-            total_magnitude:  0.2
-            increment_magnitude: 0.05 
+            step_magnitude:  0.2
+            increment_magnitude: 0.01 

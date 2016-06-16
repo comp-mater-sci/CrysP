@@ -8,7 +8,7 @@ $ewc.worklevel_selection_method # Keyword: method for selecting worklevel
 #if $ewc.worklevel_selection_method == 'reference'
 ${ewc.reference.stress_mode, plain=True} # Reference stress mode
 $ewc.reference.scaling.type # Keyword: incrementation type
-$ewc.reference.scaling.total_magnitude # Magnitude of the step
+$ewc.reference.scaling.step_magnitude # Magnitude of the step
 $ewc.reference.scaling.increment_magnitude # Magnitude of the increment
 #end if
 $range($ewc.contour_theta_range, 'theta angles at which the contours will be computed')#slurp
