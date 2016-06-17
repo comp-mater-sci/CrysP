@@ -238,11 +238,9 @@ if \f$ \mathbf{X} \f$ is expressed in the sample (`xyz`) reference frame.
 ~~~~~~~~~~~~~ 
 
 
-\subsection incrementation_option Configuration option for strain incrementation
+\subsection incrementation_option Configuration options for strain incrementation
 
-The VEF provides several ways to control how the deformation is incremented if strain evolution of the material is analyzed.
-
-The option includes three fields.
+The VEF provides several ways to control how the deformation is incremented if strain evolution of the material is analyzed, as follows:
 
 -# \confdef{incrementation_type,string} specifies how the strain increments will be calculated. If the option takes the value:
    - `StrainTensor`: the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
