@@ -235,7 +235,7 @@ We can quickly inspect the content of these files, for instance `sid1687f_udsa_0
 <img class="fullsize" src="sid1687f_udsa_0_000_rvalues.png" alt="evolution of the r-values in 0deg tensile test (DX51D steel)">
 <img class="fullsize" src="sid1687f_udsa_45_000_rvalues.png" alt="evolution of the r-values in 45deg tensile test (DX51D steel)">
 <img class="fullsize" src="sid1687f_udsa_90_000_rvalues.png" alt="evolution of the r-values in 90deg tensile test (DX51D steel)">
-<div class="figcaption">Evolution of the r-values in tensile tests (Top - 0&deg;; Middle - 45&deg;; Bottom - 90&deg;), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
+<div class="figcaption">Evolution of the r-values in tensile tests calculated by Uniaxial Stress Test Module (DX51D steel)</div>
 </div>
 
 It can be seen that the instantaneous r-values evolve much faster. They also show more irregularities, since they are derived from plastic <EM>strain rate</EM> (cf. [definition] (@ref r-value)). The accumulated r-values, which are derived from plastic <EM>strain</EM> (cf. [definition] (@ref r-valueA)), evolve far slower.
@@ -244,9 +244,7 @@ It appears that the r-values in the TD directions follow a different evolution p
 
 The tensile stresses are reported in the column `sigma_xx` as well:
 <div class="figure">
-<img class="fullsize" src="sid1687f_udsa_0_000_tensile_stress.png" alt="tensile stress in tensile test (DX51D steel)">
-<img class="fullsize" src="sid1687f_udsa_45_000_tensile_stress.png" alt="tensile stress in tensile test (DX51D steel)">
-<img class="fullsize" src="sid1687f_udsa_90_000_tensile_stress.png" alt="tensile stress in  (DX51D steel)">
+<img class="fullsize" src="sid1687f_udsa_tensile_stress.png" alt="tensile stress in tensile test (DX51D steel)">
 <div class="figcaption">Evolution of the tensile stress without strain hardening (Top - 0&deg;; Middle - 45&deg;; Bottom - 90&deg;), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
 </div>
 
@@ -278,37 +276,37 @@ Let's plot the tensile stresses this virtual material that <em>does</em> harden:
 </div>
 
 
-Let's check now how the texture evolves in these tensile tests. Because we [requested output of material state ](@ref state_request), the discrete deformation textures have been stored in a dedicated output format: a CUR file. It contains consecutive <em>blocks</em>: the initial (input) texture in the first block is followed by one block per increment of the AlamDMC simulation, up to the final state of texture that is stored in the last block. We may calculate continuous ODFs for all the texture states stored:
+Let's check now how the texture evolves in these tensile tests. Because we [requested output of material state ](@ref state_request), the discrete deformation textures have been stored in a dedicated output format: a CUR file. It contains consecutive <em>blocks</em>: one block per increment of the AlamDMC simulation, up to the final state of texture that is stored in the last block. We may calculate continuous ODFs for all the texture states stored:
 <pre class="consoleView">
-cur2c --input=sid1687f_hardening_udsa_0_000.CUR -output sid1687f_hardening_udsa_0_000_42.C
+cur2c --input=sid1687f_hardening_udsa_0_000.CUR --output=sid1687f_hardening_udsa_0_000.C
 </pre>
-The [cur2c command](@ref cur2c)  produces a series of C files: `sid1687f_hardening_udsa_1.C` to `sid1687f_hardening_udsa_42.C`, corresponding to all blocks contained within the input CUR file. A C file describes the continuous ODF as a set of series expansion coefficients. 
-As we remember, the program calculated 41 increments, so the final texture will be in 42nd block. We can be more selective and request just the final one from the two other CUR files:
+The [cur2c command](@ref cur2c) produces a series of C files: `sid1687f_hardening_udsa_1.C` to `sid1687f_hardening_udsa_40.C`, corresponding to all blocks contained within the input CUR file. A C file describes the continuous ODF as a set of series expansion coefficients. 
+As we remember, the program calculated 41 increments (the initial one and 40 increments afterwards), so the final texture will be in the 40th block. We can be more selective and request just the final one from the two other CUR files:
 <pre class="consoleView">
-cur2c --input=sid1687f_hardening_udsa_45_000.CUR --block=42 -output sid1687f_hardening_udsa_45_000_42.C
-cur2c --input=sid1687f_hardening_udsa_90_000.CUR --block=42 -output sid1687f_hardening_udsa_90_000_42.C
+cur2c --input=sid1687f_hardening_udsa_45_000.CUR --block=40 --output=sid1687f_hardening_udsa_45_000_40.C
+cur2c --input=sid1687f_hardening_udsa_90_000.CUR --block=40 --output=sid1687f_hardening_udsa_90_000_40.C
 </pre>
 
 For the 3 virtual tests, we can plot ODF sections of the final deformation state:
 <pre class="consoleView">
-odfplot --input sid1687f_hardening_udsa_0_000_42.C  sid1687f_hardening_udsa_45_000_42.C sid1687f_hardening_udsa_90_000_42.C --style=filled --odfmin=0.9 --odfmax=6.0
+odfplot --input sid1687f_hardening_udsa_0_000_40.C  sid1687f_hardening_udsa_45_000_40.C sid1687f_hardening_udsa_90_000_40.C --style=filled --odfmin=0.9 --odfmax=6.0
 </pre>
 Here are the requested ODF sections:
 <div class="figure">
 	<span class="zoom">
-	<img class="fullsize widefigure" src="sid1687f_hardening_udsa_0_000_42.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
+	<img class="fullsize widefigure" src="sid1687f_hardening_udsa_0_000_40.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
 	</span>
 	<div class="figcaption">Deformation texture at tensile strain 0.4 (in-plane direction of 0&deg; to RD), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
 </div>
 <div class="figure">
 	<span class="zoom">
-	<img class="fullsize widefigure" src="sid1687f_hardening_udsa_45_000_42.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
+	<img class="fullsize widefigure" src="sid1687f_hardening_udsa_45_000_40.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
 	</span>
 	<div class="figcaption">Deformation texture at tensile strain 0.4 (in-plane direction of 45&deg; to RD), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
 </div>
 <div class="figure">
 	<span class="zoom">
-	<img class="fullsize widefigure" src="sid1687f_hardening_udsa_90_000_42.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
+	<img class="fullsize widefigure" src="sid1687f_hardening_udsa_90_000_40.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
 	</span>
 	<div class="figcaption">Deformation texture at tensile strain 0.4 (in-plane direction of 90&deg; to RD), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
 </div>
@@ -322,7 +320,7 @@ Obviously, the uniaxial stress state is not the only one that is relevant in sim
   
 Suppose we are interested how the material would behave if we deform it under a given stress state and subsequently impose another deformation, and possibly yet another deformation, and so on. The module ASR can do such calculation for us.
 
-Let us get input file `sid1687f_asr.cfg` from `examples` directory: 
+Let us get input file `sid1687f_asr.cfg` for this module: 
 
 \includelineno sid1687f_asr.cfg
 
@@ -331,6 +329,8 @@ The essential part of the file (from line 14 onwards) instructs the `alamDMC` pr
 <pre class="consoleView">
 alamDMC ASR sid1687f_asr.cfg
 </pre>
+
+Let's open the output file `sid1687f_asr.asr` to check what's produced by the ASR module. Uh-oh. Sixty columns of data, that's a lot. The module simulates evolution an arbitrary stress and makes no additional assumptions, so it  reports as much as possible (within reason) to allow the user to interpret the results.
 
 */
 
