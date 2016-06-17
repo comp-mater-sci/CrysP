@@ -21,6 +21,7 @@ use dmcEvolutionOutputRecord
 use xVectorIncrementOutputRecord
 use commonUtils
 use criMathUtils
+use criLog
 use criAlgorithm, only: optionalDefault
 implicit none
 
@@ -273,7 +274,16 @@ contains
     class(IncrementationControl),intent(inout)          :: icv
     integer,intent(out)                                 :: info
     !
+        if (doLogging(criLogDebug,this%output%verbosity)) then
+            write(display_unit,fmt=801)
+            write(display_unit,fmt=300) icv%increment
+            ! Formats
+            300 format(/,'Increment ', I0,/, 'TR search progress:')
+        endif
         info = criSuccess
+#define MSG_GROUP_RULERS
+#include "msgFormats.inc"
+#undef MSG_GROUP_RULERS
     !
     end subroutine
 
@@ -288,6 +298,24 @@ contains
     type(IncrementOutputRecord),intent(in)              :: output_record
     integer,intent(out)                                 :: info
     !
+    integer :: j
+    !
+        if (doLogging(criLogInfo,this%output%verbosity)) then
+    
+            write(display_unit,fmt=300) output_record%icv%increment, output_record%R
+            
+            if (doLogging(criLogDebug,this%output%verbosity)) then
+                write(display_unit,400) 'A^star', 'S(A^star)', 'Delta eps'
+                do j=1,3
+                    write(display_unit,411) output_record%A%t(:,j), output_record%SonA%t(:,j), &
+                                            output_record%P_inc_evol%t(:,j)
+                enddo
+            endif
+            ! Formats
+            300 format('Increment ', I0, 1X, 'finished, residual error: ', E10.3)
+            400 format(T15,A,T54,A,T85,A)
+            411 format(3(E10.3,1X),' | ',3(E10.3,1X),' | ',3(E10.3,1X))
+        endif
         info = criSuccess
     !
     end subroutine

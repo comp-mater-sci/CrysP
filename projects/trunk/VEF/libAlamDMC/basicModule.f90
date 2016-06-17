@@ -28,6 +28,7 @@ use criMathUtils
 use criAlgorithm, only: optionalDefault
 use criPath, only: max_pathlen, splitExt
 use criLinearMap
+use criLog
 use fngVec5D
 
       !> Size of time increment
@@ -107,15 +108,18 @@ contains
                   this%altay%output_config%nmss = 1
             endif
             !
-            write(display_unit,fmt=30) 'Initializing the multilevel model...'
+            if (doLogging(criLoginfo,this%output%verbosity)) write(display_unit,fmt=30, advance='no')
             call initAltay(this%altay,info,errmsg)
-            if (info == 0) then
-                  write(display_unit,fmt=31) 'Done.'
-            else
-                  write(display_unit,fmt=31) 'Failed.'
-                  return
+            if (doLogging(criLoginfo,this%output%verbosity)) then
+                if (info == 0) then
+                      write(display_unit,fmt=31) 'Done.'
+                else
+                      write(display_unit,fmt=31) 'Failed.'
+                endif
             endif
-            30 format(A,\)
+            if (info /= 0) return
+            
+            30 format('Initializing the multilevel model...')
             31 format(1X,A)
       
             ! Output the initial state variables (texture etc) if requested.
@@ -170,32 +174,33 @@ contains
       integer,intent(in)                  :: outunit
       !
             info = criErr_BadArgs
-            
-            select case (this%altay%model_id)
-            case(modelAlamel)
-                  write(display_unit,fmt=202) 'ALAMEL'
-            case(modelFCTaylor)
-                  write(display_unit,fmt=202) 'FC Taylor'
-            end select
-            !
+            if (doLogging(criLogInfo,this%output%verbosity)) then
+                select case (this%altay%model_id)
+                case(modelAlamel)
+                      write(display_unit,fmt=202) 'ALAMEL'
+                case(modelFCTaylor)
+                      write(display_unit,fmt=202) 'FC Taylor'
+                end select
+                !
       
-            ! Print configuration     
-            select case(this%altay%texture%input_type)
-                  case(1)     ! SMT or CUB
-                        write(outunit,fmt=200) 'SMT'
-                  case(2)       ! CUR file    
-                        write(outunit,fmt=200) 'CUR'
-                  case(3)
-                        write(outunit,fmt=200) 'CUB'                       
-            end select
-            write(outunit,fmt=201) trim(this%altay%texture%input_fname)
-            write(outunit,fmt=101) 'Slip systems definition:', trim(this%altay%slipsystem%input_fname)
-            write(outunit,fmt=101) 'Microstructure definition:', trim(this%altay%micros_fname)
-            !
-            if (this%ylp%linearize) then
-                  write(display_unit,100) 'Info: the program will first attempt to linearize the identification problems.'
-            else
-                  write(display_unit,100) 'Info: The program will attempt to solve the nonlinear problems.'
+                ! Print configuration     
+                select case(this%altay%texture%input_type)
+                      case(1)     ! SMT or CUB
+                            write(outunit,fmt=200) 'SMT'
+                      case(2)       ! CUR file    
+                            write(outunit,fmt=200) 'CUR'
+                      case(3)
+                            write(outunit,fmt=200) 'CUB'                       
+                end select
+                write(outunit,fmt=201) trim(this%altay%texture%input_fname)
+                write(outunit,fmt=101) 'Slip systems definition:', trim(this%altay%slipsystem%input_fname)
+                write(outunit,fmt=101) 'Microstructure definition:', trim(this%altay%micros_fname)
+                !
+                if (this%ylp%linearize) then
+                      write(display_unit,100) 'Info: the program will first attempt to linearize the identification problems.'
+                else
+                      write(display_unit,100) 'Info: The program will attempt to solve the nonlinear problems.'
+                endif
             endif
             !
             info = criSuccess
