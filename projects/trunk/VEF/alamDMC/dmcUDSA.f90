@@ -274,7 +274,7 @@ contains
         !
         ! Process the output evolution path and produce result file
         !
-        do increment = 1, size(output%values) - 1
+        do increment = 1, size(output%values)
             ! Total plastic strain at the _begining_ of the inrement.
 
             associate(v => output%values(increment))
