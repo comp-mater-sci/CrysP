@@ -32,7 +32,7 @@ Although the configuration options of the multi-scale model are pretty much fine
 
 
 <ol>
-<li> \confdef{texture_file,path} specifies the path to the input texture file. The extension of the file will be interpreted to determine the format of the texture data. Currently the following extensions can be used: `smt`, `cur` and `cub` (case sensitive). Note that the CUR format allows many discrete ODFs inside a single file. If \conffield{texture_file} has the extension `cur`, the subsequent line must provide:
+<li> \confdef{texture_file,path} specifies the path to the input texture file. The extension of the file will be interpreted to determine the format of the texture data. Currently the following extensions can be used: `smt`, `cur` and `cub` (case sensitive). Note that the CUR format allows many discrete ODFs inside a single file. If \conffield{texture_file} has the extension `cur`, the following suboption must be provided:
 	<ol>
 	<li> \confdef{texture_block,integer} provides the index of the ODF block inside the CUR file. The first block has index 1 (one).</li>
 	</ol>
@@ -47,76 +47,77 @@ Although the configuration options of the multi-scale model are pretty much fine
 		<li>`bcc48`: the 12 slip systems of {110}&lt;111&gt; family, plus the 12 slip systems of {112}&lt;111&gt; family, plus the 24 slip systems of {123}&lt;111&gt; family.</li>
 	</ul>
 </li>
-<li> \confdef{microstructure_default,logical} specifies if the default microstructural description should be used, namely equi-axed grained microstructure. If \conffield{microstructure_default} is `False`, the subsequent lines must provide the following options: 
+<li> \confdef{microstructure_default,logical} specifies if the default microstructural description should be used, namely equi-axed grained microstructure. If \conffield{microstructure_default} is `False`, required suboptions are: 
 	<ol>
 	<li> \confdef{microstructure_file,path} specifies the file with microstructure definition.</li>
 	<li> \confdef{microstructure_F,srtensor} defines a pre-deformation of the microstructure definition in the form of a deformation gradient tensor.</li> 
 	</ol>
 </li>
-<li>\confdef{hardening_default,logical} specifies if the default hardening description should be used. As default, non-hardening slip systems are assumed having a critical resolved shear stress equal to 1.0, independent of deformation. If \conffield{hardening_default} is `False`, the subsequent line must provide:
+<li>\confdef{hardening_default,logical} specifies if the default hardening description should be used. As default, non-hardening slip systems are assumed having a critical resolved shear stress equal to 1.0, independent of deformation. If \conffield{hardening_default} is `False`, it is followed by suboption:
 	<ol>
-	<li> \confdef{hardening_model,integer} specifies the micro-scale hardening law, in general as the dependency of the critical resolved shear stress \f$ \tau \f$ on one or more internal state variables. An example of internal state variable is the accumulated slip of a grain \f$ \gamma \f$. This is a multi-line option, which means that depending on the content of this field, zero or more subsequent lines are expected. 
+	<li> \confdef{hardening_model,integer} specifies the micro-scale hardening law, in general as the dependency of the critical resolved shear stress \f$ \tau \f$ on one or more internal state variables. An example of internal state variable is the accumulated slip of a grain \f$ \gamma \f$. 
 	Supported values of \conffield{hardening_model} are:  
 		<ul>
-			<li> 0 (zero) \anchor hardening_model0 for non-hardening slip systems. This option is equivalent to the default hardening description.
+			<li> `0` (zero) \anchor hardening_model0  for non-hardening slip systems. This is equivalent to the default hardening description.
 			</li>
 			
-			<li> 1 (one) \anchor hardening_model1 for Voce-type of isotropic hardening. If this hardening law is chosen, the next line must contain five real values, being parameters of Voce hardening law: \f$ \tau_0 \f$, \f$ \tau^{III}_{sat} \f$, \f$ \tau^{IV}_{sat} \f$, \f$ \theta_0 \f$, \f$ \theta_T \f$.
-			The classical Voce hardening law assumes that the hardening rate \f$ \theta=\frac{d\tau}{d\gamma} \f$ decreases linearly as a function of \f$ \tau \f$.
-			Current implementation is more generic: besides such *one-stage* hardening behavior, also *two-stage* hardening behaviour is supported.
-			The two subsequent hardening stages are denoted stages `III` and `IV`, respectively.
-			In \f$ \tau-\theta\f$-diagram, the two-stage behavior shows 2 linear parts, connected to each other at a so-called transition point. 
-			 The meaning of the Voce input parameters is as follows:
-			- \f$ \tau_0 \f$ is the initial flow stress (i.e. of the stage `III`), 
-			- \f$ \tau^{III}_{sat} \f$ is the saturation flow stress associated to stage `III`, 
-			- \f$ \tau^{IV}_{sat} \f$ is the saturation flow stress associated to stage `IV`, 
-			- \f$ \theta_0 \f$ is the initial hardening rate (i.e. of the stage `III`),
-			- \f$ \theta_T \f$ is the hardening rate of the transition point between stages `III` and `IV`.
+			<li> `1` (one) \anchor hardening_model1  for Voce-type of isotropic hardening. If this hardening law is chosen, it is followed by suboption specifying the parameters of Voce hardening law:
+			 -# \confdef{voce_parameters,realarray} contains 5 parameter values that are ordered as: \f$ \tau_0 \space \tau^{III}_{sat} \space \tau^{IV}_{sat} \space \theta_0 \space \theta_T \f$.
+			 
+				The classical Voce hardening law assumes that the hardening rate \f$ \theta=\frac{d\tau}{d\gamma} \f$ decreases linearly as a function of \f$ \tau \f$.
+				Current implementation is more generic: besides such *one-stage* hardening behavior, also *two-stage* hardening behaviour is supported.
+				The two subsequent hardening stages are denoted stages `III` and `IV`, respectively.
+				In \f$ \tau-\theta\f$-diagram, the two-stage hardening behavior shows 2 linear parts, connected to each other at a so-called transition point. 
+				 The physical meaning of the Voce input parameters is as follows:
+				- \f$ \tau_0 \f$ is the initial flow stress (i.e. of the stage `III`), 
+				- \f$ \tau^{III}_{sat} \f$ is the saturation flow stress associated to stage `III`, 
+				- \f$ \tau^{IV}_{sat} \f$ is the saturation flow stress associated to stage `IV`, 
+				- \f$ \theta_0 \f$ is the initial hardening rate (i.e. of the stage `III`),
+				- \f$ \theta_T \f$ is the hardening rate of the transition point between stages `III` and `IV`.
 
-			The input parameters are subject to the constraints \f$ 0 < \tau_0 < \tau^{III}_{sat} \leq \tau^{IV}_{sat} \f$ and \f$ 0 < \theta_T < \theta_0 \f$.
-			The one-stage Voce variant is retrieved by imposing \f$ \tau^{III}_{sat} = \tau^{IV}_{sat} \f$ and setting \f$ \theta_T \f$ to an arbitrary value within constraint boundaries.
+				The input parameters are subject to the constraints \f$ 0 < \tau_0 < \tau^{III}_{sat} \leq \tau^{IV}_{sat} \f$ and \f$ 0 < \theta_T < \theta_0 \f$.
+				The one-stage Voce variant is retrieved by imposing \f$ \tau^{III}_{sat} = \tau^{IV}_{sat} \f$ and setting \f$ \theta_T \f$ to an arbitrary value within constraint boundaries.
 
-			The two-stage Voce hardening law is given by:
-			\f[ \begin{split}
-				& \tau = \tau^{III}_{sat} - (\tau^{III}_{sat}-\tau_0) \exp{\left( \frac{-\theta_0}{\tau^{III}_{sat}-\tau_0}\gamma \right)} \quad \textrm{for} \quad \gamma\leq\gamma_T \\
-				& \tau = \tau^{IV}_{sat} - (\tau^{IV}_{sat}-\tau_T) \exp{\left( \frac{-\theta_T}{\tau^{IV}_{sat}-\tau_T}(\gamma-\gamma_T) \right)} \quad \textrm{for} \quad \gamma\geq\gamma_T
-			\end{split} \f]	
-			\n
-			Here, \f$ \gamma_T \f$ and \f$ \tau_T \f$ are two dependent Voce parameters that denote the accumulated slip and the flow stress at the transition point, respectively.
+				The two-stage Voce hardening law is given by:
+				\f[ \begin{split}
+					& \tau = \tau^{III}_{sat} - (\tau^{III}_{sat}-\tau_0) \exp{\left( \frac{-\theta_0}{\tau^{III}_{sat}-\tau_0}\gamma \right)} \quad \textrm{for} \quad \gamma\leq\gamma_T \\
+					& \tau = \tau^{IV}_{sat} - (\tau^{IV}_{sat}-\tau_T) \exp{\left( \frac{-\theta_T}{\tau^{IV}_{sat}-\tau_T}(\gamma-\gamma_T) \right)} \quad \textrm{for} \quad \gamma\geq\gamma_T
+				\end{split} \f]	
+				\n
+				Here, \f$ \gamma_T \f$ and \f$ \tau_T \f$ are two dependent Voce parameters that denote the accumulated slip and the flow stress at the transition point, respectively.
 			</li>
 			
-			<li>2 (two) \anchor hardening_model2 for Swift hardening law (variant SwiftK). If SwiftK is chosen, the next line must contain three real values: \f$ K \f$, \f$ \gamma_0 \f$ and \f$ n \f$, which are the parameters of Swift hardening law given by the formula:
-			\f[
-				\tau = K \left(\gamma - \gamma_0 \right)^n
-			\f]
-			Only positive values of parameters are acceptable (constraints: \f$ 0 < K \f$, \f$ 0 < \gamma_0 \f$ and \f$ 0 < n \f$).
+			<li>`2` (two) \anchor hardening_model2  for Swift hardening law (variant SwiftK). It has as suboption:
+			 -# \confdef{swiftk_parameters,realarray} holds 3 parameter values ordered as: \f$ K \space \gamma_0 \space n \f$.
+			 
+				 This variant of the Swift hardening law is given by the formula:
+				\f[
+					\tau = K \left(\gamma - \gamma_0 \right)^n
+				\f]
+				Only positive values of parameters are acceptable (constraints: \f$ 0 < K \f$, \f$ 0 < \gamma_0 \f$ and \f$ 0 < n \f$).
 			</li>
 			
-			<li>3 (three) \anchor hardening_model3 for Swift hardening law (variant SwiftS). If SwiftS is chosen, the next line must contain three real values: \f$ \tau_0 \f$, \f$ \gamma_0 \f$ and \f$ n \f$, which are the parameters of Swift hardening law expressed by the formula:
-			\f[
-				\tau = \tau_0 \left(\frac{\gamma}{\gamma_0} - 1 \right)^n
-			\f]
-			Only positive values of parameters are acceptable (constraints: \f$ 0 < \tau_0 \f$, \f$ 0 < \gamma_0 \f$ and \f$ 0 < n \f$).
+			<li>`3` (three) \anchor hardening_model3  for Swift hardening law (variant SwiftS), with suboption:
+			 -# \confdef{swifts_parameters,realarray} contains 3 parameter values in following order: \f$ \tau_0 \space \gamma_0 \space n \f$.
+				
+				This variant of the Swift hardening law is expressed as:
+				\f[
+					\tau = \tau_0 \left(\frac{\gamma}{\gamma_0} - 1 \right)^n
+				\f]
+				Only positive values of parameters are acceptable (constraints: \f$ 0 < \tau_0 \f$, \f$ 0 < \gamma_0 \f$ and \f$ 0 < n \f$).
 			</li>
 			
-			<li> 11 (eleven) \anchor hardening_model11 for Dislocation Substructural Hardening (DSH) model (variant described in _Peeters et al. ActaMat 49: 1607-19_).
-			Slip systems that are supported in conjunction with DSH hardening, are:
-			\conffield{slip_system_family} = `bcc24`.
-			If the DSH model is selected, two subsequent lines are to be provided:
-				<ul>
-					<li> \confdef{hardening_parameter_file,path} refers to the file that contains parameters of the DSH model.
-					Please see the example parameter file `DSHparaset.txt` from `examples` directory for the ordering, units and meaning of the parameters:
-					\includelineno DSHparaset.txt
-					</li>
-					<li> \confdef{hardening_state_block,integer}   \confdef{hardening_state_file,path}  configures initialization of the material state variables 
-					associated to disclocation substructure.
-					If \conffield{hardening_state_block} has a negative value, the  state is initialized in the annealed condition
-					(and the contents of the \conffield{hardening_state_file} file will be ignored).
-					For simulation on predeformed material, \conffield{hardening_state_block} has a non-negative value:
-					it refers to an index of material state block inside the \conffield{hardening_state_file} file.
-					The index runs from 0, which denotes the first block in the file. 
-					</li>
-				</ul>
+			<li>`11` (eleven) \anchor hardening_model11  for Dislocation Substructural Hardening (DSH) model (variant described in _Peeters et al. ActaMat 49: 1607-19_).
+			Slip systems that are supported in conjunction with DSH hardening, are: \conffield{slip_system_family} = `bcc24`.
+			If the DSH model is selected, two suboptions follow:
+			 -# \confdef{hardening_parameter_file,path} refers to the file that contains parameters of the DSH model.
+				Please see the example parameter file `DSHparaset.txt` from `examples` directory for the ordering, units, boundaries and physical meaning of the parameters:
+				\includelineno DSHparaset.txt
+			 -#  \confdef{hardening_state_block,integer}   \confdef{hardening_state_file,path}  configures initialization of the material state variables associated to disclocation substructure.
+				If \conffield{hardening_state_block} has a negative value, the  state is initialized in the annealed condition (and the contents of the \conffield{hardening_state_file} file will be ignored).
+				For simulation on predeformed material, \conffield{hardening_state_block} has a non-negative value:
+				it refers to an index of material state block inside the \conffield{hardening_state_file} file.
+				The index runs from 0, which denotes the first block in the file. 
 			</li>
 		</ul>
 	</li>
@@ -130,7 +131,9 @@ AKDQFF.smt           # Path to the texture file
 ALAMEL               # Model type: either ALAMEL or FCTaylor
 bcc24                # Family of slip systems
 True                 # Flag: use default microstructural description
-True                 # Flag: use default hardening
+False                # Flag: use default hardening
+2                    # Selection of Swift law (K-variant)
+65.0 1.e-3 0.24      # Swift parameters: K, eps0 and n
 ~~~~~~~~~~~~~
 
 \section config_search_procedure Configuration of the search procedure
@@ -141,14 +144,14 @@ A^\star = \mathrm{arg min} \left\| \frac{S(A)}{\| S(A) \|} - \frac{ S^\star }{ \
 To minimize the objective function, the TR solver requires its Jacobian. The Jacobian is numerically approximated by the finite difference method. 
 
 <ol>
-<li>\confdef{solver_default,logical} specifies if default values for solver settings should be used. If \conffield{solver_default} is `False`, the subsequent lines must provide the following options:
+<li>\confdef{solver_default,logical} specifies if default values for solver settings should be used. If \conffield{solver_default} is `False`, the subsequent lines provide the following suboptions:
 	<ol>
 	<li> \confdef{jacobian_fd_step,real} controls how the Jacobian is constructed.  The field \conffield{jacobian_fd_step} specifies the length of strain increment that is be used for estimating the Jacobian by finite difference method. 
 	</li>
-	<li> \confdef{search_linearize,logical} specifies whether the program should first attempt to solve the minimization problem that is considered linear. Note that if the \conffield{search_linearize} is set to `True`, the following applies:
-	-# the linearization is attempted each time when strain rate corresponding to a given stress is sought,  
-	-# the linearization is done per strain increment,
-	-# if the solver fails to find a good quality solution of the linearized problem, it will fall back to the non-linear problem.
+	<li> \confdef{search_linearize,logical} specifies whether the program should first attempt to solve the minimization problem that is considered linear. Note that if the \conffield{search_linearize} is set to `True`, then
+	the linearization is attempted each case in which strain rate corresponding to a given stress is sought  
+	, and also per strain increment.
+	If the solver fails to find a good quality solution of the linearized problem, it will fall back to the non-linear problem.
 	The non-linear problem is much more computationally expensive, since it requires several recalculations of the Jacobian.
 	Therefore, the user is advised to use \conffield{search_linearize} set to `True` whenever possible. The linearized problem can be solved much faster and in practice its solution rarely differs from the solution of its non-linear counterpart.
 	</li>
