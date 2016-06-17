@@ -4,7 +4,7 @@
 [TOC]
 
 Each AlamDMC module has its own module-specific configuration, which
-are located in the trailing part of the configuration file. 
+is located in the trailing part of the configuration file. 
 Furthermore, each module will generate its own specific output data.
 
 \section module_udsa Uniaxial Stress Test Module (keyword: UDSA)
@@ -13,9 +13,9 @@ The Uniaxial Stress Test Module provides virtual experiments under uniaxial, ten
 The _pure_ uniaxial state imposes a total stress with exactly one non-zero principal component. 
 In this module, also some _non-pure_ uniaxial states may be imposed, namely those having two non-zero principal stress components.
  
-A specific _sample reference frame_ (with x-, y- and z-axes) is associated to the virtual sample.
+A dedicated _sample reference frame_ (with `x`-, `y`- and `z`-axes) is associated to the virtual sample.
 The imposed stress state is described with reference to this sample reference frame.
-By convention, the sample x-axis is aligned with the uniaxial (or main) loading direction. 
+By convention, the sample `x`-axis is aligned with the uniaxial (or main) loading direction. 
 
 \subsection configuration_udsa Module-specific configuration
 
@@ -25,9 +25,9 @@ The exact orientation (or several orientations) may be further specified by a va
 Supported values of \conffield{orientation_type} are:
 	<ul>
 	<li> `inplane` to request one or several in-plane uniaxial tests. 
-	The sample x-axis (loading direction) is contained to the material 1-2-plane (RD-TD-plane). 
-	The sample y-axis is also contained in the material 1-2-plane (RD-TD-plane).
-	The sample z-axis is aligned with the material 3-direction (ND). 
+	The sample `x`-axis (loading direction) is contained to the material `1`-`2`-plane. 
+	The sample `y`-axis is also contained in the material `1`-`2`-plane.
+	The sample `z`-axis is aligned with the material `3`-direction. 
 	For \conffield{orientation_type}=`inplane`, the following option needs to be provided:
 		<ol>
 		<li> \confdef{inplane_orientation_range,real} defines a [range] (\ref range_option) for in-plane orientations to be tested.
@@ -35,14 +35,14 @@ Supported values of \conffield{orientation_type} are:
 		</li>
 		</ol>
 	</li>
-	<li> `ND` to request uniaxial loading along ND.
-	In this case, the sample x-axis (loading direction) is aligned with the material 3-direction (ND).
-	The sample y-axis is aligned with the material 2-direction (TD).
-	The sample z-axis is aligned with the material 1-direction (RD).
+	<li> `ND` to request uniaxial loading (direction of sample `x`-axis) along the material `3`-direction.
+	Note that for sheet metal, it is a convention that the material `3`-direction corresponds to the sheet normal direction ND.
+	Also, the sample `y`-axis is aligned with the material `2`-direction (conventional transverse direction TD for sheet metal).
+	Consequently, the sample `z`-axis is aligned with the material `1`-direction (conventional rolling direction RD for sheet metal).
 	</li>
-	<li> `arbitrary` to request a single test with generic orientation of the sample reference, using the suboption
+	<li> `arbitrary` to request a single test with generic orientation of the sample reference, as
 		<ol>
-		<li> \confdef{sample_arbitrary,real} specifies the orientation of the sample frame in format specified in \ref euler_option.
+		<li> \confdef{arbitrary_orientation,euler} specifies the orientation of the sample frame in format specified in \ref euler_option.
 		</li>
 		</ol>
 	</li>
@@ -207,21 +207,21 @@ The Multiaxial Stress Test Module prescribes a generic stress loading on a virtu
 Several subsequent deformation _steps_ may be imposed; 
 each step imposes a certain (constant) stress mode for a certain deformation (which may be infinitesimally small).
 
-A specific _sample reference frame_ (with x-, y- and z-axes) is associated to the virtual sample.
+A specific _sample reference frame_ (with `x`-, `y`- and `z`-axes) is associated to the virtual sample.
 The imposed stress state is described with reference to this sample reference frame.
 
 \subsection configuration_asr Module-specific configuration
 
 <ol>
-<li> \confdef{reference_frame,real} specifies the orientation of the sample reference frame of the virtual specimen, in format specified in \ref euler_option.
+<li> \confdef{sample_orientation,euler} specifies the orientation of the sample reference frame of the virtual specimen, in format specified in \ref euler_option.
 </li>
 <li> \confdef{n_steps,integer} sets the number of subsequent deformation steps, each one being specified by the configuration settings 3.-4. and their optional subsettings.
 These settings are repeated \conffield{n_steps} times in configuration file, in the same order as they are to be applied to the virtual sample.
 </li>
-<li> \confdef{stress_mode,real} specifies the imposed stress mode for given step, with reference to the sample (`xyz`) reference frame, and in format specified in \ref symsrtensor_option. 
+<li> \confdef{stress_mode,symsrtensor} specifies the imposed stress mode for given step, with reference to the sample (`xyz`) reference frame, and in format specified in \ref symsrtensor_option. 
 Note that the hydrostatic part of the imposed stress mode is ignored, as well as its norm.
 </li>
-<li> \confdef{update_state,real} is a switch that controls update of material state for given step. When set to `False` then \conffield{stress_mode}
+<li> \confdef{update_state,logical} is a switch that controls update of material state for given step. When set to `False` then \conffield{stress_mode}
 is merely queried without finite deformation and without associated evolution of state. Otherwise a finite deformation has to be specified as follows:
 	<ol>
 	<li> \conffield{incrementation_type} specifies how the deformation increments will be calculated. The only allowed values in this module are:
@@ -238,8 +238,6 @@ is merely queried without finite deformation and without associated evolution of
 \par Example
 Please see the configuration file `AKDQf_asr.cfg` from `examples` directory:
 \includelineno AKDQf_asr.cfg
-
-\todo This manual section is still under preparations.
 
 \subsection output_asr Module-specific output
 
@@ -263,12 +261,12 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outref{Pnorm}
 	</li>
 	
-	<li> \outdef{eps_total_vM} The von Mises equivalent strain of the total strain along all past increments 
-	\f$ \\epsilon_{vM,step} \f$
+	<li> \outdef{eps_total_vM} The von Mises equivalent of the _total_ strain, 
+	\f$ \epsilon_{vM} \f$
 	
-	It is derived from the strain tensor of current step \f$ \boldsymbol{\epsilon}_{step} \f$ as: 
+	It is derived from the incremental strain tensor \f$ \Delta \boldsymbol{\epsilon}_{i} \f$ of an increment \f$ i \f$, as: 
 	\f[ 
-		\epsilon_{vM,total}=\sqrt{2/3} \| \sum_{i=1}^{N increments} \Delta \boldsymbol{\epsilon}_{i} \| 
+		\epsilon_{vM}=\sqrt{2/3} \| \sum_{i=1}^{N increments} \Delta \boldsymbol{\epsilon}_{i} \| 
 	\f]
 	</li>
 	
@@ -379,7 +377,7 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outdef{eps_xz} Similar to \ref eps_xx 
 	</li>
 
-	<li> \outdef{eps_tot_11} A component of the strain tensor 
+	<li> \outdef{eps_tot_11} A component of the total strain tensor 
 	\f$ \boldsymbol{\epsilon} \f$ in the material (`123`) reference frame  
 	</li>
 	<li> \outdef{eps_tot_22} Similar to \ref eps_tot_11 
@@ -393,7 +391,7 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outdef{eps_tot_13} Similar to \ref eps_tot_11 
 	</li>
 
-	<li> \outdef{eps_tot_xx} A component of the strain tensor 
+	<li> \outdef{eps_tot_xx} A component of the total strain tensor 
 	\f$ \boldsymbol{\epsilon} \f$ in the sample (`xyz`) reference frame   
 	</li>
 	<li> \outdef{eps_tot_yy} Similar to \ref eps_tot_xx 
@@ -414,17 +412,16 @@ The Uniaxial Anisotropy Module provides Lankford coefficients (in two variants: 
 for a specified range of in-plane directions, and under tensile loading. These properties are queried for the virtual microstructure in the given state without 
 any finite deformation imposed. There is no evolution of state associated with this module.
 
-For each loading case, a _sample reference frame_ (with x-, y- and z-axes) is associated to the virtual sample.
-The loading direction is aligned with the sample x-axis, by convention.
-The x-axis is contained to the material 1-2-plane (RD-TD-plane).
-The sample y-axis is also contained in the material 1-2-plane (RD-TD-plane).
-The sample z-axis is aligned with the material 3-direction (ND).
+For each loading case, a _sample reference frame_ (with `x`-, `y`- and `z`-axes) is associated to the virtual sample.
+The loading direction is aligned with the sample `x`-axis, by convention.
+The `x`- and `y`-axes are restricted to the material `1`-`2`-plane.
+Consequently, the sample `z`-axis is aligned with the material `3`-direction.
 
 \subsection configuration_qrs Module-specific configuration
 
 <ol>
 <li> \confdef{sample_orientation_range,real} defines the range for the orientation of virtual tensile specimen, in multi-line format specified in 
-\ref range_option. Orientations in the range denote the angle between the sample x-axis and the material 1-direction, and are expressed in degrees. 
+\ref range_option. Orientations in the range denote the angle between the sample `x`-axis and the material `1`-direction, and are expressed in degrees. 
 </li>
 <li> \conffield{pure_uniaxial_state} is defined [here](@ref pure_uniaxial_state_anchor).
 </li>
@@ -489,11 +486,11 @@ For \conffield{section_default}=`False`, the following suboptions are required:
 	<li> \confdef{normalize_base,logical}. If `True`, then the base tensors specified by the following configuration 
 	settings 2.-3.-4. are normalized so their norm is equal to 1.0.
 	</li>
-	<li> \confdef{base_sigma_X,real} is the base tensor along the X-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
+	<li> \confdef{base_sigma_X,symsrtensor} is the base tensor along the X-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
 	</li>
-	<li> \confdef{base_sigma_Y,real} is the base tensor along the Y-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
+	<li> \confdef{base_sigma_Y,symsrtensor} is the base tensor along the Y-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
 	</li>
-	<li> \confdef{base_sigma_offset,real} is the base tensor that determines the mode of the stress that coincides with the origin of the 
+	<li> \confdef{base_sigma_offset,symsrtensor} is the base tensor that determines the mode of the stress that coincides with the origin of the 
 	yield locus section, in [Voigt notation](@ref symsrtensor_option).
 	</li>
 	<li> \confdef{normalize_stress,logical}
@@ -502,7 +499,7 @@ For \conffield{section_default}=`False`, the following suboptions are required:
 	</li>
 	<li> \confdef{use_scaling,logical}
 		<ol>
-		<li> \confdef{scaling_stress_mode,real} is the stress mode for which the yield point is used as scaling factor, 
+		<li> \confdef{scaling_stress_mode,symsrtensor} is the stress mode for which the yield point is used as scaling factor, 
 		in [Voigt notation](@ref symsrtensor_option).
 		</li>
 		</ol>
@@ -520,7 +517,6 @@ Please see the configuration file `AKDQf_yld.cfg` from `examples` directory:
 Please see the configuration file `sid1687f_yld.cfg` from `examples` directory:
 \includelineno sid1687f_yld.cfg
 
-The initial lines 1 - 12 belong to the \ref page_alamdmc_generic. 
 
 
 
@@ -576,7 +572,7 @@ The module-specific outputfile `<output_prefix>.xyld` makes column-wise reportin
 \section module_ewc Equiwork Contour Module (keyword: EWC)
 
 The Equiwork Contour Module produces generic sections of equi-work contours in stress space.
-Equi-work contour points are calculated from a series of monotonic stress loading cases within the requested 2-dimensional section of stress space.
+Equi-work contour points are calculated from a series of monotonic stress loading cases within the requested 2-dimensional (\f$X\f$-\f$Y\f$-) section of stress space.
 The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locus in the initial state of material.
 
 \subsection configuration_ewc Module-specific configuration
@@ -592,7 +588,7 @@ The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locu
 	by \conffield{contour_levels_range}. 
 	The reference test is specified by the following suboptions: 
 		<ol>
-		<li> \confdef{stress_mode,real} specifies the imposed stress mode of the reference test, in format specified in \ref symsrtensor_option.
+		<li> \confdef{stress_mode,symsrtensor} specifies the imposed stress mode of the reference test, in format specified in \ref symsrtensor_option.
 		</li>
 		<li> \conffield{incrementation_type} specifies how the deformation increments of the reference test will be calculated. The only values permitted in this module are:
 			`StrainTensor`, `StrainTensorIncrement` and `PlasticWork`. See \ref incrementation_option for details.
@@ -619,13 +615,13 @@ section base vector towards the 2nd section base vector.
  for all virtual tests that generate the equi-work contour levels.
 </li>
 <li> \confdef{use_default_settings,logical} specifies whether or not the default section in stress space is to be used. 
-If \conffield{use_default_settings}=`True`, the equi-work contour section is defined by \f$\sigma_{11}\f$ (normal stress along RD) along the X-axis, 
-and \f$\sigma_{22}\f$ (normal stress along TD) along the Y-axis.
+If \conffield{use_default_settings}=`True`, the equi-work contour section is defined by \f$\sigma_{11}\f$ along the \f$X\f$-axis, 
+and \f$\sigma_{22}\f$ along the \f$Y\f$-axis.
 For \conffield{use_default_settings}=`False`, the following suboptions are required:
 	<ol>
-	<li>  \confdef{base_sigma_X,real} is the base tensor along the X-axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
+	<li>  \confdef{base_sigma_X,real} is the base tensor along the \f$X\f$-axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
 	</li>
-	<li>  \confdef{base_sigma_Y,real} is the base tensor along the Y-axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
+	<li>  \confdef{base_sigma_Y,real} is the base tensor along the \f$Y\f$-axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
 	</li>
 	</ol>
 </li>
