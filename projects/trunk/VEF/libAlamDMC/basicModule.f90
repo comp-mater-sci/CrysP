@@ -419,6 +419,9 @@ contains
 #ifdef PEBP_ENABLED
                   case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                         call readPEPBhardening(cnfunit,hardening%HardLawID,hardening%PEBPCnf,info)
+#else
+                        write(display_unit,fmt=900) 'The hardening model is not available in your version'
+                        info = criError
 #endif
                   case default
                         info = criError
@@ -427,7 +430,10 @@ contains
             else
                   info = criSuccess
             endif
-            !
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
+      !
       end subroutine
 
 
