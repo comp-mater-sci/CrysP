@@ -29,7 +29,7 @@ The VEF consists of a number of programs. One of these, the `alamDMC` program, i
 Let's start!
 ------------
 
-Before we start, please copy the content of directory `guided_tour` from the 
+Before we start, please copy the content of directory `examples\guided_tour` from the 
 VEF installation directory to another directory on your computer. We will refer
 to that copy as `guided_tour_directory`.
 
@@ -195,11 +195,26 @@ Additionally, we can use columns `dsigma_x` and `dsigma_y` to plot yield locus' 
 \note The normals to the yield locus contour are approximated numerically by considering also the neighboring points. To ensure good quality of the normals, make sure that the angular resolution of \f$\theta\f$ does not exceed \f$ \approx 5^\circ \f$ in the regions of stress space where the yield locus contour has high curvature. 
 
 
-Of course, we don't always need very detailed calculations of the yield locus. If just a few points are enough, we can easily get this done. Let's modify our example: please see the changes in lines 16 and 17 in the example below:
+Of course, we don't always need very detailed calculations of the yield locus. 
+If just a few points are enough, we can easily get this done. Let's modify our 
+example: first copy `sid1687f_yld.cfg` to `sid1687f_coarse_yld.cfg` and then 
+edit the copy. We need to change just a few things:
+-# the prefix for the output file. This is just to prevent overwriting the results 
+   we got from `YLD` a minute ago.
+-# the range of \f$\theta\f$ angles. 
+
+Please see the changes in lines 4, 16 and 17 in the `sid1687f_coarse_yld.cfg`
+listed below:
 
 \includelineno sid1687f_coarse_yld.cfg
 
-We can see that \f$\theta\f$ is restricted to the range from 0&deg; to 90&deg;  every 15&deg;, so only 7 points will be calculated:
+We can see that \f$\theta\f$ is restricted to the range from 0&deg; to 90&deg;  
+every 15&deg;, so only 7 points will be calculated:
+<pre class="consoleView">
+alamDMC YLD sid1687f_coarse_yld.cfg
+</pre>
+
+Here are the computed points on the yield locus section:
 <div class="figure">
 <img class="fullsize" src="sid1687f_coarse_yld.png" alt="yield locus section, coarse (DX51D steel)">
 <div class="figcaption">Yield locus section with limited \f$\theta\f$ range (DX51D steel)</div>
