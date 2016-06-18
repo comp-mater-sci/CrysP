@@ -1,7 +1,7 @@
 generic:
     output_prefix: sid1687f
     output_request: True
-    verbosity: 3
+    verbosity: 2
     input_fname: sid1687f.smt
     # if you use CUR format, you must also specify which block
     # of data from the texture file is to be loaded, for example:
