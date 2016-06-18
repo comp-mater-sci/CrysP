@@ -235,7 +235,7 @@ We can quickly inspect the content of these files, for instance `sid1687f_udsa_0
 <img class="fullsize" src="sid1687f_udsa_0_000_rvalues.png" alt="evolution of the r-values in 0deg tensile test (DX51D steel)">
 <img class="fullsize" src="sid1687f_udsa_45_000_rvalues.png" alt="evolution of the r-values in 45deg tensile test (DX51D steel)">
 <img class="fullsize" src="sid1687f_udsa_90_000_rvalues.png" alt="evolution of the r-values in 90deg tensile test (DX51D steel)">
-<div class="figcaption">Evolution of the r-values in tensile tests calculated by Uniaxial Stress Test Module (DX51D steel)</div>
+<div class="figcaption">Evolution of the r-values in tensile tests (Top - 0&deg;; Middle - 45&deg;; Bottom - 90&deg;), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
 </div>
 
 It can be seen that the instantaneous r-values evolve much faster. They also show more irregularities, since they are derived from plastic <EM>strain rate</EM> (cf. [definition] (@ref r-value)). The accumulated r-values, which are derived from plastic <EM>strain</EM> (cf. [definition] (@ref r-valueA)), evolve far slower.
@@ -245,7 +245,7 @@ It appears that the r-values in the TD directions follow a different evolution p
 The tensile stresses are reported in the column `sigma_xx` as well:
 <div class="figure">
 <img class="fullsize" src="sid1687f_udsa_tensile_stress.png" alt="tensile stress in tensile test (DX51D steel)">
-<div class="figcaption">Evolution of the tensile stress without strain hardening (Top - 0&deg;; Middle - 45&deg;; Bottom - 90&deg;), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
+<div class="figcaption">Evolution of the tensile stress without strain hardening calculated by Uniaxial Stress Test Module (DX51D steel)</div>
 </div>
 
 That's weird. It seems that the samples at 45&deg; and 90&deg; initially _soften_ and then only slightly harden. Well, it's pretty normal given the fact we do not use any hardening model at all. This also means the hardening effect results exclusively from the texture evolution.
