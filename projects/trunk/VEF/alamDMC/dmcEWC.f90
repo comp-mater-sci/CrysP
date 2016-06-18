@@ -143,6 +143,12 @@ contains
                 this%base_vectors(:,i) = this%base_vectors(:,i) / norm2(this%base_vectors(:,i))
             enddo
         endif
+        
+        ! Override the requests for outputs: 
+        this%altay%output_config%nfile = 0   ! texture
+        this%altay%output_config%npebp = 0   ! KOST1x state
+        this%output%outputRequest = .false.       ! idem.
+
         info = criSuccess
         !
 #define MSG_GROUP_ERRORS
