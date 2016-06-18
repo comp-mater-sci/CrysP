@@ -105,7 +105,6 @@ contains
                   case default
                         this%altay%output_config%npebp = 0
                   end select
-                  this%altay%output_config%nmss = 1
             endif
             !
             if (doLogging(criLoginfo,this%output%verbosity)) write(display_unit,fmt=30, advance='no')
