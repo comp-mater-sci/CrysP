@@ -119,7 +119,7 @@ alamDMC UDSA sid1687f_udsa_hard0.cfg
 Swift parameter identification through curve fitting
 ====================================================
 
-The output file of the non-hardening VEF simulation is provided in `sid1687f_udsa_hard0.uds` in directory `examples\tutorial_swift`.
+The output file of the non-hardening VEF simulation is provided in `sid1687f_udsa_hard0.uds` in directory `examples\tutorial_swift\results`.
 Let's take a glance at the leading 5 lines:
 \dontinclude sid1687f_udsa_hard0.uds
 \until 0.540350518E-01
@@ -155,7 +155,7 @@ The [Swift law variant] (@ref hardening_model3) is defined in the lines 12-13.
 Other modifications are a new output prefix (line 4), and the reduction of increment size (line 24) to generate denser points on the stress-strain curve.
 
 The output file generated from running this simulation
-is `sid1687f_udsa_SwiftS.uds`, also included in the directory `examples\tutorial_swift`.
+is `sid1687f_udsa_SwiftS.uds`, also included in the directory `examples\tutorial_swift\results`.
 As can be seen in figure below, the stress-strain behavior of the virtual material
 compares very well to the experimental behavior:
 <div class="figure">
