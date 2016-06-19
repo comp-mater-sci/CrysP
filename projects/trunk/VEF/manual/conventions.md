@@ -159,7 +159,7 @@ readability of the documentation concerned:
 	
 - Mandatory configuration options are always numbered as: 1. ,2. , 3. etc. If a configuration option has a
   limited number of supported values, those values may be given in an unummerated and indented list.
-  Value-dependent suboptions that depend on the value of previous field, are documented as a Roman-numerated list (a., b., c., etc.), and they are indented accordingly. 
+  Value-dependent suboptions that depend on the value of previous field, are documented as a letter-numerated list (a., b., c., etc.), and they are indented accordingly. Second-level suboptions (sub-suboptions) are listed as a Roman-numerated list (i., ii., iii., etc.) with further indentation.
 
   \par &emsp; Example: 
   A configuration file section may be documented as follows: 
@@ -171,8 +171,9 @@ readability of the documentation concerned:
 	    -# \confdef{xx_subop2bf,logical} ... 
 	      - `True`<BR>
   	        ... 
-	      - `False`<BR>
-	        ... 
+	      - `False`<BR> requires 2 sub-suboptions:
+		    -# \confdef{xx_false_subsubop2bif,path} ...
+		    -# \confdef{xx_false_subsubop2biif,real} ...
 	  - `yy`<BR>
 	    If \conffield{op2f}=`yy`, there are no suboptions.
 	  - `zz`<BR>

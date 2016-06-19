@@ -19,65 +19,39 @@ By convention, the sample `x`-axis is aligned with the uniaxial (or main) loadin
 
 \subsection configuration_udsa Module-specific configuration
 
-<ol>
-<li> \confdef{orientation_type,string} specifies the type of sample orientation. 
+-# \confdef{orientation_type,string} specifies the type of sample orientation. 
 The exact orientation (or several orientations) may be further specified by a value-dependent option. 
 Supported values of \conffield{orientation_type} are:
-	<ul>
-	<li> `inplane` to request one or several in-plane uniaxial tests. 
-	The sample `x`-axis (loading direction) is contained to the material `1`-`2`-plane. 
-	The sample `y`-axis is also contained in the material `1`-`2`-plane.
-	The sample `z`-axis is aligned with the material `3`-direction. 
-	For \conffield{orientation_type}=`inplane`, the following option needs to be provided:
-		<ol>
-		<li> \confdef{inplane_orientation_range,real} defines a [range] (\ref range_option) for in-plane orientations to be tested.
-		The field \conffield{inplane_orientation_range} is expressed in degrees. 
-		</li>
-		</ol>
-	</li>
-	<li> `ND` to request uniaxial loading (direction of sample `x`-axis) along the material `3`-direction.
-	Note that for sheet metal, it is a convention that the material `3`-direction corresponds to the sheet normal direction ND.
-	Also, the sample `y`-axis is aligned with the material `2`-direction (conventional transverse direction TD for sheet metal).
-	Consequently, the sample `z`-axis is aligned with the material `1`-direction (conventional rolling direction RD for sheet metal).
-	</li>
-	<li> `arbitrary` to request a single test with generic orientation of the sample reference, as
-		<ol>
-		<li> \confdef{arbitrary_orientation,euler} specifies the orientation of the sample frame in format specified in \ref euler_option.
-		</li>
-		</ol>
-	</li>
-	</ul>
-<li> \conffield{incrementation_type} specifies how the deformation increments will be calculated. 
-      All values listed in \ref incrementation_option are permitted.
-</li>
-<li>
-\conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) to be reached in the virtual test.
-</li>
-<li>
-\conffield{increment_magnitude} sets the magnitude of strain increments.
-</li>
-<li> \confdef{stress_state,string}  selects between tension and compression stress states. Specify 
-	<ul>
-		<li> `compression` to request compressive stress state, i.e.: \f$ \sigma_{xx} < 0 \f$.
-		</li>
-		<li> `tension` to request tensile stress state, i.e.: \f$ \sigma_{xx} > 0 \f$. 
-		</li>
-	</ul>
-</li>
-<li> \confdef{pure_uniaxial_state,logical} \anchor pure_uniaxial_state_anchor specifies whether or not the stress state is _pure_, i.e. 
+  - `inplane` <BR> to request one or several in-plane uniaxial tests. 
+  The sample `x`-axis (loading direction) is contained to the material `1`-`2`-plane. 
+  The sample `y`-axis is also contained in the material `1`-`2`-plane.
+  The sample `z`-axis is aligned with the material `3`-direction. 
+  For \conffield{orientation_type}=`inplane`, the following option needs to be provided:
+    -# \confdef{inplane_orientation_range,real} defines a [range] (\ref range_option) for in-plane orientations to be tested.
+	The field \conffield{inplane_orientation_range} is expressed in degrees. 
+  - `ND` <BR> to request uniaxial loading (direction of sample `x`-axis) along the material `3`-direction.
+  Note that for sheet metal, it is a convention that the material `3`-direction corresponds to the sheet normal direction ND.
+  Also, the sample `y`-axis is aligned with the material `2`-direction (conventional transverse direction TD for sheet metal).
+  Consequently, the sample `z`-axis is aligned with the material `1`-direction (conventional rolling direction RD for sheet metal).
+  - `arbitrary` <BR> to request a single test with generic orientation of the sample reference, as
+    -# \confdef{arbitrary_orientation,euler} specifies the orientation of the sample frame in format specified in \ref euler_option.
+-# \conffield{incrementation_type} specifies how the deformation increments will be calculated. 
+All values listed in \ref incrementation_option are permitted.
+-# \conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) to be reached in the virtual test.
+-# \conffield{increment_magnitude} sets the magnitude of strain increments.
+-# \confdef{stress_state,string}  selects between tension and compression stress states. Specify 
+  - `compression` <BR> to request compressive stress state, i.e.: \f$ \sigma_{xx} < 0 \f$.
+  - `tension` <BR> to request tensile stress state, i.e.: \f$ \sigma_{xx} > 0 \f$. 
+-# \confdef{pure_uniaxial_state,logical} \anchor pure_uniaxial_state_anchor specifies whether or not the stress state is _pure_, i.e. 
 having exactly one non-zero principal component.
-If set to `False`, a non-pure uniaxial stress state is imposed, in which case the following option must be specified:
-	<ol>
-		<li> \confdef{stress_ratio_rho,real} contains the imposed deviation \f$ \rho \f$ from the pure uniaxial stress state, as:
-		\f[
-		\rho = \frac{\sigma_{yy}}{\sigma_{xx}}
-		\f]
-		where \f$ \sigma_{xx} \f$ and \f$ \sigma_{yy} \f$ are the normal stresses in the sample x- and y-directions, respectively.
-		Note that \f$ \rho = 0 \f$ corresponds to the configuration \conffield{pure_uniaxial_state}=`True`.
-		</li>
-	</ol>
-</li>
-</ol>
+If set to 
+  - `False` <BR> then a non-pure uniaxial stress state is imposed, in which case the following option must be specified:
+    -# \confdef{stress_ratio_rho,real} contains the imposed deviation \f$ \rho \f$ from the pure uniaxial stress state, as:
+    \f[
+    \rho = \frac{\sigma_{yy}}{\sigma_{xx}}
+    \f]
+    where \f$ \sigma_{xx} \f$ and \f$ \sigma_{yy} \f$ are the normal stresses in the sample x- and y-directions, respectively.
+    Note that \f$ \rho = 0 \f$ corresponds to the configuration \conffield{pure_uniaxial_state}=`True`.
 
 \par Example
 Please see the configuration file `AKDQf_udsa.cfg` from `examples` directory:
@@ -212,28 +186,18 @@ The imposed stress state is described with reference to this sample reference fr
 
 \subsection configuration_asr Module-specific configuration
 
-<ol>
-<li> \confdef{sample_orientation,euler} specifies the orientation of the sample reference frame of the virtual specimen, in format specified in \ref euler_option.
-</li>
-<li> \confdef{n_steps,integer} sets the number of subsequent deformation steps, each one being specified by the configuration settings 3.-4. and their optional subsettings.
+-# \confdef{sample_orientation,euler} specifies the orientation of the sample reference frame of the virtual specimen, in format specified in \ref euler_option.
+-# \confdef{n_steps,integer} sets the number of subsequent deformation steps, each one being specified by the configuration settings 3.-4. and their optional subsettings.
 These settings are repeated \conffield{n_steps} times in configuration file, in the same order as they are to be applied to the virtual sample.
-</li>
-<li> \confdef{stress_mode,symsrtensor} specifies the imposed stress mode for given step, with reference to the sample (`xyz`) reference frame, and in format specified in \ref symsrtensor_option. 
+-# \confdef{stress_mode,symsrtensor} specifies the imposed stress mode for given step, with reference to the sample (`xyz`) reference frame, and in format specified in \ref symsrtensor_option. 
 Note that the hydrostatic part of the imposed stress mode is ignored, as well as its norm.
-</li>
-<li> \confdef{update_state,logical} is a switch that controls update of material state for given step. When set to `False` then \conffield{stress_mode}
-is merely queried without finite deformation and without associated evolution of state. Otherwise a finite deformation has to be specified as follows:
-	<ol>
-	<li> \conffield{incrementation_type} specifies how the deformation increments will be calculated. The only allowed values in this module are:
+-# \confdef{update_state,logical} is a switch that controls update of material state for given step. When set to 
+  - `False` <BR> then \conffield{stress_mode} is merely queried without finite deformation and without associated evolution of state.
+  - `True` <BR> then a finite deformation has to be specified as follows:
+    -# \conffield{incrementation_type} specifies how the deformation increments will be calculated. The only allowed values in this module are:
 		`StrainTensor`, `StrainTensorIncrement` and `PlasticWork`. See \ref incrementation_option for details. 
-	</li>
-	<li> \conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) to be reached in the virtual test.
-	</li>
-	<li> \conffield{increment_magnitude} sets the magnitude of deformation increments.
-	</li>
-	</ol>
-</li>
-</ol>
+	-# \conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) to be reached in the virtual test.
+	-# \conffield{increment_magnitude} sets the magnitude of deformation increments.
 
 \par Example
 Please see the configuration file `AKDQf_asr.cfg` from `examples` directory:
@@ -419,18 +383,11 @@ Consequently, the sample `z`-axis is aligned with the material `3`-direction.
 
 \subsection configuration_qrs Module-specific configuration
 
-<ol>
-<li> \confdef{sample_orientation_range,real} defines the range for the orientation of virtual tensile specimen, in multi-line format specified in 
-\ref range_option. Orientations in the range denote the angle between the sample `x`-axis and the material `1`-direction, and are expressed in degrees. 
-</li>
-<li> \conffield{pure_uniaxial_state} is defined [here](@ref pure_uniaxial_state_anchor).
-</li>
-<li> \confdef{calculate_Mfactor,logical} is a flag to request calculation of average Taylor factor in module-specific outputfile. If `True`, it may
+-# \confdef{sample_orientation_range,real} defines the range for the orientation of virtual tensile specimen, in multi-line format specified in \ref range_option. Orientations in the range denote the angle between the sample `x`-axis and the material `1`-direction, and are expressed in degrees. 
+-# \conffield{pure_uniaxial_state} is defined [here](@ref pure_uniaxial_state_anchor).
+-# \confdef{calculate_Mfactor,logical} is a flag to request calculation of average Taylor factor in module-specific outputfile. If `True`, it may
 increase calculation time for certain model assumptions.
-</li>
-<li> \confdef{fold_symmetry,logical} enables or disables averaging of output variables over symmetrically equivalent positions. 
-</li>
-</ol>
+-# \confdef{fold_symmetry,logical} enables or disables averaging of output variables over symmetrically equivalent positions. 
 
 \par Example
 Please see the configuration file `AKDQf_qrs.cfg` from `examples` directory:
@@ -472,42 +429,20 @@ There is no evolution of state associated with this module.
 
 \subsection configuration_yld Module-specific configuration
 
-<ol>
-<li> \confdef{theta_range,real} defines the range for yield locus points according to the multi-line format specified in 
-\ref range_option. Angles in the field \conffield{theta_range} are expressed in degrees and are measured from the 1st  
-section base vector towards the 2nd section base vector. 
-</li>
-<li> \confdef{section_default,logical} is a flag to request default or non-default section definition and yield locus scaling.
-If \conffield{section_default}=`True`, the yield locus section is defined by \f$\sigma_{11}\f$ (normal stress along RD) along the X-axis, 
-and \f$\sigma_{22}\f$ (normal stress along TD) along the Y-axis. Furthermore, the yield locus will be scaled by the yield stress 
-corresponding to uniaxial tension along the RD.
-For \conffield{section_default}=`False`, the following suboptions are required:
-	<ol>
-	<li> \confdef{normalize_base,logical}. If `True`, then the base tensors specified by the following configuration 
-	settings 2.-3.-4. are normalized so their norm is equal to 1.0.
-	</li>
-	<li> \confdef{base_sigma_X,symsrtensor} is the base tensor along the X-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
-	</li>
-	<li> \confdef{base_sigma_Y,symsrtensor} is the base tensor along the Y-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
-	</li>
-	<li> \confdef{base_sigma_offset,symsrtensor} is the base tensor that determines the mode of the stress that coincides with the origin of the 
-	yield locus section, in [Voigt notation](@ref symsrtensor_option).
-	</li>
-	<li> \confdef{normalize_stress,logical}
-	</li>
-	<li> \confdef{offset_range,real}
-	</li>
-	<li> \confdef{use_scaling,logical}
-		<ol>
-		<li> \confdef{scaling_stress_mode,symsrtensor} is the stress mode for which the yield point is used as scaling factor, 
-		in [Voigt notation](@ref symsrtensor_option).
-		</li>
-		</ol>
-	</li>
-	</ol>
-</li>
-</ol>
-
+-# \confdef{theta_range,real} defines the range for yield locus points according to the multi-line format specified in \ref range_option. Angles in the field \conffield{theta_range} are expressed in degrees and are measured from the 1st section base vector towards the 2nd section base vector. 
+-# \confdef{section_default,logical} is a flag to request default or non-default section definition and yield locus scaling.
+If \conffield{section_default} equals
+  - `True` <BR> then the yield locus section is defined by \f$\sigma_{11}\f$ (normal stress along RD) along the X-axis, and \f$\sigma_{22}\f$ (normal stress along TD) along the Y-axis. Furthermore, the yield locus will be scaled by the yield stress corresponding to uniaxial tension along the RD.
+  - `False` <BR> then the following suboptions are required:
+    -# \confdef{normalize_base,logical}. If `True`, then the base tensors specified by the following configuration 	settings 2.-3.-4. are normalized so their norm is equal to 1.0.
+	-# \confdef{base_sigma_X,symsrtensor} is the base tensor along the X-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
+	-# \confdef{base_sigma_Y,symsrtensor} is the base tensor along the Y-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
+	-# \confdef{base_sigma_offset,symsrtensor} is the base tensor that determines the mode of the stress that coincides with the origin of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
+	-# \confdef{normalize_stress,logical}
+	-# \confdef{offset_range,real}
+	-# \confdef{use_scaling,logical}. If it equals
+	  - `False` <BR> then the suboption
+        -# \confdef{scaling_stress_mode,symsrtensor} is the stress mode for which the yield point is used as scaling factor, in [Voigt notation](@ref symsrtensor_option).
 
 \par Example
 Please see the configuration file `AKDQf_yld.cfg` from `examples` directory:
@@ -577,55 +512,27 @@ The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locu
 
 \subsection configuration_ewc Module-specific configuration
 
-<ol>
-<li> \confdef{worklevel_selection_method,string}
+-# \confdef{worklevel_selection_method,string}
 	if \conffield{worklevel_selection_method} is equal to
-	<ul>
-	<li> `direct`, the equi-work contour levels are specified directly as a range of plastic work values with \conffield{contour_levels_range}.
-	</li>
-	<li> `reference`, the equi-work contour levels are selected indirectly, on the basis of a reference test. The values of plastic work 
+    - `direct` <BR> the equi-work contour levels are specified directly as a range of plastic work values with \conffield{contour_levels_range}.
+	- `reference` <BR> the equi-work contour levels are selected indirectly, on the basis of a reference test. The values of plastic work 
 	used as contour levels are those for which the von Mises equivalent strain \f$ \epsilon_{vM} \f$ of the reference test are specified 
 	by \conffield{contour_levels_range}. 
 	The reference test is specified by the following suboptions: 
-		<ol>
-		<li> \confdef{stress_mode,symsrtensor} specifies the imposed stress mode of the reference test, in format specified in \ref symsrtensor_option.
-		</li>
-		<li> \conffield{incrementation_type} specifies how the deformation increments of the reference test will be calculated. The only values permitted in this module are:
-			`StrainTensor`, `StrainTensorIncrement` and `PlasticWork`. See \ref incrementation_option for details.
-		</li>
-		<li> \conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) 
-		to be simulated in the reference test. 
-		A proper selection of contour levels implies \conffield{step_magnitude} must be set equal or greater than the largest value
-		of \conffield{contour_levels_range}.
-		</li>
-		<li> \conffield{increment_magnitude} sets the magnitude of deformation increments for the reference test. 
-		</li>
-		</ol>
-	</li>
-	</ul>
-</li>
-<li> \confdef{contour_theta_range,real} defines the range for equi-work contour points according to the multi-line format specified in 
-\ref range_option. Angles in the field \conffield{contour_theta_range} are expressed in degrees and are measured from the 1st  
-section base vector towards the 2nd section base vector. 
-</li>
-<li> \confdef{contour_levels_range,real} defines the values for the levels of equi-work contours, according to 
-\conffield{worklevel_selection_method}.
-</li>
-<li> \confdef{points_per_contour,integer} sets the number of increments to be performed in-between two subsequent contour levels,
- for all virtual tests that generate the equi-work contour levels.
-</li>
-<li> \confdef{use_default_settings,logical} specifies whether or not the default section in stress space is to be used. 
-If \conffield{use_default_settings}=`True`, the equi-work contour section is defined by \f$\sigma_{11}\f$ along the \f$X\f$-axis, 
-and \f$\sigma_{22}\f$ along the \f$Y\f$-axis.
-For \conffield{use_default_settings}=`False`, the following suboptions are required:
-	<ol>
-	<li>  \confdef{base_sigma_X,real} is the base tensor along the \f$X\f$-axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
-	</li>
-	<li>  \confdef{base_sigma_Y,real} is the base tensor along the \f$Y\f$-axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
-	</li>
-	</ol>
-</li>
-</ol>
+	  -# \confdef{stress_mode,symsrtensor} specifies the imposed stress mode of the reference test, in format specified in \ref symsrtensor_option.
+	  -# \conffield{incrementation_type} specifies how the deformation increments of the reference test will be calculated. The only values permitted in this module are: `StrainTensor`, `StrainTensorIncrement` and `PlasticWork`. See \ref incrementation_option for details.
+	  -# \conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) to be simulated in the reference test. 
+		A proper selection of contour levels implies \conffield{step_magnitude} must be set equal or greater than the largest value	of \conffield{contour_levels_range}.
+	  -# \conffield{increment_magnitude} sets the magnitude of deformation increments for the reference test. 
+-# \confdef{contour_theta_range,real} defines the range for equi-work contour points according to the multi-line format specified in \ref range_option. Angles in the field \conffield{contour_theta_range} are expressed in degrees and are measured from the 1st section base vector towards the 2nd section base vector. 
+-# \confdef{contour_levels_range,real} defines the values for the levels of equi-work contours, according to \conffield{worklevel_selection_method}.
+-# \confdef{points_per_contour,integer} sets the number of increments to be performed in-between two subsequent contour levels, for all virtual tests that generate the equi-work contour levels.
+-# \confdef{use_default_settings,logical} specifies whether or not the default section in stress space is to be used. 
+If \conffield{use_default_settings} equals 
+  - `True` <BR> then the equi-work contour section is defined by \f$\sigma_{11}\f$ along the \f$X\f$-axis, and \f$\sigma_{22}\f$ along the \f$Y\f$-axis.
+  - `False` <BR> then the following suboptions are required:
+    -# \confdef{base_sigma_X,real} is the base tensor along the \f$X\f$-axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
+    -# \confdef{base_sigma_Y,real} is the base tensor along the \f$Y\f$-axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
 
 \par Example
 Please see the configuration file `AKDQf_ewc.cfg` from `examples` directory:
