@@ -23,7 +23,7 @@ a single internal state variable, being the accumulated slip \f$ \gamma \f$ of t
 \f]
 This heuristic hardening law has 3 parameters: \f$\tau_0\f$, \f$\gamma_0\f$ and \f$n\f$.
 
-The experimental data for identification is given in the file `\examples\DX51D_uni0_exp.txt`
+The experimental data for identification is given in the file `examples\tutorial_swift\DX51D_uni0_exp.txt`.
 Its contents looks as follows:
 <div class="figure">
 	<span class="zoom">
@@ -91,7 +91,7 @@ Let's now see how these steps work out for the example at hand.
 Non-hardening VEF simulation of the identification test
 =======================================================
 As a first step, we need to simulate the 0° uniaxial tensile test assuming a non-hardening material model.
-For DX51D, a pre-made configuration file `sid1687f_udsa_hard0.cfg` is available in directory `\guided_tour\Swift`.
+For DX51D, a pre-made configuration file `sid1687f_udsa_hard0.cfg` is available in directory `examples\tutorial_swift`.
 It looks as follows:
 \includelineno sid1687f_udsa_hard0.cfg
 
@@ -104,7 +104,7 @@ The 0° tensile test is easily configured with the \ref module_udsa.
 We can see that, besides specifying a single, in-plane tensile test along 0° to RD (lines 16-19 and line 23),
 we request that increments be made in equal intervals of 0.018 of tensile strain (lines 20 and 22).
 This is far from a random choice; in fact it corresponds  exactly to the strain intervals
-in which the experimental data (cf. file `\examples\DX51D_uni0_exp.txt`) is available. 
+in which the experimental data (cf. file `examples\tutorial_swift\DX51D_uni0_exp.txt`) is available. 
 
 \par Hint 
 \anchor hint_nonequal_Strain_intervals
@@ -119,7 +119,7 @@ alamDMC UDSA sid1687f_udsa_hard0.cfg
 Swift parameter identification through curve fitting
 ====================================================
 
-The output file of the non-hardening VEF simulation is provided in `sid1687f_udsa_hard0.uds` in directory `\guided_tour\Swift`.
+The output file of the non-hardening VEF simulation is provided in `sid1687f_udsa_hard0.uds` in directory `examples\tutorial_swift`.
 Let's take a glance at the leading 5 lines:
 \dontinclude sid1687f_udsa_hard0.uds
 \until 0.540350518E-01
@@ -127,7 +127,7 @@ Let's take a glance at the leading 5 lines:
 We should now have all coefficients for [the least-square minimization problem] (@ref eq_leastsquarefit):
 <ul> 
 	<li> The experimental datapoints \f$\sigma^{exp}_{xx,i}\f$ for strain levels \f$i\f$ are located 
-	in `\examples\DX51D_uni0_exp.txt`.</li>
+	in `examples\tutorial_swift\DX51D_uni0_exp.txt`.</li>
 	<li> The same experimental strain levels \f$i\f$ are also listed in column 4 of `sid1687f_udsa_hard0.uds`, 
 	so we also have the corresponding \f$\sigma^*_{xx,i}\f$ datapoints in column 5. </li>
 	<li> Wait a minute - how about the datapoints of homogenized accumulated slip \f$ \gamma^* \f$?
@@ -149,13 +149,13 @@ Verification of parameter identification
 ========================================
 
 The verification step needs only a slight modification to configuration file, 
-see file `sid1687f_udsa_SwiftS.cfg` in directory `\guided_tour\Swift`:
+see file `sid1687f_udsa_SwiftS.cfg` in directory `examples\tutorial_swift`:
 \includelineno sid1687f_udsa_SwiftS.cfg
 The [Swift law variant] (@ref hardening_model3) is defined in the lines 12-13.
 Other modifications are a new output prefix (line 4), and the reduction of increment size (line 24) to generate denser points on the stress-strain curve.
 
 The output file generated from running this simulation
-is `sid1687f_udsa_SwiftS.uds`, also included in the directory `\guided_tour\Swift`.
+is `sid1687f_udsa_SwiftS.uds`, also included in the directory `examples\tutorial_swift`.
 As can be seen in figure below, the stress-strain behavior of the virtual material
 compares very well to the experimental behavior:
 <div class="figure">
