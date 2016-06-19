@@ -96,7 +96,7 @@ Uniaxial tension   {#gt_QRS}
 The VEF can calculate anisotropic properties for any direction of uniaxial loading. If the properties of the as-recieved (undeformed) material are of interest, the Uniaxial Anisotropy Module of the `alamDMC` program is the most handy way to do so. 
 To run this module, we need a configuration file that instructs the program what to do (see [reference manual](@ref module_qrs) for full details on what can be specified in Uniaxial Anisotropy Module configuration files). We have drafted one for you: please find file `sid1687f_qrs.cfg` in `guided_tour_directory`. Let's quickly inspect what's inside:
 
-\includelineno sid1687f_qrs.cfg
+\includelineno guided_tour/sid1687f_qrs.cfg
 
 As you certainly noticed, there are lines that start with `#`: these are [comments](@ref desc_alamdmc_comments) that you can put in the configuration files. The comments are ignored by the program, but help us to understand the content of the file.
 
@@ -153,7 +153,7 @@ Yield locus sections    {#gt_YLD}
 The VEF includes a Yield Locus Module that calculates yield locus sections.  
 
 Here is how a typical configuration file looks like (please see the file `sid1687f_yld.cfg`):
-\includelineno sid1687f_yld.cfg
+\includelineno guided_tour/sid1687f_yld.cfg
 
 Whereas the generic configuration settings (lines 4 - 12) are identical as in the previous section, the trailing [module-specific configuration] (@ref configuration_yld) is different. The YLD uses the angle \f$\theta\f$ to choose which points on the locus section should be calculated. Figure below gives an illustration how \f$\theta\f$ is defined.  
 
@@ -234,7 +234,7 @@ Deformation under uniaxial stress state    {#gt_udsa}
 In the next step of this tour we will simulate uniaxial tension test. The [Uniaxial Stress Test Module](@ref module_udsa)  provides a virtual uniaxial test. We will track the evolution of the material state up to a plastic strain of approximately 40%, which is much higher than what may usually be realized in an experimental tensile test setup.
 
 Let's take the configuration file `sid1687f_udsa.cfg` for this module:
-\includelineno sid1687f_udsa.cfg
+\includelineno guided_tour/sid1687f_udsa.cfg
 
 Again, we made no change in the generic configuration section. The [module-specific part] (@ref configuration_udsa) tells the VEF to simulate a process where the virtual samples are oriented in-plane of the sheet, and  "cut out" in the directions 0&deg;, 45&deg; and 90&deg; with respect to the RD. The AlamDMC program will simulate tension up to tensile strain 0.4. The total deformation will be subdivided into increments of magnitude 0.01. The option `StrainTensorComponent ` instructs the program to calculate the increments in a way that the tensile strain component will uniformly increase.
 
@@ -337,7 +337,7 @@ Suppose we are interested how the material would behave if we deform it under a 
 
 Let us get input file `sid1687f_asr.cfg` for this module: 
 
-\includelineno sid1687f_asr.cfg
+\includelineno guided_tour/sid1687f_asr.cfg
 
 The essential part of the file (from line 14 onwards) instructs the `alamDMC` program to apply 4 consecutive deformation steps, each of different stress mode but identical plastic strain magnitude 0.2. So, let's run it:
 
@@ -363,7 +363,7 @@ loadings.
 We are going to use the latter option, which is implemented in the module EWC. Please locate the 
 input file `sid1687f_hardening_ewc.cfg` in `guided_tour_directory`. Let's open it:
 
-\includelineno sid1687f_hardening_ewc.cfg
+\includelineno guided_tour/sid1687f_hardening_ewc.cfg
 
 As we can see, the generic part of the configuration file includes the same hardening law as we 
 previously used in our [uniaxial stress state analysis](@ref gt_udsa).
