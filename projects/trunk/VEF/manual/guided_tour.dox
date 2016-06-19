@@ -263,7 +263,7 @@ The tensile stresses are reported in the column `sigma_xx` as well:
 <div class="figcaption">Evolution of the tensile stress without strain hardening calculated by Uniaxial Stress Test Module (DX51D steel)</div>
 </div>
 
-That's weird. It seems that the samples at 45&deg; and 90&deg; initially _soften_ and then only slightly harden. Well, it's pretty normal given the fact we do not use any hardening model at all. This also means the hardening effect results exclusively from the texture evolution.
+That looks weird. It seems that the samples at 45&deg; and 90&deg; initially _soften_ and then only slightly harden. Well, it's pretty normal given the fact we do not use any hardening model at all. This also means the hardening effect results exclusively from the texture evolution.
 
 It takes just a few steps to include the hardening. First, let's make a copy of `sid1687f_udsa.cfg` and name it `sid1687f_hardening_udsa.cfg`. We need to make a slight modification to its generic section: 
 -# change the output prefix (we don't want to overwrite the results of the previous tests, do we?) into: `sid1687f_hardening_udsa`
@@ -347,6 +347,61 @@ alamDMC ASR sid1687f_asr.cfg
 
 Let's open the output file `sid1687f_asr.asr` to check what's produced by the ASR module. Uh-oh. Sixty columns of data, that's a lot. The module simulates evolution an arbitrary stress and makes no additional assumptions, so it  reports as much as possible (within reason) to allow the user to interpret the results.
 
+
+Equiwork contours    {#gt_ewc}
+-----------------
+
+In [one of previous sections](@ref gt_YLD) we have calculated  the yield locus of the
+material in as-received state. But a natural question arises: how would the yield locus change 
+once we deform the material?
+
+The VEF provides two ways of answering this question. One is to calculate a new yield locus for 
+a predicted deformation texture, while the other is to compute so-called 
+[equiwork contours](@ref module_ewc) that are obtained from a series of monotonic stress 
+loadings.
+
+We are going to use the latter option, which is implemented in the module EWC. Please locate the 
+input file `sid1687f_hardening_ewc.cfg` in `guided_tour_directory`. Let's open it:
+
+\includelineno sid1687f_hardening_ewc.cfg
+
+As we can see, the generic part of the configuration file includes the same hardening law as we 
+previously used in our [uniaxial stress state analysis](@ref gt_udsa).
+
+The [module-specific part] (@ref configuration_ewc) tells the VEF to get the plastic work levels 
+from a reference stress path, in this case uniaxial tension simulated up to strain magnitude of
+0.4. Then the program will follow a series of biaxial loading paths with 5&deg; resolution of 
+angle \f$ \theta \f$. Each loading path will follow work-controlled evolution up to the
+work level corresponding to equivalent strain of 0.3 on the reference stress path. Likewise, 
+the work increments will be chosen to match increment of 0.1 of equivalent strain on 
+the reference path.  
+
+
+Let's run the program (module keyword `EWC`):
+<pre class="consoleView">
+alamDMC EWC sid1687f_hardening_ewc.cfg
+</pre>
+
+There is quite a lot to compute in this run, so in the meantime we can go and grab a cup of coffee 
+or some other tasty drink. Once we are back, we can jump into the results stored in the output file
+`sid1687f_hardening_ewc.ewc`. The first 5 lines should look like below:
+
+\dontinclude expert/sid1687f_hardening_ewc.ewc
+\until   .1000000000000E+02
+
+The column `theta` contains the angles that were used for computing the loading paths. The subsequent
+columns contain the stresses on the section equiwork contours. As you can see, the column headers
+indicate what strain level each contour corresponds to.
+
+The numerical values in the listing show that stresses on the contours increase with deformation. 
+This perfectly makes sense: the material hardens with deformation, so the equiwork contours expand. 
+So, let's make a polar plot of these contours:
+
+<div class="figure">
+<img class="fullsize" src="sid1687f_hardening_ewc.png" alt="Equiwork contours (DX51D steel)">
+<div class="figcaption">Equiwork contours in the biaxial \f$ \sigma_x \f$ \f$ \sigma_y \f$ section (DX51D steel)</div>
+</div>
+
 */
 
 /* 
@@ -369,6 +424,4 @@ We can now easily check how the yield locus shape changes due to the imposed def
 
 Note that we now use a deformation texture predicted by the UDSA module, as we take input texture from the CUR file.
 
-Equi-work contours    {#gt_ewc}
-------------------
 */
