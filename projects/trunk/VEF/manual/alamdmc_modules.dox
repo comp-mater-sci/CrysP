@@ -27,7 +27,7 @@ Supported values of \conffield{orientation_type} are:
   The sample `y`-axis is also contained in the material `1`-`2`-plane.
   The sample `z`-axis is aligned with the material `3`-direction. 
   For \conffield{orientation_type}=`inplane`, the following option needs to be provided:
-    -# \confdef{inplane_orientation_range,real} defines a [range] (\ref range_option) for in-plane orientations to be tested.
+    -# \confdef{inplane_orientation_range,realrange} defines a [range] (\ref range_option) for in-plane orientations to be tested.
 	The field \conffield{inplane_orientation_range} is expressed in degrees. 
   - `ND` <BR> to request uniaxial loading (direction of sample `x`-axis) along the material `3`-direction.
   Note that for sheet metal, it is a convention that the material `3`-direction corresponds to the sheet normal direction ND.
@@ -383,7 +383,7 @@ Consequently, the sample `z`-axis is aligned with the material `3`-direction.
 
 \subsection configuration_qrs Module-specific configuration
 
--# \confdef{sample_orientation_range,real} defines the range for the orientation of virtual tensile specimen, in multi-line format specified in \ref range_option. Orientations in the range denote the angle between the sample `x`-axis and the material `1`-direction, and are expressed in degrees. 
+-# \confdef{sample_orientation_range,realrange} defines the range for the orientation of virtual tensile specimen, in multi-line format specified in \ref range_option. Orientations in the range denote the angle between the sample `x`-axis and the material `1`-direction, and are expressed in degrees. 
 -# \conffield{pure_uniaxial_state} is defined [here](@ref pure_uniaxial_state_anchor).
 -# \confdef{calculate_Mfactor,logical} is a flag to request calculation of average Taylor factor in module-specific outputfile. If `True`, it may
 increase calculation time for certain model assumptions.
@@ -429,7 +429,7 @@ There is no evolution of state associated with this module.
 
 \subsection configuration_yld Module-specific configuration
 
--# \confdef{theta_range,real} defines the range for yield locus points according to the multi-line format specified in \ref range_option. Angles in the field \conffield{theta_range} are expressed in degrees and are measured from the 1st section base vector towards the 2nd section base vector. 
+-# \confdef{theta_range,realrange} defines the range for yield locus points according to the multi-line format specified in \ref range_option. Angles in the field \conffield{theta_range} are expressed in degrees and are measured from the 1st section base vector towards the 2nd section base vector. 
 -# \confdef{section_default,logical} is a flag to request default or non-default section definition and yield locus scaling.
 If \conffield{section_default} equals
   - `True` <BR> then the yield locus section is defined by \f$\sigma_{11}\f$ (normal stress along RD) along the X-axis, and \f$\sigma_{22}\f$ (normal stress along TD) along the Y-axis. Furthermore, the yield locus will be scaled by the yield stress corresponding to uniaxial tension along the RD.
@@ -524,7 +524,7 @@ The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locu
 	  -# \conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) to be simulated in the reference test. 
 		A proper selection of contour levels implies \conffield{step_magnitude} must be set equal or greater than the largest value	of \conffield{contour_levels_range}.
 	  -# \conffield{increment_magnitude} sets the magnitude of deformation increments for the reference test. 
--# \confdef{contour_theta_range,real} defines the range for equi-work contour points according to the multi-line format specified in \ref range_option. Angles in the field \conffield{contour_theta_range} are expressed in degrees and are measured from the 1st section base vector towards the 2nd section base vector. 
+-# \confdef{contour_theta_range,realrange} defines the range for equi-work contour points according to the multi-line format specified in \ref range_option. Angles in the field \conffield{contour_theta_range} are expressed in degrees and are measured from the 1st section base vector towards the 2nd section base vector. 
 -# \confdef{contour_levels_range,real} defines the values for the levels of equi-work contours, according to \conffield{worklevel_selection_method}.
 -# \confdef{points_per_contour,integer} sets the number of increments to be performed in-between two subsequent contour levels, for all virtual tests that generate the equi-work contour levels.
 -# \confdef{use_default_settings,logical} specifies whether or not the default section in stress space is to be used. 

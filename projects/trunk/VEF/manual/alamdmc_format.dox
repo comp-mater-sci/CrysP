@@ -62,8 +62,8 @@ Any configuration option belongs to one of the two groups:
 
 There are a number of recurrent configuration options that deserve some more explanation: 
    
-\subsection range_option  Configuration option for expressing range of values
-This is a multi-line configuration option: 
+\subsection range_option  Configuration option for expressing range of real values
+This is a multi-line configuration option of the compound datatype `realrange`, which is composed as follows: 
 -# \confdef{range_type,string}
    determines the type of range to be specified. Supported values of \conffield{range_type} are: `zero`, `one`, `single`, `discrete`, `uniform`, `biased`, `doublebiased` and `multibiased`. It requires zero or more value-dependent suboptions:
   - \anchor option_zero `zero`<BR>
