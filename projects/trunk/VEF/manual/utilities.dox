@@ -1,10 +1,54 @@
 /*!
 \page page_utilities Utilities and auxiliary tools
 
-MTMFHMport user manual
-
-
 [TOC]
+
+
+cur2c     {#cur2c}
+=====
+
+Script to construct a continuous texture, described by C-coefficients, from a deformation textures 
+predicted by the VEF and stored as a set of discrete orientations (CUR format).
+
+\verbatim
+usage: cur2c [-h] --input INPUT [--block BLOCK] --output OUTPUT
+
+Calculate continuous C-coefficient ODF from discrete CUR data
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input INPUT, -i INPUT
+                        CUR file
+  --block BLOCK         'Index of the block inside CUR file (indexed from 1).
+                        If omitted, all blocks from the CUR file will be
+                        processed.
+  --output OUTPUT, -o OUTPUT
+                        output C-coefficient file
+\endverbatim
+
+
+odfcompose    {#odfcompose}
+==========
+
+\verbatim
+usage: odfcompose [-h] --input INPUT --output OUTPUT [--adjust ADJUST ADJUST]
+                  [--set SETS SETS] [--keep KEEP]
+
+Compose synthetic textures
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input INPUT, -i INPUT
+                        C-coefficient ODF files
+  --output OUTPUT, -o OUTPUT
+                        output file
+  --adjust ADJUST ADJUST
+                        Modify texture component (strengthen/diminis): Two
+                        parameters are needed: component_name value Value can
+                        be positive or negative, either a number or percentage
+  --set SETS SETS       Set volume of texture component: component_name value
+  --keep KEEP           Try to retain texture component: component_name
+\endverbatim
 
 odfplot      {#odfplot}
 =======
@@ -46,6 +90,24 @@ optional arguments:
 \endverbatim
 
 
+odf2odf    {#odf2odf}
+=======
+
+\verbatim
+usage: odf2odf [-h] --input INPUT --output OUTPUT
+
+Convert between different filerepresentations of ODF. Currently C-coefficient
+(.C), and AODF (.aodf) and MTEX (.odf) file formats are supported.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input INPUT, -i INPUT
+                        Input ODF file
+  --output OUTPUT, -o OUTPUT
+                        Output ODF file
+
+\endverbatim
+
 odf2smt    {#odf2smt}
 =======
 
@@ -67,30 +129,105 @@ optional arguments:
                         with extension .smt will be used.
   --ncrystals NCRYSTALS
                         Number of crystals in the SMT file
+\endverbatim
+
+
+odfcompare     {#odfcompare}
+==========
+
+\verbatim
+usage: odfcompare [-h] --input INPUTS [INPUTS ...] --output OUTPUT
+
+compare several ODFs given as C-coefficient files
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input INPUTS [INPUTS ...], -i INPUTS [INPUTS ...]
+                        C-coefficient ODF files
+  --output OUTPUT, -o OUTPUT
+                        output file
 
 \endverbatim
 
 
-cur2c     {#cur2c}
-=====
-
-Script to construct a continuous texture, described by C-coefficients, from a deformation textures 
-predicted by the VEF and stored as a set of discrete orientations (CUR format).
+odfideal    {#odfideal}
+========
 
 \verbatim
-usage: cur2c [-h] --input INPUT [--block BLOCK] --output OUTPUT
+usage: odfideal [-h] --list
 
-Calculate continuous C-coefficient ODF from discrete CUR data
+Ideal texture components
+
+optional arguments:
+  -h, --help  show this help message and exit
+  --list, -l  list available texture components
+\endverbatim
+
+
+odfmerge    {#odfmerge}
+========
+
+\verbatim
+usage: odfmerge [-h] --input INPUTS INPUTS --output OUTPUT --assume
+                {grid,continuous} --title TITLE
+
+Merge several ODFs
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input INPUTS INPUTS, -i INPUTS INPUTS
+                        pair: (ODF file or texture component (name or
+                        name.variant) weight)
+  --output OUTPUT, -o OUTPUT
+                        output ODF file
+  --assume {grid,continuous}
+  --title TITLE         Title to be included in the output ODF
+\endverbatim
+
+
+odfmodify    {#odfmodify}
+=========
+
+\verbatim
+usage: odfmodify [-h] --input INPUT --output OUTPUT [--title TITLE]
+                 [--symmetry {orthorhombic,triclinic}]
+                 [--rotation phi_1 Phi phi_2]
+
+Modify the ODF. Currently only C-coefficient files are supported.
 
 optional arguments:
   -h, --help            show this help message and exit
   --input INPUT, -i INPUT
-                        CUR file
-  --block BLOCK         'Index of the block inside CUR file (indexed from 1).
-                        If omitted, all blocks from the CUR file will be
-                        processed.
+                        input C-coefficient file
   --output OUTPUT, -o OUTPUT
                         output C-coefficient file
-
+  --title TITLE         Title to be included in the output file
+  --symmetry {orthorhombic,triclinic}
+                        Title to be included in the output ODF
+  --rotation phi_1 Phi phi_2
+                        rotation by three Euler angles: phi_1 Phi phi_2
 \endverbatim
+
+
+odfvolfrac      {#odfvolfrac}
+==========
+
+\verbatim
+usage: odfvolfrac [-h] --input INPUTS [INPUTS ...] --output OUTPUT
+                  --components COMPONENTS [COMPONENTS ...]
+
+Compute volume fractions of texture components
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input INPUTS [INPUTS ...], -i INPUTS [INPUTS ...]
+                        input C-coefficient files
+  --output OUTPUT, -o OUTPUT
+                        output file
+  --components COMPONENTS [COMPONENTS ...]
+                        List of texture components or "ALL" (see odfideal
+                        --list for the names of the available texture
+                        components)
+\endverbatim
+
 */
