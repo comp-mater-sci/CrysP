@@ -106,11 +106,6 @@ we request that increments be made in equal intervals of 0.018 of tensile strain
 This is far from a random choice; in fact it corresponds  exactly to the strain intervals
 in which the experimental data (cf. file `examples\tutorial_swift\DX51D_uni0_exp.txt`) is available. 
 
-\par Hint 
-\anchor hint_nonequal_Strain_intervals
-Should the experimental data of your material be available in non-equal intervals of strain levels,
-[another range option] (@ref option_discrete) is likely a better choice.
-
 Now let's run the simulation:
 <pre class="consoleView">
 alamDMC UDSA sid1687f_udsa_hard0.cfg
