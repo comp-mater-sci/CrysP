@@ -146,11 +146,13 @@ contains
         _TEST('push #3', xVector_push(v, 3) == criSuccess)
         ! Test:
         _TEST('size, after push #3', xVector_size(v) == 3)
+        ! Test: last element
+        _TEST('last element, after push #3', v%values(size(v)) == 3)
         ! Test:
         _TEST('capacity, after push #3', xVector_capacity(v) == 6)
         ! Test:
         _TEST('elements, after push #3', all(v%values == [1, 2, 3]))
-        
+
         test_prealloc_push = .true.
     !
     end function
