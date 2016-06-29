@@ -159,7 +159,7 @@ contains
 
       logical function test_splitExt()
       implicit none
-      character(len=max_pathlen)    :: path, path_res, root, root_res, ext, ext_res
+      character(len=max_pathlen)    :: path, path_res, root, ext
       !
             test_splitExt = .false.
             ! Test:

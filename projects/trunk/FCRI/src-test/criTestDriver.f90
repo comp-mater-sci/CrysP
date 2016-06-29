@@ -37,7 +37,6 @@ use criTestNumerics
 use criTestExpandableVector
 implicit none
 
-integer  :: info
 logical  :: l
 
       call testInit()

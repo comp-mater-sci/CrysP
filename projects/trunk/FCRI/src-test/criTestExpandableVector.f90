@@ -81,7 +81,6 @@ contains
     implicit none
     
     type(xVector_integer),target :: v
-    integer :: info
     !
         test_push = .false.
 

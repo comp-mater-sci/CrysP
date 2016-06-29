@@ -58,7 +58,7 @@ contains
       logical,dimension(:,:),allocatable :: tst_results, arr_results
       logical,dimension(n_algorithms) :: found
 
-      integer :: i, count, idx
+      integer :: i, count
       !      
             res = .false.
       
