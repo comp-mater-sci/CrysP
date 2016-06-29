@@ -75,12 +75,11 @@ contains
             
             tst_results = .false.
 
-            
             ! Test if the three implementations are equivalent
             do i = 1, size(tst)
-                tst_results(:,i) = [(binarySearch(arr,tst(i)) == tst_val(i)), &
-                                    (binary_search(arr,tst(i)) == tst_val(i)), &
-                                    (binary_search2(arr,tst(i)) == tst_val(i)) ]
+                tst_results(:,i) = [(binarySearch(arr,tst(i)) .eqv. tst_val(i)), &
+                                    (binary_search(arr,tst(i)) .eqv. tst_val(i)), &
+                                    (binary_search2(arr,tst(i)) .eqv. tst_val(i)) ]
             enddo
             _TEST('binary searches give identical results on test data',all(tst_results))
             
@@ -235,7 +234,7 @@ contains
       
           ltest = .false.
           _TEST('absent logical value, default returned', &
-                (optionalDefault(lval,ltest) == ltest))
+                (optionalDefault(lval,ltest) .eqv. ltest))
 
           itest = 20
           _TEST('absent integer value, default returned', &
@@ -256,7 +255,7 @@ contains
       
           ltest = .false.
           _TEST('present logical value', &
-                (present(lval) .and. optionalDefault(lval,ltest) == lval))
+                (present(lval) .and. optionalDefault(lval,ltest) .eqv. lval))
 
           itest = 20
           _TEST('present integer value', &
