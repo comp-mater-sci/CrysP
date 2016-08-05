@@ -81,7 +81,7 @@ Although the configuration options of the multi-scale model are pretty much fine
 		
 		This variant of the Swift hardening law is given by the formula:
 		\f[
-			\tau = K \left(\gamma - \gamma_0 \right)^n
+			\tau = K \left(\gamma + \gamma_0 \right)^n
 		\f]
 		Only positive values of parameters are acceptable (constraints: \f$ 0 < K \f$, \f$ 0 < \gamma_0 \f$ and \f$ 0 < n \f$).
 			
@@ -90,7 +90,7 @@ Although the configuration options of the multi-scale model are pretty much fine
 				
 		This variant of the Swift hardening law is expressed as:
 		\f[
-			\tau = \tau_0 \left(\frac{\gamma}{\gamma_0} - 1 \right)^n
+			\tau = \tau_0 \left(\frac{\gamma}{\gamma_0} + 1 \right)^n
 		\f]
 		Only positive values of parameters are acceptable (constraints: \f$ 0 < \tau_0 \f$, \f$ 0 < \gamma_0 \f$ and \f$ 0 < n \f$).
 			
