@@ -2,10 +2,20 @@
 # $Id$
 #
 
+ifeq ($(BUILDHOST),thinking) 
+     MKLROOT:=$(MKLROOT)/mkl
+     MKLPATH=$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
+     MKLINCLUDE= -I$(MKLROOT)/include/$(MKL_TARGET_ARCH)/lp64
+     ifeq ($(INTEL_COMPILER_VERSION),11.1)
+     MKLLDFLAGS += $(MKLPATH)/libmkl_solver_lp64_sequential.a -Wl,--start-group $(MKLPATH)/libmkl_intel_lp64.a $(MKLPATH)/libmkl_sequential.a $(MKLPATH)/libmkl_core.a -Wl,--end-group -lpthread
+     else
+     MKLLDFLAGS += -L/lib64 -L/usr/lib64 -Wl,--start-group $(addprefix $(MKLROOT)/lib/intel64/libmkl_,intel_lp64.a sequential.a core.a) -Wl,--end-group -lpthread -lm
+     endif
+endif
 # 
 # Configuration on VIC3
 # 
-ifeq ($(BUILDHOST),vic3)
+ifeq ($(BUILDHOST),vic3) 
      # MKLROOT is set via environment variable
      MKLPATH=$(MKLROOT)/lib/$(MKL_TARGET_ARCH)
      MKLINCLUDE= -I$(MKLROOT)/include/$(MKL_TARGET_ARCH)/lp64
