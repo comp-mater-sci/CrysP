@@ -70,7 +70,7 @@ contains
       implicit none
             class(quadraticFX)                          :: this
             double precision,dimension(:),intent(in)    :: vX       !< Dimension must be: [n_X_dim]
-            double precision,dimension(:),intent(inout) :: vFval    !< Dimension must be: [m_F_dim]
+            double precision,dimension(:),intent(out)   :: vFval    !< Dimension must be: [m_F_dim]
             integer,intent(out)                         :: info
       
       vFval = this%vParams(1) * vX * vX  ! assing x^2
@@ -84,9 +84,9 @@ contains
       !  m = n + 1
       subroutine djquadra(m,n,vX,vFval)
       implicit none
-            integer     :: m, n
+            integer,intent(in)     :: m, n
             double precision,dimension(n),intent(in)        :: vX       !< Dimension must be: [n_X_dim]
-            double precision,dimension(m),intent(inout)     :: vFval    !< Dimension must be: [m_F_dim]
+            double precision,dimension(m),intent(out)     :: vFval    !< Dimension must be: [m_F_dim]
       !
       vFval = vX * vX  ! assing x^2
       vFval(1) = vFval(1) + vX(2)**2  ! add x_2^2

@@ -117,8 +117,8 @@ contains
       subroutine nlls_TR_solve(objFx,vX,config,r1,r2,info,resInfo,SolutionInitOut)
       use, intrinsic :: IEEE_EXCEPTIONS
       use, intrinsic :: IEEE_ARITHMETIC
+      use mkl_rci
       implicit none
-      include  "mkl_rci.fi"
       ! Formal parameters
       class(objectiveFunction),intent(inout)          :: objFx    !< objective function
       !> Design vector, dimension of vX must correspond to those in objFX
@@ -135,7 +135,7 @@ contains
       !!!! Local variables
       integer                              :: n        !< Dimension of design vector
       integer                              :: m        !< Dimension of objective function vector
-      integer(kind=8)   :: handle
+      type(HANDLE_TR)   :: handle
       integer           :: res, linfo 
       ! 
       double precision,allocatable,dimension(:)    :: vLW, vUP   ! would be of size    
@@ -152,7 +152,7 @@ contains
       integer                        :: ierr, i
       character(len=512)             :: message
       !---------------------------------------------------
-            handle = 0; RCI_Req = 0; next_solve = .true.
+            RCI_Req = 0; next_solve = .true.
             info = -1
             !! Check preconditions
             ! TODO 
@@ -215,7 +215,6 @@ contains
             endif
             !
             !! Initialize MKL solver
-            handle = 0
             res = dtrnlspbc_init(handle, n, m, vX, vLW, vUP, config%eps,  config%iter1,  config%iter2,  config%init_step)
             ! Check result      
             if (checkMKLRescode(res,'initialization of TR nlls solver', nllsTR_ounit) /= 0) return
@@ -466,8 +465,8 @@ contains
       !>
       !> This subroutine uses djacobi_solve RCI subroutine from MKL.
       subroutine JacobiObjEval_djacobi(this,vX, info)
+      use mkl_rci
       implicit none
-      include  "mkl_rci.fi"
       class(MKLFDJacobiObjFunction),intent(inout)     :: this
       double precision,dimension(:),intent(in)        :: vX       !< Dimension must be: [n_X_dim]
       integer,intent(out)                             :: info
@@ -557,8 +556,8 @@ contains
       !> indicates an error conditions, the function will write an error message
       !> containing 'decrypted' description of error.
       integer function checkMKLRescode(res, leadmsg,  ounit)
+      use mkl_rci
       implicit none
-      include  "mkl_rci.fi"
       integer,intent(in)            :: res
       character(len=*),intent(in)   :: leadmsg
       integer,intent(in)            :: ounit

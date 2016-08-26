@@ -17,6 +17,7 @@ nlls_tr.f90
 nnls_mod.f90 
 jacobiFD.f90 
 objectiveFx.f90
+mkl_rci_stub.f90
 )
 
 add_library(fopt STATIC ${LIBSRC}) 

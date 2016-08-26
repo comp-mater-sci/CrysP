@@ -25,6 +25,7 @@ implicit none
 contains
 
       subroutine testJacobiCalculations()
+      use mkl_rci
       implicit none
       integer :: m,n
       double precision,allocatable,dimension(:)         :: vX,vF,vX0,vInvDelta
@@ -37,7 +38,7 @@ contains
 
       type(quadraticFX) :: objFunc
       ! type(quadraticAnalyticFX) :: objFunc
-      include  "mkl_rci.fi"
+      
       
             !!!!!!!
             n = testFunctions_n
@@ -181,11 +182,11 @@ contains
       end subroutine
      
       subroutine testTROptimization()
+      use mkl_rci
       use nllsTR
       use jacobiFD
       use testFunctions
       implicit none
-      include  "mkl_rci.fi"
       !
       integer :: n, m
       double precision,allocatable,dimension(:)         :: vX,vF
