@@ -16,6 +16,8 @@ import os
 import subprocess
 import multiprocessing
 import tempfile
+import sys
+import datetime
 from collections import OrderedDict
 import numpy as np
 import pyvef.configurators as pc
@@ -215,74 +217,84 @@ def make_config(id, module_name, config, module_config, sequence=None):
 
 
 def main(jobname, input, cpmodel, structure, serial, as_json=True, **requests):
-    #
-    # prepare the generic section
-    #
-    config = {
-        'output_prefix': jobname,
-        'verbosity': 0,
-        'output_request': False,
-        'input_fname': os.path.abspath(input),
-        'model_type': cpmodel,
-        'slipsystems': STRUCTURES[structure],
-        'use_default_microstructure': True,
-        'use_default_hardening': True,
-        'use_default_solver_settings': True
-        }
-    #
-    # 
-    #
-    jobid = str(uuid.uuid1())
-    meta = {'id': jobid,
-            'generator': {'name': 'vef_datacard',
-                          'version': __version__}
-           }
 
-    jobs = []
+    try:
+        #
+        # prepare the generic section
+        #
+        config = {
+            'output_prefix': jobname,
+            'verbosity': 0,
+            'output_request': False,
+            'input_fname': os.path.abspath(input),
+            'model_type': cpmodel,
+            'slipsystems': STRUCTURES[structure],
+            'use_default_microstructure': True,
+            'use_default_hardening': True,
+            'use_default_solver_settings': True
+            }
+        #
+        # 
+        #
+        jobid = str(uuid.uuid1())
+        meta = {'id': jobid,
+                'generator': {'name': 'vef_datacard',
+                              'version': __version__,
+                              'backend': {'name': 'VEF',
+                                          'version': "0.9.1s"}},
+                'timestamp': str(datetime.datetime.now())
+               }
 
-    # temporary nasty hack: configurators return 3rd field "inputs"
-    inputs = []
+        jobs = []
 
-    for request in requests.items():
-        try:
-            name, data_list = request
-            for data in data_list:
-                if not data:
-                    continue
-                job_seq = '{}_{}'.format(jobid, len(jobs))
-                module_name, module_config, module_input = CONFIGURATORS[name](config, data)
-                job_config = make_config(job_seq, module_name, config, 
-                                         module_config)
-                jobs.append((name, module_name, job_config))
-                inputs.append(module_input)
-        except KeyError:
-            print('Error: unknown request {}'.format(request))
+        # temporary nasty hack: configurators return 3rd field "inputs"
+        inputs = []
 
-    # tmpdir = tempfile.mkdtemp()
+        for request in requests.items():
+            try:
+                name, data_list = request
+                for data in data_list:
+                    if not data:
+                        continue
+                    job_seq = '{}_{}'.format(jobid, len(jobs))
+                    module_name, module_config, module_input = CONFIGURATORS[name](config, data)
+                    job_config = make_config(job_seq, module_name, config, 
+                                             module_config)
+                    jobs.append((name, module_name, job_config))
+                    inputs.append(module_input)
+            except KeyError:
+                print('Error: unknown request {}'.format(request))
 
-    if serial:
-        results = [run_job(job) for job in jobs]
-    else:
-        pool = multiprocessing.Pool()
-        results = pool.map(run_job, jobs)
+        # tmpdir = tempfile.mkdtemp()
 
-    pass
-    # temporary nasty hack: merge inputs and results
-    for input, result in zip(inputs, results):
-        if input:
-            source = result.keys()[0]
-            result[source]['input'] = input
+        if serial:
+            results = [run_job(job) for job in jobs]
+        else:
+            pool = multiprocessing.Pool()
+            results = pool.map(run_job, jobs)
 
-    output = {'meta': meta, 'data': results}
+        pass
+        # temporary nasty hack: merge inputs and results
+        for input, result in zip(inputs, results):
+            if input:
+                source = result.keys()[0]
+                result[source]['input'] = input
 
-    #
-    # Present the results
-    #
-    if as_json:
-        with file(jobname+'.json','wt') as f:
-            json.dump(output, f, indent=2)
+        output = {'meta': meta, 'data': results}
 
-    pass
+        #
+        # Present the results
+        #
+        if as_json:
+            with file(jobname+'.json','wt') as f:
+                json.dump(output, f, indent=2)
+
+        return 0
+
+    except Exception as e:
+        print('A general exception has occured. '
+              'This is unsusual, so please report that to the developer')
+        return 2
 
 if __name__ == '__main__':
     import argparse
@@ -312,12 +324,13 @@ if __name__ == '__main__':
     parser.add_argument('--uniaxial',
                         nargs='+',
                         action='append',
-                        default=[[0, 45, 90]],
+                        default=[],
                         help='Directions of uniaxial tension tests')
 
     parser.add_argument('--equibiaxial',
                         action='append_const',
                         const=True,
+                        default=[],
                         help='Evaluate equibiaxial tension point')
 
     inplane_help = '''Evaluate in-plane stress point givend by:
@@ -354,8 +367,14 @@ if __name__ == '__main__':
                         default=False,
                         help='Force serial execution of the workflow')
 
-
     args = parser.parse_args()
 
-    main(**vars(args))
+    DATASOURCES = ['uniaxial', 'equibiaxial', 'inplane', 'arbitrary']
+    switches = vars(args)
+
+    if not any(switches[key] for key in DATASOURCES):
+        print('You must request at least one of:', ' '.join(DATASOURCES))
+        sys.exit(1)
+
+    sys.exit(main(**vars(args)))
 
