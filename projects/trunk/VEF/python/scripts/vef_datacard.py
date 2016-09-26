@@ -214,7 +214,7 @@ def make_config(id, module_name, config, module_config, sequence=None):
     return job_config
 
 
-def main(jobname, input, cpmodel, structure, as_json, serial, **requests):
+def main(jobname, input, cpmodel, structure, serial, as_json=True, **requests):
     #
     # prepare the generic section
     #
@@ -340,11 +340,11 @@ if __name__ == '__main__':
                         default=[],
                         help=arbitrary_help)
 
-    parser.add_argument('--json',
-                        default=False,
-                        action='store_true',
-                        dest='as_json',
-                        help='Output in JSON format')
+    #parser.add_argument('--json',
+    #                    default=False,
+    #                    action='store_true',
+    #                    dest='as_json',
+    #                    help='Output in JSON format')
 
     parser.add_argument('--version', action='version', 
                         version='%(prog)s {}'.format(__version__))
