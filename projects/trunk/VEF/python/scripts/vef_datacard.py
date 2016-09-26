@@ -15,6 +15,8 @@ import copy
 import os
 import subprocess
 import multiprocessing
+import tempfile
+from collections import OrderedDict
 import numpy as np
 import pyvef.configurators as pc
 import pyvef.CustomFilters as CustomFilters
@@ -24,6 +26,17 @@ STRUCTURES = {'fcc': 'fcc12', 'bcc': 'bcc24'}
 
 
 ALAMDMC_BIN = os.path.join(os.environ.get('VEF_ROOT'), 'bin', 'alamDMC')
+
+
+VOIGT_3D = ['xx', 'yy', 'zz', 'xy', 'yz', 'xz']
+
+VOIGT_2D = ['xx', 'yy', 'xy']
+
+
+def as_voigt(X, dims):
+    s = '{}_{{}}'.format(str(X))
+    return [s.format(dim) for dim in dims]
+
 
 
 def load_data(prefix, ext):
@@ -43,7 +56,7 @@ def uniaxial_setup(config, data):
     module_config = {'range': {'type': 'discrete',
                                'params': {'values': data}},
                      'use_default_settings': True}
-    return module_name, module_config
+    return module_name, module_config, {}
 
 
 def uniaxial_harvester(output_prefix):
@@ -66,7 +79,7 @@ def equibiaxial_setup(config, data):
         'stress_state': 'compression',
         'use_default_settings': True
         }
-    return module_name, module_config
+    return module_name, module_config, {}
 
 
 def equibiaxial_harvester(output_prefix):
@@ -113,13 +126,15 @@ def inplane_setup(config, data):
     IDX = np.array((0, 1, 3))
     full_stress = np.zeros(6)
     full_stress[IDX] = np.array(data)
-    return arbitrary_setup(config, full_stress)
+    inputs = OrderedDict(zip(as_voigt('sigma', VOIGT_2D), data))
+    setup = arbitrary_setup(config, full_stress)
+    return setup[0], setup[1], inputs
 
 
 def inplane_harvester(output_prefix):
     fields = ('scal_s', 'S', 'A_xx', 'A_yy', 'A_zz', 'A_xy')
     point = load_data(output_prefix, 'asr')[0]
-    return {'inplane': dict((field, point[field]) for field in fields)}
+    return {'inplane': OrderedDict((field, point[field]) for field in fields)}
 
 
 def arbitrary_setup(config, data):
@@ -140,13 +155,14 @@ def arbitrary_setup(config, data):
              }
             ]
         }
-    return module_name, module_config
+    inputs = OrderedDict(zip(as_voigt('sigma', VOIGT_3D), data))
+    return module_name, module_config, inputs
 
 
 def arbitrary_harvester(output_prefix):
     fields = ('scal_s', 'S', 'A_xx', 'A_yy', 'A_zz', 'A_xy', 'A_yz', 'A_xz')
     point = load_data(output_prefix, 'asr')[0]
-    return {'arbitrary': dict((field, point[field]) for field in fields)}
+    return {'arbitrary': OrderedDict((field, point[field]) for field in fields)}
 
 
 CONFIGURATORS = {'uniaxial': uniaxial_setup,
@@ -223,6 +239,10 @@ def main(jobname, input, cpmodel, structure, as_json, serial, **requests):
            }
 
     jobs = []
+
+    # temporary nasty hack: configurators return 3rd field "inputs"
+    inputs = []
+
     for request in requests.items():
         try:
             name, data_list = request
@@ -230,12 +250,15 @@ def main(jobname, input, cpmodel, structure, as_json, serial, **requests):
                 if not data:
                     continue
                 job_seq = '{}_{}'.format(jobid, len(jobs))
-                module_name, module_config = CONFIGURATORS[name](config, data)
+                module_name, module_config, module_input = CONFIGURATORS[name](config, data)
                 job_config = make_config(job_seq, module_name, config, 
                                          module_config)
                 jobs.append((name, module_name, job_config))
+                inputs.append(module_input)
         except KeyError:
             print('Error: unknown request {}'.format(request))
+
+    # tmpdir = tempfile.mkdtemp()
 
     if serial:
         results = [run_job(job) for job in jobs]
@@ -243,6 +266,12 @@ def main(jobname, input, cpmodel, structure, as_json, serial, **requests):
         pool = multiprocessing.Pool()
         results = pool.map(run_job, jobs)
 
+    pass
+    # temporary nasty hack: merge inputs and results
+    for input, result in zip(inputs, results):
+        if input:
+            source = result.keys()[0]
+            result[source]['input'] = input
 
     output = {'meta': meta, 'data': results}
 
