@@ -20,10 +20,11 @@ use criErrcodes
 use criLinearMap, only: MapItem
 implicit none
 
-    integer,parameter :: scalingStrainTensor = 0, &
-                         scalingStrainTensorComponent = 1, &
-                         scalingPlasticWork = 2, &
-                         scalingStrainTensorIncrement = 3
+    integer,parameter :: scalingNone = 0, &
+                         scalingStrainTensor = 1, &
+                         scalingStrainTensorComponent = 2, &
+                         scalingPlasticWork = 3, &
+                         scalingStrainTensorIncrement = 4
 
     integer,parameter :: nscaling_types = 4
     type(MapItem),dimension(nscaling_types) :: scaling_type_names = [&
@@ -86,7 +87,7 @@ implicit none
     !> Basic settings for incrementation control.
     type :: IncrementationControlSettings
         
-        integer         :: scaling_type = scalingStrainTensor
+        integer         :: scaling_type = scalingNone
         
         integer         :: incrementation_type = incrementFixed
         

@@ -159,6 +159,7 @@ contains
                                                taylor_factor)
             !
             ! Check if we start a/another increment
+            stop_flag = .false.
             select case(control%scaling_type)
             case(scalingStrainTensor, scalingStrainTensorIncrement)
                 stop_control_variable = norm2(icv%vP_step)
@@ -175,11 +176,13 @@ contains
                 stop_control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
             case default
                 ! Make sure it stops immediately
+                stop_flag = .true.
                 stop_control_variable = control%step_size + control%increment_size
             !
             end select
             !
-            stop_flag = stop_control_variable + stretch > control%step_size
+            stop_flag = stop_flag &
+                        .or.(stop_control_variable + stretch > control%step_size)
             !
             if (.not. stop_flag) then
                 !
