@@ -137,7 +137,7 @@ contains
             if (info /= 0) return
             info = criErr_BadArgs
             ! Introduce youself ;-)
-            write(outunit,'(A)') 'UDSA, $Rev$'
+            write(outunit,'(A)') 'YLD, $Rev$'
             !
             if (doLogging(criLogInfo,this%output%verbosity)) then
                   !
