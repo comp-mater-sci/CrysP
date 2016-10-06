@@ -293,7 +293,8 @@ contains
                     
                     write(iounit,fmt=710,iostat=ierr) &
                                 output%step, v%icv%increment, & ! 2 fields
-                                v%vm_strain, norm2(v%icv%vP_step), v%norm_P_abs, v%vm_strain_total, v%icv%plastic_work_total, v%dotWonA, &
+                                v%vm_strain, norm2(v%icv%vP_step), v%norm_P_abs, v%vm_strain_total, &
+                                v%icv%plastic_work_total, v%dotWonA, &
                                 v%taylor_factor, v%scal_s, v%norm_SonA, v%R, & ! 9 fields
                                 SonA_voigt, SonA_rot_voigt, &
                                 A_voigt, A_rot_voigt, &

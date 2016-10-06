@@ -115,12 +115,12 @@ contains
             write(outunit,fmt=fmtMsg2Int,iostat=ioerr)   'Number of points:', this%ptr_range%size() 
             write(outunit,fmt=fmtMsg2Float,iostat=ioerr) 'Stress ratio', this%rho 
             !
-            write(outunit,fmt='(A,\)') 'Info:'
+            write(outunit,fmt='(A)',advance='NO') 'Info:'
             if (this%reuse_previous) then
                 if (this%reuse_strainrate) then
-                    write(outunit,'(1X,A,\)') 'Strain rate'
+                    write(outunit,'(1X,A)',advance='NO') 'Strain rate'
                 else
-                    write(outunit,'(1X,A,\)') 'Stress'
+                    write(outunit,'(1X,A)',advance='NO') 'Stress'
                 endif
                 write(outunit,'(1X,A)') 'from the previous solution will be re-used.'
             else
