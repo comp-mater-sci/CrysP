@@ -19,7 +19,7 @@ Configuration files of the `alamDMC` program have a fixed format. The files are 
 \anchor desc_alamdmc_comments
 Additionally, the configuration files can include comments that are ignored by the program. A comment starts with `#` and spans till the end of the line. A comment may start at the beginning of the line or after a data field.
 \par Example:
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
 # This is a comment
 6           # This is a comment that follows a data field.
  # Beware, this comment begins at 2nd character, so this line contains (empty) data!
@@ -70,7 +70,7 @@ This is a multi-line configuration option of the compound datatype `realrange`, 
     A range that consists of a single value equal to 0.0 (no suboptions).
     
     \par Example:
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
 zero            # Equivalent to: 0.0
 ~~~~~~~~~~~~~
 <BR>
@@ -79,7 +79,7 @@ zero            # Equivalent to: 0.0
     A range that consists of a single value equal to 1.0 (no suboptions).
     
     \par Example:
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
 one             # Equivalent to: 1.0
 ~~~~~~~~~~~~~
 <BR>
@@ -89,7 +89,7 @@ one             # Equivalent to: 1.0
     -# \confdef{value,real} sets the single value.
     
     \par Example:
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
 single             # One data point
 90.0
 ~~~~~~~~~~~~~
@@ -101,7 +101,7 @@ single             # One data point
     -# \confdef{points,realarray} lists the \conffield{npoints} values, spread over one or more lines.  
         
     \par Example:
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
 discrete             # Discrete data points
 6                    # 6 real values follow
  6.0  7.0  8.0 
@@ -115,7 +115,7 @@ discrete             # Discrete data points
     -# \confdef{range_begin,real} \confdef{range_end,real} \confdef{range_step,real} specify the beginning, the end and the step of the range, respectively. Note that the endpoints of the interval do belong to the range. Also note that, unless the length of the interval is a multiple of \conffield{range_step}, the last step of the range is smaller than \conffield{range_step}. Please read [the hint below](@ref hint_even_range) how to ensure even distribution of points inside the range.
     
    \par Example:
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
 uniform          # uniformly distributed points
 0.0 180.0 40.0   # range [0,180], consisting of: 0.0 40.0 80.0 120.0 160.0 and 180.0
 ~~~~~~~~~~~~~
@@ -127,7 +127,7 @@ uniform          # uniformly distributed points
     -# \confdef{number_of_points,integer,biased_number_of_points} sets the number of points in the range.
 
     \par Example:
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
 # Unevenly distributed points within range [0,180], 
 # with single bias controlled by ratio=4.0
 # This results in points: 0.0 64.04 109.33 141.35 163.99 and 180.0
@@ -141,13 +141,13 @@ biased         # unevenly distributed points, single bias
     A uniform range with guaranteed even distribution _including the last step_, may be enforced by declaring a `biased` range with the \conffield{ratio,biased_ratio} equal to 1.0, and with the number of points specified in \conffield{number_of_points,biased_number_of_points}.
 
 <BR>
-  - \anchor option_doublebiased `double-biased`<BR>
+  - \anchor option_doublebiased `doublebiased`<BR>
     A range of non-uniformly distributed points, with the density either higher or lower at the endpoints. The double-biased range gives basically a sequence of points that would result from two [biased ranges](@ref option_biased) stitched together, with the stitching point located at the half point of the interval [\conffield{range_begin},\conffield{range_end}] and the \conffield{ratio,biased_ratio} of the second range being the reciprocal of the \conffield{ratio,biased_ratio} in the first range. 
     -# \confdef{range_begin,real,doublebiased_range_begin} \confdef{range_end,real,doublebiased_range_end} \confdef{ratio,real,doublebiased_ratio} has identical meaning of the first two fields as in the `uniform` range. The field \conffield{ratio,doublebiased_ratio} is a non-negative real value that defines a ratio between the largest and the smallest step within the first half of the interval and, at the same time, it defines a ratio between the smallest and the largest step in the second half of the interval. The highest density of points is located around the centre of the interval if \conffield{ratio,biased_ratio} &gt; 1.0. Conversely, if (0.0 &lt;  \conffield{ratio,biased_ratio} &lt;  1.0) the most refined steps will be put next to the endpoints of the range. Note that the mid-point of the interval is always included in the sequence of points defined by the double-biased range.
     -# \confdef{number_of_points,integer,doublebiased_number_of_points} sets the number of points in the range.
 
     \par Example:
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
 # Unevenly distributed points within range [0,180], 
 # with double bias controlled by ratio=4.0
 # This results in points: 0.0 51.43 77.14 90.0 102.86 128.57 and 180.0
@@ -166,7 +166,7 @@ doublebiased     # unevenly distributed points, double-biased
 
     \par Example:
     The following `multibiased` range definition  is equivalent to the example of double-biased range described in the [previous section](@ref option_doublebiased):
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
 # Unevenly distributed points within range [0,180], 
 # with multiple biases
 # This results in points: 0.0 51.43 77.14 90.0 102.86 128.57 and 180.0
@@ -189,7 +189,7 @@ notation and expressed in degrees. It is a single-line option:
 -# \confdef{eulerangles,euler} specifies a set of Euler angles as a compound datatype that consists of 3 fields (type `real`), ordered as: \f$ \phi_1 \space \mit\Phi \space \phi_2 \f$.
 
 \par Example:
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
 0. 45. 0. # Goss orientation
 ~~~~~~~~~~~~~ 
 
@@ -210,7 +210,7 @@ for \f$ \mathbf{X} \f$ expressed in the material (`123`) reference frame, or:
 for \f$ \mathbf{X} \f$ expressed in the sample (`xyz`) reference frame. 
 
 \par Example:
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
 1.0 0.0 0.0 0.0 0.0 0.0 # All tensor components are zero, except 11- (or xx-)component.
 ~~~~~~~~~~~~~ 
  
@@ -231,7 +231,7 @@ if \f$ \mathbf{X} \f$ is expressed in the material (`123`) reference frame, or:
 if \f$ \mathbf{X} \f$ is expressed in the sample (`xyz`) reference frame.
 
 \par Example:
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
  0.0 0.0 1.0 # All tensor components are zero,
  0.0 0.0 0.0 #  except 13- (or xz-)component.
  0.0 0.0 0.0 #

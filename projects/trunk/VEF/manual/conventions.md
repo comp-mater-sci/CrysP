@@ -142,7 +142,7 @@ readability of the documentation concerned:
   \confdef{field1,integer} \confdef{field2,real} is a configuration option 
 	consisting of two fields, the first of type `integer`, and the second of type `real`.<BR>
 	An example of the corresponding line in the configuration file might be:
-~~~~~{.cfg}
+~~~~~{.txt}
 1 0.7
 ~~~~~
 <BR>

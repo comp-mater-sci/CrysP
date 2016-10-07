@@ -20,7 +20,7 @@ The outputs of the program are controlled by three parameters:
 -# \confdef{verbosity,integer} controls amount of print-outs sent to the standard output (the terminal). The value can vary from 0 (zero) for a minimalistic output to 4 (four) for very detailed print-outs about the calculations being performed by the program.
 
 \par Example:
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
 AKDQFF_UDSA          # Prefix for the output files
 True                 # Flag: request incremental output of the material state
 3                    # Verbosity level: 0 (the lowest) - 3 (the highest)
@@ -107,7 +107,7 @@ Although the configuration options of the multi-scale model are pretty much fine
 		The index runs from 0, which denotes the first block in the file. 
 
 \par Example:
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
 AKDQFF.smt           # Path to the texture file
 ALAMEL               # Model type: either ALAMEL or FCTaylor
 bcc24                # Family of slip systems
@@ -137,7 +137,7 @@ To minimize the objective function, the TR solver requires its Jacobian. The Jac
     -# \confdef{solver_advanced,logical} specifies if advanced solver settings should be read. This unlocks a multi-line option, which currently remains undocumented.
 
 \par Example:
-~~~~~~~~~~~~~{.cfg}
+~~~~~~~~~~~~~{.txt}
 False              # Flag: use default solver settings
 5e-2               # Control over numerical estimation of Jacobian
 True               # Flag: attempt to linearize the problem
