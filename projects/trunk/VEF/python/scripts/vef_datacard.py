@@ -222,8 +222,9 @@ def main(jobname, input, cpmodel, structure, serial, as_json=True, **requests):
         #
         # prepare the generic section
         #
+        workdir = tempfile.mkdtemp()
         config = {
-            'output_prefix': jobname,
+            'output_prefix': os.path.join(workdir,jobname),
             'verbosity': 0,
             'output_request': False,
             'input_fname': os.path.abspath(input),
@@ -241,9 +242,10 @@ def main(jobname, input, cpmodel, structure, serial, as_json=True, **requests):
                 'generator': {'name': 'vef_datacard',
                               'version': __version__,
                               'backend': {'name': 'VEF',
-                                          'version': "0.9.1s"}},
+                                          'version': "0.11.0"}},
                 'timestamp': str(datetime.datetime.now())
                }
+
 
         jobs = []
 
@@ -264,8 +266,6 @@ def main(jobname, input, cpmodel, structure, serial, as_json=True, **requests):
                     inputs.append(module_input)
             except KeyError:
                 print('Error: unknown request {}'.format(request))
-
-        # tmpdir = tempfile.mkdtemp()
 
         if serial:
             results = [run_job(job) for job in jobs]
