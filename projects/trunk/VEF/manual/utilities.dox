@@ -12,18 +12,22 @@ predicted by the VEF and stored as a set of discrete orientations (CUR format).
 
 \verbatim
 usage: cur2c [-h] --input INPUT [--block BLOCK] --output OUTPUT
+             [--symmetry {orthorhombic,triclinic}]
 
 Calculate continuous C-coefficient ODF from discrete CUR data
 
 optional arguments:
   -h, --help            show this help message and exit
   --input INPUT, -i INPUT
-                        CUR file
-  --block BLOCK         'Index of the block inside CUR file (indexed from 1).
-                        If omitted, all blocks from the CUR file will be
+                        Input CUR file
+  --block BLOCK         Index of the block inside CUR file (indexed from 1).
+                        If omitted, all blocks of the CUR file will be
                         processed.
   --output OUTPUT, -o OUTPUT
                         output C-coefficient file
+  --symmetry {orthorhombic,triclinic}
+                        Symmetry class to be imposed in the output
+                        C-coefficient ODF
 \endverbatim
 
 
