@@ -9,6 +9,7 @@ __version__ = '0.1.0'
 
 import yaml
 import json
+import csv
 import pyvef
 import uuid
 import copy
@@ -64,11 +65,22 @@ def uniaxial_setup(config, data):
 def uniaxial_harvester(output_prefix):
     fields = ('rvalue', 'svalue', 'sigma_xx')
     # too complex for dictionary comprehension
-    output = {}
+    output = OrderedDict()
     for point in load_data(output_prefix, 'xqrs'):
         angle = point['angle']
-        output[angle] = dict((field, point[field]) for field in fields)
+        output[angle] = OrderedDict((field, point[field]) for field in fields)
     return {'uniaxial': output}
+
+
+def uniaxial_flatten(data):
+    '''Convert nested structure into a one-level dictionary'''
+    output = OrderedDict()
+    for direction, values in data.items():
+        for fieldname, value in values.items():
+            colname = '{field}_{direction}'.format(field=fieldname, 
+                                                   direction=direction)
+            output[colname] = value
+    return output
 
 
 def equibiaxial_setup(config, data):
@@ -85,13 +97,20 @@ def equibiaxial_setup(config, data):
 
 
 def equibiaxial_harvester(output_prefix):
-    fields = ('rvalue', 'svalue', 'sigma_xx')
+    fields = OrderedDict([('rvalue', 'r_bx'),
+                          ('svalue', 's_bx'),
+                          ('sigma_xx', 'sigma_bx')])
     output = {}
     # Consider only the first data line
     point = load_data(output_prefix, 'uds')[0]
-    return {'equibiaxial': dict((field, point[field]) for field in fields)}
+    # tweak: point['sigma_xx'] is negative, but it should be reported positive
+    point['sigma_xx'] *= -1.
+    return {'equibiaxial': OrderedDict((name, point[field]) \
+            for field, name in fields.iteritems())}
 
 
+def equibiaxial_flatten(data):
+    return data
 
     # Alternate implementation of 'inplane' would make use of the yld module
     #    data_name = 'inplane'
@@ -139,6 +158,10 @@ def inplane_harvester(output_prefix):
     return {'inplane': OrderedDict((field, point[field]) for field in fields)}
 
 
+def inplane_flatten(data):
+    return data
+
+
 def arbitrary_setup(config, data):
     data = list(float(x) for x in data)
     module_name = 'asr'
@@ -160,6 +183,9 @@ def arbitrary_setup(config, data):
     inputs = OrderedDict(zip(as_voigt('sigma', VOIGT_3D), data))
     return module_name, module_config, inputs
 
+def arbitrary_flatten(data):
+    return data
+
 
 def arbitrary_harvester(output_prefix):
     fields = ('scal_s', 'S', 'A_xx', 'A_yy', 'A_zz', 'A_xy', 'A_yz', 'A_xz')
@@ -176,6 +202,30 @@ HARVESTERS = {'uniaxial': uniaxial_harvester,
               'equibiaxial': equibiaxial_harvester,
               'inplane': inplane_harvester,
               'arbitrary': arbitrary_harvester}
+
+def output_csv(jobname, data):
+
+    # transform data into a dictionary
+    results = OrderedDict([('jobname', jobname)])
+
+    dispatcher = {'uniaxial': uniaxial_flatten,
+                  'equibiaxial': equibiaxial_flatten,
+                  'inplane': inplane_flatten,
+                  'arbitrary': arbitrary_flatten}
+    # TODO: we need a more robust method of resolving duplicate names.
+    #       This is issue is really painful for 'inplane' and 'arbitrary'.
+    for item in data:
+        provider = item.keys()[0]
+        result = item.values()[0]
+        tmp = dispatcher[provider](result)
+        results.update(tmp)
+
+
+    with file(jobname + '.csv', 'wb') as f:
+        writer = csv.DictWriter(f, results.keys())
+        writer.writeheader()
+        writer.writerow(results)
+
 
 
 def run_job(job, workdir='', keep_intermediate=True):
@@ -216,7 +266,8 @@ def make_config(id, module_name, config, module_config, sequence=None):
     return job_config
 
 
-def main(jobname, input, cpmodel, structure, serial, as_json=True, **requests):
+def main(jobname, input, cpmodel, structure, serial,
+         as_json=True, as_csv=True, **requests):
 
     try:
         #
@@ -289,6 +340,9 @@ def main(jobname, input, cpmodel, structure, serial, as_json=True, **requests):
             with file(jobname+'.json','wt') as f:
                 json.dump(output, f, indent=2)
 
+        if as_csv:
+            output_csv(jobname, output['data'])
+                
         return 0
 
     except Exception as e:
