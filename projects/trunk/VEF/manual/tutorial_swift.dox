@@ -19,7 +19,7 @@ The methodology can also be readily adapted for identification against another (
 The micro-scale Swift law postulates the Critical Resolved Shear Stress of a grain \f$\tau\f$ as a function of 
 a single internal state variable, being the accumulated slip \f$ \gamma \f$ of that grain, as:
 \f[
-	\tau(\gamma) = \tau_0 \left(\frac{\gamma}{\gamma_0} - 1 \right)^n
+	\tau(\gamma) = \tau_0 \left(\frac{\gamma}{\gamma_0} + 1 \right)^n
 \f]
 This heuristic hardening law has 3 parameters: \f$\tau_0\f$, \f$\gamma_0\f$ and \f$n\f$.
 
@@ -68,13 +68,13 @@ The identification strategy consists of three basic steps:
 	It has nevertheless proven to be a usefull relation in practice.
 	In case of the of Swift law, expansion of the \f$\tau(\gamma)\f$ relation leads to
 	\f[
-	\sigma_{xx} \approx \sigma^*_{xx} \tau_0 \left(\frac{\gamma^*}{\gamma_0} - 1 \right)^n
+	\sigma_{xx} \approx \sigma^*_{xx} \tau_0 \left(\frac{\gamma^*}{\gamma_0} + 1 \right)^n
 	\f]
 	Simultaneous identification of the three Swift parameters
 	\f$\tau_0\f$, \f$\gamma_0\f$ and \f$n\f$ can be accomplished by, for instance, least-square fitting,
 	i.e. the minimization of following function of the parameters:\anchor eq_leastsquarefit
 	\f[
-	f\left(\tau_0,\gamma_0,n\right)=\sum_{i} \left[ \sigma^{exp}_{xx,i} - \sigma^*_{xx,i} \tau_0 \left(\frac{\gamma^*_{i}}{\gamma_0} - 1 \right)^n \right]^2
+	f\left(\tau_0,\gamma_0,n\right)=\sum_{i} \left[ \sigma^{exp}_{xx,i} - \sigma^*_{xx,i} \tau_0 \left(\frac{\gamma^*_{i}}{\gamma_0} + 1 \right)^n \right]^2
 	\f]
 	Note that the experimental datapoints \f$\sigma^{exp}_{xx,i}\f$ and the non-hardening simulation output data 
 	(\f$\sigma^*_{xx,i}\f$ and \f$\gamma^*_{i}\f$) need to be known for the same set of deformation levels \f$i\f$. 
