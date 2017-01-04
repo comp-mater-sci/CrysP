@@ -30,7 +30,7 @@ CMAKELISTS ?= CMakeLists.txt src/CMakeLists.txt
 .PHONY : all clean mrproper info doc
 
 all build install : $(CMAKELISTS) | $(OutDir) $(IntDir)
-	cd $(IntDir) && cmake $(ProjectDir) -DCMAKE_BUILD_TYPE=$(ConfigurationName) && $(MAKE) install
+	cd $(IntDir) && cmake -DCMAKE_BUILD_TYPE=$(ConfigurationName) $(CMAKE_FLAGS) $(ProjectDir) && $(MAKE) install
 
 $(OutDir) $(IntDir) :
 	-$(MKDIR) -p $@
