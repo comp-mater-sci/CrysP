@@ -2,7 +2,7 @@
 :: $Id$
 :: 
 :: The only line that needs to be adjusted: VEF_ROOT
-set VEF_ROOT=c:\temp\VEF_v0.9
+set VEF_ROOT=c:\temp\VEF
 
 :: The first command line argument sets the VEF_ROOT variable
 if not "%1" == "" (
