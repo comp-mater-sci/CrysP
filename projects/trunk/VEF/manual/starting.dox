@@ -34,7 +34,7 @@ You received the archive file VEF_verXXX_yyyymmdd.zip, which contains the distri
 This instruction will tell you step-by-step how to install and set-up the VEF software on your Windows computer.
 
 
--# Unpack the distribution to a directory you prefer, for example: `c:\VEF` or `c:\Users\<i>your-user_name<i>\VEF`. 
+-# Unpack the distribution to a directory you prefer, for example: `c:\VEF` or `c:\Users\[your-user_name]\VEF`. 
    Note: the path to that directory should not contain spaces.
 -# Edit the VEF configuration file \fsname{vef.cmd}, located in the directory where you unpacked the distribution. 
    You will need to customize the line that sets \envname{VEF_ROOT} by setting it to the path where the VEF is unpacked. 
