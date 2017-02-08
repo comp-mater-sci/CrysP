@@ -94,7 +94,7 @@ implicit none
     
 contains
 
-    integer function UDSAModule_ReadConfig(this,cnfunit) result(info)
+    integer function UDSAModule_readConfig(this,cnfunit) result(info)
     implicit none
     integer,intent(in)                        :: cnfunit
     class(UDSAModule),intent(inout)            :: this
@@ -102,7 +102,7 @@ contains
     logical :: use_default_settings
     double precision,dimension(3) :: arr_euler
     !
-        info = BasicModule_ReadConfig(this,cnfunit)
+        info = this%StressDrivenEvolutionModule%readConfig(cnfunit)
         if (info /= criSuccess) return
         info = criErr_IORead
         ! Read parameters specific for the UDSAModule program
@@ -145,7 +145,7 @@ contains
     !
     character(len=32)       :: description, orientation
     !
-        info = BasicModule_printConfig(this,outunit)
+        info = this%StressDrivenEvolutionModule%printConfig(outunit)
         if (info /= 0) return
         info = criErr_BadArgs
         ! Introduce youself ;-)

@@ -59,7 +59,7 @@ implicit none
 
 contains
 
-    integer function ASRModule_ReadConfig(this,cnfunit) result(info) 
+    integer function ASRModule_readConfig(this,cnfunit) result(info) 
     implicit none
     class(ASRModule),intent(inout)            :: this
     integer,intent(in)                        :: cnfunit
@@ -67,7 +67,7 @@ contains
     double precision,dimension(3) :: tmp_euler
     integer :: i, n_steps
     !
-        info = BasicModule_ReadConfig(this,cnfunit)
+        info = this%StressDrivenEvolutionModule%readConfig(cnfunit)
         if (info /= criSuccess) return
         info = criErr_IORead
         ! Read parameters specific for the ASRModule

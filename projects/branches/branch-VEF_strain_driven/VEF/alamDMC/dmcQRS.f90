@@ -22,7 +22,7 @@ use alamYLP
 !use alamEval, only: alamEval_objFx_call_count
 use qrsTypes
 use dmcUtils
-use dmcBasicModule
+use dmcStressDrivenModule
 use commonConfig
 use commonUtils
 use criMathUtils
@@ -33,7 +33,7 @@ use fngVec5D
 
 implicit none
 
-    type,extends(BasicModule) :: QRSModule
+    type,extends(StressDrivenModule) :: QRSModule
         class(range_type),pointer                 :: ptr_range
 
         double precision                          :: rho = 0.D0
@@ -57,7 +57,7 @@ implicit none
 
 contains
 
-    integer function QRSModule_ReadConfig(this,cnfunit) result(info)
+    integer function QRSModule_readConfig(this,cnfunit) result(info)
     implicit none
     class(QRSModule),intent(inout)              :: this
     integer,intent(in)                        :: cnfunit
@@ -66,7 +66,7 @@ contains
     !
         use_stability_improvements = .false.
         use_default_settings = .false.
-        info = BasicModule_ReadConfig(this,cnfunit)
+        info = this%StressDrivenModule%readConfig(cnfunit)
         if (info /= criSuccess) return
         info = criErr_IORead
         ! Read parameters specific for the QRSModule module
@@ -103,7 +103,7 @@ contains
     !
     integer :: ioerr
     !
-        info = BasicModule_printConfig(this,outunit)
+        info = this%StressDrivenModule%printConfig(outunit)
         if (info /= 0) return
         !
         info = -1
