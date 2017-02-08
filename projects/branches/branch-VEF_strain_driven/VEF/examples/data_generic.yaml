@@ -1,0 +1,162 @@
+generic:
+    output_prefix: sid1687f
+    output_request: True
+    verbosity: 2
+    input_fname: sid1687f.smt
+    # if you use CUR format, you must also specify which block
+    # of data from the texture file is to be loaded, for example:
+    # block_id: 1
+    model_type: ALAMEL
+    slipsystems: bcc24
+    use_default_microstructure: True
+    # If use_default_microstructure is False, the lines below will be used:
+    # -->>
+    microstructure:
+        microstructure_fname: equiaxed.smt
+        Fmicro: [1., 0., 0.,
+                 0., 1., 0.,
+                 0., 0., 1.]
+    # <<--
+    use_default_hardening: True
+    # If use_default_hardening is False, the lines below will be used:
+    # -->>
+    hardening:
+        hardening_type: 0
+    # <<--
+    use_default_solver_settings: True
+    # If advanced_solver is False, the lines below will be used:
+    # -->>
+    solver:
+        jacobi_eps: 5.e-2
+        attempt_linearize: T
+        default_eps: 1e-5
+        objective_eps: 1e-3
+        use_advanced_settings: False
+    # <<--
+#####################################################################
+qrs:
+    range: 
+        type: uniform
+        params: 
+            begin: 0.
+            end: 90.
+            step: 5.
+    use_default_settings: True
+    # if use_default_settings is False, the lines below will be used:
+    # -->>
+    rho: 0.0
+    calculate_MFactor: False
+    fold_symmetry: False
+    improve_stability: False
+    # <<--
+#####################################################################
+yld:
+    theta_range: 
+        type: multibiased
+        params:
+            begin: 45.
+            subranges:
+                - end: 135.0
+                  bias: 0.25
+                  npoints: 15
+                - end: 225.
+                  bias: 4.0
+                  npoints: 15
+                - end: 315.
+                  bias: 0.25
+                  npoints: 15
+                - end: 405.
+                  bias: 4.0
+                  npoints: 15
+
+    use_default_settings: True
+    # if use_default_settings is False, the lines below will be used:
+    section:
+        normalize_base: True
+        base_sigma_x: [1., 0., 0., 0., 0., 0.]
+        base_sigma_y: [0., 1., 0., 0., 0., 0.]
+        base_sigma_offset: [0., 0., 0., 0., 0., 0.]
+    normalize_stress: False
+    offset_range:
+        # Range that produces 0
+        type: discrete
+        params:
+            values: [0.]
+    use_scaling: True
+    scaling_stress_mode: [1., 0., 0., 0., 0., 0.]
+#####################################################################
+udsa:
+    sample_orientation: 
+        orientation: inplane
+        range:
+            type: discrete
+            params:
+                values: [0.0, 45., 90.]
+    scaling:
+        type: StrainTensorComponent
+        step_magnitude:  0.4
+        increment_magnitude: 0.01
+    stress_state: tension
+    use_default_settings: True
+    # if use_default_settings is False, the lines below will be used:
+    stress_ratio: 0.0
+#####################################################################
+ewc:
+    worklevel_selection_method: reference
+    # if worklevel_selection_method is 'reference' the lines for 'reference'
+    # will be used
+    reference:
+        stress_mode: [1., 0., 0., 0., 0., 0.]
+        scaling:
+            type: StrainTensor
+            step_magnitude:  0.4
+            increment_magnitude: 0.01
+    contour_theta_range:
+        type: uniform
+        params:
+            begin: 0.
+            end: 360.
+            step: 5.
+    contour_levels_range:
+        type: uniform
+        params:
+            begin: 0.
+            end: 0.3
+            step: 0.1
+    points_per_contour: 2 
+    use_default_settings: True 
+    # if use_default_settings is False, the lines below will be used:
+    base_sigma_x: [1., 0., 0., 0., 0., 0.]
+    base_sigma_y: [0., 1., 0., 0., 0., 0.]
+#####################################################################
+asr:
+    reference_frame:    [0., 0., 0.]
+    steps:
+        # Equibiaxial tension
+        - stress_mode: [ 1., 1.0, 0., 0., 0., 0.]
+          update_state: True
+          scaling:
+            type: StrainTensor
+            step_magnitude:  0.2
+            increment_magnitude: 0.01 
+        # Equibiaxial compression
+        - stress_mode: [-1., -1.0, 0., 0., 0., 0.]
+          update_state: True
+          scaling:
+            type: StrainTensor
+            step_magnitude:  0.2
+            increment_magnitude: 0.01 
+        # Biaxial tension-compression
+        - stress_mode: [1., -1.0, 0., 0., 0., 0.]
+          update_state: True
+          scaling:
+            type: StrainTensor
+            step_magnitude:  0.2
+            increment_magnitude: 0.01 
+        # Biaxial compression-tension
+        - stress_mode: [-1., .0, 0., 0., 0., 0.]
+          update_state: True
+          scaling:
+            type: StrainTensor
+            step_magnitude:  0.2
+            increment_magnitude: 0.01 
