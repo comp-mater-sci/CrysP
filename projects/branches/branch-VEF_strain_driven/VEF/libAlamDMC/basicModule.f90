@@ -72,6 +72,9 @@ use fngVec5D
 
             procedure,pass(this)     :: run => BasicModule_run
             
+            !>@{ \name Helper procedures
+            procedure,pass(this)      :: openOutputFile => BasicModule_openOutputFile
+            !>@}
       end type
 
 
@@ -206,7 +209,36 @@ contains
         info = criError
     !
     end subroutine
-      
+
+
+    !> Open output file
+    integer function BasicModule_openOutputFile(this, ext, ofunit, suffix) result(info)
+    class(BasicModule),intent(in)           :: this
+    character(len=*),intent(in)             :: ext !< File extension (with leading dot)
+    integer,intent(out)                     :: ofunit !< IO unit of the output
+    character(len=*),intent(in),optional    :: suffix !< Suffix to the file
+    !
+    character(len=max_pathlen) :: output_path
+    !
+        if (present(suffix)) then
+            output_path = trim(this%output%outputPrefix)// trim(suffix) //trim(ext)
+        else
+            output_path = trim(this%output%outputPrefix)// trim(ext)
+            
+        endif
+        open(newunit=ofunit, file=output_path, status='replace', iostat=ierr)
+        if (ierr /= 0) then
+            write(display_unit, fmt=952) output_path
+            info = criErr_IOWrite
+            return
+        endif
+        info = criSuccess
+    !
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
+      !
+    end function
       !
       ! Procedures for processing sections of the configuration file
       !
