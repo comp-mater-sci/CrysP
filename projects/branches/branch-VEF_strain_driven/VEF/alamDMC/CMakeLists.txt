@@ -11,9 +11,11 @@ list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
 list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
 set(alamDMC_SRCS
+dmcADP.f90
 dmcASR.f90 
 dmcEWC.f90 
 dmcQRS.f90  
+dmcSD.f90
 dmcUDSA.f90  
 dmcYld.f90  
 main.f90
