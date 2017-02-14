@@ -194,6 +194,8 @@ contains
     type(ADPOutputData) :: output
     integer :: iounit
     !
+        ! Introduce youself ;-)
+        write(display_unit,'(A)') 'ADP, $Rev$'
         ! Open output file
         RETURN_IF(info /= criSuccess, info = this%openOutputFile('.adp',iounit))
         ! Run the simulation
@@ -217,7 +219,7 @@ contains
     implicit none
     class(ADPModule),intent(inout)  :: this
     type(ADPOutputData),intent(out) :: output
-    integer :: i, n_steps, j, n_increments
+    integer :: i_step, n_steps, j, n_increments
     double precision :: volumetric_strain_fraction, volumetric_strain_norm
     ! Volumetric strain fraction that triggers a warning (0.1%)
     double precision,parameter :: volumetric_strain_fraction_threshold = 0.001
@@ -228,16 +230,22 @@ contains
         ALLOCATED_SIZE(n_steps, this%steps)
         if (n_steps < 1) return
         !
-        ! Storage for calculated output
+        ! Storage for the calculated output
         allocate(output%steps(n_steps))
         !
         ! Main loop over the steps
-        do i = 1, n_steps
-            associate(step => this%steps(i), step_output => output%steps(i))
+        do i_step = 1, n_steps
+            associate(step => this%steps(i_step), &
+                      step_output => output%steps(i_step))
                 !
-                ! Get the total step
+                ! Befing step
                 !
-                
+                if (doLogging(criLogInfo, this%output%verbosity)) then
+                    write(display_unit,800)
+                    write(display_unit,fmt=300) i_step, n_steps
+                    300 format(/, 'Step ', I0, ' out of ', I0, /)
+                endif
+                !
                 ! Make the step traceless: decompose into volumetric strain rate
                 ! and strain rate deviator
                 volumetric_strain%t = trace(step%deformation_rate) / 3.D0 * unit_sr_tensor%t
@@ -321,8 +329,10 @@ contains
     
     !
 #define MSG_GROUP_ERRORS
+#define MSG_GROUP_RULERS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
+#undef MSG_GROUP_RULERS
     !
     end function
 
