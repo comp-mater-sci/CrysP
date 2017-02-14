@@ -1,0 +1,30 @@
+#extends configGeneric
+#block moduleConfig
+#
+# Module ADP section
+# ==================
+#filter FilterChain
+$len($adp.steps) # Number of steps
+#for $istep,$step in $enumerate($adp.steps, 1)
+# Step $istep
+#set step_type = None
+#set step_types = ['Deformation', 'StrainMode', 'Strain', None]
+#for $step_type in $step_types
+#if step_type in $step.keys()
+#break
+#end if
+#end for
+$step_type # Keyword: deformation type  
+#if $step_type == 'Deformation'
+${step.Deformation, plain=True} # Full deformation rate tensor in Voigt notation: 9 components
+#elif $step_type == 'StrainMode'
+${step.StrainMode, plain=True} # Strain mode in Voigt notation: 6 components
+${step.magnitude} # Magnitude of the step
+#elif $step_type == 'Strain'
+${step.Strain, plain=True} # Strain increment in Voigt notation: 6 components
+#end if
+$step.update_state # Flag: incrementally update state variables
+$step.incrementation # Keyword: incrementation type
+#end for
+#end filter
+#end block moduleConfig
