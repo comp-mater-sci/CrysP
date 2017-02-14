@@ -385,7 +385,7 @@ Consequently, the sample `z`-axis is aligned with the material `3`-direction.
 
 -# \confdef{sample_orientation_range,realrange} defines the range for the orientation of virtual tensile specimen, in multi-line format specified in \ref range_option. Orientations in the range denote the angle between the sample `x`-axis and the material `1`-direction, and are expressed in degrees. 
 -# \conffield{pure_uniaxial_state} is defined [here](@ref pure_uniaxial_state_anchor).
--# \confdef{calculate_Mfactor,logical} is a flag to request calculation of average Taylor factor in module-specific outputfile. If `True`, it may
+-# \confdef{calculate_Mfactor,logical} is a flag to request calculation of average Taylor factor in module-specific output file. If `True`, it may
 increase calculation time for certain model assumptions.
 -# \confdef{fold_symmetry,logical} enables or disables averaging of output variables over symmetrically equivalent positions. 
 
