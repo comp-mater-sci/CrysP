@@ -111,15 +111,15 @@ contains
     integer,parameter :: n_incrementation_types = 2
     integer,parameter :: auto_incrementation_id = 1, fixed_incrementation_id = 2
     type(MapItem),dimension(n_incrementation_types) :: incrementation_type_names = [&
-        MapItem('Auto', auto_incrementation_id), &
-        MapItem('Fixed', fixed_incrementation_id)]
+        MapItem('auto', auto_incrementation_id), &
+        MapItem('fixed', fixed_incrementation_id)]
     !
     integer,parameter :: n_deformation_types = 3
     integer,parameter :: deformation_id = 1, strainmode_id = 2, strain_id = 3
     type(MapItem),dimension(n_deformation_types) :: deformation_type_names = [&
-        MapItem('Deformation', deformation_id),&
-        MapItem('StrainMode', strainmode_id),&
-        MapItem('Strain', strain_id)]
+        MapItem('deformation', deformation_id),&
+        MapItem('strainmode', strainmode_id),&
+        MapItem('strain', strain_id)]
     !
     double precision,dimension(sr_voigt_dim) :: tmp_deformation
     double precision,dimension(sr_symm_voigt_dim) :: tmp_strain

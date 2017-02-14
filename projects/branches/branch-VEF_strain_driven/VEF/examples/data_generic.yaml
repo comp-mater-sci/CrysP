@@ -163,13 +163,13 @@ asr:
 #####################################################################
 adp:
     steps:
-        - Deformation: [1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        - deformation: [1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
           update_state: True
-          incrementation: Auto
-        - StrainMode: [-1.0, -1.0, 0.0, 0.0, 0.0, 0.0] 
+          incrementation: auto
+        - strainmode: [-1.0, -1.0, 0.0, 0.0, 0.0, 0.0] 
           magnitude: 0.2
           update_state: True
-          incrementation: Auto
-        - Strain: [0.1, -0.1, 0.0, 0.0, 0.0, 0.0]
+          incrementation: auto
+        - strain: [0.1, -0.1, 0.0, 0.0, 0.0, 0.0]
           update_state: True
-          incrementation: Auto
+          incrementation: auto
