@@ -135,6 +135,9 @@ To minimize the objective function, the TR solver requires its Jacobian. The Jac
 	Therefore, the user is advised to use \conffield{search_linearize} set to `True` whenever possible. The linearized problem can be solved much faster and in practice its solution rarely differs from the solution of its non-linear counterpart.
     -# \confdef{TR_default_epsilon,real} \confdef{TR_objective_norm,real} control convergence criteria used by the solver. The search for the minimum is considered successful if the square norm of the objective function does not exceed \conffield{TR_objective_norm}. 
     -# \confdef{solver_advanced,logical} specifies if advanced solver settings should be read. This unlocks a multi-line option, which currently remains undocumented.
+  - `False` there are no suboptions.
+
+\note If any of deformation-driven (strain-rate driven) modules is used (such as \ref module_adp), the only available option in \conffield{solver_default} is `False`.
 
 \par Example:
 ~~~~~~~~~~~~~{.txt}
@@ -144,6 +147,8 @@ True               # Flag: attempt to linearize the problem
 1e-5 1e-3          # Default eps for TR-solver, eps for the norm of objective function: ||F||_2
 False              # Flag: use advanced solver settings
 ~~~~~~~~~~~~~
+
+
 
 <HR>
 Quick links
