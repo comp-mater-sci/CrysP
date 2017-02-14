@@ -107,9 +107,15 @@ contains
         ! as it is done in the stressDrivenModule.
         if (.not. readValue(cnfunit, default_solver_config)) return
         !
-        ! Read the module-specific config
-        
+        ! For the time being, only default solver config is accepted.
+        if (.not. default_solver_config) then
+            write(display_unit, fmt=900) 'This module does not allow non-default solver settings'
+            info = criErr_BadArgs
+        endif
         !
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
     !
     end function
 
