@@ -589,7 +589,7 @@ The module can also be used to simply calculate stress response of the virtual s
 
 \subsection configuration_adp Module-specific configuration
 
--# \confdef{n_steps,integer} sets the number of subsequent deformation steps, each one being specified by later configuration settings and their optional subsettings.
+-# \confdef{n_steps,integer,n_steps_ADP} sets the number of subsequent deformation steps, each one being specified by later configuration settings and their optional subsettings.
 These settings are repeated \conffield{n_steps} times in configuration file, in the same order as they are to be applied to the virtual sample.
 -# \confdef{deformation_type,string} specifies how the deformation is imposed in the given step. Possible values are:
     -# `deformation` 
@@ -607,18 +607,18 @@ These settings are repeated \conffield{n_steps} times in configuration file, in 
        If this option is used, the next line is:
          - \confdef{strain,symsrtensor} Strain increment to be imposed during the step.
 
--# \confdef{update_state,logical} is a switch that controls update of material state for given step. When set to 
+-# \confdef{update_state,logical,update_state_ADP} is a switch that controls update of material state for given step. When set to 
   - `False` then the stresses and other outputs are queried without finite deformation and without associated evolution of state.
   - `True` then the deformation is actually imposed, resulting in evolution of state.
--# \confdef{incrementation_type,string} specifies how the deformation increments will be calculated. The only allowed value of \conffield{incrementation_type} in this module is: `auto`
+-# \confdef{incrementation_type,string,incrementation_type_ADP} specifies how the deformation increments will be calculated. The only allowed value of \conffield{incrementation_type_ADP}} in this module is: `auto`
 
 
 \subsection output_adp Module-specific output
 
 The module-specific outputfile `<output_prefix>.adp` makes column-wise reporting of:
--# \outdef{step} The deformation step sequence number
+-# \outdef{step,step_ADP} The deformation step sequence number
 
--# \outdef{increment} The increment sequence number of the current deformation step
+-# \outdef{increment,increment_ADP} The increment sequence number of the current deformation step
 
 -# \outdef{L_11} A component of the velocity gradient tensor \f$ \mathbf{L} \f$ imposed during the increment, given in the material (123) reference frame.
 
@@ -652,15 +652,15 @@ The module-specific outputfile `<output_prefix>.adp` makes column-wise reporting
 
 -# \outdef{S_11,adp_S_11} The 11 component of the deviatoric stress, given in the material (123) reference frame. The deviatoric stress \f$ \mathbf{S} \f$ corresponds to the imposed \f$ \mathbf{L} \f$.
 
--# \outdef{S_22} similar to \ref adp_S_11
+-# \outdef{S_22,adp_S_22} similar to \ref adp_S_11
 
--# \outdef{S_33} similar to \ref adp_S_11
+-# \outdef{S_33,adp_S_33} similar to \ref adp_S_11
 
--# \outdef{S_12} similar to \ref adp_S_11
+-# \outdef{S_12,adp_S_12} similar to \ref adp_S_11
 
--# \outdef{S_23} similar to \ref adp_S_11
+-# \outdef{S_23,adp_S_23} similar to \ref adp_S_11
 
--# \outdef{S_13} similar to \ref adp_S_11
+-# \outdef{S_13,adp_S_13} similar to \ref adp_S_11
 
 -# \outdef{S_vM} Von Mises equivalent stress
 
