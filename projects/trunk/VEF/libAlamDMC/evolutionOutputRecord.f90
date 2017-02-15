@@ -18,7 +18,7 @@ module dmcEvolutionOutputRecord
 use criErrcodes
 use criMathUtils, only: SRTensor, root23
 use dmcIncrementationControl, only: IncrementationControlVariables
-use dmcBasicModule, only: YLPResult !> \fixme This dependency should be avoided by refactoring dmcBasicModule
+use dmcStressDrivenModule, only: YLPResult !> \fixme This dependency should be avoided by refactoring dmcStressDrivenModule
 use fngVec5D, only: vec5D2tens
 implicit none
 

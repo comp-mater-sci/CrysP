@@ -131,7 +131,7 @@ matrix is numerically approximated by the finite difference method.
 
 -# \confdef{solver_default,logical} specifies if default values for solver settings should 
    be used. If \conffield{solver_default} is: 
-  - `False`<BR> then the subsequent lines provide the following suboptions:
+  - `False` then the subsequent lines provide the following suboptions:
     -# \confdef{jacobian_fd_step,real} controls how the Jacobian is constructed.  The 
        field \conffield{jacobian_fd_step} specifies the length of strain increment that is 
        used for estimating the Jacobian by finite difference method. 
@@ -149,7 +149,6 @@ matrix is numerically approximated by the finite difference method.
        set to `True` whenever possible. The linearized problem can be solved much faster 
        and in practice its solution rarely differs from the solution of its non-linear 
        counterpart.
-
     -# \confdef{TR_default_epsilon,real} and \confdef{TR_objective_norm,real} control 
        convergence criteria used by the solver. The search for the minimum is considered 
        successful if the square norm of the objective function does not exceed 
@@ -157,6 +156,11 @@ matrix is numerically approximated by the finite difference method.
        to \f$ 10^{-3} \f$ is sufficient to reach a good convergence.
     -# \confdef{solver_advanced,logical} specifies if advanced solver settings should be 
        read. This unlocks a multi-line option, which currently remains undocumented.
+  - `False` there are no suboptions.
+
+\note If any of deformation-driven modules is used (such as \ref module_adp),
+      the only available option in \conffield{solver_default} is `False`.
+
 
 \par Example:
 ~~~~~~~~~~~~~{.txt}
@@ -166,6 +170,8 @@ True               # Flag: attempt to linearize the problem
 1e-5 1e-3          # Default eps for TR-solver, eps for the norm of objective function: ||F||_2
 False              # Flag: use advanced solver settings
 ~~~~~~~~~~~~~
+
+
 
 <HR>
 Quick links

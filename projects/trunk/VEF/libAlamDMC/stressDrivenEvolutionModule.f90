@@ -15,7 +15,7 @@
 !> Implementation of a DMC computiational module that allows stress-driven evolution of
 !> material state.
 module dmcStressDrivenEvolutionModule
-use dmcBasicModule
+use dmcStressDrivenModule
 use dmcIncrementationControl
 use dmcEvolutionOutputRecord
 use xVectorIncrementOutputRecord
@@ -32,7 +32,7 @@ implicit none
     
     
     
-    type,extends(BasicModule),abstract :: StressDrivenEvolutionModule
+    type,extends(StressDrivenModule) :: StressDrivenEvolutionModule
         
         type(IncrementationControlSettings) :: control
 

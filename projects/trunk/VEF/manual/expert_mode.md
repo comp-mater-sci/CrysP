@@ -10,7 +10,7 @@ The AlamDMC enables to perform __stress-driven__ analysis on __strain-rate drive
 through numerical inversion of the multi-scale model in an [iterative procedure]
 (@ref config_search_procedure).
 
-From this part of the user manual you will learn how to set up and interprete virtual experiments in 
+From this part of the user manual you will learn how to set up and interpret virtual experiments in 
 AlamDMC. More in detail:
 - \ref page_alamdmc_usage tells you how to execute the AlamDMC program.
 - \ref page_alamdmc_format discusses the formatting to be used in AlamDMC configuration files.

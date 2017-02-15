@@ -160,3 +160,16 @@ asr:
             type: StrainTensor
             step_magnitude:  0.2
             increment_magnitude: 0.01 
+#####################################################################
+adp:
+    steps:
+        - deformation: [1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+          update_state: True
+          incrementation: auto
+        - strainmode: [-1.0, -1.0, 0.0, 0.0, 0.0, 0.0] 
+          magnitude: 0.2
+          update_state: True
+          incrementation: auto
+        - strain: [0.1, -0.1, 0.0, 0.0, 0.0, 0.0]
+          update_state: True
+          incrementation: auto

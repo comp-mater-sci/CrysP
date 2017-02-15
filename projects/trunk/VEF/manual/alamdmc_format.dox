@@ -215,8 +215,10 @@ for \f$ \mathbf{X} \f$ expressed in the sample (`xyz`) reference frame.
 ~~~~~~~~~~~~~ 
  
 \subsection srtensor_option Configuration option for expressing second-order tensors
+
+\subsubsection srtensor_option_matrix Second-order tensors in direct (matrix-like) notation 
 Second-order tensors may be expressed as a 3-line option of the compound datatype `srtensor` that contains 3 `real` types per line:
--# \confdef{tensor,srtensor,srtensor} gives the compononents for \f$ \mathbf{X} \f$ being a second-order tensor, ordered as follows:
+-# \confdef{tensor,srtensor,srtensor} gives the components for \f$ \mathbf{X} \f$ being a second-order tensor, ordered as follows:
 <ul>
 <li> <em>line 1: </em>\f$ X_{11} \space X_{12} \space X_{13} \f$ </li>
 <li> <em>line 2: </em>\f$ X_{21} \space X_{22} \space X_{23} \f$ </li>
@@ -236,6 +238,19 @@ if \f$ \mathbf{X} \f$ is expressed in the sample (`xyz`) reference frame.
  0.0 0.0 0.0 #  except 13- (or xz-)component.
  0.0 0.0 0.0 #
 ~~~~~~~~~~~~~ 
+
+\subsubsection srtensor_option_voigt Second-order tensors in Voigt notation 
+Second-order tensors may be expressed as a one-line option of the compound datatype `srtensor_voigt` that contains 9 `real` values:
+-# \confdef{tensor,srtensor_voigt,srtensor_voigt} gives the components for \f$ \mathbf{X} \f$ being a second-order tensor, ordered as according to Voigt convention:
+
+   \f$ X_{11} \space X_{22} \space X_{33} \space X_{12} \space X_{23} \space X_{31} \space X_{21} \space X_{32} \space X_{13}\f$
+
+\par Example
+If the example given above were represented as \conffield{srtensor_voigt}, it would read:
+~~~~~~~~~~~~~{.txt}
+0.0 0.0. 0.0 0.0 0.0. 0.0 0.0 0.0. 1.0 # All tensor components are zero, except 13- (or xz-)component.
+~~~~~~~~~~~~~ 
+
 
 
 \subsection incrementation_option Configuration options for strain incrementation

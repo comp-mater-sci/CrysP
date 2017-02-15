@@ -18,7 +18,7 @@ module dmcYld
 use alamYLP
 use dmcUtils
 use commonConfig
-use dmcBasicModule
+use dmcStressDrivenModule
 use criAlgorithm
 use criErrcodes
 use criRange
@@ -28,7 +28,7 @@ implicit none
 private
 
       integer,parameter                               :: nbase = 3
-      type,extends(BasicModule) :: YldModule
+      type,extends(StressDrivenModule) :: YldModule
             
             class(range_type),pointer                 :: ptr_theta_range
             
@@ -73,7 +73,7 @@ private
       
 contains
 
-      integer function YldModule_ReadConfig(this,cnfunit) result(info)
+      integer function YldModule_readConfig(this,cnfunit) result(info)
       implicit none
       class(YldModule),intent(inout)            :: this
       integer,intent(in)                        :: cnfunit
@@ -82,7 +82,7 @@ contains
       double precision :: norm
       logical :: normalize, use_default_settings
       !
-            info = BasicModule_ReadConfig(this,cnfunit)
+            info = this%StressDrivenModule%ReadConfig(cnfunit)
             if (info /= criSuccess) return
             ! Read parameters specific for the dmcYld program
             this%ptr_theta_range => rangeFromConfig(cnfunit,info)
@@ -133,7 +133,7 @@ contains
       character(len=6),dimension(nbase)    :: veclabels = [ character(len=6) :: 'base','base','offset' ]
       integer :: i
       !
-            info = BasicModule_printConfig(this, outunit)
+            info = this%StressDrivenModule%printConfig(outunit)
             if (info /= 0) return
             info = criErr_BadArgs
             ! Introduce youself ;-)

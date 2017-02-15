@@ -111,8 +111,8 @@ Notations of some common mathematical operators are:
 <caption id="operators_table"></caption>
 <tr><th>Operator  <th>Meaning and/or definition
 <tr><td> \f$ |x| \f$ <td> Absolute value of scalar \f$ x \f$
-<tr><td> \f$ \|\mathbf{x}\| \f$ <td> Euclidian norm of vector \f$ \mathbf{x} \f$
-<tr><td> \f$ \|\mathbf{X}\| \f$ <td> Euclidian norm of tensor \f$ \mathbf{X} \f$
+<tr><td> \f$ \|\mathbf{x}\| \f$ <td> Euclidean norm of vector \f$ \mathbf{x} \f$
+<tr><td> \f$ \|\mathbf{X}\| \f$ <td> Euclidean norm of tensor \f$ \mathbf{X} \f$
 <tr><td> \f$ \dot{x} \f$ <td> 1st time derivative of \f$ x \f$
 <tr><td> \f$ \overline{x} \f$ <td> Volume-average of (local variable) \f$ x \f$
 </table>
@@ -134,7 +134,7 @@ readability of the documentation concerned:
   \eg The declaration \confdef{example_field,string} declares a field of type `string`
 
 - A configuration option consists of one or more fields. Field declarations that are
-  merely seperated by spacing in the documentation, belong to the same 
+  merely separated by spacing in the documentation, belong to the same 
   configuration option: they need to be provided on a single line of configuration file, 
   and in the same order.
   
@@ -148,7 +148,7 @@ readability of the documentation concerned:
 <BR>
 	
 - The consecutive configuration options that belong to a specific part
-  of the configuration file, are ennumerated in the documentation. Note that numbering may restart for a following section
+  of the configuration file, are enumerated in the documentation. Note that numbering may restart for a following section
   of configuration file.
 
   \par Example:
@@ -158,7 +158,7 @@ readability of the documentation concerned:
        option (consisting of two fields).
 
 - Mandatory configuration options are always numbered as: 1. ,2. , 3. etc. If a configuration option has a
-  limited number of supported values, those values may be given in an unummerated and indented list.
+  limited number of supported values, those values may be given in an unenumerated and indented list.
   Value-dependent suboptions that depend on the value of previous field, are documented as a letter-numerated list (a., b., c., etc.), and they are indented accordingly. Second-level suboptions (sub-suboptions) are listed as a Roman-numerated list (i., ii., iii., etc.) with further indentation.
 
   \par &emsp; Example: 

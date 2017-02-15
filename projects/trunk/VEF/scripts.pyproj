@@ -5,17 +5,18 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{916832b9-b724-48df-861e-979726dbfd69}</ProjectGuid>
     <ProjectHome>python\scripts\</ProjectHome>
-    <StartupFile>run_config.py</StartupFile>
+    <StartupFile>vef_datacard.py</StartupFile>
     <SearchPath>..\</SearchPath>
-    <WorkingDirectory>C:\Users\Jerzy\Documents\Work\TWRMTMProject\projects\trunk\VEF\templates</WorkingDirectory>
+    <WorkingDirectory>C:\Users\Jerzy\Documents\Work\TWRMTMProject\projects\trunk\VEF\tests\vef_datacard</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <InterpreterId />
     <InterpreterVersion />
-    <CommandLineArguments>--input data_generic.yaml --modules yld</CommandLineArguments>
+    <CommandLineArguments>--input sid1687f.smt --structure=bcc --uniaxial 0 45 90 --equibiaxial --serial --inplane 1. 1. 1. --arbitrary 1. 0. 1. 0. 1. 1.</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
+    <Environment>VEF_ROOT=\Users\Jerzy\Documents\Work\VEF_distributions\VEF</Environment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
@@ -25,6 +26,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="run_config.py" />
+    <Compile Include="vef_datacard.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />

@@ -15,8 +15,6 @@
 !> Implementation of a basic DMC computiational module.
 module dmcBasicModule
 use dmcAbstractModule
-use alamYLP
-use alamYLPConstants
 use altayConfig, only: altayConfigData
 use commonConfig
 use dmcUtils
@@ -50,13 +48,17 @@ use fngVec5D
             
       end type
       
-      !> Abstract class implementing basic subset of operations that are shared by all 
-      !> computational modules
-      type,abstract,extends(abstractModule) :: BasicModule
+      !> Class implementing basic subset of operations that are shared by all 
+      !> computational modules.
+      !>
+      !> \note This class is essentially an abstract class, but declaring it
+      !>       that way prevents the subclasses from calling _ANY_ superclass 
+      !>       method (including the ones that have an actual implementation
+      !>       in BasicModule) in the OO-acceptable style:
+      !>       `this%ParentClassName%method()`
+      type,extends(abstractModule) :: BasicModule
       
             type(outputConfig)            :: output
-
-            type(multilevelYLPConfig)     :: ylp
 
             type(altayConfigData)         :: altay
             
@@ -68,19 +70,14 @@ use fngVec5D
 
             procedure,pass(this)     :: printConfig => BasicModule_printConfig
 
-            procedure,pass(this)     :: findSolution => BasicModule_findSolution
+            procedure,pass(this)     :: run => BasicModule_run
             
+            !>@{ \name Helper procedures
+            procedure,pass(this)      :: openOutputFile => BasicModule_openOutputFile
+            !>@}
       end type
 
-      type :: YLPResult
-            double precision,dimension(alamEval_vSD_dim) :: vA = 0.D0 
-            double precision,dimension(alamEval_vSD_dim) :: vS = 0.D0 
-            double precision,dimension(alamEval_vSD_dim) :: vSonA = 0.D0 
-            double precision,dimension(alamEval_vSD_dim) :: vSonAn = 0.D0 
-            double precision :: R = 0.D0
-            double precision :: dotWonA = 0.D0
-            double precision :: scal_s = 0.D0
-      end type
+
 
 
 contains
@@ -133,7 +130,7 @@ contains
       end function
       
       
-      integer function BasicModule_ReadConfig(this,cnfunit) result(info)
+      integer function BasicModule_readConfig(this,cnfunit) result(info)
       implicit none
       class(BasicModule),intent(inout)          :: this
       integer,intent(in)                        :: cnfunit
@@ -151,13 +148,7 @@ contains
                   write(errmsg,fmt=901) 'check libaltay config section'
                   return
             endif
-            !
-            ! Read multilevelYLP configuration
-            call readYLPConfigSection(cnfunit,this%ylp,info)
-            if (info /= criSuccess) then
-                  write(errmsg,fmt=901) 'check YLP config section' 
-                  return
-            endif
+
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
@@ -195,11 +186,6 @@ contains
                 write(outunit,fmt=101) 'Slip systems definition:', trim(this%altay%slipsystem%input_fname)
                 write(outunit,fmt=101) 'Microstructure definition:', trim(this%altay%micros_fname)
                 !
-                if (this%ylp%linearize) then
-                      write(display_unit,100) 'Info: the program will first attempt to linearize the identification problems.'
-                else
-                      write(display_unit,100) 'Info: The program will attempt to solve the nonlinear problems.'
-                endif
             endif
             !
             info = criSuccess
@@ -215,64 +201,44 @@ contains
       end function
       
 
-    !> Calculate plastic strain rate D that corresponds to the superimposed input stress `sigma`
-    !> by performing an iterative search.
-    !>
-    !> The results of the iterative search are placed in ylp_results.
-    integer function BasicModule_findSolution(this,sigma, D, ylp_result, vM_guess) result(info)
-    implicit none
-    class(BasicModule),intent(in)   :: this
-    type(SRTensor),intent(in)       :: sigma !< Input stress
-    type(SRTEnsor),intent(inout)    :: D     !< Plastic strain rate
-    type(YLPResult),intent(out)     :: ylp_result !< Results of the interative search
-    !> Flag: use von Mises inital guess (default: .true.). If false, D will be used as the
-    !> starting point for the iterative search.
-    logical,optional                :: vM_guess 
-    !
-    double precision :: vS_norm, vA_norm, SonA_norm, pressure
-    logical :: use_vM_guess
-    !
-        info = criErr_BadArgs
 
-        ! Convert input to the 5D space and make the unit vector(s).
-        ! This also makes sure it is deviatoric.
-        ylp_result%vS = tens2vec5D(sigma%t)
-        vS_norm = norm2(ylp_result%vS)
-        if (vS_norm < epsilon(0.D0)) return
-        ylp_result%vS = ylp_result%vS / vS_norm
-        !
-        use_vM_guess = optionalDefault(vM_guess, .true.)
-        if (.not. use_vM_guess) then
-            ylp_result%vA = tens2vec5D(D%t)
-            vA_norm = norm2(ylp_result%vA)
-            if (vA_norm < epsilon(0.D0)) return
+    subroutine BasicModule_run(this,info)
+    class(BasicModule),intent(inout) :: this
+    integer,intent(out)                 :: info
+    !
+        info = criError
+    !
+    end subroutine
+
+
+    !> Open output file
+    integer function BasicModule_openOutputFile(this, ext, ofunit, suffix) result(info)
+    class(BasicModule),intent(in)           :: this
+    character(len=*),intent(in)             :: ext !< File extension (with leading dot)
+    integer,intent(out)                     :: ofunit !< IO unit of the output
+    character(len=*),intent(in),optional    :: suffix !< Suffix to the file
+    !
+    character(len=max_pathlen) :: output_path
+    !
+        if (present(suffix)) then
+            output_path = trim(this%output%outputPrefix)// trim(suffix) //trim(ext)
+        else
+            output_path = trim(this%output%outputPrefix)// trim(ext)
+            
         endif
-        
-        ! Calculate the corresponding strain rate vA
-        call multilevelYLP( ylp_result%vS,    &
-                            ylp_result%vA,    &
-                            ylp_result%vSonA, &
-                            ylp_result%R,     &
-                            info,             &
-                            useVMGuess=use_vM_guess, &
-                            YLPconfig=this%ylp, &
-                            verbose=this%output%verbosity)
-        SonA_norm = norm2(ylp_result%vSonA)
-        if ((info /= 0) .or. (SonA_norm < epsilon(0.D0))) then
-            info = criError
+        open(newunit=ofunit, file=output_path, status='replace', iostat=ierr)
+        if (ierr /= 0) then
+            write(display_unit, fmt=952) output_path
+            info = criErr_IOWrite
             return
         endif
-        !
-        ylp_result%dotWonA = dot_product(ylp_result%vA, ylp_result%vSonA)
-        ylp_result%scal_s = SonA_norm / vS_norm
-        ! Calculate normalized stess
-        ylp_result%vSonAn = ylp_result%vSonA / SonA_norm
-        D%t = vec5D2tens(ylp_result%vA)
         info = criSuccess
     !
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
+      !
     end function
-      
-      
       !
       ! Procedures for processing sections of the configuration file
       !
@@ -474,35 +440,6 @@ contains
                   if (.not. readValue(cnfunit,hc%block_id)) return
             endif
             !
-            info = criSuccess
-      !
-      end subroutine
-
-
-      !> Read configuration of the solver (libalamylp)
-      subroutine readYLPConfigSection(cnfunit,cnf,info)
-      implicit none
-      integer,intent(in)                        :: cnfunit
-      type(multilevelYLPConfig),intent(out)     :: cnf
-      integer,intent(out)                       :: info
-      !
-      double precision,dimension(2) :: tmp
-      logical :: use_default_solver_settings, use_advanced_settings
-      !
-            info = criErr_IORead
-            use_default_solver_settings = .true.
-            use_advanced_settings = .false.
-            if (.not. readValue(cnfunit, use_default_solver_settings)) return
-            if (.not. use_default_solver_settings) then
-                  if (.not. readValue(cnfunit, cnf%jacobi_eps)) return
-                  if (.not. readValue(cnfunit, cnf%linearize)) return
-                  ! read default_eps and obj_func_eps
-                  if (.not. readValue(cnfunit,tmp)) return
-                  cnf%default_eps = tmp(1)
-                  cnf%obj_func_eps = tmp(2)
-                  ! read flag for advanced settings (placeholder at the moment)
-                  if (.not. readValue(cnfunit, use_advanced_settings)) return
-            endif
             info = criSuccess
       !
       end subroutine

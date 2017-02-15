@@ -81,7 +81,7 @@ implicit none
      
 contains
 
-    integer function EWCModule_ReadConfig(this,cnfunit) result(info) 
+    integer function EWCModule_readConfig(this,cnfunit) result(info) 
     implicit none
     class(EWCModule),intent(inout)            :: this
     integer,intent(in)                        :: cnfunit
@@ -94,7 +94,7 @@ contains
     type(MapItem),dimension(nmodes),parameter :: mode_keywords = [ MapItem('reference',mode_reference_id), &
                                                                    MapItem('direct',mode_direct_id) ]
     !
-        info = BasicModule_ReadConfig(this,cnfunit) 
+        info = this%StressDrivenEvolutionModule%ReadConfig(cnfunit)
         if (info /= criSuccess) return
         info = criErr_IORead
         ! Read parameters specific for the EWCModule
@@ -166,7 +166,7 @@ contains
     !
     !integer :: ioerr
     !
-        info = BasicModule_printConfig(this,outunit)
+        info = this%StressDrivenEvolutionModule%printConfig(outunit)
         if (info /= 0) return
         !
         info = -1

@@ -16,6 +16,7 @@ The `alamDMC` program provides the following modules:
 (properties that characterize plastic anisotropy in uniaxial stress state).
 -# \ref module_yld - the keyword stands for YieLD locus.
 -# \ref module_ewc - the keyword stands for Equi-Work Contour.
+-# \ref module_adp - the keyword stands for Arbitrary Deformation Path.
 
 For instance, to invoke the Yield Locus Module, the user may run the command:
 \verbatim
