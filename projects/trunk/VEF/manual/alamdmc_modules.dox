@@ -137,7 +137,8 @@ The output files make column-wise reporting of:
 		r_i = \frac{D_{yy}}{D_{zz}} 
 	\f] 
 	where \f$D_{yy}\f$ and \f$D_{zz}\f$ are the strain rates in the width and thickness 
-	directions, respectively. It relates to the instantaneous q-value as \f$ r_i = \frac{q_i}{1-q_i} \f$.
+	directions, respectively. It relates to the instantaneous q-value as 
+	\f$ \displaystyle r_i = \frac{q_i}{1-q_i} \f$.
 	</li> 
 
 	<li> \outdef{s-value} A normalised flow stress \f$ s \f$
@@ -150,7 +151,8 @@ The output files make column-wise reporting of:
 		q = \frac{-\epsilon_{yy}}{\epsilon_{xx}} 
 	\f] 
 	where \f$\epsilon_{yy}\f$ and \f$\epsilon_{xx}\f$ are the strains in the width and 
-	tensile directions, respectively. It relates to the r-value as \f$ q = \frac{r}{1+r} \f$.
+	tensile directions, respectively. It relates to the r-value as 
+	\f$ \displaystyle  q = \frac{r}{1+r} \f$.
 	</li> 
 
 	<li> \outdef{r-valueA} The (strain-based) r-value \f$ r \f$ 
@@ -160,7 +162,8 @@ The output files make column-wise reporting of:
 		r = \frac{\epsilon_{yy}}{\epsilon_{zz}} 
 	\f] 
 	where \f$\epsilon_{yy}\f$ and \f$\epsilon_{zz}\f$ are the strains in the width and 
-	thickness directions, respectively. It relates to the q-value as \f$ r = \frac{q}{1-q} \f$.
+	thickness directions, respectively. It relates to the q-value as 
+	\f$ \displaystyle r = \frac{q}{1-q} \f$.
 	</li>
 
 	<li> \outdef{S, norm_SonA} The norm of deviatoric stress that corresponds to plastic strain mode:
@@ -170,8 +173,8 @@ The output files make column-wise reporting of:
 	<li> \outdef{residual} The residual of \ref config_search_procedure "search procedure"
 	\f$ Res \f$
 	
-	\note As a rule-of-thumb, the search procedure is supposed to reach the convergence 
-	if \f$ Res<<10^{-2} \f$.
+	\note As a rule of thumb, the search procedure is supposed to reach the convergence 
+	if \f$ Res \ll 10^{-2} \f$.
 	</li> 
 </ol>
 
@@ -210,10 +213,11 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outdef{step} The deformation step sequence number
 	</li>
 	
-	<li> \outdef{increment} The increment sequence number of the current deformation step
+	<li> \outdef{increment, increment_ASR} The increment sequence number of the current 
+	deformation step
 	</li>
 	
-	<li> \outdef{eps_vM} The von Mises equivalent strain of the current step 
+	<li> \outdef{eps_vM, eps_vM_ASR} The von Mises equivalent strain of the current step 
 	\f$ \epsilon_{vM,step} \f$
 	
 	It is derived from the strain tensor of current step \f$ \boldsymbol{\epsilon}_{step} \f$ as: 
@@ -519,7 +523,7 @@ The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locu
 	used as contour levels are those for which the von Mises equivalent strain \f$ \epsilon_{vM} \f$ of the reference test are specified 
 	by \conffield{contour_levels_range}. 
 	The reference test is specified by the following suboptions: 
-	  -# \confdef{stress_mode,symsrtensor} specifies the imposed stress mode of the reference test, in format specified in \ref symsrtensor_option.
+	  -# \confdef{stress_mode,symsrtensor,stress_mode_EWC} specifies the imposed stress mode of the reference test, in format specified in \ref symsrtensor_option.
 	  -# \conffield{incrementation_type} specifies how the deformation increments of the reference test will be calculated. The only values permitted in this module are: `StrainTensor`, `StrainTensorIncrement` and `PlasticWork`. See \ref incrementation_option for details.
 	  -# \conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) to be simulated in the reference test. 
 		A proper selection of contour levels implies \conffield{step_magnitude} must be set equal or greater than the largest value	of \conffield{contour_levels_range}.
@@ -528,11 +532,16 @@ The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locu
 -# \confdef{contour_levels_range,real} defines the values for the levels of equi-work contours, according to \conffield{worklevel_selection_method}.
 -# \confdef{points_per_contour,integer} sets the number of increments to be performed in-between two subsequent contour levels, for all virtual tests that generate the equi-work contour levels.
 -# \confdef{use_default_settings,logical} specifies whether or not the default section in stress space is to be used. 
-If \conffield{use_default_settings} equals 
-  - `True` <BR> then the equi-work contour section is defined by \f$\sigma_{11}\f$ along the \f$X\f$-axis, and \f$\sigma_{22}\f$ along the \f$Y\f$-axis.
-  - `False` <BR> then the following suboptions are required:
-    -# \confdef{base_sigma_X,real} is the base tensor along the \f$X\f$-axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
-    -# \confdef{base_sigma_Y,real} is the base tensor along the \f$Y\f$-axis of the equi-work contour section, in [Voigt notation](@ref symsrtensor_option). 
+If \conffield{use_default_settings} equals
+  - `True` then the equi-work contour section is defined by \f$\sigma_{11}\f$ along the 
+    \f$X\f$-axis, and \f$\sigma_{22}\f$ along the \f$Y\f$-axis.
+  - `False` then the following suboptions are required:
+    -# \confdef{base_sigma_X,real,base_sigma_X_EWC} is the base tensor along the 
+       \f$X\f$-axis of the equi-work contour section, 
+      in [Voigt notation](@ref symsrtensor_option). 
+    -# \confdef{base_sigma_Y,real,base_sigma_Y_EWC} is the base tensor along 
+       the \f$Y\f$-axis of the equi-work contour section, 
+       in [Voigt notation](@ref symsrtensor_option). 
 
 \par Example
 Please see the configuration file `AKDQf_ewc.cfg` from `examples` directory:

@@ -11,7 +11,7 @@ configuration file. It has its own internal structure, consisting of three main 
 	<li> \ref config_multiscale </li>
 	<li> \ref config_search_procedure </li>
 </ol>
-	
+
 \section config_outputs Configuration of outputs
 
 The outputs of the program are controlled by three parameters:
@@ -118,23 +118,45 @@ False                # Flag: use default hardening
 ~~~~~~~~~~~~~
 
 \section config_search_procedure Configuration of the search procedure
-This part of the configuration file controls how the program will search for the strain rate that corresponds to a requested stress state. A gradient-based Trust Region (TR) solver is used to find the strain rate \f$ A^\star \f$ that corresponds to the stress \f$ S^\star \f$:
+This part of the configuration file controls how the program will search for the strain 
+rate that corresponds to a requested stress state. A gradient-based Trust Region (TR) 
+least squares solver is used to find the strain rate \f$ A^\star \f$ that corresponds to 
+the stress \f$ S^\star \f$:
 \f[
-A^\star = \mathrm{arg min} \left\| \frac{S(A)}{\| S(A) \|} - \frac{ S^\star }{ \| S^\star \| } \right\|
+A^\star = \mathrm{arg min} \left\|  \frac{S(A)}{\| S(A) \|} 
+                                  - \frac{ S^\star }{ \| S^\star \| } \right\|
 \f]
-To minimize the objective function, the TR solver requires its Jacobian. The Jacobian is numerically approximated by the finite difference method. 
+To minimize the objective function, the TR solver requires its Jacobian. The Jacobian 
+matrix is numerically approximated by the finite difference method. 
 
--# \confdef{solver_default,logical} specifies if default values for solver settings should be used. If \conffield{solver_default} is 
+-# \confdef{solver_default,logical} specifies if default values for solver settings should 
+   be used. If \conffield{solver_default} is: 
   - `False`<BR> then the subsequent lines provide the following suboptions:
-    -# \confdef{jacobian_fd_step,real} controls how the Jacobian is constructed.  The field \conffield{jacobian_fd_step} specifies the length of strain increment that is be used for estimating the Jacobian by finite difference method. 
-    -# \confdef{search_linearize,logical} specifies whether the program should first attempt to solve the minimization problem that is considered linear. Note that if the \conffield{search_linearize} is set to `True`, then
-	the linearization is attempted each case in which strain rate corresponding to a given stress is sought  
-	, and also per strain increment.
-	If the solver fails to find a good quality solution of the linearized problem, it will fall back to the non-linear problem.
-	The non-linear problem is much more computationally expensive, since it requires several recalculations of the Jacobian.
-	Therefore, the user is advised to use \conffield{search_linearize} set to `True` whenever possible. The linearized problem can be solved much faster and in practice its solution rarely differs from the solution of its non-linear counterpart.
-    -# \confdef{TR_default_epsilon,real} \confdef{TR_objective_norm,real} control convergence criteria used by the solver. The search for the minimum is considered successful if the square norm of the objective function does not exceed \conffield{TR_objective_norm}. 
-    -# \confdef{solver_advanced,logical} specifies if advanced solver settings should be read. This unlocks a multi-line option, which currently remains undocumented.
+    -# \confdef{jacobian_fd_step,real} controls how the Jacobian is constructed.  The 
+       field \conffield{jacobian_fd_step} specifies the length of strain increment that is 
+       used for estimating the Jacobian by finite difference method. 
+    -# \confdef{search_linearize,logical} specifies whether the program should first 
+       attempt to solve the minimization problem that is considered linear. Note that if 
+       the \conffield{search_linearize} is set to `True` (which is the default), then the  
+       linearization is attempted each case in which strain rate corresponding to a given  
+       stress is sought, and also per strain increment, provided that strain evolution is 
+       computed.
+       
+       If the solver fails to find a good quality solution of the linearized problem, 
+       it will fall back to the non-linear problem. The non-linear problem is much more 
+       computationally expensive, since it requires several recalculations of the 
+       Jacobian matrix. Therefore, the user is advised to use \conffield{search_linearize} 
+       set to `True` whenever possible. The linearized problem can be solved much faster 
+       and in practice its solution rarely differs from the solution of its non-linear 
+       counterpart.
+
+    -# \confdef{TR_default_epsilon,real} and \confdef{TR_objective_norm,real} control 
+       convergence criteria used by the solver. The search for the minimum is considered 
+       successful if the square norm of the objective function does not exceed 
+       \conffield{TR_objective_norm}. In most cases, setting \conffield{TR_objective_norm}
+       to \f$ 10^{-3} \f$ is sufficient to reach a good convergence.
+    -# \confdef{solver_advanced,logical} specifies if advanced solver settings should be 
+       read. This unlocks a multi-line option, which currently remains undocumented.
 
 \par Example:
 ~~~~~~~~~~~~~{.txt}

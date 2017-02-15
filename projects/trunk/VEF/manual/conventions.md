@@ -151,12 +151,12 @@ readability of the documentation concerned:
   of the configuration file, are ennumerated in the documentation. Note that numbering may restart for a following section
   of configuration file.
 
-  \par &emsp; Example:
+  \par Example:
   A configuration file section may be documented as follows:  
     -# \confdef{option1field,integer} is a first option (consisting of a single field).
-	-# \confdef{option2field1,string} \confdef{option2field1,string} is a second (consecutive) option
-	(consisting of two fields).<BR>
-	
+    -# \confdef{option2field1,real} \confdef{option2field2,real} is a second (consecutive) 
+       option (consisting of two fields).
+
 - Mandatory configuration options are always numbered as: 1. ,2. , 3. etc. If a configuration option has a
   limited number of supported values, those values may be given in an unummerated and indented list.
   Value-dependent suboptions that depend on the value of previous field, are documented as a letter-numerated list (a., b., c., etc.), and they are indented accordingly. Second-level suboptions (sub-suboptions) are listed as a Roman-numerated list (i., ii., iii., etc.) with further indentation.
