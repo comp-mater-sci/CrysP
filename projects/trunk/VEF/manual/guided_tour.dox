@@ -311,19 +311,19 @@ Here are the requested ODF sections:
 	<span class="zoom">
 	<img class="fullsize widefigure" src="sid1687f_hardening_udsa_0_000_40.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
 	</span>
-	<div class="figcaption">Deformation texture at tensile strain 0.4 (in-plane direction of 0&deg; to RD), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
+	<div class="figcaption">ODF section \f$ \phi_2 = 45^\circ \f$ of the deformation texture at tensile strain 0.4 (in-plane direction of 0&deg; to RD), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
 </div>
 <div class="figure">
 	<span class="zoom">
 	<img class="fullsize widefigure" src="sid1687f_hardening_udsa_45_000_40.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
 	</span>
-	<div class="figcaption">Deformation texture at tensile strain 0.4 (in-plane direction of 45&deg; to RD), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
+	<div class="figcaption">ODF section \f$ \phi_2 = 45^\circ \f$ of the deformation texture at tensile strain 0.4 (in-plane direction of 45&deg; to RD), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
 </div>
 <div class="figure">
 	<span class="zoom">
 	<img class="fullsize widefigure" src="sid1687f_hardening_udsa_90_000_40.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
 	</span>
-	<div class="figcaption">Deformation texture at tensile strain 0.4 (in-plane direction of 90&deg; to RD), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
+	<div class="figcaption">ODF section \f$ \phi_2 = 45^\circ \f$ of the deformation texture at tensile strain 0.4 (in-plane direction of 90&deg; to RD), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
 </div>
 
 It is immediately clear from these sections that the evolution of the texture greatly depends on the direction of the imposed tension. In-depth interpretation of the texture evolution is beyond the scope of this tutorial. Briefly speaking, the \f$ \gamma \f$-fibre breaks into individual components, but the changes are not limited to this effect.
