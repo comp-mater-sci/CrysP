@@ -227,7 +227,7 @@ contains
       !       !ocross_product_dp(i,i:) = a(i) * b(i:)
       !       !ocross_product_dp(i:,i) = ocross_product_dp(i,i:) 
       !endforall
-      integer :: i,j
+      integer :: i
       !
             do i=1,size(a)
                   !do j = 1, size(b)
@@ -293,7 +293,6 @@ contains
       implicit none
       double precision,dimension(3),intent(in)        :: a,b
       double precision,dimension(3)                   :: vector_product_dp
-      integer :: i
       !
             vector_product_dp(1) = a(2)*b(3) - a(3)*b(2)
             vector_product_dp(2) = a(3)*b(1) - a(1)*b(3)
