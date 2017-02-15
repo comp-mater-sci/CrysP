@@ -58,7 +58,8 @@ module criMathUtils
       
       !> Array dimension for symmetric 3D second-rank tensors expressed in Voigt
       !> notation.
-      integer,parameter                   :: sr_symm_voigt_dim = 6
+      integer,parameter                   :: sr_symm_voigt_dim = 6, &
+                                             sr_voigt_dim = 9
 
       !> Matrix form of the unit second rank tensor
       double precision,dimension(sr_tensor_dim,sr_tensor_dim),parameter :: unit_sr_Matrix = reshape( &
@@ -553,6 +554,52 @@ contains
             vec(4) = mat(1,2)
             vec(5) = mat(2,3)
             vec(6) = mat(1,3)
+      !
+      end function
+
+
+      !> The function converts Voigt-style vector vec into rank-two tensor.
+      !> Ordering of the tensor terms in the vector follows the convention used in Abaqus: 
+      !> 11, 22, 33, 12, 23, 31, 21, 32, 13. 
+      !>
+      !> There is a reverse conversion available. \sa Mat33ToVec9
+      pure function Vec9ToMat33(vec) result(mat)
+      implicit none
+      double precision,dimension(sr_voigt_dim),intent(in)  :: vec
+      double precision,dimension(sr_tensor_dim,sr_tensor_dim)   :: mat
+      !
+            mat(1,1) = vec(1)
+            mat(2,2) = vec(2)
+            mat(3,3) = vec(3)
+            mat(1,2) = vec(4)
+            mat(2,3) = vec(5)
+            mat(3,1) = vec(6)
+            mat(2,1) = vec(7)
+            mat(3,2) = vec(8)
+            mat(1,3) = vec(9)
+      !
+      end function
+
+
+      !> The function converts the rank-two tensor mat into Voigt-style vector representation.
+      !> Ordering of the tensor terms in the vector follows the convention used in Abaqus: 
+      !> 11, 22, 33, 12, 23, 31, 21, 32, 13.
+      !>
+      !> There is a reverse conversion available. \sa Vec9ToMat33
+      pure function Mat33ToVec9(mat) result(vec)
+      implicit none
+      double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
+      double precision,dimension(sr_voigt_dim)                            :: vec
+      !
+            vec(1) = mat(1,1)
+            vec(2) = mat(2,2)
+            vec(3) = mat(3,3)
+            vec(4) = mat(1,2)
+            vec(5) = mat(2,3)
+            vec(6) = mat(3,1)
+            vec(7) = mat(2,1)
+            vec(8) = mat(3,2)
+            vec(9) = mat(1,3)
       !
       end function
 

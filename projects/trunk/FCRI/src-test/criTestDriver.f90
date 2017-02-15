@@ -35,6 +35,7 @@ use criTestUncomment
 use criTestIterUtils
 use criTestNumerics
 use criTestExpandableVector
+use criTestMathUtils
 implicit none
 
 logical  :: l
@@ -56,6 +57,8 @@ logical  :: l
       l = criTestNumerics_main()
 
       l = criTestExpandableVector_main()
+      
+      l = criTestMathUtils_main()
       
       call testSummary()
 
