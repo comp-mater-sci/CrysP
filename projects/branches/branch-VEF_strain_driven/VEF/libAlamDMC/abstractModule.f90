@@ -14,6 +14,7 @@
 
 !> The module defines abstract types for computational modules
 module dmcAbstractModule
+implicit none
 
       !> Abstract class for computational modules of the DMC
       type,abstract     :: AbstractModule

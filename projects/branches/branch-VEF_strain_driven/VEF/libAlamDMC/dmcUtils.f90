@@ -16,6 +16,7 @@
 module dmcUtils
 use criMathUtils
 use criRuntime
+implicit none
       
       integer,parameter       :: display_unit = 6
 

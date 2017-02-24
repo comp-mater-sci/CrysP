@@ -15,7 +15,8 @@
 !
 !> Forward compatibility with libaltay
 module dmcFuture
-    
+implicit none
+
     !> FCC (111)<110>, through altayDeformationMechanismData_preconfigured 
     !> objects
     integer,parameter :: DM_fcc12 = 1

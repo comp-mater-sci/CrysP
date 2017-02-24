@@ -17,7 +17,7 @@
 module xVectorIncrementOutputRecord
 use criErrcodes
 use dmcEvolutionOutputRecord, only: IncrementOutputRecord
-
+implicit none
 !
 ! Instantiate xVector_IncrementOutputRecord
 !
