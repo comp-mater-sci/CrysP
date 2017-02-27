@@ -15,18 +15,13 @@
 
 !> Base class for modules implementing strain-(rate) driven simulations
 module dmcSD
-use dmcBasicModule
+use criRange
 use criErrcodes
+use dmcBasicModule
+use dmcSubsteppingConfig
 implicit none
 
-    !> Configuration related to substepping
-    !> Currently a placeholder.
-    type :: SubsteppingConfig
-        ! empty, placeholder
-        
-    end type
-    
-    
+
     !> Configuration of a strain-(rate) driven step
     type :: StrainDrivenStep
         
@@ -129,6 +124,5 @@ contains
         info = criError
     !
     end subroutine
-    
-    
+
 end module

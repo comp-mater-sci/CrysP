@@ -79,5 +79,6 @@
 		<File RelativePath="qrsTypes.f90"/>
 		<File RelativePath=".\stressDrivenEvolutionModule.f90"/>
 		<File RelativePath="..\libAlamYLP\stressDrivenModule.f90"/>
+		<File RelativePath=".\substeppingConfig.f90"/>
 		<File RelativePath=".\xVectorEvolutionOutputRecord.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>
