@@ -78,6 +78,6 @@
 		<File RelativePath=".\incrementationControl.f90"/>
 		<File RelativePath="qrsTypes.f90"/>
 		<File RelativePath=".\stressDrivenEvolutionModule.f90"/>
-		<File RelativePath="..\libAlamYLP\stressDrivenModule.f90"/>
+		<File RelativePath=".\stressDrivenModule.f90"/>
 		<File RelativePath=".\xVectorEvolutionOutputRecord.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>
