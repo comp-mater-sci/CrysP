@@ -87,7 +87,7 @@ contains
 
 
     !> Create a FixedSubsteppingConfig that defines substepping with n_increments
-    function FixedSubsteppingConfig_init_nintervals(n_increments) result(this)
+    pure function FixedSubsteppingConfig_init_nintervals(n_increments) result(this)
     implicit none
     type(FixedSubsteppingConfig) :: this
     integer,intent(in)  :: n_increments !< Number of increments
@@ -99,7 +99,7 @@ contains
 
 
     !> Create a FixedSubsteppingConfig from an array of specified increments
-    function FixedSubsteppingConfig_init_intervals(increments) result(this)
+    pure function FixedSubsteppingConfig_init_intervals(increments) result(this)
     implicit none
     type(FixedSubsteppingConfig) :: this
     double precision,dimension(:),intent(in)  :: increments

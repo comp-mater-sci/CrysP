@@ -18,18 +18,9 @@ module dmcSD
 use criRange
 use criErrcodes
 use dmcBasicModule
-use dmcSubsteppingConfig
+use dmcStrainDrivenStep
 implicit none
 
-
-    !> Configuration of a strain-(rate) driven step
-    type :: StrainDrivenStep
-        
-        type(SRTensor)                      :: deformation_rate
-        class(SubsteppingConfig),pointer    :: substepping_config => null()
-        logical                             :: update_state = .false.
-        
-    end type
 
     !> Configuration related to strain(-rate) driven simulations.
     !> Currently a placeholder.
@@ -37,13 +28,18 @@ implicit none
         
     end type
 
+    !> Wrapper around a polymorphic pointer to StrainDrivenStep objects
+    type :: PtrStrainDrivenStep
+        class(StrainDrivenStep),pointer :: step
+    end type
+    
 
     !> Base class for strain-(rate) driven simulations modules
     type,extends(BasicModule) :: SDModule
 
         class(StrainDrivenSolverConfig),pointer :: solver_config => null()
 
-        type(StrainDrivenStep),dimension(:),allocatable :: steps
+        type(PtrStrainDrivenStep),dimension(:),allocatable :: steps
         
     contains
         !>@{ \name Interface methods of AbstractModule
