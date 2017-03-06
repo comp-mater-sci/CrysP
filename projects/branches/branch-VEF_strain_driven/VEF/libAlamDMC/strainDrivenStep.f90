@@ -281,8 +281,8 @@ contains
                 step_strain_total%t = step_strain_total%t + increment_strain%t
                 x_prev = x
                 !
-                increment_size_tot = increment_size_tot + increment_size ! FIXME
-                write(*,*) increment_size_tot, norm2(increment_strain%t) ! FIXME
+                ! increment_size_tot = increment_size_tot + increment_size ! FIXME
+                ! write(*,*) increment_size_tot, norm2(increment_strain%t) ! FIXME
                 !
                 if (norm2(increment_strain%t) < epsilon(0.D0)) then
                     write(display_unit, 900) 'Norm of the prescribed incremental deformation is too small.'
