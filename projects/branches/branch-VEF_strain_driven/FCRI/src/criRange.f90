@@ -282,7 +282,7 @@ contains
       !  Members of biasedRange
       !
       
-      function biasedRange_init(rbegin,rend,ratio,npoints,endpoint) result(res)
+      elemental function biasedRange_init(rbegin,rend,ratio,npoints,endpoint) result(res)
       implicit none
       type(biasedRange)             :: res
       double precision,intent(in)   :: rbegin !< Left endpoint of the range
@@ -345,7 +345,7 @@ contains
       !  Members of multiBiasedRange
       !
 
-      function multiBiasedRange_init(rbegin,biases,endpoint) result(res)
+      pure function multiBiasedRange_init(rbegin,biases,endpoint) result(res)
       implicit none
       type(multiBiasedRange)                    :: res
       double precision,intent(in)               :: rbegin   !< Leftmost endpoint of the range.
@@ -382,7 +382,7 @@ contains
       !> Initialization function for double-biased range. The result of the function
       !> is actually an instance of multiBiasedRange with two biased ranges. By default,
       !> the first range has progression ratio "ratio", while the second has "1.0/ratio".
-      function doubleBiasedRange_init(rbegin,rend,ratio,npoints,endpoint,ratio2) result(res)
+      elemental function doubleBiasedRange_init(rbegin,rend,ratio,npoints,endpoint,ratio2) result(res)
       implicit none
       type(multiBiasedRange)        :: res
       double precision,intent(in)   :: rbegin   !< Left endpoint of the range
@@ -455,7 +455,7 @@ contains
       !  Members of discreteRange
       !
 
-      function discreteRange_init(values) result(res)
+      pure function discreteRange_init(values) result(res)
       implicit none
       type(discreteRange)                       :: res
       double precision,dimension(:),intent(in)  :: values   !< Sequence of points
