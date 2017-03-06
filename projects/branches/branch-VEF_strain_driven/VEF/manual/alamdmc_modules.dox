@@ -601,7 +601,47 @@ These settings are repeated \conffield{n_steps} times in configuration file, in 
 -# \confdef{update_state,logical} is a switch that controls update of material state for given step. When set to 
   - `False` then the stresses and other outputs are queried without finite deformation and without associated evolution of state.
   - `True` then the deformation is actually imposed, resulting in evolution of state.
--# \confdef{incrementation_type,string} specifies how the deformation increments will be calculated. The only allowed value of \conffield{incrementation_type} in this module is: `auto`
+-# \confdef{incrementation_type,string} specifies how the deformation increments will be calculated. Possible values are:
+    - `none`
+
+     The step will not involve any incrementation, but the prescribed deformation will
+     be imposed in a single increment.
+
+     \note This option is often used in a combination with disabled updating of material 
+     state. 
+  
+    - `auto`
+
+      If this option is used, the module will attempt to automatically determine 
+      a suitable incrementation. In general, it will try to avoid large increments.
+
+    - `fixed`
+
+      If this option is used, it is followed by a multi-line suboption of 
+      [the compound datatype `realrange`](@ref range_option) that allows the user to
+      specify how the step deformation is subdivided into strain increments. The range of 
+      values provides the relative positions of the increment ends on a normalized total 
+      step size. The values 0.0, which corresponds the beginning of the step, and 1.0, 
+      which correspond to its end, are assumed and the user does not need to specify them.
+     
+      The values in the range must be:
+        - larger than 0. and smaller than 1., and
+        - given in a strictly increasing order.
+     
+      \par Example
+      In the example below fixed incrementation is used. The total step deformation will
+      be split into 5 increments: 
+      - 1st covering 0.1 of step deformation (i.e. from 0. till 0.1),
+      - 2nd 0.15 (i.e. 0.25 - 0.1), 
+      - 3rd 0.25 (i.e. 0.5 - 0.25), 
+      - 4th 0.4 (i.e. 0.9 - 0.5), and 
+      - 5th 0.1 (i.e. 1. - 0.9).
+~~~~~~~~~~~~~{.txt}
+fixed                # Keyword: incrementation type
+discrete             # Range type specification 
+4                    # Range specification for 'discrete': number of points
+0.1 0.25 0.5 0.9     # Values: 
+~~~~~~~~~~~~~
 
 
 \subsection output_adp Module-specific output
