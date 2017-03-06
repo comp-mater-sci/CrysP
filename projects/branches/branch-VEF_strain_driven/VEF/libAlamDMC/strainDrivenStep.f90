@@ -69,12 +69,13 @@ public StepOutput, IncrementOutput
         
     end type
 
-    
+    !> Constructors of StrainDrivenFixedStep
     interface StrainDrivenFixedStep
         module procedure StrainDrivenFixedStep_init_nincrements
     end interface
 
-        !> Outputs collected per increment
+
+    !> Outputs collected per increment
     type :: IncrementOutput
         
         type(SRTensor)  :: L
@@ -103,15 +104,18 @@ public StepOutput, IncrementOutput
 contains
 
 
+    !> Constructor of StrainDrivenFixedStep. It takes number of increments
+    !> as argument
     pure function StrainDrivenFixedStep_init_nincrements(n_increments) result(this)
     type(StrainDrivenFixedStep) :: this
-    integer,intent(in)          :: n_increments
+    integer,intent(in)          :: n_increments !< Number of increments.
     !
         allocate(this%substepping_config, source=FixedSubsteppingConfig(n_increments))
     !
     end function
 
-    !>
+
+    !> Set up StrainDrivenStep 
     integer function StrainDrivenStep_setUp(this) result(info)
     implicit none
     class(StrainDrivenStep),intent(inout)   :: this
@@ -159,7 +163,9 @@ contains
     end function
 
 
+    !> Execute StrainDrivenStep. 
     !>
+    !> It is a placeholder method, it always returns criError.
     integer function StrainDrivenStep_execute(this, step_output) result(info)
     class(StrainDrivenStep),intent(inout)   :: this
     class(StepOutput),intent(out)           :: step_output
@@ -168,17 +174,21 @@ contains
     !
     end function
     
-    
+    !> Read configuration of StrainDrivenStep from config IO unit
+    !>
+    !> It is a placeholder method, it always returns criSuccess
     integer function StrainDrivenStep_readConfig(this, cnfunit) result(info)
-    class(StrainDrivenStep),intent(inout)      :: this
-    integer,intent(in)                          :: cnfunit
+    class(StrainDrivenStep),intent(inout)   :: this
+    integer,intent(in)                      :: cnfunit !< IO unit
     !
         info = criSuccess
     !
     end function
     
     
+    !> Set up strain driven fixed step.
     !>
+    !> Returns criSuccess on success.
     integer function StrainDrivenFixedStep_setUp(this) result(info)
     implicit none
     class(StrainDrivenFixedStep),intent(inout)   :: this
@@ -219,7 +229,9 @@ contains
     end function
 
 
+    !> Execute step and store the output in step_output
     !>
+    !> Returns criSuccess on success.
     integer function StrainDrivenFixedStep_execute(this, step_output) result(info)
     use altaySub
     use altayConfig
@@ -256,9 +268,9 @@ contains
             !
             ! Get the lower boundary, it should be zero.
             RETURN_IF_WITH(.not. increment_range%next(x_prev), info = criErr_BadArgs)
-                    
+            
             increment_size_tot = 0.D0
-                    
+            
             ! Set-up the substeps
             step_strain_total%t = 0.D0
             i_incr = 0
@@ -306,10 +318,10 @@ contains
     !
     end function
 
-    
+    !> Read configuration of substepping from the config IO unit
     integer function StrainDrivenFixedStep_readConfig(this, cnfunit) result(info)
-    class(StrainDrivenFixedStep),intent(inout)      :: this
-    integer,intent(in)                          :: cnfunit
+    class(StrainDrivenFixedStep),intent(inout)  :: this
+    integer,intent(in)                          :: cnfunit !< IO unit
     !
         if (.not. associated(this%substepping_config)) allocate(FixedSubsteppingConfig :: this%substepping_config)
         info = this%substepping_config%readConfig(cnfunit)
@@ -317,7 +329,7 @@ contains
     end function
     
 
-    !>
+    !> Collect the outputs from the AlTay simulation
     integer function StepOutput_collect(this, n_increments) result(info)
     use altayConfig
     use altayMacroKinematic
@@ -350,4 +362,5 @@ contains
         info = criSuccess
     !
     end function
+
 end module
