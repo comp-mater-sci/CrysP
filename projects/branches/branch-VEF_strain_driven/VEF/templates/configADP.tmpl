@@ -26,7 +26,10 @@ ${step.strain, plain=True} # Strain increment in Voigt notation: 6 components
 #raise RuntimeError('Unknown step deformation type')
 #end if
 $step.update_state # Flag: incrementally update state variables
-$step.incrementation # Keyword: incrementation type
+$step.incrementation.type # Keyword: incrementation type
+#if $step.incrementation.type == 'fixed'
+$range($step.incrementation.range, 'incrementation definition')#slurp
+#end if
 #end for
 #end filter
 #end block moduleConfig
