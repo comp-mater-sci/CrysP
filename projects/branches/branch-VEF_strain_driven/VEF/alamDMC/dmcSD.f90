@@ -25,7 +25,7 @@ implicit none
     !> Configuration related to strain(-rate) driven simulations.
     !> Currently a placeholder.
     type :: StrainDrivenSolverConfig
-        
+        ! Empty
     end type
 
     !> Wrapper around a polymorphic pointer to StrainDrivenStep objects
@@ -37,8 +37,10 @@ implicit none
     !> Base class for strain-(rate) driven simulations modules
     type,extends(BasicModule) :: SDModule
 
+        !> Optional solver settings
         class(StrainDrivenSolverConfig),pointer :: solver_config => null()
 
+        !> Container for steps 
         type(PtrStrainDrivenStep),dimension(:),allocatable :: steps
         
     contains
@@ -48,13 +50,11 @@ implicit none
         
         procedure,pass(this) :: readConfig => SDModule_readConfig
         
-        procedure,pass(this) :: run => SDModule_run
-        
         !>@}
         
     end type
 
-    
+
 contains
 
 
@@ -97,16 +97,5 @@ contains
 #undef MSG_GROUP_ERRORS
     !
     end function
-
-
-    !> Dummy procedure for run() method.
-    subroutine SDModule_run(this,info)
-    implicit none
-    class(SDModule),intent(inout)   :: this
-    integer,intent(out)             :: info
-    !
-        info = criError
-    !
-    end subroutine
 
 end module
