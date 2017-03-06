@@ -32,8 +32,6 @@ implicit none
         
         !>@{ \name Interface methods of AbstractModule
         
-        procedure,pass(this) :: initialize => ADPModule_initialize
-        
         procedure,pass(this) :: printConfig => ADPModule_printConfig
         
         procedure,pass(this) :: readConfig => ADPModule_readConfig
@@ -52,16 +50,6 @@ implicit none
     end type
     
 contains
-
-
-    !> Initialization of the module
-    integer function ADPModule_initialize(this) result(info)
-    implicit none
-    class(ADPModule),intent(inout) :: this
-    !
-        info = this%SDModule%initialize()
-    !
-    end function
 
 
     !> Print configuration to IO unit

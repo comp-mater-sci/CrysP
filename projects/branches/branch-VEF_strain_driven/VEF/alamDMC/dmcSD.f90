@@ -44,8 +44,6 @@ implicit none
     contains
         !>@{ \name Interface methods of AbstractModule
         
-        procedure,pass(this) :: initialize => SDModule_initialize
-        
         procedure,pass(this) :: printConfig => SDModule_printConfig
         
         procedure,pass(this) :: readConfig => SDModule_readConfig
@@ -58,16 +56,6 @@ implicit none
 
     
 contains
-
-
-    !> Initialization of the module
-    integer function SDModule_initialize(this) result(info)
-    implicit none
-    class(SDModule),intent(inout) :: this
-    !
-        info = this%BasicModule%initialize()
-    !
-    end function
 
 
     !> Print configuration to IO unit
