@@ -337,9 +337,14 @@ contains
     class(StepOutput),intent(inout)     :: this
     integer,intent(in)                  :: n_increments
     !
-    integer :: i, ierr
+    integer :: i, ierr, n_simulcalls
     type(DeformationRate) :: deformation_rate ! defined in altayMacroKinematic
     !
+        ! Check if the input and the state of libaltay correspond.
+        ALLOCATED_SIZE(n_simulcalls, astate%simulCalls)
+        RETURN_IF(n_simulcalls < n_increments .or. n_simulcalls /= astate%nSimulCalls, &
+                  info = criErr_BadArgs)
+        !
         ! Allocate storage for output
         RETURN_ON_WITH(allocate(this%increments(n_increments), stat=ierr), &
                        ierr /= 0, info = criErr_MemAlloc)
