@@ -20,6 +20,7 @@ dmcUtils.f90
 evolutionOutputRecord.f90
 incrementationControl.f90 
 qrsTypes.f90
+strainDrivenStep.f90
 stressDrivenModule.f90
 stressDrivenEvolutionModule.f90
 substeppingConfig.f90
