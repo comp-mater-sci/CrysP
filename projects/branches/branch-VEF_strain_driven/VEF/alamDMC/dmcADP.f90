@@ -19,7 +19,7 @@
 module dmcADP
 use criErrcodes
 use criConfigReader
-use dmcSD
+use dmcDeformationDrivenModule
 use altayMacroKinematic, only: DeformationRate, Set_DeformationRate
 use dmcResultFileOutput
 use dmcStrainDrivenStep
@@ -27,7 +27,7 @@ implicit none
 
 
     !> Arbitrary Strain Mode
-    type,extends(SDModule) :: ADPModule
+    type,extends(DeformationDrivenModule) :: ADPModule
     contains
         
         !>@{ \name Interface methods of AbstractModule
@@ -57,7 +57,7 @@ contains
     class(ADPModule),intent(in)      :: this
     integer,intent(in)              :: outunit !< IO unit for output
     !
-        info = this%SDModule%printConfig(outunit)
+        info = this%DeformationDrivenModule%printConfig(outunit)
 
     !
     end function
@@ -92,7 +92,7 @@ contains
     type(StrainDrivenStepConfig) :: tmp_step_config
     type(SRTensor) :: tmp_deformation_rate
     !
-        RETURN_IF(info /= criSuccess, info = this%SDModule%readConfig(cnfunit))
+        RETURN_IF(info /= criSuccess, info = this%DeformationDrivenModule%readConfig(cnfunit))
         info = criErr_IORead
         !
         ! Read the module-specific config

@@ -14,7 +14,7 @@
 !>    History of modifications: (see svn log)
 
 !> Base class for modules implementing strain-(rate) driven simulations
-module dmcSD
+module dmcDeformationDrivenModule
 use criRange
 use criErrcodes
 use dmcBasicModule
@@ -35,7 +35,7 @@ implicit none
     
 
     !> Base class for strain-(rate) driven simulations modules
-    type,extends(BasicModule) :: SDModule
+    type,extends(BasicModule) :: DeformationDrivenModule
 
         !> Optional solver settings
         class(StrainDrivenSolverConfig),pointer :: solver_config => null()
@@ -46,9 +46,9 @@ implicit none
     contains
         !>@{ \name Interface methods of AbstractModule
         
-        procedure,pass(this) :: printConfig => SDModule_printConfig
+        procedure,pass(this) :: printConfig => DeformationDrivenModule_printConfig
         
-        procedure,pass(this) :: readConfig => SDModule_readConfig
+        procedure,pass(this) :: readConfig => DeformationDrivenModule_readConfig
         
         !>@}
         
@@ -59,9 +59,9 @@ contains
 
 
     !> Print configuration to IO unit
-    integer function SDModule_printConfig(this,outunit) result(info)
+    integer function DeformationDrivenModule_printConfig(this,outunit) result(info)
     implicit none
-    class(SDModule),intent(in)      :: this
+    class(DeformationDrivenModule),intent(in)      :: this
     integer,intent(in)              :: outunit !< IO unit for output
     !
         info = this%BasicModule%printConfig(outunit)
@@ -74,9 +74,9 @@ contains
 
 
     !> Read configuration from IO unit
-    integer function SDModule_readConfig(this,cnfunit) result(info)
+    integer function DeformationDrivenModule_readConfig(this,cnfunit) result(info)
     implicit none
-    class(SDModule),intent(inout)   :: this
+    class(DeformationDrivenModule),intent(inout)   :: this
     integer,intent(in)              :: cnfunit !< IO input unit
     !
     logical :: default_solver_config
