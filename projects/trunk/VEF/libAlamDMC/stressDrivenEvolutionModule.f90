@@ -100,7 +100,7 @@ contains
     !
     type(xVector_IncrementOutputRecord) :: tmp_output
     type(IncrementOutputRecord)         :: tmp_record
-    integer :: increment, i, n_roots
+    integer :: i, n_roots
     double precision,dimension(2) :: xi
     logical :: stop_flag
     double precision,parameter :: stretch_ratio = 1e-3

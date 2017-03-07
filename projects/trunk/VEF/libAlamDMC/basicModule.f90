@@ -252,8 +252,6 @@ contains
       type(outputConfig),intent(inout) :: cnf
       integer,intent(out)                 :: info
       !
-      integer                       :: ioerr
-      !     
             info = criErr_IORead
             if (.not. readValue(cnfunit, cnf%outputPrefix)) return
             if (.not. readValue(cnfunit, cnf%outputRequest)) return

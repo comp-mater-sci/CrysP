@@ -50,7 +50,6 @@ contains
     logical,optional,intent(in)                     :: use_column_numbers
     character(len=*),dimension(:),optional          :: data_formats
     !
-    integer :: i, ierr
     character(len=fmt_string_length) :: fmt_string ! TODO: make it allocatable
     !
         info = criSuccess
@@ -112,7 +111,7 @@ contains
     integer :: ncolumns
     character(len=fmt_string_length) :: fmt_string
 
-    integer :: i, ierr, column_width
+    integer :: i, ierr
     !
         ncolumns = size(column_names)
         if (size(column_widths) == 1) then
@@ -150,7 +149,7 @@ contains
     !> \todo Another choice could be to use one statement for all columns.
     character(len=*),dimension(:),intent(in)        :: data_formats
     !
-    integer :: i, j, ierr, ncolumns, nrows
+    integer :: i, ierr, ncolumns, nrows
     character(len=fmt_string_length) :: fmt_string ! TODO: make it allocatable
     !
         ncolumns = size(data, dim=1)

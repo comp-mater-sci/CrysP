@@ -110,7 +110,7 @@ contains
     !> starting point for the iterative search.
     logical,optional                :: vM_guess 
     !
-    double precision :: vS_norm, vA_norm, SonA_norm, pressure
+    double precision :: vS_norm, vA_norm, SonA_norm
     logical :: use_vM_guess
     !
         info = criErr_BadArgs
