@@ -544,7 +544,9 @@
             callout%homogenised_slip_tot = HGAMTOT            
             callout%effective_macro_strain = MEPSCALL
             callout%effective_macro_strain_tot =                         &
-            MacroDefState%AccumvMeqStrain_ToStartOfInc
+                MacroDefState%AccumvMeqStrain_ToStartOfInc
+            callout%effective_macro_strain_tot_end =                     &
+                MacroDefState%AccumvMeqStrain_ToEndOfInc
       end associate
 #endif
       !

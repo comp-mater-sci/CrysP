@@ -118,6 +118,8 @@ implicit none
             double precision                    :: effective_macro_strain = 0.D0
             !> Macroscopic (imposed) effective von Mises strain - total over the calls
             double precision                    :: effective_macro_strain_tot = 0.D0
+            !> Macroscopic (imposed) effective von Mises strain till the end of the current step - total over the calls
+            double precision                    :: effective_macro_strain_tot_end = 0.D0
        end type
 
       type :: simulStepData
