@@ -73,7 +73,6 @@
 		<File RelativePath=".\dmcASR.f90"/>
 		<File RelativePath=".\dmcEWC.f90"/>
 		<File RelativePath=".\dmcQRS.f90"/>
-		<File RelativePath=".\dmcSD.f90"/>
 		<File RelativePath=".\dmcUDSA.f90"/>
 		<File RelativePath=".\dmcYld.f90"/>
 		<File RelativePath=".\main.f90"/></Filter></Files>

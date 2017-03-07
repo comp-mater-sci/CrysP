@@ -19,48 +19,18 @@
 module dmcADP
 use criErrcodes
 use criConfigReader
-use dmcSD
+use dmcDeformationDrivenModule
 use altayMacroKinematic, only: DeformationRate, Set_DeformationRate
 use dmcResultFileOutput
+use dmcStrainDrivenStep
 implicit none
 
-    !> Outputs collected per increment
-    type :: IncrementOutput
-        
-        type(SRTensor)  :: L
-        
-        type(SRTensor)  :: D
-        
-        type(SRTensor)  :: S
-        
-        double precision :: vm_stress = 0.D0
-        
-        double precision :: plastic_work_inc = 0.D0 !< Plastic work during the increment, i.e. dotW = (D : S)
-        
-        double precision :: taylor_factor = 0.D0
-        
-    end type
 
-
-    !> Outputs collected per step
-    type :: StepOutput
-        type(IncrementOutput),dimension(:),allocatable :: increments
-    end type
-
-    !> Outputs collected by the simulation run
-    type :: ADPOutputData
-        type(StepOutput),dimension(:),allocatable :: steps
-    end type
-
-    
     !> Arbitrary Strain Mode
-    type,extends(SDModule) :: ADPModule
-        
+    type,extends(DeformationDrivenModule) :: ADPModule
     contains
         
         !>@{ \name Interface methods of AbstractModule
-        
-        procedure,pass(this) :: initialize => ADPModule_initialize
         
         procedure,pass(this) :: printConfig => ADPModule_printConfig
         
@@ -69,24 +39,17 @@ implicit none
         procedure,pass(this) :: run => ADPModule_run
         
         !>@}
-        
-        procedure,pass(this) :: execute => ADPModule_execute
+
         procedure,pass(this) :: fileOutput => ADPModule_fileOutput
-        
         
     end type
 
+    !> Outputs collected by the simulation run
+    type :: ADPOutputData
+        type(StepOutput),dimension(:),allocatable :: steps
+    end type
+    
 contains
-
-
-    !> Initialization of the module
-    integer function ADPModule_initialize(this) result(info)
-    implicit none
-    class(ADPModule),intent(inout) :: this
-    !
-        info = this%SDModule%initialize()
-    !
-    end function
 
 
     !> Print configuration to IO unit
@@ -94,7 +57,7 @@ contains
     class(ADPModule),intent(in)      :: this
     integer,intent(in)              :: outunit !< IO unit for output
     !
-        info = this%SDModule%printConfig(outunit)
+        info = this%DeformationDrivenModule%printConfig(outunit)
 
     !
     end function
@@ -108,9 +71,10 @@ contains
     !
     integer     :: n_steps, ierr, i, deformation, incrementation
     !
-    integer,parameter :: n_incrementation_types = 2
-    integer,parameter :: auto_incrementation_id = 1, fixed_incrementation_id = 2
+    integer,parameter :: n_incrementation_types = 3
+    integer,parameter :: none_incrementation_id = 0, auto_incrementation_id = 1, fixed_incrementation_id = 2
     type(MapItem),dimension(n_incrementation_types) :: incrementation_type_names = [&
+        MapItem('none', none_incrementation_id), &
         MapItem('auto', auto_incrementation_id), &
         MapItem('fixed', fixed_incrementation_id)]
     !
@@ -125,14 +89,17 @@ contains
     double precision,dimension(sr_symm_voigt_dim) :: tmp_strain
     
     double precision :: step_size, tmp
+    type(StrainDrivenStepConfig) :: tmp_step_config
+    type(SRTensor) :: tmp_deformation_rate
     !
-        RETURN_IF(info /= criSuccess, info = this%SDModule%readConfig(cnfunit))
+        RETURN_IF(info /= criSuccess, info = this%DeformationDrivenModule%readConfig(cnfunit))
         info = criErr_IORead
         !
         ! Read the module-specific config
         if (.not. readValue(cnfunit, n_steps)) return
         !
         RETURN_IF_WITH(n_steps < 1, info = criErr_BadArgs)
+
         RETURN_ON_WITH(allocate(this%steps(n_steps), stat=ierr), &
                        ierr /= 0, &
                        info = criErr_MemAlloc)
@@ -148,32 +115,60 @@ contains
                 select case(deformation)
                 case(deformation_id)
                     if (.not. readValue(cnfunit, tmp_deformation)) return
-                    step%deformation_rate%t = Vec9ToMat33(tmp_deformation)
+                    tmp_deformation_rate%t = Vec9ToMat33(tmp_deformation)
                 !
                 case(strainmode_id)
                     if (.not. readValue(cnfunit, tmp_strain)) return
                     if (.not. readValue(cnfunit, step_size)) return
                     !
-                    step%deformation_rate%t = Vec6ToMat33(tmp_strain)
+                    tmp_deformation_rate%t = Vec6ToMat33(tmp_strain)
                     ! Normalize the deformation
-                    tmp = norm2(step%deformation_rate%t)
+                    tmp = norm2(tmp_deformation_rate%t)
                     if (tmp < epsilon(0.D0)) then
                         write(display_unit,fmt=900) 'Norm of the strain mode must not be zero'
                         return
                     endif
-                    step%deformation_rate%t = step%deformation_rate%t / tmp * step_size
+                    tmp_deformation_rate%t = tmp_deformation_rate%t / tmp * step_size
                 !   
                 case(strain_id)
                     if (.not. readValue(cnfunit, tmp_strain)) return
-                    step%deformation_rate%t = Vec6ToMat33(tmp_strain)
+                    tmp_deformation_rate%t = Vec6ToMat33(tmp_strain)
                 !
                 case default
                     return
                 end select
                 !
-                if (.not. readValue(cnfunit, step%update_state)) return
+                if (.not. readValue(cnfunit, tmp_step_config%update_state)) return
+                !
+                tmp_step_config%deformation_rate = tmp_deformation_rate
+                tmp_step_config%output_state = this%output%outputRequest
+                !
                 ! Read the incrementation type
                 if (.not. readKeyword(cnfunit, incrementation_type_names, incrementation)) return
+                !
+                ! Phase 1: allocate right step type
+                select case(incrementation)
+                case(none_incrementation_id)
+                    ! Allocate step with one fixed increment
+                    allocate(step%step, source=StrainDrivenFixedStep(1))
+                !
+                case(auto_incrementation_id)
+                    allocate(StrainDrivenFixedStep :: step%step)
+
+                case(fixed_incrementation_id)
+                    allocate(StrainDrivenFixedStep :: step%step)
+                    info = step%step%readConfig(cnfunit)
+                    if (info /= criSuccess) return
+                !
+                case default
+                    info = criErr_BadArgs
+                    return
+                end select
+                !
+                ! Phase 2: set the config
+                step%step%config = tmp_step_config
+                step%step%log = logData(this%output%verbosity, display_unit)
+                
             end associate
         enddo
         info = criSuccess
@@ -192,40 +187,14 @@ contains
     integer,intent(out)             :: info
     !
     type(ADPOutputData) :: output
-    integer :: iounit
+    integer :: iounit, i_step, n_steps
     !
         ! Introduce youself ;-)
         write(display_unit,'(A)') 'ADP, $Rev$'
         ! Open output file
         RETURN_IF(info /= criSuccess, info = this%openOutputFile('.adp',iounit))
-        ! Run the simulation
-        RETURN_IF(info /= criSuccess, info = this%execute(output))
         !
-        ! Output the results
-        RETURN_IF(info /= criSuccess, info = this%fileOutput(iounit, output, header=.true.))
-    !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-    !
-    end subroutine
-    
-    
-    
-    !> Execute the simulation and gather output
-    integer function ADPModule_execute(this, output) result(info)
-    use altaySub
-    use altayConfig
-    implicit none
-    class(ADPModule),intent(inout)  :: this
-    type(ADPOutputData),intent(out) :: output
-    integer :: i_step, n_steps, j, n_increments
-    double precision :: volumetric_strain_fraction, volumetric_strain_norm
-    ! Volumetric strain fraction that triggers a warning (0.1%)
-    double precision,parameter :: volumetric_strain_fraction_threshold = 0.001
-    type(SRTensor) :: step_strain, increment_strain, volumetric_strain
-    type(DeformationRate) :: deformation_rate ! defined in altayMacroKinematic
-    !
+        ! Run the simulation
         info = criErr_BadArgs
         ALLOCATED_SIZE(n_steps, this%steps)
         if (n_steps < 1) return
@@ -235,98 +204,29 @@ contains
         !
         ! Main loop over the steps
         do i_step = 1, n_steps
-            associate(step => this%steps(i_step), &
+            associate(step => this%steps(i_step)%step, &
                       step_output => output%steps(i_step))
                 !
-                ! Befing step
+                ! Begin step
                 !
                 if (doLogging(criLogInfo, this%output%verbosity)) then
                     write(display_unit,800)
                     write(display_unit,fmt=300) i_step, n_steps
                     300 format(/, 'Step ', I0, ' out of ', I0, /)
                 endif
-                !
-                ! Make the step traceless: decompose into volumetric strain rate
-                ! and strain rate deviator
-                volumetric_strain%t = trace(step%deformation_rate) / 3.D0 * unit_sr_tensor%t
-                step_strain%t = step%deformation_rate%t - volumetric_strain%t
-                if (norm2(step_strain%t) < epsilon(0.D0)) then
-                    write(display_unit, 900) 'Norm of the deviatoric part of prescribed deformation is too small.'
-                    return
-                endif
-                !
-                if (doLogging(criLogInfo, this%output%verbosity)) then
-                    ! Report the discrepancy if the substracted volumetric part is larger than a given
-                    ! fraction of the total.
-                    volumetric_strain_norm = norm2(volumetric_strain%t)
-                    volumetric_strain_fraction = volumetric_strain_norm / norm2(step%deformation_rate%t)
-                    if (volumetric_strain_fraction > volumetric_strain_fraction_threshold ) then
-                        write(display_unit, 600) volumetric_strain_norm, volumetric_strain_fraction * 100
-                        600 format(/, 'Note: volumetric deformation of magnitude ', G0.2, 1X, &
-                                   ', which makes ', G0.2, 1X, &
-                                   'percent of the prescribed deformation in this step, was substracted.', /)
-                    endif
-                endif
-                !
-                ! Calculate number of increments
-                if (associated(step%substepping_config)) then
-                    ! FIXME To be implemented
-                    info = criErr_BadArgs
-                    return
-                else
-                    n_increments = 1
-                endif
-
-                !
-                ! Initialize AlTay structures
-                RETURN_ON_WITH(call initStepData(n_increments, astate,info), &
-                               info /= 0, &
-                               info = criError)
-                ! Set-up the substeps
-                do j = 1, n_increments
-                    ! FIXME Actual substepping: to be implemented
-                    increment_strain%t = step_strain%t / dble(n_increments)
-                    !
-                    ! Set input data for AlTay
-                    associate (input => astate%simulCalls(j)%input)
-                          input%dgf = increment_strain%t
-                          input%keep_texture = .not. step%update_state
-                          input%keep_state = .not. step%update_state
-                          input%full_model = .true.
-                          input%do_output_init = .false.
-                          input%do_output_final = this%output%outputRequest
-                          call setStepType(input, acnf%model_id, info)
-                    end associate
-                enddo
-                !
-                ! Call the AlTay
-                RETURN_ON_WITH(call runSteps(astate,info), &
-                               info /= 0, &
-                               info = criError)
-                !
-                ! Allocate storage for output
-                allocate(step_output%increments(n_increments))
-                !
-                ! Get the results
-
-                do j = 1, n_increments
-                    associate (increment_output =>  step_output%increments(j))
-                        increment_output%L%t = astate%simulCalls(j)%input%dgf
-                        ! Let libaltay calculate the strain rates etc.
-                        call Set_DeformationRate(increment_output%L%t, deformation_rate)
-                        increment_output%D%t = deformation_rate%StrainRate
-                        increment_output%S%t = astate%simulCalls(j)%output%stress_tensor
-                        increment_output%vm_stress = astate%simulCalls(j)%output%effective_stress
-                        ! D : S
-                        increment_output%plastic_work_inc = sum(increment_output%D%t * increment_output%S%t)
-                        !
-                        increment_output%taylor_factor = astate%simulCalls(j)%output%taylor_factor
-                    end associate
-                enddo
+                ! Set up the step
+                RETURN_IF(info /= criSuccess, info = step%setUp())
+                ! Execute the step
+                RETURN_IF(info /= criSuccess, info = step%execute(step_output))
+                
+                ! Output the results
+                RETURN_IF(info /= criSuccess, info = this%fileOutput(iounit, output, header=(i_step==1), step_id=i_step))
+                
+                if (info /= criSuccess) return
                 
             end associate
         enddo
-    
+        !
     !
 #define MSG_GROUP_ERRORS
 #define MSG_GROUP_RULERS
@@ -334,27 +234,29 @@ contains
 #undef MSG_GROUP_ERRORS
 #undef MSG_GROUP_RULERS
     !
-    end function
+    end subroutine
+
 
 
     !> Write out results to the output file
-    integer function ADPModule_fileOutput(this, iounit, data_record, header) result(info)
+    integer function ADPModule_fileOutput(this, iounit, data_record, header, step_id) result(info)
     implicit none
     class(ADPModule),intent(in)                 :: this
     integer,intent(in)                          :: iounit !< Output IO unit
     type(ADPOutputData),intent(in),optional     :: data_record !< Data to be written out
     logical,intent(in),optional                 :: header !< Header to be written out
+    integer,intent(in),optional                 :: step_id
     !
-    integer :: step, increment, ierr, n_steps, n_increments
+    integer :: step, increment, ierr, n_steps, first_step, last_step, n_increments 
     !      
-    integer,parameter :: ncolumn_labels = 26, column_width = 18, short_column_width = 9
+    integer,parameter :: ncolumn_labels = 29, column_width = 18, short_column_width = 9
     character(len=column_width),dimension(ncolumn_labels) :: column_names = [character(len=column_width) :: &
         'step', 'increment', & ! 2 fields
         ! 'eps_vM', 'Pnorm','eps_xx', 'sigma_xx', 'S_xx','W','dotW', 'M-factor'&
         'L_11','L_22','L_33','L_12','L_23','L_31', 'L_21', 'L_32', 'L_13',  & ! 9 fields  (I)
         'D_11','D_22','D_33','D_12','D_23','D_13', & ! 6 fields  (I)
         'S_11','S_22','S_33','S_12','S_23','S_13', & ! 6 fields  (I)
-        'S_vM', 'dW', 'M-factor' & ! 3 fields
+        'eps_vM_begin', 'eps_vM_end', 'S_vM', 'dW', 'M-factor', 'gamma' & ! 6 fields
         ]
     ! integer,dimension(ncolumn_labels),parameter :: column_widths = [ &
     !    short_column_width, short_column_width, & ! step, increment
@@ -372,8 +274,13 @@ contains
         !
         if (present(data_record)) then
             ALLOCATED_SIZE(n_steps, data_record%steps)
+            first_step = optionalDefault(step_id, 1)
+            last_step = optionalDefault(step_id, n_steps)
+            RETURN_IF_WITH(first_step < 1 .or. last_step > n_steps, info = criErr_BadArgs)
+            !
+            info = criErr_IOWrite
             ! Write the data
-            do step = 1, n_steps
+            do step = first_step, last_step
                 associate (step_output => data_record%steps(step))
                     ALLOCATED_SIZE(n_increments, step_output%increments)
                     do increment = 1, n_increments
@@ -382,9 +289,12 @@ contains
                                                               Mat33ToVec9(increment_output%L%t), &
                                                               Mat33ToVec6(increment_output%D%t), &
                                                               Mat33ToVec6(increment_output%S%t), &
+                                                              increment_output%vm_strain_begin, &
+                                                              increment_output%vm_strain_end, &
                                                               increment_output%vm_stress, &
                                                               increment_output%plastic_work_inc, &
-                                                              increment_output%taylor_factor
+                                                              increment_output%taylor_factor, &
+                                                              increment_output%plastic_slip_tot
                         end associate
                         if (ierr /= 0) return
                     enddo
@@ -395,7 +305,7 @@ contains
 
         !
         ! Formats for the output file
-        710 format(1X, 2(I18,1X),24(E18.9,1X))
+        710 format(1X, 2(I18,1X),27(E18.9,1X))
     !
     end function
     

@@ -15,13 +15,16 @@ abstractModule.f90
 basicModule.f90  
 commonConfig.f90
 commonUtils.f90
+deformationDrivenModule.f90
 dmcFuture.f90  
 dmcUtils.f90
 evolutionOutputRecord.f90
 incrementationControl.f90 
 qrsTypes.f90
+strainDrivenStep.f90
 stressDrivenModule.f90
 stressDrivenEvolutionModule.f90
+substeppingConfig.f90
 dmcResultFileOutput.f90
 xVectorEvolutionOutputRecord.f90
 )

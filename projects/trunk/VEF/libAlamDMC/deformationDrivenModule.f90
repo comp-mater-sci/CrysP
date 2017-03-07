@@ -14,75 +14,54 @@
 !>    History of modifications: (see svn log)
 
 !> Base class for modules implementing strain-(rate) driven simulations
-module dmcSD
-use dmcBasicModule
+module dmcDeformationDrivenModule
+use criRange
 use criErrcodes
+use dmcBasicModule
+use dmcStrainDrivenStep
 implicit none
 
-    !> Configuration related to substepping
-    !> Currently a placeholder.
-    type :: SubsteppingConfig
-        ! empty, placeholder
-        
-    end type
-    
-    
-    !> Configuration of a strain-(rate) driven step
-    type :: StrainDrivenStep
-        
-        type(SRTensor)                      :: deformation_rate
-        class(SubsteppingConfig),pointer    :: substepping_config => null()
-        logical                             :: update_state = .false.
-        
-    end type
 
     !> Configuration related to strain(-rate) driven simulations.
     !> Currently a placeholder.
     type :: StrainDrivenSolverConfig
-        
+        ! Empty
     end type
 
+    !> Wrapper around a polymorphic pointer to StrainDrivenStep objects
+    type :: PtrStrainDrivenStep
+        class(StrainDrivenStep),pointer :: step
+    end type
+    
 
     !> Base class for strain-(rate) driven simulations modules
-    type,extends(BasicModule) :: SDModule
+    type,extends(BasicModule) :: DeformationDrivenModule
 
+        !> Optional solver settings
         class(StrainDrivenSolverConfig),pointer :: solver_config => null()
 
-        type(StrainDrivenStep),dimension(:),allocatable :: steps
+        !> Container for steps 
+        type(PtrStrainDrivenStep),dimension(:),allocatable :: steps
         
     contains
         !>@{ \name Interface methods of AbstractModule
         
-        procedure,pass(this) :: initialize => SDModule_initialize
+        procedure,pass(this) :: printConfig => DeformationDrivenModule_printConfig
         
-        procedure,pass(this) :: printConfig => SDModule_printConfig
-        
-        procedure,pass(this) :: readConfig => SDModule_readConfig
-        
-        procedure,pass(this) :: run => SDModule_run
+        procedure,pass(this) :: readConfig => DeformationDrivenModule_readConfig
         
         !>@}
         
     end type
 
-    
+
 contains
 
 
-    !> Initialization of the module
-    integer function SDModule_initialize(this) result(info)
-    implicit none
-    class(SDModule),intent(inout) :: this
-    !
-        info = this%BasicModule%initialize()
-    !
-    end function
-
-
     !> Print configuration to IO unit
-    integer function SDModule_printConfig(this,outunit) result(info)
+    integer function DeformationDrivenModule_printConfig(this,outunit) result(info)
     implicit none
-    class(SDModule),intent(in)      :: this
+    class(DeformationDrivenModule),intent(in)      :: this
     integer,intent(in)              :: outunit !< IO unit for output
     !
         info = this%BasicModule%printConfig(outunit)
@@ -95,9 +74,9 @@ contains
 
 
     !> Read configuration from IO unit
-    integer function SDModule_readConfig(this,cnfunit) result(info)
+    integer function DeformationDrivenModule_readConfig(this,cnfunit) result(info)
     implicit none
-    class(SDModule),intent(inout)   :: this
+    class(DeformationDrivenModule),intent(inout)   :: this
     integer,intent(in)              :: cnfunit !< IO input unit
     !
     logical :: default_solver_config
@@ -119,16 +98,4 @@ contains
     !
     end function
 
-
-    !> Dummy procedure for run() method.
-    subroutine SDModule_run(this,info)
-    implicit none
-    class(SDModule),intent(inout)   :: this
-    integer,intent(out)             :: info
-    !
-        info = criError
-    !
-    end subroutine
-    
-    
 end module

@@ -28,6 +28,7 @@ use criPath, only: max_pathlen, splitExt
 use criLinearMap
 use criLog
 use fngVec5D
+implicit none
 
       !> Size of time increment
       !>
@@ -213,12 +214,14 @@ contains
 
     !> Open output file
     integer function BasicModule_openOutputFile(this, ext, ofunit, suffix) result(info)
+    implicit none
     class(BasicModule),intent(in)           :: this
     character(len=*),intent(in)             :: ext !< File extension (with leading dot)
     integer,intent(out)                     :: ofunit !< IO unit of the output
     character(len=*),intent(in),optional    :: suffix !< Suffix to the file
     !
     character(len=max_pathlen) :: output_path
+    integer :: ierr
     !
         if (present(suffix)) then
             output_path = trim(this%output%outputPrefix)// trim(suffix) //trim(ext)

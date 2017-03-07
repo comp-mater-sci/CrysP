@@ -15,6 +15,7 @@
 
 !> Useful data types for calculation of anisotropic characteristics
 module qrsTypes
+implicit none
 
       type qrsData
             double precision :: qvalue = 0.D0
