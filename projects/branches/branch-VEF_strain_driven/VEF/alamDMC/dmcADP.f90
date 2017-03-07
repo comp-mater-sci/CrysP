@@ -249,14 +249,14 @@ contains
     !
     integer :: step, increment, ierr, n_steps, first_step, last_step, n_increments 
     !      
-    integer,parameter :: ncolumn_labels = 26, column_width = 18, short_column_width = 9
+    integer,parameter :: ncolumn_labels = 29, column_width = 18, short_column_width = 9
     character(len=column_width),dimension(ncolumn_labels) :: column_names = [character(len=column_width) :: &
         'step', 'increment', & ! 2 fields
         ! 'eps_vM', 'Pnorm','eps_xx', 'sigma_xx', 'S_xx','W','dotW', 'M-factor'&
         'L_11','L_22','L_33','L_12','L_23','L_31', 'L_21', 'L_32', 'L_13',  & ! 9 fields  (I)
         'D_11','D_22','D_33','D_12','D_23','D_13', & ! 6 fields  (I)
         'S_11','S_22','S_33','S_12','S_23','S_13', & ! 6 fields  (I)
-        'S_vM', 'dW', 'M-factor' & ! 3 fields
+        'eps_vM_begin', 'eps_vM_end', 'S_vM', 'dW', 'M-factor', 'gamma' & ! 6 fields
         ]
     ! integer,dimension(ncolumn_labels),parameter :: column_widths = [ &
     !    short_column_width, short_column_width, & ! step, increment
@@ -277,6 +277,8 @@ contains
             first_step = optionalDefault(step_id, 1)
             last_step = optionalDefault(step_id, n_steps)
             RETURN_IF_WITH(first_step < 1 .or. last_step > n_steps, info = criErr_BadArgs)
+            !
+            info = criErr_IOWrite
             ! Write the data
             do step = first_step, last_step
                 associate (step_output => data_record%steps(step))
@@ -287,9 +289,12 @@ contains
                                                               Mat33ToVec9(increment_output%L%t), &
                                                               Mat33ToVec6(increment_output%D%t), &
                                                               Mat33ToVec6(increment_output%S%t), &
+                                                              increment_output%vm_strain_begin, &
+                                                              increment_output%vm_strain_end, &
                                                               increment_output%vm_stress, &
                                                               increment_output%plastic_work_inc, &
-                                                              increment_output%taylor_factor
+                                                              increment_output%taylor_factor, &
+                                                              increment_output%plastic_slip_tot
                         end associate
                         if (ierr /= 0) return
                     enddo
@@ -300,7 +305,7 @@ contains
 
         !
         ! Formats for the output file
-        710 format(1X, 2(I18,1X),24(E18.9,1X))
+        710 format(1X, 2(I18,1X),27(E18.9,1X))
     !
     end function
     

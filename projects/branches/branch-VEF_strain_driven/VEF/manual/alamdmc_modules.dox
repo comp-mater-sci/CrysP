@@ -693,11 +693,17 @@ The module-specific outputfile `<output_prefix>.adp` makes column-wise reporting
 
 -# \outdef{S_13} similar to \ref adp_S_11
 
+-# \outdef{eps_vM_begin} Von Mises strain at the beginning of the increment
+
+-# \outdef{eps_vM_end} Von Mises strain at the end of the increment
+
 -# \outdef{S_vM} Von Mises equivalent stress
 
 -# \outdef{dW,adp_dotW} plastic work rate \f$ W = \mathbf{D} : \mathbf{S} \f$
 
--# \outref{M-factor} 
+-# \outref{M-factor}
+
+-# \outdef{gamma} total accumulated plastic slip
 
 <HR>
 Quick links

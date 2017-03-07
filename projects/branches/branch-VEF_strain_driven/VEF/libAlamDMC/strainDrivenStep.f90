@@ -84,11 +84,17 @@ public StepOutput, IncrementOutput
         
         type(SRTensor)  :: S
         
+        double precision :: vm_strain_begin = 0.D0
+        
+        double precision :: vm_strain_end = 0.D0
+        
         double precision :: vm_stress = 0.D0
         
         double precision :: plastic_work_inc = 0.D0 !< Plastic work during the increment, i.e. dotW = (D : S)
         
         double precision :: taylor_factor = 0.D0
+        
+        double precision :: plastic_slip_tot = 0.D0
         
     end type
 
@@ -351,17 +357,24 @@ contains
         !
         ! collect the results
         do i = 1, n_increments
-            associate (increment_output =>  this%increments(i))
-                increment_output%L%t = astate%simulCalls(i)%input%dgf
+            associate (increment_output =>  this%increments(i), &
+                       altay_state => astate%simulCalls(i), &
+                       altay_output => altay_state%output)
+                !
+                increment_output%L%t = altay_state%input%dgf
                 ! Let libaltay calculate the strain rates etc.
                 call Set_DeformationRate(increment_output%L%t, deformation_rate)
                 increment_output%D%t = deformation_rate%StrainRate
-                increment_output%S%t = astate%simulCalls(i)%output%stress_tensor
-                increment_output%vm_stress = astate%simulCalls(i)%output%effective_stress
+                increment_output%S%t = altay_output%stress_tensor
+                increment_output%vm_strain_begin = altay_output%effective_macro_strain_tot
+                increment_output%vm_strain_end = altay_output%effective_macro_strain_tot_end
+                increment_output%vm_stress = altay_output%effective_stress
                 ! D : S
                 increment_output%plastic_work_inc = sum(increment_output%D%t * increment_output%S%t)
                 !
-                increment_output%taylor_factor = astate%simulCalls(i)%output%taylor_factor
+                increment_output%taylor_factor = altay_output%taylor_factor
+                increment_output%plastic_slip_tot = altay_output%homogenised_slip_tot
+
             end associate
         enddo
         info = criSuccess
