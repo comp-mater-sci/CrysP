@@ -5,12 +5,10 @@
 
 from __future__ import print_function
 
-__version__ = '0.1.0'
+__version__ = '0.1.1' + '.$Rev$'.strip('$Rev: ')
 
-import yaml
 import json
 import csv
-import pyvef
 import uuid
 import copy
 import os
@@ -47,6 +45,30 @@ def load_data(prefix, ext):
     return np.genfromtxt(outfile, names=True, skip_header=1)
 
 
+def transform_output(dataframe, key_field, fields):
+    '''Transform multi-row dataframe (such as) into a dictionary where values
+    of key_field become keys, while fields are set to the values.
+    
+    For a multi-row dataframe, create a dictionary with:
+       - the value of key_field as the key, and
+       -  dictionary with field,value pairs for the fields'''
+    output = OrderedDict()
+    for row in dataframe:
+        key = row[key_field]
+        output[key] = OrderedDict((field, row[field]) for field in fields)
+    return output
+
+
+def flatten_onelevel_dict(data, output_type=OrderedDict):
+    '''Convert nested structure into a one-level dictionary'''
+    output = output_type()
+    for key, values in data.items():
+        for fieldname, value in values.items():
+            colname = '{field}_{key}'.format(field=fieldname, 
+                                             key=key)
+            output[colname] = value
+    return output
+
 # TODO: fix the design flaw: harvesters make assumption (use of implied
 #       knowledge) about the module that provides the data. This knowledge
 #       is explicitly present elsewhere. What's worse, it has to assume what
@@ -64,23 +86,8 @@ def uniaxial_setup(config, data):
 
 def uniaxial_harvester(output_prefix):
     fields = ('rvalue', 'svalue', 'sigma_xx')
-    # too complex for dictionary comprehension
-    output = OrderedDict()
-    for point in load_data(output_prefix, 'xqrs'):
-        angle = point['angle']
-        output[angle] = OrderedDict((field, point[field]) for field in fields)
-    return {'uniaxial': output}
-
-
-def uniaxial_flatten(data):
-    '''Convert nested structure into a one-level dictionary'''
-    output = OrderedDict()
-    for direction, values in data.items():
-        for fieldname, value in values.items():
-            colname = '{field}_{direction}'.format(field=fieldname, 
-                                                   direction=direction)
-            output[colname] = value
-    return output
+    dataframe = load_data(output_prefix, 'xqrs')
+    return {'uniaxial': transform_output(dataframe, 'angle', fields)}
 
 
 def equibiaxial_setup(config, data):
@@ -109,8 +116,6 @@ def equibiaxial_harvester(output_prefix):
             for field, name in fields.iteritems())}
 
 
-def equibiaxial_flatten(data):
-    return data
 
     # Alternate implementation of 'inplane' would make use of the yld module
     #    data_name = 'inplane'
@@ -158,10 +163,6 @@ def inplane_harvester(output_prefix):
     return {'inplane': OrderedDict((field, point[field]) for field in fields)}
 
 
-def inplane_flatten(data):
-    return data
-
-
 def arbitrary_setup(config, data):
     data = list(float(x) for x in data)
     module_name = 'asr'
@@ -183,9 +184,6 @@ def arbitrary_setup(config, data):
     inputs = OrderedDict(zip(as_voigt('sigma', VOIGT_3D), data))
     return module_name, module_config, inputs
 
-def arbitrary_flatten(data):
-    return data
-
 
 def arbitrary_harvester(output_prefix):
     fields = ('scal_s', 'S', 'A_xx', 'A_yy', 'A_zz', 'A_xy', 'A_yz', 'A_xz')
@@ -193,31 +191,57 @@ def arbitrary_harvester(output_prefix):
     return {'arbitrary': OrderedDict((field, point[field]) for field in fields)}
 
 
+def yld_setup(config, data):
+    begin,end,step = data
+    module_name = 'yld'
+    module_config = {
+        'theta_range': {'type': 'uniform',
+                        'params': {'begin': begin, 'end': end, 'step': step}},
+        'use_default_settings': True
+        }
+    return module_name, module_config, {}
+
+
+
+def yld_harvester(output_prefix):
+    dataframe = load_data(output_prefix, 'xyld')
+    key_field = 'theta'
+    fields = ('sigma', 'sigma_scaled', 'S', 'dotW', 'sigma_x', 'sigma_y', 'dsigma_x', 'dsigma_y', 'beta')
+    # too complex for dictionary comprehension
+    return {'yld': transform_output(dataframe, key_field, fields)}
+
+
+
 CONFIGURATORS = {'uniaxial': uniaxial_setup,
                  'equibiaxial': equibiaxial_setup,
                  'inplane': inplane_setup,
-                 'arbitrary': arbitrary_setup}
+                 'arbitrary': arbitrary_setup,
+                 'yld': yld_setup}
 
 HARVESTERS = {'uniaxial': uniaxial_harvester,
               'equibiaxial': equibiaxial_harvester,
               'inplane': inplane_harvester,
-              'arbitrary': arbitrary_harvester}
+              'arbitrary': arbitrary_harvester,
+              'yld': yld_harvester}
 
-def output_csv(jobname, data):
+FLATTENERS = {'uniaxial': flatten_onelevel_dict,
+              'yld': flatten_onelevel_dict}
+
+def output_csv(jobname, data, meta, transform_map=None, **kwargs):
 
     # transform data into a dictionary
-    results = OrderedDict([('jobname', jobname)])
-
-    dispatcher = {'uniaxial': uniaxial_flatten,
-                  'equibiaxial': equibiaxial_flatten,
-                  'inplane': inplane_flatten,
-                  'arbitrary': arbitrary_flatten}
+    results = OrderedDict([('jobname', jobname),
+                           ('jobid', meta['id']),
+                           ('structure', meta['material']['structure'])])
+    
+    tr = {} if transform_map is None else transform_map
+    
     # TODO: we need a more robust method of resolving duplicate names.
     #       This is issue is really painful for 'inplane' and 'arbitrary'.
     for item in data:
         provider = item.keys()[0]
         result = item.values()[0]
-        tmp = dispatcher[provider](result)
+        tmp = tr[provider](result) if tr.get(provider) else result
         results.update(tmp)
 
 
@@ -266,14 +290,24 @@ def make_config(id, module_name, config, module_config, sequence=None):
     return job_config
 
 
-def main(jobname, input, cpmodel, structure, serial,
+def main(jobname, input, cpmodel, structure, serial, intermediate_dir,
          as_json=True, as_csv=True, **requests):
 
     try:
+
+        jobid = str(uuid.uuid1())
+        if intermediate_dir:
+            workdir = os.path.abspath(os.path.join(intermediate_dir,jobid))
+            try:
+                os.makedirs(workdir)
+            except os.error:
+                pass
+        else:
+            workdir = tempfile.mkdtemp()
+
         #
         # prepare the generic section
         #
-        workdir = tempfile.mkdtemp()
         config = {
             'output_prefix': os.path.join(workdir,jobname),
             'verbosity': 0,
@@ -288,13 +322,14 @@ def main(jobname, input, cpmodel, structure, serial,
         #
         # 
         #
-        jobid = str(uuid.uuid1())
+
         meta = {'id': jobid,
                 'generator': {'name': 'vef_datacard',
                               'version': __version__,
                               'backend': {'name': 'VEF',
-                                          'version': "0.11.0"}},
-                'timestamp': str(datetime.datetime.now())
+                                          'version': "0.12.0"}},
+                'timestamp': str(datetime.datetime.now()),
+                'material': {'structure': structure}
                }
 
 
@@ -341,13 +376,14 @@ def main(jobname, input, cpmodel, structure, serial,
                 json.dump(output, f, indent=2)
 
         if as_csv:
-            output_csv(jobname, output['data'])
+            output_csv(jobname, transform_map=FLATTENERS, **output)
                 
         return 0
 
     except Exception as e:
         print('A general exception has occured. '
-              'This is unsusual, so please report that to the developer')
+              'This is unsusual, so please report that to the developer.\n'
+              'More detail:', e.message)
         return 2
 
 if __name__ == '__main__':
@@ -407,6 +443,12 @@ if __name__ == '__main__':
                         default=[],
                         help=arbitrary_help)
 
+    parser.add_argument('--yld',
+                        nargs=3,
+                        metavar=('theta_begin', 'theta_end', 'theta_step'),
+                        action='append',
+                        default=[],
+                        help='Calculate yield locus characteristics')
     #parser.add_argument('--json',
     #                    default=False,
     #                    action='store_true',
@@ -421,9 +463,15 @@ if __name__ == '__main__':
                         default=False,
                         help='Force serial execution of the workflow')
 
+    parser.add_argument('--intermediate_dir',
+                        metavar='directory_path',
+                        default=None,
+                        help='Working directory where intermediate results are produced')
+
+
     args = parser.parse_args()
 
-    DATASOURCES = ['uniaxial', 'equibiaxial', 'inplane', 'arbitrary']
+    DATASOURCES = ['uniaxial', 'equibiaxial', 'inplane', 'arbitrary', 'yld']
     switches = vars(args)
 
     if not any(switches[key] for key in DATASOURCES):
