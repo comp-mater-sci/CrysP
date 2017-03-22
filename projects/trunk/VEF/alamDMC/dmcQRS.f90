@@ -23,19 +23,19 @@ use dmcUtils
 use dmcStressDrivenModule
 use commonConfig
 use commonUtils
+use dmcResultFileOutput
 use criMathUtils
 use criRange
 use criLog
 use criAlgorithm
 use fngVec5D
-
 implicit none
 
     type,extends(StressDrivenModule) :: QRSModule
         class(range_type),pointer                 :: ptr_range
 
         double precision                          :: rho = 0.D0
-            
+
         logical                                   :: calculate_Mfactor = .false.
 
         logical                                   :: use_stability_improvements = .false.
@@ -43,17 +43,32 @@ implicit none
         logical                                   :: fold_symmetry = .false.
             
     contains
-      
+
         procedure,pass(this)    :: readConfig => QRSModule_ReadConfig
 
         procedure,pass(this)    :: printConfig => QRSModule_printConfig
 
         procedure,pass(this)    :: run => QRSModule_run
 
+        procedure,pass(this)    :: fileOutput => QRSModule_fileOutput
+
     end type
 
 
+    !> Container for output datapoints of QRS module
+    type :: QRSOutputData
+        double precision,dimension(:),allocatable   :: residuals,mfactors,phis,sigmas_x
+        type(qrsData),dimension(:),allocatable      :: qrsvalues
+    end type
+
+
+    !> Constructors of QRSOutputData objects
+    interface QRSOutputData
+        module procedure QRSOutputData_init_size
+    end interface
+
 contains
+
 
     integer function QRSModule_readConfig(this,cnfunit) result(info)
     implicit none
@@ -121,10 +136,10 @@ contains
 
 
 
-    subroutine QRSModule_Run(this,info)
+    subroutine QRSModule_run(this,info)
     implicit none
-    class(QRSModule),intent(inout)              :: this
-    integer,intent(out)                       :: info
+    class(QRSModule),intent(inout)      :: this
+    integer,intent(out)                 :: info
 
     ! Convention: strain rate and stress tensors in
     ! - "Tensile sample coordinate system" have suffix _t
@@ -135,48 +150,31 @@ contains
     type(YLPResult)                           :: ylp_result
     !
     double precision                          :: fi1,phi,fi2, residual_resume
-    integer     :: i,j, k, npoints
+    integer     :: i,j, k, npoints,ofunit
     logical     :: useVMGuess
-    double precision,dimension(:),allocatable       :: residuals,mfactors,phis, sigmas_x
-    type(qrsData),dimension(:),allocatable          :: qrsvalues
     !
-    integer                 :: left, right, stride
-    integer :: ofunit
+    type(QRSOutputData) :: results
     !
-    integer,parameter :: ncolumn_labels = 8, column_width = 15
-    ! For file output
-    character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = &
-        [ character(len=column_width) ::  &
-        'angle','rho','q-value','r-value','s-value','sigma_xx','M-factor','residual' ]
-      
+    integer,parameter :: column_width = 15
     ! For display output:
     integer,parameter :: ncolumn_labels_display = 7, column_width_display = 14
     character(len=column_width-1),dimension(ncolumn_labels_display) :: display_column_labels = &
         [ character(len=column_width_display) ::  &
         'angle','rho','q-value','r-value','s-value','M-factor','residual' ]
     !
-        info = 1
-        !
+        info = criError
         !
         npoints = this%ptr_range%size()
         !
         RETURN_IF(info /= criSuccess, info = this%openOutputFile('.xqrs', ofunit))
         !
-        write(ofunit,701) (centered(i,column_width), i = 1, ncolumn_labels)
-        write(ofunit,700) (centered(file_column_labels(i)), i=1,ncolumn_labels) 
-
-        !
         ! Apply correction to the configuration of the search procedure:
         ! there will be no need to use the full model in the last call unless 
         ! the average Taylor factor is requested.
         this%ylp%evaluate_full_model  = this%calculate_MFactor
-      
-
-        ! Make space for the results      
-        allocate(qrsvalues(npoints), residuals(npoints), sigmas_x(npoints), mfactors(npoints), phis(npoints))
-        residuals = 0.D0
-        mfactors = 0.D0
-      
+        !
+        results = QRSOutputData(npoints)
+        !
         fi1 = 0.D0
         phi = 0.D0
         !
@@ -196,8 +194,6 @@ contains
                 write(display_unit,800)
                 write(display_unit,'(/,A,1X,I4,1X,A,1X,F8.3,A,/)')'Point:',i,'fi2 =',fi2, ' degs'
             endif
-            !
-            phis(i) = fi2
             !
             fi2 = deg2rad(fi2)
             ! Calculate rotation matrix
@@ -221,16 +217,6 @@ contains
             if (info /= criSuccess) then
                 write(display_unit,fmt=960)
                 exit
-            endif
-            !
-            residuals(i) = ylp_result%R
-            ! 
-            if (this%calculate_MFactor) then
-                call getTaylorFactor(1, mfactors(i), info)
-                if (info /= 0) then
-                    write(display_unit,980)
-                    exit
-                endif
             endif
             !
             if (doLogging(criLogInfo,this%output%verbosity)) then
@@ -265,59 +251,42 @@ contains
             endif
             !            
             ! Calculate output variables
-            qrsvalues(i) = calculateQRS(D_t%t,ylp_result%scal_s)
-            sigmas_x(i) = S_t%t(1,1) - S_t%t(3,3)
             !
-            if (doLogging(criLogInfo,this%output%verbosity)) then
-                write(display_unit,fmt=601) !
-                write(display_unit,fmt=600) (centered(display_column_labels(j)), j=1,ncolumn_labels_display) 
-                write(display_unit,fmt=610) phis(i), this%rho, qrsvalues(i), mfactors(i),residuals(i)
-                write(display_unit,fmt=601)
-            endif
+            associate(r => results, &
+                      phis => r%phis(i), qrsvalues => r%qrsvalues(i), &
+                      sigmas_x => r%sigmas_x(i), mfactors => r%mfactors(i), &
+                      residuals => r%residuals(i))
+                !
+                phis = rad2deg(fi2)
+                qrsvalues = calculateQRS(D_t%t,ylp_result%scal_s)
+                sigmas_x = S_t%t(1,1) - S_t%t(3,3)
+                residuals = ylp_result%R
+                ! Optional: Taylor factor can be retrieved
+                if (this%calculate_MFactor) then
+                    call getTaylorFactor(1, mfactors, info)
+                    if (info /= 0) then
+                        write(display_unit,980)
+                        exit
+                    endif
+                endif
+                !
+                if (doLogging(criLogInfo,this%output%verbosity)) then
+                    write(display_unit,fmt=601) !
+                    write(display_unit,fmt=600) (centered(display_column_labels(j)), j=1,ncolumn_labels_display) 
+                    write(display_unit,fmt=610) phis, this%rho, qrsvalues, mfactors,residuals
+                    write(display_unit,fmt=601)
+                endif
+            end associate
             !
-            info = 0
+            info = criSuccess
         enddo
         ! 
         ! End of the main loop, check what's the status of the last operation
-        if (info /= 0) return
+        if (info /= criSuccess) return
         !
-        if (doLogging(criLogErr,this%output%verbosity)) then
-            ! Write complete output to the terminal
-            write(display_unit,800)
-            write(display_unit,fmt=700)
-            do i=1,npoints
-                    write(display_unit,fmt=710) phis(i), this%rho, qrsvalues(i), mfactors(i), residuals(i)
-            enddo
-        endif
-        ! Write output file
-        if (this%fold_symmetry) then
-            ! \todo Use FCRI::criArray::fold_array for this task. It allows multiple folds!
-            ! Average over symmetric positions
-            left = 1
-            right = npoints
-            do 
-                if (left > right) exit
-                stride = right - left
-                if (stride == 0) stride = 1
-                write(ofunit,fmt=710) phis(left), this%rho,                     &
-                                      avgQRS(qrsvalues(left:right:stride)),     &
-                                      average(sigmas_x(left:right:stride) ),    &
-                                      average(mfactors(left:right:stride) ),    &
-                                      average(residuals(left:right:stride) )
-                left = left + 1
-                right = right -1
-            enddo
-        else
-            ! Output complete set of points
-            do i=1,npoints
-                write(ofunit,fmt=710) phis(i), this%rho, qrsvalues(i), sigmas_x(i) ,mfactors(i),residuals(i)
-            enddo
-        endif
-        !
-        deallocate(qrsvalues, residuals,mfactors,phis)
+        info = this%fileOutput(ofunit, results, header=.true.)
         close(ofunit)
         !
-        info = 0
         !
         400 format('| sigma',T40,'| SmIdent',T80,'|Dmcoord')
         401 format(3(F10.6,1X),T40,3(F10.6,1X),T80,3(F10.6,1X))
@@ -328,11 +297,6 @@ contains
         600 format(1X, 7(A14,    1X))
         601 format('|',7(14('-'),'|'))
         610 format(1X, 7(F14.6,  1X))
-          
-        ! Formats for output file
-        700 format(1X, 8(A18,  1X))
-        701 format('#',8(A18,  1X))
-        710 format(1X, 8(E18.9,1X))
 
 #define MSG_GROUP_RULERS     
 #define MSG_GROUP_ERRORS
@@ -342,5 +306,87 @@ contains
     !
     end subroutine
 
+
+    !> Write out results to the output file
+    integer function QRSModule_fileOutput(this, iounit, data_record, header) result(info)
+    implicit none
+    class(QRSModule),intent(in)                 :: this
+    integer,intent(in)                          :: iounit !< Output IO unit
+    type(QRSOutputData),intent(in),optional     :: data_record !< Data to be written out
+    logical,intent(in),optional                 :: header !< Header to be written out
+    !
+    integer :: i, npoints, left, right, stride, ierr
+    !
+    integer,parameter :: ncolumn_labels = 8, column_width = 18
+    character(len=column_width),dimension(ncolumn_labels) :: column_names = &
+        [ character(len=column_width) ::  &
+        'angle','rho','q-value','r-value','s-value','sigma_xx','M-factor','residual' ]
+    !
+        info = criErr_BadArgs
+        if (optionalDefault(header,.false.)) then
+            info = writeStandardHeader(iounit, column_names, [column_width])
+            if (info /= criSuccess) return
+        endif
+        !
+        if (present(data_record)) then
+            info = criErr_IOWrite
+            ! FIXME: flawed assumption, other arrays may have different size
+            ALLOCATED_SIZE(npoints, data_record%phis)
+            ! Write output file
+            if (this%fold_symmetry) then
+                ! \todo Use FCRI::criArray::fold_array for this task. It allows multiple folds!
+                ! Average over symmetric positions
+                left = 1
+                right = npoints
+                do 
+                    if (left > right) exit
+                    stride = right - left
+                    if (stride == 0) stride = 1
+                    write(iounit,fmt=710,iostat=ierr) data_record%phis(left), &
+                                                      this%rho,                 &
+                                                      avgQRS(data_record%qrsvalues(left:right:stride)), &
+                                                      average(data_record%sigmas_x(left:right:stride)), &
+                                                      average(data_record%mfactors(left:right:stride)), &
+                                                      average(data_record%residuals(left:right:stride))
+                    if (ierr /= 0) return
+                    left = left + 1
+                    right = right -1
+                enddo
+            else
+                ! Output complete set of points
+                do i=1,npoints
+                    write(iounit,fmt=710,iostat=ierr) data_record%phis(i), &
+                                                      this%rho, &
+                                                      data_record%qrsvalues(i), &
+                                                      data_record%sigmas_x(i), &
+                                                      data_record%mfactors(i), &
+                                                      data_record%residuals(i)
+                    if (ierr /= 0) return
+                enddo
+            endif
+        endif
+        !
+        info = criSuccess
+        !
+        ! Formats for the output file
+        710 format(1X, 8(E18.9,1X))
+    end function
+
+
+    !> Initialize QRSOutputData to store npoints datapoints
+    pure function QRSOutputData_init_size(npoints) result(res)
+    type(QRSOutputData)     :: res
+    integer,intent(in)      :: npoints
+    !
+        ! Make space for the results
+        allocate(res%qrsvalues(npoints))
+        ! Other entities are of the same type, but they can not be treated in a single
+        ! statement if SOURCE is provided...
+        allocate(res%residuals(npoints), source=0.D0)
+        allocate(res%sigmas_x(npoints), source=0.D0)
+        allocate(res%mfactors(npoints), source=0.D0)
+        allocate(res%phis(npoints), source=0.D0)
+    !
+    end function
 
 end module
