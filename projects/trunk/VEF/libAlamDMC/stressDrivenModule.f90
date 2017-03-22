@@ -189,7 +189,7 @@ contains
     integer function printYLPResult(iounit, ylp_result) result(info)
     implicit none
     integer,intent(in)              :: iounit
-    type(YLPResult),intent(out)     :: ylp_result
+    type(YLPResult),intent(in)      :: ylp_result
     !
         write(iounit,fmt=100)
         write(iounit,fmt=200) 'Requested stress:', ylp_result%vS
