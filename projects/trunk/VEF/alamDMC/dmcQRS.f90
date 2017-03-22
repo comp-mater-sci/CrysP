@@ -37,8 +37,8 @@ implicit none
             
         logical                                   :: calculate_Mfactor = .false.
 
-        logical                                   :: reuse_previous = .false.
-        logical                                   :: reuse_strainrate = .false.
+        logical                                   :: use_stability_improvements = .false.
+
         logical                                   :: fold_symmetry = .false.
             
     contains
@@ -59,9 +59,8 @@ contains
     class(QRSModule),intent(inout)              :: this
     integer,intent(in)                        :: cnfunit
     !
-    logical :: use_default_settings, use_stability_improvements
+    logical :: use_default_settings
     !
-        use_stability_improvements = .false.
         use_default_settings = .false.
         info = this%StressDrivenModule%readConfig(cnfunit)
         if (info /= criSuccess) return
@@ -76,11 +75,7 @@ contains
                 if (.not. readValue(cnfunit, this%rho)) return
                 if (.not. readValue(cnfunit, this%calculate_MFactor)) return
                 if (.not. readValue(cnfunit, this%fold_symmetry)) return
-                if (.not. readValue(cnfunit, use_stability_improvements)) return
-                if (use_stability_improvements) then
-                    this%reuse_previous = .true.
-                    this%reuse_strainrate = .true.
-                endif
+                if (.not. readValue(cnfunit, this%use_stability_improvements)) return
         endif
         !
         ! Override the requests for outputs: 
@@ -113,13 +108,8 @@ contains
             write(outunit,fmt=fmtMsg2Float,iostat=ioerr) 'Stress ratio', this%rho 
             !
             write(outunit,fmt='(A)',advance='NO') 'Info:'
-            if (this%reuse_previous) then
-                if (this%reuse_strainrate) then
-                    write(outunit,'(1X,A)',advance='NO') 'Strain rate'
-                else
-                    write(outunit,'(1X,A)',advance='NO') 'Stress'
-                endif
-                write(outunit,'(1X,A)') 'from the previous solution will be re-used.'
+            if (this%use_stability_improvements) then
+                write(outunit,'(1X,A)') 'Strain rate from the previous solution will be re-used.'
             else
                 write(outunit,'(1X,A)') 'von Mises guess will be used.'
             endif
@@ -143,7 +133,7 @@ contains
     double precision,dimension(3,3)           :: Mrot = 0.0
     type(YLPResult)                           :: ylp_result
     !
-    double precision                          :: fi1,phi,fi2
+    double precision                          :: fi1,phi,fi2, residual_resume
     integer     :: i,j, k, npoints
     logical     :: useVMGuess
     double precision,dimension(:),allocatable       :: residuals,mfactors,phis, sigmas_x
@@ -198,11 +188,13 @@ contains
         sigma_t%t(1,1) = root32/dsqrt(this%rho**2-this%rho+1.D0)
         sigma_t%t(2,2) = this%rho*sigma_t%t(1,1)
         !
-        ! use von Mises guess as a default
-        useVMGuess = .true.
         i = 0
         do while (this%ptr_range%next(fi2))
             i = i + 1
+            !
+            ! use von Mises guess as a default
+            useVMGuess = .true.
+            !
             if (doLogging(criLogDebug,this%output%verbosity)) then
                 write(display_unit,800)
                 write(display_unit,'(/,A,1X,I4,1X,A,1X,F8.3,A,/)')'Point:',i,'fi2 =',fi2, ' degs'
@@ -217,13 +209,15 @@ contains
             ! Rotate from "tensile" to material coordinate system
             sigma = rotateSRTensorTo(sigma_t, Mrot)
             !
-            if ((this%reuse_previous) .AND. (i > 1))  then
+            if ((this%use_stability_improvements) .AND. (i > 1)) then
                 ! Reuse previously stored result in new coordinate system
-                ! Type of result (strain rate or stress) is decided in line mared with (***)
-                ! Rotate Dresume_t to new coordinate system
-                D = rotateSRTensorTo(Dresume_t, Mrot)
-                ! Disable Von Mises guess in multilevelYLP: vA will be used as a starting point
-                useVMGuess = .false.
+                ! if it represents a converged solution.
+                if (residual_resume <= this%ylp%obj_func_eps) then
+                    ! Rotate Dresume_t to new coordinate system
+                    D = rotateSRTensorTo(Dresume_t, Mrot)
+                    ! Disable Von Mises guess
+                    useVMGuess = .false.
+                endif
             endif
             !
             info = this%findSolution(sigma, D, ylp_result, useVMGuess)
@@ -268,18 +262,9 @@ contains
             S_t = rotateSRTensorFrom(SonA, Mrot)
             !
             !(***) Prepare next iteration if re-using is requested.
-            if (this%reuse_previous) then
-                
-                ! FIXME: the "reuse" scheme has to be reconsidered. The non-strainrate part
-                !        is completely flawed.
-                
-                ! Re-used data are always in "tensile" coordinate system (initial coordinate system) 
-                if (this%reuse_strainrate) then
-                    Dresume_t = D_t
-                else
-                    ! Rotate stresses to "tensile" coordinate system 
-                    Dresume_t = rotateSRTensorFrom(SmIdent, Mrot)
-                endif
+            if (this%use_stability_improvements) then
+                Dresume_t = D_t
+                residual_resume = ylp_result%R
             endif
             !            
             ! Calculate output variables
