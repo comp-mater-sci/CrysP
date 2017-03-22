@@ -171,7 +171,7 @@ contains
         !
         info = -1
         ! Print banner
-        write(outunit,'(A)') 'EWCModule: $Rev$'
+        write(outunit,'(A)') 'EWC: $Rev$'
         if (doLogging(criLogInfo,this%output%verbosity)) then
                 !> \todo Print out summary of the configuration
                 continue

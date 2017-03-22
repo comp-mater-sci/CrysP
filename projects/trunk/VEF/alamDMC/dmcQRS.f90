@@ -115,7 +115,7 @@ contains
         if (info /= criSuccess) return
         !
         ! Print banner
-        write(outunit,'(A)') 'QRSModule: $Rev$'
+        write(outunit,'(A)') 'QRS: $Rev$'
         if (doLogging(criLogInfo,this%output%verbosity)) then
             ! Print-out summary of the configuration 
             !write(display_unit,fmt=fmtMsg2Other//'2(F8.3,1X))',iostat=ioerr) 'Angular range:', this%fi2min, this%fi2max
