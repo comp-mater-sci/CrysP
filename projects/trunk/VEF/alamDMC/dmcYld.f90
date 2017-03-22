@@ -250,11 +250,7 @@ contains
                         scal_s_rel = ylp_result%scal_s * iunilen
                         !
                         if (doLogging(criLogDebug,this%output%verbosity)) then
-                            call printIdentResults(display_unit,ylp_result%vS, &
-                                                                ylp_result%vA, &
-                                                                ylp_result%vSonA, &
-                                                                ylp_result%vSonAn, &
-                                                                ylp_result%R,info)
+                            info = printYLPResult(display_unit, ylp_result)
                         endif
 
                         if (doLogging(criLogInfo,this%output%verbosity)) then

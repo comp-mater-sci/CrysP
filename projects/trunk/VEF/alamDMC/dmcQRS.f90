@@ -219,14 +219,7 @@ contains
             endif
             !
             if (doLogging(criLogInfo,this%output%verbosity)) then
-                ! TODO: refactor printIdentResults
-                call printIdentResults(display_unit, &
-                                       ylp_result%vS, &
-                                       ylp_result%vA, &
-                                       ylp_result%vSonA, &
-                                       ylp_result%vSonAn, &
-                                       ylp_result%R, &
-                                       info)
+                info = printYLPResult(display_unit, ylp_result)
             endif
             !
             SonA%t = vec5D2tens(ylp_result%vSonA)

@@ -182,5 +182,30 @@ contains
         info = criSuccess
     !
     end subroutine
-    
+
+
+    !> Print detailed info about YLP solution based on the content of YLPResult 
+    !> object.
+    integer function printYLPResult(iounit, ylp_result) result(info)
+    implicit none
+    integer,intent(in)              :: iounit
+    type(YLPResult),intent(out)     :: ylp_result
+    !
+        write(iounit,fmt=100)
+        write(iounit,fmt=200) 'Requested stress:', ylp_result%vS
+        write(iounit,fmt=200) 'Identified scaled stress:', ylp_result%vSonAn
+        write(iounit,fmt=201) 'Norm of stress residual:', ylp_result%R
+        write(iounit,fmt=100)
+        write(iounit,fmt=200) 'Stress on vA:', ylp_result%vSonA
+        write(iounit,fmt=201) 'Norm of stress on vA:', norm2(ylp_result%vSonA)
+        write(iounit,fmt=100)
+        !
+        info = criSuccess
+        !
+        100 format('(/)')
+        200 format(A,T40,5(E12.5,1X))
+        201 format(A,T40,E12.5)
+    !
+    end function
+
 end module
