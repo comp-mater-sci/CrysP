@@ -12,8 +12,9 @@
 !>    $Date$
 !>
 !>    History of modifications: (see svn log)
-!
-!
+
+#include "criMacros.fpp"
+
 !> dmcQRS calculates plastic anisotropic properties, expressed in terms of q-values,
 !> directly from texture data, presented in form of SMT, CUR or CUB files.
 module dmcQRS
@@ -140,8 +141,7 @@ contains
     type(qrsData),dimension(:),allocatable          :: qrsvalues
     !
     integer                 :: left, right, stride
-    integer                 :: ioerr
-    integer,parameter       :: cnfunit = 90, ofunit = 91
+    integer :: ofunit
     !
     integer,parameter :: ncolumn_labels = 8, column_width = 15
     ! For file output
@@ -159,12 +159,9 @@ contains
         !
         !
         npoints = this%ptr_range%size()
-        ! 
-        open(unit=ofunit,file=trim(this%output%outputPrefix)//'.xqrs',iostat=ioerr)
-        if (ioerr /= 0) then
-            write(display_unit,fmt=952)
-            return 
-        endif
+        !
+        RETURN_IF(info /= criSuccess, info = this%openOutputFile('.xqrs', ofunit))
+        !
         write(ofunit,701) (centered(i,column_width), i = 1, ncolumn_labels)
         write(ofunit,700) (centered(file_column_labels(i)), i=1,ncolumn_labels) 
 
