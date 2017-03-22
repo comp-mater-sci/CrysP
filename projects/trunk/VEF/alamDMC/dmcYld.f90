@@ -12,6 +12,9 @@
 !>    $Date$
 !>
 !>    History of modifications: (see svn log)
+
+#include "criMacros.fpp"
+
 !
 !> Yield locus calculations
 module dmcYld
@@ -170,8 +173,7 @@ contains
       double precision,dimension(sr_symm_voigt_dim) :: sigma_vector
       class(range_type),allocatable             :: theta_range
       !
-      integer                 :: ioerr,i,npoints
-      integer,parameter       :: cnfunit = 90, ofunit = 91
+      integer                 :: i,npoints, ofunit
       !
       integer :: posA, posB
       logical :: first_run
@@ -187,11 +189,7 @@ contains
             endif
             !
             ! Open the main output file
-            open(unit=ofunit,file=trim(this%output%outputPrefix)//'.xyld',iostat=ioerr)
-            if (ioerr /= 0) then
-                  write(display_unit,fmt=952)
-                  return 
-            endif
+            RETURN_IF(info /= criSuccess, info = this%openOutputFile('.xyld', ofunit))
             !
             ! Fix the configuration: no need for anything except for the stresses.
             this%ylp%evaluate_full_model = .false.
