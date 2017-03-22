@@ -159,16 +159,13 @@ contains
       implicit none
       class(YldModule),intent(inout)            :: this
       integer,intent(out)                       :: info
-      
-      ! Base tensors
-      double precision,dimension(3,3)           :: Sm
+      !
       double precision                          :: theta, w
       double precision                          :: iunilen ! Inverse of the length of the deviatoric part of uniaxial tensile stress
 
-      !
-      double precision                          :: dotWonA, scal_s, norm_sona, vS_norm, scal_s_rel,Sm_norm
-      double precision,dimension(5)             :: vA, vS,vSonA, vSonAn
-      double precision                          :: R
+      type(SRTensor)                            :: Sm, D
+      type(YLPResult)                           :: ylp_result !< Results of the interative search
+      double precision                          :: scal_s_rel
       type(yldResult),dimension(:),allocatable  :: yldRes
       double precision,dimension(sr_symm_voigt_dim) :: sigma_vector
       class(range_type),allocatable             :: theta_range
@@ -201,22 +198,23 @@ contains
             !
             iunilen = 1.D0
             if (this%do_scaling) then
-                  Sm =  Vec6ToMat33(this%scaling_vector)
-                  if (norm2(Sm) < epsilon(0.D0)) then
+                  Sm%t =  Vec6ToMat33(this%scaling_vector)
+                  if (norm2(Sm%t) < epsilon(0.D0)) then
                         write(display_unit,fmt=900) 'Norm of the input stress for scaling cannot be zero'
                         return
                   endif
                   ! Run the identification
-                  if (findSolution() /= 0) then
+                  info = this%findSolution(Sm, D, ylp_result) 
+                  if (info /= criSuccess) then
                         write(display_unit,fmt=900) 'Cannot find solution for the scaling stress'
                         return
                   endif
                   
-                  if (abs(scal_s) < epsilon(0.D0)) then
+                  if (abs(ylp_result%scal_s) < epsilon(0.D0)) then
                         write(display_unit,fmt=900) 'Identification results in zero-length stress tensor.'
                         return
                   endif
-                  iunilen = 1.D0 / scal_s
+                  iunilen = 1.D0 / ylp_result%scal_s
             endif
             !
             allocate(yldRes(npoints))
@@ -244,26 +242,41 @@ contains
                         !       a temporary created in a call to Vec6ToMat33
                         sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) & 
                                        + w*this%base_vectors(:,3)
-                        Sm = Vec6ToMat33(sigma_vector)
-                        !                  
-                        if (findSolution() /= 0) cycle
+                        Sm%t = Vec6ToMat33(sigma_vector)
                         !
+                        info = this%findSolution(Sm, D, ylp_result)
+                        if (info /= criSuccess) then
+                            write(display_unit,fmt=860) 'Cannot find solution, datapoint dropped'
+                            cycle
+                        endif
+                        scal_s_rel = ylp_result%scal_s * iunilen
+                        !
+                        if (doLogging(criLogDebug,this%output%verbosity)) then
+                            call printIdentResults(display_unit,ylp_result%vS, &
+                                                                ylp_result%vA, &
+                                                                ylp_result%vSonA, &
+                                                                ylp_result%vSonAn, &
+                                                                ylp_result%R,info)
+                        endif
+
                         if (doLogging(criLogInfo,this%output%verbosity)) then
                               write(display_unit,fmt=510)
                               write(display_unit,fmt=500) 'theta', 'S', 'S_rel', 'dotW(A)' 
-                              write(display_unit,fmt=501) rad2deg(theta), scal_s, scal_s_rel, dotWonA
+                              write(display_unit,fmt=501) rad2deg(theta), ylp_result%scal_s, scal_s_rel, ylp_result%dotWonA
                               write(display_unit,fmt=510)
                         endif
-                        yldRes(i) = yldResult(rad2deg(theta), w, scal_s, scal_s_rel, norm_sona, dotWonA, &
+                        yldRes(i) = yldResult(rad2deg(theta), w, ylp_result%scal_s, scal_s_rel, &
+                                              norm2(ylp_result%vSonA), ylp_result%dotWonA, &
                                               pair_double(scal_s_rel * cos(theta), scal_s_rel * sin(theta)),&
-                                              pair_double(0.D0,0.D0), beta, R)
+                                              pair_double(0.D0,0.D0), beta, ylp_result%R)
                         
                         i = i + 1
                   enddo
                   deallocate(theta_range)
                   !
-                  ! Post-process the results
-                  npoints = size(yldRes)
+                  ! Post-process the results. Get the lower bound of container
+                  ! size and iterator - some points may have been dropped.
+                  npoints = min(size(yldRes), i)
                   do i = 1, npoints
                         ! Get the positions of the bracketing points:
                         posA = merge(npoints-1,i - 1,i == 1)
@@ -294,44 +307,7 @@ contains
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
 #undef MSG_GROUP_RULERS
-
-      contains 
-      
-            integer function findSolution() result(info)
-            implicit none
-            
-                  info = -1
-                  Sm_norm = norm2(Sm)
-                  if (Sm_norm < epsilon(0.D0)) then
-                        write(display_unit,fmt=900) 'Norm of the stress cannot be zero, skipping'
-                        return
-                  endif      
-                  if (this%normalizeSm) Sm = Sm / Sm_norm
-            
-                  ! Convert to 5D space
-                  vS = tens2vec5D(Sm)
-                  ! Enforce unit length of vS
-                  vS_norm = vec_norm2(vS)
-                  vS = vS / vS_norm
-
-                  !! -> Calculate corresponding strain rate vA
-                  call multilevelYLP(vS,vA,vSonA,R,info,.true.,this%ylp,verbose=this%output%verbosity)
-                  !
-                  dotWonA = dot_product(vA, vSonA)
-                  ! Calculate normalized stess
-                  norm_sona = vec_norm2(vSonA)
-                  scal_s = norm_sona / vS_norm
-                  vSonAn = vSonA / vec_norm2(vSonA) 
-                  ! Print vector form
-                  if (this%output%verbosity > 1) call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
-                  scal_s_rel = scal_s * iunilen
-                  info = 0
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-            end function
-
-
+      !
       end subroutine
       
       
