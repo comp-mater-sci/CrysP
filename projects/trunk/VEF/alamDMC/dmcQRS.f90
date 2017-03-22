@@ -17,9 +17,6 @@
 !> dmcQRS calculates plastic anisotropic properties, expressed in terms of q-values,
 !> directly from texture data, presented in form of SMT, CUR or CUB files.
 module dmcQRS
-!use nllsTR
-use alamYLP
-!use alamEval, only: alamEval_objFx_call_count
 use qrsTypes
 use dmcUtils
 use dmcStressDrivenModule
@@ -138,16 +135,15 @@ contains
     class(QRSModule),intent(inout)              :: this
     integer,intent(out)                       :: info
 
-    ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
-    ! coordinate system
-    double precision,dimension(3,3)           :: Dmcoord, SmIdent, Xmcoord_resume, Xtcoord_resume
-    type(SRTensor)                            :: D_t, S_t, sigma, sigma_t, SonA
+    ! Convention: strain rate and stress tensors in
+    ! - "Tensile sample coordinate system" have suffix _t
+    ! - "Material coordinate system" have no suffix.
+    ! 
+    type(SRTensor)                            :: D_t, S_t, sigma, sigma_t, SonA, D, Dresume_t, SmIdent
     double precision,dimension(3,3)           :: Mrot = 0.0
+    type(YLPResult)                           :: ylp_result
     !
-    double precision,dimension(5)             :: vA, vS,vSonA, vSonAn
     double precision                          :: fi1,phi,fi2
-    double precision                          :: SonA_len, scal_s
-    double precision                          :: R
     integer     :: i,j, k, npoints
     logical     :: useVMGuess
     double precision,dimension(:),allocatable       :: residuals,mfactors,phis, sigmas_x
@@ -220,72 +216,74 @@ contains
 
             ! Rotate from "tensile" to material coordinate system
             sigma = rotateSRTensorTo(sigma_t, Mrot)
-            
-            !            
-            vS = tens2vec5D(sigma%t) 
+            !
             if ((this%reuse_previous) .AND. (i > 1))  then
                 ! Reuse previously stored result in new coordinate system
                 ! Type of result (strain rate or stress) is decided in line mared with (***)
-                ! Rotate Xtcoord_resume to new coordinate system
-                Xmcoord_resume = rotateSRTensorTo(Xtcoord_resume,Mrot)
-                ! Set starting point
-                vA = tens2vec5D(Xmcoord_resume)
-                vA = vA / vec_norm2(vA)
+                ! Rotate Dresume_t to new coordinate system
+                D = rotateSRTensorTo(Dresume_t, Mrot)
                 ! Disable Von Mises guess in multilevelYLP: vA will be used as a starting point
                 useVMGuess = .false.
             endif
             !
-            call multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,this%ylp,verbose=this%output%verbosity)
-            if (info /= 0) then
+            info = this%findSolution(sigma, D, ylp_result, useVMGuess)
+            if (info /= criSuccess) then
                 write(display_unit,fmt=960)
                 exit
             endif
-            
-            residuals(i) = R
+            !
+            residuals(i) = ylp_result%R
             ! 
             if (this%calculate_MFactor) then
-                call getTaylorFactor(1,mfactors(i),info)
+                call getTaylorFactor(1, mfactors(i), info)
                 if (info /= 0) then
                     write(display_unit,980)
                     exit
                 endif
             endif
-            ! Calculate normalized stess
-            SonA_len = vec_norm2(vSonA)
-            scal_s = SonA_len / vec_norm2(vS)
-            vSonAn = vSonA / SonA_len
             !
-            if (doLogging(criLogInfo,this%output%verbosity)) call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
-            ! Convert AONSET vector to tensor form
-            Dmcoord = vec5D2tens(vA)
-
-            SonA%t = vec5D2tens(vSonA)
-            SmIdent = vec5D2tens(vSonAn)
+            if (doLogging(criLogInfo,this%output%verbosity)) then
+                ! TODO: refactor printIdentResults
+                call printIdentResults(display_unit, &
+                                       ylp_result%vS, &
+                                       ylp_result%vA, &
+                                       ylp_result%vSonA, &
+                                       ylp_result%vSonAn, &
+                                       ylp_result%R, &
+                                       info)
+            endif
+            !
+            SonA%t = vec5D2tens(ylp_result%vSonA)
+            SmIdent%t = vec5D2tens(ylp_result%vSonAn)
             
             if (doLogging(criLogInfo,this%output%verbosity)) then
                 write(display_unit,400)
                 do j=1,3
                     ! would be just:  write(display_unit,401) sigma(j,:),SmIdent(j,:),Dmcoord(j,:)
-                    write(display_unit,401) (sigma%t(j,k),k=1,3), (SmIdent(j,k),k=1,3), (Dmcoord(j,k), k=1,3)
+                    write(display_unit,401) (sigma%t(j,k),k=1,3), (SmIdent%t(j,k),k=1,3), (D%t(j,k), k=1,3)
                 enddo
             endif
             ! Rotate back to the "tensile test" coordinate system  
-            D_t%t = rotateSRTensorFrom(Dmcoord, Mrot)
+            D_t = rotateSRTensorFrom(D, Mrot)
             S_t = rotateSRTensorFrom(SonA, Mrot)
             !
             !(***) Prepare next iteration if re-using is requested.
             if (this%reuse_previous) then
+                
+                ! FIXME: the "reuse" scheme has to be reconsidered. The non-strainrate part
+                !        is completely flawed.
+                
                 ! Re-used data are always in "tensile" coordinate system (initial coordinate system) 
                 if (this%reuse_strainrate) then
-                    Xtcoord_resume = D_t%t
+                    Dresume_t = D_t
                 else
                     ! Rotate stresses to "tensile" coordinate system 
-                    Xtcoord_resume = rotateSRTensorFrom(SmIdent, Mrot)
+                    Dresume_t = rotateSRTensorFrom(SmIdent, Mrot)
                 endif
             endif
             !            
             ! Calculate output variables
-            qrsvalues(i) = calculateQRS(D_t%t,scal_s)
+            qrsvalues(i) = calculateQRS(D_t%t,ylp_result%scal_s)
             sigmas_x(i) = S_t%t(1,1) - S_t%t(3,3)
             !
             if (doLogging(criLogInfo,this%output%verbosity)) then
