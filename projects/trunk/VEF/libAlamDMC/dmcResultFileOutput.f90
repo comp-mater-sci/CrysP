@@ -129,6 +129,20 @@ contains
     !
     end function
     
+    !> Write out standard header: two lines: #1: column numbers, #2 column names
+    integer function writeStandardHeader(iounit, column_names, column_widths) result(info)
+    implicit none
+    integer,intent(in)                      :: iounit !< Output IO unit
+    character(len=*),dimension(:)           :: column_names ! Names of columns
+    integer,dimension(:),intent(in)         :: column_widths ! Widths of columns
+    !
+        info = writeColumnNumbers(iounit, size(column_names), column_widths)
+        if (info /= criSuccess) return
+        info = writeColumnNames(iounit, column_names, column_widths)
+    !
+    end function
+
+
     integer function writeData(iounit, data, column_widths, data_formats) result(info)
     implicit none
     integer,intent(in)                              :: iounit
