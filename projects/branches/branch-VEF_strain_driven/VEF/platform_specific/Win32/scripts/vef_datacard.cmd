@@ -1,1 +1,0 @@
-@python -OO -m %~n0 %*
