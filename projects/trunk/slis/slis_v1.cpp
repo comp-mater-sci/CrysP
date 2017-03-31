@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "slis_v1.hpp"
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <boost/filesystem/path.hpp>
 #include <boost/uuid/string_generator.hpp>
@@ -277,19 +278,14 @@ Slis::Slis()
 
 int Slis::load_license(const std::string & envvar)
 {
-	char buffer[1024];
-	size_t len = 0;
-	errno_t exitcode = getenv_s(&len, buffer, envvar.c_str());
-	if (exitcode != 0) return -1;
+	char * buffer = std::getenv(envvar.c_str());
+	if (!(buffer && std::strlen(buffer) > 0)) return -1;
 	// Process the content
-	boost::filesystem::path file_path;
-	if (exitcode == 0 && len > 0)
-		file_path = buffer;
+	boost::filesystem::path file_path(buffer);
 	file_path /= license_fname;
 	// try to get the license
 	int result = licenses.load(file_path.string());
 	license_loaded = (result == 0);
-
 	return result;
 
 }
