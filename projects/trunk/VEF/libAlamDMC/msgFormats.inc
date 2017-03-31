@@ -16,6 +16,7 @@
 ! Error messages
 #ifdef MSG_GROUP_ERRORS
       850 format(/,'Note:',1X,A,/)
+      860 format(/,'Warning:',1X,A,/)
       900 format(/,'Error:',1X,A,/)
 
       901 format('Error: incorrect format of configuration file:', 1X, A)
