@@ -30,7 +30,7 @@ xVectorEvolutionOutputRecord.f90
 )
 
 add_library(AlamDMC STATIC ${AlamDMC_SRCS})
-add_dependencies(AlamDMC alamYLP)
+target_link_libraries(AlamDMC alamYLP CRI)
 
 # Include files located in the same directories as the sources
 # and this CMakeLists.txt

@@ -23,7 +23,13 @@ set(fopt_DIR "../fopt/${CMAKE_BUILD_TYPE}")
 find_package(fopt REQUIRED)
 include_directories(${fopt_INCLUDE_DIR})
 
+set(fng_DIR "../fng/${CMAKE_BUILD_TYPE}")
+find_package(fng REQUIRED)
+include_directories(${fng_INCLUDE_DIR})
+
 add_subdirectory(alamDMC)
 add_subdirectory(libAlamDMC) 
 add_subdirectory(libAlamYLP)
+
+include("${COMMON_DIR}/python-bytecode.cmake")
 

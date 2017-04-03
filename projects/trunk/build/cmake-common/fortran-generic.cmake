@@ -9,7 +9,7 @@
 
 # Intel compiler specific
 
-set(Fortran_FLAGS -fpp "-warn all" -implicitnone "-stand f08" -standard-semantics)
+set(Fortran_FLAGS -fpp "-warn all" -implicitnone "-stand f08" -standard-semantics -diag-disable=5268,5194)
 
 set(Fortran_FLAGS_DEBUG -g -O0 -check all -ftrapuv "-debug all" "-debug-parameters all" -traceback)
 
