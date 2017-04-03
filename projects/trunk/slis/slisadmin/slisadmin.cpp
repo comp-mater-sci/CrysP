@@ -7,17 +7,17 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/uuid/string_generator.hpp>
 #include <boost/uuid/uuid.hpp>
-#include <boost/filesystem.hpp>
+// #include <boost/filesystem.hpp>
 #include "slis_v1.hpp"
 
-int _tmain(int argc, _TCHAR* argv[])
+int main(int argc, char * argv[])
 {
 	// Dummy program. We generate just one license file.
 	using namespace slis::slis_v1;
 	using namespace boost;
 	using namespace boost::gregorian;
 	using namespace std;
-	using namespace boost::filesystem;
+	// using namespace boost::filesystem;
 
 	int errcode;
 	uuids::string_generator gen;
