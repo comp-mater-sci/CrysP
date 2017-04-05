@@ -49,7 +49,7 @@ contains
       !> Calculates plastic strain rate corresponding to given deviatoric stress
       !>
       !> The subroutine assumes that multilevel model is already configured and initialized.
-      subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig,outunit,verbose)
+      subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig,outunit,verbose,objective_function)
       use nllsTR
       use alamEval
       implicit none
@@ -63,13 +63,17 @@ contains
       type(multilevelYLPConfig),optional,intent(in) :: YLPconfig !< Configuration parameters to be imposed to the search method
       integer,intent(in),optional   :: outunit    !< Unit number for messages
       integer,intent(in),optional   :: verbose
+      class(NormalizedV5DComp),target,optional,intent(inout) :: objective_function
       !
 
       double precision, dimension(alamEval_vSD_dim) :: vX, vX_lin
       type(multilevelYLPConfig) :: config !< Effective configuration parameters (defaults on entry)
       ! 
       !
-      type(NormalizedV5DComp) :: objFunc
+      class(NormalizedV5DComp),pointer :: objFunc
+      ! Default objective function declared as local variable: it will get
+      ! deallocated on return.
+      type(NormalizedV5DComp),allocatable,target :: objective_function_local
       type(nllsTRConf)        :: tr_config
       double precision        :: r1,r2
       logical                 :: use_vmGuess
@@ -104,6 +108,13 @@ contains
       ! Override the defaults by the user's settings:
       if (present(YLPconfig)) config = YLPconfig
       !
+      ! Set the objective function
+      if (present(objective_function)) then
+          objFunc => objective_function
+      else
+          allocate(objective_function_local)
+          objFunc => objective_function_local
+      endif
       ! Configure objective function      
       call objFunc%initFx(alamEval_vSD_dim,alamEval_vSD_dim,info)
       if (info /= 0) return 
