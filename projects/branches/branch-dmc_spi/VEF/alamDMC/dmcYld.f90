@@ -270,7 +270,7 @@ contains
                   !
                   ! Post-process the results. Get the lower bound of container
                   ! size and iterator - some points may have been dropped.
-                  npoints = min(size(yldRes), i)
+                  npoints = min(size(yldRes), i-1)
                   do i = 1, npoints
                         ! Get the positions of the bracketing points:
                         posA = merge(npoints-1,i - 1,i == 1)
@@ -281,7 +281,7 @@ contains
                         yldRes(i)%beta = rad2deg(yldRes(i)%beta)
                   enddo
                   !
-                  call writeYldResults(ofunit,yldRes,info,write_header=first_run)
+                  call writeYldResults(ofunit,yldRes(:npoints),info,write_header=first_run)
                   first_run = .false.
             enddo
             !
