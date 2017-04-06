@@ -215,8 +215,12 @@ implicit none
       if (log_info) write(ounit,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',objFunc%state%vF
       
       vSonA = objFunc%vSml
-      
-      info = criSuccess
+      !
+      if (R > config%obj_func_eps) then
+          info = criFailure
+      else
+          info = criSuccess
+      endif
       !
       end subroutine
 
