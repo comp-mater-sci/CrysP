@@ -6,7 +6,7 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>
-!>    \date Date of the initial release: 2017-02-08, as a result of refactoring 'basicModule.f90'
+!>    \date Date of the initial release: 2017-02-08, as a result of refactoring 'stressDrivenModule.f90'
 !>    $Revision$
 !>    $Date$
 !>
@@ -15,7 +15,9 @@
 !> Implementation of a altay-based DMC computiational module.
 module dmcStressDrivenModule
 use alamYLP
-use alamYLPConstants
+use dmcYLPResult
+use dmcAlamEvalCached
+use dmcResultTable
 use dmcBasicModule
 implicit none
     !> Abstract class implementing basic subset of operations that are shared by all 
@@ -32,17 +34,6 @@ implicit none
 
         procedure,pass(this)     :: findSolution => StressDrivenModule_findSolution
             
-    end type
-    
-    
-    type :: YLPResult
-        double precision,dimension(alamEval_vSD_dim) :: vA = 0.D0 
-        double precision,dimension(alamEval_vSD_dim) :: vS = 0.D0 
-        double precision,dimension(alamEval_vSD_dim) :: vSonA = 0.D0 
-        double precision,dimension(alamEval_vSD_dim) :: vSonAn = 0.D0 
-        double precision :: R = 0.D0
-        double precision :: dotWonA = 0.D0
-        double precision :: scal_s = 0.D0
     end type
 
 
@@ -100,6 +91,9 @@ contains
     !> by performing an iterative search.
     !>
     !> The results of the iterative search are placed in ylp_results.
+    !> \return criFailure on lack of convergence. ylp_result and D are set to the best solution found
+    !> \return criError or any criErr_* on severe error conditions. ylp_result and D are undefined
+    !> \return criSuccess on success
     integer function StressDrivenModule_findSolution(this,sigma, D, ylp_result, vM_guess) result(info)
     implicit none
     class(StressDrivenModule),intent(in)   :: this
@@ -112,9 +106,14 @@ contains
     !
     double precision :: vS_norm, vA_norm, SonA_norm
     logical :: use_vM_guess
+    type(NormalizedV5DCompCached),target :: obj_func
+    !
+    type(YLPResult)  :: ylp_result_retry
     !
         info = criErr_BadArgs
 
+        obj_func%ptr_db => db ! FIXME: static object
+        
         ! Convert input to the 5D space and make the unit vector(s).
         ! This also makes sure it is deviatoric.
         ylp_result%vS = tens2vec5D(sigma%t)
@@ -128,7 +127,6 @@ contains
             vA_norm = norm2(ylp_result%vA)
             if (vA_norm < epsilon(0.D0)) return
         endif
-        
         ! Calculate the corresponding strain rate vA
         call multilevelYLP( ylp_result%vS,    &
                             ylp_result%vA,    &
@@ -137,9 +135,33 @@ contains
                             info,             &
                             useVMGuess=use_vM_guess, &
                             YLPconfig=this%ylp, &
-                            verbose=this%output%verbosity)
+                            verbose=this%output%verbosity, &
+                            objective_function=obj_func)
+#define ENABLE_EXTENSION
+#ifdef ENABLE_EXTENSION
+        if (info == criFailure) then
+            ! Try another starting point
+            if (db%get(ylp_result%vS, ylp_result_retry%vA) == criSuccess) then
+                ! Set the retry
+                ylp_result_retry%vS = ylp_result%vS
+                !
+                ! get new solution
+                call multilevelYLP(ylp_result_retry%vS,    &
+                                   ylp_result_retry%vA,    &
+                                   ylp_result_retry%vSonA, &
+                                   ylp_result_retry%R,     &
+                                   info,             &
+                                   useVMGuess=.false., &
+                                   YLPconfig=this%ylp, &
+                                   verbose=this%output%verbosity, &
+                                   objective_function=obj_func)
+                ! Use the better of the two
+                if (ylp_result_retry%R < ylp_result%R) ylp_result = ylp_result_retry
+            endif
+        endif
+#endif ! ENABLE_EXTENSION
         SonA_norm = norm2(ylp_result%vSonA)
-        if ((info /= 0) .or. (SonA_norm < epsilon(0.D0))) then
+        if ((info /= criFailure .and. info /= criSuccess) .or. (SonA_norm < epsilon(0.D0))) then
             info = criError
             return
         endif
@@ -149,7 +171,7 @@ contains
         ! Calculate normalized stess
         ylp_result%vSonAn = ylp_result%vSonA / SonA_norm
         D%t = vec5D2tens(ylp_result%vA)
-        info = criSuccess
+        ! Return the info from the last call to multilevelYLP (
     !
     end function
     
@@ -183,29 +205,5 @@ contains
     !
     end subroutine
 
-
-    !> Print detailed info about YLP solution based on the content of YLPResult 
-    !> object.
-    integer function printYLPResult(iounit, ylp_result) result(info)
-    implicit none
-    integer,intent(in)              :: iounit
-    type(YLPResult),intent(in)      :: ylp_result
-    !
-        write(iounit,fmt=100)
-        write(iounit,fmt=200) 'Requested stress:', ylp_result%vS
-        write(iounit,fmt=200) 'Identified scaled stress:', ylp_result%vSonAn
-        write(iounit,fmt=201) 'Norm of stress residual:', ylp_result%R
-        write(iounit,fmt=100)
-        write(iounit,fmt=200) 'Stress on vA:', ylp_result%vSonA
-        write(iounit,fmt=201) 'Norm of stress on vA:', norm2(ylp_result%vSonA)
-        write(iounit,fmt=100)
-        !
-        info = criSuccess
-        !
-        100 format('(/)')
-        200 format(A,T40,5(E12.5,1X))
-        201 format(A,T40,E12.5)
-    !
-    end function
 
 end module

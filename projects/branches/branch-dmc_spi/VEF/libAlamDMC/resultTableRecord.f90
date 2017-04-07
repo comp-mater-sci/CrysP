@@ -1,0 +1,38 @@
+!
+! $Id$
+!
+!>    \author Jerzy Gawad                                                
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>                                                             
+!>    \date Date of the initial release: 2017-04-07
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+
+!> Datatype for storing essential results from the multi-level model.
+module dmcResultTableRecord
+use criErrcodes
+use alamYLPConstants
+implicit none
+
+    type :: ResultTableRecord
+        
+        double precision,dimension(alamEval_vSD_dim) :: vA = 0.D0
+        double precision,dimension(alamEval_vSD_dim) :: vSonA = 0.D0
+        
+    end type
+    
+!
+! Instantiate xVector_ResultTableRecord
+!
+#define _VALUE_TYPE type(ResultTableRecord)
+#define _VALUE_NAME ResultTableRecord
+#include "criExpandableVectorTemplates.fpp"
+#undef _VALUE_TYPE
+#undef _VALUE_NAME
+
+end module
