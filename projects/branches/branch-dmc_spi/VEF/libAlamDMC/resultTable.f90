@@ -13,6 +13,8 @@
 !>
 !>    History of modifications: (see svn log)
 
+#include "criMacros.fpp"
+
 !> In-memory cache/table of the recent results from the multi-level model.
 module dmcResultTable
 use criErrcodes
@@ -96,15 +98,13 @@ contains
             write(*,'(A,1X,F7.2)') 'min angle: ', rad2deg(angles(min_idx))
             ! -->> TESTING
             if (present(max_angle)) then
-                if (angles(min_idx) > max_angle) info = criFailure
+                CHOOSE(info, angles(min_idx) > max_angle, criFailure, criSuccess)
             else
                 info = criSuccess
             endif
             if (info == criSuccess) A = this%table%values(min_idx)%vA
         endif
-
     !
     end function
-
 
 end module
