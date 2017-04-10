@@ -33,7 +33,9 @@ implicit none
         procedure,pass(this)     :: printConfig => StressDrivenModule_printConfig
 
         procedure,pass(this)     :: findSolution => StressDrivenModule_findSolution
-            
+
+        procedure,pass(this)     :: search => StressDrivenModule_search
+
     end type
 
 
@@ -128,15 +130,8 @@ contains
             if (vA_norm < epsilon(0.D0)) return
         endif
         ! Calculate the corresponding strain rate vA
-        call multilevelYLP( ylp_result%vS,    &
-                            ylp_result%vA,    &
-                            ylp_result%vSonA, &
-                            ylp_result%R,     &
-                            info,             &
-                            useVMGuess=use_vM_guess, &
-                            YLPconfig=this%ylp, &
-                            verbose=this%output%verbosity, &
-                            objective_function=obj_func)
+        info = this%search(ylp_result, use_vM_guess, obj_func)
+        
 #define ENABLE_EXTENSION
 #ifdef ENABLE_EXTENSION
         if (info == criFailure) then
@@ -146,15 +141,7 @@ contains
                 ylp_result_retry%vS = ylp_result%vS
                 !
                 ! get new solution
-                call multilevelYLP(ylp_result_retry%vS,    &
-                                   ylp_result_retry%vA,    &
-                                   ylp_result_retry%vSonA, &
-                                   ylp_result_retry%R,     &
-                                   info,             &
-                                   useVMGuess=.false., &
-                                   YLPconfig=this%ylp, &
-                                   verbose=this%output%verbosity, &
-                                   objective_function=obj_func)
+                info = this%search(ylp_result_retry, .false., obj_func)
                 ! Use the better of the two
                 if (ylp_result_retry%R < ylp_result%R) ylp_result = ylp_result_retry
             endif
@@ -170,11 +157,38 @@ contains
         ylp_result%scal_s = SonA_norm / vS_norm
         ! Calculate normalized stess
         ylp_result%vSonAn = ylp_result%vSonA / SonA_norm
+        !
         D%t = vec5D2tens(ylp_result%vA)
-        ! Return the info from the last call to multilevelYLP (
+        ! Return the info from the last call to 'search'
+        !
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
     !
     end function
-    
+
+
+    !> Wrapper around multilevelYLP that uses YLPResult for communicating with the caller.
+    !> 
+    !> It applies settings provided as members of StressDrivenModule.
+    integer function StressDrivenModule_search(this, ylp_result, use_vM_guess, obj_func) result(info)
+    implicit none
+    class(StressDrivenModule),intent(in):: this
+    type(YLPResult),intent(inout)           :: ylp_result
+    logical,intent(in)                      :: use_vM_guess
+    class(NormalizedV5DComp),intent(inout)  :: obj_func
+    !
+        call multilevelYLP(ylp_result%vS,    &
+                           ylp_result%vA,    &
+                           ylp_result%vSonA, &
+                           ylp_result%R,     &
+                           info,             &
+                           useVMGuess=use_vM_guess, &
+                           YLPconfig=this%ylp, &
+                           verbose=this%output%verbosity, &
+                           objective_function=obj_func)
+    !
+    end function
     
     
     !> Read configuration of the solver (libalamylp)
