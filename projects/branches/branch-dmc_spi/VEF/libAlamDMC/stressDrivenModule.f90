@@ -131,13 +131,13 @@ contains
         endif
         ! Calculate the corresponding strain rate vA
         info = this%search(ylp_result, use_vM_guess, obj_func)
-        
-#define ENABLE_EXTENSION
-#ifdef ENABLE_EXTENSION
         if (info == criFailure) then
             ! Try another starting point
             if (db%get(ylp_result%vS, ylp_result_retry%vA) == criSuccess) then
-                ! Set the retry
+                if (doLogging(criLogDebug,this%output%verbosity)) then
+                     write(display_unit,860) 'Poor convergence, re-attempting to find the solution.'
+                endif
+                ! Set the re-try point
                 ylp_result_retry%vS = ylp_result%vS
                 !
                 ! get new solution
@@ -146,7 +146,6 @@ contains
                 if (ylp_result_retry%R < ylp_result%R) ylp_result = ylp_result_retry
             endif
         endif
-#endif ! ENABLE_EXTENSION
         SonA_norm = norm2(ylp_result%vSonA)
         if ((info /= criFailure .and. info /= criSuccess) .or. (SonA_norm < epsilon(0.D0))) then
             info = criError
