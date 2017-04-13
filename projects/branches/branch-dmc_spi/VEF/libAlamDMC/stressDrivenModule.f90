@@ -26,6 +26,8 @@ implicit none
 
         type(multilevelYLPConfig)     :: ylp
 
+        type(YLPResultTolerance)      :: solution_tolerance
+
     contains
 
         procedure,pass(this)     :: readConfig => StressDrivenModule_readConfig
@@ -96,7 +98,7 @@ contains
     !> \return criFailure on lack of convergence. ylp_result and D are set to the best solution found
     !> \return criError or any criErr_* on severe error conditions. ylp_result and D are undefined
     !> \return criSuccess on success
-    integer function StressDrivenModule_findSolution(this,sigma, D, ylp_result, vM_guess) result(info)
+    integer function StressDrivenModule_findSolution(this,sigma, D, ylp_result, vM_guess, is_acceptable) result(info)
     implicit none
     class(StressDrivenModule),intent(in)   :: this
     type(SRTensor),intent(in)       :: sigma !< Input stress
@@ -104,7 +106,8 @@ contains
     type(YLPResult),intent(out)     :: ylp_result !< Results of the interative search
     !> Flag: use von Mises inital guess (default: .true.). If false, D will be used as the
     !> starting point for the iterative search.
-    logical,optional                :: vM_guess 
+    logical,intent(in),optional     :: vM_guess
+    logical,intent(out),optional    :: is_acceptable
     !
     double precision :: vS_norm, vA_norm, SonA_norm
     logical :: use_vM_guess
@@ -115,7 +118,9 @@ contains
         info = criErr_BadArgs
 
         obj_func%ptr_db => db ! FIXME: static object
-        
+        !
+        if (present(is_acceptable)) is_acceptable = .false.
+        !
         ! Convert input to the 5D space and make the unit vector(s).
         ! This also makes sure it is deviatoric.
         ylp_result%vS = tens2vec5D(sigma%t)
@@ -147,7 +152,7 @@ contains
             endif
         endif
         SonA_norm = norm2(ylp_result%vSonA)
-        if ((info /= criFailure .and. info /= criSuccess) .or. (SonA_norm < epsilon(0.D0))) then
+        if (is_error(info) .or. (SonA_norm < epsilon(0.D0))) then
             info = criError
             return
         endif
@@ -156,6 +161,9 @@ contains
         ylp_result%scal_s = SonA_norm / vS_norm
         ! Calculate normalized stess
         ylp_result%vSonAn = ylp_result%vSonA / SonA_norm
+        if (present(is_acceptable)) then
+            is_acceptable = checkYLPResult(ylp_result, this%solution_tolerance, this%ylp%obj_func_eps)
+        endif
         !
         D%t = vec5D2tens(ylp_result%vA)
         ! Return the info from the last call to 'search'
