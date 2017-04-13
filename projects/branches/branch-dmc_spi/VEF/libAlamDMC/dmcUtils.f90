@@ -14,11 +14,10 @@
 !
 !> Various utility subroutines and functions
 module dmcUtils
-use criMathUtils
-use criRuntime
+use,intrinsic :: iso_fortran_env, only: output_unit
 implicit none
-      
-      integer,parameter       :: display_unit = 6
+
+      integer,parameter       :: display_unit = output_unit
 
       character,parameter     :: default_comment_sign = '#'
      
