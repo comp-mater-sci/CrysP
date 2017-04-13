@@ -176,7 +176,7 @@ contains
       integer                 :: i,npoints, ofunit
       !
       integer :: posA, posB
-      logical :: first_run, drop_point
+      logical :: first_run, acceptable_point
       double precision,parameter :: beta = 0.D0
       double precision,parameter :: residual_tolerance_factor = 5.D0
       !
@@ -243,13 +243,11 @@ contains
                                        + w*this%base_vectors(:,3)
                         Sm%t = Vec6ToMat33(sigma_vector)
                         !
-                        info = this%findSolution(Sm, D, ylp_result)
+                        info = this%findSolution(Sm, D, ylp_result, is_acceptable=acceptable_point)
                         ! Consider what to do with unsuccessful search
                         if (info /= criSuccess) then
-                            drop_point = .true.
-                            ! Note: we can meaningfully check ylp_result only if it's a failure and not an error.
-                            if (info == criFailure) drop_point = (ylp_result%R > residual_tolerance_factor * this%ylp%obj_func_eps)
-                            if (drop_point) then
+                            ! Note: we can meaningfully check ylp_result only on success or failure
+                            if ((info == criFailure) .and. (.not. acceptable_point)) then
                                 write(display_unit,fmt=860) 'Cannot find solution, datapoint dropped'
                                 cycle
                             endif
