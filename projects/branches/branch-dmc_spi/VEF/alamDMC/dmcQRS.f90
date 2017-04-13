@@ -149,8 +149,8 @@ contains
     type(YLPResult)                           :: ylp_result
     !
     double precision                          :: fi1,phi,fi2, residual_resume
-    integer     :: i,j, k, npoints,ofunit
-    logical     :: useVMGuess
+    integer     :: i,j, k, npoints, npoints_ok, ofunit
+    logical     :: useVMGuess, acceptable_point
     !
     type(QRSOutputData) :: results
     !
@@ -182,9 +182,8 @@ contains
         sigma_t%t(1,1) = root32/dsqrt(this%rho**2-this%rho+1.D0)
         sigma_t%t(2,2) = this%rho*sigma_t%t(1,1)
         !
-        i = 0
+        i = 1
         do while (this%ptr_range%next(fi2))
-            i = i + 1
             !
             ! use von Mises guess as a default
             useVMGuess = .true.
@@ -212,11 +211,12 @@ contains
                 endif
             endif
             !
-            info = this%findSolution(sigma, D, ylp_result, useVMGuess)
-            if (info /= criSuccess) then
-                write(display_unit,fmt=960)
-                exit
+            info = this%findSolution(sigma, D, ylp_result, useVMGuess, is_acceptable=acceptable_point)
+            if ((info /= criSuccess) .and. .not. acceptable_point) then
+                write(display_unit,fmt=860) 'Cannot find solution, datapoint dropped'
+                cycle
             endif
+            if (is_error(info)) exit
             !
             if (doLogging(criLogInfo,this%output%verbosity)) then
                 info = printYLPResult(display_unit, ylp_result)
@@ -270,13 +270,25 @@ contains
                 endif
             end associate
             !
+            i = i + 1
+            !
             info = criSuccess
         enddo
         ! 
         ! End of the main loop, check what's the status of the last operation
-        if (info /= criSuccess) return
+        if (is_error(info)) return
         !
-        info = this%fileOutput(ofunit, results, header=.true.)
+        npoints_ok = i-1
+        if (npoints /= npoints_ok) then 
+            write(display_unit,fmt=850) 'There were unconverged solutions, so some of datapoints are dropped'
+            ! FIXME: temporary solution: folding cannot be done if there are missing points.
+            if (this%fold_symmetry) then
+                write(display_unit,fmt=850) 'Folding is turned off.'
+                this%fold_symmetry = .false.
+            endif
+        endif
+        !
+        info = this%fileOutput(ofunit, results, header=.true., restrict=npoints_ok)
         close(ofunit)
         !
         !
@@ -297,12 +309,13 @@ contains
 
 
     !> Write out results to the output file
-    integer function QRSModule_fileOutput(this, iounit, data_record, header) result(info)
+    integer function QRSModule_fileOutput(this, iounit, data_record, header, restrict) result(info)
     implicit none
     class(QRSModule),intent(in)                 :: this
     integer,intent(in)                          :: iounit !< Output IO unit
     type(QRSOutputData),intent(in),optional     :: data_record !< Data to be written out
     logical,intent(in),optional                 :: header !< Header to be written out
+    integer,intent(in),optional                 :: restrict
     !
     integer :: i, npoints, left, right, stride, ierr
     !
@@ -321,6 +334,10 @@ contains
             info = criErr_IOWrite
             ! FIXME: flawed assumption, other arrays may have different size
             ALLOCATED_SIZE(npoints, data_record%phis)
+            if (present(restrict)) then
+                RETURN_IF_WITH(npoints < restrict, info=criError)
+                npoints = restrict
+            endif
             ! Write output file
             if (this%fold_symmetry) then
                 ! \todo Use FCRI::criArray::fold_array for this task. It allows multiple folds!
