@@ -61,7 +61,6 @@ implicit none
       !
       integer                 :: info, ioerr, cnfunit
       !
-      character(len=errmsg_len) :: error_message
       character(len=128)  :: progname
       !
 #ifdef DMC_USE_SLIS
@@ -135,16 +134,11 @@ implicit none
       endif
       !
       ! OK, the configuration stage has been finished. 
-      ! Initialize the micro-scale model
+      ! Initialize the module
       !
       
-      if (the_module%initialize() /= 0) then
-            if (len(errmsg) == 0) then
-                  errmsg = 'Fatal error: cannot initialize the multilevel model.'
-            else
-                  error_message = errmsg
-                  errmsg = 'Fatal error during initialization of the multilevel model: ' // trim(error_message)
-            endif
+      if (the_module%initialize() /= criSuccess) then
+            if (len(errmsg) == 0) errmsg = 'Cannot initialize the module.'
             call finalize(stopcode_runtimeerror)
       endif
        
@@ -155,7 +149,7 @@ implicit none
       ! Run the module
       call the_module%run(info)
       !
-      write(display_unit,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
+          write(display_unit,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
       write(display_unit,'(A,1X,A,1X,A)',advance='no') 'Execution of module', trim(moduleName), 'finished'
       if (info == 0) then
             write(display_unit,'(1X,A)') 'succesfully.'
