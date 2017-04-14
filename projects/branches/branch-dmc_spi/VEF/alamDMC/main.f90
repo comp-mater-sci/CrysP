@@ -41,10 +41,6 @@ use fslis
 #define ALAMDMC_FEATURE_UUID 'ff921f1e-fa42-11e5-97dc-ecf4bb152acb'//C_NULL_CHAR
 #endif
 implicit none
-      
-      
-      integer,parameter       :: cnfunit_default = 90, ofunit = 91
-      !
       !
       integer,parameter       :: ncommands = 6
       integer,parameter       :: Q_id = 1, UDSA_id = 2, ASR_id = 3, YLD_id = 4, EWC_id = 5, ADP_id = 6
@@ -63,12 +59,7 @@ implicit none
       !
       character(len=128)  :: progname
       !
-#ifdef DMC_USE_SLIS
-!      character(kind=c_char),dimension(*),parameter :: alamdmc_uuid = 'ff921f1e-fa42-11e5-97dc-ecf4bb152acb'//C_NULL_CHAR
-!      logical(kind=c_bool),parameter :: print_license = .true.
-#endif
-      !
-      info = 1
+      info = criError
       ioerr = 0
       !
       write(progname,fmt=300)
@@ -102,7 +93,7 @@ implicit none
       !
       ! open and read the config file      
       write(display_unit,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(2))
-      cnfunit = openOrDie(fpath=trim(cmdline%argv(2)),status='old',unit=cnfunit_default)
+      cnfunit = openOrDie(fpath=trim(cmdline%argv(2)),status='old')
       !
       info = -1
       ! Create a module of appropriate type and read its configuration:
@@ -136,7 +127,6 @@ implicit none
       ! OK, the configuration stage has been finished. 
       ! Initialize the module
       !
-      
       if (the_module%initialize() /= criSuccess) then
             if (len(errmsg) == 0) errmsg = 'Cannot initialize the module.'
             call finalize(stopcode_runtimeerror)
@@ -149,7 +139,7 @@ implicit none
       ! Run the module
       call the_module%run(info)
       !
-          write(display_unit,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
+      write(display_unit,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
       write(display_unit,'(A,1X,A,1X,A)',advance='no') 'Execution of module', trim(moduleName), 'finished'
       if (info == 0) then
             write(display_unit,'(1X,A)') 'succesfully.'
