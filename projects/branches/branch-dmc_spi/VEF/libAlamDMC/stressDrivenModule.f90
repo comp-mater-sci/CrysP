@@ -34,6 +34,8 @@ implicit none
 
         procedure,pass(this)     :: printConfig => StressDrivenModule_printConfig
 
+        procedure,pass(this)     :: finalize => StressDrivenModule_finalize
+
         procedure,pass(this)     :: findSolution => StressDrivenModule_findSolution
 
         procedure,pass(this)     :: search => StressDrivenModule_search
@@ -90,6 +92,17 @@ contains
     end function
     
     
+    !> Finalization of the module
+    integer function StressDrivenModule_finalize(this) result(info)
+    implicit none
+    class(StressDrivenModule),intent(inout) :: this
+    !
+        if (doLogging(criLogDebug, this%output%verbosity)) then
+            write(display_unit,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
+        endif
+        info = this%BasicModule%finalize()
+    !
+    end function
     
     !> Calculate plastic strain rate D that corresponds to the superimposed input stress `sigma`
     !> by performing an iterative search.

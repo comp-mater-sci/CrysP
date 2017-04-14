@@ -21,7 +21,6 @@ program alamDMC
 use alamYLP
 use alamEval, only: alamEval_objFx_call_count
 use dmcUtils
-use altaySub
 use altayConfig, only: altayConfigData
 use commonConfig
 use commonUtils
@@ -139,20 +138,17 @@ implicit none
       ! Run the module
       call the_module%run(info)
       !
-      write(display_unit,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
       write(display_unit,'(A,1X,A,1X,A)',advance='no') 'Execution of module', trim(moduleName), 'finished'
       if (info == 0) then
             write(display_unit,'(1X,A)') 'succesfully.'
       else
             write(display_unit,'(1X,A)') 'with errors.'
       endif
-
-      call finalizeAltay(info)
-      if (info /= 0) then
-            write(display_unit,'(A)') 'Problems have been encountered while finalizing libaltay'
-      endif
-      
-
+      !
+      ! Finalize the module
+      info = the_module%finalize()
+      !
+      call finalize(info)
 
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"

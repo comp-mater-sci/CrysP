@@ -72,7 +72,9 @@ implicit none
             procedure,pass(this)     :: printConfig => BasicModule_printConfig
 
             procedure,pass(this)     :: run => BasicModule_run
-            
+
+            procedure,pass(this)     :: finalize => BasicModule_finalize
+
             !>@{ \name Helper procedures
             procedure,pass(this)      :: openOutputFile => BasicModule_openOutputFile
             !>@}
@@ -214,6 +216,25 @@ contains
     !
     end subroutine
 
+
+    !> Finalization of the module
+    integer function BasicModule_finalize(this) result(info)
+    use altaySub
+    implicit none
+    class(BasicModule),intent(inout) :: this
+    !
+    integer :: ierr
+    !
+        call finalizeAltay(ierr)
+        if (ierr /= altaySub_OK) then
+            errmsg = 'Problems have been encountered while finalizing libaltay'
+            info = criError
+        else
+            info = criSuccess
+        endif
+    !
+    end function
+    
 
     !> Open output file
     integer function BasicModule_openOutputFile(this, ext, ofunit, suffix) result(info)
