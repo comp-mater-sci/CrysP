@@ -176,20 +176,11 @@ private
       interface discreteRange
             module procedure discreteRange_init
       end interface
-      
-      !> Generic interface for non-virtual calls to the methods "next"   
-      interface next
-            module procedure uniformRange_next, biasedRange_next, multiBiasedRange_next, discreteRange_next
-      end interface
-      
-      
-      
+
 !>@{ \name Public datatypes
 public :: range_type, uniformRange, biasedRange, doubleBiasedRange, multiBiasedRange, discreteRange
 public :: bias_t
 !>@}
-
-public :: next
 
 contains
 
