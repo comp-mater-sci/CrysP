@@ -108,7 +108,7 @@ contains
     integer,intent(out) :: info
     !
     _VALUE_TYPE,dimension(:),allocatable :: tmp
-    integer :: ierr, idx_last
+    integer :: ierr, idx_last, new_size, i, new_min_size
     !
         if (nelem <= 0) then
             ! Expand by 0 is legal, but ignored
@@ -116,16 +116,48 @@ contains
             if (nelem == 0) info = criSuccess
             return
         endif
-        info = criErr_MemAlloc
         if (.not. allocated(v%xdata)) then
             v%values => null()
             allocate(v%xdata(nelem), stat=ierr)
-            if (ierr /= 0) return
+            if (ierr /= 0) then
+                info = criErr_MemAlloc
+                return
+            endif
         else
+            info = criErr_BadArgs
             idx_last = xVector_size(v)
-            if (idx_last + nelem > size(v%xdata)) then
-                allocate(tmp(2*(idx_last + nelem)))
-                tmp(1:idx_last) = v%xdata(1:idx_last)
+            new_min_size = idx_last + nelem
+            ! Check for integer overflow
+            if (new_min_size < idx_last) return
+            if (new_min_size > size(v%xdata)) then
+                new_size = 2*(new_min_size)
+                ! Check for integer overflow
+                if (new_size < idx_last) then
+                    ! new_size is bigger than huge(), so let's limit new_size
+                    ! to that bound.
+                    new_size = huge(idx_last)
+                    ! We need to guarantee that the storage is expanded to 
+                    ! make space for at least nelem objects.
+                    if (new_size < new_min_size) return
+                endif
+                allocate(tmp(new_size), stat=ierr)
+                if (ierr /= 0) then
+                    info = criErr_MemAlloc
+                    return
+                endif
+                ! Copy data from the old storage to the newly allocated
+                ! storate.
+                ! Note: normally this operation should be just an assignment
+                ! statement as below. However, for some unclear reason Intel
+                ! Fortran compiler makes an temporary array (even though there
+                ! are neither overlaps, nor storage aliasing) on the stack.
+                ! This makes the code crash due to stack corruption.
+                ! tmp(1:idx_last) = v%xdata(1:idx_last)
+                ! DO CONCURRENT loop does not involve temporary array, but is
+                ! slower.
+                do concurrent (i=1:idx_last)
+                    tmp(i) = v%xdata(i)
+                enddo
                 deallocate(v%xdata)
                 call move_alloc(tmp,v%xdata)
                 v%values => v%xdata(1:idx_last)
