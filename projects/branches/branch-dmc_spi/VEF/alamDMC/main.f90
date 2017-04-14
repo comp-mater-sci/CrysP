@@ -72,10 +72,6 @@ implicit none
       info = 1
       ioerr = 0
       !
-      !! FIXME -->>
-      info = db%reserve(50000)
-      !! <<--
-      !
       write(progname,fmt=300)
       !
       cmdline = commandLine(progname,description='parameters: command_name configuration_file')
