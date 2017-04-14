@@ -169,7 +169,7 @@ contains
     
     
     !> Returns the number of elements currently stored in the vector
-    integer function __FX(xVector_size, _VALUE_NAME)(v) result(res)
+    pure integer function __FX(xVector_size, _VALUE_NAME)(v) result(res)
     implicit none
     type(__TYPE_NAME(_VALUE_NAME)),intent(in) :: v
     !
@@ -181,7 +181,7 @@ contains
     
     !> Returns the size of the storage space currently allocated for the vector, 
     !> expressed in terms of elements.
-    integer function __FX(xVector_capacity, _VALUE_NAME)(v) result(res)
+    pure integer function __FX(xVector_capacity, _VALUE_NAME)(v) result(res)
     implicit none
     type(__TYPE_NAME(_VALUE_NAME)),intent(in) :: v
     !
