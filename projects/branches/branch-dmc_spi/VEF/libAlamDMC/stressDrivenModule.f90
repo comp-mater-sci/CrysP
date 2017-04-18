@@ -12,6 +12,8 @@
 !>
 !>    History of modifications: (see svn log)
 
+#include "criMacros.fpp"
+
 !> Implementation of a altay-based DMC computiational module.
 module dmcStressDrivenModule
 use alamYLP
@@ -20,15 +22,20 @@ use dmcAlamEvalCached
 use dmcResultTable
 use dmcBasicModule
 implicit none
+
+
     !> Abstract class implementing basic subset of operations that are shared by all 
     !> stress-drien computational modules
     type,extends(BasicModule) :: StressDrivenModule
 
-        type(multilevelYLPConfig)     :: ylp
+        type(multilevelYLPConfig)   :: ylp
 
-        type(YLPResultTolerance)      :: solution_tolerance
+        type(YLPResultTolerance)    :: solution_tolerance
+
+        class(ResultTable),pointer  :: ptr_db => null()
 
     contains
+        procedure,pass(this)     :: initialize => StressDrivenModule_initialize
 
         procedure,pass(this)     :: readConfig => StressDrivenModule_readConfig
 
@@ -44,6 +51,29 @@ implicit none
 
 
 contains
+
+
+    !> Initialize a configured StressDrivenModule object
+    integer function StressDrivenModule_initialize(this) result(info)
+    implicit none
+    class(StressDrivenModule),intent(inout)          :: this
+    !
+    integer :: ierr
+    !
+        !
+        ! Let the superclass do its initialization first ...
+        !
+        info = this%BasicModule%initialize()
+        !
+        ! ... and then do your own initialization
+        !
+        ! Allocate and possibly populate the result cache
+        allocate(this%ptr_db, stat = ierr)
+        RETURN_IF_WITH(ierr /= 0, info=criErr_MemAlloc)
+        ! Try to load data
+        ierr = this%ptr_db%load(trim(this%output%outputPrefix)//'.rtdb')
+    !
+    end function
 
 
     
@@ -97,9 +127,21 @@ contains
     implicit none
     class(StressDrivenModule),intent(inout) :: this
     !
+        !
+        ! Do your own finalization first ...
+        !
         if (doLogging(criLogDebug, this%output%verbosity)) then
             write(display_unit,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
         endif
+        !
+        ! Save the result cache and delete the object
+        if (associated(this%ptr_db)) then
+            info = this%ptr_db%store(trim(this%output%outputPrefix)//'.rtdb')
+            deallocate(this%ptr_db)
+        endif
+        !
+        ! ... and then finalize the superclass.
+        !
         info = this%BasicModule%finalize()
     !
     end function
@@ -130,7 +172,7 @@ contains
     !
         info = criErr_BadArgs
 
-        obj_func%ptr_db => db ! FIXME: static object
+        obj_func%ptr_db => this%ptr_db
         !
         if (present(is_acceptable)) is_acceptable = .false.
         !
@@ -149,9 +191,9 @@ contains
         endif
         ! Calculate the corresponding strain rate vA
         info = this%search(ylp_result, use_vM_guess, obj_func)
-        if (info == criFailure) then
+        if (info == criFailure .and. associated(this%ptr_db)) then
             ! Try another starting point
-            if (db%get(ylp_result%vS, ylp_result_retry%vA) == criSuccess) then
+            if (this%ptr_db%get(ylp_result%vS, ylp_result_retry%vA) == criSuccess) then
                 if (doLogging(criLogDebug,this%output%verbosity)) then
                      write(display_unit,860) 'Poor convergence, re-attempting to find the solution.'
                 endif

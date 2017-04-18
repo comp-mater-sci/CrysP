@@ -46,9 +46,6 @@ private
         
     end type
 
-    
-    ! FIXME: static object, and at wrong place.
-    type(ResultTable),target,save :: db
 
 contains
 
