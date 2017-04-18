@@ -52,7 +52,7 @@ contains
             ! Normalize vX before storing it. It is also done by objectiveEval
             ! in the superclass.
             vX_norm = vX / norm2(vX)
-            info = this%ptr_db%store(vX_norm, this%NormalizedV5DComp%vSml)
+            info = this%ptr_db%put(vX_norm, this%NormalizedV5DComp%vSml)
         endif
     !
     end subroutine

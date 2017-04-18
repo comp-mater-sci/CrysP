@@ -23,20 +23,26 @@ use alamYLPConstants
 use dmcResultTableRecord
 implicit none
 
-public :: ResultTable, db
+public :: ResultTable
 
 private
 
     type :: ResultTable
     
+        integer,private                         :: saved_session_idx = 0
+        
         type(xVector_ResultTableRecord),private :: table
         
     contains
         procedure,pass(this)    :: reserve
     
-        procedure,pass(this)    :: store
+        procedure,pass(this)    :: put
        
         procedure,pass(this)    :: get
+        
+        procedure,pass(this)    :: store
+        
+        procedure,pass(this)    :: load
         
     end type
 
@@ -57,7 +63,7 @@ contains
     
     
     !> Add result to the database
-    integer function store(this, A, SonA) result(info)
+    integer function put(this, A, SonA) result(info)
     implicit none
     class(ResultTable),intent(inout)   :: this
     double precision,dimension(alamEval_vSD_dim),intent(in) :: A
@@ -107,4 +113,63 @@ contains
     !
     end function
 
+
+    !> Store the values in file fpath
+    integer function store(this, fpath) result(info)
+    implicit none
+    class(ResultTable),intent(inout)    :: this
+    character(len=*),intent(in)         :: fpath
+    !
+    integer :: iounit, ierr, i
+    
+        if (size(this%table) > this%saved_session_idx) then
+            open(newunit=iounit, file=fpath, position='APPEND', &
+                 status='UNKNOWN', form='UNFORMATTED', iostat=ierr)
+            RETURN_IF_WITH(ierr /= 0, info=criErr_IOOpen)
+            do i = this%saved_session_idx + 1, size(this%table)
+                write(iounit, iostat=ierr) this%table%values(i)
+            enddo
+            if (ierr /= 0) then
+                ! clear the cache
+                close(iounit, status='DELETE', iostat=ierr)
+                this%saved_session_idx = 0
+            else
+                this%saved_session_idx = this%saved_session_idx + i - 1
+                close(iounit, iostat=ierr)
+            endif
+        endif
+        info = criSuccess
+    !
+    end function
+
+
+    !> Load the values from file fpath. The file may or may not exist.
+    integer function load(this, fpath) result(info)
+    implicit none
+    class(ResultTable),intent(inout)    :: this
+    character(len=*),intent(in)         :: fpath
+    !
+    integer :: iounit, ierr
+    type(ResultTableRecord) :: tmp
+    !
+        info = criSuccess
+        open(newunit=iounit, file=fpath, status='OLD', &
+             form='UNFORMATTED', iostat=ierr)
+        if (ierr == 0) then
+            ! the file exists, load data from it
+            do while ((ierr == 0) .or. (info /= criSuccess))
+                read(iounit, iostat=ierr) tmp
+                if (ierr == 0) info = xVector_push(this%table, tmp)
+            enddo
+            ! negative ierr on end-of-file or end-of-record; positive on error
+            if (ierr > 0 .or. info /= criSuccess) then
+                info = criErr_IORead
+            else
+                this%saved_session_idx = size(this%table)
+                info = criSuccess
+            endif
+        endif
+    end function
+    
+    
 end module
