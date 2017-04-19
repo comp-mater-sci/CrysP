@@ -22,7 +22,9 @@ contains
         stat = test_push()
         
         stat = test_prealloc_push()
-        
+#ifdef EXTENDED_TESTSUIT
+        stat = test_push_bigtask()
+#endif
     end function
 
 
@@ -156,6 +158,39 @@ contains
     !
     end function
     
+#ifdef EXTENDED_TESTSUIT
+    !> Long test that checks behavior for huge vectors.
+    !>
+    !> \remark This test has severe shortcomings. It takes too long to be 
+    !> included in a normal unit testing. It is platform and architecture
+    !> dependent, so it does not test code invariants.
+    logical function test_push_bigtask()
+    implicit none
     
-    
+    type(xVector_integer),target :: v
+    integer :: i, info
+    !
+        test_push_bigtask = .false.
+        ! Set-up
+        do i = 1, huge(i)
+            info = xVector_push(v, i)
+            if (info /= criSuccess) exit
+        enddo
+        !
+        ! On Win32 arch, the loop is expected to end with error code: no memory 
+        ! allocation possible.
+        ! On Win x64, we should get the two tests passed.
+#ifdef _WIN64 
+        _TEST('exit code, after push bigtask', info == criSuccess)
+#elif defined(_WIN32)
+        _TEST('exit code, after push bigtask', info == criErr_MemAlloc)
+#endif
+        ! Whatever the status code, the vector should reach its capacity
+        _TEST('capacity, after push bigtask', xVector_capacity(v) == xVector_size(v))
+
+        test_push_bigtask = .true.
+    !
+    end function
+#endif
+
 end module
