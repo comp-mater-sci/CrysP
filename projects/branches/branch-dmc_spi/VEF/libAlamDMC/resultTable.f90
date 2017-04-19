@@ -71,19 +71,19 @@ contains
     end function
 
 
-    !> Find item in the database that has the smallest angle betweem
+    !> Find item in the database that has the smallest angle between
     !> S and item%vSonA, optionally restricting the choice to acceptable angles 
     !> smaller than max_angle.
     !> Unless criSuccess is returned, the argument A is undefined.
     !>
     !> \return criSuccess on success, criFailure if no item satisfies the 
-    !> requirement, 
+    !> requirement 
     integer function get(this, S, A, max_angle) result(info)
     implicit none
     class(ResultTable),intent(inout)   :: this
     double precision,dimension(alamEval_vSD_dim),intent(in) :: S
-    double precision,dimension(alamEval_vSD_dim),intent(out) :: A
-    double precision,intent(in),optional                    :: max_angle
+    double precision,dimension(alamEval_vSD_dim),intent(out):: A
+    double precision,intent(in),optional                    :: max_angle !< Threshold angle (in radians)
     !
     integer :: npoints, i, min_idx_a(1), min_idx
     equivalence(min_idx_a(1), min_idx)
