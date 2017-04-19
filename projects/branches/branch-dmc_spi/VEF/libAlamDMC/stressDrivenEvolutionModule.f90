@@ -12,6 +12,8 @@
 !>
 !>    History of modifications: (see svn log)
 
+#include "criMacros.fpp"
+
 !> Implementation of a DMC computiational module that allows stress-driven evolution of
 !> material state.
 module dmcStressDrivenEvolutionModule
@@ -102,7 +104,7 @@ contains
     type(IncrementOutputRecord)         :: tmp_record
     integer :: i, n_roots
     double precision,dimension(2) :: xi
-    logical :: stop_flag
+    logical :: stop_flag, acceptable_point, acceptable_point_retry
     double precision,parameter :: stretch_ratio = 1e-3
     !
         ! Prepare non-default incrementation controls if requested
@@ -125,8 +127,8 @@ contains
             if (info /= criSuccess) exit
             !
             ! Calculate the strain rate mode
-            info = this%findSolution(sigma, D, ylp)
-            if ((info /= criSuccess) .or. (ylp%R > this%ylp%obj_func_eps)) then
+            info = this%findSolution(sigma, D, ylp, is_acceptable=acceptable_point)
+            if ((info /= criSuccess) .or. .not. acceptable_point) then
                 ! Re-attempt, try A from the previous increment as the starting point
                 !
                 ! Pick the most recent converged solution
@@ -136,18 +138,21 @@ contains
                         exit
                     endif
                 enddo
+                acceptable_point_retry = .false.
                 ! Check post-condition of the loop: i > 0 means
                 ! we have such a solution:
                 if (i > 0) then
-                    info = this%findSolution(sigma, D_retry, ylp_retry, vM_guess=.false.)
+                    info = this%findSolution(sigma, D_retry, ylp_retry, vM_guess=.false., &
+                                             is_acceptable=acceptable_point_retry)
                     ! Accept the solution only if it is better than the original one
-                    if ((info == criSuccess) .and. (ylp_retry%R < ylp%R)) then 
+                    if (acceptable_point .and. (ylp_retry%R < ylp%R)) then 
                         D = D_retry
                         ylp = ylp_retry
                     endif
                 endif
+                CHOOSE(info, acceptable_point .or. acceptable_point_retry, criSuccess, criFailure)
             endif
-            if (info /= 0) exit
+            if (is_error(info)) exit
             !
             ! Nasty hack: drilling a hole to libaltay to get the Taylor factor
             call getTaylorFactor(1,taylor_factor,info)
