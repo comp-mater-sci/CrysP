@@ -97,9 +97,6 @@ contains
                 angles(i) = vec_angle(S, this%table%values(i)%vSonA)
             enddo
             min_idx_a = minloc(angles)
-            ! <<-- TESTING
-            write(*,'(A,1X,F7.2)') 'min angle: ', rad2deg(angles(min_idx))
-            ! -->> TESTING
             if (present(max_angle)) then
                 CHOOSE(info, angles(min_idx) > max_angle, criFailure, criSuccess)
             else
