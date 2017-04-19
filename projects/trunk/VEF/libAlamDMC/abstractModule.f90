@@ -35,6 +35,9 @@ implicit none
             !> Start the calculations.
             procedure(IF_AbstractModule_run),deferred,pass(this)              :: run
             
+            !> Finalization of the object
+            procedure(IF_AbstractModule_finalize),deferred,pass(this)         :: finalize
+            
       end type
 
       
@@ -62,6 +65,11 @@ implicit none
                   class(AbstractModule),intent(inout) :: this
                   integer,intent(out)                 :: info
             end subroutine
+            
+            integer function IF_AbstractModule_finalize(this)
+            import :: AbstractModule
+                  class(AbstractModule),intent(inout) :: this
+            end function
             
       end interface
 

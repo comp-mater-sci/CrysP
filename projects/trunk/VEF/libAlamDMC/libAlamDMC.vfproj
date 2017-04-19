@@ -64,6 +64,7 @@
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
 		<File RelativePath="abstractModule.f90"/>
+		<File RelativePath=".\alamEvalCached.f90"/>
 		<File RelativePath="basicModule.f90">
 			<FileConfiguration Name="Debug|Win32">
 				<Tool Name="VFFortranCompilerTool" PreprocessorDefinitions=""/></FileConfiguration>
@@ -78,9 +79,12 @@
 		<File RelativePath=".\evolutionOutputRecord.f90"/>
 		<File RelativePath=".\incrementationControl.f90"/>
 		<File RelativePath="qrsTypes.f90"/>
+		<File RelativePath=".\resultTable.f90"/>
+		<File RelativePath=".\resultTableRecord.f90"/>
 		<File RelativePath=".\strainDrivenStep.f90"/>
 		<File RelativePath=".\stressDrivenEvolutionModule.f90"/>
 		<File RelativePath=".\stressDrivenModule.f90"/>
 		<File RelativePath=".\substeppingConfig.f90"/>
-		<File RelativePath=".\xVectorEvolutionOutputRecord.f90"/></Filter></Files>
+		<File RelativePath=".\xVectorEvolutionOutputRecord.f90"/>
+		<File RelativePath=".\YLPResult.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>

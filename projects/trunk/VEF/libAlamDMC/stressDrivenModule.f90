@@ -6,47 +6,74 @@
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>
-!>    \date Date of the initial release: 2017-02-08, as a result of refactoring 'basicModule.f90'
+!>    \date Date of the initial release: 2017-02-08, as a result of refactoring 'stressDrivenModule.f90'
 !>    $Revision$
 !>    $Date$
 !>
 !>    History of modifications: (see svn log)
 
+#include "criMacros.fpp"
+
 !> Implementation of a altay-based DMC computiational module.
 module dmcStressDrivenModule
 use alamYLP
-use alamYLPConstants
+use dmcYLPResult
+use dmcAlamEvalCached
+use dmcResultTable
 use dmcBasicModule
 implicit none
+
+
     !> Abstract class implementing basic subset of operations that are shared by all 
     !> stress-drien computational modules
     type,extends(BasicModule) :: StressDrivenModule
 
-        type(multilevelYLPConfig)     :: ylp
+        type(multilevelYLPConfig)   :: ylp
+
+        type(YLPResultTolerance)    :: solution_tolerance
+
+        class(ResultTable),pointer  :: ptr_db => null()
 
     contains
+        procedure,pass(this)     :: initialize => StressDrivenModule_initialize
 
         procedure,pass(this)     :: readConfig => StressDrivenModule_readConfig
 
         procedure,pass(this)     :: printConfig => StressDrivenModule_printConfig
 
+        procedure,pass(this)     :: finalize => StressDrivenModule_finalize
+
         procedure,pass(this)     :: findSolution => StressDrivenModule_findSolution
-            
-    end type
-    
-    
-    type :: YLPResult
-        double precision,dimension(alamEval_vSD_dim) :: vA = 0.D0 
-        double precision,dimension(alamEval_vSD_dim) :: vS = 0.D0 
-        double precision,dimension(alamEval_vSD_dim) :: vSonA = 0.D0 
-        double precision,dimension(alamEval_vSD_dim) :: vSonAn = 0.D0 
-        double precision :: R = 0.D0
-        double precision :: dotWonA = 0.D0
-        double precision :: scal_s = 0.D0
+
+        procedure,pass(this)     :: search => StressDrivenModule_search
+
     end type
 
 
 contains
+
+
+    !> Initialize a configured StressDrivenModule object
+    integer function StressDrivenModule_initialize(this) result(info)
+    implicit none
+    class(StressDrivenModule),intent(inout)          :: this
+    !
+    integer :: ierr
+    !
+        !
+        ! Let the superclass do its initialization first ...
+        !
+        info = this%BasicModule%initialize()
+        !
+        ! ... and then do your own initialization
+        !
+        ! Allocate and possibly populate the result cache
+        allocate(this%ptr_db, stat = ierr)
+        RETURN_IF_WITH(ierr /= 0, info=criErr_MemAlloc)
+        ! Try to load data
+        ierr = this%ptr_db%load(trim(this%output%outputPrefix)//'.rtdb')
+    !
+    end function
 
 
     
@@ -95,12 +122,38 @@ contains
     end function
     
     
+    !> Finalization of the module
+    integer function StressDrivenModule_finalize(this) result(info)
+    implicit none
+    class(StressDrivenModule),intent(inout) :: this
+    !
+        !
+        ! Do your own finalization first ...
+        !
+        if (doLogging(criLogDebug, this%output%verbosity)) then
+            write(display_unit,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
+        endif
+        !
+        ! Save the result cache and delete the object
+        if (associated(this%ptr_db)) then
+            info = this%ptr_db%store(trim(this%output%outputPrefix)//'.rtdb')
+            deallocate(this%ptr_db)
+        endif
+        !
+        ! ... and then finalize the superclass.
+        !
+        info = this%BasicModule%finalize()
+    !
+    end function
     
     !> Calculate plastic strain rate D that corresponds to the superimposed input stress `sigma`
     !> by performing an iterative search.
     !>
     !> The results of the iterative search are placed in ylp_results.
-    integer function StressDrivenModule_findSolution(this,sigma, D, ylp_result, vM_guess) result(info)
+    !> \return criFailure on lack of convergence. ylp_result and D are set to the best solution found
+    !> \return criError or any criErr_* on severe error conditions. ylp_result and D are undefined
+    !> \return criSuccess on success
+    integer function StressDrivenModule_findSolution(this,sigma, D, ylp_result, vM_guess, is_acceptable) result(info)
     implicit none
     class(StressDrivenModule),intent(in)   :: this
     type(SRTensor),intent(in)       :: sigma !< Input stress
@@ -108,13 +161,21 @@ contains
     type(YLPResult),intent(out)     :: ylp_result !< Results of the interative search
     !> Flag: use von Mises inital guess (default: .true.). If false, D will be used as the
     !> starting point for the iterative search.
-    logical,optional                :: vM_guess 
+    logical,intent(in),optional     :: vM_guess
+    logical,intent(out),optional    :: is_acceptable
     !
     double precision :: vS_norm, vA_norm, SonA_norm
     logical :: use_vM_guess
+    type(NormalizedV5DCompCached),target :: obj_func
+    !
+    type(YLPResult)  :: ylp_result_retry
     !
         info = criErr_BadArgs
 
+        obj_func%ptr_db => this%ptr_db
+        !
+        if (present(is_acceptable)) is_acceptable = .false.
+        !
         ! Convert input to the 5D space and make the unit vector(s).
         ! This also makes sure it is deviatoric.
         ylp_result%vS = tens2vec5D(sigma%t)
@@ -128,18 +189,25 @@ contains
             vA_norm = norm2(ylp_result%vA)
             if (vA_norm < epsilon(0.D0)) return
         endif
-        
         ! Calculate the corresponding strain rate vA
-        call multilevelYLP( ylp_result%vS,    &
-                            ylp_result%vA,    &
-                            ylp_result%vSonA, &
-                            ylp_result%R,     &
-                            info,             &
-                            useVMGuess=use_vM_guess, &
-                            YLPconfig=this%ylp, &
-                            verbose=this%output%verbosity)
+        info = this%search(ylp_result, use_vM_guess, obj_func)
+        if (info == criFailure .and. associated(this%ptr_db)) then
+            ! Try another starting point
+            if (this%ptr_db%get(ylp_result%vS, ylp_result_retry%vA) == criSuccess) then
+                if (doLogging(criLogDebug,this%output%verbosity)) then
+                     write(display_unit,860) 'Poor convergence, re-attempting to find the solution.'
+                endif
+                ! Set the re-try point
+                ylp_result_retry%vS = ylp_result%vS
+                !
+                ! get new solution
+                info = this%search(ylp_result_retry, .false., obj_func)
+                ! Use the better of the two
+                if (ylp_result_retry%R < ylp_result%R) ylp_result = ylp_result_retry
+            endif
+        endif
         SonA_norm = norm2(ylp_result%vSonA)
-        if ((info /= 0) .or. (SonA_norm < epsilon(0.D0))) then
+        if (is_error(info) .or. (SonA_norm < epsilon(0.D0))) then
             info = criError
             return
         endif
@@ -148,11 +216,41 @@ contains
         ylp_result%scal_s = SonA_norm / vS_norm
         ! Calculate normalized stess
         ylp_result%vSonAn = ylp_result%vSonA / SonA_norm
+        if (present(is_acceptable)) then
+            is_acceptable = checkYLPResult(ylp_result, this%solution_tolerance, this%ylp%obj_func_eps)
+        endif
+        !
         D%t = vec5D2tens(ylp_result%vA)
-        info = criSuccess
+        ! Return the info from the last call to 'search'
+        !
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
     !
     end function
-    
+
+
+    !> Wrapper around multilevelYLP that uses YLPResult for communicating with the caller.
+    !> 
+    !> It applies settings provided as members of StressDrivenModule.
+    integer function StressDrivenModule_search(this, ylp_result, use_vM_guess, obj_func) result(info)
+    implicit none
+    class(StressDrivenModule),intent(in):: this
+    type(YLPResult),intent(inout)           :: ylp_result
+    logical,intent(in)                      :: use_vM_guess
+    class(NormalizedV5DComp),intent(inout)  :: obj_func
+    !
+        call multilevelYLP(ylp_result%vS,    &
+                           ylp_result%vA,    &
+                           ylp_result%vSonA, &
+                           ylp_result%R,     &
+                           info,             &
+                           useVMGuess=use_vM_guess, &
+                           YLPconfig=this%ylp, &
+                           verbose=this%output%verbosity, &
+                           objective_function=obj_func)
+    !
+    end function
     
     
     !> Read configuration of the solver (libalamylp)
@@ -183,29 +281,5 @@ contains
     !
     end subroutine
 
-
-    !> Print detailed info about YLP solution based on the content of YLPResult 
-    !> object.
-    integer function printYLPResult(iounit, ylp_result) result(info)
-    implicit none
-    integer,intent(in)              :: iounit
-    type(YLPResult),intent(in)      :: ylp_result
-    !
-        write(iounit,fmt=100)
-        write(iounit,fmt=200) 'Requested stress:', ylp_result%vS
-        write(iounit,fmt=200) 'Identified scaled stress:', ylp_result%vSonAn
-        write(iounit,fmt=201) 'Norm of stress residual:', ylp_result%R
-        write(iounit,fmt=100)
-        write(iounit,fmt=200) 'Stress on vA:', ylp_result%vSonA
-        write(iounit,fmt=201) 'Norm of stress on vA:', norm2(ylp_result%vSonA)
-        write(iounit,fmt=100)
-        !
-        info = criSuccess
-        !
-        100 format('(/)')
-        200 format(A,T40,5(E12.5,1X))
-        201 format(A,T40,E12.5)
-    !
-    end function
 
 end module

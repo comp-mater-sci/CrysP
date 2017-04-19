@@ -176,8 +176,9 @@ contains
       integer                 :: i,npoints, ofunit
       !
       integer :: posA, posB
-      logical :: first_run
+      logical :: first_run, acceptable_point
       double precision,parameter :: beta = 0.D0
+      double precision,parameter :: residual_tolerance_factor = 5.D0
       !
             info = criErr_BadArgs
             if (.not. (associated(this%ptr_theta_range) .and. associated(this%ptr_w_range)))  return
@@ -242,10 +243,14 @@ contains
                                        + w*this%base_vectors(:,3)
                         Sm%t = Vec6ToMat33(sigma_vector)
                         !
-                        info = this%findSolution(Sm, D, ylp_result)
+                        info = this%findSolution(Sm, D, ylp_result, is_acceptable=acceptable_point)
+                        ! Consider what to do with unsuccessful search
                         if (info /= criSuccess) then
-                            write(display_unit,fmt=860) 'Cannot find solution, datapoint dropped'
-                            cycle
+                            ! Note: we can meaningfully check ylp_result only on success or failure
+                            if ((info == criFailure) .and. (.not. acceptable_point)) then
+                                write(display_unit,fmt=860) 'Cannot find solution, datapoint dropped'
+                                cycle
+                            endif
                         endif
                         scal_s_rel = ylp_result%scal_s * iunilen
                         !
@@ -270,7 +275,7 @@ contains
                   !
                   ! Post-process the results. Get the lower bound of container
                   ! size and iterator - some points may have been dropped.
-                  npoints = min(size(yldRes), i)
+                  npoints = min(size(yldRes), i-1)
                   do i = 1, npoints
                         ! Get the positions of the bracketing points:
                         posA = merge(npoints-1,i - 1,i == 1)
@@ -281,7 +286,7 @@ contains
                         yldRes(i)%beta = rad2deg(yldRes(i)%beta)
                   enddo
                   !
-                  call writeYldResults(ofunit,yldRes,info,write_header=first_run)
+                  call writeYldResults(ofunit,yldRes(:npoints),info,write_header=first_run)
                   first_run = .false.
             enddo
             !

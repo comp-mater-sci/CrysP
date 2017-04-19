@@ -72,7 +72,9 @@ implicit none
             procedure,pass(this)     :: printConfig => BasicModule_printConfig
 
             procedure,pass(this)     :: run => BasicModule_run
-            
+
+            procedure,pass(this)     :: finalize => BasicModule_finalize
+
             !>@{ \name Helper procedures
             procedure,pass(this)      :: openOutputFile => BasicModule_openOutputFile
             !>@}
@@ -83,14 +85,16 @@ implicit none
 
 contains
 
-      integer function BasicModule_Initialize(this) result(info)
+      integer function BasicModule_initialize(this) result(info)
       use altaySub
       use altayHardTypes, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop
       use commonUtils
       implicit none
       class(BasicModule),intent(inout)          :: this
       !
-            info = -1
+      integer :: ierr
+      !
+            info = criError
             ! Finish the configuration:
             this%altay%output_config%nfile = merge(1,0,this%output%outputRequest)
             this%altay%output_prefix = trim(this%output%outputPrefix)
@@ -106,27 +110,28 @@ contains
             endif
             !
             if (doLogging(criLoginfo,this%output%verbosity)) write(display_unit,fmt=30, advance='no')
-            call initAltay(this%altay,info,errmsg)
+            call initAltay(this%altay,ierr,errmsg)
             if (doLogging(criLoginfo,this%output%verbosity)) then
-                if (info == 0) then
+                if (ierr == altaySub_OK) then
                       write(display_unit,fmt=31) 'Done.'
                 else
                       write(display_unit,fmt=31) 'Failed.'
                 endif
             endif
-            if (info /= 0) return
+            if (ierr /= altaySub_OK) return
             
             30 format('Initializing the multilevel model...')
             31 format(1X,A)
       
             ! Output the initial state variables (texture etc) if requested.
             if (this%output%outputRequest) then
-                  call outputTexture(info)
-                  if (info /= 0) then
+                  call outputTexture(ierr)
+                  if (ierr /= altaySub_OK) then
                         write(errmsg,'(A)') 'Error: cannot write initial state'
-                        !call finalize(stopcode_runtimeerror)
+                        return
                   endif
             endif
+            info = criSuccess
             !
       end function
       
@@ -211,6 +216,25 @@ contains
     !
     end subroutine
 
+
+    !> Finalization of the module
+    integer function BasicModule_finalize(this) result(info)
+    use altaySub
+    implicit none
+    class(BasicModule),intent(inout) :: this
+    !
+    integer :: ierr
+    !
+        call finalizeAltay(ierr)
+        if (ierr /= altaySub_OK) then
+            errmsg = 'Problems have been encountered while finalizing libaltay'
+            info = criError
+        else
+            info = criSuccess
+        endif
+    !
+    end function
+    
 
     !> Open output file
     integer function BasicModule_openOutputFile(this, ext, ofunit, suffix) result(info)

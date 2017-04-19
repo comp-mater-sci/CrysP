@@ -21,6 +21,7 @@
     
 !> Implementation of YLP function that can directly use the ALAMEL multilevel model instead of a plastic potential function.
 module alamYLP
+use criErrcodes
 implicit none
 
       type multilevelYLPConfig
@@ -43,13 +44,15 @@ implicit none
             logical                 :: evaluate_full_model = .true.
       end type
       
-contains
+    contains
 
 
       !> Calculates plastic strain rate corresponding to given deviatoric stress
       !>
       !> The subroutine assumes that multilevel model is already configured and initialized.
-      subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig,outunit,verbose)
+      !> Exit code is retured in info: criSuccess on success; criFailure if no converged solution can
+      !> be found; criError or criErr_BadArgs if error conditions have been detected.
+      subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig,outunit,verbose,objective_function)
       use nllsTR
       use alamEval
       implicit none
@@ -63,13 +66,17 @@ contains
       type(multilevelYLPConfig),optional,intent(in) :: YLPconfig !< Configuration parameters to be imposed to the search method
       integer,intent(in),optional   :: outunit    !< Unit number for messages
       integer,intent(in),optional   :: verbose
+      class(NormalizedV5DComp),target,optional,intent(inout) :: objective_function
       !
 
       double precision, dimension(alamEval_vSD_dim) :: vX, vX_lin
       type(multilevelYLPConfig) :: config !< Effective configuration parameters (defaults on entry)
       ! 
       !
-      type(NormalizedV5DComp) :: objFunc
+      class(NormalizedV5DComp),pointer :: objFunc
+      ! Default objective function declared as local variable: it will get
+      ! deallocated on return.
+      type(NormalizedV5DComp),allocatable,target :: objective_function_local
       type(nllsTRConf)        :: tr_config
       double precision        :: r1,r2
       logical                 :: use_vmGuess
@@ -77,10 +84,9 @@ contains
       double precision        :: r1_lin,r2_lin
       type(nllsTRRes)         :: TR_res
       type(SolutionPoint)     :: initState
-      integer                 :: ounit
+      integer                 :: ounit, tr_verbose, ierr
       integer,parameter       :: stdout = 6
       logical                 :: log_info,log_debug
-      integer                 :: tr_verbose
       double precision        :: norm
       !
       if (present(useVMGuess)) then
@@ -104,10 +110,20 @@ contains
       ! Override the defaults by the user's settings:
       if (present(YLPconfig)) config = YLPconfig
       !
+      ! Set the objective function
+      if (present(objective_function)) then
+          objFunc => objective_function
+      else
+          allocate(objective_function_local)
+          objFunc => objective_function_local
+      endif
       ! Configure objective function      
-      call objFunc%initFx(alamEval_vSD_dim,alamEval_vSD_dim,info)
-      if (info /= 0) return 
-      info  = -1
+      call objFunc%initFx(alamEval_vSD_dim,alamEval_vSD_dim,ierr)
+      if (ierr /= 0) then
+          info = criError
+          return
+      endif
+      info  = criErr_BadArgs
       !
       !Get normalized stress vector
       norm = norm2(vS)
@@ -152,7 +168,7 @@ contains
             vX_lin = vX    
             ! Start the TR solver for linearized problem
             ! More thorough exit status is necessary: TR_res
-            call nlls_TR_solve(objFunc,vX_lin,tr_config,r1_lin,r2_lin,info,TR_res,SolutionInitOut=initState)
+            call nlls_TR_solve(objFunc,vX_lin,tr_config,r1_lin,r2_lin,ierr,TR_res,SolutionInitOut=initState)
             R = r2_lin
             ! do checks if the solution is OK:
             ! Stop criterion: magic number "3" means: ||F(x)||_2 < eps(2)
@@ -167,14 +183,14 @@ contains
             tr_config%constJacobi = .false.
             !
             ! initState is invalid if nlls_TR_solve in the "if (attempt_linearized)" 
-            ! branch above returns info /= 0
-            if (attempt_linearized .and. (info == 0)) then
+            ! branch above returns ierr /= 0
+            if (attempt_linearized .and. (ierr == 0)) then
                   ! Profit from the initial point stored by the solver for the linearized problem
-                  info = objFunc%state%copy(initState)
-                  tr_config%use_init_state = (info == 0)
+                  ierr = objFunc%state%copy(initState)
+                  tr_config%use_init_state = (ierr == 0)
             endif
             ! start TR solver
-            call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
+            call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,ierr)
             R = r2
             !TODO: check exit status of the solver
             if (attempt_linearized) then
@@ -188,19 +204,24 @@ contains
       call initState%finalize()
       !
       ! Set output strain rate
-      info  = -1
+      info  = criError
       norm = norm2(vX)
       if (norm < epsilon(0.D0)) return
       vA = vX / norm
       ! Call objective function again to get corresponding yield stress and other quantities.
       objFunc%full_model = config%evaluate_full_model
-      call objFunc%objectiveEval(vA,info)
+      call objFunc%objectiveEval(vA,ierr)
       
       if (log_info) write(ounit,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',objFunc%state%vF
       
-      vSonA = objFunc%vSml  
-      !info = 0
-      
+      vSonA = objFunc%vSml
+      !
+      if (R > config%obj_func_eps) then
+          info = criFailure
+      else
+          info = criSuccess
+      endif
+      !
       end subroutine
 
 end module
