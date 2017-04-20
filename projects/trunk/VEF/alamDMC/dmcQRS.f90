@@ -50,11 +50,15 @@ implicit none
             
     contains
 
-        procedure,pass(this)    :: readConfig => QRSModule_ReadConfig
+        !>@{ \name Interface methods of AbstractModule
+
+        procedure,pass(this)    :: readConfig => QRSModule_readConfig
 
         procedure,pass(this)    :: printConfig => QRSModule_printConfig
 
         procedure,pass(this)    :: run => QRSModule_run
+
+        !>@}
 
         procedure,pass(this)    :: fileOutput => QRSModule_fileOutput
 

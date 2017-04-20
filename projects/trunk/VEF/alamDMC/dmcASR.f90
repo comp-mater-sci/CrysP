@@ -45,12 +45,15 @@ implicit none
         type(StressDrivenStep),dimension(:),allocatable :: steps
             
     contains
-      
-        procedure,pass(this)    :: readConfig => ASRModule_ReadConfig
-            
+    
+        !>@{ \name Interface methods of AbstractModule
+
+        procedure,pass(this)    :: readConfig => ASRModule_readConfig
+
         procedure,pass(this)    :: run => ASRModule_run
-        
+
         procedure,pass(this)    :: outputFile => ASRModule_outputFile
+        !>@}
     end type
 
     
@@ -103,7 +106,7 @@ contains
     end function
 
 
-    subroutine ASRModule_Run(this,info)
+    subroutine ASRModule_run(this,info)
     implicit none
     class(ASRModule),intent(inout)          :: this
     integer,intent(out)                     :: info

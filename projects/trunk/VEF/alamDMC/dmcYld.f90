@@ -35,6 +35,9 @@ implicit none
 
 
     integer,parameter                               :: nbase = 3
+
+
+    !> Class responsible for calculations of yield locus sections
     type,extends(StressDrivenModule) :: YldModule
 
         class(range_type),pointer                 :: ptr_theta_range
@@ -56,13 +59,18 @@ implicit none
 
     contains
 
-        procedure,pass(this)    :: readConfig => YldModule_ReadConfig
+        !>@{ \name Interface methods of AbstractModule
+    
+        procedure,pass(this)    :: readConfig => YldModule_readConfig
+
         procedure,pass(this)    :: printConfig => YldModule_printConfig
+
         procedure,pass(this)    :: run => YldModule_run
+        !>@}
 
     end type
 
-
+    !> Data that describe a single yield locus point
     type :: yldResult
         double precision :: theta = 0.D0 
         double precision :: w = 0.D0
@@ -123,7 +131,7 @@ contains
         this%altay%output_config%npebp = 0   ! KOST1x state
         this%output%outputRequest = .false.       ! idem.
         !
-        info = 0
+        info = criSuccess
     !
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
@@ -140,7 +148,7 @@ contains
     integer :: i
     !
         info = this%StressDrivenModule%printConfig(outunit)
-        if (info /= 0) return
+        if (info /= criSuccess) return
         info = criErr_BadArgs
         ! Introduce youself ;-)
         write(outunit,'(A)') 'YLD, $Rev$'
@@ -161,7 +169,7 @@ contains
     end function
 
 
-    subroutine YldModule_Run(this,info)
+    subroutine YldModule_run(this,info)
     implicit none
     class(YldModule),intent(inout)            :: this
     integer,intent(out)                       :: info
@@ -181,7 +189,6 @@ contains
     integer :: posA, posB
     logical :: first_run, acceptable_point
     double precision,parameter :: beta = 0.D0
-    double precision,parameter :: residual_tolerance_factor = 5.D0
     !
         info = criErr_BadArgs
         if (.not. (associated(this%ptr_theta_range) .and. associated(this%ptr_w_range)))  return

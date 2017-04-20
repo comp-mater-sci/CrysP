@@ -69,17 +69,21 @@ implicit none
         !> of data points
         integer                                 :: n_intervals = 0
     contains
-      
-        procedure,pass(this)    :: readConfig => EWCModule_ReadConfig
-            
+
+        !>@{ \name Interface methods of AbstractModule
+    
+        procedure,pass(this)    :: readConfig => EWCModule_readConfig
+
+        procedure,pass(this)    :: printConfig => EWCModule_printConfig
+
         procedure,pass(this)    :: run => EWCModule_run
-        
+
+        !>@}
+
         procedure,pass(this)    :: fileOutput => EWCModule_fileOutput
 
         procedure,pass(this)    :: fileOutputMeta => EWCModule_fileOutputMeta
-        
-        procedure,pass(this)    :: printConfig => EWCModule_PrintConfig
-        
+
     end type
       
      
@@ -171,21 +175,19 @@ contains
     !integer :: ioerr
     !
         info = this%StressDrivenEvolutionModule%printConfig(outunit)
-        if (info /= 0) return
+        if (info /= criSuccess) return
         !
-        info = -1
         ! Print banner
         write(outunit,'(A)') 'EWC: $Rev$'
         if (doLogging(criLogInfo,this%output%verbosity)) then
                 !> \todo Print out summary of the configuration
                 continue
         endif
-        info = 0
     !
     end function
     
 
-    subroutine EWCModule_Run(this,info)
+    subroutine EWCModule_run(this,info)
     implicit none
     class(EWCModule),intent(inout)            :: this
     integer,intent(out)                       :: info
@@ -306,7 +308,7 @@ contains
             endif
             
         enddo
-        if (info /= 0) return
+        if (info /= criSuccess) return
         !
         if (this%use_reference_stress_mode) then
             info = this%fileOutput(vEquivalentStrainLevels, results)

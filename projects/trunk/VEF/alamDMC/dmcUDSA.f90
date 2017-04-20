@@ -66,16 +66,21 @@ implicit none
         double precision  :: rho = 0.D0 
 
     contains
-      
-        procedure,pass(this)    :: readConfig => UDSAModule_ReadConfig
-            
-        procedure,pass(this)    :: run => UDSAModule_run
+
+        !>@{ \name Interface methods of AbstractModule
+
+        procedure,pass(this)    :: readConfig => UDSAModule_readConfig
 
         procedure,pass(this)    :: printConfig => UDSAModule_printConfig
-            
+
+        procedure,pass(this)    :: run => UDSAModule_run
+
+        !>@}
+
         procedure,private,pass(this)    :: createOutputFile => UDSAModule_createOutputFile
         
         procedure,private,pass(this)    :: outputFile => UDSAModule_outputFile
+
         procedure,pass(this)    :: outputPrefix => UDSAModule_outputPrefix
     end type
 
@@ -150,7 +155,7 @@ contains
     character(len=32)       :: description, orientation
     !
         info = this%StressDrivenEvolutionModule%printConfig(outunit)
-        if (info /= 0) return
+        if (info /= criSuccess) return
         info = criErr_BadArgs
         ! Introduce youself ;-)
         write(outunit,'(A)') 'UDSA, $Rev$'
@@ -185,7 +190,7 @@ contains
     end function
 
 
-    subroutine UDSAModule_Run(this,info)
+    subroutine UDSAModule_run(this,info)
     implicit none
     class(UDSAModule),intent(inout)            :: this
     integer,intent(out)                        :: info
@@ -199,7 +204,7 @@ contains
     type(EvolutionOutput) :: output
     type(EulerAngles) :: sample_orientation
     double precision  :: angle, stress_direction
-    integer :: test_run, n_test_runs, increment, ierr, ofunit
+    integer :: test_run, n_test_runs, increment, ofunit
     type(UDSAOutputRecord)  :: outrec
     !
     ! Check the preconditions

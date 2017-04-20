@@ -38,11 +38,11 @@ implicit none
         !>@{ \name Interface methods of AbstractModule
         
         procedure,pass(this) :: printConfig => ADPModule_printConfig
-        
+
         procedure,pass(this) :: readConfig => ADPModule_readConfig
-        
+
         procedure,pass(this) :: run => ADPModule_run
-        
+
         !>@}
 
         procedure,pass(this) :: fileOutput => ADPModule_fileOutput
