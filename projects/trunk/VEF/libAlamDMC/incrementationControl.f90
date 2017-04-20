@@ -15,9 +15,9 @@
 !> Types and procedures that control incrementation in stress-driven 
 !> evolution of material state.
 module dmcIncrementationControl
-use alamYLPConstants
 use criErrcodes
 use criLinearMap, only: MapItem
+use alamYLPConstants
 implicit none
 
     integer,parameter :: scalingNone = 0, &

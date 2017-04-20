@@ -19,8 +19,11 @@
 module dmcADP
 use criErrcodes
 use criConfigReader
-use dmcDeformationDrivenModule
+use criLog
+use criMathUtils
 use altayMacroKinematic, only: DeformationRate, Set_DeformationRate
+use dmcUtils, only: display_unit
+use dmcDeformationDrivenModule
 use dmcResultFileOutput
 use dmcStrainDrivenStep
 implicit none

@@ -22,6 +22,9 @@ use dmcYLPResult, only: YLPResult
 use fngVec5D, only: vec5D2tens
 implicit none
 
+    public :: IncrementOutputRecord
+    private
+
     !> Data outputed per increment of stress driven state evolution
     type :: IncrementOutputRecord
          

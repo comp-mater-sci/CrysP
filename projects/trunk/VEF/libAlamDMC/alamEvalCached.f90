@@ -23,6 +23,9 @@ use alamEval
 use dmcResultTable
 implicit none
 
+    public :: NormalizedV5DCompCached
+    private
+
     type,extends(NormalizedV5DComp) :: NormalizedV5DCompCached
         
         type(ResultTable),pointer :: ptr_db => null()

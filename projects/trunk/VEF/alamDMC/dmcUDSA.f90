@@ -17,19 +17,20 @@
 !> dmcUDSA (Uniaxially-Dominated Stress Analysis)  allows one to track anisotropic properties  
 !> along deformation due to the uniaxial tension or compression stress.
 module dmcUDSA
-use alamYLP
-use altaySub
-use dmcUtils
-use dmcStressDrivenEvolutionModule
-use dmcIncrementationControl
-use commonUtils
-use qrsTypes
+use criPath
 use criLog
 use criAlgorithm
 use criRange
 use criNamedRange
 use criConfigReader
 use fngVec5D
+use altaySub
+use dmcUtils
+use dmcStressDrivenEvolutionModule
+use dmcIncrementationControl
+use commonUtils
+use qrsTypes
+use commonConfig
 implicit none
 
     integer,parameter,private :: tension_state = 0, compression_state = 1

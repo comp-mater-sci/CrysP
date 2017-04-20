@@ -18,14 +18,16 @@
 !
 !> Yield locus calculations
 module dmcYld
-use alamYLP
+use criErrcodes
+use criAlgorithm
+use criRange
+use criLog
+use criMathUtils
+use criUncomment, only: readValue
+use dmcYLPResult
 use dmcUtils
 use commonConfig
 use dmcStressDrivenModule
-use criAlgorithm
-use criErrcodes
-use criRange
-use criLog
 implicit none
 
 private

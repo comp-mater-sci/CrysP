@@ -17,10 +17,14 @@
 module dmcDeformationDrivenModule
 use criRange
 use criErrcodes
+use criUncomment, only: readValue
+use dmcUtils, only: display_unit
 use dmcBasicModule
 use dmcStrainDrivenStep
 implicit none
 
+    public :: StrainDrivenSolverConfig, DeformationDrivenModule
+    private
 
     !> Configuration related to strain(-rate) driven simulations.
     !> Currently a placeholder.

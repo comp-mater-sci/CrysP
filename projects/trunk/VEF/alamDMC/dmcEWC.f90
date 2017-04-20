@@ -19,10 +19,7 @@
 
 !> Calculations of Equi-Work Contours
 module dmcEWC
-use altaySub
-use alamYLP
-use dmcStressDrivenEvolutionModule
-use dmcResultFileOutput
+use criPath
 use criMathUtils
 use criRange
 use criNumerics
@@ -30,7 +27,12 @@ use criAlgorithm
 use criLinearMap
 use criConfigReader
 use criLog
-use fngVec5D
+use altaySub
+use commonConfig
+use dmcUtils, only: display_unit
+use dmcStressDrivenEvolutionModule
+use dmcIncrementationControl
+use dmcResultFileOutput
 implicit none
 
 

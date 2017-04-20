@@ -14,11 +14,6 @@
 
 !> Implementation of a basic DMC computiational module.
 module dmcBasicModule
-use dmcAbstractModule
-use altayConfig, only: altayConfigData
-use commonConfig
-use dmcUtils
-use dmcFuture
 use criRuntime
 use criUncomment
 use criConfigReader
@@ -28,14 +23,16 @@ use criPath, only: max_pathlen, splitExt
 use criLinearMap
 use criLog
 use fngVec5D
+use dmcAbstractModule
+use altayConfig, only: altayConfigData
+use commonConfig
+use dmcUtils
+use dmcFuture
 implicit none
 
-      !> Size of time increment
-      !>
-      !> Note: this should be taken either from altayConfigData (if it was provided there)
-      !> or from some time incrementation procedure. Presently we always assume delta_t = 1
-      double precision,parameter          :: delta_t = 1.D0
 
+    public :: outputConfig, BasicModule
+    private
 
       type :: outputConfig
 

@@ -19,6 +19,11 @@ use criErrcodes
 use alamYLPConstants
 implicit none
 
+    public :: ResultTableRecord
+    public :: xVector_ResultTableRecord, xVector_push, xVector_size, &
+              xVector_capacity, xVector_expand, size
+    private
+
     type :: ResultTableRecord
         
         double precision,dimension(alamEval_vSD_dim) :: vA = 0.D0

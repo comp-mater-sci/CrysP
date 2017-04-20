@@ -16,17 +16,17 @@
 !> DMC Arbitrary Stress Response
 !>
 module dmcASR
-!use nllsTR
-use alamYLP
-use dmcIncrementationControl
-use dmcStressDrivenEvolutionModule
-use commonConfig
-use commonUtils
 use criMathUtils
 use criAlgorithm
 use criLog
 use criMathUtils
+use criUncomment, only: readValue
 use fngVec5D
+use dmcUtils, only: display_unit
+use dmcIncrementationControl
+use dmcStressDrivenEvolutionModule
+use commonConfig
+use commonUtils
 implicit none
 
     type :: StressDrivenStep

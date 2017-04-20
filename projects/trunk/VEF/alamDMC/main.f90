@@ -18,19 +18,6 @@
 !>
 !
 program alamDMC
-use alamYLP
-use alamEval, only: alamEval_objFx_call_count
-use dmcUtils
-use altayConfig, only: altayConfigData
-use commonConfig
-use commonUtils
-!
-use dmcASR
-use dmcQRS
-use dmcUDSA
-use dmcYld
-use dmcEWC
-use dmcADP
 !
 use criRuntime
 !
@@ -39,6 +26,15 @@ use,intrinsic :: iso_c_binding, only: C_NULL_CHAR
 use fslis
 #define ALAMDMC_FEATURE_UUID 'ff921f1e-fa42-11e5-97dc-ecf4bb152acb'//C_NULL_CHAR
 #endif
+!
+use dmcBasicModule
+use dmcASR
+use dmcQRS
+use dmcUDSA
+use dmcYld
+use dmcEWC
+use dmcADP
+!
 implicit none
       !
       integer,parameter       :: ncommands = 6

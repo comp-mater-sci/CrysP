@@ -17,17 +17,25 @@
 !> Implementation of a DMC computiational module that allows stress-driven evolution of
 !> material state.
 module dmcStressDrivenEvolutionModule
+use criErrcodes
+use criMathUtils
+use criLog
+use criAlgorithm, only: optionalDefault
+use fngVec5D
+use dmcUtils, only: display_unit
+use dmcYLPResult
 use dmcStressDrivenModule
 use dmcIncrementationControl
 use dmcEvolutionOutputRecord
 use xVectorIncrementOutputRecord
 use commonUtils
-use criMathUtils
-use criLog
-use criAlgorithm, only: optionalDefault
 implicit none
 
-    
+
+    public :: EvolutionOutput, StressDrivenEvolutionModule
+    private
+
+
     type :: EvolutionOutput
         type(IncrementOutputRecord),dimension(:),allocatable      :: values
     end type

@@ -16,13 +16,23 @@
 
 !> Implementation of a altay-based DMC computiational module.
 module dmcStressDrivenModule
+use criErrcodes
+use criAlgorithm, only: optionalDefault
+use criLog
+use criRuntime
+use criUncomment, only: readValue
+use fngVec5D
 use alamYLP
+use alamEval, only: NormalizedV5DComp, alamEval_objFx_call_count
+use dmcUtils, only: display_unit
 use dmcYLPResult
 use dmcAlamEvalCached
 use dmcResultTable
 use dmcBasicModule
 implicit none
 
+    public :: StressDrivenModule
+    private
 
     !> Abstract class implementing basic subset of operations that are shared by all 
     !> stress-drien computational modules

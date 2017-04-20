@@ -23,9 +23,8 @@ use alamYLPConstants
 use dmcResultTableRecord
 implicit none
 
-public :: ResultTable
-
-private
+    public :: ResultTable
+    private
 
     type :: ResultTable
     

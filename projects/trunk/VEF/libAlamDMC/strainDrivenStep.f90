@@ -25,8 +25,11 @@ use dmcUtils, only: display_unit
 use dmcSubsteppingConfig
 implicit none
 
-public StrainDrivenStep, StrainDrivenStepConfig, StrainDrivenFixedStep
-public StepOutput, IncrementOutput
+
+
+    public :: StrainDrivenStep, StrainDrivenStepConfig, StrainDrivenFixedStep
+    public :: StepOutput, IncrementOutput
+    private
 
 
     !> Base class for deformation rate driven steps
