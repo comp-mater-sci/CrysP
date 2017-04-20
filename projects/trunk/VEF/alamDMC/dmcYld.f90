@@ -30,7 +30,9 @@ use commonConfig
 use dmcStressDrivenModule
 implicit none
 
-private
+    public YldModule
+    private
+
 
       integer,parameter                               :: nbase = 3
       type,extends(StressDrivenModule) :: YldModule
@@ -60,7 +62,7 @@ private
             
       end type
       
-      public YldModule
+
       
       
       type :: yldResult

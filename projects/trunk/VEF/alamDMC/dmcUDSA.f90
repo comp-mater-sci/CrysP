@@ -33,6 +33,9 @@ use qrsTypes
 use commonConfig
 implicit none
 
+    public :: UDSAModule
+    private
+
     integer,parameter,private :: tension_state = 0, compression_state = 1
     type(MapItem),dimension(2),parameter :: stress_states = [MapItem('compression', compression_state),&
                                                             MapItem('tension', tension_state)]

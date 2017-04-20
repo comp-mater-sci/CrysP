@@ -35,6 +35,8 @@ use dmcIncrementationControl
 use dmcResultFileOutput
 implicit none
 
+    public :: EWCModule
+    private
 
     integer,parameter,private :: n_base_vectors = 2
 

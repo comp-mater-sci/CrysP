@@ -33,6 +33,10 @@ use dmcResultFileOutput
 use qrsTypes
 implicit none
 
+    public :: QRSModule
+    private
+
+
     type,extends(StressDrivenModule) :: QRSModule
         class(range_type),pointer                 :: ptr_range
 

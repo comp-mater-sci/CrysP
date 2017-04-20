@@ -29,6 +29,9 @@ use commonConfig
 use commonUtils
 implicit none
 
+    public :: ASRModule
+    private
+
     type :: StressDrivenStep
         double precision,dimension(sr_symm_voigt_dim)   :: stress_mode = 0.D0
         type(IncrementationControlSettings)             :: incrementation_control

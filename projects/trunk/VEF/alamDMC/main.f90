@@ -27,6 +27,7 @@ use fslis
 #define ALAMDMC_FEATURE_UUID 'ff921f1e-fa42-11e5-97dc-ecf4bb152acb'//C_NULL_CHAR
 #endif
 !
+use dmcUtils, only: display_unit
 use dmcBasicModule
 use dmcASR
 use dmcQRS

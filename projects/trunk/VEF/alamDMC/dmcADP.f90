@@ -28,6 +28,8 @@ use dmcResultFileOutput
 use dmcStrainDrivenStep
 implicit none
 
+    public :: ADPModule
+    private
 
     !> Arbitrary Strain Mode
     type,extends(DeformationDrivenModule) :: ADPModule
