@@ -50,10 +50,14 @@ implicit none
 
         procedure,pass(this)    :: readConfig => ASRModule_readConfig
 
+        procedure,pass(this)    :: printConfig => ASRModule_printConfig
+
         procedure,pass(this)    :: run => ASRModule_run
 
-        procedure,pass(this)    :: outputFile => ASRModule_outputFile
         !>@}
+
+        procedure,pass(this)    :: outputFile => ASRModule_outputFile
+
     end type
 
     
@@ -81,8 +85,8 @@ contains
         this%rotframe = Arr2EulerAngles(tmp_euler)
         if (.not. readValue(cnfunit, n_steps)) return
         if (n_steps <= 0) then
-                write(display_unit, fmt=902) 'ASRModule'
-                return
+            write(display_unit, fmt=902) 'ASR module'
+            return
         endif
         allocate(this%steps(n_steps))
         do i = 1, n_steps
@@ -106,6 +110,26 @@ contains
     end function
 
 
+    integer function ASRModule_printConfig(this,outunit) result (info)
+    implicit none
+    class(ASRModule),intent(in)         :: this
+    integer,intent(in)                  :: outunit
+    !
+        info = this%StressDrivenEvolutionModule%printConfig(outunit)
+        if (info /= criSuccess) return
+        !
+        if (doLogging(criLogWarn,this%output%verbosity)) then
+            ! Introduce youself ;-)
+            write(display_unit,'(A)') 'ASR, $Rev$'
+        endif
+        if (doLogging(criLogInfo,this%output%verbosity)) then
+            !> \todo Print out summary of the configuration
+            continue
+        endif
+    !
+    end function
+
+    
     subroutine ASRModule_run(this,info)
     implicit none
     class(ASRModule),intent(inout)          :: this
@@ -129,8 +153,7 @@ contains
         !
         info = criErr_BadArgs
         !
-        ! Introduce youself ;-)
-        write(display_unit,'(A)') 'ASR, $Rev$'
+        
         !
         ! Open and initialize result files
         !
@@ -151,6 +174,12 @@ contains
         Mrot = rotmat(deg2rad(this%rotframe))
         !
         do  istep = 1, nsteps
+            !
+            if (doLogging(criLogDebug,this%output%verbosity)) write(display_unit,800)
+            if (doLogging(criLogWarn,this%output%verbosity)) then
+                write(display_unit,fmt=1600) istep, nsteps
+            endif
+            !
             associate(step => this%steps(istep), control => this%steps(istep)%incrementation_control)
                 !
                 ! Acquire full stress tensor sigma
@@ -162,18 +191,13 @@ contains
                 sigma_rot = rotateSRTensorTo(sigma, Mrot)
                 !
                 ! Print the input data:
-                if (doLogging(criLogInfo,this%output%verbosity)) then
-                    write(display_unit,800)
-                    write(display_unit,fmt=300) istep, nsteps
-                    300 format(/, 'Step ', I0, ' out of ', I0, /)
-                endif
                 if (doLogging(criLogDebug,this%output%verbosity)) then
-                    write(display_unit,fmt=310)
-                    write(display_unit,400) 'sigma', 'S', 'sigma_h'
+                    write(display_unit,fmt=3310)
+                    write(display_unit,3400) 'sigma', 'S', 'sigma_h'
                     do j=1,3
-                        write(display_unit,411) sigma%t(:,j), S%t(:,j), Pressure%t(:,j)
+                        write(display_unit,3411) sigma%t(:,j), S%t(:,j), Pressure%t(:,j)
                     enddo
-                    310 format('Input stress tensor, in the material reference frame:')
+                    
                 endif
                 !
                 ! Follow the stress path
@@ -201,10 +225,12 @@ contains
         enddo
         
         ! Formats
-        400 format(T15,A,T54,A,T85,A)
+        3310 format('Input stress tensor, in the material reference frame:')
+        3400 format(T15,A,T54,A,T85,A)
         ! 410 format('| SmScaled',T40,'| SmIdent',T80,'|SonA')
-        411 format(3(E10.3,1X),' | ',3(E10.3,1X),' | ',3(E10.3,1X))
+        3411 format(3(E10.3,1X),' | ',3(E10.3,1X),' | ',3(E10.3,1X))
 
+        1600 format(/,'Step ',I0, ' out of ',I0)
 #define MSG_GROUP_RULERS
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"

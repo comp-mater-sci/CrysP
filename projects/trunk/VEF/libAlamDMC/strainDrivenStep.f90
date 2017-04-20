@@ -156,7 +156,8 @@ contains
                     write(display_unit, 600) volumetric_strain_norm, volumetric_strain_fraction * 100
                     600 format(/, 'Note: volumetric deformation of magnitude ', G0.2, 1X, &
                                 ', which makes ', G0.2, 1X, &
-                                'percent of the prescribed deformation in this step, was substracted.', /)
+                                'percent of the prescribed ',/, &
+                                'deformation in this step, was substracted.', /)
                 endif
             endif
         end associate

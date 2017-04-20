@@ -124,8 +124,10 @@ contains
         info = this%StressDrivenModule%printConfig(outunit)
         if (info /= criSuccess) return
         !
-        ! Print banner
-        write(outunit,'(A)') 'QRS: $Rev$'
+        if (doLogging(criLogWarn,this%output%verbosity)) then
+            ! Introduce youself ;-)
+            write(outunit,'(A)') 'QRS: $Rev$'
+        endif
         if (doLogging(criLogInfo,this%output%verbosity)) then
             ! Print-out summary of the configuration 
             !write(display_unit,fmt=fmtMsg2Other//'2(F8.3,1X))',iostat=ioerr) 'Angular range:', this%fi2min, this%fi2max
@@ -166,10 +168,10 @@ contains
     !
     integer,parameter :: column_width = 15
     ! For display output:
-    integer,parameter :: ncolumn_labels_display = 7, column_width_display = 14
+    integer,parameter :: ncolumn_labels_display = 6, column_width_display = 14
     character(len=column_width-1),dimension(ncolumn_labels_display) :: display_column_labels = &
         [ character(len=column_width_display) ::  &
-        'angle','rho','q-value','r-value','s-value','M-factor','residual' ]
+        'angle','rho','q-value','r-value','sigma_xx','residual' ]
     !
         info = criError
         !
@@ -200,7 +202,11 @@ contains
             !
             if (doLogging(criLogDebug,this%output%verbosity)) then
                 write(display_unit,800)
-                write(display_unit,'(/,A,1X,I4,1X,A,1X,F8.3,A,/)')'Point:',i,'fi2 =',fi2, ' degs'
+            endif
+            if (doLogging(criLogInfo,this%output%verbosity)) then
+                continue
+            elseif (doLogging(criLogWarn,this%output%verbosity)) then
+                write(display_unit,fmt=1600) i, npoints, fi2
             endif
             !
             fi2 = deg2rad(fi2)
@@ -228,18 +234,15 @@ contains
             endif
             if (is_error(info)) exit
             !
-            if (doLogging(criLogInfo,this%output%verbosity)) then
-                info = printYLPResult(display_unit, ylp_result)
-            endif
-            !
             SonA%t = vec5D2tens(ylp_result%vSonA)
             SmIdent%t = vec5D2tens(ylp_result%vSonAn)
             
-            if (doLogging(criLogInfo,this%output%verbosity)) then
-                write(display_unit,400)
+            if (doLogging(criLogDebug,this%output%verbosity)) then
+                info = printYLPResult(display_unit, ylp_result)
+                write(display_unit, fmt=3400)
                 do j=1,3
                     ! would be just:  write(display_unit,401) sigma(j,:),SmIdent(j,:),Dmcoord(j,:)
-                    write(display_unit,401) (sigma%t(j,k),k=1,3), (SmIdent%t(j,k),k=1,3), (D%t(j,k), k=1,3)
+                    write(display_unit,fmt=3401) (sigma%t(j,k),k=1,3), (SmIdent%t(j,k),k=1,3), (D%t(j,k), k=1,3)
                 enddo
             endif
             ! Rotate back to the "tensile test" coordinate system  
@@ -273,10 +276,10 @@ contains
                 endif
                 !
                 if (doLogging(criLogInfo,this%output%verbosity)) then
-                    write(display_unit,fmt=601) !
-                    write(display_unit,fmt=600) (centered(display_column_labels(j)), j=1,ncolumn_labels_display) 
-                    write(display_unit,fmt=610) phis, this%rho, qrsvalues, mfactors,residuals
-                    write(display_unit,fmt=601)
+                    write(display_unit,fmt=2601) !
+                    write(display_unit,fmt=2600) (centered(display_column_labels(j)), j=1,ncolumn_labels_display) 
+                    write(display_unit,fmt=2610) phis, this%rho, qrsvalues%qvalue, qrsvalues%rvalue, sigmas_x, residuals
+                    write(display_unit,fmt=2601)
                 endif
             end associate
             !
@@ -302,13 +305,14 @@ contains
         close(ofunit)
         !
         !
-        400 format('| sigma',T40,'| SmIdent',T80,'|Dmcoord')
-        401 format(3(F10.6,1X),T40,3(F10.6,1X),T80,3(F10.6,1X))
+        3400 format('| sigma',T40,'| SmIdent',T80,'|Dmcoord')
+        3401 format(3(F10.6,1X),T40,3(F10.6,1X),T80,3(F10.6,1X))
         ! Formats for the display output
-        600 format(1X, 7(A14,    1X))
-        601 format('|',7(14('-'),'|'))
-        610 format(1X, 7(F14.6,  1X))
-
+        2600 format(1X, 6(A14,    1X))
+        2601 format('|',6(14('-'),'|'))
+        2610 format(1X, F14.2, 1X, 3(F14.6,1X),2(E14.6,1X)) ! 6 fields in total
+        1600 format(/,'Sample ', I0, ' out of ',I0, ', sample orientation: ',F0.2)
+        !
 #define MSG_GROUP_RULERS     
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"

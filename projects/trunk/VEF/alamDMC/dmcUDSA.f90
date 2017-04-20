@@ -157,8 +157,10 @@ contains
         info = this%StressDrivenEvolutionModule%printConfig(outunit)
         if (info /= criSuccess) return
         info = criErr_BadArgs
-        ! Introduce youself ;-)
-        write(outunit,'(A)') 'UDSA, $Rev$'
+        if (doLogging(criLogWarn,this%output%verbosity)) then
+            ! Introduce youself ;-)
+            write(outunit,'(A)') 'UDSA, $Rev$'
+        endif
         !
         if (doLogging(criLogInfo,this%output%verbosity)) then 
             if (this%stress_state_id == tension_state) then
@@ -233,7 +235,10 @@ contains
     test_run_loop: do while (this%ptr_orientation_range%next(angle))
         test_run = test_run + 1
         !
-        if (doLogging(criLogDebug,this%output%verbosity))  write(display_unit,800)
+        if (doLogging(criLogDebug,this%output%verbosity)) write(display_unit,fmt=800)
+        if (doLogging(criLogWarn,this%output%verbosity)) then
+            write(display_unit, fmt=1600) test_run, n_test_runs, angle
+        endif
         !
         ! Come back to the initial material state if needed
         ! Re-initialize altay 
@@ -327,8 +332,8 @@ contains
         endif
     !
     end do test_run_loop
-
-
+    !
+    1600 format(/,'Sample ', I0, ' out of ',I0, ', sample orientation: ',F0.2)
 #define MSG_GROUP_RULERS
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"

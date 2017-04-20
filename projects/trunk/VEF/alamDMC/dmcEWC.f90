@@ -177,8 +177,10 @@ contains
         info = this%StressDrivenEvolutionModule%printConfig(outunit)
         if (info /= criSuccess) return
         !
-        ! Print banner
-        write(outunit,'(A)') 'EWC: $Rev$'
+        if (doLogging(criLogWarn,this%output%verbosity)) then
+            ! Introduce youself ;-)
+            write(outunit,'(A)') 'EWC: $Rev$'
+        endif
         if (doLogging(criLogInfo,this%output%verbosity)) then
                 !> \todo Print out summary of the configuration
                 continue
@@ -192,7 +194,7 @@ contains
     class(EWCModule),intent(inout)            :: this
     integer,intent(out)                       :: info
     !
-    integer :: i, j
+    integer :: i, j, npoints
     double precision :: theta
     
     type(SRTensor)  :: sigma
@@ -231,6 +233,10 @@ contains
         allocate(vPlasticWorkLevels(n_contours))
         !
         if (this%use_reference_stress_mode) then
+            if (doLogging(criLogDebug,this%output%verbosity)) write(display_unit,800)
+            if (doLogging(criLogWarn,this%output%verbosity)) then
+                write(display_unit,fmt=1500)
+            endif
             ! Strain levels are provided
             allocate(vEquivalentStrainLevels(n_contours))
             do i = 1, n_contours
@@ -271,9 +277,15 @@ contains
         !            Note: the iterations of the main loop are conceptually independent
         !            of each other. Current implementation of the back-end CP model
         !            prevents exploiting that.
+        npoints = this%ptr_theta_range%size()
         i =  0
         do while (this%ptr_theta_range%next(theta))
             i = i + 1
+            !
+            if (doLogging(criLogWarn,this%output%verbosity)) then
+                write(display_unit,fmt=1600) i, npoints, theta
+            endif
+            !
             vTheta(i) = theta
             theta = deg2rad(theta)
             !
@@ -317,6 +329,15 @@ contains
         else
             info = this%fileOutput(vPlasticWorkLevels, results, use_work_levels=.true.)
         endif
+    !
+    1500 format(/,'Reference sample')
+    1600 format(/,'Sample ', I0, ' out of ',I0, ', sample orientation theta: ',F0.2)
+    !
+#define MSG_GROUP_RULERS
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
+#undef MSG_GROUP_RULERS
     !
     end subroutine
 

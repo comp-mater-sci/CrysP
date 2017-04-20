@@ -150,13 +150,12 @@ contains
         info = this%StressDrivenModule%printConfig(outunit)
         if (info /= criSuccess) return
         info = criErr_BadArgs
-        ! Introduce youself ;-)
-        write(outunit,'(A)') 'YLD, $Rev$'
         !
-        if (doLogging(criLogInfo,this%output%verbosity)) then
-            !
+        if (doLogging(criLogWarn,this%output%verbosity)) then
             ! Introduce youself ;-)
-            write(display_unit,'(A)') 'dmcYld, $Rev$'
+            write(outunit,'(A)') 'YLD, $Rev$'
+        endif
+        if (doLogging(criLogDebug,this%output%verbosity)) then
             do i=1,nbase
                 write(display_unit,'(A,1x,A,6(F6.2,1X))') veclabels(i),'vector:',this%base_vectors(:,i)
             enddo
@@ -240,9 +239,9 @@ contains
                 if (doLogging(criLogDebug,this%output%verbosity)) then
                     write(display_unit,800)
                     !
-                    write(display_unit,fmt=200)
-                    write(display_unit,fmt=201) theta
-                    write(display_unit,fmt=200)
+                    write(display_unit,fmt=3200)
+                    write(display_unit,fmt=3201) theta
+                    write(display_unit,fmt=3200)
                 endif
                 !
                 theta = deg2rad(theta) 
@@ -267,13 +266,17 @@ contains
                 if (doLogging(criLogDebug,this%output%verbosity)) then
                     info = printYLPResult(display_unit, ylp_result)
                 endif
-
+                !
+                ! Report progress
                 if (doLogging(criLogInfo,this%output%verbosity)) then
-                    write(display_unit,fmt=510)
-                    write(display_unit,fmt=500) 'theta', 'S', 'S_rel', 'dotW(A)' 
-                    write(display_unit,fmt=501) rad2deg(theta), ylp_result%scal_s, scal_s_rel, ylp_result%dotWonA
-                    write(display_unit,fmt=510)
+                    write(display_unit,fmt=2510)
+                    write(display_unit,fmt=2500) 'theta', 'S', 'S_rel', 'dotW(A)', 'residual'
+                    write(display_unit,fmt=2501) rad2deg(theta), ylp_result%scal_s, scal_s_rel, ylp_result%dotWonA, ylp_result%R
+                    write(display_unit,fmt=2510)
+                elseif (doLogging(criLogWarn,this%output%verbosity)) then
+                    write(display_unit,fmt=1600) rad2deg(theta), ylp_result%R
                 endif
+                !
                 yldRes(i) = yldResult(rad2deg(theta), w, ylp_result%scal_s, scal_s_rel, &
                                       norm2(ylp_result%vSonA), ylp_result%dotWonA, &
                                       pair_double(scal_s_rel * cos(theta), scal_s_rel * sin(theta)),&
@@ -303,12 +306,12 @@ contains
         close(ofunit)
         info = criSuccess
     !
-    200 format(28('-'))
-    201 format('Theta angle =',T20,F8.3) 
-    400 format(A,T40,A,T80,A)
-    500 format(1X, A10,    '|',3(A12,'|'))
-    501 format(1X, F10.3,  1X, 3(E12.5,1X))
-    510 format('|',10('-'),'|',3(12('-'),'|'))
+    3200 format(28('-'))
+    3201 format('Theta angle =',T20,F8.3) 
+    2500 format(1X, A10,    '|',4(A12,'|'))
+    2501 format(1X, F10.3,  1X, 4(E12.5,1X))
+    2510 format('|',10('-'),'|',4(12('-'),'|'))
+    1600 format('Yield locus point at theta:',1X, F0.2, 1X, 'computed, residual error: ', E10.3)
     !
 #define MSG_GROUP_RULERS     
 #define MSG_GROUP_ERRORS

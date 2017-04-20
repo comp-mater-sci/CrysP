@@ -63,7 +63,10 @@ contains
     integer,intent(in)              :: outunit !< IO unit for output
     !
         info = this%DeformationDrivenModule%printConfig(outunit)
-
+        if (doLogging(criLogWarn,this%output%verbosity)) then
+            ! Introduce youself ;-)
+            write(display_unit,'(A)') 'ADP, $Rev$'
+        endif
     !
     end function
 
@@ -194,8 +197,6 @@ contains
     type(ADPOutputData) :: output
     integer :: iounit, i_step, n_steps
     !
-        ! Introduce youself ;-)
-        write(display_unit,'(A)') 'ADP, $Rev$'
         ! Open output file
         RETURN_IF(info /= criSuccess, info = this%openOutputFile('.adp',iounit))
         !
@@ -214,10 +215,9 @@ contains
                 !
                 ! Begin step
                 !
-                if (doLogging(criLogInfo, this%output%verbosity)) then
-                    write(display_unit,800)
-                    write(display_unit,fmt=300) i_step, n_steps
-                    300 format(/, 'Step ', I0, ' out of ', I0, /)
+                if (doLogging(criLogDebug, this%output%verbosity)) write(display_unit,800)
+                if (doLogging(criLogWarn, this%output%verbosity)) then
+                    write(display_unit,fmt=1600) i_step, n_steps
                 endif
                 ! Set up the step
                 RETURN_IF(info /= criSuccess, info = step%setUp())
@@ -232,6 +232,7 @@ contains
             end associate
         enddo
         !
+        1600 format(/,'Step ',I0, ' out of ',I0)
     !
 #define MSG_GROUP_ERRORS
 #define MSG_GROUP_RULERS
