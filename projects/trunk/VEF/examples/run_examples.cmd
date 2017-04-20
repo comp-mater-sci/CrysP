@@ -15,9 +15,11 @@ set ALAMDMC=!VEF_ROOT!\bin\alamDMC.exe
 
 set LOGFILE=run_examples.log
 
+echo %date% %time% > %LOGFILE%
+
 for %%m in (UDSA ASR QRS YLD EWC ADP) do (
 	for %%x in (*_%%m.cfg) do (
-		echo %%x
+		echo %%m %%x
 		!ALAMDMC! %%m %%x
 		if ERRORLEVEL 1 (
 			echo FAILURE: %%m %%x >> %LOGFILE%
