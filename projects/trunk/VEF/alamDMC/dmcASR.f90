@@ -12,6 +12,9 @@
 !>    $Date$
 !>
 !>    History of modifications: (see svn log)
+
+#include "criMacros.fpp"
+
 !
 !> DMC Arbitrary Stress Response
 !>
@@ -143,31 +146,14 @@ contains
     type(IncrementationControl)     :: icv
     double precision,dimension(rot_matrix_dim,rot_matrix_dim)   :: Mrot
     !
-    integer     :: j,istep, nsteps
+    integer     :: j, istep, nsteps, ofunit
     !
-    integer :: ofunit, ierr
-    !integer,dimension(2),parameter :: teeunits = [display_unit,histunit]
-      
-!    character(len=14),dimension(9) :: display_column_labels = [ character(len=14) ::  &
-!        'step','incr','eps_vM','Pnorm','totalP_vM','W','scal_s','||S(A)||','residual' ]
-        !
-        info = criErr_BadArgs
-        !
-        
         !
         ! Open and initialize result files
         !
-        open(newunit=ofunit, file=trim(this%output%outputPrefix)//'.asr',status='replace',iostat=ierr)
-        if (ierr /= 0) then
-            write(display_unit, fmt=952) trim(this%output%outputPrefix)//'.asr'
-            info = criErr_IOWrite
-            return
-        endif
-        info = this%outputFile(ofunit, header=.true.)
-        if (info /= criSuccess) return
+        RETURN_IF(info /= criSuccess, info = this%openOutputFile('.asr',ofunit))
+        RETURN_IF(info /= criSuccess, info = this%outputFile(ofunit, header=.true.))
         !
-        ! open(unit=histunit,file=trim(this%output%outputPrefix)//'.hsr',status='replace')
-        !      
         nsteps = size(this%steps)
         !
         ! Calculate rotation matrix
