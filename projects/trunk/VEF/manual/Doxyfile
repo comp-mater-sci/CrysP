@@ -813,7 +813,7 @@ INPUT                  = mainpage.dox \
                          alamdmc_generic.dox \
                          alamdmc_modules.dox \
                          simple_mode.md \
-                         utilities.dox \
+                         utilities.md \
                          tutorials.dox \
                          tutorial_swift.dox \
                          guided_tour.dox \
