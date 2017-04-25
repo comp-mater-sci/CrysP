@@ -55,7 +55,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release-instrumented|x64" ConfigurationType="typeStaticLibrary" WholeProgramOptimization="true">
-				<Tool Name="VFFortranCompilerTool" AdditionalOptions="/stand:f08" SuppressStartupBanner="true" MultiProcessorCompilation="true" Optimization="optimizeFull" InterproceduralOptimizations="ipoNone" Preprocess="preprocessYes" F2003Semantics="true" StandardWarnings="standardWarningsF08" CommonElementAlignment="alignCommonEightBytes" ModulePath="$(IntDir)\include" UseMkl="mklSequential"/>
+				<Tool Name="VFFortranCompilerTool" AdditionalOptions="/stand:f08" SuppressStartupBanner="true" DebugInformationFormat="debugLineInfoOnly" MultiProcessorCompilation="true" Optimization="optimizeFull" InterproceduralOptimizations="ipoNone" Preprocess="preprocessYes" F2003Semantics="true" StandardWarnings="standardWarningsF08" DebugParameter="debugParameterUsed" CommonElementAlignment="alignCommonEightBytes" ModulePath="$(IntDir)\include" Traceback="true" RuntimeChecks="rtChecksNone" UseMkl="mklSequential"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
