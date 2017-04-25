@@ -15,7 +15,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release|Win32" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" F2003Semantics="true" StandardWarnings="standardWarningsF08"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Optimization="optimizeFull" InterproceduralOptimizations="ipoMultiFile" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" F2003Semantics="true" StandardWarnings="standardWarningsF08" Diagnostics="diagnosticsShowAll"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -55,7 +55,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release|x64" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" F2003Semantics="true" StandardWarnings="standardWarningsF08"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Optimization="optimizeFull" InterproceduralOptimizations="ipoMultiFile" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" F2003Semantics="true" StandardWarnings="standardWarningsF08"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
@@ -105,7 +105,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release-instrumented|Win32" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugLineInfoOnly" MultiProcessorCompilation="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" F2003Semantics="true" StandardWarnings="standardWarningsF08" Traceback="true"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugLineInfoOnly" MultiProcessorCompilation="true" Optimization="optimizeFull" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" F2003Semantics="true" StandardWarnings="standardWarningsF08" DebugParameter="debugParameterUsed" Traceback="true" RuntimeChecks="rtChecksNone"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
@@ -115,7 +115,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release-instrumented|x64" ConfigurationType="typeStaticLibrary">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" MultiProcessorCompilation="true" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" F2003Semantics="true" StandardWarnings="standardWarningsF08"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugLineInfoOnly" MultiProcessorCompilation="true" Optimization="optimizeFull" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\include" PreprocessorDefinitions="FLAWED_IFORT_OPT" F2003Semantics="true" StandardWarnings="standardWarningsF08" DebugParameter="debugParameterUsed" Traceback="true" RuntimeChecks="rtChecksNone"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
