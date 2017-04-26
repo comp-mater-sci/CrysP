@@ -29,7 +29,14 @@ implicit none
         double precision :: R = 0.D0
         double precision :: dotWonA = 0.D0
         double precision :: scal_s = 0.D0
+        double precision :: vS_length = 0.D0
     end type
+
+
+    !> Constructors of YLPResult type
+    interface YLPResult
+        module procedure YLPResult_init
+    end interface
 
     double precision, parameter,private :: default_residual_tolerance_factor = 5.D0
     
@@ -46,6 +53,43 @@ implicit none
     end type
     
 contains
+
+
+    !> Create YLPResult from arbitrary vS and performs normalization.
+    !>
+    !> \post A correctly initialized result has non-zero vS_length field.
+    pure function YLPResult_init(vS) result(res)
+    implicit none
+    type(YLPResult) :: res
+    double precision,dimension(alamEval_vSD_dim),intent(in) :: vS
+    !
+        res%vS_length = norm2(vS)
+        if (res%vS_length > 0.D0) res%vS = vS / res%vS_length
+    !
+    end function
+
+
+    !> Derive dependant fields from properly initialized and evaluated YLPResult;
+    !>
+    !> This requires fields: vS, vA and vS_length.
+    !> \return criErr_BadArgs if input ylp_result contains wrong data.
+    integer function deriveYLPResult(ylp_result) result(info)
+    implicit none
+    type(YLPResult),intent(inout)   :: ylp_result
+    !
+    double precision :: SonA_norm
+    !
+        info = criErr_BadArgs
+        SonA_norm = norm2(ylp_result%vSonA)
+        if ((ylp_result%vS_length < epsilon(0.D0)) .or. (SonA_norm < epsilon(0.D0))) return
+        !
+        ylp_result%dotWonA = dot_product(ylp_result%vA, ylp_result%vSonA)
+        ylp_result%scal_s = SonA_norm / ylp_result%vS_length
+        ! Calculate normalized stess
+        ylp_result%vSonAn = ylp_result%vSonA / SonA_norm
+        info = criSuccess
+    !
+    end function
 
 
     !> Print detailed info about YLP solution based on the content of YLPResult 

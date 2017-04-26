@@ -175,7 +175,8 @@ contains
     logical,intent(out),optional    :: is_acceptable
     logical,intent(in),optional     :: pretry
     !
-    double precision :: vS_norm, vA_norm, SonA_norm
+    double precision :: vA_norm
+    double precision,dimension(alamEval_vSD_dim) :: vS
     logical :: use_vM_guess, use_pretry, is_pretry_acceptable
     type(NormalizedV5DCompCached),target :: obj_func
     !
@@ -194,16 +195,15 @@ contains
         !
         ! Convert input to the 5D space and make the unit vector(s).
         ! This also makes sure it is deviatoric.
-        ylp_result%vS = tens2vec5D(sigma%t)
-        vS_norm = norm2(ylp_result%vS)
-        if (vS_norm < epsilon(0.D0)) return
-        ylp_result%vS = ylp_result%vS / vS_norm
+        vS = tens2vec5D(sigma%t)
+        ylp_result = YLPResult(vS)
+        if (ylp_result%vS_length < epsilon(0.D0)) return
         !
         ! Pre-try if requested and no explicit initial quess is provided
         is_pretry_acceptable = .false.
         if (use_pretry .and. use_vM_guess) then
             !
-            ylp_result_pretry%vS = ylp_result%vS
+            ylp_result_pretry = ylp_result
             !
             if (this%ptr_db%get(ylp_result_pretry%vS, &
                                 ylp_result_pretry%vA, &
@@ -248,18 +248,9 @@ contains
                     if (ylp_result_retry%R < ylp_result%R) ylp_result = ylp_result_retry
                 endif
             endif
-            SonA_norm = norm2(ylp_result%vSonA) ! FIXME
-            if (is_error(info) .or. (SonA_norm < epsilon(0.D0))) then
-                info = criError
-                return
-            endif
+            RETURN_IF_WITH(is_error(info), info = criError)
         endif
         !
-        SonA_norm = norm2(ylp_result%vSonA) ! FIXME
-        ylp_result%dotWonA = dot_product(ylp_result%vA, ylp_result%vSonA)
-        ylp_result%scal_s = SonA_norm / vS_norm
-        ! Calculate normalized stess
-        ylp_result%vSonAn = ylp_result%vSonA / SonA_norm
         if (present(is_acceptable)) then
             is_acceptable = checkYLPResult(ylp_result, this%solution_tolerance, this%ylp%obj_func_eps)
         endif
@@ -276,7 +267,11 @@ contains
 
     !> Wrapper around multilevelYLP that uses YLPResult for communicating with the caller.
     !> 
-    !> It applies settings provided as members of StressDrivenModule.
+    !> The wrapper applies settings provided as members of StressDrivenModule.
+    !> It provides a ready-to-use ylp_result on non-error info code.
+    !> \return Exit code from multilevelYLP, unless an error condition occurs 
+    !> at later stage. In such case criError is returned.
+    !> In such case
     integer function StressDrivenModule_search(this, ylp_config, ylp_result, use_vM_guess, obj_func) result(info)
     implicit none
     class(StressDrivenModule),intent(in):: this
@@ -294,6 +289,8 @@ contains
                            YLPconfig=ylp_config, &
                            verbose=this%output%verbosity, &
                            objective_function=obj_func)
+        if (is_error(info)) return
+        if (deriveYLPResult(ylp_result) /= criSuccess) info = criError
     !
     end function
     
