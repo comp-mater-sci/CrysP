@@ -31,6 +31,8 @@ implicit none
             double precision        :: jacobi_eps = 5.E-1
             !> Request for preliminary solution of linearized problem 
             logical                 :: linearize = .true.
+            !> Request for solving the non-linear problem
+            logical                 :: nonlinear = .true.
             !> Default epsilon to be set for all TR-solver convergence criteria, except ||F||_2
             double precision        :: default_eps = 1.E-5
             !> Epsilon to be set on norm of objective function ||F||_2
@@ -109,6 +111,10 @@ implicit none
       endif
       ! Override the defaults by the user's settings:
       if (present(YLPconfig)) config = YLPconfig
+      ! Check if the configuration is consistent and allows at least one
+      ! search procedure to be started.
+      info  = criErr_BadArgs
+      if (.not. (config%linearize .or. config%nonlinear)) return
       !
       ! Set the objective function
       if (present(objective_function)) then
@@ -172,13 +178,13 @@ implicit none
             R = r2_lin
             ! do checks if the solution is OK:
             ! Stop criterion: magic number "3" means: ||F(x)||_2 < eps(2)
-            if ( (r2_lin < r1_lin) .and. (TR_res%stop_criterion == 3) .and. (r2_lin <= tr_config%eps(2)) ) then
+            if ( (r2_lin <= r1_lin) .and. (TR_res%stop_criterion == 3) .and. (r2_lin <= tr_config%eps(2)) ) then
                   vX = vX_lin
                   linearized_successful = .true.
             endif
       endif
       ! The linearized analysis is either not done or failed.
-      if (.not. linearized_successful) then
+      if (.not. linearized_successful .and. config%nonlinear) then
             ! Set non-linear analysis
             tr_config%constJacobi = .false.
             !

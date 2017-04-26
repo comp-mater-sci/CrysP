@@ -163,7 +163,7 @@ contains
     !> \return criFailure on lack of convergence. ylp_result and D are set to the best solution found
     !> \return criError or any criErr_* on severe error conditions. ylp_result and D are undefined
     !> \return criSuccess on success
-    integer function StressDrivenModule_findSolution(this,sigma, D, ylp_result, vM_guess, is_acceptable) result(info)
+    integer function StressDrivenModule_findSolution(this,sigma, D, ylp_result, vM_guess, is_acceptable, pretry) result(info)
     implicit none
     class(StressDrivenModule),intent(in)   :: this
     type(SRTensor),intent(in)       :: sigma !< Input stress
@@ -173,18 +173,24 @@ contains
     !> starting point for the iterative search.
     logical,intent(in),optional     :: vM_guess
     logical,intent(out),optional    :: is_acceptable
+    logical,intent(in),optional     :: pretry
     !
     double precision :: vS_norm, vA_norm, SonA_norm
-    logical :: use_vM_guess
+    logical :: use_vM_guess, use_pretry, is_pretry_acceptable
     type(NormalizedV5DCompCached),target :: obj_func
     !
-    type(YLPResult)  :: ylp_result_retry
+    type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
+    type(multilevelYLPConfig)   :: ylp_pretry
+    double precision, parameter :: pretry_search_angle = pi_deg * 2.0D0 
     !
         info = criErr_BadArgs
 
         obj_func%ptr_db => this%ptr_db
         !
         if (present(is_acceptable)) is_acceptable = .false.
+        !
+        use_vM_guess = optionalDefault(vM_guess, .true.)
+        use_pretry = optionalDefault(pretry, .true.)
         !
         ! Convert input to the 5D space and make the unit vector(s).
         ! This also makes sure it is deviatoric.
@@ -193,35 +199,63 @@ contains
         if (vS_norm < epsilon(0.D0)) return
         ylp_result%vS = ylp_result%vS / vS_norm
         !
-        use_vM_guess = optionalDefault(vM_guess, .true.)
-        if (.not. use_vM_guess) then
-            ylp_result%vA = tens2vec5D(D%t)
-            vA_norm = norm2(ylp_result%vA)
-            if (vA_norm < epsilon(0.D0)) return
-        endif
-        ! Calculate the corresponding strain rate vA
-        info = this%search(ylp_result, use_vM_guess, obj_func)
-        if (info == criFailure .and. associated(this%ptr_db)) then
-            ! Try another starting point
-            if (this%ptr_db%get(ylp_result%vS, ylp_result_retry%vA) == criSuccess) then
-                if (doLogging(criLogDebug,this%output%verbosity)) then
-                     write(display_unit,860) 'Poor convergence, re-attempting to find the solution.'
-                endif
-                ! Set the re-try point
-                ylp_result_retry%vS = ylp_result%vS
+        ! Pre-try if requested and no explicit initial quess is provided
+        is_pretry_acceptable = .false.
+        if (use_pretry .and. use_vM_guess) then
+            !
+            ylp_result_pretry%vS = ylp_result%vS
+            !
+            if (this%ptr_db%get(ylp_result_pretry%vS, &
+                                ylp_result_pretry%vA, &
+                                max_angle=pretry_search_angle) == criSuccess) then
+                ! Use special settings for pre-try
+                ylp_pretry = this%ylp
+                ylp_pretry%linearize = .true.
+                ylp_pretry%nonlinear = .false.
                 !
-                ! get new solution
-                info = this%search(ylp_result_retry, .false., obj_func)
-                ! Use the better of the two
-                if (ylp_result_retry%R < ylp_result%R) ylp_result = ylp_result_retry
+                ! get the solution
+                info = this%search(ylp_pretry, ylp_result_pretry, .false., obj_func)
+                ! Accept the solution only if it reached the requested quality
+                if (info == criSuccess .and. (ylp_result_pretry%R < this%ylp%obj_func_eps)) then
+                    is_pretry_acceptable = .true.
+                    ylp_result = ylp_result_pretry
+                endif
             endif
-        endif
-        SonA_norm = norm2(ylp_result%vSonA)
-        if (is_error(info) .or. (SonA_norm < epsilon(0.D0))) then
-            info = criError
-            return
+            !
         endif
         !
+        if (.not. is_pretry_acceptable) then
+            !
+            if (.not. use_vM_guess) then
+                ylp_result%vA = tens2vec5D(D%t)
+                vA_norm = norm2(ylp_result%vA)
+                if (vA_norm < epsilon(0.D0)) return
+            endif
+            ! Calculate the corresponding strain rate vA
+            info = this%search(this%ylp, ylp_result, use_vM_guess, obj_func)
+            if (info == criFailure .and. associated(this%ptr_db)) then
+                ! Try another starting point
+                if (this%ptr_db%get(ylp_result%vS, ylp_result_retry%vA) == criSuccess) then
+                    if (doLogging(criLogDebug,this%output%verbosity)) then
+                         write(display_unit,860) 'Poor convergence, re-attempting to find the solution.'
+                    endif
+                    ! Set the re-try point
+                    ylp_result_retry%vS = ylp_result%vS
+                    !
+                    ! get new solution
+                    info = this%search(this%ylp, ylp_result_retry, .false., obj_func)
+                    ! Use the better of the two
+                    if (ylp_result_retry%R < ylp_result%R) ylp_result = ylp_result_retry
+                endif
+            endif
+            SonA_norm = norm2(ylp_result%vSonA) ! FIXME
+            if (is_error(info) .or. (SonA_norm < epsilon(0.D0))) then
+                info = criError
+                return
+            endif
+        endif
+        !
+        SonA_norm = norm2(ylp_result%vSonA) ! FIXME
         ylp_result%dotWonA = dot_product(ylp_result%vA, ylp_result%vSonA)
         ylp_result%scal_s = SonA_norm / vS_norm
         ! Calculate normalized stess
@@ -243,9 +277,10 @@ contains
     !> Wrapper around multilevelYLP that uses YLPResult for communicating with the caller.
     !> 
     !> It applies settings provided as members of StressDrivenModule.
-    integer function StressDrivenModule_search(this, ylp_result, use_vM_guess, obj_func) result(info)
+    integer function StressDrivenModule_search(this, ylp_config, ylp_result, use_vM_guess, obj_func) result(info)
     implicit none
     class(StressDrivenModule),intent(in):: this
+    type(multilevelYLPConfig),intent(in)    :: ylp_config
     type(YLPResult),intent(inout)           :: ylp_result
     logical,intent(in)                      :: use_vM_guess
     class(NormalizedV5DComp),intent(inout)  :: obj_func
@@ -256,7 +291,7 @@ contains
                            ylp_result%R,     &
                            info,             &
                            useVMGuess=use_vM_guess, &
-                           YLPconfig=this%ylp, &
+                           YLPconfig=ylp_config, &
                            verbose=this%output%verbosity, &
                            objective_function=obj_func)
     !
