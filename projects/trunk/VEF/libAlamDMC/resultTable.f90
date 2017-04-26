@@ -116,11 +116,12 @@ contains
     integer :: iounit, ierr, i
     
         if (size(this%table) > this%saved_session_idx) then
-            open(newunit=iounit, file=fpath, position='APPEND', &
+            open(newunit=iounit, file=fpath, position='APPEND', action='WRITE',&
                  status='UNKNOWN', form='UNFORMATTED', iostat=ierr)
             RETURN_IF_WITH(ierr /= 0, info=criErr_IOOpen)
             do i = this%saved_session_idx + 1, size(this%table)
                 write(iounit, iostat=ierr) this%table%values(i)
+                if (ierr /= 0) exit
             enddo
             if (ierr /= 0) then
                 ! clear the cache
@@ -152,7 +153,11 @@ contains
             ! the file exists, load data from it
             do while ((ierr == 0) .or. (info /= criSuccess))
                 read(iounit, iostat=ierr) tmp
-                if (ierr == 0) info = xVector_push(this%table, tmp)
+                if (ierr == 0) then
+                    info = xVector_push(this%table, tmp)
+                else
+                    exit
+                endif
             enddo
             ! negative ierr on end-of-file or end-of-record; positive on error
             if (ierr > 0 .or. info /= criSuccess) then
@@ -161,6 +166,7 @@ contains
                 this%saved_session_idx = size(this%table)
                 info = criSuccess
             endif
+            close(iounit)
         endif
     end function
     
