@@ -254,12 +254,9 @@ contains
                 !
                 info = this%findSolution(Sm, D, ylp_result, is_acceptable=acceptable_point)
                 ! Consider what to do with unsuccessful search
-                if (info /= criSuccess) then
-                    ! Note: we can meaningfully check ylp_result only on success or failure
-                    if ((info == criFailure) .and. (.not. acceptable_point)) then
-                        write(display_unit,fmt=860) 'Cannot find solution, datapoint dropped'
-                        cycle
-                    endif
+                if (is_error(info) .or. ((info == criFailure) .and. (.not. acceptable_point))) then
+                    write(display_unit,fmt=860) 'Cannot find solution, datapoint dropped'
+                    cycle
                 endif
                 scal_s_rel = ylp_result%scal_s * iunilen
                 !
