@@ -234,13 +234,16 @@ contains
             ! Calculate the corresponding strain rate vA
             info = this%search(this%ylp, ylp_result, use_vM_guess, obj_func)
             if (info == criFailure .and. associated(this%ptr_db)) then
+                !
                 ! Try another starting point
-                if (this%ptr_db%get(ylp_result%vS, ylp_result_retry%vA) == criSuccess) then
+                !
+                ! Set the re-try point
+                ylp_result_retry = ylp_result
+                !
+                if (this%ptr_db%get(ylp_result_retry%vS, ylp_result_retry%vA) == criSuccess) then
                     if (doLogging(criLogDebug,this%output%verbosity)) then
                          write(display_unit,860) 'Poor convergence, re-attempting to find the solution.'
                     endif
-                    ! Set the re-try point
-                    ylp_result_retry%vS = ylp_result%vS
                     !
                     ! get new solution
                     info = this%search(this%ylp, ylp_result_retry, .false., obj_func)
