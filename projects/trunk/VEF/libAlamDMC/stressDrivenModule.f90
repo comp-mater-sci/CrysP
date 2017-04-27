@@ -191,7 +191,8 @@ contains
         if (present(is_acceptable)) is_acceptable = .false.
         !
         use_vM_guess = optionalDefault(vM_guess, .true.)
-        use_pretry = optionalDefault(pretry, .true.)
+        ! Pre-try if requested and no explicit initial quess is provided
+        use_pretry = optionalDefault(pretry, .true.) .and. use_vM_guess
         !
         ! Convert input to the 5D space and make the unit vector(s).
         ! This also makes sure it is deviatoric.
@@ -199,9 +200,8 @@ contains
         ylp_result = YLPResult(vS)
         if (ylp_result%vS_length < epsilon(0.D0)) return
         !
-        ! Pre-try if requested and no explicit initial quess is provided
         is_pretry_acceptable = .false.
-        if (use_pretry .and. use_vM_guess) then
+        if (use_pretry) then
             !
             ylp_result_pretry = ylp_result
             !
@@ -252,6 +252,11 @@ contains
                 endif
             endif
             RETURN_IF_WITH(is_error(info), info = criError)
+            !
+            ! Rare case: normal search and re-try cannot improve over pre-try
+            if (info /= criSuccess .and. use_pretry) then
+                if (ylp_result_pretry%R < ylp_result%R) ylp_result = ylp_result_pretry
+            endif
         endif
         !
         if (present(is_acceptable)) then
