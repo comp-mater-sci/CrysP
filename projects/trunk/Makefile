@@ -1,28 +1,45 @@
 # $Id$
 
-
-# Canned recipe for top-level build set:
-define make-targets
-$(ECHO) "Performing make $@"
-$(MAKE) -C FCRI $@ 
-$(MAKE) -C AlTay $@
-$(MAKE) -C fopt $@
-$(MAKE) -C fng $@
-$(MAKE) -C abaqus/vumats $@
-$(MAKE) -C MTM-FHMport $@
-$(MAKE) -C slis $@
-$(MAKE) -C VEF $@
-# $(MAKE) -C hms $@
-endef
 #
+# Top-level projects as phony targets
+#
+ALL_PROJECTS := FCRI AlTay fopt fng abaqus/vumats MTM-FHMport slis VEF hms
+
 
 ECHO=@echo -e
 
-BRANCH_ROOT=$(shell pwd)
+# Canned recipe for top-level projects
+define make-target
+$(MAKE) -C $1 $@;
+endef
+
+#
+# Provide certain variables to the sub-makes
+#
+BRANCH_ROOT := $(shell pwd)
 export BRANCH_ROOT
+
+#
+# Top-level projects are phony targets
+#
+.PHONY: $(ALL_PROJECTS)
+.PHONY: all clean info
+
+all: $(ALL_PROJECTS)
+
+#
+# Dependencies between the top-level projects
 #
 
-.PHONY: all clean info
+AlTay: FCRI
+fng: FCRI fopt AlTay
+abaqus/vumats: FCRI fng
+VEF: FCRI fopt slis
+hms: abaqus/vumats AlTay fng VEF
+
+#
+# Targets
+#
 
 info:
 	$(ECHO) "Build all top-level targets. \n"
@@ -34,7 +51,10 @@ info:
 	$(ECHO) "\tVERBOSE: set VERBOSE=1 to see detaied compilation info on the terminal" 
 	$(ECHO) "\n"
 
-all clean mrproper:
-	$(make-targets)
+$(ALL_PROJECTS):
+	$(ECHO) "\nBuilding $@ \n"
+	$(MAKE) -C $@
 
+clean mrproper:
+	$(foreach project, $(ALL_PROJECTS), $(call make-target, $(project)))
 
