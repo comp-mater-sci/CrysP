@@ -11,6 +11,7 @@
     </tab>
     <tab type="user" visible="yes" url="@ref page_tutorials" title="Tutorials"/>
     <tab type="user" visible="yes" url="@ref page_resources" title="Resources"/>
+    <tab type="user" visible="yes" url="@ref page_about" title="About"/>
     <!-- Doxygen built-ins -->
     <tab type="pages" visible="no" title="Documentation" intro=""/>
     <tab type="modules" visible="no" title="" intro=""/>
