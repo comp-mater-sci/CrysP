@@ -34,7 +34,7 @@ all: $(ALL_PROJECTS)
 AlTay: FCRI
 fng: FCRI fopt AlTay
 abaqus/vumats: FCRI fng
-VEF: FCRI fopt slis
+VEF: FCRI fopt slis AlTay fng
 hms: abaqus/vumats AlTay fng VEF
 
 #
