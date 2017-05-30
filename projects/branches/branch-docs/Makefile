@@ -5,7 +5,10 @@
 #
 ALL_PROJECTS := FCRI AlTay fopt fng abaqus/vumats MTM-FHMport slis VEF hms
 
-
+#
+# Top-level generic targets
+#
+GENERIC_TARGETS := all clean info
 ECHO=@echo -e
 
 # Canned recipe for top-level projects
@@ -23,8 +26,11 @@ export BRANCH_ROOT
 # Top-level projects are phony targets
 #
 .PHONY: $(ALL_PROJECTS)
-.PHONY: all clean info
+.PHONY: $(GENERIC_TARGETS)
 
+#
+# Default target
+#
 all: $(ALL_PROJECTS)
 
 #
@@ -42,10 +48,12 @@ hms: abaqus/vumats AlTay fng VEF
 #
 
 info:
-	$(ECHO) "Build all top-level targets. \n"
-	$(ECHO) "Targets:"
-	$(ECHO) "\t all \n\t clean \n\t mrproper"
-	$(ECHO) "\n"
+	$(ECHO) "Build all top-level targets.\n"
+	$(ECHO) "Default target: all\n"
+	$(ECHO) "Generic targets:"
+	$(ECHO) $(foreach target,$(GENERIC_TARGETS),"\t$(target)\n")
+	$(ECHO) "Top-level targets:"
+	$(ECHO) $(foreach target,$(ALL_PROJECTS),"\t$(target)\n")
 	$(ECHO) "Special flags:\n" 
 	$(ECHO) "\tDEBUG: set DEBUG=1 to build the debug versions"
 	$(ECHO) "\tVERBOSE: set VERBOSE=1 to see detaied compilation info on the terminal" 
