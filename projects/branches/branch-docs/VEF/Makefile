@@ -7,3 +7,8 @@ CMAKELISTS=CMakeLists.txt  alamDMC/CMakeLists.txt  libAlamDMC/CMakeLists.txt  li
 
 include ../build/cmake-common/bootstrap.makefile
 
+doc: user_manual
+
+.PHONY: user_manual
+user_manual:
+	$(CD) manual && $(DOXYGEN)
