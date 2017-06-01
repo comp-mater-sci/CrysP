@@ -8,7 +8,7 @@ ALL_PROJECTS := FCRI AlTay fopt fng abaqus/vumats MTM-FHMport slis VEF hms
 #
 # Top-level generic targets
 #
-GENERIC_TARGETS := all clean info
+GENERIC_TARGETS := all clean info doc
 ECHO=@echo -e
 
 # Canned recipe for top-level projects
@@ -63,6 +63,10 @@ $(ALL_PROJECTS):
 	$(ECHO) "\nBuilding $@ \n"
 	$(MAKE) -C $@
 
-clean mrproper:
+clean mrproper doc:
 	$(foreach project, $(ALL_PROJECTS), $(call make-target, $(project)))
 
+doc: doc/readme.html
+
+doc/readme.html: readme.rst
+	rst2html.py $< $@
