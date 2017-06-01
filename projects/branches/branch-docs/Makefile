@@ -66,7 +66,10 @@ $(ALL_PROJECTS):
 clean mrproper doc:
 	$(foreach project, $(ALL_PROJECTS), $(call make-target, $(project)))
 
-doc: doc/readme.html
+doc: doc/readme.html doc/readme.pdf
 
 doc/readme.html: readme.rst
-	rst2html.py $< $@
+	rst2html.py --stylesheet=doc/assets/rst2html.css $< $@
+
+doc/readme.pdf: readme.rst
+	rst2pdf --stylesheet-path=doc/assets/rst2html.css $< $@
