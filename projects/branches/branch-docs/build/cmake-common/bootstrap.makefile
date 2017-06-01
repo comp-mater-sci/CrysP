@@ -36,6 +36,7 @@ ProjectDir=$(CURDIR)
 # Common tools
 #
 CAT=cat
+CD=cd
 CP=cp
 ECHO=@echo -e
 ECHO_RAW=echo -e
