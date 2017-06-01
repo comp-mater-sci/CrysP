@@ -15,7 +15,7 @@ Overview of the repository contents
 This directory contains top-level projects. Each project has a separate directory where
 its content resides. On this level, the list of projects include:
 
-abaqus
+`abaqus`
   Abaqus-related code: VUMATs, Abaqus Python scripts and utilities
 
 `AlTay`_
@@ -53,6 +53,48 @@ simulations
 `VEF`_
   Container for sub-projects related to the Virtual Experimentation Framework
 
+Documentation guidelines
+========================
+
+There are few general guidelines how to produce, structure and maintain the documentation 
+of the projects.
+
+#. Readme in every high-level directory
+
+   **Motivation**
+   
+   It is useful to have a compact and concise overview of the directory content.
+
+#. Readme as reStructuredText
+
+   .. epigraph::
+
+      reStructuredText is an easy-to-read, what-you-see-is-what-you-get plaintext markup 
+      syntax and parser system
+      
+      -- `reStructuredText webpage`_ 
+
+   **Motivation**
+
+   reStructuredText has several advantages:
+   
+   - it can be easily read by humans, since it does not contain *too obtrusive* elements
+     (as HTML does)
+   - it can be transformed into a variety of formats: HTML, PDF, DOC, ...
+   - it is structured and well-suited for preparing technical documentation 
+   - it is much more standardized than Markdown
+   
+#. Each project in C/C++ or Fortran should be ready for being processed with Doxygen_ 
+
+   **Motivation**
+   
+   Doxygen can extract documentation directly from the source code and present it in 
+   a searcheable form. Doxygen also produces useful graphs that summarize the code, such 
+   as class graphs, caller/callee graphs etc.
+   
+.. _Doxygen: https://www.stack.nl/~dimitri/doxygen
+.. _reStructuredText: http://docutils.sourceforge.net/rst.html
+.. _reStructuredText webpage: reStructuredText_
 
 Building the software
 =====================
@@ -78,7 +120,6 @@ to the installed software tools:
 
 .. _GNU Make: https://www.gnu.org/software/make/
 .. _CMake: https://cmake.org/
-.. _Doxygen: https://www.stack.nl/~dimitri/doxygen/
 
 The code depends on certain external libraries:
 
@@ -129,6 +170,8 @@ Visual Studio projects.
 ----------
 
 .. include:: build/readme.rst
+
+.. include:: abaqus/readme.rst
 
 .. include:: AlTay/readme.rst
 
