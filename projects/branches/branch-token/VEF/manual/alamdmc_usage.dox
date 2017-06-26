@@ -1,0 +1,36 @@
+/*!
+\page page_alamdmc_usage AlamDMC Usage
+
+The program AlamDMC can be started from the Windows command line. General form of command 
+line parameters is:
+\verbatim
+alamDMC  keyword  configuration_file
+\endverbatim
+
+The `alamDMC` program provides the following modules:
+
+
+-# \ref module_udsa - the keyword stands for Uniaxially-Dominated Stress Analysis.
+-# \ref module_asr - the keyword stands for Arbitrary Stress Response.
+-# \ref module_qrs - the keyword stands for Q-values, R-values and S-values 
+(properties that characterize plastic anisotropy in uniaxial stress state).
+-# \ref module_yld - the keyword stands for YieLD locus.
+-# \ref module_ewc - the keyword stands for Equi-Work Contour.
+-# \ref module_adp - the keyword stands for Arbitrary Deformation Path.
+
+For instance, to invoke the Yield Locus Module, the user may run the command:
+\verbatim
+alamDMC  YLD  yld_config.cnf
+\endverbatim
+
+The configuration files of the individual modules are structured in a very similar manner. See \ref page_alamdmc_format for detailed description how to prepare the configuration files, including \ref page_alamdmc_generic and documentation of individual \ref page_alamdmc_modules.
+
+<HR>
+Quick links
+-----------
+\ref page_expert_mode
+- \ref page_alamdmc_usage
+- \ref page_alamdmc_format
+- \ref page_alamdmc_generic
+- \ref page_alamdmc_modules
+*/

@@ -1,0 +1,286 @@
+/*!
+\page page_alamdmc_format AlamDMC Configuration File Format
+
+[TOC]
+
+The AlamDMC configuration file has to follow some basic formatting rules.
+Some dedicated formats for a number of special configuration options may also apply.
+
+\section alamdmc_format_basics Basic Formatting rules
+
+\anchor desc_alamdmc_format
+Configuration files of the `alamDMC` program have a fixed format. The files are read and interpreted by the program according to Fortran formatted input rules, which implies that:
+- the files are processed line by line,
+- empty lines are typically interpreted as containing 'zero' of the type being read,
+- tabulators are not allowed as blank characters.
+
+\attention Please make sure that AlamDMC configuration files do not contain tabulators.
+
+\anchor desc_alamdmc_comments
+Additionally, the configuration files can include comments that are ignored by the program. A comment starts with `#` and spans till the end of the line. A comment may start at the beginning of the line or after a data field.
+\par Example:
+~~~~~~~~~~~~~{.txt}
+# This is a comment
+6           # This is a comment that follows a data field.
+ # Beware, this comment begins at 2nd character, so this line contains (empty) data!
+~~~~~~~~~~~~~
+
+\note If a comment does not start at the first position in a line, the line is interpreted as containing a data field.
+
+\attention Comment lines are <em>not allowed</em> if they break [compound data] (@ref compound) across two or more lines. An example is given [here] (@ref option_discrete).
+
+Generally, the user is supposed to provide correct configuration files. Although the program attempts some rudimentary detection of errors and mistakes in the configuration file, the user is advised not to rely on that feature. 
+
+\section alamdmc_format_structure Configuration File Structure
+
+The configuration file is structured in two consecutive parts, as follows:
+
+ -# generic configuration settings, and 
+ -# settings related to the specific module.
+
+Only the second part varies from one module to another. For instance, let's have a look at the configuration file `AKDQf_asr.cfg` located in `examples` directory. The file contains:
+\includelineno AKDQf_asr.cfg
+ 
+As in the example above, a leading part of the configuration file (up to line 21) relates to the generic 
+configuration, while a trailing part (from line 25 onwards) pertains to module-specific configuration.
+
+\section alamdmc_format_configoptions Configuration Options
+
+Any line in the configuration file that is not a comment line, belongs to a _configuration option_.
+A configuration option consists of one or more _configuration fields_. Each configuration field has a certain _type_ \anchor field_type, which can be
+- trivial data types (`path`, `string`, `logical`, `integer` or `real`), or
+- compound data types \anchor compound  (e.g. `srtensor`, `symsrtensor` and `realarray`). 
+
+There are [specific notation conventions] (@ref convention_configuration) for configuration options, fields and field declarations.
+
+Any configuration option belongs to one of the two groups:
+-# _single-line options_: such options always occupy exactly one line in the configuration 
+   file. One or more fields per line is allowed. 
+-# _multi-line options_: depending on the values of the fields in the first line, 
+   __zero or more__ subsequent lines may follow. As in the case of the single-line 
+   options, any line may contain one or more fields.
+
+There are a number of recurrent configuration options that deserve some more explanation: 
+   
+\subsection range_option  Configuration option for expressing range of real values
+This is a multi-line configuration option of the compound datatype `realrange`, which is composed as follows: 
+-# \confdef{range_type,string}
+   determines the type of range to be specified. Supported values of \conffield{range_type} are: `zero`, `one`, `single`, `discrete`, `uniform`, `biased`, `doublebiased` and `multibiased`. It requires zero or more value-dependent suboptions:
+  - \anchor option_zero `zero`<BR>
+    A range that consists of a single value equal to 0.0 (no suboptions).
+    
+    \par Example:
+~~~~~~~~~~~~~{.txt}
+zero            # Equivalent to: 0.0
+~~~~~~~~~~~~~
+<BR>
+
+  - \anchor option_one `one`<BR>
+    A range that consists of a single value equal to 1.0 (no suboptions).
+    
+    \par Example:
+~~~~~~~~~~~~~{.txt}
+one             # Equivalent to: 1.0
+~~~~~~~~~~~~~
+<BR>
+
+  - \anchor option_single `single`<BR>
+    A range that consists of a single value, which is provided as the single field in the suboption:
+    -# \confdef{value,real} sets the single value.
+    
+    \par Example:
+~~~~~~~~~~~~~{.txt}
+single             # One data point
+90.0
+~~~~~~~~~~~~~
+<BR>
+
+  - \anchor option_discrete `discrete`<BR>
+    An explicitly specified set of values. There are two suboptions:
+    -# \confdef{npoints,integer} gives the number of points in the range.
+    -# \confdef{points,realarray} lists the \conffield{npoints} values, spread over one or more lines.  
+        
+    \par Example:
+~~~~~~~~~~~~~{.txt}
+discrete             # Discrete data points
+6                    # 6 real values follow
+ 6.0  7.0  8.0 
+29.0 30.0 31.0  
+~~~~~~~~~~~~~
+    \attention Comment lines are <em>not allowed</em> if they break compound data such as \conffield{points}.
+
+<BR>
+  - \anchor option_uniform `uniform`<BR>
+    A range of uniformly distributed points within a closed interval. The range is specified via suboption:
+    -# \confdef{range_begin,real} \confdef{range_end,real} \confdef{range_step,real} specify the beginning, the end and the step of the range, respectively. Note that the endpoints of the interval do belong to the range. Also note that, unless the length of the interval is a multiple of \conffield{range_step}, the last step of the range is smaller than \conffield{range_step}. Please read [the hint below](@ref hint_even_range) how to ensure even distribution of points inside the range.
+    
+   \par Example:
+~~~~~~~~~~~~~{.txt}
+uniform          # uniformly distributed points
+0.0 180.0 40.0   # range [0,180], consisting of: 0.0 40.0 80.0 120.0 160.0 and 180.0
+~~~~~~~~~~~~~
+<BR>
+
+  - \anchor option_biased `biased`<BR>
+    A range of non-uniformly distributed points, with the density higher at one of the endpoints. It has two suboptions:
+    -# \confdef{range_begin,real,biased_range_begin} \confdef{range_end,real,biased_range_end} \confdef{ratio,real,biased_ratio} has identical meaning of the first two fields as in the `uniform` range. The field \conffield{ratio,biased_ratio} holds a non-negative real value that denotes the ratio between the largest and the smallest step within the range. If (0.0 &lt; \conffield{ratio,biased_ratio} &lt; 1.0) then the smallest steps are located at the beginning of the range; otherwise (\conffield{ratio,biased_ratio} &gt; 1.0) the refined steps appear at the end of the range.
+    -# \confdef{number_of_points,integer,biased_number_of_points} sets the number of points in the range.
+
+    \par Example:
+~~~~~~~~~~~~~{.txt}
+# Unevenly distributed points within range [0,180], 
+# with single bias controlled by ratio=4.0
+# This results in points: 0.0 64.04 109.33 141.35 163.99 and 180.0
+#  
+biased         # unevenly distributed points, single bias  
+0.0 180.0 4.0  # range_begin=0, range_end=180, ratio=4.0 
+5              # number_of_points=5
+~~~~~~~~~~~~~
+    \par Hint 
+    \anchor hint_even_range 
+    A uniform range with guaranteed even distribution _including the last step_, may be enforced by declaring a `biased` range with the \conffield{ratio,biased_ratio} equal to 1.0, and with the number of points specified in \conffield{number_of_points,biased_number_of_points}.
+
+<BR>
+  - \anchor option_doublebiased `doublebiased`<BR>
+    A range of non-uniformly distributed points, with the density either higher or lower at the endpoints. The double-biased range gives basically a sequence of points that would result from two [biased ranges](@ref option_biased) stitched together, with the stitching point located at the half point of the interval [\conffield{range_begin},\conffield{range_end}] and the \conffield{ratio,biased_ratio} of the second range being the reciprocal of the \conffield{ratio,biased_ratio} in the first range. 
+    -# \confdef{range_begin,real,doublebiased_range_begin} \confdef{range_end,real,doublebiased_range_end} \confdef{ratio,real,doublebiased_ratio} has identical meaning of the first two fields as in the `uniform` range. The field \conffield{ratio,doublebiased_ratio} is a non-negative real value that defines a ratio between the largest and the smallest step within the first half of the interval and, at the same time, it defines a ratio between the smallest and the largest step in the second half of the interval. The highest density of points is located around the centre of the interval if \conffield{ratio,biased_ratio} &gt; 1.0. Conversely, if (0.0 &lt;  \conffield{ratio,biased_ratio} &lt;  1.0) the most refined steps will be put next to the endpoints of the range. Note that the mid-point of the interval is always included in the sequence of points defined by the double-biased range.
+    -# \confdef{number_of_points,integer,doublebiased_number_of_points} sets the number of points in the range.
+
+    \par Example:
+~~~~~~~~~~~~~{.txt}
+# Unevenly distributed points within range [0,180], 
+# with double bias controlled by ratio=4.0
+# This results in points: 0.0 51.43 77.14 90.0 102.86 128.57 and 180.0
+doublebiased     # unevenly distributed points, double-biased
+0.0 180.0 4.0    # range_begin=0, range_end=180, ratio=4.0
+7                # number_of_points=7
+~~~~~~~~~~~~~
+<BR>
+
+  - \anchor option_multibiased `multibiased`<BR>
+    A range of non-uniformly distributed points, with arbitrarily selected biased sub-ranges. The endpoint of every subrange becomes the start point of the next subrange, except for the last one which terminates the range. 
+    -# \confdef{range_begin,real,multibiased_range_begin} has identical meaning as in the `uniform` range.
+    -# \confdef{number_of_ranges,integer} defines how many sub-ranges are created; it must be at least 1. For *every* subrange, two additional suboptions, as the following c. and d., are to be provided:
+    -# \confdef{subrange_endpoint,real} \confdef{subrange_ratio,real} have similar meaning as \conffield{range_end,biased_range_end}, resp. \conffield{ratio,biased_ratio}, in the `biased` range.
+    -# \confdef{subrange_number_of_points,integer} has a similar meaning as \conffield{number_of_points,biased_number_of_points} in the `biased` range.
+
+    \par Example:
+    The following `multibiased` range definition  is equivalent to the example of double-biased range described in the [previous section](@ref option_doublebiased):
+~~~~~~~~~~~~~{.txt}
+# Unevenly distributed points within range [0,180], 
+# with multiple biases
+# This results in points: 0.0 51.43 77.14 90.0 102.86 128.57 and 180.0
+multibiased      # unevenly distributed points, multibiased
+0.0              # range_begin=0.0
+2                # number_of_ranges=2
+90.0  4.0        # subrange 1: from 0.0 to 90.0
+3                # subrange 1: subrange_number_of_points=3
+180.0 0.25       # subrange 2: from 90.0 to 180.0
+3                # subrange 2: subrange_number_of_points=3
+~~~~~~~~~~~~~
+<BR>
+
+\subsection euler_option  Configuration option for expressing Euler angles.
+
+A general description of orientation (of a certain reference frame, of a crystal, etc.) is 
+given by a set of Euler angles. All Euler angles are given in Bunge 
+notation and expressed in degrees. It is a single-line option: 
+
+-# \confdef{eulerangles,euler} specifies a set of Euler angles as a compound datatype that consists of 3 fields (type `real`), ordered as: \f$ \phi_1 \space \mit\Phi \space \phi_2 \f$.
+
+\par Example:
+~~~~~~~~~~~~~{.txt}
+0. 45. 0. # Goss orientation
+~~~~~~~~~~~~~ 
+
+\subsection symsrtensor_option Configuration option for expressing symmetric second-order tensors
+
+
+Symmetric second-order tensors are expressed in the configuration files in 
+Voigt notation, as a single-line option of the compound datatype `symsrtensor` that consists of 6 `real` types. Let \f$ \mathbf{X} \f$ be a symmetric second-order tensor, then: 
+
+-# \confdef{tensor,symsrtensor,symsrtensor} lists the components of \f$ \mathbf{X} \f$ in the order: 
+<ul>
+<li> \f$ X_{11} \space X_{22} \space X_{33} \space X_{12} \space X_{23} \space X_{13} \f$ </li>
+</ul>
+for \f$ \mathbf{X} \f$ expressed in the material (`123`) reference frame, or:
+<ul>
+<li> \f$ X_{xx} \space X_{yy} \space X_{zz} \space X_{xy} \space X_{yz} \space X_{xz} \f$ </li>
+</ul>
+for \f$ \mathbf{X} \f$ expressed in the sample (`xyz`) reference frame. 
+
+\par Example:
+~~~~~~~~~~~~~{.txt}
+1.0 0.0 0.0 0.0 0.0 0.0 # All tensor components are zero, except 11- (or xx-)component.
+~~~~~~~~~~~~~ 
+ 
+\subsection srtensor_option Configuration option for expressing second-order tensors
+
+\subsubsection srtensor_option_matrix Second-order tensors in direct (matrix-like) notation 
+Second-order tensors may be expressed as a 3-line option of the compound datatype `srtensor` that contains 3 `real` types per line:
+-# \confdef{tensor,srtensor,srtensor} gives the components for \f$ \mathbf{X} \f$ being a second-order tensor, ordered as follows:
+<ul>
+<li> <em>line 1: </em>\f$ X_{11} \space X_{12} \space X_{13} \f$ </li>
+<li> <em>line 2: </em>\f$ X_{21} \space X_{22} \space X_{23} \f$ </li>
+<li> <em>line 3: </em>\f$ X_{31} \space X_{32} \space X_{33} \f$ </li>
+</ul>
+if \f$ \mathbf{X} \f$ is expressed in the material (`123`) reference frame, or:
+<ul>
+<li> <em>line 1: </em>\f$ X_{xx} \space X_{xy} \space X_{xz} \f$ </li>
+<li> <em>line 2: </em>\f$ X_{yx} \space X_{yy} \space X_{yz} \f$ </li>
+<li> <em>line 3: </em>\f$ X_{zx} \space X_{zy} \space X_{zz} \f$ </li>
+</ul>
+if \f$ \mathbf{X} \f$ is expressed in the sample (`xyz`) reference frame.
+
+\par Example:
+~~~~~~~~~~~~~{.txt}
+ 0.0 0.0 1.0 # All tensor components are zero,
+ 0.0 0.0 0.0 #  except 13- (or xz-)component.
+ 0.0 0.0 0.0 #
+~~~~~~~~~~~~~ 
+
+\subsubsection srtensor_option_voigt Second-order tensors in Voigt notation 
+Second-order tensors may be expressed as a one-line option of the compound datatype `srtensor_voigt` that contains 9 `real` values:
+-# \confdef{tensor,srtensor_voigt,srtensor_voigt} gives the components for \f$ \mathbf{X} \f$ being a second-order tensor, ordered as according to Voigt convention:
+
+   \f$ X_{11} \space X_{22} \space X_{33} \space X_{12} \space X_{23} \space X_{31} \space X_{21} \space X_{32} \space X_{13}\f$
+
+\par Example
+If the example given above were represented as \conffield{srtensor_voigt}, it would read:
+~~~~~~~~~~~~~{.txt}
+0.0 0.0. 0.0 0.0 0.0. 0.0 0.0 0.0. 1.0 # All tensor components are zero, except 13- (or xz-)component.
+~~~~~~~~~~~~~ 
+
+
+
+\subsection incrementation_option Configuration options for strain incrementation
+
+The VEF provides several ways to control how the deformation is incremented if strain evolution of the material is analyzed, as follows:
+
+-# \confdef{incrementation_type,string} specifies how the strain increments will be calculated. If the option takes the value:
+   - `StrainTensor`: the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
+     \f$ \| \boldsymbol{\epsilon} + \Delta\boldsymbol{\epsilon} \| - \| \boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
+   - `StrainTensorIncrement`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
+     \f$ \| \Delta\boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
+   - `StrainTensorComponent`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ is such that 
+     its normal component along the sample x-axis \f$ \Delta \epsilon_{xx} =  \f$  \conffield{increment_magnitude}.
+   - `PlasticWork`, the plastic work per increment \f$ \Delta W =  \f$  \conffield{increment_magnitude}.
+   \note Some values for \conffield{incrementation_type} are only allowed in particular modules of the VEF.
+
+-# \confdef{step_magnitude,real} provides maximal deformation (as specified by \conffield{incrementation_type}) 
+   to be reached in a given deformation step. If the module allows simulating only one step (i.e. one stress path)
+   this field also provides total magnitude to be reached.   
+-# \confdef{increment_magnitude,real} sets the magnitude of deformation increments. Note that the last increment may have a slightly 
+   different magnitude than specified in order to reach exactly \conffield{step_magnitude}.
+
+
+<HR>
+Quick links
+-----------
+\ref page_expert_mode
+- \ref page_alamdmc_usage
+- \ref page_alamdmc_format
+- \ref page_alamdmc_generic
+- \ref page_alamdmc_modules
+
+*/
