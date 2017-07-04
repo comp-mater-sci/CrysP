@@ -221,6 +221,8 @@ contains
     integer :: n_theta, n_contours
     logical :: tmp_flag
     !
+        ! Super-class first
+        RETURN_IF(info /= criSuccess, call this%StressDrivenEvolutionModule%run(info))
         !
         ! Prepare the input data: array of increments, and
         ! array of results.

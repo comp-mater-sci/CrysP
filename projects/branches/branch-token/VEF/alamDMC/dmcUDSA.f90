@@ -13,6 +13,7 @@
 !>
 !>    History of modifications: (see svn log)
 !
+#include "criMacros.fpp"
 !
 !> dmcUDSA (Uniaxially-Dominated Stress Analysis)  allows one to track anisotropic properties  
 !> along deformation due to the uniaxial tension or compression stress.
@@ -208,6 +209,9 @@ contains
     double precision  :: angle, stress_direction
     integer :: test_run, n_test_runs, increment, ofunit
     type(UDSAOutputRecord)  :: outrec
+    !
+    ! Super-class first
+    RETURN_IF(info /= criSuccess, call this%StressDrivenEvolutionModule%run(info))
     !
     ! Check the preconditions
     !

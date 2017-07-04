@@ -209,7 +209,7 @@ contains
     class(BasicModule),intent(inout) :: this
     integer,intent(out)                 :: info
     !
-        info = criError
+        info = criSuccess
     !
     end subroutine
 
