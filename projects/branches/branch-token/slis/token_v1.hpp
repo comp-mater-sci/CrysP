@@ -4,11 +4,13 @@
 #include <string>
 // #include <ctime>
 
+#include <boost/filesystem/path.hpp>
+// UUID
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/nil_generator.hpp>
 #include <boost/uuid/uuid_serialize.hpp>
-
+// Serialization
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
@@ -112,6 +114,11 @@ namespace slis {
 			// Write out the token
 			bool write(std::ostream &) const;
 
+			std::string alias() const { return content.alias; }
+			id_type id() const { return content.id; }
+
+			TokenContent get() const { return content; }
+
 		private:
 			slis::signature::signature_t signature;
 
@@ -121,11 +128,44 @@ namespace slis {
 
 		
 		// Low level functions
-		bool readToken(Token & token, const char * token_path);
+		bool readToken(Token & token, const boost::filesystem::path & token_path);
 
 
-		bool writeToken(const Token & token, const char * token_path);
+		bool writeToken(const Token & token, const boost::filesystem::path & token_path);
+
+		namespace tokenapi_v1 {
+
+			enum signature_status {
+				ok = 0,
+				invalid_token = -1,
+				invalid_signature = -2,
+				io_error = -3,
+				error = -10
+			};
+
+			// Implementation of tokenapi functions
+
+			int signFile(const boost::filesystem::path & file_path, //<! path to the file
+						 const boost::filesystem::path & token_path, //<! path to the token file
+						 const boost::filesystem::path & signature_path //<! path to the signature file
+						) noexcept;
+
+			/*! Verify if the file is signed with the token.
+			*/
+			bool isSignatureValid(const boost::filesystem::path & file_path, //<! path to the file
+									const boost::filesystem::path & token_path, //<! path to the token file
+									const boost::filesystem::path & signature_path//<! path to the signature file
+								) noexcept;
+
+			/*! Verify authenticity of the token in token_path*/
+			bool isTokenValid(const boost::filesystem::path & token_path) noexcept;
+
 		}
+
+	}
+
+
+
 
 };
 

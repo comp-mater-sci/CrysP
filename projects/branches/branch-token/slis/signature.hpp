@@ -54,18 +54,20 @@ namespace slis {
 
 		};	
 
+		const auto sigfile_extension = std::string(".slissig");
+
 		//! Calculate signature of file at file_path using signer
 		signature_t file_signature(const Signer & signer, const path_t & file_path);
 
 		//! Verify if the signature file contains a valid signature of 
 		bool verify_file_signature(const Signer & signer,
 									const path_t & file_path,
-									const path_t & sigfile_path);
+									const path_t & sigfile_path = path_t{});
 
 		bool sign_file(const Signer & signer,
 						const path_t & path,
 						const std::string & comment = std::string(),
-						const std::string & ext = std::string(".slissig"));
+						const std::string & ext = sigfile_extension);
 
 	}
 }

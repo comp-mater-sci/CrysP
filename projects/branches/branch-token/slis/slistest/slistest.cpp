@@ -34,6 +34,9 @@
 #include "signature.hpp"
 #include "token_v1.hpp"
 #include "signature_serialization.h"
+#include "tokenapi.h"
+
+#include "token_secret.hpp" // to be removed
 
 using namespace std;
 
@@ -155,7 +158,6 @@ void test_uuid()
 	cout << "f1 == f3 ?" << (feature_uuid1 == feature_uuid3 ? "yes" : "no") << endl;
 
 	
-
 }
 
 
@@ -245,7 +247,7 @@ void test_signer()
 	//cout << "test_file_nonexisting.txt: " << digest::hexdigest(file_sig_none) << endl;
 
 	auto signing_success = sign_file(signer, "test_file.txt", "testing");
-
+	auto verifying_success = verify_file_signature(signer, "test_file.txt");
 }
 
 
@@ -303,6 +305,7 @@ void test_token_making()
 		std::string token_path("token1.slistkn");
 		Token token{};
 		auto status = writeToken(token,token_path.c_str());
+		cout << (status ? "OK" : "FAILED") << endl;
 
 	}
 	{
@@ -310,6 +313,7 @@ void test_token_making()
 		auto status = writeToken(token, "token2.slistkn");
 		auto authentic = token.isAuthentic(signer);
 		cout << "status: " << status << " authentic:" << authentic << endl;
+		cout << (status && authentic ? "OK" : "FAILED") << endl;
 	}
 	{
 		// read token and check authenticity
@@ -317,6 +321,7 @@ void test_token_making()
 		auto status = readToken(token, "token2.slistkn");
 		auto authentic = token.isAuthentic(signer);
 		cout << "status: " << status << " authentic:" << authentic << endl;
+		cout << (status && authentic ? "OK" : "FAILED") << endl;
 	}
 
 	{
@@ -325,16 +330,16 @@ void test_token_making()
 		auto status = readToken(token, "token2.slistkn");
 		auto authentic = token.isAuthentic(forger);
 		cout << "status: " << status << " authentic:" << authentic << endl;
+		cout << (status && !authentic ? "OK" : "FAILED") << endl;
 	}
-
 	
-
 	// read non-exisitng token
 	{
 		Token token;
 		auto status = readToken(token, "non_existing_token.slistkn");
 		auto authentic = token.isAuthentic(signer);
 		cout << "status: " << status << " authentic:" << authentic << endl;
+		cout << (!(status || authentic) ? "OK" : "FAILED") << endl;
 	}
 	{
 		// read a malformed token
@@ -342,16 +347,81 @@ void test_token_making()
 		auto status = readToken(token, "malformed_token.slistkn");
 		auto authentic = token.isAuthentic(signer);
 		cout << "status: " << status << " authentic:" << authentic << endl;
+		cout << (!(status || authentic) ? "OK" : "FAILED") << endl;
 	}
 
 }
 
 
+void make_authentic_token()
+{
+	using namespace slis::signature;
+	using namespace slis::tokens;
+
+	// Create a token that can be used by token API
+	Signer signer(constants::token_secret);
+	Token token{ signer, "authentic_token", "development", "20170930"};
+	auto status = writeToken(token, "authentic_token.slistkn");
+	auto authentic = token.isAuthentic(signer);
+
+
+}
+
+void test_token_api() 
+{
+	// signing with non-authentic/wrong token
+	{
+		int exitcode = signFile("datafile.txt", "test_token.slistkn","");
+		cout << "Signing file with non-authentic token: " << exitcode <<  " "
+			 << (exitcode != 0? "OK" : "FAILED") << endl;
+	}
+
+	// signing with authentic token
+	{
+		int exitcode = signFile("datafile.txt", "authentic_token.slistkn", "");
+		cout << "Signing file: " << exitcode << " "
+			<< (exitcode == 0 ? "OK" : "FAILED") << endl;
+	}
+
+	// Checking signature with wrong token
+	{
+		cout << "isSignatureValid with wrong token:" 
+			<< (isSignatureValid("datafile.txt", "test_token.slistkn", "") ? "FAILED" : "OK") << endl;
+	}
+
+	// Checking signature with proper token
+	{
+		cout << "isSignatureValid with wrong token:"
+			<< (isSignatureValid("datafile.txt", "authentic_token.slistkn", "") ? "OK" : "FAILED") << endl;
+	}
+
+	// Checking malformed signature with proper token
+	{
+		cout << "isSignatureValid with malformed signature:"
+			<< (isSignatureValid("datafile.txt", "authentic_token.slistkn", "datafile.txt.slissig.malformed") ? "FAILED" : "OK") << endl;
+	}
+
+	// Checking non-existing signature with proper token
+	{
+		cout << "isSignatureValid with non-existing signature:"
+			<< (isSignatureValid("datafile.txt", "authentic_token.slistkn", "datafile.txt.nonexisting.slissig") ? "FAILED" : "OK") << endl;
+	}
+
+
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
+	// make_authentic_token();
+
+
+	test_token_api();
+
 	test_token_making();
 	test_boost_archive();
 	test_token_archive();
+
+
 
 	test_api();
 
