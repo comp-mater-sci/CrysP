@@ -5,8 +5,8 @@
 		<Platform Name="x64"/></Platforms>
 	<Configurations>
 		<Configuration Name="Debug|Win32">
-				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\libAlamDMC;..\..\FCRI\include;" F2003Semantics="true" StandardWarnings="standardWarningsF08" Diagnostics="diagnosticsShowAll" DebugParameter="debugParameterAll" WarnDeclarations="true" WarnUnusedVariables="true" WarnTruncateSource="true" WarnUnalignedData="false" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" InitLocalVarToNAN="true" FloatingPointStackCheck="true" Traceback="true" RuntimeChecks="rtChecksAll" NullPointerCheck="true" BoundsCheck="true" UninitializedVariablesCheck="true" DescriptorDataTypeCheck="true" DescriptorDataSizeCheck="true" ArgTempCreatedCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug" UseMkl="mklSequential" Interfaces="true"/>
-				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="..\..\slis\$(ConfigurationName); C:\Users\Jerzy\Utils\boost_1_64_0\lib32-msvc-12.0;" GenerateDebugInformation="true" AssemblyDebug="linkAssemblyDebugFull" SubSystem="subSystemConsole" InterproceduralOptimizations="false" AdditionalDependencies="libslis.lib"/>
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\libAlamDMC;..\..\FCRI\include;" PreprocessorDefinitions="DMC_USE_TOKENS" F2003Semantics="true" StandardWarnings="standardWarningsF08" Diagnostics="diagnosticsShowAll" DebugParameter="debugParameterAll" WarnDeclarations="true" WarnUnusedVariables="true" WarnTruncateSource="true" WarnUnalignedData="false" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" InitLocalVarToNAN="true" FloatingPointStackCheck="true" Traceback="true" RuntimeChecks="rtChecksAll" NullPointerCheck="true" BoundsCheck="true" UninitializedVariablesCheck="true" DescriptorDataTypeCheck="true" DescriptorDataSizeCheck="true" ArgTempCreatedCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug" UseMkl="mklSequential" Interfaces="true"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="..\..\slis\$(ConfigurationName); C:\Users\Jerzy\Utils\boost_1_64_0\lib32-msvc-14.0;" GenerateDebugInformation="true" AssemblyDebug="linkAssemblyDebugFull" SubSystem="subSystemConsole" InterproceduralOptimizations="false" AdditionalDependencies="libslis.lib"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
 				<Tool Name="VFCustomBuildTool"/>
@@ -16,7 +16,7 @@
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release|Win32" WholeProgramOptimization="true">
 				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" Optimization="optimizeFull" InterproceduralOptimizations="ipoSingleFile" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\libAlamDMC;..\..\FCRI\include;" PreprocessorDefinitions="DMC_USE_SLIS" F2003Semantics="true" StandardWarnings="standardWarningsF08" Diagnostics="diagnosticsShowAll" CommonElementAlignment="alignCommonEightBytes" UseMkl="mklSequential"/>
-				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="..\..\slis\$(ConfigurationName);C:\Users\Jerzy\Utils\boost_1_64_0\lib32-msvc-12.0;" SubSystem="subSystemConsole" InterproceduralOptimizations="false" AdditionalDependencies="libslis.lib"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="..\..\slis\$(ConfigurationName);C:\Users\Jerzy\Utils\boost_1_64_0\lib32-msvc-14.0;" SubSystem="subSystemConsole" InterproceduralOptimizations="false" AdditionalDependencies="libslis.lib"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
 				<Tool Name="VFCustomBuildTool"/>
@@ -26,7 +26,7 @@
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Debug|x64">
 				<Tool Name="VFFortranCompilerTool" AdditionalOptions="/stand:f08" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\libAlamDMC;..\..\FCRI\include;" F2003Semantics="true" Diagnostics="diagnosticsShowAll" DebugParameter="debugParameterAll" WarnDeclarations="true" WarnUnusedVariables="true" WarnTruncateSource="true" WarnUnalignedData="false" WarnInterfaces="true" CommonElementAlignment="alignCommonEightBytes" InitLocalVarToNAN="true" FloatingPointStackCheck="true" Traceback="true" RuntimeChecks="rtChecksAll" NullPointerCheck="true" BoundsCheck="true" UninitializedVariablesCheck="true" DescriptorDataTypeCheck="true" DescriptorDataSizeCheck="true" ArgTempCreatedCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug" UseMkl="mklSequential" Interfaces="true"/>
-				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="..\..\slis\$(Platform)\$(ConfigurationName);C:\Users\Jerzy\Utils\boost_1_64_0\lib64-msvc-12.0;" GenerateDebugInformation="true" SubSystem="subSystemConsole" AdditionalDependencies="libslis.lib"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="..\..\slis\$(Platform)\$(ConfigurationName);C:\Users\Jerzy\Utils\boost_1_64_0\lib64-msvc-14.0;" GenerateDebugInformation="true" SubSystem="subSystemConsole" AdditionalDependencies="libslis.lib"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
 				<Tool Name="VFCustomBuildTool"/>
@@ -36,7 +36,7 @@
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release|x64">
 				<Tool Name="VFFortranCompilerTool" AdditionalOptions="/stand:f08" SuppressStartupBanner="true" Optimization="optimizeFull" InterproceduralOptimizations="ipoSingleFile" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\libAlamDMC;..\..\FCRI\include;" PreprocessorDefinitions="DMC_USE_SLIS" F2003Semantics="true" StandardWarnings="standardWarningsF08" CommonElementAlignment="alignCommonEightBytes" UseMkl="mklSequential"/>
-				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="..\..\slis\$(Platform)\$(ConfigurationName);C:\Users\Jerzy\Utils\boost_1_64_0\lib64-msvc-12.0;" SubSystem="subSystemConsole" InterproceduralOptimizations="false" AdditionalDependencies="libslis.lib"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="..\..\slis\$(Platform)\$(ConfigurationName);C:\Users\Jerzy\Utils\boost_1_64_0\lib64-msvc-14.0;" SubSystem="subSystemConsole" InterproceduralOptimizations="false" AdditionalDependencies="libslis.lib"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
 				<Tool Name="VFCustomBuildTool"/>
@@ -56,7 +56,7 @@
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
 		<Configuration Name="Release-instrumented|x64">
 				<Tool Name="VFFortranCompilerTool" AdditionalOptions="/stand:f08" SuppressStartupBanner="true" DebugInformationFormat="debugLineInfoOnly" Optimization="optimizeFull" Preprocess="preprocessYes" AdditionalIncludeDirectories="..\libAlamDMC;..\..\FCRI\include;" F2003Semantics="true" StandardWarnings="standardWarningsF08" DebugParameter="debugParameterUsed" CommonElementAlignment="alignCommonEightBytes" Traceback="true" RuntimeChecks="rtChecksNone" UseMkl="mklSequential"/>
-				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="..\..\slis\$(Platform)\$(ConfigurationName);C:\Users\Jerzy\Utils\boost_1_64_0\lib64-msvc-12.0;" SubSystem="subSystemConsole" InterproceduralOptimizations="false"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" AdditionalLibraryDirectories="..\..\slis\$(Platform)\$(ConfigurationName);C:\Users\Jerzy\Utils\boost_1_64_0\lib64-msvc-14.0;" SubSystem="subSystemConsole" InterproceduralOptimizations="false"/>
 				<Tool Name="VFResourceCompilerTool"/>
 				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
 				<Tool Name="VFCustomBuildTool"/>
@@ -65,8 +65,7 @@
 				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration></Configurations>
 	<Files>
-		<Filter Name="Header Files" Filter="fi;fd">
-		<File RelativePath=".\dmcSlisAssets.fpp"/></Filter>
+		<Filter Name="Header Files" Filter="fi;fd"/>
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
 		<File RelativePath=".\dmcADP.f90"/>

@@ -12,6 +12,8 @@
 !>
 !>    History of modifications: (see svn log)
 
+#include "criMacros.fpp"
+
 !> Implementation of a basic DMC computiational module.
 module dmcBasicModule
 use criRuntime
@@ -28,6 +30,9 @@ use altayConfig, only: altayConfigData
 use commonConfig
 use dmcUtils
 use dmcFuture
+#ifdef DMC_USE_TOKENS
+use dmcToken
+#endif
 implicit none
 
 
@@ -60,6 +65,10 @@ implicit none
 
             type(altayConfigData)         :: altay
             
+#ifdef DMC_USE_TOKENS
+            type(Token)                   :: token
+#endif
+            
       contains
       
             procedure,pass(this)     :: initialize =>  BasicModule_initialize
@@ -75,6 +84,10 @@ implicit none
             !>@{ \name Helper procedures
             procedure,pass(this)      :: openOutputFile => BasicModule_openOutputFile
             !>@}
+            
+#ifdef DMC_USE_TOKENS
+            procedure,pass(this)        :: verifySignatures => BasicModule_verifySignatures
+#endif
       end type
 
 
@@ -91,6 +104,10 @@ contains
       !
       integer :: ierr
       !
+
+#ifdef DMC_USE_TOKENS
+            RETURN_IF(info /= criSuccess, info = this%verifySignatures())
+#endif
             info = criError
             ! Finish the configuration:
             this%altay%output_config%nfile = merge(1,0,this%output%outputRequest)
@@ -540,5 +557,31 @@ contains
             call getDataPath('equiaxed.smt', micros_fname, info)
       !
       end subroutine
+      
+      
+      
+#ifdef DMC_USE_TOKENS
+        integer function BasicModule_verifySignatures(this) result(info)
+        class(BasicModule),intent(inout)          :: this
+        !
+            info = criError
+            if (this%token%verifyToken() /= criSuccess) then
+                write(display_unit, fmt=900) 'Invalid token file.'
+                return
+            endif
+            !
+            ! Input file signature
+            if (this%token%verifySignature(this%altay%texture%input_fname) /= criSuccess) then
+                write(display_unit, fmt=900) 'Invalid or missing signature of input file ' // trim(this%altay%texture%input_fname)
+                return
+            endif
+            info = criSuccess
+            !
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
+        !
+        end function
+#endif
       
 end module
