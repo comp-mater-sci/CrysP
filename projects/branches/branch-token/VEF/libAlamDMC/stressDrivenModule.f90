@@ -73,7 +73,7 @@ contains
         !
         ! Let the superclass do its initialization first ...
         !
-        info = this%BasicModule%initialize()
+        RETURN_IF(info /= criSuccess, info = this%BasicModule%initialize())
         !
         ! ... and then do your own initialization
         !
