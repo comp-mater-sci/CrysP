@@ -83,6 +83,10 @@ implicit none
 
             !>@{ \name Helper procedures
             procedure,pass(this)      :: openOutputFile => BasicModule_openOutputFile
+            
+            procedure,pass(this)      :: reinitializeLibAltay => BasicModule_reinitializeLibAltay
+            
+            procedure,pass(this)      :: finalizeLibAltay => BasicModule_finalizeLibAltay
             !>@}
             
 #ifdef DMC_USE_TOKENS
@@ -237,14 +241,10 @@ contains
     implicit none
     class(BasicModule),intent(inout) :: this
     !
-    integer :: ierr
-    !
-        call finalizeAltay(ierr)
-        if (ierr /= altaySub_OK) then
+        info = this%finalizeLibAltay()
+        if (info /= criSuccess) then
             errmsg = 'Problems have been encountered while finalizing libaltay'
             info = criError
-        else
-            info = criSuccess
         endif
     !
     end function
@@ -280,6 +280,52 @@ contains
 #undef MSG_GROUP_ERRORS
       !
     end function
+    
+    
+    
+    integer function BasicModule_reinitializeLibAltay(this, output_prefix) result(info)
+    use altaySub
+    implicit none
+    class(BasicModule),intent(inout)        :: this
+    character(len=*),intent(in),optional    :: output_prefix !< File prefix
+    !
+    integer :: ierr
+        ! Re-initialize AlTay
+        RETURN_IF(info /= criSuccess, info = this%finalizeLibAltay())
+        !
+        ! Reconfigure:
+        !  - Set new prefix
+        if (present(output_prefix)) this%altay%output_prefix = output_prefix
+        ! 
+        call initAltay(this%altay,ierr)
+        CHOOSE(info, ierr == altaySub_OK, criSuccess, criError)
+    !
+    end function
+
+    !> Finalize libAltay and perform additional actions on finalization.
+    integer function BasicModule_finalizeLibAltay(this) result(info)
+    use altaySub
+    implicit none
+    class(BasicModule),intent(inout)        :: this
+    !
+    integer :: ierr
+    !
+        info = criError
+        RETURN_IF(ierr /= altaySub_OK, call finalizeAltay(ierr))
+        !
+        ! Action on finalize:
+        info = criSuccess
+#ifdef DMC_USE_TOKENS
+        if (this%output%outputRequest) then
+            ! Let's _assume_ the actual output file. An alternative is to INQUIRE
+            ! one of libaltay internals: IO unit altayIOConfig::IMP1, but it would
+            ! be very much intrusive.
+            info = this%token%signDataFile(trim(this%altay%output_prefix)//'.CUR')
+        endif
+#endif
+    !
+    end function
+    
       !
       ! Procedures for processing sections of the configuration file
       !

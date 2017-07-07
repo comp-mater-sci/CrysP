@@ -25,7 +25,6 @@ use criRange
 use criNamedRange
 use criConfigReader
 use fngVec5D
-use altaySub
 use dmcUtils
 use dmcStressDrivenEvolutionModule
 use dmcIncrementationControl
@@ -248,11 +247,8 @@ contains
         ! Re-initialize altay 
         if (n_test_runs > 1) then
             ! Re-initialize AlTay
-            call finalizeAltay(info)
-            if (info /= 0) exit
-            this%altay%output_prefix = this%outputPrefix(angle)
-            call initAltay(this%altay,info)
-            if (info /= 0) exit
+            info = this%reinitializeLibAltay(this%outputPrefix(angle))
+            if (info /= criSuccess) exit
         endif
         !
         ! Set sample orientation and make rotation matrix

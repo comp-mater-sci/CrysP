@@ -27,7 +27,6 @@ use criAlgorithm
 use criLinearMap
 use criConfigReader
 use criLog
-use altaySub
 use commonConfig
 use dmcUtils, only: display_unit
 use dmcStressDrivenEvolutionModule
@@ -296,10 +295,8 @@ contains
             sigma%t = Vec6ToMat33(sigma_vector)
             !
             ! Re-initialize AlTay
-            call finalizeAltay(info)
-            if (info /= 0) exit
-            call initAltay(this%altay,info)
-            if (info /= 0) exit
+            info = this%reinitializeLibAltay()
+            if (info /= criSuccess) exit
             !
             if (this%calculateStressPath(sigma, evolution_control, output) /= criSuccess) then
                 ! For a certain reason we cannot calculate this path.
