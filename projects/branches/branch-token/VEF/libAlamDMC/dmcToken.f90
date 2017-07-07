@@ -23,6 +23,8 @@ use criErrcodes
 use fslis
 implicit none
 
+private
+
 public :: Token
 
     !> Component that wraps essential token-related operation in alamDMC
@@ -39,6 +41,10 @@ public :: Token
 
         !> Verify file signature with the token.
         procedure,pass(this),public :: verifySignature
+        
+        !> Sign output file with the token
+        procedure,pass(this),public :: signDatafile
+        
     end type
 
 contains
@@ -71,7 +77,7 @@ contains
     
     integer function verifySignature(this, file_path) result(info)
     implicit none
-    class(Token),intent(inout)      :: this
+    class(Token),intent(in)         :: this
     character(len=*),intent(in)     :: file_path
     !
         ! Set file path to be C-API conformant
@@ -79,4 +85,14 @@ contains
     !
     end function
     
+    
+    integer function signDatafile(this, file_path) result(info)
+    implicit none
+    class(Token),intent(inout)      :: this
+    character(len=*),intent(in)     :: file_path
+    !
+        ! Set file path to be C-API conformant
+        CHOOSE(info, signFile(trim(file_path)//C_NULL_CHAR, this%tokenfile_path, C_NULL_CHAR) == ok, criSuccess, criError)
+    !
+    end function
 end module
