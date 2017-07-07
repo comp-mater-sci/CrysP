@@ -51,7 +51,6 @@ implicit none
       integer,parameter       :: argc_min = 3, argc_max=3
       integer,parameter       :: tokenfile_argpos = 3
       character(len=*),parameter    :: prog_desc = 'parameters: command_name configuration_file token_file'
-      character(len=max_pathlen) :: tokenfile_path
 #endif
       integer,parameter       :: command_argpos = 1, configfile_argpos = 2
       type(commandLine)       :: cmdline
