@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <memory>
 #include <fstream>
+#include <sstream>
 
 namespace slis{
 	namespace signature{
@@ -50,11 +51,17 @@ namespace slis{
 		signature_t file_signature(const Signer & signer, const path_t & file_path)
 		{
 			using namespace std;
-			ifstream inp(file_path.native(), ios_base::in & ios_base::binary);
-			// Read as a sequence of bytes
-			istream_iterator<byte_array_t::value_type> inp_it(inp), term_it;
-			byte_array_t buffer;
-			copy(inp_it, term_it, back_inserter(buffer));
+			// read as a sequence of bytes
+			ifstream inp{ file_path.native(), ios_base::in & ios_base::binary };
+			auto tmp_sstream = ostringstream{};
+			tmp_sstream << inp.rdbuf();
+			auto s = tmp_sstream.str();
+			byte_array_t buffer{ s.begin(), s.end() };
+			/* A slower, but pretty canonical and idiomatic version would be:
+			ifstream inp{file_path.native(), ios_base::in & ios_base::binary};
+			byte_array_t buffer(std::istreambuf_iterator<char>{inp}, std::istreambuf_iterator<char>{});
+			*/
+			inp.close();
 			return signer.get_signature(buffer);
 		}
 
