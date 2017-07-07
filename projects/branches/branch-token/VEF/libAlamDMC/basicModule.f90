@@ -357,9 +357,12 @@ contains
       logical                       :: use_default_microstructure
       integer                       :: i
       character(len=max_pathlen) :: root, ext
-      type(MapItem),dimension(3) :: extensions = [MapItem('.smt',1), &
-                                                  MapItem('.cur',2), &
-                                                  MapItem('.cub',3)]
+
+      type(MapItem),dimension(3*2) :: extensions = [MapItem('.smt',TF_SMT), MapItem('.SMT',TF_SMT), &
+                                                    MapItem('.cur',TF_CUR), MapItem('.CUR',TF_CUR), &
+                                                    MapItem('.cub',TF_CUB), MapItem('.CUB',TF_CUB)]
+
+      
       type(MapItem),dimension(2) :: model_types = [MapItem('ALAMEL', modelAlamel), &
                                                    MapItem('FCTaylor', modelFCTaylor)]
       type(MapItem),dimension(4) :: slipsystem_types = [MapItem('fcc12', DM_fcc12), &
@@ -375,16 +378,15 @@ contains
             !
             ! Deduce the input type from the extension
             call splitExt(cnf%texture%input_fname, root, ext)
-            cnf%texture%input_type = findName(extensions, ext)
-            if (ext == '' .or. cnf%texture%input_type == 0) then
+            if (ext == '' .or. .not. resolveName(extensions, ext, cnf%texture%input_type)) then
                 write(display_unit,*) 'Cannot determine texture input type from the extension'
                 info = criErr_BadArgs
                 return
             endif
             select case(cnf%texture%input_type)
-                  case(1,3)     ! SMT or CUB
+                  case(TF_SMT,TF_CUB)     ! SMT or CUB
                         continue
-                  case(2)       ! CUR file, the only multi-block file now.
+                  case(TF_CUR)       ! CUR file, the only multi-block file now.
                        if (.not. readValue(cnfunit, cnf%texture%block_id)) return 
                   case default
                         write(display_unit, fmt=900) 'Incorrect texture type.'
