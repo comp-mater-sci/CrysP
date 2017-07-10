@@ -27,18 +27,29 @@
 #include <boost/uuid/uuid_serialize.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
+#ifndef SLIS_DLL
 // slis components
 #include "slis_v1.hpp"
-#include "slisapi.h"
+
 #include "digest.hpp"
 #include "signature.hpp"
 #include "token_v1.hpp"
 #include "signature_serialization.h"
+#endif // !SLIS_DLL
+
+#include "slisapi.h"
 #include "tokenapi.h"
 
 #include "token_secret.hpp" // to be removed
 
 using namespace std;
+
+
+/*
+	Testset for the internals 
+*/
+
+#ifndef SLIS_DLL
 
 
 void date_test()
@@ -175,6 +186,7 @@ void test_map()
 	{ }
 }
 
+#endif // !SLIS_DLL
 
 void test_api()
 {
@@ -188,6 +200,8 @@ void test_api()
 	is_license_valid = isLicenseValid("01234567-89ab-cdef-0123-456789abcdef", true);
 	cout << "isLicenseValid: " << (is_license_valid ? "true" : "false") << endl;
 }
+
+#ifndef SLIS_DLL
 
 
 // Secret for testing & development purposes
@@ -366,6 +380,7 @@ void make_authentic_token()
 
 
 }
+#endif // !SLIS_DLL
 
 void test_token_api() 
 {
@@ -410,20 +425,32 @@ void test_token_api()
 
 }
 
+
+
+void sign_files()
+{
+	int exitcode = signFile("sid1687f.smt", "authentic_token.slistkn", "");
+
+	exitcode = signFile("sid1687f_udsa_0_000.CUR", "authentic_token.slistkn", "");
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	// make_authentic_token();
-
+#ifndef SLIS_DLL
+	sign_files();
 
 	test_token_api();
+
 
 	test_token_making();
 	test_boost_archive();
 	test_token_archive();
+#endif
 
-
-
+#ifndef SLIS_DLL
 	test_api();
+
 
 	test_uuid();
 	test_sha1();
@@ -433,7 +460,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	test_salt();
 
 	test_signer();
-
+#endif
 	return 0;
 }
 

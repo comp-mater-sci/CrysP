@@ -6,7 +6,18 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>$(ProjectDir)\tests</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">
+    <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
+    <LocalDebuggerEnvironment>PRODUCT_ROOT=c:\Users\Jerzy\Documents\Work\TWRMTMProject\projects\trunk\slis\slistest\tests</LocalDebuggerEnvironment>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)\tests</LocalDebuggerWorkingDirectory>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
+    <LocalDebuggerEnvironment>PRODUCT_ROOT=c:\Users\Jerzy\Documents\Work\TWRMTMProject\projects\trunk\slis\slistest\tests</LocalDebuggerEnvironment>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|x64'">
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
     <LocalDebuggerEnvironment>PRODUCT_ROOT=c:\Users\Jerzy\Documents\Work\TWRMTMProject\projects\trunk\slis\slistest\tests</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
@@ -15,8 +26,20 @@
     <LocalDebuggerEnvironment>PRODUCT_ROOT=c:\Users\Jerzy\Documents\Work\TWRMTMProject\projects\trunk\slis\slistest\tests;
 $(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)\tests</LocalDebuggerWorkingDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|Win32'">
+    <LocalDebuggerEnvironment>PRODUCT_ROOT=c:\Users\Jerzy\Documents\Work\TWRMTMProject\projects\trunk\slis\slistest\tests;
+$(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)\tests</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerEnvironment>PRODUCT_ROOT=c:\Users\Jerzy\Documents\Work\TWRMTMProject\projects\trunk\slis\slistest\tests;
+$(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|x64'">
     <LocalDebuggerEnvironment>PRODUCT_ROOT=c:\Users\Jerzy\Documents\Work\TWRMTMProject\projects\trunk\slis\slistest\tests;
 $(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
