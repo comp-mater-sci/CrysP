@@ -7,6 +7,8 @@ from __future__ import print_function
 
 __version__ = '0.1.1' + '.$Rev$'.strip('$Rev: ')
 
+BACKEND_VERSION = '0.13.1'
+
 import json
 import csv
 import uuid
@@ -327,7 +329,7 @@ def main(jobname, input, cpmodel, structure, serial, intermediate_dir,
                 'generator': {'name': 'vef_datacard',
                               'version': __version__,
                               'backend': {'name': 'VEF',
-                                          'version': "0.12.0"}},
+                                          'version': BACKEND_VERSION}},
                 'timestamp': str(datetime.datetime.now()),
                 'material': {'structure': structure}
                }
