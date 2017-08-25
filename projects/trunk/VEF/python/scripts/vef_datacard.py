@@ -5,7 +5,7 @@
 
 from __future__ import print_function
 
-__version__ = '0.1.3' + '.$Rev$'.strip('$Rev: ')
+__version__ = '0.1.4' + '.' + '$Rev$'.strip('$Rev: ')
 
 BACKEND_VERSION = '0.13.1'
 
@@ -341,7 +341,8 @@ def main(jobname, input, cpmodel, structure, serial, intermediate_dir,
                               'backend': {'name': 'VEF',
                                           'version': BACKEND_VERSION}},
                 'timestamp': str(datetime.datetime.now()),
-                'material': {'structure': structure}
+                'material': {'structure': structure,
+                             'data': os.path.basename(input)}
                }
 
 
