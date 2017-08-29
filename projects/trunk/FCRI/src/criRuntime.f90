@@ -28,7 +28,7 @@ use,intrinsic :: iso_fortran_env, only: error_unit,output_unit
 implicit none
 
       !> Length of error message
-      integer,parameter              :: errmsg_len = 128
+      integer,parameter              :: errmsg_len = 1024
 
       !> Error message to be emitted on stop.
       character(len=errmsg_len),save :: errmsg = ''
