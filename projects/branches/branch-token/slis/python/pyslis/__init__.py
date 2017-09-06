@@ -12,9 +12,10 @@
 # $Date$
 #
 
+'''Python wrapper for SLIS'''
+
 __author__ = 'Jerzy Gawad'
 __copyright__ = 'KU Leuven'
-
 __status__ = 'Prototype'
 
 import sys

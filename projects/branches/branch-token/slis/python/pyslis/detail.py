@@ -12,11 +12,12 @@
 # $Date$
 #
 
+'''Implementation of SLIS wrapper for token API.'''
+
 from ctypes import cdll, c_bool, c_int, c_char_p
 import platform
 import sys
 import os
-
 
 def setup_functions(module, lib, meta):
     '''Setup external function `fx_name` from DLL `lib` in `module`'''
@@ -32,18 +33,13 @@ def setup_functions(module, lib, meta):
         setattr(module, fx_name, fx)
 
 # Dispatcher: pick the library suitable for 32- or 64-bit Python
-_bits, _linkage = platform.architecture()
-
-
-# TODO: get the path from VEF_ROOT
-
-
-if _bits == '64bit':
-    _lib_path = r'C:\Users\Jerzy\Documents\Work\TWRMTMProject\projects\branches\branch-token\slis\x64\Release-DLL'
-else:
-    _lib_path = r'C:\Users\Jerzy\Documents\Work\TWRMTMProject\projects\branches\branch-token\slis\Win32\Release-DLL'
-
-lib = cdll.LoadLibrary(os.path.join(_lib_path, 'libslis.dll'))
+__bits, __linkage = platform.architecture()
+__arch_variant = 'x64' if __bits == '64bit' else 'Win32'
+__lib_path = os.path.join(os.environ['VEF_ROOT'],
+                          'lib',
+                          __arch_variant,
+                         'libslis.dll')
+lib = cdll.LoadLibrary(__lib_path)
 
 
 # map: function name -> attributes 
