@@ -1,0 +1,335 @@
+! $Id$
+!
+!>    \author Jerzy Gawad
+!>    Email:  Jerzy.Gawad@cs.kuleuven.be
+!>
+!>    Organization: Katholieke Universiteit Leuven
+!>    Organization unit: Dept.Comp.Sci., TWR Group
+!>
+!>    \date Date of the initial release: 2017-02-08, as a result of refactoring 'stressDrivenModule.f90'
+!>    $Revision$
+!>    $Date$
+!>
+!>    History of modifications: (see svn log)
+
+#include "criMacros.fpp"
+
+!> Implementation of a altay-based DMC computiational module.
+module dmcStressDrivenModule
+use criErrcodes
+use criAlgorithm, only: optionalDefault
+use criLog
+use criRuntime
+use criUncomment, only: readValue
+use fngVec5D
+use alamYLP
+use alamEval, only: NormalizedV5DComp, alamEval_objFx_call_count
+use dmcUtils, only: display_unit
+use dmcYLPResult
+use dmcAlamEvalCached
+use dmcResultTable
+use dmcBasicModule
+implicit none
+
+    public :: StressDrivenModule
+    private
+
+    !> Abstract class implementing basic subset of operations that are shared by all 
+    !> stress-drien computational modules
+    type,extends(BasicModule) :: StressDrivenModule
+
+        type(multilevelYLPConfig)   :: ylp
+
+        type(YLPResultTolerance)    :: solution_tolerance
+
+        class(ResultTable),pointer  :: ptr_db => null()
+
+    contains
+        procedure,pass(this)     :: initialize => StressDrivenModule_initialize
+
+        procedure,pass(this)     :: readConfig => StressDrivenModule_readConfig
+
+        procedure,pass(this)     :: printConfig => StressDrivenModule_printConfig
+
+        procedure,pass(this)     :: finalize => StressDrivenModule_finalize
+
+        procedure,pass(this)     :: findSolution => StressDrivenModule_findSolution
+
+        procedure,pass(this)     :: search => StressDrivenModule_search
+
+    end type
+
+
+contains
+
+
+    !> Initialize a configured StressDrivenModule object
+    integer function StressDrivenModule_initialize(this) result(info)
+    implicit none
+    class(StressDrivenModule),intent(inout)          :: this
+    !
+    integer :: ierr
+    !
+        !
+        ! Let the superclass do its initialization first ...
+        !
+        info = this%BasicModule%initialize()
+        !
+        ! ... and then do your own initialization
+        !
+        ! Allocate and possibly populate the result cache
+        allocate(this%ptr_db, stat = ierr)
+        RETURN_IF_WITH(ierr /= 0, info=criErr_MemAlloc)
+        ! Try to load data
+        ierr = this%ptr_db%load(trim(this%output%outputPrefix)//'.rtdb')
+    !
+    end function
+
+
+    
+    integer function StressDrivenModule_readConfig(this,cnfunit) result(info)
+    implicit none
+    class(StressDrivenModule),intent(inout)          :: this
+    integer,intent(in)                        :: cnfunit
+    !
+        info = this%BasicModule%readConfig(cnfunit)
+        if (info /= criSuccess) return 
+        !
+        ! Read multilevelYLP configuration
+        call readYLPConfigSection(cnfunit,this%ylp,info)
+        if (info /= criSuccess) then
+            write(errmsg,fmt=901) 'check YLP config section' 
+            return
+        endif
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
+    !
+    end function
+    
+    
+    !> Print out configuration of the module
+    integer function StressDrivenModule_printConfig(this,outunit) result(info)
+    use altayConfig
+    implicit none
+    class(StressDrivenModule),intent(in):: this
+    integer,intent(in)                  :: outunit
+    !
+        info = this%BasicModule%printConfig(outunit)
+        if (doLogging(criLogInfo,this%output%verbosity)) then
+            !
+            if (this%ylp%linearize) then
+                write(display_unit,100) 'Info: the program will first attempt to linearize the identification problems.'
+            else
+                write(display_unit,100) 'Info: The program will attempt to solve the nonlinear problems.'
+            endif
+        endif
+        !
+        info = criSuccess
+        !
+        100 format(/,A,/)
+    !
+    end function
+    
+    
+    !> Finalization of the module
+    integer function StressDrivenModule_finalize(this) result(info)
+    implicit none
+    class(StressDrivenModule),intent(inout) :: this
+    !
+        !
+        ! Do your own finalization first ...
+        !
+        if (doLogging(criLogDebug, this%output%verbosity)) then
+            write(display_unit,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
+        endif
+        !
+        ! Save the result cache and delete the object
+        if (associated(this%ptr_db)) then
+            info = this%ptr_db%store(trim(this%output%outputPrefix)//'.rtdb')
+            deallocate(this%ptr_db)
+        endif
+        !
+        ! ... and then finalize the superclass.
+        !
+        info = this%BasicModule%finalize()
+    !
+    end function
+    
+    !> Calculate plastic strain rate D that corresponds to the superimposed input stress `sigma`
+    !> by performing an iterative search.
+    !>
+    !> The results of the iterative search are placed in ylp_results.
+    !> \return criFailure on lack of convergence. ylp_result and D are set to the best solution found
+    !> \return criError or any criErr_* on severe error conditions. ylp_result and D are undefined
+    !> \return criSuccess on success
+    integer function StressDrivenModule_findSolution(this,sigma, D, ylp_result, vM_guess, is_acceptable, pretry) result(info)
+    implicit none
+    class(StressDrivenModule),intent(in)   :: this
+    type(SRTensor),intent(in)       :: sigma !< Input stress
+    type(SRTEnsor),intent(inout)    :: D     !< Plastic strain rate
+    type(YLPResult),intent(out)     :: ylp_result !< Results of the interative search
+    !> Flag: use von Mises inital guess (default: .true.). If false, D will be used as the
+    !> starting point for the iterative search.
+    logical,intent(in),optional     :: vM_guess
+    logical,intent(out),optional    :: is_acceptable
+    logical,intent(in),optional     :: pretry
+    !
+    double precision :: vA_norm
+    double precision,dimension(alamEval_vSD_dim) :: vS
+    logical :: use_vM_guess, use_pretry, is_pretry_acceptable
+    type(NormalizedV5DCompCached),target :: obj_func
+    !
+    type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
+    type(multilevelYLPConfig)   :: ylp_pretry
+    double precision, parameter :: pretry_search_angle = pi_deg * 2.0D0 
+    !
+        info = criErr_BadArgs
+
+        obj_func%ptr_db => this%ptr_db
+        !
+        if (present(is_acceptable)) is_acceptable = .false.
+        !
+        use_vM_guess = optionalDefault(vM_guess, .true.)
+        ! Pre-try if requested and no explicit initial quess is provided
+        use_pretry = optionalDefault(pretry, .true.) .and. use_vM_guess
+        !
+        ! Convert input to the 5D space and make the unit vector(s).
+        ! This also makes sure it is deviatoric.
+        vS = tens2vec5D(sigma%t)
+        ylp_result = YLPResult(vS)
+        if (ylp_result%vS_length < epsilon(0.D0)) return
+        !
+        is_pretry_acceptable = .false.
+        if (use_pretry) then
+            !
+            ylp_result_pretry = ylp_result
+            !
+            if (this%ptr_db%get(ylp_result_pretry%vS, &
+                                ylp_result_pretry%vA, &
+                                max_angle=pretry_search_angle) == criSuccess) then
+                ! Use special settings for pre-try
+                ylp_pretry = this%ylp
+                ylp_pretry%linearize = .true.
+                ylp_pretry%nonlinear = .false.
+                !
+                ! get the solution
+                info = this%search(ylp_pretry, ylp_result_pretry, .false., obj_func)
+                ! Accept the solution only if it reached the requested quality
+                if (info == criSuccess .and. (ylp_result_pretry%R < this%ylp%obj_func_eps)) then
+                    is_pretry_acceptable = .true.
+                    ylp_result = ylp_result_pretry
+                endif
+            endif
+            !
+        endif
+        !
+        if (.not. is_pretry_acceptable) then
+            !
+            if (.not. use_vM_guess) then
+                ylp_result%vA = tens2vec5D(D%t)
+                vA_norm = norm2(ylp_result%vA)
+                if (vA_norm < epsilon(0.D0)) return
+            endif
+            ! Calculate the corresponding strain rate vA
+            info = this%search(this%ylp, ylp_result, use_vM_guess, obj_func)
+            if (info == criFailure .and. associated(this%ptr_db)) then
+                !
+                ! Try another starting point
+                !
+                ! Set the re-try point
+                ylp_result_retry = ylp_result
+                !
+                if (this%ptr_db%get(ylp_result_retry%vS, ylp_result_retry%vA) == criSuccess) then
+                    if (doLogging(criLogDebug,this%output%verbosity)) then
+                         write(display_unit,860) 'Poor convergence, re-attempting to find the solution.'
+                    endif
+                    !
+                    ! get new solution
+                    info = this%search(this%ylp, ylp_result_retry, .false., obj_func)
+                    ! Use the better of the two
+                    if (ylp_result_retry%R < ylp_result%R) ylp_result = ylp_result_retry
+                endif
+            endif
+            RETURN_IF_WITH(is_error(info), info = criError)
+            !
+            ! Rare case: normal search and re-try cannot improve over pre-try
+            if (info /= criSuccess .and. use_pretry) then
+                if (ylp_result_pretry%R < ylp_result%R) ylp_result = ylp_result_pretry
+            endif
+        endif
+        !
+        if (present(is_acceptable)) then
+            is_acceptable = checkYLPResult(ylp_result, this%solution_tolerance, this%ylp%obj_func_eps)
+        endif
+        !
+        D%t = vec5D2tens(ylp_result%vA)
+        ! Return the info from the last call to 'search'
+        !
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
+    !
+    end function
+
+
+    !> Wrapper around multilevelYLP that uses YLPResult for communicating with the caller.
+    !> 
+    !> The wrapper applies settings provided as members of StressDrivenModule.
+    !> It provides a ready-to-use ylp_result on non-error info code.
+    !> \return Exit code from multilevelYLP, unless an error condition occurs 
+    !> at later stage. In such case criError is returned.
+    !> In such case
+    integer function StressDrivenModule_search(this, ylp_config, ylp_result, use_vM_guess, obj_func) result(info)
+    implicit none
+    class(StressDrivenModule),intent(in):: this
+    type(multilevelYLPConfig),intent(in)    :: ylp_config
+    type(YLPResult),intent(inout)           :: ylp_result
+    logical,intent(in)                      :: use_vM_guess
+    class(NormalizedV5DComp),intent(inout)  :: obj_func
+    !
+        call multilevelYLP(ylp_result%vS,    &
+                           ylp_result%vA,    &
+                           ylp_result%vSonA, &
+                           ylp_result%R,     &
+                           info,             &
+                           useVMGuess=use_vM_guess, &
+                           YLPconfig=ylp_config, &
+                           verbose=this%output%verbosity, &
+                           objective_function=obj_func)
+        if (is_error(info)) return
+        if (deriveYLPResult(ylp_result) /= criSuccess) info = criError
+    !
+    end function
+    
+    
+    !> Read configuration of the solver (libalamylp)
+    subroutine readYLPConfigSection(cnfunit,cnf,info)
+    implicit none
+    integer,intent(in)                        :: cnfunit
+    type(multilevelYLPConfig),intent(out)     :: cnf
+    integer,intent(out)                       :: info
+    !
+    double precision,dimension(2) :: tmp
+    logical :: use_default_solver_settings, use_advanced_settings
+    !
+        info = criErr_IORead
+        use_default_solver_settings = .true.
+        use_advanced_settings = .false.
+        if (.not. readValue(cnfunit, use_default_solver_settings)) return
+        if (.not. use_default_solver_settings) then
+            if (.not. readValue(cnfunit, cnf%jacobi_eps)) return
+            if (.not. readValue(cnfunit, cnf%linearize)) return
+            ! read default_eps and obj_func_eps
+            if (.not. readValue(cnfunit,tmp)) return
+            cnf%default_eps = tmp(1)
+            cnf%obj_func_eps = tmp(2)
+            ! read flag for advanced settings (placeholder at the moment)
+            if (.not. readValue(cnfunit, use_advanced_settings)) return
+        endif
+        info = criSuccess
+    !
+    end subroutine
+
+
+end module

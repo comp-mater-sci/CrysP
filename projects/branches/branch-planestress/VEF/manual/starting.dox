@@ -1,0 +1,63 @@
+/*
+$Id$
+
+VEF manual - Getting started section.
+
+Author:    Jerzy Gawad, Jerzy.Gawad@cs.kuleuven.be
+Copyright: KU Leuven
+*/
+
+
+/*!
+\page page_gettingstarted Getting started
+
+Before we start    {#sec_installation_requirements}
+===============
+
+To install and use the VEF you will need to satisfy the following requirements:
+-# Python version 2.7.X installed. 
+-# Python packages installed: numpy, scipy, matplotlib and cheetah.
+
+
+\note If you are not familiar with [Python](https://www.python.org/), the easiest way to get it installed is to download 
+[Miniconda Python distribution](http://conda.pydata.org/miniconda.html). Once it is installed,
+you may run the following command from the command line to get the required packages:
+<pre class="consoleView">
+conda install numpy scipy matplotlib cheetah -y
+</pre>
+
+
+Installation and configuration    {#sec_installation}
+==============================
+
+You received the archive file VEF_verXXX_yyyymmdd.zip, which contains the distribution of the VEF binaries, scripts, examples and documentation. 
+This instruction will tell you step-by-step how to install and set-up the VEF software on your Windows computer.
+
+
+-# Unpack the distribution to a directory you prefer, for example: `c:\VEF` or `c:\Users\[your-user_name]\VEF`. 
+   Note: the path to that directory should not contain spaces.
+-# Edit the VEF configuration file \fsname{vef.cmd}, located in the directory where you unpacked the distribution. 
+   You will need to customize the line that sets \envname{VEF_ROOT} by setting it to the path where the VEF is unpacked. 
+   For example:
+   \verbatim
+   set VEF_ROOT="c:\VEF"
+   \endverbatim
+   or, if you unpacked the VEF distribution to your home directory:
+   \verbatim
+   set VEF_ROOT="%USERPROFILE%\VEF"
+   \endverbatim
+
+   
+Setting up the simulations with HMS    {#sec_setting_up_simulation}
+===================================
+
+The VEF programs are run from the command line. In order to conduct any VEF simulation, you have to configure VEF environment first. 
+It is as simple as running \fsname{vef.cmd} before starting any VEF program. 
+For example:
+\verbatim
+c:\VEF\vef.cmd
+\endverbatim
+
+\note You have to run \fsname{vef.cmd} at the beginning of every VEF session.
+
+*/
