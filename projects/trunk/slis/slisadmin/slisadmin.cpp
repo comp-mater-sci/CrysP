@@ -83,6 +83,20 @@ int main(int argc, char * argv[])
 	date from(2016, 7, 14), to(2016, 9, 20);
 #endif
 
+#ifdef LICENSE_MITSUBISHI_EVALUATION
+	string licname("Mitsubishi Materials Corporation");
+	SlisContainer lic(licname, license_types::evaluation);
+	uuids::uuid alamdmc_feature_uuid = gen("ff921f1e-fa42-11e5-97dc-ecf4bb152acb");
+	date from(2017, 9, 1), to(2017, 9, 25);
+#endif
+
+#ifdef LICENSE_MITSUBISHI_COMMERCIAL
+	string licname("Mitsubishi Materials Corporation");
+	SlisContainer lic(licname, license_types::commercial);
+	uuids::uuid alamdmc_feature_uuid = gen("ff921f1e-fa42-11e5-97dc-ecf4bb152acb");
+	date from(2017, 9, 1), to(2099, 12, 31);
+#endif
+
 	lic.addLicense(alamdmc_feature_uuid, "alamDMC", from, to);
 	string licensefile_path("license.slis");
 	lic.printLicenseSummary(cout, alamdmc_feature_uuid);
