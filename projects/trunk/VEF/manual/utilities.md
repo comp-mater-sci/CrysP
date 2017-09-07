@@ -62,7 +62,7 @@ Discretize ODF into a form suitable for the VEF
 
     usage: odf2smt [-h] --input INPUT [--output OUTPUT] [--ncrystals NCRYSTALS]
     
-    Calculate dicrete representative crystal orientations from ODF file
+    Calculate discrete representative crystal orientations from ODF file
     
     optional arguments:
       -h, --help            show this help message and exit
