@@ -5,7 +5,7 @@
 
 from __future__ import print_function
 
-__version__ = '0.1.4' + '.' + '$Rev$'.strip('$Rev: ')
+__version__ = '0.1.5' + '.' + '$Rev$'.strip('$Rev: ')
 
 BACKEND_VERSION = '0.13.1'
 
@@ -394,9 +394,9 @@ def main(jobname, input, cpmodel, structure, serial, intermediate_dir,
         return 0
 
     except Exception as e:
-        print('A general exception has occured. '
-              'This is unsusual, so please report that to the developer.\n'
-              'More detail:', e.message)
+        print('A general exception has occurred. '
+              'This is unusual, so please report that to the developers.\n')
+        e.message and print('More detail:', e.message)
         return 2
 
 if __name__ == '__main__':
