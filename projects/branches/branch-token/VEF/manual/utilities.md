@@ -61,6 +61,7 @@ Discretize ODF into a form suitable for the VEF
 
 
     usage: odf2smt [-h] --input INPUT [--output OUTPUT] [--ncrystals NCRYSTALS]
+                   [--token_path TOKEN_PATH]
     
     Calculate dicrete representative crystal orientations from ODF file
     
@@ -74,6 +75,8 @@ Discretize ODF into a form suitable for the VEF
                             with extension .smt will be used.
       --ncrystals NCRYSTALS
                             Number of crystals in the SMT file
+      --token_path TOKEN_PATH
+                            Path where the token file will be stored
 
 
 
