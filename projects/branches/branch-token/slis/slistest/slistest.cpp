@@ -436,29 +436,23 @@ void sign_files()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	// make_authentic_token();
-#ifndef SLIS_DLL
-	sign_files();
-
 	test_token_api();
 
-
+#ifndef SLIS_DLL
+	// make_authentic_token();
+	sign_files();
 	test_token_making();
 	test_boost_archive();
 	test_token_archive();
 #endif
-
-#ifndef SLIS_DLL
 	test_api();
 
-
+#ifndef SLIS_DLL
 	test_uuid();
 	test_sha1();
 	date_test();
 	slis_test();
-
 	test_salt();
-
 	test_signer();
 #endif
 	return 0;

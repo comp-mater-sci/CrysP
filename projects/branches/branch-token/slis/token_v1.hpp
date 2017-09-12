@@ -116,6 +116,7 @@ namespace slis {
 
 			std::string alias() const { return content.alias; }
 			id_type id() const { return content.id; }
+			date_type expiry_date() const { return content.expiry_date; }
 
 			TokenContent get() const { return content; }
 
