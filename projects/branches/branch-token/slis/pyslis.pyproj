@@ -22,6 +22,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="python\pyslis\detail.py" />
+    <Compile Include="python\pyslis\dummy.py" />
     <Compile Include="python\pyslis\__init__.py" />
     <Compile Include="python\tokenstorage\makedb.py" />
     <Compile Include="python\tokenstorage\queries.py" />

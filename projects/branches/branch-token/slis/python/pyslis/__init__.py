@@ -20,8 +20,12 @@ __status__ = 'Prototype'
 
 import sys
 import detail
+import dummy
+
 
 this_module = sys.modules[__name__]
 
 detail.setup_functions(this_module, detail.lib, detail.meta)
+
+acquireToken = dummy.acquireToken
 
