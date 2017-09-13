@@ -23,10 +23,15 @@
   <ItemGroup>
     <Compile Include="python\pyslis\detail.py" />
     <Compile Include="python\pyslis\__init__.py" />
+    <Compile Include="python\tokenstorage\makedb.py" />
+    <Compile Include="python\tokenstorage\queries.py" />
+    <Compile Include="python\tokenstorage\tables.py" />
+    <Compile Include="python\tokenstorage\__init__.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="python\" />
     <Folder Include="python\pyslis\" />
+    <Folder Include="python\tokenstorage\" />
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
