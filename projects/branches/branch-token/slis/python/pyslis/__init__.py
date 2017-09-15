@@ -19,13 +19,19 @@ __copyright__ = 'KU Leuven'
 __status__ = 'Prototype'
 
 import sys
-import detail
-import dummy
+
+try:
+    import detail
+    import remote
+except Exception as excpt:
+    raise RuntimeError('Cannot initialize SLIS, reason: {}'.format(str(excpt)))
 
 
 this_module = sys.modules[__name__]
 
 detail.setup_functions(this_module, detail.lib, detail.meta)
 
-acquireToken = dummy.acquireToken
+acquireToken = remote.acquireToken
+
+getTokenCount = remote.getTokenCount
 

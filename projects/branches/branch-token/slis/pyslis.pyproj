@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{d96d2396-0f6f-41d0-9362-f15c6b947a85}</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile />
+    <StartupFile>python\scripts\check_tokens.py</StartupFile>
     <SearchPath>python</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -13,6 +13,9 @@
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <InterpreterId />
     <InterpreterVersion />
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
+    <Environment>SLIS_ROOT=\temp\VEF_tokens
+</Environment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
@@ -21,8 +24,13 @@
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="python\scripts\check_tokens.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="python\pyslis\config.py" />
     <Compile Include="python\pyslis\detail.py" />
     <Compile Include="python\pyslis\dummy.py" />
+    <Compile Include="python\pyslis\remote.py" />
     <Compile Include="python\pyslis\__init__.py" />
     <Compile Include="python\tokenstorage\makedb.py" />
     <Compile Include="python\tokenstorage\queries.py" />
@@ -31,6 +39,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="python\" />
+    <Folder Include="python\scripts\" />
     <Folder Include="python\pyslis\" />
     <Folder Include="python\tokenstorage\" />
   </ItemGroup>

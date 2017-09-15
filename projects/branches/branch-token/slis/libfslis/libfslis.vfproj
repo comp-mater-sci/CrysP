@@ -4,7 +4,7 @@
 		<Platform Name="Win32"/>
 		<Platform Name="x64"/></Platforms>
 	<Configurations>
-		<Configuration Name="Debug|Win32" ConfigurationType="typeStaticLibrary">
+		<Configuration Name="Debug|Win32" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="typeStaticLibrary">
 				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
@@ -13,7 +13,7 @@
 				<Tool Name="VFPreLinkEventTool"/>
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/></Configuration>
-		<Configuration Name="Release|Win32" ConfigurationType="typeStaticLibrary">
+		<Configuration Name="Release|Win32" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="typeStaticLibrary">
 				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
@@ -40,7 +40,7 @@
 				<Tool Name="VFPreLinkEventTool"/>
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/></Configuration>
-		<Configuration Name="Debug-DLL|Win32" ConfigurationType="typeStaticLibrary">
+		<Configuration Name="Debug-DLL|Win32" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="typeStaticLibrary">
 				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" WarnInterfaces="true" Traceback="true" BoundsCheck="true" StackFrameCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>
@@ -58,7 +58,7 @@
 				<Tool Name="VFPreLinkEventTool"/>
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/></Configuration>
-		<Configuration Name="Release-DLL|Win32" ConfigurationType="typeStaticLibrary">
+		<Configuration Name="Release-DLL|Win32" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="typeStaticLibrary">
 				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true"/>
 				<Tool Name="VFLibrarianTool"/>
 				<Tool Name="VFResourceCompilerTool"/>

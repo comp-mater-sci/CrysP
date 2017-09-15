@@ -1,0 +1,15 @@
+
+# Host: URL to the SLIS token server
+host: http://127.0.0.1:5555
+
+#
+# User key
+#
+# Keep this confidential, since it allows access to the tokens.
+user_key: 334f5b64c11bcadecd5bf1680ddea626c20c9a2cb07906580944a5a13806dc2e
+
+# Version of the API
+api_version: v1
+
+# Timeout in seconds
+timeout: 2
