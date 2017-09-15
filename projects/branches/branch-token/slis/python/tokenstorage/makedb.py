@@ -13,7 +13,7 @@ from os import path
 from io import open
 import tables
 
-# The last field looks like an SHA3-256 hash.
+# The last field looks like an SHA3-256 hash: [a-z0-9]{64}
 USERS = [(1, "Mitsubishi Materials Corporation", "334f5b64c11bcadecd5bf1680ddea626c20c9a2cb07906580944a5a13806dc2e")]
 
 def populate_users(db):

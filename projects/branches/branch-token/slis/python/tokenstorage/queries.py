@@ -1,4 +1,8 @@
 
+__author__ = 'Jerzy Gawad'
+__copyright__ = 'KU Leuven'
+__status__ = 'Prototype'
+
 # TODO: consider using "named style" in queries:
 
 # Return one or zero records: non-activated token OR empty
@@ -16,12 +20,25 @@ FROM Tokens
 WHERE activation_date IS NULL AND user_id == {user_id} AND expiry >= date("now")
 '''
 
+_COUNT_ALL_USERS_TOKENS_SQL_STMT = '''
+SELECT Count() 
+FROM Tokens 
+WHERE user_id == {user_id} AND expiry >= date("now")
+'''
+
 # Parameters: {id}, {user_id}
 _ACTIVATE_TOKEN_SQL_STMT = '''
 UPDATE Tokens 
 SET activation_date=date("now") 
 WHERE id == {id} AND user_id == {user_id}
 '''
+
+# Parameters: {user_key}
+_RESOLVE_USERKEY_SQL_STMT = '''
+SELECT id from USERS
+WHERE key == "{user_key}"
+'''
+
 
 def acquireToken(db, user_id):
     '''
@@ -51,9 +68,19 @@ def acquireToken(db, user_id):
         pass # Silence the error, but the function returns None
 
 
-
-def getTokenCount(connection, user_id):
-    cursor = connection.cursor()
-    count = cursor.execute(_COUNT_TOKENS_SQL_STMT.format(user_id=user_id)).fetchone()
+def getTokenCount(connection, user_id, total=False):
+    '''Get the number of tokens owned by user user_id
+    '''
+    query = _COUNT_TOKENS_SQL_STMT if not total else _COUNT_ALL_USERS_TOKENS_SQL_STMT
+    count = connection.execute(query.format(user_id=user_id)).fetchone()
     return int(0 if count is None else count[0])
+
+
+def getUserId(connection, user_key):
+    '''Resolve user_key to user_id. Returns user_id (int) on success or None 
+    if user_key does not exist in the database.
+    '''
+    query = _RESOLVE_USERKEY_SQL_STMT.format(user_key=user_key)
+    user_id = connection.execute(query).fetchone()
+    return user_id[0] if user_id else None
 
