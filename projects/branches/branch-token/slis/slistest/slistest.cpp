@@ -398,6 +398,14 @@ void test_token_api()
 			<< (exitcode == 0 ? "OK" : "FAILED") << endl;
 	}
 
+	// signing with authentic token, explicit signature name
+	{
+		int exitcode = signFile("datafile.txt", "authentic_token.slistkn", "datafile_arbitrary.txt.slissig");
+		cout << "Signing file: " << exitcode << " "
+			<< (exitcode == 0 ? "OK" : "FAILED") << endl;
+	}
+
+
 	// Checking signature with wrong token
 	{
 		cout << "isSignatureValid with wrong token:" 

@@ -97,7 +97,9 @@ namespace slis{
 			return computed_signature.digest == sigfile_signature.digest;
 		}
 
-		bool sign_file(const Signer & signer, const path_t & file_path,
+		bool sign_file(const Signer & signer, 
+						const path_t & file_path,
+						const path_t & signature_path,
 						const std::string & comment,
 						const std::string & ext)
 		{
@@ -107,8 +109,11 @@ namespace slis{
 			if (filesystem::exists(file_path)){
 				signature_t signature = file_signature(signer, file_path);
 
-				path_t output_path(file_path);
-				output_path += ext;
+				path_t output_path(signature_path);
+				if (signature_path.empty()) {
+					output_path = file_path;
+					output_path += ext;
+				}
 
 				ofstream out(output_path.string());
 				if (out) {

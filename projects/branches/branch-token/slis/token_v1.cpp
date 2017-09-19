@@ -121,8 +121,7 @@ namespace slis {
 				{
 					Token token = authenticToken(token_path);
 					signature::Signer file_signer = fileSigner(token);
-					auto target_signature_path = signature_path.empty() ? file_path : signature_path;
-					return (signature::sign_file(file_signer, target_signature_path, token.alias()) ?
+					return (signature::sign_file(file_signer, file_path, signature_path, token.alias()) ?
 							signature_status::ok 
 							: 
 							signature_status::invalid_signature);

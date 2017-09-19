@@ -66,6 +66,7 @@ namespace slis {
 
 		bool sign_file(const Signer & signer,
 						const path_t & path,
+						const path_t & signature_path,
 						const std::string & comment = std::string(),
 						const std::string & ext = sigfile_extension);
 
