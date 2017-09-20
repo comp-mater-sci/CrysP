@@ -6,10 +6,12 @@
 This section is under preparation. For the time being, the reader is referred to 
 the original research papers.
 - Comprehensive description of the FC Taylor and Alamel models is presented 
-  in \opcite{VanHoutte05} 
+  in \opcite{VanHoutte05}.
 - The overview of numerical algorithms implemented in the VEF AlamDMC program is 
-  given in \opcite{GawadIJP2015}
-- An example of the VEF  exploited in studying hardening phenomena at the crystal
-  level has been presented in study \opcite{Eyckens2015}
+  given in \opcite{GawadIJP2015} and book chapter \opcite{GawadBookChapter2016}.
+- An example of the VEF exploited in studying hardening phenomena at the crystal
+  level has been presented in study \opcite{Eyckens2015}.
+- An example of the VEF application in calibration of advanced anisotropic yield criteria 
+  is described in \opcite{BanabicBookChapter2016}.
 
 */
