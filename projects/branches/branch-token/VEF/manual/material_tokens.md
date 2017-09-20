@@ -46,6 +46,16 @@ The User should understand that the following general rules apply:
    into the software, which consumes another token.
 
 
+At any time it is possible to check the current balance of tokens by using tool 
+`check_tokens`. It reports the total number of tokens that were purchased and the 
+number of 'Valid tokens' (reported as available tokens). The tool does not require any 
+parameters.
+
+       check_tokens
+
+*Note*: it may take a while for `check_tokens` to return the output.
+
+
 Typical procedure
 -----------------
 
@@ -58,7 +68,14 @@ Typical procedure
    is recommended to use it to prevent consuming a token on a texture that does not meet 
    user's requirements.
 
-2. `odf2smt` is used to create a signed discrete texture in SMT format. 
+2. (optional) `check_tokens` is used to check if there are still 'Valid tokens' available.
+
+       check_tokens
+
+   This step is optional, but in certain situations it helps to avoid possible issues
+   at later stages of the procedure.
+
+3. `odf2smt` is used to create a signed discrete texture in SMT format. 
 
        odf2smt --input AA5005.odf --token_path=AA5005_token
    
@@ -68,7 +85,7 @@ Typical procedure
    2. signature file `AA5005.smt.slissig`
    3. token file `AA5005_token` that contains an 'In-Use' token. 
 
-3. `alamDMC` is used to run an analysis procedure. This step can be repeated with any
+4. `alamDMC` is used to run an analysis procedure. This step can be repeated with any
    analysis procedure as many times the User needs.
 
    For example, let's assume the `UDSA` module is used and the generic section of 
@@ -104,7 +121,7 @@ Typical procedure
    2) `AA5005_UDSA.cur.slissig`
    
    
-4. (optional) `alamDMC` is used to run another analysis procedure that starts from the 
+5. (optional) `alamDMC` is used to run another analysis procedure that starts from the 
    evolved texture.
    
    In the present example, let's assume the `YLD` module is used and the generic section 
