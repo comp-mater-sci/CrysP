@@ -12,4 +12,4 @@ user_key: 334f5b64c11bcadecd5bf1680ddea626c20c9a2cb07906580944a5a13806dc2e
 api_version: v1
 
 # Timeout in seconds
-timeout: 5
+timeout: 30
