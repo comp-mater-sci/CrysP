@@ -31,6 +31,8 @@ mkdir %VEF_DIR%\scripts
 
 copy python\scripts\*.pyo %VEF_DIR%\scripts
 
+cat python\requirements.txt >> %VEF_DIR%\python\requirements.txt
+
 ::
 :: Platform-specific
 ::
