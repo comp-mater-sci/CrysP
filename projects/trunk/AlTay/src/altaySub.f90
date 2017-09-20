@@ -171,6 +171,7 @@ contains
             close(LEC)
             close(KLEC)
             close(IMP)
+            flush(IMP1)
             close(IMP1)
             close(IMP2)
             close(IMP3)

@@ -13,6 +13,7 @@
 !>
 !>    History of modifications: (see svn log)
 !
+#include "criMacros.fpp"
 !
 !> dmcUDSA (Uniaxially-Dominated Stress Analysis)  allows one to track anisotropic properties  
 !> along deformation due to the uniaxial tension or compression stress.
@@ -24,7 +25,6 @@ use criRange
 use criNamedRange
 use criConfigReader
 use fngVec5D
-use altaySub
 use dmcUtils
 use dmcStressDrivenEvolutionModule
 use dmcIncrementationControl
@@ -209,6 +209,9 @@ contains
     integer :: test_run, n_test_runs, increment, ofunit
     type(UDSAOutputRecord)  :: outrec
     !
+    ! Super-class first
+    RETURN_IF(info /= criSuccess, call this%StressDrivenEvolutionModule%run(info))
+    !
     ! Check the preconditions
     !
     info = criErr_BadArgs
@@ -244,11 +247,8 @@ contains
         ! Re-initialize altay 
         if (n_test_runs > 1) then
             ! Re-initialize AlTay
-            call finalizeAltay(info)
-            if (info /= 0) exit
-            this%altay%output_prefix = this%outputPrefix(angle)
-            call initAltay(this%altay,info)
-            if (info /= 0) exit
+            info = this%reinitializeLibAltay(this%outputPrefix(angle))
+            if (info /= criSuccess) exit
         endif
         !
         ! Set sample orientation and make rotation matrix

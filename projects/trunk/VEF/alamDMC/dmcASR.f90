@@ -148,6 +148,8 @@ contains
     !
     integer     :: j, istep, nsteps, ofunit
     !
+        ! Super-class first
+        RETURN_IF(info /= criSuccess, call this%StressDrivenEvolutionModule%run(info))
         !
         ! Open and initialize result files
         !

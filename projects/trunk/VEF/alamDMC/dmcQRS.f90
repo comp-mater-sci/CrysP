@@ -173,6 +173,9 @@ contains
         [ character(len=column_width_display) ::  &
         'angle','rho','q-value','r-value','sigma_xx','residual' ]
     !
+        ! Super-class first
+        RETURN_IF(info /= criSuccess, call this%StressDrivenModule%run(info))
+        !
         info = criError
         !
         npoints = this%ptr_range%size()

@@ -197,6 +197,9 @@ contains
     type(ADPOutputData) :: output
     integer :: iounit, i_step, n_steps
     !
+        ! Super-class first
+        RETURN_IF(info /= criSuccess, call this%DeformationDrivenModule%run(info))
+        !
         ! Open output file
         RETURN_IF(info /= criSuccess, info = this%openOutputFile('.adp',iounit))
         !

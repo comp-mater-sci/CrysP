@@ -12,6 +12,8 @@
 !>
 !>    History of modifications: (see svn log)
 
+#include "criMacros.fpp"
+
 !> Implementation of a basic DMC computiational module.
 module dmcBasicModule
 use criRuntime
@@ -28,6 +30,9 @@ use altayConfig, only: altayConfigData
 use commonConfig
 use dmcUtils
 use dmcFuture
+#ifdef DMC_USE_TOKENS
+use dmcToken
+#endif
 implicit none
 
 
@@ -60,6 +65,10 @@ implicit none
 
             type(altayConfigData)         :: altay
             
+#ifdef DMC_USE_TOKENS
+            type(Token)                   :: token
+#endif
+            
       contains
       
             procedure,pass(this)     :: initialize =>  BasicModule_initialize
@@ -74,7 +83,15 @@ implicit none
 
             !>@{ \name Helper procedures
             procedure,pass(this)      :: openOutputFile => BasicModule_openOutputFile
+            
+            procedure,pass(this)      :: reinitializeLibAltay => BasicModule_reinitializeLibAltay
+            
+            procedure,pass(this)      :: finalizeLibAltay => BasicModule_finalizeLibAltay
             !>@}
+            
+#ifdef DMC_USE_TOKENS
+            procedure,pass(this)        :: verifySignatures => BasicModule_verifySignatures
+#endif
       end type
 
 
@@ -91,6 +108,10 @@ contains
       !
       integer :: ierr
       !
+
+#ifdef DMC_USE_TOKENS
+            RETURN_IF(info /= criSuccess, info = this%verifySignatures())
+#endif
             info = criError
             ! Finish the configuration:
             this%altay%output_config%nfile = merge(1,0,this%output%outputRequest)
@@ -209,7 +230,7 @@ contains
     class(BasicModule),intent(inout) :: this
     integer,intent(out)                 :: info
     !
-        info = criError
+        info = criSuccess
     !
     end subroutine
 
@@ -220,14 +241,10 @@ contains
     implicit none
     class(BasicModule),intent(inout) :: this
     !
-    integer :: ierr
-    !
-        call finalizeAltay(ierr)
-        if (ierr /= altaySub_OK) then
+        info = this%finalizeLibAltay()
+        if (info /= criSuccess) then
             errmsg = 'Problems have been encountered while finalizing libaltay'
             info = criError
-        else
-            info = criSuccess
         endif
     !
     end function
@@ -263,6 +280,52 @@ contains
 #undef MSG_GROUP_ERRORS
       !
     end function
+    
+    
+    
+    integer function BasicModule_reinitializeLibAltay(this, output_prefix) result(info)
+    use altaySub
+    implicit none
+    class(BasicModule),intent(inout)        :: this
+    character(len=*),intent(in),optional    :: output_prefix !< File prefix
+    !
+    integer :: ierr
+        ! Re-initialize AlTay
+        RETURN_IF(info /= criSuccess, info = this%finalizeLibAltay())
+        !
+        ! Reconfigure:
+        !  - Set new prefix
+        if (present(output_prefix)) this%altay%output_prefix = output_prefix
+        ! 
+        call initAltay(this%altay,ierr)
+        CHOOSE(info, ierr == altaySub_OK, criSuccess, criError)
+    !
+    end function
+
+    !> Finalize libAltay and perform additional actions on finalization.
+    integer function BasicModule_finalizeLibAltay(this) result(info)
+    use altaySub
+    implicit none
+    class(BasicModule),intent(inout)        :: this
+    !
+    integer :: ierr
+    !
+        info = criError
+        RETURN_IF(ierr /= altaySub_OK, call finalizeAltay(ierr))
+        !
+        ! Action on finalize:
+        info = criSuccess
+#ifdef DMC_USE_TOKENS
+        if (this%output%outputRequest) then
+            ! Let's _assume_ the actual output file. An alternative is to INQUIRE
+            ! one of libaltay internals: IO unit altayIOConfig::IMP1, but it would
+            ! be very much intrusive.
+            info = this%token%signDataFile(trim(this%altay%output_prefix)//'.CUR')
+        endif
+#endif
+    !
+    end function
+    
       !
       ! Procedures for processing sections of the configuration file
       !
@@ -294,9 +357,12 @@ contains
       logical                       :: use_default_microstructure
       integer                       :: i
       character(len=max_pathlen) :: root, ext
-      type(MapItem),dimension(3) :: extensions = [MapItem('.smt',1), &
-                                                  MapItem('.cur',2), &
-                                                  MapItem('.cub',3)]
+
+      type(MapItem),dimension(3*2) :: extensions = [MapItem('.smt',TF_SMT), MapItem('.SMT',TF_SMT), &
+                                                    MapItem('.cur',TF_CUR), MapItem('.CUR',TF_CUR), &
+                                                    MapItem('.cub',TF_CUB), MapItem('.CUB',TF_CUB)]
+
+      
       type(MapItem),dimension(2) :: model_types = [MapItem('ALAMEL', modelAlamel), &
                                                    MapItem('FCTaylor', modelFCTaylor)]
       type(MapItem),dimension(4) :: slipsystem_types = [MapItem('fcc12', DM_fcc12), &
@@ -312,16 +378,15 @@ contains
             !
             ! Deduce the input type from the extension
             call splitExt(cnf%texture%input_fname, root, ext)
-            cnf%texture%input_type = findName(extensions, ext)
-            if (ext == '' .or. cnf%texture%input_type == 0) then
+            if (ext == '' .or. .not. resolveName(extensions, ext, cnf%texture%input_type)) then
                 write(display_unit,*) 'Cannot determine texture input type from the extension'
                 info = criErr_BadArgs
                 return
             endif
             select case(cnf%texture%input_type)
-                  case(1,3)     ! SMT or CUB
+                  case(TF_SMT,TF_CUB)     ! SMT or CUB
                         continue
-                  case(2)       ! CUR file, the only multi-block file now.
+                  case(TF_CUR)       ! CUR file, the only multi-block file now.
                        if (.not. readValue(cnfunit, cnf%texture%block_id)) return 
                   case default
                         write(display_unit, fmt=900) 'Incorrect texture type.'
@@ -540,5 +605,31 @@ contains
             call getDataPath('equiaxed.smt', micros_fname, info)
       !
       end subroutine
+      
+      
+      
+#ifdef DMC_USE_TOKENS
+        integer function BasicModule_verifySignatures(this) result(info)
+        class(BasicModule),intent(inout)          :: this
+        !
+            info = criError
+            if (this%token%verifyToken() /= criSuccess) then
+                write(display_unit, fmt=900) 'Invalid token file.'
+                return
+            endif
+            !
+            ! Input file signature
+            if (this%token%verifySignature(this%altay%texture%input_fname) /= criSuccess) then
+                write(display_unit, fmt=900) 'Invalid or missing signature of input file ' // trim(this%altay%texture%input_fname)
+                return
+            endif
+            info = criSuccess
+            !
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
+        !
+        end function
+#endif
       
 end module
