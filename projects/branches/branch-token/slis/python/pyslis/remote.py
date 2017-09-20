@@ -66,7 +66,9 @@ def getTokenCount():
         if req.status_code == requests.codes.ok:
             return req.json()
     except requests.Timeout as excpt:
-        print('Error: Cannot reach the token server')
-        raise
+        print('Error: Cannot reach the token server within {timeout} seconds.'
+              ' Try to increase timeout in slis.yaml configuration file.'
+              ''.format(timeout=timeout))
+
 
 
