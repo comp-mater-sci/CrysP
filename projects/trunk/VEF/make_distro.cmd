@@ -37,7 +37,7 @@ cat python\requirements.txt >> %VEF_DIR%\python\requirements.txt
 :: Platform-specific
 ::
 copy platform_specific\win32\scripts\* %VEF_DIR%\scripts
-copy platform_specific\Win32\vef.cmd %VEF_DIR%
+copy platform_specific\Win32\vef_session.cmd %VEF_DIR%
 
 ::
 :: Manual
