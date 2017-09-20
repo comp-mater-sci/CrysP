@@ -69,3 +69,13 @@ if exist %MTMFHM_DIR%\make_distro.cmd (
 	@echo Setting up MTM-FHMport
 	pushd %MTMFHM_DIR% && call make_distro.cmd %VEF_DIR% & popd
 )
+
+::
+:: slis
+::
+set SLIS_DIR=..\slis
+if exist %SLIS_DIR%\make_distro.cmd (
+	@echo.
+	@echo Setting up slis
+	pushd %SLIS_DIR% && call make_distro.cmd %VEF_DIR% & popd
+)
