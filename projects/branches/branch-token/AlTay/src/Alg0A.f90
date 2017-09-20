@@ -158,8 +158,21 @@
             RCM_RAISE(1,'SIMUL','Incorrect value of NGR',RCM_RTN)
 #endif
       endif
- 140  format (' NGR can only take the values 1 or 2 but was',I5)   
-
+ 140  format (' NGR can only take the values 1 or 2 but was',I5)
+      ! Check if number of crystals is right for the model
+      if (modulo(NPOINT, NGR) /= 0) then
+#ifndef ALTAY_SUBROUTINE      
+            write (6,405) NPOINT
+            write (*,405) NPOINT
+ 405  format (' Subroutine SIMUL',/' The LAMEL version works only if',   &
+      ' the number of orientations NPOINT=',I5,/,                        &
+      ' is an even number')
+            call terminate(stopcode_runtimeerror)
+#else
+            RCM_RAISE(1,'SIMUL',                                         &
+            'The number of grains must be an even number',RCM_RTN)
+#endif
+      endif
 !     Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
       NRL=(NGR-1)*2
 #ifdef ALTAY_SUBROUTINE
@@ -224,20 +237,6 @@
       ! Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
       NRL=(NGR-1)*2
 #endif
-      i=NPOINT/NGR
-      if (NGR*i.ne.npoint) then
-#ifndef ALTAY_SUBROUTINE      
-            write (6,405) NPOINT
-            write (*,405) NPOINT
- 405  format (' Subroutine SIMUL',/' The LAMEL version works only if',   &
-      ' the number of orientations NPOINT=',I5,/,                        &
-      ' is an even number')
-            call terminate(stopcode_runtimeerror)
-#else
-            RCM_RAISE(1,'SIMUL',                                         &
-            'The number of grains must be an even number',RCM_RTN)
-#endif
-      endif
   36  NFILE=NFILE0*NFILE1
       NPEBPx=NFILE0*NPEBP   ! control "BEP" (effective value)
       NMSSx= NFILE0*NMSS    ! control "MSS" (effective value)

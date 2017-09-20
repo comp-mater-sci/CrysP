@@ -32,7 +32,7 @@ implicit none
 #endif
 
       !> Maximal length of path acceptable by the filesystem
-      integer,parameter       :: max_pathlen = 512
+      integer,parameter       :: max_pathlen = 2048
 
 contains
 

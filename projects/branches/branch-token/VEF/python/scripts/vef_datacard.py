@@ -5,7 +5,9 @@
 
 from __future__ import print_function
 
-__version__ = '0.1.1' + '.$Rev$'.strip('$Rev: ')
+__version__ = '0.1.5' + '.' + '$Rev$'.strip('$Rev: ')
+
+BACKEND_VERSION = '0.13.1'
 
 import json
 import csv
@@ -18,6 +20,7 @@ import tempfile
 import sys
 import datetime
 from collections import OrderedDict
+from itertools import chain
 import numpy as np
 import pyvef.configurators as pc
 import pyvef.CustomFilters as CustomFilters
@@ -192,11 +195,20 @@ def arbitrary_harvester(output_prefix):
 
 
 def yld_setup(config, data):
-    begin,end,step = data
+    begin,end,step = list(float(x) for x in data)
     module_name = 'yld'
+    # Special treatment to make sure that normals to the yield locus are
+    # properly estimated. In principle, this ought to be taken care of by the
+    # backend, but at the moment it is not.
+    # We add auxiliary points using the central diffetence stencil with delta:
+    delta = 0.5
+    discrete = np.append(np.arange(begin, end, step, dtype=float), [end])
+
+    discrete_ext = list(chain(*[(x-delta, x, x+delta) for x in discrete]))
+
     module_config = {
-        'theta_range': {'type': 'uniform',
-                        'params': {'begin': begin, 'end': end, 'step': step}},
+        'theta_range': {'type': 'discrete',
+                        'params': {'values': discrete_ext}},
         'use_default_settings': True
         }
     return module_name, module_config, {}
@@ -207,8 +219,8 @@ def yld_harvester(output_prefix):
     dataframe = load_data(output_prefix, 'xyld')
     key_field = 'theta'
     fields = ('sigma', 'sigma_scaled', 'S', 'dotW', 'sigma_x', 'sigma_y', 'dsigma_x', 'dsigma_y', 'beta')
-    # too complex for dictionary comprehension
-    return {'yld': transform_output(dataframe, key_field, fields)}
+    # Special treatment: filter out the auxiliary points
+    return {'yld': transform_output(dataframe[1::3], key_field, fields)}
 
 
 
@@ -327,9 +339,10 @@ def main(jobname, input, cpmodel, structure, serial, intermediate_dir,
                 'generator': {'name': 'vef_datacard',
                               'version': __version__,
                               'backend': {'name': 'VEF',
-                                          'version': "0.12.0"}},
+                                          'version': BACKEND_VERSION}},
                 'timestamp': str(datetime.datetime.now()),
-                'material': {'structure': structure}
+                'material': {'structure': structure,
+                             'data': os.path.basename(input)}
                }
 
 
@@ -381,9 +394,9 @@ def main(jobname, input, cpmodel, structure, serial, intermediate_dir,
         return 0
 
     except Exception as e:
-        print('A general exception has occured. '
-              'This is unsusual, so please report that to the developer.\n'
-              'More detail:', e.message)
+        print('A general exception has occurred. '
+              'This is unusual, so please report that to the developers.\n')
+        e.message and print('More detail:', e.message)
         return 2
 
 if __name__ == '__main__':
