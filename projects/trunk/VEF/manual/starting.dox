@@ -16,14 +16,14 @@ Before we start    {#sec_installation_requirements}
 
 To install and use the VEF you will need to satisfy the following requirements:
 -# Python version 2.7.X installed. 
--# Python packages installed: numpy, scipy, matplotlib and cheetah.
+-# Python packages installed: numpy, scipy, matplotlib, requests and cheetah.
 
 
 \note If you are not familiar with [Python](https://www.python.org/), the easiest way to get it installed is to download 
 [Miniconda Python distribution](http://conda.pydata.org/miniconda.html). Once it is installed,
 you may run the following command from the command line to get the required packages:
 <pre class="consoleView">
-conda install numpy scipy matplotlib cheetah -y
+conda install numpy scipy matplotlib cheetah requests -y
 </pre>
 
 
