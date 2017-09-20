@@ -19,6 +19,11 @@ db = tokenstorage.connect('database.db')
 app = Flask(__name__)
 api = Api(app, catch_all_404s=True)
 
+
+# Make the WSGI interface available at the top level so wfastcgi can get it.
+wsgi_app = app.wsgi_app
+
+
 #
 # Validation of user_key
 #
@@ -69,12 +74,10 @@ class UsersTokenCount(Resource):
 api.add_resource(UsersTokens, '/v1/<string:user_key>/tokens')
 api.add_resource(UsersTokenCount, '/v1/<string:user_key>/tokens/count')
 
-# Make the WSGI interface available at the top level so wfastcgi can get it.
-wsgi_app = app.wsgi_app
 
 if __name__ == '__main__':
     
-    debug = True
+    debug = False
 
     if debug:
         app.config['DEBUG']=True
