@@ -68,8 +68,9 @@ contains
         else
             ! \todo replace with data_formats (either generated or provided)
             ! \fixme broken feature: column_widths are ignored!
+            ! \fixme broken feature: column width - 7: may produce a broken format!
             fmt_string = '(' // 'E' // trim(tostring(column_widths(1),max_int_digits)) // &
-                         '.' // trim(tostring(column_widths(1)-5,max_int_digits)) // ',1X)'
+                         '.' // trim(tostring(column_widths(1)-7,max_int_digits)) // ',1X)'
             info = writeData(iounit, data, column_widths, [fmt_string])
         endif
     !
