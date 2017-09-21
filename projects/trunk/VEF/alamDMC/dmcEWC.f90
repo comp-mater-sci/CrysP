@@ -350,7 +350,7 @@ contains
     logical,optional,intent(in)                 :: use_work_levels
     !
     integer :: iounit, ierr, i, n_contours, n_columns
-    integer,parameter :: output_column_width = 18
+    integer,parameter :: output_column_width = 25
     character(len=output_column_width),dimension(:),allocatable :: header_columns
     character(len=output_column_width) :: tmp_str, label_str
     !
