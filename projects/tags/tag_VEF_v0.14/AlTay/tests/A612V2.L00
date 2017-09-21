@@ -1,0 +1,273 @@
+ Code for this simulation: A612V2  
+  1        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+  7        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ 13        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ 19        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ 25        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ 31        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ 37        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ 43        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ 49        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ 55        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ 61        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ 67        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ 73        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ 79        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ 85        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ 91        1.0000      1.0000      1.0000      1.0000      1.0000      1.0000
+ NBLOC=    4
+ GRFIL - Input Texture File:micro1.smt  
+ Number of orientations in MICROSTRUCTURE file: 1000
+ Titel on  file: Micr                                    
+ GRFIL Allocation of RAM-memory was succesful
+
+
+ INITIALISATION OF SUBROUTINE SIMUL
+ PARAMETER J =    1
+ SIMUL - PARAMETERS:
+ NLIST=    1     NFILE=    1     NFILTW=    0
+ NTEN=    1     NSYM=    1
+ IGLIJ=    0     IPR=    0    ETAFAK=   3.00000   ATTENF=   0.50000
+
+F_Microstructure=    1.000000    0.000000    0.000000
+F_Microstructure=    0.000000    1.000000    0.000000
+F_Microstructure=    0.000000    0.000000    1.000000
+ Title of the new simulation: a612LM Alamel V2                        
+ Work hardening model = DOUBLE VOCE-model
+ TAU-III-1=            1.48600000
+ TAU-III-S =           2.47600000
+ TAU-IV-S =            8.35700000
+ THETA-III-1=          2.75000000
+ THETA-T=              0.55000000
+ GAMMA-T, TAU-T, THETA-IV-0, TAU-IV-0
+    0.57940D+00    0.22780D+01    0.75610D+00    0.19508D+01
+
+ SUBROUTINE TAYLOR - READS ITS CRYSTAL DATA
+
+
+
+ Slip system set:FCC - FOR HIGH STACKING FAULT ENERGY F.C.C. METALS                      
+
+    0             12    0              1    2    4    5    8
+  1 A  0.4082483-0.4082483 0.0000000-0.2886751 0.2886751 B -0.4082483 0.2041241 0.2041241
+  2 A  0.1494292 0.5576775 0.2886751 0.0000000-0.2886751 B  0.2041241-0.4082483 0.2041241
+  3 A -0.5576775-0.1494292-0.2886751 0.2886751 0.0000000 B  0.2041241 0.2041241-0.4082483
+  4 A  0.4082483-0.4082483 0.0000000 0.2886751-0.2886751 B -0.4082483-0.2041241-0.2041241
+  5 A  0.1494292 0.5576775 0.2886751 0.0000000 0.2886751 B  0.2041241 0.4082483-0.2041241
+  6 A  0.5576775 0.1494292 0.2886751 0.2886751 0.0000000 B -0.2041241 0.2041241-0.4082483
+  7 A -0.4082483 0.4082483 0.0000000 0.2886751 0.2886751 B -0.4082483-0.2041241 0.2041241
+  8 A  0.1494292 0.5576775-0.2886751 0.0000000 0.2886751 B -0.2041241-0.4082483-0.2041241
+  9 A -0.5576775-0.1494292 0.2886751 0.2886751 0.0000000 B -0.2041241 0.2041241 0.4082483
+ 10 A  0.4082483-0.4082483 0.0000000 0.2886751 0.2886751 B  0.4082483-0.2041241 0.2041241
+ 11 A -0.1494292-0.5576775 0.2886751 0.0000000 0.2886751 B  0.2041241-0.4082483-0.2041241
+ 12 A -0.5576775-0.1494292 0.2886751-0.2886751 0.0000000 B -0.2041241-0.2041241-0.4082483
+   13           0.96592583D+00-0.25881905D+00-0.67841227D-33-0.17320508D+01 0.11132846D-16
+   14           0.70710678D+00 0.70710678D+00 0.89669403D-16-0.17320508D+01-0.17320508D+01
+   15           0.96592583D+00-0.25881905D+00-0.67841227D-33 0.17320508D+01 0.11132846D-16
+   16          -0.21900884D-16 0.80339381D-16 0.17320508D+01 0.17320508D+01 0.17320508D+01
+   17           0.70710678D+00 0.70710678D+00-0.17320508D+01 0.48590488D-16-0.95768969D-17
+ LEESOR - Input Texture File:a612LM.smt  
+ LEESOR - READS A TEXTURE FILE Type (NDAT) is:    1 CHOSEN BLOCK:    1
+ Number of orientations in SMT-type input file: 3000
+ Titel on input file: ALUM612 1200CR0/50                      
+ NUMBER OF ORIENTATIONS=  3000   SUM OF ALL WEIGHT FACTORS=   3000.0000000
+
+ DYNFIL1 Allocation of RAM-memory to WtLam was succesful
+ DYNFIL - Allocation of RAM-memory to temporary file was succesful
+ SIMUL CALLED for first estimation of SG0.Output parameter:    0
+ Displacement gradient:
+    0.02500   0.00000   0.00000
+    0.00000   0.00000   0.00000
+    0.00000   0.00000  -0.02500
+
+
+ S I M U L         NR. STEPS=    1
+
+
+ ICRAT:    0    1
+ TAYLOR - DISPLACEMENT GRADIENT WHICH WILL BE USED FOR THE SIMULATION
+
+        GLOBAL TENSOR                         SYMMETRICAL PART                      ANTISYMMETRICAL PART
+
+    0.02500   0.00000   0.00000             0.02500   0.00000   0.00000             0.00000   0.00000   0.00000          
+    0.00000   0.00000   0.00000             0.00000   0.00000   0.00000             0.00000   0.00000   0.00000          
+    0.00000   0.00000  -0.02500             0.00000   0.00000  -0.02500             0.00000   0.00000   0.00000          
+ Step nr.    1          1.00000     1.00000     1.00000
+ FOR STEP    1  AVERAGE STRESS=        3.90082   AVERAGE M-VALUE=   2.62505  EFF. STRAIN EPS USED=   0.02887
+ LEESOR - Input Texture File:a612LM.smt  
+ LEESOR - READS A TEXTURE FILE Type (NDAT) is:    1 CHOSEN BLOCK:    1
+ Number of orientations in SMT-type input file: 3000
+ Titel on input file: ALUM612 1200CR0/50                      
+ NUMBER OF ORIENTATIONS=  3000   SUM OF ALL WEIGHT FACTORS=   3000.0000000
+
+ DYNFIL1 Allocation of RAM-memory to WtLam was succesful
+ DYNFIL - Allocation of RAM-memory to temporary file was succesful
+ SIMUL CALL NR.    1   Output parameter    1
+ Displacement gradient:
+    0.02500   0.00000   0.00000
+    0.00000   0.00000   0.00000
+    0.00000   0.00000  -0.02500
+
+
+ S I M U L         NR. STEPS=   10
+
+
+ ICRAT:    1    1
+ TAYLOR - DISPLACEMENT GRADIENT WHICH WILL BE USED FOR THE SIMULATION
+
+        GLOBAL TENSOR                         SYMMETRICAL PART                      ANTISYMMETRICAL PART
+
+    0.02500   0.00000   0.00000             0.02500   0.00000   0.00000             0.00000   0.00000   0.00000          
+    0.00000   0.00000   0.00000             0.00000   0.00000   0.00000             0.00000   0.00000   0.00000          
+    0.00000   0.00000  -0.02500             0.00000   0.00000  -0.02500             0.00000   0.00000   0.00000          
+ Step nr.    1          1.00000     1.00000     1.00000
+ FOR STEP    1  AVERAGE STRESS=        3.79739   AVERAGE M-VALUE=   2.55544  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    2          1.02533     0.99998     0.97532
+ FOR STEP    2  AVERAGE STRESS=        4.29078   AVERAGE M-VALUE=   2.56152  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    3          1.05129     0.99996     0.95125
+ FOR STEP    3  AVERAGE STRESS=        4.68596   AVERAGE M-VALUE=   2.56517  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    4          1.07792     0.99994     0.92777
+ FOR STEP    4  AVERAGE STRESS=        5.00625   AVERAGE M-VALUE=   2.56882  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    5          1.10522     0.99992     0.90487
+ FOR STEP    5  AVERAGE STRESS=        5.26689   AVERAGE M-VALUE=   2.57241  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    6          1.13321     0.99990     0.88254
+ FOR STEP    6  AVERAGE STRESS=        5.47792   AVERAGE M-VALUE=   2.57506  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    7          1.16191     0.99988     0.86076
+ FOR STEP    7  AVERAGE STRESS=        5.64990   AVERAGE M-VALUE=   2.57741  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    8          1.19133     0.99985     0.83952
+ FOR STEP    8  AVERAGE STRESS=        5.79330   AVERAGE M-VALUE=   2.57958  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    9          1.22151     0.99983     0.81880
+ FOR STEP    9  AVERAGE STRESS=        5.91903   AVERAGE M-VALUE=   2.58157  EFF. STRAIN EPS USED=   0.02887
+ Step nr.   10          1.25244     0.99981     0.79859
+ FOR STEP   10  AVERAGE STRESS=        6.03591   AVERAGE M-VALUE=   2.58343  EFF. STRAIN EPS USED=   0.02887
+ SIMUL CALL NR.    2   Output parameter    1
+ Displacement gradient:
+    0.02500   0.00000   0.00000
+    0.00000   0.00000   0.00000
+    0.00000   0.00000  -0.02500
+
+
+ S I M U L         NR. STEPS=   10
+
+
+ ICRAT:    1    1
+ TAYLOR - DISPLACEMENT GRADIENT WHICH WILL BE USED FOR THE SIMULATION
+
+        GLOBAL TENSOR                         SYMMETRICAL PART                      ANTISYMMETRICAL PART
+
+    0.02500   0.00000   0.00000             0.02500   0.00000   0.00000             0.00000   0.00000   0.00000          
+    0.00000   0.00000   0.00000             0.00000   0.00000   0.00000             0.00000   0.00000   0.00000          
+    0.00000   0.00000  -0.02500             0.00000   0.00000  -0.02500             0.00000   0.00000   0.00000          
+ Step nr.    1          1.28416     0.99979     0.77888
+ FOR STEP    1  AVERAGE STRESS=        6.14930   AVERAGE M-VALUE=   2.58607  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    2          1.31668     0.99977     0.75966
+ FOR STEP    2  AVERAGE STRESS=        6.25934   AVERAGE M-VALUE=   2.58743  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    3          1.35003     0.99975     0.74091
+ FOR STEP    3  AVERAGE STRESS=        6.36846   AVERAGE M-VALUE=   2.58899  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    4          1.38422     0.99973     0.72262
+ FOR STEP    4  AVERAGE STRESS=        6.47561   AVERAGE M-VALUE=   2.59008  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    5          1.41928     0.99971     0.70479
+ FOR STEP    5  AVERAGE STRESS=        6.58168   AVERAGE M-VALUE=   2.59112  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    6          1.45522     0.99969     0.68740
+ FOR STEP    6  AVERAGE STRESS=        6.68923   AVERAGE M-VALUE=   2.59270  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    7          1.49207     0.99967     0.67043
+ FOR STEP    7  AVERAGE STRESS=        6.79750   AVERAGE M-VALUE=   2.59515  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    8          1.52986     0.99965     0.65388
+ FOR STEP    8  AVERAGE STRESS=        6.90465   AVERAGE M-VALUE=   2.59717  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    9          1.56861     0.99963     0.63775
+ FOR STEP    9  AVERAGE STRESS=        7.00888   AVERAGE M-VALUE=   2.59836  EFF. STRAIN EPS USED=   0.02887
+ Step nr.   10          1.60833     0.99960     0.62201
+ FOR STEP   10  AVERAGE STRESS=        7.11446   AVERAGE M-VALUE=   2.60022  EFF. STRAIN EPS USED=   0.02887
+ SIMUL CALL NR.    3   Output parameter    1
+ Displacement gradient:
+    0.02500   0.00000   0.00000
+    0.00000   0.00000   0.00000
+    0.00000   0.00000  -0.02500
+
+
+ S I M U L         NR. STEPS=   10
+
+
+ ICRAT:    1    1
+ TAYLOR - DISPLACEMENT GRADIENT WHICH WILL BE USED FOR THE SIMULATION
+
+        GLOBAL TENSOR                         SYMMETRICAL PART                      ANTISYMMETRICAL PART
+
+    0.02500   0.00000   0.00000             0.02500   0.00000   0.00000             0.00000   0.00000   0.00000          
+    0.00000   0.00000   0.00000             0.00000   0.00000   0.00000             0.00000   0.00000   0.00000          
+    0.00000   0.00000  -0.02500             0.00000   0.00000  -0.02500             0.00000   0.00000   0.00000          
+ Step nr.    1          1.64907     0.99958     0.60666
+ FOR STEP    1  AVERAGE STRESS=        7.22191   AVERAGE M-VALUE=   2.60307  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    2          1.69083     0.99956     0.59168
+ FOR STEP    2  AVERAGE STRESS=        7.32267   AVERAGE M-VALUE=   2.60329  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    3          1.73365     0.99954     0.57708
+ FOR STEP    3  AVERAGE STRESS=        7.42466   AVERAGE M-VALUE=   2.60451  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    4          1.77756     0.99952     0.56284
+ FOR STEP    4  AVERAGE STRESS=        7.52847   AVERAGE M-VALUE=   2.60635  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    5          1.82258     0.99950     0.54895
+ FOR STEP    5  AVERAGE STRESS=        7.62955   AVERAGE M-VALUE=   2.60746  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    6          1.86873     0.99948     0.53540
+ FOR STEP    6  AVERAGE STRESS=        7.73188   AVERAGE M-VALUE=   2.60941  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    7          1.91606     0.99946     0.52219
+ FOR STEP    7  AVERAGE STRESS=        7.83325   AVERAGE M-VALUE=   2.61086  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    8          1.96459     0.99944     0.50930
+ FOR STEP    8  AVERAGE STRESS=        7.93365   AVERAGE M-VALUE=   2.61229  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    9          2.01434     0.99942     0.49673
+ FOR STEP    9  AVERAGE STRESS=        8.03308   AVERAGE M-VALUE=   2.61349  EFF. STRAIN EPS USED=   0.02887
+ Step nr.   10          2.06536     0.99940     0.48447
+ FOR STEP   10  AVERAGE STRESS=        8.13165   AVERAGE M-VALUE=   2.61462  EFF. STRAIN EPS USED=   0.02887
+ SIMUL CALL NR.    4   Output parameter    1
+ Displacement gradient:
+    0.02500   0.00000   0.00000
+    0.00000   0.00000   0.00000
+    0.00000   0.00000  -0.02500
+
+
+ S I M U L         NR. STEPS=   10
+
+
+ ICRAT:    1    1
+ TAYLOR - DISPLACEMENT GRADIENT WHICH WILL BE USED FOR THE SIMULATION
+
+        GLOBAL TENSOR                         SYMMETRICAL PART                      ANTISYMMETRICAL PART
+
+    0.02500   0.00000   0.00000             0.02500   0.00000   0.00000             0.00000   0.00000   0.00000          
+    0.00000   0.00000   0.00000             0.00000   0.00000   0.00000             0.00000   0.00000   0.00000          
+    0.00000   0.00000  -0.02500             0.00000   0.00000  -0.02500             0.00000   0.00000   0.00000          
+ Step nr.    1          2.11766     0.99938     0.47251
+ FOR STEP    1  AVERAGE STRESS=        8.23130   AVERAGE M-VALUE=   2.61629  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    2          2.17130     0.99935     0.46085
+ FOR STEP    2  AVERAGE STRESS=        8.33279   AVERAGE M-VALUE=   2.61866  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    3          2.22629     0.99933     0.44948
+ FOR STEP    3  AVERAGE STRESS=        8.43135   AVERAGE M-VALUE=   2.62027  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    4          2.28267     0.99931     0.43838
+ FOR STEP    4  AVERAGE STRESS=        8.52863   AVERAGE M-VALUE=   2.62180  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    5          2.34048     0.99929     0.42757
+ FOR STEP    5  AVERAGE STRESS=        8.62729   AVERAGE M-VALUE=   2.62365  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    6          2.39975     0.99927     0.41701
+ FOR STEP    6  AVERAGE STRESS=        8.72281   AVERAGE M-VALUE=   2.62473  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    7          2.46053     0.99925     0.40672
+ FOR STEP    7  AVERAGE STRESS=        8.81927   AVERAGE M-VALUE=   2.62653  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    8          2.52285     0.99923     0.39668
+ FOR STEP    8  AVERAGE STRESS=        8.91746   AVERAGE M-VALUE=   2.62841  EFF. STRAIN EPS USED=   0.02887
+ Step nr.    9          2.58674     0.99921     0.38689
+ FOR STEP    9  AVERAGE STRESS=        9.01321   AVERAGE M-VALUE=   2.63013  EFF. STRAIN EPS USED=   0.02887
+ Step nr.   10          2.65225     0.99919     0.37734
+ FOR STEP   10  AVERAGE STRESS=        9.11258   AVERAGE M-VALUE=   2.63316  EFF. STRAIN EPS USED=   0.02887
+
+
+ Final call of SIMUL (for output only)
+
+
+ S I M U L         NR. STEPS=    1
+
+
+ ICRAT:    0    0
+ TAYLOR - DISPLACEMENT GRADIENT WHICH WILL BE USED FOR THE SIMULATION
+
+        GLOBAL TENSOR                         SYMMETRICAL PART                      ANTISYMMETRICAL PART
+
+    0.02500   0.00000   0.00000             0.02500   0.00000   0.00000             0.00000   0.00000   0.00000          
+    0.00000   0.00000   0.00000             0.00000   0.00000   0.00000             0.00000   0.00000   0.00000          
+    0.00000   0.00000  -0.02500             0.00000   0.00000  -0.02500             0.00000   0.00000   0.00000          
+ Step nr.    1          2.71942     0.99917     0.36803
