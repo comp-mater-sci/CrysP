@@ -7,7 +7,7 @@ from __future__ import print_function
 
 __version__ = '0.1.5' + '.' + '$Rev$'.strip('$Rev: ')
 
-BACKEND_VERSION = '0.13.1'
+BACKEND_VERSION = '0.14.0'
 
 import json
 import csv
