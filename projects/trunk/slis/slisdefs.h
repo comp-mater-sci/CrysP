@@ -19,4 +19,6 @@
 
 #endif // _WIN32
 
+#define SLIS_API
+
 #endif // !slisdefs_15DBE750_3BFB_4B5D_8CE5_2763DF5C7C60

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "token_v1.hpp"
 
+#include <fstream>
 #include <sstream>
 #include <exception>
 

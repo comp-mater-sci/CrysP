@@ -8,7 +8,8 @@ include("${COMMON_DIR}/basic-fortran-project.cmake")
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost REQUIRED COMPONENTS date_time filesystem)
 
-set(LIBSLIS_SRC slisapi.cpp  slis_v1.cpp  stdafx.cpp)
+set(LIBSLIS_SRC digest.cpp  signature.cpp  slisapi.cpp  slis_v1.cpp 
+	        stdafx.cpp  tokenapi.cpp  token_v1.cpp )
 
 add_library(slis STATIC ${LIBSLIS_SRC})
 target_compile_definitions(slis PUBLIC BOOST_ALL_STATIC_LINK)

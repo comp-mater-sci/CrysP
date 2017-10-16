@@ -30,7 +30,11 @@ namespace slis {
 		{
 		public:
 			
-			TokenContent() = default;
+			TokenContent()
+			{
+				id = boost::uuids::nil_uuid();
+			}
+				
 
 			TokenContent(alias_type alias, owner_name_type owner_name,
 						date_type expiry_date, payload_type payload)
@@ -43,7 +47,7 @@ namespace slis {
 			{}
 			
 			
-			id_type				id{ boost::uuids::nil_uuid() };
+			id_type				id;
 			alias_type			alias;
 			owner_name_type		owner_name;
 			//date_type			creation_time;
