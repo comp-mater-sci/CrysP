@@ -31,7 +31,7 @@ def main(input, output_prefix=None, input_texture=None, quiet=True,
         jobname_prefix = output_prefix
 
     if input_texture is not None:
-        generic['input_texture'] = input_texture
+        generic['input_fname'] = input_texture
 
     # interpret 'jobs'. Make a list of (name, jobtype) tuples
     
@@ -84,8 +84,8 @@ def main(input, output_prefix=None, input_texture=None, quiet=True,
         not quiet and print('----')
 
     if command_lines:
-        print('\nHere are the commands you need to run the jobs '
-              'defined in {}: \n'.format(input))
+        not quiet and print('\nHere are the commands you need to run the jobs '
+                            'defined in {}: \n'.format(input))
         sys.stdout.writelines(command_lines + ['\n'])
 
 if __name__ == '__main__':
