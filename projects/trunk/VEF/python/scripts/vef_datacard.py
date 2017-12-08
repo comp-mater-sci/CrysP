@@ -401,9 +401,14 @@ def main(jobname, input, cpmodel, structure, serial, intermediate_dir,
 
 if __name__ == '__main__':
     import argparse
-
+    import textwrap
     #
-    dsc = ''''Calculate datacard for yield locus calibration'''
+    dsc = textwrap.dedent('''
+        Calculate datacard for yield locus calibration
+
+        The purpose of the tool is to calculate at once various yield points 
+        typically used in calibration of advanced yield locus models.
+    ''')
 
     parser = argparse.ArgumentParser(prog='vef_datacard', description=dsc)
 

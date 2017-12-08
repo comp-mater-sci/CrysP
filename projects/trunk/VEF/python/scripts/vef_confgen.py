@@ -90,17 +90,24 @@ def main(input, output_prefix=None, input_texture=None, quiet=True,
 
 if __name__ == '__main__':
     import argparse
+    import textwrap
     #
-    dsc = ''''Generate alamDMC configuration files from YAML configuration'''
+    dsc = textwrap.dedent('''
+        Generate alamDMC configuration files from YAML job specification
 
-    parser = argparse.ArgumentParser(description=dsc)
+        The purpose of the tool is to run various types of VEF simulations for
+        the same basic settings (texture data, hardening etc.).
+        ''')
+
+    parser = argparse.ArgumentParser(description=dsc, 
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--input',
                         required=True,
-                        help='YAML specification file')
+                        help='YAML job specification file')
     parser.add_argument('--output_prefix', 
                         default=None,
                         help='prefix for the output files. '
-                             'Overrides the settings in the YAML file.'
+                             'It overrides the settings in the YAML file.'
                         )
     parser.add_argument('--input_texture',
                         default=None,
@@ -109,7 +116,7 @@ if __name__ == '__main__':
     parser.add_argument('--quiet', 
                         default=False,
                         action='store_true',
-                        help='Suppress the terminal output')
+                        help='suppress the terminal output')
     args = parser.parse_args()
 
     try:
