@@ -99,7 +99,8 @@ if __name__ == '__main__':
         the same basic settings (texture data, hardening etc.).
         ''')
 
-    parser = argparse.ArgumentParser(description=dsc, 
+    parser = argparse.ArgumentParser(prog='vef_confgen',
+                                     description=dsc, 
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--input',
                         required=True,
