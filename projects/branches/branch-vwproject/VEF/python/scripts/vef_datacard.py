@@ -5,9 +5,9 @@
 
 from __future__ import print_function
 
-__version__ = '0.1.5' + '.' + '$Rev$'.strip('$Rev: ')
+__version__ = '0.2.0' + '.' + '$Rev$'.strip('$Rev: ')
 
-BACKEND_VERSION = '0.14.0'
+BACKEND_VERSION = '0.15.0'
 
 import json
 import csv
@@ -78,12 +78,30 @@ def flatten_onelevel_dict(data, output_type=OrderedDict):
 #       data (shape, type, ...) is generated. It violates the general policy:
 #       as few assumptions as possible.
 
-def uniaxial_setup(config, data):
+def uniaxial_raw_setup(config, data):
     data = list(float(x) for x in data)
     module_name = 'qrs'
     module_config = {'range': {'type': 'discrete',
                                'params': {'values': data}},
                      'use_default_settings': True}
+    return module_name, module_config, {}
+
+
+def uniaxial_setup(config, data):
+    data = np.array([float(x) for x in data])
+    # Extend the range to prepare symmetry folding
+    data_ext = np.hstack((np.array(data), (180. - np.array(data)[::-1])))
+    data_ext = np.unique(data_ext)
+    #
+    module_name = 'qrs'
+    module_config = {'range': {'type': 'discrete',
+                               'params': {'values': data_ext}},
+                     'use_default_settings': False,
+                     'rho': 0.,
+                     'calculate_MFactor': False,
+                     'fold_symmetry': True,
+                     'improve_stability': False
+                      }
     return module_name, module_config, {}
 
 
@@ -225,18 +243,21 @@ def yld_harvester(output_prefix):
 
 
 CONFIGURATORS = {'uniaxial': uniaxial_setup,
+                 'uniaxial_raw': uniaxial_raw_setup,
                  'equibiaxial': equibiaxial_setup,
                  'inplane': inplane_setup,
                  'arbitrary': arbitrary_setup,
                  'yld': yld_setup}
 
 HARVESTERS = {'uniaxial': uniaxial_harvester,
+              'uniaxial_raw': uniaxial_harvester,
               'equibiaxial': equibiaxial_harvester,
               'inplane': inplane_harvester,
               'arbitrary': arbitrary_harvester,
               'yld': yld_harvester}
 
 FLATTENERS = {'uniaxial': flatten_onelevel_dict,
+              'uniaxial_raw': flatten_onelevel_dict,
               'yld': flatten_onelevel_dict}
 
 def output_csv(jobname, data, meta, transform_map=None, **kwargs):
@@ -303,7 +324,7 @@ def make_config(id, module_name, config, module_config, sequence=None):
 
 
 def main(jobname, input, cpmodel, structure, serial, intermediate_dir,
-         as_json=True, as_csv=True, **requests):
+         as_json=True, as_csv=True,  uniaxial_options=[], **requests):
 
     try:
 
@@ -402,6 +423,7 @@ def main(jobname, input, cpmodel, structure, serial, intermediate_dir,
 if __name__ == '__main__':
     import argparse
     import textwrap
+    import itertools
     #
     dsc = textwrap.dedent('''
         Calculate datacard for yield locus calibration
@@ -453,6 +475,7 @@ if __name__ == '__main__':
     arbitrary_help = '''\
     Evaluate an arbirtary stress point specified in Voce convention:
     sigma_xx sigma_yy sigma_zz sigma_xy sigma_yz sigma_xz'''
+
     parser.add_argument('--arbitrary',
                         nargs=6,
                         metavar=('sigma_xx', 'sigma_yy', 'sigma_zz', 
@@ -486,6 +509,15 @@ if __name__ == '__main__':
                         default=None,
                         help='Working directory where intermediate results are produced')
 
+    uniaxial_options_help = ''''Set additional options to uniaxial.
+
+    nofold: Disable symmetry folding and allow arbitrary sample orientations'
+    '''
+
+    parser.add_argument('--uniaxial_options',
+                        nargs='?',
+                        default=[],
+                        help=uniaxial_options_help)
 
     args = parser.parse_args()
 
@@ -495,6 +527,22 @@ if __name__ == '__main__':
     if not any(switches[key] for key in DATASOURCES):
         print('You must request at least one of:', ' '.join(DATASOURCES))
         sys.exit(1)
+    #
+    # Additional mangling
+    #
+    
+    if 'uniaxial' in switches:
+        if 'nofold' in switches['uniaxial_options']:
+            # replace 'uniaxial' with 'uniaxial_raw' if mangling is disabled
+            switches['uniaxial_raw'] = switches['uniaxial']
+            del switches['uniaxial']
+        else:
+            # check the inputs
+            if any([float(x) > 90 or float(x) < 0 \
+                    for x in itertools.chain(*switches['uniaxial'])]):
+                print('Uniaxial loading directions must be in range [0,90] '
+                      'unless "nofold" option is specified')
+                sys.exit(1)
 
-    sys.exit(main(**vars(args)))
+    sys.exit(main(**switches))
 
