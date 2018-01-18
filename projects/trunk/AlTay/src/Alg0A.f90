@@ -116,6 +116,7 @@
       read (KLEC,99) NLIST
       read (KLEC,99) NFILE1
       read (KLEC,99) NFILTW
+      read (KLEC,99) NMSS
       read (KLEC,99) KOST
       read (KLEC,99) IPR
       NRES = NFILE1  ! IMP2 and IMP3 are controlled only by NFILE1
@@ -124,7 +125,6 @@
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
           NPEBP  = NFILE1
       endselect
-      NMSS = NLIST
 #endif
       HGAMTOT=0.D0
       ! NGR == 3: enable MAS-AL
