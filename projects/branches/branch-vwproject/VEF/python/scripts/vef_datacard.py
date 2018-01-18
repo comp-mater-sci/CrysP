@@ -509,9 +509,9 @@ if __name__ == '__main__':
                         default=None,
                         help='Working directory where intermediate results are produced')
 
-    uniaxial_options_help = ''''Set additional options to uniaxial.
+    uniaxial_options_help = '''Set additional options to --uniaxial.
 
-    nofold: Disable symmetry folding and allow arbitrary sample orientations'
+    nofold: Disable symmetry folding and allow arbitrary sample orientations
     '''
 
     parser.add_argument('--uniaxial_options',
