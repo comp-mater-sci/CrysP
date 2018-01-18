@@ -27,7 +27,6 @@ use criAlgorithm
 use criLinearMap
 use criConfigReader
 use criLog
-use altaySub
 use commonConfig
 use dmcUtils, only: display_unit
 use dmcStressDrivenEvolutionModule
@@ -221,6 +220,8 @@ contains
     integer :: n_theta, n_contours
     logical :: tmp_flag
     !
+        ! Super-class first
+        RETURN_IF(info /= criSuccess, call this%StressDrivenEvolutionModule%run(info))
         !
         ! Prepare the input data: array of increments, and
         ! array of results.
@@ -294,10 +295,8 @@ contains
             sigma%t = Vec6ToMat33(sigma_vector)
             !
             ! Re-initialize AlTay
-            call finalizeAltay(info)
-            if (info /= 0) exit
-            call initAltay(this%altay,info)
-            if (info /= 0) exit
+            info = this%reinitializeLibAltay()
+            if (info /= criSuccess) exit
             !
             if (this%calculateStressPath(sigma, evolution_control, output) /= criSuccess) then
                 ! For a certain reason we cannot calculate this path.
@@ -351,7 +350,7 @@ contains
     logical,optional,intent(in)                 :: use_work_levels
     !
     integer :: iounit, ierr, i, n_contours, n_columns
-    integer,parameter :: output_column_width = 18
+    integer,parameter :: output_column_width = 25
     character(len=output_column_width),dimension(:),allocatable :: header_columns
     character(len=output_column_width) :: tmp_str, label_str
     !

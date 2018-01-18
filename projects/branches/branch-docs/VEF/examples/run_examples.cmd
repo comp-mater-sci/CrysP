@@ -18,7 +18,7 @@ set LOGFILE=run_examples.log
 echo %date% %time% > %LOGFILE%
 
 for %%m in (UDSA ASR QRS YLD EWC ADP) do (
-	for %%x in (*_%%m.cfg) do (
+	for %%x in (*_%%m*.cfg) do (
 		echo %%m %%x
 		!ALAMDMC! %%m %%x
 		if ERRORLEVEL 1 (

@@ -20,6 +20,7 @@ if ERRORLEVEL 1 (
 )
 set PATH=%VEF_ROOT%\bin;%PATH%
 set PYTHONPATH=%VEF_ROOT%\python;%PYTHONPATH%
+set SLIS_ROOT=%VEF_ROOT%
 
 echo The VEF is now initialized.
 

@@ -16,14 +16,14 @@ Before we start    {#sec_installation_requirements}
 
 To install and use the VEF you will need to satisfy the following requirements:
 -# Python version 2.7.X installed. 
--# Python packages installed: numpy, scipy, matplotlib and cheetah.
+-# Python packages installed: numpy, scipy, matplotlib, requests and cheetah.
 
 
 \note If you are not familiar with [Python](https://www.python.org/), the easiest way to get it installed is to download 
 [Miniconda Python distribution](http://conda.pydata.org/miniconda.html). Once it is installed,
 you may run the following command from the command line to get the required packages:
 <pre class="consoleView">
-conda install numpy scipy matplotlib cheetah -y
+conda install numpy scipy matplotlib cheetah requests -y
 </pre>
 
 
@@ -36,7 +36,7 @@ This instruction will tell you step-by-step how to install and set-up the VEF so
 
 -# Unpack the distribution to a directory you prefer, for example: `c:\VEF` or `c:\Users\[your-user_name]\VEF`. 
    Note: the path to that directory should not contain spaces.
--# Edit the VEF configuration file \fsname{vef.cmd}, located in the directory where you unpacked the distribution. 
+-# Edit the VEF configuration file \fsname{vef_session.cmd}, located in the directory where you unpacked the distribution. 
    You will need to customize the line that sets \envname{VEF_ROOT} by setting it to the path where the VEF is unpacked. 
    For example:
    \verbatim
@@ -52,12 +52,12 @@ Setting up the simulations with HMS    {#sec_setting_up_simulation}
 ===================================
 
 The VEF programs are run from the command line. In order to conduct any VEF simulation, you have to configure VEF environment first. 
-It is as simple as running \fsname{vef.cmd} before starting any VEF program. 
+It is as simple as running \fsname{vef_session.cmd} before starting any VEF program. 
 For example:
 \verbatim
-c:\VEF\vef.cmd
+c:\VEF\vef_session.cmd
 \endverbatim
 
-\note You have to run \fsname{vef.cmd} at the beginning of every VEF session.
+\note Important: you have to run \fsname{vef_session.cmd} at the beginning of every VEF session.
 
 */

@@ -33,7 +33,15 @@ Before we start, please copy the content of directory `examples\guided_tour` fro
 VEF installation directory to another directory on your computer. We will refer
 to that copy as `guided_tour_directory`.
 
-Please run the VEF command prompt window and change the directory to `guided_tour_directory`.
+Please run the command prompt window and change the directory to `guided_tour_directory`.
+The very first thing we have to do is to initialize a VEF session. To do so, we run 
+`vef_session` command from the VEF installation directory. For instance, if the VEF is 
+installed in `c:\\VEF`, the command is:
+
+<pre class="consoleView">
+c:\\VEF\\vef_session
+</pre>
+
 
 
 Input texture        {#gt_input_texture}

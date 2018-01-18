@@ -21,7 +21,7 @@ program alamDMC
 !
 use criRuntime
 !
-#ifdef DMC_USE_SLIS
+#if defined(DMC_USE_SLIS) || defined(DMC_USE_TOKENS)
 use,intrinsic :: iso_c_binding, only: C_NULL_CHAR
 use fslis
 #define ALAMDMC_FEATURE_UUID 'ff921f1e-fa42-11e5-97dc-ecf4bb152acb'//C_NULL_CHAR
@@ -43,7 +43,16 @@ implicit none
       type(MapItem),dimension(ncommands)  :: command_map =  [ MapItem('QRS',Q_id), MapItem('UDSA',UDSA_id), &
                                                               MapItem('ASR',ASR_id), MapItem('YLD',YLD_id), &
                                                               MapItem('EWC',EWC_id), MapItem('ADP',ADP_id) ]
-      integer,parameter       :: argc_min = 2, argc_max=2, command_argpos = 1
+#ifndef DMC_USE_TOKENS
+      integer,parameter       :: argc_min = 2, argc_max=2
+      character(len=*),parameter    :: prog_desc = 'parameters: command_name configuration_file'
+#else
+      ! Additional parameter: token file
+      integer,parameter       :: argc_min = 3, argc_max=3
+      integer,parameter       :: tokenfile_argpos = 3
+      character(len=*),parameter    :: prog_desc = 'parameters: command_name configuration_file token_file'
+#endif
+      integer,parameter       :: command_argpos = 1, configfile_argpos = 2
       type(commandLine)       :: cmdline
       
       logical                 :: moduleFound = .false.
@@ -60,7 +69,7 @@ implicit none
       !
       write(progname,fmt=300)
       !
-      cmdline = commandLine(progname,description='parameters: command_name configuration_file')
+      cmdline = commandLine(progname,description=prog_desc)
       call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.)
       moduleFound = .false.
       if (info == criSuccess) moduleFound = resolveId(command_map, cmdline%command_id,moduleName)
@@ -88,8 +97,8 @@ implicit none
 #endif
       !
       ! open and read the config file      
-      write(display_unit,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(2))
-      cnfunit = openOrDie(fpath=trim(cmdline%argv(2)),status='old')
+      write(display_unit,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(configfile_argpos))
+      cnfunit = openOrDie(fpath=trim(cmdline%argv(configfile_argpos)),status='old')
       !
       info = -1
       ! Create a module of appropriate type and read its configuration:
@@ -119,6 +128,15 @@ implicit none
             write(errmsg,'(A)') 'Configuration file contains errors.'
             call finalize(stopcode_runtimeerror)
       endif
+#ifdef DMC_USE_TOKENS
+      !
+      ! Initialize token
+      !
+      if (the_module%token%setTokenPath(cmdline%argv(tokenfile_argpos)) /= criSuccess) then
+          write(errmsg,'(A)') 'Incorrect path to the token file'
+          call finalize(stopcode_runtimeerror)
+      endif
+#endif
       !
       ! OK, the configuration stage has been finished. 
       ! Initialize the module

@@ -7,8 +7,12 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/uuid/string_generator.hpp>
 #include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 // #include <boost/filesystem.hpp>
 #include "slis_v1.hpp"
+#include "token_v1.hpp"
+#include "token_secret.hpp"
 
 int main(int argc, char * argv[])
 {
@@ -83,6 +87,22 @@ int main(int argc, char * argv[])
 	date from(2016, 7, 14), to(2016, 9, 20);
 #endif
 
+#ifdef LICENSE_MITSUBISHI_EVALUATION
+	string licname("Mitsubishi Materials Corporation");
+	SlisContainer lic(licname, license_types::evaluation);
+	uuids::uuid alamdmc_feature_uuid = gen("ff921f1e-fa42-11e5-97dc-ecf4bb152acb");
+	date from(2017, 9, 1), to(2017, 9, 25);
+#endif
+
+#ifdef LICENSE_MITSUBISHI_COMMERCIAL
+	string licname("Mitsubishi Materials Corporation");
+	SlisContainer lic(licname, license_types::commercial);
+	uuids::uuid alamdmc_feature_uuid = gen("ff921f1e-fa42-11e5-97dc-ecf4bb152acb");
+	date from(2017, 9, 1), to(2099, 12, 31);
+	date token_expiry(2019, 9, 1);
+	size_t ntokens = 20;
+#endif
+
 	lic.addLicense(alamdmc_feature_uuid, "alamDMC", from, to);
 	string licensefile_path("license.slis");
 	lic.printLicenseSummary(cout, alamdmc_feature_uuid);
@@ -95,6 +115,43 @@ int main(int argc, char * argv[])
 	cout << "load returned " << errcode << endl;
 
 	r_lic.printLicenseSummary(cout, alamdmc_feature_uuid);
+
+#ifdef GENERATE_TOKENS
+	{
+		using namespace slis::tokens;
+		using namespace slis::signature;
+		using namespace boost::uuids;
+		Signer signer(constants::token_secret);
+
+		string report_fname = "tokens.csv";
+		ofstream out{ report_fname };
+
+		out << "fname" << ","
+			<< "alias" << ","
+			<< "id" << ","
+			<< "expiry_date" << ","
+			<< "status" << endl;
+
+		for (size_t i = 1; i <= ntokens; i++) {
+			string alias = "token_" + to_string(i);
+			auto output_fname = alias + ".slistkn";
+			// Note: to_iso_extended_string produces YYYY-MM-DD, to_iso_string produces YYYYMMDD
+			Token token{ signer, alias, licname,to_iso_extended_string(token_expiry)};
+
+			// write out and validate
+			auto status = writeToken(token, output_fname);
+			auto authentic = tokenapi_v1::isTokenValid(output_fname);
+
+			out << output_fname << ","
+				<< token.alias() << "," 
+				<< token.id() << ","
+				<< token.expiry_date() << ","
+				<< (status && authentic ? "OK" : "FAILED")<< endl;
+
+		}
+	}
+
+#endif // GENERATE_TOKENS
 
 
 	return 0;

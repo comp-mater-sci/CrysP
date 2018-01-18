@@ -189,6 +189,9 @@ contains
     logical :: first_run, acceptable_point
     double precision,parameter :: beta = 0.D0
     !
+        ! Super-class first
+        RETURN_IF(info /= criSuccess, call this%StressDrivenModule%run(info))
+        !
         info = criErr_BadArgs
         if (.not. (associated(this%ptr_theta_range) .and. associated(this%ptr_w_range)))  return
         !

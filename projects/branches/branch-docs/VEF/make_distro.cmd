@@ -31,11 +31,13 @@ mkdir %VEF_DIR%\scripts
 
 copy python\scripts\*.pyo %VEF_DIR%\scripts
 
+cat python\requirements.txt > %VEF_DIR%\python\requirements.txt
+
 ::
 :: Platform-specific
 ::
 copy platform_specific\win32\scripts\* %VEF_DIR%\scripts
-copy platform_specific\Win32\vef.cmd %VEF_DIR%
+copy platform_specific\Win32\vef_session.cmd %VEF_DIR%
 
 ::
 :: Manual
@@ -66,4 +68,14 @@ if exist %MTMFHM_DIR%\make_distro.cmd (
 	@echo.
 	@echo Setting up MTM-FHMport
 	pushd %MTMFHM_DIR% && call make_distro.cmd %VEF_DIR% & popd
+)
+
+::
+:: slis
+::
+set SLIS_DIR=..\slis
+if exist %SLIS_DIR%\make_distro.cmd (
+	@echo.
+	@echo Setting up slis
+	pushd %SLIS_DIR% && call make_distro.cmd %VEF_DIR% & popd
 )
