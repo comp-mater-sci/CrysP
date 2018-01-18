@@ -109,9 +109,9 @@ The machine where the software is built must fulfill a set of requirements with 
 to the installed software tools:
 
 - `GNU Make`_ >= 3.8 and CMake_ >= 3.7 (Linux platform)
-- Microsoft® Visual Studio >= 2013 (Windows platform)
-- Intel® Fortran >= 2015
-- Intel® C/C++ >= 2015 (Linux platform)
+- Microsoft Visual Studio >= 2013 (Windows platform)
+- Intel Fortran >= 2015
+- Intel C/C++ >= 2015 (Linux platform)
 - Doxygen_ >= 1.8.13
 - Python 2.7.X and packages:
 
