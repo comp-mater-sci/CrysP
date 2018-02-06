@@ -51,6 +51,33 @@ int main(int argc, char * argv[])
 	date from(2017, 03, 01), to(2017, 9, 8); 
 #endif
 
+#ifdef LICENSE_ALERIS_COMMERCIAL_EXT
+	string licname("Aleris Aluminum Duffel bvba");
+	SlisContainer lic(licname, license_types::commercial);
+	uuids::uuid alamdmc_feature_uuid = gen("ff921f1e-fa42-11e5-97dc-ecf4bb152acb");
+	// Note: the license agreement says: from 2017/03/01 for 6 months.
+	// The license is provided on 2017/03/8
+	// Note 2: following C. Bollmann's request, the license is extended till
+	// the end of September 2017.
+	date from(2017, 03, 01), to(2017, 9, 30);
+#endif
+
+#ifdef LICENSE_ALERIS_COMMERCIAL_EXT2
+	// License for the preparations of the Numisheet benchmark.
+	// Issued prior to signing the license agreement.
+	string licname("Aleris Aluminum Duffel bvba");
+	SlisContainer lic(licname, license_types::commercial);
+	uuids::uuid alamdmc_feature_uuid = gen("ff921f1e-fa42-11e5-97dc-ecf4bb152acb");
+	date from(2018, 2, 1), to(2018, 3, 1);
+#endif
+
+#ifdef LICENSE_ALERIS_COMMERCIAL_EXT3
+	string licname("Aleris Aluminum Duffel bvba");
+	SlisContainer lic(licname, license_types::commercial);
+	uuids::uuid alamdmc_feature_uuid = gen("ff921f1e-fa42-11e5-97dc-ecf4bb152acb");
+	date from(2018, 2, 1), to(2019, 2, 1);
+#endif
+
 
 #ifdef LICENSE_OCAS_EVALUATION
 	string licname("Onderzoekscentrum voor Aanwending van Staal NV");
