@@ -1,0 +1,17 @@
+!!
+!
+!TODO
+!
+!!
+
+
+- selection of the model per simul call:
+    * NGR and NRL must be set accordingly
+
+- getting rid of the IO-related Dynfil operations
+
+- getting gid of NDISK parameter of the SIMUL (see above)
+
+- simplify GRFIL 
+
+- add cabability of dumping CUR, CUB and other formats.
