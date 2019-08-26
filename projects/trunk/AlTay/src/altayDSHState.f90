@@ -6,7 +6,7 @@ use altayHardLaw_DSH
 use altayHardTypes
 implicit none
 
-      type(StatVar),allocatable,dimension(:),private,save    :: KS_state
+      type(StatVar),allocatable,dimension(:),private,save    :: KS_state !MB: structure array of state variables
       
       interface KS_readState
             module procedure KS_readState_unit, KS_readState_file
@@ -111,7 +111,7 @@ contains
       !> Open state file either for reading or writing.
       !>
       !> The function opens the file and, if requested, performs some initialization 
-      !> actions, such as processing file header.
+      !> actions, such as processing or writing file header.
       integer function KS_openStateFile(iounit,fname,mode,use_header) result(info)
       implicit none
       integer,intent(in)                              :: iounit   !< IO unit to be used
@@ -129,11 +129,11 @@ contains
             if (present(use_header))  is_header = use_header
             select case(mode)
             case('r')
-                  open(unit=iounit,file=fname,status='old',iostat=ierr)
+                  open(unit=iounit,file=fname,status='old',iostat=ierr) !MB: open existing file (status='old')
                   if (ierr /= 0) return
                   if (is_header) info = ReadHeadSVfile(iounit)
             case('w')
-                  open(unit=iounit,file=fname,status='replace',iostat=ierr)
+                  open(unit=iounit,file=fname,status='replace',iostat=ierr) !MB: replace if already existing
                   if (ierr /= 0) return
                   if (is_header) info = WriteHeadSVfile(iounit)
             end select
@@ -166,38 +166,42 @@ contains
       !
       end function
 
-      !>
+      !> contains call to ReadSVfile, which stores state variables from file in ks_state
       integer function KS_readState_unit(iounit,nblock) result(info)
       implicit none
       integer,intent(in)                              :: iounit   !< I/O unit number
       integer,optional,intent(in)                     :: nblock   !< Number of blocks to be skipped
       !
-      integer :: i, n, nf, tmp, ioerr, iblock
+      integer :: i, & !MB: index for loop over ks_state elements
+                 n, & !MB: size of ks_state (= number of blocks)
+				 nf, & !MB: grain index (??)
+				 tmp, ioerr, &
+				 iblock !MB: index for loop over blocks (what is the exact meaning of 'block'?, difference to i and nf??)
       character(len=5) :: tmp_str
       logical :: is_dummy
       !
             info = KS_ErrUninitialized
             if (.not. allocated(KS_state)) return
-            n = size(KS_state)
-            if (n < 1) return
+            n = size(KS_state) !MB: query size of ks_state; same function as KS_getStateSize() (?)
+            if (n < 1) return !MB: stop if ks_state is empty
             info = KS_ErrIO
             nf = 0
-            is_dummy = .true.
+            is_dummy = .true. !MB: set fake read flag to true
             !
-            do iblock = 0, nblock
-                  if (iblock == nblock) is_dummy = .false.
-                  read(iounit,fmt=100,iostat=ioerr) nf
+            do iblock = 0, nblock !MB: loop over blocks until nblock
+                  if (iblock == nblock) is_dummy = .false. !MB: read state file only in last loop repetition
+                  read(iounit,fmt=100,iostat=ioerr) nf !MB: read nf
                   if ((nf /= n) .or. (ioerr /= 0)) return
                   read(iounit,fmt=110) tmp_str
-                  do i = 1, n
+                  do i = 1, n !MB: loop till i=size(ks_state)
                         read(iounit,fmt=200,iostat=ioerr) tmp
                         if (ioerr /= 0) return
-                        if (ReadSVfile(iounit,KS_state(i),is_dummy) /= KS_OK) return
+                        if (ReadSVfile(iounit,KS_state(i),is_dummy) /= KS_OK) return !MB: read from iounit into KS_state(i)
                   enddo
                   read(iounit,fmt=111,iostat=ioerr) tmp_str
-                  if (.not.is_dummy) exit
+                  if (.not.is_dummy) exit !MB: exit do loop if none-fake read took place
             enddo
-            if ((i > n) .and. (ioerr == 0)) info = KS_OK 
+            if ((i > n) .and. (ioerr == 0)) info = KS_OK !MB: if all went well return success code (ks_ok)
 100         format(I5)
 110         format(A)
 111         format(A)
@@ -211,7 +215,7 @@ contains
       integer,optional,intent(in)                     :: nblock   !< Number of blocks to be skipped
       logical,optional,intent(in)                     :: use_header
       !
-            info = KS_openStateFile(iounit,fname,'r',use_header)
+            info = KS_openStateFile(iounit,fname,'r',use_header) !MB: open file for read access ('r')
             if (info == 0) then 
                   info = KS_readState_unit(iounit,nblock)
             else

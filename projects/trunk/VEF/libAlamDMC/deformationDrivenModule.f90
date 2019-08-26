@@ -13,7 +13,7 @@
 !>
 !>    History of modifications: (see svn log)
 
-!> Base class for modules implementing strain-(rate) driven simulations
+!> Base class for modules implementing strain-(rate) driven simulations (such as ADPModule)
 module dmcDeformationDrivenModule
 use criRange
 use criErrcodes
@@ -47,7 +47,7 @@ implicit none
         !> Container for steps 
         type(PtrStrainDrivenStep),dimension(:),allocatable :: steps
         
-    contains
+    contains !MB: type-bound procedures
         !>@{ \name Interface methods of AbstractModule
         
         procedure,pass(this) :: printConfig => DeformationDrivenModule_printConfig
@@ -80,17 +80,18 @@ contains
     !> Read configuration from IO unit
     integer function DeformationDrivenModule_readConfig(this,cnfunit) result(info)
     implicit none
-    class(DeformationDrivenModule),intent(inout)   :: this
+    class(DeformationDrivenModule),intent(inout)   :: this !< MB: passed implicitly 
     integer,intent(in)              :: cnfunit !< IO input unit
     !
     logical :: default_solver_config
-    !
-        info = this%BasicModule%readConfig(cnfunit)
+        !
+        !MB> read output and AlTay configuration sections
+        info = this%BasicModule%readConfig(cnfunit) 
+        !
         ! Read "solver config flag" that belongs to the global section
         ! as it is done in the stressDrivenModule.
         if (.not. readValue(cnfunit, default_solver_config)) return
-        !
-        ! For the time being, only default solver config is accepted.
+        ! For the time being, only default solver configuration is accepted for this module.
         if (.not. default_solver_config) then
             write(display_unit, fmt=900) 'This module does not allow non-default solver settings'
             info = criErr_BadArgs

@@ -24,10 +24,11 @@
 module criLinearMap
 implicit none
       
-      !> Maximal lenght of strings that are used as keys in the map
+      !> Maximal length of strings that are used as keys in the map
       integer,private,parameter     :: cMapNameLen = 32
       
-      !> Helper data structure for resolving name-to-identifier
+      !> Helper data structure for resolving name-identifier pairs
+      !> MB: Maps (= structure arrays constructed from MapItem) are used to look up name and find corresponding ID and vice versa
       type MapItem
             character(len=cMapNameLen)          :: Name
             integer                             :: ID           
@@ -57,7 +58,7 @@ contains
       !
       end function
 
-      !> Resolve symbolic name of into an integer identifier.
+      !> Resolve symbolic name into an integer identifier.
       !>
       !> \return .true. if the name matches a name provided in the map, then id contains corresponding identifier
       !> \return .false. if the name doesn't match any map item, id and index (if present) are left unmodified.
@@ -65,22 +66,22 @@ contains
       implicit none
       character(len=*),intent(in)               :: name      
       type(MapItem),dimension(1:),intent(in)    :: themap
-      integer,intent(inout)                     :: id
-      integer,intent(inout),optional            :: index
+      integer,intent(inout)                     :: id !MB: inout instead of only out since id only modified when name exists 
+      integer,intent(inout),optional            :: index !MB: inout instead of only out since index only modified when name exists
       !
       integer :: i
       character(len=cMapNameLen)       :: shortname  
       !
             resolveName = .false.
             shortname = trim(adjustl(name)) ! Trim and store (make direct comparison)
-            do i=1,size(themap)
+            do i=1,size(themap) !MB: search for name in map
                   if (shortname == trim(themap(i)%Name)) then
                         id = themap(i)%ID
                         resolveName = .true.
                         exit
                   endif
             enddo
-            if (present(index) .and. resolveName) index = i
+            if (present(index) .and. resolveName) index = i !MB: store map index when name found
       !
       end function
 
@@ -92,13 +93,13 @@ contains
       implicit none
       type(MapItem),dimension(1:),intent(in)    :: themap
       integer,intent(in)                        :: id
-      character(len=*),intent(inout)            :: name
-      integer,intent(inout),optional            :: index
+      character(len=*),intent(inout)            :: name !MB: inout instead of only out since name only modified when name exists
+      integer,intent(inout),optional            :: index !MB: inout instead of only out since index only modified when name exists
       !
       integer :: i
       !
             resolveId = .false.
-            do i=1,size(themap)
+            do i=1,size(themap) !MB: search for id in map
                   if (id == themap(i)%ID) then
                         name = themap(i)%Name
                         resolveId = .true.

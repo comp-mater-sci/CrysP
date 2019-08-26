@@ -22,8 +22,8 @@
 !      There is a "last block with Current situation"
 !      (without simulation, only for output to the CUR-file).
 !
-!     LEC= data set with slip systems
-!     KLEC= data set with parameters
+!     LEC= data set with slip systems (file handle to .pre file, name stored in fnam2 (defined in KLEC))
+!     KLEC= data set with parameters (initially file handle to MAINA1.CTL (which again leads to mainA1.i01))
 !     IMP= printer
 !     IMP1=output-file with successive "current situations"
 !     IMP2=output-file with successive "responses to imposed strain"
@@ -41,7 +41,7 @@
       integer :: tex_type, tex_nblock
       character(len=pathlength) :: tex_fname
 #ifdef PEBP_ENABLED      
-      character(len=pathlength) :: fname_pebp
+      character(len=pathlength) :: fname_pebp !MB: PEBP state variables file from which initial state gets read
       logical :: read_state
       integer :: nblock
 #endif
@@ -53,8 +53,8 @@
 !     UNIT KLEC = CONTROL FILE
   90  format (a)
 #ifndef MAINDIRECT
-      open (unit=KLEC,file='MAINA1.CTL',status='old')
-      read (KLEC,90) fnam1
+      open (unit=KLEC,file='MAINA1.CTL',status='old') !MB: MAINA1.CTL contains single line: mainA1.i01
+      read (KLEC,90) fnam1 !MB: assign 'mainA1.i01' to fnam1 
       call stripComment(fnam1)
       write (*,93) trim(fnam1)
       close (unit=KLEC)
@@ -62,7 +62,9 @@
       open (unit=KLEC,file=fnam1,status='old')
 #else
       open (unit=KLEC,file='MAIN.CTL',status='old')
+!MB> fnam1 points now either to file mainA1.i01 or to MAIN.CTL
 #endif
+
       read (KLEC,90) codsim
       call stripComment(codsim)
       write (*,92) trim(codsim)
@@ -102,13 +104,13 @@
   97  format (' number of lines with tau-crit values:',i3)
   96  FORMAT (I5) 
       DO 3 ISIGN=1,2                                                       
-      DO 1 J=1,NLINES                                                   
-      K=1+6*(J-1)                                                       
-      L=K+5                                                             
-      READ(KLEC,98) (crss_ratiosIN%crss(ISIGN,I),I=K,L)
+        DO 1 J=1,NLINES                                                   
+          K=1+6*(J-1)                                                       
+          L=K+5                                                             
+          READ(KLEC,98) (crss_ratiosIN%crss(ISIGN,I),I=K,L)
   98  FORMAT (6F10.0)
 ! 
-   1  CONTINUE
+   1    CONTINUE
   3   continue
       read (KLEC,99) NBLOC
   99  format (i5)
@@ -153,11 +155,11 @@
       
 #ifdef PEBP_ENABLED
       ! PEBP model
-      NREC = size(DFIL)
+      NREC = size(DFIL) !MB: where is dfil defined?
       select case(HardLawID)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
             ! UNIT IMP4 = state variables of PEBP KOST11
-            info = KS_openStateFile(IMP4,trim(fname_prefix)//'.BPM','w')
+            info = KS_openStateFile(IMP4,trim(fname_prefix)//'.BPM','w') !MB: open .BPM file for writing; existing file gets replaced
             !
             if (KS_initState(NREC) /= 0) then
                   write(IMP,fmt=600) 
@@ -165,10 +167,10 @@
             endif
             read_state = .false.
             nblock = 0
-            read(KLEC,66) read_state, nblock, fname_pebp
+            read(KLEC,66) read_state, nblock, fname_pebp !MB: this line in the VEF cfg file contains only 2 values!! here 3 are read??
             if (read_state) then
                   call stripComment(fname_pebp)
-                  info = KS_readState(fname_pebp,IPEBPSTAT,nblock)
+                  info = KS_readState(fname_pebp,IPEBPSTAT,nblock) !MB: interface to KS_readState_file; IPEBPSTAT is the IO unit number
                   if (info /= 0) then 
                         write(IMP,fmt=601) trim(fname_pebp)
                         write(*,fmt=601) trim(fname_pebp)

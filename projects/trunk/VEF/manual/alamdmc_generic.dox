@@ -85,6 +85,17 @@ Although the configuration options of the multi-scale model are pretty much fine
 		\f]
 		Only positive values of parameters are acceptable (constraints: \f$ 0 < K \f$, \f$ 0 < \gamma_0 \f$ and \f$ 0 < n \f$).
 			
+		\par Example:
+~~~~~~~~~~~~~{.txt}
+AKDQFF.smt           # Path to the texture file
+ALAMEL               # Model type: either ALAMEL or FCTaylor
+bcc24                # Family of slip systems
+True                 # Flag: use default microstructural description
+False                # Flag: use default hardening
+2                    # Selection of Swift law (K-variant)
+65.0 1.e-3 0.24      # Swift parameters: K, eps0 and n
+~~~~~~~~~~~~~
+<BR>
       - `3` \anchor hardening_model3 <BR> for Swift hardening law (variant SwiftS), with suboption:
         -# \confdef{swifts_parameters,realarray} contains 3 parameter values in following order: \f$ \tau_0 \space \gamma_0 \space n \f$.
 				
@@ -100,22 +111,22 @@ Although the configuration options of the multi-scale model are pretty much fine
 	    -# \confdef{hardening_parameter_file,path} refers to the file that contains parameters of the DSH model.
 		Please see the example parameter file `DSHparaset.txt` from `examples` directory for the ordering, units, boundaries and physical meaning of the parameters:
 		\includelineno DSHparaset.txt
-		-#  \confdef{hardening_state_block,integer}   \confdef{hardening_state_file,path}  configures initialization of the material state variables associated to disclocation substructure.
-		If \conffield{hardening_state_block} has a negative value, the  state is initialized in the annealed condition (and the contents of the \conffield{hardening_state_file} file will be ignored).
-		For simulation on predeformed material, \conffield{hardening_state_block} has a non-negative value:
-		it refers to an index of material state block inside the \conffield{hardening_state_file} file.
-		The index runs from 0, which denotes the first block in the file. 
+		-# \confdef{read_hardening_state,logical} specifies whether the material state variables associated to dislocation substructure are to be read from a state file. If
+		\conffield{read_hardening_state} is `False`<BR> the model is initialized corresponding to the default annealed condition. Setting \conffield{read_hardening_state} to 
+			- `True`<BR> allows initializing the model from a user defined material state. In this case 2 more suboptions need to be provided:
+				-# \confdef{hardening_state_file,path} specifies the path to the state file
+				-# \confdef{hardening_state_block,integer} has a non-negative value and refers to the number of material state blocks inside the \conffield{hardening_state_file} file
+				to be skipped when reading the state variables.
 
-\par Example:
+        \par Example:
 ~~~~~~~~~~~~~{.txt}
-AKDQFF.smt           # Path to the texture file
-ALAMEL               # Model type: either ALAMEL or FCTaylor
-bcc24                # Family of slip systems
-True                 # Flag: use default microstructural description
-False                # Flag: use default hardening
-2                    # Selection of Swift law (K-variant)
-65.0 1.e-3 0.24      # Swift parameters: K, eps0 and n
+11                   # Hardening law Id
+DSHparaset.txt       # DSH parameter file
+True                 # Flag: read DSH state variables from file
+DSHinitial.BPM       # DSH state file
+4                    # State blocks to skip
 ~~~~~~~~~~~~~
+<BR>
 
 \section config_search_procedure Configuration of the search procedure
 This part of the configuration file controls how the program will search for the strain 

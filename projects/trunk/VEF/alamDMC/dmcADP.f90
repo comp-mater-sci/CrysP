@@ -31,9 +31,9 @@ implicit none
     public :: ADPModule
     private
 
-    !> Arbitrary Strain Mode
+    !> Arbitrary Strain Mode (extends DeformationDrivenModule by 4 procedures)
     type,extends(DeformationDrivenModule) :: ADPModule
-    contains
+    contains !MB: type-bound procedures; pass(this) passes object itself, through which procedure referenced, as first argument to procedure
         
         !>@{ \name Interface methods of AbstractModule
         
@@ -57,9 +57,9 @@ implicit none
 contains
 
 
-    !> Print configuration to IO unit
+    !> Print configuration to IO unit (type-bound function)
     integer function ADPModule_printConfig(this, outunit) result(info)
-    class(ADPModule),intent(in)      :: this
+    class(ADPModule),intent(in)      :: this !<MB: passed implicitly
     integer,intent(in)              :: outunit !< IO unit for output
     !
         info = this%DeformationDrivenModule%printConfig(outunit)
@@ -71,20 +71,20 @@ contains
     end function
 
 
-    !> Read configuration from IO unit
-    integer function ADPModule_readConfig(this, cnfunit) result(info)
+    !> Read configuration from IO unit (type-bound function)
+    integer function ADPModule_readConfig(this, cnfunit) result(info) !MB: call with 1 argument (cnfunit) when referenced through object
     implicit none
-    class(ADPModule),intent(inout)   :: this
-    integer,intent(in)              :: cnfunit !< IO input unit
+    class(ADPModule),intent(inout)   :: this !<MB: passed implicitly 
+    integer,intent(in)              :: cnfunit !< IO input unit; provide explicitly
     !
     integer     :: n_steps, ierr, i, deformation, incrementation
     !
-    integer,parameter :: n_incrementation_types = 3
-    integer,parameter :: none_incrementation_id = 0, auto_incrementation_id = 1, fixed_incrementation_id = 2
+    integer,parameter :: n_incrementation_types = 3 !MB: number of incrementation types
+    integer,parameter :: none_incrementation_id = 0, auto_incrementation_id = 1,  fixed_incrementation_id = 2
     type(MapItem),dimension(n_incrementation_types) :: incrementation_type_names = [&
         MapItem('none', none_incrementation_id), &
         MapItem('auto', auto_incrementation_id), &
-        MapItem('fixed', fixed_incrementation_id)]
+        MapItem('fixed', fixed_incrementation_id)] !MB: 1-dim 3-element structure array where every element is a MapItem
     !
     integer,parameter :: n_deformation_types = 3
     integer,parameter :: deformation_id = 1, strainmode_id = 2, strain_id = 3
@@ -99,8 +99,9 @@ contains
     double precision :: step_size, tmp
     type(StrainDrivenStepConfig) :: tmp_step_config
     type(SRTensor) :: tmp_deformation_rate
-    !
-        RETURN_IF(info /= criSuccess, info = this%DeformationDrivenModule%readConfig(cnfunit))
+        ! 
+		! Read generic configuration section (output settings, AlTay (texture, microstructure, hardening), solver settings
+        RETURN_IF(info /= criSuccess, info = this%DeformationDrivenModule%readConfig(cnfunit)) !MB: RETURN_IF defined in criMacros.fpp; call readConfig (type-bound procedure defined in DeformationDrivenModule.f90) and return if successful
         info = criErr_IORead
         !
         ! Read the module-specific config

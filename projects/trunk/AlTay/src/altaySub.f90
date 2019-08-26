@@ -39,7 +39,7 @@ module altaySub
       
 contains
 
-      !> Initialize the module.
+      !> Initialize the module. 
       !>
       !> This subroutine must be called prior to any call to other
       !> module subroutines.
@@ -63,20 +63,21 @@ contains
       integer :: ierr
       logical :: is_exception
       !
-            if (present(errmsg)) errmsg = ''
+            if (present(errmsg)) errmsg = '' !MB: clear errmsg
             ierr = 0
             ! Set the singleton object to the cnf
             acnf = cnf
             !
             ! Open input files
             !
-            ! UNIT LEC = SLIP SYSTEMS
+            ! UNIT LEC = SLIP SYSTEMS; open slip system file
             open (unit=LEC,file=trim(cnf%slipsystem%input_fname),status='old',iostat=ierr)
             if (ierr /= 0) then
                   if (present(errmsg)) errmsg = 'Cannot open slip system definition file: ' // trim(cnf%slipsystem%input_fname)
                   info = altaySub_IOErr
                   return
             endif
+			!
             ! Load microstructure data
             CALL GRFIL(acnf%micros_fname,acnf%simul_init%FMicro,info)
             if (info /= 0) then

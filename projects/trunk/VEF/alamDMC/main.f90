@@ -44,6 +44,7 @@ implicit none
                                                               MapItem('ASR',ASR_id), MapItem('YLD',YLD_id), &
                                                               MapItem('EWC',EWC_id), MapItem('ADP',ADP_id) ]
 #ifndef DMC_USE_TOKENS
+      !MB:  2 command line parameters when DMC_USE_TOKENS not defined
       integer,parameter       :: argc_min = 2, argc_max=2
       character(len=*),parameter    :: prog_desc = 'parameters: command_name configuration_file'
 #else
@@ -52,8 +53,9 @@ implicit none
       integer,parameter       :: tokenfile_argpos = 3
       character(len=*),parameter    :: prog_desc = 'parameters: command_name configuration_file token_file'
 #endif
-      integer,parameter       :: command_argpos = 1, configfile_argpos = 2
-      type(commandLine)       :: cmdline
+      integer,parameter       :: command_argpos = 1, & !MB: command (i.e. module identifier) is 1st argument
+                                 configfile_argpos = 2 !MB: configuration file is 2nd argument
+      type(commandLine)       :: cmdline !MB: type commandLine defined in criRuntime.f90
       
       logical                 :: moduleFound = .false.
       character(len=32)       :: moduleName = ''
@@ -64,15 +66,15 @@ implicit none
       !
       character(len=128)  :: progname
       !
-      info = criError
+      info = criError !MB> defined in criErrcodes.f90
       ioerr = 0
       !
       write(progname,fmt=300)
       !
-      cmdline = commandLine(progname,description=prog_desc)
-      call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.)
+      cmdline = commandLine(progname,description=prog_desc) !MB: create commandLine type object with progname and description defined and assign to cmdline
+      call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.) !MB: call processCommandLine with 7 arguments, last one optional
       moduleFound = .false.
-      if (info == criSuccess) moduleFound = resolveId(command_map, cmdline%command_id,moduleName)
+      if (info == criSuccess) moduleFound = resolveId(command_map, cmdline%command_id,moduleName) !MB: logical function defined in criLinearMap.f90: resolveId(themap,id,name[,index])
       if ((info /= criSuccess) .or. (.not. moduleFound)) then
             errmsg = 'Error in processing the command line'
             call finalize(stopcode_inputerror)
@@ -96,15 +98,16 @@ implicit none
       endif
 #endif
       !
-      ! open and read the config file      
-      write(display_unit,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(configfile_argpos))
-      cnfunit = openOrDie(fpath=trim(cmdline%argv(configfile_argpos)),status='old')
+      ! Configure the module
+      !
+      write(display_unit,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(configfile_argpos)) !MB: display_unit = output_unit defined in dmcutils.f90 
+      cnfunit = openOrDie(fpath=trim(cmdline%argv(configfile_argpos)),status='old') !MB: create new unit (handle) for config file; openOrDie(fpath,status[,unit]) defined in criRuntime.f90
       !
       info = -1
-      ! Create a module of appropriate type and read its configuration:
+      ! Create a module of appropriate type:
       select case(cmdline%command_id)
       case(Q_id) ! dmcQRS
-            allocate(QRSModule :: the_module)
+            allocate(QRSModule :: the_module) !MB: create object the_module of type QRSModule
       case(UDSA_id) ! dmcUDSA
             allocate(UDSAModule :: the_module)
       case(ASR_id) ! dmcASR
@@ -122,7 +125,8 @@ implicit none
             call finalize(stopcode_runtimeerror)
       endif
       !
-      info = the_module%ReadConfig(cnfunit)
+      ! Read the configuration file:
+      info = the_module%ReadConfig(cnfunit) !MB: type-bound subroutine defined in dmc<module>.f90
       close(cnfunit)
       if (info /= 0) then
             write(errmsg,'(A)') 'Configuration file contains errors.'

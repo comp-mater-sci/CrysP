@@ -15,9 +15,7 @@
 
 #include "criMacros.fpp"
 
-!
 !> DMC Arbitrary Stress Response
-!>
 module dmcASR
 use criMathUtils
 use criAlgorithm

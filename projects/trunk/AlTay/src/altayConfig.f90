@@ -58,7 +58,7 @@ implicit none
       end type
 
       
-      type :: simulStepInputData
+      type :: simulStepInputData !MB: no hardening data!  
             !> Flag that decides if this step leads to modification of the texture.
             logical                                   :: keep_texture = .true.
             
@@ -123,6 +123,8 @@ implicit none
        end type
 
       type :: simulStepData
+            !> type that subsumes step input and output data
+            !>
             type(simulStepInputData)            :: input      
             type(simulStepOutputData)           :: output
       end type
@@ -146,9 +148,11 @@ implicit none
             logical                                   :: use_curfile = .false.
             logical                                   :: use_cubfile = .false.
       end type
-
+      !
+      !> PEBP model parameters (no state variables)
       type :: PEBPConfig
-            type(PAR)                   :: params
+            !>MB: contains BP parameters, saturation and lower bounds for dislocation densities (defined in altayHardLawDSH.f90)
+            type(PAR)                     :: params 
             
             !> Flag that decides if state variables should be read from file.
             logical                       :: read_state = .false.
@@ -197,7 +201,7 @@ implicit none
             !>   - 1 - FC Taylor
             !>   - 2 - Alamel
             !>   - 3 - MAS-AL
-            integer                                   :: NGR = 2
+            integer                                   :: NGR = 2 !MB: Number of grains in the cluster
             
             !> It is relevant only in MAS-AL
             double precision                          :: ENTA = 1.D0
@@ -209,16 +213,17 @@ implicit none
                                                             [ 3, 3 ])
       end type
 
-      !> Root-level configuration structure.
+      !> Root-level configuration structure
+      !> MB: Config. parameters of AlTay, i.e. texture and hardening.
       type :: altayConfigData
             !>
             integer                                   :: model_id      = modelAlamel
             character(len=fname_len)                  :: output_prefix = 'alamel'
             character(len=fname_len)                  :: jobtitle      = 'alamel'
             character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
-            type(slipSystemData)                      :: slipsystem
-            type(outputConfig)                        :: output_config
-            type(hardeningData)                       :: hardening
+            type(slipSystemData)                      :: slipsystem !<MB: definition of slip systems 
+            type(outputConfig)                        :: output_config !<MB: output file prefix, incremental output request flag, verbosity level
+            type(hardeningData)                       :: hardening !<MB: hardening model parameters
             type(textureData)                         :: texture
             type(simulData)                           :: simul_init
             ! 
@@ -246,7 +251,7 @@ implicit none
 
 contains
 
-      !> Configure the stp object for using selected model type.
+      !> Configure the stp object for using selected model type (FCTaylor, ALAMEL, MASAL).
       subroutine setStepType(stp,modelId,info)
       type(simulStepInputData),intent(inout)    :: stp
       integer,intent(in)                        :: modelId
@@ -266,7 +271,7 @@ contains
       !
       end subroutine
 
-      !> Configure the cnf object for using selected model type.
+      !> Configure the cnf object for using selected model type (FCTaylor, ALAMEL, MASAL).
       subroutine setModelType(cnf,modelId,info)
       type(altayConfigData),intent(inout)       :: cnf
       integer,intent(in)                        :: modelId
@@ -289,7 +294,7 @@ contains
       !
       end subroutine
       
-      !> Verify if integer value modelId represents any supported AlTay model.
+      !> Verify if integer value modelId represents any supported AlTay model (FCTaylor, ALAMEL, MASAL).
       pure logical function isValidModelType(modelId)
       implicit none
       integer,intent(in) :: modelId
