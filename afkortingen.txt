@@ -1,6 +1,0 @@
-TWR: Technisch Wetenschappelijke Software Research group (onderdeel van NUMA nu)
-MTM: geen idee waarvoor het staat, departement materiaalkunde
-MuSTMeF: Multi Scale Simulation Techniques for Metal Forming
-
-IP: Integration Point
-
