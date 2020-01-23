@@ -505,11 +505,11 @@ contains
       !$ integer,parameter :: min_omp_size = 128*128
       !
             fn = 0.D0
-            !$omp parallel do default(shared) private(i) reduction(+:fn) if (size(M) >= min_omp_size)
+            !!$omp parallel do default(shared) private(i) reduction(+:fn) if (size(M) >= min_omp_size) ! HGH: Commented it out due to compilation error
             do i = lbound(M,dim=2), ubound(M,dim=2)
                   fn = fn + dot_product(M(:,i),M(:,i))
             enddo
-            !$omp end parallel do
+            !!$omp end parallel do ! HGH: Commented it out due to compilation error
             fn = sqrt(fn)
       !
       end function

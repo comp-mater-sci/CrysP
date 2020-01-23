@@ -11,7 +11,7 @@ class WidthFilter(Filter):
 class TensorFilter(Filter):
     def filter(self, val, **kw):
         n = 3
-        return '\n'.join([' '.join((str(float(item)) for item in val[i:i+n])) for i in xrange(0, len(val), n)])
+        return '\n'.join([' '.join((str(float(item)) for item in val[i:i+n])) for i in range(0, len(val), n)])
 
 class PlainIterableFilter(Filter):
     def filter(self, val, **kw):

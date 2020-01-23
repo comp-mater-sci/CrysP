@@ -79,8 +79,64 @@ module smtAccess
  403  format (4F10.3,I5,5X,2F10.5)     !                                  
 
 
-      end subroutine
+      end subroutine writeSMTRecord
+	  
+	  subroutine readSMT(NUNIT,STYLE,MICROS,ERRCODE)
+      use cubAccess
+      implicit none
+      integer,intent(in)            :: NUNIT
+      integer,intent(in)            :: STYLE
+      type(microsDesc),intent(out)  :: MICROS
+      integer,intent(out)           :: ERRCODE         
+      !
+      integer                       :: i,ngrains
+      integer                       :: iuerr
+      !! End of declaration section
+      !
+      iuerr = 0
+      ERRCODE=0
+      ! Read header
+      read (NUNIT,*)   ngrains, MICROS%TITLE
+	  MICROS%NGRAINS = ngrains
+	  
+	  call allocateMicros(MICROS,ngrains,ERRCODE)
+	  
+      ! Read grains
 
+      do 11 i=1, MICROS%NGRAINS
+      !!
+			call readSMTRecord(NUNIT,STYLE,micros%grains(i),ERRCODE) 
+                 
+           ! Check IO status 
+           if (ERRCODE /= 0) then
+                  ERRCODE=(-1)
+                  exit
+           endif 
+ 11   end do
+      end subroutine readSMT
+
+
+      subroutine readSMTRecord(NUNIT,STYLE,GRAIN,ERRCODE)
+      implicit none
+      integer,intent(in)            :: NUNIT
+      integer,intent(in)            :: STYLE
+      type(grainDesc),intent(out)   :: GRAIN 
+      integer,intent(out)           :: ERRCODE 
+      integer                       :: NSTAP
+      double precision              :: STAP
+      select case (STYLE)
+        case(1)     
+		  ! use the 'bare' smt format
+          read(NUNIT,*,iostat=ERRCODE) GRAIN%PHI2,GRAIN%PHI,GRAIN%PHI1
+        case(2)                       
+          ! Use format with weigths, 
+          read(NUNIT,*,iostat=ERRCODE) GRAIN%PHI2,GRAIN%PHI,GRAIN%PHI1,NSTAP,GRAIN%GEW
+        case(3)
+          ! Use full format    	  
+          read(NUNIT,*,iostat=ERRCODE) GRAIN%PHI2,GRAIN%PHI,GRAIN%PHI1,STAP,NSTAP,GRAIN%GEW,GRAIN%GAMMA
+      end select
+
+      end subroutine readSMTRecord
 
 
 end module smtAccess

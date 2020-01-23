@@ -362,7 +362,7 @@ contains
         do i = 1, n_increments
             associate (increment_output =>  this%increments(i), &
                        altay_state => astate%simulCalls(i), &
-                       altay_output => altay_state%output)
+                       altay_output => astate%simulCalls(i)%output)   ! HGH: originally altay_output => altay_state%output
                 !
                 increment_output%L%t = altay_state%input%dgf
                 ! Let libaltay calculate the strain rates etc.
