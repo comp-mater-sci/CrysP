@@ -65,11 +65,11 @@ implicit none
 		  300 format('Dataset ',I3,': ',A,1X,I6,1X,'grains')
 	end subroutine
 
-	subroutine combineCubs(inputMicros,inputWeights,mrgtype,outputMicro,info)
+	subroutine combineCubs(inputMicros,inputWeights,outfmt,outputMicro,info)
 	implicit none
 		type(microsDesc),dimension(:),intent(in)   :: inputMicros
 		double precision,dimension(:),intent(in)   :: inputWeights
-		character(len=*),intent(in)                :: mrgtype
+		character(len=3),intent(in)                :: outfmt
 		type(microsDesc),intent(out)               :: outputMicro
 		integer,intent(out)                        :: info
 		!
@@ -87,98 +87,57 @@ implicit none
 		! TODO: check dimensions
 		!
 		outputMicro%NS = inputMicros(1)%NS
-		
-		if (mrgtype == 'average') then
-		
-			ngrains=inputMicros(1)%ngrains
-			outputmicro%ngrains = ngrains
-			write(*,'(A,1X,I6,1X,A)') 'Merging datasets, the output will contain',ngrains,'grains'
-			! Prepare data structure
-			allocate(outputMicro%grains(ngrains))
-			
-			outputMicro%GAXES = 0.d0
-			outputMicro%GEULR = 0.d0
-			outputMicro%FALG = 0.d0
-			do j=1,ngrains
-				outputMicro%grains(j)%GEW = 0.d0
-				outputMicro%grains(j)%PHI1 = 0.d0
-				outputMicro%grains(j)%PHI = 0.d0
-				outputMicro%grains(j)%PHI2 = 0.d0
-				outputMicro%grains(j)%GAMMA = 0.d0
-				outputMicro%grains(j)%GAXES = 0.d0
-				outputMicro%grains(j)%GEULR = 0.d0
-				outputMicro%grains(j)%F = 0.d0
-			enddo
-
-			! Transfer other componenst
-			do i=1,nmicros
-				if (inputMicros(i)%NS < outputMicro%NS) outputMicro%NS = inputMicros(i)%NS
-				outputMicro%GAXES = outputMicro%GAXES + inputMicros(i)%GAXES * vWeights(i)
-				outputMicro%GEULR = outputMicro%GEULR + inputMicros(i)%GEULR * vWeights(i)
-				outputMicro%FALG = outputMicro%FALG + inputMicros(i)%FALG * vWeights(i)
-
-				do j=1,ngrains
-					outputMicro%grains(j)%GEW = outputMicro%grains(j)%GEW + inputMicros(i)%grains(j)%GEW * vWeights(i)
-					outputMicro%grains(j)%PHI1 = outputMicro%grains(j)%PHI1 + inputMicros(i)%grains(j)%PHI1 * vWeights(i)
-					outputMicro%grains(j)%PHI = outputMicro%grains(j)%PHI + inputMicros(i)%grains(j)%PHI * vWeights(i)
-					outputMicro%grains(j)%PHI2 = outputMicro%grains(j)%PHI2 + inputMicros(i)%grains(j)%PHI2 * vWeights(i)
-					outputMicro%grains(j)%GAMMA = outputMicro%grains(j)%GAMMA + inputMicros(i)%grains(j)%GAMMA * vWeights(i)
-					outputMicro%grains(j)%GAXES = outputMicro%grains(j)%GAXES + inputMicros(i)%grains(j)%GAXES * vWeights(i)
-					outputMicro%grains(j)%GEULR = outputMicro%grains(j)%GEULR + inputMicros(i)%grains(j)%GEULR * vWeights(i)
-					outputMicro%grains(j)%F = outputMicro%grains(j)%F + inputMicros(i)%grains(j)%F * vWeights(i)
-				enddo
-			enddo
-
+	
+		! Determine total number of grains
+		totGrains = 0
+		do i=1,nmicros
+			  totGrains = totGrains + inputMicros(i)%ngrains
+		enddo
+		!
+		if (outfmt=='cub') then
+		   outputmicro%ngrains = totGrains
 		else
-		
-			! Determine total number of grains
-			totGrains = 0
-			do i=1,nmicros
-				  totGrains = totGrains + inputMicros(i)%ngrains
-			enddo
-			!
-			outputmicro%ngrains = min(maxCurGrains,totGrains)
-			write(*,'(A,1X,I6,1X,A)') 'Merging datasets, the output will contain',outputmicro%ngrains,'grains'
-			! Prepare data structure
-			allocate(outputMicro%grains(outputmicro%ngrains))
-			if (totGrains < maxCurGrains) then
-				  ! Simple merge of the curfiles
-				  j=1
-				  do i=1,nmicros
-						if (inputMicros(i)%NS < outputMicro%NS) outputMicro%NS = inputMicros(i)%NS
-						ng = inputMicros(i)%ngrains
-						write(*,300) i, 'transfering',ng
-						! Transfer grains
-						outputMicro%grains(j:j+ng-1) = inputMicros(i)%grains(1:ng)
-						j = j + ng 
-				  enddo
-			else
-				  allocate(vProbes(nmicros))
-				  ! 
-				  vProbes(:) = int(dble(maxCurGrains) * vWeights(:))
-				  ng = sum(vProbes)
-				  ! fill up the last slot
-				  vProbes(nmicros) = vProbes(nmicros) + (maxCurGrains - ng)
-				  ! Select at random 
-				  j = 1
-				  do i=1,nmicros
-						if (inputMicros(i)%NS < outputMicro%NS) outputMicro%NS = inputMicros(i)%NS
-						write(*,300) i, 'probing',vProbes(i)
-						do k=1,vProbes(i)
-							  outputMicro%grains(j) =inputMicros(i)%grains(irandom(1,inputMicros(i)%ngrains))
-							  j = j + 1
-						enddo
-				  enddo
-				  deallocate(vProbes)
-			endif
-			! Transfer other componenst
-			do i=1,nmicros
-				  outputMicro%GAXES = outputMicro%GAXES + inputMicros(i)%GAXES * vWeights(i)
-				  outputMicro%GEULR = outputMicro%GEULR + inputMicros(i)%GEULR * vWeights(i)
-				  outputMicro%FALG = outputMicro%FALG + inputMicros(i)%FALG * vWeights(i)
-			enddo
-
+		   outputmicro%ngrains = min(maxCurGrains,totGrains)
 		endif
+		write(*,'(A,1X,I6,1X,A)') 'Merging datasets, the output will contain',outputmicro%ngrains,'grains'
+		! Prepare data structure
+		allocate(outputMicro%grains(outputmicro%ngrains))
+		if (totGrains < maxCurGrains .or. outfmt=='cub') then
+			  ! Simple merge of the curfiles
+			  j=1
+			  do i=1,nmicros
+					if (inputMicros(i)%NS < outputMicro%NS) outputMicro%NS = inputMicros(i)%NS
+					ng = inputMicros(i)%ngrains
+					write(*,300) i, 'transfering',ng
+					! Transfer grains
+					outputMicro%grains(j:j+ng-1) = inputMicros(i)%grains(1:ng)
+					j = j + ng 
+			  enddo
+		else
+			  allocate(vProbes(nmicros))
+			  ! 
+			  vProbes(:) = int(dble(maxCurGrains) * vWeights(:))
+			  ng = sum(vProbes)
+			  ! fill up the last slot
+			  vProbes(nmicros) = vProbes(nmicros) + (maxCurGrains - ng)
+			  ! Select at random 
+			  j = 1
+			  do i=1,nmicros
+					if (inputMicros(i)%NS < outputMicro%NS) outputMicro%NS = inputMicros(i)%NS
+					write(*,300) i, 'probing',vProbes(i)
+					do k=1,vProbes(i)
+						  outputMicro%grains(j) =inputMicros(i)%grains(irandom(1,inputMicros(i)%ngrains))
+						  j = j + 1
+					enddo
+			  enddo
+			  deallocate(vProbes)
+		endif
+		! Transfer other componenst
+		do i=1,nmicros
+			  outputMicro%GAXES = outputMicro%GAXES + inputMicros(i)%GAXES * vWeights(i)
+			  outputMicro%GEULR = outputMicro%GEULR + inputMicros(i)%GEULR * vWeights(i)
+			  outputMicro%FALG = outputMicro%FALG + inputMicros(i)%FALG * vWeights(i)
+		enddo
 		
 		deallocate(vWeights)
 		info = 0
@@ -207,10 +166,11 @@ implicit none
 	character(LEN=pathlength),dimension(:),allocatable     :: fnamcubs
 	character(LEN=pathlength)     :: fnamout,fnamcnf
 	integer                       :: argc,i
-	logical                       :: isConfigFile
+	logical                       :: isConfigFile, ifreset
 	character(len=ctitlelen)      :: title
 	character(len=3)              :: outfmt
-	character(len=7)              :: mrgtype
+	character(len=5)              :: reset
+	
 
 	integer :: nInputs
 	integer :: nOutGrains
@@ -221,10 +181,13 @@ implicit none
 	integer                                     :: info
 	! Check number of parameters, at least 3 are required 
 	!
+	ifreset = .false.
 	argc = command_argument_count()
-	! Valid command line: 1 argument or at least 5 arguments
-	if ( (argc == 0) .or. (argc /= 1 .and. argc < 5) ) then
-		  write(*,*) 'arguments: input1.cub input2.cub [...] output output-format(cub or cur) merge-type(append or average)'
+	! Valid command line: 1 argument or at least 4 arguments
+	if ( (argc == 0) .or. (argc /= 1 .and. argc < 4) ) then
+		  write(*,*) 'arguments: input1.cub input2.cub [...] output cub [reset]'
+		  write(*,*) 'or:'
+		  write(*,*) 'arguments: input1.cub input2.cub [...] output cur'
 		  write(*,*) 'or:'
 		  write(*,*) 'arguments:  config_file'
 		  call exit(10)
@@ -248,7 +211,35 @@ implicit none
 				call exit(1)
 		  endif
 	else
-		  nInputs = argc-3
+		  call get_command_argument(argc,outfmt,status=iuerr)
+		  if (outfmt=='cub' .or. outfmt=='cur') then
+		     call get_command_argument(argc-1,fnamout,status=iuerr)
+		     nInputs = argc-2
+	      else
+		     call get_command_argument(argc,reset,status=iuerr)
+			 call get_command_argument(argc-1,outfmt,status=iuerr)
+			 if (reset=='reset' .and. argc>=5) then
+			    if (outfmt=='cub' .or. outfmt=='cur') then
+			       call get_command_argument(argc-2,fnamout,status=iuerr)
+			       nInputs = argc-3
+				   if (outfmt=='cub') then
+				      ifreset=.true.
+				   else
+				      write(*,*) 'The reset option is valid only for cub outputs; merging to cur file without resetting any value'
+				   endif
+				else
+				   write(*,*) 'Unknown output format ', outfmt,'; only cub and cur formats are supported'
+				   call exit(10)
+				endif
+			 else
+			    write(*,*) 'arguments: input1.cub input2.cub [...] output cub [reset]'
+		        write(*,*) 'or:'
+		        write(*,*) 'arguments: input1.cub input2.cub [...] output cur'
+		        write(*,*) 'or:'
+		        write(*,*) 'arguments:  config_file'
+		        call exit(10)
+			 endif
+		  endif
 	endif
 	!
 	allocate(inputMicros(nInputs),inputWeights(nInputs),fnamcubs(nInputs))
@@ -276,9 +267,6 @@ implicit none
 				call get_command_argument(i,fnamcubs(i),status=iuerr)
 				if (iuerr /= 0) exit
 		  end do
-		  call get_command_argument(argc-2,fnamout,status=iuerr)
-		  call get_command_argument(argc-1,outfmt,status=iuerr)
-		  call get_command_argument(argc,mrgtype,status=iuerr)
 		  inputWeights = 1.D0
 		  nOutGrains = maxCurGrains 
 	endif
@@ -295,18 +283,18 @@ implicit none
 		  call exit(1)
 	endif
 	! Merge the data
-	call combineCubs(inputMicros,inputWeights,mrgtype,outputMicro,info)
+	call combineCubs(inputMicros,inputWeights,outfmt,outputMicro,info)
 	!
 
 	if (info == 0) then
 		if (outfmt=='cub') then
 			! open CUB file
-			open (unit=noutunit,file=TRIM(fnamout), status='unknown',form='UNFORMATTED',access='STREAM',iostat=iuerr)
+			open (unit=noutunit,file=TRIM(fnamout), status='REPLACE',form='UNFORMATTED',iostat=iuerr)
 			if (iuerr /= 0) then
 				write(*,*) 'Cannot open output file'
 				call exit(11)
 			endif
-			call writeCub(noutunit,outputMicro,info)     
+			call writeCub(noutunit,outputMicro,ifreset,info)     
 			if (info /= 0) then
 				write(*,*) 'Error writing CUB file ',trim(fnamout)
 				call exit(11)

@@ -72,7 +72,7 @@ module cubAccess
 			MICROS%FALG,                                                 &
 			MICROS%GAXES,                                                &
 			MICROS%GEULR
-		! 
+		!
 		if ((iuerr .ne. 0) .or. (ngrains <= 0) )then
 			write(*,*) 'Error in header of CUB file'
 			ERRCODE=(-1)
@@ -105,10 +105,11 @@ module cubAccess
 		ERRCODE=0
 	end subroutine readCub
 	
-	subroutine writeCub(NUNIT,MICROS,ERRCODE)
+	subroutine writeCub(NUNIT,MICROS,IFRESET,ERRCODE)
 	implicit none
 		integer,intent(in)            :: NUNIT
-		type(microsDesc),intent(in)  :: MICROS
+		type(microsDesc),intent(in)   :: MICROS
+		logical,intent(in)            :: IFRESET
 		integer,intent(out)           :: ERRCODE         
 
 		integer                       :: i
@@ -117,12 +118,21 @@ module cubAccess
 		!
 		iuerr = 0
 		write (*,*) 'Writing binary CUB-type-input file'
-		write (NUNIT,iostat=iuerr)                                          &
-			MICROS%NS,                                                   &
-			MICROS%ngrains,                                                     &
-			MICROS%FALG,                                                 &
-			MICROS%GAXES,                                                &
-			MICROS%GEULR
+		if (IFRESET) then
+		   write (NUNIT,iostat=iuerr)                                          &
+			   MICROS%NS,                                                   &
+			   MICROS%NGRAINS,                                                     &
+			   unitMatrix,                                                 &
+			   [1.D0,1.D0,1.D0],                                                &
+			   [0.D0,0.D0,0.D0]
+		else
+		   write (NUNIT,iostat=iuerr)                                          &
+			   MICROS%NS,                                                   &
+			   MICROS%NGRAINS,                                                     &
+			   MICROS%FALG,                                                 &
+			   MICROS%GAXES,                                                &
+			   MICROS%GEULR
+		endif
 		! 
 		if (iuerr .ne. 0) then
 			write(*,*) 'Error in header of CUB file'
@@ -138,10 +148,17 @@ module cubAccess
 			! Write binary record; 
 			! The only difference between CUR and CUB record format is
 			! that the leading ordinal number is skipped in CUB. 
-			write(NUNIT,iostat=iuerr)                                     &
+			if (IFRESET) then
+			   write(NUNIT,iostat=iuerr)                                     &
+				 MICROS%GRAINS(i)%GEW,                                           &
+				 MICROS%GRAINS(i)%PHI1,MICROS%GRAINS(i)%PHI,MICROS%GRAINS(i)%PHI2,               &
+				 MICROS%GRAINS(i)%GAMMA,unitMatrix,[1.D0,1.D0,1.D0],[0.D0,0.D0,0.D0]
+			else
+			   write(NUNIT,iostat=iuerr)                                     &
 				 MICROS%GRAINS(i)%GEW,                                           &
 				 MICROS%GRAINS(i)%PHI1,MICROS%GRAINS(i)%PHI,MICROS%GRAINS(i)%PHI2,               &
 				 MICROS%GRAINS(i)%GAMMA,MICROS%GRAINS(i)%F,MICROS%GRAINS(i)%GAXES,MICROS%GRAINS(i)%GEULR
+			endif
 			if (iuerr .ne. 0) then
 				  write(*,*) 'Error in CUB file record'
 				  ERRCODE=(-1)
@@ -150,6 +167,73 @@ module cubAccess
 		end do
 		ERRCODE=0
 	end subroutine writeCub
+	
+	subroutine writeFormattedCub(NUNIT,MICROS,ERRCODE)
+	implicit none
+		integer,intent(in)            :: NUNIT
+		type(microsDesc),intent(in)   :: MICROS
+		integer,intent(out)           :: ERRCODE         
+		!
+		integer                       :: i
+		integer                       :: iuerr
+		!! End of declaration section
+		!
+		iuerr = 0
+		ERRCODE=0
+		! Write title
+		99  format (A)
+		write (NUNIT,99) MICROS%TITLE
+		! Write the header
+		write (NUNIT,502)
+		502  format (/,' Def. Step    ','Number of orientations',18X,           &
+		2X,'F(1,1)',4X,'F(2,1)',4X,'F(3,1)',4X,                           &
+		2X,'F(1,2)',4X,'F(2,2)',4X,'F(3,2)',4X,                           &
+		2X,'F(1,3)',4X,'F(2,3)',4X,'F(3,3)',                              &
+		7X,'a',9X,'b',9x,'c',9x,'G-phi1',4x,'G-PHI',5x,'G-phi2')
+		! Write frame-specific data
+		!!
+		write (NUNIT,503)                                                  & ! nrstep,NPOINT,F,GAXES,GLR
+			MICROS%NS,                                                   &
+			MICROS%NGRAINS,                                              &
+			MICROS%FALG,                                                 &
+			MICROS%GAXES,                                                &
+			MICROS%GEULR
+		503  format(I6,7X,i5,34x,3(2X,3F10.6),2(2x,3f10.5))
+		! write the subheader
+		write (NUNIT,501)
+		501  format (' WEIGHT ',5X,'phi1',6X,'PHI',7X,'phi2',6X,'  GAMMA')
+		! Write grain records
+		do 11 i=1, MICROS%NGRAINS
+		!!
+		   call writeFormattedCubRec(NUNIT,MICROS%GRAINS(i),iuerr)
+		   if (iuerr /= 0) then
+				  ERRCODE=(-1)
+				  exit
+		   endif 
+		11  end do
+	end subroutine writeFormattedCub
+	
+	subroutine writeFormattedCubRec(NUNIT,GRAIN,ERRCODE)
+	implicit none
+		integer,intent(in)           :: NUNIT
+		type(grainDesc),intent(in)   :: GRAIN
+		integer,intent(out)          :: ERRCODE 
+		!
+		integer                      :: iuerr
+		!!
+		ERRCODE=0
+		! Write single record
+		write(NUNIT,500,iostat=iuerr)                                  & 
+			GRAIN%GEW,                                                   &
+			GRAIN%PHI1,GRAIN%PHI,GRAIN%PHI2,                             &
+			GRAIN%GAMMA,                                                 &
+			GRAIN%F,GRAIN%GAXES,GRAIN%GEULR
+		if (iuerr .ne. 0) then
+			write(*,*) 'Error in CUR file record'
+			ERRCODE=(-1)
+		endif
+		500  format (f8.5,2X,3f10.5,2X,f10.5,3(2X,3F10.6),2(2x,3f10.5))
+	end subroutine writeFormattedCubRec
 
 	subroutine writeCur(NUNIT,MICROS,ERRCODE)
 	implicit none

@@ -34,7 +34,8 @@ smtAccess.f90 \
 oriAccess.f90 \
 cub2smt.f90 \
 smt2cur.f90 \
-mergeCubs.f90 
+mergeCubs.f90 \
+formatCub.f90
 
 
 # Build list of objects:
@@ -52,8 +53,9 @@ PROG4=mergeCubs
 PROG5=ori2smt
 PROG6=euler2cur
 PROG7=smt2cur
+PROG8=formatCub
 
-ALLPROGS= $(addprefix $(BINDIR)/, $(PROG1) $(PROG2) $(PROG3) $(PROG4) $(PROG5) $(PROG6) $(PROG7))
+ALLPROGS= $(addprefix $(BINDIR)/, $(PROG1) $(PROG2) $(PROG3) $(PROG4) $(PROG5) $(PROG6) $(PROG7) $(PROG8))
 
 all	: structure $(ALLPROGS) $(OBJS)
 
@@ -79,6 +81,8 @@ $(OBJDIR)/ori2smt.o	:  $(OBJDIR)/cubAccess.o $(OBJDIR)/smtAccess.o $(OBJDIR)/ori
 
 $(OBJDIR)/oriAccess.o	:  $(OBJDIR)/cubAccess.o
 
+$(OBJDIR)/formatCub.o	:  $(OBJDIR)/cubAccess.o
+
 
 $(BINDIR)/$(PROG1)	: $(addprefix $(OBJDIR)/, cubAccess.o cub2cur.o)
 	$(FC) $(FCLDFLAGS) -o $@ $^
@@ -99,6 +103,9 @@ $(BINDIR)/$(PROG6)	: $(addprefix $(OBJDIR)/, eulerAccess.o euler2cur.o)
 	$(FC) $(FCLDFLAGS) -o $@ $^
 	
 $(BINDIR)/$(PROG7)	: $(addprefix $(OBJDIR)/, smtAccess.o cubAccess.o smt2cur.o)
+	$(FC) $(FCLDFLAGS) -o $@ $^
+	
+$(BINDIR)/$(PROG8)	: $(addprefix $(OBJDIR)/, cubAccess.o  formatCub.o)
 	$(FC) $(FCLDFLAGS) -o $@ $^
 
 clean :
