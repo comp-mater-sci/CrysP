@@ -65,17 +65,20 @@ implicit none
 		  300 format('Dataset ',I3,': ',A,1X,I6,1X,'grains')
 	end subroutine
 
-	subroutine combineCubs(inputMicros,inputWeights,outfmt,outputMicro,info)
+	subroutine combineCubs(inputMicros,inputWeights,outfmt,mrgtype,outputMicro,info)
+	use ifport
 	implicit none
 		type(microsDesc),dimension(:),intent(in)   :: inputMicros
 		double precision,dimension(:),intent(in)   :: inputWeights
 		character(len=3),intent(in)                :: outfmt
+		character(len=6),intent(in)                :: mrgtype
 		type(microsDesc),intent(out)               :: outputMicro
 		integer,intent(out)                        :: info
 		!
-		integer :: i,j,k,ng,totGrains,nmicros,ngrains
-		integer,dimension(:),allocatable  :: vProbes
-		double precision,dimension(:),allocatable :: vWeights
+		integer :: i,j,k,ng,totGrains,nmicros,ngrains,nselgrains
+		integer,dimension(:),allocatable  :: vProbes, Iselgrains
+		double precision,dimension(:),allocatable :: vWeights, Dselgrains
+		integer,dimension(:),allocatable :: allgrains
 		!
 		info = 1
 		nmicros = size(inputMicros)
@@ -89,10 +92,21 @@ implicit none
 		outputMicro%NS = inputMicros(1)%NS
 	
 		! Determine total number of grains
-		totGrains = 0
-		do i=1,nmicros
-			  totGrains = totGrains + inputMicros(i)%ngrains
-		enddo
+		if (mrgtype=='random') then
+			totGrains = inputMicros(1)%ngrains
+			do i=2,nmicros
+				if (inputMicros(i)%ngrains /= totGrains) then
+					write(*,*) 'The number of grains in the input files are different'
+					write(*,*) 'The output will have ',totGrains,' grains which is equal to that of the first input'
+					exit
+				endif
+			enddo
+		else
+			totGrains = 0
+			do i=1,nmicros
+				  totGrains = totGrains + inputMicros(i)%ngrains
+			enddo
+		endif
 		!
 		if (outfmt=='cub') then
 		   outputmicro%ngrains = totGrains
@@ -102,35 +116,55 @@ implicit none
 		write(*,'(A,1X,I6,1X,A)') 'Merging datasets, the output will contain',outputmicro%ngrains,'grains'
 		! Prepare data structure
 		allocate(outputMicro%grains(outputmicro%ngrains))
-		if (totGrains < maxCurGrains .or. outfmt=='cub') then
-			  ! Simple merge of the curfiles
-			  j=1
-			  do i=1,nmicros
-					if (inputMicros(i)%NS < outputMicro%NS) outputMicro%NS = inputMicros(i)%NS
-					ng = inputMicros(i)%ngrains
-					write(*,300) i, 'transfering',ng
-					! Transfer grains
-					outputMicro%grains(j:j+ng-1) = inputMicros(i)%grains(1:ng)
-					j = j + ng 
-			  enddo
-		else
-			  allocate(vProbes(nmicros))
-			  ! 
-			  vProbes(:) = int(dble(maxCurGrains) * vWeights(:))
-			  ng = sum(vProbes)
-			  ! fill up the last slot
-			  vProbes(nmicros) = vProbes(nmicros) + (maxCurGrains - ng)
-			  ! Select at random 
-			  j = 1
-			  do i=1,nmicros
-					if (inputMicros(i)%NS < outputMicro%NS) outputMicro%NS = inputMicros(i)%NS
-					write(*,300) i, 'probing',vProbes(i)
-					do k=1,vProbes(i)
-						  outputMicro%grains(j) =inputMicros(i)%grains(irandom(1,inputMicros(i)%ngrains))
-						  j = j + 1
-					enddo
-			  enddo
-			  deallocate(vProbes)
+		if (mrgtype=='append') then
+			if (totGrains < maxCurGrains .or. outfmt=='cub') then
+				  ! Simple merge of the curfiles
+				  j=1
+				  do i=1,nmicros
+						if (inputMicros(i)%NS < outputMicro%NS) outputMicro%NS = inputMicros(i)%NS
+						ng = inputMicros(i)%ngrains
+						write(*,300) i, 'transfering',ng
+						! Transfer grains
+						outputMicro%grains(j:j+ng-1) = inputMicros(i)%grains(1:ng)
+						j = j + ng 
+				  enddo
+			else
+				  allocate(vProbes(nmicros))
+				  ! 
+				  vProbes(:) = int(dble(maxCurGrains) * vWeights(:))
+				  ng = sum(vProbes)
+				  ! fill up the last slot
+				  vProbes(nmicros) = vProbes(nmicros) + (maxCurGrains - ng)
+				  ! Select at random 
+				  j = 1
+				  do i=1,nmicros
+						if (inputMicros(i)%NS < outputMicro%NS) outputMicro%NS = inputMicros(i)%NS
+						write(*,300) i, 'probing',vProbes(i)
+						do k=1,vProbes(i)
+							  outputMicro%grains(j) =inputMicros(i)%grains(irandom(1,inputMicros(i)%ngrains))
+							  j = j + 1
+						enddo
+				  enddo
+				  deallocate(vProbes)
+			endif
+		elseif (mrgtype=='random') then
+			ngrains = nmicros*totGrains/2
+			allocate(allgrains(ngrains))
+			allgrains(:)=(/ (i, i = 1, ngrains) /)
+			call shuffle(allgrains)
+			
+			nselgrains = totGrains/2
+			allocate(Dselgrains(nselgrains))
+			call random_number(Dselgrains)
+			
+			allocate(Iselgrains(nselgrains))
+			Iselgrains(:)=int(Dselgrains*ngrains+1)
+			
+			do i=1,nselgrains
+				j = ((Iselgrains(i)-1)/nselgrains)+1
+				k = mod(Iselgrains(i)-1,nselgrains)+1
+				outputMicro%grains(2*i-1:2*i) = inputMicros(j)%grains(2*k-1:2*k)
+			enddo
 		endif
 		! Transfer other componenst
 		do i=1,nmicros
@@ -153,6 +187,26 @@ implicit none
 		irandom = range_min + int(dble(rnd)*dble(1 + range_max - range_min))
 		if (irandom > range_max) irandom = range_max
 	end function
+	
+	subroutine shuffle(x)
+	use ifport
+	implicit none
+		integer :: x(:)
+		integer :: i, n, tmp, k
+		double precision :: R
+
+		n = size(x)
+		i = n
+		do 
+			R = rand()
+			k = int(R*i)+1
+			tmp = x(i)
+			x(i) = x(k)
+			x(k) = tmp
+			i = i - 1
+			if (i==1) exit
+		enddo
+	end subroutine
 
 end module
 
@@ -170,6 +224,7 @@ implicit none
 	character(len=ctitlelen)      :: title
 	character(len=3)              :: outfmt
 	character(len=5)              :: reset
+	character(len=6)              :: mrgtype
 	
 
 	integer :: nInputs
@@ -184,10 +239,10 @@ implicit none
 	ifreset = .false.
 	argc = command_argument_count()
 	! Valid command line: 1 argument or at least 4 arguments
-	if ( (argc == 0) .or. (argc /= 1 .and. argc < 4) ) then
-		  write(*,*) 'arguments: input1.cub input2.cub [...] output cub [reset]'
+	if ( (argc == 0) .or. (argc /= 1 .and. argc < 5) ) then
+		  write(*,*) 'arguments: input1.cub input2.cub [...] output cub {append,random} [reset]'
 		  write(*,*) 'or:'
-		  write(*,*) 'arguments: input1.cub input2.cub [...] output cur'
+		  write(*,*) 'arguments: input1.cub input2.cub [...] output cur {append,random}'
 		  write(*,*) 'or:'
 		  write(*,*) 'arguments:  config_file'
 		  call exit(10)
@@ -211,17 +266,24 @@ implicit none
 				call exit(1)
 		  endif
 	else
-		  call get_command_argument(argc,outfmt,status=iuerr)
-		  if (outfmt=='cub' .or. outfmt=='cur') then
-		     call get_command_argument(argc-1,fnamout,status=iuerr)
-		     nInputs = argc-2
+		  call get_command_argument(argc,mrgtype,status=iuerr)
+		  !
+		  if (mrgtype=='append' .or. mrgtype=='random') then
+		     call get_command_argument(argc-1,outfmt,status=iuerr)
+		     call get_command_argument(argc-2,fnamout,status=iuerr)
+		     nInputs = argc-3
 	      else
 		     call get_command_argument(argc,reset,status=iuerr)
-			 call get_command_argument(argc-1,outfmt,status=iuerr)
-			 if (reset=='reset' .and. argc>=5) then
+			 call get_command_argument(argc-1,mrgtype,status=iuerr)
+			 call get_command_argument(argc-2,outfmt,status=iuerr)
+			 if (reset=='reset' .and. argc>=6) then
+			    if (mrgtype/='append' .and. mrgtype/='random') then
+				   write(*,*) 'Unknown merge type ', mrgtype,'; only append and random types are supported'
+				   call exit(10)
+				endif
 			    if (outfmt=='cub' .or. outfmt=='cur') then
-			       call get_command_argument(argc-2,fnamout,status=iuerr)
-			       nInputs = argc-3
+			       call get_command_argument(argc-3,fnamout,status=iuerr)
+			       nInputs = argc-4
 				   if (outfmt=='cub') then
 				      ifreset=.true.
 				   else
@@ -232,9 +294,9 @@ implicit none
 				   call exit(10)
 				endif
 			 else
-			    write(*,*) 'arguments: input1.cub input2.cub [...] output cub [reset]'
+			    write(*,*) 'arguments: input1.cub input2.cub [...] output cub {append,random} [reset]'
 		        write(*,*) 'or:'
-		        write(*,*) 'arguments: input1.cub input2.cub [...] output cur'
+		        write(*,*) 'arguments: input1.cub input2.cub [...] output cur {append,random}'
 		        write(*,*) 'or:'
 		        write(*,*) 'arguments:  config_file'
 		        call exit(10)
@@ -283,7 +345,7 @@ implicit none
 		  call exit(1)
 	endif
 	! Merge the data
-	call combineCubs(inputMicros,inputWeights,outfmt,outputMicro,info)
+	call combineCubs(inputMicros,inputWeights,outfmt,mrgtype,outputMicro,info)
 	!
 
 	if (info == 0) then
@@ -294,7 +356,7 @@ implicit none
 				write(*,*) 'Cannot open output file'
 				call exit(11)
 			endif
-			call writeCub(noutunit,outputMicro,ifreset,info)     
+			call writeCub(noutunit,outputMicro,.false.,ifreset,info)     
 			if (info /= 0) then
 				write(*,*) 'Error writing CUB file ',trim(fnamout)
 				call exit(11)

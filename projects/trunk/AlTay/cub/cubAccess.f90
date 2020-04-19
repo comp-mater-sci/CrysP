@@ -105,12 +105,14 @@ module cubAccess
 		ERRCODE=0
 	end subroutine readCub
 	
-	subroutine writeCub(NUNIT,MICROS,IFRESET,ERRCODE)
+	subroutine writeCub(NUNIT,MICROS,IFRESET_W,IFRESET_ORI,ERRCODE)
 	implicit none
 		integer,intent(in)            :: NUNIT
 		type(microsDesc),intent(in)   :: MICROS
-		logical,intent(in)            :: IFRESET
-		integer,intent(out)           :: ERRCODE         
+		logical,intent(in)            :: IFRESET_ORI
+		logical,intent(in)            :: IFRESET_W
+		integer,intent(out)           :: ERRCODE    
+		double precision              :: GEW, F(3,3), GAXES(3), GEULR(3)     
 
 		integer                       :: i
 		integer                       :: iuerr
@@ -118,7 +120,7 @@ module cubAccess
 		!
 		iuerr = 0
 		write (*,*) 'Writing binary CUB-type-input file'
-		if (IFRESET) then
+		if (IFRESET_ORI) then
 		   write (NUNIT,iostat=iuerr)                                          &
 			   MICROS%NS,                                                   &
 			   MICROS%NGRAINS,                                                     &
@@ -146,19 +148,26 @@ module cubAccess
 		!
 		do i=1,MICROS%NGRAINS
 			! Write binary record; 
-			! The only difference between CUR and CUB record format is
-			! that the leading ordinal number is skipped in CUB. 
-			if (IFRESET) then
-			   write(NUNIT,iostat=iuerr)                                     &
-				 MICROS%GRAINS(i)%GEW,                                           &
-				 MICROS%GRAINS(i)%PHI1,MICROS%GRAINS(i)%PHI,MICROS%GRAINS(i)%PHI2,               &
-				 MICROS%GRAINS(i)%GAMMA,unitMatrix,[1.D0,1.D0,1.D0],[0.D0,0.D0,0.D0]
+ 
+			if (IFRESET_W) then
+			   GEW = 1.D0/3.D0
 			else
-			   write(NUNIT,iostat=iuerr)                                     &
-				 MICROS%GRAINS(i)%GEW,                                           &
-				 MICROS%GRAINS(i)%PHI1,MICROS%GRAINS(i)%PHI,MICROS%GRAINS(i)%PHI2,               &
-				 MICROS%GRAINS(i)%GAMMA,MICROS%GRAINS(i)%F,MICROS%GRAINS(i)%GAXES,MICROS%GRAINS(i)%GEULR
+			   GEW = MICROS%GRAINS(i)%GEW
 			endif
+			
+			if (IFRESET_ORI) then
+			   F = unitMatrix
+			   GAXES = [1.D0,1.D0,1.D0]
+			   GEULR = [0.D0,0.D0,0.D0]
+			else
+			   F = MICROS%GRAINS(i)%F
+			   GAXES = MICROS%GRAINS(i)%GAXES
+			   GEULR = MICROS%GRAINS(i)%GEULR
+			endif
+			
+			write(NUNIT,iostat=iuerr)                                     &
+				 GEW,MICROS%GRAINS(i)%PHI1,MICROS%GRAINS(i)%PHI,MICROS%GRAINS(i)%PHI2,               &
+				 MICROS%GRAINS(i)%GAMMA,F,GAXES,GEULR
 			if (iuerr .ne. 0) then
 				  write(*,*) 'Error in CUB file record'
 				  ERRCODE=(-1)
