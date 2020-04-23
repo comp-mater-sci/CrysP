@@ -4,7 +4,7 @@
 
 include ../build/cmake-common/bootstrap.makefile
 
-all : cub_all
+install all : cub_all
 clean : cub_clean
 mrproper : cub_mrproper
 

@@ -13,5 +13,5 @@ if envvar is None:
 else:
     config_path = os.path.join(envvar, 'config', config_default)
 
-config = yaml.load(io.open(config_path))
+config = yaml.load(io.open(config_path),Loader=yaml.FullLoader)
 

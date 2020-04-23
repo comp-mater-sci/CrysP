@@ -286,6 +286,7 @@ int Slis::load_license(const std::string & envvar)
 	// try to get the license
 	int result = licenses.load(file_path.string());
 	license_loaded = (result == 0);
+	std::cout << "file_path.string(): " << file_path.string() << "  " << license_loaded << std::endl;
 	return result;
 
 }

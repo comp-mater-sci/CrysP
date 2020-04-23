@@ -2,7 +2,7 @@
 from __future__ import print_function
 
 import requests
-import urlparse
+import urllib.parse # Python3 equivalent of urlparse
 
 import pyslis.config
 
@@ -10,8 +10,8 @@ _DEFAULT_TIMEOUT = 5
 
 def _get_tokens_api_url(config):
     try:
-        api = urlparse.urljoin(config['host'], config['api_version']) + '/'
-        request = urlparse.urljoin(api, config['user_key']) + '/tokens'
+        api = urllib.parse.urljoin(config['host'], config['api_version']) + '/'
+        request = urllib.parse.urljoin(api, config['user_key']) + '/tokens'
         return request
     except AttributeError as excpt:
         raise RuntimeError('Incorrect configuration')

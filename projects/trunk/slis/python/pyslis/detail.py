@@ -39,8 +39,14 @@ __lib_path = os.path.join(os.environ['SLIS_ROOT'],
                           'lib',
                           __arch_variant,
                          'libslis.dll')
-lib = cdll.LoadLibrary(__lib_path)
-
+# Dries
+__lib_path = os.path.join(os.environ['SLIS_ROOT'],'lib','libslis.so')
+print(__lib_path)
+try:
+    lib = cdll.LoadLibrary(__lib_path)
+except:
+    lib = cdll.LoadLibrary(__lib_path)
+print("lib loaded")
 
 # map: function name -> attributes 
 meta = {'isTokenValid': {'argtypes': [c_char_p], 'restype': c_bool},

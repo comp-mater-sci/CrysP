@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include <iostream>
 #include <string>
+#include <map>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/uuid/string_generator.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -22,6 +23,9 @@ int main(int argc, char * argv[])
 	using namespace boost::gregorian;
 	using namespace std;
 	// using namespace boost::filesystem;
+
+#ifndef HMS_LICENSES
+
 
 	int errcode;
 	uuids::string_generator gen;
@@ -179,6 +183,59 @@ int main(int argc, char * argv[])
 	}
 
 #endif // GENERATE_TOKENS
+
+
+#else // HMS_LICENSES is defined
+
+	/*
+
+	HMS licenses
+
+	*/
+
+	int errcode;
+	uuids::string_generator gen;
+
+	// Map: feature_name -> feature_uuid
+	map<string, uuids::uuid> feature_map = { 
+		{"alamDMC" , gen("ff921f1e-fa42-11e5-97dc-ecf4bb152acb") },
+		{"vumat_ps", gen("03c3bba0-b3ff-426b-bab0-c19d888d21b3") },
+		{"vumat_3d", gen("61f7d842-0c1e-4d8d-a816-0dc275fe386a") },
+		{ "fng",     gen("98c7a26d-ffa9-4803-859a-a16e942002a2") }
+	};
+
+
+#ifdef LICENSE_MPIE
+	string licname("Max-Planck-Institut fur Eisenforschung GmbH");
+	SlisContainer lic(licname, license_types::research);
+	date from(2018, 3, 22), to(2019, 3, 22);
+#endif
+
+#ifdef LICENSE_KUL
+	string licname("KU Leuven - essentially eternal license");
+	SlisContainer lic(licname, license_types::research);
+	date from(2018, 3, 22), to(2099, 12, 31);
+#endif
+
+	for (auto item : feature_map)
+		lic.addLicense(item.second, item.first, from, to);
+
+	string licensefile_path("license.slis");
+	errcode = lic.save(licensefile_path);
+	std::cout << "save returned " << errcode << endl;
+	//
+	std::cout << "Checking the license: ";
+	SlisContainer r_lic;
+	errcode = r_lic.load(licensefile_path);
+	std::cout << "load returned " << errcode << endl;
+
+	for (auto item : feature_map)
+	{
+		std::cout << item.first << std::endl;
+		r_lic.printLicenseSummary(std::cout, item.second);
+	}
+
+#endif // HMS_LICENSES
 
 
 	return 0;
