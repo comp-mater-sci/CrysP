@@ -61,6 +61,8 @@ but I get the following error:
 	  File "/apps/leuven/skylake/2018a/software/Python/3.6.4-intel-2018a/lib/python3.6/site-packages/pip/_vendor/pkg_resources/__init__.py", line 789, in resolve
 		raise VersionConflict(dist, req).with_context(dependent_req)
 	pip._vendor.pkg_resources.ContextualVersionConflict: (idna 2.8 (/vsc-hard-mounts/leuven-apps/skylake/2018a/software/Python/3.6.4-intel-2018a/lib/python3.6/site-packages/idna-2.8-py3.6.egg), Requirement.parse('idna<2.7,>=2.5'), {'requests'}) 
+	
+#LABELS: odf2smt discretization python_modules requests VSC Genius
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 solution_1: after loading Boost/1.66.0-intel-2018a-Python-3.6.4, load Python/3.6.5-intel-2018a and try odf2smt.
@@ -86,5 +88,7 @@ If it still gives the following error:
 	RuntimeError: Cannot initialize SLIS, reason: No module named 'yaml'
 	
 then install 'yaml' by $ python3 -m pip install --user PyYAML
+
+#LABELS: yaml PyYAML python_versions
 
 ======================================================================================================================================================
