@@ -1,7 +1,8 @@
 !
 ! $Id$
 !
-      MODULE altayHardLaw_DSH
+      !> Dislocation substructural hardening (Peeters model and derivatives)
+	  MODULE altayHardLaw_DSH
 !     v1.0 by P. Eyckens, MTM, KU Leuven, 17 July 2012.
 !     v1.1 by P. Eyckens, MTM, and J. Gawad, CS, KU Leuven, 2 August 2012.
 !     v1.2 by J. Gawad, CS, KU Leuven, 13 August 2012:
@@ -100,18 +101,20 @@
       IMPLICIT NONE
       PRIVATE 
       
-	  !> BP model parameters including saturation and minimum values for state dependent dislocation densities
+	  !> BP model parameters including saturation and minimum values for state dependent dislocation densities.
+	  !> MIN values used for initialization of disl. dens.; RHOwpMIN used for switching sign of RHOwp.
       TYPE :: PAR 
             !PUBLIC components
             double precision :: b,G,alfa,f,tau0
             double precision :: I,R,Iwd,Rwd,Rncg,beta1,beta2
             double precision :: Iwp,Rwp,Rrev,R2
-            double precision :: RHOcbSAT,RHOwdSAT,RHOwpSAT
-            double precision :: RHOcbMIN,RHOwdMIN,RHOwpMIN
-            double precision :: RHOwpLOW
+            double precision :: RHOcbSAT,RHOwdSAT,RHOwpSAT !dependent hardening parameters
+            double precision :: RHOcbMIN,RHOwdMIN,RHOwpMIN !dependent hardening parameters
+			double precision :: RHOwpLOW 				   !dependent hardening parameters
       END TYPE PAR
       
-      TYPE :: CBBtype
+      !> State variables of single CBB
+	  TYPE :: CBBtype
             !PUBLIC components
             double precision :: RHOwd = 0.D0
             double precision :: RHOwp = 0.D0
@@ -126,17 +129,18 @@
             double precision                    :: RHOcb = 0.D0
             TYPE(CBBtype), DIMENSION(6)         :: CBB 
             integer, DIMENSION(2)               :: ActiveCBB = 0
-            double precision, DIMENSION(2,24)   :: CRSS = 0.D0 !Up to 24 slip systems supported
+            double precision, DIMENSION(2,24)   :: CRSS = 0.D0 !< Up to 24 slip systems supported
       END TYPE StatVar
 
+	  !> Average disl. densities for single grain (calculated in GetStateDerivedVar)
       TYPE :: StateDerivedVars
             !> Dislocation density of cell boundaries; unit: m^(-2)
             double precision :: rho_CBs = 0.D0
             !> Dislocation density of cell block boundaries; unit: m^(-2)
             double precision :: rho_CBBs = 0.D0
-            !> Dislocation density of polarized dislocations at cell block boundaries; unit: m^(-2)
+            !> Dislocation density of polarizing dislocations at cell block boundaries; unit: m^(-2)
             double precision :: rho_polCBBs = 0.D0
-            !> Average dislocation density; unit: m^(-2)
+            !> Total average dislocation density; unit: m^(-2)
             double precision :: rho_avg = 0.D0    
       END TYPE 
       
@@ -148,7 +152,7 @@
             MODULE PROCEDURE  StateDerivedVar_times
       END INTERFACE
       
-      INTERFACE InitModuleAltayHardLaw_DSH !Generic Interface
+      INTERFACE InitModuleAltayHardLaw_DSH !< Generic Interface
         MODULE PROCEDURE Init_file,Init_PAR
       END INTERFACE
                   
@@ -187,15 +191,15 @@
             
       integer, SAVE, PUBLIC :: iKOST=0
       !Remaining declarations all PRIVATE:
-      TYPE(PAR), SAVE :: P !unit system: MPa; nm(nanometer)
+      TYPE(PAR), SAVE :: P !< Unit system: MPa; nm(nanometer)
       logical, SAVE :: InitOK=.FALSE.
-      integer, SAVE :: Nss !Number of slip systems. Supported values: 
-                           !     Nss=12: (110)[111] - 1 family
-                           !     Nss=24: (110)+(112)[111] - 2 families
-      integer, PRIVATE :: i !running index
+      integer, SAVE :: Nss !< Number of slip systems. Supported values:
+                           !< 	* Nss=12: (110)[111] - 1 family 
+                           !< 	* Nss=24: (110)+(112)[111] - 2 families
+      integer, PRIVATE :: i !< Running index
       double precision, SAVE :: alfa_G_b 
-      double precision, SAVE, DIMENSION(24,6):: eff             = 0.D0 ,&
-                                                effslashb       = 0.D0 ,&
+      double precision, SAVE, DIMENSION(24,6):: eff             = 0.D0 ,& !< Geometric blocking effectivity of CBBs
+                                                effslashb       = 0.D0 ,& !< Geometric blocking effectivity of CBBs divided by length of Burgers vector
                                                 alfa_G_b_eff    = 0.D0 ,&
                                                 alfa_G_b_ABSeff = 0.D0
 
@@ -219,8 +223,8 @@
       !double precision, PARAMETER :: p5_42= 0.771516749810 !5.0/sqrt(42.0)
       !double precision, PARAMETER :: n5_42=-0.771516749810
 
-      !EdgeDir(s,1:3): normalized movement vector of EDGE disl. on slip system s
-      !               (it equals the normalized burgers vector of slip system s)
+      !> EdgeDir(s,1:3): normalized movement vector of EDGE disl. on slip system s
+      !>               (it equals the normalized Burgers vector of slip system s)
       double precision, SAVE, DIMENSION(24,3)::EdgeDir    
       DATA (EdgeDir( 1: 3,i),i=1,3) /3*p3,3*p3,3*p3/ !s.s. 1 to 3
       DATA (EdgeDir( 4: 6,i),i=1,3) /3*n3,3*n3,3*p3/ !s.s. 4 to 6
@@ -231,9 +235,9 @@
       DATA (EdgeDir(19:21,i),i=1,3) /3*n3,3*p3,3*p3/ !..
       DATA (EdgeDir(22:24,i),i=1,3) /3*p3,3*n3,3*p3/ !s.s. 21 to 24
 
-      !ScrewDir(s,1:3): normalized movement vector of SCREW disl. on slip system s 
-      !  If NormSS(s,:) denotes slip plane normal vector and x the cross product, then:
-      !      ScrewDir(s,:) = EdgeDir(s,:) x NormSS(s,:)
+      !> ScrewDir(s,1:3): normalized movement vector of SCREW disl. on slip system s. 
+      !> If NormSS(s,:) denotes slip plane normal vector and x the cross product, then:
+      !> ScrewDir(s,:) = EdgeDir(s,:) x NormSS(s,:)
       double precision, SAVE, DIMENSION(24,3)::ScrewDir    
       DATA (ScrewDir(01,i),i=1,3) /nd6,p6,p6/ !s.s. 01
       DATA (ScrewDir(02,i),i=1,3) /p6,nd6,p6/ !s.s. 02
@@ -284,7 +288,7 @@
       !DATA (ScrewDir(47,i),i=1,3) /p1_42,p5_42,n4_42/ !s.s. 47
       !DATA (ScrewDir(48,i),i=1,3) /n1_42,p4_42,n5_42/ !s.s. 48
 
-      !NormDir(s,1:3): normalized slip plane normal vector of slip system s 
+      !> NormDir(s,1:3): normalized slip plane normal vector of slip system s 
       double precision, SAVE, DIMENSION(24,3)::NormDir    
       DATA (NormDir(01,i),i=1,3) /0.,p2,n2/ !s.s. 01
       DATA (NormDir(02,i),i=1,3) /n2,0.,p2/ !s.s. 02
@@ -311,7 +315,7 @@
       DATA (NormDir(23,i),i=1,3) /n6,nd6,n6/ !s.s. 23
       DATA (NormDir(24,i),i=1,3) /n6,p6,pd6/ !s.s. 24
      
-      !CBBnormal(i,1:3): normalized vector normal to CBB i
+      !> CBBnormal(i,1:3): normalized vector normal to CBB i
       double precision, SAVE, DIMENSION(6,3)::CBBnormal  
       DATA (CBBnormal(1,i),i=1,3) /0.,p2,n2/ !CBBs on (01-1)-plane
       DATA (CBBnormal(2,i),i=1,3) /n2,0.,p2/ !CBBs on (-101)-plane
@@ -324,7 +328,7 @@
 
       CONTAINS
 
-      !> Initialization of altayHardLaw_DSH.
+      !> Initialization of model.
       !>
       !> \return This procedure returns an error code (iError):  
       !>    * KS_OK : no error
@@ -333,13 +337,13 @@
       !>    * KS_ErrIO : slipsystem file (read from LEC) does not meet requirements about its format
       !> \note CONTAINed by MODULE altayHardLaw_DSH
       integer FUNCTION Init_PAR(Ptry,KOSTtry,LEC) result(iError)
-      TYPE(PAR),INTENT(IN)   :: Ptry    !proposed parameter set
-      integer    ,INTENT(IN) :: KOSTtry !proposed value of KOST
-      integer    ,INTENT(IN) :: LEC !unit number of PRE-file
+      TYPE(PAR),INTENT(IN)   :: Ptry    !< proposed parameter set
+      integer    ,INTENT(IN) :: KOSTtry !< proposed value of KOST (hardening model identifier)
+      integer    ,INTENT(IN) :: LEC 	!< unit number of PRE-file
       
       !local variables declarations:
       character(LEN=128) :: line1
-      integer           :: s,i,Idum=0,Nsstry=0
+      integer            :: s,i,Idum=0,Nsstry=0
       
       InitOK=.FALSE.
             
@@ -417,7 +421,7 @@
 
       P%RHOwpLOW=  LOWfrac * P%RHOwpSAT
 
-      !Calculate "Wall-effectivity"-matrices
+      !Calculate "Wall-effectivity"-matrices for CBBs
       select case(iKOST)
       case(13) ! "LoopSlip": introduced in v.1.11; invokable through KOST=13    
           do s=1,24 
@@ -455,13 +459,13 @@
       END FUNCTION Init_PAR
 
 
-
-      !CONTAINed by MODULE altayHardLaw_DSH:
+      !> Initialize model parameters from PAR file
+      !> \note CONTAINed by MODULE altayHardLaw_DSH
       integer FUNCTION Init_file(inunit,KOST,LEC) result(info)
       implicit none
-      integer,intent(in)      :: inunit   !< number of 
-      integer,intent(in)      :: KOST     !< Id of the model version.
-      integer,intent(in)      :: LEC      
+      integer,intent(in)      :: inunit   !< Unit number of PAR-file (list of model parameters)
+      integer,intent(in)      :: KOST     !< Model identifier
+      integer,intent(in)      :: LEC      !< Unit number of PRE-file
       !
       TYPE(PAR) :: PARtry
       !
@@ -470,8 +474,8 @@
       case(11,12,13)
             ! Supported value of KOST
             ! Read parameters of PE-BP hardening model
-            if (ReadPar(inunit,KOST,PARtry) == 0) then
-                  info = Init_PAR(PARtry,KOST,LEC)
+            if (ReadPar(inunit,KOST,PARtry) == 0) then	! read model parameters from file
+                  info = Init_PAR(PARtry,KOST,LEC)		! initialize parameters
             endif
       case default
             info = KS_ErrBadValue !Unsupported value of KOST
@@ -480,13 +484,13 @@
       end FUNCTION Init_file
 
 
-      
-      !CONTAINed by MODULE altayHardLaw_DSH:
+      !> Read model parameters from PAR file 
+      !> \note CONTAINed by MODULE altayHardLaw_DSH
       integer FUNCTION ReadPar(inunit,KOST,Pf)
       implicit none
       integer,intent(in)      :: inunit   !< IO unit number
-      integer,intent(in)      :: KOST     !< model identifier
-      TYPE(PAR),INTENT(OUT) :: Pf       !< Parameters to be read from a formatted file.
+      integer,intent(in)      :: KOST     !< Model identifier
+      TYPE(PAR),INTENT(OUT)   :: Pf       !< Parameters to be read from formatted file.
       !
       read(inunit,fmt=100,err=666,end=666) Pf%b
       read(inunit,fmt=100,err=666,end=666) Pf%G
@@ -514,16 +518,16 @@
       end FUNCTION ReadPar
    
       
-
-      !CONTAINed by MODULE altayHardLaw_DSH:
+      !> Initialize state variables. 
+      !> \return
+      !> 	* state variables for an annealed & undeformed substructure for single grain (SV0)
+      !> 	* an error code (iError):  
+      !>      	* KS_OK , no error
+      !>      	* KS_ErrUninitialized, in case this module is not correctly initialized
+      !> \note CONTAINed by MODULE altayHardLaw_DSH
       SUBROUTINE GetInitStatVar(SV0,iError)
-      !This procedure returns:
-      ! state variables for an annealed & undeformed substructure for single grain (SV0)
-      ! an error code (iError):  
-      !      KS_OK , no error
-      !      KS_ErrUninitialized, in case this module is not correctly initialized
 
-      TYPE(StatVar),INTENT(OUT) :: SV0
+      TYPE(StatVar),INTENT(OUT) :: SV0 !< State variables for an annealed & undeformed substructure for single grain
       integer,      INTENT(OUT) :: iError
 
       if(.NOT.InitOK) then
@@ -544,31 +548,34 @@
       END SUBROUTINE GetInitStatVar
 
 
-
-      !CONTAINed by MODULE altayHardLaw_DSH:
+      !> Make increment. 
+      !> \par Input
+      !>	* state variable at beginning of increment (SVa)
+      !> 	* slip rates, assumed constant throughout the increment (sliprate)
+      !> 	* time increment (deltaT)
+      !> \return
+      !> 	* state variables at end of the increment (SVb)
+      !> 	* an error code (iError):  
+      !>   		*  KS_OK , no error
+	  !>   		*  KS_ErrBadValue, if negative deltaT is provided
+      !>   		*  KS_ErrUninitialized, in case this module is not correctly initialized.
+	  !>
+      !> \note CONTAINed by MODULE altayHardLaw_DSH
       SUBROUTINE MakeInc(SVa,sliprate,deltaT,SVb,iError)
-      !This procedure requires as input:
-      ! state variable at beginning of increment (SVa)
-      ! the slip rates, assumed constant throughout the increment (sliprate)
-      ! the time increment (deltaT)
-      !This procedure returns:
-      ! state variables at end of the increment (SVb)
-      ! an error code (iError):  
-      !   *  KS_OK , no error
-	  !   *  KS_ErrBadValue, if negative deltaT is provided
-      !   *  KS_ErrUninitialized, in case this module is not correctly initialized
-      TYPE(StatVar),INTENT(IN)       :: SVa
-      double precision,INTENT(IN), DIMENSION(24) :: sliprate
-      double precision,INTENT(IN)                      :: deltaT
-      TYPE(StatVar),INTENT(OUT)      :: SVb !OUT
-      integer,INTENT(OUT)            :: iError
+      TYPE(StatVar),INTENT(IN)       			 :: SVa !< state variable at beginning of increment
+      double precision,INTENT(IN), DIMENSION(24) :: sliprate !< slip rates, assumed constant throughout the increment
+      double precision,INTENT(IN)                :: deltaT !< time increment
+      TYPE(StatVar),INTENT(OUT)     			 :: SVb !< state variables at end of the increment
+      integer,INTENT(OUT)            			 :: iError
 
       !local variable declarations
-      double precision :: SUMabsGamDot=0.,GAMMAdot_new=0.,RHObausch=0.  
+      double precision :: SUMabsGamDot=0., 		& !< sum of absolute slip rates over all slip systems
+							GAMMAdot_new=0., 	&
+							RHObausch=0.  
       double precision :: SUMabsGam   =0.,GAMMA_new   =0.
-      double precision,    DIMENSION(6) :: GAMMAdot=0.,GAMMA=0. 
-      integer, DIMENSION(6) :: r 
-      integer :: j 
+      double precision, DIMENSION(6) :: GAMMAdot=0.,GAMMA=0. 
+      integer, DIMENSION(6) :: r !< 2 most active CBBs and 4 others
+      integer :: j !< local looping variable
       double precision :: fl,wd
 
       if(.NOT.InitOK) then
@@ -584,7 +591,6 @@
       ! 'Gam'   ~ small-caps gamma: for a slip system
       ! 'GAMMA' ~ large-caps GAMMA: for a wall
 
-      
       SUMabsGamDot=sum(abs(sliprate(1:Nss)))
       SUMabsGam=SUMabsGamDot*deltaT
       !
@@ -599,7 +605,7 @@
       GAMMAdot=F_GAMMAdot(sliprate) 
       GAMMA=GAMMAdot*deltaT
 
-      r= sort110planes(GAMMAdot) !sort the walls in r
+      r= sort110planes(GAMMAdot) !sort the walls (CBBs) in r by amount of slip
       SVb%ActiveCBB(1)=r(1)
       SVb%ActiveCBB(2)=r(2)
 
@@ -637,15 +643,13 @@
       !!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       SVb%CRSS= F_CRSS(SVb)
 
-
-
       CONTAINS
 
-      !CONTAINed by SUBROUTINE MakeInc:
+      !> Calculate the total slip rates on each of the six {110}-planes
+      !> \note CONTAINed by SUBROUTINE MakeInc
       FUNCTION F_GAMMAdot(sr) 
-      ! Calculate the total slip rates on each of the six (110)-planes
-      double precision, DIMENSION(24), INTENT(IN)  :: sr !Slip Rate
-      double precision, DIMENSION( 6)              :: F_GAMMAdot !OUT
+      double precision, DIMENSION(24), INTENT(IN)  :: sr !< Slip Rate
+      double precision, DIMENSION( 6)              :: F_GAMMAdot !< OUT: Total slip rate for {110}-planes
       
       F_GAMMAdot(1)= abs(sr( 1))+abs(sr( 7))!(01-1)-plane
       F_GAMMAdot(2)= abs(sr( 2))+abs(sr(11))!(-101)-plane
@@ -657,16 +661,15 @@
       END FUNCTION F_GAMMAdot
 
 
-
-      !CONTAINed by SUBROUTINE MakeInc:
+      !> Identify 2 most active (110)-planes from the six total PlaneSlips:\n
+      !> The plane of the largest PlaneSlip is identified by sort110planes(1).\n
+      !> The plane of 2nd-largest PlaneSlip is identified by sort110planes(2).\n
+      !> The remaining 4 planes are identified by            sort110planes(3:6). \n
+      !> (Note: the 4 remaining planes are not ordered from higher to lower total PlaneSlip!)
+      !> \note CONTAINed by SUBROUTINE MakeInc
       FUNCTION sort110planes(PlaneSlip)
-      !For the six total PlaneSlips on the (110)-planes:
-      !The plane of the largest PlaneSlip is identified by sort110planes(1).
-      !The plane of 2nd-largest PlaneSlip is identified by sort110planes(2).
-      !The remaining 4 planes are identified by            sort110planes(3:6). 
-      ! (note: the 4 remaining planes are not ordered from higher to lower total PlaneSlip!)
-      double precision,    DIMENSION(6), INTENT(IN)  :: PlaneSlip
-      integer, DIMENSION(6)              :: sort110planes !OUT
+      double precision, DIMENSION(6), INTENT(IN)  :: PlaneSlip
+      integer, DIMENSION(6)              :: sort110planes !< OUT
 
       !declaration of local variables
       integer r(6), i
@@ -697,24 +700,24 @@
       END FUNCTION sort110planes    
 
 
-
-      !CONTAINed by SUBROUTINE MakeInc:
+      !> Returns RHO_b, the value of RHO at the end of an interval (a,b) 
+      !> for the following differential equation:
+      !>
+      !> d(RHO)/d(g) = ( II*sqrt(RHO) - RR*RHO )/P%b    
+      !>
+      !> The value of 'P%b', the size of Burgers vector, is inherited.
+      !>
+      !> To calc. RHO_b, following inputs are required:
+      !>	- RHO_a, the value of RHO at the start of the interval (a,b)
+      !> 	- delta_g = g_b - g_a, the increment in g during the interval (a,b)
+      !>
+      !> \note CONTAINed by SUBROUTINE MakeInc
       double precision FUNCTION F_KocksMeck(RHO_a,delta_g,II,RR) !PE27062012-2
-      !Returns RHO_b, the value of RHO at the end of an interval (a,b) 
-      ! for the following differential equation:
-      !
-      ! d(RHO)    1
-      ! ------ = --- * ( II*sqrt(RHO) - RR*RHO )
-      !  d(g)    P%b
-      !
-      ! The value of 'P%b', the size of burgers vector, is inherited.
-      !
-      ! To calc. RHO_b, following inputs are required: 
-      !   -> RHO_a, the value of RHO at the start of the interval (a,b)
-      !   -> delta_g = g_b - g_a, the increment in g during the interval (a,b)
-      double precision ,INTENT(IN):: RHO_a,delta_g,II,RR
+      double precision,INTENT(IN):: RHO_a,	&	!< value of RHO at the start of the interval
+									delta_g,&	!< increment in g during the interval
+									II,RR
 
-!     local variable declarations
+	  !local variable declarations
       double precision x
 
       x=exp(-0.5D0*RR*delta_g/P%b)
@@ -724,13 +727,13 @@
       END FUNCTION F_KocksMeck
 
 
-
-      !CONTAINed by SUBROUTINE MakeInc:
+	  !> Update the polarizing dislocation density for a currently generated CBB
+      !> \note CONTAINed by SUBROUTINE MakeInc
       SUBROUTINE UPD_cur_wp(rdr,RHOwp_a,RHOwp_b,RHObausch)
-      integer, INTENT(IN):: rdr
-      double precision ,INTENT(IN)   :: RHOwp_a 
-      double precision ,INTENT(OUT)  :: RHOwp_b 
-      double precision, INTENT(INOUT):: RHObausch
+      integer, INTENT(IN):: rdr						!< CBB identifier (1..6)
+      double precision ,INTENT(IN)   :: RHOwp_a 	!< polarizing disl. density at start of increment
+      double precision ,INTENT(OUT)  :: RHOwp_b 	!< polarizing disl. density at end of increment
+      double precision, INTENT(INOUT):: RHObausch	!< polarizing disl. density for which fluxes reversed
 
       !inherited variables:
       !P%Iwd, P%Rwd, P%b 
@@ -740,29 +743,27 @@
       !fl, wd
 
       !local variable declarations:
-      double precision :: wpFLUX !wp-flux on the wall 'rdr' 
-
+      double precision :: wpFLUX !< wp-flux on the wall (CBB) 'rdr' 
       logical :: FLUXreversal,wpLOW
 
-      wpFLUX=DOT_PRODUCT( effslashb(:,rdr) , sliprate(:) )  
-
+      wpFLUX=DOT_PRODUCT(effslashb(:,rdr),sliprate(:))  ! net flux onto CBB (section 3.2.2.3 Peeters PhD)
       FLUXreversal= wpFLUX*RHOwp_a .LT. 0.0
       wpLOW= abs(RHOwp_a) .LE. P%RHOwpLOW
 
       if ( FLUXreversal .and. .NOT.(wpLOW) ) then
         ! |RHOwp| gets smaller, following analytic time integration
-        RHOwp_b=RHOwp_a*exp(-P%Rrev*abs(wpFLUX)*deltaT) !wpFLUX is a rate!
+        RHOwp_b=RHOwp_a*exp(-P%Rrev*abs(wpFLUX)*deltaT) !wpFLUX is a rate! eq. 3.18 Peeters PhD
         RHObausch=RHObausch+abs(RHOwp_a)    
       else
         ! |RHOwp| gets larger, following numeric time integration (4th order Runge-Kutta)
         fl=wpFLUX                       !to be used by RungeKutta->dwp_dt
-        wd=SVb%CBB(rdr)%RHOwdHOM  !to be used by RungeKutta->dwp_dt
+        wd=SVb%CBB(rdr)%RHOwdHOM  		!to be used by RungeKutta->dwp_dt
         if ( FLUXreversal ) then
           !In this case, it must also be that: wpLOW=.TRUE.
           !AFTER change of its sign, RHOwp will build up again.
           RHOwp_b = RungeKutta(-RHOwp_a)    
         else
-          RHOwp_b = RungeKutta( RHOwp_a) 
+          RHOwp_b = RungeKutta( RHOwp_a) ! build up
         end if
         !RHObausch=RHObausch : No contribution to RHObausch
       end if
@@ -770,29 +771,28 @@
       END SUBROUTINE UPD_cur_wp                                          
 
 
-
-      !CONTAINed by SUBROUTINE MakeInc:
+      !> Build-up of rhowp. This function returns the 4th order Runge-Kutta approximation
+      !> of the differential equation given by 
+      !>
+      !>                            d(wp)/dt = F(wp)
+      !> 
+      !> The dif. eq. is implemented as another function: function dwp_dt(wp).
+      !>
+      !> This function returns: \n
+      !> RungeKutta = wpini + (K1+2*K2+2*K3+K4)/6\n
+      !>    in which     K1= deltaT * F(wpini     )\n
+      !>                       K2= deltaT * F(wpini+K1/2)\n
+      !>                       K3= deltaT * F(wpini+K2/2)\n 
+      !>                       K4= deltaT * F(wpini+K3  )\n
+      !>    with wpini : the value of wp at the start of the increment\n
+      !>         deltaT : the time of the increment\n
+      !> \note CONTAINed by SUBROUTINE MakeInc
       FUNCTION RungeKutta(wpini)
-      !This function returns the 4th order Runge-Kutta approximation
-      !of the differential equation given by 
-      !
-      !                             d(wp)/dt = F(wp)
-      ! 
-      ! The dif. eq. is implemented as another function: function dwp_dt(wp).
-      !
-      ! This function returns:
-      ! RungeKutta = wpini + (K1+2*K2+2*K3+K4)/6
-      !    in which     K1= deltaT * F(wpini     )
-      !                       K2= deltaT * F(wpini+K1/2)
-      !                       K3= deltaT * F(wpini+K2/2)
-      !                       K4= deltaT * F(wpini+K3  )
-      !    with wpini : the value of wp at the start of the increment
-      !         deltaT: the time of the increment
-      double precision, INTENT(IN) :: wpini
+      double precision, INTENT(IN) :: wpini !< dislocation density at start of increment
       double precision                RungeKutta   !OUT
 
       !local variable declarations:
-      double precision, DIMENSION(4) :: K
+      double precision, DIMENSION(4) :: K !< 4-th order Runge-Kutta increments
 
       K(1)=deltaT*dwp_dt(wpini        )
       K(2)=deltaT*dwp_dt(wpini+K(1)/2.D0)
@@ -803,8 +803,8 @@
       END FUNCTION RungeKutta
 
 
-
-      !CONTAINed by SUBROUTINE MakeInc:
+	  !> Evolution equation for build-up of RHOwp (eq. 3.11 Peeters PhD)
+      !> \note CONTAINed by SUBROUTINE MakeInc
       FUNCTION dwp_dt(wp)
       double precision, INTENT(IN) :: wp
       double precision             :: dwp_dt !OUT
@@ -813,13 +813,14 @@
       !fl, wd
       !P%Iwp, P%Rwp
 
-      dwp_dt=(sign(1.D0,fl)*P%Iwp*sqrt(wd+abs(wp)) - P%Rwp*wp) * abs(fl)
+      dwp_dt=(sign(1.D0,fl)*P%Iwp*sqrt(wd+abs(wp)) - P%Rwp*wp) * abs(fl) ! eq. 3.11 Peeters PhD
 
       END FUNCTION dwp_dt
 
 
-
-      !CONTAINed by SUBROUTINE MakeInc:
+	  !> Update rhowp on non-currently generated (ncg) CBBs \n
+	  !> |rhowp| on ncg CBBs can only shrink or stay constant at RHOwpMIN.
+      !> \note CONTAINed by SUBROUTINE MakeInc
       SUBROUTINE UPD_ncg_wp(RHOwp_a,RHOwp_b) 
       double precision, INTENT(IN)  :: RHOwp_a 
       double precision, INTENT(OUT) :: RHOwp_b 
@@ -828,9 +829,10 @@
       !P%Rncg, GAMMAdot_new, P%b, P%RHOwpMIN 
 
       if (abs(RHOwp_a) .GT. P%RHOwpMIN) then
-        RHOwp_b= RHOwp_a*exp(-P%Rncg*GAMMA_new/P%b)
+        RHOwp_b= RHOwp_a*exp(-P%Rncg*GAMMA_new/P%b) ! reduce RHOwp further
       else
-        if (RHOwp_a .GE. 0.0) then 
+        ! set RHOwp to minimum value
+		if (RHOwp_a .GE. 0.0) then 
           RHOwp_b=  P%RHOwpMIN
         else
           RHOwp_b= -P%RHOwpMIN
@@ -840,12 +842,12 @@
       END SUBROUTINE UPD_ncg_wp
 
 
-
-      !CONTAINed by SUBROUTINE MakeInc:
+	  !> Update rhowd
+      !> \note CONTAINed by SUBROUTINE MakeInc
       SUBROUTINE UPD_ncg_wd(rdr,SV_a,SV_b)
-      integer,INTENT(IN )       :: rdr
-      TYPE(StatVar), INTENT(IN) :: SV_a
-      TYPE(StatVar), INTENT(INOUT):: SV_b
+      integer,INTENT(IN )       :: rdr	!< CBB identifier
+      TYPE(StatVar), INTENT(IN) :: SV_a	!< state variables at start of increment
+      TYPE(StatVar), INTENT(INOUT):: SV_b	!< state variables at end of increment
 
       !inherited variables:
       !P%b, P%Rncg, P%beta1, P%beta2, P%RHOwdMIN  
@@ -882,7 +884,7 @@
         RHOwd   =P%RHOwdMIN
       end if
 
-      SV_b%CBB(rdr)%RHOwd           = RHOwd 
+      SV_b%CBB(rdr)%RHOwd        = RHOwd 
       SV_b%CBB(rdr)%RHOwdHOM     = RHOwdHOM 
       SV_b%CBB(rdr)%accGAMMA_new = accGAMMA_new
       SV_b%CBB(rdr)%RHOwd_ini    = RHOwd_ini
@@ -890,28 +892,28 @@
       END SUBROUTINE UPD_ncg_wd
 
 
-
-      !CONTAINed by SUBROUTINE MakeInc:
+	  !> Update cell (CB) dislocation density
+      !> \note CONTAINed by SUBROUTINE MakeInc
       SUBROUTINE UPD_cb(RHObausch,SUMabsGam,RHO_a,RHO_b) 
       double precision, INTENT(IN)  :: RHObausch,SUMabsGam
-      double precision, INTENT(IN)  :: RHO_a 
-      double precision, INTENT(OUT) :: RHO_b 
+      double precision, INTENT(IN)  :: RHO_a !< CB density at start of increment
+      double precision, INTENT(OUT) :: RHO_b !< CB density at end of increment
 
       !inherited variables:
       !P%I, P%R, P%R2, P%b, P%RHOwpSAT 
 
 !     local variable declarations
-      double precision Reffective
+      double precision Reffective !< effective recovery parameter for CBs (isotropic and Bauschinger contribution)
 
-      if(RHObausch .GT. 0.0) then
+      if(RHObausch .GT. 0.0) then ! 1 or 2 fluxes reversed
         Reffective=P%R + P%R2*RHObausch/(2.D0*P%RHOwpSAT)  
         if (P%I*sqrt(RHO_a) - Reffective*RHO_a .LE. 0.0) then
-          RHO_b=RHO_a !Keep as is. 
+            RHO_b=RHO_a !Keep as is. (Heaviside bracket/step function, eq. 3.17 Peeters PhD)
         else
             RHO_b= F_KocksMeck(RHO_a,SUMabsGam,P%I,Reffective)
         end if
-      else !RHObausch .EQ. 0.0
-        RHO_b= F_KocksMeck(  RHO_a,SUMabsGam,P%I,P%R       )  
+      else !RHObausch .EQ. 0.0; no flux reversed
+        RHO_b= F_KocksMeck(RHO_a,SUMabsGam,P%I,P%R)
       end if
 
       END SUBROUTINE UPD_cb
@@ -919,18 +921,19 @@
       END SUBROUTINE MakeInc
       
       
-
-      !CONTAINed by MODULE altayHardLaw_DSH:
+	  !> Calculate CRSSs for all slip systems in a grain
+      !> \note CONTAINed by MODULE altayHardLaw_DSH
       FUNCTION F_CRSS(SV) 
-      TYPE(StatVar), INTENT(IN) :: SV 
-      double precision, DIMENSION(2,24):: F_CRSS !OUT 
+      TYPE(StatVar), INTENT(IN) :: SV 				!< State variables of grain
+      double precision, DIMENSION(2,24):: F_CRSS 	!< OUT : Matrix of CRSSs (forward and backward slip)
 
 !     P%tau0,P%f  ->inherited
 !     alfa_G_b ->inherited
 !     alfa_G_b_eff,alfa_G_b_ABSeff ->inherited
 
       !local variables declarations
-      double precision :: tau_CB,CRSS_0_CB
+      double precision :: tau_CB, &		!< CRSS within cells & CBs
+							CRSS_0_CB	!< contribution from tau_0 and CBs to CRSS
       double precision,DIMENSION(2,24)::tau_CBB
       integer :: j,s,i
       double precision :: signfac
@@ -954,12 +957,12 @@
                   wpcontr(i)=sqrt(abs(SV%CBB(i)%RHOwp)) *             &
                        signfac * alfa_G_b_eff(s,i) *                    &
                        sign(1.D0,SV%CBB(i)%RHOwp) ! sign returns +/-1 depending on the sign of the second argument
-            if (wpcontr(i) .LT. 0.0) wpcontr(i)=0.0
+            if (wpcontr(i) .LT. 0.0) wpcontr(i)=0.0 ! Heaviside bracket/step function, eq. 3.20 Peeters PhD
             wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*alfa_G_b_ABSeff(s,i)
           end do
           !CRSS within CBB = wp- and wd-contributions for all 6 walls
           tau_CBB(j,s)=sum(wpcontr)+sum(wdcontr) 
-          !C.R.S.S. for the "two-phase composite"
+          !CRSS for the "two-phase composite"
           F_CRSS(j,s)= CRSS_0_CB + P%f*tau_CBB(j,s) 
         end do
       end do
@@ -967,8 +970,8 @@
       END FUNCTION F_CRSS
 
 
-
-      !CONTAINed by MODULE altayHardLaw_DSH:
+	  !> Read DSH state variable file
+      !> \note CONTAINed by MODULE altayHardLaw_DSH
       !> Perform an IO formatted read operation on StatVar 
       !>
       !> \param dummy if true, the function performs a fake read operation of by simply skipping the same number of lines as the ReadSVfile would normally read. The resulting SV becomes initialized to default values.
@@ -1016,8 +1019,8 @@
       END FUNCTION ReadSVfile
 
       
-      
-      !CONTAINed by MODULE altayHardLaw_DSH:
+	  !> Write DSH state variable file
+      !> \note CONTAINed by MODULE altayHardLaw_DSH
       integer FUNCTION WriteSVfile(unit,SV) result(iError)
       integer,      INTENT(IN)  :: unit
       TYPE(StatVar),INTENT(IN)  :: SV
@@ -1050,9 +1053,8 @@
       END FUNCTION WriteSVfile
 
 
-      
-      
-      !CONTAINed by MODULE altayHardLaw_DSH:
+      !> Write header into DSH state variable file
+      !> \note CONTAINed by MODULE altayHardLaw_DSH
       integer function WriteHeadSVfile(unit) result(iError)
       integer,intent(in)  :: unit
       !      
@@ -1081,7 +1083,8 @@
       end function WriteHeadSVfile
       
       
-      
+      !> Read header from DSH state variable file
+      !> \note CONTAINed by MODULE altayHardLaw_DSH
       integer function ReadHeadSVfile(unit) result(iError)
       integer,intent(in)  :: unit
       
@@ -1102,15 +1105,15 @@
       end function ReadHeadSVfile
       
       
-      
-      !CONTAINed by MODULE altayHardLaw_DSH:
+	  !> Calculate derived state variables (SDVs)
+      !> \note CONTAINed by MODULE altayHardLaw_DSH
       SUBROUTINE GetStateDerivedVar(SV,SDV,iError)
-      TYPE(StatVar),   INTENT(IN)  :: SV
+      TYPE(StatVar),   INTENT(IN)  :: SV !< state variables of single grain
       !> An object of type StateDerivedVars, which contains state-derived variables calculated from SV
       TYPE(StateDerivedVars), INTENT(OUT) :: SDV
       !> Exit code:  
-      !> - KS_OK , no error
-      !> - KS_ErrUninitialized, in case this module is not correctly initialized
+      !> 	- KS_OK: no error
+      !> 	- KS_ErrUninitialized: in case this module is not correctly initialized
       integer,         INTENT(OUT) :: iError
 
       iError= KS_Error !init
