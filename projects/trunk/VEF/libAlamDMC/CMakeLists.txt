@@ -6,6 +6,10 @@ project(AlamDMC Fortran)
 
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
+set(libalamDMC_FLAGS "-DPEBP_ENABLED" )
+
+list(APPEND Fortran_FLAGS ${libalamDMC_FLAGS})
+
 list2string(Fortran_FLAGS CMAKE_Fortran_FLAGS) 
 list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
 list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
