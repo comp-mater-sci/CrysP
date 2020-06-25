@@ -1,8 +1,6 @@
 /*!
 \page page_alamdmc_generic AlamDMC Generic Configuration
 
-[TOC]
-
 Generic configuration settings are applicable to all AlamDMC modules. 
 As described in \ref alamdmc_format_basics, these settings are located in the leading part of the 
 configuration file. It has its own internal structure, consisting of three main sections, as follows:
@@ -148,11 +146,10 @@ matrix is numerically approximated by the finite difference method.
        used for estimating the Jacobian by finite difference method. 
     -# \confdef{search_linearize,logical} specifies whether the program should first 
        attempt to solve the minimization problem that is considered linear. Note that if 
-       the \conffield{search_linearize} is set to `True` (which is the default), then the  
-       linearization is attempted each case in which strain rate corresponding to a given  
+       the \conffield{search_linearize} is set to `True` (which is the default), then the 
+       linearization is attempted each case in which strain rate corresponding to a given 
        stress is sought, and also per strain increment, provided that strain evolution is 
        computed.
-       
        If the solver fails to find a good quality solution of the linearized problem, 
        it will fall back to the non-linear problem. The non-linear problem is much more 
        computationally expensive, since it requires several recalculations of the 
@@ -167,7 +164,7 @@ matrix is numerically approximated by the finite difference method.
        to \f$ 10^{-3} \f$ is sufficient to reach a good convergence.
     -# \confdef{solver_advanced,logical} specifies if advanced solver settings should be 
        read. This unlocks a multi-line option, which currently remains undocumented.
-  - `False` there are no suboptions.
+  - `True` there are no suboptions.
 
 \note If any of deformation-driven modules is used (such as \ref module_adp),
       the only available option in \conffield{solver_default} is `False`.

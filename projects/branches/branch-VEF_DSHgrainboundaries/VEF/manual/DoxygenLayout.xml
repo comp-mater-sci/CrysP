@@ -4,12 +4,16 @@
   <navindex>
     <tab type="mainpage" visible="yes" title="Home"/>
     <tab type="usergroup" visible="yes" url="@ref user_reference" title="Reference Manual">
+      <tab type="user" visible="yes" title="Conventions" url="@ref page_conventions"/>
       <tab type="user" visible="yes" title="Expert mode" url="@ref page_expert_mode"/>
       <tab type="user" visible="yes" title="Simple mode" url="@ref page_simple_mode"/>
       <tab type="user" visible="yes" title="Utilities" url="@ref page_utilities"/>
-      <tab type="user" visible="yes" url="@ref page_theory" title="Theory Reference"/>
+      <tab type="user" visible="yes" title="Theory Reference" url="@ref page_theory"/>
     </tab>
-    <tab type="user" visible="yes" url="@ref page_tutorials" title="Tutorials"/>
+    <tab type="usergroup" visible="yes" url="@ref page_tutorials" title="Tutorials">
+      <tab type="user" visible="yes" title="Guided tour" url="@ref guided_tour"/>
+      <tab type="user" visible="yes" title="Identification of Swift parameters" url="@ref tutorial_swift"/>
+    </tab>
     <tab type="user" visible="yes" url="@ref page_resources" title="Resources"/>
     <tab type="user" visible="yes" url="@ref page_about" title="About"/>
     <!-- Doxygen built-ins -->
