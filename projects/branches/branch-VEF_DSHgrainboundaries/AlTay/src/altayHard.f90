@@ -26,8 +26,7 @@ implicit none
       end interface
 
 contains
-      
-      
+            
       subroutine InitModuleAltayHard_file(inunit,HardLaw,crss_init,info)
       implicit none
       integer,intent(in)      :: inunit
@@ -122,8 +121,7 @@ contains
       !
       end subroutine
 #endif
-      
-      
+            
       subroutine getTau(gamma, tau, info)
       use altayHardLaw_Simple
       implicit none

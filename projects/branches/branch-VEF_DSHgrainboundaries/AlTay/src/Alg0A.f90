@@ -6,7 +6,7 @@
       use altayHardTypes
       use altayMacroKinematic
       
-      ! Initial rations of CRSS, set in MAINA1.
+      ! Initial ratios of CRSS, set in MAINA1.
       ! It is used only by the stand-alone AlTay
       type(CRSS),save :: crss_ratiosIN
 

@@ -39,8 +39,7 @@ implicit none
 
       !> \name Named constants for identifiers of the supported models
       !>@{ 
-      integer,parameter :: modelFCTaylor = 1, modelAlamel = 2, modelMASAL = 3
-      
+      integer,parameter :: modelFCTaylor = 1, modelAlamel = 2, modelMASAL = 3     
       !>@}
       
       type :: slipSystemData
@@ -151,18 +150,14 @@ implicit none
       !
       !> PEBP model parameters (no state variables)
       type :: PEBPConfig
-            !>MB: contains BP parameters, saturation and lower bounds for dislocation densities (defined in altayHardLawDSH.f90)
-            type(PAR)                     :: params 
-            
+            !> BP parameters, saturation and lower bounds for dislocation densities (defined in altayHardLawDSH.f90)
+            type(PAR)                     :: params           
             !> Flag that decides if state variables should be read from file.
-            logical                       :: read_state = .false.
-            
+            logical                       :: read_state = .false.            
             !> Name of file that contains state variables
-            character(len=fname_len)      :: input_fname = ''
-            
+            character(len=fname_len)      :: input_fname = ''           
             !> Number of blocks to be skipped while reading the input file
-            integer                       :: block_id = 0
-            
+            integer                       :: block_id = 0            
       end type
 
       !> Parameters of available hardening models.
@@ -201,7 +196,7 @@ implicit none
             !>   - 1 - FC Taylor
             !>   - 2 - Alamel
             !>   - 3 - MAS-AL
-            integer                                   :: NGR = 2 !MB: Number of grains in the cluster
+            integer                                   :: NGR = 2 !< Number of grains in the cluster
             
             !> It is relevant only in MAS-AL
             double precision                          :: ENTA = 1.D0
@@ -214,16 +209,15 @@ implicit none
       end type
 
       !> Root-level configuration structure
-      !> MB: Config. parameters of AlTay, i.e. texture and hardening.
+      !> Config. parameters of AlTay, i.e. texture and hardening.
       type :: altayConfigData
-            !>
             integer                                   :: model_id      = modelAlamel
             character(len=fname_len)                  :: output_prefix = 'alamel'
             character(len=fname_len)                  :: jobtitle      = 'alamel'
             character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
-            type(slipSystemData)                      :: slipsystem !<MB: definition of slip systems 
-            type(outputConfig)                        :: output_config !<MB: output file prefix, incremental output request flag, verbosity level
-            type(hardeningData)                       :: hardening !<MB: hardening model parameters
+            type(slipSystemData)                      :: slipsystem 	!< definition of slip systems 
+            type(outputConfig)                        :: output_config 	!< output file prefix, incremental output request flag, verbosity level
+            type(hardeningData)                       :: hardening 		!< hardening model parameters
             type(textureData)                         :: texture
             type(simulData)                           :: simul_init
             ! 

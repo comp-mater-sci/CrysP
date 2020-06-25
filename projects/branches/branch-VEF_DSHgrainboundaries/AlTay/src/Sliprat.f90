@@ -19,7 +19,7 @@
 !     To find the slip rates assuming that
 !     - the stress, strain rate and the active slip systems are known,
 !       previously obtained by PANCAK2;
-!     - (under the above resrtrictions) the sum of the squares of the slip
+!     - (under the above restrictions) the sum of the squares of the slip
 !       rates must be minimal. 
 !
 !     Modified in Aug 2010

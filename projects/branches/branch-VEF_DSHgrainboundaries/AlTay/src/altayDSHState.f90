@@ -6,7 +6,7 @@ use altayHardLaw_DSH
 use altayHardTypes
 implicit none
 
-      type(StatVar),allocatable,dimension(:),private,save    :: KS_state !MB: structure array of state variables
+      type(StatVar),allocatable,dimension(:),private,save :: KS_state !< array of state variables
       
       interface KS_readState
             module procedure KS_readState_unit, KS_readState_file
@@ -76,7 +76,6 @@ contains
             KS_state(i) = SV_tmp
       !
       end subroutine
-
       
       subroutine KS_getCRSS(i,Mcrss,info)
       implicit none
@@ -139,8 +138,7 @@ contains
             end select
       !
       end function
-      
-      
+            
       !>
       integer function KS_writeState(iounit) result(info)
       implicit none

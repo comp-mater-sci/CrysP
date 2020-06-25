@@ -41,7 +41,7 @@
       integer :: tex_type, tex_nblock
       character(len=pathlength) :: tex_fname
 #ifdef PEBP_ENABLED      
-      character(len=pathlength) :: fname_pebp !MB: PEBP state variables file from which initial state gets read
+      character(len=pathlength) :: fname_pebp !< file with PEBP state variables from which initial state gets read
       logical :: read_state
       integer :: nblock
 #endif
@@ -62,7 +62,7 @@
       open (unit=KLEC,file=fnam1,status='old')
 #else
       open (unit=KLEC,file='MAIN.CTL',status='old')
-!MB> fnam1 points now either to file mainA1.i01 or to MAIN.CTL
+!MB: fnam1 points now either to file mainA1.i01 or to MAIN.CTL
 #endif
 
       read (KLEC,90) codsim
@@ -155,7 +155,7 @@
       
 #ifdef PEBP_ENABLED
       ! PEBP model
-      NREC = size(DFIL) !MB: where is dfil defined?
+      NREC = size(DFIL)
       select case(HardLawID)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
             ! UNIT IMP4 = state variables of PEBP KOST11
@@ -167,7 +167,7 @@
             endif
             read_state = .false.
             nblock = 0
-            read(KLEC,66) read_state, nblock, fname_pebp !MB: this line in the VEF cfg file contains only 2 values!! here 3 are read??
+            read(KLEC,66) read_state, nblock, fname_pebp
             if (read_state) then
                   call stripComment(fname_pebp)
                   info = KS_readState(fname_pebp,IPEBPSTAT,nblock) !MB: interface to KS_readState_file; IPEBPSTAT is the IO unit number

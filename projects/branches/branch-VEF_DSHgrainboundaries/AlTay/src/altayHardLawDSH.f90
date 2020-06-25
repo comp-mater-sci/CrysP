@@ -102,15 +102,20 @@
       PRIVATE 
       
 	  !> BP model parameters including saturation and minimum values for state dependent dislocation densities.
-	  !> MIN values used for initialization of disl. dens.; RHOwpMIN used for switching sign of RHOwp.
-      TYPE :: PAR 
+	  !> disl. densities initialized to MIN values; RHOwpLOW used for switching sign of RHOwp.
+      TYPE :: PAR
             !PUBLIC components
             double precision :: b,G,alfa,f,tau0
             double precision :: I,R,Iwd,Rwd,Rncg,beta1,beta2
             double precision :: Iwp,Rwp,Rrev,R2
-            double precision :: RHOcbSAT,RHOwdSAT,RHOwpSAT !dependent hardening parameters
-            double precision :: RHOcbMIN,RHOwdMIN,RHOwpMIN !dependent hardening parameters
-			double precision :: RHOwpLOW 				   !dependent hardening parameters
+            double precision :: RHOcbSAT,RHOwdSAT,RHOwpSAT  !dependent hardening parameters
+            double precision :: RHOcbMIN,RHOwdMIN, &
+								RHOwpMIN 					!<dependent hardening parameter, minimum disl. dens. on non-currently generated CBB
+			double precision :: RHOwpLOW 					!<dependent hardening parameter, minimum disl. dens. on currently generated CBB
+			!MB: grain boundary interactions ('g'-quantities)
+            double precision :: IgpRHO,IgpD,Rgp
+			double precision :: RHOgpSAT,RHOgpMIN,RHOgpLOW !dependent hardening parameters
+			double precision :: kg !< Hall-Petch constant
       END TYPE PAR
       
       !> State variables of single CBB
@@ -119,17 +124,24 @@
             double precision :: RHOwd = 0.D0
             double precision :: RHOwp = 0.D0
             double precision :: RHOwdHOM = 0.D0 
-            double precision :: accGAMMA_new = 0.D0
+            double precision :: accGAMMA_new = 0.D0 !< total slip on active CBBs (see eq. 3.15 Peeters PhD) accumulated since CBB became inactive
             double precision :: RHOwd_ini = 0.D0    
+      END TYPE CBBtype
+
+      !> State variables of single GB
+	  TYPE :: GBtype
+            !PUBLIC components
+            double precision :: RHOwp = 0.D0
       END TYPE CBBtype
 
       !> State variables for single grain
       TYPE :: StatVar
       !PUBLIC components
             double precision                    :: RHOcb = 0.D0
-            TYPE(CBBtype), DIMENSION(6)         :: CBB 
+            TYPE(CBBtype), DIMENSION(6)         :: CBB
+            TYPE(GBtype), DIMENSION(1)          :: GB			!< currently 1 grain boundary per grain
             integer, DIMENSION(2)               :: ActiveCBB = 0
-            double precision, DIMENSION(2,24)   :: CRSS = 0.D0 !< Up to 24 slip systems supported
+            double precision, DIMENSION(2,24)   :: CRSS = 0.D0 	!< Up to 24 slip systems supported
       END TYPE StatVar
 
 	  !> Average disl. densities for single grain (calculated in GetStateDerivedVar)
@@ -140,6 +152,8 @@
             double precision :: rho_CBBs = 0.D0
             !> Dislocation density of polarizing dislocations at cell block boundaries; unit: m^(-2)
             double precision :: rho_polCBBs = 0.D0
+            !> Dislocation density of polarizing dislocations at grain boundaries; unit: m^(-2)
+            double precision :: rho_polGBs = 0.D0
             !> Total average dislocation density; unit: m^(-2)
             double precision :: rho_avg = 0.D0    
       END TYPE 
@@ -175,6 +189,7 @@
             PAR,                &
             StatVar,            &
             CBBtype,            &
+			GBtype,				&
             StateDerivedVars
 
       !> \name Exit codes from altayHardLaw_DSH subroutines and functions:
@@ -198,15 +213,20 @@
                            !< 	* Nss=24: (110)+(112)[111] - 2 families
       integer, PRIVATE :: i !< Running index
       double precision, SAVE :: alfa_G_b 
-      double precision, SAVE, DIMENSION(24,6):: eff             = 0.D0 ,& !< Geometric blocking effectivity of CBBs
-                                                effslashb       = 0.D0 ,& !< Geometric blocking effectivity of CBBs divided by length of Burgers vector
-                                                alfa_G_b_eff    = 0.D0 ,&
-                                                alfa_G_b_ABSeff = 0.D0
+      double precision, SAVE, DIMENSION(24,6):: eff              = 0.D0 ,& !< Geometric blocking effectivity of CBBs
+                                                effslashb        = 0.D0 ,& !< Geometric blocking effectivity of CBBs divided by length of Burgers vector
+                                                alfa_G_b_eff     = 0.D0 ,&
+                                                alfa_G_b_ABSeff  = 0.D0 ,&
+	  double precision, SAVE, DIMENSION(24,1):: effGB            = 0.D0 ,& !< Geometric blocking effectivity of GB
+                                                effGBslashb      = 0.D0 ,& !< Geometric blocking effectivity of GB divided by length of Burgers vector
+                                                alfa_G_b_effGB   = 0.D0 ,&
+                                                kg_ABSeffGB= 0.D0		   !< Hall-Petch times blocking effectivity of GB
 
-      double precision, PARAMETER :: MINfrac= 2.0D-3
-      double precision, PARAMETER :: LOWfrac=10.0D-3
+      double precision, PARAMETER :: MINfrac= 2.0D-3 !< RHOcbMIN=  MINfrac * RHOcbSAT
+      double precision, PARAMETER :: LOWfrac=10.0D-3 !< RHOwpMIN=  MINfrac * RHOwpSAT
       
       double precision, PARAMETER :: TENpow6 = 1.D6      
+      double precision, PARAMETER :: TENpow4c5 = 1.D(4.5)      
       
       double precision, PARAMETER :: p2= 1.D0/sqrt(2.D0)
       double precision, PARAMETER :: n2= -p2 
@@ -337,7 +357,7 @@
       !>    * KS_ErrIO : slipsystem file (read from LEC) does not meet requirements about its format
       !> \note CONTAINed by MODULE altayHardLaw_DSH
       integer FUNCTION Init_PAR(Ptry,KOSTtry,LEC) result(iError)
-      TYPE(PAR),INTENT(IN)   :: Ptry    !< proposed parameter set
+      TYPE(PAR)	 ,INTENT(IN) :: Ptry    !< proposed parameter set
       integer    ,INTENT(IN) :: KOSTtry !< proposed value of KOST (hardening model identifier)
       integer    ,INTENT(IN) :: LEC 	!< unit number of PRE-file
       
@@ -349,7 +369,7 @@
             
       !Check KOSTtry
       select case (KOSTtry)
-      case (11,12,13) !supported
+      case (11,12,13,14) !supported
           iKOST=KOSTtry !iKOST: PRIVATE to this module.
       case default !unsupported
           iError = KS_ErrBadValue
@@ -392,6 +412,8 @@
          Ptry%R2   >  0.    .AND. Ptry%R2   <= 1.e-6    .AND.& ! [m]
          Ptry%beta1>= 0.    .AND. Ptry%beta1<= 100.     .AND.& ! [/]
          Ptry%beta2>= 0.    .AND. Ptry%beta2<= 100.          & ! [/]
+         Ptry%Igpd >= 0.    .AND. Ptry%beta2<= 10.           & ! [/]
+         Ptry%kg   >= 0.    .AND. Ptry%beta2<= 5.            & ! [MPa*m^(1/2)]
           )then
             !Save the parameters in P (private to this module)          
             P=Ptry
@@ -403,6 +425,7 @@
             P%Rwp  = P%Rwp  * TENpow6 ![m] -> [nm]
             P%Rrev = P%Rrev * TENpow6 ![m] -> [nm]
             P%R2   = P%R2   * TENpow6 ![m] -> [nm]            
+            P%kg   = P%kg   / TENpow4c5 ![MPa*m^(1/2)] -> [MPa*nm^(1/2)]            
           else
             iError = KS_ErrOutOfRange
             return 
@@ -414,12 +437,16 @@
       P%RHOwpSAT=(sqrt((P%Iwp/P%Rwp)**4 +               &
                  4.D0*(P%Iwp*P%Iwd/(P%Rwp*P%Rwd))**2) +   &
                  (P%Iwp/P%Rwp)**2)/2.D0  
-
+	  !P%RHOgpSAT=...
+	  
+	  
       P%RHOcbMIN=  MINfrac * P%RHOcbSAT
       P%RHOwdMIN=  MINfrac * P%RHOwdSAT  
       P%RHOwpMIN=  MINfrac * P%RHOwpSAT   
+      P%RHOgpMIN=  MINfrac * P%RHOgpSAT   
 
       P%RHOwpLOW=  LOWfrac * P%RHOwpSAT
+      P%RHOgpLOW=  LOWfrac * P%RHOgpSAT
 
       !Calculate "Wall-effectivity"-matrices for CBBs
       select case(iKOST)
@@ -458,6 +485,11 @@
 
       END FUNCTION Init_PAR
 
+      !> Calculate RHOgpSAT
+      !> \note CONTAINed by MODULE altayHardLaw_DSH
+      FUNCTION GetRHOgpSAT() result(RHOgpSAT)
+	  implicit none
+	  
 
       !> Initialize model parameters from PAR file
       !> \note CONTAINed by MODULE altayHardLaw_DSH
@@ -570,9 +602,10 @@
 
       !local variable declarations
       double precision :: SUMabsGamDot=0., 		& !< sum of absolute slip rates over all slip systems
-							GAMMAdot_new=0., 	&
+							GAMMAdot_new=0., 	& !< sum of absolute slip rates over active CBBs
 							RHObausch=0.  
-      double precision :: SUMabsGam   =0.,GAMMA_new   =0.
+      double precision :: SUMabsGam   =0.,		& 
+							GAMMA_new   =0.		  !< total slip increment on active CBBs
       double precision, DIMENSION(6) :: GAMMAdot=0.,GAMMA=0. 
       integer, DIMENSION(6) :: r !< 2 most active CBBs and 4 others
       integer :: j !< local looping variable
@@ -601,16 +634,17 @@
             if (deltaT < 0.D0) iError = KS_ErrBadValue
             return
       endif
+	  ! finite deformation => update the state
+      
+	  GAMMAdot=F_GAMMAdot(sliprate) !total slip rates on {110} planes
+      GAMMA=GAMMAdot*deltaT			!total slip increment on {110} planes
 
-      GAMMAdot=F_GAMMAdot(sliprate) 
-      GAMMA=GAMMAdot*deltaT
-
-      r= sort110planes(GAMMAdot) !sort the walls (CBBs) in r by amount of slip
+      r= sort110planes(GAMMAdot) !sort the walls (CBBs) by amount of slip in r 
       SVb%ActiveCBB(1)=r(1)
       SVb%ActiveCBB(2)=r(2)
 
-      GAMMAdot_new=GAMMAdot(r(1))+GAMMAdot(r(2))
-      GAMMA_new=GAMMAdot_new*deltaT
+      GAMMAdot_new=GAMMAdot(r(1))+GAMMAdot(r(2)) 	!total slip rate on active CBBs
+      GAMMA_new=GAMMAdot_new*deltaT					!total slip increment on active CBBs
 
       !! Update dislocation densities
       !!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -649,7 +683,7 @@
       !> \note CONTAINed by SUBROUTINE MakeInc
       FUNCTION F_GAMMAdot(sr) 
       double precision, DIMENSION(24), INTENT(IN)  :: sr !< Slip Rate
-      double precision, DIMENSION( 6)              :: F_GAMMAdot !< OUT: Total slip rate for {110}-planes
+      double precision, DIMENSION( 6)              :: F_GAMMAdot !< OUT: Total slip rate for {110}-planes (2 <111> slip directions per plane)
       
       F_GAMMAdot(1)= abs(sr( 1))+abs(sr( 7))!(01-1)-plane
       F_GAMMAdot(2)= abs(sr( 2))+abs(sr(11))!(-101)-plane
@@ -743,10 +777,11 @@
       !fl, wd
 
       !local variable declarations:
-      double precision :: wpFLUX !< wp-flux on the wall (CBB) 'rdr' 
-      logical :: FLUXreversal,wpLOW
+      double precision :: wpFLUX !< net wp-flux onto wall (CBB) 'rdr' (section 3.2.2.3 Peeters PhD)
+      logical :: FLUXreversal, & !< true when flux and rho_wp have opposite signs
+				 wpLOW
 
-      wpFLUX=DOT_PRODUCT(effslashb(:,rdr),sliprate(:))  ! net flux onto CBB (section 3.2.2.3 Peeters PhD)
+      wpFLUX=DOT_PRODUCT(effslashb(:,rdr),sliprate(:))
       FLUXreversal= wpFLUX*RHOwp_a .LT. 0.0
       wpLOW= abs(RHOwp_a) .LE. P%RHOwpLOW
 
@@ -829,7 +864,7 @@
       !P%Rncg, GAMMAdot_new, P%b, P%RHOwpMIN 
 
       if (abs(RHOwp_a) .GT. P%RHOwpMIN) then
-        RHOwp_b= RHOwp_a*exp(-P%Rncg*GAMMA_new/P%b) ! reduce RHOwp further
+        RHOwp_b= RHOwp_a*exp(-P%Rncg*GAMMA_new/P%b) ! reduce RHOwp further; integrated version of eq. 3.14 Peeters PhD
       else
         ! set RHOwp to minimum value
 		if (RHOwp_a .GE. 0.0) then 
@@ -855,8 +890,10 @@
       !GAMMAdot_new
 
 !     local variable declarations
-      double precision RHOwdLOC 
-      double precision RHOwdHOM,accGAMMA_new,RHOwd_ini 
+      double precision RHOwdLOC 		  !< local wall disl. density in cut-through
+      double precision RHOwdHOM,		&
+						accGAMMA_new,	& !< total slip on active CBBs (see eq. 3.15 Peeters PhD) accumulated since CBB became inactive
+						RHOwd_ini 
       double precision RHOwd 
 
       RHOwdHOM     = SV_a%CBB(rdr)%RHOwdHOM 
@@ -875,9 +912,9 @@
         end if
 
         RHOwdLOC=-tanh( P%beta1*accGAMMA_new)*                           &
-                   exp(-P%beta1*accGAMMA_new)*RHOwd_ini*P%beta2
-        RHOwdHOM=RHOwdHOM*exp(-P%Rncg*GAMMA_new/P%b)
-        RHOwd=RHOwdHOM+RHOwdLOC
+                   exp(-P%beta1*accGAMMA_new)*RHOwd_ini*P%beta2				! eq. 3.15 Peeters PhD
+        RHOwdHOM=RHOwdHOM*exp(-P%Rncg*GAMMA_new/P%b)						! integrated version of eq. 3.13 Peeters PhD
+        RHOwd=RHOwdHOM+RHOwdLOC												! eq. 3.16 Peeters PhD
         if (RHOwd .LT. P%RHOwdMIN)  RHOwd=P%RHOwdMIN
       else
         RHOwdHOM=P%RHOwdMIN
