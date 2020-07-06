@@ -905,7 +905,7 @@
 
       if(RHObausch .GT. 0.0) then
         Reffective=P%R + P%R2*RHObausch/(2.D0*P%RHOwpSAT)  
-        if (P%I*sqrt(RHO_a) - Reffective*RHO_a .LE. 0.0) then
+        if (P%I*sqrt(RHO_a) - Reffective*RHO_a .LE. 0.0) then ! Heaviside bracket
           RHO_b=RHO_a !Keep as is. 
         else
             RHO_b= F_KocksMeck(RHO_a,SUMabsGam,P%I,Reffective)
@@ -954,7 +954,7 @@
                   wpcontr(i)=sqrt(abs(SV%CBB(i)%RHOwp)) *             &
                        signfac * alfa_G_b_eff(s,i) *                    &
                        sign(1.D0,SV%CBB(i)%RHOwp) ! sign returns +/-1 depending on the sign of the second argument
-            if (wpcontr(i) .LT. 0.0) wpcontr(i)=0.0
+            if (wpcontr(i) .LT. 0.0) wpcontr(i)=0.0 ! Heaviside bracket
             wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*alfa_G_b_ABSeff(s,i)
           end do
           !CRSS within CBB = wp- and wd-contributions for all 6 walls
