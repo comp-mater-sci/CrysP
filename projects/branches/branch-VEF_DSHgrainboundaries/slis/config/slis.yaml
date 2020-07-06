@@ -1,0 +1,15 @@
+
+# Host: URL to the SLIS token server
+host: http://tokenapi-throughscale.azurewebsites.net/
+
+#
+# User key
+#
+# Keep this confidential, since it allows access to the tokens.
+user_key: None
+
+# Version of the API
+api_version: v1
+
+# Timeout in seconds
+timeout: 30
