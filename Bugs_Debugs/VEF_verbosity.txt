@@ -1,0 +1,16 @@
+Unexpected behavior when setting output verbosity in VEF configuration file outside the required 0-3.
+
+Example configuration file:
+
+# Note: this is an automatically generated config file.
+# Generic section
+# ===============
+VEF_mod              # Prefix for the output files
+True                 # Flag: request incremental output of the material state
+3                    # Verbosity level: 0 (the lowest) - 3 (the highest)
+
+
+Setting verbosity to negative value let's execution freeze, setting it to value >3 falls back to (likely) verbosity level 3.
+
+Desired behavior:
+User receives error message when verbosity out of defined bounds. Or verbosity is set to minumum or maximum value and user gets notified.
