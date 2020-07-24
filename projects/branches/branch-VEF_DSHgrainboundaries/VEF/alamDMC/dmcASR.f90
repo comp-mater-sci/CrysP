@@ -28,6 +28,7 @@ use dmcIncrementationControl
 use dmcStressDrivenEvolutionModule
 use commonConfig
 use commonUtils
+!use,intrinsic :: iso_fortran_env, only: error_unit,output_unit   !<<<<<<<<<<<============== testing
 implicit none
 
     public :: ASRModule
@@ -75,10 +76,11 @@ contains
     class(ASRModule),intent(inout)            :: this
     integer,intent(in)                        :: cnfunit
     !
-    double precision,dimension(3) :: tmp_euler
-    integer :: i, n_steps
-    !
-        info = this%StressDrivenEvolutionModule%readConfig(cnfunit)
+    double precision,dimension(3) :: tmp_euler !< Euler angles defining sample reference frame
+    integer :: i, &
+               n_steps    !< number of steps
+        ! Read general configuration section
+        info = this%StressDrivenEvolutionModule%readConfig(cnfunit)									   
         if (info /= criSuccess) return
         info = criErr_IORead
         ! Read parameters specific for the ASRModule
