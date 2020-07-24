@@ -63,7 +63,7 @@ contains
       integer :: ierr
       logical :: is_exception
       !
-            if (present(errmsg)) errmsg = '' !MB: clear errmsg
+            if (present(errmsg)) errmsg = '' ! clear errmsg
             ierr = 0
             ! Set the singleton object to the cnf
             acnf = cnf

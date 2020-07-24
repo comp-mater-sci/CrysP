@@ -53,9 +53,9 @@ implicit none
       integer,parameter       :: tokenfile_argpos = 3
       character(len=*),parameter    :: prog_desc = 'parameters: command_name configuration_file token_file'
 #endif
-      integer,parameter       :: command_argpos = 1, & !MB: command (i.e. module identifier) is 1st argument
-                                 configfile_argpos = 2 !MB: configuration file is 2nd argument
-      type(commandLine)       :: cmdline !MB: type commandLine defined in criRuntime.f90
+      integer,parameter       :: command_argpos = 1, & ! command (i.e. module identifier) is 1st argument
+                                 configfile_argpos = 2 ! configuration file is 2nd argument
+      type(commandLine)       :: cmdline ! type commandLine defined in criRuntime.f90
       
       logical                 :: moduleFound = .false.
       character(len=32)       :: moduleName = ''
@@ -66,15 +66,15 @@ implicit none
       !
       character(len=128)  :: progname
       !
-      info = criError !MB> defined in criErrcodes.f90
+      info = criError ! see criErrcodes.f90
       ioerr = 0
       !
       write(progname,fmt=300)
       !
-      cmdline = commandLine(progname,description=prog_desc) !MB: create commandLine type object with progname and description defined and assign to cmdline
-      call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.) !MB: call processCommandLine with 7 arguments, last one optional
+      cmdline = commandLine(progname,description=prog_desc) ! create commandLine type object with progname and description defined and assign to cmdline
+      call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.) ! call processCommandLine with 7 arguments, last one optional
       moduleFound = .false.
-      if (info == criSuccess) moduleFound = resolveId(command_map, cmdline%command_id,moduleName) !MB: logical function defined in criLinearMap.f90: resolveId(themap,id,name[,index])
+      if (info == criSuccess) moduleFound = resolveId(command_map, cmdline%command_id,moduleName) ! logical function defined in criLinearMap.f90: resolveId(themap,id,name[,index])
       if ((info /= criSuccess) .or. (.not. moduleFound)) then
             errmsg = 'Error in processing the command line'
             call finalize(stopcode_inputerror)
@@ -100,8 +100,8 @@ implicit none
       !
       ! Configure the module
       !
-      write(display_unit,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(configfile_argpos)) !MB: display_unit = output_unit defined in dmcutils.f90 
-      cnfunit = openOrDie(fpath=trim(cmdline%argv(configfile_argpos)),status='old') !MB: create new unit (handle) for config file; openOrDie(fpath,status[,unit]) defined in criRuntime.f90
+      write(display_unit,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(configfile_argpos)) ! display_unit = output_unit defined in dmcutils.f90 
+      cnfunit = openOrDie(fpath=trim(cmdline%argv(configfile_argpos)),status='old') ! create new unit (handle) for config file; openOrDie(fpath,status[,unit]) defined in criRuntime.f90
       !
       info = -1
       ! Create a module of appropriate type:
@@ -126,7 +126,7 @@ implicit none
       endif
       !
       ! Read the configuration file:
-      info = the_module%ReadConfig(cnfunit) !MB: type-bound subroutine defined in dmc<module>.f90
+      info = the_module%ReadConfig(cnfunit) ! type-bound subroutine defined in dmc<module>.f90
       close(cnfunit)
       if (info /= 0) then
             write(errmsg,'(A)') 'Configuration file contains errors.'

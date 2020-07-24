@@ -80,12 +80,12 @@ contains
     !> Read configuration from IO unit
     integer function DeformationDrivenModule_readConfig(this,cnfunit) result(info)
     implicit none
-    class(DeformationDrivenModule),intent(inout)   :: this !< MB: passed implicitly 
+    class(DeformationDrivenModule),intent(inout)   :: this
     integer,intent(in)              :: cnfunit !< IO input unit
     !
     logical :: default_solver_config
         !
-        !MB> read output and AlTay configuration sections
+        ! read output and AlTay configuration sections
         info = this%BasicModule%readConfig(cnfunit) 
         !
         ! Read "solver config flag" that belongs to the global section
