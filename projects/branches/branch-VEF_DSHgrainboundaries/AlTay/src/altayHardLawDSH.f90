@@ -2,7 +2,7 @@
 ! $Id$
 !
       !> Dislocation substructural hardening (Peeters model and derivatives)
-      MODULE altayHardLaw_DSH
+MODULE altayHardLaw_DSH
 !     v1.0 by P. Eyckens, MTM, KU Leuven, 17 July 2012.
 !     v1.1 by P. Eyckens, MTM, and J. Gawad, CS, KU Leuven, 2 August 2012.
 !     v1.2 by J. Gawad, CS, KU Leuven, 13 August 2012:
@@ -366,7 +366,7 @@
 
 
 
-      CONTAINS
+CONTAINS
 
       !> Initialization of altayHardLaw_DSH.
       !>
@@ -378,12 +378,12 @@
       !> \note CONTAINed by MODULE altayHardLaw_DSH
       integer FUNCTION Init_PAR(Ptry,KOSTtry,LEC) result(iError)
       CLASS(PAR),INTENT(IN)   :: Ptry    !< proposed parameter set
-      integer    ,INTENT(IN) :: KOSTtry  !< proposed value of KOST (hardening model identifier)
-      integer    ,INTENT(IN) :: LEC      !< unit number of PRE-file
+      integer    ,INTENT(IN)  :: KOSTtry !< proposed value of KOST (hardening model identifier)
+      integer    ,INTENT(IN)  :: LEC     !< unit number of PRE-file
       
       !local variables declarations:
       character(LEN=128) :: line1
-      integer           :: s,i,Idum=0,Nsstry=0
+      integer            :: s,i,Idum=0,Nsstry=0
       
 
       InitOK=.FALSE.
@@ -558,16 +558,15 @@
       implicit none
       integer,intent(in)      :: inunit   !< IO unit number
       integer,intent(in)      :: KOST     !< model identifier
-      !CLASS(PAR), allocatable, INTENT(OUT)  :: Pf       !< Parameters to be read from formatted file.
-      CLASS(PAR), INTENT(OUT)  :: Pf       !< Parameters to be read from formatted file.
+      CLASS(PAR), allocatable, INTENT(OUT)  :: Pf       !< Parameters to be read from formatted file.
       !
-      ! !assign type to Pf according to hardening law
-      ! select case(KOST)
-      ! case (11,12,13)
-         ! allocate(PAR::Pf) 
-      ! case (14)
-         ! allocate(PARg::Pf)
-      ! end select
+      !assign type to Pf according to hardening law
+      select case(KOST)
+      case (11,12,13)
+         allocate(PAR::Pf) 
+      case (14)
+         allocate(PARg::Pf)
+      end select
       
       read(inunit,fmt=100,err=666,end=666) Pf%b
       read(inunit,fmt=100,err=666,end=666) Pf%G
@@ -1338,4 +1337,4 @@
       !
       end function
     
-      END MODULE altayHardLaw_DSH
+END MODULE altayHardLaw_DSH
