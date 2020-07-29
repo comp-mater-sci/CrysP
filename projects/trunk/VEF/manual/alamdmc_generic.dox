@@ -29,9 +29,23 @@ True                 # Flag: request incremental output of the material state
 Although the configuration options of the multi-scale model are pretty much fine grained, there are reliable defaults that the user can rely on. These defaults typically cover a set of aspects and allow the user not to define the corresponding collection of configuration options. If the defaults do not fit to user's needs, it is possible to adapt the model by selectively dropping the defaults. The multi-scale model is configured as follows:
 
 
--# \confdef{texture_file,path} specifies the path to the input texture file. The extension of the file will be interpreted to determine the format of the texture data. Currently the following extensions can be used: `smt`, `cur` and `cub` (case sensitive). Note that the CUR format allows many discrete ODFs inside a single file. If \conffield{texture_file} has the extension 
-  - `cur` <BR> then the following suboption must be provided:
+-# \confdef{texture_file,path} specifies the path to the input texture file. The extension of the file will be interpreted to determine the format of the texture data. Currently the following extensions can be used: `smt`, `cur` and `cub` (case sensitive).
+  - `smt` <BR>
+     The texture input file contains the number of grains (orientations) and a title for the texture on its first line. Each of the following lines contains a set of Euler angles (in the order: \f$\phi_2\f$, \f$\Phi\f$, \f$\phi_1\f$) in the first 3 colums as in the following example:
+     \par Example
+~~~~~~~~~~~~~{.txt}
+ 5000     texinp                 
+     0.000    20.000   145.000              1            1.0
+    67.500    65.000   -65.000              1            1.0
+    12.500    27.500    30.000              1            1.0
+~~~~~~~~~~~~~
+<BR>
+  
+  - `cur` <BR>
+     Note that the CUR format allows many discrete ODFs inside a single file. Thus, the following suboption must be provided:
 	-# \confdef{texture_block,integer} provides the index of the ODF block inside the CUR file. The first block has index 1 (one).
+  - `cub` <BR>
+     A binary format with similar capabilities as `cur`.
 
 -# \confdef{model_type,string} specifies the multi-scale crystal plasticity model to be used in the calculations: either `ALAMEL` or `FCTaylor` (case sensitive).
 
@@ -43,7 +57,7 @@ Although the configuration options of the multi-scale model are pretty much fine
  
 -# \confdef{microstructure_default,logical} specifies if the default microstructural description should be used, namely equi-axed grained microstructure. If \conffield{microstructure_default} is 
   - `False`<BR> then 2 required suboptions are: 
-      -# \confdef{microstructure_file,path} specifies the file with microstructure definition. Its first line contains the number of grain boundary orientations and a title for the microstructure. Each of the following lines contains a set of Euler angles (in the order: phi2, PHI, phi1).\n
+      -# \confdef{microstructure_file,path} specifies the file with microstructure definition. Its first line contains the number of grain boundary orientations and a title for the microstructure. Each of the following lines contains a set of Euler angles (in the order: \f$\phi_2\f$, \f$\Phi\f$, \f$\phi_1\f$).\n
 
 \par Example
 ~~~~~~~~~~~~~{.txt}
@@ -53,7 +67,7 @@ Although the configuration options of the multi-scale model are pretty much fine
    307.452   105.118   301.893              1            1.0
 ~~~~~~~~~~~~~
 <BR>
-      The last two columns in the example above are not read.
+      The example above show the first 4 lines of a microstructure file. Note that the last two columns are not read.
       -# \confdef{microstructure_F,srtensor} defines a deviation from the default equi-axed microstructure in the form of a deformation gradient tensor \f$ F_0 \f$. \f$ F_0 \f$ modifies the initial grain shape from a spherical into an ellipsoidal shape (unless \f$ F_0 \f$ equals the identity matrix).
 	  
 -# \confdef{hardening_default,logical} specifies if the default hardening description should be used. As default, non-hardening slip systems are assumed having a critical resolved shear stress equal to 1.0, independent of deformation. If \conffield{hardening_default} is 
