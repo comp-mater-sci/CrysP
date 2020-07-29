@@ -1,6 +1,7 @@
 !> $Id$
       
 !> Microstructure representation in AlTay
+!> The microstructure is created by grain boundary segments. 
 module altayMesostructure
 use altayAlgorithms
 use altayMiscutils, only: terminate, stopcode_runtimeerror
@@ -10,27 +11,27 @@ implicit none
       !> in the initial state.
       !> Shape is: [3,3,ngr], where ngr is the number of grains.
       double precision, dimension(:,:,:),allocatable,save :: TmatGr
-      integer,save :: NGrElm = 0
-      character(len=40), save :: TitMic = ''
+      integer,save :: NGrElm = 0             !< Number of grain boundary orientations
+      character(len=40), save :: TitMic = '' !< Microstructure title
 
       
 contains
       
-      ! Reading of "microstructure" (Euler angles defining 
-      ! grain boundary segments) in SMT-format, allocation 
-      ! and assignment of the module variables.
+      !> Reading of "microstructure" (Euler angles defining 
+      !> grain boundary segments) in SMT-format, allocation 
+      !> and assignment of the module variables.
       subroutine GRFIL(fnam,F_mic,ierr)
       use altayMiscutils
       use altayIOConfig
       implicit none
       !
       integer,intent(out)         :: ierr
-      character(len=*),intent(in) :: fnam
-      !F_mic is a deformation gradient that conceptually
-      ! 'deforms' a spherical grain into an ellipsoidal shape
+      character(len=*),intent(in) :: fnam !< Microstructure file name
+      !> F_mic is a deformation gradient that conceptually
+      !> 'deforms' a spherical grain into an ellipsoidal shape
       double precision, dimension(3,3), intent(in) :: F_mic
       !
-      integer          :: IGrElm
+      integer           :: IGrElm !< Counter for loop over GBs
       type(EulerAngles) :: EulGB
       double precision, dimension(3,3) :: T 
       ! 
@@ -38,20 +39,19 @@ contains
       !
       ! output to NLIST 
       if(NLIST.eq.1) write (IMP,103) fnam
-      103  format (' GRFIL - Input Texture File:' ,a)
+      103  format (' GRFIL - Input microstructure file:' ,a)
       !
       open (unit=NDAT2,file=fnam,status='old',iostat=ierr) 
       if (ierr /= 0) return
       !
-      read (NDAT2,94) NGrElm,TitMic
+      read (NDAT2,94) NGrElm,TitMic ! read number of GBs and title
       94  format(I5,5x,A)
 #ifndef NO_STDOUT
       write (*,93) NGrElm,TitMic
 #endif
       ! output to NLIST 
       if(NLIST.eq.1) write (IMP,93) NGrElm,TitMic
-      93  format (' Number of orientations in MICROSTRUCTURE file:' ,I5,/,' Titel on  file: ',A)
-    
+      93  format (' Number of orientations in MICROSTRUCTURE file:' ,I5,/,' Title in file: ',A)    
       !
       allocate(TmatGr(3,3,NGrElm),STAT=ierr)
       if (ierr.ne.0) then
@@ -61,7 +61,7 @@ contains
       102  format (' GRFIL - Allocation of memory failed')
       !
       do IGrElm=1,NGrElm
-            read (NDAT2,96) EulGB%fi2,EulGB%PHI,EulGB%fi1
+            read (NDAT2,96) EulGB%fi2,EulGB%PHI,EulGB%fi1 ! read Euler angles from microstructure file in order: phi2, PHI, phi1
             !Calc. the transformation matrix T
             T = rotmat(deg2rad(EulGB))
             !TmatGr(1:3,i,IGrElm) for i=1,2 holds two non-parallel vectors 
@@ -99,7 +99,7 @@ contains
       !      Cofcos and Cofsin are the cosine and sine of the angle for relaxation-1
       !
       !   relaxation-2 is always the orthogonal one.
-      !   TDC is the normalized von-Mise equivalent strain rate
+      !   TDC is the normalized von-Mises equivalent strain rate
       use altayIOConfig, only: IPR,NLIST,IMP
       use altayMiscutils, only: unitMatrix, pi
       use altayMacroKinematic

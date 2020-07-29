@@ -43,8 +43,18 @@ Although the configuration options of the multi-scale model are pretty much fine
  
 -# \confdef{microstructure_default,logical} specifies if the default microstructural description should be used, namely equi-axed grained microstructure. If \conffield{microstructure_default} is 
   - `False`<BR> then 2 required suboptions are: 
-      -# \confdef{microstructure_file,path} specifies the file with microstructure definition.
-      -# \confdef{microstructure_F,srtensor} defines a pre-deformation of the microstructure definition in the form of a deformation gradient tensor.
+      -# \confdef{microstructure_file,path} specifies the file with microstructure definition. Its first line contains the number of grain boundary orientations and a title for the microstructure. Each of the following lines contains a set of Euler angles (in the order: phi2, PHI, phi1).\n
+
+\par Example
+~~~~~~~~~~~~~{.txt}
+ 1000     Micr
+     3.285    61.555   171.650              1            1.0
+   296.169   153.316   162.828              1            1.0
+   307.452   105.118   301.893              1            1.0
+~~~~~~~~~~~~~
+<BR>
+      The last two columns in the example above are not read.
+      -# \confdef{microstructure_F,srtensor} defines a deviation from the default equi-axed microstructure in the form of a deformation gradient tensor \f$ F_0 \f$. \f$ F_0 \f$ modifies the initial grain shape from a spherical into an ellipsoidal shape (unless \f$ F_0 \f$ equals the identity matrix).
 	  
 -# \confdef{hardening_default,logical} specifies if the default hardening description should be used. As default, non-hardening slip systems are assumed having a critical resolved shear stress equal to 1.0, independent of deformation. If \conffield{hardening_default} is 
   - `False`<BR> it is followed by suboption:
