@@ -30,8 +30,8 @@ module altayConfig
 ! Import configuration structures from AlTay modules
 use altayHardTypes
 use altayHardLaw_Simple, only: VoceConfig, SwiftKConfig, SwiftSConfig
-use altayHardLaw_DSH, only: PAR
-use altayTexFormatConstants
+use altayHardLaw_DSH, only: PAR, PARg
+use altayTexFormatConstants ! texture format IDs
 
 implicit none
 
@@ -58,7 +58,7 @@ implicit none
       end type
 
       
-      type :: simulStepInputData !MB: no hardening data!  
+      type :: simulStepInputData ! (no hardening data)
             !> Flag that decides if this step leads to modification of the texture.
             logical                                   :: keep_texture = .true.
             
@@ -214,16 +214,16 @@ implicit none
       end type
 
       !> Root-level configuration structure
-      !> MB: Config. parameters of AlTay, i.e. texture and hardening.
+      !> Config. parameters of AlTay, incl. texture and hardening.
       type :: altayConfigData
             !>
             integer                                   :: model_id      = modelAlamel
             character(len=fname_len)                  :: output_prefix = 'alamel'
             character(len=fname_len)                  :: jobtitle      = 'alamel'
             character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
-            type(slipSystemData)                      :: slipsystem !<MB: definition of slip systems 
-            type(outputConfig)                        :: output_config !<MB: output file prefix, incremental output request flag, verbosity level
-            type(hardeningData)                       :: hardening !<MB: hardening model parameters
+            type(slipSystemData)                      :: slipsystem ! definition of slip systems 
+            type(outputConfig)                        :: output_config ! output file prefix, incremental output request flag, verbosity level
+            type(hardeningData)                       :: hardening ! hardening model parameters
             type(textureData)                         :: texture
             type(simulData)                           :: simul_init
             ! 

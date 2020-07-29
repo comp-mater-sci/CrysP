@@ -443,8 +443,8 @@ CONTAINS
       select type (Ptry)
       type is (PARg)
          if (.NOT. &
-            (Ptry%Igpd >= 0.    .AND. Ptry%Igpd<= 10.       .AND.& ! [/]
-             Ptry%kg   >= 0.    .AND. Ptry%kg<= 5.              )& ! [MPa*m^(1/2)] micro Hall-Petch parameter
+            (Ptry%Igpd >= 0.    .AND. Ptry%Igpd <= 10.       .AND.& ! [/] accumulation of polarization at GBs, setting to 0 corresponds to no grain boundaries
+             Ptry%kg   >= 0.    .AND. Ptry%kg   <= 5.            )& ! [MPa*m^(1/2)] micro Hall-Petch parameter
              ) then
               
             iError = KS_ErrOutOfRange
@@ -460,7 +460,7 @@ CONTAINS
       end select
       !Save the parameters in P (private to this module)          
       P=Ptry
-      !change of units if different in Ptry from P (units of P are: MPa; nm(nanometer))
+      !change of units if different in Ptry from P (units of P are: MPa; nm)
       P%b    = P%b    * TENpow6 ![m] -> [nm]
       P%R    = P%R    * TENpow6 ![m] -> [nm]
       P%Rwd  = P%Rwd  * TENpow6 ![m] -> [nm]
@@ -470,9 +470,9 @@ CONTAINS
       P%R2   = P%R2   * TENpow6 ![m] -> [nm]            
       select type (P)
       type is (PARg)
-         P%kg   = P%kg   / TENpow4c5 ![MPa*m^(1/2)] -> [MPa*nm^(1/2)]
-         P%Igpr=P%Iwp*sqrt(P%f)                ! same dislocation immobilization due to rho_polCBBs and rho_polGBs
-         P%Rgp=P%R                           ! same recovery of rho_polCBBs and rho_polGBs
+         P%kg   = P%kg   / TENpow4c5 ! [MPa*m^(1/2)] -> [MPa*nm^(1/2)]
+         P%Igpr=P%Iwp*sqrt(P%f)      ! same dislocation immobilization due to rho_polCBB and rho_polGB
+         P%Rgp=P%R                   ! same recovery of rho_polCBB and rho_polGB
       end select      
 
       !Calculate dependent hardening parameters

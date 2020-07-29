@@ -49,7 +49,7 @@ contains
       use altayRCM
       use altayIOConfig
       use altayTexFormats
-      use altayHard,only: hard_BP,hard_PEBPscrew,hard_PEBPloop,InitModuleAltayHard
+      use altayHard,only: hard_BP,hard_PEBPscrew,hard_PEBPloop,InitModuleAltayHard, hard_BPg
       use altayMesostructure
 #ifdef PEBP_ENABLED
       use AltayDSHstate

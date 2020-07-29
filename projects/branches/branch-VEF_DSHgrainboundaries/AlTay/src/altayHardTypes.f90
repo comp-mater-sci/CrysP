@@ -23,13 +23,14 @@ module altayHardTypes
       ! CRSS for each individual slip system is multiplied with inputted "crss_ratios". 
       ! Note that "RefTau" is work-equivalent to the total slip rate ONLY IF all "crss_ratios" == 1.
       integer,parameter :: hard_voce =          1, &
-                           hard_swiftK =        2, &   !MB: Swift law with K-factor :: TAU = K * (gamma0+GAMMA)**n
-                           hard_swiftS =        3      !MB: Swift law with initial crsS :: TAU = crss0 * (1.+GAMMA/gammaA0)**n
+                           hard_swiftK =        2, &   !< Swift law with K-factor :: TAU = K * (gamma0+GAMMA)**n
+                           hard_swiftS =        3      !< Swift law with initial crsS :: TAU = crss0 * (1.+GAMMA/gammaA0)**n
 
       !Following identifiers invoke module altayHardLaw_DSH, resulting in generally different CRSS for the slip systems.
       ! The reference-crss "RefTau" is arbitrarily set to 1.
-      integer,parameter :: hard_BP =           11, &
-                           hard_PEBPscrew =    12, &
-                           hard_PEBPloop =     13
+      integer,parameter :: hard_BP =           11, & !< original (Bart) Peeters model
+                           hard_PEBPscrew =    12, & !< Philip Eyckens modified BP model
+                           hard_PEBPloop =     13, & !< Philip Eyckens modified BP model
+                           hard_BPg =          14    !< Peeters model extended to grain boundaries
 
 end module

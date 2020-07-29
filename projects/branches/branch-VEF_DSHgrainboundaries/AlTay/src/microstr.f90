@@ -16,21 +16,21 @@ implicit none
       
 contains
       
-      ! Reading of "microstructure" (Euler angles defining 
-      ! grain boundary segments) in SMT-format, allocation 
-      ! and assignment of the module variables.
+      !> Reading of "microstructure" (Euler angles defining 
+      !> grain boundary segments) in SMT-format, allocation 
+      !> and assignment of the module variables.
       subroutine GRFIL(fnam,F_mic,ierr)
       use altayMiscutils
       use altayIOConfig
       implicit none
       !
       integer,intent(out)         :: ierr
-      character(len=*),intent(in) :: fnam
-      !F_mic is a deformation gradient that conceptually
-      ! 'deforms' a spherical grain into an ellipsoidal shape
+      character(len=*),intent(in) :: fnam  !< microstructure file name
+      !> F_mic is a deformation gradient that conceptually
+      !> 'deforms' a spherical grain into an ellipsoidal shape
       double precision, dimension(3,3), intent(in) :: F_mic
       !
-      integer          :: IGrElm
+      integer           :: IGrElm
       type(EulerAngles) :: EulGB
       double precision, dimension(3,3) :: T 
       ! 

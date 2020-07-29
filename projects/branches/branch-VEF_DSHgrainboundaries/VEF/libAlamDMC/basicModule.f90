@@ -101,7 +101,7 @@ contains
 
       integer function BasicModule_initialize(this) result(info)
       use altaySub
-      use altayHardTypes, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop
+      use altayHardTypes, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop, hard_BPg
       use commonUtils
       implicit none
       class(BasicModule),intent(inout)          :: this
@@ -121,9 +121,9 @@ contains
             if (this%output%outputRequest) then
                   select case(this%altay%hardening%HardLawID)
                   case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-                        this%altay%output_config%npebp = 1
+                        this%altay%output_config%npebp = 1 ! Create state variable file for DSH model
                   case default
-                        this%altay%output_config%npebp = 0
+                        this%altay%output_config%npebp = 0 ! Don't create state variable file for DSH model
                   end select
             endif
             !
@@ -478,7 +478,7 @@ contains
 
       !> Read configuration of hardening model from configuration file 
       subroutine readHardeningSection(cnfunit, hardening, info)
-      use altayHard, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop, hard_SwiftK, hard_SwiftS
+      use altayHard, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop, hard_SwiftK, hard_SwiftS, hard_BPg
       use altayConfig, only: hardeningData, VoceConfig, SwiftKConfig, SwiftSConfig
       implicit none
       integer,intent(in)                  :: cnfunit
@@ -518,7 +518,7 @@ contains
                               info = criSuccess
                         endif
                   !
-                  case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+                  case(hard_BP,hard_PEBPscrew,hard_PEBPloop,hard_BPg)
 #ifdef PEBP_ENABLED                        
                         call readPEPBhardening(cnfunit,hardening%HardLawID,hardening%PEBPCnf,info)
 #else
@@ -550,26 +550,26 @@ contains
       use altayConfig
       use altayHardLaw_DSH, only: ReadPar
       implicit none
-      integer,intent(in)                  :: cnfunit !< configuration file
+      integer,intent(in)                  :: cnfunit !< VEF configuration file
       integer,intent(in)                  :: kost    !< HardLawID
       type(PEBPConfig),intent(out)        :: hc      !< data type containing the BP model parameters (no state variables); defined in altayConfig.f90
       integer,intent(out)                 :: info
       !
       integer                             :: ioerr
-      character(len=max_pathlen)          :: tmp_fname ! BP parameter file name
-      integer                             :: nparunit  ! IO unit of BP parameter file
+      character(len=max_pathlen)          :: tmp_fname !< BP parameter file name
+      integer                             :: nparunit  !< IO unit of BP parameter file
       !
             info = criErr_IORead
             !
-            ! Process PEBP parameter file
-            if (.not. readValue(cnfunit, tmp_fname)) return ! read BP parameter file name
+            ! Read PEBP parameter file name
+            if (.not. readValue(cnfunit, tmp_fname)) return 
             ! Open the PEBP parameter file and read its content
             open(newunit=nparunit,file=tmp_fname,status='old',iostat=ioerr)
             if (ioerr /= 0) then
 				write(error_unit,fmt=951) trim(tmp_fname)
 				return
 			endif
-            info = ReadPar(nparunit,kost,hc%params) ! read the BP parameter file
+            info = ReadPar(nparunit,kost,hc%params) ! read the PEBP parameter file
             close(nparunit)
             if (info /= 0) then
 				write(error_unit,'(A,1X,A,1X,A)') 'Error: Reading of the parameter file',trim(tmp_fname),'failed.'
@@ -579,8 +579,8 @@ contains
             ! Read PEBP state variable file path and block ID. 3 lines in config file
             if (.not. readValue(cnfunit, hc%read_state)) return ! read read_state flag; default read_state=.false.
             if (hc%read_state) then
-                  if (.not. readValue(cnfunit,hc%input_fname)) return !MB: read state variable file name; default input_fname=''
-                  if (.not. readValue(cnfunit,hc%block_id)) return !MB: read no. of state blocks to skip in state file; default block_id=0
+                  if (.not. readValue(cnfunit,hc%input_fname)) return ! read state variable file name; default input_fname=''
+                  if (.not. readValue(cnfunit,hc%block_id)) return ! read no. of state blocks to skip in state file; default block_id=0
             endif
             !
             info = criSuccess

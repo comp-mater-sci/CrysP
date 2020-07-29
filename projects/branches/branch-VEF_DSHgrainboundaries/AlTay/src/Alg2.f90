@@ -350,7 +350,7 @@
       return
       end subroutine
       !
-      SUBROUTINE MINV(A,N,D,L,M,NXXX)                                   
+      SUBROUTINE MINV(A,N,D,L,M,NXXX)
       DIMENSION A(NXXX),L(N),M(N)                                       
 !                                                                       
 !        ...............................................................
@@ -486,10 +486,8 @@
       GO TO 100                                                         
   150 RETURN                                                            
       END SUBROUTINE
-      
       !
-      
-           Subroutine Kleinkwa(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
+      Subroutine Kleinkwa(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
 !     N1=number of equations
 !     N2=number of unknowns
 !     A=coefficient matrix
@@ -530,12 +528,7 @@
    1  continue
       return
       end subroutine
-
-
-
-
-
-
+      !
       Subroutine STELSEL(N,M,A,R,TOL,VAL,XV,YV)
       IMPLICIT double precision (A-H,O-Z)
       dimension A(M,M),R(M),VAL(M),XV(M),YV(M)
