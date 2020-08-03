@@ -36,7 +36,7 @@ use dmcToken
 implicit none
 
 
-    public :: outputConfig, BasicModule
+    public :: outputConfig, BasicModule, readAlTayConfigSection
     private
 
       type :: outputConfig
@@ -396,7 +396,7 @@ contains
             !
             ! Deduce the input type from the extension
             call splitExt(cnf%texture%input_fname, root, ext)
-            if (ext == '' .or. .not. resolveName(extensions, ext, cnf%texture%input_type)) then
+			if (ext == '' .or. .not. resolveName(extensions, ext, cnf%texture%input_type)) then
                 write(error_unit,fmt=900) 'Unsupported texture input file format.'
                 info = criErr_BadArgs
                 return

@@ -43,7 +43,7 @@
       call GET_COMMAND_ARGUMENT(2,fnamfcub,status=iuerr)
       
       write(*,*) trim(fnamucub), ' => ',trim(fnamfcub)
-      ! Open CUB file 
+      ! Open unformatted CUB file 
       open (unit=nucubunit,file=TRIM(fnamucub),                            &
                      status='old',form='UNFORMATTED')
       
@@ -53,7 +53,7 @@
             call exit(11)
       endif
       close(nucubunit)
-      ! Open CUR file
+      ! Open formatted CUB file
       open (unit=nfcubunit,file=TRIM(fnamfcub),                            &
                      status='unknown',form='FORMATTED')
       ! Mangle title
