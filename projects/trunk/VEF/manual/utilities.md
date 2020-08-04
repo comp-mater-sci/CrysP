@@ -198,7 +198,8 @@ Make basic modifications to ODF
       --symmetry {orthorhombic,triclinic}
                             Title to be included in the output ODF
       --rotation phi_1 Phi phi_2
-                            rotation by three Euler angles in Bunge convention:
+                            Rotation of ODF reference frame (passive rotation of
+                            ODF) by three Euler angles in Bunge convention:
                             phi_1 Phi phi_2 given in degrees
 
 
