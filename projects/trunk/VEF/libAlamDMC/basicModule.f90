@@ -213,6 +213,22 @@ contains
                 write(outunit,fmt=201) trim(this%altay%texture%input_fname)
                 write(outunit,fmt=101) 'Slip systems definition:', trim(this%altay%slipsystem%input_fname)
                 write(outunit,fmt=101) 'Microstructure definition:', trim(this%altay%micros_fname)
+                select case(this%altay%hardening%HardLawID)
+                      case(0)     ! hard_none
+                            write(outunit,fmt=203) 'non-hardening'
+                      case(1)     ! 
+                            write(outunit,fmt=203) 'Voce'
+                      case(2)       !    
+                            write(outunit,fmt=203) 'Swift K'
+                      case(3)
+                            write(outunit,fmt=203) 'Swift S'                       
+                      case(11)
+                            write(outunit,fmt=203) 'Peeters'                       
+                      case(12)
+                            write(outunit,fmt=203) 'PEBP screw'                       
+                      case(13)
+                            write(outunit,fmt=203) 'PEBP loop'                       
+                end select
                 !
             endif
             !
