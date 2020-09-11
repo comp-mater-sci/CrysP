@@ -241,6 +241,7 @@ contains
             200 format('Input texture format:', T35,A)
             201 format('Input texture file:', T35,A)
             202 format('Multilevel model:', T35,A)
+			203 format('Hardening model:', T35,A)
       !
       end function
       
