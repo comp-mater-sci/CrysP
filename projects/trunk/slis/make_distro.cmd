@@ -21,20 +21,21 @@ copy Win32\Release-DLL\libslis.dll %SLIS_DIR%\lib\Win32
 ::
 :: Python
 ::
-python -OO -m compileall python
+python -OO -m compileall -b python
 
 set PYSLIS=python\pyslis
 
 mkdir %SLIS_DIR%\%PYSLIS%
 
-copy %PYSLIS%\*.pyo %SLIS_DIR%\%PYSLIS%
+copy %PYSLIS%\*.pyc %SLIS_DIR%\%PYSLIS%
 
 xcopy /I /E /Y config %SLIS_DIR%\config
 
-cat python\requirements.txt >> %SLIS_DIR%\python\requirements.txt
+:: requirements replaced with conda environment
+:: cat python\requirements.txt >> %SLIS_DIR%\python\requirements.txt
 
 :: Utilities
-copy python\scripts\*.pyo %SLIS_DIR%\scripts
+copy python\scripts\*.pyc %SLIS_DIR%\scripts
 
 ::
 :: Bootstrap for utilities

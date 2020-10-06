@@ -19,19 +19,20 @@ copy alamDMC\Release\alamDMC.exe %VEF_DIR%\bin
 ::
 :: Python
 ::
-python -OO -m compileall python
+python -OO -m compileall -b python
 
 mkdir %VEF_DIR%\python\pyvef
 mkdir %VEF_DIR%\python\pyvef\configurators
 
-copy python\pyvef\*.pyo %VEF_DIR%\python\pyvef
-copy python\pyvef\configurators\*.pyo %VEF_DIR%\python\pyvef\configurators
+copy python\pyvef\*.pyc %VEF_DIR%\python\pyvef
+copy python\pyvef\configurators\*.pyc %VEF_DIR%\python\pyvef\configurators
 
 mkdir %VEF_DIR%\scripts
 
-copy python\scripts\*.pyo %VEF_DIR%\scripts
+copy python\scripts\*.pyc %VEF_DIR%\scripts
 
-cat python\requirements.txt > %VEF_DIR%\python\requirements.txt
+:: requirements replaced with conda environment
+:: cat python\requirements.txt > %VEF_DIR%\python\requirements.txt
 
 ::
 :: Platform-specific
