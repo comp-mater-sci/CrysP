@@ -4,7 +4,8 @@
 #include <string>
 #include <vector>
 #include <boost/filesystem.hpp>
-#include <boost/uuid/sha1.hpp>
+#include <boost/uuid/detail/sha1.hpp>
+// can be #include <boost/uuid/sha1.hpp> dependant on boost version.
 
 #include "digest.hpp"
 

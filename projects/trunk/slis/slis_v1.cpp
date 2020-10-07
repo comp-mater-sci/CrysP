@@ -5,7 +5,9 @@
 #include <fstream>
 #include <boost/filesystem/path.hpp>
 #include <boost/uuid/string_generator.hpp>
-#include <boost/uuid/sha1.hpp>
+#include <boost/uuid/detail/sha1.hpp>
+// can be #include <boost/uuid/sha1.hpp> dependant on boost version.
+
 
 using namespace slis::slis_v1;
 

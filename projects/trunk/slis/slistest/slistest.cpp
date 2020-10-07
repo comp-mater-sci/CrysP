@@ -11,7 +11,8 @@
 #include <boost/uuid/string_generator.hpp>
 
 #include <boost/uuid/uuid.hpp>
-#include <boost/uuid/sha1.hpp>
+#include <boost/uuid/detail/sha1.hpp>
+// can be #include <boost/uuid/sha1.hpp> dependant on boost version.
 
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>

@@ -5,7 +5,8 @@
 #include <array>
 #include <type_traits>
 
-#include <boost/uuid/sha1.hpp>
+#include <boost/uuid/detail/sha1.hpp>
+// can be #include <boost/uuid/sha1.hpp> for older boost version.
 
 namespace slis {
 	namespace digest {
