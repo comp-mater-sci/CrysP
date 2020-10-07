@@ -19,7 +19,9 @@ copy alamDMC\Release\alamDMC.exe %VEF_DIR%\bin
 ::
 :: Python
 ::
+call activate Conda_VEF_env
 python -OO -m compileall -b python
+call conda deactivate
 
 mkdir %VEF_DIR%\python\pyvef
 mkdir %VEF_DIR%\python\pyvef\configurators
@@ -33,11 +35,12 @@ copy python\scripts\*.pyc %VEF_DIR%\scripts
 
 :: requirements replaced with conda environment
 :: cat python\requirements.txt > %VEF_DIR%\python\requirements.txt
+copy python\conda_VEF_env.yml %VEF_DIR%\python\conda_VEF_env.yml
 
 ::
 :: Platform-specific
 ::
-copy platform_specific\win32\scripts\* %VEF_DIR%\scripts
+copy platform_specific\Win32\scripts\* %VEF_DIR%\scripts
 copy platform_specific\Win32\vef_session.cmd %VEF_DIR%
 
 ::
@@ -55,6 +58,7 @@ copy manual\user_manual.html %VEF_DIR%
 :: Examples
 ::
 xcopy /i /s /y examples %VEF_DIR%\examples
+xcopy /i /s /y manual\guided_tour\expert %VEF_DIR%\examples\guided_tour
 
 ::
 :: Data

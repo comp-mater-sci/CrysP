@@ -21,7 +21,9 @@ copy Win32\Release-DLL\libslis.dll %SLIS_DIR%\lib\Win32
 ::
 :: Python
 ::
+call activate conda_VEF_env
 python -OO -m compileall -b python
+call conda deactivate
 
 set PYSLIS=python\pyslis
 

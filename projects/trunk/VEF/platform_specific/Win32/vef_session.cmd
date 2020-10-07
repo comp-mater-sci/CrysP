@@ -22,7 +22,15 @@ set PATH=%VEF_ROOT%\bin;%PATH%
 set PYTHONPATH=%VEF_ROOT%\python;%PYTHONPATH%
 set SLIS_ROOT=%VEF_ROOT%
 
-echo The VEF is now initialized.
+echo checking the Conda environment
+call conda env list | findstr Conda_VEF_env
+if ERRORLEVEL 1 (
+	echo conda environment not yet present: creating environment
+	call conda env create -f %VEF_ROOT%\python\Conda_VEF_env.yml
+) else (
+	call conda env update --name Conda_VEF_env --file %VEF_ROOT%\python\Conda_VEF_env.yml --prune
+)
+call conda activate Conda_VEF_env
 
 goto :eof
 
