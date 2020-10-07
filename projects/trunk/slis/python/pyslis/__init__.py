@@ -21,8 +21,8 @@ __status__ = 'Prototype'
 import sys
 
 try:
-    import detail
-    import remote
+    from . import detail
+    from . import remote
 except Exception as excpt:
     raise RuntimeError('Cannot initialize SLIS, reason: {}'.format(str(excpt)))
 

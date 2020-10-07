@@ -32,21 +32,25 @@ def setup_functions(module, lib, meta):
         fx.restype = fx_meta['restype']
         setattr(module, fx_name, fx)
 
-# Dispatcher: pick the library suitable for 32- or 64-bit Python
-__bits, __linkage = platform.architecture()
-__arch_variant = 'x64' if __bits == '64bit' else 'Win32'
-__lib_path = os.path.join(os.environ['SLIS_ROOT'],
-                          'lib',
-                          __arch_variant,
-                         'libslis.dll')
+if 'win' in sys.platform
+    # Dispatcher: pick the library suitable for 32- or 64-bit Python
+    __bits, __linkage = platform.architecture()
+    __arch_variant = 'x64' if __bits == '64bit' else 'Win32'
+    __lib_path = os.path.join(os.environ['SLIS_ROOT'],
+                            'lib',
+                            __arch_variant,
+                            'libslis.dll')
 # Dries
-__lib_path = os.path.join(os.environ['SLIS_ROOT'],'lib','libslis.so')
-print(__lib_path)
+elif 'linux' in sys.platform:
+    __lib_path = os.path.join(os.environ['SLIS_ROOT'],'lib','libslis.so')
+else:
+    raise RuntimeError('Platform not recognized, cannot find dynamic slis library')
+
+
 try:
     lib = cdll.LoadLibrary(__lib_path)
 except:
     lib = cdll.LoadLibrary(__lib_path)
-print("lib loaded")
 
 # map: function name -> attributes 
 meta = {'isTokenValid': {'argtypes': [c_char_p], 'restype': c_bool},
