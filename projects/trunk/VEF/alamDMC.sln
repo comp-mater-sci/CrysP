@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30128.74
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deps", "deps", "{F0FD6B17-398B-40AB-ACF1-03398B47494E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "python", "python", "{6B506E96-8065-4658-94CC-1A8FC6C232FA}"
 EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libfopt", "..\fopt\libfopt.vfproj", "{BE90F1A8-DC67-45F4-B168-5D687878EAD8}"
 EndProject
@@ -34,7 +36,7 @@ Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libaltay", "..\AlTay\libalt
 EndProject
 Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libFCRI", "..\FCRI\libFCRI\libFCRI.vfproj", "{48A894A8-DEF0-4103-8323-DA4269DB06E8}"
 EndProject
-Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libAlamDMC", "libalamDMC\libalamDMC.vfproj", "{B26EB62B-886D-4C8B-A616-2E25BB5EC2D3}"
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libalamDMC", "libalamDMC\libalamDMC.vfproj", "{B26EB62B-886D-4C8B-A616-2E25BB5EC2D3}"
 	ProjectSection(ProjectDependencies) = postProject
 		{3DAE2C65-0C11-4D04-ADC3-8E101AD55419} = {3DAE2C65-0C11-4D04-ADC3-8E101AD55419}
 		{F951AC66-E940-489A-AC99-A6AC837F1FB7} = {F951AC66-E940-489A-AC99-A6AC837F1FB7}
@@ -49,8 +51,6 @@ Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "fngCore", "..\fng\projects\
 		{48A894A8-DEF0-4103-8323-DA4269DB06E8} = {48A894A8-DEF0-4103-8323-DA4269DB06E8}
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "python", "python", "{6B506E96-8065-4658-94CC-1A8FC6C232FA}"
-EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "pyvef", "pyvef.pyproj", "{F4E5396C-681C-4396-89E2-4C4A50F88591}"
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "scripts", "scripts.pyproj", "{916832B9-B724-48DF-861E-979726DBFD69}"
@@ -60,10 +60,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libslis", "..\slis\slis.vcxproj", "{02ACC83B-70B5-4D00-9674-8E9B3149031B}"
 EndProject
 Global
-	GlobalSection(SubversionScc) = preSolution
-		Svn-Managed = True
-		Manager = AnkhSVN - Subversion Support for Visual Studio
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug_abaqus|Any CPU = Debug_abaqus|Any CPU
 		Debug_abaqus|Mixed Platforms = Debug_abaqus|Mixed Platforms
@@ -395,7 +391,8 @@ Global
 		{F951AC66-E940-489A-AC99-A6AC837F1FB7}.Release|Mixed Platforms.Build.0 = Release|Win32
 		{F951AC66-E940-489A-AC99-A6AC837F1FB7}.Release|Win32.ActiveCfg = Release|Win32
 		{F951AC66-E940-489A-AC99-A6AC837F1FB7}.Release|Win32.Build.0 = Release|Win32
-		{F951AC66-E940-489A-AC99-A6AC837F1FB7}.Release|x64.ActiveCfg = Release|Win32
+		{F951AC66-E940-489A-AC99-A6AC837F1FB7}.Release|x64.ActiveCfg = Release|x64
+		{F951AC66-E940-489A-AC99-A6AC837F1FB7}.Release|x64.Build.0 = Release|x64
 		{F951AC66-E940-489A-AC99-A6AC837F1FB7}.Release-instrumented|Any CPU.ActiveCfg = Release|Win32
 		{F951AC66-E940-489A-AC99-A6AC837F1FB7}.Release-instrumented|Mixed Platforms.ActiveCfg = Release|Win32
 		{F951AC66-E940-489A-AC99-A6AC837F1FB7}.Release-instrumented|Mixed Platforms.Build.0 = Release|Win32
@@ -450,5 +447,12 @@ Global
 		{916832B9-B724-48DF-861E-979726DBFD69} = {6B506E96-8065-4658-94CC-1A8FC6C232FA}
 		{F951AC66-E940-489A-AC99-A6AC837F1FB7} = {F0FD6B17-398B-40AB-ACF1-03398B47494E}
 		{02ACC83B-70B5-4D00-9674-8E9B3149031B} = {F0FD6B17-398B-40AB-ACF1-03398B47494E}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {488ED8F8-4AEC-433E-8F63-5144994956B7}
+	EndGlobalSection
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN - Subversion Support for Visual Studio
 	EndGlobalSection
 EndGlobal
