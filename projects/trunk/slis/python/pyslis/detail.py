@@ -32,7 +32,7 @@ def setup_functions(module, lib, meta):
         fx.restype = fx_meta['restype']
         setattr(module, fx_name, fx)
 
-if 'win' in sys.platform
+if 'win' in sys.platform:
     # Dispatcher: pick the library suitable for 32- or 64-bit Python
     __bits, __linkage = platform.architecture()
     __arch_variant = 'x64' if __bits == '64bit' else 'Win32'
