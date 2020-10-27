@@ -2,7 +2,7 @@
 :: $Id$
 :: 
 :: The only line that needs to be adjusted: VEF_ROOT
-set VEF_ROOT=c:\temp\VEF
+set VEF_ROOT=%CD%
 
 :: The first command line argument sets the VEF_ROOT variable
 if not "%1" == "" (
@@ -28,9 +28,11 @@ if ERRORLEVEL 1 (
 	echo conda environment not yet present: creating environment
 	call conda env create -f %VEF_ROOT%\python\Conda_VEF_env.yml
 ) else (
-	call conda env update --name Conda_VEF_env --file %VEF_ROOT%\python\Conda_VEF_env.yml --prune
+	call conda env update --name Conda_VEF_env --file %VEF_ROOT%\python\Conda_VEF_env.yml --prune > nul
 )
 call conda activate Conda_VEF_env
+
+cmd \k
 
 goto :eof
 

@@ -10,48 +10,43 @@ Copyright: KU Leuven
 
 /*!
 \page page_gettingstarted Getting started
+\htmlinclude plugin_jquery.zoom.html
 
 Before we start    {#sec_installation_requirements}
 ===============
 
-To install and use the VEF you will need to satisfy the following requirements:
--# Python version 2.7.X installed. 
--# Python packages installed: numpy, scipy, matplotlib, requests and cheetah.
+To install and use the VEF you will need to have miniconda or Anaconda.
+If you don't have this installed, the easiest way to get it is from the site [http://conda.pydata.org/miniconda.html](http://conda.pydata.org/miniconda.html) (you will need Python version >= 3.6)
 
+Windows
+-------
 
-\note If you are not familiar with [Python](https://www.python.org/), the easiest way to get it installed is to download 
-[Miniconda Python distribution](http://conda.pydata.org/miniconda.html). Once it is installed,
-you may run the following command from the command line to get the required packages:
-<pre class="consoleView">
-conda install numpy scipy matplotlib cheetah requests -y
-</pre>
+<div class="figure">
+	<span class="zoom">
+		<img class="fullsize widefigure" src="MinicondaPath.png" alt="ODF section phi_2 = 0">
+	</span>
+</div>
+When running the installer, they will ask if you want to add Anaconda or Miniconda to your PATH environment variable. We reccomend to let this checkbox unmarked and manually append the change the PATH environment variable with only the strict necessary folders.
 
+To append these folders to your PATH, open start and type "edit the system environment variables". When you opened the suggested application, you get the system properties screen. At the bottom of this window there is the button "Environment Variables". When clicked it opens a window with the user defined environment variables and the system environment variables. Unless you have administrator rights and want to enable conda python for every user, you should edit the User defined "Path" variable. Append the folder "<path to anaconda3/miniconda3>\condabin" to this variable.
+If you already had Anaconda3 or Miniconda3 installed, but this path was not yet added to the environmend variable, you should also do that. In the case you have an earlier version of Anaconda3 or Miniconda3 it is possible you should add "<path to Anaconda3/Miniconda3>\Scripts" instead.
 
 Installation and configuration    {#sec_installation}
 ==============================
 
 You received the archive file VEF_verXXX_yyyymmdd.zip, which contains the distribution of the VEF binaries, scripts, examples and documentation. 
-This instruction will tell you step-by-step how to install and set-up the VEF software on your Windows computer.
-
-
--# Unpack the distribution to a directory you prefer, for example: `c:\VEF` or `c:\Users\[your-user_name]\VEF`. 
+To install the VEF, unpack the distribution to a directory you prefer, for example: `c:\VEF` or `c:\Users\[your-user_name]\VEF`. 
    Note: the path to that directory should not contain spaces.
--# Edit the VEF configuration file \fsname{vef_session.cmd}, located in the directory where you unpacked the distribution. 
-   You will need to customize the line that sets \envname{VEF_ROOT} by setting it to the path where the VEF is unpacked. 
-   For example:
-   \verbatim
-   set VEF_ROOT="c:\VEF"
-   \endverbatim
-   or, if you unpacked the VEF distribution to your home directory:
-   \verbatim
-   set VEF_ROOT="%USERPROFILE%\VEF"
-   \endverbatim
 
    
 Setting up the simulations with HMS    {#sec_setting_up_simulation}
 ===================================
 
-The VEF programs are run from the command line. In order to conduct any VEF simulation, you have to configure VEF environment first. 
+The VEF programs are run from the command line. In order to conduct any VEF simulation, you have two options
+-# Double click on the `vef_session.cmd` file
+-# Start a command prompt, navigate to you VEF directory and execute `vef_session.cmd`
+
+to configure VEF environment first. 
 It is as simple as running \fsname{vef_session.cmd} before starting any VEF program. 
 For example:
 \verbatim
