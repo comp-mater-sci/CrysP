@@ -45,7 +45,7 @@
             double precision,dimension(3)       :: GAXES = [1.0,1.0,1.0] !< Frame description   (?)
             double precision,dimension(3)       :: GEULR = [0.0,0.0,0.0]
             double precision,dimension(3,3)     :: FALG = unitMatrix     !< Frame description 2 (?)   
-            integer                             :: NGRAINS = 0           !< Number of grains    
+            integer(kind=4)                     :: NGRAINS = 0           !< Number of grains    
             type(grainDesc),dimension(:),allocatable  :: GRAINS !< Array of grains
       end type
       
@@ -58,7 +58,7 @@
       integer,intent(out)           :: ERRCODE 
       integer,parameter             :: nunit=110  ! Unit number	  
       integer                       :: tmp
-      integer                       :: i,ngrains
+      integer(kind=4)               :: i,ngrains
       integer                       :: iuerr
       type(grainDesc)               :: tmpgrain
       !! End of declaration section
@@ -83,7 +83,7 @@
 	  
       MICROS%NGRAINS = ngrains
       write (*,105) MICROS%NS,MICROS%NGRAINS
- 105  format (' Input step nr.',i5,3x,'  Number of crystallites',i5)
+ 105  format (' Input step nr.',i5,3x,'  Number of crystallites',i12)
       !
       call allocateMicros(MICROS,ngrains,ERRCODE)
 
@@ -126,7 +126,7 @@
       type(microsDesc),intent(in)   :: MICROS
       integer,intent(out)           :: ERRCODE         
       !
-      integer                       :: i
+      integer(kind=4)               :: i
       integer                       :: iuerr
       !! End of declaration section
       !
@@ -150,7 +150,7 @@
             MICROS%FALG,                                                 &
             MICROS%GAXES,                                                &
             MICROS%GEULR
- 403  format(I6,5X,i5,44x,3(2X,3F10.6),2(2x,3f10.5))
+ 403  format(I6,5X,i7,42x,3(2X,3F10.6),2(2x,3f10.5))
       ! write the subheader
       write (NUNIT,401)
  401  format (' CRYSTAL WEIGHT ',5X,'phi1',6X,'PHI',7X,'phi2',6X,'  GAMMA')
