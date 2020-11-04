@@ -26,33 +26,33 @@ set SLIS_ROOT=%VEF_ROOT%
 :: If the conda command is available there is no problem, otherwise
 :: the standard installation folders %userprofile%\[ana|mini]conda3\condabin
 :: are checked and added to the path if present.
-where conda 2> nul
+where conda > nul 2>&1
+::echo ;%path%; | find /c /I ";%userprofile%\miniconda3\condabin;" > nul
 if "%ERRORLEVEL%" EQU "0" goto :condaavail
-echo no conda
 :: test for miniconda
-echo ;%path%; | find /c /I ";%userprofile%\miniconda3\condabin;"
+echo ;%path%; | find /c /I ";%userprofile%\miniconda3\condabin;" > nul 2>&1
 if NOT EXIST %userprofile%\miniconda3\condabin goto :anacondatest
 if "%ERRORLEVEL%" EQU "0" goto :anacondatest
 set PATH=%PATH%;%userprofile%\miniconda3\condabin;
-where conda
+where conda > nul 2>&1
 if "%ERRORLEVEL%" EQU "0" goto :condaavail
 :: test for anaconda
 :anacondatest
 if NOT EXIST %userprofile%\anaconda3\condabin goto :condaerror
-echo ;%path%; | find /c /I ";%userprofile%\anaconda3\condabin;"
+echo ;%path%; | find /c /I ";%userprofile%\anaconda3\condabin;" > nul 2>&1
 if "%ERRORLEVEL%" EQU "0" goto :condaerror
 set PATH=%PATH%;%userprofile%\anaconda3\condabin;
-where conda
+where conda > nul 2>&1
 if "%ERRORLEVEL%" EQU "1" goto :condaerror
 
 :condaavail
-echo checking the Conda environment
-call conda env list | findstr Conda_VEF_env
+echo Checking if the conda environment us already initialized.
+call conda env list | findstr Conda_VEF_env > nul
 if ERRORLEVEL 1 (
 	echo conda environment not yet present: creating environment
 	call conda env create -f %VEF_ROOT%\python\Conda_VEF_env.yml
 ) else (
-	echo Checking the conda environment...
+	echo Conda environment present: checking if the conda environment needs updating...
 	call conda env update --name Conda_VEF_env --file %VEF_ROOT%\python\Conda_VEF_env.yml --prune > nul
 )
 call conda activate Conda_VEF_env
