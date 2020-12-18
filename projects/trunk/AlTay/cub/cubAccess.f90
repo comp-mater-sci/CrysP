@@ -274,7 +274,7 @@ module cubAccess
 			MICROS%FALG,                                                 &
 			MICROS%GAXES,                                                &
 			MICROS%GEULR
-		403  format(I6,5X,i5,44x,3(2X,3F10.6),2(2x,3f10.5))
+		403  format(I6,5X,i7,42x,3(2X,3F10.6),2(2x,3f10.5))
 		! write the subheader
 		write (NUNIT,401)
 		401  format (' CRYSTAL WEIGHT ',5X,'phi1',6X,'PHI',7X,'phi2',6X,'  GAMMA')
