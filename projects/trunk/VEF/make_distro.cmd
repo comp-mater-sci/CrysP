@@ -14,7 +14,7 @@ if not "%1" == "" (
 @echo.
 
 mkdir %VEF_DIR%\bin
-copy alamDMC\Release\alamDMC.exe %VEF_DIR%\bin
+copy alamDMC\x64\Release\alamDMC.exe %VEF_DIR%\bin
 
 ::
 :: Python
