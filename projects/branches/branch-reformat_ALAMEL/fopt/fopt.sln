@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libfopt", "libfopt.vfproj", "{BE90F1A8-DC67-45F4-B168-5D687878EAD8}"
+EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "libfoptTest", "libfoptTest.vfproj", "{73CFF27B-C1DE-4218-A55A-CF939C9BB543}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8} = {BE90F1A8-DC67-45F4-B168-5D687878EAD8}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Debug|Win32.Build.0 = Debug|Win32
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Debug|x64.ActiveCfg = Debug|x64
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Debug|x64.Build.0 = Debug|x64
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Release|Win32.ActiveCfg = Release|Win32
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Release|Win32.Build.0 = Release|Win32
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Release|x64.ActiveCfg = Release|x64
+		{BE90F1A8-DC67-45F4-B168-5D687878EAD8}.Release|x64.Build.0 = Release|x64
+		{73CFF27B-C1DE-4218-A55A-CF939C9BB543}.Debug|Win32.ActiveCfg = Debug|Win32
+		{73CFF27B-C1DE-4218-A55A-CF939C9BB543}.Debug|Win32.Build.0 = Debug|Win32
+		{73CFF27B-C1DE-4218-A55A-CF939C9BB543}.Debug|x64.ActiveCfg = Debug|x64
+		{73CFF27B-C1DE-4218-A55A-CF939C9BB543}.Debug|x64.Build.0 = Debug|x64
+		{73CFF27B-C1DE-4218-A55A-CF939C9BB543}.Release|Win32.ActiveCfg = Release|Win32
+		{73CFF27B-C1DE-4218-A55A-CF939C9BB543}.Release|Win32.Build.0 = Release|Win32
+		{73CFF27B-C1DE-4218-A55A-CF939C9BB543}.Release|x64.ActiveCfg = Release|x64
+		{73CFF27B-C1DE-4218-A55A-CF939C9BB543}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

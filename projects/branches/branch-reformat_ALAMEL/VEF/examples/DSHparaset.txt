@@ -1,0 +1,16 @@
+2.48E-10                #b     [m]   ]0.   ;1.E-8]  Magnitude of burgers vector
+8.16E4                  #G     [MPa] [1.E4 ;5.E5 ]  Shear modulus
+0.20                    #alpha [/]   ]0.   ;5.   ]  Dislocation interaction parameter
+0.20                    #f     [/]   [0.   ;1.   ]  Volume fraction of CBBs (Cell Block Boundaries)
+53.0.                   #tau_0 [MPa] [0.   ;1.E4 ]  Initial critical resolved shear stress on all slip systems
+2.12E-2                 #I     [/]   [0.   ;1.E1 ]  Immobilization coefficient of CBs (Cell Boundaries)
+8.89E-10.               #R     [m]   ]0.   ;1.E-6]  Recovery coefficient of CBs
+8.37E-1                 #I_wd  [/]   [0.   ;1.E1 ]  Immobilization coefficient of CBBs
+2.66E-8                 #R_wd  [m]   ]0.   ;1.E-6]  Recovery coefficient of CBBs
+2.27E-9                 #R_ncg [m]   ]0.   ;1.E-6]  Recovery coefficient of old CBBs and polarity of old CBBs
+9.59                    #beta_1[/]   [0.   ;1.E2 ]  1st coeff. micro shear band cut-through of old CBBs
+1.07                    #beta_2[/]   [0.   ;1.E2 ]  2nd coeff. micro shear band cut-through of old CBBs
+5.45E-2                 #I_wp  [/]   [0.   ;1.E1 ]  Immobilization coefficient of polarity of CBBs
+1.44E-9                 #R_wp  [m]   ]0.   ;1.E-6]  Recovery coefficient of polarity of CBBs
+4.12E-9                 #R_rev [m]   ]0.   ;1.E-6]  Recovery coefficient of polarity CBBs during bauschinger
+8.70E-9                 #R_2   [m]   ]0.   ;1.E-6]  Recovery coefficient of CBs due to reversal polarity flux
