@@ -12,7 +12,7 @@
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
       Subroutine Pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,               &
-       SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
+						SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif      
@@ -27,22 +27,28 @@
       use AltayDSHstate
 #endif
       implicit double precision (a-h,o-z)
-      type(DeformationRate),intent(in) :: MacroDefRate
+      
+	  type(DeformationRate),intent(in) :: MacroDefRate
       type(DeformationState),intent(in):: MacroDefState      
-      COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
+      type(CRSS) :: CRSSmatrix
+      logical SWRLX(3),bas(194),VALID(194)
+      integer DI1(5),DI(10),DI2(10)
+      double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
+      double precision,dimension(5):: RHOS, RHOA 
+
+      common /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
        gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
        CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),                             &
        fi1b(2),phib(2),fi2b(2),                                          &
-       NGR,NRL,ENTA,ITFMAS
-      COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
+       NGR,NRL,ENTA,ITFMAS													! NRL= number of relaxations, NGR= number of grains
+      common /IGLIJS/ M11,CC(2,96)
+      common /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
       common /extra/ A1(10,194),UU(10,10)
       common /CEIGEN/ IOR,ISTP,NBLOC
-      COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),           &
+      common /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),           &
        TLXX,TAURLP(8)
-      double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
-      double precision,dimension(5):: RHOS, RHOA 
-        dimension ccc2(2,194)
+      
+	  dimension ccc2(2,194)
       dimension C2(3,3),                                                 &
        TDCb(3,3,2),TRCb(3,3,2),                                          &
        B(5,5),relax(3,3,3),DACC(10),                                     &
@@ -50,16 +56,14 @@
        B3(10,3),PLUMIN(2,3),CUst(10)
 !     first index op PLUMIN = nr. of grain
 !     second index = nr. of relaxation
-      dimension spanv(5),XX(194),STRSS(10),BB(10)
-      dimension CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194)
-      type (CRSS) :: CRSSmatrix
-      logical SWRLX(3),bas(194),VALID(194)
 !     rlm is unit relaxation tensor in macroscopic frame
 !     rls and rla in crystal frame (symmetric and anti-sym. part)
+      dimension spanv(5),XX(194),STRSS(10),BB(10)
+      dimension CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194)
       dimension B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10)
-      integer DI1(5),DI(10),DI2(10)
       dimension GAMR(2),Tprinc(3,3),TAURL(2)
-      data SQR2/0.7071067811865476D+00/,B3/30*0.0D0/,TOLXX/5.0d-6/
+      
+	  data SQR2/0.7071067811865476D+00/,B3/30*0.0D0/,TOLXX/5.0d-6/
 !     Definition of the two relaxations, representing a
 !     13-simple shear and a 23-simple shear, respectively:
       data relax /0.0D0, 0.0D0, 0.0D0,                                   &
@@ -76,7 +80,6 @@
                   1.0D0, 1.0D0/
       data NDIM/10/
 !     NDIM=dimension A 
-!     NRL= number of relaxations    NGR= number of grains
       data TAURL/2*0.0d0/
       data GETAL/1.0D6/,TOL/1.0d-6/
 #ifdef PEBP_ENABLED      
@@ -86,8 +89,8 @@
 
       if (laml.ne.1.and.laml.ne.2) then
 #ifndef ALTAY_SUBROUTINE
-      write(*,*) 'laml=', laml
-      call terminate(stopcode_runtimeerror)
+		  write(*,*) 'laml=', laml
+		  call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'Pancak2','Wrong selection of lamels',RCM_RTN)
 #endif      
@@ -122,10 +125,10 @@
       do 31 j=1,NU
       UU(j,i)=0.0
   31  continue
-      DO 53 I=1,5
+      do 53 I=1,5
       DI(I)=DI1(I)
       DI(I+5)=DI1(I)+M11
-  53  CONTINUE                                                          
+  53  continue                                                          
       do 1 IL=1,NGR
       L1=5*(IL-1)
       
@@ -154,11 +157,11 @@
   84  continue
   82  continue 
   87  continue
-      DO 80 I=1,3
-      DO 81 J=1,3                                                       
+      do 80 I=1,3
+      do 81 J=1,3                                                       
       TDCb(I,J,IL)=(C2(I,J)+C2(J,I))*0.5D0
   81  TRCb(I,J,IL)=(C2(I,J)-C2(J,I))*0.5D0
-  80  CONTINUE                                                          
+  80  continue                                                          
       B5= Vector5D(TDCb(1:3,1:3,IL)) ! sym.(3,3) -> (5)
       do 30 i=1,5
       j=i+L1
@@ -190,15 +193,15 @@
       !
 !   92 write (IMP,914) i,j,CCC(1,j),CCC(2,j)
  914  format (' i,j',2i5, ' CCC ',2d16.4)
-      DO 15 J=1,5
-      DO 15 I=1,5
+      do 15 J=1,5
+      do 15 I=1,5
       UU(I+L1,J+L1)=B(I,J)
   15  continue
    1  continue 
-      DO 54 I=1,N 
+      do 54 I=1,N 
 !     Conversion of strain to normalized strain rate
       BB(I)=BB(I)/MacroDefRate%vMeqStrainRate
-  54  CONTINUE
+  54  continue
       if (NRL.eq.0) goto 88
       do 85 j=M2+1,M12             
 !    The coefficient of the relaxations is set to a very large number
@@ -209,15 +212,15 @@
 !     Full constraints calculation
 !
 !     UITVOEREN VAN DE SIMPLEX-SUBROUTINE
-  88  IF (IPR.EQ.2) then
+  88  if (IPR.EQ.2) then
       if(NLIST.eq.1) then 
-      WRITE (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
+      write (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
       end if
       end if
- 218  FORMAT(/' COST FUNCTION',/,(2x,12F10.4))
-      IF (IPR.EQ.2) then
+ 218  format(/' COST FUNCTION',/,(2x,12F10.4))
+      if (IPR.EQ.2) then
       if (NLIST.eq.1) then
-      WRITE (IMP,219) (BB(I),I=1,N)
+      write (IMP,219) (BB(I),I=1,N)
       end if
       end if
  219  format (' right hand side',/,(2x,10F10.4),/)
@@ -228,7 +231,7 @@
       end if
       end if
  400  format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
-      Call TBH(IPR,NDIM,N,M2,A1,BB,                                      &
+      call TBH(IPR,NDIM,N,M2,A1,BB,                                      &
        CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,                              &
        Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID) 
 ! CCC (input): critical resolved shear stresses (Tauc)
@@ -252,7 +255,7 @@
   345 if (IPR.lt.4) goto 220
 #ifndef ALTAY_SUBROUTINE
       if(NLIST.eq.1) then
-      write (IMP,221) IPR,IOR,ISTP,NBLOC
+		  write (IMP,221) IPR,IOR,ISTP,NBLOC
       end if
       write (*,221) IPR,IOR,ISTP,NBLOC
  221  format (' Pancak2 ',                                               &
@@ -261,17 +264,17 @@
 #else
       RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
 #endif
-  220    DTAU1=DTAU 
-         TAUR1=TAUR  
+  220 DTAU1=DTAU 
+      TAUR1=TAUR  
 
       if (NRL.eq.0) then
-                      UU=UU2
-                      DI=DI2
-                      STRSS=UBUF
-                      goto 89
-                    endif
+			UU=UU2
+			DI=DI2
+			STRSS=UBUF
+			goto 89
+      endif
 !@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$$@$@$@$@$@$@$@$@$@$ QGX 15/11/2012 
-      IF(ITFMAS.eq.1) then
+      if(ITFMAS.eq.1) then
         CCC(1,M2+1)=GETAL
         CCC(2,M2+1)=GETAL
         CCC(1,M2+2)=0.0
@@ -285,9 +288,9 @@
   86    continue 
       endif
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      IF (IPR.EQ.2) then
+      if (IPR.EQ.2) then
       if(NLIST.eq.1) then 
-      WRITE (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
+      write (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
       end if
       end if
 !     Second call of Simplex (relaxed constraints)
@@ -298,7 +301,7 @@
       end if
       end if
  401  format (' Second call of TBH')
-      Call TBH(IPR,N,N,M12,A1,BB,                                        &
+      call TBH(IPR,N,N,M12,A1,BB,                                        &
        CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,                             &
        Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
 ! CCC (input): critical resolved shear stresses (Tauc)
@@ -339,7 +342,7 @@
 !@#@#@#@#@#@#@#@#@@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@#@@#@# QGX 15/11/2012
 !   loop
 !   
-      IF(ITFMAS.eq.1) then 
+      if(ITFMAS.eq.1) then 
       iter=0
   999 iter=iter+1
       call Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,STRSS,M11,ca1,ca2)
@@ -348,7 +351,7 @@
       CCC(1,M2+1)=dabs(ENTA*Cofcos*(ca1+ca2)/2.D0)
       CCC(2,M2+1)=dabs(ENTA*Cofcos*(ca1+ca2)/2.D0)
 !  Third call of TBH
-      Call TBH(IPR,N,N,M12,A1,BB,                                        &
+      call TBH(IPR,N,N,M12,A1,BB,                                        &
        CCC,UU,UU2,DI,DI2,Dacc,XX,STRSS,FakM,                             &
        Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
 ! output for current iteration must be the input for the next iteration
@@ -492,7 +495,7 @@
                       SLIPLP(NLP)=XX(j+jj)
                       TAURLP(NLP)=TAUR1(j+jj) 
  310  continue
-      RETURN
+      return
       END SUBROUTINE        
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
 
@@ -582,14 +585,14 @@
       ca1=Crssg1
       ca2=Crssg2  
 !  update the CRSS for grain-1
-      Do i=1,M11,1
-      Do j=1,2,1
+      do i=1,M11,1
+      do j=1,2,1
          CCC2(j,i)=Crssg1*CCC(j,i)
       enddo
       enddo
 !   update the CRSS for grain-2
-      Do i=1,M11,1
-      Do j=1,2,1
+      do i=1,M11,1
+      do j=1,2,1
          CCC2(j,i+M11)=Crssg2*CCC(j,i+M11)
       enddo
       enddo

@@ -46,24 +46,25 @@
 !
 !     IW=2 is meant for outputting the final texture.
 !
-      COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON /DOUBLE/ XM(5,96),XEPS(5),RHO(5),B5(5)
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
-      ITW,GEWF
-      COMMON /SYMP/ INV,ISP,LOM,KSYM,KTYP,TEN(3,3),TOTGEW        
-      COMMON /EULERA/ fi1,PHI,fi2
-      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
-       SWRLX(3)
-      COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
-       gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
-       CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),                             &
-       fi1b(2),phib(2),fi2b(2),                                          &
-       NGR,NRL,ENTA,ITFMAS
+      common /IGLIJS/ M11,CC(2,96)
+      common /DOUBLE/ XM(5,96),XEPS(5),RHO(5),B5(5)
+      common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
+					  ITW,GEWF
+      common /SYMP/ INV,ISP,LOM,KSYM,KTYP,TEN(3,3),TOTGEW        
+      common /EULERA/ fi1,PHI,fi2
+      common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
+					  SWRLX(3)
+      common /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
+  					 gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),         &
+					 CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),                     &
+					 fi1b(2),phib(2),fi2b(2),                                  &
+					 NGR,NRL,ENTA,ITFMAS
       common /CEIGEN/ IOR,ISTP,NBLOC
       common /PE/ Fmicro !Temporary!!!      
-      DIMENSION GAXES(3),GEULR(3),TG(3,3),                               &
-       CIJ(3,3),STOT(3,3),                                               &
-       RHOST(3,3),RHOSm(3,3),FMicro(3,3)
+      dimension GAXES(3),								   &	! half axes a,b,c, of the grain shape ellipsoid
+		   GEULR(3),TG(3,3),                               &
+		   CIJ(3,3),STOT(3,3),                             &
+		   RHOST(3,3),RHOSm(3,3),FMicro(3,3)
       dimension FS(3,3)
       character(len=40) :: TITEL
       logical SWRLX
@@ -91,18 +92,25 @@
 #endif
       data convf/0.5729577951308232D+02/
       data FS/9*1.0D0/ 
-      SAVE
+      save
       !
       NPOINT = size(DFIL)
       !
-      IF (IW) 32,33,30
+      ! Top branches depending on first argument IW of SIMUL
+      if (IW) 32,33,30         ! 32: return if IW<0; 33: IW=0; 30: continue if IW>0
+      !
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !-------- IW=0 --------
+	  ! initialization call
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !
   33  call  random_seed
 #ifdef ALTAY_SUBROUTINE
       NGR    = acnf%simul_init%NGR
       ENTA   = acnf%simul_init%ENTA
       KOST   = acnf%hardening%HardLawID
       !
-      NLIST  = acnf%output_config%NLIST   ! control "listing"
+      NLIST  = acnf%output_config%NLIST   ! control "output listing"
       NFILE1 = acnf%output_config%NFILE   ! control "CUR"
       NFILTW = acnf%output_config%NFILTW  ! control "TWN"
       IPR    = acnf%output_config%IPR     ! control printing level
@@ -137,12 +145,12 @@
       !
 #ifndef ALTAY_SUBROUTINE
       if(NLIST.eq.1) then
-            WRITE (IMP,101) NGR,NLIST,NFILE1,NFILTW,KOST,IPR
+            write (IMP,101) NGR,NLIST,NFILE1,NFILTW,KOST,IPR
       end if
 #ifndef NO_STDOUT   
-      WRITE (*,101) NGR,NLIST,NFILE1,NFILTW,KOST,IPR
+      write (*,101) NGR,NLIST,NFILE1,NFILTW,KOST,IPR
 #endif
- 101  FORMAT (' SIMUL - PARAMETERS:',/                                   &
+ 101  format (' SIMUL - PARAMETERS:',/                                   &
       'NGR=   ',I5,/,'NLIST= ',I5,/,'NFILE1=',I5,/,'NFILTW=',i5,/,       &
       'KOST=  ',I5,/,'IPR=   ',I5) 
 #endif
@@ -188,7 +196,7 @@
          end if
       enddo
  106  format ('F_Microstructure=',3f12.6)
-  99  FORMAT (2I5)
+  99  format (2I5)
   94  format (3F10.0)
   16  read (KLEC,98) TITEL
 #endif      
@@ -204,7 +212,7 @@
 #ifndef ALTAY_SUBROUTINE
       call InitModuleAltayHard(KLEC,KOST,crss_ratiosIN,info)
 #endif
-      CALL TAYLOR(1,KOST)
+      call TAYLOR(1,KOST) ! read slip system file
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -222,8 +230,12 @@
       if (NPEBP /= 0) info = writeSDV(IPEBPSDV,header=.true.)
 #endif
 #endif
-      RETURN
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      return
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !-------- IW>0 --------
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !
   30  continue
 #ifdef ALTAY_SUBROUTINE
       ! Per-call selection of the model: NGR & NRL must be set
@@ -264,7 +276,7 @@
       if (IPR.gt.0.and.NLIST.eq.1) write (IMP,*)'Relaxations:',swrlx(1)
 #endif
       !
-      CALL TAYLOR(2,KOST,MacroDefRate)
+      call TAYLOR(2,KOST,MacroDefRate)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -285,132 +297,132 @@
 !     Main Loop over the Steps
 !
       steploop: DO 8 ISTP=1,NSTP
-      !
-      TOTGEW=0.0
-      STOT = 0.D0
-      RHOST = 0.D0
-      SeqAvg=0.
-      Mavg=0.
-      srh=0.
-      HGAM=0.D0
+		  !
+		  TOTGEW=0.0
+		  STOT = 0.D0
+		  RHOST = 0.D0
+		  SeqAvg=0.
+		  Mavg=0.
+		  srh=0.
+		  HGAM=0.D0
 #ifdef PEBP_ENABLED
-      pebpSDVavg = StateDerivedVars()
+		  pebpSDVavg = StateDerivedVars()
 #endif      
       
-      call dynfil2(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
+		  call dynfil2(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT       
-      write (*,96) ISTP,GAXES
+		  write (*,96) ISTP,GAXES
 #endif
-      if(NLIST.eq.1) then
-      write (IMP,96) ISTP,GAXES
-      end if
-  96  format(' Step nr.',i5,5X,3f12.5)
+		  if(NLIST.eq.1) then
+			  write (IMP,96) ISTP,GAXES
+		  end if
+	  96  format(' Step nr.',i5,5X,3f12.5)
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-      if (IW.gt.1) goto 70
-      if(NLIST.eq.1) then
-          write (IMP,3456) MacroDefRate%VelGrad
-      end if
- 3456 format ('DG=',3(T10,3d12.3,/))
+		  if (IW.gt.1) goto 70
+		  if(NLIST.eq.1) then
+			  write (IMP,3456) MacroDefRate%VelGrad
+		  end if
+ 3456 	  format ('DG=',3(T10,3d12.3,/))
 !
 !     Get the 5x5 transformation matrix MACRO to morfol. GRAIN AXES
 !
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!      if (IGLIJ.eq.1) then
+!         if (IGLIJ.eq.1) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if(NLIST.eq.1) then
-      write (IMP,3458) TG
-      end if
+		  if(NLIST.eq.1) then
+			  write (IMP,3458) TG
+		  end if
       
- 3458 format (' TG=',3(T10,3d12.3,/))
-  70  if (nfile.eq.0.or.ISTP.gt.1) goto 44
-      IF (NLIST.EQ.1) WRITE (IMP,112) ISTP
- 112  FORMAT (//' DEFORMATION STEP ',I5,//)
-      if (NRES.gt.0) write (IMP2,404) nrstep+1,NPOINT
- 404  format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'  &
-       ,T7,'EquivStress',T23,'WorkRate',T37,'tau_ref',T56,'M',T64,       &
-       'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS' &
-       ,/,1x,278('*'))
-      !
-  44  continue
-      if (NLIST.eq.1) then
-          do i=1,3 
-             write (IMP,407) (MacroDefState%TotalDefGrad(j,i),j=1,3)
-          enddo
- 407  format (' F ',3d15.7)
-      end if
-      !
-      nrstep=nrstep+1
-      !
-      call Update_DeformationState(MacroDefRate,MacroDefState,info)
-      !
-      call UPDATC(CIJ,MacroDefState%IncrDefGrad_inverse) 
-      call GETANG(CIJ,GAXES,GEULR,TG)
+ 3458 	  format (' TG=',3(T10,3d12.3,/))
+  70      if (nfile.eq.0.or.ISTP.gt.1) goto 44
+		  if (NLIST.EQ.1) write (IMP,112) ISTP
+ 112      format (//' DEFORMATION STEP ',I5,//)
+		  if (NRES.gt.0) write (IMP2,404) nrstep+1,NPOINT
+ 404      format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'  &
+		   ,T7,'EquivStress',T23,'WorkRate',T37,'tau_ref',T56,'M',T64,       &
+		   'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS' &
+		   ,/,1x,278('*'))
+		  !
+  44      continue
+		  if (NLIST.eq.1) then
+			  do i=1,3 
+				 write (IMP,407) (MacroDefState%TotalDefGrad(j,i),j=1,3)
+			  enddo
+		  end if
+ 407      format (' F ',3d15.7)
+		  !
+		  nrstep=nrstep+1
+		  !
+		  call Update_DeformationState(MacroDefRate,MacroDefState,info)
+		  !
+		  call UPDATC(CIJ,MacroDefState%IncrDefGrad_inverse) 
+		  call GETANG(CIJ,GAXES,GEULR,TG)
 #ifdef ALTAY_SUBROUTINE
-      RCM_GUARD
-      ! We can choose not to update the texture data
-      if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,  &
-                         CIJ,TG)
-      endif
+		  RCM_GUARD
+		  ! We can choose not to update the texture data
+		  if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
+				call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,  &
+							 CIJ,TG)
+		  endif
 #else          
-      call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
+		  call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #endif
 !
-!       Added for lamel model:
-!     Organisation reading temporary texture file,
-!     in such way that the program TAYLOR can process the crystals
-!     by sets of 2.
-!     Taylor must therefore have "advance knowledge" of the
-!     orientation to come at the moment that it starts such
-!     computation.
-!     See also the comment before the calling of subroutine TAYLOR.
+!         Added for lamel model:
+!         Organisation reading temporary texture file,
+!         in such way that the program TAYLOR can process the crystals
+!         by sets of 2.
+!         Taylor must therefore have "advance knowledge" of the
+!         orientation to come at the moment that it starts such
+!         computation.
+!         See also the comment before the calling of subroutine TAYLOR.
 !
-  10  laml=1
-      laml1=NGR
-      ifil4=0
-      if (NFILTW.eq.1) write (IMP3,399)
- 399  format(1x)
-      !
-      ! Begin the loop over grains/clusters
-      !
-      clusterloop: DO 23 IOR=1,NPOINT
-      Mgrain=0.0
-      GMMdot=0.0
-      WorkRate = 0.D0
-      SeqGrain = 0.D0
-      Wtot = 0.0
-      !
- 2626 do 80 L=laml,laml1
-      if (ifil4.eq.NPOINT) goto 80
-      ifil4=ifil4+1
-      call DYNFIL4(ifil4,fi10b(L),PHI0b(L),fi20b(L),                     &
-       TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L),GAXESb(1,L),              &
-       GEULRb(1,L),CIJb(1,1,L),TGb(1,1,L),RHOSSb(1,1,L))
-!
-      fi1b(L)=fi10b(L)*convf
-      PHIb(L)=PHI0b(L)*convf
-      fi2b(L)=fi20b(L)*convf
-  80  continue
-      laml1=laml1+1
-      if (laml1.gt.NGR) laml1=1
-      laml=laml1
-      GMM0=GMMAb(laml)
-      call getTau(GMM0,TAU,info)
-      fi1=fi1b(laml)
-      PHI=PHIb(laml)
-      fi2=fi2b(laml)
-      !
-      TRF = TRFb(:,:,laml)
-      TG = TGb(:,:,laml)
-      RHOSSa = RHOSSb(:,:,laml)
+  10  	  laml=1
+		  laml1=NGR
+		  ifil4=0
+		  if (NFILTW.eq.1) write (IMP3,399)
+ 399      format(1x)
+		  !
+		  ! Begin the loop over grains/clusters
+		  !
+		  clusterloop: DO 23 IOR=1,NPOINT
+			  Mgrain=0.0
+			  GMMdot=0.0
+			  WorkRate = 0.D0
+			  SeqGrain = 0.D0
+			  Wtot = 0.0
+			  !
+ 2626  		  do 80 L=laml,laml1
+				  if (ifil4.eq.NPOINT) goto 80
+				  ifil4=ifil4+1
+				  call DYNFIL4(ifil4,fi10b(L),PHI0b(L),fi20b(L),                     &
+				   TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L),GAXESb(1,L),              &
+				   GEULRb(1,L),CIJb(1,1,L),TGb(1,1,L),RHOSSb(1,1,L))
+			!
+				  fi1b(L)=fi10b(L)*convf
+				  PHIb(L)=PHI0b(L)*convf
+				  fi2b(L)=fi20b(L)*convf
+  80          continue
+			  laml1=laml1+1
+			  if (laml1.gt.NGR) laml1=1
+			  laml=laml1
+			  GMM0=GMMAb(laml)
+			  call getTau(GMM0,TAU,info)
+			  fi1=fi1b(laml)
+			  PHI=PHIb(laml)
+			  fi2=fi2b(laml)
+			  !
+			  TRF = TRFb(:,:,laml)
+			  TG = TGb(:,:,laml)
+			  RHOSSa = RHOSSb(:,:,laml)
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 27/10/2011
-      if(laml.eq.1) then
-      qgx=GEWFb(laml)
-      GEWF=qgx
-      else
-      GEWF=qgx
-      end if
-      IF (NFILE.eq.0.or.ISTP.gt.1) goto 999
+			  if(laml.eq.1) then
+				  qgx=GEWFb(laml)
+				  GEWF=qgx
+			  else
+				  GEWF=qgx
+			  end if
+			  if (NFILE.eq.0.or.ISTP.gt.1) goto 999
 ! 
 !     In case of NGR=2:
 !        LAML=1: TAYLOR
@@ -424,153 +436,159 @@
 !
 !      write (*,3210)
 ! 3210 format (' Just before Taylor')
- 999  if (IW.le.1) then
-            CALL  TAYLOR(3,KOST,MacroDefRate,MacroDefState)
+ 999  		  if (IW.le.1) then
+					call  TAYLOR(3,KOST,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
-            RCM_GUARD
+					RCM_GUARD
 #endif            
-      endif
+			  endif
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 2/1/2011     
 ! this modification is to suit for the output of stress     
-      if(laml.eq.1) then
-      ssqgx=GEWF
-      else
-      GEWF=ssqgx
-      end if
+			  if(laml.eq.1) then
+				  ssqgx=GEWF
+			  else
+				  GEWF=ssqgx
+			  end if
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      TOTGEW=TOTGEW+GEWF
-      !
-      ! Skip the rest of the loop if IF > 1
-  41  if (IW.gt.1) cycle
-      !
+			  TOTGEW=TOTGEW+GEWF
+			  !
+			  ! Skip the rest of the loop if IW > 1
+  41          if (IW.gt.1) cycle
+			  !
 #ifdef ALTAY_SUBROUTINE
-      if (astate%simulCalls(astate%this)%input%full_model) then
-            CALL TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate,      &
-                        MacroDefRate)
-            RCM_GUARD
-      endif
+			  if (astate%simulCalls(astate%this)%input%full_model) then
+					call TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate,      &
+								MacroDefRate)
+					RCM_GUARD
+			  endif
 #else
-      CALL TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain,WorkRate,           &
-                  MacroDefRate)
+			  call TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain,WorkRate,           &
+						  MacroDefRate)
 #endif      
-   49 if (NFILTW.eq.1) write (IMP3,398) ITW
- 398  format (I3)
-      !
-      STOT = STOT + Ssam*GEWF
-      RHOST = RHOST + RHOSsa*GEWF
-      !      
-  63  SeqAvg = SeqAvg + SeqGrain*GEWF
-      Mgrain = GMMdot /  MacroDefRate%vMeqStrainRate
-      Mavg = Mavg + Mgrain*GEWF
-      ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/MacroDefRate%vMeqStrainRate 
-      srh = srh + norm2(RHOSsa)*GEWF
-      HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s      
-      GMM1 = GMM0 + GMMdot !Step time here implicitly assumed to be 1.0s
-      Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
+   49 		  if (NFILTW.eq.1) write (IMP3,398) ITW
+ 398  		  format (I3)
+			  !
+			  STOT = STOT + Ssam*GEWF
+			  RHOST = RHOST + RHOSsa*GEWF
+			  !      
+  63          SeqAvg = SeqAvg + SeqGrain*GEWF
+			  Mgrain = GMMdot /  MacroDefRate%vMeqStrainRate
+			  Mavg = Mavg + Mgrain*GEWF
+			  ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/MacroDefRate%vMeqStrainRate 
+			  srh = srh + norm2(RHOSsa)*GEWF
+			  HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s      
+			  GMM1 = GMM0 + GMMdot !Step time here implicitly assumed to be 1.0s
+			  Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
 #ifdef PEBP_ENABLED
-      select case(KOST)
-      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-           call KS_getSDV(IOR,pebpSDV,info)
-           pebpSDVavg = pebpSDVavg + pebpSDV * GEWF
-      endselect
+			  select case(KOST)
+			  case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+				   call KS_getSDV(IOR,pebpSDV,info)
+				   pebpSDVavg = pebpSDVavg + pebpSDV * GEWF
+			  endselect
 #endif
 #ifdef ALTAY_SUBROUTINE
-      ! We can choose not to update the texture state
-      if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-            call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                   &
-                         MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,  &
-                         RHOSsa) 
-      endif
+			  ! We can choose not to update the texture state
+			  if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
+					call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                   &
+								 MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,  &
+								 RHOSsa) 
+			  endif
 #else
-      call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                         &
-                   MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
+			  call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                         &
+						   MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
 #endif
-      ! 
+			  ! 
 #ifndef ALTAY_SUBROUTINE
-      ! Output the plastic work of the grain (in its initial configuration)
-      if (NRES >= 1) call writeReportRecord(IMP6,fi1b(laml),PHIb(laml),  &
-                                            fi2b(laml),Wtot,info)
+			  ! Output the plastic work of the grain (in its initial configuration)
+			  if (NRES >= 1) call writeReportRecord(IMP6,fi1b(laml),PHIb(laml),  &
+													fi2b(laml),Wtot,info)
 #endif      
-      !
-      ! End of the loop over crystals
-      !
-  23  enddo clusterloop
-      !
-      ! Finish processing if IW > 1
-      if (IW.gt.1) exit
-      !
-      SHsam = STOT / TOTGEW
-      RHOSm = RHOST / TOTGEW
-      !
-  66  do 65 i=1,2
-      do 65 j=i+1,3
-      SHsam(i,j)=SHsam(i,j)*FS(i,j)
-      SHsam(j,i)=SHsam(i,j)
-      RHOSm(i,j)=RHOSm(i,j)*FS(i,j)
-      RHOSm(j,i)=RHOSm(i,j)
-65    continue
+			  !
+			  ! End of the loop over crystals
+			  !
+  23      enddo clusterloop
+		  !
+		  ! Finish processing if IW > 1
+		  if (IW.gt.1) exit
+		  !
+		  SHsam = STOT / TOTGEW
+		  RHOSm = RHOST / TOTGEW
+		  !
+  66      do 65 i=1,2
+			  do 65 j=i+1,3
+			  SHsam(i,j)=SHsam(i,j)*FS(i,j)
+			  SHsam(j,i)=SHsam(i,j)
+			  RHOSm(i,j)=RHOSm(i,j)*FS(i,j)
+			  RHOSm(j,i)=RHOSm(i,j)
+65        continue
 
-      Mavg=Mavg/TOTGEW
-      ! DEFINITION: srh = (||d-D||) / ||D||
-      srh=sqrt(2.D0/3.D0)*srh/TOTGEW 
-      SeqAvg=SeqAvg/TOTGEW
-      !
-      MEPSCALL= MacroDefState%IncrvMeqStrain * (ISTP-1)
-      !
-      if (NMSSx /= 0) then
-            call writeMSSRecord(IMP5,MEPSCALL,                           &
-                          MacroDefState%AccumvMeqStrain_ToStartOfInc,    &
-                          HGAMCALL,HGAMTOT,SHsam,Mavg,srh,info)
-      endif
+		  Mavg=Mavg/TOTGEW
+		  ! DEFINITION: srh = (||d-D||) / ||D||
+		  srh=sqrt(2.D0/3.D0)*srh/TOTGEW 
+		  SeqAvg=SeqAvg/TOTGEW
+		  !
+		  MEPSCALL= MacroDefState%IncrvMeqStrain * (ISTP-1)
+		  !
+		  if (NMSSx /= 0) then
+				call writeMSSRecord(IMP5,MEPSCALL,                           &
+							  MacroDefState%AccumvMeqStrain_ToStartOfInc,    &
+							  HGAMCALL,HGAMTOT,SHsam,Mavg,srh,info)
+		  endif
 #ifdef PEBP_ENABLED
-      select case(KOST)
-      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-           pebpSDVavg = pebpSDVavg * (1.D0/TOTGEW)
-      endselect
+		  select case(KOST)
+		  case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+			   pebpSDVavg = pebpSDVavg * (1.D0/TOTGEW)
+		  endselect
 #ifndef ALTAY_SUBROUTINE
-      if (NPEBPx /= 0) info = writeSDV(IPEBPSDV,pebpSDVavg)
+		  if (NPEBPx /= 0) info = writeSDV(IPEBPSDV,pebpSDVavg)
 #endif
 #endif      
 #ifdef ALTAY_SUBROUTINE
-      ! Get the homogenized quantities:
-      associate (callout => astate%simulCalls(astate%this)%output)
-            callout%stress_tensor= SHsam
-            callout%taylor_factor= Mavg
-            callout%strain_rate_heterogeneity = srh
-            callout%equivalent_stress= SeqAvg
-            callout%effective_stress = sqrt(3.D0/2.D0)*norm2(SHsam)
-            callout%homogenised_slip = HGAMCALL
-            callout%homogenised_slip_tot = HGAMTOT            
-            callout%effective_macro_strain = MEPSCALL
-            callout%effective_macro_strain_tot =                         &
-                MacroDefState%AccumvMeqStrain_ToStartOfInc
-            callout%effective_macro_strain_tot_end =                     &
-                MacroDefState%AccumvMeqStrain_ToEndOfInc
-      end associate
+		  ! Get the homogenized quantities:
+		  associate (callout => astate%simulCalls(astate%this)%output)
+				callout%stress_tensor= SHsam
+				callout%taylor_factor= Mavg
+				callout%strain_rate_heterogeneity = srh
+				callout%equivalent_stress= SeqAvg
+				callout%effective_stress = sqrt(3.D0/2.D0)*norm2(SHsam)
+				callout%homogenised_slip = HGAMCALL
+				callout%homogenised_slip_tot = HGAMTOT            
+				callout%effective_macro_strain = MEPSCALL
+				callout%effective_macro_strain_tot =                         &
+					MacroDefState%AccumvMeqStrain_ToStartOfInc
+				callout%effective_macro_strain_tot_end =                     &
+					MacroDefState%AccumvMeqStrain_ToEndOfInc
+		  end associate
 #endif
-      !
-      HGAM = HGAM / TOTGEW
-      HGAMCALL = HGAMCALL + HGAM
+		  !
+		  HGAM = HGAM / TOTGEW
+		  HGAMCALL = HGAMCALL + HGAM
 #ifdef ALTAY_SUBROUTINE
-      ! We can choose not to update the internal state
-      if (.not.astate%simulCalls(astate%this)%input%keep_state) then  
-            HGAMTOT = HGAMTOT + HGAM 
-      endif
+		  ! We can choose not to update the internal state
+		  if (.not.astate%simulCalls(astate%this)%input%keep_state) then  
+				HGAMTOT = HGAMTOT + HGAM 
+		  endif
 #else
-      HGAMTOT = HGAMTOT + HGAM
+		  HGAMTOT = HGAMTOT + HGAM
 #endif
-      if(NLIST.eq.1) then
-      WRITE (IMP,105) ISTP,SeqAvg,Mavg,MacroDefState%IncrvMeqStrain
-      end if
- 105  FORMAT (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VALUE=',F10.5, &
+		  if(NLIST.eq.1) then
+		  write (IMP,105) ISTP,SeqAvg,Mavg,MacroDefState%IncrvMeqStrain
+		  end if
+ 105      format (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VALUE=',F10.5, &
               '  EFF. STRAIN EPS USED=',F10.5) 
-      !
-      ! End of the loop over steps
-      !
+		  !
+		  ! End of the loop over steps
+		  !
    8  enddo steploop
       !
-  22  RETURN
+  22  return
+      !
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !-------- IW<0 --------
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !
   32  return
+      !
       END SUBROUTINE
       
       end module
