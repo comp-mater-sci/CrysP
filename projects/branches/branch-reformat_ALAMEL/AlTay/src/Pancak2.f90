@@ -289,7 +289,7 @@ contains
                     CCC(2,M2+2)=0.0
                 else  !ALAMEL running
                     do IRL=1,NRL
-                        if (.not. swrlx(IRL)) cycle !HGH: TO BE CHECKED
+                        if (.not. swrlx(IRL)) cycle
                         j=M2+IRL  
                         CCC(1,j)=TAURL(IRL)
                         CCC(2,j)=TAURL(IRL)
@@ -463,7 +463,7 @@ contains
             j=i+jj
             !     If one grain does not deform, then DTAU1 comes from the full
             !     constraints solution.
-            if (ABS(DTAU1(j)).gt.TOL) goto 305
+            if (ABS(DTAU1(j)).gt.TOL) cycle
             NACTIV=NACTIV+1
             !      write (IMP,912) NACTIV,i
             ! 912  format (' NACTIV, i',2I5)
