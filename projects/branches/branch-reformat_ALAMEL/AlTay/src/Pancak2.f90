@@ -87,7 +87,7 @@ contains
 #endif
         SAVE
 
-        if (laml.ne.1.and.laml.ne.2) then
+        if (laml /= 1 .and. laml /= 2) then
 #ifndef ALTAY_SUBROUTINE
           write(*,*) 'laml=', laml
           call terminate(stopcode_runtimeerror)
@@ -96,7 +96,7 @@ contains
 #endif      
         endif
         !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-        if (IOR.eq.1) IGrElm=0 
+        if (IOR == 1) IGrElm=0 
         TWOSQ3=sqrt(2.D0/3.D0)
         !     N is number of rows of A1;   NU number of rows of UU2
         TLXX=TOLXX 
@@ -104,7 +104,7 @@ contains
         NU=N
         M2=NGR*M11
         M12=NGR*M11+NRL
-        if (laml==1) then
+        if (laml == 1) then
             !
             !     Updating of microstructure
             !
@@ -386,7 +386,7 @@ contains
                     j=j+1  
                     XXTOT=XXTOT+ABS(xx(j))
                 enddo
-                if (XXTOT < TOLXX) break
+                if (XXTOT < TOLXX) exit
             enddo
             
             if (XXTOT >= TOLXX) then
