@@ -44,7 +44,7 @@ implicit none
         !> Slip rates, normalized by von Mises equivalent strain rate, of the potentially active slip systems
         double precision, dimension(Pancak2_max_activesystems) :: sliplp = 0.0d0
           
-        !> CRSSs of the potentially active slip systems
+        !> CRSSs (not RSS??) of the potentially active slip systems
         double precision, dimension(Pancak2_max_activesystems) :: taurlp = 0.0d0
           
         !> Local strain rate (in vector format)

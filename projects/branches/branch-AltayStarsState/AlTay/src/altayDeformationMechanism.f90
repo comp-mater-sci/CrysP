@@ -339,6 +339,8 @@ contains
                                             tmp%n_twinning_systems
         !
         ! Attempt to construct the output
+        !
+        ! Initialize relevant variables
         call DeformationMechanismData_initEmpty(this,tmp%n_slip_systems, &
                                                 tmp%n_twinning_systems, info)
         if (info /= criSuccess) return

@@ -160,7 +160,8 @@
       double precision, intent(inout), dimension(3,3)           :: TRF
       integer, intent(out)                                      :: info
       !
-      double precision :: X, RNDM
+      double precision :: X,                                & ! increment of volume fraction of twins
+                          RNDM
       integer :: I, J, K
       double precision, dimension(DM_max_systems) :: VOLFR
       double precision, dimension(3,3) :: RCC, TDC
@@ -169,34 +170,35 @@
       info = criError
       !
       X=0.                                                              
-      DO 84 I=1,DM_data%n_twinning_systems                                                     
-      J=I+DM_data%n_slip_systems                                                           
-      X=X+sliprat_solution%shearrate%shearrate(J)/DM_data%G(I)                                                
-      VOLFR(I)=X                                                        
-  84  CONTINUE                                                          
-       IF (X.LE.1.) GOTO 85  
+      do I=1,DM_data%n_twinning_systems                                                     
+          J=I+DM_data%n_slip_systems                                                           
+          X=X+sliprat_solution%shearrate%shearrate(J)/DM_data%G(I)                                                
+          VOLFR(I)=X                                                        
+      end do                                                          
+      if (X.LE.1.) goto 85  ! check if increment of volume fraction of twins exceeds unity
 #ifndef ALTAY_SUBROUTINE
 !      if(NLIST.eq.1) then                                           
 !      WRITE (IMP,107) X   
 !      end if                                              
 ! 107  FORMAT (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,              &
 !      '   SHOULD BE LESS THAN 1')                                       
-       call terminate(stopcode_runtimeerror)
+      call terminate(stopcode_runtimeerror)
 #else       
-      RCM_RAISE(1,'TAYLR1',                                              &
+      RCM_RAISE(1,'TAYLR1',                                               &
       'Total volume fraction of twins exceeds unity',RCM_RTN)
 #endif
       return
       !
   85  CALL RANDOM_NUMBER(RNDM)
-      DO 86 I=1,DM_data%n_twinning_systems                                                     
-      IF (RNDM.LT.VOLFR(I)) GOTO 87                                     
-  86  CONTINUE                                                          
-      GOTO 31                                                           
-  87  DO 88 K=1,3                                                       
-      DO 89 J=1,3                                                       
-  89  RCC(K,J)=TRF(K,J)                                                  
-  88  CONTINUE                                                          
+      do I=1,DM_data%n_twinning_systems                                                     
+          if (RNDM.LT.VOLFR(I)) goto 87                                     
+      end do                                                          
+      goto 31                                                           
+  87  do K=1,3                                                       
+          do J=1,3                                                       
+              RCC(K,J)=TRF(K,J)
+          end do
+      end do                                                          
       TDC(1,1)=DM_data%B2(1,I)                                                  
       X=DM_data%B2(2,I)                                                         
       TDC(2,1)=X                                                        
