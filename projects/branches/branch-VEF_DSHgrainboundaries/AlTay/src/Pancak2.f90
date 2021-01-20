@@ -1,16 +1,16 @@
 #ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
 #endif
-      module altayPancake
-      use altayMiscutils, only: terminate, stopcode_runtimeerror
-      use criMathUtils
+module altayPancake
+use altayMiscutils, only: terminate, stopcode_runtimeerror
+use criMathUtils
       
-      contains
+contains
       
-! MODIFICATIONS AUG 2010
-! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
-! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
-!
+	  !> MODIFICATIONS AUG 2010
+	  !> THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
+	  !> WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
+	  !>
       Subroutine Pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,               &
        SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
@@ -29,16 +29,16 @@
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
       type(DeformationState),intent(in):: MacroDefState      
-      COMMON /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
+      common /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
        gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
        CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),                             &
        fi1b(2),phib(2),fi2b(2),                                          &
        NGR,NRL,ENTA,ITFMAS
-      COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
+      common /IGLIJS/ M11,CC(2,96)
+      common /double/ A8(5,96),BB8(5),RHO(5),B5(5)
       common /extra/ A1(10,194),UU(10,10)
       common /CEIGEN/ IOR,ISTP,NBLOC
-      COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),           &
+      common /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),           &
        TLXX,TAURLP(8)
       double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
       double precision,dimension(5):: RHOS, RHOA 
@@ -597,4 +597,4 @@
       return
       end subroutine
 
-      end module
+end module

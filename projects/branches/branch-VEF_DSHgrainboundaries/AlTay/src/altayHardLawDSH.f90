@@ -2,6 +2,7 @@
 ! $Id$
 !
       !> Dislocation substructural hardening (Peeters model and derivatives)
+      !> Hardening of a single grain
 MODULE altayHardLaw_DSH
 !     v1.0 by P. Eyckens, MTM, KU Leuven, 17 July 2012.
 !     v1.1 by P. Eyckens, MTM, and J. Gawad, CS, KU Leuven, 2 August 2012.
@@ -134,14 +135,18 @@ MODULE altayHardLaw_DSH
       !> State variables of single GB
       TYPE :: GBtype
             !PUBLIC components
-            double precision :: RHOgp = 0.D0 !< polarizing dislocation density in fron tof grain boundary
-            double precision :: RHOgpSAT,RHOgpMIN,RHOgpLOW !< state-dependent (!) saturation, min, and low values for rhogp
-            !!!!!!!!!!!!!!  to add:
-            ! GB normal vector
-            ! efffectivity matrix
+            double precision :: RHOgp = 0.D0 !< polarizing dislocation density in front of grain boundary
+            double precision :: RHOgpSAT,RHOgpMIN,RHOgpLOW !< state-dependent saturation, min, low values for rhogp
+            double precision :: GBspac = 0.D0 !< grain boundary spacing
+            double precision, dimension(3) :: GBnormal =  1.0 !< GB normal vector
+            double precision, DIMENSION(24) :: effGB               = 0.D0 ,& !< Geometric blocking effectivity of GB
+                                                    effGBslashb      = 0.D0 ,& !< Geometric blocking effectivity of GB divided by length of Burgers vector
+                                                    alfa_G_b_effGB   = 0.D0 ,&
+                                                    kg_ABSeffGB      = 0.D0    !< Hall-Petch times blocking effectivity of GB
       END TYPE GBtype
 
       !> State variables for single grain
+      !> Dislocation densities & CRSSs
       TYPE :: StatVar
       !PUBLIC components
             double precision                    :: RHOcb = 0.D0
@@ -150,8 +155,9 @@ MODULE altayHardLaw_DSH
             double precision, DIMENSION(2,24)   :: CRSS = 0.D0 !Up to 24 slip systems supported
       END TYPE StatVar
 
+      integer,save           :: nGB = 1   !< Number of grain boundaries, currently 1 supported
       TYPE, extends(StatVar) :: StatVarG
-            TYPE(GBtype), DIMENSION(1)          :: GB           !< currently 1 grain boundary per grain
+            TYPE(GBtype), DIMENSION(1)          :: GB           !< nGB grain boundaries
       END TYPE StatVarG
             
       !> Average disl. densities for single grain (calculated in GetStateDerivedVar)
@@ -164,21 +170,23 @@ MODULE altayHardLaw_DSH
             double precision :: rho_polCBBs = 0.D0
             !> Total average dislocation density; unit: m^(-2)
             double precision :: rho_avg = 0.D0    
+            !> Dislocation density of polarizing dislocations at grain boundaries; unit: m^(-2)
+            double precision,allocatable :: rho_polGBs
       END TYPE 
       
-      TYPE, extends(StateDerivedVars) :: StateDerivedVarsG
-            !> Dislocation density of polarizing dislocations at grain boundaries; unit: m^(-2)
-            double precision :: rho_polGBs = 0.D0
-      END TYPE StateDerivedVarsG
+      ! TYPE, extends(StateDerivedVars) :: StateDerivedVarsG
+            ! !> Dislocation density of polarizing dislocations at grain boundaries; unit: m^(-2)
+            ! double precision :: rho_polGBs = 0.D0
+      ! END TYPE StateDerivedVarsG
             
       INTERFACE OPERATOR(+)
             MODULE PROCEDURE  StateDerivedVar_plus
-            MODULE PROCEDURE  StateDerivedVarG_plus
+            !MODULE PROCEDURE  StateDerivedVarG_plus
       END INTERFACE
       
       INTERFACE OPERATOR(*)
             MODULE PROCEDURE  StateDerivedVar_times
-            MODULE PROCEDURE  StateDerivedVarG_times
+            !MODULE PROCEDURE  StateDerivedVarG_times
       END INTERFACE
       
       INTERFACE InitModuleAltayHardLaw_DSH !<Generic Interface
@@ -207,9 +215,9 @@ MODULE altayHardLaw_DSH
             GBtype,             &
             StateDerivedVars,   &
        !extended types:
-            PARg,                &
-            StatVarG,            &
-            StateDerivedVarsG
+            PARg,               &
+!            StateDerivedVars,   &
+            StatVarG            
 
       !> \name Exit codes from altayHardLaw_DSH subroutines and functions:
       !>@{
@@ -229,18 +237,14 @@ MODULE altayHardLaw_DSH
       CLASS(PAR), ALLOCATABLE, SAVE :: P !< Unit system: MPa; nm(nanometer)
       logical, SAVE :: InitOK=.FALSE.
       integer, SAVE :: Nss !< Number of slip systems. Supported values:
-                           !<   * Nss=12: (110)[111] - 1 family 
-                           !<   * Nss=24: (110)+(112)[111] - 2 families
+                              !<   * Nss=12: (110)[111] - 1 family 
+                              !<   * Nss=24: (110)+(112)[111] - 2 families
       integer, PRIVATE :: i !< Running index
       double precision, SAVE :: alfa_G_b 
       double precision, SAVE, DIMENSION(24,6):: eff              = 0.D0 ,& !< Geometric blocking effectivity of CBBs
                                                 effslashb        = 0.D0 ,& !< Geometric blocking effectivity of CBBs divided by length of Burgers vector
-                                                alfa_G_b_eff    = 0.D0 ,&
-                                                alfa_G_b_ABSeff = 0.D0
-      double precision, SAVE, DIMENSION(24,1):: effGB            = 0.D0 ,& !< Geometric blocking effectivity of GB
-                                                effGBslashb      = 0.D0 ,& !< Geometric blocking effectivity of GB divided by length of Burgers vector
-                                                alfa_G_b_effGB   = 0.D0 ,&
-                                                kg_ABSeffGB= 0.D0          !< Hall-Petch times blocking effectivity of GB
+                                                alfa_G_b_eff     = 0.D0 ,&
+                                                alfa_G_b_ABSeff  = 0.D0
 
       double precision, PARAMETER :: MINfrac= 2.0D-3 !< RHOcbMIN=  MINfrac * RHOcbSAT
       double precision, PARAMETER :: LOWfrac=10.0D-3 !< RHOwpMIN=  MINfrac * RHOwpSAT
@@ -488,7 +492,7 @@ CONTAINS
 
       P%RHOwpLOW=  LOWfrac * P%RHOwpSAT
 
-      !Calculate "Wall-effectivity"-matrices
+      !Calculate CBB "wall-effectivity"-matrices
       select case(iKOST)
       case(13) ! "LoopSlip": introduced in v.1.11; invokable through KOST=13    
           do s=1,24 
@@ -507,7 +511,7 @@ CONTAINS
               eff(s,i)=DOT_PRODUCT( ScrewDir(s,:) , CBBnormal(i,:) )  
             end do
           end do
-      case(11) ! according to PhD Peeters    
+      case(11,14) ! according to PhD Peeters    
           do s=1,24 
             do i=1,6
               eff(s,i)=DOT_PRODUCT( EdgeDir(s,:) , CBBnormal(i,:) )  
@@ -517,8 +521,7 @@ CONTAINS
       effslashb       = eff / P%b  
       alfa_G_b= P%alfa* P%G * P%b 
       alfa_G_b_eff    = alfa_G_b * eff       
-      alfa_G_b_ABSeff = ABS(alfa_G_b_eff)  
-
+      alfa_G_b_ABSeff = ABS(alfa_G_b_eff)
                                            
       !If control passes here, initialization is done without errors
       InitOK=.TRUE. !PRIVATE to this module
@@ -567,7 +570,7 @@ CONTAINS
       case (14)
          allocate(PARg::Pf)
       end select
-      
+      !
       read(inunit,fmt=100,err=666,end=666) Pf%b
       read(inunit,fmt=100,err=666,end=666) Pf%G
       read(inunit,fmt=100,err=666,end=666) Pf%alfa
@@ -607,15 +610,17 @@ CONTAINS
       !>        * KS_ErrUninitialized, in case this module is not correctly initialized
       !> \note CONTAINed by MODULE altayHardLaw_DSH
       SUBROUTINE GetInitStatVar(SV0,iError) 
-      CLASS(StatVar),INTENT(OUT) :: SV0 !< State variables for an annealed & undeformed substructure for single grain
-      integer,      INTENT(OUT) :: iError
-
+      CLASS(StatVar),INTENT(OUT) :: SV0      !< State variables for an annealed & undeformed substructure for single grain
+      integer,       INTENT(OUT) :: iError
+      integer                    :: i,s
+      
       if(.NOT.InitOK) then
             iError = KS_ErrUninitialized
             return
       end if
       iError=KS_OK
 
+      ! basic Peeters model
       SV0%RHOcb               = P%RHOcbMIN
       SV0%CBB(:)%RHOwd        = P%RHOwdMIN
       SV0%CBB(:)%RHOwp        = 0.
@@ -625,19 +630,36 @@ CONTAINS
       SV0%ActiveCBB(:)        = 0
       SV0%CRSS                = F_CRSS(SV0)
 
-      select type (SV0)
+      ! GB extended model
+      select type (SV0)    
       type is (StatVarG)
-          SV0%GB(:)%RHOgp         = 0.
-          ! SV0%GB(:)%RHOgpSAT=(P%Igpr*sqrt(4.D0*P%Igpd*P%Rgp/d+P%Igpr**2) +   &    !!!!!<<<<<<<<========= define grain size d, but d depends on deformation, so likely not the right place to initialize!!!
-                     ! 2.D0*P%Igpd*P%Rgp/d + P%Igpr**2)/(2.D0*P%Rgp**2)
-          SV0%GB(:)%RHOgpMIN=  MINfrac * SV0%GB(:)%RHOgpSAT   !<<<===== does that work?? element-wise assignment???
-          SV0%GB(:)%RHOgpLOW=  LOWfrac * SV0%GB(:)%RHOgpSAT   !<<<===== does that work?? element-wise assignment???
-          ! GB normal vector & effectivity matrix
+      select type (P)    
+      type is (PARg)
+        do i=1,nGB          ! loop over GBs
+          do s=1,24         ! loop over slip systems
+              SV0%GB(i)%effGB(s)=DOT_PRODUCT( EdgeDir(s,:) , SV0%GB(i)%GBnormal )  
+          end do
+          SV0%GB(i)%effGBslashb = SV0%GB(i)%effGB / P%b        
+          SV0%GB(i)%alfa_G_b_effGB = alfa_G_b * SV0%GB(i)%effGB       
+          SV0%GB(i)%kg_ABSeffGB = P%kg * SV0%GB(i)%effGB       
+        !
+        !!!!!!> \todo Set GB normal vector and spacing from microstructure
+        !   SV0%GB%GBspac =
+        !   SV0%GB%GBnormal =
+        !
+          SV0%GB(i)%RHOgp         = 0.
+          SV0%GB(i)%RHOgpSAT=(P%Igpr*sqrt(4.D0*P%Igpd*P%Rgp/SV0%GB(i)%GBspac+P%Igpr**2) +   &
+                  2.D0*P%Igpd*P%Rgp/SV0%GB(i)%GBspac + P%Igpr**2)/(2.D0*P%Rgp**2)
+          SV0%GB(i)%RHOgpMIN=  MINfrac * SV0%GB(i)%RHOgpSAT !> \todo Check whether that works correctly
+          SV0%GB(i)%RHOgpLOW=  LOWfrac * SV0%GB(i)%RHOgpSAT !> \todo Check whether that works correctly
+        end do
+      end select
       end select
       END SUBROUTINE GetInitStatVar
 
 
-      !> Make increment. 
+      !-----------------------------------------------------------------------------
+      !> Make increment: Update dislocation densities and CRSSs
       !> \par Input
       !>    * state variable at beginning of increment (SVa)
       !>    * slip rates, assumed constant throughout the increment (sliprate)
@@ -650,31 +672,31 @@ CONTAINS
       !>        *  KS_ErrUninitialized, in case this module is not correctly initialized.
       !>
       !> \note CONTAINed by MODULE altayHardLaw_DSH
+      !-----------------------------------------------------------------------------
       SUBROUTINE MakeInc(SVa,sliprate,deltaT,SVb,iError)
       CLASS(StatVar),INTENT(IN)                  :: SVa      !< state variable at beginning of increment
       double precision,INTENT(IN), DIMENSION(24) :: sliprate !< slip rates, assumed constant throughout the increment
       double precision,INTENT(IN)                :: deltaT   !< time increment
-      CLASS(StatVar), allocatable, INTENT(OUT)   :: SVb      !< state variables at end of the increment
+      CLASS(StatVar),allocatable,INTENT(OUT)     :: SVb      !< state variables at end of the increment
       integer,INTENT(OUT)            :: iError
 
       !local variable declarations
-      double precision :: SUMabsGamDot=0.,      & !< sum of absolute slip rates over all slip systems
-                            GAMMAdot_new=0.,    & !< sum of absolute slip rates over active CBBs
+      double precision :: SUMabsGamDot=0.,      & !< total slip rate over all slip systems
+                            GAMMAdot_new=0.,    & !< total slip rate over active CBBs
                             RHObausch=0.  
       double precision :: SUMabsGam   =0.,      & 
                             GAMMA_new   =0.       !< total slip increment on active CBBs
-      double precision, DIMENSION(6) :: GAMMAdot=0.,GAMMA=0. 
-      integer, DIMENSION(6) :: r !< 2 most active CBBs and 4 others
-      integer :: j !< local looping variable
-      double precision :: fl,wd
-
-      select type (SVa)
-      type is (StatVar)
-         allocate(StatVar::SVb)
-      type is (StatVarG)
-         allocate(StatVarG::SVb)
-      end select
+      double precision, DIMENSION(6) :: GAMMAdot=0., & !< total slip rate per wall
+                                          GAMMA=0.     !< total slip per wall
+      integer, DIMENSION(6) :: r        !< 2 most active CBBs and 4 others
+      integer :: j                      !< looping variable
+      double precision :: fl, &         !< flux onto CBB or GB
+                          wd, &         !
+                          spac          !< GB spacing
       
+      ! allocate SVb
+      allocate(SVb,mold=SVa)
+                    
       if(.NOT.InitOK) then
             SVb=SVa
             iError = KS_ErrUninitialized
@@ -688,10 +710,10 @@ CONTAINS
       ! 'Gam'   ~ small-caps gamma: for a slip system
       ! 'GAMMA' ~ large-caps GAMMA: for a wall
 
-      
+
       SUMabsGamDot=sum(abs(sliprate(1:Nss)))
       SUMabsGam=SUMabsGamDot*deltaT
-      !
+      ! Check if slip occurs
       if (SUMabsGam < epsilon(0.D0)) then
             ! No slip rate in the current grain => no deformation, no update of the state
             SVb=SVa
@@ -702,12 +724,12 @@ CONTAINS
       ! finite deformation => update the state
 
                                                                          
-      GAMMAdot=F_GAMMAdot(sliprate) 
-      GAMMA=GAMMAdot*deltaT
+      GAMMAdot=F_GAMMAdot(sliprate) ! total slip rate per wall
+      GAMMA=GAMMAdot*deltaT         ! total slip per wall
 
-      r= sort110planes(GAMMAdot) !sort the walls in r
-      SVb%ActiveCBB(1)=r(1)
-      SVb%ActiveCBB(2)=r(2)
+      r= sort110planes(GAMMAdot)    ! sort the walls by activity
+      SVb%ActiveCBB(1)=r(1)         ! most active wall
+      SVb%ActiveCBB(2)=r(2)         ! second most active wall
 
       GAMMAdot_new=GAMMAdot(r(1))+GAMMAdot(r(2))    !total slip rate on active CBBs
       GAMMA_new=GAMMAdot_new*deltaT                 !total slip increment on active CBBs
@@ -735,6 +757,19 @@ CONTAINS
                         SVb%CBB(r(j))%RHOwp ) !out
       end do
 
+      !update RHOgp and RHObausch with GB contributions
+      select type (SVa)
+      type is (StatVarG)
+      select type (SVb)
+      type is (StatVarG)
+          do j=1,nGb
+            spac=SVa%GB(j)%GBspac !to be used by RungeKutta_gp->dgp_dt
+            call UPD_gp(SVa%GB(j)%RHOgp,SVa%GB(j)%effGBslashb,SVa%GB(j)%RHOgpLOW, & !in
+                                SVb%GB(j)%RHOgp,RHObausch) !out
+          end do
+      end select
+      end select
+      !
       !RHOcb
       call UPD_cb(RHObausch,SUMabsGam,SVa%RHOcb,                         & !in
                                       SVb%RHOcb ) !out
@@ -750,7 +785,7 @@ CONTAINS
       !> Calculate the total slip rates on each of the six {110}-planes
       !> \note CONTAINed by SUBROUTINE MakeInc
       FUNCTION F_GAMMAdot(sr) 
-      double precision, DIMENSION(24), INTENT(IN)  :: sr         !< Slip Rate
+      double precision, DIMENSION(24), INTENT(IN)  :: sr         !< Slip Rates of all systems
       double precision, DIMENSION( 6)              :: F_GAMMAdot !< OUT: Total slip rate for {110}-planes (2 <111> slip directions per plane)
       
       F_GAMMAdot(1)= abs(sr( 1))+abs(sr( 7))!(01-1)-plane
@@ -834,7 +869,7 @@ CONTAINS
       integer, INTENT(IN):: rdr                     !< CBB identifier (1..6)
       double precision ,INTENT(IN)   :: RHOwp_a     !< polarizing disl. density at start of increment
       double precision ,INTENT(OUT)  :: RHOwp_b     !< polarizing disl. density at end of increment
-      double precision, INTENT(INOUT):: RHObausch   !< polarizing disl. density for which fluxes reversed
+      double precision, INTENT(INOUT):: RHObausch   !< total polarizing disl. density for CBBs + GBs with reversed flux (local to MakeInc)
 
       !inherited variables:
       !P%Iwd, P%Rwd, P%b 
@@ -845,12 +880,9 @@ CONTAINS
 
       !local variable declarations:
       double precision :: wpFLUX !wp-flux on the wall 'rdr' 
-
       logical :: FLUXreversal,wpLOW
 
-      wpFLUX=DOT_PRODUCT( effslashb(:,rdr) , sliprate(:) )  
-
-                                         
+      wpFLUX=DOT_PRODUCT( effslashb(:,rdr) , sliprate(:) )                                           
       FLUXreversal= wpFLUX*RHOwp_a .LT. 0.0
       wpLOW= abs(RHOwp_a) .LE. P%RHOwpLOW
 
@@ -999,7 +1031,85 @@ CONTAINS
       END SUBROUTINE UPD_ncg_wd
 
 
+!===============>>>>>>>>>>>> testing
+
+      !> Build-up of rhogp. RungeKutta modified for rhogp.                              
+      !> \note CONTAINed by SUBROUTINE MakeInc
+      FUNCTION RungeKutta_gp(gpini)
+      double precision, INTENT(IN) :: gpini        !< dislocation density at start of increment
+      double precision                RungeKutta_gp   !< OUT
+
+      !local variable declarations:
+      double precision, DIMENSION(4) :: K !< 4-th order Runge-Kutta increments
+
+      K(1)=deltaT*dgp_dt(gpini        )
+      K(2)=deltaT*dgp_dt(gpini+K(1)/2.D0)
+      K(3)=deltaT*dgp_dt(gpini+K(2)/2.D0)
+      K(4)=deltaT*dgp_dt(gpini+K(3)   )
+      RungeKutta_gp=gpini+(K(1)+2.D0*K(2)+2.D0*K(3)+K(4))/6.D0
+
+      END FUNCTION RungeKutta_gp
+
+
+      !> Evolution equation for build-up of rhogp                         
+      !> \note CONTAINed by SUBROUTINE MakeInc
+      FUNCTION dgp_dt(gp)
+      double precision, INTENT(IN) :: gp
+      double precision             :: dgp_dt !OUT
+
+      !inherited variables:
+      !fl, spac
+      !P%Igpr, P%Igpd, P%Rgp
+
+      select type (P)
+      type is (PARg)
+        dgp_dt=(sign(1.D0,fl) * (P%Igpr*sqrt(abs(gp)) + P%Igpd/spac) - P%Rgp*gp) * abs(fl)
+      end select
+      
+      END FUNCTION dgp_dt
+
+
+      !> Update the polarizing dislocation density for a grain boundary
+      !> \note CONTAINed by SUBROUTINE MakeInc
+      SUBROUTINE UPD_gp(RHOgp_a,effGBslashb,RHOgpLOW,RHOgp_b,RHObausch)
+      double precision ,INTENT(IN)   :: RHOgp_a     !< polarizing disl. density at start of increment
+      double precision ,dimension(24),INTENT(IN)   :: effGBslashb     !< blocking effectivity of GB
+      double precision ,INTENT(IN)   :: RHOgpLOW     !
+      double precision ,INTENT(OUT)  :: RHOgp_b     !< polarizing disl. density at end of increment
+      double precision, INTENT(INOUT):: RHObausch   !< total polarizing disl. density for GBs with reversed flux
+
+      !local variable declarations:
+      double precision :: gpFLUX !< gp-flux on the GB 
+      logical :: FLUXreversal,gpLOW
+
+      gpFLUX=DOT_PRODUCT( effGBslashb(:) , sliprate(:) )                                           
+      FLUXreversal= gpFLUX*RHOgp_a .LT. 0.0
+      gpLOW= abs(RHOgp_a) .LE. RHOgpLOW
                                              
+      if ( FLUXreversal .and. .NOT.(gpLOW) ) then
+        ! |RHOgp| gets smaller, following analytic time integration
+        select type (P)
+        type is (PARg)
+          RHOgp_b=RHOgp_a*exp(-P%Rgp*abs(gpFLUX)*deltaT) !gpFLUX is a rate!
+        end select
+        RHObausch=RHObausch+abs(RHOgp_a)    
+      else
+        ! |RHOgp| gets larger, following numeric time integration (4th order Runge-Kutta)
+        fl=gpFLUX                 !to be used by RungeKutta->dwp_dt
+        if ( FLUXreversal ) then
+          !In this case, it must also be that: gpLOW=.TRUE.
+          !AFTER change of its sign, RHOgp will build up again.
+          RHOgp_b = RungeKutta_gp(-RHOgp_a)    
+        else
+          RHOgp_b = RungeKutta_gp( RHOgp_a) 
+        end if
+        !RHObausch=RHObausch : No contribution to RHObausch
+      end if
+
+      END SUBROUTINE UPD_gp
+
+!<<<<<<<<<<<<<<============== testing 
+
 
       !> Update cell (CB) dislocation density
       !> \note CONTAINed by SUBROUTINE MakeInc
@@ -1017,7 +1127,7 @@ CONTAINS
       if(RHObausch .GT. 0.0) then ! 1 or 2 fluxes reversed
         Reffective=P%R + P%R2*RHObausch/(2.D0*P%RHOwpSAT)  
         !RHO_b= F_KocksMeck(RHO_a,SUMabsGam,P%I,Reffective)   ! <<<<<<<<---------- TESTING
-        if (P%I*sqrt(RHO_a) - Reffective*RHO_a .LE. 0.0) then
+        if (P%I*sqrt(RHO_a) - Reffective*RHO_a .LE. 0.0) then ! Heaviside bracket, step function
           RHO_b=RHO_a !Keep as is. 
         else
             RHO_b= F_KocksMeck(RHO_a,SUMabsGam,P%I,Reffective)
@@ -1035,7 +1145,7 @@ CONTAINS
       !> \note CONTAINed by MODULE altayHardLaw_DSH
       FUNCTION F_CRSS(SV) 
       CLASS(StatVar), INTENT(IN) :: SV              !< State variables of grain
-      double precision, DIMENSION(2,24):: F_CRSS !OUT 
+      double precision, DIMENSION(2,24):: F_CRSS    !< OUT 
 
 !     P%tau0,P%f  ->inherited
 !     alfa_G_b ->inherited
@@ -1044,10 +1154,12 @@ CONTAINS
       !local variables declarations
       double precision :: tau_CB, &     !< CRSS within cells & CBs
                             CRSS_0_CB   !< contribution from tau_0 and CBs to CRSS
-      double precision,DIMENSION(2,24)::tau_CBB
-      integer :: j,s,i
+      double precision,DIMENSION(2,24) :: tau_CBB !< contribution from CBBs
+      double precision,DIMENSION(2,24) :: tau_GB  !< contribution from GBs
+      integer :: j,s,i                          !< loop counters
       double precision :: signfac
-      double precision,DIMENSION(6)::wpcontr,wdcontr
+      double precision,DIMENSION(6) :: wpcontr,wdcontr !< contributions of CBBs on single slip system
+      double precision,DIMENSION(:),allocatable :: gpcontr,kgcontr !< contrib. of GBs on single slip system; dimension is nGB
       
       !Slip systems not allowed to become active retain initialization value of -1.0
       F_CRSS=-1.D0
@@ -1074,9 +1186,28 @@ CONTAINS
           end do
           !CRSS within CBB = wp- and wd-contributions for all 6 walls
           tau_CBB(j,s)=sum(wpcontr)+sum(wdcontr) 
-          !C.R.S.S. for the "two-phase composite"
+ 
+          select type (SV)
+          type is (StatVarG)
+              !gp- and Hall-Petch contributions from all GBs i
+              do i=1,nGb
+                !gp
+                      gpcontr(i)=sqrt(abs(SV%GB(i)%RHOgp)) *             &
+                           signfac * SV%GB(i)%alfa_G_b_effGB(s) *                    &
+                           sign(1.D0,SV%GB(i)%RHOgp) ! sign returns +/-1 depending on the sign of the second argument
+                if (gpcontr(i) .LT. 0.0) gpcontr(i)=0.0 ! Heaviside bracket/step function
+                !Hall-Petch
+                kgcontr(i)=SV%GB(i)%kg_ABSeffGB(s)/sqrt(SV%GB(i)%GBspac)
+              end do
+              tau_GB(j,s)=sum(gpcontr)+sum(kgcontr) 
+          end select
+
+          !CRSS for the "two-phase composite"
           F_CRSS(j,s)= CRSS_0_CB + P%f*tau_CBB(j,s) 
           !if (F_CRSS(j,s) .LT. 0.0) F_CRSS(j,s)=0.1      !<<<<<<---------  TESTING  
+          if (iKost==14) then
+            F_CRSS(j,s)= F_CRSS(j,s) + tau_GB(j,s) 
+          end if          
         end do
       end do
 
@@ -1106,15 +1237,28 @@ CONTAINS
                   read(unit,fmt=100,err=666,end=666) tmpstr
             enddo
       else               !< when dummy = .false. or not present (default option) read SV from file
-            read(unit,fmt=101,err=666,end=666) SV%RHOcb
-            do i=1,6 !one line per WALL
+            read(unit,fmt=101,err=666,end=666) SV%RHOcb ! disl. cells
+            do i=1,6 !one line per disl. WALL
               read(unit,fmt=102,err=666,end=666)SV%CBB(i)%RHOwd,        &
                                                 SV%CBB(i)%RHOwp,        &
                                                 SV%CBB(i)%RHOwdHOM,     &
                                                 SV%CBB(i)%accGAMMA_new, &
                                                 SV%CBB(i)%RHOwd_ini    
             end do
-            read(unit,fmt=103,err=666,end=666) SV%ActiveCBB(1),SV%ActiveCBB(2)
+            read(unit,fmt=103,err=666,end=666) SV%ActiveCBB(1),SV%ActiveCBB(2) ! 2 most active walls
+            select type (SV)
+            type is (StatVarG)
+                do i=1,nGB !one line per GB
+                    read(unit,fmt=105,err=666)SV%GB(i)%RHOgp,        &
+                                        SV%GB(i)%RHOgpSAT,        &
+                                        SV%GB(i)%RHOgpMIN,     &
+                                        SV%GB(i)%RHOgpLOW, &
+                                        SV%GB(i)%GBspac, &    
+                                        SV%GB(i)%GBnormal(1), &    
+                                        SV%GB(i)%GBnormal(2), &    
+                                        SV%GB(i)%GBnormal(3)    
+                end do
+            end select
             do i=1,2 !first line for positive sense, 2nd line for negative sense
               read(unit,fmt=104,err=666,end=666)(SV%CRSS(i,j),j=1,24)
             end do
@@ -1127,6 +1271,7 @@ CONTAINS
 102   format( 5(E15.8,1X))   ! 5 times E15.8 with 1 blank spacing in between
 103   format( 2(I5,1X   ))   ! 2 5-digit integers with 1 blank spacing
 104   format(24(E15.8,1X))
+105   format( 8(E15.8,1X))
       !
 666   iError = KS_ErrIO !Error in reading from file    
       !
@@ -1141,16 +1286,31 @@ CONTAINS
 
       !local variables declarations
       integer :: i,j
-
-      write(unit,fmt=101,err=666) SV%RHOcb
-      do i=1,6 !one line per WALL
+      
+      write(unit,fmt=101,err=666) SV%RHOcb ! dislocation cells
+      do i=1,6 !one line per disl. WALL
             write(unit,fmt=102,err=666)SV%CBB(i)%RHOwd,        &
                                     SV%CBB(i)%RHOwp,        &
                                     SV%CBB(i)%RHOwdHOM,     &
                                     SV%CBB(i)%accGAMMA_new, &
                                     SV%CBB(i)%RHOwd_ini    
       end do
-      write(unit,fmt=103,err=666) SV%ActiveCBB(1),SV%ActiveCBB(2)
+      write(unit,fmt=103,err=666) SV%ActiveCBB(1),SV%ActiveCBB(2) ! 2 most active walls
+      select type (SV)
+      type is (StatVarG)
+            do i=1,nGB !one line per GB
+                write(unit,fmt=105,err=666)SV%GB(i)%RHOgp,        &
+                                    SV%GB(i)%RHOgpSAT,        &
+                                    SV%GB(i)%RHOgpMIN,     &
+                                    SV%GB(i)%RHOgpLOW, &
+                                    SV%GB(i)%GBspac, &    
+                                    SV%GB(i)%GBnormal(1), &    
+                                    SV%GB(i)%GBnormal(2), &    
+                                    SV%GB(i)%GBnormal(3)   
+            end do         
+      !type is (StatVar)
+      !      write(unit,fmt=*,err=666) 'SV is type StatVar' !<<<<<<<<<<<<<<<<< testing
+      end select
       do i=1,2 !first line for positive sense, 2nd line for negative sense
             write(unit,fmt=104,err=666)(SV%CRSS(i,j),j=1,24)
       end do
@@ -1161,6 +1321,7 @@ CONTAINS
 102   format( 5(E15.8,1X))
 103   format( 2(I5,1X   ))
 104   format(24(E15.8,1X))
+105   format( 8(E15.8,1X))
       !
 666   iError = KS_ErrIO !Error in reading from file    
       !
@@ -1171,6 +1332,8 @@ CONTAINS
       !> \note CONTAINed by MODULE altayHardLaw_DSH
       integer function WriteHeadSVfile(unit) result(iError)
       integer,intent(in)  :: unit
+      integer             :: i
+      character(len=9)    :: i_char
       !      
       write(unit,fmt=100,err=666)"# CB         : [1]RHOcb                                                    "
       write(unit,fmt=100,err=666)"# CBB1(01-1) : [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
@@ -1180,6 +1343,12 @@ CONTAINS
       write(unit,fmt=100,err=666)"# CBB5(101)  : [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
       write(unit,fmt=100,err=666)"# CBB6(-1-10): [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
       write(unit,fmt=100,err=666)"# ActiveCBBs : [1]ID_ActiveCBB_highest_slip [2]ID_ActiveCBB_2ndhighest_slip"
+      if (iKost==14) then
+         do i=1,nGB
+            write (i_char, '(i9)') i
+            write(unit,fmt=102,err=666) adjustl(i_char)
+         end do
+      end if
       write(unit,fmt=100,err=666)"# CRSS+sense : [1]CRSS(1+) [2]CRSS(2+) ...  [23]CRSS(23+) [24]CRSS(24+)    "
       write(unit,fmt=100,err=666)"# CRSS-sense : [1]CRSS(1-) [2]CRSS(2-) ...  [23]CRSS(23-) [24]CRSS(24-)    "      
       write(unit,fmt=100,err=666)"#--------------------------------------------------------------------------"
@@ -1192,6 +1361,8 @@ CONTAINS
       !
 100   format(A76)
 101   format(A26,L1)
+102   format("# GB",A9,": [1]RHOgp [2]RHOgpSAT [3]RHOgpMIN [4]RHOgpLOW [5]GBspac [6]GBnormal(1) [7]GBnormal(2) &
+              &[8]GBnormal(3)")
 666   iError = KS_ErrIO !Error in writing to file
       !
       end function WriteHeadSVfile
@@ -1203,11 +1374,14 @@ CONTAINS
       integer,intent(in)  :: unit
       
       !local variables declarations
-      integer ::  i
+      integer ::  i, &
+                   n !< number of lines in header
       character :: tmp
       
-      do i=1,15
-        read(unit,fmt=100,err=666) tmp !read 15 lines
+      n=15
+      if (iKost==14) n=n+nGB
+      do i=1,n
+        read(unit,fmt=100,err=666) tmp !read n lines
       end do
       
       iError = KS_OK
@@ -1223,8 +1397,7 @@ CONTAINS
       !> \note CONTAINed by MODULE altayHardLaw_DSH
       SUBROUTINE GetStateDerivedVar(SV,SDV,iError)
       CLASS(StatVar),   INTENT(IN)  :: SV
-      !> An object of type StateDerivedVars, which contains state-derived variables calculated from SV
-      CLASS(StateDerivedVars), INTENT(OUT) :: SDV
+      type(StateDerivedVars), INTENT(OUT) :: SDV !< Contains state-derived variables calculated from SV
       !> Exit code:  
       !> - KS_OK , no error
       !> - KS_ErrUninitialized, in case this module is not correctly initialized
@@ -1235,13 +1408,21 @@ CONTAINS
             iError = KS_ErrUninitialized
             return
       end if
-      
+          
       SDV%rho_CBs     = SV%RHOcb                        * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
       SDV%rho_CBBs    = sum(    SV%CBB(:)%RHOwd ) /6.D0 * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
       SDV%rho_polCBBs = sum(abs(SV%CBB(:)%RHOwp)) /6.D0 * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
       SDV%rho_avg     = (1.D0-P%f)*SDV%rho_CBs + P%f*(SDV%rho_CBBs+SDV%rho_PolCBBs)
       !Note: Number of CBBs is 6 (currently hard-coded)
-         
+
+      ! GB extended model
+      select type (SV)
+      type is (StatVarG)
+         if (.NOT.allocated(SDV%rho_polGBs)) allocate(SDV%rho_polGBs) !check if rho_polGBs needs to be allocated
+         SDV%rho_polGBs = sum(abs(SV%GB(:)%RHOgp)) /6.D0 * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
+         SDV%rho_avg    = SDV%rho_avg + SDV%rho_polGBs
+      end select
+      
       iError=KS_OK
       
       END SUBROUTINE GetStateDerivedVar
@@ -1256,77 +1437,58 @@ CONTAINS
       res%rho_CBBs = first%rho_CBBs + second%rho_CBBs
       res%rho_polCBBs = first%rho_polCBBs + second%rho_polCBBs
       res%rho_avg = first%rho_avg + second%rho_avg
+      if (allocated(first%rho_polGBs) .AND. allocated(second%rho_polGBs)) then
+          if (.NOT.allocated(res%rho_polGBs)) allocate (res%rho_polGBs)
+          res%rho_polGBs = first%rho_polGBs + second%rho_polGBs
+      end if
       !
       end function StateDerivedVar_plus
     
-      !> Calculate component-wise sum of two StateDerivedVarsG objects 
-      elemental function StateDerivedVarG_plus(first,second) result(res)
-      type(StateDerivedVarsG),intent(in) :: first,second
-      type(StateDerivedVarsG) :: res
-      !
-      res%rho_CBs = first%rho_CBs + second%rho_CBs
-      res%rho_CBBs = first%rho_CBBs + second%rho_CBBs
-      res%rho_polCBBs = first%rho_polCBBs + second%rho_polCBBs
-      res%rho_avg = first%rho_avg + second%rho_avg
-      res%rho_polGBs = first%rho_polGBs + second%rho_polGBs
-      !
-      end function StateDerivedVarG_plus
     
       !> Multiply all components of SDV by the scalar
       elemental function StateDerivedVar_times(SDV,scalar) result(res)
       type(StateDerivedVars),intent(in) :: SDV
       double precision,intent(in)       :: scalar
-      type(StateDerivedVars) :: res
+      type(StateDerivedVars)            :: res
       !
       res%rho_CBs = scalar * SDV%rho_CBs
       res%rho_CBBs = scalar * SDV%rho_CBBs
       res%rho_polCBBs = scalar * SDV%rho_polCBBs
       res%rho_avg = scalar * SDV%rho_avg
+      if (allocated(SDV%rho_polGBs)) then
+          if (.NOT.allocated(res%rho_polGBs)) allocate (res%rho_polGBs)
+          res%rho_polGBs = scalar * SDV%rho_polGBs
+      end if
       !
       end function StateDerivedVar_times
 
-      !> Multiply all components of SDV by the scalar
-      elemental function StateDerivedVarG_times(SDV,scalar) result(res)
-      type(StateDerivedVarsG),intent(in) :: SDV
-      double precision,intent(in)       :: scalar
-      type(StateDerivedVarsG) :: res
-      !
-      res%rho_CBs = scalar * SDV%rho_CBs
-      res%rho_CBBs = scalar * SDV%rho_CBBs
-      res%rho_polCBBs = scalar * SDV%rho_polCBBs
-      res%rho_avg = scalar * SDV%rho_avg
-      res%rho_polGBs = scalar * SDV%rho_polGBs
-      !
-      end function StateDerivedVarG_times
 
       !> Output state-derived variables (SDV) or/and a header line.
       integer function writeSDV(unit,SDV,header) result(info)
       integer,intent(in)                :: unit
       logical,intent(in),optional       :: header
-      class(StateDerivedVars),intent(in),optional :: SDV
+      type(StateDerivedVars),intent(in),optional :: SDV
       !
       integer :: ierr
       !
       info = KS_ErrIO
       if (present(header)) then
           if (header) then
-          select type (SDV)
-          type is (StateDerivedVars)
-             write(unit,fmt=100,iostat=ierr)
-          type is (StateDerivedVarsG)
-             write(unit,fmt=102,iostat=ierr)
-          end select
+             if (.NOT.allocated(SDV%rho_polGBs)) then
+                write(unit,fmt=100,iostat=ierr)
+             else
+                write(unit,fmt=102,iostat=ierr)
+             end if
           endif
           if (ierr /= 0) return
       endif
       if (present(SDV)) then
-          select type (SDV)
-          type is (StateDerivedVars)
-             write(unit,fmt=101,iostat=ierr) SDV
-          type is (StateDerivedVarsG)
-             write(unit,fmt=103,iostat=ierr) SDV
+          if (.NOT.allocated(SDV%rho_polGBs)) then
+             write(unit,fmt=101,iostat=ierr) SDV%rho_CBs, SDV%rho_CBBs, SDV%rho_polCBBs, SDV%rho_avg
+          else
+             write(unit,fmt=103,iostat=ierr) SDV%rho_CBs, SDV%rho_CBBs, SDV%rho_polCBBs, SDV%rho_avg, SDV%rho_polGBs
+          end if
           if (ierr /= 0) return
-          end select
       endif  
       info = KS_OK
       ! 

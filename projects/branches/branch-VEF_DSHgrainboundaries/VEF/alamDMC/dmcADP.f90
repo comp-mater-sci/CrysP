@@ -59,7 +59,7 @@ contains
 
     !> Print configuration to IO unit (type-bound function)
     integer function ADPModule_printConfig(this, outunit) result(info)
-    class(ADPModule),intent(in)      :: this !<MB: passed implicitly
+    class(ADPModule),intent(in)      :: this ! passed implicitly
     integer,intent(in)              :: outunit !< IO unit for output
     !
         info = this%DeformationDrivenModule%printConfig(outunit)

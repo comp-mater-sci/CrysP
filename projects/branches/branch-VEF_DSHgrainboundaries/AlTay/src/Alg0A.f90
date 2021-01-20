@@ -1,29 +1,25 @@
 #ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
 #endif
-      module altaySimul
-      use altayMiscutils, only: terminate, stopcode_runtimeerror
-      use altayHardTypes
-      use altayMacroKinematic
+module altaySimul
+use altayMiscutils, only: terminate, stopcode_runtimeerror
+use altayHardTypes
+use altayMacroKinematic
       
-      ! Initial rations of CRSS, set in MAINA1.
-      ! It is used only by the stand-alone AlTay
-      type(CRSS),save :: crss_ratiosIN
+      type(CRSS),save :: crss_ratiosIN !< Initial rations of CRSS, set in MAINA1. It is used only by the stand-alone AlTay
 
-      contains
+contains
       
-! ALAMEL V3
-! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
-! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
-!  All comments about modifications of the source have been removed
-! for clarity 
-! See "annotated source codes" if you need these
-!
-!
+	  !> ALAMEL V3
+	  !> THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
+	  !> WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
+	  !> All comments about modifications of the source have been removed
+	  !> for clarity.
+	  !> See "annotated source codes" if you need these.
       SUBROUTINE SIMUL(IW,NFILE0,MacroDefRate)
 
-!     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
-!     USING THE ALAMEL MODEL
+      !     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
+      !     USING THE ALAMEL MODEL
       use altayCurAccess
       use altayDYNFIL
       use altayHard
@@ -43,9 +39,9 @@
       implicit double precision (a-h,o-z)
       ! optional argument for IW=1 or 2:
       type(DeformationRate),intent(in),optional :: MacroDefRate !inout
-!
-!     IW=2 is meant for outputting the final texture.
-!
+      !
+      !     IW=2 is meant for outputting the final texture.
+      !
       COMMON /IGLIJS/ M11,CC(2,96)
       COMMON /DOUBLE/ XM(5,96),XEPS(5),RHO(5),B5(5)
       COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
@@ -122,7 +118,7 @@
       NRES = NFILE1  ! IMP2 and IMP3 are controlled only by NFILE1
       NPEBP = 0
       select case(KOST)
-      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop,hard_BPgb)
           NPEBP  = NFILE1
       endselect
 #endif
@@ -573,4 +569,4 @@
   32  return
       END SUBROUTINE
       
-      end module
+end module

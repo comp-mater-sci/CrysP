@@ -3,9 +3,9 @@
       use criMathUtils
       implicit none
 
-      
+      !> Texture-related state variables for single grain 
       TYPE :: grain
-            double precision :: tFI1 = 0.D0,tPHI = 0.D0, tFI2 = 0.D0
+            double precision :: tFI1 = 0.D0,tPHI = 0.D0, tFI2 = 0.D0 !< Euler angles
             double precision :: tGEW = 1.D0 ,tGAM = 0.D0
             double precision, dimension(3) :: tAXES = 1.D0, tEULR = 0.D0
             double precision, dimension(3,3) :: tT = 0.D0

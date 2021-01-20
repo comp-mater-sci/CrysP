@@ -71,10 +71,10 @@ implicit none
       !> Control of the listing file (formerly in TEXTUR common block)
       !>
       !> This value controls amount of output sent to the IMP unit.
-      integer :: NLIST = 0
+      integer :: NLIST = 1
       
       !> Printing switch (formerly in TEXTUR common block)
-      integer :: IPR = 0
+      integer :: IPR = 1
       
       !> Control of the result file
       !>

@@ -31,6 +31,6 @@ module altayHardTypes
       integer,parameter :: hard_BP =           11, & !< original (Bart) Peeters model
                            hard_PEBPscrew =    12, & !< Philip Eyckens modified BP model
                            hard_PEBPloop =     13, & !< Philip Eyckens modified BP model
-                           hard_BPg =          14    !< Peeters model extended to grain boundaries
+                           hard_BPgb =         14    !< Peeters model extended to grain boundaries
 
 end module

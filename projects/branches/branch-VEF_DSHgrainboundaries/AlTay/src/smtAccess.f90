@@ -4,17 +4,19 @@ implicit none
 
 contains
       
+      !> Read SMT header
       subroutine SMTreadHeader(iounit,title,info)
       implicit none
       integer,intent(in)      :: iounit
-      character(len=*)        :: title
+      character(len=*)        :: title     !< Title for texture
       integer,intent(out)     :: info
       !
-      integer :: nrec, ioerr
+      integer :: nrec, &     !< number of grains
+                 ioerr
       !
             info = -1
             nrec = 0
-            read (iounit,94,iostat=ioerr) nrec,title
+            read (iounit,94,iostat=ioerr) nrec,title ! Read number of grains and title
             if ((ioerr == 0) .and. (nrec > 0)) then
                   filetitle = title
                   ! Pre-allocate the storage. Chances are that there will be no need to reallocate it.
@@ -23,8 +25,7 @@ contains
       94  format(I5,5x,A)
       !
       end subroutine
-      
-      
+            
       subroutine SMTwriteHeader(iounit,title,info)
       implicit none
       integer,intent(in)            :: iounit
@@ -61,17 +62,18 @@ contains
       97 format (3F10.3,10X,I5,5X,F10.5) 
       end subroutine      
 
+      !> Read texture from SMT file
       subroutine SMTreadBlock(iounit,info)
       use altayDynfil
       implicit none
       integer,intent(in)      :: iounit      !< IO unit
-      integer,intent(out)     :: info     !< Exit code
+      integer,intent(out)     :: info        !< Exit code
       !
-      double precision,parameter :: convf =  acos(-1.D0) / 180.D0
+      double precision,parameter :: convf =  acos(-1.D0) / 180.D0   !< conversion factor degree=>radians, equals 2*pi/360
       integer :: i,j,i0,k,NSTAP,nrec,ngrains
       double precision :: STAP = 0.D0
             !
-            ! Number of records in the SMT file
+            ! Number of records (orientations) in the SMT file
             nrec = size(DFIL)
             ngrains = nrec
             i = 1

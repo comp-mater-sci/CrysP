@@ -129,27 +129,28 @@ implicit none
             type(simulStepOutputData)           :: output
       end type
       
-      
+      !> Output configuration defaults
+      !> The user should use these to control the various outputs of the VEF
       type :: outputConfig
-            !> (SIMUL) NLIST (Make an output listing 0 or 1)
-            integer                                   :: nlist = 0
-            !> (SIMUL) NFILE (Make output files 0 or 1) (CUR output)
-            integer                                   :: nfile = 0
-            !> (SIMUL) NFILTW (Make output files 0 or 1)
+            !> (SIMUL) NLIST (Make an output listing 0 or 1)                        .LST file
+            integer                                   :: nlist = 1
+            !> (SIMUL) NFILE (Make output files 0 or 1)                             .CUR file
+            integer                                   :: nfile = 1                  ! overridden by output request flag in VEF cfg file
+            !> (SIMUL) NFILTW (Make output files 0 or 1)                            .TWN file
             integer                                   :: nfiltw = 0
             !> (SIMUL) IPR  0-3 Print switch
-            integer                                   :: ipr = 0
-            !> (SIMUL) NRES (Make output for stresses with per-grain resolution)
-            integer                                   :: nres = 0
-            !> (SIMUL) NPEBP (Make state variable file for DSH model)
-            integer                                   :: npebp = 0
-            !> (SIMUL) NMSS (output of macroscopic homogenized strain-stress)
-            integer                                   :: nmss = 0
+            integer                                   :: ipr = 3
+            !> (SIMUL) NRES (Make output for stresses with per-grain resolution)    .RES file
+            integer                                   :: nres = 1
+            !> (SIMUL) NPEBP (Make state variable file for DSH model)               .BPM file
+            integer                                   :: npebp = 0                  ! currently overridden for all DSH models to = 1
+            !> (SIMUL) NMSS (output of macroscopic homogenized strain-stress)       .MSS file
+            integer                                   :: nmss = 1
             logical                                   :: use_curfile = .false.
             logical                                   :: use_cubfile = .false.
       end type
-      !
-      !> PEBP model parameters (no state variables)
+      
+      !> PEBP DSH model parameters (no state variables)
       type :: PEBPConfig
             !> BP model parameters, saturation and lower bounds for dislocation densities (defined in altayHardLawDSH.f90)
             class(PAR), allocatable       :: params 
@@ -187,12 +188,12 @@ implicit none
             !> Parameters of Swift hardening law ('scientific-type')
             type(SwiftSConfig)      :: SwiftSCnf
 
-            !> Parameters of Dislocation Substructural Hardening models (PEBP variants)
+            !> Parameters of Dislocation Substructural Hardening models (Peeters model variants)
             type(PEBPConfig)        :: PEBPCnf
             
       end type
       
-      !> 
+      !> Altay model selection & default initial deformation of microstructure
       type :: simulData
             
             !> Model selection. At the same time it controls number of grains in the cluster.
@@ -201,9 +202,9 @@ implicit none
             !>   - 1 - FC Taylor
             !>   - 2 - Alamel
             !>   - 3 - MAS-AL
-            integer                                   :: NGR = 2 !MB: Number of grains in the cluster
+            integer                                   :: NGR = 2 !< AlTay model identifier, Alamel is default
             
-            !> It is relevant only in MAS-AL
+            !> It is relevant only in MAS-AL (Multi-axial Sachs - ALAMEL)
             double precision                          :: ENTA = 1.D0
             
             double precision, dimension(3,3)          :: FMicro = reshape(       & 
@@ -221,9 +222,9 @@ implicit none
             character(len=fname_len)                  :: output_prefix = 'alamel'
             character(len=fname_len)                  :: jobtitle      = 'alamel'
             character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
-            type(slipSystemData)                      :: slipsystem ! definition of slip systems 
-            type(outputConfig)                        :: output_config ! output file prefix, incremental output request flag, verbosity level
-            type(hardeningData)                       :: hardening ! hardening model parameters
+            type(slipSystemData)                      :: slipsystem !< definition of slip systems 
+            type(outputConfig)                        :: output_config !< output file prefix, incremental output request flag, verbosity level
+            type(hardeningData)                       :: hardening !< hardening model parameters
             type(textureData)                         :: texture
             type(simulData)                           :: simul_init
             ! 
@@ -262,7 +263,7 @@ contains
             case(modelFCTaylor)
                   stp%rlx1 = .false. 
                   stp%rlx2 = .false.
-            case(modelAlamel,modelMASAL) 
+            case(modelAlamel,modelMASAL) ! enable relaxation modes
                   stp%rlx1 = .true. 
                   stp%rlx2 = .true.
             case default

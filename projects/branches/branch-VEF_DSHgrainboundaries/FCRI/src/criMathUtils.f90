@@ -363,12 +363,12 @@ contains
       end function
 
       
-      !> Rotation matrix from three Euler angles in Bunge convention (phi1,PHI,phi2).
+      !> Rotation matrix from three Euler angles (in rad) in Bunge convention (phi1,PHI,phi2).
       !>
       !> The matrix R is equivalent to superpositions of three individual
       !> rotations around Z1 (by phi1), X (by PHI) and Z2(by phi2) (in this order). 
       !> In terms of matrix multiplication, the total rotation matrix R is given by:
-      !> R = R_{phi2} * R_{PHI} * R_{phi1}
+      !> R = R_{phi2} * R_{PHI} * R_{phi1} (see e.g. Engler, Randle, Intro to texture analysis, eq. 2.16b)
       !> \returns [3x3] rotation matrix R. 
       pure function rotmat_triplet(phi1, PHI, phi2) result(mat)
       implicit none
@@ -398,7 +398,7 @@ contains
       !
       end function
 
-      !> Rotation matrix from three Euler angles in Bunge convention
+      !> Rotation matrix from three Euler angles (in rad) in Bunge convention
       pure function rotmat_EulerAngles(ang) result(mat)
       implicit none
       double precision, dimension(rot_matrix_dim,rot_matrix_dim)    :: mat

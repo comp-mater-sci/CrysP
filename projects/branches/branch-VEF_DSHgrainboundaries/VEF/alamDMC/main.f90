@@ -159,7 +159,7 @@ implicit none
       !
       write(display_unit,'(A,1X,A,1X,A)',advance='no') 'Execution of module', trim(moduleName), 'finished'
       if (info == 0) then
-            write(display_unit,'(1X,A)') 'succesfully.'
+            write(display_unit,'(1X,A)') 'successfully.'
       else
             write(display_unit,'(1X,A)') 'with errors.'
       endif

@@ -104,7 +104,7 @@ contains
             call InitModuleAltayHardLaw_Simple(config%swiftSCnf,info)
       !
 #ifdef PEBP_ENABLED     
-      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop,hard_BPgb)
             info = InitModuleAltayHardLaw_DSH(config%PEBPCnf%params,&
                                               config%HardLawID,LEC)
 #endif
@@ -133,7 +133,7 @@ contains
       !
       info = 0
       select case(HardLawID)
-      case(hard_none,hard_BP,hard_PEBPscrew,hard_PEBPloop)
+      case(hard_none,hard_BP,hard_PEBPscrew,hard_PEBPloop,hard_BPgb)
             tau = 1.D0
       case(hard_voce,hard_swiftK,hard_swiftS)
             call getRefTau(HardLawID, gamma, tau, info)
@@ -143,10 +143,11 @@ contains
       end select
       !
       end subroutine
+
       
       subroutine getCRSS(ior,gamma,CRSSmatrix,info)
       implicit none
-      integer,intent(in)                           :: ior
+      integer,intent(in)                           :: ior  !< grain identifier
       double precision,intent(in)                  :: gamma         
       type(CRSS),intent(out)                       :: CRSSmatrix
       integer, intent(out)                         :: info
@@ -159,7 +160,7 @@ contains
             call getTau(gamma, tau, info)
             if (info == 0) CRSSmatrix%crss = crss_ratios%crss * tau
 #ifdef PEBP_ENABLED
-      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop,hard_BPgb)
             call KS_getCRSS(ior,CRSSmatrix,info)
 #endif
       case default

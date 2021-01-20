@@ -181,7 +181,8 @@ contains
                 ! Print the input data:
                 if (doLogging(criLogDebug,this%output%verbosity)) then
                     write(display_unit,fmt=3310)
-                    write(display_unit,3400) 'sigma', 'S', 'sigma_h'
+                    write(display_unit,3400) 'Full stress', 'Deviatoric stress', 'Hydrostatic stress'
+                    !write(display_unit,3400) 'sigma', 'S', 'sigma_h'
                     do j=1,3
                         write(display_unit,3411) sigma%t(:,j), S%t(:,j), Pressure%t(:,j)
                     enddo

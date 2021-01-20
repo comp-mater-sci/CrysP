@@ -101,7 +101,7 @@ contains
 
       integer function BasicModule_initialize(this) result(info)
       use altaySub
-      use altayHardTypes, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop, hard_BPg
+      use altayHardTypes, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop, hard_BPgb
       use commonUtils
       implicit none
       class(BasicModule),intent(inout)          :: this
@@ -120,7 +120,7 @@ contains
             ! 
             if (this%output%outputRequest) then
                   select case(this%altay%hardening%HardLawID)
-                  case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+                  case(hard_BP,hard_PEBPscrew,hard_PEBPloop,hard_BPgb)
                         this%altay%output_config%npebp = 1 ! Create state variable file for DSH model
                   case default
                         this%altay%output_config%npebp = 0 ! Don't create state variable file for DSH model
@@ -141,9 +141,9 @@ contains
             30 format('Initializing the multilevel model...')
             31 format(1X,A)
       
-            ! Output the initial state variables (texture etc) if requested.
+            ! Output the initial state variables (non only texture but also BPM, MSS) if requested.
             if (this%output%outputRequest) then
-                  call outputTexture(ierr)
+                  call outputTexture(ierr) !< \todo Rename with more general name
                   if (ierr /= altaySub_OK) then
                         write(errmsg,'(A)') 'Error: cannot write initial state'
                         return
@@ -161,7 +161,7 @@ contains
       !
             info = criErr_IORead
             !
-            ! Read output configuration lines
+            ! Read output configuration
             call readOutputConfigSection(cnfunit,this%output,info) ! top 3 lines after comment header of config file
             if (info /= criSuccess) then 
                   !write(errmsg,fmt=901) 'check output config section'
@@ -169,7 +169,7 @@ contains
                   return
             endif
             ! 
-            ! Read AlTay configuration lines (texture, microstructure, hardening)
+            ! Read AlTay configuration (texture, microstructure, hardening)
             call readAlTayConfigSection(cnfunit,this%altay,info) ! read configuration of texture, microstructure and hardening
             if (info /= criSuccess) then
                   !write(errmsg,fmt=901) 'Check libaltay configuration section.'
@@ -213,6 +213,24 @@ contains
                 write(outunit,fmt=201) trim(this%altay%texture%input_fname)
                 write(outunit,fmt=101) 'Slip systems definition:', trim(this%altay%slipsystem%input_fname)
                 write(outunit,fmt=101) 'Microstructure definition:', trim(this%altay%micros_fname)
+                select case(this%altay%hardening%HardLawID)
+                      case(0)     ! hard_none
+                            write(outunit,fmt=203) 'non-hardening'
+                      case(1)     ! 
+                            write(outunit,fmt=203) 'Voce'
+                      case(2)       !    
+                            write(outunit,fmt=203) 'Swift K'
+                      case(3)
+                            write(outunit,fmt=203) 'Swift S'                       
+                      case(11)
+                            write(outunit,fmt=203) 'Peeters'                       
+                      case(12)
+                            write(outunit,fmt=203) 'PEBP screw'                       
+                      case(13)
+                            write(outunit,fmt=203) 'PEBP loop'                       
+                      case(14)
+                            write(outunit,fmt=203) 'grain boundary extended Peeters'                       
+                end select
                 !
             endif
             !
@@ -225,6 +243,7 @@ contains
             200 format('Input texture format:', T35,A)
             201 format('Input texture file:', T35,A)
             202 format('Multilevel model:', T35,A)
+            203 format('Hardening model:', T35,A)
       !
       end function
       
@@ -344,19 +363,19 @@ contains
       !
             info = criErr_IORead
             if (.not. readValue(cnfunit, cnf%outputPrefix)) then
-				write(error_unit,fmt=900) 'Check output file prefix.'
-				return
-			endif
+                write(error_unit,fmt=900) 'Check output file prefix.'
+                return
+            endif
             if (.not. readValue(cnfunit, cnf%outputRequest)) then
-				write(error_unit,fmt=900) 'Check output request flag.'
-				return
-			endif
+                write(error_unit,fmt=900) 'Check output request flag.'
+                return
+            endif
             if (.not. readValue(cnfunit, cnf%verbosity)) then
-				write(error_unit,fmt=900) 'Check verbosity level.'
-				return
-			endif
+                write(error_unit,fmt=900) 'Check verbosity level.'
+                return
+            endif
             info = criSuccess
-	  !
+      !
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
@@ -412,38 +431,37 @@ contains
                   end select
             !
             ! Determine crystal plasticity model type
-            !if (.not. readKeyword(cnfunit, model_types, model_id)) return
             if (.not. readKeyword(cnfunit, model_types, model_id)) then
                 write(error_unit,fmt=900) 'Unsupported crystal plasticity model.'
                 info = criErr_BadArgs
-			    return
-			endif
+                return
+            endif
             ! Determine slip system file 
             if (.not. readKeyword(cnfunit, slipsystem_types, dm_id)) then
                 write(error_unit,fmt=900) 'Unsupported slip system family.'
                 info = criErr_BadArgs
-			    return
-			endif
+                return
+            endif
             !
             ! Process advanced microstructure characterization
             use_default_microstructure = .true.
             if (.not. readValue(cnfunit, use_default_microstructure)) return
             if (.not. use_default_microstructure) then 
-                  if (.not. readValue(cnfunit, cnf%micros_fname)) return ! read <microstructure>.smt filename				  
-				  ! Deduce the input type from the extension
-				  call splitExt(cnf%micros_fname, root, ext)
-				  if (ext == '' .or. .not. (ext == '.smt' .or. ext == '.SMT')) then
-						write(error_unit,fmt=900) 'Unsupported microstructure input file format.'
-						info = criErr_BadArgs
-						return
-				  endif
-				  ! Read user-supplied initial deformation gradient
-				  do i=1,3 
+                  if (.not. readValue(cnfunit, cnf%micros_fname)) return ! read <microstructure>.smt filename                 
+                  ! Deduce the input type from the extension
+                  call splitExt(cnf%micros_fname, root, ext)
+                  if (ext == '' .or. .not. (ext == '.smt' .or. ext == '.SMT')) then
+                        write(error_unit,fmt=900) 'Unsupported microstructure input file format.'
+                        info = criErr_BadArgs
+                        return
+                  endif
+                  ! Read user-supplied initial deformation gradient
+                  do i=1,3 
                         if (.not. readValue(cnfunit, cnf%simul_init%Fmicro(:,i))) then 
-							write(error_unit,fmt=900) 'Cannot read deformation gradient.'
-							info = criErr_BadArgs
-							return
-						endif							
+                            write(error_unit,fmt=900) 'Cannot read deformation gradient.'
+                            info = criErr_BadArgs
+                            return
+                        endif                           
                   enddo
             else
                   call incurMicrostructureFile(cnf%micros_fname, info) ! load default microstructure
@@ -456,9 +474,9 @@ contains
             ! Process hardening model section
             call readHardeningSection(cnfunit, cnf%hardening, info)
             if (info /= criSuccess) then
-				write(error_unit,fmt=900) 'Cannot read the hardening law section.'
-				return
-			endif
+                write(error_unit,fmt=900) 'Cannot read the hardening model section.'
+                return
+            endif
             ! the keyword is mapped to a proper model_id, we can instantly set it.
             call setModelType(cnf,model_id,info)
             if (info /= criSuccess) return
@@ -478,7 +496,7 @@ contains
 
       !> Read configuration of hardening model from configuration file 
       subroutine readHardeningSection(cnfunit, hardening, info)
-      use altayHard, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop, hard_SwiftK, hard_SwiftS, hard_BPg
+      use altayHard, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop, hard_SwiftK, hard_SwiftS, hard_BPgb
       use altayConfig, only: hardeningData, VoceConfig, SwiftKConfig, SwiftSConfig
       implicit none
       integer,intent(in)                  :: cnfunit
@@ -489,10 +507,13 @@ contains
       logical :: use_default_hardening
       !
             use_default_hardening = .true.
-            if (.not. readValue(cnfunit, use_default_hardening)) return ! read default hardening flag
+            if (.not. readValue(cnfunit, use_default_hardening)) then ! read default hardening flag
+				  write(display_unit,fmt=900) 'Reading of the default hardening flag unsuccessful.'
+				  return
+			endif
             if (.not. use_default_hardening) then
                   ! read hardening law ID
-				  if (.not. readValue(cnfunit, hardening%HardLawID)) return
+                  if (.not. readValue(cnfunit, hardening%HardLawID)) return
                   select case(hardening%HardLawID)
                   case(hard_none)
                         ! no action needed
@@ -518,7 +539,7 @@ contains
                               info = criSuccess
                         endif
                   !
-                  case(hard_BP,hard_PEBPscrew,hard_PEBPloop,hard_BPg)
+                  case(hard_BP,hard_PEBPscrew,hard_PEBPloop,hard_BPgb)
 #ifdef PEBP_ENABLED                        
                         call readPEPBhardening(cnfunit,hardening%HardLawID,hardening%PEBPCnf,info)
 #else
@@ -526,7 +547,7 @@ contains
                         info = criError
 #endif
                   case default
-						write(error_unit,fmt=900) 'Unsupported hardening law.'						
+                        write(error_unit,fmt=900) 'Unsupported hardening law.'                      
                         info = criError
                         return
                   end select
@@ -566,15 +587,15 @@ contains
             ! Open the PEBP parameter file and read its content
             open(newunit=nparunit,file=tmp_fname,status='old',iostat=ioerr)
             if (ioerr /= 0) then
-				write(error_unit,fmt=951) trim(tmp_fname)
-				return
-			endif
+                write(error_unit,fmt=951) trim(tmp_fname)
+                return
+            endif
             info = ReadPar(nparunit,kost,hc%params) ! read the PEBP parameter file
             close(nparunit)
             if (info /= 0) then
-				write(error_unit,'(A,1X,A,1X,A)') 'Error: Reading of the parameter file',trim(tmp_fname),'failed.'
-				return
-			endif
+                write(error_unit,'(A,1X,A,1X,A)') 'Error: Reading of the parameter file',trim(tmp_fname),'failed.'
+                return
+            endif
             !
             ! Read PEBP state variable file path and block ID. 3 lines in config file
             if (.not. readValue(cnfunit, hc%read_state)) return ! read read_state flag; default read_state=.false.

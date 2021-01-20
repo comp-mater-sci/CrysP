@@ -49,7 +49,7 @@ contains
       use altayRCM
       use altayIOConfig
       use altayTexFormats
-      use altayHard,only: hard_BP,hard_PEBPscrew,hard_PEBPloop,InitModuleAltayHard, hard_BPg
+      use altayHard,only: hard_BP,hard_PEBPscrew,hard_PEBPloop,InitModuleAltayHard,hard_BPgb
       use altayMesostructure
 #ifdef PEBP_ENABLED
       use AltayDSHstate
@@ -104,7 +104,7 @@ contains
             ! Set the data for CRSS calculations
             call InitModuleAltayHard(cnf%hardening, info) 
             if (info /= 0) then
-                  if (present(errmsg)) errmsg = 'Cannot initialize hardening law'
+                  if (present(errmsg)) errmsg = 'Cannot initialize hardening law.'
                   info = altaySub_Err
                   return
             endif
@@ -129,8 +129,8 @@ contains
 #ifdef PEBP_ENABLED
             ! PEBP model
             select case(cnf%hardening%HardLawID)
-            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-                  info = KS_initState(size(DFIL))
+            case(hard_BP,hard_PEBPscrew,hard_PEBPloop,hard_BPgb)
+                  info = KS_initState(size(DFIL),cnf%hardening%HardLawID)
                   if (info /= 0) return
                   if (acnf%hardening%PEBPCnf%read_state) then 
                         ! Load state variables
@@ -154,6 +154,7 @@ contains
             info = altaySub_OK
       !
       end subroutine
+
       
       !> Finalizes the module and releases the resources.
       subroutine finalizeAltay(info)
@@ -171,15 +172,15 @@ contains
             ! Close all units.
             close(LEC)
             close(KLEC)
-            close(IMP)
+            close(IMP)  ! .LST
             flush(IMP1)
-            close(IMP1)
-            close(IMP2)
-            close(IMP3)
+            close(IMP1) ! .CUR - successive "current situations"
+            close(IMP2) ! .RES
+            close(IMP3) ! .TWN
 #ifdef PEBP_ENABLED
-            close(IMP4) 
+            close(IMP4) ! .BPM - state variables of PEBP
 #endif
-            close(IMP5)
+            close(IMP5) ! .MSS - homogenized strain-stress
             close(IMP6)
             call MICROSTR_finalize(info)
             if (info /= 0) return
@@ -199,6 +200,7 @@ contains
             call RCM_clean()
       !
       end subroutine
+
       
       subroutine openOutputFiles(cnf, info, errmsg)
       use altayConfig, only: altayConfigData,fname_len
@@ -276,10 +278,9 @@ contains
             if (present(errmsg)) errmsg = 'Cannot open file '//trim(fname)
       !
       end subroutine
+
       
       !> Initialization of input and output data for the steps.
-      !>
-      !> 
       subroutine initStepData(nsteps,steps,info)
       use altayConfig, only: altayStateData
       implicit none
@@ -299,6 +300,7 @@ contains
             info = ierr
       !
       end subroutine
+
       
       !> Run the AlTay for the set of steps
       subroutine runSteps(steps,info)
@@ -357,6 +359,7 @@ contains
       !
       end subroutine
 
+
       !> Write out the current state variables.
       !>
       !> The call may involve IO units: IMP1 (CUR file), IMP4 (PEBP state file) and IMP5 (MSS file).
@@ -366,7 +369,7 @@ contains
       use altayIOConfig
       use altayCurAccess
       use altayConfig, only: acnf,astate
-      use altayHard, only: hard_BP,hard_PEBPscrew,hard_PEBPloop
+      use altayHard, only: hard_BP,hard_PEBPscrew,hard_PEBPloop,hard_BPgb
       use AltayDSHstate
       use altayMiscutils
       implicit none
@@ -379,7 +382,7 @@ contains
             if (info /= 0) return
             !
             select case(acnf%hardening%HardLawID)
-            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+            case(hard_BP,hard_PEBPscrew,hard_PEBPloop,hard_BPgb)
                 if (acnf%output_config%npebp == 1) then
                       info = KS_writeState(IMP4)
                 endif
@@ -401,8 +404,6 @@ contains
       !
       end subroutine
 
-      
-      
       
 end module
 

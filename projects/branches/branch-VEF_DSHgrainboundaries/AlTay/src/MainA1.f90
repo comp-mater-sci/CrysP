@@ -155,22 +155,22 @@
       
 #ifdef PEBP_ENABLED
       ! PEBP model
-      NREC = size(DFIL) !MB: where is dfil defined?
+      NREC = size(DFIL) !number of orientations (grains)
       select case(HardLawID)
-      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+      case(hard_BP,hard_PEBPscrew,hard_PEBPloop,hard_BPgb)
             ! UNIT IMP4 = state variables of PEBP KOST11
             info = KS_openStateFile(IMP4,trim(fname_prefix)//'.BPM','w') !MB: open .BPM file for writing; existing file gets replaced
             !
-            if (KS_initState(NREC) /= 0) then
+            if (KS_initState(NREC,HardLawID) /= 0) then
                   write(IMP,fmt=600) 
                   call exit(stopcode_runtimeerror)
             endif
             read_state = .false.
             nblock = 0
-            read(KLEC,66) read_state, nblock, fname_pebp !MB: this line in the VEF cfg file contains only 2 values!! here 3 are read??
+            read(KLEC,66) read_state, nblock, fname_pebp !MB: this line in the VEF cfg file contains only 2 values! here 3 are read?
             if (read_state) then
                   call stripComment(fname_pebp)
-                  info = KS_readState(fname_pebp,IPEBPSTAT,nblock) !MB: interface to KS_readState_file; IPEBPSTAT is the IO unit number
+                  info = KS_readState(fname_pebp,IPEBPSTAT,nblock)
                   if (info /= 0) then 
                         write(IMP,fmt=601) trim(fname_pebp)
                         write(*,fmt=601) trim(fname_pebp)
