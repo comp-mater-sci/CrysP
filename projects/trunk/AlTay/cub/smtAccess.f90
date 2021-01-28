@@ -91,28 +91,32 @@ module smtAccess
       !
       integer                       :: i,ngrains
       integer                       :: iuerr
+	  character(len=512)            :: buf
       !! End of declaration section
       !
       iuerr = 0
       ERRCODE=0
-      ! Read header
-      read (NUNIT,*)   ngrains, MICROS%TITLE
+      ! Read header	  
+      read (NUNIT,'(A)',iostat=ERRCODE)   buf
+      read (buf,*,iostat=ERRCODE)   ngrains, MICROS%TITLE
 	  MICROS%NGRAINS = ngrains
 	  
 	  call allocateMicros(MICROS,ngrains,ERRCODE)
+	  
 	  
       ! Read grains
 
       do 11 i=1, MICROS%NGRAINS
       !!
 			call readSMTRecord(NUNIT,STYLE,micros%grains(i),ERRCODE) 
-                 
            ! Check IO status 
            if (ERRCODE /= 0) then
                   ERRCODE=(-1)
                   exit
            endif 
  11   end do
+ 
+  10  format(I5,5x,A)
       end subroutine readSMT
 
 
