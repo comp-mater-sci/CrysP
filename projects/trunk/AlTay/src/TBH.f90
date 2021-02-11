@@ -7,7 +7,7 @@
       contains
       
 !     SUBROUTINE LINEAR PROGRAMMING TAYLOR-BISHOP-HILL STYLE
-       Subroutine TBH(IPR,NDIM,N,M,A,D,                                  &
+      Subroutine TBH(IPR,NDIM,N,M,A,D,                                   &
        TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,                          &
        TauR,bas,Trp,Aprime,CUst,UU,DD,DTAU,VALID)
 !    
@@ -82,23 +82,23 @@
          XX=Dacc(i)
          X=XX
          if (abs(XX).lt.TOL) then
-                              X=0.0
-                              do k=1,N
-                                X=X+A(k,j)*D(k)
-                              enddo
+              X=0.0
+              do k=1,N
+                X=X+A(k,j)*D(k)
+              enddo
          endif
-          if (X.ge.0.0d0) then
-                                Trp(i)=Tauc(1,j)
-                               else 
-                                Trp(i)=-Tauc(2,j)
-                               endif
+         if (X.ge.0.0d0) then
+            Trp(i)=Tauc(1,j)
+         else 
+            Trp(i)=-Tauc(2,j)
+         endif
       enddo
       iter=0
     4 iter=iter+1
       if (iter.le.50) goto 7
 #ifndef ALTAY_SUBROUTINE
       if(NLIST.eq.1) then
-      write (IMP,250)  
+          write (IMP,250)  
       end if
       write (*,250) 
  250  format (' TBH is looping')
@@ -108,9 +108,9 @@
 #endif
       
     7 if (IPR.GE.JPR) then
-      if (NLIST.eq.1) then
-      write (IMP,251) iter
-      end if
+          if (NLIST.eq.1) then
+              write (IMP,251) iter
+          end if
       end if
  251  format (/,'  ITERATION NR. ',I5,/)
       call mtprd(SIG,Trp,U,1,N,N,1,NDIM) 
@@ -126,14 +126,14 @@
       call mtprd(TauR,SIG,A,1,N,M,1,NDIM)
       if (IPR.GE.JPR) then
         if (NLIST.eq.1) then
-        write (IMP,205)
-        do i=1,N
-          write (IMP,204) D(i),SIG(i)
-        enddo
-        write (IMP,201) FakM
-        do j=1,M
-          write (IMP,202) j,TauR(j)
-        enddo
+            write (IMP,205)
+            do i=1,N
+              write (IMP,204) D(i),SIG(i)
+            enddo
+            write (IMP,201) FakM
+            do j=1,M
+              write (IMP,202) j,TauR(j)
+            enddo
         end if
       endif
   201 format (' M-Factor:',D20.10,/,' Resolved shear stresses:')
@@ -147,14 +147,14 @@
       do 1 j=1,M
         X=TauR(j)
         if (X.ge.0.0d0) then
-                         Y=X-Tauc(1,j)
-                        else
-                         Y=-X-Tauc(2,j)
-                        endif
+             Y=X-Tauc(1,j)
+        else
+             Y=-X-Tauc(2,j)
+        endif
         if (IPR.GE.JPR) then
-        if (NLIST.eq.1) then
-        write (IMP,919) j,jn,X,Y,Y-DT
-        end if
+            if (NLIST.eq.1) then
+                write (IMP,919) j,jn,X,Y,Y-DT
+            end if
         end if
   919 format ('j=',I5,'  jn=',I5,'  TauR(=X)',D15.5,' DTAU(=Y)',D20.10,  &
        ' Y-DT=',D20.10)
@@ -176,18 +176,18 @@
 !        if (IPR.GE.JPR) write(IMP,917) j,VALID(j)
 ! 917    format (I5,' valid',L8)
         if (IPR.GE.JPR) then
-        if (NLIST.eq.1) then
-        write (IMP,920) Y,j
-        end if
+            if (NLIST.eq.1) then
+                write (IMP,920) Y,j
+            end if
         end if
   920   format (' DT(=Y)',D15.5,'  New jn=',I5)
         DT=Y
         jn=j
     1 continue
       if (IPR.GE.JPR.and.jn.gt.0) then
-      if (NLIST.eq.1) then
-      write (IMP,913) jn,DT,TauR(jn)
-      end if
+          if (NLIST.eq.1) then
+              write (IMP,913) jn,DT,TauR(jn)
+          end if
       end if
   913 format ('Overstressed:jn DT',I5, D15.5,'   TauR(jn)',D20.10)  
 !      if (jn.eq.0.and.DT.gt.0.0D0) then
@@ -205,18 +205,18 @@
       call mtprd(Aprime,U,A(1,jn),N,N,1,NDIM,NDIM)
       in=0
       if (IPR.GE.JPR) then
-      if (NLIST.eq.1) then
-      write (IMP,203)
-      end if
+          if (NLIST.eq.1) then
+              write (IMP,203)
+          end if
       end if
   203 format (' ACTIVE',9x,'Slip rate',11X,                              &
        'Critical Resolved shear stress',11X,'Aprime')
       do 3 i=1,N
         if (IPR.GE.JPR) then
-        if (NLIST.eq.1) then
-        write (IMP,200)Irp(i),DACC(i),Trp(i),Aprime(i)
-       end if
-       end if
+            if (NLIST.eq.1) then
+                write (IMP,200)Irp(i),DACC(i),Trp(i),Aprime(i)
+            end if
+        end if
   200 format (I5,5x,D26.16,5x,D20.10,5x,D20.10)
         Z1=Aprime(i)
         if (abs(Z1).lt.TOL) goto 3  
@@ -260,7 +260,7 @@
       RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
 #endif      
                    endif
-  101 FORMAT (' Subroutine TBH - solution unbounded') 
+  101 format (' Subroutine TBH - solution unbounded') 
       if (IPR.GE.JPR) then
       if (NLIST.eq.1) then
       write (IMP,912) in,jn,Gmin
@@ -285,9 +285,9 @@
       DD=Dacc
       call Ust(Dacc,DD,CUst,in,N,1,N)
       if (IPR.GE.JPR) then
-      if (NLIST.eq.1) then
-      write (IMP,929) in,Gmin,Dacc(in)
-      end if
+          if (NLIST.eq.1) then
+              write (IMP,929) in,Gmin,Dacc(in)
+          end if
       end if
   929 format ('updated slip rate in',I5,2D15.5)
 !     Updating of basis: bas and Irp
@@ -306,18 +306,18 @@
         Gdot(j)=0.0
       enddo
       if (IPR.GE.JPR) then
-      if (NLIST.eq.1) then
-      write (IMP,212)
-      end if
+          if (NLIST.eq.1) then
+              write (IMP,212)
+          end if
       end if
 !
       do i=1,N
         j=Irp(i)
         Gdot(j)=Dacc(i)
          if (IPR.GE.JPR) then
-         if (NLIST.eq.1) then
-         write (IMP,211) j,DACC(i)
-         end if
+             if (NLIST.eq.1) then
+                 write (IMP,211) j,DACC(i)
+             end if
          end if
       enddo
   211 format (I5,5x,D20.10)
@@ -327,10 +327,10 @@
       
       
       
-      SUBROUTINE Ust(C,B,CUst,in,N,M3,NDIM)
+      subroutine Ust(C,B,CUst,in,N,M3,NDIM)
 !     MATRIX C=MATRIX Ustar*MATRIX B                                        
       implicit double precision (a-h,o-z)
-      DIMENSION B(NDIM,M3),C(NDIM,M3),CUst(N)
+      dimension B(NDIM,M3),C(NDIM,M3),CUst(N)
       do j=1,M3
         X=B(in,j)
         do i=1,N
@@ -343,26 +343,21 @@
       
       
       
-      SUBROUTINE mtprd(C,A,B,N1,N2,N3,ND1,ND2)
+      subroutine mtprd(C,A,B,N1,N2,N3,ND1,ND2)
 !     MATRIX C=MATRIX A*MATRIX B                                        
       implicit double precision (a-h,o-z)
-      DIMENSION A(ND1,N2),B(ND2,N3),C(ND1,N3)
-      DO 1 I=1,N1                                                       
-      DO 2 J=1,N3                                                       
-      X=0.                                                              
-      DO 3 K=1,N2                                                       
-      X=X+A(I,K)*B(K,J)                                                 
- 3    CONTINUE                                                          
-      C(I,J)=X                                                          
- 2    CONTINUE                                                          
- 1    CONTINUE                                                          
-      RETURN                                                            
-      END SUBROUTINE
+      dimension A(ND1,N2),B(ND2,N3),C(ND1,N3)
+      do I=1,N1                                                       
+          do J=1,N3                                                       
+              X=0.                                                              
+              do K=1,N2                                                       
+                  X=X+A(I,K)*B(K,J)                                                 
+              enddo
+              C(I,J)=X                                                          
+          enddo                                                          
+      enddo                                                         
+      return                                                            
+      end subroutine
 
       end module
       
-
-      
-     
-     
-     

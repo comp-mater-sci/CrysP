@@ -41,7 +41,7 @@
       integer :: tex_type, tex_nblock
       character(len=pathlength) :: tex_fname
 #ifdef PEBP_ENABLED      
-      character(len=pathlength) :: fname_pebp !MB: PEBP state variables file from which initial state gets read
+      character(len=pathlength) :: fname_pebp ! PEBP state variables file from which initial state gets read
       logical :: read_state
       integer :: nblock
 #endif
@@ -53,8 +53,8 @@
 !     UNIT KLEC = CONTROL FILE
   90  format (a)
 #ifndef MAINDIRECT
-      open (unit=KLEC,file='MAINA1.CTL',status='old') !MB: MAINA1.CTL contains single line: mainA1.i01
-      read (KLEC,90) fnam1 !MB: assign 'mainA1.i01' to fnam1 
+      open (unit=KLEC,file='MAINA1.CTL',status='old')
+      read (KLEC,90) fnam1 
       call stripComment(fnam1)
       write (*,93) trim(fnam1)
       close (unit=KLEC)
@@ -62,7 +62,7 @@
       open (unit=KLEC,file=fnam1,status='old')
 #else
       open (unit=KLEC,file='MAIN.CTL',status='old')
-!MB> fnam1 points now either to file mainA1.i01 or to MAIN.CTL
+! fnam1 points now either to file mainA1.i01 or to MAIN.CTL
 #endif
 
       read (KLEC,90) codsim
@@ -155,11 +155,11 @@
       
 #ifdef PEBP_ENABLED
       ! PEBP model
-      NREC = size(DFIL) !MB: where is dfil defined?
+      NREC = size(DFIL)
       select case(HardLawID)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
             ! UNIT IMP4 = state variables of PEBP KOST11
-            info = KS_openStateFile(IMP4,trim(fname_prefix)//'.BPM','w') !MB: open .BPM file for writing; existing file gets replaced
+            info = KS_openStateFile(IMP4,trim(fname_prefix)//'.BPM','w')
             !
             if (KS_initState(NREC) /= 0) then
                   write(IMP,fmt=600) 
@@ -167,10 +167,10 @@
             endif
             read_state = .false.
             nblock = 0
-            read(KLEC,66) read_state, nblock, fname_pebp !MB: this line in the VEF cfg file contains only 2 values!! here 3 are read??
+            read(KLEC,66) read_state, nblock, fname_pebp
             if (read_state) then
                   call stripComment(fname_pebp)
-                  info = KS_readState(fname_pebp,IPEBPSTAT,nblock) !MB: interface to KS_readState_file; IPEBPSTAT is the IO unit number
+                  info = KS_readState(fname_pebp,IPEBPSTAT,nblock) ! interface to KS_readState_file; IPEBPSTAT is the IO unit number
                   if (info /= 0) then 
                         write(IMP,fmt=601) trim(fname_pebp)
                         write(*,fmt=601) trim(fname_pebp)
@@ -205,11 +205,11 @@
  101  format (' SIMUL CALL NR.',I5,'   Output parameter',I5,/,           &
       ' Displacement gradient:')
       DO 35 I=1,3
-      READ (KLEC,*) (DG(I,K),K=1,3)
-      if(NLIST.eq.1) then
-      WRITE (IMP,109) (DG(I,K),K=1,3)
-      end if
-      WRITE (*,109) (DG(I,K),K=1,3)
+          READ (KLEC,*) (DG(I,K),K=1,3)
+          if(NLIST.eq.1) then
+          WRITE (IMP,109) (DG(I,K),K=1,3)
+          end if
+          WRITE (*,109) (DG(I,K),K=1,3)
  109  FORMAT (1x,3F10.5)
   35  CONTINUE
       ! Here DG = [L]*dt, where [L] is the velocity gradient 

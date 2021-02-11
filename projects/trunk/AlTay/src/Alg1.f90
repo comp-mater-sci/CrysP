@@ -8,7 +8,9 @@
       use criMathUtils
       integer,parameter,private :: N = 5, N1 = N + 1 
       
-      integer,private           :: M,NGL,NTW
+      integer,private           :: M,   &       ! number of glide systems + number of twin systems
+                                   NGL, &       ! number of glide systems
+                                   NTW          ! number of twin systems
       double precision,private  :: B1(3,96),B(5,5),B2(6,96),G(96)
       integer,private           :: DI1(5)
      
@@ -18,7 +20,7 @@
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY 
 !
-      SUBROUTINE TAYLOR (IRICHT, KOST, MacroDefRate, MacroDefState)
+      subroutine TAYLOR(IRICHT, KOST, MacroDefRate, MacroDefState)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif
@@ -29,55 +31,64 @@
       type(DeformationRate), intent(in),optional :: MacroDefRate
       ! optional argument - required for IRICHT=3:      
       type(DeformationState),intent(in),optional :: MacroDefState      
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
+      common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
       ITW,GEWF
-      COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON/TLR2/ RHOAsa
-      COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
-      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
+      common /IGLIJS/ M11,CC(2,96)      ! M11...total number of systems in slip system file (glide+twin),
+      common /TLR2/ RHOAsa
+      common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
+      common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
        SWRLX(3)
       double precision, dimension(3,3):: RHOScrys(3,3)
       double precision, dimension(3,3):: RHOAcrys(3,3), RHOAsa(3,3) 
-      character(len=72) :: TITGLIJ
+      character(len=72) :: TITglij                                          ! Name of slip system set
 !
-!     Extra arrays nodig voor lineare programmatie op 2 korrels tegelijk
+!     Extra arrays necessary for linear programming of 2 grains simultaneously
 !
       common /extra/ A2(10,194),UU(10,10)
       dimension XXLP(194)
       logical SWRLX
-      INTEGER R 
-      DATA MMAX/96/ ! dimension of A1 and other arrays 
+      integer R 
+      data MMAX/96/ ! dimension of A1 and other arrays 
 !
 !     DVM = von Mises equivalent strain rate
 !
-      !Local stress in crystal reference system
+      ! Local stress in crystal reference system:
       double precision, dimension(3,3):: Scrys=0.0d0 
-      SAVE
-      GOTO (1000,2000,3000),IRICHT
+      save
+      !
+      goto (1000,2000,3000),IRICHT
+      !
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! IRICHT=1 
+      ! Read slip system file
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !
  1000 if(NLIST.eq.1) then
-      WRITE (IMP,216)
+            write (IMP,216)
       end if
- 216  FORMAT (/,' SUBROUTINE TAYLOR - READS ITS CRYSTAL DATA',//)
+ 216  format (/,' SUBROUTINE TAYLOR - READS ITS CRYSTAL DATA',//)
 !
-      R=LEC
+      R=LEC         ! slip system file
 !
+      ! Read name of slip system set
   507 read (R,217) TITglij
   217 format(A)
       if(NLIST.eq.1) then
-      write (IMP,221) titglij
+            write (IMP,221) TITglij
       end if
   221 format (/,' Slip system set:',A,/)
-      READ (R,210) I,NGL,NTW,DI1,X,Y
- 210  FORMAT (8I4,4X,2F10.0)
+      !
+      read (R,210) I,NGL,NTW,DI1,X,Y        ! I is implicitly typed integer
+ 210  format (8I4,4X,2F10.0)
       if(NLIST.eq.1) then
-      WRITE (IMP,211) I,NGL,NTW,DI1
+            write (IMP,211) I,NGL,NTW,DI1
       end if
- 211  FORMAT (1X,I4,10X,2I5,10X,5I5)
+ 211  format (1X,I4,10X,2I5,10X,5I5)
 #ifndef ALTAY_SUBROUTINE
-      IF (I.NE.0) call terminate(stopcode_runtimeerror)
+      if (I.NE.0) call terminate(stopcode_runtimeerror)
 #else
       if (I.NE.0) then
-      RCM_RAISE(1,'TAYLOR','Improper slip system set',RCM_RTN)
+            RCM_RAISE(1,'TAYLOR','Improper slip system set',RCM_RTN)
       endif
 #endif
       M=NGL+NTW
@@ -94,61 +105,70 @@
 #endif
       endif
  5001 format(' TAYLOR - NGL+NTW=',I5,' LARGER THAN  MMAX=',I5) 
-      DO 500 I1=1,M11                                                     
-      READ (R,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
- 212  FORMAT (I4,8F20.16)
-      if(NLIST.eq.1) then
-      WRITE (IMP,213) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
-      end if
- 213   FORMAT (I3,' A ',5F10.7,' B ',3F10.7)
- 500  CONTINUE
-      DO 501 I=1,5                                                      
-      READ (R,214) J,(B(I,L),L=1,5)
- 214  FORMAT (I4,5D23.16)
-      if(NLIST.eq.1) then
-      WRITE (IMP,215) J,(B(I,L),L=1,5)
-      end if
- 215  FORMAT (1X,I4,10X,5D15.8)
- 501  CONTINUE
-      IF (NTW.EQ.0) GOTO 504                                            
-      DO 505 I=1,NTW                                                    
-      READ (R,212) J,(B2(L,I),L=1,6),G(I)
-      if(NLIST.eq.1) then
-      WRITE (IMP,218) J,(B2(L,I),L=1,6),G(I)
-      end if
+      ! read glide + twin systems
+      do 500 I1=1,M11                                                     
+          read (R,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
+          if(NLIST.eq.1) then
+              write (IMP,213) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
+          end if
+ 500  continue
+ 212  format (I4,8F20.16)
+ 213  format (I3,' A ',5F10.7,' B ',3F10.7)
+      !
+      do 501 I=1,5                                                      
+          read (R,214) J,(B(I,L),L=1,5) ! J implicitly typed as integer
+          if(NLIST.eq.1) then
+              write (IMP,215) J,(B(I,L),L=1,5)
+          end if
+ 501  continue
+ 214  format (I4,5D23.16)
+ 215  format (1X,I4,10X,5D15.8)
+      !
+      if (NTW.EQ.0) goto 504                                            
+      do 505 I=1,NTW                                                    
+          read (R,212) J,(B2(L,I),L=1,6),G(I)
+          if(NLIST.eq.1) then
+              write (IMP,218) J,(B2(L,I),L=1,6),G(I)
+          end if
+ 505  continue
  218  format (i4,' B2',6f10.7,' G',f10.7)
- 505  CONTINUE
- 504  CONTINUE
+ 504  continue
+      ! set all components of A2=0
  502  do 30 j=1,194
-      do 30 i=1,10
-      A2(i,j)=0.0
+          do 30 i=1,10
+              A2(i,j)=0.0
   30  continue
       do 31 j=1,M11
-      do 31 i=1,5
-      x8=A1(i,j)
-      A2(i,j)=x8
-      A2(i+5,j+M11)=x8
+          do 31 i=1,5
+              x8=A1(i,j)
+              A2(i,j)=x8
+              A2(i+5,j+M11)=x8
   31  continue
-      RETURN
+      return
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011 
-! 2000 IF (IGLIJ.EQ.0) GOTO 70  
+! 2000 if (IGLIJ.EQ.0) goto 70  
+      !
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! IRICHT=2
+      ! Write velocity gradient, strain rate and spin tensor; then check norm of strain rate
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !
  2000 continue
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then                                         
-      WRITE (IMP,203)
+            write (IMP,203)
       end if     
       do I=1,3                                                       
           if(NLIST.eq.1) then                                   
-              WRITE (IMP,204) (MacroDefRate%VelGrad(I,J),J=1,3),         &
+              write (IMP,204) (MacroDefRate%VelGrad(I,J),J=1,3),         &
                               (MacroDefRate%StrainRate(I,J),J=1,3),      &
                               (MacroDefRate%Spin(I,J),J=1,3) 
           end if
       end do
- 203  FORMAT (' TAYLOR - DISPLACEMENT GRADIENT WHICH WILL BE USED FOR THE SIMULATION', &
+ 203  format (' TAYLOR - VELOCITY GRADIENT WHICH WILL BE USED FOR THE SIMULATION', &
               //T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,     &
               'ANTISYMMETRICAL PART',/)
- 204  FORMAT (1X,3(3F10.5,10X))
-   70  continue
+ 204  format (1X,3(3F10.5,10X))
+  70  continue
       if (MacroDefRate%NormStrainRate.lt.1.0D-10) then
 #ifndef ALTAY_SUBROUTINE
          write (*,205) MacroDefRate%NormStrainRate
@@ -164,13 +184,21 @@
  205  format (' Taylor - symmetric part of strain step is too small'     &
        ,d20.8)
 !      
-      RETURN
-!!     OMREKENING DISPLACEMENT GRADIENT.
+      return
+      !
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! IRICHT=3
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !
+      ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
  3000 continue
 !      write (*,1234)
 ! 1234 format (' Just before Pancak2')
-       CALL Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,              &
-       SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
+      !
+      call Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,              &
+                    SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
+      ! OUT: Scrys,RHOScrys,RHOAcrys
+      !
       !Report Scrys to LST-file
  100  format(' Bishop-Hill stress (crystal system):')
  101  format(3d20.7)       
@@ -206,10 +234,11 @@
 #endif
 !      write (*,1235)
 ! 1235 format (' Just after Pancak2')
-      RETURN
-      END SUBROUTINE
+      return
+      end subroutine
       !
-      SUBROUTINE TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,       &
+      !
+      subroutine TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,       &
                         MacroDefRate)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
@@ -223,12 +252,12 @@
       use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
-      COMMON /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
+      common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
       ITW,GEWF
-      COMMON /IGLIJS/ M11,CC(2,96)
-      COMMON/TLR2/ RHOAsa
-      COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
-      COMMON /EULERA/ fi1,PHI,fi2
+      common /IGLIJS/ M11,CC(2,96)
+      common/TLR2/ RHOAsa
+      common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
+      common /EULERA/ fi1,PHI,fi2
       logical SWRLX
       double precision, intent(out):: Seq ! Equivalent stress in crystal, defined as..
                                     !  plastic work rate in crystal normalized by..
@@ -243,7 +272,7 @@
 !     SPANH: macroscopic stress in crystal reference system
 !     Ssam:        local stress in sample reference system
 !
-      COMMON /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
+      common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
        SWRLX(3)
       DIMENSION RCC(3,3),RCcryst(3,3),rhossaTot(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
@@ -323,44 +352,45 @@
       Seq=WorkRate / MacroDefRate%vMeqStrainRate
   43  J=M
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 4/11/2011
-!      IF (IGLIJ.EQ.0) GOTO 90
+!      if (IGLIJ.EQ.0) goto 90
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-      WRITE (IMP,301) WorkRate
+          write (IMP,301) WorkRate
       end if
- 301  FORMAT (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
+ 301  format (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
 !      if(NLIST.eq.1) then
-!      DO 302 I=1,M
-! 302  WRITE (IMP,303) I,GAMdot(I)
+!      do 302 I=1,M
+! 302  write (IMP,303) I,GAMdot(I)
 !      end if
 !
- 303  FORMAT (1X,I5,(12F10.6))  
+ 303  format (1X,I5,(12F10.6))  
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011                                        
-!      IF (IGLIJ.NE.0) then
+!      if (IGLIJ.NE.0) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-      WRITE (IMP,109) MacroDefRate%vMeqStrainRate,Seq,                   &
-                      (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M)
+          write (IMP,109) MacroDefRate%vMeqStrainRate,Seq,                   &
+                          (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M)
       end if
 
- 109  FORMAT ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
+ 109  format ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
        '  SLIP RATES',/,(T2,10F10.5))
-  90  CONTINUE                                                          
+  90  continue                                                          
   202 ROT = matmul(B1,GAMdot)
 
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!      IF (IGLIJ.NE.0) then
+!      if (IGLIJ.NE.0) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) then
-      WRITE (IMP,305) ROT
+          write (IMP,305) ROT
       end if
                                
-  305 FORMAT (' ROTATIONS',3F12.6)
-!      DO 58 K=1,M                                                       
+  305 format (' ROTATIONS',3F12.6)
+!      do 58 K=1,M                                                       
 !      X=ABS(GAMdot(K))
-!  58  CONTINUE                                                          
-      DO 75 J=1,3
-  75  C1(J,J)=1.D0                                                      
+!  58  continue                                                          
+      do J=1,3
+            C1(J,J)=1.D0
+      end do
       C1(3,2)=ROT(1)-TRC(1)                                             
       C1(1,3)=ROT(2)-TRC(2)                                             
       C1(2,1)=ROT(3)-TRC(3)                                         
@@ -377,34 +407,34 @@
       fi2=Euler%fi2 !   by common block /EULERA/
       C2 = rotmat(Euler)
       ITW=0
-      IF (NTW.EQ.0) GOTO 31                                             
+      if (NTW.EQ.0) goto 31                                             
       X=0.                                                              
-      DO 84 I=1,NTW                                                     
-      J=I+NGL                                                           
-      X=X+GAMdot(J)/G(I)                                                
-      VOLFR(I)=X                                                        
-  84  CONTINUE                                                          
-       IF (X.LE.1.) GOTO 85  
+      do I=1,NTW                                                     
+          J=I+NGL                                                           
+          X=X+GAMdot(J)/G(I)                                                
+          VOLFR(I)=X                                                        
+      end do
+      if (X.LE.1.) goto 85  
 #ifndef ALTAY_SUBROUTINE
        if(NLIST.eq.1) then                                           
-      WRITE (IMP,107) X   
+      write (IMP,107) X   
       end if                                              
- 107  FORMAT (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,              &
+ 107  format (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,              &
       '   SHOULD BE LESS THAN 1')                                       
        call terminate(stopcode_runtimeerror)
 #else       
       RCM_RAISE(1,'TAYLR1',                                              &
       'Total volume fraction of twins exceeds unity',RCM_RTN)
 #endif
-  85  CALL RANDOM_NUMBER(RNDM)
-      DO 86 I=1,NTW                                                     
-      IF (RNDM.LT.VOLFR(I)) GOTO 87                                     
-  86  CONTINUE                                                          
-      GOTO 31                                                           
-  87  DO 88 K=1,3                                                       
-      DO 89 J=1,3                                                       
+  85  call RANDOM_NUMBER(RNDM)
+      do 86 I=1,NTW                                                     
+      if (RNDM.LT.VOLFR(I)) goto 87                                     
+  86  continue                                                          
+      goto 31                                                           
+  87  do 88 K=1,3                                                       
+      do 89 J=1,3                                                       
   89  RCC(K,J)=C2(K,J)                                                  
-  88  CONTINUE                                                          
+  88  continue                                                          
       TDC(1,1)=B2(1,I)                                                  
       X=B2(2,I)                                                         
       TDC(2,1)=X                                                        
@@ -444,15 +474,15 @@
   150 format(i5,5(E12.5,1X),5x,6(E12.5,1X),5x,3(E12.5,1X),               &
              5x,6(E12.5,1X))
  101  format(3d20.7)      
-   61 RETURN
-  26  WRITE (IMP,106)
- 106  FORMAT (1X,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBLEM')
+   61 return
+  26  write (IMP,106)
+ 106  format (1X,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBLEM')
 #ifndef ALTAY_SUBROUTINE
   52  call terminate(stopcode_runtimeerror)
 #else
   52  RCM_RAISE(1,'TAYLR1',                                              &
       'No upper limit for linear programming problem',RCM_RTN)
 #endif
-      END SUBROUTINE
+      end subroutine
       
       end module
