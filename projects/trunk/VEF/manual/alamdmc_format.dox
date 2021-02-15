@@ -3,7 +3,7 @@
 
 [TOC]
 
-The AlamDMC configuration file has to follow some basic formatting rules.
+The AlamDMC configuration file (.cfg) has to follow some basic formatting rules.
 Some dedicated formats for a number of special configuration options may also apply.
 
 \section alamdmc_format_basics Basic Formatting rules

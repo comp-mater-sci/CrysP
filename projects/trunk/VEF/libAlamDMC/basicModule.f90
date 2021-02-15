@@ -164,15 +164,13 @@ contains
             ! Read output configuration lines
             call readOutputConfigSection(cnfunit,this%output,info) ! top 3 lines after comment header of config file
             if (info /= criSuccess) then 
-                  !write(errmsg,fmt=901) 'check output config section'
                   write(error_unit,fmt=901) 'Check output configuration section.'
                   return
             endif
             ! 
-            ! Read AlTay configuration lines (texture, microstructure, hardening)
-            call readAlTayConfigSection(cnfunit,this%altay,info) ! read configuration of texture, microstructure and hardening
+            ! Read AlTay configuration lines
+            call readAlTayConfigSection(cnfunit,this%altay,info) ! read configuration of texture, slip systems, microstructure and hardening
             if (info /= criSuccess) then
-                  !write(errmsg,fmt=901) 'Check libaltay configuration section.'
                   write(error_unit,fmt=901) 'Check libaltay configuration section.'
                   return
             endif
@@ -391,6 +389,7 @@ contains
       !
       integer                       :: model_id, dm_id
       logical                       :: use_default_microstructure
+      logical                       :: use_default_slipsystems
       integer                       :: i
       character(len=max_pathlen) :: root, ext
 
@@ -435,11 +434,25 @@ contains
                 info = criErr_BadArgs
                 return
             endif
+            !
             ! Determine slip system file 
-            if (.not. readKeyword(cnfunit, slipsystem_types, dm_id)) then
-                write(error_unit,fmt=900) 'Unsupported slip system family.'
-                info = criErr_BadArgs
-                return
+            use_default_slipsystems = .true.
+            if (.not. readValue(cnfunit, use_default_slipsystems)) return
+            if (.not. use_default_slipsystems) then ! user-supplied slip system definition
+                  if (.not. readValue(cnfunit, cnf%slipsystem%input_fname)) return ! read slip system filename                 
+            !
+            else ! default slip system definition
+                  if (.not. readKeyword(cnfunit, slipsystem_types, dm_id)) then
+                      write(error_unit,fmt=900) 'Unsupported slip system family.'
+                      info = criErr_BadArgs
+                      return
+                  endif
+                  ! Let's map DM_id to a file
+                  call incurSlipsystemFile(dm_id, cnf%slipsystem%input_fname, info)
+                  if (info /= criSuccess) then
+                        write(error_unit, fmt=930) 'Cannot locate slipsystem file.'
+                        return
+                  endif
             endif
             !
             ! Process advanced microstructure characterization
@@ -463,7 +476,7 @@ contains
                         endif                           
                   enddo
             else
-                  call incurMicrostructureFile(cnf%micros_fname, info) ! load default microstructure
+                  call incurMicrostructureFile(cnf%micros_fname, info) ! verify location of default microstructure file
                   if (info /= criSuccess) then
                         write(error_unit, fmt=930) 'Cannot locate default microstructure file.'
                         return
@@ -479,12 +492,7 @@ contains
             ! the keyword is mapped to a proper model_id, we can instantly set it.
             call setModelType(cnf,model_id,info)
             if (info /= criSuccess) return
-            ! Let's map DM_id to a file
-            call incurSlipsystemFile(dm_id, cnf%slipsystem%input_fname, info)
-            if (info /= criSuccess) then
-                  write(error_unit, fmt=930) 'Cannot locate slipsystem file.'
-                  return
-            endif
+            !
             !
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
@@ -629,7 +637,7 @@ contains
       end function
       
       
-      !> Determines location of data file and checks its existence.
+      !> Determines location of data file in VEF distribution and checks its existence.
       !>
       !> The places where the procedure looks for the files are:
       !> 1. $VEF_ROOT/data
@@ -652,7 +660,7 @@ contains
       end subroutine
 
 
-      !> Incur the location of slip system file
+      !> Incur the location of default slip system file
       subroutine incurSlipsystemFile(dm_id, slipsystem_path, info)
       implicit none
       integer,intent(in)              :: dm_id !< Deformation mechanism ID
@@ -664,11 +672,11 @@ contains
             info = criErr_BadArgs
             select case(dm_id)
             case(DM_fcc12)
-                  fname = 'fcc.pre'
+                  fname = 'fcc12.pre'
             case(DM_bcc24)
-                  fname = 'bcc.pre'
+                  fname = 'bcc24.pre'
             case(DM_bcc48)
-                  fname = 'bcc2.pre'
+                  fname = 'bcc48.pre'
             case default
                   return
             end select
@@ -677,7 +685,7 @@ contains
       end subroutine
 
 
-      !> Incur the location of the microstructure file
+      !> Incur the location of the default microstructure file
       subroutine incurMicrostructureFile(micros_fname, info)
       character(len=*),intent(out)    :: micros_fname
       integer,intent(out)             :: info

@@ -118,7 +118,7 @@ Here's what the configuration file tells the `alamDMC`:
 - The [texture file](@ref texture_file) `sid1687f.smt` [we created earlier](#gt_input_texture) will be used as the input (line 7).
 - The ALAMEL [crystal plasticity model](@ref model_type) will be used (line 8).
 - The crystal plasticity model will assume [bcc crystal structure with 24 slip systems](@ref slip_system_family) (line 9).
-- Lines 10 - 12 instruct the program to use the defaults for [microstructural description](@ref microstructure_default), [hardening](@ref hardening_default) and [solver settings](@ref solver_default), respectively.
+- Lines 10 - 12 instruct the program to use the defaults for [microstructural description](@ref use_default_microstructure), [hardening](@ref use_default_hardening) and [solver settings](@ref solver_default), respectively.
 
 The module-specific configuration section specifies the following:
 - Lines 16 - 17 provide the program with the orientations of virtual samples with respect to the [reference frame](@ref convention_reference_frame). This is done by a [range specification](@ref range_option). In this example the orientations are given as a [uniform range](@ref option_uniform) of angles between the loading direction and selected material axis (see below).

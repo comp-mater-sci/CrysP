@@ -44,7 +44,7 @@ implicit none
                                                               MapItem('ASR',ASR_id), MapItem('YLD',YLD_id), &
                                                               MapItem('EWC',EWC_id), MapItem('ADP',ADP_id) ]
 #ifndef DMC_USE_TOKENS
-      !MB:  2 command line parameters when DMC_USE_TOKENS not defined
+      ! 2 command line parameters when DMC_USE_TOKENS not defined
       integer,parameter       :: argc_min = 2, argc_max=2
       character(len=*),parameter    :: prog_desc = 'parameters: command_name configuration_file'
 #else
@@ -107,7 +107,7 @@ implicit none
       ! Create a module of appropriate type:
       select case(cmdline%command_id)
       case(Q_id) ! dmcQRS
-            allocate(QRSModule :: the_module) !MB: create object the_module of type QRSModule
+            allocate(QRSModule :: the_module) ! create object the_module of type QRSModule
       case(UDSA_id) ! dmcUDSA
             allocate(UDSAModule :: the_module)
       case(ASR_id) ! dmcASR
