@@ -33,6 +33,7 @@ implicit none
 	integer,parameter :: maxCurGrains = 11200
 
 	contains
+      
 
 	subroutine loadCubs(inputFnames,inputMicros,info)
 	implicit none
@@ -65,20 +66,26 @@ implicit none
 		  300 format('Dataset ',I3,': ',A,1X,I6,1X,'grains')
 	end subroutine
 
-	subroutine combineCubs(inputMicros,inputWeights,outfmt,mrgtype,outputMicro,info)
+	subroutine combineCubs(inputMicros,inputWeights,outfmt,mrgtype,outputMicro,rep,info)
 	use ifport
+	use altayAlgorithms
+	use altayMacroKinematic
+	
 	implicit none
 		type(microsDesc),dimension(:),intent(in)   :: inputMicros
 		double precision,dimension(:),intent(in)   :: inputWeights
 		character(len=3),intent(in)                :: outfmt
 		character(len=6),intent(in)                :: mrgtype
 		type(microsDesc),intent(out)               :: outputMicro
+		integer,allocatable,intent(inout)          :: rep(:)
 		integer,intent(out)                        :: info
 		!
-		integer :: i,j,k,ng,totGrains,nmicros,ngrains,nselgrains
+		integer :: i,j,k,ng,totGrains,nmicros,ngrains,nselgrains, ipiv(3)
 		integer,dimension(:),allocatable  :: vProbes, Iselgrains
 		double precision,dimension(:),allocatable :: vWeights, Dselgrains
 		integer,dimension(:),allocatable :: allgrains
+		double precision  :: w_int, DefGrad(3,3),DefGrad_inverse(3,3), CIJ(3,3), TG(3,3), work(3)
+		
 		!
 		info = 1
 		nmicros = size(inputMicros)
@@ -107,6 +114,8 @@ implicit none
 				  totGrains = totGrains + inputMicros(i)%ngrains
 			enddo
 		endif
+		allocate(rep(totGrains))
+
 		!
 		if (outfmt=='cub') then
 		   outputmicro%ngrains = totGrains
@@ -149,29 +158,44 @@ implicit none
 			endif
 		elseif (mrgtype=='random') then
 			ngrains = nmicros*totGrains/2
-			allocate(allgrains(ngrains))
-			allgrains(:)=(/ (i, i = 1, ngrains) /)
-			call shuffle(allgrains)
 			
 			nselgrains = totGrains/2
 			allocate(Dselgrains(nselgrains))
 			call random_number(Dselgrains)
 			
-			allocate(Iselgrains(nselgrains))
-			Iselgrains(:)=int(Dselgrains*ngrains+1)
-			
 			do i=1,nselgrains
-				j = ((Iselgrains(i)-1)/nselgrains)+1
-				k = mod(Iselgrains(i)-1,nselgrains)+1
-				outputMicro%grains(2*i-1:2*i) = inputMicros(j)%grains(2*k-1:2*k)
+				w_int = 0
+				do j=1,nmicros
+				    w_int = w_int + vWeights(j)
+					if (Dselgrains(i) < w_int) exit					
+				enddo
+				outputMicro%grains(2*i-1:2*i) = inputMicros(j)%grains(2*i-1:2*i)
+				rep(2*i-1:2*i) = j
 			enddo
 		endif
-		! Transfer other componenst
+		! Transfer other components
+		outputMicro%FALG = 0.d0
 		do i=1,nmicros
-			  outputMicro%GAXES = outputMicro%GAXES + inputMicros(i)%GAXES * vWeights(i)
-			  outputMicro%GEULR = outputMicro%GEULR + inputMicros(i)%GEULR * vWeights(i)
 			  outputMicro%FALG = outputMicro%FALG + inputMicros(i)%FALG * vWeights(i)
 		enddo
+
+		if (norm2(outputMicro%FALG) <= 1.0D0) then
+		    call MatrixExponentSmallNorm(outputMicro%FALG,DefGrad,DefGrad_inverse,info)
+		else
+		    DefGrad_inverse = outputMicro%FALG
+			call dgetrf(3,3,DefGrad_inverse,3,ipiv,info)
+            call dgetri(3,DefGrad_inverse,3,ipiv,work,3,info)
+		endif
+		CIJ = unitMatrix
+        call UPDATC(CIJ,DefGrad_inverse) 
+        call GETANG(CIJ,outputMicro%GAXES,outputMicro%GEULR,TG) !(CIJ,prval,GEULR,TMAT)	
+		
+		do i=1,outputmicro%ngrains
+			outputMicro%grains(i)%F = outputMicro%FALG
+			outputMicro%grains(i)%GAXES = outputMicro%GAXES
+			outputMicro%grains(i)%GEULR = outputMicro%GEULR
+		enddo
+        outputMicro%GEULR = rad2deg(outputMicro%GEULR)		
 		
 		deallocate(vWeights)
 		info = 0
@@ -215,15 +239,16 @@ use cubAccess
 use mergeCubs
 implicit none
 
-	integer,parameter             :: noutunit=111,ncnfunit=112  ! Unit numbers      
+	integer,parameter             :: noutunit=111,ncnfunit=112, nrepunit=113  ! Unit numbers      
 	integer                       :: iuerr  ! Error code for I/O operations
 	character(LEN=pathlength),dimension(:),allocatable     :: fnamcubs
-	character(LEN=pathlength)     :: fnamout,fnamcnf
-	integer                       :: argc,i
-	logical                       :: isConfigFile, ifreset
+	character(LEN=pathlength)     :: fnamout,fnamcnf,buf
+	integer                       :: argc,i,offst
+	logical                       :: isConfigFile, ifreset, ifreport
 	character(len=ctitlelen)      :: title
 	character(len=3)              :: outfmt
-	character(len=5)              :: reset
+	character(len=5)              :: reset, tmp
+	character(len=6)              :: report
 	character(len=6)              :: mrgtype
 	
 
@@ -233,22 +258,25 @@ implicit none
 	type(microsDesc),dimension(:),allocatable   :: inputMicros
 	type(microsDesc)                            :: outputMicro
 	double precision,dimension(:),allocatable   :: inputWeights
+	integer, allocatable :: rep(:)
 	integer                                     :: info
 	! Check number of parameters, at least 3 are required 
 	!
 	ifreset = .false.
+	ifreport = .false.
 	argc = command_argument_count()
 	! Valid command line: 1 argument or at least 4 arguments
 	if ( (argc == 0) .or. (argc /= 1 .and. argc < 5) ) then
-		  write(*,*) 'arguments: input1.cub input2.cub [...] output cub {append,random} [reset]'
-		  write(*,*) 'or:'
-		  write(*,*) 'arguments: input1.cub input2.cub [...] output cur {append,random}'
-		  write(*,*) 'or:'
-		  write(*,*) 'arguments:  config_file'
+		write(*,*) 'arguments: input1.cub weight1 input2.cub weight2 [...] output cub {append,random} [reset] [report]'
+		write(*,*) 'or:'
+		write(*,*) 'arguments: input1.cub weight1 input2.cub weight2 [...] output cur {append,random}'
+		write(*,*) 'or:'
+		write(*,*) 'arguments: config_file'
 		  call exit(10)
 	endif
 	! Determine if the program is config-driven or command line-driven
 	isConfigFile = .false. 
+	
 	if (argc == 1) isConfigFile = .true. 
 	!
 
@@ -266,45 +294,47 @@ implicit none
 				call exit(1)
 		  endif
 	else
-		  call get_command_argument(argc,mrgtype,status=iuerr)
-		  !
-		  if (mrgtype=='append' .or. mrgtype=='random') then
-		     call get_command_argument(argc-1,outfmt,status=iuerr)
-		     call get_command_argument(argc-2,fnamout,status=iuerr)
-		     nInputs = argc-3
-	      else
-		     call get_command_argument(argc,reset,status=iuerr)
-			 call get_command_argument(argc-1,mrgtype,status=iuerr)
-			 call get_command_argument(argc-2,outfmt,status=iuerr)
-			 if (reset=='reset' .and. argc>=6) then
-			    if (mrgtype/='append' .and. mrgtype/='random') then
-				   write(*,*) 'Unknown merge type ', mrgtype,'; only append and random types are supported'
-				   call exit(10)
-				endif
-			    if (outfmt=='cub' .or. outfmt=='cur') then
-			       call get_command_argument(argc-3,fnamout,status=iuerr)
-			       nInputs = argc-4
-				   if (outfmt=='cub') then
-				      ifreset=.true.
-				   else
-				      write(*,*) 'The reset option is valid only for cub outputs; merging to cur file without resetting any value'
-				   endif
-				else
-				   write(*,*) 'Unknown output format ', outfmt,'; only cub and cur formats are supported'
-				   call exit(10)
-				endif
-			 else
-			    write(*,*) 'arguments: input1.cub input2.cub [...] output cub {append,random} [reset]'
-		        write(*,*) 'or:'
-		        write(*,*) 'arguments: input1.cub input2.cub [...] output cur {append,random}'
-		        write(*,*) 'or:'
-		        write(*,*) 'arguments:  config_file'
-		        call exit(10)
-			 endif
+		  offst = 0
+		  call get_command_argument(argc,report,status=iuerr)
+		  if (report=='report') offst = offst+1
+		  
+		  call get_command_argument(argc-offst,reset,status=iuerr)
+	      if (reset=='reset') offst = offst+1
+		  
+		  call get_command_argument(argc-offst,mrgtype,status=iuerr)		  
+		  if (mrgtype/='append' .and. mrgtype/='random') then
+		      write(*,*) 'Unknown merge type ', mrgtype,'; only append and random types are supported'
+			  call exit(10)
 		  endif
+		  if (report=='report') then
+			  if (mrgtype=='random') then
+				  ifreport=.true.
+			  else
+				  write(*,*) 'The report option is valid only for random merging'
+			  endif
+		  endif
+		  
+		  call get_command_argument(argc-offst-1,outfmt,status=iuerr)
+		  if (outfmt/='cub' .and. outfmt/='cur') then
+		      write(*,*) 'Unknown output format ', outfmt,'; only cub and cur formats are supported'
+			  call exit(10)
+		  endif
+		  if (reset=='reset') then
+			  if (outfmt=='cub') then
+				  ifreset=.true.
+			  else
+				  write(*,*) 'The reset option is valid only for cub outputs; merging to cur file without resetting any values'
+			  endif
+		  endif
+		  
+		  
+		  call get_command_argument(argc-offst-2,fnamout,status=iuerr)
+		  nInputs = (argc-offst-3)/2
+	      
 	endif
 	!
 	allocate(inputMicros(nInputs),inputWeights(nInputs),fnamcubs(nInputs))
+	inputWeights = 1.D0
 	!
 	if (isConfigFile) then
 		  do i=1,nInputs
@@ -326,10 +356,13 @@ implicit none
 		  info = 0
 		  do i=1,nInputs
 				info = 1
-				call get_command_argument(i,fnamcubs(i),status=iuerr)
+				call get_command_argument(2*i-1,fnamcubs(i),status=iuerr)
+				if (iuerr /= 0) exit
+				call get_command_argument(2*i,buf,status=iuerr)
+				read(buf,*) inputWeights(i)
 				if (iuerr /= 0) exit
 		  end do
-		  inputWeights = 1.D0
+		  
 		  nOutGrains = maxCurGrains 
 	endif
 	!
@@ -345,7 +378,7 @@ implicit none
 		  call exit(1)
 	endif
 	! Merge the data
-	call combineCubs(inputMicros,inputWeights,outfmt,mrgtype,outputMicro,info)
+	call combineCubs(inputMicros,inputWeights,outfmt,mrgtype,outputMicro,rep,info)
 	!
 
 	if (info == 0) then
@@ -360,6 +393,24 @@ implicit none
 			if (info /= 0) then
 				write(*,*) 'Error writing CUB file ',trim(fnamout)
 				call exit(11)
+			endif
+			if (ifreport) then
+			    do i=len_trim(fnamout),1,-1
+					if (fnamout(i:i) == '/' .or. fnamout(i:i) == '\') exit
+				enddo
+				
+				if (i == 1) then
+				    open (unit=nrepunit,file='merging_report.txt', status='REPLACE',iostat=iuerr)
+				else
+				    open (unit=nrepunit,file=fnamout(1:i)//'merging_report.txt', status='REPLACE',iostat=iuerr)
+				endif
+				write(nrepunit,*) size(rep)
+				write(nrepunit,*) 'grain #      original texture #'
+				do i=1,size(rep)
+				    write(tmp,'(i5)') i
+					write(nrepunit,'(1x,A,7x,i2)') adjustl(trim(tmp)),rep(i)
+				enddo
+				close(nrepunit)
 			endif
 		else
 			! Open CUR file 
