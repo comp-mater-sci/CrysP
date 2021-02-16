@@ -62,9 +62,11 @@
       !
       trafo_previous = rotmat(previous)
       !
+      !update cyrstal orientation from slip
       call update_crystal_trafo_fromSlip(trafo_this,trafo_previous,dt,info)
       if (info .ne. criSuccess) return
       !
+      !update cyrstal orientation from twinning (do first update due to slip to set trafo_this) 
       if (DM_data%n_twinning_systems>0) then                                             
           call update_crystal_trafo_fromTwin(trafo_this,info)
           if (info .ne. criSuccess) return
@@ -154,14 +156,16 @@
       end subroutine
 
       
-      !> Twinning contribution to evolution of crystal transformation matrix 
+      !> Twinning contribution to evolution of crystal transformation matrix
+      !> See Gil Sevillano et al, Progr.Mater.Sci 25 (1980) pp. 69-412, p297
+      !> The new cystal orientation is selected through a Monte-Carlo type scheme.
       subroutine update_crystal_trafo_fromTwin(TRF,info)
       implicit none
       double precision, intent(inout), dimension(3,3)           :: TRF
       integer, intent(out)                                      :: info
       !
-      double precision :: X,                                & ! increment of volume fraction of twins
-                          RNDM
+      double precision :: X,                                & ! increment of total volume fraction of twins
+                          Y, RNDM
       integer :: I, J, K
       double precision, dimension(DM_max_systems) :: VOLFR
       double precision, dimension(3,3) :: RCC, TDC
@@ -189,6 +193,13 @@
 #endif
       return
       !
+      !Monte-Carlo scheme to select new crystal orientation.
+      !Total number of orientations in the material point are kept constant in that way. One of the 1 + 
+      !n_twinning_systems possible lattice orientations of the deformed crystallite is chosen by means of a random 
+      !number between 0 and 1. The chosen lattice orientation will stand for the entire crystallite. The choice takes 
+      !the volume fractions of the 1 + n_twinning_systems orientations into account (the larger the volume fraction 
+      !the likelier it will be chosen).
+      !See also P Van Houtte Francqui chair lectures.
   85  CALL RANDOM_NUMBER(RNDM)
       do I=1,DM_data%n_twinning_systems                                                     
           if (RNDM.LT.VOLFR(I)) goto 87                                     
@@ -196,21 +207,23 @@
       goto 31                                                           
   87  do K=1,3                                                       
           do J=1,3                                                       
-              RCC(K,J)=TRF(K,J)
+              RCC(K,J)=TRF(K,J) ! make copy of crystal transformation matrix due to slip
           end do
       end do                                                          
+      !fill crystal transformation matrix due to twin
       TDC(1,1)=DM_data%B2(1,I)                                                  
-      X=DM_data%B2(2,I)                                                         
-      TDC(2,1)=X                                                        
-      TDC(1,2)=X                                                        
-      X=DM_data%B2(3,I)                                                         
-      TDC(3,1)=X                                                        
-      TDC(1,3)=X                                                        
+      Y=DM_data%B2(2,I)                                                         
+      TDC(2,1)=Y                                                        
+      TDC(1,2)=Y                                                        
+      Y=DM_data%B2(3,I)                                                         
+      TDC(3,1)=Y                                                        
+      TDC(1,3)=Y                                                        
       TDC(2,2)=DM_data%B2(4,I)                                                  
-      X=DM_data%B2(5,I)                                                         
-      TDC(3,2)=X                                                        
-      TDC(2,3)=X                                                        
-      TDC(3,3)=DM_data%B2(6,I)                                                  
+      Y=DM_data%B2(5,I)                                                         
+      TDC(3,2)=Y                                                        
+      TDC(2,3)=Y                                                        
+      TDC(3,3)=DM_data%B2(6,I)
+      !total crystal transformation matrix (slip + twin)      
       TRF = matmul(TDC,RCC) 
 31    CONTINUE
       !

@@ -447,9 +447,11 @@ contains
             !
         end do
         !
-        !Set %B2 component (for twinning systems) 
+        !Set %B2 component (for twinning systems, orientation of the crystal lattice in the twin relative to its matrix) 
         do s=1,this%n_twinning_systems
-            !construct B2-column
+            !construct B2-column.
+            !see Gil Sevillano et al, Progr.Mater.Sci 25 (1980) pp. 69-412, p 297
+            !component order: 11, 12, 13, 22, 23, 33
             this%B2(1,s)=2.D0*this%plane_vector(1,s)**2.0D0 - 1.D0
             this%B2(2,s)=2.D0*this%plane_vector(2,s)*this%plane_vector(1,s)
             this%B2(3,s)=2.D0*this%plane_vector(3,s)*this%plane_vector(1,s)
