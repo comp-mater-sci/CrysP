@@ -42,7 +42,7 @@
       character(len=pathlength) :: tex_fname
 #ifdef PEBP_ENABLED      
       character(len=pathlength) :: fname_pebp ! PEBP state variables file from which initial state gets read
-      logical :: read_state
+      logical :: read_state, dumpInitState_BPM = .false., StopSimul = .false.
       integer :: nblock
 #endif
 #ifdef FINALCUB_ENABLED
@@ -167,7 +167,7 @@
             endif
             read_state = .false.
             nblock = 0
-            read(KLEC,66) read_state, nblock, fname_pebp
+            read(KLEC,*) dumpInitState_BPM, StopSimul, read_state, nblock, fname_pebp
             if (read_state) then
                   call stripComment(fname_pebp)
                   info = KS_readState(fname_pebp,IPEBPSTAT,nblock) ! interface to KS_readState_file; IPEBPSTAT is the IO unit number
@@ -176,9 +176,14 @@
                         write(*,fmt=601) trim(fname_pebp)
                         call exit(stopcode_ioerror)
                   endif
+			else
+			      if (dumpInitState_BPM) then
+				      info = KS_writeState(IMP4)
+					  if (StopSimul) call exit(info)
+				  endif
             endif
       endselect
- 66   format(L2,I5,A)      
+ 66   format(L2,L2,L2,I5,A)      
  600  format('Cannot initialize DSH state variables')
  601  format('Cannot read DSH state variables from file: ',A)
 #endif
