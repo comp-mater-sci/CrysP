@@ -28,19 +28,19 @@ implicit none
     !> Data outputed per increment of stress driven state evolution
     type :: IncrementOutputRecord
          
-        double precision :: vm_strain = 0.D0
-        double precision :: vm_strain_total = 0.D0
+        double precision :: vm_strain = 0.D0          !< von Mises equivalent of the strain in current step
+        double precision :: vm_strain_total = 0.D0    !< von Mises equivalent of the total strain across all steps
         
-        double precision :: norm_P_abs = 0.D0
+        double precision :: norm_P_abs = 0.D0         !< norm of accumulated absolute plastic strain increment tensors
         
         double precision :: dotWonA = 0.D0
         double precision :: taylor_factor = 0.D0
         double precision :: scal_s = 0.D0
         double precision :: norm_SonA = 0.D0
-        double precision :: R = 0.D0
+        double precision :: R = 0.D0                  !< residual of search procedure
 
-        type(SRTensor) :: A
-        type(SRTensor) :: SonA
+        type(SRTensor) :: A                           !< plastic strain mode
+        type(SRTensor) :: SonA                        !< norm of deviatoric stress that corresponds to plastic strain mode A
 
         type(SRTensor)  :: P_inc_evol
         type(SRTensor)  :: S_evol

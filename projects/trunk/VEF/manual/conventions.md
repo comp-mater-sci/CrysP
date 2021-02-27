@@ -58,8 +58,8 @@ Reference frames   {#convention_reference_frame}
 
 The VEF uses two different reference frames in the physical, 3-dimensional space:
 
-1. **The material reference frame**: the reference frame in which the material data 
-   are given
+1. **The material reference frame**: the reference frame in which the material data, such as crystallographic texture,
+   are given. This frame can be considered as the global reference frame.
 
    To denote the components of second-order tensors in the material reference frame, 
    numeral indices are used. Repeated axes can be omitted.
@@ -74,6 +74,8 @@ The VEF uses two different reference frames in the physical, 3-dimensional space
 
     \egs \f$ \sigma_x \f$ (or equivalent: \f$ \sigma_{xx} \f$), \f$ D_y \f$, 
     \f$ S_{xz} \f$
+
+Both material and sample reference frames do not change during a simulation and are fixed in space.
 	
 Index notation   {#convention_indexnotation}
 --------------

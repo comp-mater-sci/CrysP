@@ -33,7 +33,7 @@ implicit none
 
     !> Arbitrary Strain Mode (extends DeformationDrivenModule by 4 procedures)
     type,extends(DeformationDrivenModule) :: ADPModule
-    contains !MB: type-bound procedures; pass(this) passes object itself, through which procedure referenced, as first argument to procedure
+    contains ! type-bound procedures; pass(this) passes object itself, through which procedure referenced, as first argument to procedure
         
         !>@{ \name Interface methods of AbstractModule
         
@@ -59,7 +59,7 @@ contains
 
     !> Print configuration to IO unit (type-bound function)
     integer function ADPModule_printConfig(this, outunit) result(info)
-    class(ADPModule),intent(in)      :: this !<MB: passed implicitly
+    class(ADPModule),intent(in)      :: this   !< passed implicitly
     integer,intent(in)              :: outunit !< IO unit for output
     !
         info = this%DeformationDrivenModule%printConfig(outunit)
@@ -72,19 +72,19 @@ contains
 
 
     !> Read configuration from IO unit (type-bound function)
-    integer function ADPModule_readConfig(this, cnfunit) result(info) !MB: call with 1 argument (cnfunit) when referenced through object
+    integer function ADPModule_readConfig(this, cnfunit) result(info) ! call with 1 argument (cnfunit) when referenced through object
     implicit none
-    class(ADPModule),intent(inout)   :: this !<MB: passed implicitly 
-    integer,intent(in)              :: cnfunit !< IO input unit; provide explicitly
+    class(ADPModule),intent(inout)   :: this !< passed implicitly
+    integer,intent(in)              :: cnfunit !< IO input unit; pass explicitly
     !
     integer     :: n_steps, ierr, i, deformation, incrementation
     !
-    integer,parameter :: n_incrementation_types = 3 !MB: number of incrementation types
+    integer,parameter :: n_incrementation_types = 3 !< number of supported incrementation types
     integer,parameter :: none_incrementation_id = 0, auto_incrementation_id = 1,  fixed_incrementation_id = 2
     type(MapItem),dimension(n_incrementation_types) :: incrementation_type_names = [&
         MapItem('none', none_incrementation_id), &
         MapItem('auto', auto_incrementation_id), &
-        MapItem('fixed', fixed_incrementation_id)] !MB: 1-dim 3-element structure array where every element is a MapItem
+        MapItem('fixed', fixed_incrementation_id)]
     !
     integer,parameter :: n_deformation_types = 3
     integer,parameter :: deformation_id = 1, strainmode_id = 2, strain_id = 3
@@ -100,8 +100,8 @@ contains
     type(StrainDrivenStepConfig) :: tmp_step_config
     type(SRTensor) :: tmp_deformation_rate
         ! 
-		! Read generic configuration section (output settings, AlTay (texture, microstructure, hardening), solver settings
-        RETURN_IF(info /= criSuccess, info = this%DeformationDrivenModule%readConfig(cnfunit)) !MB: RETURN_IF defined in criMacros.fpp; call readConfig (type-bound procedure defined in DeformationDrivenModule.f90) and return if successful
+        ! Read generic configuration section (output settings, AlTay (texture, microstructure, hardening), solver settings
+        RETURN_IF(info /= criSuccess, info = this%DeformationDrivenModule%readConfig(cnfunit))
         info = criErr_IORead
         !
         ! Read the module-specific config
@@ -227,12 +227,11 @@ contains
                 RETURN_IF(info /= criSuccess, info = step%setUp())
                 ! Execute the step
                 RETURN_IF(info /= criSuccess, info = step%execute(step_output))
-                
                 ! Output the results
                 RETURN_IF(info /= criSuccess, info = this%fileOutput(iounit, output, header=(i_step==1), step_id=i_step))
-                
+                !
                 if (info /= criSuccess) return
-                
+                !
             end associate
         enddo
         !
@@ -249,11 +248,11 @@ contains
 
 
     !> Write out results to the output file
-    integer function ADPModule_fileOutput(this, iounit, data_record, header, step_id) result(info)
+    integer function ADPModule_fileOutput(this, iounit, output, header, step_id) result(info)
     implicit none
     class(ADPModule),intent(in)                 :: this
     integer,intent(in)                          :: iounit !< Output IO unit
-    type(ADPOutputData),intent(in),optional     :: data_record !< Data to be written out
+    type(ADPOutputData),intent(in),optional     :: output !< Data to be written out
     logical,intent(in),optional                 :: header !< Header to be written out
     integer,intent(in),optional                 :: step_id
     !
@@ -282,31 +281,35 @@ contains
             if (info /= criSuccess) return
         endif
         !
-        if (present(data_record)) then
-            ALLOCATED_SIZE(n_steps, data_record%steps)
+        if (present(output)) then
+            ALLOCATED_SIZE(n_steps, output%steps)
             first_step = optionalDefault(step_id, 1)
             last_step = optionalDefault(step_id, n_steps)
             RETURN_IF_WITH(first_step < 1 .or. last_step > n_steps, info = criErr_BadArgs)
             !
             info = criErr_IOWrite
+            !
             ! Write the data
             do step = first_step, last_step
-                associate (step_output => data_record%steps(step))
+                associate(step_output => output%steps(step))
+                    !
                     ALLOCATED_SIZE(n_increments, step_output%increments)
+                    !
                     do increment = 1, n_increments
-                        associate(increment_output => step_output%increments(increment))
-                            write(iounit,fmt=710,iostat=ierr) step, increment, &
-                                                              Mat33ToVec9(increment_output%L%t), &
-                                                              Mat33ToVec6(increment_output%D%t), &
-                                                              Mat33ToVec6(increment_output%S%t), &
-                                                              increment_output%vm_strain_begin, &
-                                                              increment_output%vm_strain_end, &
-                                                              increment_output%vm_stress, &
-                                                              increment_output%plastic_work_inc, &
-                                                              increment_output%taylor_factor, &
-                                                              increment_output%plastic_slip_tot
-                        end associate
-                        if (ierr /= 0) return
+                          associate(v => step_output%increments(increment))
+                              write(iounit,fmt=710,iostat=ierr) &
+                                          step, increment, &            ! 2 fields
+                                          Mat33ToVec9(v%L%t), &         ! 9 fields: velocity gradient
+                                          Mat33ToVec6(v%D%t), &         ! 6 fields: rate for deformation tensor (strain rate)
+                                          Mat33ToVec6(v%S%t), &         ! 6 fields: deviatoric stress
+                                          v%vm_strain_begin, &
+                                          v%vm_strain_end, &
+                                          v%vm_stress, &
+                                          v%plastic_work_inc, &
+                                          v%taylor_factor, &
+                                          v%plastic_slip_tot
+                          end associate
+                          if (ierr /= 0) return
                     enddo
                 end associate
             enddo

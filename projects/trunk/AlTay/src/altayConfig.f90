@@ -91,7 +91,7 @@ implicit none
             !> Selection of relaxations
             logical                                   :: rlx1 = .true., rlx2 = .true.
             
-            !> Deformation gradient tensor to be imposed.
+            !> Deformation gradient tensor to be imposed. (MB: this is rather a velocity gradient.)
             double precision,dimension(3,3)           :: dgf  = 0.D0 
             
       end type

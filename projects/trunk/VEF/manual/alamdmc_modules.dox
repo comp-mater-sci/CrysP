@@ -34,7 +34,7 @@ Supported values of \conffield{orientation_type} are:
   Also, the sample `y`-axis is aligned with the material `2`-direction (conventional transverse direction TD for sheet metal).
   Consequently, the sample `z`-axis is aligned with the material `1`-direction (conventional rolling direction RD for sheet metal).
   - `arbitrary` <BR> to request a single test with generic orientation of the sample reference, as
-    -# \confdef{arbitrary_orientation,euler} specifies the orientation of the sample frame in format specified in \ref euler_option.
+    -# \confdef{arbitrary_orientation,euler} specifies the orientation of the sample frame relative to the material frame in the format specified in \ref euler_option.
 -# \conffield{incrementation_type} specifies how the deformation increments will be calculated. 
 All values listed in \ref incrementation_option are permitted.
 -# \conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) to be reached in the virtual test.
@@ -584,7 +584,8 @@ Both these outputfiles make column-wise reporting of:
 The Arbirtary Deformation Path prescribes an arbitrary generic deformation on a virtual 
 sample. Several subsequent deformation _steps_ may be imposed; each step imposes a certain 
 (constant) deformation. The module can also be used to simply calculate stress response of 
-the virtual sample to a superimposed deformation.
+the virtual sample to a superimposed deformation. All inputs and outputs are reported in the
+global material frame.
 
 \note This module implements a deformation-driven crystal plasticity model. The only 
 available option in \ref config_search_procedure is to use the default settings.

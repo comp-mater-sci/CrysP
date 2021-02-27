@@ -81,23 +81,23 @@ implicit none
     !> Outputs collected per increment
     type :: IncrementOutput
         
-        type(SRTensor)  :: L
+        type(SRTensor)  :: L !< Velocity gradient
         
-        type(SRTensor)  :: D
+        type(SRTensor)  :: D !< Rate of deformation tensor (symmetric part of L)
         
-        type(SRTensor)  :: S
+        type(SRTensor)  :: S !< Deviatoric stress tensor
         
-        double precision :: vm_strain_begin = 0.D0
+        double precision :: vm_strain_begin = 0.D0 !< Von Mises strain at the beginning of the increment
         
-        double precision :: vm_strain_end = 0.D0
+        double precision :: vm_strain_end = 0.D0 !< Von Mises strain at the end of the increment
         
-        double precision :: vm_stress = 0.D0
+        double precision :: vm_stress = 0.D0 !< Von Mises equivalent stress
         
         double precision :: plastic_work_inc = 0.D0 !< Plastic work during the increment, i.e. dotW = (D : S)
         
         double precision :: taylor_factor = 0.D0
         
-        double precision :: plastic_slip_tot = 0.D0
+        double precision :: plastic_slip_tot = 0.D0 !< total accumulated plastic slip
         
     end type
 

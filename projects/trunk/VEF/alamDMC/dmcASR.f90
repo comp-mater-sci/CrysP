@@ -136,10 +136,10 @@ contains
     class(ASRModule),intent(inout)          :: this
     integer,intent(out)                     :: info
     !
-    ! Quantities in the global (aka. material) reference frame
-    type(SRTensor)                  :: sigma, S,  Pressure
+    ! Quantities in the global (aka. material = texture) reference frame
+    type(SRTensor)                  :: sigma, S,  Pressure  !< total stress, deviatoric stress, hydrostatic stress
     ! Quantities in rotated (aka. sample) reference frame
-    type(SRTensor)                  :: sigma_rot
+!    type(SRTensor)                  :: sigma_rot
     type(ASROutput)                 :: output
     type(IncrementationControl)     :: icv
     double precision,dimension(rot_matrix_dim,rot_matrix_dim)   :: Mrot
@@ -156,7 +156,7 @@ contains
         !
         nsteps = size(this%steps)
         !
-        ! Calculate rotation matrix
+        ! Calculate rotation matrix (active rotation from material (=texture) to sample frame)
         Mrot = rotmat(deg2rad(this%rotframe))
         !
         do  istep = 1, nsteps
@@ -174,7 +174,7 @@ contains
                 S%t = sigma%t - Pressure%t
                 !
                 ! Rotate from the original reference frame to the sample reference frame
-                sigma_rot = rotateSRTensorTo(sigma, Mrot)
+!                sigma_rot = rotateSRTensorTo(sigma, Mrot)
                 !
                 ! Print the input data:
                 if (doLogging(criLogDebug,this%output%verbosity)) then

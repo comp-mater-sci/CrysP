@@ -446,6 +446,7 @@ contains
       end function
       
       !> Rotates the second-rank tensor S to the reference frame given by rotation R.
+      !> This corresponds to a coordinate transformation of S into the new frame obtained by rotation R.
       !>
       !> The result is R^T S R, which is equivalent to (R^T S) R
       pure function rotateSRTensorTo_matrix(S,R) result(Srot)
@@ -459,6 +460,7 @@ contains
       end function
       
       !> Rotates the second-rank tensor S back from the reference frame given by rotation R.
+      !> This corresponds to a coordinate transformation of S into the new frame obtained by rotation R^T.
       !>
       !> The result is R S R^T, which is equivalent to (R S) R^T
       pure function rotateSRTensorFrom_matrix(S,R) result(Srot)
@@ -472,6 +474,7 @@ contains
       end function
       
       !> Rotates the second-rank tensor S to the reference frame given by rotation R.
+      !> This corresponds to a coordinate transformation of S into the new frame obtained by rotation R.
       !>
       !> The result is R^T S R, which is equivalent to (R^T S) R
       pure function rotateSRTensorTo_SRTensor(S,R) result(Srot)
@@ -485,6 +488,7 @@ contains
       end function
       
       !> Rotates the second-rank tensor S back from the reference frame given by rotation R.
+      !> This corresponds to a coordinate transformation of S into the new frame obtained by rotation R^T.
       !>
       !> The result is R S R^T, which is equivalent to (R S) R^T
       pure function rotateSRTensorFrom_SRTensor(S,R) result(Srot)
