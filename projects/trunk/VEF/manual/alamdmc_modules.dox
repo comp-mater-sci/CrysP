@@ -284,7 +284,7 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outdef{S_xz} Similar to \ref S_xx 
 	</li>
 	
-	<li> \outdef{A_11} A component of the strain mode tensor \f$ \mathbf{A} \f$ in 
+	<li> \outdef{A_11,asr_A_11} A component of the strain mode tensor \f$ \mathbf{A} \f$ in 
 	the material (`123`) reference frame
 	
 	It is derived from the strain rate tensor \f$ \mathbf{D} \f$ as 
@@ -292,15 +292,15 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 		\mathbf{A}=\frac{\mathbf{D}}{\| \mathbf{D} \|} 
 	\f]
 	</li>
-	<li> \outdef{A_22} Similar to \ref A_11 
+	<li> \outdef{A_22} Similar to \ref asr_A_11 "A_11"
 	</li>
-	<li> \outdef{A_33} Similar to \ref A_11 
+	<li> \outdef{A_33} Similar to \ref asr_A_11 "A_11"
 	</li>
-	<li> \outdef{A_12} Similar to \ref A_11 
+	<li> \outdef{A_12} Similar to \ref asr_A_11 "A_11"
 	</li>
-	<li> \outdef{A_23} Similar to \ref A_11 
+	<li> \outdef{A_23} Similar to \ref asr_A_11 "A_11"
 	</li>
-	<li> \outdef{A_13} Similar to \ref A_11 
+	<li> \outdef{A_13} Similar to \ref asr_A_11 "A_11"
 	</li>
 
 	<li> \outdef{A_xx} A component of the strain mode tensor \f$ \mathbf{A} \f$ in 
@@ -581,7 +581,7 @@ Both these outputfiles make column-wise reporting of:
 
 \section module_adp Arbirtary Deformation Path (keyword: ADP)
 
-The Arbirtary Deformation Path prescribes an arbitrary generic deformation on a virtual 
+The Arbitrary Deformation Path prescribes an arbitrary generic deformation on a virtual 
 sample. Several subsequent deformation _steps_ may be imposed; each step imposes a certain 
 (constant) deformation. The module can also be used to simply calculate stress response of 
 the virtual sample to a superimposed deformation. All inputs and outputs are reported in the
@@ -679,57 +679,58 @@ Please see the configuration file `sid1687f_adp.cfg` from `examples` directory:
 The module-specific outputfile `<output_prefix>.adp` makes column-wise reporting of:
 -# \outdef{step,step_ADP} The deformation step sequence number
 
+
 -# \outdef{increment,increment_ADP} The increment sequence number of the current 
    deformation step
 
--# \outdef{L_11} A component of the velocity gradient tensor \f$ \mathbf{L} \f$ imposed 
+
+-# \outdef{L_11} The 11 component of the velocity gradient tensor \f$ \mathbf{L} \f$ imposed 
    during the increment, given in the material (123) reference frame.
-
 -# \outdef{L_22} similar to \ref L_11
-
 -# \outdef{L_33} similar to \ref L_11
-
 -# \outdef{L_12} similar to \ref L_11
-
 -# \outdef{L_23} similar to \ref L_11
-
 -# \outdef{L_31} similar to \ref L_11
-
 -# \outdef{L_21} similar to \ref L_11
-
 -# \outdef{L_32} similar to \ref L_11
-
 -# \outdef{L_13} similar to \ref L_11
 
--# \outdef{D_11,adp_D_11} Plastic strain rate component calculated from \f$ \mathbf{L} \f$
-
+-# \outdef{D_11,adp_D_11} The 11 component of the plastic strain rate, given in the material 
+   (123) reference frame. \f$ \mathbf{D} \f$ corresponds to the symmetric part of \f$ \mathbf{L} \f$.
 -# \outdef{D_22} similar to \ref adp_D_11 "D_11"
-
 -# \outdef{D_33} similar to \ref adp_D_11 "D_11"
-
 -# \outdef{D_12} similar to \ref adp_D_11 "D_11"
-
 -# \outdef{D_23} similar to \ref adp_D_11 "D_11"
-
 -# \outdef{D_13} similar to \ref adp_D_11 "D_11"
+
+-# \outdef{O_12,adp_O_12} The 12 component of the spin rate, given in the material 
+   (123) reference frame. \f$ \mathbf{O} \f$ corresponds to the 
+   antisymmetric part of \f$ \mathbf{L} \f$.
+-# \outdef{O_23} similar to \ref adp_O_12 "O_12"
+-# \outdef{O_13} similar to \ref adp_O_12 "O_12"
+
+-# \outdef{A_11,adp_A_11} The 11 component of the strain mode tensor \f$ \mathbf{A} \f$ in 
+   the material (123) reference frame. See \ref asr_A_11 "A".
+-# \outdef{A_22} Similar to \ref adp_A_11 "A_11"
+-# \outdef{A_33} Similar to \ref adp_A_11 "A_11"
+-# \outdef{A_12} Similar to \ref adp_A_11 "A_11"
+-# \outdef{A_23} Similar to \ref adp_A_11 "A_11"
+-# \outdef{A_13} Similar to \ref adp_A_11 "A_11"
 
 -# \outdef{S_11,adp_S_11} The 11 component of the deviatoric stress, given in the material 
    (123) reference frame. The deviatoric stress \f$ \mathbf{S} \f$ corresponds to the 
    imposed \f$ \mathbf{L} \f$.
-
 -# \outdef{S_22,adp_S_22} similar to \ref adp_S_11 "S_11"
-
 -# \outdef{S_33,adp_S_33} similar to \ref adp_S_11 "S_11"
-
 -# \outdef{S_12,adp_S_12} similar to \ref adp_S_11 "S_11"
-
 -# \outdef{S_23,adp_S_23} similar to \ref adp_S_11 "S_11"
-
 -# \outdef{S_13,adp_S_13} similar to \ref adp_S_11 "S_11"
 
 -# \outdef{eps_vM_begin} Von Mises strain at the beginning of the increment
 
 -# \outdef{eps_vM_end} Von Mises strain at the end of the increment
+
+-# \outdef{D_vM} Von Mises equivalent strain rate
 
 -# \outdef{S_vM} Von Mises equivalent stress
 

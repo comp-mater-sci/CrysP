@@ -58,7 +58,8 @@ module criMathUtils
       
       !> Array dimension for symmetric 3D second-rank tensors expressed in Voigt
       !> notation.
-      integer,parameter                   :: sr_symm_voigt_dim = 6, &
+      integer,parameter                   :: sr_asymm_voigt_dim = 3, &
+                                             sr_symm_voigt_dim = 6, &
                                              sr_voigt_dim = 9
 
       !> Matrix form of the unit second rank tensor
@@ -309,8 +310,6 @@ contains
       !
       end function
 
-
-
       !> Calculates an angle between two vectors
       !>
       !> \returns Value zero if: 
@@ -330,7 +329,6 @@ contains
             vec_angle = acos(cosine)
       !
       end function
-
 
       !> Calculates a cosine of angle between two vectors. The function guarantees that 
       !> the result is within range [-1:1]
@@ -361,7 +359,6 @@ contains
             endif
       !
       end function
-
       
       !> Rotation matrix from three Euler angles in Bunge convention (phi1,PHI,phi2).
       !>
@@ -517,9 +514,46 @@ contains
             fn = sqrt(fn)
       !
       end function
-      
-      
-      !> The function converts Voigt-style vector vec into symmetrical rank-two tensors.
+            
+      !> The function converts the antisymmetrical rank-two tensors mat into Voigt-style vector representation.
+      !> Ordering of the tensor terms in the vector follows the convention used in Abaqus: 
+      !> 12, 23, 13
+      !>
+      !> There is a reverse conversion available. \sa Vec3ToMat33
+      pure function Mat33ToVec3(mat) result(vec)
+      implicit none
+      double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
+      double precision,dimension(sr_asymm_voigt_dim)                      :: vec
+      !
+            vec(1) = mat(1,2)
+            vec(2) = mat(2,3)
+            vec(3) = mat(1,3)
+      !
+      end function
+
+      !> The function converts Voigt-style vector vec into antisymmetrical rank-two tensor.
+      !> Ordering of the tensor terms in the vector follows the convention used in Abaqus: 
+      !> 12, 23, 13. 
+      !>
+      !> There is a reverse conversion available. \sa Mat33ToVec3
+      pure function Vec3ToMat33(vec) result(mat)
+      implicit none
+      double precision,dimension(sr_asymm_voigt_dim),intent(in)  :: vec
+      double precision,dimension(sr_tensor_dim,sr_tensor_dim)    :: mat
+      !
+            mat(1,1) = 0.D0
+            mat(2,2) = 0.D0
+            mat(3,3) = 0.D0
+            mat(1,2) = vec(1)
+            mat(2,3) = vec(2)
+            mat(1,3) = vec(3)
+            mat(2,1) = mat(1,2)
+            mat(3,1) = mat(1,3)
+            mat(3,2) = mat(2,3)
+      !
+      end function
+
+      !> The function converts Voigt-style vector vec into symmetrical rank-two tensor.
       !> Ordering of the tensor terms in the vector follows the convention used in Abaqus: 
       !> 11, 22, 33, 12, 23, 13. 
       !>
@@ -541,7 +575,6 @@ contains
       !
       end function
 
-      
       !> The function converts the symmetrical rank-two tensors mat into Voigt-style vector representation.
       !> Ordering of the tensor terms in the vector follows the convention used in Abaqus: 
       !> 11, 22, 33, 12, 23, 13
@@ -560,7 +593,6 @@ contains
             vec(6) = mat(1,3)
       !
       end function
-
 
       !> The function converts Voigt-style vector vec into rank-two tensor.
       !> Ordering of the tensor terms in the vector follows the convention used in Abaqus: 
@@ -584,7 +616,6 @@ contains
       !
       end function
 
-
       !> The function converts the rank-two tensor mat into Voigt-style vector representation.
       !> Ordering of the tensor terms in the vector follows the convention used in Abaqus: 
       !> 11, 22, 33, 12, 23, 31, 21, 32, 13.
@@ -607,7 +638,6 @@ contains
       !
       end function
 
-
       !> Calculates trace of the square n x n matrix X
       pure double precision function trace_matrix(X) result(res)
       implicit none
@@ -620,7 +650,6 @@ contains
             enddo
       !
       end function
-
     
       !> Calculates trace of second-rank tensor X
       pure double precision function trace_SRTensor(X) result(res)
@@ -631,7 +660,7 @@ contains
       !
       end function
 
-    !
+      !
       ! Some operations on double_pair
       !
       
@@ -671,7 +700,6 @@ contains
             endif
       !
       end subroutine
-
 
       !> Calculate the real roots of quadratic polynomial given in form
       !> a^2 x + b x + c = 0

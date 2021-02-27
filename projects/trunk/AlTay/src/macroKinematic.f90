@@ -39,7 +39,7 @@ end type DeformationState
 
 contains   
 
-      !Construct the instance 'this' of type DeformationRate
+      !Calculate strain rate, spin etc. from velocity gradient
       subroutine Set_DeformationRate(VelGrad,this)
       double precision, dimension(3,3), intent(in)    :: VelGrad
       type(DeformationRate)           , intent(out)   :: this

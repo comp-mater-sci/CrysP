@@ -258,19 +258,17 @@ contains
     !
     integer :: step, increment, ierr, n_steps, first_step, last_step, n_increments 
     !      
-    integer,parameter :: ncolumn_labels = 29, column_width = 18, short_column_width = 9
+    integer,parameter :: ncolumn_labels = 2+9+3*6+3+7, column_width = 18, short_column_width = 9
     character(len=column_width),dimension(ncolumn_labels) :: column_names = [character(len=column_width) :: &
         'step', 'increment', & ! 2 fields
-        ! 'eps_vM', 'Pnorm','eps_xx', 'sigma_xx', 'S_xx','W','dotW', 'M-factor'&
-        'L_11','L_22','L_33','L_12','L_23','L_31', 'L_21', 'L_32', 'L_13',  & ! 9 fields  (I)
+        'L_11','L_22','L_33','L_12','L_23','L_31','L_21','L_32','L_13',  & ! 9 fields  (I)
         'D_11','D_22','D_33','D_12','D_23','D_13', & ! 6 fields  (I)
+        'O_12','O_23','O_13', & ! 3 fields  (I)
+        'A_11','A_22','A_33','A_12','A_23','A_13', & ! 6 fields  (I)
         'S_11','S_22','S_33','S_12','S_23','S_13', & ! 6 fields  (I)
-        'eps_vM_begin', 'eps_vM_end', 'S_vM', 'dW', 'M-factor', 'gamma' & ! 6 fields
+        'eps_vM_begin', 'eps_vM_end', 'D_vM', 'S_vM', 'dW', 'M-factor', 'gamma' & ! 7 fields
         ]
-    ! integer,dimension(ncolumn_labels),parameter :: column_widths = [ &
-    !    short_column_width, short_column_width, & ! step, increment
-    !    (column_width, i=1,ncolumn_labels-2) ]
-    !
+        !
         info = criErr_BadArgs
         if (optionalDefault(header,.false.)) then
             ! Write column numbers
@@ -301,9 +299,12 @@ contains
                                           step, increment, &            ! 2 fields
                                           Mat33ToVec9(v%L%t), &         ! 9 fields: velocity gradient
                                           Mat33ToVec6(v%D%t), &         ! 6 fields: rate for deformation tensor (strain rate)
+                                          Mat33ToVec3(v%O%t), &         ! 3 fields: spin tensor
+                                          Mat33ToVec6(v%A%t), &         ! 6 fields: strain mode
                                           Mat33ToVec6(v%S%t), &         ! 6 fields: deviatoric stress
                                           v%vm_strain_begin, &
                                           v%vm_strain_end, &
+                                          v%vMeqStrainRate, &
                                           v%vm_stress, &
                                           v%plastic_work_inc, &
                                           v%taylor_factor, &
@@ -318,7 +319,7 @@ contains
 
         !
         ! Formats for the output file
-        710 format(1X, 2(I18,1X),27(E18.9,1X))
+        710 format(1X, 2(I18,1X),39(E18.9,1X))
     !
     end function
     

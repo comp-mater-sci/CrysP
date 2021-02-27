@@ -83,7 +83,11 @@ implicit none
         
         type(SRTensor)  :: L !< Velocity gradient
         
-        type(SRTensor)  :: D !< Rate of deformation tensor (symmetric part of L)
+        type(SRTensor)  :: D !< Rate of deformation tensor (symmetric part of L) (strain rate)
+        
+        type(SRTensor)  :: O !< Spin tensor (antisymmetric part of L)
+        
+        type(SRTensor)  :: A !< Strain mode
         
         type(SRTensor)  :: S !< Deviatoric stress tensor
         
@@ -98,6 +102,8 @@ implicit none
         double precision :: taylor_factor = 0.D0
         
         double precision :: plastic_slip_tot = 0.D0 !< total accumulated plastic slip
+        
+        double precision :: vMeqStrainRate = 0.D0 !< von Mises equivalent strain rate (= sqrt(2/3)*||D||)
         
     end type
 
@@ -365,9 +371,11 @@ contains
                        altay_output => astate%simulCalls(i)%output)   ! HGH: originally altay_output => altay_state%output
                 !
                 increment_output%L%t = altay_state%input%dgf
-                ! Let libaltay calculate the strain rates etc.
+                ! Let libaltay calculate the strain rates etc. from velocity gradient
                 call Set_DeformationRate(increment_output%L%t, deformation_rate)
                 increment_output%D%t = deformation_rate%StrainRate
+                increment_output%O%t = deformation_rate%Spin
+                increment_output%A%t = deformation_rate%StrainMode
                 increment_output%S%t = altay_output%stress_tensor
                 increment_output%vm_strain_begin = altay_output%effective_macro_strain_tot
                 increment_output%vm_strain_end = altay_output%effective_macro_strain_tot_end
@@ -377,6 +385,7 @@ contains
                 !
                 increment_output%taylor_factor = altay_output%taylor_factor
                 increment_output%plastic_slip_tot = altay_output%homogenised_slip_tot
+                increment_output%vMeqStrainRate = deformation_rate%vMeqStrainRate
 
             end associate
         enddo
