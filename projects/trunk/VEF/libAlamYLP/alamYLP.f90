@@ -58,7 +58,7 @@ implicit none
       use nllsTR
       use alamEval
       implicit none
-      double precision,intent(in)   :: vS(alamEval_vSD_dim)      !< Stress vector
+      double precision,intent(in)   :: vS(alamEval_vSD_dim)      !< Imposed stress vector
       double precision,intent(inout):: vA(alamEval_vSD_dim)      !< Strain rate mode on yield locus
       double precision,intent(out)  :: vSonA(alamEval_vSD_dim)   !< Stress vector corresponding to A
       double precision,intent(out)  :: R          !< Square norm of residual error

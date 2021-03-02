@@ -156,7 +156,8 @@ contains
     ! - "Tensile sample coordinate system" have suffix _t
     ! - "Material coordinate system" have no suffix.
     ! 
-    type(SRTensor)                            :: D_t, S_t, sigma, sigma_t, SonA, D, Dresume_t, SmIdent
+    type(SRTensor)                            :: D_t, S_t, sigma, sigma_t, SonA, D, Dresume_t, &
+                                                 SmIdent    !< obtained stress mode
     double precision,dimension(3,3)           :: Mrot = 0.0
     type(YLPResult)                           :: ylp_result
     !
@@ -238,7 +239,7 @@ contains
             if (is_error(info)) exit
             !
             SonA%t = vec5D2tens(ylp_result%vSonA)
-            SmIdent%t = vec5D2tens(ylp_result%vSonAn)
+            SmIdent%t = vec5D2tens(ylp_result%vSonAn) ! stress mode for found strain mode
             
             if (doLogging(criLogDebug,this%output%verbosity)) then
                 info = printYLPResult(display_unit, ylp_result)

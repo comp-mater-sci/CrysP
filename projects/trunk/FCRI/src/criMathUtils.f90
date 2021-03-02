@@ -547,9 +547,9 @@ contains
             mat(1,2) = vec(1)
             mat(2,3) = vec(2)
             mat(1,3) = vec(3)
-            mat(2,1) = mat(1,2)
-            mat(3,1) = mat(1,3)
-            mat(3,2) = mat(2,3)
+            mat(2,1) = -mat(1,2)
+            mat(3,1) = -mat(1,3)
+            mat(3,2) = -mat(2,3)
       !
       end function
 

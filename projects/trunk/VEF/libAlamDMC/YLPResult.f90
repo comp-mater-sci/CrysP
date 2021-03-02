@@ -22,14 +22,14 @@ implicit none
 
     !> Datatype to store results of iterative search
     type :: YLPResult
-        double precision,dimension(alamEval_vSD_dim) :: vA = 0.D0 
-        double precision,dimension(alamEval_vSD_dim) :: vS = 0.D0 
-        double precision,dimension(alamEval_vSD_dim) :: vSonA = 0.D0 
-        double precision,dimension(alamEval_vSD_dim) :: vSonAn = 0.D0 
-        double precision :: R = 0.D0
-        double precision :: dotWonA = 0.D0
-        double precision :: scal_s = 0.D0
-        double precision :: vS_length = 0.D0
+        double precision,dimension(alamEval_vSD_dim) :: vA = 0.D0       !< Strain rate mode on yield locus
+        double precision,dimension(alamEval_vSD_dim) :: vS = 0.D0       !< Imposed stress
+        double precision,dimension(alamEval_vSD_dim) :: vSonA = 0.D0    !< Stress corresponding to A
+        double precision,dimension(alamEval_vSD_dim) :: vSonAn = 0.D0   !< Stress mode corresponding to A
+        double precision :: R = 0.D0                  !< Norm of stress residual
+        double precision :: dotWonA = 0.D0            !< Work rate corresponding to vA and vSonA
+        double precision :: scal_s = 0.D0             !< norm2(vSonA) / vS_length
+        double precision :: vS_length = 0.D0          !< norm2(vS)
     end type
 
 

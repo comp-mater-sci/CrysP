@@ -166,9 +166,9 @@ contains
     integer function StressDrivenModule_findSolution(this,sigma, D, ylp_result, vM_guess, is_acceptable, pretry) result(info)
     implicit none
     class(StressDrivenModule),intent(in)   :: this
-    type(SRTensor),intent(in)       :: sigma !< Input stress
+    type(SRTensor),intent(in)       :: sigma !< Total input stress tensor
     type(SRTEnsor),intent(inout)    :: D     !< Plastic strain rate
-    type(YLPResult),intent(out)     :: ylp_result !< Results of the interative search
+    type(YLPResult),intent(out)     :: ylp_result !< Results of the iterative search
     !> Flag: use von Mises inital guess (default: .true.). If false, D will be used as the
     !> starting point for the iterative search.
     logical,intent(in),optional     :: vM_guess
@@ -176,7 +176,7 @@ contains
     logical,intent(in),optional     :: pretry
     !
     double precision :: vA_norm
-    double precision,dimension(alamEval_vSD_dim) :: vS
+    double precision,dimension(alamEval_vSD_dim) :: vS            !< Input stress in 5D deviatoric stress space
     logical :: use_vM_guess, use_pretry, is_pretry_acceptable
     type(NormalizedV5DCompCached),target :: obj_func
     !
