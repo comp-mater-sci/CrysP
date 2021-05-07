@@ -187,7 +187,7 @@
             
       integer, SAVE, PUBLIC :: iKOST=0
       !Remaining declarations all PRIVATE:
-      TYPE(PAR), SAVE :: P !unit system: MPa; nm(nanometer)
+      TYPE(PAR), SAVE :: P !unit system: MPa; micrometer
       logical, SAVE :: InitOK=.FALSE.
       integer, SAVE :: Nss !Number of slip systems. Supported values: 
                            !     Nss=12: (110)[111] - 1 family
@@ -391,14 +391,14 @@
           )then
             !Save the parameters in P (private to this module)          
             P=Ptry
-            !change of units if different in Ptry from P (units of P are: MPa; nm(nanometer))
-            P%b    = P%b    * TENpow6 ![m] -> [nm]
-            P%R    = P%R    * TENpow6 ![m] -> [nm]
-            P%Rwd  = P%Rwd  * TENpow6 ![m] -> [nm]
-            P%Rncg = P%Rncg * TENpow6 ![m] -> [nm]            
-            P%Rwp  = P%Rwp  * TENpow6 ![m] -> [nm]
-            P%Rrev = P%Rrev * TENpow6 ![m] -> [nm]
-            P%R2   = P%R2   * TENpow6 ![m] -> [nm]            
+            !change of units if different in Ptry from P (units of P are: MPa; micrometer)
+            P%b    = P%b    * TENpow6 ![m] -> [micrometer]
+            P%R    = P%R    * TENpow6 ![m] -> [micrometer]
+            P%Rwd  = P%Rwd  * TENpow6 ![m] -> [micrometer]
+            P%Rncg = P%Rncg * TENpow6 ![m] -> [micrometer]            
+            P%Rwp  = P%Rwp  * TENpow6 ![m] -> [micrometer]
+            P%Rrev = P%Rrev * TENpow6 ![m] -> [micrometer]
+            P%R2   = P%R2   * TENpow6 ![m] -> [micrometer]            
           else
             iError = KS_ErrOutOfRange
             return 
@@ -1119,9 +1119,9 @@
             return
       end if
       
-      SDV%rho_CBs     = SV%RHOcb                        * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
-      SDV%rho_CBBs    = sum(    SV%CBB(:)%RHOwd ) /6.D0 * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
-      SDV%rho_polCBBs = sum(abs(SV%CBB(:)%RHOwp)) /6.D0 * TENpow6**2 !unit conversion nm^(-2) -> m^(-2)
+      SDV%rho_CBs     = SV%RHOcb                        * TENpow6**2 !unit conversion micrometer^(-2) -> m^(-2)
+      SDV%rho_CBBs    = sum(    SV%CBB(:)%RHOwd ) /6.D0 * TENpow6**2 !unit conversion micrometer^(-2) -> m^(-2)
+      SDV%rho_polCBBs = sum(abs(SV%CBB(:)%RHOwp)) /6.D0 * TENpow6**2 !unit conversion micrometer^(-2) -> m^(-2)
       SDV%rho_avg     = (1.D0-P%f)*SDV%rho_CBs + P%f*(SDV%rho_CBBs+SDV%rho_PolCBBs)
       !Note: Number of CBBs is 6 (currently hard-coded)
          
