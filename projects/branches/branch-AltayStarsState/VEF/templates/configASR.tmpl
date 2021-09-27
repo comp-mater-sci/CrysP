@@ -1,0 +1,20 @@
+#extends configGeneric
+#block moduleConfig
+#
+# Module ASR section
+# ==================
+#filter FilterChain
+${asr.reference_frame, plain=True} # Euler angles defining sample reference frame
+$len($asr.steps) # Number of steps
+#for $istep,$step in $enumerate($asr.steps, 1)
+# Step $istep
+${step.stress_mode, plain=True} # Stress mode in Voigt notation
+$step.update_state # Flag: incrementally update state variables
+#if $step.update_state
+$step.scaling.type # Keyword: incrementation type
+$step.scaling.step_magnitude # Magnitude of the step
+$step.scaling.increment_magnitude # Magnitude of the increment
+#end if
+#end for
+#end filter
+#end block moduleConfig

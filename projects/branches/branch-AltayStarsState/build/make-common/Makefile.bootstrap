@@ -1,0 +1,6 @@
+# $Id: Makefile.bootstrap 2024 2014-12-09 09:16:17Z jgawad $
+#
+#
+
+include ../build/cmake-common/bootstrap.makefile
+

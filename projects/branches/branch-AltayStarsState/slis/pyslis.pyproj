@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{d96d2396-0f6f-41d0-9362-f15c6b947a85}</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>python\scripts\check_tokens.py</StartupFile>
+    <SearchPath>python</SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
+    <Environment>SLIS_ROOT=\temp\VEF_tokens
+</Environment>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="python\scripts\check_tokens.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="python\pyslis\config.py" />
+    <Compile Include="python\pyslis\detail.py" />
+    <Compile Include="python\pyslis\dummy.py" />
+    <Compile Include="python\pyslis\remote.py" />
+    <Compile Include="python\pyslis\__init__.py" />
+    <Compile Include="python\tokenstorage\makedb.py" />
+    <Compile Include="python\tokenstorage\queries.py" />
+    <Compile Include="python\tokenstorage\tables.py" />
+    <Compile Include="python\tokenstorage\__init__.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="python\" />
+    <Folder Include="python\scripts\" />
+    <Folder Include="python\pyslis\" />
+    <Folder Include="python\tokenstorage\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+</Project>
