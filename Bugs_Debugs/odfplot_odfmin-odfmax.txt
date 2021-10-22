@@ -1,4 +1,0 @@
-Problem description:
-* using odfplot with the options --odfmin and --odfmax gives the following error:
-odfplot: error: Conflicting options: --levelset and any of --odfmin, --odfmax, --nlevels
-* this happens when both options are used together or alone
