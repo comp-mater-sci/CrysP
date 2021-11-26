@@ -2,7 +2,6 @@
 #
 #
 #HGH:
-CMAKE_FLAGS='-DCMAKE_CXX_COMPILER=/apps/leuven/ivybridge/2018a/software/icc/2018.1.163-GCC-6.4.0-2.28/compilers_and_libraries_2018.1.163/linux/bin/intel64/icpc'
 
 CMAKELISTS=CMakeLists.txt
 
