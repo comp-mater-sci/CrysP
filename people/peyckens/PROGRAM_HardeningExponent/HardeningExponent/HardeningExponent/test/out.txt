@@ -1,2 +1,0 @@
-ND_mat2_Al_Cube.narrow.10.UDS                                      0.22217129
-inplane_45_mat1_Al_Brass.narrow.10.UDS                             0.22177610

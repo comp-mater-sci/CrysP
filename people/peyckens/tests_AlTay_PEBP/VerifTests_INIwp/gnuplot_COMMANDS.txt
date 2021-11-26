@@ -1,1 +1,0 @@
-plot "DC06F250SM0.MSS" using ($2):(abs($11)) with lines, "DC06F250SM0fix.MSS" using ($2):(abs($11)) every 5
