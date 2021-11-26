@@ -1,7 +1,0 @@
-    0                          iall (=1: plot complete ODF; else: use limits
-0.0       360.0         limits for phi1
-45.0      45.0          limits for phi2
-0.0       90.0          limits for PHI
-    0    3    0 0.85           isnij/niv/ktp/scale
-1.6       2.6       3.8        5.5      8.0
-11.0      16.0       22.0      32.0       44.0

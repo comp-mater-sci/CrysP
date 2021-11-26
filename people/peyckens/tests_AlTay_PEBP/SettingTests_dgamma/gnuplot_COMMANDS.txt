@@ -1,3 +1,0 @@
-plot "test_PEBP_twoshear_ALAMEL_ini/DC06F250SM0_ini.MSS" using ($2):(abs($11)) with lines title'gam_inc=0.002', "test_PEBP_twoshear_ALAMEL_x2p5/DC06F250SM0_x2p5.MSS" using ($2):(abs($11)) title'gam_inc=0.005',                                    "test_PEBP_twoshear_ALAMEL_x5/DC06F250SM0_x5.MSS" using ($2):(abs($11)) title'gam_inc=0.010',                  "test_PEBP_twoshear_ALAMEL_x10/DC06F250SM0_x10.MSS" using ($2):(abs($11)) title'gam_inc=0.020',       "test_PEBP_twoshear_ALAMEL_x20/DC06F250SM0_x20.MSS" using ($2):(abs($11)) title'gam_inc=0.040'
-
-

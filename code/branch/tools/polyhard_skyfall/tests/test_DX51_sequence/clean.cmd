@@ -1,1 +1,0 @@
-rm texinp* texout* main.ctl

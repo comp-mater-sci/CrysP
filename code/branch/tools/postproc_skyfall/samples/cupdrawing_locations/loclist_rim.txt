@@ -1,5 +1,0 @@
-9,12,1236,rim 0 to RD
-10,92,1452,rim 25 to RD
-12,36,1668,rim 45 to RD
-13,80,1848,rim 66 to RD
-15,24,2064,rim 90 to RD
