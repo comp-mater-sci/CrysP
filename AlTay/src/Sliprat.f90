@@ -6,27 +6,27 @@
       use altayMiscutils, only: terminate, stopcode_runtimeerror
 
       contains
-      
+
       Subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn,MacroDefRate)
       use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
-#endif      
+#endif
       use altayMacroKinematic
       IMPLICIT double precision (A-H,O-Z)
-      type(DeformationRate),intent(in) :: MacroDefRate      
+      type(DeformationRate),intent(in) :: MacroDefRate
 !     September 2000
 !     To find the slip rates assuming that
 !     - the stress, strain rate and the active slip systems are known,
 !       previously obtained by PANCAK2;
 !     - (under the above resrtrictions) the sum of the squares of the slip
-!       rates must be minimal. 
+!       rates must be minimal.
 !
 !     Modified in Aug 2010
 !
       COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),           &
-       TLXX,TAURLP(8) 
+       TLXX,TAURLP(8)
       dimension SGNN(IDIMXX)
       dimension SLPR(8),IND(8),XX(IDIMXX),ISTOR(0:8,48),SLSTOR(0:8,48)
       data NSTOR/48/
@@ -39,7 +39,7 @@
       NOPL=0
 !     check whether solution is totally zero
       x=0.0
-      do i=1,NLP 
+      do i=1,NLP
           x=x+abs(SLIPLP(i))
           j=INDACT(i)
           sgnn(j)=1.D0
@@ -83,7 +83,7 @@
              call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
 #ifdef ALTAY_SUBROUTINE
              RCM_GUARD
-#endif 
+#endif
           endif
 !          write (IMP,110) (IND(i),i=1,N1)
  110   format (10i5)
@@ -141,7 +141,7 @@
 #ifdef ALTAY_SUBROUTINE
                   RCM_GUARD
 #endif
-              endif 
+              endif
 !              write (IMP,110) (IND(i),i=1,N3)
            enddo
          enddo
@@ -205,7 +205,7 @@
                      endif
       enddo
        if (X.lt.0.0d0) then
-       if (NLIST.eq.1) then 
+       if (NLIST.eq.1) then
        write (IMP,102) IOR,k,X
        end if
        end if
@@ -318,7 +318,7 @@
       ineg=0
       do i=1,NN
          is=IND(i)
-         Y=SLPR(i) 
+         Y=SLPR(i)
          sumsq=sumsq+Y**2
          if (x.gt.Y) then
                        x=Y
@@ -339,7 +339,7 @@
       use altayIOConfig
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
-#endif      
+#endif
       IMPLICIT double precision (A-H,O-Z)
       dimension SLPR(8),IND(8),ISTOR(0:8,48),SLSTOR(0:8,48)
       NOPL=NOPL+1
@@ -351,8 +351,7 @@
          write (*,100)
          call terminate(stopcode_runtimeerror)
 #else
-         RCM_RAISE(1,'STORE',                                            &
-         'Too small dimension NSTOR in SLIPRAT',RCM_RTN)
+         RCM_RAISE(1,'STORE','Too small dimension NSTOR in SLIPRAT',RCM_RTN)
 #endif
       endif
  100  format (' STORE - increase dimension NSTOR in SLIPRAT,STORE')
@@ -366,4 +365,4 @@
       end subroutine
 
       end module
-      
+

@@ -14,7 +14,7 @@
 !>
 !>    History of modifications: (see svn log)
 !>
-!>    \file criTestMathUtils.f90 
+!>    \file criTestMathUtils.f90
 !
 !
 #include "criStdDefs.fpp"
@@ -30,11 +30,11 @@ public criTestMathUtils_main
 
 
 contains
-    
+
     logical function criTestMathUtils_main() result(stat)
     implicit none
         stat = .true.
-            
+
         stat = stat .and. test_VoigtConversions()
 
     end function
@@ -51,23 +51,21 @@ contains
 
         vec6_ref = [(dble(i), i = 1, sr_symm_voigt_dim)]
         vec9_ref = [(dble(i), i = 1, sr_voigt_dim)]
-       
+
         mat = 0.D0
         mat = Vec6ToMat33(vec6_ref)
         vec6 = Mat33ToVec6(mat)
-        _TEST('Vec6ToMat33 produces symmetrical matrix', all([mat(1,2) == mat(2,1), &
-                                                              mat(1,3) == mat(3,1), &
-                                                              mat(2,3) == mat(3,2)]))
+        _TEST('Vec6ToMat33 produces symmetrical matrix', all([mat(1,2) == mat(2,1),mat(1,3) == mat(3,1), mat(2,3) == mat(3,2)]))
         _TEST('Vec6ToMat33 is reciprocal to Mat33ToVec6', all(vec6 == vec6_ref))
-        
-        
+
+
         mat = 0.D0
         mat = Vec9ToMat33(vec9_ref)
         vec9 = Mat33ToVec9(mat)
         _TEST('Vec9ToMat33 is reciprocal to Mat33ToVec9', all(vec9 == vec9_ref))
-        
+
     end function
-    
+
 end module
 
 !> Collection of legacy test cases that do not conform with criTest
@@ -82,8 +80,8 @@ integer  :: i
 double precision,dimension(5,5) :: M = 0.D0
 double precision,dimension(5)   :: V,U
 
-double precision,dimension(5,1) :: MU =  (/ ( dble(i), i=1,5 ) /)
-double precision,dimension(1,5) :: MV =  (/ ( dble(i), i=1,5 ) /)
+double precision,dimension(5,1) :: MU =  reshape([ ( dble(i), i=1,5 ) ],[5,1])
+double precision,dimension(1,5) :: MV =  reshape([ ( dble(i), i=1,5 ) ],[1,5])
 double precision,dimension(5,5) :: MR = 0.D0
 
 do i=1,5
@@ -122,7 +120,7 @@ integer :: i, n = 2 * 360
 double precision :: alpha, dalpha, alphamax, angle
 double precision,dimension(2) :: u,v
 
-alphamax = 360.D0 
+alphamax = 360.D0
 n = alphamax
 dalpha = alphamax / dble(180)
 alpha = -alphamax
@@ -133,10 +131,10 @@ v = 1.D0
 
 do i=1,n
       ! apply rotation by angle alpha
-      v = rotate2D(deg2rad(alpha),u)      
+      v = rotate2D(deg2rad(alpha),u)
       angle = vec_angle(u,v)
       write(*,'(F10.4,1X,4(F14.8,1X))') alpha, deg2rad(alpha), vec_cosine(u,v), angle, rad2deg(angle)
-      alpha = alpha + dalpha     
+      alpha = alpha + dalpha
 end do
 
 contains
@@ -150,7 +148,7 @@ contains
       double precision,dimension(2,2) :: R
       double precision, dimension(2,1) :: V
       V(:,1) = vec
-      
+
       rotate2D = 0.D0
       R(1,1) = cos(phi)
       R(1,2) = -sin(phi)

@@ -14,7 +14,7 @@
 !>
 !>    History of modifications: (see svn log)
 !>
-!>    \file criTestAlgorithm.f90 
+!>    \file criTestAlgorithm.f90
 !
 !
 #include "criStdDefs.fpp"
@@ -30,28 +30,28 @@ implicit none
 public criTestAlgorithm_main
 
 contains
-      
+
       logical function criTestAlgorithm_main() result(stat)
       implicit none
-        
-            stat = .true. 
-            
+
+            stat = .true.
+
             stat = stat .and. test_boundsAndBinarySearch()
-            
+
             stat = stat .and. test_replaceAll()
-      
+
             stat = stat .and. test_isPresent()
-      
+
             stat = stat .and. test_optionalDefault()
-            
+
             stat = stat .and. test_CHOOSE()
-            
+
       end function
 
       logical function test_boundsAndBinarySearch() result(res)
       implicit none
       integer,parameter :: n_algorithms = 3
-      integer,dimension(:),allocatable :: arr, tst 
+      integer,dimension(:),allocatable :: arr, tst
       logical,dimension(:),allocatable :: tst_val
       integer,dimension(:),allocatable :: tst_lb_idx, tst_ub_idx
       integer,dimension(:),allocatable :: tst_eval
@@ -59,20 +59,20 @@ contains
       logical,dimension(n_algorithms) :: found
 
       integer :: i, count
-      !      
+      !
             res = .false.
-      
+
             arr = [5,7,10,22,33,35,44,50,55,56,60,70,71,72,73,80,90,100]
             tst = [1,4,5,20,60,90,91,100,200]
             tst_val = [.false.,.false.,.true.,.false.,.true.,.true.,.false.,.true.,.false.]
-            
+
             tst_lb_idx = [1, 1, 1, 4, 11, 17, 18, 18, 19]
             tst_ub_idx = [1, 1, 2, 4, 12, 18, 18, 19, 19]
-            
+
             allocate(tst_results(n_algorithms, size(tst)))
             allocate(tst_eval(size(tst_val)))
             allocate(arr_results(n_algorithms,size(arr)))
-            
+
             tst_results = .false.
 
             ! Test if the three implementations are equivalent
@@ -82,11 +82,11 @@ contains
                                     (binary_search2(arr,tst(i)) .eqv. tst_val(i)) ]
             enddo
             _TEST('binary searches give identical results on test data',all(tst_results))
-            
+
             arr_results = .false.
             do i=1,size(arr)
                   arr_results(:,i) = [binarySearch(arr,arr(i)), &
-                                      binary_search(arr,arr(i)),& 
+                                      binary_search(arr,arr(i)),&
                                       binary_search2(arr,arr(i))]
             enddo
              _TEST('binary searches locate the elements in input data',all(arr_results))
@@ -100,7 +100,7 @@ contains
             enddo
             _TEST('search for items inside and outside range', (count == size(arr)))
 
-            
+
             tst_eval = 0
             !
             ! Test upper bound algorithm
@@ -119,7 +119,7 @@ contains
             !        write(*,*) 'lb of ', tst(i), 'is outside array at i=', idx
             !    endif
             !enddo
-            
+
             !
             ! Test upper bound algorithm
             tst_eval = 0
@@ -139,7 +139,7 @@ contains
             !enddo
 
             res = .true.
-      !      
+      !
       end function
 
       logical function test_replaceAll()
@@ -148,23 +148,23 @@ contains
             test_replaceAll = .false.
             ! Test: neutral for empty string (returns empty string)
             _TEST('empty string',(replaceAll('','a','b') == ''))
-            
+
             ! Test: neutral for strings without "from" (returns a copy of string)
             _TEST('string with no from',(replaceAll('kbx zwd','a','b') == 'kbx zwd'))
-            
+
             ! Test: single-element string that contains only "from"
             _TEST('single char string with one inst. of from',(replaceAll('a','a','b') == 'b'))
-            
+
             ! Test:
             _TEST('string with two inst. of from',(replaceAll('abx awd','a','b') == 'bbx bwd'))
-            
+
             ! Test:
             _TEST('string with three inst. of from',(replaceAll('abx awd gwda','a','b') == 'bbx bwd gwdb'))
-            
+
             test_replaceAll = .true.
       !
       end function
-      
+
       logical function test_isPresent()
       implicit none
       !
@@ -195,7 +195,7 @@ contains
             index = -100
             is_present = isPresent(val_two_3,list,index)
             _TEST('value and index (smaller size) in list', (is_present .and. (index == 2)))
-            ! Note: extent of the array is NOT passed to isPresent 
+            ! Note: extent of the array is NOT passed to isPresent
             index = -100
             is_present = isPresent(val_two_10,list_nonstandard_shape,index)
             _TEST('value and index (exact size) in shaped list', (is_present .and. (index == 2)))
@@ -203,27 +203,27 @@ contains
             is_present = isPresent(val_two_3,list_nonstandard_shape,index)
             _TEST('value and index (smaller size) in shaped list', (is_present .and. (index == 2)))
 
-             
+
       !
       end function
-      
+
       logical function test_optionalDefault() result(stat)
       implicit none
       !
       logical :: lval
       integer :: ival
-      
+
             stat = .true.
-            
+
             stat = stat .and. optionalDefault_absent()
-            
+
             lval = .true.
             ival = 1
-            
+
             stat = stat .and. optionalDefault_present(ival, lval)
       !
       end function
-      
+
       logical function optionalDefault_absent(ival, lval)
       implicit none
       integer,intent(in),optional :: ival
@@ -231,20 +231,18 @@ contains
       !
       logical :: ltest
       integer :: itest
-      
+
           ltest = .false.
-          _TEST('absent logical value, default returned', &
-                (optionalDefault(lval,ltest) .eqv. ltest))
+          _TEST('absent logical value, default returned', (optionalDefault(lval,ltest) .eqv. ltest))
 
           itest = 20
-          _TEST('absent integer value, default returned', &
-                (optionalDefault(ival,itest) == itest))
-          
+          _TEST('absent integer value, default returned', (optionalDefault(ival,itest) == itest))
+
           optionalDefault_absent = .true.
       !
       end function
-      
-      
+
+
       logical function optionalDefault_present(ival, lval)
       implicit none
       integer,intent(in),optional :: ival
@@ -252,40 +250,38 @@ contains
       !
       logical :: ltest
       integer :: itest
-      
+
           ltest = .false.
-          _TEST('present logical value', &
-                (present(lval) .and. optionalDefault(lval,ltest) .eqv. lval))
+          _TEST('present logical value', (present(lval) .and. optionalDefault(lval,ltest) .eqv. lval))
 
           itest = 20
-          _TEST('present integer value', &
-                (present(ival) .and. optionalDefault(ival,itest) == ival))
+          _TEST('present integer value', (present(ival) .and. optionalDefault(ival,itest) == ival))
 
           optionalDefault_present = .true.
       !
       end function
-      
-      
+
+
       logical function test_CHOOSE()
       implicit none
       !
-      integer :: yes, no, res, arg 
+      integer :: yes, no, res, arg
       !
             arg = -1
             yes = 10
             no = 20
-      
+
             CHOOSE(res, .true., yes, no)
             _TEST('CHOOSE true', res == yes)
-      
+
             CHOOSE(res, .false., yes, no)
             _TEST('CHOOSE false', res == no)
-            
+
             CHOOSE(res, arg >= 0, sqrt(dble(arg)), no)
             _TEST('CHOOSE test, runtime error avoided', res == no)
             test_CHOOSE = .true.
       !
       end function
-      
-      
+
+
 end module
