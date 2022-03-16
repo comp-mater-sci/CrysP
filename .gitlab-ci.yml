@@ -1,0 +1,26 @@
+# This file is a template, and might need editing before it works on your project.
+# To contribute improvements to CI/CD templates, please follow the Development guide at:
+# https://docs.gitlab.com/ee/development/cicd/templates.html
+# This specific template is located at:
+# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/C++.gitlab-ci.yml
+
+# use the official gcc image, based on debian
+# can use verions as well, like gcc:5.2
+# see https://hub.docker.com/_/gcc/
+
+image: gcc
+
+build:
+  stage: test
+  script: |
+    wget -q https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    echo "deb https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+    apt-get update
+    apt-get install -y \
+    intel-basekit \
+    intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-compiler-fortran \
+    intel-oneapi-openmp intel-oneapi-mkl-devel
+    source /opt/intel/oneapi/setvars.sh
+    FC=ifort AR=xiar make VEF
