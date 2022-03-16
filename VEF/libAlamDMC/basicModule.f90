@@ -94,7 +94,6 @@ contains
       use altaySub
       use altayHardTypes, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop
       use commonUtils
-      implicit none
       class(BasicModule),intent(inout)          :: this
       !
       integer :: ierr
@@ -143,7 +142,6 @@ contains
 
       !> read output and AlTay configuration sections
       integer function BasicModule_readConfig(this,cnfunit) result(info)
-      implicit none
       class(BasicModule),intent(inout)          :: this
       integer,intent(in)                        :: cnfunit !< IO input unit
       !
@@ -173,7 +171,6 @@ contains
 
       integer function BasicModule_printConfig(this,outunit) result(info)
       use altayConfig
-      implicit none
       class(BasicModule),intent(in)       :: this
       integer,intent(in)                  :: outunit
       !
@@ -245,7 +242,6 @@ contains
     !> Finalization of the module
     integer function BasicModule_finalize(this) result(info)
     use altaySub
-    implicit none
     class(BasicModule),intent(inout) :: this
     !
         info = this%finalizeLibAltay()
@@ -259,7 +255,6 @@ contains
 
     !> Open output file
     integer function BasicModule_openOutputFile(this, ext, ofunit, suffix) result(info)
-    implicit none
     class(BasicModule),intent(in)           :: this
     character(len=*),intent(in)             :: ext !< File extension (with leading dot)
     integer,intent(out)                     :: ofunit !< IO unit of the output
@@ -292,7 +287,6 @@ contains
 
     integer function BasicModule_reinitializeLibAltay(this, output_prefix) result(info)
     use altaySub
-    implicit none
     class(BasicModule),intent(inout)        :: this
     character(len=*),intent(in),optional    :: output_prefix !< File prefix
     !
@@ -312,7 +306,6 @@ contains
     !> Finalize libAltay and perform additional actions on finalization.
     integer function BasicModule_finalizeLibAltay(this) result(info)
     use altaySub
-    implicit none
     class(BasicModule),intent(inout)        :: this
     !
     integer :: ierr
@@ -332,7 +325,6 @@ contains
       !> Read output configuration from top 3 lines after comment header in configuration file:
       !> prefix for output files, incremental output request flag, verbosity level
       subroutine readOutputConfigSection(cnfunit,cnf,info)
-      implicit none
       integer,intent(in)                  :: cnfunit !< configuration file
       type(outputConfig),intent(inout)    :: cnf
       integer,intent(out)                 :: info
@@ -362,7 +354,6 @@ contains
       !> Read configuration of libaltay
       subroutine readAlTayConfigSection(cnfunit,cnf,info)
       use altayConfig
-      implicit none
       integer,intent(in)                  :: cnfunit
       type(altayConfigData),intent(inout) :: cnf !< Root-level configuration structure of texture, microstructure and hardening
       integer,intent(out)                 :: info
@@ -485,7 +476,6 @@ contains
       subroutine readHardeningSection(cnfunit, hardening, info)
       use altayHard, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop, hard_SwiftK, hard_SwiftS
       use altayConfig, only: hardeningData, VoceConfig, SwiftKConfig, SwiftSConfig
-      implicit none
       integer,intent(in)                  :: cnfunit
       type(hardeningData),intent(out)     :: hardening !< structure containing hardening configuration
       integer,intent(out)                 :: info
@@ -557,7 +547,6 @@ contains
       subroutine readPEPBhardening(cnfunit,kost,hc,info)
       use altayConfig
       use altayHardLaw_DSH, only: ReadPar
-      implicit none
       integer,intent(in)                  :: cnfunit !< configuration file
       integer,intent(in)                  :: kost    !< HardLawID
       type(PEBPConfig),intent(out)        :: hc      !< data type containing the BP model parameters (no state variables); defined in altayConfig.f90
@@ -602,7 +591,6 @@ contains
 
       !> Deduce the path to VEF common data files.
       function getVEFDataDir()
-      implicit none
       character(len=max_pathlen) :: getVEFDataDir
       !
       character(len=max_pathlen) :: vef_root_path
@@ -642,7 +630,6 @@ contains
 
       !> Incur the location of default slip system file
       subroutine incurSlipsystemFile(dm_id, slipsystem_path, info)
-      implicit none
       integer,intent(in)              :: dm_id !< Deformation mechanism ID
       character(len=*),intent(out)    :: slipsystem_path
       integer,intent(out)             :: info
