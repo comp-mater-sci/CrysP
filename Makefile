@@ -3,7 +3,7 @@
 #
 # Top-level projects as phony targets
 #
-ALL_PROJECTS := FCRI AlTay fopt fng abaqus/vumats MTM-FHMport VEF hms
+ALL_PROJECTS := FCRI AlTay fopt fng VEF
 
 #
 # Top-level generic targets
@@ -39,9 +39,7 @@ all: $(ALL_PROJECTS)
 
 AlTay: FCRI
 fng: FCRI fopt AlTay
-abaqus/vumats: FCRI fng VEF
 VEF: FCRI fopt AlTay fng
-hms: abaqus/vumats AlTay fng VEF
 
 #
 # Targets
@@ -65,11 +63,3 @@ $(ALL_PROJECTS):
 
 clean mrproper doc:
 	$(foreach project, $(ALL_PROJECTS), $(call make-target, $(project)))
-
-doc: doc/readme.html doc/readme.pdf
-
-doc/readme.html: readme.rst
-	rst2html.py --stylesheet=doc/assets/rst2html.css $< $@
-
-doc/readme.pdf: readme.rst
-	rst2pdf --stylesheet-path=doc/assets/rst2html.css $< $@
