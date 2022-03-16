@@ -1,1 +1,0 @@
-alamDMC ADP exits with an error for both cfg files. Hardening model is initialized seemingly correctly, though.

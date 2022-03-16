@@ -1,6 +1,0 @@
-# To generate the material data (JSON):
-
-vef_datacard --jobname bbc2008vex_input --structure fcc --uniaxial 0 15 30 45 60 75 90 --equibiaxial --yld -45 135 20 --intermediate_dir bbc2008vex_input --input alu1190f.smt
-
-
---jobname elem --input bbc2008vef_input.json  --output bbc2008vef.dat

@@ -1,6 +1,0 @@
-12,36,1668,Line 45 Level0
-12,32,1664,Line 45 Level1
-12,28,1660,Line 45 Level2
-12,23,1655,Line 45 Level3
-12,17,1649,Line 45 Level4
-12,14,1646,Line 45 Level5
