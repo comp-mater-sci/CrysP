@@ -5,18 +5,18 @@
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayHardTypes
       use altayMacroKinematic
-      
+
       ! Initial rations of CRSS, set in MAINA1.
       ! It is used only by the stand-alone AlTay
       type(CRSS),save :: crss_ratiosIN
 
       contains
-      
+
 ! ALAMEL V3
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !  All comments about modifications of the source have been removed
-! for clarity 
+! for clarity
 ! See "annotated source codes" if you need these
 !
 !
@@ -50,7 +50,7 @@
       common /DOUBLE/ XM(5,96),XEPS(5),RHO(5),B5(5)
       common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
                       ITW,GEWF
-      common /SYMP/ INV,ISP,LOM,KSYM,KTYP,TEN(3,3),TOTGEW        
+      common /SYMP/ INV,ISP,LOM,KSYM,KTYP,TEN(3,3),TOTGEW
       common /EULERA/ fi1,PHI,fi2
       common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
                       SWRLX(3)
@@ -60,7 +60,7 @@
                      fi1b(2),phib(2),fi2b(2),                                  &
                      NGR,NRL,ENTA,ITFMAS
       common /CEIGEN/ IOR,ISTP,NBLOC
-      common /PE/ Fmicro !Temporary!!!      
+      common /PE/ Fmicro !Temporary!!!
       dimension GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
            GEULR(3),TG(3,3),                               &
            CIJ(3,3),STOT(3,3),                             &
@@ -76,22 +76,22 @@
       ! HGAMTOT: homogenized slip accumulated over calls
       double precision :: HGAM=0.D0,HGAMCALL=0.D0,HGAMTOT=0.D0
       ! Macroscopically imposed vM equivalent strain per call.
-      double precision :: MEPSCALL=0.D0 
-      double precision :: GMMdot !Total slip rate in current grain      
+      double precision :: MEPSCALL=0.D0
+      double precision :: GMMdot !Total slip rate in current grain
       double precision :: Mgrain !Taylor factor of the current grain
       double precision :: Mavg   !Volume-averaged Taylor factor
       double precision :: srh !Strain Rate Heterogeneity in polycrystal
       double precision :: SeqGrain=0.D0 ! Equivalent stress in crystal, defined as..
                                     !  plastic work rate in crystal normalized by..
                                     !  (macro) von Mises equivalent strain rate
-      double precision :: WorkRate ! Rate of plastic work per unit 
+      double precision :: WorkRate ! Rate of plastic work per unit
                                    ! volume in the crystal
       double precision :: Wtot ! Total plastic work per unit volume in crystal
 #ifdef PEBP_ENABLED
       type(StateDerivedVars) :: pebpSDV, pebpSDVavg
 #endif
       data convf/0.5729577951308232D+02/
-      data FS/9*1.0D0/ 
+      data FS/9*1.0D0/
       save
       !
       NPOINT = size(DFIL)
@@ -147,14 +147,14 @@
       if(NLIST.eq.1) then
             write (IMP,101) NGR,NLIST,NFILE1,NFILTW,KOST,IPR
       end if
-#ifndef NO_STDOUT   
+#ifndef NO_STDOUT
       write (*,101) NGR,NLIST,NFILE1,NFILTW,KOST,IPR
 #endif
  101  format (' SIMUL - PARAMETERS:',/                                   &
       'NGR=   ',I5,/,'NLIST= ',I5,/,'NFILE1=',I5,/,'NFILTW=',i5,/,       &
-      'KOST=  ',I5,/,'IPR=   ',I5) 
+      'KOST=  ',I5,/,'IPR=   ',I5)
 #endif
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE 
+!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (NGR.lt.1.or.NGR.gt.2) then
 #ifndef ALTAY_SUBROUTINE
             write (*,140) NGR
@@ -169,7 +169,7 @@
  140  format (' NGR can only take the values 1 or 2 but was',I5)
       ! Check if number of crystals is right for the model
       if (modulo(NPOINT, NGR) /= 0) then
-#ifndef ALTAY_SUBROUTINE      
+#ifndef ALTAY_SUBROUTINE
             write (6,405) NPOINT
             write (*,405) NPOINT
  405  format (' Subroutine SIMUL',/' The LAMEL version works only if',   &
@@ -177,11 +177,10 @@
       ' is an even number')
             call terminate(stopcode_runtimeerror)
 #else
-            RCM_RAISE(1,'SIMUL',                                         &
-            'The number of grains must be an even number',RCM_RTN)
+            RCM_RAISE(1,'SIMUL','The number of grains must be an even number',RCM_RTN)
 #endif
       endif
-!     Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
+!     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
       NRL=(NGR-1)*2
 #ifdef ALTAY_SUBROUTINE
       !
@@ -199,7 +198,7 @@
   99  format (2I5)
   94  format (3F10.0)
   16  read (KLEC,98) TITEL
-#endif      
+#endif
       if(NLIST.eq.1) then
       write (IMP,97) TITEL
       end if
@@ -207,7 +206,7 @@
   97  format (' Title of the new simulation: ',A)
       ! Only if CUR file is requested
       if (NFILE1.eq.1) call CURwriteTitle(IMP1,TITEL,info)
-  98  format (A)      
+  98  format (A)
 !     read the parameters of the work hardening model
 #ifndef ALTAY_SUBROUTINE
       call InitModuleAltayHard(KLEC,KOST,crss_ratiosIN,info)
@@ -246,7 +245,7 @@
       else
             ITFMAS=0
       endif
-      ! Number of relaxations: 0 for Taylor and 2 for ALAMEL: 
+      ! Number of relaxations: 0 for Taylor and 2 for ALAMEL:
       NRL=(NGR-1)*2
 #endif
   36  NFILE=NFILE0*NFILE1
@@ -258,7 +257,7 @@
       swrlx(1) = astate%simulCalls(astate%this)%input%rlx1
       swrlx(2) = astate%simulCalls(astate%this)%input%rlx2
       swrlx(3) =.false.
-#else      
+#else
       read (KLEC,99) NSTP
       if(NLIST.eq.1) then
       write (IMP,115) NSTP
@@ -284,8 +283,8 @@
       if (NFILE.eq.1) call CURwriteBlock(IMP1,info)
 #ifndef ALTAY_SUBROUTINE
       if ((NRES >= 1).and.(IW <= 1)) call writeReportHeader(IMP6,info)
-#endif      
-#if defined(PEBP_ENABLED) && .not. defined(INTERMEDIATEBPM_DISABLED)
+#endif
+#if defined(PEBP_ENABLED) && !defined(INTERMEDIATEBPM_DISABLED)
       select case(KOST)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
           if (NPEBPx.eq.1) info = KS_writeState(IMP4)
@@ -307,10 +306,10 @@
           HGAM=0.D0
 #ifdef PEBP_ENABLED
           pebpSDVavg = StateDerivedVars()
-#endif      
-      
+#endif
+
           call dynfil2(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
-#ifndef NO_STDOUT       
+#ifndef NO_STDOUT
           write (*,96) ISTP,GAXES
 #endif
           if(NLIST.eq.1) then
@@ -332,7 +331,7 @@
           if(NLIST.eq.1) then
               write (IMP,3458) TG
           end if
-      
+
  3458     format (' TG=',3(T10,3d12.3,/))
   70      if (nfile.eq.0.or.ISTP.gt.1) goto 44
           if (NLIST.EQ.1) write (IMP,112) ISTP
@@ -345,7 +344,7 @@
           !
   44      continue
           if (NLIST.eq.1) then
-              do i=1,3 
+              do i=1,3
                  write (IMP,407) (MacroDefState%TotalDefGrad(j,i),j=1,3)
               enddo
           end if
@@ -355,7 +354,7 @@
           !
           call Update_DeformationState(MacroDefRate,MacroDefState,info)
           !
-          call UPDATC(CIJ,MacroDefState%IncrDefGrad_inverse) 
+          call UPDATC(CIJ,MacroDefState%IncrDefGrad_inverse)
           call GETANG(CIJ,GAXES,GEULR,TG)
 #ifdef ALTAY_SUBROUTINE
           RCM_GUARD
@@ -364,7 +363,7 @@
                 call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,  &
                              CIJ,TG)
           endif
-#else          
+#else
           call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #endif
 !
@@ -423,7 +422,7 @@
                   GEWF=qgx
               end if
               if (NFILE.eq.0.or.ISTP.gt.1) goto 999
-! 
+!
 !     In case of NGR=2:
 !        LAML=1: TAYLOR
 !                - has the present and the next orientation available
@@ -440,10 +439,10 @@
                     call  TAYLOR(3,KOST,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
                     RCM_GUARD
-#endif            
+#endif
               endif
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 2/1/2011     
-! this modification is to suit for the output of stress     
+!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 2/1/2011
+! this modification is to suit for the output of stress
               if(laml.eq.1) then
                   ssqgx=GEWF
               else
@@ -464,19 +463,19 @@
 #else
               call TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain,WorkRate,           &
                           MacroDefRate)
-#endif      
+#endif
    49         if (NFILTW.eq.1) write (IMP3,398) ITW
  398          format (I3)
               !
               STOT = STOT + Ssam*GEWF
               RHOST = RHOST + RHOSsa*GEWF
-              !      
+              !
   63          SeqAvg = SeqAvg + SeqGrain*GEWF
               Mgrain = GMMdot /  MacroDefRate%vMeqStrainRate
               Mavg = Mavg + Mgrain*GEWF
-              ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/MacroDefRate%vMeqStrainRate 
+              ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/MacroDefRate%vMeqStrainRate
               srh = srh + norm2(RHOSsa)*GEWF
-              HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s      
+              HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s
               GMM1 = GMM0 + GMMdot !Step time here implicitly assumed to be 1.0s
               Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
 #ifdef PEBP_ENABLED
@@ -491,18 +490,18 @@
               if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                     call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                   &
                                  MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,  &
-                                 RHOSsa) 
+                                 RHOSsa)
               endif
 #else
               call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                         &
                            MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
 #endif
-              ! 
+              !
 #ifndef ALTAY_SUBROUTINE
               ! Output the plastic work of the grain (in its initial configuration)
               if (NRES >= 1) call writeReportRecord(IMP6,fi1b(laml),PHIb(laml),  &
                                                     fi2b(laml),Wtot,info)
-#endif      
+#endif
               !
               ! End of the loop over crystals
               !
@@ -524,7 +523,7 @@
 
           Mavg=Mavg/TOTGEW
           ! DEFINITION: srh = (||d-D||) / ||D||
-          srh=sqrt(2.D0/3.D0)*srh/TOTGEW 
+          srh=sqrt(2.D0/3.D0)*srh/TOTGEW
           SeqAvg=SeqAvg/TOTGEW
           !
           MEPSCALL= MacroDefState%IncrvMeqStrain * (ISTP-1)
@@ -542,7 +541,7 @@
 #ifndef ALTAY_SUBROUTINE
           if (NPEBPx /= 0) info = writeSDV(IPEBPSDV,pebpSDVavg)
 #endif
-#endif      
+#endif
 #ifdef ALTAY_SUBROUTINE
           ! Get the homogenized quantities:
           associate (callout => astate%simulCalls(astate%this)%output)
@@ -552,7 +551,7 @@
                 callout%equivalent_stress= SeqAvg
                 callout%effective_stress = sqrt(3.D0/2.D0)*norm2(SHsam)
                 callout%homogenised_slip = HGAMCALL
-                callout%homogenised_slip_tot = HGAMTOT            
+                callout%homogenised_slip_tot = HGAMTOT
                 callout%effective_macro_strain = MEPSCALL
                 callout%effective_macro_strain_tot =                         &
                     MacroDefState%AccumvMeqStrain_ToStartOfInc
@@ -565,8 +564,8 @@
           HGAMCALL = HGAMCALL + HGAM
 #ifdef ALTAY_SUBROUTINE
           ! We can choose not to update the internal state
-          if (.not.astate%simulCalls(astate%this)%input%keep_state) then  
-                HGAMTOT = HGAMTOT + HGAM 
+          if (.not.astate%simulCalls(astate%this)%input%keep_state) then
+                HGAMTOT = HGAMTOT + HGAM
           endif
 #else
           HGAMTOT = HGAMTOT + HGAM
@@ -575,7 +574,7 @@
           write (IMP,105) ISTP,SeqAvg,Mavg,MacroDefState%IncrvMeqStrain
           end if
  105      format (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VALUE=',F10.5, &
-              '  EFF. STRAIN EPS USED=',F10.5) 
+              '  EFF. STRAIN EPS USED=',F10.5)
           !
           ! End of the loop over steps
           !
@@ -590,5 +589,5 @@
   32  return
       !
       END SUBROUTINE
-      
+
       end module

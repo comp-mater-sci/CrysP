@@ -1,22 +1,22 @@
 !
 ! $Id$
 !
-!>    \author Jerzy Gawad                                                
+!>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
 !>    \author Paul Van Houtte
 !>    Email:  Paul.VanHoutte@mtm.kuleuven.be
 !>
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
+!>
 !>    \date Date of first release: 2010-10-18/2010-10-28
-!>    $Revision$                                        
+!>    $Revision$
 !>    $Date$
 !>
 !>    History of modifications: (see svn log)
 !>    * This module is based on ALAMEL main program code by PVH and co-workers.
 !>    * Several modifications have been introduced by JG to make this code more
-!>      "procedure-like".                  
+!>      "procedure-like".
 !>    * The code inside this file was initially based on Main1.for.
 !>      Now it is only loosely related to its predecessor.
 !
@@ -28,7 +28,7 @@
 module altaySub
 
       !> \name Named constants for error codes in altaySub
-      !>@{ 
+      !>@{
       integer,parameter :: altaySub_OK = 0
       integer,parameter :: altaySub_Err = -1
       integer,parameter :: altaySub_Exception = -2
@@ -36,10 +36,10 @@ module altaySub
       integer,parameter :: altaySub_BadVal = -10
       integer,parameter :: altaySub_BadDim = -11
       !>@}
-      
+
 contains
 
-      !> Initialize the module. 
+      !> Initialize the module.
       !>
       !> This subroutine must be called prior to any call to other
       !> module subroutines.
@@ -56,7 +56,7 @@ contains
 #endif
       implicit none
       !
-      type(altayConfigData),intent(in)    :: cnf      !< configuration data 
+      type(altayConfigData),intent(in)    :: cnf      !< configuration data
       integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
       character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
       !
@@ -102,7 +102,7 @@ contains
             ! Initialize altay modules
             !
             ! Set the data for CRSS calculations
-            call InitModuleAltayHard(cnf%hardening, info) 
+            call InitModuleAltayHard(cnf%hardening, info)
             if (info /= 0) then
                   if (present(errmsg)) errmsg = 'Cannot initialize hardening law'
                   info = altaySub_Err
@@ -113,7 +113,7 @@ contains
             if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
             info = altaySub_Exception
             CALL SIMUL(0,1)
-            ! Collect more info about the 
+            ! Collect more info about the
             if(RCM_signal()) then
                 if (present(errmsg)) then
                     ! Extend the level of detail if the size of errmsg permits that.
@@ -132,21 +132,21 @@ contains
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                   info = KS_initState(size(DFIL))
                   if (info /= 0) return
-                  if (acnf%hardening%PEBPCnf%read_state) then 
+                  if (acnf%hardening%PEBPCnf%read_state) then
                         ! Load state variables
                         info = KS_openStateFile(IPEBPSTAT,acnf%hardening%PEBPCnf%input_fname, mode='r')
                         if (info /= 0) then
-                              if (present(errmsg)) errmsg = 'Cannot open PEBP state file: ' & 
-                                                            // trim(acnf%hardening%PEBPCnf%input_fname) 
+                              if (present(errmsg)) errmsg = 'Cannot open PEBP state file: ' &
+                                                            // trim(acnf%hardening%PEBPCnf%input_fname)
                               return
                         endif
                         info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
-                        if ((info /= 0) .and. present(errmsg)) then  
+                        if ((info /= 0) .and. present(errmsg)) then
                               errmsg = 'Cannot read from PEBP state file: '// trim(acnf%hardening%PEBPCnf%input_fname)
                               return
                         endif
                   endif
-            endselect      
+            endselect
 #endif
             !
             ! No need for the slip system definition anymore.
@@ -154,7 +154,7 @@ contains
             info = altaySub_OK
       !
       end subroutine
-      
+
       !> Finalizes the module and releases the resources.
       subroutine finalizeAltay(info)
       use altayConfig, only: altayConfigData,fname_len,acnf, astate
@@ -177,7 +177,7 @@ contains
             close(IMP2)
             close(IMP3)
 #ifdef PEBP_ENABLED
-            close(IMP4) 
+            close(IMP4)
 #endif
             close(IMP5)
             close(IMP6)
@@ -199,7 +199,7 @@ contains
             call RCM_clean()
       !
       end subroutine
-      
+
       subroutine openOutputFiles(cnf, info, errmsg)
       use altayConfig, only: altayConfigData,fname_len
       use altayIOConfig
@@ -208,7 +208,7 @@ contains
       use AltayDSHstate
 #endif
       implicit none
-      type(altayConfigData),intent(in)    :: cnf      !< configuration data 
+      type(altayConfigData),intent(in)    :: cnf      !< configuration data
       integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
       character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
       !
@@ -252,8 +252,8 @@ contains
                   call writeMSSHeader(IMP5,info)
             endif
 !
-#if defined(PEBP_ENABLED) .and. .not. defined(NOBEPFILE)
-            if (cnf%output_config%npebp /= 0) then 
+#if defined(PEBP_ENABLED) && !defined(NOBEPFILE)
+            if (cnf%output_config%npebp /= 0) then
                   ! PEBP model
                   ! UNIT IMP4 = state variables of PEBP
                   fname = trim(fname_prefix)//'.BPM'
@@ -276,10 +276,10 @@ contains
             if (present(errmsg)) errmsg = 'Cannot open file '//trim(fname)
       !
       end subroutine
-      
+
       !> Initialization of input and output data for the steps.
       !>
-      !> 
+      !>
       subroutine initStepData(nsteps,steps,info)
       use altayConfig, only: altayStateData
       implicit none
@@ -299,7 +299,7 @@ contains
             info = ierr
       !
       end subroutine
-      
+
       !> Run the AlTay for the set of steps
       subroutine runSteps(steps,info)
       use altayConfig, only: altayStateData,astate
@@ -340,19 +340,19 @@ contains
                   else
                         NFILE0 = 0
                   endif
-                  
+
                   !Set the macro velocity gradient in module MacroKinematic
                   call Set_DeformationRate(steps%simulCalls(i)%input%dgf,MacroDefRate)
 
                   ! Run simul.
                   call SIMUL(1,NFILE0,MacroDefRate)
                   if (RCM_signal()) then
-                        RCM_RAISE(info,'runSteps','SIMUL has thrown exception',RCM_RTN) 
+                        RCM_RAISE(info,'runSteps','SIMUL has thrown exception',RCM_RTN)
                   endif
 
                   if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
             enddo
-      
+
             info = altaySub_OK
       !
       end subroutine
@@ -361,7 +361,7 @@ contains
       !>
       !> The call may involve IO units: IMP1 (CUR file), IMP4 (PEBP state file) and IMP5 (MSS file).
       !> Appropriate control fields in acnf%output_config are checked to decide if the data have to
-      !> be actually written to corresponding IO units.  
+      !> be actually written to corresponding IO units.
       subroutine outputCurrentState(info)
       use altayIOConfig
       use altayCurAccess
@@ -401,9 +401,9 @@ contains
       !
       end subroutine
 
-      
-      
-      
+
+
+
 end module
 
 
