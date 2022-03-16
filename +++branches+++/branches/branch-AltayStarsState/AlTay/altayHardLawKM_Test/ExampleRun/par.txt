@@ -1,9 +1,0 @@
-0.286E-9                b       [m]         Magnitude of burgers vector
-26.E3                   G       [MPa]       Shear modulus
-  0.20                  alpha   [/]         Dislocation interaction parameter
- 80.0                   tau0    [MPa]       Lattice resistance (for all slip systems)
-2.0E-2                  I       [/]         Immobilization coefficient
-9.0E-10                 R       [m]         Recovery coefficient
-1.0E12                  RHO_ann [m^(-2)]    Dislocation density in annealed condition
-
-
