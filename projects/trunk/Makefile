@@ -3,7 +3,7 @@
 #
 # Top-level projects as phony targets
 #
-ALL_PROJECTS := FCRI AlTay fopt slis fng abaqus/vumats MTM-FHMport VEF hms
+ALL_PROJECTS := FCRI AlTay fopt fng abaqus/vumats MTM-FHMport VEF hms
 
 #
 # Top-level generic targets
@@ -38,10 +38,10 @@ all: $(ALL_PROJECTS)
 #
 
 AlTay: FCRI
-fng: FCRI fopt AlTay slis
-abaqus/vumats: FCRI fng slis VEF
-VEF: FCRI fopt slis AlTay fng slis
-hms: abaqus/vumats AlTay fng VEF slis
+fng: FCRI fopt AlTay 
+abaqus/vumats: FCRI fng VEF
+VEF: FCRI fopt AlTay fng
+hms: abaqus/vumats AlTay fng VEF
 
 #
 # Targets

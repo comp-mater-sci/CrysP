@@ -21,12 +21,6 @@ program alamDMC
 !
 use criRuntime
 !
-#if defined(DMC_USE_SLIS) || defined(DMC_USE_TOKENS)
-use,intrinsic :: iso_c_binding, only: C_NULL_CHAR
-use fslis
-#define ALAMDMC_FEATURE_UUID 'ff921f1e-fa42-11e5-97dc-ecf4bb152acb'//C_NULL_CHAR
-#endif
-!
 use dmcUtils, only: display_unit
 use dmcBasicModule
 use dmcASR
@@ -85,17 +79,6 @@ implicit none
       300 format('AlamDMC $Rev$',1X,'EXPERIMENTAL')
 #else
       300 format('AlamDMC $Rev$')
-#endif
-!
-#ifdef DMC_USE_SLIS
-      if (initSlis('VEF_ROOT'//C_NULL_CHAR) /= 0) then
-            write(display_unit,fmt=900) 'Cannot access the license. Check if "license.slis" file is in your VEF_ROOT'
-            call finalize(stopcode_runtimeerror)
-      endif
-      if (.not. isLicenseValid(ALAMDMC_FEATURE_UUID, logical(.true.,kind=c_bool))) then
-            write(display_unit,fmt=900) 'There is no valid license for AlamDMC'
-            call finalize(stopcode_runtimeerror)
-      endif
 #endif
       !
       ! Configure the module
