@@ -1,4 +1,4 @@
-# $Id$
+# $Id: basic.cmake 2069 2015-02-20 17:22:41Z jgawad $
 #
 # Pre-defined configuration for projects with simple Debug and Release configuration
 

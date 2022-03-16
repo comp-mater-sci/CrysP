@@ -1,6 +1,6 @@
-# $Id$
+# $Id: CMakeLists.txt 2070 2015-02-20 17:27:29Z jgawad $
 #
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 2.8)
 
 project(fopt Fortran)
 

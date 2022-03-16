@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: criLibCRIVersion.f90 1980 2014-08-17 10:43:23Z jgawad $
 !
 !>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -9,8 +9,8 @@
 !>    \copyright KU Leuven
 !>
 !>    \date Date of first release: 2012-06-11
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 1980 $
+!>    $Date: 2014-08-17 12:43:23 +0200 (Sun, 17 Aug 2014) $
 !>
 !>    History of modifications: (see svn log)
 !>

@@ -1,6 +1,6 @@
-# $Id$
+# $Id: CMakeLists.txt 2919 2017-04-03 09:56:15Z jgawad $
 #
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 2.8)
 
 project(fopt Fortran)
 
@@ -12,6 +12,10 @@ list2string(Fortran_FLAGS CMAKE_Fortran_FLAGS)
 list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
 list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
+set(AUXLIBSRC
+mkl_rci_stub.f90
+)
+
 set(LIBSRC
 nlls_tr.f90 
 nnls_mod.f90 
@@ -19,7 +23,14 @@ jacobiFD.f90
 objectiveFx.f90
 )
 
-add_library(fopt STATIC ${LIBSRC}) 
+# We have to force mkl_rci_stub to be built before fopt.
+# CMake dependency scanner does not realize that mkl_rci_stub.f90 provides
+# Fortran modules that are used in fopt.
+add_library(mkl_rci_stub OBJECT ${AUXLIBSRC})
+
+add_library(fopt STATIC ${LIBSRC} $<TARGET_OBJECTS:mkl_rci_stub>)
+
+add_dependencies(fopt mkl_rci_stub)
 
 #
 # Installation of the outputs in the build tree

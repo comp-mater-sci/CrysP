@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: criRuntime.f90 3345 2020-01-23 21:31:07Z Hadi.Ghiabakloo $
 !
 !>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -9,8 +9,8 @@
 !>    \copyright KU Leuven
 !>
 !>    \date Date of first release: 2011-12-24
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 3345 $
+!>    $Date: 2020-01-23 22:31:07 +0100 (Thu, 23 Jan 2020) $
 !>
 !>    History of modifications: (see svn log)
 !>
@@ -28,7 +28,7 @@ use,intrinsic :: iso_fortran_env, only: error_unit,output_unit
 implicit none
 
       !> Length of error message
-      integer,parameter              :: errmsg_len = 128
+      integer,parameter              :: errmsg_len = 1024
 
       !> Error message to be emitted on stop.
       character(len=errmsg_len),save :: errmsg = ''
@@ -139,12 +139,12 @@ contains
             call exit(errcode)
       end subroutine
 
-      !> Initialization of commandLine object
+      !> Initialization of commandLine object and return it with progname and description defined
       function commandLine_init(progname,description) result(res)
       implicit none
       character(len=*),intent(in)        :: progname
       character(len=*),intent(in)        :: description
-      type(commandLine)       :: res
+      type(commandLine)       :: res !MB: initialize res of type commandLine and set progname and description (other 8 components unmodified)
       !
             res%progname = progname
             res%description = description
@@ -153,14 +153,15 @@ contains
       
       
       !> Process the arguments provided in the command line.
-      !>
       subroutine processCommandLine(this,argc_min,argc_max,command_map,command_argpos,info, & 
-                                    terminate,command_desc,argv,prologue_fx,epilogue_fx)
+                                    terminate,command_desc,argv,prologue_fx,epilogue_fx) !MB: 11 arguments, last 5 optional
       implicit none
-      type(commandLine),intent(inout)           :: this
+      type(commandLine),intent(inout)           :: this !MB: defined in criRuntime.f90
       !> Minimal number of mandatory parameters
+      !> 2 default, 3 if DMC_USE_TOKENS defined
       integer,intent(in)                        :: argc_min
       !> Maximal number of parameters
+      !> 2 default, 3 if DMC_USE_TOKENS defined
       integer,intent(in)                        :: argc_max
       !> Map of command strings into integer identifiers.
       !>
@@ -197,21 +198,21 @@ contains
             info = criError
             this%is_command_identified = .false.
             !
-            ! The 'argv' argument takes precedence over the command line:
-            if (present(argv)) then
+            ! The 'argv' argument (9th argument of processCommandLine) takes precedence over the command line:
+            if (present(argv)) then !MB: not present (thus skipped) in call to processCommandLine in main.f90
                   if (allocated(this%argv)) deallocate(this%argv)
-                  this%argc = size(argv) 
+                  this%argc = size(argv) !MB: total number of command line arguments
                   allocate(character(len=max_command_param_len) :: this%argv(0:this%argc),stat=ierr)
                   this%argv(0:) = argv(:)
             else
-                  ! Get the count of parameters and the parameters
+                  ! Get the count of parameters (this%argc) and the parameters (this%argv: array of strings containing program name (alamDMC) and arguments)
                   call getArgv(this%argc,this%argv,info)
             endif
             !
             ! Attempt to identify the command argument in the first place
             if ((this%argc >= command_argpos) .and. (command_argpos > 0) .and. (size(command_map) > 0)) then
                   ! Check if the command appears in the command line
-                  this%is_command_identified = resolveName(command_map,this%argv(command_argpos),this%command_id)
+                  this%is_command_identified = resolveName(command_map,this%argv(command_argpos),this%command_id) !MB: logical function resolveName(themap,name,id[,index]) defined in criLinearMap.f90; default command_id = -1, here to be overwritten with that of argv(command_argpos)
                   if (.not. this%is_command_identified) then
                         errmsg = 'Unknown command: ' // trim(this%argv(command_argpos))
                         call finishProcessing(this,command_map,info,terminate,command_desc,prologue_fx,epilogue_fx)
@@ -330,7 +331,7 @@ contains
       end subroutine
                                     
                                     
-      !> Process the command line and put the command line arguments into an allocatable array of strings
+      !> Process the command line using Fortran intrinsic procedures (command_argument_count, get_command_argument) and put the command line arguments into an allocatable array of strings (argv)
       subroutine getArgv(argc,argv,info)
       implicit none
       !> Number of command parameters. The program name does not count as one of the command arguments.
@@ -342,11 +343,11 @@ contains
       integer :: i,ierr, max_param_len, param_len
       !
             info = criErr_MemAlloc
-            argc = command_argument_count()
+            argc = command_argument_count() !MB: Fortran intrinsic function: returns the number of command arguments available. If there are no command arguments available, the result is 0. The command name does not count as one of the command arguments.
             ! Scout for the longest parameter
             max_param_len = 0
-            do i = 0, argc
-                  call get_command_argument(i,length=param_len)
+            do i = 0, argc !MB: determine maximum length of supplied command line parameters and store in max_param_len
+                  call get_command_argument(i,length=param_len) !MB: Fortran intrinsic subroutine: Returns the command line argument at position (number) i of the command that invoked the program (here: alamDMC). The command itself (here: alamDMC) is argument number 0 (zeroth position). 
                   if (param_len > max_param_len) max_param_len = param_len
             enddo
             if (max_param_len == 0) max_param_len = max_command_param_len
@@ -356,8 +357,8 @@ contains
             if (ierr /= 0) return
             ! OK, minimal conditions are satisfied.
             info = criError
-            do i = 0, argc
-                  call get_command_argument(i,argv(i),status=ierr)
+            do i = 0, argc !MB: loop over command line parameters (command name + arguments) and store them in array of strings argv
+                  call get_command_argument(i,argv(i),status=ierr) !MB: Fortran intrinsic function
                   if (ierr /= 0) return
             enddo
             info = criSuccess

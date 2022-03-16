@@ -1,4 +1,4 @@
-# $Id$
+# $Id: xiar.cmake 2069 2015-02-20 17:22:41Z jgawad $
 #
 
 # For some reasons CMake does not use xiar by default.

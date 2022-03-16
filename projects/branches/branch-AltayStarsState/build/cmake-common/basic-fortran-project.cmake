@@ -1,4 +1,4 @@
-# $Id$
+# $Id: basic-fortran-project.cmake 3347 2020-01-30 17:05:28Z Matthias.Bonisch $
 
 # Define variables to be used in CMakeLists files in subdirectories:
 # * ${PROJECT_NAME}_ROOT_DIR: output directory
@@ -7,7 +7,7 @@
 #   be stored (used in making a project package)
 
 macro(basicFortranSetup projectname)
-	include("${COMMON_DIR}/basic.cmake")
+	include("${COMMON_DIR}/basic.cmake") #MB: sets build type: Debug, Release
 	include("${COMMON_DIR}/xiar.cmake")
 	include("${COMMON_DIR}/utilities.cmake")
 	# Provides lists: Fortran_FLAGS, Fortran_FLAGS_DEBUG, Fortran_FLAGS_RELEASE

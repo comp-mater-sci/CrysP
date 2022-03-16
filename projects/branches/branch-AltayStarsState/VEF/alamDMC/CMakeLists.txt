@@ -1,6 +1,6 @@
-# $Id$
+# $Id: CMakeLists.txt 2851 2017-03-07 14:07:47Z jgawad $
 #
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 2.8)
 
 project(alamDMC Fortran)
 
@@ -11,7 +11,9 @@ list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
 list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
 set(alamDMC_SRCS
-dmcASR.f90  
+dmcADP.f90
+dmcASR.f90 
+dmcEWC.f90 
 dmcQRS.f90  
 dmcUDSA.f90  
 dmcYld.f90  

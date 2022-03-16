@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: criModules.fpp 2407 2015-11-30 19:34:46Z jgawad $
 !
 !>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -9,8 +9,8 @@
 !>    \copyright KU Leuven
 !>
 !>    \date Date of the first release: 2010-08-18
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 2407 $
+!>    $Date: 2015-11-30 20:34:46 +0100 (Mon, 30 Nov 2015) $
 !>
 !>    History of modifications: (see svn log)
 !>
@@ -23,6 +23,7 @@
 ! 
 ! Add appropriate macro to rename module
 #define criAlgorithm kcriAlgorithm
+#define criArray kcriArray
 #define criAssert kcriAssert
 #define criConfigReader kcriConfigReader
 #define criErrcodes kcriErrcodes
@@ -32,6 +33,7 @@
 #define criLog kcriLog
 #define criMathUtils kcriMathUtils
 #define criMkTemp kcriMkTemp
+#define criNumerics kcriNumerics
 #define criPath kcriPath
 #define criRange kcriRange
 #define criRuntime kcriRuntime

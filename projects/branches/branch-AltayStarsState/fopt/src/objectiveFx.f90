@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: objectiveFx.f90 2027 2014-12-09 13:49:35Z jgawad $
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !>    \author     Jerzy Gawad 
@@ -9,8 +9,8 @@
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>    
 !>    \date Date of initial release: 2012-04-02
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 2027 $
+!>    $Date: 2014-12-09 14:49:35 +0100 (Tue, 09 Dec 2014) $
 !>    History of modifications: (see SVN log).
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! 

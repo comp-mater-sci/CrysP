@@ -1,4 +1,4 @@
-# $Id$
+# $Id: Makefile 3235 2018-01-18 16:02:03Z jgawad $
 #
 #
 
@@ -7,3 +7,8 @@ CMAKELISTS=CMakeLists.txt  alamDMC/CMakeLists.txt  libAlamDMC/CMakeLists.txt  li
 
 include ../build/cmake-common/bootstrap.makefile
 
+doc: user_manual
+
+.PHONY: user_manual
+user_manual:
+	$(CD) manual && $(DOXYGEN)

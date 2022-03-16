@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: criMathUtils.f90 3483 2021-03-02 14:42:38Z Matthias.Bonisch $
 !
 !>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -10,8 +10,8 @@
 !>    \copyright KU Leuven
 !>
 !>    \date Date of first release: 2010-08-02
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 3483 $
+!>    $Date: 2021-03-02 15:42:38 +0100 (Tue, 02 Mar 2021) $
 !>
 !>    History of modifications: (see svn log)
 !>
@@ -56,13 +56,38 @@ module criMathUtils
       !> Array dimension for 3D rotation matrix (rot_matrix_dim x rot_matrix_dim)
       integer,parameter                   :: rot_matrix_dim = 3
       
+      !> Array dimension for symmetric 3D second-rank tensors expressed in Voigt
+      !> notation.
+      integer,parameter                   :: sr_asymm_voigt_dim = 3, &
+                                             sr_symm_voigt_dim = 6, &
+                                             sr_voigt_dim = 9
+
       !> Matrix form of the unit second rank tensor
-      double precision,dimension(3,3),parameter :: unit_sr_Matrix = reshape( &
+      double precision,dimension(sr_tensor_dim,sr_tensor_dim),parameter :: unit_sr_Matrix = reshape( &
            [ 1.D0, 0.D0, 0.D0,     &
              0.D0, 1.D0, 0.D0,     &
              0.D0, 0.D0, 1.D0], [ sr_tensor_dim, sr_tensor_dim ])
       !>@}
 
+      !> Type for 2nd rank tensors in matrix notation. The matrix is initially filled 
+      !> with zeros.
+      type :: SRTensor
+            !> matrix representation of the tensor (t stands for tensor)
+            double precision,dimension(sr_tensor_dim,sr_tensor_dim) :: t = 0.D0
+      end type
+      
+      type(SRTensor),parameter :: unit_sr_tensor = SRTensor(unit_sr_Matrix)
+      
+      !> Rotate the 2nd-rank tensor S to the reference frame given by rotation R.
+      interface rotateSRTensorTo
+            module procedure rotateSRTensorTo_matrix, rotateSRTensorTo_SRTensor
+      end interface
+      
+      !> Rotate the 2nd-rank tensor S back from the reference frame given by rotation R.
+      interface rotateSRTensorFrom
+            module procedure rotateSRTensorFrom_matrix, rotateSRTensorFrom_SRTensor
+      end interface
+      
       !> \interface ocross_product Vector-Vector ocross product operator
       !>
       !> The result of m = ocross_product(u,v) is equivalent to:
@@ -75,7 +100,7 @@ module criMathUtils
       interface vector_product
             module procedure vector_product_dp
       end interface vector_product
-
+      
       !> Representation of Euler angles: Bunge notation
       type EulerAngles
             double precision  :: fi1 = 0.D0 !< \f$ \phi_1 \f$
@@ -104,6 +129,10 @@ module criMathUtils
             module procedure rotmat_triplet, rotmat_EulerAngles
       end interface
 
+      interface trace
+            module procedure trace_matrix, trace_SRTensor
+      end interface
+      
 #ifndef FORT_HAS_NORM2
       !> A substitute for the norm2 intrinsic for ifort 11.1 and older.
       !> 
@@ -200,7 +229,7 @@ contains
       !       !ocross_product_dp(i,i:) = a(i) * b(i:)
       !       !ocross_product_dp(i:,i) = ocross_product_dp(i,i:) 
       !endforall
-      integer :: i,j
+      integer :: i
       !
             do i=1,size(a)
                   !do j = 1, size(b)
@@ -266,7 +295,6 @@ contains
       implicit none
       double precision,dimension(3),intent(in)        :: a,b
       double precision,dimension(3)                   :: vector_product_dp
-      integer :: i
       !
             vector_product_dp(1) = a(2)*b(3) - a(3)*b(2)
             vector_product_dp(2) = a(3)*b(1) - a(1)*b(3)
@@ -281,8 +309,6 @@ contains
             vec_norm2 = sqrt(dot_product(v,v))
       !
       end function
-
-
 
       !> Calculates an angle between two vectors
       !>
@@ -303,7 +329,6 @@ contains
             vec_angle = acos(cosine)
       !
       end function
-
 
       !> Calculates a cosine of angle between two vectors. The function guarantees that 
       !> the result is within range [-1:1]
@@ -334,7 +359,6 @@ contains
             endif
       !
       end function
-
       
       !> Rotation matrix from three Euler angles in Bunge convention (phi1,PHI,phi2).
       !>
@@ -419,9 +443,10 @@ contains
       end function
       
       !> Rotates the second-rank tensor S to the reference frame given by rotation R.
+      !> This corresponds to a coordinate transformation of S into the new frame obtained by rotation R.
       !>
       !> The result is R^T S R, which is equivalent to (R^T S) R
-      pure function rotateSRTensorTo(S,R) result(Srot)
+      pure function rotateSRTensorTo_matrix(S,R) result(Srot)
       implicit none
       double precision,dimension(sr_tensor_dim,sr_tensor_dim)     :: Srot
       double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)     :: S
@@ -432,9 +457,10 @@ contains
       end function
       
       !> Rotates the second-rank tensor S back from the reference frame given by rotation R.
+      !> This corresponds to a coordinate transformation of S into the new frame obtained by rotation R^T.
       !>
       !> The result is R S R^T, which is equivalent to (R S) R^T
-      pure function rotateSRTensorFrom(S,R) result(Srot)
+      pure function rotateSRTensorFrom_matrix(S,R) result(Srot)
       implicit none
       double precision,dimension(sr_tensor_dim,sr_tensor_dim)     :: Srot
       double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)     :: S
@@ -444,6 +470,33 @@ contains
       !
       end function
       
+      !> Rotates the second-rank tensor S to the reference frame given by rotation R.
+      !> This corresponds to a coordinate transformation of S into the new frame obtained by rotation R.
+      !>
+      !> The result is R^T S R, which is equivalent to (R^T S) R
+      pure function rotateSRTensorTo_SRTensor(S,R) result(Srot)
+      implicit none
+      type(SRTensor)                :: Srot
+      type(SRTensor),intent(in)     :: S
+      double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
+      !
+            Srot%t = rotateSRTensorTo_matrix(S%t, R)
+      !
+      end function
+      
+      !> Rotates the second-rank tensor S back from the reference frame given by rotation R.
+      !> This corresponds to a coordinate transformation of S into the new frame obtained by rotation R^T.
+      !>
+      !> The result is R S R^T, which is equivalent to (R S) R^T
+      pure function rotateSRTensorFrom_SRTensor(S,R) result(Srot)
+      implicit none
+      type(SRTensor)                :: Srot
+      type(SRTensor),intent(in)     :: S
+      double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
+      !
+            Srot%t = rotateSRTensorFrom_matrix(S%t, R)
+      !
+      end function
       
       !> Calculation of the Frobenius norm (aka Hilbert–Schmidt norm) of the rectangular matrix M
       pure double precision function FrobeniusNorm(M) result(fn)
@@ -453,25 +506,62 @@ contains
       !$ integer,parameter :: min_omp_size = 128*128
       !
             fn = 0.D0
-            !$omp parallel do default(shared) private(i) reduction(+:fn) if (size(M) >= min_omp_size)
+            !!$omp parallel do default(shared) private(i) reduction(+:fn) if (size(M) >= min_omp_size) ! HGH: Commented it out due to compilation error
             do i = lbound(M,dim=2), ubound(M,dim=2)
                   fn = fn + dot_product(M(:,i),M(:,i))
             enddo
-            !$omp end parallel do
+            !!$omp end parallel do ! HGH: Commented it out due to compilation error
             fn = sqrt(fn)
       !
       end function
-      
-      
-      !> The function converts Voigt-style vector vec into symmetrical rank-two tensors.
+            
+      !> The function converts the antisymmetrical rank-two tensors mat into Voigt-style vector representation.
+      !> Ordering of the tensor terms in the vector follows the convention used in Abaqus: 
+      !> 12, 23, 13
+      !>
+      !> There is a reverse conversion available. \sa Vec3ToMat33
+      pure function Mat33ToVec3(mat) result(vec)
+      implicit none
+      double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
+      double precision,dimension(sr_asymm_voigt_dim)                      :: vec
+      !
+            vec(1) = mat(1,2)
+            vec(2) = mat(2,3)
+            vec(3) = mat(1,3)
+      !
+      end function
+
+      !> The function converts Voigt-style vector vec into antisymmetrical rank-two tensor.
+      !> Ordering of the tensor terms in the vector follows the convention used in Abaqus: 
+      !> 12, 23, 13. 
+      !>
+      !> There is a reverse conversion available. \sa Mat33ToVec3
+      pure function Vec3ToMat33(vec) result(mat)
+      implicit none
+      double precision,dimension(sr_asymm_voigt_dim),intent(in)  :: vec
+      double precision,dimension(sr_tensor_dim,sr_tensor_dim)    :: mat
+      !
+            mat(1,1) = 0.D0
+            mat(2,2) = 0.D0
+            mat(3,3) = 0.D0
+            mat(1,2) = vec(1)
+            mat(2,3) = vec(2)
+            mat(1,3) = vec(3)
+            mat(2,1) = -mat(1,2)
+            mat(3,1) = -mat(1,3)
+            mat(3,2) = -mat(2,3)
+      !
+      end function
+
+      !> The function converts Voigt-style vector vec into symmetrical rank-two tensor.
       !> Ordering of the tensor terms in the vector follows the convention used in Abaqus: 
       !> 11, 22, 33, 12, 23, 13. 
       !>
       !> There is a reverse conversion available. \sa Mat33ToVec6
       pure function Vec6ToMat33(vec) result(mat)
       implicit none
-      double precision,dimension(6),intent(in)  :: vec
-      double precision,dimension(3,3)           :: mat
+      double precision,dimension(sr_symm_voigt_dim),intent(in)  :: vec
+      double precision,dimension(sr_tensor_dim,sr_tensor_dim)   :: mat
       !
             mat(1,1) = vec(1)
             mat(2,2) = vec(2)
@@ -485,7 +575,6 @@ contains
       !
       end function
 
-      
       !> The function converts the symmetrical rank-two tensors mat into Voigt-style vector representation.
       !> Ordering of the tensor terms in the vector follows the convention used in Abaqus: 
       !> 11, 22, 33, 12, 23, 13
@@ -493,8 +582,8 @@ contains
       !> There is a reverse conversion available. \sa Vec6ToMat33
       pure function Mat33ToVec6(mat) result(vec)
       implicit none
-      double precision,dimension(3,3),intent(in)      :: mat
-      double precision,dimension(6)                   :: vec
+      double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
+      double precision,dimension(sr_symm_voigt_dim)                       :: vec
       !
             vec(1) = mat(1,1)
             vec(2) = mat(2,2)
@@ -505,7 +594,72 @@ contains
       !
       end function
 
+      !> The function converts Voigt-style vector vec into rank-two tensor.
+      !> Ordering of the tensor terms in the vector follows the convention used in Abaqus: 
+      !> 11, 22, 33, 12, 23, 31, 21, 32, 13. 
+      !>
+      !> There is a reverse conversion available. \sa Mat33ToVec9
+      pure function Vec9ToMat33(vec) result(mat)
+      implicit none
+      double precision,dimension(sr_voigt_dim),intent(in)  :: vec
+      double precision,dimension(sr_tensor_dim,sr_tensor_dim)   :: mat
+      !
+            mat(1,1) = vec(1)
+            mat(2,2) = vec(2)
+            mat(3,3) = vec(3)
+            mat(1,2) = vec(4)
+            mat(2,3) = vec(5)
+            mat(3,1) = vec(6)
+            mat(2,1) = vec(7)
+            mat(3,2) = vec(8)
+            mat(1,3) = vec(9)
+      !
+      end function
+
+      !> The function converts the rank-two tensor mat into Voigt-style vector representation.
+      !> Ordering of the tensor terms in the vector follows the convention used in Abaqus: 
+      !> 11, 22, 33, 12, 23, 31, 21, 32, 13.
+      !>
+      !> There is a reverse conversion available. \sa Vec9ToMat33
+      pure function Mat33ToVec9(mat) result(vec)
+      implicit none
+      double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
+      double precision,dimension(sr_voigt_dim)                            :: vec
+      !
+            vec(1) = mat(1,1)
+            vec(2) = mat(2,2)
+            vec(3) = mat(3,3)
+            vec(4) = mat(1,2)
+            vec(5) = mat(2,3)
+            vec(6) = mat(3,1)
+            vec(7) = mat(2,1)
+            vec(8) = mat(3,2)
+            vec(9) = mat(1,3)
+      !
+      end function
+
+      !> Calculates trace of the square n x n matrix X
+      pure double precision function trace_matrix(X) result(res)
+      implicit none
+      double precision,dimension(:,:),intent(in)    :: X
+      !
+      integer :: i
+            res = 0.D0
+            do i = 1, minval(shape(X))
+                res = res + X(i,i)
+            enddo
+      !
+      end function
     
+      !> Calculates trace of second-rank tensor X
+      pure double precision function trace_SRTensor(X) result(res)
+      implicit none
+      type(SRTensor),intent(in)    :: X
+      !
+           res = trace_matrix(X%t)
+      !
+      end function
+
       !
       ! Some operations on double_pair
       !
@@ -547,6 +701,38 @@ contains
       !
       end subroutine
 
-      
+      !> Calculate the real roots of quadratic polynomial given in form
+      !> a^2 x + b x + c = 0
+      !>
+      !> 
+      !> Provides x1 and x2. Both x1 and x2 are guaranteed to be set to a defined value,
+      !> even if no real roots exist and info /= criSuccess is returned.
+      integer function solveQuadraticPolynomial(a, b, c, x) result(n_roots)
+      implicit none
+      double precision,intent(in)   :: a, b, c
+      double precision,dimension(2),intent(out)  :: x
+      !
+      double precision :: delta
+      !
+            ! Satisfy intent(out)
+            x = 0.D0
+            n_roots = 0
+            if (abs(a) > tiny(0.D0)) then
+                  delta = b**2 - 4.D0 * a * c
+                  if (delta >= 0) then
+                        x(1) = 0.5D0 * (-b - sqrt(delta)) / a
+                        x(2) = 0.5D0 * (-b + sqrt(delta)) / a
+                        n_roots = 2
+                  endif
+            else
+                  ! Solve linear equation b x = -c
+                  if (abs(a) > epsilon(0.D0)) then
+                        x(1) = -c / b
+                        n_roots = 1
+                  endif
+            endif
+      !
+      end function
+
 end module
 

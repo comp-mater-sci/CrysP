@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: criRange.f90 3345 2020-01-23 21:31:07Z Hadi.Ghiabakloo $
 !
 !>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -9,8 +9,8 @@
 !>    \copyright KU Leuven
 !>
 !>    \date Date of first release: 2012-10-31
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 3345 $
+!>    $Date: 2020-01-23 22:31:07 +0100 (Thu, 23 Jan 2020) $
 !>
 !>    History of modifications: (see svn log)
 !>
@@ -176,20 +176,11 @@ private
       interface discreteRange
             module procedure discreteRange_init
       end interface
-      
-      !> Generic interface for non-virtual calls to the methods "next"   
-      interface next
-            module procedure uniformRange_next, biasedRange_next, multiBiasedRange_next, discreteRange_next
-      end interface
-      
-      
-      
+
 !>@{ \name Public datatypes
 public :: range_type, uniformRange, biasedRange, doubleBiasedRange, multiBiasedRange, discreteRange
 public :: bias_t
 !>@}
-
-public :: next
 
 contains
 
@@ -282,7 +273,7 @@ contains
       !  Members of biasedRange
       !
       
-      function biasedRange_init(rbegin,rend,ratio,npoints,endpoint) result(res)
+      elemental function biasedRange_init(rbegin,rend,ratio,npoints,endpoint) result(res)
       implicit none
       type(biasedRange)             :: res
       double precision,intent(in)   :: rbegin !< Left endpoint of the range
@@ -345,7 +336,7 @@ contains
       !  Members of multiBiasedRange
       !
 
-      function multiBiasedRange_init(rbegin,biases,endpoint) result(res)
+      pure function multiBiasedRange_init(rbegin,biases,endpoint) result(res)
       implicit none
       type(multiBiasedRange)                    :: res
       double precision,intent(in)               :: rbegin   !< Leftmost endpoint of the range.
@@ -382,7 +373,7 @@ contains
       !> Initialization function for double-biased range. The result of the function
       !> is actually an instance of multiBiasedRange with two biased ranges. By default,
       !> the first range has progression ratio "ratio", while the second has "1.0/ratio".
-      function doubleBiasedRange_init(rbegin,rend,ratio,npoints,endpoint,ratio2) result(res)
+      elemental function doubleBiasedRange_init(rbegin,rend,ratio,npoints,endpoint,ratio2) result(res)
       implicit none
       type(multiBiasedRange)        :: res
       double precision,intent(in)   :: rbegin   !< Left endpoint of the range
@@ -455,7 +446,7 @@ contains
       !  Members of discreteRange
       !
 
-      function discreteRange_init(values) result(res)
+      pure function discreteRange_init(values) result(res)
       implicit none
       type(discreteRange)                       :: res
       double precision,dimension(:),intent(in)  :: values   !< Sequence of points

@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: criPath.f90 3107 2017-08-30 07:29:53Z jgawad $
 !
 !>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -9,8 +9,8 @@
 !>    \copyright KU Leuven
 !>
 !>    \date Date of first release: 2012-11-02
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 3107 $
+!>    $Date: 2017-08-30 09:29:53 +0200 (Wed, 30 Aug 2017) $
 !>
 !>    History of modifications: (see svn log)
 !>
@@ -32,20 +32,24 @@ implicit none
 #endif
 
       !> Maximal length of path acceptable by the filesystem
-      integer,parameter       :: max_pathlen = 512
+      integer,parameter       :: max_pathlen = 2048
 
 contains
 
-            
-      function basename(path)
-      use ifport
+      !> Return basename of the pathname `path`, which is the name
+      !> of the file or directory `path` with any leading directory
+      !> components removed.
+      !>
+      !> The function is modelled after Unix command `basename` and
+      !> Python os.path.basename()
+      elemental function basename(path)
       implicit none
       character(len=*),intent(in)   :: path
       character(len=len(path))       :: basename
       !
       integer :: lb,l,u
       !
-            lb = lnblnk(path)
+            lb = len_trim(path)
             if (lb > 0) then
                   l = 1
                   u = index(path, pathsep, back=.true.)
@@ -67,7 +71,6 @@ contains
                   else
                         u = lb
                   endif
-                  ASSERT(l <= u)
                   ! finally: shift to the left
                   basename = adjustl(path(l:u))
             else
@@ -77,17 +80,39 @@ contains
       end function
       
       !> Returns the path without file exension (if there is any)
-      function stripExt(path)
-      use ifport
+      elemental function stripExt(path)
       implicit none
       character(len=*),intent(in)   :: path
       character(len=len(path))      :: stripExt
       !
+      character(len=len(path))   :: ext ! temporary
+      !
+            call splitExt(path, stripExt, ext)
+      !
+      end function      
+      
+      !> Split the pathname path into a pair (root, ext).
+      !>
+      !> Ext is empty or begins with a period and contains at most one period. 
+      !> Leading periods on the basename are ignored.
+      !> Semantically it should hold that (root // ext) == path, but the effect of 
+      !> leading and trailing blanks must be also considered. It is safer to assume
+      !> that:
+      !> adjustl(trim(root)) // adjustl(trim(ext)) == adjustl(path)
+      !> The procedure removes the leading blanks from root and ext, so:
+      !> len_trim(root) // len_trim(ext) == adjustl(path)
+      elemental subroutine splitExt(path, root, ext)
+      implicit none
+      character(len=*),intent(in)   :: path
+      character(len=*),intent(out)  :: root
+      character(len=*),intent(out)  :: ext
+      !
       integer :: lb,l,u,ups
       character,parameter :: dot = '.'
       !
-            lb = lnblnk(path)
-            stripExt = ''
+            lb = len_trim(path)
+            root = ''
+            ext = ''
             if (lb > 0) then
                   l = 1
                   u = index(path, dot, back=.true.)
@@ -107,11 +132,15 @@ contains
                   endif
                   if (l <= u) then 
                         ! finally: shift to the left
-                        stripExt = adjustl(path(l:u))
+                        root = adjustl(path(l:u))
+                        ups = u + 1 ! Supposed position of the dot
+                        if (ups <= lb) ext = adjustl(path(ups:lb))
+                        
                   endif
             endif
+
       !
-      end function      
+      end subroutine
       
       
       !> Construct a filename by stitching together prefix and suffix.
@@ -125,6 +154,46 @@ contains
             mkfilename = trim(adjustl(prefix))//trim(adjustl(suffix))
       !
       end function
+
+
+      !> Join two path components, inserting directory separator
+      !> as needed.
+      !>
+      !> Notable special case:
+      !> - 2nd path begins with root path, e.g.: 
+      !>   pathjoin('path1','/path2') returns '/path2'
+      elemental function pathjoin(path_a, path_b) result(path)
+      implicit none
+      character(len=*),intent(in)               :: path_a, path_b
+      character(len=len(path_a)+len(path_b))    :: path
+      !
+      logical :: a_sep, b_sep
+      integer :: a_end, b_start
+      character :: sep
+      !
+            sep = ''
+            a_sep = .false. ! does path_a _end_ with pathsep?
+            b_sep = .false. ! does path_b _begin_ with pathsep?
+            ! Get the index of first non-blank character in path_b
+            b_start = verify(path_b, ' ')
+            if (b_start > 0) b_sep = path_b(b_start:b_start) == pathsep
+            if (b_sep) then
+                  ! path_b begins with pathsep, so it is an absolute
+                  ! path starting at root. We neglect path_a in this case.
+                  path = trim(adjustl(path_b))
+                  return
+            endif
+            ! ... and the last non-blank in path_a
+            a_end = verify(path_a, ' ', back=.true.)
+            if (a_end > 0) a_sep = path_a(a_end:a_end) == pathsep
+            ! Add separator if the first path has no separator
+            if ((a_end > 0) .and. .not. a_sep) sep = pathsep
+            ! We have to trim sep to get empty string for '', otherwise it is 
+            ! a one-character string.
+            path = trim(adjustl(path_a)) // trim(sep) // trim(adjustl(path_b))
+      !
+      end function
+
       
 end module
       

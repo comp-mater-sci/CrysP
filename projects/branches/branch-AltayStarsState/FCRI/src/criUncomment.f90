@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: criUncomment.f90 2392 2015-11-20 17:01:10Z jgawad $
 !
 !>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -9,8 +9,8 @@
 !>    \copyright KU Leuven
 !>
 !>    \date Date of first release: 2010-11-13
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 2392 $
+!>    $Date: 2015-11-20 18:01:10 +0100 (Fri, 20 Nov 2015) $
 !>
 !>    History of modifications: (see svn log)
 !>
@@ -26,6 +26,13 @@ module criUncomment
 
       character,parameter     :: comment_sign = '#'
 
+      !> Read value from iounit and strip comments
+      !> Arguments:
+      !> \param[in] inunit The IO unit (type: integer)
+      !> \param[out] val   The value being retrieved (type: one of the supported types 
+      !>                   (integer, logical, string, double precision) OR a vector of 
+      !>                   elements of supported types)
+      !> \param[in] frmt  The format to be used in the read operation (type: character(len=*),optional)
       interface readValue
             
             module procedure read_integer,   read_vector_integer, &

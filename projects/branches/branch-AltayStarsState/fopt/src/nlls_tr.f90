@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: nlls_tr.f90 2739 2016-08-26 14:14:49Z jgawad $
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !>    \author     Jerzy Gawad 
@@ -9,8 +9,8 @@
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>    
 !>    \date Date of initial release: 2010-06-25
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 2739 $
+!>    $Date: 2016-08-26 16:14:49 +0200 (Fri, 26 Aug 2016) $
 !>    History of modifications: (see SVN log).
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -117,8 +117,8 @@ contains
       subroutine nlls_TR_solve(objFx,vX,config,r1,r2,info,resInfo,SolutionInitOut)
       use, intrinsic :: IEEE_EXCEPTIONS
       use, intrinsic :: IEEE_ARITHMETIC
+      use mkl_rci
       implicit none
-      include  "mkl_rci.fi"
       ! Formal parameters
       class(objectiveFunction),intent(inout)          :: objFx    !< objective function
       !> Design vector, dimension of vX must correspond to those in objFX
@@ -135,7 +135,7 @@ contains
       !!!! Local variables
       integer                              :: n        !< Dimension of design vector
       integer                              :: m        !< Dimension of objective function vector
-      integer(kind=8)   :: handle
+      type(HANDLE_TR)   :: handle
       integer           :: res, linfo 
       ! 
       double precision,allocatable,dimension(:)    :: vLW, vUP   ! would be of size    
@@ -152,7 +152,7 @@ contains
       integer                        :: ierr, i
       character(len=512)             :: message
       !---------------------------------------------------
-            handle = 0; RCI_Req = 0; next_solve = .true.
+            RCI_Req = 0; next_solve = .true.
             info = -1
             !! Check preconditions
             ! TODO 
@@ -215,7 +215,6 @@ contains
             endif
             !
             !! Initialize MKL solver
-            handle = 0
             res = dtrnlspbc_init(handle, n, m, vX, vLW, vUP, config%eps,  config%iter1,  config%iter2,  config%init_step)
             ! Check result      
             if (checkMKLRescode(res,'initialization of TR nlls solver', nllsTR_ounit) /= 0) return
@@ -466,8 +465,8 @@ contains
       !>
       !> This subroutine uses djacobi_solve RCI subroutine from MKL.
       subroutine JacobiObjEval_djacobi(this,vX, info)
+      use mkl_rci
       implicit none
-      include  "mkl_rci.fi"
       class(MKLFDJacobiObjFunction),intent(inout)     :: this
       double precision,dimension(:),intent(in)        :: vX       !< Dimension must be: [n_X_dim]
       integer,intent(out)                             :: info
@@ -516,11 +515,13 @@ contains
                   !!-----------------------------------------------------------------------
                   case(1)       
                         call this%objectiveEval(tmp_vX,info)
+                        if (info /= 0) exit
                         ! Grab the state
                         f1 = this%state%vF
                   !!-----------------------------------------------------------------------
                   case(2)       
                         call this%objectiveEval(tmp_vX,info)
+                        if (info /= 0) exit
                         ! Grab the state
                         f2 = this%state%vF
                   !!-----------------------------------------------------------------------
@@ -538,7 +539,7 @@ contains
       deallocate(f0,f1,f2,tmp_vX)
       ! Finalize Jacobi solver, release resources
       res = djacobi_delete(handle)
-      if (checkMKLRescode(res,'recalculation of Jacobi matrix', nllsTR_ounit) /= 0) then
+      if ((info /= 0) .or. (checkMKLRescode(res,'recalculation of Jacobi matrix', nllsTR_ounit) /= 0)) then
             info = 1
       else
             info = 0
@@ -555,8 +556,8 @@ contains
       !> indicates an error conditions, the function will write an error message
       !> containing 'decrypted' description of error.
       integer function checkMKLRescode(res, leadmsg,  ounit)
+      use mkl_rci
       implicit none
-      include  "mkl_rci.fi"
       integer,intent(in)            :: res
       character(len=*),intent(in)   :: leadmsg
       integer,intent(in)            :: ounit

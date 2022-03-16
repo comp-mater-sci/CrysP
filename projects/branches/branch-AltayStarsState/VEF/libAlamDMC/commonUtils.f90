@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: commonUtils.f90 2066 2015-02-11 16:15:25Z jgawad $
 !
 !>    \author Jerzy Gawad                                                
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -8,8 +8,8 @@
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
 !>    \date Date of the initial release: 2012-08-16
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 2066 $
+!>    $Date: 2015-02-11 17:15:25 +0100 (Wed, 11 Feb 2015) $
 !>
 !>    History of modifications: (see svn log)
 !

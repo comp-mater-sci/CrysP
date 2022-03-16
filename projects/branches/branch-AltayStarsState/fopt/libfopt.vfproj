@@ -43,12 +43,33 @@
 				<Tool Name="VFPreLinkEventTool"/>
 				<Tool Name="VFPreBuildEventTool"/>
 				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Release-instrumented|Win32" ConfigurationType="typeStaticLibrary">
+				<Tool Name="VFFortranCompilerTool" AdditionalOptions="/stand:f08" SuppressStartupBanner="true" DebugInformationFormat="debugLineInfoOnly" MultiProcessorCompilation="true" Optimization="optimizeFull" Preprocess="preprocessYes" F2003Semantics="true" StandardWarnings="standardWarningsF08" DebugParameter="debugParameterUsed" CommonElementAlignment="alignCommonEightBytes" ModulePath="$(IntDir)\include" Traceback="true" RuntimeChecks="rtChecksNone" UseMkl="mklSequential"/>
+				<Tool Name="VFLibrarianTool"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Release-instrumented|x64" ConfigurationType="typeStaticLibrary" WholeProgramOptimization="true">
+				<Tool Name="VFFortranCompilerTool" AdditionalOptions="/stand:f08" SuppressStartupBanner="true" DebugInformationFormat="debugLineInfoOnly" MultiProcessorCompilation="true" Optimization="optimizeFull" InterproceduralOptimizations="ipoNone" Preprocess="preprocessYes" F2003Semantics="true" StandardWarnings="standardWarningsF08" DebugParameter="debugParameterUsed" CommonElementAlignment="alignCommonEightBytes" ModulePath="$(IntDir)\include" Traceback="true" RuntimeChecks="rtChecksNone" UseMkl="mklSequential"/>
+				<Tool Name="VFLibrarianTool"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
 				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration></Configurations>
 	<Files>
 		<Filter Name="Header Files" Filter="fi;fd"/>
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
 		<File RelativePath=".\src\jacobiFD.f90"/>
+		<File RelativePath=".\src\mkl_rci_stub.f90"/>
 		<File RelativePath=".\src\nlls_tr.f90"/>
 		<File RelativePath=".\src\nnls_mod.f90"/>
 		<File RelativePath=".\src\objectiveFx.f90"/></Filter></Files>

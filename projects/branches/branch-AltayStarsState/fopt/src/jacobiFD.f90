@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: jacobiFD.f90 2026 2014-12-09 13:25:56Z jgawad $
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!
@@ -10,8 +10,8 @@
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>    
 !>    \date Date of initial release: 2012-03-26
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 2026 $
+!>    $Date: 2014-12-09 14:25:56 +0100 (Tue, 09 Dec 2014) $
 !>    History of modifications: (see SVN log).
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! 

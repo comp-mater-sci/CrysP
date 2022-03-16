@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: criToolset.fpp 2087 2015-03-04 15:03:24Z jgawad $
 !
 !>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -9,8 +9,8 @@
 !>    \copyright KU Leuven
 !>
 !>    \date Date of first release: 2010-08-18
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 2087 $
+!>    $Date: 2015-03-04 16:03:24 +0100 (Wed, 04 Mar 2015) $
 !>
 !>    History of modifications: (see svn log)
 !>

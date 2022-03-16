@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: criTestRange.f90 2479 2016-03-18 11:30:34Z jgawad $
 !
 !>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -9,8 +9,8 @@
 !>    \copyright KU Leuven
 !>
 !>    \date Date of first release: 2012-10-31
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 2479 $
+!>    $Date: 2016-03-18 12:30:34 +0100 (Fri, 18 Mar 2016) $
 !>
 !>    History of modifications: (see svn log)
 !>
@@ -22,6 +22,7 @@
 !
 module criTestRange
 use criRange
+use criTest
 implicit none
 private      
 

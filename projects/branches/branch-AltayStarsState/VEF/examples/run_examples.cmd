@@ -1,0 +1,31 @@
+@echo off
+rem $Id: run_examples.cmd 3345 2020-01-23 21:31:07Z Hadi.Ghiabakloo $
+
+setlocal ENABLEDELAYEDEXPANSION
+setlocal ENABLEEXTENSIONS
+
+if not defined VEF_ROOT (
+	echo.
+	echo Error: cannot run the examples. 
+	echo Please set VEF_ROOT environment variable to resolve this problem.
+	exit /B 2
+)
+
+set ALAMDMC=!VEF_ROOT!\bin\alamDMC.exe
+
+set LOGFILE=run_examples.log
+
+echo %date% %time% > %LOGFILE%
+
+for %%m in (UDSA ASR QRS YLD EWC ADP) do (
+	for %%x in (*_%%m*.cfg) do (
+		echo %%m %%x
+		!ALAMDMC! %%m %%x
+		if ERRORLEVEL 1 (
+			echo FAILURE: %%m %%x >> %LOGFILE%
+		) else (
+			echo SUCCESS: %%m %%x >> %LOGFILE%
+		)
+		
+	)
+)

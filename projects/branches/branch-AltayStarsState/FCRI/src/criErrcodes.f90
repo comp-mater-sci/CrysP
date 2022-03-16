@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: criErrcodes.f90 3345 2020-01-23 21:31:07Z Hadi.Ghiabakloo $
 !
 !>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -9,8 +9,8 @@
 !>    \copyright KU Leuven
 !>
 !>    \date Date of first release: 2010-08-05
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 3345 $
+!>    $Date: 2020-01-23 22:31:07 +0100 (Thu, 23 Jan 2020) $
 !>
 !>    History of modifications: (see svn log)
 !>
@@ -27,6 +27,7 @@
 !> \todo Define string-output subroutine to emmit messages
 !> \todo Define IO output subroutine to emmit messages
 module criErrcodes
+implicit none
       !>@{ \name General error codes
       
       !> Success
@@ -44,10 +45,12 @@ module criErrcodes
       
       integer,parameter :: criErr_NumNaN     = -10    !< Error that led to NaN or Inf
 
-      integer,parameter :: criErr_BadArgs    = -20    !< Inconsistent of incorrect parameters
+      integer,parameter :: criErr_BadArgs    = -20    !< Inconsistent of incorrect procedure arguments
       integer,parameter :: criErr_BadDims    = -21    !< Dimension mismatch between parameters
       integer,parameter :: criErr_NullPtr    = -22    !< Null pointer would be referenced
-      integer,parameter :: criErr_NonAlloc   = -23    !< Non-allocated allocatable would be referenced 
+      integer,parameter :: criErr_NonAlloc   = -23    !< Non-allocated allocatable would be referenced
+      integer,parameter :: criErr_BadValue   = -24    !< Incorrect value is encountered
+      integer,parameter :: criErr_BadIndex   = -25    !< Subscript is out of the allowed range
       
       integer,parameter :: criErr_Mem        = -30    !< Error on memory allocation/delallocation attempt
       integer,parameter :: criErr_MemAlloc   = -31    !< Error on memory allocation attempt
@@ -64,7 +67,20 @@ module criErrcodes
       integer,parameter :: criErr_DynCast    = -62    !< Cannot dynamically cast  one type into another
       integer,parameter :: criErr_TypeSel    = -63    !< No suitable match in "select type" construct.
       
+      integer,parameter :: criErr_NotImplemented = -90 !< Feature not implemented
       !>@}
       
+contains
+
+
+      !> Returns .true. if errcode represents an error condition, otherwise .false.
+      elemental logical function is_error(errcode)
+      implicit none
+      integer,value,intent(in)    :: errcode
+      !
+            is_error = (errcode /= criSuccess) .and. (errcode /= criFailure)
+      !
+      end function
+
 end module
 

@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: criTestUncomment.f90 2479 2016-03-18 11:30:34Z jgawad $
 !
 !>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -9,8 +9,8 @@
 !>    \copyright KU Leuven
 !>
 !>    \date Date of the initial release: 2013-07-09
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 2479 $
+!>    $Date: 2016-03-18 12:30:34 +0100 (Fri, 18 Mar 2016) $
 !>
 !>    History of modifications: (see svn log)
 !>
@@ -20,7 +20,7 @@
 
 module criTestUncomment
 use criUncomment
-
+use criTest
 implicit none
 private
 

@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: testNllsTR.f90 2739 2016-08-26 14:14:49Z jgawad $
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !>    \author     Jerzy Gawad 
@@ -9,8 +9,8 @@
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>    
 !>    \date Date of initial release: 2010-10-28
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 2739 $
+!>    $Date: 2016-08-26 16:14:49 +0200 (Fri, 26 Aug 2016) $
 !>    History of modifications: (see SVN log).
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! 
@@ -25,6 +25,7 @@ implicit none
 contains
 
       subroutine testJacobiCalculations()
+      use mkl_rci
       implicit none
       integer :: m,n
       double precision,allocatable,dimension(:)         :: vX,vF,vX0,vInvDelta
@@ -37,7 +38,7 @@ contains
 
       type(quadraticFX) :: objFunc
       ! type(quadraticAnalyticFX) :: objFunc
-      include  "mkl_rci.fi"
+      
       
             !!!!!!!
             n = testFunctions_n
@@ -181,11 +182,11 @@ contains
       end subroutine
      
       subroutine testTROptimization()
+      use mkl_rci
       use nllsTR
       use jacobiFD
       use testFunctions
       implicit none
-      include  "mkl_rci.fi"
       !
       integer :: n, m
       double precision,allocatable,dimension(:)         :: vX,vF

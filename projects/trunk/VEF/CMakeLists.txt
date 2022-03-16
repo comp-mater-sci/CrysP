@@ -27,12 +27,6 @@ set(fng_DIR "../fng/${CMAKE_BUILD_TYPE}")
 find_package(fng REQUIRED)
 include_directories(${fng_INCLUDE_DIR})
 
-set(slis_DIR "../slis/${CMAKE_BUILD_TYPE}")
-# Quick and dirty way, since SLIS does not provide CMake package yet (/if ever/)
-get_filename_component(slis_INCLUDE_DIR "${slis_DIR}/include" ABSOLUTE)
-get_filename_component(slis_LIB_DIR "${slis_DIR}/lib" ABSOLUTE)
-message("slis_INCLUDE_DIR = ${slis_INCLUDE_DIR}")
-# Quick and dirty cntd, since SLIS does not provide automatic dependencies yet (/if ever/)
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost REQUIRED COMPONENTS date_time filesystem)
 

@@ -1,4 +1,4 @@
-! $Id$
+! $Id: abstractModule.f90 2963 2017-04-19 14:09:05Z jgawad $
 !
 !>    \author Jerzy Gawad                                                
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -7,13 +7,14 @@
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
 !>    \date Date of the initial release: 2013-02-16
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 2963 $
+!>    $Date: 2017-04-19 16:09:05 +0200 (Wed, 19 Apr 2017) $
 !>
 !>    History of modifications: (see svn log)
 
 !> The module defines abstract types for computational modules
 module dmcAbstractModule
+implicit none
 
       !> Abstract class for computational modules of the DMC
       type,abstract     :: AbstractModule
@@ -33,6 +34,9 @@ module dmcAbstractModule
             
             !> Start the calculations.
             procedure(IF_AbstractModule_run),deferred,pass(this)              :: run
+            
+            !> Finalization of the object
+            procedure(IF_AbstractModule_finalize),deferred,pass(this)         :: finalize
             
       end type
 
@@ -61,6 +65,11 @@ module dmcAbstractModule
                   class(AbstractModule),intent(inout) :: this
                   integer,intent(out)                 :: info
             end subroutine
+            
+            integer function IF_AbstractModule_finalize(this)
+            import :: AbstractModule
+                  class(AbstractModule),intent(inout) :: this
+            end function
             
       end interface
 

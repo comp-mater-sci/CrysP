@@ -1,31 +1,37 @@
-/*
-$Id$
-
-DMC manual - main page.
-
-Author:    Jerzy Gawad, Jerzy.Gawad@cs.kuleuven.be
-Copyright: KU Leuven
-*/
-
-
 /*!
+\mainpage Home
 
-\mainpage 
+Welcome to the manual of the Virtual Experimentation Framework software suite!
 
+New to the VEF?
+---------------
+- \ref page_gettingstarted describes the installation of the VEF software.
+- \ref guided_tour gives a step-by-step tour of some typical use cases where the VEF is applied.
 
-The AlamDMC program provides a way to perform a stress-driven analysis by means of micro-mechanical models, such as the Full Constraint Taylor or the Alamel, which typically are strain-rate driven.
+Ready to run your own VEF simulations?
+---------------
+The \ref user_reference presents the main components of the VEF and discusses 
+  how to operate them. 
+  It covers:
+- \ref page_conventions that explain how to specify the inputs and interpret the outputs, 
+- \ref page_expert_mode that provides a complete control over all the knobs  in the VEF software, 
+- \ref page_simple_mode that helps to carry out standard tasks with minimal
+effort, while sticking to pre-defined defaults,
+- \ref page_utilities that facilitate a more integral use of the VEF, 
+- \ref page_theory that introduces the foundations of the VEF software and multi-scale crystal
+plasticity models it utilizes.
+- \ref page_licensing that discusses how to use the licensing options.
 
+Need a helping hand?
+--------------- 
 
-This manual is divided into three parts.
-
-The first part forms a user manual:
-<ul>
-
-<li> Section \ref page_gettingstarted tells you how to run the software and outlines the ways how the code can
-     be used.
-<li> Section \ref page_configuration explains in detail what input has to be provided by the user: configuration files and input data.   
-<li> Section \ref theory  contains  a brief overview how the software operates and how the quantities of interest are calculated.
-</ul>
+Included \ref page_tutorials are:
+  - \ref guided_tour "Guided tour in the expert mode"
+  - \ref tutorial_swift "Identification of Swift parameters from tensile data"
+  
+\ref page_resources contain:
+  - \ref examples - a collection of sample problems bundled with the VEF.
+  - \ref support
 
 */
 

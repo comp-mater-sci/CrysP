@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: alamYLP.f90 3483 2021-03-02 14:42:38Z Matthias.Bonisch $
 !
 !>    \author Jerzy Gawad                                                
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -8,8 +8,8 @@
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
 !>    \date Date of first release: 2010-11-03
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 3483 $
+!>    $Date: 2021-03-02 15:42:38 +0100 (Tue, 02 Mar 2021) $
 !>
 !>    History of modifications: (see svn log)
 !
@@ -17,130 +17,22 @@
 !>    \file alamYLP.f90 The file contains modules that calculate
 !>          yield locus position directly from the ALAMEL model.      
 !>                                  
-!  
-!
-!> Objective function for minimization of difference between requested stress tensor 
-!> and stresses obtained from the ALAMEL
-module alamEval
-use nllsTR
 
-
-      !> Dimensionality of th search space for vector representation (Stress/Strain rate)
-      integer,parameter :: alamEval_vSD_dim = 5
-      !> Dimensions of second-rank tensor representation of Stress and Strain rate
-      integer,parameter :: alamEval_tSD_dim = 3 
-
-   
-      !> Objective function: difference between the searched-for normalized stress and the normalized
-      !> stress given by the multilevel model.
-      type,extends(MKLFDJacobiObjFunction) :: NormalizedV5DComp
-      
-            !NOTE: [n_X_dim] must be 5
-            !      [m_F_dim] must be 5 
-      
-            !> Normalized stress vector
-            double precision,dimension(alamEval_vSD_dim)        :: vSn = 0.D0 
-            
-            !> Multilevel prediction of stress from the previous call
-            double precision,dimension(alamEval_vSD_dim)        :: vSml = 0.D0
-            
-            !> Flag: request for simulation outputs other than just deviatoric stress.
-            !>
-            !> The full model is not needed for calculation of stresses.
-            logical                                             :: full_model = .false.
-            
-      contains
-            !> Implementation of virtual method defined in ObjectiveFunction
-            procedure,pass(this)           :: objectiveEval => objectiveEval_NV5DComp
-            
-      end type
-
-      !> Performance counter: number of evaluations of the objective function
-      integer                              :: alamEval_objFx_call_count = 0
-
-contains
-
-      subroutine objectiveEval_NV5DComp(this,vX,info)
-      use Kutils
-      use altaySub
-      use altayConfig
-      implicit none
-            class(NormalizedV5DComp),intent(inout)      :: this
-            double precision,dimension(:),intent(in)    :: vX       !< Dimension must be: 5
-            integer,intent(out)                         :: info
-            !
-            double precision,dimension(alamEval_tSD_dim,alamEval_tSD_dim)     :: Atens
-            double precision,dimension(alamEval_vSD_dim)       :: vS, vXn
-            double precision                    :: norm
-            integer                             :: i
-            !
-            integer,parameter :: istp = 1
-            !
-            info = -1
-            i = 0
-            alamEval_objFx_call_count = alamEval_objFx_call_count + 1
-            !
-            ! Transfer normalized vX into second rank tensor.
-            norm = norm2(vX)
-            if (norm < epsilon(0.D0)) return
-            vXn = vX/norm
-            call KVEC5D2MAT(vXn,Atens) 
-            ! Set Atens as current value for processing 
-#ifdef DIAGNOSTIC_OUTPUT                
-            write(*,'(A,1X,5(F12.8))') 'eval for ', vXn
-#endif        
-            ! Re-initialize with a request for just one single step
-            call initStepData(istp,astate,info)
-            if (info /= 0) return
-            !
-            associate (input => astate%simulCalls(istp)%input)
-                  input%dgf = Atens
-                  input%keep_texture = .true.
-                  input%keep_state = .true.
-                  input%full_model = this%full_model
-                  input%do_output_init = .false.
-                  input%do_output_final = .false.
-                  call setStepType(input,acnf%model_id,info)
-            end associate
-            ! Call the simulation
-            call runSteps(astate,info)
-            if (info /= 0) return
-            !
-            ! Retrieve output stress into 5D vector
-            call KMAT2VEC5D(astate%simulCalls(istp)%output%stress_tensor,vS)
-            ! Transfer vS to vSml
-            this%vSml = vS  
-#ifdef DIAGNOSTIC_OUTPUT            
-            write(*,'(A,1X,5(F12.8))') 'stress is ', vS
-#endif            
-            ! Normalize vS
-            norm = norm2(vS)
-            if (norm > 0.D0) then
-                  vS = vS / norm
-                  this%state%vF = this%vSn - vS
-#ifdef DIAGNOSTIC_OUTPUT            
-                  write(*,'(F12.8,1X)') (vS(i),i=1,alamEval_vSD_dim)
-#endif            
-            else
-                 ! norm is zero, so vS=0
-                 this%state%vF = this%vSn
-            endif
-            info = 0
-      end subroutine
-      
-end module
-
-
+    
 !> Implementation of YLP function that can directly use the ALAMEL multilevel model instead of a plastic potential function.
 module alamYLP
-      
+use criErrcodes
+implicit none
+
       type multilevelYLPConfig
             !> Epsilon used for numerical estimation of Jacobi matrix.
             !>
             !> Note: this is a reasonable value. Lowering it can lead to poor convergence or lack of convergence.
-            double precision        :: jacobi_eps = 5.E-2 
+            double precision        :: jacobi_eps = 5.E-1
             !> Request for preliminary solution of linearized problem 
-            logical                 :: linearize = .false.
+            logical                 :: linearize = .true.
+            !> Request for solving the non-linear problem
+            logical                 :: nonlinear = .true.
             !> Default epsilon to be set for all TR-solver convergence criteria, except ||F||_2
             double precision        :: default_eps = 1.E-5
             !> Epsilon to be set on norm of objective function ||F||_2
@@ -154,32 +46,39 @@ module alamYLP
             logical                 :: evaluate_full_model = .true.
       end type
       
-contains
+    contains
 
 
       !> Calculates plastic strain rate corresponding to given deviatoric stress
       !>
       !> The subroutine assumes that multilevel model is already configured and initialized.
-      subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig,outunit,verbose)
+      !> Exit code is retured in info: criSuccess on success; criFailure if no converged solution can
+      !> be found; criError or criErr_BadArgs if error conditions have been detected.
+      subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig,outunit,verbose,objective_function)
       use nllsTR
       use alamEval
       implicit none
-      double precision,intent(in)   :: vS(alamEval_vSD_dim)      !< Stress vector
+      double precision,intent(in)   :: vS(alamEval_vSD_dim)      !< Imposed stress vector
       double precision,intent(inout):: vA(alamEval_vSD_dim)      !< Strain rate mode on yield locus
       double precision,intent(out)  :: vSonA(alamEval_vSD_dim)   !< Stress vector corresponding to A
       double precision,intent(out)  :: R          !< Square norm of residual error
       integer                       :: info       !< Exit code
-      logical,optional,intent(in)   :: useVMGuess !< use von Mises initial guess, otherwise assume vA as an initial strain rate
+      !> Flag: use von Mises initial guess, otherwise assume vA as an initial strain rate (default: .true.)
+      logical,optional,intent(in)   :: useVMGuess
       type(multilevelYLPConfig),optional,intent(in) :: YLPconfig !< Configuration parameters to be imposed to the search method
       integer,intent(in),optional   :: outunit    !< Unit number for messages
       integer,intent(in),optional   :: verbose
+      class(NormalizedV5DComp),target,optional,intent(inout) :: objective_function
       !
 
       double precision, dimension(alamEval_vSD_dim) :: vX, vX_lin
       type(multilevelYLPConfig) :: config !< Effective configuration parameters (defaults on entry)
       ! 
       !
-      type(NormalizedV5DComp) :: objFunc
+      class(NormalizedV5DComp),pointer :: objFunc
+      ! Default objective function declared as local variable: it will get
+      ! deallocated on return.
+      type(NormalizedV5DComp),allocatable,target :: objective_function_local
       type(nllsTRConf)        :: tr_config
       double precision        :: r1,r2
       logical                 :: use_vmGuess
@@ -187,10 +86,9 @@ contains
       double precision        :: r1_lin,r2_lin
       type(nllsTRRes)         :: TR_res
       type(SolutionPoint)     :: initState
-      integer                 :: ounit
+      integer                 :: ounit, tr_verbose, ierr
       integer,parameter       :: stdout = 6
       logical                 :: log_info,log_debug
-      integer                 :: tr_verbose
       double precision        :: norm
       !
       if (present(useVMGuess)) then
@@ -213,11 +111,25 @@ contains
       endif
       ! Override the defaults by the user's settings:
       if (present(YLPconfig)) config = YLPconfig
+      ! Check if the configuration is consistent and allows at least one
+      ! search procedure to be started.
+      info  = criErr_BadArgs
+      if (.not. (config%linearize .or. config%nonlinear)) return
       !
+      ! Set the objective function
+      if (present(objective_function)) then
+          objFunc => objective_function
+      else
+          allocate(objective_function_local)
+          objFunc => objective_function_local
+      endif
       ! Configure objective function      
-      call objFunc%initFx(alamEval_vSD_dim,alamEval_vSD_dim,info)
-      if (info /= 0) return 
-      info  = -1
+      call objFunc%initFx(alamEval_vSD_dim,alamEval_vSD_dim,ierr)
+      if (ierr /= 0) then
+          info = criError
+          return
+      endif
+      info  = criErr_BadArgs
       !
       !Get normalized stress vector
       norm = norm2(vS)
@@ -262,27 +174,29 @@ contains
             vX_lin = vX    
             ! Start the TR solver for linearized problem
             ! More thorough exit status is necessary: TR_res
-            call nlls_TR_solve(objFunc,vX_lin,tr_config,r1_lin,r2_lin,info,TR_res,SolutionInitOut=initState)
+            call nlls_TR_solve(objFunc,vX_lin,tr_config,r1_lin,r2_lin,ierr,TR_res,SolutionInitOut=initState)
             R = r2_lin
             ! do checks if the solution is OK:
             ! Stop criterion: magic number "3" means: ||F(x)||_2 < eps(2)
-            if ( (r2_lin < r1_lin) .and. (TR_res%stop_criterion == 3) .and. (r2_lin <= tr_config%eps(2)) ) then
+            if ( (r2_lin <= r1_lin) .and. (TR_res%stop_criterion == 3) .and. (r2_lin <= tr_config%eps(2)) ) then
                   vX = vX_lin
                   linearized_successful = .true.
             endif
       endif
       ! The linearized analysis is either not done or failed.
-      if (.not. linearized_successful) then
+      if (.not. linearized_successful .and. config%nonlinear) then
             ! Set non-linear analysis
             tr_config%constJacobi = .false.
             !
-            ! start TR solver
-            if (attempt_linearized) then
+            ! initState is invalid if nlls_TR_solve in the "if (attempt_linearized)" 
+            ! branch above returns ierr /= 0
+            if (attempt_linearized .and. (ierr == 0)) then
                   ! Profit from the initial point stored by the solver for the linearized problem
-                  info = objFunc%state%copy(initState)
-                  tr_config%use_init_state = .true.
+                  ierr = objFunc%state%copy(initState)
+                  tr_config%use_init_state = (ierr == 0)
             endif
-            call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,info)
+            ! start TR solver
+            call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,ierr)
             R = r2
             !TODO: check exit status of the solver
             if (attempt_linearized) then
@@ -296,19 +210,24 @@ contains
       call initState%finalize()
       !
       ! Set output strain rate
-      info  = -1
+      info  = criError
       norm = norm2(vX)
       if (norm < epsilon(0.D0)) return
       vA = vX / norm
       ! Call objective function again to get corresponding yield stress and other quantities.
       objFunc%full_model = config%evaluate_full_model
-      call objFunc%objectiveEval(vA,info)
+      call objFunc%objectiveEval(vA,ierr)
       
       if (log_info) write(ounit,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',objFunc%state%vF
       
-      vSonA = objFunc%vSml  
-      !info = 0
-      
+      vSonA = objFunc%vSml
+      !
+      if (R > config%obj_func_eps) then
+          info = criFailure
+      else
+          info = criSuccess
+      endif
+      !
       end subroutine
 
 end module

@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: criIterUtils.f90 2388 2015-11-06 22:25:10Z jgawad $
 !
 !>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -9,8 +9,8 @@
 !>    \copyright KU Leuven
 !>
 !>    \date Date of the initial release: 2014-02-16
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 2388 $
+!>    $Date: 2015-11-06 23:25:10 +0100 (Fri, 06 Nov 2015) $
 !>
 !>    History of modifications: (see svn log)
 !>

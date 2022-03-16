@@ -16,10 +16,12 @@ list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
 
 set(EXESRC
-criTest.f90
+criTestDriver.f90
 criTestAlgorithm.f90
+criTestExpandableVector.f90
 criTestIterUtils.f90
 criTestMathUtils.f90
+criTestNumerics.f90
 criTestPath.f90
 criTestRange.f90
 criTestUncomment.f90

@@ -1,6 +1,6 @@
-# $Id$
+# $Id: CMakeLists.txt 2919 2017-04-03 09:56:15Z jgawad $
 #
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 2.8)
 
 project(alamYLP Fortran)
 
@@ -12,10 +12,12 @@ list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
 set(alamYLP_SRCS
 alamYLP.f90 
-vumat_libvec5.for
+alamEval.f90
+alamYLPConstants.f90
 )
 
 add_library(alamYLP STATIC ${alamYLP_SRCS})
+target_link_libraries(alamYLP PUBLIC CRI fngCore fopt)
 
 install(TARGETS alamYLP DESTINATION "lib")
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")

@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: dmcQRS.f90 3483 2021-03-02 14:42:38Z Matthias.Bonisch $
 !
 !>    \author Jerzy Gawad                                                
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -8,355 +8,409 @@
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
 !>    \date Date of the initial release: 2010-11-03 (under the name alamQ)
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 3483 $
+!>    $Date: 2021-03-02 15:42:38 +0100 (Tue, 02 Mar 2021) $
 !>
 !>    History of modifications: (see svn log)
-!
-!
+
+#include "criMacros.fpp"
+
 !> dmcQRS calculates plastic anisotropic properties, expressed in terms of q-values,
 !> directly from texture data, presented in form of SMT, CUR or CUB files.
 module dmcQRS
-use nllsTR
-use Kutils
-use alamYLP
-use alamEval, only: alamEval_objFx_call_count
-use qrsTypes
-use dmcUtils
-use dmcBasicModule
-use commonConfig
-use commonUtils
 use criMathUtils
 use criRange
 use criLog
 use criAlgorithm
-
-
+use criUncomment, only: readValue
+use fngVec5D
+use dmcYLPResult
+use dmcUtils
+use dmcStressDrivenModule
+use commonConfig
+use commonUtils
+use dmcResultFileOutput
+use qrsTypes
 implicit none
 
-      type,extends(BasicModule) :: QRSModule
-            class(range_type),pointer                 :: ptr_range
-            
-            double precision                          :: rho = 0.D0
-            
-            logical                                   :: calculate_Mfactor = .false.
+    public :: QRSModule
+    private
 
-            logical                                   :: reuse_previous = .false.
-            logical                                   :: resuse_stainrate = .false.
-            logical                                   :: fold_symmetry = .false.
-            
-      contains
-      
-            procedure,pass(this)    :: readConfig => QRSModule_ReadConfig
-            
-            procedure,pass(this)    :: printConfig => QRSModule_printConfig
-            
-            procedure,pass(this)    :: run => QRSModule_run
-            
-      end type
 
+    type,extends(StressDrivenModule) :: QRSModule
+        class(range_type),pointer                 :: ptr_range
+
+        double precision                          :: rho = 0.D0
+
+        logical                                   :: calculate_Mfactor = .false.
+
+        logical                                   :: use_stability_improvements = .false.
+
+        logical                                   :: fold_symmetry = .false.
+            
+    contains
+
+        !>@{ \name Interface methods of AbstractModule
+
+        procedure,pass(this)    :: readConfig => QRSModule_readConfig
+
+        procedure,pass(this)    :: printConfig => QRSModule_printConfig
+
+        procedure,pass(this)    :: run => QRSModule_run
+
+        !>@}
+
+        procedure,pass(this)    :: fileOutput => QRSModule_fileOutput
+
+    end type
+
+
+    !> Container for output datapoints of QRS module
+    type :: QRSOutputData
+        double precision,dimension(:),allocatable   :: residuals,mfactors,phis,sigmas_x
+        type(qrsData),dimension(:),allocatable      :: qrsvalues
+    end type
+
+
+    !> Constructors of QRSOutputData objects
+    interface QRSOutputData
+        module procedure QRSOutputData_init_size
+    end interface
 
 contains
 
-      integer function QRSModule_ReadConfig(this,cnfunit) result(info)
-      implicit none
-      class(QRSModule),intent(inout)              :: this
-      integer,intent(in)                        :: cnfunit
-      !
-      integer :: ioerr
-      !
-            info = BasicModule_ReadConfig(this,cnfunit)
-            if (info /= 0) return
-            info = -1
-            ! Read parameters specific for the QRSModule module
-            ! Read QRSModule-specific parameters
-            this%ptr_range => rangeFromConfig(cnfunit,info)
-            if ( (info /= 0) .or. (.not. associated(this%ptr_range)) ) return
-            info = -1
-            read(cnfunit,fmt=*,iostat=ioerr)  this%rho
-            if (ioerr /= 0) return
-            read(cnfunit,fmt=*,iostat=ioerr)  this%calculate_MFactor
-            if (ioerr /= 0) return
-            read(cnfunit,fmt='(2L2)',iostat=ioerr)  this%reuse_previous, this%resuse_stainrate
-            if (ioerr /= 0) return
-            read(cnfunit,fmt='(L2)',iostat=ioerr)  this%fold_symmetry
-            if (ioerr /= 0) return
-            !
-            ! Override the requests for outputs: 
-            this%altay%output_config%nfile = 0   ! texture
-            this%altay%output_config%npebp = 0   ! KOST1x state
-            this%output%outputRequest = .false.       ! idem.
-            !
-            info = 0
-            
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-      end function
 
-      
-      integer function QRSModule_printConfig(this,outunit) result (info)
-      implicit none
-      class(QRSModule),intent(in)         :: this
-      integer,intent(in)                  :: outunit
-      !
-      integer :: ioerr
-      !
-            info = BasicModule_printConfig(this,outunit)
-            if (info /= 0) return
+    integer function QRSModule_readConfig(this,cnfunit) result(info)
+    implicit none
+    class(QRSModule),intent(inout)              :: this
+    integer,intent(in)                        :: cnfunit
+    !
+    logical :: use_default_settings
+    !
+        use_default_settings = .false.
+        info = this%StressDrivenModule%readConfig(cnfunit)
+        if (info /= criSuccess) return
+        info = criErr_IORead
+        ! Read parameters specific for the QRSModule module
+        this%ptr_range => rangeFromConfig(cnfunit,info)
+        if ( (info /= criSuccess) .or. (.not. associated(this%ptr_range)) ) return
+        !
+        if (.not. readValue(cnfunit, use_default_settings)) return
+        if (.not. use_default_settings) then
+                info = criErr_IORead
+                if (.not. readValue(cnfunit, this%rho)) return
+                if (.not. readValue(cnfunit, this%calculate_MFactor)) return
+                if (.not. readValue(cnfunit, this%fold_symmetry)) return
+                if (.not. readValue(cnfunit, this%use_stability_improvements)) return
+        endif
+        !
+        ! Override the requests for outputs: 
+        this%altay%output_config%nfile = 0   ! texture
+        this%altay%output_config%npebp = 0   ! KOST1x state
+        this%output%outputRequest = .false.       ! idem.
+        !
+        info = criSuccess
+    !
+    end function
+
+
+    integer function QRSModule_printConfig(this,outunit) result (info)
+    implicit none
+    class(QRSModule),intent(in)         :: this
+    integer,intent(in)                  :: outunit
+    !
+    integer :: ioerr
+    !
+        info = this%StressDrivenModule%printConfig(outunit)
+        if (info /= criSuccess) return
+        !
+        if (doLogging(criLogWarn,this%output%verbosity)) then
+            ! Introduce youself ;-)
+            write(outunit,'(A)') 'QRS: $Rev: 3483 $'
+        endif
+        if (doLogging(criLogInfo,this%output%verbosity)) then
+            ! Print-out summary of the configuration 
+            !write(display_unit,fmt=fmtMsg2Other//'2(F8.3,1X))',iostat=ioerr) 'Angular range:', this%fi2min, this%fi2max
+            write(outunit,fmt=fmtMsg2Int,iostat=ioerr)   'Number of points:', this%ptr_range%size() 
+            write(outunit,fmt=fmtMsg2Float,iostat=ioerr) 'Stress ratio', this%rho 
             !
-            info = -1
-            ! Print banner
-            write(outunit,'(A)') 'QRSModule: $Rev$'
-            if (doLogging(criLogInfo,this%output%verbosity)) then
-                  ! Print-out summary of the configuration 
-                  !write(display_unit,fmt=fmtMsg2Other//'2(F8.3,1X))',iostat=ioerr) 'Angular range:', this%fi2min, this%fi2max
-                  write(outunit,fmt=fmtMsg2Int,iostat=ioerr)   'Number of points:', this%ptr_range%size() 
-                  write(outunit,fmt=fmtMsg2Float,iostat=ioerr) 'Stress ratio', this%rho 
-                  !
-                  write(outunit,fmt='(A,\)') 'Info:'
-                  if (this%reuse_previous) then
-                        if (this%resuse_stainrate) then
-                              write(outunit,'(1X,A,\)') 'Strain rate'
-                        else
-                              write(outunit,'(1X,A,\)') 'Stress'
-                        endif
-                        write(outunit,'(1X,A)') 'from the previous solution will be re-used.'
-                  else
-                        write(outunit,'(1X,A)') 'von Mises guess will be used.'
-                  endif
+            write(outunit,fmt='(A, 1X)',advance='NO') 'Info:'
+            if (this%use_stability_improvements) then
+                write(outunit,'(A)') 'Strain rate from the previous solution will be re-used.'
+            else
+                write(outunit,'(A)') 'von Mises guess will be used.'
             endif
-            info = 0
-      !
-      end function
-      
-      subroutine QRSModule_Run(this,info)
-      implicit none
-      class(QRSModule),intent(inout)              :: this
-      integer,intent(out)                       :: info
+        endif
+        info = criSuccess
+    !
+    end function
 
-      ! Strain rate and stress tensors in Material coordinate system and "Tensile sample"
-      ! coordinate system
-      double precision,dimension(3,3)           :: Dmcoord, Dtcoord, Smcoord,Stcoord, SmIdent, Xmcoord_resume, Xtcoord_resume
-      double precision,dimension(3,3)           :: Mrot = 0.0
-      !
-      double precision,dimension(5)             :: vA, vS,vSonA, vSonAn
-      double precision                          :: fi1,phi,fi2
-      double precision                          :: SonA_len, scal_s
-      double precision                          :: R
-      integer     :: i,j, k, npoints
-      logical     :: useVMGuess
-      double precision,dimension(:),allocatable       :: residuals,mfactors,phis
-      type(qrsData),dimension(:),allocatable          :: qrsvalues
-      !
-      integer                 :: left, right, stride
-      integer                 :: ioerr
-      integer,parameter       :: cnfunit = 90, ofunit = 91
-      !
-      
-      
-      integer,parameter :: ncolumn_labels = 7, column_width = 15
-      ! For file output
-      character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = &
-           [ character(len=column_width) ::  &
-            'angle','rho','q-value','r-value','s-value','M-factor','residual' ]
-      
-      ! For display output:
-      integer,parameter :: ncolumn_labels_display = 7, column_width_display = 14
-      character(len=column_width-1),dimension(ncolumn_labels_display) :: display_column_labels = &
-            [ character(len=column_width_display) ::  &
-            'angle','rho','q-value','r-value','s-value','M-factor','residual' ]
 
-      
-      info = 1
-      !
-      !
-      npoints = this%ptr_range%size()
-      ! 
-      open(unit=ofunit,file=trim(this%output%outputPrefix)//'.xqrs',iostat=ioerr)
-      if (ioerr /= 0) then
-            write(display_unit,fmt=952)
-            return 
-      endif
-      write(ofunit,701) (centered(i,column_width), i = 1, ncolumn_labels)
-      write(ofunit,700) (centered(file_column_labels(i)), i=1,ncolumn_labels) 
 
-      !
-      ! Apply correction to the configuration of the search procedure:
-      ! there will be no need to use the full model in the last call unless 
-      ! the average Taylor factor is requested.
-      this%ylp%evaluate_full_model  = this%calculate_MFactor
-      
+    subroutine QRSModule_run(this,info)
+    implicit none
+    class(QRSModule),intent(inout)      :: this
+    integer,intent(out)                 :: info
 
-      ! Make space for the results      
-      allocate(qrsvalues(npoints), residuals(npoints),mfactors(npoints),phis(npoints))
-      residuals = 0.D0
-      mfactors = 0.D0
-      
-      fi1 = 0.D0
-      phi = 0.D0
-      
-      ! use von Mises guess as a default
-      useVMGuess = .true.
-      i = 0
-      do while (this%ptr_range%next(fi2))
-            i = i + 1
+    ! Convention: strain rate and stress tensors in
+    ! - "Tensile sample coordinate system" have suffix _t
+    ! - "Material coordinate system" have no suffix.
+    ! 
+    type(SRTensor)                            :: D_t, S_t, sigma, sigma_t, SonA, D, Dresume_t, &
+                                                 SmIdent    !< obtained stress mode
+    double precision,dimension(3,3)           :: Mrot = 0.0
+    type(YLPResult)                           :: ylp_result
+    !
+    double precision                          :: fi1,phi,fi2, residual_resume
+    integer     :: i,j, k, npoints, npoints_ok, ofunit
+    logical     :: useVMGuess, acceptable_point
+    !
+    type(QRSOutputData) :: results
+    !
+    integer,parameter :: column_width = 15
+    ! For display output:
+    integer,parameter :: ncolumn_labels_display = 6, column_width_display = 14
+    character(len=column_width-1),dimension(ncolumn_labels_display) :: display_column_labels = &
+        [ character(len=column_width_display) ::  &
+        'angle','rho','q-value','r-value','sigma_xx','residual' ]
+    !
+        ! Super-class first
+        RETURN_IF(info /= criSuccess, call this%StressDrivenModule%run(info))
+        !
+        info = criError
+        !
+        npoints = this%ptr_range%size()
+        !
+        RETURN_IF(info /= criSuccess, info = this%openOutputFile('.xqrs', ofunit))
+        !
+        ! Apply correction to the configuration of the search procedure:
+        ! there will be no need to use the full model in the last call unless 
+        ! the average Taylor factor is requested.
+        this%ylp%evaluate_full_model  = this%calculate_MFactor
+        !
+        results = QRSOutputData(npoints)
+        !
+        fi1 = 0.D0
+        phi = 0.D0
+        !
+        ! Set sigma_t in such way that deviatoric part is of unit length
+        sigma_t%t = 0.D0
+        sigma_t%t(1,1) = root32/dsqrt(this%rho**2-this%rho+1.D0)
+        sigma_t%t(2,2) = this%rho*sigma_t%t(1,1)
+        !
+        i = 1
+        do while (this%ptr_range%next(fi2))
+            !
+            ! use von Mises guess as a default
+            useVMGuess = .true.
+            !
             if (doLogging(criLogDebug,this%output%verbosity)) then
-                  write(display_unit,800)
-                  write(display_unit,'(/,A,1X,I4,1X,A,1X,F8.3,A,/)')'Point:',i,'fi2 =',fi2, ' degs'
+                write(display_unit,800)
             endif
-            !
-            phis(i) = fi2
+            if (doLogging(criLogInfo,this%output%verbosity)) then
+                continue
+            elseif (doLogging(criLogWarn,this%output%verbosity)) then
+                write(display_unit,fmt=1600) i, npoints, fi2
+            endif
             !
             fi2 = deg2rad(fi2)
             ! Calculate rotation matrix
-            call KROTMAT(fi1,phi,fi2,Mrot)
-            ! Set Stcoord in such way that deviatoric part is of unit length
-            Stcoord = 0.D0
-            Stcoord(1,1) = dsqrt(3.D0/2.D0)*1.D0/dsqrt(this%rho**2-this%rho+1)
-            Stcoord(2,2) = this%rho*Stcoord(1,1)
+            Mrot = rotmat(fi1,phi,fi2)
 
             ! Rotate from "tensile" to material coordinate system
-            Smcoord = rotateSRTensorTo(Stcoord, Mrot)
-            
-            !            
-            call KMAT2VEC5D(Smcoord,vS) 
-            if ((this%reuse_previous) .AND. (i > 1))  then
-                  ! Reuse previously stored result in new coordinate system
-                  ! Type of result (strain rate or stress) is decided in line mared with (***)
-                  ! Rotate Xtcoord_resume to new coordinate system
-                  Xmcoord_resume = rotateSRTensorTo(Xtcoord_resume,Mrot)
-                  ! Set starting point
-                  call KMAT2VEC5D(Xmcoord_resume,vA)
-                  vA = vA / vec_norm2(vA)
-                  ! Disable Von Mises guess in multilevelYLP: vA will be used as a starting point
-                  useVMGuess = .false.
+            sigma = rotateSRTensorTo(sigma_t, Mrot)
+            !
+            if ((this%use_stability_improvements) .AND. (i > 1)) then
+                ! Reuse previously stored result in new coordinate system
+                ! if it represents a converged solution.
+                if (residual_resume <= this%ylp%obj_func_eps) then
+                    ! Rotate Dresume_t to new coordinate system
+                    D = rotateSRTensorTo(Dresume_t, Mrot)
+                    ! Disable Von Mises guess
+                    useVMGuess = .false.
+                endif
             endif
             !
-            call multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,this%ylp,verbose=this%output%verbosity)
-            if (info /= 0) then
-                  write(display_unit,fmt=960)
-                  exit
+            info = this%findSolution(sigma, D, ylp_result, useVMGuess, is_acceptable=acceptable_point)
+            if ((info /= criSuccess) .and. .not. acceptable_point) then
+                write(display_unit,fmt=860) 'Cannot find solution, datapoint dropped'
+                cycle
             endif
-            
-            residuals(i) = R
-            ! 
-            if (this%calculate_MFactor) then
-                  call getTaylorFactor(1,mfactors(i),info)
-                  if (info /= 0) then
-                        write(display_unit,980)
-                        exit
-                  endif
-            endif
-            ! Calculate normalized stess
-            SonA_len = vec_norm2(vSonA)
-            scal_s = SonA_len / vec_norm2(vS)
-            vSonAn = vSonA / SonA_len
+            if (is_error(info)) exit
             !
-            if (doLogging(criLogInfo,this%output%verbosity)) call printIdentResults(display_unit,vS,vA,vSonA,vSonAn,R,info)
-            ! Convert AONSET vector to tensor form
-            call KVEC5D2MAT(vA,Dmcoord)
-
-            call KVEC5D2MAT(vSonAn,SmIdent)
+            SonA%t = vec5D2tens(ylp_result%vSonA)
+            SmIdent%t = vec5D2tens(ylp_result%vSonAn) ! stress mode for found strain mode
             
-            if (doLogging(criLogInfo,this%output%verbosity)) then
-                  write(display_unit,400)
-                  do j=1,3
-                        ! would be just:  write(display_unit,401) Smcoord(j,:),SmIdent(j,:),Dmcoord(j,:)
-                        write(display_unit,401) (Smcoord(j,k),k=1,3), (SmIdent(j,k),k=1,3), (Dmcoord(j,k), k=1,3)
-                  enddo
-            endif            
+            if (doLogging(criLogDebug,this%output%verbosity)) then
+                info = printYLPResult(display_unit, ylp_result)
+                write(display_unit, fmt=3400)
+                do j=1,3
+                    ! would be just:  write(display_unit,401) sigma(j,:),SmIdent(j,:),Dmcoord(j,:)
+                    write(display_unit,fmt=3401) (sigma%t(j,k),k=1,3), (SmIdent%t(j,k),k=1,3), (D%t(j,k), k=1,3)
+                enddo
+            endif
             ! Rotate back to the "tensile test" coordinate system  
-            Dtcoord = rotateSRTensorFrom(Dmcoord, Mrot)
+            D_t = rotateSRTensorFrom(D, Mrot)
+            S_t = rotateSRTensorFrom(SonA, Mrot)
             !
             !(***) Prepare next iteration if re-using is requested.
-            if (this%reuse_previous) then
-                  ! Re-used data are always in "tensile" coordinate system (initial coordinate system) 
-                  if (this%resuse_stainrate) then
-                        Xtcoord_resume = Dtcoord
-                  else
-                        ! Rotate stresses to "tensile" coordinate system 
-                        Xtcoord_resume = rotateSRTensorFrom(SmIdent, Mrot)
-                  endif
+            if (this%use_stability_improvements) then
+                Dresume_t = D_t
+                residual_resume = ylp_result%R
             endif
             !            
             ! Calculate output variables
-            qrsvalues(i) = calculateQRS(Dtcoord,scal_s)
             !
-            if (doLogging(criLogInfo,this%output%verbosity)) then
-                  write(display_unit,fmt=601) !
-                  write(display_unit,fmt=600) (centered(display_column_labels(j)), j=1,ncolumn_labels_display) 
-                  write(display_unit,fmt=610) phis(i), this%rho, qrsvalues(i), mfactors(i),residuals(i)
-                  write(display_unit,fmt=601)
+            associate(r => results, &
+                      phis => r%phis(i), qrsvalues => r%qrsvalues(i), &
+                      sigmas_x => r%sigmas_x(i), mfactors => r%mfactors(i), &
+                      residuals => r%residuals(i))
+                !
+                phis = rad2deg(fi2)
+                qrsvalues = calculateQRS(D_t%t,ylp_result%scal_s)
+                sigmas_x = S_t%t(1,1) - S_t%t(3,3)
+                residuals = ylp_result%R
+                ! Optional: Taylor factor can be retrieved
+                if (this%calculate_MFactor) then
+                    call getTaylorFactor(1, mfactors, info)
+                    if (info /= 0) then
+                        write(display_unit,980)
+                        exit
+                    endif
+                endif
+                !
+                if (doLogging(criLogInfo,this%output%verbosity)) then
+                    write(display_unit,fmt=2601) !
+                    write(display_unit,fmt=2600) (centered(display_column_labels(j)), j=1,ncolumn_labels_display) 
+                    write(display_unit,fmt=2610) phis, this%rho, qrsvalues%qvalue, qrsvalues%rvalue, sigmas_x, residuals
+                    write(display_unit,fmt=2601)
+                endif
+            end associate
+            !
+            i = i + 1
+            !
+            info = criSuccess
+        enddo
+        ! 
+        ! End of the main loop, check what's the status of the last operation
+        if (is_error(info)) return
+        !
+        npoints_ok = i-1
+        if (npoints /= npoints_ok) then 
+            write(display_unit,fmt=850) 'There were unconverged solutions, so some of datapoints are dropped'
+            ! FIXME: temporary solution: folding cannot be done if there are missing points.
+            if (this%fold_symmetry) then
+                write(display_unit,fmt=850) 'Folding is turned off.'
+                this%fold_symmetry = .false.
             endif
-            !
-            info = 0
-      enddo
-      ! 
-      ! End of the main loop, check what's the status of the last operation
-      if (info /= 0) return
-      !
-      if (doLogging(criLogErr,this%output%verbosity)) then
-            ! Write complete output to the terminal
-            write(display_unit,800)
-            write(display_unit,fmt=700)
-            do i=1,npoints
-                  write(display_unit,fmt=710) phis(i), this%rho, qrsvalues(i), mfactors(i), residuals(i)
-            enddo
-      endif
-      ! Write output file
-      if (this%fold_symmetry) then
-            ! Average over symmetric positions
-            left = 1
-            right = npoints
-            do 
-                  if (left > right) exit
-                  stride = right - left
-                  if (stride == 0) stride = 1
-                  write(ofunit,fmt=710) phis(left), this%rho,                      &
-                                        avgQRS(qrsvalues(left:right:stride)),     &
-                                        average(mfactors(left:right:stride) ),    &
-                                        average(residuals(left:right:stride) )
-                  left = left + 1
-                  right = right -1
-            enddo
-      else
-            ! Output complete set of points
-            do i=1,npoints
-                  write(ofunit,fmt=710) phis(i), this%rho, qrsvalues(i), mfactors(i),residuals(i)
-            enddo
-      endif
-      !
-      deallocate(qrsvalues, residuals,mfactors,phis)
-      close(ofunit)
-      !
-      info = 0
-      !
-      400 format('| Smcoord',T40,'| SmIdent',T80,'|Dmcoord')
-      401 format(3(F10.6,1X),T40,3(F10.6,1X),T80,3(F10.6,1X))
-      ! Format for header file
-      500 format('#Material:',1X,A,/,'#Generated by QRSModule $Revision$')
-
-      ! Formats for the display output
-      600 format(1X, 7(A14,    1X))
-      601 format('|',7(14('-'),'|'))
-      610 format(1X, 7(F14.6,  1X))
-          
-      ! Formats for output file
-      700 format(1X, 7(A18,  1X))
-      701 format('#',7(A18,  1X))
-      710 format(1X, 7(E18.9,1X))
-
-
+        endif
+        !
+        info = this%fileOutput(ofunit, results, header=.true., restrict=npoints_ok)
+        close(ofunit)
+        !
+        !
+        3400 format('| sigma',T40,'| SmIdent',T80,'|Dmcoord')
+        3401 format(3(F10.6,1X),T40,3(F10.6,1X),T80,3(F10.6,1X))
+        ! Formats for the display output
+        2600 format(1X, 6(A14,    1X))
+        2601 format('|',6(14('-'),'|'))
+        2610 format(1X, F14.2, 1X, 3(F14.6,1X),2(E14.6,1X)) ! 6 fields in total
+        1600 format(/,'Sample ', I0, ' out of ',I0, ', sample orientation: ',F0.2)
+        !
 #define MSG_GROUP_RULERS     
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
 #undef MSG_GROUP_RULERS
-       
+    !
+    end subroutine
 
-      
-      end subroutine
 
+    !> Write out results to the output file
+    integer function QRSModule_fileOutput(this, iounit, data_record, header, restrict) result(info)
+    implicit none
+    class(QRSModule),intent(in)                 :: this
+    integer,intent(in)                          :: iounit !< Output IO unit
+    type(QRSOutputData),intent(in),optional     :: data_record !< Data to be written out
+    logical,intent(in),optional                 :: header !< Header to be written out
+    integer,intent(in),optional                 :: restrict
+    !
+    integer :: i, npoints, left, right, stride, ierr
+    !
+    integer,parameter :: ncolumn_labels = 8, column_width = 18
+    character(len=column_width),dimension(ncolumn_labels) :: column_names = &
+        [ character(len=column_width) ::  &
+        'angle','rho','q-value','r-value','s-value','sigma_xx','M-factor','residual' ]
+    !
+        info = criErr_BadArgs
+        if (optionalDefault(header,.false.)) then
+            info = writeStandardHeader(iounit, column_names, [column_width])
+            if (info /= criSuccess) return
+        endif
+        !
+        if (present(data_record)) then
+            info = criErr_IOWrite
+            ! FIXME: flawed assumption, other arrays may have different size
+            ALLOCATED_SIZE(npoints, data_record%phis)
+            if (present(restrict)) then
+                RETURN_IF_WITH(npoints < restrict, info=criError)
+                npoints = restrict
+            endif
+            ! Write output file
+            if (this%fold_symmetry) then
+                ! \todo Use FCRI::criArray::fold_array for this task. It allows multiple folds!
+                ! Average over symmetric positions
+                left = 1
+                right = npoints
+                do 
+                    if (left > right) exit
+                    stride = right - left
+                    if (stride == 0) stride = 1
+                    write(iounit,fmt=710,iostat=ierr) data_record%phis(left), &
+                                                      this%rho,                 &
+                                                      avgQRS(data_record%qrsvalues(left:right:stride)), &
+                                                      average(data_record%sigmas_x(left:right:stride)), &
+                                                      average(data_record%mfactors(left:right:stride)), &
+                                                      average(data_record%residuals(left:right:stride))
+                    if (ierr /= 0) return
+                    left = left + 1
+                    right = right -1
+                enddo
+            else
+                ! Output complete set of points
+                do i=1,npoints
+                    write(iounit,fmt=710,iostat=ierr) data_record%phis(i), &
+                                                      this%rho, &
+                                                      data_record%qrsvalues(i), &
+                                                      data_record%sigmas_x(i), &
+                                                      data_record%mfactors(i), &
+                                                      data_record%residuals(i)
+                    if (ierr /= 0) return
+                enddo
+            endif
+        endif
+        !
+        info = criSuccess
+        !
+        ! Formats for the output file
+        710 format(1X, 8(E18.9,1X))
+    end function
+
+
+    !> Initialize QRSOutputData to store npoints datapoints
+    pure function QRSOutputData_init_size(npoints) result(res)
+    type(QRSOutputData)     :: res
+    integer,intent(in)      :: npoints
+    !
+        ! Make space for the results
+        allocate(res%qrsvalues(npoints))
+        ! Other entities are of the same type, but they can not be treated in a single
+        ! statement if SOURCE is provided...
+        allocate(res%residuals(npoints), source=0.D0)
+        allocate(res%sigmas_x(npoints), source=0.D0)
+        allocate(res%mfactors(npoints), source=0.D0)
+        allocate(res%phis(npoints), source=0.D0)
+    !
+    end function
 
 end module

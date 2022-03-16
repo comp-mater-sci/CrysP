@@ -1,5 +1,5 @@
 ! 
-! $Id$
+! $Id: nnls_mod.f90 2026 2014-12-09 13:25:56Z jgawad $
 !
 !
 !> Helper module for controlling default precision in NNLSPack module.

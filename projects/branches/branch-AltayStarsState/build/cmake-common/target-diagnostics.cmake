@@ -1,0 +1,11 @@
+# $Id: target-diagnostics.cmake 2919 2017-04-03 09:56:15Z jgawad $
+
+# Enable tracing output for target properties
+set(CMAKE_DEBUG_TARGET_PROPERTIES
+  COMPILE_OPTIONS
+  INCLUDE_DIRECTORIES
+  COMPILE_DEFINITIONS
+  POSITION_INDEPENDENT_CODE
+  LIB_VERSION
+)
+

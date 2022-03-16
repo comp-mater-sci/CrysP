@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: criMkTemp.f90 1933 2014-07-11 14:04:49Z jgawad $
 !
 !>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -9,8 +9,8 @@
 !>    \copyright KU Leuven
 !>
 !>    \date Date of first release: 2011-12-04
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 1933 $
+!>    $Date: 2014-07-11 16:04:49 +0200 (Fri, 11 Jul 2014) $
 !>
 !>    History of modifications: (see svn log)
 !>

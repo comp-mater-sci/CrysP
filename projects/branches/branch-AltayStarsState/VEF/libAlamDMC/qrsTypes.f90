@@ -1,5 +1,5 @@
 !
-! $Id$
+! $Id: qrsTypes.f90 2851 2017-03-07 14:07:47Z jgawad $
 !
 !>    \author Jerzy Gawad                                                
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
@@ -8,13 +8,14 @@
 !>    Organization unit: Dept.Comp.Sci., TWR Group
 !>                                                             
 !>    \date Date of the initial release: 2011-09-14
-!>    $Revision$
-!>    $Date$
+!>    $Revision: 2851 $
+!>    $Date: 2017-03-07 15:07:47 +0100 (Tue, 07 Mar 2017) $
 !>
 !>    History of modifications: (see svn log)
 
 !> Useful data types for calculation of anisotropic characteristics
 module qrsTypes
+implicit none
 
       type qrsData
             double precision :: qvalue = 0.D0
