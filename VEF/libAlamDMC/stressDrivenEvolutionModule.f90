@@ -21,7 +21,6 @@ use criErrcodes
 use criMathUtils
 use criLog
 use criAlgorithm, only: optionalDefault
-use fngVec5D
 use dmcUtils, only: display_unit
 use dmcYLPResult
 use dmcStressDrivenModule
