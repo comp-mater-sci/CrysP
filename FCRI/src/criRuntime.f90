@@ -142,7 +142,7 @@ contains
 
       !> Process the arguments provided in the command line.
       subroutine processCommandLine(this,argc_min,argc_max,command_map,command_argpos,info, &
-                                    terminate,argv) !MB: 11 arguments, last 5 optional
+                                    terminate)
       implicit none
       type(commandLine),intent(inout)           :: this !MB: defined in criRuntime.f90
       !> Minimal number of mandatory parameters
@@ -170,23 +170,13 @@ contains
       !> Short description of the "command arguments" that can be accepted by the program
       !>
       !> User-supplied list of command line arguments. It must contain program name in the zeroth element.
-      character(len=*),dimension(:),intent(in),optional     :: argv
       !> Subroutine to be called before printing the help message.
       integer :: ierr, i
       !
             info = criError
             this%is_command_identified = .false.
             !
-            ! The 'argv' argument (9th argument of processCommandLine) takes precedence over the command line:
-            if (present(argv)) then !MB: not present (thus skipped) in call to processCommandLine in main.f90
-                  if (allocated(this%argv)) deallocate(this%argv)
-                  this%argc = size(argv) !MB: total number of command line arguments
-                  allocate(character(len=max_command_param_len) :: this%argv(0:this%argc),stat=ierr)
-                  this%argv(0:) = argv(:)
-            else
-                  ! Get the count of parameters (this%argc) and the parameters (this%argv: array of strings containing program name (alamDMC) and arguments)
-                  call getArgv(this%argc,this%argv,info)
-            endif
+            call getArgv(this%argc,this%argv,info)
             !
             ! Attempt to identify the command argument in the first place
             if ((this%argc >= command_argpos) .and. (command_argpos > 0) .and. (size(command_map) > 0)) then
