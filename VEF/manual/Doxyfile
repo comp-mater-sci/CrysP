@@ -854,7 +854,6 @@ INPUT                  = mainpage.dox \
                          guided_tour.dox \
                          resources.md \
                          examples.dox \
-                         support.dox \
                          starting.dox \
                          theory.dox \
                          illustrations.dox \
