@@ -31,7 +31,6 @@ contains
       !> Check exit status of IO operation
       logical function ioStatusOK(ioerr)
       use dmcUtils
-      implicit none
       integer,intent(in) :: ioerr
             ! Status 
             if (ioerr /= 0) then
@@ -49,7 +48,6 @@ contains
       use criNamedRange
       use criUncomment
       use criConfigReader
-      implicit none
       class(range_type),pointer     :: inst
       integer,intent(in)            :: cnfunit
       integer,intent(out)           :: info

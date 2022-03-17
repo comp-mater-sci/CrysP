@@ -64,7 +64,6 @@ contains
 
     !> Print configuration to IO unit
     integer function DeformationDrivenModule_printConfig(this,outunit) result(info)
-    implicit none
     class(DeformationDrivenModule),intent(in)      :: this
     integer,intent(in)              :: outunit !< IO unit for output
     !
@@ -79,7 +78,6 @@ contains
 
     !> Read configuration from IO unit
     integer function DeformationDrivenModule_readConfig(this,cnfunit) result(info)
-    implicit none
     class(DeformationDrivenModule),intent(inout)   :: this
     integer,intent(in)              :: cnfunit !< IO input unit
     !

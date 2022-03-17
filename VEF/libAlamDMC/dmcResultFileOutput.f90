@@ -39,7 +39,6 @@ contains
     integer function writeResultFile(iounit, data, column_names, column_widths, &
                                      use_column_numbers, data_formats) result(info)
                                     !, colnames_formats, data_formats, )
-    implicit none
     integer,intent(in)                              :: iounit
     double precision,dimension(:,:),intent(in)      :: data !< Shape: [ncolumns x nrows]
     character(len=*),dimension(:),intent(in)        :: column_names
@@ -79,7 +78,6 @@ contains
 
     !> Write centered column numbers spaced according to column_widths
     integer function  writeColumnNumbers(iounit, ncolumns, column_widths) result(info)
-    implicit none
     integer,intent(in)                      :: iounit
     integer,intent(in)                      :: ncolumns
     integer,dimension(:),intent(in)         :: column_widths
@@ -104,7 +102,6 @@ contains
     
     
     integer function  writeColumnNames(iounit, column_names, column_widths) result(info)
-    implicit none
     integer,intent(in)                      :: iounit
     character(len=*),dimension(:)           :: column_names
     integer,dimension(:),intent(in)         :: column_widths
@@ -132,7 +129,6 @@ contains
     
     !> Write out standard header: two lines: #1: column numbers, #2 column names
     integer function writeStandardHeader(iounit, column_names, column_widths) result(info)
-    implicit none
     integer,intent(in)                      :: iounit !< Output IO unit
     character(len=*),dimension(:)           :: column_names ! Names of columns
     integer,dimension(:),intent(in)         :: column_widths ! Widths of columns
@@ -145,7 +141,6 @@ contains
 
 
     integer function writeData(iounit, data, column_widths, data_formats) result(info)
-    implicit none
     integer,intent(in)                              :: iounit
     double precision,dimension(:,:),intent(in)      :: data !< Shape: [ncolumns x nrows]
     !> Specification of column widths

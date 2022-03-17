@@ -60,7 +60,6 @@ contains
     
     !> Add result to the database
     integer function put(this, A, SonA) result(info)
-    implicit none
     class(ResultTable),intent(inout)   :: this
     double precision,dimension(alamEval_vSD_dim),intent(in) :: A
     double precision,dimension(alamEval_vSD_dim),intent(in) :: SonA
@@ -78,7 +77,6 @@ contains
     !> \return criSuccess on success, criFailure if no item satisfies the 
     !> requirement 
     integer function get(this, S, A, max_angle) result(info)
-    implicit none
     class(ResultTable),intent(inout)   :: this
     double precision,dimension(alamEval_vSD_dim),intent(in) :: S
     double precision,dimension(alamEval_vSD_dim),intent(out):: A
@@ -109,7 +107,6 @@ contains
 
     !> Store the values in file fpath
     integer function store(this, fpath) result(info)
-    implicit none
     class(ResultTable),intent(inout)    :: this
     character(len=*),intent(in)         :: fpath
     !
@@ -139,7 +136,6 @@ contains
 
     !> Load the values from file fpath. The file may or may not exist.
     integer function load(this, fpath) result(info)
-    implicit none
     class(ResultTable),intent(inout)    :: this
     character(len=*),intent(in)         :: fpath
     !

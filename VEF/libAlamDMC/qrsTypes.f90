@@ -26,7 +26,6 @@ implicit none
 contains
 
       type(qrsData) pure function avgQRS(qrsvalues)
-      implicit none
       type(qrsData),dimension(:),intent(in)     :: qrsvalues
       double precision :: frc
       integer :: i,n
@@ -49,7 +48,6 @@ contains
 
 
       type(qrsData) pure function calculateQRS(Dt,s) result(qrsvalue)
-      implicit none
       double precision,dimension(3,3),intent(in)      :: Dt
       double precision,intent(in)                     :: s
             if ( abs(Dt(3,3)) >= epsilon(0.D0) ) then

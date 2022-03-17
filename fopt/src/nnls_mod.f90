@@ -1,7 +1,3 @@
-! 
-! $Id$
-!
-!
 !> Helper module for controlling default precision in NNLSPack module.
 MODULE NNLSprecision
 IMPLICIT NONE
@@ -11,6 +7,9 @@ END MODULE NNLSprecision
 
 !> Provides Non-Negative Least Squares algorithm
 module NNLSPack
+
+USE NNLSprecision
+IMPLICIT NONE
 
 contains
 
@@ -23,7 +22,7 @@ contains
 !>  1973 JUN 15, and published in the book
 !>  "SOLVING LEAST SQUARES PROBLEMS", Prentice-HalL, 1974.
 !>  Revised FEB 1995 to accompany reprinting of the book by SIAM.
-!> 
+!>
 !> \author This translation into Fortran 90 by Alan Miller, February 1997
 !>  Latest revision - 15 April 1997
 !> \author Additional modularization: J. Gawad, 2009
@@ -64,8 +63,7 @@ contains
 !  ------------------------------------------------------------------
 SUBROUTINE nnls (a, m, n, b, x, rnorm, w, indx, mode)
 !     ------------------------------------------------------------------
-USE NNLSprecision
-IMPLICIT NONE
+
 INTEGER, INTENT(IN)       :: m, n
 INTEGER, INTENT(OUT)      :: indx(:), mode
 REAL (dp), INTENT(IN OUT) :: a(:,:), b(:)
@@ -348,8 +346,6 @@ sUBROUTINE g1(a, b, cterm, sterm, sig)
 !        SIG IS COMPUTED LAST TO ALLOW FOR THE POSSIBILITY THAT
 !        SIG MAY BE IN THE SAME LOCATION AS A OR B .
 !     ------------------------------------------------------------------
-USE NNLSprecision
-IMPLICIT NONE
 REAL (dp), INTENT(IN)  :: a, b
 REAL (dp), INTENT(OUT) :: cterm, sterm, sig
 
@@ -420,8 +416,6 @@ END SUBROUTINE g1
 SUBROUTINE h12(mode, lpivot, l1, m, u, up, c, ice, icv, ncv)
 !     ------------------------------------------------------------------
 
-USE NNLSprecision
-IMPLICIT NONE
 INTEGER, INTENT(IN)                     :: mode, lpivot, l1, m, ice, icv, ncv
 REAL (dp), DIMENSION(:), INTENT(IN OUT) :: u, c
 REAL (dp), INTENT(IN OUT)               :: up
@@ -441,9 +435,7 @@ IF (mode /= 2) THEN
   clinv = one / cl
   sm = (u(lpivot)*clinv) ** 2 + SUM( (u(l1:m)*clinv)**2 )
   cl = cl * SQRT(sm)
-  IF (u(lpivot) > 0) THEN
-    cl = -cl
-  END IF
+  IF (u(lpivot) > 0) cl = -cl
   up = u(lpivot) - cl
   u(lpivot) = cl
 ELSE
@@ -480,7 +472,6 @@ IF (b < 0) THEN
   END DO ! j = 1, ncv
 END IF
 
-RETURN
 END SUBROUTINE h12
 
 

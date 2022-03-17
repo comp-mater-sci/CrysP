@@ -27,7 +27,6 @@ contains
       !> Perform basic checks if the state variables in altayConfig are consistent.
       logical function isStateOK(stepid)
       use altayConfig
-      implicit none
       integer,intent(in)      :: stepid
       !
             isStateOK = .false.
@@ -39,7 +38,6 @@ contains
 
       subroutine  getTaylorFactor(stepid,M,info)
       use altayConfig
-      implicit none
       integer,intent(in)            :: stepid
       double precision,intent(out)  :: M
       integer,intent(out)           :: info
@@ -56,7 +54,6 @@ contains
       subroutine makeTextureUpdateStep(D,S,M,output_flag,info)
       use altaySub
       use altayConfig
-      implicit none
       double precision,dimension(3,3),intent(in)      :: D
       double precision,dimension(3,3),intent(out)     :: S
       double precision,intent(out)                    :: M
@@ -92,7 +89,6 @@ contains
       
       subroutine outputTexture(info)
       use altaySub
-      implicit none
       integer,intent(out)     :: info
       !
             call outputCurrentState(info)

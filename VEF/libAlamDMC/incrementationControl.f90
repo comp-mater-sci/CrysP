@@ -111,7 +111,6 @@ implicit none
 contains
     
     subroutine IncrementationControl_update(this, vDe, vSe, info)
-    implicit none
     class(IncrementationControl),intent(inout)      :: this
     double precision,dimension(alamEval_vSD_dim),intent(in) :: vDe, vSe
     integer,intent(out)                             :: info
@@ -140,7 +139,6 @@ contains
     !>
     !> All fields except for the ones representing 'totals' are set to zero.
     subroutine IncrementationControl_initStep(this, info)
-    implicit none
     class(IncrementationControl),intent(inout)      :: this
     integer,intent(out)                             :: info
     !
@@ -161,7 +159,6 @@ contains
     subroutine IncrementationControlSettings_read(this, cnfunit, info, allowed)
     use criConfigReader
     use criUncomment
-    implicit none
     type(IncrementationControlSettings),intent(out)   :: this
     integer,intent(in)                                :: cnfunit
     integer,intent(out)                               :: info
