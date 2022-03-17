@@ -14,14 +14,13 @@
 !>
 !>    History of modifications: (see svn log)
 !>
-!>    \file criStdDefs.fpp 
+!>    \file criStdDefs.fpp
 !
 #ifndef criStdDefs_62108D29_8A2E_4d99_8F56_46D6307CD9AF
 #define criStdDefs_62108D29_8A2E_4d99_8F56_46D6307CD9AF
 
 #include "criToolset.fpp"
 #include "criModules.fpp"
-#include "criAssert.fpp"
 
 #endif
 

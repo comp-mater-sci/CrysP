@@ -14,20 +14,20 @@
 !>
 !>    History of modifications: (see svn log)
 !>
-!>    \file criVersion.f90 
+!>    \file criVersion.f90
 !
 #include "criStdDefs.fpp"
 !
 !> Basic functions for displaying and manipulating version numbers.
 module criVersion
+      implicit none
 
       integer,parameter       :: criVersion_max_string_len = 32
-      
-      
+
+
 contains
-      
+
       function versionString(feature,major,minor,subminor,msg,rev)
-      implicit none
       character(len=*),intent(in)               :: feature
       integer,intent(in)                        :: major,minor,subminor
       character(len=*),intent(in),optional      :: msg,rev
@@ -38,8 +38,8 @@ contains
             write(tmp,fmt=1) feature,major,minor,subminor
             versionString = trim(adjustl(tmp))
             if (present(msg)) versionString = trim(versionString) // ' ' // trim(adjustl(msg))
-            if (present(rev)) versionString = trim(versionString) // ' ' // trim(adjustl(rev))                  
-            !            
+            if (present(rev)) versionString = trim(versionString) // ' ' // trim(adjustl(rev))
+            !
             1 format(A12,1X,I2.2,'.',I3.3,'.',I3.3)
       !
       end function

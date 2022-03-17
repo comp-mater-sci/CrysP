@@ -26,7 +26,6 @@ list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 set(LIBSRC 
 criAlgorithm.f90
 criArray.f90
-criAssert.f90
 criConfigReader.f90
 criErrcodes.f90
 criExpandableVector.f90
