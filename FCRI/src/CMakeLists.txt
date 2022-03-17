@@ -33,7 +33,6 @@ criLibCRIVersion.f90
 criLinearMap.f90
 criLog.f90
 criMathUtils.f90
-criMkTemp.f90
 criNamedRange.f90
 criNumerics.f90
 criPath.f90
