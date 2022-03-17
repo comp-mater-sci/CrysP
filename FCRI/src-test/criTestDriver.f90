@@ -14,7 +14,7 @@
 !>
 !>    History of modifications: (see svn log)
 !>
-!>    \file criTest.f90 
+!>    \file criTest.f90
 !
 !
 #include "criStdDefs.fpp"
@@ -34,7 +34,6 @@ use criTestPath
 use criTestUncomment
 use criTestIterUtils
 use criTestNumerics
-use criTestExpandableVector
 use criTestMathUtils
 implicit none
 
@@ -43,23 +42,21 @@ logical  :: l
       call testInit()
 
       l = test_replaceAll()
-      
+
       l = criTestPath_main()
-      
+
       l = criTestRange_main()
-      
+
       l = criTestUncomment_main()
-      
+
       l = criTestAlgorithm_main()
-      
+
       l = criTestIterUtils_main()
 
       l = criTestNumerics_main()
 
-      l = criTestExpandableVector_main()
-      
       l = criTestMathUtils_main()
-      
+
       call testSummary()
 
 end program

@@ -28,7 +28,6 @@ criAlgorithm.f90
 criArray.f90
 criConfigReader.f90
 criErrcodes.f90
-criExpandableVector.f90
 criIterUtils.f90
 criLibCRIVersion.f90
 criLinearMap.f90
