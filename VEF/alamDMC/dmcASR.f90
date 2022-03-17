@@ -22,7 +22,6 @@ use criAlgorithm
 use criLog
 use criMathUtils
 use criUncomment, only: readValue
-use fngVec5D
 use dmcUtils, only: display_unit
 use dmcIncrementationControl
 use dmcStressDrivenEvolutionModule

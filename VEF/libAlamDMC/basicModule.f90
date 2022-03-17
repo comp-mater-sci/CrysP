@@ -24,7 +24,6 @@ use criAlgorithm, only: optionalDefault
 use criPath, only: max_pathlen, splitExt
 use criLinearMap
 use criLog
-use fngVec5D
 use dmcAbstractModule
 use altayConfig, only: altayConfigData
 use commonConfig

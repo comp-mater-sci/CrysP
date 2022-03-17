@@ -17,7 +17,7 @@ alamYLPConstants.f90
 )
 
 add_library(alamYLP STATIC ${alamYLP_SRCS})
-target_link_libraries(alamYLP PUBLIC CRI fngCore fopt)
+target_link_libraries(alamYLP PUBLIC CRI fopt)
 
 install(TARGETS alamYLP DESTINATION "lib")
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")

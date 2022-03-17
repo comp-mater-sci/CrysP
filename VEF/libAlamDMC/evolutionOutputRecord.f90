@@ -16,10 +16,9 @@
 !> Data types for stress evolution outputs
 module dmcEvolutionOutputRecord
 use criErrcodes
-use criMathUtils, only: SRTensor, root23
+use criMathUtils, only: SRTensor, root23, vec5D2tens
 use dmcIncrementationControl, only: IncrementationControlVariables
 use dmcYLPResult, only: YLPResult
-use fngVec5D, only: vec5D2tens
 implicit none
 
     public :: IncrementOutputRecord

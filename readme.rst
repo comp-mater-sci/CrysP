@@ -3,8 +3,6 @@ Introduction
 ============
 
 :Author: Jerzy Gawad <jerzy.gawad@cs.kuleuven.be>
-:Date: $Date$
-:Revision: $Revision$
 :Copyright: KU Leuven
 
 .. contents::
@@ -15,9 +13,6 @@ Overview of the repository contents
 This directory contains top-level projects. Each project has a separate directory where
 its content resides. On this level, the list of projects include:
 
-`abaqus`
-  Abaqus-related code: VUMATs, Abaqus Python scripts and utilities
-
 `AlTay`_
   Source code of AlTay. This includes altay stand-alone program and libaltay library
 
@@ -27,9 +22,6 @@ its content resides. On this level, the list of projects include:
 `FCRI`_
   Fortran library that provides a number of utility components. FCRI is the corner stone
   of almost all Fortran projects in this repository.
-
-`fng`_
-  Implementation of Facet plastic potential.
 
 `fopt`_
   Collection of optimization procedures written in Fortran
@@ -117,11 +109,7 @@ the project and use ``make`` command.
 
 .. include:: build/readme.rst
 
-.. include:: abaqus/readme.rst
-
 .. include:: AlTay/readme.rst
-
-.. include:: fng/readme.rst
 
 .. include:: FCRI/readme.rst
 

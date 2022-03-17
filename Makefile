@@ -38,8 +38,7 @@ all: $(ALL_PROJECTS)
 #
 
 AlTay: FCRI
-fng: FCRI fopt AlTay
-VEF: FCRI fopt AlTay fng
+VEF: FCRI fopt AlTay
 
 #
 # Targets

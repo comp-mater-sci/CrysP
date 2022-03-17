@@ -1,5 +1,3 @@
-# $Id$
-#
 cmake_minimum_required(VERSION 2.8)
 
 project(altay Fortran)
@@ -20,6 +18,3 @@ find_package(FCRI REQUIRED)
 include_directories(${FCRI_INCLUDE_DIR})
 
 add_subdirectory(src)
-add_subdirectory(cub)
-
-

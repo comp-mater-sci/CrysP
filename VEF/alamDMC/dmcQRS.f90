@@ -23,7 +23,6 @@ use criRange
 use criLog
 use criAlgorithm
 use criUncomment, only: readValue
-use fngVec5D
 use dmcYLPResult
 use dmcUtils
 use dmcStressDrivenModule
