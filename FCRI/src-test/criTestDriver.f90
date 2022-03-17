@@ -32,7 +32,6 @@ use criTestAlgorithm
 use criTestRange
 use criTestPath
 use criTestUncomment
-use criTestIterUtils
 use criTestNumerics
 use criTestMathUtils
 implicit none
@@ -50,8 +49,6 @@ logical  :: l
       l = criTestUncomment_main()
 
       l = criTestAlgorithm_main()
-
-      l = criTestIterUtils_main()
 
       l = criTestNumerics_main()
 
