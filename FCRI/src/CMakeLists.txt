@@ -26,25 +26,18 @@ list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 set(LIBSRC 
 criAlgorithm.f90
 criArray.f90
-criAssert.f90
 criConfigReader.f90
 criErrcodes.f90
-criExpandableVector.f90
-criIterUtils.f90
-criLibCRIVersion.f90
 criLinearMap.f90
 criLog.f90
 criMathUtils.f90
-criMkTemp.f90
 criNamedRange.f90
 criNumerics.f90
 criPath.f90
 criRange.f90
 criRuntime.f90
 criTest.f90
-criTimers.f90
 criUncomment.f90
-criVersion.f90
 )
 
 add_library(${CRI} STATIC ${LIBSRC})

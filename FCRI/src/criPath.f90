@@ -14,13 +14,12 @@
 !>
 !>    History of modifications: (see svn log)
 !>
-!>    \file criPath.f90 
+!>    \file criPath.f90
 !
 #include "criStdDefs.fpp"
 !
 !> Provides named constants and procedures for dealing with filesystem paths.
 module criPath
-use criAssert
 implicit none
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -43,7 +42,6 @@ contains
       !> The function is modelled after Unix command `basename` and
       !> Python os.path.basename()
       elemental function basename(path)
-      implicit none
       character(len=*),intent(in)   :: path
       character(len=len(path))       :: basename
       !
@@ -57,7 +55,7 @@ contains
                   ! (u == lb) : dir, search for another dirsep if u > 1; otherwise return root path
                   ! (u > 0) && (u < lb): there is a path separator inside the path
                   if (u > 0) then
-                        if (u < lb) then 
+                        if (u < lb) then
                               l = u + 1
                               u = lb
                         else
@@ -78,10 +76,9 @@ contains
             endif
       !
       end function
-      
+
       !> Returns the path without file exension (if there is any)
       elemental function stripExt(path)
-      implicit none
       character(len=*),intent(in)   :: path
       character(len=len(path))      :: stripExt
       !
@@ -89,20 +86,19 @@ contains
       !
             call splitExt(path, stripExt, ext)
       !
-      end function      
-      
+      end function
+
       !> Split the pathname path into a pair (root, ext).
       !>
-      !> Ext is empty or begins with a period and contains at most one period. 
+      !> Ext is empty or begins with a period and contains at most one period.
       !> Leading periods on the basename are ignored.
-      !> Semantically it should hold that (root // ext) == path, but the effect of 
+      !> Semantically it should hold that (root // ext) == path, but the effect of
       !> leading and trailing blanks must be also considered. It is safer to assume
       !> that:
       !> adjustl(trim(root)) // adjustl(trim(ext)) == adjustl(path)
       !> The procedure removes the leading blanks from root and ext, so:
       !> len_trim(root) // len_trim(ext) == adjustl(path)
       elemental subroutine splitExt(path, root, ext)
-      implicit none
       character(len=*),intent(in)   :: path
       character(len=*),intent(out)  :: root
       character(len=*),intent(out)  :: ext
@@ -117,12 +113,12 @@ contains
                   l = 1
                   u = index(path, dot, back=.true.)
                   ! (u == 0)  : entire path
-                  ! (u > 0): there is an extension separator 
+                  ! (u > 0): there is an extension separator
                   if (u > 0) then
                         ! Consider extension separator inside the path - it does not count as an extension separator.
                         ! Consider file name that starts with dot (dot after pathsep or at beginning of unrooted path)
                         ups = index(path, pathsep, back=.true.) ! Right-most pathsep or zero for unrooted path
-                        if (ups + 1 >= u) then ! Dot appears inside the path, skipping 
+                        if (ups + 1 >= u) then ! Dot appears inside the path, skipping
                               u = lb
                         else
                               u = u - 1
@@ -130,24 +126,23 @@ contains
                   else
                         u = lb
                   endif
-                  if (l <= u) then 
+                  if (l <= u) then
                         ! finally: shift to the left
                         root = adjustl(path(l:u))
                         ups = u + 1 ! Supposed position of the dot
                         if (ups <= lb) ext = adjustl(path(ups:lb))
-                        
+
                   endif
             endif
 
       !
       end subroutine
-      
-      
+
+
       !> Construct a filename by stitching together prefix and suffix.
       !>
       !> The leading whitespaces in the suffix are not preserved in the resulting string.
       pure function  mkfilename(prefix,suffix)
-      implicit none
       character(len=*),intent(in)               :: prefix, suffix
       character(len=len(prefix)+len(suffix))    :: mkfilename
       !
@@ -160,10 +155,9 @@ contains
       !> as needed.
       !>
       !> Notable special case:
-      !> - 2nd path begins with root path, e.g.: 
+      !> - 2nd path begins with root path, e.g.:
       !>   pathjoin('path1','/path2') returns '/path2'
       elemental function pathjoin(path_a, path_b) result(path)
-      implicit none
       character(len=*),intent(in)               :: path_a, path_b
       character(len=len(path_a)+len(path_b))    :: path
       !
@@ -188,12 +182,12 @@ contains
             if (a_end > 0) a_sep = path_a(a_end:a_end) == pathsep
             ! Add separator if the first path has no separator
             if ((a_end > 0) .and. .not. a_sep) sep = pathsep
-            ! We have to trim sep to get empty string for '', otherwise it is 
+            ! We have to trim sep to get empty string for '', otherwise it is
             ! a one-character string.
             path = trim(adjustl(path_a)) // trim(sep) // trim(adjustl(path_b))
       !
       end function
 
-      
+
 end module
-      
+
