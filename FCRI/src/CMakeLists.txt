@@ -29,7 +29,6 @@ criArray.f90
 criConfigReader.f90
 criErrcodes.f90
 criIterUtils.f90
-criLibCRIVersion.f90
 criLinearMap.f90
 criLog.f90
 criMathUtils.f90
@@ -40,7 +39,6 @@ criRange.f90
 criRuntime.f90
 criTest.f90
 criUncomment.f90
-criVersion.f90
 )
 
 add_library(${CRI} STATIC ${LIBSRC})
