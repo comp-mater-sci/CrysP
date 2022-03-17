@@ -88,7 +88,6 @@ contains
 
     !> Create a FixedSubsteppingConfig that defines substepping with n_increments
     pure function FixedSubsteppingConfig_init_nintervals(n_increments) result(this)
-    implicit none
     type(FixedSubsteppingConfig) :: this
     integer,intent(in)  :: n_increments !< Number of increments
     !
@@ -100,7 +99,6 @@ contains
 
     !> Create a FixedSubsteppingConfig from an array of specified increments
     pure function FixedSubsteppingConfig_init_intervals(increments) result(this)
-    implicit none
     type(FixedSubsteppingConfig) :: this
     double precision,dimension(:),intent(in)  :: increments
     !
@@ -111,7 +109,6 @@ contains
 
     !> Create a FixedSubsteppingConfig from a range
     function FixedSubsteppingConfig_init_range(range) result(this)
-    implicit none
     type(FixedSubsteppingConfig) :: this
     class(range_type),intent(in) :: range
     !
@@ -122,7 +119,6 @@ contains
 
     !> Create a FixedSubsteppingConfig that defines one increment.
     function FixedSubsteppingConfig_init_single() result(this)
-    implicit none
     type(FixedSubsteppingConfig) :: this
     !
         allocate(this%ptr_range, source=DiscreteRange([0.D0, 1.D0]))
@@ -142,7 +138,6 @@ contains
 
     
     function properSubsteppingRange(range, info) result(inst)
-    implicit none
     class(range_type),pointer       :: inst
     class(range_type),intent(inout) :: range
     integer,intent(out)             :: info

@@ -74,7 +74,6 @@ contains
     !> Main loop of incremental stress driven state evolution
     integer function StressDrivenEvolutionModule_calculateStressPath(this, sigma, control, outputs, rotmat, &
                                                                      incrementation_control, use_icv_as_is) result(info)
-    implicit none
     class(StressDrivenEvolutionModule),intent(inout):: this
     type(SRTensor),intent(in)                       :: sigma !< Imposed stress tensor
     !> Settings that control the incrementation process
@@ -283,7 +282,6 @@ contains
     !> Event handler in calculateStressPath: invoked at the begining of each
     !> increment
     subroutine StressDrivenEvolutionModule_onIncrementStart(this, control, icv, info)
-    implicit none
     class(StressDrivenEvolutionModule),intent(inout)    :: this
     class(IncrementationControlSettings),intent(inout)  :: control
     class(IncrementationControl),intent(inout)          :: icv
@@ -306,7 +304,6 @@ contains
     !> Event handler in calculateStressPath: invoked at the end of each
     !> increment
     subroutine StressDrivenEvolutionModule_onIncrementEnd(this, control, icv, output_record, info)
-    implicit none
     class(StressDrivenEvolutionModule),intent(inout)    :: this
     class(IncrementationControlSettings),intent(inout)  :: control
     class(IncrementationControl),intent(inout)          :: icv

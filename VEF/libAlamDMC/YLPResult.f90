@@ -59,7 +59,6 @@ contains
     !>
     !> \post A correctly initialized result has non-zero vS_length field.
     pure function YLPResult_init(vS) result(res)
-    implicit none
     type(YLPResult) :: res
     double precision,dimension(alamEval_vSD_dim),intent(in) :: vS
     !
@@ -74,7 +73,6 @@ contains
     !> This requires fields: vS, vA and vS_length.
     !> \return criErr_BadArgs if input ylp_result contains wrong data.
     integer function deriveYLPResult(ylp_result) result(info)
-    implicit none
     type(YLPResult),intent(inout)   :: ylp_result
     !
     double precision :: SonA_norm
@@ -95,7 +93,6 @@ contains
     !> Print detailed info about YLP solution based on the content of YLPResult 
     !> object.
     integer function printYLPResult(iounit, ylp_result) result(info)
-    implicit none
     integer,intent(in)              :: iounit
     type(YLPResult),intent(in)      :: ylp_result
     !
@@ -126,7 +123,6 @@ contains
     !> except for unconverged solution where they are not. For this reason it 
     !> appears better to check both.
     pure logical function checkYLPResult(ylp_result, tolerance, target_residual) result(val)
-    implicit none
     type(YLPResult),intent(in)          :: ylp_result
     type(YLPResultTolerance),intent(in) :: tolerance
     double precision,intent(in)         :: target_residual

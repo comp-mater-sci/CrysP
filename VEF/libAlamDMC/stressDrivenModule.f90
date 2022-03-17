@@ -65,7 +65,6 @@ contains
 
     !> Initialize a configured StressDrivenModule object
     integer function StressDrivenModule_initialize(this) result(info)
-    implicit none
     class(StressDrivenModule),intent(inout)          :: this
     !
     integer :: ierr
@@ -88,7 +87,6 @@ contains
 
     
     integer function StressDrivenModule_readConfig(this,cnfunit) result(info)
-    implicit none
     class(StressDrivenModule),intent(inout)          :: this
     integer,intent(in)                        :: cnfunit
     !
@@ -111,7 +109,6 @@ contains
     !> Print out configuration of the module
     integer function StressDrivenModule_printConfig(this,outunit) result(info)
     use altayConfig
-    implicit none
     class(StressDrivenModule),intent(in):: this
     integer,intent(in)                  :: outunit
     !
@@ -134,7 +131,6 @@ contains
     
     !> Finalization of the module
     integer function StressDrivenModule_finalize(this) result(info)
-    implicit none
     class(StressDrivenModule),intent(inout) :: this
     !
         !
@@ -164,7 +160,6 @@ contains
     !> \return criError or any criErr_* on severe error conditions. ylp_result and D are undefined
     !> \return criSuccess on success
     integer function StressDrivenModule_findSolution(this,sigma, D, ylp_result, vM_guess, is_acceptable, pretry) result(info)
-    implicit none
     class(StressDrivenModule),intent(in)   :: this
     type(SRTensor),intent(in)       :: sigma !< Total input stress tensor
     type(SRTEnsor),intent(inout)    :: D     !< Plastic strain rate
@@ -281,7 +276,6 @@ contains
     !> at later stage. In such case criError is returned.
     !> In such case
     integer function StressDrivenModule_search(this, ylp_config, ylp_result, use_vM_guess, obj_func) result(info)
-    implicit none
     class(StressDrivenModule),intent(in):: this
     type(multilevelYLPConfig),intent(in)    :: ylp_config
     type(YLPResult),intent(inout)           :: ylp_result
@@ -305,7 +299,6 @@ contains
     
     !> Read configuration of the solver (libalamylp)
     subroutine readYLPConfigSection(cnfunit,cnf,info)
-    implicit none
     integer,intent(in)                        :: cnfunit
     type(multilevelYLPConfig),intent(out)     :: cnf
     integer,intent(out)                       :: info

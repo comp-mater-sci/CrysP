@@ -132,7 +132,6 @@ contains
 
     !> Set up StrainDrivenStep 
     integer function StrainDrivenStep_setUp(this) result(info)
-    implicit none
     class(StrainDrivenStep),intent(inout)   :: this
     !
     double precision :: step_strain_norm, volumetric_strain_norm, volumetric_strain_fraction
@@ -205,7 +204,6 @@ contains
     !>
     !> Returns criSuccess on success.
     integer function StrainDrivenFixedStep_setUp(this) result(info)
-    implicit none
     class(StrainDrivenFixedStep),intent(inout)   :: this
     !
     double precision :: step_strain_norm
@@ -250,7 +248,6 @@ contains
     integer function StrainDrivenFixedStep_execute(this, step_output) result(info)
     use altaySub
     use altayConfig
-    implicit none
     class(StrainDrivenFixedStep),intent(inout)  :: this
     class(StepOutput),intent(out)               :: step_output
     !
@@ -348,7 +345,6 @@ contains
     integer function StepOutput_collect(this, n_increments) result(info)
     use altayConfig
     use altayMacroKinematic
-    implicit none
     class(StepOutput),intent(inout)     :: this
     integer,intent(in)                  :: n_increments
     !

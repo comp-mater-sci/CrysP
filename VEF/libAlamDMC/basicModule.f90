@@ -1,11 +1,11 @@
 ! $Id$
 !
-!>    \author Jerzy Gawad                                                
+!>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
 !>
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
+!>
 !>    \date Date of the initial release: 2013-02-16, partly based on contents of 'commonConfig.f90'
 !>    $Revision$
 !>    $Date$
@@ -29,9 +29,6 @@ use altayConfig, only: altayConfigData
 use commonConfig
 use dmcUtils
 use dmcFuture
-#ifdef DMC_USE_TOKENS
-use dmcToken
-#endif
 implicit none
 
 
@@ -40,38 +37,35 @@ implicit none
 
       type :: outputConfig
 
-            character(len=max_pathlen)      :: outputPrefix = '' !< Prefix for the output files. 
+            character(len=max_pathlen)      :: outputPrefix = '' !< Prefix for the output files.
 
             logical                       :: outputRequest = .false.
-            
+
             integer                       :: verbosity = 0  !< Level of verbosity sent to the stdout and to the log file (if any)
-            
+
             integer                       :: log_unit = 6
-            
+
       end type
-      
-      !> Class implementing basic subset of operations that are shared by all 
+
+      !> Class implementing basic subset of operations that are shared by all
       !> computational modules.
       !>
       !> \note This class is essentially an abstract class, but declaring it
-      !>       that way prevents the subclasses from calling _ANY_ superclass 
+      !>       that way prevents the subclasses from calling _ANY_ superclass
       !>       method (including the ones that have an actual implementation
       !>       in BasicModule) in the OO-acceptable style:
       !>       `this%ParentClassName%method()`
       type,extends(abstractModule) :: BasicModule
-      
+
             type(outputConfig)            :: output
 
             type(altayConfigData)         :: altay !< Root-level configuration structure of texture and hardening
-            
-#ifdef DMC_USE_TOKENS
-            type(Token)                   :: token
-#endif
-            
+
+
       contains ! type-bound procedures
-      
+
             procedure,pass(this)     :: initialize =>  BasicModule_initialize
-      
+
             procedure,pass(this)     :: readConfig => BasicModule_readConfig
 
             procedure,pass(this)     :: printConfig => BasicModule_printConfig
@@ -82,15 +76,12 @@ implicit none
 
             !>@{ \name Helper procedures
             procedure,pass(this)      :: openOutputFile => BasicModule_openOutputFile
-            
+
             procedure,pass(this)      :: reinitializeLibAltay => BasicModule_reinitializeLibAltay
-            
+
             procedure,pass(this)      :: finalizeLibAltay => BasicModule_finalizeLibAltay
             !>@}
-            
-#ifdef DMC_USE_TOKENS
-            procedure,pass(this)        :: verifySignatures => BasicModule_verifySignatures
-#endif
+
       end type
 
 
@@ -102,21 +93,17 @@ contains
       use altaySub
       use altayHardTypes, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop
       use commonUtils
-      implicit none
       class(BasicModule),intent(inout)          :: this
       !
       integer :: ierr
       !
 
-#ifdef DMC_USE_TOKENS
-            RETURN_IF(info /= criSuccess, info = this%verifySignatures())
-#endif
             info = criError
             ! Finish the configuration:
             this%altay%output_config%nfile = merge(1,0,this%output%outputRequest)
             this%altay%output_prefix = trim(this%output%outputPrefix)
             this%altay%jobtitle = trim(this%output%outputPrefix)
-            ! 
+            !
             if (this%output%outputRequest) then
                   select case(this%altay%hardening%HardLawID)
                   case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
@@ -136,10 +123,10 @@ contains
                 endif
             endif
             if (ierr /= altaySub_OK) return
-            
+
             30 format('Initializing the multilevel model...')
             31 format(1X,A)
-      
+
             ! Output the initial state variables (non only texture but also BPM, MSS) if requested.
             if (this%output%outputRequest) then
                   call outputTexture(ierr) !< \todo Rename with more general name
@@ -151,22 +138,21 @@ contains
             info = criSuccess
             !
       end function
-      
+
       !> read output and AlTay configuration sections
       integer function BasicModule_readConfig(this,cnfunit) result(info)
-      implicit none
-      class(BasicModule),intent(inout)          :: this 
+      class(BasicModule),intent(inout)          :: this
       integer,intent(in)                        :: cnfunit !< IO input unit
       !
             info = criErr_IORead
             !
             ! Read output configuration lines
             call readOutputConfigSection(cnfunit,this%output,info) ! top 3 lines after comment header of config file
-            if (info /= criSuccess) then 
+            if (info /= criSuccess) then
                   write(error_unit,fmt=901) 'Check output configuration section.'
                   return
             endif
-            ! 
+            !
             ! Read AlTay configuration lines
             call readAlTayConfigSection(cnfunit,this%altay,info) ! read configuration of texture, slip systems, microstructure and hardening
             if (info /= criSuccess) then
@@ -177,14 +163,13 @@ contains
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-      !            
+      !
       end function
-      
-      
-      
+
+
+
       integer function BasicModule_printConfig(this,outunit) result(info)
       use altayConfig
-      implicit none
       class(BasicModule),intent(in)       :: this
       integer,intent(in)                  :: outunit
       !
@@ -197,15 +182,15 @@ contains
                       write(display_unit,fmt=202) 'FC Taylor'
                 end select
                 !
-      
-                ! Print configuration     
+
+                ! Print configuration
                 select case(this%altay%texture%input_type)
                       case(1)     ! SMT or CUB
                             write(outunit,fmt=200) 'SMT'
-                      case(2)       ! CUR file    
+                      case(2)       ! CUR file
                             write(outunit,fmt=200) 'CUR'
                       case(3)
-                            write(outunit,fmt=200) 'CUB'                       
+                            write(outunit,fmt=200) 'CUB'
                 end select
                 write(outunit,fmt=201) trim(this%altay%texture%input_fname)
                 write(outunit,fmt=101) 'Slip systems definition:', trim(this%altay%slipsystem%input_fname)
@@ -213,25 +198,25 @@ contains
                 select case(this%altay%hardening%HardLawID)
                       case(0)     ! hard_none
                             write(outunit,fmt=203) 'non-hardening'
-                      case(1)     ! 
+                      case(1)     !
                             write(outunit,fmt=203) 'Voce'
-                      case(2)       !    
+                      case(2)       !
                             write(outunit,fmt=203) 'Swift K'
                       case(3)
-                            write(outunit,fmt=203) 'Swift S'                       
+                            write(outunit,fmt=203) 'Swift S'
                       case(11)
-                            write(outunit,fmt=203) 'Peeters'                       
+                            write(outunit,fmt=203) 'Peeters'
                       case(12)
-                            write(outunit,fmt=203) 'PEBP screw'                       
+                            write(outunit,fmt=203) 'PEBP screw'
                       case(13)
-                            write(outunit,fmt=203) 'PEBP loop'                       
+                            write(outunit,fmt=203) 'PEBP loop'
                 end select
                 !
             endif
             !
             info = criSuccess
             !
-            !!!!     
+            !!!!
             100 format(/,A,/)
             101 format(A,T35,A)
             !
@@ -241,7 +226,7 @@ contains
             203 format('Hardening model:', T35,A)
       !
       end function
-      
+
 
 
     subroutine BasicModule_run(this,info)
@@ -256,7 +241,6 @@ contains
     !> Finalization of the module
     integer function BasicModule_finalize(this) result(info)
     use altaySub
-    implicit none
     class(BasicModule),intent(inout) :: this
     !
         info = this%finalizeLibAltay()
@@ -266,11 +250,10 @@ contains
         endif
     !
     end function
-    
+
 
     !> Open output file
     integer function BasicModule_openOutputFile(this, ext, ofunit, suffix) result(info)
-    implicit none
     class(BasicModule),intent(in)           :: this
     character(len=*),intent(in)             :: ext !< File extension (with leading dot)
     integer,intent(out)                     :: ofunit !< IO unit of the output
@@ -283,7 +266,7 @@ contains
             output_path = trim(this%output%outputPrefix)// trim(suffix) //trim(ext)
         else
             output_path = trim(this%output%outputPrefix)// trim(ext)
-            
+
         endif
         open(newunit=ofunit, file=output_path, status='replace', iostat=ierr)
         if (ierr /= 0) then
@@ -298,12 +281,11 @@ contains
 #undef MSG_GROUP_ERRORS
       !
     end function
-    
-    
-    
+
+
+
     integer function BasicModule_reinitializeLibAltay(this, output_prefix) result(info)
     use altaySub
-    implicit none
     class(BasicModule),intent(inout)        :: this
     character(len=*),intent(in),optional    :: output_prefix !< File prefix
     !
@@ -314,7 +296,7 @@ contains
         ! Reconfigure:
         !  - Set new prefix
         if (present(output_prefix)) this%altay%output_prefix = output_prefix
-        ! 
+        !
         call initAltay(this%altay,ierr)
         CHOOSE(info, ierr == altaySub_OK, criSuccess, criError)
     !
@@ -323,7 +305,6 @@ contains
     !> Finalize libAltay and perform additional actions on finalization.
     integer function BasicModule_finalizeLibAltay(this) result(info)
     use altaySub
-    implicit none
     class(BasicModule),intent(inout)        :: this
     !
     integer :: ierr
@@ -333,25 +314,16 @@ contains
         !
         ! Action on finalize:
         info = criSuccess
-#ifdef DMC_USE_TOKENS
-        if (this%output%outputRequest) then
-            ! Let's _assume_ the actual output file. An alternative is to INQUIRE
-            ! one of libaltay internals: IO unit altayIOConfig::IMP1, but it would
-            ! be very much intrusive.
-            info = this%token%signDataFile(trim(this%altay%output_prefix)//'.CUR')
-        endif
-#endif
     !
     end function
-    
+
       !
       ! Procedures for processing sections of the configuration file
       !
-       
+
       !> Read output configuration from top 3 lines after comment header in configuration file:
-      !> prefix for output files, incremental output request flag, verbosity level  
+      !> prefix for output files, incremental output request flag, verbosity level
       subroutine readOutputConfigSection(cnfunit,cnf,info)
-      implicit none
       integer,intent(in)                  :: cnfunit !< configuration file
       type(outputConfig),intent(inout)    :: cnf
       integer,intent(out)                 :: info
@@ -381,7 +353,6 @@ contains
       !> Read configuration of libaltay
       subroutine readAlTayConfigSection(cnfunit,cnf,info)
       use altayConfig
-      implicit none
       integer,intent(in)                  :: cnfunit
       type(altayConfigData),intent(inout) :: cnf !< Root-level configuration structure of texture, microstructure and hardening
       integer,intent(out)                 :: info
@@ -395,7 +366,7 @@ contains
       type(MapItem),dimension(3*2) :: extensions = [MapItem('.smt',TF_SMT), MapItem('.SMT',TF_SMT), &
                                                     MapItem('.cur',TF_CUR), MapItem('.CUR',TF_CUR), &
                                                     MapItem('.cub',TF_CUB), MapItem('.CUB',TF_CUB)] ! ignore case of extension when resolving its name
-      
+
       type(MapItem),dimension(2) :: model_types = [MapItem('ALAMEL', modelAlamel), &
                                                    MapItem('FCTaylor', modelFCTaylor)]
       type(MapItem),dimension(4) :: slipsystem_types = [MapItem('fcc12', DM_fcc12), &
@@ -434,11 +405,11 @@ contains
                 return
             endif
             !
-            ! Determine slip system file 
+            ! Determine slip system file
             use_default_slipsystems = .true.
             if (.not. readValue(cnfunit, use_default_slipsystems)) return
             if (.not. use_default_slipsystems) then ! user-supplied slip system definition
-                  if (.not. readValue(cnfunit, cnf%slipsystem%input_fname)) return ! read slip system filename                 
+                  if (.not. readValue(cnfunit, cnf%slipsystem%input_fname)) return ! read slip system filename
             !
             else ! default slip system definition
                   if (.not. readKeyword(cnfunit, slipsystem_types, dm_id)) then
@@ -457,8 +428,8 @@ contains
             ! Process advanced microstructure characterization
             use_default_microstructure = .true.
             if (.not. readValue(cnfunit, use_default_microstructure)) return
-            if (.not. use_default_microstructure) then 
-                  if (.not. readValue(cnfunit, cnf%micros_fname)) return ! read <microstructure>.smt filename                 
+            if (.not. use_default_microstructure) then
+                  if (.not. readValue(cnfunit, cnf%micros_fname)) return ! read <microstructure>.smt filename
                   ! Deduce the input type from the extension
                   call splitExt(cnf%micros_fname, root, ext)
                   if (ext == '' .or. .not. (ext == '.smt' .or. ext == '.SMT')) then
@@ -467,12 +438,12 @@ contains
                         return
                   endif
                   ! Read user-supplied initial deformation gradient
-                  do i=1,3 
-                        if (.not. readValue(cnfunit, cnf%simul_init%Fmicro(:,i))) then 
+                  do i=1,3
+                        if (.not. readValue(cnfunit, cnf%simul_init%Fmicro(:,i))) then
                             write(error_unit,fmt=900) 'Cannot read deformation gradient.'
                             info = criErr_BadArgs
                             return
-                        endif                           
+                        endif
                   enddo
             else
                   call incurMicrostructureFile(cnf%micros_fname, info) ! verify location of default microstructure file
@@ -500,13 +471,12 @@ contains
       end subroutine
 
 
-      !> Read configuration of hardening model from configuration file 
+      !> Read configuration of hardening model from configuration file
       subroutine readHardeningSection(cnfunit, hardening, info)
       use altayHard, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop, hard_SwiftK, hard_SwiftS
       use altayConfig, only: hardeningData, VoceConfig, SwiftKConfig, SwiftSConfig
-      implicit none
       integer,intent(in)                  :: cnfunit
-      type(hardeningData),intent(out)     :: hardening !< structure containing hardening configuration 
+      type(hardeningData),intent(out)     :: hardening !< structure containing hardening configuration
       integer,intent(out)                 :: info
       !
       double precision,dimension(5) :: tmp ! Temporary for hardening parameters.
@@ -546,14 +516,14 @@ contains
                         endif
                   !
                   case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-#ifdef PEBP_ENABLED                        
+#ifdef PEBP_ENABLED
                         call readPEPBhardening(cnfunit,hardening%HardLawID,hardening%PEBPCnf,info)
 #else
                         write(error_unit,fmt=900) 'The selected hardening model is not available in your version'
                         info = criError
 #endif
                   case default
-                        write(error_unit,fmt=900) 'Unsupported hardening law.'                      
+                        write(error_unit,fmt=900) 'Unsupported hardening law.'
                         info = criError
                         return
                   end select
@@ -576,7 +546,6 @@ contains
       subroutine readPEPBhardening(cnfunit,kost,hc,info)
       use altayConfig
       use altayHardLaw_DSH, only: ReadPar
-      implicit none
       integer,intent(in)                  :: cnfunit !< configuration file
       integer,intent(in)                  :: kost    !< HardLawID
       type(PEBPConfig),intent(out)        :: hc      !< data type containing the BP model parameters (no state variables); defined in altayConfig.f90
@@ -621,7 +590,6 @@ contains
 
       !> Deduce the path to VEF common data files.
       function getVEFDataDir()
-      implicit none
       character(len=max_pathlen) :: getVEFDataDir
       !
       character(len=max_pathlen) :: vef_root_path
@@ -634,8 +602,8 @@ contains
             endif
       !
       end function
-      
-      
+
+
       !> Determines location of data file in VEF distribution and checks its existence.
       !>
       !> The places where the procedure looks for the files are:
@@ -661,7 +629,6 @@ contains
 
       !> Incur the location of default slip system file
       subroutine incurSlipsystemFile(dm_id, slipsystem_path, info)
-      implicit none
       integer,intent(in)              :: dm_id !< Deformation mechanism ID
       character(len=*),intent(out)    :: slipsystem_path
       integer,intent(out)             :: info
@@ -692,31 +659,5 @@ contains
             call getDataPath('equiaxed.smt', micros_fname, info)
       !
       end subroutine
-      
-      
-      
-#ifdef DMC_USE_TOKENS
-        integer function BasicModule_verifySignatures(this) result(info)
-        class(BasicModule),intent(inout)          :: this
-        !
-            info = criError
-            if (this%token%verifyToken() /= criSuccess) then
-                write(display_unit, fmt=900) 'Invalid token file.'
-                return
-            endif
-            !
-            ! Input file signature
-            if (this%token%verifySignature(this%altay%texture%input_fname) /= criSuccess) then
-                write(display_unit, fmt=900) 'Invalid or missing signature of input file ' // trim(this%altay%texture%input_fname)
-                return
-            endif
-            info = criSuccess
-            !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-        !
-        end function
-#endif
-      
+
 end module

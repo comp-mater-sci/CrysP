@@ -58,7 +58,6 @@ contains
 
     !> Make IncrementOutputRecord from increment data.
     function IncrementOutputRecord_init(icv, ylp, De, Se, taylor_factor) result(this)
-    implicit none
     type(IncrementOutputRecord)                 :: this
     type(IncrementationControlVariables),intent(in) :: icv
     type(YLPResult),intent(in)                  :: ylp
