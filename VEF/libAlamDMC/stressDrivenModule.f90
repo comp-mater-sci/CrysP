@@ -21,7 +21,7 @@ use criAlgorithm, only: optionalDefault
 use criLog
 use criRuntime
 use criUncomment, only: readValue
-use fngVec5D
+use criMathUtils, only: vec5D2tens,tens2vec5D
 use alamYLP
 use alamEval, only: NormalizedV5DComp, alamEval_objFx_call_count
 use dmcUtils, only: display_unit
