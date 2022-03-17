@@ -106,18 +106,6 @@ implicit none
       end interface
 #endif
 
-      interface
-            subroutine callback_commandLine(outunit,cmdline,info,command_map)
-            import commandLine
-            import MapItem
-            implicit none
-            integer,intent(in)                  :: outunit !< IO unit where the function should print to.
-            type(commandLine),intent(in)        :: cmdline !< Command line object
-            integer,intent(out)                 :: info    !< Exit code
-            type(MapItem),dimension(:),optional :: command_map !< Command map
-            end subroutine
-      end interface
-
 contains
 
       !> Terminate execution of the program, returning stop code.
@@ -154,7 +142,7 @@ contains
 
       !> Process the arguments provided in the command line.
       subroutine processCommandLine(this,argc_min,argc_max,command_map,command_argpos,info, &
-                                    terminate,command_desc,argv) !MB: 11 arguments, last 5 optional
+                                    terminate,argv) !MB: 11 arguments, last 5 optional
       implicit none
       type(commandLine),intent(inout)           :: this !MB: defined in criRuntime.f90
       !> Minimal number of mandatory parameters
@@ -181,9 +169,6 @@ contains
       logical,intent(in),optional                           :: terminate
       !> Short description of the "command arguments" that can be accepted by the program
       !>
-      !> \note To give an extended description, one can use either
-      !> prologue or epilogue callback functions.
-      character(len=*),dimension(:),intent(in),optional     :: command_desc
       !> User-supplied list of command line arguments. It must contain program name in the zeroth element.
       character(len=*),dimension(:),intent(in),optional     :: argv
       !> Subroutine to be called before printing the help message.
@@ -209,7 +194,7 @@ contains
                   this%is_command_identified = resolveName(command_map,this%argv(command_argpos),this%command_id) !MB: logical function resolveName(themap,name,id[,index]) defined in criLinearMap.f90; default command_id = -1, here to be overwritten with that of argv(command_argpos)
                   if (.not. this%is_command_identified) then
                         errmsg = 'Unknown command: ' // trim(this%argv(command_argpos))
-                        call finishProcessing(this,command_map,info,terminate,command_desc)
+                        call finishProcessing(this,command_map,info,terminate)
                         if (info /= criSuccess) return
                   endif
             endif
@@ -217,7 +202,7 @@ contains
             if ( (this%argc < argc_min) .or. (this%argc > argc_max) ) then
                   errmsg = 'Insufficient number of parameters.'
                   ! Either stop or return exit code:
-                  call finishProcessing(this,command_map,info,terminate,command_desc)
+                  call finishProcessing(this,command_map,info,terminate)
                   if (info /= criSuccess) return
             endif
             !
@@ -243,20 +228,19 @@ contains
       !>
       !> See processCommandLine for the description of parameters.
       !> \sa processCommandLine
-      subroutine finishProcessing(this,command_map,info,terminate,command_desc)
+      subroutine finishProcessing(this,command_map,info,terminate)
       implicit none
       type(commandLine),intent(inout)     :: this
       type(MapItem),dimension(:),intent(in)                 :: command_map
       integer,intent(out)                 :: info
       logical,intent(in),optional         :: terminate
-      character(len=*),dimension(:),intent(in),optional     :: command_desc
       logical :: do_terminate
       !
             info = criError
             do_terminate = .false.
             if (present(terminate)) do_terminate = terminate
             !
-            call printHelpMessage(this,command_map,info,command_desc)
+            call printHelpMessage(this,command_map,info)
             if (do_terminate) then
                   call finalize(stopcode_inputerror)
             else
@@ -270,12 +254,11 @@ contains
       !>
       !> See processCommandLine for the description of parameters.
       !> \sa processCommandLine
-      subroutine printHelpMessage(this,command_map,info,command_desc)
+      subroutine printHelpMessage(this,command_map,info)
       implicit none
       type(commandLine),intent(inout)     :: this
       type(MapItem),dimension(:),intent(in)                 :: command_map
       integer,intent(out)                 :: info
-      character(len=*),dimension(:),intent(in),optional     :: command_desc
       integer :: i, idx
       character(len=max_command_param_len) :: name
       !
@@ -283,28 +266,10 @@ contains
             if (this%progname /= '') write(error_unit,'(A)') trim(this%progname)
             write(error_unit,'(A)') trim(basename(trim(this%argv(0))))//' '// trim(this%description)
             if (size(command_map) > 0) then
-                  if (present(command_desc)) then
-                        !
-                        if ( all(shape(command_desc) == shape(command_map)) .and. (size(command_map) > 0)) then
-                              ! If the user provided a valid command, give the most specific information:
-                              ! the command + its description
-                              if (this%is_command_identified) then
-                                    if (resolveId(command_map,this%command_id,name,idx)) then
-                                          write(error_unit,fmt=9000) trim(command_map(idx)%name), trim(command_desc(idx))
-                                    endif
-                              else
-                                    write(error_unit,fmt=8000)
-                                    do i = lbound(command_map,dim=1), ubound(command_map,dim=1)
-                                          write(error_unit,fmt=9000) trim(command_map(i)%name), trim(command_desc(i))
-                                    enddo
-                              endif
-                        endif
-                  else
-                        write(error_unit,fmt=8000)
-                        do i =1, size(command_map)
-                              write(error_unit,'(A)') trim(command_map(i)%name)
-                        enddo
-                  endif
+                 write(error_unit,fmt=8000)
+                 do i =1, size(command_map)
+                       write(error_unit,'(A)') trim(command_map(i)%name)
+                 enddo
             endif
       !
             8000 format(/,'Available commands:')
