@@ -1,22 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven (KU Leuven)
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>    \copyright KU Leuven
-!>
-!>    \date Date of the initial release: 2015-11-06
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-!>
-!>    \file criAlgorithm.f90 
-!
-
 #include "criStdDefs.fpp"
 
 !> Various high-level operations on arrays
@@ -25,16 +6,16 @@ use criErrcodes
 implicit none
 
 contains
-    
+
     !> Symmetry folding of arrays
     !>
     !> The algorithm implements folding of arrays. It imposes n-fold mirror symmetry.
-    !> Folding of ragged arrays is not allowed, thus the size of the array 
+    !> Folding of ragged arrays is not allowed, thus the size of the array
     !> must satisfy that N % (2**nfolds) == 0, where N is the size of the array
     !> and `%` denotes modulo operator.
-    !> 
+    !>
     !> Example:
-    !> The array X = [A B] to be folded once. The result is 
+    !> The array X = [A B] to be folded once. The result is
     !> Y = [(A+) + (B-)] / 2, where the suffix `+` denotes the order
     !> of elements as in the original array, and `-` denotes the reverse order.
     !> The array X [A B C D] to be folded twice. The result is
@@ -58,7 +39,7 @@ contains
         outarray = 0.D0
         !
         ! Let's distribute the input matrix over nf blocks of size nout
-        ! The folding takes the element order in the odd blocks 
+        ! The folding takes the element order in the odd blocks
         ! [block_begin:block_end:1]
         ! and in the even blocks: [block_end:block_begin:-1]
         blockstart = 1
@@ -69,7 +50,7 @@ contains
                 istep = 1
             else
                 istart = blockstart + nout - 1
-                iend = blockstart 
+                iend = blockstart
                 istep = -1
             endif
             !_ASSERT(abs(istart - iend) == nout - 1)
@@ -83,5 +64,5 @@ contains
         info = criSuccess
     !
     end subroutine
-    
+
 end module
