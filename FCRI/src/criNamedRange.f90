@@ -51,7 +51,6 @@ contains
 
       !> Creates an instance of relevant range type
       function rangeFactory(name) result(instance)
-      implicit none
       class(range_type),pointer      :: instance
       character(len=*),intent(in)   :: name
       !
@@ -83,7 +82,6 @@ contains
       !> - 'zero' : one-elemental range, the element has value 0.0
       !> - 'one'  : one-elemental range, the element has value 1.0
       function rangeFactory_extended(name) result(instance)
-      implicit none
       class(range_type),pointer      :: instance
       character(len=*),intent(in)   :: name
       !

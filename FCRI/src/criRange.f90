@@ -40,14 +40,12 @@ private
       abstract interface
             logical function range_type_next(r,value)
                   import :: range_type
-                  implicit none
                   class(range_type),intent(inout)    :: r
                   double precision,intent(inout)      :: value
             end function
 
             elemental integer function range_type_size(r)
                   import :: range_type
-                  implicit none
                   class(range_type),intent(in)    :: r
             end function
       end interface
@@ -192,7 +190,6 @@ contains
       !>    * uniformRange(2.D0, 5.D0, 1.D0, endpoint=.false.) is a range comprising {2.D0, 3.D0, 4.D0}
       !>    * uniformRange(1.D0, 3.D0, npoints=4, endpoint=.true.) consists of {1.D0,1.5D0,2.D0,2.5D0,3.D0}
       elemental function uniformRange_init(rbegin,rend,rstep,npoints,endpoint) result(res)
-      implicit none
       type(uniformRange)                         :: res
       double precision,intent(in)               :: rbegin   !< Begin of the range
       double precision,intent(in)               :: rend     !< End of the range.
@@ -232,7 +229,6 @@ contains
       !> \returns .true. if a point belongs to the range. The corresponding value is returned
       !> in value.
       logical function uniformRange_next(r,value) result(next)
-      implicit none
       class(uniformRange),intent(inout)    :: r
       !> The value at the point belonging to the interval. This is meaningful if and only if
       !> the function returns .true.
@@ -257,7 +253,6 @@ contains
       end function
 
       elemental integer function uniformRange_size(r)    result(n)
-      implicit none
       class(uniformRange),intent(in)    :: r
       !
             n = 0
@@ -272,7 +267,6 @@ contains
       !
 
       elemental function biasedRange_init(rbegin,rend,ratio,npoints,endpoint) result(res)
-      implicit none
       type(biasedRange)             :: res
       double precision,intent(in)   :: rbegin !< Left endpoint of the range
       double precision,intent(in)   :: rend   !< Right endpoint of the range
@@ -318,7 +312,6 @@ contains
 
 
       logical function  biasedRange_next(r,value) result(next)
-      implicit none
       class(biasedRange),intent(inout)    :: r
       !> The value at the point belonging to the interval. This is meaningful if and only if
       !> the function returns .true.
@@ -335,7 +328,6 @@ contains
       !
 
       pure function multiBiasedRange_init(rbegin,biases,endpoint) result(res)
-      implicit none
       type(multiBiasedRange)                    :: res
       double precision,intent(in)               :: rbegin   !< Leftmost endpoint of the range.
       type(bias_t),dimension(1:),intent(in)     :: biases   !< Array of biases.
@@ -372,7 +364,6 @@ contains
       !> is actually an instance of multiBiasedRange with two biased ranges. By default,
       !> the first range has progression ratio "ratio", while the second has "1.0/ratio".
       elemental function doubleBiasedRange_init(rbegin,rend,ratio,npoints,endpoint,ratio2) result(res)
-      implicit none
       type(multiBiasedRange)        :: res
       double precision,intent(in)   :: rbegin   !< Left endpoint of the range
       double precision,intent(in)   :: rend     !< Right endpoint of the range
@@ -409,7 +400,6 @@ contains
 
 
       logical function multiBiasedRange_next(r,value) result(next)
-      implicit none
       class(multiBiasedRange),intent(inout)    :: r
       !> The value at the point belonging to the interval. This is meaningful if and only if
       !> the function returns .true.
@@ -432,7 +422,6 @@ contains
 
 
       elemental integer function multiBiasedRange_size(r)    result(n)
-      implicit none
       class(multiBiasedRange),intent(in)    :: r
       !
             n = sum(r%ranges(:)%size())
@@ -445,7 +434,6 @@ contains
       !
 
       pure function discreteRange_init(values) result(res)
-      implicit none
       type(discreteRange)                       :: res
       double precision,dimension(:),intent(in)  :: values   !< Sequence of points
       !
@@ -459,7 +447,6 @@ contains
       !> Provide the next value belonging to the range.
       !> It returns .false. if the end of the range is reached.
       logical function discreteRange_next(r,value) result(next)
-      implicit none
       class(discreteRange),intent(inout)    :: r
       !> The value at the point belonging to the range. This is meaningful if and only if
       !> the function returns .true.
@@ -477,7 +464,6 @@ contains
 
       !> Return the number of points that remain in the sequence.
       elemental integer function discreteRange_size(r)    result(n)
-      implicit none
       class(discreteRange),intent(in)    :: r
       !
             if (allocated(r%sequence)) then

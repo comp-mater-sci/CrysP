@@ -25,6 +25,7 @@
 !> that are frequently used in various subroutunes in the library.
 !> It also provides some simple functions, e.g. conversions.
 module criMathUtils
+implicit none
 
       !>@{ \name Math constants
 
@@ -137,7 +138,6 @@ contains
 
       !> Conversion from radians to degrees
       elemental function scalarRad2Deg(alpha)
-      implicit none
       double precision :: scalarRad2Deg  !< Angle in radians
       double precision,intent(in) :: alpha
       !
@@ -147,7 +147,6 @@ contains
 
       !> Conversion from degrees to radians
       elemental function scalarDeg2Rad(alpha)
-      implicit none
       double precision :: scalarDeg2Rad !< Angle in degrees
       double precision,intent(in) :: alpha
       !
@@ -157,7 +156,6 @@ contains
 
       !> Conversion from radians to degrees
       elemental type(EulerAngles) function EulerAnglesRad2Deg(ang)
-      implicit none
       type(EulerAngles), intent(in)       :: ang
       !
             EulerAnglesRad2Deg%fi1 = rad2deg(ang%fi1)
@@ -168,7 +166,6 @@ contains
 
       !> Conversion from degrees to radians
       elemental type(EulerAngles) function EulerAnglesDeg2Rad(ang)
-      implicit none
       type(EulerAngles), intent(in)       :: ang
       !
             EulerAnglesDeg2Rad%fi1 = deg2rad(ang%fi1)
@@ -179,7 +176,6 @@ contains
 
       !> Trivial conversion from EulerAngles to array of rank 1, dimension 3
       pure function EulerAngles2Arr(ang) result(arr)
-      implicit none
       double precision,dimension(3) :: arr
       type(EulerAngles),intent(in)  :: ang
       !
@@ -191,7 +187,6 @@ contains
 
       !> Trivial conversion from  array of rank 1, dimension 3 to EulerAngles
       pure function Arr2EulerAngles(arr) result(ang)
-      implicit none
       type(EulerAngles)  :: ang
       double precision,dimension(3),intent(in) :: arr
       !
@@ -208,7 +203,6 @@ contains
       !>
       !> \implements ocross_product
       pure function ocross_product_dp(a,b)
-      implicit none
       double precision,dimension(5),intent(in)        :: a,b
       double precision,dimension(5,5)                 :: ocross_product_dp
       !integer :: i
@@ -232,7 +226,6 @@ contains
       !>
       !> \implements ocross_product
       pure function ocross_product_int(a,b)
-      implicit none
       integer,dimension(5),intent(in)                 :: a,b
       integer,dimension(5,5)                          :: ocross_product_int
       integer :: i
@@ -248,7 +241,6 @@ contains
       !>
       !> \implements ocross_product
       pure function ocross_product_dp(a,b)
-      implicit none
       double precision,dimension(:),intent(in)        :: a,b
       double precision,dimension(size(a),size(b))     :: ocross_product_dp
       integer :: i
@@ -265,7 +257,6 @@ contains
       !>
       !> \implements ocross_product
       pure function ocross_product_int(a,b)
-      implicit none
       integer,dimension(:),intent(in)                 :: a,b
       integer,dimension(size(a),size(b))              :: ocross_product_int
       integer :: i
@@ -280,7 +271,6 @@ contains
 
       !> Calculation of the vector product of two double precision vectors with size 3.
       pure function vector_product_dp(a,b)
-      implicit none
       double precision,dimension(3),intent(in)        :: a,b
       double precision,dimension(3)                   :: vector_product_dp
       !
@@ -298,7 +288,6 @@ contains
       !>          *  vectors are of different dimensionality
       !>          *  at least one of the vectors u or v has length 0
       pure double precision function vec_angle(u,v)
-      implicit none
       double precision,dimension(:),intent(in)   :: u, v
       ! Declaration section
       double precision :: cosine
@@ -319,7 +308,6 @@ contains
       !>          *  vectors are of different dimensionality
       !>          *  at least one of the vectors u or v has length 0
       pure double precision function vec_cosine(u,v)
-      implicit none
       double precision,dimension(:),intent(in)   :: u, v
       ! Declaration section
       double precision :: udp, vdp
@@ -348,7 +336,6 @@ contains
       !> R = R_{phi2} * R_{PHI} * R_{phi1}
       !> \returns [3x3] rotation matrix R.
       pure function rotmat_triplet(phi1, PHI, phi2) result(mat)
-      implicit none
       double precision, intent(in)        :: phi1, PHI, phi2
       double precision, dimension(rot_matrix_dim,rot_matrix_dim)    :: mat
       !
@@ -377,7 +364,6 @@ contains
 
       !> Rotation matrix from three Euler angles in Bunge convention
       pure function rotmat_EulerAngles(ang) result(mat)
-      implicit none
       double precision, dimension(rot_matrix_dim,rot_matrix_dim)    :: mat
       type(EulerAngles),intent(in) :: ang
       !
@@ -400,10 +386,10 @@ contains
           cosPHI = mat(3,3) / sqrt( mat(1,3)**2 + mat(2,3)**2 + mat(3,3)**2 )
           PHI = acos(cosPHI) !range: [0,pi]
           !
-          if (abs(cosPHI)==1.0D0) then !case that PHI=0° or PHI=180°
+          if (abs(cosPHI)==1.0D0) then !case that PHI=0\B0 or PHI=180\B0
               !Set phi2 to 0.0D0, given that:
-              !  (phi1;   0°; phi2) equivalent to (phi1+phi2;    0; 0).
-              !  (phi1; 180°; phi2) equivalent to (phi1+phi2; 180°; 0).
+              !  (phi1;   0\B0; phi2) equivalent to (phi1+phi2;    0; 0).
+              !  (phi1; 180\B0; phi2) equivalent to (phi1+phi2; 180\B0; 0).
               phi2 = 0.0D0
               phi1 = atan2(-mat(2,1)/cosPHI,mat(2,2)/cosPHI) !range: [-pi,pi[
           else
@@ -427,7 +413,6 @@ contains
       !>
       !> The result is R^T S R, which is equivalent to (R^T S) R
       pure function rotateSRTensorTo_matrix(S,R) result(Srot)
-      implicit none
       double precision,dimension(sr_tensor_dim,sr_tensor_dim)     :: Srot
       double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)     :: S
       double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
@@ -441,7 +426,6 @@ contains
       !>
       !> The result is R S R^T, which is equivalent to (R S) R^T
       pure function rotateSRTensorFrom_matrix(S,R) result(Srot)
-      implicit none
       double precision,dimension(sr_tensor_dim,sr_tensor_dim)     :: Srot
       double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)     :: S
       double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
@@ -455,7 +439,6 @@ contains
       !>
       !> The result is R^T S R, which is equivalent to (R^T S) R
       pure function rotateSRTensorTo_SRTensor(S,R) result(Srot)
-      implicit none
       type(SRTensor)                :: Srot
       type(SRTensor),intent(in)     :: S
       double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
@@ -469,7 +452,6 @@ contains
       !>
       !> The result is R S R^T, which is equivalent to (R S) R^T
       pure function rotateSRTensorFrom_SRTensor(S,R) result(Srot)
-      implicit none
       type(SRTensor)                :: Srot
       type(SRTensor),intent(in)     :: S
       double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
@@ -485,7 +467,6 @@ contains
       !>
       !> There is a reverse conversion available. \sa Vec3ToMat33
       pure function Mat33ToVec3(mat) result(vec)
-      implicit none
       double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
       double precision,dimension(sr_asymm_voigt_dim)                      :: vec
       !
@@ -501,7 +482,6 @@ contains
       !>
       !> There is a reverse conversion available. \sa Mat33ToVec3
       pure function Vec3ToMat33(vec) result(mat)
-      implicit none
       double precision,dimension(sr_asymm_voigt_dim),intent(in)  :: vec
       double precision,dimension(sr_tensor_dim,sr_tensor_dim)    :: mat
       !
@@ -523,7 +503,6 @@ contains
       !>
       !> There is a reverse conversion available. \sa Mat33ToVec6
       pure function Vec6ToMat33(vec) result(mat)
-      implicit none
       double precision,dimension(sr_symm_voigt_dim),intent(in)  :: vec
       double precision,dimension(sr_tensor_dim,sr_tensor_dim)   :: mat
       !
@@ -545,7 +524,6 @@ contains
       !>
       !> There is a reverse conversion available. \sa Vec6ToMat33
       pure function Mat33ToVec6(mat) result(vec)
-      implicit none
       double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
       double precision,dimension(sr_symm_voigt_dim)                       :: vec
       !
@@ -564,7 +542,6 @@ contains
       !>
       !> There is a reverse conversion available. \sa Mat33ToVec9
       pure function Vec9ToMat33(vec) result(mat)
-      implicit none
       double precision,dimension(sr_voigt_dim),intent(in)  :: vec
       double precision,dimension(sr_tensor_dim,sr_tensor_dim)   :: mat
       !
@@ -586,7 +563,6 @@ contains
       !>
       !> There is a reverse conversion available. \sa Vec9ToMat33
       pure function Mat33ToVec9(mat) result(vec)
-      implicit none
       double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
       double precision,dimension(sr_voigt_dim)                            :: vec
       !
@@ -604,7 +580,6 @@ contains
 
       !> Calculates trace of the square n x n matrix X
       pure double precision function trace_matrix(X) result(res)
-      implicit none
       double precision,dimension(:,:),intent(in)    :: X
       !
       integer :: i
@@ -617,7 +592,6 @@ contains
 
       !> Calculates trace of second-rank tensor X
       pure double precision function trace_SRTensor(X) result(res)
-      implicit none
       type(SRTensor),intent(in)    :: X
       !
            res = trace_matrix(X%t)
@@ -633,7 +607,6 @@ contains
       !>
       !> v is obtained by a clockwise rotation by 90 degs applied to the AB vector.
       subroutine getNormalVector2D(A,B,length,v,beta)
-      implicit none
       type(pair_double), intent(in) :: A, B    !< Positions of the points: A and B
       double precision,intent(in)   :: length  !< Length of the vector v
       type(pair_double),intent(out) :: v       !< Normal vector
@@ -672,7 +645,6 @@ contains
       !> Provides x1 and x2. Both x1 and x2 are guaranteed to be set to a defined value,
       !> even if no real roots exist and info /= criSuccess is returned.
       integer function solveQuadraticPolynomial(a, b, c, x) result(n_roots)
-      implicit none
       double precision,intent(in)   :: a, b, c
       double precision,dimension(2),intent(out)  :: x
       !
@@ -700,7 +672,6 @@ contains
 
 	  !> Convert 5D vector v into second-rank tensor
       pure function vec5D2tens(v) result(t)
-      implicit none
       double precision,dimension(5),intent(in)    :: v
       double precision,dimension(3,3)             :: t
       !
@@ -724,7 +695,6 @@ contains
       !> \remark If the tensor v is not of deviatoric nature,
       !> the deviator will be extracted and used in calculations.
       pure function tens2vec5D(t) result(v)
-      implicit none
       double precision,dimension(3,3),intent(in)   :: t
       double precision,dimension(5)                :: v
       !

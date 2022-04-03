@@ -75,7 +75,6 @@ contains
 
       !> Returns .true. if errcode represents an error condition, otherwise .false.
       elemental logical function is_error(errcode)
-      implicit none
       integer,value,intent(in)    :: errcode
       !
             is_error = (errcode /= criSuccess) .and. (errcode /= criFailure)

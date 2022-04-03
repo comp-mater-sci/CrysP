@@ -24,6 +24,7 @@
 !> \todo A generic name should be provided for all logging subroutines
 module criLog
 use criErrcodes
+implicit none
       !>@{ \name Logging levels defined in CRI
       !>
       !> \remark In principle, users should not rely on numerical values of the constants.
@@ -63,7 +64,6 @@ contains
       
       !> Informs whether events with given severity level should be logged under refLogLevel.
       pure logical function doLogging_integer(severity, refLogLevel)
-      implicit none
       integer,intent(in)                              :: severity
       integer,intent(in)                              :: refLogLevel
       !
@@ -73,7 +73,6 @@ contains
       
       !> Informs whether events with given severity level should be logged by gived logunit.
       pure logical function doLogging_logData(logunit, severity)
-      implicit none
       type(logData),intent(in)                        :: logunit
       integer,intent(in)                              :: severity
       !
@@ -84,7 +83,6 @@ contains
 
       !> Checks if the log level "severity" is within proper range.
       pure logical function isLogLevelOK(severity)
-      implicit none
       integer,intent(in)                              :: severity
       !
             isLogLevelOK = ( (severity >= criLogNone) .and. (severity <= criLogDebug) )

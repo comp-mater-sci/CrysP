@@ -75,7 +75,6 @@ contains
       !>
       !> This implementation is somewhat naive, binary_search can be used instead. \sa binary_search
       logical pure function binarySearch(array,val)
-      implicit none
       integer,dimension(:),intent(in)     :: array
       integer,intent(in)                  :: val
       !
@@ -129,7 +128,6 @@ contains
 
       !> Check if the string value val is present in the list of strings.
       logical function isPresent(val, list,index)
-      implicit none
       character(len=*),intent(in)               :: val      !< Value to be looked up
       character(len=*),dimension(:),intent(in)  :: list     !< Array of strings
       !> Index of the element that was found. It is set only if isPresent returns .true.
@@ -151,7 +149,6 @@ contains
       !> Returns a string that stems from "str", but all instances of the character "from" 
       !> are replaced by the character "to".
       function replaceAll(str,from,to) result(ustr)
-      implicit none
       character(len=*),intent(in)         :: str
       character,intent(in)                :: from
       character,intent(in)                :: to
@@ -171,7 +168,6 @@ contains
       
       
       pure function tostring_int(val,strlen,fmt) result(str)
-      implicit none
       integer,intent(in)                        :: val
       integer,intent(in)                        :: strlen
       character(len=*),intent(in),optional      :: fmt
@@ -189,7 +185,6 @@ contains
       end function
 
       pure function tostring_real(val,strlen,fmt) result(str)
-      implicit none
       real,intent(in)                           :: val
       integer,intent(in)                        :: strlen
       character(len=*),intent(in)               :: fmt
@@ -203,7 +198,6 @@ contains
       end function
 
       pure function tostring_double(val,strlen,fmt) result(str)
-      implicit none
       double precision,intent(in)               :: val
       integer,intent(in)                        :: strlen
       character(len=*),intent(in)               :: fmt
@@ -218,7 +212,6 @@ contains
      
       
       pure function centered_int(val,strlen,fmt) result(str)
-      implicit none
       integer,intent(in)                        :: val
       integer,intent(in)                        :: strlen
       character(len=*),intent(in),optional      :: fmt
@@ -230,7 +223,6 @@ contains
 
       
       pure function centered_string(val) result(str)
-      implicit none
       character(len=*),intent(in)               :: val
       character(len=len(val))                   :: str
       !
@@ -247,7 +239,6 @@ contains
       !> Test the presence of optional logical value, and return a default if the optional
       !> is not present.
       pure logical function optionalDefault_logical(value, default) result(res)
-      implicit none
       !> The parameter to be tested for presence. The actual parameter MUST have optional attribute.
       logical,intent(in),optional   :: value
       logical,intent(in)            :: default  !< Default value
@@ -259,7 +250,6 @@ contains
       !> Test the presence of optional integer value, and return a default if the optional
       !> is not present.
       pure integer function optionalDefault_integer(value, default) result(res)
-      implicit none
       !> The parameter to be tested for presence. The actual parameter MUST have optional attribute.
       integer,intent(in),optional   :: value
       integer,intent(in)            :: default  !< Default value

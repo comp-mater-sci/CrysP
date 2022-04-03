@@ -32,37 +32,37 @@ implicit none
 
     !> Data needed by barycentric interpolation
     type :: BarycentricInterpolator
-        
+
         integer :: order = 0 !< Order of interpolation polynomial
-        
+
         integer :: npoints !< number of points in xi and yi
-        
-        !> x coordinates of the known points. 
+
+        !> x coordinates of the known points.
         !>
-        !> The interpolation nodes and the barycentric weighting factors 
+        !> The interpolation nodes and the barycentric weighting factors
         !> will be constructed from xi.
         !> Size of xi must be at least [order + 1]
         double precision,dimension(:),allocatable   :: xi
-        
+
         !> y coordinates of the known points.
         !>
         !> Size of yi must be identical as the size of xi, so the same
         !> restrictions apply.
         double precision,dimension(:),allocatable   :: yi
-        
+
         !> Barycentric weighting factors of the interpolation polynomials
-        !> It is useful to pre-compute the weights for every 
-        !> polynomial that that is on the nodes from i to i+order+1. 
-        !> This way the latst order+1 nodes 
+        !> It is useful to pre-compute the weights for every
+        !> polynomial that that is on the nodes from i to i+order+1.
+        !> This way the latst order+1 nodes
         !> Shape: [1:order+1, 1:size(xi)-order]
         double precision,dimension(:,:),allocatable   :: wi
-        
-        !> The flag defines how the points outside the range 
+
+        !> The flag defines how the points outside the range
         !> will be treated. If .true., linear interpolation from the
-        !> two border points will be constructed and used for extrapolation. 
+        !> two border points will be constructed and used for extrapolation.
         !> If .false., the border point will be returned.
         logical :: extrapolate = .true.
-        
+
     end type
 
     !> Interpolation function
@@ -72,19 +72,18 @@ implicit none
     interface interpolate
         module procedure BarycentricInterpolator_interpolate
     end interface
-    
+
 contains
-    
+
     !> Calculate evenly spaced numbers over a specified interval
     !> and place them in dynamically allocated array.
     pure subroutine linspace_dynarr(xstart, xend, n, array ,endpoint)
     use criAlgorithm, only: optionalDefault
-    implicit none
     double precision,intent(in)             :: xstart !< Begin of the interval
     double precision,intent(in)             :: xend !< End of the interval
     integer,intent(in)                      :: n !< Number of values to be
     !> Array to be filled in. The allocated size of the array will be either
-    !>  0 if n<1 or n otherwise. 
+    !>  0 if n<1 or n otherwise.
     double precision,dimension(:),allocatable,intent(out) :: array
     !> Flag: set the endpoint to xend (default: .true.)
     logical,intent(in),optional :: endpoint
@@ -98,10 +97,9 @@ contains
     !> Calculate evenly spaced numbers over a specified interval
     pure subroutine linspace_arr(xstart, xend, array ,endpoint)
     use criAlgorithm, only: optionalDefault
-    implicit none
     double precision,intent(in)             :: xstart !< Begin of the interval
     double precision,intent(in)             :: xend !< End of the interval
-    !< Array to be filled in. Size of the array determines 
+    !< Array to be filled in. Size of the array determines
     !> the number of numbers to be generated.
     double precision,dimension(:),intent(out):: array
     !> Flag: set the endpoint to xend (default: .true.)
@@ -126,10 +124,9 @@ contains
     !
     end subroutine
 
-    
+
     !> Initialize and set BarycentricInterpolator object
     subroutine BarycentricInterpolator_init(this, order, xi, yi, info)
-    implicit none
     type(BarycentricInterpolator),intent(out)   :: this
     integer,intent(in)                          :: order
     double precision,dimension(:),intent(in)    :: xi
@@ -140,28 +137,27 @@ contains
         info = criErr_BadArgs
         if (size(xi) /= size(yi)) return
         ! TODO: check if the nodes are in strictly ascending order
-        
+
         call BarycentricInterpolator_init_allocate(this, order, size(xi), info)
         if (info /= criSuccess) return
-        
+
         this%xi = xi
         this%yi = yi
-        
+
         ! compute weighting factors starting from all points.
-        ! Every set of the factors takes the block from i-th to i+order+1 
+        ! Every set of the factors takes the block from i-th to i+order+1
         ! points as the interpolation nodes.
-        
+
         do i = 1, size(this%xi) - order
             call barycentric_weights(this%xi(i:i+order), this%wi(:,i), info)
         enddo
-        
+
     !
     end subroutine
-    
-    
+
+
     !> Allocate internal structures of BarycentricInterpolator object
     subroutine BarycentricInterpolator_init_allocate(this, order, npoints, info)
-    implicit none
     type(BarycentricInterpolator),intent(out)   :: this
     integer,intent(in)  :: order
     integer,intent(in)  :: npoints
@@ -177,8 +173,8 @@ contains
         info = criSuccess
     !
     end subroutine
-    
-    
+
+
     !> Calculate interpolation by means of barycentric form of interpolation
     !> polynomial in Lagrange form.
     !>
@@ -186,7 +182,6 @@ contains
     !> Otherwise the result of the function is undefined.
     double precision pure function BarycentricInterpolator_interpolate(this, x) result(res)
     use criAlgorithm
-    implicit none
     !> Properly initialized object of type BarycentricInterpolator
     type(BarycentricInterpolator),intent(in)    :: this
     !> The point at which the interpolated function is evaluated
@@ -212,7 +207,7 @@ contains
             CHOOSE(res, out_bounds(left_bound), this%yi(1), this%yi(last))
             return
         else
-            ! Pick the right chunk. lower_bound will provide the position of the first element 
+            ! Pick the right chunk. lower_bound will provide the position of the first element
             ! in that has a value greater than or equivalent to x
             i = min(last - this%order, max(1,lower_bound(this%xi, x)-1))
             j = i + this%order
@@ -220,16 +215,15 @@ contains
         endif
     !
     end function
-    
+
     !> Compute interpolation by polynomial of degree n using barycentric formula.
     !>
     !> The degree of the polynomial n is deduced from the size of xi. All xi, yi
     !> and wi must have identical shape.
     !>
     !> [1] J-P Berrut and L.N. Trefethen, Barycentric Lagrange Interpolation, SIAM Rev.
-    !>     46(3), 501–517. DOI:10.1137/S0036144502417715
+    !>     46(3), 501\96517. DOI:10.1137/S0036144502417715
     double precision pure function barycentric_interpolation(x, xi, yi, wi) result(p)
-    implicit none
     double precision,intent(in)                 :: x  !< interpolation point
     double precision,dimension(:),intent(in)    :: xi !< interpolation nodes. Shape is [1:n+1]
     double precision,dimension(:),intent(in)    :: yi !< function values at the interpolation nodes. Shape is [1:n+1]
@@ -251,14 +245,13 @@ contains
         p = dot_product(xterms, yi) / sum(xterms)
     !
     end function
-    
-    
+
+
     !> Compute barycentric weights of interpolation points
     !>
     !> [1] J-P Berrut and L.N. Trefethen, Barycentric Lagrange Interpolation, SIAM Rev.
-    !>     46(3), 501–517. DOI:10.1137/S0036144502417715
+    !>     46(3), 501\96517. DOI:10.1137/S0036144502417715
     pure subroutine barycentric_weights(xi, wi, info)
-    implicit none
     double precision,dimension(0:),intent(in)   :: xi
     double precision,dimension(0:),intent(out)  :: wi
     integer,intent(out)                         :: info
@@ -280,7 +273,7 @@ contains
         enddo
         wi = 1.D0 / wi
         info = criSuccess
-        
+
         ! A better alternative: follow the algorithm given in [1]
         ! Deplorably, the code below is buggy...
         !wi(0) = 1.D0
@@ -294,7 +287,7 @@ contains
         info = criSuccess
     !
     end subroutine
-    
-    
-    
+
+
+
 end module

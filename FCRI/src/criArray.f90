@@ -40,7 +40,6 @@ contains
     !> The array X [A B C D] to be folded twice. The result is
     !> Y = [(A+) + (B-) + (C+) + (D-)] / 4
     subroutine fold_array(array, nfolds, outarray, info)
-    implicit none
     double precision, dimension(:),intent(in)   :: array
     integer,intent(in)                          :: nfolds
     double precision, dimension(:),intent(out)  :: outarray

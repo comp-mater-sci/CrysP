@@ -46,7 +46,6 @@ contains
 
       !> Initialize the module
       subroutine testInit(outunit)
-      implicit none
       !> IO unit where the output will be printed to
       integer,intent(in),optional :: outunit
       !
@@ -58,7 +57,6 @@ contains
 
       !> Print summary of the test
       subroutine testSummary()
-      implicit none
       !
             write(iounit, fmt=100)
             write(iounit, fmt=200) test_track%n_failed + test_track%n_successful
@@ -76,7 +74,6 @@ contains
 
       !> Report the outcome of an individual unit test.
       subroutine testReport(name, outcome, line, file)
-      implicit none
       character(len=*),intent(in)               :: name !< Name of the test
       logical,intent(in)                        :: outcome !< Result: .true. for success
       integer,intent(in)                        :: line !< Line in the source file

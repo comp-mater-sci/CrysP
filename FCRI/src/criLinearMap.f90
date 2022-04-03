@@ -40,7 +40,6 @@ contains
       !>
       !> \return 0 if the name doesn't match any name provided in the map.
       integer function findName(themap,name)
-      implicit none
       character(len=*),intent(in)               :: name
       type(MapItem),dimension(1:)               :: themap
       !
@@ -63,7 +62,6 @@ contains
       !> \return .true. if the name matches a name provided in the map, then id contains corresponding identifier
       !> \return .false. if the name doesn't match any map item, id and index (if present) are left unmodified.
       logical function resolveName(themap,name,id,index)
-      implicit none
       character(len=*),intent(in)               :: name
       type(MapItem),dimension(1:),intent(in)    :: themap
       integer,intent(inout)                     :: id !MB: inout instead of only out since id only modified when name exists
@@ -90,7 +88,6 @@ contains
       !> \return .true. if the id matches a name provided in the map, then name contains corresponding symbolic identifier
       !> \return .false. if the id doesn't match any map item, name and index (if present) are left unmodified.
       logical function resolveId(themap,id,name,index)
-      implicit none
       type(MapItem),dimension(1:),intent(in)    :: themap
       integer,intent(in)                        :: id
       character(len=*),intent(inout)            :: name !MB: inout instead of only out since name only modified when name exists

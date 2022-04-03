@@ -31,7 +31,6 @@ contains
       !> If the keyword appears in the map, .true. is returned and the parameter value is set 
       !> to the value associated to the keyword. Otherwise .false. is returned and value becomes undefined.
       logical function readKeyword(cnfunit,map,value) result(res)
-      implicit none
       integer,intent(in)                        :: cnfunit
       type(MapItem),dimension(:),intent(in)     :: map
       integer,intent(out)                       :: value
@@ -48,7 +47,6 @@ contains
 
       !> Read logical value
       logical function readFlag(cnfunit)
-      implicit none
       integer,intent(in) :: cnfunit
       !
             readFlag = .false.

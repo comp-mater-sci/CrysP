@@ -20,6 +20,7 @@
 !
 !> Provides access to config files with bash-style comments
 module criUncomment
+implicit none
 
       !> Maximal length of a line
       integer,parameter       :: max_line_len = 512
@@ -49,7 +50,6 @@ contains
       !>@{
       !> Removes a comment from the string.
       pure subroutine stripComment(line,comment_mark)
-      implicit none
       character(len=*),intent(inout)      :: line
       character,intent(in),optional       :: comment_mark
       !
@@ -94,14 +94,12 @@ contains
       !>@{
 
       integer function getLineCount()
-      implicit none
       !
             getLineCount = line_count
       !
       end function
 
       subroutine initLineCount(initval)
-      implicit none
       integer,intent(in),optional :: initval
       !
             if (present(initval)) then
@@ -114,7 +112,6 @@ contains
 
 
       logical function isComment(buffer)
-      implicit none
       character(len=*),intent(in)  :: buffer
       !
             isComment = .false.
@@ -125,7 +122,6 @@ contains
       end function
 
       logical function skipComment(nunit,buffer)
-      implicit none
       integer,intent(in)            :: nunit
       character(len=*),intent(out)  :: buffer
       !
