@@ -3,8 +3,7 @@
 !>
 !> \note The module replaces /ES/ and /ES1/ common blocks and a subset of /TEXTUR/ block. 
 module altayIOConfig
-implicit none
-
+      implicit none
       !> Maximal length of any path (filenames, directrories etc.)
       integer,parameter :: pathlength = 512
 

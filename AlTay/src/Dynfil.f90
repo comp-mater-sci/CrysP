@@ -42,7 +42,6 @@
       !> Allocate the memory block for the state variables.
       subroutine DYNFIL0(npoint,keepstate,istat)
       use altayIOConfig
-      implicit none
       !> Number of points (elements) to be allocated
       integer,intent(in)      :: npoint
       !> Flag: if .true., the contents of the DFIL will be preserved
@@ -95,7 +94,6 @@
       !> Finalizes the module. The subroutine puts the module variables 
       !> into initial state and deallocates the storage.
       subroutine DYNFIL_finalize(info)
-      implicit none
       integer,intent(out)     :: info
       !
             info = 0
@@ -140,7 +138,6 @@
       !> Get the record data for i-th grain
       subroutine DYNFIL4(i,FI1,PHI,FI2,T,                                &
                         GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO)
-      implicit none
       integer,intent(in) :: i
       double precision,intent(out) :: FI1,PHI,FI2,GEW,GAM
       double precision,intent(out) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3), &
@@ -165,7 +162,6 @@
       !> Put the record data for i-th grain
       subroutine DYNFIL5(i,FI1,PHI,FI2,T,                                &
                         GEW,GAM,F,AXES,EULR,CIJ,TAX,ZERO)
-      implicit none
       integer,intent(in) :: i
       double precision,intent(in) :: FI1,PHI,FI2,GEW,GAM
       double precision,intent(in) :: AXES(3),EULR(3),CIJ(3,3),TAX(3,3),  &
@@ -191,7 +187,6 @@
       !> For IDIR=1:
       !> To write RHOS in the temporary file in memory
       subroutine DYNFIL7(i,IDIR,RHOS)
-      implicit none
       integer,intent(in) :: i, IDIR
       double precision :: RHOS(3,3)
       !
@@ -212,7 +207,6 @@
       !>    from mf
       !>  - tZERO and tRHO - are zeroed.
       subroutine initFields(mf,gr)
-      implicit none
       type(matFrame),intent(in)     :: mf
       type(grain),intent(inout)     :: gr
       !

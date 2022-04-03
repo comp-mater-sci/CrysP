@@ -51,7 +51,6 @@
       !>    - Only the symmetric part of 2nd rank tensor is transformed.
       !>    - The reverse transformation is done by function 'SymMatrix'.
       function Vector5D(mat)
-      implicit none
       double precision, dimension(3,3), intent(in) :: mat
       double precision, dimension(5)               :: Vector5D !out
       double precision, parameter ::                                     &

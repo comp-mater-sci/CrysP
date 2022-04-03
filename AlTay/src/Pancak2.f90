@@ -97,7 +97,6 @@
       endif
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (IOR.eq.1) IGrElm=0
-      TWOSQ3=sqrt(2.D0/3.D0)
 !     N is number of rows of A1;   NU number of rows of UU2
       TLXX=TOLXX
       N=5*NGR

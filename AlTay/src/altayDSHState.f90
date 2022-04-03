@@ -17,7 +17,6 @@ contains
  
       !> Query the number of elements in the state array.
       integer function KS_getStateSize()
-      implicit none
       !
             KS_getStateSize = 0
             if (allocated(KS_state)) KS_getStateSize = size(KS_state)
@@ -30,7 +29,6 @@ contains
       !> The function simply makes allocation. It relies on a default initializer 
       !> of StatVar type.
       integer function KS_initState(norient) result(info)
-      implicit none
       integer,intent(in)      :: norient !< Number of orientations in the material
       !
       integer :: i
@@ -50,7 +48,6 @@ contains
 
       !> Deallocate the KS_state array.
       integer function KS_finalize() result(info)
-      implicit none
       integer :: memstat
       !
             info = KS_OK
@@ -64,7 +61,6 @@ contains
  
       !> Update the state variables of the PEBP model for i-th grain.
       subroutine KS_updateState(i,sliprate,deltaT,info)
-      implicit none
       integer,intent(in)                              :: i        !< Grain identifier
       double precision,intent(in), dimension(24)      :: sliprate !< slip rates on 2*12 slip systems
       double precision,intent(in)                     :: deltaT   !< Time increment
@@ -85,7 +81,6 @@ contains
 
       !> Get CRSS for i-th grain.      
       subroutine KS_getCRSS(i,Mcrss,info)
-      implicit none
       integer,intent(in)                              :: i        !< Grain identifier
       integer,intent(out)                             :: info
       type(CRSS),intent(out)                          :: Mcrss    !< CRSS output
@@ -104,7 +99,6 @@ contains
 
       !> Retrieve state-derived variables for the i-th grain.
       subroutine KS_getSDV(i,SDV,info)
-      implicit none
       integer,intent(in)                              :: i    !< Grain identifier
       type(StateDerivedVars), intent(out)             :: SDV
       integer,intent(out)                             :: info !< exit code
@@ -121,7 +115,6 @@ contains
       !> The function opens the file and, if requested, performs some initialization 
       !> actions, such as processing or writing file header.
       integer function KS_openStateFile(iounit,fname,mode,use_header) result(info)
-      implicit none
       integer,intent(in)                              :: iounit   !< IO unit to be used
       character(len=*),intent(in)                     :: fname    !< Name of the file
       !> File opening mode: 'r' for read access or 'w' for write access
@@ -151,7 +144,6 @@ contains
       
       !> Write block (=snapshot of KS_state) into file.
       integer function KS_writeState(iounit) result(info)
-      implicit none
       integer,intent(in)                              :: iounit   !< I/O unit number
       !
       integer :: i, &    !< loop counter
@@ -179,7 +171,6 @@ contains
       !> Call ReadSVfile and store state variables in ks_state.
       !> Perform fake reads on the first nblock blocks, where each block corresponds to one snapshot of ks_state.
       integer function KS_readState_unit(iounit,nblock) result(info)
-      implicit none
       integer,intent(in)                              :: iounit   !< I/O unit number
       integer,optional,intent(in)                     :: nblock   !< Number of blocks to be skipped
       !
@@ -223,7 +214,6 @@ contains
       !> Open state file for reading and read state variables of snapshot.
       !> The snapshot (block) to be read is specified by nblock.
       integer function KS_readState_file(fname,iounit,nblock,use_header) result(info)
-      implicit none
       character(len=*),intent(in)                     :: fname    !< Filename
       integer,intent(in)                              :: iounit   !< I/O unit number to be used by the function
       integer,optional,intent(in)                     :: nblock   !< Number of blocks to be skipped

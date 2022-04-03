@@ -68,7 +68,6 @@ contains
 
       subroutine readVoceConfig(inunit,c,info)
       use altayIOConfig
-      implicit none
       integer,intent(in)                  :: inunit
       type(VoceConfig),intent(out)        :: c
       integer,intent(out)                 :: info
@@ -93,7 +92,6 @@ contains
 
       subroutine readSwiftKConfig(inunit,c,info)
       use altayIOConfig
-      implicit none
       integer,intent(in)                  :: inunit
       type(SwiftKConfig),intent(out)      :: c
       integer,intent(out)                 :: info
@@ -118,7 +116,6 @@ contains
 
       subroutine readSwiftSConfig(inunit,c,info)
       use altayIOConfig
-      implicit none
       integer,intent(in)                  :: inunit
       type(SwiftSConfig),intent(out)      :: c
       integer,intent(out)                 :: info
@@ -143,7 +140,6 @@ contains
 
       subroutine init_voce(c,info)
       use altayIOConfig
-      implicit none
       type(VoceConfig),intent(in)         :: c
       integer,intent(out)                 :: info
       !
@@ -187,7 +183,6 @@ contains
 
       subroutine init_swiftK(c,info)
       use altayIOConfig
-      implicit none
       type(swiftKConfig),intent(in)       :: c
       integer,intent(out)                 :: info
       !
@@ -219,7 +214,6 @@ contains
 
       subroutine init_swiftS(c,info)
       use altayIOConfig
-      implicit none
       type(swiftSConfig),intent(in)       :: c
       integer,intent(out)                 :: info
       !
@@ -250,7 +244,6 @@ contains
       end subroutine
       
       subroutine getRefTau(hardID,gamma,RefTau,info)
-      implicit none
       integer,intent(in)                  :: hardID
       double precision,intent(in)         :: gamma
       double precision,intent(out)        :: RefTau

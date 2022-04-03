@@ -1,7 +1,6 @@
 !> Container for miscellaneous utility routines.
 module altayMiscutils
 implicit none
-
       !>@{ \name Exit codes that are returned to the OS on various stop contitions
       
       ! This piece of code has been ported from fngRuntime
@@ -35,7 +34,6 @@ implicit none
       !> Typical use case for premature termination:
       !> call terminate(stopcode_runtimeerror)
       subroutine terminate(exit_code)
-      implicit none
       integer,intent(in)        :: exit_code
       !
           if (exit_code /= stopcode_OK) write(*,'(A)') 'AlTay terminated due to an error.'
@@ -46,7 +44,6 @@ implicit none
       !> This subroutine extracts the first word from str, fills
       !> the remaining part with spaces and removes all leading blanks.
       subroutine stripComment(str)
-      implicit none
       character(len=*),intent(inout) :: str
       !
       integer :: iblank
@@ -62,7 +59,6 @@ implicit none
 
 
       subroutine writeMSSHeader(ounit,info)
-      implicit none
       integer,intent(in)      :: ounit
       integer,intent(out)     :: info
       !
@@ -75,7 +71,6 @@ implicit none
       
       
       subroutine writeMSSRecord(ounit,meps,mepstot,hgamcall,hgamtot,shsam,mavg,srh,info)
-      implicit none
       integer,intent(in)                              :: ounit
       double precision,intent(in)                     :: meps,mepstot,hgamcall,hgamtot,mavg,srh
       double precision,dimension(3,3),intent(in)      :: shsam
@@ -92,7 +87,6 @@ implicit none
       
       !> Write header line to the report file
       subroutine writeReportHeader(outunit,info)
-      implicit none
       integer,intent(in)      :: outunit !< I/O unit number to be used for raport
       integer,intent(out)     :: info
       !
@@ -103,7 +97,6 @@ implicit none
       
       !> Write data line to the report file
       subroutine writeReportRecord(outunit,fi1,PHI,fi2,Wtot,info)
-      implicit none
       integer,intent(in)            :: outunit !< I/O unit number to be used for raport
       double precision,intent(in)   :: fi1,PHI,fi2,Wtot
       integer,intent(out) :: info

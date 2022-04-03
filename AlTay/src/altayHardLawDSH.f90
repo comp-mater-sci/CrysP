@@ -458,7 +458,6 @@
 
       !CONTAINed by MODULE altayHardLaw_DSH:
       integer FUNCTION Init_file(inunit,KOST,LEC) result(info)
-      implicit none
       integer,intent(in)      :: inunit   !< number of 
       integer,intent(in)      :: KOST     !< Id of the model version.
       integer,intent(in)      :: LEC      
@@ -483,7 +482,6 @@
       
       !CONTAINed by MODULE altayHardLaw_DSH:
       integer FUNCTION ReadPar(inunit,KOST,Pf)
-      implicit none
       integer,intent(in)      :: inunit   !< IO unit number
       integer,intent(in)      :: KOST     !< model identifier
       TYPE(PAR),INTENT(OUT) :: Pf       !< Parameters to be read from a formatted file.

@@ -6,7 +6,6 @@ module altayMesostructure
 use altayAlgorithms
 use altayMiscutils, only: terminate, stopcode_runtimeerror
 implicit none
-
       !> Transformation matrix associated to the grain boundary reference frame 
       !> in the initial state.
       !> Shape is: [3,3,ngr], where ngr is the number of grains.
@@ -23,7 +22,6 @@ contains
       subroutine GRFIL(fnam,F_mic,ierr)
       use altayMiscutils
       use altayIOConfig
-      implicit none
       !
       integer,intent(out)         :: ierr
       character(len=*),intent(in) :: fnam !< Microstructure file name
@@ -81,7 +79,6 @@ contains
       !> Finalizes the module. The subroutine puts the module variables 
       !> into initial state and deallocates the storage.
       subroutine MICROSTR_finalize(info)
-      implicit none
       integer,intent(out)     :: info
       !
             NGrElm = 0
@@ -104,7 +101,6 @@ contains
       use altayMiscutils, only: unitMatrix, pi
       use altayMacroKinematic
     
-      implicit none
       integer,intent(in)                              :: NGR
       integer,intent(in)                              :: IGrElm
       type(DeformationRate),intent(in)                :: MacroDefRate     

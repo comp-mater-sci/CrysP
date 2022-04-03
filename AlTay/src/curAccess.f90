@@ -4,12 +4,11 @@
 module altayCurAccess
 use altayDynfil
 use altayAlgorithms
-
+implicit none
 contains
 
       !> Write title line of the CUR format.
       subroutine CURwriteTitle(iounit,title,info)
-      implicit none
       integer,intent(in)            :: iounit  !< IO unit number
       character(len=*),intent(in)   :: title !< Title line
       integer,intent(out)           :: info  !< exit code: 0 on success
@@ -21,7 +20,6 @@ contains
       
       ! Write the current contents of the dynfil
       subroutine CURwriteBlock(iounit,info)
-      implicit none
       integer,intent(in)      :: iounit !< IO unit number
       integer,intent(out)     :: info !< exit code: 0 on success
       integer :: npoint, i
@@ -58,7 +56,6 @@ contains
 
       
       subroutine CURreadTitle(iounit,title,info)
-      implicit none
       integer,intent(in)      :: iounit
       character(len=*)        :: title
       integer,intent(out)     :: info
@@ -70,7 +67,6 @@ contains
 
       
       subroutine CURreadBlock(iounit,offset,info)
-      implicit none
       integer,intent(in)      :: iounit      !< IO unit
       integer,intent(in)      :: offset   !< Number of blocks to be skipped
       integer,intent(out)     :: info     !< Exit code

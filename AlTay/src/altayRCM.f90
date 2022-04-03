@@ -50,13 +50,11 @@ contains
       !> Informs whether there are outstanding exceptions on the stack. Returns .false. if there is 
       !> any non-processed exception left.
       logical function RCM_empty()
-      implicit none
             RCM_empty = (RCM_stack_top == 0)
       end function
 
       !> Informs whether there is a
       logical function RCM_signal()
-      implicit none
             ! No signal if the module is not initialized yet or the stack is empty.
             RCM_signal = .false.
             if (.not. allocated(RCM_stack)) return
@@ -68,7 +66,6 @@ contains
       !> Probes the stack for the error code of the last operation.
       !> Returns 0 if no exception is lying on the stack.
       integer function RCM_topError()
-      implicit none
       !
             RCM_topError = 0
             if (.not. RCM_empty()) RCM_topError = RCM_stack(RCM_stack_top)%error_code 
@@ -77,7 +74,6 @@ contains
 
       !> Throws an exception and puts it on the stack.
       subroutine RCM_throw(ec,fx,msg,action)
-      implicit none
       integer,intent(in)            :: ec       !< Error code
       character(len=*),intent(in)   :: fx       !< Name of the function that raised the exception.
       character(len=*),intent(in)   :: msg      !< Message associated to the exception.
@@ -108,7 +104,6 @@ contains
       !> 
       !> Returns .true. if an exception is caught and .false. otherwise.
       logical function RCM_catch_exception(ec,fx,msg,action) result(info)
-      implicit none
       integer,intent(out)           :: ec !< Error code
       character(len=*),intent(out)  :: fx !< Name of the function that raised the exception.
       character(len=*),intent(out)  :: msg !< Message/information about the exception 
@@ -137,7 +132,6 @@ contains
       !>
       !> Returns .true. if an exception is caught and .false. otherwise.
       logical function RCM_catch_message(ec,message) result(info)
-      implicit none
       integer,intent(out)           :: ec      !< Error code
       character(len=*),intent(out)  :: message !< Message
       !
@@ -156,7 +150,6 @@ contains
       !>
       !> Returns .true. if an exception is caught and .false. otherwise.
       logical function RCM_catch_print(nunit) result(info)
-      implicit none
       integer,intent(in)      :: nunit
       !
       integer :: ec
@@ -174,7 +167,6 @@ contains
       
       !> Cleans up the excetion stack.
       subroutine RCM_clean()
-      implicit none
       !
             RCM_stack_top = 0
       !

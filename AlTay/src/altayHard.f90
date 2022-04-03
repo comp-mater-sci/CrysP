@@ -29,7 +29,6 @@ contains
       
       
       subroutine InitModuleAltayHard_file(inunit,HardLaw,crss_init,info)
-      implicit none
       integer,intent(in)      :: inunit
       integer,intent(in)      :: HardLaw
       type(CRSS),intent(in)   :: crss_init
@@ -81,7 +80,6 @@ contains
 #ifdef ALTAY_SUBROUTINE
       !> Initialize module from config data object
       subroutine InitModuleAltayHard_config(config,info)
-      implicit none
       type(hardeningData),intent(in)      :: config
       integer,intent(out)                 :: info
       !
@@ -126,7 +124,6 @@ contains
       
       subroutine getTau(gamma, tau, info)
       use altayHardLaw_Simple
-      implicit none
       double precision,intent(in)   :: gamma
       double precision,intent(out)  :: tau
       integer,intent(out)           :: info
@@ -145,7 +142,6 @@ contains
       end subroutine
       
       subroutine getCRSS(ior,gamma,CRSSmatrix,info)
-      implicit none
       integer,intent(in)                           :: ior
       double precision,intent(in)                  :: gamma         
       type(CRSS),intent(out)                       :: CRSSmatrix
