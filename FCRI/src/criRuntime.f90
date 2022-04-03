@@ -100,12 +100,6 @@ implicit none
             integer                             :: command_idx = 0
       end type
 
-#ifdef FORT_HAS_DERIVED_TYPE_INTERFACE
-      interface commandLine
-            module procedure commandLine_init
-      end interface
-#endif
-
 contains
 
       !> Terminate execution of the program, returning stop code.
@@ -126,19 +120,6 @@ contains
             !
             call exit(errcode)
       end subroutine
-
-      !> Initialization of commandLine object and return it with progname and description defined
-      function commandLine_init(progname,description) result(res)
-      implicit none
-      character(len=*),intent(in)        :: progname
-      character(len=*),intent(in)        :: description
-      type(commandLine)       :: res !MB: initialize res of type commandLine and set progname and description (other 8 components unmodified)
-      !
-            res%progname = progname
-            res%description = description
-      !
-      end function
-
 
       !> Process the arguments provided in the command line.
       subroutine processCommandLine(this,argc_min,argc_max,command_map,command_argpos,info, &
@@ -302,8 +283,6 @@ contains
       !
       end subroutine
 
-#ifdef FORT_HAS_NEWUNIT
-
       !> Open file fpath in the mode given by status, or call finalize on failure.
       !> Returns IO unit of the newly opened file.
       integer function openOrDie(fpath,status,unit) result(nunit)
@@ -327,6 +306,5 @@ contains
             endif
       !
       end function
-#endif
 
 end module
