@@ -41,7 +41,7 @@ contains
       !>
       !> The function is modelled after Unix command `basename` and
       !> Python os.path.basename()
-      elemental function basename(path)
+      pure function basename(path)
       character(len=*),intent(in)   :: path
       character(len=len(path))       :: basename
       !
@@ -78,7 +78,7 @@ contains
       end function
 
       !> Returns the path without file exension (if there is any)
-      elemental function stripExt(path)
+      pure function stripExt(path)
       character(len=*),intent(in)   :: path
       character(len=len(path))      :: stripExt
       !
@@ -98,7 +98,7 @@ contains
       !> adjustl(trim(root)) // adjustl(trim(ext)) == adjustl(path)
       !> The procedure removes the leading blanks from root and ext, so:
       !> len_trim(root) // len_trim(ext) == adjustl(path)
-      elemental subroutine splitExt(path, root, ext)
+      pure subroutine splitExt(path, root, ext)
       character(len=*),intent(in)   :: path
       character(len=*),intent(out)  :: root
       character(len=*),intent(out)  :: ext
@@ -157,7 +157,7 @@ contains
       !> Notable special case:
       !> - 2nd path begins with root path, e.g.:
       !>   pathjoin('path1','/path2') returns '/path2'
-      elemental function pathjoin(path_a, path_b) result(path)
+      pure function pathjoin(path_a, path_b) result(path)
       character(len=*),intent(in)               :: path_a, path_b
       character(len=len(path_a)+len(path_b))    :: path
       !

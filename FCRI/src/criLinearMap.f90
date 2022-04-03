@@ -14,7 +14,7 @@
 !>
 !>    History of modifications: (see svn log)
 !>
-!>    \file criLinearMap.f90 
+!>    \file criLinearMap.f90
 !
 #include "criStdDefs.fpp"
 !
@@ -23,25 +23,25 @@
 !> Note that linear map can be efficient only if the map size is very small (e.g. up to 10)
 module criLinearMap
 implicit none
-      
+
       !> Maximal length of strings that are used as keys in the map
       integer,private,parameter     :: cMapNameLen = 32
-      
+
       !> Helper data structure for resolving name-identifier pairs
       !> MB: Maps (= structure arrays constructed from MapItem) are used to look up name and find corresponding ID and vice versa
       type MapItem
             character(len=cMapNameLen)          :: Name
-            integer                             :: ID           
+            integer                             :: ID
       end type
 
 contains
-      
+
       !> Return index (position) of the symbolic name in the map.
       !>
       !> \return 0 if the name doesn't match any name provided in the map.
       integer function findName(themap,name)
       implicit none
-      character(len=*),intent(in)               :: name      
+      character(len=*),intent(in)               :: name
       type(MapItem),dimension(1:)               :: themap
       !
       integer :: i
@@ -64,13 +64,13 @@ contains
       !> \return .false. if the name doesn't match any map item, id and index (if present) are left unmodified.
       logical function resolveName(themap,name,id,index)
       implicit none
-      character(len=*),intent(in)               :: name      
+      character(len=*),intent(in)               :: name
       type(MapItem),dimension(1:),intent(in)    :: themap
-      integer,intent(inout)                     :: id !MB: inout instead of only out since id only modified when name exists 
+      integer,intent(inout)                     :: id !MB: inout instead of only out since id only modified when name exists
       integer,intent(inout),optional            :: index !MB: inout instead of only out since index only modified when name exists
       !
       integer :: i
-      character(len=cMapNameLen)       :: shortname  
+      character(len=cMapNameLen)       :: shortname
       !
             resolveName = .false.
             shortname = trim(adjustl(name)) ! Trim and store (make direct comparison)
@@ -111,5 +111,5 @@ contains
       end function
 
 
-      
+
 end module
