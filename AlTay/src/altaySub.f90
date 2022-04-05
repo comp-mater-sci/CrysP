@@ -26,7 +26,7 @@
 
 !> API for "AlTay as a subroutine"
 module altaySub
-
+      implicit none
       !> \name Named constants for error codes in altaySub
       !>@{
       integer,parameter :: altaySub_OK = 0
@@ -54,7 +54,6 @@ contains
 #ifdef PEBP_ENABLED
       use AltayDSHstate
 #endif
-      implicit none
       !
       type(altayConfigData),intent(in)    :: cnf      !< configuration data
       integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
@@ -165,7 +164,6 @@ contains
 #ifdef PEBP_ENABLED
       use AltayDSHstate
 #endif
-      implicit none
       integer,intent(out)                 :: info     !< exit code (0 on success)
       !
             ! Close all units.
@@ -207,7 +205,6 @@ contains
 #ifdef PEBP_ENABLED
       use AltayDSHstate
 #endif
-      implicit none
       type(altayConfigData),intent(in)    :: cnf      !< configuration data
       integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
       character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
@@ -282,7 +279,6 @@ contains
       !>
       subroutine initStepData(nsteps,steps,info)
       use altayConfig, only: altayStateData
-      implicit none
       integer,intent(in)                  :: nsteps   !< Number of steps to be created
       type(altayStateData),intent(out)    :: steps    !< Definiton of the steps.
       integer,intent(out)                 :: info     !< Exit code: 0 on success
@@ -307,7 +303,6 @@ contains
       use altayRCM
       use altayIOConfig
       use altayMacroKinematic
-      implicit none
       type(altayStateData),intent(inout)        :: steps !< Definiton of the steps.
       integer,intent(out)                       :: info  !< Exit code: 0 on success.
       integer :: NFILE0
@@ -369,7 +364,6 @@ contains
       use altayHard, only: hard_BP,hard_PEBPscrew,hard_PEBPloop
       use AltayDSHstate
       use altayMiscutils
-      implicit none
       integer,intent(out)           :: info
       !
             info = altaySub_OK

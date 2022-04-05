@@ -4,9 +4,9 @@
       module altayPancake
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use criMathUtils
-      
+
       contains
-      
+
 ! MODIFICATIONS AUG 2010
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
@@ -15,7 +15,7 @@
                         SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
-#endif      
+#endif
       use altayMesostructure
       use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
       use altayHard
@@ -27,14 +27,14 @@
       use AltayDSHstate
 #endif
       implicit double precision (a-h,o-z)
-      
+
       type(DeformationRate),intent(in) :: MacroDefRate
-      type(DeformationState),intent(in):: MacroDefState      
+      type(DeformationState),intent(in):: MacroDefState
       type(CRSS) :: CRSSmatrix
       logical SWRLX(3),bas(194),VALID(194)
       integer DI1(5),DI(10),DI2(10)
-      double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33 
-      double precision,dimension(5):: RHOS, RHOA 
+      double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33
+      double precision,dimension(5):: RHOS, RHOA
 
       common /LAMEL/ laml,fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
        gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
@@ -47,7 +47,7 @@
       common /CEIGEN/ IOR,ISTP,NBLOC
       common /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),           &
        TLXX,TAURLP(8)
-      
+
       dimension ccc2(2,194)
       dimension C2(3,3),                                                 &
        TDCb(3,3,2),TRCb(3,3,2),                                          &
@@ -62,7 +62,7 @@
       dimension CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194)
       dimension B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10)
       dimension GAMR(2),Tprinc(3,3),TAURL(2)
-      
+
       data SQR2/0.7071067811865476D+00/,B3/30*0.0D0/,TOLXX/5.0d-6/
 !     Definition of the two relaxations, representing a
 !     13-simple shear and a 23-simple shear, respectively:
@@ -79,10 +79,10 @@
                   1.0D0,-1.0D0,                                          &
                   1.0D0, 1.0D0/
       data NDIM/10/
-!     NDIM=dimension A 
+!     NDIM=dimension A
       data TAURL/2*0.0d0/
       data GETAL/1.0D6/,TOL/1.0d-6/
-#ifdef PEBP_ENABLED      
+#ifdef PEBP_ENABLED
       integer :: info
 #endif
       SAVE
@@ -93,13 +93,12 @@
           call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'Pancak2','Wrong selection of lamels',RCM_RTN)
-#endif      
+#endif
       endif
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if (IOR.eq.1) IGrElm=0 
-      TWOSQ3=sqrt(2.D0/3.D0)
+      if (IOR.eq.1) IGrElm=0
 !     N is number of rows of A1;   NU number of rows of UU2
-      TLXX=TOLXX 
+      TLXX=TOLXX
       N=5*NGR
       NU=N
       M2=NGR*M11
@@ -111,10 +110,10 @@
       IGrElm=IGrElm+1
       if (IGrElm.gt.NGrElm) IGrElm=1
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX
-      
+
       call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,   &
                     Cofcos,Cofsin)
-      
+
 
 
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -128,10 +127,10 @@
       do 53 I=1,5
       DI(I)=DI1(I)
       DI(I+5)=DI1(I)+M11
-  53  continue                                                          
+  53  continue
       do 1 IL=1,NGR
       L1=5*(IL-1)
-      
+
       C2 = rotateSRTensorFrom(MacroDefRate%VelGrad,TRFb(:,:,IL))
       if (NRL.eq.0) goto 87
       do 82 IRL=1,NRL
@@ -155,13 +154,13 @@
       x=B5(i)*PLUMIN(IL,IRL)
       A1(i1,j)=x
   84  continue
-  82  continue 
+  82  continue
   87  continue
       do 80 I=1,3
-      do 81 J=1,3                                                       
+      do 81 J=1,3
       TDCb(I,J,IL)=(C2(I,J)+C2(J,I))*0.5D0
   81  TRCb(I,J,IL)=(C2(I,J)-C2(J,I))*0.5D0
-  80  continue                                                          
+  80  continue
       B5= Vector5D(TDCb(1:3,1:3,IL)) ! sym.(3,3) -> (5)
       do 30 i=1,5
       j=i+L1
@@ -178,15 +177,15 @@
       K1=M11*(IL-1)
       !
       ! Retrieve the CRSSmatrix
-      !    IOR+IL-1  = sequence number of current grain 
+      !    IOR+IL-1  = sequence number of current grain
       !    GMMAb(IL) = the GAMMA of current grain
-      call getCRSS(IOR+IL-1,GMMAb(IL),CRSSmatrix,info) 
+      call getCRSS(IOR+IL-1,GMMAb(IL),CRSSmatrix,info)
       !
       ! Assign CRSSmatrix to proper section of CCC
-      CCC(:,1+K1:M11+K1)=CRSSmatrix%crss(:,1:M11)  
+      CCC(:,1+K1:M11+K1)=CRSSmatrix%crss(:,1:M11)
       !
       ! Set Tau_crit for antitwinning direction equal to
-      ! GETAL times Tau_crit for twinning direction       
+      ! GETAL times Tau_crit for twinning direction
       do I=NGL+1,M11 ! this do-loop will only be executed for NTW>0
           CCC(2,I+K1)=CCC(1,I+K1)*GETAL
       end do
@@ -197,23 +196,23 @@
       do 15 I=1,5
       UU(I+L1,J+L1)=B(I,J)
   15  continue
-   1  continue 
-      do 54 I=1,N 
+   1  continue
+      do 54 I=1,N
 !     Conversion of strain to normalized strain rate
       BB(I)=BB(I)/MacroDefRate%vMeqStrainRate
   54  continue
       if (NRL.eq.0) goto 88
-      do 85 j=M2+1,M12             
+      do 85 j=M2+1,M12
 !    The coefficient of the relaxations is set to a very large number
-!    in order to suppress the relaxations in a first call of the TBH program     
-      CCC(1,j)=GETAL  
-      CCC(2,j)=GETAL 
+!    in order to suppress the relaxations in a first call of the TBH program
+      CCC(1,j)=GETAL
+      CCC(2,j)=GETAL
   85  continue
 !     Full constraints calculation
 !
 !     UITVOEREN VAN DE SIMPLEX-SUBROUTINE
   88  if (IPR.EQ.2) then
-      if(NLIST.eq.1) then 
+      if(NLIST.eq.1) then
       write (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
       end if
       end if
@@ -233,11 +232,11 @@
  400  format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
       call TBH(IPR,NDIM,N,M2,A1,BB,                                      &
        CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,                              &
-       Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID) 
+       Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
 ! CCC (input): critical resolved shear stresses (Tauc)
 ! UU (input): initial inverse of "basis" = columns of A1
 !      corresponding to thoses slip systems which are active
-!      according to first guess 
+!      according to first guess
 ! UU2 (output): inverse of final "basis" (active slip systems)
 ! DI (input): indices of basis corresponding to UU
 ! DI2 (output): indices of basis corresponding to UU2
@@ -246,8 +245,8 @@
 ! UBUF (output): stresses, in crystal frames
 !                  (2 sets of stresses, one for each crystal)
 ! Fakm: rate of plastic work of the 2 crsytals together
-! Taur (output) resolved shear stress (can be + or -)        
-! DTAU (output)=abs(Taur)-Tauc 
+! Taur (output) resolved shear stress (can be + or -)
+! DTAU (output)=abs(Taur)-Tauc
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -260,12 +259,12 @@
       write (*,221) IPR,IOR,ISTP,NBLOC
  221  format (' Pancak2 ',                                               &
        ' IPR IOR, ISTP, NBLOC=',4I5)
-      if (IPR.ge.4) call terminate(stopcode_runtimeerror) 
+      if (IPR.ge.4) call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
 #endif
-  220 DTAU1=DTAU 
-      TAUR1=TAUR  
+  220 DTAU1=DTAU
+      TAUR1=TAUR
 
       if (NRL.eq.0) then
             UU=UU2
@@ -273,7 +272,7 @@
             STRSS=UBUF
             goto 89
       endif
-!@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$$@$@$@$@$@$@$@$@$@$ QGX 15/11/2012 
+!@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$$@$@$@$@$@$@$@$@$@$ QGX 15/11/2012
       if(ITFMAS.eq.1) then
         CCC(1,M2+1)=GETAL
         CCC(2,M2+1)=GETAL
@@ -282,14 +281,14 @@
       else  !ALAMEL running
         do 86 IRL=1,NRL
         if (.not.swrlx(IRL)) goto 86
-        j=M2+IRL  
+        j=M2+IRL
         CCC(1,j)=TAURL(IRL)
         CCC(2,j)=TAURL(IRL)
-  86    continue 
+  86    continue
       endif
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (IPR.EQ.2) then
-      if(NLIST.eq.1) then 
+      if(NLIST.eq.1) then
       write (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
       end if
       end if
@@ -307,7 +306,7 @@
 ! CCC (input): critical resolved shear stresses (Tauc)
 ! UU2 (input): initial inverse of "basis" = columns of A1
 !      corresponding to thoses slip systems which are active
-!      according to first guess 
+!      according to first guess
 ! UU (output): inverse of final "basis" (active slip systems)
 ! DI2 (input): indices of basis corresponding to UU2
 ! DI (output): indices of basis corresponding to UU
@@ -316,8 +315,8 @@
 ! STRSS (output): stresses, in crystal frames
 !                  (2 sets of stresses, one for each crystal)
 ! Fakm: rate of plastic work of the 2 crsytals together
-! Taur (output) resolved shear stress (can be + or -)        
-! DTAU (output)=abs(Taur)-Tauc 
+! Taur (output) resolved shear stress (can be + or -)
+! DTAU (output)=abs(Taur)-Tauc
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
@@ -333,16 +332,16 @@
  222     format (' Pancak2 222 - Problem with TBH',/,                    &
          ' IPR IOR, ISTP, NBLOC=',4I5)
 #ifndef ALTAY_SUBROUTINE
-          call terminate(stopcode_runtimeerror)  
+          call terminate(stopcode_runtimeerror)
 #else
           RCM_RAISE(1,'Pancak2','Problem with TBH',RCM_RTN)
 
-#endif         
+#endif
       endif
 !@#@#@#@#@#@#@#@#@@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@#@@#@# QGX 15/11/2012
 !   loop
-!   
-      if(ITFMAS.eq.1) then 
+!
+      if(ITFMAS.eq.1) then
       iter=0
   999 iter=iter+1
       call Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,STRSS,M11,ca1,ca2)
@@ -361,7 +360,7 @@
       if(iter.le.0) then
       goto 999
       else
-      endif 
+      endif
 !VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
       UU=UU2
       DI=DI2
@@ -380,7 +379,7 @@
       do 40 IG=1,NGR
       XXTOT=0.0
       do i=1,M11
-       j=j+1  
+       j=j+1
        XXTOT=XXTOT+ABS(xx(j))
       enddo
       if (XXTOT.lt.TOLXX) goto 213
@@ -389,10 +388,10 @@
   99  DTAU1=DTAU
       TAUR1=TAUR
       UBUF=STRSS
- 213  if(NLIST.eq.1) then 
+ 213  if(NLIST.eq.1) then
         write (IMP,780) gamr
       end if
- 780  format (' RELAXATIONS:                   ',2d12.4)      
+ 780  format (' RELAXATIONS:                   ',2d12.4)
    2  continue
 !
 !     From here on, output is produced for grain number "laml"
@@ -403,7 +402,7 @@
       do jsgn=1,2
          CC(jsgn,j)=CCC(jsgn,j+jj)
       enddo
- 203  continue    
+ 203  continue
       ii=5*(laml-1)
       do 201 i=1,5
 !     If one grain does not deform, note that stress UBUF has come
@@ -425,7 +424,7 @@
       RHOA(i)=-y8
  201  continue
       S33=    SymMatrix(spanv) ! (5) -> sym.(3,3)
-      RHOS33= SymMatrix(RHOS)  ! (5) -> sym.(3,3) 
+      RHOS33= SymMatrix(RHOS)  ! (5) -> sym.(3,3)
       !Conversion of RHOA to dim(3,3)
       RHOA33=0.0d0
       RHOA33(2,3)= RHOA(1)*sqr2*MacroDefRate%vMeqStrainRate
@@ -435,11 +434,11 @@
       RHOA33(1,3)= -RHOA33(3,1)
       RHOA33(2,1)= -RHOA33(1,2)
 !
-      if (IPR.EQ.2 .AND. NLIST.eq.1) then 
+      if (IPR.EQ.2 .AND. NLIST.eq.1) then
         WR=0.0
         do i=1,5
             WR=WR+spanv(i)*BB(i+ii)
-        end do             
+        end do
         write (IMP,777) WR
       end if
   777 format (' spanv . BB          :',d10.4)
@@ -472,12 +471,12 @@
                            call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'Pancak2','Too many active slip systems',RCM_RTN)
-#endif                        
+#endif
                         endif
  306  format (' PANCAK2 - 306 - TOO MANY ACTIVE SLIP SYSTEMS')
  305  continue
       if (NACTIV.eq.0) then
-#ifndef ALTAY_SUBROUTINE      
+#ifndef ALTAY_SUBROUTINE
                            if(NLIST.eq.1) then
                                      write (IMP,307)
                            end if
@@ -493,17 +492,17 @@
       i1=j
                       INDLP(NLP)=i1
                       SLIPLP(NLP)=XX(j+jj)
-                      TAURLP(NLP)=TAUR1(j+jj) 
+                      TAURLP(NLP)=TAUR1(j+jj)
  310  continue
       return
-      END SUBROUTINE        
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!      
+      END SUBROUTINE
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 
 
 
-      subroutine Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,UBUF,M11,ca1,ca2)     
+      subroutine Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,UBUF,M11,ca1,ca2)
 !   Cofsin, Cofcos         -- input
 !   BB(10), UBUF(10)       -- input
 !   M11                    -- input
@@ -522,7 +521,7 @@
       dimension BB(10),base1(5),UBUF(10),ccc(2,194),ccc2(2,194)
 !
       if((abs(Cofsin) < epsilon(0.D0)) .and.                             &
-         (abs(Cofcos) < epsilon(0.D0))) then 
+         (abs(Cofcos) < epsilon(0.D0))) then
 !  update CRSS
       ccc2=ccc
       elseif(dabs(Cofcos).lt.0.000000001) then
@@ -561,7 +560,7 @@
       base1(3)= BB(8)/dlength2
       base1(4)= BB(9)/dlength2
       base1(5)=BB(10)/dlength2
-!           
+!
 !  then calculate the stress component in grain-2
 !
       sg2c1=UBUF(6)*base1(1)+                                            &
@@ -569,7 +568,7 @@
             UBUF(8)*base1(3)+                                            &
             UBUF(9)*base1(4)+                                            &
            UBUF(10)*base1(5)
-! from here we use the new method to update the CRSS 
+! from here we use the new method to update the CRSS
       zeta=sg1c1/sg2c1
 !  check if it is negative
       if(zeta.lt.0.D0) then
@@ -583,7 +582,7 @@
       Crssg1=Cofcos*Cofcos*enta1+Cofsin*Cofsin
       Crssg2=Cofcos*Cofcos*enta2+Cofsin*Cofsin
       ca1=Crssg1
-      ca2=Crssg2  
+      ca2=Crssg2
 !  update the CRSS for grain-1
       do i=1,M11,1
       do j=1,2,1

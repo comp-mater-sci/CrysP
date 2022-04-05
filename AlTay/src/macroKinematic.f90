@@ -1,6 +1,6 @@
 module altayMacroKinematic
 use altayMiscutils, only: unitMatrix
-implicit none 
+implicit none
 
 type DeformationRate
     !> Velocity Gradient

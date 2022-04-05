@@ -32,8 +32,7 @@ use altayHardTypes
 use altayHardLaw_Simple, only: VoceConfig, SwiftKConfig, SwiftSConfig
 use altayHardLaw_DSH, only: PAR
 use altayTexFormatConstants
-
-implicit none
+      implicit none
 
       integer,parameter  :: fname_len = 512 !< Length of filenames
 
@@ -295,7 +294,6 @@ contains
       
       !> Verify if integer value modelId represents any supported AlTay model (FCTaylor, ALAMEL, MASAL).
       pure logical function isValidModelType(modelId)
-      implicit none
       integer,intent(in) :: modelId
       !
             isValidModelType = .false.

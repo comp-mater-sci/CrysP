@@ -1,21 +1,3 @@
-!
-! $Id: criLog.f90 1933 2014-07-11 14:04:49Z jgawad $
-!
-!>    \author Jerzy Gawad
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven (KU Leuven)
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>    \copyright KU Leuven
-!>
-!>    \date Date of first release: 2011-08-08
-!>    $Revision: 1933 $
-!>    $Date: 2014-07-11 16:04:49 +0200 (Fri, 11 Jul 2014) $
-!>
-!>    History of modifications: (see svn log)
-!>
-!>    \file criLog.f90 
-!
 #include "criStdDefs.fpp"
 !
 !> Constant parameters, data structures and functions for output logging
@@ -24,6 +6,7 @@
 !> \todo A generic name should be provided for all logging subroutines
 module criLog
 use criErrcodes
+implicit none
       !>@{ \name Logging levels defined in CRI
       !>
       !> \remark In principle, users should not rely on numerical values of the constants.
@@ -35,9 +18,9 @@ use criErrcodes
       integer,parameter       :: criLogWarn  = 1      !< Write warnings
       integer,parameter       :: criLogInfo  = 2      !< Information messages
 
-      !> Detailed diagnostic messages 
+      !> Detailed diagnostic messages
       !> \details It is very likely that a huge amount of output data will be produced.
-      integer,parameter       :: criLogDebug = 3     
+      integer,parameter       :: criLogDebug = 3
       !>@}
 
 
@@ -50,30 +33,28 @@ use criErrcodes
       interface logIt
             module procedure log_string, log_integer, log_logical, log_double
       end interface logIt
-      
+
       interface logEvent
             module procedure logEvent_string, logEvent_integer, logEvent_logical, logEvent_double
       end interface logEvent
-      
+
       interface doLogging
             module procedure doLogging_integer, doLogging_logData
       end interface doLogging
-      
+
 contains
-      
+
       !> Informs whether events with given severity level should be logged under refLogLevel.
       pure logical function doLogging_integer(severity, refLogLevel)
-      implicit none
       integer,intent(in)                              :: severity
       integer,intent(in)                              :: refLogLevel
       !
             doLogging_integer = (severity /= criLogNone) .and. (severity <= refLogLevel)
       !
       end function
-      
+
       !> Informs whether events with given severity level should be logged by gived logunit.
       pure logical function doLogging_logData(logunit, severity)
-      implicit none
       type(logData),intent(in)                        :: logunit
       integer,intent(in)                              :: severity
       !
@@ -84,14 +65,13 @@ contains
 
       !> Checks if the log level "severity" is within proper range.
       pure logical function isLogLevelOK(severity)
-      implicit none
       integer,intent(in)                              :: severity
       !
             isLogLevelOK = ( (severity >= criLogNone) .and. (severity <= criLogDebug) )
       !
       end function
-      
-! Templatized functions:      
+
+! Templatized functions:
 !
 ! Instantization of the template for: string
 !
@@ -100,8 +80,8 @@ contains
 #define TMPL_CRILOG_TYPE character(len=*)
 #define TMPL_CRILOG_FMT A
 #include "criLogTemplates.fpp"
-#undef TMPL_LOG_FX 
-#undef TMPL_LOGEVENT_FX 
+#undef TMPL_LOG_FX
+#undef TMPL_LOGEVENT_FX
 #undef TMPL_CRILOG_TYPE
 #undef TMPL_CRILOG_FMT
 !
@@ -112,8 +92,8 @@ contains
 #define TMPL_CRILOG_TYPE integer
 #define TMPL_CRILOG_FMT I0
 #include "criLogTemplates.fpp"
-#undef TMPL_LOG_FX 
-#undef TMPL_LOGEVENT_FX 
+#undef TMPL_LOG_FX
+#undef TMPL_LOGEVENT_FX
 #undef TMPL_CRILOG_TYPE
 #undef TMPL_CRILOG_FMT
 !
@@ -124,8 +104,8 @@ contains
 #define TMPL_CRILOG_TYPE logical
 #define TMPL_CRILOG_FMT L1
 #include "criLogTemplates.fpp"
-#undef TMPL_LOG_FX 
-#undef TMPL_LOGEVENT_FX 
+#undef TMPL_LOG_FX
+#undef TMPL_LOGEVENT_FX
 #undef TMPL_CRILOG_TYPE
 #undef TMPL_CRILOG_FMT
 !
@@ -136,10 +116,10 @@ contains
 #define TMPL_CRILOG_TYPE double precision
 #define TMPL_CRILOG_FMT D10.3
 #include "criLogTemplates.fpp"
-#undef TMPL_LOG_FX 
-#undef TMPL_LOGEVENT_FX 
+#undef TMPL_LOG_FX
+#undef TMPL_LOGEVENT_FX
 #undef TMPL_CRILOG_TYPE
 #undef TMPL_CRILOG_FMT
-      
+
 
 end module

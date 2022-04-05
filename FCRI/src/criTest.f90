@@ -1,20 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven (KU Leuven)
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>    \copyright KU Leuven
-!>
-!>    \date Date of the initial release: 2016-03-18
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-!>
-!
 #include "criStdDefs.fpp"
 !
 !> Simplistic stand-alone unit testing module
@@ -46,7 +29,6 @@ contains
 
       !> Initialize the module
       subroutine testInit(outunit)
-      implicit none
       !> IO unit where the output will be printed to
       integer,intent(in),optional :: outunit
       !
@@ -58,7 +40,6 @@ contains
 
       !> Print summary of the test
       subroutine testSummary()
-      implicit none
       !
             write(iounit, fmt=100)
             write(iounit, fmt=200) test_track%n_failed + test_track%n_successful
@@ -76,7 +57,6 @@ contains
 
       !> Report the outcome of an individual unit test.
       subroutine testReport(name, outcome, line, file)
-      implicit none
       character(len=*),intent(in)               :: name !< Name of the test
       logical,intent(in)                        :: outcome !< Result: .true. for success
       integer,intent(in)                        :: line !< Line in the source file
@@ -94,5 +74,5 @@ contains
             202 format('Test ',A,': FAILED in line ', I0 ' of ', A)
       !
       end subroutine
-      
+
 end module

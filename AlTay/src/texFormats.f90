@@ -16,7 +16,6 @@ implicit none
 contains
       
       subroutine loadTexture(texfmt,nunit,fname,iblock,info)
-      implicit none
       integer,intent(in)            :: texfmt
       integer,intent(inout)         :: nunit
       character(len=*),intent(in)   :: fname
@@ -49,7 +48,6 @@ contains
       
       !> Open a file for texture output
       integer function openTextureFile(iounit,fname,texfmt,mode) result(info)
-      implicit none
       integer,intent(in)            :: iounit   !< I/O unit
       character(len=*),intent(in)   :: fname    !< File name to be opened
       integer,intent(in)            :: texfmt   !< Format ID
@@ -80,7 +78,6 @@ contains
       end function
       
       subroutine outputCurrentTexture(iounit,texfmt,full,info)
-      implicit none
       integer,intent(in)            :: iounit   !< I/O unit
       integer,intent(in)            :: texfmt   !< Format ID
       !< If true, both header and block are written, otherwise only the block output is written out.

@@ -1,12 +1,10 @@
 module altaySmtAccess
 use altayDynfil
 implicit none
-
 contains
       
       !> Read SMT header
       subroutine SMTreadHeader(iounit,title,info)
-      implicit none
       integer,intent(in)      :: iounit
       character(len=*)        :: title     !< Title for texture
       integer,intent(out)     :: info
@@ -27,7 +25,6 @@ contains
       end subroutine
             
       subroutine SMTwriteHeader(iounit,title,info)
-      implicit none
       integer,intent(in)            :: iounit
       character(len=*),intent(in)   :: title !< Title line
       integer,intent(out)           :: info
@@ -40,7 +37,6 @@ contains
       
       subroutine SMTwriteBlock(iounit,info)
       use altayDynfil
-      implicit none
       integer,intent(in)      :: iounit   !< IO unit
       integer,intent(out)     :: info     !< Exit code
       !
@@ -65,7 +61,6 @@ contains
       !> Read texture from SMT file
       subroutine SMTreadBlock(iounit,info)
       use altayDynfil
-      implicit none
       integer,intent(in)      :: iounit      !< IO unit
       integer,intent(out)     :: info        !< Exit code
       !

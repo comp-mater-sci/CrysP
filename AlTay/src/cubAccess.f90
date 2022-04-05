@@ -9,13 +9,11 @@ module altayCubAccess
 use altayDynfil
 use altayAlgorithms
 implicit none
-
 contains
 
 
       ! Write the current contents of the dynfil
       subroutine CUBwriteBlock(iounit,info)
-      implicit none
       integer,intent(in)      :: iounit !< IO unit number
       integer,intent(out)     :: info !< exit code: 0 on success
       !      
@@ -46,7 +44,6 @@ contains
       
       
       subroutine CUBreadTitle(iounit,title,info)
-      implicit none
       integer,intent(in)      :: iounit
       character(len=*)        :: title
       integer,intent(out)     :: info
@@ -62,7 +59,6 @@ contains
 
       !> Read a CUB file block into DYNFIL::DFIL
       subroutine CUBreadBlock(iounit,info)
-      implicit none
       integer,intent(in)      :: iounit      !< IO unit
       integer,intent(out)     :: info     !< Exit code
       !

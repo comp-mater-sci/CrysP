@@ -1,21 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven (KU Leuven)
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>    \copyright KU Leuven
-!>
-!>    \date Date of first release: 2011-12-24
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-!>
-!>    \file criRuntime.f90
-!
 #include "criStdDefs.fpp"
 !
 !> Provide shared infrastructure for managing runtime in cri
@@ -100,12 +82,6 @@ implicit none
             integer                             :: command_idx = 0
       end type
 
-#ifdef FORT_HAS_DERIVED_TYPE_INTERFACE
-      interface commandLine
-            module procedure commandLine_init
-      end interface
-#endif
-
 contains
 
       !> Terminate execution of the program, returning stop code.
@@ -116,7 +92,6 @@ contains
       !>   * STOP
       !>   * call exit()
       subroutine finalize(errcode)
-      implicit none
       integer,intent(in)      :: errcode
             !
             if ((errcode /= 0) .and. (len_trim(errmsg) > 0)) then
@@ -127,23 +102,9 @@ contains
             call exit(errcode)
       end subroutine
 
-      !> Initialization of commandLine object and return it with progname and description defined
-      function commandLine_init(progname,description) result(res)
-      implicit none
-      character(len=*),intent(in)        :: progname
-      character(len=*),intent(in)        :: description
-      type(commandLine)       :: res !MB: initialize res of type commandLine and set progname and description (other 8 components unmodified)
-      !
-            res%progname = progname
-            res%description = description
-      !
-      end function
-
-
       !> Process the arguments provided in the command line.
       subroutine processCommandLine(this,argc_min,argc_max,command_map,command_argpos,info, &
                                     terminate)
-      implicit none
       type(commandLine),intent(inout)           :: this !MB: defined in criRuntime.f90
       !> Minimal number of mandatory parameters
       integer,intent(in)                        :: argc_min
@@ -219,7 +180,6 @@ contains
       !> See processCommandLine for the description of parameters.
       !> \sa processCommandLine
       subroutine finishProcessing(this,command_map,info,terminate)
-      implicit none
       type(commandLine),intent(inout)     :: this
       type(MapItem),dimension(:),intent(in)                 :: command_map
       integer,intent(out)                 :: info
@@ -245,12 +205,10 @@ contains
       !> See processCommandLine for the description of parameters.
       !> \sa processCommandLine
       subroutine printHelpMessage(this,command_map,info)
-      implicit none
       type(commandLine),intent(inout)     :: this
       type(MapItem),dimension(:),intent(in)                 :: command_map
       integer,intent(out)                 :: info
-      integer :: i, idx
-      character(len=max_command_param_len) :: name
+      integer :: i
       !
             info = criError
             if (this%progname /= '') write(error_unit,'(A)') trim(this%progname)
@@ -270,7 +228,6 @@ contains
 
       !> Process the command line using Fortran intrinsic procedures (command_argument_count, get_command_argument) and put the command line arguments into an allocatable array of strings (argv)
       subroutine getArgv(argc,argv,info)
-      implicit none
       !> Number of command parameters. The program name does not count as one of the command arguments.
       integer,intent(out)                                   :: argc
       !> Array of command parameters. Its shape is [0:argc]. The program name is stored under index 0.
@@ -302,12 +259,9 @@ contains
       !
       end subroutine
 
-#ifdef FORT_HAS_NEWUNIT
-
       !> Open file fpath in the mode given by status, or call finalize on failure.
       !> Returns IO unit of the newly opened file.
       integer function openOrDie(fpath,status,unit) result(nunit)
-      implicit none
       character(len=*),intent(in)   :: fpath
       character(len=*),intent(in)   :: status !< Status of the file. The same as status in OPEN.
       !> IO unit to be used in opening the file. Unless it is provided, a new unit will be generated.
@@ -327,6 +281,5 @@ contains
             endif
       !
       end function
-#endif
 
 end module
