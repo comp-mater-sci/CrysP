@@ -23,4 +23,4 @@ build:
     intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-compiler-fortran \
     intel-oneapi-openmp intel-oneapi-mkl-devel
     source /opt/intel/oneapi/setvars.sh
-    FC=ifort AR=xiar make VEF
+    FC=ifort AR=xiar ./build.sh
