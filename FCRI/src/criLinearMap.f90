@@ -18,27 +18,6 @@ implicit none
 
 contains
 
-      !> Return index (position) of the symbolic name in the map.
-      !>
-      !> \return 0 if the name doesn't match any name provided in the map.
-      integer function findName(themap,name)
-      character(len=*),intent(in)               :: name
-      type(MapItem),dimension(1:)               :: themap
-      !
-      integer :: i
-      character(len=cMapNameLen)       :: shortname
-      !
-            findName = 0
-            shortname = trim(adjustl(name)) ! Trim and store (make direct comparison)
-            do i=1,size(themap)
-                  if (shortname == trim(themap(i)%Name)) then
-                        findName = i
-                        exit
-                  endif
-            enddo
-      !
-      end function
-
       !> Resolve symbolic name into an integer identifier.
       !>
       !> \return .true. if the name matches a name provided in the map, then id contains corresponding identifier
