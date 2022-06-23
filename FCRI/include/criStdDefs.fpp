@@ -19,7 +19,6 @@
 #ifndef criStdDefs_62108D29_8A2E_4d99_8F56_46D6307CD9AF
 #define criStdDefs_62108D29_8A2E_4d99_8F56_46D6307CD9AF
 
-#include "criToolset.fpp"
 #include "criModules.fpp"
 
 #endif
