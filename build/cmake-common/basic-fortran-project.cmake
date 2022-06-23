@@ -1,5 +1,3 @@
-# $Id$
-
 # Define variables to be used in CMakeLists files in subdirectories:
 # * ${PROJECT_NAME}_ROOT_DIR: output directory
 # * ${CMAKE_INSTALL_PREFIX}: directory where the outputs will be installed

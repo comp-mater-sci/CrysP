@@ -27,8 +27,6 @@ cmake-common
      * - basic.cmake
        - Pre-defined configuration for projects with simple Debug and Release 
          configuration
-     * - python-bytecode.cmake
-       - Helper for generating bytecode in projects with Python components
 
 make-common
   Common components of Make-based build system

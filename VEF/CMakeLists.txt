@@ -1,5 +1,3 @@
-# $Id$
-#
 cmake_minimum_required(VERSION 2.8)
 
 project(alamDMC Fortran)
@@ -26,6 +24,3 @@ include_directories(${fopt_INCLUDE_DIR})
 add_subdirectory(alamDMC)
 add_subdirectory(libAlamDMC) 
 add_subdirectory(libAlamYLP)
-
-include("${COMMON_DIR}/python-bytecode.cmake")
-
