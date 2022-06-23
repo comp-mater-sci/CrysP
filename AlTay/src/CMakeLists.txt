@@ -9,7 +9,7 @@ set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 set(libaltay "altay")
 set(progaltay "prog_altay")
 
-set(LibAlTay_FLAGS "-extend-source 132" "-align dcommons" "-warn nodeclarations")
+set(LibAlTay_FLAGS "-extend-source 132")
 
 list(APPEND Fortran_FLAGS ${LibAlTay_FLAGS})
 

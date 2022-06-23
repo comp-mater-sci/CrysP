@@ -1,5 +1,3 @@
-# $Id: CMakeLists.txt -1   $
-#
 cmake_minimum_required(VERSION 2.8)
 
 project(foptTest Fortran)
@@ -7,8 +5,6 @@ set(progname foptTest)
 
 include_directories("${CMAKE_BINARY_DIR}/include")
 
-# Tweak for Intel compiler: prevent CMAKE from appending -i_dynamic
-set(CMAKE_SHARED_LIBRARY_LINK_Fortran_FLAGS "")
 list(APPEND Fortran_FLAGS "-mkl=sequential")
 
 list2string(Fortran_FLAGS CMAKE_Fortran_FLAGS) 

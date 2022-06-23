@@ -6,8 +6,6 @@ project(FCRI-test Fortran)
 
 set(CRI_TEST "criTest")
 
-list(APPEND Fortran_FLAGS "-diag-disable 5268")
-
 list2string(Fortran_FLAGS CMAKE_Fortran_FLAGS) 
 
 list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
