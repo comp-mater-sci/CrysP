@@ -1,6 +1,3 @@
-# $Id$
-#
-
 # Generic sets of Fortran compiler and linker flags, commonly used across many
 # projects.
 #

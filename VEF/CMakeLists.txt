@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project(alamDMC Fortran)
 
 # Load typical initialization code. It sets a collection of variables.
-set(COMMON_DIR "../build/cmake-common")
+set(COMMON_DIR "../cmake-common")
 include("${COMMON_DIR}/basic-fortran-project.cmake")
 
 #

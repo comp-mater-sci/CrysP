@@ -5,7 +5,7 @@ project(altay Fortran)
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
 # Load typical initialization code. It sets a collection of variables.
-set(COMMON_DIR "../build/cmake-common")
+set(COMMON_DIR "../cmake-common")
 include("${COMMON_DIR}/basic-fortran-project.cmake")
 
 include_directories("include")
