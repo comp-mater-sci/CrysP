@@ -27,12 +27,6 @@ cmake-common
      * - basic.cmake
        - Pre-defined configuration for projects with simple Debug and Release 
          configuration
-
-make-common
-  Common components of Make-based build system
-
-.. _cmake_include: https://cmake.org/cmake/help/latest/command/include.html
-__ cmake_include_
   
 CMake based build system
 ========================
@@ -43,8 +37,6 @@ In most projects it is a very simple ``Makefile`` that just includes a generic
 one, for instance: ::
 
   include ../build/cmake-common/bootstrap.makefile
-
-Such ``Makefile`` is available as ``build/make-common/Makefile.bootstrap``.
   
 The generic ``Makefile`` offers two basic configurations: ``debug`` and ``release``. It 
 provides generic targets:

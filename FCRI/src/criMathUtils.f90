@@ -651,7 +651,7 @@ contains
       !
       end function
 
-	  !> Convert 5D vector v into second-rank tensor
+      !> Convert 5D vector v into second-rank tensor
       pure function vec5D2tens(v) result(t)
       double precision,dimension(5),intent(in)    :: v
       double precision,dimension(3,3)             :: t
