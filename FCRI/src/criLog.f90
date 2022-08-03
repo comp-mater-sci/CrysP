@@ -1,4 +1,3 @@
-#include "criStdDefs.fpp"
 !
 !> Constant parameters, data structures and functions for output logging
 !>

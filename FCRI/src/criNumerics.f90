@@ -1,4 +1,3 @@
-#include "criStdDefs.fpp"
 #include "criMacros.fpp"
 
 !> Various numerical algorithms

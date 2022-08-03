@@ -1,4 +1,3 @@
-#include "criStdDefs.fpp"
 !
 !> Definition of several symbolic error codes and its corresponding numerical values.
 !>

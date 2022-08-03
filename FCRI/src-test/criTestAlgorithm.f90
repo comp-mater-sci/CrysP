@@ -1,23 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven (KU Leuven)
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>    \copyright KU Leuven
-!>
-!>    \date Date of first release: 2012-06-11
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-!>
-!>    \file criTestAlgorithm.f90
-!
-!
-#include "criStdDefs.fpp"
 #include "criTest.fpp"
 #include "criMacros.fpp"
 !

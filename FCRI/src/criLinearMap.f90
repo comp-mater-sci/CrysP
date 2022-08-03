@@ -1,4 +1,3 @@
-#include "criStdDefs.fpp"
 !
 !> Simple (and stupid) implementation of unsorted linear map.
 !>

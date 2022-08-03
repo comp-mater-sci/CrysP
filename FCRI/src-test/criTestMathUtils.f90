@@ -1,23 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven (KU Leuven)
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>    \copyright KU Leuven
-!>
-!>    \date Date of first release: 2010-08-24
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-!>
-!>    \file criTestMathUtils.f90
-!
-!
-#include "criStdDefs.fpp"
 #include "criTest.fpp"
 !
 

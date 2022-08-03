@@ -1,4 +1,3 @@
-#include "criStdDefs.fpp"
 !
 !> Provides named constants and procedures for dealing with filesystem paths.
 module criPath

@@ -1,5 +1,3 @@
-#include "criStdDefs.fpp"
-
 !> Various high-level operations on arrays
 module criArray
 use criErrcodes

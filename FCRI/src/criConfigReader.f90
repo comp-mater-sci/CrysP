@@ -1,4 +1,3 @@
-#include "criStdDefs.fpp"
 !
 !> Helper algorithms for processing config files
 module criConfigReader

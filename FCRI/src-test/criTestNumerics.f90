@@ -1,21 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven (KU Leuven)
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>    \copyright KU Leuven
-!>
-!>    \date Date of first release: 2015-11-09
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-!>
-
-#include "criStdDefs.fpp"
 #include "criTest.fpp"
 #include "criMacros.fpp"
 
@@ -34,119 +16,119 @@ public criTestNumerics_main
     end interface
 
 contains
-      
+
     logical function criTestNumerics_main() result(stat)
     implicit none
-        
-        stat = .true. 
-        
+
+        stat = .true.
+
         stat = stat .and. test_linspace()
-        
+
         stat = stat .and. test_barycentric_weights()
-        
+
         stat = stat .and. test_barycentric_interpolate()
-        
+
         stat = stat .and. test_barycentricInterpolatorKnownData()
-        
+
         stat = stat .and. test_barycentricInterpolator()
-        
+
     end function
 
     !
     ! Testing of linspace
     !
-    
+
     logical function test_linspace() result(res)
     implicit none
     double precision,dimension(:),allocatable :: x
     double precision :: xmin, xmax
     integer :: npoints
-    
+
     double precision,dimension(5) :: x5
     double precision,dimension(5),parameter :: ref5_noendpoint = [ 1.D0 ,  1.2D0,  1.4D0,  1.6D0,  1.8D0]
     double precision,dimension(5),parameter :: ref5_endpoint =   [ 1.D0 ,  1.25D0, 1.5D0 , 1.75D0, 2.D0 ]
     double precision,dimension(5),parameter :: ref5_reverse_noendpoint = [ 2.D0 ,  1.8D0,  1.6D0,  1.4D0,  1.2D0]
-     
+
         res = .false.
-        
-        
+
+
         xmin = 1.D0
         xmax = 2.D0
         npoints = -5
-        
-        call linspace(xmin, xmax, npoints, x)
-        _TEST('linspace, negative #points, default endpoint, array is allocated', allocated(x)) 
-        _TEST('linspace,  negative #points, default endpoint, size is 0', size(x) == 0) 
 
-        
+        call linspace(xmin, xmax, npoints, x)
+        _TEST('linspace, negative #points, default endpoint, array is allocated', allocated(x))
+        _TEST('linspace,  negative #points, default endpoint, size is 0', size(x) == 0)
+
+
         xmin = 1.D0
         xmax = 2.D0
         npoints = 0
-        
+
         call linspace(xmin, xmax, npoints, x)
-        _TEST('linspace, zero points, default endpoint, array is allocated', allocated(x)) 
-        _TEST('linspace, zero points, default endpoint, size is 0', size(x) == npoints) 
-         
+        _TEST('linspace, zero points, default endpoint, array is allocated', allocated(x))
+        _TEST('linspace, zero points, default endpoint, size is 0', size(x) == npoints)
+
         call linspace(xmin, xmax, npoints, x,  endpoint=.true.)
-        _TEST('linspace, zero points, endpoint, array is allocated', allocated(x)) 
-        _TEST('linspace, zero points, endpoint, size is 0', size(x) == npoints) 
+        _TEST('linspace, zero points, endpoint, array is allocated', allocated(x))
+        _TEST('linspace, zero points, endpoint, size is 0', size(x) == npoints)
 
         call linspace(xmin, xmax, npoints, x,  endpoint=.false.)
-        _TEST('linspace, zero points, no endpoint, array is allocated', allocated(x)) 
-        _TEST('linspace, zero points, no endpoint, size is 0', size(x) == npoints) 
+        _TEST('linspace, zero points, no endpoint, array is allocated', allocated(x))
+        _TEST('linspace, zero points, no endpoint, size is 0', size(x) == npoints)
 
         xmin = 1.D0
         xmax = 2.D0
         npoints = 1
-        
+
         call linspace(xmin, xmax, npoints, x)
-        _TEST('linspace, one point, default endpoint, array is allocated', allocated(x)) 
-        _TEST('linspace, one point, default endpoint, size is 1', size(x) == npoints) 
-        _TEST('linspace, one point, default endpoint, endpoint=xmin', x(size(x)) == xmin) 
-         
+        _TEST('linspace, one point, default endpoint, array is allocated', allocated(x))
+        _TEST('linspace, one point, default endpoint, size is 1', size(x) == npoints)
+        _TEST('linspace, one point, default endpoint, endpoint=xmin', x(size(x)) == xmin)
+
         call linspace(xmin, xmax, npoints, x, endpoint=.true.)
-        _TEST('linspace, one point, endpoint, array is allocated', allocated(x)) 
-        _TEST('linspace, one point, endpoint, size is 1', size(x) == npoints) 
-        _TEST('linspace, one point, endpoint, endpoint=xmin', x(size(x)) == xmin) 
+        _TEST('linspace, one point, endpoint, array is allocated', allocated(x))
+        _TEST('linspace, one point, endpoint, size is 1', size(x) == npoints)
+        _TEST('linspace, one point, endpoint, endpoint=xmin', x(size(x)) == xmin)
 
         call linspace(xmin, xmax, npoints, x,  endpoint=.false.)
-        _TEST('linspace, one point, no endpoint, array is allocated', allocated(x)) 
-        _TEST('linspace, one point, no endpoint, size is 1', size(x) == npoints) 
-        _TEST('linspace, one point, no endpoint, endpoint=xmin', x(size(x)) == xmin) 
+        _TEST('linspace, one point, no endpoint, array is allocated', allocated(x))
+        _TEST('linspace, one point, no endpoint, size is 1', size(x) == npoints)
+        _TEST('linspace, one point, no endpoint, endpoint=xmin', x(size(x)) == xmin)
 
         xmin = 1.D0
         xmax = 2.D0
         npoints = 2
-        
+
         call linspace(xmin, xmax, npoints, x)
-        _TEST('linspace, two points, default endpoint, size is 2', size(x) == npoints) 
+        _TEST('linspace, two points, default endpoint, size is 2', size(x) == npoints)
         _TEST('linspace, two points, default endpoint, first=xmin', x(1) == xmin)
-        _TEST('linspace, two points, default endpoint, last=xmax', x(size(x)) == xmax) 
-         
+        _TEST('linspace, two points, default endpoint, last=xmax', x(size(x)) == xmax)
+
         call linspace(xmin, xmax, npoints, x, endpoint=.true.)
-        _TEST('linspace, two points, endpoint, size is 2', size(x) == npoints) 
+        _TEST('linspace, two points, endpoint, size is 2', size(x) == npoints)
         _TEST('linspace, two points, endpoint, first=xmin', x(1) == xmin)
-        _TEST('linspace, two points, endpoint, last=xmax', x(size(x)) == xmax) 
+        _TEST('linspace, two points, endpoint, last=xmax', x(size(x)) == xmax)
 
         call linspace(xmin, xmax, npoints, x,  endpoint=.false.)
-        _TEST('linspace, two points, no endpoint, size is 2', size(x) == npoints) 
+        _TEST('linspace, two points, no endpoint, size is 2', size(x) == npoints)
         _TEST('linspace, two points, no endpoint, first=xmin', x(1) == xmin)
         _TEST('linspace, two points, no endpoint, last', ((x(size(x)) - 1.5D0 < epsilon(0.D0))))
 
         xmin = 1.D0
         xmax = 2.D0
         npoints = 5
-        
+
         call linspace(xmin, xmax, x5,  endpoint=.false.)
         _TEST('linspace fixed array, no endpoint, data OK', all(x5 - ref5_noendpoint < epsilon(0.D0)))
-        
+
         call linspace(xmin, xmax, npoints, x,  endpoint=.false.)
         _TEST('linspace allocatable, no endpoint, size OK', size(x) == npoints)
         _TEST('linspace allocatable, no endpoint, data OK', all(x - ref5_noendpoint < epsilon(0.D0)))
-        
+
         call linspace(xmin, xmax, x5,  endpoint=.true.)
         _TEST('linspace fixed array, endpoint, data OK', all(x5 - ref5_endpoint < epsilon(0.D0)))
-        
+
         call linspace(xmin, xmax, npoints, x,  endpoint=.true.)
         _TEST('linspace allocatable, no endpoint, size OK', size(x) == npoints)
         _TEST('linspace allocatable, no endpoint, data OK', all(x - ref5_endpoint < epsilon(0.D0)))
@@ -157,30 +139,30 @@ contains
         xmin = 2.D0
         xmax = 1.D0
         npoints = 5
-        
+
         call linspace(xmin, xmax, x5,  endpoint=.false.)
         _TEST('linspace fixed array, no endpoint, data OK', all(x5 - ref5_reverse_noendpoint < epsilon(0.D0)))
-        
+
         call linspace(xmin, xmax, npoints, x,  endpoint=.false.)
         _TEST('linspace allocatable, no endpoint, size OK', size(x) == npoints)
         _TEST('linspace allocatable, no endpoint, data OK', all(x - ref5_reverse_noendpoint < epsilon(0.D0)))
-        
+
         ! If endpoint is requested, the ref5_endpoint in reverse order should be produced
         call linspace(xmin, xmax, x5,  endpoint=.true.)
         _TEST('linspace fixed array, endpoint, data OK', all(x5 - ref5_endpoint(5:1:-1) < epsilon(0.D0)))
-        
+
         ! If endpoint is requested, the ref5_endpoint in reverse order should be produced
         call linspace(xmin, xmax, npoints, x,  endpoint=.true.)
         _TEST('linspace allocatable, no endpoint, size OK', size(x) == npoints)
         _TEST('linspace allocatable, no endpoint, data OK', all(x - ref5_endpoint(5:1:-1) < epsilon(0.D0)))
 
-        
+
         res = .true.
     end function
     !
     ! Testing of interpolation
     !
-    
+
     pure double precision function fx_identity(x) result(y)
     implicit none
     double precision,intent(in) :: x
@@ -192,7 +174,7 @@ contains
     double precision,intent(in) :: x
         y = 0.5D0 * x + 1.D0
     end function
-    
+
     pure double precision function fx_quadratic(x) result(y)
     implicit none
     double precision,intent(in) :: x
@@ -205,7 +187,7 @@ contains
         y = sin(x)
     end function
 
-    
+
     subroutine setUp_barycentric_linear(xi, yi, wi, wi_r)
     implicit none
     double precision,dimension(:),allocatable,intent(out) :: xi, yi, wi, wi_r
@@ -219,13 +201,13 @@ contains
         allocate(xi(size(wi_ref)), yi(size(wi_ref)), wi(size(wi_ref)), wi_r(size(wi_ref)))
         xi = xi_ref
         ! Note: SciPy BarycentricInterpolator provides wi = [1., -1.]
-        ! while it should be [-1., 1.]. In this case it does not matter 
+        ! while it should be [-1., 1.]. In this case it does not matter
         ! anyway.
         wi_r = - wi_ref
     !
     end subroutine
 
-    
+
     subroutine setUp_barycentric_quadratic(xi, yi, wi, wi_r)
     implicit none
     double precision,dimension(:),allocatable,intent(out) :: xi, yi, wi, wi_r
@@ -242,7 +224,7 @@ contains
     !
     end subroutine
 
-      
+
     subroutine setUp_barycentric_big(xi, yi, wi, wi_r)
     implicit none
     double precision,dimension(:),allocatable,intent(out) :: xi, yi, wi, wi_r
@@ -267,8 +249,8 @@ contains
         wi_r = wi_ref
     !
     end subroutine
-      
-      
+
+
     logical function test_barycentric_weights() result(res)
     implicit none
     double precision,dimension(:),allocatable :: xi, yi, wi, wi_ref
@@ -287,10 +269,10 @@ contains
         call setUp_barycentric_big(xi, yi, wi, wi_ref)
         call barycentric_weights(xi, wi, info)
         _TEST('big problem, wi ~= wi_ref',all(abs(wi-wi_ref)< 10.D0 * epsilon(0.D0)))
-        
+
         res = .true.
     end function
-    
+
     subroutine setUp_barycentric_interpolate(n, xi, yi, yi_res)
     implicit none
     integer,intent(in) :: n !< size multiplier
@@ -301,8 +283,8 @@ contains
     !
     end subroutine
 
-    
-    
+
+
     subroutine setUp_testarrays(n, x, y, y_res)
     implicit none
     integer,intent(in) :: n !< size
@@ -312,8 +294,8 @@ contains
     !
     end subroutine
 
-    
-    
+
+
     logical function test_barycentric_interpolate() result(res)
     implicit none
     double precision,dimension(:),allocatable :: xi, yi, yi_res, wi, wi_ref, x_test, y_test, y_ref
@@ -329,7 +311,7 @@ contains
         ! Assuming linear function, we should get the exact results at the mid-points , too.
         call setUp_testMidpoints(1, 0.5D0, x_test, y_test, y_ref)
         _TEST('linear problem, yi = xi, on mid-points', all(abs(y_test - y_ref) < epsilon(0.D0)))
-        
+
         !
         call setUp_barycentric_quadratic(xi, yi, wi, wi_ref)
         call barycentric_weights(xi, wi, info)
@@ -344,9 +326,9 @@ contains
         call barycentric_weights(xi, wi, info)
         call setUp_testOnNodes()
         _TEST('big problem (n=20), yi = xi, on nodes',all(abs(yi - yi_res)< epsilon(0.D0)))
-        
+
         res = .true.
-        
+
     contains
         subroutine setUp_testOnNodes()
         implicit none
@@ -357,7 +339,7 @@ contains
                 yi_res(i) =  barycentric_interpolation(xi(i), xi, yi, wi)
             enddo
         end subroutine
-        
+
         subroutine setUp_testMidpoints(p, frac, x_test, y_test, y_ref)
         implicit none
         integer,intent(in) :: p
@@ -370,16 +352,16 @@ contains
             yi = xi**p
             x_test = xi(:n) + frac*(xi(2) - xi(1))
             y_ref = x_test**p
-            
+
             do i = 1, size(x_test)
                 y_test(i) =  barycentric_interpolation(x_test(i), xi, yi, wi)
             enddo
         end subroutine
-        
+
     end function
-    
-    
-    
+
+
+
     subroutine setUp_barycentricInterpolator(n, order, xstart, xend, bi, fx)
     implicit none
     integer,intent(in) :: n, order ! number of points, order
@@ -389,23 +371,23 @@ contains
     !
     double precision,dimension(:),allocatable :: xi, yi
     integer :: i, info
-    
+
         call linspace(xstart, xend, n, xi)
         allocate(yi(size(xi)))
         ! Sadly, fx cannot be elemental...
         do i = 1, size(xi)
             yi(i) = fx(xi(i))
         enddo
-        
+
         call BarycentricInterpolator_init(bi, order, xi, yi, info)
-        
+
     end subroutine
-    
-    
+
+
     logical function test_barycentricInterpolatorKnownData() result(res)
     use criMathUtils, only: pi
     implicit none
-    !    
+    !
     ! Known nodal data for linear interpolation:
     integer,parameter :: nnodes = 5, nresults = 5
     double precision,dimension(nnodes),parameter ::  &
@@ -417,12 +399,12 @@ contains
         x_test = [0.5D0, 2.D0, 3.5D0, 4.5D0, 5.D0], &
         y_test = [3.D0,  6.D0, 7.D0,  6.D0,  5.D0]
     double precision,dimension(nresults) :: y_res
-    
+
     !
     integer :: i, info
     type(BarycentricInterpolator) :: bi
     !
-    
+
         res = .false.
         ! Set-up
         call BarycentricInterpolator_init(bi, 1, xi, yi, info)
@@ -437,9 +419,9 @@ contains
         enddo
          _TEST('BarycentricInterpolator, linear on linear function at nodes', all(abs(yi - yi_res) < epsilon(0.D0)))
         res = .true.
-    
+
     end function
-    
+
     logical function test_barycentricInterpolator() result(res)
     use criMathUtils, only: pi
     implicit none
@@ -447,9 +429,9 @@ contains
     double precision,dimension(:),allocatable :: y_test, y_res
     double precision :: xstart, xend
     !
-    
+
         res = .false.
-        
+
 
         !
         ! Interpolate quadratic function
@@ -464,15 +446,15 @@ contains
         call setUp_barycentricInterpolation(1, xstart, xend, 0.5D0, npoints, npoints, fx_quadratic, y_test, y_res)
         call printTestData()
         _TEST("BarycentricInterpolator, linear, between nodes, crude", all(abs(y_test - y_res) <= 6.25e-2))
-        
+
         call setUp_barycentricInterpolation(2, xstart, xend, 0.D0, npoints, npoints, fx_quadratic, y_test, y_res)
         _TEST("BarycentricInterpolator, quadratic, on nodes, crude", all(abs(y_test - y_res) < epsilon(0.D0)))
-        
+
         call setUp_barycentricInterpolation(2, xstart, xend, 0.5D0, npoints, npoints, fx_quadratic, y_test, y_res)
         call printTestData()
         _TEST("BarycentricInterpolator, quadratic, between nodes, crude", all(abs(y_test - y_res) < 65.D0*epsilon(0.D0)))
 
-        
+
         xstart = 0.D0
         xend = 10.D0
         npoints = 100
@@ -484,16 +466,16 @@ contains
         call setUp_barycentricInterpolation(1, xstart, xend, 0.5D0, npoints, ntest_points, fx_quadratic, y_test, y_res)
         call printTestData()
         _TEST("BarycentricInterpolator, linear, between nodes, fine", all(abs(y_test - y_res) < 3.D-3))
-        
-        
+
+
         call setUp_barycentricInterpolation(2, xstart, xend, 0.D0, npoints, npoints, fx_quadratic, y_test, y_res)
         _TEST("BarycentricInterpolator, quadratic, on nodes, fine", all(abs(y_test - y_res) < epsilon(0.D0)))
-        
+
         call setUp_barycentricInterpolation(2, xstart, xend, 0.5D0, npoints, ntest_points, fx_quadratic, y_test, y_res)
         call printTestData()
         _TEST("BarycentricInterpolator, quadratic, between nodes, fine", all(abs(y_test - y_res) < 65.D0*epsilon(0.D0)))
 
-        
+
         !
         ! Interpolate sin(x) on [-pi,pi] with linear polynomial
         !
@@ -501,7 +483,7 @@ contains
         xend = pi
         npoints = 100
         ntest_points = 200
-        
+
         call setUp_barycentricInterpolation(1, xstart, xend, 0.5D0, npoints, ntest_points, fx_sin, y_test, y_res)
         call printTestData()
         _TEST("BarycentricInterpolator of sin(x), linear", all(abs(y_test - y_res) < 5.D-4))
@@ -514,7 +496,7 @@ contains
         _TEST("BarycentricInterpolator of sin(x), quadratic", all(abs(y_test - y_res) < 2.D-5))
 
         res = .true.
-        
+
     contains
         subroutine printTestData()
         implicit none
@@ -529,10 +511,10 @@ contains
             write(*,*) '---'
 #endif
         end subroutine
-        
+
     end function
-    
-    
+
+
     subroutine setUp_barycentricInterpolation(order, xstart, xend, midratio, ni_points, ntest_points, fx, y_test, y_res)
     implicit none
     integer,intent(in) :: order
@@ -565,7 +547,7 @@ contains
         enddo
     !
     end subroutine
-    
-    
+
+
 end module
-    
+

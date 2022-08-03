@@ -1,4 +1,3 @@
-#include "criStdDefs.fpp"
 !
 !> Provide shared infrastructure for managing runtime in cri
 !> applications.

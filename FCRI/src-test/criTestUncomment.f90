@@ -1,21 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven (KU Leuven)
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>    \copyright KU Leuven
-!>
-!>    \date Date of the initial release: 2013-07-09
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-!>
-!>    \file criTestUncomment.f90 
-
 #include "criTest.fpp"
 
 module criTestUncomment
@@ -27,19 +9,19 @@ private
 public criTestUncomment_main
 
 contains
-      
+
       !> main driver routine of criTestUncomment
       logical function criTestUncomment_main() result(stat)
       implicit none
-      
-            stat = test_uncommentedString() 
 
-            stat = test_stripComment() 
+            stat = test_uncommentedString()
+
+            stat = test_stripComment()
 
       end function
 
 
-      
+
       logical function test_uncommentedString()
       implicit none
       character(len=max_line_len)    :: string, res_string
@@ -51,7 +33,7 @@ contains
 
             ! Test:
             _TEST('empty literal string',uncommentedString('') == '')
-            
+
             ! Test:
             string = '   '
             _TEST('empty string, spaces',uncommentedString(string) == string)
@@ -82,11 +64,11 @@ contains
             res_string = ''
             _TEST('sample comment string with a comment',uncommentedString(string) == res_string)
 
-            
+
       !
       end function
 
-      
+
       logical function test_stripComment()
       implicit none
       character(len=max_line_len)    :: string, res_string
@@ -102,7 +84,7 @@ contains
             ! res_string = ''
             ! call stripComment('')
             ! _TEST('empty literal string', string == res_string)
-            
+
             ! Test:
             string = '   '
             res_string = string
@@ -147,5 +129,5 @@ contains
       !
       end function
 
-      
-end module 
+
+end module

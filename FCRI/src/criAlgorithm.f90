@@ -1,4 +1,3 @@
-#include "criStdDefs.fpp"
 !
 !> Various algorithms
 module criAlgorithm

@@ -1,4 +1,3 @@
-#include "criStdDefs.fpp"
 !
 !> Provides access to config files with bash-style comments
 module criUncomment

@@ -1,4 +1,3 @@
-#include "criStdDefs.fpp"
 !
 !> Simplistic stand-alone unit testing module
 !>

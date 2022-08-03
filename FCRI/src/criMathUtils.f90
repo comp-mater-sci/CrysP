@@ -1,4 +1,3 @@
-#include "criStdDefs.fpp"
 !
 !> Elementary math constants and functions
 !>
