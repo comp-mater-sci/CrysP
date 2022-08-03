@@ -1,5 +1,3 @@
-# $Id: utilities.cmake 2069 2015-02-20 17:22:41Z jgawad $
-
 # Collection of useful utilities
 
 # Converts a CMake list to a space-delimited string
