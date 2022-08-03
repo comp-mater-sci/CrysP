@@ -1,12 +1,12 @@
 !
 ! $Id$
 !
-!>    \author Jerzy Gawad                                                
+!>    \author Jerzy Gawad
 !>    Email:  Jerzy.Gawad@cs.kuleuven.be
 !>
 !>    Organization: Katholieke Universiteit Leuven
 !>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
+!>
 !>    \date Date of the initial release: 2010-11-03 (under the name alamQ)
 !>    $Revision$
 !>    $Date$
@@ -46,7 +46,7 @@ implicit none
         logical                                   :: use_stability_improvements = .false.
 
         logical                                   :: fold_symmetry = .false.
-            
+
     contains
 
         !>@{ \name Interface methods of AbstractModule
@@ -103,7 +103,7 @@ contains
                 if (.not. readValue(cnfunit, this%use_stability_improvements)) return
         endif
         !
-        ! Override the requests for outputs: 
+        ! Override the requests for outputs:
         this%altay%output_config%nfile = 0   ! texture
         this%altay%output_config%npebp = 0   ! KOST1x state
         this%output%outputRequest = .false.       ! idem.
@@ -128,10 +128,10 @@ contains
             write(outunit,'(A)') 'QRS: $Rev$'
         endif
         if (doLogging(criLogInfo,this%output%verbosity)) then
-            ! Print-out summary of the configuration 
+            ! Print-out summary of the configuration
             !write(display_unit,fmt=fmtMsg2Other//'2(F8.3,1X))',iostat=ioerr) 'Angular range:', this%fi2min, this%fi2max
-            write(outunit,fmt=fmtMsg2Int,iostat=ioerr)   'Number of points:', this%ptr_range%size() 
-            write(outunit,fmt=fmtMsg2Float,iostat=ioerr) 'Stress ratio', this%rho 
+            write(outunit,fmt=fmtMsg2Int,iostat=ioerr)   'Number of points:', this%ptr_range%size()
+            write(outunit,fmt=fmtMsg2Float,iostat=ioerr) 'Stress ratio', this%rho
             !
             write(outunit,fmt='(A, 1X)',advance='NO') 'Info:'
             if (this%use_stability_improvements) then
@@ -154,7 +154,7 @@ contains
     ! Convention: strain rate and stress tensors in
     ! - "Tensile sample coordinate system" have suffix _t
     ! - "Material coordinate system" have no suffix.
-    ! 
+    !
     type(SRTensor)                            :: D_t, S_t, sigma, sigma_t, SonA, D, Dresume_t, &
                                                  SmIdent    !< obtained stress mode
     double precision,dimension(3,3)           :: Mrot = 0.0
@@ -183,7 +183,7 @@ contains
         RETURN_IF(info /= criSuccess, info = this%openOutputFile('.xqrs', ofunit))
         !
         ! Apply correction to the configuration of the search procedure:
-        ! there will be no need to use the full model in the last call unless 
+        ! there will be no need to use the full model in the last call unless
         ! the average Taylor factor is requested.
         this%ylp%evaluate_full_model  = this%calculate_MFactor
         !
@@ -239,7 +239,7 @@ contains
             !
             SonA%t = vec5D2tens(ylp_result%vSonA)
             SmIdent%t = vec5D2tens(ylp_result%vSonAn) ! stress mode for found strain mode
-            
+
             if (doLogging(criLogDebug,this%output%verbosity)) then
                 info = printYLPResult(display_unit, ylp_result)
                 write(display_unit, fmt=3400)
@@ -248,7 +248,7 @@ contains
                     write(display_unit,fmt=3401) (sigma%t(j,k),k=1,3), (SmIdent%t(j,k),k=1,3), (D%t(j,k), k=1,3)
                 enddo
             endif
-            ! Rotate back to the "tensile test" coordinate system  
+            ! Rotate back to the "tensile test" coordinate system
             D_t = rotateSRTensorFrom(D, Mrot)
             S_t = rotateSRTensorFrom(SonA, Mrot)
             !
@@ -257,7 +257,7 @@ contains
                 Dresume_t = D_t
                 residual_resume = ylp_result%R
             endif
-            !            
+            !
             ! Calculate output variables
             !
             associate(r => results, &
@@ -280,7 +280,7 @@ contains
                 !
                 if (doLogging(criLogInfo,this%output%verbosity)) then
                     write(display_unit,fmt=2601) !
-                    write(display_unit,fmt=2600) (centered(display_column_labels(j)), j=1,ncolumn_labels_display) 
+                    write(display_unit,fmt=2600) (centered(display_column_labels(j)), j=1,ncolumn_labels_display)
                     write(display_unit,fmt=2610) phis, this%rho, qrsvalues%qvalue, qrsvalues%rvalue, sigmas_x, residuals
                     write(display_unit,fmt=2601)
                 endif
@@ -290,12 +290,12 @@ contains
             !
             info = criSuccess
         enddo
-        ! 
+        !
         ! End of the main loop, check what's the status of the last operation
         if (is_error(info)) return
         !
         npoints_ok = i-1
-        if (npoints /= npoints_ok) then 
+        if (npoints /= npoints_ok) then
             write(display_unit,fmt=850) 'There were unconverged solutions, so some of datapoints are dropped'
             ! FIXME: temporary solution: folding cannot be done if there are missing points.
             if (this%fold_symmetry) then
@@ -316,7 +316,7 @@ contains
         2610 format(1X, F14.2, 1X, 3(F14.6,1X),2(E14.6,1X)) ! 6 fields in total
         1600 format(/,'Sample ', I0, ' out of ',I0, ', sample orientation: ',F0.2)
         !
-#define MSG_GROUP_RULERS     
+#define MSG_GROUP_RULERS
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
@@ -357,11 +357,10 @@ contains
             endif
             ! Write output file
             if (this%fold_symmetry) then
-                ! \todo Use FCRI::criArray::fold_array for this task. It allows multiple folds!
                 ! Average over symmetric positions
                 left = 1
                 right = npoints
-                do 
+                do
                     if (left > right) exit
                     stride = right - left
                     if (stride == 0) stride = 1
