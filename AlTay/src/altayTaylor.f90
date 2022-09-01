@@ -171,8 +171,6 @@
       !
       ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
  3000 continue
-!      write (*,1234)
-! 1234 format (' Just before Pancak2')
       !
       call Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,              &
                     SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
@@ -211,8 +209,6 @@
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
-!      write (*,1235)
-! 1235 format (' Just after Pancak2')
       return
       end subroutine
       !
@@ -414,7 +410,7 @@
       fi2=Euler%fi2 !   by common block /EULERA/
   31  if (nfile.eq.0.or.istp.gt.1) goto 61
 !
-      !“the ratio of the parallel strain rates”
+      ! the ratio of the parallel strain rates
       ! MacroDefRate%StrainMode & rhossa: expressed in same (sample) reference frame
       ratlon= sum( (MacroDefRate%StrainMode+sqrt(2.0D0/3.0D0)*rhossa) *  &
                     MacroDefRate%StrainMode                            )
