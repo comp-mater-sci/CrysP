@@ -18,9 +18,9 @@ list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
 list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
 set(CORESRC
-Alg0A.f90 
-Alg1.f90 
-Alg2.f90 
+altaySimul.f90 
+altayTaylor.f90 
+altayAlgorithms.f90 
 Dynfil.f90 
 macroKinematic.f90 
 microstr.f90 
