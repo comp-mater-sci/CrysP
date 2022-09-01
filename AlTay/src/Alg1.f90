@@ -394,9 +394,9 @@
       RCM_RAISE(1,'TAYLR1','Total volume fraction of twins exceeds unity',RCM_RTN)
 #endif
   85  call RANDOM_NUMBER(RNDM)
-      do 86 I=1,NTW
-      if (RNDM.LT.VOLFR(I)) goto 87
-  86  continue
+      do I=1,NTW
+        if (RNDM.LT.VOLFR(I)) goto 87
+      end do
       goto 31
   87  do 88 K=1,3
       do 89 J=1,3
