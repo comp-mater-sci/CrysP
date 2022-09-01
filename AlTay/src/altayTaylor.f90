@@ -73,16 +73,12 @@
       ! Read name of slip system set
       read (R,217) TITglij
   217 format(A)
-      if(NLIST.eq.1) then
-            write (IMP,221) TITglij
-      end if
+      if(NLIST.eq.1) write (IMP,221) TITglij
   221 format (/,' Slip system set:',A,/)
       !
       read (R,210) I,NGL,NTW,DI1,X,Y        ! I is implicitly typed integer
  210  format (8I4,4X,2F10.0)
-      if(NLIST.eq.1) then
-            write (IMP,211) I,NGL,NTW,DI1
-      end if
+      if(NLIST.eq.1) write (IMP,211) I,NGL,NTW,DI1
  211  format (1X,I4,10X,2I5,10X,5I5)
 #ifndef ALTAY_SUBROUTINE
       if (I.NE.0) call terminate(stopcode_runtimeerror)
@@ -96,9 +92,7 @@
       if (M11.gt.MMAX)then
 #ifndef ALTAY_SUBROUTINE
             write (*,5001) M11,MMAX
-            if(NLIST.eq.1) then
-                  write (IMP,5001) M11,MMAX
-            end if
+            if(NLIST.eq.1) write (IMP,5001) M11,MMAX
             call terminate(stopcode_runtimeerror)
 #else
             RCM_RAISE(1,'TAYLOR','Too large slip system set',RCM_RTN)
@@ -108,18 +102,14 @@
       ! read glide + twin systems
       do I1=1,M11
           read (R,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
-          if(NLIST.eq.1) then
-              write (IMP,213) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
-          end if
+          if(NLIST.eq.1) write (IMP,213) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
       end do
  212  format (I4,8F20.16)
  213  format (I3,' A ',5F10.7,' B ',3F10.7)
       !
       do I=1,5
           read (R,214) J,(B(I,L),L=1,5) ! J implicitly typed as integer
-          if(NLIST.eq.1) then
-              write (IMP,215) J,(B(I,L),L=1,5)
-          end if
+          if(NLIST.eq.1) write (IMP,215) J,(B(I,L),L=1,5)
       end do
  214  format (I4,5D23.16)
  215  format (1X,I4,10X,5D15.8)
@@ -127,9 +117,7 @@
       if (NTW.EQ.0) goto 504
       do I=1,NTW
           read (R,212) J,(B2(L,I),L=1,6),G(I)
-          if(NLIST.eq.1) then
-              write (IMP,218) J,(B2(L,I),L=1,6),G(I)
-          end if
+          if(NLIST.eq.1) write (IMP,218) J,(B2(L,I),L=1,6),G(I)
       end do
  218  format (i4,' B2',6f10.7,' G',f10.7)
  504  continue
@@ -154,15 +142,12 @@
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !
  2000 continue
-      if(NLIST.eq.1) then
-            write (IMP,203)
-      end if
+      if(NLIST.eq.1) write (IMP,203)
       do I=1,3
-          if(NLIST.eq.1) then
+          if(NLIST.eq.1) &
               write (IMP,204) (MacroDefRate%VelGrad(I,J),J=1,3),         &
                               (MacroDefRate%StrainRate(I,J),J=1,3),      &
                               (MacroDefRate%Spin(I,J),J=1,3)
-          end if
       end do
  203  format (' TAYLOR - VELOCITY GRADIENT WHICH WILL BE USED FOR THE SIMULATION', &
               //T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,     &
@@ -172,9 +157,7 @@
       if (MacroDefRate%NormStrainRate.lt.1.0D-10) then
 #ifndef ALTAY_SUBROUTINE
          write (*,205) MacroDefRate%NormStrainRate
-         if(NLIST.eq.1) then
-              write (IMP,205) MacroDefRate%NormStrainRate
-         end if
+         if(NLIST.eq.1) write (IMP,205) MacroDefRate%NormStrainRate
          call terminate(stopcode_runtimeerror)
 #else
          RCM_RAISE(1,'TAYLOR','Symmetric part of the strain step is too small',RCM_RTN)
@@ -311,9 +294,7 @@
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 !  13  if (IGLIJ.eq.1) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if(NLIST.eq.1) then
-      write (IMP,103) ISTP,IOR,fi1,PHI,fi2
-      end if
+      if(NLIST.eq.1) write (IMP,103) ISTP,IOR,fi1,PHI,fi2
 
 !  13  write (IMP,103) ISTP,IOR,fi1,PHI,fi2
  103  format (' ISTP,IOR',2I5,' phi1, PHI, phi2:',3F15.6)
@@ -349,18 +330,15 @@
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 4/11/2011
 !      if (IGLIJ.EQ.0) goto 90
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if(NLIST.eq.1) then
-          write (IMP,301) WorkRate
-      end if
+      if(NLIST.eq.1) write (IMP,301) WorkRate
  301  format (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
 
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 !      if (IGLIJ.NE.0) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if(NLIST.eq.1) then
+      if(NLIST.eq.1) &
           write (IMP,109) MacroDefRate%vMeqStrainRate,Seq,                   &
                           (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M)
-      end if
 
  109  format ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
        '  SLIP RATES',/,(T2,10F10.5))
@@ -369,9 +347,7 @@
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 !      if (IGLIJ.NE.0) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if(NLIST.eq.1) then
-          write (IMP,305) ROT
-      end if
+      if(NLIST.eq.1) write (IMP,305) ROT
 
   305 format (' ROTATIONS',3F12.6)
 !      do 58 K=1,M
@@ -405,9 +381,7 @@
       end do
       if (X.LE.1.) goto 85
 #ifndef ALTAY_SUBROUTINE
-       if(NLIST.eq.1) then
-      write (IMP,107) X
-      end if
+      if(NLIST.eq.1) write (IMP,107) X
  107  format (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,              &
       '   SHOULD BE LESS THAN 1')
        call terminate(stopcode_runtimeerror)
