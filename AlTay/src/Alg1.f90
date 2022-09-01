@@ -114,18 +114,15 @@
  214  format (I4,5D23.16)
  215  format (1X,I4,10X,5D15.8)
       !
-      if (NTW.EQ.0) goto 504
-      do I=1,NTW
-          read (R,212) J,(B2(L,I),L=1,6),G(I)
-          if(NLIST.eq.1) write (IMP,218) J,(B2(L,I),L=1,6),G(I)
-      end do
- 218  format (i4,' B2',6f10.7,' G',f10.7)
- 504  continue
+      if (NTW /= 0) then
+          do I=1,NTW
+              read (R,212) J,(B2(L,I),L=1,6),G(I)
+              if(NLIST.eq.1) write (IMP,218) J,(B2(L,I),L=1,6),G(I)
+          end do
+ 218      format (i4,' B2',6f10.7,' G',f10.7)
+      endif
       ! set all components of A2=0
- 502  do j=1,194
-          do i=1,10
-              A2(i,j)=0.0
-      end do; end do
+ 502  A2=0.0
       do j=1,M11
           do i=1,5
               x8=A1(i,j)
