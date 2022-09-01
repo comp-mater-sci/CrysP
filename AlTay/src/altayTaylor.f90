@@ -106,44 +106,44 @@
       endif
  5001 format(' TAYLOR - NGL+NTW=',I5,' LARGER THAN  MMAX=',I5)
       ! read glide + twin systems
-      do 500 I1=1,M11
+      do I1=1,M11
           read (R,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
           if(NLIST.eq.1) then
               write (IMP,213) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
           end if
- 500  continue
+      end do
  212  format (I4,8F20.16)
  213  format (I3,' A ',5F10.7,' B ',3F10.7)
       !
-      do 501 I=1,5
+      do I=1,5
           read (R,214) J,(B(I,L),L=1,5) ! J implicitly typed as integer
           if(NLIST.eq.1) then
               write (IMP,215) J,(B(I,L),L=1,5)
           end if
- 501  continue
+      end do
  214  format (I4,5D23.16)
  215  format (1X,I4,10X,5D15.8)
       !
       if (NTW.EQ.0) goto 504
-      do 505 I=1,NTW
+      do I=1,NTW
           read (R,212) J,(B2(L,I),L=1,6),G(I)
           if(NLIST.eq.1) then
               write (IMP,218) J,(B2(L,I),L=1,6),G(I)
           end if
- 505  continue
+      end do
  218  format (i4,' B2',6f10.7,' G',f10.7)
  504  continue
       ! set all components of A2=0
- 502  do 30 j=1,194
-          do 30 i=1,10
+ 502  do j=1,194
+          do i=1,10
               A2(i,j)=0.0
-  30  continue
-      do 31 j=1,M11
-          do 31 i=1,5
+      end do; end do
+      do j=1,M11
+          do i=1,5
               x8=A1(i,j)
               A2(i,j)=x8
               A2(i+5,j+M11)=x8
-  31  continue
+      end do; end do
       return
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 ! 2000 if (IGLIJ.EQ.0) goto 70
