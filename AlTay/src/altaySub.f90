@@ -1,19 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>    \author Paul Van Houtte
-!>    Email:  Paul.VanHoutte@mtm.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>
-!>    \date Date of first release: 2010-10-18/2010-10-28
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
 !>    * This module is based on ALAMEL main program code by PVH and co-workers.
 !>    * Several modifications have been introduced by JG to make this code more
 !>      "procedure-like".

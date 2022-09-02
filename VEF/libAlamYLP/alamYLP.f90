@@ -1,24 +1,8 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of first release: 2010-11-03
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-!
-!
 !>    \file alamYLP.f90 The file contains modules that calculate
-!>          yield locus position directly from the ALAMEL model.      
-!>                                  
+!>          yield locus position directly from the ALAMEL model.
+!>
 
-    
+
 !> Implementation of YLP function that can directly use the ALAMEL multilevel model instead of a plastic potential function.
 module alamYLP
 use criErrcodes
@@ -29,7 +13,7 @@ implicit none
             !>
             !> Note: this is a reasonable value. Lowering it can lead to poor convergence or lack of convergence.
             double precision        :: jacobi_eps = 5.E-1
-            !> Request for preliminary solution of linearized problem 
+            !> Request for preliminary solution of linearized problem
             logical                 :: linearize = .true.
             !> Request for solving the non-linear problem
             logical                 :: nonlinear = .true.
@@ -37,15 +21,15 @@ implicit none
             double precision        :: default_eps = 1.E-5
             !> Epsilon to be set on norm of objective function ||F||_2
             double precision        :: obj_func_eps = 1.E-3
-            
+
             !> Request for usage of full multilevel model in the search phase
             logical                 :: search_full_model = .false.
-            
-            !> Request for a full multilevel call in the very last evaluation 
+
+            !> Request for a full multilevel call in the very last evaluation
             !> of the objective function.
             logical                 :: evaluate_full_model = .true.
       end type
-      
+
     contains
 
 
@@ -73,7 +57,7 @@ implicit none
 
       double precision, dimension(alamEval_vSD_dim) :: vX, vX_lin
       type(multilevelYLPConfig) :: config !< Effective configuration parameters (defaults on entry)
-      ! 
+      !
       !
       class(NormalizedV5DComp),pointer :: objFunc
       ! Default objective function declared as local variable: it will get
@@ -123,7 +107,7 @@ implicit none
           allocate(objective_function_local)
           objFunc => objective_function_local
       endif
-      ! Configure objective function      
+      ! Configure objective function
       call objFunc%initFx(alamEval_vSD_dim,alamEval_vSD_dim,ierr)
       if (ierr /= 0) then
           info = criError
@@ -139,7 +123,7 @@ implicit none
       !
       ounit = stdout
       if (present(outunit))  ounit = outunit
-      ! Initialize TR solver 
+      ! Initialize TR solver
       ! (note: outunit argument has "optional" modifier in both the caller and callee)
       call nlls_TR_init(outunit,tr_verbose)
       ! Use von Mises guess
@@ -148,7 +132,7 @@ implicit none
       else
             vX = vA
       endif
-      !      
+      !
       r1 = 0.D0; r2 = 0.D0
       !
       !!! call objFunc%jacobiMatrixFx(vX, mJ,info)
@@ -171,7 +155,7 @@ implicit none
       ! Run linearized problem if requested
       if (attempt_linearized) then
             tr_config%constJacobi = .true.
-            vX_lin = vX    
+            vX_lin = vX
             ! Start the TR solver for linearized problem
             ! More thorough exit status is necessary: TR_res
             call nlls_TR_solve(objFunc,vX_lin,tr_config,r1_lin,r2_lin,ierr,TR_res,SolutionInitOut=initState)
@@ -188,7 +172,7 @@ implicit none
             ! Set non-linear analysis
             tr_config%constJacobi = .false.
             !
-            ! initState is invalid if nlls_TR_solve in the "if (attempt_linearized)" 
+            ! initState is invalid if nlls_TR_solve in the "if (attempt_linearized)"
             ! branch above returns ierr /= 0
             if (attempt_linearized .and. (ierr == 0)) then
                   ! Profit from the initial point stored by the solver for the linearized problem
@@ -217,9 +201,9 @@ implicit none
       ! Call objective function again to get corresponding yield stress and other quantities.
       objFunc%full_model = config%evaluate_full_model
       call objFunc%objectiveEval(vA,ierr)
-      
+
       if (log_info) write(ounit,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',objFunc%state%vF
-      
+
       vSonA = objFunc%vSml
       !
       if (R > config%obj_func_eps) then

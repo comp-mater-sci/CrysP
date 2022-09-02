@@ -1,19 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2012-08-16
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-!
-!
 !> Shared subroutines that offer (safer) access to the results of the multilevel
 !> model.
 !>
@@ -86,7 +70,7 @@ contains
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
       end subroutine
-      
+
       subroutine outputTexture(info)
       use altaySub
       integer,intent(out)     :: info
@@ -94,5 +78,5 @@ contains
             call outputCurrentState(info)
       !
       end subroutine
-      
+
 end module

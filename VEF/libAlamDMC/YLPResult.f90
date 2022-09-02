@@ -1,17 +1,3 @@
-! $Id$
-!
-!>    \author Jerzy Gawad
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>
-!>    \date Date of the initial release: 2017-04-07, as a result of refactoring 'stressDrivenModule.f90'
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-
 !> Datatypes that simplify work with results of multilevelYLP and procedures
 !> that operate on these datatypes.
 module dmcYLPResult
@@ -39,19 +25,19 @@ implicit none
     end interface
 
     double precision, parameter,private :: default_residual_tolerance_factor = 5.D0
-    
+
     !> Default angular tolerance (given in degrees)
     double precision, parameter,private :: default_angular_tolerance = 0.25D0
-    
+
     !> Datatype for commonly used tolerances that the YLPResult should meet to be
-    !> an acceptable solution. The defaults are 
+    !> an acceptable solution. The defaults are
     type :: YLPResultTolerance
         !> Tolerance in terms of residual norm
         double precision    :: residual_tolerance_factor = default_residual_tolerance_factor
         !> Tolerance in terms of angle between requested stess and identified stress (in degrees)
         double precision    :: angular_tolerance = default_angular_tolerance
     end type
-    
+
 contains
 
 
@@ -90,7 +76,7 @@ contains
     end function
 
 
-    !> Print detailed info about YLP solution based on the content of YLPResult 
+    !> Print detailed info about YLP solution based on the content of YLPResult
     !> object.
     integer function printYLPResult(iounit, ylp_result) result(info)
     integer,intent(in)              :: iounit
@@ -120,7 +106,7 @@ contains
     !>
     !> The procedure checks the norm of residual error and angle between the solution
     !> stress and requested stress. These two quantities are very much correlated,
-    !> except for unconverged solution where they are not. For this reason it 
+    !> except for unconverged solution where they are not. For this reason it
     !> appears better to check both.
     pure logical function checkYLPResult(ylp_result, tolerance, target_residual) result(val)
     type(YLPResult),intent(in)          :: ylp_result
@@ -132,5 +118,5 @@ contains
               (vec_angle(ylp_result%vS, ylp_result%vSonA) < deg2rad(tolerance%angular_tolerance))
     !
     end function
-    
+
 end module

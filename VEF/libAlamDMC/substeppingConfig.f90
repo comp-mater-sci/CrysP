@@ -1,26 +1,10 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2017-02-27
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-
-
 !> Configuration of substepping schemes
 module dmcSubsteppingConfig
 use criRange
 use criErrcodes
 use commonConfig
 implicit none
-    
+
     !> Base class for configuration related to substepping
     type :: SubsteppingConfig
     contains
@@ -50,7 +34,7 @@ implicit none
     end interface
 
 contains
-    
+
     !> Dummy for reading substepping config
     integer function SubsteppingConfig_readConfig(this, cnfunit) result(info)
     class(SubsteppingConfig),intent(inout)      :: this
@@ -59,14 +43,14 @@ contains
         info = criSuccess
     !
     end function
-    
-    
+
+
     !> Read fixed substepping configuration from file and construct a proper
     !> range ptr_range from user's input
     !>
     !> The file input follows convention: only the boundaries of the increments
-    !> are given. Example: [0.1, 0.5, 0.9]. On the other hand, ptr_range 
-    !> must contain also 0.0 at the beginning and 1.0 at the end. So, the range 
+    !> are given. Example: [0.1, 0.5, 0.9]. On the other hand, ptr_range
+    !> must contain also 0.0 at the beginning and 1.0 at the end. So, the range
     !> from in the earlier example would be: [0.0, 0.1, 0.5, 0.9, 1.0]. This
     !> function ensures that a proper range is constructed from user's input.
     integer function  FixedSubsteppingConfig_readConfig(this, cnfunit) result(info)
@@ -136,7 +120,7 @@ contains
     !
     end function
 
-    
+
     function properSubsteppingRange(range, info) result(inst)
     class(range_type),pointer       :: inst
     class(range_type),intent(inout) :: range

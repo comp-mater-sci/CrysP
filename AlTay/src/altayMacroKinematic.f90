@@ -4,7 +4,7 @@ implicit none
 
 type DeformationRate
     !> Velocity Gradient
-    double precision, dimension(3,3) :: VelGrad = 0.0D0 
+    double precision, dimension(3,3) :: VelGrad = 0.0D0
     !> Strain Rate, i.e. symmetric part of the velocity gradient
     double precision, dimension(3,3) :: StrainRate = 0.0D0
     !> Norm of strain rate
@@ -15,29 +15,29 @@ type DeformationRate
     double precision                 :: vMeqStrainRate = 0.0D0
     !> Strain Mode normalized by von Mises equivalent strain rate
     double precision, dimension(3,3) :: StrainModevM = 0.0D0
-    !> Spin, i.e. anti-symmetric part of the velocity gradient 
+    !> Spin, i.e. anti-symmetric part of the velocity gradient
     double precision, dimension(3,3) :: Spin = 0.0D0
 end type DeformationRate
 
 type DeformationState
     !> Total Deformation Gradient (from undeformed state to the end of current increment)
-    !> For simulations with predeformation, it is re-initialized with call to dynfil2 subroutine. 
-    double precision, dimension(3,3) :: TotalDefGrad = unitMatrix 
+    !> For simulations with predeformation, it is re-initialized with call to dynfil2 subroutine.
+    double precision, dimension(3,3) :: TotalDefGrad = unitMatrix
     !> Incremental Deformation Gradient (from start to end of current increment)
     double precision, dimension(3,3) :: IncrDefGrad = unitMatrix
     !> Inverse of Incremental Deformation Gradient
     double precision, dimension(3,3) :: IncrDefGrad_inverse = unitMatrix
     !> Incremental von Mises equivalent strain (from start to end of current increment)
     double precision                 :: IncrvMeqStrain = 0.0D0
-    !> Accumulated von Mises equivalent strain, up to the start of current inc. 
+    !> Accumulated von Mises equivalent strain, up to the start of current inc.
     !> (note: reference state might be different than that of TotalDefGrad)
     double precision                 :: AccumvMeqStrain_ToStartOfInc = 0.0D0
-    !> Accumulated von Mises equivalent strain, up to the end of current inc. 
+    !> Accumulated von Mises equivalent strain, up to the end of current inc.
     !> (note: reference state might be different than that of TotalDefGrad)
-    double precision                 :: AccumvMeqStrain_ToEndOfInc = 0.0D0    
+    double precision                 :: AccumvMeqStrain_ToEndOfInc = 0.0D0
 end type DeformationState
 
-contains   
+contains
 
       !Calculate strain rate, spin etc. from velocity gradient
       subroutine Set_DeformationRate(VelGrad,this)
@@ -59,7 +59,7 @@ contains
 
       subroutine Update_DeformationState(thisRate,thisState,info,deltaTime_in)
       type(DeformationRate), intent(in)    :: thisRate
-      type(DeformationState),intent(inout) :: thisState      
+      type(DeformationState),intent(inout) :: thisState
       integer,                    intent(out) :: info
       double precision, optional, intent (in) :: deltaTime_in
       !
@@ -73,7 +73,7 @@ contains
       end if
       !
       Ldt= thisRate%VelGrad * deltaTime
-      call MatrixExponentSmallNorm(Ldt,thisState%IncrDefGrad,thisState%IncrDefGrad_inverse,info) 
+      call MatrixExponentSmallNorm(Ldt,thisState%IncrDefGrad,thisState%IncrDefGrad_inverse,info)
       !
       !Update thisState%TotalDefGrad
       thisState%TotalDefGrad = matmul(thisState%IncrDefGrad,thisState%TotalDefGrad)
@@ -100,12 +100,12 @@ contains
       !
       ![1] Moler, C. and Van Loan, C., "Nineteen Dubious ways to compute the exponential of a matrix", Siam Review, vol 20, No 4, 1978.
       !
-      double precision, dimension(3,3) :: Term= unitMatrix 
+      double precision, dimension(3,3) :: Term= unitMatrix
       double precision, parameter      :: NormTerm_cutoff= 1.0D-10 !Treshold to cut off Taylor Series Expansion
       integer                          :: k= 0 !The current term in Taylor Series Expansion
       integer, parameter               :: k_max= 10 !Upper limit of terms in Taylor Series Expansion to be calculated
       !
-      !Implemented algorithm is reliable on the condition that ||A|| < 1; if not, catastrophic cancellation in floating point arithmetic 
+      !Implemented algorithm is reliable on the condition that ||A|| < 1; if not, catastrophic cancellation in floating point arithmetic
       ! can lead to totally erroneous results [1].
       if (norm2(A)>1.0D0) then
           info= -1
@@ -130,5 +130,5 @@ contains
       !
       end subroutine
 
-          
+
 end module

@@ -40,7 +40,7 @@
       integer :: info
       integer :: tex_type, tex_nblock
       character(len=pathlength) :: tex_fname
-#ifdef PEBP_ENABLED      
+#ifdef PEBP_ENABLED
       character(len=pathlength) :: fname_pebp ! PEBP state variables file from which initial state gets read
       logical :: read_state, dumpInitState_BPM = .false., StopSimul = .false.
       integer :: nblock
@@ -54,7 +54,7 @@
   90  format (a)
 #ifndef MAINDIRECT
       open (unit=KLEC,file='MAINA1.CTL',status='old')
-      read (KLEC,90) fnam1 
+      read (KLEC,90) fnam1
       call stripComment(fnam1)
       write (*,93) trim(fnam1)
       close (unit=KLEC)
@@ -82,7 +82,7 @@
       open (unit=IMP2,file=trim(fname_prefix)//'.RES',status='replace')
 !     UNIT IMP3 = PRINTER
       open (unit=IMP3,file=trim(fname_prefix)//'.TWN',status='replace')
-      ! 
+      !
 !     UNIT IMP5 = homogenized strain-stress
       open (unit=IMP5,file=trim(fname_prefix)//'.MSS',status='replace')
       call writeMSSHeader(IMP5,info)
@@ -102,14 +102,14 @@
       READ(KLEC,96) NLINES
       write (*,97) NLINES
   97  format (' number of lines with tau-crit values:',i3)
-  96  FORMAT (I5) 
-      DO 3 ISIGN=1,2                                                       
-        DO 1 J=1,NLINES                                                   
-          K=1+6*(J-1)                                                       
-          L=K+5                                                             
+  96  FORMAT (I5)
+      DO 3 ISIGN=1,2
+        DO 1 J=1,NLINES
+          K=1+6*(J-1)
+          L=K+5
           READ(KLEC,98) (crss_ratiosIN%crss(ISIGN,I),I=K,L)
   98  FORMAT (6F10.0)
-! 
+!
    1    CONTINUE
   3   continue
       read (KLEC,99) NBLOC
@@ -123,28 +123,28 @@
   88  format (a)
       call stripComment(fnam3)
       write (*,103) trim(fnam3)
- 103  format (' GRFIL - Input Texture File:',a)            
+ 103  format (' GRFIL - Input Texture File:',a)
 
 !
 !     Initialisation of SIMUL
 !
-      CALL SIMUL(0,1) 
-      
-      ! Initializing microstructure      
+      CALL SIMUL(0,1)
+
+      ! Initializing microstructure
       ! NOTE: this is done after initialisation of SIMUL, since SIMUL currently reads a.o. NLIST
-      CALL GRFIL(fnam3,Fmicro,info) 
+      CALL GRFIL(fnam3,Fmicro,info)
       if (info.ne.0) then
           write(*,215)
           call exit(stopcode_ioerror)
  215      format('Error condition is returned by GRFIL')
-      endif      
-      
+      endif
+
       ! Get the initial texture
       read(KLEC,99) tex_type
       read(KLEC,'(A)') tex_fname
       read(KLEC,99) tex_nblock
       call stripComment(tex_fname)
-      ! 
+      !
       call loadTexture(tex_type,NDAT1,trim(tex_fname),tex_nblock,info)
       if (info /= 0) then
             write(*,fmt=9980) trim(tex_fname)
@@ -152,7 +152,7 @@
  9980 format('An error has occurred while processing texture data file:' &
              ,1X,A)
       endif
-      
+
 #ifdef PEBP_ENABLED
       ! PEBP model
       NREC = size(DFIL)
@@ -162,7 +162,7 @@
             info = KS_openStateFile(IMP4,trim(fname_prefix)//'.BPM','w')
             !
             if (KS_initState(NREC) /= 0) then
-                  write(IMP,fmt=600) 
+                  write(IMP,fmt=600)
                   call exit(stopcode_runtimeerror)
             endif
             read_state = .false.
@@ -171,7 +171,7 @@
             if (read_state) then
                   call stripComment(fname_pebp)
                   info = KS_readState(fname_pebp,IPEBPSTAT,nblock) ! interface to KS_readState_file; IPEBPSTAT is the IO unit number
-                  if (info /= 0) then 
+                  if (info /= 0) then
                         write(IMP,fmt=601) trim(fname_pebp)
                         write(*,fmt=601) trim(fname_pebp)
                         call exit(stopcode_ioerror)
@@ -183,12 +183,12 @@
 				  endif
             endif
       endselect
- 66   format(L2,L2,L2,I5,A)      
+ 66   format(L2,L2,L2,I5,A)
  600  format('Cannot initialize DSH state variables')
  601  format('Cannot read DSH state variables from file: ',A)
 #endif
-      ! 
-      
+      !
+
       DO 2 JBLOC=1,NBLOC
 !
 !     Simulation of a certain number of steps.
@@ -217,7 +217,7 @@
           WRITE (*,109) (DG(I,K),K=1,3)
  109  FORMAT (1x,3F10.5)
   35  CONTINUE
-      ! Here DG = [L]*dt, where [L] is the velocity gradient 
+      ! Here DG = [L]*dt, where [L] is the velocity gradient
       ! and the time step dt = 1.0
       call Set_DeformationRate(DG,MacroDefRate)
       !
@@ -229,7 +229,7 @@
 #ifdef FINALCUB_ENABLED
       info = openTextureFile(icubunit,trim(fname_prefix)//'.cub',TF_CUB, &
                              'w')
-      if (info == 0) then 
+      if (info == 0) then
             call outputCurrentTexture(icubunit,TF_CUB,.true.,info)
       endif
 #endif

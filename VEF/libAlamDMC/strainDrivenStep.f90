@@ -1,18 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2017-03-06
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-
 #include "criMacros.fpp"
 
 !> Strain-(rate) driven step
@@ -42,23 +27,23 @@ implicit none
 
     !> A strain-(rate) driven step
     type :: StrainDrivenStep
-        
+
         type(logData)                       :: log
-        
+
         type(StrainDrivenStepConfig)        :: config
-        
+
         !> Volumetric strain
         type(SRTensor)                      :: volumetric_strain ! FIXME: no need to store SRTensor
-        
+
         !> Step strain
         type(SRTensor)                      :: deviatoric_strain
-        
+
     contains
         procedure,pass(this)    :: setUp => StrainDrivenStep_setUp
         procedure,pass(this)    :: execute => StrainDrivenStep_execute
-        
+
         procedure,pass(this)    :: readConfig => StrainDrivenStep_readConfig
-        
+
     end type
 
 
@@ -67,9 +52,9 @@ implicit none
     contains
         procedure,pass(this)    :: setUp => StrainDrivenFixedStep_setUp
         procedure,pass(this)    :: execute => StrainDrivenFixedStep_execute
-        
+
         procedure,pass(this)    :: readConfig => StrainDrivenFixedStep_readConfig
-        
+
     end type
 
     !> Constructors of StrainDrivenFixedStep
@@ -80,31 +65,31 @@ implicit none
 
     !> Outputs collected per increment
     type :: IncrementOutput
-        
+
         type(SRTensor)  :: L !< Velocity gradient
-        
+
         type(SRTensor)  :: D !< Rate of deformation tensor (symmetric part of L) (strain rate)
-        
+
         type(SRTensor)  :: O !< Spin tensor (antisymmetric part of L)
-        
+
         type(SRTensor)  :: A !< Strain mode
-        
+
         type(SRTensor)  :: S !< Deviatoric stress tensor
-        
+
         double precision :: vm_strain_begin = 0.D0 !< Von Mises strain at the beginning of the increment
-        
+
         double precision :: vm_strain_end = 0.D0 !< Von Mises strain at the end of the increment
-        
+
         double precision :: vm_stress = 0.D0 !< Von Mises equivalent stress
-        
+
         double precision :: plastic_work_inc = 0.D0 !< Plastic work during the increment, i.e. dotW = (D : S)
-        
+
         double precision :: taylor_factor = 0.D0
-        
+
         double precision :: plastic_slip_tot = 0.D0 !< total accumulated plastic slip
-        
+
         double precision :: vMeqStrainRate = 0.D0 !< von Mises equivalent strain rate (= sqrt(2/3)*||D||)
-        
+
     end type
 
 
@@ -130,7 +115,7 @@ contains
     end function
 
 
-    !> Set up StrainDrivenStep 
+    !> Set up StrainDrivenStep
     integer function StrainDrivenStep_setUp(this) result(info)
     class(StrainDrivenStep),intent(inout)   :: this
     !
@@ -177,7 +162,7 @@ contains
     end function
 
 
-    !> Execute StrainDrivenStep. 
+    !> Execute StrainDrivenStep.
     !>
     !> It is a placeholder method, it always returns criError.
     integer function StrainDrivenStep_execute(this, step_output) result(info)
@@ -187,7 +172,7 @@ contains
         info = criError
     !
     end function
-    
+
     !> Read configuration of StrainDrivenStep from config IO unit
     !>
     !> It is a placeholder method, it always returns criSuccess
@@ -198,8 +183,8 @@ contains
         info = criSuccess
     !
     end function
-    
-    
+
+
     !> Set up strain driven fixed step.
     !>
     !> Returns criSuccess on success.
@@ -260,7 +245,7 @@ contains
         RETURN_IF_WITH(.not. associated(this%substepping_config%ptr_range), info = criErr_BadArgs)
         !
         n_increments = this%substepping_config%getNumberOfIncrements()
-        
+
         if (doLogging(criLogInfo, this%log%level)) then
             if (n_increments > 1) then
                 write(display_unit,fmt=400) n_increments
@@ -280,9 +265,9 @@ contains
             !
             ! Get the lower boundary, it should be zero.
             RETURN_IF_WITH(.not. increment_range%next(x_prev), info = criErr_BadArgs)
-            
+
             increment_size_tot = 0.D0
-            
+
             ! Set-up the substeps
             step_strain_total%t = 0.D0
             i_incr = 0
@@ -339,7 +324,7 @@ contains
         info = this%substepping_config%readConfig(cnfunit)
     !
     end function
-    
+
 
     !> Collect the outputs from the AlTay simulation
     integer function StepOutput_collect(this, n_increments) result(info)

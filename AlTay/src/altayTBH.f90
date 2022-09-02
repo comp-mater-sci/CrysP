@@ -3,18 +3,18 @@
 #endif
       module altayTBH
       use altayMiscutils, only: terminate, stopcode_runtimeerror
-      
+
       contains
-      
+
 !     SUBROUTINE LINEAR PROGRAMMING TAYLOR-BISHOP-HILL STYLE
       Subroutine TBH(IPR,NDIM,N,M,A,D,                                   &
        TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,                          &
        TauR,bas,Trp,Aprime,CUst,UU,DD,DTAU,VALID)
-!    
+!
 !     Subroutine which solves Taylor-Bishop-Hill for one crystallite
 !                    Stresses and strain rates are to be represented
 !                    by vectors
-!     input          IPR (Print parameter: if <2, no printing of  results) 
+!     input          IPR (Print parameter: if <2, no printing of  results)
 !     input          NDIM: number of rows in arrays, must not < N
 !     input          There are M slip systems
 !     input          N is the number of independent Taylor equations
@@ -27,19 +27,19 @@
 !     input          BINV=First guess of inverse of basis, corresp. with IACT
 !                    (Basis=set of columns from A corresponding
 !                                    with the active slip sytems)
-!     output         U=Inverse of basis, corresponding with IRP        
-!     input          IACT=indices of active slip systems: first guess 
+!     output         U=Inverse of basis, corresponding with IRP
+!     input          IACT=indices of active slip systems: first guess
 !     output         Irp=indices of active slip systems
 !     output         Dacc=final slip rates, for the slip systems indexed in Irp
 !     output         GDOT=slip rates
 !     output         SIG=stress
-!     output         FakM=plastic work  (stress*imposed strain rate) 
+!     output         FakM=plastic work  (stress*imposed strain rate)
 !     output         TauR (resolved shear stress)
-!     workspace      bas (logical TRUE=belongs to basis)         
+!     workspace      bas (logical TRUE=belongs to basis)
 !     workspace      Trp (resolved shear stress on basis systems)
-!     workspace      Aprime (column of U * A)         
+!     workspace      Aprime (column of U * A)
 !     workspace      CUst compact storage of U* (only one column)
-!     workspace      UU (copy of inverse of basis)         
+!     workspace      UU (copy of inverse of basis)
 !     workspace      DD (copy of strain rates in some basis)
 !     output         DTAU=abs(TAUR)-TAUC
 !
@@ -47,7 +47,7 @@
       use altayRCM
 #endif
       use altayIOConfig,IIPR=>IPR!Rename global IPR switch to avoid conflict
-      implicit double precision (a-h,o-z) 
+      implicit double precision (a-h,o-z)
       dimension A(NDIM,M),D(NDIM),BINV(NDIM,N),U(NDIM,N),IACT(NDIM),     &
        GDOT(M),SIG(NDIM),TauC(2,M),TauR(M),Dacc(NDIM),Irp(NDIM)
       logical bas(M),valid(M)
@@ -60,12 +60,12 @@
                       call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'TBH','Bad input: N>NDIM',RCM_RTN)
-#endif      
+#endif
                      endif
  100  format (' Subroutine TBH - N=',I5,'  is > NDIM=',I5,               &
        '   this is an error in the calling program')
       U=BINV
-      Irp=IACT 
+      Irp=IACT
       do j=1,M
         bas(j)=.FALSE.
         TAuR(j)=0.0
@@ -89,7 +89,7 @@
          endif
          if (X.ge.0.0d0) then
             Trp(i)=Tauc(1,j)
-         else 
+         else
             Trp(i)=-Tauc(2,j)
          endif
       enddo
@@ -98,22 +98,22 @@
       if (iter.le.50) goto 7
 #ifndef ALTAY_SUBROUTINE
       if(NLIST.eq.1) then
-          write (IMP,250)  
+          write (IMP,250)
       end if
-      write (*,250) 
+      write (*,250)
  250  format (' TBH is looping')
       call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'TBH','Too many iterations.',RCM_RTN)
 #endif
-      
+
     7 if (IPR.GE.JPR) then
           if (NLIST.eq.1) then
               write (IMP,251) iter
           end if
       end if
  251  format (/,'  ITERATION NR. ',I5,/)
-      call mtprd(SIG,Trp,U,1,N,N,1,NDIM) 
+      call mtprd(SIG,Trp,U,1,N,N,1,NDIM)
       do j=1,M
          valid(j)=.TRUE.
       enddo
@@ -169,8 +169,8 @@
                            endif
         if (abs(Y-DT).lt.TOL) Y=DT
         DTAU(j)=Y
-        if (bas(j)) goto 1   
-        if (abs(X).lt.TOL) goto 1 
+        if (bas(j)) goto 1
+        if (abs(X).lt.TOL) goto 1
         if (Y.le.DT) goto 1
 !        if (.NOT.valid(j)) goto 1
 !        if (IPR.GE.JPR) write(IMP,917) j,VALID(j)
@@ -189,15 +189,15 @@
               write (IMP,913) jn,DT,TauR(jn)
           end if
       end if
-  913 format ('Overstressed:jn DT',I5, D15.5,'   TauR(jn)',D20.10)  
+  913 format ('Overstressed:jn DT',I5, D15.5,'   TauR(jn)',D20.10)
 !      if (jn.eq.0.and.DT.gt.0.0D0) then
 !                                      write (IMP,910)
 !                                      write (*,910)
 !                                      stop
-!                                    endif 
+!                                    endif
 !  910 format (' TBH - There are invalid slip sytems ',
 !     1'which are overstressed')
-      if (jn.eq.0) goto 2 ! There is no overstressed slip system  
+      if (jn.eq.0) goto 2 ! There is no overstressed slip system
 !     There is an overstressed slip system, which we will activate now
 !     Search which active slip system must be desactivated (removed from basis)
       X=TauR(jn)
@@ -219,15 +219,15 @@
         end if
   200 format (I5,5x,D26.16,5x,D20.10,5x,D20.10)
         Z1=Aprime(i)
-        if (abs(Z1).lt.TOL) goto 3  
+        if (abs(Z1).lt.TOL) goto 3
         j=Irp(i)
         ZR=TauR(j)
         if (abs(ZR).lt.TOL) then
                              ZR=Dacc(i)
                              if (abs(Zr).lt.TOL) goto 3
                             endif
-        ZR=ZR*Z1 
-        Z2=Dacc(i)/Z1 
+        ZR=ZR*Z1
+        Z2=Dacc(i)/Z1
         if (X.gt.0.0d0) then
                          if (ZR.lt.0.0d0) goto 3
                          if (in.eq.0) then
@@ -239,8 +239,8 @@
                                                          in=i
                                                         endif
                                        endif
-                        else 
-                         if (ZR.gt.0.0d0) goto 3 
+                        else
+                         if (ZR.gt.0.0d0) goto 3
                          if (in.eq.0) then
                                         in=i
                                         Gmin=Z2
@@ -254,13 +254,13 @@
     3 continue
       if (in.eq.0) then
 #ifndef ALTAY_SUBROUTINE
-                     write (*,101) 
+                     write (*,101)
                      call terminate(stopcode_runtimeerror)
 #else
       RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
-#endif      
+#endif
                    endif
-  101 format (' Subroutine TBH - solution unbounded') 
+  101 format (' Subroutine TBH - solution unbounded')
       if (IPR.GE.JPR) then
       if (NLIST.eq.1) then
       write (IMP,912) in,jn,Gmin
@@ -269,8 +269,8 @@
   912 format ('in jn Gmin',2I5, D15.5)
       if (abs(Gmin).gt.0.0D0) goto 5
 !      valid(jn)=.FALSE.
-!      goto 6  
-!     Updating of inverse of basis: U 
+!      goto 6
+!     Updating of inverse of basis: U
     5 Z1=Aprime(in)
       do i=1,N
         CUst(i)=-Aprime(i)
@@ -278,10 +278,10 @@
       CUst(in)=1.0d0
       do i=1,N
         CUst(i)=CUst(i)/Z1
-      enddo  
+      enddo
       UU=U
       call Ust(U,UU,CUst,in,N,N,NDIM)
-!     Updating of Dacc 
+!     Updating of Dacc
       DD=Dacc
       call Ust(Dacc,DD,CUst,in,N,1,N)
       if (IPR.GE.JPR) then
@@ -293,10 +293,10 @@
 !     Updating of basis: bas and Irp
       bas(Irp(in))=.FALSE.
       bas(jn)=.TRUE.
-      Irp(in)=jn 
+      Irp(in)=jn
       if ((Dacc(in).ge.0.0d0).and.(X.gt.0.0d0)) then
                                 Trp(in)=Tauc(1,jn)
-                             else 
+                             else
                                 Trp(in)=-Tauc(2,jn)
                              endif
 !     Go back to stress calculation
@@ -324,11 +324,11 @@
   212 format (/,'   SOLUTION ',/)
       return
       end subroutine
-      
-      
-      
+
+
+
       subroutine Ust(C,B,CUst,in,N,M3,NDIM)
-!     MATRIX C=MATRIX Ustar*MATRIX B                                        
+!     MATRIX C=MATRIX Ustar*MATRIX B
       implicit double precision (a-h,o-z)
       dimension B(NDIM,M3),C(NDIM,M3),CUst(N)
       do j=1,M3
@@ -340,24 +340,24 @@
       enddo
       return
       end subroutine
-      
-      
-      
+
+
+
       subroutine mtprd(C,A,B,N1,N2,N3,ND1,ND2)
-!     MATRIX C=MATRIX A*MATRIX B                                        
+!     MATRIX C=MATRIX A*MATRIX B
       implicit double precision (a-h,o-z)
       dimension A(ND1,N2),B(ND2,N3),C(ND1,N3)
-      do I=1,N1                                                       
-          do J=1,N3                                                       
-              X=0.                                                              
-              do K=1,N2                                                       
-                  X=X+A(I,K)*B(K,J)                                                 
+      do I=1,N1
+          do J=1,N3
+              X=0.
+              do K=1,N2
+                  X=X+A(I,K)*B(K,J)
               enddo
-              C(I,J)=X                                                          
-          enddo                                                          
-      enddo                                                         
-      return                                                            
+              C(I,J)=X
+          enddo
+      enddo
+      return
       end subroutine
 
       end module
-      
+

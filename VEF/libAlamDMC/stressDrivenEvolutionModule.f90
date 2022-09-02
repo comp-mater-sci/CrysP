@@ -1,17 +1,3 @@
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2015-11-25, based on contents of 'dmcEWC.f90'
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-
 #include "criMacros.fpp"
 
 !> Implementation of a DMC computiational module that allows stress-driven evolution of
@@ -38,11 +24,11 @@ implicit none
     type :: EvolutionOutput
         type(IncrementOutputRecord),dimension(:),allocatable      :: values
     end type
-    
-    
-    
+
+
+
     type,extends(StressDrivenModule) :: StressDrivenEvolutionModule
-        
+
         type(IncrementationControlSettings) :: control
 
     contains
@@ -56,16 +42,16 @@ implicit none
 
         !> Event handler invoked on increment start.
         !>
-        !> A subclass can overload this to get informed about the incrementation and 
+        !> A subclass can overload this to get informed about the incrementation and
         !> influence the incrementation.
         procedure,pass(this)    :: onIncrementStart => StressDrivenEvolutionModule_onIncrementStart
 
         !> Event handler invoked on increment end
         !>
-        !> A subclass can overload this to get informed about the incrementation and 
+        !> A subclass can overload this to get informed about the incrementation and
         !> influence the incrementation.
         procedure,pass(this)    :: onIncrementEnd => StressDrivenEvolutionModule_onIncrementEnd
-        
+
     end type
 
 contains
@@ -78,13 +64,13 @@ contains
     type(SRTensor),intent(in)                       :: sigma !< Imposed stress tensor
     !> Settings that control the incrementation process
     class(IncrementationControlSettings),intent(inout) :: control
-    !> Results if the incrementation procedure. 
+    !> Results if the incrementation procedure.
     !>
     !> On successful exit it will include  n+1 entries, where n is the number of
     !> increments needed to reach the end of the step.
     !> The leading n contain complete results (search for strain rate
     !> AND strain incrementation), while the last one just the result of the search for
-    !> the strain rate. Therefore, the last entry corresponds to the state of 
+    !> the strain rate. Therefore, the last entry corresponds to the state of
     !> the material at the end of the step.
     type(EvolutionOutput),intent(out)   :: outputs
     !> Rotation matrix. Relevant only if scalingStrainTensorComponent is used
@@ -151,7 +137,7 @@ contains
                     info = this%findSolution(sigma, D_retry, ylp_retry, vM_guess=.false., &
                                              is_acceptable=acceptable_point_retry)
                     ! Accept the solution only if it is better than the original one
-                    if (acceptable_point .and. (ylp_retry%R < ylp%R)) then 
+                    if (acceptable_point .and. (ylp_retry%R < ylp%R)) then
                         D = D_retry
                         ylp = ylp_retry
                     endif
@@ -177,7 +163,7 @@ contains
             !
             case(scalingPlasticWork)
                 stop_control_variable = icv%plastic_work_total
-            !    
+            !
             case(scalingStrainTensorComponent)
                 ! Get total plastic strain in appropriate reference frame
                 ! and check the tensor component of interest.
@@ -199,13 +185,13 @@ contains
                 !
                 ! Calculate incrementation control variables
                 !
-                ! Calculate increment of plastic strain to be imposed for texture evolution: 
+                ! Calculate increment of plastic strain to be imposed for texture evolution:
                 select case(control%scaling_type)
                 case(scalingStrainTensorIncrement)
                     control_variable = norm2(ylp%vA)
                 !
                 case(scalingStrainTensor)
-                    ! Find scaling factor x such as 
+                    ! Find scaling factor x such as
                     ! ||vP_step - x vA|| - ||vP_step|| = increment_size   (*)
                     n_roots = solveQuadraticPolynomial(a=dot_product(ylp%vA, ylp%vA), &
                                                        b=2*dot_product(ylp%vA, icv%vP_step), &
@@ -214,7 +200,7 @@ contains
                                                        x=xi)
                     ! Up to two roots; we pick the largest one;
                     if (n_roots > 0) control_variable = control%increment_size / maxval(xi(1:n_roots))
-                    ! If control variable is negative (the only way to satisfy (*) is 
+                    ! If control variable is negative (the only way to satisfy (*) is
                     ! to decrease the strain), fall back to a less accurate scheme.
                     if (control_variable < 0.D0) control_variable = norm2(ylp%vA)
                     !
@@ -313,9 +299,9 @@ contains
     integer :: j
     !
         if (doLogging(criLogInfo,this%output%verbosity)) then
-    
+
             write(display_unit,fmt=300) output_record%icv%increment, output_record%R
-            
+
             if (doLogging(criLogDebug,this%output%verbosity)) then
                 write(display_unit,400) 'A^star', 'S(A^star)', 'Delta eps'
                 do j=1,3
@@ -333,4 +319,4 @@ contains
     end subroutine
 
 end module
-    
+

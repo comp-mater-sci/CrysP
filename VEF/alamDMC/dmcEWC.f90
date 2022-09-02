@@ -1,22 +1,4 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2015-11-19
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-!
-!> DMC Equi-Work Contour
-!>
 #include "criMacros.fpp"
-
 !> Calculations of Equi-Work Contours
 module dmcEWC
 use criPath
@@ -41,13 +23,13 @@ implicit none
 
 
     type,extends(StressDrivenEvolutionModule) :: EWCModule
-        
+
         ! type(EulerAngles)                       :: reference_frame
-        
+
         character(len=max_pathlen)              :: output_fname = ''
-        
+
         logical                                 :: use_reference_stress_mode = .false.
-        
+
         double precision,dimension(sr_symm_voigt_dim)   :: reference_stress_mode = 0.D0
 
         double precision,dimension(sr_symm_voigt_dim,n_base_vectors)   :: base_vectors = reshape( &
@@ -57,11 +39,11 @@ implicit none
 
         !> Range of angles that provide stress ratios
         class(range_type),pointer               :: ptr_theta_range => null()
-        
+
         class(range_type),pointer               :: ptr_contourlevel_range => null()
-        
+
         logical                                :: report_state = .false.
-        
+
         !> Number of data points per contour level along regular evolution lines
         !>
         !> \todo Consider changing it into double: much less limiting control over the number
@@ -70,7 +52,7 @@ implicit none
     contains
 
         !>@{ \name Interface methods of AbstractModule
-    
+
         procedure,pass(this)    :: readConfig => EWCModule_readConfig
 
         procedure,pass(this)    :: printConfig => EWCModule_printConfig
@@ -84,11 +66,11 @@ implicit none
         procedure,pass(this)    :: fileOutputMeta => EWCModule_fileOutputMeta
 
     end type
-      
-     
+
+
 contains
 
-    integer function EWCModule_readConfig(this,cnfunit) result(info) 
+    integer function EWCModule_readConfig(this,cnfunit) result(info)
     implicit none
     class(EWCModule),intent(inout)            :: this
     integer,intent(in)                        :: cnfunit
@@ -150,8 +132,8 @@ contains
                 this%base_vectors(:,i) = this%base_vectors(:,i) / norm2(this%base_vectors(:,i))
             enddo
         endif
-        
-        ! Override the requests for outputs: 
+
+        ! Override the requests for outputs:
         this%altay%output_config%nfile = 0   ! texture
         this%altay%output_config%npebp = 0   ! KOST1x state
         this%output%outputRequest = .false.       ! idem.
@@ -165,7 +147,7 @@ contains
     end function
 
 
-    
+
     integer function EWCModule_printConfig(this,outunit) result (info)
     implicit none
     class(EWCModule),intent(in)         :: this
@@ -186,7 +168,7 @@ contains
         endif
     !
     end function
-    
+
 
     subroutine EWCModule_run(this,info)
     implicit none
@@ -195,15 +177,15 @@ contains
     !
     integer :: i, j, npoints
     double precision :: theta
-    
+
     type(SRTensor)  :: sigma
-    
+
     type(EvolutionOutput) :: ref_output, output
     ! Shape or `results` is: [0:n_countours,1:n_theta]. Zeroth column
     ! shall include the theta angles
-    double precision,dimension(:,:),allocatable,target :: results 
+    double precision,dimension(:,:),allocatable,target :: results
     type(IncrementationControlSettings) :: evolution_control
-    
+
     double precision,dimension(sr_symm_voigt_dim) :: sigma_vector
     !
     double precision,dimension(:),allocatable :: vEquivalentStrainLevels, &
@@ -214,7 +196,7 @@ contains
                                                  vScalS
 
     double precision,dimension(:),pointer :: vTheta
-    
+
     type(BarycentricInterpolator) :: bi
     integer,parameter :: interpolation_order = 2
     integer :: n_theta, n_contours
@@ -249,7 +231,7 @@ contains
             info = this%calculateStressPath(sigma, this%control, ref_output)
             if (info /= criSuccess) return
             !
-            ! Calculate work levels that correspond to the requested levels of 
+            ! Calculate work levels that correspond to the requested levels of
             ! equivalent plastic strain.
             vEquivalentStrain_ref = ref_output%values(:)%vm_strain_total
             vPlasticWork_ref = ref_output%values(:)%icv%plastic_work_total
@@ -317,7 +299,7 @@ contains
                 results(:,i) = 0.D0
                 cycle
             endif
-            
+
         enddo
         if (info /= criSuccess) return
         !
@@ -375,7 +357,7 @@ contains
         enddo
         !
         info = writeResultFile(iounit, results, header_columns, [output_column_width])
-       
+
         close(iounit)
     !
     end function
@@ -403,9 +385,9 @@ contains
             write(iounit,fmt='(E15.7,1X,E15.7)',iostat=ierr) vEquivalentStrainLevels(i), vPlasticWorkLevels(i)
             if (ierr /= 0) exit
         enddo
-        if (ierr == 0) info = criSuccess 
+        if (ierr == 0) info = criSuccess
         close(iounit)
     !
     end function
-    
+
 end module

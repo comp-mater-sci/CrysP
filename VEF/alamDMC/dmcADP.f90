@@ -1,18 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2017-02-13
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-
 #include "criMacros.fpp"
 
 !> Arbitrary Deformation Path strain-(rate) driven simulations
@@ -34,9 +19,9 @@ implicit none
     !> Arbitrary Strain Mode (extends DeformationDrivenModule by 4 procedures)
     type,extends(DeformationDrivenModule) :: ADPModule
     contains ! type-bound procedures; pass(this) passes object itself, through which procedure referenced, as first argument to procedure
-        
+
         !>@{ \name Interface methods of AbstractModule
-        
+
         procedure,pass(this) :: printConfig => ADPModule_printConfig
 
         procedure,pass(this) :: readConfig => ADPModule_readConfig
@@ -46,14 +31,14 @@ implicit none
         !>@}
 
         procedure,pass(this) :: fileOutput => ADPModule_fileOutput
-        
+
     end type
 
     !> Outputs collected by the simulation run
     type :: ADPOutputData
         type(StepOutput),dimension(:),allocatable :: steps
     end type
-    
+
 contains
 
 
@@ -95,11 +80,11 @@ contains
     !
     double precision,dimension(sr_voigt_dim) :: tmp_deformation
     double precision,dimension(sr_symm_voigt_dim) :: tmp_strain
-    
+
     double precision :: step_size, tmp
     type(StrainDrivenStepConfig) :: tmp_step_config
     type(SRTensor) :: tmp_deformation_rate
-        ! 
+        !
         ! Read generic configuration section (output settings, AlTay (texture, microstructure, hardening), solver settings
         RETURN_IF(info /= criSuccess, info = this%DeformationDrivenModule%readConfig(cnfunit))
         info = criErr_IORead
@@ -138,7 +123,7 @@ contains
                         return
                     endif
                     tmp_deformation_rate%t = tmp_deformation_rate%t / tmp * step_size
-                !   
+                !
                 case(strain_id)
                     if (.not. readValue(cnfunit, tmp_strain)) return
                     tmp_deformation_rate%t = Vec6ToMat33(tmp_strain)
@@ -177,7 +162,7 @@ contains
                 ! Phase 2: set the config
                 step%step%config = tmp_step_config
                 step%step%log = logData(this%output%verbosity, display_unit)
-                
+
             end associate
         enddo
         info = criSuccess
@@ -256,8 +241,8 @@ contains
     logical,intent(in),optional                 :: header !< Header to be written out
     integer,intent(in),optional                 :: step_id
     !
-    integer :: step, increment, ierr, n_steps, first_step, last_step, n_increments 
-    !      
+    integer :: step, increment, ierr, n_steps, first_step, last_step, n_increments
+    !
     integer,parameter :: ncolumn_labels = 2+9+3*6+3+7, column_width = 18, short_column_width = 9
     character(len=column_width),dimension(ncolumn_labels) :: column_names = [character(len=column_width) :: &
         'step', 'increment', & ! 2 fields
@@ -322,7 +307,7 @@ contains
         710 format(1X, 2(I18,1X),39(E18.9,1X))
     !
     end function
-    
-    
-    
+
+
+
 end module

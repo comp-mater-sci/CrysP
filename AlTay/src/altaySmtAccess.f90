@@ -2,7 +2,7 @@ module altaySmtAccess
 use altayDynfil
 implicit none
 contains
-      
+
       !> Read SMT header
       subroutine SMTreadHeader(iounit,title,info)
       integer,intent(in)      :: iounit
@@ -23,7 +23,7 @@ contains
       94  format(I5,5x,A)
       !
       end subroutine
-            
+
       subroutine SMTwriteHeader(iounit,title,info)
       integer,intent(in)            :: iounit
       character(len=*),intent(in)   :: title !< Title line
@@ -34,7 +34,7 @@ contains
       94  format(I5,5x,A)
       !
       end subroutine
-      
+
       subroutine SMTwriteBlock(iounit,info)
       use altayDynfil
       integer,intent(in)      :: iounit   !< IO unit
@@ -55,8 +55,8 @@ contains
                   if (info /= 0) exit
             enddo
             !
-      97 format (3F10.3,10X,I5,5X,F10.5) 
-      end subroutine      
+      97 format (3F10.3,10X,I5,5X,F10.5)
+      end subroutine
 
       !> Read texture from SMT file
       subroutine SMTreadBlock(iounit,info)
@@ -80,7 +80,7 @@ contains
                                           DFIL(i)%tPHI,           &
                                           DFIL(i)%tfi1,           &
                                           STAP,NSTAP,             &
-                                          DFIL(i)%tGEW,           &                                   
+                                          DFIL(i)%tGEW,           &
                                           DFIL(i)%tGAM
                   if (info /= 0) exit
                   ! Convert the grain orientatios from degrees to radians
@@ -104,15 +104,15 @@ contains
                         enddo
                   endif
             enddo
-  96  FORMAT (4F10.0,I5,5X,2F10.0)                                      
+  96  FORMAT (4F10.0,I5,5X,2F10.0)
       !
       end subroutine
-      
-      
 
 
-      
-      
-      
-      
+
+
+
+
+
+
 end module
