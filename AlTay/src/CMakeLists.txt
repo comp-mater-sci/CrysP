@@ -33,7 +33,6 @@ altayCubAccess.f90
 altayCurAccess.f90 
 altaySmtAccess.f90 
 altayTexFormats.f90 
-altayTexFormatConstants.f90 
 altayHardLawSimple.f90 
 altayHard.f90 
 altayHardTypes.f90 

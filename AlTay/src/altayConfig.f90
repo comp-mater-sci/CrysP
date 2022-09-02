@@ -15,7 +15,7 @@ module altayConfig
 use altayHardTypes
 use altayHardLaw_Simple, only: VoceConfig, SwiftKConfig, SwiftSConfig
 use altayHardLaw_DSH, only: PAR
-use altayTexFormatConstants
+use altayTexFormats
       implicit none
 
       integer,parameter  :: fname_len = 512 !< Length of filenames
@@ -34,7 +34,6 @@ use altayTexFormatConstants
       type :: textureData
             !> Type of texture representation
             !>
-            !> See altayTexFormatConstants for the list of possible values. \sa altayTexFormatConstants
             integer                                   :: input_type = TF_SMT
             character(len=fname_len)                  :: input_fname = ''
             integer                                   :: block_id = 1

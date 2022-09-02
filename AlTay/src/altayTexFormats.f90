@@ -1,20 +1,16 @@
-!
-! $Id$
-!
-
 !> Dispatcher subroutines for IO operation on texture data files.
 module altayTexFormats
-use altayTexFormatConstants
 use altayDynfil
 use altaySmtAccess
 use altayCurAccess
 use altayCubAccess
 
 implicit none
-      
-      
+      !>@{ \name Named constants for supported texture file formats (aka FormatID)
+      integer,parameter :: TF_SMT = 1, TF_CUR = 2, TF_CUB = 3
+
 contains
-      
+
       subroutine loadTexture(texfmt,nunit,fname,iblock,info)
       integer,intent(in)            :: texfmt
       integer,intent(inout)         :: nunit
@@ -45,23 +41,23 @@ contains
       !
       end subroutine
 
-      
+
       !> Open a file for texture output
       integer function openTextureFile(iounit,fname,texfmt,mode) result(info)
       integer,intent(in)            :: iounit   !< I/O unit
       character(len=*),intent(in)   :: fname    !< File name to be opened
       integer,intent(in)            :: texfmt   !< Format ID
-      character(len=1),intent(in)   :: mode     !< Mode: ['r'|'w'] 
+      character(len=1),intent(in)   :: mode     !< Mode: ['r'|'w']
       !
       character(len=10) :: stat
       !
             info = -1
             select case(mode)
-            case('r')   
+            case('r')
                   stat = 'old'
-            case('w')   
+            case('w')
                   stat = 'replace'
-            case default 
+            case default
                   return
             end select
             !
@@ -76,12 +72,12 @@ contains
             end select
       !
       end function
-      
+
       subroutine outputCurrentTexture(iounit,texfmt,full,info)
       integer,intent(in)            :: iounit   !< I/O unit
       integer,intent(in)            :: texfmt   !< Format ID
       !< If true, both header and block are written, otherwise only the block output is written out.
-      logical,intent(in)            :: full     
+      logical,intent(in)            :: full
       integer,intent(out)           :: info
       !
             info = -1
@@ -100,7 +96,7 @@ contains
             end select
       !
       end subroutine
- 
-      
-      
+
+
+
 end module
