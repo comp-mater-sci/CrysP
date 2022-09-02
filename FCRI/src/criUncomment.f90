@@ -24,8 +24,6 @@ implicit none
 
       end interface
 
-      integer,private         :: line_count = 0
-
 contains
       !> \name Various procedures on the theme "removing comment from a string"
       !>@{
@@ -69,28 +67,6 @@ contains
       !
       end function
 
-      !>@}
-
-      !> Functions for processing input files with comments
-      !>@{
-
-      integer function getLineCount()
-      !
-            getLineCount = line_count
-      !
-      end function
-
-      subroutine initLineCount(initval)
-      integer,intent(in),optional :: initval
-      !
-            if (present(initval)) then
-                  line_count = initval
-            else
-                  line_count = 0
-            endif
-      !
-      end subroutine
-
 
       logical function isComment(buffer)
       character(len=*),intent(in)  :: buffer
@@ -116,7 +92,6 @@ contains
                         skipComment = .false.
                         next = .false.
                   endif
-                  line_count = line_count + 1
                   if (.not. isComment(trim(adjustl(buffer))) ) then
                         skipComment = .true.
                         next = .false.
