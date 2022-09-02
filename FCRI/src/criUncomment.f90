@@ -44,39 +44,6 @@ contains
             if (idx /= 0) line(idx:) = ' '
       end subroutine
 
-      !> Returns the string with a comment removed.
-      pure function uncommentedString(string,comment_mark)
-      character(len=*),intent(in)         :: string
-      character,intent(in),optional       :: comment_mark
-      character(len=len(string))          :: uncommentedString
-      !
-      integer     :: idx
-      character   :: comment_delim
-      !
-            uncommentedString = ''
-            if (len(string) == 0) return
-            ! Set default comment sign, override if comment_mark is provided by user
-            comment_delim = comment_sign
-            if (present(comment_mark)) comment_delim = comment_mark
-            idx = index(string,comment_delim)
-            if (idx /= 0) then
-                  uncommentedString = string(:idx-1)
-            else
-                  uncommentedString = string
-            endif
-      !
-      end function
-
-
-      logical function isComment(buffer)
-      character(len=*),intent(in)  :: buffer
-      !
-            isComment = .false.
-            if (len(buffer) > 0) then
-                  if (buffer(1:1) == comment_sign) isComment = .true.
-            endif
-      !
-      end function
 
       logical function skipComment(nunit,buffer)
       integer,intent(in)            :: nunit
@@ -102,6 +69,19 @@ contains
             enddo
             500 format(A512)
       !
+      contains
+
+      logical function isComment(buffer)
+      character(len=*),intent(in)  :: buffer
+      !
+            isComment = .false.
+            if (len(buffer) > 0) then
+                  if (buffer(1:1) == comment_sign) isComment = .true.
+            endif
+      !
+      end function
+
+
       end function
 !
 ! Instantization of template for integer

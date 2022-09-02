@@ -27,13 +27,4 @@ contains
       !
       end function
 
-      !> Read logical value
-      logical function readFlag(cnfunit)
-      integer,intent(in) :: cnfunit
-      !
-            readFlag = .false.
-            if (.not. readValue(cnfunit,readFlag,'(L)')) readFlag = .false.
-      !
-      end function
-
 end module
