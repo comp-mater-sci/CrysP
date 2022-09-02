@@ -76,13 +76,9 @@
 !     This version assumes that A is a diagonal matrix
 !
       dimension Gaxes(3),A(3),Aprime(3,3),T(3,3),X(3,3)
-      do k=1,3
-        A(k)=1.D0/Gaxes(k)**2
-      end do
-      do k=1,3
-        do j=1,3
-          X(k,j)=t(k,j)*A(k)
-        end do
+      A=1.D0/Gaxes**2
+      do j=1,3
+        X(:,j)=t(:,j)*A
       end do
       do i=1,3
         do j=1,3
@@ -110,28 +106,21 @@
       logical axisym
       type(EulerAngles):: CEuler
       CIJTR=(CIJ(1,1)+CIJ(2,2)+CIJ(3,3))/3.D0
+      e = CIJ
       do i=1,3
-        do j=1,3
-          e(i,j)=CIJ(i,j)
-        end do
         e(i,i)=e(i,i)-CIJTR
       end do
       call eigenv(e,prval,prdir,enrm,axisym)
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
-      do i=1,3
-        prval(i)=prval(i)+CIJTR
-      end do
+      prval=prval+CIJTR
+
       if (prval(1).gt.prval(2)) call verwis(2,1,prval,prdir)
       if (prval(2).gt.prval(3)) call verwis(3,2,prval,prdir)
       if (prval(1).gt.prval(2)) call verwis(1,2,prval,prdir)
-      do i=1,3
-        prval(i)=1.D0/sqrt(prval(i))
-        do j=1,3
-          TMAT(i,j)=prdir(j,i)
-        end do
-      end do
+      prval=1.D0/sqrt(prval)
+      TMAT=prdir
       CEuler= EuleranglesType(TMAT)
       GEULR=EulerAngles2Arr(CEuler)
       end subroutine
@@ -726,6 +715,8 @@
         endif
       end do
       END SUBROUTINE
+
+
 !  (C) Copr. 1986-92 Numerical Recipes Software D04-4-+5Z5{..
       double precision FUNCTION pythag(a,b)
       implicit double precision (a-h,o-z)
@@ -742,9 +733,7 @@
           pythag=absb*sqrt(1.D0+(absa/absb)**2)
         endif
       endif
-      return
       END FUNCTION
-
 
       end module
 
