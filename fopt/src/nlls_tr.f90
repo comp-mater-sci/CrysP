@@ -1,23 +1,6 @@
-!
-! $Id$
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!>    \author     Jerzy Gawad 
-!>    Email:      Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>    
-!>    \date Date of initial release: 2010-06-25
-!>    $Revision$
-!>    $Date$
-!>    History of modifications: (see SVN log).
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-
 !> nllsTR  -- wrapper module for MKL Non-Linear Least Squares Trust Region algorithm
 !> \remark The module can be compiled with: ifort >= 12.1, gfortran >= 4.6. Earlier versions
-!>         are unable to handle OO technique in a proper way or simply fail at compilation time. 
+!>         are unable to handle OO technique in a proper way or simply fail at compilation time.
 module nllsTR
 use objectiveFx
 
@@ -45,48 +28,48 @@ use objectiveFx
             !> linearized.
             logical                                      :: constJacobi = .false.
 
-            !> If set true, the algorithm will use the contents of "state" field in the objective 
-            !> function object for the very first iteration. This implies an assumption that 
+            !> If set true, the algorithm will use the contents of "state" field in the objective
+            !> function object for the very first iteration. This implies an assumption that
             !> the state field contains a consistent starting point.
             logical                                      :: use_init_state = .false.
-            
-            !> If set true, every evaluation of either the objective function or Jacobian 
+
+            !> If set true, every evaluation of either the objective function or Jacobian
             !> will be tested against NaN or Inf.
             logical                                      :: use_input_checks = .true.
-            
-      end type       
-      
+
+      end type
+
 
       !> Default step for finite difference evaluation of Jacobi matrix
       double precision,parameter                        :: nllsTR_jacobi_eps = 1.D-7
 
 
-      !>@{ \name Other parameters 
+      !>@{ \name Other parameters
       !>  These parameters are not directly accessible. Use \ref nlls_TR_init to control them. \sa nlls_TR_init
 
       !> Output unit
       integer,private                            :: nllsTR_ounit = 6
 
-      !> Verbosity level. 
+      !> Verbosity level.
       !>
       !> The following values of verbosity are allowed:
-      !>   -  0 - only error messages, 
-      !>   -  1 - some diagnostic informations, 
+      !>   -  0 - only error messages,
+      !>   -  1 - some diagnostic informations,
       !>   -  2 and higher - detailed informations (huge amount of output is expected!)
       integer,private                            :: nllsTR_iw = 0
 
-     !>@} 
+     !>@}
 
       type nllsTRRes
             integer                             :: iteration = 0        !< Interation number
             integer                             :: stop_criterion = 0   !< Identifier of stop criterion, see MKL documentation
             double precision                    :: r1 = 0.D0            !< Initial norm of residual
             double precision                    :: r2 = 0.D0            !< Final norm of residual
-      end type 
+      end type
 
 
       type,abstract,extends(objectiveFunction) :: MKLFDJacobiObjFunction
-            double precision                          ::  jacobi_eps = nllsTR_jacobi_eps 
+            double precision                          ::  jacobi_eps = nllsTR_jacobi_eps
       contains
             procedure :: jacobiMatrixEval => JacobiObjEval_djacobi
       end type
@@ -94,13 +77,13 @@ use objectiveFx
 
       ! Internal components of the module.
       ! private writeMatrix
-      private checkMKLRescode 
-      
-contains 
- 
+      private checkMKLRescode
+
+contains
 
 
-      !> Initialization of nlls_TR module. 
+
+      !> Initialization of nlls_TR module.
       subroutine nlls_TR_init(ounit,verbose)
       implicit none
       integer,optional,intent(in)         ::  ounit  !< IO unit number for outputs
@@ -109,7 +92,7 @@ contains
       if (present(ounit)) nllsTR_ounit = ounit
       if (present(verbose)) nllsTR_iw = verbose
       end subroutine
-      
+
 
       !> This subroutine solves the mnimization problem. Trust region algorithm from MKL library is used.
       !> \param objFx Objective function to minimize
@@ -122,30 +105,30 @@ contains
       ! Formal parameters
       class(objectiveFunction),intent(inout)          :: objFx    !< objective function
       !> Design vector, dimension of vX must correspond to those in objFX
-      double precision,dimension(:),intent(inout)     :: vX       
-      type(nllsTRConf),intent(in)                     :: config   !< Configuration of nllsTR 
+      double precision,dimension(:),intent(inout)     :: vX
+      type(nllsTRConf),intent(in)                     :: config   !< Configuration of nllsTR
       double precision,intent(out)                    :: r1       !< Initial residual of the solution
       double precision,intent(out)                    :: r2       !< Final residual of the solution
       !> Exit code: 0 on success, < 0 on error, > 0 on failure/warning
       integer,intent(out)                             :: info
       !> Full termination status of the TR solver
-      type(nllsTRRes),intent(inout),optional          :: resInfo  
+      type(nllsTRRes),intent(inout),optional          :: resInfo
       !> Initial solution to be stored after initial evaluation
-      type(SolutionPoint),intent(out),optional        :: SolutionInitOut 
+      type(SolutionPoint),intent(out),optional        :: SolutionInitOut
       !!!! Local variables
       integer                              :: n        !< Dimension of design vector
       integer                              :: m        !< Dimension of objective function vector
       type(HANDLE_TR)   :: handle
-      integer           :: res, linfo 
-      ! 
-      double precision,allocatable,dimension(:)    :: vLW, vUP   ! would be of size    
+      integer           :: res, linfo
+      !
+      double precision,allocatable,dimension(:)    :: vLW, vUP   ! would be of size
       ! Variables for TR query
       type(nllsTRRes)                :: resultInfo
       ! RCI loop control
       logical                        :: next_solve
       integer                        :: RCI_Req, RCI_Count
       ! Initialization of vFval and mJacobi
-      logical                        :: use_init_mJacobi, use_init_vFval 
+      logical                        :: use_init_mJacobi, use_init_vFval
       logical                        :: is_firstFval, is_firstJacobi
       !
       ! Other variables
@@ -155,7 +138,7 @@ contains
             RCI_Req = 0; next_solve = .true.
             info = -1
             !! Check preconditions
-            ! TODO 
+            ! TODO
             n = objFx%state%n_X_dim        ! Dimensionality of vector X (argument)
             m = objFx%state%m_F_dim        ! Dimensionality of objective function
             !
@@ -178,7 +161,7 @@ contains
                   use_init_vFval = .false.
             endif
             !
-            if ((config%constJacobi) .and. (.not. config%use_init_state)) then 
+            if ((config%constJacobi) .and. (.not. config%use_init_state)) then
                   ! Calculate Jacobi matrix
                   call objFx%jacobiMatrixEval(vX, linfo)
                   if ( (linfo == 0) .and. (config%use_input_checks) ) &
@@ -216,7 +199,7 @@ contains
             !
             !! Initialize MKL solver
             res = dtrnlspbc_init(handle, n, m, vX, vLW, vUP, config%eps,  config%iter1,  config%iter2,  config%init_step)
-            ! Check result      
+            ! Check result
             if (checkMKLRescode(res,'initialization of TR nlls solver', nllsTR_ounit) /= 0) return
             if (nllsTR_iw > 2) write( nllsTR_ounit,fmt=200) 'TR initialized, handle: ', handle
             !
@@ -235,7 +218,7 @@ contains
                         if (trapFPErrors()) then
                               write(nllsTR_ounit,fmt=200) 'Warning: floating point problem before the solver, RCI_Count',RCI_Count
                         endif
-                        !                        
+                        !
                         res = dtrnlspbc_solve(handle, vFval, mJacobi, RCI_Req)
                         !
                         if (trapFPErrors()) then
@@ -251,11 +234,11 @@ contains
                         select case (RCI_Req)
                               !!-----------------------------------------------------------------------
                               case(-1)          ! Iteration count has been exceeded
-                                    next_solve = .false.      
+                                    next_solve = .false.
                               !!-----------------------------------------------------------------------
                               case(-6:-2)       ! Epsilon has been reached
-                                    next_solve = .false.      
-                        
+                                    next_solve = .false.
+
                               !!-----------------------------------------------------------------------
                               case(0)           ! Successful
                                     next_solve = .true.
@@ -279,9 +262,9 @@ contains
                                                        '||X|| = ', norm2(vX),             &
                                                        '||vF|| = ', norm2(vFval)
                                     if (nllsTR_iw > 2) then
-                                          write(nllsTR_ounit,fmt=100) 'X' 
-                                          write(nllsTR_ounit,fmt=500) (vX(i), i=1,n) 
-                                          write(nllsTR_ounit,fmt=100) 'vF' 
+                                          write(nllsTR_ounit,fmt=100) 'X'
+                                          write(nllsTR_ounit,fmt=500) (vX(i), i=1,n)
+                                          write(nllsTR_ounit,fmt=100) 'vF'
                                           write(nllsTR_ounit,fmt=500) (vFval(i), i=1,m)
                                     endif
                                     ! Store the initial guess if requested to do so
@@ -290,10 +273,10 @@ contains
                                     endif
                                     is_firstFval = .false.
                               !!-----------------------------------------------------------------------
-                              case(2)           ! Recalculate Jacobian 
+                              case(2)           ! Recalculate Jacobian
                                     if (.not.(config%constJacobi)) then
                                           if (nllsTR_iw > 2) write( nllsTR_ounit,fmt=100) 'Recalculation of the Jacobi matrix'
-                                          linfo = 0 
+                                          linfo = 0
                                           if (.not. use_init_mJacobi) then
                                                 call objFx%jacobiMatrixEval(vX,linfo)
                                                 if ((linfo == 0) .and. (config%use_input_checks)) &
@@ -311,7 +294,7 @@ contains
                                                 call writeMatrix(mJacobi,  nllsTR_ounit)
                                                 write( nllsTR_ounit,fmt=100)  'Jacobi matrix  <--'
                                                 flush( nllsTR_ounit)
-                                          endif                                          
+                                          endif
                                     endif
                                     ! Store the initial guess if requested to do so
                                     if (is_firstJacobi .and. present(SolutionInitOut)) then
@@ -319,7 +302,7 @@ contains
                                     endif
                                     is_firstJacobi = .false.
                               !!-----------------------------------------------------------------------
-                              case default      ! Unknown RCI, it should never happen!! 
+                              case default      ! Unknown RCI, it should never happen!!
                                     write( nllsTR_ounit,fmt=100) 'Error: unknown RCI control code!!!'
                                     exit
                         end select
@@ -340,14 +323,14 @@ contains
             res = dtrnlspbc_get(handle, resultInfo%iteration, resultInfo%stop_criterion, resultInfo%r1, resultInfo%r2)
             r1 = resultInfo%r1
             r2 = resultInfo%r2
-            !            
+            !
             if (present(resInfo)) resInfo = resultInfo
-            !            
+            !
             if (nllsTR_iw > 0) then
                   call nlls_TR_exit_message(message,resultInfo,config,linfo)
                   write( nllsTR_ounit,fmt=200) 'Stop criterion code: ', resultInfo%stop_criterion
                   write( nllsTR_ounit,fmt=100) trim(message)
-                  write( nllsTR_ounit,'(A,1X,I0,2(1X,A,1X,E16.8))') 'Step ',resultInfo%iteration, 'R0=', r1, 'R1=',r2 
+                  write( nllsTR_ounit,'(A,1X,I0,2(1X,A,1X,E16.8))') 'Step ',resultInfo%iteration, 'R0=', r1, 'R1=',r2
             endif
             if (nllsTR_iw > 2) then
                   write( nllsTR_ounit,fmt=100) 'X = '
@@ -357,7 +340,7 @@ contains
             ! Release MKL resources
             res = dtrnlspbc_delete(handle)
             if (res /= TR_SUCCESS) then
-                  write( nllsTR_ounit,fmt=200) 'dtrnlspbc_delete failed, exit code:',res 
+                  write( nllsTR_ounit,fmt=200) 'dtrnlspbc_delete failed, exit code:',res
             endif
             call mkl_free_buffers()
             ! Deallocate temporary arrays
@@ -368,7 +351,7 @@ contains
             200 format(A,1X,I0)     ! fmt=400  ! a string followed by an integer
             500 format(F15.8,1X)    ! fmt=500  ! long float, followed by one space
             !
-      end subroutine            
+      end subroutine
 
       subroutine nlls_TR_exit_message(str,resInfo,config,info)
       implicit none
@@ -377,7 +360,7 @@ contains
       type(nllsTRConf),intent(in)                     :: config
       integer,intent(out)                             :: info
       !
-            ! See documentation of ?trnlspbc_get in MKL manual for 
+            ! See documentation of ?trnlspbc_get in MKL manual for
             ! meaning of the stop criterion codes.
             info = 0
             select case (resInfo%stop_criterion)
@@ -397,12 +380,12 @@ contains
                   str = 'TR solver has prematurely stopped for unknown reason.'
                   info = -1
             end select
-            200   format(A,1X,I0)            
+            200   format(A,1X,I0)
             201   format(A,1X,E15.7)
       !
       end subroutine
 
-      
+
       subroutine checkSolverInput(vF,mJ,info)
       use, intrinsic :: IEEE_EXCEPTIONS
       use, intrinsic :: IEEE_ARITHMETIC
@@ -414,7 +397,7 @@ contains
             info = 0
             if (present(vF)) then
                   ! Test for NaN and Infty
-                  if ( any(IEEE_IS_NAN(vF)) ) then 
+                  if ( any(IEEE_IS_NAN(vF)) ) then
                         write(nllsTR_ounit,fmt=101) 'the objective function'
                         info = -1
                   endif
@@ -436,7 +419,7 @@ contains
             endif
             !
             101 format('Error: NaN is detected in ',A)  ! For NaN messages
-            102 format('Error: Inf is detected in ',A)  ! For Inf messages      
+            102 format('Error: Inf is detected in ',A)  ! For Inf messages
       !
       end subroutine
 
@@ -459,8 +442,8 @@ contains
             trapFPErrors = any(fp_errflags)
       !
       end function
-      
-      
+
+
       !> Calculation of Jacobi matrix by means of central difference method.
       !>
       !> This subroutine uses djacobi_solve RCI subroutine from MKL.
@@ -505,7 +488,7 @@ contains
       next_solve = .true.
       RCI_Req = 0
       do while (next_solve)
-            res = djacobi_solve(handle, f1, f2, RCI_Req)      
+            res = djacobi_solve(handle, f1, f2, RCI_Req)
             !! TESTING -->>
             ! write(*,*) 'RCI_Req = ',RCI_Req, ' res = ', res, ' success = ', res == TR_SUCCESS
             !! TESTING <<--
@@ -513,13 +496,13 @@ contains
             ! RCI status
             select case (RCI_Req)
                   !!-----------------------------------------------------------------------
-                  case(1)       
+                  case(1)
                         call this%objectiveEval(tmp_vX,info)
                         if (info /= 0) exit
                         ! Grab the state
                         f1 = this%state%vF
                   !!-----------------------------------------------------------------------
-                  case(2)       
+                  case(2)
                         call this%objectiveEval(tmp_vX,info)
                         if (info /= 0) exit
                         ! Grab the state
@@ -563,19 +546,19 @@ contains
       integer,intent(in)            :: ounit
       !!
       character(len=20)             :: errname
-      !!      
+      !!
             checkMKLRescode = 0
             if (res /= TR_SUCCESS) then
                   checkMKLRescode = -1
                   select case (res)
-                        case(TR_INVALID_OPTION)  
-                                    errname = 'TR_INVALID_OPTION'                  
+                        case(TR_INVALID_OPTION)
+                                    errname = 'TR_INVALID_OPTION'
                         case(TR_OUT_OF_MEMORY)
                                     errname = 'TR_OUT_OF_MEMORY'
                         case default
                                     errname = 'Unknown'
                   end select
-                  write( ounit,9900) leadmsg, errname 
+                  write( ounit,9900) leadmsg, errname
             endif
       9900 format(A,1X,'failed, reason:',1X,A)
       end function

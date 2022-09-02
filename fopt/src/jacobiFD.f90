@@ -1,22 +1,3 @@
-!
-! $Id$
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!
-!>    \author     Jerzy Gawad 
-!>    Email:      Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>    
-!>    \date Date of initial release: 2012-03-26
-!>    $Revision$
-!>    $Date$
-!>    History of modifications: (see SVN log).
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!! 
-! 
-      
 !> Calculation of Jacobi matrix by means of finite differences.
 !>
 module JacobiFD
@@ -26,11 +7,11 @@ module JacobiFD
       interface jacobiPrepCFD
             module procedure jacobiPrepCFD_mX, jacobiPrepCFD_invdelta
       end interface
-      
+
       interface jacobiCalcCFD
             module procedure jacobiCalcCFD_mX, jacobiCalcCFD_invdelta
       end interface
-      
+
 contains
 
       !> The subroutine calculates finite difference points at which the function shall be evaluated.
@@ -43,7 +24,7 @@ contains
       double precision,dimension(:),intent(in)        :: vX
       !> Precision of finite difference scheme
       double precision,intent(in)                     :: eps
-      !> Output matrix consisting of [n x 2n] elements. 
+      !> Output matrix consisting of [n x 2n] elements.
       double precision,dimension(:,:),allocatable,intent(out)      :: mX
       !> Exit code: 0 on succcess.
       integer,intent(out)                             :: info
@@ -59,7 +40,7 @@ contains
             !
             j = 1
             do i=1,m,2
-                  delta = eps * vX(j) 
+                  delta = eps * vX(j)
                   if (abs(delta) < epsilon(0.D0)) delta = eps ! eps : non-zero if vX(j) is zero
                   mX(:,i) = vX(:)
                   mX(j,i) = mX(j,i) + delta
@@ -72,16 +53,16 @@ contains
 
       !> The subroutine calculates Jacobi matrix by means of Central Finite Difference stencil.
       !>
-      !> The CFD 
+      !> The CFD
       !> \f[
-      !> \frac{\partial f_i}{\partial x_j} = 
+      !> \frac{\partial f_i}{\partial x_j} =
       !>     \frac{ f(x_1,\ldots,x_j+\Delta x_j,\ldots,x_n)  - f(x_1,\ldots,  x_j-\Delta x_j,\ldots,x_n )}{2 \Delta x_j}
       !> \f]
       subroutine jacobiCalcCFD_mX(mX,mF,mJ,info)
       implicit none
       !> Finite difference points: [n x 2n] matrix.
       double precision,dimension(:,:),intent(in)      :: mX  ! [n x 2n]
-      !> Function values at the corresponding finite difference points. 
+      !> Function values at the corresponding finite difference points.
       !> Functions are represented by m-dimensional vectors inside the matrix.
       double precision,dimension(:,:),intent(in)      :: mF  ! [m x 2n]
       !> Output Jacobi matrix
@@ -100,19 +81,19 @@ contains
             !
             j = lbound(mF,dim=2)
             do i=lbound(mJ,dim=2), ubound(mJ,dim=2)
-                  idelta = 1.D0 / (mX(i,j) - mX(i,j+1))  
+                  idelta = 1.D0 / (mX(i,j) - mX(i,j+1))
                   mJ(:,i) = idelta * (mF(:,j) - mF(:,j+1))
                   j = j + 2
             enddo
             info = 0
       end subroutine
-      
 
-      
+
+
       !> The subroutine calculates finite difference points at which the function shall be evaluated.
       !>
       !> Central Finite Difference stencil is used.
-      !> Additionally, the inverses of the Delta X increments are calculated. Although it requires 
+      !> Additionally, the inverses of the Delta X increments are calculated. Although it requires
       !> additional storage, subsequent calculations of the Jacobi matrix are easier and faster, in
       !> particular if a large problem is dealt with.
       subroutine jacobiPrepCFD_invdelta(vX,eps,mX,vInvDelta,info)
@@ -121,15 +102,15 @@ contains
       double precision,dimension(1:),intent(in)        :: vX
       !> Precision of finite difference scheme
       double precision,intent(in)                     :: eps
-      !> Output matrix consisting of [n x 2n] finite difference points. 
-      !> 
+      !> Output matrix consisting of [n x 2n] finite difference points.
+      !>
       !> The points are organized as follows. For every odd i:
-      !>   * mX(:,i) contains vX + Delta X 
-      !>   * mX(:,i+1) contains vX - Delta X 
+      !>   * mX(:,i) contains vX + Delta X
+      !>   * mX(:,i+1) contains vX - Delta X
       !> To put it simple: "forward" points are at odd i, "backward" ones are at even i.
       double precision,dimension(:,:),allocatable,intent(out)      :: mX
       !> Inverses of the Delta X
-      double precision,dimension(:),allocatable,intent(out)        :: vInvDelta 
+      double precision,dimension(:),allocatable,intent(out)        :: vInvDelta
       !> Exit code: 0 on succcess.
       integer,intent(out)                             :: info
       !
@@ -147,7 +128,7 @@ contains
                   k = 2*i
                   j = k - 1
                   !
-                  delta = eps * vX(i)  
+                  delta = eps * vX(i)
                   if (abs(delta) < epsilon(0.D0)) delta = eps ! eps : non-zero if vX(j) is zero
                   vInvDelta(i) = 0.5D0 / delta ! Inverse of the delta
                   !
@@ -159,8 +140,8 @@ contains
             !$omp end parallel do
             info = 0
       end subroutine
-      
-      
+
+
       !> The subroutine calculates Jacobi matrix by means of Central Finite Difference stencil.
       !>
       !> The function can accept either the function values (F) evaluated at the FD
@@ -170,23 +151,23 @@ contains
       subroutine jacobiCalcCFD_invdelta(vInvDelta,isDeltaF,mF,mJ,info)
       implicit none
       !> Inverse of the Delta x
-      double precision,dimension(1:),intent(in)       :: vInvDelta 
+      double precision,dimension(1:),intent(in)       :: vInvDelta
       !> Description of the mF contents
       !>
       !> The contents of mF is interpreted according to the following rules:
-      !>   * If isDeltaF is False, then mF contains values of the function evaluated 
+      !>   * If isDeltaF is False, then mF contains values of the function evaluated
       !>     at the corresponding finite difference points: R^n -> R^m.
       !>     Dimensionality of the array is then [m x 2n].
-      !>   * If isDeltaF is True, then mF contains values of the difference between 
+      !>   * If isDeltaF is True, then mF contains values of the difference between
       !>     the function evaluated at the corresponding finite difference points: R^n -> R^m.
       !>     Dimensionality of the array must be [m x n].
       !> Note that the values of the function are represented by m-dimensional vectors inside the matrix.
       logical,intent(in)                              :: isDeltaF
       !> Array of either function values or differences between the function values.
-      double precision,dimension(1:,1:),intent(in)      :: mF  
+      double precision,dimension(1:,1:),intent(in)      :: mF
       !> Output Jacobi matrix.
       !> Dimensionality is [m x n]
-      double precision,dimension(1:,1:),intent(out)     :: mJ  
+      double precision,dimension(1:,1:),intent(out)     :: mJ
       !> Exit code: 0 on succcess.
       integer,intent(out)                             :: info
       !
@@ -221,5 +202,5 @@ contains
             endif
       !
       end subroutine
-      
+
 end module
