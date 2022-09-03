@@ -60,7 +60,6 @@ contains
                   info = altaySub_IOErr
                   return
             endif
-			!
             ! Load microstructure data
             CALL GRFIL(acnf%micros_fname,acnf%simul_init%FMicro,info)
             if (info /= 0) then
