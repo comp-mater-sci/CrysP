@@ -141,7 +141,7 @@ contains
             ! Attempt to identify the command argument in the first place
             if ((this%argc >= command_argpos) .and. (command_argpos > 0) .and. (size(command_map) > 0)) then
                   ! Check if the command appears in the command line
-                  this%is_command_identified = resolveName(command_map,this%argv(command_argpos),this%command_id) !MB: logical function resolveName(themap,name,id[,index]) defined in criLinearMap.f90; default command_id = -1, here to be overwritten with that of argv(command_argpos)
+                  this%is_command_identified = resolveName(command_map,this%argv(command_argpos),this%command_id)
                   if (.not. this%is_command_identified) then
                         errmsg = 'Unknown command: ' // trim(this%argv(command_argpos))
                         call finishProcessing(this,command_map,info,terminate)
@@ -225,7 +225,8 @@ contains
       end subroutine
 
 
-      !> Process the command line using Fortran intrinsic procedures (command_argument_count, get_command_argument) and put the command line arguments into an allocatable array of strings (argv)
+      !> Process the command line using Fortran intrinsic procedures (command_argument_count, get_command_argument)
+      ! and put the command line arguments into an allocatable array of strings (argv)
       subroutine getArgv(argc,argv,info)
       !> Number of command parameters. The program name does not count as one of the command arguments.
       integer,intent(out)                                   :: argc
@@ -236,11 +237,11 @@ contains
       integer :: i,ierr, max_param_len, param_len
       !
             info = criErr_MemAlloc
-            argc = command_argument_count() !MB: Fortran intrinsic function: returns the number of command arguments available. If there are no command arguments available, the result is 0. The command name does not count as one of the command arguments.
+            argc = command_argument_count()
             ! Scout for the longest parameter
             max_param_len = 0
-            do i = 0, argc !MB: determine maximum length of supplied command line parameters and store in max_param_len
-                  call get_command_argument(i,length=param_len) !MB: Fortran intrinsic subroutine: Returns the command line argument at position (number) i of the command that invoked the program (here: alamDMC). The command itself (here: alamDMC) is argument number 0 (zeroth position).
+            do i = 0, argc
+                  call get_command_argument(i,length=param_len)
                   if (param_len > max_param_len) max_param_len = param_len
             enddo
             if (max_param_len == 0) max_param_len = max_command_param_len
@@ -260,20 +261,14 @@ contains
 
       !> Open file fpath in the mode given by status, or call finalize on failure.
       !> Returns IO unit of the newly opened file.
-      integer function openOrDie(fpath,status,unit) result(nunit)
+      integer function openOrDie(fpath,status) result(nunit)
       character(len=*),intent(in)   :: fpath
       character(len=*),intent(in)   :: status !< Status of the file. The same as status in OPEN.
       !> IO unit to be used in opening the file. Unless it is provided, a new unit will be generated.
-      integer,intent(in),optional   :: unit
       !
       integer :: ierr
       !
-            if (present(unit)) then
-                  nunit = unit
-                  open(unit=nunit,file=fpath,status=status,iostat=ierr)
-            else
-                  open(newunit=nunit,file=fpath,status=status,iostat=ierr)
-            endif
+            open(newunit=nunit,file=fpath,status=status,iostat=ierr)
             if (ierr /= 0) then
                   errmsg = 'Cannot open file ' // trim(fpath)
                   call finalize(stopcode_ioerror)

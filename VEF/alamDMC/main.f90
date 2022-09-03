@@ -61,7 +61,7 @@ implicit none
       ! Configure the module
       !
       write(display_unit,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(configfile_argpos)) ! display_unit = output_unit defined in dmcutils.f90
-      cnfunit = openOrDie(fpath=trim(cmdline%argv(configfile_argpos)),status='old') ! create new unit (handle) for config file; openOrDie(fpath,status[,unit]) defined in criRuntime.f90
+      cnfunit = openOrDie(fpath=trim(cmdline%argv(configfile_argpos)),status='old')
       !
       info = -1
       ! Create a module of appropriate type:

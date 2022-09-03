@@ -39,7 +39,7 @@ contains
       subroutine objectiveEval_NV5DComp(this,vX,info)
       use altaySub
       use altayConfig
-	  use criMathUtils, only: vec5D2tens,tens2vec5D
+      use criMathUtils, only: vec5D2tens,tens2vec5D
       implicit none
             class(NormalizedV5DComp),intent(inout)      :: this
             double precision,dimension(:),intent(in)    :: vX       !< Dimension must be: 5
