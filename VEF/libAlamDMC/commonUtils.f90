@@ -8,18 +8,6 @@ implicit none
 
 contains
 
-      !> Perform basic checks if the state variables in altayConfig are consistent.
-      logical function isStateOK(stepid)
-      use altayConfig
-      integer,intent(in)      :: stepid
-      !
-            isStateOK = .false.
-            if (allocated(astate%simulCalls)) then
-                  isStateOK = (size(astate%simulCalls) <= stepid) .and. (astate%this >= stepid)
-            endif
-      !
-      end function
-
       subroutine  getTaylorFactor(stepid,M,info)
       use altayConfig
       integer,intent(in)            :: stepid
@@ -33,6 +21,19 @@ contains
                   info = 0
             endif
       !
+      contains
+      !> Perform basic checks if the state variables in altayConfig are consistent.
+      logical function isStateOK(stepid)
+      use altayConfig
+      integer,intent(in)      :: stepid
+      !
+            isStateOK = .false.
+            if (allocated(astate%simulCalls)) then
+                  isStateOK = (size(astate%simulCalls) <= stepid) .and. (astate%this >= stepid)
+            endif
+      !
+      end function
+
       end subroutine
 
       subroutine makeTextureUpdateStep(D,S,M,output_flag,info)
