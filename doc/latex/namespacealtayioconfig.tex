@@ -1,0 +1,269 @@
+\hypertarget{namespacealtayioconfig}{}\doxysection{altayioconfig Module Reference}
+\label{namespacealtayioconfig}\index{altayioconfig@{altayioconfig}}
+
+
+This module contains the configuration parameters of IO operations as well as other IO-\/related entities, such as IO unit numbers.  
+
+
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtayioconfig_ae67a5b4c3fdb3d1aa3b85189bbcd2ee7}{pathlength}} = 512
+\begin{DoxyCompactList}\small\item\em Maximal length of any path (filenames, directrories etc.) \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ IO units}\par
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_ad3583c096e588b501ebab691acb4ddd3}{lec}} = 4
+\begin{DoxyCompactList}\small\item\em LEC= data set with slip systems. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_ab685d4991914b9b19673d79869fb7982}{klec}} = 5
+\begin{DoxyCompactList}\small\item\em KLEC= data set with parameters. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_ae8d0881e684dcfc392b42096ed66d885}{imp}} = 3
+\begin{DoxyCompactList}\small\item\em IMP= printer. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_af9cd72fae5470af7553a9c544a0a2c76}{imp1}} = 7
+\begin{DoxyCompactList}\small\item\em IMP1=output-\/file with successive \char`\"{}current situations\char`\"{}. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a71cb21879bca7e7144ac7a55114c5c1b}{imp2}} = 8
+\begin{DoxyCompactList}\small\item\em IMP2=output-\/file with successive \char`\"{}responses to imposed strain\char`\"{}. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_af455b9583704bb6c4c7da299d6b39a09}{imp3}} = 11
+\begin{DoxyCompactList}\small\item\em IMP3=output-\/file with twinning information. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_ad2e6a190d3991013ba0dd2acda925ea9}{imp4}} = 110
+\begin{DoxyCompactList}\small\item\em IMP4= output file for state variables of KOST11. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_aeaa6b5958ac67eb93331f0b680bec146}{imp5}} = 111
+\begin{DoxyCompactList}\small\item\em IMP5= output of stress-\/strain or slip-\/stress. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a1bbb79ec86627e8c8f81a95c2d1d3300}{imp6}} = 112
+\begin{DoxyCompactList}\small\item\em IMP6= output of report file. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a320e07aa12fd8313041019deb015bb63}{idisk1}} = 12
+\begin{DoxyCompactList}\small\item\em IDISK1= work file. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_accd9035e5b54351023a63f53ea9a5873}{ndat1}} = 9
+\begin{DoxyCompactList}\small\item\em NDAT1= input texture file. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_af511d2a95f075ba20aff8e8b4b63bf4f}{ndat2}} = 10
+\begin{DoxyCompactList}\small\item\em NDAT2= input microstructure file. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_ac8bd6d4f9bb0e8b16716968ecd6dc88f}{ipebpstat}} = 60
+\begin{DoxyCompactList}\small\item\em IPEBPSTAT= input file for state variables of KOST11. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a44ac6efea9ff61868eab36ab43fdab48}{ipebpsdv}} = 61
+\begin{DoxyCompactList}\small\item\em Output file for state-\/derived variables of KOST11. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Output control switches}\par
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a54d31ddd0aa3f31e2429e7028f889e3c}{nlist}} = 0
+\begin{DoxyCompactList}\small\item\em Control of the listing file (formerly in TEXTUR common block) \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a799f1da2d42c565fe171aa38722889cc}{ipr}} = 0
+\begin{DoxyCompactList}\small\item\em Printing switch (formerly in TEXTUR common block) \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a9bd40d425a310741111d2bd579efd1bb}{nres}} = 0
+\begin{DoxyCompactList}\small\item\em Control of the result file. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a378e639f23cd60428fdea89fd84eb1ca}{npebp}} = 0
+\begin{DoxyCompactList}\small\item\em Control of the state file in PEBP (KOST11 module) \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a63ea9cc0617263c204f773518c143d78}{nmss}} = 0
+\begin{DoxyCompactList}\small\item\em Control of the output with homogenized strain-\/stress (IMP5) \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\doxysubsection{Detailed Description}
+This module contains the configuration parameters of IO operations as well as other IO-\/related entities, such as IO unit numbers. 
+
+\begin{DoxyNote}{Note}
+The module replaces /\+ES/ and /\+ES1/ common blocks and a subset of /\+TEXTUR/ block. 
+\end{DoxyNote}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacealtayioconfig_a320e07aa12fd8313041019deb015bb63}\label{namespacealtayioconfig_a320e07aa12fd8313041019deb015bb63}} 
+\index{altayioconfig@{altayioconfig}!idisk1@{idisk1}}
+\index{idisk1@{idisk1}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{idisk1}{idisk1}}
+{\footnotesize\ttfamily integer altayioconfig\+::idisk1 = 12}
+
+
+
+IDISK1= work file. 
+
+\mbox{\Hypertarget{namespacealtayioconfig_ae8d0881e684dcfc392b42096ed66d885}\label{namespacealtayioconfig_ae8d0881e684dcfc392b42096ed66d885}} 
+\index{altayioconfig@{altayioconfig}!imp@{imp}}
+\index{imp@{imp}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{imp}{imp}}
+{\footnotesize\ttfamily integer altayioconfig\+::imp = 3}
+
+
+
+IMP= printer. 
+
+\mbox{\Hypertarget{namespacealtayioconfig_af9cd72fae5470af7553a9c544a0a2c76}\label{namespacealtayioconfig_af9cd72fae5470af7553a9c544a0a2c76}} 
+\index{altayioconfig@{altayioconfig}!imp1@{imp1}}
+\index{imp1@{imp1}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{imp1}{imp1}}
+{\footnotesize\ttfamily integer altayioconfig\+::imp1 = 7}
+
+
+
+IMP1=output-\/file with successive \char`\"{}current situations\char`\"{}. 
+
+\mbox{\Hypertarget{namespacealtayioconfig_a71cb21879bca7e7144ac7a55114c5c1b}\label{namespacealtayioconfig_a71cb21879bca7e7144ac7a55114c5c1b}} 
+\index{altayioconfig@{altayioconfig}!imp2@{imp2}}
+\index{imp2@{imp2}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{imp2}{imp2}}
+{\footnotesize\ttfamily integer altayioconfig\+::imp2 = 8}
+
+
+
+IMP2=output-\/file with successive \char`\"{}responses to imposed strain\char`\"{}. 
+
+\mbox{\Hypertarget{namespacealtayioconfig_af455b9583704bb6c4c7da299d6b39a09}\label{namespacealtayioconfig_af455b9583704bb6c4c7da299d6b39a09}} 
+\index{altayioconfig@{altayioconfig}!imp3@{imp3}}
+\index{imp3@{imp3}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{imp3}{imp3}}
+{\footnotesize\ttfamily integer altayioconfig\+::imp3 = 11}
+
+
+
+IMP3=output-\/file with twinning information. 
+
+\mbox{\Hypertarget{namespacealtayioconfig_ad2e6a190d3991013ba0dd2acda925ea9}\label{namespacealtayioconfig_ad2e6a190d3991013ba0dd2acda925ea9}} 
+\index{altayioconfig@{altayioconfig}!imp4@{imp4}}
+\index{imp4@{imp4}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{imp4}{imp4}}
+{\footnotesize\ttfamily integer altayioconfig\+::imp4 = 110}
+
+
+
+IMP4= output file for state variables of KOST11. 
+
+\mbox{\Hypertarget{namespacealtayioconfig_aeaa6b5958ac67eb93331f0b680bec146}\label{namespacealtayioconfig_aeaa6b5958ac67eb93331f0b680bec146}} 
+\index{altayioconfig@{altayioconfig}!imp5@{imp5}}
+\index{imp5@{imp5}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{imp5}{imp5}}
+{\footnotesize\ttfamily integer altayioconfig\+::imp5 = 111}
+
+
+
+IMP5= output of stress-\/strain or slip-\/stress. 
+
+\mbox{\Hypertarget{namespacealtayioconfig_a1bbb79ec86627e8c8f81a95c2d1d3300}\label{namespacealtayioconfig_a1bbb79ec86627e8c8f81a95c2d1d3300}} 
+\index{altayioconfig@{altayioconfig}!imp6@{imp6}}
+\index{imp6@{imp6}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{imp6}{imp6}}
+{\footnotesize\ttfamily integer altayioconfig\+::imp6 = 112}
+
+
+
+IMP6= output of report file. 
+
+\mbox{\Hypertarget{namespacealtayioconfig_a44ac6efea9ff61868eab36ab43fdab48}\label{namespacealtayioconfig_a44ac6efea9ff61868eab36ab43fdab48}} 
+\index{altayioconfig@{altayioconfig}!ipebpsdv@{ipebpsdv}}
+\index{ipebpsdv@{ipebpsdv}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{ipebpsdv}{ipebpsdv}}
+{\footnotesize\ttfamily integer altayioconfig\+::ipebpsdv = 61}
+
+
+
+Output file for state-\/derived variables of KOST11. 
+
+\mbox{\Hypertarget{namespacealtayioconfig_ac8bd6d4f9bb0e8b16716968ecd6dc88f}\label{namespacealtayioconfig_ac8bd6d4f9bb0e8b16716968ecd6dc88f}} 
+\index{altayioconfig@{altayioconfig}!ipebpstat@{ipebpstat}}
+\index{ipebpstat@{ipebpstat}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{ipebpstat}{ipebpstat}}
+{\footnotesize\ttfamily integer altayioconfig\+::ipebpstat = 60}
+
+
+
+IPEBPSTAT= input file for state variables of KOST11. 
+
+\mbox{\Hypertarget{namespacealtayioconfig_a799f1da2d42c565fe171aa38722889cc}\label{namespacealtayioconfig_a799f1da2d42c565fe171aa38722889cc}} 
+\index{altayioconfig@{altayioconfig}!ipr@{ipr}}
+\index{ipr@{ipr}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{ipr}{ipr}}
+{\footnotesize\ttfamily integer altayioconfig\+::ipr = 0}
+
+
+
+Printing switch (formerly in TEXTUR common block) 
+
+\mbox{\Hypertarget{namespacealtayioconfig_ab685d4991914b9b19673d79869fb7982}\label{namespacealtayioconfig_ab685d4991914b9b19673d79869fb7982}} 
+\index{altayioconfig@{altayioconfig}!klec@{klec}}
+\index{klec@{klec}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{klec}{klec}}
+{\footnotesize\ttfamily integer altayioconfig\+::klec = 5}
+
+
+
+KLEC= data set with parameters. 
+
+\mbox{\Hypertarget{namespacealtayioconfig_ad3583c096e588b501ebab691acb4ddd3}\label{namespacealtayioconfig_ad3583c096e588b501ebab691acb4ddd3}} 
+\index{altayioconfig@{altayioconfig}!lec@{lec}}
+\index{lec@{lec}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{lec}{lec}}
+{\footnotesize\ttfamily integer altayioconfig\+::lec = 4}
+
+
+
+LEC= data set with slip systems. 
+
+\mbox{\Hypertarget{namespacealtayioconfig_accd9035e5b54351023a63f53ea9a5873}\label{namespacealtayioconfig_accd9035e5b54351023a63f53ea9a5873}} 
+\index{altayioconfig@{altayioconfig}!ndat1@{ndat1}}
+\index{ndat1@{ndat1}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{ndat1}{ndat1}}
+{\footnotesize\ttfamily integer altayioconfig\+::ndat1 = 9}
+
+
+
+NDAT1= input texture file. 
+
+\mbox{\Hypertarget{namespacealtayioconfig_af511d2a95f075ba20aff8e8b4b63bf4f}\label{namespacealtayioconfig_af511d2a95f075ba20aff8e8b4b63bf4f}} 
+\index{altayioconfig@{altayioconfig}!ndat2@{ndat2}}
+\index{ndat2@{ndat2}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{ndat2}{ndat2}}
+{\footnotesize\ttfamily integer altayioconfig\+::ndat2 = 10}
+
+
+
+NDAT2= input microstructure file. 
+
+\mbox{\Hypertarget{namespacealtayioconfig_a54d31ddd0aa3f31e2429e7028f889e3c}\label{namespacealtayioconfig_a54d31ddd0aa3f31e2429e7028f889e3c}} 
+\index{altayioconfig@{altayioconfig}!nlist@{nlist}}
+\index{nlist@{nlist}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{nlist}{nlist}}
+{\footnotesize\ttfamily integer altayioconfig\+::nlist = 0}
+
+
+
+Control of the listing file (formerly in TEXTUR common block) 
+
+This value controls amount of output sent to the IMP unit. \mbox{\Hypertarget{namespacealtayioconfig_a63ea9cc0617263c204f773518c143d78}\label{namespacealtayioconfig_a63ea9cc0617263c204f773518c143d78}} 
+\index{altayioconfig@{altayioconfig}!nmss@{nmss}}
+\index{nmss@{nmss}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{nmss}{nmss}}
+{\footnotesize\ttfamily integer altayioconfig\+::nmss = 0}
+
+
+
+Control of the output with homogenized strain-\/stress (IMP5) 
+
+\mbox{\Hypertarget{namespacealtayioconfig_a378e639f23cd60428fdea89fd84eb1ca}\label{namespacealtayioconfig_a378e639f23cd60428fdea89fd84eb1ca}} 
+\index{altayioconfig@{altayioconfig}!npebp@{npebp}}
+\index{npebp@{npebp}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{npebp}{npebp}}
+{\footnotesize\ttfamily integer altayioconfig\+::npebp = 0}
+
+
+
+Control of the state file in PEBP (KOST11 module) 
+
+\mbox{\Hypertarget{namespacealtayioconfig_a9bd40d425a310741111d2bd579efd1bb}\label{namespacealtayioconfig_a9bd40d425a310741111d2bd579efd1bb}} 
+\index{altayioconfig@{altayioconfig}!nres@{nres}}
+\index{nres@{nres}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{nres}{nres}}
+{\footnotesize\ttfamily integer altayioconfig\+::nres = 0}
+
+
+
+Control of the result file. 
+
+This value control amount of output that is sent to IMP2 unit. \mbox{\Hypertarget{namespacealtayioconfig_ae67a5b4c3fdb3d1aa3b85189bbcd2ee7}\label{namespacealtayioconfig_ae67a5b4c3fdb3d1aa3b85189bbcd2ee7}} 
+\index{altayioconfig@{altayioconfig}!pathlength@{pathlength}}
+\index{pathlength@{pathlength}!altayioconfig@{altayioconfig}}
+\doxysubsubsection{\texorpdfstring{pathlength}{pathlength}}
+{\footnotesize\ttfamily integer, parameter altayioconfig\+::pathlength = 512}
+
+
+
+Maximal length of any path (filenames, directrories etc.) 
+

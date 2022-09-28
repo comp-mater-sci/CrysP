@@ -1,0 +1,136 @@
+\hypertarget{criMathUtils_8f90}{}\doxysection{FCRI/src/cri\+Math\+Utils.f90 File Reference}
+\label{criMathUtils_8f90}\index{FCRI/src/criMathUtils.f90@{FCRI/src/criMathUtils.f90}}
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structcrimathutils_1_1srtensor}{crimathutils\+::srtensor}}
+\begin{DoxyCompactList}\small\item\em Type for 2nd rank tensors in matrix notation. The matrix is initially filled with zeros. \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{interfacecrimathutils_1_1rotatesrtensorto}{crimathutils\+::rotatesrtensorto}}
+\begin{DoxyCompactList}\small\item\em Rotate the 2nd-\/rank tensor S to the reference frame given by rotation R. \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{interfacecrimathutils_1_1rotatesrtensorfrom}{crimathutils\+::rotatesrtensorfrom}}
+\begin{DoxyCompactList}\small\item\em Rotate the 2nd-\/rank tensor S back from the reference frame given by rotation R. \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{interfacecrimathutils_1_1ocross__product}{crimathutils\+::ocross\+\_\+product}}
+\begin{DoxyCompactList}\small\item\em product operator \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{interfacecrimathutils_1_1vector__product}{crimathutils\+::vector\+\_\+product}}
+\begin{DoxyCompactList}\small\item\em product operator \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structcrimathutils_1_1eulerangles}{crimathutils\+::eulerangles}}
+\begin{DoxyCompactList}\small\item\em Representation of Euler angles\+: Bunge notation. \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{interfacecrimathutils_1_1rad2deg}{crimathutils\+::rad2deg}}
+\begin{DoxyCompactList}\small\item\em Generic function for conversion from radians to degrees. \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{interfacecrimathutils_1_1deg2rad}{crimathutils\+::deg2rad}}
+\begin{DoxyCompactList}\small\item\em Generic function for conversion from degrees to radians. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structcrimathutils_1_1pair__double}{crimathutils\+::pair\+\_\+double}}
+\begin{DoxyCompactList}\small\item\em Datatype representing pair of double precision reals. \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{interfacecrimathutils_1_1rotmat}{crimathutils\+::rotmat}}
+\item 
+interface \mbox{\hyperlink{interfacecrimathutils_1_1trace}{crimathutils\+::trace}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacecrimathutils}{crimathutils}}
+\begin{DoxyCompactList}\small\item\em Elementary math constants and functions. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+elemental double precision function \mbox{\hyperlink{namespacecrimathutils_a389226791a5b998f744b550a62ba9d8d}{crimathutils\+::scalarrad2deg}} (alpha)
+\begin{DoxyCompactList}\small\item\em Conversion from radians to degrees. \end{DoxyCompactList}\item 
+elemental double precision function \mbox{\hyperlink{namespacecrimathutils_a611e7a8133529b4ff5ebca3e1d527962}{crimathutils\+::scalardeg2rad}} (alpha)
+\begin{DoxyCompactList}\small\item\em Conversion from degrees to radians. \end{DoxyCompactList}\item 
+elemental type(eulerangles) function \mbox{\hyperlink{namespacecrimathutils_afbc0d906734e94f5be0a3ff9d7f107b4}{crimathutils\+::euleranglesrad2deg}} (ang)
+\begin{DoxyCompactList}\small\item\em Conversion from radians to degrees. \end{DoxyCompactList}\item 
+elemental type(eulerangles) function \mbox{\hyperlink{namespacecrimathutils_a1ed5a4e6492e95d322712b04c14a8291}{crimathutils\+::euleranglesdeg2rad}} (ang)
+\begin{DoxyCompactList}\small\item\em Conversion from degrees to radians. \end{DoxyCompactList}\item 
+pure double precision function, dimension(3) \mbox{\hyperlink{namespacecrimathutils_a394fb503bda17b6bf621bbb7397ecb27}{crimathutils\+::eulerangles2arr}} (ang)
+\begin{DoxyCompactList}\small\item\em Trivial conversion from Euler\+Angles to array of rank 1, dimension 3. \end{DoxyCompactList}\item 
+pure type(eulerangles) function \mbox{\hyperlink{namespacecrimathutils_a0fbdd4166ac92e26978d057509117a5a}{crimathutils\+::arr2eulerangles}} (arr)
+\begin{DoxyCompactList}\small\item\em Trivial conversion from array of rank 1, dimension 3 to Euler\+Angles. \end{DoxyCompactList}\item 
+pure double precision function, dimension(5, 5) \mbox{\hyperlink{namespacecrimathutils_af4655cec5cd506dfd57444d5ee6ab368}{crimathutils\+::ocross\+\_\+product\+\_\+dp}} (a, b)
+\begin{DoxyCompactList}\small\item\em Calculation of \mbox{\hyperlink{interfacecrimathutils_1_1ocross__product}{ocross\+\_\+product}} for double precision real. \end{DoxyCompactList}\item 
+pure integer function, dimension(5, 5) \mbox{\hyperlink{namespacecrimathutils_ab7dd1454a34ae645c8222d4bdc0f4e96}{crimathutils\+::ocross\+\_\+product\+\_\+int}} (a, b)
+\begin{DoxyCompactList}\small\item\em Calculation of \mbox{\hyperlink{interfacecrimathutils_1_1ocross__product}{ocross\+\_\+product}} for integer (default kind) \end{DoxyCompactList}\item 
+pure double precision function, dimension(size(a), size(b)) \mbox{\hyperlink{namespacecrimathutils_ada855c4f87904a844da750320836d716}{crimathutils\+::ocross\+\_\+product\+\_\+dp}} (a, b)
+\begin{DoxyCompactList}\small\item\em Calculation of \mbox{\hyperlink{interfacecrimathutils_1_1ocross__product}{ocross\+\_\+product}} for double precision real. \end{DoxyCompactList}\item 
+pure integer function, dimension(size(a), size(b)) \mbox{\hyperlink{namespacecrimathutils_a53f10ff699f93194bc5406944366e674}{crimathutils\+::ocross\+\_\+product\+\_\+int}} (a, b)
+\begin{DoxyCompactList}\small\item\em Calculation of \mbox{\hyperlink{interfacecrimathutils_1_1ocross__product}{ocross\+\_\+product}} for integer (default kind) \end{DoxyCompactList}\item 
+pure double precision function, dimension(3) \mbox{\hyperlink{namespacecrimathutils_a92645e898c8945f240fd9ba41f37f187}{crimathutils\+::vector\+\_\+product\+\_\+dp}} (a, b)
+\begin{DoxyCompactList}\small\item\em Calculation of the vector product of two double precision vectors with size 3. \end{DoxyCompactList}\item 
+pure double precision function \mbox{\hyperlink{namespacecrimathutils_ab1949c5d82d3543767d4c8e171b6d04d}{crimathutils\+::vec\+\_\+angle}} (u, v)
+\begin{DoxyCompactList}\small\item\em Calculates an angle between two vectors. \end{DoxyCompactList}\item 
+pure double precision function \mbox{\hyperlink{namespacecrimathutils_a50a987f1089170493bd8a392ba081249}{crimathutils\+::vec\+\_\+cosine}} (u, v)
+\begin{DoxyCompactList}\small\item\em Calculates a cosine of angle between two vectors. The function guarantees that the result is within range \mbox{[}-\/1\+:1\mbox{]}. \end{DoxyCompactList}\item 
+pure double precision function, dimension(rot\+\_\+matrix\+\_\+dim, rot\+\_\+matrix\+\_\+dim) \mbox{\hyperlink{namespacecrimathutils_a773d282ec9f1ca0ed001c983bfb7cc1b}{crimathutils\+::rotmat\+\_\+triplet}} (phi1, PHI, phi2)
+\begin{DoxyCompactList}\small\item\em Rotation matrix from three Euler angles in Bunge convention (phi1,PHI,phi2). \end{DoxyCompactList}\item 
+pure double precision function, dimension(rot\+\_\+matrix\+\_\+dim, rot\+\_\+matrix\+\_\+dim) \mbox{\hyperlink{namespacecrimathutils_a8b0208f439a01392e10e97eb2b3f009d}{crimathutils\+::rotmat\+\_\+eulerangles}} (ang)
+\begin{DoxyCompactList}\small\item\em Rotation matrix from three Euler angles in Bunge convention. \end{DoxyCompactList}\item 
+pure type(eulerangles) function \mbox{\hyperlink{namespacecrimathutils_ad7da68e48442d8f3b70e43cc9a9672d3}{crimathutils\+::euleranglestype}} (mat)
+\begin{DoxyCompactList}\small\item\em Three Euler angles in Bunge convention (ang) from rotation matrix (mat). \end{DoxyCompactList}\item 
+pure double precision function, dimension(sr\+\_\+tensor\+\_\+dim, sr\+\_\+tensor\+\_\+dim) \mbox{\hyperlink{namespacecrimathutils_a90ecca88917124ec1b177d29f6b19abb}{crimathutils\+::rotatesrtensorto\+\_\+matrix}} (S, R)
+\begin{DoxyCompactList}\small\item\em Rotates the second-\/rank tensor S to the reference frame given by rotation R. This corresponds to a coordinate transformation of S into the new frame obtained by rotation R. \end{DoxyCompactList}\item 
+pure double precision function, dimension(sr\+\_\+tensor\+\_\+dim, sr\+\_\+tensor\+\_\+dim) \mbox{\hyperlink{namespacecrimathutils_ae285197b436d5889852b4254ae4f80a8}{crimathutils\+::rotatesrtensorfrom\+\_\+matrix}} (S, R)
+\begin{DoxyCompactList}\small\item\em Rotates the second-\/rank tensor S back from the reference frame given by rotation R. This corresponds to a coordinate transformation of S into the new frame obtained by rotation R$^\wedge$T. \end{DoxyCompactList}\item 
+pure type(srtensor) function \mbox{\hyperlink{namespacecrimathutils_adf21d35e7bbf9384e5799a2c17f5b3eb}{crimathutils\+::rotatesrtensorto\+\_\+srtensor}} (S, R)
+\begin{DoxyCompactList}\small\item\em Rotates the second-\/rank tensor S to the reference frame given by rotation R. This corresponds to a coordinate transformation of S into the new frame obtained by rotation R. \end{DoxyCompactList}\item 
+pure type(srtensor) function \mbox{\hyperlink{namespacecrimathutils_aa4d918e6eac574deb6ffbd8e1a7c765b}{crimathutils\+::rotatesrtensorfrom\+\_\+srtensor}} (S, R)
+\begin{DoxyCompactList}\small\item\em Rotates the second-\/rank tensor S back from the reference frame given by rotation R. This corresponds to a coordinate transformation of S into the new frame obtained by rotation R$^\wedge$T. \end{DoxyCompactList}\item 
+pure double precision function, dimension(sr\+\_\+asymm\+\_\+voigt\+\_\+dim) \mbox{\hyperlink{namespacecrimathutils_ab707d3da563a51442612de2ce12aad10}{crimathutils\+::mat33tovec3}} (mat)
+\begin{DoxyCompactList}\small\item\em The function converts the antisymmetrical rank-\/two tensors mat into Voigt-\/style vector representation. Ordering of the tensor terms in the vector follows the convention used in Abaqus\+: 12, 23, 13. \end{DoxyCompactList}\item 
+pure double precision function, dimension(sr\+\_\+tensor\+\_\+dim, sr\+\_\+tensor\+\_\+dim) \mbox{\hyperlink{namespacecrimathutils_af4918aeddcff3078779b93ddbc09bb9e}{crimathutils\+::vec3tomat33}} (vec)
+\begin{DoxyCompactList}\small\item\em The function converts Voigt-\/style vector vec into antisymmetrical rank-\/two tensor. Ordering of the tensor terms in the vector follows the convention used in Abaqus\+: 12, 23, 13. \end{DoxyCompactList}\item 
+pure double precision function, dimension(sr\+\_\+tensor\+\_\+dim, sr\+\_\+tensor\+\_\+dim) \mbox{\hyperlink{namespacecrimathutils_a9cd69660eace16f013f9818f9b843287}{crimathutils\+::vec6tomat33}} (vec)
+\begin{DoxyCompactList}\small\item\em The function converts Voigt-\/style vector vec into symmetrical rank-\/two tensor. Ordering of the tensor terms in the vector follows the convention used in Abaqus\+: 11, 22, 33, 12, 23, 13. \end{DoxyCompactList}\item 
+pure double precision function, dimension(sr\+\_\+symm\+\_\+voigt\+\_\+dim) \mbox{\hyperlink{namespacecrimathutils_a5bbc8c129af6a094f67fb92104373d85}{crimathutils\+::mat33tovec6}} (mat)
+\begin{DoxyCompactList}\small\item\em The function converts the symmetrical rank-\/two tensors mat into Voigt-\/style vector representation. Ordering of the tensor terms in the vector follows the convention used in Abaqus\+: 11, 22, 33, 12, 23, 13. \end{DoxyCompactList}\item 
+pure double precision function, dimension(sr\+\_\+tensor\+\_\+dim, sr\+\_\+tensor\+\_\+dim) \mbox{\hyperlink{namespacecrimathutils_a8b5bfaeb41852f58e3d9f9755b8bb251}{crimathutils\+::vec9tomat33}} (vec)
+\begin{DoxyCompactList}\small\item\em The function converts Voigt-\/style vector vec into rank-\/two tensor. Ordering of the tensor terms in the vector follows the convention used in Abaqus\+: 11, 22, 33, 12, 23, 31, 21, 32, 13. \end{DoxyCompactList}\item 
+pure double precision function, dimension(sr\+\_\+voigt\+\_\+dim) \mbox{\hyperlink{namespacecrimathutils_afae40a968b4e144498673698537573b7}{crimathutils\+::mat33tovec9}} (mat)
+\begin{DoxyCompactList}\small\item\em The function converts the rank-\/two tensor mat into Voigt-\/style vector representation. Ordering of the tensor terms in the vector follows the convention used in Abaqus\+: 11, 22, 33, 12, 23, 31, 21, 32, 13. \end{DoxyCompactList}\item 
+pure double precision function \mbox{\hyperlink{namespacecrimathutils_a2e3ffcb4fc4186951a786ffb6687bb02}{crimathutils\+::trace\+\_\+matrix}} (X)
+\begin{DoxyCompactList}\small\item\em Calculates trace of the square n x n matrix X. \end{DoxyCompactList}\item 
+pure double precision function \mbox{\hyperlink{namespacecrimathutils_af34cc731177198842472b2b4d5b07747}{crimathutils\+::trace\+\_\+srtensor}} (X)
+\begin{DoxyCompactList}\small\item\em Calculates trace of second-\/rank tensor X. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacecrimathutils_a08eb18077596eeb4e606682be7b3060c}{crimathutils\+::getnormalvector2d}} (A, B, length, v, beta)
+\begin{DoxyCompactList}\small\item\em Calculate vector v that is normal to the vector AB (from point A to B). Provide the angle between the vector v and the x axis. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacecrimathutils_a0edef1d6669e63fbd6a6e812df4b7d93}{crimathutils\+::solvequadraticpolynomial}} (a, b, c, x)
+\begin{DoxyCompactList}\small\item\em Calculate the real roots of quadratic polynomial given in form a$^\wedge$2 x + b x + c = 0. \end{DoxyCompactList}\item 
+pure double precision function, dimension(3, 3) \mbox{\hyperlink{namespacecrimathutils_a4e158616776e62e285ed385f4a85771e}{crimathutils\+::vec5d2tens}} (v)
+\begin{DoxyCompactList}\small\item\em Convert 5D vector v into second-\/rank tensor. \end{DoxyCompactList}\item 
+pure double precision function, dimension(5) \mbox{\hyperlink{namespacecrimathutils_ad4899c6afd60edbd47366bf6aee64657}{crimathutils\+::tens2vec5d}} (t)
+\begin{DoxyCompactList}\small\item\em Convert second-\/rank tensor t into 5D vector. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+type(srtensor), parameter \mbox{\hyperlink{namespacecrimathutils_a85ddeba48fbdd4eb42641566db66f5bd}{crimathutils\+::unit\+\_\+sr\+\_\+tensor}} = SRTensor(unit\+\_\+sr\+\_\+\+Matrix)
+\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Math constants}\par
+\begin{DoxyCompactItemize}
+\item 
+double precision, parameter \mbox{\hyperlink{namespacecrimathutils_a6a9b6fc89d6bee5567075f0b2064291f}{crimathutils\+::pi}} = acos(-\/1.D0)
+\begin{DoxyCompactList}\small\item\em Pi $ \pi $. \end{DoxyCompactList}\item 
+double precision, parameter \mbox{\hyperlink{namespacecrimathutils_ad4918160e8df6c96122fbd76c0ba4869}{crimathutils\+::pi2}} = acos(0.D0)
+\begin{DoxyCompactList}\small\item\em Pi / 2. \end{DoxyCompactList}\item 
+double precision, parameter \mbox{\hyperlink{namespacecrimathutils_ade114c23d014db90bc9c439c7b128086}{crimathutils\+::pi\+\_\+deg}} = pi / 180.D0
+\item 
+double precision, parameter \mbox{\hyperlink{namespacecrimathutils_ab5753624d4216a85e366f556ba3c70cc}{crimathutils\+::deg\+\_\+pi}} = 180.D0 / pi
+\item 
+double precision, parameter \mbox{\hyperlink{namespacecrimathutils_a398ac1586197cb4acfe8898840b0f86f}{crimathutils\+::root2}} = sqrt(2.D0)
+\begin{DoxyCompactList}\small\item\em Square root of 2 $ \sqrt{2} $. \end{DoxyCompactList}\item 
+double precision, parameter \mbox{\hyperlink{namespacecrimathutils_a2c2e1af846fb820b31cf71e4a9462c06}{crimathutils\+::root2i}} = 0.\+5D0 $\ast$ sqrt(2.D0)
+\begin{DoxyCompactList}\small\item\em Inverse of square root of 2 $ \frac{1}{\sqrt{2}} $. \end{DoxyCompactList}\item 
+double precision, parameter \mbox{\hyperlink{namespacecrimathutils_a8f5008cdecddc5422b823e7849e655d8}{crimathutils\+::root23}} = sqrt(2.D0/3.D0)
+\begin{DoxyCompactList}\small\item\em Square root of 2/3 $ \sqrt{2/3} $. \end{DoxyCompactList}\item 
+double precision, parameter \mbox{\hyperlink{namespacecrimathutils_adfb13757cc089db703babbe44cc9053f}{crimathutils\+::root32}} = sqrt(3.D0/2.D0)
+\begin{DoxyCompactList}\small\item\em Square root of 3/2 $ \sqrt{3/2} $. \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespacecrimathutils_a4c8bab38c29f02139ed7d3bfba642864}{crimathutils\+::sr\+\_\+tensor\+\_\+dim}} = 3
+\begin{DoxyCompactList}\small\item\em Array dimension for second-\/rank tensors (sr\+\_\+tensor\+\_\+dim x sr\+\_\+tensor\+\_\+dim) \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespacecrimathutils_a90f99787840fe40d0bd3cd53f0fa1755}{crimathutils\+::rot\+\_\+matrix\+\_\+dim}} = 3
+\begin{DoxyCompactList}\small\item\em Array dimension for 3D rotation matrix (rot\+\_\+matrix\+\_\+dim x rot\+\_\+matrix\+\_\+dim) \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespacecrimathutils_aa6b9e7a537da6ffeea6434748617dd48}{crimathutils\+::sr\+\_\+asymm\+\_\+voigt\+\_\+dim}} = 3
+\begin{DoxyCompactList}\small\item\em Array dimension for symmetric 3D second-\/rank tensors expressed in Voigt notation. \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespacecrimathutils_aa6f6ba7d874dd79d42873b2026b4d62c}{crimathutils\+::sr\+\_\+symm\+\_\+voigt\+\_\+dim}} = 6
+\item 
+integer, parameter \mbox{\hyperlink{namespacecrimathutils_a15d1e2e661ee56108c9518fd3864ff69}{crimathutils\+::sr\+\_\+voigt\+\_\+dim}} = 9
+\item 
+double precision, dimension(sr\+\_\+tensor\+\_\+dim, sr\+\_\+tensor\+\_\+dim), parameter \mbox{\hyperlink{namespacecrimathutils_a6149c01cf6f4e5850a34a8823324c8a0}{crimathutils\+::unit\+\_\+sr\+\_\+matrix}} = reshape( \mbox{[} 1.D0, 0.D0, 0.D0, 0.D0, 1.D0, 0.D0, 0.D0, 0.D0, 1.D0\mbox{]}, \mbox{[} sr\+\_\+tensor\+\_\+dim, sr\+\_\+tensor\+\_\+dim \mbox{]})
+\begin{DoxyCompactList}\small\item\em Matrix form of the unit second rank tensor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}

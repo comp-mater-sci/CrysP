@@ -1,0 +1,283 @@
+\hypertarget{guided_tour_gt_introduction}{}\doxysection{Introduction}\label{guided_tour_gt_introduction}
+Throughout this guided tour, we will walk you through the the most common VEF features. This guided tour is written for the \mbox{\hyperlink{page_expert_mode}{expert mode}} that provides the most elaborate control over the virtual experiments.\hypertarget{guided_tour_autotoc_md36}{}\doxysubsection{Expert mode -\/ what\textquotesingle{}s that?}\label{guided_tour_autotoc_md36}
+The VEF consists of a number of programs. One of these, the {\ttfamily alam\+DMC} program, is the corner stone, since it carries out most of the computational work. In this guided tour we will primarily demonstrate how to use {\ttfamily alam\+DMC} and how to interpret its results. We call it \char`\"{}expert mode\char`\"{} because it comes down to writing configuration files and running programs from a command line (command prompt on Windows or user shell on Linux).\hypertarget{guided_tour_autotoc_md37}{}\doxysubsection{Let\textquotesingle{}s start!}\label{guided_tour_autotoc_md37}
+Before we start, please copy the content of directory {\ttfamily examples\textbackslash{}guided\+\_\+tour} from the VEF installation directory to another directory on your computer. We will refer to that copy as {\ttfamily guided\+\_\+tour\+\_\+directory}.
+
+Please run the command prompt window and change the directory to {\ttfamily guided\+\_\+tour\+\_\+directory}. The very first thing we have to do is to initialize a VEF session. To do so, we run {\ttfamily vef\+\_\+session} command from the VEF installation directory. For instance, if the VEF is installed in {\ttfamily c\+:\textbackslash{}\textbackslash{}VEF}, the command is\+:
+
+
+\begin{DoxyPre}
+c:\textbackslash{}VEF\textbackslash{}vef\_session
+\end{DoxyPre}
+\hypertarget{guided_tour_gt_input_texture}{}\doxysection{Input texture}\label{guided_tour_gt_input_texture}
+The VEF calculations require crystallographic texture data as input. The texture is usually provided as the Orientation Distribution Function (ODF), either in the form of a continuous function or as OFD intensities on a regular grid. Before we use the texture data in the VEF software, we have to make a discrete ODF by sampling orientations from the ODF ~\newline
+ to get a collection of discrete orientations, which as a whole approximates the input ODF. In this example we are going to start from the ODF exported from MTEX Toolbox \textbackslash{}opcite\{MTEX\}.
+
+\begin{DoxyNote}{Note}
+The VEF currently supports importing texture data from MTEX. ~\newline
+ However, the data must satisfy two requirements\+: triclinic symmetry must ~\newline
+ be pre-\/imposed and Bunge convention has to be used. Please see \href{https://mtex-toolbox.github.io/files/doc/ODFImportExport.html\#7}{\texttt{ MTEX documentation}} how to export ODF data to generic ASCII files.
+\end{DoxyNote}
+Let us use the texture data for a ferritic steel (it\textquotesingle{}s DX51D, for your curiosity), given in the file {\ttfamily sid1687f.\+odf}. It so happens the texture is expressed in the \mbox{\hyperlink{page_conventions_convention_reference_frame}{material reference frame}} where the RD, TD and ND are the first, second and third axis, respectively. By the way, this reference frame adheres to a pretty common convention used in measuring texture of rolled alloys. If you wish, you can first inspect the texture by plotting a set of ODF sections. To do so, run the \mbox{\hyperlink{page_utilities_odfplot}{odfplot command}}\+: 
+\begin{DoxyPre}
+odfplot -\/-\/input sid1687f.odf -\/-\/sections 0,45 -\/-\/style=filled -\/-\/no-\/labels
+\end{DoxyPre}
+
+
+This will produce two PNG files\+: {\ttfamily sid1687f\+\_\+0.\+png} and {\ttfamily sid1687f\+\_\+45.\+png}\+:     ODF section $ \phi_2 = 0^\circ $      ODF section $ \phi_2 = 45^\circ $ 
+
+As we can see from these ODF sections, the material has a prevalently strong $\gamma$-\/fiber.
+
+Let us now sample the ODF to get representative crystal orientations. As a rule of thumb, we recommend to use at least 2000 (ideally\+: 3000 -\/ 7000) orientations to get a good representation of the macrotexture. The command \mbox{\hyperlink{page_utilities_odf2smt}{\`{}odf2smt\`{}}} will do the sampling\+: 
+\begin{DoxyPre}
+odf2smt -\/-\/input sid1687f.odf -\/-\/ncrystals 3000
+\end{DoxyPre}
+ The command will produce a single file {\ttfamily sid1687f.\+smt} that contains 3000 discrete orientations. We will use this file as input in all the examples in this tutorial.\hypertarget{guided_tour_gt_anisotropy}{}\doxysection{Anisotropy of the as-\/received material}\label{guided_tour_gt_anisotropy}
+\hypertarget{guided_tour_gt_QRS}{}\doxysubsection{Uniaxial tension}\label{guided_tour_gt_QRS}
+The VEF can calculate anisotropic properties for any direction of uniaxial loading. If the properties of the as-\/recieved (undeformed) material are of interest, the Uniaxial Anisotropy Module of the {\ttfamily alam\+DMC} program is the most handy way to do so. To run this module, we need a configuration file that instructs the program what to do (see \mbox{\hyperlink{page_alamdmc_modules_module_qrs}{reference manual}} for full details on what can be specified in Uniaxial Anisotropy Module configuration files). We have drafted one for you\+: please find file {\ttfamily sid1687f\+\_\+qrs.\+cfg} in {\ttfamily guided\+\_\+tour\+\_\+directory}. Let\textquotesingle{}s quickly inspect what\textquotesingle{}s inside\+:
+
+
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+
+
+As you certainly noticed, there are lines that start with {\ttfamily \#}\+: these are \mbox{\hyperlink{page_alamdmc_format_desc_alamdmc_comments}{comments}} that you can put in the configuration files. The comments are ignored by the program, but help us to understand the content of the file.
+
+The file has a \mbox{\hyperlink{page_alamdmc_format_desc_alamdmc_format}{fixed format}}, which means the order and the position of the items matter. The leading part (lines 4 -\/ 12) contain generic settings, and is followed by a trailing part (lines 16 -\/ 18) with setting that are specific for this module.
+
+Here\textquotesingle{}s what the configuration file tells the {\ttfamily alam\+DMC}\+:
+\begin{DoxyItemize}
+\item The names of output files will stem from {\ttfamily sid1687f\+\_\+qrs} (line 4). In our case the primary output file will be named {\ttfamily sid1687f\+\_\+qrs.\+xqrs}. ~\newline
+
+\item If available, the deformed material state should be written out to dedicated output files (line 5).
+\item Much details about the calculations performed will be printed to the terminal (line 6).
+\item The texture file {\ttfamily sid1687f.\+smt} \mbox{\hyperlink{guided_tour_gt_input_texture}{we created earlier}} will be used as the input (line 7).
+\item The ALAMEL crystal plasticity model will be used (line 8).
+\item The crystal plasticity model will assume bcc crystal structure with 24 slip systems (line 9).
+\item Lines 10 -\/ 12 instruct the program to use the defaults for microstructural description, hardening and solver settings, respectively.
+\end{DoxyItemize}
+
+The module-\/specific configuration section specifies the following\+:
+\begin{DoxyItemize}
+\item Lines 16 -\/ 17 provide the program with the orientations of virtual samples with respect to the \mbox{\hyperlink{page_conventions_convention_reference_frame}{reference frame}}. This is done by a \mbox{\hyperlink{page_alamdmc_format_range_option}{range specification}}. In this example the orientations are given as a \mbox{\hyperlink{page_alamdmc_format_option_uniform}{uniform range}} of angles between the loading direction and selected material axis (see below).
+\item Default settings of uniaxial tension will be used (line 18). These include, among other things, that the reference frame will be given by the material reference frame, in this case RD, TD and ND. Therefore, the orientations of the virtual tensile samples are given as the angle between RD and the loading direction within the RD-\/\+TD plane.
+\end{DoxyItemize}
+
+Let\textquotesingle{}s now run the {\ttfamily alam\+DMC} program in the command line. The program \mbox{[}takes two arguments\mbox{]} (\mbox{\hyperlink{page_alamdmc_usage}{Alam\+DMC Usage}})\+: the module keyword ({\ttfamily QRS}) and the path to the configuration file {\ttfamily sid1687f\+\_\+qrs.\+cfg}\+: 
+\begin{DoxyPre}
+alamDMC QRS sid1687f\_qrs.cfg
+\end{DoxyPre}
+
+
+The program will place its output in the file {\ttfamily sid1687f\+\_\+qrs.\+xqrs}. Let\textquotesingle{}s have a look at the leading 5 lines of that file\+:  
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+ The initial two lines constitute a header. The first line that starts with \textquotesingle{}\#\textquotesingle{} character contains column numbers. Because of the leading \textquotesingle{}\#\textquotesingle{}, the line is typically neglected by upstream analysis software (e.\+g. plotting program). The second line contains the column names. You will see headers similar to this one in many output files produced by the VEF.
+
+Let\textquotesingle{}s plot the Lankford coefficient (column {\ttfamily r-\/value}) as a function of loading direction (column {\ttfamily angle})\+:
+
+  Lankford coefficients in different directions of uniaxial loading 
+
+This module of the VEF calculates the {\itshape instantaneous} r-\/values, meaning there\textquotesingle{}s no finite deformation imposed (see also the exact \mbox{[}definition\mbox{]} (r-\/value)). Off course, the VEF can also calculate r-\/values in a similar way as they are measured according to norms, spanning a finite deformation of 20\% tensile strain, for instance. We will come back to this in \mbox{\hyperlink{guided_tour_gt_udsa}{further in this guided tour}}.
+
+The column {\ttfamily sigma\+\_\+xx} contains the tensile stresses. Let\textquotesingle{}s plot this output as well\+:   Tensile stress in different directions of uniaxial loading 
+
+The unit for stresses we put in the figure is referring to the fact we do not use any hardening and we make no assumptions if the stress is given in any particular unit. Again, \mbox{\hyperlink{guided_tour_gt_udsa}{a further section of this guided tour}} will shed some light on this issue.\hypertarget{guided_tour_gt_YLD}{}\doxysubsection{Yield locus sections}\label{guided_tour_gt_YLD}
+The VEF includes a Yield Locus Module that calculates yield locus sections. ~\newline
+
+
+Here is how a typical configuration file looks like (please see the file {\ttfamily sid1687f\+\_\+yld.\+cfg})\+: 
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+
+
+Whereas the generic configuration settings (lines 4 -\/ 12) are identical as in the previous section, the trailing \mbox{[}module-\/specific configuration\mbox{]} (\mbox{\hyperlink{page_alamdmc_modules_configuration_yld}{Module-\/specific configuration}}) is different. The YLD uses the angle $\theta$ to choose which points on the locus section should be calculated. Figure below gives an illustration how $\theta$ is defined. ~\newline
+
+
+  Illustration of $\theta$ angle that the Yield Locus Module uses to select points in yield locus section. The $\beta$ angle is one of the outputs from the module. 
+
+In this example we specify a \mbox{\hyperlink{page_alamdmc_format_option_multibiased}{multibiased range}} of $\theta$ angles, which allows us to probe the yield locus more densely in regions where the curvature of the section is expected to be high, and far more coarsely elsewhere. In our example, the denser scan of the yield locus will be around equibiaxial tension point (i.\+e. $\theta = 45^\circ $) and equibiaxial compression point ( $\theta = 205^\circ $). However, the equibiaxial tension point will be covered by more points (see the subranges 1 and 4) than the exquibiaxial compression (see the subranges 2 and 3).
+
+The last configuration option (line 27) requests to use the default module settings, which are\+:
+\begin{DoxyItemize}
+\item the yield locus section is defined by $\sigma_{11} $ (normal stress along RD) and $\sigma_{22} $ (normal stress along TD) directions,
+\item the yield locus will be scaled by yield stress corresponding to uniaxial tension along the RD.
+\end{DoxyItemize}
+
+We can run it as follows, using the appropriate keyword {\ttfamily YLD}\+:
+
+
+\begin{DoxyPre}
+alamDMC YLD sid1687f\_yld.cfg
+\end{DoxyPre}
+
+
+We may now quickly inspect the content of the output file {\ttfamily sid1687f\+\_\+yld.\+xyld} (the file contains 12 columns, so depending on the size of your screen some lines may fold). The top five lines will look similar to this\+:  
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+ The column {\ttfamily theta} contains the angles that were used for computing the yield locus section. The columns {\ttfamily sigma} and {\ttfamily sigma\+\_\+scaled} include the points on the section, both in polar coordinate system of the angle {\ttfamily theta}. For post-\/processing, we may use the columns {\ttfamily sigma\+\_\+x} and {\ttfamily sigma\+\_\+y}, containing the yield locus contour in Cartesian coordinate system, as an alternative to using {\ttfamily theta} with {\ttfamily sigma\+\_\+scaled}. Plotting this data gives as result\+:
+
+  Yield locus section (DX51D steel) 
+
+Additionally, we can use columns {\ttfamily dsigma\+\_\+x} and {\ttfamily dsigma\+\_\+y} to plot yield locus\textquotesingle{} normals (actually\+: the projections of yield locus normals onto the current section of stress space)\+:
+
+  Normals to the yield locus section (DX51D steel) 
+
+\begin{DoxyNote}{Note}
+The normals to the yield locus contour are approximated numerically by considering also the neighboring points. To ensure good quality of the normals, make sure that the angular resolution of $\theta$ does not exceed $ \approx 5^\circ $ in the regions of stress space where the yield locus contour has high curvature.
+\end{DoxyNote}
+Of course, we don\textquotesingle{}t always need very detailed calculations of the yield locus. If just a few points are enough, we can easily get this done. Let\textquotesingle{}s modify our example\+: first copy {\ttfamily sid1687f\+\_\+yld.\+cfg} to {\ttfamily sid1687f\+\_\+coarse\+\_\+yld.\+cfg} and then edit the copy. We need to change just a few things\+:
+\begin{DoxyEnumerate}
+\item the prefix for the output file. This is just to prevent overwriting the results we got from {\ttfamily YLD} a minute ago.
+\item the range of $\theta$ angles.
+\end{DoxyEnumerate}
+
+Please see the changes in lines 4, 16 and 17 in the {\ttfamily sid1687f\+\_\+coarse\+\_\+yld.\+cfg} listed below\+:
+
+
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+
+
+We can see that $\theta$ is restricted to the range from 0\textdegree{} to 90\textdegree{} ~\newline
+ every 15\textdegree{}, so only 7 points will be calculated\+: 
+\begin{DoxyPre}
+alamDMC YLD sid1687f\_coarse\_yld.cfg
+\end{DoxyPre}
+
+
+Here are the computed points on the yield locus section\+:   Yield locus section with limited $\theta$ range (DX51D steel) \hypertarget{guided_tour_gt_anisotropy_evol}{}\doxysection{Anisotropy evolution due to deformation}\label{guided_tour_gt_anisotropy_evol}
+So far we have used the VEF to derive plastic properties of the material {\itshape in the state given by the texture measurement}. Now we are going to get predictions how the material state evolves, and at the same time we will see how the properties evolve with strain.\hypertarget{guided_tour_gt_udsa}{}\doxysubsection{Deformation under uniaxial stress state}\label{guided_tour_gt_udsa}
+In the next step of this tour we will simulate uniaxial tension test. The \mbox{\hyperlink{page_alamdmc_modules_module_udsa}{Uniaxial Stress Test Module}} provides a virtual uniaxial test. We will track the evolution of the material state up to a plastic strain of approximately 40\%, which is much higher than what may usually be realized in an experimental tensile test setup.
+
+Let\textquotesingle{}s take the configuration file {\ttfamily sid1687f\+\_\+udsa.\+cfg} for this module\+: 
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+
+
+Again, we made no change in the generic configuration section. The \mbox{[}module-\/specific part\mbox{]} (\mbox{\hyperlink{page_alamdmc_modules_configuration_udsa}{Module-\/specific configuration}}) tells the VEF to simulate a process where the virtual samples are oriented in-\/plane of the sheet, and \char`\"{}cut out\char`\"{} in the directions 0\textdegree{}, 45\textdegree{} and 90\textdegree{} with respect to the RD. The Alam\+DMC program will simulate tension up to tensile strain 0.\+4. The total deformation will be subdivided into increments of magnitude 0.\+01. The option {\ttfamily Strain\+Tensor\+Component} instructs the program to calculate the increments in a way that the tensile strain component will uniformly increase.
+
+Let\textquotesingle{}s run the program (module keyword {\ttfamily UDSA})\+: 
+\begin{DoxyPre}
+alamDMC UDSA sid1687f\_udsa.cfg
+\end{DoxyPre}
+
+
+You will see a couple of output files produced this time, in particular {\ttfamily sid1687f\+\_\+udsa\+\_\+0\+\_\+000.\+uds}, {\ttfamily sid1687f\+\_\+udsa\+\_\+45\+\_\+000.\+uds} and {\ttfamily sid1687f\+\_\+udsa\+\_\+90\+\_\+000.\+uds}. As you probably guessed from their names, the files correspond to the three directions of the virtual samples. We can quickly inspect the content of these files, for instance {\ttfamily sid1687f\+\_\+udsa\+\_\+0\+\_\+000.\+uds}. The file contains a number of columns. The first one gives the increment number -\/ as we can see, the program performed 41 increments. We also see {\ttfamily r-\/value} and {\ttfamily r-\/valueA}, which are the instantaneous and accumulated Lankford coefficients, respectively. Let\textquotesingle{}s plot these two as functions of tensile strain norm (column {\ttfamily eps\+\_\+xx})\+:
+
+    Evolution of the r-\/values in tensile tests (Top -\/ 0\textdegree{}; Middle -\/ 45\textdegree{}; Bottom -\/ 90\textdegree{}), calculated by Uniaxial Stress Test Module (DX51D steel) 
+
+It can be seen that the instantaneous r-\/values evolve much faster. They also show more irregularities, since they are derived from plastic {\itshape strain rate} (cf. \mbox{[}definition\mbox{]} (r-\/value)). The accumulated r-\/values, which are derived from plastic {\itshape strain} (cf. \mbox{[}definition\mbox{]} (r-\/valueA)), evolve far slower.
+
+It appears that the r-\/values in the TD directions follow a different evolution path than in the other two directions. That also means that $ \Delta r $ increases with deformation.
+
+The tensile stresses are reported in the column {\ttfamily sigma\+\_\+xx} as well\+:   Evolution of the tensile stress without strain hardening calculated by Uniaxial Stress Test Module (DX51D steel) 
+
+That looks weird. It seems that the samples at 45\textdegree{} and 90\textdegree{} initially {\itshape soften} and then only slightly harden. Well, it\textquotesingle{}s pretty normal given the fact we do not use any hardening model at all. This also means the hardening effect results exclusively from the texture evolution.
+
+It takes just a few steps to include the hardening. First, let\textquotesingle{}s make a copy of {\ttfamily sid1687f\+\_\+udsa.\+cfg} and name it {\ttfamily sid1687f\+\_\+hardening\+\_\+udsa.\+cfg}. We need to make a slight modification to its generic section\+:
+\begin{DoxyEnumerate}
+\item change the output prefix (we don\textquotesingle{}t want to overwrite the results of the previous tests, do we?) into\+: {\ttfamily sid1687f\+\_\+hardening\+\_\+udsa}
+\item change the hardening parameters\+:
+\begin{DoxyItemize}
+\item Set the flag to use default hardening to\+: {\ttfamily False}
+\item add a line below and put there\+: {\ttfamily 2}
+\item add yet another line below and put the following three values there\+: {\ttfamily 42. 1.\+4e-\/2 0.\+24}
+\end{DoxyItemize}
+\end{DoxyEnumerate}
+
+We have just requested \mbox{\hyperlink{page_alamdmc_generic_hardening_model3}{Swift hardening law}} with the parameters $ \tau_0 = 42 $ MPa, $ \gamma_0 = 1.4e-2 $ and $ n = 0.24 $ (if you are curious where are these numbers coming from, you are welcome to read our \mbox{\hyperlink{tutorial_swift}{tutorial on calibrating hardening laws in VEF}}).
+
+After the modifications, the new input file should look as shown in the listings below\+: 
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+
+
+It\textquotesingle{}s time to re-\/run the program on our modified input file\+: 
+\begin{DoxyPre}
+alamDMC UDSA sid1687f\_hardening\_udsa.cfg
+\end{DoxyPre}
+
+
+Let\textquotesingle{}s plot the tensile stresses this virtual material that {\itshape does} harden\+:   Tensile stress evolution in tensile tests with strain hardening, calculated by Uniaxial Stress Test Module (DX51D steel) 
+
+Let\textquotesingle{}s check now how the texture evolves in these tensile tests. Because we requested output of material state , the discrete deformation textures have been stored in a dedicated output format\+: a CUR file. It contains consecutive {\itshape blocks}\+: one block per increment of the Alam\+DMC simulation, up to the final state of texture that is stored in the last block. We may calculate continuous ODFs for all the texture states stored\+: 
+\begin{DoxyPre}
+cur2c -\/-\/input=sid1687f\_hardening\_udsa\_0\_000.CUR -\/-\/output=sid1687f\_hardening\_udsa\_0\_000.C
+\end{DoxyPre}
+ The \mbox{\hyperlink{page_utilities_cur2c}{cur2c command}} produces a series of C files\+: {\ttfamily sid1687f\+\_\+hardening\+\_\+udsa\+\_\+1.\+C} to {\ttfamily sid1687f\+\_\+hardening\+\_\+udsa\+\_\+40.\+C}, corresponding to all blocks contained within the input CUR file. A C file describes the continuous ODF as a set of series expansion coefficients. As we remember, the program calculated 41 increments (the initial one and 40 increments afterwards), so the final texture will be in the 40th block. We can be more selective and request just the final one from the two other CUR files\+: 
+\begin{DoxyPre}
+cur2c -\/-\/input=sid1687f\_hardening\_udsa\_45\_000.CUR -\/-\/block=40 -\/-\/output=sid1687f\_hardening\_udsa\_45\_000\_40.C
+cur2c -\/-\/input=sid1687f\_hardening\_udsa\_90\_000.CUR -\/-\/block=40 -\/-\/output=sid1687f\_hardening\_udsa\_90\_000\_40.C
+\end{DoxyPre}
+
+
+For the 3 virtual tests, we can plot ODF sections of the final deformation state\+: 
+\begin{DoxyPre}
+odfplot -\/-\/input sid1687f\_hardening\_udsa\_0\_000\_40.C  sid1687f\_hardening\_udsa\_45\_000\_40.C sid1687f\_hardening\_udsa\_90\_000\_40.C -\/-\/style=filled -\/-\/odfmin=0.9 -\/-\/odfmax=6.0
+\end{DoxyPre}
+ Here are the requested ODF sections\+:     ODF section $ \phi_2 = 45^\circ $ of the deformation texture at tensile strain 0.\+4 (in-\/plane direction of 0\textdegree{} to RD), calculated by Uniaxial Stress Test Module (DX51D steel)      ODF section $ \phi_2 = 45^\circ $ of the deformation texture at tensile strain 0.\+4 (in-\/plane direction of 45\textdegree{} to RD), calculated by Uniaxial Stress Test Module (DX51D steel)      ODF section $ \phi_2 = 45^\circ $ of the deformation texture at tensile strain 0.\+4 (in-\/plane direction of 90\textdegree{} to RD), calculated by Uniaxial Stress Test Module (DX51D steel) 
+
+It is immediately clear from these sections that the evolution of the texture greatly depends on the direction of the imposed tension. In-\/depth interpretation of the texture evolution is beyond the scope of this tutorial. Briefly speaking, the $ \gamma $-\/fibre breaks into individual components, but the changes are not limited to this effect.\hypertarget{guided_tour_gt_asr}{}\doxysubsection{Deformation under arbitrary stress state}\label{guided_tour_gt_asr}
+Obviously, the uniaxial stress state is not the only one that is relevant in simulating plastic deformations. In fact, quite the opposite is true\+: we often want to find out how the material performs under more complex state. We sometimes also want to know what happens as a result of a pre-\/deformation under some known stress mode.
+
+Suppose we are interested how the material would behave if we deform it under a given stress state and subsequently impose another deformation, and possibly yet another deformation, and so on. The module ASR can do such calculation for us.
+
+Let us get input file {\ttfamily sid1687f\+\_\+asr.\+cfg} for this module\+:
+
+
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+
+
+The essential part of the file (from line 14 onwards) instructs the {\ttfamily alam\+DMC} program to apply 4 consecutive deformation steps, each of different stress mode but identical plastic strain magnitude 0.\+2. So, let\textquotesingle{}s run it\+:
+
+
+\begin{DoxyPre}
+alamDMC ASR sid1687f\_asr.cfg
+\end{DoxyPre}
+
+
+Let\textquotesingle{}s open the output file {\ttfamily sid1687f\+\_\+asr.\+asr} to check what\textquotesingle{}s produced by the ASR module. Uh-\/oh. Sixty columns of data, that\textquotesingle{}s a lot. The module simulates evolution an arbitrary stress and makes no additional assumptions, so it reports as much as possible (within reason) to allow the user to interpret the results.\hypertarget{guided_tour_gt_ewc}{}\doxysubsection{Equiwork contours}\label{guided_tour_gt_ewc}
+In \mbox{\hyperlink{guided_tour_gt_YLD}{one of previous sections}} we have calculated the yield locus of the material in as-\/received state. But a natural question arises\+: how would the yield locus change once we deform the material?
+
+The VEF provides two ways of answering this question. One is to calculate a new yield locus for a predicted deformation texture, while the other is to compute so-\/called \mbox{\hyperlink{page_alamdmc_modules_module_ewc}{equiwork contours}} that are obtained from a series of monotonic stress loadings.
+
+We are going to use the latter option, which is implemented in the module EWC. Please locate the input file {\ttfamily sid1687f\+\_\+hardening\+\_\+ewc.\+cfg} in {\ttfamily guided\+\_\+tour\+\_\+directory}. Let\textquotesingle{}s open it\+:
+
+
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+
+
+As we can see, the generic part of the configuration file includes the same hardening law as we previously used in our \mbox{\hyperlink{guided_tour_gt_udsa}{uniaxial stress state analysis}}.
+
+The \mbox{[}module-\/specific part\mbox{]} (\mbox{\hyperlink{page_alamdmc_modules_configuration_ewc}{Module-\/specific configuration}}) tells the VEF to get the plastic work levels from a reference stress path, in this case uniaxial tension simulated up to strain magnitude of 0.\+4. Then the program will follow a series of biaxial loading paths with 5\textdegree{} resolution of angle $ \theta $. Each loading path will follow work-\/controlled evolution up to the work level corresponding to equivalent strain of 0.\+3 on the reference stress path. Likewise, the work increments will be chosen to match increment of 0.\+1 of equivalent strain on the reference path. ~\newline
+
+
+Let\textquotesingle{}s run the program (module keyword {\ttfamily EWC})\+: 
+\begin{DoxyPre}
+alamDMC EWC sid1687f\_hardening\_ewc.cfg
+\end{DoxyPre}
+
+
+There is quite a lot to compute in this run, so in the meantime we can go and grab a cup of coffee or some other tasty drink. Once we are back, we can jump into the results stored in the output file {\ttfamily sid1687f\+\_\+hardening\+\_\+ewc.\+ewc}. The first 5 lines should look like below\+:
+
+ 
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+ The column {\ttfamily theta} contains the angles that were used for computing the loading paths. The subsequent columns contain the stresses on the section equiwork contours. As you can see, the column headers indicate what strain level each contour corresponds to.
+
+The numerical values in the listing show that stresses on the contours increase with deformation. This perfectly makes sense\+: the material hardens with deformation, so the equiwork contours expand. So, let\textquotesingle{}s make a polar plot of these contours\+:
+
+  Equiwork contours in the biaxial $ \sigma_x $ $ \sigma_y $ section (DX51D steel)  

@@ -1,0 +1,224 @@
+\hypertarget{namespacedmcbasicmodule}{}\doxysection{dmcbasicmodule Module Reference}
+\label{namespacedmcbasicmodule}\index{dmcbasicmodule@{dmcbasicmodule}}
+
+
+Implementation of a basic DMC computational module.  
+
+
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+integer function \mbox{\hyperlink{namespacedmcbasicmodule_a3e22bc4f2359cb559de888a8d5bb489e}{basicmodule\+\_\+readconfig}} (this, cnfunit)
+\begin{DoxyCompactList}\small\item\em read output and Al\+Tay configuration sections \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedmcbasicmodule_a462409cfc66bd86fc3bac1a780f08290}{basicmodule\+\_\+run}} (this, info)
+\item 
+integer function \mbox{\hyperlink{namespacedmcbasicmodule_aed1b2b0198fb684ea549404d15d821ad}{basicmodule\+\_\+openoutputfile}} (this, ext, ofunit, suffix)
+\begin{DoxyCompactList}\small\item\em Open output file. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcbasicmodule_a5f6d9685ace3da73075f7d8ab9b3025b}{basicmodule\+\_\+finalizelibaltay}} (this)
+\begin{DoxyCompactList}\small\item\em Finalize lib\+Altay and perform additional actions on finalization. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedmcbasicmodule_a064dfc41ccd5a131b83dcc30aba292d7}{readoutputconfigsection}} (cnfunit, cnf, info)
+\begin{DoxyCompactList}\small\item\em Read output configuration from top 3 lines after comment header in configuration file\+: prefix for output files, incremental output request flag, verbosity level. \end{DoxyCompactList}\item 
+subroutine, public \mbox{\hyperlink{namespacedmcbasicmodule_afbf4094988fefb69030a30dc069f0880}{readaltayconfigsection}} (cnfunit, cnf, info)
+\begin{DoxyCompactList}\small\item\em Read configuration of libaltay. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedmcbasicmodule_a67e8f775b221faa2fee06e5cf11b057b}{readhardeningsection}} (cnfunit, hardening, info)
+\begin{DoxyCompactList}\small\item\em Read configuration of hardening model from configuration file. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedmcbasicmodule_a4eca5c3a585757a4bc784ba84c310cb5}{readpepbhardening}} (cnfunit, kost, hc, info)
+\begin{DoxyCompactList}\small\item\em Read configuration of PEBP hardening module. \end{DoxyCompactList}\item 
+character(len=max\+\_\+pathlen) function \mbox{\hyperlink{namespacedmcbasicmodule_ae707e232788d261c4b8810cff68305cc}{getvefdatadir}} ()
+\begin{DoxyCompactList}\small\item\em Deduce the path to VEF common data files. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacedmcbasicmodule_a48d2c805db157cdf1780fc8962279586}{dm\+\_\+fcc12}} = 1
+\begin{DoxyCompactList}\small\item\em FCC (111)\texorpdfstring{$<$}{<}110\texorpdfstring{$>$}{>}, through altay\+Deformation\+Mechanism\+Data\+\_\+preconfigured objects. \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespacedmcbasicmodule_a53735bba54a5db17a29088a923dd0bcd}{dm\+\_\+bcc24}} = 2
+\begin{DoxyCompactList}\small\item\em BCC (110)\texorpdfstring{$<$}{<}111\texorpdfstring{$>$}{>} + (112)\texorpdfstring{$<$}{<}111\texorpdfstring{$>$}{>}, through altay\+Deformation\+Mechanism\+Data\+\_\+preconfigured objects. \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespacedmcbasicmodule_a81ffbb7a8288ffc4b6145d5581d2aa47}{dm\+\_\+bcc48}} = 3
+\begin{DoxyCompactList}\small\item\em BCC (110)\texorpdfstring{$<$}{<}111\texorpdfstring{$>$}{>} + (112)\texorpdfstring{$<$}{<}111\texorpdfstring{$>$}{>} + (123)\texorpdfstring{$<$}{<}111\texorpdfstring{$>$}{>}, through altay\+Deformation\+Mechanism\+Data\+\_\+preconfigured objects. \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespacedmcbasicmodule_a96c0ca382f8c5a7fd66f4d98715366bb}{dm\+\_\+user}} =99
+\begin{DoxyCompactList}\small\item\em DM\+\_\+user (currently not exploited). \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespacedmcbasicmodule_a89aa72081ba1559805e5932a4c7e9fdb}{dm\+\_\+format\+\_\+pre}} = 101
+\begin{DoxyCompactList}\small\item\em Initialization from file of PRE file format. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Implementation of a basic DMC computational module. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacedmcbasicmodule_a5f6d9685ace3da73075f7d8ab9b3025b}\label{namespacedmcbasicmodule_a5f6d9685ace3da73075f7d8ab9b3025b}} 
+\index{dmcbasicmodule@{dmcbasicmodule}!basicmodule\_finalizelibaltay@{basicmodule\_finalizelibaltay}}
+\index{basicmodule\_finalizelibaltay@{basicmodule\_finalizelibaltay}!dmcbasicmodule@{dmcbasicmodule}}
+\doxysubsubsection{\texorpdfstring{basicmodule\_finalizelibaltay()}{basicmodule\_finalizelibaltay()}}
+{\footnotesize\ttfamily integer function dmcbasicmodule\+::basicmodule\+\_\+finalizelibaltay (\begin{DoxyParamCaption}\item[{class(basicmodule), intent(inout)}]{this }\end{DoxyParamCaption})}
+
+
+
+Finalize lib\+Altay and perform additional actions on finalization. 
+
+\mbox{\Hypertarget{namespacedmcbasicmodule_aed1b2b0198fb684ea549404d15d821ad}\label{namespacedmcbasicmodule_aed1b2b0198fb684ea549404d15d821ad}} 
+\index{dmcbasicmodule@{dmcbasicmodule}!basicmodule\_openoutputfile@{basicmodule\_openoutputfile}}
+\index{basicmodule\_openoutputfile@{basicmodule\_openoutputfile}!dmcbasicmodule@{dmcbasicmodule}}
+\doxysubsubsection{\texorpdfstring{basicmodule\_openoutputfile()}{basicmodule\_openoutputfile()}}
+{\footnotesize\ttfamily integer function dmcbasicmodule\+::basicmodule\+\_\+openoutputfile (\begin{DoxyParamCaption}\item[{class(basicmodule), intent(in)}]{this,  }\item[{character(len=$\ast$), intent(in)}]{ext,  }\item[{integer, intent(out)}]{ofunit,  }\item[{character(len=$\ast$), intent(in), optional}]{suffix }\end{DoxyParamCaption})}
+
+
+
+Open output file. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em ext} & File extension (with leading dot) \\
+\hline
+\mbox{\texttt{ out}}  & {\em ofunit} & IO unit of the output \\
+\hline
+\mbox{\texttt{ in}}  & {\em suffix} & Suffix to the file \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacedmcbasicmodule_a3e22bc4f2359cb559de888a8d5bb489e}\label{namespacedmcbasicmodule_a3e22bc4f2359cb559de888a8d5bb489e}} 
+\index{dmcbasicmodule@{dmcbasicmodule}!basicmodule\_readconfig@{basicmodule\_readconfig}}
+\index{basicmodule\_readconfig@{basicmodule\_readconfig}!dmcbasicmodule@{dmcbasicmodule}}
+\doxysubsubsection{\texorpdfstring{basicmodule\_readconfig()}{basicmodule\_readconfig()}}
+{\footnotesize\ttfamily integer function dmcbasicmodule\+::basicmodule\+\_\+readconfig (\begin{DoxyParamCaption}\item[{class(basicmodule), intent(inout)}]{this,  }\item[{integer, intent(in)}]{cnfunit }\end{DoxyParamCaption})}
+
+
+
+read output and Al\+Tay configuration sections 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em cnfunit} & IO input unit \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacedmcbasicmodule_a462409cfc66bd86fc3bac1a780f08290}\label{namespacedmcbasicmodule_a462409cfc66bd86fc3bac1a780f08290}} 
+\index{dmcbasicmodule@{dmcbasicmodule}!basicmodule\_run@{basicmodule\_run}}
+\index{basicmodule\_run@{basicmodule\_run}!dmcbasicmodule@{dmcbasicmodule}}
+\doxysubsubsection{\texorpdfstring{basicmodule\_run()}{basicmodule\_run()}}
+{\footnotesize\ttfamily subroutine dmcbasicmodule\+::basicmodule\+\_\+run (\begin{DoxyParamCaption}\item[{class(basicmodule), intent(inout)}]{this,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacedmcbasicmodule_ae707e232788d261c4b8810cff68305cc}\label{namespacedmcbasicmodule_ae707e232788d261c4b8810cff68305cc}} 
+\index{dmcbasicmodule@{dmcbasicmodule}!getvefdatadir@{getvefdatadir}}
+\index{getvefdatadir@{getvefdatadir}!dmcbasicmodule@{dmcbasicmodule}}
+\doxysubsubsection{\texorpdfstring{getvefdatadir()}{getvefdatadir()}}
+{\footnotesize\ttfamily character(len=max\+\_\+pathlen) function dmcbasicmodule\+::getvefdatadir}
+
+
+
+Deduce the path to VEF common data files. 
+
+\mbox{\Hypertarget{namespacedmcbasicmodule_afbf4094988fefb69030a30dc069f0880}\label{namespacedmcbasicmodule_afbf4094988fefb69030a30dc069f0880}} 
+\index{dmcbasicmodule@{dmcbasicmodule}!readaltayconfigsection@{readaltayconfigsection}}
+\index{readaltayconfigsection@{readaltayconfigsection}!dmcbasicmodule@{dmcbasicmodule}}
+\doxysubsubsection{\texorpdfstring{readaltayconfigsection()}{readaltayconfigsection()}}
+{\footnotesize\ttfamily subroutine, public dmcbasicmodule\+::readaltayconfigsection (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{cnfunit,  }\item[{type(\mbox{\hyperlink{structaltayconfig_1_1altayconfigdata}{altayconfigdata}}), intent(inout)}]{cnf,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Read configuration of libaltay. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em cnf} & Root-\/level configuration structure of texture, microstructure and hardening \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacedmcbasicmodule_a67e8f775b221faa2fee06e5cf11b057b}\label{namespacedmcbasicmodule_a67e8f775b221faa2fee06e5cf11b057b}} 
+\index{dmcbasicmodule@{dmcbasicmodule}!readhardeningsection@{readhardeningsection}}
+\index{readhardeningsection@{readhardeningsection}!dmcbasicmodule@{dmcbasicmodule}}
+\doxysubsubsection{\texorpdfstring{readhardeningsection()}{readhardeningsection()}}
+{\footnotesize\ttfamily subroutine dmcbasicmodule\+::readhardeningsection (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{cnfunit,  }\item[{type(\mbox{\hyperlink{structaltayconfig_1_1hardeningdata}{hardeningdata}}), intent(out)}]{hardening,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Read configuration of hardening model from configuration file. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em hardening} & structure containing hardening configuration \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacedmcbasicmodule_a064dfc41ccd5a131b83dcc30aba292d7}\label{namespacedmcbasicmodule_a064dfc41ccd5a131b83dcc30aba292d7}} 
+\index{dmcbasicmodule@{dmcbasicmodule}!readoutputconfigsection@{readoutputconfigsection}}
+\index{readoutputconfigsection@{readoutputconfigsection}!dmcbasicmodule@{dmcbasicmodule}}
+\doxysubsubsection{\texorpdfstring{readoutputconfigsection()}{readoutputconfigsection()}}
+{\footnotesize\ttfamily subroutine dmcbasicmodule\+::readoutputconfigsection (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{cnfunit,  }\item[{type(outputconfig), intent(inout)}]{cnf,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Read output configuration from top 3 lines after comment header in configuration file\+: prefix for output files, incremental output request flag, verbosity level. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em cnfunit} & configuration file \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacedmcbasicmodule_a4eca5c3a585757a4bc784ba84c310cb5}\label{namespacedmcbasicmodule_a4eca5c3a585757a4bc784ba84c310cb5}} 
+\index{dmcbasicmodule@{dmcbasicmodule}!readpepbhardening@{readpepbhardening}}
+\index{readpepbhardening@{readpepbhardening}!dmcbasicmodule@{dmcbasicmodule}}
+\doxysubsubsection{\texorpdfstring{readpepbhardening()}{readpepbhardening()}}
+{\footnotesize\ttfamily subroutine dmcbasicmodule\+::readpepbhardening (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{cnfunit,  }\item[{integer, intent(in)}]{kost,  }\item[{type(\mbox{\hyperlink{structaltayconfig_1_1pebpconfig}{pebpconfig}}), intent(out)}]{hc,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Read configuration of PEBP hardening module. 
+
+The current implementation reads the coefficients of the hardening law from an external file that is specified in the configuration file. If read\+\_\+state=True the state variables are read for a defined increment (block\+\_\+id) from a state file specified. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em cnfunit} & configuration file \\
+\hline
+\mbox{\texttt{ in}}  & {\em kost} & Hard\+Law\+ID \\
+\hline
+\mbox{\texttt{ out}}  & {\em hc} & data type containing the BP model parameters (no state variables); defined in \mbox{\hyperlink{altayConfig_8f90}{altay\+Config.\+f90}} \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacedmcbasicmodule_a53735bba54a5db17a29088a923dd0bcd}\label{namespacedmcbasicmodule_a53735bba54a5db17a29088a923dd0bcd}} 
+\index{dmcbasicmodule@{dmcbasicmodule}!dm\_bcc24@{dm\_bcc24}}
+\index{dm\_bcc24@{dm\_bcc24}!dmcbasicmodule@{dmcbasicmodule}}
+\doxysubsubsection{\texorpdfstring{dm\_bcc24}{dm\_bcc24}}
+{\footnotesize\ttfamily integer, parameter dmcbasicmodule\+::dm\+\_\+bcc24 = 2}
+
+
+
+BCC (110)\texorpdfstring{$<$}{<}111\texorpdfstring{$>$}{>} + (112)\texorpdfstring{$<$}{<}111\texorpdfstring{$>$}{>}, through altay\+Deformation\+Mechanism\+Data\+\_\+preconfigured objects. 
+
+\mbox{\Hypertarget{namespacedmcbasicmodule_a81ffbb7a8288ffc4b6145d5581d2aa47}\label{namespacedmcbasicmodule_a81ffbb7a8288ffc4b6145d5581d2aa47}} 
+\index{dmcbasicmodule@{dmcbasicmodule}!dm\_bcc48@{dm\_bcc48}}
+\index{dm\_bcc48@{dm\_bcc48}!dmcbasicmodule@{dmcbasicmodule}}
+\doxysubsubsection{\texorpdfstring{dm\_bcc48}{dm\_bcc48}}
+{\footnotesize\ttfamily integer, parameter dmcbasicmodule\+::dm\+\_\+bcc48 = 3}
+
+
+
+BCC (110)\texorpdfstring{$<$}{<}111\texorpdfstring{$>$}{>} + (112)\texorpdfstring{$<$}{<}111\texorpdfstring{$>$}{>} + (123)\texorpdfstring{$<$}{<}111\texorpdfstring{$>$}{>}, through altay\+Deformation\+Mechanism\+Data\+\_\+preconfigured objects. 
+
+\mbox{\Hypertarget{namespacedmcbasicmodule_a48d2c805db157cdf1780fc8962279586}\label{namespacedmcbasicmodule_a48d2c805db157cdf1780fc8962279586}} 
+\index{dmcbasicmodule@{dmcbasicmodule}!dm\_fcc12@{dm\_fcc12}}
+\index{dm\_fcc12@{dm\_fcc12}!dmcbasicmodule@{dmcbasicmodule}}
+\doxysubsubsection{\texorpdfstring{dm\_fcc12}{dm\_fcc12}}
+{\footnotesize\ttfamily integer, parameter dmcbasicmodule\+::dm\+\_\+fcc12 = 1}
+
+
+
+FCC (111)\texorpdfstring{$<$}{<}110\texorpdfstring{$>$}{>}, through altay\+Deformation\+Mechanism\+Data\+\_\+preconfigured objects. 
+
+\mbox{\Hypertarget{namespacedmcbasicmodule_a89aa72081ba1559805e5932a4c7e9fdb}\label{namespacedmcbasicmodule_a89aa72081ba1559805e5932a4c7e9fdb}} 
+\index{dmcbasicmodule@{dmcbasicmodule}!dm\_format\_pre@{dm\_format\_pre}}
+\index{dm\_format\_pre@{dm\_format\_pre}!dmcbasicmodule@{dmcbasicmodule}}
+\doxysubsubsection{\texorpdfstring{dm\_format\_pre}{dm\_format\_pre}}
+{\footnotesize\ttfamily integer, parameter dmcbasicmodule\+::dm\+\_\+format\+\_\+pre = 101}
+
+
+
+Initialization from file of PRE file format. 
+
+\mbox{\Hypertarget{namespacedmcbasicmodule_a96c0ca382f8c5a7fd66f4d98715366bb}\label{namespacedmcbasicmodule_a96c0ca382f8c5a7fd66f4d98715366bb}} 
+\index{dmcbasicmodule@{dmcbasicmodule}!dm\_user@{dm\_user}}
+\index{dm\_user@{dm\_user}!dmcbasicmodule@{dmcbasicmodule}}
+\doxysubsubsection{\texorpdfstring{dm\_user}{dm\_user}}
+{\footnotesize\ttfamily integer, parameter dmcbasicmodule\+::dm\+\_\+user =99}
+
+
+
+DM\+\_\+user (currently not exploited). 
+

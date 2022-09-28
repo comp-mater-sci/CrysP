@@ -1,0 +1,140 @@
+\hypertarget{namespacealtayalgorithms}{}\doxysection{altayalgorithms Module Reference}
+\label{namespacealtayalgorithms}\index{altayalgorithms@{altayalgorithms}}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacealtayalgorithms_ac25b058d4fe9b4e38c286c86bdc71524}{updatc}} (CIJ, Finv)
+\item 
+double precision function, dimension(3, 3) \mbox{\hyperlink{namespacealtayalgorithms_af96674f5c8108e02c7b94ea37fee22a3}{symmatrix}} (vec)
+\begin{DoxyCompactList}\small\item\em Transform a 5D-\/vector in deviatoric (stress/strain-\/rate) space to a (3,3)-\/matrix representation of a symmetric and traceless 2nd rank tensor. Note\+: The reverse transformation is done by function \textquotesingle{}Vector5D\textquotesingle{}. \end{DoxyCompactList}\item 
+double precision function, dimension(5) \mbox{\hyperlink{namespacealtayalgorithms_a6693b12b83882580bad1e484773848d9}{vector5d}} (mat)
+\begin{DoxyCompactList}\small\item\em Transform a (3,3)-\/matrix representation of a traceless 2nd rank tensor to 5D-\/vector representation in deviatoric (stress/strain-\/rate) space. Notes\+: \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtayalgorithms_a0c3bbd42125330a0d4ed10e07a47cfc8}{transf}} (Gaxes, Aprime, T)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayalgorithms_a9d8ed4a05903a99f7ad5c22837a5a8d6}{getang}} (CIJ, prval, GEULR, TMAT)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayalgorithms_a69f5a840fc056009db98dd300b81a552}{eigenv}} (e, prval, prdir, enrm, axisym)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayalgorithms_a0e320252bf3cc706c64256332f7a3e7a}{normaliz}} (prdir, xx)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayalgorithms_aee1c9117c4a597ea9b7f6a1d3e1aadad}{canoni}} (a, b, X, theta, pi)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayalgorithms_af1065f25c767db1fab3c8c6072d71b2b}{verwis}} (i1, i2, prval, prdir)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayalgorithms_a25caf34719506970f9f3db432d3f2b8d}{minv}} (A, N, D, L, M, NXXX)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayalgorithms_ad0d3f5dd573457d66f722ecaa80a06dc}{kleinkwa}} (N1, N2, M1, M2, A, B, AA, BA, VAL, XV, YV, TOL, RES)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayalgorithms_a35e205538830223bf51a81bd0f466fde}{stelsel}} (N, M, A, R, TOL, VAL, XV, YV)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayalgorithms_a0ca5653ec64e1919a6e9c5bc6c1d4c1c}{tred2}} (a, n, np, d, e)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayalgorithms_a6e025f6998683b89370f61892e6d85bb}{tqli}} (d, e, n, np, z)
+\item 
+double precision function \mbox{\hyperlink{namespacealtayalgorithms_a7e244e0ee7c1d8622012baae9e72ab5b}{pythag}} (a, b)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacealtayalgorithms_aee1c9117c4a597ea9b7f6a1d3e1aadad}\label{namespacealtayalgorithms_aee1c9117c4a597ea9b7f6a1d3e1aadad}} 
+\index{altayalgorithms@{altayalgorithms}!canoni@{canoni}}
+\index{canoni@{canoni}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{canoni()}{canoni()}}
+{\footnotesize\ttfamily subroutine altayalgorithms\+::canoni (\begin{DoxyParamCaption}\item[{}]{a,  }\item[{}]{b,  }\item[{dimension(3)}]{X,  }\item[{}]{theta,  }\item[{}]{pi }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayalgorithms_a69f5a840fc056009db98dd300b81a552}\label{namespacealtayalgorithms_a69f5a840fc056009db98dd300b81a552}} 
+\index{altayalgorithms@{altayalgorithms}!eigenv@{eigenv}}
+\index{eigenv@{eigenv}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{eigenv()}{eigenv()}}
+{\footnotesize\ttfamily subroutine altayalgorithms\+::eigenv (\begin{DoxyParamCaption}\item[{dimension(3,3)}]{e,  }\item[{dimension(3)}]{prval,  }\item[{dimension(3,3)}]{prdir,  }\item[{}]{enrm,  }\item[{logical}]{axisym }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayalgorithms_a9d8ed4a05903a99f7ad5c22837a5a8d6}\label{namespacealtayalgorithms_a9d8ed4a05903a99f7ad5c22837a5a8d6}} 
+\index{altayalgorithms@{altayalgorithms}!getang@{getang}}
+\index{getang@{getang}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{getang()}{getang()}}
+{\footnotesize\ttfamily subroutine altayalgorithms\+::getang (\begin{DoxyParamCaption}\item[{dimension(3,3)}]{CIJ,  }\item[{dimension(3)}]{prval,  }\item[{dimension(3)}]{GEULR,  }\item[{dimension(3,3)}]{TMAT }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayalgorithms_ad0d3f5dd573457d66f722ecaa80a06dc}\label{namespacealtayalgorithms_ad0d3f5dd573457d66f722ecaa80a06dc}} 
+\index{altayalgorithms@{altayalgorithms}!kleinkwa@{kleinkwa}}
+\index{kleinkwa@{kleinkwa}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{kleinkwa()}{kleinkwa()}}
+{\footnotesize\ttfamily subroutine altayalgorithms\+::kleinkwa (\begin{DoxyParamCaption}\item[{}]{N1,  }\item[{}]{N2,  }\item[{}]{M1,  }\item[{}]{M2,  }\item[{dimension(m1,m2)}]{A,  }\item[{dimension(m2)}]{B,  }\item[{dimension(m2,m2)}]{AA,  }\item[{dimension(m2)}]{BA,  }\item[{dimension(m2)}]{VAL,  }\item[{dimension(m2)}]{XV,  }\item[{dimension(m2)}]{YV,  }\item[{}]{TOL,  }\item[{}]{RES }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayalgorithms_a25caf34719506970f9f3db432d3f2b8d}\label{namespacealtayalgorithms_a25caf34719506970f9f3db432d3f2b8d}} 
+\index{altayalgorithms@{altayalgorithms}!minv@{minv}}
+\index{minv@{minv}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{minv()}{minv()}}
+{\footnotesize\ttfamily subroutine altayalgorithms\+::minv (\begin{DoxyParamCaption}\item[{double precision, dimension(nxxx)}]{A,  }\item[{}]{N,  }\item[{double precision}]{D,  }\item[{dimension(n)}]{L,  }\item[{dimension(n)}]{M,  }\item[{}]{NXXX }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayalgorithms_a0e320252bf3cc706c64256332f7a3e7a}\label{namespacealtayalgorithms_a0e320252bf3cc706c64256332f7a3e7a}} 
+\index{altayalgorithms@{altayalgorithms}!normaliz@{normaliz}}
+\index{normaliz@{normaliz}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{normaliz()}{normaliz()}}
+{\footnotesize\ttfamily subroutine altayalgorithms\+::normaliz (\begin{DoxyParamCaption}\item[{dimension(3)}]{prdir,  }\item[{}]{xx }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayalgorithms_a7e244e0ee7c1d8622012baae9e72ab5b}\label{namespacealtayalgorithms_a7e244e0ee7c1d8622012baae9e72ab5b}} 
+\index{altayalgorithms@{altayalgorithms}!pythag@{pythag}}
+\index{pythag@{pythag}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{pythag()}{pythag()}}
+{\footnotesize\ttfamily double precision function altayalgorithms\+::pythag (\begin{DoxyParamCaption}\item[{double precision, intent(in)}]{a,  }\item[{double precision, intent(in)}]{b }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayalgorithms_a35e205538830223bf51a81bd0f466fde}\label{namespacealtayalgorithms_a35e205538830223bf51a81bd0f466fde}} 
+\index{altayalgorithms@{altayalgorithms}!stelsel@{stelsel}}
+\index{stelsel@{stelsel}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{stelsel()}{stelsel()}}
+{\footnotesize\ttfamily subroutine altayalgorithms\+::stelsel (\begin{DoxyParamCaption}\item[{}]{N,  }\item[{}]{M,  }\item[{dimension(m,m)}]{A,  }\item[{dimension(m)}]{R,  }\item[{}]{TOL,  }\item[{dimension(m)}]{VAL,  }\item[{dimension(m)}]{XV,  }\item[{dimension(m)}]{YV }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayalgorithms_af96674f5c8108e02c7b94ea37fee22a3}\label{namespacealtayalgorithms_af96674f5c8108e02c7b94ea37fee22a3}} 
+\index{altayalgorithms@{altayalgorithms}!symmatrix@{symmatrix}}
+\index{symmatrix@{symmatrix}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{symmatrix()}{symmatrix()}}
+{\footnotesize\ttfamily double precision function, dimension(3,3) altayalgorithms\+::symmatrix (\begin{DoxyParamCaption}\item[{double precision, dimension(5), intent(in)}]{vec }\end{DoxyParamCaption})}
+
+
+
+Transform a 5D-\/vector in deviatoric (stress/strain-\/rate) space to a (3,3)-\/matrix representation of a symmetric and traceless 2nd rank tensor. Note\+: The reverse transformation is done by function \textquotesingle{}Vector5D\textquotesingle{}. 
+
+\mbox{\Hypertarget{namespacealtayalgorithms_a6e025f6998683b89370f61892e6d85bb}\label{namespacealtayalgorithms_a6e025f6998683b89370f61892e6d85bb}} 
+\index{altayalgorithms@{altayalgorithms}!tqli@{tqli}}
+\index{tqli@{tqli}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{tqli()}{tqli()}}
+{\footnotesize\ttfamily subroutine altayalgorithms\+::tqli (\begin{DoxyParamCaption}\item[{double precision, dimension(np)}]{d,  }\item[{double precision, dimension(np)}]{e,  }\item[{integer}]{n,  }\item[{integer}]{np,  }\item[{double precision, dimension(np,np)}]{z }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayalgorithms_a0c3bbd42125330a0d4ed10e07a47cfc8}\label{namespacealtayalgorithms_a0c3bbd42125330a0d4ed10e07a47cfc8}} 
+\index{altayalgorithms@{altayalgorithms}!transf@{transf}}
+\index{transf@{transf}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{transf()}{transf()}}
+{\footnotesize\ttfamily subroutine altayalgorithms\+::transf (\begin{DoxyParamCaption}\item[{dimension(3)}]{Gaxes,  }\item[{dimension(3,3)}]{Aprime,  }\item[{dimension(3,3)}]{T }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayalgorithms_a0ca5653ec64e1919a6e9c5bc6c1d4c1c}\label{namespacealtayalgorithms_a0ca5653ec64e1919a6e9c5bc6c1d4c1c}} 
+\index{altayalgorithms@{altayalgorithms}!tred2@{tred2}}
+\index{tred2@{tred2}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{tred2()}{tred2()}}
+{\footnotesize\ttfamily subroutine altayalgorithms\+::tred2 (\begin{DoxyParamCaption}\item[{double precision, dimension(np,np)}]{a,  }\item[{integer}]{n,  }\item[{integer}]{np,  }\item[{double precision, dimension(np)}]{d,  }\item[{double precision, dimension(np)}]{e }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayalgorithms_ac25b058d4fe9b4e38c286c86bdc71524}\label{namespacealtayalgorithms_ac25b058d4fe9b4e38c286c86bdc71524}} 
+\index{altayalgorithms@{altayalgorithms}!updatc@{updatc}}
+\index{updatc@{updatc}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{updatc()}{updatc()}}
+{\footnotesize\ttfamily subroutine altayalgorithms\+::updatc (\begin{DoxyParamCaption}\item[{double precision, dimension(3,3), intent(inout)}]{CIJ,  }\item[{double precision, dimension(3,3), intent(in)}]{Finv }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayalgorithms_a6693b12b83882580bad1e484773848d9}\label{namespacealtayalgorithms_a6693b12b83882580bad1e484773848d9}} 
+\index{altayalgorithms@{altayalgorithms}!vector5d@{vector5d}}
+\index{vector5d@{vector5d}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{vector5d()}{vector5d()}}
+{\footnotesize\ttfamily double precision function, dimension(5) altayalgorithms\+::vector5d (\begin{DoxyParamCaption}\item[{double precision, dimension(3,3), intent(in)}]{mat }\end{DoxyParamCaption})}
+
+
+
+Transform a (3,3)-\/matrix representation of a traceless 2nd rank tensor to 5D-\/vector representation in deviatoric (stress/strain-\/rate) space. Notes\+: 
+
+
+\begin{DoxyItemize}
+\item Only the symmetric part of 2nd rank tensor is transformed.
+\item The reverse transformation is done by function \textquotesingle{}Sym\+Matrix\textquotesingle{}. 
+\end{DoxyItemize}\mbox{\Hypertarget{namespacealtayalgorithms_af1065f25c767db1fab3c8c6072d71b2b}\label{namespacealtayalgorithms_af1065f25c767db1fab3c8c6072d71b2b}} 
+\index{altayalgorithms@{altayalgorithms}!verwis@{verwis}}
+\index{verwis@{verwis}!altayalgorithms@{altayalgorithms}}
+\doxysubsubsection{\texorpdfstring{verwis()}{verwis()}}
+{\footnotesize\ttfamily subroutine altayalgorithms\+::verwis (\begin{DoxyParamCaption}\item[{}]{i1,  }\item[{}]{i2,  }\item[{dimension(3)}]{prval,  }\item[{dimension(3,3)}]{prdir }\end{DoxyParamCaption})}
+

@@ -1,0 +1,25 @@
+\hypertarget{altayMesostructure_8f90}{}\doxysection{Al\+Tay/src/altay\+Mesostructure.f90 File Reference}
+\label{altayMesostructure_8f90}\index{AlTay/src/altayMesostructure.f90@{AlTay/src/altayMesostructure.f90}}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacealtaymesostructure}{altaymesostructure}}
+\begin{DoxyCompactList}\small\item\em Microstructure representation in Al\+Tay The microstructure is created by grain boundary segments. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacealtaymesostructure_a130fb1f03234f7b9f930d69b0de2d3e5}{altaymesostructure\+::grfil}} (fnam, F\+\_\+mic, ierr)
+\begin{DoxyCompactList}\small\item\em Reading of \char`\"{}microstructure\char`\"{} (Euler angles defining grain boundary segments) in SMT-\/format, allocation and assignment of the module variables. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaymesostructure_aae3dc36a3e6b7ce5c237a2218d78db82}{altaymesostructure\+::microstr\+\_\+finalize}} (info)
+\begin{DoxyCompactList}\small\item\em Finalizes the module. The subroutine puts the module variables into initial state and deallocates the storage. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaymesostructure_a1bbac8583c5aa166a620a855f6c2439d}{altaymesostructure\+::cluster1}} (NGR, IGr\+Elm, Macro\+Def\+Rate, Macro\+Def\+State, GEWF, Tprinc, Cofcos, Cofsin)
+\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+double precision, dimension(\+:,\+:,\+:), allocatable, save \mbox{\hyperlink{namespacealtaymesostructure_a38c866dce0530643059b7931d522686c}{altaymesostructure\+::tmatgr}}
+\begin{DoxyCompactList}\small\item\em Transformation matrix associated to the grain boundary reference frame in the initial state. Shape is\+: \mbox{[}3,3,ngr\mbox{]}, where ngr is the number of grains. \end{DoxyCompactList}\item 
+integer, save \mbox{\hyperlink{namespacealtaymesostructure_ad710b4e94b19c8a972d86ae0ae5bb9e1}{altaymesostructure\+::ngrelm}} = 0
+\begin{DoxyCompactList}\small\item\em Number of grain boundary orientations. \end{DoxyCompactList}\item 
+character(len=40), save \mbox{\hyperlink{namespacealtaymesostructure_a960e5d493443782ab497d67c1da30d36}{altaymesostructure\+::titmic}} = \textquotesingle{}\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em Microstructure title. \end{DoxyCompactList}\end{DoxyCompactItemize}

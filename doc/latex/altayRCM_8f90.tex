@@ -1,0 +1,39 @@
+\hypertarget{altayRCM_8f90}{}\doxysection{Al\+Tay/src/altay\+RCM.f90 File Reference}
+\label{altayRCM_8f90}\index{AlTay/src/altayRCM.f90@{AlTay/src/altayRCM.f90}}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacealtayrcm}{altayrcm}}
+\begin{DoxyCompactList}\small\item\em RCM\+: Runtime Control Module The module implements handling of \char`\"{}stop\char`\"{} and other termination conditions. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+logical function, public \mbox{\hyperlink{namespacealtayrcm_a6652f7d8d55aa03ce8f6370d6e2442b5}{altayrcm\+::rcm\+\_\+empty}} ()
+\begin{DoxyCompactList}\small\item\em Informs whether there are outstanding exceptions on the stack. Returns .false. if there is any non-\/processed exception left. \end{DoxyCompactList}\item 
+logical function, public \mbox{\hyperlink{namespacealtayrcm_a699cab86a5a10dfb65e8d17c543d5dc8}{altayrcm\+::rcm\+\_\+signal}} ()
+\begin{DoxyCompactList}\small\item\em Informs whether there is a. \end{DoxyCompactList}\item 
+integer function, public \mbox{\hyperlink{namespacealtayrcm_ae5b2994289ae648778b55c9fa1725ee7}{altayrcm\+::rcm\+\_\+toperror}} ()
+\begin{DoxyCompactList}\small\item\em Probes the stack for the error code of the last operation. Returns 0 if no exception is lying on the stack. \end{DoxyCompactList}\item 
+subroutine, public \mbox{\hyperlink{namespacealtayrcm_aa2012515c578a72ebbbc8d260a017f03}{altayrcm\+::rcm\+\_\+throw}} (ec, fx, msg, action)
+\begin{DoxyCompactList}\small\item\em Throws an exception and puts it on the stack. \end{DoxyCompactList}\item 
+subroutine, public \mbox{\hyperlink{namespacealtayrcm_ac29369125e8ed88d0800c8a52a0b6476}{altayrcm\+::rcm\+\_\+clean}} ()
+\begin{DoxyCompactList}\small\item\em Cleans up the excetion stack. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter, public \mbox{\hyperlink{namespacealtayrcm_a758b4abbb6d88c3b910142d4a6d4fdec}{altayrcm\+::exception\+\_\+msg\+\_\+len}} = 128
+\item 
+integer, parameter, public \mbox{\hyperlink{namespacealtayrcm_a9fc8c2f966daedc1519c62994c16889f}{altayrcm\+::message\+\_\+msg\+\_\+len}} = 512
+\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Action identifiers}\par
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter, public \mbox{\hyperlink{namespacealtayrcm_a61a419c6e1d83dc4705eadfa460d3374}{altayrcm\+::rcm\+\_\+cnt}} = 0
+\begin{DoxyCompactList}\small\item\em attempt to continue execution \end{DoxyCompactList}\item 
+integer, parameter, public \mbox{\hyperlink{namespacealtayrcm_a9a5ec5b0241ad53b36f7d9146cae07d0}{altayrcm\+::rcm\+\_\+rtn}} = 1
+\begin{DoxyCompactList}\small\item\em attempt to return (shall not propagate along the call stack) \end{DoxyCompactList}\item 
+integer, parameter, public \mbox{\hyperlink{namespacealtayrcm_a246f1f2131b587f94553547342542435}{altayrcm\+::rcm\+\_\+ext}} = 2
+\begin{DoxyCompactList}\small\item\em attempt to return (shall propagate along the call stack) \end{DoxyCompactList}\item 
+integer, parameter, public \mbox{\hyperlink{namespacealtayrcm_a5b6f5eb3767ae4cf61ae5f59965dfc1a}{altayrcm\+::rcm\+\_\+stp}} = 10
+\begin{DoxyCompactList}\small\item\em terminate the execution \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}

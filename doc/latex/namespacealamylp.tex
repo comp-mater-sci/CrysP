@@ -1,0 +1,52 @@
+\hypertarget{namespacealamylp}{}\doxysection{alamylp Module Reference}
+\label{namespacealamylp}\index{alamylp@{alamylp}}
+
+
+Implementation of YLP function that can directly use the ALAMEL multilevel model instead of a plastic potential function.  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structalamylp_1_1multilevelylpconfig}{multilevelylpconfig}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacealamylp_a2108d0e24a52609e1a1979f8ea2a8a6e}{multilevelylp}} (vS, vA, v\+SonA, R, info, use\+VMGuess, YLPconfig, outunit, verbose, objective\+\_\+function)
+\begin{DoxyCompactList}\small\item\em Calculates plastic strain rate corresponding to given deviatoric stress. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Implementation of YLP function that can directly use the ALAMEL multilevel model instead of a plastic potential function. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacealamylp_a2108d0e24a52609e1a1979f8ea2a8a6e}\label{namespacealamylp_a2108d0e24a52609e1a1979f8ea2a8a6e}} 
+\index{alamylp@{alamylp}!multilevelylp@{multilevelylp}}
+\index{multilevelylp@{multilevelylp}!alamylp@{alamylp}}
+\doxysubsubsection{\texorpdfstring{multilevelylp()}{multilevelylp()}}
+{\footnotesize\ttfamily subroutine alamylp\+::multilevelylp (\begin{DoxyParamCaption}\item[{double precision, dimension(alameval\+\_\+vsd\+\_\+dim), intent(in)}]{vS,  }\item[{double precision, dimension(alameval\+\_\+vsd\+\_\+dim), intent(inout)}]{vA,  }\item[{double precision, dimension(alameval\+\_\+vsd\+\_\+dim), intent(out)}]{v\+SonA,  }\item[{double precision, intent(out)}]{R,  }\item[{integer}]{info,  }\item[{logical, intent(in), optional}]{use\+VMGuess,  }\item[{type(\mbox{\hyperlink{structalamylp_1_1multilevelylpconfig}{multilevelylpconfig}}), intent(in), optional}]{YLPconfig,  }\item[{integer, intent(in), optional}]{outunit,  }\item[{integer, intent(in), optional}]{verbose,  }\item[{class(\mbox{\hyperlink{structalameval_1_1normalizedv5dcomp}{normalizedv5dcomp}}), intent(inout), optional, target}]{objective\+\_\+function }\end{DoxyParamCaption})}
+
+
+
+Calculates plastic strain rate corresponding to given deviatoric stress. 
+
+The subroutine assumes that multilevel model is already configured and initialized. Exit code is retured in info\+: cri\+Success on success; cri\+Failure if no converged solution can be found; cri\+Error or cri\+Err\+\_\+\+Bad\+Args if error conditions have been detected. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em vs} & Imposed stress vector \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em va} & Strain rate mode on yield locus \\
+\hline
+\mbox{\texttt{ out}}  & {\em vsona} & Stress vector corresponding to A \\
+\hline
+\mbox{\texttt{ out}}  & {\em r} & Square norm of residual error \\
+\hline
+ & {\em info} & Exit code \\
+\hline
+\mbox{\texttt{ in}}  & {\em usevmguess} & Flag\+: use von Mises initial guess, otherwise assume vA as an initial strain rate (default\+: .true.) \\
+\hline
+\mbox{\texttt{ in}}  & {\em ylpconfig} & Configuration parameters to be imposed to the search method \\
+\hline
+\mbox{\texttt{ in}}  & {\em outunit} & Unit number for messages \\
+\hline
+\end{DoxyParams}

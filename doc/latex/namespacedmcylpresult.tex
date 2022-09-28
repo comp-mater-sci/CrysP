@@ -1,0 +1,80 @@
+\hypertarget{namespacedmcylpresult}{}\doxysection{dmcylpresult Module Reference}
+\label{namespacedmcylpresult}\index{dmcylpresult@{dmcylpresult}}
+
+
+Datatypes that simplify work with results of multilevel\+YLP and procedures that operate on these datatypes.  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+interface \mbox{\hyperlink{structdmcylpresult_1_1ylpresult}{ylpresult}}
+\begin{DoxyCompactList}\small\item\em Datatype to store results of iterative search. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structdmcylpresult_1_1ylpresulttolerance}{ylpresulttolerance}}
+\begin{DoxyCompactList}\small\item\em Datatype for commonly used tolerances that the YLPResult should meet to be an acceptable solution. The defaults are. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+pure type(\mbox{\hyperlink{structdmcylpresult_1_1ylpresult}{ylpresult}}) function \mbox{\hyperlink{namespacedmcylpresult_ad693a7cb247afeb9e98a22f7a914d146}{ylpresult\+\_\+init}} (vS)
+\begin{DoxyCompactList}\small\item\em Create YLPResult from arbitrary vS and performs normalization. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcylpresult_a14638dbe60cc3d9c468f7588e46af055}{deriveylpresult}} (ylp\+\_\+result)
+\begin{DoxyCompactList}\small\item\em Derive dependant fields from properly initialized and evaluated YLPResult;. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcylpresult_a6958747a92910f30e120ce594ad01f9a}{printylpresult}} (iounit, ylp\+\_\+result)
+\begin{DoxyCompactList}\small\item\em Print detailed info about YLP solution based on the content of YLPResult object. \end{DoxyCompactList}\item 
+pure logical function \mbox{\hyperlink{namespacedmcylpresult_aecd23ad76e440669c373b4105864d44d}{checkylpresult}} (ylp\+\_\+result, tolerance, target\+\_\+residual)
+\begin{DoxyCompactList}\small\item\em Check if ylp\+\_\+result is within all tolerances. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Datatypes that simplify work with results of multilevel\+YLP and procedures that operate on these datatypes. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacedmcylpresult_aecd23ad76e440669c373b4105864d44d}\label{namespacedmcylpresult_aecd23ad76e440669c373b4105864d44d}} 
+\index{dmcylpresult@{dmcylpresult}!checkylpresult@{checkylpresult}}
+\index{checkylpresult@{checkylpresult}!dmcylpresult@{dmcylpresult}}
+\doxysubsubsection{\texorpdfstring{checkylpresult()}{checkylpresult()}}
+{\footnotesize\ttfamily pure logical function dmcylpresult\+::checkylpresult (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structdmcylpresult_1_1ylpresult}{ylpresult}}), intent(in)}]{ylp\+\_\+result,  }\item[{type(\mbox{\hyperlink{structdmcylpresult_1_1ylpresulttolerance}{ylpresulttolerance}}), intent(in)}]{tolerance,  }\item[{double precision, intent(in)}]{target\+\_\+residual }\end{DoxyParamCaption})}
+
+
+
+Check if ylp\+\_\+result is within all tolerances. 
+
+\begin{DoxyReturn}{Returns}
+.true. if ylp\+\_\+result passes all tolerances (ie. is acceptable), .false. otherwise.
+\end{DoxyReturn}
+The procedure checks the norm of residual error and angle between the solution stress and requested stress. These two quantities are very much correlated, except for unconverged solution where they are not. For this reason it appears better to check both. \mbox{\Hypertarget{namespacedmcylpresult_a14638dbe60cc3d9c468f7588e46af055}\label{namespacedmcylpresult_a14638dbe60cc3d9c468f7588e46af055}} 
+\index{dmcylpresult@{dmcylpresult}!deriveylpresult@{deriveylpresult}}
+\index{deriveylpresult@{deriveylpresult}!dmcylpresult@{dmcylpresult}}
+\doxysubsubsection{\texorpdfstring{deriveylpresult()}{deriveylpresult()}}
+{\footnotesize\ttfamily integer function dmcylpresult\+::deriveylpresult (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structdmcylpresult_1_1ylpresult}{ylpresult}}), intent(inout)}]{ylp\+\_\+result }\end{DoxyParamCaption})}
+
+
+
+Derive dependant fields from properly initialized and evaluated YLPResult;. 
+
+This requires fields\+: vS, vA and v\+S\+\_\+length. \begin{DoxyReturn}{Returns}
+cri\+Err\+\_\+\+Bad\+Args if input ylp\+\_\+result contains wrong data. 
+\end{DoxyReturn}
+\mbox{\Hypertarget{namespacedmcylpresult_a6958747a92910f30e120ce594ad01f9a}\label{namespacedmcylpresult_a6958747a92910f30e120ce594ad01f9a}} 
+\index{dmcylpresult@{dmcylpresult}!printylpresult@{printylpresult}}
+\index{printylpresult@{printylpresult}!dmcylpresult@{dmcylpresult}}
+\doxysubsubsection{\texorpdfstring{printylpresult()}{printylpresult()}}
+{\footnotesize\ttfamily integer function dmcylpresult\+::printylpresult (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit,  }\item[{type(\mbox{\hyperlink{structdmcylpresult_1_1ylpresult}{ylpresult}}), intent(in)}]{ylp\+\_\+result }\end{DoxyParamCaption})}
+
+
+
+Print detailed info about YLP solution based on the content of YLPResult object. 
+
+\mbox{\Hypertarget{namespacedmcylpresult_ad693a7cb247afeb9e98a22f7a914d146}\label{namespacedmcylpresult_ad693a7cb247afeb9e98a22f7a914d146}} 
+\index{dmcylpresult@{dmcylpresult}!ylpresult\_init@{ylpresult\_init}}
+\index{ylpresult\_init@{ylpresult\_init}!dmcylpresult@{dmcylpresult}}
+\doxysubsubsection{\texorpdfstring{ylpresult\_init()}{ylpresult\_init()}}
+{\footnotesize\ttfamily pure type(\mbox{\hyperlink{structdmcylpresult_1_1ylpresult}{ylpresult}}) function dmcylpresult\+::ylpresult\+\_\+init (\begin{DoxyParamCaption}\item[{double precision, dimension(alameval\+\_\+vsd\+\_\+dim), intent(in)}]{vS }\end{DoxyParamCaption})}
+
+
+
+Create YLPResult from arbitrary vS and performs normalization. 
+
+\begin{DoxyPostcond}{Postcondition}
+A correctly initialized result has non-\/zero v\+S\+\_\+length field. 
+\end{DoxyPostcond}

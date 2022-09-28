@@ -1,0 +1,69 @@
+\hypertarget{namespacealtaycuraccess}{}\doxysection{altaycuraccess Module Reference}
+\label{namespacealtaycuraccess}\index{altaycuraccess@{altaycuraccess}}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacealtaycuraccess_a3c301501035d7b77766bc320d5e28138}{curwritetitle}} (iounit, title, info)
+\begin{DoxyCompactList}\small\item\em Write title line of the CUR format. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaycuraccess_a605d971d36cc207de82a1314811dc625}{curwriteblock}} (iounit, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtaycuraccess_abbb08f79d91c31d1f97204779a7a6fd5}{curreadtitle}} (iounit, title, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtaycuraccess_ad66d0a2766b6873525c2e981bf3eafab}{curreadblock}} (iounit, offset, info)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacealtaycuraccess_ad66d0a2766b6873525c2e981bf3eafab}\label{namespacealtaycuraccess_ad66d0a2766b6873525c2e981bf3eafab}} 
+\index{altaycuraccess@{altaycuraccess}!curreadblock@{curreadblock}}
+\index{curreadblock@{curreadblock}!altaycuraccess@{altaycuraccess}}
+\doxysubsubsection{\texorpdfstring{curreadblock()}{curreadblock()}}
+{\footnotesize\ttfamily subroutine altaycuraccess\+::curreadblock (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit,  }\item[{integer, intent(in)}]{offset,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em iounit} & IO unit\\
+\hline
+\mbox{\texttt{ in}}  & {\em offset} & Number of blocks to be skipped\\
+\hline
+\mbox{\texttt{ out}}  & {\em info} & Exit code \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaycuraccess_abbb08f79d91c31d1f97204779a7a6fd5}\label{namespacealtaycuraccess_abbb08f79d91c31d1f97204779a7a6fd5}} 
+\index{altaycuraccess@{altaycuraccess}!curreadtitle@{curreadtitle}}
+\index{curreadtitle@{curreadtitle}!altaycuraccess@{altaycuraccess}}
+\doxysubsubsection{\texorpdfstring{curreadtitle()}{curreadtitle()}}
+{\footnotesize\ttfamily subroutine altaycuraccess\+::curreadtitle (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit,  }\item[{character(len=$\ast$)}]{title,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtaycuraccess_a605d971d36cc207de82a1314811dc625}\label{namespacealtaycuraccess_a605d971d36cc207de82a1314811dc625}} 
+\index{altaycuraccess@{altaycuraccess}!curwriteblock@{curwriteblock}}
+\index{curwriteblock@{curwriteblock}!altaycuraccess@{altaycuraccess}}
+\doxysubsubsection{\texorpdfstring{curwriteblock()}{curwriteblock()}}
+{\footnotesize\ttfamily subroutine altaycuraccess\+::curwriteblock (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em iounit} & IO unit number\\
+\hline
+\mbox{\texttt{ out}}  & {\em info} & exit code\+: 0 on success \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaycuraccess_a3c301501035d7b77766bc320d5e28138}\label{namespacealtaycuraccess_a3c301501035d7b77766bc320d5e28138}} 
+\index{altaycuraccess@{altaycuraccess}!curwritetitle@{curwritetitle}}
+\index{curwritetitle@{curwritetitle}!altaycuraccess@{altaycuraccess}}
+\doxysubsubsection{\texorpdfstring{curwritetitle()}{curwritetitle()}}
+{\footnotesize\ttfamily subroutine altaycuraccess\+::curwritetitle (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit,  }\item[{character(len=$\ast$), intent(in)}]{title,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Write title line of the CUR format. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em iounit} & IO unit number \\
+\hline
+\mbox{\texttt{ in}}  & {\em title} & Title line \\
+\hline
+\mbox{\texttt{ out}}  & {\em info} & exit code\+: 0 on success \\
+\hline
+\end{DoxyParams}

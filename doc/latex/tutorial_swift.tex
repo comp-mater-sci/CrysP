@@ -1,0 +1,128 @@
+\hypertarget{tutorial_swift_autotoc_md42}{}\doxysection{Introduction}\label{tutorial_swift_autotoc_md42}
+This tutorial gives a step-\/by-\/step procedure for the identification of hardening parameters of a micro-\/scale $\tau(\gamma)$ hardening law, such as Swift law and single-\/ or double-\/stage Voce laws, from macro-\/scale experimental stress-\/strain data. Note that all hardening laws in VEF are micro-\/scale laws and are thus defined on the slip-\/system level. As example, we use macro-\/scale stress-\/strain data of a uniaxial tensile test along RD of a polycrystalline DX51D steel sheet sample to identify the corresponding micro-\/scale Swift law.
+
+\begin{DoxyNote}{Note}
+A similar procedure may also be followed for Voce law or any other micro-\/scale hardening law that prescribes $\tau(\gamma)$. The methodology can also be readily adapted for identification against another (single) monotonic test.
+\end{DoxyNote}
+The micro-\/scale Swift law postulates the Critical Resolved Shear Stress of a grain $\tau$ as a function of a single internal state variable, being the accumulated slip $ \gamma $ of that grain, as\+: \[ \tau(\gamma) = \tau_0 \left(\frac{\gamma}{\gamma_0} + 1 \right)^n \] This heuristic hardening law has 3 parameters\+: $\tau_0$, $\gamma_0$ and $n$.
+
+In what follows 2 approaches to obtain $\tau(\gamma)$ from the macro-\/scale experimental stress-\/strain data $\sigma(\epsilon)$ are demonstrated\+:
+
+
+\begin{DoxyItemize}
+\item \mbox{[}Taking texture evolution into account\mbox{]} (\mbox{\hyperlink{tutorial_swift_swift_texture_evol}{Swift identification with texture evolution}})~\newline
+ Deformation-\/induced changes in texture that affect the stress-\/level of the macroscopic flow stress $\sigma(\epsilon)$ are considered.  
+\item \mbox{[}Neglecting texture evolution\mbox{]} (\mbox{\hyperlink{tutorial_swift_swift_texture_const}{Swift identification with constant texture}})~\newline
+ Texture is assumed constant during the macro-\/scale test.  
+\end{DoxyItemize}
+
+The macro-\/scale stress-\/strain curve (also called identification test) is given in the file {\ttfamily examples\textbackslash{}tutorial\+\_\+swift\textbackslash{}DX51\+D\+\_\+uni0\+\_\+exp.\+txt}. Its contents looks as follows\+:     Experimental stress-\/strain data from 0° tensile test (DX51D steel) 
+
+\begin{DoxyAttention}{Attention}
+A set of micro-\/scale hardening parameters is identified under assumption of specific multi-\/scale model configuration, such as the \mbox{[}model type\mbox{]} (model\+\_\+type) (e.\+g. Alamel or Taylor) and the \mbox{[}definition of slip systems\mbox{]} (slip\+\_\+system\+\_\+family). Even if the hardening law is the same, the parameters are generally different for different multi-\/scale model assumptions. So in case several variants of multi-\/scale model are being studied, it is important that the identification procedure is repeated for every model variant.
+\end{DoxyAttention}
+\hypertarget{tutorial_swift_swift_texture_evol}{}\doxysection{Swift identification with texture evolution}\label{tutorial_swift_swift_texture_evol}
+\hypertarget{tutorial_swift_autotoc_md43}{}\doxysubsection{Basics of the identification strategy}\label{tutorial_swift_autotoc_md43}
+The identification strategy consists of three steps\+: 
+\begin{DoxyEnumerate}
+\item {\bfseries{Non-\/hardening VEF simulation of the identification test}}~\newline
+ A non-\/hardening VEF simulation is conducted first. It is hereby assumed that the Critical Resolved Shear Stress equals unity, independent of the degree of deformation. Quantities associated to this non-\/hardening reference material are tagged by superscript-\/star symbol ($\ast$). So for instance, we have the relation $ \tau^* \equiv 1 $, and the tensile stress and accumulated slip of the non-\/hardening material are written as $ \sigma^*_{xx} $ and $ \gamma^* $, respectively. The goal of the non-\/hardening simulation is to obtain the relationship $\sigma^*_{xx}(\gamma^*)$.  
+\item {\bfseries{Swift parameter identification through curve fitting}}~\newline
+ Parameter identification of the $\tau(\gamma)$ hardening law is based on the {\itshape approximate} relationship between the experimental target tensile stress $\sigma_{xx}$ on one hand, and quantities of the non-\/hardening material on the other hand\+: \[ \sigma_{xx} \approx \sigma^*_{xx}(\gamma^*) \tau(\gamma^*) \] In general, this relation is only approximate since the right-\/hand side neglects local interaction effects between grain orientations (reflected by the factor $ \sigma^*_{xx}$) and strain hardening (given by the factor $\tau(\gamma^*)$). It has nevertheless proven to be a usefull relation in practice. In case of the of Swift law, expansion of the $\tau(\gamma)$ relation leads to \[ \sigma_{xx} \approx \sigma^*_{xx}(\gamma^*) \tau_0 \left(\frac{\gamma^*}{\gamma_0} + 1 \right)^n \] Simultaneous identification of the three Swift parameters $\tau_0$, $\gamma_0$ and $n$ can be accomplished by, for instance, least-\/square fitting, i.\+e. the minimization of following function of the parameters\+:\label{tutorial_swift_eq_leastsquarefit}%
+\Hypertarget{tutorial_swift_eq_leastsquarefit}%
+ \[ f\left(\tau_0,\gamma_0,n\right)=\sum_{i} \left[ \sigma^{exp}_{xx,i} - \sigma^*_{xx,i} \tau_0 \left(\frac{\gamma^*_{i}}{\gamma_0} + 1 \right)^n \right]^2 \] Note that the experimental datapoints $\sigma^{exp}_{xx,i}$ and the non-\/hardening simulation output data ( $\sigma^*_{xx,i}=\sigma^*_{xx}(\gamma^*_{i})$ and $\gamma^*_{i}$) need to be known for the same set of deformation levels $i$.  
+\item {\bfseries{Verification of parameter identification}}~\newline
+ As the identification relationship is approximate, it is advised to check that a satisfactory simulation accuracy is obtained for the identification test using the hardening parameters identified in previous step.  
+\end{DoxyEnumerate}
+
+Let\textquotesingle{}s now see how these steps work out for the example at hand.\hypertarget{tutorial_swift_autotoc_md44}{}\doxysubsection{Non-\/hardening VEF simulation of the identification test}\label{tutorial_swift_autotoc_md44}
+As a first step, we need to simulate the 0° uniaxial tensile test assuming a non-\/hardening material model. For DX51D, a pre-\/made configuration file {\ttfamily sid1687f\+\_\+udsa\+\_\+hard0\+\_\+evol.\+cfg} is available in directory {\ttfamily examples\textbackslash{}tutorial\+\_\+swift}. It looks as follows\+: 
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+
+
+We want to identify hardening parameters for ALAMEL multi-\/scale model (line 8) with 24 BCC slip systems (line 9). The non-\/hardening behavior is accomplished by the default hardening settings (line 11), as can be cross-\/checked with \mbox{\hyperlink{page_alamdmc_generic}{Alam\+DMC Generic Configuration}}.
+
+The 0° tensile test is easily configured with the \mbox{\hyperlink{page_alamdmc_modules_module_udsa}{Uniaxial Stress Test Module (keyword\+: UDSA)}}. We can see that, besides specifying a single, in-\/plane tensile test along 0° to RD (lines 16-\/19 and line 23), we request that increments be made in equal intervals of 0.\+018 of tensile strain (lines 20 and 22). This is far from a random choice; in fact it corresponds exactly to the strain intervals in which the experimental data (cf. file {\ttfamily examples\textbackslash{}tutorial\+\_\+swift\textbackslash{}DX51\+D\+\_\+uni0\+\_\+exp.\+txt}) is available.
+
+Now let\textquotesingle{}s run the simulation\+: 
+\begin{DoxyPre}
+alamDMC UDSA sid1687f\_udsa\_hard0\_evol.cfg
+\end{DoxyPre}
+
+
+S\hypertarget{tutorial_swift_autotoc_md45}{}\doxysubsection{wift parameter identification through curve fitting}\label{tutorial_swift_autotoc_md45}
+The output file of the non-\/hardening VEF simulation is provided in {\ttfamily sid1687f\+\_\+udsa\+\_\+hard0\+\_\+evol.\+uds} in directory {\ttfamily examples\textbackslash{}tutorial\+\_\+swift\textbackslash{}results}. Let\textquotesingle{}s take a glance at the leading 5 lines\+:  
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+ We should now have all coefficients for \mbox{[}the least-\/square minimization problem\mbox{]} (\mbox{\hyperlink{tutorial_swift_eq_leastsquarefit}{eq\+\_\+leastsquarefit}})\+: 
+\begin{DoxyItemize}
+\item The experimental datapoints $\sigma^{exp}_{xx,i}$ for strain levels $i$ are located in {\ttfamily examples\textbackslash{}tutorial\+\_\+swift\textbackslash{}DX51\+D\+\_\+uni0\+\_\+exp.\+txt}. 
+\item The same experimental strain levels $i$ are also listed in column 4 of {\ttfamily sid1687f\+\_\+udsa\+\_\+hard0\+\_\+evol.\+uds}, so we also have the corresponding $\sigma^*_{xx,i}$ datapoints in column 5.  
+\item Wait a minute -\/ how about the datapoints of homogenized accumulated slip $ \gamma^* $? On first sight, it does not appear to be listed in the {\ttfamily uds}-\/output file... But in fact we {\itshape do} know it, because for the non-\/hardening material with unity CRSS, $ \gamma^* $ is numerically identical to the accumulated work $ W^* $, which we can find back in column 7. It can be derived from the rate of work of a particular grain due to slip activity on slip systems $s$, which is given by $ \dot{w} = \sum_{s}\tau_{s} \dot\gamma_{s} $. For the non-\/hardening material with $ \tau^*_{s}\equiv 1 $, it follows that rate of work in the grain equals the total slip rate of the grain. The identity $ W^* = \gamma^* $ is then found after time integration and volume-\/averaging (i.\+e. homogenization). 
+\end{DoxyItemize}
+
+Least-\/square fitting results in the following parameter set\+: $\tau_0=43.38MPa$, $\gamma_0=1.35\space10^{-2}$ and $n=0.243$.
+
+\begin{DoxyNote}{Note}
+This procedure requires only a single run of VEF, namely for the non-\/hardening simulation in order to obtain $\sigma^*_{xx}(\gamma^*)$. The minimization can be afterwards performed with a least-\/squares solver of the user\textquotesingle{}s choice.
+\end{DoxyNote}
+\hypertarget{tutorial_swift_swift_texture_evol_ver}{}\doxysubsection{Verification of parameter identification}\label{tutorial_swift_swift_texture_evol_ver}
+The verification step needs only a slight modification to configuration file, see file {\ttfamily sid1687f\+\_\+udsa\+\_\+\+Swift\+S\+\_\+evol.\+cfg} in directory {\ttfamily examples\textbackslash{}tutorial\+\_\+swift}\+: 
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+ The \mbox{[}Swift law variant\mbox{]} (\mbox{\hyperlink{page_alamdmc_generic_hardening_model3}{hardening\+\_\+model3}}) is defined in the lines 12-\/13. Other modifications are a new output prefix (line 4), and the reduction of increment size (line 24) to generate denser points on the stress-\/strain curve.
+
+The output file generated from running this simulation is {\ttfamily sid1687f\+\_\+udsa\+\_\+\+Swift\+S\+\_\+evol.\+uds}, also included in the directory {\ttfamily examples\textbackslash{}tutorial\+\_\+swift\textbackslash{}results}. As can be seen in figure below, the stress-\/strain behavior of the virtual material compares very well to the experimental behavior\+:     Identification result for Swift hardening parameter set with texture evolution (DX51D steel) \hypertarget{tutorial_swift_swift_texture_const}{}\doxysection{Swift identification with constant texture}\label{tutorial_swift_swift_texture_const}
+\hypertarget{tutorial_swift_autotoc_md46}{}\doxysubsection{Basics of the identification strategy}\label{tutorial_swift_autotoc_md46}
+The identification strategy consists of three steps\+: 
+\begin{DoxyEnumerate}
+\item {\bfseries{Non-\/hardening VEF simulation of the identification test}}~\newline
+ Similar to the \mbox{[}identification procedure with texture evolution\mbox{]} (\mbox{\hyperlink{tutorial_swift_swift_texture_evol}{Swift identification with texture evolution}}) a non-\/hardening VEF simulation is conducted first. However, this time only for a single small increment to determine the initial yield stress. The goal of the non-\/hardening simulation is to obtain the yield stress for the same load direction as the macro-\/scale test assuming $\tau^*=1$ . 
+
+
+\item {\bfseries{Conversion of macro-\/ to micro-\/scale parameters}}~\newline
+ The yield stress obtained from the non-\/hardening simulation is then used to convert the macro-\/scale hardening parameters into the corresponding micro-\/scale counterparts. Here it is assumed that the macro-\/scale hardening law is already known in the following form\+: \[ \sigma_{xx} = \sigma_{xx,0} \left(\frac{\epsilon_{xx}}{\epsilon_{xx,0}} + 1 \right)^n \]
+
+In the present example $\sigma_{xx,0}=112.9$ MPa, $\epsilon_{xx,0}=0.0054$, $n=0.2461$.
+
+
+
+
+\item {\bfseries{Verification of parameter identification}}~\newline
+ Lastly, the micro-\/scale law is used to simulate the identification test and to verify the accuracy of the calibration.  
+\end{DoxyEnumerate}
+
+Proceed as follows to carry out the necessary steps.\hypertarget{tutorial_swift_autotoc_md47}{}\doxysubsection{Non-\/hardening VEF simulation of the identification test}\label{tutorial_swift_autotoc_md47}
+Again we start with a 0° uniaxial tensile test simulation assuming a non-\/hardening slip systems. However, we apply only a very small plastic strain of 0.\+0001, since we only need the initial yield point. The respective pre-\/made configuration file is {\ttfamily sid1687f\+\_\+udsa\+\_\+hard0\+\_\+const.\+cfg} \+: 
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+
+
+To run the simulation enter\+: 
+\begin{DoxyPre}
+alamDMC UDSA sid1687f\_udsa\_hard0\_const.cfg
+\end{DoxyPre}
+
+
+C\hypertarget{tutorial_swift_autotoc_md48}{}\doxysubsection{onversion of macro-\/ to micro-\/scale parameters}\label{tutorial_swift_autotoc_md48}
+The output file of the non-\/hardening VEF simulation is {\ttfamily sid1687f\+\_\+udsa\+\_\+hard0\+\_\+const.\+uds} and can be found in the folder {\ttfamily examples\textbackslash{}tutorial\+\_\+swift\textbackslash{}results} \+: 
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+
+
+We are interested in the total uniaxial stress $\sigma_{xx}$ (column 5) of the first increment, which represents $\sigma^*_{xx,0}$. It allows converting the macro-\/scale parameters into micro-\/scale parameters\+: \[ \tau_{0} = \frac{\sigma_{xx,0}}{\sigma^*_{xx,0}} \] \[ \gamma_{0} = \sigma^*_{xx,0}\cdot\epsilon_{xx,0} \] Note that the exponent $n$ remains the same. This leads to $\tau_{0}=43.40$ MPa, $\gamma_{0}=1.41\space10^{-2}$, $n=0.246$.\hypertarget{tutorial_swift_autotoc_md49}{}\doxysubsection{Verification of parameter identification}\label{tutorial_swift_autotoc_md49}
+Using the micro-\/scale hardening law we can now simulate the uni-\/axial calibration test. The UDSA configuration used in this example can be found in file {\ttfamily sid1687f\+\_\+udsa\+\_\+\+Swift\+S\+\_\+const.\+cfg} and is identical to the case for \mbox{[}texture evolution\mbox{]} (\mbox{\hyperlink{tutorial_swift_swift_texture_evol_ver}{Verification of parameter identification}}) except for minor differences in the hardening parameters due to keeping the texture constant. 
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+
+
+The simulation results (listed in file {\ttfamily sid1687f\+\_\+udsa\+\_\+\+Swift\+S\+\_\+const.\+uds}) reproduce the experimental data accurately\+:
+
+    Identification result for Swift hardening parameter set with constant texture (DX51D steel)  

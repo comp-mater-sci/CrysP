@@ -1,0 +1,119 @@
+\hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolvariables}{}\doxysection{dmcincrementationcontrol\+::incrementationcontrolvariables Type Reference}
+\label{structdmcincrementationcontrol_1_1incrementationcontrolvariables}\index{dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}}
+
+
+Basic control variables used in evolution of material state.  
+
+
+Inheritance diagram for dmcincrementationcontrol\+::incrementationcontrolvariables\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{structdmcincrementationcontrol_1_1incrementationcontrolvariables}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a3ac349747989805f3c6cbda6bb2142f6}{increment}} = 0
+\item 
+double precision \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolvariables_ad419053b97abaf286568c22e49393556}{plastic\+\_\+work\+\_\+inc}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Plastic work in the current increment. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolvariables_af89894a2ee7d341bb2ee4bf9eb71b32e}{plastic\+\_\+work\+\_\+step}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Plastic work in the current step. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a8f622a0031b10349609a6dac1db0045d}{plastic\+\_\+work\+\_\+total}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Total plastic work. \end{DoxyCompactList}\item 
+double precision, dimension(alameval\+\_\+vsd\+\_\+dim) \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a23ca8c577c029fcc25ebed43f22f9f13}{vp\+\_\+inc}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Increment of plastic strain. \end{DoxyCompactList}\item 
+double precision, dimension(alameval\+\_\+vsd\+\_\+dim) \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a10d2af6fa1a31b1c0de237832196c495}{vp\+\_\+step}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Total plastic strain in the current step. \end{DoxyCompactList}\item 
+double precision, dimension(alameval\+\_\+vsd\+\_\+dim) \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a4ef6674864eca73d137f2cfad5740714}{vp\+\_\+total}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Total plastic strain\+: \end{DoxyCompactList}\item 
+double precision, dimension(alameval\+\_\+vsd\+\_\+dim) \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolvariables_ac89b274174e0fde6af530e5d28a0d3c4}{vp\+\_\+abs}}
+\begin{DoxyCompactList}\small\item\em Sum of absolute plastic strain increments\+: \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Basic control variables used in evolution of material state. 
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a3ac349747989805f3c6cbda6bb2142f6}\label{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a3ac349747989805f3c6cbda6bb2142f6}} 
+\index{dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}!increment@{increment}}
+\index{increment@{increment}!dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}}
+\doxysubsubsection{\texorpdfstring{increment}{increment}}
+{\footnotesize\ttfamily integer dmcincrementationcontrol\+::incrementationcontrolvariables\+::increment = 0}
+
+\mbox{\Hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolvariables_ad419053b97abaf286568c22e49393556}\label{structdmcincrementationcontrol_1_1incrementationcontrolvariables_ad419053b97abaf286568c22e49393556}} 
+\index{dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}!plastic\_work\_inc@{plastic\_work\_inc}}
+\index{plastic\_work\_inc@{plastic\_work\_inc}!dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}}
+\doxysubsubsection{\texorpdfstring{plastic\_work\_inc}{plastic\_work\_inc}}
+{\footnotesize\ttfamily double precision dmcincrementationcontrol\+::incrementationcontrolvariables\+::plastic\+\_\+work\+\_\+inc = 0.D0}
+
+
+
+Plastic work in the current increment. 
+
+\mbox{\Hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolvariables_af89894a2ee7d341bb2ee4bf9eb71b32e}\label{structdmcincrementationcontrol_1_1incrementationcontrolvariables_af89894a2ee7d341bb2ee4bf9eb71b32e}} 
+\index{dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}!plastic\_work\_step@{plastic\_work\_step}}
+\index{plastic\_work\_step@{plastic\_work\_step}!dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}}
+\doxysubsubsection{\texorpdfstring{plastic\_work\_step}{plastic\_work\_step}}
+{\footnotesize\ttfamily double precision dmcincrementationcontrol\+::incrementationcontrolvariables\+::plastic\+\_\+work\+\_\+step = 0.D0}
+
+
+
+Plastic work in the current step. 
+
+\mbox{\Hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a8f622a0031b10349609a6dac1db0045d}\label{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a8f622a0031b10349609a6dac1db0045d}} 
+\index{dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}!plastic\_work\_total@{plastic\_work\_total}}
+\index{plastic\_work\_total@{plastic\_work\_total}!dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}}
+\doxysubsubsection{\texorpdfstring{plastic\_work\_total}{plastic\_work\_total}}
+{\footnotesize\ttfamily double precision dmcincrementationcontrol\+::incrementationcontrolvariables\+::plastic\+\_\+work\+\_\+total = 0.D0}
+
+
+
+Total plastic work. 
+
+\mbox{\Hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolvariables_ac89b274174e0fde6af530e5d28a0d3c4}\label{structdmcincrementationcontrol_1_1incrementationcontrolvariables_ac89b274174e0fde6af530e5d28a0d3c4}} 
+\index{dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}!vp\_abs@{vp\_abs}}
+\index{vp\_abs@{vp\_abs}!dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}}
+\doxysubsubsection{\texorpdfstring{vp\_abs}{vp\_abs}}
+{\footnotesize\ttfamily double precision, dimension(alameval\+\_\+vsd\+\_\+dim) dmcincrementationcontrol\+::incrementationcontrolvariables\+::vp\+\_\+abs}
+
+
+
+Sum of absolute plastic strain increments\+: 
+
+\[ vP_{abs} = \sum | vP_{inc} | \] \mbox{\Hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a23ca8c577c029fcc25ebed43f22f9f13}\label{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a23ca8c577c029fcc25ebed43f22f9f13}} 
+\index{dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}!vp\_inc@{vp\_inc}}
+\index{vp\_inc@{vp\_inc}!dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}}
+\doxysubsubsection{\texorpdfstring{vp\_inc}{vp\_inc}}
+{\footnotesize\ttfamily double precision, dimension(alameval\+\_\+vsd\+\_\+dim) dmcincrementationcontrol\+::incrementationcontrolvariables\+::vp\+\_\+inc = 0.D0}
+
+
+
+Increment of plastic strain. 
+
+\mbox{\Hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a10d2af6fa1a31b1c0de237832196c495}\label{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a10d2af6fa1a31b1c0de237832196c495}} 
+\index{dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}!vp\_step@{vp\_step}}
+\index{vp\_step@{vp\_step}!dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}}
+\doxysubsubsection{\texorpdfstring{vp\_step}{vp\_step}}
+{\footnotesize\ttfamily double precision, dimension(alameval\+\_\+vsd\+\_\+dim) dmcincrementationcontrol\+::incrementationcontrolvariables\+::vp\+\_\+step = 0.D0}
+
+
+
+Total plastic strain in the current step. 
+
+\mbox{\Hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a4ef6674864eca73d137f2cfad5740714}\label{structdmcincrementationcontrol_1_1incrementationcontrolvariables_a4ef6674864eca73d137f2cfad5740714}} 
+\index{dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}!vp\_total@{vp\_total}}
+\index{vp\_total@{vp\_total}!dmcincrementationcontrol::incrementationcontrolvariables@{dmcincrementationcontrol::incrementationcontrolvariables}}
+\doxysubsubsection{\texorpdfstring{vp\_total}{vp\_total}}
+{\footnotesize\ttfamily double precision, dimension(alameval\+\_\+vsd\+\_\+dim) dmcincrementationcontrol\+::incrementationcontrolvariables\+::vp\+\_\+total = 0.D0}
+
+
+
+Total plastic strain\+: 
+
+
+
+The documentation for this type was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+VEF/lib\+Alam\+DMC/\mbox{\hyperlink{incrementationControl_8f90}{incrementation\+Control.\+f90}}\end{DoxyCompactItemize}

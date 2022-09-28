@@ -1,0 +1,60 @@
+\hypertarget{altayConfig_8f90}{}\doxysection{Al\+Tay/src/altay\+Config.f90 File Reference}
+\label{altayConfig_8f90}\index{AlTay/src/altayConfig.f90@{AlTay/src/altayConfig.f90}}
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1slipsystemdata}{altayconfig\+::slipsystemdata}}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1texturedata}{altayconfig\+::texturedata}}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1simulstepinputdata}{altayconfig\+::simulstepinputdata}}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1simulstepoutputdata}{altayconfig\+::simulstepoutputdata}}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1simulstepdata}{altayconfig\+::simulstepdata}}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1outputconfig}{altayconfig\+::outputconfig}}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1pebpconfig}{altayconfig\+::pebpconfig}}
+\begin{DoxyCompactList}\small\item\em PEBP model parameters (no state variables) \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltayconfig_1_1hardeningdata}{altayconfig\+::hardeningdata}}
+\begin{DoxyCompactList}\small\item\em Parameters of available hardening models. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltayconfig_1_1simuldata}{altayconfig\+::simuldata}}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1altayconfigdata}{altayconfig\+::altayconfigdata}}
+\begin{DoxyCompactList}\small\item\em Root-\/level configuration structure of Altay. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltayconfig_1_1altaystatedata}{altayconfig\+::altaystatedata}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacealtayconfig}{altayconfig}}
+\begin{DoxyCompactList}\small\item\em Provides configuration data for Al\+Tay. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacealtayconfig_aacbe5a7105a4c8225d397226a3d5eb9c}{altayconfig\+::setsteptype}} (stp, model\+Id, info)
+\begin{DoxyCompactList}\small\item\em Configure the stp object for using selected model type (FCTaylor, ALAMEL, MASAL). \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtayconfig_ae306d4ac87903aa2e6a4a177e075f2c9}{altayconfig\+::setmodeltype}} (cnf, model\+Id, info)
+\begin{DoxyCompactList}\small\item\em Configure the cnf object for using selected model type (FCTaylor, ALAMEL, MASAL). \end{DoxyCompactList}\item 
+pure logical function \mbox{\hyperlink{namespacealtayconfig_abc8096c886c87314283233fee383d598}{altayconfig\+::isvalidmodeltype}} (model\+Id)
+\begin{DoxyCompactList}\small\item\em Verify if integer value model\+Id represents any supported Al\+Tay model (FCTaylor, ALAMEL, MASAL). \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtayconfig_aad1bc3a1fd9cbe0d7f7ddcdd79b24665}{altayconfig\+::fname\+\_\+len}} = 512
+\begin{DoxyCompactList}\small\item\em Length of filenames. \end{DoxyCompactList}\item 
+type(altayconfigdata), save \mbox{\hyperlink{namespacealtayconfig_a13c0330eea12cd4d31719341ed29e3a5}{altayconfig\+::acnf}}
+\item 
+type(altaystatedata), save \mbox{\hyperlink{namespacealtayconfig_a8718c110c6bf74b4acc6b95260b5b7de}{altayconfig\+::astate}}
+\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Named constants for identifiers of the supported models}\par
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtayconfig_a01479cb4e94d6d3c8d16aed5ba82974f}{altayconfig\+::modelfctaylor}} = 1
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtayconfig_a6692faa56c461ccb019c58b244f96099}{altayconfig\+::modelalamel}} = 2
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtayconfig_ad4596ff9e4b5a7d30e190d6e1e93090f}{altayconfig\+::modelmasal}} = 3
+\end{DoxyCompactItemize}
+\end{Indent}

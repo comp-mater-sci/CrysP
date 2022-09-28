@@ -1,0 +1,89 @@
+\hypertarget{namespacealtaytexformats}{}\doxysection{altaytexformats Module Reference}
+\label{namespacealtaytexformats}\index{altaytexformats@{altaytexformats}}
+
+
+Dispatcher subroutines for IO operation on texture data files.  
+
+
+\doxysubsection*{Named constants for supported texture file formats (aka Format\+ID)}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaytexformats_a97efd46cbf500928d1cf7dc2a5ed4bd1}{tf\+\_\+smt}} = 1
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaytexformats_a3226883beda20e5e08b09e912e6f6d2e}{tf\+\_\+cur}} = 2
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaytexformats_a7d89068f43f245a8fce2a655f2c22a3b}{tf\+\_\+cub}} = 3
+\item 
+subroutine \mbox{\hyperlink{namespacealtaytexformats_a89b3355df7922cb3a4d616a107d92d21}{loadtexture}} (texfmt, nunit, fname, iblock, info)
+\item 
+integer function \mbox{\hyperlink{namespacealtaytexformats_a39fe086c47e2f12946fa4ba24a73e386}{opentexturefile}} (iounit, fname, texfmt, mode)
+\begin{DoxyCompactList}\small\item\em Open a file for texture output. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaytexformats_ab9572026e3036f38eb686b9aa2785ea5}{outputcurrenttexture}} (iounit, texfmt, full, info)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Dispatcher subroutines for IO operation on texture data files. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacealtaytexformats_a89b3355df7922cb3a4d616a107d92d21}\label{namespacealtaytexformats_a89b3355df7922cb3a4d616a107d92d21}} 
+\index{altaytexformats@{altaytexformats}!loadtexture@{loadtexture}}
+\index{loadtexture@{loadtexture}!altaytexformats@{altaytexformats}}
+\doxysubsubsection{\texorpdfstring{loadtexture()}{loadtexture()}}
+{\footnotesize\ttfamily subroutine altaytexformats\+::loadtexture (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{texfmt,  }\item[{integer, intent(inout)}]{nunit,  }\item[{character(len=$\ast$), intent(in)}]{fname,  }\item[{integer, intent(in)}]{iblock,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtaytexformats_a39fe086c47e2f12946fa4ba24a73e386}\label{namespacealtaytexformats_a39fe086c47e2f12946fa4ba24a73e386}} 
+\index{altaytexformats@{altaytexformats}!opentexturefile@{opentexturefile}}
+\index{opentexturefile@{opentexturefile}!altaytexformats@{altaytexformats}}
+\doxysubsubsection{\texorpdfstring{opentexturefile()}{opentexturefile()}}
+{\footnotesize\ttfamily integer function altaytexformats\+::opentexturefile (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit,  }\item[{character(len=$\ast$), intent(in)}]{fname,  }\item[{integer, intent(in)}]{texfmt,  }\item[{character(len=1), intent(in)}]{mode }\end{DoxyParamCaption})}
+
+
+
+Open a file for texture output. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em iounit} & I/O unit \\
+\hline
+\mbox{\texttt{ in}}  & {\em fname} & File name to be opened \\
+\hline
+\mbox{\texttt{ in}}  & {\em texfmt} & Format ID \\
+\hline
+\mbox{\texttt{ in}}  & {\em mode} & Mode\+: \mbox{[}\textquotesingle{}r\textquotesingle{}$\vert$\textquotesingle{}w\textquotesingle{}\mbox{]} \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaytexformats_ab9572026e3036f38eb686b9aa2785ea5}\label{namespacealtaytexformats_ab9572026e3036f38eb686b9aa2785ea5}} 
+\index{altaytexformats@{altaytexformats}!outputcurrenttexture@{outputcurrenttexture}}
+\index{outputcurrenttexture@{outputcurrenttexture}!altaytexformats@{altaytexformats}}
+\doxysubsubsection{\texorpdfstring{outputcurrenttexture()}{outputcurrenttexture()}}
+{\footnotesize\ttfamily subroutine altaytexformats\+::outputcurrenttexture (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit,  }\item[{integer, intent(in)}]{texfmt,  }\item[{logical, intent(in)}]{full,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em iounit} & I/O unit\\
+\hline
+\mbox{\texttt{ in}}  & {\em texfmt} & Format ID If true, both header and block are written, otherwise only the block output is written out. \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacealtaytexformats_a7d89068f43f245a8fce2a655f2c22a3b}\label{namespacealtaytexformats_a7d89068f43f245a8fce2a655f2c22a3b}} 
+\index{altaytexformats@{altaytexformats}!tf\_cub@{tf\_cub}}
+\index{tf\_cub@{tf\_cub}!altaytexformats@{altaytexformats}}
+\doxysubsubsection{\texorpdfstring{tf\_cub}{tf\_cub}}
+{\footnotesize\ttfamily integer, parameter altaytexformats\+::tf\+\_\+cub = 3}
+
+\mbox{\Hypertarget{namespacealtaytexformats_a3226883beda20e5e08b09e912e6f6d2e}\label{namespacealtaytexformats_a3226883beda20e5e08b09e912e6f6d2e}} 
+\index{altaytexformats@{altaytexformats}!tf\_cur@{tf\_cur}}
+\index{tf\_cur@{tf\_cur}!altaytexformats@{altaytexformats}}
+\doxysubsubsection{\texorpdfstring{tf\_cur}{tf\_cur}}
+{\footnotesize\ttfamily integer, parameter altaytexformats\+::tf\+\_\+cur = 2}
+
+\mbox{\Hypertarget{namespacealtaytexformats_a97efd46cbf500928d1cf7dc2a5ed4bd1}\label{namespacealtaytexformats_a97efd46cbf500928d1cf7dc2a5ed4bd1}} 
+\index{altaytexformats@{altaytexformats}!tf\_smt@{tf\_smt}}
+\index{tf\_smt@{tf\_smt}!altaytexformats@{altaytexformats}}
+\doxysubsubsection{\texorpdfstring{tf\_smt}{tf\_smt}}
+{\footnotesize\ttfamily integer, parameter altaytexformats\+::tf\+\_\+smt = 1}
+

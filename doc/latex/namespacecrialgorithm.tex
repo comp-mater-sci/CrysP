@@ -1,0 +1,138 @@
+\hypertarget{namespacecrialgorithm}{}\doxysection{crialgorithm Module Reference}
+\label{namespacecrialgorithm}\index{crialgorithm@{crialgorithm}}
+
+
+Various algorithms.  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+interface \mbox{\hyperlink{interfacecrialgorithm_1_1centered}{centered}}
+\begin{DoxyCompactList}\small\item\em centered function centers a character string. \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{interfacecrialgorithm_1_1lower__bound}{lower\+\_\+bound}}
+\begin{DoxyCompactList}\small\item\em Find the first element in array not before val, using operator \texorpdfstring{$<$}{<}. \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{interfacecrialgorithm_1_1optionaldefault}{optionaldefault}}
+\begin{DoxyCompactList}\small\item\em Test the presence of optional value, and return a default if the optional is not present. \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{interfacecrialgorithm_1_1tostring}{tostring}}
+\begin{DoxyCompactList}\small\item\em tostring function converts from an intrisic data type into character string. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+logical function \mbox{\hyperlink{namespacecrialgorithm_a933e1196b48674887b485ca7f166a805}{ispresent}} (val, list, index)
+\begin{DoxyCompactList}\small\item\em Check if the string value val is present in the list of strings. \end{DoxyCompactList}\item 
+character(len=len(str)) function \mbox{\hyperlink{namespacecrialgorithm_af2d693406e930e764a34f722407e4344}{replaceall}} (str, from, to)
+\begin{DoxyCompactList}\small\item\em Returns a string that stems from \char`\"{}str\char`\"{}, but all instances of the character \char`\"{}from\char`\"{} are replaced by the character \char`\"{}to\char`\"{}. \end{DoxyCompactList}\item 
+pure character(len=strlen) function \mbox{\hyperlink{namespacecrialgorithm_a8ad83d20d966a26b52e9815366803828}{tostring\+\_\+int}} (val, strlen, fmt)
+\item 
+pure character(len=strlen) function \mbox{\hyperlink{namespacecrialgorithm_ab1d975bc61d3bb162edd3db5bbb63593}{tostring\+\_\+real}} (val, strlen, fmt)
+\item 
+pure character(len=strlen) function \mbox{\hyperlink{namespacecrialgorithm_aaae6239d94d8c7e186ad1a3a736d0afb}{tostring\+\_\+double}} (val, strlen, fmt)
+\item 
+pure character(len=strlen) function \mbox{\hyperlink{namespacecrialgorithm_a90eca76b5a6a17c23e246a798e5a3841}{centered\+\_\+int}} (val, strlen, fmt)
+\item 
+pure character(len=len(val)) function \mbox{\hyperlink{namespacecrialgorithm_aa15d2f3313a7f568779c2f12ff542195}{centered\+\_\+string}} (val)
+\item 
+pure logical function \mbox{\hyperlink{namespacecrialgorithm_a4dfa2a7c8fdb58324dd7db19bade60d3}{optionaldefault\+\_\+logical}} (value, default)
+\begin{DoxyCompactList}\small\item\em Test the presence of optional logical value, and return a default if the optional is not present. \end{DoxyCompactList}\item 
+pure integer function \mbox{\hyperlink{namespacecrialgorithm_a90fc487c8bb954a5386f495026980871}{optionaldefault\+\_\+integer}} (value, default)
+\begin{DoxyCompactList}\small\item\em Test the presence of optional integer value, and return a default if the optional is not present. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Various algorithms. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacecrialgorithm_a90eca76b5a6a17c23e246a798e5a3841}\label{namespacecrialgorithm_a90eca76b5a6a17c23e246a798e5a3841}} 
+\index{crialgorithm@{crialgorithm}!centered\_int@{centered\_int}}
+\index{centered\_int@{centered\_int}!crialgorithm@{crialgorithm}}
+\doxysubsubsection{\texorpdfstring{centered\_int()}{centered\_int()}}
+{\footnotesize\ttfamily pure character(len=strlen) function crialgorithm\+::centered\+\_\+int (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{val,  }\item[{integer, intent(in)}]{strlen,  }\item[{character(len=$\ast$), intent(in), optional}]{fmt }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacecrialgorithm_aa15d2f3313a7f568779c2f12ff542195}\label{namespacecrialgorithm_aa15d2f3313a7f568779c2f12ff542195}} 
+\index{crialgorithm@{crialgorithm}!centered\_string@{centered\_string}}
+\index{centered\_string@{centered\_string}!crialgorithm@{crialgorithm}}
+\doxysubsubsection{\texorpdfstring{centered\_string()}{centered\_string()}}
+{\footnotesize\ttfamily pure character(len=len(val)) function crialgorithm\+::centered\+\_\+string (\begin{DoxyParamCaption}\item[{character(len=$\ast$), intent(in)}]{val }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacecrialgorithm_a933e1196b48674887b485ca7f166a805}\label{namespacecrialgorithm_a933e1196b48674887b485ca7f166a805}} 
+\index{crialgorithm@{crialgorithm}!ispresent@{ispresent}}
+\index{ispresent@{ispresent}!crialgorithm@{crialgorithm}}
+\doxysubsubsection{\texorpdfstring{ispresent()}{ispresent()}}
+{\footnotesize\ttfamily logical function crialgorithm\+::ispresent (\begin{DoxyParamCaption}\item[{character(len=$\ast$), intent(in)}]{val,  }\item[{character(len=$\ast$), dimension(\+:), intent(in)}]{list,  }\item[{integer, intent(out), optional}]{index }\end{DoxyParamCaption})}
+
+
+
+Check if the string value val is present in the list of strings. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em val} & Value to be looked up \\
+\hline
+\mbox{\texttt{ in}}  & {\em list} & Array of strings \\
+\hline
+\mbox{\texttt{ out}}  & {\em index} & Index of the element that was found. It is set only if is\+Present returns .true. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacecrialgorithm_a90fc487c8bb954a5386f495026980871}\label{namespacecrialgorithm_a90fc487c8bb954a5386f495026980871}} 
+\index{crialgorithm@{crialgorithm}!optionaldefault\_integer@{optionaldefault\_integer}}
+\index{optionaldefault\_integer@{optionaldefault\_integer}!crialgorithm@{crialgorithm}}
+\doxysubsubsection{\texorpdfstring{optionaldefault\_integer()}{optionaldefault\_integer()}}
+{\footnotesize\ttfamily pure integer function crialgorithm\+::optionaldefault\+\_\+integer (\begin{DoxyParamCaption}\item[{integer, intent(in), optional}]{value,  }\item[{integer, intent(in)}]{default }\end{DoxyParamCaption})}
+
+
+
+Test the presence of optional integer value, and return a default if the optional is not present. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em value} & The parameter to be tested for presence. The actual parameter MUST have optional attribute. \\
+\hline
+\mbox{\texttt{ in}}  & {\em default} & Default value \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacecrialgorithm_a4dfa2a7c8fdb58324dd7db19bade60d3}\label{namespacecrialgorithm_a4dfa2a7c8fdb58324dd7db19bade60d3}} 
+\index{crialgorithm@{crialgorithm}!optionaldefault\_logical@{optionaldefault\_logical}}
+\index{optionaldefault\_logical@{optionaldefault\_logical}!crialgorithm@{crialgorithm}}
+\doxysubsubsection{\texorpdfstring{optionaldefault\_logical()}{optionaldefault\_logical()}}
+{\footnotesize\ttfamily pure logical function crialgorithm\+::optionaldefault\+\_\+logical (\begin{DoxyParamCaption}\item[{logical, intent(in), optional}]{value,  }\item[{logical, intent(in)}]{default }\end{DoxyParamCaption})}
+
+
+
+Test the presence of optional logical value, and return a default if the optional is not present. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em value} & The parameter to be tested for presence. The actual parameter MUST have optional attribute. \\
+\hline
+\mbox{\texttt{ in}}  & {\em default} & Default value \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacecrialgorithm_af2d693406e930e764a34f722407e4344}\label{namespacecrialgorithm_af2d693406e930e764a34f722407e4344}} 
+\index{crialgorithm@{crialgorithm}!replaceall@{replaceall}}
+\index{replaceall@{replaceall}!crialgorithm@{crialgorithm}}
+\doxysubsubsection{\texorpdfstring{replaceall()}{replaceall()}}
+{\footnotesize\ttfamily character(len=len(str)) function crialgorithm\+::replaceall (\begin{DoxyParamCaption}\item[{character(len=$\ast$), intent(in)}]{str,  }\item[{character, intent(in)}]{from,  }\item[{character, intent(in)}]{to }\end{DoxyParamCaption})}
+
+
+
+Returns a string that stems from \char`\"{}str\char`\"{}, but all instances of the character \char`\"{}from\char`\"{} are replaced by the character \char`\"{}to\char`\"{}. 
+
+\mbox{\Hypertarget{namespacecrialgorithm_aaae6239d94d8c7e186ad1a3a736d0afb}\label{namespacecrialgorithm_aaae6239d94d8c7e186ad1a3a736d0afb}} 
+\index{crialgorithm@{crialgorithm}!tostring\_double@{tostring\_double}}
+\index{tostring\_double@{tostring\_double}!crialgorithm@{crialgorithm}}
+\doxysubsubsection{\texorpdfstring{tostring\_double()}{tostring\_double()}}
+{\footnotesize\ttfamily pure character(len=strlen) function crialgorithm\+::tostring\+\_\+double (\begin{DoxyParamCaption}\item[{double precision, intent(in)}]{val,  }\item[{integer, intent(in)}]{strlen,  }\item[{character(len=$\ast$), intent(in)}]{fmt }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacecrialgorithm_a8ad83d20d966a26b52e9815366803828}\label{namespacecrialgorithm_a8ad83d20d966a26b52e9815366803828}} 
+\index{crialgorithm@{crialgorithm}!tostring\_int@{tostring\_int}}
+\index{tostring\_int@{tostring\_int}!crialgorithm@{crialgorithm}}
+\doxysubsubsection{\texorpdfstring{tostring\_int()}{tostring\_int()}}
+{\footnotesize\ttfamily pure character(len=strlen) function crialgorithm\+::tostring\+\_\+int (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{val,  }\item[{integer, intent(in)}]{strlen,  }\item[{character(len=$\ast$), intent(in), optional}]{fmt }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacecrialgorithm_ab1d975bc61d3bb162edd3db5bbb63593}\label{namespacecrialgorithm_ab1d975bc61d3bb162edd3db5bbb63593}} 
+\index{crialgorithm@{crialgorithm}!tostring\_real@{tostring\_real}}
+\index{tostring\_real@{tostring\_real}!crialgorithm@{crialgorithm}}
+\doxysubsubsection{\texorpdfstring{tostring\_real()}{tostring\_real()}}
+{\footnotesize\ttfamily pure character(len=strlen) function crialgorithm\+::tostring\+\_\+real (\begin{DoxyParamCaption}\item[{real, intent(in)}]{val,  }\item[{integer, intent(in)}]{strlen,  }\item[{character(len=$\ast$), intent(in)}]{fmt }\end{DoxyParamCaption})}
+

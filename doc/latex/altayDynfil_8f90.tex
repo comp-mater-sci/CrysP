@@ -1,0 +1,44 @@
+\hypertarget{altayDynfil_8f90}{}\doxysection{Al\+Tay/src/altay\+Dynfil.f90 File Reference}
+\label{altayDynfil_8f90}\index{AlTay/src/altayDynfil.f90@{AlTay/src/altayDynfil.f90}}
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structaltaydynfil_1_1grain}{altaydynfil\+::grain}}
+\begin{DoxyCompactList}\small\item\em Texture-\/related state variables for single grain. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltaydynfil_1_1matframe}{altaydynfil\+::matframe}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacealtaydynfil}{altaydynfil}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacealtaydynfil_a6a0517fd44d15242709fdabd9046e2dc}{altaydynfil\+::dynfil0}} (npoint, keepstate, istat)
+\begin{DoxyCompactList}\small\item\em Allocate the memory block for the state variables. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaydynfil_a0e5f4420bf9426228e52f7b9b061565c}{altaydynfil\+::dynfil\+\_\+finalize}} (info)
+\begin{DoxyCompactList}\small\item\em Finalizes the module. The subroutine puts the module variables into initial state and deallocates the storage. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaydynfil_a06ff707ec88c8a1ce9a219eaf501c118}{altaydynfil\+::dynfil2}} (n, F, AXES, EULR, CIJ, TAX)
+\begin{DoxyCompactList}\small\item\em Extract the global material data. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaydynfil_a8ad55fdf7713683ba27783b52e10c270}{altaydynfil\+::dynfil3}} (n, F, AXES, EULR, CIJ, TAX)
+\begin{DoxyCompactList}\small\item\em Write the global material data. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaydynfil_a79f90f2467b1282b16688e19799f4672}{altaydynfil\+::dynfil4}} (i, FI1, PHI, FI2, T,
+\begin{DoxyCompactList}\small\item\em Get the record data for i-\/th grain. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaydynfil_a98b356c973aa52ea8eac80750d59c361}{altaydynfil\+::dynfil5}} (i, FI1, PHI, FI2, T,
+\begin{DoxyCompactList}\small\item\em Put the record data for i-\/th grain. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaydynfil_a6317904faa51fe6ff289cac4138379ef}{altaydynfil\+::dynfil7}} (i, IDIR, RHOS)
+\begin{DoxyCompactList}\small\item\em For IDIR=0\+: To read RHOS from the temporary file in memory For IDIR=1\+: To write RHOS in the temporary file in memory. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaydynfil_a52ac629e38a612f460a892dd92d7efb2}{altaydynfil\+::initfields}} (mf, gr)
+\begin{DoxyCompactList}\small\item\em Set the computed fields in grain structure. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+type(grain), dimension(\+:), allocatable, save \mbox{\hyperlink{namespacealtaydynfil_ad49a2da66958ecb616a4d7cdac7e908c}{altaydynfil\+::dfil}}
+\begin{DoxyCompactList}\small\item\em State variable\+: array of grains/orientations. \end{DoxyCompactList}\item 
+type(matframe), save \mbox{\hyperlink{namespacealtaydynfil_a8e10651f91652392d4f5eb4b9cf4063b}{altaydynfil\+::mf}}
+\begin{DoxyCompactList}\small\item\em State variable\+: material (frame) global geometry. \end{DoxyCompactList}\item 
+character(len=40), save \mbox{\hyperlink{namespacealtaydynfil_af07875b379e3412ca859feb649796735}{altaydynfil\+::filetitle}} = \textquotesingle{}\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em State variable\+: title of the input texture file. \end{DoxyCompactList}\item 
+integer, save \mbox{\hyperlink{namespacealtaydynfil_a2f7dd6e2fbd784841e257263c1c6d58a}{altaydynfil\+::nrstep}} = 0
+\begin{DoxyCompactList}\small\item\em State variable\+: step number. \end{DoxyCompactList}\end{DoxyCompactItemize}

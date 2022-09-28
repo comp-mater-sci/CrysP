@@ -1,0 +1,129 @@
+\hypertarget{structnllstr_1_1nllstrconf}{}\doxysection{nllstr\+::nllstrconf Type Reference}
+\label{structnllstr_1_1nllstrconf}\index{nllstr::nllstrconf@{nllstr::nllstrconf}}
+
+
+Control over Trust Region algorithm.  
+
+
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+double precision, dimension(6) \mbox{\hyperlink{structnllstr_1_1nllstrconf_ae089f28ec465a3e2b70318665cfeb500}{eps}} = 1.e-\/10
+\begin{DoxyCompactList}\small\item\em Array of parameters controling stop criteria. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{structnllstr_1_1nllstrconf_a4227e049c23a2954682b0186babf9dc8}{iter1}} = 300
+\begin{DoxyCompactList}\small\item\em Maximum number of iterations. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{structnllstr_1_1nllstrconf_a58f43251f5ac4247a4abbec29b494d2c}{iter2}} = 50
+\begin{DoxyCompactList}\small\item\em Maximum number of trial steps. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structnllstr_1_1nllstrconf_a660c0c49751239a4e95acd4334520262}{init\+\_\+step}} = 100.\+0
+\begin{DoxyCompactList}\small\item\em Initial step bound factor. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structnllstr_1_1nllstrconf_a8b0cc7f367c788631bb300464550fd9e}{lo\+\_\+limit}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Lower constraints for design vector. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structnllstr_1_1nllstrconf_a6226870a6eecc402ae2c2583a50a4b6e}{up\+\_\+limit}} = 1.D2
+\begin{DoxyCompactList}\small\item\em Upper constraints for design vector. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{structnllstr_1_1nllstrconf_a627a98c7ad00051749ec926d44762a5a}{constjacobi}} = .false.
+\begin{DoxyCompactList}\small\item\em Helper for problems with invariant Jacobi matrix. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{structnllstr_1_1nllstrconf_ae3a29dd71820a4d3dc31914edeb0f6a0}{use\+\_\+init\+\_\+state}} = .false.
+\begin{DoxyCompactList}\small\item\em If set true, the algorithm will use the contents of \char`\"{}state\char`\"{} field in the objective function object for the very first iteration. This implies an assumption that the state field contains a consistent starting point. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{structnllstr_1_1nllstrconf_aaf3efd21047b8427d2a97e8a46f85a41}{use\+\_\+input\+\_\+checks}} = .true.
+\begin{DoxyCompactList}\small\item\em If set true, every evaluation of either the objective function or Jacobian will be tested against NaN or Inf. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Control over Trust Region algorithm. 
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structnllstr_1_1nllstrconf_a627a98c7ad00051749ec926d44762a5a}\label{structnllstr_1_1nllstrconf_a627a98c7ad00051749ec926d44762a5a}} 
+\index{nllstr::nllstrconf@{nllstr::nllstrconf}!constjacobi@{constjacobi}}
+\index{constjacobi@{constjacobi}!nllstr::nllstrconf@{nllstr::nllstrconf}}
+\doxysubsubsection{\texorpdfstring{constjacobi}{constjacobi}}
+{\footnotesize\ttfamily logical nllstr\+::nllstrconf\+::constjacobi = .false.}
+
+
+
+Helper for problems with invariant Jacobi matrix. 
+
+If this variable is set to .true., the library will assume that Jacobi matrix is constant over subsequent steps. As effect, the matrix will be evaluated only once, before the first step of optimization procedure. This parameter is useful if the optimization problem is linear or can be linearized. \mbox{\Hypertarget{structnllstr_1_1nllstrconf_ae089f28ec465a3e2b70318665cfeb500}\label{structnllstr_1_1nllstrconf_ae089f28ec465a3e2b70318665cfeb500}} 
+\index{nllstr::nllstrconf@{nllstr::nllstrconf}!eps@{eps}}
+\index{eps@{eps}!nllstr::nllstrconf@{nllstr::nllstrconf}}
+\doxysubsubsection{\texorpdfstring{eps}{eps}}
+{\footnotesize\ttfamily double precision, dimension(6) nllstr\+::nllstrconf\+::eps = 1.e-\/10}
+
+
+
+Array of parameters controling stop criteria. 
+
+Various convergence criteria are evaluated, see MKL documentation for details \mbox{\Hypertarget{structnllstr_1_1nllstrconf_a660c0c49751239a4e95acd4334520262}\label{structnllstr_1_1nllstrconf_a660c0c49751239a4e95acd4334520262}} 
+\index{nllstr::nllstrconf@{nllstr::nllstrconf}!init\_step@{init\_step}}
+\index{init\_step@{init\_step}!nllstr::nllstrconf@{nllstr::nllstrconf}}
+\doxysubsubsection{\texorpdfstring{init\_step}{init\_step}}
+{\footnotesize\ttfamily double precision nllstr\+::nllstrconf\+::init\+\_\+step = 100.\+0}
+
+
+
+Initial step bound factor. 
+
+\mbox{\Hypertarget{structnllstr_1_1nllstrconf_a4227e049c23a2954682b0186babf9dc8}\label{structnllstr_1_1nllstrconf_a4227e049c23a2954682b0186babf9dc8}} 
+\index{nllstr::nllstrconf@{nllstr::nllstrconf}!iter1@{iter1}}
+\index{iter1@{iter1}!nllstr::nllstrconf@{nllstr::nllstrconf}}
+\doxysubsubsection{\texorpdfstring{iter1}{iter1}}
+{\footnotesize\ttfamily integer nllstr\+::nllstrconf\+::iter1 = 300}
+
+
+
+Maximum number of iterations. 
+
+\mbox{\Hypertarget{structnllstr_1_1nllstrconf_a58f43251f5ac4247a4abbec29b494d2c}\label{structnllstr_1_1nllstrconf_a58f43251f5ac4247a4abbec29b494d2c}} 
+\index{nllstr::nllstrconf@{nllstr::nllstrconf}!iter2@{iter2}}
+\index{iter2@{iter2}!nllstr::nllstrconf@{nllstr::nllstrconf}}
+\doxysubsubsection{\texorpdfstring{iter2}{iter2}}
+{\footnotesize\ttfamily integer nllstr\+::nllstrconf\+::iter2 = 50}
+
+
+
+Maximum number of trial steps. 
+
+\mbox{\Hypertarget{structnllstr_1_1nllstrconf_a8b0cc7f367c788631bb300464550fd9e}\label{structnllstr_1_1nllstrconf_a8b0cc7f367c788631bb300464550fd9e}} 
+\index{nllstr::nllstrconf@{nllstr::nllstrconf}!lo\_limit@{lo\_limit}}
+\index{lo\_limit@{lo\_limit}!nllstr::nllstrconf@{nllstr::nllstrconf}}
+\doxysubsubsection{\texorpdfstring{lo\_limit}{lo\_limit}}
+{\footnotesize\ttfamily double precision nllstr\+::nllstrconf\+::lo\+\_\+limit = 0.D0}
+
+
+
+Lower constraints for design vector. 
+
+\mbox{\Hypertarget{structnllstr_1_1nllstrconf_a6226870a6eecc402ae2c2583a50a4b6e}\label{structnllstr_1_1nllstrconf_a6226870a6eecc402ae2c2583a50a4b6e}} 
+\index{nllstr::nllstrconf@{nllstr::nllstrconf}!up\_limit@{up\_limit}}
+\index{up\_limit@{up\_limit}!nllstr::nllstrconf@{nllstr::nllstrconf}}
+\doxysubsubsection{\texorpdfstring{up\_limit}{up\_limit}}
+{\footnotesize\ttfamily double precision nllstr\+::nllstrconf\+::up\+\_\+limit = 1.D2}
+
+
+
+Upper constraints for design vector. 
+
+\mbox{\Hypertarget{structnllstr_1_1nllstrconf_ae3a29dd71820a4d3dc31914edeb0f6a0}\label{structnllstr_1_1nllstrconf_ae3a29dd71820a4d3dc31914edeb0f6a0}} 
+\index{nllstr::nllstrconf@{nllstr::nllstrconf}!use\_init\_state@{use\_init\_state}}
+\index{use\_init\_state@{use\_init\_state}!nllstr::nllstrconf@{nllstr::nllstrconf}}
+\doxysubsubsection{\texorpdfstring{use\_init\_state}{use\_init\_state}}
+{\footnotesize\ttfamily logical nllstr\+::nllstrconf\+::use\+\_\+init\+\_\+state = .false.}
+
+
+
+If set true, the algorithm will use the contents of \char`\"{}state\char`\"{} field in the objective function object for the very first iteration. This implies an assumption that the state field contains a consistent starting point. 
+
+\mbox{\Hypertarget{structnllstr_1_1nllstrconf_aaf3efd21047b8427d2a97e8a46f85a41}\label{structnllstr_1_1nllstrconf_aaf3efd21047b8427d2a97e8a46f85a41}} 
+\index{nllstr::nllstrconf@{nllstr::nllstrconf}!use\_input\_checks@{use\_input\_checks}}
+\index{use\_input\_checks@{use\_input\_checks}!nllstr::nllstrconf@{nllstr::nllstrconf}}
+\doxysubsubsection{\texorpdfstring{use\_input\_checks}{use\_input\_checks}}
+{\footnotesize\ttfamily logical nllstr\+::nllstrconf\+::use\+\_\+input\+\_\+checks = .true.}
+
+
+
+If set true, every evaluation of either the objective function or Jacobian will be tested against NaN or Inf. 
+
+
+
+The documentation for this type was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+fopt/src/\mbox{\hyperlink{nlls__tr_8f90}{nlls\+\_\+tr.\+f90}}\end{DoxyCompactItemize}

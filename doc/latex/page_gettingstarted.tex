@@ -1,0 +1,19 @@
+\hypertarget{page_gettingstarted_sec_installation_requirements}{}\doxysection{Before we start}\label{page_gettingstarted_sec_installation_requirements}
+To install and use the VEF you will need to have miniconda or Anaconda. If you don\textquotesingle{}t have this installed, the easiest way to get it is from the site \href{http://conda.pydata.org/miniconda.html}{\texttt{ http\+://conda.\+pydata.\+org/miniconda.\+html}} (you will need Python version \texorpdfstring{$>$}{>}= 3.\+6)\hypertarget{page_gettingstarted_autotoc_md41}{}\doxysubsection{Windows}\label{page_gettingstarted_autotoc_md41}
+     When running the installer, they will ask if you want to add Anaconda or Miniconda to your PATH environment variable. We reccomend to let this checkbox unmarked and manually append the change the PATH environment variable with only the strict necessary folders.
+
+To append these folders to your PATH, open start and type \char`\"{}edit the system environment variables\char`\"{}. When you opened the suggested application, you get the system properties screen. At the bottom of this window there is the button \char`\"{}\+Environment Variables\char`\"{}. When clicked it opens a window with the user defined environment variables and the system environment variables. Unless you have administrator rights and want to enable conda python for every user, you should edit the User defined \char`\"{}\+Path\char`\"{} variable. Append the folder \char`\"{}$<$path to anaconda3/miniconda3$>$\textbackslash{}condabin\char`\"{} to this variable. If you already had Anaconda3 or Miniconda3 installed, but this path was not yet added to the environmend variable, you should also do that. In the case you have an earlier version of Anaconda3 or Miniconda3 it is possible you should add \char`\"{}$<$path to Anaconda3/\+Miniconda3$>$\textbackslash{}\+Scripts\char`\"{} instead.\hypertarget{page_gettingstarted_sec_installation}{}\doxysection{Installation and configuration}\label{page_gettingstarted_sec_installation}
+You received the archive file VEF\+\_\+ver\+XXX\+\_\+yyyymmdd.\+zip, which contains the distribution of the VEF binaries, scripts, examples and documentation. To install the VEF, unpack the distribution to a directory you prefer, for example\+: {\ttfamily c\+:\textbackslash{}VEF} or {\ttfamily c\+:\textbackslash{}Users\textbackslash{}\mbox{[}your-\/user\+\_\+name\mbox{]}\textbackslash{}VEF}. Note\+: the path to that directory should not contain spaces.\hypertarget{page_gettingstarted_sec_setting_up_simulation}{}\doxysection{Setting up the simulations with HMS}\label{page_gettingstarted_sec_setting_up_simulation}
+The VEF programs are run from the command line. In order to conduct any VEF simulation, you have two options
+\begin{DoxyEnumerate}
+\item Double click on the {\ttfamily vef\+\_\+session.\+cmd} file
+\item Start a command prompt, navigate to you VEF directory and execute {\ttfamily vef\+\_\+session.\+cmd}
+\end{DoxyEnumerate}
+
+to configure VEF environment first. It is as simple as running \textbackslash{}fsname\{vef\+\_\+session.\+cmd\} before starting any VEF program. For example\+: \begin{DoxyVerb}c:\VEF\vef_session.cmd
+\end{DoxyVerb}
+
+
+\begin{DoxyNote}{Note}
+Important\+: you have to run \textbackslash{}fsname\{vef\+\_\+session.\+cmd\} at the beginning of every VEF session. 
+\end{DoxyNote}

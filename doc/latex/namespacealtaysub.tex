@@ -1,0 +1,179 @@
+\hypertarget{namespacealtaysub}{}\doxysection{altaysub Module Reference}
+\label{namespacealtaysub}\index{altaysub@{altaysub}}
+
+
+API for \char`\"{}\+Al\+Tay as a subroutine\char`\"{}.  
+
+
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacealtaysub_ab3d9f418a33665e89cb7c7802ef649a8}{initaltay}} (cnf, info, errmsg)
+\begin{DoxyCompactList}\small\item\em Initialize the module. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaysub_a562dd2b5a154ac232cfb68ae07cb16c5}{finalizealtay}} (info)
+\begin{DoxyCompactList}\small\item\em Finalizes the module and releases the resources. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaysub_ab301babe646d7eeaf82a844b571fcf1b}{openoutputfiles}} (cnf, info, errmsg)
+\item 
+subroutine \mbox{\hyperlink{namespacealtaysub_a5c22b9f3e92a663bfe409cc1651db815}{initstepdata}} (nsteps, steps, info)
+\begin{DoxyCompactList}\small\item\em Initialization of input and output data for the steps. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaysub_af59014a0ca76f040362472a48b14c572}{runsteps}} (steps, info)
+\begin{DoxyCompactList}\small\item\em Run the Al\+Tay for the set of steps. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaysub_a1a6dd49c5dded4f073e116b8fa904e00}{outputcurrentstate}} (info)
+\begin{DoxyCompactList}\small\item\em Write out the current state variables. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{Indent}\textbf{ Named constants for error codes in altay\+Sub}\par
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaysub_adf3ce115d3b35a0ca970a89a10b2763a}{altaysub\+\_\+ok}} = 0
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaysub_abedfc3c3bc5d0d890541a47f52e8ed74}{altaysub\+\_\+err}} = -\/1
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaysub_afe11744bc14a82c90f90759efc1d7f91}{altaysub\+\_\+exception}} = -\/2
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaysub_a6e88d6f60647d11e285877fa624c2b9f}{altaysub\+\_\+ioerr}} = -\/3
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaysub_a916d3db520f8ec64b5bd908376a7be86}{altaysub\+\_\+badval}} = -\/10
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaysub_a112abc7eb49c1b9e4750dbf9b9f53a50}{altaysub\+\_\+baddim}} = -\/11
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\doxysubsection{Detailed Description}
+API for \char`\"{}\+Al\+Tay as a subroutine\char`\"{}. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacealtaysub_a562dd2b5a154ac232cfb68ae07cb16c5}\label{namespacealtaysub_a562dd2b5a154ac232cfb68ae07cb16c5}} 
+\index{altaysub@{altaysub}!finalizealtay@{finalizealtay}}
+\index{finalizealtay@{finalizealtay}!altaysub@{altaysub}}
+\doxysubsubsection{\texorpdfstring{finalizealtay()}{finalizealtay()}}
+{\footnotesize\ttfamily subroutine altaysub\+::finalizealtay (\begin{DoxyParamCaption}\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Finalizes the module and releases the resources. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em info} & exit code (0 on success) \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaysub_ab3d9f418a33665e89cb7c7802ef649a8}\label{namespacealtaysub_ab3d9f418a33665e89cb7c7802ef649a8}} 
+\index{altaysub@{altaysub}!initaltay@{initaltay}}
+\index{initaltay@{initaltay}!altaysub@{altaysub}}
+\doxysubsubsection{\texorpdfstring{initaltay()}{initaltay()}}
+{\footnotesize\ttfamily subroutine altaysub\+::initaltay (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structaltayconfig_1_1altayconfigdata}{altayconfigdata}}), intent(in)}]{cnf,  }\item[{integer, intent(out)}]{info,  }\item[{character(len=$\ast$), intent(out), optional}]{errmsg }\end{DoxyParamCaption})}
+
+
+
+Initialize the module. 
+
+This subroutine must be called prior to any call to other module subroutines. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em cnf} & configuration data \\
+\hline
+\mbox{\texttt{ out}}  & {\em info} & exit code (altay\+Sub\+\_\+\+OK on success) \\
+\hline
+\mbox{\texttt{ out}}  & {\em errmsg} & Error message (set if info /= altay\+Sub\+\_\+\+OK) \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaysub_a5c22b9f3e92a663bfe409cc1651db815}\label{namespacealtaysub_a5c22b9f3e92a663bfe409cc1651db815}} 
+\index{altaysub@{altaysub}!initstepdata@{initstepdata}}
+\index{initstepdata@{initstepdata}!altaysub@{altaysub}}
+\doxysubsubsection{\texorpdfstring{initstepdata()}{initstepdata()}}
+{\footnotesize\ttfamily subroutine altaysub\+::initstepdata (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{nsteps,  }\item[{type(\mbox{\hyperlink{structaltayconfig_1_1altaystatedata}{altaystatedata}}), intent(out)}]{steps,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Initialization of input and output data for the steps. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em nsteps} & Number of steps to be created \\
+\hline
+\mbox{\texttt{ out}}  & {\em steps} & Definiton of the steps. \\
+\hline
+\mbox{\texttt{ out}}  & {\em info} & Exit code\+: 0 on success \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaysub_ab301babe646d7eeaf82a844b571fcf1b}\label{namespacealtaysub_ab301babe646d7eeaf82a844b571fcf1b}} 
+\index{altaysub@{altaysub}!openoutputfiles@{openoutputfiles}}
+\index{openoutputfiles@{openoutputfiles}!altaysub@{altaysub}}
+\doxysubsubsection{\texorpdfstring{openoutputfiles()}{openoutputfiles()}}
+{\footnotesize\ttfamily subroutine altaysub\+::openoutputfiles (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structaltayconfig_1_1altayconfigdata}{altayconfigdata}}), intent(in)}]{cnf,  }\item[{integer, intent(out)}]{info,  }\item[{character(len=$\ast$), intent(out), optional}]{errmsg }\end{DoxyParamCaption})}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em cnf} & configuration data\\
+\hline
+\mbox{\texttt{ out}}  & {\em info} & exit code (altay\+Sub\+\_\+\+OK on success)\\
+\hline
+\mbox{\texttt{ out}}  & {\em errmsg} & Error message (set if info /= altay\+Sub\+\_\+\+OK) \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaysub_a1a6dd49c5dded4f073e116b8fa904e00}\label{namespacealtaysub_a1a6dd49c5dded4f073e116b8fa904e00}} 
+\index{altaysub@{altaysub}!outputcurrentstate@{outputcurrentstate}}
+\index{outputcurrentstate@{outputcurrentstate}!altaysub@{altaysub}}
+\doxysubsubsection{\texorpdfstring{outputcurrentstate()}{outputcurrentstate()}}
+{\footnotesize\ttfamily subroutine altaysub\+::outputcurrentstate (\begin{DoxyParamCaption}\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Write out the current state variables. 
+
+The call may involve IO units\+: IMP1 (CUR file), IMP4 (PEBP state file) and IMP5 (MSS file). Appropriate control fields in acnfoutput\+\_\+config are checked to decide if the data have to be actually written to corresponding IO units. \mbox{\Hypertarget{namespacealtaysub_af59014a0ca76f040362472a48b14c572}\label{namespacealtaysub_af59014a0ca76f040362472a48b14c572}} 
+\index{altaysub@{altaysub}!runsteps@{runsteps}}
+\index{runsteps@{runsteps}!altaysub@{altaysub}}
+\doxysubsubsection{\texorpdfstring{runsteps()}{runsteps()}}
+{\footnotesize\ttfamily subroutine altaysub\+::runsteps (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structaltayconfig_1_1altaystatedata}{altaystatedata}}), intent(inout)}]{steps,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Run the Al\+Tay for the set of steps. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em steps} & Definiton of the steps. \\
+\hline
+\mbox{\texttt{ out}}  & {\em info} & Exit code\+: 0 on success. \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacealtaysub_a112abc7eb49c1b9e4750dbf9b9f53a50}\label{namespacealtaysub_a112abc7eb49c1b9e4750dbf9b9f53a50}} 
+\index{altaysub@{altaysub}!altaysub\_baddim@{altaysub\_baddim}}
+\index{altaysub\_baddim@{altaysub\_baddim}!altaysub@{altaysub}}
+\doxysubsubsection{\texorpdfstring{altaysub\_baddim}{altaysub\_baddim}}
+{\footnotesize\ttfamily integer, parameter altaysub\+::altaysub\+\_\+baddim = -\/11}
+
+\mbox{\Hypertarget{namespacealtaysub_a916d3db520f8ec64b5bd908376a7be86}\label{namespacealtaysub_a916d3db520f8ec64b5bd908376a7be86}} 
+\index{altaysub@{altaysub}!altaysub\_badval@{altaysub\_badval}}
+\index{altaysub\_badval@{altaysub\_badval}!altaysub@{altaysub}}
+\doxysubsubsection{\texorpdfstring{altaysub\_badval}{altaysub\_badval}}
+{\footnotesize\ttfamily integer, parameter altaysub\+::altaysub\+\_\+badval = -\/10}
+
+\mbox{\Hypertarget{namespacealtaysub_abedfc3c3bc5d0d890541a47f52e8ed74}\label{namespacealtaysub_abedfc3c3bc5d0d890541a47f52e8ed74}} 
+\index{altaysub@{altaysub}!altaysub\_err@{altaysub\_err}}
+\index{altaysub\_err@{altaysub\_err}!altaysub@{altaysub}}
+\doxysubsubsection{\texorpdfstring{altaysub\_err}{altaysub\_err}}
+{\footnotesize\ttfamily integer, parameter altaysub\+::altaysub\+\_\+err = -\/1}
+
+\mbox{\Hypertarget{namespacealtaysub_afe11744bc14a82c90f90759efc1d7f91}\label{namespacealtaysub_afe11744bc14a82c90f90759efc1d7f91}} 
+\index{altaysub@{altaysub}!altaysub\_exception@{altaysub\_exception}}
+\index{altaysub\_exception@{altaysub\_exception}!altaysub@{altaysub}}
+\doxysubsubsection{\texorpdfstring{altaysub\_exception}{altaysub\_exception}}
+{\footnotesize\ttfamily integer, parameter altaysub\+::altaysub\+\_\+exception = -\/2}
+
+\mbox{\Hypertarget{namespacealtaysub_a6e88d6f60647d11e285877fa624c2b9f}\label{namespacealtaysub_a6e88d6f60647d11e285877fa624c2b9f}} 
+\index{altaysub@{altaysub}!altaysub\_ioerr@{altaysub\_ioerr}}
+\index{altaysub\_ioerr@{altaysub\_ioerr}!altaysub@{altaysub}}
+\doxysubsubsection{\texorpdfstring{altaysub\_ioerr}{altaysub\_ioerr}}
+{\footnotesize\ttfamily integer, parameter altaysub\+::altaysub\+\_\+ioerr = -\/3}
+
+\mbox{\Hypertarget{namespacealtaysub_adf3ce115d3b35a0ca970a89a10b2763a}\label{namespacealtaysub_adf3ce115d3b35a0ca970a89a10b2763a}} 
+\index{altaysub@{altaysub}!altaysub\_ok@{altaysub\_ok}}
+\index{altaysub\_ok@{altaysub\_ok}!altaysub@{altaysub}}
+\doxysubsubsection{\texorpdfstring{altaysub\_ok}{altaysub\_ok}}
+{\footnotesize\ttfamily integer, parameter altaysub\+::altaysub\+\_\+ok = 0}
+

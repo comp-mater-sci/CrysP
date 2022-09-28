@@ -1,0 +1,33 @@
+\hypertarget{substeppingConfig_8f90}{}\doxysection{VEF/lib\+Alam\+DMC/substepping\+Config.f90 File Reference}
+\label{substeppingConfig_8f90}\index{VEF/libAlamDMC/substeppingConfig.f90@{VEF/libAlamDMC/substeppingConfig.f90}}
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structdmcsubsteppingconfig_1_1substeppingconfig}{dmcsubsteppingconfig\+::substeppingconfig}}
+\begin{DoxyCompactList}\small\item\em Base class for configuration related to substepping. \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig}{dmcsubsteppingconfig\+::fixedsubsteppingconfig}}
+\begin{DoxyCompactList}\small\item\em Configuration of substepping schemes that impose the size of the step. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacedmcsubsteppingconfig}{dmcsubsteppingconfig}}
+\begin{DoxyCompactList}\small\item\em Configuration of substepping schemes. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+integer function \mbox{\hyperlink{namespacedmcsubsteppingconfig_a2c10c3c6c95f09c8e1ebb5047c32d8a8}{dmcsubsteppingconfig\+::substeppingconfig\+\_\+readconfig}} (this, cnfunit)
+\begin{DoxyCompactList}\small\item\em Dummy for reading substepping config. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcsubsteppingconfig_a4f5825d0c9e18f714205c2148c769859}{dmcsubsteppingconfig\+::fixedsubsteppingconfig\+\_\+readconfig}} (this, cnfunit)
+\begin{DoxyCompactList}\small\item\em Read fixed substepping configuration from file and construct a proper range ptr\+\_\+range from user\textquotesingle{}s input. \end{DoxyCompactList}\item 
+pure type(fixedsubsteppingconfig) function \mbox{\hyperlink{namespacedmcsubsteppingconfig_a440b16ada625be5ac0b7930027dd82a0}{dmcsubsteppingconfig\+::fixedsubsteppingconfig\+\_\+init\+\_\+nintervals}} (n\+\_\+increments)
+\begin{DoxyCompactList}\small\item\em Create a Fixed\+Substepping\+Config that defines substepping with n\+\_\+increments. \end{DoxyCompactList}\item 
+pure type(fixedsubsteppingconfig) function \mbox{\hyperlink{namespacedmcsubsteppingconfig_a2ebfff06225953600f5e6e8686b5437b}{dmcsubsteppingconfig\+::fixedsubsteppingconfig\+\_\+init\+\_\+intervals}} (increments)
+\begin{DoxyCompactList}\small\item\em Create a Fixed\+Substepping\+Config from an array of specified increments. \end{DoxyCompactList}\item 
+type(fixedsubsteppingconfig) function \mbox{\hyperlink{namespacedmcsubsteppingconfig_a488a2ab63a5d61bbb722d80e2e616568}{dmcsubsteppingconfig\+::fixedsubsteppingconfig\+\_\+init\+\_\+range}} (range)
+\begin{DoxyCompactList}\small\item\em Create a Fixed\+Substepping\+Config from a range. \end{DoxyCompactList}\item 
+type(fixedsubsteppingconfig) function \mbox{\hyperlink{namespacedmcsubsteppingconfig_af451ffb310b34d8c6485c1739c1f2d97}{dmcsubsteppingconfig\+::fixedsubsteppingconfig\+\_\+init\+\_\+single}} ()
+\begin{DoxyCompactList}\small\item\em Create a Fixed\+Substepping\+Config that defines one increment. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcsubsteppingconfig_a6c80814175f04b9b7383e532c2a59448}{dmcsubsteppingconfig\+::fixedsubsteppingconfig\+\_\+getnumberofincrements}} (this)
+\item 
+class(range\+\_\+type) function, pointer \mbox{\hyperlink{namespacedmcsubsteppingconfig_a4ff8b0f777961ce689585147335af8f5}{dmcsubsteppingconfig\+::propersubsteppingrange}} (range, info)
+\end{DoxyCompactItemize}

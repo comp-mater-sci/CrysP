@@ -1,0 +1,86 @@
+\hypertarget{namespacecommonconfig}{}\doxysection{commonconfig Module Reference}
+\label{namespacecommonconfig}\index{commonconfig@{commonconfig}}
+
+
+This module contains subroutines, data structures and common variables for shared configuration features of all alam\+DMC modules.  
+
+
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+logical function \mbox{\hyperlink{namespacecommonconfig_a852877eee4080edcffd5e83c42e49ea6}{iostatusok}} (ioerr)
+\begin{DoxyCompactList}\small\item\em Check exit status of IO operation. \end{DoxyCompactList}\item 
+class(range\+\_\+type) function, pointer \mbox{\hyperlink{namespacecommonconfig_a199eabe6136147399792730ad6c25bee}{rangefromconfig}} (cnfunit, info)
+\begin{DoxyCompactList}\small\item\em Factory function that returns an instance appropriate range type depending on the the input read from the cnfunit IO unit. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+character(len=20), parameter \mbox{\hyperlink{namespacecommonconfig_a714d756d149d19346cb9050344d37c6a}{fmtmsg2msg}} = \textquotesingle{}(A,T35,A)\textquotesingle{}
+\item 
+character(len=20), parameter \mbox{\hyperlink{namespacecommonconfig_a690366b2d2ecddf4413f8b34925f5d06}{fmtmsg2int}} = \textquotesingle{}(A,T35,I4)\textquotesingle{}
+\item 
+character(len=20), parameter \mbox{\hyperlink{namespacecommonconfig_a351ba2b2c48e3abcc9e05fbe94933be2}{fmtmsg2float}} = \textquotesingle{}(A,T35,F12.\+8)\textquotesingle{}
+\item 
+character(len=20), parameter \mbox{\hyperlink{namespacecommonconfig_a28149166483ab37c663c6cc65c0c58dd}{fmtmsg2any}} = \textquotesingle{}(A,T35)\textquotesingle{}
+\item 
+character(len=20), parameter \mbox{\hyperlink{namespacecommonconfig_aaff690e2726dc4fb123f994e14c003e3}{fmtmsg2other}} = \textquotesingle{}(A,T35,\textquotesingle{}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+This module contains subroutines, data structures and common variables for shared configuration features of all alam\+DMC modules. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacecommonconfig_a852877eee4080edcffd5e83c42e49ea6}\label{namespacecommonconfig_a852877eee4080edcffd5e83c42e49ea6}} 
+\index{commonconfig@{commonconfig}!iostatusok@{iostatusok}}
+\index{iostatusok@{iostatusok}!commonconfig@{commonconfig}}
+\doxysubsubsection{\texorpdfstring{iostatusok()}{iostatusok()}}
+{\footnotesize\ttfamily logical function commonconfig\+::iostatusok (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{ioerr }\end{DoxyParamCaption})}
+
+
+
+Check exit status of IO operation. 
+
+\mbox{\Hypertarget{namespacecommonconfig_a199eabe6136147399792730ad6c25bee}\label{namespacecommonconfig_a199eabe6136147399792730ad6c25bee}} 
+\index{commonconfig@{commonconfig}!rangefromconfig@{rangefromconfig}}
+\index{rangefromconfig@{rangefromconfig}!commonconfig@{commonconfig}}
+\doxysubsubsection{\texorpdfstring{rangefromconfig()}{rangefromconfig()}}
+{\footnotesize\ttfamily class(range\+\_\+type) function, pointer commonconfig\+::rangefromconfig (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{cnfunit,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Factory function that returns an instance appropriate range type depending on the the input read from the cnfunit IO unit. 
+
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacecommonconfig_a28149166483ab37c663c6cc65c0c58dd}\label{namespacecommonconfig_a28149166483ab37c663c6cc65c0c58dd}} 
+\index{commonconfig@{commonconfig}!fmtmsg2any@{fmtmsg2any}}
+\index{fmtmsg2any@{fmtmsg2any}!commonconfig@{commonconfig}}
+\doxysubsubsection{\texorpdfstring{fmtmsg2any}{fmtmsg2any}}
+{\footnotesize\ttfamily character(len=20), parameter commonconfig\+::fmtmsg2any = \textquotesingle{}(A,T35)\textquotesingle{}}
+
+\mbox{\Hypertarget{namespacecommonconfig_a351ba2b2c48e3abcc9e05fbe94933be2}\label{namespacecommonconfig_a351ba2b2c48e3abcc9e05fbe94933be2}} 
+\index{commonconfig@{commonconfig}!fmtmsg2float@{fmtmsg2float}}
+\index{fmtmsg2float@{fmtmsg2float}!commonconfig@{commonconfig}}
+\doxysubsubsection{\texorpdfstring{fmtmsg2float}{fmtmsg2float}}
+{\footnotesize\ttfamily character(len=20), parameter commonconfig\+::fmtmsg2float = \textquotesingle{}(A,T35,F12.\+8)\textquotesingle{}}
+
+\mbox{\Hypertarget{namespacecommonconfig_a690366b2d2ecddf4413f8b34925f5d06}\label{namespacecommonconfig_a690366b2d2ecddf4413f8b34925f5d06}} 
+\index{commonconfig@{commonconfig}!fmtmsg2int@{fmtmsg2int}}
+\index{fmtmsg2int@{fmtmsg2int}!commonconfig@{commonconfig}}
+\doxysubsubsection{\texorpdfstring{fmtmsg2int}{fmtmsg2int}}
+{\footnotesize\ttfamily character(len=20), parameter commonconfig\+::fmtmsg2int = \textquotesingle{}(A,T35,I4)\textquotesingle{}}
+
+\mbox{\Hypertarget{namespacecommonconfig_a714d756d149d19346cb9050344d37c6a}\label{namespacecommonconfig_a714d756d149d19346cb9050344d37c6a}} 
+\index{commonconfig@{commonconfig}!fmtmsg2msg@{fmtmsg2msg}}
+\index{fmtmsg2msg@{fmtmsg2msg}!commonconfig@{commonconfig}}
+\doxysubsubsection{\texorpdfstring{fmtmsg2msg}{fmtmsg2msg}}
+{\footnotesize\ttfamily character(len=20), parameter commonconfig\+::fmtmsg2msg = \textquotesingle{}(A,T35,A)\textquotesingle{}}
+
+\mbox{\Hypertarget{namespacecommonconfig_aaff690e2726dc4fb123f994e14c003e3}\label{namespacecommonconfig_aaff690e2726dc4fb123f994e14c003e3}} 
+\index{commonconfig@{commonconfig}!fmtmsg2other@{fmtmsg2other}}
+\index{fmtmsg2other@{fmtmsg2other}!commonconfig@{commonconfig}}
+\doxysubsubsection{\texorpdfstring{fmtmsg2other}{fmtmsg2other}}
+{\footnotesize\ttfamily character(len=20), parameter commonconfig\+::fmtmsg2other = \textquotesingle{}(A,T35,\textquotesingle{}}
+

@@ -1,0 +1,39 @@
+\hypertarget{altayHardLawSimple_8f90}{}\doxysection{Al\+Tay/src/altay\+Hard\+Law\+Simple.f90 File Reference}
+\label{altayHardLawSimple_8f90}\index{AlTay/src/altayHardLawSimple.f90@{AlTay/src/altayHardLawSimple.f90}}
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structaltayhardlaw__simple_1_1voceconfig}{altayhardlaw\+\_\+simple\+::voceconfig}}
+\begin{DoxyCompactList}\small\item\em Configuration parameters of Double\+Voce hardening law. Some \textquotesingle{}reasonable\textquotesingle{} defaults are used. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltayhardlaw__simple_1_1swiftkconfig}{altayhardlaw\+\_\+simple\+::swiftkconfig}}
+\begin{DoxyCompactList}\small\item\em Configuration parameters of SwiftK hardening law. Some \textquotesingle{}reasonable\textquotesingle{} defaults are used. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltayhardlaw__simple_1_1swiftsconfig}{altayhardlaw\+\_\+simple\+::swiftsconfig}}
+\begin{DoxyCompactList}\small\item\em Configuration parameters of SwiftS hardening law. Some \textquotesingle{}reasonable\textquotesingle{} defaults are used. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltayhardlaw__simple_1_1voceparams}{altayhardlaw\+\_\+simple\+::voceparams}}
+\begin{DoxyCompactList}\small\item\em Parameters of Double\+Voce hardening law, private to this module. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltayhardlaw__simple_1_1swiftparams}{altayhardlaw\+\_\+simple\+::swiftparams}}
+\begin{DoxyCompactList}\small\item\em Parameters of Swift hardening law, private to this module. \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{interfacealtayhardlaw__simple_1_1initmodulealtayhardlaw__simple}{altayhardlaw\+\_\+simple\+::initmodulealtayhardlaw\+\_\+simple}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacealtayhardlaw__simple}{altayhardlaw\+\_\+simple}}
+\begin{DoxyCompactList}\small\item\em Implementation of \textquotesingle{}simple\textquotesingle{} hardening laws TAU(\+GAMMA), i.\+e. with only 1 internal variable\+: accumulated slip in grain GAMMA. Available laws\+: \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhardlaw__simple_a71c504fcd07edac3552f5dc05cb42e9a}{altayhardlaw\+\_\+simple\+::readvoceconfig}} (inunit, c, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhardlaw__simple_ac372580af9c9a0dbe12686723acf010e}{altayhardlaw\+\_\+simple\+::readswiftkconfig}} (inunit, c, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhardlaw__simple_a063dc253e46d47207acd90a6d9b07730}{altayhardlaw\+\_\+simple\+::readswiftsconfig}} (inunit, c, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhardlaw__simple_a8d554027b9fa6488e5d23d1cd442999a}{altayhardlaw\+\_\+simple\+::init\+\_\+voce}} (c, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhardlaw__simple_a7996200fe2c0449c8c1be94b1a6e4406}{altayhardlaw\+\_\+simple\+::init\+\_\+swiftk}} (c, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhardlaw__simple_ace9fbe582fabaf65468a43d60139d6ca}{altayhardlaw\+\_\+simple\+::init\+\_\+swifts}} (c, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhardlaw__simple_ac70bf3025a67930911020c2c363e1ec8}{altayhardlaw\+\_\+simple\+::getreftau}} (hard\+ID, gamma, Ref\+Tau, info)
+\end{DoxyCompactItemize}

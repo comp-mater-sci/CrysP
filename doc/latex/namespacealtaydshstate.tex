@@ -1,0 +1,193 @@
+\hypertarget{namespacealtaydshstate}{}\doxysection{altaydshstate Module Reference}
+\label{namespacealtaydshstate}\index{altaydshstate@{altaydshstate}}
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+interface \mbox{\hyperlink{interfacealtaydshstate_1_1ks__readstate}{ks\+\_\+readstate}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+integer function \mbox{\hyperlink{namespacealtaydshstate_a1a3416626e06f04b7c6ec235d0d41bb3}{ks\+\_\+getstatesize}} ()
+\begin{DoxyCompactList}\small\item\em Query the number of elements in the state array. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacealtaydshstate_abc3e88cc8035aa1541303c43eb57a2d5}{ks\+\_\+initstate}} (norient)
+\begin{DoxyCompactList}\small\item\em Allocate memory to the KS\+\_\+state array. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacealtaydshstate_a1cd008272a4d4779cc827ebbe6abc243}{ks\+\_\+finalize}} ()
+\begin{DoxyCompactList}\small\item\em Deallocate the KS\+\_\+state array. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaydshstate_a036fb0fdca69e58643465223124bbb92}{ks\+\_\+updatestate}} (i, sliprate, deltaT, info)
+\begin{DoxyCompactList}\small\item\em Update the state variables of the PEBP model for i-\/th grain. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaydshstate_ab99de89147c8921c657036738dec5e54}{ks\+\_\+getcrss}} (i, Mcrss, info)
+\begin{DoxyCompactList}\small\item\em Get CRSS for i-\/th grain. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaydshstate_af639960a230ef483babe7a26ab014797}{ks\+\_\+getsdv}} (i, SDV, info)
+\begin{DoxyCompactList}\small\item\em Retrieve state-\/derived variables for the i-\/th grain. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacealtaydshstate_ae19e5629332eabed9fd2653123729ae8}{ks\+\_\+openstatefile}} (iounit, fname, mode, use\+\_\+header)
+\begin{DoxyCompactList}\small\item\em Open state file either for reading or writing. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacealtaydshstate_a48c87dfa600a698ca8017cddb9e66c08}{ks\+\_\+writestate}} (iounit)
+\begin{DoxyCompactList}\small\item\em Write block (=snapshot of KS\+\_\+state) into file. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacealtaydshstate_a878d318a8da20dfd501d2800de5b4862}{ks\+\_\+readstate\+\_\+unit}} (iounit, nblock)
+\begin{DoxyCompactList}\small\item\em Call Read\+SVfile and store state variables in ks\+\_\+state. Perform fake reads on the first nblock blocks, where each block corresponds to one snapshot of ks\+\_\+state. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacealtaydshstate_ae9fa465e2e076f29c5e69f974d437831}{ks\+\_\+readstate\+\_\+file}} (fname, iounit, nblock, use\+\_\+header)
+\begin{DoxyCompactList}\small\item\em Open state file for reading and read state variables of snapshot. The snapshot (block) to be read is specified by nblock. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacealtaydshstate_a1cd008272a4d4779cc827ebbe6abc243}\label{namespacealtaydshstate_a1cd008272a4d4779cc827ebbe6abc243}} 
+\index{altaydshstate@{altaydshstate}!ks\_finalize@{ks\_finalize}}
+\index{ks\_finalize@{ks\_finalize}!altaydshstate@{altaydshstate}}
+\doxysubsubsection{\texorpdfstring{ks\_finalize()}{ks\_finalize()}}
+{\footnotesize\ttfamily integer function altaydshstate\+::ks\+\_\+finalize}
+
+
+
+Deallocate the KS\+\_\+state array. 
+
+\mbox{\Hypertarget{namespacealtaydshstate_ab99de89147c8921c657036738dec5e54}\label{namespacealtaydshstate_ab99de89147c8921c657036738dec5e54}} 
+\index{altaydshstate@{altaydshstate}!ks\_getcrss@{ks\_getcrss}}
+\index{ks\_getcrss@{ks\_getcrss}!altaydshstate@{altaydshstate}}
+\doxysubsubsection{\texorpdfstring{ks\_getcrss()}{ks\_getcrss()}}
+{\footnotesize\ttfamily subroutine altaydshstate\+::ks\+\_\+getcrss (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{i,  }\item[{type(\mbox{\hyperlink{structaltayhardtypes_1_1crss}{crss}}), intent(out)}]{Mcrss,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Get CRSS for i-\/th grain. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em i} & Grain identifier \\
+\hline
+\mbox{\texttt{ out}}  & {\em mcrss} & CRSS output \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaydshstate_af639960a230ef483babe7a26ab014797}\label{namespacealtaydshstate_af639960a230ef483babe7a26ab014797}} 
+\index{altaydshstate@{altaydshstate}!ks\_getsdv@{ks\_getsdv}}
+\index{ks\_getsdv@{ks\_getsdv}!altaydshstate@{altaydshstate}}
+\doxysubsubsection{\texorpdfstring{ks\_getsdv()}{ks\_getsdv()}}
+{\footnotesize\ttfamily subroutine altaydshstate\+::ks\+\_\+getsdv (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{i,  }\item[{type(statederivedvars), intent(out)}]{SDV,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Retrieve state-\/derived variables for the i-\/th grain. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em i} & Grain identifier \\
+\hline
+\mbox{\texttt{ out}}  & {\em info} & exit code \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaydshstate_a1a3416626e06f04b7c6ec235d0d41bb3}\label{namespacealtaydshstate_a1a3416626e06f04b7c6ec235d0d41bb3}} 
+\index{altaydshstate@{altaydshstate}!ks\_getstatesize@{ks\_getstatesize}}
+\index{ks\_getstatesize@{ks\_getstatesize}!altaydshstate@{altaydshstate}}
+\doxysubsubsection{\texorpdfstring{ks\_getstatesize()}{ks\_getstatesize()}}
+{\footnotesize\ttfamily integer function altaydshstate\+::ks\+\_\+getstatesize}
+
+
+
+Query the number of elements in the state array. 
+
+\mbox{\Hypertarget{namespacealtaydshstate_abc3e88cc8035aa1541303c43eb57a2d5}\label{namespacealtaydshstate_abc3e88cc8035aa1541303c43eb57a2d5}} 
+\index{altaydshstate@{altaydshstate}!ks\_initstate@{ks\_initstate}}
+\index{ks\_initstate@{ks\_initstate}!altaydshstate@{altaydshstate}}
+\doxysubsubsection{\texorpdfstring{ks\_initstate()}{ks\_initstate()}}
+{\footnotesize\ttfamily integer function altaydshstate\+::ks\+\_\+initstate (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{norient }\end{DoxyParamCaption})}
+
+
+
+Allocate memory to the KS\+\_\+state array. 
+
+The function simply makes allocation. It relies on a default initializer of Stat\+Var type. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em norient} & Number of orientations in the material \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaydshstate_ae19e5629332eabed9fd2653123729ae8}\label{namespacealtaydshstate_ae19e5629332eabed9fd2653123729ae8}} 
+\index{altaydshstate@{altaydshstate}!ks\_openstatefile@{ks\_openstatefile}}
+\index{ks\_openstatefile@{ks\_openstatefile}!altaydshstate@{altaydshstate}}
+\doxysubsubsection{\texorpdfstring{ks\_openstatefile()}{ks\_openstatefile()}}
+{\footnotesize\ttfamily integer function altaydshstate\+::ks\+\_\+openstatefile (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit,  }\item[{character(len=$\ast$), intent(in)}]{fname,  }\item[{character, intent(in)}]{mode,  }\item[{logical, intent(in), optional}]{use\+\_\+header }\end{DoxyParamCaption})}
+
+
+
+Open state file either for reading or writing. 
+
+The function opens the file and, if requested, performs some initialization actions, such as processing or writing file header. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em iounit} & IO unit to be used \\
+\hline
+\mbox{\texttt{ in}}  & {\em fname} & Name of the file \\
+\hline
+\mbox{\texttt{ in}}  & {\em mode} & File opening mode\+: \textquotesingle{}r\textquotesingle{} for read access or \textquotesingle{}w\textquotesingle{} for write access \\
+\hline
+\mbox{\texttt{ in}}  & {\em use\+\_\+header} & Request for processing the file header. Default is\+: .true. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaydshstate_ae9fa465e2e076f29c5e69f974d437831}\label{namespacealtaydshstate_ae9fa465e2e076f29c5e69f974d437831}} 
+\index{altaydshstate@{altaydshstate}!ks\_readstate\_file@{ks\_readstate\_file}}
+\index{ks\_readstate\_file@{ks\_readstate\_file}!altaydshstate@{altaydshstate}}
+\doxysubsubsection{\texorpdfstring{ks\_readstate\_file()}{ks\_readstate\_file()}}
+{\footnotesize\ttfamily integer function altaydshstate\+::ks\+\_\+readstate\+\_\+file (\begin{DoxyParamCaption}\item[{character(len=$\ast$), intent(in)}]{fname,  }\item[{integer, intent(in)}]{iounit,  }\item[{integer, intent(in), optional}]{nblock,  }\item[{logical, intent(in), optional}]{use\+\_\+header }\end{DoxyParamCaption})}
+
+
+
+Open state file for reading and read state variables of snapshot. The snapshot (block) to be read is specified by nblock. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em fname} & Filename \\
+\hline
+\mbox{\texttt{ in}}  & {\em iounit} & I/O unit number to be used by the function \\
+\hline
+\mbox{\texttt{ in}}  & {\em nblock} & Number of blocks to be skipped \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaydshstate_a878d318a8da20dfd501d2800de5b4862}\label{namespacealtaydshstate_a878d318a8da20dfd501d2800de5b4862}} 
+\index{altaydshstate@{altaydshstate}!ks\_readstate\_unit@{ks\_readstate\_unit}}
+\index{ks\_readstate\_unit@{ks\_readstate\_unit}!altaydshstate@{altaydshstate}}
+\doxysubsubsection{\texorpdfstring{ks\_readstate\_unit()}{ks\_readstate\_unit()}}
+{\footnotesize\ttfamily integer function altaydshstate\+::ks\+\_\+readstate\+\_\+unit (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit,  }\item[{integer, intent(in), optional}]{nblock }\end{DoxyParamCaption})}
+
+
+
+Call Read\+SVfile and store state variables in ks\+\_\+state. Perform fake reads on the first nblock blocks, where each block corresponds to one snapshot of ks\+\_\+state. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em iounit} & I/O unit number \\
+\hline
+\mbox{\texttt{ in}}  & {\em nblock} & Number of blocks to be skipped \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaydshstate_a036fb0fdca69e58643465223124bbb92}\label{namespacealtaydshstate_a036fb0fdca69e58643465223124bbb92}} 
+\index{altaydshstate@{altaydshstate}!ks\_updatestate@{ks\_updatestate}}
+\index{ks\_updatestate@{ks\_updatestate}!altaydshstate@{altaydshstate}}
+\doxysubsubsection{\texorpdfstring{ks\_updatestate()}{ks\_updatestate()}}
+{\footnotesize\ttfamily subroutine altaydshstate\+::ks\+\_\+updatestate (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{i,  }\item[{double precision, dimension(24), intent(in)}]{sliprate,  }\item[{double precision, intent(in)}]{deltaT,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Update the state variables of the PEBP model for i-\/th grain. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em i} & Grain identifier \\
+\hline
+\mbox{\texttt{ in}}  & {\em sliprate} & slip rates on 2$\ast$12 slip systems \\
+\hline
+\mbox{\texttt{ in}}  & {\em deltat} & Time increment \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaydshstate_a48c87dfa600a698ca8017cddb9e66c08}\label{namespacealtaydshstate_a48c87dfa600a698ca8017cddb9e66c08}} 
+\index{altaydshstate@{altaydshstate}!ks\_writestate@{ks\_writestate}}
+\index{ks\_writestate@{ks\_writestate}!altaydshstate@{altaydshstate}}
+\doxysubsubsection{\texorpdfstring{ks\_writestate()}{ks\_writestate()}}
+{\footnotesize\ttfamily integer function altaydshstate\+::ks\+\_\+writestate (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit }\end{DoxyParamCaption})}
+
+
+
+Write block (=snapshot of KS\+\_\+state) into file. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em iounit} & I/O unit number \\
+\hline
+\end{DoxyParams}

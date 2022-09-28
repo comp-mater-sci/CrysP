@@ -1,0 +1,48 @@
+\hypertarget{interfaceobjectivefx_1_1IF__JacobiObjFx__stateful}{}\doxysection{objectivefx\+::IF\+\_\+\+Jacobi\+Obj\+Fx\+\_\+stateful Interface Reference}
+\label{interfaceobjectivefx_1_1IF__JacobiObjFx__stateful}\index{objectivefx::IF\_JacobiObjFx\_stateful@{objectivefx::IF\_JacobiObjFx\_stateful}}
+
+
+Abstract interface for a function that calculates Jacobi matrix in a stateful-\/style.  
+
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{interfaceobjectivefx_1_1IF__JacobiObjFx__stateful_a5b32d673311f59ed7dc9d16c43e2bbef}{if\+\_\+jacobiobjfx\+\_\+stateful}} (this, vX, info)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Abstract interface for a function that calculates Jacobi matrix in a stateful-\/style. 
+
+The function should update the mF component of state member (\begin{DoxySeeAlso}{See also}
+Solution\+Point). 
+\end{DoxySeeAlso}
+\begin{DoxyNote}{Note}
+It is user\textquotesingle{}s responsibility to provide a function that complies with this interface. 
+
+This function must not modify any component of Solution\+Point except for vX and mJ. 
+\end{DoxyNote}
+
+
+\doxysubsection{Member Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{interfaceobjectivefx_1_1IF__JacobiObjFx__stateful_a5b32d673311f59ed7dc9d16c43e2bbef}\label{interfaceobjectivefx_1_1IF__JacobiObjFx__stateful_a5b32d673311f59ed7dc9d16c43e2bbef}} 
+\index{objectivefx::IF\_JacobiObjFx\_stateful@{objectivefx::IF\_JacobiObjFx\_stateful}!if\_jacobiobjfx\_stateful@{if\_jacobiobjfx\_stateful}}
+\index{if\_jacobiobjfx\_stateful@{if\_jacobiobjfx\_stateful}!objectivefx::IF\_JacobiObjFx\_stateful@{objectivefx::IF\_JacobiObjFx\_stateful}}
+\doxysubsubsection{\texorpdfstring{if\_jacobiobjfx\_stateful()}{if\_jacobiobjfx\_stateful()}}
+{\footnotesize\ttfamily subroutine objectivefx\+::\+IF\+\_\+\+Jacobi\+Obj\+Fx\+\_\+stateful\+::if\+\_\+jacobiobjfx\+\_\+stateful (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structobjectivefx_1_1objectivefunction}{objectivefunction}}), intent(inout)}]{this,  }\item[{double precision, dimension(\+:), intent(in)}]{vX,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em this} & Instance of the object.\\
+\hline
+\mbox{\texttt{ in}}  & {\em vx} & Dimension must be\+: \mbox{[}n\+\_\+\+X\+\_\+dim\mbox{]}\\
+\hline
+\mbox{\texttt{ out}}  & {\em info} & Set to 0 on success \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this interface was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+fopt/src/\mbox{\hyperlink{objectiveFx_8f90}{objective\+Fx.\+f90}}\end{DoxyCompactItemize}

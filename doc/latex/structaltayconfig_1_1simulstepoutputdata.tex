@@ -1,0 +1,133 @@
+\hypertarget{structaltayconfig_1_1simulstepoutputdata}{}\doxysection{altayconfig\+::simulstepoutputdata Type Reference}
+\label{structaltayconfig_1_1simulstepoutputdata}\index{altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+double precision, dimension(3, 3) \mbox{\hyperlink{structaltayconfig_1_1simulstepoutputdata_ab7982d50d6cf8de31ebaae6148116fcc}{stress\+\_\+tensor}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Macroscopic (homogenized) stress. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structaltayconfig_1_1simulstepoutputdata_aef0fb4ede7ee1adb014514e51280f7a5}{taylor\+\_\+factor}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Macroscopic (homogenized) Taylor factor. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structaltayconfig_1_1simulstepoutputdata_ae7f715c7abf586675971c80a473f19da}{strain\+\_\+rate\+\_\+heterogeneity}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Strain Rate Heterogeneity in polycrystal. Non-\/zero only for models that consider clusters of grains\+: $ \kappa = (||d-D||) / ||D|| $. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structaltayconfig_1_1simulstepoutputdata_a02f79bf8ac98923d42ff43a24b173de5}{equivalent\+\_\+stress}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Macroscopic stress, defined as the work conjugate to D\+\_\+vM\+: $ \sigma_{eq} = (\mathbf{S} \cdot \mathbf{D}) / D_{vM} $. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structaltayconfig_1_1simulstepoutputdata_a58f237d27945e9cecaee85cb8b2d98a0}{effective\+\_\+stress}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Macroscopic (homogenized) effective von Mises stress. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structaltayconfig_1_1simulstepoutputdata_ab72aeedce171b5ea2a7a62aa811f86d3}{homogenised\+\_\+slip}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Macroscopic (homogenized) plastic slip. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structaltayconfig_1_1simulstepoutputdata_aacb580d64187e825fd86bda3868c25fc}{homogenised\+\_\+slip\+\_\+tot}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Macroscopic (homogenized) plastic slip -\/ total over the calls. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structaltayconfig_1_1simulstepoutputdata_a32468d72a3f0d47abcb5106bafbbbce1}{effective\+\_\+macro\+\_\+strain}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Macroscopic (imposed) effective von Mises strain -\/ total over the steps. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structaltayconfig_1_1simulstepoutputdata_addaa9e1fc689d74edc832ac8183497a8}{effective\+\_\+macro\+\_\+strain\+\_\+tot}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Macroscopic (imposed) effective von Mises strain -\/ total over the calls. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structaltayconfig_1_1simulstepoutputdata_ab67c5087ae65e57ff97c4b72c8434a38}{effective\+\_\+macro\+\_\+strain\+\_\+tot\+\_\+end}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Macroscopic (imposed) effective von Mises strain till the end of the current step -\/ total over the calls. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepoutputdata_a32468d72a3f0d47abcb5106bafbbbce1}\label{structaltayconfig_1_1simulstepoutputdata_a32468d72a3f0d47abcb5106bafbbbce1}} 
+\index{altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}!effective\_macro\_strain@{effective\_macro\_strain}}
+\index{effective\_macro\_strain@{effective\_macro\_strain}!altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}}
+\doxysubsubsection{\texorpdfstring{effective\_macro\_strain}{effective\_macro\_strain}}
+{\footnotesize\ttfamily double precision altayconfig\+::simulstepoutputdata\+::effective\+\_\+macro\+\_\+strain = 0.D0}
+
+
+
+Macroscopic (imposed) effective von Mises strain -\/ total over the steps. 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepoutputdata_addaa9e1fc689d74edc832ac8183497a8}\label{structaltayconfig_1_1simulstepoutputdata_addaa9e1fc689d74edc832ac8183497a8}} 
+\index{altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}!effective\_macro\_strain\_tot@{effective\_macro\_strain\_tot}}
+\index{effective\_macro\_strain\_tot@{effective\_macro\_strain\_tot}!altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}}
+\doxysubsubsection{\texorpdfstring{effective\_macro\_strain\_tot}{effective\_macro\_strain\_tot}}
+{\footnotesize\ttfamily double precision altayconfig\+::simulstepoutputdata\+::effective\+\_\+macro\+\_\+strain\+\_\+tot = 0.D0}
+
+
+
+Macroscopic (imposed) effective von Mises strain -\/ total over the calls. 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepoutputdata_ab67c5087ae65e57ff97c4b72c8434a38}\label{structaltayconfig_1_1simulstepoutputdata_ab67c5087ae65e57ff97c4b72c8434a38}} 
+\index{altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}!effective\_macro\_strain\_tot\_end@{effective\_macro\_strain\_tot\_end}}
+\index{effective\_macro\_strain\_tot\_end@{effective\_macro\_strain\_tot\_end}!altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}}
+\doxysubsubsection{\texorpdfstring{effective\_macro\_strain\_tot\_end}{effective\_macro\_strain\_tot\_end}}
+{\footnotesize\ttfamily double precision altayconfig\+::simulstepoutputdata\+::effective\+\_\+macro\+\_\+strain\+\_\+tot\+\_\+end = 0.D0}
+
+
+
+Macroscopic (imposed) effective von Mises strain till the end of the current step -\/ total over the calls. 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepoutputdata_a58f237d27945e9cecaee85cb8b2d98a0}\label{structaltayconfig_1_1simulstepoutputdata_a58f237d27945e9cecaee85cb8b2d98a0}} 
+\index{altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}!effective\_stress@{effective\_stress}}
+\index{effective\_stress@{effective\_stress}!altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}}
+\doxysubsubsection{\texorpdfstring{effective\_stress}{effective\_stress}}
+{\footnotesize\ttfamily double precision altayconfig\+::simulstepoutputdata\+::effective\+\_\+stress = 0.D0}
+
+
+
+Macroscopic (homogenized) effective von Mises stress. 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepoutputdata_a02f79bf8ac98923d42ff43a24b173de5}\label{structaltayconfig_1_1simulstepoutputdata_a02f79bf8ac98923d42ff43a24b173de5}} 
+\index{altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}!equivalent\_stress@{equivalent\_stress}}
+\index{equivalent\_stress@{equivalent\_stress}!altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}}
+\doxysubsubsection{\texorpdfstring{equivalent\_stress}{equivalent\_stress}}
+{\footnotesize\ttfamily double precision altayconfig\+::simulstepoutputdata\+::equivalent\+\_\+stress = 0.D0}
+
+
+
+Macroscopic stress, defined as the work conjugate to D\+\_\+vM\+: $ \sigma_{eq} = (\mathbf{S} \cdot \mathbf{D}) / D_{vM} $. 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepoutputdata_ab72aeedce171b5ea2a7a62aa811f86d3}\label{structaltayconfig_1_1simulstepoutputdata_ab72aeedce171b5ea2a7a62aa811f86d3}} 
+\index{altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}!homogenised\_slip@{homogenised\_slip}}
+\index{homogenised\_slip@{homogenised\_slip}!altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}}
+\doxysubsubsection{\texorpdfstring{homogenised\_slip}{homogenised\_slip}}
+{\footnotesize\ttfamily double precision altayconfig\+::simulstepoutputdata\+::homogenised\+\_\+slip = 0.D0}
+
+
+
+Macroscopic (homogenized) plastic slip. 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepoutputdata_aacb580d64187e825fd86bda3868c25fc}\label{structaltayconfig_1_1simulstepoutputdata_aacb580d64187e825fd86bda3868c25fc}} 
+\index{altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}!homogenised\_slip\_tot@{homogenised\_slip\_tot}}
+\index{homogenised\_slip\_tot@{homogenised\_slip\_tot}!altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}}
+\doxysubsubsection{\texorpdfstring{homogenised\_slip\_tot}{homogenised\_slip\_tot}}
+{\footnotesize\ttfamily double precision altayconfig\+::simulstepoutputdata\+::homogenised\+\_\+slip\+\_\+tot = 0.D0}
+
+
+
+Macroscopic (homogenized) plastic slip -\/ total over the calls. 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepoutputdata_ae7f715c7abf586675971c80a473f19da}\label{structaltayconfig_1_1simulstepoutputdata_ae7f715c7abf586675971c80a473f19da}} 
+\index{altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}!strain\_rate\_heterogeneity@{strain\_rate\_heterogeneity}}
+\index{strain\_rate\_heterogeneity@{strain\_rate\_heterogeneity}!altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}}
+\doxysubsubsection{\texorpdfstring{strain\_rate\_heterogeneity}{strain\_rate\_heterogeneity}}
+{\footnotesize\ttfamily double precision altayconfig\+::simulstepoutputdata\+::strain\+\_\+rate\+\_\+heterogeneity = 0.D0}
+
+
+
+Strain Rate Heterogeneity in polycrystal. Non-\/zero only for models that consider clusters of grains\+: $ \kappa = (||d-D||) / ||D|| $. 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepoutputdata_ab7982d50d6cf8de31ebaae6148116fcc}\label{structaltayconfig_1_1simulstepoutputdata_ab7982d50d6cf8de31ebaae6148116fcc}} 
+\index{altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}!stress\_tensor@{stress\_tensor}}
+\index{stress\_tensor@{stress\_tensor}!altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}}
+\doxysubsubsection{\texorpdfstring{stress\_tensor}{stress\_tensor}}
+{\footnotesize\ttfamily double precision, dimension(3,3) altayconfig\+::simulstepoutputdata\+::stress\+\_\+tensor = 0.D0}
+
+
+
+Macroscopic (homogenized) stress. 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepoutputdata_aef0fb4ede7ee1adb014514e51280f7a5}\label{structaltayconfig_1_1simulstepoutputdata_aef0fb4ede7ee1adb014514e51280f7a5}} 
+\index{altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}!taylor\_factor@{taylor\_factor}}
+\index{taylor\_factor@{taylor\_factor}!altayconfig::simulstepoutputdata@{altayconfig::simulstepoutputdata}}
+\doxysubsubsection{\texorpdfstring{taylor\_factor}{taylor\_factor}}
+{\footnotesize\ttfamily double precision altayconfig\+::simulstepoutputdata\+::taylor\+\_\+factor = 0.D0}
+
+
+
+Macroscopic (homogenized) Taylor factor. 
+
+
+
+The documentation for this type was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Al\+Tay/src/\mbox{\hyperlink{altayConfig_8f90}{altay\+Config.\+f90}}\end{DoxyCompactItemize}

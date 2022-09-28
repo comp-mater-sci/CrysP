@@ -1,0 +1,65 @@
+\hypertarget{namespacecriuncomment}{}\doxysection{criuncomment Module Reference}
+\label{namespacecriuncomment}\index{criuncomment@{criuncomment}}
+
+
+Provides access to config files with bash-\/style comments.  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+interface \mbox{\hyperlink{interfacecriuncomment_1_1readvalue}{readvalue}}
+\begin{DoxyCompactList}\small\item\em Read value from iounit and strip comments Arguments\+: \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{Indent}\textbf{ Various procedures on the theme \char`\"{}removing comment from a string\char`\"{}}\par
+{\em Removes a comment from the string. }\begin{DoxyCompactItemize}
+\item 
+pure subroutine \mbox{\hyperlink{namespacecriuncomment_a6c550f9bbf2f78d61b11e833be9cd479}{stripcomment}} (line, comment\+\_\+mark)
+\item 
+logical function \mbox{\hyperlink{namespacecriuncomment_a5b192b07be757c83a4cb818aa133cd85}{skipcomment}} (nunit, buffer)
+\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacecriuncomment_a54e44a42a767eb45f828b3328af1a82c}{max\+\_\+line\+\_\+len}} = 512
+\begin{DoxyCompactList}\small\item\em Maximal length of a line. \end{DoxyCompactList}\item 
+character, parameter \mbox{\hyperlink{namespacecriuncomment_a045aed2f669fb3efaa51564c32ad7abd}{comment\+\_\+sign}} = \textquotesingle{}\#\textquotesingle{}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Provides access to config files with bash-\/style comments. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacecriuncomment_a5b192b07be757c83a4cb818aa133cd85}\label{namespacecriuncomment_a5b192b07be757c83a4cb818aa133cd85}} 
+\index{criuncomment@{criuncomment}!skipcomment@{skipcomment}}
+\index{skipcomment@{skipcomment}!criuncomment@{criuncomment}}
+\doxysubsubsection{\texorpdfstring{skipcomment()}{skipcomment()}}
+{\footnotesize\ttfamily logical function criuncomment\+::skipcomment (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{nunit,  }\item[{character(len=$\ast$), intent(out)}]{buffer }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacecriuncomment_a6c550f9bbf2f78d61b11e833be9cd479}\label{namespacecriuncomment_a6c550f9bbf2f78d61b11e833be9cd479}} 
+\index{criuncomment@{criuncomment}!stripcomment@{stripcomment}}
+\index{stripcomment@{stripcomment}!criuncomment@{criuncomment}}
+\doxysubsubsection{\texorpdfstring{stripcomment()}{stripcomment()}}
+{\footnotesize\ttfamily pure subroutine criuncomment\+::stripcomment (\begin{DoxyParamCaption}\item[{character(len=$\ast$), intent(inout)}]{line,  }\item[{character, intent(in), optional}]{comment\+\_\+mark }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacecriuncomment_a045aed2f669fb3efaa51564c32ad7abd}\label{namespacecriuncomment_a045aed2f669fb3efaa51564c32ad7abd}} 
+\index{criuncomment@{criuncomment}!comment\_sign@{comment\_sign}}
+\index{comment\_sign@{comment\_sign}!criuncomment@{criuncomment}}
+\doxysubsubsection{\texorpdfstring{comment\_sign}{comment\_sign}}
+{\footnotesize\ttfamily character, parameter criuncomment\+::comment\+\_\+sign = \textquotesingle{}\#\textquotesingle{}}
+
+\mbox{\Hypertarget{namespacecriuncomment_a54e44a42a767eb45f828b3328af1a82c}\label{namespacecriuncomment_a54e44a42a767eb45f828b3328af1a82c}} 
+\index{criuncomment@{criuncomment}!max\_line\_len@{max\_line\_len}}
+\index{max\_line\_len@{max\_line\_len}!criuncomment@{criuncomment}}
+\doxysubsubsection{\texorpdfstring{max\_line\_len}{max\_line\_len}}
+{\footnotesize\ttfamily integer, parameter criuncomment\+::max\+\_\+line\+\_\+len = 512}
+
+
+
+Maximal length of a line. 
+

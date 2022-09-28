@@ -1,0 +1,58 @@
+\hypertarget{altayIOConfig_8f90}{}\doxysection{Al\+Tay/src/altay\+IOConfig.f90 File Reference}
+\label{altayIOConfig_8f90}\index{AlTay/src/altayIOConfig.f90@{AlTay/src/altayIOConfig.f90}}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacealtayioconfig}{altayioconfig}}
+\begin{DoxyCompactList}\small\item\em This module contains the configuration parameters of IO operations as well as other IO-\/related entities, such as IO unit numbers. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtayioconfig_ae67a5b4c3fdb3d1aa3b85189bbcd2ee7}{altayioconfig\+::pathlength}} = 512
+\begin{DoxyCompactList}\small\item\em Maximal length of any path (filenames, directrories etc.) \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ IO units}\par
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_ad3583c096e588b501ebab691acb4ddd3}{altayioconfig\+::lec}} = 4
+\begin{DoxyCompactList}\small\item\em LEC= data set with slip systems. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_ab685d4991914b9b19673d79869fb7982}{altayioconfig\+::klec}} = 5
+\begin{DoxyCompactList}\small\item\em KLEC= data set with parameters. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_ae8d0881e684dcfc392b42096ed66d885}{altayioconfig\+::imp}} = 3
+\begin{DoxyCompactList}\small\item\em IMP= printer. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_af9cd72fae5470af7553a9c544a0a2c76}{altayioconfig\+::imp1}} = 7
+\begin{DoxyCompactList}\small\item\em IMP1=output-\/file with successive \char`\"{}current situations\char`\"{}. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a71cb21879bca7e7144ac7a55114c5c1b}{altayioconfig\+::imp2}} = 8
+\begin{DoxyCompactList}\small\item\em IMP2=output-\/file with successive \char`\"{}responses to imposed strain\char`\"{}. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_af455b9583704bb6c4c7da299d6b39a09}{altayioconfig\+::imp3}} = 11
+\begin{DoxyCompactList}\small\item\em IMP3=output-\/file with twinning information. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_ad2e6a190d3991013ba0dd2acda925ea9}{altayioconfig\+::imp4}} = 110
+\begin{DoxyCompactList}\small\item\em IMP4= output file for state variables of KOST11. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_aeaa6b5958ac67eb93331f0b680bec146}{altayioconfig\+::imp5}} = 111
+\begin{DoxyCompactList}\small\item\em IMP5= output of stress-\/strain or slip-\/stress. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a1bbb79ec86627e8c8f81a95c2d1d3300}{altayioconfig\+::imp6}} = 112
+\begin{DoxyCompactList}\small\item\em IMP6= output of report file. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a320e07aa12fd8313041019deb015bb63}{altayioconfig\+::idisk1}} = 12
+\begin{DoxyCompactList}\small\item\em IDISK1= work file. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_accd9035e5b54351023a63f53ea9a5873}{altayioconfig\+::ndat1}} = 9
+\begin{DoxyCompactList}\small\item\em NDAT1= input texture file. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_af511d2a95f075ba20aff8e8b4b63bf4f}{altayioconfig\+::ndat2}} = 10
+\begin{DoxyCompactList}\small\item\em NDAT2= input microstructure file. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_ac8bd6d4f9bb0e8b16716968ecd6dc88f}{altayioconfig\+::ipebpstat}} = 60
+\begin{DoxyCompactList}\small\item\em IPEBPSTAT= input file for state variables of KOST11. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a44ac6efea9ff61868eab36ab43fdab48}{altayioconfig\+::ipebpsdv}} = 61
+\begin{DoxyCompactList}\small\item\em Output file for state-\/derived variables of KOST11. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Output control switches}\par
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a54d31ddd0aa3f31e2429e7028f889e3c}{altayioconfig\+::nlist}} = 0
+\begin{DoxyCompactList}\small\item\em Control of the listing file (formerly in TEXTUR common block) \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a799f1da2d42c565fe171aa38722889cc}{altayioconfig\+::ipr}} = 0
+\begin{DoxyCompactList}\small\item\em Printing switch (formerly in TEXTUR common block) \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a9bd40d425a310741111d2bd579efd1bb}{altayioconfig\+::nres}} = 0
+\begin{DoxyCompactList}\small\item\em Control of the result file. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a378e639f23cd60428fdea89fd84eb1ca}{altayioconfig\+::npebp}} = 0
+\begin{DoxyCompactList}\small\item\em Control of the state file in PEBP (KOST11 module) \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{namespacealtayioconfig_a63ea9cc0617263c204f773518c143d78}{altayioconfig\+::nmss}} = 0
+\begin{DoxyCompactList}\small\item\em Control of the output with homogenized strain-\/stress (IMP5) \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}

@@ -1,0 +1,27 @@
+\hypertarget{commonConfig_8f90}{}\doxysection{VEF/lib\+Alam\+DMC/common\+Config.f90 File Reference}
+\label{commonConfig_8f90}\index{VEF/libAlamDMC/commonConfig.f90@{VEF/libAlamDMC/commonConfig.f90}}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacecommonconfig}{commonconfig}}
+\begin{DoxyCompactList}\small\item\em This module contains subroutines, data structures and common variables for shared configuration features of all alam\+DMC modules. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+logical function \mbox{\hyperlink{namespacecommonconfig_a852877eee4080edcffd5e83c42e49ea6}{commonconfig\+::iostatusok}} (ioerr)
+\begin{DoxyCompactList}\small\item\em Check exit status of IO operation. \end{DoxyCompactList}\item 
+class(range\+\_\+type) function, pointer \mbox{\hyperlink{namespacecommonconfig_a199eabe6136147399792730ad6c25bee}{commonconfig\+::rangefromconfig}} (cnfunit, info)
+\begin{DoxyCompactList}\small\item\em Factory function that returns an instance appropriate range type depending on the the input read from the cnfunit IO unit. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+character(len=20), parameter \mbox{\hyperlink{namespacecommonconfig_a714d756d149d19346cb9050344d37c6a}{commonconfig\+::fmtmsg2msg}} = \textquotesingle{}(A,T35,A)\textquotesingle{}
+\item 
+character(len=20), parameter \mbox{\hyperlink{namespacecommonconfig_a690366b2d2ecddf4413f8b34925f5d06}{commonconfig\+::fmtmsg2int}} = \textquotesingle{}(A,T35,I4)\textquotesingle{}
+\item 
+character(len=20), parameter \mbox{\hyperlink{namespacecommonconfig_a351ba2b2c48e3abcc9e05fbe94933be2}{commonconfig\+::fmtmsg2float}} = \textquotesingle{}(A,T35,F12.\+8)\textquotesingle{}
+\item 
+character(len=20), parameter \mbox{\hyperlink{namespacecommonconfig_a28149166483ab37c663c6cc65c0c58dd}{commonconfig\+::fmtmsg2any}} = \textquotesingle{}(A,T35)\textquotesingle{}
+\item 
+character(len=20), parameter \mbox{\hyperlink{namespacecommonconfig_aaff690e2726dc4fb123f994e14c003e3}{commonconfig\+::fmtmsg2other}} = \textquotesingle{}(A,T35,\textquotesingle{}
+\end{DoxyCompactItemize}

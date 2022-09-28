@@ -1,0 +1,75 @@
+\hypertarget{namespacealtayhard}{}\doxysection{altayhard Module Reference}
+\label{namespacealtayhard}\index{altayhard@{altayhard}}
+
+
+Dispatcher of hardening models.  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+interface \mbox{\hyperlink{interfacealtayhard_1_1initmodulealtayhard}{initmodulealtayhard}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhard_a58b48c1c25473236c7a0bd08a63f5b05}{initmodulealtayhard\+\_\+file}} (inunit, Hard\+Law, crss\+\_\+init, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhard_ac210c63a5198bf1692237c81f1ba0a96}{initmodulealtayhard\+\_\+config}} (config, info)
+\begin{DoxyCompactList}\small\item\em Initialize module from config data object. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtayhard_abe573b96620b6bb381a37be35964d1ae}{gettau}} (gamma, tau, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhard_a5e26830b92ae350407b1d7d9c530f11e}{getcrss}} (ior, gamma, CRSSmatrix, info)
+\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, save \mbox{\hyperlink{namespacealtayhard_a2a071e632b57ae9a153a378ac949af1b}{hardlawid}} = hard\+\_\+invalid
+\begin{DoxyCompactList}\small\item\em Hardening law identifier of the initialized module. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Dispatcher of hardening models. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacealtayhard_a5e26830b92ae350407b1d7d9c530f11e}\label{namespacealtayhard_a5e26830b92ae350407b1d7d9c530f11e}} 
+\index{altayhard@{altayhard}!getcrss@{getcrss}}
+\index{getcrss@{getcrss}!altayhard@{altayhard}}
+\doxysubsubsection{\texorpdfstring{getcrss()}{getcrss()}}
+{\footnotesize\ttfamily subroutine altayhard\+::getcrss (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{ior,  }\item[{double precision, intent(in)}]{gamma,  }\item[{type(\mbox{\hyperlink{structaltayhardtypes_1_1crss}{crss}}), intent(out)}]{CRSSmatrix,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayhard_abe573b96620b6bb381a37be35964d1ae}\label{namespacealtayhard_abe573b96620b6bb381a37be35964d1ae}} 
+\index{altayhard@{altayhard}!gettau@{gettau}}
+\index{gettau@{gettau}!altayhard@{altayhard}}
+\doxysubsubsection{\texorpdfstring{gettau()}{gettau()}}
+{\footnotesize\ttfamily subroutine altayhard\+::gettau (\begin{DoxyParamCaption}\item[{double precision, intent(in)}]{gamma,  }\item[{double precision, intent(out)}]{tau,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayhard_ac210c63a5198bf1692237c81f1ba0a96}\label{namespacealtayhard_ac210c63a5198bf1692237c81f1ba0a96}} 
+\index{altayhard@{altayhard}!initmodulealtayhard\_config@{initmodulealtayhard\_config}}
+\index{initmodulealtayhard\_config@{initmodulealtayhard\_config}!altayhard@{altayhard}}
+\doxysubsubsection{\texorpdfstring{initmodulealtayhard\_config()}{initmodulealtayhard\_config()}}
+{\footnotesize\ttfamily subroutine altayhard\+::initmodulealtayhard\+\_\+config (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structaltayconfig_1_1hardeningdata}{hardeningdata}}), intent(in)}]{config,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Initialize module from config data object. 
+
+\mbox{\Hypertarget{namespacealtayhard_a58b48c1c25473236c7a0bd08a63f5b05}\label{namespacealtayhard_a58b48c1c25473236c7a0bd08a63f5b05}} 
+\index{altayhard@{altayhard}!initmodulealtayhard\_file@{initmodulealtayhard\_file}}
+\index{initmodulealtayhard\_file@{initmodulealtayhard\_file}!altayhard@{altayhard}}
+\doxysubsubsection{\texorpdfstring{initmodulealtayhard\_file()}{initmodulealtayhard\_file()}}
+{\footnotesize\ttfamily subroutine altayhard\+::initmodulealtayhard\+\_\+file (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{inunit,  }\item[{integer, intent(in)}]{Hard\+Law,  }\item[{type(\mbox{\hyperlink{structaltayhardtypes_1_1crss}{crss}}), intent(in)}]{crss\+\_\+init,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacealtayhard_a2a071e632b57ae9a153a378ac949af1b}\label{namespacealtayhard_a2a071e632b57ae9a153a378ac949af1b}} 
+\index{altayhard@{altayhard}!hardlawid@{hardlawid}}
+\index{hardlawid@{hardlawid}!altayhard@{altayhard}}
+\doxysubsubsection{\texorpdfstring{hardlawid}{hardlawid}}
+{\footnotesize\ttfamily integer, save altayhard\+::hardlawid = hard\+\_\+invalid}
+
+
+
+Hardening law identifier of the initialized module. 
+

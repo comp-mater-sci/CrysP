@@ -1,0 +1,132 @@
+\hypertarget{structaltayconfig_1_1simulstepinputdata}{}\doxysection{altayconfig\+::simulstepinputdata Type Reference}
+\label{structaltayconfig_1_1simulstepinputdata}\index{altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+logical \mbox{\hyperlink{structaltayconfig_1_1simulstepinputdata_abfc2b4bf32d97f766abd8edb9fe19451}{keep\+\_\+texture}} = .true.
+\begin{DoxyCompactList}\small\item\em Flag that decides if this step leads to modification of the texture. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{structaltayconfig_1_1simulstepinputdata_a1825eaa47f0e9df810124835cfb6bcbf}{keep\+\_\+state}} = .true.
+\begin{DoxyCompactList}\small\item\em Flag that decides if this step leads to an update of the state components (other than texture) \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{structaltayconfig_1_1simulstepinputdata_a39e3350ea376e97b4e6b42c6286f7b9a}{full\+\_\+model}} = .true.
+\begin{DoxyCompactList}\small\item\em Flag that decides if the full model is to be employed. If set .false.\+: 1) a simplified formula is used for calculations of the microscopic stress 2) texture is NOT updated, so \char`\"{}keep\+\_\+texture\char`\"{} must be set, too. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{structaltayconfig_1_1simulstepinputdata_a5f95db0e2b3f8f0307dc25bbefa456e6}{do\+\_\+output\+\_\+init}} = .false.
+\begin{DoxyCompactList}\small\item\em Flag that decides if the initial texture should be written out as a CUR output of the step. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{structaltayconfig_1_1simulstepinputdata_a93f7a879898bf792d2122ea31fb31703}{do\+\_\+output\+\_\+final}} = .false.
+\begin{DoxyCompactList}\small\item\em Flag that decides if the final texture (as it is at the end of the call) should be written out as a a CUR output of the step. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{structaltayconfig_1_1simulstepinputdata_a3b8d99e9801c34d9264568092ac909ce}{nsteps}} = 1
+\begin{DoxyCompactList}\small\item\em Number of steps per call. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{structaltayconfig_1_1simulstepinputdata_a6142a900315d44f538c4203fc5730ac3}{rlx1}} = .true.
+\begin{DoxyCompactList}\small\item\em Selection of relaxations. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{structaltayconfig_1_1simulstepinputdata_a63becde526540931428dfd3e2d7aa61d}{rlx2}} = .true.
+\item 
+double precision, dimension(3, 3) \mbox{\hyperlink{structaltayconfig_1_1simulstepinputdata_a6303db712cdd15495b02392d557368bd}{dgf}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Deformation gradient tensor to be imposed. (MB\+: this is rather a velocity gradient.) \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepinputdata_a6303db712cdd15495b02392d557368bd}\label{structaltayconfig_1_1simulstepinputdata_a6303db712cdd15495b02392d557368bd}} 
+\index{altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}!dgf@{dgf}}
+\index{dgf@{dgf}!altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}}
+\doxysubsubsection{\texorpdfstring{dgf}{dgf}}
+{\footnotesize\ttfamily double precision, dimension(3,3) altayconfig\+::simulstepinputdata\+::dgf = 0.D0}
+
+
+
+Deformation gradient tensor to be imposed. (MB\+: this is rather a velocity gradient.) 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepinputdata_a93f7a879898bf792d2122ea31fb31703}\label{structaltayconfig_1_1simulstepinputdata_a93f7a879898bf792d2122ea31fb31703}} 
+\index{altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}!do\_output\_final@{do\_output\_final}}
+\index{do\_output\_final@{do\_output\_final}!altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}}
+\doxysubsubsection{\texorpdfstring{do\_output\_final}{do\_output\_final}}
+{\footnotesize\ttfamily logical altayconfig\+::simulstepinputdata\+::do\+\_\+output\+\_\+final = .false.}
+
+
+
+Flag that decides if the final texture (as it is at the end of the call) should be written out as a a CUR output of the step. 
+
+\begin{DoxyRemark}{Remarks}
+This flag takes effect if output\+Config\+::nfile is non-\/zero. 
+\end{DoxyRemark}
+\begin{DoxySeeAlso}{See also}
+output\+Config\+::nfile 
+\end{DoxySeeAlso}
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepinputdata_a5f95db0e2b3f8f0307dc25bbefa456e6}\label{structaltayconfig_1_1simulstepinputdata_a5f95db0e2b3f8f0307dc25bbefa456e6}} 
+\index{altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}!do\_output\_init@{do\_output\_init}}
+\index{do\_output\_init@{do\_output\_init}!altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}}
+\doxysubsubsection{\texorpdfstring{do\_output\_init}{do\_output\_init}}
+{\footnotesize\ttfamily logical altayconfig\+::simulstepinputdata\+::do\+\_\+output\+\_\+init = .false.}
+
+
+
+Flag that decides if the initial texture should be written out as a CUR output of the step. 
+
+\begin{DoxyNote}{Note}
+The texture is actually written out for initial configuration that is available at the beginning of the step. 
+\end{DoxyNote}
+\begin{DoxyRemark}{Remarks}
+This flag takes effect if output\+Config\+::nfile is non-\/zero. 
+\end{DoxyRemark}
+\begin{DoxySeeAlso}{See also}
+output\+Config\+::nfile 
+\end{DoxySeeAlso}
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepinputdata_a39e3350ea376e97b4e6b42c6286f7b9a}\label{structaltayconfig_1_1simulstepinputdata_a39e3350ea376e97b4e6b42c6286f7b9a}} 
+\index{altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}!full\_model@{full\_model}}
+\index{full\_model@{full\_model}!altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}}
+\doxysubsubsection{\texorpdfstring{full\_model}{full\_model}}
+{\footnotesize\ttfamily logical altayconfig\+::simulstepinputdata\+::full\+\_\+model = .true.}
+
+
+
+Flag that decides if the full model is to be employed. If set .false.\+: 1) a simplified formula is used for calculations of the microscopic stress 2) texture is NOT updated, so \char`\"{}keep\+\_\+texture\char`\"{} must be set, too. 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepinputdata_a1825eaa47f0e9df810124835cfb6bcbf}\label{structaltayconfig_1_1simulstepinputdata_a1825eaa47f0e9df810124835cfb6bcbf}} 
+\index{altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}!keep\_state@{keep\_state}}
+\index{keep\_state@{keep\_state}!altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}}
+\doxysubsubsection{\texorpdfstring{keep\_state}{keep\_state}}
+{\footnotesize\ttfamily logical altayconfig\+::simulstepinputdata\+::keep\+\_\+state = .true.}
+
+
+
+Flag that decides if this step leads to an update of the state components (other than texture) 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepinputdata_abfc2b4bf32d97f766abd8edb9fe19451}\label{structaltayconfig_1_1simulstepinputdata_abfc2b4bf32d97f766abd8edb9fe19451}} 
+\index{altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}!keep\_texture@{keep\_texture}}
+\index{keep\_texture@{keep\_texture}!altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}}
+\doxysubsubsection{\texorpdfstring{keep\_texture}{keep\_texture}}
+{\footnotesize\ttfamily logical altayconfig\+::simulstepinputdata\+::keep\+\_\+texture = .true.}
+
+
+
+Flag that decides if this step leads to modification of the texture. 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepinputdata_a3b8d99e9801c34d9264568092ac909ce}\label{structaltayconfig_1_1simulstepinputdata_a3b8d99e9801c34d9264568092ac909ce}} 
+\index{altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}!nsteps@{nsteps}}
+\index{nsteps@{nsteps}!altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}}
+\doxysubsubsection{\texorpdfstring{nsteps}{nsteps}}
+{\footnotesize\ttfamily integer altayconfig\+::simulstepinputdata\+::nsteps = 1}
+
+
+
+Number of steps per call. 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepinputdata_a6142a900315d44f538c4203fc5730ac3}\label{structaltayconfig_1_1simulstepinputdata_a6142a900315d44f538c4203fc5730ac3}} 
+\index{altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}!rlx1@{rlx1}}
+\index{rlx1@{rlx1}!altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}}
+\doxysubsubsection{\texorpdfstring{rlx1}{rlx1}}
+{\footnotesize\ttfamily logical altayconfig\+::simulstepinputdata\+::rlx1 = .true.}
+
+
+
+Selection of relaxations. 
+
+\mbox{\Hypertarget{structaltayconfig_1_1simulstepinputdata_a63becde526540931428dfd3e2d7aa61d}\label{structaltayconfig_1_1simulstepinputdata_a63becde526540931428dfd3e2d7aa61d}} 
+\index{altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}!rlx2@{rlx2}}
+\index{rlx2@{rlx2}!altayconfig::simulstepinputdata@{altayconfig::simulstepinputdata}}
+\doxysubsubsection{\texorpdfstring{rlx2}{rlx2}}
+{\footnotesize\ttfamily logical altayconfig\+::simulstepinputdata\+::rlx2 = .true.}
+
+
+
+The documentation for this type was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Al\+Tay/src/\mbox{\hyperlink{altayConfig_8f90}{altay\+Config.\+f90}}\end{DoxyCompactItemize}

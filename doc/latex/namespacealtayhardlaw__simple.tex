@@ -1,0 +1,94 @@
+\hypertarget{namespacealtayhardlaw__simple}{}\doxysection{altayhardlaw\+\_\+simple Module Reference}
+\label{namespacealtayhardlaw__simple}\index{altayhardlaw\_simple@{altayhardlaw\_simple}}
+
+
+Implementation of \textquotesingle{}simple\textquotesingle{} hardening laws TAU(\+GAMMA), i.\+e. with only 1 internal variable\+: accumulated slip in grain GAMMA. Available laws\+:  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+interface \mbox{\hyperlink{interfacealtayhardlaw__simple_1_1initmodulealtayhardlaw__simple}{initmodulealtayhardlaw\+\_\+simple}}
+\item 
+type \mbox{\hyperlink{structaltayhardlaw__simple_1_1swiftkconfig}{swiftkconfig}}
+\begin{DoxyCompactList}\small\item\em Configuration parameters of SwiftK hardening law. Some \textquotesingle{}reasonable\textquotesingle{} defaults are used. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltayhardlaw__simple_1_1swiftparams}{swiftparams}}
+\begin{DoxyCompactList}\small\item\em Parameters of Swift hardening law, private to this module. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltayhardlaw__simple_1_1swiftsconfig}{swiftsconfig}}
+\begin{DoxyCompactList}\small\item\em Configuration parameters of SwiftS hardening law. Some \textquotesingle{}reasonable\textquotesingle{} defaults are used. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltayhardlaw__simple_1_1voceconfig}{voceconfig}}
+\begin{DoxyCompactList}\small\item\em Configuration parameters of Double\+Voce hardening law. Some \textquotesingle{}reasonable\textquotesingle{} defaults are used. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltayhardlaw__simple_1_1voceparams}{voceparams}}
+\begin{DoxyCompactList}\small\item\em Parameters of Double\+Voce hardening law, private to this module. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhardlaw__simple_a71c504fcd07edac3552f5dc05cb42e9a}{readvoceconfig}} (inunit, c, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhardlaw__simple_ac372580af9c9a0dbe12686723acf010e}{readswiftkconfig}} (inunit, c, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhardlaw__simple_a063dc253e46d47207acd90a6d9b07730}{readswiftsconfig}} (inunit, c, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhardlaw__simple_a8d554027b9fa6488e5d23d1cd442999a}{init\+\_\+voce}} (c, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhardlaw__simple_a7996200fe2c0449c8c1be94b1a6e4406}{init\+\_\+swiftk}} (c, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhardlaw__simple_ace9fbe582fabaf65468a43d60139d6ca}{init\+\_\+swifts}} (c, info)
+\item 
+subroutine \mbox{\hyperlink{namespacealtayhardlaw__simple_ac70bf3025a67930911020c2c363e1ec8}{getreftau}} (hard\+ID, gamma, Ref\+Tau, info)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Implementation of \textquotesingle{}simple\textquotesingle{} hardening laws TAU(\+GAMMA), i.\+e. with only 1 internal variable\+: accumulated slip in grain GAMMA. Available laws\+: 
+
+
+\begin{DoxyItemize}
+\item Double\+Voce
+\item SwiftK\+: Swift law with K-\/factor \+:: TAU = K $\ast$ (gamma0+\+GAMMA)$\ast$$\ast$n
+\item SwiftS\+: Swift law with initial crsS \+:: TAU = crss0 $\ast$ (1.+GAMMA/gamma\+A0)$\ast$$\ast$n 
+\end{DoxyItemize}
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacealtayhardlaw__simple_ac70bf3025a67930911020c2c363e1ec8}\label{namespacealtayhardlaw__simple_ac70bf3025a67930911020c2c363e1ec8}} 
+\index{altayhardlaw\_simple@{altayhardlaw\_simple}!getreftau@{getreftau}}
+\index{getreftau@{getreftau}!altayhardlaw\_simple@{altayhardlaw\_simple}}
+\doxysubsubsection{\texorpdfstring{getreftau()}{getreftau()}}
+{\footnotesize\ttfamily subroutine altayhardlaw\+\_\+simple\+::getreftau (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{hard\+ID,  }\item[{double precision, intent(in)}]{gamma,  }\item[{double precision, intent(out)}]{Ref\+Tau,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayhardlaw__simple_a7996200fe2c0449c8c1be94b1a6e4406}\label{namespacealtayhardlaw__simple_a7996200fe2c0449c8c1be94b1a6e4406}} 
+\index{altayhardlaw\_simple@{altayhardlaw\_simple}!init\_swiftk@{init\_swiftk}}
+\index{init\_swiftk@{init\_swiftk}!altayhardlaw\_simple@{altayhardlaw\_simple}}
+\doxysubsubsection{\texorpdfstring{init\_swiftk()}{init\_swiftk()}}
+{\footnotesize\ttfamily subroutine altayhardlaw\+\_\+simple\+::init\+\_\+swiftk (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structaltayhardlaw__simple_1_1swiftkconfig}{swiftkconfig}}), intent(in)}]{c,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayhardlaw__simple_ace9fbe582fabaf65468a43d60139d6ca}\label{namespacealtayhardlaw__simple_ace9fbe582fabaf65468a43d60139d6ca}} 
+\index{altayhardlaw\_simple@{altayhardlaw\_simple}!init\_swifts@{init\_swifts}}
+\index{init\_swifts@{init\_swifts}!altayhardlaw\_simple@{altayhardlaw\_simple}}
+\doxysubsubsection{\texorpdfstring{init\_swifts()}{init\_swifts()}}
+{\footnotesize\ttfamily subroutine altayhardlaw\+\_\+simple\+::init\+\_\+swifts (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structaltayhardlaw__simple_1_1swiftsconfig}{swiftsconfig}}), intent(in)}]{c,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayhardlaw__simple_a8d554027b9fa6488e5d23d1cd442999a}\label{namespacealtayhardlaw__simple_a8d554027b9fa6488e5d23d1cd442999a}} 
+\index{altayhardlaw\_simple@{altayhardlaw\_simple}!init\_voce@{init\_voce}}
+\index{init\_voce@{init\_voce}!altayhardlaw\_simple@{altayhardlaw\_simple}}
+\doxysubsubsection{\texorpdfstring{init\_voce()}{init\_voce()}}
+{\footnotesize\ttfamily subroutine altayhardlaw\+\_\+simple\+::init\+\_\+voce (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structaltayhardlaw__simple_1_1voceconfig}{voceconfig}}), intent(in)}]{c,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayhardlaw__simple_ac372580af9c9a0dbe12686723acf010e}\label{namespacealtayhardlaw__simple_ac372580af9c9a0dbe12686723acf010e}} 
+\index{altayhardlaw\_simple@{altayhardlaw\_simple}!readswiftkconfig@{readswiftkconfig}}
+\index{readswiftkconfig@{readswiftkconfig}!altayhardlaw\_simple@{altayhardlaw\_simple}}
+\doxysubsubsection{\texorpdfstring{readswiftkconfig()}{readswiftkconfig()}}
+{\footnotesize\ttfamily subroutine altayhardlaw\+\_\+simple\+::readswiftkconfig (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{inunit,  }\item[{type(\mbox{\hyperlink{structaltayhardlaw__simple_1_1swiftkconfig}{swiftkconfig}}), intent(out)}]{c,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayhardlaw__simple_a063dc253e46d47207acd90a6d9b07730}\label{namespacealtayhardlaw__simple_a063dc253e46d47207acd90a6d9b07730}} 
+\index{altayhardlaw\_simple@{altayhardlaw\_simple}!readswiftsconfig@{readswiftsconfig}}
+\index{readswiftsconfig@{readswiftsconfig}!altayhardlaw\_simple@{altayhardlaw\_simple}}
+\doxysubsubsection{\texorpdfstring{readswiftsconfig()}{readswiftsconfig()}}
+{\footnotesize\ttfamily subroutine altayhardlaw\+\_\+simple\+::readswiftsconfig (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{inunit,  }\item[{type(\mbox{\hyperlink{structaltayhardlaw__simple_1_1swiftsconfig}{swiftsconfig}}), intent(out)}]{c,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtayhardlaw__simple_a71c504fcd07edac3552f5dc05cb42e9a}\label{namespacealtayhardlaw__simple_a71c504fcd07edac3552f5dc05cb42e9a}} 
+\index{altayhardlaw\_simple@{altayhardlaw\_simple}!readvoceconfig@{readvoceconfig}}
+\index{readvoceconfig@{readvoceconfig}!altayhardlaw\_simple@{altayhardlaw\_simple}}
+\doxysubsubsection{\texorpdfstring{readvoceconfig()}{readvoceconfig()}}
+{\footnotesize\ttfamily subroutine altayhardlaw\+\_\+simple\+::readvoceconfig (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{inunit,  }\item[{type(\mbox{\hyperlink{structaltayhardlaw__simple_1_1voceconfig}{voceconfig}}), intent(out)}]{c,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+

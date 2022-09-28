@@ -1,0 +1,96 @@
+\hypertarget{structaltayconfig_1_1hardeningdata}{}\doxysection{altayconfig\+::hardeningdata Type Reference}
+\label{structaltayconfig_1_1hardeningdata}\index{altayconfig::hardeningdata@{altayconfig::hardeningdata}}
+
+
+Parameters of available hardening models.  
+
+
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{structaltayconfig_1_1hardeningdata_a1c9e54fec67c2a6120ab5243c96a2407}{hardlawid}} = hard\+\_\+\+None
+\begin{DoxyCompactList}\small\item\em Selector of the model for hardening of slipsystems. \end{DoxyCompactList}\item 
+type(\mbox{\hyperlink{structaltayhardtypes_1_1crss}{crss}}) \mbox{\hyperlink{structaltayconfig_1_1hardeningdata_a29409ab5c42bd8f2566970dc6f2d112a}{crss\+\_\+ratios}}
+\begin{DoxyCompactList}\small\item\em Initial values of CRSS ratios. \end{DoxyCompactList}\item 
+type(\mbox{\hyperlink{structaltayhardlaw__simple_1_1voceconfig}{voceconfig}}) \mbox{\hyperlink{structaltayconfig_1_1hardeningdata_a9d913062092727c978cdc4f8d3e66ab5}{vocecnf}}
+\begin{DoxyCompactList}\small\item\em Parameters of Voce hardening law. \end{DoxyCompactList}\item 
+type(\mbox{\hyperlink{structaltayhardlaw__simple_1_1swiftkconfig}{swiftkconfig}}) \mbox{\hyperlink{structaltayconfig_1_1hardeningdata_a0f424dca940058de508f8902a75e6cdf}{swiftkcnf}}
+\begin{DoxyCompactList}\small\item\em Parameters of Swift hardening law (\textquotesingle{}engineering-\/type\textquotesingle{}) \end{DoxyCompactList}\item 
+type(\mbox{\hyperlink{structaltayhardlaw__simple_1_1swiftsconfig}{swiftsconfig}}) \mbox{\hyperlink{structaltayconfig_1_1hardeningdata_a9830738850247135639c16d428c00cb9}{swiftscnf}}
+\begin{DoxyCompactList}\small\item\em Parameters of Swift hardening law (\textquotesingle{}scientific-\/type\textquotesingle{}) \end{DoxyCompactList}\item 
+type(\mbox{\hyperlink{structaltayconfig_1_1pebpconfig}{pebpconfig}}) \mbox{\hyperlink{structaltayconfig_1_1hardeningdata_a7430bea72b8efe6164617a4e8292746d}{pebpcnf}}
+\begin{DoxyCompactList}\small\item\em Parameters of Dislocation Substructural Hardening models (PEBP variants) \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Parameters of available hardening models. 
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structaltayconfig_1_1hardeningdata_a29409ab5c42bd8f2566970dc6f2d112a}\label{structaltayconfig_1_1hardeningdata_a29409ab5c42bd8f2566970dc6f2d112a}} 
+\index{altayconfig::hardeningdata@{altayconfig::hardeningdata}!crss\_ratios@{crss\_ratios}}
+\index{crss\_ratios@{crss\_ratios}!altayconfig::hardeningdata@{altayconfig::hardeningdata}}
+\doxysubsubsection{\texorpdfstring{crss\_ratios}{crss\_ratios}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structaltayhardtypes_1_1crss}{crss}}) altayconfig\+::hardeningdata\+::crss\+\_\+ratios}
+
+
+
+Initial values of CRSS ratios. 
+
+\mbox{\Hypertarget{structaltayconfig_1_1hardeningdata_a1c9e54fec67c2a6120ab5243c96a2407}\label{structaltayconfig_1_1hardeningdata_a1c9e54fec67c2a6120ab5243c96a2407}} 
+\index{altayconfig::hardeningdata@{altayconfig::hardeningdata}!hardlawid@{hardlawid}}
+\index{hardlawid@{hardlawid}!altayconfig::hardeningdata@{altayconfig::hardeningdata}}
+\doxysubsubsection{\texorpdfstring{hardlawid}{hardlawid}}
+{\footnotesize\ttfamily integer altayconfig\+::hardeningdata\+::hardlawid = hard\+\_\+\+None}
+
+
+
+Selector of the model for hardening of slipsystems. 
+
+Acceptable values depend on availability of CRSS (aka TAUC) hardening models that are implemented in the code. See module altay\+Hard for details about available hardening laws. \begin{DoxySeeAlso}{See also}
+\mbox{\hyperlink{structaltayconfig_1_1hardeningdata_a29409ab5c42bd8f2566970dc6f2d112a}{crss\+\_\+ratios}} 
+\end{DoxySeeAlso}
+\mbox{\Hypertarget{structaltayconfig_1_1hardeningdata_a7430bea72b8efe6164617a4e8292746d}\label{structaltayconfig_1_1hardeningdata_a7430bea72b8efe6164617a4e8292746d}} 
+\index{altayconfig::hardeningdata@{altayconfig::hardeningdata}!pebpcnf@{pebpcnf}}
+\index{pebpcnf@{pebpcnf}!altayconfig::hardeningdata@{altayconfig::hardeningdata}}
+\doxysubsubsection{\texorpdfstring{pebpcnf}{pebpcnf}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structaltayconfig_1_1pebpconfig}{pebpconfig}}) altayconfig\+::hardeningdata\+::pebpcnf}
+
+
+
+Parameters of Dislocation Substructural Hardening models (PEBP variants) 
+
+\mbox{\Hypertarget{structaltayconfig_1_1hardeningdata_a0f424dca940058de508f8902a75e6cdf}\label{structaltayconfig_1_1hardeningdata_a0f424dca940058de508f8902a75e6cdf}} 
+\index{altayconfig::hardeningdata@{altayconfig::hardeningdata}!swiftkcnf@{swiftkcnf}}
+\index{swiftkcnf@{swiftkcnf}!altayconfig::hardeningdata@{altayconfig::hardeningdata}}
+\doxysubsubsection{\texorpdfstring{swiftkcnf}{swiftkcnf}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structaltayhardlaw__simple_1_1swiftkconfig}{swiftkconfig}}) altayconfig\+::hardeningdata\+::swiftkcnf}
+
+
+
+Parameters of Swift hardening law (\textquotesingle{}engineering-\/type\textquotesingle{}) 
+
+\mbox{\Hypertarget{structaltayconfig_1_1hardeningdata_a9830738850247135639c16d428c00cb9}\label{structaltayconfig_1_1hardeningdata_a9830738850247135639c16d428c00cb9}} 
+\index{altayconfig::hardeningdata@{altayconfig::hardeningdata}!swiftscnf@{swiftscnf}}
+\index{swiftscnf@{swiftscnf}!altayconfig::hardeningdata@{altayconfig::hardeningdata}}
+\doxysubsubsection{\texorpdfstring{swiftscnf}{swiftscnf}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structaltayhardlaw__simple_1_1swiftsconfig}{swiftsconfig}}) altayconfig\+::hardeningdata\+::swiftscnf}
+
+
+
+Parameters of Swift hardening law (\textquotesingle{}scientific-\/type\textquotesingle{}) 
+
+\mbox{\Hypertarget{structaltayconfig_1_1hardeningdata_a9d913062092727c978cdc4f8d3e66ab5}\label{structaltayconfig_1_1hardeningdata_a9d913062092727c978cdc4f8d3e66ab5}} 
+\index{altayconfig::hardeningdata@{altayconfig::hardeningdata}!vocecnf@{vocecnf}}
+\index{vocecnf@{vocecnf}!altayconfig::hardeningdata@{altayconfig::hardeningdata}}
+\doxysubsubsection{\texorpdfstring{vocecnf}{vocecnf}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structaltayhardlaw__simple_1_1voceconfig}{voceconfig}}) altayconfig\+::hardeningdata\+::vocecnf}
+
+
+
+Parameters of Voce hardening law. 
+
+
+
+The documentation for this type was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Al\+Tay/src/\mbox{\hyperlink{altayConfig_8f90}{altay\+Config.\+f90}}\end{DoxyCompactItemize}

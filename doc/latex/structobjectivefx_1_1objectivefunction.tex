@@ -1,0 +1,111 @@
+\hypertarget{structobjectivefx_1_1objectivefunction}{}\doxysection{objectivefx\+::objectivefunction Type Reference}
+\label{structobjectivefx_1_1objectivefunction}\index{objectivefx::objectivefunction@{objectivefx::objectivefunction}}
+
+
+Abstract data type for objective functions.  
+
+
+Inheritance diagram for objectivefx\+::objectivefunction\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.696370cm]{structobjectivefx_1_1objectivefunction}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+procedure, pass(this) \mbox{\hyperlink{structobjectivefx_1_1objectivefunction_a2284289365e76e986acc0cdbedefdb8a}{initfx}} =$>$ \mbox{\hyperlink{namespaceobjectivefx_aa2bc9218863f18aa02b75631ddddfeff}{objectivefunction\+\_\+initfx}}
+\begin{DoxyCompactList}\small\item\em Initialization function. \end{DoxyCompactList}\item 
+procedure, pass(this) \mbox{\hyperlink{structobjectivefx_1_1objectivefunction_aea991f06f3f226330bd9de7681bc5012}{getproblemsize}}
+\item 
+procedure, pass(this) \mbox{\hyperlink{structobjectivefx_1_1objectivefunction_adf5fac06f06aa052ab5c3f6ab67f313e}{getxsize}}
+\item 
+procedure, pass(this) \mbox{\hyperlink{structobjectivefx_1_1objectivefunction_ab11d67434971206ec5f3879b2f02a486}{getfsize}}
+\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Stateful interface}\par
+\begin{DoxyCompactItemize}
+\item 
+procedure(\mbox{\hyperlink{interfaceobjectivefx_1_1IF__objectiveFx__stateful}{IF\+\_\+objective\+Fx\+\_\+stateful}}), deferred, pass(this) \mbox{\hyperlink{structobjectivefx_1_1objectivefunction_a9be7ddfef615bd84ae6afca0f08d02a5}{objectiveeval}}
+\begin{DoxyCompactList}\small\item\em Evaluation of objective function vector. \end{DoxyCompactList}\item 
+procedure(\mbox{\hyperlink{interfaceobjectivefx_1_1IF__JacobiObjFx__stateful}{IF\+\_\+\+Jacobi\+Obj\+Fx\+\_\+stateful}}), deferred, pass(this) \mbox{\hyperlink{structobjectivefx_1_1objectivefunction_afe4b4d6041fc8436a1ccbb3b03d7fce1}{jacobimatrixeval}}
+\begin{DoxyCompactList}\small\item\em Evaluation of Jacobi matrix for the objective function. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+type(\mbox{\hyperlink{structobjectivefx_1_1solutionpoint}{solutionpoint}}) \mbox{\hyperlink{structobjectivefx_1_1objectivefunction_ac6ca0fd9fc0b02ecfb4d4c1d98553ca7}{state}}
+\begin{DoxyCompactList}\small\item\em State variable. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Abstract data type for objective functions. 
+
+It is assumed that every objective function contains a state variable that represents the value of the function and its Jacobian. 
+
+\doxysubsection{Member Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{structobjectivefx_1_1objectivefunction_ab11d67434971206ec5f3879b2f02a486}\label{structobjectivefx_1_1objectivefunction_ab11d67434971206ec5f3879b2f02a486}} 
+\index{objectivefx::objectivefunction@{objectivefx::objectivefunction}!getfsize@{getfsize}}
+\index{getfsize@{getfsize}!objectivefx::objectivefunction@{objectivefx::objectivefunction}}
+\doxysubsubsection{\texorpdfstring{getfsize()}{getfsize()}}
+{\footnotesize\ttfamily procedure, pass(this) objectivefx\+::objectivefunction\+::getfsize}
+
+\mbox{\Hypertarget{structobjectivefx_1_1objectivefunction_aea991f06f3f226330bd9de7681bc5012}\label{structobjectivefx_1_1objectivefunction_aea991f06f3f226330bd9de7681bc5012}} 
+\index{objectivefx::objectivefunction@{objectivefx::objectivefunction}!getproblemsize@{getproblemsize}}
+\index{getproblemsize@{getproblemsize}!objectivefx::objectivefunction@{objectivefx::objectivefunction}}
+\doxysubsubsection{\texorpdfstring{getproblemsize()}{getproblemsize()}}
+{\footnotesize\ttfamily procedure, pass(this) objectivefx\+::objectivefunction\+::getproblemsize}
+
+\mbox{\Hypertarget{structobjectivefx_1_1objectivefunction_adf5fac06f06aa052ab5c3f6ab67f313e}\label{structobjectivefx_1_1objectivefunction_adf5fac06f06aa052ab5c3f6ab67f313e}} 
+\index{objectivefx::objectivefunction@{objectivefx::objectivefunction}!getxsize@{getxsize}}
+\index{getxsize@{getxsize}!objectivefx::objectivefunction@{objectivefx::objectivefunction}}
+\doxysubsubsection{\texorpdfstring{getxsize()}{getxsize()}}
+{\footnotesize\ttfamily procedure, pass(this) objectivefx\+::objectivefunction\+::getxsize}
+
+\mbox{\Hypertarget{structobjectivefx_1_1objectivefunction_a2284289365e76e986acc0cdbedefdb8a}\label{structobjectivefx_1_1objectivefunction_a2284289365e76e986acc0cdbedefdb8a}} 
+\index{objectivefx::objectivefunction@{objectivefx::objectivefunction}!initfx@{initfx}}
+\index{initfx@{initfx}!objectivefx::objectivefunction@{objectivefx::objectivefunction}}
+\doxysubsubsection{\texorpdfstring{initfx()}{initfx()}}
+{\footnotesize\ttfamily procedure, pass(this) objectivefx\+::objectivefunction\+::initfx}
+
+
+
+Initialization function. 
+
+\mbox{\Hypertarget{structobjectivefx_1_1objectivefunction_afe4b4d6041fc8436a1ccbb3b03d7fce1}\label{structobjectivefx_1_1objectivefunction_afe4b4d6041fc8436a1ccbb3b03d7fce1}} 
+\index{objectivefx::objectivefunction@{objectivefx::objectivefunction}!jacobimatrixeval@{jacobimatrixeval}}
+\index{jacobimatrixeval@{jacobimatrixeval}!objectivefx::objectivefunction@{objectivefx::objectivefunction}}
+\doxysubsubsection{\texorpdfstring{jacobimatrixeval()}{jacobimatrixeval()}}
+{\footnotesize\ttfamily procedure(\mbox{\hyperlink{interfaceobjectivefx_1_1IF__JacobiObjFx__stateful}{IF\+\_\+\+Jacobi\+Obj\+Fx\+\_\+stateful}}), deferred, pass(this) objectivefx\+::objectivefunction\+::jacobimatrixeval}
+
+
+
+Evaluation of Jacobi matrix for the objective function. 
+
+See remarks in \mbox{\hyperlink{interfaceobjectivefx_1_1IF__JacobiObjFx__stateful}{IF\+\_\+\+Jacobi\+Obj\+Fx\+\_\+stateful}} for a guidance how to implement it. \mbox{\Hypertarget{structobjectivefx_1_1objectivefunction_a9be7ddfef615bd84ae6afca0f08d02a5}\label{structobjectivefx_1_1objectivefunction_a9be7ddfef615bd84ae6afca0f08d02a5}} 
+\index{objectivefx::objectivefunction@{objectivefx::objectivefunction}!objectiveeval@{objectiveeval}}
+\index{objectiveeval@{objectiveeval}!objectivefx::objectivefunction@{objectivefx::objectivefunction}}
+\doxysubsubsection{\texorpdfstring{objectiveeval()}{objectiveeval()}}
+{\footnotesize\ttfamily procedure(\mbox{\hyperlink{interfaceobjectivefx_1_1IF__objectiveFx__stateful}{IF\+\_\+objective\+Fx\+\_\+stateful}}), deferred, pass(this) objectivefx\+::objectivefunction\+::objectiveeval}
+
+
+
+Evaluation of objective function vector. 
+
+See remarks in \mbox{\hyperlink{interfaceobjectivefx_1_1IF__objectiveFx__stateful}{IF\+\_\+objective\+Fx\+\_\+stateful}} for a guidance how to implement it. 
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structobjectivefx_1_1objectivefunction_ac6ca0fd9fc0b02ecfb4d4c1d98553ca7}\label{structobjectivefx_1_1objectivefunction_ac6ca0fd9fc0b02ecfb4d4c1d98553ca7}} 
+\index{objectivefx::objectivefunction@{objectivefx::objectivefunction}!state@{state}}
+\index{state@{state}!objectivefx::objectivefunction@{objectivefx::objectivefunction}}
+\doxysubsubsection{\texorpdfstring{state}{state}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structobjectivefx_1_1solutionpoint}{solutionpoint}}) objectivefx\+::objectivefunction\+::state}
+
+
+
+State variable. 
+
+
+
+The documentation for this type was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+fopt/src/\mbox{\hyperlink{objectiveFx_8f90}{objective\+Fx.\+f90}}\end{DoxyCompactItemize}

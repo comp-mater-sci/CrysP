@@ -1,0 +1,97 @@
+\hypertarget{namespacealtaymesostructure}{}\doxysection{altaymesostructure Module Reference}
+\label{namespacealtaymesostructure}\index{altaymesostructure@{altaymesostructure}}
+
+
+Microstructure representation in Al\+Tay The microstructure is created by grain boundary segments.  
+
+
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacealtaymesostructure_a130fb1f03234f7b9f930d69b0de2d3e5}{grfil}} (fnam, F\+\_\+mic, ierr)
+\begin{DoxyCompactList}\small\item\em Reading of \char`\"{}microstructure\char`\"{} (Euler angles defining grain boundary segments) in SMT-\/format, allocation and assignment of the module variables. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaymesostructure_aae3dc36a3e6b7ce5c237a2218d78db82}{microstr\+\_\+finalize}} (info)
+\begin{DoxyCompactList}\small\item\em Finalizes the module. The subroutine puts the module variables into initial state and deallocates the storage. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaymesostructure_a1bbac8583c5aa166a620a855f6c2439d}{cluster1}} (NGR, IGr\+Elm, Macro\+Def\+Rate, Macro\+Def\+State, GEWF, Tprinc, Cofcos, Cofsin)
+\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+double precision, dimension(\+:,\+:,\+:), allocatable, save \mbox{\hyperlink{namespacealtaymesostructure_a38c866dce0530643059b7931d522686c}{tmatgr}}
+\begin{DoxyCompactList}\small\item\em Transformation matrix associated to the grain boundary reference frame in the initial state. Shape is\+: \mbox{[}3,3,ngr\mbox{]}, where ngr is the number of grains. \end{DoxyCompactList}\item 
+integer, save \mbox{\hyperlink{namespacealtaymesostructure_ad710b4e94b19c8a972d86ae0ae5bb9e1}{ngrelm}} = 0
+\begin{DoxyCompactList}\small\item\em Number of grain boundary orientations. \end{DoxyCompactList}\item 
+character(len=40), save \mbox{\hyperlink{namespacealtaymesostructure_a960e5d493443782ab497d67c1da30d36}{titmic}} = \textquotesingle{}\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em Microstructure title. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Microstructure representation in Al\+Tay The microstructure is created by grain boundary segments. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacealtaymesostructure_a1bbac8583c5aa166a620a855f6c2439d}\label{namespacealtaymesostructure_a1bbac8583c5aa166a620a855f6c2439d}} 
+\index{altaymesostructure@{altaymesostructure}!cluster1@{cluster1}}
+\index{cluster1@{cluster1}!altaymesostructure@{altaymesostructure}}
+\doxysubsubsection{\texorpdfstring{cluster1()}{cluster1()}}
+{\footnotesize\ttfamily subroutine altaymesostructure\+::cluster1 (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{NGR,  }\item[{integer, intent(in)}]{IGr\+Elm,  }\item[{type(\mbox{\hyperlink{structaltaymacrokinematic_1_1deformationrate}{deformationrate}}), intent(in)}]{Macro\+Def\+Rate,  }\item[{type(\mbox{\hyperlink{structaltaymacrokinematic_1_1deformationstate}{deformationstate}}), intent(in)}]{Macro\+Def\+State,  }\item[{double precision, intent(inout)}]{GEWF,  }\item[{double precision, dimension(3,3), intent(out)}]{Tprinc,  }\item[{double precision, intent(out)}]{Cofcos,  }\item[{double precision, intent(out)}]{Cofsin }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespacealtaymesostructure_a130fb1f03234f7b9f930d69b0de2d3e5}\label{namespacealtaymesostructure_a130fb1f03234f7b9f930d69b0de2d3e5}} 
+\index{altaymesostructure@{altaymesostructure}!grfil@{grfil}}
+\index{grfil@{grfil}!altaymesostructure@{altaymesostructure}}
+\doxysubsubsection{\texorpdfstring{grfil()}{grfil()}}
+{\footnotesize\ttfamily subroutine altaymesostructure\+::grfil (\begin{DoxyParamCaption}\item[{character(len=$\ast$), intent(in)}]{fnam,  }\item[{double precision, dimension(3,3), intent(in)}]{F\+\_\+mic,  }\item[{integer, intent(out)}]{ierr }\end{DoxyParamCaption})}
+
+
+
+Reading of \char`\"{}microstructure\char`\"{} (Euler angles defining grain boundary segments) in SMT-\/format, allocation and assignment of the module variables. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em fnam} & Microstructure file name \\
+\hline
+\mbox{\texttt{ in}}  & {\em f\+\_\+mic} & F\+\_\+mic is a deformation gradient that conceptually \textquotesingle{}deforms\textquotesingle{} a spherical grain into an ellipsoidal shape \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacealtaymesostructure_aae3dc36a3e6b7ce5c237a2218d78db82}\label{namespacealtaymesostructure_aae3dc36a3e6b7ce5c237a2218d78db82}} 
+\index{altaymesostructure@{altaymesostructure}!microstr\_finalize@{microstr\_finalize}}
+\index{microstr\_finalize@{microstr\_finalize}!altaymesostructure@{altaymesostructure}}
+\doxysubsubsection{\texorpdfstring{microstr\_finalize()}{microstr\_finalize()}}
+{\footnotesize\ttfamily subroutine altaymesostructure\+::microstr\+\_\+finalize (\begin{DoxyParamCaption}\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Finalizes the module. The subroutine puts the module variables into initial state and deallocates the storage. 
+
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacealtaymesostructure_ad710b4e94b19c8a972d86ae0ae5bb9e1}\label{namespacealtaymesostructure_ad710b4e94b19c8a972d86ae0ae5bb9e1}} 
+\index{altaymesostructure@{altaymesostructure}!ngrelm@{ngrelm}}
+\index{ngrelm@{ngrelm}!altaymesostructure@{altaymesostructure}}
+\doxysubsubsection{\texorpdfstring{ngrelm}{ngrelm}}
+{\footnotesize\ttfamily integer, save altaymesostructure\+::ngrelm = 0}
+
+
+
+Number of grain boundary orientations. 
+
+\mbox{\Hypertarget{namespacealtaymesostructure_a960e5d493443782ab497d67c1da30d36}\label{namespacealtaymesostructure_a960e5d493443782ab497d67c1da30d36}} 
+\index{altaymesostructure@{altaymesostructure}!titmic@{titmic}}
+\index{titmic@{titmic}!altaymesostructure@{altaymesostructure}}
+\doxysubsubsection{\texorpdfstring{titmic}{titmic}}
+{\footnotesize\ttfamily character(len=40), save altaymesostructure\+::titmic = \textquotesingle{}\textquotesingle{}}
+
+
+
+Microstructure title. 
+
+\mbox{\Hypertarget{namespacealtaymesostructure_a38c866dce0530643059b7931d522686c}\label{namespacealtaymesostructure_a38c866dce0530643059b7931d522686c}} 
+\index{altaymesostructure@{altaymesostructure}!tmatgr@{tmatgr}}
+\index{tmatgr@{tmatgr}!altaymesostructure@{altaymesostructure}}
+\doxysubsubsection{\texorpdfstring{tmatgr}{tmatgr}}
+{\footnotesize\ttfamily double precision, dimension(\+:,\+:,\+:), allocatable, save altaymesostructure\+::tmatgr}
+
+
+
+Transformation matrix associated to the grain boundary reference frame in the initial state. Shape is\+: \mbox{[}3,3,ngr\mbox{]}, where ngr is the number of grains. 
+

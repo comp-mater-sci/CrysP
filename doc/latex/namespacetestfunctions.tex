@@ -1,0 +1,131 @@
+\hypertarget{namespacetestfunctions}{}\doxysection{testfunctions Module Reference}
+\label{namespacetestfunctions}\index{testfunctions@{testfunctions}}
+
+
+Test functions for the nlls\+TR module.  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+interface \mbox{\hyperlink{interfacetestfunctions_1_1JacobiAnalytical}{Jacobi\+Analytical}}
+\item 
+type \mbox{\hyperlink{structtestfunctions_1_1quadraticanalyticfx}{quadraticanalyticfx}}
+\item 
+type \mbox{\hyperlink{structtestfunctions_1_1quadraticfx}{quadraticfx}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacetestfunctions_ad3adbdbf854cc6a26902adf918914dc2}{quadraeval}} (this, vX, info)
+\item 
+subroutine \mbox{\hyperlink{namespacetestfunctions_a0e80c9654a05cebcd05a5ab688f941dc}{quadra}} (this, vX, v\+Fval, info)
+\item 
+subroutine \mbox{\hyperlink{namespacetestfunctions_a4a4e3cc7a937b5a40e4ecc74641f4d05}{djquadra}} (m, n, vX, v\+Fval)
+\item 
+subroutine \mbox{\hyperlink{namespacetestfunctions_a370deceb4784f73a17d454dd06603bdb}{quadrajacobianalytic}} (this, vX, mJ, info)
+\begin{DoxyCompactList}\small\item\em Analytical calculations. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacetestfunctions_a1d7fdfe64711b0763ae3d3aca557878b}{quadrajacobianalyticeval}} (this, vX, info)
+\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacetestfunctions_a068f08df89256108354756965abc887e}{testfunctions\+\_\+n}} = 3
+\item 
+integer, parameter \mbox{\hyperlink{namespacetestfunctions_a7c316f6c493ce59769f328e4aabf668a}{testfunctions\+\_\+m}} = 4
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Test functions for the nlls\+TR module. 
+
+\begin{DoxyAuthor}{Author}
+Jerzy Gawad Email\+: \href{mailto:Jerzy.Gawad@cs.kuleuven.be}{\texttt{ Jerzy.\+Gawad@cs.\+kuleuven.\+be}}
+\end{DoxyAuthor}
+Organization\+: Katholieke Universiteit Leuven Organization unit\+: Dept.\+Comp.\+Sci., TWR Group
+
+\textbackslash{}revision Date of initial release\+: 2012-\/04-\/02 History of modifications\+: (see SVN log). 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacetestfunctions_a4a4e3cc7a937b5a40e4ecc74641f4d05}\label{namespacetestfunctions_a4a4e3cc7a937b5a40e4ecc74641f4d05}} 
+\index{testfunctions@{testfunctions}!djquadra@{djquadra}}
+\index{djquadra@{djquadra}!testfunctions@{testfunctions}}
+\doxysubsubsection{\texorpdfstring{djquadra()}{djquadra()}}
+{\footnotesize\ttfamily subroutine testfunctions\+::djquadra (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{m,  }\item[{integer, intent(in)}]{n,  }\item[{double precision, dimension(n), intent(in)}]{vX,  }\item[{double precision, dimension(m), intent(out)}]{v\+Fval }\end{DoxyParamCaption})}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em vx} & Dimension must be\+: \mbox{[}n\+\_\+\+X\+\_\+dim\mbox{]}\\
+\hline
+\mbox{\texttt{ out}}  & {\em vfval} & Dimension must be\+: \mbox{[}m\+\_\+\+F\+\_\+dim\mbox{]} \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacetestfunctions_a0e80c9654a05cebcd05a5ab688f941dc}\label{namespacetestfunctions_a0e80c9654a05cebcd05a5ab688f941dc}} 
+\index{testfunctions@{testfunctions}!quadra@{quadra}}
+\index{quadra@{quadra}!testfunctions@{testfunctions}}
+\doxysubsubsection{\texorpdfstring{quadra()}{quadra()}}
+{\footnotesize\ttfamily subroutine testfunctions\+::quadra (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structtestfunctions_1_1quadraticfx}{quadraticfx}})}]{this,  }\item[{double precision, dimension(\+:), intent(in)}]{vX,  }\item[{double precision, dimension(\+:), intent(out)}]{v\+Fval,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em vx} & Dimension must be\+: \mbox{[}n\+\_\+\+X\+\_\+dim\mbox{]}\\
+\hline
+\mbox{\texttt{ out}}  & {\em vfval} & Dimension must be\+: \mbox{[}m\+\_\+\+F\+\_\+dim\mbox{]} \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacetestfunctions_ad3adbdbf854cc6a26902adf918914dc2}\label{namespacetestfunctions_ad3adbdbf854cc6a26902adf918914dc2}} 
+\index{testfunctions@{testfunctions}!quadraeval@{quadraeval}}
+\index{quadraeval@{quadraeval}!testfunctions@{testfunctions}}
+\doxysubsubsection{\texorpdfstring{quadraeval()}{quadraeval()}}
+{\footnotesize\ttfamily subroutine testfunctions\+::quadraeval (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structtestfunctions_1_1quadraticfx}{quadraticfx}}), intent(inout)}]{this,  }\item[{double precision, dimension(\+:), intent(in)}]{vX,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em vx} & Dimension must be\+: \mbox{[}n\+\_\+\+X\+\_\+dim\mbox{]}\\
+\hline
+\mbox{\texttt{ out}}  & {\em info} & Set to 0 on success \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacetestfunctions_a370deceb4784f73a17d454dd06603bdb}\label{namespacetestfunctions_a370deceb4784f73a17d454dd06603bdb}} 
+\index{testfunctions@{testfunctions}!quadrajacobianalytic@{quadrajacobianalytic}}
+\index{quadrajacobianalytic@{quadrajacobianalytic}!testfunctions@{testfunctions}}
+\doxysubsubsection{\texorpdfstring{quadrajacobianalytic()}{quadrajacobianalytic()}}
+{\footnotesize\ttfamily subroutine testfunctions\+::quadrajacobianalytic (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structtestfunctions_1_1quadraticfx}{quadraticfx}})}]{this,  }\item[{double precision, dimension(\+:), intent(in)}]{vX,  }\item[{double precision, dimension(\+:,\+:), intent(out)}]{mJ,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Analytical calculations. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em vx} & Dimension must be\+: \mbox{[}n\+\_\+\+X\+\_\+dim\mbox{]} \\
+\hline
+\mbox{\texttt{ out}}  & {\em mj} & Dimension must be\+: \mbox{[}m\+F\+\_\+dim x n\+\_\+\+X\+\_\+dim\mbox{]} \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacetestfunctions_a1d7fdfe64711b0763ae3d3aca557878b}\label{namespacetestfunctions_a1d7fdfe64711b0763ae3d3aca557878b}} 
+\index{testfunctions@{testfunctions}!quadrajacobianalyticeval@{quadrajacobianalyticeval}}
+\index{quadrajacobianalyticeval@{quadrajacobianalyticeval}!testfunctions@{testfunctions}}
+\doxysubsubsection{\texorpdfstring{quadrajacobianalyticeval()}{quadrajacobianalyticeval()}}
+{\footnotesize\ttfamily subroutine testfunctions\+::quadrajacobianalyticeval (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structtestfunctions_1_1quadraticanalyticfx}{quadraticanalyticfx}}), intent(inout)}]{this,  }\item[{double precision, dimension(\+:), intent(in)}]{vX,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em vx} & Dimension must be\+: \mbox{[}n\+\_\+\+X\+\_\+dim\mbox{]} \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacetestfunctions_a7c316f6c493ce59769f328e4aabf668a}\label{namespacetestfunctions_a7c316f6c493ce59769f328e4aabf668a}} 
+\index{testfunctions@{testfunctions}!testfunctions\_m@{testfunctions\_m}}
+\index{testfunctions\_m@{testfunctions\_m}!testfunctions@{testfunctions}}
+\doxysubsubsection{\texorpdfstring{testfunctions\_m}{testfunctions\_m}}
+{\footnotesize\ttfamily integer, parameter testfunctions\+::testfunctions\+\_\+m = 4}
+
+\mbox{\Hypertarget{namespacetestfunctions_a068f08df89256108354756965abc887e}\label{namespacetestfunctions_a068f08df89256108354756965abc887e}} 
+\index{testfunctions@{testfunctions}!testfunctions\_n@{testfunctions\_n}}
+\index{testfunctions\_n@{testfunctions\_n}!testfunctions@{testfunctions}}
+\doxysubsubsection{\texorpdfstring{testfunctions\_n}{testfunctions\_n}}
+{\footnotesize\ttfamily integer, parameter testfunctions\+::testfunctions\+\_\+n = 3}
+

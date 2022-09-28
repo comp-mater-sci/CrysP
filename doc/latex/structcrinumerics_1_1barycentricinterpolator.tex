@@ -1,0 +1,93 @@
+\hypertarget{structcrinumerics_1_1barycentricinterpolator}{}\doxysection{crinumerics\+::barycentricinterpolator Type Reference}
+\label{structcrinumerics_1_1barycentricinterpolator}\index{crinumerics::barycentricinterpolator@{crinumerics::barycentricinterpolator}}
+
+
+Data needed by barycentric interpolation.  
+
+
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{structcrinumerics_1_1barycentricinterpolator_a99f5f7dee6e4a753e4e73d82c7b3f6be}{order}} = 0
+\begin{DoxyCompactList}\small\item\em Order of interpolation polynomial. \end{DoxyCompactList}\item 
+integer \mbox{\hyperlink{structcrinumerics_1_1barycentricinterpolator_a5f7ad39e31c346077b4ab3a80f0193f6}{npoints}}
+\begin{DoxyCompactList}\small\item\em number of points in xi and yi \end{DoxyCompactList}\item 
+double precision, dimension(\+:), allocatable \mbox{\hyperlink{structcrinumerics_1_1barycentricinterpolator_ae4588789089443bbb3c33b82dda784fa}{xi}}
+\begin{DoxyCompactList}\small\item\em x coordinates of the known points. \end{DoxyCompactList}\item 
+double precision, dimension(\+:), allocatable \mbox{\hyperlink{structcrinumerics_1_1barycentricinterpolator_a38f82fe22ea8616f85ecfa9ed2a9d764}{yi}}
+\begin{DoxyCompactList}\small\item\em y coordinates of the known points. \end{DoxyCompactList}\item 
+double precision, dimension(\+:,\+:), allocatable \mbox{\hyperlink{structcrinumerics_1_1barycentricinterpolator_ab405f640b2475f4ad59f4b2e1430bb3a}{wi}}
+\begin{DoxyCompactList}\small\item\em Barycentric weighting factors of the interpolation polynomials It is useful to pre-\/compute the weights for every polynomial that that is on the nodes from i to i+order+1. This way the latst order+1 nodes Shape\+: \mbox{[}1\+:order+1, 1\+:size(xi)-\/order\mbox{]}. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{structcrinumerics_1_1barycentricinterpolator_a62cb6a1b49b3e51516690bb588e68ba6}{extrapolate}} = .true.
+\begin{DoxyCompactList}\small\item\em The flag defines how the points outside the range will be treated. If .true., linear interpolation from the two border points will be constructed and used for extrapolation. If .false., the border point will be returned. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Data needed by barycentric interpolation. 
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structcrinumerics_1_1barycentricinterpolator_a62cb6a1b49b3e51516690bb588e68ba6}\label{structcrinumerics_1_1barycentricinterpolator_a62cb6a1b49b3e51516690bb588e68ba6}} 
+\index{crinumerics::barycentricinterpolator@{crinumerics::barycentricinterpolator}!extrapolate@{extrapolate}}
+\index{extrapolate@{extrapolate}!crinumerics::barycentricinterpolator@{crinumerics::barycentricinterpolator}}
+\doxysubsubsection{\texorpdfstring{extrapolate}{extrapolate}}
+{\footnotesize\ttfamily logical crinumerics\+::barycentricinterpolator\+::extrapolate = .true.}
+
+
+
+The flag defines how the points outside the range will be treated. If .true., linear interpolation from the two border points will be constructed and used for extrapolation. If .false., the border point will be returned. 
+
+\mbox{\Hypertarget{structcrinumerics_1_1barycentricinterpolator_a5f7ad39e31c346077b4ab3a80f0193f6}\label{structcrinumerics_1_1barycentricinterpolator_a5f7ad39e31c346077b4ab3a80f0193f6}} 
+\index{crinumerics::barycentricinterpolator@{crinumerics::barycentricinterpolator}!npoints@{npoints}}
+\index{npoints@{npoints}!crinumerics::barycentricinterpolator@{crinumerics::barycentricinterpolator}}
+\doxysubsubsection{\texorpdfstring{npoints}{npoints}}
+{\footnotesize\ttfamily integer crinumerics\+::barycentricinterpolator\+::npoints}
+
+
+
+number of points in xi and yi 
+
+\mbox{\Hypertarget{structcrinumerics_1_1barycentricinterpolator_a99f5f7dee6e4a753e4e73d82c7b3f6be}\label{structcrinumerics_1_1barycentricinterpolator_a99f5f7dee6e4a753e4e73d82c7b3f6be}} 
+\index{crinumerics::barycentricinterpolator@{crinumerics::barycentricinterpolator}!order@{order}}
+\index{order@{order}!crinumerics::barycentricinterpolator@{crinumerics::barycentricinterpolator}}
+\doxysubsubsection{\texorpdfstring{order}{order}}
+{\footnotesize\ttfamily integer crinumerics\+::barycentricinterpolator\+::order = 0}
+
+
+
+Order of interpolation polynomial. 
+
+\mbox{\Hypertarget{structcrinumerics_1_1barycentricinterpolator_ab405f640b2475f4ad59f4b2e1430bb3a}\label{structcrinumerics_1_1barycentricinterpolator_ab405f640b2475f4ad59f4b2e1430bb3a}} 
+\index{crinumerics::barycentricinterpolator@{crinumerics::barycentricinterpolator}!wi@{wi}}
+\index{wi@{wi}!crinumerics::barycentricinterpolator@{crinumerics::barycentricinterpolator}}
+\doxysubsubsection{\texorpdfstring{wi}{wi}}
+{\footnotesize\ttfamily double precision, dimension(\+:,\+:), allocatable crinumerics\+::barycentricinterpolator\+::wi}
+
+
+
+Barycentric weighting factors of the interpolation polynomials It is useful to pre-\/compute the weights for every polynomial that that is on the nodes from i to i+order+1. This way the latst order+1 nodes Shape\+: \mbox{[}1\+:order+1, 1\+:size(xi)-\/order\mbox{]}. 
+
+\mbox{\Hypertarget{structcrinumerics_1_1barycentricinterpolator_ae4588789089443bbb3c33b82dda784fa}\label{structcrinumerics_1_1barycentricinterpolator_ae4588789089443bbb3c33b82dda784fa}} 
+\index{crinumerics::barycentricinterpolator@{crinumerics::barycentricinterpolator}!xi@{xi}}
+\index{xi@{xi}!crinumerics::barycentricinterpolator@{crinumerics::barycentricinterpolator}}
+\doxysubsubsection{\texorpdfstring{xi}{xi}}
+{\footnotesize\ttfamily double precision, dimension(\+:), allocatable crinumerics\+::barycentricinterpolator\+::xi}
+
+
+
+x coordinates of the known points. 
+
+The interpolation nodes and the barycentric weighting factors will be constructed from xi. Size of xi must be at least \mbox{[}order + 1\mbox{]} \mbox{\Hypertarget{structcrinumerics_1_1barycentricinterpolator_a38f82fe22ea8616f85ecfa9ed2a9d764}\label{structcrinumerics_1_1barycentricinterpolator_a38f82fe22ea8616f85ecfa9ed2a9d764}} 
+\index{crinumerics::barycentricinterpolator@{crinumerics::barycentricinterpolator}!yi@{yi}}
+\index{yi@{yi}!crinumerics::barycentricinterpolator@{crinumerics::barycentricinterpolator}}
+\doxysubsubsection{\texorpdfstring{yi}{yi}}
+{\footnotesize\ttfamily double precision, dimension(\+:), allocatable crinumerics\+::barycentricinterpolator\+::yi}
+
+
+
+y coordinates of the known points. 
+
+Size of yi must be identical as the size of xi, so the same restrictions apply. 
+
+The documentation for this type was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+FCRI/src/\mbox{\hyperlink{criNumerics_8f90}{cri\+Numerics.\+f90}}\end{DoxyCompactItemize}

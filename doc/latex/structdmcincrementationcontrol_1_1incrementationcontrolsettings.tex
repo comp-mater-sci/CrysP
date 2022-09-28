@@ -1,0 +1,77 @@
+\hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolsettings}{}\doxysection{dmcincrementationcontrol\+::incrementationcontrolsettings Type Reference}
+\label{structdmcincrementationcontrol_1_1incrementationcontrolsettings}\index{dmcincrementationcontrol::incrementationcontrolsettings@{dmcincrementationcontrol::incrementationcontrolsettings}}
+
+
+Basic settings for incrementation control.  
+
+
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+integer \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolsettings_a345a043e2d62d9a32dc4b027c8a94869}{scaling\+\_\+type}} = scaling\+None
+\item 
+integer \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolsettings_ab0409ceed91a322026a4350d7f8e5938}{incrementation\+\_\+type}} = increment\+Fixed
+\item 
+integer \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolsettings_a1724c29f656a6393cbcb404330409ad1}{max\+\_\+increment\+\_\+count}} = dmc\+IC\+\_\+max\+\_\+increments
+\begin{DoxyCompactList}\small\item\em Maximal number of increments. If set to positive value, it limits the number of increments independently of other criteria. It is ignored if set to a negative value. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolsettings_aad939d141e853f73fd0d7b34f806196d}{increment\+\_\+size}} = 0.D0
+\item 
+double precision \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolsettings_aba410ca43851bab63c7e8b0c1572c676}{step\+\_\+size}} = 0.D0
+\item 
+integer \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolsettings_ad837e8256a61fb04f8b6b4e287da09c0}{selected\+\_\+tensor\+\_\+component}} = 1
+\begin{DoxyCompactList}\small\item\em If scaling\+\_\+type Strain\+Tensor\+Component is used, this contains the index of the tensor component of interest in Voigt notation. The default corresponds to X\+\_\+11 in SR tensor X. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Basic settings for incrementation control. 
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolsettings_aad939d141e853f73fd0d7b34f806196d}\label{structdmcincrementationcontrol_1_1incrementationcontrolsettings_aad939d141e853f73fd0d7b34f806196d}} 
+\index{dmcincrementationcontrol::incrementationcontrolsettings@{dmcincrementationcontrol::incrementationcontrolsettings}!increment\_size@{increment\_size}}
+\index{increment\_size@{increment\_size}!dmcincrementationcontrol::incrementationcontrolsettings@{dmcincrementationcontrol::incrementationcontrolsettings}}
+\doxysubsubsection{\texorpdfstring{increment\_size}{increment\_size}}
+{\footnotesize\ttfamily double precision dmcincrementationcontrol\+::incrementationcontrolsettings\+::increment\+\_\+size = 0.D0}
+
+\mbox{\Hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolsettings_ab0409ceed91a322026a4350d7f8e5938}\label{structdmcincrementationcontrol_1_1incrementationcontrolsettings_ab0409ceed91a322026a4350d7f8e5938}} 
+\index{dmcincrementationcontrol::incrementationcontrolsettings@{dmcincrementationcontrol::incrementationcontrolsettings}!incrementation\_type@{incrementation\_type}}
+\index{incrementation\_type@{incrementation\_type}!dmcincrementationcontrol::incrementationcontrolsettings@{dmcincrementationcontrol::incrementationcontrolsettings}}
+\doxysubsubsection{\texorpdfstring{incrementation\_type}{incrementation\_type}}
+{\footnotesize\ttfamily integer dmcincrementationcontrol\+::incrementationcontrolsettings\+::incrementation\+\_\+type = increment\+Fixed}
+
+\mbox{\Hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolsettings_a1724c29f656a6393cbcb404330409ad1}\label{structdmcincrementationcontrol_1_1incrementationcontrolsettings_a1724c29f656a6393cbcb404330409ad1}} 
+\index{dmcincrementationcontrol::incrementationcontrolsettings@{dmcincrementationcontrol::incrementationcontrolsettings}!max\_increment\_count@{max\_increment\_count}}
+\index{max\_increment\_count@{max\_increment\_count}!dmcincrementationcontrol::incrementationcontrolsettings@{dmcincrementationcontrol::incrementationcontrolsettings}}
+\doxysubsubsection{\texorpdfstring{max\_increment\_count}{max\_increment\_count}}
+{\footnotesize\ttfamily integer dmcincrementationcontrol\+::incrementationcontrolsettings\+::max\+\_\+increment\+\_\+count = dmc\+IC\+\_\+max\+\_\+increments}
+
+
+
+Maximal number of increments. If set to positive value, it limits the number of increments independently of other criteria. It is ignored if set to a negative value. 
+
+\mbox{\Hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolsettings_a345a043e2d62d9a32dc4b027c8a94869}\label{structdmcincrementationcontrol_1_1incrementationcontrolsettings_a345a043e2d62d9a32dc4b027c8a94869}} 
+\index{dmcincrementationcontrol::incrementationcontrolsettings@{dmcincrementationcontrol::incrementationcontrolsettings}!scaling\_type@{scaling\_type}}
+\index{scaling\_type@{scaling\_type}!dmcincrementationcontrol::incrementationcontrolsettings@{dmcincrementationcontrol::incrementationcontrolsettings}}
+\doxysubsubsection{\texorpdfstring{scaling\_type}{scaling\_type}}
+{\footnotesize\ttfamily integer dmcincrementationcontrol\+::incrementationcontrolsettings\+::scaling\+\_\+type = scaling\+None}
+
+\mbox{\Hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolsettings_ad837e8256a61fb04f8b6b4e287da09c0}\label{structdmcincrementationcontrol_1_1incrementationcontrolsettings_ad837e8256a61fb04f8b6b4e287da09c0}} 
+\index{dmcincrementationcontrol::incrementationcontrolsettings@{dmcincrementationcontrol::incrementationcontrolsettings}!selected\_tensor\_component@{selected\_tensor\_component}}
+\index{selected\_tensor\_component@{selected\_tensor\_component}!dmcincrementationcontrol::incrementationcontrolsettings@{dmcincrementationcontrol::incrementationcontrolsettings}}
+\doxysubsubsection{\texorpdfstring{selected\_tensor\_component}{selected\_tensor\_component}}
+{\footnotesize\ttfamily integer dmcincrementationcontrol\+::incrementationcontrolsettings\+::selected\+\_\+tensor\+\_\+component = 1}
+
+
+
+If scaling\+\_\+type Strain\+Tensor\+Component is used, this contains the index of the tensor component of interest in Voigt notation. The default corresponds to X\+\_\+11 in SR tensor X. 
+
+\mbox{\Hypertarget{structdmcincrementationcontrol_1_1incrementationcontrolsettings_aba410ca43851bab63c7e8b0c1572c676}\label{structdmcincrementationcontrol_1_1incrementationcontrolsettings_aba410ca43851bab63c7e8b0c1572c676}} 
+\index{dmcincrementationcontrol::incrementationcontrolsettings@{dmcincrementationcontrol::incrementationcontrolsettings}!step\_size@{step\_size}}
+\index{step\_size@{step\_size}!dmcincrementationcontrol::incrementationcontrolsettings@{dmcincrementationcontrol::incrementationcontrolsettings}}
+\doxysubsubsection{\texorpdfstring{step\_size}{step\_size}}
+{\footnotesize\ttfamily double precision dmcincrementationcontrol\+::incrementationcontrolsettings\+::step\+\_\+size = 0.D0}
+
+
+
+The documentation for this type was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+VEF/lib\+Alam\+DMC/\mbox{\hyperlink{incrementationControl_8f90}{incrementation\+Control.\+f90}}\end{DoxyCompactItemize}

@@ -1,0 +1,144 @@
+\hypertarget{namespacealtayconfig}{}\doxysection{altayconfig Module Reference}
+\label{namespacealtayconfig}\index{altayconfig@{altayconfig}}
+
+
+Provides configuration data for Al\+Tay.  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1altayconfigdata}{altayconfigdata}}
+\begin{DoxyCompactList}\small\item\em Root-\/level configuration structure of Altay. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltayconfig_1_1altaystatedata}{altaystatedata}}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1hardeningdata}{hardeningdata}}
+\begin{DoxyCompactList}\small\item\em Parameters of available hardening models. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltayconfig_1_1outputconfig}{outputconfig}}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1pebpconfig}{pebpconfig}}
+\begin{DoxyCompactList}\small\item\em PEBP model parameters (no state variables) \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structaltayconfig_1_1simuldata}{simuldata}}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1simulstepdata}{simulstepdata}}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1simulstepinputdata}{simulstepinputdata}}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1simulstepoutputdata}{simulstepoutputdata}}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1slipsystemdata}{slipsystemdata}}
+\item 
+type \mbox{\hyperlink{structaltayconfig_1_1texturedata}{texturedata}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacealtayconfig_aacbe5a7105a4c8225d397226a3d5eb9c}{setsteptype}} (stp, model\+Id, info)
+\begin{DoxyCompactList}\small\item\em Configure the stp object for using selected model type (FCTaylor, ALAMEL, MASAL). \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtayconfig_ae306d4ac87903aa2e6a4a177e075f2c9}{setmodeltype}} (cnf, model\+Id, info)
+\begin{DoxyCompactList}\small\item\em Configure the cnf object for using selected model type (FCTaylor, ALAMEL, MASAL). \end{DoxyCompactList}\item 
+pure logical function \mbox{\hyperlink{namespacealtayconfig_abc8096c886c87314283233fee383d598}{isvalidmodeltype}} (model\+Id)
+\begin{DoxyCompactList}\small\item\em Verify if integer value model\+Id represents any supported Al\+Tay model (FCTaylor, ALAMEL, MASAL). \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtayconfig_aad1bc3a1fd9cbe0d7f7ddcdd79b24665}{fname\+\_\+len}} = 512
+\begin{DoxyCompactList}\small\item\em Length of filenames. \end{DoxyCompactList}\item 
+type(\mbox{\hyperlink{structaltayconfig_1_1altayconfigdata}{altayconfigdata}}), save \mbox{\hyperlink{namespacealtayconfig_a13c0330eea12cd4d31719341ed29e3a5}{acnf}}
+\item 
+type(\mbox{\hyperlink{structaltayconfig_1_1altaystatedata}{altaystatedata}}), save \mbox{\hyperlink{namespacealtayconfig_a8718c110c6bf74b4acc6b95260b5b7de}{astate}}
+\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Named constants for identifiers of the supported models}\par
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtayconfig_a01479cb4e94d6d3c8d16aed5ba82974f}{modelfctaylor}} = 1
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtayconfig_a6692faa56c461ccb019c58b244f96099}{modelalamel}} = 2
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtayconfig_ad4596ff9e4b5a7d30e190d6e1e93090f}{modelmasal}} = 3
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\doxysubsection{Detailed Description}
+Provides configuration data for Al\+Tay. 
+
+\begin{DoxyRemark}{Remarks}
+The module is derived from the module alamel\+Config, taken from the alamel\+Sub project. However, the differences in the API are drastic. For this reason, the API is intentionally made even more incompatibile (e.\+g. changes in the names of datastructures) to force the users of the alamel\+Sub to make a deliberate, conscious and well-\/thought decision of upgrading their code to the altay\+Sub. Basic configuration of Al\+Tay in a form of formalized data structures. 
+\end{DoxyRemark}
+
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacealtayconfig_abc8096c886c87314283233fee383d598}\label{namespacealtayconfig_abc8096c886c87314283233fee383d598}} 
+\index{altayconfig@{altayconfig}!isvalidmodeltype@{isvalidmodeltype}}
+\index{isvalidmodeltype@{isvalidmodeltype}!altayconfig@{altayconfig}}
+\doxysubsubsection{\texorpdfstring{isvalidmodeltype()}{isvalidmodeltype()}}
+{\footnotesize\ttfamily pure logical function altayconfig\+::isvalidmodeltype (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{model\+Id }\end{DoxyParamCaption})}
+
+
+
+Verify if integer value model\+Id represents any supported Al\+Tay model (FCTaylor, ALAMEL, MASAL). 
+
+\mbox{\Hypertarget{namespacealtayconfig_ae306d4ac87903aa2e6a4a177e075f2c9}\label{namespacealtayconfig_ae306d4ac87903aa2e6a4a177e075f2c9}} 
+\index{altayconfig@{altayconfig}!setmodeltype@{setmodeltype}}
+\index{setmodeltype@{setmodeltype}!altayconfig@{altayconfig}}
+\doxysubsubsection{\texorpdfstring{setmodeltype()}{setmodeltype()}}
+{\footnotesize\ttfamily subroutine altayconfig\+::setmodeltype (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structaltayconfig_1_1altayconfigdata}{altayconfigdata}}), intent(inout)}]{cnf,  }\item[{integer, intent(in)}]{model\+Id,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Configure the cnf object for using selected model type (FCTaylor, ALAMEL, MASAL). 
+
+\mbox{\Hypertarget{namespacealtayconfig_aacbe5a7105a4c8225d397226a3d5eb9c}\label{namespacealtayconfig_aacbe5a7105a4c8225d397226a3d5eb9c}} 
+\index{altayconfig@{altayconfig}!setsteptype@{setsteptype}}
+\index{setsteptype@{setsteptype}!altayconfig@{altayconfig}}
+\doxysubsubsection{\texorpdfstring{setsteptype()}{setsteptype()}}
+{\footnotesize\ttfamily subroutine altayconfig\+::setsteptype (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structaltayconfig_1_1simulstepinputdata}{simulstepinputdata}}), intent(inout)}]{stp,  }\item[{integer, intent(in)}]{model\+Id,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Configure the stp object for using selected model type (FCTaylor, ALAMEL, MASAL). 
+
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacealtayconfig_a13c0330eea12cd4d31719341ed29e3a5}\label{namespacealtayconfig_a13c0330eea12cd4d31719341ed29e3a5}} 
+\index{altayconfig@{altayconfig}!acnf@{acnf}}
+\index{acnf@{acnf}!altayconfig@{altayconfig}}
+\doxysubsubsection{\texorpdfstring{acnf}{acnf}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structaltayconfig_1_1altayconfigdata}{altayconfigdata}}), save altayconfig\+::acnf}
+
+\mbox{\Hypertarget{namespacealtayconfig_a8718c110c6bf74b4acc6b95260b5b7de}\label{namespacealtayconfig_a8718c110c6bf74b4acc6b95260b5b7de}} 
+\index{altayconfig@{altayconfig}!astate@{astate}}
+\index{astate@{astate}!altayconfig@{altayconfig}}
+\doxysubsubsection{\texorpdfstring{astate}{astate}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structaltayconfig_1_1altaystatedata}{altaystatedata}}), save altayconfig\+::astate}
+
+\mbox{\Hypertarget{namespacealtayconfig_aad1bc3a1fd9cbe0d7f7ddcdd79b24665}\label{namespacealtayconfig_aad1bc3a1fd9cbe0d7f7ddcdd79b24665}} 
+\index{altayconfig@{altayconfig}!fname\_len@{fname\_len}}
+\index{fname\_len@{fname\_len}!altayconfig@{altayconfig}}
+\doxysubsubsection{\texorpdfstring{fname\_len}{fname\_len}}
+{\footnotesize\ttfamily integer, parameter altayconfig\+::fname\+\_\+len = 512}
+
+
+
+Length of filenames. 
+
+\mbox{\Hypertarget{namespacealtayconfig_a6692faa56c461ccb019c58b244f96099}\label{namespacealtayconfig_a6692faa56c461ccb019c58b244f96099}} 
+\index{altayconfig@{altayconfig}!modelalamel@{modelalamel}}
+\index{modelalamel@{modelalamel}!altayconfig@{altayconfig}}
+\doxysubsubsection{\texorpdfstring{modelalamel}{modelalamel}}
+{\footnotesize\ttfamily integer, parameter altayconfig\+::modelalamel = 2}
+
+\mbox{\Hypertarget{namespacealtayconfig_a01479cb4e94d6d3c8d16aed5ba82974f}\label{namespacealtayconfig_a01479cb4e94d6d3c8d16aed5ba82974f}} 
+\index{altayconfig@{altayconfig}!modelfctaylor@{modelfctaylor}}
+\index{modelfctaylor@{modelfctaylor}!altayconfig@{altayconfig}}
+\doxysubsubsection{\texorpdfstring{modelfctaylor}{modelfctaylor}}
+{\footnotesize\ttfamily integer, parameter altayconfig\+::modelfctaylor = 1}
+
+\mbox{\Hypertarget{namespacealtayconfig_ad4596ff9e4b5a7d30e190d6e1e93090f}\label{namespacealtayconfig_ad4596ff9e4b5a7d30e190d6e1e93090f}} 
+\index{altayconfig@{altayconfig}!modelmasal@{modelmasal}}
+\index{modelmasal@{modelmasal}!altayconfig@{altayconfig}}
+\doxysubsubsection{\texorpdfstring{modelmasal}{modelmasal}}
+{\footnotesize\ttfamily integer, parameter altayconfig\+::modelmasal = 3}
+

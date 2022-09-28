@@ -1,0 +1,57 @@
+\hypertarget{altaySub_8f90}{}\doxysection{Al\+Tay/src/altay\+Sub.f90 File Reference}
+\label{altaySub_8f90}\index{AlTay/src/altaySub.f90@{AlTay/src/altaySub.f90}}
+
+
+ALAMEL as a subroutine.  
+
+
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacealtaysub}{altaysub}}
+\begin{DoxyCompactList}\small\item\em API for \char`\"{}\+Al\+Tay as a subroutine\char`\"{}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacealtaysub_ab3d9f418a33665e89cb7c7802ef649a8}{altaysub\+::initaltay}} (cnf, info, errmsg)
+\begin{DoxyCompactList}\small\item\em Initialize the module. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaysub_a562dd2b5a154ac232cfb68ae07cb16c5}{altaysub\+::finalizealtay}} (info)
+\begin{DoxyCompactList}\small\item\em Finalizes the module and releases the resources. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaysub_ab301babe646d7eeaf82a844b571fcf1b}{altaysub\+::openoutputfiles}} (cnf, info, errmsg)
+\item 
+subroutine \mbox{\hyperlink{namespacealtaysub_a5c22b9f3e92a663bfe409cc1651db815}{altaysub\+::initstepdata}} (nsteps, steps, info)
+\begin{DoxyCompactList}\small\item\em Initialization of input and output data for the steps. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaysub_af59014a0ca76f040362472a48b14c572}{altaysub\+::runsteps}} (steps, info)
+\begin{DoxyCompactList}\small\item\em Run the Al\+Tay for the set of steps. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacealtaysub_a1a6dd49c5dded4f073e116b8fa904e00}{altaysub\+::outputcurrentstate}} (info)
+\begin{DoxyCompactList}\small\item\em Write out the current state variables. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{Indent}\textbf{ Named constants for error codes in altay\+Sub}\par
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaysub_adf3ce115d3b35a0ca970a89a10b2763a}{altaysub\+::altaysub\+\_\+ok}} = 0
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaysub_abedfc3c3bc5d0d890541a47f52e8ed74}{altaysub\+::altaysub\+\_\+err}} = -\/1
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaysub_afe11744bc14a82c90f90759efc1d7f91}{altaysub\+::altaysub\+\_\+exception}} = -\/2
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaysub_a6e88d6f60647d11e285877fa624c2b9f}{altaysub\+::altaysub\+\_\+ioerr}} = -\/3
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaysub_a916d3db520f8ec64b5bd908376a7be86}{altaysub\+::altaysub\+\_\+badval}} = -\/10
+\item 
+integer, parameter \mbox{\hyperlink{namespacealtaysub_a112abc7eb49c1b9e4750dbf9b9f53a50}{altaysub\+::altaysub\+\_\+baddim}} = -\/11
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\doxysubsection{Detailed Description}
+ALAMEL as a subroutine. 
+
+
+\begin{DoxyItemize}
+\item This module is based on ALAMEL main program code by PVH and co-\/workers.
+\begin{DoxyItemize}
+\item Several modifications have been introduced by JG to make this code more \char`\"{}procedure-\/like\char`\"{}.
+\item The code inside this file was initially based on Main1.\+for. Now it is only loosely related to its predecessor. 
+\end{DoxyItemize}
+\end{DoxyItemize}

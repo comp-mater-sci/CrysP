@@ -1,0 +1,33 @@
+The program Alam\+DMC can be started from the Windows command line. General form of command line parameters is\+: \begin{DoxyVerb}alamDMC  module_name  configuration_file  [token_file]
+\end{DoxyVerb}
+
+
+The {\ttfamily alam\+DMC} program provides the following modules\+:
+
+
+\begin{DoxyEnumerate}
+\item \mbox{\hyperlink{page_alamdmc_modules_module_udsa}{Uniaxial Stress Test Module (keyword\+: UDSA)}} -\/ the keyword stands for Uniaxially-\/\+Dominated Stress Analysis.
+\item \mbox{\hyperlink{page_alamdmc_modules_module_asr}{Multiaxial Stress Test Module (keyword\+: ASR)}} -\/ the keyword stands for Arbitrary Stress Response.
+\item \mbox{\hyperlink{page_alamdmc_modules_module_qrs}{Uniaxial Anisotropy Module (keyword\+: QRS)}} -\/ the keyword stands for Q-\/values, R-\/values and S-\/values (properties that characterize plastic anisotropy in uniaxial stress state).
+\item \mbox{\hyperlink{page_alamdmc_modules_module_yld}{Yield Locus Module (keyword\+: YLD)}} -\/ the keyword stands for Yie\+LD locus.
+\item \mbox{\hyperlink{page_alamdmc_modules_module_ewc}{Equiwork Contour Module (keyword\+: EWC)}} -\/ the keyword stands for Equi-\/\+Work Contour.
+\item \mbox{\hyperlink{page_alamdmc_modules_module_adp}{Arbirtary Deformation Path (keyword\+: ADP)}} -\/ the keyword stands for Arbitrary Deformation Path.
+\end{DoxyEnumerate}
+
+For instance, to invoke the Yield Locus Module, the user may run the command\+: \begin{DoxyVerb}alamDMC  YLD  yld_config.cnf
+\end{DoxyVerb}
+
+
+The configuration files of the individual modules are structured in a very similar manner. See \mbox{\hyperlink{page_alamdmc_format}{Alam\+DMC Configuration File Format}} for detailed description how to prepare the configuration files, including \mbox{\hyperlink{page_alamdmc_generic}{Alam\+DMC Generic Configuration}} and documentation of individual \mbox{\hyperlink{page_alamdmc_modules}{Alam\+DMC Modules}}.
+
+The {\ttfamily token\+\_\+file} is relevant only if the license includes material tokens. The token file that is provided here must match the signature of the texture file used in the analysis. See page\+\_\+material\+\_\+tokens for details.
+
+\DoxyHorRuler{0}
+ \hypertarget{page_alamdmc_usage_autotoc_md6}{}\doxysubsection{Quick links}\label{page_alamdmc_usage_autotoc_md6}
+\mbox{\hyperlink{page_expert_mode}{VEF expert mode}}
+\begin{DoxyItemize}
+\item \mbox{\hyperlink{page_alamdmc_usage}{Alam\+DMC Usage}}
+\item \mbox{\hyperlink{page_alamdmc_format}{Alam\+DMC Configuration File Format}}
+\item \mbox{\hyperlink{page_alamdmc_generic}{Alam\+DMC Generic Configuration}}
+\item \mbox{\hyperlink{page_alamdmc_modules}{Alam\+DMC Modules}} 
+\end{DoxyItemize}

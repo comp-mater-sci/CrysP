@@ -1,0 +1,116 @@
+\hypertarget{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig}{}\doxysection{dmcsubsteppingconfig\+::fixedsubsteppingconfig Interface Reference}
+\label{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig}\index{dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}}
+
+
+Configuration of substepping schemes that impose the size of the step.  
+
+
+Inheritance diagram for dmcsubsteppingconfig\+::fixedsubsteppingconfig\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+procedure, pass(this) \mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_ad43fb77849af379142c157bbe47dfbf6}{readconfig}} =$>$ \mbox{\hyperlink{namespacedmcsubsteppingconfig_a4f5825d0c9e18f714205c2148c769859}{fixedsubsteppingconfig\+\_\+readconfig}}
+\item 
+procedure, pass(this) \mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_aa08dd0ead099b84155638196f760c0fe}{getnumberofincrements}} =$>$ \mbox{\hyperlink{namespacedmcsubsteppingconfig_a6c80814175f04b9b7383e532c2a59448}{fixedsubsteppingconfig\+\_\+getnumberofincrements}}
+\item 
+type(\mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig}{fixedsubsteppingconfig}}) function \mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_a72be279cefaeed6f9421ea546cb71995}{fixedsubsteppingconfig\+\_\+init\+\_\+single}} ()
+\begin{DoxyCompactList}\small\item\em Create a Fixed\+Substepping\+Config that defines one increment. \end{DoxyCompactList}\item 
+pure type(\mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig}{fixedsubsteppingconfig}}) function \mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_a5f9efb181fc29dbb2e848f351cb13398}{fixedsubsteppingconfig\+\_\+init\+\_\+nintervals}} (n\+\_\+increments)
+\begin{DoxyCompactList}\small\item\em Create a Fixed\+Substepping\+Config that defines substepping with n\+\_\+increments. \end{DoxyCompactList}\item 
+pure type(\mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig}{fixedsubsteppingconfig}}) function \mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_afc47b15513ba90c9bf9f75b53abe0673}{fixedsubsteppingconfig\+\_\+init\+\_\+intervals}} (increments)
+\begin{DoxyCompactList}\small\item\em Create a Fixed\+Substepping\+Config from an array of specified increments. \end{DoxyCompactList}\item 
+type(\mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig}{fixedsubsteppingconfig}}) function \mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_a393f9750cafe3f77ab2ea69ab13e2eb2}{fixedsubsteppingconfig\+\_\+init\+\_\+range}} (range)
+\begin{DoxyCompactList}\small\item\em Create a Fixed\+Substepping\+Config from a range. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+class(range\+\_\+type), pointer \mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_ae552a7fc246816076f3e7e6653836049}{ptr\+\_\+range}} =$>$ null()
+\begin{DoxyCompactList}\small\item\em Range of scalars that define substepping. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Configuration of substepping schemes that impose the size of the step. 
+
+Constructors of Fixed\+Substepping\+Config. 
+
+\doxysubsection{Member Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_afc47b15513ba90c9bf9f75b53abe0673}\label{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_afc47b15513ba90c9bf9f75b53abe0673}} 
+\index{dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}!fixedsubsteppingconfig\_init\_intervals@{fixedsubsteppingconfig\_init\_intervals}}
+\index{fixedsubsteppingconfig\_init\_intervals@{fixedsubsteppingconfig\_init\_intervals}!dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}}
+\doxysubsubsection{\texorpdfstring{fixedsubsteppingconfig\_init\_intervals()}{fixedsubsteppingconfig\_init\_intervals()}}
+{\footnotesize\ttfamily pure type(\mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig}{fixedsubsteppingconfig}}) function dmcsubsteppingconfig\+::fixedsubsteppingconfig\+::fixedsubsteppingconfig\+\_\+init\+\_\+intervals (\begin{DoxyParamCaption}\item[{double precision, dimension(\+:), intent(in)}]{increments }\end{DoxyParamCaption})}
+
+
+
+Create a Fixed\+Substepping\+Config from an array of specified increments. 
+
+\mbox{\Hypertarget{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_a5f9efb181fc29dbb2e848f351cb13398}\label{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_a5f9efb181fc29dbb2e848f351cb13398}} 
+\index{dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}!fixedsubsteppingconfig\_init\_nintervals@{fixedsubsteppingconfig\_init\_nintervals}}
+\index{fixedsubsteppingconfig\_init\_nintervals@{fixedsubsteppingconfig\_init\_nintervals}!dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}}
+\doxysubsubsection{\texorpdfstring{fixedsubsteppingconfig\_init\_nintervals()}{fixedsubsteppingconfig\_init\_nintervals()}}
+{\footnotesize\ttfamily pure type(\mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig}{fixedsubsteppingconfig}}) function dmcsubsteppingconfig\+::fixedsubsteppingconfig\+::fixedsubsteppingconfig\+\_\+init\+\_\+nintervals (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{n\+\_\+increments }\end{DoxyParamCaption})}
+
+
+
+Create a Fixed\+Substepping\+Config that defines substepping with n\+\_\+increments. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em n\+\_\+increments} & Number of increments \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_a393f9750cafe3f77ab2ea69ab13e2eb2}\label{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_a393f9750cafe3f77ab2ea69ab13e2eb2}} 
+\index{dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}!fixedsubsteppingconfig\_init\_range@{fixedsubsteppingconfig\_init\_range}}
+\index{fixedsubsteppingconfig\_init\_range@{fixedsubsteppingconfig\_init\_range}!dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}}
+\doxysubsubsection{\texorpdfstring{fixedsubsteppingconfig\_init\_range()}{fixedsubsteppingconfig\_init\_range()}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig}{fixedsubsteppingconfig}}) function dmcsubsteppingconfig\+::fixedsubsteppingconfig\+::fixedsubsteppingconfig\+\_\+init\+\_\+range (\begin{DoxyParamCaption}\item[{class(range\+\_\+type), intent(in)}]{range }\end{DoxyParamCaption})}
+
+
+
+Create a Fixed\+Substepping\+Config from a range. 
+
+\mbox{\Hypertarget{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_a72be279cefaeed6f9421ea546cb71995}\label{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_a72be279cefaeed6f9421ea546cb71995}} 
+\index{dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}!fixedsubsteppingconfig\_init\_single@{fixedsubsteppingconfig\_init\_single}}
+\index{fixedsubsteppingconfig\_init\_single@{fixedsubsteppingconfig\_init\_single}!dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}}
+\doxysubsubsection{\texorpdfstring{fixedsubsteppingconfig\_init\_single()}{fixedsubsteppingconfig\_init\_single()}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig}{fixedsubsteppingconfig}}) function dmcsubsteppingconfig\+::fixedsubsteppingconfig\+::fixedsubsteppingconfig\+\_\+init\+\_\+single}
+
+
+
+Create a Fixed\+Substepping\+Config that defines one increment. 
+
+\mbox{\Hypertarget{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_aa08dd0ead099b84155638196f760c0fe}\label{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_aa08dd0ead099b84155638196f760c0fe}} 
+\index{dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}!getnumberofincrements@{getnumberofincrements}}
+\index{getnumberofincrements@{getnumberofincrements}!dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}}
+\doxysubsubsection{\texorpdfstring{getnumberofincrements()}{getnumberofincrements()}}
+{\footnotesize\ttfamily procedure, pass(this) dmcsubsteppingconfig\+::fixedsubsteppingconfig\+::getnumberofincrements}
+
+\mbox{\Hypertarget{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_ad43fb77849af379142c157bbe47dfbf6}\label{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_ad43fb77849af379142c157bbe47dfbf6}} 
+\index{dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}!readconfig@{readconfig}}
+\index{readconfig@{readconfig}!dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}}
+\doxysubsubsection{\texorpdfstring{readconfig()}{readconfig()}}
+{\footnotesize\ttfamily procedure, pass(this) dmcsubsteppingconfig\+::fixedsubsteppingconfig\+::readconfig}
+
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_ae552a7fc246816076f3e7e6653836049}\label{structdmcsubsteppingconfig_1_1fixedsubsteppingconfig_ae552a7fc246816076f3e7e6653836049}} 
+\index{dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}!ptr\_range@{ptr\_range}}
+\index{ptr\_range@{ptr\_range}!dmcsubsteppingconfig::fixedsubsteppingconfig@{dmcsubsteppingconfig::fixedsubsteppingconfig}}
+\doxysubsubsection{\texorpdfstring{ptr\_range}{ptr\_range}}
+{\footnotesize\ttfamily class(range\+\_\+type), pointer dmcsubsteppingconfig\+::fixedsubsteppingconfig\+::ptr\+\_\+range =$>$ null()}
+
+
+
+Range of scalars that define substepping. 
+
+The range must run from 0.\+0 till 1.\+0. So, It must include at least two values\+: \mbox{[}0., 1.\mbox{]} 
+
+The documentation for this interface was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+VEF/lib\+Alam\+DMC/\mbox{\hyperlink{substeppingConfig_8f90}{substepping\+Config.\+f90}}\end{DoxyCompactItemize}

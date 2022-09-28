@@ -1,0 +1,52 @@
+\hypertarget{interfacecrinumerics_1_1interpolate}{}\doxysection{crinumerics\+::interpolate Interface Reference}
+\label{interfacecrinumerics_1_1interpolate}\index{crinumerics::interpolate@{crinumerics::interpolate}}
+
+
+Interpolation function.  
+
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+double precision pure function \mbox{\hyperlink{interfacecrinumerics_1_1interpolate_ad8c6ff82fa2da75b08f02d64213ec4a7}{barycentricinterpolator\+\_\+interpolate}} (this, x)
+\begin{DoxyCompactList}\small\item\em Calculate interpolation by means of barycentric form of interpolation polynomial in Lagrange form. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Interpolation function. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em this} & The interpolator (the type implicates the interpolation method used) \\
+\hline
+\mbox{\texttt{ in}}  & {\em x} & The value at which the function shall be evaluated \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The interpolated value y(x) 
+\end{DoxyReturn}
+
+
+\doxysubsection{Member Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{interfacecrinumerics_1_1interpolate_ad8c6ff82fa2da75b08f02d64213ec4a7}\label{interfacecrinumerics_1_1interpolate_ad8c6ff82fa2da75b08f02d64213ec4a7}} 
+\index{crinumerics::interpolate@{crinumerics::interpolate}!barycentricinterpolator\_interpolate@{barycentricinterpolator\_interpolate}}
+\index{barycentricinterpolator\_interpolate@{barycentricinterpolator\_interpolate}!crinumerics::interpolate@{crinumerics::interpolate}}
+\doxysubsubsection{\texorpdfstring{barycentricinterpolator\_interpolate()}{barycentricinterpolator\_interpolate()}}
+{\footnotesize\ttfamily double precision pure function crinumerics\+::interpolate\+::barycentricinterpolator\+\_\+interpolate (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structcrinumerics_1_1barycentricinterpolator}{barycentricinterpolator}}), intent(in)}]{this,  }\item[{double precision, intent(in)}]{x }\end{DoxyParamCaption})}
+
+
+
+Calculate interpolation by means of barycentric form of interpolation polynomial in Lagrange form. 
+
+The function requires a properly initialized Barycentric\+Interpolator object. Otherwise the result of the function is undefined. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em this} & Properly initialized object of type Barycentric\+Interpolator \\
+\hline
+\mbox{\texttt{ in}}  & {\em x} & The point at which the interpolated function is evaluated \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this interface was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+FCRI/src/\mbox{\hyperlink{criNumerics_8f90}{cri\+Numerics.\+f90}}\end{DoxyCompactItemize}

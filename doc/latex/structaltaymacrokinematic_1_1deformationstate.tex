@@ -1,0 +1,85 @@
+\hypertarget{structaltaymacrokinematic_1_1deformationstate}{}\doxysection{altaymacrokinematic\+::deformationstate Type Reference}
+\label{structaltaymacrokinematic_1_1deformationstate}\index{altaymacrokinematic::deformationstate@{altaymacrokinematic::deformationstate}}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+double precision, dimension(3, 3) \mbox{\hyperlink{structaltaymacrokinematic_1_1deformationstate_a0e87d6e69bb78f8c37a7bc3c449fb35a}{totaldefgrad}} = unit\+Matrix
+\begin{DoxyCompactList}\small\item\em Total Deformation Gradient (from undeformed state to the end of current increment) For simulations with predeformation, it is re-\/initialized with call to dynfil2 subroutine. \end{DoxyCompactList}\item 
+double precision, dimension(3, 3) \mbox{\hyperlink{structaltaymacrokinematic_1_1deformationstate_aba7afe57760903615883da1b3db703b6}{incrdefgrad}} = unit\+Matrix
+\begin{DoxyCompactList}\small\item\em Incremental Deformation Gradient (from start to end of current increment) \end{DoxyCompactList}\item 
+double precision, dimension(3, 3) \mbox{\hyperlink{structaltaymacrokinematic_1_1deformationstate_ad6ec33c3319fcc4f03e82fdee72387d9}{incrdefgrad\+\_\+inverse}} = unit\+Matrix
+\begin{DoxyCompactList}\small\item\em Inverse of Incremental Deformation Gradient. \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structaltaymacrokinematic_1_1deformationstate_ab48f57e8cca29d2db0263d85d4c330bd}{incrvmeqstrain}} = 0.\+0\+D0
+\begin{DoxyCompactList}\small\item\em Incremental von Mises equivalent strain (from start to end of current increment) \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structaltaymacrokinematic_1_1deformationstate_a45670e321738b4e883b15ce684d4ac76}{accumvmeqstrain\+\_\+tostartofinc}} = 0.\+0\+D0
+\begin{DoxyCompactList}\small\item\em Accumulated von Mises equivalent strain, up to the start of current inc. (note\+: reference state might be different than that of Total\+Def\+Grad) \end{DoxyCompactList}\item 
+double precision \mbox{\hyperlink{structaltaymacrokinematic_1_1deformationstate_a5f6c7ba7e2fcfc5cc45aa1a26b72d29f}{accumvmeqstrain\+\_\+toendofinc}} = 0.\+0\+D0
+\begin{DoxyCompactList}\small\item\em Accumulated von Mises equivalent strain, up to the end of current inc. (note\+: reference state might be different than that of Total\+Def\+Grad) \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structaltaymacrokinematic_1_1deformationstate_a5f6c7ba7e2fcfc5cc45aa1a26b72d29f}\label{structaltaymacrokinematic_1_1deformationstate_a5f6c7ba7e2fcfc5cc45aa1a26b72d29f}} 
+\index{altaymacrokinematic::deformationstate@{altaymacrokinematic::deformationstate}!accumvmeqstrain\_toendofinc@{accumvmeqstrain\_toendofinc}}
+\index{accumvmeqstrain\_toendofinc@{accumvmeqstrain\_toendofinc}!altaymacrokinematic::deformationstate@{altaymacrokinematic::deformationstate}}
+\doxysubsubsection{\texorpdfstring{accumvmeqstrain\_toendofinc}{accumvmeqstrain\_toendofinc}}
+{\footnotesize\ttfamily double precision altaymacrokinematic\+::deformationstate\+::accumvmeqstrain\+\_\+toendofinc = 0.\+0\+D0}
+
+
+
+Accumulated von Mises equivalent strain, up to the end of current inc. (note\+: reference state might be different than that of Total\+Def\+Grad) 
+
+\mbox{\Hypertarget{structaltaymacrokinematic_1_1deformationstate_a45670e321738b4e883b15ce684d4ac76}\label{structaltaymacrokinematic_1_1deformationstate_a45670e321738b4e883b15ce684d4ac76}} 
+\index{altaymacrokinematic::deformationstate@{altaymacrokinematic::deformationstate}!accumvmeqstrain\_tostartofinc@{accumvmeqstrain\_tostartofinc}}
+\index{accumvmeqstrain\_tostartofinc@{accumvmeqstrain\_tostartofinc}!altaymacrokinematic::deformationstate@{altaymacrokinematic::deformationstate}}
+\doxysubsubsection{\texorpdfstring{accumvmeqstrain\_tostartofinc}{accumvmeqstrain\_tostartofinc}}
+{\footnotesize\ttfamily double precision altaymacrokinematic\+::deformationstate\+::accumvmeqstrain\+\_\+tostartofinc = 0.\+0\+D0}
+
+
+
+Accumulated von Mises equivalent strain, up to the start of current inc. (note\+: reference state might be different than that of Total\+Def\+Grad) 
+
+\mbox{\Hypertarget{structaltaymacrokinematic_1_1deformationstate_aba7afe57760903615883da1b3db703b6}\label{structaltaymacrokinematic_1_1deformationstate_aba7afe57760903615883da1b3db703b6}} 
+\index{altaymacrokinematic::deformationstate@{altaymacrokinematic::deformationstate}!incrdefgrad@{incrdefgrad}}
+\index{incrdefgrad@{incrdefgrad}!altaymacrokinematic::deformationstate@{altaymacrokinematic::deformationstate}}
+\doxysubsubsection{\texorpdfstring{incrdefgrad}{incrdefgrad}}
+{\footnotesize\ttfamily double precision, dimension(3,3) altaymacrokinematic\+::deformationstate\+::incrdefgrad = unit\+Matrix}
+
+
+
+Incremental Deformation Gradient (from start to end of current increment) 
+
+\mbox{\Hypertarget{structaltaymacrokinematic_1_1deformationstate_ad6ec33c3319fcc4f03e82fdee72387d9}\label{structaltaymacrokinematic_1_1deformationstate_ad6ec33c3319fcc4f03e82fdee72387d9}} 
+\index{altaymacrokinematic::deformationstate@{altaymacrokinematic::deformationstate}!incrdefgrad\_inverse@{incrdefgrad\_inverse}}
+\index{incrdefgrad\_inverse@{incrdefgrad\_inverse}!altaymacrokinematic::deformationstate@{altaymacrokinematic::deformationstate}}
+\doxysubsubsection{\texorpdfstring{incrdefgrad\_inverse}{incrdefgrad\_inverse}}
+{\footnotesize\ttfamily double precision, dimension(3,3) altaymacrokinematic\+::deformationstate\+::incrdefgrad\+\_\+inverse = unit\+Matrix}
+
+
+
+Inverse of Incremental Deformation Gradient. 
+
+\mbox{\Hypertarget{structaltaymacrokinematic_1_1deformationstate_ab48f57e8cca29d2db0263d85d4c330bd}\label{structaltaymacrokinematic_1_1deformationstate_ab48f57e8cca29d2db0263d85d4c330bd}} 
+\index{altaymacrokinematic::deformationstate@{altaymacrokinematic::deformationstate}!incrvmeqstrain@{incrvmeqstrain}}
+\index{incrvmeqstrain@{incrvmeqstrain}!altaymacrokinematic::deformationstate@{altaymacrokinematic::deformationstate}}
+\doxysubsubsection{\texorpdfstring{incrvmeqstrain}{incrvmeqstrain}}
+{\footnotesize\ttfamily double precision altaymacrokinematic\+::deformationstate\+::incrvmeqstrain = 0.\+0\+D0}
+
+
+
+Incremental von Mises equivalent strain (from start to end of current increment) 
+
+\mbox{\Hypertarget{structaltaymacrokinematic_1_1deformationstate_a0e87d6e69bb78f8c37a7bc3c449fb35a}\label{structaltaymacrokinematic_1_1deformationstate_a0e87d6e69bb78f8c37a7bc3c449fb35a}} 
+\index{altaymacrokinematic::deformationstate@{altaymacrokinematic::deformationstate}!totaldefgrad@{totaldefgrad}}
+\index{totaldefgrad@{totaldefgrad}!altaymacrokinematic::deformationstate@{altaymacrokinematic::deformationstate}}
+\doxysubsubsection{\texorpdfstring{totaldefgrad}{totaldefgrad}}
+{\footnotesize\ttfamily double precision, dimension(3,3) altaymacrokinematic\+::deformationstate\+::totaldefgrad = unit\+Matrix}
+
+
+
+Total Deformation Gradient (from undeformed state to the end of current increment) For simulations with predeformation, it is re-\/initialized with call to dynfil2 subroutine. 
+
+
+
+The documentation for this type was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Al\+Tay/src/\mbox{\hyperlink{altayMacroKinematic_8f90}{altay\+Macro\+Kinematic.\+f90}}\end{DoxyCompactItemize}
