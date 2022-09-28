@@ -1,0 +1,11 @@
+digraph "dmcsubsteppingconfig::fixedsubsteppingconfig_init_nintervals"
+{
+ // INTERACTIVE_SVG=YES
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="dmcsubsteppingconfig\l::fixedsubsteppingconfig\l_init_nintervals",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Create a FixedSubsteppingConfig that defines substepping with n_increments."];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node2 [label="dmcsubsteppingconfig\l::fixedsubsteppingconfig\l::getnumberofincrements",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structdmcsubsteppingconfig_1_1fixedsubsteppingconfig.html#aa08dd0ead099b84155638196f760c0fe",tooltip=" "];
+}

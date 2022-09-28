@@ -1,0 +1,13 @@
+digraph "dmcsubsteppingconfig::fixedsubsteppingconfig_readconfig"
+{
+ // INTERACTIVE_SVG=YES
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="dmcsubsteppingconfig\l::fixedsubsteppingconfig\l_readconfig",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Read fixed substepping configuration from file and construct a proper range ptr_range from user's inp..."];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid"];
+  Node2 [label="dmcsubsteppingconfig\l::propersubsteppingrange",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacedmcsubsteppingconfig.html#a4ff8b0f777961ce689585147335af8f5",tooltip=" "];
+  Node1 -> Node3 [color="midnightblue",fontsize="10",style="solid"];
+  Node3 [label="commonconfig::rangefromconfig",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecommonconfig.html#a199eabe6136147399792730ad6c25bee",tooltip="Factory function that returns an instance appropriate range type depending on the the input read from..."];
+}

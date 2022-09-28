@@ -1,0 +1,130 @@
+\hypertarget{namespacedmcstressdrivenmodule}{}\doxysection{dmcstressdrivenmodule Module Reference}
+\label{namespacedmcstressdrivenmodule}\index{dmcstressdrivenmodule@{dmcstressdrivenmodule}}
+
+
+Implementation of a altay-\/based DMC computiational module.  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structdmcstressdrivenmodule_1_1stressdrivenmodule}{stressdrivenmodule}}
+\begin{DoxyCompactList}\small\item\em Abstract class implementing basic subset of operations that are shared by all stress-\/drien computational modules. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+integer function \mbox{\hyperlink{namespacedmcstressdrivenmodule_a9849e241fee39c7bbf756bffec53a806}{stressdrivenmodule\+\_\+initialize}} (this)
+\begin{DoxyCompactList}\small\item\em Initialize a configured Stress\+Driven\+Module object. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcstressdrivenmodule_af83fed3af07056bf36954c85a26710a4}{stressdrivenmodule\+\_\+readconfig}} (this, cnfunit)
+\item 
+integer function \mbox{\hyperlink{namespacedmcstressdrivenmodule_a6a538e64c02ba2f8432eb288e14cd297}{stressdrivenmodule\+\_\+printconfig}} (this, outunit)
+\begin{DoxyCompactList}\small\item\em Print out configuration of the module. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcstressdrivenmodule_a9da7db4139147453fc9b78ae5a6acfd5}{stressdrivenmodule\+\_\+finalize}} (this)
+\begin{DoxyCompactList}\small\item\em Finalization of the module. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcstressdrivenmodule_abceb217bba8c562816fb2de413da9173}{stressdrivenmodule\+\_\+findsolution}} (this, sigma, D, ylp\+\_\+result, v\+M\+\_\+guess, is\+\_\+acceptable, pretry)
+\begin{DoxyCompactList}\small\item\em Calculate plastic strain rate D that corresponds to the superimposed input stress {\ttfamily sigma} by performing an iterative search. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcstressdrivenmodule_a5d484d08991e1f7e30e08708ed66e8ed}{stressdrivenmodule\+\_\+search}} (this, ylp\+\_\+config, ylp\+\_\+result, use\+\_\+v\+M\+\_\+guess, obj\+\_\+func)
+\begin{DoxyCompactList}\small\item\em Wrapper around multilevel\+YLP that uses YLPResult for communicating with the caller. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedmcstressdrivenmodule_ab85cc1763875fc2db72336e79ee30583}{readylpconfigsection}} (cnfunit, cnf, info)
+\begin{DoxyCompactList}\small\item\em Read configuration of the solver (libalamylp) \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Implementation of a altay-\/based DMC computiational module. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacedmcstressdrivenmodule_ab85cc1763875fc2db72336e79ee30583}\label{namespacedmcstressdrivenmodule_ab85cc1763875fc2db72336e79ee30583}} 
+\index{dmcstressdrivenmodule@{dmcstressdrivenmodule}!readylpconfigsection@{readylpconfigsection}}
+\index{readylpconfigsection@{readylpconfigsection}!dmcstressdrivenmodule@{dmcstressdrivenmodule}}
+\doxysubsubsection{\texorpdfstring{readylpconfigsection()}{readylpconfigsection()}}
+{\footnotesize\ttfamily subroutine dmcstressdrivenmodule\+::readylpconfigsection (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{cnfunit,  }\item[{type(\mbox{\hyperlink{structalamylp_1_1multilevelylpconfig}{multilevelylpconfig}}), intent(out)}]{cnf,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Read configuration of the solver (libalamylp) 
+
+Here is the caller graph for this function\+:
+% FIG 0
+\mbox{\Hypertarget{namespacedmcstressdrivenmodule_a9da7db4139147453fc9b78ae5a6acfd5}\label{namespacedmcstressdrivenmodule_a9da7db4139147453fc9b78ae5a6acfd5}} 
+\index{dmcstressdrivenmodule@{dmcstressdrivenmodule}!stressdrivenmodule\_finalize@{stressdrivenmodule\_finalize}}
+\index{stressdrivenmodule\_finalize@{stressdrivenmodule\_finalize}!dmcstressdrivenmodule@{dmcstressdrivenmodule}}
+\doxysubsubsection{\texorpdfstring{stressdrivenmodule\_finalize()}{stressdrivenmodule\_finalize()}}
+{\footnotesize\ttfamily integer function dmcstressdrivenmodule\+::stressdrivenmodule\+\_\+finalize (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstressdrivenmodule_1_1stressdrivenmodule}{stressdrivenmodule}}), intent(inout)}]{this }\end{DoxyParamCaption})}
+
+
+
+Finalization of the module. 
+
+\mbox{\Hypertarget{namespacedmcstressdrivenmodule_abceb217bba8c562816fb2de413da9173}\label{namespacedmcstressdrivenmodule_abceb217bba8c562816fb2de413da9173}} 
+\index{dmcstressdrivenmodule@{dmcstressdrivenmodule}!stressdrivenmodule\_findsolution@{stressdrivenmodule\_findsolution}}
+\index{stressdrivenmodule\_findsolution@{stressdrivenmodule\_findsolution}!dmcstressdrivenmodule@{dmcstressdrivenmodule}}
+\doxysubsubsection{\texorpdfstring{stressdrivenmodule\_findsolution()}{stressdrivenmodule\_findsolution()}}
+{\footnotesize\ttfamily integer function dmcstressdrivenmodule\+::stressdrivenmodule\+\_\+findsolution (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstressdrivenmodule_1_1stressdrivenmodule}{stressdrivenmodule}}), intent(in)}]{this,  }\item[{type(srtensor), intent(in)}]{sigma,  }\item[{type(srtensor), intent(inout)}]{D,  }\item[{type(\mbox{\hyperlink{structdmcylpresult_1_1ylpresult}{ylpresult}}), intent(out)}]{ylp\+\_\+result,  }\item[{logical, intent(in), optional}]{v\+M\+\_\+guess,  }\item[{logical, intent(out), optional}]{is\+\_\+acceptable,  }\item[{logical, intent(in), optional}]{pretry }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Calculate plastic strain rate D that corresponds to the superimposed input stress {\ttfamily sigma} by performing an iterative search. 
+
+The results of the iterative search are placed in ylp\+\_\+results. \begin{DoxyReturn}{Returns}
+cri\+Failure on lack of convergence. ylp\+\_\+result and D are set to the best solution found 
+
+cri\+Error or any cri\+Err\+\_\+$\ast$ on severe error conditions. ylp\+\_\+result and D are undefined 
+
+cri\+Success on success 
+\end{DoxyReturn}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em sigma} & Total input stress tensor \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em d} & Plastic strain rate \\
+\hline
+\mbox{\texttt{ out}}  & {\em ylp\+\_\+result} & Results of the iterative search \\
+\hline
+\mbox{\texttt{ in}}  & {\em vm\+\_\+guess} & Flag\+: use von Mises inital guess (default\+: .true.). If false, D will be used as the starting point for the iterative search. \\
+\hline
+\end{DoxyParams}
+Here is the call graph for this function\+:
+% FIG 1
+\mbox{\Hypertarget{namespacedmcstressdrivenmodule_a9849e241fee39c7bbf756bffec53a806}\label{namespacedmcstressdrivenmodule_a9849e241fee39c7bbf756bffec53a806}} 
+\index{dmcstressdrivenmodule@{dmcstressdrivenmodule}!stressdrivenmodule\_initialize@{stressdrivenmodule\_initialize}}
+\index{stressdrivenmodule\_initialize@{stressdrivenmodule\_initialize}!dmcstressdrivenmodule@{dmcstressdrivenmodule}}
+\doxysubsubsection{\texorpdfstring{stressdrivenmodule\_initialize()}{stressdrivenmodule\_initialize()}}
+{\footnotesize\ttfamily integer function dmcstressdrivenmodule\+::stressdrivenmodule\+\_\+initialize (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstressdrivenmodule_1_1stressdrivenmodule}{stressdrivenmodule}}), intent(inout)}]{this }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Initialize a configured Stress\+Driven\+Module object. 
+
+\mbox{\Hypertarget{namespacedmcstressdrivenmodule_a6a538e64c02ba2f8432eb288e14cd297}\label{namespacedmcstressdrivenmodule_a6a538e64c02ba2f8432eb288e14cd297}} 
+\index{dmcstressdrivenmodule@{dmcstressdrivenmodule}!stressdrivenmodule\_printconfig@{stressdrivenmodule\_printconfig}}
+\index{stressdrivenmodule\_printconfig@{stressdrivenmodule\_printconfig}!dmcstressdrivenmodule@{dmcstressdrivenmodule}}
+\doxysubsubsection{\texorpdfstring{stressdrivenmodule\_printconfig()}{stressdrivenmodule\_printconfig()}}
+{\footnotesize\ttfamily integer function dmcstressdrivenmodule\+::stressdrivenmodule\+\_\+printconfig (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstressdrivenmodule_1_1stressdrivenmodule}{stressdrivenmodule}}), intent(in)}]{this,  }\item[{integer, intent(in)}]{outunit }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Print out configuration of the module. 
+
+\mbox{\Hypertarget{namespacedmcstressdrivenmodule_af83fed3af07056bf36954c85a26710a4}\label{namespacedmcstressdrivenmodule_af83fed3af07056bf36954c85a26710a4}} 
+\index{dmcstressdrivenmodule@{dmcstressdrivenmodule}!stressdrivenmodule\_readconfig@{stressdrivenmodule\_readconfig}}
+\index{stressdrivenmodule\_readconfig@{stressdrivenmodule\_readconfig}!dmcstressdrivenmodule@{dmcstressdrivenmodule}}
+\doxysubsubsection{\texorpdfstring{stressdrivenmodule\_readconfig()}{stressdrivenmodule\_readconfig()}}
+{\footnotesize\ttfamily integer function dmcstressdrivenmodule\+::stressdrivenmodule\+\_\+readconfig (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstressdrivenmodule_1_1stressdrivenmodule}{stressdrivenmodule}}), intent(inout)}]{this,  }\item[{integer, intent(in)}]{cnfunit }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+Here is the call graph for this function\+:
+% FIG 2
+\mbox{\Hypertarget{namespacedmcstressdrivenmodule_a5d484d08991e1f7e30e08708ed66e8ed}\label{namespacedmcstressdrivenmodule_a5d484d08991e1f7e30e08708ed66e8ed}} 
+\index{dmcstressdrivenmodule@{dmcstressdrivenmodule}!stressdrivenmodule\_search@{stressdrivenmodule\_search}}
+\index{stressdrivenmodule\_search@{stressdrivenmodule\_search}!dmcstressdrivenmodule@{dmcstressdrivenmodule}}
+\doxysubsubsection{\texorpdfstring{stressdrivenmodule\_search()}{stressdrivenmodule\_search()}}
+{\footnotesize\ttfamily integer function dmcstressdrivenmodule\+::stressdrivenmodule\+\_\+search (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstressdrivenmodule_1_1stressdrivenmodule}{stressdrivenmodule}}), intent(in)}]{this,  }\item[{type(\mbox{\hyperlink{structalamylp_1_1multilevelylpconfig}{multilevelylpconfig}}), intent(in)}]{ylp\+\_\+config,  }\item[{type(\mbox{\hyperlink{structdmcylpresult_1_1ylpresult}{ylpresult}}), intent(inout)}]{ylp\+\_\+result,  }\item[{logical, intent(in)}]{use\+\_\+v\+M\+\_\+guess,  }\item[{class(\mbox{\hyperlink{structalameval_1_1normalizedv5dcomp}{normalizedv5dcomp}}), intent(inout)}]{obj\+\_\+func }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Wrapper around multilevel\+YLP that uses YLPResult for communicating with the caller. 
+
+The wrapper applies settings provided as members of Stress\+Driven\+Module. It provides a ready-\/to-\/use ylp\+\_\+result on non-\/error info code. \begin{DoxyReturn}{Returns}
+Exit code from multilevel\+YLP, unless an error condition occurs at later stage. In such case cri\+Error is returned. In such case 
+\end{DoxyReturn}
+Here is the call graph for this function\+:
+% FIG 3

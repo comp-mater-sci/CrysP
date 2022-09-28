@@ -1,0 +1,27 @@
+\hypertarget{dmc_q_r_s_8f90}{}\doxysection{alam\+DMC/dmc\+QRS.f90 File Reference}
+\label{dmc_q_r_s_8f90}\index{alamDMC/dmcQRS.f90@{alamDMC/dmcQRS.f90}}
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structdmcqrs_1_1qrsmodule}{dmcqrs\+::qrsmodule}}
+\item 
+interface \mbox{\hyperlink{structdmcqrs_1_1qrsoutputdata}{dmcqrs\+::qrsoutputdata}}
+\begin{DoxyCompactList}\small\item\em Container for output datapoints of QRS module. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacedmcqrs}{dmcqrs}}
+\begin{DoxyCompactList}\small\item\em dmc\+QRS calculates plastic anisotropic properties, expressed in terms of q-\/values, directly from texture data, presented in form of SMT, CUR or CUB files. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+integer function \mbox{\hyperlink{namespacedmcqrs_add59d94c8383b6fcacdccdb8ffe66419}{dmcqrs\+::qrsmodule\+\_\+readconfig}} (this, cnfunit)
+\item 
+integer function \mbox{\hyperlink{namespacedmcqrs_ad0f1c9d01887870e50a4d13806660007}{dmcqrs\+::qrsmodule\+\_\+printconfig}} (this, outunit)
+\item 
+subroutine \mbox{\hyperlink{namespacedmcqrs_a3ed1f2d06328a1bdb250e9dca6895eb9}{dmcqrs\+::qrsmodule\+\_\+run}} (this, info)
+\item 
+integer function \mbox{\hyperlink{namespacedmcqrs_aae60c450f0c5646c67378b7810b00674}{dmcqrs\+::qrsmodule\+\_\+fileoutput}} (this, iounit, data\+\_\+record, header, restrict)
+\begin{DoxyCompactList}\small\item\em Write out results to the output file. \end{DoxyCompactList}\item 
+pure type(qrsoutputdata) function \mbox{\hyperlink{namespacedmcqrs_a776b4e9bf95ce1cb3f9fd904820d5df2}{dmcqrs\+::qrsoutputdata\+\_\+init\+\_\+size}} (npoints)
+\begin{DoxyCompactList}\small\item\em Initialize QRSOutput\+Data to store npoints datapoints. \end{DoxyCompactList}\end{DoxyCompactItemize}

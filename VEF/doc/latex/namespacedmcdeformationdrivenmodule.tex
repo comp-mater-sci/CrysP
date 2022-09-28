@@ -1,0 +1,59 @@
+\hypertarget{namespacedmcdeformationdrivenmodule}{}\doxysection{dmcdeformationdrivenmodule Module Reference}
+\label{namespacedmcdeformationdrivenmodule}\index{dmcdeformationdrivenmodule@{dmcdeformationdrivenmodule}}
+
+
+Base class for modules implementing strain-\/(rate) driven simulations (such as ADPModule)  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structdmcdeformationdrivenmodule_1_1deformationdrivenmodule}{deformationdrivenmodule}}
+\begin{DoxyCompactList}\small\item\em Base class for strain-\/(rate) driven simulations modules. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structdmcdeformationdrivenmodule_1_1ptrstraindrivenstep}{ptrstraindrivenstep}}
+\begin{DoxyCompactList}\small\item\em Wrapper around a polymorphic pointer to Strain\+Driven\+Step objects. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structdmcdeformationdrivenmodule_1_1straindrivensolverconfig}{straindrivensolverconfig}}
+\begin{DoxyCompactList}\small\item\em Configuration related to strain(-\/rate) driven simulations. Currently a placeholder. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+integer function \mbox{\hyperlink{namespacedmcdeformationdrivenmodule_a36ac6209698ddb9938584a1d7ca000ec}{deformationdrivenmodule\+\_\+printconfig}} (this, outunit)
+\begin{DoxyCompactList}\small\item\em Print configuration to IO unit. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcdeformationdrivenmodule_afab7eabaea56255e3eca7ba49481fd14}{deformationdrivenmodule\+\_\+readconfig}} (this, cnfunit)
+\begin{DoxyCompactList}\small\item\em Read configuration from IO unit. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Base class for modules implementing strain-\/(rate) driven simulations (such as ADPModule) 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacedmcdeformationdrivenmodule_a36ac6209698ddb9938584a1d7ca000ec}\label{namespacedmcdeformationdrivenmodule_a36ac6209698ddb9938584a1d7ca000ec}} 
+\index{dmcdeformationdrivenmodule@{dmcdeformationdrivenmodule}!deformationdrivenmodule\_printconfig@{deformationdrivenmodule\_printconfig}}
+\index{deformationdrivenmodule\_printconfig@{deformationdrivenmodule\_printconfig}!dmcdeformationdrivenmodule@{dmcdeformationdrivenmodule}}
+\doxysubsubsection{\texorpdfstring{deformationdrivenmodule\_printconfig()}{deformationdrivenmodule\_printconfig()}}
+{\footnotesize\ttfamily integer function dmcdeformationdrivenmodule\+::deformationdrivenmodule\+\_\+printconfig (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcdeformationdrivenmodule_1_1deformationdrivenmodule}{deformationdrivenmodule}}), intent(in)}]{this,  }\item[{integer, intent(in)}]{outunit }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Print configuration to IO unit. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em outunit} & IO unit for output \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacedmcdeformationdrivenmodule_afab7eabaea56255e3eca7ba49481fd14}\label{namespacedmcdeformationdrivenmodule_afab7eabaea56255e3eca7ba49481fd14}} 
+\index{dmcdeformationdrivenmodule@{dmcdeformationdrivenmodule}!deformationdrivenmodule\_readconfig@{deformationdrivenmodule\_readconfig}}
+\index{deformationdrivenmodule\_readconfig@{deformationdrivenmodule\_readconfig}!dmcdeformationdrivenmodule@{dmcdeformationdrivenmodule}}
+\doxysubsubsection{\texorpdfstring{deformationdrivenmodule\_readconfig()}{deformationdrivenmodule\_readconfig()}}
+{\footnotesize\ttfamily integer function dmcdeformationdrivenmodule\+::deformationdrivenmodule\+\_\+readconfig (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcdeformationdrivenmodule_1_1deformationdrivenmodule}{deformationdrivenmodule}}), intent(inout)}]{this,  }\item[{integer, intent(in)}]{cnfunit }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Read configuration from IO unit. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em cnfunit} & IO input unit \\
+\hline
+\end{DoxyParams}

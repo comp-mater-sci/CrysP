@@ -1,0 +1,81 @@
+\hypertarget{structdmcqrs_1_1qrsoutputdata}{}\doxysection{dmcqrs\+::qrsoutputdata Interface Reference}
+\label{structdmcqrs_1_1qrsoutputdata}\index{dmcqrs::qrsoutputdata@{dmcqrs::qrsoutputdata}}
+
+
+Container for output datapoints of QRS module.  
+
+
+\doxysubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+pure type(\mbox{\hyperlink{structdmcqrs_1_1qrsoutputdata}{qrsoutputdata}}) function \mbox{\hyperlink{structdmcqrs_1_1qrsoutputdata_a8742cc8b81c30ded4e66e2cc601f703e}{qrsoutputdata\+\_\+init\+\_\+size}} (npoints)
+\begin{DoxyCompactList}\small\item\em Initialize QRSOutput\+Data to store npoints datapoints. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+double precision, dimension(\+:), allocatable \mbox{\hyperlink{structdmcqrs_1_1qrsoutputdata_a1de7fa85f7b903f52827700d96e8982b}{residuals}}
+\item 
+double precision, dimension(\+:), allocatable \mbox{\hyperlink{structdmcqrs_1_1qrsoutputdata_ad7cfcb11f2c855443a9f18cf115d1f81}{mfactors}}
+\item 
+double precision, dimension(\+:), allocatable \mbox{\hyperlink{structdmcqrs_1_1qrsoutputdata_ab5ed2a3488b7e4f2eacd277e4be748ee}{phis}}
+\item 
+double precision, dimension(\+:), allocatable \mbox{\hyperlink{structdmcqrs_1_1qrsoutputdata_abe277e9884787b958d054375690ca36c}{sigmas\+\_\+x}}
+\item 
+type(\mbox{\hyperlink{structqrstypes_1_1qrsdata}{qrsdata}}), dimension(\+:), allocatable \mbox{\hyperlink{structdmcqrs_1_1qrsoutputdata_a8f5062543efd544d6b5b8c13fc75ef89}{qrsvalues}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Container for output datapoints of QRS module. 
+
+Constructors of QRSOutput\+Data objects. 
+
+\doxysubsection{Member Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{structdmcqrs_1_1qrsoutputdata_a8742cc8b81c30ded4e66e2cc601f703e}\label{structdmcqrs_1_1qrsoutputdata_a8742cc8b81c30ded4e66e2cc601f703e}} 
+\index{dmcqrs::qrsoutputdata@{dmcqrs::qrsoutputdata}!qrsoutputdata\_init\_size@{qrsoutputdata\_init\_size}}
+\index{qrsoutputdata\_init\_size@{qrsoutputdata\_init\_size}!dmcqrs::qrsoutputdata@{dmcqrs::qrsoutputdata}}
+\doxysubsubsection{\texorpdfstring{qrsoutputdata\_init\_size()}{qrsoutputdata\_init\_size()}}
+{\footnotesize\ttfamily pure type(\mbox{\hyperlink{structdmcqrs_1_1qrsoutputdata}{qrsoutputdata}}) function dmcqrs\+::qrsoutputdata\+::qrsoutputdata\+\_\+init\+\_\+size (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{npoints }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Initialize QRSOutput\+Data to store npoints datapoints. 
+
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structdmcqrs_1_1qrsoutputdata_ad7cfcb11f2c855443a9f18cf115d1f81}\label{structdmcqrs_1_1qrsoutputdata_ad7cfcb11f2c855443a9f18cf115d1f81}} 
+\index{dmcqrs::qrsoutputdata@{dmcqrs::qrsoutputdata}!mfactors@{mfactors}}
+\index{mfactors@{mfactors}!dmcqrs::qrsoutputdata@{dmcqrs::qrsoutputdata}}
+\doxysubsubsection{\texorpdfstring{mfactors}{mfactors}}
+{\footnotesize\ttfamily double precision, dimension(\+:), allocatable dmcqrs\+::qrsoutputdata\+::mfactors\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{structdmcqrs_1_1qrsoutputdata_ab5ed2a3488b7e4f2eacd277e4be748ee}\label{structdmcqrs_1_1qrsoutputdata_ab5ed2a3488b7e4f2eacd277e4be748ee}} 
+\index{dmcqrs::qrsoutputdata@{dmcqrs::qrsoutputdata}!phis@{phis}}
+\index{phis@{phis}!dmcqrs::qrsoutputdata@{dmcqrs::qrsoutputdata}}
+\doxysubsubsection{\texorpdfstring{phis}{phis}}
+{\footnotesize\ttfamily double precision, dimension(\+:), allocatable dmcqrs\+::qrsoutputdata\+::phis\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{structdmcqrs_1_1qrsoutputdata_a8f5062543efd544d6b5b8c13fc75ef89}\label{structdmcqrs_1_1qrsoutputdata_a8f5062543efd544d6b5b8c13fc75ef89}} 
+\index{dmcqrs::qrsoutputdata@{dmcqrs::qrsoutputdata}!qrsvalues@{qrsvalues}}
+\index{qrsvalues@{qrsvalues}!dmcqrs::qrsoutputdata@{dmcqrs::qrsoutputdata}}
+\doxysubsubsection{\texorpdfstring{qrsvalues}{qrsvalues}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structqrstypes_1_1qrsdata}{qrsdata}}), dimension(\+:), allocatable dmcqrs\+::qrsoutputdata\+::qrsvalues\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{structdmcqrs_1_1qrsoutputdata_a1de7fa85f7b903f52827700d96e8982b}\label{structdmcqrs_1_1qrsoutputdata_a1de7fa85f7b903f52827700d96e8982b}} 
+\index{dmcqrs::qrsoutputdata@{dmcqrs::qrsoutputdata}!residuals@{residuals}}
+\index{residuals@{residuals}!dmcqrs::qrsoutputdata@{dmcqrs::qrsoutputdata}}
+\doxysubsubsection{\texorpdfstring{residuals}{residuals}}
+{\footnotesize\ttfamily double precision, dimension(\+:), allocatable dmcqrs\+::qrsoutputdata\+::residuals\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{structdmcqrs_1_1qrsoutputdata_abe277e9884787b958d054375690ca36c}\label{structdmcqrs_1_1qrsoutputdata_abe277e9884787b958d054375690ca36c}} 
+\index{dmcqrs::qrsoutputdata@{dmcqrs::qrsoutputdata}!sigmas\_x@{sigmas\_x}}
+\index{sigmas\_x@{sigmas\_x}!dmcqrs::qrsoutputdata@{dmcqrs::qrsoutputdata}}
+\doxysubsubsection{\texorpdfstring{sigmas\_x}{sigmas\_x}}
+{\footnotesize\ttfamily double precision, dimension(\+:), allocatable dmcqrs\+::qrsoutputdata\+::sigmas\+\_\+x\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+The documentation for this interface was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+alam\+DMC/\mbox{\hyperlink{dmc_q_r_s_8f90}{dmc\+QRS.\+f90}}\end{DoxyCompactItemize}

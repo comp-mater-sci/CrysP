@@ -1,0 +1,11 @@
+digraph "crinamedrange::rangefactory"
+{
+ // INTERACTIVE_SVG=YES
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="crinamedrange::rangefactory",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Creates an instance of relevant range type."];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node2 [label="crinamedrange::rangefactory\l_extended",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecrinamedrange.html#a9c861a40683d02d87ca6847c83a5f7d6",tooltip="Creates an instance of the relevant range type given its name OR makes an appropriate instance for a ..."];
+}

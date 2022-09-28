@@ -1,0 +1,145 @@
+\hypertarget{namespacedmcudsa}{}\doxysection{dmcudsa Module Reference}
+\label{namespacedmcudsa}\index{dmcudsa@{dmcudsa}}
+
+
+dmc\+UDSA (Uniaxially-\/\+Dominated Stress Analysis) allows one to track anisotropic properties along deformation due to the uniaxial tension or compression stress.  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structdmcudsa_1_1udsamodule}{udsamodule}}
+\item 
+type \mbox{\hyperlink{structdmcudsa_1_1udsaoutputrecord}{udsaoutputrecord}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+integer function \mbox{\hyperlink{namespacedmcudsa_a061866b1b14e055c0fb076176e71945b}{udsamodule\+\_\+readconfig}} (this, cnfunit)
+\item 
+integer function \mbox{\hyperlink{namespacedmcudsa_acbf041621465b26800beae1736fdedc6}{udsamodule\+\_\+printconfig}} (this, outunit)
+\item 
+subroutine \mbox{\hyperlink{namespacedmcudsa_aff0b1bf1305156cf66494f0f2fc024d0}{udsamodule\+\_\+run}} (this, info)
+\item 
+integer function \mbox{\hyperlink{namespacedmcudsa_a64d4d88f0e716bd9f7dd97204f3f1794}{udsamodule\+\_\+createoutputfile}} (this, iounit, tag\+\_\+number)
+\item 
+integer function \mbox{\hyperlink{namespacedmcudsa_a476991355286fa0152e5a9fcc4a9c573}{udsamodule\+\_\+outputfile}} (this, iounit, data\+\_\+record, header)
+\item 
+character(len=max\+\_\+pathlen) function \mbox{\hyperlink{namespacedmcudsa_a096826dce1a3f60d2bae22f5be92b996}{udsamodule\+\_\+outputprefix}} (this, tag\+\_\+number)
+\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter, private \mbox{\hyperlink{namespacedmcudsa_ae7dc64478a9d8d3db46828f65e1d5cad}{tension\+\_\+state}} = 0
+\item 
+integer, parameter, private \mbox{\hyperlink{namespacedmcudsa_a52927d807e0d262372991cf9c722f789}{compression\+\_\+state}} = 1
+\item 
+type(mapitem), dimension(2), parameter \mbox{\hyperlink{namespacedmcudsa_a3c48e2e363c407fb4fac95e47a73c0bd}{stress\+\_\+states}} = \mbox{[}Map\+Item(\textquotesingle{}compression\textquotesingle{}, \mbox{\hyperlink{namespacedmcudsa_a52927d807e0d262372991cf9c722f789}{compression\+\_\+state}}), Map\+Item(\textquotesingle{}tension\textquotesingle{}, \mbox{\hyperlink{namespacedmcudsa_ae7dc64478a9d8d3db46828f65e1d5cad}{tension\+\_\+state}})\mbox{]}
+\item 
+integer, parameter, private \mbox{\hyperlink{namespacedmcudsa_ad9511fd1e85184ef912a83b982472f8e}{sample\+\_\+orientation\+\_\+inplane\+\_\+id}} = 1
+\item 
+integer, parameter, private \mbox{\hyperlink{namespacedmcudsa_ae9eb0c3061bc759b3ebdbfc33a4f9b32}{sample\+\_\+orientation\+\_\+nd\+\_\+id}} = 2
+\item 
+integer, parameter, private \mbox{\hyperlink{namespacedmcudsa_a05da6faee7f4551db9b3b0b77886f4bf}{sample\+\_\+orientation\+\_\+arbitrary\+\_\+id}} = 3
+\item 
+integer, parameter, private \mbox{\hyperlink{namespacedmcudsa_a5fe32d0e869658edd5f6f1c01acb6b97}{n\+\_\+orientation\+\_\+types}} = 3
+\item 
+type(mapitem), dimension(\mbox{\hyperlink{namespacedmcudsa_a5fe32d0e869658edd5f6f1c01acb6b97}{n\+\_\+orientation\+\_\+types}}), parameter, private \mbox{\hyperlink{namespacedmcudsa_aa00b20674ef5b86e2391c90e5852f490}{sample\+\_\+orientation\+\_\+types}} = \mbox{[} Map\+Item(\textquotesingle{}inplane\textquotesingle{}, \mbox{\hyperlink{namespacedmcudsa_ad9511fd1e85184ef912a83b982472f8e}{sample\+\_\+orientation\+\_\+inplane\+\_\+id}}), Map\+Item(\textquotesingle{}ND\textquotesingle{}, sample\+\_\+orientation\+\_\+\+ND\+\_\+id), Map\+Item(\textquotesingle{}arbitrary\textquotesingle{}, \mbox{\hyperlink{namespacedmcudsa_a05da6faee7f4551db9b3b0b77886f4bf}{sample\+\_\+orientation\+\_\+arbitrary\+\_\+id}}) \mbox{]}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+dmc\+UDSA (Uniaxially-\/\+Dominated Stress Analysis) allows one to track anisotropic properties along deformation due to the uniaxial tension or compression stress. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacedmcudsa_a64d4d88f0e716bd9f7dd97204f3f1794}\label{namespacedmcudsa_a64d4d88f0e716bd9f7dd97204f3f1794}} 
+\index{dmcudsa@{dmcudsa}!udsamodule\_createoutputfile@{udsamodule\_createoutputfile}}
+\index{udsamodule\_createoutputfile@{udsamodule\_createoutputfile}!dmcudsa@{dmcudsa}}
+\doxysubsubsection{\texorpdfstring{udsamodule\_createoutputfile()}{udsamodule\_createoutputfile()}}
+{\footnotesize\ttfamily integer function dmcudsa\+::udsamodule\+\_\+createoutputfile (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcudsa_1_1udsamodule}{udsamodule}}), intent(in)}]{this,  }\item[{integer, intent(out)}]{iounit,  }\item[{double precision, intent(in), optional}]{tag\+\_\+number }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacedmcudsa_a476991355286fa0152e5a9fcc4a9c573}\label{namespacedmcudsa_a476991355286fa0152e5a9fcc4a9c573}} 
+\index{dmcudsa@{dmcudsa}!udsamodule\_outputfile@{udsamodule\_outputfile}}
+\index{udsamodule\_outputfile@{udsamodule\_outputfile}!dmcudsa@{dmcudsa}}
+\doxysubsubsection{\texorpdfstring{udsamodule\_outputfile()}{udsamodule\_outputfile()}}
+{\footnotesize\ttfamily integer function dmcudsa\+::udsamodule\+\_\+outputfile (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcudsa_1_1udsamodule}{udsamodule}}), intent(in)}]{this,  }\item[{integer, intent(in)}]{iounit,  }\item[{type(\mbox{\hyperlink{structdmcudsa_1_1udsaoutputrecord}{udsaoutputrecord}}), intent(in), optional}]{data\+\_\+record,  }\item[{logical, intent(in), optional}]{header }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacedmcudsa_a096826dce1a3f60d2bae22f5be92b996}\label{namespacedmcudsa_a096826dce1a3f60d2bae22f5be92b996}} 
+\index{dmcudsa@{dmcudsa}!udsamodule\_outputprefix@{udsamodule\_outputprefix}}
+\index{udsamodule\_outputprefix@{udsamodule\_outputprefix}!dmcudsa@{dmcudsa}}
+\doxysubsubsection{\texorpdfstring{udsamodule\_outputprefix()}{udsamodule\_outputprefix()}}
+{\footnotesize\ttfamily character(len=max\+\_\+pathlen) function dmcudsa\+::udsamodule\+\_\+outputprefix (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcudsa_1_1udsamodule}{udsamodule}}), intent(in)}]{this,  }\item[{double precision, intent(in), optional}]{tag\+\_\+number }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacedmcudsa_acbf041621465b26800beae1736fdedc6}\label{namespacedmcudsa_acbf041621465b26800beae1736fdedc6}} 
+\index{dmcudsa@{dmcudsa}!udsamodule\_printconfig@{udsamodule\_printconfig}}
+\index{udsamodule\_printconfig@{udsamodule\_printconfig}!dmcudsa@{dmcudsa}}
+\doxysubsubsection{\texorpdfstring{udsamodule\_printconfig()}{udsamodule\_printconfig()}}
+{\footnotesize\ttfamily integer function dmcudsa\+::udsamodule\+\_\+printconfig (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcudsa_1_1udsamodule}{udsamodule}}), intent(in)}]{this,  }\item[{integer, intent(in)}]{outunit }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacedmcudsa_a061866b1b14e055c0fb076176e71945b}\label{namespacedmcudsa_a061866b1b14e055c0fb076176e71945b}} 
+\index{dmcudsa@{dmcudsa}!udsamodule\_readconfig@{udsamodule\_readconfig}}
+\index{udsamodule\_readconfig@{udsamodule\_readconfig}!dmcudsa@{dmcudsa}}
+\doxysubsubsection{\texorpdfstring{udsamodule\_readconfig()}{udsamodule\_readconfig()}}
+{\footnotesize\ttfamily integer function dmcudsa\+::udsamodule\+\_\+readconfig (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcudsa_1_1udsamodule}{udsamodule}}), intent(inout)}]{this,  }\item[{integer, intent(in)}]{cnfunit }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+Here is the call graph for this function\+:
+% FIG 0
+\mbox{\Hypertarget{namespacedmcudsa_aff0b1bf1305156cf66494f0f2fc024d0}\label{namespacedmcudsa_aff0b1bf1305156cf66494f0f2fc024d0}} 
+\index{dmcudsa@{dmcudsa}!udsamodule\_run@{udsamodule\_run}}
+\index{udsamodule\_run@{udsamodule\_run}!dmcudsa@{dmcudsa}}
+\doxysubsubsection{\texorpdfstring{udsamodule\_run()}{udsamodule\_run()}}
+{\footnotesize\ttfamily subroutine dmcudsa\+::udsamodule\+\_\+run (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcudsa_1_1udsamodule}{udsamodule}}), intent(inout)}]{this,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+Uniaxial stress state. Negative value denotes compressive state; non-\/negative values are used for tensile state.Here is the call graph for this function\+:
+% FIG 1
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacedmcudsa_a52927d807e0d262372991cf9c722f789}\label{namespacedmcudsa_a52927d807e0d262372991cf9c722f789}} 
+\index{dmcudsa@{dmcudsa}!compression\_state@{compression\_state}}
+\index{compression\_state@{compression\_state}!dmcudsa@{dmcudsa}}
+\doxysubsubsection{\texorpdfstring{compression\_state}{compression\_state}}
+{\footnotesize\ttfamily integer, parameter, private dmcudsa\+::compression\+\_\+state = 1\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacedmcudsa_a5fe32d0e869658edd5f6f1c01acb6b97}\label{namespacedmcudsa_a5fe32d0e869658edd5f6f1c01acb6b97}} 
+\index{dmcudsa@{dmcudsa}!n\_orientation\_types@{n\_orientation\_types}}
+\index{n\_orientation\_types@{n\_orientation\_types}!dmcudsa@{dmcudsa}}
+\doxysubsubsection{\texorpdfstring{n\_orientation\_types}{n\_orientation\_types}}
+{\footnotesize\ttfamily integer, parameter, private dmcudsa\+::n\+\_\+orientation\+\_\+types = 3\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacedmcudsa_a05da6faee7f4551db9b3b0b77886f4bf}\label{namespacedmcudsa_a05da6faee7f4551db9b3b0b77886f4bf}} 
+\index{dmcudsa@{dmcudsa}!sample\_orientation\_arbitrary\_id@{sample\_orientation\_arbitrary\_id}}
+\index{sample\_orientation\_arbitrary\_id@{sample\_orientation\_arbitrary\_id}!dmcudsa@{dmcudsa}}
+\doxysubsubsection{\texorpdfstring{sample\_orientation\_arbitrary\_id}{sample\_orientation\_arbitrary\_id}}
+{\footnotesize\ttfamily integer, parameter, private dmcudsa\+::sample\+\_\+orientation\+\_\+arbitrary\+\_\+id = 3\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacedmcudsa_ad9511fd1e85184ef912a83b982472f8e}\label{namespacedmcudsa_ad9511fd1e85184ef912a83b982472f8e}} 
+\index{dmcudsa@{dmcudsa}!sample\_orientation\_inplane\_id@{sample\_orientation\_inplane\_id}}
+\index{sample\_orientation\_inplane\_id@{sample\_orientation\_inplane\_id}!dmcudsa@{dmcudsa}}
+\doxysubsubsection{\texorpdfstring{sample\_orientation\_inplane\_id}{sample\_orientation\_inplane\_id}}
+{\footnotesize\ttfamily integer, parameter, private dmcudsa\+::sample\+\_\+orientation\+\_\+inplane\+\_\+id = 1\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacedmcudsa_ae9eb0c3061bc759b3ebdbfc33a4f9b32}\label{namespacedmcudsa_ae9eb0c3061bc759b3ebdbfc33a4f9b32}} 
+\index{dmcudsa@{dmcudsa}!sample\_orientation\_nd\_id@{sample\_orientation\_nd\_id}}
+\index{sample\_orientation\_nd\_id@{sample\_orientation\_nd\_id}!dmcudsa@{dmcudsa}}
+\doxysubsubsection{\texorpdfstring{sample\_orientation\_nd\_id}{sample\_orientation\_nd\_id}}
+{\footnotesize\ttfamily integer, parameter, private dmcudsa\+::sample\+\_\+orientation\+\_\+nd\+\_\+id = 2\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacedmcudsa_aa00b20674ef5b86e2391c90e5852f490}\label{namespacedmcudsa_aa00b20674ef5b86e2391c90e5852f490}} 
+\index{dmcudsa@{dmcudsa}!sample\_orientation\_types@{sample\_orientation\_types}}
+\index{sample\_orientation\_types@{sample\_orientation\_types}!dmcudsa@{dmcudsa}}
+\doxysubsubsection{\texorpdfstring{sample\_orientation\_types}{sample\_orientation\_types}}
+{\footnotesize\ttfamily type(mapitem), dimension(\mbox{\hyperlink{namespacedmcudsa_a5fe32d0e869658edd5f6f1c01acb6b97}{n\+\_\+orientation\+\_\+types}}), parameter, private dmcudsa\+::sample\+\_\+orientation\+\_\+types = \mbox{[} Map\+Item(\textquotesingle{}inplane\textquotesingle{}, \mbox{\hyperlink{namespacedmcudsa_ad9511fd1e85184ef912a83b982472f8e}{sample\+\_\+orientation\+\_\+inplane\+\_\+id}}), Map\+Item(\textquotesingle{}ND\textquotesingle{}, sample\+\_\+orientation\+\_\+\+ND\+\_\+id), Map\+Item(\textquotesingle{}arbitrary\textquotesingle{}, \mbox{\hyperlink{namespacedmcudsa_a05da6faee7f4551db9b3b0b77886f4bf}{sample\+\_\+orientation\+\_\+arbitrary\+\_\+id}}) \mbox{]}\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacedmcudsa_a3c48e2e363c407fb4fac95e47a73c0bd}\label{namespacedmcudsa_a3c48e2e363c407fb4fac95e47a73c0bd}} 
+\index{dmcudsa@{dmcudsa}!stress\_states@{stress\_states}}
+\index{stress\_states@{stress\_states}!dmcudsa@{dmcudsa}}
+\doxysubsubsection{\texorpdfstring{stress\_states}{stress\_states}}
+{\footnotesize\ttfamily type(mapitem), dimension(2), parameter dmcudsa\+::stress\+\_\+states = \mbox{[}Map\+Item(\textquotesingle{}compression\textquotesingle{}, \mbox{\hyperlink{namespacedmcudsa_a52927d807e0d262372991cf9c722f789}{compression\+\_\+state}}), Map\+Item(\textquotesingle{}tension\textquotesingle{}, \mbox{\hyperlink{namespacedmcudsa_ae7dc64478a9d8d3db46828f65e1d5cad}{tension\+\_\+state}})\mbox{]}\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacedmcudsa_ae7dc64478a9d8d3db46828f65e1d5cad}\label{namespacedmcudsa_ae7dc64478a9d8d3db46828f65e1d5cad}} 
+\index{dmcudsa@{dmcudsa}!tension\_state@{tension\_state}}
+\index{tension\_state@{tension\_state}!dmcudsa@{dmcudsa}}
+\doxysubsubsection{\texorpdfstring{tension\_state}{tension\_state}}
+{\footnotesize\ttfamily integer, parameter, private dmcudsa\+::tension\+\_\+state = 0\hspace{0.3cm}{\ttfamily [private]}}
+

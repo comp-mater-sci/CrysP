@@ -1,0 +1,48 @@
+\hypertarget{incrementation_control_8f90}{}\doxysection{lib\+Alam\+DMC/incrementation\+Control.f90 File Reference}
+\label{incrementation_control_8f90}\index{libAlamDMC/incrementationControl.f90@{libAlamDMC/incrementationControl.f90}}
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolvariables}{dmcincrementationcontrol\+::incrementationcontrolvariables}}
+\begin{DoxyCompactList}\small\item\em Basic control variables used in evolution of material state. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrol}{dmcincrementationcontrol\+::incrementationcontrol}}
+\item 
+type \mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolsettings}{dmcincrementationcontrol\+::incrementationcontrolsettings}}
+\begin{DoxyCompactList}\small\item\em Basic settings for incrementation control. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacedmcincrementationcontrol}{dmcincrementationcontrol}}
+\begin{DoxyCompactList}\small\item\em Types and procedures that control incrementation in stress-\/driven evolution of material state. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacedmcincrementationcontrol_a47b4b4ac320c852e6af6d2290dd30826}{dmcincrementationcontrol\+::incrementationcontrol\+\_\+update}} (this, v\+De, v\+Se, info)
+\item 
+subroutine \mbox{\hyperlink{namespacedmcincrementationcontrol_abe866936dcd94d3ec8e15b75ebb6794b}{dmcincrementationcontrol\+::incrementationcontrol\+\_\+initstep}} (this, info)
+\begin{DoxyCompactList}\small\item\em Clean increment-\/wise and step-\/wise control fields. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedmcincrementationcontrol_a4dd81742ddf14aaf4b0daa769d193ccc}{dmcincrementationcontrol\+::incrementationcontrolsettings\+\_\+read}} (this, cnfunit, info, allowed)
+\begin{DoxyCompactList}\small\item\em Read Incrementation\+Control\+Settings from configuration file. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacedmcincrementationcontrol_ad585a9609906b4e47b2078a358e0ccb5}{dmcincrementationcontrol\+::scalingnone}} = 0
+\item 
+integer, parameter \mbox{\hyperlink{namespacedmcincrementationcontrol_abd40115616da7789c700a76affe480ed}{dmcincrementationcontrol\+::scalingstraintensor}} = 1
+\item 
+integer, parameter \mbox{\hyperlink{namespacedmcincrementationcontrol_a9dfbdc0c8ee8cd1f1dc9babafc80c28f}{dmcincrementationcontrol\+::scalingstraintensorcomponent}} = 2
+\item 
+integer, parameter \mbox{\hyperlink{namespacedmcincrementationcontrol_a13f2462c30bb0e6f27c6effaf615e44e}{dmcincrementationcontrol\+::scalingplasticwork}} = 3
+\item 
+integer, parameter \mbox{\hyperlink{namespacedmcincrementationcontrol_a27e7b58eea969303ab8b9558da5dd5ec}{dmcincrementationcontrol\+::scalingstraintensorincrement}} = 4
+\item 
+integer, parameter \mbox{\hyperlink{namespacedmcincrementationcontrol_a41c167d835f9f99f6dee8a40fa9e4e52}{dmcincrementationcontrol\+::nscaling\+\_\+types}} = 4
+\item 
+type(mapitem), dimension(nscaling\+\_\+types) \mbox{\hyperlink{namespacedmcincrementationcontrol_af3cd2e4d21ce4bc7dd40aa3ef375a9fa}{dmcincrementationcontrol\+::scaling\+\_\+type\+\_\+names}} = \mbox{[} Map\+Item(\textquotesingle{}Strain\+Tensor\textquotesingle{}, scaling\+Strain\+Tensor), Map\+Item(\textquotesingle{}Strain\+Tensor\+Increment\textquotesingle{}, scaling\+Strain\+Tensor\+Increment), Map\+Item(\textquotesingle{}Strain\+Tensor\+Component\textquotesingle{}, scaling\+Strain\+Tensor\+Component), Map\+Item(\textquotesingle{}Plastic\+Work\textquotesingle{}, scaling\+Plastic\+Work)\mbox{]}
+\item 
+integer, parameter \mbox{\hyperlink{namespacedmcincrementationcontrol_a60435304e7dddec4e459ba2ce413450b}{dmcincrementationcontrol\+::incrementfixed}} = 0
+\item 
+integer, parameter \mbox{\hyperlink{namespacedmcincrementationcontrol_ac69e3a5961663658d3647b406709474d}{dmcincrementationcontrol\+::incrementauto}} = 1
+\item 
+integer, parameter \mbox{\hyperlink{namespacedmcincrementationcontrol_ae8045837f8d691c98446539ba300de87}{dmcincrementationcontrol\+::dmcic\+\_\+max\+\_\+increments}} = 1000
+\begin{DoxyCompactList}\small\item\em Default maximal number of increments along a deformation path. \end{DoxyCompactList}\end{DoxyCompactItemize}

@@ -1,0 +1,23 @@
+digraph "dmcbasicmodule::readaltayconfigsection"
+{
+ // INTERACTIVE_SVG=YES
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="dmcbasicmodule::readaltayconfigsection",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Read configuration of libaltay."];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid"];
+  Node2 [label="dmcbasicmodule::incurmicrostructurefile",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacedmcbasicmodule.html#a82739de27c92549304c26c10179f4b35",tooltip="Incur the location of the default microstructure file."];
+  Node2 -> Node3 [color="midnightblue",fontsize="10",style="solid"];
+  Node3 [label="dmcbasicmodule::getdatapath",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacedmcbasicmodule.html#a4909c877b565580d4388b8d33e1e4ede",tooltip="Determines location of data file in VEF distribution and checks its existence."];
+  Node3 -> Node4 [color="midnightblue",fontsize="10",style="solid"];
+  Node4 [label="dmcbasicmodule::getvefdatadir",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacedmcbasicmodule.html#ae707e232788d261c4b8810cff68305cc",tooltip="Deduce the path to VEF common data files."];
+  Node4 -> Node4 [color="midnightblue",fontsize="10",style="solid"];
+  Node1 -> Node5 [color="midnightblue",fontsize="10",style="solid"];
+  Node5 [label="dmcbasicmodule::incurslipsystemfile",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacedmcbasicmodule.html#a3327c62a90e23f8f127e385d1c693325",tooltip="Incur the location of default slip system file."];
+  Node5 -> Node3 [color="midnightblue",fontsize="10",style="solid"];
+  Node1 -> Node6 [color="midnightblue",fontsize="10",style="solid"];
+  Node6 [label="dmcbasicmodule::readhardeningsection",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacedmcbasicmodule.html#a67e8f775b221faa2fee06e5cf11b057b",tooltip="Read configuration of hardening model from configuration file."];
+  Node6 -> Node7 [color="midnightblue",fontsize="10",style="solid"];
+  Node7 [label="dmcbasicmodule::readpepbhardening",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacedmcbasicmodule.html#a4eca5c3a585757a4bc784ba84c310cb5",tooltip="Read configuration of PEBP hardening module."];
+}

@@ -1,0 +1,23 @@
+\hypertarget{deformation_driven_module_8f90}{}\doxysection{lib\+Alam\+DMC/deformation\+Driven\+Module.f90 File Reference}
+\label{deformation_driven_module_8f90}\index{libAlamDMC/deformationDrivenModule.f90@{libAlamDMC/deformationDrivenModule.f90}}
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structdmcdeformationdrivenmodule_1_1straindrivensolverconfig}{dmcdeformationdrivenmodule\+::straindrivensolverconfig}}
+\begin{DoxyCompactList}\small\item\em Configuration related to strain(-\/rate) driven simulations. Currently a placeholder. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structdmcdeformationdrivenmodule_1_1ptrstraindrivenstep}{dmcdeformationdrivenmodule\+::ptrstraindrivenstep}}
+\begin{DoxyCompactList}\small\item\em Wrapper around a polymorphic pointer to Strain\+Driven\+Step objects. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structdmcdeformationdrivenmodule_1_1deformationdrivenmodule}{dmcdeformationdrivenmodule\+::deformationdrivenmodule}}
+\begin{DoxyCompactList}\small\item\em Base class for strain-\/(rate) driven simulations modules. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacedmcdeformationdrivenmodule}{dmcdeformationdrivenmodule}}
+\begin{DoxyCompactList}\small\item\em Base class for modules implementing strain-\/(rate) driven simulations (such as ADPModule) \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+integer function \mbox{\hyperlink{namespacedmcdeformationdrivenmodule_a36ac6209698ddb9938584a1d7ca000ec}{dmcdeformationdrivenmodule\+::deformationdrivenmodule\+\_\+printconfig}} (this, outunit)
+\begin{DoxyCompactList}\small\item\em Print configuration to IO unit. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcdeformationdrivenmodule_afab7eabaea56255e3eca7ba49481fd14}{dmcdeformationdrivenmodule\+::deformationdrivenmodule\+\_\+readconfig}} (this, cnfunit)
+\begin{DoxyCompactList}\small\item\em Read configuration from IO unit. \end{DoxyCompactList}\end{DoxyCompactItemize}

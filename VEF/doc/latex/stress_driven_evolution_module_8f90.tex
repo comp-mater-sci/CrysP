@@ -1,0 +1,23 @@
+\hypertarget{stress_driven_evolution_module_8f90}{}\doxysection{lib\+Alam\+DMC/stress\+Driven\+Evolution\+Module.f90 File Reference}
+\label{stress_driven_evolution_module_8f90}\index{libAlamDMC/stressDrivenEvolutionModule.f90@{libAlamDMC/stressDrivenEvolutionModule.f90}}
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structdmcstressdrivenevolutionmodule_1_1evolutionoutput}{dmcstressdrivenevolutionmodule\+::evolutionoutput}}
+\item 
+type \mbox{\hyperlink{structdmcstressdrivenevolutionmodule_1_1stressdrivenevolutionmodule}{dmcstressdrivenevolutionmodule\+::stressdrivenevolutionmodule}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacedmcstressdrivenevolutionmodule}{dmcstressdrivenevolutionmodule}}
+\begin{DoxyCompactList}\small\item\em Implementation of a DMC computiational module that allows stress-\/driven evolution of material state. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+integer function \mbox{\hyperlink{namespacedmcstressdrivenevolutionmodule_a3b812f33daf919ed6ee389787a2d8518}{dmcstressdrivenevolutionmodule\+::stressdrivenevolutionmodule\+\_\+calculatestresspath}} (this, sigma, control, outputs, rotmat, incrementation\+\_\+control, use\+\_\+icv\+\_\+as\+\_\+is)
+\begin{DoxyCompactList}\small\item\em Main loop of incremental stress driven state evolution. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedmcstressdrivenevolutionmodule_a9f562d45ad31798366abb32a355e4489}{dmcstressdrivenevolutionmodule\+::stressdrivenevolutionmodule\+\_\+onincrementstart}} (this, control, icv, info)
+\begin{DoxyCompactList}\small\item\em Event handler in calculate\+Stress\+Path\+: invoked at the begining of each increment. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedmcstressdrivenevolutionmodule_a3c2a4b9be3064d3ce1e0616695cfe6ba}{dmcstressdrivenevolutionmodule\+::stressdrivenevolutionmodule\+\_\+onincrementend}} (this, control, icv, output\+\_\+record, info)
+\begin{DoxyCompactList}\small\item\em Event handler in calculate\+Stress\+Path\+: invoked at the end of each increment. \end{DoxyCompactList}\end{DoxyCompactItemize}

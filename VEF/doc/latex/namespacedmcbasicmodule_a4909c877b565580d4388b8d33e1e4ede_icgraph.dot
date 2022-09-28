@@ -1,0 +1,18 @@
+digraph "dmcbasicmodule::getdatapath"
+{
+ // INTERACTIVE_SVG=YES
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="dmcbasicmodule::getdatapath",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Determines location of data file in VEF distribution and checks its existence."];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node2 [label="dmcbasicmodule::incurmicrostructurefile",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacedmcbasicmodule.html#a82739de27c92549304c26c10179f4b35",tooltip="Incur the location of the default microstructure file."];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node3 [label="dmcbasicmodule::readaltayconfigsection",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacedmcbasicmodule.html#afbf4094988fefb69030a30dc069f0880",tooltip="Read configuration of libaltay."];
+  Node3 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node4 [label="dmcbasicmodule::basicmodule\l_readconfig",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacedmcbasicmodule.html#a3e22bc4f2359cb559de888a8d5bb489e",tooltip="read output and AlTay configuration sections"];
+  Node1 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node5 [label="dmcbasicmodule::incurslipsystemfile",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacedmcbasicmodule.html#a3327c62a90e23f8f127e385d1c693325",tooltip="Incur the location of default slip system file."];
+  Node5 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+}

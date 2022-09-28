@@ -1,0 +1,75 @@
+\hypertarget{namespacedmcyld}{}\doxysection{dmcyld Module Reference}
+\label{namespacedmcyld}\index{dmcyld@{dmcyld}}
+
+
+Yield locus calculations.  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structdmcyld_1_1yldmodule}{yldmodule}}
+\begin{DoxyCompactList}\small\item\em Class responsible for calculations of yield locus sections. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structdmcyld_1_1yldresult}{yldresult}}
+\begin{DoxyCompactList}\small\item\em Data that describe a single yield locus point. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+integer function \mbox{\hyperlink{namespacedmcyld_aac87e2500f7e78f3df3bfd310d6c7314}{yldmodule\+\_\+readconfig}} (this, cnfunit)
+\item 
+integer function \mbox{\hyperlink{namespacedmcyld_ac71985b767211981ee1dd4bcd00056b9}{yldmodule\+\_\+printconfig}} (this, outunit)
+\item 
+subroutine \mbox{\hyperlink{namespacedmcyld_ad2b0de8a083ba0db614c918b83e64b8c}{yldmodule\+\_\+run}} (this, info)
+\item 
+subroutine \mbox{\hyperlink{namespacedmcyld_ab91f8f9c475573cd466212ffc093af5c}{writeyldresults}} (ounit, res, info, write\+\_\+header)
+\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacedmcyld_aa13847fb228678f143ab55e87996fbe8}{nbase}} = 3
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Yield locus calculations. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacedmcyld_ab91f8f9c475573cd466212ffc093af5c}\label{namespacedmcyld_ab91f8f9c475573cd466212ffc093af5c}} 
+\index{dmcyld@{dmcyld}!writeyldresults@{writeyldresults}}
+\index{writeyldresults@{writeyldresults}!dmcyld@{dmcyld}}
+\doxysubsubsection{\texorpdfstring{writeyldresults()}{writeyldresults()}}
+{\footnotesize\ttfamily subroutine dmcyld\+::writeyldresults (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{ounit,  }\item[{type(\mbox{\hyperlink{structdmcyld_1_1yldresult}{yldresult}}), dimension(\+:), intent(in)}]{res,  }\item[{integer, intent(out)}]{info,  }\item[{logical, intent(in), optional}]{write\+\_\+header }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+Here is the caller graph for this function\+:
+% FIG 0
+\mbox{\Hypertarget{namespacedmcyld_ac71985b767211981ee1dd4bcd00056b9}\label{namespacedmcyld_ac71985b767211981ee1dd4bcd00056b9}} 
+\index{dmcyld@{dmcyld}!yldmodule\_printconfig@{yldmodule\_printconfig}}
+\index{yldmodule\_printconfig@{yldmodule\_printconfig}!dmcyld@{dmcyld}}
+\doxysubsubsection{\texorpdfstring{yldmodule\_printconfig()}{yldmodule\_printconfig()}}
+{\footnotesize\ttfamily integer function dmcyld\+::yldmodule\+\_\+printconfig (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcyld_1_1yldmodule}{yldmodule}}), intent(in)}]{this,  }\item[{integer, intent(in)}]{outunit }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacedmcyld_aac87e2500f7e78f3df3bfd310d6c7314}\label{namespacedmcyld_aac87e2500f7e78f3df3bfd310d6c7314}} 
+\index{dmcyld@{dmcyld}!yldmodule\_readconfig@{yldmodule\_readconfig}}
+\index{yldmodule\_readconfig@{yldmodule\_readconfig}!dmcyld@{dmcyld}}
+\doxysubsubsection{\texorpdfstring{yldmodule\_readconfig()}{yldmodule\_readconfig()}}
+{\footnotesize\ttfamily integer function dmcyld\+::yldmodule\+\_\+readconfig (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcyld_1_1yldmodule}{yldmodule}}), intent(inout)}]{this,  }\item[{integer, intent(in)}]{cnfunit }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+Here is the call graph for this function\+:
+% FIG 1
+\mbox{\Hypertarget{namespacedmcyld_ad2b0de8a083ba0db614c918b83e64b8c}\label{namespacedmcyld_ad2b0de8a083ba0db614c918b83e64b8c}} 
+\index{dmcyld@{dmcyld}!yldmodule\_run@{yldmodule\_run}}
+\index{yldmodule\_run@{yldmodule\_run}!dmcyld@{dmcyld}}
+\doxysubsubsection{\texorpdfstring{yldmodule\_run()}{yldmodule\_run()}}
+{\footnotesize\ttfamily subroutine dmcyld\+::yldmodule\+\_\+run (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcyld_1_1yldmodule}{yldmodule}}), intent(inout)}]{this,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+Here is the call graph for this function\+:
+% FIG 2
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacedmcyld_aa13847fb228678f143ab55e87996fbe8}\label{namespacedmcyld_aa13847fb228678f143ab55e87996fbe8}} 
+\index{dmcyld@{dmcyld}!nbase@{nbase}}
+\index{nbase@{nbase}!dmcyld@{dmcyld}}
+\doxysubsubsection{\texorpdfstring{nbase}{nbase}}
+{\footnotesize\ttfamily integer, parameter dmcyld\+::nbase = 3\hspace{0.3cm}{\ttfamily [private]}}
+

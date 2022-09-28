@@ -1,0 +1,83 @@
+\hypertarget{structalameval_1_1normalizedv5dcomp}{}\doxysection{alameval\+::normalizedv5dcomp Type Reference}
+\label{structalameval_1_1normalizedv5dcomp}\index{alameval::normalizedv5dcomp@{alameval::normalizedv5dcomp}}
+
+
+Objective function\+: difference between the searched-\/for normalized stress and the normalized stress given by the multilevel model.  
+
+
+
+
+Inheritance diagram for alameval\+::normalizedv5dcomp\+:
+% FIG 0
+
+
+Collaboration diagram for alameval\+::normalizedv5dcomp\+:
+% FIG 1
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+procedure, pass(this) \mbox{\hyperlink{structalameval_1_1normalizedv5dcomp_afbb994c511ab655bc4094afcf6731600}{objectiveeval}} =$>$ \mbox{\hyperlink{namespacealameval_a8057fdc0d87bdda57aebff6a613646c6}{objectiveeval\+\_\+nv5dcomp}}
+\begin{DoxyCompactList}\small\item\em Implementation of virtual method defined in Objective\+Function. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+double precision, dimension(alameval\+\_\+vsd\+\_\+dim) \mbox{\hyperlink{structalameval_1_1normalizedv5dcomp_a5d60915abc4829fda3e0356c4de07638}{vsn}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Normalized stress vector. \end{DoxyCompactList}\item 
+double precision, dimension(alameval\+\_\+vsd\+\_\+dim) \mbox{\hyperlink{structalameval_1_1normalizedv5dcomp_a23502e3f85ea9851179fe4f486d298c5}{vsml}} = 0.D0
+\begin{DoxyCompactList}\small\item\em Multilevel prediction of stress from the previous call. \end{DoxyCompactList}\item 
+logical \mbox{\hyperlink{structalameval_1_1normalizedv5dcomp_aed2c6b96ed23b07c010e1661ab5c7aff}{full\+\_\+model}} = .false.
+\begin{DoxyCompactList}\small\item\em Flag\+: request for simulation outputs other than just deviatoric stress. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Objective function\+: difference between the searched-\/for normalized stress and the normalized stress given by the multilevel model. 
+
+\doxysubsection{Member Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{structalameval_1_1normalizedv5dcomp_afbb994c511ab655bc4094afcf6731600}\label{structalameval_1_1normalizedv5dcomp_afbb994c511ab655bc4094afcf6731600}} 
+\index{alameval::normalizedv5dcomp@{alameval::normalizedv5dcomp}!objectiveeval@{objectiveeval}}
+\index{objectiveeval@{objectiveeval}!alameval::normalizedv5dcomp@{alameval::normalizedv5dcomp}}
+\doxysubsubsection{\texorpdfstring{objectiveeval()}{objectiveeval()}}
+{\footnotesize\ttfamily procedure, pass(this) alameval\+::normalizedv5dcomp\+::objectiveeval}
+
+
+
+Implementation of virtual method defined in Objective\+Function. 
+
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structalameval_1_1normalizedv5dcomp_aed2c6b96ed23b07c010e1661ab5c7aff}\label{structalameval_1_1normalizedv5dcomp_aed2c6b96ed23b07c010e1661ab5c7aff}} 
+\index{alameval::normalizedv5dcomp@{alameval::normalizedv5dcomp}!full\_model@{full\_model}}
+\index{full\_model@{full\_model}!alameval::normalizedv5dcomp@{alameval::normalizedv5dcomp}}
+\doxysubsubsection{\texorpdfstring{full\_model}{full\_model}}
+{\footnotesize\ttfamily logical alameval\+::normalizedv5dcomp\+::full\+\_\+model = .false.}
+
+
+
+Flag\+: request for simulation outputs other than just deviatoric stress. 
+
+The full model is not needed for calculation of stresses. \mbox{\Hypertarget{structalameval_1_1normalizedv5dcomp_a23502e3f85ea9851179fe4f486d298c5}\label{structalameval_1_1normalizedv5dcomp_a23502e3f85ea9851179fe4f486d298c5}} 
+\index{alameval::normalizedv5dcomp@{alameval::normalizedv5dcomp}!vsml@{vsml}}
+\index{vsml@{vsml}!alameval::normalizedv5dcomp@{alameval::normalizedv5dcomp}}
+\doxysubsubsection{\texorpdfstring{vsml}{vsml}}
+{\footnotesize\ttfamily double precision, dimension(alameval\+\_\+vsd\+\_\+dim) alameval\+::normalizedv5dcomp\+::vsml = 0.D0}
+
+
+
+Multilevel prediction of stress from the previous call. 
+
+\mbox{\Hypertarget{structalameval_1_1normalizedv5dcomp_a5d60915abc4829fda3e0356c4de07638}\label{structalameval_1_1normalizedv5dcomp_a5d60915abc4829fda3e0356c4de07638}} 
+\index{alameval::normalizedv5dcomp@{alameval::normalizedv5dcomp}!vsn@{vsn}}
+\index{vsn@{vsn}!alameval::normalizedv5dcomp@{alameval::normalizedv5dcomp}}
+\doxysubsubsection{\texorpdfstring{vsn}{vsn}}
+{\footnotesize\ttfamily double precision, dimension(alameval\+\_\+vsd\+\_\+dim) alameval\+::normalizedv5dcomp\+::vsn = 0.D0}
+
+
+
+Normalized stress vector. 
+
+
+
+The documentation for this type was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+lib\+Alam\+YLP/\mbox{\hyperlink{alam_eval_8f90}{alam\+Eval.\+f90}}\end{DoxyCompactItemize}

@@ -1,0 +1,82 @@
+\hypertarget{namespacedmcstressdrivenevolutionmodule}{}\doxysection{dmcstressdrivenevolutionmodule Module Reference}
+\label{namespacedmcstressdrivenevolutionmodule}\index{dmcstressdrivenevolutionmodule@{dmcstressdrivenevolutionmodule}}
+
+
+Implementation of a DMC computiational module that allows stress-\/driven evolution of material state.  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structdmcstressdrivenevolutionmodule_1_1evolutionoutput}{evolutionoutput}}
+\item 
+type \mbox{\hyperlink{structdmcstressdrivenevolutionmodule_1_1stressdrivenevolutionmodule}{stressdrivenevolutionmodule}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+integer function \mbox{\hyperlink{namespacedmcstressdrivenevolutionmodule_a3b812f33daf919ed6ee389787a2d8518}{stressdrivenevolutionmodule\+\_\+calculatestresspath}} (this, sigma, control, outputs, rotmat, incrementation\+\_\+control, use\+\_\+icv\+\_\+as\+\_\+is)
+\begin{DoxyCompactList}\small\item\em Main loop of incremental stress driven state evolution. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedmcstressdrivenevolutionmodule_a9f562d45ad31798366abb32a355e4489}{stressdrivenevolutionmodule\+\_\+onincrementstart}} (this, control, icv, info)
+\begin{DoxyCompactList}\small\item\em Event handler in calculate\+Stress\+Path\+: invoked at the begining of each increment. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacedmcstressdrivenevolutionmodule_a3c2a4b9be3064d3ce1e0616695cfe6ba}{stressdrivenevolutionmodule\+\_\+onincrementend}} (this, control, icv, output\+\_\+record, info)
+\begin{DoxyCompactList}\small\item\em Event handler in calculate\+Stress\+Path\+: invoked at the end of each increment. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Implementation of a DMC computiational module that allows stress-\/driven evolution of material state. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacedmcstressdrivenevolutionmodule_a3b812f33daf919ed6ee389787a2d8518}\label{namespacedmcstressdrivenevolutionmodule_a3b812f33daf919ed6ee389787a2d8518}} 
+\index{dmcstressdrivenevolutionmodule@{dmcstressdrivenevolutionmodule}!stressdrivenevolutionmodule\_calculatestresspath@{stressdrivenevolutionmodule\_calculatestresspath}}
+\index{stressdrivenevolutionmodule\_calculatestresspath@{stressdrivenevolutionmodule\_calculatestresspath}!dmcstressdrivenevolutionmodule@{dmcstressdrivenevolutionmodule}}
+\doxysubsubsection{\texorpdfstring{stressdrivenevolutionmodule\_calculatestresspath()}{stressdrivenevolutionmodule\_calculatestresspath()}}
+{\footnotesize\ttfamily integer function dmcstressdrivenevolutionmodule\+::stressdrivenevolutionmodule\+\_\+calculatestresspath (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstressdrivenevolutionmodule_1_1stressdrivenevolutionmodule}{stressdrivenevolutionmodule}}), intent(inout)}]{this,  }\item[{type(srtensor), intent(in)}]{sigma,  }\item[{class(\mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolsettings}{incrementationcontrolsettings}}), intent(inout)}]{control,  }\item[{type(\mbox{\hyperlink{structdmcstressdrivenevolutionmodule_1_1evolutionoutput}{evolutionoutput}}), intent(out)}]{outputs,  }\item[{double precision, dimension(rot\+\_\+matrix\+\_\+dim,rot\+\_\+matrix\+\_\+dim), intent(in), optional}]{rotmat,  }\item[{type(\mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrol}{incrementationcontrol}}), intent(inout), optional}]{incrementation\+\_\+control,  }\item[{logical, intent(in), optional}]{use\+\_\+icv\+\_\+as\+\_\+is }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Main loop of incremental stress driven state evolution. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em sigma} & Imposed stress tensor \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em control} & Settings that control the incrementation process \\
+\hline
+\mbox{\texttt{ out}}  & {\em outputs} & Results if the incrementation procedure.\\
+\hline
+\end{DoxyParams}
+On successful exit it will include n+1 entries, where n is the number of increments needed to reach the end of the step. The leading n contain complete results (search for strain rate AND strain incrementation), while the last one just the result of the search for the strain rate. Therefore, the last entry corresponds to the state of the material at the end of the step. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em rotmat} & Rotation matrix. Relevant only if scaling\+Strain\+Tensor\+Component is used \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em incrementation\+\_\+control} & Incrementation control variables to override the defaults.\\
+\hline
+\end{DoxyParams}
+Typical use is to inherit some control variables (the totals) from a previous call to this function. On exit, the parameter will contain updated control variables. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em use\+\_\+icv\+\_\+as\+\_\+is} & Suppress re-\/initialization of step-\/wide and increment-\/wide incrementation control variables (default\+: false) \\
+\hline
+\end{DoxyParams}
+Here is the call graph for this function\+:
+% FIG 0
+\mbox{\Hypertarget{namespacedmcstressdrivenevolutionmodule_a3c2a4b9be3064d3ce1e0616695cfe6ba}\label{namespacedmcstressdrivenevolutionmodule_a3c2a4b9be3064d3ce1e0616695cfe6ba}} 
+\index{dmcstressdrivenevolutionmodule@{dmcstressdrivenevolutionmodule}!stressdrivenevolutionmodule\_onincrementend@{stressdrivenevolutionmodule\_onincrementend}}
+\index{stressdrivenevolutionmodule\_onincrementend@{stressdrivenevolutionmodule\_onincrementend}!dmcstressdrivenevolutionmodule@{dmcstressdrivenevolutionmodule}}
+\doxysubsubsection{\texorpdfstring{stressdrivenevolutionmodule\_onincrementend()}{stressdrivenevolutionmodule\_onincrementend()}}
+{\footnotesize\ttfamily subroutine dmcstressdrivenevolutionmodule\+::stressdrivenevolutionmodule\+\_\+onincrementend (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstressdrivenevolutionmodule_1_1stressdrivenevolutionmodule}{stressdrivenevolutionmodule}}), intent(inout)}]{this,  }\item[{class(\mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolsettings}{incrementationcontrolsettings}}), intent(inout)}]{control,  }\item[{class(\mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrol}{incrementationcontrol}}), intent(inout)}]{icv,  }\item[{type(\mbox{\hyperlink{structdmcevolutionoutputrecord_1_1incrementoutputrecord}{incrementoutputrecord}}), intent(in)}]{output\+\_\+record,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Event handler in calculate\+Stress\+Path\+: invoked at the end of each increment. 
+
+\mbox{\Hypertarget{namespacedmcstressdrivenevolutionmodule_a9f562d45ad31798366abb32a355e4489}\label{namespacedmcstressdrivenevolutionmodule_a9f562d45ad31798366abb32a355e4489}} 
+\index{dmcstressdrivenevolutionmodule@{dmcstressdrivenevolutionmodule}!stressdrivenevolutionmodule\_onincrementstart@{stressdrivenevolutionmodule\_onincrementstart}}
+\index{stressdrivenevolutionmodule\_onincrementstart@{stressdrivenevolutionmodule\_onincrementstart}!dmcstressdrivenevolutionmodule@{dmcstressdrivenevolutionmodule}}
+\doxysubsubsection{\texorpdfstring{stressdrivenevolutionmodule\_onincrementstart()}{stressdrivenevolutionmodule\_onincrementstart()}}
+{\footnotesize\ttfamily subroutine dmcstressdrivenevolutionmodule\+::stressdrivenevolutionmodule\+\_\+onincrementstart (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstressdrivenevolutionmodule_1_1stressdrivenevolutionmodule}{stressdrivenevolutionmodule}}), intent(inout)}]{this,  }\item[{class(\mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrolsettings}{incrementationcontrolsettings}}), intent(inout)}]{control,  }\item[{class(\mbox{\hyperlink{structdmcincrementationcontrol_1_1incrementationcontrol}{incrementationcontrol}}), intent(inout)}]{icv,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Event handler in calculate\+Stress\+Path\+: invoked at the begining of each increment. 
+

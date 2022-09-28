@@ -1,0 +1,48 @@
+\hypertarget{dmc_u_d_s_a_8f90}{}\doxysection{alam\+DMC/dmc\+UDSA.f90 File Reference}
+\label{dmc_u_d_s_a_8f90}\index{alamDMC/dmcUDSA.f90@{alamDMC/dmcUDSA.f90}}
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structdmcudsa_1_1udsamodule}{dmcudsa\+::udsamodule}}
+\item 
+type \mbox{\hyperlink{structdmcudsa_1_1udsaoutputrecord}{dmcudsa\+::udsaoutputrecord}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacedmcudsa}{dmcudsa}}
+\begin{DoxyCompactList}\small\item\em dmc\+UDSA (Uniaxially-\/\+Dominated Stress Analysis) allows one to track anisotropic properties along deformation due to the uniaxial tension or compression stress. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+integer function \mbox{\hyperlink{namespacedmcudsa_a061866b1b14e055c0fb076176e71945b}{dmcudsa\+::udsamodule\+\_\+readconfig}} (this, cnfunit)
+\item 
+integer function \mbox{\hyperlink{namespacedmcudsa_acbf041621465b26800beae1736fdedc6}{dmcudsa\+::udsamodule\+\_\+printconfig}} (this, outunit)
+\item 
+subroutine \mbox{\hyperlink{namespacedmcudsa_aff0b1bf1305156cf66494f0f2fc024d0}{dmcudsa\+::udsamodule\+\_\+run}} (this, info)
+\item 
+integer function \mbox{\hyperlink{namespacedmcudsa_a64d4d88f0e716bd9f7dd97204f3f1794}{dmcudsa\+::udsamodule\+\_\+createoutputfile}} (this, iounit, tag\+\_\+number)
+\item 
+integer function \mbox{\hyperlink{namespacedmcudsa_a476991355286fa0152e5a9fcc4a9c573}{dmcudsa\+::udsamodule\+\_\+outputfile}} (this, iounit, data\+\_\+record, header)
+\item 
+character(len=max\+\_\+pathlen) function \mbox{\hyperlink{namespacedmcudsa_a096826dce1a3f60d2bae22f5be92b996}{dmcudsa\+::udsamodule\+\_\+outputprefix}} (this, tag\+\_\+number)
+\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter, private \mbox{\hyperlink{namespacedmcudsa_ae7dc64478a9d8d3db46828f65e1d5cad}{dmcudsa\+::tension\+\_\+state}} = 0
+\item 
+integer, parameter, private \mbox{\hyperlink{namespacedmcudsa_a52927d807e0d262372991cf9c722f789}{dmcudsa\+::compression\+\_\+state}} = 1
+\item 
+type(mapitem), dimension(2), parameter \mbox{\hyperlink{namespacedmcudsa_a3c48e2e363c407fb4fac95e47a73c0bd}{dmcudsa\+::stress\+\_\+states}} = \mbox{[}Map\+Item(\textquotesingle{}compression\textquotesingle{}, compression\+\_\+state), Map\+Item(\textquotesingle{}tension\textquotesingle{}, tension\+\_\+state)\mbox{]}
+\item 
+integer, parameter, private \mbox{\hyperlink{namespacedmcudsa_ad9511fd1e85184ef912a83b982472f8e}{dmcudsa\+::sample\+\_\+orientation\+\_\+inplane\+\_\+id}} = 1
+\item 
+integer, parameter, private \mbox{\hyperlink{namespacedmcudsa_ae9eb0c3061bc759b3ebdbfc33a4f9b32}{dmcudsa\+::sample\+\_\+orientation\+\_\+nd\+\_\+id}} = 2
+\item 
+integer, parameter, private \mbox{\hyperlink{namespacedmcudsa_a05da6faee7f4551db9b3b0b77886f4bf}{dmcudsa\+::sample\+\_\+orientation\+\_\+arbitrary\+\_\+id}} = 3
+\item 
+integer, parameter, private \mbox{\hyperlink{namespacedmcudsa_a5fe32d0e869658edd5f6f1c01acb6b97}{dmcudsa\+::n\+\_\+orientation\+\_\+types}} = 3
+\item 
+type(mapitem), dimension(n\+\_\+orientation\+\_\+types), parameter, private \mbox{\hyperlink{namespacedmcudsa_aa00b20674ef5b86e2391c90e5852f490}{dmcudsa\+::sample\+\_\+orientation\+\_\+types}} = \mbox{[} Map\+Item(\textquotesingle{}inplane\textquotesingle{}, sample\+\_\+orientation\+\_\+inplane\+\_\+id), Map\+Item(\textquotesingle{}ND\textquotesingle{}, sample\+\_\+orientation\+\_\+\+ND\+\_\+id), Map\+Item(\textquotesingle{}arbitrary\textquotesingle{}, sample\+\_\+orientation\+\_\+arbitrary\+\_\+id) \mbox{]}
+\end{DoxyCompactItemize}

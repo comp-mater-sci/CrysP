@@ -1,0 +1,142 @@
+\hypertarget{namespacedmcstraindrivenstep}{}\doxysection{dmcstraindrivenstep Module Reference}
+\label{namespacedmcstraindrivenstep}\index{dmcstraindrivenstep@{dmcstraindrivenstep}}
+
+
+Strain-\/(rate) driven step.  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structdmcstraindrivenstep_1_1incrementoutput}{incrementoutput}}
+\begin{DoxyCompactList}\small\item\em Outputs collected per increment. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structdmcstraindrivenstep_1_1stepoutput}{stepoutput}}
+\begin{DoxyCompactList}\small\item\em Outputs collected per step. \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{structdmcstraindrivenstep_1_1straindrivenfixedstep}{straindrivenfixedstep}}
+\begin{DoxyCompactList}\small\item\em Constructors of Strain\+Driven\+Fixed\+Step. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structdmcstraindrivenstep_1_1straindrivenstep}{straindrivenstep}}
+\begin{DoxyCompactList}\small\item\em A strain-\/(rate) driven step. \end{DoxyCompactList}\item 
+type \mbox{\hyperlink{structdmcstraindrivenstep_1_1straindrivenstepconfig}{straindrivenstepconfig}}
+\begin{DoxyCompactList}\small\item\em Base class for deformation rate driven steps. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+pure type(\mbox{\hyperlink{structdmcstraindrivenstep_1_1straindrivenfixedstep}{straindrivenfixedstep}}) function \mbox{\hyperlink{namespacedmcstraindrivenstep_a8330527d41e8c7135ef0026a288dcadd}{straindrivenfixedstep\+\_\+init\+\_\+nincrements}} (n\+\_\+increments)
+\begin{DoxyCompactList}\small\item\em Constructor of Strain\+Driven\+Fixed\+Step. It takes number of increments as argument. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcstraindrivenstep_a75e509925bfbac3909e3f36d52065975}{straindrivenstep\+\_\+setup}} (this)
+\begin{DoxyCompactList}\small\item\em Set up Strain\+Driven\+Step. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcstraindrivenstep_aa6e41e7f439a852518935140860bdc53}{straindrivenstep\+\_\+execute}} (this, step\+\_\+output)
+\begin{DoxyCompactList}\small\item\em Execute Strain\+Driven\+Step. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcstraindrivenstep_a80a5635c4b16d192a61e68a8c6397b96}{straindrivenstep\+\_\+readconfig}} (this, cnfunit)
+\begin{DoxyCompactList}\small\item\em Read configuration of Strain\+Driven\+Step from config IO unit. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcstraindrivenstep_a585ed9268548b4f847db411fbf9d767e}{straindrivenfixedstep\+\_\+setup}} (this)
+\begin{DoxyCompactList}\small\item\em Set up strain driven fixed step. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcstraindrivenstep_a9dce30216dca884c9e1d7ec7f2090441}{straindrivenfixedstep\+\_\+execute}} (this, step\+\_\+output)
+\begin{DoxyCompactList}\small\item\em Execute step and store the output in step\+\_\+output. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcstraindrivenstep_a4be679f5a21a28611fb586dc2944757d}{straindrivenfixedstep\+\_\+readconfig}} (this, cnfunit)
+\begin{DoxyCompactList}\small\item\em Read configuration of substepping from the config IO unit. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcstraindrivenstep_ae059075d07f5428202adf92213b0f814}{stepoutput\+\_\+collect}} (this, n\+\_\+increments)
+\begin{DoxyCompactList}\small\item\em Collect the outputs from the Al\+Tay simulation. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Strain-\/(rate) driven step. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacedmcstraindrivenstep_ae059075d07f5428202adf92213b0f814}\label{namespacedmcstraindrivenstep_ae059075d07f5428202adf92213b0f814}} 
+\index{dmcstraindrivenstep@{dmcstraindrivenstep}!stepoutput\_collect@{stepoutput\_collect}}
+\index{stepoutput\_collect@{stepoutput\_collect}!dmcstraindrivenstep@{dmcstraindrivenstep}}
+\doxysubsubsection{\texorpdfstring{stepoutput\_collect()}{stepoutput\_collect()}}
+{\footnotesize\ttfamily integer function dmcstraindrivenstep\+::stepoutput\+\_\+collect (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstraindrivenstep_1_1stepoutput}{stepoutput}}), intent(inout)}]{this,  }\item[{integer, intent(in)}]{n\+\_\+increments }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Collect the outputs from the Al\+Tay simulation. 
+
+\mbox{\Hypertarget{namespacedmcstraindrivenstep_a9dce30216dca884c9e1d7ec7f2090441}\label{namespacedmcstraindrivenstep_a9dce30216dca884c9e1d7ec7f2090441}} 
+\index{dmcstraindrivenstep@{dmcstraindrivenstep}!straindrivenfixedstep\_execute@{straindrivenfixedstep\_execute}}
+\index{straindrivenfixedstep\_execute@{straindrivenfixedstep\_execute}!dmcstraindrivenstep@{dmcstraindrivenstep}}
+\doxysubsubsection{\texorpdfstring{straindrivenfixedstep\_execute()}{straindrivenfixedstep\_execute()}}
+{\footnotesize\ttfamily integer function dmcstraindrivenstep\+::straindrivenfixedstep\+\_\+execute (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstraindrivenstep_1_1straindrivenfixedstep}{straindrivenfixedstep}}), intent(inout)}]{this,  }\item[{class(\mbox{\hyperlink{structdmcstraindrivenstep_1_1stepoutput}{stepoutput}}), intent(out)}]{step\+\_\+output }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Execute step and store the output in step\+\_\+output. 
+
+Returns cri\+Success on success. \mbox{\Hypertarget{namespacedmcstraindrivenstep_a8330527d41e8c7135ef0026a288dcadd}\label{namespacedmcstraindrivenstep_a8330527d41e8c7135ef0026a288dcadd}} 
+\index{dmcstraindrivenstep@{dmcstraindrivenstep}!straindrivenfixedstep\_init\_nincrements@{straindrivenfixedstep\_init\_nincrements}}
+\index{straindrivenfixedstep\_init\_nincrements@{straindrivenfixedstep\_init\_nincrements}!dmcstraindrivenstep@{dmcstraindrivenstep}}
+\doxysubsubsection{\texorpdfstring{straindrivenfixedstep\_init\_nincrements()}{straindrivenfixedstep\_init\_nincrements()}}
+{\footnotesize\ttfamily pure type(\mbox{\hyperlink{structdmcstraindrivenstep_1_1straindrivenfixedstep}{straindrivenfixedstep}}) function dmcstraindrivenstep\+::straindrivenfixedstep\+\_\+init\+\_\+nincrements (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{n\+\_\+increments }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Constructor of Strain\+Driven\+Fixed\+Step. It takes number of increments as argument. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em n\+\_\+increments} & Number of increments. \\
+\hline
+\end{DoxyParams}
+Here is the caller graph for this function\+:
+% FIG 0
+\mbox{\Hypertarget{namespacedmcstraindrivenstep_a4be679f5a21a28611fb586dc2944757d}\label{namespacedmcstraindrivenstep_a4be679f5a21a28611fb586dc2944757d}} 
+\index{dmcstraindrivenstep@{dmcstraindrivenstep}!straindrivenfixedstep\_readconfig@{straindrivenfixedstep\_readconfig}}
+\index{straindrivenfixedstep\_readconfig@{straindrivenfixedstep\_readconfig}!dmcstraindrivenstep@{dmcstraindrivenstep}}
+\doxysubsubsection{\texorpdfstring{straindrivenfixedstep\_readconfig()}{straindrivenfixedstep\_readconfig()}}
+{\footnotesize\ttfamily integer function dmcstraindrivenstep\+::straindrivenfixedstep\+\_\+readconfig (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstraindrivenstep_1_1straindrivenfixedstep}{straindrivenfixedstep}}), intent(inout)}]{this,  }\item[{integer, intent(in)}]{cnfunit }\end{DoxyParamCaption})}
+
+
+
+Read configuration of substepping from the config IO unit. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em cnfunit} & IO unit \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacedmcstraindrivenstep_a585ed9268548b4f847db411fbf9d767e}\label{namespacedmcstraindrivenstep_a585ed9268548b4f847db411fbf9d767e}} 
+\index{dmcstraindrivenstep@{dmcstraindrivenstep}!straindrivenfixedstep\_setup@{straindrivenfixedstep\_setup}}
+\index{straindrivenfixedstep\_setup@{straindrivenfixedstep\_setup}!dmcstraindrivenstep@{dmcstraindrivenstep}}
+\doxysubsubsection{\texorpdfstring{straindrivenfixedstep\_setup()}{straindrivenfixedstep\_setup()}}
+{\footnotesize\ttfamily integer function dmcstraindrivenstep\+::straindrivenfixedstep\+\_\+setup (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstraindrivenstep_1_1straindrivenfixedstep}{straindrivenfixedstep}}), intent(inout)}]{this }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Set up strain driven fixed step. 
+
+Returns cri\+Success on success. \mbox{\Hypertarget{namespacedmcstraindrivenstep_aa6e41e7f439a852518935140860bdc53}\label{namespacedmcstraindrivenstep_aa6e41e7f439a852518935140860bdc53}} 
+\index{dmcstraindrivenstep@{dmcstraindrivenstep}!straindrivenstep\_execute@{straindrivenstep\_execute}}
+\index{straindrivenstep\_execute@{straindrivenstep\_execute}!dmcstraindrivenstep@{dmcstraindrivenstep}}
+\doxysubsubsection{\texorpdfstring{straindrivenstep\_execute()}{straindrivenstep\_execute()}}
+{\footnotesize\ttfamily integer function dmcstraindrivenstep\+::straindrivenstep\+\_\+execute (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstraindrivenstep_1_1straindrivenstep}{straindrivenstep}}), intent(inout)}]{this,  }\item[{class(\mbox{\hyperlink{structdmcstraindrivenstep_1_1stepoutput}{stepoutput}}), intent(out)}]{step\+\_\+output }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Execute Strain\+Driven\+Step. 
+
+It is a placeholder method, it always returns cri\+Error. \mbox{\Hypertarget{namespacedmcstraindrivenstep_a80a5635c4b16d192a61e68a8c6397b96}\label{namespacedmcstraindrivenstep_a80a5635c4b16d192a61e68a8c6397b96}} 
+\index{dmcstraindrivenstep@{dmcstraindrivenstep}!straindrivenstep\_readconfig@{straindrivenstep\_readconfig}}
+\index{straindrivenstep\_readconfig@{straindrivenstep\_readconfig}!dmcstraindrivenstep@{dmcstraindrivenstep}}
+\doxysubsubsection{\texorpdfstring{straindrivenstep\_readconfig()}{straindrivenstep\_readconfig()}}
+{\footnotesize\ttfamily integer function dmcstraindrivenstep\+::straindrivenstep\+\_\+readconfig (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstraindrivenstep_1_1straindrivenstep}{straindrivenstep}}), intent(inout)}]{this,  }\item[{integer, intent(in)}]{cnfunit }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Read configuration of Strain\+Driven\+Step from config IO unit. 
+
+It is a placeholder method, it always returns cri\+Success 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em cnfunit} & IO unit \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacedmcstraindrivenstep_a75e509925bfbac3909e3f36d52065975}\label{namespacedmcstraindrivenstep_a75e509925bfbac3909e3f36d52065975}} 
+\index{dmcstraindrivenstep@{dmcstraindrivenstep}!straindrivenstep\_setup@{straindrivenstep\_setup}}
+\index{straindrivenstep\_setup@{straindrivenstep\_setup}!dmcstraindrivenstep@{dmcstraindrivenstep}}
+\doxysubsubsection{\texorpdfstring{straindrivenstep\_setup()}{straindrivenstep\_setup()}}
+{\footnotesize\ttfamily integer function dmcstraindrivenstep\+::straindrivenstep\+\_\+setup (\begin{DoxyParamCaption}\item[{class(\mbox{\hyperlink{structdmcstraindrivenstep_1_1straindrivenstep}{straindrivenstep}}), intent(inout)}]{this }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Set up Strain\+Driven\+Step. 
+

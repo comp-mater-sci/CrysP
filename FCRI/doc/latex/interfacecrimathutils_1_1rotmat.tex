@@ -1,0 +1,44 @@
+\hypertarget{interfacecrimathutils_1_1rotmat}{}\doxysection{crimathutils\+::rotmat Interface Reference}
+\label{interfacecrimathutils_1_1rotmat}\index{crimathutils::rotmat@{crimathutils::rotmat}}
+
+
+Collaboration diagram for crimathutils\+::rotmat\+:
+% FIG 0
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+pure double precision function, dimension(\mbox{\hyperlink{namespacecrimathutils_a90f99787840fe40d0bd3cd53f0fa1755}{rot\+\_\+matrix\+\_\+dim}}, \mbox{\hyperlink{namespacecrimathutils_a90f99787840fe40d0bd3cd53f0fa1755}{rot\+\_\+matrix\+\_\+dim}}) \mbox{\hyperlink{interfacecrimathutils_1_1rotmat_ac8e96c59dce7507a864aeef8b71b3fbd}{rotmat\+\_\+triplet}} (phi1, PHI, phi2)
+\begin{DoxyCompactList}\small\item\em Rotation matrix from three Euler angles in Bunge convention (phi1,PHI,phi2). \end{DoxyCompactList}\item 
+pure double precision function, dimension(\mbox{\hyperlink{namespacecrimathutils_a90f99787840fe40d0bd3cd53f0fa1755}{rot\+\_\+matrix\+\_\+dim}}, \mbox{\hyperlink{namespacecrimathutils_a90f99787840fe40d0bd3cd53f0fa1755}{rot\+\_\+matrix\+\_\+dim}}) \mbox{\hyperlink{interfacecrimathutils_1_1rotmat_a8a74c4dddecdb4b50b8627d48eb8eb8e}{rotmat\+\_\+eulerangles}} (ang)
+\begin{DoxyCompactList}\small\item\em Rotation matrix from three Euler angles in Bunge convention. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{interfacecrimathutils_1_1rotmat_a8a74c4dddecdb4b50b8627d48eb8eb8e}\label{interfacecrimathutils_1_1rotmat_a8a74c4dddecdb4b50b8627d48eb8eb8e}} 
+\index{crimathutils::rotmat@{crimathutils::rotmat}!rotmat\_eulerangles@{rotmat\_eulerangles}}
+\index{rotmat\_eulerangles@{rotmat\_eulerangles}!crimathutils::rotmat@{crimathutils::rotmat}}
+\doxysubsubsection{\texorpdfstring{rotmat\_eulerangles()}{rotmat\_eulerangles()}}
+{\footnotesize\ttfamily pure double precision function, dimension(\mbox{\hyperlink{namespacecrimathutils_a90f99787840fe40d0bd3cd53f0fa1755}{rot\+\_\+matrix\+\_\+dim}},\mbox{\hyperlink{namespacecrimathutils_a90f99787840fe40d0bd3cd53f0fa1755}{rot\+\_\+matrix\+\_\+dim}}) crimathutils\+::rotmat\+::rotmat\+\_\+eulerangles (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structcrimathutils_1_1eulerangles}{eulerangles}}), intent(in)}]{ang }\end{DoxyParamCaption})}
+
+
+
+Rotation matrix from three Euler angles in Bunge convention. 
+
+\mbox{\Hypertarget{interfacecrimathutils_1_1rotmat_ac8e96c59dce7507a864aeef8b71b3fbd}\label{interfacecrimathutils_1_1rotmat_ac8e96c59dce7507a864aeef8b71b3fbd}} 
+\index{crimathutils::rotmat@{crimathutils::rotmat}!rotmat\_triplet@{rotmat\_triplet}}
+\index{rotmat\_triplet@{rotmat\_triplet}!crimathutils::rotmat@{crimathutils::rotmat}}
+\doxysubsubsection{\texorpdfstring{rotmat\_triplet()}{rotmat\_triplet()}}
+{\footnotesize\ttfamily pure double precision function, dimension(\mbox{\hyperlink{namespacecrimathutils_a90f99787840fe40d0bd3cd53f0fa1755}{rot\+\_\+matrix\+\_\+dim}},\mbox{\hyperlink{namespacecrimathutils_a90f99787840fe40d0bd3cd53f0fa1755}{rot\+\_\+matrix\+\_\+dim}}) crimathutils\+::rotmat\+::rotmat\+\_\+triplet (\begin{DoxyParamCaption}\item[{double precision, intent(in)}]{phi1,  }\item[{double precision, intent(in)}]{PHI,  }\item[{double precision, intent(in)}]{phi2 }\end{DoxyParamCaption})}
+
+
+
+Rotation matrix from three Euler angles in Bunge convention (phi1,PHI,phi2). 
+
+The matrix R is equivalent to superpositions of three individual rotations around Z1 (by phi1), X (by PHI) and Z2(by phi2) (in this order). In terms of matrix multiplication, the total rotation matrix R is given by\+: R = R\+\_\+\{phi2\} $\ast$ R\+\_\+\{PHI\} $\ast$ R\+\_\+\{phi1\} \begin{DoxyReturn}{Returns}
+\mbox{[}3x3\mbox{]} rotation matrix R. 
+\end{DoxyReturn}
+
+
+The documentation for this interface was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+src/\mbox{\hyperlink{cri_math_utils_8f90}{cri\+Math\+Utils.\+f90}}\end{DoxyCompactItemize}

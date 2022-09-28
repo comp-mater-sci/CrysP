@@ -1,0 +1,129 @@
+\hypertarget{structdmcbasicmodule_1_1basicmodule}{}\doxysection{dmcbasicmodule\+::basicmodule Type Reference}
+\label{structdmcbasicmodule_1_1basicmodule}\index{dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}}
+
+
+Class implementing basic subset of operations that are shared by all computational modules.  
+
+
+
+
+Inheritance diagram for dmcbasicmodule\+::basicmodule\+:
+% FIG 0
+
+
+Collaboration diagram for dmcbasicmodule\+::basicmodule\+:
+% FIG 1
+\doxysubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+procedure, pass(this) \mbox{\hyperlink{structdmcbasicmodule_1_1basicmodule_ac2fa26a317a6bc6936248ee96b2fb596}{initialize}} =$>$ \mbox{\hyperlink{namespacedmcbasicmodule_a1669e4f80b978d5fe7d29216ba182783}{basicmodule\+\_\+initialize}}
+\item 
+procedure, pass(this) \mbox{\hyperlink{structdmcbasicmodule_1_1basicmodule_a2c4fc44bae68e504b19aa678269346b8}{readconfig}} =$>$ \mbox{\hyperlink{namespacedmcbasicmodule_a3e22bc4f2359cb559de888a8d5bb489e}{basicmodule\+\_\+readconfig}}
+\item 
+procedure, pass(this) \mbox{\hyperlink{structdmcbasicmodule_1_1basicmodule_a629c2fae326e60aa691d5cd8e1a7bd29}{printconfig}} =$>$ \mbox{\hyperlink{namespacedmcbasicmodule_a16b375dc426ce8f3c3222f0b2ebbf8c4}{basicmodule\+\_\+printconfig}}
+\item 
+procedure, pass(this) \mbox{\hyperlink{structdmcbasicmodule_1_1basicmodule_a3694e0137fa7e2a0d9e5babb660b0637}{run}} =$>$ \mbox{\hyperlink{namespacedmcbasicmodule_a462409cfc66bd86fc3bac1a780f08290}{basicmodule\+\_\+run}}
+\item 
+procedure, pass(this) \mbox{\hyperlink{structdmcbasicmodule_1_1basicmodule_a41e876c05573af7cb67a8668e04f42e8}{finalize}} =$>$ \mbox{\hyperlink{namespacedmcbasicmodule_a0a794a6211a2b9a3bf7be4d15742aa1f}{basicmodule\+\_\+finalize}}
+\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Helper procedures}\par
+\begin{DoxyCompactItemize}
+\item 
+procedure, pass(this) \mbox{\hyperlink{structdmcbasicmodule_1_1basicmodule_a5f4438577481bbc5706cc6d366362631}{openoutputfile}} =$>$ \mbox{\hyperlink{namespacedmcbasicmodule_aed1b2b0198fb684ea549404d15d821ad}{basicmodule\+\_\+openoutputfile}}
+\item 
+procedure, pass(this) \mbox{\hyperlink{structdmcbasicmodule_1_1basicmodule_a7ec346e68a87d2ae2b9910dca952e768}{reinitializelibaltay}} =$>$ \mbox{\hyperlink{namespacedmcbasicmodule_a019a0302c02616a43e549cb8d9c42ed8}{basicmodule\+\_\+reinitializelibaltay}}
+\item 
+procedure, pass(this) \mbox{\hyperlink{structdmcbasicmodule_1_1basicmodule_a629f34f34166f769a1f8e6d791a39642}{finalizelibaltay}} =$>$ \mbox{\hyperlink{namespacedmcbasicmodule_a5f6d9685ace3da73075f7d8ab9b3025b}{basicmodule\+\_\+finalizelibaltay}}
+\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+type(\mbox{\hyperlink{structdmcbasicmodule_1_1outputconfig}{outputconfig}}) \mbox{\hyperlink{structdmcbasicmodule_1_1basicmodule_a44927eaa60367f756e889cb904bc945b}{output}}
+\item 
+type(altayconfigdata) \mbox{\hyperlink{structdmcbasicmodule_1_1basicmodule_ab2ca1fd07c5c57e2086271a776934792}{altay}}
+\begin{DoxyCompactList}\small\item\em Root-\/level configuration structure of texture and hardening. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Additional Inherited Members}
+
+
+\doxysubsection{Detailed Description}
+Class implementing basic subset of operations that are shared by all computational modules. 
+
+\begin{DoxyNote}{Note}
+This class is essentially an abstract class, but declaring it that way prevents the subclasses from calling {\itshape ANY} superclass method (including the ones that have an actual implementation in Basic\+Module) in the OO-\/acceptable style\+: {\ttfamily thisParent\+Class\+Namemethod()} 
+\end{DoxyNote}
+
+
+\doxysubsection{Member Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{structdmcbasicmodule_1_1basicmodule_a41e876c05573af7cb67a8668e04f42e8}\label{structdmcbasicmodule_1_1basicmodule_a41e876c05573af7cb67a8668e04f42e8}} 
+\index{dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}!finalize@{finalize}}
+\index{finalize@{finalize}!dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}}
+\doxysubsubsection{\texorpdfstring{finalize()}{finalize()}}
+{\footnotesize\ttfamily procedure, pass(this) dmcbasicmodule\+::basicmodule\+::finalize\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{structdmcbasicmodule_1_1basicmodule_a629f34f34166f769a1f8e6d791a39642}\label{structdmcbasicmodule_1_1basicmodule_a629f34f34166f769a1f8e6d791a39642}} 
+\index{dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}!finalizelibaltay@{finalizelibaltay}}
+\index{finalizelibaltay@{finalizelibaltay}!dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}}
+\doxysubsubsection{\texorpdfstring{finalizelibaltay()}{finalizelibaltay()}}
+{\footnotesize\ttfamily procedure, pass(this) dmcbasicmodule\+::basicmodule\+::finalizelibaltay\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{structdmcbasicmodule_1_1basicmodule_ac2fa26a317a6bc6936248ee96b2fb596}\label{structdmcbasicmodule_1_1basicmodule_ac2fa26a317a6bc6936248ee96b2fb596}} 
+\index{dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}!initialize@{initialize}}
+\index{initialize@{initialize}!dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}}
+\doxysubsubsection{\texorpdfstring{initialize()}{initialize()}}
+{\footnotesize\ttfamily procedure, pass(this) dmcbasicmodule\+::basicmodule\+::initialize\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{structdmcbasicmodule_1_1basicmodule_a5f4438577481bbc5706cc6d366362631}\label{structdmcbasicmodule_1_1basicmodule_a5f4438577481bbc5706cc6d366362631}} 
+\index{dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}!openoutputfile@{openoutputfile}}
+\index{openoutputfile@{openoutputfile}!dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}}
+\doxysubsubsection{\texorpdfstring{openoutputfile()}{openoutputfile()}}
+{\footnotesize\ttfamily procedure, pass(this) dmcbasicmodule\+::basicmodule\+::openoutputfile\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{structdmcbasicmodule_1_1basicmodule_a629c2fae326e60aa691d5cd8e1a7bd29}\label{structdmcbasicmodule_1_1basicmodule_a629c2fae326e60aa691d5cd8e1a7bd29}} 
+\index{dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}!printconfig@{printconfig}}
+\index{printconfig@{printconfig}!dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}}
+\doxysubsubsection{\texorpdfstring{printconfig()}{printconfig()}}
+{\footnotesize\ttfamily procedure, pass(this) dmcbasicmodule\+::basicmodule\+::printconfig\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{structdmcbasicmodule_1_1basicmodule_a2c4fc44bae68e504b19aa678269346b8}\label{structdmcbasicmodule_1_1basicmodule_a2c4fc44bae68e504b19aa678269346b8}} 
+\index{dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}!readconfig@{readconfig}}
+\index{readconfig@{readconfig}!dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}}
+\doxysubsubsection{\texorpdfstring{readconfig()}{readconfig()}}
+{\footnotesize\ttfamily procedure, pass(this) dmcbasicmodule\+::basicmodule\+::readconfig\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{structdmcbasicmodule_1_1basicmodule_a7ec346e68a87d2ae2b9910dca952e768}\label{structdmcbasicmodule_1_1basicmodule_a7ec346e68a87d2ae2b9910dca952e768}} 
+\index{dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}!reinitializelibaltay@{reinitializelibaltay}}
+\index{reinitializelibaltay@{reinitializelibaltay}!dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}}
+\doxysubsubsection{\texorpdfstring{reinitializelibaltay()}{reinitializelibaltay()}}
+{\footnotesize\ttfamily procedure, pass(this) dmcbasicmodule\+::basicmodule\+::reinitializelibaltay\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{structdmcbasicmodule_1_1basicmodule_a3694e0137fa7e2a0d9e5babb660b0637}\label{structdmcbasicmodule_1_1basicmodule_a3694e0137fa7e2a0d9e5babb660b0637}} 
+\index{dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}!run@{run}}
+\index{run@{run}!dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}}
+\doxysubsubsection{\texorpdfstring{run()}{run()}}
+{\footnotesize\ttfamily procedure, pass(this) dmcbasicmodule\+::basicmodule\+::run\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structdmcbasicmodule_1_1basicmodule_ab2ca1fd07c5c57e2086271a776934792}\label{structdmcbasicmodule_1_1basicmodule_ab2ca1fd07c5c57e2086271a776934792}} 
+\index{dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}!altay@{altay}}
+\index{altay@{altay}!dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}}
+\doxysubsubsection{\texorpdfstring{altay}{altay}}
+{\footnotesize\ttfamily type(altayconfigdata) dmcbasicmodule\+::basicmodule\+::altay\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Root-\/level configuration structure of texture and hardening. 
+
+\mbox{\Hypertarget{structdmcbasicmodule_1_1basicmodule_a44927eaa60367f756e889cb904bc945b}\label{structdmcbasicmodule_1_1basicmodule_a44927eaa60367f756e889cb904bc945b}} 
+\index{dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}!output@{output}}
+\index{output@{output}!dmcbasicmodule::basicmodule@{dmcbasicmodule::basicmodule}}
+\doxysubsubsection{\texorpdfstring{output}{output}}
+{\footnotesize\ttfamily type(\mbox{\hyperlink{structdmcbasicmodule_1_1outputconfig}{outputconfig}}) dmcbasicmodule\+::basicmodule\+::output\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+The documentation for this type was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+lib\+Alam\+DMC/\mbox{\hyperlink{basic_module_8f90}{basic\+Module.\+f90}}\end{DoxyCompactItemize}

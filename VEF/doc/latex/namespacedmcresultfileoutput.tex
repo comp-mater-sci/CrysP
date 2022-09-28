@@ -1,0 +1,140 @@
+\hypertarget{namespacedmcresultfileoutput}{}\doxysection{dmcresultfileoutput Module Reference}
+\label{namespacedmcresultfileoutput}\index{dmcresultfileoutput@{dmcresultfileoutput}}
+
+
+Common set of procedures for producing plain text column-\/based output of numerical data.  
+
+
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+integer function \mbox{\hyperlink{namespacedmcresultfileoutput_acd9efadc98ad67a15029255c352f87ba}{writeresultfile}} (iounit, data, column\+\_\+names, column\+\_\+widths, use\+\_\+column\+\_\+numbers, data\+\_\+formats)
+\begin{DoxyCompactList}\small\item\em Driver function for writing numerical data. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcresultfileoutput_a66f2752bf105c917c7a562ae54b06591}{writecolumnnumbers}} (iounit, ncolumns, column\+\_\+widths)
+\begin{DoxyCompactList}\small\item\em Write centered column numbers spaced according to column\+\_\+widths. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcresultfileoutput_a4ef11595969dbdb63e450b352e01cfaf}{writecolumnnames}} (iounit, column\+\_\+names, column\+\_\+widths)
+\item 
+integer function \mbox{\hyperlink{namespacedmcresultfileoutput_ac72c05a489f80fabdd0d9159d8afe575}{writestandardheader}} (iounit, column\+\_\+names, column\+\_\+widths)
+\begin{DoxyCompactList}\small\item\em Write out standard header\+: two lines\+: \#1\+: column numbers, \#2 column names. \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacedmcresultfileoutput_a2714cdcd072692ed4c404696da5eedb2}{writedata}} (iounit, data, column\+\_\+widths, data\+\_\+formats)
+\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter, private \mbox{\hyperlink{namespacedmcresultfileoutput_aebeed2939d8730585b9f19c64b21e8cf}{fmt\+\_\+string\+\_\+length}} = 128
+\item 
+integer, parameter, private \mbox{\hyperlink{namespacedmcresultfileoutput_a3585df4489da7f623288fa3aa02b7371}{max\+\_\+int\+\_\+digits}} = 10
+\begin{DoxyCompactList}\small\item\em \textbackslash{}fixme max\+\_\+int\+\_\+digits is platform dependent. To be replaced by a constant expression that computes how many decimal digits are needed to store 2$^\wedge$digits(1) \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Common set of procedures for producing plain text column-\/based output of numerical data. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacedmcresultfileoutput_a4ef11595969dbdb63e450b352e01cfaf}\label{namespacedmcresultfileoutput_a4ef11595969dbdb63e450b352e01cfaf}} 
+\index{dmcresultfileoutput@{dmcresultfileoutput}!writecolumnnames@{writecolumnnames}}
+\index{writecolumnnames@{writecolumnnames}!dmcresultfileoutput@{dmcresultfileoutput}}
+\doxysubsubsection{\texorpdfstring{writecolumnnames()}{writecolumnnames()}}
+{\footnotesize\ttfamily integer function dmcresultfileoutput\+::writecolumnnames (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit,  }\item[{character(len=$\ast$), dimension(\+:)}]{column\+\_\+names,  }\item[{integer, dimension(\+:), intent(in)}]{column\+\_\+widths }\end{DoxyParamCaption})}
+
+Here is the caller graph for this function\+:
+% FIG 0
+\mbox{\Hypertarget{namespacedmcresultfileoutput_a66f2752bf105c917c7a562ae54b06591}\label{namespacedmcresultfileoutput_a66f2752bf105c917c7a562ae54b06591}} 
+\index{dmcresultfileoutput@{dmcresultfileoutput}!writecolumnnumbers@{writecolumnnumbers}}
+\index{writecolumnnumbers@{writecolumnnumbers}!dmcresultfileoutput@{dmcresultfileoutput}}
+\doxysubsubsection{\texorpdfstring{writecolumnnumbers()}{writecolumnnumbers()}}
+{\footnotesize\ttfamily integer function dmcresultfileoutput\+::writecolumnnumbers (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit,  }\item[{integer, intent(in)}]{ncolumns,  }\item[{integer, dimension(\+:), intent(in)}]{column\+\_\+widths }\end{DoxyParamCaption})}
+
+
+
+Write centered column numbers spaced according to column\+\_\+widths. 
+
+Here is the caller graph for this function\+:
+% FIG 1
+\mbox{\Hypertarget{namespacedmcresultfileoutput_a2714cdcd072692ed4c404696da5eedb2}\label{namespacedmcresultfileoutput_a2714cdcd072692ed4c404696da5eedb2}} 
+\index{dmcresultfileoutput@{dmcresultfileoutput}!writedata@{writedata}}
+\index{writedata@{writedata}!dmcresultfileoutput@{dmcresultfileoutput}}
+\doxysubsubsection{\texorpdfstring{writedata()}{writedata()}}
+{\footnotesize\ttfamily integer function dmcresultfileoutput\+::writedata (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit,  }\item[{double precision, dimension(\+:,\+:), intent(in)}]{data,  }\item[{integer, dimension(\+:), intent(in)}]{column\+\_\+widths,  }\item[{character(len=$\ast$), dimension(\+:), intent(in)}]{data\+\_\+formats }\end{DoxyParamCaption})}
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em data} & Shape\+: \mbox{[}ncolumns x nrows\mbox{]}\\
+\hline
+\mbox{\texttt{ in}}  & {\em column\+\_\+widths} & Specification of column widths\\
+\hline
+\end{DoxyParams}
+Shape is either\+:
+\begin{DoxyItemize}
+\item \mbox{[}1\mbox{]} (single-\/element array)\+: the width of each column is set to column\+\_\+widths(1)
+\item \mbox{[}ncolumns\mbox{]}\+: the width of each i-\/th column will be set according to column\+\_\+widths(i)
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em data\+\_\+formats} & Specification of data format used to format the columns\\
+\hline
+\end{DoxyParams}
+Shape is either\+:
+\item \mbox{[}1\mbox{]} (single-\/element array)\+: data\+\_\+formats(1) will be used to format each column. Note that the format for a single element must be provided.
+\item \mbox{[}ncolumns\mbox{]}\+: width of each column will be treated accodingly column widths, shape is \mbox{[}ncolumns\mbox{]} \begin{DoxyRefDesc}{Todo}
+\item[\mbox{\hyperlink{todo__todo000006}{Todo}}]Another choice could be to use one statement for all columns. \end{DoxyRefDesc}
+
+\end{DoxyItemize}Here is the caller graph for this function\+:
+% FIG 2
+\mbox{\Hypertarget{namespacedmcresultfileoutput_acd9efadc98ad67a15029255c352f87ba}\label{namespacedmcresultfileoutput_acd9efadc98ad67a15029255c352f87ba}} 
+\index{dmcresultfileoutput@{dmcresultfileoutput}!writeresultfile@{writeresultfile}}
+\index{writeresultfile@{writeresultfile}!dmcresultfileoutput@{dmcresultfileoutput}}
+\doxysubsubsection{\texorpdfstring{writeresultfile()}{writeresultfile()}}
+{\footnotesize\ttfamily integer function dmcresultfileoutput\+::writeresultfile (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit,  }\item[{double precision, dimension(\+:,\+:), intent(in)}]{data,  }\item[{character(len=$\ast$), dimension(\+:), intent(in)}]{column\+\_\+names,  }\item[{integer, dimension(\+:), intent(in)}]{column\+\_\+widths,  }\item[{logical, intent(in), optional}]{use\+\_\+column\+\_\+numbers,  }\item[{character(len=$\ast$), dimension(\+:), optional}]{data\+\_\+formats }\end{DoxyParamCaption})}
+
+
+
+Driver function for writing numerical data. 
+
+\begin{DoxyRefDesc}{Todo}
+\item[\mbox{\hyperlink{todo__todo000004}{Todo}}]Move TADJUSTL macro to some more suitable place (FCRI?) \end{DoxyRefDesc}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em data} & Shape\+: \mbox{[}ncolumns x nrows\mbox{]} \\
+\hline
+\mbox{\texttt{ in}}  & {\em column\+\_\+widths} & Either\+: shape is \mbox{[}1\mbox{]} (single-\/element array) that contains width of every column, or column widths, shape is \mbox{[}ncolumns\mbox{]} \\
+\hline
+\end{DoxyParams}
+Here is the call graph for this function\+:
+% FIG 3
+Here is the caller graph for this function\+:
+% FIG 4
+\mbox{\Hypertarget{namespacedmcresultfileoutput_ac72c05a489f80fabdd0d9159d8afe575}\label{namespacedmcresultfileoutput_ac72c05a489f80fabdd0d9159d8afe575}} 
+\index{dmcresultfileoutput@{dmcresultfileoutput}!writestandardheader@{writestandardheader}}
+\index{writestandardheader@{writestandardheader}!dmcresultfileoutput@{dmcresultfileoutput}}
+\doxysubsubsection{\texorpdfstring{writestandardheader()}{writestandardheader()}}
+{\footnotesize\ttfamily integer function dmcresultfileoutput\+::writestandardheader (\begin{DoxyParamCaption}\item[{integer, intent(in)}]{iounit,  }\item[{character(len=$\ast$), dimension(\+:)}]{column\+\_\+names,  }\item[{integer, dimension(\+:), intent(in)}]{column\+\_\+widths }\end{DoxyParamCaption})}
+
+
+
+Write out standard header\+: two lines\+: \#1\+: column numbers, \#2 column names. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em iounit} & Output IO unit \\
+\hline
+\end{DoxyParams}
+Here is the call graph for this function\+:
+% FIG 5
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{namespacedmcresultfileoutput_aebeed2939d8730585b9f19c64b21e8cf}\label{namespacedmcresultfileoutput_aebeed2939d8730585b9f19c64b21e8cf}} 
+\index{dmcresultfileoutput@{dmcresultfileoutput}!fmt\_string\_length@{fmt\_string\_length}}
+\index{fmt\_string\_length@{fmt\_string\_length}!dmcresultfileoutput@{dmcresultfileoutput}}
+\doxysubsubsection{\texorpdfstring{fmt\_string\_length}{fmt\_string\_length}}
+{\footnotesize\ttfamily integer, parameter, private dmcresultfileoutput\+::fmt\+\_\+string\+\_\+length = 128\hspace{0.3cm}{\ttfamily [private]}}
+
+\mbox{\Hypertarget{namespacedmcresultfileoutput_a3585df4489da7f623288fa3aa02b7371}\label{namespacedmcresultfileoutput_a3585df4489da7f623288fa3aa02b7371}} 
+\index{dmcresultfileoutput@{dmcresultfileoutput}!max\_int\_digits@{max\_int\_digits}}
+\index{max\_int\_digits@{max\_int\_digits}!dmcresultfileoutput@{dmcresultfileoutput}}
+\doxysubsubsection{\texorpdfstring{max\_int\_digits}{max\_int\_digits}}
+{\footnotesize\ttfamily integer, parameter, private dmcresultfileoutput\+::max\+\_\+int\+\_\+digits = 10\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+\textbackslash{}fixme max\+\_\+int\+\_\+digits is platform dependent. To be replaced by a constant expression that computes how many decimal digits are needed to store 2$^\wedge$digits(1) 
+

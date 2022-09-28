@@ -1,0 +1,16 @@
+digraph "dmcewc::ewcmodule"
+{
+ // INTERACTIVE_SVG=YES
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="dmcewc::ewcmodule",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node2 -> Node1 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node2 [label="dmcstressdrivenevolutionmodule\l::stressdrivenevolutionmodule",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structdmcstressdrivenevolutionmodule_1_1stressdrivenevolutionmodule.html",tooltip=" "];
+  Node3 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node3 [label="dmcstressdrivenmodule\l::stressdrivenmodule",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structdmcstressdrivenmodule_1_1stressdrivenmodule.html",tooltip="Abstract class implementing basic subset of operations that are shared by all stress-drien computatio..."];
+  Node4 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node4 [label="dmcbasicmodule::basicmodule",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structdmcbasicmodule_1_1basicmodule.html",tooltip="Class implementing basic subset of operations that are shared by all computational modules."];
+  Node5 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node5 [label="dmcabstractmodule::\labstractmodule",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structdmcabstractmodule_1_1abstractmodule.html",tooltip="Abstract class for computational modules of the DMC."];
+}
