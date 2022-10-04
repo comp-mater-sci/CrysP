@@ -6,6 +6,7 @@
 import os
 import hashlib
 import shutil
+from pathlib import Path
 
 import pytest
 
@@ -48,23 +49,23 @@ HASHES = {'ADP': {'ALAMEL':{'fcc12':'2e114a9f21e6c1447caa1c065da7becc',
                               'bcc48':'d41d8cd98f00b204e9800998ecf8427e'}}}
 #File extension for the output of each execution mode. May be removed when we get rid of the file-based I/O for the simulations.
 EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'UDSA':'uds','YLD':'xyld'}
-TEST_ROOT = os.getcwd()
+TEST_ROOT=Path.cwd()
 
 
 #Set up file structure for benchmark execution. May be removed when we get rid of file I/O for the simulations.
 def setup_benchmark(mode, algorithm, slip_system, test_path):
-    shutil.copy(TEST_ROOT + '/data/in/sid1687f_short.smt', test_path/'texture.smt')
-    shutil.copy(TEST_ROOT + '/../VEF/examples/equiaxed.smt', test_path/'equiaxed.smt')
-    shutil.copy(TEST_ROOT + '/../VEF/examples/'+slip_system+'.pre', test_path/f'{slip_system}.pre')
+    shutil.copy(TEST_ROOT/'data/in/sid1687f_short.smt', test_path/'texture.smt')
+    shutil.copy(TEST_ROOT/'../VEF/examples/equiaxed.smt', test_path/'equiaxed.smt')
+    shutil.copy(TEST_ROOT/f'../VEF/examples/{slip_system}.pre', test_path/f'{slip_system}.pre')
     create_conf_file(mode, algorithm, slip_system, test_path)
     if (mode == 'EWC'):
-        shutil.copyfile(TEST_ROOT + '/data/in/out.rtdb', test_path/'out.rtdb')
+        shutil.copyfile(TEST_ROOT/'data/in/out.rtdb', test_path/'out.rtdb')
 
 
 #Generate configuration file based on global settings and mode-specific ones.
 def create_conf_file(mode, algorithm, slip_system, test_path):
     with open(test_path/'test.cfg', 'w') as conf_file, \
-         open(TEST_ROOT + '/conf/' + mode + '.cfg','r') as mode_specific_conf_file:
+         open(TEST_ROOT/f'conf/{mode}.cfg','r') as mode_specific_conf_file:
         conf_file.write('out\n')
         conf_file.write('True\n')
         conf_file.write('2\n')
@@ -80,14 +81,11 @@ def create_conf_file(mode, algorithm, slip_system, test_path):
 
 #Execute simulations themselves. Implemented as a dedicated function to simplify test adjustments when transitioning to a different software architecture.
 def generate_output(mode):
-    os.system(TEST_ROOT + '/../VEF/release/bin/alamDMC ' + mode + ' test.cfg')
+    os.system(TEST_ROOT/f'../VEF/release/bin/alamDMC {mode} test.cfg')
 
 #Calculate the MD5 hash of the test output.
 def calc_hash(mode):
-    if mode == 'UDSA':
-        path = 'out_0_000.uds'
-    else:
-        path = 'out.' + EXTENSIONS[mode]
+    path = 'out_0_000.uds' if mode == 'UDSA' else 'out.' + EXTENSIONS[mode]
 
     hasher = hashlib.md5()
     result = open(path,'rb').read()
