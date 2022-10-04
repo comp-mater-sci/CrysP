@@ -1,12 +1,13 @@
 #Test bench for VEF software
 #Runs a large number of configurations using a dummy data set and compares the hashes of the output data to predetermined hash values.
 #USAGE: Run 'pytest' in the 'test' directory of the project. The tests are parametrized over mode, algorithm and slip system. If you want to run e.g. only the tests pertaining to ADP, run "pytest -k ADP"
-#REQUIRES: Python, pytest, shutil
+#REQUIRES: Python, pytest
 
 import os
-import shutil
-import pytest
 import hashlib
+import shutil
+
+import pytest
 
 #Predetermined output hashes
 HASHES = {'ADP': {'ALAMEL':{'fcc12':'2e114a9f21e6c1447caa1c065da7becc',
