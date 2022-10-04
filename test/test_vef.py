@@ -65,23 +65,22 @@ def setup_benchmark(mode, algorithm, slip_system):
     if (mode == 'EWC'):
         shutil.copyfile(TEST_ROOT + '/data/in/out.rtdb', TEST_ROOT + '/run/out.rtdb')
 
+
 #Generate configuration file based on global settings and mode-specific ones.
 def create_conf_file(mode, algorithm, slip_system):
-    conf_file = open(TEST_ROOT + '/run/test.cfg', 'w')
-    conf_file.write('out\n')
-    conf_file.write('True\n')
-    conf_file.write('2\n')
-    conf_file.write('texture.smt\n')
-    conf_file.write(algorithm + '\n')
-    conf_file.write('True\n')
-    conf_file.write(slip_system + '\n')
-    conf_file.write('True\n')
-    conf_file.write('True\n')
-    conf_file.write('True\n')
-    mode_specific_conf_file = open(TEST_ROOT + '/conf/' + mode + '.cfg','r')
-    conf_file.write(mode_specific_conf_file.read())
-    mode_specific_conf_file.close()
-    conf_file.close()
+    with open(TEST_ROOT + '/run/test.cfg', 'w') as conf_file, \
+         open(TEST_ROOT + '/conf/' + mode + '.cfg','r') as mode_specific_conf_file:
+        conf_file.write('out\n')
+        conf_file.write('True\n')
+        conf_file.write('2\n')
+        conf_file.write('texture.smt\n')
+        conf_file.write(algorithm + '\n')
+        conf_file.write('True\n')
+        conf_file.write(slip_system + '\n')
+        conf_file.write('True\n')
+        conf_file.write('True\n')
+        conf_file.write('True\n')
+        conf_file.write(mode_specific_conf_file.read())
 
 
 #Execute simulations themselves. Implemented as a dedicated function to simplify test adjustments when transitioning to a different software architecture.
