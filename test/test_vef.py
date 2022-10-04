@@ -50,25 +50,20 @@ HASHES = {'ADP': {'ALAMEL':{'fcc12':'2e114a9f21e6c1447caa1c065da7becc',
 EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'UDSA':'uds','YLD':'xyld'}
 TEST_ROOT = os.getcwd()
 
-#Basic configuration and cleanup
-@pytest.fixture
-def setup():
-    os.mkdir(TEST_ROOT + '/run')
-    shutil.copy(TEST_ROOT + '/data/in/sid1687f_short.smt', TEST_ROOT + '/run/texture.smt')
-    os.environ["VEF_HOME"] = TEST_ROOT + '../VEF'
-    yield
-    shutil.rmtree(TEST_ROOT + '/run')
 
 #Set up file structure for benchmark execution. May be removed when we get rid of file I/O for the simulations.
-def setup_benchmark(mode, algorithm, slip_system):
-    create_conf_file(mode, algorithm, slip_system)
+def setup_benchmark(mode, algorithm, slip_system, test_path):
+    shutil.copy(TEST_ROOT + '/data/in/sid1687f_short.smt', test_path/'texture.smt')
+    shutil.copy(TEST_ROOT + '/../VEF/examples/equiaxed.smt', test_path/'equiaxed.smt')
+    shutil.copy(TEST_ROOT + '/../VEF/examples/'+slip_system+'.pre', test_path/f'{slip_system}.pre')
+    create_conf_file(mode, algorithm, slip_system, test_path)
     if (mode == 'EWC'):
-        shutil.copyfile(TEST_ROOT + '/data/in/out.rtdb', TEST_ROOT + '/run/out.rtdb')
+        shutil.copyfile(TEST_ROOT + '/data/in/out.rtdb', test_path/'out.rtdb')
 
 
 #Generate configuration file based on global settings and mode-specific ones.
-def create_conf_file(mode, algorithm, slip_system):
-    with open(TEST_ROOT + '/run/test.cfg', 'w') as conf_file, \
+def create_conf_file(mode, algorithm, slip_system, test_path):
+    with open(test_path/'test.cfg', 'w') as conf_file, \
          open(TEST_ROOT + '/conf/' + mode + '.cfg','r') as mode_specific_conf_file:
         conf_file.write('out\n')
         conf_file.write('True\n')
@@ -85,14 +80,14 @@ def create_conf_file(mode, algorithm, slip_system):
 
 #Execute simulations themselves. Implemented as a dedicated function to simplify test adjustments when transitioning to a different software architecture.
 def generate_output(mode):
-    os.system('export VEF_ROOT=' + TEST_ROOT + '/../VEF && cd ' + TEST_ROOT + '/run && ../../VEF/release/bin/alamDMC ' + mode + ' test.cfg')
+    os.system(TEST_ROOT + '/../VEF/release/bin/alamDMC ' + mode + ' test.cfg')
 
 #Calculate the MD5 hash of the test output.
 def calc_hash(mode):
     if mode == 'UDSA':
-        path = TEST_ROOT + '/run/out_0_000.uds'
+        path = 'out_0_000.uds'
     else:
-        path = TEST_ROOT + "/run/out." + EXTENSIONS[mode]
+        path = 'out.' + EXTENSIONS[mode]
 
     hasher = hashlib.md5()
     result = open(path,'rb').read()
@@ -104,8 +99,9 @@ def calc_hash(mode):
 @pytest.mark.parametrize('mode',['ADP', 'ASR', 'EWC','QRS','UDSA','YLD'])
 @pytest.mark.parametrize('algorithm',['ALAMEL', 'FCTaylor'])
 @pytest.mark.parametrize('slip_system',['fcc12','bcc24','bcc48'])
-def test_vef(setup, mode, algorithm,slip_system):
-    setup_benchmark(mode, algorithm, slip_system)
+def test_vef(mode, algorithm, slip_system, tmp_path):
+    setup_benchmark(mode, algorithm, slip_system, tmp_path)
+    os.chdir(tmp_path)
     generate_output(mode)
     test_hash = calc_hash(mode)
     assert test_hash == HASHES[mode][algorithm][slip_system]
