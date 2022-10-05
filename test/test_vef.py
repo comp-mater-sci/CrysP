@@ -35,12 +35,12 @@ HASHES = {'ADP': {'ALAMEL':{'fcc12':'2e114a9f21e6c1447caa1c065da7becc',
                   'FCTaylor':{'fcc12':'612181898c215dac586a0f8c68e8251f',
                               'bcc24':'be10a0afe73060dc3a6f048e9e58e02f',
                               'bcc48':'fa5d02ece85d10f9eff939f6c878265c'}},
-          'UDSA': {'ALAMEL':{'fcc12':'e4095d33be7f9d1095224441a061a5ba',
-                             'bcc24':'e4095d33be7f9d1095224441a061a5ba',
-                             'bcc48':'e4095d33be7f9d1095224441a061a5ba'},
-                   'FCTaylor':{'fcc12':'e4095d33be7f9d1095224441a061a5ba',
-                               'bcc24':'e4095d33be7f9d1095224441a061a5ba',
-                               'bcc48':'e4095d33be7f9d1095224441a061a5ba'}},
+          'UDSA': {'ALAMEL':{'fcc12':'7dfe706c5d73e1e120592b14a54bb436',
+                             'bcc24':'9ca59b57e8127e21e36b106d61b87e4a',
+                             'bcc48':'49a91f993350e49646a4c6f81298314c'},
+                   'FCTaylor':{'fcc12':'70f20cfee41a4f81d583cdcd5046da88',
+                               'bcc24':'cf8bc2845fa1c3f2eba5d3e9340e5dcc',
+                               'bcc48':'049185a78be4e9a5a460fd5379196182'}},
           'YLD': {'ALAMEL':{'fcc12':'d41d8cd98f00b204e9800998ecf8427e',
                             'bcc24':'d41d8cd98f00b204e9800998ecf8427e',
                             'bcc48':'d41d8cd98f00b204e9800998ecf8427e'},
@@ -54,12 +54,18 @@ TEST_ROOT=Path.cwd()
 
 #Set up file structure for benchmark execution. May be removed when we get rid of file I/O for the simulations.
 def setup_benchmark(mode, algorithm, slip_system, test_path):
-    shutil.copy(TEST_ROOT/'data/in/sid1687f_short.smt', test_path/'texture.smt')
+    if (mode == 'YLD'):
+        shutil.copy(TEST_ROOT/'data/in/texture_yld.smt', test_path/'texture.smt')
+    else:
+        shutil.copy(TEST_ROOT/'data/in/sid1687f_short.smt', test_path/'texture.smt')
     shutil.copy(TEST_ROOT/'../VEF/data/equiaxed.smt', test_path/'equiaxed.smt')
     shutil.copy(TEST_ROOT/f'../VEF/data/{slip_system}.pre', test_path/f'{slip_system}.pre')
     create_conf_file(mode, algorithm, slip_system, test_path)
     if (mode == 'EWC' or mode == 'ASR'):
         shutil.copyfile(TEST_ROOT/f'data/in/{mode}.rtdb', test_path/'out.rtdb')
+    elif (mode == 'UDSA' or mode == 'YLD'):
+        shutil.copyfile(TEST_ROOT/f'data/in/UDSA_YLD.rtdb', test_path/'out.rtdb')
+
 
 
 #Generate configuration file based on global settings and mode-specific ones.
@@ -85,7 +91,13 @@ def generate_output(mode):
 
 #Calculate the MD5 hash of the test output.
 def calc_hash(mode):
-    path = 'out_0_000.uds' if mode == 'UDSA' else 'out.' + EXTENSIONS[mode]
+    if mode == 'UDSA':
+        with open('out.uds', 'w') as out:
+            for orientation in [0,45,90]:
+                with open(f'out_{orientation}_000.uds','r') as out_oriented:
+                    out.write(out_oriented.read())
+
+    path = 'out.' + EXTENSIONS[mode]
 
     hasher = hashlib.md5()
     result = open(path,'rb').read()
