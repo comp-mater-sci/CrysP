@@ -89,16 +89,16 @@ def create_conf_file(mode, algorithm, slip_system, test_path):
 def generate_output(mode):
     os.system(TEST_ROOT/f'../VEF/release/bin/alamDMC {mode} test.cfg')
 
-#Calculate the MD5 hash of the test output.
-def calc_hash(mode):
     if mode == 'UDSA':
         with open('out.uds', 'w') as out:
             for orientation in [0,45,90]:
                 with open(f'out_{orientation}_000.uds','r') as out_oriented:
                     out.write(out_oriented.read())
 
-    path = 'out.' + EXTENSIONS[mode]
 
+#Calculate the MD5 hash of the test output.
+def calc_hash(mode):
+    path = 'out.' + EXTENSIONS[mode]
     hasher = hashlib.md5()
     result = open(path,'rb').read()
     hasher.update(result)
