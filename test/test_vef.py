@@ -55,8 +55,8 @@ TEST_ROOT=Path.cwd()
 #Set up file structure for benchmark execution. May be removed when we get rid of file I/O for the simulations.
 def setup_benchmark(mode, algorithm, slip_system, test_path):
     shutil.copy(TEST_ROOT/'data/in/sid1687f_short.smt', test_path/'texture.smt')
-    shutil.copy(TEST_ROOT/'../VEF/examples/equiaxed.smt', test_path/'equiaxed.smt')
-    shutil.copy(TEST_ROOT/f'../VEF/examples/{slip_system}.pre', test_path/f'{slip_system}.pre')
+    shutil.copy(TEST_ROOT/'../VEF/data/equiaxed.smt', test_path/'equiaxed.smt')
+    shutil.copy(TEST_ROOT/f'../VEF/data/{slip_system}.pre', test_path/f'{slip_system}.pre')
     create_conf_file(mode, algorithm, slip_system, test_path)
     if (mode == 'EWC'):
         shutil.copyfile(TEST_ROOT/'data/in/out.rtdb', test_path/'out.rtdb')
