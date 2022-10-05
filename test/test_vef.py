@@ -17,12 +17,12 @@ HASHES = {'ADP': {'ALAMEL':{'fcc12':'2e114a9f21e6c1447caa1c065da7becc',
                   'FCTaylor':{'fcc12':'d3bd4f94f0397c830c841a6d7b0eab53',
                               'bcc24':'a869ed87b3d925193dd6fee62004e230',
                               'bcc48':'815be3efeefd9a735b1f165decb0216d'}},
-          'ASR': {'ALAMEL':{'fcc12':'22e163ef1b2701b3e7a94b53ab7ba6a6',
-                            'bcc24':'22e163ef1b2701b3e7a94b53ab7ba6a6',
-                            'bcc48':'22e163ef1b2701b3e7a94b53ab7ba6a6'},
-                 'FCTaylor':{'fcc12':'22e163ef1b2701b3e7a94b53ab7ba6a6',
-                             'bcc24':'22e163ef1b2701b3e7a94b53ab7ba6a6',
-                             'bcc48':'2646017b760760038f3369827c47a052'}},
+          'ASR': {'ALAMEL':{'fcc12':'3a85f59feeaf9e0ac2d077a3d5e16d1d',
+                            'bcc24':'4e6248723d17d10433dc08ae0062126c',
+                            'bcc48':'a6bf075ced02a1f401eb6a00400cddb2'},
+                 'FCTaylor':{'fcc12':'af75369c40118e26cc5188db3c6a4e9a',
+                             'bcc24':'8c989e6e8cdcb208ba2557a1fd97be63',
+                             'bcc48':'34a9b1c4c10e65a42f218c607fe7b9d2'}},
           'EWC': {'ALAMEL':{'fcc12':'7b2055cba222ed1a95d41bade17eef08',
                             'bcc24':'9ad4316eecf3a4d24792a71e1513fc9d',
                             'bcc48':'0ae07d5bafd59578233696d6e0ebc2ae'},
@@ -58,7 +58,7 @@ def setup_benchmark(mode, algorithm, slip_system, test_path):
     shutil.copy(TEST_ROOT/'../VEF/data/equiaxed.smt', test_path/'equiaxed.smt')
     shutil.copy(TEST_ROOT/f'../VEF/data/{slip_system}.pre', test_path/f'{slip_system}.pre')
     create_conf_file(mode, algorithm, slip_system, test_path)
-    if (mode == 'EWC'):
+    if (mode == 'EWC' or mode == 'ASR'):
         shutil.copyfile(TEST_ROOT/'data/in/out.rtdb', test_path/'out.rtdb')
 
 
