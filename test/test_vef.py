@@ -23,12 +23,12 @@ HASHES = {'ADP': {'ALAMEL':{'fcc12':'2e114a9f21e6c1447caa1c065da7becc',
                  'FCTaylor':{'fcc12':'af75369c40118e26cc5188db3c6a4e9a',
                              'bcc24':'8c989e6e8cdcb208ba2557a1fd97be63',
                              'bcc48':'34a9b1c4c10e65a42f218c607fe7b9d2'}},
-          'EWC': {'ALAMEL':{'fcc12':'7b2055cba222ed1a95d41bade17eef08',
-                            'bcc24':'9ad4316eecf3a4d24792a71e1513fc9d',
-                            'bcc48':'0ae07d5bafd59578233696d6e0ebc2ae'},
-                  'FCTaylor':{'fcc12':'076ec32666143bb5765c0eb7b6fd53d0',
-                              'bcc24':'8a24f588d8d7c5e814da15aad2c22483',
-                              'bcc48':'a9afac2d0299529614aece7707c59b8f'}},
+          'EWC': {'ALAMEL':{'fcc12':'531ce0cfb3268bb991639e4593aab114',
+                            'bcc24':'f3bb187560838c54d3b805a83ed31e4b',
+                            'bcc48':'a3805e4b66bc340f8c7b9a85ef892ca5'},
+                  'FCTaylor':{'fcc12':'7c29f53b10f651d25b88fad8eb737fa7',
+                              'bcc24':'b325a689314d2cfd6cb7872ad7af8bed',
+                              'bcc48':'d618c46526608c0c532ce5fe5d86c082'}},
           'QRS': {'ALAMEL':{'fcc12':'612181898c215dac586a0f8c68e8251f',
                             'bcc24':'9b38997de6c590c32223e17525ef0ad8',
                             'bcc48':'733aac7805ac3b0bdecf39c5a27f7a84'},
@@ -59,7 +59,7 @@ def setup_benchmark(mode, algorithm, slip_system, test_path):
     shutil.copy(TEST_ROOT/f'../VEF/data/{slip_system}.pre', test_path/f'{slip_system}.pre')
     create_conf_file(mode, algorithm, slip_system, test_path)
     if (mode == 'EWC' or mode == 'ASR'):
-        shutil.copyfile(TEST_ROOT/'data/in/out.rtdb', test_path/'out.rtdb')
+        shutil.copyfile(TEST_ROOT/f'data/in/{mode}.rtdb', test_path/'out.rtdb')
 
 
 #Generate configuration file based on global settings and mode-specific ones.
