@@ -41,12 +41,12 @@ HASHES = {'ADP': {'ALAMEL':{'fcc12':'2e114a9f21e6c1447caa1c065da7becc',
                    'FCTaylor':{'fcc12':'70f20cfee41a4f81d583cdcd5046da88',
                                'bcc24':'cf8bc2845fa1c3f2eba5d3e9340e5dcc',
                                'bcc48':'049185a78be4e9a5a460fd5379196182'}},
-          'YLD': {'ALAMEL':{'fcc12':'d41d8cd98f00b204e9800998ecf8427e',
-                            'bcc24':'d41d8cd98f00b204e9800998ecf8427e',
-                            'bcc48':'d41d8cd98f00b204e9800998ecf8427e'},
-                  'FCTaylor':{'fcc12':'d41d8cd98f00b204e9800998ecf8427e',
-                              'bcc24':'d41d8cd98f00b204e9800998ecf8427e',
-                              'bcc48':'d41d8cd98f00b204e9800998ecf8427e'}}}
+          'YLD': {'ALAMEL':{'fcc12':'8ff0fdce0e4eff616ffa9ff5b86273d4',
+                            'bcc24':'c6888ba3659a06e0b98514316bc5c79b',
+                            'bcc48':'6b812302a270b4c8ad7118ec95b0e5c8'},
+                  'FCTaylor':{'fcc12':'64becdc0c6abb96b9d53ff23e843c2d5',
+                              'bcc24':'989b2a75622ab228f92944c456ad2e91',
+                              'bcc48':'2c5678b27b776f493d65d82f1610b05b'}}}
 #File extension for the output of each execution mode. May be removed when we get rid of the file-based I/O for the simulations.
 EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'UDSA':'uds','YLD':'xyld'}
 TEST_ROOT=Path.cwd()
