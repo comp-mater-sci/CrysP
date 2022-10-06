@@ -6,47 +6,12 @@
 import os
 import hashlib
 import shutil
+import re
+import pandas as pd
 from pathlib import Path
 
 import pytest
 
-#Predetermined output hashes
-HASHES = {'ADP': {'ALAMEL':{'fcc12':'2e114a9f21e6c1447caa1c065da7becc',
-                            'bcc24':'5ded6ebd05fb3f95b59f168a12f07f11',
-                            'bcc48':'eafd5736d8046465d086fc98a09d174e'},
-                  'FCTaylor':{'fcc12':'d3bd4f94f0397c830c841a6d7b0eab53',
-                              'bcc24':'a869ed87b3d925193dd6fee62004e230',
-                              'bcc48':'815be3efeefd9a735b1f165decb0216d'}},
-          'ASR': {'ALAMEL':{'fcc12':'3a85f59feeaf9e0ac2d077a3d5e16d1d',
-                            'bcc24':'4e6248723d17d10433dc08ae0062126c',
-                            'bcc48':'a6bf075ced02a1f401eb6a00400cddb2'},
-                 'FCTaylor':{'fcc12':'af75369c40118e26cc5188db3c6a4e9a',
-                             'bcc24':'8c989e6e8cdcb208ba2557a1fd97be63',
-                             'bcc48':'34a9b1c4c10e65a42f218c607fe7b9d2'}},
-          'EWC': {'ALAMEL':{'fcc12':'531ce0cfb3268bb991639e4593aab114',
-                            'bcc24':'f3bb187560838c54d3b805a83ed31e4b',
-                            'bcc48':'a3805e4b66bc340f8c7b9a85ef892ca5'},
-                  'FCTaylor':{'fcc12':'7c29f53b10f651d25b88fad8eb737fa7',
-                              'bcc24':'b325a689314d2cfd6cb7872ad7af8bed',
-                              'bcc48':'d618c46526608c0c532ce5fe5d86c082'}},
-          'QRS': {'ALAMEL':{'fcc12':'612181898c215dac586a0f8c68e8251f',
-                            'bcc24':'9b38997de6c590c32223e17525ef0ad8',
-                            'bcc48':'733aac7805ac3b0bdecf39c5a27f7a84'},
-                  'FCTaylor':{'fcc12':'612181898c215dac586a0f8c68e8251f',
-                              'bcc24':'be10a0afe73060dc3a6f048e9e58e02f',
-                              'bcc48':'fa5d02ece85d10f9eff939f6c878265c'}},
-          'UDSA': {'ALAMEL':{'fcc12':'7dfe706c5d73e1e120592b14a54bb436',
-                             'bcc24':'9ca59b57e8127e21e36b106d61b87e4a',
-                             'bcc48':'49a91f993350e49646a4c6f81298314c'},
-                   'FCTaylor':{'fcc12':'70f20cfee41a4f81d583cdcd5046da88',
-                               'bcc24':'cf8bc2845fa1c3f2eba5d3e9340e5dcc',
-                               'bcc48':'049185a78be4e9a5a460fd5379196182'}},
-          'YLD': {'ALAMEL':{'fcc12':'8ff0fdce0e4eff616ffa9ff5b86273d4',
-                            'bcc24':'c6888ba3659a06e0b98514316bc5c79b',
-                            'bcc48':'6b812302a270b4c8ad7118ec95b0e5c8'},
-                  'FCTaylor':{'fcc12':'64becdc0c6abb96b9d53ff23e843c2d5',
-                              'bcc24':'989b2a75622ab228f92944c456ad2e91',
-                              'bcc48':'2c5678b27b776f493d65d82f1610b05b'}}}
 #File extension for the output of each execution mode. May be removed when we get rid of the file-based I/O for the simulations.
 EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'UDSA':'uds','YLD':'xyld'}
 TEST_ROOT=Path.cwd()
@@ -96,14 +61,23 @@ def generate_output(mode):
                     out.write(out_oriented.read())
 
 
-#Calculate the MD5 hash of the test output.
-def calc_hash(mode):
-    path = 'out.' + EXTENSIONS[mode]
-    hasher = hashlib.md5()
-    result = open(path,'rb').read()
-    hasher.update(result)
-    return hasher.hexdigest()
+def process_file(path):
+    df = pd.read_csv(path,delimiter=' +')
+    pattern = re.compile("^-*0\.[0-9]+E[+\-][0-9]+$")
+    res = []
+    for index, row in df.iterrows():
+        for num in row:
+            if isinstance(num, str) and pattern.match(num):
+                formatted = num.split('E')
+                if int(formatted[1]) > -9:
+                    res.append(int(formatted[0].replace('-','')[2:8]))
+    return res
 
+
+def process_output(mode, algorithm, slip_system):
+    reference = process_file(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}.out')
+    result = process_file('out.' + EXTENSIONS[mode])
+    return (reference, result)
 
 #Generate and execute the different test cases.
 @pytest.mark.parametrize('mode',['ADP', 'ASR', 'EWC','QRS','UDSA','YLD'])
@@ -113,5 +87,5 @@ def test_vef(mode, algorithm, slip_system, tmp_path):
     setup_benchmark(mode, algorithm, slip_system, tmp_path)
     os.chdir(tmp_path)
     generate_output(mode)
-    test_hash = calc_hash(mode)
-    assert test_hash == HASHES[mode][algorithm][slip_system]
+    (reference, result) = process_output(mode, algorithm, slip_system)
+    assert reference == result
