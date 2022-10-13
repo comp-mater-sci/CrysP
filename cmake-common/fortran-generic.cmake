@@ -6,7 +6,7 @@
 
 # Intel compiler specific
 
-set(Fortran_FLAGS -fpp "-warn all" -implicitnone "-stand f08" -standard-semantics)
+set(Fortran_FLAGS -cpp -ffree-line-length-none -I/home/m/intel/oneapi/mkl/2022.2.0/include)
 
 set(Fortran_FLAGS_DEBUG -g -O0 -check all -ftrapuv "-debug all" "-debug-parameters all" -traceback)
 
