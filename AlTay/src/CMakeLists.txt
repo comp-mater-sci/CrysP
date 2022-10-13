@@ -6,7 +6,14 @@ set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
 set(libaltay "altay")
 
-set(LibAlTay_FLAGS "-extend-source 132")
+
+if   (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+    set(LibAlTay_FLAGS "-extend-source 132")
+elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+    set(LibAlTay_FLAGS "-ffree-line-length-none")
+else()
+    message(FATAL_ERROR "Compiler type(CMAKE_Fortran_COMPILER_ID) not recognized")
+endif()
 
 list(APPEND Fortran_FLAGS ${LibAlTay_FLAGS})
 
