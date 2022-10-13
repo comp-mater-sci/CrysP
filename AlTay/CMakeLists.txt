@@ -8,8 +8,6 @@ set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 set(COMMON_DIR "../cmake-common")
 include("${COMMON_DIR}/basic-fortran-project.cmake")
 
-include_directories("include")
-
 #
 # Dependencies
 #
