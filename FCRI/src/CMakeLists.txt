@@ -45,8 +45,6 @@ add_library(${CRI_MT} STATIC ${LIBSRC})
 add_library(${CRI_SHARED} SHARED ${LIBSRC})
 set_target_properties(${CRI_SHARED} PROPERTIES OUTPUT_NAME ${CRI})
 
-target_compile_options(${CRI_MT} PUBLIC "-parallel" "-qopenmp") #HGH: originally -openmp
-
 #
 # Installation of the outputs in the build tree
 #
