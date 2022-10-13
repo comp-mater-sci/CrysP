@@ -91,7 +91,7 @@ implicit none
       integer,intent(out)     :: info
       !
             write(outunit,fmt=100,iostat=info)
-            100 format(T8,'phi1',T23,'PHI',T38,'phi2',T55'W')
+            100 format(T8,'phi1',T23,'PHI',T38,'phi2',T55,'W')
       !
       end subroutine
 
