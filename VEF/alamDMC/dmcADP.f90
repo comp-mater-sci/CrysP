@@ -94,9 +94,7 @@ contains
         !
         RETURN_IF_WITH(n_steps < 1, info = criErr_BadArgs)
 
-        RETURN_ON_WITH(allocate(this%steps(n_steps), stat=ierr), &
-                       ierr /= 0, &
-                       info = criErr_MemAlloc)
+        RETURN_ON_WITH(allocate(this%steps(n_steps), stat=ierr), ierr /= 0, info = criErr_MemAlloc)
         !
         do i = 1, n_steps
             associate(step => this%steps(i))
