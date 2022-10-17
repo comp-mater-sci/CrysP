@@ -36,9 +36,8 @@ contains
       integer,dimension(:),allocatable :: tst_lb_idx, tst_ub_idx
       integer,dimension(:),allocatable :: tst_eval
       logical,dimension(:,:),allocatable :: arr_results
-      logical,dimension(n_algorithms) :: found
 
-      integer :: i, count
+      integer :: i
       !
             res = .false.
 

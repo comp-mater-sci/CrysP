@@ -274,8 +274,6 @@
       DIMENSION RCC(3,3),RCcryst(3,3),rhossaTot(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
       dimension RHOAsa(3,3),RHOAcrys(3,3),GAMdot(96)
-      real, dimension(3,3) :: test !!single precision!!
-!      data SQR2/0.7071067811865476D+00/
 #ifdef PEBP_ENABLED
       integer :: info
       double precision :: ddt
