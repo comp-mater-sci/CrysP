@@ -10,7 +10,5 @@ RUN git clone git@gitlab.kuleuven.be:comp-mater-sci/TWRMTMProject.git
 CMD cd /app/TWRMTMProject \
     && git checkout fix_fp_problems \
     && git pull \
-    && mv test/conf/nlls_tr.f90 fopt/src \
-    && ./build.sh \
     && cd test \
     && pytest

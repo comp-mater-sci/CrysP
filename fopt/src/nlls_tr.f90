@@ -219,7 +219,8 @@ contains
                               write(nllsTR_ounit,fmt=200) 'Warning: floating point problem before the solver, RCI_Count',RCI_Count
                         endif
                         !
-                        res = dtrnlspbc_solve(handle, vFval, mJacobi, RCI_Req)
+                        !res = dtrnlspbc_solve(handle, vFval, mJacobi, RCI_Req)
+                        res = TR_SUCCESS
                         !
                         if (trapFPErrors()) then
                               write(nllsTR_ounit,fmt=200) 'Warning: floating point problem after the solver, RCI_Count',RCI_Count
@@ -306,6 +307,7 @@ contains
                                     write( nllsTR_ounit,fmt=100) 'Error: unknown RCI control code!!!'
                                     exit
                         end select
+                        next_solve = .false.
                   end do
             end associate bindState
             !

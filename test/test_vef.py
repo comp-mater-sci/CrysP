@@ -17,6 +17,13 @@ EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'UDSA':'uds','
 TEST_ROOT=Path.cwd()
 
 
+#General configuration
+shutil.copy(TEST_ROOT/'../fopt/src/nlls_tr.f90', TEST_ROOT)
+shutil.copy(TEST_ROOT/'conf/nlls_tr.f90', TEST_ROOT/'../fopt/src')
+os.chdir(TEST_ROOT/'..')
+os.system('./build.sh')
+shutil.move(TEST_ROOT/'nlls_tr.f90', TEST_ROOT/'../fopt/src/nlls_tr.f90')
+
 #Set up file structure for benchmark execution. May be removed when we get rid of file I/O for the simulations.
 def setup_benchmark(mode, algorithm, slip_system, test_path):
     if (mode == 'YLD'):
