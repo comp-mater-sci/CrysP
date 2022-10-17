@@ -5,7 +5,7 @@ set(progname foptTest)
 
 include_directories("${CMAKE_BINARY_DIR}/include")
 
-list(APPEND Fortran_FLAGS "-qmkl=sequential")
+list(APPEND Fortran_FLAGS "-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl")
 
 list2string(Fortran_FLAGS CMAKE_Fortran_FLAGS) 
 list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)

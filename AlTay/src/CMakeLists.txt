@@ -1,5 +1,3 @@
-# $Id$
-#
 cmake_minimum_required(VERSION 2.8)
 
 project(AlTay Fortran)
@@ -7,9 +5,15 @@ project(AlTay Fortran)
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
 set(libaltay "altay")
-set(progaltay "prog_altay")
 
-set(LibAlTay_FLAGS "-extend-source 132")
+
+if   (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+    set(LibAlTay_FLAGS "-extend-source 132")
+elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+    set(LibAlTay_FLAGS "-ffree-line-length-none")
+else()
+    message(FATAL_ERROR "Compiler type(CMAKE_Fortran_COMPILER_ID) not recognized")
+endif()
 
 list(APPEND Fortran_FLAGS ${LibAlTay_FLAGS})
 
@@ -56,21 +60,6 @@ add_library(${libaltay} STATIC ${LIBSRC})
 set_target_properties(${libaltay} PROPERTIES COMPILE_DEFINITIONS "ALTAY_SUBROUTINE;NO_STDOUT;RCM_ENABLED;PEBP_ENABLED;")
 
 #
-# AlTay stand-alone
-#
-set(PROGSRC
-${CORESRC}
-MainA1.f90
-)
-
-add_executable(${progaltay} ${PROGSRC}) 
-set_target_properties(${progaltay} PROPERTIES OUTPUT_NAME "altay")
-set_target_properties(${progaltay} PROPERTIES COMPILE_DEFINITIONS "MAINDIRECT;FINALCUB_ENABLED;PEBP_ENABLED;FINALBPM_ENABLED;INTERMEDIATEBPM_DISABLED")
-# Set different output for module files
-set_target_properties(${progaltay} PROPERTIES Fortran_MODULE_DIRECTORY "${progaltay}_modules")
-target_link_libraries(${progaltay} "CRI")
-
-#
 # Installation of the outputs in the build tree
 #
 
@@ -90,8 +79,6 @@ install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")
 
 install(EXPORT "altayTargets" DESTINATION "cmake")
 
-install(TARGETS ${progaltay} DESTINATION "bin")
-
 # Generate package
 include(CMakePackageConfigHelpers)
 configure_package_config_file("../altayConfig.cmake.in" "altayConfig.cmake"
@@ -102,5 +89,3 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/altayConfig.cmake" DESTINATION ".")
 
 # Export the package
 export(PACKAGE altay)
-
-

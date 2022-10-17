@@ -257,9 +257,7 @@ contains
         endif
         !
         ! Initialize AlTay structures
-        RETURN_ON_WITH(call initStepData(n_increments, astate,info), &
-                        info /= 0, &
-                        info = criError)
+        RETURN_ON_WITH(call initStepData(n_increments, astate,info),info /= 0,info = criError)
         !
         associate(increment_range => this%substepping_config%ptr_range)
             !
@@ -303,9 +301,7 @@ contains
         end associate
         !
         ! Call the AlTay
-        RETURN_ON_WITH(call runSteps(astate,info), &
-                        info /= 0, &
-                        info = criError)
+        RETURN_ON_WITH(call runSteps(astate,info), info /= 0, info = criError)
         !
         RETURN_IF(info /= criSuccess, info = step_output%collect(n_increments))
     !
@@ -338,12 +334,10 @@ contains
     !
         ! Check if the input and the state of libaltay correspond.
         ALLOCATED_SIZE(n_simulcalls, astate%simulCalls)
-        RETURN_IF(n_simulcalls < n_increments .or. n_simulcalls /= astate%nSimulCalls, &
-                  info = criErr_BadArgs)
+        RETURN_IF(n_simulcalls < n_increments .or. n_simulcalls /= astate%nSimulCalls, info = criErr_BadArgs)
         !
         ! Allocate storage for output
-        RETURN_ON_WITH(allocate(this%increments(n_increments), stat=ierr), &
-                       ierr /= 0, info = criErr_MemAlloc)
+        RETURN_ON_WITH(allocate(this%increments(n_increments), stat=ierr), ierr /= 0, info = criErr_MemAlloc)
         !
         ! collect the results
         do i = 1, n_increments

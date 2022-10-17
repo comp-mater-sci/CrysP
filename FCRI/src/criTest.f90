@@ -70,7 +70,7 @@ contains
             endif
             !
             201 format('Test ',A,': PASS')
-            202 format('Test ',A,': FAILED in line ', I0 ' of ', A)
+            202 format('Test ',A,': FAILED in line ', I0, ' of ', A)
       !
       end subroutine
 
