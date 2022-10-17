@@ -52,7 +52,7 @@ def create_conf_file(mode, algorithm, slip_system, test_path):
 
 #Execute simulations themselves. Implemented as a dedicated function to simplify test adjustments when transitioning to a different software architecture.
 def generate_output(mode):
-    os.system(TEST_ROOT/f'../VEF/release/bin/alamDMC {mode} test.cfg')
+    os.system(TEST_ROOT/f'../VEF/release/bin/alamDMC {mode} test.cfg > alamDMC.log' )
 
     if mode == 'UDSA':
         with open('out.uds', 'w') as out:
