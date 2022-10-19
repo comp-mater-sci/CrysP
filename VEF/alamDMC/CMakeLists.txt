@@ -19,7 +19,7 @@ main.f90
 )
 
 add_executable(alamDMC  ${alamDMC_SRCS})
-target_link_libraries(alamDMC alamYLP AlamDMC altay CRI fopt)
+target_link_libraries(alamDMC AlamDMC altay CRI fopt)
 set_target_properties(alamDMC PROPERTIES LINK_FLAGS "-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl")
 
 install(TARGETS alamDMC DESTINATION "bin")
