@@ -1,0 +1,27 @@
+\hypertarget{cri_path_8f90}{}\doxysection{src/cri\+Path.f90 File Reference}
+\label{cri_path_8f90}\index{src/criPath.f90@{src/criPath.f90}}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacecripath}{cripath}}
+\begin{DoxyCompactList}\small\item\em Provides named constants and procedures for dealing with filesystem paths. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+pure character(len=len(path)) function \mbox{\hyperlink{namespacecripath_acf33272936fc9b3fb2a79f303d90b613}{cripath\+::basename}} (path)
+\begin{DoxyCompactList}\small\item\em Return basename of the pathname {\ttfamily path}, which is the name of the file or directory {\ttfamily path} with any leading directory components removed. \end{DoxyCompactList}\item 
+pure character(len=len(path)) function \mbox{\hyperlink{namespacecripath_ab6284d364899aeac072beaf949182ea6}{cripath\+::stripext}} (path)
+\begin{DoxyCompactList}\small\item\em Returns the path without file exension (if there is any) \end{DoxyCompactList}\item 
+pure subroutine \mbox{\hyperlink{namespacecripath_a427e721cd0af1d4810238292fb521fc4}{cripath\+::splitext}} (path, root, ext)
+\begin{DoxyCompactList}\small\item\em Split the pathname path into a pair (root, ext). \end{DoxyCompactList}\item 
+pure character(len=len(prefix)+len(suffix)) function \mbox{\hyperlink{namespacecripath_a59882556ce377835f391465127e8120c}{cripath\+::mkfilename}} (prefix, suffix)
+\begin{DoxyCompactList}\small\item\em Construct a filename by stitching together prefix and suffix. \end{DoxyCompactList}\item 
+pure character(len=len(path\+\_\+a)+len(path\+\_\+b)) function \mbox{\hyperlink{namespacecripath_aaf9b652b0fd1d069cbfab97daa69221e}{cripath\+::pathjoin}} (path\+\_\+a, path\+\_\+b)
+\begin{DoxyCompactList}\small\item\em Join two path components, inserting directory separator as needed. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+character, parameter \mbox{\hyperlink{namespacecripath_a3b212c2ebc04a77130a7b47259cb431f}{cripath\+::pathsep}} = \textquotesingle{}\textbackslash{}\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em Path separator. \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespacecripath_a431565de6cbae010916555dd42fb8f5e}{cripath\+::max\+\_\+pathlen}} = 2048
+\begin{DoxyCompactList}\small\item\em Maximal length of path acceptable by the filesystem. \end{DoxyCompactList}\end{DoxyCompactItemize}

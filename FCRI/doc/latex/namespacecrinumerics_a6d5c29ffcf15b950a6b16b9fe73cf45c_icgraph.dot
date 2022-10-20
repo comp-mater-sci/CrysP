@@ -1,0 +1,11 @@
+digraph "crinumerics::barycentric_interpolation"
+{
+ // INTERACTIVE_SVG=YES
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="crinumerics::barycentric\l_interpolation",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Compute interpolation by polynomial of degree n using barycentric formula."];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node2 [label="crinumerics::interpolate\l::barycentricinterpolator\l_interpolate",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$interfacecrinumerics_1_1interpolate.html#ad8c6ff82fa2da75b08f02d64213ec4a7",tooltip="Calculate interpolation by means of barycentric form of interpolation polynomial in Lagrange form."];
+}

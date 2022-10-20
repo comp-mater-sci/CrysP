@@ -3,3 +3,5 @@
 *~
 .DS_Store
 */release
+security/ssh_keys/*
+test/security/ssh_keys/*

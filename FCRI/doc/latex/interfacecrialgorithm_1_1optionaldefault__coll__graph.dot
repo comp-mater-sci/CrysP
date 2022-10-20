@@ -1,0 +1,8 @@
+digraph "crialgorithm::optionaldefault"
+{
+ // INTERACTIVE_SVG=YES
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{crialgorithm::optionaldefault\n||+ optionaldefault_logical()\l+ optionaldefault_integer()\l}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Test the presence of optional value, and return a default if the optional is not present."];
+}
