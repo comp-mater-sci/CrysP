@@ -3,10 +3,6 @@
 !>
 !> The user is strongly advised against any direct usage of numerical error codes.
 !> Instead of this, one should use the symbolic names.
-!> \todo Extend the list of specific error conditions
-!> \todo Append iso_binding enum that represents the same error codes
-!> \todo Define string-output subroutine to emmit messages
-!> \todo Define IO output subroutine to emmit messages
 module criErrcodes
 implicit none
       !>@{ \name General error codes

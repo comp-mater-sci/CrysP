@@ -20,8 +20,6 @@ contains
 
             stat = stat .and. test_replaceAll()
 
-            stat = stat .and. test_isPresent()
-
             stat = stat .and. test_optionalDefault()
 
             stat = stat .and. test_CHOOSE()
@@ -36,9 +34,8 @@ contains
       integer,dimension(:),allocatable :: tst_lb_idx, tst_ub_idx
       integer,dimension(:),allocatable :: tst_eval
       logical,dimension(:,:),allocatable :: arr_results
-      logical,dimension(n_algorithms) :: found
 
-      integer :: i, count
+      integer :: i
       !
             res = .false.
 
@@ -86,48 +83,6 @@ contains
             _TEST('string with three inst. of from',(replaceAll('abx awd gwda','a','b') == 'bbx bwd gwdb'))
 
             test_replaceAll = .true.
-      !
-      end function
-
-      logical function test_isPresent()
-      implicit none
-      !
-      character(len=0)  :: empty_string
-      character(len=10),dimension(3),parameter      :: list = [character(len=10) :: 'one', 'two', 'three']
-      character(len=10),dimension(-1:1),parameter   :: list_nonstandard_shape = [character(len=10) :: 'one', 'two', 'three']
-      character(len=10),dimension(0) :: empty_list
-      character(len=10),parameter :: val_two_10 = 'two'
-      character(len=3),parameter :: val_two_3 = 'two'
-      integer :: index
-      logical :: is_present
-            test_isPresent = .false.
-            _TEST('empty string not in empty list', .not.isPresent(empty_string,empty_list))
-            _TEST('empty string not in list', .not.isPresent(empty_string,list))
-            _TEST('empty string not in shaped list', .not.isPresent(empty_string,list_nonstandard_shape))
-            !
-            _TEST('value (exact size) not in empty list', .not.isPresent(val_two_10,empty_list))
-            _TEST('value (smaller size) not in empty list', .not.isPresent(val_two_3,empty_list))
-            !
-            _TEST('value (exact size) in list', isPresent(val_two_10,list))
-            _TEST('value (smaller size) in list', isPresent(val_two_3,list))
-            _TEST('value (exact size) in shaped list', isPresent(val_two_10,list_nonstandard_shape))
-            _TEST('value (smaller size) in shaped list', isPresent(val_two_3,list_nonstandard_shape))
-            !
-            index = -100
-            is_present = isPresent(val_two_10,list,index)
-            _TEST('value and index (exact size) in list', (is_present .and. (index == 2)))
-            index = -100
-            is_present = isPresent(val_two_3,list,index)
-            _TEST('value and index (smaller size) in list', (is_present .and. (index == 2)))
-            ! Note: extent of the array is NOT passed to isPresent
-            index = -100
-            is_present = isPresent(val_two_10,list_nonstandard_shape,index)
-            _TEST('value and index (exact size) in shaped list', (is_present .and. (index == 2)))
-            index = -100
-            is_present = isPresent(val_two_3,list_nonstandard_shape,index)
-            _TEST('value and index (smaller size) in shaped list', (is_present .and. (index == 2)))
-
-
       !
       end function
 
