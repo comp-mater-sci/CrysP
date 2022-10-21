@@ -73,8 +73,8 @@ def generate_output(mode):
 
 
 def process_file(path):
-    df = pd.read_csv(path,delimiter=' +')
-    pattern = re.compile("^-*0\.[0-9]+E[+\-][0-9]+$")
+    df = pd.read_csv(path,delimiter=' +', engine='python')
+    pattern = re.compile(r'^-*0\.[0-9]+E[+\-][0-9]+$')
     res = []
     for index, row in df.iterrows():
         for num in row:
