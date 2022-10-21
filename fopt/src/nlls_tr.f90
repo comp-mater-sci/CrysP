@@ -306,7 +306,6 @@ contains
                                     write( nllsTR_ounit,fmt=100) 'Error: unknown RCI control code!!!'
                                     exit
                         end select
-
                   end do
             end associate bindState
             !

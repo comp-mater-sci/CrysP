@@ -153,7 +153,8 @@ contains
             close(LEC)
             close(KLEC)
             close(IMP)
-            close(IMP1)
+            !flush(IMP1)
+            !close(IMP1)
             close(IMP2)
             close(IMP3)
 #ifdef PEBP_ENABLED

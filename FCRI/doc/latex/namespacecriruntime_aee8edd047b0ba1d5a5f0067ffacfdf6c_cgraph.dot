@@ -1,0 +1,23 @@
+digraph "criruntime::processcommandline"
+{
+ // INTERACTIVE_SVG=YES
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="criruntime::processcommandline",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Process the arguments provided in the command line."];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid"];
+  Node2 [label="criruntime::finishprocessing",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecriruntime.html#afa1548197c8e0c3d4b589cb7effa1e74",tooltip="Print the help message and (optionally) terminate the program."];
+  Node2 -> Node3 [color="midnightblue",fontsize="10",style="solid"];
+  Node3 [label="criruntime::finalize",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecriruntime.html#a63427cf84230e038e9283c85459955f2",tooltip="Terminate execution of the program, returning stop code."];
+  Node2 -> Node4 [color="midnightblue",fontsize="10",style="solid"];
+  Node4 [label="criruntime::printhelpmessage",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecriruntime.html#ae4940aef753d2b1322a27659dc0b8ade",tooltip="Print the help message."];
+  Node4 -> Node5 [color="midnightblue",fontsize="10",style="solid"];
+  Node5 [label="cripath::basename",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecripath.html#acf33272936fc9b3fb2a79f303d90b613",tooltip="Return basename of the pathname path, which is the name of the file or directory path with any leadin..."];
+  Node5 -> Node5 [color="midnightblue",fontsize="10",style="solid"];
+  Node1 -> Node6 [color="midnightblue",fontsize="10",style="solid"];
+  Node6 [label="criruntime::getargv",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecriruntime.html#a7f6bc1a11847d6ec29643785f832ca12",tooltip="Process the command line using Fortran intrinsic procedures (command_argument_count,..."];
+  Node1 -> Node7 [color="midnightblue",fontsize="10",style="solid"];
+  Node7 [label="crilinearmap::resolvename",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecrilinearmap.html#a1970584de6e99087fa79a30f5ae036a6",tooltip="Resolve symbolic name into an integer identifier."];
+  Node7 -> Node7 [color="midnightblue",fontsize="10",style="solid"];
+}

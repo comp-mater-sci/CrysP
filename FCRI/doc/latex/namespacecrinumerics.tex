@@ -1,0 +1,163 @@
+\hypertarget{namespacecrinumerics}{}\doxysection{crinumerics Module Reference}
+\label{namespacecrinumerics}\index{crinumerics@{crinumerics}}
+
+
+Various numerical algorithms.  
+
+
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structcrinumerics_1_1barycentricinterpolator}{barycentricinterpolator}}
+\begin{DoxyCompactList}\small\item\em Data needed by barycentric interpolation. \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{interfacecrinumerics_1_1interpolate}{interpolate}}
+\begin{DoxyCompactList}\small\item\em Interpolation function. \end{DoxyCompactList}\item 
+interface \mbox{\hyperlink{interfacecrinumerics_1_1linspace}{linspace}}
+\begin{DoxyCompactList}\small\item\em Calculate evenly spaced numbers over a specified interval. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+pure subroutine \mbox{\hyperlink{namespacecrinumerics_ad7b8f7f9ef7f8735bfa84334af363dda}{linspace\+\_\+dynarr}} (xstart, xend, n, array, endpoint)
+\begin{DoxyCompactList}\small\item\em Calculate evenly spaced numbers over a specified interval and place them in dynamically allocated array. \end{DoxyCompactList}\item 
+pure subroutine \mbox{\hyperlink{namespacecrinumerics_a560d856b796afe26e70ae52a731c53e3}{linspace\+\_\+arr}} (xstart, xend, array, endpoint)
+\begin{DoxyCompactList}\small\item\em Calculate evenly spaced numbers over a specified interval. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacecrinumerics_a66099be4de96c83c6a4eb0a90b5dd53e}{barycentricinterpolator\+\_\+init}} (this, order, xi, yi, info)
+\begin{DoxyCompactList}\small\item\em Initialize and set Barycentric\+Interpolator object. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacecrinumerics_aaae28aeffc6f4341ce08105fdf319493}{barycentricinterpolator\+\_\+init\+\_\+allocate}} (this, order, npoints, info)
+\begin{DoxyCompactList}\small\item\em Allocate internal structures of Barycentric\+Interpolator object. \end{DoxyCompactList}\item 
+double precision pure function \mbox{\hyperlink{namespacecrinumerics_a59cea91da1ef4c174d1a1a13e936f0e6}{barycentricinterpolator\+\_\+interpolate}} (this, x)
+\begin{DoxyCompactList}\small\item\em Calculate interpolation by means of barycentric form of interpolation polynomial in Lagrange form. \end{DoxyCompactList}\item 
+double precision pure function \mbox{\hyperlink{namespacecrinumerics_a6d5c29ffcf15b950a6b16b9fe73cf45c}{barycentric\+\_\+interpolation}} (x, xi, yi, wi)
+\begin{DoxyCompactList}\small\item\em Compute interpolation by polynomial of degree n using barycentric formula. \end{DoxyCompactList}\item 
+pure subroutine \mbox{\hyperlink{namespacecrinumerics_ab41904a084be454ee5d8cafdbd7ec832}{barycentric\+\_\+weights}} (xi, wi, info)
+\begin{DoxyCompactList}\small\item\em Compute barycentric weights of interpolation points. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Various numerical algorithms. 
+
+\doxysubsection{Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{namespacecrinumerics_a6d5c29ffcf15b950a6b16b9fe73cf45c}\label{namespacecrinumerics_a6d5c29ffcf15b950a6b16b9fe73cf45c}} 
+\index{crinumerics@{crinumerics}!barycentric\_interpolation@{barycentric\_interpolation}}
+\index{barycentric\_interpolation@{barycentric\_interpolation}!crinumerics@{crinumerics}}
+\doxysubsubsection{\texorpdfstring{barycentric\_interpolation()}{barycentric\_interpolation()}}
+{\footnotesize\ttfamily double precision pure function crinumerics\+::barycentric\+\_\+interpolation (\begin{DoxyParamCaption}\item[{double precision, intent(in)}]{x,  }\item[{double precision, dimension(\+:), intent(in)}]{xi,  }\item[{double precision, dimension(\+:), intent(in)}]{yi,  }\item[{double precision, dimension(\+:), intent(in)}]{wi }\end{DoxyParamCaption})}
+
+
+
+Compute interpolation by polynomial of degree n using barycentric formula. 
+
+The degree of the polynomial n is deduced from the size of xi. All xi, yi and wi must have identical shape.
+
+\mbox{[}1\mbox{]} J-\/P Berrut and L.\+N. Trefethen, Barycentric Lagrange Interpolation, SIAM Rev. 46(3), 501\textbackslash{}96517. DOI\+:10.\+1137/\+S0036144502417715 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em x} & interpolation point \\
+\hline
+\mbox{\texttt{ in}}  & {\em xi} & interpolation nodes. Shape is \mbox{[}1\+:n+1\mbox{]} \\
+\hline
+\mbox{\texttt{ in}}  & {\em yi} & function values at the interpolation nodes. Shape is \mbox{[}1\+:n+1\mbox{]} \\
+\hline
+\mbox{\texttt{ in}}  & {\em wi} & barycentric weights of the nodes. Shape is \mbox{[}1\+:n+1\mbox{]} \\
+\hline
+\end{DoxyParams}
+Here is the caller graph for this function\+:
+% FIG 0
+\mbox{\Hypertarget{namespacecrinumerics_ab41904a084be454ee5d8cafdbd7ec832}\label{namespacecrinumerics_ab41904a084be454ee5d8cafdbd7ec832}} 
+\index{crinumerics@{crinumerics}!barycentric\_weights@{barycentric\_weights}}
+\index{barycentric\_weights@{barycentric\_weights}!crinumerics@{crinumerics}}
+\doxysubsubsection{\texorpdfstring{barycentric\_weights()}{barycentric\_weights()}}
+{\footnotesize\ttfamily pure subroutine crinumerics\+::barycentric\+\_\+weights (\begin{DoxyParamCaption}\item[{double precision, dimension(0\+:), intent(in)}]{xi,  }\item[{double precision, dimension(0\+:), intent(out)}]{wi,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Compute barycentric weights of interpolation points. 
+
+\mbox{[}1\mbox{]} J-\/P Berrut and L.\+N. Trefethen, Barycentric Lagrange Interpolation, SIAM Rev. 46(3), 501\textbackslash{}96517. DOI\+:10.\+1137/\+S0036144502417715 Here is the caller graph for this function\+:
+% FIG 1
+\mbox{\Hypertarget{namespacecrinumerics_a66099be4de96c83c6a4eb0a90b5dd53e}\label{namespacecrinumerics_a66099be4de96c83c6a4eb0a90b5dd53e}} 
+\index{crinumerics@{crinumerics}!barycentricinterpolator\_init@{barycentricinterpolator\_init}}
+\index{barycentricinterpolator\_init@{barycentricinterpolator\_init}!crinumerics@{crinumerics}}
+\doxysubsubsection{\texorpdfstring{barycentricinterpolator\_init()}{barycentricinterpolator\_init()}}
+{\footnotesize\ttfamily subroutine crinumerics\+::barycentricinterpolator\+\_\+init (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structcrinumerics_1_1barycentricinterpolator}{barycentricinterpolator}}), intent(out)}]{this,  }\item[{integer, intent(in)}]{order,  }\item[{double precision, dimension(\+:), intent(in)}]{xi,  }\item[{double precision, dimension(\+:), intent(in)}]{yi,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Initialize and set Barycentric\+Interpolator object. 
+
+Here is the call graph for this function\+:
+% FIG 2
+\mbox{\Hypertarget{namespacecrinumerics_aaae28aeffc6f4341ce08105fdf319493}\label{namespacecrinumerics_aaae28aeffc6f4341ce08105fdf319493}} 
+\index{crinumerics@{crinumerics}!barycentricinterpolator\_init\_allocate@{barycentricinterpolator\_init\_allocate}}
+\index{barycentricinterpolator\_init\_allocate@{barycentricinterpolator\_init\_allocate}!crinumerics@{crinumerics}}
+\doxysubsubsection{\texorpdfstring{barycentricinterpolator\_init\_allocate()}{barycentricinterpolator\_init\_allocate()}}
+{\footnotesize\ttfamily subroutine crinumerics\+::barycentricinterpolator\+\_\+init\+\_\+allocate (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structcrinumerics_1_1barycentricinterpolator}{barycentricinterpolator}}), intent(out)}]{this,  }\item[{integer, intent(in)}]{order,  }\item[{integer, intent(in)}]{npoints,  }\item[{integer, intent(out)}]{info }\end{DoxyParamCaption})}
+
+
+
+Allocate internal structures of Barycentric\+Interpolator object. 
+
+Here is the caller graph for this function\+:
+% FIG 3
+\mbox{\Hypertarget{namespacecrinumerics_a59cea91da1ef4c174d1a1a13e936f0e6}\label{namespacecrinumerics_a59cea91da1ef4c174d1a1a13e936f0e6}} 
+\index{crinumerics@{crinumerics}!barycentricinterpolator\_interpolate@{barycentricinterpolator\_interpolate}}
+\index{barycentricinterpolator\_interpolate@{barycentricinterpolator\_interpolate}!crinumerics@{crinumerics}}
+\doxysubsubsection{\texorpdfstring{barycentricinterpolator\_interpolate()}{barycentricinterpolator\_interpolate()}}
+{\footnotesize\ttfamily double precision pure function crinumerics\+::barycentricinterpolator\+\_\+interpolate (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structcrinumerics_1_1barycentricinterpolator}{barycentricinterpolator}}), intent(in)}]{this,  }\item[{double precision, intent(in)}]{x }\end{DoxyParamCaption})}
+
+
+
+Calculate interpolation by means of barycentric form of interpolation polynomial in Lagrange form. 
+
+The function requires a properly initialized Barycentric\+Interpolator object. Otherwise the result of the function is undefined. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em this} & Properly initialized object of type Barycentric\+Interpolator \\
+\hline
+\mbox{\texttt{ in}}  & {\em x} & The point at which the interpolated function is evaluated \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{namespacecrinumerics_a560d856b796afe26e70ae52a731c53e3}\label{namespacecrinumerics_a560d856b796afe26e70ae52a731c53e3}} 
+\index{crinumerics@{crinumerics}!linspace\_arr@{linspace\_arr}}
+\index{linspace\_arr@{linspace\_arr}!crinumerics@{crinumerics}}
+\doxysubsubsection{\texorpdfstring{linspace\_arr()}{linspace\_arr()}}
+{\footnotesize\ttfamily pure subroutine crinumerics\+::linspace\+\_\+arr (\begin{DoxyParamCaption}\item[{double precision, intent(in)}]{xstart,  }\item[{double precision, intent(in)}]{xend,  }\item[{double precision, dimension(\+:), intent(out)}]{array,  }\item[{logical, intent(in), optional}]{endpoint }\end{DoxyParamCaption})}
+
+
+
+Calculate evenly spaced numbers over a specified interval. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em xstart} & Begin of the interval \\
+\hline
+\mbox{\texttt{ in}}  & {\em xend} & End of the interval Array to be filled in. Size of the array determines \\
+\hline
+\mbox{\texttt{ out}}  & {\em array} & the number of numbers to be generated. \\
+\hline
+\mbox{\texttt{ in}}  & {\em endpoint} & Flag\+: set the endpoint to xend (default\+: .true.) \\
+\hline
+\end{DoxyParams}
+Here is the caller graph for this function\+:
+% FIG 4
+\mbox{\Hypertarget{namespacecrinumerics_ad7b8f7f9ef7f8735bfa84334af363dda}\label{namespacecrinumerics_ad7b8f7f9ef7f8735bfa84334af363dda}} 
+\index{crinumerics@{crinumerics}!linspace\_dynarr@{linspace\_dynarr}}
+\index{linspace\_dynarr@{linspace\_dynarr}!crinumerics@{crinumerics}}
+\doxysubsubsection{\texorpdfstring{linspace\_dynarr()}{linspace\_dynarr()}}
+{\footnotesize\ttfamily pure subroutine crinumerics\+::linspace\+\_\+dynarr (\begin{DoxyParamCaption}\item[{double precision, intent(in)}]{xstart,  }\item[{double precision, intent(in)}]{xend,  }\item[{integer, intent(in)}]{n,  }\item[{double precision, dimension(\+:), intent(out), allocatable}]{array,  }\item[{logical, intent(in), optional}]{endpoint }\end{DoxyParamCaption})}
+
+
+
+Calculate evenly spaced numbers over a specified interval and place them in dynamically allocated array. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em xstart} & Begin of the interval \\
+\hline
+\mbox{\texttt{ in}}  & {\em xend} & End of the interval \\
+\hline
+\mbox{\texttt{ in}}  & {\em n} & Number of values to be \\
+\hline
+\mbox{\texttt{ out}}  & {\em array} & Array to be filled in. The allocated size of the array will be either 0 if n\texorpdfstring{$<$}{<}1 or n otherwise. \\
+\hline
+\mbox{\texttt{ in}}  & {\em endpoint} & Flag\+: set the endpoint to xend (default\+: .true.) \\
+\hline
+\end{DoxyParams}

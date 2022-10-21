@@ -1,0 +1,19 @@
+digraph "crilinearmap::resolvename"
+{
+ // INTERACTIVE_SVG=YES
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="crilinearmap::resolvename",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Resolve symbolic name into an integer identifier."];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node2 [label="criruntime::processcommandline",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecriruntime.html#aee8edd047b0ba1d5a5f0067ffacfdf6c",tooltip="Process the arguments provided in the command line."];
+  Node1 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node3 [label="crinamedrange::rangefactory",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecrinamedrange.html#a3eec7f47f4e78ed876939595d932c5cc",tooltip="Creates an instance of relevant range type."];
+  Node3 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node4 [label="crinamedrange::rangefactory\l_extended",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecrinamedrange.html#a9c861a40683d02d87ca6847c83a5f7d6",tooltip="Creates an instance of the relevant range type given its name OR makes an appropriate instance for a ..."];
+  Node1 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node1 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node5 [label="criconfigreader::readkeyword",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecriconfigreader.html#a345a9fbfae8b657dc08bfc8e9f6a90a8",tooltip="Read a keyword value and checks it against the map."];
+  Node1 -> Node1 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+}

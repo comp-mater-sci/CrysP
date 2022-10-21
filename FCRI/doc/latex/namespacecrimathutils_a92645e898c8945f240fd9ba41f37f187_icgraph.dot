@@ -1,0 +1,11 @@
+digraph "crimathutils::vector_product_dp"
+{
+ // INTERACTIVE_SVG=YES
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="crimathutils::vector\l_product_dp",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Calculation of the vector product of two double precision vectors with size 3."];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node2 [label="crimathutils::vector\l_product::vector_product_dp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$interfacecrimathutils_1_1vector__product.html#a9ee8f6808376753a4b52138377b0d4d6",tooltip="Calculation of the vector product of two double precision vectors with size 3."];
+}

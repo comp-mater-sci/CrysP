@@ -1,0 +1,8 @@
+digraph "criuncomment::readvalue"
+{
+ // INTERACTIVE_SVG=YES
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{criuncomment::readvalue\n||+ read_integer()\l+ read_vector_integer()\l+ read_logical()\l+ read_vector_logical()\l+ read_string()\l+ read_vector_string()\l+ read_double()\l+ read_vector_double()\l}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Read value from iounit and strip comments Arguments:"];
+}

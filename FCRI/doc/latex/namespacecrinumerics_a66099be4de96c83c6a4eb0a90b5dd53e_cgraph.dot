@@ -1,0 +1,13 @@
+digraph "crinumerics::barycentricinterpolator_init"
+{
+ // INTERACTIVE_SVG=YES
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="crinumerics::barycentricinterpolator_init",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Initialize and set BarycentricInterpolator object."];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid"];
+  Node2 [label="crinumerics::barycentric\l_weights",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecrinumerics.html#ab41904a084be454ee5d8cafdbd7ec832",tooltip="Compute barycentric weights of interpolation points."];
+  Node1 -> Node3 [color="midnightblue",fontsize="10",style="solid"];
+  Node3 [label="crinumerics::barycentricinterpolator\l_init_allocate",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecrinumerics.html#aaae28aeffc6f4341ce08105fdf319493",tooltip="Allocate internal structures of BarycentricInterpolator object."];
+}

@@ -1,0 +1,19 @@
+\hypertarget{cri_linear_map_8f90}{}\doxysection{src/cri\+Linear\+Map.f90 File Reference}
+\label{cri_linear_map_8f90}\index{src/criLinearMap.f90@{src/criLinearMap.f90}}
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structcrilinearmap_1_1mapitem}{crilinearmap\+::mapitem}}
+\begin{DoxyCompactList}\small\item\em Helper data structure for resolving name-\/identifier pairs MB\+: Maps (= structure arrays constructed from Map\+Item) are used to look up name and find corresponding ID and vice versa. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacecrilinearmap}{crilinearmap}}
+\begin{DoxyCompactList}\small\item\em Simple (and stupid) implementation of unsorted linear map. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+logical function \mbox{\hyperlink{namespacecrilinearmap_a1970584de6e99087fa79a30f5ae036a6}{crilinearmap\+::resolvename}} (themap, name, id, index)
+\begin{DoxyCompactList}\small\item\em Resolve symbolic name into an integer identifier. \end{DoxyCompactList}\item 
+logical function \mbox{\hyperlink{namespacecrilinearmap_a0348dc52347bdafd3d27b0726795fc47}{crilinearmap\+::resolveid}} (themap, id, name, index)
+\begin{DoxyCompactList}\small\item\em Resolve an integer identifier into a symbolic name. \end{DoxyCompactList}\end{DoxyCompactItemize}
