@@ -1,18 +1,4 @@
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2015-11-25, based on contents of 'dmcEWC.f90'
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-
-!> Types and procedures that control incrementation in stress-driven 
+!> Types and procedures that control incrementation in stress-driven
 !> evolution of material state.
 module dmcIncrementationControl
 use criErrcodes
@@ -38,78 +24,78 @@ implicit none
 
     !> Default maximal number of increments along a deformation path.
     integer,parameter :: dmcIC_max_increments = 1000
-    
+
     !> Basic control variables used in evolution of material state.
     type :: IncrementationControlVariables
-        
+
         integer :: increment = 0
-        
+
         !> Plastic work in the current increment
         double precision    :: plastic_work_inc = 0.D0
-        
+
         !> Plastic work in the current step
         double precision    :: plastic_work_step = 0.D0
-        
+
         !> Total plastic work
         double precision    :: plastic_work_total = 0.D0
-        
+
         !> Increment of plastic strain
         double precision,dimension(alamEval_vSD_dim)    :: vP_inc = 0.D0
-        
+
         !> Total plastic strain in the current step
         double precision,dimension(alamEval_vSD_dim)    :: vP_step = 0.D0
-        
+
         !> Total plastic strain:
         double precision,dimension(alamEval_vSD_dim)    :: vP_total = 0.D0
-        
-        
+
+
         !> Sum of absolute plastic strain increments:
         !> \f[
         !>    vP_{abs} = \sum | vP_{inc} |
         !> \f]
         double precision,dimension(alamEval_vSD_dim)    :: vP_abs
-        
+
     end type
-    
-    
-    !> 
+
+
+    !>
     type,extends(IncrementationControlVariables) :: IncrementationControl
-        
+
     contains
 
         procedure,pass(this)        :: initStep => IncrementationControl_initStep
-    
+
         procedure,pass(this)        :: update => IncrementationControl_update
-        
+
     end type
 
 
     !> Basic settings for incrementation control.
     type :: IncrementationControlSettings
-        
+
         integer         :: scaling_type = scalingNone
-        
+
         integer         :: incrementation_type = incrementFixed
-        
+
         !> Maximal number of increments. If set to positive value, it limits
         !> the number of increments independently of other criteria.
         !> It is ignored if set to a negative value.
         integer         :: max_increment_count = dmcIC_max_increments
-        
+
         double precision :: increment_size = 0.D0
-        
+
         double precision :: step_size = 0.D0
 
         !> If scaling_type StrainTensorComponent is used, this contains
-        !> the index of the tensor component of interest in Voigt notation. 
-        !> The default corresponds to X_11 in SR tensor X. 
+        !> the index of the tensor component of interest in Voigt notation.
+        !> The default corresponds to X_11 in SR tensor X.
         integer         :: selected_tensor_component = 1
-        
+
     end type
 
-    
+
 contains
-    
+
     subroutine IncrementationControl_update(this, vDe, vSe, info)
     class(IncrementationControl),intent(inout)      :: this
     double precision,dimension(alamEval_vSD_dim),intent(in) :: vDe, vSe
@@ -134,7 +120,7 @@ contains
     !
     end subroutine
 
-    
+
     !> Clean increment-wise and step-wise control fields.
     !>
     !> All fields except for the ones representing 'totals' are set to zero.

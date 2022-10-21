@@ -1,17 +1,3 @@
-! $Id$
-!
-!>    \author Jerzy Gawad
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>
-!>    \date Date of the initial release: 2017-02-08, as a result of refactoring 'stressDrivenModule.f90'
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-
 #include "criMacros.fpp"
 
 !> Implementation of a altay-based DMC computiational module.
@@ -34,7 +20,7 @@ implicit none
     public :: StressDrivenModule
     private
 
-    !> Abstract class implementing basic subset of operations that are shared by all 
+    !> Abstract class implementing basic subset of operations that are shared by all
     !> stress-drien computational modules
     type,extends(BasicModule) :: StressDrivenModule
 
@@ -85,18 +71,18 @@ contains
     end function
 
 
-    
+
     integer function StressDrivenModule_readConfig(this,cnfunit) result(info)
     class(StressDrivenModule),intent(inout)          :: this
     integer,intent(in)                        :: cnfunit
     !
         info = this%BasicModule%readConfig(cnfunit)
-        if (info /= criSuccess) return 
+        if (info /= criSuccess) return
         !
         ! Read multilevelYLP configuration
         call readYLPConfigSection(cnfunit,this%ylp,info)
         if (info /= criSuccess) then
-            write(errmsg,fmt=901) 'check YLP config section' 
+            write(errmsg,fmt=901) 'check YLP config section'
             return
         endif
 #define MSG_GROUP_ERRORS
@@ -104,8 +90,8 @@ contains
 #undef MSG_GROUP_ERRORS
     !
     end function
-    
-    
+
+
     !> Print out configuration of the module
     integer function StressDrivenModule_printConfig(this,outunit) result(info)
     use altayConfig
@@ -127,8 +113,8 @@ contains
         100 format(/,A,/)
     !
     end function
-    
-    
+
+
     !> Finalization of the module
     integer function StressDrivenModule_finalize(this) result(info)
     class(StressDrivenModule),intent(inout) :: this
@@ -151,7 +137,7 @@ contains
         info = this%BasicModule%finalize()
     !
     end function
-    
+
     !> Calculate plastic strain rate D that corresponds to the superimposed input stress `sigma`
     !> by performing an iterative search.
     !>
@@ -177,7 +163,7 @@ contains
     !
     type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
     type(multilevelYLPConfig)   :: ylp_pretry
-    double precision, parameter :: pretry_search_angle = pi_deg * 2.0D0 
+    double precision, parameter :: pretry_search_angle = pi_deg * 2.0D0
     !
         info = criErr_BadArgs
 
@@ -269,10 +255,10 @@ contains
 
 
     !> Wrapper around multilevelYLP that uses YLPResult for communicating with the caller.
-    !> 
+    !>
     !> The wrapper applies settings provided as members of StressDrivenModule.
     !> It provides a ready-to-use ylp_result on non-error info code.
-    !> \return Exit code from multilevelYLP, unless an error condition occurs 
+    !> \return Exit code from multilevelYLP, unless an error condition occurs
     !> at later stage. In such case criError is returned.
     !> In such case
     integer function StressDrivenModule_search(this, ylp_config, ylp_result, use_vM_guess, obj_func) result(info)
@@ -295,8 +281,8 @@ contains
         if (deriveYLPResult(ylp_result) /= criSuccess) info = criError
     !
     end function
-    
-    
+
+
     !> Read configuration of the solver (libalamylp)
     subroutine readYLPConfigSection(cnfunit,cnf,info)
     integer,intent(in)                        :: cnfunit

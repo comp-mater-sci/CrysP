@@ -1,19 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2012-08-16
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-!
-!
 !> Shared subroutines that offer (safer) access to the results of the multilevel
 !> model.
 !>
@@ -23,18 +7,6 @@ module commonUtils
 implicit none
 
 contains
-
-      !> Perform basic checks if the state variables in altayConfig are consistent.
-      logical function isStateOK(stepid)
-      use altayConfig
-      integer,intent(in)      :: stepid
-      !
-            isStateOK = .false.
-            if (allocated(astate%simulCalls)) then
-                  isStateOK = (size(astate%simulCalls) <= stepid) .and. (astate%this >= stepid)
-            endif
-      !
-      end function
 
       subroutine  getTaylorFactor(stepid,M,info)
       use altayConfig
@@ -49,6 +21,19 @@ contains
                   info = 0
             endif
       !
+      contains
+      !> Perform basic checks if the state variables in altayConfig are consistent.
+      logical function isStateOK(stepid)
+      use altayConfig
+      integer,intent(in)      :: stepid
+      !
+            isStateOK = .false.
+            if (allocated(astate%simulCalls)) then
+                  isStateOK = (size(astate%simulCalls) <= stepid) .and. (astate%this >= stepid)
+            endif
+      !
+      end function
+
       end subroutine
 
       subroutine makeTextureUpdateStep(D,S,M,output_flag,info)
@@ -86,7 +71,7 @@ contains
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
       end subroutine
-      
+
       subroutine outputTexture(info)
       use altaySub
       integer,intent(out)     :: info
@@ -94,5 +79,5 @@ contains
             call outputCurrentState(info)
       !
       end subroutine
-      
+
 end module

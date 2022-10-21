@@ -1,21 +1,6 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2011-05-17 (under the name alamTSA)
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-!
 #include "criMacros.fpp"
-!
-!> dmcUDSA (Uniaxially-Dominated Stress Analysis)  allows one to track anisotropic properties  
+
+!> dmcUDSA (Uniaxially-Dominated Stress Analysis)  allows one to track anisotropic properties
 !> along deformation due to the uniaxial tension or compression stress.
 module dmcUDSA
 use criMathUtils
@@ -39,31 +24,31 @@ implicit none
     integer,parameter,private :: tension_state = 0, compression_state = 1
     type(MapItem),dimension(2),parameter :: stress_states = [MapItem('compression', compression_state),&
                                                             MapItem('tension', tension_state)]
-     
+
     integer,parameter,private :: sample_orientation_inplane_id = 1, &
                                 sample_orientation_ND_id = 2, &
                                 sample_orientation_arbitrary_id = 3
-      
+
     integer,parameter,private :: n_orientation_types = 3
     type(MapItem),dimension(n_orientation_types),parameter,private :: sample_orientation_types = [ &
             MapItem('inplane', sample_orientation_inplane_id), &
             MapItem('ND', sample_orientation_ND_id), &
             MapItem('arbitrary', sample_orientation_arbitrary_id) ]
-      
 
-      
+
+
     type,extends(StressDrivenEvolutionModule) :: UDSAModule
-          
+
         integer           :: orientation_type_id = sample_orientation_inplane_id
-            
+
         class(range_type),pointer   :: ptr_orientation_range => null()
-            
+
         type(EulerAngles) :: sample_orientation
-            
+
         integer           :: stress_state_id = tension_state
-            
+
         !> Stress ratio
-        double precision  :: rho = 0.D0 
+        double precision  :: rho = 0.D0
 
     contains
 
@@ -78,13 +63,13 @@ implicit none
         !>@}
 
         procedure,private,pass(this)    :: createOutputFile => UDSAModule_createOutputFile
-        
+
         procedure,private,pass(this)    :: outputFile => UDSAModule_outputFile
 
         procedure,pass(this)    :: outputPrefix => UDSAModule_outputPrefix
     end type
 
-    
+
     type :: UDSAOutputRecord
         integer             :: increment
         double precision    :: vm_strain = 0.D0
@@ -99,8 +84,8 @@ implicit none
         type(qrsData)       :: cummulative_qrsvalue
         double precision    :: residual = 0.D0
     end type
-    
-    
+
+
 contains
 
     integer function UDSAModule_readConfig(this,cnfunit) result(info)
@@ -127,7 +112,7 @@ contains
             this%ptr_orientation_range => rangeFactory_extended('zero') ! One-element range
         !
         case(sample_orientation_arbitrary_id)
-            this%ptr_orientation_range => rangeFactory_extended('zero') ! One-element range   
+            this%ptr_orientation_range => rangeFactory_extended('zero') ! One-element range
             ! Read Euler angles
             if (.not. readValue(cnfunit, arr_euler)) return
             this%sample_orientation = Arr2EulerAngles(arr_euler)
@@ -146,7 +131,7 @@ contains
     !
     end function
 
-      
+
     integer function UDSAModule_printConfig(this,outunit) result (info)
     implicit none
     class(UDSAModule),intent(in)         :: this
@@ -162,14 +147,14 @@ contains
             write(outunit,'(A)') 'UDSA, $Rev$'
         endif
         !
-        if (doLogging(criLogInfo,this%output%verbosity)) then 
+        if (doLogging(criLogInfo,this%output%verbosity)) then
             if (this%stress_state_id == tension_state) then
                 description = 'uniaxial tensile'
             else
                 description = 'uniaxial compression'
             endif
             write(outunit,fmt=fmtMsg2Msg) 'Test type:', description
-            
+
             if (resolveId(sample_orientation_types, this%orientation_type_id, orientation)) then
                 write(outunit,fmt=fmtMsg2Other//'A)') 'Orientation of the sample:', orientation
             endif
@@ -193,12 +178,12 @@ contains
 
 
     subroutine UDSAModule_run(this,info)
-	implicit none
+    implicit none
     class(UDSAModule),intent(inout)            :: this
     integer,intent(out)                        :: info
     !
     ! Note about naming convention for variables:
-    !    - All variables for vectors and tensors suffixed with _t are expressed 
+    !    - All variables for vectors and tensors suffixed with _t are expressed
     !      in the "tensile sample coordinate system".
     !    - All other variables are implicitly expressed in the "material coordinate system"
     type(SRTensor) :: sigma, sigma_t, S_t, D_t, P_t, P_t_end
@@ -216,13 +201,13 @@ contains
     !
     info = criErr_BadArgs
     if (.not. associated(this%ptr_orientation_range)) return
-      
+
     !
-    ! Prepare the input data      
+    ! Prepare the input data
     ! Take uniaxial/{slightly biaxial} tensile stress, to be rotated to the given sample
     ! orientation.
     !
-    !> Uniaxial stress state. Negative value denotes compressive state; 
+    !> Uniaxial stress state. Negative value denotes compressive state;
     !> non-negative values are used for tensile state.
     sigma_t%t = 0.D0
     stress_direction = merge(-1.D0,1.D0,(this%stress_state_id == compression_state))
@@ -232,9 +217,9 @@ contains
     ! Loop over test set
     !
     test_run = 0
-      
+
     n_test_runs = this%ptr_orientation_range%size()
-      
+
     test_run_loop: do while (this%ptr_orientation_range%next(angle))
         test_run = test_run + 1
         !
@@ -244,7 +229,7 @@ contains
         endif
         !
         ! Come back to the initial material state if needed
-        ! Re-initialize altay 
+        ! Re-initialize altay
         if (n_test_runs > 1) then
             ! Re-initialize AlTay
             info = this%reinitializeLibAltay(this%outputPrefix(angle))
@@ -292,12 +277,12 @@ contains
             ! Total plastic strain at the _begining_ of the inrement.
 
             associate(v => output%values(increment))
-                
-                ! Rotate back to the "tensile test" coordinate system   
+
+                ! Rotate back to the "tensile test" coordinate system
                 D_t = rotateSRTensorFrom(v%A, Mrot)
                 S_t = rotateSRTensorFrom(v%SonA, Mrot)
-                        
-                ! Total deviatoric strain (Note: the total, not per-step) 
+
+                ! Total deviatoric strain (Note: the total, not per-step)
                 P_t%t = vec5D2tens(v%icv%vP_total) ! at the beginning of the increment
                 P_t_end%t = P_t%t + v%P_inc_evol%t ! at the end of the increment
                 P_t = rotateSRTensorFrom(P_t, Mrot)
@@ -339,7 +324,7 @@ contains
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
 #undef MSG_GROUP_RULERS
-      
+
     end subroutine
 
 
@@ -360,8 +345,8 @@ contains
         info = this%outputFile(iounit, header=.true.)
         !
     end function
-    
-    
+
+
     integer function UDSAModule_outputFile(this, iounit, data_record, header) result(info)
     implicit none
     class(UDSAModule),intent(in)                :: this
@@ -370,7 +355,7 @@ contains
     logical,intent(in),optional                 :: header
     !
     integer :: i, ierr
-    !      
+    !
     integer,parameter :: ncolumn_labels = 16, column_width = 15, short_column_width = 9
     character(len=column_width),dimension(ncolumn_labels) :: file_column_labels = [character(len=column_width) :: &
         'increment','eps_vM','Pnorm','eps_xx', 'sigma_xx', 'S_xx','W','dotW',&
@@ -385,7 +370,7 @@ contains
                                           (centered(i,column_width), i = 2, ncolumn_labels)
             if (ierr /= 0) return
             write(iounit,700,iostat=ierr) file_column_labels(1)(1:short_column_width), &
-                                          (centered(file_column_labels(i)), i=2,ncolumn_labels) 
+                                          (centered(file_column_labels(i)), i=2,ncolumn_labels)
             if (ierr /= 0) return
             info = criSuccess
         endif
@@ -401,8 +386,8 @@ contains
         710 format(1X, 1(I9,1X),15(E18.9,1X))
     !
     end function
-    
-    
+
+
     function UDSAModule_outputPrefix(this, tag_number) result(path)
     implicit none
     character(len=max_pathlen)                :: path
@@ -421,7 +406,7 @@ contains
             datafile_tag = ''
         endif
         path = trim(this%output%outputPrefix)//datafile_tag
-    !  
+    !
     end function
 
 end module

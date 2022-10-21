@@ -1,21 +1,3 @@
-!
-! $Id: objectiveFx.f90 2027 2014-12-09 13:49:35Z jgawad $
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!>    \author     Jerzy Gawad 
-!>    Email:      Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>    
-!>    \date Date of initial release: 2012-04-02
-!>    $Revision: 2027 $
-!>    $Date: 2014-12-09 14:49:35 +0100 (Tue, 09 Dec 2014) $
-!>    History of modifications: (see SVN log).
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!! 
-! 
-      
 !> Data type for objective functions.
 !>
 module objectiveFx
@@ -25,46 +7,46 @@ implicit none
       type :: SolutionPoint
             !> Dimensionality of vector X (argument)
             integer                                         :: n_X_dim = 0
-            
+
             !> Dimensionality of objective function
             integer                                         :: m_F_dim = 0
-            
+
             double precision,dimension(:),allocatable       :: vX       !< The point
             double precision,dimension(:),allocatable       :: vF       !< Function at vX
             double precision,dimension(:,:),allocatable     :: mJ       !< Jacobi matrix at vX, [m_F_dim x n_X_dim]
-            
+
       contains
-            !> Constructor: initialization guided by the dimensions n_X_dim and m_F_dim 
+            !> Constructor: initialization guided by the dimensions n_X_dim and m_F_dim
             procedure,pass(this)       :: init => SolutionPoint_Init
-            
+
             !> Constructor: copy from other SolutionPoint object
             procedure,pass(this)       :: copy => SolutionPoint_Copy
-            
+
             !> Destructor: state of the object is changed to uninitialized.
             procedure,pass(this)       :: finalize => SolutionPoint_Finalize
-            
+
             !> Generic name for constructors
             generic,public :: construct => init, copy
 
       end type
- 
-      
-      !> Abstract data type for objective functions. 
+
+
+      !> Abstract data type for objective functions.
       !>
       !> It is assumed that every objective function contains a state variable that
       !> represents the value of the function and its Jacobian.
       type,abstract :: objectiveFunction
-            
+
             !> State variable
             type(SolutionPoint)                               :: state
 
-            
+
       contains
             !> Initialization function
             procedure,pass(this)                 :: initFx => objectiveFunction_initFx
-            
+
             !>@{ \name Stateful interface
-            
+
             !> Evaluation of objective function vector.
             !>
             !> See remarks in IF_objectiveFx_stateful for a guidance how to implement it.
@@ -74,42 +56,42 @@ implicit none
             !>
             !> See remarks in IF_JacobiObjFx_stateful for a guidance how to implement it.
             procedure(IF_JacobiObjFx_stateful),deferred,pass(this)     :: jacobiMatrixEval
-            
+
             !>@}
-            
+
             procedure,pass(this)                            :: getProblemSize
             procedure,pass(this)                            :: getXSize
             procedure,pass(this)                            :: getFSize
 
-            
+
       end type
 
-      !> Named constants for trackableObjFunc 
+      !> Named constants for trackableObjFunc
       integer,parameter       :: TOF_None = 0, TOF_Function = 1, TOF_Jacobian = 2, TOF_All = 4
-      
+
       !> Objective function with tacking of the last evaluations.
       !>
-      !> vX corresponding to the last evaluation of the function is stored in state%vX 
+      !> vX corresponding to the last evaluation of the function is stored in state%vX
       !> (member of the parent class)
       !> vX that corresponds to the last evaluation of the Jacobian is stored in vXofJacobi
       type,abstract,extends(objectiveFunction) :: trackableObjFunc
-            
+
             integer                                         :: tracking_level = TOF_None
-            
+
             double precision,dimension(:),allocatable       :: vXofJacobi
-            
+
       contains
 
             procedure :: objectiveEval => trackableObjFunc_objectiveEval
             procedure :: jacobiMatrixEval => trackableObjFunc_jacobiMatrixEval
 
             procedure,pass(this) :: track => trackableObjFunc_track
-            
-      end type
-      
 
-      abstract interface 
-            !> Abstract interface for initalization of an instance of objectiveFunction object. 
+      end type
+
+
+      abstract interface
+            !> Abstract interface for initalization of an instance of objectiveFunction object.
             subroutine IF_initFx(this,n_X_dim,m_F_dim,info)
                   import  ::  objectiveFunction
                   class(objectiveFunction),intent(inout)      :: this         !< Instance of the object.
@@ -141,13 +123,13 @@ implicit none
                   double precision,dimension(:),intent(in)        :: vX       !< Dimension must be: [n_X_dim]
                   integer,intent(out)                             :: info     !< Set to 0 on success
             end subroutine
-            
+
       end interface
-      
-      
+
+
 
 contains
-      
+
             !
             ! Methods of SolutionPoint
             !
@@ -166,12 +148,12 @@ contains
                   allocate(this%vX(n_X_dim),this%vF(m_F_dim),this%mJ(m_F_dim,n_X_dim),stat=memstat)
                   if (memstat == 0) info = 0
             end function
-            
+
 
             integer function SolutionPoint_Copy(this,other) result(info)
             class(SolutionPoint),intent(out)    :: this
             class(SolutionPoint),intent(in)     :: other
-            !      
+            !
                   info = SolutionPoint_Init(this,other%n_X_dim, other%m_F_dim)
                   if (info == 0) then
                         this%vX = other%vX
@@ -179,11 +161,11 @@ contains
                         this%mJ = other%mJ
                   endif
             end function
-            
+
             subroutine SolutionPoint_Finalize(this)
             implicit none
             class(SolutionPoint),intent(inout)    :: this
-            !      
+            !
                   if (allocated(this%vX)) deallocate(this%vX)
                   if (allocated(this%vF)) deallocate(this%vF)
                   if (allocated(this%mJ)) deallocate(this%mJ)
@@ -191,7 +173,7 @@ contains
                   this%m_F_dim = 0
             end subroutine
 
-            
+
             !
             ! Methods of objectiveFunction
             !
@@ -211,7 +193,7 @@ contains
                   this%state%mJ = 0.D0
             !
             end subroutine
-            
+
             !> Returns rank-one two-elemental array containing:
             !> (1) dimension of variables X and (2) number of components in the function F.
             pure function getProblemSize(this) result(outval)
@@ -222,7 +204,7 @@ contains
                   outval = [ this%state%n_X_dim, this%state%m_F_dim ]
             !
             end function
-            
+
             !> Returns dimension of variables X.
             pure function getXSize(this)
             implicit none
@@ -232,7 +214,7 @@ contains
                   getXSize = this%state%n_X_dim
             !
             end function
-            
+
             !> Returns number of components in the objective function F.
             pure function getFSize(this)
             implicit none
@@ -243,16 +225,16 @@ contains
             !
             end function
 
-            
-            
-            
+
+
+
             !
             ! Methods of trackableObjFunc
             !
-            
-            
-            !> Basic implementation of trackableObjInterface. The method defers actual 
-            !> calculations of the Jacobi matrix to the derived class. The implementation 
+
+
+            !> Basic implementation of trackableObjInterface. The method defers actual
+            !> calculations of the Jacobi matrix to the derived class. The implementation
             !> of objectiveEval should call this method at the end of its execution.
             subroutine trackableObjFunc_objectiveEval(this, vX, info)
             implicit none
@@ -265,15 +247,15 @@ contains
             !
             end subroutine
 
-            !> Basic implementation of trackableObjInterface. The method defers actual 
-            !> calculations of the Jacobi matrix to the derived class. The implementation 
+            !> Basic implementation of trackableObjInterface. The method defers actual
+            !> calculations of the Jacobi matrix to the derived class. The implementation
             !> of jacobiMatrixEval should call this method at the end of its execution.
             subroutine trackableObjFunc_jacobiMatrixEval(this, vX, info)
             implicit none
             class(trackableObjFunc),intent(inout)     :: this
             double precision,dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
             integer,intent(out)                       :: info
-            !                  
+            !
                   ! call this%jacobiMatrixFx(vX, this%state%mJ, info)
                   if (info == 0) call this%track(vX, TOF_Jacobian, info)
             !
@@ -290,10 +272,10 @@ contains
                   info = 0
                   select case(this%tracking_level)
                   !
-                  case(TOF_None) 
+                  case(TOF_None)
                         continue
                   !
-                  case(TOF_Function) 
+                  case(TOF_Function)
                         if (request == TOF_Function) this%state%vX = vX
                   !
                   case(TOF_Jacobian)
@@ -311,5 +293,5 @@ contains
             !
             end subroutine
 
-            
+
 end module

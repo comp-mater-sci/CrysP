@@ -6,7 +6,13 @@ project(AlamDMC Fortran)
 
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
-set(libalamDMC_FLAGS "-DPEBP_ENABLED" )
+if   (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+    set(libalamDMC_FLAGS "-DPEBP_ENABLED")
+elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+    set(libalamDMC_FLAGS "-DPEBP_ENABLED -ffree-line-length-none")
+else()
+    message(FATAL_ERROR "Compiler type(CMAKE_Fortran_COMPILER_ID) not recognized")
+endif()
 
 list(APPEND Fortran_FLAGS ${libalamDMC_FLAGS})
 
@@ -21,7 +27,6 @@ basicModule.f90
 commonConfig.f90
 commonUtils.f90
 deformationDrivenModule.f90
-dmcFuture.f90
 dmcResultFileOutput.f90
 dmcUtils.f90
 evolutionOutputRecord.f90

@@ -16,7 +16,7 @@ contains
 
             stat = .true.
 
-            stat = stat .and. test_boundsAndBinarySearch()
+            stat = stat .and. test_bounds()
 
             stat = stat .and. test_replaceAll()
 
@@ -28,14 +28,14 @@ contains
 
       end function
 
-      logical function test_boundsAndBinarySearch() result(res)
+      logical function test_bounds() result(res)
       implicit none
       integer,parameter :: n_algorithms = 3
       integer,dimension(:),allocatable :: arr, tst
       logical,dimension(:),allocatable :: tst_val
       integer,dimension(:),allocatable :: tst_lb_idx, tst_ub_idx
       integer,dimension(:),allocatable :: tst_eval
-      logical,dimension(:,:),allocatable :: tst_results, arr_results
+      logical,dimension(:,:),allocatable :: arr_results
       logical,dimension(n_algorithms) :: found
 
       integer :: i, count
@@ -49,74 +49,18 @@ contains
             tst_lb_idx = [1, 1, 1, 4, 11, 17, 18, 18, 19]
             tst_ub_idx = [1, 1, 2, 4, 12, 18, 18, 19, 19]
 
-            allocate(tst_results(n_algorithms, size(tst)))
             allocate(tst_eval(size(tst_val)))
             allocate(arr_results(n_algorithms,size(arr)))
-
-            tst_results = .false.
-
-            ! Test if the three implementations are equivalent
-            do i = 1, size(tst)
-                tst_results(:,i) = [(binarySearch(arr,tst(i)) .eqv. tst_val(i)), &
-                                    (binary_search(arr,tst(i)) .eqv. tst_val(i)), &
-                                    (binary_search2(arr,tst(i)) .eqv. tst_val(i)) ]
-            enddo
-            _TEST('binary searches give identical results on test data',all(tst_results))
-
-            arr_results = .false.
-            do i=1,size(arr)
-                  arr_results(:,i) = [binarySearch(arr,arr(i)), &
-                                      binary_search(arr,arr(i)),&
-                                      binary_search2(arr,arr(i))]
-            enddo
-             _TEST('binary searches locate the elements in input data',all(arr_results))
-
-            count = 0
-            do i=-10,arr(size(arr))+10
-                  found = [ binarySearch(arr,i), binary_search(arr,i), binary_search2(arr,i)]
-                  if (all(found)) then
-                        count = count + 1
-                  endif
-            enddo
-            _TEST('search for items inside and outside range', (count == size(arr)))
 
 
             tst_eval = 0
             !
-            ! Test upper bound algorithm
+            ! Test lower bound algorithm
 
             do i=1, size(tst)
                 tst_eval(i) = lower_bound(arr,tst(i))
             enddo
             _TEST('lower_bound, indices', all(tst_eval == tst_lb_idx))
-            !
-            ! Manual test:
-            !do i=1, size(tst)
-            !    idx = lower_bound(arr,tst(i))
-            !    if (idx <= size(arr)) then
-            !        write(*,*) 'lb of ', tst(i), 'is ',arr(idx), ' at i=', idx
-            !    else
-            !        write(*,*) 'lb of ', tst(i), 'is outside array at i=', idx
-            !    endif
-            !enddo
-
-            !
-            ! Test upper bound algorithm
-            tst_eval = 0
-            do i=1, size(tst)
-                tst_eval(i) = upper_bound(arr,tst(i))
-            enddo
-            _TEST('upper_bound, indices', all(tst_eval == tst_ub_idx))
-            !
-            ! Manual test
-            !do i=1,size(tst)
-            !    idx = upper_bound(arr,tst(i))
-            !    if (idx <= size(arr)) then
-            !        write(*,*) 'ub of ', tst(i), 'is ',arr(idx), ' at i=', idx
-            !    else
-            !        write(*,*) 'lb of ', tst(i), 'is outside array at i=', idx
-            !    endif
-            !enddo
 
             res = .true.
       !

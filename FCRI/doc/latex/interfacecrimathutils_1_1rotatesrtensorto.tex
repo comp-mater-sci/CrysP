@@ -1,0 +1,51 @@
+\hypertarget{interfacecrimathutils_1_1rotatesrtensorto}{}\doxysection{crimathutils\+::rotatesrtensorto Interface Reference}
+\label{interfacecrimathutils_1_1rotatesrtensorto}\index{crimathutils::rotatesrtensorto@{crimathutils::rotatesrtensorto}}
+
+
+Rotate the 2nd-\/rank tensor S to the reference frame given by rotation R.  
+
+
+
+
+Collaboration diagram for crimathutils\+::rotatesrtensorto\+:
+% FIG 0
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+pure double precision function, dimension(\mbox{\hyperlink{namespacecrimathutils_a4c8bab38c29f02139ed7d3bfba642864}{sr\+\_\+tensor\+\_\+dim}}, \mbox{\hyperlink{namespacecrimathutils_a4c8bab38c29f02139ed7d3bfba642864}{sr\+\_\+tensor\+\_\+dim}}) \mbox{\hyperlink{interfacecrimathutils_1_1rotatesrtensorto_a66320748b5c0d9b0f2623e93e8f73fc3}{rotatesrtensorto\+\_\+matrix}} (S, R)
+\begin{DoxyCompactList}\small\item\em Rotates the second-\/rank tensor S to the reference frame given by rotation R. This corresponds to a coordinate transformation of S into the new frame obtained by rotation R. \end{DoxyCompactList}\item 
+pure type(\mbox{\hyperlink{structcrimathutils_1_1srtensor}{srtensor}}) function \mbox{\hyperlink{interfacecrimathutils_1_1rotatesrtensorto_ab9bfd24ffa77dfbebfc63d5a349824cb}{rotatesrtensorto\+\_\+srtensor}} (S, R)
+\begin{DoxyCompactList}\small\item\em Rotates the second-\/rank tensor S to the reference frame given by rotation R. This corresponds to a coordinate transformation of S into the new frame obtained by rotation R. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Rotate the 2nd-\/rank tensor S to the reference frame given by rotation R. 
+
+\doxysubsection{Member Function/\+Subroutine Documentation}
+\mbox{\Hypertarget{interfacecrimathutils_1_1rotatesrtensorto_a66320748b5c0d9b0f2623e93e8f73fc3}\label{interfacecrimathutils_1_1rotatesrtensorto_a66320748b5c0d9b0f2623e93e8f73fc3}} 
+\index{crimathutils::rotatesrtensorto@{crimathutils::rotatesrtensorto}!rotatesrtensorto\_matrix@{rotatesrtensorto\_matrix}}
+\index{rotatesrtensorto\_matrix@{rotatesrtensorto\_matrix}!crimathutils::rotatesrtensorto@{crimathutils::rotatesrtensorto}}
+\doxysubsubsection{\texorpdfstring{rotatesrtensorto\_matrix()}{rotatesrtensorto\_matrix()}}
+{\footnotesize\ttfamily pure double precision function, dimension(\mbox{\hyperlink{namespacecrimathutils_a4c8bab38c29f02139ed7d3bfba642864}{sr\+\_\+tensor\+\_\+dim}},\mbox{\hyperlink{namespacecrimathutils_a4c8bab38c29f02139ed7d3bfba642864}{sr\+\_\+tensor\+\_\+dim}}) crimathutils\+::rotatesrtensorto\+::rotatesrtensorto\+\_\+matrix (\begin{DoxyParamCaption}\item[{double precision, dimension(\mbox{\hyperlink{namespacecrimathutils_a4c8bab38c29f02139ed7d3bfba642864}{sr\+\_\+tensor\+\_\+dim}},\mbox{\hyperlink{namespacecrimathutils_a4c8bab38c29f02139ed7d3bfba642864}{sr\+\_\+tensor\+\_\+dim}}), intent(in)}]{S,  }\item[{double precision, dimension(\mbox{\hyperlink{namespacecrimathutils_a90f99787840fe40d0bd3cd53f0fa1755}{rot\+\_\+matrix\+\_\+dim}},\mbox{\hyperlink{namespacecrimathutils_a90f99787840fe40d0bd3cd53f0fa1755}{rot\+\_\+matrix\+\_\+dim}}), intent(in)}]{R }\end{DoxyParamCaption})}
+
+
+
+Rotates the second-\/rank tensor S to the reference frame given by rotation R. This corresponds to a coordinate transformation of S into the new frame obtained by rotation R. 
+
+The result is R$^\wedge$T S R, which is equivalent to (R$^\wedge$T S) R \mbox{\Hypertarget{interfacecrimathutils_1_1rotatesrtensorto_ab9bfd24ffa77dfbebfc63d5a349824cb}\label{interfacecrimathutils_1_1rotatesrtensorto_ab9bfd24ffa77dfbebfc63d5a349824cb}} 
+\index{crimathutils::rotatesrtensorto@{crimathutils::rotatesrtensorto}!rotatesrtensorto\_srtensor@{rotatesrtensorto\_srtensor}}
+\index{rotatesrtensorto\_srtensor@{rotatesrtensorto\_srtensor}!crimathutils::rotatesrtensorto@{crimathutils::rotatesrtensorto}}
+\doxysubsubsection{\texorpdfstring{rotatesrtensorto\_srtensor()}{rotatesrtensorto\_srtensor()}}
+{\footnotesize\ttfamily pure type(\mbox{\hyperlink{structcrimathutils_1_1srtensor}{srtensor}}) function crimathutils\+::rotatesrtensorto\+::rotatesrtensorto\+\_\+srtensor (\begin{DoxyParamCaption}\item[{type(\mbox{\hyperlink{structcrimathutils_1_1srtensor}{srtensor}}), intent(in)}]{S,  }\item[{double precision, dimension(\mbox{\hyperlink{namespacecrimathutils_a90f99787840fe40d0bd3cd53f0fa1755}{rot\+\_\+matrix\+\_\+dim}},\mbox{\hyperlink{namespacecrimathutils_a90f99787840fe40d0bd3cd53f0fa1755}{rot\+\_\+matrix\+\_\+dim}}), intent(in)}]{R }\end{DoxyParamCaption})}
+
+
+
+Rotates the second-\/rank tensor S to the reference frame given by rotation R. This corresponds to a coordinate transformation of S into the new frame obtained by rotation R. 
+
+The result is R$^\wedge$T S R, which is equivalent to (R$^\wedge$T S) R Here is the call graph for this function\+:
+% FIG 1
+
+
+The documentation for this interface was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+src/\mbox{\hyperlink{cri_math_utils_8f90}{cri\+Math\+Utils.\+f90}}\end{DoxyCompactItemize}

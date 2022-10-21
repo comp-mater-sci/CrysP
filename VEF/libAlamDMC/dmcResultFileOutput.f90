@@ -1,19 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2015-12-18
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-!
-
 #include "criMacros.fpp"
 
 !> Common set of procedures for producing plain text column-based output of numerical data.
@@ -24,17 +8,17 @@ implicit none
 
     integer,parameter,private :: fmt_string_length = 128
 
-    !> \fixme  max_int_digits is platform dependent. To be replaced by a constant 
+    !> \fixme  max_int_digits is platform dependent. To be replaced by a constant
     !> expression that computes how many decimal digits are needed to store 2^digits(1)
     integer,parameter,private ::  max_int_digits = 10
-    
+
 contains
 
 !> \todo Move TADJUSTL macro to some more suitable place (FCRI?)
 #define TADJUSTL(str) trim(adjustl(str))
-    
 
-    
+
+
     !> Driver function for writing numerical data
     integer function writeResultFile(iounit, data, column_names, column_widths, &
                                      use_column_numbers, data_formats) result(info)
@@ -60,7 +44,7 @@ contains
         ! Write column labels
         info = writeColumnNames(iounit, column_names, column_widths)
         if (info /= criSuccess) return
-        ! 
+        !
         ! Write the data
         if (present(data_formats)) then
             info = writeData(iounit, data, column_widths, data_formats)
@@ -99,8 +83,8 @@ contains
         endif
     !
     end function
-    
-    
+
+
     integer function  writeColumnNames(iounit, column_names, column_widths) result(info)
     integer,intent(in)                      :: iounit
     character(len=*),dimension(:)           :: column_names
@@ -119,14 +103,14 @@ contains
             CHOOSE(info, ierr==0, criSuccess, criErr_IOWrite)
             !
         elseif(size(column_widths) == ncolumns) then
-            
+
             info = criError ! Not yet implemented
         else
             info = criErr_BadArgs
         endif
     !
     end function
-    
+
     !> Write out standard header: two lines: #1: column numbers, #2 column names
     integer function writeStandardHeader(iounit, column_names, column_widths) result(info)
     integer,intent(in)                      :: iounit !< Output IO unit
@@ -175,21 +159,21 @@ contains
             CHOOSE(info, ierr==0, criSuccess, criErr_IOWrite)
             !
         elseif(size(column_widths) == ncolumns) then
-            
+
             info = criError ! Not yet implemented
         else
             info = criErr_BadArgs
         endif
 
-       
+
     !
     end function
-    
-    
+
+
     !function makeFormatString_double(specifier,width,n_repeat,sep)
 
-    
+
     !end function
 #undef TADJUSTL
-    
+
 end module

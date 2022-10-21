@@ -11,12 +11,12 @@ use altayHardLaw_DSH
 use altayDSHstate
 #endif
 implicit none
-      
+
       !> Hardening law identifier of the initialized module
       integer,save :: HardLawID = hard_invalid
-      
+
       type(CRSS),private,save :: crss_ratios
-      
+
       interface InitModuleAltayHard
 #ifdef ALTAY_SUBROUTINE
             module procedure InitModuleAltayHard_file, InitModuleAltayHard_config
@@ -26,8 +26,8 @@ implicit none
       end interface
 
 contains
-      
-      
+
+
       subroutine InitModuleAltayHard_file(inunit,HardLaw,crss_init,info)
       integer,intent(in)      :: inunit
       integer,intent(in)      :: HardLaw
@@ -61,7 +61,7 @@ contains
             if (info /= 0) return
             call InitModuleAltayHardLaw_Simple(swiftSCnf,info)
       !
-#ifdef PEBP_ENABLED     
+#ifdef PEBP_ENABLED
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
             info = InitModuleAltayHardLaw_DSH(inunit,HardLaw,LEC)
 #endif
@@ -69,7 +69,7 @@ contains
       case default
             ! Unsupported hardening model is requested
             info = -1
-      !      
+      !
       end select
       !
       HardLawID = HardLaw
@@ -101,7 +101,7 @@ contains
             ! Swift-S hardening
             call InitModuleAltayHardLaw_Simple(config%swiftSCnf,info)
       !
-#ifdef PEBP_ENABLED     
+#ifdef PEBP_ENABLED
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
             info = InitModuleAltayHardLaw_DSH(config%PEBPCnf%params,&
                                               config%HardLawID,LEC)
@@ -116,12 +116,12 @@ contains
       ! Finalize the configuration:
       ! Set the module members
       HardLawID = config%HardLawID
-      crss_ratios = config%crss_ratios 
+      crss_ratios = config%crss_ratios
       !
       end subroutine
 #endif
-      
-      
+
+
       subroutine getTau(gamma, tau, info)
       use altayHardLaw_Simple
       double precision,intent(in)   :: gamma
@@ -140,17 +140,17 @@ contains
       end select
       !
       end subroutine
-      
+
       subroutine getCRSS(ior,gamma,CRSSmatrix,info)
       integer,intent(in)                           :: ior
-      double precision,intent(in)                  :: gamma         
+      double precision,intent(in)                  :: gamma
       type(CRSS),intent(out)                       :: CRSSmatrix
       integer, intent(out)                         :: info
       !
       double precision :: tau
       select case(HardLawID)
       case(hard_none)
-            CRSSmatrix%crss = 1.D0 ! CRSS of all slip systems equal to 1. (& not dependent on crss_ratios)         
+            CRSSmatrix%crss = 1.D0 ! CRSS of all slip systems equal to 1. (& not dependent on crss_ratios)
       case(hard_voce,hard_swiftK,hard_swiftS)
             call getTau(gamma, tau, info)
             if (info == 0) CRSSmatrix%crss = crss_ratios%crss * tau
@@ -162,6 +162,6 @@ contains
             info = -1
       end select
       end subroutine
-      
+
 end module
-      
+

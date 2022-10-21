@@ -1,18 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2017-02-13
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-
 !> Base class for modules implementing strain-(rate) driven simulations (such as ADPModule)
 module dmcDeformationDrivenModule
 use criRange
@@ -36,7 +21,7 @@ implicit none
     type :: PtrStrainDrivenStep
         class(StrainDrivenStep),pointer :: step
     end type
-    
+
 
     !> Base class for strain-(rate) driven simulations modules
     type,extends(BasicModule) :: DeformationDrivenModule
@@ -44,18 +29,18 @@ implicit none
         !> Optional solver settings
         class(StrainDrivenSolverConfig),pointer :: solver_config => null()
 
-        !> Container for steps 
+        !> Container for steps
         type(PtrStrainDrivenStep),dimension(:),allocatable :: steps
-        
+
     contains !MB: type-bound procedures
         !>@{ \name Interface methods of AbstractModule
-        
+
         procedure,pass(this) :: printConfig => DeformationDrivenModule_printConfig
-        
+
         procedure,pass(this) :: readConfig => DeformationDrivenModule_readConfig
-        
+
         !>@}
-        
+
     end type
 
 
@@ -84,7 +69,7 @@ contains
     logical :: default_solver_config
         !
         ! read output and AlTay configuration sections
-        info = this%BasicModule%readConfig(cnfunit) 
+        info = this%BasicModule%readConfig(cnfunit)
         !
         ! Read "solver config flag" that belongs to the global section
         ! as it is done in the stressDrivenModule.

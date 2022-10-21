@@ -13,29 +13,9 @@ implicit none
             module procedure  centered_int, centered_string
       end interface
 
-
-      !> Find the last element in array not before val, using operator <
-      interface upper_bound
-            module procedure upper_bound_int, upper_bound_double
-      end interface
-
-
       !> Find the first element in array not before val, using operator <
       interface lower_bound
             module procedure lower_bound_int, lower_bound_double
-      end interface
-
-
-      !> Find out if val appears in a sorted array, using operator < for equivalence.
-      interface binary_search
-            module procedure binary_search_int, binary_search_double
-      end interface
-
-      !> Find out if val appears in a sorted array, using operator < for equivalence.
-      !> The function is optimized for datasets where the searched value is the most frequently
-      !> outside the range of values in the array.
-      interface binary_search2
-            module procedure binary_search2_int, binary_search2_double
       end interface
 
 
@@ -51,61 +31,16 @@ implicit none
       end interface
 
 contains
-
-      !> Find out if val appears in a sorted array, using operator < for equivalence.
-      !>
-      !> This implementation is somewhat naive, binary_search can be used instead. \sa binary_search
-      logical pure function binarySearch(array,val)
-      integer,dimension(:),intent(in)     :: array
-      integer,intent(in)                  :: val
-      !
-      integer :: first,last,cnt
-      logical :: tmp
-      !
-            binarySearch = .false.
-            first = lbound(array,dim=1)
-            last = ubound(array,dim=1)
-            if (last < first) return
-            ! No point to search if the value is out of the range
-            if ((array(last) < val) .or. (val < array(first))) return
-            !
-            do while (first <= last)
-                  cnt = (first + last) / 2
-                  ! Check the central element
-                  tmp = (array(cnt) < val)
-                  if ( (.not.tmp) .and. (.not.(val < array(cnt)))) then
-                        binarySearch = .true.
-                        exit
-                  endif
-                  if (tmp) then
-                        ! Right-hand
-                        first = cnt + 1
-                  else
-                        ! Left-hand
-                        last = cnt - 1
-                  endif
-            enddo
-      !
-      end function
-
-      !
       ! Instantiate parametrized functions
       !
 #define _TYPE_NAME integer
 #define _LOWER_BOUND_FX_NAME lower_bound_int
-#define _UPPER_BOUND_FX_NAME upper_bound_int
-#define _BINARY_SEARCH_FX_NAME binary_search_int
-#define _BINARY_SEARCH2_FX_NAME binary_search2_int
 #include "criAlgorithmTemplates.fpp"
 
 
 #define _TYPE_NAME double precision
 #define _LOWER_BOUND_FX_NAME lower_bound_double
-#define _UPPER_BOUND_FX_NAME upper_bound_double
-#define _BINARY_SEARCH_FX_NAME binary_search_double
-#define _BINARY_SEARCH2_FX_NAME binary_search2_double
 #include "criAlgorithmTemplates.fpp"
-
 
       !> Check if the string value val is present in the list of strings.
       logical function isPresent(val, list,index)

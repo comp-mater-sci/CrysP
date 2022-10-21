@@ -1,20 +1,17 @@
-!
-! $Id$
-!
 module altayDSHState
 use altayHardLaw_DSH
 use altayHardTypes
 implicit none
 
       type(StatVar),allocatable,dimension(:),private,save    :: KS_state ! array of state variables
-      
+
       interface KS_readState
             module procedure KS_readState_unit, KS_readState_file
       end interface
-      
+
 contains
- 
- 
+
+
       !> Query the number of elements in the state array.
       integer function KS_getStateSize()
       !
@@ -26,7 +23,7 @@ contains
 
       !> Allocate memory to the KS_state array.
       !>
-      !> The function simply makes allocation. It relies on a default initializer 
+      !> The function simply makes allocation. It relies on a default initializer
       !> of StatVar type.
       integer function KS_initState(norient) result(info)
       integer,intent(in)      :: norient !< Number of orientations in the material
@@ -51,14 +48,14 @@ contains
       integer :: memstat
       !
             info = KS_OK
-            if (allocated(KS_state)) then 
+            if (allocated(KS_state)) then
                   deallocate(KS_state,stat=memstat)
                   if (memstat /= 0) info = KS_Error
             endif
       !
       end function
-    
- 
+
+
       !> Update the state variables of the PEBP model for i-th grain.
       subroutine KS_updateState(i,sliprate,deltaT,info)
       integer,intent(in)                              :: i        !< Grain identifier
@@ -79,7 +76,7 @@ contains
       end subroutine
 
 
-      !> Get CRSS for i-th grain.      
+      !> Get CRSS for i-th grain.
       subroutine KS_getCRSS(i,Mcrss,info)
       integer,intent(in)                              :: i        !< Grain identifier
       integer,intent(out)                             :: info
@@ -93,7 +90,7 @@ contains
             ! Extract the CRSSes
             Mcrss%crss(:,1:l) = KS_state(i)%CRSS(:,1:l)
             info = KS_OK
-      !      
+      !
       end subroutine
 
 
@@ -108,11 +105,11 @@ contains
             call GetStateDerivedVar(KS_state(i),SDV,info)
       !
       end subroutine
-      
-      
+
+
       !> Open state file either for reading or writing.
       !>
-      !> The function opens the file and, if requested, performs some initialization 
+      !> The function opens the file and, if requested, performs some initialization
       !> actions, such as processing or writing file header.
       integer function KS_openStateFile(iounit,fname,mode,use_header) result(info)
       integer,intent(in)                              :: iounit   !< IO unit to be used
@@ -120,7 +117,7 @@ contains
       !> File opening mode: 'r' for read access or 'w' for write access
       character,intent(in)                            :: mode
       !> Request for processing  the file header. Default is: .true.
-      logical,optional,intent(in)                     :: use_header 
+      logical,optional,intent(in)                     :: use_header
       !
       logical :: is_header
       integer :: ierr
@@ -140,8 +137,8 @@ contains
             end select
       !
       end function
-      
-      
+
+
       !> Write block (=snapshot of KS_state) into file.
       integer function KS_writeState(iounit) result(info)
       integer,intent(in)                              :: iounit   !< I/O unit number
@@ -154,12 +151,12 @@ contains
             write(iounit,fmt=100) n
             write(iounit,fmt=110)
             do i = 1, n
-                  write(iounit,fmt=200) i      
+                  write(iounit,fmt=200) i
                   if (WriteSVfile(iounit,KS_state(i)) /= KS_OK) exit
             enddo
             write(iounit,fmt=111)
-            if (i > n) info = KS_OK 
-            
+            if (i > n) info = KS_OK
+
 100         format(I5,1X,' # of points in KOST11 block')
 110         format('-->')
 111         format('<--')
@@ -220,7 +217,7 @@ contains
       logical,optional,intent(in)                     :: use_header
       !
             info = KS_openStateFile(iounit,fname,'r',use_header) ! open file for read access ('r')
-            if (info == 0) then 
+            if (info == 0) then
                   info = KS_readState_unit(iounit,nblock)
             else
                   info = KS_ErrIO
@@ -228,5 +225,5 @@ contains
             close(iounit)
       !
       end function
-       
+
 end module

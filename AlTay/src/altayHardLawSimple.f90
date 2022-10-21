@@ -1,7 +1,6 @@
-
 !> Implementation of 'simple' hardening laws TAU(GAMMA), i.e. with only 1 internal variable: accumulated slip in grain GAMMA.
 !> Available laws:
-!>  - DoubleVoce 
+!>  - DoubleVoce
 !>  - SwiftK: Swift law with K-factor     :: TAU = K * (gamma0+GAMMA)**n
 !>  - SwiftS: Swift law with initial crsS :: TAU = crss0 * (1.+GAMMA/gammaA0)**n
 module altayHardLaw_Simple
@@ -9,37 +8,37 @@ use altayMiscutils, only: terminate, stopcode_runtimeerror
 use altayHardTypes
 implicit none
 
-      !> Configuration parameters of DoubleVoce hardening law. 
+      !> Configuration parameters of DoubleVoce hardening law.
       !> Some 'reasonable' defaults are used.
       type :: VoceConfig
-            double precision  :: TIII1  = 1.486     
-            double precision  :: TIIIS  = 2.476     
-            double precision  :: TIVS   = 8.357 
-            double precision  :: THIII1 = 2.75      
+            double precision  :: TIII1  = 1.486
+            double precision  :: TIIIS  = 2.476
+            double precision  :: TIVS   = 8.357
+            double precision  :: THIII1 = 2.75
             double precision  :: THT    = 0.55
       end type
 
-      !> Configuration parameters of SwiftK hardening law. 
+      !> Configuration parameters of SwiftK hardening law.
       !> Some 'reasonable' defaults are used.
       type :: SwiftKConfig
-            double precision  :: K      = 398.1D0 !-> crss0 = 100.     
-            double precision  :: gamma0 = 1.D-3     
-            double precision  :: n      = 0.2D0 
+            double precision  :: K      = 398.1D0 !-> crss0 = 100.
+            double precision  :: gamma0 = 1.D-3
+            double precision  :: n      = 0.2D0
       end type
 
-      !> Configuration parameters of SwiftS hardening law. 
+      !> Configuration parameters of SwiftS hardening law.
       !> Some 'reasonable' defaults are used.
       type :: SwiftSConfig
-            double precision  :: crss0  = 100.0D0      
-            double precision  :: gamma0 = 1.D-3     
-            double precision  :: n      = 0.2D0 
+            double precision  :: crss0  = 100.0D0
+            double precision  :: gamma0 = 1.D-3
+            double precision  :: n      = 0.2D0
       end type
-      
+
       !> Parameters of DoubleVoce hardening law, private to this module.
       type :: VoceParams
-            double precision  :: TIII1  = 0.D0     
-            double precision  :: TIIIS  = 0.D0     
-            double precision  :: TIVS   = 0.D0 
+            double precision  :: TIII1  = 0.D0
+            double precision  :: TIIIS  = 0.D0
+            double precision  :: TIVS   = 0.D0
             double precision  :: GAMMAT = 0.D0
             double precision  :: THIII  = 0.D0
             double precision  :: ETA    = 0.D0
@@ -50,20 +49,20 @@ implicit none
 
       !> Parameters of Swift hardening law, private to this module.
       type :: SwiftParams
-            double precision  :: K      = 0.D0     
-            double precision  :: gamma0 = 0.D0     
+            double precision  :: K      = 0.D0
+            double precision  :: gamma0 = 0.D0
             double precision  :: n      = 0.D0
       end type
       !
       type(VoceParams),private,save     :: vocePar
       type(SwiftParams),private,save    :: swiftPar
-      
+
       interface InitModuleAltayHardLaw_Simple !Generic Interface
             module procedure init_voce, init_swiftK, init_swiftS
-      end interface      
-      
+      end interface
+
       integer,save,private :: configured_law_id = hard_invalid
-      
+
 contains
 
       subroutine readVoceConfig(inunit,c,info)
@@ -103,7 +102,7 @@ contains
       read (inunit,99,iostat=info) c%gamma0
       if (info /= 0) return
       read (inunit,99,iostat=info) c%n
-      if (info /= 0) return      
+      if (info /= 0) return
   99        format (3f10.0)
       if(NLIST.eq.1) write (IMP,200) c%K,c%gamma0,c%n
  200        format(' Work hardening model = SWIFT-K model',/, &
@@ -127,7 +126,7 @@ contains
       read (inunit,99,iostat=info) c%gamma0
       if (info /= 0) return
       read (inunit,99,iostat=info) c%n
-      if (info /= 0) return      
+      if (info /= 0) return
   99        format (3f10.0)
       if(NLIST.eq.1) write (IMP,200) c%crss0,c%gamma0,c%n
  200        format(' Work hardening model = SWIFT-S model',/, &
@@ -157,7 +156,7 @@ contains
 #endif
             endif
             p%THIII=c%THIII1/(1.D0-c%TIII1/c%TIIIS)
-            if ((abs(p%THIII) < epsilon(0.D0)) .or. (abs(c%TIIIS) < epsilon(0.D0))) return      
+            if ((abs(p%THIII) < epsilon(0.D0)) .or. (abs(c%TIIIS) < epsilon(0.D0))) return
             p%ETA=c%THT/p%THIII
             ! Calculation of transition-gamma
             p%GAMMAT=-c%TIIIS*LOG(p%ETA*c%TIIIS/(c%TIIIS-c%TIII1))/p%THIII
@@ -167,11 +166,11 @@ contains
             p%THIV=c%THT/(1.D0-p%TAUT/c%TIVS)
             ! Calculation of TAU-IV-0
             p%TIV0=c%TIVS+(p%TAUT-c%TIVS)*exp(p%THIV*p%GAMMAT/c%TIVS)
-            ! 
-            p%TIII1= c%TIII1     
-            p%TIIIS= c%TIIIS     
+            !
+            p%TIII1= c%TIII1
+            p%TIIIS= c%TIIIS
             p%TIVS = c%TIVS
-            !      
+            !
             if(NLIST.eq.1) write (IMP,102) p%GAMMAT,p%TAUT,p%THIV,p%TIV0
        102  format (' GAMMA-T, TAU-T, THETA-IV-0, TAU-IV-0',/,4d15.5)
       configured_law_id = hard_voce
@@ -202,7 +201,7 @@ contains
       p%K=c%K
       p%gamma0=c%gamma0
       p%n=c%n
-      ! 
+      !
       if(NLIST.eq.1) write (IMP,103) p%K,p%gamma0,p%n
        103  format ('Swift: K, gamma0, n: ',/,3d15.5)
       configured_law_id = hard_swiftK
@@ -233,7 +232,7 @@ contains
       p%K=c%crss0/(c%gamma0**c%n)
       p%gamma0=c%gamma0
       p%n=c%n
-      ! 
+      !
       if(NLIST.eq.1) write (IMP,103) p%K,p%gamma0,p%n
        103  format ('Swift: K, gamma0, n: ',/,3d15.5)
       configured_law_id = hard_swiftS
@@ -242,7 +241,7 @@ contains
       ! Succesful initialization:
       info = 0
       end subroutine
-      
+
       subroutine getRefTau(hardID,gamma,RefTau,info)
       integer,intent(in)                  :: hardID
       double precision,intent(in)         :: gamma
@@ -269,5 +268,5 @@ contains
             end select
       !
       end subroutine
-      
+
 end module

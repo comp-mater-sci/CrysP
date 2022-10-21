@@ -1,0 +1,11 @@
+digraph "crimathutils::trace::trace_srtensor"
+{
+ // INTERACTIVE_SVG=YES
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="crimathutils::trace\l::trace_srtensor",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Calculates trace of second-rank tensor X."];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid"];
+  Node2 [label="crimathutils::trace\l_matrix",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$namespacecrimathutils.html#a2e3ffcb4fc4186951a786ffb6687bb02",tooltip="Calculates trace of the square n x n matrix X."];
+}

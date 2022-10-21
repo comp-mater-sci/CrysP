@@ -1,18 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>
-!>    \date Date of the initial release: 2017-04-07
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-
 #include "criMacros.fpp"
 
 !> Subclass of NormalizedV5DComp that stores intermediate points the table of cached results

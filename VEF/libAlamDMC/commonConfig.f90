@@ -1,18 +1,3 @@
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2011-09-17
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-!
-!
 !> This module contains subroutines, data structures and common variables
 !> for shared configuration features of all alamDMC modules
 module commonConfig
@@ -24,23 +9,23 @@ implicit none
       character(len=20),parameter   :: fmtMsg2Float = '(A,T35,F12.8)'
 
       character(len=20),parameter   :: fmtMsg2Any   = '(A,T35)'
-      character(len=20),parameter   :: fmtMsg2Other = '(A,T35,'  ! Note: user is responsible for finishing the format string      
-      
+      character(len=20),parameter   :: fmtMsg2Other = '(A,T35,'  ! Note: user is responsible for finishing the format string
+
 contains
 
       !> Check exit status of IO operation
       logical function ioStatusOK(ioerr)
       use dmcUtils
       integer,intent(in) :: ioerr
-            ! Status 
+            ! Status
             if (ioerr /= 0) then
                   write(display_unit,*) 'An error has occured while reading the config file'
-                  ioStatusOK = .false.  
+                  ioStatusOK = .false.
             endif
             ioStatusOK = .true.
       end function
 
-      !> Factory function that returns an instance appropriate range type depending on 
+      !> Factory function that returns an instance appropriate range type depending on
       !> the the input read from the  cnfunit IO unit
       function rangeFromConfig(cnfunit,info) result(inst)
       use criRange
@@ -62,7 +47,7 @@ contains
       ! Mapping triplet members to logical view (named fields)
       ! Note: rstep an ratio are aliases for the same memory location.
       equivalence (rbegin,triplet(1)), (rend,triplet(2)), &
-                  (rstep,triplet(3)), (ratio,triplet(3)) 
+                  (rstep,triplet(3)), (ratio,triplet(3))
       !
       integer,parameter :: range_single_id = 200
       type(MapItem),dimension(1),parameter :: special_range_names_map =  [ MapItem('single', range_single_id) ]
@@ -108,7 +93,7 @@ contains
                   if (.not. readValue(cnfunit, triplet)) return
                   if (.not. readValue(cnfunit, npoints)) return
                   if (npoints <= 0) return
-                  ! 
+                  !
                   allocate(inst, source=doubleBiasedRange(rbegin, rend, ratio, npoints))
             !
             case(range_multibiased_id)

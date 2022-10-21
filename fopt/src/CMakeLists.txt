@@ -16,8 +16,6 @@ mkl_rci_stub.f90
 
 set(LIBSRC
 nlls_tr.f90 
-nnls_mod.f90 
-jacobiFD.f90 
 objectiveFx.f90
 )
 

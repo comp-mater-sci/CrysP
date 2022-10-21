@@ -1,6 +1,3 @@
-!
-! $Id$
-!
       MODULE altayHardLaw_DSH
 !     v1.0 by P. Eyckens, MTM, KU Leuven, 17 July 2012.
 !     v1.1 by P. Eyckens, MTM, and J. Gawad, CS, KU Leuven, 2 August 2012.
@@ -100,7 +97,7 @@
       IMPLICIT NONE
       PRIVATE
 
-	  !> BP model parameters including saturation and minimum values for state dependent dislocation densities
+      !> BP model parameters including saturation and minimum values for state dependent dislocation densities
       TYPE :: PAR
             !PUBLIC components
             double precision :: b,G,alfa,f,tau0
@@ -548,7 +545,7 @@
       ! state variables at end of the increment (SVb)
       ! an error code (iError):
       !   *  KS_OK , no error
-	  !   *  KS_ErrBadValue, if negative deltaT is provided
+      !   *  KS_ErrBadValue, if negative deltaT is provided
       !   *  KS_ErrUninitialized, in case this module is not correctly initialized
       TYPE(StatVar),INTENT(IN)       :: SVa
       double precision,INTENT(IN), DIMENSION(24) :: sliprate

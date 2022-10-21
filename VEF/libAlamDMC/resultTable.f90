@@ -1,18 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2017-04-07
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-
 #include "criMacros.fpp"
 
 !> In-memory cache/table of the recent results from the multi-level model.
@@ -27,22 +12,22 @@ implicit none
     private
 
     type :: ResultTable
-    
+
         integer,private                         :: saved_session_idx = 0
-        
+
         type(xVector_ResultTableRecord),private :: table
-        
+
     contains
         procedure,pass(this)    :: reserve
-    
+
         procedure,pass(this)    :: put
-       
+
         procedure,pass(this)    :: get
-        
+
         procedure,pass(this)    :: store
-        
+
         procedure,pass(this)    :: load
-        
+
     end type
 
 
@@ -56,8 +41,8 @@ contains
         call xVector_expand(this%table, capacity, info)
     !
     end function
-    
-    
+
+
     !> Add result to the database
     integer function put(this, A, SonA) result(info)
     class(ResultTable),intent(inout)   :: this
@@ -70,12 +55,12 @@ contains
 
 
     !> Find item in the database that has the smallest angle between
-    !> S and item%vSonA, optionally restricting the choice to acceptable angles 
+    !> S and item%vSonA, optionally restricting the choice to acceptable angles
     !> smaller than max_angle.
     !> Unless criSuccess is returned, the argument A is undefined.
     !>
-    !> \return criSuccess on success, criFailure if no item satisfies the 
-    !> requirement 
+    !> \return criSuccess on success, criFailure if no item satisfies the
+    !> requirement
     integer function get(this, S, A, max_angle) result(info)
     class(ResultTable),intent(inout)   :: this
     double precision,dimension(alamEval_vSD_dim),intent(in) :: S
@@ -111,7 +96,7 @@ contains
     character(len=*),intent(in)         :: fpath
     !
     integer :: iounit, ierr, i
-    
+
         if (size(this%table) > this%saved_session_idx) then
             open(newunit=iounit, file=fpath, position='APPEND', action='WRITE',&
                  status='UNKNOWN', form='UNFORMATTED', iostat=ierr)
@@ -165,6 +150,6 @@ contains
             close(iounit)
         endif
     end function
-    
-    
+
+
 end module

@@ -1,18 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>
-!>    \date Date of the initial release: 2010-11-03 (under the name alamQ)
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-
 #include "criMacros.fpp"
 
 !> dmcQRS calculates plastic anisotropic properties, expressed in terms of q-values,
@@ -260,18 +245,15 @@ contains
             !
             ! Calculate output variables
             !
-            associate(r => results, &
-                      phis => r%phis(i), qrsvalues => r%qrsvalues(i), &
-                      sigmas_x => r%sigmas_x(i), mfactors => r%mfactors(i), &
-                      residuals => r%residuals(i))
+            associate(r => results)
                 !
-                phis = rad2deg(fi2)
-                qrsvalues = calculateQRS(D_t%t,ylp_result%scal_s)
-                sigmas_x = S_t%t(1,1) - S_t%t(3,3)
-                residuals = ylp_result%R
+                r%phis(i) = rad2deg(fi2)
+                r%qrsvalues(i) = calculateQRS(D_t%t,ylp_result%scal_s)
+                r%sigmas_x(i) = S_t%t(1,1) - S_t%t(3,3)
+                r%residuals(i) = ylp_result%R
                 ! Optional: Taylor factor can be retrieved
                 if (this%calculate_MFactor) then
-                    call getTaylorFactor(1, mfactors, info)
+                    call getTaylorFactor(1, r%mfactors(i), info)
                     if (info /= 0) then
                         write(display_unit,980)
                         exit
@@ -281,7 +263,7 @@ contains
                 if (doLogging(criLogInfo,this%output%verbosity)) then
                     write(display_unit,fmt=2601) !
                     write(display_unit,fmt=2600) (centered(display_column_labels(j)), j=1,ncolumn_labels_display)
-                    write(display_unit,fmt=2610) phis, this%rho, qrsvalues%qvalue, qrsvalues%rvalue, sigmas_x, residuals
+                    write(display_unit,fmt=2610) r%phis(i), this%rho, r%qrsvalues(i)%qvalue, r%qrsvalues(i)%rvalue, r%sigmas_x(i), r%residuals(i)
                     write(display_unit,fmt=2601)
                 endif
             end associate

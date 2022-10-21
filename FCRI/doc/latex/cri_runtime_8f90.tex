@@ -1,0 +1,50 @@
+\hypertarget{cri_runtime_8f90}{}\doxysection{src/cri\+Runtime.f90 File Reference}
+\label{cri_runtime_8f90}\index{src/criRuntime.f90@{src/criRuntime.f90}}
+\doxysubsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \mbox{\hyperlink{structcriruntime_1_1commandline}{criruntime\+::commandline}}
+\begin{DoxyCompactList}\small\item\em Data structure for parsing (and combining) the command line arguments. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \mbox{\hyperlink{namespacecriruntime}{criruntime}}
+\begin{DoxyCompactList}\small\item\em Provide shared infrastructure for managing runtime in cri applications. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \mbox{\hyperlink{namespacecriruntime_a63427cf84230e038e9283c85459955f2}{criruntime\+::finalize}} (errcode)
+\begin{DoxyCompactList}\small\item\em Terminate execution of the program, returning stop code. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacecriruntime_aee8edd047b0ba1d5a5f0067ffacfdf6c}{criruntime\+::processcommandline}} (this, argc\+\_\+min, argc\+\_\+max, command\+\_\+map, command\+\_\+argpos, info, terminate)
+\begin{DoxyCompactList}\small\item\em Process the arguments provided in the command line. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacecriruntime_afa1548197c8e0c3d4b589cb7effa1e74}{criruntime\+::finishprocessing}} (this, command\+\_\+map, info, terminate)
+\begin{DoxyCompactList}\small\item\em Print the help message and (optionally) terminate the program. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacecriruntime_ae4940aef753d2b1322a27659dc0b8ade}{criruntime\+::printhelpmessage}} (this, command\+\_\+map, info)
+\begin{DoxyCompactList}\small\item\em Print the help message. \end{DoxyCompactList}\item 
+subroutine \mbox{\hyperlink{namespacecriruntime_a7f6bc1a11847d6ec29643785f832ca12}{criruntime\+::getargv}} (argc, argv, info)
+\begin{DoxyCompactList}\small\item\em Process the command line using Fortran intrinsic procedures (command\+\_\+argument\+\_\+count, get\+\_\+command\+\_\+argument) \end{DoxyCompactList}\item 
+integer function \mbox{\hyperlink{namespacecriruntime_ae24680de8b2573d1d72ce20f42a9ef2d}{criruntime\+::openordie}} (fpath, status)
+\begin{DoxyCompactList}\small\item\em Open file fpath in the mode given by status, or call finalize on failure. Returns IO unit of the newly opened file. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacecriruntime_aadf126359318d1657fa7dc4c80a2a053}{criruntime\+::errmsg\+\_\+len}} = 1024
+\begin{DoxyCompactList}\small\item\em Length of error message. \end{DoxyCompactList}\item 
+character(len=errmsg\+\_\+len), save \mbox{\hyperlink{namespacecriruntime_a6be05f9853d153a53e3f1511df7134ed}{criruntime\+::errmsg}} = \textquotesingle{}\textquotesingle{}
+\begin{DoxyCompactList}\small\item\em Error message to be emitted on stop. \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespacecriruntime_affe08f177754552f44d45bbb95a1c128}{criruntime\+::description\+\_\+len}} = 128
+\item 
+integer, parameter \mbox{\hyperlink{namespacecriruntime_acf96fd012797ef564d36c611757c3adb}{criruntime\+::max\+\_\+command\+\_\+param\+\_\+len}} = max\+\_\+pathlen
+\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Exit codes that are returned to the OS on various stop contitions}\par
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter \mbox{\hyperlink{namespacecriruntime_a4b23d17de3a3852fe7b1d26931cde693}{criruntime\+::stopcode\+\_\+ok}} = 0
+\begin{DoxyCompactList}\small\item\em OK, succsssful termination. \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespacecriruntime_aa35f23bf5c0993afba7de5a8f6b975d2}{criruntime\+::stopcode\+\_\+inputerror}} = 1
+\begin{DoxyCompactList}\small\item\em Error, input parameters are wrong. \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespacecriruntime_a35bbce4dcd8dfca411591b89ae418d9d}{criruntime\+::stopcode\+\_\+ioerror}} = 2
+\begin{DoxyCompactList}\small\item\em Error, an IO operation has failed. \end{DoxyCompactList}\item 
+integer, parameter \mbox{\hyperlink{namespacecriruntime_a17e4716ebdaf69e8e87f7ca09b9325ab}{criruntime\+::stopcode\+\_\+runtimeerror}} = 10
+\begin{DoxyCompactList}\small\item\em Run-\/time error condition occured. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}

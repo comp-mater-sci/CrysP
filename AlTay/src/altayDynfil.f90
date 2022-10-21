@@ -3,7 +3,7 @@
       use criMathUtils
       implicit none
 
-      !> Texture-related state variables for single grain 
+      !> Texture-related state variables for single grain
       TYPE :: grain
             double precision :: tFI1 = 0.D0,tPHI = 0.D0, tFI2 = 0.D0 !< Euler angles
             double precision :: tGEW = 1.D0 ,tGAM = 0.D0
@@ -14,7 +14,7 @@
             double precision, dimension(3,3) :: tTAX = unitMatrix
             double precision, dimension(3,3) :: tZERO = 0.D0,tRHO = 0.D0
       END TYPE grain
-      
+
       type :: matFrame
             double precision,dimension(3,3) :: FALG = unitMatrix
             double precision,dimension(3,3) :: CIJ0 = unitMatrix
@@ -30,15 +30,15 @@
       !> State variable: material (frame) global geometry
       type(matFrame),save     :: mf
 
-      !> State variable: title of the input texture file 
+      !> State variable: title of the input texture file
       character(len=40),save  :: filetitle = ''
-      
+
       !> State variable: step number.
       integer,save            :: NRSTEP = 0
-      
-      
+
+
       contains
-      
+
       !> Allocate the memory block for the state variables.
       subroutine DYNFIL0(npoint,keepstate,istat)
       use altayIOConfig
@@ -59,7 +59,7 @@
             if(NLIST.eq.1) write(IMP,100)
             return
       endif
-      ! 
+      !
       if (.not. allocated(DFIL)) then
             allocate(DFIL(npoint),stat=istat)
       else
@@ -70,7 +70,7 @@
                   return
             endif
             if (keepstate) then
-                  ! Transfer npoints 
+                  ! Transfer npoints
                   allocate(tmp(npoint),stat=istat)
                   if (istat == 0) then
                         ntransf = min(npoint,size(DFIL))
@@ -90,8 +90,8 @@
  100  format('DYNFIL0: error: requested number of grains is zero.')
  101  format('DYNFIL0: error: allocation of memory failed.')
       end subroutine
-      
-      !> Finalizes the module. The subroutine puts the module variables 
+
+      !> Finalizes the module. The subroutine puts the module variables
       !> into initial state and deallocates the storage.
       subroutine DYNFIL_finalize(info)
       integer,intent(out)     :: info
@@ -103,7 +103,7 @@
             if (allocated(DFIL)) deallocate(DFIL,stat=info)
       !
       end subroutine
-      
+
 
       !> Extract the global material data
       subroutine DYNFIL2(n,F,AXES,EULR,CIJ,TAX)
@@ -203,7 +203,7 @@
       !> The following fields are modified:
       !>  - tT is calculated from Euler angles as defined by the tfi1,
       !>    tPHI and tfi2 fields
-      !>  - tAXES,tEULR,tF,tCIJ,tTAX - inherit corresponding properties 
+      !>  - tAXES,tEULR,tF,tCIJ,tTAX - inherit corresponding properties
       !>    from mf
       !>  - tZERO and tRHO - are zeroed.
       subroutine initFields(mf,gr)
@@ -214,7 +214,7 @@
             !
             ! Backward compatibility with type(gr):
             ! initialize the remaining components with mf data...
-            gr%tAXES = mf%GAXES 
+            gr%tAXES = mf%GAXES
             gr%tEULR = mf%GEULR
             gr%tF   = mf%FALG
             gr%tCIJ = mf%CIJ0
@@ -224,8 +224,8 @@
             gr%tRHO  = 0.D0
       !
       end subroutine
-      
-      
+
+
       end module
-      
+
 

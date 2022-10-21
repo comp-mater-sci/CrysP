@@ -1,23 +1,21 @@
-!> $Id$
-      
 !> Microstructure representation in AlTay
-!> The microstructure is created by grain boundary segments. 
+!> The microstructure is created by grain boundary segments.
 module altayMesostructure
 use altayAlgorithms
 use altayMiscutils, only: terminate, stopcode_runtimeerror
 implicit none
-      !> Transformation matrix associated to the grain boundary reference frame 
+      !> Transformation matrix associated to the grain boundary reference frame
       !> in the initial state.
       !> Shape is: [3,3,ngr], where ngr is the number of grains.
       double precision, dimension(:,:,:),allocatable,save :: TmatGr
       integer,save :: NGrElm = 0             !< Number of grain boundary orientations
       character(len=40), save :: TitMic = '' !< Microstructure title
 
-      
+
 contains
-      
-      !> Reading of "microstructure" (Euler angles defining 
-      !> grain boundary segments) in SMT-format, allocation 
+
+      !> Reading of "microstructure" (Euler angles defining
+      !> grain boundary segments) in SMT-format, allocation
       !> and assignment of the module variables.
       subroutine GRFIL(fnam,F_mic,ierr)
       use altayMiscutils
@@ -31,15 +29,15 @@ contains
       !
       integer           :: IGrElm !< Counter for loop over GBs
       type(EulerAngles) :: EulGB
-      double precision, dimension(3,3) :: T 
-      ! 
+      double precision, dimension(3,3) :: T
+      !
       ierr = -1
       !
-      ! output to NLIST 
+      ! output to NLIST
       if(NLIST.eq.1) write (IMP,103) fnam
       103  format (' GRFIL - Input microstructure file:' ,a)
       !
-      open (unit=NDAT2,file=fnam,status='old',iostat=ierr) 
+      open (unit=NDAT2,file=fnam,status='old',iostat=ierr)
       if (ierr /= 0) return
       !
       read (NDAT2,94) NGrElm,TitMic ! read number of GBs and title
@@ -47,23 +45,23 @@ contains
 #ifndef NO_STDOUT
       write (*,93) NGrElm,TitMic
 #endif
-      ! output to NLIST 
+      ! output to NLIST
       if(NLIST.eq.1) write (IMP,93) NGrElm,TitMic
-      93  format (' Number of orientations in MICROSTRUCTURE file:' ,I5,/,' Title in file: ',A)    
+      93  format (' Number of orientations in MICROSTRUCTURE file:' ,I5,/,' Title in file: ',A)
       !
       allocate(TmatGr(3,3,NGrElm),STAT=ierr)
       if (ierr.ne.0) then
           if(NLIST.eq.1) write(IMP,102)
           return
-      end if 
+      end if
       102  format (' GRFIL - Allocation of memory failed')
       !
       do IGrElm=1,NGrElm
             read (NDAT2,96) EulGB%fi2,EulGB%PHI,EulGB%fi1 ! read Euler angles from microstructure file in order: phi2, PHI, phi1
             !Calc. the transformation matrix T
             T = rotmat(deg2rad(EulGB))
-            !TmatGr(1:3,i,IGrElm) for i=1,2 holds two non-parallel vectors 
-            !  within the initial GB (grain boundary) plane.      
+            !TmatGr(1:3,i,IGrElm) for i=1,2 holds two non-parallel vectors
+            !  within the initial GB (grain boundary) plane.
             !TmatGr(1:3,i,IGrElm) for i=3 holds a vector out of the initial
             !  GB plane (not necessarily perpendicular to the GB plane).
             TmatGr(:,:,IGrElm)=matmul(F_mic,transpose(T))
@@ -76,7 +74,7 @@ contains
       end subroutine GRFIL
 
 
-      !> Finalizes the module. The subroutine puts the module variables 
+      !> Finalizes the module. The subroutine puts the module variables
       !> into initial state and deallocates the storage.
       subroutine MICROSTR_finalize(info)
       integer,intent(out)     :: info
@@ -87,8 +85,8 @@ contains
       !
       end subroutine
 
-      
-      
+
+
       subroutine CLUSTER1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,Cofcos,Cofsin)
       !   IF both relaxations are orthogonal:
       !      Cofcos=0 and Cofsin=0 is returned
@@ -100,16 +98,16 @@ contains
       use altayIOConfig, only: IPR,NLIST,IMP
       use altayMiscutils, only: unitMatrix, pi
       use altayMacroKinematic
-    
+
       integer,intent(in)                              :: NGR
       integer,intent(in)                              :: IGrElm
-      type(DeformationRate),intent(in)                :: MacroDefRate     
+      type(DeformationRate),intent(in)                :: MacroDefRate
       type(DeformationState),intent(in)               :: MacroDefState
       double precision,intent(inout)                  :: GEWF
       double precision,dimension(3,3),intent(out)     :: Tprinc
       double precision,intent(out)                    :: Cofcos
       double precision,intent(out)                    :: Cofsin
- 
+
       !
       double precision :: AXX(3,3),GRPAR(3,3), PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
       double precision :: x, u, dlength, dot1, dot2, TGANGLE, Y
@@ -127,16 +125,16 @@ contains
             GRPAR = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
             if ((IPR.gt.1) .and.(NLIST.eq.1)) then
                   write (IMP,409) IGrElm
-                  409 format (' IGrElm = ',i5) 
-                  do i=1,3 
+                  409 format (' IGrElm = ',i5)
+                  do i=1,3
                         write (IMP,407) (TmatGr(j,i,IGrElm),j=1,3)
                   enddo
                   407 format (' TmatGr ',3d15.7)
-                  do i=1,3 
+                  do i=1,3
                         write (IMP,408) (GRPAR(j,i),j=1,3)
                   enddo
                   408 format (' GRPAR  ',3d15.7)
-            endif 
+            endif
             !
             if ((IPR.gt.0) .and. (NLIST.eq.1) )then
                   write (IMP,100)
@@ -145,14 +143,14 @@ contains
             !     Calculation of volume affected by the surface
             do i=1,3,1
                   x=0.0
-                  do j=1,3,1 
+                  do j=1,3,1
                         X=X+GRPAR(j,i)**2
                   enddo
                   AL(i)=sqrt(X)
-            enddo 
+            enddo
             !     Box product
             vec1(1)=GRPAR(2,2)*GRPAR(3,3)-GRPAR(3,2)*GRPAR(2,3)
-            vec1(2)=GRPAR(3,2)*GRPAR(1,3)-GRPAR(1,2)*GRPAR(3,3)            
+            vec1(2)=GRPAR(3,2)*GRPAR(1,3)-GRPAR(1,2)*GRPAR(3,3)
             vec1(3)=GRPAR(1,2)*GRPAR(2,3)-GRPAR(2,2)*GRPAR(1,3)
             u=0.0D0
             do i=1,3
@@ -161,10 +159,10 @@ contains
             u=abs(u)*0.25D0/(AL(1)*AL(2)*AL(3))
             !     The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3;
             !      for very flattened grains, it should tend to 1.
-            ! 
+            !
             !     re-order the basisvectors so that AA(1)>=AA(2)>=AA(3)
             !     find out which one of these corresponds to the original AL(3)
-            !     Case 1: is AL(3) the longest? 
+            !     Case 1: is AL(3) the longest?
             if (AL(2).le.AL(3).and.AL(1).le.AL(3)) then
                   AA(1)=AL(3)
                   if(AL(2).ge.AL(1))then
@@ -175,7 +173,7 @@ contains
                         AA(3)=AL(2)
                   endif
                   GEWF=u*(2.0D0*(AA(2)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.0D0)
-            else 
+            else
                   !       Case 2: is AL(3) the shortest?
                   if (AL(3).le.AL(1).and.AL(3).le.AL(2)) then
                         AA(3)=AL(3)
@@ -190,7 +188,7 @@ contains
                               +2.0D0*(AA(2)-AA(3))*AA(3)**2+2.0D0*(AA(1)-AA(3))*AA(3)**2 &
                               +4.D0*AA(3)**3/3.D0)
                     else
-                        !         Case 3: AL(3) is neither shortest nor longest      
+                        !         Case 3: AL(3) is neither shortest nor longest
                         AA(2)=AL(3)
                         if(AL(1).ge.AL(2))then
                               AA(1)=AL(1)
@@ -204,13 +202,13 @@ contains
             endif
             if ((IPR.gt.0) .and. (NLIST.eq.1)) then
                   write (IMP,103) GEWF
-            end if 
+            end if
             !      write (*,103) GEWF
-             103  format (/,' GEWF ',3d15.7,/) 
+             103  format (/,' GEWF ',3d15.7,/)
 
             !     Construction of orientation matrices for frames associated to the
             !     interfaces
-            IN=3  
+            IN=3
             IA=1
             IB=2
             do i=1,3
@@ -239,19 +237,19 @@ contains
             do i=1,3
                   do j=1,3
                         Tprinc(i,j)=AXX(j,i)
-                  enddo           
+                  enddo
                   if (IPR.gt.0) then
-                        if(NLIST.eq.1) then 
+                        if(NLIST.eq.1) then
                         write (IMP,102) (Tprinc(i,j),j=1,3)
                   end if
             end if
-            102      format (' TGrb ',3d15.7)            
+            102      format (' TGrb ',3d15.7)
             enddo
             !@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@##@# QGX 17/9/2012
             dlength=norm2(MacroDefRate%StrainModevM)
             !     Transform MacroDefRate%StrainModevM to the "Grb" reference frame
             TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
-            !   
+            !
             relaxI=0.0
             relaxI(1,3)=1.D0
             relaxI(3,1)=1.D0
@@ -274,7 +272,7 @@ contains
             enddo
             enddo
             dot2=dot2/sqrt(2.0D0)/dlength
-            ! 
+            !
             if(dabs(dot1).lt.0.000001.and.dabs(dot2).lt.0.000001) then
                   ! both relaxations are orthogonal
                   Cofcos=0.0
@@ -302,7 +300,7 @@ contains
                         Tprinc = transpose(AXX)
                         Cofcos=1.D0
                         Cofsin=0.D0
-                        return        
+                        return
                   endif
             !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
             !  new axe-1 be old axe-2
@@ -323,16 +321,16 @@ contains
             AXX(3,2)=vec2(3)
             ! update Tprinc
             Tprinc = transpose(AXX)
-            !     Transform MacroDefRate%StrainModevM to the new "Grb" reference frame 
-            TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc) 
-            !   make sure relaxation-2 is orthogonal  
+            !     Transform MacroDefRate%StrainModevM to the new "Grb" reference frame
+            TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
+            !   make sure relaxation-2 is orthogonal
             dot2=0.0
             do i=1,3,1
                   do j=1,3,1
                         dot2=dot2+relaxII(i,j)*TDCGr(i,j)
                   enddo
-            enddo 
-#ifdef ENABLE_CHECK_ORTHORLX         
+            enddo
+#ifdef ENABLE_CHECK_ORTHORLX
             if(dabs(dot2).gt.0.0001) then
                   write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
                   call terminate(stopcode_runtimeerror)
@@ -358,9 +356,9 @@ contains
                   if(dabs(dot1-1.0D0).lt.0.00001) then
                         Cofcos=1.0D0
                         Cofsin=0.0D0
-                  else  
+                  else
                         Cofcos=dot1
-                        Cofsin=sqrt(1.0D0-dot1*dot1)   
+                        Cofsin=sqrt(1.0D0-dot1*dot1)
                   endif
                   return
             else
@@ -374,7 +372,7 @@ contains
                   PrDir(2,1)=-y
                   PrDir(2,2)=x
                   PrDir(3,3)=1.0D0
-                  ! 
+                  !
                   !   Prdir(1,) is vector-1 in the GB frame
                   !   Prdir(2,) is vector-2 in the GB frame
                   !   Transform these two vector in the Sample's frame
@@ -400,23 +398,23 @@ contains
                   AXX(3,2)=vec2(3)
                   ! update Tprinc
                   Tprinc = transpose(AXX)
-                  ! 
-                  ! Transform MacroDefRate%StrainModevM to the new "Grb" reference frame 
-                  TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc) 
-                  !  make sure relaxation-2 is orthogonal   
+                  !
+                  ! Transform MacroDefRate%StrainModevM to the new "Grb" reference frame
+                  TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
+                  !  make sure relaxation-2 is orthogonal
                   dot2=0.0
                   do i=1,3,1
                         do j=1,3,1
                               dot2=dot2+relaxII(i,j)*TDCGr(i,j)
                         enddo
                   enddo
-#ifdef ENABLE_CHECK_ORTHORLX      
+#ifdef ENABLE_CHECK_ORTHORLX
                   if(dabs(dot2).gt.0.0001) then
                         write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
                         call terminate(stopcode_runtimeerror)
-                  endif 
+                  endif
 #endif
-                  !     
+                  !
                   dot1=0.0
                   do i=1,3,1
                         do j=1,3,1
@@ -430,10 +428,10 @@ contains
                   Cofsin=sqrt(1.0D0-dot1*dot1)
             endif
       !
-      end subroutine               
+      end subroutine
 
-      
-      
-      
+
+
+
 end module
-    
+

@@ -14,58 +14,8 @@ contains
       logical function criTestUncomment_main() result(stat)
       implicit none
 
-            stat = test_uncommentedString()
-
             stat = test_stripComment()
 
-      end function
-
-
-
-      logical function test_uncommentedString()
-      implicit none
-      character(len=max_line_len)    :: string, res_string
-      !
-            test_uncommentedString = .false.
-            ! Test:
-            string = ''
-            _TEST('empty string',uncommentedString(string) == '')
-
-            ! Test:
-            _TEST('empty literal string',uncommentedString('') == '')
-
-            ! Test:
-            string = '   '
-            _TEST('empty string, spaces',uncommentedString(string) == string)
-
-            ! Test:
-            _TEST('blank string, comment at the end',uncommentedString('   #') == '   ')
-
-            ! Test:
-            string = '#     '
-            _TEST('blank string, comment at the beginning',uncommentedString(string) == '')
-
-            ! Test:
-            string = 'sample string with no comment'
-            _TEST('sample string, no comment',uncommentedString(string) == string)
-
-            ! Test:
-            string = 'sample string with a trailing comment#'
-            res_string = 'sample string with a trailing comment'
-            _TEST('sample string, no comment',uncommentedString(string) == res_string)
-
-            ! Test:
-            string = 'sample string # with a comment'
-            res_string = 'sample string '
-            _TEST('sample string with a comment',uncommentedString(string) == res_string)
-
-            ! Test:
-            string = '#sample comment string with a comment char#'
-            res_string = ''
-            _TEST('sample comment string with a comment',uncommentedString(string) == res_string)
-
-
-      !
       end function
 
 

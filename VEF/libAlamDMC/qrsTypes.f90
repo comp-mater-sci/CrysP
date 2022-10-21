@@ -1,18 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2011-09-14
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-
 !> Useful data types for calculation of anisotropic characteristics
 module qrsTypes
 implicit none
@@ -21,7 +6,7 @@ implicit none
             double precision :: qvalue = 0.D0
             double precision :: rvalue = 0.D0
             double precision :: svalue = 0.D0
-      end type    
+      end type
 
 contains
 
@@ -31,7 +16,7 @@ contains
       integer :: i,n
       !
             avgQRS = qrsData(0.D0, 0.D0, 0.D0)
-            n = size(qrsvalues) 
+            n = size(qrsvalues)
             if (n > 0) then
                   do i=1,n
                        avgQRS%qvalue= avgQRS%qvalue +  qrsvalues(i)%qvalue
@@ -43,7 +28,7 @@ contains
                   avgQRS%rvalue = avgQRS%rvalue * frc
                   avgQRS%svalue = avgQRS%svalue * frc
             endif
-      
+
       end function
 
 
@@ -57,7 +42,7 @@ contains
             else
                   qrsvalue = qrsData(0.D0, 0.D0, 0.D0)
             endif
-      end function      
+      end function
 
-      
+
 end module

@@ -1,18 +1,3 @@
-!
-! $Id$
-!
-!>    \author Jerzy Gawad                                                
-!>    Email:  Jerzy.Gawad@cs.kuleuven.be
-!>
-!>    Organization: Katholieke Universiteit Leuven
-!>    Organization unit: Dept.Comp.Sci., TWR Group
-!>                                                             
-!>    \date Date of the initial release: 2011-07-18 (under the name alamASR)
-!>    $Revision$
-!>    $Date$
-!>
-!>    History of modifications: (see svn log)
-
 #include "criMacros.fpp"
 
 !> DMC Arbitrary Stress Response
@@ -43,9 +28,9 @@ implicit none
         type(EulerAngles)                         :: rotframe
 
         type(StressDrivenStep),dimension(:),allocatable :: steps
-            
+
     contains
-    
+
         !>@{ \name Interface methods of AbstractModule
 
         procedure,pass(this)    :: readConfig => ASRModule_readConfig
@@ -60,7 +45,7 @@ implicit none
 
     end type
 
-    
+
     type :: ASROutput
         integer                 :: step = 0
         type(EvolutionOutput)   :: evolution_output
@@ -69,7 +54,7 @@ implicit none
 
 contains
 
-    integer function ASRModule_readConfig(this,cnfunit) result(info) 
+    integer function ASRModule_readConfig(this,cnfunit) result(info)
     implicit none
     class(ASRModule),intent(inout)            :: this
     integer,intent(in)                        :: cnfunit
@@ -103,7 +88,7 @@ contains
                 end associate
         enddo
         info = criSuccess
-            
+
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
@@ -129,7 +114,7 @@ contains
     !
     end function
 
-    
+
     subroutine ASRModule_run(this,info)
     implicit none
     class(ASRModule),intent(inout)          :: this
@@ -182,11 +167,11 @@ contains
                     do j=1,3
                         write(display_unit,3411) sigma%t(:,j), S%t(:,j), Pressure%t(:,j)
                     enddo
-                    
+
                 endif
                 !
                 ! Follow the stress path
-                !                
+                !
                 info = this%calculateStressPath(sigma, control, output%evolution_output, Mrot, &
                                                 incrementation_control=icv)
                 if (info /= criSuccess) then
@@ -208,7 +193,7 @@ contains
                 endif
             end associate
         enddo
-        
+
         ! Formats
         3310 format('Input stress tensor, in the material reference frame:')
         3400 format(T15,A,T54,A,T85,A)
@@ -221,7 +206,7 @@ contains
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
 #undef MSG_GROUP_RULERS
-    
+
     end subroutine
 
 
@@ -307,7 +292,7 @@ contains
                     SonA_rot_voigt = Mat33ToVec6(v%SonA%t)
                     P_step_rot_voigt =  Mat33ToVec6(P_step_rot%t)
                     P_total_end_rot_voigt = Mat33ToVec6(P_total_end%t)
-                    
+
                     write(iounit,fmt=710,iostat=ierr) &
                                 output%step, v%icv%increment, & ! 2 fields
                                 v%vm_strain, norm2(v%icv%vP_step), v%norm_P_abs, v%vm_strain_total, &
