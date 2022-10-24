@@ -3,85 +3,85 @@
 #endif
 
 module altayAlgorithms
-        implicit none
-        
         use altayMiscutils, only: terminate, stopcode_runtimeerror
         use criMathUtils
         
+        implicit none
+
         contains
         
         !> Updating of CIJ matrix of ellipsoid
         !> Finv is the inverse of the F-tensor which describes the strain increment.
-        subroutine UPDATC(CIJ,Finv)
+        subroutine UPDATC(CIJ, Finv)
                 double precision, dimension(3,3), intent(in)   :: Finv
-                double precision, dimension(3,3), intent(inout):: CIJ
-                CIJ = matmul(matmul(transpose(Finv),CIJ),Finv)
+                double precision, dimension(3,3), intent(inout)  :: CIJ
+                CIJ = matmul(matmul(transpose(Finv), CIJ), Finv)
         end subroutine
         
-        !> Transform a 5D-vector in deviatoric (stress/strain-rate) space
-        !> to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
+        !> Transform a 5D-vector in deviatoric (stress/strain-rate) space to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
         !> Note: The reverse transformation is done by function 'Vector5D'.
-        function SymMatrix(vec)
-                double precision, dimension(5),  intent(in) :: vec
-                double precision, dimension(3,3)            :: SymMatrix !out
-                double precision, parameter ::                                     &
-                      sq22=   sqrt(0.5d0),                                         & !0.7071068
-                      const3= (sqrt(3.0d0)+3.0d0)/6.0d0,                           & !0.7886751
-                      const4= (3.0d0-sqrt(3.0d0))/6.0d0  !0.2113249
+        function SymMatrix(vec) result(sym)
+                double precision, dimension(5), intent(in) :: vec
+                double precision, dimension(3,3)           :: sym 
+                double precision, parameter                :: sq22 = sqrt(0.5d0),                     & 
+                                                              const3 = (sqrt(3.0d0) + 3.0d0) / 6.0d0, & 
+                                                              const4 = (3.0d0 - sqrt(3.0d0)) / 6.0d0  
                 
-                SymMatrix(2,2)=  const3*vec(1)-const4*vec(2)
-                SymMatrix(3,3)= -const4*vec(1)+const3*vec(2)
+                sym(2,2)=  const3 * vec(1) - const4 * vec(2)
+                sym(3,3) = -const4 * vec(1) + const3 * vec(2)
                 
-                SymMatrix(1,1)= -SymMatrix(2,2)-SymMatrix(3,3)
+                sym(1,1) = -sym(2,2) - sym(3,3)
                 
-                SymMatrix(2,3)= sq22*vec(3)
-                SymMatrix(3,1)= sq22*vec(4)
-                SymMatrix(1,2)= sq22*vec(5)
+                sym(2,3) = sq22 * vec(3)
+                sym(3,1) = sq22 * vec(4)
+                sym(1,2) = sq22 * vec(5)
                 
-                SymMatrix(3,2)= SymMatrix(2,3)
-                SymMatrix(1,3)= SymMatrix(3,1)
-                SymMatrix(2,1)= SymMatrix(1,2)
+                sym(3,2) = sym(2,3)
+                sym(1,3) = sym(3,1)
+                sym(2,1) = sym(1,2)
         end function SymMatrix
         
-        !> Transform a (3,3)-matrix representation of a traceless 2nd rank tensor
-        !> to 5D-vector representation in deviatoric (stress/strain-rate) space.
+        !> Transform a (3,3)-matrix representation of a traceless 2nd rank tensor to 5D-vector representation in deviatoric (stress/strain-rate) space.
         !> Notes:
         !>    - Only the symmetric part of 2nd rank tensor is transformed.
         !>    - The reverse transformation is done by function 'SymMatrix'.
-        function Vector5D(mat)
+        function Vector5D(mat) result(vec)
                 double precision, dimension(3,3), intent(in) :: mat
-                double precision, dimension(5)               :: Vector5D !out
-                double precision, parameter ::                                     &
-                      c1= 0.5d0*(sqrt(3.0d0)+1.0d0),                               &
-                      c2= c1-1.0d0,                                                &
-                      c3= sqrt(0.5d0)
+                double precision, dimension(5)               :: vec 
+                double precision, parameter                  :: c1 = 0.5d0 * (sqrt(3.0d0) + 1.0d0), &
+                                                                c2 = c1 - 1.0d0,                       & 
+                                                                c3 = sqrt(0.5d0)
                 
-                Vector5D(1)= c1*mat(2,2) + c2*mat(3,3)
-                Vector5D(2)= c2*mat(2,2) + c1*mat(3,3)
-                
-                Vector5D(3)= c3* (mat(2,3)+mat(3,2))
-                Vector5D(4)= c3* (mat(3,1)+mat(1,3))
-                Vector5D(5)= c3* (mat(1,2)+mat(2,1))
+                vec(1) = c1 * mat(2,2) + c2 * mat(3,3)
+                vec(2) = c2 * mat(2,2) + c1 * mat(3,3)
+                vec(3) = c3 * (mat(2,3) + mat(3,2))
+                vec(4) = c3 * (mat(3,1) + mat(1,3))
+                vec(5) = c3 * (mat(1,2) + mat(2,1))
         end function Vector5D
        
         !Calculate the CIJ matrix of an ellipsoid with half axes stored in Gaxes. T defines the orientation of the axes.
         !This version assumes that A is a diagonal matrix
-        Subroutine Transf(Gaxes,Aprime,T)
-                IMPLICIT double precision (A-H,O-Z)
-        
-                dimension Gaxes(3),A(3),Aprime(3,3),T(3,3),X(3,3)
-                A=1.D0/Gaxes**2
-                do j=1,3
-                        X(:,j)=t(:,j)*A
+        Subroutine Transf(Gaxes, Aprime, T)
+                double precision, dimension(3), intent(in)      :: Gaxes 
+                double precision, dimension(3,3), intent(inout) :: Aprime 
+                double precision, dimension(3,3), intent(in)    :: T 
+                integer                                         :: i, j, k
+                double precision                                :: y
+                double precision, dimension(3)                  :: A
+                double precision, dimension(3,3)                :: X
+
+                A = 1.D0 / Gaxes ** 2
+                do j = 1,3
+                        X(:,j) = t(:,j) * A
                 end do
 
-                do i=1,3
-                        do j=1,3
-                                y=0.0
-                                do k=1,3
-                                        y=y+T(k,i)*X(k,j)
+                do i = 1, 3
+                        do j = 1, 3
+                                y = 0.0
+                                do k = 1,3
+                                        y = y + T(k,i) * X(k,j)
                                 end do
-                                Aprime(i,j)=y
+                                Aprime(i, j) = y
                         end do
                 end do
         end subroutine
@@ -89,45 +89,48 @@ module altayAlgorithms
         !find half-lengths of ellipsoid axes from CIJ matrix
         !store them in prval
         !find Euler angles of these axes, store in GEULR
-        Subroutine GETANG(CIJ,prval,GEULR,TMAT)
-                #ifdef ALTAY_SUBROUTINE
-                        use altayRCM
-                #endif
-                IMPLICIT double precision (A-H,O-Z)
-                
-                dimension CIJ(3,3),TMAT(3,3),GEULR(3)
-                Dimension prval(3),prdir(3,3),e(3,3)
-                logical axisym
-                type(EulerAngles):: CEuler
+        Subroutine GETANG(CIJ, prval, GEULR, TMAT)
+#ifdef ALTAY_SUBROUTINE
+                use altayRCM
+#endif
+                double precision, dimension(3,3), intent(in)    :: CIJ
+                double precision, dimension(3), intent(inout)   :: GEULR, prval
+                double precision, dimension(3,3), intent(inout) :: TMAT
+                integer                                         :: i
+                double precision                                :: CIJTR, enrm 
+                double precision, dimension(3,3)                :: prdir, e
+                logical                                         :: axisym
+                type(EulerAngles)                               :: CEuler
 
-                CIJTR=(CIJ(1,1)+CIJ(2,2)+CIJ(3,3))/3.D0
+                CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3.D0
                 e = CIJ
-                do i=1,3
-                        e(i,i)=e(i,i)-CIJTR
+                do i=1, 3
+                        e(i,i) = e(i,i) - CIJTR
                 end do
 
-                call eigenv(e,prval,prdir,enrm,axisym)
+                call eigenv(e, prval, prdir, enrm, axisym)
                 
-                #ifdef ALTAY_SUBROUTINE
-                        RCM_GUARD
-                #endif
+#ifdef ALTAY_SUBROUTINE
+                RCM_GUARD
+#endif
       
-                prval=prval+CIJTR
+                prval = prval + CIJTR
 
-                if (prval(1).gt.prval(2)) call verwis(2,1,prval,prdir)
-                if (prval(2).gt.prval(3)) call verwis(3,2,prval,prdir)
-                if (prval(1).gt.prval(2)) call verwis(1,2,prval,prdir)
-                prval=1.D0/sqrt(prval)
-                TMAT=prdir
-                CEuler= EuleranglesType(TMAT)
-                GEULR=EulerAngles2Arr(CEuler)
+                if (prval(1) > prval(2)) call verwis(2, 1, prval, prdir)
+                if (prval(2) > prval(3)) call verwis(3, 2, prval, prdir)
+                if (prval(1) > prval(2)) call verwis(1, 2, prval, prdir)
+                prval = 1.D0 / sqrt(prval)
+                TMAT = prdir
+                CEuler = EuleranglesType(TMAT)
+                GEULR = EulerAngles2Arr(CEuler)
         end subroutine
       
-        Subroutine eigenv(e,prval,prdir,enrm,axisym)
-                #ifdef ALTAY_SUBROUTINE
-                        use altayRCM
-                #endif
+        Subroutine eigenv(e, prval, prdir, enrm, axisym)
+#ifdef ALTAY_SUBROUTINE
+                use altayRCM
+#endif
                 IMPLICIT double precision (A-H,O-Z)
+                integer :: i, i1, i2, j, imax, jmax, kmax, ipr, j1, j2
 !     Principal values of symmetric tensor with zero trace
 !     The eigenvectors are normalized.
 !     prval contains the principal values
@@ -274,6 +277,7 @@ module altayAlgorithms
       subroutine normaliz(prdir,xx)
       IMPLICIT double precision (A-H,O-Z)
       dimension prdir(3)
+      integer :: i
       xx=0.0
       do 19 i=1,3
       xx=prdir(i)**2+xx
@@ -322,22 +326,27 @@ module altayAlgorithms
       x(3)=delta*cos((theta+4.D0*pi)/3.D0)
       end subroutine
       !
-      subroutine verwis(i1,i2,prval,prdir)
-      IMPLICIT double precision (A-H,O-Z)
-      dimension prval(3),prdir(3,3)
-      x=prval(i1)
-      prval(i1)=prval(i2)
-      prval(i2)=x
-      do i=1,3
-        x=prdir(i,i1)
-        prdir(i,i1)=-prdir(i,i2)
-        prdir(i,i2)=x
-      end do
+        subroutine verwis(i1,i2,prval,prdir)
+                IMPLICIT double precision (A-H,O-Z)
+                dimension prval(3),prdir(3,3)
+                integer, intent(in) :: i1, i2
+                integer :: i
+                x=prval(i1)
+                prval(i1)=prval(i2)
+                prval(i2)=x
+                do i=1,3
+                        x=prdir(i,i1)
+                        prdir(i,i1)=-prdir(i,i2)
+                        prdir(i,i2)=x
+                end do
 
-      end subroutine
+        end subroutine
       !
-      SUBROUTINE MINV(A,N,D,L,M,NXXX)
-      DIMENSION A(NXXX),L(N),M(N)
+        SUBROUTINE MINV(A,N,D,L,M,NXXX)
+                integer, intent(in)                              :: N, NXXX
+                integer, dimension(N), intent(inout)             :: M, L
+                double precision, dimension(NXXX), intent(inout) :: A
+                integer                                          :: K, J, I, JI, NK, KK, IZ, IJ, KI, JP, IK, JR, JK, KJ, JQ
 !
 !        ...............................................................
 !
@@ -345,7 +354,7 @@ module altayAlgorithms
 !        C IN COLUMN 1 SHOULD BE REMOVED FROM THE DOUBLE PRECISION
 !        STATEMENT WHICH FOLLOWS.
 !
-      DOUBLE PRECISION A,D,BIGA,HOLD
+      DOUBLE PRECISION D,BIGA,HOLD
 !
 !        THE C MUST ALSO BE REMOVED FROM DOUBLE PRECISION STATEMENTS
 !        APPEARING IN OTHER ROUTINES USED IN CONJUNCTION WITH THIS
@@ -489,8 +498,10 @@ module altayAlgorithms
 !     we want to use STELSEL to solve it.
 !
       IMPLICIT double precision (A-H,O-Z)
+      integer, intent(in) :: M1, M2
       dimension  A(M1,M2),AA(M2,M2),B(M2),BA(M2)
       dimension VAL(M2),XV(M2),YV(M2)
+      integer :: kk, i, j, N2, N1, N
       do kk=1,N2
         x=0.0
         do i=1,N1
@@ -520,7 +531,9 @@ module altayAlgorithms
 
       Subroutine STELSEL(N,M,A,R,TOL,VAL,XV,YV)
       IMPLICIT double precision (A-H,O-Z)
+      integer, intent(in) :: N, M
       dimension A(M,M),R(M),VAL(M),XV(M),YV(M)
+      integer :: j, i 
 !
 !     to solve the system of equations A * X = R using
 !     eigenvalues and eigenvectors
