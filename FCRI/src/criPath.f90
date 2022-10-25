@@ -120,6 +120,18 @@ contains
       end subroutine
 
 
+      !> Construct a filename by stitching together prefix and suffix.
+      !>
+      !> The leading whitespaces in the suffix are not preserved in the resulting string.
+      pure function  mkfilename(prefix,suffix)
+      character(len=*),intent(in)               :: prefix, suffix
+      character(len=len(prefix)+len(suffix))    :: mkfilename
+      !
+            mkfilename = trim(adjustl(prefix))//trim(adjustl(suffix))
+      !
+      end function
+
+
       !> Join two path components, inserting directory separator
       !> as needed.
       !>

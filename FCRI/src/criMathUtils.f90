@@ -74,9 +74,13 @@ implicit none
       !> The result of m = ocross_product(u,v) is equivalent to:
       !> \f$ \mathbf{m} = \mathbf{u}^T \mathbf{v} \f$  where \f$\mathbf{u}\f$ and \f$\mathbf{v}\f$  are vectors.
       interface ocross_product
-            module procedure ocross_product_dp
+            module procedure ocross_product_dp, ocross_product_int
       end interface ocross_product
 
+      !> \interface vector_product Vector-Vector ovector product operator
+      interface vector_product
+            module procedure vector_product_dp
+      end interface vector_product
 
       !> Representation of Euler angles: Bunge notation
       type EulerAngles
@@ -198,6 +202,19 @@ contains
       !
       end function
 
+      !> Calculation of ocross_product for integer (default kind)
+      !>
+      !> \implements ocross_product
+      pure function ocross_product_int(a,b)
+      integer,dimension(5),intent(in)                 :: a,b
+      integer,dimension(5,5)                          :: ocross_product_int
+      integer :: i
+      !
+            forall (i = 1:5)
+                  ocross_product_int(i,:) = a(i) * b
+            endforall
+      !
+      end function
 #else
       ! buggy until ifort is updated
       !> Calculation of ocross_product for double precision real
@@ -216,7 +233,32 @@ contains
       !
       end function
 
+      !> Calculation of ocross_product for integer (default kind)
+      !>
+      !> \implements ocross_product
+      pure function ocross_product_int(a,b)
+      integer,dimension(:),intent(in)                 :: a,b
+      integer,dimension(size(a),size(b))              :: ocross_product_int
+      integer :: i
+      !
+            forall (i = 1:size(a))
+                  ocross_product_int(i,:) = a(i) * b
+            endforall
+      !
+      end function
+
 #endif
+
+      !> Calculation of the vector product of two double precision vectors with size 3.
+      pure function vector_product_dp(a,b)
+      double precision,dimension(3),intent(in)        :: a,b
+      double precision,dimension(3)                   :: vector_product_dp
+      !
+            vector_product_dp(1) = a(2)*b(3) - a(3)*b(2)
+            vector_product_dp(2) = a(3)*b(1) - a(1)*b(3)
+            vector_product_dp(3) = a(1)*b(2) - a(2)*b(1)
+      !
+      end function
 
       !> Calculates an angle between two vectors
       !>

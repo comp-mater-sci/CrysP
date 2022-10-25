@@ -5,7 +5,7 @@ implicit none
 
       !> tostring function converts from an intrisic data type into character string.
       interface tostring
-            module procedure tostring_int, tostring_double
+            module procedure tostring_int, tostring_real, tostring_double
       end interface
 
       !> centered function centers a character string.
@@ -78,6 +78,19 @@ contains
             else
                   write(str,'(I0)',iostat=ierr) val
             endif
+      !
+      end function
+
+      pure function tostring_real(val,strlen,fmt) result(str)
+      real,intent(in)                           :: val
+      integer,intent(in)                        :: strlen
+      character(len=*),intent(in)               :: fmt
+      character(len=strlen)                     :: str
+      !
+      integer :: ierr
+      !
+            str = ''
+            write(str,fmt,iostat=ierr) val
       !
       end function
 
