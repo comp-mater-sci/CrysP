@@ -7,6 +7,8 @@ if ! [ $# -eq 0  ]; then
 	export FC=$1
 fi
 
+find -name "*.dir" | xargs rm -r
+
 
 for LIB in FCRI fopt AlTay VEF;do
   cd $LIB
