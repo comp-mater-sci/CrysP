@@ -1,6 +1,6 @@
 # $Id$
 #
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 project(AlamDMC Fortran)
 
@@ -9,7 +9,7 @@ set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 if   (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
     set(libalamDMC_FLAGS "-DPEBP_ENABLED")
 elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-    set(libalamDMC_FLAGS "-DPEBP_ENABLED -ffree-line-length-none")
+    set(libalamDMC_FLAGS "-DPEBP_ENABLED -ffree-line-length-0")
 else()
     message(FATAL_ERROR "Compiler type(CMAKE_Fortran_COMPILER_ID) not recognized")
 endif()

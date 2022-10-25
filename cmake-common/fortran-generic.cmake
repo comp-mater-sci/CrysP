@@ -6,7 +6,7 @@
 
 # Intel compiler specific
 
-set(Fortran_FLAGS -cpp -ffree-line-length-none -I$ENV{MKLROOT}/include)
+set(Fortran_FLAGS -cpp -I$ENV{MKLROOT}/include)
 
 set(Fortran_FLAGS_DEBUG -g -O0 -check all -ftrapuv "-debug all" "-debug-parameters all" -traceback)
 

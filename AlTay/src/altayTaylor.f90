@@ -33,7 +33,7 @@
       type(DeformationState),intent(in),optional :: MacroDefState
       common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
       ITW,GEWF
-      common /IGLIJS/ M11,CC(2,96)      ! M11...total number of systems in slip system file (glide+twin),
+      common /IGLIJS/ CC(2,96), M11     ! M11...total number of systems in slip system file (glide+twin),
       common /TLR2/ RHOAsa
       common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
@@ -227,7 +227,7 @@
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
       common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
-      common /IGLIJS/ M11,CC(2,96)
+      common /IGLIJS/ CC(2,96), M11
       common/TLR2/ RHOAsa
       common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       common /EULERA/ fi1,PHI,fi2
