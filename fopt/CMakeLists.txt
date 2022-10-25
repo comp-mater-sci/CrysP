@@ -7,6 +7,3 @@ set(COMMON_DIR "../cmake-common")
 include("${COMMON_DIR}/basic-fortran-project.cmake")
 
 add_subdirectory(src)
-
-add_subdirectory(src-test)
-
