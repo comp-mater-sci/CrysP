@@ -33,7 +33,7 @@
       type(DeformationState),intent(in),optional :: MacroDefState
       common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
       ITW,GEWF
-      common /IGLIJS/ M11,CC(2,96)      ! M11...total number of systems in slip system file (glide+twin),
+      common /IGLIJS/ CC(2,96), M11     ! M11...total number of systems in slip system file (glide+twin),
       common /TLR2/ RHOAsa
       common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
@@ -73,16 +73,12 @@
       ! Read name of slip system set
   507 read (R,217) TITglij
   217 format(A)
-      if(NLIST.eq.1) then
-            write (IMP,221) TITglij
-      end if
+      if(NLIST.eq.1) write (IMP,221) TITglij
   221 format (/,' Slip system set:',A,/)
       !
       read (R,210) I,NGL,NTW,DI1,X,Y        ! I is implicitly typed integer
  210  format (8I4,4X,2F10.0)
-      if(NLIST.eq.1) then
-            write (IMP,211) I,NGL,NTW,DI1
-      end if
+      if(NLIST.eq.1) write (IMP,211) I,NGL,NTW,DI1
  211  format (1X,I4,10X,2I5,10X,5I5)
 #ifndef ALTAY_SUBROUTINE
       if (I.NE.0) call terminate(stopcode_runtimeerror)
@@ -96,9 +92,7 @@
       if (M11.gt.MMAX)then
 #ifndef ALTAY_SUBROUTINE
             write (*,5001) M11,MMAX
-            if(NLIST.eq.1) then
-                  write (IMP,5001) M11,MMAX
-            end if
+            if(NLIST.eq.1) write (IMP,5001) M11,MMAX
             call terminate(stopcode_runtimeerror)
 #else
             RCM_RAISE(1,'TAYLOR','Too large slip system set',RCM_RTN)
@@ -106,44 +100,35 @@
       endif
  5001 format(' TAYLOR - NGL+NTW=',I5,' LARGER THAN  MMAX=',I5)
       ! read glide + twin systems
-      do 500 I1=1,M11
+      do I1=1,M11
           read (R,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
-          if(NLIST.eq.1) then
-              write (IMP,213) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
-          end if
- 500  continue
+          if(NLIST.eq.1) write (IMP,213) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
+      end do
  212  format (I4,8F20.16)
  213  format (I3,' A ',5F10.7,' B ',3F10.7)
       !
-      do 501 I=1,5
+      do I=1,5
           read (R,214) J,(B(I,L),L=1,5) ! J implicitly typed as integer
-          if(NLIST.eq.1) then
-              write (IMP,215) J,(B(I,L),L=1,5)
-          end if
- 501  continue
+          if(NLIST.eq.1) write (IMP,215) J,(B(I,L),L=1,5)
+      end do
  214  format (I4,5D23.16)
  215  format (1X,I4,10X,5D15.8)
       !
-      if (NTW.EQ.0) goto 504
-      do 505 I=1,NTW
-          read (R,212) J,(B2(L,I),L=1,6),G(I)
-          if(NLIST.eq.1) then
-              write (IMP,218) J,(B2(L,I),L=1,6),G(I)
-          end if
- 505  continue
- 218  format (i4,' B2',6f10.7,' G',f10.7)
- 504  continue
+      if (NTW /= 0) then
+          do I=1,NTW
+              read (R,212) J,(B2(L,I),L=1,6),G(I)
+              if(NLIST.eq.1) write (IMP,218) J,(B2(L,I),L=1,6),G(I)
+          end do
+ 218      format (i4,' B2',6f10.7,' G',f10.7)
+      endif
       ! set all components of A2=0
- 502  do 30 j=1,194
-          do 30 i=1,10
-              A2(i,j)=0.0
-  30  continue
-      do 31 j=1,M11
-          do 31 i=1,5
+ 502  A2=0.0
+      do j=1,M11
+          do i=1,5
               x8=A1(i,j)
               A2(i,j)=x8
               A2(i+5,j+M11)=x8
-  31  continue
+      end do; end do
       return
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 ! 2000 if (IGLIJ.EQ.0) goto 70
@@ -154,15 +139,12 @@
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !
  2000 continue
-      if(NLIST.eq.1) then
-            write (IMP,203)
-      end if
+      if(NLIST.eq.1) write (IMP,203)
       do I=1,3
-          if(NLIST.eq.1) then
+          if(NLIST.eq.1) &
               write (IMP,204) (MacroDefRate%VelGrad(I,J),J=1,3),         &
                               (MacroDefRate%StrainRate(I,J),J=1,3),      &
                               (MacroDefRate%Spin(I,J),J=1,3)
-          end if
       end do
  203  format (' TAYLOR - VELOCITY GRADIENT WHICH WILL BE USED FOR THE SIMULATION', &
               //T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,     &
@@ -172,9 +154,7 @@
       if (MacroDefRate%NormStrainRate.lt.1.0D-10) then
 #ifndef ALTAY_SUBROUTINE
          write (*,205) MacroDefRate%NormStrainRate
-         if(NLIST.eq.1) then
-              write (IMP,205) MacroDefRate%NormStrainRate
-         end if
+         if(NLIST.eq.1) write (IMP,205) MacroDefRate%NormStrainRate
          call terminate(stopcode_runtimeerror)
 #else
          RCM_RAISE(1,'TAYLOR','Symmetric part of the strain step is too small',RCM_RTN)
@@ -191,8 +171,6 @@
       !
       ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
  3000 continue
-!      write (*,1234)
-! 1234 format (' Just before Pancak2')
       !
       call Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,              &
                     SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
@@ -231,8 +209,6 @@
 #ifdef ALTAY_SUBROUTINE
       RCM_GUARD
 #endif
-!      write (*,1235)
-! 1235 format (' Just after Pancak2')
       return
       end subroutine
       !
@@ -251,7 +227,7 @@
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
       common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
-      common /IGLIJS/ M11,CC(2,96)
+      common /IGLIJS/ CC(2,96), M11
       common/TLR2/ RHOAsa
       common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       common /EULERA/ fi1,PHI,fi2
@@ -313,9 +289,7 @@
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 !  13  if (IGLIJ.eq.1) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if(NLIST.eq.1) then
-      write (IMP,103) ISTP,IOR,fi1,PHI,fi2
-      end if
+      if(NLIST.eq.1) write (IMP,103) ISTP,IOR,fi1,PHI,fi2
 
 !  13  write (IMP,103) ISTP,IOR,fi1,PHI,fi2
  103  format (' ISTP,IOR',2I5,' phi1, PHI, phi2:',3F15.6)
@@ -351,9 +325,7 @@
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 4/11/2011
 !      if (IGLIJ.EQ.0) goto 90
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if(NLIST.eq.1) then
-          write (IMP,301) WorkRate
-      end if
+      if(NLIST.eq.1) write (IMP,301) WorkRate
  301  format (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
 !      if(NLIST.eq.1) then
 !      do 302 I=1,M
@@ -364,10 +336,9 @@
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 !      if (IGLIJ.NE.0) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if(NLIST.eq.1) then
+      if(NLIST.eq.1) &
           write (IMP,109) MacroDefRate%vMeqStrainRate,Seq,                   &
                           (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M)
-      end if
 
  109  format ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
        '  SLIP RATES',/,(T2,10F10.5))
@@ -377,9 +348,7 @@
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 !      if (IGLIJ.NE.0) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-      if(NLIST.eq.1) then
-          write (IMP,305) ROT
-      end if
+      if(NLIST.eq.1) write (IMP,305) ROT
 
   305 format (' ROTATIONS',3F12.6)
 !      do 58 K=1,M
@@ -413,9 +382,7 @@
       end do
       if (X.LE.1.) goto 85
 #ifndef ALTAY_SUBROUTINE
-       if(NLIST.eq.1) then
-      write (IMP,107) X
-      end if
+      if(NLIST.eq.1) write (IMP,107) X
  107  format (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,              &
       '   SHOULD BE LESS THAN 1')
        call terminate(stopcode_runtimeerror)
@@ -423,9 +390,9 @@
       RCM_RAISE(1,'TAYLR1','Total volume fraction of twins exceeds unity',RCM_RTN)
 #endif
   85  call RANDOM_NUMBER(RNDM)
-      do 86 I=1,NTW
-      if (RNDM.LT.VOLFR(I)) goto 87
-  86  continue
+      do I=1,NTW
+        if (RNDM.LT.VOLFR(I)) goto 87
+      end do
       goto 31
   87  do 88 K=1,3
       do 89 J=1,3
@@ -451,7 +418,7 @@
       fi2=Euler%fi2 !   by common block /EULERA/
   31  if (nfile.eq.0.or.istp.gt.1) goto 61
 !
-      !“the ratio of the parallel strain rates”
+      ! the ratio of the parallel strain rates
       ! MacroDefRate%StrainMode & rhossa: expressed in same (sample) reference frame
       ratlon= sum( (MacroDefRate%StrainMode+sqrt(2.0D0/3.0D0)*rhossa) *  &
                     MacroDefRate%StrainMode                            )

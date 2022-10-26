@@ -182,22 +182,6 @@
       !
       end subroutine DYNFIL5
 
-      !> For IDIR=0:
-      !> To read RHOS from the temporary file in memory
-      !> For IDIR=1:
-      !> To write RHOS in the temporary file in memory
-      subroutine DYNFIL7(i,IDIR,RHOS)
-      integer,intent(in) :: i, IDIR
-      double precision :: RHOS(3,3)
-      !
-            if (IDIR.eq.0) then
-                  RHOS=DFIL(i)%tRHO
-            else
-                  DFIL(i)%tRHO=RHOS
-            endif
-      !
-      end subroutine DYNFIL7
-
       !> Set the computed fields in grain structure.
       !>
       !> The following fields are modified:

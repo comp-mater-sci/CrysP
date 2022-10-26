@@ -6,7 +6,14 @@
 
 # Intel compiler specific
 
-set(Fortran_FLAGS -cpp -ffree-line-length-none -I/home/m/intel/oneapi/mkl/2022.2.0/include)
+
+if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+	set(Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -extend-source 132")
+elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+	set(Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -ffree-line-length-none")
+else()
+    message(FATAL_ERROR "Compiler type(CMAKE_Fortran_COMPILER_ID) not recognized")
+endif()
 
 set(Fortran_FLAGS_DEBUG -g -O0 -check all -ftrapuv "-debug all" "-debug-parameters all" -traceback)
 
