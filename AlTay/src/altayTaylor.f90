@@ -71,7 +71,7 @@
       R=LEC         ! slip system file
 !
       ! Read name of slip system set
-      read (R,217) TITglij
+  507 read (R,217) TITglij
   217 format(A)
       if(NLIST.eq.1) then
             write (IMP,221) TITglij
@@ -274,6 +274,8 @@
       DIMENSION RCC(3,3),RCcryst(3,3),rhossaTot(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
       dimension RHOAsa(3,3),RHOAcrys(3,3),GAMdot(96)
+      real, dimension(3,3) :: test !!single precision!!
+!      data SQR2/0.7071067811865476D+00/
 #ifdef PEBP_ENABLED
       integer :: info
       double precision :: ddt
@@ -331,7 +333,7 @@
       !Calculate RCcryst: the rigid body spin in the crystal frame
       RCcryst = rotateSRTensorFrom(MacroDefRate%Spin,TRF)
       RHOAcrys = rotateSRTensorFrom(RHOAsa,TRF)
-        TRC(1)=RCcryst(3,2)+RHOAcrys(3,2)
+   71   TRC(1)=RCcryst(3,2)+RHOAcrys(3,2)
         TRC(2)=RCcryst(1,3)+RHOAcrys(1,3)
         TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
       WorkRate=0.0
@@ -353,7 +355,12 @@
           write (IMP,301) WorkRate
       end if
  301  format (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
-
+!      if(NLIST.eq.1) then
+!      do 302 I=1,M
+! 302  write (IMP,303) I,GAMdot(I)
+!      end if
+!
+ 303  format (1X,I5,(12F10.6))
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 !      if (IGLIJ.NE.0) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -365,6 +372,7 @@
  109  format ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
        '  SLIP RATES',/,(T2,10F10.5))
   90  continue
+  202 ROT = matmul(B1,GAMdot)
 
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 !      if (IGLIJ.NE.0) then
@@ -466,9 +474,9 @@
   26  write (IMP,106)
  106  format (1X,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBLEM')
 #ifndef ALTAY_SUBROUTINE
-      call terminate(stopcode_runtimeerror)
+  52  call terminate(stopcode_runtimeerror)
 #else
-      RCM_RAISE(1,'TAYLR1','No upper limit for linear programming problem',RCM_RTN)
+  52  RCM_RAISE(1,'TAYLR1','No upper limit for linear programming problem',RCM_RTN)
 #endif
       end subroutine
 
