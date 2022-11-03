@@ -81,9 +81,7 @@ def process_file(path):
             if isinstance(num, str) and pattern.match(num):
                 formatted = num.split('E')
                 if int(formatted[1]) > -9:
-                    val = int(formatted[0].replace('-','')[2:8])
-                    if val > 0:
-                        res.append(val)
+                    res.append(int(formatted[0].replace('-','')[2:8]))
     return res
 
 
@@ -112,8 +110,4 @@ def test_vef(mode, algorithm, slip_system, tmp_path, request):
         replace_reference(tmp_path, mode, algorithm, slip_system)
     else:
         (reference, result) = process_output(mode, algorithm, slip_system)
-        ratio_lens = len(reference) / len(result)
-        #Small deviations in length are possible because we rejecct very small numbers
-        assert ratio_lens > 0.95 and ratio_lens < 1.05
-        ratio_vals = (sum(reference) / len(reference)) / (sum(result) / len(result))
-        assert ratio_vals > 0.93 and ratio_vals < 1.07
+        assert reference == result

@@ -23,3 +23,4 @@ include_directories(${fopt_INCLUDE_DIR})
 
 add_subdirectory(alamDMC)
 add_subdirectory(libAlamDMC) 
+add_subdirectory(libAlamYLP)
