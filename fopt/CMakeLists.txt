@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 project(fopt Fortran)
 
@@ -7,6 +7,3 @@ set(COMMON_DIR "../cmake-common")
 include("${COMMON_DIR}/basic-fortran-project.cmake")
 
 add_subdirectory(src)
-
-add_subdirectory(src-test)
-

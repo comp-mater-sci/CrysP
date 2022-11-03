@@ -33,7 +33,7 @@
       type(DeformationState),intent(in),optional :: MacroDefState
       common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
       ITW,GEWF
-      common /IGLIJS/ M11,CC(2,96)      ! M11...total number of systems in slip system file (glide+twin),
+      common /IGLIJS/ CC(2,96), M11     ! M11...total number of systems in slip system file (glide+twin),
       common /TLR2/ RHOAsa
       common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
@@ -71,7 +71,7 @@
       R=LEC         ! slip system file
 !
       ! Read name of slip system set
-  507 read (R,217) TITglij
+      read (R,217) TITglij
   217 format(A)
       if(NLIST.eq.1) write (IMP,221) TITglij
   221 format (/,' Slip system set:',A,/)
@@ -227,7 +227,7 @@
       implicit double precision (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
       common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
-      common /IGLIJS/ M11,CC(2,96)
+      common /IGLIJS/ CC(2,96), M11
       common/TLR2/ RHOAsa
       common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       common /EULERA/ fi1,PHI,fi2
@@ -250,8 +250,6 @@
       DIMENSION RCC(3,3),RCcryst(3,3),rhossaTot(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
       dimension RHOAsa(3,3),RHOAcrys(3,3),GAMdot(96)
-      real, dimension(3,3) :: test !!single precision!!
-!      data SQR2/0.7071067811865476D+00/
 #ifdef PEBP_ENABLED
       integer :: info
       double precision :: ddt
@@ -307,7 +305,7 @@
       !Calculate RCcryst: the rigid body spin in the crystal frame
       RCcryst = rotateSRTensorFrom(MacroDefRate%Spin,TRF)
       RHOAcrys = rotateSRTensorFrom(RHOAsa,TRF)
-   71   TRC(1)=RCcryst(3,2)+RHOAcrys(3,2)
+        TRC(1)=RCcryst(3,2)+RHOAcrys(3,2)
         TRC(2)=RCcryst(1,3)+RHOAcrys(1,3)
         TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
       WorkRate=0.0
@@ -327,12 +325,7 @@
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) write (IMP,301) WorkRate
  301  format (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
-!      if(NLIST.eq.1) then
-!      do 302 I=1,M
-! 302  write (IMP,303) I,GAMdot(I)
-!      end if
-!
- 303  format (1X,I5,(12F10.6))
+
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 !      if (IGLIJ.NE.0) then
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
@@ -343,7 +336,6 @@
  109  format ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
        '  SLIP RATES',/,(T2,10F10.5))
   90  continue
-  202 ROT = matmul(B1,GAMdot)
 
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
 !      if (IGLIJ.NE.0) then
@@ -441,9 +433,9 @@
   26  write (IMP,106)
  106  format (1X,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBLEM')
 #ifndef ALTAY_SUBROUTINE
-  52  call terminate(stopcode_runtimeerror)
+      call terminate(stopcode_runtimeerror)
 #else
-  52  RCM_RAISE(1,'TAYLR1','No upper limit for linear programming problem',RCM_RTN)
+      RCM_RAISE(1,'TAYLR1','No upper limit for linear programming problem',RCM_RTN)
 #endif
       end subroutine
 

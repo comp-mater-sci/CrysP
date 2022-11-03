@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 project(AlTay Fortran)
 
@@ -10,7 +10,7 @@ set(libaltay "altay")
 if   (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
     set(LibAlTay_FLAGS "-extend-source 132")
 elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-    set(LibAlTay_FLAGS "-ffree-line-length-none")
+    set(LibAlTay_FLAGS "-ffree-line-length-0")
 else()
     message(FATAL_ERROR "Compiler type(CMAKE_Fortran_COMPILER_ID) not recognized")
 endif()

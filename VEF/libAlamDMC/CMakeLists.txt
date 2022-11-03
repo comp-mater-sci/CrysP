@@ -1,6 +1,6 @@
 # $Id$
 #
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 project(AlamDMC Fortran)
 
@@ -9,7 +9,7 @@ set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 if   (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
     set(libalamDMC_FLAGS "-DPEBP_ENABLED")
 elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-    set(libalamDMC_FLAGS "-DPEBP_ENABLED -ffree-line-length-none")
+    set(libalamDMC_FLAGS "-DPEBP_ENABLED -ffree-line-length-0")
 else()
     message(FATAL_ERROR "Compiler type(CMAKE_Fortran_COMPILER_ID) not recognized")
 endif()
@@ -40,10 +40,13 @@ stressDrivenModule.f90
 substeppingConfig.f90
 xVectorEvolutionOutputRecord.f90
 YLPResult.f90
+alamYLP.f90 
+alamEval.f90
+alamYLPConstants.f90
 )
 
 add_library(AlamDMC STATIC ${AlamDMC_SRCS})
-target_link_libraries(AlamDMC alamYLP CRI)
+target_link_libraries(AlamDMC CRI)
 
 # Include files located in the same directories as the sources
 # and this CMakeLists.txt

@@ -7,7 +7,6 @@ if ! [ $# -eq 0  ]; then
 	export FC=$1
 fi
 
-
 for LIB in FCRI fopt AlTay VEF;do
   cd $LIB
   rm -rf release debug

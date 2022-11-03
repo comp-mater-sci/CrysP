@@ -69,19 +69,6 @@ implicit none
             module procedure rotateSRTensorFrom_matrix, rotateSRTensorFrom_SRTensor
       end interface
 
-      !> \interface ocross_product Vector-Vector ocross product operator
-      !>
-      !> The result of m = ocross_product(u,v) is equivalent to:
-      !> \f$ \mathbf{m} = \mathbf{u}^T \mathbf{v} \f$  where \f$\mathbf{u}\f$ and \f$\mathbf{v}\f$  are vectors.
-      interface ocross_product
-            module procedure ocross_product_dp, ocross_product_int
-      end interface ocross_product
-
-      !> \interface vector_product Vector-Vector ovector product operator
-      interface vector_product
-            module procedure vector_product_dp
-      end interface vector_product
-
       !> Representation of Euler angles: Bunge notation
       type EulerAngles
             double precision  :: fi1 = 0.D0 !< \f$ \phi_1 \f$
@@ -173,90 +160,6 @@ contains
             ang%fi1 = arr(1)
             ang%phi = arr(2)
             ang%fi2 = arr(3)
-      !
-      end function
-
-
-
-#ifdef FLAWED_IFORT_OPT
-      !> Calculation of ocross_product for double precision real
-      !>
-      !> \implements ocross_product
-      pure function ocross_product_dp(a,b)
-      double precision,dimension(5),intent(in)        :: a,b
-      double precision,dimension(5,5)                 :: ocross_product_dp
-      !integer :: i
-      !forall (i = 1:5)
-      !       ocross_product_dp(i,:) = a(i) * b
-      !       !ocross_product_dp(i,i:) = a(i) * b(i:)
-      !       !ocross_product_dp(i:,i) = ocross_product_dp(i,i:)
-      !endforall
-      integer :: i
-      !
-            do i=1,size(a)
-                  !do j = 1, size(b)
-                  !      ocross_product_dp(i,j) = a(i) * b(j)
-                  !enddo
-                  ocross_product_dp(i,:) = a(i) * b(:)
-            enddo
-      !
-      end function
-
-      !> Calculation of ocross_product for integer (default kind)
-      !>
-      !> \implements ocross_product
-      pure function ocross_product_int(a,b)
-      integer,dimension(5),intent(in)                 :: a,b
-      integer,dimension(5,5)                          :: ocross_product_int
-      integer :: i
-      !
-            forall (i = 1:5)
-                  ocross_product_int(i,:) = a(i) * b
-            endforall
-      !
-      end function
-#else
-      ! buggy until ifort is updated
-      !> Calculation of ocross_product for double precision real
-      !>
-      !> \implements ocross_product
-      pure function ocross_product_dp(a,b)
-      double precision,dimension(:),intent(in)        :: a,b
-      double precision,dimension(size(a),size(b))     :: ocross_product_dp
-      integer :: i
-      !
-            forall (i = 1:size(a))
-                  ocross_product_dp(i,:) = a(i) * b
-            !      ! ocross_product_dp(i,i:) = a(i) * b(i:)
-            !      ! ocross_product_dp(i:,i) = ocross_product_dp(i,i:)
-            endforall
-      !
-      end function
-
-      !> Calculation of ocross_product for integer (default kind)
-      !>
-      !> \implements ocross_product
-      pure function ocross_product_int(a,b)
-      integer,dimension(:),intent(in)                 :: a,b
-      integer,dimension(size(a),size(b))              :: ocross_product_int
-      integer :: i
-      !
-            forall (i = 1:size(a))
-                  ocross_product_int(i,:) = a(i) * b
-            endforall
-      !
-      end function
-
-#endif
-
-      !> Calculation of the vector product of two double precision vectors with size 3.
-      pure function vector_product_dp(a,b)
-      double precision,dimension(3),intent(in)        :: a,b
-      double precision,dimension(3)                   :: vector_product_dp
-      !
-            vector_product_dp(1) = a(2)*b(3) - a(3)*b(2)
-            vector_product_dp(2) = a(3)*b(1) - a(1)*b(3)
-            vector_product_dp(3) = a(1)*b(2) - a(2)*b(1)
       !
       end function
 
