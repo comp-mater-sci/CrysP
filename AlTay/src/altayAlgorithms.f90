@@ -3,93 +3,94 @@
 #endif
 
 module altayAlgorithms
-        use altayMiscutils, only: terminate, stopcode_runtimeerror
-        use criMathUtils
-        
-        implicit none
+    use altayMiscutils, only: terminate, stopcode_runtimeerror
+    use criMathUtils
+    
+    implicit none
 
-        contains
-        
-        !> Updating of CIJ matrix of ellipsoid
-        !> Finv is the inverse of the F-tensor which describes the strain increment.
-        subroutine UPDATC(CIJ, Finv)
-                double precision, dimension(3,3), intent(in)   :: Finv
-                double precision, dimension(3,3), intent(inout)  :: CIJ
-                CIJ = matmul(matmul(transpose(Finv), CIJ), Finv)
-        end subroutine
-        
-        !> Transform a 5D-vector in deviatoric (stress/strain-rate) space to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
-        !> Note: The reverse transformation is done by function 'Vector5D'.
-        function SymMatrix(vec) result(sym)
-                double precision, dimension(5), intent(in) :: vec
-                double precision, dimension(3,3)           :: sym 
-                double precision, parameter                :: sq22 = sqrt(0.5d0),                     & 
-                                                              const3 = (sqrt(3.0d0) + 3.0d0) / 6.0d0, & 
-                                                              const4 = (3.0d0 - sqrt(3.0d0)) / 6.0d0  
-                
-                sym(2,2)=  const3 * vec(1) - const4 * vec(2)
-                sym(3,3) = -const4 * vec(1) + const3 * vec(2)
-                
-                sym(1,1) = -sym(2,2) - sym(3,3)
-                
-                sym(2,3) = sq22 * vec(3)
-                sym(3,1) = sq22 * vec(4)
-                sym(1,2) = sq22 * vec(5)
-                
-                sym(3,2) = sym(2,3)
-                sym(1,3) = sym(3,1)
-                sym(2,1) = sym(1,2)
-        end function SymMatrix
-        
-        !> Transform a (3,3)-matrix representation of a traceless 2nd rank tensor to 5D-vector representation in deviatoric (stress/strain-rate) space.
-        !> Notes:
-        !>    - Only the symmetric part of 2nd rank tensor is transformed.
-        !>    - The reverse transformation is done by function 'SymMatrix'.
-        function Vector5D(mat) result(vec)
-                double precision, dimension(3,3), intent(in) :: mat
-                double precision, dimension(5)               :: vec 
-                double precision, parameter                  :: c1 = 0.5d0 * (sqrt(3.0d0) + 1.0d0), &
-                                                                c2 = c1 - 1.0d0,                       & 
-                                                                c3 = sqrt(0.5d0)
-                
-                vec(1) = c1 * mat(2,2) + c2 * mat(3,3)
-                vec(2) = c2 * mat(2,2) + c1 * mat(3,3)
-                vec(3) = c3 * (mat(2,3) + mat(3,2))
-                vec(4) = c3 * (mat(3,1) + mat(1,3))
-                vec(5) = c3 * (mat(1,2) + mat(2,1))
-        end function Vector5D
-       
-        !Calculate the CIJ matrix of an ellipsoid with half axes stored in Gaxes. T defines the orientation of the axes.
-        !This version assumes that A is a diagonal matrix
-        Subroutine Transf(Gaxes, Aprime, T)
-                double precision, dimension(3), intent(in)      :: Gaxes 
-                double precision, dimension(3,3), intent(inout) :: Aprime 
-                double precision, dimension(3,3), intent(in)    :: T 
-                integer                                         :: i, j, k
-                double precision                                :: y
-                double precision, dimension(3)                  :: A
-                double precision, dimension(3,3)                :: X
+    double precision, parameter :: SQRT_P5 = sqrt(0.5d0)
 
-                A = 1.D0 / Gaxes ** 2
-                do j = 1,3
-                        X(:,j) = t(:,j) * A
+contains
+    
+    !> Updating of CIJ matrix of ellipsoid
+    !> Finv is the inverse of the F-tensor which describes the strain increment.
+    subroutine UPDATC(CIJ, Finv)
+        double precision, dimension(3,3), intent(in)   :: Finv
+        double precision, dimension(3,3), intent(inout)  :: CIJ
+        CIJ = matmul(matmul(transpose(Finv), CIJ), Finv)
+    end subroutine
+    
+    !> Transform a 5D-vector in deviatoric (stress/strain-rate) space to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
+    !> Note: The reverse transformation is done by function 'Vector5D'.
+    function SymMatrix(vec) result(sym)
+        double precision, dimension(5), intent(in) :: vec
+        double precision, dimension(3,3)           :: sym 
+        double precision, parameter                :: C1 = (sqrt(3.0d0) + 3.0d0) / 6.0d0, & 
+                                                      C2 = (3.0d0 - sqrt(3.0d0)) / 6.0d0  
+        
+        sym(2,2) =  C1 * vec(1) - C2 * vec(2)
+        sym(3,3) = -C2 * vec(1) + C1 * vec(2)
+        
+        sym(1,1) = -sym(2,2) - sym(3,3)
+        
+        sym(2,3) = SQRT_P5 * vec(3)
+        sym(3,1) = SQRT_P5 * vec(4)
+        sym(1,2) = SQRT_P5 * vec(5)
+        
+        sym(3,2) = sym(2,3)
+        sym(1,3) = sym(3,1)
+        sym(2,1) = sym(1,2)
+    end function SymMatrix
+    
+    !> Transform a (3,3)-matrix representation of a traceless 2nd rank tensor to 5D-vector representation in deviatoric (stress/strain-rate) space.
+    !> Notes:
+    !>    - Only the symmetric part of 2nd rank tensor is transformed.
+    !>    - The reverse transformation is done by function 'SymMatrix'.
+    function Vector5D(mat) result(vec)
+        double precision, dimension(3,3), intent(in) :: mat
+        double precision, dimension(5)               :: vec 
+        double precision, parameter                  :: C1 = 0.5d0 * (sqrt(3.0d0) + 1.0d0), &
+                                                        C2 = C1 - 1.0d0
+        
+        vec(1) = C1 * mat(2,2) + C2 * mat(3,3)
+        vec(2) = C2 * mat(2,2) + C1 * mat(3,3)
+        vec(3) = SQRT_P5 * (mat(2,3) + mat(3,2))
+        vec(4) = SQRT_P5 * (mat(3,1) + mat(1,3))
+        vec(5) = SQRT_P5 * (mat(1,2) + mat(2,1))
+    end function Vector5D
+   
+    !Calculate the CIJ matrix of an ellipsoid with half axes stored in Gaxes. T defines the orientation of the axes.
+    !This version assumes that A is a diagonal matrix
+    Subroutine Transf(Gaxes, Aprime, T)
+        double precision, dimension(3), intent(in)      :: Gaxes 
+        double precision, dimension(3,3), intent(inout) :: Aprime 
+        double precision, dimension(3,3), intent(in)    :: T 
+        integer                                         :: i, j, k
+        double precision                                :: y
+        double precision, dimension(3)                  :: A
+        double precision, dimension(3,3)                :: X
+
+        A = 1.D0 / Gaxes ** 2
+
+        do j = 1,3
+            X(:,j) = t(:,j) * A
+        end do
+
+        do i = 1, 3
+            do j = 1, 3
+                y = 0.0
+                do k = 1,3
+                    y = y + T(k,i) * X(k,j)
                 end do
-
-                do i = 1, 3
-                        do j = 1, 3
-                                y = 0.0
-                                do k = 1,3
-                                        y = y + T(k,i) * X(k,j)
-                                end do
-                                Aprime(i, j) = y
-                        end do
-                end do
-        end subroutine
-      
-        !find half-lengths of ellipsoid axes from CIJ matrix
-        !store them in prval
-        !find Euler angles of these axes, store in GEULR
-        Subroutine GETANG(CIJ, prval, GEULR, TMAT)
+                Aprime(i, j) = y
+            end do
+        end do
+    end subroutine
+  
+    !find half-lengths of ellipsoid axes from CIJ matrix
+    !store them in prval
+    !find Euler angles of these axes, store in GEULR
+    Subroutine GETANG(CIJ, prval, GEULR, TMAT)
 #ifdef ALTAY_SUBROUTINE
                 use altayRCM
 #endif
@@ -104,7 +105,7 @@ module altayAlgorithms
 
                 CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3.D0
                 e = CIJ
-                do i=1, 3
+                do i = 1, 3
                         e(i,i) = e(i,i) - CIJTR
                 end do
 
