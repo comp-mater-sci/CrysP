@@ -27,15 +27,6 @@ else
 fi
 done
 
-
-
-if [ $# -eq 1 ]; then
-    TRACE="1"
-elif [ $# -eq 2 ]; then
-    export FC="$1"
-    TRACE="$2"
-fi
-
 for LIB in FCRI fopt AlTay VEF;do
   cd $LIB
   rm -rf release debug
