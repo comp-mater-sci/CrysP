@@ -166,7 +166,6 @@ contains
 
         character(len=6), parameter :: ROUTINE_NAME = 'eigenv'
 
-        call vef_trace(MODULE_NAME, ROUTINE_NAME, 'In function')
 
         a=0.0
         do i = 1,3
@@ -286,6 +285,7 @@ contains
             prdir(3,1) = prdir(1,2) * prdir(2,3) - prdir(2,2) * prdir(1,3)
             call normaliz(prdir(1,1), xx)
         end if
+        call vef_trace_dbl_arr(MODULE_NAME, ROUTINE_NAME, prval)
     end subroutine
  
     !>Principal values of symmetric tensor with zero trace
