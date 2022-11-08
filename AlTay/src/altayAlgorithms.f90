@@ -6,12 +6,13 @@ module altayAlgorithms
     use altayMiscutils, only: terminate, stopcode_runtimeerror
     use criMathUtils
     use altayRCM
-    use trace
+    use tracing
     
     implicit none
 
     double precision, parameter :: SQRT_P5 = sqrt(0.5d0)
     double precision, parameter :: RESOLUTION = 0.5e-5
+    character(len=15), parameter :: MODULE_NAME = "altayAlgorithms"
 
     private  
     public  :: deg2rad,             &
@@ -163,6 +164,10 @@ contains
         double precision, dimension(3)                  :: x
         double precision, dimension(3,3)                :: y
 
+        character(len=6), parameter :: ROUTINE_NAME = 'eigenv'
+
+        call vef_trace(MODULE_NAME, ROUTINE_NAME, 'In function')
+
         a=0.0
         do i = 1,3
             do j = 1,3
@@ -281,9 +286,6 @@ contains
             prdir(3,1) = prdir(1,2) * prdir(2,3) - prdir(2,2) * prdir(1,3)
             call normaliz(prdir(1,1), xx)
         end if
-          do i=1,3
-                write (*,*) prval(i)
-            end do
     end subroutine
  
     !>Principal values of symmetric tensor with zero trace

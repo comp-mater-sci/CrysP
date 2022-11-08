@@ -1,19 +1,17 @@
-module trace
+module tracing
     implicit none
     
     private
-    public  :: trace    
+    public  :: vef_trace    
 
 
 
 contains
 
-    subroutine trace(message)
-#ifndef NDEBUG
-        character(len=*), intent(in)    :: message
-
-        print *, "TRACE: ", message 
+    subroutine vef_trace(caller_module, caller_routine, message)
+        character(len=*), intent(in)    :: caller_module, caller_routine, message
+#ifdef TRACE
+        print *, 'TRACE ', caller_module, ', ', caller_routine, ': ', message 
 #endif
     end subroutine
-
 end module

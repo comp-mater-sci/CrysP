@@ -7,3 +7,7 @@ if(NOT CMAKE_BUILD_TYPE)
 	message(STATUS "Assuming Release configuration")
 endif(NOT CMAKE_BUILD_TYPE)
 
+if(TRACE)
+    add_definitions(-DTRACE)
+endif(TRACE)
+
