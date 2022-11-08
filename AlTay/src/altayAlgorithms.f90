@@ -5,10 +5,23 @@
 module altayAlgorithms
     use altayMiscutils, only: terminate, stopcode_runtimeerror
     use criMathUtils
+    use altayRCM
     
     implicit none
 
     double precision, parameter :: SQRT_P5 = sqrt(0.5d0)
+    double precision, parameter :: RESOLUTION = 0.5e-5
+
+    private  
+    public  :: deg2rad,             &
+               rotmat,              &
+               rotateSRTensorFrom,  &
+               KleinKwa,            &
+               UPDATC,              &
+               GETANG,              &
+               Vector5D,            &
+               SymMatrix,           &
+               Transf
 
 contains
     
@@ -91,51 +104,193 @@ contains
     !store them in prval
     !find Euler angles of these axes, store in GEULR
     Subroutine GETANG(CIJ, prval, GEULR, TMAT)
-#ifdef ALTAY_SUBROUTINE
-                use altayRCM
-#endif
-                double precision, dimension(3,3), intent(in)    :: CIJ
-                double precision, dimension(3), intent(inout)   :: GEULR, prval
-                double precision, dimension(3,3), intent(inout) :: TMAT
-                integer                                         :: i
-                double precision                                :: CIJTR, enrm 
-                double precision, dimension(3,3)                :: prdir, e
-                logical                                         :: axisym
-                type(EulerAngles)                               :: CEuler
+        
+        double precision, dimension(3,3), intent(in)    :: CIJ
+        double precision, dimension(3), intent(inout)   :: GEULR, prval
+        double precision, dimension(3,3), intent(inout) :: TMAT
+        integer                                         :: i
+        double precision                                :: CIJTR, enrm 
+        double precision, dimension(3,3)                :: prdir, e
+        logical                                         :: axisym
+        type(EulerAngles)                               :: CEuler
 
-                CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3.D0
-                e = CIJ
-                do i = 1, 3
-                        e(i,i) = e(i,i) - CIJTR
+        CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3.D0
+        e = CIJ
+        do i = 1, 3
+            e(i,i) = e(i,i) - CIJTR
+        end do
+
+        call eigenv(e, prval, prdir, enrm, axisym)
+        
+        RCM_GUARD
+      
+        prval = prval + CIJTR
+
+        if (prval(1) > prval(2)) call verwis(2, 1, prval, prdir)
+        if (prval(2) > prval(3)) call verwis(3, 2, prval, prdir)
+        if (prval(1) > prval(2)) call verwis(1, 2, prval, prdir)
+        prval = 1.D0 / sqrt(prval)
+        TMAT = prdir
+        CEuler = EuleranglesType(TMAT)
+        GEULR = EulerAngles2Arr(CEuler)
+    end subroutine
+
+
+    !>Utility function to simplify incrementing some value which may roll over
+    !>@param val The value to be incremented.
+    !>@param inc The amount to increment val by.
+    !>@param modulus the value at which to roll over to 0.
+    !>@return The incremented value.
+    function increment(val, inc, modulus) result(res)
+        integer, intent(in) :: val, inc, modulus
+        integer             :: res
+
+        res = mod(val + inc, modulus)
+    end function
+    
+    !>Principal values of symmetric tensor with zero trace
+    !>The eigenvectors are normalized.
+    !>prval contains the principal values
+    Subroutine eigenv(e, prval, prdir, enrm, axisym)
+        double precision, dimension(3,3), intent(in)    :: e
+        logical, intent(inout)                          :: axisym
+        double precision, dimension(3,3), intent(inout) :: prdir
+        double precision, intent(out)                   :: enrm
+        double precision, dimension(3), intent(out)     :: prval
+        integer                                         :: i, i1, i2, j, imax, jmax, kmax, ipr, j1, j2, min_ipr
+        double precision                                :: xx, a, b, theta, pi, pmax, eta, pp
+        double precision, dimension(3)                  :: x
+        double precision, dimension(3,3)                :: y
+
+        a=0.0
+        do i = 1,3
+            do j = 1,3
+                if (abs(e(i,j) - e(j,i)) > RESOLUTION) then
+                    RCM_RAISE(1,'eigenv','The input tensor is not symmetric', RCM_RTN)
+                end if
+                a = a + e(i,j)**2
+            end do
+        end do
+
+        enrm = sqrt(a)
+        if (enrm < RESOLUTION) then
+            do i = 1,3
+                prval(i) = 0.0
+                do j = 1,3
+                    prdir(i,j) = 0.0
+                end do
+                prdir(i,i) = 1.D0
+            end do
+        else 
+            a = a / 2
+            b = e(1,1) * e(2,3)**2 + e(2,2) * e(3,1)**2 + e(3,3) * e(1,2)**2 - 2 * e(1,2) * e(2,3) * e(3,1) - e(1,1) * e(2,2) * e(3,3)
+            call canoni(a, b, x, theta, pi)
+      
+            RCM_GUARD
+            
+            pmax = abs(x(1))
+            imax = 1
+            do i = 2,3
+                if (abs(x(i)) > pmax) then
+                    pmax = abs(x(i))
+                    imax = i
+                end if
+            end do
+
+            prval(3) = x(imax)
+            jmax = mod(imax + 1, 3)
+            prval(1) = x(jmax)
+            kmax = 6 - imax - jmax
+            prval(2) = x(kmax)
+
+            eta = (theta + (imax - 1) * 2 * pi) / 3.D0
+            if (eta > pi) eta = eta - 2 * pi
+
+            !Correction on the order of the eigenvalues
+            if (abs(prval(2)) >= abs(prval(1))) then
+                xx = prval(2)
+                prval(2) = prval(1)
+                prval(1) = xx
+            end if
+            
+            axisym = abs(prval(2) - prval(1)) < RESOLUTION
+            if (axisym) then
+                prval(1) = 0.5 * (prval(1) + prval(2))
+                prval(2) = prval(1)
+                min_ipr = 3
+            else
+                min_ipr = 2
+            end if
+
+            y = e
+            do ipr = 3,min_ipr,-1
+                do i = 1,3
+                    y(i,i) = y(i,i) - prval(ipr)
+                end do
+                pmax = 0.0
+                pp = 0.0
+                imax = 0
+                jmax = 0
+                do i = 1,3
+                    i1 = increment(i, 1, 3)
+                    i2 = increment(i, 2, 3)
+                    do j = 1,3
+                        j1 = increment(j, 1, 3)
+                        j2 = increment(j, 2, 3)
+                        xx = y(i1,j1) * y(i2,j2) - y(i1,j2) * y(i2,j1)
+                        if (pmax <= abs(xx)) then 
+                            pmax = abs(xx)
+                            pp = xx
+                            imax = i
+                            jmax = j
+                        end if 
+                    end do
                 end do
 
-                call eigenv(e, prval, prdir, enrm, axisym)
-                
-#ifdef ALTAY_SUBROUTINE
-                RCM_GUARD
-#endif
-      
-                prval = prval + CIJTR
+                ! the minor with the max. value has been identified
+                i1 = increment(imax, 1, 3)
+                i2 = increment(imax, 2, 3)
+                j1 = increment(jmax, 1, 3)
+                j2 = increment(jmax, 2, 3)
+                prdir(jmax, ipr) = 1.D0
+                pmax = -(y(i1,jmax) * y(i2,j2) - y(i2,jmax) * y(i1,j2))
+                prdir(j1, ipr) = pmax / pp
+                pmax = -(y(i1,j1) * y(i2,jmax) - y(i2,j1) * y(i1,jmax))
+                prdir(j2, ipr) = pmax / pp
+                call normaliz(prdir(1,ipr), xx)
+            end do
+            
+            if (axisym) then
+                !Vectorial product between prdir(,3) and x3 axis
+                prdir(1,2) = -prdir(2,3)
+                prdir(2,2) = prdir(1,3)
+                prdir(3,2) = 0.0
+                call normaliz(prdir(1,2), xx)
+                if (xx <= 0.7) then
+                    !Vectorial product between prdir(,3) and x2 axis
+                    prdir(1,2) = prdir(3,3)
+                    prdir(2,2) = 0.0
+                    prdir(3,2) = -prdir(1,3)
+                    call normaliz(prdir(1,2), xx)
+                end if 
+            end if
 
-                if (prval(1) > prval(2)) call verwis(2, 1, prval, prdir)
-                if (prval(2) > prval(3)) call verwis(3, 2, prval, prdir)
-                if (prval(1) > prval(2)) call verwis(1, 2, prval, prdir)
-                prval = 1.D0 / sqrt(prval)
-                TMAT = prdir
-                CEuler = EuleranglesType(TMAT)
-                GEULR = EulerAngles2Arr(CEuler)
-        end subroutine
-      
-        Subroutine eigenv(e, prval, prdir, enrm, axisym)
-#ifdef ALTAY_SUBROUTINE
-                use altayRCM
-#endif
-                IMPLICIT double precision (A-H,O-Z)
-                integer :: i, i1, i2, j, imax, jmax, kmax, ipr, j1, j2
-!     Principal values of symmetric tensor with zero trace
-!     The eigenvectors are normalized.
-!     prval contains the principal values
-!
+            prdir(1,1) = prdir(2,2) * prdir(3,3) - prdir(3,2) * prdir(2,3)
+            prdir(2,1) = prdir(3,2) * prdir(1,3) - prdir(1,2) * prdir(3,3)
+            prdir(3,1) = prdir(1,2) * prdir(2,3) - prdir(2,2) * prdir(1,3)
+            call normaliz(prdir(1,1), xx)
+        end if
+          do i=1,3
+                write (*,*) prval(i)
+            end do
+    end subroutine
+ 
+    !>Principal values of symmetric tensor with zero trace
+    !>The eigenvectors are normalized.
+    !>prval contains the principal values
+    Subroutine eigenv2(e, prval, prdir, enrm, axisym)
+        IMPLICIT double precision (A-H,O-Z)
+        integer :: i, i1, i2, j, imax, jmax, kmax, ipr, j1, j2
       dimension e(3,3),x(3),prval(3), y(3,3),prdir(3,3)
       logical axisym,eerste
       SAVE
@@ -148,17 +303,7 @@ contains
       do 6 j=1,3
       xx=abs(e(i,j)-e(j,i))
       if (xx.lt.0.5e-5) goto 7
-#ifndef ALTAY_SUBROUTINE
-      write (*,104)
-  104 format (' Eigenv  - the input tensor is not symmetric')
-      do 50 ii=1,3
-      write (*,110) (e(ii,jj),jj=1,3)
-  110 format (3f16.8)
-   50 continue
-      call terminate(stopcode_runtimeerror)
-#else
       RCM_RAISE(1,'eigenv','The input tensor is not symmetric',RCM_RTN)
-#endif
 
     7 a=a+e(i,j)**2
     6 continue
@@ -169,9 +314,8 @@ contains
       b=e(1,1)*e(2,3)**2+e(2,2)*e(3,1)**2+e(3,3)*e(1,2)**2-              &
        2.D0*e(1,2)*e(2,3)*e(3,1)-e(1,1)*e(2,2)*e(3,3)
       call canoni(a,b,x,theta,pi)
-#ifdef ALTAY_SUBROUTINE
-      RCM_GUARD
-#endif
+      
+    RCM_GUARD
       pmax=abs(x(1))
       imax=1
       do 10 i=2,3
@@ -294,9 +438,6 @@ contains
       end subroutine
       !
       subroutine canoni(a,b,X,theta,pi)
-#ifdef ALTAY_SUBROUTINE
-      use altayRCM
-#endif
       IMPLICIT double precision (A-H,O-Z)
 !
 !     should find the roots of an equation
@@ -311,13 +452,7 @@ contains
       delta=0.5D0*b/roota
       if (abs(delta).lt.(1.0d0+1.0d-6)) goto 1
     2 continue
-#ifndef ALTAY_SUBROUTINE
-      write (*,100)
-  100 format(' Subroutine CANONI - 2 Roots seem to be complex')
-      call terminate(stopcode_runtimeerror)
-#else
       RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
-#endif
     1 if (delta.gt.1.0) delta=1.D0
       if (delta.lt.-1.0) delta=-1.D0
       theta=acos(delta)

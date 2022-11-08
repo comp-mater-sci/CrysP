@@ -5,6 +5,8 @@ BUILD_TYPE=release
 
 if ! [ $# -eq 0  ]; then
 	export FC=$1
+else 
+    export FC="ifort"
 fi
 
 for LIB in FCRI fopt AlTay VEF;do
