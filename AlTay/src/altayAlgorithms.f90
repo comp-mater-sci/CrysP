@@ -6,6 +6,7 @@ module altayAlgorithms
     use altayMiscutils, only: terminate, stopcode_runtimeerror
     use criMathUtils
     use altayRCM
+    use trace
     
     implicit none
 

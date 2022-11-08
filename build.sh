@@ -1,12 +1,14 @@
 #! /usr/bin/env sh
 
-BUILD_TYPE=release
 
+export FC="ifort"
+BUILD_TYPE="release"
 
-if ! [ $# -eq 0  ]; then
-	export FC=$1
-else 
-    export FC="ifort"
+if [ $# -eq 1 ]; then
+    BUILD_TYPE="$1"
+elif [ $# -eq 2 ]; then
+    export FC="$1"
+    BUILD_TYPE="$2"
 fi
 
 for LIB in FCRI fopt AlTay VEF;do
@@ -14,7 +16,7 @@ for LIB in FCRI fopt AlTay VEF;do
   rm -rf release debug
   mkdir -p $BUILD_TYPE/build
   cd $BUILD_TYPE/build
-  cmake ../..  -DCMAKE_BUILD_TYPE=release
+  cmake ../..  -DCMAKE_BUILD_TYPE=$BUILD_TYPE
   make install
   cd ../../..
 done
