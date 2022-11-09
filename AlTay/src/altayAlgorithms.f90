@@ -153,7 +153,7 @@ contains
     !>Principal values of symmetric tensor with zero trace
     !>The eigenvectors are normalized.
     !>prval contains the principal values
-    Subroutine eigenv(e, prval, prdir, enrm, axisym)
+    Subroutine eigenv2(e, prval, prdir, enrm, axisym)
         double precision, dimension(3,3), intent(in)    :: e
         logical, intent(inout)                          :: axisym
         double precision, dimension(3,3), intent(inout) :: prdir
@@ -291,7 +291,7 @@ contains
     !>Principal values of symmetric tensor with zero trace
     !>The eigenvectors are normalized.
     !>prval contains the principal values
-    Subroutine eigenv2(e, prval, prdir, enrm, axisym)
+    Subroutine eigenv(e, prval, prdir, enrm, axisym)
         IMPLICIT double precision (A-H,O-Z)
         integer :: i, i1, i2, j, imax, jmax, kmax, ipr, j1, j2
       dimension e(3,3),x(3),prval(3), y(3,3),prdir(3,3)
