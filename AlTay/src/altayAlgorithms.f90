@@ -153,7 +153,7 @@ contains
     !>Principal values of symmetric tensor with zero trace
     !>The eigenvectors are normalized.
     !>prval contains the principal values
-    Subroutine eigenv2(e, prval, prdir, enrm, axisym)
+    Subroutine eigenv(e, prval, prdir, enrm, axisym)
         double precision, dimension(3,3), intent(in)    :: e
         logical, intent(inout)                          :: axisym
         double precision, dimension(3,3), intent(inout) :: prdir
@@ -291,11 +291,12 @@ contains
     !>Principal values of symmetric tensor with zero trace
     !>The eigenvectors are normalized.
     !>prval contains the principal values
-    Subroutine eigenv(e, prval, prdir, enrm, axisym)
+    Subroutine eigenv2(e, prval, prdir, enrm, axisym)
         IMPLICIT double precision (A-H,O-Z)
         integer :: i, i1, i2, j, imax, jmax, kmax, ipr, j1, j2
       dimension e(3,3),x(3),prval(3), y(3,3),prdir(3,3)
       logical axisym,eerste
+        character(len=6), parameter :: ROUTINE_NAME = 'eigenv'
       SAVE
       a=0.0
       do i=1,3
@@ -411,7 +412,9 @@ contains
       prdir(2,1)=prdir(3,2)*prdir(1,3)-prdir(1,2)*prdir(3,3)
       prdir(3,1)=prdir(1,2)*prdir(2,3)-prdir(2,2)*prdir(1,3)
       call normaliz(prdir(1,1),xx)
-   21 return
+
+   21 call vef_trace_dbl_arr(MODULE_NAME, ROUTINE_NAME, prval)
+      return
    33 do i=1,3
         prval(i)=0.0
         do j=1,3
