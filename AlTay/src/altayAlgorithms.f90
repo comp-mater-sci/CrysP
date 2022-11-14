@@ -3,282 +3,292 @@
 #endif
 
 module altayAlgorithms
-        use altayMiscutils, only: terminate, stopcode_runtimeerror
-        use criMathUtils
-        use tracing
-        
-        implicit none
+    use altayMiscutils, only: terminate, stopcode_runtimeerror
+    use criMathUtils
+    use altayRCM
+    use tracing
+    
+    implicit none
 
-        character(len=*), parameter :: MODULE_NAME = 'altayAlgorithms'
+    double precision, parameter :: SQRT_P5 = sqrt(0.5d0)
+    double precision, parameter :: RESOLUTION = 0.5e-5
+    character(len=15), parameter :: MODULE_NAME = "altayAlgorithms"
 
-        contains
-        
-        !> Updating of CIJ matrix of ellipsoid
-        !> Finv is the inverse of the F-tensor which describes the strain increment.
-        subroutine UPDATC(CIJ, Finv)
-                double precision, dimension(3,3), intent(in)   :: Finv
-                double precision, dimension(3,3), intent(inout)  :: CIJ
-                CIJ = matmul(matmul(transpose(Finv), CIJ), Finv)
-        end subroutine
-        
-        !> Transform a 5D-vector in deviatoric (stress/strain-rate) space to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
-        !> Note: The reverse transformation is done by function 'Vector5D'.
-        function SymMatrix(vec) result(sym)
-                double precision, dimension(5), intent(in) :: vec
-                double precision, dimension(3,3)           :: sym 
-                double precision, parameter                :: sq22 = sqrt(0.5d0),                     & 
-                                                              const3 = (sqrt(3.0d0) + 3.0d0) / 6.0d0, & 
-                                                              const4 = (3.0d0 - sqrt(3.0d0)) / 6.0d0  
-                
-                sym(2,2)=  const3 * vec(1) - const4 * vec(2)
-                sym(3,3) = -const4 * vec(1) + const3 * vec(2)
-                
-                sym(1,1) = -sym(2,2) - sym(3,3)
-                
-                sym(2,3) = sq22 * vec(3)
-                sym(3,1) = sq22 * vec(4)
-                sym(1,2) = sq22 * vec(5)
-                
-                sym(3,2) = sym(2,3)
-                sym(1,3) = sym(3,1)
-                sym(2,1) = sym(1,2)
-        end function SymMatrix
-        
-        !> Transform a (3,3)-matrix representation of a traceless 2nd rank tensor to 5D-vector representation in deviatoric (stress/strain-rate) space.
-        !> Notes:
-        !>    - Only the symmetric part of 2nd rank tensor is transformed.
-        !>    - The reverse transformation is done by function 'SymMatrix'.
-        function Vector5D(mat) result(vec)
-                double precision, dimension(3,3), intent(in) :: mat
-                double precision, dimension(5)               :: vec 
-                double precision, parameter                  :: c1 = 0.5d0 * (sqrt(3.0d0) + 1.0d0), &
-                                                                c2 = c1 - 1.0d0,                       & 
-                                                                c3 = sqrt(0.5d0)
-                
-                vec(1) = c1 * mat(2,2) + c2 * mat(3,3)
-                vec(2) = c2 * mat(2,2) + c1 * mat(3,3)
-                vec(3) = c3 * (mat(2,3) + mat(3,2))
-                vec(4) = c3 * (mat(3,1) + mat(1,3))
-                vec(5) = c3 * (mat(1,2) + mat(2,1))
-        end function Vector5D
-       
-        !Calculate the CIJ matrix of an ellipsoid with half axes stored in Gaxes. T defines the orientation of the axes.
-        !This version assumes that A is a diagonal matrix
-        Subroutine Transf(Gaxes, Aprime, T)
-                double precision, dimension(3), intent(in)      :: Gaxes 
-                double precision, dimension(3,3), intent(inout) :: Aprime 
-                double precision, dimension(3,3), intent(in)    :: T 
-                integer                                         :: i, j, k
-                double precision                                :: y
-                double precision, dimension(3)                  :: A
-                double precision, dimension(3,3)                :: X
+    private  
+    public  :: deg2rad,             &
+               rotmat,              &
+               rotateSRTensorFrom,  &
+               KleinKwa,            &
+               UPDATC,              &
+               GETANG,              &
+               Vector5D,            &
+               SymMatrix,           &
+               Transf
 
-                A = 1.D0 / Gaxes ** 2
+contains
+    
+    !> Updating of CIJ matrix of ellipsoid
+    !> Finv is the inverse of the F-tensor which describes the strain increment.
+    subroutine UPDATC(CIJ, Finv)
+        double precision, dimension(3,3), intent(in)   :: Finv
+        double precision, dimension(3,3), intent(inout)  :: CIJ
+        CIJ = matmul(matmul(transpose(Finv), CIJ), Finv)
+    end subroutine
+    
+    !> Transform a 5D-vector in deviatoric (stress/strain-rate) space to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
+    !> Note: The reverse transformation is done by function 'Vector5D'.
+    function SymMatrix(vec) result(sym)
+        double precision, dimension(5), intent(in) :: vec
+        double precision, dimension(3,3)           :: sym 
+        double precision, parameter                :: C1 = (sqrt(3.0d0) + 3.0d0) / 6.0d0, & 
+                                                      C2 = (3.0d0 - sqrt(3.0d0)) / 6.0d0  
+        
+        sym(2,2) =  C1 * vec(1) - C2 * vec(2)
+        sym(3,3) = -C2 * vec(1) + C1 * vec(2)
+        
+        sym(1,1) = -sym(2,2) - sym(3,3)
+        
+        sym(2,3) = SQRT_P5 * vec(3)
+        sym(3,1) = SQRT_P5 * vec(4)
+        sym(1,2) = SQRT_P5 * vec(5)
+        
+        sym(3,2) = sym(2,3)
+        sym(1,3) = sym(3,1)
+        sym(2,1) = sym(1,2)
+    end function SymMatrix
+    
+    !> Transform a (3,3)-matrix representation of a traceless 2nd rank tensor to 5D-vector representation in deviatoric (stress/strain-rate) space.
+    !> Notes:
+    !>    - Only the symmetric part of 2nd rank tensor is transformed.
+    !>    - The reverse transformation is done by function 'SymMatrix'.
+    function Vector5D(mat) result(vec)
+        double precision, dimension(3,3), intent(in) :: mat
+        double precision, dimension(5)               :: vec 
+        double precision, parameter                  :: C1 = 0.5d0 * (sqrt(3.0d0) + 1.0d0), &
+                                                        C2 = C1 - 1.0d0
+        
+        vec(1) = C1 * mat(2,2) + C2 * mat(3,3)
+        vec(2) = C2 * mat(2,2) + C1 * mat(3,3)
+        vec(3) = SQRT_P5 * (mat(2,3) + mat(3,2))
+        vec(4) = SQRT_P5 * (mat(3,1) + mat(1,3))
+        vec(5) = SQRT_P5 * (mat(1,2) + mat(2,1))
+    end function Vector5D
+   
+    !Calculate the CIJ matrix of an ellipsoid with half axes stored in Gaxes. T defines the orientation of the axes.
+    !This version assumes that A is a diagonal matrix
+    Subroutine Transf(Gaxes, Aprime, T)
+        double precision, dimension(3), intent(in)      :: Gaxes 
+        double precision, dimension(3,3), intent(inout) :: Aprime 
+        double precision, dimension(3,3), intent(in)    :: T 
+        integer                                         :: i, j, k
+        double precision                                :: y
+        double precision, dimension(3)                  :: A
+        double precision, dimension(3,3)                :: X
+
+        A = 1.D0 / Gaxes ** 2
+
+        do j = 1,3
+            X(:,j) = t(:,j) * A
+        end do
+
+        do i = 1, 3
+            do j = 1, 3
+                y = 0.0
+                do k = 1,3
+                    y = y + T(k,i) * X(k,j)
+                end do
+                Aprime(i, j) = y
+            end do
+        end do
+    end subroutine
+  
+    !find half-lengths of ellipsoid axes from CIJ matrix
+    !store them in prval
+    !find Euler angles of these axes, store in GEULR
+    Subroutine GETANG(CIJ, prval, GEULR, TMAT)
+        
+        double precision, dimension(3,3), intent(in)    :: CIJ
+        double precision, dimension(3), intent(inout)   :: GEULR, prval
+        double precision, dimension(3,3), intent(inout) :: TMAT
+        integer                                         :: i
+        double precision                                :: CIJTR, enrm 
+        double precision, dimension(3,3)                :: prdir, e
+        logical                                         :: axisym
+        type(EulerAngles)                               :: CEuler
+
+        CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3.D0
+        e = CIJ
+        do i = 1, 3
+            e(i,i) = e(i,i) - CIJTR
+        end do
+
+        call eigenv(e, prval, prdir, enrm, axisym)
+        
+        RCM_GUARD
+      
+        prval = prval + CIJTR
+
+        if (prval(1) > prval(2)) call verwis(2, 1, prval, prdir)
+        if (prval(2) > prval(3)) call verwis(3, 2, prval, prdir)
+        if (prval(1) > prval(2)) call verwis(1, 2, prval, prdir)
+        prval = 1.D0 / sqrt(prval)
+        TMAT = prdir
+        CEuler = EuleranglesType(TMAT)
+        GEULR = EulerAngles2Arr(CEuler)
+    end subroutine
+
+
+    !>Utility function to simplify incrementing some value which may roll over at 3
+    !>@param val The value to be incremented.
+    !>@return The incremented value.
+    function inc_max_3(val) result(res)
+        integer, intent(in) :: val
+        integer             :: res
+            
+        res = val + 1
+        if (res > 3) then
+            res = 1
+        end if
+    end function
+    
+    !>Principal values of symmetric tensor with zero trace
+    !>The eigenvectors are normalized.
+    !>prval contains the principal values
+    Subroutine eigenv(e, prval, prdir, enrm, axisym)
+        double precision, dimension(3,3), intent(in)    :: e
+        logical, intent(out)                          :: axisym
+        double precision, dimension(3,3), intent(inout) :: prdir
+        double precision, intent(out)                   :: enrm
+        double precision, dimension(3), intent(out)     :: prval
+        integer                                         :: i, i1, i2, j, imax, jmax, kmax, ipr, j1, j2, min_ipr
+        double precision                                :: xx, a, b, theta, pmax, eta, pp
+        double precision, dimension(3)                  :: x
+        double precision, dimension(3,3)                :: y
+
+        character(len=6), parameter :: ROUTINE_NAME = 'eigenv'
+
+        a=0.0
+        do i = 1,3
+            do j = 1,3
+                if (abs(e(i,j) - e(j,i)) > RESOLUTION) then
+                    RCM_RAISE(1,'eigenv','The input tensor is not symmetric', RCM_RTN)
+                end if
+                a = a + e(i,j)**2
+            end do
+        end do
+
+        enrm = sqrt(a)
+        if (enrm < RESOLUTION) then
+            do i = 1,3
+                prval(i) = 0.0
                 do j = 1,3
-                        X(:,j) = t(:,j) * A
+                    prdir(i,j) = 0.0
+                end do
+                prdir(i,i) = 1.D0
+            end do
+        else 
+            a = a / 2
+            b = e(1,1) * e(2,3)**2 + e(2,2) * e(3,1)**2 + e(3,3) * e(1,2)**2 - 2 * e(1,2) * e(2,3) * e(3,1) - e(1,1) * e(2,2) * e(3,3)
+            call canoni(a, b, x, theta, pi)
+      
+            RCM_GUARD
+            
+            pmax = abs(x(1))
+            imax = 1
+            do i = 2,3
+                if (abs(x(i)) > pmax) then
+                    pmax = abs(x(i))
+                    imax = i
+                end if
+            end do
+
+            prval(3) = x(imax)
+            jmax = inc_max_3(imax)
+            prval(1) = x(jmax)
+            kmax = 6 - imax - jmax
+            prval(2) = x(kmax)
+
+            eta = (theta + (imax - 1) * 2 * pi) / 3.D0
+            if (eta > pi) eta = eta - 2 * pi
+
+            !Correction on the order of the eigenvalues
+            if (abs(prval(2)) >= abs(prval(1))) then
+                xx = prval(2)
+                prval(2) = prval(1)
+                prval(1) = xx
+            end if
+            
+            axisym = abs(prval(2) - prval(1)) < RESOLUTION
+            if (axisym) then
+                prval(1) = 0.5 * (prval(1) + prval(2))
+                prval(2) = prval(1)
+                min_ipr = 3
+            else
+                min_ipr = 2
+            end if
+
+            y = e
+            do ipr = 3,min_ipr,-1
+                do i = 1,3
+                    y(i,i) = y(i,i) - prval(ipr)
+                end do
+                pmax = 0.0
+                pp = 0.0
+                imax = 0
+                jmax = 0
+                do i = 1,3
+                    i1 = inc_max_3(i)
+                    i2 = inc_max_3(i1)
+                    do j = 1,3
+                        j1 = inc_max_3(j)
+                        j2 = inc_max_3(j1)
+                        xx = y(i1,j1) * y(i2,j2) - y(i1,j2) * y(i2,j1)
+                        if (pmax <= abs(xx)) then 
+                            pmax = abs(xx)
+                            pp = xx
+                            imax = i
+                            jmax = j
+                        end if 
+                    end do
                 end do
 
-                do i = 1, 3
-                        do j = 1, 3
-                                y = 0.0
-                                do k = 1,3
-                                        y = y + T(k,i) * X(k,j)
-                                end do
-                                Aprime(i, j) = y
-                        end do
-                end do
-        end subroutine
-      
-        !find half-lengths of ellipsoid axes from CIJ matrix
-        !store them in prval
-        !find Euler angles of these axes, store in GEULR
-        Subroutine GETANG(CIJ, prval, GEULR, TMAT)
-#ifdef ALTAY_SUBROUTINE
-                use altayRCM
-#endif
-                double precision, dimension(3,3), intent(in)    :: CIJ
-                double precision, dimension(3), intent(inout)   :: GEULR, prval
-                double precision, dimension(3,3), intent(inout) :: TMAT
-                integer                                         :: i
-                double precision                                :: CIJTR, enrm 
-                double precision, dimension(3,3)                :: prdir, e
-                logical                                         :: axisym
-                type(EulerAngles)                               :: CEuler
+                ! the minor with the max. value has been identified
+                i1 = inc_max_3(imax)
+                i2 = inc_max_3(i1)
+                j1 = inc_max_3(jmax)
+                j2 = inc_max_3(j2)
+                prdir(jmax, ipr) = 1.D0
+                pmax = -(y(i1,jmax) * y(i2,j2) - y(i2,jmax) * y(i1,j2))
+                prdir(j1, ipr) = pmax / pp
+                pmax = -(y(i1,j1) * y(i2,jmax) - y(i2,j1) * y(i1,jmax))
+                prdir(j2, ipr) = pmax / pp
+                call normaliz(prdir(1,ipr), xx)
+            end do
+            
+            if (axisym) then
+                !Vectorial product between prdir(,3) and x3 axis
+                prdir(1,2) = -prdir(2,3)
+                prdir(2,2) = prdir(1,3)
+                prdir(3,2) = 0.0
+                call normaliz(prdir(1,2), xx)
+                if (xx <= 0.7) then
+                    !Vectorial product between prdir(,3) and x2 axis
+                    prdir(1,2) = prdir(3,3)
+                    prdir(2,2) = 0.0
+                    prdir(3,2) = -prdir(1,3)
+                    call normaliz(prdir(1,2), xx)
+                end if 
+            end if
 
-                CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3.D0
-                e = CIJ
-                do i=1, 3
-                        e(i,i) = e(i,i) - CIJTR
-                end do
-
-                call eigenv(e, prval, prdir, enrm, axisym)
-                
-#ifdef ALTAY_SUBROUTINE
-                RCM_GUARD
-#endif
-      
-                prval = prval + CIJTR
-
-                if (prval(1) > prval(2)) call verwis(2, 1, prval, prdir)
-                if (prval(2) > prval(3)) call verwis(3, 2, prval, prdir)
-                if (prval(1) > prval(2)) call verwis(1, 2, prval, prdir)
-                prval = 1.D0 / sqrt(prval)
-                TMAT = prdir
-                CEuler = EuleranglesType(TMAT)
-                GEULR = EulerAngles2Arr(CEuler)
-        end subroutine
-      
-        Subroutine eigenv(e, prval, prdir, enrm, axisym)
-#ifdef ALTAY_SUBROUTINE
-                use altayRCM
-#endif
-                IMPLICIT double precision (A-H,O-Z)
-                integer :: i, i1, i2, j, imax, jmax, kmax, ipr, j1, j2
-!     Principal values of symmetric tensor with zero trace
-!     The eigenvectors are normalized.
-!     prval contains the principal values
-!
-      dimension e(3,3),x(3),prval(3), y(3,3),prdir(3,3)
-      logical axisym,eerste
-      SAVE
-      a=0.0
-      do i=1,3
-        a=a+e(i,i)
-      enddo
-    4 a=0.0
-      do 5 i=1,3
-      do 6 j=1,3
-      xx=abs(e(i,j)-e(j,i))
-      if (xx.lt.0.5e-5) goto 7
-#ifndef ALTAY_SUBROUTINE
-      write (*,104)
-  104 format (' Eigenv  - the input tensor is not symmetric')
-      do 50 ii=1,3
-      write (*,110) (e(ii,jj),jj=1,3)
-  110 format (3f16.8)
-   50 continue
-      call terminate(stopcode_runtimeerror)
-#else
-      RCM_RAISE(1,'eigenv','The input tensor is not symmetric',RCM_RTN)
-#endif
-
-    7 a=a+e(i,j)**2
-    6 continue
-    5 continue
-      enrm=sqrt(a)
-      if (enrm.lt.0.5e-5) goto 33
-      a=a*0.5D0
-      b=e(1,1)*e(2,3)**2+e(2,2)*e(3,1)**2+e(3,3)*e(1,2)**2-              &
-       2.D0*e(1,2)*e(2,3)*e(3,1)-e(1,1)*e(2,2)*e(3,3)
-      call canoni(a,b,x,theta,pi)
-#ifdef ALTAY_SUBROUTINE
-      RCM_GUARD
-#endif
-      pmax=abs(x(1))
-      imax=1
-      do 10 i=2,3
-      if (abs(x(i)).lt.pmax) goto 10
-      pmax=abs(x(i))
-      imax=i
-   10 continue
-      prval(3)=x(imax)
-      jmax=imax+1
-      if (jmax.gt.3) jmax=1
-      prval(1)=x(jmax)
-      kmax=6-imax-jmax
-      prval(2)=x(kmax)
-      eta=(theta+(imax-1)*2.D0*pi)/3.D0
-      if (eta.gt.pi) eta=eta-2.D0*pi
-!
-!     Correction on the order of the eigenvalues
-!
-      if (abs(prval(2)).lt.abs(prval(1))) goto 11
-      xx=prval(2)
-      prval(2)=prval(1)
-      prval(1)=xx
-   11 axisym=abs(prval(2)-prval(1)).lt.0.5e-5
-      if (.not.axisym) goto 9
-      prval(1)=0.5D0*(prval(1)+prval(2))
-      prval(2)=prval(1)
-    9 do ipr=3,2,-1
-        do i=1,3
-          do j=1,3
-            y(i,j)=e(i,j)
-          end do
-          y(i,i)=y(i,i)-prval(ipr)
-        end do
-        pmax=0.0
-        pp=0.0
-        imax=0
-        jmax=0
-        do i=1,3
-        i1=i+1
-        if (i1.gt.3) i1=1
-        i2=i1+1
-        if (i2.gt.3) i2=1
-        do 16 j=1,3
-          j1=j+1
-          if (j1.gt.3) j1=1
-          j2=j1+1
-          if (j2.gt.3) j2=1
-          xx=y(i1,j1)*y(i2,j2)-y(i1,j2)*y(i2,j1)
-          if (pmax.gt.abs(xx)) goto 16
-          pmax=abs(xx)
-          pp=xx
-          imax=i
-          jmax=j
-   16   continue
-        end do
-!       the minor with the max. value has been identified
-        i1=imax+1
-        if (i1.gt.3) i1=1
-        i2=i1+1
-        if (i2.gt.3) i2=1
-        j1=jmax+1
-        if (j1.gt.3) j1=1
-        j2=j1+1
-        if (j2.gt.3) j2=1
-        prdir(jmax,ipr)=1.D0
-        pmax=-(y(i1,jmax)*y(i2,j2)-y(i2,jmax)*y(i1,j2))
-        prdir(j1,ipr)=pmax/pp
-        pmax=-(y(i1,j1)*y(i2,jmax)-y(i2,j1)*y(i1,jmax))
-        prdir(j2,ipr)=pmax/pp
-        call normaliz(prdir(1,ipr),xx)
-        if (axisym) goto 17
-      end do
-      goto 19
-!
-!     Vectorial product between prdir(,3) and x3 axis
-!
-   17 prdir(1,2)=-prdir(2,3)
-      prdir(2,2)=prdir(1,3)
-      prdir(3,2)=0.0
-      call normaliz(prdir(1,2),xx)
-      if (xx.gt.0.7) goto 19
-!
-!     Vectorial product between prdir(,3) and x2 axis
-!
-      prdir(1,2)=prdir(3,3)
-      prdir(2,2)=0.0
-      prdir(3,2)=-prdir(1,3)
-      call normaliz(prdir(1,2),xx)
-   19 prdir(1,1)=prdir(2,2)*prdir(3,3)-prdir(3,2)*prdir(2,3)
-      prdir(2,1)=prdir(3,2)*prdir(1,3)-prdir(1,2)*prdir(3,3)
-      prdir(3,1)=prdir(1,2)*prdir(2,3)-prdir(2,2)*prdir(1,3)
-      call normaliz(prdir(1,1),xx)
-   21 call vef_trace_dbl_arr(MODULE_NAME, 'eigenv', prval)
-      return
-   33 do i=1,3
-        prval(i)=0.0
-        do j=1,3
-          prdir(i,j)=0.0
-        end do
-        prdir(i,i)=1.D0
-      end do
-      goto 21
-      end subroutine
-      !
-      subroutine normaliz(prdir,xx)
+            prdir(1,1) = prdir(2,2) * prdir(3,3) - prdir(3,2) * prdir(2,3)
+            prdir(2,1) = prdir(3,2) * prdir(1,3) - prdir(1,2) * prdir(3,3)
+            prdir(3,1) = prdir(1,2) * prdir(2,3) - prdir(2,2) * prdir(1,3)
+            call normaliz(prdir(1,1), xx)
+        end if
+        call vef_trace_dbl_arr(MODULE_NAME, ROUTINE_NAME, prval)
+    end subroutine
+ 
+    subroutine normaliz(prdir,xx)
       IMPLICIT double precision (A-H,O-Z)
       dimension prdir(3)
       integer :: i
@@ -297,9 +307,6 @@ module altayAlgorithms
       end subroutine
       !
       subroutine canoni(a,b,X,theta,pi)
-#ifdef ALTAY_SUBROUTINE
-      use altayRCM
-#endif
       IMPLICIT double precision (A-H,O-Z)
 !
 !     should find the roots of an equation
@@ -314,13 +321,7 @@ module altayAlgorithms
       delta=0.5D0*b/roota
       if (abs(delta).lt.(1.0d0+1.0d-6)) goto 1
     2 continue
-#ifndef ALTAY_SUBROUTINE
-      write (*,100)
-  100 format(' Subroutine CANONI - 2 Roots seem to be complex')
-      call terminate(stopcode_runtimeerror)
-#else
       RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
-#endif
     1 if (delta.gt.1.0) delta=1.D0
       if (delta.lt.-1.0) delta=-1.D0
       theta=acos(delta)
