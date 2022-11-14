@@ -110,7 +110,7 @@ def get_trace_values(path, module, function):
     with open(path) as log_file:
         for line in log_file:
             if header in line:
-                vals.append(re.findall(r'-?[0-9]+\.?[0-9]+ *$', line)[0].replace(' ','').replace('-','').replace('.','')[0:6])
+                vals.append(re.findall(r'-?[0-9]+\.?[0-9]+E?-?[0-9]* *$', line)[0].replace(' ','').replace('-','').replace('.','').replace('E','')[0:6])
     return vals
         
      
