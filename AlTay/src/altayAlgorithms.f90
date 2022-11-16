@@ -288,10 +288,12 @@ contains
         call vef_trace_dbl_arr(MODULE_NAME, ROUTINE_NAME, prval)
     end subroutine
  
+    !> Normalize the 3D-vector prdir to xx
     subroutine normaliz(prdir,xx)
       IMPLICIT double precision (A-H,O-Z)
       dimension prdir(3)
       integer :: i
+        character(len=*), parameter :: ROUTINE_NAME = 'normaliz'
       xx=0.0
       do 19 i=1,3
       xx=prdir(i)**2+xx
@@ -303,6 +305,7 @@ contains
    20 do 22 i=1,3
       prdir(i)=prdir(i)/xx
    22 continue
+        call vef_trace_dbl_arr(MODULE_NAME, ROUTINE_NAME, prdir)
       return
       end subroutine
       !

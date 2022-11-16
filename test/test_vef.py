@@ -9,18 +9,30 @@ import shutil
 import re
 import pandas as pd
 from pathlib import Path
+import itertools
 
 import pytest
 
 #File extension for the output of each execution mode. May be removed when we get rid of the file-based I/O for the simulations.
 EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'UDSA':'uds','YLD':'xyld'}
 GENERATED_DATA = []
-TEST_ROOT=Path.cwd()
-TEST_DATA=TEST_ROOT/'run'
+TEST_ROOT = Path.cwd()
+TEST_DATA = TEST_ROOT/'run'
+
+#Configurations that can be tested
+MODES = ['ADP', 'ASR', 'EWC','QRS','UDSA','YLD']
+ALGORITHMS = ['ALAMEL', 'FCTaylor']
+SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
+#Unit tests
+UNITS = [('altayAlgorithms','eigenv'), \
+         ('altayAlgorithms','normaliz')]
 
 #Generate configuration file based on global settings and mode-specific ones.
 @pytest.fixture
 def create_conf_file(mode, algorithm, slip_system):
+    if not os.path.exists(TEST_DATA):
+        os.mkdir(TEST_DATA)
+
     with open(TEST_DATA/'test.cfg', 'w') as conf_file, \
          open(TEST_ROOT/f'conf/{mode}.cfg','r') as mode_specific_conf_file:
         conf_file.write('out\n')
@@ -95,9 +107,7 @@ def process_file(path):
 
 #Generate and execute the different test cases.
 @pytest.mark.integration
-@pytest.mark.parametrize('mode',['ADP', 'ASR', 'EWC','QRS','UDSA','YLD'])
-@pytest.mark.parametrize('algorithm',['ALAMEL', 'FCTaylor'])
-@pytest.mark.parametrize('slip_system',['fcc12','bcc24','bcc48'])
+@pytest.mark.parametrize('mode,algorithm,slip_system', itertools.product(MODES, ALGORITHMS, SLIP_SYSTEMS))
 def test_vef(mode, algorithm, slip_system, request, generate_output):
     reference = process_file(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}.out')
     result = process_file(TEST_DATA/f'{mode}_{algorithm}_{slip_system}.out')
@@ -113,19 +123,12 @@ def get_trace_values(path, module, function):
                 vals.append(re.findall(r'-?[0-9]+\.?[0-9]+E?-?[0-9]* *$', line)[0].replace(' ','').replace('-','').replace('.','').replace('E','')[0:6])
     return vals
         
-     
-@pytest.mark.altayAlgorithms_eigenv
-@pytest.mark.parametrize('mode',['ADP', 'ASR', 'EWC','QRS','UDSA','YLD'])
-@pytest.mark.parametrize('algorithm',['ALAMEL', 'FCTaylor'])
-@pytest.mark.parametrize('slip_system',['fcc12','bcc24','bcc48'])
-def test_altayAlgorithms_eigenv(mode, algorithm, slip_system, request, generate_output):
-    reference = get_trace_values(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}.log', 'altayAlgorithms', 'eigenv')
-    data = get_trace_values(TEST_DATA/f'{mode}_{algorithm}_{slip_system}.log', 'altayAlgorithms', 'eigenv')
+
+@pytest.mark.unit
+@pytest.mark.parametrize('module,function,mode,algorithm,slip_system', [(a,b,c,d,e) for ((a,b),c,d,e) in itertools.product(UNITS, MODES, ALGORITHMS, SLIP_SYSTEMS)])
+def test_unit(mode, algorithm, slip_system, module, function, generate_output):
+    reference = get_trace_values(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}.log', module, function)
+    data = get_trace_values(TEST_DATA/f'{mode}_{algorithm}_{slip_system}.log', module, function)
     assert data == reference
-
-
-
-
-
 
 
