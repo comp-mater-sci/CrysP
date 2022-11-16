@@ -288,18 +288,18 @@ contains
  
     subroutine normaliz(prdir,x)
         double precision, dimension(3), intent(inout)   :: prdir
-        double precision, intent(out)                 :: x
+        double precision, intent(out)                   :: x
         integer :: i
       
         x = 0.0
-        do i = 1, 3
+        do i=1,3
             x = prdir(i)**2 + x
         end do
       
         x = sqrt(x)
         if (x > RESOLUTION) then
-            do i = 1,3
-                prdir(i)=prdir(i)/x
+            do i=1,3
+                prdir(i) = prdir(i) / x
             end do
             call vef_trace_dbl_arr(MODULE_NAME, 'normaliz', prdir)
         else
@@ -308,34 +308,7 @@ contains
         
         return
     end subroutine
-subroutine canoni2(a,b,X,theta,pi)
-      IMPLICIT double precision (A-H,O-Z)
-      dimension x(3)
-!
-!     should find the roots of an equation
-!
-!     x**3 - A x + B = 0
-!
-!     The roots are suppposed to be real.
-!
-      if (a.lt.0.5e-11) goto 2
-      roota=sqrt(a**3/27.0d0)
-      delta=0.5D0*b/roota
-      if (abs(delta).lt.(1.0d0+1.0d-6)) goto 1
-    2 continue
-      RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
-    1 if (delta.gt.1.0) delta=1.D0
-      if (delta.lt.-1.0) delta=-1.D0
-      theta=acos(delta)
-      delta=-2.D0*sqrt(a/3.D0)
-      x(1)=delta*cos(theta/3.D0)
-      x(2)=delta*cos((theta+2.D0*pi)/3.D0)
-      x(3)=delta*cos((theta+4.D0*pi)/3.D0)
-        call vef_trace_dbl_arr(MODULE_NAME, 'canoni', X)
-    end subroutine
-      !
- 
- 
+
     !should find the roots of an equation
     !x**3 - A x + B = 0
     !The roots are suppposed to be real.
@@ -365,23 +338,22 @@ subroutine canoni2(a,b,X,theta,pi)
         end if 
         RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
     end subroutine
-      !
-        subroutine verwis(i1,i2,prval,prdir)
-                IMPLICIT double precision (A-H,O-Z)
-                dimension prval(3),prdir(3,3)
-                integer, intent(in) :: i1, i2
-                integer :: i
-                x=prval(i1)
-                prval(i1)=prval(i2)
-                prval(i2)=x
-                do i=1,3
-                        x=prdir(i,i1)
-                        prdir(i,i1)=-prdir(i,i2)
-                        prdir(i,i2)=x
-                end do
-                
-                call vef_trace_dbl_mat(MODULE_NAME, 'verwis', prdir)
-        end subroutine
+      
+    subroutine verwis(i1, i2, prval, prdir)
+        integer, intent(in)                             :: i1, i2
+        double precision, dimension(3), intent(inout)   :: prval
+        double precision, dimension(3,3), intent(inout) :: prdir
+        double precision                                :: x
+        integer                                         :: i
+        x = prval(i1)
+        prval(i1) = prval(i2)
+        prval(i2) = x
+        do i=1,3
+                x = prdir(i,i1)
+                prdir(i,i1) = -prdir(i,i2)
+                prdir(i,i2) = x
+        end do
+    end subroutine
       !
         SUBROUTINE MINV(A,N,D,L,M,NXXX)
                 integer, intent(in)                              :: N, NXXX
@@ -460,6 +432,7 @@ subroutine canoni2(a,b,X,theta,pi)
    48 DO 55 I=1,N
       IF(I-K) 50,55,50
    50 IK=NK+I
+        
       A(IK)=A(IK)/(-BIGA)
    55 CONTINUE
 !

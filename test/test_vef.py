@@ -26,8 +26,7 @@ SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
 #Unit tests
 UNITS = [('altayAlgorithms','eigenv'),      \
          ('altayAlgorithms','normaliz'),    \
-         ('altayAlgorithms','canoni'),      \
-         ('altayAlgorithms','verwis')]
+         ('altayAlgorithms','canoni')]
 
 #Generate configuration file based on global settings and mode-specific ones.
 @pytest.fixture
