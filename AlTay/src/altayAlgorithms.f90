@@ -189,7 +189,7 @@ contains
         else 
             a = a / 2
             b = e(1,1) * e(2,3)**2 + e(2,2) * e(3,1)**2 + e(3,3) * e(1,2)**2 - 2 * e(1,2) * e(2,3) * e(3,1) - e(1,1) * e(2,2) * e(3,3)
-            call canoni(a, b, x, theta, pi)
+            call canoni(a, b, x, theta)
       
             RCM_GUARD
             
@@ -289,10 +289,10 @@ contains
     end subroutine
  
     subroutine normaliz(prdir,x)
+        character(len=*), parameter :: ROUTINE_NAME = 'normaliz'
         double precision, dimension(3), intent(inout)   :: prdir
         double precision, intent(out)                 :: x
         integer :: i
-        character(len=*), parameter :: ROUTINE_NAME = 'normaliz'
       
         x = 0.0
         do i = 1, 3
@@ -310,32 +310,39 @@ contains
         end if 
         
         return
-      end subroutine
-      !
-      subroutine canoni(a,b,X,theta,pi)
-      IMPLICIT double precision (A-H,O-Z)
-!
-!     should find the roots of an equation
-!
-!     x**3 - A x + B = 0
-!
-!     The roots are suppposed to be real.
-!
-      dimension x(3)
-      if (a.lt.0.5e-11) goto 2
-      roota=sqrt(a**3/27.0d0)
-      delta=0.5D0*b/roota
-      if (abs(delta).lt.(1.0d0+1.0d-6)) goto 1
-    2 continue
-      RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
-    1 if (delta.gt.1.0) delta=1.D0
-      if (delta.lt.-1.0) delta=-1.D0
-      theta=acos(delta)
-      delta=-2.D0*sqrt(a/3.D0)
-      x(1)=delta*cos(theta/3.D0)
-      x(2)=delta*cos((theta+2.D0*pi)/3.D0)
-      x(3)=delta*cos((theta+4.D0*pi)/3.D0)
-      end subroutine
+    end subroutine
+     
+ 
+    !should find the roots of an equation
+    !x**3 - A x + B = 0
+    !The roots are suppposed to be real.
+    subroutine canoni(a, b, X, theta)
+        character(len=*), parameter                 :: ROUTINE_NAME = 'canoni'
+        double precision, intent(in)                :: a, b
+        double precision, intent(out)               :: theta
+        double precision, dimension(3), intent(out) :: X
+        double precision                            :: roota, delta
+    
+        if (a > 0.5e-11) then
+            roota = sqrt(a**3 / 27.0d0)
+            delta = 0.5D0 * b / roota
+            if (abs(delta) >= (1.0d0 + 1.0d-6))
+                RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
+            if (delta > 1.0) 
+                delta = 1.D0
+            else if (delta < -1.0) 
+                delta = -1.D0
+      
+            theta = acos(delta)
+            delta = -2.D0 * sqrt(a / 3.D0)
+
+            x(1) = delta * cos(theta / 3.D0)
+            x(2) = delta * cos((theta + 2.D0 * pi) / 3.D0)
+            x(3) = delta * cos((theta + 4.D0 * pi) / 3.D0)
+            
+            call vef_trace_dbl_arr(MODULE_NAME, ROUTINE_NAME, x)
+        end if 
+    end subroutine
       !
         subroutine verwis(i1,i2,prval,prdir)
                 IMPLICIT double precision (A-H,O-Z)
