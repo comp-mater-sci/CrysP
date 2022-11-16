@@ -165,8 +165,6 @@ contains
         double precision, dimension(3)                  :: x
         double precision, dimension(3,3)                :: y
 
-        character(len=6), parameter :: ROUTINE_NAME = 'eigenv'
-
         a=0.0
         do i = 1,3
             do j = 1,3
@@ -285,11 +283,10 @@ contains
             prdir(3,1) = prdir(1,2) * prdir(2,3) - prdir(2,2) * prdir(1,3)
             call normaliz(prdir(1,1), xx)
         end if
-        call vef_trace_dbl_arr(MODULE_NAME, ROUTINE_NAME, prval)
+        call vef_trace_dbl_arr(MODULE_NAME, 'eigenv', prval)
     end subroutine
  
     subroutine normaliz(prdir,x)
-        character(len=*), parameter :: ROUTINE_NAME = 'normaliz'
         double precision, dimension(3), intent(inout)   :: prdir
         double precision, intent(out)                 :: x
         integer :: i
@@ -304,44 +301,69 @@ contains
             do i = 1,3
                 prdir(i)=prdir(i)/x
             end do
-            call vef_trace_dbl_arr(MODULE_NAME, ROUTINE_NAME, prdir)
+            call vef_trace_dbl_arr(MODULE_NAME, 'normaliz', prdir)
         else
             x = 0
         end if 
         
         return
     end subroutine
-     
+subroutine canoni2(a,b,X,theta,pi)
+      IMPLICIT double precision (A-H,O-Z)
+      dimension x(3)
+!
+!     should find the roots of an equation
+!
+!     x**3 - A x + B = 0
+!
+!     The roots are suppposed to be real.
+!
+      if (a.lt.0.5e-11) goto 2
+      roota=sqrt(a**3/27.0d0)
+      delta=0.5D0*b/roota
+      if (abs(delta).lt.(1.0d0+1.0d-6)) goto 1
+    2 continue
+      RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
+    1 if (delta.gt.1.0) delta=1.D0
+      if (delta.lt.-1.0) delta=-1.D0
+      theta=acos(delta)
+      delta=-2.D0*sqrt(a/3.D0)
+      x(1)=delta*cos(theta/3.D0)
+      x(2)=delta*cos((theta+2.D0*pi)/3.D0)
+      x(3)=delta*cos((theta+4.D0*pi)/3.D0)
+        call vef_trace_dbl_arr(MODULE_NAME, 'canoni', X)
+    end subroutine
+      !
+ 
  
     !should find the roots of an equation
     !x**3 - A x + B = 0
     !The roots are suppposed to be real.
     subroutine canoni(a, b, X, theta)
-        character(len=*), parameter                 :: ROUTINE_NAME = 'canoni'
         double precision, intent(in)                :: a, b
         double precision, intent(out)               :: theta
         double precision, dimension(3), intent(out) :: X
         double precision                            :: roota, delta
     
-        if (a > 0.5e-11) then
-            roota = sqrt(a**3 / 27.0d0)
-            delta = 0.5D0 * b / roota
-            if (abs(delta) >= (1.0d0 + 1.0d-6))
-                RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
-            if (delta > 1.0) 
-                delta = 1.D0
-            else if (delta < -1.0) 
-                delta = -1.D0
+        if (a >= 0.5e-11 ) then 
+            roota = sqrt(a**3 / 27.0)
+            delta = 0.5 * b / roota
+            if (abs(delta) < (1.0 + 1.0D-6)) then
+                if (delta > 1.0) delta = 1.0
+                if (delta < -1.0) delta = -1.0
       
-            theta = acos(delta)
-            delta = -2.D0 * sqrt(a / 3.D0)
+                theta = acos(delta)
+                delta = -2.0 * sqrt(a / 3.0)
 
-            x(1) = delta * cos(theta / 3.D0)
-            x(2) = delta * cos((theta + 2.D0 * pi) / 3.D0)
-            x(3) = delta * cos((theta + 4.D0 * pi) / 3.D0)
+                X(1) = delta * cos(theta / 3.0)
+                X(2) = delta * cos((theta + 2.0 * PI) / 3.0)
+                X(3) = delta * cos((theta + 4.0 * PI) / 3.0)
             
-            call vef_trace_dbl_arr(MODULE_NAME, ROUTINE_NAME, x)
+                call vef_trace_dbl_arr(MODULE_NAME, 'canoni', X)
+                return
+            end if
         end if 
+        RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
     end subroutine
       !
         subroutine verwis(i1,i2,prval,prdir)
@@ -357,7 +379,8 @@ contains
                         prdir(i,i1)=-prdir(i,i2)
                         prdir(i,i2)=x
                 end do
-
+                
+                call vef_trace_dbl_mat(MODULE_NAME, 'verwis', prdir)
         end subroutine
       !
         SUBROUTINE MINV(A,N,D,L,M,NXXX)
