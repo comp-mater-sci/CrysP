@@ -5,3 +5,5 @@
 */release
 security/ssh_keys/*
 test/security/ssh_keys/*
+callgraph/*
+test/run/*

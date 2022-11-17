@@ -5,8 +5,11 @@
 module altayAlgorithms
         use altayMiscutils, only: terminate, stopcode_runtimeerror
         use criMathUtils
+        use tracing
         
         implicit none
+
+        character(len=*), parameter :: MODULE_NAME = 'altayAlgorithms'
 
         contains
         
@@ -263,7 +266,8 @@ module altayAlgorithms
       prdir(2,1)=prdir(3,2)*prdir(1,3)-prdir(1,2)*prdir(3,3)
       prdir(3,1)=prdir(1,2)*prdir(2,3)-prdir(2,2)*prdir(1,3)
       call normaliz(prdir(1,1),xx)
-   21 return
+   21 call vef_trace_dbl_arr(MODULE_NAME, 'eigenv', prval)
+      return
    33 do i=1,3
         prval(i)=0.0
         do j=1,3
