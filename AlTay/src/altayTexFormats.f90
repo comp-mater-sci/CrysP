@@ -13,7 +13,7 @@ contains
 
       subroutine loadTexture(texfmt,nunit,fname,iblock,info)
       integer,intent(in)            :: texfmt
-      integer,intent(in)            :: nunit
+      integer,intent(inout)         :: nunit
       character(len=*),intent(in)   :: fname
       integer,intent(in)            :: iblock
       integer,intent(out)           :: info

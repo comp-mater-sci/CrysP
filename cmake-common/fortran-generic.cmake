@@ -7,7 +7,6 @@
 # Intel compiler specific
 
 
-
 if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
 	set(Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -extend-source 132")
 elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")

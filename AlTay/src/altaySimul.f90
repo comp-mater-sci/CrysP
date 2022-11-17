@@ -249,7 +249,7 @@
       ! Number of relaxations: 0 for Taylor and 2 for ALAMEL:
       NRL=(NGR-1)*2
 #endif
-      NFILE=NFILE0*NFILE1
+  36  NFILE=NFILE0*NFILE1
       NPEBPx=NFILE0*NPEBP   ! control "BEP" (effective value)
       NMSSx= NFILE0*NMSS    ! control "MSS" (effective value)
 
@@ -377,7 +377,7 @@
 !         computation.
 !         See also the comment before the calling of subroutine TAYLOR.
 !
-          laml=1
+  10      laml=1
           laml1=NGR
           ifil4=0
           if (NFILTW.eq.1) write (IMP3,399)
@@ -453,7 +453,7 @@
               TOTGEW=TOTGEW+GEWF
               !
               ! Skip the rest of the loop if IW > 1
-              if (IW.gt.1) cycle
+  41          if (IW.gt.1) cycle
               !
 #ifdef ALTAY_SUBROUTINE
               if (astate%simulCalls(astate%this)%input%full_model) then
@@ -581,7 +581,7 @@
           !
    8  enddo steploop
       !
-      return
+  22  return
       !
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !-------- IW<0 --------

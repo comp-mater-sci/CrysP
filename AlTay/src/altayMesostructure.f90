@@ -1,6 +1,7 @@
 !> Microstructure representation in AlTay
 !> The microstructure is created by grain boundary segments.
 module altayMesostructure
+use criMathUtils, only: EulerAngles
 use altayAlgorithms
 use altayMiscutils, only: terminate, stopcode_runtimeerror
 implicit none

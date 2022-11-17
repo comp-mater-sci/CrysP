@@ -8,7 +8,7 @@ RUN chmod 700 /root/.ssh && chown root:root /root/.ssh/*
 RUN ssh-keyscan gitlab.kuleuven.be >> /root/.ssh/known_hosts
 RUN git clone git@gitlab.kuleuven.be:comp-mater-sci/TWRMTMProject.git
 CMD cd /app/TWRMTMProject \
-    && git checkout master \
+    && git checkout modern-style \
     && git pull \
     && ./build.sh ifort \
     && cd test \

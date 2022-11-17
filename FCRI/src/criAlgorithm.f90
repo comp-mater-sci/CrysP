@@ -42,6 +42,25 @@ contains
 #define _LOWER_BOUND_FX_NAME lower_bound_double
 #include "criAlgorithmTemplates.fpp"
 
+      !> Check if the string value val is present in the list of strings.
+      logical function isPresent(val, list,index)
+      character(len=*),intent(in)               :: val      !< Value to be looked up
+      character(len=*),dimension(:),intent(in)  :: list     !< Array of strings
+      !> Index of the element that was found. It is set only if isPresent returns .true.
+      integer,intent(out),optional              :: index
+      !
+      integer :: i
+            isPresent = .false.
+            do i = lbound(list,dim=1), ubound(list,dim=1)
+                  if (val == list(i)) then
+                        isPresent = .true.
+                        exit
+                  endif
+            enddo
+            if (present(index) .and. isPresent) index = i
+      !
+      end function
+
 
       !> Returns a string that stems from "str", but all instances of the character "from"
       !> are replaced by the character "to".

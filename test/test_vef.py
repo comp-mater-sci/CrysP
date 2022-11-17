@@ -9,40 +9,32 @@ import shutil
 import re
 import pandas as pd
 from pathlib import Path
+import itertools
 
 import pytest
 
 #File extension for the output of each execution mode. May be removed when we get rid of the file-based I/O for the simulations.
 EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'UDSA':'uds','YLD':'xyld'}
-TEST_ROOT=Path.cwd()
+GENERATED_DATA = []
+TEST_ROOT = Path.cwd()
+TEST_DATA = TEST_ROOT/'run'
 
-
-#General configuration
-#shutil.copy(TEST_ROOT/'../fopt/src/nlls_tr.f90', TEST_ROOT)
-#shutil.copy(TEST_ROOT/'conf/nlls_tr.f90', TEST_ROOT/'../fopt/src')
-#os.chdir(TEST_ROOT/'..')
-#os.system('./build.sh')
-#shutil.move(TEST_ROOT/'nlls_tr.f90', TEST_ROOT/'../fopt/src/nlls_tr.f90')
-
-#Set up file structure for benchmark execution. May be removed when we get rid of file I/O for the simulations.
-def setup_benchmark(mode, algorithm, slip_system, test_path):
-    if (mode == 'YLD' or mode == 'QRS'):
-        shutil.copy(TEST_ROOT/'data/in/texture_yld.smt', test_path/'texture.smt')
-    else:
-        shutil.copy(TEST_ROOT/'data/in/sid1687f_short.smt', test_path/'texture.smt')
-    shutil.copy(TEST_ROOT/'../VEF/data/equiaxed.smt', test_path/'equiaxed.smt')
-    shutil.copy(TEST_ROOT/f'../VEF/data/{slip_system}.pre', test_path/f'{slip_system}.pre')
-    create_conf_file(mode, algorithm, slip_system, test_path)
-    if (mode == 'EWC' or mode == 'ASR'):
-        shutil.copyfile(TEST_ROOT/f'data/in/{mode}.rtdb', test_path/'out.rtdb')
-    elif (mode == 'UDSA' or mode == 'YLD'):
-        shutil.copyfile(TEST_ROOT/f'data/in/UDSA_YLD.rtdb', test_path/'out.rtdb')
-
-
+#Configurations that can be tested
+MODES = ['ADP', 'ASR', 'EWC','QRS','UDSA','YLD']
+ALGORITHMS = ['ALAMEL', 'FCTaylor']
+SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
+#Unit tests
+UNITS = [('altayAlgorithms','eigenv'),      \
+         ('altayAlgorithms','normaliz'),    \
+         ('altayAlgorithms','canoni')]
 
 #Generate configuration file based on global settings and mode-specific ones.
-def create_conf_file(mode, algorithm, slip_system, test_path):
-    with open(test_path/'test.cfg', 'w') as conf_file, \
+@pytest.fixture
+def create_conf_file(mode, algorithm, slip_system):
+    if not os.path.exists(TEST_DATA):
+        os.mkdir(TEST_DATA)
+
+    with open(TEST_DATA/'test.cfg', 'w') as conf_file, \
          open(TEST_ROOT/f'conf/{mode}.cfg','r') as mode_specific_conf_file:
         conf_file.write('out\n')
         conf_file.write('True\n')
@@ -56,21 +48,56 @@ def create_conf_file(mode, algorithm, slip_system, test_path):
         conf_file.write('True\n')
         conf_file.write(mode_specific_conf_file.read())
 
+#Set up file structure for benchmark execution. May be removed when we get rid of file I/O for the simulations.
+@pytest.fixture
+def setup_benchmark(mode, algorithm, slip_system, create_conf_file):
+    try:
+        os.remove(TEST_DATA/'out.rtdb')
+        os.remove(TEST_DATA/'out.CUR')
+    except: FileNotFoundError 
+    if (mode == 'YLD' or mode == 'QRS'):
+        shutil.copy(TEST_ROOT/'data/in/texture_yld.smt', TEST_DATA/'texture.smt')
+    else:
+        shutil.copy(TEST_ROOT/'data/in/sid1687f_short.smt', TEST_DATA/'texture.smt')
+    shutil.copy(TEST_ROOT/'../VEF/data/equiaxed.smt', TEST_DATA/'equiaxed.smt')
+    shutil.copy(TEST_ROOT/f'../VEF/data/{slip_system}.pre', TEST_DATA/f'{slip_system}.pre')
+    if (mode == 'EWC' or mode == 'ASR'):
+        shutil.copyfile(TEST_ROOT/f'data/in/{mode}.rtdb', TEST_DATA/'out.rtdb')
+    elif (mode == 'UDSA' or mode == 'YLD'):
+        shutil.copyfile(TEST_ROOT/f'data/in/UDSA_YLD.rtdb', TEST_DATA/'out.rtdb')
 
-def concat_udsa_output():
-    with open('out.uds', 'w') as out:
-        for orientation in [0,45,90]:
-            with open(f'out_{orientation}_000.uds','r') as out_oriented:
-                out.write(out_oriented.read())
 
 
 #Execute simulations themselves. Implemented as a dedicated function to simplify test adjustments when transitioning to a different software architecture.
-def generate_output(mode):
-    os.system(TEST_ROOT/f'../VEF/release/bin/alamDMC {mode} test.cfg > alamDMC.log' )
+@pytest.fixture
+def generate_output(mode, algorithm, slip_system, setup_benchmark, request):
+    if not (mode, algorithm, slip_system) in GENERATED_DATA:
+        os.chdir(TEST_DATA)
+        os.system(TEST_ROOT/f'../VEF/release/bin/alamDMC {mode} test.cfg > alamDMC.log')
 
-    if mode == 'UDSA':
-        concat_udsa_output()
+        if mode == 'UDSA':
+            with open('out.uds', 'w') as out:
+                for orientation in [0,45,90]:
+                    with open(f'out_{orientation}_000.uds','r') as out_oriented:
+                        out.write(out_oriented.read())
 
+        path = TEST_DATA/f'{mode}_{algorithm}_{slip_system}'
+        out_path = str(path) + '.out'
+        log_path = str(path) + '.log'
+        shutil.move(TEST_DATA/f'out.{EXTENSIONS[mode]}', out_path)
+        shutil.move(TEST_DATA/'alamDMC.log', log_path)
+        GENERATED_DATA.append((mode, algorithm, slip_system))
+        ref_path = TEST_ROOT/'data/out/'
+        match request.config.getoption('--update'):
+            case 'log':
+                shutil.copy(log_path, ref_path)
+            case 'out':
+                shutil.copy(out_path, ref_path)
+            case 'FALSE':
+                pass
+            case _: 
+                shutil.copy(log_path, ref_path)
+                shutil.copy(out_path, ref_path)
 
 def process_file(path):
     df = pd.read_csv(path,delimiter=' +', engine='python')
@@ -81,39 +108,34 @@ def process_file(path):
             if isinstance(num, str) and pattern.match(num):
                 formatted = num.split('E')
                 if int(formatted[1]) > -9:
-                    val = int(formatted[0].replace('-','')[2:8])
-                    if val > 0:
-                        res.append(val)
+                    res.append(int(formatted[0].replace('-','')[2:8]))
     return res
 
 
-def process_output(mode, algorithm, slip_system):
-    reference = process_file(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}.out')
-    result = process_file('out.' + EXTENSIONS[mode])
-    return (reference, result)
-
-
-def replace_reference(tmp_path, mode, algorithm, slip_system):
-    if mode == 'UDSA':
-        concat_udsa_output()
-    shutil.copy(tmp_path/f'out.{EXTENSIONS[mode]}', TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}.out')
-
-
-
 #Generate and execute the different test cases.
-@pytest.mark.parametrize('mode',['ADP', 'ASR', 'EWC','QRS','UDSA','YLD'])
-@pytest.mark.parametrize('algorithm',['ALAMEL', 'FCTaylor'])
-@pytest.mark.parametrize('slip_system',['fcc12','bcc24','bcc48'])
-def test_vef(mode, algorithm, slip_system, tmp_path, request):
-    setup_benchmark(mode, algorithm, slip_system, tmp_path)
-    os.chdir(tmp_path)
-    generate_output(mode)
-    if request.config.getoption('--update') != 'FALSE':
-        replace_reference(tmp_path, mode, algorithm, slip_system)
-    else:
-        (reference, result) = process_output(mode, algorithm, slip_system)
-        ratio_lens = len(reference) / len(result)
-        #Small deviations in length are possible because we rejecct very small numbers
-        assert ratio_lens > 0.95 and ratio_lens < 1.05
-        ratio_vals = (sum(reference) / len(reference)) / (sum(result) / len(result))
-        assert ratio_vals > 0.93 and ratio_vals < 1.07
+@pytest.mark.integration
+@pytest.mark.parametrize('mode,algorithm,slip_system', itertools.product(MODES, ALGORITHMS, SLIP_SYSTEMS))
+def test_vef(mode, algorithm, slip_system, request, generate_output):
+    reference = process_file(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}.out')
+    result = process_file(TEST_DATA/f'{mode}_{algorithm}_{slip_system}.out')
+    assert reference == result
+
+
+def get_trace_values(path, module, function):
+    vals = []
+    header = "TRACE " + module + ", " + function
+    with open(path) as log_file:
+        for line in log_file:
+            if header in line:
+                vals.append(re.findall(r'-?[0-9]+\.?[0-9]+E?-?[0-9]* *$', line)[0].replace(' ','').replace('-','').replace('.','').replace('E','')[0:6])
+    return vals
+        
+
+@pytest.mark.unit
+@pytest.mark.parametrize('module,function,mode,algorithm,slip_system', [(a,b,c,d,e) for ((a,b),c,d,e) in itertools.product(UNITS, MODES, ALGORITHMS, SLIP_SYSTEMS)])
+def test_unit(mode, algorithm, slip_system, module, function, generate_output):
+    reference = get_trace_values(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}.log', module, function)
+    data = get_trace_values(TEST_DATA/f'{mode}_{algorithm}_{slip_system}.log', module, function)
+    assert data == reference
+
+

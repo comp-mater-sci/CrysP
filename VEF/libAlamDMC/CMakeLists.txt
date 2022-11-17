@@ -40,13 +40,10 @@ stressDrivenModule.f90
 substeppingConfig.f90
 xVectorEvolutionOutputRecord.f90
 YLPResult.f90
-alamYLP.f90 
-alamEval.f90
-alamYLPConstants.f90
 )
 
 add_library(AlamDMC STATIC ${AlamDMC_SRCS})
-target_link_libraries(AlamDMC CRI)
+target_link_libraries(AlamDMC alamYLP CRI)
 
 # Include files located in the same directories as the sources
 # and this CMakeLists.txt
