@@ -18,12 +18,12 @@ module altayAlgorithms
     public  :: deg2rad,             &
                rotmat,              &
                rotateSRTensorFrom,  &
-               KleinKwa,            &
-               UPDATC,              &
-               GETANG,              &
-               Vector5D,            &
-               SymMatrix,           &
-               Transf
+               kleinKwa,            &
+               updatc,              &
+               getang,              &
+               vector5D,            &
+               symMatrix,           &
+               transf
 
 contains
     
@@ -354,193 +354,58 @@ contains
                 prdir(i,i2) = x
         end do
     end subroutine
-      !
-        SUBROUTINE MINV(A,N,D,L,M,NXXX)
-                integer, intent(in)                              :: N, NXXX
-                integer, dimension(N), intent(inout)             :: M, L
-                double precision, dimension(NXXX), intent(inout) :: A
-                integer                                          :: K, J, I, JI, NK, KK, IZ, IJ, KI, JP, IK, JR, JK, KJ, JQ
-!
-!        ...............................................................
-!
-!        IF A DOUBLE PRECISION VERSION OF THIS ROUTINE IS DESIRED, THE
-!        C IN COLUMN 1 SHOULD BE REMOVED FROM THE DOUBLE PRECISION
-!        STATEMENT WHICH FOLLOWS.
-!
-      DOUBLE PRECISION D,BIGA,HOLD
-!
-!        THE C MUST ALSO BE REMOVED FROM DOUBLE PRECISION STATEMENTS
-!        APPEARING IN OTHER ROUTINES USED IN CONJUNCTION WITH THIS
-!        ROUTINE.
-!
-!        THE DOUBLE PRECISION VERSION OF THIS SUBROUTINE MUST ALSO
-!        CONTAIN DOUBLE PRECISION FORTRAN FUNCTIONS.  ABS IN STATEMENT
-!        10 MUST BE CHANGED TO DABS.
-!
-!        ...............................................................
-!
-!        SEARCH FOR LARGEST ELEMENT
-!
-      D=1.D0
-      NK=-N
-      DO 80 K=1,N
-      NK=NK+N
-      M(K)=K
-      L(K)=K
-      KK=NK+K
-      BIGA=A(KK)
-      DO 20 J=K,N
-      IZ=N*(J-1)
-      DO 20 I=K,N
-      IJ=IZ+I
-   10 IF( DABS(BIGA)- DABS(A(IJ))) 15,20,20
-   15 BIGA=A(IJ)
-      L(K)=I
-      M(K)=J
-   20 CONTINUE
-!
-!        INTERCHANGE ROWS
-!
-      J=L(K)
-      IF(J-K) 35,35,25
-   25 KI=K-N
-      DO 30 I=1,N
-      KI=KI+N
-      HOLD=-A(KI)
-      JI=KI-K+J
-      A(KI)=A(JI)
-   30 A(JI) =HOLD
-!
-!        INTERCHANGE COLUMNS
-!
-   35 I=M(K)
-      IF(I-K) 45,45,38
-   38 JP=N*(I-1)
-      DO 40 J=1,N
-      JK=NK+J
-      JI=JP+J
-      HOLD=-A(JK)
-      A(JK)=A(JI)
-   40 A(JI) =HOLD
-!
-!        DIVIDE COLUMN BY MINUS PIVOT (VALUE OF PIVOT ELEMENT IS
-!        CONTAINED IN BIGA)
-!
-   45 IF(BIGA) 48,46,48
-   46 D=0.0
-      RETURN
-   48 DO 55 I=1,N
-      IF(I-K) 50,55,50
-   50 IK=NK+I
-        
-      A(IK)=A(IK)/(-BIGA)
-   55 CONTINUE
-!
-!        REDUCE MATRIX
-!
-      DO 65 I=1,N
-      IK=NK+I
-      HOLD=A(IK)
-      IJ=I-N
-      DO 65 J=1,N
-      IJ=IJ+N
-      IF(I-K) 60,65,60
-   60 IF(J-K) 62,65,62
-   62 KJ=IJ-I+K
-      A(IJ)=HOLD*A(KJ)+A(IJ)
-   65 CONTINUE
-!
-!        DIVIDE ROW BY PIVOT
-!
-      KJ=K-N
-      DO 75 J=1,N
-      KJ=KJ+N
-      IF(J-K) 70,75,70
-   70 A(KJ)=A(KJ)/BIGA
-   75 CONTINUE
-!
-!        PRODUCT OF PIVOTS
-!
-      D=D*BIGA
-!
-!        REPLACE PIVOT BY RECIPROCAL
-!
-      A(KK)=1.D0/BIGA
-   80 CONTINUE
-!
-!        FINAL ROW AND COLUMN INTERCHANGE
-!
-      K=N
-  100 K=(K-1)
-      IF(K) 150,150,105
-  105 I=L(K)
-      IF(I-K) 120,120,108
-  108 JQ=N*(K-1)
-      JR=N*(I-1)
-      DO 110 J=1,N
-      JK=JQ+J
-      HOLD=A(JK)
-      JI=JR+J
-      A(JK)=-A(JI)
-  110 A(JI) =HOLD
-  120 J=M(K)
-      IF(J-K) 100,100,125
-  125 KI=K-N
-      DO 130 I=1,N
-      KI=KI+N
-      HOLD=A(KI)
-      JI=KI-K+J
-      A(KI)=-A(JI)
-  130 A(JI) =HOLD
-      GO TO 100
-  150 RETURN
-      END SUBROUTINE
 
-      !
+    !>N1=number of equations
+    !>N2=number of unknowns
+    !>A=coefficient matrix
+    !>B=right hand sides
+    !>BA=solution on output
+    !>AA,VAL,XV,YV=work space
+    !>RES=residu (sum of squares)
+    !>M1,M2=dimensions
+    
+    !>We make it a set with a symmetrical matrix, because
+    !>we want to use STELSEL to solve it.
 
-           Subroutine Kleinkwa(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
-!     N1=number of equations
-!     N2=number of unknowns
-!     A=coefficient matrix
-!     B=right hand sides
-!     BA=solution on output
-!     AA,VAL,XV,YV=work space
-!     RES=residu (sum of squares)
-!     M1,M2=dimensions
-!
-!     We make it a set with a symmetrical matrix, because
-!     we want to use STELSEL to solve it.
-!
-      IMPLICIT double precision (A-H,O-Z)
-      integer, intent(in) :: M1, M2
-      dimension  A(M1,M2),AA(M2,M2),B(M2),BA(M2)
-      dimension VAL(M2),XV(M2),YV(M2)
-      integer :: kk, i, j, N2, N1, N
-      do kk=1,N2
-        x=0.0
+    Subroutine Kleinkwa(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
+        double precision, dimension(M1,M2), intent(in)      :: A
+        double precision, dimension(M2,M2), intent(inout)   :: AA
+        double precision, dimension(M2), intent(in)         :: B
+        double precision, dimension(M2), intent(inout)      :: BA, VAL, XV, YV
+        double precision, intent(inout)                     :: res, tol
+        double precision                                    :: x,y
+        integer, intent(in) :: M1, M2
+        integer :: kk, i, j, N2, N1, N
+
+        do kk=1,N2
+            x = 0.0
+            do i=1,N1
+                x = x + A(i,kk) * B(i)
+            end do
+            BA(kk) = x
+            do j=1,N2
+                y = 0.0
+                do i=1,N1
+                    y = y + A(i,kk) * A(i,j)
+                end do
+                AA(kk,j) = y
+            end do
+        end do
+
+        call stelsel(N2,M2,AA,BA,TOL,VAL,XV,YV)
+
+        res = 0.0
         do i=1,N1
-          x=x+A(i,kk)*B(i)
-        end do
-        BA(kk)=x
-        do j=1,N2
-          y=0.0
-          do i=1,N1
-            y=y+A(i,kk)*A(i,j)
+          y = 0.0
+          do j=1,N2
+            y = y + A(i,j) * BA(j)
           end do
-          AA(kk,j)=y
+          RES = RES + (y - B(i))**2
         end do
-      end do
-      call STELSEL(N2,M2,AA,BA,TOL,VAL,XV,YV)
-      RES=0.0
-      do i=1,N1
-        y=0.0
-        do j=1,N2
-          y=y+A(i,j)*BA(j)
-        end do
-        RES=RES+(y-B(i))**2
-      end do
-
-      end subroutine
+          
+        call vef_trace_tensor(MODULE_NAME, "kleinKwa", BA)
+    
+    end subroutine
 
 
       Subroutine STELSEL(N,M,A,R,TOL,VAL,XV,YV)
