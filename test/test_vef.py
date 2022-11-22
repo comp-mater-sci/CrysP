@@ -137,8 +137,3 @@ def test_unit(mode, algorithm, slip_system, module, function, generate_output):
     reference = get_trace_values(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}.log', module, function)
     data = get_trace_values(TEST_DATA/f'{mode}_{algorithm}_{slip_system}.log', module, function)
     assert data == reference
-
-<<<<<<< HEAD
-
-=======
->>>>>>> master

@@ -3,12 +3,8 @@ module tracing
     
     private
     public  :: vef_trace_str,    &
-<<<<<<< HEAD
                vef_trace_dbl_arr, &    
                vef_trace_dbl_mat    
-=======
-               vef_trace_dbl_arr    
->>>>>>> master
 
 
 
@@ -21,17 +17,12 @@ contains
 #endif
     end subroutine
 
-<<<<<<< HEAD
     subroutine vef_trace_dbl_arr(caller_module, caller_routine, arr)
-=======
-subroutine vef_trace_dbl_arr(caller_module, caller_routine, arr)
->>>>>>> master
         character(len=*), intent(in)                :: caller_module, caller_routine
         double precision, dimension(:), intent(in)  ::  arr
         integer                                     :: i
 #ifdef TRACE
         do i = 1,size(arr)
-<<<<<<< HEAD
             print *, 'TRACE ', caller_module, ', ', caller_routine, ': ', arr(i) 
         end do
 #endif
@@ -47,12 +38,5 @@ subroutine vef_trace_dbl_arr(caller_module, caller_routine, arr)
         end do
 #endif
     end subroutine
-
-=======
-            print *, 'TRACE ', caller_module, ', ', caller_routine, ', index ', i, ': ', arr(i) 
-        end do
-#endif
-    end subroutine
->>>>>>> master
 
 end module
