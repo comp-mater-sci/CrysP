@@ -87,11 +87,17 @@ def generate_output(mode, algorithm, slip_system, setup_benchmark, request):
         shutil.move(TEST_DATA/f'out.{EXTENSIONS[mode]}', out_path)
         shutil.move(TEST_DATA/'alamDMC.log', log_path)
         GENERATED_DATA.append((mode, algorithm, slip_system))
-        if request.config.getoption('--update') != 'FALSE':
-            ref_path = TEST_ROOT/'data/out/'
-            shutil.copy(out_path, ref_path)
-            shutil.copy(log_path, ref_path)
-    
+        ref_path = TEST_ROOT/'data/out/'
+        match request.config.getoption('--update'):
+            case 'log':
+                shutil.copy(log_path, ref_path)
+            case 'out':
+                shutil.copy(out_path, ref_path)
+            case 'FALSE':
+                pass
+            case _: 
+                shutil.copy(log_path, ref_path)
+                shutil.copy(out_path, ref_path)
 
 def process_file(path):
     df = pd.read_csv(path,delimiter=' +', engine='python')
@@ -132,4 +138,7 @@ def test_unit(mode, algorithm, slip_system, module, function, generate_output):
     data = get_trace_values(TEST_DATA/f'{mode}_{algorithm}_{slip_system}.log', module, function)
     assert data == reference
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> master

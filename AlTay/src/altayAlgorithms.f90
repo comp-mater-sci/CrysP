@@ -3,6 +3,7 @@
 #endif
 
 module altayAlgorithms
+<<<<<<< HEAD
     use altayMiscutils, only: terminate, stopcode_runtimeerror
     use criMathUtils
     use altayRCM
@@ -13,6 +14,77 @@ module altayAlgorithms
     double precision, parameter :: SQRT_P5 = sqrt(0.5d0)
     double precision, parameter :: RESOLUTION = 0.5e-5
     character(len=15), parameter :: MODULE_NAME = "altayAlgorithms"
+=======
+        use altayMiscutils, only: terminate, stopcode_runtimeerror
+        use criMathUtils
+        use tracing
+        
+        implicit none
+
+        character(len=*), parameter :: MODULE_NAME = 'altayAlgorithms'
+
+        contains
+        
+        !> Updating of CIJ matrix of ellipsoid
+        !> Finv is the inverse of the F-tensor which describes the strain increment.
+        subroutine UPDATC(CIJ, Finv)
+                double precision, dimension(3,3), intent(in)   :: Finv
+                double precision, dimension(3,3), intent(inout)  :: CIJ
+                CIJ = matmul(matmul(transpose(Finv), CIJ), Finv)
+        end subroutine
+        
+        !> Transform a 5D-vector in deviatoric (stress/strain-rate) space to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
+        !> Note: The reverse transformation is done by function 'Vector5D'.
+        function SymMatrix(vec) result(sym)
+                double precision, dimension(5), intent(in) :: vec
+                double precision, dimension(3,3)           :: sym 
+                double precision, parameter                :: sq22 = sqrt(0.5d0),                     & 
+                                                              const3 = (sqrt(3.0d0) + 3.0d0) / 6.0d0, & 
+                                                              const4 = (3.0d0 - sqrt(3.0d0)) / 6.0d0  
+                
+                sym(2,2)=  const3 * vec(1) - const4 * vec(2)
+                sym(3,3) = -const4 * vec(1) + const3 * vec(2)
+                
+                sym(1,1) = -sym(2,2) - sym(3,3)
+                
+                sym(2,3) = sq22 * vec(3)
+                sym(3,1) = sq22 * vec(4)
+                sym(1,2) = sq22 * vec(5)
+                
+                sym(3,2) = sym(2,3)
+                sym(1,3) = sym(3,1)
+                sym(2,1) = sym(1,2)
+        end function SymMatrix
+        
+        !> Transform a (3,3)-matrix representation of a traceless 2nd rank tensor to 5D-vector representation in deviatoric (stress/strain-rate) space.
+        !> Notes:
+        !>    - Only the symmetric part of 2nd rank tensor is transformed.
+        !>    - The reverse transformation is done by function 'SymMatrix'.
+        function Vector5D(mat) result(vec)
+                double precision, dimension(3,3), intent(in) :: mat
+                double precision, dimension(5)               :: vec 
+                double precision, parameter                  :: c1 = 0.5d0 * (sqrt(3.0d0) + 1.0d0), &
+                                                                c2 = c1 - 1.0d0,                       & 
+                                                                c3 = sqrt(0.5d0)
+                
+                vec(1) = c1 * mat(2,2) + c2 * mat(3,3)
+                vec(2) = c2 * mat(2,2) + c1 * mat(3,3)
+                vec(3) = c3 * (mat(2,3) + mat(3,2))
+                vec(4) = c3 * (mat(3,1) + mat(1,3))
+                vec(5) = c3 * (mat(1,2) + mat(2,1))
+        end function Vector5D
+       
+        !Calculate the CIJ matrix of an ellipsoid with half axes stored in Gaxes. T defines the orientation of the axes.
+        !This version assumes that A is a diagonal matrix
+        Subroutine Transf(Gaxes, Aprime, T)
+                double precision, dimension(3), intent(in)      :: Gaxes 
+                double precision, dimension(3,3), intent(inout) :: Aprime 
+                double precision, dimension(3,3), intent(in)    :: T 
+                integer                                         :: i, j, k
+                double precision                                :: y
+                double precision, dimension(3)                  :: A
+                double precision, dimension(3,3)                :: X
+>>>>>>> master
 
     private  
     public  :: deg2rad,             &
@@ -295,6 +367,7 @@ contains
         do i=1,3
             x = prdir(i)**2 + x
         end do
+<<<<<<< HEAD
       
         x = sqrt(x)
         if (x > RESOLUTION) then
@@ -308,6 +381,144 @@ contains
         
         return
     end subroutine
+=======
+        pmax=0.0
+        pp=0.0
+        imax=0
+        jmax=0
+        do i=1,3
+        i1=i+1
+        if (i1.gt.3) i1=1
+        i2=i1+1
+        if (i2.gt.3) i2=1
+        do 16 j=1,3
+          j1=j+1
+          if (j1.gt.3) j1=1
+          j2=j1+1
+          if (j2.gt.3) j2=1
+          xx=y(i1,j1)*y(i2,j2)-y(i1,j2)*y(i2,j1)
+          if (pmax.gt.abs(xx)) goto 16
+          pmax=abs(xx)
+          pp=xx
+          imax=i
+          jmax=j
+   16   continue
+        end do
+!       the minor with the max. value has been identified
+        i1=imax+1
+        if (i1.gt.3) i1=1
+        i2=i1+1
+        if (i2.gt.3) i2=1
+        j1=jmax+1
+        if (j1.gt.3) j1=1
+        j2=j1+1
+        if (j2.gt.3) j2=1
+        prdir(jmax,ipr)=1.D0
+        pmax=-(y(i1,jmax)*y(i2,j2)-y(i2,jmax)*y(i1,j2))
+        prdir(j1,ipr)=pmax/pp
+        pmax=-(y(i1,j1)*y(i2,jmax)-y(i2,j1)*y(i1,jmax))
+        prdir(j2,ipr)=pmax/pp
+        call normaliz(prdir(1,ipr),xx)
+        if (axisym) goto 17
+      end do
+      goto 19
+!
+!     Vectorial product between prdir(,3) and x3 axis
+!
+   17 prdir(1,2)=-prdir(2,3)
+      prdir(2,2)=prdir(1,3)
+      prdir(3,2)=0.0
+      call normaliz(prdir(1,2),xx)
+      if (xx.gt.0.7) goto 19
+!
+!     Vectorial product between prdir(,3) and x2 axis
+!
+      prdir(1,2)=prdir(3,3)
+      prdir(2,2)=0.0
+      prdir(3,2)=-prdir(1,3)
+      call normaliz(prdir(1,2),xx)
+   19 prdir(1,1)=prdir(2,2)*prdir(3,3)-prdir(3,2)*prdir(2,3)
+      prdir(2,1)=prdir(3,2)*prdir(1,3)-prdir(1,2)*prdir(3,3)
+      prdir(3,1)=prdir(1,2)*prdir(2,3)-prdir(2,2)*prdir(1,3)
+      call normaliz(prdir(1,1),xx)
+   21 call vef_trace_dbl_arr(MODULE_NAME, 'eigenv', prval)
+      return
+   33 do i=1,3
+        prval(i)=0.0
+        do j=1,3
+          prdir(i,j)=0.0
+        end do
+        prdir(i,i)=1.D0
+      end do
+      goto 21
+      end subroutine
+      !
+      subroutine normaliz(prdir,xx)
+      IMPLICIT double precision (A-H,O-Z)
+      dimension prdir(3)
+      integer :: i
+      xx=0.0
+      do 19 i=1,3
+      xx=prdir(i)**2+xx
+   19 continue
+      xx=sqrt(xx)
+      if (xx.gt.0.5d-5) goto 20
+      xx=0.0
+      return
+   20 do 22 i=1,3
+      prdir(i)=prdir(i)/xx
+   22 continue
+      return
+      end subroutine
+      !
+      subroutine canoni(a,b,X,theta,pi)
+#ifdef ALTAY_SUBROUTINE
+      use altayRCM
+#endif
+      IMPLICIT double precision (A-H,O-Z)
+!
+!     should find the roots of an equation
+!
+!     x**3 - A x + B = 0
+!
+!     The roots are suppposed to be real.
+!
+      dimension x(3)
+      if (a.lt.0.5e-11) goto 2
+      roota=sqrt(a**3/27.0d0)
+      delta=0.5D0*b/roota
+      if (abs(delta).lt.(1.0d0+1.0d-6)) goto 1
+    2 continue
+#ifndef ALTAY_SUBROUTINE
+      write (*,100)
+  100 format(' Subroutine CANONI - 2 Roots seem to be complex')
+      call terminate(stopcode_runtimeerror)
+#else
+      RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
+#endif
+    1 if (delta.gt.1.0) delta=1.D0
+      if (delta.lt.-1.0) delta=-1.D0
+      theta=acos(delta)
+      delta=-2.D0*sqrt(a/3.D0)
+      x(1)=delta*cos(theta/3.D0)
+      x(2)=delta*cos((theta+2.D0*pi)/3.D0)
+      x(3)=delta*cos((theta+4.D0*pi)/3.D0)
+      end subroutine
+      !
+        subroutine verwis(i1,i2,prval,prdir)
+                IMPLICIT double precision (A-H,O-Z)
+                dimension prval(3),prdir(3,3)
+                integer, intent(in) :: i1, i2
+                integer :: i
+                x=prval(i1)
+                prval(i1)=prval(i2)
+                prval(i2)=x
+                do i=1,3
+                        x=prdir(i,i1)
+                        prdir(i,i1)=-prdir(i,i2)
+                        prdir(i,i2)=x
+                end do
+>>>>>>> master
 
     !should find the roots of an equation
     !x**3 - A x + B = 0
