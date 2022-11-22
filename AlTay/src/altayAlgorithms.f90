@@ -283,7 +283,7 @@ contains
             prdir(3,1) = prdir(1,2) * prdir(2,3) - prdir(2,2) * prdir(1,3)
             call normaliz(prdir(1,1), xx)
         end if
-        call vef_trace_dbl_arr(MODULE_NAME, 'eigenv', prval)
+        call vef_trace_tensor(MODULE_NAME, 'eigenv', prval)
     end subroutine
  
     subroutine normaliz(prdir,x)
@@ -301,7 +301,7 @@ contains
             do i=1,3
                 prdir(i) = prdir(i) / x
             end do
-            call vef_trace_dbl_arr(MODULE_NAME, 'normaliz', prdir)
+            call vef_trace_tensor(MODULE_NAME, 'normaliz', prdir)
         else
             x = 0
         end if 
@@ -332,7 +332,7 @@ contains
                 X(2) = delta * cos((theta + 2.0 * PI) / 3.0)
                 X(3) = delta * cos((theta + 4.0 * PI) / 3.0)
             
-                call vef_trace_dbl_arr(MODULE_NAME, 'canoni', X)
+                call vef_trace_tensor(MODULE_NAME, 'canoni', X)
                 return
             end if
         end if 
