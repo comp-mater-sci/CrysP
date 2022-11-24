@@ -6,7 +6,5 @@
 security/ssh_keys/*
 test/security/ssh_keys/*
 callgraph/*
-<<<<<<< HEAD
-=======
 test/run/*
->>>>>>> master
+test/data/out/

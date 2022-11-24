@@ -1,6 +1,4 @@
-#ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
-#endif
 
 module altayAlgorithms
     use altayMiscutils, only: terminate, stopcode_runtimeerror
@@ -10,9 +8,12 @@ module altayAlgorithms
     
     implicit none
 
+    include 'mkl.fi'
+
     double precision, parameter :: SQRT_P5 = sqrt(0.5d0)
     double precision, parameter :: RESOLUTION = 0.5e-5
     character(len=15), parameter :: MODULE_NAME = "altayAlgorithms"
+    
         
     private  
     public  :: deg2rad,             &
@@ -367,15 +368,26 @@ contains
     !>We make it a set with a symmetrical matrix, because
     !>we want to use STELSEL to solve it.
 
-    Subroutine Kleinkwa(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
-        double precision, dimension(M1,M2), intent(in)      :: A
-        double precision, dimension(M2,M2), intent(inout)   :: AA
-        double precision, dimension(M2), intent(in)         :: B
-        double precision, dimension(M2), intent(inout)      :: BA, VAL, XV, YV
-        double precision, intent(inout)                     :: res, tol
-        double precision                                    :: x,y
-        integer, intent(in) :: M1, M2
-        integer :: kk, i, j, N2, N1, N
+Subroutine Kleinkwa2(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
+        !double precision, dimension(M1,M2), intent(in)      :: A
+        !double precision, dimension(M2,M2), intent(inout)   :: AA
+        !double precision, dimension(M2), intent(in)         :: B
+        !double precision, dimension(M2), intent(inout)      :: BA, VAL, XV, YV
+        !double precision, intent(inout)                     :: res, tol
+        !double precision                                    :: x,y
+        !integer, intent(in) :: M1, M2
+        !integer :: kk, i, j, N2, N1, N
+
+         IMPLICIT double precision (A-H,O-Z)
+      integer, intent(in) :: M1, M2
+      dimension  A(M1,M2),AA(M2,M2),B(M2),BA(M2)
+      dimension VAL(M2),XV(M2),YV(M2)
+      integer :: kk, i, j, N2, N1, N, info
+        integer, dimension(N2) :: ipiv
+
+        ipiv = 0
+
+                
 
         do kk=1,N2
             x = 0.0
@@ -393,6 +405,7 @@ contains
         end do
 
         call stelsel(N2,M2,AA,BA,TOL,VAL,XV,YV)
+        
 
         res = 0.0
         do i=1,N1
@@ -403,12 +416,53 @@ contains
           RES = RES + (y - B(i))**2
         end do
           
-        call vef_trace_tensor(MODULE_NAME, "kleinKwa", BA)
+        call vef_trace_dbl_arr(MODULE_NAME, "kleinKwa", BA(1:N2))
+    
+    end subroutine
+    
+Subroutine kleinkwa(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
+        double precision, dimension(M1,M2), intent(in)      :: A
+        double precision, dimension(M2,M2), intent(inout)   :: AA
+        double precision, dimension(M2), intent(in)         :: B
+        double precision, dimension(M2), intent(inout)      :: BA, VAL, XV, YV
+        double precision, intent(inout)                     :: res, tol
+        double precision                                    :: x,y
+        integer, intent(in) :: M1, M2
+        integer :: kk, i, j, N2, N1, N
+
+      integer :: rank, info, lwork
+        double precision, dimension(M1,M2)  :: A_COPY
+        integer, dimension(N2)           :: jpvt
+        double precision :: rcond
+        double precision, dimension(1) :: work_buffer
+        double precision, dimension(:), allocatable :: work
+
+        A_COPY = A 
+        BA = B
+        jpvt = 0
+        rcond = 0.01
+
+        call dgelsy(N1, N2, 1, A_COPY, M1, BA, M2, jpvt, rcond, rank, work_buffer, -1, info)
+        lwork = work_buffer(1)
+        allocate(work(lwork))
+        call dgelsy(N1, N2, 1, A_COPY, M1, BA, M2, jpvt, rcond, rank, work, lwork, info)
+        deallocate(work)
+        
+        res = 0.0
+        do i=1,N1
+          y = 0.0
+          do j=1,N2
+            y = y + A(i,j) * BA(j)
+          end do
+          RES = RES + (y - B(i))**2
+        end do
+
+          
+        call vef_trace_dbl_arr(MODULE_NAME, "kleinKwa", BA(1:N2))
     
     end subroutine
 
-
-      Subroutine STELSEL(N,M,A,R,TOL,VAL,XV,YV)
+Subroutine STELSEL(N,M,A,R,TOL,VAL,XV,YV)
       IMPLICIT double precision (A-H,O-Z)
       integer, intent(in) :: N, M
       dimension A(M,M),R(M),VAL(M),XV(M),YV(M)

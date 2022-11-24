@@ -74,7 +74,7 @@ def setup_benchmark(mode, algorithm, slip_system, create_conf_file):
 def generate_output(mode, algorithm, slip_system, setup_benchmark, request):
     if not (mode, algorithm, slip_system) in GENERATED_DATA:
         os.chdir(TEST_DATA)
-        os.system(TEST_ROOT/f'../VEF/release/bin/alamDMC {mode} test.cfg > alamDMC.log')
+        os.system(TEST_ROOT/f'../VEF/release/bin/alamDMC {mode} test.cfg > alamDMC.log 2>&1')
 
         if mode == 'UDSA':
             with open('out.uds', 'w') as out:
@@ -109,7 +109,7 @@ def process_file(path):
             if isinstance(num, str) and pattern.match(num):
                 formatted = num.split('E')
                 if int(formatted[1]) > -9:
-                    res.append(int(formatted[0].replace('-','')[2:8]))
+                    res.append(int(formatted[0].replace('-','')[2:4]))
     return res
 
 
@@ -128,7 +128,10 @@ def get_trace_values(path, module, function):
     with open(path) as log_file:
         for line in log_file:
             if header in line:
-                vals.append(re.findall(r'-?[0-9]+\.?[0-9]+E?-?[0-9]* *$', line)[0].replace(' ','').replace('-','').replace('.','').replace('E','')[0:6])
+                num = re.findall(r'-?[0-9]+\.?[0-9]+E?-?[0-9]* *$', line)[0]
+                formatted = num.split('E')
+                if len(formatted) == 1 or int(formatted[1]) > -9:
+                    vals.append((formatted[0]).replace('-','').replace('.','')[0:3])
     return vals
         
 

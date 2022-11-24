@@ -4,6 +4,9 @@
 
       module altaySliprate
       use altayMiscutils, only: terminate, stopcode_runtimeerror
+        use tracing
+        
+    character(len=*), parameter :: MODULE_NAME = "altaySliprate"
 
       contains
 
@@ -327,7 +330,10 @@
       enddo
 !      write (IMP,101) (SLPR(i),i=1,NN)
 ! 101  format (10F8.5)
-      if (RES.gt.(10000.0*TOL)) ineg=-1
+      if (RES.gt.(10000.0*TOL)) then
+        ineg=-1
+        call vef_trace_str(MODULE_NAME,'MINSQU', 'RES too large')
+      end if
 !      write (IMP,103) INEG,RES,sumsq
 ! 103  format (' MINSQU INEG',i5,'  RES',d15.6,'  sumsq',d15.6)
 !      write (IMP,915) (SLPR(i),i=1,NN)
