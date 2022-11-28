@@ -1,13 +1,12 @@
 module tracing
     implicit none
     
+    interface vef_trace
+        module procedure vef_trace_str, vef_trace_tensor
+    end interface
+
     private
-    public  :: vef_trace_str,    &
-               vef_trace_dbl_arr, &
-               vef_trace_dbl_mat, &                
-               vef_trace_tensor
-
-
+    public  :: vef_trace 
 
 contains
 
@@ -41,26 +40,4 @@ contains
         print *, 'TRACE ', caller_module, ', ', caller_routine, ': ', buffer
 #endif
     end subroutine
-subroutine vef_trace_dbl_arr(caller_module, caller_routine, arr)
-        character(len=*), intent(in)                :: caller_module, caller_routine
-        double precision, dimension(:), intent(in)  ::  arr
-        integer                                     :: i
-#ifdef TRACE
-        do i = 1,size(arr)
-            print *, 'TRACE ', caller_module, ', ', caller_routine, ': ', arr(i) 
-        end do
-#endif
-    end subroutine
-    
-    subroutine vef_trace_dbl_mat(caller_module, caller_routine, mat)
-        character(len=*), intent(in)                    :: caller_module, caller_routine
-        double precision, dimension(:,:), intent(in)    :: mat
-        integer                                         :: i
-#ifdef TRACE
-        do i = 1,size(mat(1,:))
-            call vef_trace_dbl_arr(caller_module, caller_routine, mat(i,:))
-        end do
-#endif
-    end subroutine
-
 end module

@@ -332,7 +332,7 @@
 ! 101  format (10F8.5)
       if (RES.gt.(10000.0*TOL)) then
         ineg=-1
-        call vef_trace_str(MODULE_NAME,'MINSQU', 'RES too large')
+        call vef_trace(MODULE_NAME,'MINSQU', 'RES too large')
       end if
 !      write (IMP,103) INEG,RES,sumsq
 ! 103  format (' MINSQU INEG',i5,'  RES',d15.6,'  sumsq',d15.6)
