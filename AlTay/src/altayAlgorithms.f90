@@ -14,7 +14,6 @@ module altayAlgorithms
     double precision, parameter :: RESOLUTION = 0.5e-5
     character(len=15), parameter :: MODULE_NAME = "altayAlgorithms"
     
-        
     private  
     public  :: deg2rad,             &
                rotmat,              &
@@ -107,14 +106,12 @@ contains
     !store them in prval
     !find Euler angles of these axes, store in GEULR
     Subroutine GETANG(CIJ, prval, GEULR, TMAT)
-        
         double precision, dimension(3,3), intent(in)    :: CIJ
         double precision, dimension(3), intent(inout)   :: GEULR, prval
         double precision, dimension(3,3), intent(inout) :: TMAT
         integer                                         :: i
         double precision                                :: CIJTR, enrm 
-        double precision, dimension(3,3)                :: prdir, e
-        logical                                         :: axisym
+        double precision, dimension(3,3)                :: e
         type(EulerAngles)                               :: CEuler
 
         CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3.D0
@@ -123,174 +120,38 @@ contains
             e(i,i) = e(i,i) - CIJTR
         end do
 
-        call eigenv(e, prval, prdir, enrm, axisym)
+        call eigenv(e, prval)
         
         RCM_GUARD
       
         prval = prval + CIJTR
 
-        if (prval(1) > prval(2)) call verwis(2, 1, prval, prdir)
-        if (prval(2) > prval(3)) call verwis(3, 2, prval, prdir)
-        if (prval(1) > prval(2)) call verwis(1, 2, prval, prdir)
         prval = 1.D0 / sqrt(prval)
-        TMAT = prdir
+        TMAT = e
         CEuler = EuleranglesType(TMAT)
         GEULR = EulerAngles2Arr(CEuler)
     end subroutine
-
-
-    !>Utility function to simplify incrementing some value which may roll over at 3
-    !>@param val The value to be incremented.
-    !>@return The incremented value.
-    function inc_max_3(val) result(res)
-        integer, intent(in) :: val
-        integer             :: res
-            
-        res = val + 1
-        if (res > 3) then
-            res = 1
-        end if
-    end function
-    
-    !>Principal values of symmetric tensor with zero trace
-    !>The eigenvectors are normalized.
-    !>prval contains the principal values
-    Subroutine eigenv(e, prval, prdir, enrm, axisym)
-        double precision, dimension(3,3), intent(in)    :: e
-        logical, intent(out)                          :: axisym
-        double precision, dimension(3,3), intent(inout) :: prdir
-        double precision, intent(out)                   :: enrm
+  
+    subroutine eigenv(e, prval)
+        double precision, dimension(3,3), intent(inout) :: e
         double precision, dimension(3), intent(out)     :: prval
-        integer                                         :: i, i1, i2, j, imax, jmax, kmax, ipr, j1, j2, min_ipr
-        double precision                                :: xx, a, b, theta, pmax, eta, pp
-        double precision, dimension(3)                  :: x
-        double precision, dimension(3,3)                :: y
+        integer                                         :: i, info
+        integer, dimension(18)                          :: iwork
+        double precision, dimension(37)                 :: work
 
-        a=0.0
-        do i = 1,3
-            do j = 1,3
-                if (abs(e(i,j) - e(j,i)) > RESOLUTION) then
-                    RCM_RAISE(1,'eigenv','The input tensor is not symmetric', RCM_RTN)
-                end if
-                a = a + e(i,j)**2
-            end do
+        call dsyevd('V', 'U', 3, e, 3, prval, work, 37, iwork, 18, info)
+    
+        do i=1,3
+            call normaliz(e(:,i))
         end do
-
-        enrm = sqrt(a)
-        if (enrm < RESOLUTION) then
-            do i = 1,3
-                prval(i) = 0.0
-                do j = 1,3
-                    prdir(i,j) = 0.0
-                end do
-                prdir(i,i) = 1.D0
-            end do
-        else 
-            a = a / 2
-            b = e(1,1) * e(2,3)**2 + e(2,2) * e(3,1)**2 + e(3,3) * e(1,2)**2 - 2 * e(1,2) * e(2,3) * e(3,1) - e(1,1) * e(2,2) * e(3,3)
-            call canoni(a, b, x, theta)
-      
-            RCM_GUARD
-            
-            pmax = abs(x(1))
-            imax = 1
-            do i = 2,3
-                if (abs(x(i)) > pmax) then
-                    pmax = abs(x(i))
-                    imax = i
-                end if
-            end do
-
-            prval(3) = x(imax)
-            jmax = inc_max_3(imax)
-            prval(1) = x(jmax)
-            kmax = 6 - imax - jmax
-            prval(2) = x(kmax)
-
-            eta = (theta + (imax - 1) * 2 * pi) / 3.D0
-            if (eta > pi) eta = eta - 2 * pi
-
-            !Correction on the order of the eigenvalues
-            if (abs(prval(2)) >= abs(prval(1))) then
-                xx = prval(2)
-                prval(2) = prval(1)
-                prval(1) = xx
-            end if
-            
-            axisym = abs(prval(2) - prval(1)) < RESOLUTION
-            if (axisym) then
-                prval(1) = 0.5 * (prval(1) + prval(2))
-                prval(2) = prval(1)
-                min_ipr = 3
-            else
-                min_ipr = 2
-            end if
-
-            y = e
-            do ipr = 3,min_ipr,-1
-                do i = 1,3
-                    y(i,i) = y(i,i) - prval(ipr)
-                end do
-                pmax = 0.0
-                pp = 0.0
-                imax = 0
-                jmax = 0
-                do i = 1,3
-                    i1 = inc_max_3(i)
-                    i2 = inc_max_3(i1)
-                    do j = 1,3
-                        j1 = inc_max_3(j)
-                        j2 = inc_max_3(j1)
-                        xx = y(i1,j1) * y(i2,j2) - y(i1,j2) * y(i2,j1)
-                        if (pmax <= abs(xx)) then 
-                            pmax = abs(xx)
-                            pp = xx
-                            imax = i
-                            jmax = j
-                        end if 
-                    end do
-                end do
-
-                ! the minor with the max. value has been identified
-                i1 = inc_max_3(imax)
-                i2 = inc_max_3(i1)
-                j1 = inc_max_3(jmax)
-                j2 = inc_max_3(j2)
-                prdir(jmax, ipr) = 1.D0
-                pmax = -(y(i1,jmax) * y(i2,j2) - y(i2,jmax) * y(i1,j2))
-                prdir(j1, ipr) = pmax / pp
-                pmax = -(y(i1,j1) * y(i2,jmax) - y(i2,j1) * y(i1,jmax))
-                prdir(j2, ipr) = pmax / pp
-                call normaliz(prdir(1,ipr), xx)
-            end do
-            
-            if (axisym) then
-                !Vectorial product between prdir(,3) and x3 axis
-                prdir(1,2) = -prdir(2,3)
-                prdir(2,2) = prdir(1,3)
-                prdir(3,2) = 0.0
-                call normaliz(prdir(1,2), xx)
-                if (xx <= 0.7) then
-                    !Vectorial product between prdir(,3) and x2 axis
-                    prdir(1,2) = prdir(3,3)
-                    prdir(2,2) = 0.0
-                    prdir(3,2) = -prdir(1,3)
-                    call normaliz(prdir(1,2), xx)
-                end if 
-            end if
-
-            prdir(1,1) = prdir(2,2) * prdir(3,3) - prdir(3,2) * prdir(2,3)
-            prdir(2,1) = prdir(3,2) * prdir(1,3) - prdir(1,2) * prdir(3,3)
-            prdir(3,1) = prdir(1,2) * prdir(2,3) - prdir(2,2) * prdir(1,3)
-            call normaliz(prdir(1,1), xx)
-        end if
+        
         call vef_trace_tensor(MODULE_NAME, 'eigenv', prval)
     end subroutine
- 
-    subroutine normaliz(prdir,x)
+            
+    subroutine normaliz(prdir)
         double precision, dimension(3), intent(inout)   :: prdir
-        double precision, intent(out)                   :: x
-        integer :: i
+        double precision                                :: x
+        integer                                         :: i
       
         x = 0.0
         do i=1,3
@@ -310,9 +171,9 @@ contains
         return
     end subroutine
 
-    !should find the roots of an equation
-    !x**3 - A x + B = 0
-    !The roots are suppposed to be real.
+    !>should find the roots of an equation
+    !>x**3 - A x + B = 0
+    !>The roots are suppposed to be real.
     subroutine canoni(a, b, X, theta)
         double precision, intent(in)                :: a, b
         double precision, intent(out)               :: theta
@@ -340,102 +201,25 @@ contains
         RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
     end subroutine
       
-    subroutine verwis(i1, i2, prval, prdir)
-        integer, intent(in)                             :: i1, i2
-        double precision, dimension(3), intent(inout)   :: prval
-        double precision, dimension(3,3), intent(inout) :: prdir
-        double precision                                :: x
-        integer                                         :: i
-        x = prval(i1)
-        prval(i1) = prval(i2)
-        prval(i2) = x
-        do i=1,3
-                x = prdir(i,i1)
-                prdir(i,i1) = -prdir(i,i2)
-                prdir(i,i2) = x
-        end do
-    end subroutine
-
     !>N1=number of equations
     !>N2=number of unknowns
     !>A=coefficient matrix
     !>B=right hand sides
     !>BA=solution on output
-    !>AA,VAL,XV,YV=work space
     !>RES=residu (sum of squares)
     !>M1,M2=dimensions
-    
-    !>We make it a set with a symmetrical matrix, because
-    !>we want to use STELSEL to solve it.
-
-Subroutine Kleinkwa2(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
-        !double precision, dimension(M1,M2), intent(in)      :: A
-        !double precision, dimension(M2,M2), intent(inout)   :: AA
-        !double precision, dimension(M2), intent(in)         :: B
-        !double precision, dimension(M2), intent(inout)      :: BA, VAL, XV, YV
-        !double precision, intent(inout)                     :: res, tol
-        !double precision                                    :: x,y
-        !integer, intent(in) :: M1, M2
-        !integer :: kk, i, j, N2, N1, N
-
-         IMPLICIT double precision (A-H,O-Z)
-      integer, intent(in) :: M1, M2
-      dimension  A(M1,M2),AA(M2,M2),B(M2),BA(M2)
-      dimension VAL(M2),XV(M2),YV(M2)
-      integer :: kk, i, j, N2, N1, N, info
-        integer, dimension(N2) :: ipiv
-
-        ipiv = 0
-
-                
-
-        do kk=1,N2
-            x = 0.0
-            do i=1,N1
-                x = x + A(i,kk) * B(i)
-            end do
-            BA(kk) = x
-            do j=1,N2
-                y = 0.0
-                do i=1,N1
-                    y = y + A(i,kk) * A(i,j)
-                end do
-                AA(kk,j) = y
-            end do
-        end do
-
-        call stelsel(N2,M2,AA,BA,TOL,VAL,XV,YV)
-        
-
-        res = 0.0
-        do i=1,N1
-          y = 0.0
-          do j=1,N2
-            y = y + A(i,j) * BA(j)
-          end do
-          RES = RES + (y - B(i))**2
-        end do
-          
-        call vef_trace_dbl_arr(MODULE_NAME, "kleinKwa", BA(1:N2))
-    
-    end subroutine
-    
-Subroutine kleinkwa(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
-        double precision, dimension(M1,M2), intent(in)      :: A
-        double precision, dimension(M2,M2), intent(inout)   :: AA
-        double precision, dimension(M2), intent(in)         :: B
-        double precision, dimension(M2), intent(inout)      :: BA, VAL, XV, YV
-        double precision, intent(inout)                     :: res, tol
-        double precision                                    :: x,y
-        integer, intent(in) :: M1, M2
-        integer :: kk, i, j, N2, N1, N
-
-      integer :: rank, info, lwork
-        double precision, dimension(M1,M2)  :: A_COPY
-        integer, dimension(N2)           :: jpvt
-        double precision :: rcond
-        double precision, dimension(1) :: work_buffer
-        double precision, dimension(:), allocatable :: work
+    subroutine kleinkwa(N1, N2, M1, M2, A, B, BA, res)
+        double precision, dimension(M2), intent(in)     :: B
+        double precision, dimension(M1,M2), intent(in)  :: A
+        double precision, dimension(M2), intent(inout)  :: BA
+        double precision, intent(inout)                 :: res
+        integer, intent(in)                             :: M1, M2, N1, N2
+        integer                                         :: i, j, rank, info, lwork
+        integer, dimension(N2)                          :: jpvt
+        double precision                                :: y, rcond
+        double precision, dimension(1)                  :: work_buffer
+        double precision, dimension(:), allocatable     :: work
+        double precision, dimension(M1,M2)              :: A_COPY
 
         A_COPY = A 
         BA = B
@@ -457,227 +241,6 @@ Subroutine kleinkwa(N1,N2,M1,M2,A,B,AA,BA,VAL,XV,YV,TOL,RES)
           RES = RES + (y - B(i))**2
         end do
 
-          
         call vef_trace_dbl_arr(MODULE_NAME, "kleinKwa", BA(1:N2))
-    
     end subroutine
-
-Subroutine STELSEL(N,M,A,R,TOL,VAL,XV,YV)
-      IMPLICIT double precision (A-H,O-Z)
-      integer, intent(in) :: N, M
-      dimension A(M,M),R(M),VAL(M),XV(M),YV(M)
-      integer :: j, i 
-!
-!     to solve the system of equations A * X = R using
-!     eigenvalues and eigenvectors
-!
-!     This method is known as "Singular Value Decomposition Method".
-!
-!     A s a symmetrical matrix (NxN). Modified during the process.
-!
-!     The output X is actually stored in R, which is hence modified.
-!
-!     On return, A (NxN) contains the eigenvectors
-!     VAL (N) contains eigenvalues
-!     XV, YV : workspace
-!
-!      write (IMP,203) TOL
-! 203  format (' TOL',d20.10)
-!      do 50 i=1,N
-!      write (IMP,201) r(i),(A(i,j),j=1,N)
-! 201  format (d12.4,5x,5d12.4)
-!  50  continue
-      call tred2(a,N,M,VAL,XV)
-      call tqli(VAL,XV,N,M,a)
-      do j=1,N
-        y=0.0d00
-        do i=1,N
-          y=y+A(i,j)*R(i)
-        end do
-        z=VAL(j)
-!       write (IMP,202) j,z
-! 202   format (' VAL(j)',i5,d20.10)
-        if (abs(z).lt.tol) then
-             z=0.0d0
-        else
-             z=y/z
-        endif
-  !      write (IMP,202) j,z
-        YV(j)=z
-      end do
-      do i=1,N
-        y=0.0d00
-        do j=1,N
-          y=y+A(i,j)*YV(j)
-        end do
-        R(i)=y
-      end do
-      end subroutine
-
-      SUBROUTINE tred2(a,n,np,d,e)
-
-      implicit double precision (a-h,o-z)
-      INTEGER n,np
-      double precision a(np,np),d(np),e(np)
-      INTEGER i,j,k,l
-      double precision f,g,h,hh,scale
-      do i=n,2,-1
-        l=i-1
-        h=0.
-        scale=0.
-        if(l.gt.1)then
-          do k=1,l
-            scale=scale+abs(a(i,k))
-          end do
-          if(scale.eq.0.)then
-            e(i)=a(i,l)
-          else
-            do k=1,l
-              a(i,k)=a(i,k)/scale
-              h=h+a(i,k)**2
-            end do
-            f=a(i,l)
-            g=-sign(sqrt(h),f)
-            e(i)=scale*g
-            h=h-f*g
-            a(i,l)=f-g
-            f=0.
-            do j=1,l
-!     Omit following line if finding only eigenvalues
-              a(j,i)=a(i,j)/h
-              g=0.
-              do k=1,j
-                g=g+a(j,k)*a(i,k)
-              end do
-              do k=j+1,l
-                g=g+a(k,j)*a(i,k)
-              end do
-              e(j)=g/h
-              f=f+e(j)*a(i,j)
-            end do
-            hh=f/(h+h)
-            do j=1,l
-              f=a(i,j)
-              g=e(j)-hh*f
-              e(j)=g
-              do k=1,j
-                a(j,k)=a(j,k)-f*e(k)-g*a(i,k)
-              end do
-            end do
-          endif
-        else
-          e(i)=a(i,l)
-        endif
-        d(i)=h
-      end do
-!     Omit following line if finding only eigenvalues.
-      d(1)=0.
-      e(1)=0.
-      do i=1,n
-!     Delete lines from here ...
-        l=i-1
-        if(d(i).ne.0.)then
-          do j=1,l
-            g=0.
-            do k=1,l
-              g=g+a(i,k)*a(k,j)
-            end do
-            do k=1,l
-              a(k,j)=a(k,j)-g*a(k,i)
-            end do
-          end do
-        endif
-!     ... to here when finding only eigenvalues.
-        d(i)=a(i,i)
-!     Also delete lines from here ...
-        a(i,i)=1.
-        do j=1,l
-          a(i,j)=0.
-          a(j,i)=0.
-        end do
-!     ... to here when finding only eigenvalues.
-      end do
-
-      END SUBROUTINE
-      !
-!  (C) Copr. 1986-92 Numerical Recipes Software D04-4-+5Z5{..
-      SUBROUTINE tqli(d,e,n,np,z)
-      implicit double precision (a-h,o-z)
-      INTEGER n,np
-      double precision d(np),e(np),z(np,np)
-      INTEGER i,iter,k,l,m
-      double precision b,c,dd,f,g,p,r,s
-      do i=2,n
-        e(i-1)=e(i)
-      end do
-      e(n)=0.
-      do l=1,n
-        iter=0
-1       do m=l,n-1
-          dd=abs(d(m))+abs(d(m+1))
-          if (abs(e(m))+dd.eq.dd) goto 2
-        end do
-        m=n
-2       if(m.ne.l)then
-          if(iter.eq.100) write(*,*) 'too many iterations in tqli'
-          iter=iter+1
-          g=(d(l+1)-d(l))/(2.D0*e(l))
-          r=pythag(g,1.0d00)
-          g=d(m)-d(l)+e(l)/(g+sign(r,g))
-          s=1.
-          c=1.
-          p=0.
-          do i=m-1,l,-1
-            f=s*e(i)
-            b=c*e(i)
-            r=pythag(f,g)
-            e(i+1)=r
-            if(r.eq.0.)then
-              d(i+1)=d(i+1)-p
-              e(m)=0.
-              goto 1
-            endif
-            s=f/r
-            c=g/r
-            g=d(i+1)-p
-            r=(d(i)-g)*s+2.D0*c*b
-            p=s*r
-            d(i+1)=g+p
-            g=c*r-b
-!     Omit lines from here ...
-            do k=1,n
-              f=z(k,i+1)
-              z(k,i+1)=s*z(k,i)+c*f
-              z(k,i)=c*z(k,i)-s*f
-            end do
-!     ... to here when finding only eigenvalues.
-          end do
-          d(l)=d(l)-p
-          e(l)=g
-          e(m)=0.
-          goto 1
-        endif
-      end do
-      END SUBROUTINE
-
-
-!  (C) Copr. 1986-92 Numerical Recipes Software D04-4-+5Z5{..
-      double precision FUNCTION pythag(a,b)
-      implicit double precision (a-h,o-z)
-      double precision,intent(in) :: a,b
-      double precision absa,absb
-      absa=abs(a)
-      absb=abs(b)
-      if(absa.gt.absb)then
-        pythag=absa*sqrt(1.D0+(absb/absa)**2)
-      else
-        if(absb.eq.0.)then
-          pythag=0.
-        else
-          pythag=absb*sqrt(1.D0+(absa/absb)**2)
-        endif
-      endif
-      END FUNCTION
-
 end module
-

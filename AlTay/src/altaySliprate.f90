@@ -310,7 +310,7 @@
          B(NN+j)=BB8(j)
       enddo
 !     Solve by least-squares method followed by singular value decomposition
-   1  call Kleinkwa(N1,N2,13,13,A,B,AA,BA,VAL,XV,YV,TOL,RES)
+   1  call Kleinkwa(N1,N2,13,13,A,B,BA,RES)
 !      write (IMP,100) RES
 ! 100  format(' MINSQU - RES',d15.6)
       do i=1,NN

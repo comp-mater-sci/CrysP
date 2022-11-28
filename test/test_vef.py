@@ -138,7 +138,7 @@ def get_trace_values(path, module, function):
             if header in line:
                 num = re.findall(r'-?[0-9]+\.?[0-9]+E?-?[0-9]* *$', line)[0]
                 formatted = num.split('E')
-                if len(formatted) == 1 or int(formatted[1]) > -9:
+                if (len(formatted) == 1 or int(formatted[1]) > -9) and not int(formatted[0]) == 0:
                     vals.append((formatted[0]).replace('-','').replace('.','')[0:3])
     return vals
         
