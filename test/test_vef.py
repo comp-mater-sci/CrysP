@@ -112,15 +112,23 @@ def process_file(path):
                     res.append(int(formatted[0].replace('-','')[2:4]))
     return res
 
+def process_list(l):
+    filtered = list(filter(lambda e: not e == 0, l))
+    return sum(filtered) / len(filtered)
+
+def within_tolerance(reference, result):
+    ref = process_list(reference)
+    res = process_list(result)
+    return ref > res * 0.95 and ref < res * 1.05
+
 
 #Generate and execute the different test cases.
 @pytest.mark.integration
 @pytest.mark.parametrize('mode,algorithm,slip_system', itertools.product(MODES, ALGORITHMS, SLIP_SYSTEMS))
 def test_vef(mode, algorithm, slip_system, request, generate_output):
-    reference = process_file(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}.out')
-    result = process_file(TEST_DATA/f'{mode}_{algorithm}_{slip_system}.out')
-    assert reference == result
-
+    filename =  f'{mode}_{algorithm}_{slip_system}.out'
+    assert within_tolerance(process_file(TEST_ROOT/'data/out'/filename), \
+                            process_file(TEST_DATA/filename))       
 
 def get_trace_values(path, module, function):
     vals = []
