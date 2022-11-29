@@ -3,22 +3,24 @@ module altayDSHState
     use altayHardTypes
 
     implicit none
+    
+    !>array of state variables
+    type(StatVar), dimension(:), allocatable, save :: KS_state 
 
-    type(StatVar),allocatable,dimension(:),private,save    :: KS_state ! array of state variables
+    interface KS_readState
+        module procedure KS_readState_unit, KS_readState_file
+    end interface
 
-      interface KS_readState
-            module procedure KS_readState_unit, KS_readState_file
-      end interface
 
 contains
 
 
       !> Query the number of elements in the state array.
       integer function KS_getStateSize()
-      !
+      
             KS_getStateSize = 0
             if (allocated(KS_state)) KS_getStateSize = size(KS_state)
-      !
+      
       end function
 
 
@@ -28,9 +30,9 @@ contains
       !> of StatVar type.
       integer function KS_initState(norient) result(info)
       integer,intent(in)      :: norient !< Number of orientations in the material
-      !
+      
       integer :: i
-      !
+      
             info = KS_ErrBadDims
             if (norient > 0) allocate(KS_state(norient),stat=info)
             if (info /= 0) return
@@ -40,7 +42,7 @@ contains
             do i = 2, norient
                   KS_state(i) = KS_state(1)
             enddo
-      !
+      
       end function
 
 
