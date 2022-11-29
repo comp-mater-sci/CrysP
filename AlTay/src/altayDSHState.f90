@@ -11,6 +11,9 @@ module altayDSHState
         module procedure KS_readState_unit, KS_readState_file
     end interface
 
+    private
+    public  :: iKOST
+    
 
 contains
 
