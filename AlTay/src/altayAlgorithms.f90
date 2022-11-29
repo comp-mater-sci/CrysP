@@ -1,5 +1,7 @@
 #include "altayRCM.fpp"
 
+include 'lapack.f90'
+
 module altayAlgorithms
     use altayMiscutils, only: terminate, stopcode_runtimeerror
     use criMathUtils
@@ -8,7 +10,6 @@ module altayAlgorithms
     
     implicit none
 
-    include 'mkl.fi'
 
     double precision, parameter :: SQRT_P5 = sqrt(0.5d0)
     double precision, parameter :: RESOLUTION = 0.5e-5
