@@ -6,27 +6,40 @@ module altayDynfil
 
     !>Texture-related state variables for single grain
     type :: grain
-        double precision                    :: tFI1 = 0.D0, tPHI = 0.D0, tFI2 = 0.D0    !<Euler angles
-        double precision                    :: tGEW = 1.D0, tGAM = 0.D0
-        double precision, dimension(3)      :: tAXES = 1.D0, tEULR = 0.D0
-        double precision, dimension(3,3)    :: tT = 0.D0
-        double precision, dimension(3,3)    :: tF = unitMatrix
-        double precision, dimension(3,3)    :: tCIJ = unitMatrix
-        double precision, dimension(3,3)    :: tTAX = unitMatrix
-        double precision, dimension(3,3)    :: tZERO = 0.D0, tRHO = 0.D0
+        double precision                    :: tFI1     = 0.D0, tPHI    = 0.D0, tFI2 = 0.D0    !<Euler angles
+        double precision                    :: tGEW     = 1.D0, tGAM    = 0.D0
+        double precision, dimension(3)      :: tAXES    = 1.D0, tEULR   = 0.D0
+        double precision, dimension(3,3)    :: tT       = 0.D0
+        double precision, dimension(3,3)    :: tF       = unitMatrix
+        double precision, dimension(3,3)    :: tCIJ     = unitMatrix
+        double precision, dimension(3,3)    :: tTAX     = unitMatrix
+        double precision, dimension(3,3)    :: tZERO    = 0.D0, tRHO    = 0.D0
     end type grain
 
     type :: matFrame
-        double precision,dimension(3,3)   :: FALG = unitMatrix
-        double precision,dimension(3,3)   :: CIJ0 = unitMatrix
-        double precision,dimension(3,3)   :: TAX0 = unitMatrix
-        double precision,dimension(3)     :: GAXES = 1.D0, GEULR = 0.D0
+        double precision,dimension(3,3)   :: FALG   = unitMatrix
+        double precision,dimension(3,3)   :: CIJ0   = unitMatrix
+        double precision,dimension(3,3)   :: TAX0   = unitMatrix
+        double precision,dimension(3)     :: GAXES  = 1.D0, GEULR = 0.D0
     end type
 
     type(grain), dimension(:), allocatable, save    :: DFIL             !<State variable: array of grains/orientations.
     type(matFrame), save                            :: mf               !<State variable: material (frame) global geometry
     character(len=40), save                         :: filetitle = ''   !<State variable: title of the input texture file
-    integer, save                                   :: NRSTEP = 0       !<State variable: step number.
+    integer, save                                   :: nrStep = 0       !<State variable: step number.
+
+    private
+    public  ::  DFIL,       &
+                mf,         &
+                nrStep,     &
+                fileTitle,  &
+                initFields, &
+                dynFil0,    &
+                dynFil2,    &
+                dynFil3,    &
+                dynFil4,    &
+                dynFil5,    &
+                dynfil_finalize
 
 contains
 
