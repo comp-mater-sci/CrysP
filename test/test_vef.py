@@ -26,7 +26,8 @@ SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
 #Unit tests
 UNITS = [('altayAlgorithms','eigenv'),      \
          ('altayAlgorithms','normaliz'),    \
-         ('altayAlgorithms','canoni')]
+         ('altayAlgorithms','canoni'),      \
+         ('altayAlgorithms','kleinKwa')]
 
 #Generate configuration file based on global settings and mode-specific ones.
 @pytest.fixture
@@ -73,7 +74,7 @@ def setup_benchmark(mode, algorithm, slip_system, create_conf_file):
 def generate_output(mode, algorithm, slip_system, setup_benchmark, request):
     if not (mode, algorithm, slip_system) in GENERATED_DATA:
         os.chdir(TEST_DATA)
-        os.system(TEST_ROOT/f'../VEF/release/bin/alamDMC {mode} test.cfg > alamDMC.log')
+        os.system(TEST_ROOT/f'../VEF/release/bin/alamDMC {mode} test.cfg > alamDMC.log 2>&1')
 
         if mode == 'UDSA':
             with open('out.uds', 'w') as out:
@@ -108,18 +109,26 @@ def process_file(path):
             if isinstance(num, str) and pattern.match(num):
                 formatted = num.split('E')
                 if int(formatted[1]) > -9:
-                    res.append(int(formatted[0].replace('-','')[2:8]))
+                    res.append(int(formatted[0].replace('-','')[2:4]))
     return res
+
+def process_list(l):
+    filtered = list(filter(lambda e: not e == 0, l))
+    return sum(filtered) / len(filtered)
+
+def within_tolerance(reference, result):
+    ref = process_list(reference)
+    res = process_list(result)
+    return ref > res * 0.95 and ref < res * 1.05
 
 
 #Generate and execute the different test cases.
 @pytest.mark.integration
 @pytest.mark.parametrize('mode,algorithm,slip_system', itertools.product(MODES, ALGORITHMS, SLIP_SYSTEMS))
 def test_vef(mode, algorithm, slip_system, request, generate_output):
-    reference = process_file(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}.out')
-    result = process_file(TEST_DATA/f'{mode}_{algorithm}_{slip_system}.out')
-    assert reference == result
-
+    filename =  f'{mode}_{algorithm}_{slip_system}.out'
+    assert within_tolerance(process_file(TEST_ROOT/'data/out'/filename), \
+                            process_file(TEST_DATA/filename))       
 
 def get_trace_values(path, module, function):
     vals = []
@@ -127,7 +136,10 @@ def get_trace_values(path, module, function):
     with open(path) as log_file:
         for line in log_file:
             if header in line:
-                vals.append(re.findall(r'-?[0-9]+\.?[0-9]+E?-?[0-9]* *$', line)[0].replace(' ','').replace('-','').replace('.','').replace('E','')[0:6])
+                num = re.findall(r'-?[0-9]+\.?[0-9]+E?-?[0-9]* *$', line)[0]
+                formatted = num.split('E')
+                if (len(formatted) == 1 or int(formatted[1]) > -9) and not int(formatted[0]) == 0:
+                    vals.append((formatted[0]).replace('-','').replace('.','')[0:3])
     return vals
         
 
@@ -137,5 +149,3 @@ def test_unit(mode, algorithm, slip_system, module, function, generate_output):
     reference = get_trace_values(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}.log', module, function)
     data = get_trace_values(TEST_DATA/f'{mode}_{algorithm}_{slip_system}.log', module, function)
     assert data == reference
-
-

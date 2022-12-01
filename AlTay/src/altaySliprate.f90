@@ -4,6 +4,9 @@
 
       module altaySliprate
       use altayMiscutils, only: terminate, stopcode_runtimeerror
+        use tracing
+        
+    character(len=*), parameter :: MODULE_NAME = "altaySliprate"
 
       contains
 
@@ -307,7 +310,7 @@
          B(NN+j)=BB8(j)
       enddo
 !     Solve by least-squares method followed by singular value decomposition
-   1  call Kleinkwa(N1,N2,13,13,A,B,AA,BA,VAL,XV,YV,TOL,RES)
+   1  call Kleinkwa(N1,N2,13,13,A,B,BA,RES)
 !      write (IMP,100) RES
 ! 100  format(' MINSQU - RES',d15.6)
       do i=1,NN
@@ -327,7 +330,10 @@
       enddo
 !      write (IMP,101) (SLPR(i),i=1,NN)
 ! 101  format (10F8.5)
-      if (RES.gt.(10000.0*TOL)) ineg=-1
+      if (RES.gt.(10000.0*TOL)) then
+        ineg=-1
+        call vef_trace_str(MODULE_NAME,'MINSQU', 'RES too large')
+      end if
 !      write (IMP,103) INEG,RES,sumsq
 ! 103  format (' MINSQU INEG',i5,'  RES',d15.6,'  sumsq',d15.6)
 !      write (IMP,915) (SLPR(i),i=1,NN)

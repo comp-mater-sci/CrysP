@@ -7,3 +7,4 @@ security/ssh_keys/*
 test/security/ssh_keys/*
 callgraph/*
 test/run/*
+test/data/out/
