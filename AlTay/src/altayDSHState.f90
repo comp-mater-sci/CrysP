@@ -1,5 +1,6 @@
 module altayDSHState
     use altayHardLaw_DSH
+    use altay_definitions
     use altayHardTypes
 
     implicit none

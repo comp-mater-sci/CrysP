@@ -17,7 +17,9 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 module altayHardLaw_DSH
-
+    use altay_definitions
+    use altay_io
+    
     implicit none
 
     !> BP model parameters including saturation and minimum values for state dependent dislocation densities
@@ -29,42 +31,7 @@ module altayHardLaw_DSH
         double precision :: RHOcbMIN, RHOwdMIN, RHOwpMIN
         double precision :: RHOwpLOW
     end type
-
-    type :: CBBtype
-        double precision :: RHOwd           = 0.D0
-        double precision :: RHOwp           = 0.D0
-        double precision :: RHOwdHOM        = 0.D0
-        double precision :: accGAMMA_new    = 0.D0
-        double precision :: RHOwd_ini       = 0.D0
-    end type
-
-    !> State variables for single grain
-    type :: StatVar
-        double precision                    :: RHOcb      = 0.D0
-        type(CBBtype), dimension(6)         :: CBB
-        integer, dimension(2)               :: ActiveCBB  = 0
-        double precision, dimension(2,24)   :: CRSS       = 0.D0 !Up to 24 slip systems supported
-    end type StatVar
-
-    type :: StateDerivedVars
-        double precision :: rho_CBs     = 0.D0 !<Dislocation density of cell boundaries; unit: m^(-2)
-        double precision :: rho_CBBs    = 0.D0 !<Dislocation density of cell block boundaries; unit: m^(-2)
-        double precision :: rho_polCBBs = 0.D0 !<Dislocation density of polarized dislocations at cell block boundaries; unit: m^(-2)
-        double precision :: rho_avg     = 0.D0 !<Average dislocation density; unit: m^(-2)
-    end type
-    
-    !> \name Exit codes from altayHardLaw_DSH subroutines and functions:
-    !>@{
-    integer, parameter, public :: KS_OK                 = 0     !< OK
-    integer, parameter, public :: KS_Error              = -1    !< General error (not covered by any specific error code).
-    integer, parameter, public :: KS_ErrBadDims         = -2    !< At least one parameter out of boundaries
-    integer, parameter, public :: KS_ErrBadValue        = -5    !< At least one input parameter has unacceptable value
-    integer, parameter, public :: KS_ErrOutOfRange      = -6    !< At least one input parameter has a value outside acceptable range
-    integer, parameter, public :: KS_ErrIO              = -15   !< Error during an IO operation
-    integer, parameter, public :: KS_ErrNss             = -16   !< Unsupported number of slip systems proposed. Supported values are: 12, 24
-    integer, parameter, public :: KS_ErrUninitialized   = -50   !< Call to module procedures without proper initialization of the module
-    !>@}
-    
+        
     double precision, parameter :: MINfrac= 2.0D-3
     double precision, parameter :: LOWfrac=10.0D-3
     double precision, parameter :: TENpow6 = 1.D6
@@ -616,209 +583,45 @@ contains
         end do
     end function 
 
-      !> Perform an IO formatted read operation on StatVar
-      !>
-      !> \param dummy if true, the function performs a fake read operation of by simply skipping the same number of lines as the ReadSVfile would normally read. The resulting SV becomes initialized to default values.
-      integer function ReadSVfile(unit,SV,dummy) result(iError)
-      integer,      intent(in)  :: unit
-      type(StatVar),intent(out) :: SV
-      logical,optional,intent(in)   :: dummy
+    subroutine GetStateDerivedVar(SV, SDV, iError)
+        type(StatVar),          intent(in)  :: SV
+        type(StateDerivedVars), intent(out) :: SDV
+        integer,                intent(out) :: iError
 
-      !local variables declarations
-      integer :: i,j
-      logical :: is_dummy
-      character(len=5)             :: tmpstr
-      !
-      is_dummy = .false.
-      if (present(dummy)) is_dummy = dummy
-      if (is_dummy) then !< when dummy = .true. perform fake read
-            do i=1,10
-                  read(unit,fmt=100,err=666,end=666) tmpstr
-            enddo
-      else               !< when dummy = .false. or not present (default option) read SV from file
-            read(unit,fmt=101,err=666,end=666) SV%RHOcb
-            do i=1,6 !one line per WALL
-              read(unit,fmt=102,err=666,end=666)SV%CBB(i)%RHOwd,        &
-                                                SV%CBB(i)%RHOwp,        &
-                                                SV%CBB(i)%RHOwdHOM,     &
-                                                SV%CBB(i)%accGAMMA_new, &
-                                                SV%CBB(i)%RHOwd_ini
-            end do
-            read(unit,fmt=103,err=666,end=666) SV%ActiveCBB(1),SV%ActiveCBB(2)
-            do i=1,2 !first line for positive sense, 2nd line for negative sense
-              read(unit,fmt=104,err=666,end=666)(SV%CRSS(i,j),j=1,24)
-            end do
-      endif
-      iError = KS_OK
-      return
-100   format(A5)             ! 5 characters
-101   format(   E15.8 )      ! real number in scientific notation, 15 digits total (including 1
-                             ! digit for sign and 4 for exponent, 8 digits after decimal point)
-102   format( 5(E15.8,1X))   ! 5 times E15.8 with 1 blank spacing in between
-103   format( 2(I5,1X   ))   ! 2 5-digit integers with 1 blank spacing
-104   format(24(E15.8,1X))
-      !
-666   iError = KS_ErrIO !Error in reading from file
-      !
-      end function ReadSVfile
+        iError = KS_Error !init
+        if(.not. InitOK) then
+              iError = KS_ErrUninitialized
+              return
+        end if
 
+        !Note: Number of CBBs is 6 (currently hard-coded)
+        SDV%rho_CBs     = SV%RHOcb                        * TENpow6**2 !unit conversion micrometer^(-2) -> m^(-2)
+        SDV%rho_CBBs    = sum(    SV%CBB(:)%RHOwd ) /6.D0 * TENpow6**2 !unit conversion micrometer^(-2) -> m^(-2)
+        SDV%rho_polCBBs = sum(abs(SV%CBB(:)%RHOwp)) /6.D0 * TENpow6**2 !unit conversion micrometer^(-2) -> m^(-2)
+        SDV%rho_avg     = (1.D0-P%f) * SDV%rho_CBs + P%f * (SDV%rho_CBBs + SDV%rho_PolCBBs)
 
+        iError=KS_OK
+    end subroutine 
 
-      integer function WriteSVfile(unit,SV) result(iError)
-      integer,      intent(in)  :: unit
-      type(StatVar),intent(in)  :: SV
+    !> Calculate component-wise sum of two StateDerivedVars objects
+    pure elemental type(StateDerivedVars) function StateDerivedVar_plus(first,second) result(res)
+        type(StateDerivedVars), intent(in)  :: first, second
+        
+        res%rho_CBs     = first%rho_CBs     + second%rho_CBs
+        res%rho_CBBs    = first%rho_CBBs    + second%rho_CBBs
+        res%rho_polCBBs = first%rho_polCBBs + second%rho_polCBBs
+        res%rho_avg     = first%rho_avg     + second%rho_avg
+    end function 
 
-      !local variables declarations
-      integer :: i,j
+    !> Multiply all components of SDV by the scalar
+    pure elemental type(StateDerivedVars) function StateDerivedVar_times(SDV, scalar) result(res)
+        double precision,       intent(in) :: scalar
+        type(StateDerivedVars), intent(in) :: SDV
+        
+        res%rho_CBs     = scalar * SDV%rho_CBs
+        res%rho_CBBs    = scalar * SDV%rho_CBBs
+        res%rho_polCBBs = scalar * SDV%rho_polCBBs
+        res%rho_avg     = scalar * SDV%rho_avg
+    end function StateDerivedVar_times
 
-      write(unit,fmt=101,err=666) SV%RHOcb
-      do i=1,6 !one line per WALL
-            write(unit,fmt=102,err=666)SV%CBB(i)%RHOwd,        &
-                                    SV%CBB(i)%RHOwp,        &
-                                    SV%CBB(i)%RHOwdHOM,     &
-                                    SV%CBB(i)%accGAMMA_new, &
-                                    SV%CBB(i)%RHOwd_ini
-      end do
-      write(unit,fmt=103,err=666) SV%ActiveCBB(1),SV%ActiveCBB(2)
-      do i=1,2 !first line for positive sense, 2nd line for negative sense
-            write(unit,fmt=104,err=666)(SV%CRSS(i,j),j=1,24)
-      end do
-      iError = KS_OK
-      return
-      !
-101   format(   E15.8 )
-102   format( 5(E15.8,1X))
-103   format( 2(I5,1X   ))
-104   format(24(E15.8,1X))
-      !
-666   iError = KS_ErrIO !Error in reading from file
-      !
-      end function WriteSVfile
-
-
-
-
-      integer function WriteHeadSVfile(unit) result(iError)
-      integer,intent(in)  :: unit
-      !
-      write(unit,fmt=100,err=666)"# CB         : [1]RHOcb                                                    "
-      write(unit,fmt=100,err=666)"# CBB1(01-1) : [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
-      write(unit,fmt=100,err=666)"# CBB2(-101) : [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
-      write(unit,fmt=100,err=666)"# CBB3(1-10) : [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
-      write(unit,fmt=100,err=666)"# CBB4(0-1-1): [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
-      write(unit,fmt=100,err=666)"# CBB5(101)  : [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
-      write(unit,fmt=100,err=666)"# CBB6(-1-10): [1]RHOwd [2]RHOwp [3]RHOwdHOM [4]accGAMMA_new [5]RHOwd_ini  "
-      write(unit,fmt=100,err=666)"# ActiveCBBs : [1]ID_ActiveCBB_highest_slip [2]ID_ActiveCBB_2ndhighest_slip"
-      write(unit,fmt=100,err=666)"# CRSS+sense : [1]CRSS(1+) [2]CRSS(2+) ...  [23]CRSS(23+) [24]CRSS(24+)    "
-      write(unit,fmt=100,err=666)"# CRSS-sense : [1]CRSS(1-) [2]CRSS(2-) ...  [23]CRSS(23-) [24]CRSS(24-)    "
-      write(unit,fmt=100,err=666)"#--------------------------------------------------------------------------"
-      write(unit,fmt=100,err=666)"# units:  RHOx:          micrometer^(-2)                                   "
-      write(unit,fmt=100,err=666)"#         accGAMMA_new:  /                                                 "
-      write(unit,fmt=100,err=666)"#         CRSS:          MPa                                               "
-      write(unit,fmt=100,err=666)"#--------------------------------------------------------------------------"
-      iError = KS_OK
-      return
-      !
-100   format(A76)
-101   format(A26,L1)
-666   iError = KS_ErrIO !Error in writing to file
-      !
-      end function WriteHeadSVfile
-
-
-
-      integer function ReadHeadSVfile(unit) result(iError)
-      integer,intent(in)  :: unit
-
-      !local variables declarations
-      integer ::  i
-      character :: tmp
-
-      do i=1,15
-        read(unit,fmt=100,err=666) tmp !read 15 lines
-      end do
-
-      iError = KS_OK
-      return
-      !
-100   format(A76)
-666   iError = KS_ErrIO !Error in reading from file
-      !
-      end function ReadHeadSVfile
-
-
-
-      subroutine GetStateDerivedVar(SV,SDV,iError)
-      type(StatVar),   intent(in)  :: SV
-      !> An object of type StateDerivedVars, which contains state-derived variables calculated from SV
-      type(StateDerivedVars), intent(out) :: SDV
-      !> Exit code:
-      !> - KS_OK , no error
-      !> - KS_ErrUninitialized, in case this module is not correctly initialized
-      integer,         intent(out) :: iError
-
-      iError= KS_Error !init
-      if(.NOT.InitOK) then
-            iError = KS_ErrUninitialized
-            return
-      end if
-
-      SDV%rho_CBs     = SV%RHOcb                        * TENpow6**2 !unit conversion micrometer^(-2) -> m^(-2)
-      SDV%rho_CBBs    = sum(    SV%CBB(:)%RHOwd ) /6.D0 * TENpow6**2 !unit conversion micrometer^(-2) -> m^(-2)
-      SDV%rho_polCBBs = sum(abs(SV%CBB(:)%RHOwp)) /6.D0 * TENpow6**2 !unit conversion micrometer^(-2) -> m^(-2)
-      SDV%rho_avg     = (1.D0-P%f)*SDV%rho_CBs + P%f*(SDV%rho_CBBs+SDV%rho_PolCBBs)
-      !Note: Number of CBBs is 6 (currently hard-coded)
-
-      iError=KS_OK
-
-      end subroutine GetStateDerivedVar
-
-      !> Calculate component-wise sum of two StateDerivedVars objects
-      elemental function StateDerivedVar_plus(first,second) result(res)
-      type(StateDerivedVars),intent(in) :: first,second
-      type(StateDerivedVars) :: res
-      !
-      res%rho_CBs = first%rho_CBs + second%rho_CBs
-      res%rho_CBBs = first%rho_CBBs + second%rho_CBBs
-      res%rho_polCBBs = first%rho_polCBBs + second%rho_polCBBs
-      res%rho_avg = first%rho_avg + second%rho_avg
-      !
-      end function StateDerivedVar_plus
-
-      !> Multiply all components of SDV by the scalar
-      elemental function StateDerivedVar_times(SDV,scalar) result(res)
-      type(StateDerivedVars),intent(in) :: SDV
-      double precision,intent(in)       :: scalar
-      type(StateDerivedVars) :: res
-      !
-      res%rho_CBs = scalar * SDV%rho_CBs
-      res%rho_CBBs = scalar * SDV%rho_CBBs
-      res%rho_polCBBs = scalar * SDV%rho_polCBBs
-      res%rho_avg = scalar * SDV%rho_avg
-      !
-      end function StateDerivedVar_times
-
-      !> Output state-derived variables (SDV) or/and a header line.
-      integer function writeSDV(unit,SDV,header) result(info)
-      integer,intent(in)                :: unit
-      logical,intent(in),optional       :: header
-      type(StateDerivedVars),intent(in),optional :: SDV
-      !
-      integer :: ierr
-      !
-      info = KS_ErrIO
-      if (present(header)) then
-          if (header) write(unit,fmt=100,iostat=ierr)
-          if (ierr /= 0) return
-      endif
-      if (present(SDV)) then
-          write(unit,fmt=101,iostat=ierr) SDV
-          if (ierr /= 0) return
-      endif
-      info = KS_OK
-      !
-      100 format(T4,'rho_CBs',T20,'rho_CBBs',T36,'rho_polCBBs',T52,'rho_avg')
-      101 format(4(E15.7,1X))
-      !
-      end function
 end module

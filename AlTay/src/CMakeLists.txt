@@ -32,6 +32,8 @@ altayHard.f90
 altayHardTypes.f90 
 altayHardLawDSH.f90 
 altayDSHState.f90
+altayIO.f90
+altayDefinitions.f90
 trace.f90
 )
 
