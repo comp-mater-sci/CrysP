@@ -584,55 +584,37 @@ contains
         derivative = (sign(1.D0, fl) * P%Iwp * sqrt(wd + abs(wp)) - P%Rwp * wp) * abs(fl)
     end function
 
+    pure function F_CRSS(SV) result(CRSS) 
+        type(StatVar), intent(in)           :: SV
+        integer                             :: j, s, i
+        double precision                    :: signfac, tau_CB, CRSS_0_CB
+        double precision, dimension(6)      :: wpcontr, wdcontr
+        double precision, dimension(2,24)   :: CRSS, tau_CBB
 
+        !Slip systems not allowed to become active retain initialization value of -1.0
+        CRSS = -1.D0
+        !CRSS within cells & CBs
+        tau_CB = alfa_G_b * sqrt(SV%RHOcb)
+        !contributions from tau_0 and CBs to CRSS
+        CRSS_0_CB = P%tau0 + (1.D0 - P%f) * tau_CB
 
-
-      function F_CRSS(SV)
-      type(StatVar), intent(in) :: SV
-      double precision, dimension(2,24):: F_CRSS !OUT
-
-!     P%tau0,P%f  ->inherited
-!     alfa_G_b ->inherited
-!     alfa_G_b_eff,alfa_G_b_ABSeff ->inherited
-
-      !local variables declarations
-      double precision :: tau_CB,CRSS_0_CB
-      double precision,dimension(2,24)::tau_CBB
-      integer :: j,s,i
-      double precision :: signfac
-      double precision,dimension(6)::wpcontr,wdcontr
-
-      !Slip systems not allowed to become active retain initialization value of -1.0
-      F_CRSS=-1.D0
-
-      !CRSS within cells & CBs
-      tau_CB=alfa_G_b*sqrt(SV%RHOcb)
-
-      !contributions from tau_0 and CBs to CRSS
-      CRSS_0_CB=P%tau0 +  (1.D0-P%f)*tau_CB
-
-      !Calc. CRSS for each slip system s, for the sense of slip j
-      do j=1,2
-      signfac=3.D0-2.D0*dble(j) ! 1 for j=1 ; -1 for j=2
-        do s=1,Nss
-          !wp- and wd-contributions from all CBBs i
-          do i=1,6
-                  wpcontr(i)=sqrt(abs(SV%CBB(i)%RHOwp)) *             &
-                       signfac * alfa_G_b_eff(s,i) *                    &
-                       sign(1.D0,SV%CBB(i)%RHOwp) ! sign returns +/-1 depending on the sign of the second argument
-            if (wpcontr(i) .LT. 0.0) wpcontr(i)=0.0 ! Heaviside bracket
-            wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*alfa_G_b_ABSeff(s,i)
-          end do
-          !CRSS within CBB = wp- and wd-contributions for all 6 walls
-          tau_CBB(j,s)=sum(wpcontr)+sum(wdcontr)
-          !C.R.S.S. for the "two-phase composite"
-          F_CRSS(j,s)= CRSS_0_CB + P%f*tau_CBB(j,s)
+        !Calc. CRSS for each slip system s, for the sense of slip j
+        do j = 1,2
+            signfac = 3.D0 - 2.D0 * dble(j) ! 1 for j=1 ; -1 for j=2
+            do s = 1,Nss
+                !wp- and wd-contributions from all CBBs i
+                do i = 1,6
+                    wpcontr(i) = sqrt(abs(SV%CBB(i)%RHOwp)) * signfac * alfa_G_b_eff(s,i) * sign(1.D0, SV%CBB(i)%RHOwp)
+                    if (wpcontr(i) < 0.0) wpcontr(i) = 0.0 ! Heaviside bracket
+                    wdcontr(i) = sqrt(SV%CBB(i)%RHOwd) * alfa_G_b_ABSeff(s,i)
+                end do
+                !CRSS within CBB = wp- and wd-contributions for all 6 walls
+                tau_CBB(j,s) = sum(wpcontr) + sum(wdcontr)
+                !C.R.S.S. for the "two-phase composite"
+                CRSS(j,s) = CRSS_0_CB + P%f * tau_CBB(j,s)
+            end do
         end do
-      end do
-
-      end function F_CRSS
-
-
+    end function 
 
       !> Perform an IO formatted read operation on StatVar
       !>
