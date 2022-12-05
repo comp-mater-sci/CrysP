@@ -393,16 +393,17 @@ contains
         type(StatVar), intent(out)                    :: SVb      !<State variables at end of the increment
         integer, intent(out)                          :: iError
 
-        integer                           :: j
-        integer, dimension(6)             :: r
-        double precision                  ::  fl, wd,                 &
-                                              SUMabsGamDot    = 0.,   &
-                                              GAMMAdot_new    = 0.,   &
-                                              RHObausch       = 0.,   &
-                                              SUMabsGam       = 0.,   &
-                                              GAMMA_new       = 0.
-        double precision, dimension(6)    ::  GAMMAdot        = 0.,   &
-                                              GAMMA           = 0.
+        logical                         :: FLUXreversal, wpLOW
+        integer                         :: j
+        integer, dimension(6)           :: r
+        double precision                ::  fl, wd, RHOwp_a, wpFLUX, RHOwdLOC, RHOwdHOM, accGAMMA_new, RHOwd_ini, RHOwd, rEffective,    &
+                                            SUMabsGamDot    = 0.,                                                                       &
+                                            GAMMAdot_new    = 0.,                                                                       &
+                                            RHObausch       = 0.,                                                                       &
+                                            SUMabsGam       = 0.,                                                                       &
+                                            GAMMA_new       = 0.
+        double precision, dimension(6)  ::  GAMMAdot        = 0.,                                                                       &
+                                            GAMMA           = 0.
 
         if(.not. InitOK) then
               SVb=SVa
@@ -417,324 +418,172 @@ contains
         SUMabsGam = SUMabsGamDot * deltaT
         
         if (SUMabsGam < epsilon(0.D0)) then
-              ! No slip rate in the current grain => no deformation, no update of the state
-              SVb = SVa
-              ! Issue error only on negative time increment.
-              if (deltaT < 0.D0) iError = KS_ErrBadValue
-              return
-        endif
+            ! No slip rate in the current grain => no deformation, no update of the state
+            SVb = SVa
+            if (deltaT < 0.D0) iError = KS_ErrBadValue
+            return
+        end if
 
-        GAMMAdot = F_GAMMAdot(sliprate)
+        !F_GAMMADOT
+        GAMMAdot(1) = abs(slipRate(1)) + abs(slipRate(7))  !(01-1)-plane
+        GAMMAdot(2) = abs(slipRate(2)) + abs(slipRate(11)) !(-101)-plane
+        GAMMAdot(3) = abs(slipRate(3)) + abs(slipRate(6))  !(1-10)-plane
+        GAMMAdot(4) = abs(slipRate(4)) + abs(slipRate(10)) !(0-1-1)-plane
+        GAMMAdot(5) = abs(slipRate(5)) + abs(slipRate(8))  !(101)-plane
+        GAMMAdot(6) = abs(slipRate(9)) + abs(slipRate(12)) !(-1-10)-plane
         GAMMA = GAMMAdot * deltaT
-          !sort the walls in r
-        r = sort110planes(GAMMAdot) 
-        SVb%ActiveCBB(1)=r(1)
-        SVb%ActiveCBB(2)=r(2)
 
-        GAMMAdot_new=GAMMAdot(r(1))+GAMMAdot(r(2))
-        GAMMA_new=GAMMAdot_new*deltaT
+        !sort the walls in r
+        if (GAMMAdot(1) > GAMMAdot(2)) then
+            r(1) = 1
+            r(2) = 2
+        else
+            r(1) = 2
+            r(2) = 1
+        end if
 
-        !! Update dislocation densities
-        !!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+        do i=3,6
+            if (GAMMAdot(i) > GAMMAdot(r(1))) then
+                r(i) = r(2)
+                r(2) = r(1)
+                r(1) = i
+            else if (GAMMAdot(i) > GAMMAdot(r(2))) then
+                r(i) = r(2)
+                r(2) = i
+            else
+                r(i) = i
+            end if
+        end do
 
-        RHObausch=0. !init.
+        SVb%ActiveCBB(1) = r(1)
+        SVb%ActiveCBB(2) = r(2)
+
+        GAMMAdot_new = GAMMAdot(r(1)) + GAMMAdot(r(2))
+        GAMMA_new = GAMMAdot_new * deltaT
+
+        !Update dislocation densities
+        RHObausch=0. 
         do j=1,2 !Loop over 2 currently generated walls
-          !RHOwd
-          SVb%CBB(r(j))%RHOwd= F_KocksMeck(SVa%CBB(r(j))%RHOwd             &
-                                           ,GAMMA(r(j)),P%Iwd,P%Rwd)
-          SVb%CBB(r(j))%RHOwdHOM= SVb%CBB(r(j))%RHOwd
-          !RHOwp
-          call UPD_cur_wp(r(j),SVa%CBB(r(j))%RHOwp,                        & !in
-                               SVb%CBB(r(j))%RHOwp,RHObausch) !out
+            !RHOwd
+            SVb%CBB(r(j))%RHOwd = F_KocksMeck(SVa%CBB(r(j))%RHOwd, GAMMA(r(j)),P%Iwd,P%Rwd)
+            SVb%CBB(r(j))%RHOwdHOM = SVb%CBB(r(j))%RHOwd
+            !RHOwp
+            RHOwp_a = SVa%CBB(r(j))%RHOwp
+            wpFLUX = dot_product(effslashb(:,r(j)), sliprate(:))
+            FLUXreversal = wpFLUX * RHOwp_a < 0.0
+            wpLOW = abs(RHOwp_a) <= P%RHOwpLOW
+
+            if (FLUXreversal .and. .not. (wpLOW) ) then
+                ! |RHOwp| gets smaller, following analytic time integration
+                SVb%CBB(r(j))%RHOwp = RHOwp_a * exp(-P%Rrev * abs(wpFLUX) * deltaT) !wpFLUX is a rate!
+                RHObausch = RHObausch + abs(RHOwp_a)
+            else
+                ! |RHOwp| gets larger, following numeric time integration (4th order Runge-Kutta)
+                fl = wpFLUX                 !to be used by RungeKutta->dwp_dt
+                wd = SVb%CBB(r(j))%RHOwdHOM  !to be used by RungeKutta->dwp_dt
+                if (FLUXreversal) then
+                    !In this case, it must also be that: wpLOW=.TRUE.
+                    !AFTER change of its sign, RHOwp will build up again.
+                    SVb%CBB(r(j))%RHOwp = rungeKutta(-RHOwp_a, deltaT, fl, wd)
+                else
+                    SVb%CBB(r(j))%RHOwp = rungeKutta(RHOwp_a, deltaT, fl, wd)
+                end if
+            end if
         end do
 
         do j=3,6 !Loop over 4 non-currently generated walls
-          !RHOwd
-          call UPD_ncg_wd(r(j),SVa,                                        & !in
-                               SVb ) !out
-          !RHOwp
-          call UPD_ncg_wp(SVa%CBB(r(j))%RHOwp,                             & !in
-                          SVb%CBB(r(j))%RHOwp ) !out
+            !RHOwd
+            RHOwdHOM     = SVa%CBB(r(j))%RHOwdHOM
+            accGAMMA_new = SVa%CBB(r(j))%accGAMMA_new
+            RHOwd_ini    = SVa%CBB(r(j))%RHOwd_ini
+
+            if (RHOwdHOM > P%RHOwdMIN) then
+                !if the wall was NOT active in prev. inc.
+                if (r(j) /= SVa%ActiveCBB(1) .and. r(j) /= SVa%ActiveCBB(2)) then
+                    accGAMMA_new = accGAMMA_new + GAMMA_new
+                else !the wall was active in prev. inc.
+                    accGAMMA_new = GAMMA_new
+                    RHOwd_ini = RHOwdHOM
+                end if
+
+                RHOwdLOC    = -tanh(P%beta1 * accGAMMA_new) * exp(-P%beta1 * accGAMMA_new) * RHOwd_ini * P%beta2
+                RHOwdHOM    = RHOwdHOM * exp(-P%Rncg * GAMMA_new / P%b)
+                RHOwd       = RHOwdHOM + RHOwdLOC
+                if (RHOwd < P%RHOwdMIN) RHOwd = P%RHOwdMIN
+            else
+                RHOwdHOM    = P%RHOwdMIN
+                RHOwd       = P%RHOwdMIN
+            end if
+
+            SVb%CBB(r(j))%RHOwd         = RHOwd
+            SVb%CBB(r(j))%RHOwdHOM      = RHOwdHOM
+            SVb%CBB(r(j))%accGAMMA_new  = accGAMMA_new
+            SVb%CBB(r(j))%RHOwd_ini     = RHOwd_ini
+
+            !RHOwp
+            RHOwp_a = SVa%CBB(r(j))%RHOwp
+        
+            if (abs(RHOwp_a) > P%RHOwpMIN) then
+                SVb%CBB(r(j))%RHOwp = RHOwp_a * exp(-P%Rncg * GAMMA_new / P%b)
+            else
+                if (RHOwp_a >= 0.0) then
+                    SVb%CBB(r(j))%RHOwp = P%RHOwpMIN
+                else
+                    SVb%CBB(r(j))%RHOwp = -P%RHOwpMIN
+                end if
+            end if
         end do
 
         !RHOcb
-        call UPD_cb(RHObausch,SUMabsGam,SVa%RHOcb,                         & !in
-                                        SVb%RHOcb ) !out
+        if(RHObausch > 0.0) then
+            Reffective = P%R + P%R2 * RHObausch / (2.D0 * P%RHOwpSAT)
+            if (P%I * sqrt(SVa%RHOcb) - Reffective * SVa%RHOcb <= 0.0) then 
+                !Heaviside bracket, keep as is.
+                SVb%RHOcb = SVa%RHOcb
+            else
+                SVb%RHOcb = F_KocksMeck(SVa%RHOcb, SUMabsGam, P%I, Reffective)
+            end if
+        else 
+            SVb%RHOcb = F_KocksMeck(SVa%RHOcb, SUMabsGam, P%I, P%R)
+        end if
 
         !! Calculate Critical Resolved Shear Stresses
-        !!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-        SVb%CRSS= F_CRSS(SVb)
+        SVb%CRSS = F_CRSS(SVb)
+    end subroutine 
+
+    !>Returns the value of RHO at the end of an interval (a,b)  for the following differential equation: d(RHO)/d(g) = ( II*sqrt(RHO) - RR*RHO ) / P%b
+    !>The value of 'P%b', the size of burgers vector, is inherited.
+    !>@param RHO_a: the value of RHO at the start of the interval (a,b)
+    !>@param delta_g: the increment in g during the interval (a,b)
+    pure double precision function F_KocksMeck(RHO_a, delta_g, II, RR) result(kock)
+        double precision, intent(in)    :: RHO_a, delta_g,II, RR
+        double precision x
+    
+        x = exp(-0.5D0 * RR * delta_g / P%b)
+        x = II / RR * (1.D0 - x) + sqrt(RHO_a) * x
+        kock = x**2
+    end function 
+
+    !> 4th order Runge-Kutta approximation of the differential equation given by d(wp)/dt = F(wp).
+    !> @param wpini initial state of wp
+    pure double precision function rungeKutta(wpini, deltaT, fl, wd) result(runge_kutta)
+        double precision, intent(in)    :: wpini, deltaT, fl, wd
+        double precision, dimension(4)  :: k
+
+        k(1) = deltaT * dwp_dt(wpini, fl, wd)
+        k(2) = deltaT * dwp_dt(wpini + k(1) / 2.D0, fl, wd)
+        k(3) = deltaT * dwp_dt(wpini + K(2) / 2.D0, fl, wd)
+        k(4) = deltaT * dwp_dt(wpini + K(3), fl, wd)
+        
+        runge_kutta = wpini + (k(1) + 2.D0 * k(2) + 2.D0 * k(3) + k(4)) / 6.D0
+    end function 
+
+    pure double precision function dwp_dt(wp, fl, wd) result(derivative)
+        double precision, intent(in)    :: wp, fl, wd
+
+        derivative = (sign(1.D0, fl) * P%Iwp * sqrt(wd + abs(wp)) - P%Rwp * wp) * abs(fl)
+    end function
 
-    contains
-
-
-      function F_GAMMAdot(sr)
-      ! Calculate the total slip rates on each of the six (110)-planes
-      double precision, dimension(24), intent(in)  :: sr !Slip Rate
-      double precision, dimension( 6)              :: F_GAMMAdot !OUT
-
-      F_GAMMAdot(1)= abs(sr( 1))+abs(sr( 7))!(01-1)-plane
-      F_GAMMAdot(2)= abs(sr( 2))+abs(sr(11))!(-101)-plane
-      F_GAMMAdot(3)= abs(sr( 3))+abs(sr( 6))!(1-10)-plane
-      F_GAMMAdot(4)= abs(sr( 4))+abs(sr(10))!(0-1-1)-plane
-      F_GAMMAdot(5)= abs(sr( 5))+abs(sr( 8))!(101)-plane
-      F_GAMMAdot(6)= abs(sr( 9))+abs(sr(12))!(-1-10)-plane
-
-      end function F_GAMMAdot
-
-
-
-      function sort110planes(PlaneSlip)
-      !For the six total PlaneSlips on the (110)-planes:
-      !The plane of the largest PlaneSlip is identified by sort110planes(1).
-      !The plane of 2nd-largest PlaneSlip is identified by sort110planes(2).
-      !The remaining 4 planes are identified by            sort110planes(3:6).
-      ! (note: the 4 remaining planes are not ordered from higher to lower total PlaneSlip!)
-      double precision,    dimension(6), intent(in)  :: PlaneSlip
-      integer, dimension(6)              :: sort110planes !OUT
-
-      !declaration of local variables
-      integer r(6), i
-
-      if (PlaneSlip(1).GE.PlaneSlip(2)) then
-        r(1)=1
-        r(2)=2
-      else
-        r(1)=2
-        r(2)=1
-      end if
-
-      do i=3,6
-        if      (PlaneSlip(i).GT.PlaneSlip(r(1))) then
-          r(i)=r(2)
-          r(2)=r(1)
-          r(1)=i
-        else if (PlaneSlip(i).GT.PlaneSlip(r(2))) then
-          r(i)=r(2)
-          r(2)=i
-        else
-          r(i)=i
-        end if
-      end do
-
-      sort110planes = r
-
-      end function sort110planes
-
-
-
-      double precision function F_KocksMeck(RHO_a,delta_g,II,RR) !PE27062012-2
-      !Returns RHO_b, the value of RHO at the end of an interval (a,b)
-      ! for the following differential equation:
-      !
-      ! d(RHO)    1
-      ! ------ = --- * ( II*sqrt(RHO) - RR*RHO )
-      !  d(g)    P%b
-      !
-      ! The value of 'P%b', the size of burgers vector, is inherited.
-      !
-      ! To calc. RHO_b, following inputs are required:
-      !   -> RHO_a, the value of RHO at the start of the interval (a,b)
-      !   -> delta_g = g_b - g_a, the increment in g during the interval (a,b)
-      double precision ,intent(in):: RHO_a,delta_g,II,RR
-
-!     local variable declarations
-      double precision x
-
-      x=exp(-0.5D0*RR*delta_g/P%b)
-      x=II/RR*(1.D0-x)+sqrt(RHO_a)*x
-      F_KocksMeck=x*x
-
-      end function F_KocksMeck
-
-
-
-      subroutine UPD_cur_wp(rdr,RHOwp_a,RHOwp_b,RHObausch)
-      integer, intent(in):: rdr
-      double precision ,intent(in)   :: RHOwp_a
-      double precision ,intent(out)  :: RHOwp_b
-      double precision, intent(inout):: RHObausch
-
-      !inherited variables:
-      !P%Iwd, P%Rwd, P%b
-      !glidedir, wall
-      !effslashb, sliprate
-      !P%RHOwpSAT, P%RHOwpLOW
-      !fl, wd
-
-      !local variable declarations:
-      double precision :: wpFLUX !wp-flux on the wall 'rdr'
-
-      logical :: FLUXreversal,wpLOW
-
-      wpFLUX=DOT_PRODUCT( effslashb(:,rdr) , sliprate(:) )
-
-      FLUXreversal= wpFLUX*RHOwp_a .LT. 0.0
-      wpLOW= abs(RHOwp_a) .LE. P%RHOwpLOW
-
-      if ( FLUXreversal .and. .NOT.(wpLOW) ) then
-        ! |RHOwp| gets smaller, following analytic time integration
-        RHOwp_b=RHOwp_a*exp(-P%Rrev*abs(wpFLUX)*deltaT) !wpFLUX is a rate!
-        RHObausch=RHObausch+abs(RHOwp_a)
-      else
-        ! |RHOwp| gets larger, following numeric time integration (4th order Runge-Kutta)
-        fl=wpFLUX                       !to be used by RungeKutta->dwp_dt
-        wd=SVb%CBB(rdr)%RHOwdHOM  !to be used by RungeKutta->dwp_dt
-        if ( FLUXreversal ) then
-          !In this case, it must also be that: wpLOW=.TRUE.
-          !AFTER change of its sign, RHOwp will build up again.
-          RHOwp_b = RungeKutta(-RHOwp_a)
-        else
-          RHOwp_b = RungeKutta( RHOwp_a)
-        end if
-        !RHObausch=RHObausch : No contribution to RHObausch
-      end if
-
-      end subroutine UPD_cur_wp
-
-
-
-      function RungeKutta(wpini)
-      !This function returns the 4th order Runge-Kutta approximation
-      !of the differential equation given by
-      !
-      !                             d(wp)/dt = F(wp)
-      !
-      ! The dif. eq. is implemented as another function: function dwp_dt(wp).
-      !
-      ! This function returns:
-      ! RungeKutta = wpini + (K1+2*K2+2*K3+K4)/6
-      !    in which     K1= deltaT * F(wpini     )
-      !                       K2= deltaT * F(wpini+K1/2)
-      !                       K3= deltaT * F(wpini+K2/2)
-      !                       K4= deltaT * F(wpini+K3  )
-      !    with wpini : the value of wp at the start of the increment
-      !         deltaT: the time of the increment
-      double precision, intent(in) :: wpini
-      double precision                RungeKutta   !OUT
-
-      !local variable declarations:
-      double precision, dimension(4) :: K
-
-      K(1)=deltaT*dwp_dt(wpini        )
-      K(2)=deltaT*dwp_dt(wpini+K(1)/2.D0)
-      K(3)=deltaT*dwp_dt(wpini+K(2)/2.D0)
-      K(4)=deltaT*dwp_dt(wpini+K(3)   )
-      RungeKutta=wpini+(K(1)+2.D0*K(2)+2.D0*K(3)+K(4))/6.D0
-
-      end function RungeKutta
-
-
-
-      function dwp_dt(wp)
-      double precision, intent(in) :: wp
-      double precision             :: dwp_dt !OUT
-
-      !inherited variables:
-      !fl, wd
-      !P%Iwp, P%Rwp
-
-      dwp_dt=(sign(1.D0,fl)*P%Iwp*sqrt(wd+abs(wp)) - P%Rwp*wp) * abs(fl)
-
-      end function dwp_dt
-
-
-
-      subroutine UPD_ncg_wp(RHOwp_a,RHOwp_b)
-      double precision, intent(in)  :: RHOwp_a
-      double precision, intent(out) :: RHOwp_b
-
-      !inherited variables:
-      !P%Rncg, GAMMAdot_new, P%b, P%RHOwpMIN
-
-      if (abs(RHOwp_a) .GT. P%RHOwpMIN) then
-        RHOwp_b= RHOwp_a*exp(-P%Rncg*GAMMA_new/P%b)
-      else
-        if (RHOwp_a .GE. 0.0) then
-          RHOwp_b=  P%RHOwpMIN
-        else
-          RHOwp_b= -P%RHOwpMIN
-        end if
-      end if
-
-      end subroutine UPD_ncg_wp
-
-
-
-      subroutine UPD_ncg_wd(rdr,SV_a,SV_b)
-      integer,INTENT(IN )       :: rdr
-      type(StatVar), intent(in) :: SV_a
-      type(StatVar), intent(inout):: SV_b
-
-      !inherited variables:
-      !P%b, P%Rncg, P%beta1, P%beta2, P%RHOwdMIN
-      !SVa%ActiveCBB
-      !GAMMAdot_new
-
-!     local variable declarations
-      double precision RHOwdLOC
-      double precision RHOwdHOM,accGAMMA_new,RHOwd_ini
-      double precision RHOwd
-
-      RHOwdHOM     = SV_a%CBB(rdr)%RHOwdHOM
-      accGAMMA_new = SV_a%CBB(rdr)%accGAMMA_new
-      RHOwd_ini    = SV_a%CBB(rdr)%RHOwd_ini
-
-      if (RHOwdHOM.GT.P%RHOwdMIN) then
-       !if the wall was NOT active in prev. inc.
-        if (rdr .NE. SVa%ActiveCBB(1) .AND.                              &
-            rdr .NE. SVa%ActiveCBB(2)      ) then
-         !accGAMMA_new=[accGAMMA_new]_inc(i-1) + [GAMMA_new]_inc(i)
-            accGAMMA_new=accGAMMA_new+GAMMA_new
-        else !the wall was active in prev. inc.
-          accGAMMA_new=GAMMA_new
-          RHOwd_ini=RHOwdHOM
-        end if
-
-        RHOwdLOC=-tanh( P%beta1*accGAMMA_new)*                           &
-                   exp(-P%beta1*accGAMMA_new)*RHOwd_ini*P%beta2
-        RHOwdHOM=RHOwdHOM*exp(-P%Rncg*GAMMA_new/P%b)
-        RHOwd=RHOwdHOM+RHOwdLOC
-        if (RHOwd .LT. P%RHOwdMIN)  RHOwd=P%RHOwdMIN
-      else
-        RHOwdHOM=P%RHOwdMIN
-        RHOwd   =P%RHOwdMIN
-      end if
-
-      SV_b%CBB(rdr)%RHOwd           = RHOwd
-      SV_b%CBB(rdr)%RHOwdHOM     = RHOwdHOM
-      SV_b%CBB(rdr)%accGAMMA_new = accGAMMA_new
-      SV_b%CBB(rdr)%RHOwd_ini    = RHOwd_ini
-
-      end subroutine UPD_ncg_wd
-
-
-
-      subroutine UPD_cb(RHObausch,SUMabsGam,RHO_a,RHO_b)
-      double precision, intent(in)  :: RHObausch,SUMabsGam
-      double precision, intent(in)  :: RHO_a
-      double precision, intent(out) :: RHO_b
-
-      !inherited variables:
-      !P%I, P%R, P%R2, P%b, P%RHOwpSAT
-
-!     local variable declarations
-      double precision Reffective
-
-      if(RHObausch .GT. 0.0) then
-        Reffective=P%R + P%R2*RHObausch/(2.D0*P%RHOwpSAT)
-        if (P%I*sqrt(RHO_a) - Reffective*RHO_a .LE. 0.0) then ! Heaviside bracket
-          RHO_b=RHO_a !Keep as is.
-        else
-            RHO_b= F_KocksMeck(RHO_a,SUMabsGam,P%I,Reffective)
-        end if
-      else !RHObausch .EQ. 0.0
-        RHO_b= F_KocksMeck(  RHO_a,SUMabsGam,P%I,P%R       )
-      end if
-
-      end subroutine UPD_cb
-
-      end subroutine MakeInc
 
 
 
