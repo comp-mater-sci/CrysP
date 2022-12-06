@@ -19,6 +19,7 @@
 module altayHardLaw_DSH
     use altay_definitions
     use altay_io
+    use altay_log
     
     implicit none
 
@@ -180,7 +181,7 @@ contains
             case (11, 12, 13) !supported
                 iKOST = KOSTtry 
             case default !unsupported
-                iError = KS_ErrBadValue
+                iError = VEF_BADVAL
                 return
         end select
 
@@ -188,7 +189,7 @@ contains
         rewind (unit=LEC)
         read (LEC,FMT='(A)') line1 !line1
         if ( (index(line1,'BCC') == 0) .or. (index(line1,'{BP}') == 0)) then
-            iError = KS_ErrIO
+            iError = VEF_IO
             return
         end if !File is OK.
 
@@ -199,7 +200,7 @@ contains
             case (12, 24) !supported number of slip systems
                 Nss=Nsstry
             case default !unsupported number of slip systems specified  in LEC
-                iError = KS_ErrNss
+                iError = VEF_NSS
                 return
         end select
 
@@ -231,7 +232,7 @@ contains
             P%Rrev = P%Rrev * TENpow6 ![m] -> [micrometer]
             P%R2   = P%R2   * TENpow6 ![m] -> [micrometer]
         else
-              iError = KS_ErrOutOfRange
+              iError = VEF_OutOfRange
               return
         end if
 
@@ -281,7 +282,7 @@ contains
 
         !If control passes here, initialization is done without errors
         InitOK = .TRUE. !private to this module
-        iError = KS_OK  !OUT
+        iError = VEF_OK  !OUT
     end function 
 
     integer function Init_file(inunit,KOST,LEC) result(info)
@@ -290,7 +291,7 @@ contains
         integer,intent(in)      :: LEC
         type(PAR) :: PARtry
         
-        info = KS_Error
+        info = VEF_Error
         select case(KOST)
             case(11,12,13)
                 ! Supported value of KOST
@@ -299,7 +300,7 @@ contains
                     info = Init_PAR(PARtry,KOST,LEC)
                 endif
             case default
-                info = KS_ErrBadValue !Unsupported value of KOST
+                info = VEF_BADVAL !Unsupported value of KOST
         end select
     end function 
 
@@ -326,10 +327,10 @@ contains
         read(inunit,fmt=100,err=666,end=666) Pf%R2
 100     format(F12.5)
         
-        ReadPar = KS_OK
+        ReadPar = VEF_OK
         return
         
-666     ReadPar = KS_ErrIO !Error in reading from file
+666     ReadPar = VEF_IO !Error in reading from file
     end function ReadPar
 
     !>Determine state variables for an annealed & undeformed substructure for single grain (SV0)
@@ -338,10 +339,10 @@ contains
         integer, intent(out)        :: iError
 
         if(.not. InitOK) then
-              iError = KS_ErrUninitialized
+              iError = VEF_Uninitialized
               return
         end if
-        iError=KS_OK
+        iError = VEF_OK
 
         SV0%RHOcb               = P%RHOcbMIN
         SV0%CBB(:)%RHOwd        = P%RHOwdMIN
@@ -373,11 +374,11 @@ contains
                                             GAMMA           = 0.
 
         if(.not. InitOK) then
-              SVb=SVa
-              iError = KS_ErrUninitialized
+              SVb = SVa
+              iError = VEF_Uninitialized
               return
         end if
-        iError = KS_OK
+        iError = VEF_OK
 
         !>Calculate quantities of slip rates and slips
         !>Identify currently generated and non-currently generated walls
@@ -387,7 +388,7 @@ contains
         if (SUMabsGam < epsilon(0.D0)) then
             ! No slip rate in the current grain => no deformation, no update of the state
             SVb = SVa
-            if (deltaT < 0.D0) iError = KS_ErrBadValue
+            if (deltaT < 0.D0) iError = VEF_BADVAL
             return
         end if
 
@@ -588,9 +589,9 @@ contains
         type(StateDerivedVars), intent(out) :: SDV
         integer,                intent(out) :: iError
 
-        iError = KS_Error !init
+        iError = VEF_Error !init
         if(.not. InitOK) then
-              iError = KS_ErrUninitialized
+              iError = VEF_Uninitialized
               return
         end if
 
@@ -600,7 +601,7 @@ contains
         SDV%rho_polCBBs = sum(abs(SV%CBB(:)%RHOwp)) /6.D0 * TENpow6**2 !unit conversion micrometer^(-2) -> m^(-2)
         SDV%rho_avg     = (1.D0-P%f) * SDV%rho_CBs + P%f * (SDV%rho_CBBs + SDV%rho_PolCBBs)
 
-        iError=KS_OK
+        iError = VEF_OK
     end subroutine 
 
     !> Calculate component-wise sum of two StateDerivedVars objects

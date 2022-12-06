@@ -34,7 +34,7 @@ altayHardLawDSH.f90
 altayDSHState.f90
 altayIO.f90
 altayDefinitions.f90
-trace.f90
+altayLog.f90
 )
 
 #

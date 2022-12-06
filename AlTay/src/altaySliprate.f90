@@ -5,7 +5,7 @@
       module altaySliprate
     use altay_definitions, only: dp
       use altayMiscutils, only: terminate, stopcode_runtimeerror
-        use tracing
+        use altay_log
         
     character(len=*), parameter :: MODULE_NAME = "altaySliprate"
 

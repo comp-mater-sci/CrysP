@@ -1,5 +1,6 @@
 module altay_io
     use altay_definitions
+    use altay_log
 
     implicit none
 
@@ -14,7 +15,7 @@ contains
     !
     integer :: ierr
     !
-    info = KS_ErrIO
+    info = VEF_IO
     if (present(header)) then
         if (header) write(unit,fmt=100,iostat=ierr)
         if (ierr /= 0) return
@@ -23,7 +24,7 @@ contains
         write(unit,fmt=101,iostat=ierr) SDV
         if (ierr /= 0) return
     endif
-    info = KS_OK
+    info = VEF_OK
     !
     100 format(T4,'rho_CBs',T20,'rho_CBBs',T36,'rho_polCBBs',T52,'rho_avg')
     101 format(4(E15.7,1X))
@@ -65,7 +66,7 @@ contains
               read(unit,fmt=104,err=666,end=666)(SV%CRSS(i,j),j=1,24)
             end do
       endif
-      iError = KS_OK
+      iError = VEF_OK
       return
 100   format(A5)             ! 5 characters
 101   format(   E15.8 )      ! real number in scientific notation, 15 digits total (including 1
@@ -74,7 +75,7 @@ contains
 103   format( 2(I5,1X   ))   ! 2 5-digit integers with 1 blank spacing
 104   format(24(E15.8,1X))
       !
-666   iError = KS_ErrIO !Error in reading from file
+666   iError = VEF_IO !Error in reading from file
       !
       end function ReadSVfile
 
@@ -99,7 +100,7 @@ contains
       do i=1,2 !first line for positive sense, 2nd line for negative sense
             write(unit,fmt=104,err=666)(SV%CRSS(i,j),j=1,24)
       end do
-      iError = KS_OK
+      iError = VEF_OK
       return
       !
 101   format(   E15.8 )
@@ -107,7 +108,7 @@ contains
 103   format( 2(I5,1X   ))
 104   format(24(E15.8,1X))
       !
-666   iError = KS_ErrIO !Error in reading from file
+666   iError = VEF_IO !Error in reading from file
       !
       end function WriteSVfile
 
@@ -132,12 +133,12 @@ contains
       write(unit,fmt=100,err=666)"#         accGAMMA_new:  /                                                 "
       write(unit,fmt=100,err=666)"#         CRSS:          MPa                                               "
       write(unit,fmt=100,err=666)"#--------------------------------------------------------------------------"
-      iError = KS_OK
+      iError = VEF_OK
       return
       !
 100   format(A76)
 101   format(A26,L1)
-666   iError = KS_ErrIO !Error in writing to file
+666   iError = VEF_IO !Error in writing to file
       !
       end function WriteHeadSVfile
 
@@ -154,11 +155,11 @@ contains
         read(unit,fmt=100,err=666) tmp !read 15 lines
       end do
 
-      iError = KS_OK
+      iError = VEF_OK
       return
       !
 100   format(A76)
-666   iError = KS_ErrIO !Error in reading from file
+666   iError = VEF_IO !Error in reading from file
       !
       end function ReadHeadSVfile
 end module

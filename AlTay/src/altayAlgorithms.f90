@@ -1,12 +1,10 @@
-#include "altayRCM.fpp"
 include 'lapack.f90'
 
 module altayAlgorithms
     use altayMiscutils, only: terminate, stopcode_runtimeerror
     use altay_definitions, only: dp
     use criMathUtils
-    use altayRCM
-    use tracing
+    use altay_log
     
     implicit none
 
@@ -120,8 +118,6 @@ contains
 
         call eigenv(e, prval)
         
-        RCM_GUARD
-      
         prval = prval + CIJTR
 
         prval = 1.D0 / sqrt(prval)
@@ -196,7 +192,7 @@ contains
                 return
             end if
         end if 
-        RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
+        call vef_exception(MODULE_NAME, 'canoni', VEF_BADVAL, 'Two roots seem to be complex')
     end subroutine
       
     !>N1=number of equations

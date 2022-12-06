@@ -2,6 +2,7 @@ module altayDSHState
     use altayHardLaw_DSH
     use altay_definitions
     use altayHardTypes
+    use altay_log
 
     implicit none
     
@@ -40,12 +41,12 @@ contains
         integer, intent(in) :: norient 
         integer             :: i
     
-        info = KS_ErrBadDims
+        info = VEF_BADDIMS
         if (norient > 0) allocate(KS_state(norient), stat=info)
         if (info /= 0) return
         ! All elements (orientations) of the KS_state array must have the same initial state.
         call GetInitStatVar(KS_state(1),info)
-        if (info /= KS_OK) return
+        if (info /= VEF_OK) return
         do i = 2, norient
               KS_state(i) = KS_state(1)
         enddo
@@ -55,10 +56,10 @@ contains
     integer function KS_finalize() result(info)
         integer :: memstat
     
-        info = KS_OK
+        info = VEF_OK
         if (allocated(KS_state)) then
             deallocate(KS_state,stat=memstat)
-            if (memstat /= 0) info = KS_Error
+            if (memstat /= 0) info = VEF_ERROR
         endif
     end function
 
@@ -70,12 +71,12 @@ contains
         integer,intent(out)                         :: info
         type(StatVar)                               :: SV_tmp
         
-        info = KS_ErrBadDims
+        info = VEF_BADDIMS
         if (size(KS_state) < i) return
         
         call MakeInc(KS_state(i), sliprate, deltaT, SV_tmp, info)
 
-        if (info /= 0) return
+        if (info /= VEF_OK) return
         KS_state(i) = SV_tmp
     end subroutine
 
@@ -87,13 +88,13 @@ contains
         type(CRSS),intent(out)  :: Mcrss    
         integer                 :: l   
         
-        info = KS_ErrBadDims
+        info = VEF_BADDIMS
         if (size(KS_state) < i) return
         !Corresponds to the number of slip systems
         l = min(24, ubound(Mcrss%crss,2)) 
         !Extract the CRSSes
         Mcrss%crss(:,1:l) = KS_state(i)%CRSS(:,1:l)
-        info = KS_OK
+        info = VEF_OK
     end subroutine
 
     !> Retrieve state-derived variables for the i-th grain.
@@ -102,7 +103,7 @@ contains
         type(StateDerivedVars), intent(out) :: SDV
         integer,intent(out)                 :: info 
         
-        info = KS_ErrBadDims
+        info = VEF_BADDIMS
         if (size(KS_state) < i) return
 
         call GetStateDerivedVar(KS_state(i),SDV,info)
@@ -117,7 +118,7 @@ contains
     !> @param fname: Name of the file
     integer function KS_openStateFile(iounit, fname, mode, use_header) result(info)
         integer,intent(in)              :: iounit
-        character(len=*), intent(in)    :: fname
+        character(*), intent(in)        :: fname
         character, intent(in)           :: mode
         logical, optional, intent(in)   :: use_header
         logical                         :: is_header
@@ -146,16 +147,16 @@ contains
         integer, intent(in) :: iounit   
         integer             :: i, n
     
-        info = KS_ErrIO
+        info = VEF_IO
         n = size(KS_state)
         write(iounit,fmt=100) n
         write(iounit,fmt=110)
         do i = 1, n
               write(iounit,fmt=200) i
-              if (WriteSVfile(iounit,KS_state(i)) /= KS_OK) exit
+              if (WriteSVfile(iounit,KS_state(i)) /= VEF_OK) exit
         enddo
         write(iounit,fmt=111)
-        if (i > n) info = KS_OK
+        if (i > n) info = VEF_OK
 
         !Tolerate line numbers here since file I/O will be removed anyway
 100     format(I5,1X,' # of points in KOST11 block')
@@ -176,11 +177,11 @@ contains
         character(len=5)                :: tmp_str
         logical                         :: is_dummy
         
-        info = KS_ErrUninitialized
+        info = VEF_Uninitialized
         if (.not. allocated(KS_state)) return
         n = size(KS_state) 
         if (n < 1) return
-        info = KS_ErrIO
+        info = VEF_IO
         nf = 0
         is_dummy = .true.
         
@@ -192,13 +193,13 @@ contains
             do i = 1, n 
                 read(iounit,fmt=100,iostat=ioerr) tmp
                 if (ioerr /= 0) return
-                if (ReadSVfile(iounit,KS_state(i),is_dummy) /= KS_OK) return 
+                if (ReadSVfile(iounit,KS_state(i),is_dummy) /= VEF_OK) return 
             enddo
             read(iounit,fmt=110,iostat=ioerr) tmp_str
             if (.not.is_dummy) exit 
         enddo
 
-        if ((i > n) .and. (ioerr == 0)) info = KS_OK 
+        if ((i > n) .and. (ioerr == 0)) info = VEF_OK 
 
         !Tolerate line numbers here since file I/O will be removed anyway
 100     format(I5)
@@ -220,7 +221,7 @@ contains
         if (info == 0) then
             info = KS_readState_unit(iounit, nblock)
         else
-            info = KS_ErrIO
+            info = VEF_IO
         endif
         close(iounit)
     end function
