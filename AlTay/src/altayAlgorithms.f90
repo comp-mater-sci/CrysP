@@ -1,5 +1,4 @@
 #include "altayRCM.fpp"
-
 include 'lapack.f90'
 
 module altayAlgorithms
@@ -11,78 +10,75 @@ module altayAlgorithms
     
     implicit none
 
-
-    real(dp), parameter :: SQRT_P5 = sqrt(0.5d0)
-    real(dp), parameter :: RESOLUTION = 0.5e-5
-    character(len=15), parameter :: MODULE_NAME = "altayAlgorithms"
+    real(dp), parameter     :: SQRT_P5 = sqrt(0.5d0)
+    real(dp), parameter     :: RESOLUTION = 0.5e-5
+    character(*), parameter :: MODULE_NAME = "altayAlgorithms"
     
     private  
-    public  :: deg2rad,             &
-               rotmat,              &
-               rotateSRTensorFrom,  &
-               kleinKwa,            &
-               updatc,              &
-               getang,              &
-               vector5D,            &
-               symMatrix,           &
-               transf
+    public  ::  updatC,             &
+                symMatrix,          &
+                vector5D,           &
+                transf,             &
+                deg2rad,            &
+                rotmat,             &
+                rotateSRTensorFrom, &
+                kleinKwa,           &
+                getang              
 
 contains
     
     !> Updating of CIJ matrix of ellipsoid
     !> Finv is the inverse of the F-tensor which describes the strain increment.
-    subroutine UPDATC(CIJ, Finv)
-        real(dp), dimension(3,3), intent(in)   :: Finv
-        real(dp), dimension(3,3), intent(inout)  :: CIJ
+    subroutine updatC(CIJ, Finv)
+        real(dp), dimension(3,3), intent(in)    :: Finv
+        real(dp), dimension(3,3), intent(inout) :: CIJ
+
         CIJ = matmul(matmul(transpose(Finv), CIJ), Finv)
     end subroutine
     
     !> Transform a 5D-vector in deviatoric (stress/strain-rate) space to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
     !> Note: The reverse transformation is done by function 'Vector5D'.
     function SymMatrix(vec) result(sym)
-        real(dp), dimension(5), intent(in) :: vec
-        real(dp), dimension(3,3)           :: sym 
-        real(dp), parameter                :: C1 = (sqrt(3.0d0) + 3.0d0) / 6.0d0, & 
-                                                      C2 = (3.0d0 - sqrt(3.0d0)) / 6.0d0  
+        real(dp), dimension(5), intent(in)  ::  vec
+        real(dp), dimension(3,3)            ::  sym 
+        real(dp), parameter                 ::  C1 = (sqrt(3.0d0) + 3.0d0) / 6.0d0, & 
+                                                C2 = (3.0d0 - sqrt(3.0d0)) / 6.0d0  
         
         sym(2,2) =  C1 * vec(1) - C2 * vec(2)
         sym(3,3) = -C2 * vec(1) + C1 * vec(2)
-        
         sym(1,1) = -sym(2,2) - sym(3,3)
-        
         sym(2,3) = SQRT_P5 * vec(3)
         sym(3,1) = SQRT_P5 * vec(4)
         sym(1,2) = SQRT_P5 * vec(5)
-        
         sym(3,2) = sym(2,3)
         sym(1,3) = sym(3,1)
         sym(2,1) = sym(1,2)
-    end function SymMatrix
+    end function 
     
     !> Transform a (3,3)-matrix representation of a traceless 2nd rank tensor to 5D-vector representation in deviatoric (stress/strain-rate) space.
     !> Notes:
     !>    - Only the symmetric part of 2nd rank tensor is transformed.
     !>    - The reverse transformation is done by function 'SymMatrix'.
-    function Vector5D(mat) result(vec)
+    function vector5D(mat) result(vec)
         real(dp), dimension(3,3), intent(in) :: mat
         real(dp), dimension(5)               :: vec 
         real(dp), parameter                  :: C1 = 0.5d0 * (sqrt(3.0d0) + 1.0d0), &
-                                                        C2 = C1 - 1.0d0
+                                                C2 = C1 - 1.0d0
         
         vec(1) = C1 * mat(2,2) + C2 * mat(3,3)
         vec(2) = C2 * mat(2,2) + C1 * mat(3,3)
         vec(3) = SQRT_P5 * (mat(2,3) + mat(3,2))
         vec(4) = SQRT_P5 * (mat(3,1) + mat(1,3))
         vec(5) = SQRT_P5 * (mat(1,2) + mat(2,1))
-    end function Vector5D
+    end function 
    
     !Calculate the CIJ matrix of an ellipsoid with half axes stored in Gaxes. T defines the orientation of the axes.
     !This version assumes that A is a diagonal matrix
-    Subroutine Transf(Gaxes, Aprime, T)
+    Subroutine transf(Gaxes, Aprime, T)
         real(dp), dimension(3), intent(in)      :: Gaxes 
         real(dp), dimension(3,3), intent(inout) :: Aprime 
         real(dp), dimension(3,3), intent(in)    :: T 
-        integer                                         :: i, j, k
+        integer                                 :: i, j, k
         real(dp)                                :: y
         real(dp), dimension(3)                  :: A
         real(dp), dimension(3,3)                :: X
@@ -109,12 +105,12 @@ contains
     !find Euler angles of these axes, store in GEULR
     Subroutine GETANG(CIJ, prval, GEULR, TMAT)
         real(dp), dimension(3,3), intent(in)    :: CIJ
-        real(dp), dimension(3), intent(inout)   :: GEULR, prval
+        real(dp), dimension(3),   intent(inout) :: GEULR, prval
         real(dp), dimension(3,3), intent(inout) :: TMAT
-        integer                                         :: i
+        integer                                 :: i
         real(dp)                                :: CIJTR, enrm 
         real(dp), dimension(3,3)                :: e
-        type(EulerAngles)                               :: CEuler
+        type(EulerAngles)                       :: CEuler
 
         CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3.D0
         e = CIJ
@@ -211,36 +207,32 @@ contains
     !>RES=residu (sum of squares)
     !>M1,M2=dimensions
     subroutine kleinkwa(N1, N2, M1, M2, A, B, BA, res)
-        real(dp), dimension(M2), intent(in)     :: B
-        real(dp), dimension(M1,M2), intent(in)  :: A
-        real(dp), dimension(M2), intent(inout)  :: BA
-        real(dp), intent(inout)                 :: res
-        integer, intent(in)                             :: M1, M2, N1, N2
-        integer                                         :: i, j, rank, info, lwork
-        integer, dimension(N2)                          :: jpvt
-        real(dp)                                :: y, rcond
-        real(dp), dimension(1)                  :: work_buffer
-        real(dp), dimension(:), allocatable     :: work
-        real(dp), dimension(M1,M2)              :: A_COPY
+        real(dp), dimension(M2),    intent(in)                                  :: B
+        real(dp), dimension(M1,M2), intent(in)                                  :: A
+        real(dp), dimension(M2),    intent(inout)                               :: BA
+        real(dp),                   intent(inout)                               :: res
+        integer,                    intent(in)                                  :: M1, M2, N1, N2
+        integer                                                                 :: i, j, rank, info, lwork
+        integer, dimension(N2)                                                  :: jpvt
+        real(dp)                                                                :: y, rcond
+        real(dp), dimension(max(min(N1,N2) + 3 * N2 + 1, 2 * min(N1,N2) + 1))   :: work
+        real(dp), dimension(M1,M2)                                              :: A_COPY
 
         A_COPY = A 
         BA = B
         jpvt = 0
         rcond = 0.01
+        lwork = size(work)
 
-        call dgelsy(N1, N2, 1, A_COPY, M1, BA, M2, jpvt, rcond, rank, work_buffer, -1, info)
-        lwork = work_buffer(1)
-        allocate(work(lwork))
         call dgelsy(N1, N2, 1, A_COPY, M1, BA, M2, jpvt, rcond, rank, work, lwork, info)
-        deallocate(work)
         
         res = 0.0
         do i=1,N1
-          y = 0.0
-          do j=1,N2
-            y = y + A(i,j) * BA(j)
-          end do
-          RES = RES + (y - B(i))**2
+            y = 0.0
+            do j=1,N2
+                y = y + A(i,j) * BA(j)
+            end do
+            RES = RES + (y - B(i))**2
         end do
 
         call vef_trace(MODULE_NAME, "kleinKwa", BA(1:N2))
