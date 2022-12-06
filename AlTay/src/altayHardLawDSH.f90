@@ -18,21 +18,12 @@
 
 module altayHardLaw_DSH
     use altay_definitions
+    use altayHardTypes
     use altay_io
     use altay_log
     
     implicit none
 
-    !> BP model parameters including saturation and minimum values for state dependent dislocation densities
-    type :: PAR
-        real(dp) :: b, G, alfa, f, tau0
-        real(dp) :: I, R, Iwd, Rwd, Rncg, beta1, beta2
-        real(dp) :: Iwp, Rwp, Rrev, R2
-        real(dp) :: RHOcbSAT, RHOwdSAT, RHOwpSAT
-        real(dp) :: RHOcbMIN, RHOwdMIN, RHOwpMIN
-        real(dp) :: RHOwpLOW
-    end type
-        
     real(dp), parameter :: MINfrac= 2.0D-3
     real(dp), parameter :: LOWfrac=10.0D-3
     real(dp), parameter :: TENpow6 = 1.D6
@@ -47,7 +38,7 @@ module altayHardLaw_DSH
     real(dp), parameter :: n5_42=-0.771516749810
 
     integer, save, public :: iKOST = 0
-
+    type(StatVar), dimension(:), allocatable, save :: KS_state 
     type(PAR), save                         :: P    !unit system: MPa; micrometer
     logical, save                           ::  InitOK = .FALSE.
     integer, save                           ::  Nss !Nr. of slip systems. 12: (110)[111] - 1 family, 24: (110)+(112)[111] - 2 families
@@ -145,26 +136,106 @@ module altayHardLaw_DSH
     interface InitModuleAltayHardLaw_DSH !Generic Interface
         module procedure Init_file,Init_PAR
     end interface
+    
 
     private
-    public  ::  InitModuleAltayHardLaw_DSH, &
-                ReadPar,                    &
-                GetInitStatVar,             &
-                MakeInc,                    &
-                WriteHeadSVfile,            &
-                ReadHeadSVfile,             &
-                WriteSVfile,                &
-                ReadSVfile,                 &
-                GetStateDerivedVar,         &
-                WriteSDV,                   &
-                operator(+),                &
+    public  ::  KS_state,                   &        
+                KS_initState,               &
+                KS_getSDV,                  &
+                KS_getCRSS,                 &
+                KS_updateState,             &
+                KS_finalize,                &
+                InitModuleAltayHardLaw_DSH, &
+                operator(+),                &   
                 operator(*),                &
-                PAR,                        &
-                StatVar,                    &
-                CBBtype,                    &
-                StateDerivedVars
+                readPar
 
 contains
+
+
+    !> Query the number of elements in the state array.
+    integer function KS_getStateSize() result(state_size)
+        if (allocated(KS_state)) then 
+            state_size = size(KS_state)
+        else
+            state_size = 0
+        end if
+    end function
+
+    !> Allocate memory to the KS_state array.
+    !> @param norient: Number of orientations in the material
+    integer function KS_initState(norient) result(info)
+        integer, intent(in) :: norient 
+        integer             :: i
+    
+        info = VEF_BADDIMS
+        if (norient > 0) allocate(KS_state(norient), stat=info)
+        if (info /= 0) return
+        ! All elements (orientations) of the KS_state array must have the same initial state.
+        call GetInitStatVar(KS_state(1),info)
+        if (info /= VEF_OK) return
+        do i = 2, norient
+              KS_state(i) = KS_state(1)
+        enddo
+    end function
+
+    !> Deallocate the KS_state array.
+    integer function KS_finalize() result(info)
+        integer :: memstat
+    
+        info = VEF_OK
+        if (allocated(KS_state)) then
+            deallocate(KS_state,stat=memstat)
+            if (memstat /= 0) info = VEF_ERROR
+        endif
+    end function
+
+    !> Update the state variables of the PEBP model for i-th grain.
+    subroutine KS_updateState(i,sliprate,deltaT,info)
+        integer,intent(in)                          :: i        
+        real(dp),intent(in), dimension(24)  :: sliprate 
+        real(dp),intent(in)                 :: deltaT   
+        integer,intent(out)                         :: info
+        type(StatVar)                               :: SV_tmp
+        
+        info = VEF_BADDIMS
+        if (size(KS_state) < i) return
+        
+        call MakeInc(KS_state(i), sliprate, deltaT, SV_tmp, info)
+        call vef_trace('altayHardLaw_DSH', 'KS_updateState','Called makeInc')
+
+        if (info /= VEF_OK) return
+        KS_state(i) = SV_tmp
+    end subroutine
+
+    !> Get CRSS for i-th grain.
+    !> maximum number of slip systems restricted to 24
+    subroutine KS_getCRSS(i, Mcrss, info)
+        integer,intent(in)      :: i        
+        integer,intent(out)     :: info
+        type(CRSS),intent(out)  :: Mcrss    
+        integer                 :: l   
+        
+        info = VEF_BADDIMS
+        if (size(KS_state) < i) return
+        !Corresponds to the number of slip systems
+        l = min(24, ubound(Mcrss%crss,2)) 
+        !Extract the CRSSes
+        Mcrss%crss(:,1:l) = KS_state(i)%CRSS(:,1:l)
+        info = VEF_OK
+    end subroutine
+
+    !> Retrieve state-derived variables for the i-th grain.
+    subroutine KS_getSDV(i,SDV,info)
+        integer,intent(in)                  :: i    
+        type(StateDerivedVars), intent(out) :: SDV
+        integer,intent(out)                 :: info 
+        
+        info = VEF_BADDIMS
+        if (size(KS_state) < i) return
+
+        call GetStateDerivedVar(KS_state(i),SDV,info)
+    end subroutine
 
     !> Initialization of altayHardLaw_DSH.
     integer function Init_PAR(Ptry,KOSTtry,LEC) result(iError)
@@ -624,5 +695,4 @@ contains
         res%rho_polCBBs = scalar * SDV%rho_polCBBs
         res%rho_avg     = scalar * SDV%rho_avg
     end function StateDerivedVar_times
-
 end module

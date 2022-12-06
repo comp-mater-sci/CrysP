@@ -3,7 +3,6 @@
 module altayConfig
     use altayHardTypes
     use altayHardLaw_Simple, only: VoceConfig, SwiftKConfig, SwiftSConfig
-    use altayHardLaw_DSH, only: PAR
     use altayTexFormats
     use altay_definitions, only: dp
     
@@ -13,7 +12,7 @@ module altayConfig
 
     !> \name Named constants for identifiers of the supported models
     !>@{
-    integer,parameter :: modelFCTaylor = 1, modelAlamel = 2, modelMASAL = 3
+    integer,parameter :: modelFCTaylor = 1, modelAlamel = 2
     !>@}
 
     type :: slipSystemData
@@ -191,7 +190,7 @@ module altayConfig
 
 contains
 
-    !> Configure the stp object for using selected model type (FCTaylor, ALAMEL, MASAL).
+    !> Configure the stp object for using selected model type (FCTaylor, ALAMEL).
     subroutine setStepType(stp,modelId,info)
         type(simulStepInputData),intent(inout)    :: stp
         integer,intent(in)                        :: modelId
@@ -202,7 +201,7 @@ contains
         case(modelFCTaylor)
             stp%rlx1 = .false.
             stp%rlx2 = .false.
-        case(modelAlamel,modelMASAL)
+        case(modelAlamel)
             stp%rlx1 = .true.
             stp%rlx2 = .true.
         case default
@@ -210,7 +209,7 @@ contains
         end select
     end subroutine
 
-    !> Configure the cnf object for using selected model type (FCTaylor, ALAMEL, MASAL).
+    !> Configure the cnf object for using selected model type (FCTaylor, ALAMEL).
     subroutine setModelType(cnf,modelId,info)
         type(altayConfigData),intent(inout)       :: cnf
         integer,intent(in)                        :: modelId
@@ -221,8 +220,6 @@ contains
                 cnf%simul_init%ngr = 1
             case(modelAlamel)
                 cnf%simul_init%ngr = 2
-            case(modelMASAL)
-                cnf%simul_init%ngr = 3
             case default
                 info = -1
                 return

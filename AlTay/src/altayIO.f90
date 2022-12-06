@@ -1,8 +1,14 @@
 module altay_io
-    use altay_definitions
+    use altayHardTypes
+    use altay_definitions, only: dp
     use altay_log
 
+
     implicit none
+    
+    interface KS_readState
+        module procedure KS_readState_unit, KS_readState_file
+    end interface
 
 contains
 
@@ -162,4 +168,126 @@ contains
 666   iError = VEF_IO !Error in reading from file
       !
       end function ReadHeadSVfile
+
+
+
+
+    !> Open state file either for reading or writing.
+    !> If requested, performs some initialization, such as processing or writing file header.
+    !> @param mode: File opening mode: 'r' for read access or 'w' for write access
+    !> @param use_header: Request for processing  the file header. Default is: .true.
+    !> @param iounit: IO unit to be used
+    !> @param fname: Name of the file
+    integer function KS_openStateFile(iounit, fname, mode, use_header) result(info)
+        integer,intent(in)              :: iounit
+        character(*), intent(in)        :: fname
+        character, intent(in)           :: mode
+        logical, optional, intent(in)   :: use_header
+        logical                         :: is_header
+        integer                         :: ierr
+          
+        info = -1
+        is_header = .true.
+        if (present(use_header)) is_header = use_header
+        select case(mode)
+        case('r')
+            !open existing file (status='old')
+            open(unit=iounit, file=fname, status='old', iostat=ierr) 
+            if (ierr /= 0) return
+            if (is_header) info = ReadHeadSVfile(iounit)
+        case('w')
+            !replace if already existing
+            open(unit=iounit, file=fname, status='replace', iostat=ierr) 
+            if (ierr /= 0) return
+            if (is_header) info = WriteHeadSVfile(iounit)
+        end select
+    end function
+
+    !> Write block (=snapshot of KS_state) into file.
+    !> @param iounit: I/O unit number
+    integer function KS_writeState(iounit, KS_state, len) result(info)
+        integer, intent(in) :: iounit, len   
+        integer             :: i, n
+        type(StatVar), dimension(len), intent(in) :: KS_state 
+    
+        info = VEF_IO
+        n = size(KS_state)
+        write(iounit,fmt=100) n
+        write(iounit,fmt=110)
+        do i = 1, n
+              write(iounit,fmt=200) i
+              if (WriteSVfile(iounit,KS_state(i)) /= VEF_OK) exit
+        enddo
+        write(iounit,fmt=111)
+        if (i > n) info = VEF_OK
+
+        !Tolerate line numbers here since file I/O will be removed anyway
+100     format(I5,1X,' # of points in KOST11 block')
+110     format('-->')
+111     format('<--')
+200     format(I5)
+    end function
+
+
+    !>Call ReadSVfile and store state variables in ks_state.
+    !>Perform fake reads on the first nblock blocks, where each block corresponds to one snapshot of ks_state.
+    !>@param iounit: I/O unit number
+    !>@param nblock: Number of blocks to be skipped
+    integer function KS_readState_unit(iounit, nblock, KS_state, len) result(info)
+        integer,intent(in)              :: iounit, len
+        integer, optional, intent(in)   :: nblock
+        integer                         :: i, n, nf, tmp, ioerr, iblock 
+        character(5)                    :: tmp_str
+        logical                         :: is_dummy
+        type(StatVar), dimension(len), intent(inout) :: KS_state 
+        
+        info = VEF_Uninitialized
+        if (len == 0) return
+        n = size(KS_state) 
+        if (n < 1) return
+        info = VEF_IO
+        nf = 0
+        is_dummy = .true.
+        
+        do iblock = 0, nblock 
+            if (iblock == nblock) is_dummy = .false. 
+            read(iounit,fmt=100,iostat=ioerr) nf
+            if ((nf /= n) .or. (ioerr /= 0)) return
+            read(iounit,fmt=110) tmp_str
+            do i = 1, n 
+                read(iounit,fmt=100,iostat=ioerr) tmp
+                if (ioerr /= 0) return
+                if (ReadSVfile(iounit,KS_state(i),is_dummy) /= VEF_OK) return 
+            enddo
+            read(iounit,fmt=110,iostat=ioerr) tmp_str
+            if (.not.is_dummy) exit 
+        enddo
+
+        if ((i > n) .and. (ioerr == 0)) info = VEF_OK 
+
+        !Tolerate line numbers here since file I/O will be removed anyway
+100     format(I5)
+110     format(A)
+    end function
+
+
+    !> Open state file for reading and read state variables of snapshot.
+    !> The snapshot (block) to be read is specified by nblock.
+    !>@param nblock:  Number of blocks to be skipped
+    integer function KS_readState_file(fname,iounit,nblock,use_header, KS_state, len) result(info)
+        character(len=*), intent(in)    :: fname    
+        integer, intent(in)             :: iounit, len
+        integer, optional, intent(in)   :: nblock 
+        logical, optional, intent(in)   :: use_header
+        type(StatVar), dimension(len), intent(inout) :: KS_state 
+
+        ! open file for read access ('r')
+        info = KS_openStateFile(iounit, fname, 'r', use_header) 
+        if (info == 0) then
+            info = KS_readState_unit(iounit, nblock, KS_state, len)
+        else
+            info = VEF_IO
+        endif
+        close(iounit)
+    end function
 end module

@@ -24,9 +24,7 @@
       use altayTBH
       use altayAlgorithms
       use altayMacroKinematic
-#ifdef PEBP_ENABLED
-      use AltayDSHstate
-#endif
+    use altayHardLaw_DSH
       implicit real(dp) (a-h,o-z)
 
       type(DeformationRate),intent(in) :: MacroDefRate

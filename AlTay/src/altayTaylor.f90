@@ -220,7 +220,7 @@
       use altayConfig, only: astate
 #endif
 #ifdef PEBP_ENABLED
-      use AltayDSHstate, KOST => iKOST
+      use AltayHardLaw_DSH, KOST => iKOST
 #endif
       use altayIOConfig
       use altaySliprate
