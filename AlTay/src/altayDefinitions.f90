@@ -2,28 +2,8 @@
 module altay_definitions
     implicit none
 
-    type :: StateDerivedVars
-        double precision :: rho_CBs     = 0.D0 !<Dislocation density of cell boundaries; unit: m^(-2)
-        double precision :: rho_CBBs    = 0.D0 !<Dislocation density of cell block boundaries; unit: m^(-2)
-        double precision :: rho_polCBBs = 0.D0 !<Dislocation density of polarized dislocations at cell block boundaries; unit: m^(-2)
-        double precision :: rho_avg     = 0.D0 !<Average dislocation density; unit: m^(-2)
-    end type
-        
-    type :: CBBtype
-        double precision :: RHOwd           = 0.D0
-        double precision :: RHOwp           = 0.D0
-        double precision :: RHOwdHOM        = 0.D0
-        double precision :: accGAMMA_new    = 0.D0
-        double precision :: RHOwd_ini       = 0.D0
-    end type
-
-    !> State variables for single grain
-    type :: StatVar
-        double precision                    :: RHOcb      = 0.D0
-        type(CBBtype), dimension(6)         :: CBB
-        integer, dimension(2)               :: ActiveCBB  = 0
-        double precision, dimension(2,24)   :: CRSS       = 0.D0 !Up to 24 slip systems supported
-    end type StatVar
+    !>Standard real(dp)
+    integer, parameter :: dp = selected_real_kind(15,307)
 
     !>\name Exit codes from altayHardLaw_DSH subroutines and functions:
     !>@{
@@ -36,4 +16,29 @@ module altay_definitions
     integer, parameter :: KS_ErrNss             = -16   !< Unsupported number of slip systems proposed. Supported values are: 12, 24
     integer, parameter :: KS_ErrUninitialized   = -50   !< Call to module procedures without proper initialization of the module
     !>@}
+
+    type :: StateDerivedVars
+        real(dp) :: rho_CBs     = 0.D0 !<Dislocation density of cell boundaries; unit: m^(-2)
+        real(dp) :: rho_CBBs    = 0.D0 !<Dislocation density of cell block boundaries; unit: m^(-2)
+        real(dp) :: rho_polCBBs = 0.D0 !<Dislocation density of polarized dislocations at cell block boundaries; unit: m^(-2)
+        real(dp) :: rho_avg     = 0.D0 !<Average dislocation density; unit: m^(-2)
+    end type
+        
+    type :: CBBtype
+        real(dp) :: RHOwd           = 0.D0
+        real(dp) :: RHOwp           = 0.D0
+        real(dp) :: RHOwdHOM        = 0.D0
+        real(dp) :: accGAMMA_new    = 0.D0
+        real(dp) :: RHOwd_ini       = 0.D0
+    end type
+
+    !> State variables for single grain
+    type :: StatVar
+        real(dp)                    :: RHOcb      = 0.D0
+        type(CBBtype), dimension(6)         :: CBB
+        integer, dimension(2)               :: ActiveCBB  = 0
+        real(dp), dimension(2,24)   :: CRSS       = 0.D0 !Up to 24 slip systems supported
+    end type StatVar
+
+
 end module 

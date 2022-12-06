@@ -4,11 +4,12 @@ module altayMesostructure
 use criMathUtils, only: EulerAngles
 use altayAlgorithms
 use altayMiscutils, only: terminate, stopcode_runtimeerror
+use altay_definitions, only: dp
 implicit none
       !> Transformation matrix associated to the grain boundary reference frame
       !> in the initial state.
       !> Shape is: [3,3,ngr], where ngr is the number of grains.
-      double precision, dimension(:,:,:),allocatable,save :: TmatGr
+      real(dp), dimension(:,:,:),allocatable,save :: TmatGr
       integer,save :: NGrElm = 0             !< Number of grain boundary orientations
       character(len=40), save :: TitMic = '' !< Microstructure title
 
@@ -26,11 +27,11 @@ contains
       character(len=*),intent(in) :: fnam !< Microstructure file name
       !> F_mic is a deformation gradient that conceptually
       !> 'deforms' a spherical grain into an ellipsoidal shape
-      double precision, dimension(3,3), intent(in) :: F_mic
+      real(dp), dimension(3,3), intent(in) :: F_mic
       !
       integer           :: IGrElm !< Counter for loop over GBs
       type(EulerAngles) :: EulGB
-      double precision, dimension(3,3) :: T
+      real(dp), dimension(3,3) :: T
       !
       ierr = -1
       !
@@ -104,15 +105,15 @@ contains
       integer,intent(in)                              :: IGrElm
       type(DeformationRate),intent(in)                :: MacroDefRate
       type(DeformationState),intent(in)               :: MacroDefState
-      double precision,intent(inout)                  :: GEWF
-      double precision,dimension(3,3),intent(out)     :: Tprinc
-      double precision,intent(out)                    :: Cofcos
-      double precision,intent(out)                    :: Cofsin
+      real(dp),intent(inout)                  :: GEWF
+      real(dp),dimension(3,3),intent(out)     :: Tprinc
+      real(dp),intent(out)                    :: Cofcos
+      real(dp),intent(out)                    :: Cofsin
 
       !
-      double precision :: AXX(3,3),GRPAR(3,3), PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
-      double precision :: x, u, dlength, dot1, dot2, TGANGLE, Y
-      double precision :: relaxI(3,3),relaxII(3,3)
+      real(dp) :: AXX(3,3),GRPAR(3,3), PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
+      real(dp) :: x, u, dlength, dot1, dot2, TGANGLE, Y
+      real(dp) :: relaxI(3,3),relaxII(3,3)
       integer :: i,j, IN, IA, IB
       !
             Cofcos = 0.D0

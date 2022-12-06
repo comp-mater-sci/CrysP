@@ -1,26 +1,27 @@
 module altayDynfil
     use altayMiscutils, only: unitMatrix
+    use altay_definitions, only: dp
     use criMathUtils
 
     implicit none
 
     !>Texture-related state variables for single grain
     type :: grain
-        double precision                    :: tFI1     = 0.D0, tPHI    = 0.D0, tFI2 = 0.D0    !<Euler angles
-        double precision                    :: tGEW     = 1.D0, tGAM    = 0.D0
-        double precision, dimension(3)      :: tAXES    = 1.D0, tEULR   = 0.D0
-        double precision, dimension(3,3)    :: tT       = 0.D0
-        double precision, dimension(3,3)    :: tF       = unitMatrix
-        double precision, dimension(3,3)    :: tCIJ     = unitMatrix
-        double precision, dimension(3,3)    :: tTAX     = unitMatrix
-        double precision, dimension(3,3)    :: tZERO    = 0.D0, tRHO    = 0.D0
+        real(dp)                    :: tFI1     = 0.D0, tPHI    = 0.D0, tFI2 = 0.D0    !<Euler angles
+        real(dp)                    :: tGEW     = 1.D0, tGAM    = 0.D0
+        real(dp), dimension(3)      :: tAXES    = 1.D0, tEULR   = 0.D0
+        real(dp), dimension(3,3)    :: tT       = 0.D0
+        real(dp), dimension(3,3)    :: tF       = unitMatrix
+        real(dp), dimension(3,3)    :: tCIJ     = unitMatrix
+        real(dp), dimension(3,3)    :: tTAX     = unitMatrix
+        real(dp), dimension(3,3)    :: tZERO    = 0.D0, tRHO    = 0.D0
     end type grain
 
     type :: matFrame
-        double precision,dimension(3,3)   :: FALG   = unitMatrix
-        double precision,dimension(3,3)   :: CIJ0   = unitMatrix
-        double precision,dimension(3,3)   :: TAX0   = unitMatrix
-        double precision,dimension(3)     :: GAXES  = 1.D0, GEULR = 0.D0
+        real(dp),dimension(3,3)   :: FALG   = unitMatrix
+        real(dp),dimension(3,3)   :: CIJ0   = unitMatrix
+        real(dp),dimension(3,3)   :: TAX0   = unitMatrix
+        real(dp),dimension(3)     :: GAXES  = 1.D0, GEULR = 0.D0
     end type
 
     type(grain), dimension(:), allocatable, save    :: DFIL             !<State variable: array of grains/orientations.
@@ -103,8 +104,8 @@ contains
     !> Extract the global material data
     subroutine DYNFIL2(n, F, AXES, EULR, CIJ, TAX)
         integer, intent(out)                            :: n
-        double precision, dimension(3), intent(out)     :: AXES, EULR
-        double precision, dimension(3,3), intent(out)   :: CIJ, TAX, F
+        real(dp), dimension(3), intent(out)     :: AXES, EULR
+        real(dp), dimension(3,3), intent(out)   :: CIJ, TAX, F
     
         n = nrstep
         F = mf%FALG
@@ -117,8 +118,8 @@ contains
     !> Write the global material data
     subroutine DYNFIL3(n, F, axes, eulr, CIJ, tax)
         integer,intent(in)                              :: n
-        double precision, dimension(3), intent(in)      :: axes, eulr
-        double precision, dimension(3,3), intent(in)    :: CIJ, tax, F
+        real(dp), dimension(3), intent(in)      :: axes, eulr
+        real(dp), dimension(3,3), intent(in)    :: CIJ, tax, F
     
         nrstep = n
         mf%FALG = F
@@ -131,9 +132,9 @@ contains
     !> Get the record data for i-th grain
     subroutine DYNFIL4(i, FI1, PHI, FI2, T, GEW, GAM, F, AXES, EULR, CIJ, TAX, ZERO)
         integer, intent(in)                             :: i
-        double precision, intent(out)                   :: FI1,PHI,FI2,GEW,GAM
-        double precision, dimension(3), intent(out)     :: AXES, EULR
-        double precision, dimension(3,3), intent(out)   :: CIJ, TAX, F, T, ZERO
+        real(dp), intent(out)                   :: FI1,PHI,FI2,GEW,GAM
+        real(dp), dimension(3), intent(out)     :: AXES, EULR
+        real(dp), dimension(3,3), intent(out)   :: CIJ, TAX, F, T, ZERO
     
         FI1     = DFIL(i)%tFI1
         PHI     = DFIL(i)%tPHI
@@ -152,9 +153,9 @@ contains
     !> Put the record data for i-th grain
     subroutine DYNFIL5(i, FI1, PHI, FI2, T, GEW, GAM, F, AXES, EULR, CIJ, TAX, ZERO)
         integer, intent(in)                             :: i
-        double precision, intent(in)                    :: FI1,PHI,FI2,GEW,GAM
-        double precision, dimension(3), intent(in)      :: AXES, EULR
-        double precision, dimension(3,3), intent(in)    :: CIJ, TAX, F, T, ZERO
+        real(dp), intent(in)                    :: FI1,PHI,FI2,GEW,GAM
+        real(dp), dimension(3), intent(in)      :: AXES, EULR
+        real(dp), dimension(3,3), intent(in)    :: CIJ, TAX, F, T, ZERO
     
         DFIL(i)%tFI1    = FI1
         DFIL(i)%tPHI    = PHI

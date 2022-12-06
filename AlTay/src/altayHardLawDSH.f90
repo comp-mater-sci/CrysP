@@ -24,26 +24,26 @@ module altayHardLaw_DSH
 
     !> BP model parameters including saturation and minimum values for state dependent dislocation densities
     type :: PAR
-        double precision :: b, G, alfa, f, tau0
-        double precision :: I, R, Iwd, Rwd, Rncg, beta1, beta2
-        double precision :: Iwp, Rwp, Rrev, R2
-        double precision :: RHOcbSAT, RHOwdSAT, RHOwpSAT
-        double precision :: RHOcbMIN, RHOwdMIN, RHOwpMIN
-        double precision :: RHOwpLOW
+        real(dp) :: b, G, alfa, f, tau0
+        real(dp) :: I, R, Iwd, Rwd, Rncg, beta1, beta2
+        real(dp) :: Iwp, Rwp, Rrev, R2
+        real(dp) :: RHOcbSAT, RHOwdSAT, RHOwpSAT
+        real(dp) :: RHOcbMIN, RHOwdMIN, RHOwpMIN
+        real(dp) :: RHOwpLOW
     end type
         
-    double precision, parameter :: MINfrac= 2.0D-3
-    double precision, parameter :: LOWfrac=10.0D-3
-    double precision, parameter :: TENpow6 = 1.D6
-    double precision, parameter :: p2= 1.D0/sqrt(2.D0)
-    double precision, parameter :: n2= -p2
-    double precision, parameter :: p3= 1.D0/sqrt(3.D0)
-    double precision, parameter :: n3= -p3
-    double precision, parameter :: p6= 1.D0/sqrt(6.D0)
-    double precision, parameter :: n6= -p6
-    double precision, parameter :: pd6= 2.D0/sqrt(6.D0)
-    double precision, parameter :: nd6= -pd6
-    double precision, parameter :: n5_42=-0.771516749810
+    real(dp), parameter :: MINfrac= 2.0D-3
+    real(dp), parameter :: LOWfrac=10.0D-3
+    real(dp), parameter :: TENpow6 = 1.D6
+    real(dp), parameter :: p2= 1.D0/sqrt(2.D0)
+    real(dp), parameter :: n2= -p2
+    real(dp), parameter :: p3= 1.D0/sqrt(3.D0)
+    real(dp), parameter :: n3= -p3
+    real(dp), parameter :: p6= 1.D0/sqrt(6.D0)
+    real(dp), parameter :: n6= -p6
+    real(dp), parameter :: pd6= 2.D0/sqrt(6.D0)
+    real(dp), parameter :: nd6= -pd6
+    real(dp), parameter :: n5_42=-0.771516749810
 
     integer, save, public :: iKOST = 0
 
@@ -51,13 +51,13 @@ module altayHardLaw_DSH
     logical, save                           ::  InitOK = .FALSE.
     integer, save                           ::  Nss !Nr. of slip systems. 12: (110)[111] - 1 family, 24: (110)+(112)[111] - 2 families
     integer                                 ::  i 
-    double precision, save                  ::  alfa_G_b
-    double precision, save, dimension(24,6) ::  eff             = 0.D0, &
+    real(dp), save                  ::  alfa_G_b
+    real(dp), save, dimension(24,6) ::  eff             = 0.D0, &
                                                 effslashb       = 0.D0, &
                                                 alfa_G_b_eff    = 0.D0, &
                                                 alfa_G_b_ABSeff = 0.D0
     !EdgeDir(s,1:3): normalized movement vector of EDGE disl. on slip system s (== normalized burgers vector of slip system s)
-    double precision, save, dimension(24,3) ::  EdgeDir
+    real(dp), save, dimension(24,3) ::  EdgeDir
 
     data (EdgeDir( 1: 3,i),i=1,3) /3*p3,3*p3,3*p3/ !s.s. 1 to 3
     data (EdgeDir( 4: 6,i),i=1,3) /3*n3,3*n3,3*p3/ !s.s. 4 to 6
@@ -71,7 +71,7 @@ module altayHardLaw_DSH
     !ScrewDir(s,1:3): normalized movement vector of SCREW disl. on slip system s
     !  If NormSS(s,:) denotes slip plane normal vector and x the cross product, then:
     !      ScrewDir(s,:) = EdgeDir(s,:) x NormSS(s,:)
-    double precision, save, dimension(24,3) ::  ScrewDir
+    real(dp), save, dimension(24,3) ::  ScrewDir
     data (ScrewDir(01,i),i=1,3) /nd6,p6,p6/ !s.s. 01
     data (ScrewDir(02,i),i=1,3) /p6,nd6,p6/ !s.s. 02
     data (ScrewDir(03,i),i=1,3) /p6,p6,nd6/ !s.s. 03
@@ -98,7 +98,7 @@ module altayHardLaw_DSH
     data (ScrewDir(24,i),i=1,3) /n2,n2,0./ !s.s. 24
 
     !NormDir(s,1:3): normalized slip plane normal vector of slip system s
-    double precision, save, dimension(24,3) ::  NormDir
+    real(dp), save, dimension(24,3) ::  NormDir
     data (NormDir(01,i),i=1,3) /0.,p2,n2/ !s.s. 01
     data (NormDir(02,i),i=1,3) /n2,0.,p2/ !s.s. 02
     data (NormDir(03,i),i=1,3) /p2,n2,0./ !s.s. 03
@@ -125,7 +125,7 @@ module altayHardLaw_DSH
     data (NormDir(24,i),i=1,3) /n6,p6,pd6/ !s.s. 24
 
     !CBBnormal(i,1:3): normalized vector normal to CBB i
-    double precision, save, dimension(6,3)  ::  CBBnormal
+    real(dp), save, dimension(6,3)  ::  CBBnormal
     data (CBBnormal(1,i),i=1,3) /0.,p2,n2/ !CBBs on (01-1)-plane
     data (CBBnormal(2,i),i=1,3) /n2,0.,p2/ !CBBs on (-101)-plane
     data (CBBnormal(3,i),i=1,3) /p2,n2,0./ !CBBs on (1-10)-plane
@@ -355,21 +355,21 @@ contains
 
     subroutine MakeInc(SVa, sliprate, deltaT, SVb, iError)
         type(StatVar), intent(in)                     :: SVa      !<State variable at beginning of increment
-        double precision, intent(in), dimension(24)   :: sliprate !<Assumed constant throughout the increment
-        double precision, intent(in)                  :: deltaT   !<Time increment
+        real(dp), intent(in), dimension(24)   :: sliprate !<Assumed constant throughout the increment
+        real(dp), intent(in)                  :: deltaT   !<Time increment
         type(StatVar), intent(out)                    :: SVb      !<State variables at end of the increment
         integer, intent(out)                          :: iError
 
         logical                         :: FLUXreversal, wpLOW
         integer                         :: j
         integer, dimension(6)           :: r
-        double precision                ::  fl, wd, RHOwp_a, wpFLUX, RHOwdLOC, RHOwdHOM, accGAMMA_new, RHOwd_ini, RHOwd, rEffective,    &
+        real(dp)                ::  fl, wd, RHOwp_a, wpFLUX, RHOwdLOC, RHOwdHOM, accGAMMA_new, RHOwd_ini, RHOwd, rEffective,    &
                                             SUMabsGamDot    = 0.,                                                                       &
                                             GAMMAdot_new    = 0.,                                                                       &
                                             RHObausch       = 0.,                                                                       &
                                             SUMabsGam       = 0.,                                                                       &
                                             GAMMA_new       = 0.
-        double precision, dimension(6)  ::  GAMMAdot        = 0.,                                                                       &
+        real(dp), dimension(6)  ::  GAMMAdot        = 0.,                                                                       &
                                             GAMMA           = 0.
 
         if(.not. InitOK) then
@@ -522,9 +522,9 @@ contains
     !>The value of 'P%b', the size of burgers vector, is inherited.
     !>@param RHO_a: the value of RHO at the start of the interval (a,b)
     !>@param delta_g: the increment in g during the interval (a,b)
-    pure double precision function F_KocksMeck(RHO_a, delta_g, II, RR) result(kock)
-        double precision, intent(in)    :: RHO_a, delta_g,II, RR
-        double precision x
+    pure real(dp) function F_KocksMeck(RHO_a, delta_g, II, RR) result(kock)
+        real(dp), intent(in)    :: RHO_a, delta_g,II, RR
+        real(dp) x
     
         x = exp(-0.5D0 * RR * delta_g / P%b)
         x = II / RR * (1.D0 - x) + sqrt(RHO_a) * x
@@ -533,9 +533,9 @@ contains
 
     !> 4th order Runge-Kutta approximation of the differential equation given by d(wp)/dt = F(wp).
     !> @param wpini initial state of wp
-    pure double precision function rungeKutta(wpini, deltaT, fl, wd) result(runge_kutta)
-        double precision, intent(in)    :: wpini, deltaT, fl, wd
-        double precision, dimension(4)  :: k
+    pure real(dp) function rungeKutta(wpini, deltaT, fl, wd) result(runge_kutta)
+        real(dp), intent(in)    :: wpini, deltaT, fl, wd
+        real(dp), dimension(4)  :: k
 
         k(1) = deltaT * dwp_dt(wpini, fl, wd)
         k(2) = deltaT * dwp_dt(wpini + k(1) / 2.D0, fl, wd)
@@ -545,8 +545,8 @@ contains
         runge_kutta = wpini + (k(1) + 2.D0 * k(2) + 2.D0 * k(3) + k(4)) / 6.D0
     end function 
 
-    pure double precision function dwp_dt(wp, fl, wd) result(derivative)
-        double precision, intent(in)    :: wp, fl, wd
+    pure real(dp) function dwp_dt(wp, fl, wd) result(derivative)
+        real(dp), intent(in)    :: wp, fl, wd
 
         derivative = (sign(1.D0, fl) * P%Iwp * sqrt(wd + abs(wp)) - P%Rwp * wp) * abs(fl)
     end function
@@ -554,9 +554,9 @@ contains
     pure function F_CRSS(SV) result(CRSS) 
         type(StatVar), intent(in)           :: SV
         integer                             :: j, s, i
-        double precision                    :: signfac, tau_CB, CRSS_0_CB
-        double precision, dimension(6)      :: wpcontr, wdcontr
-        double precision, dimension(2,24)   :: CRSS, tau_CBB
+        real(dp)                    :: signfac, tau_CB, CRSS_0_CB
+        real(dp), dimension(6)      :: wpcontr, wdcontr
+        real(dp), dimension(2,24)   :: CRSS, tau_CBB
 
         !Slip systems not allowed to become active retain initialization value of -1.0
         CRSS = -1.D0
@@ -615,7 +615,7 @@ contains
 
     !> Multiply all components of SDV by the scalar
     pure elemental type(StateDerivedVars) function StateDerivedVar_times(SDV, scalar) result(res)
-        double precision,       intent(in) :: scalar
+        real(dp),       intent(in) :: scalar
         type(StateDerivedVars), intent(in) :: SDV
         
         res%rho_CBs     = scalar * SDV%rho_CBs

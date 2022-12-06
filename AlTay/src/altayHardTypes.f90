@@ -1,5 +1,6 @@
 !> Provides common data types and constants to be used by various hardening laws.
 module altayHardTypes
+    use altay_definitions, only: dp
 
       !> Representation of Critical Resolved Shear Stresses
       !>
@@ -9,7 +10,7 @@ module altayHardTypes
       !> The second index is sequence number of pre-defined deformation systems
       !> (either slips or twinnings).
       type :: CRSS
-          double precision,dimension(2,96)      :: crss = 1.D0
+          real(dp),dimension(2,96)      :: crss = 1.D0
       end type
 
       !> Unspecified or not unimplemented hardening law.

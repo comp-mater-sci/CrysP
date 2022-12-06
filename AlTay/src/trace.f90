@@ -1,4 +1,6 @@
 module tracing
+    use altay_definitions, only: dp
+
     implicit none
     
     interface vef_trace
@@ -19,8 +21,8 @@ contains
 
     subroutine vef_trace_tensor(caller_module, caller_routine, tensor)
         character(len=*), intent(in)                :: caller_module, caller_routine
-        double precision, dimension(..), intent(in) :: tensor
-        double precision                            :: buffer
+        real(dp), dimension(..), intent(in) :: tensor
+        real(dp)                            :: buffer
 
 #ifdef TRACE
         

@@ -6,6 +6,7 @@ module altayHard
     use altayConfig
     use altayHardLaw_DSH
     use altayDSHstate
+    use altay_definitions, only: dp
     
     implicit none
     
@@ -104,8 +105,8 @@ contains
     subroutine getTau(gamma, tau, info)
         use altayHardLaw_Simple
 
-        double precision,intent(in)   :: gamma
-        double precision,intent(out)  :: tau
+        real(dp),intent(in)   :: gamma
+        real(dp),intent(out)  :: tau
         integer,intent(out)           :: info
         
         info = 0
@@ -123,10 +124,10 @@ contains
 
     subroutine getCRSS(ior, gamma, CRSSmatrix, info)
         integer, intent(in)             :: ior
-        double precision, intent(in)    :: gamma
+        real(dp), intent(in)    :: gamma
         type(CRSS), intent(out)         :: CRSSmatrix
         integer, intent(out)            :: info
-        double precision                :: tau
+        real(dp)                :: tau
 
         select case(HardLawID)
             case(hard_none)

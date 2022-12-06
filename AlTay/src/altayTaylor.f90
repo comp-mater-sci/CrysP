@@ -2,6 +2,7 @@
 #include "altayRCM.fpp"
 #endif
       module altayTaylor
+    use altay_definitions, only: dp
       use altayAlgorithms
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayMacroKinematic
@@ -11,7 +12,7 @@
       integer,private           :: M,   &       ! number of glide systems + number of twin systems
                                    NGL, &       ! number of glide systems
                                    NTW          ! number of twin systems
-      double precision,private  :: B1(3,96),B(5,5),B2(6,96),G(96)
+      real(dp),private  :: B1(3,96),B(5,5),B2(6,96),G(96)
       integer,private           :: DI1(5)
 
       contains
@@ -26,7 +27,7 @@
 #endif
       use altayIOConfig
       use altayPancake
-      implicit double precision (a-h,o-z)
+      implicit real(dp) (a-h,o-z)
       ! optional argument - required for IRICHT=2 or 3:
       type(DeformationRate), intent(in),optional :: MacroDefRate
       ! optional argument - required for IRICHT=3:
@@ -38,8 +39,8 @@
       common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
        SWRLX(3)
-      double precision, dimension(3,3):: RHOScrys(3,3)
-      double precision, dimension(3,3):: RHOAcrys(3,3), RHOAsa(3,3)
+      real(dp), dimension(3,3):: RHOScrys(3,3)
+      real(dp), dimension(3,3):: RHOAcrys(3,3), RHOAsa(3,3)
       character(len=72) :: TITglij                                          ! Name of slip system set
 !
 !     Extra arrays necessary for linear programming of 2 grains simultaneously
@@ -53,7 +54,7 @@
 !     DVM = von Mises equivalent strain rate
 !
       ! Local stress in crystal reference system:
-      double precision, dimension(3,3):: Scrys=0.0d0
+      real(dp), dimension(3,3):: Scrys=0.0d0
       save
       !
       goto (1000,2000,3000),IRICHT
@@ -224,7 +225,7 @@
       use altayIOConfig
       use altaySliprate
       use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
-      implicit double precision (a-h,o-z)
+      implicit real(dp) (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
       common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
       common /IGLIJS/ CC(2,96), M11
@@ -232,12 +233,12 @@
       common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       common /EULERA/ fi1,PHI,fi2
       logical SWRLX
-      double precision, intent(out):: Seq ! Equivalent stress in crystal, defined as..
+      real(dp), intent(out):: Seq ! Equivalent stress in crystal, defined as..
                                     !  plastic work rate in crystal normalized by..
                                     !  (macro) von Mises equivalent strain rate
       !> Rate of plastic work per unit volume in the crystal
-      double precision, intent(out) :: WorkRate
-      double precision :: Mgrain
+      real(dp), intent(out) :: WorkRate
+      real(dp) :: Mgrain
       type(EulerAngles):: Euler
 !
 !     SHsam:    macroscopic stress in sample reference system
@@ -254,9 +255,9 @@
 !      data SQR2/0.7071067811865476D+00/
 #ifdef PEBP_ENABLED
       integer :: info
-      double precision :: ddt
+      real(dp) :: ddt
 #endif
-      double precision, intent(OUT) :: TOTGAMdot
+      real(dp), intent(OUT) :: TOTGAMdot
       SAVE
       WACC1=0.0
       WACC2=0.0

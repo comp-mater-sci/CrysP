@@ -2,6 +2,7 @@
 #include "altayRCM.fpp"
 #endif
       module altayTBH
+    use altay_definitions, only: dp
       use altayMiscutils, only: terminate, stopcode_runtimeerror
 
       contains
@@ -47,7 +48,7 @@
       use altayRCM
 #endif
       use altayIOConfig,IIPR=>IPR!Rename global IPR switch to avoid conflict
-      implicit double precision (a-h,o-z)
+      implicit real(dp) (a-h,o-z)
       dimension A(NDIM,M),D(NDIM),BINV(NDIM,N),U(NDIM,N),IACT(NDIM),     &
        GDOT(M),SIG(NDIM),TauC(2,M),TauR(M),Dacc(NDIM),Irp(NDIM)
       logical bas(M),valid(M)
@@ -329,7 +330,7 @@
 
       subroutine Ust(C,B,CUst,in,N,M3,NDIM)
 !     MATRIX C=MATRIX Ustar*MATRIX B
-      implicit double precision (a-h,o-z)
+      implicit real(dp) (a-h,o-z)
       dimension B(NDIM,M3),C(NDIM,M3),CUst(N)
       do j=1,M3
         X=B(in,j)
@@ -345,7 +346,7 @@
 
       subroutine mtprd(C,A,B,N1,N2,N3,ND1,ND2)
 !     MATRIX C=MATRIX A*MATRIX B
-      implicit double precision (a-h,o-z)
+      implicit real(dp) (a-h,o-z)
       dimension A(ND1,N2),B(ND2,N3),C(ND1,N3)
       do I=1,N1
           do J=1,N3

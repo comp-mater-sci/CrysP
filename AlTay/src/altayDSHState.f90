@@ -65,8 +65,8 @@ contains
     !> Update the state variables of the PEBP model for i-th grain.
     subroutine KS_updateState(i,sliprate,deltaT,info)
         integer,intent(in)                          :: i        
-        double precision,intent(in), dimension(24)  :: sliprate 
-        double precision,intent(in)                 :: deltaT   
+        real(dp),intent(in), dimension(24)  :: sliprate 
+        real(dp),intent(in)                 :: deltaT   
         integer,intent(out)                         :: info
         type(StatVar)                               :: SV_tmp
         
