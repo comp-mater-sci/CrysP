@@ -63,7 +63,7 @@
       dimension B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10)
       dimension GAMR(2),Tprinc(3,3),TAURL(2)
 
-      data B3/30*0.0D0
+      data B3/30*0.0D0/
       real(dp), parameter :: SQR2=sqrt(0.5_dp),TOLXX=5.0e-6_dp
 !     Definition of the two relaxations, representing a
 !     13-simple shear and a 23-simple shear, respectively:
@@ -225,7 +225,7 @@
  219  format (' right hand side',/,(2x,10F10.4),/)
 !     First call of Simplex (full constraints)
       if (IPR.eq.2) then
-          if (NLIST.eq.1) rite (IMP,400) IOR,ISTP,NBLOC
+          if (NLIST.eq.1) write (IMP,400) IOR,ISTP,NBLOC
       end if
  400  format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
       call TBH(IPR,NDIM,N,M2,A1,BB,                                      &
