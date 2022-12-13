@@ -10,6 +10,9 @@
 
 !> API for "AlTay as a subroutine"
 module altaySub
+    use altayHardLaw_DSH
+    use altay_io
+
       implicit none
       !> \name Named constants for error codes in altaySub
       !>@{
@@ -35,9 +38,6 @@ contains
       use altayTexFormats
       use altayHard,only: hard_BP,hard_PEBPscrew,hard_PEBPloop,InitModuleAltayHard
       use altayMesostructure
-#ifdef PEBP_ENABLED
-      use AltayDSHstate
-#endif
       !
       type(altayConfigData),intent(in)    :: cnf      !< configuration data
       integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
@@ -122,7 +122,7 @@ contains
                                                             // trim(acnf%hardening%PEBPCnf%input_fname)
                               return
                         endif
-                        info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
+                        info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id, KS_state, size(KS_state))
                         if ((info /= 0) .and. present(errmsg)) then
                               errmsg = 'Cannot read from PEBP state file: '// trim(acnf%hardening%PEBPCnf%input_fname)
                               return
@@ -144,9 +144,6 @@ contains
       use altayMesostructure, only: MICROSTR_finalize
       use altayDynfil
       use altayRCM
-#ifdef PEBP_ENABLED
-      use AltayDSHstate
-#endif
       integer,intent(out)                 :: info     !< exit code (0 on success)
       !
             ! Close all units.
@@ -185,9 +182,6 @@ contains
       use altayConfig, only: altayConfigData,fname_len
       use altayIOConfig
       use altayMiscutils
-#ifdef PEBP_ENABLED
-      use AltayDSHstate
-#endif
       type(altayConfigData),intent(in)    :: cnf      !< configuration data
       integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
       character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
@@ -345,7 +339,6 @@ contains
       use altayCurAccess
       use altayConfig, only: acnf,astate
       use altayHard, only: hard_BP,hard_PEBPscrew,hard_PEBPloop
-      use AltayDSHstate
       use altayMiscutils
       integer,intent(out)           :: info
       !
@@ -358,7 +351,7 @@ contains
             select case(acnf%hardening%HardLawID)
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                 if (acnf%output_config%npebp == 1) then
-                      info = KS_writeState(IMP4)
+                      info = KS_writeState(IMP4, KS_state, size(KS_state))
                 endif
             endselect
             if (info /= 0) return

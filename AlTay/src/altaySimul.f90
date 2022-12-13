@@ -2,9 +2,12 @@
 #include "altayRCM.fpp"
 #endif
       module altaySimul
+    use altay_definitions, only: dp
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayHardTypes
       use altayMacroKinematic
+      use altayHardLaw_DSH
+    use altay_io
 
       ! Initial rations of CRSS, set in MAINA1.
       ! It is used only by the stand-alone AlTay
@@ -29,10 +32,6 @@
       use altayHard
       use altayTaylor
       use altayAlgorithms
-#ifdef PEBP_ENABLED
-      use AltayDSHstate
-      use altayHardLaw_DSH
-#endif
 #ifdef ALTAY_SUBROUTINE
       use altayConfig
       use altayRCM
@@ -40,7 +39,7 @@
       use altayIOConfig
       use altayMiscutils
       !
-      implicit double precision (a-h,o-z)
+      implicit real(dp) (a-h,o-z)
       ! optional argument for IW=1 or 2:
       type(DeformationRate),intent(in),optional :: MacroDefRate !inout
 !
@@ -75,19 +74,19 @@
       ! HGAM: homogenized slip per step
       ! HGAMCALL: homogenized slip per call
       ! HGAMTOT: homogenized slip accumulated over calls
-      double precision :: HGAM=0.D0,HGAMCALL=0.D0,HGAMTOT=0.D0
+      real(dp) :: HGAM=0.D0,HGAMCALL=0.D0,HGAMTOT=0.D0
       ! Macroscopically imposed vM equivalent strain per call.
-      double precision :: MEPSCALL=0.D0
-      double precision :: GMMdot !Total slip rate in current grain
-      double precision :: Mgrain !Taylor factor of the current grain
-      double precision :: Mavg   !Volume-averaged Taylor factor
-      double precision :: srh !Strain Rate Heterogeneity in polycrystal
-      double precision :: SeqGrain=0.D0 ! Equivalent stress in crystal, defined as..
+      real(dp) :: MEPSCALL=0.D0
+      real(dp) :: GMMdot !Total slip rate in current grain
+      real(dp) :: Mgrain !Taylor factor of the current grain
+      real(dp) :: Mavg   !Volume-averaged Taylor factor
+      real(dp) :: srh !Strain Rate Heterogeneity in polycrystal
+      real(dp) :: SeqGrain=0.D0 ! Equivalent stress in crystal, defined as..
                                     !  plastic work rate in crystal normalized by..
                                     !  (macro) von Mises equivalent strain rate
-      double precision :: WorkRate ! Rate of plastic work per unit
+      real(dp) :: WorkRate ! Rate of plastic work per unit
                                    ! volume in the crystal
-      double precision :: Wtot ! Total plastic work per unit volume in crystal
+      real(dp) :: Wtot ! Total plastic work per unit volume in crystal
 #ifdef PEBP_ENABLED
       type(StateDerivedVars) :: pebpSDV, pebpSDVavg
 #endif
@@ -288,7 +287,7 @@
 #if defined(PEBP_ENABLED) && !defined(INTERMEDIATEBPM_DISABLED)
       select case(KOST)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-          if (NPEBPx.eq.1) info = KS_writeState(IMP4)
+          if (NPEBPx.eq.1) info = KS_writeState(IMP4, KS_state, size(KS_state))
       endselect
 #endif
       HGAMCALL = 0.D0

@@ -1,4 +1,5 @@
 module altaySmtAccess
+    use altay_definitions, only: dp
 use altayDynfil
 implicit none
 contains
@@ -42,7 +43,7 @@ contains
       !
       integer :: i,ngrains
       integer,parameter :: NSTAP = 1
-      double precision,parameter :: convf = 180.D0 / acos(-1.D0)
+      real(dp),parameter :: convf = 180.D0 / acos(-1.D0)
             !
             ngrains = size(DFIL)
             do i = 1, ngrains
@@ -64,9 +65,9 @@ contains
       integer,intent(in)      :: iounit      !< IO unit
       integer,intent(out)     :: info        !< Exit code
       !
-      double precision,parameter :: convf =  acos(-1.D0) / 180.D0   !< conversion factor degree=>radians, equals 2*pi/360
+      real(dp),parameter :: convf =  acos(-1.D0) / 180.D0   !< conversion factor degree=>radians, equals 2*pi/360
       integer :: i,j,i0,k,NSTAP,nrec,ngrains
-      double precision :: STAP = 0.D0
+      real(dp) :: STAP = 0.D0
             !
             ! Number of records (orientations) in the SMT file
             nrec = size(DFIL)

@@ -365,9 +365,8 @@ contains
       integer                       :: i
       character(len=max_pathlen) :: root, ext
 
-      type(MapItem),dimension(3*2) :: extensions = [MapItem('.smt',TF_SMT), MapItem('.SMT',TF_SMT), &
-                                                    MapItem('.cur',TF_CUR), MapItem('.CUR',TF_CUR), &
-                                                    MapItem('.cub',TF_CUB), MapItem('.CUB',TF_CUB)] ! ignore case of extension when resolving its name
+      type(MapItem),dimension(2*2) :: extensions = [MapItem('.smt',TF_SMT), MapItem('.SMT',TF_SMT), &
+                                                    MapItem('.cur',TF_CUR), MapItem('.CUR',TF_CUR)]
 
       type(MapItem),dimension(2) :: model_types = [MapItem('ALAMEL', modelAlamel), &
                                                    MapItem('FCTaylor', modelFCTaylor)]
@@ -390,7 +389,7 @@ contains
                 return
             endif
             select case(cnf%texture%input_type)
-                  case(TF_SMT,TF_CUB)     ! SMT or CUB
+                  case(TF_SMT)     ! SMT or CUB
                         continue
                   case(TF_CUR)       ! CUR file, the only multi-block file now.
                        if (.not. readValue(cnfunit, cnf%texture%block_id)) return ! read block id for CUR format

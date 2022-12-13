@@ -1,7 +1,10 @@
 module altayCurAccess
 use altayDynfil
 use altayAlgorithms
-implicit none
+use altay_definitions, only: dp
+
+    implicit none
+
 contains
 
       !> Write title line of the CUR format.
@@ -21,8 +24,8 @@ contains
       integer,intent(out)     :: info !< exit code: 0 on success
       integer :: npoint, i
       !
-      double precision,parameter :: convf = 180.D0 / acos(-1.D0)
-      double precision,dimension(3) :: GLR
+      real(dp),parameter :: convf = 180.D0 / acos(-1.D0)
+      real(dp),dimension(3) :: GLR
       !
             npoint = size(DFIL)
 
@@ -69,7 +72,7 @@ contains
       integer,intent(out)     :: info     !< Exit code
       !
       integer :: npoint, i, j, tmp
-      double precision,parameter :: convf = acos(-1.D0) / 180.D0
+      real(dp),parameter :: convf = acos(-1.D0) / 180.D0
       character(len=10) :: buf
       !
             ! Recon first: get the number of records

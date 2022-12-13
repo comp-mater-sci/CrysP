@@ -3,8 +3,8 @@
 module altayConfig
     use altayHardTypes
     use altayHardLaw_Simple, only: VoceConfig, SwiftKConfig, SwiftSConfig
-    use altayHardLaw_DSH, only: PAR
     use altayTexFormats
+    use altay_definitions, only: dp
     
     implicit none
 
@@ -12,7 +12,7 @@ module altayConfig
 
     !> \name Named constants for identifiers of the supported models
     !>@{
-    integer,parameter :: modelFCTaylor = 1, modelAlamel = 2, modelMASAL = 3
+    integer,parameter :: modelFCTaylor = 1, modelAlamel = 2
     !>@}
 
     type :: slipSystemData
@@ -53,32 +53,32 @@ module altayConfig
         !> Selection of relaxations
         logical                                   :: rlx1 = .true., rlx2 = .true.
         !> Deformation gradient tensor to be imposed. (MB: this is rather a velocity gradient.)
-        double precision,dimension(3,3)           :: dgf  = 0.D0
+        real(dp),dimension(3,3)           :: dgf  = 0.D0
     end type
 
     type :: simulStepOutputData
         !> Macroscopic (homogenized) stress
-        double precision, dimension(3,3)    :: stress_tensor = 0.D0
+        real(dp), dimension(3,3)    :: stress_tensor = 0.D0
         !> Macroscopic (homogenized) Taylor factor
-        double precision                    :: taylor_factor = 0.D0
+        real(dp)                    :: taylor_factor = 0.D0
         !> Strain Rate Heterogeneity in polycrystal. Non-zero only for models that consider clusters of grains:
         !> \f$ \kappa = (||d-D||) / ||D|| \f$
-        double precision                    :: strain_rate_heterogeneity = 0.D0
+        real(dp)                    :: strain_rate_heterogeneity = 0.D0
         !> Macroscopic stress, defined as the work conjugate to D_vM:
         !> \f$ \sigma_{eq} = (\mathbf{S} \cdot \mathbf{D}) / D_{vM} \f$
-        double precision                    :: equivalent_stress = 0.D0
+        real(dp)                    :: equivalent_stress = 0.D0
         !> Macroscopic (homogenized) effective von Mises stress
-        double precision                    :: effective_stress = 0.D0
+        real(dp)                    :: effective_stress = 0.D0
         !> Macroscopic (homogenized) plastic slip
-        double precision                    :: homogenised_slip = 0.D0
+        real(dp)                    :: homogenised_slip = 0.D0
         !> Macroscopic (homogenized) plastic slip - total over the calls
-        double precision                    :: homogenised_slip_tot = 0.D0
+        real(dp)                    :: homogenised_slip_tot = 0.D0
         !> Macroscopic (imposed) effective von Mises strain - total over the steps
-        double precision                    :: effective_macro_strain = 0.D0
+        real(dp)                    :: effective_macro_strain = 0.D0
         !> Macroscopic (imposed) effective von Mises strain - total over the calls
-        double precision                    :: effective_macro_strain_tot = 0.D0
+        real(dp)                    :: effective_macro_strain_tot = 0.D0
         !> Macroscopic (imposed) effective von Mises strain till the end of the current step - total over the calls
-        double precision                    :: effective_macro_strain_tot_end = 0.D0
+        real(dp)                    :: effective_macro_strain_tot_end = 0.D0
     end type
 
     !> type that subsumes step input and output data
@@ -148,8 +148,8 @@ module altayConfig
         !>   - 3 - MAS-AL
         integer                                   :: NGR = 2 ! Number of grains in the cluster
         !> It is relevant only in MAS-AL
-        double precision                          :: ENTA = 1.D0
-        double precision, dimension(3,3)          :: FMicro = reshape(       &
+        real(dp)                          :: ENTA = 1.D0
+        real(dp), dimension(3,3)          :: FMicro = reshape(       &
                                                         [ 1.D0, 0.D0, 0.D0,  &
                                                           0.D0, 1.D0, 0.D0,  &
                                                           0.D0, 0.D0, 1.D0], &
@@ -174,7 +174,7 @@ module altayConfig
 
 
     type :: altayStateData
-        double precision                                :: eps = 0.D0
+        real(dp)                                :: eps = 0.D0
         !> Corresponds to NBLOC config data
         integer                                         :: nSimulCalls = 0           
         type(simulStepData),dimension(:),allocatable    :: simulCalls
@@ -190,7 +190,7 @@ module altayConfig
 
 contains
 
-    !> Configure the stp object for using selected model type (FCTaylor, ALAMEL, MASAL).
+    !> Configure the stp object for using selected model type (FCTaylor, ALAMEL).
     subroutine setStepType(stp,modelId,info)
         type(simulStepInputData),intent(inout)    :: stp
         integer,intent(in)                        :: modelId
@@ -201,7 +201,7 @@ contains
         case(modelFCTaylor)
             stp%rlx1 = .false.
             stp%rlx2 = .false.
-        case(modelAlamel,modelMASAL)
+        case(modelAlamel)
             stp%rlx1 = .true.
             stp%rlx2 = .true.
         case default
@@ -209,7 +209,7 @@ contains
         end select
     end subroutine
 
-    !> Configure the cnf object for using selected model type (FCTaylor, ALAMEL, MASAL).
+    !> Configure the cnf object for using selected model type (FCTaylor, ALAMEL).
     subroutine setModelType(cnf,modelId,info)
         type(altayConfigData),intent(inout)       :: cnf
         integer,intent(in)                        :: modelId
@@ -220,8 +220,6 @@ contains
                 cnf%simul_init%ngr = 1
             case(modelAlamel)
                 cnf%simul_init%ngr = 2
-            case(modelMASAL)
-                cnf%simul_init%ngr = 3
             case default
                 info = -1
                 return

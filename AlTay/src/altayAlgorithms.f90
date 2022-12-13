@@ -1,89 +1,85 @@
-#include "altayRCM.fpp"
+include 'lapack.f90'
 
 module altayAlgorithms
     use altayMiscutils, only: terminate, stopcode_runtimeerror
+    use altay_definitions, only: dp
     use criMathUtils
-    use altayRCM
-    use tracing
+    use altay_log
     
     implicit none
 
-    include 'mkl.fi'
-
-    double precision, parameter :: SQRT_P5 = sqrt(0.5d0)
-    double precision, parameter :: RESOLUTION = 0.5e-5
-    character(len=15), parameter :: MODULE_NAME = "altayAlgorithms"
+    real(dp), parameter     :: SQRT_P5 = sqrt(0.5d0)
+    real(dp), parameter     :: RESOLUTION = 0.5e-5
+    character(*), parameter :: MODULE_NAME = "altayAlgorithms"
     
     private  
-    public  :: deg2rad,             &
-               rotmat,              &
-               rotateSRTensorFrom,  &
-               kleinKwa,            &
-               updatc,              &
-               getang,              &
-               vector5D,            &
-               symMatrix,           &
-               transf
+    public  ::  updatC,             &
+                symMatrix,          &
+                vector5D,           &
+                transf,             &
+                deg2rad,            &
+                rotmat,             &
+                rotateSRTensorFrom, &
+                kleinKwa,           &
+                getang              
 
 contains
     
     !> Updating of CIJ matrix of ellipsoid
     !> Finv is the inverse of the F-tensor which describes the strain increment.
-    subroutine UPDATC(CIJ, Finv)
-        double precision, dimension(3,3), intent(in)   :: Finv
-        double precision, dimension(3,3), intent(inout)  :: CIJ
+    subroutine updatC(CIJ, Finv)
+        real(dp), dimension(3,3), intent(in)    :: Finv
+        real(dp), dimension(3,3), intent(inout) :: CIJ
+
         CIJ = matmul(matmul(transpose(Finv), CIJ), Finv)
     end subroutine
     
     !> Transform a 5D-vector in deviatoric (stress/strain-rate) space to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
     !> Note: The reverse transformation is done by function 'Vector5D'.
     function SymMatrix(vec) result(sym)
-        double precision, dimension(5), intent(in) :: vec
-        double precision, dimension(3,3)           :: sym 
-        double precision, parameter                :: C1 = (sqrt(3.0d0) + 3.0d0) / 6.0d0, & 
-                                                      C2 = (3.0d0 - sqrt(3.0d0)) / 6.0d0  
+        real(dp), dimension(5), intent(in)  ::  vec
+        real(dp), dimension(3,3)            ::  sym 
+        real(dp), parameter                 ::  C1 = (sqrt(3.0d0) + 3.0d0) / 6.0d0, & 
+                                                C2 = (3.0d0 - sqrt(3.0d0)) / 6.0d0  
         
         sym(2,2) =  C1 * vec(1) - C2 * vec(2)
         sym(3,3) = -C2 * vec(1) + C1 * vec(2)
-        
         sym(1,1) = -sym(2,2) - sym(3,3)
-        
         sym(2,3) = SQRT_P5 * vec(3)
         sym(3,1) = SQRT_P5 * vec(4)
         sym(1,2) = SQRT_P5 * vec(5)
-        
         sym(3,2) = sym(2,3)
         sym(1,3) = sym(3,1)
         sym(2,1) = sym(1,2)
-    end function SymMatrix
+    end function 
     
     !> Transform a (3,3)-matrix representation of a traceless 2nd rank tensor to 5D-vector representation in deviatoric (stress/strain-rate) space.
     !> Notes:
     !>    - Only the symmetric part of 2nd rank tensor is transformed.
     !>    - The reverse transformation is done by function 'SymMatrix'.
-    function Vector5D(mat) result(vec)
-        double precision, dimension(3,3), intent(in) :: mat
-        double precision, dimension(5)               :: vec 
-        double precision, parameter                  :: C1 = 0.5d0 * (sqrt(3.0d0) + 1.0d0), &
-                                                        C2 = C1 - 1.0d0
+    function vector5D(mat) result(vec)
+        real(dp), dimension(3,3), intent(in) :: mat
+        real(dp), dimension(5)               :: vec 
+        real(dp), parameter                  :: C1 = 0.5d0 * (sqrt(3.0d0) + 1.0d0), &
+                                                C2 = C1 - 1.0d0
         
         vec(1) = C1 * mat(2,2) + C2 * mat(3,3)
         vec(2) = C2 * mat(2,2) + C1 * mat(3,3)
         vec(3) = SQRT_P5 * (mat(2,3) + mat(3,2))
         vec(4) = SQRT_P5 * (mat(3,1) + mat(1,3))
         vec(5) = SQRT_P5 * (mat(1,2) + mat(2,1))
-    end function Vector5D
+    end function 
    
     !Calculate the CIJ matrix of an ellipsoid with half axes stored in Gaxes. T defines the orientation of the axes.
     !This version assumes that A is a diagonal matrix
-    Subroutine Transf(Gaxes, Aprime, T)
-        double precision, dimension(3), intent(in)      :: Gaxes 
-        double precision, dimension(3,3), intent(inout) :: Aprime 
-        double precision, dimension(3,3), intent(in)    :: T 
-        integer                                         :: i, j, k
-        double precision                                :: y
-        double precision, dimension(3)                  :: A
-        double precision, dimension(3,3)                :: X
+    Subroutine transf(Gaxes, Aprime, T)
+        real(dp), dimension(3), intent(in)      :: Gaxes 
+        real(dp), dimension(3,3), intent(inout) :: Aprime 
+        real(dp), dimension(3,3), intent(in)    :: T 
+        integer                                 :: i, j, k
+        real(dp)                                :: y
+        real(dp), dimension(3)                  :: A
+        real(dp), dimension(3,3)                :: X
 
         A = 1.D0 / Gaxes ** 2
 
@@ -106,13 +102,13 @@ contains
     !store them in prval
     !find Euler angles of these axes, store in GEULR
     Subroutine GETANG(CIJ, prval, GEULR, TMAT)
-        double precision, dimension(3,3), intent(in)    :: CIJ
-        double precision, dimension(3), intent(inout)   :: GEULR, prval
-        double precision, dimension(3,3), intent(inout) :: TMAT
-        integer                                         :: i
-        double precision                                :: CIJTR, enrm 
-        double precision, dimension(3,3)                :: e
-        type(EulerAngles)                               :: CEuler
+        real(dp), dimension(3,3), intent(in)    :: CIJ
+        real(dp), dimension(3),   intent(inout) :: GEULR, prval
+        real(dp), dimension(3,3), intent(inout) :: TMAT
+        integer                                 :: i
+        real(dp)                                :: CIJTR, enrm 
+        real(dp), dimension(3,3)                :: e
+        type(EulerAngles)                       :: CEuler
 
         CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3.D0
         e = CIJ
@@ -122,8 +118,6 @@ contains
 
         call eigenv(e, prval)
         
-        RCM_GUARD
-      
         prval = prval + CIJTR
 
         prval = 1.D0 / sqrt(prval)
@@ -133,11 +127,11 @@ contains
     end subroutine
   
     subroutine eigenv(e, prval)
-        double precision, dimension(3,3), intent(inout) :: e
-        double precision, dimension(3), intent(out)     :: prval
+        real(dp), dimension(3,3), intent(inout) :: e
+        real(dp), dimension(3), intent(out)     :: prval
         integer                                         :: i, info
         integer, dimension(18)                          :: iwork
-        double precision, dimension(37)                 :: work
+        real(dp), dimension(37)                 :: work
 
         call dsyevd('V', 'U', 3, e, 3, prval, work, 37, iwork, 18, info)
     
@@ -145,12 +139,12 @@ contains
             call normaliz(e(:,i))
         end do
         
-        call vef_trace_tensor(MODULE_NAME, 'eigenv', prval)
+        call vef_trace(MODULE_NAME, 'eigenv', prval)
     end subroutine
             
     subroutine normaliz(prdir)
-        double precision, dimension(3), intent(inout)   :: prdir
-        double precision                                :: x
+        real(dp), dimension(3), intent(inout)   :: prdir
+        real(dp)                                :: x
         integer                                         :: i
       
         x = 0.0
@@ -163,7 +157,7 @@ contains
             do i=1,3
                 prdir(i) = prdir(i) / x
             end do
-            call vef_trace_tensor(MODULE_NAME, 'normaliz', prdir)
+            call vef_trace(MODULE_NAME, 'normaliz', prdir)
         else
             x = 0
         end if 
@@ -175,10 +169,10 @@ contains
     !>x**3 - A x + B = 0
     !>The roots are suppposed to be real.
     subroutine canoni(a, b, X, theta)
-        double precision, intent(in)                :: a, b
-        double precision, intent(out)               :: theta
-        double precision, dimension(3), intent(out) :: X
-        double precision                            :: roota, delta
+        real(dp), intent(in)                :: a, b
+        real(dp), intent(out)               :: theta
+        real(dp), dimension(3), intent(out) :: X
+        real(dp)                            :: roota, delta
     
         if (a >= 0.5e-11 ) then 
             roota = sqrt(a**3 / 27.0)
@@ -194,11 +188,11 @@ contains
                 X(2) = delta * cos((theta + 2.0 * PI) / 3.0)
                 X(3) = delta * cos((theta + 4.0 * PI) / 3.0)
             
-                call vef_trace_tensor(MODULE_NAME, 'canoni', X)
+                call vef_trace(MODULE_NAME, 'canoni', X)
                 return
             end if
         end if 
-        RCM_RAISE(1,'CANONI','Two roots seem to be complex',RCM_RTN)
+        call vef_exception(MODULE_NAME, 'canoni', VEF_BADVAL, 'Two roots seem to be complex')
     end subroutine
       
     !>N1=number of equations
@@ -209,38 +203,34 @@ contains
     !>RES=residu (sum of squares)
     !>M1,M2=dimensions
     subroutine kleinkwa(N1, N2, M1, M2, A, B, BA, res)
-        double precision, dimension(M2), intent(in)     :: B
-        double precision, dimension(M1,M2), intent(in)  :: A
-        double precision, dimension(M2), intent(inout)  :: BA
-        double precision, intent(inout)                 :: res
-        integer, intent(in)                             :: M1, M2, N1, N2
-        integer                                         :: i, j, rank, info, lwork
-        integer, dimension(N2)                          :: jpvt
-        double precision                                :: y, rcond
-        double precision, dimension(1)                  :: work_buffer
-        double precision, dimension(:), allocatable     :: work
-        double precision, dimension(M1,M2)              :: A_COPY
+        real(dp), dimension(M2),    intent(in)                                  :: B
+        real(dp), dimension(M1,M2), intent(in)                                  :: A
+        real(dp), dimension(M2),    intent(inout)                               :: BA
+        real(dp),                   intent(inout)                               :: res
+        integer,                    intent(in)                                  :: M1, M2, N1, N2
+        integer                                                                 :: i, j, rank, info, lwork
+        integer, dimension(N2)                                                  :: jpvt
+        real(dp)                                                                :: y, rcond
+        real(dp), dimension(max(min(N1,N2) + 3 * N2 + 1, 2 * min(N1,N2) + 1))   :: work
+        real(dp), dimension(M1,M2)                                              :: A_COPY
 
         A_COPY = A 
         BA = B
         jpvt = 0
         rcond = 0.01
+        lwork = size(work)
 
-        call dgelsy(N1, N2, 1, A_COPY, M1, BA, M2, jpvt, rcond, rank, work_buffer, -1, info)
-        lwork = work_buffer(1)
-        allocate(work(lwork))
         call dgelsy(N1, N2, 1, A_COPY, M1, BA, M2, jpvt, rcond, rank, work, lwork, info)
-        deallocate(work)
         
         res = 0.0
         do i=1,N1
-          y = 0.0
-          do j=1,N2
-            y = y + A(i,j) * BA(j)
-          end do
-          RES = RES + (y - B(i))**2
+            y = 0.0
+            do j=1,N2
+                y = y + A(i,j) * BA(j)
+            end do
+            RES = RES + (y - B(i))**2
         end do
 
-        call vef_trace_dbl_arr(MODULE_NAME, "kleinKwa", BA(1:N2))
+        call vef_trace(MODULE_NAME, "kleinKwa", BA(1:N2))
     end subroutine
 end module

@@ -3,11 +3,10 @@ module altayTexFormats
 use altayDynfil
 use altaySmtAccess
 use altayCurAccess
-use altayCubAccess
 
 implicit none
       !>@{ \name Named constants for supported texture file formats (aka FormatID)
-      integer,parameter :: TF_SMT = 1, TF_CUR = 2, TF_CUB = 3
+      integer,parameter :: TF_SMT = 1, TF_CUR = 2
 
 contains
 
@@ -17,28 +16,24 @@ contains
       character(len=*),intent(in)   :: fname
       integer,intent(in)            :: iblock
       integer,intent(out)           :: info
-      !
+      
             info = -1
             if (openTextureFile(nunit,fname,texfmt,'r') /= 0) return
-            !
+            
             select case(texfmt)
             case(TF_SMT)
                   call SMTreadHeader(nunit,filetitle,info)
                   if (info /= 0) return
                   call SMTreadBlock(nunit,info)
-            !
+            
             case(TF_CUR)
                   call CURreadTitle(nunit,filetitle,info)
                   if (info /= 0) return
                   call CURreadBlock(nunit,iblock,info)
-            !
-            case(TF_CUB)
-                  call CUBreadTitle(nunit,filetitle,info)
-                  if (info /= 0) return
-                  call CUBreadBlock(nunit,info)
+            
             end select
             close(nunit)
-      !
+      
       end subroutine
 
 
@@ -65,8 +60,6 @@ contains
             case(TF_SMT,TF_CUR)     ! formatted
                   open(unit=iounit,file=trim(fname),status=trim(stat),form='formatted',iostat=info)
                   if (info /= 0) return
-            case(TF_CUB)
-                  open(unit=iounit,file=trim(fname),status=trim(stat),form='unformatted',iostat=info)
             case default
                   info = -1
             end select
@@ -89,8 +82,6 @@ contains
             case(TF_CUR)
                   if (full) call CURwriteTitle(iounit,filetitle,info)
                   if (info == 0) call CURwriteBlock(iounit,info)
-            case(TF_CUB)
-                  call CUBwriteBlock(iounit,info)
             case default
                   info = -1
             end select

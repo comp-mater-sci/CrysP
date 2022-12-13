@@ -5,53 +5,54 @@
 !>  - SwiftS: Swift law with initial crsS :: TAU = crss0 * (1.+GAMMA/gammaA0)**n
 module altayHardLaw_Simple
 use altayMiscutils, only: terminate, stopcode_runtimeerror
+use altay_definitions, only: dp
 use altayHardTypes
 implicit none
 
       !> Configuration parameters of DoubleVoce hardening law.
       !> Some 'reasonable' defaults are used.
       type :: VoceConfig
-            double precision  :: TIII1  = 1.486
-            double precision  :: TIIIS  = 2.476
-            double precision  :: TIVS   = 8.357
-            double precision  :: THIII1 = 2.75
-            double precision  :: THT    = 0.55
+            real(dp)  :: TIII1  = 1.486
+            real(dp)  :: TIIIS  = 2.476
+            real(dp)  :: TIVS   = 8.357
+            real(dp)  :: THIII1 = 2.75
+            real(dp)  :: THT    = 0.55
       end type
 
       !> Configuration parameters of SwiftK hardening law.
       !> Some 'reasonable' defaults are used.
       type :: SwiftKConfig
-            double precision  :: K      = 398.1D0 !-> crss0 = 100.
-            double precision  :: gamma0 = 1.D-3
-            double precision  :: n      = 0.2D0
+            real(dp)  :: K      = 398.1D0 !-> crss0 = 100.
+            real(dp)  :: gamma0 = 1.D-3
+            real(dp)  :: n      = 0.2D0
       end type
 
       !> Configuration parameters of SwiftS hardening law.
       !> Some 'reasonable' defaults are used.
       type :: SwiftSConfig
-            double precision  :: crss0  = 100.0D0
-            double precision  :: gamma0 = 1.D-3
-            double precision  :: n      = 0.2D0
+            real(dp)  :: crss0  = 100.0D0
+            real(dp)  :: gamma0 = 1.D-3
+            real(dp)  :: n      = 0.2D0
       end type
 
       !> Parameters of DoubleVoce hardening law, private to this module.
       type :: VoceParams
-            double precision  :: TIII1  = 0.D0
-            double precision  :: TIIIS  = 0.D0
-            double precision  :: TIVS   = 0.D0
-            double precision  :: GAMMAT = 0.D0
-            double precision  :: THIII  = 0.D0
-            double precision  :: ETA    = 0.D0
-            double precision  :: TAUT   = 0.D0
-            double precision  :: THIV   = 0.D0
-            double precision  :: TIV0   = 0.D0
+            real(dp)  :: TIII1  = 0.D0
+            real(dp)  :: TIIIS  = 0.D0
+            real(dp)  :: TIVS   = 0.D0
+            real(dp)  :: GAMMAT = 0.D0
+            real(dp)  :: THIII  = 0.D0
+            real(dp)  :: ETA    = 0.D0
+            real(dp)  :: TAUT   = 0.D0
+            real(dp)  :: THIV   = 0.D0
+            real(dp)  :: TIV0   = 0.D0
       end type
 
       !> Parameters of Swift hardening law, private to this module.
       type :: SwiftParams
-            double precision  :: K      = 0.D0
-            double precision  :: gamma0 = 0.D0
-            double precision  :: n      = 0.D0
+            real(dp)  :: K      = 0.D0
+            real(dp)  :: gamma0 = 0.D0
+            real(dp)  :: n      = 0.D0
       end type
       !
       type(VoceParams),private,save     :: vocePar
@@ -244,8 +245,8 @@ contains
 
       subroutine getRefTau(hardID,gamma,RefTau,info)
       integer,intent(in)                  :: hardID
-      double precision,intent(in)         :: gamma
-      double precision,intent(out)        :: RefTau
+      real(dp),intent(in)         :: gamma
+      real(dp),intent(out)        :: RefTau
       integer,intent(out)                 :: info
       !
             info = -1

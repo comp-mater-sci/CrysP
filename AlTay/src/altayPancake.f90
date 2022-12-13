@@ -2,6 +2,7 @@
 #include "altayRCM.fpp"
 #endif
       module altayPancake
+    use altay_definitions, only: dp
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use criMathUtils
 
@@ -23,16 +24,14 @@
       use altayTBH
       use altayAlgorithms
       use altayMacroKinematic
-#ifdef PEBP_ENABLED
-      use AltayDSHstate
-#endif
-      implicit double precision (a-h,o-z)
+    use altayHardLaw_DSH
+      implicit real(dp) (a-h,o-z)
 
       type(DeformationRate),intent(in) :: MacroDefRate
       type(DeformationState),intent(in):: MacroDefState
       type(CRSS) :: CRSSmatrix
-      double precision,dimension(3,3),intent(out):: S33, RHOS33, RHOA33
-      double precision,dimension(5):: RHOS, RHOA
+      real(dp),dimension(3,3),intent(out):: S33, RHOS33, RHOA33
+      real(dp),dimension(5):: RHOS, RHOA
       logical SWRLX(3),bas(194),VALID(194)
       integer DI1(5),DI(10),DI2(10)
 
@@ -508,16 +507,16 @@
 !   M11                    -- input
 !  BB(10) is direction of the relaxation-1
 !  UBUF(10) is the BISHOP-HILL stress from TBH routine, in crystal frame
-      implicit double precision (a-h,o-z)
-      double precision, intent(in) :: ccc
+      implicit real(dp) (a-h,o-z)
+      real(dp), intent(in) :: ccc
       integer, intent(in) :: M11
-      double precision, intent(out) :: ccc2
-      double precision, intent(out) :: ca1
-      double precision, intent(out) :: ca2
-      double precision, intent(in) :: Cofcos
-      double precision, intent(in) :: Cofsin
-      double precision, intent(in) :: BB
-      double precision, intent(in) :: UBUF
+      real(dp), intent(out) :: ccc2
+      real(dp), intent(out) :: ca1
+      real(dp), intent(out) :: ca2
+      real(dp), intent(in) :: Cofcos
+      real(dp), intent(in) :: Cofsin
+      real(dp), intent(in) :: BB
+      real(dp), intent(in) :: UBUF
       dimension BB(10),base1(5),UBUF(10),ccc(2,194),ccc2(2,194)
 !
       if((abs(Cofsin) < epsilon(0.D0)) .and.                             &

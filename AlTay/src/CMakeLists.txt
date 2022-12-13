@@ -24,7 +24,6 @@ altayMiscutils.f90
 altayPancake.f90 
 altaySliprate.f90 
 altayTBH.f90 
-altayCubAccess.f90 
 altayCurAccess.f90 
 altaySmtAccess.f90 
 altayTexFormats.f90 
@@ -32,8 +31,9 @@ altayHardLawSimple.f90
 altayHard.f90 
 altayHardTypes.f90 
 altayHardLawDSH.f90 
-altayDSHState.f90
-trace.f90
+altayIO.f90
+altayDefinitions.f90
+altayLog.f90
 )
 
 #

@@ -3,8 +3,9 @@
 #endif
 
       module altaySliprate
+    use altay_definitions, only: dp
       use altayMiscutils, only: terminate, stopcode_runtimeerror
-        use tracing
+        use altay_log
         
     character(len=*), parameter :: MODULE_NAME = "altaySliprate"
 
@@ -16,7 +17,7 @@
       use altayRCM
 #endif
       use altayMacroKinematic
-      IMPLICIT double precision (A-H,O-Z)
+      IMPLICIT real(dp) (A-H,O-Z)
       type(DeformationRate),intent(in) :: MacroDefRate
 !     September 2000
 !     To find the slip rates assuming that
@@ -260,7 +261,7 @@
       Subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
       use altayIOConfig
       use altayAlgorithms, only: KLEINKWA
-      IMPLICIT double precision (A-H,O-Z)
+      IMPLICIT real(dp) (A-H,O-Z)
 !     December 2000
 !     The  normalisation by DELTAT (now: MacroDefRate%vMeqStrainRate) of the september 2000 version has been
 !     removed here. Is now done in PANCAK2.
@@ -332,7 +333,7 @@
 ! 101  format (10F8.5)
       if (RES.gt.(10000.0*TOL)) then
         ineg=-1
-        call vef_trace_str(MODULE_NAME,'MINSQU', 'RES too large')
+        call vef_trace(MODULE_NAME,'MINSQU', 'RES too large')
       end if
 !      write (IMP,103) INEG,RES,sumsq
 ! 103  format (' MINSQU INEG',i5,'  RES',d15.6,'  sumsq',d15.6)
@@ -346,7 +347,7 @@
 #ifdef ALTAY_SUBROUTINE
       use altayRCM
 #endif
-      IMPLICIT double precision (A-H,O-Z)
+      IMPLICIT real(dp) (A-H,O-Z)
       dimension SLPR(8),IND(8),ISTOR(0:8,48),SLSTOR(0:8,48)
       NOPL=NOPL+1
       if (NOPL.gt.NSTOR) then

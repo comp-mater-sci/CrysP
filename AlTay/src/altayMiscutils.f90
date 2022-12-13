@@ -1,5 +1,6 @@
 !> Container for miscellaneous utility routines.
 module altayMiscutils
+use altay_definitions, only: dp
 implicit none
       !>@{ \name Exit codes that are returned to the OS on various stop contitions
 
@@ -19,12 +20,12 @@ implicit none
       !>@}
 
 
-      double precision,dimension(3,3),parameter :: unitMatrix = reshape( &
+      real(dp),dimension(3,3),parameter :: unitMatrix = reshape( &
            [ 1.D0, 0.D0, 0.D0,     &
              0.D0, 1.D0, 0.D0,     &
              0.D0, 0.D0, 1.D0], [ 3, 3 ])
 
-      double precision,parameter :: pi = acos(-1.D0)
+      real(dp),parameter :: pi = acos(-1.D0)
 
     contains
 
@@ -72,8 +73,8 @@ implicit none
 
       subroutine writeMSSRecord(ounit,meps,mepstot,hgamcall,hgamtot,shsam,mavg,srh,info)
       integer,intent(in)                              :: ounit
-      double precision,intent(in)                     :: meps,mepstot,hgamcall,hgamtot,mavg,srh
-      double precision,dimension(3,3),intent(in)      :: shsam
+      real(dp),intent(in)                     :: meps,mepstot,hgamcall,hgamtot,mavg,srh
+      real(dp),dimension(3,3),intent(in)      :: shsam
       integer,intent(out)                             :: info
       !
             write(ounit,fmt=555,iostat=info) meps,mepstot,hgamcall,hgamtot,   &
@@ -98,7 +99,7 @@ implicit none
       !> Write data line to the report file
       subroutine writeReportRecord(outunit,fi1,PHI,fi2,Wtot,info)
       integer,intent(in)            :: outunit !< I/O unit number to be used for raport
-      double precision,intent(in)   :: fi1,PHI,fi2,Wtot
+      real(dp),intent(in)   :: fi1,PHI,fi2,Wtot
       integer,intent(out) :: info
       !
             write(outunit,fmt=100,iostat=info) fi1, PHI, fi2, Wtot
