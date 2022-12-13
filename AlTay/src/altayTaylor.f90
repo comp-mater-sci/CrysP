@@ -64,9 +64,7 @@
       ! Read slip system file
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !
- 1000 if(NLIST.eq.1) then
-            write (IMP,216)
-      end if
+ 1000 if(NLIST.eq.1) write (IMP,216)
  216  format (/,' SUBROUTINE TAYLOR - READS ITS CRYSTAL DATA',//)
 !
       R=LEC         ! slip system file
@@ -381,7 +379,7 @@
           X=X+GAMdot(J)/G(I)
           VOLFR(I)=X
       end do
-      if (X.LE.1.) goto 85
+      if (X <= 1.) goto 85
 #ifndef ALTAY_SUBROUTINE
       if(NLIST.eq.1) write (IMP,107) X
  107  format (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,              &
@@ -392,13 +390,10 @@
 #endif
   85  call RANDOM_NUMBER(RNDM)
       do I=1,NTW
-        if (RNDM.LT.VOLFR(I)) goto 87
+          if (RNDM < VOLFR(I)) goto 87
       end do
       goto 31
-  87  do 88 K=1,3
-      do 89 J=1,3
-  89  RCC(K,J)=C2(K,J)
-  88  continue
+  87  RCC = C2
       TDC(1,1)=B2(1,I)
       X=B2(2,I)
       TDC(2,1)=X
