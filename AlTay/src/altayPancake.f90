@@ -24,7 +24,8 @@
       use altayTBH
       use altayAlgorithms
       use altayMacroKinematic
-    use altayHardLaw_DSH
+      use altayHardLaw_DSH
+
       implicit real(dp) (a-h,o-z)
 
       type(DeformationRate),intent(in) :: MacroDefRate
@@ -62,7 +63,8 @@
       dimension B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10)
       dimension GAMR(2),Tprinc(3,3),TAURL(2)
 
-      data SQR2/0.7071067811865476D+00/,B3/30*0.0D0/,TOLXX/5.0d-6/
+      data B3/30*0.0D0
+      real(dp), parameter :: SQR2=sqrt(0.5_dp),TOLXX=5.0e-6_dp
 !     Definition of the two relaxations, representing a
 !     13-simple shear and a 23-simple shear, respectively:
       data relax /0.0D0, 0.0D0, 0.0D0,                                   &
@@ -77,10 +79,10 @@
       data PLUMIN/1.0D0,-1.0D0,                                          &
                   1.0D0,-1.0D0,                                          &
                   1.0D0, 1.0D0/
-      data NDIM/10/
+      integer, parameter :: NDIM=10
 !     NDIM=dimension A
       data TAURL/2*0.0d0/
-      data GETAL/1.0D6/,TOL/1.0d-6/
+      real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp
 #ifdef PEBP_ENABLED
       integer :: info
 #endif
@@ -119,60 +121,62 @@
       do 33 i=M2+1,M12
       do 33 jsgn=1,2
   33  CCC(jsgn,i)=0.0
-  32  do 31 i=1,NU
-      do 31 j=1,NU
-      UU(j,i)=0.0
-  31  continue
-      do 53 I=1,5
-      DI(I)=DI1(I)
-      DI(I+5)=DI1(I)+M11
-  53  continue
+  32  do i=1,NU
+          do j=1,NU
+              UU(j,i)=0.0
+          end do
+      end do
+      do I=1,5
+          DI(I)=DI1(I)
+          DI(I+5)=DI1(I)+M11
+      end do
       do 1 IL=1,NGR
       L1=5*(IL-1)
 
       C2 = rotateSRTensorFrom(MacroDefRate%VelGrad,TRFb(:,:,IL))
       if (NRL.eq.0) goto 87
-      do 82 IRL=1,NRL
-!     Transform relaxation from grain reference frame to macroscopic frame
-      RLM(:,:,IRL) = rotateSRTensorTo(RELAX(:,:,IRL),Tprinc)
-!     ... and now to crystal frame:
-      C3 = rotateSRTensorFrom(RLM(:,:,IRL),TRFb(:,:,IL))
-      do 83 j=1,3
-      do 83 i=1,3
-      RLS(i,j,IRL,IL)=(C3(I,J)+C3(J,I))*0.5D0
-      RLA(i,j)=(C3(I,J)-C3(J,I))*0.5D0
-  83  continue
-      B3(L1+1,IRL)=PLUMIN(IL,IRL)*RLA(2,3)/sqr2
-      B3(L1+2,IRL)=PLUMIN(IL,IRL)*RLA(3,1)/sqr2
-      B3(L1+3,IRL)=PLUMIN(IL,IRL)*RLA(1,2)/sqr2
-      B5= Vector5D(RLS(1:3,1:3,IRL,IL)) ! sym.(3,3) -> (5)
-!     Insert the relaxations as columns in A1-matrix
-      j=M2+IRL
-      do 84 i=1,5
-      i1=i+L1
-      x=B5(i)*PLUMIN(IL,IRL)
-      A1(i1,j)=x
-  84  continue
-  82  continue
+      do IRL=1,NRL
+!         Transform relaxation from grain reference frame to macroscopic frame
+          RLM(:,:,IRL) = rotateSRTensorTo(RELAX(:,:,IRL),Tprinc)
+!         ... and now to crystal frame:
+          C3 = rotateSRTensorFrom(RLM(:,:,IRL),TRFb(:,:,IL))
+          do j=1,3
+              do i=1,3
+                  RLS(i,j,IRL,IL)=(C3(I,J)+C3(J,I))*0.5D0
+                  RLA(i,j)=(C3(I,J)-C3(J,I))*0.5D0
+              end do
+          end do
+          B3(L1+1,IRL)=PLUMIN(IL,IRL)*RLA(2,3)/sqr2
+          B3(L1+2,IRL)=PLUMIN(IL,IRL)*RLA(3,1)/sqr2
+          B3(L1+3,IRL)=PLUMIN(IL,IRL)*RLA(1,2)/sqr2
+          B5= Vector5D(RLS(1:3,1:3,IRL,IL)) ! sym.(3,3) -> (5)
+!         Insert the relaxations as columns in A1-matrix
+          j=M2+IRL
+          do i=1,5
+              i1=i+L1
+              x=B5(i)*PLUMIN(IL,IRL)
+              A1(i1,j)=x
+          end do
+      end do
   87  continue
-      do 80 I=1,3
-      do 81 J=1,3
-      TDCb(I,J,IL)=(C2(I,J)+C2(J,I))*0.5D0
-  81  TRCb(I,J,IL)=(C2(I,J)-C2(J,I))*0.5D0
-  80  continue
+      do I=1,3
+          do 81 J=1,3
+          TDCb(I,J,IL)=(C2(I,J)+C2(J,I))*0.5D0
+  81      TRCb(I,J,IL)=(C2(I,J)-C2(J,I))*0.5D0
+      end do
       B5= Vector5D(TDCb(1:3,1:3,IL)) ! sym.(3,3) -> (5)
-      do 30 i=1,5
-      j=i+L1
-      BB(j)=B5(i)
-  30  continue
+      do i=1,5
+          j=i+L1
+          BB(j)=B5(i)
+      end do
 !
 !     Calculation of time increment by dividing von Mises equivalent
 !     strain by von Mises equivalent strain rate
 !
-      do 44 j=1,5
-      B5(j)=B5(j)/MacroDefRate%vMeqStrainRate
-      B8(j,IL)=B5(j)
-  44  continue
+      do j=1,5
+          B5(j)=B5(j)/MacroDefRate%vMeqStrainRate
+          B8(j,IL)=B5(j)
+      end do
       K1=M11*(IL-1)
       !
       ! Retrieve the CRSSmatrix
@@ -191,42 +195,37 @@
       !
 !   92 write (IMP,914) i,j,CCC(1,j),CCC(2,j)
  914  format (' i,j',2i5, ' CCC ',2d16.4)
-      do 15 J=1,5
-      do 15 I=1,5
-      UU(I+L1,J+L1)=B(I,J)
-  15  continue
+      do J=1,5
+          do I=1,5
+              UU(I+L1,J+L1)=B(I,J)
+          end do
+      end do
    1  continue
-      do 54 I=1,N
-!     Conversion of strain to normalized strain rate
-      BB(I)=BB(I)/MacroDefRate%vMeqStrainRate
-  54  continue
+      do I=1,N
+!         Conversion of strain to normalized strain rate
+          BB(I)=BB(I)/MacroDefRate%vMeqStrainRate
+      end do
       if (NRL.eq.0) goto 88
-      do 85 j=M2+1,M12
+      do j=M2+1,M12
 !    The coefficient of the relaxations is set to a very large number
 !    in order to suppress the relaxations in a first call of the TBH program
-      CCC(1,j)=GETAL
-      CCC(2,j)=GETAL
-  85  continue
+          CCC(1,j)=GETAL
+          CCC(2,j)=GETAL
+      end do
 !     Full constraints calculation
 !
 !     UITVOEREN VAN DE SIMPLEX-SUBROUTINE
   88  if (IPR.EQ.2) then
-      if(NLIST.eq.1) then
-      write (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
-      end if
+          if (NLIST.eq.1) write (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
       end if
  218  format(/' COST FUNCTION',/,(2x,12F10.4))
       if (IPR.EQ.2) then
-      if (NLIST.eq.1) then
-      write (IMP,219) (BB(I),I=1,N)
-      end if
+          if (NLIST.eq.1) write (IMP,219) (BB(I),I=1,N)
       end if
  219  format (' right hand side',/,(2x,10F10.4),/)
 !     First call of Simplex (full constraints)
       if (IPR.eq.2) then
-      if(NLIST.eq.1) then
-      write (IMP,400) IOR,ISTP,NBLOC
-      end if
+          if (NLIST.eq.1) rite (IMP,400) IOR,ISTP,NBLOC
       end if
  400  format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
       call TBH(IPR,NDIM,N,M2,A1,BB,                                      &
@@ -278,25 +277,21 @@
         CCC(1,M2+2)=0.0
         CCC(2,M2+2)=0.0
       else  !ALAMEL running
-        do 86 IRL=1,NRL
-        if (.not.swrlx(IRL)) goto 86
-        j=M2+IRL
-        CCC(1,j)=TAURL(IRL)
-        CCC(2,j)=TAURL(IRL)
-  86    continue
+        do IRL=1,NRL
+            if (.not.swrlx(IRL)) exit
+            j=M2+IRL
+            CCC(1,j)=TAURL(IRL)
+            CCC(2,j)=TAURL(IRL)
+        end do
       endif
 !EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (IPR.EQ.2) then
-      if(NLIST.eq.1) then
-      write (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
-      end if
+          if(NLIST.eq.1) write(IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
       end if
 !     Second call of Simplex (relaxed constraints)
 !      if (IOR.eq.1967.and.ISTP.eq.11.and.NBLOC.eq.3) IPR=2
       if (IPR.eq.2) then
-      if (NLIST.eq.1) then
-      write (IMP,401)
-      end if
+          if (NLIST.eq.1) write(IMP,401)
       end if
  401  format (' Second call of TBH')
       call TBH(IPR,N,N,M12,A1,BB,                                        &
@@ -375,21 +370,19 @@
                     endif
 !     Check whether 1 grain does not deform at all.
   89  j=0
-      do 40 IG=1,NGR
-      XXTOT=0.0
-      do i=1,M11
-       j=j+1
-       XXTOT=XXTOT+ABS(xx(j))
-      enddo
-      if (XXTOT.lt.TOLXX) goto 213
-   40 continue
+      do IG=1,NGR
+          XXTOT=0.0
+          do i=1,M11
+             j=j+1
+             XXTOT=XXTOT+ABS(xx(j))
+          enddo
+          if (XXTOT.lt.TOLXX) goto 213
+      end do
 !     If all grains have a non-zero slip, do the following:
   99  DTAU1=DTAU
       TAUR1=TAUR
       UBUF=STRSS
- 213  if(NLIST.eq.1) then
-        write (IMP,780) gamr
-      end if
+ 213  if(NLIST.eq.1) write (IMP,780) gamr
  780  format (' RELAXATIONS:                   ',2d12.4)
    2  continue
 !
@@ -397,11 +390,11 @@
 !
    3  continue
       jj=M11*(laml-1)
-      do 203 j=1,M11
-      do jsgn=1,2
-         CC(jsgn,j)=CCC(jsgn,j+jj)
-      enddo
- 203  continue
+      do j=1,M11
+          do jsgn=1,2
+             CC(jsgn,j)=CCC(jsgn,j+jj)
+          enddo
+      end do
       ii=5*(laml-1)
       do 201 i=1,5
 !     If one grain does not deform, note that stress UBUF has come
@@ -519,83 +512,51 @@
       real(dp), intent(in) :: UBUF
       dimension BB(10),base1(5),UBUF(10),ccc(2,194),ccc2(2,194)
 !
-      if((abs(Cofsin) < epsilon(0.D0)) .and.                             &
-         (abs(Cofcos) < epsilon(0.D0))) then
+      if((abs(Cofsin) < epsilon(0.D0)) .and. (abs(Cofcos) < epsilon(0.D0))) then
 !  update CRSS
-      ccc2=ccc
+          ccc2=ccc
       elseif(dabs(Cofcos).lt.0.000000001) then
-      write(*,*) 'Cofcos=0. Somewhere is worong in the code'
-      call terminate(stopcode_runtimeerror)
+          write(*,*) 'Cofcos=0. Somewhere is worong in the code'
+          call terminate(stopcode_runtimeerror)
       else
 !   we only need the component 1 along the imposed strain mode
-      dlength2=sqrt(BB(1)*BB(1)+                                         &
-      BB(2)*BB(2)+                                                       &
-      BB(3)*BB(3)+                                                       &
-      BB(4)*BB(4)+                                                       &
-      BB(5)*BB(5))
+      dlength2=norm2(BB(1:5))
 !  for grain-1
-      base1(1)=BB(1)/dlength2
-      base1(2)=BB(2)/dlength2
-      base1(3)=BB(3)/dlength2
-      base1(4)=BB(4)/dlength2
-      base1(5)=BB(5)/dlength2
+      base1=BB(1:5)/dlength2
 !  then calculate the stress component in grain-1
-      sg1c1=UBUF(1)*base1(1)+                                            &
-            UBUF(2)*base1(2)+                                            &
-            UBUF(3)*base1(3)+                                            &
-            UBUF(4)*base1(4)+                                            &
-            UBUF(5)*base1(5)
-!
+      sg1c1=sum(UBUF(1:5)*base1)
 ! now calculate the component for grain-2
-!
-      dlength2=sqrt(BB(6)*BB(6)+                                         &
-      BB(7)*BB(7)+                                                       &
-      BB(8)*BB(8)+                                                       &
-      BB(9)*BB(9)+                                                       &
-      BB(10)*BB(10))
+      dlength2=norm2(BB(6:10))
 !  for grain-2
-      base1(1)= BB(6)/dlength2
-      base1(2)= BB(7)/dlength2
-      base1(3)= BB(8)/dlength2
-      base1(4)= BB(9)/dlength2
-      base1(5)=BB(10)/dlength2
-!
+      base1 = BB(6:10)/dlength2
 !  then calculate the stress component in grain-2
-!
-      sg2c1=UBUF(6)*base1(1)+                                            &
-            UBUF(7)*base1(2)+                                            &
-            UBUF(8)*base1(3)+                                            &
-            UBUF(9)*base1(4)+                                            &
-           UBUF(10)*base1(5)
+      sg2c1=sum(UBUF(6:10)*base1)
 ! from here we use the new method to update the CRSS
       zeta=sg1c1/sg2c1
 !  check if it is negative
       if(zeta.lt.0.D0) then
-      write(*,*) 'Zeta is negative, somewhere is wrong'
-      call terminate(stopcode_runtimeerror)
+          write(*,*) 'Zeta is negative, somewhere is wrong'
+          call terminate(stopcode_runtimeerror)
       endif
       enta1=sqrt(1.D0/zeta)
       enta2=sqrt(zeta)
-!     enta1=2.0/(1.0+zeta)
-!     enta2=2.0*zeta/(1.0+zeta)
       Crssg1=Cofcos*Cofcos*enta1+Cofsin*Cofsin
       Crssg2=Cofcos*Cofcos*enta2+Cofsin*Cofsin
       ca1=Crssg1
       ca2=Crssg2
 !  update the CRSS for grain-1
       do i=1,M11,1
-      do j=1,2,1
-         CCC2(j,i)=Crssg1*CCC(j,i)
-      enddo
-      enddo
+          do j=1,2,1
+              CCC2(j,i)=Crssg1*CCC(j,i)
+          end do
+      end do
 !   update the CRSS for grain-2
       do i=1,M11,1
-      do j=1,2,1
-         CCC2(j,i+M11)=Crssg2*CCC(j,i+M11)
-      enddo
-      enddo
+          do j=1,2,1
+              CCC2(j,i+M11)=Crssg2*CCC(j,i+M11)
+          end do
+      end do
       endif
-      return
       end subroutine
 
       end module

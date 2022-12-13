@@ -90,7 +90,7 @@
 #ifdef PEBP_ENABLED
       type(StateDerivedVars) :: pebpSDV, pebpSDVavg
 #endif
-      data convf/0.5729577951308232D+02/
+      real(dp), parameter :: convf=0.5729577951308232e+02_dp
       data FS/9*1.0D0/
       save
       !
@@ -190,18 +190,14 @@
 #else
       do i=1,3
          read (KLEC,94)(FMicro(i,j),j=1,3)
-         if(NLIST.eq.1) then
-         write (IMP,106)(FMicro(i,j),j=1,3)
-         end if
-      enddo
+         if(NLIST.eq.1) write(IMP,106)(FMicro(i,j),j=1,3)
+      end do
  106  format ('F_Microstructure=',3f12.6)
   99  format (2I5)
   94  format (3F10.0)
   16  read (KLEC,98) TITEL
 #endif
-      if(NLIST.eq.1) then
-      write (IMP,97) TITEL
-      end if
+      if(NLIST.eq.1) write(IMP,97) TITEL
       if (NRES.gt.0) write (IMP2,98) TITEL
   97  format (' Title of the new simulation: ',A)
       ! Only if CUR file is requested
@@ -259,14 +255,10 @@
       swrlx(3) =.false.
 #else
       read (KLEC,99) NSTP
-      if(NLIST.eq.1) then
-      write (IMP,115) NSTP
-      end if
+      if(NLIST.eq.1) write(IMP,115) NSTP
  115  format (//,' S I M U L         NR. STEPS=',I5,//)
       read (KLEC,99) ICRAT1,ICRAT2
-      if(NLIST.eq.1) then
-      write (IMP,104) ICRAT1,ICRAT2
-      end if
+      if(NLIST.eq.1) write(IMP,104) ICRAT1,ICRAT2
  104  format (' ICRAT:',2I5)
 
       swrlx(1)=(ICRAT1.eq.1)
@@ -391,8 +383,8 @@
               SeqGrain = 0.D0
               Wtot = 0.0
               !
- 2626         do 80 L=laml,laml1
-                  if (ifil4.eq.NPOINT) goto 80
+ 2626         do L=laml,laml1
+                  if (ifil4.eq.NPOINT) exit
                   ifil4=ifil4+1
                   call DYNFIL4(ifil4,fi10b(L),PHI0b(L),fi20b(L),                     &
                    TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L),GAXESb(1,L),              &
@@ -401,9 +393,9 @@
                   fi1b(L)=fi10b(L)*convf
                   PHIb(L)=PHI0b(L)*convf
                   fi2b(L)=fi20b(L)*convf
-  80          continue
+              end do
               laml1=laml1+1
-              if (laml1.gt.NGR) laml1=1
+              if (laml1 > NGR) laml1=1
               laml=laml1
               GMM0=GMMAb(laml)
               call getTau(GMM0,TAU,info)
@@ -513,14 +505,14 @@
           SHsam = STOT / TOTGEW
           RHOSm = RHOST / TOTGEW
           !
-  66      do 65 i=1,2
-              do 65 j=i+1,3
-              SHsam(i,j)=SHsam(i,j)*FS(i,j)
-              SHsam(j,i)=SHsam(i,j)
-              RHOSm(i,j)=RHOSm(i,j)*FS(i,j)
-              RHOSm(j,i)=RHOSm(i,j)
-65        continue
-
+  66      do i=1,2
+              do j=i+1,3
+                  SHsam(i,j)=SHsam(i,j)*FS(i,j)
+                  SHsam(j,i)=SHsam(i,j)
+                  RHOSm(i,j)=RHOSm(i,j)*FS(i,j)
+                  RHOSm(j,i)=RHOSm(i,j)
+              end do
+          end do
           Mavg=Mavg/TOTGEW
           ! DEFINITION: srh = (||d-D||) / ||D||
           srh=sqrt(2.D0/3.D0)*srh/TOTGEW
