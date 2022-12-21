@@ -116,13 +116,13 @@ def process_file(path):
     filtered = list(filter(lambda e: not e == 0, res))
     return sum(filtered) / len(filtered)
 
-
-
-
+tests_basic = itertools.product(MODES, ALGORITHMS, SLIP_SYSTEMS, HARDENING_MODELS[0:4])
+tests_bp = itertools.product(MODES, ALGORITHMS, ['bcc24'], HARDENING_MODELS[4:7])
+tests = list(tests_basic) + list(tests_bp)
 
 #Generate and execute the different test cases.
 @pytest.mark.integration
-@pytest.mark.parametrize('mode,algorithm,slip_system,hardening_model', itertools.product(MODES, ALGORITHMS, SLIP_SYSTEMS, HARDENING_MODELS))
+@pytest.mark.parametrize('mode,algorithm,slip_system,hardening_model', tests)
 def test_vef(mode, algorithm, slip_system, hardening_model, request):
     generate_output(request, mode, algorithm, slip_system, hardening_model)
 
@@ -146,7 +146,7 @@ def get_trace_values(path, module, function):
     return vals
         
 @pytest.mark.unit
-@pytest.mark.parametrize('module,function,mode,algorithm,slip_system,hardening_model', [(a,b,c,d,e,f) for ((a,b),c,d,e,f) in itertools.product(UNITS, MODES, ALGORITHMS, SLIP_SYSTEMS, HARDENING_MODELS)])
+@pytest.mark.parametrize('module,function,mode,algorithm,slip_system,hardening_model', [(a,b,c,d,e,f) for ((a,b),(c,d,e,f)) in itertools.product(UNITS, tests)])
 def test_unit(mode, algorithm, slip_system, hardening_model, module, function):
     generate_output(request, mode, algorithm, slip_system, hardening_model)
     reference = get_trace_values(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
