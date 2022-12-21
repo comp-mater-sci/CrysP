@@ -5,6 +5,7 @@ module altayHard
     use altayHardLaw_Simple
     use altayConfig
     use altayHardLaw_DSH
+    use altayDSHState
     use altay_definitions, only: dp
     
     implicit none

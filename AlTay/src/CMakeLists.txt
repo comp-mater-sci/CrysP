@@ -30,8 +30,8 @@ altayTexFormats.f90
 altayHardLawSimple.f90 
 altayHard.f90 
 altayHardTypes.f90 
+altayDSHState.f90
 altayHardLawDSH.f90 
-altayIO.f90
 altayDefinitions.f90
 altayLog.f90
 )

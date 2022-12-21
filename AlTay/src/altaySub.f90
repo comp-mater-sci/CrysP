@@ -11,7 +11,7 @@
 !> API for "AlTay as a subroutine"
 module altaySub
     use altayHardLaw_DSH
-    use altay_io
+    use altayDSHState
 
       implicit none
       !> \name Named constants for error codes in altaySub
@@ -122,7 +122,7 @@ contains
                                                             // trim(acnf%hardening%PEBPCnf%input_fname)
                               return
                         endif
-                        info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id, KS_state, size(KS_state))
+                        info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
                         if ((info /= 0) .and. present(errmsg)) then
                               errmsg = 'Cannot read from PEBP state file: '// trim(acnf%hardening%PEBPCnf%input_fname)
                               return
@@ -351,7 +351,7 @@ contains
             select case(acnf%hardening%HardLawID)
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                 if (acnf%output_config%npebp == 1) then
-                      info = KS_writeState(IMP4, KS_state, size(KS_state))
+                      info = KS_writeState(IMP4)
                 endif
             endselect
             if (info /= 0) return

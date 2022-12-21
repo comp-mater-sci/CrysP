@@ -1,13 +1,13 @@
 #ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
 #endif
-      module altaySimul
+module altaySimul
     use altay_definitions, only: dp
-      use altayMiscutils, only: terminate, stopcode_runtimeerror
-      use altayHardTypes
-      use altayMacroKinematic
-      use altayHardLaw_DSH
-    use altay_io
+    use altayMiscutils, only: terminate, stopcode_runtimeerror
+    use altayHardTypes
+    use altayMacroKinematic
+    use altayHardLaw_DSH
+    use altayDSHState
 
       ! Initial rations of CRSS, set in MAINA1.
       ! It is used only by the stand-alone AlTay
@@ -279,7 +279,7 @@
 #if defined(PEBP_ENABLED) && !defined(INTERMEDIATEBPM_DISABLED)
       select case(KOST)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-          if (NPEBPx.eq.1) info = KS_writeState(IMP4, KS_state, size(KS_state))
+          if (NPEBPx.eq.1) info = KS_writeState(IMP4)
       endselect
 #endif
       HGAMCALL = 0.D0

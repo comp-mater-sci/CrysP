@@ -5,6 +5,7 @@ module altayConfig
     use altayHardLaw_Simple, only: VoceConfig, SwiftKConfig, SwiftSConfig
     use altayTexFormats
     use altay_definitions, only: dp
+    use altayHardLaw_DSH, only: par
     
     implicit none
 

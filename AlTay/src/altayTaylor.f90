@@ -7,6 +7,7 @@
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use altayMacroKinematic
       use criMathUtils
+        use altayDSHState
       integer,parameter,private :: N = 5, N1 = N + 1
 
       integer,private           :: M,   &       ! number of glide systems + number of twin systems
