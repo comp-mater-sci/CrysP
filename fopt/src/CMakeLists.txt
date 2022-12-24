@@ -12,7 +12,6 @@ list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
 set(LIBSRC
 nlls_tr.f90 
-objectiveFx.f90
 )
 
 add_library(fopt STATIC ${LIBSRC})
