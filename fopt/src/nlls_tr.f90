@@ -1,7 +1,8 @@
 !> nllsTR  -- wrapper module for MKL Non-Linear Least Squares Trust Region algorithm
-!> \remark The module can be compiled with: ifort >= 12.1, gfortran >= 4.6. Earlier versions
-!>         are unable to handle OO technique in a proper way or simply fail at compilation time.
+! Provide modules: MKL_RCI_TYPE and MKL_RCI
+include 'mkl_rci.f90'
 module nllsTR
+use mkl_rci
 use objectiveFx
 
 
@@ -100,7 +101,6 @@ contains
       subroutine nlls_TR_solve(objFx,vX,config,r1,r2,info,resInfo,SolutionInitOut)
       use, intrinsic :: IEEE_EXCEPTIONS
       use, intrinsic :: IEEE_ARITHMETIC
-      use mkl_rci
       implicit none
       ! Formal parameters
       class(objectiveFunction),intent(inout)          :: objFx    !< objective function
@@ -447,7 +447,6 @@ contains
       !>
       !> This subroutine uses djacobi_solve RCI subroutine from MKL.
       subroutine JacobiObjEval_djacobi(this,vX, info)
-      use mkl_rci
       implicit none
       class(MKLFDJacobiObjFunction),intent(inout)     :: this
       double precision,dimension(:),intent(in)        :: vX       !< Dimension must be: [n_X_dim]
@@ -538,7 +537,6 @@ contains
       !> indicates an error conditions, the function will write an error message
       !> containing 'decrypted' description of error.
       integer function checkMKLRescode(res, leadmsg,  ounit)
-      use mkl_rci
       implicit none
       integer,intent(in)            :: res
       character(len=*),intent(in)   :: leadmsg
