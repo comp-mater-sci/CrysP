@@ -23,9 +23,6 @@ its content resides. On this level, the list of projects include:
   Fortran library that provides a number of utility components. FCRI is the corner stone
   of almost all Fortran projects in this repository.
 
-`fopt`_
-  Collection of optimization procedures written in Fortran
-
 `VEF`_
   Container for sub-projects related to the Virtual Experimentation Framework
 
@@ -112,8 +109,6 @@ the project and use ``make`` command.
 .. include:: AlTay/readme.rst
 
 .. include:: FCRI/readme.rst
-
-.. include:: fopt/readme.rst
 
 .. include:: VEF/readme.rst
 
