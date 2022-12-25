@@ -1,7 +1,6 @@
 module altayDSHState
 use altayHardLaw_DSH
 use altayHardTypes
-use altay_definitions
 implicit none
 
       type(StatVar),allocatable,dimension(:),private,save    :: KS_state ! array of state variables

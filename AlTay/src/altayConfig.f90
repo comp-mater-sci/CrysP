@@ -3,9 +3,9 @@
 module altayConfig
     use altayHardTypes
     use altayHardLaw_Simple, only: VoceConfig, SwiftKConfig, SwiftSConfig
+    use altayHardLaw_DSH, only: PAR
     use altayTexFormats
     use altay_definitions, only: dp
-    use altayHardLaw_DSH, only: par
     
     implicit none
 
