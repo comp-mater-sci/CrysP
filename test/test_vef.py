@@ -1,6 +1,7 @@
 #Test bench for VEF software
 #Runs a large number of configurations using a dummy data set and compares the hashes of the output data to predetermined hash values.
-#USAGE: Run 'pytest' in the 'test' directory of the project. The tests are parametrized over mode, algorithm and slip system. If you want to run e.g. only the tests pertaining to ADP, run "pytest -k ADP"
+#USAGE: Run 'pytest' in the 'test' directory of the project.
+#       The tests are parametrized over mode, algorithm and slip system.
 #REQUIRES: Python, pytest
 
 import os
@@ -23,8 +24,14 @@ TEST_DATA = TEST_ROOT/'run'
 MODES = ['ADP', 'ASR', 'EWC','QRS','UDSA','YLD']
 ALGORITHMS = ['ALAMEL', 'FCTaylor']
 SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
-HARDENING_MODELS = ['NONE', 'VOCE', 'SWIFT_S', 'SWIFT_K', 'BP_LINE', 'BP_SCREW', 'BP_LOOP']
-HARDENING_MODEL_SETTINGS = {'NONE':'0', 'VOCE':'1\n12.39 15 20 0.2 0.1', 'SWIFT_K':'2\n65.0 1.e-3 0.24', 'SWIFT_S':'3\n12.39 1.e-3 0.24', 'BP_LINE':'11\nDSHparaset.txt\nFalse', 'BP_SCREW':'12\nDSHparaset.txt\nFalse', 'BP_LOOP':'13\nDSHparaset.txt\nFalse'}
+HARDENING_MODEL_SETTINGS = {'NONE':'0',
+                            'VOCE':'1\n12.39 15 20 0.2 0.1',
+                            'SWIFT_K':'2\n65.0 1.e-3 0.24',
+                            'SWIFT_S':'3\n12.39 1.e-3 0.24',
+                            'BP_LINE':'11\nDSHparaset.txt\nFalse',
+                            'BP_SCREW':'12\nDSHparaset.txt\nFalse',
+                            'BP_LOOP':'13\nDSHparaset.txt\nFalse'}
+HARDENING_MODELS = list(HARDENING_MODEL_SETTINGS.keys())
 
 #Unit tests
 UNITS = [('altayAlgorithms','eigenv'),      \
@@ -52,11 +59,11 @@ def setup_benchmark(mode, algorithm, slip_system, hardening_model):
         conf_file.write(HARDENING_MODEL_SETTINGS[hardening_model] + '\n')
         conf_file.write('True\n')
         conf_file.write(mode_specific_conf_file.read())
-        
+
     try:
         os.remove(TEST_DATA/'out.rtdb')
         os.remove(TEST_DATA/'out.CUR')
-    except: FileNotFoundError 
+    except: FileNotFoundError
     if (mode == 'YLD' or mode == 'QRS'):
         shutil.copy(TEST_ROOT/'data/in/texture_yld.smt', TEST_DATA/'texture.smt')
     else:
@@ -99,7 +106,7 @@ def generate_output(request, mode, algorithm='ALAMEL', slip_system='bcc24', hard
                 shutil.copy(out_path, ref_path)
             case 'FALSE':
                 pass
-            case _: 
+            case _:
                 shutil.copy(log_path, ref_path)
                 shutil.copy(out_path, ref_path)
 
@@ -144,7 +151,7 @@ def get_trace_values(path, module, function):
                 if (len(formatted) == 1 or int(formatted[1]) > -9) and not int(formatted[0]) == 0:
                     vals.append((formatted[0]).replace('-','').replace('.','')[0:3])
     return vals
-        
+
 @pytest.mark.unit
 @pytest.mark.parametrize('module,function,mode,algorithm,slip_system,hardening_model', [(a,b,c,d,e,f) for ((a,b),(c,d,e,f)) in itertools.product(UNITS, tests)])
 def test_unit(mode, algorithm, slip_system, hardening_model, module, function):
