@@ -85,7 +85,12 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
 
     if not (mode, algorithm, slip_system, hardening_model) in GENERATED_DATA:
         os.chdir(TEST_DATA)
-        os.system(TEST_ROOT/f'../VEF/release/bin/alamDMC {mode} test.cfg > alamDMC.log 2>&1')
+
+        result = subprocess.run([TEST_ROOT/f'../VEF/release/bin/alamDMC',mode,'test.cfg'],
+                                stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        assert result.returncode == 0
+        with open('alamDMC.log','w') as f:
+            f.write(result.stdout.decode())
 
         if mode == 'UDSA':
             with open('out.uds', 'w') as out:
