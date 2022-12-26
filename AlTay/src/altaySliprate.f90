@@ -309,19 +309,22 @@ module altaySliprate
       use altayIOConfig
       use altayRCM
 
-      IMPLICIT real(dp) (A-H,O-Z)
-      dimension SLPR(8),IND(8),ISTOR(0:8,48),SLSTOR(0:8,48)
+      implicit none
+      integer, intent(in)::NN, IND(8),NSTOR
+      integer, intent(inout)::NOPL,ISTOR(0:8,48)
+      real(dp), intent(inout)::SLSTOR(0:8,48)
+      real(dp), intent(in) :: SLPR(8), sumsq
+
       NOPL=NOPL+1
       if (NOPL.gt.NSTOR) then
          RCM_RAISE(1,'STORE','Too small dimension NSTOR in SLIPRAT',RCM_RTN)
       endif
  100  format (' STORE - increase dimension NSTOR in SLIPRAT,STORE')
       ISTOR(0,NOPL)=NN
+      ISTOR(1:NN,NOPL)=IND(1:NN)
       SLSTOR(0,NOPL)=SUMSQ
-      do i=1,NN
-         ISTOR(i,NOPL)=IND(i)
-         SLSTOR(i,NOPL)=SLPR(i)
-      enddo
+      SLSTOR(1:NN,NOPL)=SLPR(1:NN)
+
       end subroutine
 
 end module
