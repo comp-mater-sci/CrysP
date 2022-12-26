@@ -1,14 +1,13 @@
-#ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
-#endif
-      module altayTaylor
-    use altay_definitions, only: dp
-      use altayAlgorithms
-      use altayMiscutils, only: terminate, stopcode_runtimeerror
-      use altayMacroKinematic
-      use criMathUtils
-        use altayDSHState
-      integer,parameter,private :: N = 5, N1 = N + 1
+module altayTaylor
+    use altay_definitions
+    use altayAlgorithms
+    use altayMiscutils, only: terminate, stopcode_runtimeerror
+    use altayMacroKinematic
+    use criMathUtils
+    use altayDSHState
+
+   integer,parameter,private :: N = 5, N1 = N + 1
 
       integer,private           :: M,   &       ! number of glide systems + number of twin systems
                                    NGL, &       ! number of glide systems
@@ -23,11 +22,10 @@
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
       subroutine TAYLOR(IRICHT, KOST, MacroDefRate, MacroDefState)
-#ifdef ALTAY_SUBROUTINE
       use altayRCM
-#endif
       use altayIOConfig
       use altayPancake
+
       implicit real(dp) (a-h,o-z)
       ! optional argument - required for IRICHT=2 or 3:
       type(DeformationRate), intent(in),optional :: MacroDefRate
@@ -80,23 +78,13 @@
  210  format (8I4,4X,2F10.0)
       if(NLIST.eq.1) write (IMP,211) I,NGL,NTW,DI1
  211  format (1X,I4,10X,2I5,10X,5I5)
-#ifndef ALTAY_SUBROUTINE
-      if (I.NE.0) call terminate(stopcode_runtimeerror)
-#else
       if (I.NE.0) then
             RCM_RAISE(1,'TAYLOR','Improper slip system set',RCM_RTN)
       endif
-#endif
       M=NGL+NTW
       M11=M
       if (M11.gt.MMAX)then
-#ifndef ALTAY_SUBROUTINE
-            write (*,5001) M11,MMAX
-            if(NLIST.eq.1) write (IMP,5001) M11,MMAX
-            call terminate(stopcode_runtimeerror)
-#else
             RCM_RAISE(1,'TAYLOR','Too large slip system set',RCM_RTN)
-#endif
       endif
  5001 format(' TAYLOR - NGL+NTW=',I5,' LARGER THAN  MMAX=',I5)
       ! read glide + twin systems
@@ -152,13 +140,7 @@
  204  format (1X,3(3F10.5,10X))
   70  continue
       if (MacroDefRate%NormStrainRate.lt.1.0D-10) then
-#ifndef ALTAY_SUBROUTINE
-         write (*,205) MacroDefRate%NormStrainRate
-         if(NLIST.eq.1) write (IMP,205) MacroDefRate%NormStrainRate
-         call terminate(stopcode_runtimeerror)
-#else
          RCM_RAISE(1,'TAYLOR','Symmetric part of the strain step is too small',RCM_RTN)
-#endif
       endif
  205  format (' Taylor - symmetric part of strain step is too small'     &
        ,d20.8)
@@ -206,24 +188,18 @@
           end do
       end if
 
-#ifdef ALTAY_SUBROUTINE
       RCM_GUARD
-#endif
-      return
       end subroutine
-      !
-      !
+
+
       subroutine TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate)
-#ifdef ALTAY_SUBROUTINE
       use altayRCM
       use altayConfig, only: astate
-#endif
-#ifdef PEBP_ENABLED
       use AltayHardLaw_DSH, KOST => iKOST
-#endif
       use altayIOConfig
       use altaySliprate
       use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
+
       implicit real(dp) (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
       common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
@@ -250,60 +226,24 @@
       DIMENSION RCC(3,3),RCcryst(3,3),rhossaTot(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
       dimension RHOAsa(3,3),RHOAcrys(3,3),GAMdot(96)
-      real, dimension(3,3) :: test !!single precision!!
-!      data SQR2/0.7071067811865476D+00/
-#ifdef PEBP_ENABLED
       integer :: info
       real(dp) :: ddt
-#endif
       real(dp), intent(OUT) :: TOTGAMdot
       SAVE
-      WACC1=0.0
-      WACC2=0.0
-!      pause
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!      if (IGLIJ.eq.0) goto 11
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-!  11  write (*,1771) IOR
-! 1771 format (I5)
   11  call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN,MacroDefRate)
-#ifdef ALTAY_SUBROUTINE
       RCM_GUARD
-#endif
-#ifdef PEBP_ENABLED
       select case(KOST)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
             ! Here we explicitly set time increment to the value
             ! that is implicitly assumed in Pancak2.
             ddt = 1.D0
-#ifdef ALTAY_SUBROUTINE
             if (.not. astate%simulCalls(astate%this)%input%keep_state)   &
             call KS_updateState(IOR,GAMdot,ddt,info)
-#else
-            call KS_updateState(IOR,GAMdot,ddt,info)
-#endif
       endselect
-#endif
       TOTGAMdot=sum(abs(GAMdot(1:M11)))
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!  13  if (IGLIJ.eq.1) then
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) write (IMP,103) ISTP,IOR,fi1,PHI,fi2
 
-!  13  write (IMP,103) ISTP,IOR,fi1,PHI,fi2
  103  format (' ISTP,IOR',2I5,' phi1, PHI, phi2:',3F15.6)
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!      if (iend.ne.1) goto 34
-!     if(NLIST.eq.1) then
-!      write (IMP,102) ISTP,IOR,fi1,PHI,fi2
-!     end if
-! 102  format (' Taylr1 - Problem with SLIPRAT - ISTP,IOR',2I5,/,
-!     1' Euler angles phi1, PHI, phi2:',3F15.6)
-!      return
-!  51  continue
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-!
       !Calculate RCcryst: the rigid body spin in the crystal frame
       RCcryst = rotateSRTensorFrom(MacroDefRate%Spin,TRF)
       RHOAcrys = rotateSRTensorFrom(RHOAsa,TRF)
@@ -322,20 +262,10 @@
       end do
       Seq=WorkRate / MacroDefRate%vMeqStrainRate
   43  J=M
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX 4/11/2011
-!      if (IGLIJ.EQ.0) goto 90
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) write (IMP,301) WorkRate
  301  format (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
-!      if(NLIST.eq.1) then
-!      do 302 I=1,M
-! 302  write (IMP,303) I,GAMdot(I)
-!      end if
 !
  303  format (1X,I5,(12F10.6))
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!      if (IGLIJ.NE.0) then
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) &
           write (IMP,109) MacroDefRate%vMeqStrainRate,Seq,                   &
                           (GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M)
@@ -345,15 +275,9 @@
   90  continue
   202 ROT = matmul(B1,GAMdot)
 
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!      if (IGLIJ.NE.0) then
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if(NLIST.eq.1) write (IMP,305) ROT
 
   305 format (' ROTATIONS',3F12.6)
-!      do 58 K=1,M
-!      X=ABS(GAMdot(K))
-!  58  continue
       do J=1,3
             C1(J,J)=1.D0
       end do
@@ -368,9 +292,9 @@
 !     KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
       ROTM= SQRT(C1(3,2)**2+C1(1,3)**2+C1(2,1)**2)
       Euler= EuleranglesType(C2)
-      fi1=Euler%fi1 !
-      PHI=Euler%PHI !use of EulerAngles2Arr impeded
-      fi2=Euler%fi2 !   by common block /EULERA/
+      fi1=Euler%fi1
+      PHI=Euler%PHI
+      fi2=Euler%fi2
       C2 = rotmat(Euler)
       ITW=0
       if (NTW.EQ.0) goto 31
@@ -381,14 +305,7 @@
           VOLFR(I)=X
       end do
       if (X <= 1.) goto 85
-#ifndef ALTAY_SUBROUTINE
-      if(NLIST.eq.1) write (IMP,107) X
- 107  format (' SUM OF VOLUME FRACTIONS OF TWINS IS',D15.8,              &
-      '   SHOULD BE LESS THAN 1')
-       call terminate(stopcode_runtimeerror)
-#else
       RCM_RAISE(1,'TAYLR1','Total volume fraction of twins exceeds unity',RCM_RTN)
-#endif
   85  call RANDOM_NUMBER(RNDM)
       do I=1,NTW
           if (RNDM < VOLFR(I)) goto 87
@@ -410,9 +327,9 @@
       C2 = matmul(TDC,RCC)
       ITW=I
       Euler= EuleranglesType(C2)
-      fi1=Euler%fi1 !
-      PHI=Euler%PHI !use of EulerAngles2Arr impeded
-      fi2=Euler%fi2 !   by common block /EULERA/
+      fi1=Euler%fi1
+      PHI=Euler%PHI
+      fi2=Euler%fi2
   31  if (nfile.eq.0.or.istp.gt.1) goto 61
 !
       ! the ratio of the parallel strain rates
@@ -437,11 +354,7 @@
    61 return
   26  write (IMP,106)
  106  format (1X,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBLEM')
-#ifndef ALTAY_SUBROUTINE
-  52  call terminate(stopcode_runtimeerror)
-#else
   52  RCM_RAISE(1,'TAYLR1','No upper limit for linear programming problem',RCM_RTN)
-#endif
       end subroutine
 
-      end module
+end module
