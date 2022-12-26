@@ -8,11 +8,12 @@ import os
 import hashlib
 import shutil
 import re
-import pandas as pd
 from pathlib import Path
 import itertools
+import subprocess
 
 import pytest
+import pandas as pd
 
 #File extension for the output of each execution mode. May be removed when we get rid of the file-based I/O for the simulations.
 EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'UDSA':'uds','YLD':'xyld'}
@@ -79,7 +80,7 @@ def setup_benchmark(mode, algorithm, slip_system, hardening_model):
 
 
 #Execute simulations themselves. Implemented as a dedicated function to simplify test adjustments when transitioning to a different software architecture.
-def generate_output(request, mode, algorithm='ALAMEL', slip_system='bcc24', hardening_model='NONE'):
+def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', hardening_model='NONE'):
     setup_benchmark(mode, algorithm, slip_system, hardening_model)
 
     if not (mode, algorithm, slip_system, hardening_model) in GENERATED_DATA:
@@ -99,16 +100,9 @@ def generate_output(request, mode, algorithm='ALAMEL', slip_system='bcc24', hard
         shutil.move(TEST_DATA/'alamDMC.log', log_path)
         GENERATED_DATA.append((mode, algorithm, slip_system, hardening_model))
         ref_path = TEST_ROOT/'data/out/'
-        match request.config.getoption('--update'):
-            case 'log':
-                shutil.copy(log_path, ref_path)
-            case 'out':
-                shutil.copy(out_path, ref_path)
-            case 'FALSE':
-                pass
-            case _:
-                shutil.copy(log_path, ref_path)
-                shutil.copy(out_path, ref_path)
+        ref_path.mkdir(parents=True, exist_ok=True)
+        if 'log' in update: shutil.copy(log_path, ref_path)
+        if 'out' in update: shutil.copy(out_path, ref_path)
 
 def process_file(path):
     df = pd.read_csv(path,delimiter=' +', engine='python')
@@ -130,8 +124,8 @@ tests = list(tests_basic) + list(tests_bp)
 #Generate and execute the different test cases.
 @pytest.mark.integration
 @pytest.mark.parametrize('mode,algorithm,slip_system,hardening_model', tests)
-def test_vef(mode, algorithm, slip_system, hardening_model, request):
-    generate_output(request, mode, algorithm, slip_system, hardening_model)
+def test_vef(mode, algorithm, slip_system, hardening_model, update):
+    generate_output(update, mode, algorithm, slip_system, hardening_model)
 
     filename =  f'{mode}_{algorithm}_{slip_system}_{hardening_model}.out'
     ref = process_file(TEST_ROOT/'data/out'/filename)
@@ -154,8 +148,8 @@ def get_trace_values(path, module, function):
 
 @pytest.mark.unit
 @pytest.mark.parametrize('module,function,mode,algorithm,slip_system,hardening_model', [(a,b,c,d,e,f) for ((a,b),(c,d,e,f)) in itertools.product(UNITS, tests)])
-def test_unit(mode, algorithm, slip_system, hardening_model, module, function):
-    generate_output(request, mode, algorithm, slip_system, hardening_model)
+def test_unit(mode, algorithm, slip_system, hardening_model, module, function, update):
+    generate_output(update, mode, algorithm, slip_system, hardening_model)
     reference = get_trace_values(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
     data = get_trace_values(TEST_DATA/f'{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
     assert data == reference
