@@ -10,8 +10,7 @@
 
 image: gcc
 
-build:
-  stage: test
+test:
   script: |
     wget -q https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
     apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
@@ -21,9 +20,16 @@ build:
     apt-get install -y \
     intel-basekit \
     intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-compiler-fortran \
-    intel-oneapi-openmp intel-oneapi-mkl-devel
+    intel-oneapi-openmp intel-oneapi-mkl-devel \
+    python3-pip
+    pip install pandas pytest
     source /opt/intel/oneapi/setvars.sh
     AR=xiar ./build.sh -c ifort -b debug
     AR=xiar ./build.sh -c ifort -b release
+    cd test
+    pytest --update=logout -v
+    cd ..
     #AR=xiar ./build.sh -c gfortran -b debug
     AR=xiar ./build.sh -c gfortran -b release
+    cd test
+    pytest --update=logout -v
