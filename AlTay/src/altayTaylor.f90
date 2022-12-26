@@ -17,10 +17,9 @@ module altayTaylor
 
       contains
 
-! MODIFICATIONS AUG 2010
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
-!
+
       subroutine TAYLOR(IRICHT, KOST, MacroDefRate, MacroDefState)
       use altayRCM
       use altayIOConfig
@@ -55,21 +54,19 @@ module altayTaylor
       ! Local stress in crystal reference system:
       real(dp), dimension(3,3):: Scrys=0.0d0
       save
-      !
-      goto (1000,2000,3000),IRICHT
-      !
+
+      select case(IRICHT)
+      case(1)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! IRICHT=1
       ! Read slip system file
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !
- 1000 if(NLIST.eq.1) write (IMP,216)
+      if(NLIST.eq.1) write (IMP,216)
  216  format (/,' SUBROUTINE TAYLOR - READS ITS CRYSTAL DATA',//)
 !
       R=LEC         ! slip system file
 !
       ! Read name of slip system set
-  507 read (R,217) TITglij
+      read (R,217) TITglij
   217 format(A)
       if(NLIST.eq.1) write (IMP,221) TITglij
   221 format (/,' Slip system set:',A,/)
@@ -86,7 +83,6 @@ module altayTaylor
       if (M11.gt.MMAX)then
             RCM_RAISE(1,'TAYLOR','Too large slip system set',RCM_RTN)
       endif
- 5001 format(' TAYLOR - NGL+NTW=',I5,' LARGER THAN  MMAX=',I5)
       ! read glide + twin systems
       do I1=1,M11
           read (R,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
@@ -109,24 +105,18 @@ module altayTaylor
           end do
  218      format (i4,' B2',6f10.7,' G',f10.7)
       endif
-      ! set all components of A2=0
- 502  A2=0.0
+      A2=0.0
       do j=1,M11
           do i=1,5
               x8=A1(i,j)
               A2(i,j)=x8
               A2(i+5,j+M11)=x8
       end do; end do
-      return
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-! 2000 if (IGLIJ.EQ.0) goto 70
-      !
+
+      case(2)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! IRICHT=2
       ! Write velocity gradient, strain rate and spin tensor; then check norm of strain rate
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !
- 2000 continue
       if(NLIST.eq.1) write (IMP,203)
       do I=1,3
           if(NLIST.eq.1) &
@@ -138,22 +128,16 @@ module altayTaylor
               //T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,     &
               'ANTISYMMETRICAL PART',/)
  204  format (1X,3(3F10.5,10X))
-  70  continue
       if (MacroDefRate%NormStrainRate.lt.1.0D-10) then
          RCM_RAISE(1,'TAYLOR','Symmetric part of the strain step is too small',RCM_RTN)
       endif
  205  format (' Taylor - symmetric part of strain step is too small'     &
        ,d20.8)
-!
-      return
-      !
+
+      case(3)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! IRICHT=3
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !
       ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
- 3000 continue
-      !
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,              &
                     SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
       ! OUT: Scrys,RHOScrys,RHOAcrys
@@ -189,6 +173,10 @@ module altayTaylor
       end if
 
       RCM_GUARD
+      case default
+          error stop 'MD: this should not happen'
+      end select
+
       end subroutine
 
 
