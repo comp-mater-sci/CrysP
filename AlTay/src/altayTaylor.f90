@@ -12,7 +12,7 @@ module altayTaylor
       integer,private           :: M,   &       ! number of glide systems + number of twin systems
                                    NGL, &       ! number of glide systems
                                    NTW          ! number of twin systems
-      real(dp),private  :: B1(3,96),B(5,5),B2(6,96),G(96)
+      real(dp),private  :: B1(3,96),B(5,5),B2(6,96),G(96),RHOAsa(3,3)
       integer,private           :: DI1(5)
 
       contains
@@ -33,12 +33,11 @@ module altayTaylor
       common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
       ITW,GEWF
       common /IGLIJS/ CC(2,96), M11     ! M11...total number of systems in slip system file (glide+twin),
-      common /TLR2/ RHOAsa
       common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
        SWRLX(3)
       real(dp), dimension(3,3):: RHOScrys(3,3)
-      real(dp), dimension(3,3):: RHOAcrys(3,3), RHOAsa(3,3)
+      real(dp), dimension(3,3):: RHOAcrys(3,3)
       character(len=72) :: TITglij                                          ! Name of slip system set
 !
 !     Extra arrays necessary for linear programming of 2 grains simultaneously
@@ -192,7 +191,6 @@ module altayTaylor
       type(DeformationRate),intent(in) :: MacroDefRate
       common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
       common /IGLIJS/ CC(2,96), M11
-      common/TLR2/ RHOAsa
       common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
       common /EULERA/ fi1,PHI,fi2
       logical SWRLX
@@ -213,7 +211,7 @@ module altayTaylor
        SWRLX(3)
       DIMENSION RCC(3,3),RCcryst(3,3),rhossaTot(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
-      dimension RHOAsa(3,3),RHOAcrys(3,3),GAMdot(96)
+      dimension RHOAcrys(3,3),GAMdot(96)
       integer :: info
       real(dp) :: ddt
       real(dp), intent(OUT) :: TOTGAMdot
