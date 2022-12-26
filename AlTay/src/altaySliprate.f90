@@ -87,8 +87,7 @@ module altaySliprate
       if (N2.lt.5) goto 2
       NN=N2
       do I1=2,N0
-         J1=I1-1
-         do I2=1,J1
+         do I2=1,I1-1
             j=1
             do 5 i=1,N0
             if (i.eq.I1.or.i.eq.I2) goto 5
@@ -110,10 +109,8 @@ module altaySliprate
       if (N3.lt.5) goto 2
       NN=N3
       do I1=3,N0
-         J1=I1-1
-         do I2=2,J1
-            J2=I2-1
-            do I3=1,J2
+         do I2=2,I1-1
+            do I3=1,I2-1
               j=1
               do 7 i=1,N0
               if (i.eq.I1.or.i.eq.I2.or.i.eq.I3) goto 7
@@ -237,67 +234,59 @@ module altaySliprate
       Subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
       use altayIOConfig
       use altayAlgorithms, only: KLEINKWA
-      IMPLICIT real(dp) (A-H,O-Z)
+
+      implicit none
 !     The  normalisation by DELTAT (now: MacroDefRate%vMeqStrainRate) of the september 2000 version has been
 !     removed here. Is now done in PANCAK2.
 
+      real(dp) :: A8,BB8,RHO,B5
       COMMON /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
-      dimension sgnn(IDIMXX)
-      dimension A(13,13),B(13),SLPR(8),IND(8)
-      dimension AA(13,13),BA(13),VAL(13),XV(13),YV(13)
-      DATA TOl/1.0d-10/
+      real(dp) :: sgnn(IDIMXX)
+      integer, intent(in) :: IND(8), NN,IDIMXX
+      integer, intent(out) :: ineg
+      real(dp), intent(out) :: SLPR(8),sumsq
+      real(dp) :: A(13,13),B(13),RES,x,Y
+      real(dp) :: AA(13,13),BA(13),VAL(13),XV(13),YV(13)
+      real(dp), parameter :: TOL=1.0e-10_dp
+      integer :: i,j,N1,N2
 
       if (NN.gt.5) goto 2
       N1=5
       N2=NN
       do i=1,N2
-         is=IND(i)
          do j=1,5
-            A(j,i)=sgnn(is)*A8(j,is)
+            A(j,i)=sgnn(IND(i))*A8(j,IND(i))
          enddo
       enddo
-      do j=1,5
-         B(j)=BB8(j)
-      enddo
+      B(1:5)=BB8(1:5)
       goto 1
   2   N1=NN+5
       N2=N1
 !     Set up system of equations
-      do i=1,N1
-         do j=1,N1
-           A(i,j)=0.0
-         enddo
-      enddo
+      A(1:N1,1:N1)=0.0_dp
       do i=1,NN
-         is=IND(i)
-         A(i,i)=2.D0
+         A(i,i)=2.0_dp
          B(i)=0.0
          do j=1,5
-            j1=NN+j
-            x=sgnn(is)*A8(j,is)
-            A(i,j1)=-x
-            A(j1,i)=x
+            x=sgnn(IND(i))*A8(j,IND(i))
+            A(i,NN+j)=-x
+            A(NN+j,i)=x
          enddo
       enddo
-      do j=1,5
-         B(NN+j)=BB8(j)
-      enddo
+      B(1+NN:5+NN)=BB8(1:5)
 !     Solve by least-squares method followed by singular value decomposition
    1  call Kleinkwa(N1,N2,13,13,A,B,BA,RES)
-      do i=1,NN
-         SLPR(i)=BA(i)
-      enddo
-      sumsq=0.0d0
+      SLPR(1:NN)=BA(1:NN)
+      sumsq=0.0_dp
       x=0.0d0
       ineg=0
       do i=1,NN
-         is=IND(i)
          Y=SLPR(i)
          sumsq=sumsq+Y**2
          if (x.gt.Y) then
-                       x=Y
-                       ineg=i
-                     endif
+             x=Y
+             ineg=i
+         endif
       enddo
       if (RES.gt.(10000.0*TOL)) then
         ineg=-1
