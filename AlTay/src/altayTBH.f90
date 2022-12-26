@@ -323,31 +323,35 @@
       enddo
   211 format (I5,5x,D20.10)
   212 format (/,'   SOLUTION ',/)
-      return
       end subroutine
-
 
 
       subroutine Ust(C,B,CUst,in,N,M3,NDIM)
-!     MATRIX C=MATRIX Ustar*MATRIX B
-      implicit real(dp) (a-h,o-z)
-      dimension B(NDIM,M3),C(NDIM,M3),CUst(N)
+      !  MATRIX C=MATRIX Ustar*MATRIX B
+      implicit none
+      integer :: in,N,M3,NDIM
+      real(dp) :: B(NDIM,M3),CUst(N)
+      real(dp) :: C(NDIM,M3)
+      integer :: i,j
+
       do j=1,M3
-        X=B(in,j)
         do i=1,N
-          C(i,j)=X*CUst(i)
+          C(i,j)=B(in,j)*CUst(i)
           if (i.ne.in) C(i,j)=C(i,j)+B(i,j)
         enddo
       enddo
-      return
       end subroutine
 
 
-
       subroutine mtprd(C,A,B,N1,N2,N3,ND1,ND2)
-!     MATRIX C=MATRIX A*MATRIX B
-      implicit real(dp) (a-h,o-z)
-      dimension A(ND1,N2),B(ND2,N3),C(ND1,N3)
+      ! MATRIX C=MATRIX A*MATRIX B
+      implicit none
+      integer :: N1,N2,N3,ND1,ND2
+      real(dp) :: A(ND1,N2),B(ND2,N3)
+      real(dp) :: C(ND1,N3)
+      real(dp) :: X
+      integer :: I,J,K
+
       do I=1,N1
           do J=1,N3
               X=0.
@@ -357,8 +361,7 @@
               C(I,J)=X
           enddo
       enddo
-      return
       end subroutine
 
-      end module
+end module
 
