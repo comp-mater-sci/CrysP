@@ -8,9 +8,8 @@
 # can use verions as well, like gcc:5.2
 # see https://hub.docker.com/_/gcc/
 
-image: gcc
-
-test:
+gcc:
+  image: gcc
   script: |
     wget -q https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
     apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
@@ -18,18 +17,24 @@ test:
     echo "deb https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
     apt-get update
     apt-get install -y \
-    intel-basekit \
-    intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-compiler-fortran \
-    intel-oneapi-openmp intel-oneapi-mkl-devel \
+    intel-oneapi-mkl-devel \
+    cmake \
     python3-pip
     pip install pandas pytest
     source /opt/intel/oneapi/setvars.sh
-    AR=xiar ./build.sh -c ifort -b debug
-    AR=xiar ./build.sh -c ifort -b release
-    cd test
-    pytest --update=logout -v
-    cd ..
     #AR=xiar ./build.sh -c gfortran -b debug
     AR=xiar ./build.sh -c gfortran -b release
+    cd test
+    pytest --update=logout -v
+
+intel:
+  image: intel/oneapi-hpckit:devel-ubuntu22.04
+  script: |
+    apt-get update
+    apt-get install -y \
+    python3-pip
+    pip install pandas pytest
+    AR=xiar ./build.sh -c ifort -b debug
+    AR=xiar ./build.sh -c ifort -b release
     cd test
     pytest --update=logout -v
