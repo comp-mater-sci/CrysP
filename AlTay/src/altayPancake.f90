@@ -1,6 +1,4 @@
-#ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
-#endif
       module altayPancake
     use altay_definitions, only: dp
       use altayMiscutils, only: terminate, stopcode_runtimeerror
@@ -14,9 +12,7 @@
 !
       Subroutine Pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,               &
                         SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
-#ifdef ALTAY_SUBROUTINE
       use altayRCM
-#endif
       use altayMesostructure
       use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
       use altayHard
@@ -83,20 +79,12 @@
 !     NDIM=dimension A
       data TAURL/2*0.0d0/
       real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp
-#ifdef PEBP_ENABLED
       integer :: info
-#endif
       SAVE
 
       if (laml.ne.1.and.laml.ne.2) then
-#ifndef ALTAY_SUBROUTINE
-          write(*,*) 'laml=', laml
-          call terminate(stopcode_runtimeerror)
-#else
       RCM_RAISE(1,'Pancak2','Wrong selection of lamels',RCM_RTN)
-#endif
       endif
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (IOR.eq.1) IGrElm=0
 !     N is number of rows of A1;   NU number of rows of UU2
       TLXX=TOLXX
@@ -110,14 +98,8 @@
 !
       IGrElm=IGrElm+1
       if (IGrElm.gt.NGrElm) IGrElm=1
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  QGX
-
       call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,   &
                     Cofcos,Cofsin)
-
-
-
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       do 33 i=M2+1,M12
       do 33 jsgn=1,2
   33  CCC(jsgn,i)=0.0
@@ -192,9 +174,6 @@
       do I=NGL+1,M11 ! this do-loop will only be executed for NTW>0
           CCC(2,I+K1)=CCC(1,I+K1)*GETAL
       end do
-      !
-!   92 write (IMP,914) i,j,CCC(1,j),CCC(2,j)
- 914  format (' i,j',2i5, ' CCC ',2d16.4)
       do J=1,5
           do I=1,5
               UU(I+L1,J+L1)=B(I,J)
@@ -245,22 +224,10 @@
 ! Fakm: rate of plastic work of the 2 crsytals together
 ! Taur (output) resolved shear stress (can be + or -)
 ! DTAU (output)=abs(Taur)-Tauc
-#ifdef ALTAY_SUBROUTINE
       RCM_GUARD
-#endif
 !
   345 if (IPR.lt.4) goto 220
-#ifndef ALTAY_SUBROUTINE
-      if(NLIST.eq.1) then
-          write (IMP,221) IPR,IOR,ISTP,NBLOC
-      end if
-      write (*,221) IPR,IOR,ISTP,NBLOC
- 221  format (' Pancak2 ',                                               &
-       ' IPR IOR, ISTP, NBLOC=',4I5)
-      if (IPR.ge.4) call terminate(stopcode_runtimeerror)
-#else
       RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
-#endif
   220 DTAU1=DTAU
       TAUR1=TAUR
 
@@ -270,7 +237,6 @@
             STRSS=UBUF
             goto 89
       endif
-!@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$@$$@$@$@$@$@$@$@$@$@$ QGX 15/11/2012
       if(ITFMAS.eq.1) then
         CCC(1,M2+1)=GETAL
         CCC(2,M2+1)=GETAL
@@ -284,12 +250,10 @@
             CCC(2,j)=TAURL(IRL)
         end do
       endif
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (IPR.EQ.2) then
           if(NLIST.eq.1) write(IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
       end if
 !     Second call of Simplex (relaxed constraints)
-!      if (IOR.eq.1967.and.ISTP.eq.11.and.NBLOC.eq.3) IPR=2
       if (IPR.eq.2) then
           if (NLIST.eq.1) write(IMP,401)
       end if
@@ -311,9 +275,7 @@
 ! Fakm: rate of plastic work of the 2 crsytals together
 ! Taur (output) resolved shear stress (can be + or -)
 ! DTAU (output)=abs(Taur)-Tauc
-#ifdef ALTAY_SUBROUTINE
       RCM_GUARD
-#endif
 !      if (IOR.eq.1967.and.ISTP.eq.11.and.NBLOC.eq.3) stop
 !
 
@@ -325,14 +287,8 @@
          write (*,222) IPR,IOR,ISTP,NBLOC
  222     format (' Pancak2 222 - Problem with TBH',/,                    &
          ' IPR IOR, ISTP, NBLOC=',4I5)
-#ifndef ALTAY_SUBROUTINE
-          call terminate(stopcode_runtimeerror)
-#else
           RCM_RAISE(1,'Pancak2','Problem with TBH',RCM_RTN)
-
-#endif
       endif
-!@#@#@#@#@#@#@#@#@@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@#@@#@# QGX 15/11/2012
 !   loop
 !
       if(ITFMAS.eq.1) then
@@ -355,13 +311,11 @@
       goto 999
       else
       endif
-!VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
       UU=UU2
       DI=DI2
       else
       goto 204
       endif
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 !     GAMR will contain the relaxed shears:
  204  if (NRL.gt.0) then
                        do IRL=1,NRL
@@ -401,8 +355,6 @@
 !      from the fullconstraints solution.
       spanv(i)=UBUF(i+ii)
       B5(i)=B8(i,laml)
-!      write (IMP,776) laml,B5(i),spanv(i),i+ii
-! 776  format (' B5  ',i5,e15.8,   'spanv  ',d15.8,' i+ii',i5)
       x8=0.0
       y8=0.0
       if (NRL.gt.0) then
@@ -434,15 +386,8 @@
         write (IMP,777) WR
       end if
   777 format (' spanv . BB          :',d11.4)
-!     (Modification June 2001: note that if one of the grains does
 !      not deform at all, the stress and the active slip systems
 !       of the full constraintssolution are used.)
-!
-!      do i=1,M11
-!        j=i+jj
-!        write (IMP,308) i,DTAU1(j),XX(j)
-!      enddo
-! 308  format ('PANCAK2  i,DTAU1, XX',i5,2d12.4)
       NACTIV=0
       do 305 i=1,M11
       j=i+jj
@@ -450,33 +395,15 @@
 !     constraints solution.
       if (ABS(DTAU1(j)).gt.TOL) goto 305
       NACTIV=NACTIV+1
-!      write (IMP,912) NACTIV,i
-! 912  format (' NACTIV, i',2I5)
       if (NACTIV.le.8) THEN
                            INDACT(NACTIV)=i
                         ELSE
-#ifndef ALTAY_SUBROUTINE
-                           if(NLIST.eq.1) then
-                                     write (IMP,306)
-                           end if
-                           write (*,306)
-                           call terminate(stopcode_runtimeerror)
-#else
       RCM_RAISE(1,'Pancak2','Too many active slip systems',RCM_RTN)
-#endif
                         endif
  306  format (' PANCAK2 - 306 - TOO MANY ACTIVE SLIP SYSTEMS')
  305  continue
       if (NACTIV.eq.0) then
-#ifndef ALTAY_SUBROUTINE
-                           if(NLIST.eq.1) then
-                                     write (IMP,307)
-                           end if
-                           write (*,307)
-                           call terminate(stopcode_runtimeerror)
-#else
       RCM_RAISE(1,'Pancak2','No active slip systems found',RCM_RTN)
-#endif
                        endif
  307  format (' PANCAK2 - 307 - No active slip systems found')
       do 310 NLP=1,NACTIV
@@ -486,12 +413,7 @@
                       SLIPLP(NLP)=XX(j+jj)
                       TAURLP(NLP)=TAUR1(j+jj)
  310  continue
-      return
       END SUBROUTINE
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-
 
 
       subroutine Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,UBUF,M11,ca1,ca2)

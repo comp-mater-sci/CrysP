@@ -108,7 +108,6 @@ contains
             endif
             if (present(errmsg)) errmsg = ''
             !
-#ifdef PEBP_ENABLED
             ! PEBP model
             select case(cnf%hardening%HardLawID)
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
@@ -129,8 +128,6 @@ contains
                         endif
                   endif
             endselect
-#endif
-            !
             ! No need for the slip system definition anymore.
             close(LEC)
             info = altaySub_OK
@@ -154,20 +151,16 @@ contains
             !close(IMP1)
             close(IMP2)
             close(IMP3)
-#ifdef PEBP_ENABLED
             close(IMP4)
-#endif
             close(IMP5)
             close(IMP6)
             call MICROSTR_finalize(info)
             if (info /= 0) return
             call DYNFIL_finalize(info)
             if (info /= 0) return
-#ifdef PEBP_ENABLED
             info = KS_finalize()
             close(IPEBPSTAT)
             close(IPEBPSDV)
-#endif
             ! Finalize altayConfig
             if (allocated(astate%simulCalls)) then
                   deallocate(astate%simulCalls)
@@ -226,7 +219,7 @@ contains
                   call writeMSSHeader(IMP5,info)
             endif
 !
-#if defined(PEBP_ENABLED) && !defined(NOBEPFILE)
+#if !defined(NOBEPFILE)
             if (cnf%output_config%npebp /= 0) then
                   ! PEBP model
                   ! UNIT IMP4 = state variables of PEBP
@@ -371,9 +364,4 @@ contains
       !
       end subroutine
 
-
-
-
 end module
-
-

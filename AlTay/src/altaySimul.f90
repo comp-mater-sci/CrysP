@@ -1,6 +1,4 @@
-#ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
-#endif
 module altaySimul
     use altay_definitions, only: dp
     use altayMiscutils, only: terminate, stopcode_runtimeerror
@@ -32,10 +30,8 @@ module altaySimul
       use altayHard
       use altayTaylor
       use altayAlgorithms
-#ifdef ALTAY_SUBROUTINE
       use altayConfig
       use altayRCM
-#endif
       use altayIOConfig
       use altayMiscutils
       !
@@ -112,7 +108,6 @@ module altaySimul
         allocate(seed(seedsize),source=20191102) ! low entropy, but at least deterministic
         call random_seed(put=seed)
       endif
-#ifdef ALTAY_SUBROUTINE
       NGR    = acnf%simul_init%NGR
       ENTA   = acnf%simul_init%ENTA
       KOST   = acnf%hardening%HardLawID
@@ -124,23 +119,6 @@ module altaySimul
       NRES   = acnf%output_config%NRES    ! control "RES" and "RPT"
       NPEBP  = acnf%output_config%NPEBP   ! control "BEP"
       NMSS   = acnf%output_config%NMSS    ! control "MSS"
-#else
-!     Number of grains in ALAMEL cluster
-      read (KLEC,99) NGR
-      read (KLEC,*)  ENTA
-      read (KLEC,99) NLIST
-      read (KLEC,99) NFILE1
-      read (KLEC,99) NFILTW
-      read (KLEC,99) NMSS
-      read (KLEC,99) KOST
-      read (KLEC,99) IPR
-      NRES = NFILE1  ! IMP2 and IMP3 are controlled only by NFILE1
-      NPEBP = 0
-      select case(KOST)
-      case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-          NPEBP  = NFILE1
-      endselect
-#endif
       HGAMTOT=0.D0
       ! NGR == 3: enable MAS-AL
       if(NGR.eq.3) then
@@ -150,60 +128,20 @@ module altaySimul
             ITFMAS=0
       endif
       !
-#ifndef ALTAY_SUBROUTINE
-      if(NLIST.eq.1) then
-            write (IMP,101) NGR,NLIST,NFILE1,NFILTW,KOST,IPR
-      end if
-#ifndef NO_STDOUT
-      write (*,101) NGR,NLIST,NFILE1,NFILTW,KOST,IPR
-#endif
- 101  format (' SIMUL - PARAMETERS:',/                                   &
-      'NGR=   ',I5,/,'NLIST= ',I5,/,'NFILE1=',I5,/,'NFILTW=',i5,/,       &
-      'KOST=  ',I5,/,'IPR=   ',I5)
-#endif
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
       if (NGR.lt.1.or.NGR.gt.2) then
-#ifndef ALTAY_SUBROUTINE
-            write (*,140) NGR
-            if(NLIST.eq.1) then
-            write (IMP,140) NGR
-            end if
-            call terminate(stopcode_runtimeerror)
-#else
             RCM_RAISE(1,'SIMUL','Incorrect value of NGR',RCM_RTN)
-#endif
       endif
  140  format (' NGR can only take the values 1 or 2 but was',I5)
       ! Check if number of crystals is right for the model
       if (modulo(NPOINT, NGR) /= 0) then
-#ifndef ALTAY_SUBROUTINE
-            write (6,405) NPOINT
-            write (*,405) NPOINT
- 405  format (' Subroutine SIMUL',/' The LAMEL version works only if',   &
-      ' the number of orientations NPOINT=',I5,/,                        &
-      ' is an even number')
-            call terminate(stopcode_runtimeerror)
-#else
             RCM_RAISE(1,'SIMUL','The number of grains must be an even number',RCM_RTN)
-#endif
       endif
 !     Number of relaxations: 0 for Taylor and 2 for ALAMEL:
       NRL=(NGR-1)*2
-#ifdef ALTAY_SUBROUTINE
       !
       FMicro = acnf%simul_init%FMicro
       !
       TITEL  = acnf%jobtitle
-#else
-      do i=1,3
-         read (KLEC,94)(FMicro(i,j),j=1,3)
-         if(NLIST.eq.1) write(IMP,106)(FMicro(i,j),j=1,3)
-      end do
- 106  format ('F_Microstructure=',3f12.6)
-  99  format (2I5)
-  94  format (3F10.0)
-  16  read (KLEC,98) TITEL
-#endif
       if(NLIST.eq.1) write(IMP,97) TITEL
       if (NRES.gt.0) write (IMP2,98) TITEL
   97  format (' Title of the new simulation: ',A)
@@ -211,27 +149,11 @@ module altaySimul
       if (NFILE1.eq.1) call CURwriteTitle(IMP1,TITEL,info)
   98  format (A)
 !     read the parameters of the work hardening model
-#ifndef ALTAY_SUBROUTINE
-      call InitModuleAltayHard(KLEC,KOST,crss_ratiosIN,info)
-#endif
       call TAYLOR(1,KOST) ! read slip system file
-#ifdef ALTAY_SUBROUTINE
       RCM_GUARD
-#endif
-#ifndef ALTAY_SUBROUTINE
-      if (NFILTW.eq.1) then
-          write (IMP3,98) TITEL
-          write (IMP3,99) NPOINT
-      endif
-#endif
       !
       ! Various IO/initialization calls
       !
-#ifndef ALTAY_SUBROUTINE
-#ifdef PEBP_ENABLED
-      if (NPEBP /= 0) info = writeSDV(IPEBPSDV,header=.true.)
-#endif
-#endif
       return
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -239,7 +161,6 @@ module altaySimul
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !
   30  continue
-#ifdef ALTAY_SUBROUTINE
       ! Per-call selection of the model: NGR & NRL must be set
       NGR = acnf%simul_init%NGR
       if(NGR.eq.3) then
@@ -250,40 +171,19 @@ module altaySimul
       endif
       ! Number of relaxations: 0 for Taylor and 2 for ALAMEL:
       NRL=(NGR-1)*2
-#endif
   36  NFILE=NFILE0*NFILE1
       NPEBPx=NFILE0*NPEBP   ! control "BEP" (effective value)
       NMSSx= NFILE0*NMSS    ! control "MSS" (effective value)
 
-#ifdef ALTAY_SUBROUTINE
       NSTP     = astate%simulCalls(astate%this)%input%nsteps
       swrlx(1) = astate%simulCalls(astate%this)%input%rlx1
       swrlx(2) = astate%simulCalls(astate%this)%input%rlx2
       swrlx(3) =.false.
-#else
-      read (KLEC,99) NSTP
-      if(NLIST.eq.1) write(IMP,115) NSTP
- 115  format (//,' S I M U L         NR. STEPS=',I5,//)
-      read (KLEC,99) ICRAT1,ICRAT2
-      if(NLIST.eq.1) write(IMP,104) ICRAT1,ICRAT2
- 104  format (' ICRAT:',2I5)
-
-      swrlx(1)=(ICRAT1.eq.1)
-      swrlx(2)=(ICRAT2.eq.1)
-      swrlx(3)=.false.
-      if (IPR.gt.0.and.NLIST.eq.1) write (IMP,*)'Relaxations:',swrlx(1)
-#endif
-      !
       call TAYLOR(2,KOST,MacroDefRate)
-#ifdef ALTAY_SUBROUTINE
       RCM_GUARD
-#endif
       ! Output the current texture
       if (NFILE.eq.1) call CURwriteBlock(IMP1,info)
-#ifndef ALTAY_SUBROUTINE
-      if ((NRES >= 1).and.(IW <= 1)) call writeReportHeader(IMP6,info)
-#endif
-#if defined(PEBP_ENABLED) && !defined(INTERMEDIATEBPM_DISABLED)
+#if !defined(INTERMEDIATEBPM_DISABLED)
       select case(KOST)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
           if (NPEBPx.eq.1) info = KS_writeState(IMP4)
@@ -303,9 +203,7 @@ module altaySimul
           Mavg=0.
           srh=0.
           HGAM=0.D0
-#ifdef PEBP_ENABLED
           pebpSDVavg = StateDerivedVars()
-#endif
 
           call dynfil2(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT
@@ -315,7 +213,6 @@ module altaySimul
               write (IMP,96) ISTP,GAXES
           end if
       96  format(' Step nr.',i5,5X,3f12.5)
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
           if (IW.gt.1) goto 70
           if(NLIST.eq.1) then
               write (IMP,3456) MacroDefRate%VelGrad
@@ -324,9 +221,6 @@ module altaySimul
 !
 !     Get the 5x5 transformation matrix MACRO to morfol. GRAIN AXES
 !
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 4/11/2011
-!         if (IGLIJ.eq.1) then
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
           if(NLIST.eq.1) then
               write (IMP,3458) TG
           end if
@@ -355,16 +249,12 @@ module altaySimul
           !
           call UPDATC(CIJ,MacroDefState%IncrDefGrad_inverse)
           call GETANG(CIJ,GAXES,GEULR,TG)
-#ifdef ALTAY_SUBROUTINE
           RCM_GUARD
           ! We can choose not to update the texture data
           if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                 call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,  &
                              CIJ,TG)
           endif
-#else
-          call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
-#endif
 !
 !         Added for lamel model:
 !         Organisation reading temporary texture file,
@@ -413,7 +303,6 @@ module altaySimul
               TRF = TRFb(:,:,laml)
               TG = TGb(:,:,laml)
               RHOSSa = RHOSSb(:,:,laml)
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 27/10/2011
               if(laml.eq.1) then
                   qgx=GEWFb(laml)
                   GEWF=qgx
@@ -431,38 +320,26 @@ module altaySimul
 !                - should not perform any computation
 !                - has to output the result of the second crystal found
 !                  during the previous computation.
-!
-!      write (*,3210)
-! 3210 format (' Just before Taylor')
  999          if (IW.le.1) then
                     call  TAYLOR(3,KOST,MacroDefRate,MacroDefState)
-#ifdef ALTAY_SUBROUTINE
                     RCM_GUARD
-#endif
               endif
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ QGX 2/1/2011
 ! this modification is to suit for the output of stress
               if(laml.eq.1) then
                   ssqgx=GEWF
               else
                   GEWF=ssqgx
               end if
-!EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
               TOTGEW=TOTGEW+GEWF
               !
               ! Skip the rest of the loop if IW > 1
   41          if (IW.gt.1) cycle
               !
-#ifdef ALTAY_SUBROUTINE
               if (astate%simulCalls(astate%this)%input%full_model) then
                     call TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate,      &
                                 MacroDefRate)
                     RCM_GUARD
               endif
-#else
-              call TAYLR1(ISTP,IOR,NFILE,TAU,GMMdot,SeqGrain,WorkRate,           &
-                          MacroDefRate)
-#endif
    49         if (NFILTW.eq.1) write (IMP3,398) ITW
  398          format (I3)
               !
@@ -477,30 +354,17 @@ module altaySimul
               HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s
               GMM1 = GMM0 + GMMdot !Step time here implicitly assumed to be 1.0s
               Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
-#ifdef PEBP_ENABLED
               select case(KOST)
               case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                    call KS_getSDV(IOR,pebpSDV,info)
                    pebpSDVavg = pebpSDVavg + pebpSDV * GEWF
               endselect
-#endif
-#ifdef ALTAY_SUBROUTINE
               ! We can choose not to update the texture state
               if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                     call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                   &
                                  MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,  &
                                  RHOSsa)
               endif
-#else
-              call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,                         &
-                           MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
-#endif
-              !
-#ifndef ALTAY_SUBROUTINE
-              ! Output the plastic work of the grain (in its initial configuration)
-              if (NRES >= 1) call writeReportRecord(IMP6,fi1b(laml),PHIb(laml),  &
-                                                    fi2b(laml),Wtot,info)
-#endif
               !
               ! End of the loop over crystals
               !
@@ -532,16 +396,10 @@ module altaySimul
                               MacroDefState%AccumvMeqStrain_ToStartOfInc,    &
                               HGAMCALL,HGAMTOT,SHsam,Mavg,srh,info)
           endif
-#ifdef PEBP_ENABLED
           select case(KOST)
           case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                pebpSDVavg = pebpSDVavg * (1.D0/TOTGEW)
           endselect
-#ifndef ALTAY_SUBROUTINE
-          if (NPEBPx /= 0) info = writeSDV(IPEBPSDV,pebpSDVavg)
-#endif
-#endif
-#ifdef ALTAY_SUBROUTINE
           ! Get the homogenized quantities:
           associate (callout => astate%simulCalls(astate%this)%output)
                 callout%stress_tensor= SHsam
@@ -557,18 +415,13 @@ module altaySimul
                 callout%effective_macro_strain_tot_end =                     &
                     MacroDefState%AccumvMeqStrain_ToEndOfInc
           end associate
-#endif
           !
           HGAM = HGAM / TOTGEW
           HGAMCALL = HGAMCALL + HGAM
-#ifdef ALTAY_SUBROUTINE
           ! We can choose not to update the internal state
           if (.not.astate%simulCalls(astate%this)%input%keep_state) then
                 HGAMTOT = HGAMTOT + HGAM
           endif
-#else
-          HGAMTOT = HGAMTOT + HGAM
-#endif
           if(NLIST.eq.1) then
           write (IMP,105) ISTP,SeqAvg,Mavg,MacroDefState%IncrvMeqStrain
           end if
