@@ -33,12 +33,23 @@
       integer DI1(5),DI(10),DI2(10)
 
       common /LAMEL/ TRFb(3,3,2),GMMAb(2), ENTA,NGR,NRL,ITFMAS,laml                                 ! NRL= number of relaxations, NGR= number of grains
+
+      real(dp) :: CC
+      integer :: M11
       common /IGLIJS/ CC(2,96), M11
+
+      real(dp) :: A8,BB8,RHO,B5
       common /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
+
+      real(dp) :: A1,UU
       common /extra/ A1(10,194),UU(10,10)
+
+      integer :: IOR,ISTP,NBLOC
       common /CEIGEN/ IOR,ISTP,NBLOC
-      common /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),           &
-       TLXX,TAURLP(8)
+
+      real(dp) :: SLIPLP,TLXX,TAURLP
+      integer:: NACTIV,INDACT,NLP,INDLP
+      common /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),TLXX,TAURLP(8)
 
       dimension ccc2(2,194)
       dimension C2(3,3),                                                 &

@@ -202,7 +202,7 @@ module altayTaylor
       use altaySliprate
       use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
 
-      implicit real(dp) (a-h,o-z)
+      implicit none
       type(DeformationRate),intent(in) :: MacroDefRate
       integer, intent(in) :: ISTP,IOR,NFILE
       real(dp), intent(in) :: TAU
@@ -229,6 +229,7 @@ module altayTaylor
       logical SWRLX
       common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
 
+      real(dp) :: fi1,PHI,fi2
       common /EULERA/ fi1,PHI,fi2
 !
 !     SHsam:    macroscopic stress in sample reference system
@@ -240,7 +241,7 @@ module altayTaylor
       real(dp), dimension(3,3) :: RCC,RCcryst,rhossaTot,TDC,RHOAcrys
       real(dp), dimension(96) :: VOLFR,SGNN,GAMdot
       integer :: info,i,j
-      real(dp) :: ddt,rndm,Mgrain,rotm,fi1,phi,fi2
+      real(dp) :: ddt,rndm,Mgrain,rotm,ratlon,x
       type(EulerAngles):: Euler
       SAVE
 

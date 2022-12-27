@@ -13,7 +13,7 @@ module altaySliprate
       use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
       use altayRCM
       use altayMacroKinematic
-      IMPLICIT real(dp) (A-H,O-Z)
+      IMPLICIT none
       type(DeformationRate),intent(in) :: MacroDefRate
 !     To find the slip rates assuming that
 !     - the stress, strain rate and the active slip systems are known,
@@ -21,16 +21,24 @@ module altaySliprate
 !     - (under the above resrtrictions) the sum of the squares of the slip
 !       rates must be minimal.
 !
+      integer, intent(in) :: M11,IDIMXX,IPR,IOR
+      real(dp) :: XX(IDIMXX), SGNN(IDIMXX)
+
+      real(dp) :: A1,BB8,RHO,B5
       COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
-      COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),           &
-       TLXX,TAURLP(8)
-      dimension SGNN(IDIMXX)
-      dimension SLPR(8),IND(8),XX(IDIMXX),ISTOR(0:8,48),SLSTOR(0:8,48)
-      data NSTOR/48/
+
+      real(dp) :: SLIPLP,TLXX,TAURLP
+      integer:: NACTIV,INDACT,NLP,INDLP
+      COMMON /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),TLXX,TAURLP(8)
+
+      integer :: IND(8),ISTOR(0:8,48)
+      real(dp) :: SLPR(8),SLSTOR(0:8,48),x,y,yy,sumsq
+      integer, parameter :: NSTOR=48
+      integer :: i,j,k,i1,i2,i3,N0,N1,N2,N3,NN,NOPL,INEG,IOPL
+
       do j=1,M11
          XX(j)=0.0
       enddo
-      ITR=0
       NLP=NACTIV
       NN=NACTIV
       NOPL=0
@@ -44,10 +52,10 @@ module altaySliprate
       enddo
       if (x.lt.TLXX) goto 6
 !     end of check
-      do 1 i=1,NN
-      IND(i)=INDACT(i)
-  1   continue
-  3   call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
+      do i=1,NN
+        IND(i)=INDACT(i)
+      enddo
+      call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
       if (ineg.eq.0) then
            call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
            RCM_GUARD
@@ -66,7 +74,6 @@ module altaySliprate
 !     First level
 !
        N1=N0-1
-       ITR=1
        if (N1.lt.5) goto 6
        NN=N1
        do I1=1,N0
@@ -83,7 +90,6 @@ module altaySliprate
 !     Level 2
 !
       N2=N1-1
-      ITR=2
       if (N2.lt.5) goto 2
       NN=N2
       do I1=2,N0
@@ -105,7 +111,6 @@ module altaySliprate
 !     Level 3
 !
       N3=N2-1
-      ITR=3
       if (N3.lt.5) goto 2
       NN=N3
       do I1=3,N0
@@ -189,7 +194,7 @@ module altaySliprate
  102  format (' NEG. SL. RATE DETECTED',2I5,d15.6)
  101  format (2i5,5x,d15.6)
       return
-  6   ITR=-1
+  6   continue
       NN=NLP
       do 11 i=1,NN
       IND(i)=INDLP(i)
@@ -239,43 +244,49 @@ module altaySliprate
 !     The  normalisation by DELTAT (now: MacroDefRate%vMeqStrainRate) of the september 2000 version has been
 !     removed here. Is now done in PANCAK2.
 
-      real(dp) :: A8,BB8,RHO,B5
-      COMMON /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
-      real(dp) :: sgnn(IDIMXX)
       integer, intent(in) :: IND(8), NN,IDIMXX
       integer, intent(out) :: ineg
       real(dp), intent(out) :: SLPR(8),sumsq
+
+
+      real(dp) :: A8,BB8,RHO,B5
+      COMMON /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
+
+      real(dp) :: sgnn(IDIMXX)
       real(dp) :: A(13,13),B(13),RES,x,Y
       real(dp) :: AA(13,13),BA(13),VAL(13),XV(13),YV(13)
       real(dp), parameter :: TOL=1.0e-10_dp
       integer :: i,j,N1,N2
 
-      if (NN.gt.5) goto 2
-      N1=5
-      N2=NN
-      do i=1,N2
-         do j=1,5
-            A(j,i)=sgnn(IND(i))*A8(j,IND(i))
-         enddo
-      enddo
-      B(1:5)=BB8(1:5)
-      goto 1
-  2   N1=NN+5
-      N2=N1
-!     Set up system of equations
-      A(1:N1,1:N1)=0.0_dp
-      do i=1,NN
-         A(i,i)=2.0_dp
-         B(i)=0.0
-         do j=1,5
-            x=sgnn(IND(i))*A8(j,IND(i))
-            A(i,NN+j)=-x
-            A(NN+j,i)=x
-         enddo
-      enddo
-      B(1+NN:5+NN)=BB8(1:5)
-!     Solve by least-squares method followed by singular value decomposition
-   1  call Kleinkwa(N1,N2,13,13,A,B,BA,RES)
+      if (.not. (NN.gt.5)) then
+          N1=5
+          N2=NN
+          do i=1,N2
+             do j=1,5
+                A(j,i)=sgnn(IND(i))*A8(j,IND(i))
+             enddo
+          enddo
+          B(1:5)=BB8(1:5)
+      else
+          N1=NN+5
+          N2=N1
+          ! Set up system of equations
+          A(1:N1,1:N1)=0.0_dp
+          do i=1,NN
+             A(i,i)=2.0_dp
+             B(i)=0.0
+             do j=1,5
+                x=sgnn(IND(i))*A8(j,IND(i))
+                A(i,NN+j)=-x
+                A(NN+j,i)=x
+             enddo
+          enddo
+          B(1+NN:5+NN)=BB8(1:5)
+      endif
+
+      ! Solve by least-squares method followed by singular value decomposition
+      call Kleinkwa(N1,N2,13,13,A,B,BA,RES)
+
       SLPR(1:NN)=BA(1:NN)
       sumsq=0.0_dp
       x=0.0d0
@@ -293,6 +304,7 @@ module altaySliprate
         call vef_trace(MODULE_NAME,'MINSQU', 'RES too large')
       end if
       end subroutine
+
 
       subroutine STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
       use altayIOConfig

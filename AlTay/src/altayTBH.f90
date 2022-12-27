@@ -44,7 +44,7 @@ module altayTBH
       use altayRCM
       use altayIOConfig,IIPR=>IPR!Rename global IPR switch to avoid conflict
 
-      implicit real(dp) (a-h,o-z)
+      implicit none
       integer, intent(in) :: IPR,NDIM,M,N,IACT(NDIM)
       real(dp), intent(in) :: A(NDIM,M),D(NDIM),BINV(NDIM,N),TauC(2,M)
       logical :: bas(M),valid(M)
@@ -56,8 +56,8 @@ module altayTBH
       integer, parameter :: JPR=2
       real(dp), parameter :: TOL=1.0e-10_dp
 
-      integer :: i,j,k,iter,jn
-      real(dp) :: Fakm,x,dt,y,z1,z2,zr,gmin
+      integer :: i,j,k,iter,jn,in
+      real(dp) :: Fakm,x,dt,y,z1,z2,zr,gmin,xx
       if (N.gt.NDIM) then
         RCM_RAISE(1,'TBH','Bad input: N>NDIM',RCM_RTN)
       endif
