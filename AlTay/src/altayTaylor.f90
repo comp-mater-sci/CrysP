@@ -25,33 +25,48 @@ module altayTaylor
       use altayIOConfig
       use altayPancake
 
-      implicit real(dp) (a-h,o-z)
+      implicit none
       ! optional argument - required for IRICHT=2 or 3:
       type(DeformationRate), intent(in),optional :: MacroDefRate
       ! optional argument - required for IRICHT=3:
       type(DeformationState),intent(in),optional :: MacroDefState
-      common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,                       &
-      ITW,GEWF
+      integer, intent(in) :: IRICHT,KOST
+
+      ! COMMON BLOCKS
+      real(dp) :: TRF,C1,C2,GEWF
+      integer :: NO,ITW
+      common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
+
+      real(dp) :: CC
+      integer :: M11
       common /IGLIJS/ CC(2,96), M11     ! M11...total number of systems in slip system file (glide+twin),
+
+      real(dp) :: A1,BB8,RHO,B5
       common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
-      common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
-       SWRLX(3)
-      real(dp), dimension(3,3):: RHOScrys(3,3)
-      real(dp), dimension(3,3):: RHOAcrys(3,3)
-      character(len=72) :: TITglij                                          ! Name of slip system set
-!
-!     Extra arrays necessary for linear programming of 2 grains simultaneously
-!
-      common /extra/ A2(10,194),UU(10,10)
-      dimension XXLP(194)
+
+      real(dp) :: YY,SHsam,Ssam,RHOSsa
       logical SWRLX
-      integer R
-      data MMAX/96/ ! dimension of A1 and other arrays
+      common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
+
+      real(dp) :: A2,UU
+      common /extra/ A2(10,194),UU(10,10)
+
+
+      real(dp), dimension(3,3):: RHOScrys, RHOAcrys
+      character(len=72) :: TITglij                                          ! Name of slip system set
+
+      real(dp) :: XXLP(194)
+      integer ::  R
+      integer, parameter :: MMAX=96 ! dimension of A1 and other arrays
 !
 !     DVM = von Mises equivalent strain rate
 !
       ! Local stress in crystal reference system:
       real(dp), dimension(3,3):: Scrys=0.0d0
+
+
+      real(dp) :: x,y,x8
+      integer :: i,j,l,I1
       save
 
       select case(IRICHT)
@@ -70,7 +85,7 @@ module altayTaylor
       if(NLIST.eq.1) write (IMP,221) TITglij
   221 format (/,' Slip system set:',A,/)
       !
-      read (R,210) I,NGL,NTW,DI1,X,Y        ! I is implicitly typed integer
+      read (R,210) I,NGL,NTW,DI1,X,Y
  210  format (8I4,4X,2F10.0)
       if(NLIST.eq.1) write (IMP,211) I,NGL,NTW,DI1
  211  format (1X,I4,10X,2I5,10X,5I5)
@@ -91,7 +106,7 @@ module altayTaylor
  213  format (I3,' A ',5F10.7,' B ',3F10.7)
       !
       do I=1,5
-          read (R,214) J,(B(I,L),L=1,5) ! J implicitly typed as integer
+          read (R,214) J,(B(I,L),L=1,5)
           if(NLIST.eq.1) write (IMP,215) J,(B(I,L),L=1,5)
       end do
  214  format (I4,5D23.16)
