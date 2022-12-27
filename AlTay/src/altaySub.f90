@@ -12,8 +12,19 @@
 module altaySub
     use altayHardLaw_DSH
     use altayDSHState
+    use altayIOConfig
+    use altaySimul
+    use altayRCM
+    use altayMesostructure
+    use altayTexFormats
+    use altayConfig
+    use altayHard
+    use altayDynfil
+    use altayMiscutils
+    use altayMacroKinematic
+    use altayCurAccess
 
-      implicit none
+    implicit none
       !> \name Named constants for error codes in altaySub
       !>@{
       integer,parameter :: altaySub_OK = 0
@@ -31,13 +42,6 @@ contains
       !> This subroutine must be called prior to any call to other
       !> module subroutines.
       subroutine initAltay(cnf,info,errmsg)
-      use altayConfig, only: altayConfigData,fname_len,acnf
-      use altaySimul
-      use altayRCM
-      use altayIOConfig
-      use altayTexFormats
-      use altayHard,only: hard_BP,hard_PEBPscrew,hard_PEBPloop,InitModuleAltayHard
-      use altayMesostructure
       !
       type(altayConfigData),intent(in)    :: cnf      !< configuration data
       integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
@@ -136,11 +140,6 @@ contains
 
       !> Finalizes the module and releases the resources.
       subroutine finalizeAltay(info)
-      use altayConfig, only: altayConfigData,fname_len,acnf, astate
-      use altayIOConfig
-      use altayMesostructure, only: MICROSTR_finalize
-      use altayDynfil
-      use altayRCM
       integer,intent(out)                 :: info     !< exit code (0 on success)
       !
             ! Close all units.
@@ -172,9 +171,6 @@ contains
       end subroutine
 
       subroutine openOutputFiles(cnf, info, errmsg)
-      use altayConfig, only: altayConfigData,fname_len
-      use altayIOConfig
-      use altayMiscutils
       type(altayConfigData),intent(in)    :: cnf      !< configuration data
       integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
       character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
@@ -248,7 +244,6 @@ contains
       !>
       !>
       subroutine initStepData(nsteps,steps,info)
-      use altayConfig, only: altayStateData
       integer,intent(in)                  :: nsteps   !< Number of steps to be created
       type(altayStateData),intent(out)    :: steps    !< Definiton of the steps.
       integer,intent(out)                 :: info     !< Exit code: 0 on success
@@ -268,11 +263,6 @@ contains
 
       !> Run the AlTay for the set of steps
       subroutine runSteps(steps,info)
-      use altayConfig, only: altayStateData,astate
-      use altaySimul
-      use altayRCM
-      use altayIOConfig
-      use altayMacroKinematic
       type(altayStateData),intent(inout)        :: steps !< Definiton of the steps.
       integer,intent(out)                       :: info  !< Exit code: 0 on success.
       integer :: NFILE0
@@ -328,11 +318,6 @@ contains
       !> Appropriate control fields in acnf%output_config are checked to decide if the data have to
       !> be actually written to corresponding IO units.
       subroutine outputCurrentState(info)
-      use altayIOConfig
-      use altayCurAccess
-      use altayConfig, only: acnf,astate
-      use altayHard, only: hard_BP,hard_PEBPscrew,hard_PEBPloop
-      use altayMiscutils
       integer,intent(out)           :: info
       !
             info = altaySub_OK
