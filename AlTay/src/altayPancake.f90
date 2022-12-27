@@ -32,7 +32,7 @@
       logical SWRLX(3),bas(194),VALID(194)
       integer DI1(5),DI(10),DI2(10)
 
-      common /LAMEL/ TRFb(3,3,2),GMMAb(2), ENTA,NGR,NRL,ITFMAS,laml                                 ! NRL= number of relaxations, NGR= number of grains
+      common /LAMEL/ TRFb(3,3,2),GMMAb(2), ENTA,NGR,NRL,laml                                 ! NRL= number of relaxations, NGR= number of grains
 
       real(dp) :: CC
       integer :: M11
@@ -244,19 +244,12 @@
             STRSS=UBUF
             goto 89
       endif
-      if(ITFMAS.eq.1) then
-        CCC(1,M2+1)=GETAL
-        CCC(2,M2+1)=GETAL
-        CCC(1,M2+2)=0.0
-        CCC(2,M2+2)=0.0
-      else  !ALAMEL running
-        do IRL=1,NRL
-            if (.not.swrlx(IRL)) exit
-            j=M2+IRL
-            CCC(1,j)=TAURL(IRL)
-            CCC(2,j)=TAURL(IRL)
-        end do
-      endif
+      do IRL=1,NRL
+          if (.not.swrlx(IRL)) exit
+          j=M2+IRL
+          CCC(1,j)=TAURL(IRL)
+          CCC(2,j)=TAURL(IRL)
+      end do
       if (IPR.EQ.2) then
           if(NLIST.eq.1) write(IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
       end if
@@ -295,33 +288,6 @@
  222     format (' Pancak2 222 - Problem with TBH',/,                    &
          ' IPR IOR, ISTP, NBLOC=',4I5)
           RCM_RAISE(1,'Pancak2','Problem with TBH',RCM_RTN)
-      endif
-!   loop
-!
-      if(ITFMAS.eq.1) then
-      iter=0
-  999 iter=iter+1
-      call Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,STRSS,M11,ca1,ca2)
-      ccc=ccc2 ! use the Fake CRSS, they are scaled by SDD model
-!
-      CCC(1,M2+1)=dabs(ENTA*Cofcos*(ca1+ca2)/2.D0)
-      CCC(2,M2+1)=dabs(ENTA*Cofcos*(ca1+ca2)/2.D0)
-!  Third call of TBH
-      call TBH(IPR,N,N,M12,A1,BB,                                        &
-       CCC,UU,UU2,DI,DI2,Dacc,XX,STRSS,FakM,                             &
-       Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
-! output for current iteration must be the input for the next iteration
-      UU=UU2
-      DI=DI2
-!
-      if(iter.le.0) then
-      goto 999
-      else
-      endif
-      UU=UU2
-      DI=DI2
-      else
-      goto 204
       endif
 !     GAMR will contain the relaxed shears:
  204  if (NRL.gt.0) then

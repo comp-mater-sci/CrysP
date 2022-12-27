@@ -61,7 +61,7 @@ module altaySimul
       logical SWRLX
       common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
 
-      common /LAMEL/ TRFb(3,3,2),GMMAb(2),ENTA,NGR,NRL,ITFMAS, laml                                 ! NRL= number of relaxations, NGR= number of grains
+      common /LAMEL/ TRFb(3,3,2),GMMAb(2),ENTA,NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
 
       integer :: IOR,ISTP,NBLOC
       common /CEIGEN/ IOR,ISTP,NBLOC
@@ -132,13 +132,6 @@ module altaySimul
       NPEBP  = acnf%output_config%NPEBP   ! control "BEP"
       NMSS   = acnf%output_config%NMSS    ! control "MSS"
       HGAMTOT=0.D0
-      ! NGR == 3: enable MAS-AL
-      if(NGR.eq.3) then
-            ITFMAS=1
-            NGR=2
-      else
-            ITFMAS=0
-      endif
       !
       if (NGR.lt.1.or.NGR.gt.2) then
             RCM_RAISE(1,'SIMUL','Incorrect value of NGR',RCM_RTN)
@@ -175,12 +168,6 @@ module altaySimul
   30  continue
       ! Per-call selection of the model: NGR & NRL must be set
       NGR = acnf%simul_init%NGR
-      if(NGR.eq.3) then
-            ITFMAS=1
-            NGR=2
-      else
-            ITFMAS=0
-      endif
       ! Number of relaxations: 0 for Taylor and 2 for ALAMEL:
       NRL=(NGR-1)*2
   36  NFILE=NFILE0*NFILE1
