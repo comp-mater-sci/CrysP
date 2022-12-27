@@ -376,14 +376,10 @@
       if((abs(Cofsin) < epsilon(0.D0)) .and. (abs(Cofcos) < epsilon(0.D0))) then
           ccc2=ccc
       elseif(abs(Cofcos).lt.0.000000001) then
-          write(*,*) 'Cofcos=0. Somewhere is worong in the code'
           call terminate(stopcode_runtimeerror)
       else
           zeta=sum(UBUF(1:5)*BB(1:5)/norm2(BB(1:5)))/sum(UBUF(6:10)*BB(6:10)/norm2(BB(6:10)))
-          if(zeta<0.0_dp) then
-              write(*,*) 'Zeta is negative, somewhere is wrong'
-              call terminate(stopcode_runtimeerror)
-          endif
+          if(zeta<0.0_dp) call terminate(stopcode_runtimeerror)
           ca1=Cofcos*Cofcos*sqrt(1.0_dp/zeta)+Cofsin*Cofsin
           ca2=Cofcos*Cofcos*sqrt(zeta)+Cofsin*Cofsin
           CCC2(1:2,1:M11)      =ca1*CCC(1:2,1:M11)
