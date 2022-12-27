@@ -61,20 +61,22 @@ module altaySimul
       logical SWRLX
       common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
 
+      real(dp) :: TRFb,GMMAb,ENTA
+      integer :: NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
       common /LAMEL/ TRFb(3,3,2),GMMAb(2),ENTA,NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
 
       integer :: IOR,ISTP,NBLOC
       common /CEIGEN/ IOR,ISTP,NBLOC
 
-      common /PE/ Fmicro !Temporary!!!
+      real(dp) :: Fmicro
+      common /PE/ Fmicro(3,3) !Temporary!!!
 
       real(dp) :: fi10b(2),phi0b(2),fi20b(2),gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2), &
                   CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2)
-      dimension GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
+      real(dp) :: GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
            GEULR(3),TG(3,3),                               &
            CIJ(3,3),STOT(3,3),                             &
-           RHOST(3,3),RHOSm(3,3),FMicro(3,3)
-      dimension FS(3,3)
+           RHOST(3,3),RHOSm(3,3),FS(3,3)
       character(len=40) :: TITEL
       integer :: NPOINT
       integer :: info
@@ -95,9 +97,8 @@ module altaySimul
       real(dp) :: WorkRate ! Rate of plastic work per unit
                                    ! volume in the crystal
       real(dp) :: Wtot ! Total plastic work per unit volume in crystal
-#ifdef PEBP_ENABLED
+      integer :: KOST, NFILE1, NFILTW
       type(StateDerivedVars) :: pebpSDV, pebpSDVavg
-#endif
       integer :: seedsize
       integer, allocatable :: seed(:)
 
@@ -441,4 +442,4 @@ module altaySimul
       !
       END SUBROUTINE
 
-      end module
+end module

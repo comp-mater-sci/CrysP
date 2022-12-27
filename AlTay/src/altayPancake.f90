@@ -6,7 +6,6 @@
 
       contains
 
-! MODIFICATIONS AUG 2010
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
@@ -26,12 +25,17 @@
 
       type(DeformationRate),intent(in) :: MacroDefRate
       type(DeformationState),intent(in):: MacroDefState
+      integer, intent(in) :: KOST,NGL,IPR
+      logical, intent(in) :: SWRLX(3)
+
       type(CRSS) :: CRSSmatrix
       real(dp),dimension(3,3),intent(out):: S33, RHOS33, RHOA33
       real(dp),dimension(5):: RHOS, RHOA
-      logical SWRLX(3),bas(194),VALID(194)
+      logical :: bas(194),VALID(194)
       integer DI1(5),DI(10),DI2(10)
 
+      real(dp) :: TRFb,GMMAb,ENTA
+      integer :: NGR,NRL,laml
       common /LAMEL/ TRFb(3,3,2),GMMAb(2), ENTA,NGR,NRL,laml                                 ! NRL= number of relaxations, NGR= number of grains
 
       real(dp) :: CC
@@ -51,26 +55,27 @@
       integer:: NACTIV,INDACT,NLP,INDLP
       common /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),TLXX,TAURLP(8)
 
-      dimension ccc2(2,194)
-      dimension C2(3,3),                                                 &
+
+      real(dp) :: C2(3,3), ccc2(2,194),                                                 &
        TDCb(3,3,2),TRCb(3,3,2),                                          &
-       B(5,5),relax(3,3,3),DACC(10),                                     &
+       B(5,5),DACC(10),                                     &
        rls(3,3,3,2),rla(3,3),rlm(3,3,3),C3(3,3),TRP(10),APRIME(10),      &
-       B3(10,3),PLUMIN(2,3),CUst(10)
+       B3(10,3),CUst(10)
 !     first index op PLUMIN = nr. of grain
 !     second index = nr. of relaxation
 !     rlm is unit relaxation tensor in macroscopic frame
 !     rls and rla in crystal frame (symmetric and anti-sym. part)
-      dimension spanv(5),XX(194),STRSS(10),BB(10)
-      dimension CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194)
-      dimension B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10)
-      dimension GAMR(2),Tprinc(3,3),TAURL(2)
+      real(dp) :: spanv(5),XX(194),STRSS(10),BB(10), &
+               CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
+               B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10), &
+               GAMR(2),Tprinc(3,3),TAURL(2)
 
       data B3/30*0.0D0/
       real(dp), parameter :: SQR2=sqrt(0.5_dp),TOLXX=5.0e-6_dp
 !     Definition of the two relaxations, representing a
 !     13-simple shear and a 23-simple shear, respectively:
-      data relax /0.0D0, 0.0D0, 0.0D0,                                   &
+      real(dp), dimension(3,3,3) :: relax = reshape([ &
+                  0.0D0, 0.0D0, 0.0D0,                                   &
                   0.0D0, 0.0D0, 0.0D0,                                   &
                   1.0D0, 0.0D0, 0.0D0,                                   &
                   0.0D0, 0.0D0, 0.0D0,                                   &
@@ -78,15 +83,16 @@
                   0.0D0, 1.0D0, 0.0D0,                                   &
                   0.0D0, 0.0D0, 0.0D0,                                   &
                   0.0D0, 0.0D0, 0.0D0,                                   &
-                  0.0D0, 0.0D0, 0.0D0/
-      data PLUMIN/1.0D0,-1.0D0,                                          &
+                  0.0D0, 0.0D0, 0.0D0],shape(relax))
+      real(dp), dimension(2,3) ::  PLUMIN = reshape([&
                   1.0D0,-1.0D0,                                          &
-                  1.0D0, 1.0D0/
+                  1.0D0,-1.0D0,                                          &
+                  1.0D0, 1.0D0], shape(PLUMIN))
       integer, parameter :: NDIM=10
 !     NDIM=dimension A
       data TAURL/2*0.0d0/
       real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp
-      integer :: info
+      integer :: info,M12,IGrElm
       SAVE
 
       if (laml.ne.1.and.laml.ne.2) then
@@ -107,23 +113,15 @@
       if (IGrElm.gt.NGrElm) IGrElm=1
       call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,   &
                     Cofcos,Cofsin)
-      do 33 i=M2+1,M12
-      do 33 jsgn=1,2
-  33  CCC(jsgn,i)=0.0
-  32  do i=1,NU
-          do j=1,NU
-              UU(j,i)=0.0
-          end do
-      end do
-      do I=1,5
-          DI(I)=DI1(I)
-          DI(I+5)=DI1(I)+M11
-      end do
-      do 1 IL=1,NGR
+      CCC(1:2,M2+1:M12)=0.0
+      UU(1:NU,1:NU) = 0.0_dp
+      DI(1:5) = DI1(1:5)
+      DI(6:10) = DI1(1:5)+M11
+      do IL=1,NGR
       L1=5*(IL-1)
 
       C2 = rotateSRTensorFrom(MacroDefRate%VelGrad,TRFb(:,:,IL))
-      if (NRL.eq.0) goto 87
+      if (.not. NRL.eq.0) then
       do IRL=1,NRL
 !         Transform relaxation from grain reference frame to macroscopic frame
           RLM(:,:,IRL) = rotateSRTensorTo(RELAX(:,:,IRL),Tprinc)
@@ -147,25 +145,19 @@
               A1(i1,j)=x
           end do
       end do
-  87  continue
-      do I=1,3
-          do 81 J=1,3
-          TDCb(I,J,IL)=(C2(I,J)+C2(J,I))*0.5D0
-  81      TRCb(I,J,IL)=(C2(I,J)-C2(J,I))*0.5D0
-      end do
+      endif
+      TDCb(1:3,1:3,IL)=(C2(1:3,1:3)+C2(1:3,1:3))*0.5D0
+      TRCb(1:3,1:3,IL)=(C2(1:3,1:3)-C2(1:3,1:3))*0.5D0
       B5= Vector5D(TDCb(1:3,1:3,IL)) ! sym.(3,3) -> (5)
       do i=1,5
-          j=i+L1
-          BB(j)=B5(i)
+          BB(i+L1)=B5(i)
       end do
 !
 !     Calculation of time increment by dividing von Mises equivalent
 !     strain by von Mises equivalent strain rate
 !
-      do j=1,5
-          B5(j)=B5(j)/MacroDefRate%vMeqStrainRate
-          B8(j,IL)=B5(j)
-      end do
+      B5(1:5)=B5(1:5)/MacroDefRate%vMeqStrainRate
+      B8(1:5,IL)=B5(1:5)
       K1=M11*(IL-1)
       !
       ! Retrieve the CRSSmatrix
@@ -186,7 +178,7 @@
               UU(I+L1,J+L1)=B(I,J)
           end do
       end do
-   1  continue
+      enddo
       do I=1,N
 !         Conversion of strain to normalized strain rate
           BB(I)=BB(I)/MacroDefRate%vMeqStrainRate
@@ -363,29 +355,27 @@
 !       of the full constraintssolution are used.)
       NACTIV=0
       do 305 i=1,M11
-      j=i+jj
-!     If one grain does not deform, then DTAU1 comes from the full
-!     constraints solution.
-      if (ABS(DTAU1(j)).gt.TOL) goto 305
-      NACTIV=NACTIV+1
-      if (NACTIV.le.8) THEN
-                           INDACT(NACTIV)=i
-                        ELSE
-      RCM_RAISE(1,'Pancak2','Too many active slip systems',RCM_RTN)
-                        endif
- 306  format (' PANCAK2 - 306 - TOO MANY ACTIVE SLIP SYSTEMS')
+          j=i+jj
+          ! If one grain does not deform, then DTAU1 comes from the full
+          ! constraints solution.
+          if (ABS(DTAU1(j)).gt.TOL) goto 305
+          NACTIV=NACTIV+1
+          if (NACTIV.le.8) THEN
+              INDACT(NACTIV)=i
+          ELSE
+              RCM_RAISE(1,'Pancak2','Too many active slip systems',RCM_RTN)
+          endif
  305  continue
       if (NACTIV.eq.0) then
-      RCM_RAISE(1,'Pancak2','No active slip systems found',RCM_RTN)
-                       endif
- 307  format (' PANCAK2 - 307 - No active slip systems found')
-      do 310 NLP=1,NACTIV
-      j=INDACT(NLP)
-      i1=j
-                      INDLP(NLP)=i1
-                      SLIPLP(NLP)=XX(j+jj)
-                      TAURLP(NLP)=TAUR1(j+jj)
- 310  continue
+          RCM_RAISE(1,'Pancak2','No active slip systems found',RCM_RTN)
+      endif
+      do NLP=1,NACTIV
+          j=INDACT(NLP)
+          i1=j
+          INDLP(NLP)=i1
+          SLIPLP(NLP)=XX(j+jj)
+          TAURLP(NLP)=TAUR1(j+jj)
+      enddo
       END SUBROUTINE
 
 
@@ -396,12 +386,9 @@
       real(dp), intent(in) :: ccc(2,194)
       integer, intent(in) :: M11
       real(dp), intent(out) :: ccc2(2,194)
-      real(dp), intent(out) :: ca1
-      real(dp), intent(out) :: ca2
-      real(dp), intent(in) :: Cofcos
-      real(dp), intent(in) :: Cofsin
-      real(dp), intent(in) :: BB(10)
-      real(dp), intent(in) :: UBUF(10)
+      real(dp), intent(out) :: ca1,ca2
+      real(dp), intent(in) :: Cofcos,Cofsin
+      real(dp), intent(in) :: BB(10),UBUF(10)
 
       real(dp) :: zeta
 !
