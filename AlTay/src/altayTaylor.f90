@@ -122,8 +122,7 @@ module altayTaylor
       A2=0.0
       do j=1,M11
           do i=1,5
-              x8=A1(i,j)
-              A2(i,j)=x8
+              A2(i,j)=A1(i,j)
               A2(i+5,j+M11)=x8
       end do; end do
 
@@ -139,15 +138,11 @@ module altayTaylor
                               (MacroDefRate%Spin(I,J),J=1,3)
       end do
  203  format (' TAYLOR - VELOCITY GRADIENT WHICH WILL BE USED FOR THE SIMULATION', &
-              //T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,     &
-              'ANTISYMMETRICAL PART',/)
+              //T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,'ANTISYMMETRICAL PART',/)
  204  format (1X,3(3F10.5,10X))
       if (MacroDefRate%NormStrainRate.lt.1.0D-10) then
          RCM_RAISE(1,'TAYLOR','Symmetric part of the strain step is too small',RCM_RTN)
       endif
- 205  format (' Taylor - symmetric part of strain step is too small'     &
-       ,d20.8)
-
       case(3)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
@@ -187,8 +182,6 @@ module altayTaylor
       end if
 
       RCM_GUARD
-      case default
-          error stop 'MD: this should not happen'
       end select
 
       end subroutine
