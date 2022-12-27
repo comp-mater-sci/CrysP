@@ -1,24 +1,18 @@
 !> Container for miscellaneous utility routines.
 module altayMiscutils
-use altay_definitions, only: dp
-implicit none
+    use altay_definitions
+    implicit none
       !>@{ \name Exit codes that are returned to the OS on various stop contitions
-
-      ! This piece of code has been ported from fngRuntime
 
       !> OK, succsssful termination
       integer,parameter :: stopcode_OK = 0
-
       !> Error, input parameters are wrong
       integer,parameter :: stopcode_inputerror = 1
-
       !> Error, an IO operation has failed.
       integer,parameter :: stopcode_ioerror = 2
-
       !> Run-time error condition occured.
       integer,parameter :: stopcode_runtimeerror = 10
       !>@}
-
 
       real(dp),dimension(3,3),parameter :: unitMatrix = reshape( &
            [ 1.D0, 0.D0, 0.D0,     &

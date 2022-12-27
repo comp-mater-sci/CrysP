@@ -7,12 +7,10 @@ module altayAlgorithms
     use altay_log
 
     implicit none
-
+    private 
     real(dp), parameter     :: SQRT_P5 = sqrt(0.5d0)
-    real(dp), parameter     :: RESOLUTION = 0.5e-5
     character(*), parameter :: MODULE_NAME = "altayAlgorithms"
 
-    private
     public  ::  updatC,             &
                 symMatrix,          &
                 vector5D,           &
@@ -41,6 +39,7 @@ contains
         real(dp), dimension(3,3)            ::  sym
         real(dp), parameter                 ::  C1 = (sqrt(3.0d0) + 3.0d0) / 6.0d0, &
                                                 C2 = (3.0d0 - sqrt(3.0d0)) / 6.0d0
+
 
         sym(2,2) =  C1 * vec(1) - C2 * vec(2)
         sym(3,3) = -C2 * vec(1) + C1 * vec(2)
@@ -145,6 +144,7 @@ contains
     subroutine normaliz(prdir)
         real(dp), dimension(3), intent(inout)   :: prdir
         real(dp)                                :: x
+        real(dp), parameter     :: RESOLUTION = 0.5e-5
 
         x = norm2(prdir)
         if (x > RESOLUTION) then

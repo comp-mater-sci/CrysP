@@ -1,6 +1,6 @@
 #include "altayRCM.fpp"
       module altayPancake
-    use altay_definitions, only: dp
+    use altay_definitions
       use altayMiscutils, only: terminate, stopcode_runtimeerror
       use criMathUtils
 
@@ -111,8 +111,7 @@
 !
       IGrElm=IGrElm+1
       if (IGrElm.gt.NGrElm) IGrElm=1
-      call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,   &
-                    Cofcos,Cofsin)
+      call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,Cofcos,Cofsin)
       CCC(1:2,M2+1:M12)=0.0
       UU(1:NU,1:NU) = 0.0_dp
       DI(1:5) = DI1(1:5)
@@ -193,22 +192,14 @@
 !     Full constraints calculation
 !
 !     UITVOEREN VAN DE SIMPLEX-SUBROUTINE
-  88  if (IPR.EQ.2) then
-          if (NLIST.eq.1) write (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
-      end if
+  88  if (IPR.EQ.2 .and. NLIST.eq.1) write (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
  218  format(/' COST FUNCTION',/,(2x,12F10.4))
-      if (IPR.EQ.2) then
-          if (NLIST.eq.1) write (IMP,219) (BB(I),I=1,N)
-      end if
+      if (IPR.EQ.2 .and. NLIST.eq.1) write (IMP,219) (BB(I),I=1,N)
  219  format (' right hand side',/,(2x,10F10.4),/)
 !     First call of Simplex (full constraints)
-      if (IPR.eq.2) then
-          if (NLIST.eq.1) write (IMP,400) IOR,ISTP,NBLOC
-      end if
+      if (IPR.eq.2 .and. NLIST.eq.1) write (IMP,400) IOR,ISTP,NBLOC
  400  format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
-      call TBH(IPR,NDIM,N,M2,A1,BB,                                      &
-       CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,                              &
-       Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
+      call TBH(IPR,NDIM,N,M2,A1,BB,CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
 ! CCC (input): critical resolved shear stresses (Tauc)
 ! UU (input): initial inverse of "basis" = columns of A1
 !      corresponding to thoses slip systems which are active
@@ -273,9 +264,7 @@
 
 
       if (IPR.ge.4) then
-         if(NLIST.eq.1) then
-         write (IMP,222) IPR,IOR,ISTP,NBLOC
-         end if
+         if(NLIST.eq.1) write (IMP,222) IPR,IOR,ISTP,NBLOC
          write (*,222) IPR,IOR,ISTP,NBLOC
  222     format (' Pancak2 222 - Problem with TBH',/,                    &
          ' IPR IOR, ISTP, NBLOC=',4I5)
@@ -315,9 +304,8 @@
           enddo
       end do
       ii=5*(laml-1)
-      do 201 i=1,5
-!     If one grain does not deform, note that stress UBUF has come
-!      from the fullconstraints solution.
+      do i=1,5
+      ! If one grain does not deform, note that stress UBUF has come from the fullconstraints solution.
       spanv(i)=UBUF(i+ii)
       B5(i)=B8(i,laml)
       x8=0.0
@@ -331,7 +319,7 @@
       BB8(i)=B8(i,laml)-x8
       RHOS(i)=-x8
       RHOA(i)=-y8
- 201  continue
+      enddo
       S33=    SymMatrix(spanv) ! (5) -> sym.(3,3)
       RHOS33= SymMatrix(RHOS)  ! (5) -> sym.(3,3)
       !Conversion of RHOA to dim(3,3)
@@ -351,6 +339,7 @@
         write (IMP,777) WR
       end if
   777 format (' spanv . BB          :',d11.4)
+!     note that if one of the grains does
 !      not deform at all, the stress and the active slip systems
 !       of the full constraintssolution are used.)
       NACTIV=0
@@ -380,8 +369,8 @@
 
 
       subroutine Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,UBUF,M11,ca1,ca2)
-!  BB(10) is direction of the relaxation-1
-!  UBUF(10) is the BISHOP-HILL stress from TBH routine, in crystal frame
+      ! BB is direction of the relaxation-1
+      ! UBUF is the BISHOP-HILL stress from TBH routine, in crystal frame
       implicit none
       real(dp), intent(in) :: ccc(2,194)
       integer, intent(in) :: M11
@@ -410,4 +399,4 @@
       endif
       end subroutine
 
-      end module
+end module

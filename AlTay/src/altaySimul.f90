@@ -98,11 +98,9 @@ module altaySimul
       real(dp) :: WorkRate ! Rate of plastic work per unit
                                    ! volume in the crystal
       real(dp) :: Wtot ! Total plastic work per unit volume in crystal
-      integer :: KOST, NFILE1, NFILTW
-      type(StateDerivedVars) :: pebpSDV, pebpSDVavg
-      integer :: seedsize
+      integer :: KOST, NFILE1, NFILTW,seedsize
       integer, allocatable :: seed(:)
-
+      type(StateDerivedVars) :: pebpSDV, pebpSDVavg
       real(dp), parameter :: convf=0.5729577951308232e+02_dp
       data FS/9*1.0D0/
       save
@@ -197,33 +195,25 @@ module altaySimul
 #ifndef NO_STDOUT
           write (*,96) ISTP,GAXES
 #endif
-          if(NLIST.eq.1) then
-              write (IMP,96) ISTP,GAXES
-          end if
+          if(NLIST.eq.1) write (IMP,96) ISTP,GAXES
       96  format(' Step nr.',i5,5X,3f12.5)
-          if (IW.gt.1) goto 70
-          if(NLIST.eq.1) then
-              write (IMP,3456) MacroDefRate%VelGrad
-          end if
- 3456     format ('DG=',3(T10,3d12.3,/))
-!
-!     Get the 5x5 transformation matrix MACRO to morfol. GRAIN AXES
-!
-          if(NLIST.eq.1) then
-              write (IMP,3458) TG
-          end if
-
- 3458     format (' TG=',3(T10,3d12.3,/))
-  70      if (nfile.eq.0.or.ISTP.gt.1) goto 44
-          if (NLIST.EQ.1) write (IMP,112) ISTP
- 112      format (//' DEFORMATION STEP ',I5,//)
-          if (NRES.gt.0) write (IMP2,404) nrstep+1,NPOINT
- 404      format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'  &
-           ,T7,'EquivStress',T23,'WorkRate',T37,'tau_ref',T56,'M',T64,       &
-           'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS' &
-           ,/,1x,278('*'))
-          !
-  44      continue
+          if (.not.(IW.gt.1)) then
+              if(NLIST.eq.1) write (IMP,3456) MacroDefRate%VelGrad
+ 3456         format ('DG=',3(T10,3d12.3,/))
+              ! Get the 5x5 transformation matrix MACRO to morfol. GRAIN AXES
+              if(NLIST.eq.1) write (IMP,3458) TG
+ 3458         format (' TG=',3(T10,3d12.3,/))
+          endif
+          if (.not. (nfile.eq.0.or.ISTP.gt.1)) then
+              if (NLIST.EQ.1) write (IMP,112) ISTP
+ 112          format (//' DEFORMATION STEP ',I5,//)
+              if (NRES.gt.0) write (IMP2,404) nrstep+1,NPOINT
+ 404          format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'  &
+               ,T7,'EquivStress',T23,'WorkRate',T37,'tau_ref',T56,'M',T64,       &
+               'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS' &
+               ,/,1x,278('*'))
+              !
+          endif
           if (NLIST.eq.1) then
               do i=1,3
                  write (IMP,407) (MacroDefState%TotalDefGrad(j,i),j=1,3)

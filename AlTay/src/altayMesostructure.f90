@@ -1,15 +1,17 @@
 !> Microstructure representation in AlTay
 !> The microstructure is created by grain boundary segments.
 module altayMesostructure
-use criMathUtils, only: EulerAngles
-use altayAlgorithms
-use altayMiscutils, only: terminate, stopcode_runtimeerror
-use altay_definitions, only: dp
-implicit none
+    use criMathUtils
+    use altayAlgorithms
+    use altayMiscutils
+    use altay_definitions
+    use altayMacroKinematic
+
+    implicit none
       !> Transformation matrix associated to the grain boundary reference frame
       !> in the initial state.
       !> Shape is: [3,3,ngr], where ngr is the number of grains.
-      real(dp), dimension(:,:,:),allocatable,save :: TmatGr
+      real(dp), dimension(:,:,:),allocatable :: TmatGr
       integer,save :: NGrElm = 0             !< Number of grain boundary orientations
       character(len=40), save :: TitMic = '' !< Microstructure title
 
@@ -20,7 +22,6 @@ contains
       !> grain boundary segments) in SMT-format, allocation
       !> and assignment of the module variables.
       subroutine GRFIL(fnam,F_mic,ierr)
-      use altayMiscutils
       use altayIOConfig
       !
       integer,intent(out)         :: ierr
@@ -28,11 +29,11 @@ contains
       !> F_mic is a deformation gradient that conceptually
       !> 'deforms' a spherical grain into an ellipsoidal shape
       real(dp), dimension(3,3), intent(in) :: F_mic
-      !
+
       integer           :: IGrElm !< Counter for loop over GBs
       type(EulerAngles) :: EulGB
       real(dp), dimension(3,3) :: T
-      !
+
       ierr = -1
       !
       ! output to NLIST
@@ -72,7 +73,6 @@ contains
       !
       close(unit=NDAT2)
       ierr = 0
-      return
       end subroutine GRFIL
 
 
@@ -98,17 +98,13 @@ contains
       !   relaxation-2 is always the orthogonal one.
       !   TDC is the normalized von-Mises equivalent strain rate
       use altayIOConfig, only: IPR,NLIST,IMP
-      use altayMiscutils, only: unitMatrix, pi
-      use altayMacroKinematic
 
-      integer,intent(in)                              :: NGR
-      integer,intent(in)                              :: IGrElm
+      integer,intent(in)                              :: NGR,IGrElm
       type(DeformationRate),intent(in)                :: MacroDefRate
       type(DeformationState),intent(in)               :: MacroDefState
       real(dp),intent(inout)                  :: GEWF
       real(dp),dimension(3,3),intent(out)     :: Tprinc
-      real(dp),intent(out)                    :: Cofcos
-      real(dp),intent(out)                    :: Cofsin
+      real(dp),intent(out)                    :: Cofcos, Cofsin
 
       !
       real(dp) :: AXX(3,3),GRPAR(3,3), PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
@@ -205,7 +201,6 @@ contains
             if ((IPR.gt.0) .and. (NLIST.eq.1)) then
                   write (IMP,103) GEWF
             end if
-            !      write (*,103) GEWF
              103  format (/,' GEWF ',3d15.7,/)
 
             !     Construction of orientation matrices for frames associated to the
@@ -247,7 +242,7 @@ contains
             end if
             102      format (' TGrb ',3d15.7)
             enddo
-            !@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@#@#@#@#@#@##@# QGX 17/9/2012
+
             dlength=norm2(MacroDefRate%StrainModevM)
             !     Transform MacroDefRate%StrainModevM to the "Grb" reference frame
             TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
@@ -275,13 +270,13 @@ contains
             enddo
             dot2=dot2/sqrt(2.0D0)/dlength
             !
-            if(dabs(dot1).lt.0.000001.and.dabs(dot2).lt.0.000001) then
+            if(abs(dot1).lt.0.000001.and.abs(dot2).lt.0.000001) then
                   ! both relaxations are orthogonal
                   Cofcos=0.0
                   Cofsin=0.0
                   return
-            elseif(dabs(dot1).lt.0.000001) then
-                  if(dabs(dot2-1.D0).lt.0.00001) then
+            elseif(abs(dot1).lt.0.000001) then
+                  if(abs(dot2-1.D0).lt.0.00001) then
                         !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
                         !  new axe-1 be old axe-2
                         !  new axe-2 be minus old axe-1
@@ -332,12 +327,6 @@ contains
                         dot2=dot2+relaxII(i,j)*TDCGr(i,j)
                   enddo
             enddo
-#ifdef ENABLE_CHECK_ORTHORLX
-            if(dabs(dot2).gt.0.0001) then
-                  write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
-                  call terminate(stopcode_runtimeerror)
-            endif
-#endif
             ! calculate the cosine for relaxation-1
             dot1=0.0
             do i=1,3,1
@@ -347,15 +336,15 @@ contains
             enddo
             !   normalize
             dot1=dot1/sqrt(2.0D0)/dlength
-            !
+
             Cofcos=dot1
             Cofsin=sqrt(1.0D0-dot1*dot1)
             return
-            elseif(dabs(dot2).lt.0.000001) then
+            elseif(abs(dot2).lt.0.000001) then
                   ! Relaxation-2 is already a orthogonal one
                   ! calculate the cosine for relaxation-1
                   !
-                  if(dabs(dot1-1.0D0).lt.0.00001) then
+                  if(abs(dot1-1.0D0).lt.0.00001) then
                         Cofcos=1.0D0
                         Cofsin=0.0D0
                   else
@@ -383,7 +372,7 @@ contains
                   do i=1,3,1
                         do j=1,3,1
                               vec1(i)=vec1(i)+AXX(i,j)*PrDir(1,j)
-                        enddo
+                  enddo
                   enddo
                   vec2=0.0
                   do i=1,3,1
@@ -410,12 +399,6 @@ contains
                               dot2=dot2+relaxII(i,j)*TDCGr(i,j)
                         enddo
                   enddo
-#ifdef ENABLE_CHECK_ORTHORLX
-                  if(dabs(dot2).gt.0.0001) then
-                        write(*,*) 'Relaxation-2 is not orthogonal, code has errors'
-                        call terminate(stopcode_runtimeerror)
-                  endif
-#endif
                   !
                   dot1=0.0
                   do i=1,3,1
@@ -432,8 +415,4 @@ contains
       !
       end subroutine
 
-
-
-
 end module
-
