@@ -204,11 +204,25 @@ module altayTaylor
 
       implicit real(dp) (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
+
+      ! COMMON BLOCKS
+      real(dp) :: TRF,C1,C2,GEWF
+      integer :: NO,ITW
       common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
-      common /IGLIJS/ CC(2,96), M11
+
+      real(dp) :: CC
+      integer :: M11
+      common /IGLIJS/ CC(2,96), M11     ! M11...total number of systems in slip system file (glide+twin),
+
+      real(dp) :: A1,BB8,RHO,B5
       common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
-      common /EULERA/ fi1,PHI,fi2
+
+      real(dp) :: YY,SHsam,Ssam,RHOSsa
       logical SWRLX
+      common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
+
+      common /EULERA/ fi1,PHI,fi2
+
       real(dp), intent(out):: Seq ! Equivalent stress in crystal, defined as..
                                     !  plastic work rate in crystal normalized by..
                                     !  (macro) von Mises equivalent strain rate
@@ -222,8 +236,6 @@ module altayTaylor
 !     SPANH: macroscopic stress in crystal reference system
 !     Ssam:        local stress in sample reference system
 !
-      common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
-       SWRLX(3)
       DIMENSION RCC(3,3),RCcryst(3,3),rhossaTot(3,3)
       DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
       dimension RHOAcrys(3,3),GAMdot(96)
@@ -231,7 +243,8 @@ module altayTaylor
       real(dp) :: ddt
       real(dp), intent(OUT) :: TOTGAMdot
       SAVE
-  11  call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN,MacroDefRate)
+
+      call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN,MacroDefRate)
       RCM_GUARD
       select case(KOST)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
@@ -248,9 +261,9 @@ module altayTaylor
       !Calculate RCcryst: the rigid body spin in the crystal frame
       RCcryst = rotateSRTensorFrom(MacroDefRate%Spin,TRF)
       RHOAcrys = rotateSRTensorFrom(RHOAsa,TRF)
-   71   TRC(1)=RCcryst(3,2)+RHOAcrys(3,2)
-        TRC(2)=RCcryst(1,3)+RHOAcrys(1,3)
-        TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
+      TRC(1)=RCcryst(3,2)+RHOAcrys(3,2)
+      TRC(2)=RCcryst(1,3)+RHOAcrys(1,3)
+      TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
       WorkRate=0.0
       do i=1,M11
           if (GAMdot(i).GT.0.0) then
@@ -262,7 +275,7 @@ module altayTaylor
           endif
       end do
       Seq=WorkRate / MacroDefRate%vMeqStrainRate
-  43  J=M
+      J=M
       if(NLIST.eq.1) write (IMP,301) WorkRate
  301  format (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
 !
@@ -273,14 +286,13 @@ module altayTaylor
 
  109  format ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,  &
        '  SLIP RATES',/,(T2,10F10.5))
-  90  continue
-  202 ROT = matmul(B1,GAMdot)
+      ROT = matmul(B1,GAMdot)
 
       if(NLIST.eq.1) write (IMP,305) ROT
 
   305 format (' ROTATIONS',3F12.6)
       do J=1,3
-            C1(J,J)=1.D0
+          C1(J,J)=1.0_dp
       end do
       C1(3,2)=ROT(1)-TRC(1)
       C1(1,3)=ROT(2)-TRC(2)
@@ -305,25 +317,23 @@ module altayTaylor
           X=X+GAMdot(J)/G(I)
           VOLFR(I)=X
       end do
-      if (X <= 1.) goto 85
-      RCM_RAISE(1,'TAYLR1','Total volume fraction of twins exceeds unity',RCM_RTN)
-  85  call RANDOM_NUMBER(RNDM)
+      if (X > 1.) then
+        RCM_RAISE(1,'TAYLR1','Total volume fraction of twins exceeds unity',RCM_RTN)
+      endif
+      call RANDOM_NUMBER(RNDM)
       do I=1,NTW
           if (RNDM < VOLFR(I)) goto 87
       end do
       goto 31
   87  RCC = C2
       TDC(1,1)=B2(1,I)
-      X=B2(2,I)
-      TDC(2,1)=X
-      TDC(1,2)=X
-      X=B2(3,I)
-      TDC(3,1)=X
-      TDC(1,3)=X
+      TDC(2,1)=B2(2,I)
+      TDC(1,2)=B2(2,I)
+      TDC(3,1)=B2(3,I)
+      TDC(1,3)=B2(3,I)
       TDC(2,2)=B2(4,I)
-      X=B2(5,I)
-      TDC(3,2)=X
-      TDC(2,3)=X
+      TDC(3,2)=B2(5,I)
+      TDC(2,3)=B2(5,I)
       TDC(3,3)=B2(6,I)
       C2 = matmul(TDC,RCC)
       ITW=I
