@@ -32,11 +32,7 @@
       logical SWRLX(3),bas(194),VALID(194)
       integer DI1(5),DI(10),DI2(10)
 
-      common /LAMEL/ fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
-       gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
-       CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),                             &
-       fi1b(2),phib(2),fi2b(2), ENTA,                                         &
-       NGR,NRL,ITFMAS, laml                                                  ! NRL= number of relaxations, NGR= number of grains
+      common /LAMEL/ TRFb(3,3,2),GMMAb(2), ENTA,NGR,NRL,ITFMAS,laml                                 ! NRL= number of relaxations, NGR= number of grains
       common /IGLIJS/ CC(2,96), M11
       common /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
       common /extra/ A1(10,194),UU(10,10)

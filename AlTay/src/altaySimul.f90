@@ -50,11 +50,9 @@ module altaySimul
       common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),          &
                       SWRLX(3)
 
-      common /LAMEL/ fi10b(2),phi0b(2),fi20b(2),TRFb(3,3,2),        &
-       gewfb(2),GMMAb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),              &
-       CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),                             &
-       fi1b(2),phib(2),fi2b(2), ENTA,                                         &
-       NGR,NRL,ITFMAS, laml                                                  ! NRL= number of relaxations, NGR= number of grains
+      real(dp) :: fi10b(2),phi0b(2),fi20b(2),gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2), &
+                  CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2)
+      common /LAMEL/ TRFb(3,3,2),GMMAb(2),ENTA,NGR,NRL,ITFMAS, laml                                 ! NRL= number of relaxations, NGR= number of grains
       common /CEIGEN/ IOR,ISTP,NBLOC
       common /PE/ Fmicro !Temporary!!!
       dimension GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
