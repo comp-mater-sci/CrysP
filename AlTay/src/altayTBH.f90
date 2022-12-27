@@ -51,14 +51,16 @@ module altayTBH
 
       real(dp), intent(out) :: U(NDIM,N), Dacc(NDIM),GDOT(M),SIG(NDIM),TauR(M), DTAU(M)
       integer, intent(out) :: Irp(NDIM)
-      dimension Trp(NDIM),Aprime(NDIM),CUst(NDIM),UU(NDIM,N),DD(NDIM)
+      real(dp), intent(inout) :: Trp(NDIM),Aprime(NDIM),CUst(NDIM),UU(NDIM,N),DD(NDIM)
 
       integer, parameter :: JPR=2
       real(dp), parameter :: TOL=1.0e-10_dp
 
+      integer :: i,j,k,iter,jn
+      real(dp) :: Fakm,x,dt,y,z1,z2,zr,gmin
       if (N.gt.NDIM) then
-      RCM_RAISE(1,'TBH','Bad input: N>NDIM',RCM_RTN)
-                     endif
+        RCM_RAISE(1,'TBH','Bad input: N>NDIM',RCM_RTN)
+      endif
       U=BINV
       Irp=IACT
       do j=1,M
@@ -82,21 +84,13 @@ module altayTBH
                 X=X+A(k,j)*D(k)
               enddo
          endif
-         if (X.ge.0.0d0) then
-            Trp(i)=Tauc(1,j)
-         else
-            Trp(i)=-Tauc(2,j)
-         endif
+         Trp(i) = merge(Tauc(1,Irp(i)),-Tauc(2,Irp(i)),X>=0.0_dp)
       enddo
       iter=0
     4 iter=iter+1
       if (iter.le.50) goto 7
       RCM_RAISE(1,'TBH','Too many iterations.',RCM_RTN)
-    7 if (IPR.GE.JPR) then
-          if (NLIST.eq.1) then
-              write (IMP,251) iter
-          end if
-      end if
+    7 if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,251) iter
  251  format (/,'  ITERATION NR. ',I5,/)
       call mtprd(SIG,Trp,U,1,N,N,1,NDIM)
       do j=1,M
@@ -109,8 +103,7 @@ module altayTBH
       enddo
 !     Calculation of resolved shear stress
       call mtprd(TauR,SIG,A,1,N,M,1,NDIM)
-      if (IPR.GE.JPR) then
-        if (NLIST.eq.1) then
+      if (IPR.GE.JPR .and. NLIST.eq.1) then
             write (IMP,205)
             do i=1,N
               write (IMP,204) D(i),SIG(i)
@@ -119,7 +112,6 @@ module altayTBH
             do j=1,M
               write (IMP,202) j,TauR(j)
             enddo
-        end if
       endif
   201 format (' M-Factor:',D20.10,/,' Resolved shear stresses:')
   202 format (I5,30X,D20.10)
@@ -131,46 +123,24 @@ module altayTBH
       jn=0
       do 1 j=1,M
         X=TauR(j)
-        if (X.ge.0.0d0) then
-             Y=X-Tauc(1,j)
-        else
-             Y=-X-Tauc(2,j)
-        endif
-        if (IPR.GE.JPR) then
-            if (NLIST.eq.1) then
-                write (IMP,919) j,jn,X,Y,Y-DT
-            end if
-        end if
+        Y=merge(X-Tauc(1,j),-X-Tauc(2,j),X>=0.0_dp)
+        if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,919) j,jn,X,Y,Y-DT
   919 format ('j=',I5,'  jn=',I5,'  TauR(=X)',D15.5,' DTAU(=Y)',D20.10,  &
        ' Y-DT=',D20.10)
         if (abs(Y).lt.TOL) then
             Y=0.0d0
-            if (X.ge.0.0d0) then
-                 X=Tauc(1,j)
-            else
-                X=-Tauc(2,j)
-            endif
+            X=merge(Tauc(1,j),-Tauc(2,j),X>=0.0_dp)
             TauR(j)=X
         endif
         if (abs(Y-DT).lt.TOL) Y=DT
         DTAU(j)=Y
-        if (bas(j)) goto 1
-        if (abs(X).lt.TOL) goto 1
-        if (Y.le.DT) goto 1
-        if (IPR.GE.JPR) then
-            if (NLIST.eq.1) then
-                write (IMP,920) Y,j
-            end if
-        end if
+        if (bas(j) .or. (abs(X).lt.TOL) .or. (Y.le.DT)) goto 1
+        if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,920) Y,j
   920   format (' DT(=Y)',D15.5,'  New jn=',I5)
         DT=Y
         jn=j
     1 continue
-      if (IPR.GE.JPR.and.jn.gt.0) then
-          if (NLIST.eq.1) then
-              write (IMP,913) jn,DT,TauR(jn)
-          end if
-      end if
+      if (IPR.GE.JPR.and.jn.gt.0 .and. NLIST.eq.1) write (IMP,913) jn,DT,TauR(jn)
   913 format ('Overstressed:jn DT',I5, D15.5,'   TauR(jn)',D20.10)
       if (jn.eq.0) goto 2 ! There is no overstressed slip system
 !     There is an overstressed slip system, which we will activate now
@@ -179,19 +149,11 @@ module altayTBH
 !     Calculate column Mprime-s*, called Aprime
       call mtprd(Aprime,U,A(1,jn),N,N,1,NDIM,NDIM)
       in=0
-      if (IPR.GE.JPR) then
-          if (NLIST.eq.1) then
-              write (IMP,203)
-          end if
-      end if
+      if (IPR.GE.JPR .and.  NLIST.eq.1)write (IMP,203)
   203 format (' ACTIVE',9x,'Slip rate',11X,                              &
        'Critical Resolved shear stress',11X,'Aprime')
       do 3 i=1,N
-        if (IPR.GE.JPR) then
-            if (NLIST.eq.1) then
-                write (IMP,200)Irp(i),DACC(i),Trp(i),Aprime(i)
-            end if
-        end if
+        if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,200)Irp(i),DACC(i),Trp(i),Aprime(i)
   200 format (I5,5x,D26.16,5x,D20.10,5x,D20.10)
         Z1=Aprime(i)
         if (abs(Z1).lt.TOL) goto 3

@@ -204,6 +204,14 @@ module altayTaylor
 
       implicit real(dp) (a-h,o-z)
       type(DeformationRate),intent(in) :: MacroDefRate
+      integer, intent(in) :: ISTP,IOR,NFILE
+      real(dp), intent(in) :: TAU
+      real(dp), intent(OUT) :: TOTGAMdot
+      real(dp), intent(out):: Seq ! Equivalent stress in crystal, defined as..
+                                    !  plastic work rate in crystal normalized by..
+                                    !  (macro) von Mises equivalent strain rate
+      !> Rate of plastic work per unit volume in the crystal
+      real(dp), intent(out) :: WorkRate
 
       ! COMMON BLOCKS
       real(dp) :: TRF,C1,C2,GEWF
@@ -222,26 +230,18 @@ module altayTaylor
       common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
 
       common /EULERA/ fi1,PHI,fi2
-
-      real(dp), intent(out):: Seq ! Equivalent stress in crystal, defined as..
-                                    !  plastic work rate in crystal normalized by..
-                                    !  (macro) von Mises equivalent strain rate
-      !> Rate of plastic work per unit volume in the crystal
-      real(dp), intent(out) :: WorkRate
-      real(dp) :: Mgrain
-      type(EulerAngles):: Euler
 !
 !     SHsam:    macroscopic stress in sample reference system
 !     SH:   macroscopic stress in crystal reference system
 !     SPANH: macroscopic stress in crystal reference system
 !     Ssam:        local stress in sample reference system
-!
-      DIMENSION RCC(3,3),RCcryst(3,3),rhossaTot(3,3)
-      DIMENSION TRC(3),VOLFR(96),ROT(3),TDC(3,3),SGNN(96)
-      dimension RHOAcrys(3,3),GAMdot(96)
-      integer :: info
-      real(dp) :: ddt
-      real(dp), intent(OUT) :: TOTGAMdot
+
+      real(dp), dimension(3) :: TRC,ROT
+      real(dp), dimension(3,3) :: RCC,RCcryst,rhossaTot,TDC,RHOAcrys
+      real(dp), dimension(96) :: VOLFR,SGNN,GAMdot
+      integer :: info,i,j
+      real(dp) :: ddt,rndm,Mgrain,rotm,fi1,phi,fi2
+      type(EulerAngles):: Euler
       SAVE
 
       call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN,MacroDefRate)
