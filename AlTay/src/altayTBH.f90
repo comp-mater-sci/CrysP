@@ -1,11 +1,9 @@
-#ifdef ALTAY_SUBROUTINE
 #include "altayRCM.fpp"
-#endif
-      module altayTBH
+module altayTBH
     use altay_definitions, only: dp
-      use altayMiscutils, only: terminate, stopcode_runtimeerror
+    use altayMiscutils, only: terminate, stopcode_runtimeerror
 
-      contains
+    contains
 
 !     SUBROUTINE LINEAR PROGRAMMING TAYLOR-BISHOP-HILL STYLE
       Subroutine TBH(IPR,NDIM,N,M,A,D,                                   &
@@ -44,10 +42,9 @@
 !     workspace      DD (copy of strain rates in some basis)
 !     output         DTAU=abs(TAUR)-TAUC
 !
-#ifdef ALTAY_SUBROUTINE
       use altayRCM
-#endif
       use altayIOConfig,IIPR=>IPR!Rename global IPR switch to avoid conflict
+
       implicit real(dp) (a-h,o-z)
       dimension A(NDIM,M),D(NDIM),BINV(NDIM,N),U(NDIM,N),IACT(NDIM),     &
        GDOT(M),SIG(NDIM),TauC(2,M),TauR(M),Dacc(NDIM),Irp(NDIM)
@@ -56,12 +53,7 @@
        DTAU(M)
       data JPR /2/,TOL/1.0d-10/
       if (N.gt.NDIM) then
-#ifndef ALTAY_SUBROUTINE
-                       write (*,100) N,NDIM
-                      call terminate(stopcode_runtimeerror)
-#else
       RCM_RAISE(1,'TBH','Bad input: N>NDIM',RCM_RTN)
-#endif
                      endif
  100  format (' Subroutine TBH - N=',I5,'  is > NDIM=',I5,               &
        '   this is an error in the calling program')
@@ -97,17 +89,7 @@
       iter=0
     4 iter=iter+1
       if (iter.le.50) goto 7
-#ifndef ALTAY_SUBROUTINE
-      if(NLIST.eq.1) then
-          write (IMP,250)
-      end if
-      write (*,250)
- 250  format (' TBH is looping')
-      call terminate(stopcode_runtimeerror)
-#else
       RCM_RAISE(1,'TBH','Too many iterations.',RCM_RTN)
-#endif
-
     7 if (IPR.GE.JPR) then
           if (NLIST.eq.1) then
               write (IMP,251) iter
@@ -160,22 +142,19 @@
   919 format ('j=',I5,'  jn=',I5,'  TauR(=X)',D15.5,' DTAU(=Y)',D20.10,  &
        ' Y-DT=',D20.10)
         if (abs(Y).lt.TOL) then
-                             Y=0.0d0
-                             if (X.ge.0.0d0) then
-                                               X=Tauc(1,j)
-                                             else
-                                               X=-Tauc(2,j)
-                             endif
-                             TauR(j)=X
-                           endif
+            Y=0.0d0
+            if (X.ge.0.0d0) then
+                 X=Tauc(1,j)
+            else
+                X=-Tauc(2,j)
+            endif
+            TauR(j)=X
+        endif
         if (abs(Y-DT).lt.TOL) Y=DT
         DTAU(j)=Y
         if (bas(j)) goto 1
         if (abs(X).lt.TOL) goto 1
         if (Y.le.DT) goto 1
-!        if (.NOT.valid(j)) goto 1
-!        if (IPR.GE.JPR) write(IMP,917) j,VALID(j)
-! 917    format (I5,' valid',L8)
         if (IPR.GE.JPR) then
             if (NLIST.eq.1) then
                 write (IMP,920) Y,j
@@ -191,13 +170,6 @@
           end if
       end if
   913 format ('Overstressed:jn DT',I5, D15.5,'   TauR(jn)',D20.10)
-!      if (jn.eq.0.and.DT.gt.0.0D0) then
-!                                      write (IMP,910)
-!                                      write (*,910)
-!                                      stop
-!                                    endif
-!  910 format (' TBH - There are invalid slip sytems ',
-!     1'which are overstressed')
       if (jn.eq.0) goto 2 ! There is no overstressed slip system
 !     There is an overstressed slip system, which we will activate now
 !     Search which active slip system must be desactivated (removed from basis)
@@ -254,13 +226,8 @@
                         endif
     3 continue
       if (in.eq.0) then
-#ifndef ALTAY_SUBROUTINE
-                     write (*,101)
-                     call terminate(stopcode_runtimeerror)
-#else
-      RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
-#endif
-                   endif
+          RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
+      endif
   101 format (' Subroutine TBH - solution unbounded')
       if (IPR.GE.JPR) then
       if (NLIST.eq.1) then
@@ -269,9 +236,6 @@
       end if
   912 format ('in jn Gmin',2I5, D15.5)
       if (abs(Gmin).gt.0.0D0) goto 5
-!      valid(jn)=.FALSE.
-!      goto 6
-!     Updating of inverse of basis: U
     5 Z1=Aprime(in)
       do i=1,N
         CUst(i)=-Aprime(i)
