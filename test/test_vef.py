@@ -14,6 +14,7 @@ import subprocess
 
 import pytest
 import pandas as pd
+import numpy as np
 
 #File extension for the output of each execution mode. May be removed when we get rid of the file-based I/O for the simulations.
 EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'UDSA':'uds','YLD':'xyld'}
@@ -145,11 +146,8 @@ def get_trace_values(path, module, function):
     with open(path) as log_file:
         for line in log_file:
             if header in line:
-                num = re.findall(r'-?[0-9]+\.?[0-9]+E?-?[0-9]* *$', line)[0]
-                formatted = num.split('E')
-                if (len(formatted) == 1 or int(formatted[1]) > -9) and not int(formatted[0]) == 0:
-                    vals.append((formatted[0]).replace('-','').replace('.','')[0:3])
-    return vals
+                vals.append(line.split(':')[1])
+    return np.array(vals,dtype=float)
 
 @pytest.mark.unit
 @pytest.mark.parametrize('module,function,mode,algorithm,slip_system,hardening_model', [(a,b,c,d,e,f) for ((a,b),(c,d,e,f)) in itertools.product(UNITS, tests)])
@@ -157,5 +155,5 @@ def test_unit(mode, algorithm, slip_system, hardening_model, module, function, u
     generate_output(update, mode, algorithm, slip_system, hardening_model)
     reference = get_trace_values(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
     data = get_trace_values(TEST_DATA/f'{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
-    assert data == reference
+    assert np.allclose(reference,data,rtol=1e-3,atol=1e-8)
 
