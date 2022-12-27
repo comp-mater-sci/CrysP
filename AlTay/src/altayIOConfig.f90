@@ -7,12 +7,6 @@ module altayIOConfig
       !> Maximal length of any path (filenames, directrories etc.)
       integer,parameter :: pathlength = 512
 
-      !COMMON /ES/ LEC,KLEC,IDISK1,IMP,IMP1,IMP2,NDAT1
-      !COMMON /ES1/ IMP3
-      !DATA LEC,KLEC,IDISK1,IMP,NDAT1/4,5,12,3,9/
-      !data IMP1,IMP2 /7,8/
-      !data IMP3/11/
-
       !>@{ \name IO units
 
       !> LEC= data set with slip systems
