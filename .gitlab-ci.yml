@@ -20,10 +20,10 @@ gcc:
     intel-oneapi-mkl-devel \
     cmake \
     python3-pip
-    pip install pandas pytest
+    pip install pandas pytest numpy
     source /opt/intel/oneapi/setvars.sh
     #AR=xiar ./build.sh -c gfortran -b debug
-    AR=xiar ./build.sh -c gfortran -b release
+    AR=xiar ./build.sh -c gfortran -b release -t
     cd test
     pytest --update=logout -v
 
@@ -33,8 +33,8 @@ intel:
     apt-get update
     apt-get install -y \
     python3-pip
-    pip install pandas pytest
+    pip install pandas pytest numpy
     AR=xiar ./build.sh -c ifort -b debug
-    AR=xiar ./build.sh -c ifort -b release
+    AR=xiar ./build.sh -c ifort -b release -t
     cd test
     pytest --update=logout -v
