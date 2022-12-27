@@ -90,6 +90,9 @@ module altaySimul
 #ifdef PEBP_ENABLED
       type(StateDerivedVars) :: pebpSDV, pebpSDVavg
 #endif
+      integer :: seedsize
+      integer, allocatable :: seed(:)
+
       real(dp), parameter :: convf=0.5729577951308232e+02_dp
       data FS/9*1.0D0/
       save
@@ -104,7 +107,11 @@ module altaySimul
       ! initialization call
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !
-  33  call  random_seed
+  33  if(.not. allocated(seed)) then
+        call random_seed(size=seedsize)
+        allocate(seed(seedsize),source=20191102) ! low entropy, but at least deterministic
+        call random_seed(put=seed)
+      endif
 #ifdef ALTAY_SUBROUTINE
       NGR    = acnf%simul_init%NGR
       ENTA   = acnf%simul_init%ENTA
