@@ -413,67 +413,36 @@
 
 
       subroutine Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,UBUF,M11,ca1,ca2)
-!   Cofsin, Cofcos         -- input
-!   BB(10), UBUF(10)       -- input
-!   M11                    -- input
 !  BB(10) is direction of the relaxation-1
 !  UBUF(10) is the BISHOP-HILL stress from TBH routine, in crystal frame
-      implicit real(dp) (a-h,o-z)
-      real(dp), intent(in) :: ccc
+      implicit none
+      real(dp), intent(in) :: ccc(2,194)
       integer, intent(in) :: M11
-      real(dp), intent(out) :: ccc2
+      real(dp), intent(out) :: ccc2(2,194)
       real(dp), intent(out) :: ca1
       real(dp), intent(out) :: ca2
       real(dp), intent(in) :: Cofcos
       real(dp), intent(in) :: Cofsin
-      real(dp), intent(in) :: BB
-      real(dp), intent(in) :: UBUF
-      dimension BB(10),base1(5),UBUF(10),ccc(2,194),ccc2(2,194)
+      real(dp), intent(in) :: BB(10)
+      real(dp), intent(in) :: UBUF(10)
+
+      real(dp) :: zeta
 !
       if((abs(Cofsin) < epsilon(0.D0)) .and. (abs(Cofcos) < epsilon(0.D0))) then
-!  update CRSS
           ccc2=ccc
-      elseif(dabs(Cofcos).lt.0.000000001) then
+      elseif(abs(Cofcos).lt.0.000000001) then
           write(*,*) 'Cofcos=0. Somewhere is worong in the code'
           call terminate(stopcode_runtimeerror)
       else
-!   we only need the component 1 along the imposed strain mode
-      dlength2=norm2(BB(1:5))
-!  for grain-1
-      base1=BB(1:5)/dlength2
-!  then calculate the stress component in grain-1
-      sg1c1=sum(UBUF(1:5)*base1)
-! now calculate the component for grain-2
-      dlength2=norm2(BB(6:10))
-!  for grain-2
-      base1 = BB(6:10)/dlength2
-!  then calculate the stress component in grain-2
-      sg2c1=sum(UBUF(6:10)*base1)
-! from here we use the new method to update the CRSS
-      zeta=sg1c1/sg2c1
-!  check if it is negative
-      if(zeta.lt.0.D0) then
-          write(*,*) 'Zeta is negative, somewhere is wrong'
-          call terminate(stopcode_runtimeerror)
-      endif
-      enta1=sqrt(1.D0/zeta)
-      enta2=sqrt(zeta)
-      Crssg1=Cofcos*Cofcos*enta1+Cofsin*Cofsin
-      Crssg2=Cofcos*Cofcos*enta2+Cofsin*Cofsin
-      ca1=Crssg1
-      ca2=Crssg2
-!  update the CRSS for grain-1
-      do i=1,M11,1
-          do j=1,2,1
-              CCC2(j,i)=Crssg1*CCC(j,i)
-          end do
-      end do
-!   update the CRSS for grain-2
-      do i=1,M11,1
-          do j=1,2,1
-              CCC2(j,i+M11)=Crssg2*CCC(j,i+M11)
-          end do
-      end do
+          zeta=sum(UBUF(1:5)*BB(1:5)/norm2(BB(1:5)))/sum(UBUF(6:10)*BB(6:10)/norm2(BB(6:10)))
+          if(zeta<0.0_dp) then
+              write(*,*) 'Zeta is negative, somewhere is wrong'
+              call terminate(stopcode_runtimeerror)
+          endif
+          ca1=Cofcos*Cofcos*sqrt(1.0_dp/zeta)+Cofsin*Cofsin
+          ca2=Cofcos*Cofcos*sqrt(zeta)+Cofsin*Cofsin
+          CCC2(1:2,1:M11)      =ca1*CCC(1:2,1:M11)
+          CCC2(1:2,1+M11:2*M11)=ca2*CCC(1:2,1+M11:2*M11)
       endif
       end subroutine
 
