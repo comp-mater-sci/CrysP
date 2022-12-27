@@ -38,6 +38,7 @@ module altaySimul
       implicit real(dp) (a-h,o-z)
       ! optional argument for IW=1 or 2:
       type(DeformationRate),intent(in),optional :: MacroDefRate !inout
+      integer, intent(in) :: IW
 !
 !     IW=2 is meant for outputting the final texture.
 !
@@ -105,18 +106,13 @@ module altaySimul
       real(dp), parameter :: convf=0.5729577951308232e+02_dp
       data FS/9*1.0D0/
       save
-      !
+
       NPOINT = size(DFIL)
-      !
-      ! Top branches depending on first argument IW of SIMUL
-      if (IW) 32,33,30         ! 32: return if IW<0; 33: IW=0; 30: continue if IW>0
-      !
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !-------- IW=0 --------
+      if (IW < 0) then
+        return
+      elseif(IW == 0) then
       ! initialization call
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !
-  33  if(.not. allocated(seed)) then
+      if(.not. allocated(seed)) then
         call random_seed(size=seedsize)
         allocate(seed(seedsize),source=20191102) ! low entropy, but at least deterministic
         call random_seed(put=seed)
@@ -157,16 +153,8 @@ module altaySimul
 !     read the parameters of the work hardening model
       call TAYLOR(1,KOST) ! read slip system file
       RCM_GUARD
-      !
-      ! Various IO/initialization calls
-      !
-      return
 
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !-------- IW>0 --------
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !
-  30  continue
+      else
       ! Per-call selection of the model: NGR & NRL must be set
       NGR = acnf%simul_init%NGR
       ! Number of relaxations: 0 for Taylor and 2 for ALAMEL:
@@ -194,7 +182,7 @@ module altaySimul
 !
 !     Main Loop over the Steps
 !
-      steploop: DO 8 ISTP=1,NSTP
+      steploop: DO ISTP=1,NSTP
           !
           TOTGEW=0.0
           STOT = 0.D0
@@ -273,7 +261,7 @@ module altaySimul
           !
           ! Begin the loop over grains/clusters
           !
-          clusterloop: DO 23 IOR=1,NPOINT
+          clusterloop: DO IOR=1,NPOINT
               Mgrain=0.0
               GMMdot=0.0
               WorkRate = 0.D0
@@ -333,20 +321,20 @@ module altaySimul
               TOTGEW=TOTGEW+GEWF
               !
               ! Skip the rest of the loop if IW > 1
-  41          if (IW.gt.1) cycle
+              if (IW.gt.1) cycle
               !
               if (astate%simulCalls(astate%this)%input%full_model) then
                     call TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate,      &
                                 MacroDefRate)
                     RCM_GUARD
               endif
-   49         if (NFILTW.eq.1) write (IMP3,398) ITW
+              if (NFILTW.eq.1) write (IMP3,398) ITW
  398          format (I3)
               !
               STOT = STOT + Ssam*GEWF
               RHOST = RHOST + RHOSsa*GEWF
               !
-  63          SeqAvg = SeqAvg + SeqGrain*GEWF
+              SeqAvg = SeqAvg + SeqGrain*GEWF
               Mgrain = GMMdot /  MacroDefRate%vMeqStrainRate
               Mavg = Mavg + Mgrain*GEWF
               ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/MacroDefRate%vMeqStrainRate
@@ -368,7 +356,7 @@ module altaySimul
               !
               ! End of the loop over crystals
               !
-  23      enddo clusterloop
+          enddo clusterloop
           !
           ! Finish processing if IW > 1
           if (IW.gt.1) exit
@@ -376,7 +364,7 @@ module altaySimul
           SHsam = STOT / TOTGEW
           RHOSm = RHOST / TOTGEW
           !
-  66      do i=1,2
+          do i=1,2
               do j=i+1,3
                   SHsam(i,j)=SHsam(i,j)*FS(i,j)
                   SHsam(j,i)=SHsam(i,j)
@@ -427,19 +415,8 @@ module altaySimul
           end if
  105      format (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VALUE=',F10.5, &
               '  EFF. STRAIN EPS USED=',F10.5)
-          !
-          ! End of the loop over steps
-          !
-   8  enddo steploop
-      !
-  22  return
-      !
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !-------- IW<0 --------
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !
-  32  return
-      !
+      enddo steploop
+      endif
       END SUBROUTINE
 
 end module
