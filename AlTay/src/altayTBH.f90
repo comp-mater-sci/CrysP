@@ -41,22 +41,24 @@ module altayTBH
 !     workspace      UU (copy of inverse of basis)
 !     workspace      DD (copy of strain rates in some basis)
 !     output         DTAU=abs(TAUR)-TAUC
-!
       use altayRCM
       use altayIOConfig,IIPR=>IPR!Rename global IPR switch to avoid conflict
 
       implicit real(dp) (a-h,o-z)
-      dimension A(NDIM,M),D(NDIM),BINV(NDIM,N),U(NDIM,N),IACT(NDIM),     &
-       GDOT(M),SIG(NDIM),TauC(2,M),TauR(M),Dacc(NDIM),Irp(NDIM)
-      logical bas(M),valid(M)
-      dimension Trp(NDIM),Aprime(NDIM),CUst(NDIM),UU(NDIM,N),DD(NDIM),   &
-       DTAU(M)
-      data JPR /2/,TOL/1.0d-10/
+      integer, intent(in) :: IPR,NDIM,M,N,IACT(NDIM)
+      real(dp), intent(in) :: A(NDIM,M),D(NDIM),BINV(NDIM,N),TauC(2,M)
+      logical :: bas(M),valid(M)
+
+      real(dp), intent(out) :: U(NDIM,N), Dacc(NDIM),GDOT(M),SIG(NDIM),TauR(M), DTAU(M)
+      integer, intent(out) :: Irp(NDIM)
+      dimension Trp(NDIM),Aprime(NDIM),CUst(NDIM),UU(NDIM,N),DD(NDIM)
+
+      integer, parameter :: JPR=2
+      real(dp), parameter :: TOL=1.0e-10_dp
+
       if (N.gt.NDIM) then
       RCM_RAISE(1,'TBH','Bad input: N>NDIM',RCM_RTN)
                      endif
- 100  format (' Subroutine TBH - N=',I5,'  is > NDIM=',I5,               &
-       '   this is an error in the calling program')
       U=BINV
       Irp=IACT
       do j=1,M
