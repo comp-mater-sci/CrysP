@@ -21,7 +21,7 @@
       use altayMacroKinematic
       use altayHardLaw_DSH
 
-      implicit real(dp) (a-h,o-z)
+      implicit none
 
       type(DeformationRate),intent(in) :: MacroDefRate
       type(DeformationState),intent(in):: MacroDefState
@@ -68,7 +68,7 @@
       real(dp) :: spanv(5),XX(194),STRSS(10),BB(10), &
                CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
                B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10), &
-               GAMR(2),Tprinc(3,3),TAURL(2),XXTOT,X,COFCOS,COFSIN,WR
+               GAMR(2),Tprinc(3,3),TAURL(2),XXTOT,X,COFCOS,COFSIN,WR,GEWF,x8,y8,fakm
 
       data B3/30*0.0D0/
       real(dp), parameter :: SQR2=sqrt(0.5_dp),TOLXX=5.0e-6_dp
@@ -91,7 +91,7 @@
       integer, parameter :: NDIM=10 !     NDIM=dimension A
       data TAURL/2*0.0d0/
       real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp
-      integer :: info,M12,IGrElm,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II,I1,NU
+      integer :: info,M12,IGrElm,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II,I1,NU,jsgn
       SAVE
 
       if (laml.ne.1.and.laml.ne.2) then

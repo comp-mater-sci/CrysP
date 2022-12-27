@@ -35,13 +35,11 @@ module altaySimul
       use altayIOConfig
       use altayMiscutils
       !
-      implicit real(dp) (a-h,o-z)
+      implicit none
       ! optional argument for IW=1 or 2:
       type(DeformationRate),intent(in),optional :: MacroDefRate !inout
-      integer, intent(in) :: IW
-!
-!     IW=2 is meant for outputting the final texture.
-!
+      integer, intent(in) :: IW !   IW=2 is meant for outputting the final texture.
+
       real(dp) :: CC
       integer :: M11
       common /IGLIJS/ CC(2,96), M11
@@ -76,9 +74,9 @@ module altaySimul
       real(dp) :: GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
            GEULR(3),TG(3,3),                               &
            CIJ(3,3),STOT(3,3),                             &
-           RHOST(3,3),RHOSm(3,3),FS(3,3)
+           RHOST(3,3),RHOSm(3,3),FS(3,3),SeqAvg,tau,qgx,gmm1,gmm0,ssqgx
       character(len=40) :: TITEL
-      integer :: NPOINT, info, NFILE, NFILE0, NPEBPx,NMSSx,NSTP,i,j,l,LAML1,INV,ISP,LOM,KSYM,KTYP
+      integer :: NPOINT, info, NFILE, NFILE0, NPEBPx,NMSSx,NSTP,i,j,l,LAML1,INV,ISP,LOM,KSYM,KTYP,ifil4
       type(DeformationState) :: MacroDefState
       ! HGAM: homogenized slip per step
       ! HGAMCALL: homogenized slip per call

@@ -65,7 +65,7 @@ module altayTaylor
       real(dp), dimension(3,3):: Scrys=0.0d0
 
 
-      real(dp) :: x,y,x8
+      real(dp) :: x,y
       integer :: i,j,l,I1
       save
 
@@ -123,7 +123,7 @@ module altayTaylor
       do j=1,M11
           do i=1,5
               A2(i,j)=A1(i,j)
-              A2(i+5,j+M11)=x8
+              A2(i+5,j+M11)=A1(i,j)
       end do; end do
 
       case(2)
