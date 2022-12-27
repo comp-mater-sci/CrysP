@@ -53,8 +53,6 @@ module altaySimul
       integer :: NO,ITW
       common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
 
-      common /SYMP/ TEN(3,3),TOTGEW,INV,ISP,LOM,KSYM,KTYP
-
       real(dp) :: fi1,PHI,fi2
       common /EULERA/ fi1,PHI,fi2
 
@@ -72,6 +70,7 @@ module altaySimul
       real(dp) :: Fmicro
       common /PE/ Fmicro(3,3) !Temporary!!!
 
+      real(dp) :: TEN(3,3),TOTGEW
       real(dp) :: fi10b(2),phi0b(2),fi20b(2),gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2), &
                   CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2)
       real(dp) :: GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
@@ -79,8 +78,7 @@ module altaySimul
            CIJ(3,3),STOT(3,3),                             &
            RHOST(3,3),RHOSm(3,3),FS(3,3)
       character(len=40) :: TITEL
-      integer :: NPOINT
-      integer :: info
+      integer :: NPOINT, info, NFILE, NFILE0, NPEBPx,NMSSx,NSTP,i,j,l,LAML1,INV,ISP,LOM,KSYM,KTYP
       type(DeformationState) :: MacroDefState
       ! HGAM: homogenized slip per step
       ! HGAMCALL: homogenized slip per call
