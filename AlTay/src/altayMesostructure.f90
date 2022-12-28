@@ -102,7 +102,7 @@ contains
         real(dp) :: AXX(3,3),GRPAR(3,3), PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
         real(dp) :: x, u, dlength, dot1, dot2, TGANGLE, Y
         real(dp) :: relaxI(3,3),relaxII(3,3)
-        integer :: i,j, IN, IA, IB
+        integer :: i,j
 
         Cofcos = 0.D0
         Cofsin = 0.D0
@@ -187,17 +187,14 @@ contains
         if ((IPR.gt.0) .and. (NLIST.eq.1)) write (IMP,103) GEWF
         103  format (/,' GEWF ',3d15.7,/)
 
-        !     Construction of orientation matrices for frames associated to the
-        !     interfaces
-        IN=3
-        IA=1
-        IB=2
-        AXX(1:3,1)=GRPAR(1:3,IA)
-        !       Orientation of interfaces containing axes IA and IB
-        !       Normal axis: (vector product)
-        AXX(1,3)=GRPAR(2,IA)*GRPAR(3,IB)-GRPAR(3,IA)*GRPAR(2,IB)
-        AXX(2,3)=GRPAR(3,IA)*GRPAR(1,IB)-GRPAR(1,IA)*GRPAR(3,IB)
-        AXX(3,3)=GRPAR(1,IA)*GRPAR(2,IB)-GRPAR(2,IA)*GRPAR(1,IB)
+        ! Construction of orientation matrices for frames associated to the
+        ! interfaces
+        AXX(1:3,1)=GRPAR(1:3,1)
+        ! Orientation of interfaces containing axes
+        ! Normal axis: (vector product)
+        AXX(1,3)=GRPAR(2,1)*GRPAR(3,2)-GRPAR(3,1)*GRPAR(2,2)
+        AXX(2,3)=GRPAR(3,1)*GRPAR(1,2)-GRPAR(1,1)*GRPAR(3,2)
+        AXX(3,3)=GRPAR(1,1)*GRPAR(2,2)-GRPAR(2,1)*GRPAR(1,2)
         !       Orientation of 2nd axis:(vector product)
         AXX(1,2)=AXX(2,3)*AXX(3,1)-AXX(3,3)*AXX(2,1)
         AXX(2,2)=AXX(3,3)*AXX(1,1)-AXX(1,3)*AXX(3,1)
@@ -264,38 +261,38 @@ contains
                   Tprinc = transpose(AXX)
                   Cofcos=1.D0
                   Cofsin=0.D0
-                  return
-            endif
-            !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
-            !  new axe-1 be old axe-2
-            !  new axe-2 be minus old axe-1
-            !  The angle is only between relaxation-1 and D0. It is nothing related with relaxation-2.
-            vec1=AXX(1:3,2)
-            vec2=-AXX(1:3,1)
-            AXX(1:3,1)=vec1
-            AXX(1:3,2)=vec2
-            Tprinc = transpose(AXX)
-            !     Transform MacroDefRate%StrainModevM to the new "Grb" reference frame
-            TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
-            !   make sure relaxation-2 is orthogonal
-            dot2=0.0
-            do i=1,3
-                do j=1,3
-                    dot2=dot2+relaxII(i,j)*TDCGr(i,j)
-                enddo
-            enddo
-            ! calculate the cosine for relaxation-1
-            dot1=0.0
-            do i=1,3
-                do j=1,3
-                    dot1=dot1+relaxI(i,j)*TDCGr(i,j)
-                enddo
-            enddo
-            !   normalize
-            dot1=dot1/sqrt(2.0D0)/dlength
+            else
+                 !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
+                 !  new axe-1 be old axe-2
+                 !  new axe-2 be minus old axe-1
+                 !  The angle is only between relaxation-1 and D0. It is nothing related with relaxation-2.
+                 vec1=AXX(1:3,2)
+                 vec2=-AXX(1:3,1)
+                 AXX(1:3,1)=vec1
+                 AXX(1:3,2)=vec2
+                 Tprinc = transpose(AXX)
+                 !     Transform MacroDefRate%StrainModevM to the new "Grb" reference frame
+                 TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
+                 !   make sure relaxation-2 is orthogonal
+                 dot2=0.0
+                 do i=1,3
+                     do j=1,3
+                         dot2=dot2+relaxII(i,j)*TDCGr(i,j)
+                     enddo
+                 enddo
+                 ! calculate the cosine for relaxation-1
+                 dot1=0.0
+                 do i=1,3
+                     do j=1,3
+                         dot1=dot1+relaxI(i,j)*TDCGr(i,j)
+                     enddo
+                 enddo
+                 !   normalize
+                 dot1=dot1/sqrt(2.0D0)/dlength
 
-            Cofcos=dot1
-            Cofsin=sqrt(1.0D0-dot1*dot1)
+                 Cofcos=dot1
+                 Cofsin=sqrt(1.0D0-dot1*dot1)
+            endif
 
         elseif(abs(dot2).lt.0.000001) then
             ! Relaxation-2 is already a orthogonal one

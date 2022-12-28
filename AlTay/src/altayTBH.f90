@@ -47,7 +47,7 @@ module altayTBH
         real(dp), intent(in) :: A(NDIM,M),D(NDIM),BINV(NDIM,N),TauC(2,M)
         logical :: bas(M),valid(M)
 
-        real(dp), intent(out) :: U(NDIM,N), Dacc(NDIM),GDOT(M),SIG(NDIM),TauR(M), DTAU(M)
+        real(dp), intent(out) :: U(NDIM,N), Dacc(NDIM),GDOT(M),SIG(NDIM),TauR(M), DTAU(M),FakM
         integer, intent(out) :: Irp(NDIM)
         real(dp), intent(inout) :: Trp(NDIM),Aprime(NDIM),CUst(NDIM),UU(NDIM,N),DD(NDIM)
 
@@ -55,7 +55,7 @@ module altayTBH
         real(dp), parameter :: TOL=1.0e-10_dp
 
         integer :: i,j,k,iter,jn,in
-        real(dp) :: Fakm,x,dt,y,z1,z2,zr,gmin,xx
+        real(dp) :: x,dt,y,z1,z2,zr,gmin,xx
 
         if (N.gt.NDIM) then
             RCM_RAISE(1,'TBH','Bad input: N>NDIM',RCM_RTN)
