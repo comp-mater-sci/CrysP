@@ -71,7 +71,6 @@ contains
         ierr = 0
     end subroutine GRFIL
 
-
     !> Finalizes the module. The subroutine puts the module variables
     !> into initial state and deallocates the storage.
     subroutine MICROSTR_finalize(info)
@@ -82,8 +81,6 @@ contains
          if (allocated(TmatGr)) deallocate(TmatGr,stat=info)
 
     end subroutine
-
-
 
     subroutine CLUSTER1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,Cofcos,Cofsin)
     !   IF both relaxations are orthogonal:
@@ -141,7 +138,7 @@ contains
             enddo
             AL(i)=sqrt(X)
         enddo
-        !     Box product
+        ! Box product
         vec1(1)=GRPAR(2,2)*GRPAR(3,3)-GRPAR(3,2)*GRPAR(2,3)
         vec1(2)=GRPAR(3,2)*GRPAR(1,3)-GRPAR(1,2)*GRPAR(3,3)
         vec1(3)=GRPAR(1,2)*GRPAR(2,3)-GRPAR(2,2)*GRPAR(1,3)
@@ -149,14 +146,12 @@ contains
         do i=1,3
             u=u+GRPAR(i,1)*vec1(i)
         enddo
+        ! The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3;
+        ! for very flattened grains, it should tend to 1.
         u=abs(u)*0.25D0/(AL(1)*AL(2)*AL(3))
-        !     The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3;
-        !      for very flattened grains, it should tend to 1.
-        !
         !     re-order the basisvectors so that AA(1)>=AA(2)>=AA(3)
         !     find out which one of these corresponds to the original AL(3)
-        !     Case 1: is AL(3) the longest?
-        if (AL(2).le.AL(3).and.AL(1).le.AL(3)) then
+        if (AL(2).le.AL(3).and.AL(1).le.AL(3)) then    ! AL(3) is the longest
             AA(1)=AL(3)
             if(AL(2).ge.AL(1))then
                 AA(2)=AL(2)
@@ -166,32 +161,28 @@ contains
                 AA(3)=AL(2)
             endif
             GEWF=u*(2.0D0*(AA(2)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.0D0)
-        else
-            !       Case 2: is AL(3) the shortest?
-            if (AL(3).le.AL(1).and.AL(3).le.AL(2)) then
-                AA(3)=AL(3)
-                if(AL(1).ge.AL(2))then
-                      AA(1)=AL(1)
-                      AA(2)=AL(2)
-                else
-                      AA(1)=AL(2)
-                      AA(2)=AL(1)
-                endif
-                GEWF=u*(4.D0*(AA(1)-AA(3))*(AA(2)-AA(3))*AA(3)  &
-                      +2.0D0*(AA(2)-AA(3))*AA(3)**2+2.0D0*(AA(1)-AA(3))*AA(3)**2 &
-                      +4.D0*AA(3)**3/3.D0)
+        elseif (AL(3).le.AL(1).and.AL(3).le.AL(2)) then   ! AL(3) is the shortest
+            AA(3)=AL(3)
+            if(AL(1).ge.AL(2))then
+                  AA(1)=AL(1)
+                  AA(2)=AL(2)
             else
-                !         Case 3: AL(3) is neither shortest nor longest
-                AA(2)=AL(3)
-                if(AL(1).ge.AL(2))then
-                    AA(1)=AL(1)
-                    AA(3)=AL(2)
-                else
-                    AA(1)=AL(2)
-                    AA(3)=AL(1)
-                endif
-                GEWF=u*(2.D0*(AA(1)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.D0)
+                  AA(1)=AL(2)
+                  AA(2)=AL(1)
             endif
+            GEWF=u*(4.D0*(AA(1)-AA(3))*(AA(2)-AA(3))*AA(3)  &
+                  +2.0D0*(AA(2)-AA(3))*AA(3)**2+2.0D0*(AA(1)-AA(3))*AA(3)**2 &
+                  +4.D0*AA(3)**3/3.D0)
+        else                                          ! AL(3) is neither shortest nor longest
+            AA(2)=AL(3)
+            if(AL(1).ge.AL(2))then
+                AA(1)=AL(1)
+                AA(3)=AL(2)
+            else
+                AA(1)=AL(2)
+                AA(3)=AL(1)
+            endif
+            GEWF=u*(2.D0*(AA(1)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.D0)
         endif
         if ((IPR.gt.0) .and. (NLIST.eq.1)) write (IMP,103) GEWF
         103  format (/,' GEWF ',3d15.7,/)

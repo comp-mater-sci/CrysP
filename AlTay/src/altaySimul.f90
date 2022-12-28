@@ -17,7 +17,7 @@ module altaySimul
 
     implicit none
 
-      contains
+    contains
 
 ! ALAMEL V3
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE

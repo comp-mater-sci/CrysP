@@ -63,33 +63,33 @@ module altaySliprate
              if (NN.le.5) goto 2
         endif
         if (NN.le.5) goto 6
-!
-!     Let us take all combinations of NN out of NACTIV
-!
-!     "Levels" in the combination search:
-!     (first level:  if NACTIV=8, find all combinations of 7 sl. syst.
-!      second level: find all combinations of 6 - etc.)
-!
-      N0=NACTIV
-      !
-      !     First level
-      !
-       N1=N0-1
-       if (N1.lt.5) goto 6
-       NN=N1
-       do I1=1,N0
-            call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
-            if (ineg.eq.0) then
-               call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-               RCM_GUARD
-            endif
- 110   format (10i5)
-            J=N0-I1
-            if (J.gt.0) IND(J)=INDACT(J+1)
-       enddo
-       !
-       ! Level 2
-       !
+        !
+        !     Let us take all combinations of NN out of NACTIV
+        !
+        !     "Levels" in the combination search:
+        !     (first level:  if NACTIV=8, find all combinations of 7 sl. syst.
+        !      second level: find all combinations of 6 - etc.)
+        !
+        N0=NACTIV
+        !
+        !     First level
+        !
+        N1=N0-1
+        if (N1.lt.5) goto 6
+        NN=N1
+        do I1=1,N0
+             call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
+             if (ineg.eq.0) then
+                call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+                RCM_GUARD
+             endif
+ 110    format (10i5)
+             J=N0-I1
+             if (J.gt.0) IND(J)=INDACT(J+1)
+        enddo
+        !
+        ! Level 2
+        !
         N2=N1-1
         if (N2.lt.5) goto 2
         NN=N2
@@ -112,25 +112,26 @@ module altaySliprate
         ! Level 3
         !
         N3=N2-1
-        if (N3.lt.5) goto 2
-        NN=N3
-        do I1=3,N0
-            do I2=2,I1-1
-                do I3=1,I2-1
-                  j=1
-                  do i=1,N0
-                      if (i.eq.I1.or.i.eq.I2.or.i.eq.I3) cycle
-                      IND(j)=INDACT(i)
-                      j=j+1
-                  enddo
-                  call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
-                  if (ineg.eq.0) then
-                      call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-                      RCM_GUARD
-                  endif
+        if (.not. (N3.lt.5)) then
+            NN=N3
+            do I1=3,N0
+                do I2=2,I1-1
+                    do I3=1,I2-1
+                      j=1
+                      do i=1,N0
+                          if (i.eq.I1.or.i.eq.I2.or.i.eq.I3) cycle
+                          IND(j)=INDACT(i)
+                          j=j+1
+                      enddo
+                      call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
+                      if (ineg.eq.0) then
+                          call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+                          RCM_GUARD
+                      endif
+                    enddo
                 enddo
             enddo
-        enddo
+        endif
    2    if (IPR.eq.2 .and. NLIST.eq.1) write (IMP,100)
  100    format (' Results SLIPRAT')
         if (NOPL.eq.0) goto 6
@@ -279,7 +280,7 @@ module altaySliprate
 
         NOPL=NOPL+1
         if (NOPL.gt.NSTOR) then
-           RCM_RAISE(1,'STORE','Too small dimension NSTOR in SLIPRAT',RCM_RTN)
+            RCM_RAISE(1,'STORE','Too small dimension NSTOR in SLIPRAT',RCM_RTN)
         endif
  100    format (' STORE - increase dimension NSTOR in SLIPRAT,STORE')
         ISTOR(0,NOPL)=NN
