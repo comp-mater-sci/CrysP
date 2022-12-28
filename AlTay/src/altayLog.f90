@@ -1,8 +1,7 @@
 module altay_log
-    use altay_definitions, only: dp
+    use altay_definitions
 
     implicit none
-
 
     !>\name Exit codes from altayHardLaw_DSH subroutines and functions:
     !>@{
