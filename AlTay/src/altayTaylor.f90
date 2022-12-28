@@ -301,7 +301,7 @@ module altayTaylor
             Mgrain = TOTGAMdot / MacroDefRate%vMeqStrainRate
             ! Total, i.e. non-normalized, rhossa:
             rhossaTot = rhossa * MacroDefRate%vMeqStrainRate
-            !
+
             write (IMP2,150) ior,Seq,WorkRate,TAU,Mgrain,ratlon, &
              rhossaTot(1,1),rhossaTot(2,2),rhossaTot(3,3),rhossaTot(2,3),rhossaTot(3,1),rhossaTot(1,2), &
              rhoasa(2,3),rhoasa(3,1),rhoasa(1,2),ssam(1,1),ssam(2,2),ssam(3,3),ssam(2,3),ssam(3,1),ssam(1,2)

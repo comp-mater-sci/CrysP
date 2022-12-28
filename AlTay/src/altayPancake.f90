@@ -22,14 +22,14 @@ module altayPancake
     subroutine pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
         type(DeformationRate),intent(in) :: MacroDefRate
         type(DeformationState),intent(in):: MacroDefState
-        integer, intent(in) :: KOST,NGL,IPR
+        integer, intent(in) :: KOST,NGL,IPR,DI1(5)
         logical, intent(in) :: SWRLX(3)
 
         type(CRSS) :: CRSSmatrix
         real(dp),dimension(3,3),intent(out):: S33, RHOS33, RHOA33
         real(dp),dimension(5):: RHOS, RHOA
         logical :: bas(194),VALID(194)
-        integer DI1(5),DI(10),DI2(10)
+        integer ::  DI(10),DI2(10)
 
         ! common blocks
         real(dp) :: TRFb,GMMAb
@@ -49,8 +49,8 @@ module altayPancake
         common /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),TLXX,TAURLP(8)
 
 
-        real(dp) :: C2(3,3), ccc2(2,194),B(5,5),DACC(10), &
-                    rls(3,3),rla(3,3),rlm(3,3,3),C3(3,3),TRP(10),APRIME(10),B3(10,3),CUst(10)
+        real(dp) :: C2(3,3),B(5,5),DACC(10), &
+                    rls(3,3),rla(3,3),C3(3,3),TRP(10),APRIME(10),B3(10,3),CUst(10)
         !     first index op PLUMIN = nr. of grain
         !     second index = nr. of relaxation
         !     rlm is unit relaxation tensor in macroscopic frame
@@ -115,8 +115,8 @@ module altayPancake
             call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,Cofcos,Cofsin)
             CCC(1:2,M2+1:M12)=0.0
             UU(1:NU,1:NU) = 0.0_dp
-            DI(1:5) = DI1(1:5)
-            DI(6:10) = DI1(1:5)+M11
+            DI(1:5) = DI1
+            DI(6:10) = DI1+M11
             do IL=1,NGR
                 L1=5*(IL-1)
 
@@ -124,9 +124,8 @@ module altayPancake
                 if (NRL /= 0) then
                     do IRL=1,NRL
                         ! Transform relaxation from grain reference frame to macroscopic frame
-                        RLM(:,:,IRL) = rotateSRTensorTo(RELAX(:,:,IRL),Tprinc)
                         !   ... and now to crystal frame:
-                        C3 = rotateSRTensorFrom(RLM(:,:,IRL),TRFb(:,:,IL))
+                        C3 = rotateSRTensorFrom(rotateSRTensorTo(RELAX(:,:,IRL),Tprinc),TRFb(:,:,IL))
                         RLS=(C3+transpose(C3))*0.5_dp
                         RLA=(C3-transpose(C3))*0.5_dp
                         B3(L1+1,IRL)=PLUMIN(IL,IRL)*RLA(2,3)/sqr2
@@ -157,7 +156,7 @@ module altayPancake
                 do I=NGL+1,M11 ! this do-loop will only be executed for NTW>0
                     CCC(2,I+K1)=CCC(1,I+K1)*GETAL
                 end do
-                UU(L1+1:L1+5,L1+1:L1+5)=B(1:5,1:5)
+                UU(L1+1:L1+5,L1+1:L1+5)=B
             enddo
             if (NRL /= 0) CCC(1:2,M2+1:M12)=GETAL
                 ! The coefficient of the relaxations is set to a very large number
@@ -253,8 +252,7 @@ module altayPancake
         NACTIV=0
         do i=1,M11
             j=i+jj
-            ! If one grain does not deform, then DTAU1 comes from the full
-            ! constraints solution.
+            ! If one grain does not deform, then DTAU1 comes from the full constraints solution.
             if (abs(DTAU1(j)).gt.TOL) cycle
             NACTIV=NACTIV+1
             if (NACTIV.le.8) THEN

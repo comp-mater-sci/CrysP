@@ -221,7 +221,7 @@ module altaySimul
                 ifil4=0
                 if (NFILTW.eq.1) write (IMP3,399)
  399            format(1x)
-                clusterloop: DO IOR=1,NPOINT
+                clusterloop: do IOR=1,NPOINT
                     Mgrain=0.0
                     GMMdot=0.0
                     WorkRate = 0.D0
@@ -322,9 +322,9 @@ module altaySimul
                 ! DEFINITION: srh = (||d-D||) / ||D||
                 srh=sqrt(2.D0/3.D0)*srh/TOTGEW
                 SeqAvg=SeqAvg/TOTGEW
-                !
+                
                 MEPSCALL= MacroDefState%IncrvMeqStrain * (ISTP-1)
-                !
+                
                 if (NMSSx /= 0) &
                     call writeMSSRecord(IMP5,MEPSCALL,MacroDefState%AccumvMeqStrain_ToStartOfInc, HGAMCALL,HGAMTOT,SHsam,Mavg,srh,info)
                 select case(KOST)
