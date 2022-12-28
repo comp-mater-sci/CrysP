@@ -36,8 +36,8 @@ module altaySimul
         real(dp) :: CC
         integer :: M11
         common /IGLIJS/ CC(2,96), M11
-        real(dp) :: XM,XEPS,RHO,B5
-        common /DOUBLE/ XM(5,96),XEPS(5),RHO(5),B5(5)
+        real(dp) :: XM,XEPS
+        common /DOUBLE/ XM(5,96),XEPS(5)
         real(dp) :: TRF,C1,C2,GEWF
         integer :: NO,ITW
         common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
@@ -54,7 +54,7 @@ module altaySimul
         real(dp) :: Fmicro
         common /PE/ Fmicro(3,3) !Temporary!!!
 
-        real(dp) :: TEN(3,3),TOTGEW, fi10b(2),phi0b(2),fi20b(2),gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2), &
+        real(dp) :: TEN(3,3),TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2), &
                     CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2), &
                     GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
                     GEULR(3),TG(3,3),CIJ(3,3),STOT(3,3),RHOST(3,3),RHOSm(3,3),FS(3,3),SeqAvg,tau,qgx,gmm1,gmm0,ssqgx
@@ -231,11 +231,11 @@ module altaySimul
                     do L=laml,laml1
                         if (ifil4.eq.NPOINT) exit
                         ifil4=ifil4+1
-                        call DYNFIL4(ifil4,fi10b(L),PHI0b(L),fi20b(L),TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L),GAXESb(1,L), &
-                        GEULRb(1,L),CIJb(1,1,L),TGb(1,1,L),RHOSSb(1,1,L))
-                        fi1b(L)=fi10b(L)*rad2deg
-                        PHIb(L)=PHI0b(L)*rad2deg
-                        fi2b(L)=fi20b(L)*rad2deg
+                        call DYNFIL4(ifil4,fi1b(L),PHIb(L),fi2b(L),TRFb(1:3,1:3,L),GEWFb(L),GMMAb(L),Fb(1:3,1:3,L),GAXESb(1:3,L), &
+                                     GEULRb(1:3,L),CIJb(1:3,1:3,L),TGb(1:3,1:3,L),RHOSSb(1:3,1:3,L))
+                        fi1b(L)=fi1b(L)*rad2deg
+                        PHIb(L)=PHIb(L)*rad2deg
+                        fi2b(L)=fi2b(L)*rad2deg
                     end do
                     laml1=laml1+1
                     if (laml1 > NGR) laml1=1

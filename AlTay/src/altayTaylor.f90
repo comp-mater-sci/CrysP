@@ -37,8 +37,8 @@ module altayTaylor
         real(dp) :: CC
         integer :: M11
         common /IGLIJS/ CC(2,96), M11     ! M11...total number of systems in slip system file (glide+twin),
-        real(dp) :: A1,BB8,RHO,B5
-        common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
+        real(dp) :: A1,BB8
+        common /DOUBLE/ A1(5,96),BB8(5)
         real(dp) :: YY,SHsam,Ssam,RHOSsa
         logical SWRLX
         common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
@@ -188,8 +188,8 @@ module altayTaylor
         real(dp) :: CC
         integer :: M11
         common /IGLIJS/ CC(2,96), M11     ! M11...total number of systems in slip system file (glide+twin),
-        real(dp) :: A1,BB8,RHO,B5
-        common /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
+        real(dp) :: A1,BB8
+        common /DOUBLE/ A1(5,96),BB8(5)
         real(dp) :: YY,SHsam,Ssam,RHOSsa
         logical SWRLX
         common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)

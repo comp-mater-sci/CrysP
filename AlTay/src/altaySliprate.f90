@@ -25,8 +25,8 @@ module altaySliprate
         integer, intent(in) :: M11,IDIMXX,IPR,IOR
         real(dp) :: XX(IDIMXX), SGNN(IDIMXX)
 
-        real(dp) :: A1,BB8,RHO,B5
-        COMMON /DOUBLE/ A1(5,96),BB8(5),RHO(5),B5(5)
+        real(dp) :: A1,BB8
+        COMMON /DOUBLE/ A1(5,96),BB8(5)
 
         real(dp) :: SLIPLP,TLXX,TAURLP
         integer:: NACTIV,INDACT,NLP,INDLP
@@ -212,9 +212,8 @@ module altaySliprate
         integer, intent(out) :: ineg
         real(dp), intent(out) :: SLPR(8),sumsq
 
-
-        real(dp) :: A8,BB8,RHO,B5
-        COMMON /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
+        real(dp) :: A8,BB8
+        COMMON /DOUBLE/ A8(5,96),BB8(5)
 
         real(dp) :: sgnn(IDIMXX)
         real(dp) :: A(13,13),B(13),RES,x,Y

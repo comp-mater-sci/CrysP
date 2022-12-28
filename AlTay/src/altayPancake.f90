@@ -38,8 +38,8 @@ module altayPancake
         real(dp) :: CC
         integer :: M11
         common /IGLIJS/ CC(2,96), M11
-        real(dp) :: A8,BB8,RHO,B5
-        common /DOUBLE/ A8(5,96),BB8(5),RHO(5),B5(5)
+        real(dp) :: A8,BB8
+        common /DOUBLE/ A8(5,96),BB8(5)
         real(dp) :: A1,UU
         common /extra/ A1(10,194),UU(10,10)
         integer :: IOR,ISTP,NBLOC
@@ -140,9 +140,8 @@ module altayPancake
 
                 ! Calculation of time increment by dividing von Mises equivalent
                 ! strain by von Mises equivalent strain rate
-                B5 = Vector5D(C2)/MacroDefRate%vMeqStrainRate ! sym.(3,3) -> (5)
-                BB(L1+1:L1+5)=B5
-                B8(1:5,IL)=B5
+                B8(1:5,IL)=Vector5D(C2)/MacroDefRate%vMeqStrainRate ! sym.(3,3) -> (5)
+                BB(L1+1:L1+5)=B8(1:5,IL)
                 K1=M11*(IL-1)
 
                 ! Retrieve the CRSSmatrix
@@ -231,7 +230,6 @@ module altayPancake
         do i=1,5
             ! If one grain does not deform, the stress UBUF came from the fullconstraints solution.
             spanv(i)=UBUF(i+ii)
-            B5(i)=B8(i,laml)
             RHOS(i)=-sum(A1(i+ii,M2+1:M2+NRL)*gamr(1:NRL))
             BB8(i)=B8(i,laml)+RHOS(i)
             RHOA(i)=-sum(B3(i+ii,1:NRL)*gamr(1:NRL))
