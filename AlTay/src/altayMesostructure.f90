@@ -120,11 +120,11 @@ contains
             write (IMP,409) IGrElm
             409 format (' IGrElm = ',i5)
             do i=1,3
-                  write (IMP,407) (TmatGr(j,i,IGrElm),j=1,3)
+                write (IMP,407) (TmatGr(j,i,IGrElm),j=1,3)
             enddo
             407 format (' TmatGr ',3d15.7)
             do i=1,3
-                  write (IMP,408) (GRPAR(j,i),j=1,3)
+                write (IMP,408) (GRPAR(j,i),j=1,3)
             enddo
             408 format (' GRPAR  ',3d15.7)
         endif
@@ -134,10 +134,10 @@ contains
             100  format (//,' CLUSTER1')
         end if
         !     Calculation of volume affected by the surface
-        do i=1,3,1
+        do i=1,3
             x=0.0
-            do j=1,3,1
-                  X=X+GRPAR(j,i)**2
+            do j=1,3
+                X=X+GRPAR(j,i)**2
             enddo
             AL(i)=sqrt(X)
         enddo
@@ -147,7 +147,7 @@ contains
         vec1(3)=GRPAR(1,2)*GRPAR(2,3)-GRPAR(2,2)*GRPAR(1,3)
         u=0.0D0
         do i=1,3
-              u=u+GRPAR(i,1)*vec1(i)
+            u=u+GRPAR(i,1)*vec1(i)
         enddo
         u=abs(u)*0.25D0/(AL(1)*AL(2)*AL(3))
         !     The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3;
@@ -201,9 +201,7 @@ contains
         IN=3
         IA=1
         IB=2
-        do i=1,3
-            AXX(i,1)=GRPAR(i,IA)
-        enddo
+        AXX(1:3,1)=GRPAR(1:3,IA)
         !       Orientation of interfaces containing axes IA and IB
         !       Normal axis: (vector product)
         AXX(1,3)=GRPAR(2,IA)*GRPAR(3,IB)-GRPAR(3,IA)*GRPAR(2,IB)
@@ -235,35 +233,34 @@ contains
         dlength=norm2(MacroDefRate%StrainModevM)
         !     Transform MacroDefRate%StrainModevM to the "Grb" reference frame
         TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
-        !
+
         relaxI=0.0
         relaxI(1,3)=1.D0
         relaxI(3,1)=1.D0
         relaxII=0.0
         relaxII(2,3)=1.D0
         relaxII(3,2)=1.D0
-        !
+
         dot1=0.0
-        do i=1,3,1
-        do j=1,3,1
-        dot1=dot1+relaxI(i,j)*TDCGr(i,j)
-        enddo
+        do i=1,3
+            do j=1,3
+                dot1=dot1+relaxI(i,j)*TDCGr(i,j)
+            enddo
         enddo
         dot1=dot1/sqrt(2.0D0)/dlength
 
         dot2=0.0
-        do i=1,3,1
-        do j=1,3,1
-        dot2=dot2+relaxII(i,j)*TDCGr(i,j)
-        enddo
+        do i=1,3
+            do j=1,3
+                dot2=dot2+relaxII(i,j)*TDCGr(i,j)
+            enddo
         enddo
         dot2=dot2/sqrt(2.0D0)/dlength
-        !
+
         if(abs(dot1).lt.0.000001.and.abs(dot2).lt.0.000001) then
             ! both relaxations are orthogonal
             Cofcos=0.0
             Cofsin=0.0
-            return
         elseif(abs(dot1).lt.0.000001) then
             if(abs(dot2-1.D0).lt.0.00001) then
                   !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
@@ -278,41 +275,40 @@ contains
                   Cofsin=0.D0
                   return
             endif
-        !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
-        !  new axe-1 be old axe-2
-        !  new axe-2 be minus old axe-1
-        !  The angle is only between relaxation-1 and D0. It is nothing related with relaxation-2.
-        vec1=AXX(1:3,2)
-        vec2=-AXX(1:3,1)
-        AXX(1:3,1)=vec1
-        AXX(1:3,2)=vec2
-        Tprinc = transpose(AXX)
-        !     Transform MacroDefRate%StrainModevM to the new "Grb" reference frame
-        TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
-        !   make sure relaxation-2 is orthogonal
-        dot2=0.0
-        do i=1,3,1
-            do j=1,3,1
-                dot2=dot2+relaxII(i,j)*TDCGr(i,j)
+            !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
+            !  new axe-1 be old axe-2
+            !  new axe-2 be minus old axe-1
+            !  The angle is only between relaxation-1 and D0. It is nothing related with relaxation-2.
+            vec1=AXX(1:3,2)
+            vec2=-AXX(1:3,1)
+            AXX(1:3,1)=vec1
+            AXX(1:3,2)=vec2
+            Tprinc = transpose(AXX)
+            !     Transform MacroDefRate%StrainModevM to the new "Grb" reference frame
+            TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
+            !   make sure relaxation-2 is orthogonal
+            dot2=0.0
+            do i=1,3
+                do j=1,3
+                    dot2=dot2+relaxII(i,j)*TDCGr(i,j)
+                enddo
             enddo
-        enddo
-        ! calculate the cosine for relaxation-1
-        dot1=0.0
-        do i=1,3,1
-            do j=1,3,1
-                dot1=dot1+relaxI(i,j)*TDCGr(i,j)
+            ! calculate the cosine for relaxation-1
+            dot1=0.0
+            do i=1,3
+                do j=1,3
+                    dot1=dot1+relaxI(i,j)*TDCGr(i,j)
+                enddo
             enddo
-        enddo
-        !   normalize
-        dot1=dot1/sqrt(2.0D0)/dlength
+            !   normalize
+            dot1=dot1/sqrt(2.0D0)/dlength
 
-        Cofcos=dot1
-        Cofsin=sqrt(1.0D0-dot1*dot1)
-        return
+            Cofcos=dot1
+            Cofsin=sqrt(1.0D0-dot1*dot1)
+
         elseif(abs(dot2).lt.0.000001) then
             ! Relaxation-2 is already a orthogonal one
             ! calculate the cosine for relaxation-1
-            !
             if(abs(dot1-1.0D0).lt.0.00001) then
                   Cofcos=1.0D0
                   Cofsin=0.0D0
@@ -320,59 +316,56 @@ contains
                   Cofcos=dot1
                   Cofsin=sqrt(1.0D0-dot1*dot1)
             endif
-            return
         else
-            !   need to rotate by a angle < 90 (this angle could be positive or negative)
+            ! need to rotate by a angle < 90 (this angle could be positive or negative)
             tgangle=dot2/dot1
-            x=1.D0/sqrt(1.D0+tgangle*tgangle)
-            y=tgangle/sqrt(1.D0+tgangle*tgangle)
             PrDir=0.0
-            PrDir(1,1)=x
-            PrDir(1,2)=y
-            PrDir(2,1)=-y
-            PrDir(2,2)=x
+            PrDir(1,1)=1.D0/sqrt(1.D0+tgangle*tgangle)
+            PrDir(1,2)=tgangle/sqrt(1.D0+tgangle*tgangle)
+            PrDir(2,1)=-PrDir(1,2)
+            PrDir(2,2)=PrDir(1,1)
             PrDir(3,3)=1.0D0
-            !
+
             !   Prdir(1,) is vector-1 in the GB frame
             !   Prdir(2,) is vector-2 in the GB frame
             !   Transform these two vector in the Sample's frame
-            !
+
             vec1=0.0
-            do i=1,3,1
-                  do j=1,3,1
-                        vec1(i)=vec1(i)+AXX(i,j)*PrDir(1,j)
-            enddo
+            do i=1,3
+                do j=1,3
+                    vec1(i)=vec1(i)+AXX(i,j)*PrDir(1,j)
+                enddo
             enddo
             vec2=0.0
-            do i=1,3,1
-                do j=1,3,1
+            do i=1,3
+                do j=1,3
                     vec2(i)=vec2(i)+AXX(i,j)*PrDir(2,j)
                 enddo
             enddo
-            !
+
             AXX(1:3,1)=vec1
             AXX(1:3,2)=vec2
             Tprinc = transpose(AXX)
-           
+
             ! Transform MacroDefRate%StrainModevM to the new "Grb" reference frame
             TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
             !  make sure relaxation-2 is orthogonal
             dot2=0.0
-            do i=1,3,1
-                do j=1,3,1
+            do i=1,3
+                do j=1,3
                     dot2=dot2+relaxII(i,j)*TDCGr(i,j)
                 enddo
             enddo
-            !
+
             dot1=0.0
-            do i=1,3,1
-                do j=1,3,1
+            do i=1,3
+                do j=1,3
                     dot1=dot1+relaxI(i,j)*TDCGr(i,j)
                 enddo
             enddo
             ! normalize
             dot1=dot1/sqrt(2.0D0)/dlength
-            !
+
             Cofcos=dot1
             Cofsin=sqrt(1.0D0-dot1*dot1)
         endif

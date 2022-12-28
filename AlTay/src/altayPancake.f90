@@ -272,10 +272,7 @@ module altayPancake
         RHOA33(2,1)= -RHOA33(1,2)
 
         if (IPR.EQ.2 .AND. NLIST.eq.1) then
-            WR=0.0
-            do i=1,5
-                WR=WR+spanv(i)*BB(i+ii)
-            end do
+            WR=sum(spanv(1:5)*BB(ii+1:ii+5))
             write (IMP,777) WR
         end if
   777 format (' spanv . BB          :',d11.4)
