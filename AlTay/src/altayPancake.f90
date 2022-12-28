@@ -49,8 +49,8 @@ module altayPancake
         common /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),TLXX,TAURLP(8)
 
 
-        real(dp) :: C2(3,3), ccc2(2,194), TDCb(3,3,2),TRCb(3,3,2), B(5,5),DACC(10), &
-                    rls(3,3,3,2),rla(3,3),rlm(3,3,3),C3(3,3),TRP(10),APRIME(10),B3(10,3),CUst(10)
+        real(dp) :: C2(3,3), ccc2(2,194),B(5,5),DACC(10), &
+                    rls(3,3),rla(3,3),rlm(3,3,3),C3(3,3),TRP(10),APRIME(10),B3(10,3),CUst(10)
         !     first index op PLUMIN = nr. of grain
         !     second index = nr. of relaxation
         !     rlm is unit relaxation tensor in macroscopic frame
@@ -58,7 +58,7 @@ module altayPancake
         real(dp) :: spanv(5),XX(194),STRSS(10),BB(10), &
                     CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
                     B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10), &
-                    GAMR(2),Tprinc(3,3),TAURL(2),XXTOT,COFCOS,COFSIN,WR,GEWF,x8,y8,fakm
+                    GAMR(2),Tprinc(3,3),TAURL(2),XXTOT,COFCOS,COFSIN,GEWF,fakm
         ! CCC (input): critical resolved shear stresses (Tauc)
         ! UU2 (input): initial inverse of "basis" = columns of A1
         !      corresponding to thoses slip systems which are active
@@ -121,36 +121,28 @@ module altayPancake
                 L1=5*(IL-1)
 
                 C2 = rotateSRTensorFrom(MacroDefRate%VelGrad,TRFb(:,:,IL))
-                if (.not. NRL.eq.0) then
+                if (NRL /= 0) then
                     do IRL=1,NRL
                         ! Transform relaxation from grain reference frame to macroscopic frame
                         RLM(:,:,IRL) = rotateSRTensorTo(RELAX(:,:,IRL),Tprinc)
                         !   ... and now to crystal frame:
                         C3 = rotateSRTensorFrom(RLM(:,:,IRL),TRFb(:,:,IL))
-                        do j=1,3
-                            RLS(1:3,j,IRL,IL)=(C3(1:3,J)+C3(J,1:3))*0.5D0
-                            RLA(1:3,j)=(C3(1:3,J)-C3(J,1:3))*0.5D0
-                        end do
+                        RLS=(C3+transpose(C3))*0.5_dp
+                        RLA=(C3-transpose(C3))*0.5_dp
                         B3(L1+1,IRL)=PLUMIN(IL,IRL)*RLA(2,3)/sqr2
                         B3(L1+2,IRL)=PLUMIN(IL,IRL)*RLA(3,1)/sqr2
                         B3(L1+3,IRL)=PLUMIN(IL,IRL)*RLA(1,2)/sqr2
-                        B5= Vector5D(RLS(1:3,1:3,IRL,IL)) ! sym.(3,3) -> (5)
                         !  Insert the relaxations as columns in A1-matrix
-                        j=M2+IRL
-                        do i=1,5
-                            A1(i+L1,j)=B5(i)*PLUMIN(IL,IRL)
-                        end do
+                        A1(L1+1:L1+5,M2+IRL)=Vector5D(RLS)*PLUMIN(IL,IRL)
                     end do
                 endif
-                TDCb(1:3,1:3,IL)=(C2(1:3,1:3)+C2(1:3,1:3))*0.5D0
-                TRCb(1:3,1:3,IL)=(C2(1:3,1:3)-C2(1:3,1:3))*0.5D0
-                B5= Vector5D(TDCb(1:3,1:3,IL)) ! sym.(3,3) -> (5)
-                BB(L1+1:L1+5)=B5(1:5)
+
 
                 ! Calculation of time increment by dividing von Mises equivalent
                 ! strain by von Mises equivalent strain rate
-                B5(1:5)=B5(1:5)/MacroDefRate%vMeqStrainRate
-                B8(1:5,IL)=B5(1:5)
+                B5 = Vector5D(C2)/MacroDefRate%vMeqStrainRate ! sym.(3,3) -> (5)
+                BB(L1+1:L1+5)=B5
+                B8(1:5,IL)=B5
                 K1=M11*(IL-1)
 
                 ! Retrieve the CRSSmatrix
@@ -168,13 +160,9 @@ module altayPancake
                 end do
                 UU(L1+1:L1+5,L1+1:L1+5)=B(1:5,1:5)
             enddo
-            ! Conversion of strain to normalized strain rate
-            BB(1:N)=BB(1:N)/MacroDefRate%vMeqStrainRate
-            if (.not. (NRL.eq.0)) then
+            if (NRL /= 0) CCC(1:2,M2+1:M12)=GETAL
                 ! The coefficient of the relaxations is set to a very large number
                 ! in order to suppress the relaxations in a first call of the TBH program
-                CCC(1:2,M2+1:M12)=GETAL
-            endif
             ! Full constraints calculation
             ! UITVOEREN VAN DE SIMPLEX-SUBROUTINE
             if (IPR.EQ.2 .and. NLIST.eq.1) then
@@ -225,7 +213,7 @@ module altayPancake
                 XXTOT=0.0
                 do i=1,M11
                    j=j+1
-                   XXTOT=XXTOT+ABS(xx(j))
+                   XXTOT=XXTOT+abs(xx(j))
                 enddo
                 if (XXTOT.lt.TOLXX) goto 213
             end do
@@ -244,11 +232,9 @@ module altayPancake
             ! If one grain does not deform, the stress UBUF came from the fullconstraints solution.
             spanv(i)=UBUF(i+ii)
             B5(i)=B8(i,laml)
-            x8=sum(A1(i+ii,M2+1:M2+NRL)*gamr(1:NRL))
-            y8=sum(B3(i+ii,1:NRL)*gamr(1:NRL))
-            BB8(i)=B8(i,laml)-x8
-            RHOS(i)=-x8
-            RHOA(i)=-y8
+            RHOS(i)=-sum(A1(i+ii,M2+1:M2+NRL)*gamr(1:NRL))
+            BB8(i)=B8(i,laml)+RHOS(i)
+            RHOA(i)=-sum(B3(i+ii,1:NRL)*gamr(1:NRL))
         enddo
         S33=    SymMatrix(spanv) ! (5) -> sym.(3,3)
         RHOS33= SymMatrix(RHOS)  ! (5) -> sym.(3,3)
@@ -261,10 +247,7 @@ module altayPancake
         RHOA33(1,3)= -RHOA33(3,1)
         RHOA33(2,1)= -RHOA33(1,2)
 
-        if (IPR.EQ.2 .AND. NLIST.eq.1) then
-            WR=sum(spanv(1:5)*BB(ii+1:ii+5))
-            write (IMP,777) WR
-        end if
+        if (IPR.EQ.2 .AND. NLIST.eq.1) write (IMP,777) sum(spanv(1:5)*BB(ii+1:ii+5))
   777 format (' spanv . BB          :',d11.4)
        ! note that if one of the grains does
        ! not deform at all, the stress and the active slip systems
@@ -286,10 +269,9 @@ module altayPancake
             RCM_RAISE(1,'Pancak2','No active slip systems found',RCM_RTN)
         endif
         do NLP=1,NACTIV
-            j=INDACT(NLP)
-            INDLP(NLP)=j
-            SLIPLP(NLP)=XX(j+jj)
-            TAURLP(NLP)=TAUR1(j+jj)
+            INDLP(NLP)=INDACT(NLP)
+            SLIPLP(NLP)=XX(INDACT(NLP)+jj)
+            TAURLP(NLP)=TAUR1(INDACT(NLP)+jj)
         enddo
     end subroutine
 
@@ -305,18 +287,18 @@ module altayPancake
 
         real(dp) :: zeta
 
-    if((abs(Cofsin) < epsilon(0.D0)) .and. (abs(Cofcos) < epsilon(0.D0))) then
-        ccc2=ccc
-    elseif(abs(Cofcos).lt.0.000000001) then
-        call terminate(stopcode_runtimeerror)
-    else
-        zeta=sum(UBUF(1:5)*BB(1:5)/norm2(BB(1:5)))/sum(UBUF(6:10)*BB(6:10)/norm2(BB(6:10)))
-        if(zeta<0.0_dp) call terminate(stopcode_runtimeerror)
-        ca1=Cofcos*Cofcos*sqrt(1.0_dp/zeta)+Cofsin*Cofsin
-        ca2=Cofcos*Cofcos*sqrt(zeta)+Cofsin*Cofsin
-        CCC2(1:2,1:M11)      =ca1*CCC(1:2,1:M11)
-        CCC2(1:2,1+M11:2*M11)=ca2*CCC(1:2,1+M11:2*M11)
-    endif
+        if((abs(Cofsin) < epsilon(0.D0)) .and. (abs(Cofcos) < epsilon(0.D0))) then
+            ccc2=ccc
+        elseif(abs(Cofcos).lt.0.000000001) then
+            call terminate(stopcode_runtimeerror)
+        else
+            zeta=sum(UBUF(1:5)*BB(1:5)/norm2(BB(1:5)))/sum(UBUF(6:10)*BB(6:10)/norm2(BB(6:10)))
+            if(zeta<0.0_dp) call terminate(stopcode_runtimeerror)
+            ca1=Cofcos*Cofcos*sqrt(1.0_dp/zeta)+Cofsin*Cofsin
+            ca2=Cofcos*Cofcos*sqrt(zeta)+Cofsin*Cofsin
+            CCC2(1:2,1:M11)      =ca1*CCC(1:2,1:M11)
+            CCC2(1:2,1+M11:2*M11)=ca2*CCC(1:2,1+M11:2*M11)
+        endif
     end subroutine
 
 end module
