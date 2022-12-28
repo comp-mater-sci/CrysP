@@ -86,136 +86,138 @@ module altayTBH
            Trp(i) = merge(Tauc(1,Irp(i)),-Tauc(2,Irp(i)),X>=0.0_dp)
         enddo
         iter=0
-    4   iter=iter+1
-        if (iter.le.50) goto 7
-        RCM_RAISE(1,'TBH','Too many iterations.',RCM_RTN)
-    7   if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,251) iter
- 251    format (/,'  ITERATION NR. ',I5,/)
-        call mtprd(SIG,Trp,U,1,N,N,1,NDIM)
-        do j=1,M
-            valid(j)=.TRUE.
-        enddo
-        ! Calculation of Taylor factor
-        FakM=0.0
-        do i=1,N
-            FakM=FakM+SIG(i)*D(i)
-        enddo
-        ! Calculation of resolved shear stress
-        call mtprd(TauR,SIG,A,1,N,M,1,NDIM)
-        if (IPR.GE.JPR .and. NLIST.eq.1) then
-            write (IMP,205)
-            do i=1,N
-                write (IMP,204) D(i),SIG(i)
-            enddo
-            write (IMP,201) FakM
+        do
+            iter=iter+1
+            if (iter > 50) then
+                RCM_RAISE(1,'TBH','Too many iterations.',RCM_RTN)
+            endif
+            if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,251) iter
+ 251        format (/,'  ITERATION NR. ',I5,/)
+            call mtprd(SIG,Trp,U,1,N,N,1,NDIM)
             do j=1,M
-                write (IMP,202) j,TauR(j)
+                valid(j)=.TRUE.
             enddo
-        endif
-  201   format (' M-Factor:',D20.10,/,' Resolved shear stresses:')
-  202   format (I5,30X,D20.10)
-  204   format (D20.10,5X,D20.10)
-  205   format (//,'***************************************************', /,'   Strain                   Stress')
-!       Search for most severly overstressed slip system
-    6   DT=0.0d0
-        jn=0
-        do j=1,M
-            X=TauR(j)
-            Y=merge(X-Tauc(1,j),-X-Tauc(2,j),X>=0.0_dp)
-            if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,919) j,jn,X,Y,Y-DT
-  919       format ('j=',I5,'  jn=',I5,'  TauR(=X)',D15.5,' DTAU(=Y)',D20.10,' Y-DT=',D20.10)
-            if (abs(Y).lt.TOL) then
-                Y=0.0d0
-                X=merge(Tauc(1,j),-Tauc(2,j),X>=0.0_dp)
-                TauR(j)=X
+            ! Calculation of Taylor factor
+            FakM=0.0
+            do i=1,N
+                FakM=FakM+SIG(i)*D(i)
+            enddo
+            ! Calculation of resolved shear stress
+            call mtprd(TauR,SIG,A,1,N,M,1,NDIM)
+            if (IPR.GE.JPR .and. NLIST.eq.1) then
+                write (IMP,205)
+                do i=1,N
+                    write (IMP,204) D(i),SIG(i)
+                enddo
+                write (IMP,201) FakM
+                do j=1,M
+                    write (IMP,202) j,TauR(j)
+                enddo
             endif
-            if (abs(Y-DT).lt.TOL) Y=DT
-            DTAU(j)=Y
-            if (bas(j) .or. (abs(X).lt.TOL) .or. (Y.le.DT)) cycle
-            if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,920) Y,j
-  920       format (' DT(=Y)',D15.5,'  New jn=',I5)
-            DT=Y
-            jn=j
-        enddo
-        if (IPR.GE.JPR.and.jn.gt.0 .and. NLIST.eq.1) write (IMP,913) jn,DT,TauR(jn)
-  913   format ('Overstressed:jn DT',I5, D15.5,'   TauR(jn)',D20.10)
-        if (jn.eq.0) goto 2 ! There is no overstressed slip system
-        ! There is an overstressed slip system, which we will activate now
-        ! Search which active slip system must be desactivated (removed from basis)
-        X=TauR(jn)
-        ! Calculate column Mprime-s*, called Aprime
-        call mtprd(Aprime,U,A(1,jn),N,N,1,NDIM,NDIM)
-        in=0
-        if (IPR.GE.JPR .and.  NLIST.eq.1)write (IMP,203)
-  203   format (' ACTIVE',9x,'Slip rate',11X,'Critical Resolved shear stress',11X,'Aprime')
-        do i=1,N
-            if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,200)Irp(i),DACC(i),Trp(i),Aprime(i)
-  200       format (I5,5x,D26.16,5x,D20.10,5x,D20.10)
-            Z1=Aprime(i)
-            if (abs(Z1).lt.TOL) cycle
-            j=Irp(i)
-            ZR=TauR(j)
-            if (abs(ZR).lt.TOL) then
-                ZR=Dacc(i)
-                if (abs(Zr).lt.TOL) cycle
-            endif
-            ZR=ZR*Z1
-            Z2=Dacc(i)/Z1
-            if (X.gt.0.0d0) then
-                if (ZR.lt.0.0d0) cycle
-                if (in.eq.0) then
-                    in=i
-                    Gmin=Z2
-                else
-                    if (Z2.lt.Gmin) then
-                       Gmin=Z2
-                       in=i
-                    endif
-               endif
-            else
-                if (ZR.gt.0.0d0) cycle
-                if (in.eq.0) then
-                    in=i
-                    Gmin=Z2
-                else
-                    if (Z2.gt.Gmin) then
-                        Gmin=Z2
+  201       format (' M-Factor:',D20.10,/,' Resolved shear stresses:')
+  202       format (I5,30X,D20.10)
+  204       format (D20.10,5X,D20.10)
+  205       format (//,'***************************************************', /,'   Strain                   Stress')
+!           Search for most severly overstressed slip system
+    6       DT=0.0d0
+            jn=0
+            do j=1,M
+                X=TauR(j)
+                Y=merge(X-Tauc(1,j),-X-Tauc(2,j),X>=0.0_dp)
+                if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,919) j,jn,X,Y,Y-DT
+  919           format ('j=',I5,'  jn=',I5,'  TauR(=X)',D15.5,' DTAU(=Y)',D20.10,' Y-DT=',D20.10)
+                if (abs(Y).lt.TOL) then
+                    Y=0.0d0
+                    X=merge(Tauc(1,j),-Tauc(2,j),X>=0.0_dp)
+                    TauR(j)=X
+                endif
+                if (abs(Y-DT).lt.TOL) Y=DT
+                DTAU(j)=Y
+                if (bas(j) .or. (abs(X).lt.TOL) .or. (Y.le.DT)) cycle
+                if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,920) Y,j
+  920           format (' DT(=Y)',D15.5,'  New jn=',I5)
+                DT=Y
+                jn=j
+            enddo
+            if (IPR.GE.JPR.and.jn.gt.0 .and. NLIST.eq.1) write (IMP,913) jn,DT,TauR(jn)
+  913       format ('Overstressed:jn DT',I5, D15.5,'   TauR(jn)',D20.10)
+            if (jn.eq.0) exit ! There is no overstressed slip system
+            ! There is an overstressed slip system, which we will activate now
+            ! Search which active slip system must be desactivated (removed from basis)
+            X=TauR(jn)
+            ! Calculate column Mprime-s*, called Aprime
+            call mtprd(Aprime,U,A(1,jn),N,N,1,NDIM,NDIM)
+            in=0
+            if (IPR.GE.JPR .and.  NLIST.eq.1)write (IMP,203)
+  203       format (' ACTIVE',9x,'Slip rate',11X,'Critical Resolved shear stress',11X,'Aprime')
+            do i=1,N
+                if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,200)Irp(i),DACC(i),Trp(i),Aprime(i)
+  200           format (I5,5x,D26.16,5x,D20.10,5x,D20.10)
+                Z1=Aprime(i)
+                if (abs(Z1).lt.TOL) cycle
+                j=Irp(i)
+                ZR=TauR(j)
+                if (abs(ZR).lt.TOL) then
+                    ZR=Dacc(i)
+                    if (abs(Zr).lt.TOL) cycle
+                endif
+                ZR=ZR*Z1
+                Z2=Dacc(i)/Z1
+                if (X.gt.0.0d0) then
+                    if (ZR.lt.0.0d0) cycle
+                    if (in.eq.0) then
                         in=i
+                        Gmin=Z2
+                    else
+                        if (Z2.lt.Gmin) then
+                           Gmin=Z2
+                           in=i
+                        endif
+                   endif
+                else
+                    if (ZR.gt.0.0d0) cycle
+                    if (in.eq.0) then
+                        in=i
+                        Gmin=Z2
+                    else
+                        if (Z2.gt.Gmin) then
+                            Gmin=Z2
+                            in=i
+                        endif
                     endif
                 endif
+            enddo
+            if (in.eq.0) then
+                RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
             endif
+  101       format (' Subroutine TBH - solution unbounded')
+            if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,912) in,jn,Gmin
+  912       format ('in jn Gmin',2I5, D15.5)
+            if (abs(Gmin).gt.0.0D0) goto 5
+    5       Z1=Aprime(in)
+            do i=1,N
+                CUst(i)=-Aprime(i)
+            enddo
+            CUst(in)=1.0d0
+            do i=1,N
+                CUst(i)=CUst(i)/Z1
+            enddo
+            UU=U
+            call Ust(U,UU,CUst,in,N,N,NDIM)
+            ! Updating of Dacc
+            DD=Dacc
+            call Ust(Dacc,DD,CUst,in,N,1,N)
+            if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,929) in,Gmin,Dacc(in)
+  929       format ('updated slip rate in',I5,2D15.5)
+            ! Updating of basis: bas and Irp
+            bas(Irp(in))=.FALSE.
+            bas(jn)=.TRUE.
+            Irp(in)=jn
+            Trp(in) = merge(Tauc(1,jn),-Tauc(2,jn),(Dacc(in).ge.0.0d0).and.(X.gt.0.0d0))
+            ! Go back to stress calculation
         enddo
-        if (in.eq.0) then
-            RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
-        endif
-  101   format (' Subroutine TBH - solution unbounded')
-        if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,912) in,jn,Gmin
-  912   format ('in jn Gmin',2I5, D15.5)
-        if (abs(Gmin).gt.0.0D0) goto 5
-    5   Z1=Aprime(in)
-        do i=1,N
-            CUst(i)=-Aprime(i)
-        enddo
-        CUst(in)=1.0d0
-        do i=1,N
-            CUst(i)=CUst(i)/Z1
-        enddo
-        UU=U
-        call Ust(U,UU,CUst,in,N,N,NDIM)
-        ! Updating of Dacc
-        DD=Dacc
-        call Ust(Dacc,DD,CUst,in,N,1,N)
-        if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,929) in,Gmin,Dacc(in)
-  929   format ('updated slip rate in',I5,2D15.5)
-        ! Updating of basis: bas and Irp
-        bas(Irp(in))=.FALSE.
-        bas(jn)=.TRUE.
-        Irp(in)=jn
-        Trp(in) = merge(Tauc(1,jn),-Tauc(2,jn),(Dacc(in).ge.0.0d0).and.(X.gt.0.0d0))
-        ! Go back to stress calculation
-        goto 4
         ! Solution was found.
-    2   do j=1,M
+        do j=1,M
             Gdot(j)=0.0
         enddo
         if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,212)
