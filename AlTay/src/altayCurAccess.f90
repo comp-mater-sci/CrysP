@@ -39,14 +39,14 @@ contains
             if (info /= 0) exit
         enddo
 
- 400format (I6,f10.5,2X,3f10.5,2X,f10.5)
- 401format (' CRYSTAL WEIGHT ',5X,'phi1',6X,'PHI',7X,'phi2',6X,'  GAMMA')
- 402format (/,' Def. Step    ','Number of orientations',27X,          &
+ 400 format (I6,f10.5,2X,3f10.5,2X,f10.5)
+ 401 format (' CRYSTAL WEIGHT ',5X,'phi1',6X,'PHI',7X,'phi2',6X,'  GAMMA')
+ 402 format (/,' Def. Step    ','Number of orientations',27X,          &
     2X,'F(1,1)',4X,'F(2,1)',4X,'F(3,1)',4X,                           &
     2X,'F(1,2)',4X,'F(2,2)',4X,'F(3,2)',4X,                           &
     2X,'F(1,3)',4X,'F(2,3)',4X,'F(3,3)',                              &
     6X,'a',9X,'b',9x,'c',9x,'G-phi1',4x,'G-PHI',4x,'G-phi2')
- 403format(I6,5X,i8,41x,3(2X,3F10.6),2(2x,3f10.5))
+ 403 format(I6,5X,i8,41x,3(2X,3F10.6),2(2x,3f10.5))
 
     end subroutine
 
