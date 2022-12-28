@@ -229,16 +229,7 @@ module altayTaylor
         TRC(1)=RCcryst(3,2)+RHOAcrys(3,2)
         TRC(2)=RCcryst(1,3)+RHOAcrys(1,3)
         TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
-        WorkRate=0.0
-        do i=1,M11
-            if (GAMdot(i).GT.0.0) then
-                !positive slip rate
-                WorkRate= WorkRate + CC(1,i)*GAMdot(i)
-            else
-                !negative or 0 slip rate
-                WorkRate= WorkRate - CC(2,i)*GAMdot(i)
-            endif
-        end do
+        WorkRate = sum(merge(CC(1,1:M11)*GAMdot(1:M11),-CC(2,1:M11)*GAMdot(1:M11),GAMdot(1:M11)>0.0))
         Seq=WorkRate / MacroDefRate%vMeqStrainRate
         J=M
         if(NLIST.eq.1) write (IMP,301) WorkRate

@@ -212,11 +212,7 @@ module altayTBH
       bas(Irp(in))=.FALSE.
       bas(jn)=.TRUE.
       Irp(in)=jn
-      if ((Dacc(in).ge.0.0d0).and.(X.gt.0.0d0)) then
-          Trp(in)=Tauc(1,jn)
-      else
-          Trp(in)=-Tauc(2,jn)
-      endif
+      Trp(in) = merge(Tauc(1,jn),-Tauc(2,jn),(Dacc(in).ge.0.0d0).and.(X.gt.0.0d0))
 !     Go back to stress calculation
       goto 4
 !     Solution was found.
@@ -272,4 +268,3 @@ module altayTBH
     end subroutine
 
 end module
-
