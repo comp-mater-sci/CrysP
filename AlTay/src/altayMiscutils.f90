@@ -32,20 +32,6 @@ module altayMiscutils
 
     end subroutine
 
-    !> This subroutine extracts the first word from str, fills
-    !> the remaining part with spaces and removes all leading blanks.
-    subroutine stripComment(str)
-        character(len=*),intent(inout) :: str
-        integer :: iblank
-
-        str = adjustl(str)
-        ! Scan for the first blank
-        iblank = index(str,' ')
-        if (iblank.GT.0) str(iblank:)=' '
-
-    end subroutine
-
-
     subroutine writeMSSHeader(ounit,info)
         integer,intent(in)      :: ounit
         integer,intent(out)     :: info

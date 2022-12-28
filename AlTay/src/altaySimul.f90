@@ -188,7 +188,7 @@ module altaySimul
                      ,T7,'EquivStress',T23,'WorkRate',T37,'tau_ref',T56,'M',T64,       &
                      'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS' &
                      ,/,1x,278('*'))
-                    !
+
                 endif
                 if (NLIST.eq.1) then
                     do i=1,3
@@ -196,15 +196,14 @@ module altaySimul
                     enddo
                 end if
  407            format (' F ',3d15.7)
-                !
+
                 nrstep=nrstep+1
-                !
+
                 call Update_DeformationState(MacroDefRate,MacroDefState,info)
-                !
                 call UPDATC(CIJ,MacroDefState%IncrDefGrad_inverse)
                 call GETANG(CIJ,GAXES,GEULR,TG)
                 RCM_GUARD
-                ! We can choose not to update the texture data
+
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
                       call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 !
@@ -256,7 +255,6 @@ module altaySimul
                     else
                         GEWF=qgx
                     end if
-                    !
                     !  In case of NGR=2:
                     !     LAML=1: TAYLOR
                     !             - has the present and the next orientation available

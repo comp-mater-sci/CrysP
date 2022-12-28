@@ -265,24 +265,16 @@ contains
         info = altaySub_Exception
         !
         do i = 1, steps%nSimulCalls
-              steps%this = i
-              !
-              if (steps%simulCalls(i)%input%do_output_init) then
-                    NFILE0 = 1
-              else
-                    NFILE0 = 0
-              endif
+            steps%this = i
+            NFILE0 = merge(1,0,steps%simulCalls(i)%input%do_output_init)
+            call Set_DeformationRate(steps%simulCalls(i)%input%dgf,MacroDefRate)
+            ! Run simul.
+            call SIMUL(1,NFILE0,MacroDefRate)
+            if (RCM_signal()) then
+                  RCM_RAISE(info,'runSteps','SIMUL has thrown exception',RCM_RTN)
+            endif
 
-              !Set the macro velocity gradient in module MacroKinematic
-              call Set_DeformationRate(steps%simulCalls(i)%input%dgf,MacroDefRate)
-
-              ! Run simul.
-              call SIMUL(1,NFILE0,MacroDefRate)
-              if (RCM_signal()) then
-                    RCM_RAISE(info,'runSteps','SIMUL has thrown exception',RCM_RTN)
-              endif
-
-              if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
+            if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
         enddo
 
         info = altaySub_OK
@@ -300,8 +292,8 @@ contains
         if (acnf%output_config%nfile == 1) call CURwriteBlock(IMP1,info)
         if (info /= 0) return
         select case(acnf%hardening%HardLawID)
-        case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-            if (acnf%output_config%npebp == 1) info = KS_writeState(IMP4)
+            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+                if (acnf%output_config%npebp == 1) info = KS_writeState(IMP4)
         endselect
         if (info /= 0) return
 

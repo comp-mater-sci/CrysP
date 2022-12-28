@@ -21,15 +21,15 @@ contains
         if (openTextureFile(nunit,fname,texfmt,'r') /= 0) return
 
         select case(texfmt)
-        case(TF_SMT)
-              call SMTreadHeader(nunit,filetitle,info)
-              if (info /= 0) return
-              call SMTreadBlock(nunit,info)
+            case(TF_SMT)
+                call SMTreadHeader(nunit,filetitle,info)
+                if (info /= 0) return
+                call SMTreadBlock(nunit,info)
 
-        case(TF_CUR)
-              call CURreadTitle(nunit,filetitle,info)
-              if (info /= 0) return
-              call CURreadBlock(nunit,iblock,info)
+            case(TF_CUR)
+                call CURreadTitle(nunit,filetitle,info)
+                if (info /= 0) return
+                call CURreadBlock(nunit,iblock,info)
 
         end select
         close(nunit)

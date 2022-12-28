@@ -107,10 +107,9 @@ module altayTaylor
                 endif
                 A2=0.0
                 do j=1,M11
-                    do i=1,5
-                        A2(i,j)=A1(i,j)
-                        A2(i+5,j+M11)=A1(i,j)
-                end do; end do
+                    A2(1:5,j)=A1(1:5,j)
+                    A2(6:10,j+M11)=A1(1:5,j)
+                end do
 
             case(2) ! Write velocity gradient, strain rate and spin tensor; then check norm of strain rate
                 if(NLIST.eq.1) write (IMP,203)
@@ -264,8 +263,7 @@ module altayTaylor
         if (NTW.EQ.0) goto 31
         X=0.
         do I=1,NTW
-            J=I+NGL
-            X=X+GAMdot(J)/G(I)
+            X=X+GAMdot(I+NGL)/G(I)
             VOLFR(I)=X
         end do
         if (X > 1.) then

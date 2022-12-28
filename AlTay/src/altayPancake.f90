@@ -19,7 +19,7 @@ module altayPancake
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-    subroutine Pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
+    subroutine pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
         type(DeformationRate),intent(in) :: MacroDefRate
         type(DeformationState),intent(in):: MacroDefState
         integer, intent(in) :: KOST,NGL,IPR
@@ -128,10 +128,8 @@ module altayPancake
                         !   ... and now to crystal frame:
                         C3 = rotateSRTensorFrom(RLM(:,:,IRL),TRFb(:,:,IL))
                         do j=1,3
-                            do i=1,3
-                                RLS(i,j,IRL,IL)=(C3(I,J)+C3(J,I))*0.5D0
-                                RLA(i,j)=(C3(I,J)-C3(J,I))*0.5D0
-                            end do
+                            RLS(1:3,j,IRL,IL)=(C3(1:3,J)+C3(J,1:3))*0.5D0
+                            RLA(1:3,j)=(C3(1:3,J)-C3(J,1:3))*0.5D0
                         end do
                         B3(L1+1,IRL)=PLUMIN(IL,IRL)*RLA(2,3)/sqr2
                         B3(L1+2,IRL)=PLUMIN(IL,IRL)*RLA(3,1)/sqr2
@@ -203,9 +201,7 @@ module altayPancake
             else
                 do IRL=1,NRL
                     if (.not.swrlx(IRL)) exit
-                    j=M2+IRL
-                    CCC(1,j)=TAURL(IRL)
-                    CCC(2,j)=TAURL(IRL)
+                    CCC(1:2,M2+IRL)=TAURL(IRL)
                 end do
                 if (IPR.EQ.2 .and. NLIST.eq.1) write(IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
                 ! Second call of Simplex (relaxed constraints)
@@ -221,9 +217,7 @@ module altayPancake
                     RCM_RAISE(1,'Pancak2','Problem with TBH',RCM_RTN)
                 endif
                 ! GAMR will contain the relaxed shears:
-                do IRL=1,NRL
-                    gamr(IRL)=XX(M2+IRL)
-                enddo
+                gamr(1:NRL)=XX(M2+1:M2+NRL)
             endif
             ! Check whether 1 grain does not deform at all.
             j=0
@@ -247,15 +241,11 @@ module altayPancake
         CC(1:2,1:M11)=CCC(1:2,jj+1:jj+M11)
         ii=5*(laml-1)
         do i=1,5
-            ! If one grain does not deform, note that stress UBUF has come from the fullconstraints solution.
+            ! If one grain does not deform, the stress UBUF came from the fullconstraints solution.
             spanv(i)=UBUF(i+ii)
             B5(i)=B8(i,laml)
-            x8=0.0
-            y8=0.0
-            do IRL=1,NRL
-                x8=x8+A1(i+ii,M2+IRL)*gamr(IRL)
-                y8=y8+B3(i+ii,IRL)*gamr(IRL)
-            enddo
+            x8=sum(A1(i+ii,M2+1:M2+NRL)*gamr(1:NRL))
+            y8=sum(B3(i+ii,1:NRL)*gamr(1:NRL))
             BB8(i)=B8(i,laml)-x8
             RHOS(i)=-x8
             RHOA(i)=-y8
