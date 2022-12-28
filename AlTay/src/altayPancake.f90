@@ -58,15 +58,28 @@ module altayPancake
        B(5,5),DACC(10),                                     &
        rls(3,3,3,2),rla(3,3),rlm(3,3,3),C3(3,3),TRP(10),APRIME(10),      &
        B3(10,3),CUst(10)
-!     first index op PLUMIN = nr. of grain
-!     second index = nr. of relaxation
-!     rlm is unit relaxation tensor in macroscopic frame
-!     rls and rla in crystal frame (symmetric and anti-sym. part)
+      !     first index op PLUMIN = nr. of grain
+      !     second index = nr. of relaxation
+      !     rlm is unit relaxation tensor in macroscopic frame
+      !     rls and rla in crystal frame (symmetric and anti-sym. part)
       real(dp) :: spanv(5),XX(194),STRSS(10),BB(10), &
                CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
                B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10), &
                GAMR(2),Tprinc(3,3),TAURL(2),XXTOT,X,COFCOS,COFSIN,WR,GEWF,x8,y8,fakm
-
+! CCC (input): critical resolved shear stresses (Tauc)
+! UU2 (input): initial inverse of "basis" = columns of A1
+!      corresponding to thoses slip systems which are active
+!      according to first guess
+! UU (output): inverse of final "basis" (active slip systems)
+! DI2 (input): indices of basis corresponding to UU2
+! DI (output): indices of basis corresponding to UU
+! Dacc (output): slip rates in basis DI
+! XX (output): slip rates (numbered from 1 to M12)
+! STRSS (output): stresses, in crystal frames
+!                  (2 sets of stresses, one for each crystal)
+! Fakm: rate of plastic work of the 2 crsytals together
+! Taur (output) resolved shear stress (can be + or -)
+! DTAU (output)=abs(Taur)-Tauc
       data B3/30*0.0D0/
       real(dp), parameter :: SQR2=sqrt(0.5_dp),TOLXX=5.0e-6_dp
 !     Definition of the two relaxations, representing a
@@ -192,195 +205,163 @@ module altayPancake
  218  format(/' COST FUNCTION',/,(2x,12F10.4))
       if (IPR.EQ.2 .and. NLIST.eq.1) write (IMP,219) (BB(I),I=1,N)
  219  format (' right hand side',/,(2x,10F10.4),/)
-!     First call of Simplex (full constraints)
-      if (IPR.eq.2 .and. NLIST.eq.1) write (IMP,400) IOR,ISTP,NBLOC
- 400  format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
-      call TBH(IPR,NDIM,N,M2,A1,BB,CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
-! CCC (input): critical resolved shear stresses (Tauc)
-! UU (input): initial inverse of "basis" = columns of A1
-!      corresponding to thoses slip systems which are active
-!      according to first guess
-! UU2 (output): inverse of final "basis" (active slip systems)
-! DI (input): indices of basis corresponding to UU
-! DI2 (output): indices of basis corresponding to UU2
-! Dacc (output): slip rates in basis DI
-! XX (output): slip rates (numbered from 1 to M12)
-! UBUF (output): stresses, in crystal frames
-!                  (2 sets of stresses, one for each crystal)
-! Fakm: rate of plastic work of the 2 crsytals together
-! Taur (output) resolved shear stress (can be + or -)
-! DTAU (output)=abs(Taur)-Tauc
-      RCM_GUARD
-!
-  345 if (IPR.lt.4) goto 220
-      RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
-  220 DTAU1=DTAU
-      TAUR1=TAUR
+      !     First call of Simplex (full constraints)
+          if (IPR.eq.2 .and. NLIST.eq.1) write (IMP,400) IOR,ISTP,NBLOC
+ 400      format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
+          call TBH(IPR,NDIM,N,M2,A1,BB,CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
+          RCM_GUARD
 
-      if (NRL.eq.0) then
-            UU=UU2
-            DI=DI2
-            STRSS=UBUF
-            goto 89
-      endif
-      do IRL=1,NRL
-          if (.not.swrlx(IRL)) exit
-          j=M2+IRL
-          CCC(1,j)=TAURL(IRL)
-          CCC(2,j)=TAURL(IRL)
-      end do
-      if (IPR.EQ.2 .and. NLIST.eq.1) write(IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
-!     Second call of Simplex (relaxed constraints)
-      if (IPR.eq.2 .and. NLIST.eq.1) write(IMP,401)
- 401  format (' Second call of TBH')
-      call TBH(IPR,N,N,M12,A1,BB,                                        &
-       CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,                             &
-       Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
-! CCC (input): critical resolved shear stresses (Tauc)
-! UU2 (input): initial inverse of "basis" = columns of A1
-!      corresponding to thoses slip systems which are active
-!      according to first guess
-! UU (output): inverse of final "basis" (active slip systems)
-! DI2 (input): indices of basis corresponding to UU2
-! DI (output): indices of basis corresponding to UU
-! Dacc (output): slip rates in basis DI
-! XX (output): slip rates (numbered from 1 to M12)
-! STRSS (output): stresses, in crystal frames
-!                  (2 sets of stresses, one for each crystal)
-! Fakm: rate of plastic work of the 2 crsytals together
-! Taur (output) resolved shear stress (can be + or -)
-! DTAU (output)=abs(Taur)-Tauc
-      RCM_GUARD
+  345     if (IPR.lt.4) goto 220
+          RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
+  220     DTAU1=DTAU
+          TAUR1=TAUR
 
-      if (IPR.ge.4) then
-         if(NLIST.eq.1) write (IMP,222) IPR,IOR,ISTP,NBLOC
-         write (*,222) IPR,IOR,ISTP,NBLOC
- 222     format (' Pancak2 222 - Problem with TBH',/,                    &
-         ' IPR IOR, ISTP, NBLOC=',4I5)
-          RCM_RAISE(1,'Pancak2','Problem with TBH',RCM_RTN)
-      endif
-!     GAMR will contain the relaxed shears:
- 204  if (NRL.gt.0) then
-                       do IRL=1,NRL
-                         gamr(IRL)=XX(M2+IRL)
-                       enddo
-                    endif
-!     Check whether 1 grain does not deform at all.
-  89  j=0
-      do IG=1,NGR
-          XXTOT=0.0
-          do i=1,M11
-             j=j+1
-             XXTOT=XXTOT+ABS(xx(j))
-          enddo
-          if (XXTOT.lt.TOLXX) goto 213
-      end do
-!     If all grains have a non-zero slip, do the following:
-  99  DTAU1=DTAU
-      TAUR1=TAUR
-      UBUF=STRSS
- 213  if(NLIST.eq.1) write (IMP,780) gamr
- 780  format (' RELAXATIONS:                   ',2d12.4)
-   2  continue
-!
-!     From here on, output is produced for grain number "laml"
-!
-   3  continue
-      jj=M11*(laml-1)
-      do j=1,M11
-          do jsgn=1,2
-             CC(jsgn,j)=CCC(jsgn,j+jj)
-          enddo
-      end do
-      ii=5*(laml-1)
-      do i=1,5
-      ! If one grain does not deform, note that stress UBUF has come from the fullconstraints solution.
-      spanv(i)=UBUF(i+ii)
-      B5(i)=B8(i,laml)
-      x8=0.0
-      y8=0.0
-      if (NRL.gt.0) then
-                     do IRL=1,NRL
+          if (NRL.eq.0) then
+                UU=UU2
+                DI=DI2
+                STRSS=UBUF
+                goto 89
+          endif
+          do IRL=1,NRL
+              if (.not.swrlx(IRL)) exit
+              j=M2+IRL
+              CCC(1,j)=TAURL(IRL)
+              CCC(2,j)=TAURL(IRL)
+          end do
+          if (IPR.EQ.2 .and. NLIST.eq.1) write(IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
+          ! Second call of Simplex (relaxed constraints)
+          if (IPR.eq.2 .and. NLIST.eq.1) write(IMP,401)
+ 401      format (' Second call of TBH')
+          call TBH(IPR,N,N,M12,A1,BB,CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
+          RCM_GUARD
+
+          if (IPR.ge.4) then
+             if(NLIST.eq.1) write (IMP,222) IPR,IOR,ISTP,NBLOC
+             write (*,222) IPR,IOR,ISTP,NBLOC
+ 222         format (' Pancak2 222 - Problem with TBH',/,' IPR IOR, ISTP, NBLOC=',4I5)
+              RCM_RAISE(1,'Pancak2','Problem with TBH',RCM_RTN)
+          endif
+!         GAMR will contain the relaxed shears:
+ 204      if (NRL.gt.0) then
+              do IRL=1,NRL
+                  gamr(IRL)=XX(M2+IRL)
+              enddo
+          endif
+          ! Check whether 1 grain does not deform at all.
+  89      j=0
+          do IG=1,NGR
+              XXTOT=0.0
+              do i=1,M11
+                 j=j+1
+                 XXTOT=XXTOT+ABS(xx(j))
+              enddo
+              if (XXTOT.lt.TOLXX) goto 213
+          end do
+          ! If all grains have a non-zero slip, do the following:
+  99      DTAU1=DTAU
+          TAUR1=TAUR
+          UBUF=STRSS
+ 213      if(NLIST.eq.1) write (IMP,780) gamr
+ 780      format (' RELAXATIONS:                   ',2d12.4)
+   2      continue
+          !
+          !     From here on, output is produced for grain number "laml"
+          !
+   3      continue
+          jj=M11*(laml-1)
+          do j=1,M11
+              do jsgn=1,2
+                 CC(jsgn,j)=CCC(jsgn,j+jj)
+              enddo
+          end do
+          ii=5*(laml-1)
+          do i=1,5
+              ! If one grain does not deform, note that stress UBUF has come from the fullconstraints solution.
+              spanv(i)=UBUF(i+ii)
+              B5(i)=B8(i,laml)
+              x8=0.0
+              y8=0.0
+              if (NRL.gt.0) then
+                   do IRL=1,NRL
                        x8=x8+A1(i+ii,M2+IRL)*gamr(IRL)
                        y8=y8+B3(i+ii,IRL)*gamr(IRL)
-                     enddo
-                    endif
-      BB8(i)=B8(i,laml)-x8
-      RHOS(i)=-x8
-      RHOA(i)=-y8
-      enddo
-      S33=    SymMatrix(spanv) ! (5) -> sym.(3,3)
-      RHOS33= SymMatrix(RHOS)  ! (5) -> sym.(3,3)
-      !Conversion of RHOA to dim(3,3)
-      RHOA33=0.0d0
-      RHOA33(2,3)= RHOA(1)*sqr2*MacroDefRate%vMeqStrainRate
-      RHOA33(3,1)= RHOA(2)*sqr2*MacroDefRate%vMeqStrainRate
-      RHOA33(1,2)= RHOA(3)*sqr2*MacroDefRate%vMeqStrainRate
-      RHOA33(3,2)= -RHOA33(2,3)
-      RHOA33(1,3)= -RHOA33(3,1)
-      RHOA33(2,1)= -RHOA33(1,2)
-!
-      if (IPR.EQ.2 .AND. NLIST.eq.1) then
-        WR=0.0
-        do i=1,5
-            WR=WR+spanv(i)*BB(i+ii)
-        end do
-        write (IMP,777) WR
-      end if
+                   enddo
+              endif
+              BB8(i)=B8(i,laml)-x8
+              RHOS(i)=-x8
+              RHOA(i)=-y8
+          enddo
+          S33=    SymMatrix(spanv) ! (5) -> sym.(3,3)
+          RHOS33= SymMatrix(RHOS)  ! (5) -> sym.(3,3)
+          !Conversion of RHOA to dim(3,3)
+          RHOA33=0.0d0
+          RHOA33(2,3)= RHOA(1)*sqr2*MacroDefRate%vMeqStrainRate
+          RHOA33(3,1)= RHOA(2)*sqr2*MacroDefRate%vMeqStrainRate
+          RHOA33(1,2)= RHOA(3)*sqr2*MacroDefRate%vMeqStrainRate
+          RHOA33(3,2)= -RHOA33(2,3)
+          RHOA33(1,3)= -RHOA33(3,1)
+          RHOA33(2,1)= -RHOA33(1,2)
+
+        if (IPR.EQ.2 .AND. NLIST.eq.1) then
+          WR=0.0
+          do i=1,5
+              WR=WR+spanv(i)*BB(i+ii)
+          end do
+          write (IMP,777) WR
+        end if
   777 format (' spanv . BB          :',d11.4)
-!     note that if one of the grains does
-!      not deform at all, the stress and the active slip systems
-!       of the full constraintssolution are used.)
-      NACTIV=0
-      do 305 i=1,M11
-          j=i+jj
-          ! If one grain does not deform, then DTAU1 comes from the full
-          ! constraints solution.
-          if (ABS(DTAU1(j)).gt.TOL) goto 305
-          NACTIV=NACTIV+1
-          if (NACTIV.le.8) THEN
-              INDACT(NACTIV)=i
-          ELSE
-              RCM_RAISE(1,'Pancak2','Too many active slip systems',RCM_RTN)
-          endif
- 305  continue
-      if (NACTIV.eq.0) then
-          RCM_RAISE(1,'Pancak2','No active slip systems found',RCM_RTN)
-      endif
-      do NLP=1,NACTIV
-          j=INDACT(NLP)
-          i1=j
-          INDLP(NLP)=i1
-          SLIPLP(NLP)=XX(j+jj)
-          TAURLP(NLP)=TAUR1(j+jj)
-      enddo
-      END SUBROUTINE
+       ! note that if one of the grains does
+       ! not deform at all, the stress and the active slip systems
+       ! of the full constraintssolution are used.)
+        NACTIV=0
+        do i=1,M11
+            j=i+jj
+            ! If one grain does not deform, then DTAU1 comes from the full
+            ! constraints solution.
+            if (abs(DTAU1(j)).gt.TOL) cycle
+            NACTIV=NACTIV+1
+            if (NACTIV.le.8) THEN
+                INDACT(NACTIV)=i
+            else
+                RCM_RAISE(1,'Pancak2','Too many active slip systems',RCM_RTN)
+            endif
+        enddo
+        if (NACTIV.eq.0) then
+            RCM_RAISE(1,'Pancak2','No active slip systems found',RCM_RTN)
+        endif
+        do NLP=1,NACTIV
+            j=INDACT(NLP)
+            i1=j
+            INDLP(NLP)=i1
+            SLIPLP(NLP)=XX(j+jj)
+            TAURLP(NLP)=TAUR1(j+jj)
+        enddo
+    end subroutine
 
 
-      subroutine Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,UBUF,M11,ca1,ca2)
-      ! BB is direction of the relaxation-1
-      ! UBUF is the BISHOP-HILL stress from TBH routine, in crystal frame
-      real(dp), intent(in) :: ccc(2,194)
-      integer, intent(in) :: M11
-      real(dp), intent(out) :: ccc2(2,194)
-      real(dp), intent(out) :: ca1,ca2
-      real(dp), intent(in) :: Cofcos,Cofsin
-      real(dp), intent(in) :: BB(10),UBUF(10)
+    subroutine Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,UBUF,M11,ca1,ca2)
+        real(dp), intent(in) :: ccc(2,194)
+        integer, intent(in) :: M11
+        real(dp), intent(out) :: ccc2(2,194)
+        real(dp), intent(out) :: ca1,ca2
+        real(dp), intent(in) :: Cofcos,Cofsin
+        real(dp), intent(in) :: BB(10), & !< direction of the relaxation-1
+          UBUF(10) !< BISHOP-HILL stress from TBH routine, in crystal frame
 
-      real(dp) :: zeta
-!
-      if((abs(Cofsin) < epsilon(0.D0)) .and. (abs(Cofcos) < epsilon(0.D0))) then
-          ccc2=ccc
-      elseif(abs(Cofcos).lt.0.000000001) then
-          call terminate(stopcode_runtimeerror)
-      else
-          zeta=sum(UBUF(1:5)*BB(1:5)/norm2(BB(1:5)))/sum(UBUF(6:10)*BB(6:10)/norm2(BB(6:10)))
-          if(zeta<0.0_dp) call terminate(stopcode_runtimeerror)
-          ca1=Cofcos*Cofcos*sqrt(1.0_dp/zeta)+Cofsin*Cofsin
-          ca2=Cofcos*Cofcos*sqrt(zeta)+Cofsin*Cofsin
-          CCC2(1:2,1:M11)      =ca1*CCC(1:2,1:M11)
-          CCC2(1:2,1+M11:2*M11)=ca2*CCC(1:2,1+M11:2*M11)
-      endif
-      end subroutine
+        real(dp) :: zeta
+
+    if((abs(Cofsin) < epsilon(0.D0)) .and. (abs(Cofcos) < epsilon(0.D0))) then
+        ccc2=ccc
+    elseif(abs(Cofcos).lt.0.000000001) then
+        call terminate(stopcode_runtimeerror)
+    else
+        zeta=sum(UBUF(1:5)*BB(1:5)/norm2(BB(1:5)))/sum(UBUF(6:10)*BB(6:10)/norm2(BB(6:10)))
+        if(zeta<0.0_dp) call terminate(stopcode_runtimeerror)
+        ca1=Cofcos*Cofcos*sqrt(1.0_dp/zeta)+Cofsin*Cofsin
+        ca2=Cofcos*Cofcos*sqrt(zeta)+Cofsin*Cofsin
+        CCC2(1:2,1:M11)      =ca1*CCC(1:2,1:M11)
+        CCC2(1:2,1+M11:2*M11)=ca2*CCC(1:2,1+M11:2*M11)
+    endif
+    end subroutine
 
 end module

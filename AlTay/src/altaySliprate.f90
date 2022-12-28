@@ -272,7 +272,6 @@ module altaySliprate
         use altayIOConfig
         use altayRCM
 
-        implicit none
         integer, intent(in)::NN, IND(8),NSTOR
         integer, intent(inout)::NOPL,ISTOR(0:8,48)
         real(dp), intent(inout)::SLSTOR(0:8,48)
