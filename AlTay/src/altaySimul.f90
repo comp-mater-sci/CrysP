@@ -80,7 +80,7 @@ module altaySimul
         integer :: KOST, NFILE1, NFILTW,seedsize
         integer, allocatable :: seed(:)
         type(StateDerivedVars) :: pebpSDV, pebpSDVavg
-        real(dp), parameter :: convf=0.5729577951308232e+02_dp
+        real(dp), parameter :: rad2deg=0.5729577951308232e+02_dp
         data FS/9*1.0D0/
         save
 
@@ -136,7 +136,7 @@ module altaySimul
             NGR = acnf%simul_init%NGR
             ! Number of relaxations: 0 for Taylor and 2 for ALAMEL:
             NRL=(NGR-1)*2
-  36        NFILE=NFILE0*NFILE1
+            NFILE=NFILE0*NFILE1
             NPEBPx=NFILE0*NPEBP   ! control "BEP" (effective value)
             NMSSx= NFILE0*NMSS    ! control "MSS" (effective value)
 
@@ -217,7 +217,7 @@ module altaySimul
 !         computation.
 !         See also the comment before the calling of subroutine TAYLOR.
 !
-  10            laml=1
+                laml=1
                 laml1=NGR
                 ifil4=0
                 if (NFILTW.eq.1) write (IMP3,399)
@@ -229,14 +229,14 @@ module altaySimul
                     SeqGrain = 0.D0
                     Wtot = 0.0
 
- 2626               do L=laml,laml1
+                    do L=laml,laml1
                         if (ifil4.eq.NPOINT) exit
                         ifil4=ifil4+1
                         call DYNFIL4(ifil4,fi10b(L),PHI0b(L),fi20b(L),TRFb(1,1,L),GEWFb(L),GMMAb(L),Fb(1,1,L),GAXESb(1,L), &
                         GEULRb(1,L),CIJb(1,1,L),TGb(1,1,L),RHOSSb(1,1,L))
-                        fi1b(L)=fi10b(L)*convf
-                        PHIb(L)=PHI0b(L)*convf
-                        fi2b(L)=fi20b(L)*convf
+                        fi1b(L)=fi10b(L)*rad2deg
+                        PHIb(L)=PHI0b(L)*rad2deg
+                        fi2b(L)=fi20b(L)*rad2deg
                     end do
                     laml1=laml1+1
                     if (laml1 > NGR) laml1=1
@@ -343,10 +343,8 @@ module altaySimul
                       callout%homogenised_slip = HGAMCALL
                       callout%homogenised_slip_tot = HGAMTOT
                       callout%effective_macro_strain = MEPSCALL
-                      callout%effective_macro_strain_tot =                         &
-                          MacroDefState%AccumvMeqStrain_ToStartOfInc
-                      callout%effective_macro_strain_tot_end =                     &
-                          MacroDefState%AccumvMeqStrain_ToEndOfInc
+                      callout%effective_macro_strain_tot = MacroDefState%AccumvMeqStrain_ToStartOfInc
+                      callout%effective_macro_strain_tot_end = MacroDefState%AccumvMeqStrain_ToEndOfInc
                 end associate
                 !
                 HGAM = HGAM / TOTGEW

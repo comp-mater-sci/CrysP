@@ -62,9 +62,9 @@ module altayTaylor
             case(1) ! Read slip system file
                 if(NLIST.eq.1) write (IMP,216)
  216            format (/,' SUBROUTINE TAYLOR - READS ITS CRYSTAL DATA',//)
-!
+
                 R=LEC         ! slip system file
-!
+
                 ! Read name of slip system set
                 read (R,217) TITglij
   217           format(A)
@@ -97,7 +97,7 @@ module altayTaylor
                 end do
  214            format (I4,5D23.16)
  215            format (1X,I4,10X,5D15.8)
-                !
+
                 if (NTW /= 0) then
                     do I=1,NTW
                         read (R,212) J,(B2(L,I),L=1,6),G(I)
@@ -269,7 +269,7 @@ module altayTaylor
             VOLFR(I)=X
         end do
         if (X > 1.) then
-          RCM_RAISE(1,'TAYLR1','Total volume fraction of twins exceeds unity',RCM_RTN)
+            RCM_RAISE(1,'TAYLR1','Total volume fraction of twins exceeds unity',RCM_RTN)
         endif
         call RANDOM_NUMBER(RNDM)
         do I=1,NTW
@@ -292,29 +292,24 @@ module altayTaylor
         fi1=Euler%fi1
         PHI=Euler%PHI
         fi2=Euler%fi2
-  31    if (nfile.eq.0.or.istp.gt.1) goto 61
+  31    if (.not. (nfile.eq.0.or.istp.gt.1)) then
 
-        ! the ratio of the parallel strain rates
-        ! MacroDefRate%StrainMode & rhossa: expressed in same (sample) reference frame
-        ratlon= sum( (MacroDefRate%StrainMode+sqrt(2.0D0/3.0D0)*rhossa) * MacroDefRate%StrainMode )
+            ! the ratio of the parallel strain rates
+            ! MacroDefRate%StrainMode & rhossa: expressed in same (sample) reference frame
+            ratlon= sum( (MacroDefRate%StrainMode+sqrt(2.0D0/3.0D0)*rhossa) * MacroDefRate%StrainMode )
 
-        ! TAU: Reference-CRSS.
-        ! Taylor Factor of the grain:
-        Mgrain = TOTGAMdot / MacroDefRate%vMeqStrainRate
-        ! Total, i.e. non-normalized, rhossa:
-        rhossaTot = rhossa * MacroDefRate%vMeqStrainRate
-        !
-        write (IMP2,150) ior,Seq,WorkRate,TAU,Mgrain,ratlon,               &
-         rhossaTot(1,1),rhossaTot(2,2),rhossaTot(3,3),                     &
-         rhossaTot(2,3),rhossaTot(3,1),rhossaTot(1,2),                     &
-         rhoasa(2,3),rhoasa(3,1),rhoasa(1,2),                              &
-         ssam(1,1),ssam(2,2),ssam(3,3),ssam(2,3),ssam(3,1),ssam(1,2)
-  150   format(i5,5(E12.5,1X),5x,6(E12.5,1X),5x,3(E12.5,1X),5x,6(E12.5,1X))
- 101    format(3d20.7)
-   61   return
-  26    write (IMP,106)
- 106    format (1X,'TAYLOR - NO UPPER LIMIT FOR LINEAR PROGRAMMING PROBLEM')
-  52    RCM_RAISE(1,'TAYLR1','No upper limit for linear programming problem',RCM_RTN)
+            ! TAU: Reference-CRSS.
+            ! Taylor Factor of the grain:
+            Mgrain = TOTGAMdot / MacroDefRate%vMeqStrainRate
+            ! Total, i.e. non-normalized, rhossa:
+            rhossaTot = rhossa * MacroDefRate%vMeqStrainRate
+            !
+            write (IMP2,150) ior,Seq,WorkRate,TAU,Mgrain,ratlon, &
+             rhossaTot(1,1),rhossaTot(2,2),rhossaTot(3,3),rhossaTot(2,3),rhossaTot(3,1),rhossaTot(1,2), &
+             rhoasa(2,3),rhoasa(3,1),rhoasa(1,2),ssam(1,1),ssam(2,2),ssam(3,3),ssam(2,3),ssam(3,1),ssam(1,2)
+  150       format(i5,5(E12.5,1X),5x,6(E12.5,1X),5x,3(E12.5,1X),5x,6(E12.5,1X))
+ 101        format(3d20.7)
+        endif
     end subroutine
 
 end module

@@ -13,7 +13,7 @@ contains
         character(len=*),intent(in)   :: title !< Title line
         integer,intent(out)           :: info  !< exit code: 0 on success
 
-          write(iounit,fmt='(A)',iostat=info) title
+        write(iounit,fmt='(A)',iostat=info) title
 
     end subroutine
 

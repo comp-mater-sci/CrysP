@@ -193,8 +193,7 @@ module altayTBH
   101       format (' Subroutine TBH - solution unbounded')
             if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,912) in,jn,Gmin
   912       format ('in jn Gmin',2I5, D15.5)
-            if (abs(Gmin).gt.0.0D0) goto 5
-    5       Z1=Aprime(in)
+            Z1=Aprime(in)
             do i=1,N
                 CUst(i)=-Aprime(i)
             enddo
@@ -217,9 +216,7 @@ module altayTBH
             ! Go back to stress calculation
         enddo
         ! Solution was found.
-        do j=1,M
-            Gdot(j)=0.0
-        enddo
+        Gdot(1:M)=0.0
         if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,212)
         do i=1,N
             j=Irp(i)
