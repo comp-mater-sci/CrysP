@@ -12,7 +12,7 @@ list2string(Fortran_FLAGS CMAKE_Fortran_FLAGS)
 list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
 list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
-set(CORESRC
+set(LIBSRC 
 altaySimul.f90 
 altayTaylor.f90 
 altayAlgorithms.f90 
@@ -34,20 +34,6 @@ altayHardLawDSH.f90
 altayDSHState.f90
 altayDefinitions.f90
 altayLog.f90
-)
-
-#
-# Library libaltay
-#
-
-set(AUXLIBSRC
-mkl_stub.f90
-)
-
-
-
-set(LIBSRC 
-${CORESRC}
 altayConfig.f90  
 altayRCM.f90 
 altaySub.f90

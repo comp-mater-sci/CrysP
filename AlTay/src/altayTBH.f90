@@ -7,9 +7,7 @@ module altayTBH
     contains
 
 !     SUBROUTINE LINEAR PROGRAMMING TAYLOR-BISHOP-HILL STYLE
-      Subroutine TBH(IPR,NDIM,N,M,A,D,                                   &
-       TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,                          &
-       TauR,bas,Trp,Aprime,CUst,UU,DD,DTAU,VALID)
+      Subroutine TBH(IPR,NDIM,N,M,A,D,TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,TauR,bas,Trp,Aprime,CUst,UU,DD,DTAU,VALID)
 !
 !     Subroutine which solves Taylor-Bishop-Hill for one crystallite
 !                    Stresses and strain rates are to be represented
