@@ -1,28 +1,25 @@
 #include "altayRCM.fpp"
-      module altayPancake
+module altayPancake
     use altay_definitions
-      use altayMiscutils, only: terminate, stopcode_runtimeerror
-      use criMathUtils
+    use altayMiscutils
+    use criMathUtils
+    use altayRCM
+    use altayMesostructure
+    use altayIOConfig
+    use altayHard
+    use altayHardTypes
+    use altayTBH
+    use altayAlgorithms
+    use altayMacroKinematic
+    use altayHardLaw_DSH
 
-      contains
+    implicit none
+    contains
 
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-      Subroutine Pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,               &
-                        SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
-      use altayRCM
-      use altayMesostructure
-      use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
-      use altayHard
-      use altayHardTypes
-      use altayTBH
-      use altayAlgorithms
-      use altayMacroKinematic
-      use altayHardLaw_DSH
-
-      implicit none
-
+      subroutine Pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
       type(DeformationRate),intent(in) :: MacroDefRate
       type(DeformationState),intent(in):: MacroDefState
       integer, intent(in) :: KOST,NGL,IPR
@@ -363,7 +360,6 @@
       subroutine Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,UBUF,M11,ca1,ca2)
       ! BB is direction of the relaxation-1
       ! UBUF is the BISHOP-HILL stress from TBH routine, in crystal frame
-      implicit none
       real(dp), intent(in) :: ccc(2,194)
       integer, intent(in) :: M11
       real(dp), intent(out) :: ccc2(2,194)

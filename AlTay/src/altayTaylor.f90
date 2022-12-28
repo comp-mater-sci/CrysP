@@ -2,11 +2,15 @@
 module altayTaylor
     use altay_definitions
     use altayAlgorithms
-    use altayMiscutils, only: terminate, stopcode_runtimeerror
+    use altayMiscutils
     use altayMacroKinematic
     use criMathUtils
     use altayDSHState
+    use altayRCM
+    use altayIOConfig
+    use altayPancake
 
+    implicit none
    integer,parameter,private :: N = 5, N1 = N + 1
 
       integer,private           :: M,   &       ! number of glide systems + number of twin systems
@@ -21,11 +25,7 @@ module altayTaylor
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 
       subroutine TAYLOR(IRICHT, KOST, MacroDefRate, MacroDefState)
-      use altayRCM
-      use altayIOConfig
-      use altayPancake
-
-      implicit none
+  
       ! optional argument - required for IRICHT=2 or 3:
       type(DeformationRate), intent(in),optional :: MacroDefRate
       ! optional argument - required for IRICHT=3:
@@ -188,14 +188,11 @@ module altayTaylor
 
 
       subroutine TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate)
-      use altayRCM
       use altayConfig, only: astate
-      use AltayHardLaw_DSH, KOST => iKOST
-      use altayIOConfig
+      use AltayHardLaw_DSH
       use altaySliprate
       use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
 
-      implicit none
       type(DeformationRate),intent(in) :: MacroDefRate
       integer, intent(in) :: ISTP,IOR,NFILE
       real(dp), intent(in) :: TAU
@@ -240,7 +237,7 @@ module altayTaylor
 
       call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN,MacroDefRate)
       RCM_GUARD
-      select case(KOST)
+      select case(iKOST)
       case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
             ! Here we explicitly set time increment to the value
             ! that is implicitly assumed in Pancak2.

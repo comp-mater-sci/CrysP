@@ -1,23 +1,27 @@
 #include "altayRCM.fpp"
 module altaySimul
-    use altay_definitions, only: dp
-    use altayMiscutils, only: terminate, stopcode_runtimeerror
+    use altay_definitions
     use altayHardTypes
     use altayMacroKinematic
     use altayHardLaw_DSH
     use altayDSHState
+    use altayCurAccess
+    use altayDYNFIL
+    use altayHard
+    use altayTaylor
+    use altayAlgorithms
+    use altayConfig
+    use altayRCM
+    use altayIOConfig
+    use altayMiscutils
 
-      ! Initial rations of CRSS, set in MAINA1.
-      ! It is used only by the stand-alone AlTay
-      type(CRSS),save :: crss_ratiosIN
+    implicit none
 
       contains
 
 ! ALAMEL V3
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
-!  All comments about modifications of the source have been removed
-! for clarity
 ! See "annotated source codes" if you need these
 !
 !
@@ -25,17 +29,6 @@ module altaySimul
 
 !     TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES
 !     USING THE ALAMEL MODEL
-      use altayCurAccess
-      use altayDYNFIL
-      use altayHard
-      use altayTaylor
-      use altayAlgorithms
-      use altayConfig
-      use altayRCM
-      use altayIOConfig
-      use altayMiscutils
-      !
-      implicit none
       ! optional argument for IW=1 or 2:
       type(DeformationRate),intent(in),optional :: MacroDefRate !inout
       integer, intent(in) :: IW !   IW=2 is meant for outputting the final texture.

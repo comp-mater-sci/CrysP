@@ -2,10 +2,10 @@
 
 module altayConfig
     use altayHardTypes
-    use altayHardLaw_Simple, only: VoceConfig, SwiftKConfig, SwiftSConfig
-    use altayHardLaw_DSH, only: PAR
+    use altayHardLaw_Simple
+    use altayHardLaw_DSH
     use altayTexFormats
-    use altay_definitions, only: dp
+    use altay_definitions
     
     implicit none
 

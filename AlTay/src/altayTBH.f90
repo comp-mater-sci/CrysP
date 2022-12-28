@@ -3,6 +3,7 @@ module altayTBH
     use altay_definitions, only: dp
     use altayMiscutils, only: terminate, stopcode_runtimeerror
 
+    implicit none
     contains
 
 !     SUBROUTINE LINEAR PROGRAMMING TAYLOR-BISHOP-HILL STYLE
@@ -44,7 +45,6 @@ module altayTBH
       use altayRCM
       use altayIOConfig,IIPR=>IPR!Rename global IPR switch to avoid conflict
 
-      implicit none
       integer, intent(in) :: IPR,NDIM,M,N,IACT(NDIM)
       real(dp), intent(in) :: A(NDIM,M),D(NDIM),BINV(NDIM,N),TauC(2,M)
       logical :: bas(M),valid(M)
@@ -256,7 +256,7 @@ module altayTBH
 
       subroutine Ust(C,B,CUst,in,N,M3,NDIM)
       !  MATRIX C=MATRIX Ustar*MATRIX B
-      implicit none
+
       integer :: in,N,M3,NDIM
       real(dp) :: B(NDIM,M3),CUst(N)
       real(dp) :: C(NDIM,M3)
@@ -273,7 +273,7 @@ module altayTBH
 
       subroutine mtprd(C,A,B,N1,N2,N3,ND1,ND2)
       ! MATRIX C=MATRIX A*MATRIX B
-      implicit none
+
       integer :: N1,N2,N3,ND1,ND2
       real(dp) :: A(ND1,N2),B(ND2,N3)
       real(dp) :: C(ND1,N3)
