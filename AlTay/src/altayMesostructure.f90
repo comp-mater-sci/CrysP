@@ -269,20 +269,10 @@ contains
                   !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
                   !  new axe-1 be old axe-2
                   !  new axe-2 be minus old axe-1
-                  vec1(1)=AXX(1,2)
-                  vec1(2)=AXX(2,2)
-                  vec1(3)=AXX(3,2)
-                  vec2(1)=-AXX(1,1)
-                  vec2(2)=-AXX(2,1)
-                  vec2(3)=-AXX(3,1)
-                  ! update AXX
-                  AXX(1,1)=vec1(1)
-                  AXX(2,1)=vec1(2)
-                  AXX(3,1)=vec1(3)
-                  AXX(1,2)=vec2(1)
-                  AXX(2,2)=vec2(2)
-                  AXX(3,2)=vec2(3)
-                  ! update Tprinc
+                  vec1=AXX(1:3,2)
+                  vec2=-AXX(1:3,1)
+                  AXX(1:3,1)=vec1
+                  AXX(1:3,2)=vec2
                   Tprinc = transpose(AXX)
                   Cofcos=1.D0
                   Cofsin=0.D0
@@ -292,20 +282,10 @@ contains
         !  new axe-1 be old axe-2
         !  new axe-2 be minus old axe-1
         !  The angle is only between relaxation-1 and D0. It is nothing related with relaxation-2.
-        vec1(1)=AXX(1,2)
-        vec1(2)=AXX(2,2)
-        vec1(3)=AXX(3,2)
-        vec2(1)=-AXX(1,1)
-        vec2(2)=-AXX(2,1)
-        vec2(3)=-AXX(3,1)
-        ! update AXX
-        AXX(1,1)=vec1(1)
-        AXX(2,1)=vec1(2)
-        AXX(3,1)=vec1(3)
-        AXX(1,2)=vec2(1)
-        AXX(2,2)=vec2(2)
-        AXX(3,2)=vec2(3)
-        ! update Tprinc
+        vec1=AXX(1:3,2)
+        vec2=-AXX(1:3,1)
+        AXX(1:3,1)=vec1
+        AXX(1:3,2)=vec2
         Tprinc = transpose(AXX)
         !     Transform MacroDefRate%StrainModevM to the new "Grb" reference frame
         TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
@@ -370,15 +350,10 @@ contains
                 enddo
             enddo
             !
-            AXX(1,1)=vec1(1)
-            AXX(2,1)=vec1(2)
-            AXX(3,1)=vec1(3)
-            AXX(1,2)=vec2(1)
-            AXX(2,2)=vec2(2)
-            AXX(3,2)=vec2(3)
-            ! update Tprinc
+            AXX(1:3,1)=vec1
+            AXX(1:3,2)=vec2
             Tprinc = transpose(AXX)
-            !
+           
             ! Transform MacroDefRate%StrainModevM to the new "Grb" reference frame
             TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
             !  make sure relaxation-2 is orthogonal
