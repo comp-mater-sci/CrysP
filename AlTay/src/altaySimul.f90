@@ -32,41 +32,32 @@ module altaySimul
         type(DeformationRate),intent(in),optional :: MacroDefRate !inout
         integer, intent(in) :: IW !   IW=2 is meant for outputting the final texture.
 
+        ! common block
         real(dp) :: CC
         integer :: M11
         common /IGLIJS/ CC(2,96), M11
-
         real(dp) :: XM,XEPS,RHO,B5
         common /DOUBLE/ XM(5,96),XEPS(5),RHO(5),B5(5)
-
         real(dp) :: TRF,C1,C2,GEWF
         integer :: NO,ITW
         common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
-
         real(dp) :: fi1,PHI,fi2
         common /EULERA/ fi1,PHI,fi2
-
         real(dp) :: YY,SHsam,Ssam,RHOSsa
         logical SWRLX
         common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
-
         real(dp) :: TRFb,GMMAb
         integer :: NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
         common /LAMEL/ TRFb(3,3,2),GMMAb(2),NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
-
         integer :: IOR,ISTP,NBLOC
         common /CEIGEN/ IOR,ISTP,NBLOC
-
         real(dp) :: Fmicro
         common /PE/ Fmicro(3,3) !Temporary!!!
 
-        real(dp) :: TEN(3,3),TOTGEW
-        real(dp) :: fi10b(2),phi0b(2),fi20b(2),gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2), &
-                    CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2)
-        real(dp) :: GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
-             GEULR(3),TG(3,3),                               &
-             CIJ(3,3),STOT(3,3),                             &
-             RHOST(3,3),RHOSm(3,3),FS(3,3),SeqAvg,tau,qgx,gmm1,gmm0,ssqgx
+        real(dp) :: TEN(3,3),TOTGEW, fi10b(2),phi0b(2),fi20b(2),gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2), &
+                    CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2), &
+                    GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
+                    GEULR(3),TG(3,3),CIJ(3,3),STOT(3,3),RHOST(3,3),RHOSm(3,3),FS(3,3),SeqAvg,tau,qgx,gmm1,gmm0,ssqgx
         character(len=40) :: TITEL
         integer :: NPOINT, info, NFILE, NFILE0, NPEBPx,NMSSx,NSTP,i,j,l,LAML1,INV,ISP,LOM,KSYM,KTYP,ifil4
         type(DeformationState) :: MacroDefState
@@ -265,7 +256,6 @@ module altaySimul
                     else
                         GEWF=qgx
                     end if
-                    if (NFILE.eq.0.or.ISTP.gt.1) goto 999
                     !
                     !  In case of NGR=2:
                     !     LAML=1: TAYLOR
@@ -276,7 +266,7 @@ module altaySimul
                     !             - should not perform any computation
                     !             - has to output the result of the second crystal found
                     !               during the previous computation.
- 999                if (IW.le.1) then
+                    if (IW.le.1) then
                         call  TAYLOR(3,KOST,MacroDefRate,MacroDefState)
                         RCM_GUARD
                     endif

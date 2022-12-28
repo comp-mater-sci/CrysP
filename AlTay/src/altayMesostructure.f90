@@ -12,9 +12,8 @@ module altayMesostructure
     !> in the initial state.
     !> Shape is: [3,3,ngr], where ngr is the number of grains.
     real(dp), dimension(:,:,:),allocatable :: TmatGr
-    integer,save :: NGrElm = 0             !< Number of grain boundary orientations
-    character(len=40), save :: TitMic = '' !< Microstructure title
-
+    integer :: NGrElm = 0             !< Number of grain boundary orientations
+    character(len=40)  :: TitMic = '' !< Microstructure title
 
 contains
 
@@ -94,7 +93,7 @@ contains
     !
     !   relaxation-2 is always the orthogonal one.
     !   TDC is the normalized von-Mises equivalent strain rate
-    use altayIOConfig, only: IPR,NLIST,IMP
+        use altayIOConfig, only: IPR,NLIST,IMP
 
         integer,intent(in)                     :: NGR,IGrElm
         type(DeformationRate),intent(in)       :: MacroDefRate
@@ -160,44 +159,42 @@ contains
         if (AL(2).le.AL(3).and.AL(1).le.AL(3)) then
             AA(1)=AL(3)
             if(AL(2).ge.AL(1))then
-                  AA(2)=AL(2)
-                  AA(3)=AL(1)
+                AA(2)=AL(2)
+                AA(3)=AL(1)
             else
-                  AA(2)=AL(1)
-                  AA(3)=AL(2)
+                AA(2)=AL(1)
+                AA(3)=AL(2)
             endif
             GEWF=u*(2.0D0*(AA(2)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.0D0)
         else
             !       Case 2: is AL(3) the shortest?
             if (AL(3).le.AL(1).and.AL(3).le.AL(2)) then
-                  AA(3)=AL(3)
-                  if(AL(1).ge.AL(2))then
-                        AA(1)=AL(1)
-                        AA(2)=AL(2)
-                  else
-                        AA(1)=AL(2)
-                        AA(2)=AL(1)
-                  endif
-                  GEWF=u*(4.D0*(AA(1)-AA(3))*(AA(2)-AA(3))*AA(3)  &
-                        +2.0D0*(AA(2)-AA(3))*AA(3)**2+2.0D0*(AA(1)-AA(3))*AA(3)**2 &
-                        +4.D0*AA(3)**3/3.D0)
-              else
-                  !         Case 3: AL(3) is neither shortest nor longest
-                  AA(2)=AL(3)
-                  if(AL(1).ge.AL(2))then
-                        AA(1)=AL(1)
-                        AA(3)=AL(2)
-                  else
-                        AA(1)=AL(2)
-                        AA(3)=AL(1)
-                  endif
-                  GEWF=u*(2.D0*(AA(1)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.D0)
-              endif
+                AA(3)=AL(3)
+                if(AL(1).ge.AL(2))then
+                      AA(1)=AL(1)
+                      AA(2)=AL(2)
+                else
+                      AA(1)=AL(2)
+                      AA(2)=AL(1)
+                endif
+                GEWF=u*(4.D0*(AA(1)-AA(3))*(AA(2)-AA(3))*AA(3)  &
+                      +2.0D0*(AA(2)-AA(3))*AA(3)**2+2.0D0*(AA(1)-AA(3))*AA(3)**2 &
+                      +4.D0*AA(3)**3/3.D0)
+            else
+                !         Case 3: AL(3) is neither shortest nor longest
+                AA(2)=AL(3)
+                if(AL(1).ge.AL(2))then
+                    AA(1)=AL(1)
+                    AA(3)=AL(2)
+                else
+                    AA(1)=AL(2)
+                    AA(3)=AL(1)
+                endif
+                GEWF=u*(2.D0*(AA(1)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.D0)
+            endif
         endif
-        if ((IPR.gt.0) .and. (NLIST.eq.1)) then
-              write (IMP,103) GEWF
-        end if
-         103  format (/,' GEWF ',3d15.7,/)
+        if ((IPR.gt.0) .and. (NLIST.eq.1)) write (IMP,103) GEWF
+        103  format (/,' GEWF ',3d15.7,/)
 
         !     Construction of orientation matrices for frames associated to the
         !     interfaces
@@ -205,7 +202,7 @@ contains
         IA=1
         IB=2
         do i=1,3
-              AXX(i,1)=GRPAR(i,IA)
+            AXX(i,1)=GRPAR(i,IA)
         enddo
         !       Orientation of interfaces containing axes IA and IB
         !       Normal axis: (vector product)
@@ -224,19 +221,15 @@ contains
             enddo
             x=sqrt(x)
             do i=1,3
-                  AXX(i,j)=AXX(i,j)/x
+                AXX(i,j)=AXX(i,j)/x
             enddo
         enddo
         do i=1,3
             do j=1,3
-                  Tprinc(i,j)=AXX(j,i)
+                Tprinc(i,j)=AXX(j,i)
             enddo
-            if (IPR.gt.0) then
-                  if(NLIST.eq.1) then
-                  write (IMP,102) (Tprinc(i,j),j=1,3)
-            end if
-        end if
-        102      format (' TGrb ',3d15.7)
+            if (IPR.gt.0 .and. NLIST.eq.1) write (IMP,102) (Tprinc(i,j),j=1,3)
+        102 format (' TGrb ',3d15.7)
         enddo
 
         dlength=norm2(MacroDefRate%StrainModevM)

@@ -5,6 +5,7 @@ module altayDynfil
     use altayIOConfig
 
     implicit none
+    private
 
     !>Texture-related state variables for single grain
     type :: grain
@@ -25,12 +26,11 @@ module altayDynfil
         real(dp),dimension(3)     :: GAXES  = 1.D0, GEULR = 0.D0
     end type
 
-    type(grain), dimension(:), allocatable, save    :: DFIL             !<State variable: array of grains/orientations.
-    type(matFrame), save                            :: mf               !<State variable: material (frame) global geometry
-    character(len=40), save                         :: filetitle = ''   !<State variable: title of the input texture file
-    integer, save                                   :: nrStep = 0       !<State variable: step number.
+    type(grain), dimension(:), allocatable     :: DFIL             !<State variable: array of grains/orientations.
+    type(matFrame)                             :: mf               !<State variable: material (frame) global geometry
+    character(len=40)                          :: filetitle = ''   !<State variable: title of the input texture file
+    integer                                    :: nrStep = 0       !<State variable: step number.
 
-    private
     public  ::  DFIL,       &
                 mf,         &
                 nrStep,     &

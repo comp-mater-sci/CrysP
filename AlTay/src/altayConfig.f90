@@ -178,8 +178,8 @@ module altayConfig
 
 
     ! Definition of the singleton objects
-    type(altayConfigData), save :: acnf
-    type(altayStateData), save  :: astate
+    type(altayConfigData) :: acnf
+    type(altayStateData)  :: astate
 
 
 contains

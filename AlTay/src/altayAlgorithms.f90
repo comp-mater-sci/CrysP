@@ -15,8 +15,7 @@ module altayAlgorithms
                 symMatrix,          &
                 vector5D,           &
                 transf,             &
-                deg2rad,            &
-                rotmat,             &
+                rotmat, &
                 rotateSRTensorFrom, &
                 kleinKwa,           &
                 getang

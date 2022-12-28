@@ -191,17 +191,17 @@ module altayPancake
 !         Conversion of strain to normalized strain rate
           BB(I)=BB(I)/MacroDefRate%vMeqStrainRate
       end do
-      if (NRL.eq.0) goto 88
-      do j=M2+1,M12
-!    The coefficient of the relaxations is set to a very large number
-!    in order to suppress the relaxations in a first call of the TBH program
-          CCC(1,j)=GETAL
-          CCC(2,j)=GETAL
-      end do
-!     Full constraints calculation
-!
-!     UITVOEREN VAN DE SIMPLEX-SUBROUTINE
-  88  if (IPR.EQ.2 .and. NLIST.eq.1) write (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
+      if (.not. (NRL.eq.0)) then
+          do j=M2+1,M12
+          ! The coefficient of the relaxations is set to a very large number
+          ! in order to suppress the relaxations in a first call of the TBH program
+              CCC(1,j)=GETAL
+              CCC(2,j)=GETAL
+          end do
+      endif
+      ! Full constraints calculation
+      ! UITVOEREN VAN DE SIMPLEX-SUBROUTINE
+      if (IPR.EQ.2 .and. NLIST.eq.1) write (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
  218  format(/' COST FUNCTION',/,(2x,12F10.4))
       if (IPR.EQ.2 .and. NLIST.eq.1) write (IMP,219) (BB(I),I=1,N)
  219  format (' right hand side',/,(2x,10F10.4),/)
@@ -211,44 +211,45 @@ module altayPancake
           call TBH(IPR,NDIM,N,M2,A1,BB,CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
           RCM_GUARD
 
-  345     if (IPR.lt.4) goto 220
-          RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
-  220     DTAU1=DTAU
+          if (.not.(IPR.lt.4)) then
+              RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
+          endif
+          DTAU1=DTAU
           TAUR1=TAUR
 
           if (NRL.eq.0) then
                 UU=UU2
                 DI=DI2
                 STRSS=UBUF
-                goto 89
-          endif
-          do IRL=1,NRL
-              if (.not.swrlx(IRL)) exit
-              j=M2+IRL
-              CCC(1,j)=TAURL(IRL)
-              CCC(2,j)=TAURL(IRL)
-          end do
-          if (IPR.EQ.2 .and. NLIST.eq.1) write(IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
-          ! Second call of Simplex (relaxed constraints)
-          if (IPR.eq.2 .and. NLIST.eq.1) write(IMP,401)
- 401      format (' Second call of TBH')
-          call TBH(IPR,N,N,M12,A1,BB,CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
-          RCM_GUARD
-
-          if (IPR.ge.4) then
-             if(NLIST.eq.1) write (IMP,222) IPR,IOR,ISTP,NBLOC
-             write (*,222) IPR,IOR,ISTP,NBLOC
- 222         format (' Pancak2 222 - Problem with TBH',/,' IPR IOR, ISTP, NBLOC=',4I5)
-              RCM_RAISE(1,'Pancak2','Problem with TBH',RCM_RTN)
-          endif
-!         GAMR will contain the relaxed shears:
- 204      if (NRL.gt.0) then
+          else
               do IRL=1,NRL
-                  gamr(IRL)=XX(M2+IRL)
-              enddo
+                  if (.not.swrlx(IRL)) exit
+                  j=M2+IRL
+                  CCC(1,j)=TAURL(IRL)
+                  CCC(2,j)=TAURL(IRL)
+              end do
+              if (IPR.EQ.2 .and. NLIST.eq.1) write(IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
+              ! Second call of Simplex (relaxed constraints)
+              if (IPR.eq.2 .and. NLIST.eq.1) write(IMP,401)
+ 401          format (' Second call of TBH')
+              call TBH(IPR,N,N,M12,A1,BB,CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
+              RCM_GUARD
+
+              if (IPR.ge.4) then
+                 if(NLIST.eq.1) write (IMP,222) IPR,IOR,ISTP,NBLOC
+                 write (*,222) IPR,IOR,ISTP,NBLOC
+ 222             format (' Pancak2 222 - Problem with TBH',/,' IPR IOR, ISTP, NBLOC=',4I5)
+                  RCM_RAISE(1,'Pancak2','Problem with TBH',RCM_RTN)
+              endif
+              ! GAMR will contain the relaxed shears:
+              if (NRL.gt.0) then
+                  do IRL=1,NRL
+                      gamr(IRL)=XX(M2+IRL)
+                  enddo
+              endif
           endif
           ! Check whether 1 grain does not deform at all.
-  89      j=0
+          j=0
           do IG=1,NGR
               XXTOT=0.0
               do i=1,M11
@@ -258,7 +259,7 @@ module altayPancake
               if (XXTOT.lt.TOLXX) goto 213
           end do
           ! If all grains have a non-zero slip, do the following:
-  99      DTAU1=DTAU
+          DTAU1=DTAU
           TAUR1=TAUR
           UBUF=STRSS
  213      if(NLIST.eq.1) write (IMP,780) gamr

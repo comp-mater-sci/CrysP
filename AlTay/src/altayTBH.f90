@@ -1,6 +1,6 @@
 #include "altayRCM.fpp"
 module altayTBH
-    use altay_definitions, only: dp
+    use altay_definitions
     use altayMiscutils, only: terminate, stopcode_runtimeerror
 
     implicit none
@@ -102,14 +102,14 @@ module altayTBH
 !     Calculation of resolved shear stress
       call mtprd(TauR,SIG,A,1,N,M,1,NDIM)
       if (IPR.GE.JPR .and. NLIST.eq.1) then
-            write (IMP,205)
-            do i=1,N
+          write (IMP,205)
+          do i=1,N
               write (IMP,204) D(i),SIG(i)
-            enddo
-            write (IMP,201) FakM
-            do j=1,M
+          enddo
+          write (IMP,201) FakM
+          do j=1,M
               write (IMP,202) j,TauR(j)
-            enddo
+          enddo
       endif
   201 format (' M-Factor:',D20.10,/,' Resolved shear stresses:')
   202 format (I5,30X,D20.10)
@@ -148,8 +148,7 @@ module altayTBH
       call mtprd(Aprime,U,A(1,jn),N,N,1,NDIM,NDIM)
       in=0
       if (IPR.GE.JPR .and.  NLIST.eq.1)write (IMP,203)
-  203 format (' ACTIVE',9x,'Slip rate',11X,                              &
-       'Critical Resolved shear stress',11X,'Aprime')
+  203 format (' ACTIVE',9x,'Slip rate',11X,'Critical Resolved shear stress',11X,'Aprime')
       do 3 i=1,N
         if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,200)Irp(i),DACC(i),Trp(i),Aprime(i)
   200 format (I5,5x,D26.16,5x,D20.10,5x,D20.10)
@@ -158,136 +157,119 @@ module altayTBH
         j=Irp(i)
         ZR=TauR(j)
         if (abs(ZR).lt.TOL) then
-                             ZR=Dacc(i)
-                             if (abs(Zr).lt.TOL) goto 3
-                            endif
+            ZR=Dacc(i)
+            if (abs(Zr).lt.TOL) goto 3
+        endif
         ZR=ZR*Z1
         Z2=Dacc(i)/Z1
         if (X.gt.0.0d0) then
-                         if (ZR.lt.0.0d0) goto 3
-                         if (in.eq.0) then
-                                        in=i
-                                        Gmin=Z2
-                                       else
-                                        if (Z2.lt.Gmin) then
-                                                         Gmin=Z2
-                                                         in=i
-                                                        endif
-                                       endif
-                        else
-                         if (ZR.gt.0.0d0) goto 3
-                         if (in.eq.0) then
-                                        in=i
-                                        Gmin=Z2
-                                       else
-                                        if (Z2.gt.Gmin) then
-                                                         Gmin=Z2
-                                                         in=i
-                                                        endif
-                                       endif
-                        endif
+            if (ZR.lt.0.0d0) goto 3
+            if (in.eq.0) then
+                in=i
+                Gmin=Z2
+            else
+                if (Z2.lt.Gmin) then
+                   Gmin=Z2
+                   in=i
+                endif
+           endif
+        else
+            if (ZR.gt.0.0d0) goto 3
+            if (in.eq.0) then
+                in=i
+                Gmin=Z2
+            else
+                if (Z2.gt.Gmin) then
+                    Gmin=Z2
+                    in=i
+                endif
+            endif
+        endif
     3 continue
       if (in.eq.0) then
           RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
       endif
   101 format (' Subroutine TBH - solution unbounded')
-      if (IPR.GE.JPR) then
-      if (NLIST.eq.1) then
-      write (IMP,912) in,jn,Gmin
-      end if
-      end if
+      if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,912) in,jn,Gmin
   912 format ('in jn Gmin',2I5, D15.5)
       if (abs(Gmin).gt.0.0D0) goto 5
     5 Z1=Aprime(in)
       do i=1,N
-        CUst(i)=-Aprime(i)
+          CUst(i)=-Aprime(i)
       enddo
       CUst(in)=1.0d0
       do i=1,N
-        CUst(i)=CUst(i)/Z1
+          CUst(i)=CUst(i)/Z1
       enddo
       UU=U
       call Ust(U,UU,CUst,in,N,N,NDIM)
 !     Updating of Dacc
       DD=Dacc
       call Ust(Dacc,DD,CUst,in,N,1,N)
-      if (IPR.GE.JPR) then
-          if (NLIST.eq.1) then
-              write (IMP,929) in,Gmin,Dacc(in)
-          end if
-      end if
+      if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,929) in,Gmin,Dacc(in)
   929 format ('updated slip rate in',I5,2D15.5)
 !     Updating of basis: bas and Irp
       bas(Irp(in))=.FALSE.
       bas(jn)=.TRUE.
       Irp(in)=jn
       if ((Dacc(in).ge.0.0d0).and.(X.gt.0.0d0)) then
-                                Trp(in)=Tauc(1,jn)
-                             else
-                                Trp(in)=-Tauc(2,jn)
-                             endif
+          Trp(in)=Tauc(1,jn)
+      else
+          Trp(in)=-Tauc(2,jn)
+      endif
 !     Go back to stress calculation
       goto 4
 !     Solution was found.
     2 do j=1,M
-        Gdot(j)=0.0
+          Gdot(j)=0.0
       enddo
-      if (IPR.GE.JPR) then
-          if (NLIST.eq.1) then
-              write (IMP,212)
-          end if
-      end if
-!
+      if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,212)
       do i=1,N
-        j=Irp(i)
-        Gdot(j)=Dacc(i)
-         if (IPR.GE.JPR) then
-             if (NLIST.eq.1) then
-                 write (IMP,211) j,DACC(i)
-             end if
-         end if
+          j=Irp(i)
+          Gdot(j)=Dacc(i)
+          if (IPR.GE.JPR .and. NLIST.eq.1) write (IMP,211) j,DACC(i)
       enddo
   211 format (I5,5x,D20.10)
   212 format (/,'   SOLUTION ',/)
       end subroutine
 
 
-      subroutine Ust(C,B,CUst,in,N,M3,NDIM)
-      !  MATRIX C=MATRIX Ustar*MATRIX B
+    subroutine Ust(C,B,CUst,in,N,M3,NDIM)
+        !  MATRIX C=MATRIX Ustar*MATRIX B
 
-      integer :: in,N,M3,NDIM
-      real(dp) :: B(NDIM,M3),CUst(N)
-      real(dp) :: C(NDIM,M3)
-      integer :: i,j
+        integer :: in,N,M3,NDIM
+        real(dp) :: B(NDIM,M3),CUst(N)
+        real(dp) :: C(NDIM,M3)
+        integer :: i,j
 
-      do j=1,M3
-        do i=1,N
-          C(i,j)=B(in,j)*CUst(i)
-          if (i.ne.in) C(i,j)=C(i,j)+B(i,j)
+        do j=1,M3
+            do i=1,N
+                C(i,j)=B(in,j)*CUst(i)
+                if (i.ne.in) C(i,j)=C(i,j)+B(i,j)
+            enddo
         enddo
-      enddo
-      end subroutine
+    end subroutine
 
 
-      subroutine mtprd(C,A,B,N1,N2,N3,ND1,ND2)
-      ! MATRIX C=MATRIX A*MATRIX B
+    subroutine mtprd(C,A,B,N1,N2,N3,ND1,ND2)
+        ! MATRIX C=MATRIX A*MATRIX B
 
-      integer :: N1,N2,N3,ND1,ND2
-      real(dp) :: A(ND1,N2),B(ND2,N3)
-      real(dp) :: C(ND1,N3)
-      real(dp) :: X
-      integer :: I,J,K
+        integer :: N1,N2,N3,ND1,ND2
+        real(dp) :: A(ND1,N2),B(ND2,N3)
+        real(dp) :: C(ND1,N3)
+        real(dp) :: X
+        integer :: I,J,K
 
-      do I=1,N1
-          do J=1,N3
-              X=0.
-              do K=1,N2
-                  X=X+A(I,K)*B(K,J)
-              enddo
-              C(I,J)=X
-          enddo
-      enddo
-      end subroutine
+        do I=1,N1
+            do J=1,N3
+                X=0.
+                do K=1,N2
+                    X=X+A(I,K)*B(K,J)
+                enddo
+                C(I,J)=X
+            enddo
+        enddo
+    end subroutine
 
 end module
 
