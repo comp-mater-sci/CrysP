@@ -73,24 +73,17 @@ contains
         real(dp), dimension(3), intent(in)      :: Gaxes
         real(dp), dimension(3,3), intent(inout) :: Aprime
         real(dp), dimension(3,3), intent(in)    :: T
-        integer                                 :: i, j, k
+        integer                                 :: i, j
         real(dp)                                :: y
-        real(dp), dimension(3)                  :: A
         real(dp), dimension(3,3)                :: X
 
-        A = 1.D0 / Gaxes ** 2
-
         do j = 1,3
-            X(:,j) = t(:,j) * A
+            X(:,j) = t(:,j)/Gaxes**2
         end do
 
         do i = 1, 3
             do j = 1, 3
-                y = 0.0
-                do k = 1,3
-                    y = y + T(k,i) * X(k,j)
-                end do
-                Aprime(i, j) = y
+                Aprime(i, j) = sum(T(1:3,i)*X(1:3,j))
             end do
         end do
     end subroutine
@@ -195,7 +188,7 @@ contains
         real(dp), dimension(M2),    intent(inout)                               :: BA
         real(dp),                   intent(inout)                               :: res
         integer,                    intent(in)                                  :: M1, M2, N1, N2
-        integer                                                                 :: i, j, rank, info
+        integer                                                                 :: i, rank, info
         integer, dimension(N2)                                                  :: jpvt
         real(dp)                                                                :: y
         real(dp), dimension(max(min(N1,N2) + 3 * N2 + 1, 2 * min(N1,N2) + 1))   :: work
@@ -209,10 +202,7 @@ contains
 
         res = 0.0
         do i=1,N1
-            y = 0.0
-            do j=1,N2
-                y = y + A(i,j) * BA(j)
-            end do
+            y = sum(A(i,1:N2)*BA(1:N2))
             RES = RES + (y - B(i))**2
         end do
 
