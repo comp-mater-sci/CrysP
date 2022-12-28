@@ -230,19 +230,14 @@ contains
         relaxII(3,2)=1.D0
 
         dot1=0.0
-        do i=1,3
-            do j=1,3
-                dot1=dot1+relaxI(i,j)*TDCGr(i,j)
-            enddo
-        enddo
-        dot1=dot1/sqrt(2.0D0)/dlength
-
         dot2=0.0
         do i=1,3
             do j=1,3
+                dot1=dot1+relaxI(i,j)*TDCGr(i,j)
                 dot2=dot2+relaxII(i,j)*TDCGr(i,j)
             enddo
         enddo
+        dot1=dot1/sqrt(2.0D0)/dlength
         dot2=dot2/sqrt(2.0D0)/dlength
 
         if(abs(dot1).lt.0.000001.and.abs(dot2).lt.0.000001) then
@@ -271,19 +266,15 @@ contains
                  AXX(1:3,1)=vec1
                  AXX(1:3,2)=vec2
                  Tprinc = transpose(AXX)
-                 !     Transform MacroDefRate%StrainModevM to the new "Grb" reference frame
+                 ! Transform MacroDefRate%StrainModevM to the new "Grb" reference frame
                  TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
-                 !   make sure relaxation-2 is orthogonal
-                 dot2=0.0
-                 do i=1,3
-                     do j=1,3
-                         dot2=dot2+relaxII(i,j)*TDCGr(i,j)
-                     enddo
-                 enddo
+                 ! make sure relaxation-2 is orthogonal
                  ! calculate the cosine for relaxation-1
+                 dot2=0.0
                  dot1=0.0
                  do i=1,3
                      do j=1,3
+                         dot2=dot2+relaxII(i,j)*TDCGr(i,j)
                          dot1=dot1+relaxI(i,j)*TDCGr(i,j)
                      enddo
                  enddo
@@ -319,14 +310,10 @@ contains
             !   Transform these two vector in the Sample's frame
 
             vec1=0.0
-            do i=1,3
-                do j=1,3
-                    vec1(i)=vec1(i)+AXX(i,j)*PrDir(1,j)
-                enddo
-            enddo
             vec2=0.0
             do i=1,3
                 do j=1,3
+                    vec1(i)=vec1(i)+AXX(i,j)*PrDir(1,j)
                     vec2(i)=vec2(i)+AXX(i,j)*PrDir(2,j)
                 enddo
             enddo
@@ -339,15 +326,10 @@ contains
             TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
             !  make sure relaxation-2 is orthogonal
             dot2=0.0
-            do i=1,3
-                do j=1,3
-                    dot2=dot2+relaxII(i,j)*TDCGr(i,j)
-                enddo
-            enddo
-
             dot1=0.0
             do i=1,3
                 do j=1,3
+                    dot2=dot2+relaxII(i,j)*TDCGr(i,j)
                     dot1=dot1+relaxI(i,j)*TDCGr(i,j)
                 enddo
             enddo
