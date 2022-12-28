@@ -17,7 +17,7 @@ module altayMiscutils
       real(dp),dimension(3,3),parameter :: unitMatrix = reshape( &
            [ 1.D0, 0.D0, 0.D0,     &
              0.D0, 1.D0, 0.D0,     &
-             0.D0, 0.D0, 1.D0], [ 3, 3 ])
+             0.D0, 0.D0, 1.D0], shape(unitMatrix))
 
       real(dp),parameter :: pi = acos(-1.D0)
 

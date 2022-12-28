@@ -6,7 +6,7 @@ module altayConfig
     use altayHardLaw_DSH
     use altayTexFormats
     use altay_definitions
-    
+    use altayMiscutils
     implicit none
 
     integer,parameter  :: fname_len = 512 !< Length of filenames
@@ -106,7 +106,7 @@ module altayConfig
         logical                                   :: use_curfile = .false.
         logical                                   :: use_cubfile = .false.
     end type
-    
+
     !> PEBP model parameters (no state variables)
     type :: PEBPConfig
         !> contains BP parameters, saturation and lower bounds for dislocation densities (defined in altayHardLawDSH.f90)
@@ -146,15 +146,8 @@ module altayConfig
         !> Possible values are:
         !>   - 1 - FC Taylor
         !>   - 2 - Alamel
-        !>   - 3 - MAS-AL
-        integer                                   :: NGR = 2 ! Number of grains in the cluster
-        !> It is relevant only in MAS-AL
-        real(dp)                          :: ENTA = 1.D0
-        real(dp), dimension(3,3)          :: FMicro = reshape(       &
-                                                        [ 1.D0, 0.D0, 0.D0,  &
-                                                          0.D0, 1.D0, 0.D0,  &
-                                                          0.D0, 0.D0, 1.D0], &
-                                                        [ 3, 3 ])
+        integer                   :: NGR = 2 ! Number of grains in the cluster
+        real(dp), dimension(3,3) :: FMicro = unitMatrix
     end type
 
     !> Root-level configuration structure of Altay
@@ -164,11 +157,11 @@ module altayConfig
         character(len=fname_len)                  :: jobtitle      = 'alamel'
         character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
         !> slip systems file name
-        type(slipSystemData)                      :: slipsystem 
+        type(slipSystemData)                      :: slipsystem
         !> output file prefix, incremental output request flag, verbosity level
-        type(outputConfig)                        :: output_config 
+        type(outputConfig)                        :: output_config
         !> hardening model parameters
-        type(hardeningData)                       :: hardening 
+        type(hardeningData)                       :: hardening
         type(textureData)                         :: texture
         type(simulData)                           :: simul_init
     end type
@@ -177,7 +170,7 @@ module altayConfig
     type :: altayStateData
         real(dp)                                :: eps = 0.D0
         !> Corresponds to NBLOC config data
-        integer                                         :: nSimulCalls = 0           
+        integer                                         :: nSimulCalls = 0
         type(simulStepData),dimension(:),allocatable    :: simulCalls
         !> Iterator over simulCalls
         integer                                         :: this = 0
@@ -196,7 +189,7 @@ contains
         type(simulStepInputData),intent(inout)    :: stp
         integer,intent(in)                        :: modelId
         integer,intent(out)                       :: info
-        
+
         info = 0
         select case(modelId)
         case(modelFCTaylor)
@@ -215,7 +208,7 @@ contains
         type(altayConfigData),intent(inout)       :: cnf
         integer,intent(in)                        :: modelId
         integer,intent(out)                       :: info
-        
+
         select case(modelId)
             case(modelFCTaylor)
                 cnf%simul_init%ngr = 1

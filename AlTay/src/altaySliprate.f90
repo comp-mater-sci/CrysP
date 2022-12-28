@@ -2,7 +2,7 @@
 
 module altaySliprate
     use altay_definitions
-    use altayMiscutils, only: terminate, stopcode_runtimeerror
+    use altayMiscutils
     use altay_log
 
     character(len=*), parameter :: MODULE_NAME = "altaySliprate"

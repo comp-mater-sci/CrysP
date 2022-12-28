@@ -51,9 +51,9 @@ module altaySimul
       logical SWRLX
       common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
 
-      real(dp) :: TRFb,GMMAb,ENTA
+      real(dp) :: TRFb,GMMAb
       integer :: NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
-      common /LAMEL/ TRFb(3,3,2),GMMAb(2),ENTA,NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
+      common /LAMEL/ TRFb(3,3,2),GMMAb(2),NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
 
       integer :: IOR,ISTP,NBLOC
       common /CEIGEN/ IOR,ISTP,NBLOC
@@ -105,7 +105,6 @@ module altaySimul
         call random_seed(put=seed)
       endif
       NGR    = acnf%simul_init%NGR
-      ENTA   = acnf%simul_init%ENTA
       KOST   = acnf%hardening%HardLawID
       !
       NLIST  = acnf%output_config%NLIST   ! control "output listing"

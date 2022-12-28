@@ -2,12 +2,12 @@ include 'lapack.f90'
 
 module altayAlgorithms
     use altayMiscutils, only: terminate, stopcode_runtimeerror
-    use altay_definitions, only: dp
+    use altay_definitions
     use criMathUtils
     use altay_log
 
     implicit none
-    private 
+    private
     real(dp), parameter     :: SQRT_P5 = sqrt(0.5d0)
     character(*), parameter :: MODULE_NAME = "altayAlgorithms"
 
@@ -24,9 +24,8 @@ module altayAlgorithms
 contains
 
     !> Updating of CIJ matrix of ellipsoid
-    !> Finv is the inverse of the F-tensor which describes the strain increment.
     subroutine updatC(CIJ, Finv)
-        real(dp), dimension(3,3), intent(in)    :: Finv
+        real(dp), dimension(3,3), intent(in)    :: Finv !< Inverse of the F-tensor which describes the strain increment.
         real(dp), dimension(3,3), intent(inout) :: CIJ
 
         CIJ = matmul(matmul(transpose(Finv), CIJ), Finv)
@@ -71,7 +70,7 @@ contains
 
     !Calculate the CIJ matrix of an ellipsoid with half axes stored in Gaxes. T defines the orientation of the axes.
     !This version assumes that A is a diagonal matrix
-    Subroutine transf(Gaxes, Aprime, T)
+    subroutine transf(Gaxes, Aprime, T)
         real(dp), dimension(3), intent(in)      :: Gaxes
         real(dp), dimension(3,3), intent(inout) :: Aprime
         real(dp), dimension(3,3), intent(in)    :: T
@@ -100,7 +99,7 @@ contains
     !find half-lengths of ellipsoid axes from CIJ matrix
     !store them in prval
     !find Euler angles of these axes, store in GEULR
-    Subroutine GETANG(CIJ, prval, GEULR, TMAT)
+    subroutine GETANG(CIJ, prval, GEULR, TMAT)
         real(dp), dimension(3,3), intent(in)    :: CIJ
         real(dp), dimension(3),   intent(inout) :: GEULR, prval
         real(dp), dimension(3,3), intent(inout) :: TMAT
@@ -128,8 +127,8 @@ contains
     subroutine eigenv(e, prval)
         real(dp), dimension(3,3), intent(inout) :: e
         real(dp), dimension(3), intent(out)     :: prval
-        integer                                         :: i, info
-        integer, dimension(18)                          :: iwork
+        integer                                 :: i, info
+        integer, dimension(18)                  :: iwork
         real(dp), dimension(37)                 :: work
 
         call dsyevd('V', 'U', 3, e, 3, prval, work, 37, iwork, 18, info)

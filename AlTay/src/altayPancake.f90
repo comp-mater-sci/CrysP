@@ -31,9 +31,9 @@ module altayPancake
       logical :: bas(194),VALID(194)
       integer DI1(5),DI(10),DI2(10)
 
-      real(dp) :: TRFb,GMMAb,ENTA
+      real(dp) :: TRFb,GMMAb
       integer :: NGR,NRL,laml
-      common /LAMEL/ TRFb(3,3,2),GMMAb(2), ENTA,NGR,NRL,laml                                 ! NRL= number of relaxations, NGR= number of grains
+      common /LAMEL/ TRFb(3,3,2),GMMAb(2),NGR,NRL,laml                                 ! NRL= number of relaxations, NGR= number of grains
 
       real(dp) :: CC
       integer :: M11

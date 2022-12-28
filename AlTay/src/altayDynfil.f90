@@ -1,7 +1,8 @@
 module altayDynfil
-    use altayMiscutils, only: unitMatrix
-    use altay_definitions, only: dp
+    use altayMiscutils
+    use altay_definitions
     use criMathUtils
+    use altayIOConfig
 
     implicit none
 
@@ -46,7 +47,6 @@ contains
 
     !> Allocate the memory block for the state variables.
     subroutine DYNFIL0(npoint,keepstate,istat)
-        use altayIOConfig
 
         integer, intent(in)                     :: npoint       !<Number of elements to be allocated
         logical, intent(in)                     :: keepstate    !<Flag: preserve contenst of DFIL on reallocation.
@@ -83,9 +83,7 @@ contains
             endif
         endif
         ! Error handling
-        if (istat /= 0) then
-              if(NLIST.eq.1) write(IMP,101)
-        endif
+        if (istat /= 0 .and. NLIST.eq.1) write(IMP,101)
 
 100     format('DYNFIL0: error: requested number of grains is zero.')
 101     format('DYNFIL0: error: allocation of memory failed.')
