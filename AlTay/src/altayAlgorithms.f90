@@ -8,7 +8,7 @@ module altayAlgorithms
 
     implicit none
     private
-    real(dp), parameter     :: SQRT_P5 = sqrt(0.5d0)
+    real(dp), parameter     :: SQRT_P5 = sqrt(0.5_dp)
     character(*), parameter :: MODULE_NAME = "altayAlgorithms"
 
     public  ::  updatC,             &
@@ -35,8 +35,8 @@ contains
     function SymMatrix(vec) result(sym)
         real(dp), dimension(5), intent(in)  ::  vec
         real(dp), dimension(3,3)            ::  sym
-        real(dp), parameter                 ::  C1 = (sqrt(3.0d0) + 3.0d0) / 6.0d0, &
-                                                C2 = (3.0d0 - sqrt(3.0d0)) / 6.0d0
+        real(dp), parameter                 ::  C1 = (sqrt(3.0_dp) + 3.0_dp) / 6.0_dp, &
+                                                C2 = (3.0_dp - sqrt(3.0_dp)) / 6.0_dp
 
 
         sym(2,2) =  C1 * vec(1) - C2 * vec(2)
@@ -57,8 +57,8 @@ contains
     function vector5D(mat) result(vec)
         real(dp), dimension(3,3), intent(in) :: mat
         real(dp), dimension(5)               :: vec
-        real(dp), parameter                  :: C1 = 0.5d0 * (sqrt(3.0d0) + 1.0d0), &
-                                                C2 = C1 - 1.0d0
+        real(dp), parameter                  :: C1 = 0.5_dp * (sqrt(3.0_dp) + 1.0_dp), &
+                                                C2 = C1 - 1.0_dp
 
         vec(1) = C1 * mat(2,2) + C2 * mat(3,3)
         vec(2) = C2 * mat(2,2) + C1 * mat(3,3)
@@ -93,14 +93,13 @@ contains
     !find Euler angles of these axes, store in GEULR
     subroutine GETANG(CIJ, prval, GEULR, TMAT)
         real(dp), dimension(3,3), intent(in)    :: CIJ
-        real(dp), dimension(3),   intent(inout) :: GEULR, prval
-        real(dp), dimension(3,3), intent(inout) :: TMAT
+        real(dp), dimension(3),   intent(out) :: GEULR, prval
+        real(dp), dimension(3,3), intent(out) :: TMAT
         integer                                 :: i
         real(dp)                                :: CIJTR, enrm
         real(dp), dimension(3,3)                :: e
-        type(EulerAngles)                       :: CEuler
 
-        CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3.D0
+        CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3._dp
         e = CIJ
         do i = 1, 3
             e(i,i) = e(i,i) - CIJTR
@@ -110,10 +109,9 @@ contains
 
         prval = prval + CIJTR
 
-        prval = 1.D0 / sqrt(prval)
+        prval = 1._dp / sqrt(prval)
         TMAT = e
-        CEuler = EuleranglesType(TMAT)
-        GEULR = EulerAngles2Arr(CEuler)
+        GEULR = EulerAngles2Arr(EuleranglesType(TMAT))
     end subroutine
 
     subroutine eigenv(e, prval)
@@ -185,7 +183,7 @@ contains
     subroutine kleinkwa(N1, N2, M1, M2, A, B, BA, res)
         real(dp), dimension(M2),    intent(in)                                  :: B
         real(dp), dimension(M1,M2), intent(in)                                  :: A
-        real(dp), dimension(M2),    intent(inout)                               :: BA
+        real(dp), dimension(M2),    intent(out)                                 :: BA
         real(dp),                   intent(inout)                               :: res
         integer,                    intent(in)                                  :: M1, M2, N1, N2
         integer                                                                 :: i, rank, info

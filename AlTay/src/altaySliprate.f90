@@ -37,9 +37,7 @@ module altaySliprate
         integer, parameter :: NSTOR=48
         integer :: i,j,k,i1,i2,i3,N0,N1,N2,N3,NN,NOPL,INEG,IOPL
 
-        do j=1,M11
-           XX(j)=0.0
-        enddo
+        XX(1:M11)=0.0
         NLP=NACTIV
         NN=NACTIV
         NOPL=0
@@ -49,15 +47,13 @@ module altaySliprate
             x=x+abs(SLIPLP(i))
             j=INDACT(i)
             sgnn(j)=1.D0
-            if (TAURLP(i).lt.0.0d0) sgnn(j)=-1.D0
+            if (TAURLP(i)<0.0d0) sgnn(j)=-1.D0
         enddo
-        if (x.lt.TLXX) goto 6
+        if (x<TLXX) goto 6
         ! end of check
-        do i=1,NN
-          IND(i)=INDACT(i)
-        enddo
+        IND(1:NN)=INDACT(1:NN)
         call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
-        if (ineg.eq.0) then
+        if (ineg==0) then
              call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
              RCM_GUARD
              if (NN.le.5) goto 2
@@ -75,75 +71,74 @@ module altaySliprate
         !     First level
         !
         N1=N0-1
-        if (N1.lt.5) goto 6
+        if (N1<5) goto 6
         NN=N1
         do I1=1,N0
              call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
-             if (ineg.eq.0) then
+             if (ineg==0) then
                 call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                 RCM_GUARD
              endif
  110    format (10i5)
              J=N0-I1
-             if (J.gt.0) IND(J)=INDACT(J+1)
+             if (J>0) IND(J)=INDACT(J+1)
         enddo
         !
         ! Level 2
         !
         N2=N1-1
-        if (N2.lt.5) goto 2
-        NN=N2
-        do I1=2,N0
-            do I2=1,I1-1
-                j=1
-                do i=1,N0
-                    if (i.eq.I1.or.i.eq.I2) cycle
-                    IND(j)=INDACT(i)
-                    j=j+1
+        if (.not. (N2<5)) then
+            NN=N2
+            do I1=2,N0
+                do I2=1,I1-1
+                    j=1
+                    do i=1,N0
+                        if (i==I1.or.i==I2) cycle
+                        IND(j)=INDACT(i)
+                        j=j+1
+                    enddo
+                    call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
+                    if (ineg==0) then
+                        call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+                        RCM_GUARD
+                    endif
                 enddo
-                call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
-                if (ineg.eq.0) then
-                    call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-                    RCM_GUARD
-                endif
             enddo
-        enddo
-        !
-        ! Level 3
-        !
-        N3=N2-1
-        if (.not. (N3.lt.5)) then
-            NN=N3
-            do I1=3,N0
-                do I2=2,I1-1
-                    do I3=1,I2-1
-                      j=1
-                      do i=1,N0
-                          if (i.eq.I1.or.i.eq.I2.or.i.eq.I3) cycle
-                          IND(j)=INDACT(i)
-                          j=j+1
-                      enddo
-                      call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
-                      if (ineg.eq.0) then
-                          call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-                          RCM_GUARD
-                      endif
+            !
+            ! Level 3
+            !
+            N3=N2-1
+            if (.not. (N3<5)) then
+                NN=N3
+                do I1=3,N0
+                    do I2=2,I1-1
+                        do I3=1,I2-1
+                          j=1
+                          do i=1,N0
+                              if (i==I1.or.i==I2.or.i==I3) cycle
+                              IND(j)=INDACT(i)
+                              j=j+1
+                          enddo
+                          call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
+                          if (ineg==0) then
+                              call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
+                              RCM_GUARD
+                          endif
+                        enddo
                     enddo
                 enddo
-            enddo
+            endif
         endif
-   2    if (IPR.eq.2 .and. NLIST.eq.1) write (IMP,100)
+   2    if (IPR==2 .and. NLIST==1) write (IMP,100)
  100    format (' Results SLIPRAT')
-        if (NOPL.eq.0) goto 6
+        if (NOPL==0) goto 6
         IOPL=0
         X=1.0d10
         do i=1,NOPL
             Y=SLSTOR(0,i)
-            !
             !  Y is de te minimaliseren waarde van oplossing i
             !  Uitprinten!
-            !
-            if (Y.lt.X) then
+            if (Y<X) then
                 X=Y
                 IOPL=i
             endif
@@ -154,26 +149,26 @@ module altaySliprate
             IND(i)=ISTOR(i,IOPL)
             SLPR(i)=SLSTOR(i,IOPL)
         enddo
-        if (IPR.eq.2 .and. NLIST.eq.1) then
+        if (IPR==2 .and. NLIST==1) then
             write (IMP,104) IOR,NACTIV,NN,NOPL
             write (IMP,106) IOR,sumsq,(IND(i),i=1,NN)
  104        format (I5,' Reduction of NACTIV from',I5,'   to',i5,' NOPL=',i5)
  106        format (I5,d12.3,8i5)
         endif
-        x=0.0
+        x=0.0_dp
         k=0
         do i=1,NN
             j=IND(i)
             Y=SLPR(i)
             YY=Y*sgnn(j)
             XX(j)=YY*MacroDefRate%vMeqStrainRate
-            if (IPR.eq.2 .and. NLIST.eq.1) write (IMP,101) i,IND(i),YY
-            if (x.gt.Y) then
+            if (IPR==2 .and. NLIST==1) write (IMP,101) i,IND(i),YY
+            if (x>Y) then
                 x=Y
                 k=k+1
             endif
         enddo
-        if (X.lt.0.0d0 .and. NLIST.eq.1) write (IMP,102) IOR,k,X
+        if (X<0.0d0 .and. NLIST==1) write (IMP,102) IOR,k,X
  102    format (' NEG. SL. RATE DETECTED',2I5,d15.6)
  101    format (2i5,5x,d15.6)
         return
@@ -182,7 +177,7 @@ module altaySliprate
         do i=1,NN
             IND(i)=INDLP(i)
         enddo
-        if (IPR.eq.2 .and. NLIST.eq.1) then
+        if (IPR==2 .and. NLIST==1) then
             write (IMP,100)
             write (IMP,108) IOR,NN
         end if
@@ -193,14 +188,14 @@ module altaySliprate
              Y=SLIPLP(i)
              j=IND(i)
              XX(j)=Y*MacroDefRate%vMeqStrainRate
-             if (IPR.eq.2 .and. NLIST.eq.1) write (IMP,101) i,IND(i),Y
+             if (IPR==2 .and. NLIST==1) write (IMP,101) i,IND(i),Y
              Y=abs(Y)
-             if (x.gt.Y) then
+             if (x>Y) then
                  x=Y
                  k=k+1
              endif
         enddo
-        if (X.lt.0.0d0 .and. NLIST.eq.1) write (IMP,102) IOR,k,X
+        if (X<0.0d0 .and. NLIST==1) write (IMP,102) IOR,k,X
     end subroutine
 
 
@@ -221,15 +216,13 @@ module altaySliprate
         real(dp), parameter :: TOL=1.0e-10_dp
         integer :: i,j,N1,N2
 
-        if (.not. (NN.gt.5)) then
+        if (.not. (NN>5)) then
             N1=5
             N2=NN
             do i=1,N2
-               do j=1,5
-                  A(j,i)=sgnn(IND(i))*A8(j,IND(i))
-               enddo
+                 A(1:5,i)=sgnn(IND(i))*A8(1:5,IND(i))
             enddo
-            B(1:5)=BB8(1:5)
+            B(1:5)=BB8
         else
             N1=NN+5
             N2=N1
@@ -244,7 +237,7 @@ module altaySliprate
                   A(NN+j,i)=x
                enddo
             enddo
-            B(1+NN:5+NN)=BB8(1:5)
+            B(1+NN:5+NN)=BB8
         endif
 
         ! Solve by least-squares method followed by singular value decomposition
@@ -252,17 +245,17 @@ module altaySliprate
 
         SLPR(1:NN)=BA(1:NN)
         sumsq=0.0_dp
-        x=0.0d0
+        x=0.0_dp
         ineg=0
         do i=1,NN
            Y=SLPR(i)
            sumsq=sumsq+Y**2
-           if (x.gt.Y) then
+           if (x > Y) then
                x=Y
                ineg=i
            endif
         enddo
-        if (RES.gt.(10000.0*TOL)) then
+        if (RES > (10000.0*TOL)) then
             ineg=-1
             call vef_trace(MODULE_NAME,'MINSQU', 'RES too large')
         end if
@@ -278,7 +271,7 @@ module altaySliprate
         real(dp), intent(in) :: SLPR(8), sumsq
 
         NOPL=NOPL+1
-        if (NOPL.gt.NSTOR) then
+        if (NOPL>NSTOR) then
             RCM_RAISE(1,'STORE','Too small dimension NSTOR in SLIPRAT',RCM_RTN)
         endif
  100    format (' STORE - increase dimension NSTOR in SLIPRAT,STORE')
