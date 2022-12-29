@@ -61,7 +61,7 @@ module altayTBH
             bas(j)=.TRUE.
         enddo
         ! Calculation of slip rates in basis
-        call mtprd(Dacc,U,D,N,N,1,NDIM,NDIM)
+        call mtprd(C=Dacc,A=U,B=D,N1=N,N2=N,N3=1,ND1=NDIM,ND2=NDIM)
         ! Calculation of stress, using generalised Schmid law
         do i=1,N
            j=Irp(i)
@@ -83,14 +83,14 @@ module altayTBH
             endif
             if (IPR >= JPR .and. NLIST == 1) write (IMP,251) iter
  251        format (/,'  ITERATION NR. ',I5,/)
-            call mtprd(SIG,Trp,U,1,N,N,1,NDIM)
+            call mtprd(C=SIG,A=Trp,B=U,N1=1,N2=N,N3=N,ND1=1,ND2=NDIM)
             ! Calculation of Taylor factor
             FakM=0.0
             do i=1,N
                 FakM=FakM+SIG(i)*D(i)
             enddo
             ! Calculation of resolved shear stress
-            call mtprd(TauR,SIG,A,1,N,M,1,NDIM)
+            call mtprd(C=TauR,A=SIG,B=A,N1=1,N2=N,N3=M,ND1=1,ND2=NDIM)
             if (IPR >= JPR .and. NLIST == 1) then
                 write (IMP,205)
                 do i=1,N
@@ -188,10 +188,10 @@ module altayTBH
                 CUst(i)=CUst(i)/Z1
             enddo
             UU=U
-            call Ust(U,UU,CUst,in,N,N,NDIM)
+            call Ust(C=U,B=UU,Cust=CUst,in=in,N=N,M3=N,NDIM=NDIM)
             ! Updating of Dacc
             DD=Dacc
-            call Ust(Dacc,DD,CUst,in,N,1,N)
+            call Ust(C=Dacc,B=DD,Cust=CUst,in=in,N=N,M3=1,NDIM=N)
             if (IPR >= JPR .and. NLIST == 1) write (IMP,929) in,Gmin,Dacc(in)
   929       format ('updated slip rate in',I5,2D15.5)
             ! Updating of basis: bas and Irp
