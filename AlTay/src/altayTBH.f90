@@ -45,7 +45,7 @@ module altayTBH
         real(dp), parameter :: TOL=1.0e-10_dp
 
         integer :: i,j,k,iter,jn,in
-        real(dp) :: x,dt,y,z1,z2,zr,gmin,xx
+        real(dp) :: x,dt,y,z1,z2,zr,gmin
 
         if (N > NDIM) then
             RCM_RAISE(1,'TBH','Bad input: N>NDIM',RCM_RTN)
@@ -65,9 +65,8 @@ module altayTBH
         ! Calculation of stress, using generalised Schmid law
         do i=1,N
            j=Irp(i)
-           XX=Dacc(i)
-           X=XX
-           if (abs(XX) < TOL) then
+           X=Dacc(i)
+           if (abs(X) < TOL) then
                 X=0.0
                 do k=1,N
                     X=X+A(k,j)*D(k)
