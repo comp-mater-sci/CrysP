@@ -217,8 +217,8 @@ module altayTBH
     subroutine Ust(C,B,CUst,in,N,M3,NDIM)
         !  MATRIX C=MATRIX Ustar*MATRIX B
 
-        integer, intent(in) :: in,N,M3,NDIM
-        real(dp), intent(in) :: B(NDIM,M3),CUst(N)
+        integer :: in,N,M3,NDIM
+        real(dp) :: B(NDIM,M3),CUst(N)
         real(dp) :: C(NDIM,M3)
         integer :: i,j
 
@@ -234,8 +234,8 @@ module altayTBH
     subroutine mtprd(C,A,B,N1,N2,N3,ND1,ND2)
         ! MATRIX C=MATRIX A*MATRIX B
 
-        integer, intent(in) :: N1,N2,N3,ND1,ND2
-        real(dp), intent(in) :: A(ND1,N2),B(ND2,N3)
+        integer :: N1,N2,N3,ND1,ND2
+        real(dp) :: A(ND1,N2),B(ND2,N3)
         real(dp) :: C(ND1,N3)
         real(dp) :: X
         integer :: I,J,K
