@@ -110,11 +110,12 @@ module altayTaylor
                 A2(6:10,M11+1:M11*2)=A1(1:5,1:M11)
 
             case(2) ! Write velocity gradient, strain rate and spin tensor; then check norm of strain rate
-                if(NLIST == 1) write (IMP,203)
-                do I=1,3
-                    if(NLIST == 1) &
+                if(NLIST == 1) then
+                    write (IMP,203)
+                    do I=1,3
                         write (IMP,204) (MacroDefRate%VelGrad(I,J),J=1,3),(MacroDefRate%StrainRate(I,J),J=1,3),(MacroDefRate%Spin(I,J),J=1,3)
-                end do
+                    end do
+                end if
  203            format (' TAYLOR - VELOCITY GRADIENT WHICH WILL BE USED FOR THE SIMULATION', &
                         //T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,'ANTISYMMETRICAL PART',/)
  204            format (1X,3(3F10.5,10X))
@@ -123,8 +124,7 @@ module altayTaylor
                 endif
 
             case(3) ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
-                call Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,              &
-                              SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
+                call Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
                 ! OUT: Scrys,RHOScrys,RHOAcrys
                 !Report Scrys to LST-file
  100            format(' Bishop-Hill stress (crystal system):')

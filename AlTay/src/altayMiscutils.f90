@@ -35,9 +35,8 @@ module altayMiscutils
         integer,intent(out)     :: info
 
         write(ounit,fmt=554,iostat=info)
-    554 format(T5,'Eps_vM',T21,'Eps_vM^Tot',T37,'GAMMA_H',T53,'GAMMA_H^Tot',T69,'Sigma_HvM', &
-                 T90,'Sigma_11',T106,'Sigma_22',T122,'Sigma_33',T138,'Sigma_23',T154,'Sigma_31',T170,'Sigma_12', &
-                 T186,'TayFac_avg',T202,'StrnRatHet')
+    554 format(T5,'Eps_vM',T21,'Eps_vM^Tot',T37,'GAMMA_H',T53,'GAMMA_H^Tot',T69,'Sigma_HvM',T90,'Sigma_11',&
+               T106,'Sigma_22',T122,'Sigma_33',T138,'Sigma_23',T154,'Sigma_31',T170,'Sigma_12',T186,'TayFac_avg',T202,'StrnRatHet')
 
     end subroutine
 
