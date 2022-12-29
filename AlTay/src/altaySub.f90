@@ -1,9 +1,3 @@
-!>    * This module is based on ALAMEL main program code by PVH and co-workers.
-!>    * Several modifications have been introduced by JG to make this code more
-!>      "procedure-like".
-!>    * The code inside this file was initially based on Main1.for.
-!>      Now it is only loosely related to its predecessor.
-!
 !>    \file altaySub.f90 ALAMEL as a subroutine
 
 #include "altayRCM.fpp"
@@ -58,23 +52,23 @@ contains
         ! UNIT LEC = SLIP SYSTEMS; open slip system file
         open (unit=LEC,file=trim(cnf%slipsystem%input_fname),status='old',iostat=ierr)
         if (ierr /= 0) then
-              if (present(errmsg)) errmsg = 'Cannot open slip system definition file: ' // trim(cnf%slipsystem%input_fname)
-              info = altaySub_IOErr
-              return
+            if (present(errmsg)) errmsg = 'Cannot open slip system definition file: ' // trim(cnf%slipsystem%input_fname)
+            info = altaySub_IOErr
+            return
         endif
         ! Load microstructure data
         CALL GRFIL(acnf%micros_fname,acnf%simul_init%FMicro,info)
         if (info /= 0) then
-              if (present(errmsg)) errmsg = 'Cannot process the microstructure file: ' // trim(acnf%micros_fname)
-              info = altaySub_IOErr
-              return
+            if (present(errmsg)) errmsg = 'Cannot process the microstructure file: ' // trim(acnf%micros_fname)
+            info = altaySub_IOErr
+            return
         endif
         ! Get the initial texture
         call loadTexture(cnf%texture%input_type,NDAT1,trim(cnf%texture%input_fname),cnf%texture%block_id,info)
         if (info /= 0) then
-              if (present(errmsg)) errmsg = 'Cannot process the texture data file: ' // trim(cnf%texture%input_fname)
-              info = altaySub_IOErr
-              return
+            if (present(errmsg)) errmsg = 'Cannot process the texture data file: ' // trim(cnf%texture%input_fname)
+            info = altaySub_IOErr
+            return
         endif
         ! Open output files
         call openOutputFiles(cnf, info, errmsg)
@@ -85,9 +79,9 @@ contains
         ! Set the data for CRSS calculations
         call InitModuleAltayHard(cnf%hardening, info)
         if (info /= 0) then
-              if (present(errmsg)) errmsg = 'Cannot initialize hardening law'
-              info = altaySub_Err
-              return
+            if (present(errmsg)) errmsg = 'Cannot initialize hardening law'
+            info = altaySub_Err
+            return
         endif
         ! Initialisation of SIMUL
         if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
@@ -107,23 +101,22 @@ contains
         if (present(errmsg)) errmsg = ''
         ! PEBP model
         select case(cnf%hardening%HardLawID)
-        case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-              info = KS_initState(size(DFIL))
-              if (info /= 0) return
-              if (acnf%hardening%PEBPCnf%read_state) then
+            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+                info = KS_initState(size(DFIL))
+                if (info /= 0) return
+                if (acnf%hardening%PEBPCnf%read_state) then
                     ! Load state variables
                     info = KS_openStateFile(IPEBPSTAT,acnf%hardening%PEBPCnf%input_fname, mode='r')
                     if (info /= 0) then
-                          if (present(errmsg)) errmsg = 'Cannot open PEBP state file: ' &
-                                                        // trim(acnf%hardening%PEBPCnf%input_fname)
-                          return
+                        if (present(errmsg)) errmsg = 'Cannot open PEBP state file: '//trim(acnf%hardening%PEBPCnf%input_fname)
+                        return
                     endif
                     info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
                     if ((info /= 0) .and. present(errmsg)) then
-                          errmsg = 'Cannot read from PEBP state file: '// trim(acnf%hardening%PEBPCnf%input_fname)
-                          return
+                        errmsg = 'Cannot read from PEBP state file: '// trim(acnf%hardening%PEBPCnf%input_fname)
+                        return
                     endif
-              endif
+                endif
         endselect
         ! No need for the slip system definition anymore.
         close(LEC)
@@ -172,8 +165,8 @@ contains
 #ifndef NOLSTFILE
         ! UNIT IMP = PRINTER
         if (cnf%output_config%nlist /= 0) then
-             fname = trim(fname_prefix)//'.LST'
-             open(unit=IMP,file=fname,status='replace',err=9999)
+            fname = trim(fname_prefix)//'.LST'
+            open(unit=IMP,file=fname,status='replace',err=9999)
         endif
 #endif
 
@@ -212,9 +205,9 @@ contains
             fname = trim(fname_prefix)//'.BPM'
             info = KS_openStateFile(IMP4,fname=fname,mode='w')
             if (info /= 0) then
-                  if (present(errmsg)) errmsg = 'Cannot create PEBP state file: ' // fname
-                  info = altaySub_IOErr
-                  return
+                if (present(errmsg)) errmsg = 'Cannot create PEBP state file: ' // fname
+                info = altaySub_IOErr
+                return
             endif
         endif
 #endif
@@ -271,7 +264,7 @@ contains
             ! Run simul.
             call SIMUL(1,NFILE0,MacroDefRate)
             if (RCM_signal()) then
-                  RCM_RAISE(info,'runSteps','SIMUL has thrown exception',RCM_RTN)
+                RCM_RAISE(info,'runSteps','SIMUL has thrown exception',RCM_RTN)
             endif
 
             if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)

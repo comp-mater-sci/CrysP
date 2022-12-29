@@ -106,18 +106,14 @@ module altayTaylor
  218                format (i4,' B2',6f10.7,' G',f10.7)
                 endif
                 A2=0.0
-                do j=1,M11
-                    A2(1:5,j)=A1(1:5,j)
-                    A2(6:10,j+M11)=A1(1:5,j)
-                end do
+                A2(1:5,1:M11)=A1(1:5,1:M11)
+                A2(6:10,M11+1:M11*2)=A1(1:5,1:M11)
 
             case(2) ! Write velocity gradient, strain rate and spin tensor; then check norm of strain rate
                 if(NLIST.eq.1) write (IMP,203)
                 do I=1,3
                     if(NLIST.eq.1) &
-                        write (IMP,204) (MacroDefRate%VelGrad(I,J),J=1,3),         &
-                                        (MacroDefRate%StrainRate(I,J),J=1,3),      &
-                                        (MacroDefRate%Spin(I,J),J=1,3)
+                        write (IMP,204) (MacroDefRate%VelGrad(I,J),J=1,3),(MacroDefRate%StrainRate(I,J),J=1,3),(MacroDefRate%Spin(I,J),J=1,3)
                 end do
  203            format (' TAYLOR - VELOCITY GRADIENT WHICH WILL BE USED FOR THE SIMULATION', &
                         //T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,'ANTISYMMETRICAL PART',/)
@@ -127,39 +123,39 @@ module altayTaylor
                 endif
 
             case(3) ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
-               call Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,              &
-                             SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
-               ! OUT: Scrys,RHOScrys,RHOAcrys
-               !Report Scrys to LST-file
- 100           format(' Bishop-Hill stress (crystal system):')
- 101           format(3d20.7)
-               if(NLIST.eq.1) then
-                   write (IMP,100)
-                   do i=1,3
-                       write (IMP,101) (Scrys(i,j),j=1,3)
-                   end do
-               end if
-               !Transform stress from local frame (Scrys) to sample frame (Ssam)
-               Ssam = rotateSRTensorTo(Scrys,TRF)
-               !Transform relaxation strain rate tensor from local frame (RHOScrys)
-               !                                         to sample frame (RHOSsa)
-               RHOSsa = rotateSRTensorTo(RHOScrys,TRF)
-               !Transform relaxation spin tensor from local frame (RHOAcrys) to sample frame (RHOAsa)
-               RHOAsa = rotateSRTensorTo(RHOAcrys,TRF)
-               !Report RHOSsa and RHOAsa to LST-file
- 1701          format(/,' RHOSsa')
- 1706          format(/,' RHOAsa')
-               if(NLIST.eq.1) then
-                   write (IMP,1701)
-                   do i=1,3
-                       write (IMP,101) (RHOSsa(i,j),j=1,3)
-                   end do
-                   write (IMP,1706)
-                   do i=1,3
-                       write (IMP,101) (RHOAsa(i,j),j=1,3)
-                   end do
-               end if
-               RCM_GUARD
+                call Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,              &
+                              SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
+                ! OUT: Scrys,RHOScrys,RHOAcrys
+                !Report Scrys to LST-file
+ 100            format(' Bishop-Hill stress (crystal system):')
+ 101            format(3d20.7)
+                if(NLIST.eq.1) then
+                    write (IMP,100)
+                    do i=1,3
+                        write (IMP,101) (Scrys(i,j),j=1,3)
+                    end do
+                end if
+                !Transform stress from local frame (Scrys) to sample frame (Ssam)
+                Ssam = rotateSRTensorTo(Scrys,TRF)
+                !Transform relaxation strain rate tensor from local frame (RHOScrys)
+                !                                         to sample frame (RHOSsa)
+                RHOSsa = rotateSRTensorTo(RHOScrys,TRF)
+                !Transform relaxation spin tensor from local frame (RHOAcrys) to sample frame (RHOAsa)
+                RHOAsa = rotateSRTensorTo(RHOAcrys,TRF)
+                !Report RHOSsa and RHOAsa to LST-file
+ 1701           format(/,' RHOSsa')
+ 1706           format(/,' RHOAsa')
+                if(NLIST.eq.1) then
+                    write (IMP,1701)
+                    do i=1,3
+                        write (IMP,101) (RHOSsa(i,j),j=1,3)
+                    end do
+                    write (IMP,1706)
+                    do i=1,3
+                        write (IMP,101) (RHOAsa(i,j),j=1,3)
+                    end do
+                end if
+                RCM_GUARD
         end select
 
     end subroutine
@@ -306,7 +302,6 @@ module altayTaylor
              rhossaTot(1,1),rhossaTot(2,2),rhossaTot(3,3),rhossaTot(2,3),rhossaTot(3,1),rhossaTot(1,2), &
              rhoasa(2,3),rhoasa(3,1),rhoasa(1,2),ssam(1,1),ssam(2,2),ssam(3,3),ssam(2,3),ssam(3,1),ssam(1,2)
   150       format(i5,5(E12.5,1X),5x,6(E12.5,1X),5x,3(E12.5,1X),5x,6(E12.5,1X))
- 101        format(3d20.7)
         endif
     end subroutine
 
