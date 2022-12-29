@@ -4,7 +4,7 @@
 
 if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
     set(Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -extend-source 132 -Warn declarations,general,usage,interfaces,unused")
-    set(Fortran_FLAGS_DEBUG "-g -O0 -check all -ftrapuv -debug all -debug-parameters all -traceback -fpstack-check -debug all")
+    set(Fortran_FLAGS_DEBUG "-g -O0 -check all -ftrapuv -debug all -debug-parameters all -traceback -fp-stack-check -debug all")
 elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     set(Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -ffree-line-length-none -Wall -Wno-unused-label -ffpe-summary=all -Wunused-parameter -Wconversion-extra -Wimplicit-procedure")
     set(Fortran_FLAGS_DEBUG "-g -Og -fbacktrace -fcheck=all -fsanitize=undefined")
