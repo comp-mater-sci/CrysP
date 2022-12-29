@@ -139,8 +139,8 @@ contains
 
         info = .false.
         do while (RCM_catch_message(ec,message))
-              info = .true.
-              write(nunit,'(A)') trim(message)
+            info = .true.
+            write(nunit,'(A)') trim(message)
         enddo
 
     end function

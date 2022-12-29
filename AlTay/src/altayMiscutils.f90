@@ -15,8 +15,6 @@ module altayMiscutils
            0.D0, 1.D0, 0.D0,     &
            0.D0, 0.D0, 1.D0], shape(unitMatrix))
 
-    real(dp),parameter :: pi = acos(-1.D0)
-
     contains
 
     !> Terminate the analysis and return exit code

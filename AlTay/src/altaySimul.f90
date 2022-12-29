@@ -51,8 +51,6 @@ module altaySimul
         common /LAMEL/ TRFb(3,3,2),GMMAb(2),NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
         integer :: IOR,ISTP,NBLOC
         common /CEIGEN/ IOR,ISTP,NBLOC
-        real(dp) :: Fmicro
-        common /PE/ Fmicro(3,3) !Temporary!!!
 
         real(dp) :: TEN(3,3),TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2), &
                     CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2), &
@@ -117,9 +115,6 @@ module altaySimul
             endif
 !           Number of relaxations: 0 for Taylor and 2 for ALAMEL:
             NRL=(NGR-1)*2
-            !
-            FMicro = acnf%simul_init%FMicro
-            !
             TITEL  = acnf%jobtitle
             if(NLIST == 1) write(IMP,97) TITEL
             if (NRES > 0) write (IMP2,98) TITEL
@@ -186,8 +181,7 @@ module altaySimul
                     if (NRES > 0) write (IMP2,404) nrstep+1,NPOINT
  404                format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'  &
                      ,T7,'EquivStress',T23,'WorkRate',T37,'tau_ref',T56,'M',T64,       &
-                     'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS' &
-                     ,/,1x,278('*'))
+                     'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS',/,1x,278('*'))
 
                 endif
                 if (NLIST == 1) then
@@ -322,9 +316,9 @@ module altaySimul
                 ! DEFINITION: srh = (||d-D||) / ||D||
                 srh=sqrt(2.D0/3.D0)*srh/TOTGEW
                 SeqAvg=SeqAvg/TOTGEW
-                
+
                 MEPSCALL= MacroDefState%IncrvMeqStrain * (ISTP-1)
-                
+
                 if (NMSSx /= 0) &
                     call writeMSSRecord(IMP5,MEPSCALL,MacroDefState%AccumvMeqStrain_ToStartOfInc, HGAMCALL,HGAMTOT,SHsam,Mavg,srh,info)
                 select case(KOST)
@@ -344,10 +338,9 @@ module altaySimul
                       callout%effective_macro_strain_tot = MacroDefState%AccumvMeqStrain_ToStartOfInc
                       callout%effective_macro_strain_tot_end = MacroDefState%AccumvMeqStrain_ToEndOfInc
                 end associate
-                !
+
                 HGAM = HGAM / TOTGEW
                 HGAMCALL = HGAMCALL + HGAM
-                ! We can choose not to update the internal state
                 if (.not.astate%simulCalls(astate%this)%input%keep_state) HGAMTOT = HGAMTOT + HGAM
                 if(NLIST == 1) write (IMP,105) ISTP,SeqAvg,Mavg,MacroDefState%IncrvMeqStrain
  105            format (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VALUE=',F10.5,'  EFF. STRAIN EPS USED=',F10.5)
