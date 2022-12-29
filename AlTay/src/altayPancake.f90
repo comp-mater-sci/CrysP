@@ -49,15 +49,11 @@ module altayPancake
         common /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),TLXX,TAURLP(8)
 
 
-        real(dp) :: C2(3,3),B(5,5),DACC(10), &
-                    rls(3,3),rla(3,3),C3(3,3),TRP(10),APRIME(10),B3(10,3),CUst(10)
-        !     first index op PLUMIN = nr. of grain
-        !     second index = nr. of relaxation
-        !     rlm is unit relaxation tensor in macroscopic frame
-        !     rls and rla in crystal frame (symmetric and anti-sym. part)
-        real(dp) :: spanv(5),XX(194),STRSS(10),BB(10), &
-                    CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
-                    B8(5,2),UBUF(10),UU2(10,10),UU3(10,10),DD(10), &
+        real(dp) :: C2(3,3),B(5,5),DACC(10),rls(3,3),rla(3,3),C3(3,3),B3(10,3),CUst(10)
+        !     first index op PLUMIN = nr. of grain, second index = nr. of relaxation
+        !     rls and rla are unit relaxation tensors crystal frame (symmetric and anti-sym. part)
+        real(dp) :: spanv(5),XX(194),STRSS(10),BB(10),CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
+                    B8(5,2),UBUF(10),UU2(10,10),DD(10), &
                     GAMR(2),Tprinc(3,3),TAURL(2),XXTOT,COFCOS,COFSIN,GEWF,fakm
         ! CCC (input): critical resolved shear stresses (Tauc)
         ! UU2 (input): initial inverse of "basis" = columns of A1
@@ -171,7 +167,7 @@ module altayPancake
  218        format(/' COST FUNCTION',/,(2x,12F10.4))
  219        format (' right hand side',/,(2x,10F10.4),/)
  400        format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
-            call TBH(IPR,NDIM,N,M2,A1,BB,CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU)
+            call TBH(IPR,NDIM,N,M2,A1,BB,CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,Taur,bas,CUst,DD,DTAU)
             RCM_GUARD
 
             if (.not.(IPR < 4)) then
@@ -193,7 +189,7 @@ module altayPancake
                 ! Second call of Simplex (relaxed constraints)
                 if (IPR == 2 .and. NLIST == 1) write(IMP,401)
  401            format (' Second call of TBH')
-                call TBH(IPR,N,N,M12,A1,BB,CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU)
+                call TBH(IPR,N,N,M12,A1,BB,CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,Taur,bas,CUst,DD,DTAU)
                 RCM_GUARD
 
                 if (IPR >= 4) then
