@@ -201,7 +201,7 @@ module altayTaylor
         real(dp), dimension(3,3) :: RCC,RCcryst,rhossaTot,TDC,RHOAcrys
         real(dp), dimension(96) :: VOLFR,SGNN,GAMdot
         integer :: info,i,j
-        real(dp) :: ddt,rndm,Mgrain,rotm,ratlon,x
+        real(dp) :: ddt,rndm,Mgrain,ratlon,x
         type(EulerAngles):: Euler
         SAVE
 
@@ -226,7 +226,6 @@ module altayTaylor
         TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
         WorkRate = sum(merge(CC(1,1:M11)*GAMdot(1:M11),-CC(2,1:M11)*GAMdot(1:M11),GAMdot(1:M11)>0.0))
         Seq=WorkRate / MacroDefRate%vMeqStrainRate
-        J=M
         if(NLIST.eq.1) write (IMP,301) WorkRate
  301    format (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
 
@@ -249,43 +248,43 @@ module altayTaylor
         ! NIEUWE STAND UITWENDIG ASSENSTELSEL.
         C2 = matmul(C1,TRF)
         ! KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
-        ROTM= SQRT(C1(3,2)**2+C1(1,3)**2+C1(2,1)**2)
         Euler= EuleranglesType(C2)
         fi1=Euler%fi1
         PHI=Euler%PHI
         fi2=Euler%fi2
         C2 = rotmat(Euler)
         ITW=0
-        if (NTW.EQ.0) goto 31
-        X=0.
-        do I=1,NTW
-            X=X+GAMdot(I+NGL)/G(I)
-            VOLFR(I)=X
-        end do
-        if (X > 1.) then
-            RCM_RAISE(1,'TAYLR1','Total volume fraction of twins exceeds unity',RCM_RTN)
+        if (NTW /= 0) then
+            X=0.
+            do I=1,NTW
+                X=X+GAMdot(I+NGL)/G(I)
+                VOLFR(I)=X
+            end do
+            if (X > 1.) then
+                RCM_RAISE(1,'TAYLR1','Total volume fraction of twins exceeds unity',RCM_RTN)
+            endif
+            call RANDOM_NUMBER(RNDM)
+            do I=1,NTW
+                if (RNDM < VOLFR(I)) goto 87
+            end do
+            goto 31
+  87        RCC = C2
+            TDC(1,1)=B2(1,I)
+            TDC(2,1)=B2(2,I)
+            TDC(1,2)=B2(2,I)
+            TDC(3,1)=B2(3,I)
+            TDC(1,3)=B2(3,I)
+            TDC(2,2)=B2(4,I)
+            TDC(3,2)=B2(5,I)
+            TDC(2,3)=B2(5,I)
+            TDC(3,3)=B2(6,I)
+            C2 = matmul(TDC,RCC)
+            ITW=I
+            Euler= EuleranglesType(C2)
+            fi1=Euler%fi1
+            PHI=Euler%PHI
+            fi2=Euler%fi2
         endif
-        call RANDOM_NUMBER(RNDM)
-        do I=1,NTW
-            if (RNDM < VOLFR(I)) goto 87
-        end do
-        goto 31
-  87    RCC = C2
-        TDC(1,1)=B2(1,I)
-        TDC(2,1)=B2(2,I)
-        TDC(1,2)=B2(2,I)
-        TDC(3,1)=B2(3,I)
-        TDC(1,3)=B2(3,I)
-        TDC(2,2)=B2(4,I)
-        TDC(3,2)=B2(5,I)
-        TDC(2,3)=B2(5,I)
-        TDC(3,3)=B2(6,I)
-        C2 = matmul(TDC,RCC)
-        ITW=I
-        Euler= EuleranglesType(C2)
-        fi1=Euler%fi1
-        PHI=Euler%PHI
-        fi2=Euler%fi2
   31    if (.not. (nfile.eq.0.or.istp.gt.1)) then
 
             ! the ratio of the parallel strain rates
