@@ -33,7 +33,7 @@ module altayTBH
                                 BINV(NDIM,N), &
                                 TauC(2,M)
         logical :: bas(M) !< MD: this is "workspace" from pancake and has the 'save' attribute. Might be the reason for strange behavior
-        real(dp), intent(out) :: U(NDIM,N), Dacc(NDIM),GDOT(M),SIG(NDIM),TauR(M), DTAU(M),FakM
+        real(dp), intent(out) :: U(NDIM,N), Dacc(NDIM),GDOT(M),SIG(NDIM),TauR(M),DTAU(M),FakM
         integer, intent(out) :: Irp(NDIM) !< indices of active slip systems
 
         real(dp) :: Aprime(NDIM), & !< column of U * A
@@ -106,7 +106,7 @@ module altayTBH
   204       format (D20.10,5X,D20.10)
   205       format (//,'***************************************************', /,'   Strain                   Stress')
 !           Search for most severly overstressed slip system
-    6       DT=0.0d0
+            DT=0.0d0
             jn=0
             do j=1,M
                 X=TauR(j)
@@ -177,7 +177,6 @@ module altayTBH
             if (in == 0) then
                 RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
             endif
-  101       format (' Subroutine TBH - solution unbounded')
             if (IPR >= JPR .and. NLIST == 1) write (IMP,912) in,jn,Gmin
   912       format ('in jn Gmin',2I5, D15.5)
             Z1=Aprime(in)
@@ -218,8 +217,8 @@ module altayTBH
     subroutine Ust(C,B,CUst,in,N,M3,NDIM)
         !  MATRIX C=MATRIX Ustar*MATRIX B
 
-        integer :: in,N,M3,NDIM
-        real(dp) :: B(NDIM,M3),CUst(N)
+        integer, intent(in) :: in,N,M3,NDIM
+        real(dp), intent(in) :: B(NDIM,M3),CUst(N)
         real(dp) :: C(NDIM,M3)
         integer :: i,j
 
@@ -235,8 +234,8 @@ module altayTBH
     subroutine mtprd(C,A,B,N1,N2,N3,ND1,ND2)
         ! MATRIX C=MATRIX A*MATRIX B
 
-        integer :: N1,N2,N3,ND1,ND2
-        real(dp) :: A(ND1,N2),B(ND2,N3)
+        integer, intent(in) :: N1,N2,N3,ND1,ND2
+        real(dp), intent(in) :: A(ND1,N2),B(ND2,N3)
         real(dp) :: C(ND1,N3)
         real(dp) :: X
         integer :: I,J,K

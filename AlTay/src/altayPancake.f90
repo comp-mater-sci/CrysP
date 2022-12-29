@@ -19,10 +19,10 @@ module altayPancake
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-    subroutine pancak2(KOST,NGL,B,DI1,S33,RHOS33,RHOA33,SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
+    subroutine pancak2(NGL,B,DI1,S33,RHOS33,RHOA33,SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
         type(DeformationRate),intent(in) :: MacroDefRate
         type(DeformationState),intent(in):: MacroDefState
-        integer, intent(in) :: KOST,NGL,IPR,DI1(5)
+        integer, intent(in) :: NGL,IPR,DI1(5)
         logical, intent(in) :: SWRLX(3)
 
         type(CRSS) :: CRSSmatrix
@@ -74,7 +74,7 @@ module altayPancake
         integer, parameter :: NDIM=10 !     NDIM=dimension A
         data TAURL/2*0.0d0/
         real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp
-        integer :: info,M12,IGrElm,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II,NU,jsgn
+        integer :: info,M12,IGrElm,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II,NU
         SAVE
 
         if (laml /= 1.and.laml /= 2) then

@@ -124,7 +124,7 @@ module altayTaylor
                 endif
 
             case(3) ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
-                call Pancak2(KOST,NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
+                call Pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
                 ! OUT: Scrys,RHOScrys,RHOAcrys
                 !Report Scrys to LST-file
  100            format(' Bishop-Hill stress (crystal system):')
