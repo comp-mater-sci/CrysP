@@ -70,19 +70,14 @@ contains
     !Calculate the CIJ matrix of an ellipsoid with half axes stored in Gaxes. T defines the orientation of the axes.
     !This version assumes that A is a diagonal matrix
     subroutine transf(Gaxes, Aprime, T)
-        real(dp), dimension(3), intent(in)      :: Gaxes
-        real(dp), dimension(3,3), intent(inout) :: Aprime
-        real(dp), dimension(3,3), intent(in)    :: T
-        integer                                 :: i, j
-        real(dp), dimension(3,3)                :: X
-
-        do j = 1,3
-            X(:,j) = t(:,j)/Gaxes**2
-        end do
+        real(dp), dimension(3), intent(in)    :: Gaxes
+        real(dp), dimension(3,3), intent(out) :: Aprime
+        real(dp), dimension(3,3), intent(in)  :: T
+        integer                               :: i, j
 
         do i = 1, 3
             do j = 1, 3
-                Aprime(i, j) = sum(T(1:3,i)*X(1:3,j))
+                Aprime(i, j) = sum(T(1:3,i)*t(1:3,j)/Gaxes**2)
             end do
         end do
     end subroutine
