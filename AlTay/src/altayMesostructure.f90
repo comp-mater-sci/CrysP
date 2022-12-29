@@ -100,7 +100,7 @@ contains
         real(dp),intent(out)                   :: Cofcos, Cofsin
 
         real(dp) :: AXX(3,3),GRPAR(3,3), PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
-        real(dp) :: x, u, dlength, dot1, dot2, TGANGLE, Y
+        real(dp) :: x, u, dlength, dot1, dot2, TGANGLE
         integer :: i,j
         real(dp), parameter, dimension(3,3) :: &
             relaxI = reshape([0._dp, 0._dp, 1._dp, &

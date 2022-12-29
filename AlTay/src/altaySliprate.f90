@@ -212,9 +212,7 @@ module altaySliprate
         real(dp) :: A8,BB8
         COMMON /DOUBLE/ A8(5,96),BB8(5)
 
-        real(dp) :: sgnn(IDIMXX)
-        real(dp) :: A(13,13),B(13),RES,x,Y
-        real(dp) :: AA(13,13),BA(13),VAL(13),XV(13),YV(13)
+        real(dp) :: sgnn(IDIMXX),A(13,13),B(13),RES,x,Y,BA(13)
         real(dp), parameter :: TOL=1.0e-6_dp
         integer :: i,j,N1,N2
 

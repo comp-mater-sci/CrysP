@@ -23,12 +23,12 @@ module altayTaylor
 
     ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
     ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
-    subroutine TAYLOR(IRICHT, KOST, MacroDefRate, MacroDefState)
+    subroutine TAYLOR(IRICHT, MacroDefRate, MacroDefState)
         ! optional argument - required for IRICHT=2 or 3:
         type(DeformationRate), intent(in),optional :: MacroDefRate
         ! optional argument - required for IRICHT=3:
         type(DeformationState),intent(in),optional :: MacroDefState
-        integer, intent(in) :: IRICHT,KOST
+        integer, intent(in) :: IRICHT
 
         ! COMMON BLOCKS
         real(dp) :: TRF,C1,C2,GEWF

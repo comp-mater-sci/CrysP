@@ -52,12 +52,12 @@ module altaySimul
         integer :: IOR,ISTP,NBLOC
         common /CEIGEN/ IOR,ISTP,NBLOC
 
-        real(dp) :: TEN(3,3),TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2), &
+        real(dp) :: TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2), &
                     CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2), &
                     GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
                     GEULR(3),TG(3,3),CIJ(3,3),STOT(3,3),RHOST(3,3),RHOSm(3,3),FS(3,3),SeqAvg,tau,qgx,gmm1,gmm0,ssqgx
         character(len=40) :: TITEL
-        integer :: NPOINT, info, NFILE, NFILE0, NPEBPx,NMSSx,NSTP,i,j,l,LAML1,INV,ISP,LOM,KSYM,KTYP,ifil4
+        integer :: NPOINT, info, NFILE, NFILE0, NPEBPx,NMSSx,NSTP,i,j,l,LAML1,ifil4
         type(DeformationState) :: MacroDefState
         ! HGAM: homogenized slip per step
         ! HGAMCALL: homogenized slip per call
@@ -123,7 +123,7 @@ module altaySimul
             if (NFILE1 == 1) call CURwriteTitle(IMP1,TITEL,info)
   98        format (A)
 !           read the parameters of the work hardening model
-            call TAYLOR(1,KOST) ! read slip system file
+            call TAYLOR(1) ! read slip system file
             RCM_GUARD
 
       else
@@ -139,7 +139,7 @@ module altaySimul
             swrlx(1) = astate%simulCalls(astate%this)%input%rlx1
             swrlx(2) = astate%simulCalls(astate%this)%input%rlx2
             swrlx(3) =.false.
-            call TAYLOR(2,KOST,MacroDefRate)
+            call TAYLOR(2,MacroDefRate)
             RCM_GUARD
             ! Output the current texture
             if (NFILE == 1) call CURwriteBlock(IMP1,info)
@@ -259,7 +259,7 @@ module altaySimul
                     !             - has to output the result of the second crystal found
                     !               during the previous computation.
                     if (IW <= 1) then
-                        call  TAYLOR(3,KOST,MacroDefRate,MacroDefState)
+                        call TAYLOR(3,MacroDefRate,MacroDefState)
                         RCM_GUARD
                     endif
 

@@ -74,7 +74,6 @@ contains
         real(dp), dimension(3,3), intent(inout) :: Aprime
         real(dp), dimension(3,3), intent(in)    :: T
         integer                                 :: i, j
-        real(dp)                                :: y
         real(dp), dimension(3,3)                :: X
 
         do j = 1,3
@@ -96,7 +95,7 @@ contains
         real(dp), dimension(3),   intent(out) :: GEULR, prval
         real(dp), dimension(3,3), intent(out) :: TMAT
         integer                                 :: i
-        real(dp)                                :: CIJTR, enrm
+        real(dp)                                :: CIJTR
         real(dp), dimension(3,3)                :: e
 
         CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3._dp
@@ -141,36 +140,6 @@ contains
             call vef_trace(MODULE_NAME, 'normaliz', prdir)
         end if
 
-    end subroutine
-
-    !>should find the roots of an equation
-    !>x**3 - A x + B = 0
-    !>The roots are suppposed to be real.
-    subroutine canoni(a, b, X, theta)
-        real(dp), intent(in)                :: a, b
-        real(dp), intent(out)               :: theta
-        real(dp), dimension(3), intent(out) :: X
-        real(dp)                            :: roota, delta
-
-        if (a >= 0.5e-11 ) then
-            roota = sqrt(a**3 / 27.0)
-            delta = 0.5 * b / roota
-            if (abs(delta) < (1.0 + 1.0D-6)) then
-                if (delta > 1.0) delta = 1.0
-                if (delta < -1.0) delta = -1.0
-
-                theta = acos(delta)
-                delta = -2.0 * sqrt(a / 3.0)
-
-                X(1) = delta * cos(theta / 3.0)
-                X(2) = delta * cos((theta + 2.0 * PI) / 3.0)
-                X(3) = delta * cos((theta + 4.0 * PI) / 3.0)
-
-                call vef_trace(MODULE_NAME, 'canoni', X)
-                return
-            end if
-        end if
-        call vef_exception(MODULE_NAME, 'canoni', VEF_BADVAL, 'Two roots seem to be complex')
     end subroutine
 
     !>N1=number of equations
