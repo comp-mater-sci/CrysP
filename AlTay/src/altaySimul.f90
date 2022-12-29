@@ -107,7 +107,7 @@ module altaySimul
             NMSS   = acnf%output_config%NMSS    ! control "MSS"
             HGAMTOT=0.D0
 
-            if (NGR.lt.1.or.NGR.gt.2) then
+            if (NGR < 1.or.NGR > 2) then
                   RCM_RAISE(1,'SIMUL','Incorrect value of NGR',RCM_RTN)
             endif
  140        format (' NGR can only take the values 1 or 2 but was',I5)
@@ -121,11 +121,11 @@ module altaySimul
             FMicro = acnf%simul_init%FMicro
             !
             TITEL  = acnf%jobtitle
-            if(NLIST.eq.1) write(IMP,97) TITEL
-            if (NRES.gt.0) write (IMP2,98) TITEL
+            if(NLIST == 1) write(IMP,97) TITEL
+            if (NRES > 0) write (IMP2,98) TITEL
   97        format (' Title of the new simulation: ',A)
             ! Only if CUR file is requested
-            if (NFILE1.eq.1) call CURwriteTitle(IMP1,TITEL,info)
+            if (NFILE1 == 1) call CURwriteTitle(IMP1,TITEL,info)
   98        format (A)
 !           read the parameters of the work hardening model
             call TAYLOR(1,KOST) ! read slip system file
@@ -147,11 +147,11 @@ module altaySimul
             call TAYLOR(2,KOST,MacroDefRate)
             RCM_GUARD
             ! Output the current texture
-            if (NFILE.eq.1) call CURwriteBlock(IMP1,info)
+            if (NFILE == 1) call CURwriteBlock(IMP1,info)
 #if !defined(INTERMEDIATEBPM_DISABLED)
             select case(KOST)
                 case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-                    if (NPEBPx.eq.1) info = KS_writeState(IMP4)
+                    if (NPEBPx == 1) info = KS_writeState(IMP4)
             endselect
 #endif
             HGAMCALL = 0.D0
@@ -171,26 +171,26 @@ module altaySimul
 #ifndef NO_STDOUT
                 write (*,96) ISTP,GAXES
 #endif
-                if(NLIST.eq.1) write (IMP,96) ISTP,GAXES
+                if(NLIST == 1) write (IMP,96) ISTP,GAXES
       96        format(' Step nr.',i5,5X,3f12.5)
-                if (.not.(IW.gt.1)) then
-                    if(NLIST.eq.1) write (IMP,3456) MacroDefRate%VelGrad
+                if (.not.(IW > 1)) then
+                    if(NLIST == 1) write (IMP,3456) MacroDefRate%VelGrad
  3456               format ('DG=',3(T10,3d12.3,/))
                     ! Get the 5x5 transformation matrix MACRO to morfol. GRAIN AXES
-                    if(NLIST.eq.1) write (IMP,3458) TG
+                    if(NLIST == 1) write (IMP,3458) TG
  3458               format (' TG=',3(T10,3d12.3,/))
                 endif
-                if (.not. (nfile.eq.0.or.ISTP.gt.1)) then
+                if (.not. (nfile == 0.or.ISTP > 1)) then
                     if (NLIST.EQ.1) write (IMP,112) ISTP
  112                format (//' DEFORMATION STEP ',I5,//)
-                    if (NRES.gt.0) write (IMP2,404) nrstep+1,NPOINT
+                    if (NRES > 0) write (IMP2,404) nrstep+1,NPOINT
  404                format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'  &
                      ,T7,'EquivStress',T23,'WorkRate',T37,'tau_ref',T56,'M',T64,       &
                      'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS' &
                      ,/,1x,278('*'))
 
                 endif
-                if (NLIST.eq.1) then
+                if (NLIST == 1) then
                     do i=1,3
                        write (IMP,407) (MacroDefState%TotalDefGrad(j,i),j=1,3)
                     enddo
@@ -219,7 +219,7 @@ module altaySimul
                 laml=1
                 laml1=NGR
                 ifil4=0
-                if (NFILTW.eq.1) write (IMP3,399)
+                if (NFILTW == 1) write (IMP3,399)
  399            format(1x)
                 clusterloop: do IOR=1,NPOINT
                     Mgrain=0.0
@@ -229,7 +229,7 @@ module altaySimul
                     Wtot = 0.0
 
                     do L=laml,laml1
-                        if (ifil4.eq.NPOINT) exit
+                        if (ifil4 == NPOINT) exit
                         ifil4=ifil4+1
                         call DYNFIL4(ifil4,fi1b(L),PHIb(L),fi2b(L),TRFb(1:3,1:3,L),GEWFb(L),GMMAb(L),Fb(1:3,1:3,L),GAXESb(1:3,L), &
                                      GEULRb(1:3,L),CIJb(1:3,1:3,L),TGb(1:3,1:3,L),RHOSSb(1:3,1:3,L))
@@ -249,7 +249,7 @@ module altaySimul
                     TRF = TRFb(:,:,laml)
                     TG = TGb(:,:,laml)
                     RHOSSa = RHOSSb(:,:,laml)
-                    if(laml.eq.1) then
+                    if(laml == 1) then
                         qgx=GEWFb(laml)
                         GEWF=qgx
                     else
@@ -264,25 +264,25 @@ module altaySimul
                     !             - should not perform any computation
                     !             - has to output the result of the second crystal found
                     !               during the previous computation.
-                    if (IW.le.1) then
+                    if (IW <= 1) then
                         call  TAYLOR(3,KOST,MacroDefRate,MacroDefState)
                         RCM_GUARD
                     endif
 
-                    if(laml.eq.1) then
+                    if(laml == 1) then
                         ssqgx=GEWF
                     else
                         GEWF=ssqgx
                     end if
                     TOTGEW=TOTGEW+GEWF
 
-                    if (IW.gt.1) cycle
+                    if (IW > 1) cycle
 
                     if (astate%simulCalls(astate%this)%input%full_model) then
                           call TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate, MacroDefRate)
                           RCM_GUARD
                     endif
-                    if (NFILTW.eq.1) write (IMP3,398) ITW
+                    if (NFILTW == 1) write (IMP3,398) ITW
  398                format (I3)
 
                     STOT = STOT + Ssam*GEWF
@@ -305,7 +305,7 @@ module altaySimul
                     if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
                           call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
                 enddo clusterloop
-                if (IW.gt.1) exit
+                if (IW > 1) exit
 
                 SHsam = STOT / TOTGEW
                 RHOSm = RHOST / TOTGEW
@@ -349,7 +349,7 @@ module altaySimul
                 HGAMCALL = HGAMCALL + HGAM
                 ! We can choose not to update the internal state
                 if (.not.astate%simulCalls(astate%this)%input%keep_state) HGAMTOT = HGAMTOT + HGAM
-                if(NLIST.eq.1) write (IMP,105) ISTP,SeqAvg,Mavg,MacroDefState%IncrvMeqStrain
+                if(NLIST == 1) write (IMP,105) ISTP,SeqAvg,Mavg,MacroDefState%IncrvMeqStrain
  105            format (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VALUE=',F10.5,'  EFF. STRAIN EPS USED=',F10.5)
             enddo steploop
         endif

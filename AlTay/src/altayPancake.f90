@@ -97,10 +97,10 @@ module altayPancake
         integer :: info,M12,IGrElm,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II,NU,jsgn
         SAVE
 
-        if (laml.ne.1.and.laml.ne.2) then
+        if (laml /= 1.and.laml /= 2) then
             RCM_RAISE(1,'Pancak2','Wrong selection of lamels',RCM_RTN)
         endif
-        if (IOR.eq.1) IGrElm=0
+        if (IOR == 1) IGrElm=0
         !     N is number of rows of A1;   NU number of rows of UU2
         TLXX=TOLXX
         N=5*NGR
@@ -111,7 +111,7 @@ module altayPancake
 
             ! Updating of microstructure
             IGrElm=IGrElm+1
-            if (IGrElm.gt.NGrElm) IGrElm=1
+            if (IGrElm > NGrElm) IGrElm=1
             call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,Cofcos,Cofsin)
             CCC(1:2,M2+1:M12)=0.0
             UU(1:NU,1:NU) = 0.0_dp
@@ -163,7 +163,7 @@ module altayPancake
                 ! in order to suppress the relaxations in a first call of the TBH program
             ! Full constraints calculation
             ! UITVOEREN VAN DE SIMPLEX-SUBROUTINE
-            if (IPR.EQ.2 .and. NLIST.eq.1) then
+            if (IPR.EQ.2 .and. NLIST == 1) then
                 write (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
                 write (IMP,219) (BB(I),I=1,N)
                 write (IMP,400) IOR,ISTP,NBLOC
@@ -174,13 +174,13 @@ module altayPancake
             call TBH(IPR,NDIM,N,M2,A1,BB,CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
             RCM_GUARD
 
-            if (.not.(IPR.lt.4)) then
+            if (.not.(IPR < 4)) then
                 RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
             endif
             DTAU1=DTAU
             TAUR1=TAUR
 
-            if (NRL.eq.0) then
+            if (NRL == 0) then
                   UU=UU2
                   DI=DI2
                   STRSS=UBUF
@@ -189,15 +189,15 @@ module altayPancake
                     if (.not.swrlx(IRL)) exit
                     CCC(1:2,M2+IRL)=TAURL(IRL)
                 end do
-                if (IPR.EQ.2 .and. NLIST.eq.1) write(IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
+                if (IPR.EQ.2 .and. NLIST == 1) write(IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
                 ! Second call of Simplex (relaxed constraints)
-                if (IPR.eq.2 .and. NLIST.eq.1) write(IMP,401)
+                if (IPR == 2 .and. NLIST == 1) write(IMP,401)
  401            format (' Second call of TBH')
                 call TBH(IPR,N,N,M12,A1,BB,CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
                 RCM_GUARD
 
-                if (IPR.ge.4) then
-                   if(NLIST.eq.1) write (IMP,222) IPR,IOR,ISTP,NBLOC
+                if (IPR >= 4) then
+                   if(NLIST == 1) write (IMP,222) IPR,IOR,ISTP,NBLOC
                    write (*,222) IPR,IOR,ISTP,NBLOC
  222               format (' Pancak2 222 - Problem with TBH',/,' IPR IOR, ISTP, NBLOC=',4I5)
                     RCM_RAISE(1,'Pancak2','Problem with TBH',RCM_RTN)
@@ -213,13 +213,13 @@ module altayPancake
                    j=j+1
                    XXTOT=XXTOT+abs(xx(j))
                 enddo
-                if (XXTOT.lt.TOLXX) goto 213
+                if (XXTOT < TOLXX) goto 213
             end do
             ! If all grains have a non-zero slip, do the following:
             DTAU1=DTAU
             TAUR1=TAUR
             UBUF=STRSS
- 213        if(NLIST.eq.1) write (IMP,780) gamr
+ 213        if(NLIST == 1) write (IMP,780) gamr
  780        format (' RELAXATIONS:                   ',2d12.4)
         endif
         !     From here on, output is produced for grain number "laml"
@@ -244,7 +244,7 @@ module altayPancake
         RHOA33(1,3)= -RHOA33(3,1)
         RHOA33(2,1)= -RHOA33(1,2)
 
-        if (IPR.EQ.2 .AND. NLIST.eq.1) write (IMP,777) sum(spanv(1:5)*BB(ii+1:ii+5))
+        if (IPR.EQ.2 .AND. NLIST == 1) write (IMP,777) sum(spanv(1:5)*BB(ii+1:ii+5))
   777 format (' spanv . BB          :',d11.4)
        ! note that if one of the grains does
        ! not deform at all, the stress and the active slip systems
@@ -253,15 +253,15 @@ module altayPancake
         do i=1,M11
             j=i+jj
             ! If one grain does not deform, then DTAU1 comes from the full constraints solution.
-            if (abs(DTAU1(j)).gt.TOL) cycle
+            if (abs(DTAU1(j)) > TOL) cycle
             NACTIV=NACTIV+1
-            if (NACTIV.le.8) THEN
+            if (NACTIV <= 8) THEN
                 INDACT(NACTIV)=i
             else
                 RCM_RAISE(1,'Pancak2','Too many active slip systems',RCM_RTN)
             endif
         enddo
-        if (NACTIV.eq.0) then
+        if (NACTIV == 0) then
             RCM_RAISE(1,'Pancak2','No active slip systems found',RCM_RTN)
         endif
         do NLP=1,NACTIV
@@ -285,7 +285,7 @@ module altayPancake
 
         if((abs(Cofsin) < epsilon(0.D0)) .and. (abs(Cofcos) < epsilon(0.D0))) then
             ccc2=ccc
-        elseif(abs(Cofcos).lt.0.000000001) then
+        elseif(abs(Cofcos) < 0.000000001) then
             call terminate(stopcode_runtimeerror)
         else
             zeta=sum(UBUF(1:5)*BB(1:5)/norm2(BB(1:5)))/sum(UBUF(6:10)*BB(6:10)/norm2(BB(6:10)))

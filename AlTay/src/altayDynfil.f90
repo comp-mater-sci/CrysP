@@ -57,7 +57,7 @@ contains
         istat = 1
         ! Error handling
         if (npoint <= 0) then
-            if(NLIST.eq.1) write(IMP,100)
+            if(NLIST == 1) write(IMP,100)
             return
         endif
 
@@ -83,7 +83,7 @@ contains
             endif
         endif
         ! Error handling
-        if (istat /= 0 .and. NLIST.eq.1) write(IMP,101)
+        if (istat /= 0 .and. NLIST == 1) write(IMP,101)
 
 100     format('DYNFIL0: error: requested number of grains is zero.')
 101     format('DYNFIL0: error: allocation of memory failed.')

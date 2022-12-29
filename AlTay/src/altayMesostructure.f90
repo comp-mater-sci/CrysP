@@ -34,7 +34,7 @@ contains
         real(dp), dimension(3,3) :: T
 
         ierr = -1
-        if(NLIST.eq.1) write (IMP,103) fnam
+        if(NLIST == 1) write (IMP,103) fnam
     103  format (' GRFIL - Input microstructure file:' ,a)
 
         open (unit=NDAT2,file=fnam,status='old',iostat=ierr)
@@ -45,12 +45,12 @@ contains
 #ifndef NO_STDOUT
         write (*,93) NGrElm,TitMic
 #endif
-        if(NLIST.eq.1) write (IMP,93) NGrElm,TitMic
+        if(NLIST == 1) write (IMP,93) NGrElm,TitMic
       93  format (' Number of orientations in MICROSTRUCTURE file:' ,I5,/,' Title in file: ',A)
 
         allocate(TmatGr(3,3,NGrElm),STAT=ierr)
-        if (ierr.ne.0) then
-            if(NLIST.eq.1) write(IMP,102)
+        if (ierr /= 0) then
+            if(NLIST == 1) write(IMP,102)
             return
         end if
       102  format (' GRFIL - Allocation of memory failed')
@@ -113,13 +113,13 @@ contains
         Cofcos = 0.D0
         Cofsin = 0.D0
 
-        if (NGR.eq.1) then      ! let Tprinc be equal to the identity matrix.
+        if (NGR == 1) then      ! let Tprinc be equal to the identity matrix.
             Tprinc = unitMatrix
             return
         end if
 
         GRPAR = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
-        if ((IPR.gt.1) .and.(NLIST.eq.1)) then
+        if ((IPR > 1) .and.(NLIST == 1)) then
             write (IMP,409) IGrElm
             409 format (' IGrElm = ',i5)
             do i=1,3
@@ -132,7 +132,7 @@ contains
             408 format (' GRPAR  ',3d15.7)
         endif
 
-        if ((IPR.gt.0) .and. (NLIST.eq.1) )then
+        if ((IPR > 0) .and. (NLIST == 1) )then
             write (IMP,100)
             100  format (//,' CLUSTER1')
         end if
@@ -157,9 +157,9 @@ contains
         u=abs(u)*0.25D0/(AL(1)*AL(2)*AL(3))
         !     re-order the basisvectors so that AA(1)>=AA(2)>=AA(3)
         !     find out which one of these corresponds to the original AL(3)
-        if (AL(2).le.AL(3).and.AL(1).le.AL(3)) then    ! AL(3) is the longest
+        if (AL(2) <= AL(3).and.AL(1) <= AL(3)) then    ! AL(3) is the longest
             AA(1)=AL(3)
-            if(AL(2).ge.AL(1))then
+            if(AL(2) >= AL(1))then
                 AA(2)=AL(2)
                 AA(3)=AL(1)
             else
@@ -167,9 +167,9 @@ contains
                 AA(3)=AL(2)
             endif
             GEWF=u*(2.0D0*(AA(2)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.0D0)
-        elseif (AL(3).le.AL(1).and.AL(3).le.AL(2)) then   ! AL(3) is the shortest
+        elseif (AL(3) <= AL(1).and.AL(3) <= AL(2)) then   ! AL(3) is the shortest
             AA(3)=AL(3)
-            if(AL(1).ge.AL(2))then
+            if(AL(1) >= AL(2))then
                   AA(1)=AL(1)
                   AA(2)=AL(2)
             else
@@ -181,7 +181,7 @@ contains
                   +4.D0*AA(3)**3/3.D0)
         else                                          ! AL(3) is neither shortest nor longest
             AA(2)=AL(3)
-            if(AL(1).ge.AL(2))then
+            if(AL(1) >= AL(2))then
                 AA(1)=AL(1)
                 AA(3)=AL(2)
             else
@@ -190,7 +190,7 @@ contains
             endif
             GEWF=u*(2.D0*(AA(1)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.D0)
         endif
-        if ((IPR.gt.0) .and. (NLIST.eq.1)) write (IMP,103) GEWF
+        if ((IPR > 0) .and. (NLIST == 1)) write (IMP,103) GEWF
         103  format (/,' GEWF ',3d15.7,/)
 
         ! Construction of orientation matrices for frames associated to the
@@ -220,7 +220,7 @@ contains
             do j=1,3
                 Tprinc(i,j)=AXX(j,i)
             enddo
-            if (IPR.gt.0 .and. NLIST.eq.1) write (IMP,102) (Tprinc(i,j),j=1,3)
+            if (IPR > 0 .and. NLIST == 1) write (IMP,102) (Tprinc(i,j),j=1,3)
         102 format (' TGrb ',3d15.7)
         enddo
 
@@ -239,12 +239,12 @@ contains
         dot1=dot1/sqrt(2.0D0)/dlength
         dot2=dot2/sqrt(2.0D0)/dlength
 
-        if(abs(dot1).lt.0.000001.and.abs(dot2).lt.0.000001) then
+        if(abs(dot1) < 0.000001.and.abs(dot2) < 0.000001) then
             ! both relaxations are orthogonal
             Cofcos=0.0
             Cofsin=0.0
-        elseif(abs(dot1).lt.0.000001) then
-            if(abs(dot2-1.D0).lt.0.00001) then
+        elseif(abs(dot1) < 0.000001) then
+            if(abs(dot2-1.D0) < 0.00001) then
                   !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
                   !  new axe-1 be old axe-2
                   !  new axe-2 be minus old axe-1
@@ -282,10 +282,10 @@ contains
                  Cofsin=sqrt(1.0D0-dot1*dot1)
             endif
 
-        elseif(abs(dot2).lt.0.000001) then
+        elseif(abs(dot2) < 0.000001) then
             ! Relaxation-2 is already a orthogonal one
             ! calculate the cosine for relaxation-1
-            if(abs(dot1-1.0D0).lt.0.00001) then
+            if(abs(dot1-1.0D0) < 0.00001) then
                   Cofcos=1.0D0
                   Cofsin=0.0D0
             else

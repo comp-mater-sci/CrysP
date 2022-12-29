@@ -57,7 +57,7 @@ module altaySliprate
             if (ineg==0) then
                  call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                  RCM_GUARD
-                 if (NN.le.5) goto 2
+                 if (NN <= 5) goto 2
             endif
             if (NN>5) then
                 !

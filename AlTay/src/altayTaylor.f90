@@ -60,7 +60,7 @@ module altayTaylor
         select case(IRICHT)
 
             case(1) ! Read slip system file
-                if(NLIST.eq.1) write (IMP,216)
+                if(NLIST == 1) write (IMP,216)
  216            format (/,' SUBROUTINE TAYLOR - READS ITS CRYSTAL DATA',//)
 
                 R=LEC         ! slip system file
@@ -68,32 +68,32 @@ module altayTaylor
                 ! Read name of slip system set
                 read (R,217) TITglij
   217           format(A)
-                if(NLIST.eq.1) write (IMP,221) TITglij
+                if(NLIST == 1) write (IMP,221) TITglij
   221           format (/,' Slip system set:',A,/)
 
                 read (R,210) I,NGL,NTW,DI1,X,Y
  210            format (8I4,4X,2F10.0)
-                if(NLIST.eq.1) write (IMP,211) I,NGL,NTW,DI1
+                if(NLIST == 1) write (IMP,211) I,NGL,NTW,DI1
  211            format (1X,I4,10X,2I5,10X,5I5)
                 if (I.NE.0) then
                       RCM_RAISE(1,'TAYLOR','Improper slip system set',RCM_RTN)
                 endif
                 M=NGL+NTW
                 M11=M
-                if (M11.gt.MMAX)then
+                if (M11 > MMAX)then
                       RCM_RAISE(1,'TAYLOR','Too large slip system set',RCM_RTN)
                 endif
                 ! read glide + twin systems
                 do I1=1,M11
                     read (R,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
-                    if(NLIST.eq.1) write (IMP,213) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
+                    if(NLIST == 1) write (IMP,213) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
                 end do
  212            format (I4,8F20.16)
  213            format (I3,' A ',5F10.7,' B ',3F10.7)
 
                 do I=1,5
                     read (R,214) J,(B(I,L),L=1,5)
-                    if(NLIST.eq.1) write (IMP,215) J,(B(I,L),L=1,5)
+                    if(NLIST == 1) write (IMP,215) J,(B(I,L),L=1,5)
                 end do
  214            format (I4,5D23.16)
  215            format (1X,I4,10X,5D15.8)
@@ -101,7 +101,7 @@ module altayTaylor
                 if (NTW /= 0) then
                     do I=1,NTW
                         read (R,212) J,(B2(L,I),L=1,6),G(I)
-                        if(NLIST.eq.1) write (IMP,218) J,(B2(L,I),L=1,6),G(I)
+                        if(NLIST == 1) write (IMP,218) J,(B2(L,I),L=1,6),G(I)
                     end do
  218                format (i4,' B2',6f10.7,' G',f10.7)
                 endif
@@ -110,15 +110,15 @@ module altayTaylor
                 A2(6:10,M11+1:M11*2)=A1(1:5,1:M11)
 
             case(2) ! Write velocity gradient, strain rate and spin tensor; then check norm of strain rate
-                if(NLIST.eq.1) write (IMP,203)
+                if(NLIST == 1) write (IMP,203)
                 do I=1,3
-                    if(NLIST.eq.1) &
+                    if(NLIST == 1) &
                         write (IMP,204) (MacroDefRate%VelGrad(I,J),J=1,3),(MacroDefRate%StrainRate(I,J),J=1,3),(MacroDefRate%Spin(I,J),J=1,3)
                 end do
  203            format (' TAYLOR - VELOCITY GRADIENT WHICH WILL BE USED FOR THE SIMULATION', &
                         //T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,'ANTISYMMETRICAL PART',/)
  204            format (1X,3(3F10.5,10X))
-                if (MacroDefRate%NormStrainRate.lt.1.0D-10) then
+                if (MacroDefRate%NormStrainRate < 1.0D-10) then
                    RCM_RAISE(1,'TAYLOR','Symmetric part of the strain step is too small',RCM_RTN)
                 endif
 
@@ -129,7 +129,7 @@ module altayTaylor
                 !Report Scrys to LST-file
  100            format(' Bishop-Hill stress (crystal system):')
  101            format(3d20.7)
-                if(NLIST.eq.1) then
+                if(NLIST == 1) then
                     write (IMP,100)
                     do i=1,3
                         write (IMP,101) (Scrys(i,j),j=1,3)
@@ -145,7 +145,7 @@ module altayTaylor
                 !Report RHOSsa and RHOAsa to LST-file
  1701           format(/,' RHOSsa')
  1706           format(/,' RHOAsa')
-                if(NLIST.eq.1) then
+                if(NLIST == 1) then
                     write (IMP,1701)
                     do i=1,3
                         write (IMP,101) (RHOSsa(i,j),j=1,3)
@@ -215,7 +215,7 @@ module altayTaylor
                 if (.not. astate%simulCalls(astate%this)%input%keep_state) call KS_updateState(IOR,GAMdot,ddt,info)
         endselect
         TOTGAMdot=sum(abs(GAMdot(1:M11)))
-        if(NLIST.eq.1) write (IMP,103) ISTP,IOR,fi1,PHI,fi2
+        if(NLIST == 1) write (IMP,103) ISTP,IOR,fi1,PHI,fi2
 
  103    format (' ISTP,IOR',2I5,' phi1, PHI, phi2:',3F15.6)
         ! Calculate RCcryst: the rigid body spin in the crystal frame
@@ -226,15 +226,15 @@ module altayTaylor
         TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
         WorkRate = sum(merge(CC(1,1:M11)*GAMdot(1:M11),-CC(2,1:M11)*GAMdot(1:M11),GAMdot(1:M11)>0.0))
         Seq=WorkRate / MacroDefRate%vMeqStrainRate
-        if(NLIST.eq.1) write (IMP,301) WorkRate
+        if(NLIST == 1) write (IMP,301) WorkRate
  301    format (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
 
-        if(NLIST.eq.1) write (IMP,109) MacroDefRate%vMeqStrainRate,Seq,(GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M)
+        if(NLIST == 1) write (IMP,109) MacroDefRate%vMeqStrainRate,Seq,(GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M)
 
  109    format ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,'  SLIP RATES',/,(T2,10F10.5))
         ROT = matmul(B1,GAMdot)
 
-        if(NLIST.eq.1) write (IMP,305) ROT
+        if(NLIST == 1) write (IMP,305) ROT
  305    format (' ROTATIONS',3F12.6)
         do J=1,3
             C1(J,J)=1.0_dp
@@ -285,7 +285,7 @@ module altayTaylor
             PHI=Euler%PHI
             fi2=Euler%fi2
         endif
-  31    if (.not. (nfile.eq.0.or.istp.gt.1)) then
+  31    if (.not. (nfile == 0.or.istp > 1)) then
 
             ! the ratio of the parallel strain rates
             ! MacroDefRate%StrainMode & rhossa: expressed in same (sample) reference frame
