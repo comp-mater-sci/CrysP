@@ -28,7 +28,7 @@ module altayPancake
         type(CRSS) :: CRSSmatrix
         real(dp),dimension(3,3),intent(out):: S33, RHOS33, RHOA33
         real(dp),dimension(5):: RHOS, RHOA
-        logical :: bas(194),VALID(194)
+        logical :: bas(194)
         integer ::  DI(10),DI2(10)
 
         ! common blocks
@@ -171,7 +171,7 @@ module altayPancake
  218        format(/' COST FUNCTION',/,(2x,12F10.4))
  219        format (' right hand side',/,(2x,10F10.4),/)
  400        format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
-            call TBH(IPR,NDIM,N,M2,A1,BB,CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
+            call TBH(IPR,NDIM,N,M2,A1,BB,CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU)
             RCM_GUARD
 
             if (.not.(IPR < 4)) then
@@ -193,7 +193,7 @@ module altayPancake
                 ! Second call of Simplex (relaxed constraints)
                 if (IPR == 2 .and. NLIST == 1) write(IMP,401)
  401            format (' Second call of TBH')
-                call TBH(IPR,N,N,M12,A1,BB,CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU,VALID)
+                call TBH(IPR,N,N,M12,A1,BB,CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,Taur,bas,Trp,Aprime,CUst,UU3,DD,DTAU)
                 RCM_GUARD
 
                 if (IPR >= 4) then

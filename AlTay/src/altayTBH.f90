@@ -8,7 +8,7 @@ module altayTBH
     contains
 
 !   solve Taylor-Bishop-Hill for one crystallite. Stresses and strain rates are to be represented  by vectors
-    subroutine TBH(IPR,NDIM,N,M,A,D,TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,TauR,bas,Trp,Aprime,CUst,UU,DD,DTAU,VALID)
+    subroutine TBH(IPR,NDIM,N,M,A,D,TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,TauR,bas,Trp,Aprime,CUst,UU,DD,DTAU)
 !     input          TauC=critical resolved shear stresses (all Tauc>0 )
 !                     first row:  for positive slip, second row: for negative slip
 !     input          BINV=First guess of inverse of basis, corresp. with IACT
@@ -37,7 +37,7 @@ module altayTBH
                                 D(NDIM), &    !< right-hand side of Taylor equations=imposed strain rate
                                 BINV(NDIM,N), &
                                 TauC(2,M)
-        logical :: bas(M),valid(M)
+        logical :: bas(M)
 
         real(dp), intent(out) :: U(NDIM,N), Dacc(NDIM),GDOT(M),SIG(NDIM),TauR(M), DTAU(M),FakM
         integer, intent(out) :: Irp(NDIM) !< indices of active slip systems
@@ -86,9 +86,6 @@ module altayTBH
             if (IPR >= JPR .and. NLIST == 1) write (IMP,251) iter
  251        format (/,'  ITERATION NR. ',I5,/)
             call mtprd(SIG,Trp,U,1,N,N,1,NDIM)
-            do j=1,M
-                valid(j)=.TRUE.
-            enddo
             ! Calculation of Taylor factor
             FakM=0.0
             do i=1,N
