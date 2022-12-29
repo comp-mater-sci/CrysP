@@ -47,8 +47,7 @@ module altaySliprate
         do i=1,NLP
             x=x+abs(SLIPLP(i))
             j=INDACT(i)
-            sgnn(j)=1.D0
-            if (TAURLP(i)<0.0d0) sgnn(j)=-1.D0
+            sgnn(j)=sign(1.0_dp,TAURLP(i))
         enddo
         if (x>=TLXX) then
             ! end of check
@@ -68,9 +67,7 @@ module altaySliprate
                 !      second level: find all combinations of 6 - etc.)
                 !
                 N0=NACTIV
-                !
                 ! Level 1
-                !
                 N1=N0-1
                 if (N1>=5) then
                     NN=N1
@@ -80,24 +77,16 @@ module altaySliprate
                             call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                             RCM_GUARD
                          endif
- 110                format (10i5)
                          J=N0-I1
                          if (J>0) IND(J)=INDACT(J+1)
                     enddo
-                    !
                     ! Level 2
-                    !
                     N2=N1-1
-                    if (.not. (N2<5)) then
+                    if (N2>=5) then
                         NN=N2
                         do I1=2,N0
                             do I2=1,I1-1
-                                j=1
-                                do i=1,N0
-                                    if (i==I1.or.i==I2) cycle
-                                    IND(j)=INDACT(i)
-                                    j=j+1
-                                enddo
+                                call fill(IND,INDACT,[I1,I2],N0)
                                 call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
                                 if (ineg==0) then
                                     call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
@@ -105,21 +94,14 @@ module altaySliprate
                                 endif
                             enddo
                         enddo
-                        !
                         ! Level 3
-                        !
                         N3=N2-1
-                        if (.not. (N3<5)) then
+                        if (N3>=5) then
                             NN=N3
                             do I1=3,N0
                                 do I2=2,I1-1
                                     do I3=1,I2-1
-                                      j=1
-                                      do i=1,N0
-                                          if (i==I1.or.i==I2.or.i==I3) cycle
-                                          IND(j)=INDACT(i)
-                                          j=j+1
-                                      enddo
+                                      call fill(IND,INDACT,[I1,I2,I3],N0)
                                       call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
                                       if (ineg==0) then
                                           call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
@@ -202,6 +184,20 @@ module altaySliprate
         if (X<0.0d0 .and. NLIST==1) write (IMP,102) IOR,k,X
     end subroutine
 
+    subroutine fill(IND_,INDACT_,skip,N_max)
+        integer, intent(inout) :: IND_(8)
+        integer, intent(in) :: INDACT_(8), N_max
+        integer, dimension(:), intent(in) :: skip
+        integer :: i,j
+
+        j=1
+        do i=1,N_max
+            if (any(i==skip)) cycle
+            IND_(j)=INDACT_(i)
+            j=j+1
+        enddo
+
+    end subroutine
 
     subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
 
