@@ -49,26 +49,10 @@ module altayPancake
         common /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),TLXX,TAURLP(8)
 
 
-        real(dp) :: C2(3,3),B(5,5),DACC(10),rls(3,3),rla(3,3),C3(3,3),B3(10,3),CUst(10)
-        !     first index op PLUMIN = nr. of grain, second index = nr. of relaxation
-        !     rls and rla are unit relaxation tensors crystal frame (symmetric and anti-sym. part)
-        real(dp) :: spanv(5),XX(194),STRSS(10),BB(10),CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
-                    B8(5,2),UBUF(10),UU2(10,10),DD(10), &
-                    GAMR(2),Tprinc(3,3),TAURL(2),XXTOT,COFCOS,COFSIN,GEWF,fakm
-        ! CCC (input): critical resolved shear stresses (Tauc)
-        ! UU2 (input): initial inverse of "basis" = columns of A1
-        !      corresponding to thoses slip systems which are active
-        !      according to first guess
-        ! UU (output): inverse of final "basis" (active slip systems)
-        ! DI2 (input): indices of basis corresponding to UU2
-        ! DI (output): indices of basis corresponding to UU
-        ! Dacc (output): slip rates in basis DI
-        ! XX (output): slip rates (numbered from 1 to M12)
-        ! STRSS (output): stresses, in crystal frames
-        !                  (2 sets of stresses, one for each crystal)
-        ! Fakm: rate of plastic work of the 2 crsytals together
-        ! Taur (output) resolved shear stress (can be + or -)
-        ! DTAU (output)=abs(Taur)-Tauc
+        real(dp) :: C2(3,3),B(5,5),DACC(10),rls(3,3),rla(3,3),C3(3,3),B3(10,3), &
+                    spanv(5),XX(194),STRSS(10),BB(10),CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
+                    B8(5,2),UBUF(10),UU2(10,10),GAMR(2),Tprinc(3,3),TAURL(2),XXTOT,COFCOS,COFSIN,GEWF,fakm
+        ! rls and rla are unit relaxation tensors in crystal frame (symmetric and anti-sym. part)
         data B3/30*0.0D0/
         real(dp), parameter :: SQR2=sqrt(0.5_dp),TOLXX=5.0e-6_dp
         !     Definition of the two relaxations, representing a
@@ -86,7 +70,7 @@ module altayPancake
         real(dp), dimension(2,3) ::  PLUMIN = reshape([&
                     1.0D0,-1.0D0,                                          &
                     1.0D0,-1.0D0,                                          &
-                    1.0D0, 1.0D0], shape(PLUMIN))
+                    1.0D0, 1.0D0], shape(PLUMIN)) !first index: # of grain, second index: #of relaxation
         integer, parameter :: NDIM=10 !     NDIM=dimension A
         data TAURL/2*0.0d0/
         real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp
@@ -167,7 +151,7 @@ module altayPancake
  218        format(/' COST FUNCTION',/,(2x,12F10.4))
  219        format (' right hand side',/,(2x,10F10.4),/)
  400        format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
-            call TBH(IPR,NDIM,N,M2,A1,BB,CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,Taur,bas,CUst,DD,DTAU)
+            call TBH(IPR,NDIM,N,M2,A1,BB,CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,Taur,bas,DTAU)
             RCM_GUARD
 
             if (.not.(IPR < 4)) then
@@ -189,7 +173,7 @@ module altayPancake
                 ! Second call of Simplex (relaxed constraints)
                 if (IPR == 2 .and. NLIST == 1) write(IMP,401)
  401            format (' Second call of TBH')
-                call TBH(IPR,N,N,M12,A1,BB,CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,Taur,bas,CUst,DD,DTAU)
+                call TBH(IPR,N,N,M12,A1,BB,CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,Taur,bas,DTAU)
                 RCM_GUARD
 
                 if (IPR >= 4) then

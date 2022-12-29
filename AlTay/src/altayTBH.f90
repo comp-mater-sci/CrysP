@@ -8,7 +8,7 @@ module altayTBH
     contains
 
 !   solve Taylor-Bishop-Hill for one crystallite. Stresses and strain rates are to be represented  by vectors
-    subroutine TBH(IPR,NDIM,N,M,A,D,TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,TauR,bas,CUst,DD,DTAU)
+    subroutine TBH(IPR,NDIM,N,M,A,D,TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,TauR,bas,DTAU)
 !     input          TauC=critical resolved shear stresses (all Tauc>0 )
 !                     first row:  for positive slip, second row: for negative slip
 !     input          BINV=First guess of inverse of basis, corresp. with IACT
@@ -20,8 +20,6 @@ module altayTBH
 !     output         FakM=plastic work  (stress*imposed strain rate)
 !     output         TauR (resolved shear stress)
 !     workspace      bas (logical TRUE=belongs to basis)
-!     workspace      CUst compact storage of U* (only one column)
-!     workspace      DD (copy of strain rates in some basis)
 !     output         DTAU=abs(TAUR)-TAUC
         use altayIOConfig,IIPR=>IPR!Rename global IPR switch to avoid conflict
 
@@ -34,15 +32,15 @@ module altayTBH
                                 D(NDIM), &    !< right-hand side of Taylor equations=imposed strain rate
                                 BINV(NDIM,N), &
                                 TauC(2,M)
-        logical :: bas(M)
-
+        logical :: bas(M) !< MD: this is "workspace" from pancake and has the 'save' attribute. Might be the reason for strange behavior
         real(dp), intent(out) :: U(NDIM,N), Dacc(NDIM),GDOT(M),SIG(NDIM),TauR(M), DTAU(M),FakM
         integer, intent(out) :: Irp(NDIM) !< indices of active slip systems
-        real(dp), intent(inout) :: CUst(NDIM),DD(NDIM)
 
         real(dp) :: Aprime(NDIM), & !< column of U * A
                     Trp(NDIM), &    !< resolved shear stress on basis systems
-                    UU(NDIM,N)      !< copy of inverse of basis
+                    UU(NDIM,N),&    !< copy of inverse of basis
+                    CUst(NDIM),&    !< compact storage of U* (only one column)
+                    DD(NDIM)        !< copy of strain rates in some basis
         integer, parameter :: JPR=2
         real(dp), parameter :: TOL=1.0e-10_dp
 
