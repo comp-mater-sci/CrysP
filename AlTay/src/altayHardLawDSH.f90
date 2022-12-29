@@ -583,7 +583,7 @@ module altayHardLaw_DSH
       !declaration of local variables
       integer r(6), i
 
-      if (PlaneSlip(1).GE.PlaneSlip(2)) then
+      if (PlaneSlip(1) >= PlaneSlip(2)) then
         r(1)=1
         r(2)=2
       else
@@ -592,11 +592,11 @@ module altayHardLaw_DSH
       end if
 
       do i=3,6
-        if      (PlaneSlip(i).GT.PlaneSlip(r(1))) then
+        if      (PlaneSlip(i) > PlaneSlip(r(1))) then
           r(i)=r(2)
           r(2)=r(1)
           r(1)=i
-        else if (PlaneSlip(i).GT.PlaneSlip(r(2))) then
+        else if (PlaneSlip(i) > PlaneSlip(r(2))) then
           r(i)=r(2)
           r(2)=i
         else
@@ -656,8 +656,8 @@ module altayHardLaw_DSH
 
       wpFLUX=DOT_PRODUCT( effslashb(:,rdr) , sliprate(:) )
 
-      FLUXreversal= wpFLUX*RHOwp_a .LT. 0.0
-      wpLOW= abs(RHOwp_a) .LE. P%RHOwpLOW
+      FLUXreversal= wpFLUX*RHOwp_a  <  0.0
+      wpLOW= abs(RHOwp_a)  <=  P%RHOwpLOW
 
       if ( FLUXreversal .and. .NOT.(wpLOW) ) then
         ! |RHOwp| gets smaller, following analytic time integration
@@ -734,10 +734,10 @@ module altayHardLaw_DSH
       !inherited variables:
       !P%Rncg, GAMMAdot_new, P%b, P%RHOwpMIN
 
-      if (abs(RHOwp_a) .GT. P%RHOwpMIN) then
+      if (abs(RHOwp_a)  >  P%RHOwpMIN) then
         RHOwp_b= RHOwp_a*exp(-P%Rncg*GAMMA_new/P%b)
       else
-        if (RHOwp_a .GE. 0.0) then
+        if (RHOwp_a  >=  0.0) then
           RHOwp_b=  P%RHOwpMIN
         else
           RHOwp_b= -P%RHOwpMIN
@@ -767,10 +767,10 @@ module altayHardLaw_DSH
       accGAMMA_new = SV_a%CBB(rdr)%accGAMMA_new
       RHOwd_ini    = SV_a%CBB(rdr)%RHOwd_ini
 
-      if (RHOwdHOM.GT.P%RHOwdMIN) then
+      if (RHOwdHOM > P%RHOwdMIN) then
        !if the wall was NOT active in prev. inc.
-        if (rdr .NE. SVa%ActiveCBB(1) .AND.                              &
-            rdr .NE. SVa%ActiveCBB(2)      ) then
+        if (rdr  /=  SVa%ActiveCBB(1) .AND.                              &
+            rdr  /=  SVa%ActiveCBB(2)      ) then
          !accGAMMA_new=[accGAMMA_new]_inc(i-1) + [GAMMA_new]_inc(i)
             accGAMMA_new=accGAMMA_new+GAMMA_new
         else !the wall was active in prev. inc.
@@ -782,7 +782,7 @@ module altayHardLaw_DSH
                    exp(-P%beta1*accGAMMA_new)*RHOwd_ini*P%beta2
         RHOwdHOM=RHOwdHOM*exp(-P%Rncg*GAMMA_new/P%b)
         RHOwd=RHOwdHOM+RHOwdLOC
-        if (RHOwd .LT. P%RHOwdMIN)  RHOwd=P%RHOwdMIN
+        if (RHOwd  <  P%RHOwdMIN)  RHOwd=P%RHOwdMIN
       else
         RHOwdHOM=P%RHOwdMIN
         RHOwd   =P%RHOwdMIN
@@ -808,14 +808,14 @@ module altayHardLaw_DSH
 !     local variable declarations
       double precision Reffective
 
-      if(RHObausch .GT. 0.0) then
+      if(RHObausch  >  0.0) then
         Reffective=P%R + P%R2*RHObausch/(2.D0*P%RHOwpSAT)
-        if (P%I*sqrt(RHO_a) - Reffective*RHO_a .LE. 0.0) then ! Heaviside bracket
+        if (P%I*sqrt(RHO_a) - Reffective*RHO_a  <=  0.0) then ! Heaviside bracket
           RHO_b=RHO_a !Keep as is.
         else
             RHO_b= F_KocksMeck(RHO_a,SUMabsGam,P%I,Reffective)
         end if
-      else !RHObausch .EQ. 0.0
+      else !RHObausch  ==  0.0
         RHO_b= F_KocksMeck(  RHO_a,SUMabsGam,P%I,P%R       )
       end if
 
@@ -858,7 +858,7 @@ module altayHardLaw_DSH
                   wpcontr(i)=sqrt(abs(SV%CBB(i)%RHOwp)) *             &
                        signfac * alfa_G_b_eff(s,i) *                    &
                        sign(1.D0,SV%CBB(i)%RHOwp) ! sign returns +/-1 depending on the sign of the second argument
-            if (wpcontr(i) .LT. 0.0) wpcontr(i)=0.0 ! Heaviside bracket
+            if (wpcontr(i)  <  0.0) wpcontr(i)=0.0 ! Heaviside bracket
             wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*alfa_G_b_ABSeff(s,i)
           end do
           !CRSS within CBB = wp- and wd-contributions for all 6 walls

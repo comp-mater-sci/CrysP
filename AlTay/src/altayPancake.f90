@@ -163,7 +163,7 @@ module altayPancake
                 ! in order to suppress the relaxations in a first call of the TBH program
             ! Full constraints calculation
             ! UITVOEREN VAN DE SIMPLEX-SUBROUTINE
-            if (IPR.EQ.2 .and. NLIST == 1) then
+            if (IPR == 2 .and. NLIST == 1) then
                 write (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
                 write (IMP,219) (BB(I),I=1,N)
                 write (IMP,400) IOR,ISTP,NBLOC
@@ -189,7 +189,7 @@ module altayPancake
                     if (.not.swrlx(IRL)) exit
                     CCC(1:2,M2+IRL)=TAURL(IRL)
                 end do
-                if (IPR.EQ.2 .and. NLIST == 1) write(IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
+                if (IPR == 2 .and. NLIST == 1) write(IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
                 ! Second call of Simplex (relaxed constraints)
                 if (IPR == 2 .and. NLIST == 1) write(IMP,401)
  401            format (' Second call of TBH')
@@ -244,7 +244,7 @@ module altayPancake
         RHOA33(1,3)= -RHOA33(3,1)
         RHOA33(2,1)= -RHOA33(1,2)
 
-        if (IPR.EQ.2 .AND. NLIST == 1) write (IMP,777) sum(spanv(1:5)*BB(ii+1:ii+5))
+        if (IPR == 2 .AND. NLIST == 1) write (IMP,777) sum(spanv(1:5)*BB(ii+1:ii+5))
   777 format (' spanv . BB          :',d11.4)
        ! note that if one of the grains does
        ! not deform at all, the stress and the active slip systems

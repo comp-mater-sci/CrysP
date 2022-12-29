@@ -176,7 +176,7 @@ module altaySimul
  3458               format (' TG=',3(T10,3d12.3,/))
                 endif
                 if (.not. (nfile == 0.or.ISTP > 1)) then
-                    if (NLIST.EQ.1) write (IMP,112) ISTP
+                    if (NLIST == 1) write (IMP,112) ISTP
  112                format (//' DEFORMATION STEP ',I5,//)
                     if (NRES > 0) write (IMP2,404) nrstep+1,NPOINT
  404                format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'  &

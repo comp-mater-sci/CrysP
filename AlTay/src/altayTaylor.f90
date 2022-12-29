@@ -75,7 +75,7 @@ module altayTaylor
  210            format (8I4,4X,2F10.0)
                 if(NLIST == 1) write (IMP,211) I,NGL,NTW,DI1
  211            format (1X,I4,10X,2I5,10X,5I5)
-                if (I.NE.0) then
+                if (I /= 0) then
                       RCM_RAISE(1,'TAYLOR','Improper slip system set',RCM_RTN)
                 endif
                 M=NGL+NTW
