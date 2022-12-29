@@ -52,7 +52,7 @@ module altaySliprate
         if (x>=TLXX) then
             ! end of check
             IND(1:NN)=INDACT(1:NN)
-            call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
+            call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
             if (ineg==0) then
                  call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                  RCM_GUARD
@@ -72,7 +72,7 @@ module altaySliprate
                 if (N1>=5) then
                     NN=N1
                     do I1=1,N0
-                         call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
+                         call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
                          if (ineg==0) then
                             call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                             RCM_GUARD
@@ -87,7 +87,7 @@ module altaySliprate
                         do I1=2,N0
                             do I2=1,I1-1
                                 call fill(IND,INDACT,[I1,I2],N0)
-                                call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
+                                call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
                                 if (ineg==0) then
                                     call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                                     RCM_GUARD
@@ -102,7 +102,7 @@ module altaySliprate
                                 do I2=2,I1-1
                                     do I3=1,I2-1
                                       call fill(IND,INDACT,[I1,I2,I3],N0)
-                                      call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
+                                      call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
                                       if (ineg==0) then
                                           call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                                           RCM_GUARD
@@ -199,16 +199,14 @@ module altaySliprate
 
     end subroutine
 
-    subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX)
+    subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A8)
 
         integer, intent(in) :: IND(8), NN,IDIMXX
+        real(dp),intent(in) :: A8(5,96),BB8(5),sgnn(IDIMXX)
         integer, intent(out) :: ineg
         real(dp), intent(out) :: SLPR(8),sumsq
 
-        real(dp) :: A8,BB8
-        COMMON /DOUBLE/ A8(5,96),BB8(5)
-
-        real(dp) :: sgnn(IDIMXX),A(13,13),B(13),RES,x,Y,BA(13)
+        real(dp) :: A(13,13),B(13),RES,x,Y,BA(13)
         real(dp), parameter :: TOL=1.0e-6_dp
         integer :: i,j,N1,N2
 
