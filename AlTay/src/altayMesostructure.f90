@@ -101,8 +101,14 @@ contains
 
         real(dp) :: AXX(3,3),GRPAR(3,3), PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
         real(dp) :: x, u, dlength, dot1, dot2, TGANGLE, Y
-        real(dp) :: relaxI(3,3),relaxII(3,3)
         integer :: i,j
+        real(dp), parameter, dimension(3,3) :: &
+            relaxI = reshape([0._dp, 0._dp, 1._dp, &
+                              0._dp, 0._dp, 0._dp, &
+                              1._dp, 0._dp, 0._dp],shape(relaxI)), &
+            relaxII= reshape([0._dp, 0._dp, 0._dp, &
+                              0._dp, 0._dp, 1._dp, &
+                              0._dp, 1._dp, 0._dp],shape(relaxII))
 
         Cofcos = 0.D0
         Cofsin = 0.D0
@@ -222,13 +228,6 @@ contains
         !     Transform MacroDefRate%StrainModevM to the "Grb" reference frame
         TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
 
-        relaxI=0.0
-        relaxI(1,3)=1.D0
-        relaxI(3,1)=1.D0
-        relaxII=0.0
-        relaxII(2,3)=1.D0
-        relaxII(3,2)=1.D0
-
         dot1=0.0
         dot2=0.0
         do i=1,3
@@ -250,9 +249,8 @@ contains
                   !  new axe-1 be old axe-2
                   !  new axe-2 be minus old axe-1
                   vec1=AXX(1:3,2)
-                  vec2=-AXX(1:3,1)
+                  AXX(1:3,2)=-AXX(1:3,1)
                   AXX(1:3,1)=vec1
-                  AXX(1:3,2)=vec2
                   Tprinc = transpose(AXX)
                   Cofcos=1.D0
                   Cofsin=0.D0
@@ -262,9 +260,8 @@ contains
                  !  new axe-2 be minus old axe-1
                  !  The angle is only between relaxation-1 and D0. It is nothing related with relaxation-2.
                  vec1=AXX(1:3,2)
-                 vec2=-AXX(1:3,1)
+                 AXX(1:3,2)=-AXX(1:3,1)
                  AXX(1:3,1)=vec1
-                 AXX(1:3,2)=vec2
                  Tprinc = transpose(AXX)
                  ! Transform MacroDefRate%StrainModevM to the new "Grb" reference frame
                  TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
@@ -308,7 +305,6 @@ contains
             !   Prdir(1,) is vector-1 in the GB frame
             !   Prdir(2,) is vector-2 in the GB frame
             !   Transform these two vector in the Sample's frame
-
             vec1=0.0
             vec2=0.0
             do i=1,3
