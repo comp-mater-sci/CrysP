@@ -43,6 +43,10 @@ module altayTaylor
         integer :: NGR,NRL,laml
         common /LAMEL/ TRFb(3,3,2),GMMAb(2),NGR,NRL,laml                                 ! NRL= number of relaxations, NGR= number of grains
 
+        real(dp) :: CC
+        integer :: M11
+        common /IGLIJS/ CC(2,96), M11
+
         real(dp), dimension(3,3):: RHOScrys, RHOAcrys
         real(dp) :: A2(10,194)
         character(len=72) :: TITglij                                          ! Name of slip system set
@@ -124,7 +128,7 @@ module altayTaylor
 
             case(3) ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
                 call pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,XXLP,IPR,GEWF,A2,MacroDefRate,MacroDefState,NACTIV, &
-                             SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP,IOR,ISTP,NBLOC,TRFb,GMMab,NGR,NRL,laml,BB8)
+                             SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP,IOR,ISTP,NBLOC,TRFb,GMMab,NGR,NRL,laml,BB8,CC,M11)
                 ! OUT: Scrys,RHOScrys,RHOAcrys
                 !Report Scrys to LST-file
  100            format(' Bishop-Hill stress (crystal system):')
@@ -184,6 +188,9 @@ module altayTaylor
         real(dp) :: TRF(3,3),C1(3,3),C2(3,3)
 
         ! COMMON BLOCKS
+        real(dp) :: XM
+        common /DOUBLE1/ XM(5,96)
+
         real(dp), dimension(3) :: TRC,ROT
         real(dp), dimension(3,3) :: RCC,RCcryst,rhossaTot,TDC,RHOAcrys
         real(dp), dimension(96) :: VOLFR,SGNN,GAMdot
@@ -193,7 +200,7 @@ module altayTaylor
         SAVE
 
         call SLIPRAT(M111,96,GAMdot,ior,IPR,SGNN,MacroDefRate,NACTIV, &
-                     SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP,BB8)
+                     SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP,BB8,XM)
         RCM_GUARD
         select case(iKOST)
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
