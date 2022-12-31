@@ -18,9 +18,8 @@ module altayTaylor
                                  NGL, &       ! number of glide systems
                                  NTW, &       ! number of twin systems
                                  NACTIV
-    real(dp),private  :: B1(3,96),B(5,5),B2(6,96),G(96),RHOAsa(3,3)
+    real(dp),private  :: B1(3,96),B(5,5),B2(6,96),G(96),RHOAsa(3,3),SLIPLP(8),TLXX,TAURLP(8),BB8(5)
     integer,private   :: DI1(5)
-    real(dp),private :: SLIPLP(8),TLXX,TAURLP(8)
     integer,private:: INDACT(8),NLP,INDLP(8)
 
     contains
@@ -125,7 +124,7 @@ module altayTaylor
 
             case(3) ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
                 call pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,XXLP,IPR,GEWF,A2,MacroDefRate,MacroDefState,NACTIV, &
-                             SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP,IOR,ISTP,NBLOC,TRFb,GMMab,NGR,NRL,laml)
+                             SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP,IOR,ISTP,NBLOC,TRFb,GMMab,NGR,NRL,laml,BB8)
                 ! OUT: Scrys,RHOScrys,RHOAcrys
                 !Report Scrys to LST-file
  100            format(' Bishop-Hill stress (crystal system):')
@@ -194,7 +193,7 @@ module altayTaylor
         SAVE
 
         call SLIPRAT(M111,96,GAMdot,ior,IPR,SGNN,MacroDefRate,NACTIV, &
-                     SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP)
+                     SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP,BB8)
         RCM_GUARD
         select case(iKOST)
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
