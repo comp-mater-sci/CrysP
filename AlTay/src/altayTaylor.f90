@@ -23,20 +23,19 @@ module altayTaylor
 
     ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
     ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
-    subroutine TAYLOR(IRICHT, MacroDefRate, MacroDefState)
+    subroutine TAYLOR(IRICHT,M11, MacroDefRate, MacroDefState)
         ! optional argument - required for IRICHT=2 or 3:
         type(DeformationRate), intent(in),optional :: MacroDefRate
         ! optional argument - required for IRICHT=3:
         type(DeformationState),intent(in),optional :: MacroDefState
         integer, intent(in) :: IRICHT
 
+        integer :: M11  ! M11...total number of systems in slip system file (glide+twin),
+
         ! COMMON BLOCKS
         real(dp) :: TRF,C1,C2,GEWF
         integer :: NO,ITW
         common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
-        real(dp) :: CC
-        integer :: M11
-        common /IGLIJS/ CC(2,96), M11     ! M11...total number of systems in slip system file (glide+twin),
         real(dp) :: A1,BB8
         common /DOUBLE/ A1(5,96),BB8(5)
         real(dp) :: YY,SHsam,Ssam,RHOSsa
