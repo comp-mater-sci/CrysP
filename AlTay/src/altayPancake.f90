@@ -19,12 +19,12 @@ module altayPancake
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-    subroutine pancak2(NGL,B,DI1,S33,RHOS33,RHOA33,SWRLX,XX,IPR,GEWF,MacroDefRate,MacroDefState)
+    subroutine pancak2(NGL,B,DI1,S33,RHOS33,RHOA33,SWRLX,XX,IPR,GEWF,A1,MacroDefRate,MacroDefState)
         type(DeformationRate),intent(in) :: MacroDefRate
         type(DeformationState),intent(in):: MacroDefState
         integer, intent(in) :: NGL,IPR,DI1(5)
         logical, intent(in) :: SWRLX(3)
-
+        real(dp) :: A1(10,194)
         type(CRSS) :: CRSSmatrix
         real(dp),dimension(3,3),intent(out):: S33, RHOS33, RHOA33
         real(dp),dimension(5):: RHOS, RHOA
@@ -40,8 +40,6 @@ module altayPancake
         common /IGLIJS/ CC(2,96), M11
         real(dp) :: A8,BB8
         common /DOUBLE/ A8(5,96),BB8(5)
-        real(dp) :: A1
-        common /extra/ A1(10,194)
         integer :: IOR,ISTP,NBLOC
         common /CEIGEN/ IOR,ISTP,NBLOC
         real(dp) :: SLIPLP,TLXX,TAURLP

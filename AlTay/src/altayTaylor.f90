@@ -40,10 +40,9 @@ module altayTaylor
         common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
         logical SWRLX
         common /GENRLX/ SWRLX(3)
-        real(dp) :: A2
-        common /extra/ A2(10,194)
 
         real(dp), dimension(3,3):: RHOScrys, RHOAcrys
+        real(dp) :: A2(10,194)
         character(len=72) :: TITglij                                          ! Name of slip system set
         real(dp) :: XXLP(194)
         integer ::  R
@@ -122,7 +121,7 @@ module altayTaylor
                 endif
 
             case(3) ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
-                call Pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,XXLP,IPR,GEWF,MacroDefRate,MacroDefState)
+                call Pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,XXLP,IPR,GEWF,A2,MacroDefRate,MacroDefState)
                 ! OUT: Scrys,RHOScrys,RHOAcrys
                 !Report Scrys to LST-file
  100            format(' Bishop-Hill stress (crystal system):')
