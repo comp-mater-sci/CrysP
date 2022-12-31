@@ -35,10 +35,15 @@ module altayTaylor
         integer, intent(in) :: IRICHT
 
         integer :: M11  ! M11...total number of systems in slip system file (glide+twin)
-
         real(dp) :: A1(5,96),Ssam(3,3),RHOSsa(3,3),TRF(3,3),GEWF
-
         logical :: SWRLX(3)
+
+        ! common blocks
+        real(dp) :: TRFb,GMMAb
+        integer :: NGR,NRL,laml
+        common /LAMEL/ TRFb(3,3,2),GMMAb(2),NGR,NRL,laml                                 ! NRL= number of relaxations, NGR= number of grains
+        integer :: IOR,ISTP,NBLOC
+        common /CEIGEN/ IOR,ISTP,NBLOC
 
         real(dp), dimension(3,3):: RHOScrys, RHOAcrys
         real(dp) :: A2(10,194)
@@ -121,7 +126,7 @@ module altayTaylor
 
             case(3) ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
                 call pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,XXLP,IPR,GEWF,A2,MacroDefRate,MacroDefState,NACTIV, &
-                             SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP)
+                             SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP,IOR,ISTP,NBLOC,TRFb,GMMab,NGR,NRL,laml)
                 ! OUT: Scrys,RHOScrys,RHOAcrys
                 !Report Scrys to LST-file
  100            format(' Bishop-Hill stress (crystal system):')

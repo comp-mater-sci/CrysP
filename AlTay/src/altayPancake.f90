@@ -20,7 +20,7 @@ module altayPancake
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
     subroutine pancak2(NGL,B,DI1,S33,RHOS33,RHOA33,SWRLX,XX,IPR,GEWF,A1,MacroDefRate,MacroDefState,NACTIV,&
-                       SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP)
+                       SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP,IOR,ISTP,NBLOC,TRFb,GMMab,NGR,NRL,laml)
         type(DeformationRate),intent(in) :: MacroDefRate
         type(DeformationState),intent(in):: MacroDefState
         integer, intent(in) :: NGL,IPR,DI1(5)
@@ -32,21 +32,15 @@ module altayPancake
         integer, intent(inout) :: NACTIV
         logical :: bas(194)
         integer ::  DI(10),DI2(10)
-        real(dp) :: SLIPLP(8),TLXX,TAURLP(8)
-        integer:: INDACT(8),NLP,INDLP(8)
+        real(dp) :: SLIPLP(8),TLXX,TAURLP(8),TRFb(3,3,2),GMMAb(2)
+        integer:: INDACT(8),NLP,INDLP(8),IOR,ISTP,NBLOC,NGR,NRL,laml
 
         ! common blocks
-        real(dp) :: TRFb,GMMAb
-        integer :: NGR,NRL,laml
-        common /LAMEL/ TRFb(3,3,2),GMMAb(2),NGR,NRL,laml                                 ! NRL= number of relaxations, NGR= number of grains
         real(dp) :: CC
         integer :: M11
         common /IGLIJS/ CC(2,96), M11
         real(dp) :: BB8
         common /DOUBLE2/ BB8(5)
-        integer :: IOR,ISTP,NBLOC
-        common /CEIGEN/ IOR,ISTP,NBLOC
-
 
         real(dp) :: C2(3,3),B(5,5),DACC(10),rls(3,3),rla(3,3),C3(3,3),B3(10,3),UU(10,10), &
                     spanv(5),XX(194),STRSS(10),BB(10),CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
