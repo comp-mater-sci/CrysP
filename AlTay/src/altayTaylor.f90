@@ -27,7 +27,7 @@ module altayTaylor
 
     ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
     ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
-    subroutine TAYLOR(IRICHT,M11,A1,SSam,RHOSsa,SWRLX,TRF,C1,C2,GEWF,MacroDefRate,MacroDefState)
+    subroutine TAYLOR(IRICHT,M11,A1,SSam,RHOSsa,SWRLX,TRF,GEWF,MacroDefRate,MacroDefState)
         ! optional argument - required for IRICHT=2 or 3:
         type(DeformationRate), intent(in),optional :: MacroDefRate
         ! optional argument - required for IRICHT=3:
@@ -36,7 +36,7 @@ module altayTaylor
 
         integer :: M11  ! M11...total number of systems in slip system file (glide+twin)
 
-        real(dp) :: A1(5,96),Ssam(3,3),RHOSsa(3,3),TRF(3,3),C1(3,3),C2(3,3),GEWF
+        real(dp) :: A1(5,96),Ssam(3,3),RHOSsa(3,3),TRF(3,3),GEWF
 
         logical :: SWRLX(3)
 
@@ -120,7 +120,7 @@ module altayTaylor
                 endif
 
             case(3) ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
-                call Pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,XXLP,IPR,GEWF,A2,MacroDefRate,MacroDefState,NACTIV, &
+                call pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,XXLP,IPR,GEWF,A2,MacroDefRate,MacroDefState,NACTIV, &
                              SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP)
                 ! OUT: Scrys,RHOScrys,RHOAcrys
                 !Report Scrys to LST-file

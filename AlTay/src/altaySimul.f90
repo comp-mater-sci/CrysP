@@ -120,7 +120,7 @@ module altaySimul
             if (NFILE1 == 1) call CURwriteTitle(IMP1,TITEL,info)
   98        format (A)
 !           read the parameters of the work hardening model
-            call TAYLOR(1,M11,XM,Ssam,RHOSsa,SWRLX,TRF,C1,C2,GEWF) ! read slip system file
+            call TAYLOR(1,M11,XM,Ssam,RHOSsa,SWRLX,TRF,GEWF) ! read slip system file
             RCM_GUARD
 
       else
@@ -136,7 +136,7 @@ module altaySimul
             swrlx(1) = astate%simulCalls(astate%this)%input%rlx1
             swrlx(2) = astate%simulCalls(astate%this)%input%rlx2
             swrlx(3) =.false.
-            call TAYLOR(2,M11,XM,Ssam,RHOSsa,SWRLX,TRF,C1,C2,GEWF,MacroDefRate)
+            call TAYLOR(2,M11,XM,Ssam,RHOSsa,SWRLX,TRF,GEWF,MacroDefRate)
             RCM_GUARD
             ! Output the current texture
             if (NFILE == 1) call CURwriteBlock(IMP1,info)
@@ -256,7 +256,7 @@ module altaySimul
                     !             - has to output the result of the second crystal found
                     !               during the previous computation.
                     if (IW <= 1) then
-                        call TAYLOR(3,M11,XM,Ssam,RHOSsa,SWRLX,TRF,C1,C2,GEWF,MacroDefRate,MacroDefState)
+                        call TAYLOR(3,M11,XM,Ssam,RHOSsa,SWRLX,TRF,GEWF,MacroDefRate,MacroDefState)
                         RCM_GUARD
                     endif
 

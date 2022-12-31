@@ -10,9 +10,10 @@ module altaySliprate
     use altayAlgorithms
 
     implicit none
-
+    private
     character(len=*), parameter :: MODULE_NAME = "altaySliprate"
 
+    public :: SLIPRAT
     contains
 
     subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn,MacroDefRate,NACTIV, &
