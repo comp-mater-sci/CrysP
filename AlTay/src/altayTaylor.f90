@@ -37,9 +37,9 @@ module altayTaylor
         real(dp) :: TRF,C1,C2,GEWF
         integer :: ITW
         common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
-        real(dp) :: YY,SHsam,Ssam,RHOSsa
+        real(dp) :: SHsam,Ssam,RHOSsa
         logical SWRLX
-        common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
+        common /GENRLX/ SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
         real(dp) :: A2
         common /extra/ A2(10,194)
 
@@ -183,9 +183,9 @@ module altayTaylor
         real(dp) :: TRF,C1,C2,GEWF
         integer :: ITW
         common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
-        real(dp) :: YY,SHsam,Ssam,RHOSsa
+        real(dp) :: SHsam,Ssam,RHOSsa
         logical SWRLX
-        common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
+        common /GENRLX/ SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
         real(dp) :: fi1,PHI,fi2
         common /EULERA/ fi1,PHI,fi2
 

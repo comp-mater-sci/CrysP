@@ -43,9 +43,9 @@ module altaySimul
         common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
         real(dp) :: fi1,PHI,fi2
         common /EULERA/ fi1,PHI,fi2
-        real(dp) :: YY,SHsam,Ssam,RHOSsa
+        real(dp) :: SHsam,Ssam,RHOSsa
         logical SWRLX
-        common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
+        common /GENRLX/ SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
         real(dp) :: TRFb,GMMAb
         integer :: NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
         common /LAMEL/ TRFb(3,3,2),GMMAb(2),NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
