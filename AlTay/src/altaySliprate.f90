@@ -15,7 +15,8 @@ module altaySliprate
 
     contains
 
-    subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn,MacroDefRate,NACTIV)
+    subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn,MacroDefRate,NACTIV, &
+                       SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP)
         type(DeformationRate),intent(in) :: MacroDefRate
         !     To find the slip rates assuming that
         !     - the stress, strain rate and the active slip systems are known,
@@ -25,14 +26,12 @@ module altaySliprate
         !
         integer, intent(in) :: M11,IDIMXX,IPR,IOR,NACTIV
         real(dp) :: XX(IDIMXX), SGNN(IDIMXX)
+        real(dp) :: SLIPLP(8),TLXX,TAURLP(8)
+        integer:: INDACT(8),NLP,INDLP(8)
 
         real(dp) :: A1,BB8
         COMMON /DOUBLE1/ A1(5,96)
         COMMON /DOUBLE2/ BB8(5)
-
-        real(dp) :: SLIPLP,TLXX,TAURLP
-        integer:: INDACT,NLP,INDLP
-        COMMON /ACTIVE/ INDACT(8),NLP,INDLP(8),SLIPLP(8),TLXX,TAURLP(8)
 
         integer :: IND(8),ISTOR(0:8,48)
         real(dp) :: SLPR(8),SLSTOR(0:8,48),x,y,yy,sumsq

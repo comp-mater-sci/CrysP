@@ -19,13 +19,15 @@ module altayTaylor
                                  NTW, &       ! number of twin systems
                                  NACTIV
     real(dp),private  :: B1(3,96),B(5,5),B2(6,96),G(96),RHOAsa(3,3)
-    integer,private           :: DI1(5)
+    integer,private   :: DI1(5)
+    real(dp),private :: SLIPLP(8),TLXX,TAURLP(8)
+    integer,private:: INDACT(8),NLP,INDLP(8)
 
     contains
 
     ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
     ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
-    subroutine TAYLOR(IRICHT,M11,A1,SSam,RHOSsa,MacroDefRate,MacroDefState)
+    subroutine TAYLOR(IRICHT,M11,A1,SSam,RHOSsa,SWRLX,MacroDefRate,MacroDefState)
         ! optional argument - required for IRICHT=2 or 3:
         type(DeformationRate), intent(in),optional :: MacroDefRate
         ! optional argument - required for IRICHT=3:
@@ -39,8 +41,8 @@ module altayTaylor
         real(dp) :: TRF,C1,C2,GEWF
         integer :: ITW
         common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
-        logical SWRLX
-        common /GENRLX/ SWRLX(3)
+
+        logical :: SWRLX(3)
 
         real(dp), dimension(3,3):: RHOScrys, RHOAcrys
         real(dp) :: A2(10,194)
@@ -122,7 +124,8 @@ module altayTaylor
                 endif
 
             case(3) ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
-                call Pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,XXLP,IPR,GEWF,A2,MacroDefRate,MacroDefState,NACTIV)
+                call Pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,XXLP,IPR,GEWF,A2,MacroDefRate,MacroDefState,NACTIV, &
+                             SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP)
                 ! OUT: Scrys,RHOScrys,RHOAcrys
                 !Report Scrys to LST-file
  100            format(' Bishop-Hill stress (crystal system):')
@@ -190,7 +193,8 @@ module altayTaylor
         type(EulerAngles):: Euler
         SAVE
 
-        call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN,MacroDefRate,NACTIV)
+        call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN,MacroDefRate,NACTIV, &
+                     SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP)
         RCM_GUARD
         select case(iKOST)
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
