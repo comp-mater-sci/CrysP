@@ -27,14 +27,14 @@ module altayTaylor
 
     ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
     ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
-    subroutine TAYLOR(IRICHT,M11,A1,SSam,RHOSsa,SWRLX,TRF,GEWF,MacroDefRate,MacroDefState)
+    subroutine TAYLOR(IRICHT,M111,A1,SSam,RHOSsa,SWRLX,TRF,GEWF,MacroDefRate,MacroDefState)
         ! optional argument - required for IRICHT=2 or 3:
         type(DeformationRate), intent(in),optional :: MacroDefRate
         ! optional argument - required for IRICHT=3:
         type(DeformationState),intent(in),optional :: MacroDefState
         integer, intent(in) :: IRICHT
 
-        integer :: M11  ! M11...total number of systems in slip system file (glide+twin)
+        integer :: M111  ! < total number of systems in slip system file (glide+twin)
         real(dp) :: A1(5,96),Ssam(3,3),RHOSsa(3,3),TRF(3,3),GEWF
         logical :: SWRLX(3)
 
@@ -80,12 +80,12 @@ module altayTaylor
                       RCM_RAISE(1,'TAYLOR','Improper slip system set',RCM_RTN)
                 endif
                 M=NGL+NTW
-                M11=M
-                if (M11 > MMAX)then
+                M111=M
+                if (M111 > MMAX)then
                       RCM_RAISE(1,'TAYLOR','Too large slip system set',RCM_RTN)
                 endif
                 ! read glide + twin systems
-                do I1=1,M11
+                do I1=1,M111
                     read (R,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
                     if(NLIST == 1) write (IMP,213) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
                 end do
@@ -107,8 +107,8 @@ module altayTaylor
  218                format (i4,' B2',6f10.7,' G',f10.7)
                 endif
                 A2=0.0
-                A2(1:5,1:M11)=A1(1:5,1:M11)
-                A2(6:10,M11+1:M11*2)=A1(1:5,1:M11)
+                A2(1:5,1:M111)=A1(1:5,1:M111)
+                A2(6:10,M111+1:M111*2)=A1(1:5,1:M111)
 
             case(2) ! Write velocity gradient, strain rate and spin tensor; then check norm of strain rate
                 if(NLIST == 1) then
@@ -163,7 +163,7 @@ module altayTaylor
     end subroutine
 
 
-    subroutine TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate,CC,M11,Ssam,RHOSsa,fi1,PHI,fi2, &
+    subroutine TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate,CC,M111,Ssam,RHOSsa,fi1,PHI,fi2, &
                       TRF,C1,C2,ITW)
         use altayConfig, only: astate
         use AltayHardLaw_DSH
@@ -181,7 +181,7 @@ module altayTaylor
 
         real(dp) :: CC(2,96),Ssam(3,3), & !< local stress in sample reference system
                     RHOSsa(3,3),fi1,PHI,fi2
-        integer :: M11     ! M11...total number of systems in slip system file (glide+twin),
+        integer :: M111     ! M111...total number of systems in slip system file (glide+twin),
         integer :: ITW
         real(dp) :: TRF(3,3),C1(3,3),C2(3,3)
 
@@ -194,7 +194,7 @@ module altayTaylor
         type(EulerAngles):: Euler
         SAVE
 
-        call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN,MacroDefRate,NACTIV, &
+        call SLIPRAT(M111,96,GAMdot,ior,IPR,SGNN,MacroDefRate,NACTIV, &
                      SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP)
         RCM_GUARD
         select case(iKOST)
@@ -204,7 +204,7 @@ module altayTaylor
                 ddt = 1.D0
                 if (.not. astate%simulCalls(astate%this)%input%keep_state) call KS_updateState(IOR,GAMdot,ddt,info)
         endselect
-        TOTGAMdot=sum(abs(GAMdot(1:M11)))
+        TOTGAMdot=sum(abs(GAMdot(1:M111)))
         if(NLIST == 1) write (IMP,103) ISTP,IOR,fi1,PHI,fi2
 
  103    format (' ISTP,IOR',2I5,' phi1, PHI, phi2:',3F15.6)
@@ -214,7 +214,7 @@ module altayTaylor
         TRC(1)=RCcryst(3,2)+RHOAcrys(3,2)
         TRC(2)=RCcryst(1,3)+RHOAcrys(1,3)
         TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
-        WorkRate = sum(merge(CC(1,1:M11)*GAMdot(1:M11),-CC(2,1:M11)*GAMdot(1:M11),GAMdot(1:M11)>0.0))
+        WorkRate = sum(merge(CC(1,1:M111)*GAMdot(1:M111),-CC(2,1:M111)*GAMdot(1:M111),GAMdot(1:M111)>0.0))
         Seq=WorkRate / MacroDefRate%vMeqStrainRate
         if(NLIST == 1) write (IMP,301) WorkRate
  301    format (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
