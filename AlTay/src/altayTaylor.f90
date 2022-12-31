@@ -26,7 +26,9 @@ module altayTaylor
 
     ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
     ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
-    subroutine TAYLOR(IRICHT,M111,A1,SSam,RHOSsa,SWRLX,TRF,GEWF,IOR,ISTP,NBLOC,MacroDefRate,MacroDefState)
+    subroutine TAYLOR(IRICHT,M111,A1,SSam,RHOSsa,SWRLX,TRF,GEWF,IOR,ISTP,NBLOC,&
+                      TRFb,GMMAb,NGR,NRL,laml,CC,M11, &
+                      MacroDefRate,MacroDefState)
         ! optional argument - required for IRICHT=2 or 3:
         type(DeformationRate), intent(in),optional :: MacroDefRate
         ! optional argument - required for IRICHT=3:
@@ -35,17 +37,10 @@ module altayTaylor
 
         integer :: M111  ! < total number of systems in slip system file (glide+twin)
         integer :: IOR,ISTP,NBLOC
-        real(dp) :: A1(5,96),Ssam(3,3),RHOSsa(3,3),TRF(3,3),GEWF
+        real(dp) :: A1(5,96),Ssam(3,3),RHOSsa(3,3),TRF(3,3),GEWF,TRFb(3,3,2),GMMAb(2), CC(2,96)
         logical :: SWRLX(3)
 
-        ! common blocks
-        real(dp) :: TRFb,GMMAb
-        integer :: NGR,NRL,laml
-        common /LAMEL/ TRFb(3,3,2),GMMAb(2),NGR,NRL,laml                                 ! NRL= number of relaxations, NGR= number of grains
-
-        real(dp) :: CC
-        integer :: M11
-        common /IGLIJS/ CC(2,96), M11
+        integer :: NGR,NRL,laml,M11
 
         real(dp), dimension(3,3):: RHOScrys, RHOAcrys
         real(dp) :: A2(10,194)
@@ -166,7 +161,7 @@ module altayTaylor
 
 
     subroutine TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate,CC,M111,Ssam,RHOSsa,fi1,PHI,fi2, &
-                      TRF,C1,C2,ITW)
+                      TRF,C1,C2,ITW,XM)
         use altayConfig, only: astate
         use AltayHardLaw_DSH
         use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
@@ -185,11 +180,7 @@ module altayTaylor
                     RHOSsa(3,3),fi1,PHI,fi2
         integer :: M111     ! M111...total number of systems in slip system file (glide+twin),
         integer :: ITW
-        real(dp) :: TRF(3,3),C1(3,3),C2(3,3)
-
-        ! COMMON BLOCKS
-        real(dp) :: XM
-        common /DOUBLE1/ XM(5,96)
+        real(dp) :: TRF(3,3),C1(3,3),C2(3,3),XM(5,96)
 
         real(dp), dimension(3) :: TRC,ROT
         real(dp), dimension(3,3) :: RCC,RCcryst,rhossaTot,TDC,RHOAcrys
