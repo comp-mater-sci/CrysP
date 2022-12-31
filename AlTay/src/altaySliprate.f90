@@ -27,7 +27,8 @@ module altaySliprate
         real(dp) :: XX(IDIMXX), SGNN(IDIMXX)
 
         real(dp) :: A1,BB8
-        COMMON /DOUBLE/ A1(5,96),BB8(5)
+        COMMON /DOUBLE1/ A1(5,96)
+        COMMON /DOUBLE2/ BB8(5)
 
         real(dp) :: SLIPLP,TLXX,TAURLP
         integer:: INDACT,NLP,INDLP

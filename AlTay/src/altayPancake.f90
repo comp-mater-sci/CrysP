@@ -39,8 +39,8 @@ module altayPancake
         real(dp) :: CC
         integer :: M11
         common /IGLIJS/ CC(2,96), M11
-        real(dp) :: A8,BB8
-        common /DOUBLE/ A8(5,96),BB8(5)
+        real(dp) :: BB8
+        common /DOUBLE2/ BB8(5)
         integer :: IOR,ISTP,NBLOC
         common /CEIGEN/ IOR,ISTP,NBLOC
         real(dp) :: SLIPLP,TLXX,TAURLP

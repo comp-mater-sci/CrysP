@@ -37,8 +37,8 @@ module altaySimul
         integer :: M11
         common /IGLIJS/ CC(2,96), M11
 
-        real(dp) :: XM,XEPS
-        common /DOUBLE/ XM(5,96),XEPS(5)
+        real(dp) :: XM
+        common /DOUBLE1/ XM(5,96)
 
         real(dp) :: TRF,C1,C2,GEWF
         integer :: ITW
