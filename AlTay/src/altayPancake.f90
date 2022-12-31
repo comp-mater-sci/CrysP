@@ -250,30 +250,4 @@ module altayPancake
         enddo
     end subroutine
 
-
-    subroutine Fakeccc(ccc,ccc2,Cofcos,Cofsin,BB,UBUF,M11,ca1,ca2)
-        real(dp), intent(in) :: ccc(2,194)
-        integer, intent(in) :: M11
-        real(dp), intent(out) :: ccc2(2,194)
-        real(dp), intent(out) :: ca1,ca2
-        real(dp), intent(in) :: Cofcos,Cofsin
-        real(dp), intent(in) :: BB(10), & !< direction of the relaxation-1
-          UBUF(10) !< BISHOP-HILL stress from TBH routine, in crystal frame
-
-        real(dp) :: zeta
-
-        if((abs(Cofsin) < epsilon(0.D0)) .and. (abs(Cofcos) < epsilon(0.D0))) then
-            ccc2=ccc
-        elseif(abs(Cofcos) < 0.000000001) then
-            call terminate(stopcode_runtimeerror)
-        else
-            zeta=sum(UBUF(1:5)*BB(1:5)/norm2(BB(1:5)))/sum(UBUF(6:10)*BB(6:10)/norm2(BB(6:10)))
-            if(zeta<0.0_dp) call terminate(stopcode_runtimeerror)
-            ca1=Cofcos*Cofcos*sqrt(1.0_dp/zeta)+Cofsin*Cofsin
-            ca2=Cofcos*Cofcos*sqrt(zeta)+Cofsin*Cofsin
-            CCC2(1:2,1:M11)      =ca1*CCC(1:2,1:M11)
-            CCC2(1:2,1+M11:2*M11)=ca2*CCC(1:2,1+M11:2*M11)
-        endif
-    end subroutine
-
 end module
