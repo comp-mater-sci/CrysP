@@ -162,7 +162,8 @@ module altayTaylor
     end subroutine
 
 
-    subroutine TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate,CC,M11,Ssam,RHOSsa,fi1,PHI,fi2)
+    subroutine TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate,CC,M11,Ssam,RHOSsa,fi1,PHI,fi2, &
+                      ITW,TRF,C1,C2)
         use altayConfig, only: astate
         use AltayHardLaw_DSH
         use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
@@ -180,11 +181,10 @@ module altayTaylor
         real(dp) :: CC(2,96),Ssam(3,3), & !< local stress in sample reference system
                     RHOSsa(3,3),fi1,PHI,fi2
         integer :: M11     ! M11...total number of systems in slip system file (glide+twin),
+        integer :: ITW
+        real(dp) :: TRF(3,3),C1(3,3),C2(3,3)
 
         ! COMMON BLOCKS
-        real(dp) :: TRF,C1,C2,GEWF
-        integer :: ITW
-        common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
         real(dp), dimension(3) :: TRC,ROT
         real(dp), dimension(3,3) :: RCC,RCcryst,rhossaTot,TDC,RHOAcrys
         real(dp), dimension(96) :: VOLFR,SGNN,GAMdot
