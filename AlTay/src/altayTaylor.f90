@@ -35,8 +35,8 @@ module altayTaylor
 
         ! COMMON BLOCKS
         real(dp) :: TRF,C1,C2,GEWF
-        integer :: NO,ITW
-        common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
+        integer :: ITW
+        common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
         real(dp) :: YY,SHsam,Ssam,RHOSsa
         logical SWRLX
         common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
@@ -177,8 +177,8 @@ module altayTaylor
 
         ! COMMON BLOCKS
         real(dp) :: TRF,C1,C2,GEWF
-        integer :: NO,ITW
-        common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
+        integer :: ITW
+        common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
         real(dp) :: CC
         integer :: M11
         common /IGLIJS/ CC(2,96), M11     ! M11...total number of systems in slip system file (glide+twin),

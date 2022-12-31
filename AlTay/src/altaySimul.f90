@@ -39,8 +39,8 @@ module altaySimul
         real(dp) :: XM,XEPS
         common /DOUBLE/ XM(5,96),XEPS(5)
         real(dp) :: TRF,C1,C2,GEWF
-        integer :: NO,ITW
-        common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),NO,ITW,GEWF
+        integer :: ITW
+        common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
         real(dp) :: fi1,PHI,fi2
         common /EULERA/ fi1,PHI,fi2
         real(dp) :: YY,SHsam,Ssam,RHOSsa
