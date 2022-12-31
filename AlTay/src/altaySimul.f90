@@ -43,16 +43,15 @@ module altaySimul
         common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
         real(dp) :: fi1,PHI,fi2
         common /EULERA/ fi1,PHI,fi2
-        real(dp) :: Ssam,RHOSsa
         logical SWRLX
-        common /GENRLX/ Ssam(3,3),RHOSsa(3,3),SWRLX(3)
+        common /GENRLX/ SWRLX(3)
         real(dp) :: TRFb,GMMAb
         integer :: NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
         common /LAMEL/ TRFb(3,3,2),GMMAb(2),NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
         integer :: IOR,ISTP,NBLOC
         common /CEIGEN/ IOR,ISTP,NBLOC
 
-        real(dp) :: TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),SHsam(3,3), &
+        real(dp) :: TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),SHsam(3,3),Ssam(3,3),RHOSsa(3,3), &
                     CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2), &
                     GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
                     GEULR(3),TG(3,3),CIJ(3,3),STOT(3,3),RHOST(3,3),RHOSm(3,3),FS(3,3),SeqAvg,tau,qgx,gmm1,gmm0,ssqgx
@@ -123,7 +122,7 @@ module altaySimul
             if (NFILE1 == 1) call CURwriteTitle(IMP1,TITEL,info)
   98        format (A)
 !           read the parameters of the work hardening model
-            call TAYLOR(1,M11,XM) ! read slip system file
+            call TAYLOR(1,M11,XM,Ssam,RHOSsa) ! read slip system file
             RCM_GUARD
 
       else
@@ -139,7 +138,7 @@ module altaySimul
             swrlx(1) = astate%simulCalls(astate%this)%input%rlx1
             swrlx(2) = astate%simulCalls(astate%this)%input%rlx2
             swrlx(3) =.false.
-            call TAYLOR(2,M11,XM,MacroDefRate)
+            call TAYLOR(2,M11,XM,Ssam,RHOSsa,MacroDefRate)
             RCM_GUARD
             ! Output the current texture
             if (NFILE == 1) call CURwriteBlock(IMP1,info)
@@ -259,7 +258,7 @@ module altaySimul
                     !             - has to output the result of the second crystal found
                     !               during the previous computation.
                     if (IW <= 1) then
-                        call TAYLOR(3,M11,XM,MacroDefRate,MacroDefState)
+                        call TAYLOR(3,M11,XM,Ssam,RHOSsa,MacroDefRate,MacroDefState)
                         RCM_GUARD
                     endif
 
@@ -273,7 +272,7 @@ module altaySimul
                     if (IW > 1) cycle
 
                     if (astate%simulCalls(astate%this)%input%full_model) then
-                          call TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate, MacroDefRate,CC,M11)
+                          call TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate, MacroDefRate,CC,M11,SSam,RHOSsa)
                           RCM_GUARD
                     endif
                     if (NFILTW == 1) write (IMP3,398) ITW
