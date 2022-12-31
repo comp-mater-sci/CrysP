@@ -145,11 +145,11 @@ contains
     !>RES=residu (sum of squares)
     !>M1,M2=dimensions
     subroutine kleinkwa(N1, N2, M1, M2, A, B, BA, res)
+        integer,                    intent(in)                                  :: M1, M2, N1, N2
         real(dp), dimension(M2),    intent(in)                                  :: B
         real(dp), dimension(M1,M2), intent(in)                                  :: A
         real(dp), dimension(M2),    intent(out)                                 :: BA
         real(dp),                   intent(inout)                               :: res
-        integer,                    intent(in)                                  :: M1, M2, N1, N2
         integer                                                                 :: i, rank, info
         integer, dimension(N2)                                                  :: jpvt
         real(dp)                                                                :: y
