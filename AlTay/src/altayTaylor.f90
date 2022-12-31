@@ -16,7 +16,8 @@ module altayTaylor
 
     integer,private           :: M,   &       ! number of glide systems + number of twin systems
                                  NGL, &       ! number of glide systems
-                                 NTW          ! number of twin systems
+                                 NTW, &       ! number of twin systems
+                                 NACTIV
     real(dp),private  :: B1(3,96),B(5,5),B2(6,96),G(96),RHOAsa(3,3)
     integer,private           :: DI1(5)
 
@@ -45,7 +46,7 @@ module altayTaylor
         real(dp) :: A2(10,194)
         character(len=72) :: TITglij                                          ! Name of slip system set
         real(dp) :: XXLP(194)
-        integer ::  R
+        integer :: R
         integer, parameter :: MMAX=96 ! dimension of A1 and other arrays
 
         ! Local stress in crystal reference system:
@@ -121,7 +122,7 @@ module altayTaylor
                 endif
 
             case(3) ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
-                call Pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,XXLP,IPR,GEWF,A2,MacroDefRate,MacroDefState)
+                call Pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,XXLP,IPR,GEWF,A2,MacroDefRate,MacroDefState,NACTIV)
                 ! OUT: Scrys,RHOScrys,RHOAcrys
                 !Report Scrys to LST-file
  100            format(' Bishop-Hill stress (crystal system):')
@@ -158,7 +159,7 @@ module altayTaylor
     end subroutine
 
 
-    subroutine TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate,CC,M11,Ssam,RHOSsa)
+    subroutine TAYLR1(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate,CC,M11,Ssam,RHOSsa,fi1,PHI,fi2)
         use altayConfig, only: astate
         use AltayHardLaw_DSH
         use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
@@ -174,15 +175,13 @@ module altayTaylor
         real(dp), intent(out) :: WorkRate
 
         real(dp) :: CC(2,96),Ssam(3,3), & !< local stress in sample reference system
-                    RHOSsa(3,3)
+                    RHOSsa(3,3),fi1,PHI,fi2
         integer :: M11     ! M11...total number of systems in slip system file (glide+twin),
 
         ! COMMON BLOCKS
         real(dp) :: TRF,C1,C2,GEWF
         integer :: ITW
         common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
-        real(dp) :: fi1,PHI,fi2
-        common /EULERA/ fi1,PHI,fi2
         real(dp), dimension(3) :: TRC,ROT
         real(dp), dimension(3,3) :: RCC,RCcryst,rhossaTot,TDC,RHOAcrys
         real(dp), dimension(96) :: VOLFR,SGNN,GAMdot
@@ -191,7 +190,7 @@ module altayTaylor
         type(EulerAngles):: Euler
         SAVE
 
-        call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN,MacroDefRate)
+        call SLIPRAT(M11,96,GAMdot,ior,IPR,SGNN,MacroDefRate,NACTIV)
         RCM_GUARD
         select case(iKOST)
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)

@@ -36,23 +36,27 @@ module altaySimul
         real(dp) :: CC
         integer :: M11
         common /IGLIJS/ CC(2,96), M11
+
         real(dp) :: XM,XEPS
         common /DOUBLE/ XM(5,96),XEPS(5)
+
         real(dp) :: TRF,C1,C2,GEWF
         integer :: ITW
         common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
-        real(dp) :: fi1,PHI,fi2
-        common /EULERA/ fi1,PHI,fi2
+
         logical SWRLX
         common /GENRLX/ SWRLX(3)
+
         real(dp) :: TRFb,GMMAb
         integer :: NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
         common /LAMEL/ TRFb(3,3,2),GMMAb(2),NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
+
         integer :: IOR,ISTP,NBLOC
         common /CEIGEN/ IOR,ISTP,NBLOC
 
+
         real(dp) :: TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),SHsam(3,3),Ssam(3,3),RHOSsa(3,3), &
-                    CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2), &
+                    CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2),fi1,PHI,fi2, &
                     GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
                     GEULR(3),TG(3,3),CIJ(3,3),STOT(3,3),RHOST(3,3),RHOSm(3,3),FS(3,3),SeqAvg,tau,qgx,gmm1,gmm0,ssqgx
         character(len=40) :: TITEL
@@ -272,7 +276,7 @@ module altaySimul
                     if (IW > 1) cycle
 
                     if (astate%simulCalls(astate%this)%input%full_model) then
-                          call TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate, MacroDefRate,CC,M11,SSam,RHOSsa)
+                          call TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate, MacroDefRate,CC,M11,SSam,RHOSsa,fi1,PHI,fi2)
                           RCM_GUARD
                     endif
                     if (NFILTW == 1) write (IMP3,398) ITW
