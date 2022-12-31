@@ -40,8 +40,8 @@ module altayPancake
         common /IGLIJS/ CC(2,96), M11
         real(dp) :: A8,BB8
         common /DOUBLE/ A8(5,96),BB8(5)
-        real(dp) :: A1,UU
-        common /extra/ A1(10,194),UU(10,10)
+        real(dp) :: A1
+        common /extra/ A1(10,194)
         integer :: IOR,ISTP,NBLOC
         common /CEIGEN/ IOR,ISTP,NBLOC
         real(dp) :: SLIPLP,TLXX,TAURLP
@@ -49,7 +49,7 @@ module altayPancake
         common /ACTIVE/ NACTIV,INDACT(8),NLP,INDLP(8),SLIPLP(8),TLXX,TAURLP(8)
 
 
-        real(dp) :: C2(3,3),B(5,5),DACC(10),rls(3,3),rla(3,3),C3(3,3),B3(10,3), &
+        real(dp) :: C2(3,3),B(5,5),DACC(10),rls(3,3),rla(3,3),C3(3,3),B3(10,3),UU(10,10), &
                     spanv(5),XX(194),STRSS(10),BB(10),CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
                     B8(5,2),UBUF(10),UU2(10,10),GAMR(2),Tprinc(3,3),TAURL(2),XXTOT,COFCOS,COFSIN,GEWF,fakm
         ! rls and rla are unit relaxation tensors in crystal frame (symmetric and anti-sym. part)

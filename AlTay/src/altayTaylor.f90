@@ -40,8 +40,8 @@ module altayTaylor
         real(dp) :: YY,SHsam,Ssam,RHOSsa
         logical SWRLX
         common /GENRLX/ YY(5,5),SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
-        real(dp) :: A2,UU
-        common /extra/ A2(10,194),UU(10,10)
+        real(dp) :: A2
+        common /extra/ A2(10,194)
 
         real(dp), dimension(3,3):: RHOScrys, RHOAcrys
         character(len=72) :: TITglij                                          ! Name of slip system set
