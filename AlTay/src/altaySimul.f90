@@ -273,7 +273,7 @@ module altaySimul
                     if (IW > 1) cycle
 
                     if (astate%simulCalls(astate%this)%input%full_model) then
-                          call TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate, MacroDefRate)
+                          call TAYLR1(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate, MacroDefRate,CC,M11)
                           RCM_GUARD
                     endif
                     if (NFILTW == 1) write (IMP3,398) ITW
