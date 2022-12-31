@@ -43,16 +43,16 @@ module altaySimul
         common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
         real(dp) :: fi1,PHI,fi2
         common /EULERA/ fi1,PHI,fi2
-        real(dp) :: SHsam,Ssam,RHOSsa
+        real(dp) :: Ssam,RHOSsa
         logical SWRLX
-        common /GENRLX/ SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
+        common /GENRLX/ Ssam(3,3),RHOSsa(3,3),SWRLX(3)
         real(dp) :: TRFb,GMMAb
         integer :: NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
         common /LAMEL/ TRFb(3,3,2),GMMAb(2),NGR,NRL,laml         ! NRL= number of relaxations, NGR= number of grains
         integer :: IOR,ISTP,NBLOC
         common /CEIGEN/ IOR,ISTP,NBLOC
 
-        real(dp) :: TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2), &
+        real(dp) :: TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),SHsam(3,3), &
                     CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2), &
                     GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
                     GEULR(3),TG(3,3),CIJ(3,3),STOT(3,3),RHOST(3,3),RHOSm(3,3),FS(3,3),SeqAvg,tau,qgx,gmm1,gmm0,ssqgx

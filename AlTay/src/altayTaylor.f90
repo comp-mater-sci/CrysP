@@ -37,9 +37,9 @@ module altayTaylor
         real(dp) :: TRF,C1,C2,GEWF
         integer :: ITW
         common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
-        real(dp) :: SHsam,Ssam,RHOSsa
+        real(dp) :: Ssam,RHOSsa
         logical SWRLX
-        common /GENRLX/ SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
+        common /GENRLX/ Ssam(3,3),RHOSsa(3,3),SWRLX(3)
         real(dp) :: A2
         common /extra/ A2(10,194)
 
@@ -183,17 +183,12 @@ module altayTaylor
         real(dp) :: TRF,C1,C2,GEWF
         integer :: ITW
         common /TEXTUR/ TRF(3,3),C1(3,3),C2(3,3),ITW,GEWF
-        real(dp) :: SHsam,Ssam,RHOSsa
+        real(dp) :: Ssam,RHOSsa
         logical SWRLX
-        common /GENRLX/ SHsam(3,3),Ssam(3,3),RHOSsa(3,3),SWRLX(3)
+        common /GENRLX/ Ssam(3,3),RHOSsa(3,3),SWRLX(3)
         real(dp) :: fi1,PHI,fi2
         common /EULERA/ fi1,PHI,fi2
-
-        !     SHsam:    macroscopic stress in sample reference system
-        !     SH:   macroscopic stress in crystal reference system
-        !     SPANH: macroscopic stress in crystal reference system
         !     Ssam:        local stress in sample reference system
-
         real(dp), dimension(3) :: TRC,ROT
         real(dp), dimension(3,3) :: RCC,RCcryst,rhossaTot,TDC,RHOAcrys
         real(dp), dimension(96) :: VOLFR,SGNN,GAMdot
