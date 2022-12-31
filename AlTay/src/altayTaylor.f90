@@ -27,7 +27,7 @@ module altayTaylor
 
     ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
     ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
-    subroutine TAYLOR(IRICHT,M111,A1,SSam,RHOSsa,SWRLX,TRF,GEWF,MacroDefRate,MacroDefState)
+    subroutine TAYLOR(IRICHT,M111,A1,SSam,RHOSsa,SWRLX,TRF,GEWF,IOR,ISTP,NBLOC,MacroDefRate,MacroDefState)
         ! optional argument - required for IRICHT=2 or 3:
         type(DeformationRate), intent(in),optional :: MacroDefRate
         ! optional argument - required for IRICHT=3:
@@ -35,6 +35,7 @@ module altayTaylor
         integer, intent(in) :: IRICHT
 
         integer :: M111  ! < total number of systems in slip system file (glide+twin)
+        integer :: IOR,ISTP,NBLOC
         real(dp) :: A1(5,96),Ssam(3,3),RHOSsa(3,3),TRF(3,3),GEWF
         logical :: SWRLX(3)
 
@@ -42,8 +43,6 @@ module altayTaylor
         real(dp) :: TRFb,GMMAb
         integer :: NGR,NRL,laml
         common /LAMEL/ TRFb(3,3,2),GMMAb(2),NGR,NRL,laml                                 ! NRL= number of relaxations, NGR= number of grains
-        integer :: IOR,ISTP,NBLOC
-        common /CEIGEN/ IOR,ISTP,NBLOC
 
         real(dp), dimension(3,3):: RHOScrys, RHOAcrys
         real(dp) :: A2(10,194)
