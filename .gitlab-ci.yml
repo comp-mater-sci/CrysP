@@ -22,7 +22,7 @@ gcc:
     python3-pip
     pip install pandas pytest numpy
     source /opt/intel/oneapi/setvars.sh
-    #AR=xiar ./build.sh -c gfortran -b debug
+    AR=xiar ./build.sh -c gfortran -b debug
     AR=xiar ./build.sh -c gfortran -b release -t
     cd test
     pytest --update=logout -v

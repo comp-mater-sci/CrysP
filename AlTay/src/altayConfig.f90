@@ -2,11 +2,11 @@
 
 module altayConfig
     use altayHardTypes
-    use altayHardLaw_Simple, only: VoceConfig, SwiftKConfig, SwiftSConfig
-    use altayHardLaw_DSH, only: PAR
+    use altayHardLaw_Simple
+    use altayHardLaw_DSH
     use altayTexFormats
-    use altay_definitions, only: dp
-    
+    use altay_definitions
+    use altayMiscutils
     implicit none
 
     integer,parameter  :: fname_len = 512 !< Length of filenames
@@ -29,8 +29,7 @@ module altayConfig
     end type
 
     type :: simulStepInputData ! no hardening data!
-        !> Flag that decides if this step leads to modification of the texture.
-        logical                                   :: keep_texture = .true.
+        logical                                   :: keep_texture = .true.  !< Flag that decides if this step leads to modification of the texture.
         !> Flag that decides if this step leads to an update of the state components
         !> (other than texture)
         logical                                   :: keep_state = .true.
@@ -39,47 +38,33 @@ module altayConfig
         !>                   2) texture is NOT updated, so "keep_texture" must be set, too.
         logical                                   :: full_model = .true.
         !> Flag that decides if the initial texture should be written out as a CUR output of the step.
-        !>
         !> \note The texture is actually written out for initial configuration that is available
         !> at the beginning of the step.
         !> \remark This flag takes effect if outputConfig::nfile is non-zero. \sa outputConfig::nfile
         logical                                   :: do_output_init = .false.
         !> Flag that decides if the final texture (as it is at the end of the call) should be written out
         !> as a a CUR output of the step.
-        !>
         !> \remark This flag takes effect if outputConfig::nfile is non-zero. \sa outputConfig::nfile
-        logical                                   :: do_output_final = .false.
-        !> Number of steps per call
-        integer                                   :: nsteps = 1
-        !> Selection of relaxations
-        logical                                   :: rlx1 = .true., rlx2 = .true.
-        !> Deformation gradient tensor to be imposed. (MB: this is rather a velocity gradient.)
-        real(dp),dimension(3,3)           :: dgf  = 0.D0
+        logical                 :: do_output_final = .false.
+        integer                 :: nsteps = 1                    !< Number of steps per call
+        logical                 :: rlx1 = .true., rlx2 = .true.  !< Selection of relaxations
+        real(dp),dimension(3,3) :: dgf  = 0.D0                   !< Deformation gradient tensor to be imposed. (MB: this is rather a velocity gradient.)
     end type
 
     type :: simulStepOutputData
         !> Macroscopic (homogenized) stress
         real(dp), dimension(3,3)    :: stress_tensor = 0.D0
-        !> Macroscopic (homogenized) Taylor factor
-        real(dp)                    :: taylor_factor = 0.D0
-        !> Strain Rate Heterogeneity in polycrystal. Non-zero only for models that consider clusters of grains:
-        !> \f$ \kappa = (||d-D||) / ||D|| \f$
-        real(dp)                    :: strain_rate_heterogeneity = 0.D0
-        !> Macroscopic stress, defined as the work conjugate to D_vM:
-        !> \f$ \sigma_{eq} = (\mathbf{S} \cdot \mathbf{D}) / D_{vM} \f$
-        real(dp)                    :: equivalent_stress = 0.D0
-        !> Macroscopic (homogenized) effective von Mises stress
-        real(dp)                    :: effective_stress = 0.D0
-        !> Macroscopic (homogenized) plastic slip
-        real(dp)                    :: homogenised_slip = 0.D0
-        !> Macroscopic (homogenized) plastic slip - total over the calls
-        real(dp)                    :: homogenised_slip_tot = 0.D0
-        !> Macroscopic (imposed) effective von Mises strain - total over the steps
-        real(dp)                    :: effective_macro_strain = 0.D0
-        !> Macroscopic (imposed) effective von Mises strain - total over the calls
-        real(dp)                    :: effective_macro_strain_tot = 0.D0
-        !> Macroscopic (imposed) effective von Mises strain till the end of the current step - total over the calls
-        real(dp)                    :: effective_macro_strain_tot_end = 0.D0
+        real(dp)                    :: taylor_factor = 0.D0             !< Macroscopic (homogenized) Taylor factor
+        real(dp)                    :: strain_rate_heterogeneity = 0.D0 !< Strain Rate Heterogeneity in polycrystal.
+                                                                        ! \f$ \kappa = (||d-D||) / ||D|| \f$
+        real(dp)                    :: equivalent_stress = 0.D0         !< Macroscopic stress, defined as the work conjugate to D_vM:
+                                                                        ! \f$ \sigma_{eq} = (\mathbf{S} \cdot \mathbf{D}) / D_{vM} \f$
+        real(dp)                    :: effective_stress = 0.D0          !< Macroscopic (homogenized) effective von Mises stress
+        real(dp)                    :: homogenised_slip = 0.D0          !< Macroscopic (homogenized) plastic slip
+        real(dp)                    :: homogenised_slip_tot = 0.D0      !< Macroscopic (homogenized) plastic slip - total over the calls
+        real(dp)                    :: effective_macro_strain = 0.D0    !< Macroscopic (imposed) effective von Mises strain - total over the steps
+        real(dp)                    :: effective_macro_strain_tot = 0.D0 !< Macroscopic (imposed) effective von Mises strain - total over the calls
+        real(dp)                    :: effective_macro_strain_tot_end = 0.D0 !< Macroscopic (imposed) effective von Mises strain till the end of the current step - total over the calls
     end type
 
     !> type that subsumes step input and output data
@@ -89,72 +74,46 @@ module altayConfig
     end type
 
     type :: outputConfig
-        !> (SIMUL) NLIST (Make an output listing 0 or 1)
-        integer                                   :: nlist = 0
-        !> (SIMUL) NFILE (Make output files 0 or 1) (CUR output)
-        integer                                   :: nfile = 0
-        !> (SIMUL) NFILTW (Make output files 0 or 1)
-        integer                                   :: nfiltw = 0
-        !> (SIMUL) IPR  0-3 Print switch
-        integer                                   :: ipr = 0
-        !> (SIMUL) NRES (Make output for stresses with per-grain resolution)
-        integer                                   :: nres = 0
-        !> (SIMUL) NPEBP (Make state variable file for DSH model)
-        integer                                   :: npebp = 0
-        !> (SIMUL) NMSS (output of macroscopic homogenized strain-stress)
-        integer                                   :: nmss = 0
+        integer                                   :: nlist = 0 !< (SIMUL) NLIST (Make an output listing 0 or 1)
+        integer                                   :: nfile = 0 !< (SIMUL) NFILTW (Make output files 0 or 1)
+        integer                                   :: nfiltw = 0!< (SIMUL) IPR  0-3 Print switch
+        integer                                   :: ipr = 0   !< (SIMUL) NFILE (Make output files 0 or 1) (CUR output)
+        integer                                   :: nres = 0  !< (SIMUL) NRES (Make output for stresses with per-grain resolution)
+        integer                                   :: npebp = 0 !< (SIMUL) NPEBP (Make state variable file for DSH model)
+        integer                                   :: nmss = 0  !< (SIMUL) NMSS (output of macroscopic homogenized strain-stress)
         logical                                   :: use_curfile = .false.
         logical                                   :: use_cubfile = .false.
     end type
-    
+
     !> PEBP model parameters (no state variables)
     type :: PEBPConfig
-        !> contains BP parameters, saturation and lower bounds for dislocation densities (defined in altayHardLawDSH.f90)
-        type(PAR)                     :: params
-        !> Flag that decides if state variables should be read from file.
-        logical                       :: read_state = .false.
-        !> Name of file that contains state variables
-        character(len=fname_len)      :: input_fname = ''
-        !> Number of blocks to be skipped while reading the input file
-        integer                       :: block_id = 0
+        type(PAR)                     :: params                !< contains BP parameters, saturation and lower bounds for dislocation densities (defined in altayHardLawDSH.f90)
+        logical                       :: read_state = .false.  !< Flag that decides if state variables should be read from file.
+        character(len=fname_len)      :: input_fname = ''      !< Name of file that contains state variables
+        integer                       :: block_id = 0          !< Number of blocks to be skipped while reading the input file
     end type
 
     !> Parameters of available hardening models.
     type :: hardeningData
         !> Selector of the model for hardening of slipsystems.
-        !>
         !> Acceptable values depend on availability of CRSS (aka TAUC) hardening models
         !> that are implemented in the code.
         !> See module altayHard for details about available hardening laws.
-        !> \sa crss_ratios
-        integer                 :: HardLawID = hard_None
-        !> Initial values of CRSS ratios
-        type(CRSS)              :: crss_ratios
-        !> Parameters of Voce hardening law.
-        type(VoceConfig)        :: VoceCnf
-        !> Parameters of Swift hardening law ('engineering-type')
-        type(SwiftKConfig)      :: SwiftKCnf
-        !> Parameters of Swift hardening law ('scientific-type')
-        type(SwiftSConfig)      :: SwiftSCnf
-        !> Parameters of Dislocation Substructural Hardening models (PEBP variants)
-        type(PEBPConfig)        :: PEBPCnf
+        integer                 :: HardLawID = hard_None !< \sa crss_ratios
+        type(CRSS)              :: crss_ratios           !< Initial values of CRSS ratios
+        type(VoceConfig)        :: VoceCnf               !< Parameters of Voce hardening law.
+        type(SwiftKConfig)      :: SwiftKCnf             !< Parameters of Swift hardening law ('engineering-type')
+        type(SwiftSConfig)      :: SwiftSCnf             !< Parameters of Swift hardening law ('scientific-type')
+        type(PEBPConfig)        :: PEBPCnf               !< Parameters of Dislocation Substructural Hardening models (PEBP variants)
     end type
 
     type :: simulData
         !> Model selection. At the same time it controls number of grains in the cluster.
-        !>
         !> Possible values are:
         !>   - 1 - FC Taylor
         !>   - 2 - Alamel
-        !>   - 3 - MAS-AL
-        integer                                   :: NGR = 2 ! Number of grains in the cluster
-        !> It is relevant only in MAS-AL
-        real(dp)                          :: ENTA = 1.D0
-        real(dp), dimension(3,3)          :: FMicro = reshape(       &
-                                                        [ 1.D0, 0.D0, 0.D0,  &
-                                                          0.D0, 1.D0, 0.D0,  &
-                                                          0.D0, 0.D0, 1.D0], &
-                                                        [ 3, 3 ])
+        integer                   :: NGR = 2 ! Number of grains in the cluster
+        real(dp), dimension(3,3) :: FMicro = unitMatrix
     end type
 
     !> Root-level configuration structure of Altay
@@ -163,30 +122,23 @@ module altayConfig
         character(len=fname_len)                  :: output_prefix = 'alamel'
         character(len=fname_len)                  :: jobtitle      = 'alamel'
         character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
-        !> slip systems file name
-        type(slipSystemData)                      :: slipsystem 
-        !> output file prefix, incremental output request flag, verbosity level
-        type(outputConfig)                        :: output_config 
-        !> hardening model parameters
-        type(hardeningData)                       :: hardening 
+        type(slipSystemData)                      :: slipsystem    !< slip systems file name
+        type(outputConfig)                        :: output_config !< output file prefix, incremental output request flag, verbosity level
+        type(hardeningData)                       :: hardening     !< hardening model parameters
         type(textureData)                         :: texture
         type(simulData)                           :: simul_init
     end type
 
-
     type :: altayStateData
         real(dp)                                :: eps = 0.D0
-        !> Corresponds to NBLOC config data
-        integer                                         :: nSimulCalls = 0           
+        integer                                         :: nSimulCalls = 0 !< Corresponds to NBLOC config data
         type(simulStepData),dimension(:),allocatable    :: simulCalls
-        !> Iterator over simulCalls
-        integer                                         :: this = 0
+        integer                                         :: this = 0        !< Iterator over simulCalls
     end type
 
-
     ! Definition of the singleton objects
-    type(altayConfigData), save :: acnf
-    type(altayStateData), save  :: astate
+    type(altayConfigData) :: acnf
+    type(altayStateData)  :: astate
 
 
 contains
@@ -196,7 +148,7 @@ contains
         type(simulStepInputData),intent(inout)    :: stp
         integer,intent(in)                        :: modelId
         integer,intent(out)                       :: info
-        
+
         info = 0
         select case(modelId)
         case(modelFCTaylor)
@@ -215,7 +167,7 @@ contains
         type(altayConfigData),intent(inout)       :: cnf
         integer,intent(in)                        :: modelId
         integer,intent(out)                       :: info
-        
+
         select case(modelId)
             case(modelFCTaylor)
                 cnf%simul_init%ngr = 1

@@ -2,23 +2,20 @@ include 'lapack.f90'
 
 module altayAlgorithms
     use altayMiscutils, only: terminate, stopcode_runtimeerror
-    use altay_definitions, only: dp
+    use altay_definitions
     use criMathUtils
     use altay_log
 
     implicit none
-
-    real(dp), parameter     :: SQRT_P5 = sqrt(0.5d0)
-    real(dp), parameter     :: RESOLUTION = 0.5e-5
+    private
+    real(dp), parameter     :: SQRT_P5 = sqrt(0.5_dp)
     character(*), parameter :: MODULE_NAME = "altayAlgorithms"
 
-    private
     public  ::  updatC,             &
                 symMatrix,          &
                 vector5D,           &
                 transf,             &
-                deg2rad,            &
-                rotmat,             &
+                rotmat, &
                 rotateSRTensorFrom, &
                 kleinKwa,           &
                 getang
@@ -26,9 +23,8 @@ module altayAlgorithms
 contains
 
     !> Updating of CIJ matrix of ellipsoid
-    !> Finv is the inverse of the F-tensor which describes the strain increment.
     subroutine updatC(CIJ, Finv)
-        real(dp), dimension(3,3), intent(in)    :: Finv
+        real(dp), dimension(3,3), intent(in)    :: Finv !< Inverse of the F-tensor which describes the strain increment.
         real(dp), dimension(3,3), intent(inout) :: CIJ
 
         CIJ = matmul(matmul(transpose(Finv), CIJ), Finv)
@@ -39,8 +35,9 @@ contains
     function SymMatrix(vec) result(sym)
         real(dp), dimension(5), intent(in)  ::  vec
         real(dp), dimension(3,3)            ::  sym
-        real(dp), parameter                 ::  C1 = (sqrt(3.0d0) + 3.0d0) / 6.0d0, &
-                                                C2 = (3.0d0 - sqrt(3.0d0)) / 6.0d0
+        real(dp), parameter                 ::  C1 = (sqrt(3.0_dp) + 3.0_dp) / 6.0_dp, &
+                                                C2 = (3.0_dp - sqrt(3.0_dp)) / 6.0_dp
+
 
         sym(2,2) =  C1 * vec(1) - C2 * vec(2)
         sym(3,3) = -C2 * vec(1) + C1 * vec(2)
@@ -60,8 +57,8 @@ contains
     function vector5D(mat) result(vec)
         real(dp), dimension(3,3), intent(in) :: mat
         real(dp), dimension(5)               :: vec
-        real(dp), parameter                  :: C1 = 0.5d0 * (sqrt(3.0d0) + 1.0d0), &
-                                                C2 = C1 - 1.0d0
+        real(dp), parameter                  :: C1 = 0.5_dp * (sqrt(3.0_dp) + 1.0_dp), &
+                                                C2 = C1 - 1.0_dp
 
         vec(1) = C1 * mat(2,2) + C2 * mat(3,3)
         vec(2) = C2 * mat(2,2) + C1 * mat(3,3)
@@ -72,28 +69,15 @@ contains
 
     !Calculate the CIJ matrix of an ellipsoid with half axes stored in Gaxes. T defines the orientation of the axes.
     !This version assumes that A is a diagonal matrix
-    Subroutine transf(Gaxes, Aprime, T)
-        real(dp), dimension(3), intent(in)      :: Gaxes
-        real(dp), dimension(3,3), intent(inout) :: Aprime
-        real(dp), dimension(3,3), intent(in)    :: T
-        integer                                 :: i, j, k
-        real(dp)                                :: y
-        real(dp), dimension(3)                  :: A
-        real(dp), dimension(3,3)                :: X
-
-        A = 1.D0 / Gaxes ** 2
-
-        do j = 1,3
-            X(:,j) = t(:,j) * A
-        end do
+    subroutine transf(Gaxes, Aprime, T)
+        real(dp), dimension(3), intent(in)    :: Gaxes
+        real(dp), dimension(3,3), intent(out) :: Aprime
+        real(dp), dimension(3,3), intent(in)  :: T
+        integer                               :: i, j
 
         do i = 1, 3
             do j = 1, 3
-                y = 0.0
-                do k = 1,3
-                    y = y + T(k,i) * X(k,j)
-                end do
-                Aprime(i, j) = y
+                Aprime(i, j) = sum(T(1:3,i)*t(1:3,j)/Gaxes**2)
             end do
         end do
     end subroutine
@@ -101,16 +85,15 @@ contains
     !find half-lengths of ellipsoid axes from CIJ matrix
     !store them in prval
     !find Euler angles of these axes, store in GEULR
-    Subroutine GETANG(CIJ, prval, GEULR, TMAT)
+    subroutine GETANG(CIJ, prval, GEULR, TMAT)
         real(dp), dimension(3,3), intent(in)    :: CIJ
-        real(dp), dimension(3),   intent(inout) :: GEULR, prval
-        real(dp), dimension(3,3), intent(inout) :: TMAT
+        real(dp), dimension(3),   intent(out) :: GEULR, prval
+        real(dp), dimension(3,3), intent(out) :: TMAT
         integer                                 :: i
-        real(dp)                                :: CIJTR, enrm
+        real(dp)                                :: CIJTR
         real(dp), dimension(3,3)                :: e
-        type(EulerAngles)                       :: CEuler
 
-        CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3.D0
+        CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3._dp
         e = CIJ
         do i = 1, 3
             e(i,i) = e(i,i) - CIJTR
@@ -120,17 +103,16 @@ contains
 
         prval = prval + CIJTR
 
-        prval = 1.D0 / sqrt(prval)
+        prval = 1._dp / sqrt(prval)
         TMAT = e
-        CEuler = EuleranglesType(TMAT)
-        GEULR = EulerAngles2Arr(CEuler)
+        GEULR = EulerAngles2Arr(EuleranglesType(TMAT))
     end subroutine
 
     subroutine eigenv(e, prval)
         real(dp), dimension(3,3), intent(inout) :: e
         real(dp), dimension(3), intent(out)     :: prval
-        integer                                         :: i, info
-        integer, dimension(18)                          :: iwork
+        integer                                 :: i, info
+        integer, dimension(18)                  :: iwork
         real(dp), dimension(37)                 :: work
 
         call dsyevd('V', 'U', 3, e, 3, prval, work, 37, iwork, 18, info)
@@ -145,6 +127,7 @@ contains
     subroutine normaliz(prdir)
         real(dp), dimension(3), intent(inout)   :: prdir
         real(dp)                                :: x
+        real(dp), parameter     :: RESOLUTION = 0.5e-5
 
         x = norm2(prdir)
         if (x > RESOLUTION) then
@@ -152,36 +135,6 @@ contains
             call vef_trace(MODULE_NAME, 'normaliz', prdir)
         end if
 
-    end subroutine
-
-    !>should find the roots of an equation
-    !>x**3 - A x + B = 0
-    !>The roots are suppposed to be real.
-    subroutine canoni(a, b, X, theta)
-        real(dp), intent(in)                :: a, b
-        real(dp), intent(out)               :: theta
-        real(dp), dimension(3), intent(out) :: X
-        real(dp)                            :: roota, delta
-
-        if (a >= 0.5e-11 ) then
-            roota = sqrt(a**3 / 27.0)
-            delta = 0.5 * b / roota
-            if (abs(delta) < (1.0 + 1.0D-6)) then
-                if (delta > 1.0) delta = 1.0
-                if (delta < -1.0) delta = -1.0
-
-                theta = acos(delta)
-                delta = -2.0 * sqrt(a / 3.0)
-
-                X(1) = delta * cos(theta / 3.0)
-                X(2) = delta * cos((theta + 2.0 * PI) / 3.0)
-                X(3) = delta * cos((theta + 4.0 * PI) / 3.0)
-
-                call vef_trace(MODULE_NAME, 'canoni', X)
-                return
-            end if
-        end if
-        call vef_exception(MODULE_NAME, 'canoni', VEF_BADVAL, 'Two roots seem to be complex')
     end subroutine
 
     !>N1=number of equations
@@ -192,12 +145,12 @@ contains
     !>RES=residu (sum of squares)
     !>M1,M2=dimensions
     subroutine kleinkwa(N1, N2, M1, M2, A, B, BA, res)
+        integer,                    intent(in)                                  :: M1, M2, N1, N2
         real(dp), dimension(M2),    intent(in)                                  :: B
         real(dp), dimension(M1,M2), intent(in)                                  :: A
-        real(dp), dimension(M2),    intent(inout)                               :: BA
+        real(dp), dimension(M2),    intent(out)                                 :: BA
         real(dp),                   intent(inout)                               :: res
-        integer,                    intent(in)                                  :: M1, M2, N1, N2
-        integer                                                                 :: i, j, rank, info
+        integer                                                                 :: i, rank, info
         integer, dimension(N2)                                                  :: jpvt
         real(dp)                                                                :: y
         real(dp), dimension(max(min(N1,N2) + 3 * N2 + 1, 2 * min(N1,N2) + 1))   :: work
@@ -211,10 +164,7 @@ contains
 
         res = 0.0
         do i=1,N1
-            y = 0.0
-            do j=1,N2
-                y = y + A(i,j) * BA(j)
-            end do
+            y = sum(A(i,1:N2)*BA(1:N2))
             RES = RES + (y - B(i))**2
         end do
 
