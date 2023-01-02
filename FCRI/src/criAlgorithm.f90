@@ -1,46 +1,80 @@
-!
 !> Various algorithms
 module criAlgorithm
-implicit none
+    implicit none
 
-      !> tostring function converts from an intrisic data type into character string.
-      interface tostring
-          module procedure tostring_int, tostring_real, tostring_double
-      end interface
+    !> tostring function converts from an intrisic data type into character string.
+    interface tostring
+        module procedure tostring_int, tostring_real, tostring_double
+    end interface
 
-      !> centered function centers a character string.
-      interface centered
-          module procedure  centered_int, centered_string
-      end interface
+    !> centered function centers a character string.
+    interface centered
+        module procedure  centered_int, centered_string
+    end interface
 
-      !> Find the first element in array not before val, using operator <
-      interface lower_bound
-          module procedure lower_bound_int, lower_bound_double
-      end interface
+    !> Find the first element in array not before val, using operator <
+    interface lower_bound
+        module procedure lower_bound_int, lower_bound_double
+    end interface
 
 
-      !> Test the presence of optional value, and return a default if the optional
-      !> is not present.
-      !>
-      !> The function provides a simplified access pattern to optional parameters.
-      !> The first formal argument is declared as optional parameter, butit must always
-      !> appear as the actual parameter in a context where the actual parameter is
-      !> declared itself as "optional".
-      interface optionalDefault
-          module procedure optionalDefault_logical, optionalDefault_integer
-      end interface
+    !> Test the presence of optional value, and return a default if the optional
+    !> is not present.
+    !>
+    !> The function provides a simplified access pattern to optional parameters.
+    !> The first formal argument is declared as optional parameter, butit must always
+    !> appear as the actual parameter in a context where the actual parameter is
+    !> declared itself as "optional".
+    interface optionalDefault
+        module procedure optionalDefault_logical, optionalDefault_integer
+    end interface
 
 contains
-      ! Instantiate parametrized functions
-      !
-#define _TYPE_NAME integer
-#define _LOWER_BOUND_FX_NAME lower_bound_int
-#include "criAlgorithmTemplates.fpp"
+      integer pure function lower_bound_int(array,val) result(res)
+          integer,dimension(:),intent(in)     :: array
+          integer,intent(in)                  :: val
 
+          integer :: first,dist,cnt,mid
 
-#define _TYPE_NAME double precision
-#define _LOWER_BOUND_FX_NAME lower_bound_double
-#include "criAlgorithmTemplates.fpp"
+          first = lbound(array,dim=1)
+          dist = ubound(array,dim=1)     ! full range: [first:first+dist-1]
+
+          do while (dist > 0)
+              cnt = dist / 2
+              mid = first + cnt
+              if (array(mid) < val) then
+                  first = mid + 1
+                  dist = dist - (cnt + 1)
+              else
+                  dist = cnt
+              endif
+          enddo
+          res = first
+
+      end function
+
+      integer pure function lower_bound_double(array,val) result(res)
+          double precision,dimension(:),intent(in)     :: array
+          double precision,intent(in)                  :: val
+
+          integer :: first,dist,cnt,mid
+
+          first = lbound(array,dim=1)
+          dist = ubound(array,dim=1)     ! full range: [first:first+dist-1]
+
+          do while (dist > 0)
+              cnt = dist / 2
+              mid = first + cnt
+              if (array(mid) < val) then
+                  first = mid + 1
+                  dist = dist - (cnt + 1)
+              else
+                  dist = cnt
+              endif
+          enddo
+          res = first
+
+      end function
 
       !> Check if the string value val is present in the list of strings.
       logical function isPresent(val, list,index)
