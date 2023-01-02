@@ -1,41 +1,26 @@
-!
 !> Elementary math constants and functions
 !>
 !> The module provides a set of typical mathematical constants
 !> that are frequently used in various subroutunes in the library.
 !> It also provides some simple functions, e.g. conversions.
 module criMathUtils
-implicit none
+
+      implicit none
 
       !>@{ \name Math constants
 
-      !> Pi \f$ \pi \f$
-      double precision, parameter         :: pi  = acos(-1.D0) !
-
-      !> Pi / 2
-      double precision, parameter         :: pi2 = acos(0.D0) !
-
+      double precision, parameter         :: pi  = acos(-1.D0) !< Pi \f$ \pi \f$
+      double precision, parameter         :: pi2 = acos(0.D0)  !< Pi / 2
       double precision, parameter         :: pi_deg = pi / 180.D0
-
       double precision, parameter         :: deg_pi = 180.D0 / pi
 
-      !> Square root of 2 \f$ \sqrt{2} \f$
-      double precision, parameter         :: root2 = sqrt(2.D0)
+      double precision, parameter         :: root2 = sqrt(2.D0) !< Square root of 2 \f$ \sqrt{2} \f$
+      double precision, parameter         :: root2i = 0.5D0 * sqrt(2.D0) !< Inverse of square root of 2 \f$ \frac{1}{\sqrt{2}} \f$
+      double precision, parameter         :: root23 = sqrt(2.D0/3.D0) !< Square root of 2/3 \f$ \sqrt{2/3} \f$
+      double precision, parameter         :: root32 = sqrt(3.D0/2.D0) !< Square root of 3/2 \f$ \sqrt{3/2} \f$
 
-      !> Inverse of square root of 2 \f$ \frac{1}{\sqrt{2}} \f$
-      double precision, parameter         :: root2i = 0.5D0 * sqrt(2.D0)
-
-      !> Square root of 2/3 \f$ \sqrt{2/3} \f$
-      double precision, parameter         :: root23 = sqrt(2.D0/3.D0)
-
-      !> Square root of 3/2 \f$ \sqrt{3/2} \f$
-      double precision, parameter         :: root32 = sqrt(3.D0/2.D0)
-
-      !> Array dimension for second-rank tensors (sr_tensor_dim x sr_tensor_dim)
-      integer,parameter                   :: sr_tensor_dim = 3
-
-      !> Array dimension for 3D rotation matrix (rot_matrix_dim x rot_matrix_dim)
-      integer,parameter                   :: rot_matrix_dim = 3
+      integer,parameter                   :: sr_tensor_dim = 3 !< Array dimension for second-rank tensors (sr_tensor_dim x sr_tensor_dim)
+      integer,parameter                   :: rot_matrix_dim = 3 !< Array dimension for 3D rotation matrix (rot_matrix_dim x rot_matrix_dim)
 
       !> Array dimension for symmetric 3D second-rank tensors expressed in Voigt
       !> notation.
