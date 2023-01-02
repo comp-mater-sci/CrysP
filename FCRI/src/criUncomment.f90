@@ -17,9 +17,9 @@ implicit none
       !> \param[in] frmt  The format to be used in the read operation (type: character(len=*),optional)
       interface readValue
 
-            module procedure read_integer,   read_vector_integer, &
-                             read_logical,   read_vector_logical, &
-                             read_string,    read_vector_string,  &
+            module procedure read_integer,   &
+                             read_logical,   &
+                             read_string,    &
                              read_double,    read_vector_double
 
       end interface
@@ -92,12 +92,6 @@ contains
 #undef TMPL_UNCOMMENT_FX
 #undef TMPL_UNCOMMENT_TYPE
 !
-#define TMPL_UNCOMMENT_FX read_vector_integer
-#define TMPL_UNCOMMENT_TYPE integer,dimension(:)
-#include "criUncommentTemplates.fpp"
-#undef TMPL_UNCOMMENT_FX
-#undef TMPL_UNCOMMENT_TYPE
-!
 ! Instantization of template for logical
 !
 #define TMPL_UNCOMMENT_FX read_logical
@@ -106,22 +100,10 @@ contains
 #undef TMPL_UNCOMMENT_FX
 #undef TMPL_UNCOMMENT_TYPE
 !
-#define TMPL_UNCOMMENT_FX read_vector_logical
-#define TMPL_UNCOMMENT_TYPE logical,dimension(:)
-#include "criUncommentTemplates.fpp"
-#undef TMPL_UNCOMMENT_FX
-#undef TMPL_UNCOMMENT_TYPE
-!
 ! Instantization of template for string
 !
 #define TMPL_UNCOMMENT_FX read_string
 #define TMPL_UNCOMMENT_TYPE character(len=*)
-#include "criUncommentTemplates.fpp"
-#undef TMPL_UNCOMMENT_FX
-#undef TMPL_UNCOMMENT_TYPE
-!
-#define TMPL_UNCOMMENT_FX read_vector_string
-#define TMPL_UNCOMMENT_TYPE character(len=*),dimension(:)
 #include "criUncommentTemplates.fpp"
 #undef TMPL_UNCOMMENT_FX
 #undef TMPL_UNCOMMENT_TYPE
