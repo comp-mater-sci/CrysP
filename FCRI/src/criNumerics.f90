@@ -162,10 +162,11 @@ contains
         ! this%yi later on, but the 'out-of-bounds' check must be done in a safe
         ! way, i.e. this%xi must be allocated and this%xi(1) must be a valid
         ! element in the array.
-        ALLOCATED_SIZE(last, this%xi)
-        if (last < 1) then
+        if (.not. allocated(this%xi)) then
             res = 0.D0
             return
+        else
+            last = size(this%xi)
         endif
         out_bounds = [x < this%xi(1), x > this%xi(last)]
         ! Check if we fall inside the range
