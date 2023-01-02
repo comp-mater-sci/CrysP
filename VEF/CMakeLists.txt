@@ -17,10 +17,6 @@ set(altay_DIR "../AlTay/${CMAKE_BUILD_TYPE}")
 find_package(altay REQUIRED)
 include_directories(${altay_INCLUDE_DIR})
 
-set(fopt_DIR "../fopt/${CMAKE_BUILD_TYPE}")
-find_package(fopt REQUIRED)
-include_directories(${fopt_INCLUDE_DIR})
-
 add_subdirectory(alamDMC)
 add_subdirectory(libAlamDMC) 
 add_subdirectory(libAlamYLP)

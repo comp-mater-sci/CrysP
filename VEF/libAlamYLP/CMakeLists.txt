@@ -9,13 +9,14 @@ list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
 list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
 set(alamYLP_SRCS
+nlls_tr.f90
 alamYLP.f90 
 alamEval.f90
 alamYLPConstants.f90
 )
 
 add_library(alamYLP STATIC ${alamYLP_SRCS})
-target_link_libraries(alamYLP PUBLIC CRI fopt)
+target_link_libraries(alamYLP PUBLIC CRI)
 
 install(TARGETS alamYLP DESTINATION "lib")
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")
