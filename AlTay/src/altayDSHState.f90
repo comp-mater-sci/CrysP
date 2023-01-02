@@ -3,7 +3,7 @@ use altayHardLaw_DSH
 use altayHardTypes
 implicit none
 
-      type(StatVar),allocatable,dimension(:),private,save    :: KS_state ! array of state variables
+      type(StatVar),allocatable,dimension(:),private    :: KS_state ! array of state variables
 
       interface KS_readState
             module procedure KS_readState_unit, KS_readState_file

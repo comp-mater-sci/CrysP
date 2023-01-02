@@ -1,17 +1,20 @@
 #Test bench for VEF software
 #Runs a large number of configurations using a dummy data set and compares the hashes of the output data to predetermined hash values.
-#USAGE: Run 'pytest' in the 'test' directory of the project. The tests are parametrized over mode, algorithm and slip system. If you want to run e.g. only the tests pertaining to ADP, run "pytest -k ADP"
+#USAGE: Run 'pytest' in the 'test' directory of the project.
+#       The tests are parametrized over mode, algorithm and slip system.
 #REQUIRES: Python, pytest
 
 import os
 import hashlib
 import shutil
 import re
-import pandas as pd
 from pathlib import Path
 import itertools
+import subprocess
 
 import pytest
+import pandas as pd
+import numpy as np
 
 #File extension for the output of each execution mode. May be removed when we get rid of the file-based I/O for the simulations.
 EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'UDSA':'uds','YLD':'xyld'}
@@ -23,8 +26,14 @@ TEST_DATA = TEST_ROOT/'run'
 MODES = ['ADP', 'ASR', 'EWC','QRS','UDSA','YLD']
 ALGORITHMS = ['ALAMEL', 'FCTaylor']
 SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
-HARDENING_MODELS = ['NONE', 'VOCE', 'SWIFT_S', 'SWIFT_K', 'BP_LINE', 'BP_SCREW', 'BP_LOOP']
-HARDENING_MODEL_SETTINGS = {'NONE':'0', 'VOCE':'1\n12.39 15 20 0.2 0.1', 'SWIFT_K':'2\n65.0 1.e-3 0.24', 'SWIFT_S':'3\n12.39 1.e-3 0.24', 'BP_LINE':'11\nDSHparaset.txt\nFalse', 'BP_SCREW':'12\nDSHparaset.txt\nFalse', 'BP_LOOP':'13\nDSHparaset.txt\nFalse'}
+HARDENING_MODEL_SETTINGS = {'NONE':'0',
+                            'VOCE':'1\n12.39 15 20 0.2 0.1',
+                            'SWIFT_K':'2\n65.0 1.e-3 0.24',
+                            'SWIFT_S':'3\n12.39 1.e-3 0.24',
+                            'BP_LINE':'11\nDSHparaset.txt\nFalse',
+                            'BP_SCREW':'12\nDSHparaset.txt\nFalse',
+                            'BP_LOOP':'13\nDSHparaset.txt\nFalse'}
+HARDENING_MODELS = list(HARDENING_MODEL_SETTINGS.keys())
 
 #Unit tests
 UNITS = [('altayAlgorithms','eigenv'),      \
@@ -52,11 +61,11 @@ def setup_benchmark(mode, algorithm, slip_system, hardening_model):
         conf_file.write(HARDENING_MODEL_SETTINGS[hardening_model] + '\n')
         conf_file.write('True\n')
         conf_file.write(mode_specific_conf_file.read())
-        
+
     try:
         os.remove(TEST_DATA/'out.rtdb')
         os.remove(TEST_DATA/'out.CUR')
-    except: FileNotFoundError 
+    except: FileNotFoundError
     if (mode == 'YLD' or mode == 'QRS'):
         shutil.copy(TEST_ROOT/'data/in/texture_yld.smt', TEST_DATA/'texture.smt')
     else:
@@ -72,12 +81,17 @@ def setup_benchmark(mode, algorithm, slip_system, hardening_model):
 
 
 #Execute simulations themselves. Implemented as a dedicated function to simplify test adjustments when transitioning to a different software architecture.
-def generate_output(request, mode, algorithm='ALAMEL', slip_system='bcc24', hardening_model='NONE'):
+def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', hardening_model='NONE'):
     setup_benchmark(mode, algorithm, slip_system, hardening_model)
 
     if not (mode, algorithm, slip_system, hardening_model) in GENERATED_DATA:
         os.chdir(TEST_DATA)
-        os.system(TEST_ROOT/f'../VEF/release/bin/alamDMC {mode} test.cfg > alamDMC.log 2>&1')
+
+        result = subprocess.run([TEST_ROOT/f'../VEF/release/bin/alamDMC',mode,'test.cfg'],
+                                stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        assert result.returncode == 0
+        with open('alamDMC.log','w') as f:
+            f.write(result.stdout.decode())
 
         if mode == 'UDSA':
             with open('out.uds', 'w') as out:
@@ -92,16 +106,9 @@ def generate_output(request, mode, algorithm='ALAMEL', slip_system='bcc24', hard
         shutil.move(TEST_DATA/'alamDMC.log', log_path)
         GENERATED_DATA.append((mode, algorithm, slip_system, hardening_model))
         ref_path = TEST_ROOT/'data/out/'
-        match request.config.getoption('--update'):
-            case 'log':
-                shutil.copy(log_path, ref_path)
-            case 'out':
-                shutil.copy(out_path, ref_path)
-            case 'FALSE':
-                pass
-            case _: 
-                shutil.copy(log_path, ref_path)
-                shutil.copy(out_path, ref_path)
+        ref_path.mkdir(parents=True, exist_ok=True)
+        if 'log' in update: shutil.copy(log_path, ref_path)
+        if 'out' in update: shutil.copy(out_path, ref_path)
 
 def process_file(path):
     df = pd.read_csv(path,delimiter=' +', engine='python')
@@ -123,8 +130,8 @@ tests = list(tests_basic) + list(tests_bp)
 #Generate and execute the different test cases.
 @pytest.mark.integration
 @pytest.mark.parametrize('mode,algorithm,slip_system,hardening_model', tests)
-def test_vef(mode, algorithm, slip_system, hardening_model, request):
-    generate_output(request, mode, algorithm, slip_system, hardening_model)
+def test_vef(mode, algorithm, slip_system, hardening_model, update):
+    generate_output(update, mode, algorithm, slip_system, hardening_model)
 
     filename =  f'{mode}_{algorithm}_{slip_system}_{hardening_model}.out'
     ref = process_file(TEST_ROOT/'data/out'/filename)
@@ -139,17 +146,14 @@ def get_trace_values(path, module, function):
     with open(path) as log_file:
         for line in log_file:
             if header in line:
-                num = re.findall(r'-?[0-9]+\.?[0-9]+E?-?[0-9]* *$', line)[0]
-                formatted = num.split('E')
-                if (len(formatted) == 1 or int(formatted[1]) > -9) and not int(formatted[0]) == 0:
-                    vals.append((formatted[0]).replace('-','').replace('.','')[0:3])
-    return vals
-        
+                vals.append(line.split(':')[1])
+    return np.array(vals,dtype=float)
+
 @pytest.mark.unit
 @pytest.mark.parametrize('module,function,mode,algorithm,slip_system,hardening_model', [(a,b,c,d,e,f) for ((a,b),(c,d,e,f)) in itertools.product(UNITS, tests)])
-def test_unit(mode, algorithm, slip_system, hardening_model, module, function):
-    generate_output(request, mode, algorithm, slip_system, hardening_model)
+def test_unit(mode, algorithm, slip_system, hardening_model, module, function, update):
+    generate_output(update, mode, algorithm, slip_system, hardening_model)
     reference = get_trace_values(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
     data = get_trace_values(TEST_DATA/f'{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
-    assert data == reference
+    assert np.allclose(reference,data,rtol=1e-3,atol=1e-8)
 
