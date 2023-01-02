@@ -2,13 +2,8 @@
 
 !> Various numerical algorithms
 module criNumerics
-use criErrcodes
-implicit none
-
-    !> Calculate evenly spaced numbers over a specified interval
-    interface linspace
-        module procedure linspace_arr, linspace_dynarr
-    end interface
+    use criErrcodes
+    implicit none
 
     integer,parameter,private :: nbounds = 2, left_bound = 1, right_bound = 2
 
@@ -57,56 +52,6 @@ implicit none
 
 contains
 
-    !> Calculate evenly spaced numbers over a specified interval
-    !> and place them in dynamically allocated array.
-    pure subroutine linspace_dynarr(xstart, xend, n, array ,endpoint)
-    use criAlgorithm, only: optionalDefault
-    double precision,intent(in)             :: xstart !< Begin of the interval
-    double precision,intent(in)             :: xend !< End of the interval
-    integer,intent(in)                      :: n !< Number of values to be
-    !> Array to be filled in. The allocated size of the array will be either
-    !>  0 if n<1 or n otherwise.
-    double precision,dimension(:),allocatable,intent(out) :: array
-    !> Flag: set the endpoint to xend (default: .true.)
-    logical,intent(in),optional :: endpoint
-    !
-        allocate(array(max(0,n)))
-        call linspace_arr(xstart, xend, array ,endpoint)
-    !
-    end subroutine
-
-
-    !> Calculate evenly spaced numbers over a specified interval
-    pure subroutine linspace_arr(xstart, xend, array ,endpoint)
-    use criAlgorithm, only: optionalDefault
-    double precision,intent(in)             :: xstart !< Begin of the interval
-    double precision,intent(in)             :: xend !< End of the interval
-    !< Array to be filled in. Size of the array determines
-    !> the number of numbers to be generated.
-    double precision,dimension(:),intent(out):: array
-    !> Flag: set the endpoint to xend (default: .true.)
-    logical,intent(in),optional             :: endpoint
-    !
-    double precision :: xstep
-    integer :: npoints, nitervals, i
-    logical :: use_endpoint
-    !
-        npoints = size(array)
-        if (npoints == 0) return ! Nothing to do
-        !
-        nitervals = npoints
-        use_endpoint = optionalDefault(endpoint, .true.)
-        if (use_endpoint .and. (npoints > 1)) nitervals = npoints - 1
-        xstep = (xend - xstart) / dble(nitervals)
-        do i = 1, nitervals
-            array(i) = xstart + dble(i-1)*xstep
-        enddo
-        ! Make sure the endpoint is exactly the xend
-        if (use_endpoint .and. (npoints > 1)) array(npoints) = xend
-    !
-    end subroutine
-
-
     !> Initialize and set BarycentricInterpolator object
     subroutine BarycentricInterpolator_init(this, order, xi, yi, info)
     type(BarycentricInterpolator),intent(out)   :: this
@@ -134,26 +79,67 @@ contains
             call barycentric_weights(this%xi(i:i+order), this%wi(:,i), info)
         enddo
 
-    !
-    end subroutine
+    contains
 
-
-    !> Allocate internal structures of BarycentricInterpolator object
-    subroutine BarycentricInterpolator_init_allocate(this, order, npoints, info)
-    type(BarycentricInterpolator),intent(out)   :: this
-    integer,intent(in)  :: order
-    integer,intent(in)  :: npoints
-    integer,intent(out) :: info
-    !
-        info = criErr_BadArgs
-        if ((order < 1) .or. (npoints <= order)) return
+        !> Allocate internal structures of BarycentricInterpolator object
+        subroutine BarycentricInterpolator_init_allocate(this, order, npoints, info)
+        type(BarycentricInterpolator),intent(out)   :: this
+        integer,intent(in)  :: order
+        integer,intent(in)  :: npoints
+        integer,intent(out) :: info
         !
-        this%npoints = npoints
-        this%order = order
-        allocate(this%xi(npoints), this%yi(npoints))
-        allocate(this%wi(order+1, npoints - order))
-        info = criSuccess
-    !
+            info = criErr_BadArgs
+            if ((order < 1) .or. (npoints <= order)) return
+            !
+            this%npoints = npoints
+            this%order = order
+            allocate(this%xi(npoints), this%yi(npoints))
+            allocate(this%wi(order+1, npoints - order))
+            info = criSuccess
+        !
+        end subroutine
+
+        !> Compute barycentric weights of interpolation points
+        !>
+        !> [1] J-P Berrut and L.N. Trefethen, Barycentric Lagrange Interpolation, SIAM Rev.
+        !>     46(3), 501\96517. DOI:10.1137/S0036144502417715
+        pure subroutine barycentric_weights(xi, wi, info)
+        double precision,dimension(0:),intent(in)   :: xi
+        double precision,dimension(0:),intent(out)  :: wi
+        integer,intent(out)                         :: info
+        !
+        integer :: j,k, n
+        ! double precision,dimension(0:ubound(xi,dim=1)) :: xdiff
+        !
+            info = criErr_BadDims
+            n = ubound(xi,dim=1)
+            if (n /= ubound(wi,dim=1)) return
+            !
+            ! Follow (3.2) in [1]
+            do j = 0, n
+                wi(j) = 1.0
+                ! \prod_{k \ne j} (x_j - x_k)
+                do k = 0, n
+                    if (j /= k) wi(j) = wi(j) * (xi(j) - xi(k))
+                enddo
+            enddo
+            wi = 1.D0 / wi
+            info = criSuccess
+
+            ! A better alternative: follow the algorithm given in [1]
+            ! Deplorably, the code below is buggy...
+            !wi(0) = 1.D0
+            !xdiff = 0.D0
+            !do j = 1, n
+            !    xdiff(:j) = xi(j)-xi(:j)
+            !    wi(:j-1) = wi(:j-1) * xdiff(:j-1)
+            !    wi(j) = product(-xdiff(:j))
+            !enddo
+            ! wi = 1.D0 / wi
+            info = criSuccess
+        !
+        end subroutine
+
     end subroutine
 
 
@@ -227,49 +213,5 @@ contains
         p = dot_product(xterms, yi) / sum(xterms)
     !
     end function
-
-
-    !> Compute barycentric weights of interpolation points
-    !>
-    !> [1] J-P Berrut and L.N. Trefethen, Barycentric Lagrange Interpolation, SIAM Rev.
-    !>     46(3), 501\96517. DOI:10.1137/S0036144502417715
-    pure subroutine barycentric_weights(xi, wi, info)
-    double precision,dimension(0:),intent(in)   :: xi
-    double precision,dimension(0:),intent(out)  :: wi
-    integer,intent(out)                         :: info
-    !
-    integer :: j,k, n
-    ! double precision,dimension(0:ubound(xi,dim=1)) :: xdiff
-    !
-        info = criErr_BadDims
-        n = ubound(xi,dim=1)
-        if (n /= ubound(wi,dim=1)) return
-        !
-        ! Follow (3.2) in [1]
-        do j = 0, n
-            wi(j) = 1.0
-            ! \prod_{k \ne j} (x_j - x_k)
-            do k = 0, n
-                if (j /= k) wi(j) = wi(j) * (xi(j) - xi(k))
-            enddo
-        enddo
-        wi = 1.D0 / wi
-        info = criSuccess
-
-        ! A better alternative: follow the algorithm given in [1]
-        ! Deplorably, the code below is buggy...
-        !wi(0) = 1.D0
-        !xdiff = 0.D0
-        !do j = 1, n
-        !    xdiff(:j) = xi(j)-xi(:j)
-        !    wi(:j-1) = wi(:j-1) * xdiff(:j-1)
-        !    wi(j) = product(-xdiff(:j))
-        !enddo
-        ! wi = 1.D0 / wi
-        info = criSuccess
-    !
-    end subroutine
-
-
 
 end module
