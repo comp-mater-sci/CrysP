@@ -23,7 +23,6 @@ criNumerics.f90
 criPath.f90
 criRange.f90
 criRuntime.f90
-criTest.f90
 criUncomment.f90
 )
 
