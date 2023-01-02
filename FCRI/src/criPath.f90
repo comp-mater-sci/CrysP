@@ -58,16 +58,6 @@ contains
       !
       end function
 
-      !> Returns the path without file exension (if there is any)
-      pure function stripExt(path)
-      character(len=*),intent(in)   :: path
-      character(len=len(path))      :: stripExt
-      !
-      character(len=len(path))   :: ext ! temporary
-      !
-            call splitExt(path, stripExt, ext)
-      !
-      end function
 
       !> Split the pathname path into a pair (root, ext).
       !>
@@ -120,18 +110,6 @@ contains
       end subroutine
 
 
-      !> Construct a filename by stitching together prefix and suffix.
-      !>
-      !> The leading whitespaces in the suffix are not preserved in the resulting string.
-      pure function  mkfilename(prefix,suffix)
-      character(len=*),intent(in)               :: prefix, suffix
-      character(len=len(prefix)+len(suffix))    :: mkfilename
-      !
-            mkfilename = trim(adjustl(prefix))//trim(adjustl(suffix))
-      !
-      end function
-
-
       !> Join two path components, inserting directory separator
       !> as needed.
       !>
@@ -168,7 +146,6 @@ contains
             path = trim(adjustl(path_a)) // trim(sep) // trim(adjustl(path_b))
       !
       end function
-
 
 end module
 
