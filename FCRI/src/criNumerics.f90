@@ -1,11 +1,7 @@
-#include "criMacros.fpp"
-
 !> Various numerical algorithms
 module criNumerics
     use criErrcodes
     implicit none
-
-    integer,parameter,private :: nbounds = 2, left_bound = 1, right_bound = 2
 
     !> Data needed by barycentric interpolation
     type :: BarycentricInterpolator
@@ -154,27 +150,25 @@ contains
     type(BarycentricInterpolator),intent(in)    :: this
     !> The point at which the interpolated function is evaluated
     double precision,intent(in)                 :: x
-    !
+
     integer :: i, j, last
-    logical :: out_bounds(nbounds)
-    !
+
         ! Check the size of this%xi. We are going to speculate on the size of
         ! this%yi later on, but the 'out-of-bounds' check must be done in a safe
         ! way, i.e. this%xi must be allocated and this%xi(1) must be a valid
         ! element in the array.
         if (.not. allocated(this%xi)) then
-            res = 0.D0
+            res = 0.D0 ! Note MD: error stop would be more reasonable
             return
         else
             last = size(this%xi)
         endif
-        out_bounds = [x < this%xi(1), x > this%xi(last)]
-        ! Check if we fall inside the range
-        if (out_bounds(left_bound) .or. out_bounds(right_bound)) then
-            ! TODO:
-            ! deal with extrapolation
-            CHOOSE(res, out_bounds(left_bound), this%yi(1), this%yi(last))
-            return
+
+        ! TODO: deal with extrapolation
+        if (x < this%xi(1)) then
+            res = this%yi(1)
+        elseif (x > this%xi(last)) then
+            res = this%yi(last)
         else
             ! Pick the right chunk. lower_bound will provide the position of the first element
             ! in that has a value greater than or equivalent to x
