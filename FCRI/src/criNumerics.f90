@@ -1,6 +1,7 @@
 !> Various numerical algorithms
 module criNumerics
     use criErrcodes
+    use criAlgorithm
     implicit none
 
     !> Data needed by barycentric interpolation
@@ -145,68 +146,58 @@ contains
     !> The function requires a properly initialized BarycentricInterpolator object.
     !> Otherwise the result of the function is undefined.
     double precision pure function BarycentricInterpolator_interpolate(this, x) result(res)
-    use criAlgorithm
     !> Properly initialized object of type BarycentricInterpolator
     type(BarycentricInterpolator),intent(in)    :: this
     !> The point at which the interpolated function is evaluated
     double precision,intent(in)                 :: x
 
-    integer :: i, j, last
-
-        ! Check the size of this%xi. We are going to speculate on the size of
-        ! this%yi later on, but the 'out-of-bounds' check must be done in a safe
-        ! way, i.e. this%xi must be allocated and this%xi(1) must be a valid
-        ! element in the array.
-        if (.not. allocated(this%xi)) then
-            res = 0.D0 ! Note MD: error stop would be more reasonable
-            return
-        else
-            last = size(this%xi)
-        endif
+    integer :: i, j
 
         ! TODO: deal with extrapolation
-        if (x < this%xi(1)) then
+        if (.not. allocated(this%xi)) then
+            res = 0.D0 ! Note MD: error stop would be more reasonable
+        elseif (x < this%xi(1)) then
             res = this%yi(1)
-        elseif (x > this%xi(last)) then
-            res = this%yi(last)
+        elseif (x > this%xi(size(this%xi))) then
+            res = this%yi(size(this%xi))
         else
             ! Pick the right chunk. lower_bound will provide the position of the first element
             ! in that has a value greater than or equivalent to x
-            i = min(last - this%order, max(1,lower_bound(this%xi, x)-1))
+            i = min(size(this%xi) - this%order, max(1,lower_bound(this%xi, x)-1))
             j = i + this%order
             res = barycentric_interpolation(x, this%xi(i:j), this%yi(i:j), this%wi(:,i))
         endif
-    !
-    end function
 
-    !> Compute interpolation by polynomial of degree n using barycentric formula.
-    !>
-    !> The degree of the polynomial n is deduced from the size of xi. All xi, yi
-    !> and wi must have identical shape.
-    !>
-    !> [1] J-P Berrut and L.N. Trefethen, Barycentric Lagrange Interpolation, SIAM Rev.
-    !>     46(3), 501\96517. DOI:10.1137/S0036144502417715
-    double precision pure function barycentric_interpolation(x, xi, yi, wi) result(p)
-    double precision,intent(in)                 :: x  !< interpolation point
-    double precision,dimension(:),intent(in)    :: xi !< interpolation nodes. Shape is [1:n+1]
-    double precision,dimension(:),intent(in)    :: yi !< function values at the interpolation nodes. Shape is [1:n+1]
-    double precision,dimension(:),intent(in)    :: wi !< barycentric weights of the nodes. Shape is [1:n+1]
-    !
-    double precision,dimension(size(xi)) :: xterms
-    integer :: i
-    !
-        xterms = x - xi
-        ! Detect if we interpolate exactly on one of the nodes
-        do i = 1, size(xterms)
-            if (abs(xterms(i)) < epsilon(0.D0)) then
-                p = yi(i)
-                return
-            endif
-        enddo
-        ! It's interpolation between the nodes
-        xterms = wi / xterms
-        p = dot_product(xterms, yi) / sum(xterms)
-    !
+        contains
+        !> Compute interpolation by polynomial of degree n using barycentric formula.
+        !>
+        !> The degree of the polynomial n is deduced from the size of xi. All xi, yi
+        !> and wi must have identical shape.
+        !>
+        !> [1] J-P Berrut and L.N. Trefethen, Barycentric Lagrange Interpolation, SIAM Rev.
+        !>     46(3), 501\96517. DOI:10.1137/S0036144502417715
+        double precision pure function barycentric_interpolation(x, xi, yi, wi) result(p)
+        double precision,intent(in)                 :: x  !< interpolation point
+        double precision,dimension(:),intent(in)    :: xi !< interpolation nodes. Shape is [1:n+1]
+        double precision,dimension(:),intent(in)    :: yi !< function values at the interpolation nodes. Shape is [1:n+1]
+        double precision,dimension(:),intent(in)    :: wi !< barycentric weights of the nodes. Shape is [1:n+1]
+        !
+        double precision,dimension(size(xi)) :: xterms
+        integer :: i
+        !
+            xterms = x - xi
+            ! Detect if we interpolate exactly on one of the nodes
+            do i = 1, size(xterms)
+                if (abs(xterms(i)) < epsilon(0.D0)) then
+                    p = yi(i)
+                    return
+                endif
+            enddo
+            ! It's interpolation between the nodes
+            xterms = wi / xterms
+            p = dot_product(xterms, yi) / sum(xterms)
+        !
+        end function
     end function
 
 end module
