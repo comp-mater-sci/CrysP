@@ -70,8 +70,8 @@ def setup_benchmark(mode, algorithm, slip_system, hardening_model):
         shutil.copy(TEST_ROOT/'data/in/texture_yld.smt', TEST_DATA/'texture.smt')
     else:
         shutil.copy(TEST_ROOT/'data/in/sid1687f_short.smt', TEST_DATA/'texture.smt')
-    shutil.copy(TEST_ROOT/'../VEF/data/equiaxed.smt', TEST_DATA/'equiaxed.smt')
-    shutil.copy(TEST_ROOT/f'../VEF/data/{slip_system}.pre', TEST_DATA/f'{slip_system}.pre')
+    shutil.copy(TEST_ROOT/'../data/equiaxed.smt', TEST_DATA/'equiaxed.smt')
+    shutil.copy(TEST_ROOT/f'../data/{slip_system}.pre', TEST_DATA/f'{slip_system}.pre')
     shutil.copy(TEST_ROOT/f'data/in/DSHparaset.txt', TEST_DATA/'DSHparaset.txt')
     if (mode == 'EWC' or mode == 'ASR'):
         shutil.copyfile(TEST_ROOT/f'data/in/{mode}.rtdb', TEST_DATA/'out.rtdb')
