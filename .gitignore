@@ -2,8 +2,10 @@
 *.bak
 *~
 .DS_Store
-*/release
-*/debug
+AlTay/release
+AlTay/debug
+VEF/build
+bin
 doc
 */doc
 security/ssh_keys/*

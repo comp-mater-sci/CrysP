@@ -22,6 +22,7 @@ gcc:
     python3-pip
     pip install pandas pytest numpy
     source /opt/intel/oneapi/setvars.sh
+    export PATH=${PATH}:${PWD}/bin
     AR=xiar ./build.sh -c gfortran -b debug
     AR=xiar ./build.sh -c gfortran -b release -t
     cd test
@@ -34,6 +35,7 @@ intel:
     apt-get install -y \
     python3-pip
     pip install pandas pytest numpy
+    export PATH=${PATH}:${PWD}/bin
     AR=xiar ./build.sh -c ifort -b debug
     AR=xiar ./build.sh -c ifort -b release -t
     cd test

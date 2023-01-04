@@ -36,8 +36,8 @@ make install
 
 cd ../../../VEF
 
-rm -rf release debug
-mkdir -p $BUILD_TYPE/build
-cd $BUILD_TYPE/build
-cmake ../..  -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTRACE=$TRACE
+rm -rf build bin
+mkdir -p build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTRACE=$TRACE -DCMAKE_INSTALL_PREFIX=../..
 make install
