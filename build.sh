@@ -27,12 +27,17 @@ else
 fi
 done
 
-for LIB in AlTay VEF;do
-  cd $LIB
-  rm -rf release debug
-  mkdir -p $BUILD_TYPE/build
-  cd $BUILD_TYPE/build
-  cmake ../..  -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTRACE=$TRACE
-  make install
-  cd ../../..
-done
+cd AlTay
+rm -rf release debug
+mkdir -p $BUILD_TYPE/build
+cd $BUILD_TYPE/build
+cmake ../..  -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTRACE=$TRACE
+make install
+
+cd ../../../VEF
+
+rm -rf release debug
+mkdir -p $BUILD_TYPE/build
+cd $BUILD_TYPE/build
+cmake ../..  -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTRACE=$TRACE
+make install
