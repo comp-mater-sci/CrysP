@@ -9,10 +9,6 @@ include("${COMMON_DIR}/basic-fortran-project.cmake")
 #
 # Dependencies
 #
-set(FCRI_DIR "../FCRI/${CMAKE_BUILD_TYPE}")
-find_package(FCRI REQUIRED)
-include_directories(${FCRI_INCLUDE_DIR})
-
 set(altay_DIR "../AlTay/${CMAKE_BUILD_TYPE}")
 find_package(altay REQUIRED)
 include_directories(${altay_INCLUDE_DIR})

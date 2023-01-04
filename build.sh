@@ -27,7 +27,7 @@ else
 fi
 done
 
-for LIB in FCRI AlTay VEF;do
+for LIB in AlTay VEF;do
   cd $LIB
   rm -rf release debug
   mkdir -p $BUILD_TYPE/build

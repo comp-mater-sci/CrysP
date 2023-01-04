@@ -12,7 +12,19 @@ list2string(Fortran_FLAGS CMAKE_Fortran_FLAGS)
 list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
 list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
-set(LIBSRC 
+add_library(${libaltay} STATIC
+criAlgorithm.f90
+criConfigReader.f90
+criErrcodes.f90
+criLinearMap.f90
+criLog.f90
+criMathUtils.f90
+criNamedRange.f90
+criNumerics.f90
+criPath.f90
+criRange.f90
+criRuntime.f90
+criUncomment.f90
 altaySimul.f90 
 altayTaylor.f90 
 altayAlgorithms.f90 
@@ -39,7 +51,6 @@ altayRCM.f90
 altaySub.f90
 )
 
-add_library(${libaltay} STATIC ${LIBSRC})
 
 set_target_properties(${libaltay} PROPERTIES COMPILE_DEFINITIONS "ALTAY_SUBROUTINE;NO_STDOUT;RCM_ENABLED;PEBP_ENABLED;")
 
@@ -47,7 +58,7 @@ set_target_properties(${libaltay} PROPERTIES COMPILE_DEFINITIONS "ALTAY_SUBROUTI
 # Installation of the outputs in the build tree
 #
 
-set(altay_INCLUDE_DIRS "include")
+set(altay_INCLUDE_DIRS "include" "include/altay")
 set(altay_INCLUDE_DIR "include") # Just one directory needed in the package
 set(altay_LIBRARY_DIR "lib")
 
@@ -60,6 +71,8 @@ install(TARGETS ${libaltay}
 )
 
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/" DESTINATION "include/altay" 
+	FILES_MATCHING PATTERN "*.fpp" PATTERN ".*" EXCLUDE)
 
 install(EXPORT "altayTargets" DESTINATION "cmake")
 

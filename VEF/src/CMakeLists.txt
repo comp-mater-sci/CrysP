@@ -18,7 +18,7 @@ list2string(Fortran_FLAGS CMAKE_Fortran_FLAGS)
 list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
 list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
-set(alamDMC_SRCS
+add_executable(alamDMC
 nlls_tr.f90
 alamYLP.f90 
 alamEval.f90
@@ -51,9 +51,7 @@ dmcYld.f90
 main.f90
 )
 
-add_executable(alamDMC  ${alamDMC_SRCS})
-target_link_libraries(alamDMC altay CRI)
+target_link_libraries(alamDMC altay)
 set_target_properties(alamDMC PROPERTIES LINK_FLAGS "-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl")
 
 install(TARGETS alamDMC DESTINATION "bin")
-
