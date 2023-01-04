@@ -4,7 +4,7 @@ module criAlgorithm
 
     !> tostring function converts from an intrisic data type into character string.
     interface tostring
-        module procedure tostring_int, tostring_real, tostring_double
+        module procedure tostring_int, tostring_double
     end interface
 
     !> centered function centers a character string.
@@ -14,7 +14,7 @@ module criAlgorithm
 
     !> Find the first element in array not before val, using operator <
     interface lower_bound
-        module procedure lower_bound_int, lower_bound_double
+        module procedure lower_bound_double
     end interface
 
 
@@ -30,29 +30,6 @@ module criAlgorithm
     end interface
 
 contains
-      integer pure function lower_bound_int(array,val) result(res)
-          integer,dimension(:),intent(in)     :: array
-          integer,intent(in)                  :: val
-
-          integer :: first,dist,cnt,mid
-
-          first = lbound(array,dim=1)
-          dist = ubound(array,dim=1)     ! full range: [first:first+dist-1]
-
-          do while (dist > 0)
-              cnt = dist / 2
-              mid = first + cnt
-              if (array(mid) < val) then
-                  first = mid + 1
-                  dist = dist - (cnt + 1)
-              else
-                  dist = cnt
-              endif
-          enddo
-          res = first
-
-      end function
-
       integer pure function lower_bound_double(array,val) result(res)
           double precision,dimension(:),intent(in)     :: array
           double precision,intent(in)                  :: val
@@ -73,25 +50,6 @@ contains
               endif
           enddo
           res = first
-
-      end function
-
-      !> Check if the string value val is present in the list of strings.
-      logical function isPresent(val, list,index)
-          character(len=*),intent(in)               :: val   !< Value to be looked up
-          character(len=*),dimension(:),intent(in)  :: list  !< Array of strings
-          integer,intent(out),optional              :: index !< Index of the element that was found. It is set only if isPresent returns .true.
-
-          integer :: i
-
-          isPresent = .false.
-          do i = lbound(list,dim=1), ubound(list,dim=1)
-                if (val == list(i)) then
-                      isPresent = .true.
-                      exit
-                endif
-          enddo
-          if (present(index) .and. isPresent) index = i
 
       end function
 
@@ -128,19 +86,6 @@ contains
           else
                 write(str,'(I0)',iostat=ierr) val
           endif
-
-      end function
-
-      pure function tostring_real(val,strlen,fmt) result(str)
-          real,intent(in)                           :: val
-          integer,intent(in)                        :: strlen
-          character(len=*),intent(in)               :: fmt
-          character(len=strlen)                     :: str
-
-          integer :: ierr
-
-          str = ''
-          write(str,fmt,iostat=ierr) val
 
       end function
 
