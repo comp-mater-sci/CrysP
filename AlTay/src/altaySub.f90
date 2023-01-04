@@ -86,7 +86,7 @@ contains
         ! Initialisation of SIMUL
         if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
         info = altaySub_Exception
-        CALL SIMUL(0,1)
+        call SIMUL0()
         ! Collect more info about the
         if(RCM_signal()) then
             if (present(errmsg)) then
@@ -262,11 +262,10 @@ contains
             NFILE0 = merge(1,0,steps%simulCalls(i)%input%do_output_init)
             call Set_DeformationRate(steps%simulCalls(i)%input%dgf,MacroDefRate)
             ! Run simul.
-            call SIMUL(1,NFILE0,MacroDefRate)
+            call SIMUL1(NFILE0,MacroDefRate)
             if (RCM_signal()) then
                 RCM_RAISE(info,'runSteps','SIMUL has thrown exception',RCM_RTN)
             endif
-
             if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
         enddo
 

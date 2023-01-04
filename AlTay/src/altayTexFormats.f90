@@ -74,7 +74,6 @@ contains
         integer,intent(out)           :: info
 
         info = -1
-        ! TODO: write code for the available formats
         select case(texfmt)
         case(TF_SMT)
               if (full) call SMTwriteHeader(iounit,filetitle,info)

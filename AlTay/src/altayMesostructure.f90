@@ -8,14 +8,21 @@ module altayMesostructure
     use altayMacroKinematic
 
     implicit none
+    private
+
     !> Transformation matrix associated to the grain boundary reference frame
     !> in the initial state.
     !> Shape is: [3,3,ngr], where ngr is the number of grains.
     real(dp), dimension(:,:,:),allocatable :: TmatGr
-    integer :: NGrElm = 0             !< Number of grain boundary orientations
+    integer, public, protected :: NGrElm = 0             !< Number of grain boundary orientations
     character(len=40)  :: TitMic = '' !< Microstructure title
 
-contains
+    public :: &
+        GRFIL, &
+        MICROSTR_finalize, &
+        CLUSTER1
+
+    contains
 
     !> Reading of "microstructure" (Euler angles defining
     !> grain boundary segments) in SMT-format, allocation
@@ -96,8 +103,7 @@ contains
         type(DeformationRate),intent(in)       :: MacroDefRate
         type(DeformationState),intent(in)      :: MacroDefState
         real(dp),intent(inout)                 :: GEWF
-        real(dp),dimension(3,3),intent(out)    :: Tprinc
-        real(dp),intent(out)                   :: Cofcos, Cofsin
+        real(dp),intent(out)                   :: Cofcos, Cofsin,Tprinc(3,3)
 
         real(dp) :: AXX(3,3),GRPAR(3,3), PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
         real(dp) :: x, u, dlength, dot1, dot2, TGANGLE
@@ -109,9 +115,9 @@ contains
             relaxII= reshape([0._dp, 0._dp, 0._dp, &
                               0._dp, 0._dp, 1._dp, &
                               0._dp, 1._dp, 0._dp],shape(relaxII))
-
         Cofcos = 0.D0
         Cofsin = 0.D0
+
 
         if (NGR == 1) then      ! let Tprinc be equal to the identity matrix.
             Tprinc = unitMatrix

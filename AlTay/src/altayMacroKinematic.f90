@@ -1,9 +1,11 @@
 module altayMacroKinematic
     use altayMiscutils
     use altay_definitions
-    implicit none
 
-    type DeformationRate
+    implicit none
+    private
+
+    type, public ::  DeformationRate
         real(dp), dimension(3,3) :: VelGrad = 0.0D0        !< Velocity Gradient
         real(dp), dimension(3,3) :: StrainRate = 0.0D0     !< Strain Rate, i.e. symmetric part of the velocity gradient
         real(dp)                 :: NormStrainRate = 0.0D0 !< Norm of strain rate
@@ -13,7 +15,7 @@ module altayMacroKinematic
         real(dp), dimension(3,3) :: Spin = 0.0D0           !< Spin, i.e. anti-symmetric part of the velocity gradient
     end type DeformationRate
 
-    type DeformationState
+    type, public ::  DeformationState
         real(dp), dimension(3,3) :: TotalDefGrad = unitMatrix            !< Total Deformation Gradient (from undeformed state to the end of current increment)
         real(dp), dimension(3,3) :: IncrDefGrad = unitMatrix             !< Incremental Deformation Gradient (from start to end of current increment)
         real(dp), dimension(3,3) :: IncrDefGrad_inverse = unitMatrix     !< Inverse of Incremental Deformation Gradient
@@ -24,7 +26,11 @@ module altayMacroKinematic
                                                                          !< (note: reference state might be different than that of TotalDefGrad)
     end type DeformationState
 
-contains
+    public :: &
+        Set_DeformationRate, &
+        Update_deformationState
+
+    contains
 
     !Calculate strain rate, spin etc. from velocity gradient
     subroutine Set_DeformationRate(VelGrad,this)

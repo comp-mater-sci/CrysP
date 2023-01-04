@@ -8,6 +8,7 @@ module altayAlgorithms
 
     implicit none
     private
+
     real(dp), parameter     :: SQRT_P5 = sqrt(0.5_dp)
     character(*), parameter :: MODULE_NAME = "altayAlgorithms"
 
