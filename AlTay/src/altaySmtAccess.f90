@@ -1,7 +1,16 @@
 module altaySmtAccess
     use altay_definitions
     use altayDynfil
+
     implicit none
+    private
+
+    public :: &
+        SMTreadHeader, &
+        SMTwriteHeader, &
+        SMTwriteBlock, &
+        SMTreadBlock
+
     contains
 
     subroutine SMTreadHeader(iounit,title,info)
@@ -57,7 +66,7 @@ module altaySmtAccess
         integer,intent(in)      :: iounit      !< IO unit
         integer,intent(out)     :: info        !< Exit code
 
-        real(dp),parameter :: deg2rad =  acos(-1.D0) / 180.D0   !< conversion factor degree=>radians, equals 2*pi/360
+        real(dp),parameter :: deg2rad =  acos(-1.D0) / 180.D0
         integer :: i,j,i0,k,NSTAP,nrec,ngrains
         real(dp) :: STAP = 0.D0
 
@@ -68,7 +77,6 @@ module altaySmtAccess
         do j = 1, nrec
             NSTAP=1
             STAP=0.0D0
-            ! order: PHI2,PHI,PHI1,STAP,NSTAP,GEW,GAMMA
             read(iounit,96,iostat=info) DFIL(i)%tfi2,DFIL(i)%tPHI,DFIL(i)%tfi1,STAP,NSTAP,DFIL(i)%tGEW, DFIL(i)%tGAM
             if (info /= 0) exit
             DFIL(i)%tfi1 = DFIL(i)%tfi1 * deg2rad

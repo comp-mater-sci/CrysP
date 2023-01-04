@@ -2,7 +2,6 @@
 
 module altaySliprate
     use altay_definitions
-    use altayMiscutils
     use altay_log
     use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
     use altayMacroKinematic
@@ -16,8 +15,7 @@ module altaySliprate
     public :: SLIPRAT
     contains
 
-    subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn,MacroDefRate,NACTIV, &
-                       SLIPLP,TLXX,TAURLP,INDACT,NLP,INDLP,BB8,A1)
+    subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,A1)
         type(DeformationRate),intent(in) :: MacroDefRate
         !     To find the slip rates assuming that
         !     - the stress, strain rate and the active slip systems are known,
@@ -25,9 +23,10 @@ module altaySliprate
         !     - (under the above resrtrictions) the sum of the squares of the slip
         !       rates must be minimal.
         !
-        integer, intent(in) :: M11,IDIMXX,IPR,IOR,NACTIV
-        real(dp) :: XX(IDIMXX), SGNN(IDIMXX),SLIPLP(8),TLXX,TAURLP(8),BB8(5),A1(5,96)
-        integer:: INDACT(8),NLP,INDLP(8)
+        integer, intent(in) :: M11,IDIMXX,IPR,IOR,NACTIV,INDLP(8)
+        real(dp), intent(in) :: TLXX,A1(5,96),TAURLP(8),BB8(5),SLIPLP(8)
+        integer, intent(inout) :: INDACT(8)
+        real(dp), intent(inout) :: SGNN(IDIMXX),XX(IDIMXX)
 
         integer :: IND(8),ISTOR(0:8,48)
         real(dp) :: SLPR(8),SLSTOR(0:8,48),x,y,yy,sumsq
@@ -35,12 +34,11 @@ module altaySliprate
         integer :: i,j,k,i1,i2,i3,N0,N1,N2,N3,NN,NOPL,INEG,IOPL
 
         XX(1:M11)=0.0
-        NLP=NACTIV
         NN=NACTIV
         NOPL=0
         ! check whether solution is totally zero
         x=0.0
-        do i=1,NLP
+        do i=1,NACTIV
             x=x+abs(SLIPLP(i))
             j=INDACT(i)
             sgnn(j)=sign(1.0_dp,TAURLP(i))
@@ -155,7 +153,7 @@ module altaySliprate
             endif
         endif
   6     continue
-        NN=NLP
+        NN=NACTIV
         do i=1,NN
             IND(i)=INDLP(i)
         enddo

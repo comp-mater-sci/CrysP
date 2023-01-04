@@ -2,6 +2,7 @@ module altay_log
     use altay_definitions
 
     implicit none
+    private
 
     !>\name Exit codes from altayHardLaw_DSH subroutines and functions:
     !>@{
@@ -19,7 +20,6 @@ module altay_log
         module procedure vef_trace_str, vef_trace_tensor
     end interface
 
-    private
     public  ::  vef_trace,          &
                 vef_exception
 
