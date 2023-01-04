@@ -1,9 +1,11 @@
 module altayDynfil
-    use altayMiscutils, only: unitMatrix
-    use altay_definitions, only: dp
+    use altayMiscutils
+    use altay_definitions
     use criMathUtils
+    use altayIOConfig
 
     implicit none
+    private
 
     !>Texture-related state variables for single grain
     type :: grain
@@ -24,12 +26,11 @@ module altayDynfil
         real(dp),dimension(3)     :: GAXES  = 1.D0, GEULR = 0.D0
     end type
 
-    type(grain), dimension(:), allocatable, save    :: DFIL             !<State variable: array of grains/orientations.
-    type(matFrame), save                            :: mf               !<State variable: material (frame) global geometry
-    character(len=40), save                         :: filetitle = ''   !<State variable: title of the input texture file
-    integer, save                                   :: nrStep = 0       !<State variable: step number.
+    type(grain), dimension(:), allocatable     :: DFIL             !<State variable: array of grains/orientations.
+    type(matFrame)                             :: mf               !<State variable: material (frame) global geometry
+    character(len=40)                          :: filetitle = ''   !<State variable: title of the input texture file
+    integer                                    :: nrStep = 0       !<State variable: step number.
 
-    private
     public  ::  DFIL,       &
                 mf,         &
                 nrStep,     &
@@ -46,21 +47,20 @@ contains
 
     !> Allocate the memory block for the state variables.
     subroutine DYNFIL0(npoint,keepstate,istat)
-        use altayIOConfig
-        
+
         integer, intent(in)                     :: npoint       !<Number of elements to be allocated
         logical, intent(in)                     :: keepstate    !<Flag: preserve contenst of DFIL on reallocation.
         integer, intent(out)                    :: istat        !<Exit code
         type(grain), dimension(:), allocatable  :: tmp
         integer                                 :: ntransf
-        
+
         istat = 1
         ! Error handling
         if (npoint <= 0) then
-            if(NLIST.eq.1) write(IMP,100)
+            if(NLIST == 1) write(IMP,100)
             return
         endif
-        
+
         if (.not. allocated(DFIL)) then
             allocate(DFIL(npoint),stat=istat)
         else
@@ -83,10 +83,8 @@ contains
             endif
         endif
         ! Error handling
-        if (istat /= 0) then
-              if(NLIST.eq.1) write(IMP,101)
-        endif
-        
+        if (istat /= 0 .and. NLIST == 1) write(IMP,101)
+
 100     format('DYNFIL0: error: requested number of grains is zero.')
 101     format('DYNFIL0: error: allocation of memory failed.')
     end subroutine
@@ -106,28 +104,28 @@ contains
         integer, intent(out)                            :: n
         real(dp), dimension(3), intent(out)     :: AXES, EULR
         real(dp), dimension(3,3), intent(out)   :: CIJ, TAX, F
-    
+
         n = nrstep
         F = mf%FALG
         AXES = mf%GAXES
         EULR = mf%GEULR
         CIJ = mf%CIJ0
         TAX = mf%TAX0
-    end subroutine 
+    end subroutine
 
     !> Write the global material data
     subroutine DYNFIL3(n, F, axes, eulr, CIJ, tax)
         integer,intent(in)                              :: n
         real(dp), dimension(3), intent(in)      :: axes, eulr
         real(dp), dimension(3,3), intent(in)    :: CIJ, tax, F
-    
+
         nrstep = n
         mf%FALG = F
         mf%GAXES = AXES
         mf%GEULR = EULR
         mf%CIJ0 = CIJ
         mf%TAX0 = TAX
-    end subroutine 
+    end subroutine
 
     !> Get the record data for i-th grain
     subroutine DYNFIL4(i, FI1, PHI, FI2, T, GEW, GAM, F, AXES, EULR, CIJ, TAX, ZERO)
@@ -135,7 +133,7 @@ contains
         real(dp), intent(out)                   :: FI1,PHI,FI2,GEW,GAM
         real(dp), dimension(3), intent(out)     :: AXES, EULR
         real(dp), dimension(3,3), intent(out)   :: CIJ, TAX, F, T, ZERO
-    
+
         FI1     = DFIL(i)%tFI1
         PHI     = DFIL(i)%tPHI
         FI2     = DFIL(i)%tFI2
@@ -156,7 +154,7 @@ contains
         real(dp), intent(in)                    :: FI1,PHI,FI2,GEW,GAM
         real(dp), dimension(3), intent(in)      :: AXES, EULR
         real(dp), dimension(3,3), intent(in)    :: CIJ, TAX, F, T, ZERO
-    
+
         DFIL(i)%tFI1    = FI1
         DFIL(i)%tPHI    = PHI
         DFIL(i)%tFI2    = FI2
@@ -169,13 +167,13 @@ contains
         DFIL(i)%tCIJ    = CIJ
         DFIL(i)%tTAX    = TAX
         DFIL(i)%tZERO   = ZERO
-    end subroutine 
+    end subroutine
 
     !> Set the computed fields in grain structure.
     subroutine initFields(mf,gr)
         type(matFrame), intent(in)  :: mf
         type(grain), intent(inout)  :: gr
-        
+
         gr%tT       = rotmat(gr%tfi1,gr%tPHI,gr%tfi2)
         gr%tAXES    = mf%GAXES
         gr%tEULR    = mf%GEULR

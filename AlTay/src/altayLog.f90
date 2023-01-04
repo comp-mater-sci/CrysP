@@ -1,8 +1,8 @@
 module altay_log
-    use altay_definitions, only: dp
+    use altay_definitions
 
     implicit none
-
+    private
 
     !>\name Exit codes from altayHardLaw_DSH subroutines and functions:
     !>@{
@@ -15,12 +15,11 @@ module altay_log
     integer, parameter, public :: VEF_Nss           = -16   !< Unsupported number of slip systems proposed. Supported values are: 12, 24
     integer, parameter, public :: VEF_Uninitialized = -50   !< Call to module procedures without proper initialization of the module
     !>@}
-    
+
     interface vef_trace
         module procedure vef_trace_str, vef_trace_tensor
     end interface
 
-    private
     public  ::  vef_trace,          &
                 vef_exception
 
@@ -29,7 +28,7 @@ contains
     subroutine vef_trace_str(caller_module, caller_routine, message)
         character(len=*), intent(in)    :: caller_module, caller_routine, message
 #ifdef TRACE
-        print *, 'TRACE ', caller_module, ', ', caller_routine, ': ', message 
+        print *, 'TRACE ', caller_module, ', ', caller_routine, ': ', message
 #endif
     end subroutine
 

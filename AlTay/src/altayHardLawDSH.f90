@@ -1,82 +1,5 @@
-      MODULE altayHardLaw_DSH
-use altay_definitions
-!     v1.0 by P. Eyckens, MTM, KU Leuven, 17 July 2012.
-!     v1.1 by P. Eyckens, MTM, and J. Gawad, CS, KU Leuven, 2 August 2012.
-!     v1.2 by J. Gawad, CS, KU Leuven, 13 August 2012:
-!      -> Small fixes to IO format statements in ReadSVfile/WriteSVfile
-!      -> Pre-examination of slip system definition file is corrected, but
-!         afterwards it is commented out.
-!     v1.3 by P. Eyckens, MTM, and J. Gawad, CS, KU Leuven, 22 August 2012:
-!       -> Named constants are added for exit codes. Note: the constants are
-!          not used in a consistent way yet.
-!       -> Zero-slip conditions are explicitly handled in MakeInc.
-!     v1.4 by P. Eyckens, MTM, and J. Gawad, CS, KU Leuven, 29 August 2012:
-!       -> Bug Fixes:
-!           * [proc. F_CRSS] Changed interpretation of parameter P%f:
-!              NOW:    volume fraction of Cell Block Boundaries.
-!              BEFORE: volume fraction of Cell Blocks.
-!              Modification: P%f <-> (1.-P%f)
-!           * [proc. Getinitstatvar] Fixed CRSS of an annealed state:
-!              NOW:    invoking F_CRSS (includes tau_0 and contributions from CBs and CBBs)
-!              BEFORE: Set CRSS to tau_0 (so not including contributions from CBs and CBBs)
-!       -> Modifications:
-!           * [proc. Init_PAR] Avoid extremely large values for the dislocation densities:
-!              NOW:    PRIVATE parameter set P has units: MPa; nm (nanometer)
-!                        => Unit disl. densities: [nm^(-2)] ; e.g. rho = 1.D1
-!              BEFORE: PRIVATE parameter set P has units: MPa; m (meter)
-!                        => Unit disl. densities: [ m^(-2)] ; e.g. rho = 1.D13
-!    v1.5 by P. Eyckens, MTM, and J. Gawad, CS, KU Leuven, 18 September 2012:
-!       -> Bug fix: retrieval of sign in the function dwp_dt is actually implemented
-!                   by means of "sign(x)" instead of "x/|x|"
-!    v1.6 by J. Gawad, CS, KU Leuven, 01 October 2012:
-!       -> Extension to the ReadSVfile function: depending on the new parameter "dummy",
-!          the function can simply read necessary number of lines but skip the interpretation
-!          of the contents.
-!       -> LEC argumenf of Init_PAR and Init_file is declared as optional
-!       -> the utility function ReadPar is declared as public.
-!    v1.6.1 by J. Gawad, CS, KU Leuven, 03 October 2012:
-!       -> space separator is added in in multi-number IO operations to prevent
-!          stiching of negative values
-!    v1.7 by P. Eyckens, MTM, KU Leuven, 30 november 2012:
-!       -> addition of the public procedures:
-!             WriteHeadSVfile
-!             ReadHeadSVfile.
-!    v1.7.1 by J. Gawad, CS, and P. Eyckens, MTM, KU Leuven, 21 February 2013:
-!       -> fix to the API of the WriteHeadSVfile and ReadHeadSVfile: both are turned into functions.
-!          The previous implementation didn't include any possibility of reporting exit codes.
-!    v1.8 by P. Eyckens, MTM, KU Leuven, 2 may 2013:
-!       -> Allow to adopt the set of 12 BCC slip systems: (110)[111], cf. BCCbp1.PRE
-!          Previously, only the set of 24 BCC slip systems (110)+(112)[111] was allowed, cf. BCCbp2.PRE
-!    v1.9 by P. Eyckens, MTM, KU Leuven, 17 may 2013:
-!       -> A new option is available by putting the keyword "{ScrewSlip}" in the 1st line of PRE-file.
-!          Then, The assumption that all plastic slip is carried by purely screw dislocations in made in
-!          the determination of the 'wall effectivity matrix' eff(s,i). It gives the relative contribution
-!          of the CBB dislocation density of wall i onto the CRSS of slip system s.
-!          If keyword "{ScrewSlip}" is omitted, it is implicitly assumed that all slip is carried by edge
-!          dislocations (as has been done in the PhD of B. Peeters).
-!    v1.9.1 by J. Gawad, CS, and P. Eyckens, MTM, KU Leuven, 27 Jan 2014:
-!       -> Several corrections to floating point operations that involve implicit single precision constants
-!       -> Some module parameters are calculated at compile time instead of getting initialized
-!          by approximate values.
-!    v1.10 by P. Eyckens, MTM, KU Leuven, 30january 2014:
-!       -> Refactoring of module: the "{ScrewSlip}"-option for KOST=11 is converted to KOST=12.
-!    v1.11 by P. Eyckens, MTM, KU Leuven, 4 february 2014:
-!       -> "Addition of "LoopSlip" model, invoked through KOST=13.
-!          Slip is assumed to be carried through dislocation loops with equal slip realized by edge and screw segments.
-!            This has a consequence for wall effectivity matrix eff(s,i) and contribution of walls on CRSS
-!          In this version, description of polarization of CBBs is not elaborated in lign with "LoopSlip" assumption.
-!            It is therefor advised to switch of contribution of polarization of wall to CRSS, by setting I_wp=0.0
-!    v1.12 by P. Eyckens, MTM, KU Leuven, 11 April 2014, and J. Gawad, CS, KU Leuven, 14 April 2014:
-!       -> Addition of subroutine GetStateDerivedVar, which calculates state-dependent variables of the PEBP model,
-!          i.e. 4 dislocation densities. They are calculated from inputted derived type StatVar.
-!          See in-line comments for specific meaning.
-!          Foreseen application of this subroutine: visualisation of state-derived variables of the PEBP multi-scale
-!          model in HMS simulation of forming process - the dislocation densities still need to be volume-averaged
-!          over the polycrystal.
-!      -> Addition of data type for StateDerivedVars and trivial algebraic operations on objects of that type.
-!   v1.13 J. Gawad, CS, KU Leuven, 24 April 2014:
-!       -> New function is added: writeSDV, which outputs either state-derived variables or a relevant header line.
-!
+module altayHardLaw_DSH
+    use altay_definitions
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST=11 & PRE-file contains 24 (110)+(112)[111] slip systems;
 !     -----------------------------------------------------
@@ -660,7 +583,7 @@ use altay_definitions
       !declaration of local variables
       integer r(6), i
 
-      if (PlaneSlip(1).GE.PlaneSlip(2)) then
+      if (PlaneSlip(1) >= PlaneSlip(2)) then
         r(1)=1
         r(2)=2
       else
@@ -669,11 +592,11 @@ use altay_definitions
       end if
 
       do i=3,6
-        if      (PlaneSlip(i).GT.PlaneSlip(r(1))) then
+        if      (PlaneSlip(i) > PlaneSlip(r(1))) then
           r(i)=r(2)
           r(2)=r(1)
           r(1)=i
-        else if (PlaneSlip(i).GT.PlaneSlip(r(2))) then
+        else if (PlaneSlip(i) > PlaneSlip(r(2))) then
           r(i)=r(2)
           r(2)=i
         else
@@ -733,8 +656,8 @@ use altay_definitions
 
       wpFLUX=DOT_PRODUCT( effslashb(:,rdr) , sliprate(:) )
 
-      FLUXreversal= wpFLUX*RHOwp_a .LT. 0.0
-      wpLOW= abs(RHOwp_a) .LE. P%RHOwpLOW
+      FLUXreversal= wpFLUX*RHOwp_a  <  0.0
+      wpLOW= abs(RHOwp_a)  <=  P%RHOwpLOW
 
       if ( FLUXreversal .and. .NOT.(wpLOW) ) then
         ! |RHOwp| gets smaller, following analytic time integration
@@ -811,10 +734,10 @@ use altay_definitions
       !inherited variables:
       !P%Rncg, GAMMAdot_new, P%b, P%RHOwpMIN
 
-      if (abs(RHOwp_a) .GT. P%RHOwpMIN) then
+      if (abs(RHOwp_a)  >  P%RHOwpMIN) then
         RHOwp_b= RHOwp_a*exp(-P%Rncg*GAMMA_new/P%b)
       else
-        if (RHOwp_a .GE. 0.0) then
+        if (RHOwp_a  >=  0.0) then
           RHOwp_b=  P%RHOwpMIN
         else
           RHOwp_b= -P%RHOwpMIN
@@ -844,10 +767,10 @@ use altay_definitions
       accGAMMA_new = SV_a%CBB(rdr)%accGAMMA_new
       RHOwd_ini    = SV_a%CBB(rdr)%RHOwd_ini
 
-      if (RHOwdHOM.GT.P%RHOwdMIN) then
+      if (RHOwdHOM > P%RHOwdMIN) then
        !if the wall was NOT active in prev. inc.
-        if (rdr .NE. SVa%ActiveCBB(1) .AND.                              &
-            rdr .NE. SVa%ActiveCBB(2)      ) then
+        if (rdr  /=  SVa%ActiveCBB(1) .AND.                              &
+            rdr  /=  SVa%ActiveCBB(2)      ) then
          !accGAMMA_new=[accGAMMA_new]_inc(i-1) + [GAMMA_new]_inc(i)
             accGAMMA_new=accGAMMA_new+GAMMA_new
         else !the wall was active in prev. inc.
@@ -859,7 +782,7 @@ use altay_definitions
                    exp(-P%beta1*accGAMMA_new)*RHOwd_ini*P%beta2
         RHOwdHOM=RHOwdHOM*exp(-P%Rncg*GAMMA_new/P%b)
         RHOwd=RHOwdHOM+RHOwdLOC
-        if (RHOwd .LT. P%RHOwdMIN)  RHOwd=P%RHOwdMIN
+        if (RHOwd  <  P%RHOwdMIN)  RHOwd=P%RHOwdMIN
       else
         RHOwdHOM=P%RHOwdMIN
         RHOwd   =P%RHOwdMIN
@@ -885,14 +808,14 @@ use altay_definitions
 !     local variable declarations
       double precision Reffective
 
-      if(RHObausch .GT. 0.0) then
+      if(RHObausch  >  0.0) then
         Reffective=P%R + P%R2*RHObausch/(2.D0*P%RHOwpSAT)
-        if (P%I*sqrt(RHO_a) - Reffective*RHO_a .LE. 0.0) then ! Heaviside bracket
+        if (P%I*sqrt(RHO_a) - Reffective*RHO_a  <=  0.0) then ! Heaviside bracket
           RHO_b=RHO_a !Keep as is.
         else
             RHO_b= F_KocksMeck(RHO_a,SUMabsGam,P%I,Reffective)
         end if
-      else !RHObausch .EQ. 0.0
+      else !RHObausch  ==  0.0
         RHO_b= F_KocksMeck(  RHO_a,SUMabsGam,P%I,P%R       )
       end if
 
@@ -935,7 +858,7 @@ use altay_definitions
                   wpcontr(i)=sqrt(abs(SV%CBB(i)%RHOwp)) *             &
                        signfac * alfa_G_b_eff(s,i) *                    &
                        sign(1.D0,SV%CBB(i)%RHOwp) ! sign returns +/-1 depending on the sign of the second argument
-            if (wpcontr(i) .LT. 0.0) wpcontr(i)=0.0 ! Heaviside bracket
+            if (wpcontr(i)  <  0.0) wpcontr(i)=0.0 ! Heaviside bracket
             wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*alfa_G_b_ABSeff(s,i)
           end do
           !CRSS within CBB = wp- and wd-contributions for all 6 walls

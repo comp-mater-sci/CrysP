@@ -21,13 +21,13 @@ elif [ "$1" = "-b" ]; then
     shift 2
 elif [ "$1" = "-t" ]; then
     TRACE="1"
-    shift 1 
+    shift 1
 else
     break
 fi
 done
 
-for LIB in FCRI fopt AlTay VEF;do
+for LIB in FCRI AlTay VEF;do
   cd $LIB
   rm -rf release debug
   mkdir -p $BUILD_TYPE/build
