@@ -4,6 +4,7 @@
 .DS_Store
 */release
 */debug
+doc
 */doc
 security/ssh_keys/*
 test/security/ssh_keys/*

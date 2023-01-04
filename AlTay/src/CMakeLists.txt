@@ -57,9 +57,8 @@ set_target_properties(${libaltay} PROPERTIES COMPILE_DEFINITIONS "ALTAY_SUBROUTI
 #
 # Installation of the outputs in the build tree
 #
-
 set(altay_INCLUDE_DIRS "include" "include/altay")
-set(altay_INCLUDE_DIR "include") # Just one directory needed in the package
+set(altay_INCLUDE_DIR "include")
 set(altay_LIBRARY_DIR "lib")
 
 # Note: Static libraries are always treated as ARCHIVE targets.

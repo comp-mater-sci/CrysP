@@ -16,5 +16,5 @@ include("${altay_DIR}/cmake/altayTargets.cmake")
 
 set(altay_LIBRARIES altay)
 
-set(FCRI_INCLUDE_DIRS ${FCRI_INCLUDE_DIR} ${FCRI_INCLUDE_DIR}/altay)
+set(altay_INCLUDE_DIRS ${altay_INCLUDE_DIR} ${altay_INCLUDE_DIR}/altay)
 
