@@ -25,11 +25,6 @@ alamDMC  YLD  yld_config.cnf
 
 The configuration files of the individual modules are structured in a very similar manner. See \ref page_alamdmc_format for detailed description how to prepare the configuration files, including \ref page_alamdmc_generic and documentation of individual \ref page_alamdmc_modules.
 
-The `token_file` is relevant only if the license includes material tokens. The token 
-file that is provided here must match the signature of the texture file used in the 
-analysis. See \ref page_material_tokens for details.
-
-
 <HR>
 Quick links
 -----------

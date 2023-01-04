@@ -845,8 +845,6 @@ INPUT                  = mainpage.dox \
                          alamdmc_format.dox \
                          alamdmc_generic.dox \
                          alamdmc_modules.dox \
-                         material_tokens.md \
-                         utilities.md \
                          tutorials.dox \
                          tutorial_swift.dox \
                          guided_tour.dox \

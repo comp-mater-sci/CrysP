@@ -14,7 +14,6 @@ The \ref user_reference presents the main components of the VEF and discusses
   It covers:
 - \ref page_conventions that explain how to specify the inputs and interpret the outputs, 
 - \ref page_expert_mode that provides a complete control over all the knobs  in the VEF software, 
-- \ref page_utilities that facilitate a more integral use of the VEF, 
 - \ref page_theory that introduces the foundations of the VEF software and multi-scale crystal
 plasticity models it utilizes.
 
@@ -27,7 +26,6 @@ Included \ref page_tutorials are:
   
 \ref page_resources contain:
   - \ref examples - a collection of sample problems bundled with the VEF.
-  - \ref support
 
 */
 
