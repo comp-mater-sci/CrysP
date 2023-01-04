@@ -14,7 +14,7 @@ set_and_check(FCRI_LIBRARY_DIR "@PACKAGE_FCRI_LIBRARY_DIR@")
 # Our library dependencies (contains definitions for IMPORTED targets)
 include("${FCRI_DIR}/cmake/FCRITargets.cmake")
 
-set(FCRI_LIBRARIES CRI CRI_mt)
+set(FCRI_LIBRARIES CRI)
 
 set(FCRI_INCLUDE_DIRS ${FCRI_INCLUDE_DIR} ${FCRI_INCLUDE_DIR}/fcri)
 
