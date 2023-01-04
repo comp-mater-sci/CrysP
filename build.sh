@@ -29,15 +29,11 @@ done
 
 cd AlTay
 rm -rf release debug
-mkdir -p $BUILD_TYPE/build
-cd $BUILD_TYPE/build
-cmake ../..  -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTRACE=$TRACE
-make install
+cmake -B $BUILD_TYPE/build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTRACE=$TRACE
+cmake --build ${BUILD_TYPE}/build --parallel --target install
 
-cd ../../../VEF
+cd ../VEF
 
 rm -rf build bin
-mkdir -p build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTRACE=$TRACE -DCMAKE_INSTALL_PREFIX=../..
-make install
+cmake -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTRACE=$TRACE -DCMAKE_INSTALL_PREFIX=.
+cmake --build build --parallel --target install
