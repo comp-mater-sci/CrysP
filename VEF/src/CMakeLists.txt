@@ -48,7 +48,7 @@ dmcEWC.f90
 dmcQRS.f90  
 dmcUDSA.f90  
 dmcYld.f90  
-main.f90
+alamDMC.f90
 )
 
 target_link_libraries(alamDMC altay)
