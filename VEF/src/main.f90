@@ -1,124 +1,105 @@
-!>    \file main.f90 in AlamDMC provides entry point for other modules.
-!>
-!
 program alamDMC
-!
-use criRuntime
-!
-use dmcUtils, only: display_unit
-use dmcBasicModule
-use dmcASR
-use dmcQRS
-use dmcUDSA
-use dmcYld
-use dmcEWC
-use dmcADP
-!
-implicit none
-      !
-      integer,parameter       :: ncommands = 6
-      integer,parameter       :: Q_id = 1, UDSA_id = 2, ASR_id = 3, YLD_id = 4, EWC_id = 5, ADP_id = 6
-      type(MapItem),dimension(ncommands)  :: command_map =  [ MapItem('QRS',Q_id), MapItem('UDSA',UDSA_id), &
-                                                              MapItem('ASR',ASR_id), MapItem('YLD',YLD_id), &
-                                                              MapItem('EWC',EWC_id), MapItem('ADP',ADP_id) ]
-      ! 2 command line parameters
-      integer,parameter       :: argc_min = 2, argc_max=2
-      character(len=*),parameter    :: prog_desc = 'parameters: command_name configuration_file'
-      integer,parameter       :: command_argpos = 1, & ! command (i.e. module identifier) is 1st argument
-                                 configfile_argpos = 2 ! configuration file is 2nd argument
-      type(commandLine)       :: cmdline ! type commandLine defined in criRuntime.f90
+    use criRuntime
+    use dmcUtils, only: display_unit
+    use dmcBasicModule
+    use dmcASR
+    use dmcQRS
+    use dmcUDSA
+    use dmcYld
+    use dmcEWC
+    use dmcADP
+    implicit none
 
-      logical                 :: moduleFound = .false.
-      character(len=32)       :: moduleName = ''
-      !
-      class(BasicModule),pointer     :: the_module => null()
-      !
-      integer                 :: info, ioerr, cnfunit
-      !
-      character(len=128)  :: progname
-      !
-      info = criError ! see criErrcodes.f90
-      ioerr = 0
-      !
-      write(progname,fmt=300)
-      !
-      cmdline = commandLine(progname,description=prog_desc) ! create commandLine type object with progname and description defined and assign to cmdline
-      call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.) ! call processCommandLine with 7 arguments, last one optional
-      moduleFound = .false.
-      if (info == criSuccess) moduleFound = resolveId(command_map, cmdline%command_id,moduleName) ! logical function defined in criLinearMap.f90: resolveId(themap,id,name[,index])
-      if ((info /= criSuccess) .or. (.not. moduleFound)) then
-            errmsg = 'Error in processing the command line'
-            call finalize(stopcode_inputerror)
-      endif
-      ! Print the banner
-      write(display_unit,fmt=300)
-#ifdef DMC_EXPERIMENTAL
-      300 format('AlamDMC $Rev$',1X,'EXPERIMENTAL')
-#else
-      300 format('AlamDMC $Rev$')
-#endif
-      !
-      ! Configure the module
-      !
-      write(display_unit,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(configfile_argpos)) ! display_unit = output_unit defined in dmcutils.f90
-      cnfunit = openOrDie(fpath=trim(cmdline%argv(configfile_argpos)),status='old')
-      !
-      info = -1
-      ! Create a module of appropriate type:
-      select case(cmdline%command_id)
-      case(Q_id) ! dmcQRS
-            allocate(QRSModule :: the_module) ! create object the_module of type QRSModule
-      case(UDSA_id) ! dmcUDSA
+    integer,parameter       :: ncommands = 6
+    integer,parameter       :: Q_id = 1, UDSA_id = 2, ASR_id = 3, YLD_id = 4, EWC_id = 5, ADP_id = 6
+    type(MapItem),dimension(ncommands)  :: command_map =  [ MapItem('QRS',Q_id), MapItem('UDSA',UDSA_id), &
+                                                            MapItem('ASR',ASR_id), MapItem('YLD',YLD_id), &
+                                                            MapItem('EWC',EWC_id), MapItem('ADP',ADP_id) ]
+    ! 2 command line parameters
+    integer,parameter       :: argc_min = 2, argc_max=2
+    character(len=*),parameter    :: prog_desc = 'parameters: command_name configuration_file'
+    integer,parameter       :: command_argpos = 1, & ! command (i.e. module identifier) is 1st argument
+                               configfile_argpos = 2 ! configuration file is 2nd argument
+    type(commandLine)       :: cmdline ! type commandLine defined in criRuntime.f90
+
+    logical                 :: moduleFound = .false.
+    character(len=32)       :: moduleName = ''
+
+    class(BasicModule),pointer     :: the_module => null()
+
+    integer                 :: info, ioerr, cnfunit
+
+    character(len=128)  :: progname
+
+    info = criError ! see criErrcodes.f90
+    ioerr = 0
+
+    write(progname,fmt=300)
+
+    cmdline = commandLine(progname,description=prog_desc) ! create commandLine type object with progname and description defined and assign to cmdline
+    call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.) ! call processCommandLine with 7 arguments, last one optional
+    moduleFound = .false.
+    if (info == criSuccess) moduleFound = resolveId(command_map, cmdline%command_id,moduleName) ! logical function defined in criLinearMap.f90: resolveId(themap,id,name[,index])
+    if ((info /= criSuccess) .or. (.not. moduleFound)) then
+        errmsg = 'Error in processing the command line'
+        call finalize(stopcode_inputerror)
+    endif
+    write(display_unit,fmt=300)
+    300 format('AlamDMC')
+
+    ! Configure the module
+    write(display_unit,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(configfile_argpos)) ! display_unit = output_unit defined in dmcutils.f90
+    cnfunit = openOrDie(fpath=trim(cmdline%argv(configfile_argpos)),status='old')
+
+    info = -1
+    ! Create a module of appropriate type:
+    select case(cmdline%command_id)
+        case(Q_id)
+            allocate(QRSModule :: the_module)
+        case(UDSA_id)
             allocate(UDSAModule :: the_module)
-      case(ASR_id) ! dmcASR
+        case(ASR_id)
             allocate(ASRModule :: the_module)
-      case(YLD_id) ! dmcYld
+        case(YLD_id)
             allocate(YldModule :: the_module)
-      case(EWC_id) ! dmcEWC
+        case(EWC_id)
             allocate(EWCModule :: the_module)
-      case(ADP_id) ! dmcSD
+        case(ADP_id)
             allocate(ADPModule :: the_module)
-      end select
+    end select
 
-      if (.not. associated(the_module)) then
-            write(errmsg,'(A)')  'Internal error: cannot instantiate the requested module.'
-            call finalize(stopcode_runtimeerror)
-      endif
-      !
-      ! Read the configuration file:
-      info = the_module%ReadConfig(cnfunit) ! type-bound subroutine defined in dmc<module>.f90
-      close(cnfunit)
-      if (info /= 0) then
-            write(errmsg,'(A)') 'Configuration file contains errors.'
-            call finalize(stopcode_runtimeerror)
-      endif
-      !
-      ! OK, the configuration stage has been finished.
-      ! Initialize the module
-      !
-      if (the_module%initialize() /= criSuccess) then
-            if (len(errmsg) == 0) errmsg = 'Cannot initialize the module.'
-            call finalize(stopcode_runtimeerror)
-      endif
+    if (.not. associated(the_module)) then
+        write(errmsg,'(A)')  'Internal error: cannot instantiate the requested module.'
+        call finalize(stopcode_runtimeerror)
+    endif
 
-      ! Show general configuration of the multilevel model
-      info = the_module%printConfig(display_unit)
-      !
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! Run the module
-      call the_module%run(info)
-      !
-      write(display_unit,'(A,1X,A,1X,A)',advance='no') 'Execution of module', trim(moduleName), 'finished'
-      if (info == 0) then
-            write(display_unit,'(1X,A)') 'succesfully.'
-      else
-            write(display_unit,'(1X,A)') 'with errors.'
-      endif
-      !
-      ! Finalize the module
-      info = the_module%finalize()
-      !
-      call finalize(info)
+    ! Read the configuration file:
+    info = the_module%ReadConfig(cnfunit) ! type-bound subroutine defined in dmc<module>.f90
+    close(cnfunit)
+    if (info /= 0) then
+        write(errmsg,'(A)') 'Configuration file contains errors.'
+        call finalize(stopcode_runtimeerror)
+    endif
+
+    ! Initialize the module
+    if (the_module%initialize() /= criSuccess) then
+        if (len(errmsg) == 0) errmsg = 'Cannot initialize the module.'
+        call finalize(stopcode_runtimeerror)
+    endif
+
+    ! Show general configuration of the multilevel model
+    info = the_module%printConfig(display_unit)
+
+    ! Run the module
+    call the_module%run(info)
+
+    write(display_unit,'(A,1X,A,1X,A)',advance='no') 'Execution of module', trim(moduleName), 'finished'
+    write(display_unit,'(1X,A)') merge('succesfully.','with errors.',info==0)
+
+    ! Finalize the module
+    info = the_module%finalize()
+
+    call finalize(info)
 
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
