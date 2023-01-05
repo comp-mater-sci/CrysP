@@ -211,7 +211,7 @@ contains
     !> non-negative values are used for tensile state.
     sigma_t%t = 0.D0
     stress_direction = merge(-1.D0,1.D0,(this%stress_state_id == compression_state))
-    sigma_t%t(1,1) = stress_direction * sqrt(3.D0/2.D0)/dsqrt(this%rho**2-this%rho+1)
+    sigma_t%t(1,1) = stress_direction * sqrt(3.D0/2.D0)/sqrt(this%rho**2-this%rho+1)
     sigma_t%t(2,2) = this%rho*sigma_t%t(1,1)
     !
     ! Loop over test set

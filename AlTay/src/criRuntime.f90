@@ -1,6 +1,4 @@
-!
-!> Provide shared infrastructure for managing runtime in cri
-!> applications.
+!> Provide shared infrastructure for managing runtime in cri applications.
 module criRuntime
 use criErrcodes
 use criLinearMap
@@ -8,29 +6,18 @@ use criPath
 use,intrinsic :: iso_fortran_env, only: error_unit,output_unit
 implicit none
 
-      !> Length of error message
-      integer,parameter              :: errmsg_len = 1024
-
-      !> Error message to be emitted on stop.
-      character(len=errmsg_len),save :: errmsg = ''
+      integer,parameter              :: errmsg_len = 1024 !> Length of error message
+      character(len=errmsg_len),save :: errmsg = '' !> Error message to be emitted on stop.
 
       !>@{ \name Exit codes that are returned to the OS on various stop contitions
 
-      !> OK, succsssful termination
-      integer,parameter :: stopcode_OK = 0
-
-      !> Error, input parameters are wrong
-      integer,parameter :: stopcode_inputerror = 1
-
-      !> Error, an IO operation has failed.
-      integer,parameter :: stopcode_ioerror = 2
-
-      !> Run-time error condition occured.
-      integer,parameter :: stopcode_runtimeerror = 10
+      integer,parameter :: stopcode_OK = 0             !< OK, succsssful termination
+      integer,parameter :: stopcode_inputerror = 1     !< Error, input parameters are wrong
+      integer,parameter :: stopcode_ioerror = 2        !< Error, an IO operation has failed.
+      integer,parameter :: stopcode_runtimeerror = 10  !< Run-time error condition occured.
       !>@}
 
       integer,parameter       :: description_len = 128
-
       integer,parameter       :: max_command_param_len = max_pathlen
 
       !> Data structure for parsing (and combining) the command line arguments.
@@ -39,37 +26,15 @@ implicit none
       !> "command argument" in the command line, which acts as a selector of the run mode (or subprogram).
       !> The "command argument" shall be looked up in the command map (an instance of LinearMap).
       !> However, the library does not force using "command argument" in the code.
-      !>
-      !> \note The command line interface is very crude at the moment.
-      !> There is no actual need to improve it much because any complicated use case
-      !> shall be served by a "pythonized" interface...
       type :: commandLine
-            !> Name of the program. It does not need to correspond to the name of the
-            !> executable binary. It can typically contain version info and other
-            !> useful information.
-            character(len=description_len)            :: progname = ''
-
-            !> Program description
-            character(len=description_len)            :: description = ''
-
-
-            !> Flag: .true. if the object is properly initialized
-            logical                             :: is_initialized = .false.
-
-            !> Actual total number of command line arguments.
-            integer                             :: argc = 0
-
-            !> Array of command line arguments. Shape [0:argc]
-            character(len=:),dimension(:),allocatable   :: argv
-
-            !> Actual number of optional command line arguments
-            integer                             :: argc_opt = 0
-
-            !> Concatenated optional command line arguments
-            character(len=:),allocatable        :: args_opt
-
-            !> Flag: .true. if the command line contains a valid "command argument"
-            logical                             :: is_command_identified = .false.
+            character(len=description_len)      :: progname = ''                    !< Name of the program.
+            character(len=description_len)      :: description = ''                 !< Program description
+            logical                             :: is_initialized = .false.         !< Flag: .true. if the object is properly initialized
+            integer                             :: argc = 0                         !< Actual total number of command line arguments.
+            character(len=:),dimension(:),allocatable   :: argv                     !< Array of command line arguments. Shape [0:argc]
+            integer                             :: argc_opt = 0                     !< Actual number of optional command line arguments
+            character(len=:),allocatable        :: args_opt                         !< Concatenated optional command line arguments
+            logical                             :: is_command_identified = .false.  !< Flag: .true. if the command line contains a valid "command argument"
 
             !> Id of the command as obtained form the map used at the initialization.
             !> It contains a valid data only if is_command_identified is .true.
@@ -88,17 +53,15 @@ contains
       !> If error message is non-empty and errcode is non-zero,
       !> the message will be written to standard error output.
       !> This function should be called instead of the folowing:
-      !>   * STOP
-      !>   * call exit()
       subroutine finalize(errcode)
       integer,intent(in)      :: errcode
-            !
+
             if ((errcode /= 0) .and. (len_trim(errmsg) > 0)) then
                   write(error_unit,fmt=9000) trim(errmsg)
                   9000 format(/,'Error:',1X,A)
             endif
-            !
-            call exit(errcode)
+
+            stop errcode
       end subroutine
 
       !> Process the arguments provided in the command line.
@@ -252,7 +215,7 @@ contains
             ! OK, minimal conditions are satisfied.
             info = criError
             do i = 0, argc !MB: loop over command line parameters (command name + arguments) and store them in array of strings argv
-                  call get_command_argument(i,argv(i),status=ierr) !MB: Fortran intrinsic function
+                  call get_command_argument(i,argv(i),status=ierr)
                   if (ierr /= 0) return
             enddo
             info = criSuccess
