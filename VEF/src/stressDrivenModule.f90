@@ -298,27 +298,25 @@ contains
         if (.not. readValue(cnfunit, use_default_solver_settings)) return
         if (.not. use_default_solver_settings) then
             if (.not. readValue(cnfunit, cnf%jacobi_eps)) then
-				write(error_unit,fmt=900) 'Check epsilon controlling numerical estimation over Jacobian.'
-				return
-			endif
+                 write(error_unit,fmt=900) 'Check epsilon controlling numerical estimation over Jacobian.'
+                 return
+            endif
             if (.not. readValue(cnfunit, cnf%linearize)) return
             ! read default_eps and obj_func_eps
             if (.not. readValue(cnfunit,tmp)) then
-				write(error_unit,fmt=900) 'Check the linearization parameters.'
-				return
-			endif
+                 write(error_unit,fmt=900) 'Check the linearization parameters.'
+                 return
+            endif
             cnf%default_eps = tmp(1)
             cnf%obj_func_eps = tmp(2)
             ! read flag for advanced settings (placeholder at the moment)
             if (.not. readValue(cnfunit, use_advanced_settings)) return
         endif
         info = criSuccess
-	  !
+
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-    !
     end subroutine
-
 
 end module
