@@ -1,9 +1,10 @@
 !> Datatypes that simplify work with results of multilevelYLP and procedures
 !> that operate on these datatypes.
 module dmcYLPResult
-use criErrcodes
 use criMathUtils
 use alamYLPConstants, only: alamEval_vSD_dim
+use altay_definitions
+
 implicit none
 
     !> Datatype to store results of iterative search
@@ -57,13 +58,13 @@ contains
     !> Derive dependant fields from properly initialized and evaluated YLPResult;
     !>
     !> This requires fields: vS, vA and vS_length.
-    !> \return criErr_BadArgs if input ylp_result contains wrong data.
+    !> \return VEF_BADVAL if input ylp_result contains wrong data.
     integer function deriveYLPResult(ylp_result) result(info)
     type(YLPResult),intent(inout)   :: ylp_result
     !
     double precision :: SonA_norm
     !
-        info = criErr_BadArgs
+        info = VEF_BADVAL
         SonA_norm = norm2(ylp_result%vSonA)
         if ((ylp_result%vS_length < epsilon(0.D0)) .or. (SonA_norm < epsilon(0.D0))) return
         !
@@ -71,7 +72,7 @@ contains
         ylp_result%scal_s = SonA_norm / ylp_result%vS_length
         ! Calculate normalized stess
         ylp_result%vSonAn = ylp_result%vSonA / SonA_norm
-        info = criSuccess
+        info = VEF_OK
     !
     end function
 
@@ -91,7 +92,7 @@ contains
         write(iounit,fmt=201) 'Norm of stress on vA:', norm2(ylp_result%vSonA)
         write(iounit,fmt=100)
         !
-        info = criSuccess
+        info = VEF_OK
         !
         100 format()
         200 format(A,T40,5(E12.5,1X))

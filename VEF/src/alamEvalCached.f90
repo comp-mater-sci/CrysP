@@ -2,7 +2,7 @@
 
 !> Subclass of NormalizedV5DComp that stores intermediate points the table of cached results
 module dmcAlamEvalCached
-use criErrcodes
+use altay_definitions
 use alamYLPConstants
 use alamEval
 use dmcResultTable
@@ -42,7 +42,7 @@ contains
             ! Normalize vX before storing it. It is also done by objectiveEval
             ! in the superclass.
             vX_n = vX / vX_norm
-            CHOOSE(info, this%ptr_db%put(vX_n, this%NormalizedV5DComp%vSml) == criSuccess, 0, 1)
+            CHOOSE(info, this%ptr_db%put(vX_n, this%NormalizedV5DComp%vSml) == VEF_OK, 0, 1)
         endif
     !
     end subroutine

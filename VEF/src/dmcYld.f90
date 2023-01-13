@@ -3,10 +3,9 @@
 !
 !> Yield locus calculations
 module dmcYld
-use criErrcodes
+use altay_definitions
 use criAlgorithm
 use criRange
-use criLog
 use criMathUtils
 use criUncomment, only: readValue
 use dmcYLPResult
@@ -82,16 +81,16 @@ contains
     logical :: normalize, use_default_settings
     !
         info = this%StressDrivenModule%ReadConfig(cnfunit)
-        if (info /= criSuccess) return
+        if (info /= VEF_OK) return
         ! Read parameters specific for the dmcYld program
         this%ptr_theta_range => rangeFromConfig(cnfunit,info)
-        if ( (info /= criSuccess) .or. (.not. associated(this%ptr_theta_range)) ) return
+        if ( (info /= VEF_OK) .or. (.not. associated(this%ptr_theta_range)) ) return
         if (.not. readValue(cnfunit, use_default_settings)) return
         if (use_default_settings) then
             ! use the defaults:
             allocate(uniformRange :: this%ptr_w_range)
         else
-            info = criErr_BadArgs
+            info = VEF_BADVAL
             this%base_vectors = 0.D0
             if (.not. readValue(cnfunit, normalize)) return
             do i=1,nbase
@@ -116,7 +115,7 @@ contains
         this%altay%output_config%npebp = 0   ! KOST1x state
         this%output%outputRequest = .false.       ! idem.
         !
-        info = criSuccess
+        info = VEF_OK
     !
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
@@ -133,23 +132,8 @@ contains
     integer :: i
     !
         info = this%StressDrivenModule%printConfig(outunit)
-        if (info /= criSuccess) return
-        info = criErr_BadArgs
-        !
-        if (doLogging(criLogWarn,this%output%verbosity)) then
-            ! Introduce youself ;-)
-            write(outunit,'(A)') 'YLD, $Rev$'
-        endif
-        if (doLogging(criLogDebug,this%output%verbosity)) then
-            do i=1,nbase
-                write(display_unit,'(A,1x,A,6(F6.2,1X))') veclabels(i),'vector:',this%base_vectors(:,i)
-            enddo
-            !
-            write(display_unit,'(A,1X,L1)') 'Normalization of the full Sm tensor:',this%normalizeSm
-            if (this%do_scaling) write(display_unit,'(A,1X,6(F6.2,1X))') 'Scaling by yield stress for:', this%scaling_vector
-        endif
-        info = criSuccess
-    !
+        if (info /= VEF_OK) return
+        info = VEF_OK
     end function
 
 
@@ -175,9 +159,9 @@ contains
     double precision,parameter :: beta = 0.D0
     !
         ! Super-class first
-        RETURN_IF(info /= criSuccess, call this%StressDrivenModule%run(info))
+        RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
         !
-        info = criErr_BadArgs
+        info = VEF_BADVAL
         if (.not. (associated(this%ptr_theta_range) .and. associated(this%ptr_w_range)))  return
         !
         npoints = this%ptr_theta_range%size()
@@ -187,7 +171,7 @@ contains
         endif
         !
         ! Open the main output file
-        RETURN_IF(info /= criSuccess, info = this%openOutputFile('.xyld', ofunit))
+        RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.xyld', ofunit))
         !
         ! Fix the configuration: no need for anything except for the stresses.
         this%ylp%evaluate_full_model = .false.
@@ -201,7 +185,7 @@ contains
             endif
             ! Run the identification
             info = this%findSolution(Sm, D, ylp_result)
-            if (info /= criSuccess) then
+            if (info /= VEF_OK) then
                 write(display_unit,fmt=900) 'Cannot find solution for the scaling stress'
                 return
             endif
@@ -224,14 +208,6 @@ contains
             i = 1
             do while (theta_range%next(theta))
 
-                if (doLogging(criLogDebug,this%output%verbosity)) then
-                    write(display_unit,800)
-                    !
-                    write(display_unit,fmt=3200)
-                    write(display_unit,fmt=3201) theta
-                    write(display_unit,fmt=3200)
-                endif
-                !
                 theta = deg2rad(theta)
                 ! Combine the base vectors
                 ! Note: explicit temporary sigma_vector prevents runtime warning about
@@ -242,26 +218,12 @@ contains
                 !
                 info = this%findSolution(Sm, D, ylp_result, is_acceptable=acceptable_point)
                 ! Consider what to do with unsuccessful search
-                if (is_error(info) .or. ((info == criFailure) .and. (.not. acceptable_point))) then
+                if (is_error(info) .or. ((info == VEF_FAIL) .and. (.not. acceptable_point))) then
                     write(display_unit,fmt=860) 'Cannot find solution, datapoint dropped'
                     cycle
                 endif
                 scal_s_rel = ylp_result%scal_s * iunilen
-                !
-                if (doLogging(criLogDebug,this%output%verbosity)) then
-                    info = printYLPResult(display_unit, ylp_result)
-                endif
-                !
-                ! Report progress
-                if (doLogging(criLogInfo,this%output%verbosity)) then
-                    write(display_unit,fmt=2510)
-                    write(display_unit,fmt=2500) 'theta', 'S', 'S_rel', 'dotW(A)', 'residual'
-                    write(display_unit,fmt=2501) rad2deg(theta), ylp_result%scal_s, scal_s_rel, ylp_result%dotWonA, ylp_result%R
-                    write(display_unit,fmt=2510)
-                elseif (doLogging(criLogWarn,this%output%verbosity)) then
-                    write(display_unit,fmt=1600) rad2deg(theta), ylp_result%R
-                endif
-                !
+                
                 yldRes(i) = yldResult(rad2deg(theta), w, ylp_result%scal_s, scal_s_rel, &
                                       norm2(ylp_result%vSonA), ylp_result%dotWonA, &
                                       pair_double(scal_s_rel * cos(theta), scal_s_rel * sin(theta)),&
@@ -289,7 +251,7 @@ contains
         enddo
         !
         close(ofunit)
-        info = criSuccess
+        info = VEF_OK
     !
     3200 format(28('-'))
     3201 format('Theta angle =',T20,F8.3)
@@ -319,7 +281,7 @@ contains
     character(len=column_width),dimension(ncolumns),parameter  :: column_labels = [ character(len=column_width) :: &
         'theta', 'w', 'sigma', 'sigma_scaled', 'S','dotW', 'sigma_x', 'sigma_y', 'dsigma_x', 'dsigma_y', 'beta', 'residual']
     !
-        info = criErr_IOWrite
+        info = VEF_IO
         ! Write the header
         if (optionalDefault(write_header,.false.)) then
             write(ounit,fmt=700,iostat=ierr) (centered(i,column_width),  i = 1, ncolumns)
@@ -333,7 +295,7 @@ contains
             if (ierr /= 0) exit
         enddo
         write(ounit,fmt=720)
-        if (ierr == 0) info = criSuccess
+        if (ierr == 0) info = VEF_OK
         !
         ! Formats for output file
         700 format('#',12(A15,1X))

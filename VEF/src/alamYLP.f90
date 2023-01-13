@@ -5,7 +5,7 @@
 
 !> Implementation of YLP function that can directly use the ALAMEL multilevel model instead of a plastic potential function.
 module alamYLP
-use criErrcodes
+use altay_definitions
 implicit none
 
       type multilevelYLPConfig
@@ -36,8 +36,8 @@ implicit none
       !> Calculates plastic strain rate corresponding to given deviatoric stress
       !>
       !> The subroutine assumes that multilevel model is already configured and initialized.
-      !> Exit code is retured in info: criSuccess on success; criFailure if no converged solution can
-      !> be found; criError or criErr_BadArgs if error conditions have been detected.
+      !> Exit code is retured in info: VEF_OK on success; VEF_ERROR if no converged solution can
+      !> be found; VEF_ERROR or VEF_BADVAL if error conditions have been detected.
       subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig,outunit,verbose,objective_function)
       use nllsTR
       use alamEval
@@ -97,7 +97,7 @@ implicit none
       if (present(YLPconfig)) config = YLPconfig
       ! Check if the configuration is consistent and allows at least one
       ! search procedure to be started.
-      info  = criErr_BadArgs
+      info  = VEF_BADVAL
       if (.not. (config%linearize .or. config%nonlinear)) return
       !
       ! Set the objective function
@@ -110,10 +110,10 @@ implicit none
       ! Configure objective function
       call objFunc%initFx(alamEval_vSD_dim,alamEval_vSD_dim,ierr)
       if (ierr /= 0) then
-          info = criError
+          info = VEF_ERROR
           return
       endif
-      info  = criErr_BadArgs
+      info  = VEF_BADVAL
       !
       !Get normalized stress vector
       norm = norm2(vS)
@@ -194,7 +194,7 @@ implicit none
       call initState%finalize()
       !
       ! Set output strain rate
-      info  = criError
+      info  = VEF_ERROR
       norm = norm2(vX)
       if (norm < epsilon(0.D0)) return
       vA = vX / norm
@@ -207,9 +207,9 @@ implicit none
       vSonA = objFunc%vSml
       !
       if (R > config%obj_func_eps) then
-          info = criFailure
+          info = VEF_FAIL
       else
-          info = criSuccess
+          info = VEF_OK
       endif
       !
       end subroutine

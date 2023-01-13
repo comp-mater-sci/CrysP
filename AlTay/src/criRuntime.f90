@@ -1,21 +1,13 @@
 !> Provide shared infrastructure for managing runtime in cri applications.
 module criRuntime
-use criErrcodes
 use criLinearMap
+use altay_definitions
 use criPath
 use,intrinsic :: iso_fortran_env, only: error_unit,output_unit
 implicit none
 
       integer,parameter              :: errmsg_len = 1024 !> Length of error message
       character(len=errmsg_len),save :: errmsg = '' !> Error message to be emitted on stop.
-
-      !>@{ \name Exit codes that are returned to the OS on various stop contitions
-
-      integer,parameter :: stopcode_OK = 0             !< OK, succsssful termination
-      integer,parameter :: stopcode_inputerror = 1     !< Error, input parameters are wrong
-      integer,parameter :: stopcode_ioerror = 2        !< Error, an IO operation has failed.
-      integer,parameter :: stopcode_runtimeerror = 10  !< Run-time error condition occured.
-      !>@}
 
       integer,parameter       :: description_len = 128
       integer,parameter       :: max_command_param_len = max_pathlen
@@ -56,7 +48,7 @@ contains
       subroutine finalize(errcode)
       integer,intent(in)      :: errcode
 
-            if ((errcode /= 0) .and. (len_trim(errmsg) > 0)) then
+            if ((errcode /= VEF_OK) .and. (len_trim(errmsg) > 0)) then
                   write(error_unit,fmt=9000) trim(errmsg)
                   9000 format(/,'Error:',1X,A)
             endif
@@ -84,9 +76,9 @@ contains
       !> Exit code.
       !>
       !> The following values are returned:
-      !>    * info = criSuccess on success
+      !>    * info = VEF_OK on success
       !>    * info = criFailure if the command argument does not match any of commands in the command_map.
-      !>    * info = criError or one of criErr_XXX on processing error.
+      !>    * info = VEF_ERROR or one of criErr_XXX on processing error.
       integer,intent(out)                       :: info
       !> Request termination of the process if the error condition occurs. Default: .false.
       logical,intent(in),optional                           :: terminate
@@ -96,7 +88,7 @@ contains
       !> Subroutine to be called before printing the help message.
       integer :: ierr, i
       !
-            info = criError
+            info = VEF_ERROR
             this%is_command_identified = .false.
             !
             call getArgv(this%argc,this%argv,info)
@@ -108,7 +100,7 @@ contains
                   if (.not. this%is_command_identified) then
                         errmsg = 'Unknown command: ' // trim(this%argv(command_argpos))
                         call finishProcessing(this,command_map,info,terminate)
-                        if (info /= criSuccess) return
+                        if (info /= VEF_OK) return
                   endif
             endif
             ! Pre-validate command line input
@@ -116,13 +108,13 @@ contains
                   errmsg = 'Insufficient number of parameters.'
                   ! Either stop or return exit code:
                   call finishProcessing(this,command_map,info,terminate)
-                  if (info /= criSuccess) return
+                  if (info /= VEF_OK) return
             endif
             !
             ! Process the optional parameters
             this%argc_opt = max(0,this%argc - argc_min)
             ! Allocate and initialize the args_opt
-            info = criErr_MemAlloc
+            info = VEF_ERROR
             allocate(character(len=max_pathlen*this%argc_opt) :: this%args_opt,stat=ierr)
             if (ierr /= 0) return
             this%args_opt  = ''
@@ -131,7 +123,7 @@ contains
             enddo
             !
             this%is_initialized = .true.
-            info = criSuccess
+            info = VEF_OK
             !
       !
       end subroutine
@@ -148,13 +140,13 @@ contains
       logical,intent(in),optional         :: terminate
       logical :: do_terminate
       !
-            info = criError
+            info = VEF_ERROR
             do_terminate = .false.
             if (present(terminate)) do_terminate = terminate
             !
             call printHelpMessage(this,command_map,info)
             if (do_terminate) then
-                  call finalize(stopcode_inputerror)
+                  call finalize(VEF_BADVAL)
             else
                   return
             endif
@@ -172,7 +164,7 @@ contains
       integer,intent(out)                 :: info
       integer :: i
       !
-            info = criError
+            info = VEF_ERROR
             if (this%progname /= '') write(error_unit,'(A)') trim(this%progname)
             write(error_unit,'(A)') trim(basename(trim(this%argv(0))))//' '// trim(this%description)
             if (size(command_map) > 0) then
@@ -199,7 +191,7 @@ contains
       !
       integer :: i,ierr, max_param_len, param_len
       !
-            info = criErr_MemAlloc
+            info = VEF_ERROR
             argc = command_argument_count()
             ! Scout for the longest parameter
             max_param_len = 0
@@ -213,12 +205,12 @@ contains
             argv(0:) = ''
             if (ierr /= 0) return
             ! OK, minimal conditions are satisfied.
-            info = criError
+            info = VEF_ERROR
             do i = 0, argc !MB: loop over command line parameters (command name + arguments) and store them in array of strings argv
                   call get_command_argument(i,argv(i),status=ierr)
                   if (ierr /= 0) return
             enddo
-            info = criSuccess
+            info = VEF_OK
       !
       end subroutine
 
@@ -234,7 +226,7 @@ contains
             open(newunit=nunit,file=fpath,status=status,iostat=ierr)
             if (ierr /= 0) then
                   errmsg = 'Cannot open file ' // trim(fpath)
-                  call finalize(stopcode_ioerror)
+                  call finalize(VEF_IO)
             endif
       !
       end function

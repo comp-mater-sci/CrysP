@@ -1,4 +1,5 @@
 program alamDMC
+    use altay_definitions
     use criRuntime
     use dmcUtils, only: display_unit
     use dmcBasicModule
@@ -31,7 +32,7 @@ program alamDMC
 
     character(len=128)  :: progname
 
-    info = criError ! see criErrcodes.f90
+    info = VEF_ERROR ! see criErrcodes.f90
     ioerr = 0
 
     write(progname,fmt=300)
@@ -39,10 +40,10 @@ program alamDMC
     cmdline = commandLine(progname,description=prog_desc) ! create commandLine type object with progname and description defined and assign to cmdline
     call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.) ! call processCommandLine with 7 arguments, last one optional
     moduleFound = .false.
-    if (info == criSuccess) moduleFound = resolveId(command_map, cmdline%command_id,moduleName) ! logical function defined in criLinearMap.f90: resolveId(themap,id,name[,index])
-    if ((info /= criSuccess) .or. (.not. moduleFound)) then
+    if (info == VEF_OK) moduleFound = resolveId(command_map, cmdline%command_id,moduleName) ! logical function defined in criLinearMap.f90: resolveId(themap,id,name[,index])
+    if ((info /= VEF_OK) .or. (.not. moduleFound)) then
         errmsg = 'Error in processing the command line'
-        call finalize(stopcode_inputerror)
+        call finalize(VEF_BADVAL)
     endif
     write(display_unit,fmt=300)
     300 format('AlamDMC')
@@ -70,7 +71,7 @@ program alamDMC
 
     if (.not. associated(the_module)) then
         write(errmsg,'(A)')  'Internal error: cannot instantiate the requested module.'
-        call finalize(stopcode_runtimeerror)
+        call finalize(VEF_ERROR)
     endif
 
     ! Read the configuration file:
@@ -78,13 +79,13 @@ program alamDMC
     close(cnfunit)
     if (info /= 0) then
         write(errmsg,'(A)') 'Configuration file contains errors.'
-        call finalize(stopcode_runtimeerror)
+        call finalize(VEF_ERROR)
     endif
 
     ! Initialize the module
-    if (the_module%initialize() /= criSuccess) then
+    if (the_module%initialize() /= VEF_OK) then
         if (len(errmsg) == 0) errmsg = 'Cannot initialize the module.'
-        call finalize(stopcode_runtimeerror)
+        call finalize(VEF_ERROR)
     endif
 
     ! Show general configuration of the multilevel model

@@ -1,7 +1,7 @@
 !> Configuration of substepping schemes
 module dmcSubsteppingConfig
 use criRange
-use criErrcodes
+use altay_definitions
 use commonConfig
 implicit none
 
@@ -40,7 +40,7 @@ contains
     class(SubsteppingConfig),intent(inout)      :: this
     integer,intent(in)                          :: cnfunit
     !
-        info = criSuccess
+        info = VEF_OK
     !
     end function
 
@@ -60,11 +60,11 @@ contains
     class(range_type),pointer :: tmp_range
     !
         tmp_range => rangeFromConfig(cnfunit, info)
-        if (info /= criSuccess) return
+        if (info /= VEF_OK) return
         !
         ! Check user input, make sure a proper range is constructed
         this%ptr_range => properSubsteppingRange(tmp_range, info)
-        if (.not. associated(this%ptr_range)) info = criErr_BadArgs
+        if (.not. associated(this%ptr_range)) info = VEF_BADVAL
         deallocate(tmp_range)
     !
     end function
@@ -130,7 +130,7 @@ contains
     integer :: i, n_points, ierr
     double precision :: value
     !
-        info = criErr_BadArgs
+        info = VEF_BADVAL
         n_points = range%size()
         if (n_points < 1) return
         allocate(tmp_points(n_points + 2)) ! + 2 is to make space for leading 0. and trailing 1.
@@ -146,7 +146,7 @@ contains
         !
         ! construct new range that conforms with the internal representation
         allocate(inst, source=DiscreteRange(tmp_points(1:i)),stat=ierr)
-        if (ierr == 0) info = criSuccess
+        if (ierr == 0) info = VEF_OK
     !
     end function
 

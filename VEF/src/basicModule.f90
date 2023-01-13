@@ -9,11 +9,12 @@ use criMathUtils
 use criAlgorithm, only: optionalDefault
 use criPath, only: max_pathlen, splitExt
 use criLinearMap
-use criLog
 use dmcAbstractModule
 use altayConfig, only: altayConfigData
 use commonConfig
 use dmcUtils
+use altay_definitions
+
 implicit none
     !> FCC (111)<110>, through altayDeformationMechanismData_preconfigured
     !> objects
@@ -100,7 +101,7 @@ contains
       integer :: ierr
       !
 
-            info = criError
+            info = VEF_ERROR
             ! Finish the configuration:
             this%altay%output_config%nfile = merge(1,0,this%output%outputRequest)
             this%altay%output_prefix = trim(this%output%outputPrefix)
@@ -115,15 +116,8 @@ contains
                   end select
             endif
             !
-            if (doLogging(criLoginfo,this%output%verbosity)) write(display_unit,fmt=30, advance='no')
             call initAltay(this%altay,ierr,errmsg)
-            if (doLogging(criLoginfo,this%output%verbosity)) then
-                if (ierr == altaySub_OK) then
-                      write(display_unit,fmt=31) 'Done.'
-                else
-                      write(display_unit,fmt=31) 'Failed.'
-                endif
-            endif
+            
             if (ierr /= altaySub_OK) return
 
             30 format('Initializing the multilevel model...')
@@ -137,7 +131,7 @@ contains
                         return
                   endif
             endif
-            info = criSuccess
+            info = VEF_OK
             !
       end function
 
@@ -146,18 +140,18 @@ contains
       class(BasicModule),intent(inout)          :: this
       integer,intent(in)                        :: cnfunit !< IO input unit
       !
-            info = criErr_IORead
+            info = VEF_IO
             !
             ! Read output configuration lines
             call readOutputConfigSection(cnfunit,this%output,info) ! top 3 lines after comment header of config file
-            if (info /= criSuccess) then
+            if (info /= VEF_OK) then
                   write(error_unit,fmt=901) 'Check output configuration section.'
                   return
             endif
             !
             ! Read AlTay configuration lines
             call readAlTayConfigSection(cnfunit,this%altay,info) ! read configuration of texture, slip systems, microstructure and hardening
-            if (info /= criSuccess) then
+            if (info /= VEF_OK) then
                   write(error_unit,fmt=901) 'Check libaltay configuration section.'
                   return
             endif
@@ -174,59 +168,8 @@ contains
       use altayConfig
       class(BasicModule),intent(in)       :: this
       integer,intent(in)                  :: outunit
-      !
-            info = criErr_BadArgs
-            if (doLogging(criLogInfo,this%output%verbosity)) then
-                select case (this%altay%model_id)
-                case(modelAlamel)
-                      write(display_unit,fmt=202) 'ALAMEL'
-                case(modelFCTaylor)
-                      write(display_unit,fmt=202) 'FC Taylor'
-                end select
-                !
-
-                ! Print configuration
-                select case(this%altay%texture%input_type)
-                      case(1)     ! SMT or CUB
-                            write(outunit,fmt=200) 'SMT'
-                      case(2)       ! CUR file
-                            write(outunit,fmt=200) 'CUR'
-                      case(3)
-                            write(outunit,fmt=200) 'CUB'
-                end select
-                write(outunit,fmt=201) trim(this%altay%texture%input_fname)
-                write(outunit,fmt=101) 'Slip systems definition:', trim(this%altay%slipsystem%input_fname)
-                write(outunit,fmt=101) 'Microstructure definition:', trim(this%altay%micros_fname)
-                select case(this%altay%hardening%HardLawID)
-                      case(0)     ! hard_none
-                            write(outunit,fmt=203) 'non-hardening'
-                      case(1)     !
-                            write(outunit,fmt=203) 'Voce'
-                      case(2)       !
-                            write(outunit,fmt=203) 'Swift K'
-                      case(3)
-                            write(outunit,fmt=203) 'Swift S'
-                      case(11)
-                            write(outunit,fmt=203) 'Peeters'
-                      case(12)
-                            write(outunit,fmt=203) 'PEBP screw'
-                      case(13)
-                            write(outunit,fmt=203) 'PEBP loop'
-                end select
-                !
-            endif
-            !
-            info = criSuccess
-            !
-            !!!!
-            100 format(/,A,/)
-            101 format(A,T35,A)
-            !
-            200 format('Input texture format:', T35,A)
-            201 format('Input texture file:', T35,A)
-            202 format('Multilevel model:', T35,A)
-            203 format('Hardening model:', T35,A)
-      !
+                        
+            info = VEF_OK
       end function
 
 
@@ -235,7 +178,7 @@ contains
     class(BasicModule),intent(inout) :: this
     integer,intent(out)                 :: info
     !
-        info = criSuccess
+        info = VEF_OK
     !
     end subroutine
 
@@ -246,9 +189,9 @@ contains
     class(BasicModule),intent(inout) :: this
     !
         info = this%finalizeLibAltay()
-        if (info /= criSuccess) then
+        if (info /= VEF_OK) then
             errmsg = 'Problems have been encountered while finalizing libaltay'
-            info = criError
+            info = VEF_ERROR
         endif
     !
     end function
@@ -273,10 +216,10 @@ contains
         open(newunit=ofunit, file=output_path, status='replace', iostat=ierr)
         if (ierr /= 0) then
             write(display_unit, fmt=952) output_path
-            info = criErr_IOWrite
+            info = VEF_IO
             return
         endif
-        info = criSuccess
+        info = VEF_OK
     !
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
@@ -293,14 +236,14 @@ contains
     !
     integer :: ierr
         ! Re-initialize AlTay
-        RETURN_IF(info /= criSuccess, info = this%finalizeLibAltay())
+        RETURN_IF(info /= VEF_OK, info = this%finalizeLibAltay())
         !
         ! Reconfigure:
         !  - Set new prefix
         if (present(output_prefix)) this%altay%output_prefix = output_prefix
         !
         call initAltay(this%altay,ierr)
-        CHOOSE(info, ierr == altaySub_OK, criSuccess, criError)
+        CHOOSE(info, ierr == altaySub_OK, VEF_OK, VEF_ERROR)
     !
     end function
 
@@ -311,11 +254,11 @@ contains
     !
     integer :: ierr
     !
-        info = criError
+        info = VEF_ERROR
         RETURN_IF(ierr /= altaySub_OK, call finalizeAltay(ierr))
         !
         ! Action on finalize:
-        info = criSuccess
+        info = VEF_OK
     !
     end function
 
@@ -330,7 +273,7 @@ contains
       type(outputConfig),intent(inout)    :: cnf
       integer,intent(out)                 :: info
       !
-            info = criErr_IORead
+            info = VEF_IO
             if (.not. readValue(cnfunit, cnf%outputPrefix)) then
                 write(error_unit,fmt=900) 'Check output file prefix.'
                 return
@@ -343,7 +286,7 @@ contains
                 write(error_unit,fmt=900) 'Check verbosity level.'
                 return
             endif
-            info = criSuccess
+            info = VEF_OK
       !
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
@@ -375,7 +318,7 @@ contains
                                                         MapItem('bcc48', DM_bcc48), &
                                                         MapItem('pre', DM_format_pre)]
       !
-           info = criErr_IORead
+           info = VEF_IO
            model_id = -1
            dm_id = -1
             ! Read input texture file name
@@ -385,7 +328,7 @@ contains
             call splitExt(cnf%texture%input_fname, root, ext)
             if (ext == '' .or. .not. resolveName(extensions, ext, cnf%texture%input_type)) then
                 write(error_unit,fmt=900) 'Unsupported texture input file format.'
-                info = criErr_BadArgs
+                info = VEF_BADVAL
                 return
             endif
             select case(cnf%texture%input_type)
@@ -402,7 +345,7 @@ contains
             !if (.not. readKeyword(cnfunit, model_types, model_id)) return
             if (.not. readKeyword(cnfunit, model_types, model_id)) then
                 write(error_unit,fmt=900) 'Unsupported crystal plasticity model.'
-                info = criErr_BadArgs
+                info = VEF_BADVAL
                 return
             endif
             !
@@ -415,12 +358,12 @@ contains
             else ! default slip system definition
                   if (.not. readKeyword(cnfunit, slipsystem_types, dm_id)) then
                       write(error_unit,fmt=900) 'Unsupported slip system family.'
-                      info = criErr_BadArgs
+                      info = VEF_BADVAL
                       return
                   endif
                   ! Let's map DM_id to a file
                   call incurSlipsystemFile(dm_id, cnf%slipsystem%input_fname, info)
-                  if (info /= criSuccess) then
+                  if (info /= VEF_OK) then
                         write(error_unit, fmt=930) 'Cannot locate slipsystem file.'
                         return
                   endif
@@ -435,20 +378,20 @@ contains
                   call splitExt(cnf%micros_fname, root, ext)
                   if (ext == '' .or. .not. (ext == '.smt' .or. ext == '.SMT')) then
                         write(error_unit,fmt=900) 'Unsupported microstructure input file format.'
-                        info = criErr_BadArgs
+                        info = VEF_BADVAL
                         return
                   endif
                   ! Read user-supplied initial deformation gradient
                   do i=1,3
                         if (.not. readValue(cnfunit, cnf%simul_init%Fmicro(:,i))) then
                             write(error_unit,fmt=900) 'Cannot read deformation gradient.'
-                            info = criErr_BadArgs
+                            info = VEF_BADVAL
                             return
                         endif
                   enddo
             else
                   call incurMicrostructureFile(cnf%micros_fname, info) ! verify location of default microstructure file
-                  if (info /= criSuccess) then
+                  if (info /= VEF_OK) then
                         write(error_unit, fmt=930) 'Cannot locate default microstructure file.'
                         return
                   endif
@@ -456,13 +399,13 @@ contains
             !
             ! Process hardening model section
             call readHardeningSection(cnfunit, cnf%hardening, info)
-            if (info /= criSuccess) then
+            if (info /= VEF_OK) then
                 write(error_unit,fmt=900) 'Cannot read the hardening law section.'
                 return
             endif
             ! the keyword is mapped to a proper model_id, we can instantly set it.
             call setModelType(cnf,model_id,info)
-            if (info /= criSuccess) return
+            if (info /= VEF_OK) return
             !
             !
 #define MSG_GROUP_ERRORS
@@ -494,26 +437,26 @@ contains
                   select case(hardening%HardLawID)
                   case(hard_none)
                         ! no action needed
-                        info = criSuccess
+                        info = VEF_OK
                   case(hard_Voce)
                         ! Read one line
                         if (readValue(cnfunit, tmp(1:5))) then
                               hardening%VoceCnf = VoceConfig(tmp(1), tmp(2), tmp(3), tmp(4), tmp(5))
-                              info = criSuccess
+                              info = VEF_OK
                         endif
                   !
                   case(hard_SwiftK)
                         ! Read one line
                         if (readValue(cnfunit, tmp(1:3))) then
                               hardening%SwiftKCnf = SwiftKConfig(tmp(1),tmp(2), tmp(3))
-                              info = criSuccess
+                              info = VEF_OK
                         endif
                   !
                   case(hard_SwiftS)
                         ! Read one line
                         if (readValue(cnfunit, tmp(1:3))) then
                               hardening%SwiftSCnf = SwiftSConfig(tmp(1),tmp(2), tmp(3))
-                              info = criSuccess
+                              info = VEF_OK
                         endif
                   !
                   case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
@@ -521,15 +464,15 @@ contains
                         call readPEPBhardening(cnfunit,hardening%HardLawID,hardening%PEBPCnf,info)
 #else
                         write(error_unit,fmt=900) 'The selected hardening model is not available in your version'
-                        info = criError
+                        info = VEF_ERROR
 #endif
                   case default
                         write(error_unit,fmt=900) 'Unsupported hardening law.'
-                        info = criError
+                        info = VEF_ERROR
                         return
                   end select
             else
-                  info = criSuccess
+                  info = VEF_OK
             endif
 ! message formats
 #define MSG_GROUP_ERRORS
@@ -556,7 +499,7 @@ contains
       character(len=max_pathlen)          :: tmp_fname ! BP parameter file name
       integer                             :: nparunit  ! IO unit of BP parameter file
       !
-            info = criErr_IORead
+            info = VEF_IO
             !
             ! Process PEBP parameter file
             if (.not. readValue(cnfunit, tmp_fname)) return ! read BP parameter file name
@@ -580,7 +523,7 @@ contains
                   if (.not. readValue(cnfunit,hc%block_id)) return ! read no. of state blocks to skip in state file; default block_id=0
             endif
             !
-            info = criSuccess
+            info = VEF_OK
 
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
@@ -619,11 +562,11 @@ contains
       integer :: ierr
       logical :: file_exists
       !
-            info = criErr_BadArgs
+            info = VEF_BADVAL
             prefix = getVEFDataDir()
             path = pathjoin(prefix, fname)
             inquire(file=path, exist=file_exists, iostat=ierr)
-            if (ierr == 0 .and. file_exists) info = criSuccess
+            if (ierr == 0 .and. file_exists) info = VEF_OK
       !
       end subroutine
 
@@ -636,7 +579,7 @@ contains
       !
       character(len=max_pathlen) :: fname
       !
-            info = criErr_BadArgs
+            info = VEF_BADVAL
             select case(dm_id)
             case(DM_fcc12)
                   fname = 'fcc12.pre'

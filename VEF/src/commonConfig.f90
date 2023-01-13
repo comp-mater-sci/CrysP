@@ -1,7 +1,7 @@
 !> This module contains subroutines, data structures and common variables
 !> for shared configuration features of all alamDMC modules
 module commonConfig
-use criErrcodes
+use altay_definitions
 implicit none
 
       character(len=20),parameter   :: fmtMsg2Msg   = '(A,T35,A)'
@@ -59,7 +59,7 @@ contains
                                                     (range_name_extensions_map(i),i=1,size(range_name_extensions_map)), &
                                                     (special_range_names_map(i),i=1,size(special_range_names_map))]
       !
-            info = criErr_IORead
+            info = VEF_IO
             nullify(inst)
             id = -1
             ! Read the keyword
@@ -125,12 +125,12 @@ contains
                   allocate(inst, source=discreteRange(vPoints))
             !
             case default
-                  info = criErr_BadArgs
+                  info = VEF_BADVAL
                   return
             !
             end select
             !
-            if (associated(inst)) info = criSuccess
+            if (associated(inst)) info = VEF_OK
       !
       end function
 

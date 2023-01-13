@@ -5,7 +5,6 @@
 module dmcQRS
 use criMathUtils
 use criRange
-use criLog
 use criAlgorithm
 use criUncomment, only: readValue
 use dmcYLPResult
@@ -73,15 +72,15 @@ contains
     !
         use_default_settings = .false.
         info = this%StressDrivenModule%readConfig(cnfunit)
-        if (info /= criSuccess) return
-        info = criErr_IORead
+        if (info /= VEF_OK) return
+        info = VEF_IO
         ! Read parameters specific for the QRSModule module
         this%ptr_range => rangeFromConfig(cnfunit,info)
-        if ( (info /= criSuccess) .or. (.not. associated(this%ptr_range)) ) return
+        if ( (info /= VEF_OK) .or. (.not. associated(this%ptr_range)) ) return
         !
         if (.not. readValue(cnfunit, use_default_settings)) return
         if (.not. use_default_settings) then
-                info = criErr_IORead
+                info = VEF_IO
                 if (.not. readValue(cnfunit, this%rho)) return
                 if (.not. readValue(cnfunit, this%calculate_MFactor)) return
                 if (.not. readValue(cnfunit, this%fold_symmetry)) return
@@ -93,7 +92,7 @@ contains
         this%altay%output_config%npebp = 0   ! KOST1x state
         this%output%outputRequest = .false.       ! idem.
         !
-        info = criSuccess
+        info = VEF_OK
     !
     end function
 
@@ -105,27 +104,7 @@ contains
     !
     integer :: ioerr
     !
-        info = this%StressDrivenModule%printConfig(outunit)
-        if (info /= criSuccess) return
-        !
-        if (doLogging(criLogWarn,this%output%verbosity)) then
-            ! Introduce youself ;-)
-            write(outunit,'(A)') 'QRS: $Rev$'
-        endif
-        if (doLogging(criLogInfo,this%output%verbosity)) then
-            ! Print-out summary of the configuration
-            !write(display_unit,fmt=fmtMsg2Other//'2(F8.3,1X))',iostat=ioerr) 'Angular range:', this%fi2min, this%fi2max
-            write(outunit,fmt=fmtMsg2Int,iostat=ioerr)   'Number of points:', this%ptr_range%size()
-            write(outunit,fmt=fmtMsg2Float,iostat=ioerr) 'Stress ratio', this%rho
-            !
-            write(outunit,fmt='(A, 1X)',advance='NO') 'Info:'
-            if (this%use_stability_improvements) then
-                write(outunit,'(A)') 'Strain rate from the previous solution will be re-used.'
-            else
-                write(outunit,'(A)') 'von Mises guess will be used.'
-            endif
-        endif
-        info = criSuccess
+                info = VEF_OK
     !
     end function
 
@@ -159,13 +138,13 @@ contains
         'angle','rho','q-value','r-value','sigma_xx','residual' ]
     !
         ! Super-class first
-        RETURN_IF(info /= criSuccess, call this%StressDrivenModule%run(info))
+        RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
         !
-        info = criError
+        info = VEF_ERROR
         !
         npoints = this%ptr_range%size()
         !
-        RETURN_IF(info /= criSuccess, info = this%openOutputFile('.xqrs', ofunit))
+        RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.xqrs', ofunit))
         !
         ! Apply correction to the configuration of the search procedure:
         ! there will be no need to use the full model in the last call unless
@@ -188,15 +167,6 @@ contains
             ! use von Mises guess as a default
             useVMGuess = .true.
             !
-            if (doLogging(criLogDebug,this%output%verbosity)) then
-                write(display_unit,800)
-            endif
-            if (doLogging(criLogInfo,this%output%verbosity)) then
-                continue
-            elseif (doLogging(criLogWarn,this%output%verbosity)) then
-                write(display_unit,fmt=1600) i, npoints, fi2
-            endif
-            !
             fi2 = deg2rad(fi2)
             ! Calculate rotation matrix
             Mrot = rotmat(fi1,phi,fi2)
@@ -216,23 +186,16 @@ contains
             endif
             !
             info = this%findSolution(sigma, D, ylp_result, useVMGuess, is_acceptable=acceptable_point)
-            if ((info /= criSuccess) .and. .not. acceptable_point) then
+            if ((info /= VEF_OK) .and. .not. acceptable_point) then
                 write(display_unit,fmt=860) 'Cannot find solution, datapoint dropped'
                 cycle
             endif
+
             if (is_error(info)) exit
             !
             SonA%t = vec5D2tens(ylp_result%vSonA)
             SmIdent%t = vec5D2tens(ylp_result%vSonAn) ! stress mode for found strain mode
 
-            if (doLogging(criLogDebug,this%output%verbosity)) then
-                info = printYLPResult(display_unit, ylp_result)
-                write(display_unit, fmt=3400)
-                do j=1,3
-                    ! would be just:  write(display_unit,401) sigma(j,:),SmIdent(j,:),Dmcoord(j,:)
-                    write(display_unit,fmt=3401) (sigma%t(j,k),k=1,3), (SmIdent%t(j,k),k=1,3), (D%t(j,k), k=1,3)
-                enddo
-            endif
             ! Rotate back to the "tensile test" coordinate system
             D_t = rotateSRTensorFrom(D, Mrot)
             S_t = rotateSRTensorFrom(SonA, Mrot)
@@ -259,23 +222,15 @@ contains
                         exit
                     endif
                 endif
-                !
-                if (doLogging(criLogInfo,this%output%verbosity)) then
-                    write(display_unit,fmt=2601) !
-                    write(display_unit,fmt=2600) (centered(display_column_labels(j)), j=1,ncolumn_labels_display)
-                    write(display_unit,fmt=2610) r%phis(i), this%rho, r%qrsvalues(i)%qvalue, r%qrsvalues(i)%rvalue, r%sigmas_x(i), r%residuals(i)
-                    write(display_unit,fmt=2601)
-                endif
             end associate
             !
             i = i + 1
             !
-            info = criSuccess
+            info = VEF_OK
         enddo
         !
-        ! End of the main loop, check what's the status of the last operation
         if (is_error(info)) return
-        !
+    
         npoints_ok = i-1
         if (npoints /= npoints_ok) then
             write(display_unit,fmt=850) 'There were unconverged solutions, so some of datapoints are dropped'
@@ -323,18 +278,18 @@ contains
         [ character(len=column_width) ::  &
         'angle','rho','q-value','r-value','s-value','sigma_xx','M-factor','residual' ]
     !
-        info = criErr_BadArgs
+        info = VEF_BADVAL
         if (optionalDefault(header,.false.)) then
             info = writeStandardHeader(iounit, column_names, [column_width])
-            if (info /= criSuccess) return
+            if (info /= VEF_OK) return
         endif
         !
         if (present(data_record)) then
-            info = criErr_IOWrite
+            info = VEF_IO
             ! FIXME: flawed assumption, other arrays may have different size
             ALLOCATED_SIZE(npoints, data_record%phis)
             if (present(restrict)) then
-                RETURN_IF_WITH(npoints < restrict, info=criError)
+                RETURN_IF_WITH(npoints < restrict, info=VEF_ERROR)
                 npoints = restrict
             endif
             ! Write output file
@@ -370,7 +325,7 @@ contains
             endif
         endif
         !
-        info = criSuccess
+        info = VEF_OK
         !
         ! Formats for the output file
         710 format(1X, 8(E18.9,1X))

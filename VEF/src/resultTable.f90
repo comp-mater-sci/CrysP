@@ -2,7 +2,7 @@
 
 !> In-memory cache/table of the recent results from the multi-level model.
 module dmcResultTable
-use criErrcodes
+use altay_definitions
 use criMathUtils
 use alamYLPConstants
 use dmcResultTableRecord
@@ -57,9 +57,9 @@ contains
     !> Find item in the database that has the smallest angle between
     !> S and item%vSonA, optionally restricting the choice to acceptable angles
     !> smaller than max_angle.
-    !> Unless criSuccess is returned, the argument A is undefined.
+    !> Unless VEF_OK is returned, the argument A is undefined.
     !>
-    !> \return criSuccess on success, criFailure if no item satisfies the
+    !> \return VEF_OK on success, VEF_ERROR if no item satisfies the
     !> requirement
     integer function get(this, S, A, max_angle) result(info)
     class(ResultTable),intent(inout)   :: this
@@ -71,7 +71,7 @@ contains
     equivalence(min_idx_a(1), min_idx)
     double precision,dimension(:),allocatable :: angles
     !
-        info = criFailure
+        info = VEF_FAIL
         npoints = size(this%table)
         if (npoints > 0) then
             allocate(angles(npoints))
@@ -80,11 +80,11 @@ contains
             enddo
             min_idx_a = minloc(angles)
             if (present(max_angle)) then
-                CHOOSE(info, angles(min_idx) > max_angle, criFailure, criSuccess)
+                CHOOSE(info, angles(min_idx) > max_angle, VEF_FAIL, VEF_OK)
             else
-                info = criSuccess
+                info = VEF_OK
             endif
-            if (info == criSuccess) A = this%table%values(min_idx)%vA
+            if (info == VEF_OK) A = this%table%values(min_idx)%vA
         endif
     !
     end function
@@ -100,7 +100,7 @@ contains
         if (size(this%table) > this%saved_session_idx) then
             open(newunit=iounit, file=fpath, position='APPEND', action='WRITE',&
                  status='UNKNOWN', form='UNFORMATTED', iostat=ierr)
-            RETURN_IF_WITH(ierr /= 0, info=criErr_IOOpen)
+            RETURN_IF_WITH(ierr /= 0, info=VEF_IO)
             do i = this%saved_session_idx + 1, size(this%table)
                 write(iounit, iostat=ierr) this%table%values(i)
                 if (ierr /= 0) exit
@@ -114,7 +114,7 @@ contains
                 close(iounit, iostat=ierr)
             endif
         endif
-        info = criSuccess
+        info = VEF_OK
     !
     end function
 
@@ -127,12 +127,12 @@ contains
     integer :: iounit, ierr
     type(ResultTableRecord) :: tmp
     !
-        info = criSuccess
+        info = VEF_OK
         open(newunit=iounit, file=fpath, status='OLD', &
              form='UNFORMATTED', iostat=ierr)
         if (ierr == 0) then
             ! the file exists, load data from it
-            do while ((ierr == 0) .or. (info /= criSuccess))
+            do while ((ierr == 0) .or. (info /= VEF_OK))
                 read(iounit, iostat=ierr) tmp
                 if (ierr == 0) then
                     info = xVector_push(this%table, tmp)
@@ -141,11 +141,11 @@ contains
                 endif
             enddo
             ! negative ierr on end-of-file or end-of-record; positive on error
-            if (ierr > 0 .or. info /= criSuccess) then
-                info = criErr_IORead
+            if (ierr > 0 .or. info /= VEF_OK) then
+                info = VEF_IO
             else
                 this%saved_session_idx = size(this%table)
-                info = criSuccess
+                info = VEF_OK
             endif
             close(iounit)
         endif

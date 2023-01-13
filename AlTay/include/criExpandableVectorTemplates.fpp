@@ -94,12 +94,12 @@ contains
     integer :: idx_last
     !
         call xVector_expand(v, 1, info)
-        if (info /= criSuccess) return
+        if (info /= VEF_OK) return
         idx_last = xVector_size(v) + 1 !< Move the index
         ! ... and place the item
         v%xdata(idx_last) = item
         v%values => v%xdata(1:idx_last)
-        info = criSuccess
+        info = VEF_OK
     !
     end function
 
@@ -116,19 +116,19 @@ contains
     !
         if (nelem <= 0) then
             ! Expand by 0 is legal, but ignored
-            info = criErr_BadArgs
-            if (nelem == 0) info = criSuccess
+            info = VEF_BADVAL
+            if (nelem == 0) info = VEF_OK
             return
         endif
         if (.not. allocated(v%xdata)) then
             v%values => null()
             allocate(v%xdata(nelem), stat=ierr)
             if (ierr /= 0) then
-                info = criErr_MemAlloc
+                info = VEF_ERROR
                 return
             endif
         else
-            info = criErr_BadArgs
+            info = VEF_BADVAL
             idx_last = xVector_size(v)
             new_min_size = idx_last + nelem
             ! Check for integer overflow
@@ -146,7 +146,7 @@ contains
                 endif
                 allocate(tmp(new_size), stat=ierr)
                 if (ierr /= 0) then
-                    info = criErr_MemAlloc
+                    info = VEF_ERROR
                     return
                 endif
                 ! Copy data from the old storage to the newly allocated
@@ -167,7 +167,7 @@ contains
                 v%values => v%xdata(1:idx_last)
             endif
         endif
-        info = criSuccess
+        info = VEF_OK
     !
     end subroutine
 

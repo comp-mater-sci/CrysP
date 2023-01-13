@@ -2,7 +2,7 @@
 
 !> Common set of procedures for producing plain text column-based output of numerical data.
 module dmcResultFileOutput
-use criErrcodes
+use altay_definitions
 use criAlgorithm
 implicit none
 
@@ -35,15 +35,15 @@ contains
     !
     character(len=fmt_string_length) :: fmt_string ! TODO: make it allocatable
     !
-        info = criSuccess
+        info = VEF_OK
         ! Write column numbers
         if (optionalDefault(use_column_numbers, .true.)) then
             info = writeColumnNumbers(iounit, size(column_names), column_widths)
-            if (info /= criSuccess) return
+            if (info /= VEF_OK) return
         endif
         ! Write column labels
         info = writeColumnNames(iounit, column_names, column_widths)
-        if (info /= criSuccess) return
+        if (info /= VEF_OK) return
         !
         ! Write the data
         if (present(data_formats)) then
@@ -74,12 +74,12 @@ contains
             fmt_string = '("#",1X,' // trim(tostring(ncolumns,max_int_digits)) // &
                          '(A'// TADJUSTL(tostring(column_width,max_int_digits)) // ',1X))'
             write(iounit,fmt=fmt_string,iostat=ierr) (centered(i,column_width), i = 1, ncolumns)
-            CHOOSE(info, ierr == 0, criSuccess, criErr_IOWrite)
+            CHOOSE(info, ierr == 0, VEF_OK, VEF_IO)
             !
         elseif(size(column_widths) == ncolumns) then
-            info = criError ! not yet implemented
+            info = VEF_ERROR ! not yet implemented
         else
-            info = criError
+            info = VEF_ERROR
         endif
     !
     end function
@@ -100,13 +100,13 @@ contains
             ! Format: two leading spaces, followed by columns
             fmt_string = '(2X,'// trim(tostring(ncolumns,10)) // '(A,1X))'
             write(iounit,fmt=fmt_string,iostat=ierr) (centered(column_names(i)), i = 1, ncolumns)
-            CHOOSE(info, ierr==0, criSuccess, criErr_IOWrite)
+            CHOOSE(info, ierr==0, VEF_OK, VEF_IO)
             !
         elseif(size(column_widths) == ncolumns) then
 
-            info = criError ! Not yet implemented
+            info = VEF_ERROR ! Not yet implemented
         else
-            info = criErr_BadArgs
+            info = VEF_BADVAL
         endif
     !
     end function
@@ -118,7 +118,7 @@ contains
     integer,dimension(:),intent(in)         :: column_widths ! Widths of columns
     !
         info = writeColumnNumbers(iounit, size(column_names), column_widths)
-        if (info /= criSuccess) return
+        if (info /= VEF_OK) return
         info = writeColumnNames(iounit, column_names, column_widths)
     !
     end function
@@ -156,13 +156,13 @@ contains
                 write(iounit,fmt=fmt_string,iostat=ierr) data(:,i)
                 if (ierr /= 0) exit
             enddo
-            CHOOSE(info, ierr==0, criSuccess, criErr_IOWrite)
+            CHOOSE(info, ierr==0, VEF_OK, VEF_IO)
             !
         elseif(size(column_widths) == ncolumns) then
 
-            info = criError ! Not yet implemented
+            info = VEF_ERROR ! Not yet implemented
         else
-            info = criErr_BadArgs
+            info = VEF_BADVAL
         endif
 
 

@@ -30,9 +30,9 @@ HARDENING_MODEL_SETTINGS = {'NONE':'0',
                             'VOCE':'1\n12.39 15 20 0.2 0.1',
                             'SWIFT_K':'2\n65.0 1.e-3 0.24',
                             'SWIFT_S':'3\n12.39 1.e-3 0.24',
-                            'BP_LINE':'11\nDSHparaset.txt\nFalse',
-                            'BP_SCREW':'12\nDSHparaset.txt\nFalse',
-                            'BP_LOOP':'13\nDSHparaset.txt\nFalse'}
+                            'BP':'11\nDSHparaset.txt\nFalse',
+                            'PEBP_SCREW':'12\nDSHparaset.txt\nFalse',
+                            'PEBP_LOOP':'13\nDSHparaset.txt\nFalse'}
 HARDENING_MODELS = list(HARDENING_MODEL_SETTINGS.keys())
 
 #Unit tests
@@ -87,7 +87,7 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
     if not (mode, algorithm, slip_system, hardening_model) in GENERATED_DATA:
         os.chdir(TEST_DATA)
 
-        result = subprocess.run(['alamDMC',mode,'test.cfg'],
+        result = subprocess.run([TEST_ROOT/f'../VEF/bin/alamDMC',mode,'test.cfg'],
                                 stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
         assert result.returncode == 0
         with open('alamDMC.log','w') as f:

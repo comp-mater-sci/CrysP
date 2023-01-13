@@ -2,9 +2,8 @@
 
 !> Arbitrary Deformation Path strain-(rate) driven simulations
 module dmcADP
-use criErrcodes
+use altay_definitions
 use criConfigReader
-use criLog
 use criMathUtils
 use altayMacroKinematic, only: DeformationRate, Set_DeformationRate
 use dmcUtils, only: display_unit
@@ -48,11 +47,6 @@ contains
     integer,intent(in)              :: outunit !< IO unit for output
     !
         info = this%DeformationDrivenModule%printConfig(outunit)
-        if (doLogging(criLogWarn,this%output%verbosity)) then
-            ! Introduce youself ;-)
-            write(display_unit,'(A)') 'ADP, $Rev$'
-        endif
-    !
     end function
 
 
@@ -86,15 +80,15 @@ contains
     type(SRTensor) :: tmp_deformation_rate
         !
         ! Read generic configuration section (output settings, AlTay (texture, microstructure, hardening), solver settings
-        RETURN_IF(info /= criSuccess, info = this%DeformationDrivenModule%readConfig(cnfunit))
-        info = criErr_IORead
+        RETURN_IF(info /= VEF_OK, info = this%DeformationDrivenModule%readConfig(cnfunit))
+        info = VEF_IO
         !
         ! Read the module-specific config
         if (.not. readValue(cnfunit, n_steps)) return
         !
-        RETURN_IF_WITH(n_steps < 1, info = criErr_BadArgs)
+        RETURN_IF_WITH(n_steps < 1, info = VEF_BADVAL)
 
-        RETURN_ON_WITH(allocate(this%steps(n_steps), stat=ierr), ierr /= 0, info = criErr_MemAlloc)
+        RETURN_ON_WITH(allocate(this%steps(n_steps), stat=ierr), ierr /= 0, info = VEF_ERROR)
         !
         do i = 1, n_steps
             associate(step => this%steps(i))
@@ -150,20 +144,19 @@ contains
                 case(fixed_incrementation_id)
                     allocate(StrainDrivenFixedStep :: step%step)
                     info = step%step%readConfig(cnfunit)
-                    if (info /= criSuccess) return
+                    if (info /= VEF_OK) return
                 !
                 case default
-                    info = criErr_BadArgs
+                    info = VEF_BADVAL
                     return
                 end select
                 !
                 ! Phase 2: set the config
                 step%step%config = tmp_step_config
-                step%step%log = logData(this%output%verbosity, display_unit)
 
             end associate
         enddo
-        info = criSuccess
+        info = VEF_OK
     !
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
@@ -182,13 +175,13 @@ contains
     integer :: iounit, i_step, n_steps
     !
         ! Super-class first
-        RETURN_IF(info /= criSuccess, call this%DeformationDrivenModule%run(info))
+        RETURN_IF(info /= VEF_OK, call this%DeformationDrivenModule%run(info))
         !
         ! Open output file
-        RETURN_IF(info /= criSuccess, info = this%openOutputFile('.adp',iounit))
+        RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.adp',iounit))
         !
         ! Run the simulation
-        info = criErr_BadArgs
+        info = VEF_BADVAL
         ALLOCATED_SIZE(n_steps, this%steps)
         if (n_steps < 1) return
         !
@@ -199,26 +192,15 @@ contains
         do i_step = 1, n_steps
             associate(step => this%steps(i_step)%step, &
                       step_output => output%steps(i_step))
-                !
-                ! Begin step
-                !
-                if (doLogging(criLogDebug, this%output%verbosity)) write(display_unit,800)
-                if (doLogging(criLogWarn, this%output%verbosity)) then
-                    write(display_unit,fmt=1600) i_step, n_steps
-                endif
                 ! Set up the step
-                RETURN_IF(info /= criSuccess, info = step%setUp())
+                RETURN_IF(info /= VEF_OK, info = step%setUp())
                 ! Execute the step
-                RETURN_IF(info /= criSuccess, info = step%execute(step_output))
+                RETURN_IF(info /= VEF_OK, info = step%execute(step_output))
                 ! Output the results
-                RETURN_IF(info /= criSuccess, info = this%fileOutput(iounit, output, header=(i_step==1), step_id=i_step))
-                !
-                if (info /= criSuccess) return
-                !
+                RETURN_IF(info /= VEF_OK, info = this%fileOutput(iounit, output, header=(i_step==1), step_id=i_step))
+                if (info /= VEF_OK) return
             end associate
         enddo
-        !
-        1600 format(/,'Step ',I0, ' out of ',I0)
     !
 #define MSG_GROUP_ERRORS
 #define MSG_GROUP_RULERS
@@ -252,23 +234,23 @@ contains
         'eps_vM_begin', 'eps_vM_end', 'D_vM', 'S_vM', 'dW', 'M-factor', 'gamma' & ! 7 fields
         ]
         !
-        info = criErr_BadArgs
+        info = VEF_BADVAL
         if (optionalDefault(header,.false.)) then
             ! Write column numbers
             info = writeColumnNumbers(iounit, size(column_names), [column_width] )
-            if (info /= criSuccess) return
+            if (info /= VEF_OK) return
             ! Write column labels
             info = writeColumnNames(iounit, column_names, [column_width] )
-            if (info /= criSuccess) return
+            if (info /= VEF_OK) return
         endif
         !
         if (present(output)) then
             ALLOCATED_SIZE(n_steps, output%steps)
             first_step = optionalDefault(step_id, 1)
             last_step = optionalDefault(step_id, n_steps)
-            RETURN_IF_WITH(first_step < 1 .or. last_step > n_steps, info = criErr_BadArgs)
+            RETURN_IF_WITH(first_step < 1 .or. last_step > n_steps, info = VEF_BADVAL)
             !
-            info = criErr_IOWrite
+            info = VEF_IO
             !
             ! Write the data
             do step = first_step, last_step
@@ -297,7 +279,7 @@ contains
                     enddo
                 end associate
             enddo
-            info = criSuccess
+            info = VEF_OK
         endif
 
         !
