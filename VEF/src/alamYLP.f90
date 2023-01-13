@@ -205,13 +205,8 @@ implicit none
       if (log_info) write(ounit,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',objFunc%state%vF
 
       vSonA = objFunc%vSml
-      !
-      if (R > config%obj_func_eps) then
-          info = VEF_FAIL
-      else
-          info = VEF_OK
-      endif
-      !
+      info = merge(VEF_FAIL,VEF_OK,R > config%obj_func_eps)
+
       end subroutine
 
 end module

@@ -32,7 +32,7 @@ program alamDMC
 
     character(len=128)  :: progname
 
-    info = VEF_ERROR ! see criErrcodes.f90
+    info = VEF_ERROR
     ioerr = 0
 
     write(progname,fmt=300)

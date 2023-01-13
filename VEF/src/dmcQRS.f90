@@ -104,7 +104,7 @@ contains
     !
     integer :: ioerr
     !
-                info = VEF_OK
+        info = VEF_OK
     !
     end function
 
