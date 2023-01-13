@@ -1,7 +1,7 @@
 !> Types and procedures that control incrementation in stress-driven
 !> evolution of material state.
 module dmcIncrementationControl
-use criErrcodes
+    use altay_definitions
 use criLinearMap, only: MapItem
 use alamYLPConstants
 implicit none
@@ -116,7 +116,7 @@ contains
         ! Sum of absolute plastic strain increments:
         this%vP_abs = this%vP_abs + abs(this%vP_inc)
         this%increment = this%increment  + 1
-        info = criSuccess
+        info = VEF_OK
     !
     end subroutine
 
@@ -137,7 +137,7 @@ contains
         ! Total plastic strain in the current step
         this%vP_step = 0.D0
         this%increment = 0
-        info = criSuccess
+        info = VEF_OK
     !
     end subroutine
 
@@ -153,12 +153,12 @@ contains
     integer :: id, i
     logical :: is_allowed
     !
-        info = criErr_IORead
+        info = VEF_IO
         if (.not. readKeyword(cnfunit, scaling_type_names, id)) return
         ! Check for additional constraints on the scaling type
         if (present(allowed)) then
             ! check: if id not in allowed: return
-            info = criErr_BadArgs
+            info = VEF_BADVAL
             is_allowed = .false.
             do i = 1, size(allowed)
                 if (id == allowed(i)) then
@@ -170,10 +170,10 @@ contains
         endif
         this%scaling_type = id
         !
-        info = criErr_IORead
+        info = VEF_IO
         if (.not. readValue(cnfunit, this%step_size)) return
         if (.not. readValue(cnfunit, this%increment_size)) return
-        info = criSuccess
+        info = VEF_OK
     !
     end subroutine
 

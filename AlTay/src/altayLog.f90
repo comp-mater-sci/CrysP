@@ -4,18 +4,6 @@ module altay_log
     implicit none
     private
 
-    !>\name Exit codes from altayHardLaw_DSH subroutines and functions:
-    !>@{
-    integer, parameter, public :: VEF_OK            = 0     !< OK
-    integer, parameter, public :: VEF_ERROR         = -1    !< General error (not covered by any specific error code).
-    integer, parameter, public :: VEF_BADDIMS       = -2    !< At least one parameter out of boundaries
-    integer, parameter, public :: VEF_BADVAL        = -5    !< At least one input parameter has unacceptable value
-    integer, parameter, public :: VEF_OutOfRange    = -6    !< At least one input parameter has a value outside acceptable range
-    integer, parameter, public :: VEF_IO            = -15   !< Error during an IO operation
-    integer, parameter, public :: VEF_Nss           = -16   !< Unsupported number of slip systems proposed. Supported values are: 12, 24
-    integer, parameter, public :: VEF_Uninitialized = -50   !< Call to module procedures without proper initialization of the module
-    !>@}
-
     interface vef_trace
         module procedure vef_trace_str, vef_trace_tensor
     end interface

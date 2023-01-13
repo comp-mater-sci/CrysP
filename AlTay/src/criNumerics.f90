@@ -1,6 +1,6 @@
 !> Various numerical algorithms
 module criNumerics
-    use criErrcodes
+    use altay_definitions
     use criAlgorithm
     implicit none
 
@@ -58,12 +58,12 @@ contains
     integer,intent(out)                         :: info
     !
     integer :: i
-        info = criErr_BadArgs
+        info = VEF_BADVAL
         if (size(xi) /= size(yi)) return
         ! TODO: check if the nodes are in strictly ascending order
 
         call BarycentricInterpolator_init_allocate(this, order, size(xi), info)
-        if (info /= criSuccess) return
+        if (info /= VEF_OK) return
 
         this%xi = xi
         this%yi = yi
@@ -85,14 +85,14 @@ contains
         integer,intent(in)  :: npoints
         integer,intent(out) :: info
         !
-            info = criErr_BadArgs
+            info = VEF_BADVAL
             if ((order < 1) .or. (npoints <= order)) return
             !
             this%npoints = npoints
             this%order = order
             allocate(this%xi(npoints), this%yi(npoints))
             allocate(this%wi(order+1, npoints - order))
-            info = criSuccess
+            info = VEF_OK
         !
         end subroutine
 
@@ -108,7 +108,7 @@ contains
         integer :: j,k, n
         ! double precision,dimension(0:ubound(xi,dim=1)) :: xdiff
         !
-            info = criErr_BadDims
+            info = VEF_BADDIMS
             n = ubound(xi,dim=1)
             if (n /= ubound(wi,dim=1)) return
             !
@@ -121,7 +121,7 @@ contains
                 enddo
             enddo
             wi = 1.D0 / wi
-            info = criSuccess
+            info = VEF_OK
 
             ! A better alternative: follow the algorithm given in [1]
             ! Deplorably, the code below is buggy...
@@ -133,7 +133,7 @@ contains
             !    wi(j) = product(-xdiff(:j))
             !enddo
             ! wi = 1.D0 / wi
-            info = criSuccess
+            info = VEF_OK
         !
         end subroutine
 

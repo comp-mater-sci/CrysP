@@ -8,7 +8,6 @@ use criNumerics
 use criAlgorithm
 use criLinearMap
 use criConfigReader
-use criLog
 use commonConfig
 use dmcUtils, only: display_unit
 use dmcStressDrivenEvolutionModule
@@ -84,8 +83,8 @@ contains
                                                                    MapItem('direct',mode_direct_id) ]
     !
         info = this%StressDrivenEvolutionModule%ReadConfig(cnfunit)
-        if (info /= criSuccess) return
-        info = criErr_IORead
+        if (info /= VEF_OK) return
+        info = VEF_IO
         ! Read parameters specific for the EWCModule
         !
         ! Check how the work levels are provided
@@ -103,21 +102,21 @@ contains
                                                         allowed=[scalingStrainTensor, &
                                                                  scalingStrainTensorIncrement, &
                                                                  scalingPlasticWork])
-                if (info /= criSuccess) return
+                if (info /= VEF_OK) return
             case(mode_direct_id)
                 this%use_reference_stress_mode = .false.
             end select
         else
             write(display_unit,fmt=900) 'Unknown keyword for work level selection'
-            info = criErr_IORead
+            info = VEF_IO
             return
         endif
         !
         ! Contour lines
         this%ptr_theta_range => rangeFromConfig(cnfunit,info)
-        if (info /= criSuccess .or. .not. associated(this%ptr_theta_range)) return
+        if (info /= VEF_OK .or. .not. associated(this%ptr_theta_range)) return
         this%ptr_contourlevel_range => rangeFromConfig(cnfunit,info)
-        if (info /= criSuccess .or. .not. associated(this%ptr_contourlevel_range)) return
+        if (info /= VEF_OK .or. .not. associated(this%ptr_contourlevel_range)) return
         if (.not. readValue(cnfunit, this%n_intervals)) return
         ! Advanced settings
         if (.not. readValue(cnfunit, use_default_settings)) return
@@ -138,7 +137,7 @@ contains
         this%altay%output_config%npebp = 0   ! KOST1x state
         this%output%outputRequest = .false.       ! idem.
 
-        info = criSuccess
+        info = VEF_OK
         !
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
@@ -155,18 +154,8 @@ contains
     !
     !integer :: ioerr
     !
-        info = this%StressDrivenEvolutionModule%printConfig(outunit)
-        if (info /= criSuccess) return
-        !
-        if (doLogging(criLogWarn,this%output%verbosity)) then
-            ! Introduce youself ;-)
-            write(outunit,'(A)') 'EWC: $Rev$'
-        endif
-        if (doLogging(criLogInfo,this%output%verbosity)) then
-                !> \todo Print out summary of the configuration
-                continue
-        endif
-    !
+        info = VEF_OK
+            !
     end function
 
 
@@ -203,7 +192,7 @@ contains
     logical :: tmp_flag
     !
         ! Super-class first
-        RETURN_IF(info /= criSuccess, call this%StressDrivenEvolutionModule%run(info))
+        RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
         !
         ! Prepare the input data: array of increments, and
         ! array of results.
@@ -216,11 +205,6 @@ contains
         allocate(vPlasticWorkLevels(n_contours))
         !
         if (this%use_reference_stress_mode) then
-            if (doLogging(criLogDebug,this%output%verbosity)) write(display_unit,800)
-            if (doLogging(criLogWarn,this%output%verbosity)) then
-                write(display_unit,fmt=1500)
-            endif
-            ! Strain levels are provided
             allocate(vEquivalentStrainLevels(n_contours))
             do i = 1, n_contours
                 tmp_flag = this%ptr_contourlevel_range%next(vEquivalentStrainLevels(i))
@@ -229,15 +213,15 @@ contains
             ! Evaluate the reference mode
             sigma%t = Vec6ToMat33(this%reference_stress_mode)
             info = this%calculateStressPath(sigma, this%control, ref_output)
-            if (info /= criSuccess) return
+            if (info /= VEF_OK) return
             !
             ! Calculate work levels that correspond to the requested levels of
             ! equivalent plastic strain.
             vEquivalentStrain_ref = ref_output%values(:)%vm_strain_total
             vPlasticWork_ref = ref_output%values(:)%icv%plastic_work_total
             call BarycentricInterpolator_init(bi, interpolation_order, vEquivalentStrain_ref, vPlasticWork_ref, info)
-            if (info /= criSuccess) then
-                info = criError
+            if (info /= VEF_OK) then
+                info = VEF_ERROR
                 return
             endif
             do i = 1, n_contours
@@ -265,10 +249,6 @@ contains
         do while (this%ptr_theta_range%next(theta))
             i = i + 1
             !
-            if (doLogging(criLogWarn,this%output%verbosity)) then
-                write(display_unit,fmt=1600) i, npoints, theta
-            endif
-            !
             vTheta(i) = theta
             theta = deg2rad(theta)
             !
@@ -278,9 +258,9 @@ contains
             !
             ! Re-initialize AlTay
             info = this%reinitializeLibAltay()
-            if (info /= criSuccess) exit
+            if (info /= VEF_OK) exit
             !
-            if (this%calculateStressPath(sigma, evolution_control, output) /= criSuccess) then
+            if (this%calculateStressPath(sigma, evolution_control, output) /= VEF_OK) then
                 ! For a certain reason we cannot calculate this path.
                 results(:,i) = 0.D0
                 cycle
@@ -289,7 +269,7 @@ contains
             vPlasticWork = output%values(:)%icv%plastic_work_total
             vScalS = output%values(:)%scal_s
             call BarycentricInterpolator_init(bi, interpolation_order, vPlasticWork, vScalS, info)
-            if (info == criSuccess) then
+            if (info == VEF_OK) then
                 do j = 1, size(vPlasticWorkLevels)
                     results(j,i) = interpolate(bi, vPlasticWorkLevels(j))
                 enddo
@@ -301,7 +281,7 @@ contains
             endif
 
         enddo
-        if (info /= criSuccess) return
+        if (info /= VEF_OK) return
         !
         if (this%use_reference_stress_mode) then
             info = this%fileOutput(vEquivalentStrainLevels, results)
@@ -336,11 +316,11 @@ contains
     character(len=output_column_width),dimension(:),allocatable :: header_columns
     character(len=output_column_width) :: tmp_str, label_str
     !
-        info = criErr_BadArgs
+        info = VEF_BADVAL
         n_contours = ubound(results,dim=1)
         if ((size(vLevels) /= n_contours)) return
         !
-        info = criErr_IOOpen
+        info = VEF_IO
         open(newunit=iounit, file=trim(this%output%outputPrefix)//'.ewc', status='replace', iostat=ierr)
         if (ierr /= 0) return
         !
@@ -372,20 +352,20 @@ contains
     !
     integer :: iounit, ierr, i
     !
-        info = criErr_BadArgs
+        info = VEF_BADVAL
         if (size(vEquivalentStrainLevels) /= size(vPlasticWorkLevels)) return
-        info = criErr_IOOpen
+        info = VEF_IO
         open(newunit=iounit, file=trim(this%output%outputPrefix)//'_'//trim(prefix)//'.ewcm', &
              status='replace', iostat=ierr)
         if (ierr /= 0) return
-        info = criErr_IOWrite
+        info = VEF_IO
         ! Make format strings for the header and the data
         write(iounit,'(A15,1X,A15)') 'eps_vM', 'W(eps_vM)'
         do i = 1, size(vPlasticWorkLevels)
             write(iounit,fmt='(E15.7,1X,E15.7)',iostat=ierr) vEquivalentStrainLevels(i), vPlasticWorkLevels(i)
             if (ierr /= 0) exit
         enddo
-        if (ierr == 0) info = criSuccess
+        if (ierr == 0) info = VEF_OK
         close(iounit)
     !
     end function

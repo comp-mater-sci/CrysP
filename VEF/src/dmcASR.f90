@@ -4,7 +4,6 @@
 module dmcASR
 use criMathUtils
 use criAlgorithm
-use criLog
 use criMathUtils
 use criUncomment, only: readValue
 use dmcUtils, only: display_unit
@@ -63,8 +62,8 @@ contains
     integer :: i, n_steps
     !
         info = this%StressDrivenEvolutionModule%readConfig(cnfunit)
-        if (info /= criSuccess) return
-        info = criErr_IORead
+        if (info /= VEF_OK) return
+        info = VEF_IO
         ! Read parameters specific for the ASRModule
         if (.not. readValue(cnfunit, tmp_euler)) return
         this%rotframe = Arr2EulerAngles(tmp_euler)
@@ -83,11 +82,11 @@ contains
                                                             allowed=[scalingStrainTensor, &
                                                                      scalingStrainTensorIncrement, &
                                                                      scalingPlasticWork])
-                    if (info /= criSuccess) return
+                    if (info /= VEF_OK) return
                 endif
                 end associate
         enddo
-        info = criSuccess
+        info = VEF_OK
 
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
@@ -99,19 +98,9 @@ contains
     implicit none
     class(ASRModule),intent(in)         :: this
     integer,intent(in)                  :: outunit
-    !
-        info = this%StressDrivenEvolutionModule%printConfig(outunit)
-        if (info /= criSuccess) return
-        !
-        if (doLogging(criLogWarn,this%output%verbosity)) then
-            ! Introduce youself ;-)
-            write(display_unit,'(A)') 'ASR, $Rev$'
-        endif
-        if (doLogging(criLogInfo,this%output%verbosity)) then
-            !> \todo Print out summary of the configuration
-            continue
-        endif
-    !
+    
+        info = VEF_OK
+    
     end function
 
 
@@ -131,12 +120,12 @@ contains
     integer     :: j, istep, nsteps, ofunit
     !
         ! Super-class first
-        RETURN_IF(info /= criSuccess, call this%StressDrivenEvolutionModule%run(info))
+        RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
         !
         ! Open and initialize result files
         !
-        RETURN_IF(info /= criSuccess, info = this%openOutputFile('.asr',ofunit))
-        RETURN_IF(info /= criSuccess, info = this%outputFile(ofunit, header=.true.))
+        RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.asr',ofunit))
+        RETURN_IF(info /= VEF_OK, info = this%outputFile(ofunit, header=.true.))
         !
         nsteps = size(this%steps)
         !
@@ -144,12 +133,7 @@ contains
         Mrot = rotmat(deg2rad(this%rotframe))
         !
         do  istep = 1, nsteps
-            !
-            if (doLogging(criLogDebug,this%output%verbosity)) write(display_unit,800)
-            if (doLogging(criLogWarn,this%output%verbosity)) then
-                write(display_unit,fmt=1600) istep, nsteps
-            endif
-            !
+                        !
             associate(step => this%steps(istep), control => this%steps(istep)%incrementation_control)
                 !
                 ! Acquire full stress tensor sigma
@@ -161,20 +145,12 @@ contains
 !                sigma_rot = rotateSRTensorTo(sigma, Mrot)
                 !
                 ! Print the input data:
-                if (doLogging(criLogDebug,this%output%verbosity)) then
-                    write(display_unit,fmt=3310)
-                    write(display_unit,3400) 'sigma', 'S', 'sigma_h'
-                    do j=1,3
-                        write(display_unit,3411) sigma%t(:,j), S%t(:,j), Pressure%t(:,j)
-                    enddo
-
-                endif
-                !
+                                !
                 ! Follow the stress path
                 !
                 info = this%calculateStressPath(sigma, control, output%evolution_output, Mrot, &
                                                 incrementation_control=icv)
-                if (info /= criSuccess) then
+                if (info /= VEF_OK) then
                     write(display_unit,fmt=960)
                     exit
                 endif
@@ -187,7 +163,7 @@ contains
                 ! Post-process & report
                 !
                 info = this%outputFile(ofunit, output)
-                if (info /= criSuccess) then
+                if (info /= VEF_OK) then
                     write(display_unit,fmt=900) 'Cannot make output for the current step'
                     exit
                 endif
@@ -241,12 +217,12 @@ contains
                 'eps_tot_xx','eps_tot_yy','eps_tot_zz','eps_tot_xy','eps_tot_yz','eps_tot_xz'& ! 6 fields
             ]
         !
-        info = criSuccess
+        info = VEF_OK
         !
         ! Write out header lines
         !
         if (optionalDefault(header, .false.)) then
-            info = criErr_IOWrite
+            info = VEF_IO
             ! Column numbers
             write(iounit,701,iostat=ierr) (centered(i,short_column_width), i = 1,2), &
                                           (centered(i,column_width), i = 3, ncolumn_labels)
@@ -255,13 +231,13 @@ contains
             write(iounit,700,iostat=ierr) (column_labels(i)(1:short_column_width), i=1,2), &
                                           (centered(column_labels(i)), i=3,ncolumn_labels)
             if (ierr /= 0) return
-            info = criSuccess
+            info = VEF_OK
         endif
         !
         ! Write out data output
         if (present(output)) then
             ierr = 0
-            info = criErr_IOWrite
+            info = VEF_IO
             !
             do increment = 1, size(output%evolution_output%values)
                 associate(v => output%evolution_output%values(increment), &
@@ -305,7 +281,7 @@ contains
                 !
                 end associate
             enddo
-            if (ierr == 0) info = criSuccess
+            if (ierr == 0) info = VEF_OK
         endif
         ! Formats for output file
         700 format(1X, 2(A9,1X),10(A18,  1X),4(5X,12(A18,1X)))

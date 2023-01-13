@@ -5,7 +5,6 @@
 module dmcUDSA
 use criMathUtils
 use criPath
-use criLog
 use criAlgorithm
 use criRange
 use criNamedRange
@@ -97,15 +96,15 @@ contains
     double precision,dimension(3) :: arr_euler
     !
         info = this%StressDrivenEvolutionModule%readConfig(cnfunit)
-        if (info /= criSuccess) return
-        info = criErr_IORead
+        if (info /= VEF_OK) return
+        info = VEF_IO
         ! Read parameters specific for the UDSAModule program
         if (.not. readKeyword(cnfunit, sample_orientation_types, this%orientation_type_id)) return
         ! Read the sub-options
         select case(this%orientation_type_id)
         case(sample_orientation_inplane_id)
             this%ptr_orientation_range => rangeFromConfig(cnfunit, info)
-            if (info /= criSuccess .or. .not. associated(this%ptr_orientation_range)) return
+            if (info /= VEF_OK .or. .not. associated(this%ptr_orientation_range)) return
         !
         case(sample_orientation_ND_id)
             ! No sub-options
@@ -119,7 +118,7 @@ contains
         end select
         ! Read incrementation settings
         call IncrementationControlSettings_read(this%control, cnfunit, info)
-        if (info /= criSuccess) return
+        if (info /= VEF_OK) return
         !
         if (.not. readKeyword(cnfunit, stress_states, this%stress_state_id)) return
         use_default_settings = .true.
@@ -127,7 +126,7 @@ contains
         if (.not. use_default_settings) then
             if (.not. readValue(cnfunit, this%rho)) return
         endif
-        info = criSuccess
+        info = VEF_OK
     !
     end function
 
@@ -139,40 +138,7 @@ contains
     !
     character(len=32)       :: description, orientation
     !
-        info = this%StressDrivenEvolutionModule%printConfig(outunit)
-        if (info /= criSuccess) return
-        info = criErr_BadArgs
-        if (doLogging(criLogWarn,this%output%verbosity)) then
-            ! Introduce youself ;-)
-            write(outunit,'(A)') 'UDSA, $Rev$'
-        endif
-        !
-        if (doLogging(criLogInfo,this%output%verbosity)) then
-            if (this%stress_state_id == tension_state) then
-                description = 'uniaxial tensile'
-            else
-                description = 'uniaxial compression'
-            endif
-            write(outunit,fmt=fmtMsg2Msg) 'Test type:', description
-
-            if (resolveId(sample_orientation_types, this%orientation_type_id, orientation)) then
-                write(outunit,fmt=fmtMsg2Other//'A)') 'Orientation of the sample:', orientation
-            endif
-            write(outunit,fmt=fmtMsg2Other//'G0.4)') 'Stress ratio:', this%rho
-            !
-            select case(this%control%scaling_type)
-                case(scalingStrainTensor, scalingStrainTensorIncrement)
-                    write(outunit,fmt=500) 'full tensor'
-                case(scalingStrainTensorComponent)
-                    write(outunit,fmt=500) 'tensile component'
-                case(scalingPlasticWork)
-                    write(outunit,fmt=500) 'work increment'
-                case default
-                    write(outunit,*) 'Unknown scaling type, full tensor will be used'
-            end select
-            500 format('Strain incrementation:',T35, 'scaling by ', A)
-        endif
-        info = criSuccess
+        info = VEF_OK
     !
     end function
 
@@ -195,11 +161,11 @@ contains
     type(UDSAOutputRecord)  :: outrec
     !
     ! Super-class first
-    RETURN_IF(info /= criSuccess, call this%StressDrivenEvolutionModule%run(info))
+    RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
     !
     ! Check the preconditions
     !
-    info = criErr_BadArgs
+    info = VEF_BADVAL
     if (.not. associated(this%ptr_orientation_range)) return
 
     !
@@ -223,17 +189,12 @@ contains
     test_run_loop: do while (this%ptr_orientation_range%next(angle))
         test_run = test_run + 1
         !
-        if (doLogging(criLogDebug,this%output%verbosity)) write(display_unit,fmt=800)
-        if (doLogging(criLogWarn,this%output%verbosity)) then
-            write(display_unit, fmt=1600) test_run, n_test_runs, angle
-        endif
-        !
         ! Come back to the initial material state if needed
         ! Re-initialize altay
         if (n_test_runs > 1) then
             ! Re-initialize AlTay
             info = this%reinitializeLibAltay(this%outputPrefix(angle))
-            if (info /= criSuccess) exit
+            if (info /= VEF_OK) exit
         endif
         !
         ! Set sample orientation and make rotation matrix
@@ -260,13 +221,13 @@ contains
         else
             info = this%createOutputFile(ofunit)
         endif
-        if (info /= criSuccess) then
+        if (info /= VEF_OK) then
             write(display_unit, fmt=900) 'Cannot create result file for the current virtual test'
             exit
         endif
 
         info = this%calculateStressPath(sigma, this%control, output, Mrot)
-        if (info /= criSuccess) then
+        if (info /= VEF_OK) then
             write(display_unit,fmt=960)
             exit
         endif
@@ -312,7 +273,7 @@ contains
         enddo
         !
         close(ofunit)
-        if (info /= criSuccess) then
+        if (info /= VEF_OK) then
             write(display_unit, fmt=900) 'Unable to store results for the current virtual tests'
         endif
     !
@@ -338,7 +299,7 @@ contains
     character(len=max_pathlen) :: datafile_path
     !
         iounit = 0
-        info = criErr_IOWrite
+        info = VEF_IO
         datafile_path = this%outputPrefix(tag_number)
         open(newunit=iounit,file=trim(datafile_path)//'.uds', status='replace', iostat=ierr)
         if (ierr /= 0) return
@@ -364,7 +325,7 @@ contains
         'q-valueA', 'r-valueA','S',& ! qrsdata
         'residual']
     !
-        info = criErr_IOWrite
+        info = VEF_IO
         if (optionalDefault(header,.false.)) then
             write(iounit,701,iostat=ierr) centered(1,short_column_width), &
                                           (centered(i,column_width), i = 2, ncolumn_labels)
@@ -372,12 +333,12 @@ contains
             write(iounit,700,iostat=ierr) file_column_labels(1)(1:short_column_width), &
                                           (centered(file_column_labels(i)), i=2,ncolumn_labels)
             if (ierr /= 0) return
-            info = criSuccess
+            info = VEF_OK
         endif
         !
         if (present(data_record)) then
             write(iounit,710,iostat=ierr) data_record
-            if (ierr == 0) info = criSuccess
+            if (ierr == 0) info = VEF_OK
         endif
         !
         ! Formats for the output file

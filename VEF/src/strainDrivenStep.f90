@@ -3,9 +3,8 @@
 !> Strain-(rate) driven step
 module dmcStrainDrivenStep
 use criRange
-use criLog
 use criMathUtils
-use criErrcodes
+use altay_definitions
 use dmcUtils, only: display_unit
 use dmcSubsteppingConfig
 implicit none
@@ -27,8 +26,6 @@ implicit none
 
     !> A strain-(rate) driven step
     type :: StrainDrivenStep
-
-        type(logData)                       :: log
 
         type(StrainDrivenStepConfig)        :: config
 
@@ -125,7 +122,7 @@ contains
     double precision,parameter :: volumetric_strain_fraction_threshold = 0.001
     double precision,parameter :: auto_increment_norm = 0.02
     !
-        info = criErr_BadArgs
+        info = VEF_BADVAL
         associate(config => this%config)
             ! Make the step traceless: decompose into volumetric strain rate
             ! and strain rate deviator
@@ -136,22 +133,8 @@ contains
                 write(display_unit, 900) 'Norm of the deviatoric part of prescribed deformation is too small.'
                 return
             endif
-            !
-            if (doLogging(criLogInfo, this%log%level)) then
-                ! Report the discrepancy if the substracted volumetric part is larger than a given
-                ! fraction of the total.
-                volumetric_strain_norm = norm2(this%volumetric_strain%t)
-                volumetric_strain_fraction = volumetric_strain_norm / norm2(config%deformation_rate%t)
-                if (volumetric_strain_fraction > volumetric_strain_fraction_threshold ) then
-                    write(display_unit, 600) volumetric_strain_norm, volumetric_strain_fraction * 100
-                    600 format(/, 'Note: volumetric deformation of magnitude ', G0.2, 1X, &
-                                ', which makes ', G0.2, 1X, &
-                                'percent of the prescribed ',/, &
-                                'deformation in this step, was substracted.', /)
-                endif
-            endif
         end associate
-        info = criSuccess
+        info = VEF_OK
     !
 #define MSG_GROUP_ERRORS
 #define MSG_GROUP_RULERS
@@ -164,30 +147,30 @@ contains
 
     !> Execute StrainDrivenStep.
     !>
-    !> It is a placeholder method, it always returns criError.
+    !> It is a placeholder method, it always returns VEF_ERROR.
     integer function StrainDrivenStep_execute(this, step_output) result(info)
     class(StrainDrivenStep),intent(inout)   :: this
     class(StepOutput),intent(out)           :: step_output
     !
-        info = criError
+        info = VEF_ERROR
     !
     end function
 
     !> Read configuration of StrainDrivenStep from config IO unit
     !>
-    !> It is a placeholder method, it always returns criSuccess
+    !> It is a placeholder method, it always returns VEF_OK
     integer function StrainDrivenStep_readConfig(this, cnfunit) result(info)
     class(StrainDrivenStep),intent(inout)   :: this
     integer,intent(in)                      :: cnfunit !< IO unit
     !
-        info = criSuccess
+        info = VEF_OK
     !
     end function
 
 
     !> Set up strain driven fixed step.
     !>
-    !> Returns criSuccess on success.
+    !> Returns VEF_OK on success.
     integer function StrainDrivenFixedStep_setUp(this) result(info)
     class(StrainDrivenFixedStep),intent(inout)   :: this
     !
@@ -198,7 +181,7 @@ contains
     double precision,parameter :: auto_increment_norm = 0.02
     !
         info = this%StrainDrivenStep%setUp()
-        if (info /= criSuccess) return
+        if (info /= VEF_OK) return
         !
         ! Set up automatic substepping with fixed number of increments
         !
@@ -209,10 +192,6 @@ contains
                 n_increments = floor(step_strain_norm / auto_increment_norm)
                 allocate(this%substepping_config, &
                             source=FixedSubsteppingConfig(UniformRange(0.D0, 1.D0, npoints=n_increments)))
-                if (doLogging(criLogInfo, this%log%level)) then
-                    write(display_unit, 601)
-                    601 format('Note: automatic substepping will be used in this step.')
-                endif
             else
                 allocate(this%substepping_config, source=FixedSubsteppingConfig())
             endif
@@ -229,7 +208,7 @@ contains
 
     !> Execute step and store the output in step_output
     !>
-    !> Returns criSuccess on success.
+    !> Returns VEF_OK on success.
     integer function StrainDrivenFixedStep_execute(this, step_output) result(info)
     use altaySub
     use altayConfig
@@ -241,28 +220,18 @@ contains
     type(SRTensor) :: increment_strain,  step_strain_total
     !
         ! Precondition
-        RETURN_IF_WITH(.not. associated(this%substepping_config), info = criErr_BadArgs)
-        RETURN_IF_WITH(.not. associated(this%substepping_config%ptr_range), info = criErr_BadArgs)
+        RETURN_IF_WITH(.not. associated(this%substepping_config), info = VEF_BADVAL)
+        RETURN_IF_WITH(.not. associated(this%substepping_config%ptr_range), info = VEF_BADVAL)
         !
         n_increments = this%substepping_config%getNumberOfIncrements()
 
-        if (doLogging(criLogInfo, this%log%level)) then
-            if (n_increments > 1) then
-                write(display_unit,fmt=400) n_increments
-                400 format('The step will be subdivided into ', I0, ' increments.')
-            else
-                write(display_unit,fmt=401)
-                401 format('The step deformation will be instantly reached in one increment.')
-            endif
-        endif
-        !
         ! Initialize AlTay structures
-        RETURN_ON_WITH(call initStepData(n_increments, astate,info),info /= 0,info = criError)
+        RETURN_ON_WITH(call initStepData(n_increments, astate,info),info /= 0,info = VEF_ERROR)
         !
         associate(increment_range => this%substepping_config%ptr_range)
             !
             ! Get the lower boundary, it should be zero.
-            RETURN_IF_WITH(.not. increment_range%next(x_prev), info = criErr_BadArgs)
+            RETURN_IF_WITH(.not. increment_range%next(x_prev), info = VEF_BADVAL)
 
             increment_size_tot = 0.D0
 
@@ -281,7 +250,7 @@ contains
                 !
                 if (norm2(increment_strain%t) < epsilon(0.D0)) then
                     write(display_unit, 900) 'Norm of the prescribed incremental deformation is too small.'
-                    info = criErr_BadArgs
+                    info = VEF_BADVAL
                     return
                 endif
                 !
@@ -297,13 +266,13 @@ contains
                 end associate
             enddo
             ! Check if the loop had at least one iteration
-            RETURN_IF_WITH(i_incr == 0, info = criErr_BadArgs)
+            RETURN_IF_WITH(i_incr == 0, info = VEF_BADVAL)
         end associate
         !
         ! Call the AlTay
-        RETURN_ON_WITH(call runSteps(astate,info), info /= 0, info = criError)
+        RETURN_ON_WITH(call runSteps(astate,info), info /= 0, info = VEF_ERROR)
         !
-        RETURN_IF(info /= criSuccess, info = step_output%collect(n_increments))
+        RETURN_IF(info /= VEF_OK, info = step_output%collect(n_increments))
     !
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
@@ -334,10 +303,10 @@ contains
     !
         ! Check if the input and the state of libaltay correspond.
         ALLOCATED_SIZE(n_simulcalls, astate%simulCalls)
-        RETURN_IF(n_simulcalls < n_increments .or. n_simulcalls /= astate%nSimulCalls, info = criErr_BadArgs)
+        RETURN_IF(n_simulcalls < n_increments .or. n_simulcalls /= astate%nSimulCalls, info = VEF_BADVAL)
         !
         ! Allocate storage for output
-        RETURN_ON_WITH(allocate(this%increments(n_increments), stat=ierr), ierr /= 0, info = criErr_MemAlloc)
+        RETURN_ON_WITH(allocate(this%increments(n_increments), stat=ierr), ierr /= 0, info = VEF_ERROR)
         !
         ! collect the results
         do i = 1, n_increments
@@ -364,7 +333,7 @@ contains
 
             end associate
         enddo
-        info = criSuccess
+        info = VEF_OK
     !
     end function
 

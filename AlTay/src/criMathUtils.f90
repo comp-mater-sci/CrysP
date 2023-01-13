@@ -511,7 +511,7 @@ contains
       !>
       !>
       !> Provides x1 and x2. Both x1 and x2 are guaranteed to be set to a defined value,
-      !> even if no real roots exist and info /= criSuccess is returned.
+      !> even if no real roots exist.
       integer function solveQuadraticPolynomial(a, b, c, x) result(n_roots)
       double precision,intent(in)   :: a, b, c
       double precision,dimension(2),intent(out)  :: x

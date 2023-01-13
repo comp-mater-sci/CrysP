@@ -2,9 +2,8 @@
 
 !> Implementation of a altay-based DMC computiational module.
 module dmcStressDrivenModule
-use criErrcodes
+use altay_definitions
 use criAlgorithm, only: optionalDefault
-use criLog
 use criRuntime
 use criUncomment, only: readValue
 use criMathUtils, only: vec5D2tens,tens2vec5D
@@ -58,13 +57,13 @@ contains
         !
         ! Let the superclass do its initialization first ...
         !
-        RETURN_IF(info /= criSuccess, info = this%BasicModule%initialize())
+        RETURN_IF(info /= VEF_OK, info = this%BasicModule%initialize())
         !
         ! ... and then do your own initialization
         !
         ! Allocate and possibly populate the result cache
         allocate(this%ptr_db, stat = ierr)
-        RETURN_IF_WITH(ierr /= 0, info=criErr_MemAlloc)
+        RETURN_IF_WITH(ierr /= 0, info=VEF_ERROR)
         ! Try to load data
         ierr = this%ptr_db%load(trim(this%output%outputPrefix)//'.rtdb')
     !
@@ -77,11 +76,11 @@ contains
     integer,intent(in)                        :: cnfunit
     !
         info = this%BasicModule%readConfig(cnfunit)
-        if (info /= criSuccess) return
+        if (info /= VEF_OK) return
         !
         ! Read multilevelYLP configuration
         call readYLPConfigSection(cnfunit,this%ylp,info)
-        if (info /= criSuccess) then
+        if (info /= VEF_OK) then
             write(errmsg,fmt=901) 'check YLP config section'
             return
         endif
@@ -97,21 +96,7 @@ contains
     use altayConfig
     class(StressDrivenModule),intent(in):: this
     integer,intent(in)                  :: outunit
-    !
-        info = this%BasicModule%printConfig(outunit)
-        if (doLogging(criLogInfo,this%output%verbosity)) then
-            !
-            if (this%ylp%linearize) then
-                write(display_unit,100) 'Info: the program will first attempt to linearize the identification problems.'
-            else
-                write(display_unit,100) 'Info: The program will attempt to solve the nonlinear problems.'
-            endif
-        endif
-        !
-        info = criSuccess
-        !
-        100 format(/,A,/)
-    !
+        info = VEF_OK
     end function
 
 
@@ -119,13 +104,7 @@ contains
     integer function StressDrivenModule_finalize(this) result(info)
     class(StressDrivenModule),intent(inout) :: this
     !
-        !
-        ! Do your own finalization first ...
-        !
-        if (doLogging(criLogDebug, this%output%verbosity)) then
-            write(display_unit,'(A,1X,I8,1X,A)') 'Objective function was called', alamEval_objFx_call_count, 'times'
-        endif
-        !
+        
         ! Save the result cache and delete the object
         if (associated(this%ptr_db)) then
             info = this%ptr_db%store(trim(this%output%outputPrefix)//'.rtdb')
@@ -142,9 +121,9 @@ contains
     !> by performing an iterative search.
     !>
     !> The results of the iterative search are placed in ylp_results.
-    !> \return criFailure on lack of convergence. ylp_result and D are set to the best solution found
-    !> \return criError or any criErr_* on severe error conditions. ylp_result and D are undefined
-    !> \return criSuccess on success
+    !> \return VEF_ERROR on lack of convergence. ylp_result and D are set to the best solution found
+    !> \return VEF_ERROR or any criErr_* on severe error conditions. ylp_result and D are undefined
+    !> \return VEF_OK on success
     integer function StressDrivenModule_findSolution(this,sigma, D, ylp_result, vM_guess, is_acceptable, pretry) result(info)
     class(StressDrivenModule),intent(in)   :: this
     type(SRTensor),intent(in)       :: sigma !< Total input stress tensor
@@ -165,7 +144,7 @@ contains
     type(multilevelYLPConfig)   :: ylp_pretry
     double precision, parameter :: pretry_search_angle = pi_deg * 2.0D0
     !
-        info = criErr_BadArgs
+        info = VEF_BADVAL
 
         obj_func%ptr_db => this%ptr_db
         !
@@ -188,7 +167,7 @@ contains
             !
             if (this%ptr_db%get(ylp_result_pretry%vS, &
                                 ylp_result_pretry%vA, &
-                                max_angle=pretry_search_angle) == criSuccess) then
+                                max_angle=pretry_search_angle) == VEF_OK) then
                 ! Use special settings for pre-try
                 ylp_pretry = this%ylp
                 ylp_pretry%linearize = .true.
@@ -197,7 +176,7 @@ contains
                 ! get the solution
                 info = this%search(ylp_pretry, ylp_result_pretry, .false., obj_func)
                 ! Accept the solution only if it reached the requested quality
-                if (info == criSuccess .and. (ylp_result_pretry%R < this%ylp%obj_func_eps)) then
+                if (info == VEF_OK .and. (ylp_result_pretry%R < this%ylp%obj_func_eps)) then
                     is_pretry_acceptable = .true.
                     ylp_result = ylp_result_pretry
                 endif
@@ -214,28 +193,23 @@ contains
             endif
             ! Calculate the corresponding strain rate vA
             info = this%search(this%ylp, ylp_result, use_vM_guess, obj_func)
-            if (info == criFailure .and. associated(this%ptr_db)) then
+            if (info == VEF_FAIL .and. associated(this%ptr_db)) then
                 !
                 ! Try another starting point
                 !
                 ! Set the re-try point
                 ylp_result_retry = ylp_result
                 !
-                if (this%ptr_db%get(ylp_result_retry%vS, ylp_result_retry%vA) == criSuccess) then
-                    if (doLogging(criLogDebug,this%output%verbosity)) then
-                         write(display_unit,860) 'Poor convergence, re-attempting to find the solution.'
-                    endif
-                    !
+                if (this%ptr_db%get(ylp_result_retry%vS, ylp_result_retry%vA) == VEF_OK) then
                     ! get new solution
                     info = this%search(this%ylp, ylp_result_retry, .false., obj_func)
                     ! Use the better of the two
                     if (ylp_result_retry%R < ylp_result%R) ylp_result = ylp_result_retry
                 endif
             endif
-            RETURN_IF_WITH(is_error(info), info = criError)
-            !
+            RETURN_IF_WITH(is_error(info), info = VEF_ERROR)
             ! Rare case: normal search and re-try cannot improve over pre-try
-            if (info /= criSuccess .and. use_pretry) then
+            if (info /= VEF_OK .and. use_pretry) then
                 if (ylp_result_pretry%R < ylp_result%R) ylp_result = ylp_result_pretry
             endif
         endif
@@ -259,7 +233,7 @@ contains
     !> The wrapper applies settings provided as members of StressDrivenModule.
     !> It provides a ready-to-use ylp_result on non-error info code.
     !> \return Exit code from multilevelYLP, unless an error condition occurs
-    !> at later stage. In such case criError is returned.
+    !> at later stage. In such case VEF_ERROR is returned.
     !> In such case
     integer function StressDrivenModule_search(this, ylp_config, ylp_result, use_vM_guess, obj_func) result(info)
     class(StressDrivenModule),intent(in):: this
@@ -278,7 +252,7 @@ contains
                            verbose=this%output%verbosity, &
                            objective_function=obj_func)
         if (is_error(info)) return
-        if (deriveYLPResult(ylp_result) /= criSuccess) info = criError
+        if (deriveYLPResult(ylp_result) /= VEF_OK) info = VEF_ERROR
     !
     end function
 
@@ -292,7 +266,7 @@ contains
     double precision,dimension(2) :: tmp
     logical :: use_default_solver_settings, use_advanced_settings
     !
-        info = criErr_IORead
+        info = VEF_IO
         use_default_solver_settings = .true.
         use_advanced_settings = .false.
         if (.not. readValue(cnfunit, use_default_solver_settings)) return
@@ -312,7 +286,7 @@ contains
             ! read flag for advanced settings (placeholder at the moment)
             if (.not. readValue(cnfunit, use_advanced_settings)) return
         endif
-        info = criSuccess
+        info = VEF_OK
 
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"

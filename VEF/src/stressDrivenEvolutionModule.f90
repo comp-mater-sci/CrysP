@@ -3,9 +3,8 @@
 !> Implementation of a DMC computiational module that allows stress-driven evolution of
 !> material state.
 module dmcStressDrivenEvolutionModule
-use criErrcodes
+use altay_definitions
 use criMathUtils
-use criLog
 use criAlgorithm, only: optionalDefault
 use dmcUtils, only: display_unit
 use dmcYLPResult
@@ -116,11 +115,11 @@ contains
         ! in the main loop over deformation increments
         do
             call this%onIncrementStart(control, icv, info)
-            if (info /= criSuccess) exit
+            if (info /= VEF_OK) exit
             !
             ! Calculate the strain rate mode
             info = this%findSolution(sigma, D, ylp, is_acceptable=acceptable_point)
-            if ((info /= criSuccess) .or. .not. acceptable_point) then
+            if ((info /= VEF_OK) .or. .not. acceptable_point) then
                 ! Re-attempt, try A from the previous increment as the starting point
                 !
                 ! Pick the most recent converged solution
@@ -142,7 +141,7 @@ contains
                         ylp = ylp_retry
                     endif
                 endif
-                CHOOSE(info, acceptable_point .or. acceptable_point_retry, criSuccess, criFailure)
+                CHOOSE(info, acceptable_point .or. acceptable_point_retry, VEF_OK, VEF_FAIL)
             endif
             if (is_error(info)) exit
             !
@@ -217,12 +216,12 @@ contains
                     control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
                 !
                 case default
-                    info = criErr_BadArgs
+                    info = VEF_BADVAL
                     exit
                 end select
                 !
                 if (control_variable < epsilon(0.D0)) then
-                      info = criError
+                      info = VEF_ERROR
                       exit
                 endif
                 scaling_factor = (control%increment_size / control_variable)
@@ -244,18 +243,18 @@ contains
             !
             ! Append the output record
             info = xVector_push(tmp_output, tmp_record)
-            if (info /= criSuccess) exit
+            if (info /= VEF_OK) exit
             !
             ! Update icv
             !
             call icv%update(vDe, vSe, info)
-            if (info /= criSuccess) exit
+            if (info /= VEF_OK) exit
             !
             call this%onIncrementEnd(control, icv, tmp_record, info)
-            if (stop_flag .or. (info /= criSuccess)) exit
+            if (stop_flag .or. (info /= VEF_OK)) exit
         !
         enddo
-        if (info /= criSuccess) return
+        if (info /= VEF_OK) return
 
         outputs%values = tmp_output%values
         ! Report back the incrementation control variables if requested
@@ -273,13 +272,7 @@ contains
     class(IncrementationControl),intent(inout)          :: icv
     integer,intent(out)                                 :: info
     !
-        if (doLogging(criLogDebug,this%output%verbosity)) then
-            write(display_unit,fmt=801)
-            write(display_unit,fmt=300) icv%increment
-            ! Formats
-            300 format(/,'Increment ', I0,/, 'TR search progress:')
-        endif
-        info = criSuccess
+        info = VEF_OK
 #define MSG_GROUP_RULERS
 #include "msgFormats.inc"
 #undef MSG_GROUP_RULERS
@@ -298,23 +291,7 @@ contains
     !
     integer :: j
     !
-        if (doLogging(criLogInfo,this%output%verbosity)) then
-
-            write(display_unit,fmt=300) output_record%icv%increment, output_record%R
-
-            if (doLogging(criLogDebug,this%output%verbosity)) then
-                write(display_unit,400) 'A^star', 'S(A^star)', 'Delta eps'
-                do j=1,3
-                    write(display_unit,411) output_record%A%t(:,j), output_record%SonA%t(:,j), &
-                                            output_record%P_inc_evol%t(:,j)
-                enddo
-            endif
-            ! Formats
-            300 format('Increment ', I0, 1X, 'finished, residual error: ', E10.3)
-            400 format(T15,A,T54,A,T85,A)
-            411 format(3(E10.3,1X),' | ',3(E10.3,1X),' | ',3(E10.3,1X))
-        endif
-        info = criSuccess
+                info = VEF_OK
     !
     end subroutine
 
