@@ -37,16 +37,16 @@ altayTBH.f90
 altayCurAccess.f90 
 altaySmtAccess.f90 
 altayTexFormats.f90 
-altayHardLawSimple.f90 
-altayHard.f90 
-altayHardTypes.f90
-altayHardLawDSH.f90 
-altayDSHState.f90
 altayDefinitions.f90
 altayLog.f90
 altayConfig.f90  
 altayRCM.f90 
 altaySub.f90
+hardening/altayHard.f90
+hardening/altayHardTypes.f90
+hardening/altayHardLawDSH.f90
+hardening/altayHardLawSwift.f90
+hardening/altayHardLawVoce.f90
 )
 
 
