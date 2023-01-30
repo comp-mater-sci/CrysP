@@ -2,7 +2,8 @@
 
 module altayConfig
     use altayHardTypes
-    use altayHardLaw_Simple
+    use altayHardLaw_swift
+    use altayHardLaw_voce
     use altayHardLaw_DSH
     use altayTexFormats
     use altay_definitions

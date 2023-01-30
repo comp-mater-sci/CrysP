@@ -1,5 +1,6 @@
 module altayHardLaw_DSH
     use altay_definitions
+    use altayHardTypes
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST=11 & PRE-file contains 24 (110)+(112)[111] slip systems;
 !     -----------------------------------------------------
@@ -19,7 +20,6 @@ module altayHardLaw_DSH
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       IMPLICIT NONE
-      PRIVATE
 
       !> BP model parameters including saturation and minimum values for state dependent dislocation densities
       TYPE :: PAR

@@ -5,7 +5,7 @@ module altayTaylor
     use altayMiscutils
     use altayMacroKinematic
     use criMathUtils
-    use altayDSHState
+    use altayHardLaw_DSH
     use altayRCM
     use altayIOConfig
     use altayPancake

@@ -4,7 +4,6 @@ module altaySimul
     use altayHardTypes
     use altayMacroKinematic
     use altayHardLaw_DSH
-    use altayDSHState
     use altayCurAccess
     use altayDYNFIL
     use altayHard

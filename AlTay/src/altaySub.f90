@@ -5,7 +5,6 @@
 !> API for "AlTay as a subroutine"
 module altaySub
     use altayHardLaw_DSH
-    use altayDSHState
     use altayIOConfig
     use altaySimul
     use altayRCM

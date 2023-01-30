@@ -106,7 +106,7 @@ contains
       ! Succesful initialization:
       info = 0
       end subroutine
-      subroutine getRefTau(hardID,gamma,RefTau,info)
+      subroutine voce_getRefTau(hardID,gamma,RefTau,info)
       integer,intent(in)                  :: hardID
       real(dp),intent(in)         :: gamma
       real(dp),intent(out)        :: RefTau

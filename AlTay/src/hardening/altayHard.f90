@@ -2,10 +2,10 @@
 module altayHard
     use altayHardTypes
     use altayIOConfig, only: LEC
-    use altayHardLaw_Simple
     use altayConfig
     use altayHardLaw_DSH
-    use altayDSHState
+    use altayHardLaw_voce
+    use altayHardLaw_swift
     use altay_definitions, only: dp
     
     implicit none
@@ -49,17 +49,17 @@ contains
                 ! Just for non-hardening and isotropic, Voce-type hardening
                 call readVoceConfig(inunit,voceCnf,info)
                 if (info /= 0) return
-                if (HardLaw == hard_voce) call InitModuleAltayHardLaw_Simple(voceCnf,info)
+                if (HardLaw == hard_voce) call InitModuleAltayHardLaw_voce(voceCnf,info)
             case(hard_swiftK)
                 ! Swift-K hardening
                 call readSwiftKConfig(inunit,swiftKCnf,info)
                 if (info /= 0) return
-                call InitModuleAltayHardLaw_Simple(swiftKCnf,info)
+                call InitModuleAltayHardLaw_swift(swiftKCnf,info)
             case(hard_swiftS)
                 ! Swift-S hardening
                 call readSwiftSConfig(inunit,swiftSCnf,info)
                 if (info /= 0) return
-                call InitModuleAltayHardLaw_Simple(swiftSCnf,info)
+                call InitModuleAltayHardLaw_swift(swiftSCnf,info)
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                 info = InitModuleAltayHardLaw_DSH(inunit,HardLaw,LEC)
             case default
@@ -82,13 +82,13 @@ contains
                   info = 0
             case(hard_voce)
                   ! Just for non-hardening and isotropic, Voce-type hardening
-                  call InitModuleAltayHardLaw_Simple(config%VoceCnf,info)
+                  call InitModuleAltayHardLaw_voce(config%VoceCnf,info)
             case(hard_swiftK)
                   ! Swift-K hardening
-                  call InitModuleAltayHardLaw_Simple(config%swiftKCnf,info)
+                  call InitModuleAltayHardLaw_swift(config%swiftKCnf,info)
             case(hard_swiftS)
                   ! Swift-S hardening
-                  call InitModuleAltayHardLaw_Simple(config%swiftSCnf,info)
+                  call InitModuleAltayHardLaw_swift(config%swiftSCnf,info)
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                   info = InitModuleAltayHardLaw_DSH(config%PEBPCnf%params, config%HardLawID,LEC)
             case default
@@ -103,7 +103,6 @@ contains
 
 
     subroutine getTau(gamma, tau, info)
-        use altayHardLaw_Simple
 
         real(dp),intent(in)   :: gamma
         real(dp),intent(out)  :: tau
@@ -114,8 +113,10 @@ contains
         select case(HardLawID)
             case(hard_none,hard_BP,hard_PEBPscrew,hard_PEBPloop)
                   tau = 1.D0
-            case(hard_voce,hard_swiftK,hard_swiftS)
-                  call getRefTau(HardLawID, gamma, tau, info)
+            case(hard_voce)
+                  call voce_getRefTau(HardLawID, gamma, tau, info)
+            case(hard_swiftK,hard_swiftS)
+                  call swift_getRefTau(HardLawID, gamma, tau, info)
             case default
                   tau = 1.D0
                   info = -1
@@ -133,7 +134,7 @@ contains
             case(hard_none)
                 ! CRSS of all slip systems equal to 1. (& not dependent on crss_ratios)
                 CRSSmatrix%crss = 1.D0 
-            case(hard_voce,hard_swiftK,hard_swiftS)
+            case(hard_voce, hard_swiftk, hard_swifts)
                 call getTau(gamma, tau, info)
                 if (info == 0) CRSSmatrix%crss = crss_ratios%crss * tau
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
