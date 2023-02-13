@@ -56,7 +56,7 @@ contains
         end select
 
         if (info /= 0) return
-        model%init(config%hardlawid, config)
+        model%init(config)
 
         HardLawID = config%HardLawID
         crss_ratios = config%crss_ratios

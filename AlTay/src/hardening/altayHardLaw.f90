@@ -20,13 +20,12 @@ contains
 
     !>Initialize nss using params(1)
     !>@return the number of parameters used by this class
-    function hardening_model_init(this, variant, config) result(params_left)
+    subroutine hardening_model_init(this, config)
         class(BaseHardeningModel), intent(inout)    ::  this
-        integer, intent(in)                         ::  variant
         type(HardeningData), intent(in)             ::  config
 
         this%nss = 96
-    end function
+    end subroutine hardening_model_init
 
     !>Do nothing
     subroutine hardening_model_update(this, grain, time, strain, slip_rates)
