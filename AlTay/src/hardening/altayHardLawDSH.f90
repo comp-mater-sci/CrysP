@@ -1,4 +1,5 @@
 module altayHardLaw_DSH
+    use altayIOConfig, only: LEC
     use altay_definitions
     use altayHardTypes
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -249,10 +250,86 @@ module altayHardLaw_DSH
             module procedure KS_readState_unit, KS_readState_file
       end interface
 
-
+    type, extends(BaseHardeningModel) :: HardeningModelDSH
+        type(StatVar), dimension(:), allocatable    ::  state
+        real(dp), dimension(:,:,:), allocatable     ::  crss
+        real(dp)                                    ::  b,                      &   
+                                                        G,                      &   
+                                                        alfa,                   &   
+                                                        f,                      &   
+                                                        tau0,                   &   
+                                                        I,                      &   
+                                                        R,                      &   
+                                                        Iwd,                    &   
+                                                        Rwd,                    &   
+                                                        Rncg,                   &   
+                                                        beta1,                  &   
+                                                        beta2,                  &   
+                                                        Iwp,                    &   
+                                                        Rwp,                    &   
+                                                        Rrev,                   &   
+                                                        R2,                     &   
+                                                        RHOcbSAT,               &   
+                                                        RHOwdSAT,               &   
+                                                        RHOwpSAT,               &   
+                                                        RHOcbMIN,               &   
+                                                        RHOwdMIN,               &   
+                                                        RHOwpMIN,               &   
+                                                        RHOwpLOW,               &   
+                                                        alfa_G_b
+        real(dp), dimension(24,6)                   ::  eff             = 0.D0, &
+                                                        effslashb       = 0.D0, &
+                                                        alfa_G_b_eff    = 0.D0, &
+                                                        alfa_G_b_ABSeff = 0.D0
+    contains
+        procedure :: init           => bp_init
+        procedure :: update         => bp_update
+        procedure :: get_crss       => bp_get_crss
+        procedure :: finalize       => bp_finalize 
+    end type
 
       CONTAINS
 
+        subroutine bp_init(this, config)
+            class(HardeningModelDSH), intent(inout) :: this
+            type(HardeningData), intent(in) :: config
+            integer :: dummy
+
+            base_hardening_model_init(this,config)
+            dummy = initPar(config%pebpcnf%params, config%hardlawid, LEC)
+            
+        end subroutine bp_init
+        
+        subroutine bp_update(this, grain, time, strain, slip_rates)
+            class(HardeningModelDSH), intent(inout)     ::  this
+            integer, intent(in)                         ::  grain
+            real(dp), intent(in)                        ::  time,                 &
+                                                        strain
+            real(dp), dimension(this%nss), intent(in)   ::  slip_rates
+            type(StatVar)                               ::  SVa,                    &
+                                                            SVb
+            integer :: dummy
+
+            SVa = KS_state(grain)
+            call makeinc(sva, slip_rates, time, svb, dummy)
+            KS_state(grain) = svb 
+        end subroutine bp_update
+
+        function bp_get_crss(this, grain) result(crss)
+            class(HardeningModelDSH), intent(in)    :: this
+            integer, intent(in) :: grain
+            real(dp)            :: crss(2,24)
+
+            crss = KS_state(grain)%crss
+        end function bp_get_crss
+        
+        subroutine bp_finalize(this)
+            class(HardeningModelDSH), intent(inout) :: this
+
+            call KS_finalize()
+        end subroutine bp_finalize
+
+        
 
       !> Query the number of elements in the state array.
       integer function KS_getStateSize()

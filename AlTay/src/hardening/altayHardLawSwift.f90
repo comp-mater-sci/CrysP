@@ -92,6 +92,8 @@ contains
         class(HardeningModelSwift),             intent(inout)   :: this
         type(HardeningData), intent(in) :: config
 
+        base_hardening_model_init(this, config)
+
         select case(config%hardlawid)
             case(hard_swifts)
                 this%k = config%swiftkcnf%k
