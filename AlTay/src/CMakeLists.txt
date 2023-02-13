@@ -42,11 +42,13 @@ altayLog.f90
 altayConfig.f90  
 altayRCM.f90 
 altaySub.f90
-hardening/altayHard.f90
-hardening/altayHardTypes.f90
-hardening/altayHardLawDSH.f90
-hardening/altayHardLawSwift.f90
-hardening/altayHardLawVoce.f90
+altayHard.f90
+altayHardLaw.f90
+altayHardLawIsotropic.f90
+altayHardTypes.f90
+altayHardLawDSH.f90
+altayHardLawSwift.f90
+altayHardLawVoce.f90
 )
 
 
