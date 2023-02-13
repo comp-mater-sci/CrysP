@@ -6,6 +6,7 @@ module altayTaylor
     use altayMacroKinematic
     use criMathUtils
     use altayHardLaw_DSH
+    use altayHard
     use altayRCM
     use altayIOConfig
     use altayPancake
