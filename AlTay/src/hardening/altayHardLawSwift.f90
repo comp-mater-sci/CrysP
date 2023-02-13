@@ -25,20 +25,17 @@ implicit none
             real(dp)  :: n      = 0.2D0
       end type
 
-      !> Parameters of Swift hardening law, private to this module.
-      type :: SwiftParams
-            real(dp)  :: K      = 0.D0
-            real(dp)  :: gamma0 = 0.D0
-            real(dp)  :: n      = 0.D0
-      end type
-      !
-      type(SwiftParams),private,save    :: swiftPar
+      
+    type, extends(HardeningModelIsotropic) :: HardeningModelSwift
+        real(dp)    ::  k           = 398.1D0,  &
+                        gamma0      = 1.D-3,    &   
+                        n           = 0.2D0
+    contains
+        procedure :: init       => swift_init
+        procedure :: update     => swift_update
+    end type
 
-      interface InitModuleAltayHardLaw_swift !Generic Interface
-            module procedure init_swiftK, init_swiftS
-      end interface
-
-      integer,save,private :: configured_law_id = hard_invalid
+    character(*), parameter :: MODULE_NAME = 'altay_hardening_swift'
 
 contains
 
@@ -90,79 +87,33 @@ contains
       !
       end subroutine
 
-      subroutine init_swiftK(c,info)
-      use altayIOConfig
-      type(swiftKConfig),intent(in)       :: c
-      integer,intent(out)                 :: info
-      !
-      type(SwiftParams) :: p
-      info = -1
-      ! Check validity of inputs:
-      if (.not.(c%K > 0.D0 .and. c%gamma0 > 0.D0 .and. c%n > 0.D0)) then
-#ifdef ALTAY_SUBROUTINE
-            return
-#else
-            if(NLIST == 1) write (IMP,101)
-       101      format ('All 3 input parameters of SwiftK must be greater than 0.')
-            call terminate(stopcode_runtimeerror)
-#endif
-      endif
-      ! Assign Swift parameters
-      p%K=c%K
-      p%gamma0=c%gamma0
-      p%n=c%n
-      !
-      if(NLIST == 1) write (IMP,103) p%K,p%gamma0,p%n
-       103  format ('Swift: K, gamma0, n: ',/,3d15.5)
-      configured_law_id = hard_swiftK
-      ! Save the trial parameter set p
-      SwiftPar=p
-      ! Succesful initialization:
-      info = 0
-      end subroutine
 
-      subroutine init_swiftS(c,info)
-      use altayIOConfig
-      type(swiftSConfig),intent(in)       :: c
-      integer,intent(out)                 :: info
-      !
-      type(SwiftParams) :: p
-      info = -1
-      ! Check validity of inputs:
-      if (.not.(c%crss0 > 0.D0 .and. c%gamma0 > 0.D0 .and. c%n > 0.D0)) then
-#ifdef ALTAY_SUBROUTINE
-            return
-#else
-            if(NLIST == 1) write (IMP,101)
-       101      format ('All 3 input parameters of SwiftS must be greater than 0.')
-            call terminate(stopcode_runtimeerror)
-#endif
-      endif
-      ! Assign Swift parameters
-      p%K=c%crss0/(c%gamma0**c%n)
-      p%gamma0=c%gamma0
-      p%n=c%n
-      !
-      if(NLIST == 1) write (IMP,103) p%K,p%gamma0,p%n
-       103  format ('Swift: K, gamma0, n: ',/,3d15.5)
-      configured_law_id = hard_swiftS
-      ! Save the trial parameter set p
-      SwiftPar=p
-      ! Succesful initialization:
-      info = 0
-      end subroutine
+    subroutine swift_init(this, config)
+        class(HardeningModelSwift),             intent(inout)   :: this
+        type(HardeningData), intent(in) :: config
 
-      subroutine swift_getRefTau(hardID,gamma,RefTau,info)
-      integer,intent(in)                  :: hardID
-      real(dp),intent(in)         :: gamma
-      real(dp),intent(out)        :: RefTau
-      integer,intent(out)                 :: info
-     
-            info = -1
-            if (hardID /= configured_law_id) return
-            info = 0
-            RefTau = swiftPar%K * (swiftPar%GAMMA0+gamma)**(swiftPar%n)
-      
-      end subroutine
+        select case(config%hardlawid)
+            case(hard_swifts)
+                this%k = config%swiftkcnf%k
+                this%gamma0 = config%swiftkcnf%gamma0
+                this%n = config%swiftkcnf%n
+            case(hard_swiftk)
+                this%gamma0 = config%swiftScnf%gamma0
+                this%n = config%swiftScnf%n
+                this%k = config%swiftScnf%crss0 / (this%gamma0**this%n)
+        end select
+
+        if (this%gamma0 <= 0 .or. this%n <= 0 .or. this%k <= 0) call vef_exception(MODULE_NAME, 'swift_init', VEF_BADVAL, 'Swift params must be greater than 0')
+    end subroutine
+
+    subroutine swift_update(this, grain, time, strain, slip_rates)
+        class(HardeningModelSwift), intent(inout)           ::  this
+        integer,                    intent(in)              ::  grain
+        real(dp),                   intent(in)              ::  time, &
+                                                                strain
+        real(dp), dimension(this%nss), intent(in) ::  slip_rates
+
+        this%crss = this%k * (strain + this%gamma0)**(this%n)    
+    end subroutine
 
 end module
