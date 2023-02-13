@@ -18,26 +18,24 @@ implicit none
             real(dp)  :: THIII1 = 2.75
             real(dp)  :: THT    = 0.55
       end type
-      !> Parameters of DoubleVoce hardening law, private to this module.
-      type :: VoceParams
-            real(dp)  :: TIII1  = 0.D0
-            real(dp)  :: TIIIS  = 0.D0
-            real(dp)  :: TIVS   = 0.D0
-            real(dp)  :: GAMMAT = 0.D0
-            real(dp)  :: THIII  = 0.D0
-            real(dp)  :: ETA    = 0.D0
-            real(dp)  :: TAUT   = 0.D0
-            real(dp)  :: THIV   = 0.D0
-            real(dp)  :: TIV0   = 0.D0
-      end type
-     !
-      type(VoceParams),private,save     :: vocePar
 
-      interface InitModuleAltayHardLaw_voce !Generic Interface
-            module procedure init_voce
-      end interface
 
-      integer,save,private :: configured_law_id = hard_invalid
+    type :: stage
+        real(dp) :: TS, &
+                    T1, &
+                    TH  
+    end type
+
+    type, extends(HardeningModelIsotropic)   :: HardeningModelVoce
+        real(dp)    ::  transition_strain = 0.D0
+        type(stage) ::  stage_1,    &   
+                        stage_2
+    contains
+        procedure :: init           => voce_init
+        procedure :: update         => voce_update
+    end type
+
+    character(*), parameter :: MODULE_NAME = 'altayHardLaw_voce'
 
 contains
 
@@ -64,63 +62,50 @@ contains
             info = 0
       !
       end subroutine
-      subroutine init_voce(c,info)
-      use altayIOConfig
-      type(VoceConfig),intent(in)         :: c
-      integer,intent(out)                 :: info
-      !
-      type(VoceParams) :: p !trial parameter set
-      info = -1
-      ! Check validity of inputs:
-            if (.not.(c%TIIIS > c%TIII1.and.c%THIII1 > c%THT)) then
-#ifdef ALTAY_SUBROUTINE
-                  return
-#else
-                  if(NLIST == 1) write (IMP,101)
-       101  format ('TAU-III-S must be larger than TAU-III-1',/, &
-                    'also, THETA-III-1 must be larger than THETA-T')
-                  call terminate(stopcode_runtimeerror)
-#endif
-            endif
-            p%THIII=c%THIII1/(1.D0-c%TIII1/c%TIIIS)
-            if ((abs(p%THIII) < epsilon(0.D0)) .or. (abs(c%TIIIS) < epsilon(0.D0))) return
-            p%ETA=c%THT/p%THIII
-            ! Calculation of transition-gamma
-            p%GAMMAT=-c%TIIIS*LOG(p%ETA*c%TIIIS/(c%TIIIS-c%TIII1))/p%THIII
-            ! Calculation of transition TAU
-            p%TAUT=c%TIIIS-(c%TIIIS-c%TIII1)*exp(-p%THIII*p%GAMMAT/c%TIIIS)
-            ! Calculation of theta-IV-0
-            p%THIV=c%THT/(1.D0-p%TAUT/c%TIVS)
-            ! Calculation of TAU-IV-0
-            p%TIV0=c%TIVS+(p%TAUT-c%TIVS)*exp(p%THIV*p%GAMMAT/c%TIVS)
-            !
-            p%TIII1= c%TIII1
-            p%TIIIS= c%TIIIS
-            p%TIVS = c%TIVS
-            !
-            if(NLIST == 1) write (IMP,102) p%GAMMAT,p%TAUT,p%THIV,p%TIV0
-       102  format (' GAMMA-T, TAU-T, THETA-IV-0, TAU-IV-0',/,4d15.5)
-      configured_law_id = hard_voce
-      ! Save the trial parameter set p
-      vocePar=p
-      ! Succesful initialization:
-      info = 0
-      end subroutine
-      subroutine voce_getRefTau(hardID,gamma,RefTau,info)
-      integer,intent(in)                  :: hardID
-      real(dp),intent(in)         :: gamma
-      real(dp),intent(out)        :: RefTau
-      integer,intent(out)                 :: info
-      !
-            info = -1
-            if (hardID /= configured_law_id) return
-            info = 0
-                  ! Implementation of the Double-Voce-model
-                  if (gamma <= vocePar%GAMMAT) then
-                        RefTau=vocePar%TIIIS-(vocePar%TIIIS-vocePar%TIII1)*EXP(-vocePar%THIII*gamma/vocePar%TIIIS)
-                  else
-                        RefTau=vocePar%TIVS-(vocePar%TIVS-vocePar%TIV0)*EXP(-vocePar%THIV*gamma/vocePar%TIVS)
-                  endif
-      end subroutine
 
+   subroutine voce_init(this, config)
+        class(HardeningModelVoce),            intent(inout)   ::  this 
+        type(HardeningData), intent(in) :: config
+        integer                                                 ::  info
+        real(dp)                                                ::  THIII1, &
+                                                                    THT,    &   
+                                                                    ETA,    &   
+                                                                    TAUT
+
+        hardening_model_init(this, config)
+
+        
+
+        this%stage_1%T1 = config%vocecnf%TIII1 
+        this%stage_1%TS = config%vocecnf%TIIIS
+        this%stage_2%TS = config%vocecnf%TIVS
+        THIII1          = config%vocecnf%THIII1
+        THT             = config%vocecnf%THT
+    
+        !>Check validity of inputs:
+        if (.not. (this%stage_1%TS > this%stage_1%T1 .and. THIII1 > THT)) call vef_exception(MODULE_NAME, 'voce_init', VEF_BADVAL, 'TAU-III-S must be larger than TAU-III-1 and THETA-III-1 must be larger than THETA-T')
+
+        this%stage_1%TH = THIII1 / (1.D0 - this%stage_1%T1 / this%stage_1%TS)
+        ETA = THT / this%stage_1%TH
+        this%transition_strain = -this%stage_1%TS * log(ETA * this%stage_1%TS / (this%stage_1%TS - this%stage_1%T1)) / this%stage_1%TH 
+        TAUT = this%stage_1%TS - (this%stage_1%TS - this%stage_1%T1) * exp(-this%stage_1%TH * this%transition_strain / this%stage_1%TS) 
+        this%stage_2%TH = THT / (1.D0 - TAUT / this%stage_2%TS)
+        this%stage_2%T1 = this%stage_2%TS + (TAUT - this%stage_2%TS) * exp(this%stage_2%TH * this%transition_strain / this%stage_2%TS)
+    end function
+
+    subroutine voce_update(this, grain, time, strain, slip_rates)
+        class(HardeningModelVoce), intent(inout)            ::  this
+        integer, intent(in)                                 :: grain
+        real(dp), intent(in)                                ::  time, &
+                                                                strain
+        real(dp), dimension(this%nss), intent(in) ::  slip_rates
+        type(stage)                                         :: current_stage    
+
+        if (strain <= this%transition_strain) then
+            current_stage = this%stage_1
+        else
+            current_stage = this%stage_2
+        end if
+        this%crss = current_stage%TS - (current_stage%TS - current_stage%T1) * exp(-current_stage%TH * strain / current_stage%TS)
+    end subroutine
 end module
