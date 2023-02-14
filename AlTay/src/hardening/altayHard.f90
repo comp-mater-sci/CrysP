@@ -67,7 +67,7 @@ contains
         real(dp),intent(out)  :: tau 
         integer,intent(out)           :: info
         real(dp), dimension(48) :: slip_rates
-        real(dp), dimension(2,48) :: crss_buffer
+        real(dp), dimension(2,96) :: crss_buffer
     
         info = 0 
 
