@@ -108,8 +108,8 @@ contains
 
     subroutine KS_updateState(i,sliprate,deltaT,info)
       integer,intent(in)                              :: i        !< Grain identifier
-      double precision,intent(in), dimension(24)      :: sliprate !< slip rates on 2*12 slip systems
-      double precision,intent(in)                     :: deltaT   !< Time increment
+      real(dp),intent(in), dimension(24)      :: sliprate !< slip rates on 2*12 slip systems
+      real(dp),intent(in)                     :: deltaT   !< Time increment
       integer,intent(out)                             :: info
       !   
         call model%update(i, deltaT, 0.D0, sliprate)
