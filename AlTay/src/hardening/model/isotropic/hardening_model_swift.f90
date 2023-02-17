@@ -1,14 +1,10 @@
-!> Implementation of 'simple' hardening laws TAU(GAMMA), i.e. with only 1 internal variable: accumulated slip in grain GAMMA.
-!> Available laws:
-!>  - DoubleVoce
-!>  - SwiftK: Swift law with K-factor     :: TAU = K * (gamma0+GAMMA)**n
-!>  - SwiftS: Swift law with initial crsS :: TAU = crss0 * (1.+GAMMA/gammaA0)**n
-module altayHardLaw_swift
+module hardening_model_swift
 use altayMiscutils, only: terminate, stopcode_runtimeerror
 use altay_definitions, only: dp
-use altayHardTypes
+use hardening_types
 use altayConfig
-use altay_hardening_model_isotropic
+use hardening_model_isotropic
+use hardening_model
 use altay_log
 
 implicit none
@@ -23,6 +19,9 @@ implicit none
     end type
 
     character(*), parameter :: MODULE_NAME = 'altay_hardening_swift'
+
+    private
+    public :: HardeningModelSwift
 
 contains
 
@@ -105,4 +104,4 @@ contains
         this%crss = this%k * (strain + this%gamma0)**(this%n)    
     end subroutine
 
-end module
+end module hardening_model_swift

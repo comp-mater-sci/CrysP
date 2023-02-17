@@ -9,9 +9,9 @@ module altayPancake
     use altayTBH
     use altayAlgorithms
     use altayMacroKinematic
-    use altayHard
-    use altayHardTypes
-    use altayHardLaw_DSH
+    use hardening
+    use hardening_types
+    use hardening_model_dsh
 
     implicit none
     private

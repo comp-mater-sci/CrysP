@@ -1,8 +1,8 @@
-module altayHardLaw_DSH
+module hardening_model_dsh
     use altayIOConfig, only: LEC
     use altay_definitions
-    use altay_hardening_model
-    use altayHardTypes
+    use hardening_model
+    use hardening_types
     use altayConfig
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST=11 & PRE-file contains 24 (110)+(112)[111] slip systems;
@@ -66,27 +66,6 @@ module altayHardLaw_DSH
         MODULE PROCEDURE Init_file,Init_PAR
       END INTERFACE
 
-      PUBLIC                    &
-      !procedures:
-            InitModuleAltayHardLaw_DSH,   &
-            ReadPar,            &
-            GetInitStatVar,     &
-            MakeInc,            &
-            WriteHeadSVfile,    &
-            ReadHeadSVfile,     &
-            WriteSVfile,        &
-            ReadSVfile,         &
-            GetStateDerivedVar, &
-            WriteSDV,     &
-      !operators
-            operator(+),        &
-            operator(*),        &
-      !derived types:
-            PAR,                &
-            StatVar,            &
-            CBBtype,            &
-            StateDerivedVars
-
       !> \name Exit codes from altayHardLaw_DSH subroutines and functions:
       !>@{
       integer,PARAMETER,PUBLIC :: KS_OK = 0           !< OK
@@ -133,100 +112,8 @@ module altayHardLaw_DSH
       !real(dp), PARAMETER :: p5_42= 0.771516749810 !5.0/sqrt(42.0)
       !real(dp), PARAMETER :: n5_42=-0.771516749810
 
-      !EdgeDir(s,1:3): normalized movement vector of EDGE disl. on slip system s
-      !               (it equals the normalized burgers vector of slip system s)
-      real(dp), SAVE, DIMENSION(24,3)::EdgeDir
-      DATA (EdgeDir( 1: 3,i),i=1,3) /3*p3,3*p3,3*p3/ !s.s. 1 to 3
-      DATA (EdgeDir( 4: 6,i),i=1,3) /3*n3,3*n3,3*p3/ !s.s. 4 to 6
-      DATA (EdgeDir( 7: 9,i),i=1,3) /3*n3,3*p3,3*p3/ !..
-      DATA (EdgeDir(10:12,i),i=1,3) /3*p3,3*n3,3*p3/ !..
-      DATA (EdgeDir(13:15,i),i=1,3) /3*p3,3*p3,3*p3/ !..
-      DATA (EdgeDir(16:18,i),i=1,3) /3*n3,3*n3,3*p3/ !..
-      DATA (EdgeDir(19:21,i),i=1,3) /3*n3,3*p3,3*p3/ !..
-      DATA (EdgeDir(22:24,i),i=1,3) /3*p3,3*n3,3*p3/ !s.s. 21 to 24
-
-      !ScrewDir(s,1:3): normalized movement vector of SCREW disl. on slip system s
-      !  If NormSS(s,:) denotes slip plane normal vector and x the cross product, then:
-      !      ScrewDir(s,:) = EdgeDir(s,:) x NormSS(s,:)
-      real(dp), SAVE, DIMENSION(24,3)::ScrewDir
-      DATA (ScrewDir(01,i),i=1,3) /nd6,p6,p6/ !s.s. 01
-      DATA (ScrewDir(02,i),i=1,3) /p6,nd6,p6/ !s.s. 02
-      DATA (ScrewDir(03,i),i=1,3) /p6,p6,nd6/ !s.s. 03
-      DATA (ScrewDir(04,i),i=1,3) /pd6,n6,p6/ !s.s. 04
-      DATA (ScrewDir(05,i),i=1,3) /n6,pd6,p6/ !s.s. 05
-      DATA (ScrewDir(06,i),i=1,3) /n6,n6,nd6/ !s.s. 06
-      DATA (ScrewDir(07,i),i=1,3) /nd6,n6,n6/ !s.s. 07
-      DATA (ScrewDir(08,i),i=1,3) /p6,pd6,n6/ !s.s. 08
-      DATA (ScrewDir(09,i),i=1,3) /p6,n6,pd6/ !s.s. 09
-      DATA (ScrewDir(10,i),i=1,3) /pd6,p6,n6/ !s.s. 10
-      DATA (ScrewDir(11,i),i=1,3) /n6,nd6,n6/ !s.s. 11
-      DATA (ScrewDir(12,i),i=1,3) /n6,p6,pd6/ !s.s. 12
-      DATA (ScrewDir(13,i),i=1,3) /0.,p2,n2/ !s.s. 13
-      DATA (ScrewDir(14,i),i=1,3) /n2,0.,p2/ !s.s. 14
-      DATA (ScrewDir(15,i),i=1,3) /p2,n2,0./ !s.s. 15
-      DATA (ScrewDir(16,i),i=1,3) /0.,n2,n2/ !s.s. 16
-      DATA (ScrewDir(17,i),i=1,3) /p2,0.,p2/ !s.s. 17
-      DATA (ScrewDir(18,i),i=1,3) /n2,p2,0./ !s.s. 18
-      DATA (ScrewDir(19,i),i=1,3) /0.,n2,p2/ !s.s. 19
-      DATA (ScrewDir(20,i),i=1,3) /n2,0.,n2/ !s.s. 20
-      DATA (ScrewDir(21,i),i=1,3) /p2,p2,0./ !s.s. 21
-      DATA (ScrewDir(22,i),i=1,3) /0.,p2,p2/ !s.s. 22
-      DATA (ScrewDir(23,i),i=1,3) /p2,0.,n2/ !s.s. 23
-      DATA (ScrewDir(24,i),i=1,3) /n2,n2,0./ !s.s. 24
-      !DATA (ScrewDir(25,i),i=1,3) /n5_42,p4_42,p1_42/ !s.s. 25
-      !DATA (ScrewDir(26,i),i=1,3) /n4_42,p5_42,n1_42/ !s.s. 26
-      !DATA (ScrewDir(27,i),i=1,3) /p5_42,n1_42,n4_42/ !s.s. 27
-      !DATA (ScrewDir(28,i),i=1,3) /p4_42,p1_42,n5_42/ !s.s. 28
-      !DATA (ScrewDir(29,i),i=1,3) /p1_42,n5_42,p4_42/ !s.s. 29
-      !DATA (ScrewDir(30,i),i=1,3) /n1_42,n4_42,p5_42/ !s.s. 30
-      !DATA (ScrewDir(31,i),i=1,3) /p5_42,n4_42,p1_42/ !s.s. 31
-      !DATA (ScrewDir(32,i),i=1,3) /p4_42,n5_42,n1_42/ !s.s. 32
-      !DATA (ScrewDir(33,i),i=1,3) /p5_42,n1_42,p4_42/ !s.s. 33
-      !DATA (ScrewDir(34,i),i=1,3) /p4_42,p1_42,p5_42/ !s.s. 34
-      !DATA (ScrewDir(35,i),i=1,3) /p1_42,n5_42,n4_42/ !s.s. 35
-      !DATA (ScrewDir(36,i),i=1,3) /n1_42,n4_42,n5_42/ !s.s. 36
-      !DATA (ScrewDir(37,i),i=1,3) /n5_42,n4_42,p1_42/ !s.s. 37
-      !DATA (ScrewDir(38,i),i=1,3) /n4_42,n5_42,n1_42/ !s.s. 38
-      !DATA (ScrewDir(39,i),i=1,3) /n5_42,n1_42,p4_42/ !s.s. 39
-      !DATA (ScrewDir(40,i),i=1,3) /n4_42,p1_42,p5_42/ !s.s. 40
-      !DATA (ScrewDir(41,i),i=1,3) /p1_42,p5_42,p4_42/ !s.s. 41
-      !DATA (ScrewDir(42,i),i=1,3) /n1_42,p4_42,p5_42/ !s.s. 42
-      !DATA (ScrewDir(43,i),i=1,3) /p5_42,p4_42,p1_42/ !s.s. 43
-      !DATA (ScrewDir(44,i),i=1,3) /p4_42,p5_42,n1_42/ !s.s. 44
-      !DATA (ScrewDir(45,i),i=1,3) /n5_42,n1_42,n4_42/ !s.s. 45
-      !DATA (ScrewDir(46,i),i=1,3) /n4_42,p1_42,n5_42/ !s.s. 46
-      !DATA (ScrewDir(47,i),i=1,3) /p1_42,p5_42,n4_42/ !s.s. 47
-      !DATA (ScrewDir(48,i),i=1,3) /n1_42,p4_42,n5_42/ !s.s. 48
-
-      !NormDir(s,1:3): normalized slip plane normal vector of slip system s
-      real(dp), SAVE, DIMENSION(24,3)::NormDir
-      DATA (NormDir(01,i),i=1,3) /0.,p2,n2/ !s.s. 01
-      DATA (NormDir(02,i),i=1,3) /n2,0.,p2/ !s.s. 02
-      DATA (NormDir(03,i),i=1,3) /p2,n2,0./ !s.s. 03
-      DATA (NormDir(04,i),i=1,3) /0.,n2,n2/ !s.s. 04
-      DATA (NormDir(05,i),i=1,3) /p2,0.,p2/ !s.s. 05
-      DATA (NormDir(06,i),i=1,3) /n2,p2,0./ !s.s. 06
-      DATA (NormDir(07,i),i=1,3) /0.,p2,n2/ !s.s. 07
-      DATA (NormDir(08,i),i=1,3) /p2,0.,p2/ !s.s. 08
-      DATA (NormDir(09,i),i=1,3) /n2,n2,0./ !s.s. 09
-      DATA (NormDir(10,i),i=1,3) /0.,n2,n2/ !s.s. 10
-      DATA (NormDir(11,i),i=1,3) /n2,0.,p2/ !s.s. 11
-      DATA (NormDir(12,i),i=1,3) /p2,p2,0./ !s.s. 12
-      DATA (NormDir(13,i),i=1,3) /pd6,n6,n6/ !s.s. 13
-      DATA (NormDir(14,i),i=1,3) /n6,pd6,n6/ !s.s. 14
-      DATA (NormDir(15,i),i=1,3) /n6,n6,pd6/ !s.s. 15
-      DATA (NormDir(16,i),i=1,3) /nd6,p6,n6/ !s.s. 16
-      DATA (NormDir(17,i),i=1,3) /p6,nd6,n6/ !s.s. 17
-      DATA (NormDir(18,i),i=1,3) /p6,p6,pd6/ !s.s. 18
-      DATA (NormDir(19,i),i=1,3) /nd6,n6,n6/ !s.s. 19
-      DATA (NormDir(20,i),i=1,3) /p6,pd6,n6/ !s.s. 20
-      DATA (NormDir(21,i),i=1,3) /p6,n6,pd6/ !s.s. 21
-      DATA (NormDir(22,i),i=1,3) /pd6,p6,n6/ !s.s. 22
-      DATA (NormDir(23,i),i=1,3) /n6,nd6,n6/ !s.s. 23
-      DATA (NormDir(24,i),i=1,3) /n6,p6,pd6/ !s.s. 24
-
       !CBBnormal(i,1:3): normalized vector normal to CBB i
-      real(dp), SAVE, DIMENSION(6,3)::CBBnormal
+      real(dp), SAVE, DIMENSION(6,3) ::CBBnormal
       DATA (CBBnormal(1,i),i=1,3) /0.,p2,n2/ !CBBs on (01-1)-plane
       DATA (CBBnormal(2,i),i=1,3) /n2,0.,p2/ !CBBs on (-101)-plane
       DATA (CBBnormal(3,i),i=1,3) /p2,n2,0./ !CBBs on (1-10)-plane
@@ -236,13 +123,13 @@ module altayHardLaw_DSH
 
 
 
-      type(StatVar),allocatable,dimension(:),private    :: KS_state ! array of state variables
+      type(StatVar),allocatable,dimension(:)    :: KS_state ! array of state variables
 
       interface KS_readState
             module procedure KS_readState_unit, KS_readState_file
       end interface
 
-    type, extends(BaseHardeningModel) :: HardeningModelDSH
+    type, extends(HardeningModel) :: HardeningModelDSH
         type(StatVar), dimension(:), allocatable    ::  state
         real(dp), dimension(:,:,:), allocatable     ::  crss
         real(dp)                                    ::  b,                      &   
@@ -274,25 +161,24 @@ module altayHardLaw_DSH
                                                         alfa_G_b_eff    = 0.D0, &
                                                         alfa_G_b_ABSeff = 0.D0
     contains
-        procedure :: init           => bp_init
-        procedure :: update         => bp_update
-        procedure :: get_crss       => bp_get_crss
-        procedure :: finalize       => bp_finalize 
+        procedure :: init           => dsh_init
+        procedure :: update         => dsh_update
+        procedure :: get_crss       => dsh_get_crss
+        procedure :: finalize       => dsh_finalize 
     end type
 
       CONTAINS
 
-        subroutine bp_init(this, config)
+        subroutine dsh_init(this, config)
             class(HardeningModelDSH), intent(inout) :: this
             type(HardeningData), intent(in) :: config
             integer :: dummy
 
             call hardening_model_init(this,config)
             dummy = init_Par(config%pebpcnf%params, config%hardlawid, LEC)
-            
-        end subroutine bp_init
+        end subroutine dsh_init
         
-        subroutine bp_update(this, grain, time, strain, slip_rates)
+        subroutine dsh_update(this, grain, time, strain, slip_rates)
             class(HardeningModelDSH), intent(inout)     ::  this
             integer, intent(in)                         ::  grain
             real(dp), intent(in)                        ::  time,                 &
@@ -305,22 +191,22 @@ module altayHardLaw_DSH
             SVa = KS_state(grain)
             call makeinc(sva, slip_rates, time, svb, dummy)
             KS_state(grain) = svb 
-        end subroutine bp_update
+        end subroutine dsh_update
 
-        function bp_get_crss(this, grain) result(crss)
+        function dsh_get_crss(this, grain) result(crss)
             class(HardeningModelDSH), intent(in)    :: this
             integer, intent(in) :: grain
             real(dp)            :: crss(2,this%nss)
 
             crss = KS_state(grain)%crss
-        end function bp_get_crss
+        end function dsh_get_crss
         
-        subroutine bp_finalize(this)
+        subroutine dsh_finalize(this)
             class(HardeningModelDSH), intent(inout) :: this
             integer :: dummy
 
             dummy = KS_finalize()
-        end subroutine bp_finalize
+        end subroutine dsh_finalize
 
         
 
@@ -539,7 +425,7 @@ module altayHardLaw_DSH
       character(LEN=128) :: line1
       integer           :: s,i,Idum=0,Nsstry=0
 
-      InitOK=.FALSE.
+      InitOK=.TRUE.
 
       !Check KOSTtry
       select case (KOSTtry)
@@ -615,41 +501,7 @@ module altayHardLaw_DSH
 
       P%RHOwpLOW=  LOWfrac * P%RHOwpSAT
 
-      !Calculate "Wall-effectivity"-matrices
-      select case(iKOST)
-      case(13) ! "LoopSlip": introduced in v.1.11; invokable through KOST=13
-          do s=1,24
-            do i=1,6
-              eff(s,i)=DOT_PRODUCT( NormDir(s,:) , CBBnormal(i,:) )
-              if (abs(eff(s,i)) >= 0.99999D0) then !treat as "1" or "-1"
-                  eff(s,i)=0.0D0
-              else
-                  eff(s,i)=sqrt(1.0D0-(eff(s,i))**2)
-              endif
-            end do
-          end do
-      case(12) ! "ScrewSlip": introduced in v.1.9; invokable through KOST=12 in v.1.10
-          do s=1,24
-            do i=1,6
-              eff(s,i)=DOT_PRODUCT( ScrewDir(s,:) , CBBnormal(i,:) )
-            end do
-          end do
-      case(11) ! according to PhD Peeters
-          do s=1,24
-            do i=1,6
-              eff(s,i)=DOT_PRODUCT( EdgeDir(s,:) , CBBnormal(i,:) )
-            end do
-          end do
-      end select
-      effslashb       = eff / P%b
-      alfa_G_b= P%alfa* P%G * P%b
-      alfa_G_b_eff    = alfa_G_b * eff
-      alfa_G_b_ABSeff = ABS(alfa_G_b_eff)
-
-      !If control passes here, initialization is done without errors
-      InitOK=.TRUE. !PRIVATE to this module
-      iError=KS_OK      !OUT
-
+        iError = VEF_OK
       END FUNCTION Init_PAR
 
 
@@ -1356,4 +1208,4 @@ module altayHardLaw_DSH
       !
       end function
 
-      END MODULE altayHardLaw_DSH
+      END MODULE hardening_model_dsh

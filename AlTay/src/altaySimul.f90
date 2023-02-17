@@ -1,12 +1,12 @@
 #include "altayRCM.fpp"
 module altaySimul
     use altay_definitions
-    use altayHardTypes
+    use hardening_types
     use altayMacroKinematic
-    use altayHardLaw_DSH
+    use hardening_model_dsh
     use altayCurAccess
     use altayDYNFIL
-    use altayHard
+    use hardening
     use altayTaylor
     use altayAlgorithms
     use altayConfig

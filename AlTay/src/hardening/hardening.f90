@@ -1,20 +1,19 @@
 !> Dispatcher of hardening models
-module altayHard
-    use altayHardTypes
+module hardening
+    use hardening_types
     use altayIOConfig, only: LEC
     use altayConfig
-    use altayHardLaw_DSH
-    use altayHardLaw_voce
-    use altayHardLaw_swift
-    use altay_definitions, only: dp
-    use altay_hardening_model
-    use altayhardlaw_voce
-    use altayhardlaw_swift
-    use altayhardlaw_dsh
+    use altay_definitions
+    use hardening_model
+    use hardening_model_swift
+    use hardening_model_voce
+    use hardening_model_bp
+    use hardening_model_pebp_screw
+    use hardening_model_pebp_loop
     
     implicit none
     
-    class(BaseHardeningModel), allocatable :: model
+    class(HardeningModel), allocatable :: model
     integer, save :: HardLawID = hard_invalid !<Hardening law identifier of the initialized module
     
     private
@@ -42,17 +41,21 @@ contains
         if (.not. allocated(model)) then
         select case(config%HardLawID)
             case(hard_none)
-                allocate(BaseHardeningModel::model)
+                allocate(HardeningModel::model)
             case(hard_voce)
                   ! Just for non-hardening and isotropic, Voce-type hardening
                 allocate(HardeningModelVoce::model)
             case(hard_swiftK, hard_swiftS)
                   ! Swift-K hardening
                 allocate(HardeningModelSwift::model)
-            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
-                allocate(HardeningModelDSH::model)
+            case(hard_BP)
+                allocate(HardeningModelBP::model)
+            case(hard_PEBPscrew)
+                allocate(HardeningModelPEBPScrew::model)
+            case(hard_PEBPloop)
+                allocate(HardeningModelPEBPLoop::model)
             case default
-                  info = -1
+                  info = -11
         end select
         end if
 
@@ -80,7 +83,7 @@ contains
                     tau = crss_buffer(1,1)
             case default
                   tau = 1.D0
-                  info = -1
+                  info = -5
         end select
     end subroutine
 
@@ -101,7 +104,7 @@ contains
             case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
                 CRSSmatrix%crss = model%get_crss(ior)
             case default
-                info = -1
+                info = -10
         end select
     end subroutine
 
@@ -111,10 +114,10 @@ contains
       real(dp),intent(in), dimension(24)      :: sliprate !< slip rates on 2*12 slip systems
       real(dp),intent(in)                     :: deltaT   !< Time increment
       integer,intent(out)                             :: info
-      !   
+      ! 
         call model%update(i, deltaT, 0.D0, sliprate)
         info = VEF_OK   
-      end subroutine
+    end subroutine
 
 
 

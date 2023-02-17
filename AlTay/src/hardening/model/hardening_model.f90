@@ -1,4 +1,4 @@
-module altay_hardening_model
+module hardening_model
     use altay_definitions, only: dp
     use altayConfig
     
@@ -7,7 +7,7 @@ module altay_hardening_model
     !>Basic hardening model implementation.
     !>No hardening occurs.
     !>All other hardening models extend this type.   
-    type :: BaseHardeningModel
+    type :: HardeningModel
         integer :: nss
     contains
         procedure, pass(this)  :: init         => hardening_model_init
@@ -21,7 +21,7 @@ contains
     !>Initialize nss using params(1)
     !>@return the number of parameters used by this class
     subroutine hardening_model_init(this, config)
-        class(BaseHardeningModel), intent(inout)    ::  this
+        class(HardeningModel), intent(inout)    ::  this
         type(HardeningData), intent(in)             ::  config
 
         this%nss = 96
@@ -29,7 +29,7 @@ contains
 
     !>Do nothing
     subroutine hardening_model_update(this, grain, time, strain, slip_rates)
-        class(BaseHardeningModel), intent(inout)                ::  this
+        class(HardeningModel), intent(inout)                ::  this
         integer, intent(in)                                 ::  grain
         real(dp), intent(in)                                ::  time, &
                                                                 strain
@@ -38,7 +38,7 @@ contains
 
     !>All values 1.0
     function hardening_model_get_crss(this, grain) result(crss)
-        class(BaseHardeningModel), intent(in)               :: this
+        class(HardeningModel), intent(in)               :: this
         integer, intent(in)                             :: grain
         real(dp), dimension(2, this%nss)                :: crss 
 
@@ -47,6 +47,6 @@ contains
 
     !>Do nothing
     subroutine hardening_model_finalize(this)
-        class(BaseHardeningModel), intent(inout)    :: this
+        class(HardeningModel), intent(inout)    :: this
     end subroutine 
-end module
+end module hardening_model

@@ -5,15 +5,13 @@ module altayTaylor
     use altayMiscutils
     use altayMacroKinematic
     use criMathUtils
-    use altayHardLaw_DSH
-    use altayHard
+    use hardening
     use altayRCM
     use altayIOConfig
     use altayPancake
     use altaySliprate
     use altayConfig, only: astate
-    use AltayHardLaw_DSH
-    use altayHard, only: hard_BP, hard_PEBPscrew, hard_PEBPloop
+    use hardening_model_dsh
 
     implicit none
     private

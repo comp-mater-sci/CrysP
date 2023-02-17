@@ -1,15 +1,18 @@
-module altay_hardening_model_isotropic
+module hardening_model_isotropic
     use altay_definitions, only: dp
-    use altay_hardening_model
+    use hardening_model
 
     implicit none
 
     !>Superclass for simple hardening models yielding the same CRSS for all slip systems.
-    type, abstract, extends(BaseHardeningModel) :: HardeningModelIsotropic
+    type, abstract, extends(HardeningModel) :: HardeningModelIsotropic
         real(dp)    ::  crss
     contains
         procedure :: get_crss => hardening_model_isotropic_get_crss
     end type
+    
+    private
+    public :: HardeningModelIsotropic
 
 contains
 
@@ -20,4 +23,4 @@ contains
 
         crss = this%crss
     end function
-end module
+end module hardening_model_isotropic
