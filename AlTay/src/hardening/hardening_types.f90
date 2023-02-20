@@ -1,5 +1,5 @@
 !> Provides common data types and constants to be used by various hardening laws.
-module altayHardTypes
+module hardening_types
     use altay_definitions
 
     implicit none
@@ -33,4 +33,4 @@ module altayHardTypes
     integer,parameter :: hard_BP =           11, &
                          hard_PEBPscrew =    12, &
                          hard_PEBPloop =     13
-end module
+end module hardening_types

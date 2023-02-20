@@ -1,6 +1,9 @@
-module altayHardLaw_DSH
+module hardening_model_dsh
+    use altayIOConfig, only: LEC
     use altay_definitions
-    use altayHardTypes
+    use hardening_model
+    use hardening_types
+    use altayConfig
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST=11 & PRE-file contains 24 (110)+(112)[111] slip systems;
 !     -----------------------------------------------------
@@ -21,44 +24,34 @@ module altayHardLaw_DSH
 
       IMPLICIT NONE
 
-      !> BP model parameters including saturation and minimum values for state dependent dislocation densities
-      TYPE :: PAR
-            !PUBLIC components
-            double precision :: b,G,alfa,f,tau0
-            double precision :: I,R,Iwd,Rwd,Rncg,beta1,beta2
-            double precision :: Iwp,Rwp,Rrev,R2
-            double precision :: RHOcbSAT,RHOwdSAT,RHOwpSAT
-            double precision :: RHOcbMIN,RHOwdMIN,RHOwpMIN
-            double precision :: RHOwpLOW
-      END TYPE PAR
-
       TYPE :: CBBtype
             !PUBLIC components
-            double precision :: RHOwd = 0.D0
-            double precision :: RHOwp = 0.D0
-            double precision :: RHOwdHOM = 0.D0
-            double precision :: accGAMMA_new = 0.D0
-            double precision :: RHOwd_ini = 0.D0
+            real(dp) :: RHOwd = 0.D0
+            real(dp) :: RHOwp = 0.D0
+            real(dp) :: RHOwdHOM = 0.D0
+            real(dp) :: accGAMMA_new = 0.D0
+            real(dp) :: RHOwd_ini = 0.D0
       END TYPE CBBtype
+
 
       !> State variables for single grain
       TYPE :: StatVar
       !PUBLIC components
-            double precision                    :: RHOcb = 0.D0
+            real(dp)                    :: RHOcb = 0.D0
             TYPE(CBBtype), DIMENSION(6)         :: CBB
             integer, DIMENSION(2)               :: ActiveCBB = 0
-            double precision, DIMENSION(2,24)   :: CRSS = 0.D0 !Up to 24 slip systems supported
+            real(dp), DIMENSION(2,24)   :: CRSS = 0.D0 !Up to 24 slip systems supported
       END TYPE StatVar
 
       TYPE :: StateDerivedVars
             !> Dislocation density of cell boundaries; unit: m^(-2)
-            double precision :: rho_CBs = 0.D0
+            real(dp) :: rho_CBs = 0.D0
             !> Dislocation density of cell block boundaries; unit: m^(-2)
-            double precision :: rho_CBBs = 0.D0
+            real(dp) :: rho_CBBs = 0.D0
             !> Dislocation density of polarized dislocations at cell block boundaries; unit: m^(-2)
-            double precision :: rho_polCBBs = 0.D0
+            real(dp) :: rho_polCBBs = 0.D0
             !> Average dislocation density; unit: m^(-2)
-            double precision :: rho_avg = 0.D0
+            real(dp) :: rho_avg = 0.D0
       END TYPE
 
       INTERFACE OPERATOR(+)
@@ -72,27 +65,6 @@ module altayHardLaw_DSH
       INTERFACE InitModuleAltayHardLaw_DSH !Generic Interface
         MODULE PROCEDURE Init_file,Init_PAR
       END INTERFACE
-
-      PUBLIC                    &
-      !procedures:
-            InitModuleAltayHardLaw_DSH,   &
-            ReadPar,            &
-            GetInitStatVar,     &
-            MakeInc,            &
-            WriteHeadSVfile,    &
-            ReadHeadSVfile,     &
-            WriteSVfile,        &
-            ReadSVfile,         &
-            GetStateDerivedVar, &
-            WriteSDV,     &
-      !operators
-            operator(+),        &
-            operator(*),        &
-      !derived types:
-            PAR,                &
-            StatVar,            &
-            CBBtype,            &
-            StateDerivedVars
 
       !> \name Exit codes from altayHardLaw_DSH subroutines and functions:
       !>@{
@@ -114,126 +86,34 @@ module altayHardLaw_DSH
                            !     Nss=12: (110)[111] - 1 family
                            !     Nss=24: (110)+(112)[111] - 2 families
       integer, PRIVATE :: i !running index
-      double precision, SAVE :: alfa_G_b
-      double precision, SAVE, DIMENSION(24,6):: eff             = 0.D0 ,&
+      real(dp), SAVE :: alfa_G_b
+      real(dp), SAVE, DIMENSION(24,6):: eff             = 0.D0 ,&
                                                 effslashb       = 0.D0 ,&
                                                 alfa_G_b_eff    = 0.D0 ,&
                                                 alfa_G_b_ABSeff = 0.D0
 
-      double precision, PARAMETER :: MINfrac= 2.0D-3
-      double precision, PARAMETER :: LOWfrac=10.0D-3
+      real(dp), PARAMETER :: MINfrac= 2.0D-3
+      real(dp), PARAMETER :: LOWfrac=10.0D-3
 
-      double precision, PARAMETER :: TENpow6 = 1.D6
+      real(dp), PARAMETER :: TENpow6 = 1.D6
 
-      double precision, PARAMETER :: p2= 1.D0/sqrt(2.D0)
-      double precision, PARAMETER :: n2= -p2
-      double precision, PARAMETER :: p3= 1.D0/sqrt(3.D0)
-      double precision, PARAMETER :: n3= -p3
-      double precision, PARAMETER :: p6= 1.D0/sqrt(6.D0)
-      double precision, PARAMETER :: n6= -p6
-      double precision, PARAMETER :: pd6= 2.D0/sqrt(6.D0)
-      double precision, PARAMETER :: nd6= -pd6
-      !double precision, PARAMETER :: p1_42= 0.154303349962 !1.0/sqrt(42.0)
-      !double precision, PARAMETER :: n1_42=-0.154303349962
-      !double precision, PARAMETER :: p4_42= 0.617213399848 !4.0/sqrt(42.0)
-      !double precision, PARAMETER :: n4_42=-0.617213399848
-      !double precision, PARAMETER :: p5_42= 0.771516749810 !5.0/sqrt(42.0)
-      !double precision, PARAMETER :: n5_42=-0.771516749810
-
-      !EdgeDir(s,1:3): normalized movement vector of EDGE disl. on slip system s
-      !               (it equals the normalized burgers vector of slip system s)
-      double precision, SAVE, DIMENSION(24,3)::EdgeDir
-      DATA (EdgeDir( 1: 3,i),i=1,3) /3*p3,3*p3,3*p3/ !s.s. 1 to 3
-      DATA (EdgeDir( 4: 6,i),i=1,3) /3*n3,3*n3,3*p3/ !s.s. 4 to 6
-      DATA (EdgeDir( 7: 9,i),i=1,3) /3*n3,3*p3,3*p3/ !..
-      DATA (EdgeDir(10:12,i),i=1,3) /3*p3,3*n3,3*p3/ !..
-      DATA (EdgeDir(13:15,i),i=1,3) /3*p3,3*p3,3*p3/ !..
-      DATA (EdgeDir(16:18,i),i=1,3) /3*n3,3*n3,3*p3/ !..
-      DATA (EdgeDir(19:21,i),i=1,3) /3*n3,3*p3,3*p3/ !..
-      DATA (EdgeDir(22:24,i),i=1,3) /3*p3,3*n3,3*p3/ !s.s. 21 to 24
-
-      !ScrewDir(s,1:3): normalized movement vector of SCREW disl. on slip system s
-      !  If NormSS(s,:) denotes slip plane normal vector and x the cross product, then:
-      !      ScrewDir(s,:) = EdgeDir(s,:) x NormSS(s,:)
-      double precision, SAVE, DIMENSION(24,3)::ScrewDir
-      DATA (ScrewDir(01,i),i=1,3) /nd6,p6,p6/ !s.s. 01
-      DATA (ScrewDir(02,i),i=1,3) /p6,nd6,p6/ !s.s. 02
-      DATA (ScrewDir(03,i),i=1,3) /p6,p6,nd6/ !s.s. 03
-      DATA (ScrewDir(04,i),i=1,3) /pd6,n6,p6/ !s.s. 04
-      DATA (ScrewDir(05,i),i=1,3) /n6,pd6,p6/ !s.s. 05
-      DATA (ScrewDir(06,i),i=1,3) /n6,n6,nd6/ !s.s. 06
-      DATA (ScrewDir(07,i),i=1,3) /nd6,n6,n6/ !s.s. 07
-      DATA (ScrewDir(08,i),i=1,3) /p6,pd6,n6/ !s.s. 08
-      DATA (ScrewDir(09,i),i=1,3) /p6,n6,pd6/ !s.s. 09
-      DATA (ScrewDir(10,i),i=1,3) /pd6,p6,n6/ !s.s. 10
-      DATA (ScrewDir(11,i),i=1,3) /n6,nd6,n6/ !s.s. 11
-      DATA (ScrewDir(12,i),i=1,3) /n6,p6,pd6/ !s.s. 12
-      DATA (ScrewDir(13,i),i=1,3) /0.,p2,n2/ !s.s. 13
-      DATA (ScrewDir(14,i),i=1,3) /n2,0.,p2/ !s.s. 14
-      DATA (ScrewDir(15,i),i=1,3) /p2,n2,0./ !s.s. 15
-      DATA (ScrewDir(16,i),i=1,3) /0.,n2,n2/ !s.s. 16
-      DATA (ScrewDir(17,i),i=1,3) /p2,0.,p2/ !s.s. 17
-      DATA (ScrewDir(18,i),i=1,3) /n2,p2,0./ !s.s. 18
-      DATA (ScrewDir(19,i),i=1,3) /0.,n2,p2/ !s.s. 19
-      DATA (ScrewDir(20,i),i=1,3) /n2,0.,n2/ !s.s. 20
-      DATA (ScrewDir(21,i),i=1,3) /p2,p2,0./ !s.s. 21
-      DATA (ScrewDir(22,i),i=1,3) /0.,p2,p2/ !s.s. 22
-      DATA (ScrewDir(23,i),i=1,3) /p2,0.,n2/ !s.s. 23
-      DATA (ScrewDir(24,i),i=1,3) /n2,n2,0./ !s.s. 24
-      !DATA (ScrewDir(25,i),i=1,3) /n5_42,p4_42,p1_42/ !s.s. 25
-      !DATA (ScrewDir(26,i),i=1,3) /n4_42,p5_42,n1_42/ !s.s. 26
-      !DATA (ScrewDir(27,i),i=1,3) /p5_42,n1_42,n4_42/ !s.s. 27
-      !DATA (ScrewDir(28,i),i=1,3) /p4_42,p1_42,n5_42/ !s.s. 28
-      !DATA (ScrewDir(29,i),i=1,3) /p1_42,n5_42,p4_42/ !s.s. 29
-      !DATA (ScrewDir(30,i),i=1,3) /n1_42,n4_42,p5_42/ !s.s. 30
-      !DATA (ScrewDir(31,i),i=1,3) /p5_42,n4_42,p1_42/ !s.s. 31
-      !DATA (ScrewDir(32,i),i=1,3) /p4_42,n5_42,n1_42/ !s.s. 32
-      !DATA (ScrewDir(33,i),i=1,3) /p5_42,n1_42,p4_42/ !s.s. 33
-      !DATA (ScrewDir(34,i),i=1,3) /p4_42,p1_42,p5_42/ !s.s. 34
-      !DATA (ScrewDir(35,i),i=1,3) /p1_42,n5_42,n4_42/ !s.s. 35
-      !DATA (ScrewDir(36,i),i=1,3) /n1_42,n4_42,n5_42/ !s.s. 36
-      !DATA (ScrewDir(37,i),i=1,3) /n5_42,n4_42,p1_42/ !s.s. 37
-      !DATA (ScrewDir(38,i),i=1,3) /n4_42,n5_42,n1_42/ !s.s. 38
-      !DATA (ScrewDir(39,i),i=1,3) /n5_42,n1_42,p4_42/ !s.s. 39
-      !DATA (ScrewDir(40,i),i=1,3) /n4_42,p1_42,p5_42/ !s.s. 40
-      !DATA (ScrewDir(41,i),i=1,3) /p1_42,p5_42,p4_42/ !s.s. 41
-      !DATA (ScrewDir(42,i),i=1,3) /n1_42,p4_42,p5_42/ !s.s. 42
-      !DATA (ScrewDir(43,i),i=1,3) /p5_42,p4_42,p1_42/ !s.s. 43
-      !DATA (ScrewDir(44,i),i=1,3) /p4_42,p5_42,n1_42/ !s.s. 44
-      !DATA (ScrewDir(45,i),i=1,3) /n5_42,n1_42,n4_42/ !s.s. 45
-      !DATA (ScrewDir(46,i),i=1,3) /n4_42,p1_42,n5_42/ !s.s. 46
-      !DATA (ScrewDir(47,i),i=1,3) /p1_42,p5_42,n4_42/ !s.s. 47
-      !DATA (ScrewDir(48,i),i=1,3) /n1_42,p4_42,n5_42/ !s.s. 48
-
-      !NormDir(s,1:3): normalized slip plane normal vector of slip system s
-      double precision, SAVE, DIMENSION(24,3)::NormDir
-      DATA (NormDir(01,i),i=1,3) /0.,p2,n2/ !s.s. 01
-      DATA (NormDir(02,i),i=1,3) /n2,0.,p2/ !s.s. 02
-      DATA (NormDir(03,i),i=1,3) /p2,n2,0./ !s.s. 03
-      DATA (NormDir(04,i),i=1,3) /0.,n2,n2/ !s.s. 04
-      DATA (NormDir(05,i),i=1,3) /p2,0.,p2/ !s.s. 05
-      DATA (NormDir(06,i),i=1,3) /n2,p2,0./ !s.s. 06
-      DATA (NormDir(07,i),i=1,3) /0.,p2,n2/ !s.s. 07
-      DATA (NormDir(08,i),i=1,3) /p2,0.,p2/ !s.s. 08
-      DATA (NormDir(09,i),i=1,3) /n2,n2,0./ !s.s. 09
-      DATA (NormDir(10,i),i=1,3) /0.,n2,n2/ !s.s. 10
-      DATA (NormDir(11,i),i=1,3) /n2,0.,p2/ !s.s. 11
-      DATA (NormDir(12,i),i=1,3) /p2,p2,0./ !s.s. 12
-      DATA (NormDir(13,i),i=1,3) /pd6,n6,n6/ !s.s. 13
-      DATA (NormDir(14,i),i=1,3) /n6,pd6,n6/ !s.s. 14
-      DATA (NormDir(15,i),i=1,3) /n6,n6,pd6/ !s.s. 15
-      DATA (NormDir(16,i),i=1,3) /nd6,p6,n6/ !s.s. 16
-      DATA (NormDir(17,i),i=1,3) /p6,nd6,n6/ !s.s. 17
-      DATA (NormDir(18,i),i=1,3) /p6,p6,pd6/ !s.s. 18
-      DATA (NormDir(19,i),i=1,3) /nd6,n6,n6/ !s.s. 19
-      DATA (NormDir(20,i),i=1,3) /p6,pd6,n6/ !s.s. 20
-      DATA (NormDir(21,i),i=1,3) /p6,n6,pd6/ !s.s. 21
-      DATA (NormDir(22,i),i=1,3) /pd6,p6,n6/ !s.s. 22
-      DATA (NormDir(23,i),i=1,3) /n6,nd6,n6/ !s.s. 23
-      DATA (NormDir(24,i),i=1,3) /n6,p6,pd6/ !s.s. 24
+      real(dp), PARAMETER :: p2= 1.D0/sqrt(2.D0)
+      real(dp), PARAMETER :: n2= -p2
+      real(dp), PARAMETER :: p3= 1.D0/sqrt(3.D0)
+      real(dp), PARAMETER :: n3= -p3
+      real(dp), PARAMETER :: p6= 1.D0/sqrt(6.D0)
+      real(dp), PARAMETER :: n6= -p6
+      real(dp), PARAMETER :: pd6= 2.D0/sqrt(6.D0)
+      real(dp), PARAMETER :: nd6= -pd6
+      !real(dp), PARAMETER :: p1_42= 0.154303349962 !1.0/sqrt(42.0)
+      !real(dp), PARAMETER :: n1_42=-0.154303349962
+      !real(dp), PARAMETER :: p4_42= 0.617213399848 !4.0/sqrt(42.0)
+      !real(dp), PARAMETER :: n4_42=-0.617213399848
+      !real(dp), PARAMETER :: p5_42= 0.771516749810 !5.0/sqrt(42.0)
+      !real(dp), PARAMETER :: n5_42=-0.771516749810
 
       !CBBnormal(i,1:3): normalized vector normal to CBB i
-      double precision, SAVE, DIMENSION(6,3)::CBBnormal
+      real(dp), SAVE, DIMENSION(6,3) ::CBBnormal
       DATA (CBBnormal(1,i),i=1,3) /0.,p2,n2/ !CBBs on (01-1)-plane
       DATA (CBBnormal(2,i),i=1,3) /n2,0.,p2/ !CBBs on (-101)-plane
       DATA (CBBnormal(3,i),i=1,3) /p2,n2,0./ !CBBs on (1-10)-plane
@@ -243,16 +123,92 @@ module altayHardLaw_DSH
 
 
 
-      type(StatVar),allocatable,dimension(:),private    :: KS_state ! array of state variables
+      type(StatVar),allocatable,dimension(:)    :: KS_state ! array of state variables
 
       interface KS_readState
             module procedure KS_readState_unit, KS_readState_file
       end interface
 
-
+    type, extends(HardeningModel) :: HardeningModelDSH
+        type(StatVar), dimension(:), allocatable    ::  state
+        real(dp), dimension(:,:,:), allocatable     ::  crss
+        real(dp)                                    ::  b,                      &   
+                                                        G,                      &   
+                                                        alfa,                   &   
+                                                        f,                      &   
+                                                        tau0,                   &   
+                                                        I,                      &   
+                                                        R,                      &   
+                                                        Iwd,                    &   
+                                                        Rwd,                    &   
+                                                        Rncg,                   &   
+                                                        beta1,                  &   
+                                                        beta2,                  &   
+                                                        Iwp,                    &   
+                                                        Rwp,                    &   
+                                                        Rrev,                   &   
+                                                        R2,                     &   
+                                                        RHOcbSAT,               &   
+                                                        RHOwdSAT,               &   
+                                                        RHOwpSAT,               &   
+                                                        RHOcbMIN,               &   
+                                                        RHOwdMIN,               &   
+                                                        RHOwpMIN,               &   
+                                                        RHOwpLOW,               &   
+                                                        alfa_G_b
+        real(dp), dimension(24,6)                   ::  eff             = 0.D0, &
+                                                        effslashb       = 0.D0, &
+                                                        alfa_G_b_eff    = 0.D0, &
+                                                        alfa_G_b_ABSeff = 0.D0
+    contains
+        procedure :: init           => dsh_init
+        procedure :: update         => dsh_update
+        procedure :: get_crss       => dsh_get_crss
+        procedure :: finalize       => dsh_finalize 
+    end type
 
       CONTAINS
 
+        subroutine dsh_init(this, config)
+            class(HardeningModelDSH), intent(inout) :: this
+            type(HardeningData), intent(in) :: config
+            integer :: dummy
+
+            call hardening_model_init(this,config)
+            dummy = init_Par(config%pebpcnf%params, config%hardlawid, LEC)
+        end subroutine dsh_init
+        
+        subroutine dsh_update(this, grain, time, strain, slip_rates)
+            class(HardeningModelDSH), intent(inout)     ::  this
+            integer, intent(in)                         ::  grain
+            real(dp), intent(in)                        ::  time,                 &
+                                                        strain
+            real(dp), dimension(this%nss), intent(in)   ::  slip_rates
+            type(StatVar)                               ::  SVa,                    &
+                                                            SVb
+            integer :: dummy
+
+            SVa = KS_state(grain)
+            call makeinc(sva, slip_rates, time, svb, dummy)
+            KS_state(grain) = svb 
+        end subroutine dsh_update
+
+        function dsh_get_crss(this, grain) result(crss)
+            class(HardeningModelDSH), intent(in)    :: this
+            integer, intent(in) :: grain
+            real(dp)            :: crss(2,this%nss)
+
+            crss = KS_state(grain)%crss
+        end function dsh_get_crss
+        
+        subroutine dsh_finalize(this)
+            class(HardeningModelDSH), intent(inout) :: this
+            integer :: dummy
+
+            dummy = KS_finalize()
+        end subroutine dsh_finalize
+
+        
 
       !> Query the number of elements in the state array.
       integer function KS_getStateSize()
@@ -298,26 +254,6 @@ module altayHardLaw_DSH
       end function
 
 
-
-
-      !> Update the state variables of the PEBP model for i-th grain.
-      subroutine KS_updateState(i,sliprate,deltaT,info)
-      integer,intent(in)                              :: i        !< Grain identifier
-      double precision,intent(in), dimension(24)      :: sliprate !< slip rates on 2*12 slip systems
-      double precision,intent(in)                     :: deltaT   !< Time increment
-      integer,intent(out)                             :: info
-      !
-      type(StatVar) :: SV_tmp
-      !
-            info = KS_ErrBadDims
-            if (size(KS_state) < i) return
-            !
-            call MakeInc(KS_state(i),sliprate,deltaT,SV_tmp,info)
-            if (info /= 0) return
-            ! Update the state of the i-th grain
-            KS_state(i) = SV_tmp
-      !
-      end subroutine
 
 
       !> Get CRSS for i-th grain.
@@ -489,7 +425,7 @@ module altayHardLaw_DSH
       character(LEN=128) :: line1
       integer           :: s,i,Idum=0,Nsstry=0
 
-      InitOK=.FALSE.
+      InitOK=.TRUE.
 
       !Check KOSTtry
       select case (KOSTtry)
@@ -565,41 +501,7 @@ module altayHardLaw_DSH
 
       P%RHOwpLOW=  LOWfrac * P%RHOwpSAT
 
-      !Calculate "Wall-effectivity"-matrices
-      select case(iKOST)
-      case(13) ! "LoopSlip": introduced in v.1.11; invokable through KOST=13
-          do s=1,24
-            do i=1,6
-              eff(s,i)=DOT_PRODUCT( NormDir(s,:) , CBBnormal(i,:) )
-              if (abs(eff(s,i)) >= 0.99999D0) then !treat as "1" or "-1"
-                  eff(s,i)=0.0D0
-              else
-                  eff(s,i)=sqrt(1.0D0-(eff(s,i))**2)
-              endif
-            end do
-          end do
-      case(12) ! "ScrewSlip": introduced in v.1.9; invokable through KOST=12 in v.1.10
-          do s=1,24
-            do i=1,6
-              eff(s,i)=DOT_PRODUCT( ScrewDir(s,:) , CBBnormal(i,:) )
-            end do
-          end do
-      case(11) ! according to PhD Peeters
-          do s=1,24
-            do i=1,6
-              eff(s,i)=DOT_PRODUCT( EdgeDir(s,:) , CBBnormal(i,:) )
-            end do
-          end do
-      end select
-      effslashb       = eff / P%b
-      alfa_G_b= P%alfa* P%G * P%b
-      alfa_G_b_eff    = alfa_G_b * eff
-      alfa_G_b_ABSeff = ABS(alfa_G_b_eff)
-
-      !If control passes here, initialization is done without errors
-      InitOK=.TRUE. !PRIVATE to this module
-      iError=KS_OK      !OUT
-
+        iError = VEF_OK
       END FUNCTION Init_PAR
 
 
@@ -700,18 +602,18 @@ module altayHardLaw_DSH
       !   *  KS_ErrBadValue, if negative deltaT is provided
       !   *  KS_ErrUninitialized, in case this module is not correctly initialized
       TYPE(StatVar),INTENT(IN)       :: SVa
-      double precision,INTENT(IN), DIMENSION(24) :: sliprate
-      double precision,INTENT(IN)                      :: deltaT
+      real(dp),INTENT(IN), DIMENSION(24) :: sliprate
+      real(dp),INTENT(IN)                      :: deltaT
       TYPE(StatVar),INTENT(OUT)      :: SVb !OUT
       integer,INTENT(OUT)            :: iError
 
       !local variable declarations
-      double precision :: SUMabsGamDot=0.,GAMMAdot_new=0.,RHObausch=0.
-      double precision :: SUMabsGam   =0.,GAMMA_new   =0.
-      double precision,    DIMENSION(6) :: GAMMAdot=0.,GAMMA=0.
+      real(dp) :: SUMabsGamDot=0.,GAMMAdot_new=0.,RHObausch=0.
+      real(dp) :: SUMabsGam   =0.,GAMMA_new   =0.
+      real(dp),    DIMENSION(6) :: GAMMAdot=0.,GAMMA=0.
       integer, DIMENSION(6) :: r
       integer :: j
-      double precision :: fl,wd
+      real(dp) :: fl,wd
 
       if(.NOT.InitOK) then
             SVb=SVa
@@ -785,8 +687,8 @@ module altayHardLaw_DSH
 
       FUNCTION F_GAMMAdot(sr)
       ! Calculate the total slip rates on each of the six (110)-planes
-      double precision, DIMENSION(24), INTENT(IN)  :: sr !Slip Rate
-      double precision, DIMENSION( 6)              :: F_GAMMAdot !OUT
+      real(dp), DIMENSION(24), INTENT(IN)  :: sr !Slip Rate
+      real(dp), DIMENSION( 6)              :: F_GAMMAdot !OUT
 
       F_GAMMAdot(1)= abs(sr( 1))+abs(sr( 7))!(01-1)-plane
       F_GAMMAdot(2)= abs(sr( 2))+abs(sr(11))!(-101)-plane
@@ -805,7 +707,7 @@ module altayHardLaw_DSH
       !The plane of 2nd-largest PlaneSlip is identified by sort110planes(2).
       !The remaining 4 planes are identified by            sort110planes(3:6).
       ! (note: the 4 remaining planes are not ordered from higher to lower total PlaneSlip!)
-      double precision,    DIMENSION(6), INTENT(IN)  :: PlaneSlip
+      real(dp),    DIMENSION(6), INTENT(IN)  :: PlaneSlip
       integer, DIMENSION(6)              :: sort110planes !OUT
 
       !declaration of local variables
@@ -838,7 +740,7 @@ module altayHardLaw_DSH
 
 
 
-      double precision FUNCTION F_KocksMeck(RHO_a,delta_g,II,RR) !PE27062012-2
+      real(dp) FUNCTION F_KocksMeck(RHO_a,delta_g,II,RR) !PE27062012-2
       !Returns RHO_b, the value of RHO at the end of an interval (a,b)
       ! for the following differential equation:
       !
@@ -851,10 +753,10 @@ module altayHardLaw_DSH
       ! To calc. RHO_b, following inputs are required:
       !   -> RHO_a, the value of RHO at the start of the interval (a,b)
       !   -> delta_g = g_b - g_a, the increment in g during the interval (a,b)
-      double precision ,INTENT(IN):: RHO_a,delta_g,II,RR
+      real(dp) ,INTENT(IN):: RHO_a,delta_g,II,RR
 
 !     local variable declarations
-      double precision x
+      real(dp) x
 
       x=exp(-0.5D0*RR*delta_g/P%b)
       x=II/RR*(1.D0-x)+sqrt(RHO_a)*x
@@ -866,9 +768,9 @@ module altayHardLaw_DSH
 
       SUBROUTINE UPD_cur_wp(rdr,RHOwp_a,RHOwp_b,RHObausch)
       integer, INTENT(IN):: rdr
-      double precision ,INTENT(IN)   :: RHOwp_a
-      double precision ,INTENT(OUT)  :: RHOwp_b
-      double precision, INTENT(INOUT):: RHObausch
+      real(dp) ,INTENT(IN)   :: RHOwp_a
+      real(dp) ,INTENT(OUT)  :: RHOwp_b
+      real(dp), INTENT(INOUT):: RHObausch
 
       !inherited variables:
       !P%Iwd, P%Rwd, P%b
@@ -878,7 +780,7 @@ module altayHardLaw_DSH
       !fl, wd
 
       !local variable declarations:
-      double precision :: wpFLUX !wp-flux on the wall 'rdr'
+      real(dp) :: wpFLUX !wp-flux on the wall 'rdr'
 
       logical :: FLUXreversal,wpLOW
 
@@ -925,11 +827,11 @@ module altayHardLaw_DSH
       !                       K4= deltaT * F(wpini+K3  )
       !    with wpini : the value of wp at the start of the increment
       !         deltaT: the time of the increment
-      double precision, INTENT(IN) :: wpini
-      double precision                RungeKutta   !OUT
+      real(dp), INTENT(IN) :: wpini
+      real(dp)                RungeKutta   !OUT
 
       !local variable declarations:
-      double precision, DIMENSION(4) :: K
+      real(dp), DIMENSION(4) :: K
 
       K(1)=deltaT*dwp_dt(wpini        )
       K(2)=deltaT*dwp_dt(wpini+K(1)/2.D0)
@@ -942,8 +844,8 @@ module altayHardLaw_DSH
 
 
       FUNCTION dwp_dt(wp)
-      double precision, INTENT(IN) :: wp
-      double precision             :: dwp_dt !OUT
+      real(dp), INTENT(IN) :: wp
+      real(dp)             :: dwp_dt !OUT
 
       !inherited variables:
       !fl, wd
@@ -956,8 +858,8 @@ module altayHardLaw_DSH
 
 
       SUBROUTINE UPD_ncg_wp(RHOwp_a,RHOwp_b)
-      double precision, INTENT(IN)  :: RHOwp_a
-      double precision, INTENT(OUT) :: RHOwp_b
+      real(dp), INTENT(IN)  :: RHOwp_a
+      real(dp), INTENT(OUT) :: RHOwp_b
 
       !inherited variables:
       !P%Rncg, GAMMAdot_new, P%b, P%RHOwpMIN
@@ -987,9 +889,9 @@ module altayHardLaw_DSH
       !GAMMAdot_new
 
 !     local variable declarations
-      double precision RHOwdLOC
-      double precision RHOwdHOM,accGAMMA_new,RHOwd_ini
-      double precision RHOwd
+      real(dp) RHOwdLOC
+      real(dp) RHOwdHOM,accGAMMA_new,RHOwd_ini
+      real(dp) RHOwd
 
       RHOwdHOM     = SV_a%CBB(rdr)%RHOwdHOM
       accGAMMA_new = SV_a%CBB(rdr)%accGAMMA_new
@@ -1026,15 +928,15 @@ module altayHardLaw_DSH
 
 
       SUBROUTINE UPD_cb(RHObausch,SUMabsGam,RHO_a,RHO_b)
-      double precision, INTENT(IN)  :: RHObausch,SUMabsGam
-      double precision, INTENT(IN)  :: RHO_a
-      double precision, INTENT(OUT) :: RHO_b
+      real(dp), INTENT(IN)  :: RHObausch,SUMabsGam
+      real(dp), INTENT(IN)  :: RHO_a
+      real(dp), INTENT(OUT) :: RHO_b
 
       !inherited variables:
       !P%I, P%R, P%R2, P%b, P%RHOwpSAT
 
 !     local variable declarations
-      double precision Reffective
+      real(dp) Reffective
 
       if(RHObausch  >  0.0) then
         Reffective=P%R + P%R2*RHObausch/(2.D0*P%RHOwpSAT)
@@ -1055,18 +957,18 @@ module altayHardLaw_DSH
 
       FUNCTION F_CRSS(SV)
       TYPE(StatVar), INTENT(IN) :: SV
-      double precision, DIMENSION(2,24):: F_CRSS !OUT
+      real(dp), DIMENSION(2,24):: F_CRSS !OUT
 
 !     P%tau0,P%f  ->inherited
 !     alfa_G_b ->inherited
 !     alfa_G_b_eff,alfa_G_b_ABSeff ->inherited
 
       !local variables declarations
-      double precision :: tau_CB,CRSS_0_CB
-      double precision,DIMENSION(2,24)::tau_CBB
+      real(dp) :: tau_CB,CRSS_0_CB
+      real(dp),DIMENSION(2,24)::tau_CBB
       integer :: j,s,i
-      double precision :: signfac
-      double precision,DIMENSION(6)::wpcontr,wdcontr
+      real(dp) :: signfac
+      real(dp),DIMENSION(6)::wpcontr,wdcontr
 
       !Slip systems not allowed to become active retain initialization value of -1.0
       F_CRSS=-1.D0
@@ -1272,7 +1174,7 @@ module altayHardLaw_DSH
       !> Multiply all components of SDV by the scalar
       elemental function StateDerivedVar_times(SDV,scalar) result(res)
       type(StateDerivedVars),intent(in) :: SDV
-      double precision,intent(in)       :: scalar
+      real(dp),intent(in)       :: scalar
       type(StateDerivedVars) :: res
       !
       res%rho_CBs = scalar * SDV%rho_CBs
@@ -1306,4 +1208,4 @@ module altayHardLaw_DSH
       !
       end function
 
-      END MODULE altayHardLaw_DSH
+      END MODULE hardening_model_dsh

@@ -14,6 +14,8 @@ use altayConfig, only: altayConfigData
 use commonConfig
 use dmcUtils
 use altay_definitions
+use hardening_types
+use hardening_model_dsh, only: readpar
 
 implicit none
     !> FCC (111)<110>, through altayDeformationMechanismData_preconfigured
@@ -94,7 +96,6 @@ contains
 
       integer function BasicModule_initialize(this) result(info)
       use altaySub
-      use altayHardTypes, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop
       use commonUtils
       class(BasicModule),intent(inout)          :: this
       !
@@ -417,7 +418,6 @@ contains
 
       !> Read configuration of hardening model from configuration file
       subroutine readHardeningSection(cnfunit, hardening, info)
-      use altayHard, only: hard_none, hard_voce, hard_BP, hard_PEBPscrew, hard_PEBPloop, hard_SwiftK, hard_SwiftS
       use altayConfig, only: hardeningData, VoceConfig, SwiftKConfig, SwiftSConfig
       integer,intent(in)                  :: cnfunit
       type(hardeningData),intent(out)     :: hardening !< structure containing hardening configuration
@@ -489,7 +489,6 @@ contains
       !> the state variables are read for a defined increment (block_id) from a state file specified.
       subroutine readPEPBhardening(cnfunit,kost,hc,info)
       use altayConfig
-      use altayHardLaw_DSH, only: ReadPar
       integer,intent(in)                  :: cnfunit !< configuration file
       integer,intent(in)                  :: kost    !< HardLawID
       type(PEBPConfig),intent(out)        :: hc      !< data type containing the BP model parameters (no state variables); defined in altayConfig.f90

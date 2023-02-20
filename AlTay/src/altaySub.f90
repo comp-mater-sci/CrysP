@@ -4,14 +4,14 @@
 
 !> API for "AlTay as a subroutine"
 module altaySub
-    use altayHardLaw_DSH
+    use hardening_model_dsh
     use altayIOConfig
     use altaySimul
     use altayRCM
     use altayMesostructure
     use altayTexFormats
     use altayConfig
-    use altayHard
+    use hardening
     use altayDynfil
     use altayMiscutils
     use altayMacroKinematic

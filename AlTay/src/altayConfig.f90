@@ -1,14 +1,49 @@
 !> Basic configuration of AlTay in a form of formalized data structures.
 
 module altayConfig
-    use altayHardTypes
-    use altayHardLaw_swift
-    use altayHardLaw_voce
-    use altayHardLaw_DSH
+    use hardening_types
     use altayTexFormats
     use altay_definitions
     use altayMiscutils
     implicit none
+
+      !> Configuration parameters of SwiftK hardening law.
+      !> Some 'reasonable' defaults are used.
+      type :: SwiftKConfig
+            real(dp)  :: K      = 398.1D0 !-> crss0 = 100.
+            real(dp)  :: gamma0 = 1.D-3
+            real(dp)  :: n      = 0.2D0
+      end type
+
+      !> Configuration parameters of SwiftS hardening law.
+      !> Some 'reasonable' defaults are used.
+      type :: SwiftSConfig
+            real(dp)  :: crss0  = 100.0D0
+            real(dp)  :: gamma0 = 1.D-3
+            real(dp)  :: n      = 0.2D0
+      end type
+
+      !> Configuration parameters of DoubleVoce hardening law.
+      !> Some 'reasonable' defaults are used.
+      type :: VoceConfig
+            real(dp)  :: TIII1  = 1.486
+            real(dp)  :: TIIIS  = 2.476
+            real(dp)  :: TIVS   = 8.357
+            real(dp)  :: THIII1 = 2.75
+            real(dp)  :: THT    = 0.55
+      end type
+
+      TYPE :: PAR
+            !PUBLIC components
+            double precision :: b,G,alfa,f,tau0
+            double precision :: I,R,Iwd,Rwd,Rncg,beta1,beta2
+            double precision :: Iwp,Rwp,Rrev,R2
+            double precision :: RHOcbSAT,RHOwdSAT,RHOwpSAT
+            double precision :: RHOcbMIN,RHOwdMIN,RHOwpMIN
+            double precision :: RHOwpLOW
+      END TYPE PAR
+
+
 
     integer,parameter  :: fname_len = 512 !< Length of filenames
 

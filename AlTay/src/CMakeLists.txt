@@ -42,11 +42,16 @@ altayLog.f90
 altayConfig.f90  
 altayRCM.f90 
 altaySub.f90
-hardening/altayHard.f90
-hardening/altayHardTypes.f90
-hardening/altayHardLawDSH.f90
-hardening/altayHardLawSwift.f90
-hardening/altayHardLawVoce.f90
+hardening/hardening.f90
+hardening/hardening_types.f90
+hardening/model/hardening_model.f90
+hardening/model/isotropic/hardening_model_isotropic.f90
+hardening/model/isotropic/hardening_model_swift.f90
+hardening/model/isotropic/hardening_model_voce.f90
+hardening/model/dislocation_substructural_hardening/hardening_model_dsh.f90
+hardening/model/dislocation_substructural_hardening/hardening_model_bp.f90
+hardening/model/dislocation_substructural_hardening/hardening_model_pebp_screw.f90
+hardening/model/dislocation_substructural_hardening/hardening_model_pebp_loop.f90
 )
 
 
