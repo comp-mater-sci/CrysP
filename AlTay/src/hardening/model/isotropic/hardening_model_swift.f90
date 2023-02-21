@@ -10,7 +10,7 @@ use altay_log
 implicit none
       
     type, extends(HardeningModelIsotropic) :: HardeningModelSwift
-        real(dp)    ::  initial_crss    = 398.1D0,  &
+        real(dp)    ::  initial_crss    = 100.0_dp,  &
                         initial_strain  = 1.D-3,    &   
                         n               = 0.2D0
     contains
@@ -70,7 +70,7 @@ contains
                                                                 strain
         real(dp), dimension(this%nss), intent(in) ::  slip_rates
 
-        this%crss = this%initial_crss * ((strain / this%initial_strain + 1)**this%n)
+        this%crss = this%initial_crss * (strain / this%initial_strain + 1)**this%n
     end subroutine swift_update
 
 end module hardening_model_swift
