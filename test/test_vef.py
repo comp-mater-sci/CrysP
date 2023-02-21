@@ -122,8 +122,8 @@ def process_file(path):
     filtered = list(filter(lambda e: not e == 0, res))
     return sum(filtered) / len(filtered)
 
-tests_basic = itertools.product(MODES, ALGORITHMS, SLIP_SYSTEMS, HARDENING_MODELS[0:4])
-tests_bp = itertools.product(MODES, ALGORITHMS, ['bcc24'], HARDENING_MODELS[4:7])
+tests_basic = itertools.product(MODES, ALGORITHMS, SLIP_SYSTEMS, HARDENING_MODELS[0:3])
+tests_bp = itertools.product(MODES, ALGORITHMS, ['bcc24'], HARDENING_MODELS[3:6])
 tests = list(tests_basic) + list(tests_bp)
 
 #Generate and execute the different test cases.
