@@ -28,7 +28,7 @@ ALGORITHMS = ['ALAMEL', 'FCTaylor']
 SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
 HARDENING_MODEL_SETTINGS = {'NONE':'0',
                             'VOCE':'1\n12.39 15 20 0.2 0.1',
-                            'SWIFT_S':'3\n12.39 1.e-3 0.24',
+                            'SWIFT':'3\n12.3855 1.e-3 0.24',
                             'BP':'11\nDSHparaset.txt\nFalse',
                             'PEBP_SCREW':'12\nDSHparaset.txt\nFalse',
                             'PEBP_LOOP':'13\nDSHparaset.txt\nFalse'}
@@ -113,14 +113,18 @@ def process_file(path):
     df = pd.read_csv(path,delimiter=' +', engine='python')
     pattern = re.compile(r'^-*0\.[0-9]+E[+\-][0-9]+$')
     res = []
+    total = 0
     for index, row in df.iterrows():
         for num in row:
             if isinstance(num, str) and pattern.match(num):
                 formatted = num.split('E')
-                if int(formatted[1]) > -9:
-                    res.append(int(formatted[0].replace('-','')[2:4]))
+                exp = int(formatted[1])
+                if exp > -9:
+                    significand = int(formatted[0].replace('-','')[2:4])
+                    total = total + significand * pow(10,exp)        
+                    res.append(significand)
     filtered = list(filter(lambda e: not e == 0, res))
-    return sum(filtered) / len(filtered)
+    return (sum(filtered) / len(filtered), total)
 
 tests_basic = itertools.product(MODES, ALGORITHMS, SLIP_SYSTEMS, HARDENING_MODELS[0:3])
 tests_bp = itertools.product(MODES, ALGORITHMS, ['bcc24'], HARDENING_MODELS[3:6])
@@ -133,11 +137,13 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update):
     generate_output(update, mode, algorithm, slip_system, hardening_model)
 
     filename =  f'{mode}_{algorithm}_{slip_system}_{hardening_model}.out'
-    ref = process_file(TEST_ROOT/'data/out'/filename)
-    res = process_file(TEST_DATA/filename)
-    assert ref > res * 0.95 and ref < res * 1.05
-    ratio = round(res/ref, 2)
-    print(f'Ratio {mode}, {algorithm}, {slip_system}, {hardening_model}: {ratio}')
+    (ref_avg, ref_total) = process_file(TEST_ROOT/'data/out'/filename)
+    (res_avg, res_total) = process_file(TEST_DATA/filename)
+    assert ref_avg > res_avg * 0.95 and ref_avg < res_avg * 1.05
+    assert ref_total > res_total * 0.95 and ref_total < res_total * 1.05
+    ratio_avg = round(res_avg/ref_avg, 2)
+    ratio_total = round(res_total/ref_total, 2)
+    print(f'{mode}, {algorithm}, {slip_system}, {hardening_model}: avg. significands: {ratio_avg}; sum values: {ratio_total}')
 
 def get_trace_values(path, module, function):
     vals = []
