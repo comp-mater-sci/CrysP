@@ -10,7 +10,7 @@ use altay_log
 implicit none
       
     type, extends(HardeningModelIsotropic) :: HardeningModelSwift
-        real(dp)    ::  crss0,     &
+        real(dp)    ::  k,     &
                         gamma0,      &   
                         n               
     contains
@@ -33,9 +33,9 @@ contains
 
         this%gamma0 = config%swiftScnf%gamma0
         this%n = config%swiftScnf%n
-        this%crss0 = config%swiftScnf%crss0
+        this%k = config%swiftScnf%crss0 / (this%gamma0**this%n)
 
-        if (this%gamma0 <= 0 .or. this%n <= 0 .or. this%crss0 <=0) call vef_exception(MODULE_NAME, 'swift_init', VEF_BADVAL, 'Swift params must be greater than 0')
+        if (this%gamma0 <= 0 .or. this%n <= 0 .or. this%k <=0) call vef_exception(MODULE_NAME, 'swift_init', VEF_BADVAL, 'Swift params must be greater than 0')
     end subroutine swift_init
 
     subroutine swift_update(this, grain, time, strain, slip_rates)
@@ -45,7 +45,7 @@ contains
                                                                 strain
         real(dp), dimension(this%nss), intent(in) ::  slip_rates
 
-        this%crss = this%crss0 * (strain / this%gamma0 + 1)**this%n
+        this%crss = this%k * (strain + this%gamma0)**(this%n)    
     end subroutine swift_update
 
 end module hardening_model_swift
