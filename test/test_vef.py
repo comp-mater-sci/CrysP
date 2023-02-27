@@ -28,7 +28,7 @@ ALGORITHMS = ['ALAMEL', 'FCTaylor']
 SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
 HARDENING_MODEL_SETTINGS = {'NONE':'0',
                             'VOCE':'1\n12.39 15 20 0.2 0.1',
-                            'SWIFT':'3\n12.3855 1.e-3 0.24',
+                            'SWIFT':'3\n12.39 1.e-3 0.24',
                             'BP':'11\nDSHparaset.txt\nFalse',
                             'PEBP_SCREW':'12\nDSHparaset.txt\nFalse',
                             'PEBP_LOOP':'13\nDSHparaset.txt\nFalse'}
