@@ -5,13 +5,6 @@ module altay_definitions
     !>Standard real(dp)
     integer, parameter :: dp = selected_real_kind(15,307)
 
-    integer, parameter :: HM_NONE      = 0
-    integer, parameter :: HM_VOCE      = 1
-    integer, parameter :: HM_SWIFT_K   = 2
-    integer, parameter :: HM_SWIFT_S   = 3
-    integer, parameter :: HM_BP        = 11
-    integer, parameter :: HM_PEBP_SCREW  = 12
-    integer, parameter :: HM_PEBP_LOOP   = 13
 
     !>\name Exit codes from altayHardLaw_DSH subroutines and functions:
     !>@{

@@ -203,7 +203,7 @@ module altayTaylor
         call SLIPRAT(M111,96,GAMdot,ior,IPR,SGNN,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
         RCM_GUARD
         select case(iKOST)
-            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+            case(HARDENING_BP,HARDENING_PEBP_SCREW,HARDENING_PEBP_LOOP)
                 ! Here we explicitly set time increment to the value
                 ! that is implicitly assumed in Pancak2.
                 ddt = 1.D0

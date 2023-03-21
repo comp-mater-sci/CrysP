@@ -135,7 +135,7 @@ module altayConfig
         !> Acceptable values depend on availability of CRSS (aka TAUC) hardening models
         !> that are implemented in the code.
         !> See module altayHard for details about available hardening laws.
-        integer                 :: HardLawID = hard_None !< \sa crss_ratios
+        integer                 :: HardLawID    
         type(CRSS)              :: crss_ratios           !< Initial values of CRSS ratios
         type(VoceConfig)        :: VoceCnf               !< Parameters of Voce hardening law.
         type(SwiftKConfig)      :: SwiftKCnf             !< Parameters of Swift hardening law ('engineering-type')

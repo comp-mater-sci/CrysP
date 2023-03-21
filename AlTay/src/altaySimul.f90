@@ -131,7 +131,7 @@ module altaySimul
         if (NFILE == 1) call CURwriteBlock(IMP1,info)
 #if !defined(INTERMEDIATEBPM_DISABLED)
         select case(KOST)
-            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+            case(HARDENING_BP,HARDENING_PEBP_LOOP,HARDENING_PEBP_SCREW)
                 if (NPEBPx == 1) info = KS_writeState(IMP4)
         endselect
 #endif
@@ -273,7 +273,7 @@ module altaySimul
                 GMM1 = GMM0 + GMMdot !Step time here implicitly assumed to be 1.0s
                 Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
                 select case(KOST)
-                    case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+                case(HARDENING_BP,HARDENING_PEBP_LOOP,HARDENING_PEBP_SCREW)
                         call KS_getSDV(IOR,pebpSDV,info)
                         pebpSDVavg = pebpSDVavg + pebpSDV * GEWF
                 endselect
@@ -303,7 +303,7 @@ module altaySimul
             if (NMSSx /= 0) &
                 call writeMSSRecord(IMP5,MEPSCALL,MacroDefState%AccumvMeqStrain_ToStartOfInc, HGAMCALL,HGAMTOT,SHsam,Mavg,srh,info)
             select case(KOST)
-                case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+                case(HARDENING_BP,HARDENING_PEBP_LOOP,HARDENING_PEBP_SCREW)
                      pebpSDVavg = pebpSDVavg * (1.D0/TOTGEW)
             endselect
             ! Get the homogenized quantities:

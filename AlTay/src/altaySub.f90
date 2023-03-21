@@ -100,7 +100,7 @@ contains
         if (present(errmsg)) errmsg = ''
         ! PEBP model
         select case(cnf%hardening%HardLawID)
-            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+            case(HARDENING_BP,HARDENING_PEBP_LOOP,HARDENING_PEBP_SCREW)
                 info = KS_initState(size(DFIL))
                 if (info /= 0) return
                 if (acnf%hardening%PEBPCnf%read_state) then
@@ -283,7 +283,7 @@ contains
         if (acnf%output_config%nfile == 1) call CURwriteBlock(IMP1,info)
         if (info /= 0) return
         select case(acnf%hardening%HardLawID)
-            case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+            case(HARDENING_BP,HARDENING_PEBP_LOOP,HARDENING_PEBP_SCREW)
                 if (acnf%output_config%npebp == 1) info = KS_writeState(IMP4)
         endselect
         if (info /= 0) return

@@ -427,14 +427,7 @@ module hardening_model_dsh
 
       InitOK=.TRUE.
 
-      !Check KOSTtry
-      select case (KOSTtry)
-      case (11,12,13) !supported
-          iKOST=KOSTtry !iKOST: PRIVATE to this module.
-      case default !unsupported
-          iError = KS_ErrBadValue
-          return
-      end select
+      iKOST=KOSTtry !iKOST: PRIVATE to this module.
 
       !Check PRE-file #1: Does 1st comment line contain strings 'BCC' and '{BP}'?
       rewind (unit=LEC)
@@ -514,17 +507,10 @@ module hardening_model_dsh
       TYPE(PAR) :: PARtry
       !
       info = KS_Error
-      select case(KOST)
-      case(11,12,13)
-            ! Supported value of KOST
-            ! Read parameters of PE-BP hardening model
-            if (ReadPar(inunit,KOST,PARtry) == 0) then
-                  info = Init_PAR(PARtry,KOST,LEC)
-            endif
-      case default
-            info = KS_ErrBadValue !Unsupported value of KOST
-      end select
-      !
+      ! Read parameters of PE-BP hardening model
+      if (ReadPar(inunit,KOST,PARtry) == 0) &
+        info = Init_PAR(PARtry,KOST,LEC)
+      
       end FUNCTION Init_file
 
 
