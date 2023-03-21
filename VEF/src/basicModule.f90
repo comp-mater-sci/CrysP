@@ -14,7 +14,7 @@ use altayConfig, only: altayConfigData
 use commonConfig
 use dmcUtils
 use altay_definitions
-use hardening_types
+use hardening
 use hardening_model_dsh, only: readpar
 
 implicit none
@@ -110,7 +110,7 @@ contains
             !
             if (this%output%outputRequest) then
                   select case(this%altay%hardening%HardLawID)
-                  case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+                  case(HARDENING_BP, HARDENING_PEBP_SCREW, HARDENING_PEBP_LOOP)
                         this%altay%output_config%npebp = 1
                   case default
                         this%altay%output_config%npebp = 0
@@ -418,7 +418,7 @@ contains
 
       !> Read configuration of hardening model from configuration file
       subroutine readHardeningSection(cnfunit, hardening, info)
-      use altayConfig, only: hardeningData, VoceConfig, SwiftKConfig, SwiftSConfig
+      use altayConfig
       integer,intent(in)                  :: cnfunit
       type(hardeningData),intent(out)     :: hardening !< structure containing hardening configuration
       integer,intent(out)                 :: info
@@ -435,31 +435,24 @@ contains
                   ! read hardening law ID
                   if (.not. readValue(cnfunit, hardening%HardLawID)) return
                   select case(hardening%HardLawID)
-                  case(hard_none)
+                  case(HARDENING_NONE)
                         ! no action needed
                         info = VEF_OK
-                  case(hard_Voce)
+                  case(HARDENING_VOCE)
                         ! Read one line
                         if (readValue(cnfunit, tmp(1:5))) then
                               hardening%VoceCnf = VoceConfig(tmp(1), tmp(2), tmp(3), tmp(4), tmp(5))
                               info = VEF_OK
                         endif
                   !
-                  case(hard_SwiftK)
-                        ! Read one line
-                        if (readValue(cnfunit, tmp(1:3))) then
-                              hardening%SwiftKCnf = SwiftKConfig(tmp(1),tmp(2), tmp(3))
-                              info = VEF_OK
-                        endif
-                  !
-                  case(hard_SwiftS)
+                  case(HARDENING_SWIFT)
                         ! Read one line
                         if (readValue(cnfunit, tmp(1:3))) then
                               hardening%SwiftSCnf = SwiftSConfig(tmp(1),tmp(2), tmp(3))
                               info = VEF_OK
                         endif
                   !
-                  case(hard_BP,hard_PEBPscrew,hard_PEBPloop)
+                  case(HARDENING_BP,HARDENING_PEBP_SCREW,HARDENING_PEBP_LOOP)
 #ifdef PEBP_ENABLED
                         call readPEPBhardening(cnfunit,hardening%HardLawID,hardening%PEBPCnf,info)
 #else
