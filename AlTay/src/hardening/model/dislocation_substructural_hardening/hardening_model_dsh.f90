@@ -4,6 +4,9 @@ module hardening_model_dsh
     use hardening_model
     use hardening_types
     use altayConfig
+    use parameters
+    use altay_log
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST=11 & PRE-file contains 24 (110)+(112)[111] slip systems;
 !     -----------------------------------------------------
@@ -22,7 +25,9 @@ module hardening_model_dsh
 !      more accurate.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      IMPLICIT NONE
+    implicit none
+
+    character(*), parameter :: MOD_NAME = 'hardening_model_dsh'
 
       TYPE :: CBBtype
             !PUBLIC components
@@ -161,13 +166,89 @@ module hardening_model_dsh
                                                         alfa_G_b_eff    = 0.D0, &
                                                         alfa_G_b_ABSeff = 0.D0
     contains
-        procedure :: init           => dsh_init
-        procedure :: update         => dsh_update
-        procedure :: get_crss       => dsh_get_crss
-        procedure :: finalize       => dsh_finalize 
+        procedure :: get_parameters      => dsh_get_parameters
+        procedure :: validate_parameters => dsh_validate_parameters
+        procedure :: init                => dsh_init
+        procedure :: update              => dsh_update
+        procedure :: get_crss            => dsh_get_crss
+        procedure :: finalize            => dsh_finalize 
     end type
 
+    public :: dsh_init, &
+              KS_finalize, &
+              KS_openstatefile, &
+              KS_InitState
+
+
       CONTAINS
+
+    function dsh_get_parameters(this) result(params)
+        class(HardeningModelDSH), intent(in)    :: this
+        type(Parameter), allocatable    :: params(:)
+
+        params = [  parameter_init('n_slip_systems', TYPE_STRING), &
+                    parameter_init('b', TYPE_REAL),                 &
+                    parameter_init('G', TYPE_REAL),                 &
+                    parameter_init('alfa', TYPE_REAL),              &
+                    parameter_init('f', TYPE_REAL),                 &
+                    parameter_init('tau0', TYPE_REAL),              &
+                    parameter_init('I', TYPE_REAL),                 &
+                    parameter_init('R', TYPE_REAL),                 &
+                    parameter_init('Iwd', TYPE_REAL),               &
+                    parameter_init('Rwd', TYPE_REAL),               &
+                    parameter_init('Rncg', TYPE_REAL),              &
+                    parameter_init('beta1', TYPE_REAL),             &
+                    parameter_init('beta2', TYPE_REAL),             &
+                    parameter_init('Iwp', TYPE_REAL),               &
+                    parameter_init('Rwp', TYPE_REAL),               &
+                    parameter_init('Rrev', TYPE_REAL),              &
+                    parameter_init('R2', TYPE_REAL)]
+    end function dsh_get_parameters
+
+    subroutine dsh_validate_parameters(this, params)
+        class(HardeningModelDSH), intent(in)    :: this
+        type(Parameter), allocatable, intent(in) :: params(:)
+        character(:), allocatable :: nss
+
+        nss = params .find. 'n_slip_systems'
+        if (nss /= 'FCC12' .and. nss /= 'BCC24')  &
+            call vef_exception(MOD_NAME, 'validate_parameters', VEF_BADVAL, 'DSH only supports FCC12 and BCC24 slip systems.')
+
+        call check_param('b',       0._dp,      1.e-8_dp)   ! [m]
+        call check_param('G',       1.e4_dp,    5.e5_dp)    ! [MPa]
+        call check_param('alfa',    0._dp,      5._dp)      ! [/]
+        call check_param('f',       0._dp,      1.0_dp)     ! [/]
+        call check_param('tau0',    0._dp,      1.e4_dp)    ! [MPa]
+        call check_param('I',       0._dp,      10._dp)     ! [/]
+        call check_param('Iwd',     0._dp,      10._dp)     ! [/]
+        call check_param('Iwp',     0._dp,      10._dp)     ! [/]
+        call check_param('R',       0._dp,      1.e-6_dp)   ! [m]
+        call check_param('Rwd',     0._dp,      1.e-6_dp)   ! [m]
+        call check_param('Rncg',    0._dp,      1.e-6_dp)   ! [m]
+        call check_param('Rwp',     0._dp,      1.e-6_dp)   ! [m]
+        call check_param('Rrev',    0._dp,      1.e-6_dp)   ! [m]
+        call check_param('R2',      0._dp,      1.e-6_dp)   ! [m]
+        call check_param('beta1',   0._dp,      100._dp)    ! [/]
+        call check_param('beta2',   0._dp,      100._dp)    ! [/]
+    contains
+        subroutine check_param(name, min, max)
+            character(*), intent(in)    ::  name
+            real(dp), intent(in)        ::  min,    &
+                                            max
+            character(32)               ::  min_str, &
+                                            max_str
+            real(dp)                    ::  param_val
+            character(*), parameter     ::  PROC_NAME = 'dsh_check_param'
+
+            param_val = params .find. name
+
+            if (param_val < min .or. param_val > max) then
+                write (min_str, *), min
+                write (max_str, *), max
+                call vef_exception(MOD_NAME, PROC_NAME, VEF_BADVAL, 'Parameter ' // name // ' must lie between ' // min_str // ' and ' // max_str)
+            end if
+        end subroutine check_param
+    end subroutine dsh_validate_parameters
 
         subroutine dsh_init(this, config)
             class(HardeningModelDSH), intent(inout) :: this

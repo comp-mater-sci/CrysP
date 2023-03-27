@@ -4,6 +4,7 @@ module Hardening
     use altayIOConfig, only: LEC
     use altayConfig, only: hardeningData
     use altay_definitions
+    use parameters
 
     implicit none
     public
@@ -19,6 +20,14 @@ module Hardening
     end enum
 
     interface
+        !> Returns the parameter list for a particular hardening model
+        !> Also allocates the back-end hardening model
+        !> Must be called before initialization
+        module function hardening_get_parameters(model_id) result(params) 
+            integer, intent(in)                     :: model_id
+            type(Parameter), allocatable    :: params(:)
+        end function hardening_get_parameters
+
         !> Initialize module from config data object
         module subroutine  InitModuleAltayHard(config,info)
             type(hardeningData),intent(in)      :: config
@@ -64,6 +73,28 @@ submodule(Hardening) Hardening_Imp
     integer :: HardLawID !<Hardening law identifier of the initialized module
 
 contains
+
+    module procedure hardening_get_parameters
+        if (allocated(model)) deallocate(model)
+
+        select case(model_id)
+            case(HARDENING_NONE)
+                allocate(HardeningModel::model)
+            case(HARDENING_VOCE)
+                allocate(HardeningModelVoce::model)
+            case(HARDENING_SWIFT)
+                allocate(HardeningModelSwift::model)
+            case(HARDENING_BP)
+                allocate(HardeningModelBP::model)
+            case(HARDENING_PEBP_SCREW)
+                allocate(HardeningModelPEBPScrew::model)
+            case(HARDENING_PEBP_LOOP)
+                allocate(HardeningModelPEBPLoop::model)
+        end select
+
+        HardLawID = model_id
+        params = model%get_parameters()
+    end procedure hardening_get_parameters
 
     !> Initialize module from config data object
     module procedure InitModuleAltayHard
