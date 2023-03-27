@@ -6,24 +6,50 @@ use altayConfig
 use hardening_model_isotropic
 use hardening_model
 use altay_log
+use parameters
 
-implicit none
+    implicit none
+    private
       
-    type, extends(HardeningModelIsotropic) :: HardeningModelSwift
-        real(dp)    ::  k,     &
-                        gamma0,      &   
+    type, public, extends(HardeningModelIsotropic) :: HardeningModelSwift
+        real(dp)    ::  k,      &
+                        gamma0, &   
                         n               
     contains
+        procedure :: get_parameters => swift_get_parameters
+        procedure :: validate_parameters => swift_validate_parameters
         procedure :: init       => swift_init
         procedure :: update     => swift_update
     end type
 
     character(*), parameter :: MODULE_NAME = 'altay_hardening_swift'
 
-    private
-    public :: HardeningModelSwift
-
 contains
+
+    function swift_get_parameters(this) result(params)
+        class(HardeningModelSwift), intent(in)  :: this
+        type(Parameter), allocatable    :: params(:)
+    
+        params = [  parameter_init('n_slip_systems', TYPE_STRING), &
+                    parameter_init('crss0', TYPE_REAL),             &   
+                    parameter_init('gamma0', TYPE_REAL),            &   
+                    parameter_init('n', TYPE_REAL)                  ]   
+    end function swift_get_parameters
+
+    subroutine swift_validate_parameters(this, params)
+        class(HardeningModelSwift), intent(in)  :: this
+        type(Parameter), allocatable, intent(in)    :: params(:)
+        character(*), parameter :: PROC_NAME = 'validate_parameters'    
+
+        call hardening_model_validate_parameters(this, params)
+
+        if ((params .find. 'gamma0') <= 0._dp)  &
+            call vef_exception(MODULE_NAME, PROC_NAME, VEF_BADVAL, 'Initial strain must be greater than 0')
+        if ((params .find. 'n') <= 0._dp)       &   
+            call vef_exception(MODULE_NAME, PROC_NAME, VEF_BADVAL, 'N must be greater than 0')
+        if ((params .find. 'crss0') <= 0._dp)   &   
+            call vef_exception(MODULE_NAME, PROC_NAME, VEF_BADVAL, 'CRSS0 must be greater than 0')
+    end subroutine swift_validate_parameters
 
     subroutine swift_init(this, config)
         class(HardeningModelSwift),             intent(inout)   :: this

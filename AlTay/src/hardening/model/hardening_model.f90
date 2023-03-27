@@ -1,22 +1,52 @@
 module hardening_model
     use altay_definitions, only: dp
     use altayConfig
+    use parameters
+    use altay_log
     
     implicit none
+    private
 
     !>Basic hardening model implementation.
     !>No hardening occurs.
     !>All other hardening models extend this type.   
-    type :: HardeningModel
+    type, public :: HardeningModel
         integer :: nss
     contains
-        procedure, pass(this)  :: init         => hardening_model_init
-        procedure, pass(this)  :: get_crss     => hardening_model_get_crss
-        procedure, pass(this)  :: update       => hardening_model_update
-        procedure, pass(this)  :: finalize     => hardening_model_finalize
+        procedure :: get_parameters      => hardening_model_get_parameters
+        procedure :: validate_parameters => hardening_model_validate_parameters 
+        procedure :: init                => hardening_model_init
+        procedure :: get_crss            => hardening_model_get_crss
+        procedure :: update              => hardening_model_update
+        procedure :: finalize            => hardening_model_finalize
     end type
 
+    public ::   hardening_model_validate_parameters,    &   
+                hardening_model_init
+
 contains
+    
+    function hardening_model_get_parameters(this) result(params)
+        class(HardeningModel), intent(in)       :: this
+        type(Parameter), allocatable    :: params(:)
+    
+        params = [parameter_init('n_slip_systems', TYPE_STRING)]
+    end function hardening_model_get_parameters
+
+    subroutine hardening_model_validate_parameters(this, params)
+        class(HardeningModel), intent(in)   :: this
+        type(Parameter), allocatable, intent(in) :: params(:)
+        character(:), allocatable :: n_slip_systems
+
+        n_slip_systems = params .find. 'n_slip_systems'
+
+        select case(n_slip_systems)
+            case('FCC12', 'BCC24', 'BCC48') 
+                continue
+            case default
+                call vef_exception('hardening_model', 'validate_parameters', VEF_BADVAL, 'Number of slip systems must be 12, 24 or 48')
+        end select    
+    end subroutine hardening_model_validate_parameters
 
     !>Initialize nss using params(1)
     !>@return the number of parameters used by this class

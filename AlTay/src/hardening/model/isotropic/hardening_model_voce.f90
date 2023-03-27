@@ -1,12 +1,15 @@
 module hardening_model_voce
-use altayMiscutils, only: terminate, stopcode_runtimeerror
-use altay_definitions, only: dp
-use hardening_types
-use hardening_model
-use hardening_model_isotropic
-use altayConfig
-use altay_log
-implicit none
+    use altayMiscutils, only: terminate, stopcode_runtimeerror
+    use altay_definitions, only: dp
+    use hardening_types
+    use hardening_model
+    use hardening_model_isotropic
+    use altayConfig
+    use altay_log
+    use parameters
+    
+    implicit none
+    private
 
     type :: stage
         real(dp) :: TS, &
@@ -14,21 +17,45 @@ implicit none
                     TH  
     end type
 
-    type, extends(HardeningModelIsotropic)   :: HardeningModelVoce
+    type, public, extends(HardeningModelIsotropic) :: HardeningModelVoce
         real(dp)    ::  transition_strain = 0.D0
         type(stage) ::  stage_1,    &   
                         stage_2
     contains
-        procedure :: init           => voce_init
-        procedure :: update         => voce_update
+        procedure :: get_parameters      => voce_get_parameters
+        procedure :: validate_parameters => voce_validate_parameters
+        procedure :: init                => voce_init
+        procedure :: update              => voce_update
     end type
 
     character(*), parameter :: MODULE_NAME = 'altayHardLaw_voce'
 
-    private
-    public :: HardeningModelVoce
-
 contains
+
+    function voce_get_parameters(this) result(params)
+        class(HardeningModelVoce), intent(in)    :: this
+        type(Parameter), allocatable    :: params(:)
+    
+        params = [  parameter_init('n_slip_systems', TYPE_STRING), &
+                    parameter_init('TIII1', TYPE_REAL),             &   
+                    parameter_init('TIIIS', TYPE_REAL),             &   
+                    parameter_init('TIVS', TYPE_REAL),              &   
+                    parameter_init('THIII1', TYPE_REAL),            &   
+                    parameter_init('THT', TYPE_REAL)]
+    end function voce_get_parameters
+
+    subroutine voce_validate_parameters(this, params) 
+        class(HardeningModelVoce), intent(in) :: this
+        type(Parameter), allocatable, intent(in) :: params(:)
+        character(*), parameter :: PROC_NAME = 'validate_parameters'
+
+        call hardening_model_validate_parameters(this, params)    
+
+        if ((params .find. 'TIIIS') <= (params .find. 'TIII1')) & 
+            call vef_exception(MODULE_NAME, PROC_NAME, VEF_BADVAL, 'TAU-III-S must be larger than TAU-III-1')
+        if ((params .find. 'THIII1') <= (params .find. 'THT'))  &
+            call vef_exception(MODULE_NAME, PROC_NAME, VEF_BADVAL, 'THETA-III-1 must be larger than THETA-T')
+    end subroutine voce_validate_parameters
 
       subroutine readVoceConfig(inunit,c,info)
       use altayIOConfig
