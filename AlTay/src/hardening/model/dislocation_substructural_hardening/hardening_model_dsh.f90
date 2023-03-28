@@ -2,11 +2,9 @@ module hardening_model_dsh
     use altayIOConfig, only: LEC
     use altay_definitions
     use hardening_model
-    use hardening_types
     use altayConfig
-    use parameters
     use altay_log
-
+    use parameters
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST=11 & PRE-file contains 24 (110)+(112)[111] slip systems;
 !     -----------------------------------------------------
@@ -26,8 +24,7 @@ module hardening_model_dsh
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     implicit none
-
-    character(*), parameter :: MOD_NAME = 'hardening_model_dsh'
+    private
 
       TYPE :: CBBtype
             !PUBLIC components
@@ -48,7 +45,7 @@ module hardening_model_dsh
             real(dp), DIMENSION(2,24)   :: CRSS = 0.D0 !Up to 24 slip systems supported
       END TYPE StatVar
 
-      TYPE :: StateDerivedVars
+      TYPE, public :: StateDerivedVars
             !> Dislocation density of cell boundaries; unit: m^(-2)
             real(dp) :: rho_CBs = 0.D0
             !> Dislocation density of cell block boundaries; unit: m^(-2)
@@ -67,10 +64,6 @@ module hardening_model_dsh
             MODULE PROCEDURE  StateDerivedVar_times
       END INTERFACE
 
-      INTERFACE InitModuleAltayHardLaw_DSH !Generic Interface
-        MODULE PROCEDURE Init_file,Init_PAR
-      END INTERFACE
-
       !> \name Exit codes from altayHardLaw_DSH subroutines and functions:
       !>@{
       integer,PARAMETER,PUBLIC :: KS_OK = 0           !< OK
@@ -83,33 +76,23 @@ module hardening_model_dsh
       integer,PARAMETER,PUBLIC :: KS_ErrUninitialized = -50 !< Call to module procedures without proper initialization of the module
       !>@}
 
-      integer, SAVE, PUBLIC :: iKOST=0
       !Remaining declarations all PRIVATE:
-      TYPE(PAR), SAVE :: P !unit system: MPa; micrometer
       logical, SAVE :: InitOK=.FALSE.
       integer, SAVE :: Nss !Number of slip systems. Supported values:
                            !     Nss=12: (110)[111] - 1 family
                            !     Nss=24: (110)+(112)[111] - 2 families
       integer, PRIVATE :: i !running index
-      real(dp), SAVE :: alfa_G_b
-      real(dp), SAVE, DIMENSION(24,6):: eff             = 0.D0 ,&
-                                                effslashb       = 0.D0 ,&
-                                                alfa_G_b_eff    = 0.D0 ,&
-                                                alfa_G_b_ABSeff = 0.D0
-
       real(dp), PARAMETER :: MINfrac= 2.0D-3
       real(dp), PARAMETER :: LOWfrac=10.0D-3
 
-      real(dp), PARAMETER :: TENpow6 = 1.D6
-
-      real(dp), PARAMETER :: p2= 1.D0/sqrt(2.D0)
-      real(dp), PARAMETER :: n2= -p2
-      real(dp), PARAMETER :: p3= 1.D0/sqrt(3.D0)
-      real(dp), PARAMETER :: n3= -p3
-      real(dp), PARAMETER :: p6= 1.D0/sqrt(6.D0)
-      real(dp), PARAMETER :: n6= -p6
-      real(dp), PARAMETER :: pd6= 2.D0/sqrt(6.D0)
-      real(dp), PARAMETER :: nd6= -pd6
+      real(dp), PARAMETER, public :: p2= 1.D0/sqrt(2.D0)
+      real(dp), PARAMETER, public :: n2= -p2
+      real(dp), PARAMETER, public :: p3= 1.D0/sqrt(3.D0)
+      real(dp), PARAMETER, public :: n3= -p3
+      real(dp), PARAMETER, public :: p6= 1.D0/sqrt(6.D0)
+      real(dp), PARAMETER, public :: n6= -p6
+      real(dp), PARAMETER, public :: pd6= 2.D0/sqrt(6.D0)
+      real(dp), PARAMETER, public :: nd6= -pd6
       !real(dp), PARAMETER :: p1_42= 0.154303349962 !1.0/sqrt(42.0)
       !real(dp), PARAMETER :: n1_42=-0.154303349962
       !real(dp), PARAMETER :: p4_42= 0.617213399848 !4.0/sqrt(42.0)
@@ -118,7 +101,7 @@ module hardening_model_dsh
       !real(dp), PARAMETER :: n5_42=-0.771516749810
 
       !CBBnormal(i,1:3): normalized vector normal to CBB i
-      real(dp), SAVE, DIMENSION(6,3) ::CBBnormal
+      real(dp), public, DIMENSION(6,3) ::CBBnormal
       DATA (CBBnormal(1,i),i=1,3) /0.,p2,n2/ !CBBs on (01-1)-plane
       DATA (CBBnormal(2,i),i=1,3) /n2,0.,p2/ !CBBs on (-101)-plane
       DATA (CBBnormal(3,i),i=1,3) /p2,n2,0./ !CBBs on (1-10)-plane
@@ -134,7 +117,9 @@ module hardening_model_dsh
             module procedure KS_readState_unit, KS_readState_file
       end interface
 
-    type, extends(HardeningModel) :: HardeningModelDSH
+        character(*), parameter :: MOD_NAME = 'hardening_model_dsh'
+
+    type, public, extends(HardeningModel) :: HardeningModelDSH
         type(StatVar), dimension(:), allocatable    ::  state
         real(dp), dimension(:,:,:), allocatable     ::  crss
         real(dp)                                    ::  b,                      &   
@@ -166,26 +151,25 @@ module hardening_model_dsh
                                                         alfa_G_b_eff    = 0.D0, &
                                                         alfa_G_b_ABSeff = 0.D0
     contains
-        procedure :: get_parameters      => dsh_get_parameters
+        procedure :: get_parameters => dsh_get_parameters
         procedure :: validate_parameters => dsh_validate_parameters
-        procedure :: init                => dsh_init
-        procedure :: update              => dsh_update
-        procedure :: get_crss            => dsh_get_crss
-        procedure :: finalize            => dsh_finalize 
+        procedure :: init           => dsh_init
+        procedure :: update         => dsh_update
+        procedure :: get_crss       => dsh_get_crss
+        procedure :: finalize       => dsh_finalize 
     end type
 
-    public :: dsh_init, &
-              KS_finalize, &
-              KS_openstatefile, &
-              KS_InitState
+    public ::   dsh_init, &
+                dsh_initstate, &
+                KS_finalize, &
+                KS_openstatefile
 
-
-      CONTAINS
-
+CONTAINS
     function dsh_get_parameters(this) result(params)
         class(HardeningModelDSH), intent(in)    :: this
         type(Parameter), allocatable    :: params(:)
 
+        allocate(params(24))
         params = [  parameter_init('n_slip_systems', TYPE_STRING), &
                     parameter_init('b', TYPE_REAL),                 &
                     parameter_init('G', TYPE_REAL),                 &
@@ -203,15 +187,16 @@ module hardening_model_dsh
                     parameter_init('Rwp', TYPE_REAL),               &
                     parameter_init('Rrev', TYPE_REAL),              &
                     parameter_init('R2', TYPE_REAL)]
-    end function dsh_get_parameters
 
+    end function dsh_get_parameters
+        
     subroutine dsh_validate_parameters(this, params)
         class(HardeningModelDSH), intent(in)    :: this
         type(Parameter), allocatable, intent(in) :: params(:)
         character(:), allocatable :: nss
 
         nss = params .find. 'n_slip_systems'
-        if (nss /= 'FCC12' .and. nss /= 'BCC24')  &
+        if (nss /= 'fcc12' .and. nss /= 'bcc24')  &
             call vef_exception(MOD_NAME, 'validate_parameters', VEF_BADVAL, 'DSH only supports FCC12 and BCC24 slip systems.')
 
         call check_param('b',       0._dp,      1.e-8_dp)   ! [m]
@@ -236,12 +221,12 @@ module hardening_model_dsh
             real(dp), intent(in)        ::  min,    &
                                             max
             character(32)               ::  min_str, &
-                                            max_str
+                                            max_str 
             real(dp)                    ::  param_val
             character(*), parameter     ::  PROC_NAME = 'dsh_check_param'
 
             param_val = params .find. name
-
+            
             if (param_val < min .or. param_val > max) then
                 write (min_str, *), min
                 write (max_str, *), max
@@ -250,46 +235,82 @@ module hardening_model_dsh
         end subroutine check_param
     end subroutine dsh_validate_parameters
 
-        subroutine dsh_init(this, config)
-            class(HardeningModelDSH), intent(inout) :: this
-            type(HardeningData), intent(in) :: config
-            integer :: dummy
+    subroutine dsh_init(this, params)
+        class(HardeningModelDSH), intent(inout) :: this
+        type(Parameter), allocatable, intent(in)             :: params(:)
+        integer :: dummy
 
-            call hardening_model_init(this,config)
-            dummy = init_Par(config%pebpcnf%params, config%hardlawid, LEC)
-        end subroutine dsh_init
+        call hardening_model_init(this, params)
+        nss = this%nss
         
-        subroutine dsh_update(this, grain, time, strain, slip_rates)
-            class(HardeningModelDSH), intent(inout)     ::  this
-            integer, intent(in)                         ::  grain
-            real(dp), intent(in)                        ::  time,                 &
-                                                        strain
-            real(dp), dimension(this%nss), intent(in)   ::  slip_rates
-            type(StatVar)                               ::  SVa,                    &
-                                                            SVb
-            integer :: dummy
+        InitOK=.TRUE.
 
-            SVa = KS_state(grain)
-            call makeinc(sva, slip_rates, time, svb, dummy)
-            KS_state(grain) = svb 
-        end subroutine dsh_update
+        this%b          = params .find. 'b'
+        this%G          = params .find. 'G'
+        this%alfa       = params .find. 'alfa'
+        this%f          = params .find. 'f'
+        this%tau0       = params .find. 'tau0'
+        this%I          = params .find. 'I'
+        this%R          = params .find. 'R'
+        this%Iwd        = params .find. 'Iwd'
+        this%Rwd        = params .find. 'Rwd'
+        this%Rncg       = params .find. 'Rncg'
+        this%beta1      = params .find. 'beta1'
+        this%beta2      = params .find. 'beta2'
+        this%Iwp        = params .find. 'Iwp'
+        this%Rwp        = params .find. 'Rwp'
+        this%Rrev       = params .find. 'Rrev'
+        this%R2         = params .find. 'R2'
+                
+        !change of units if different in params from this (units of this are: MPa; micrometer)      
+        this%b          = this%b    * 1.e6_dp       ![m] -> [um]                                      
+        this%R          = this%R    * 1.e6_dp       ![m] -> [um]                                      
+        this%Rwd        = this%Rwd  * 1.e6_dp       ![m] -> [um]                                      
+        this%Rncg       = this%Rncg * 1.e6_dp       ![m] -> [um]                                                 
+        this%Rwp        = this%Rwp  * 1.e6_dp       ![m] -> [um]                                                 
+        this%Rrev       = this%Rrev * 1.e6_dp       ![m] -> [um]
+        this%R2         = this%R2   * 1.e6_dp       ![m] -> [um]                                      
 
-        function dsh_get_crss(this, grain) result(crss)
-            class(HardeningModelDSH), intent(in)    :: this
-            integer, intent(in) :: grain
-            real(dp)            :: crss(2,this%nss)
-
-            crss = KS_state(grain)%crss
-        end function dsh_get_crss
+        !Calculate dependent hardening parameters
+        this%RHOcbSAT = (this%I)**2 / (this%R)**2
+        this%RHOwdSAT = (this%Iwd)**2 / (this%Rwd)**2
+        this%RHOwpSAT = (sqrt((this%Iwp / this%Rwp)**4 + 4._dp * (this%Iwp * this%Iwd / (this%Rwp * this%Rwd))**2) + (this%Iwp / this%Rwp)**2) / 2._dp
+        this%RHOcbMIN = MINfrac * this%RHOcbSAT
+        this%RHOwpLOW = LOWfrac * this%RHOwpSAT
+        this%RHOwdMIN   = MINfrac   * this%RHOwdSAT
+        this%RHOwpMIN   = MINfrac   * this%RHOwpSAT
+        this%RHOwpLOW   = LOWfrac   * this%RHOwpSAT
+    end subroutine dsh_init
         
-        subroutine dsh_finalize(this)
-            class(HardeningModelDSH), intent(inout) :: this
-            integer :: dummy
+    subroutine dsh_update(this, grain, time, strain, slip_rates)
+        class(HardeningModelDSH), intent(inout)     ::  this
+        integer, intent(in)                         ::  grain
+        real(dp), intent(in)                        ::  time,                 &
+                                                    strain
+        real(dp), dimension(this%nss), intent(in)   ::  slip_rates
+        type(StatVar)                               ::  SVa,                    &
+                                                        SVb
+        integer :: dummy
 
-            dummy = KS_finalize()
-        end subroutine dsh_finalize
+        SVa = this%state(grain)
+        call makeinc(this, sva, slip_rates, time, svb, dummy)
+        this%state(grain) = svb 
+    end subroutine dsh_update
 
-        
+    function dsh_get_crss(this, grain) result(crss)
+        class(HardeningModelDSH), intent(in)    :: this
+        integer, intent(in) :: grain
+        real(dp)            :: crss(2,this%nss)
+
+        crss = this%state(grain)%crss
+    end function dsh_get_crss
+    
+    subroutine dsh_finalize(this)
+        class(HardeningModelDSH), intent(inout) :: this
+        integer :: dummy
+
+        dummy = KS_finalize()
+    end subroutine dsh_finalize
 
       !> Query the number of elements in the state array.
       integer function KS_getStateSize()
@@ -300,26 +321,30 @@ module hardening_model_dsh
       end function
 
 
-      !> Allocate memory to the KS_state array.
+    !> Allocate memory to the KS_state array.
       !>
       !> The function simply makes allocation. It relies on a default initializer
       !> of StatVar type.
-      integer function KS_initState(norient) result(info)
-      integer,intent(in)      :: norient !< Number of orientations in the material
-      !
-      integer :: i
-      !
-            info = KS_ErrBadDims
-            if (norient > 0) allocate(KS_state(norient),stat=info)
-            if (info /= 0) return
-            ! All elements (orientations) of the KS_state array must have the same initial state.
-            call GetInitStatVar(KS_state(1),info)
-            if (info /= KS_OK) return
-            do i = 2, norient
-                  KS_state(i) = KS_state(1)
-            enddo
-      !
-      end function
+    integer function dsh_initState(this, norient) result(info)
+        type(HardeningModelDSH) :: this
+        integer,intent(in)      :: norient !< Number of orientations in the material
+        integer :: i
+
+        if (.not. allocated(this%state)) allocate(this%state(norient),stat=info)
+        ! All elements (orientations) of the KS_state array must have the same initial state.
+        do i=1,norient
+            this%state(i)%RHOcb               = this%RHOcbMIN
+            this%state(i)%CBB%RHOwd        = this%RHOwdMIN
+            this%state(i)%CBB%RHOwp        = 0._dp
+            this%state(i)%CBB%RHOwdHOM     = this%RHOwdMIN
+            this%state(i)%CBB%accGAMMA_new = 0._dp
+            this%state(i)%CBB%RHOwd_ini    = this%RHOwdMIN
+            this%state(i)%ActiveCBB        = 0
+            this%state(i)%CRSS                = F_CRSS(this, this%state(1))
+        end do
+
+        info = 0
+    end function
 
 
       !> Deallocate the KS_state array.
@@ -334,39 +359,33 @@ module hardening_model_dsh
       !
       end function
 
-
-
-
       !> Get CRSS for i-th grain.
       subroutine KS_getCRSS(i,Mcrss,info)
       integer,intent(in)                              :: i        !< Grain identifier
       integer,intent(out)                             :: info
-      type(CRSS),intent(out)                          :: Mcrss    !< CRSS output
+      real(dp), dimension(2,96),intent(out)                          :: Mcrss    !< CRSS output
       integer l   !< maximum number of slip systems restricted to 24
       !
             info = KS_ErrBadDims
             if (size(KS_state) < i) return
             !if ( any(shape(Mcrss) /= shape(KS_state(i)%CRSS)) ) return
-            l = min(24, ubound(Mcrss%crss,2)) ! corresponds to the number of slip systems
+            l = min(24, ubound(Mcrss,2)) ! corresponds to the number of slip systems
             ! Extract the CRSSes
-            Mcrss%crss(:,1:l) = KS_state(i)%CRSS(:,1:l)
+            Mcrss(:,1:l) = KS_state(i)%CRSS(:,1:l)
             info = KS_OK
       !
       end subroutine
-
 
       !> Retrieve state-derived variables for the i-th grain.
       subroutine KS_getSDV(i,SDV,info)
       integer,intent(in)                              :: i    !< Grain identifier
       type(StateDerivedVars), intent(out)             :: SDV
       integer,intent(out)                             :: info !< exit code
-      !
+      
             info = KS_ErrBadDims
             if (size(KS_state) < i) return
             call GetStateDerivedVar(KS_state(i),SDV,info)
-      !
       end subroutine
-
 
       !> Open state file either for reading or writing.
       !>
@@ -399,8 +418,6 @@ module hardening_model_dsh
       !
       end function
 
-
-
       !> Write block (=snapshot of KS_state) into file.
       integer function KS_writeState(iounit) result(info)
       integer,intent(in)                              :: iounit   !< I/O unit number
@@ -426,10 +443,9 @@ module hardening_model_dsh
       !
       end function
 
-
       !> Call ReadSVfile and store state variables in ks_state.
       !> Perform fake reads on the first nblock blocks, where each block corresponds to one snapshot of ks_state.
-      integer function KS_readState_unit(iounit,nblock) result(info)
+    integer function KS_readState_unit(iounit,nblock) result(info)
       integer,intent(in)                              :: iounit   !< I/O unit number
       integer,optional,intent(in)                     :: nblock   !< Number of blocks to be skipped
       !
@@ -467,197 +483,26 @@ module hardening_model_dsh
 110         format(A)
 111         format(A)
 200         format(I5)      !
-      end function
+    end function
 
-
-      !> Open state file for reading and read state variables of snapshot.
-      !> The snapshot (block) to be read is specified by nblock.
-      integer function KS_readState_file(fname,iounit,nblock,use_header) result(info)
-      character(len=*),intent(in)                     :: fname    !< Filename
-      integer,intent(in)                              :: iounit   !< I/O unit number to be used by the function
-      integer,optional,intent(in)                     :: nblock   !< Number of blocks to be skipped
-      logical,optional,intent(in)                     :: use_header
-      !
-            info = KS_openStateFile(iounit,fname,'r',use_header) ! open file for read access ('r')
-            if (info == 0) then
-                  info = KS_readState_unit(iounit,nblock)
-            else
-                  info = KS_ErrIO
-            endif
-            close(iounit)
-      !
-      end function
-
-
-
-      !> Initialization of altayHardLaw_DSH.
-      !>
-      !> \return This procedure returns an error code (iError):
-      !>    * KS_OK : no error
-      !>    * KS_ErrBadValue : incorrect value of KOSTtry for the inputted parameter-type
-      !>    * KS_ErrOutOfRange : (at least one) parameter out of boundaries
-      !>    * KS_ErrIO : slipsystem file (read from LEC) does not meet requirements about its format
-      integer FUNCTION Init_PAR(Ptry,KOSTtry,LEC) result(iError)
-      TYPE(PAR),INTENT(IN)   :: Ptry    !proposed parameter set
-      integer    ,INTENT(IN) :: KOSTtry !proposed value of KOST
-      integer    ,INTENT(IN) :: LEC !unit number of PRE-file
-
-      !local variables declarations:
-      character(LEN=128) :: line1
-      integer           :: s,i,Idum=0,Nsstry=0
-
-      InitOK=.TRUE.
-
-      iKOST=KOSTtry !iKOST: PRIVATE to this module.
-
-      !Check PRE-file #1: Does 1st comment line contain strings 'BCC' and '{BP}'?
-      rewind (unit=LEC)
-      read (LEC,FMT='(A)') line1 !line1
-      if ( (index(line1,'BCC') == 0) .or. (index(line1,'{BP}') == 0)) then
-        iError = KS_ErrIO
-        return
-      end if !File is OK.
-
-      !Check PRE-file #2: Is number of slip systems (Nss) supported?
-      read (LEC,FMT='(8I4)') Idum, Nsstry, Idum, Idum, Idum, Idum, Idum, Idum
-      rewind (unit=LEC)
-      select case (Nsstry)
-      case (12, 24) !supported number of slip systems
-          Nss=Nsstry
-      case default !unsupported number of slip systems specified  in LEC
-          iError = KS_ErrNss
-          return
-      end select
-
-      !Check the input parameters                              ! Units of input parameters:
-      if(Ptry%b    >  0.    .AND. Ptry%b    <= 1.e-8    .AND.& ! [m]
-         Ptry%G    >= 10.e3 .AND. Ptry%G    <= 500.e3   .AND.& ! [MPa]
-         Ptry%alfa >  0.    .AND. Ptry%alfa <= 5.       .AND.& ! [/]
-         Ptry%f    >= 0.    .AND. Ptry%f    <= 1.       .AND.& ! [/]
-         Ptry%tau0 >= 0.    .AND. Ptry%tau0 <= 1.e4     .AND.& ! [MPa]
-         Ptry%I    >= 0.    .AND. Ptry%I    <= 10.      .AND.& ! [/]
-         Ptry%Iwd  >= 0.    .AND. Ptry%Iwd  <= 10.      .AND.& ! [/]
-         Ptry%Iwp  >= 0.    .AND. Ptry%Iwp  <= 10.      .AND.& ! [/]
-         Ptry%R    >  0.    .AND. Ptry%R    <= 1.e-6    .AND.& ! [m]
-         Ptry%Rwd  >  0.    .AND. Ptry%Rwd  <= 1.e-6    .AND.& ! [m]
-         Ptry%Rncg >  0.    .AND. Ptry%Rncg <= 1.e-6    .AND.& ! [m]
-         Ptry%Rwp  >  0.    .AND. Ptry%Rwp  <= 1.e-6    .AND.& ! [m]
-         Ptry%Rrev >  0.    .AND. Ptry%Rrev <= 1.e-6    .AND.& ! [m]
-         Ptry%R2   >  0.    .AND. Ptry%R2   <= 1.e-6    .AND.& ! [m]
-         Ptry%beta1>= 0.    .AND. Ptry%beta1<= 100.     .AND.& ! [/]
-         Ptry%beta2>= 0.    .AND. Ptry%beta2<= 100.          & ! [/]
-          )then
-            !Save the parameters in P (private to this module)
-            P=Ptry
-            !change of units if different in Ptry from P (units of P are: MPa; micrometer)
-            P%b    = P%b    * TENpow6 ![m] -> [micrometer]
-            P%R    = P%R    * TENpow6 ![m] -> [micrometer]
-            P%Rwd  = P%Rwd  * TENpow6 ![m] -> [micrometer]
-            P%Rncg = P%Rncg * TENpow6 ![m] -> [micrometer]
-            P%Rwp  = P%Rwp  * TENpow6 ![m] -> [micrometer]
-            P%Rrev = P%Rrev * TENpow6 ![m] -> [micrometer]
-            P%R2   = P%R2   * TENpow6 ![m] -> [micrometer]
-          else
-            iError = KS_ErrOutOfRange
-            return
-      end if
-
-      !Calculate dependent hardening parameters
-      P%RHOcbSAT=P%I  * P%I  /( P%R  * P%R  )
-      P%RHOwdSAT=P%Iwd* P%Iwd/( P%Rwd* P%Rwd)
-      P%RHOwpSAT=(sqrt((P%Iwp/P%Rwp)**4 +               &
-                 4.D0*(P%Iwp*P%Iwd/(P%Rwp*P%Rwd))**2) +   &
-                 (P%Iwp/P%Rwp)**2)/2.D0
-
-      P%RHOcbMIN=  MINfrac * P%RHOcbSAT
-      P%RHOwdMIN=  MINfrac * P%RHOwdSAT
-      P%RHOwpMIN=  MINfrac * P%RHOwpSAT
-
-      P%RHOwpLOW=  LOWfrac * P%RHOwpSAT
-
-        iError = VEF_OK
-      END FUNCTION Init_PAR
-
-
-
-      integer FUNCTION Init_file(inunit,KOST,LEC) result(info)
-      integer,intent(in)      :: inunit   !< number of
-      integer,intent(in)      :: KOST     !< Id of the model version.
-      integer,intent(in)      :: LEC
-      !
-      TYPE(PAR) :: PARtry
-      !
-      info = KS_Error
-      ! Read parameters of PE-BP hardening model
-      if (ReadPar(inunit,KOST,PARtry) == 0) &
-        info = Init_PAR(PARtry,KOST,LEC)
+    !> Open state file for reading and read state variables of snapshot.
+    !> The snapshot (block) to be read is specified by nblock.
+    integer function KS_readState_file(fname,iounit,nblock,use_header) result(info)
+        character(len=*),intent(in)                     :: fname    !< Filename
+        integer,intent(in)                              :: iounit   !< I/O unit number to be used by the function
+        integer,optional,intent(in)                     :: nblock   !< Number of blocks to be skipped
+        logical,optional,intent(in)                     :: use_header
       
-      end FUNCTION Init_file
+        info = KS_openStateFile(iounit,fname,'r',use_header) ! open file for read access ('r')
+        if (info == 0) then
+              info = KS_readState_unit(iounit,nblock)
+        else
+              info = KS_ErrIO
+        endif
+        close(iounit)
+    end function
 
-
-
-      integer FUNCTION ReadPar(inunit,KOST,Pf)
-      integer,intent(in)      :: inunit   !< IO unit number
-      integer,intent(in)      :: KOST     !< model identifier
-      TYPE(PAR),INTENT(OUT) :: Pf       !< Parameters to be read from a formatted file.
-      !
-      read(inunit,fmt=100,err=666,end=666) Pf%b
-      read(inunit,fmt=100,err=666,end=666) Pf%G
-      read(inunit,fmt=100,err=666,end=666) Pf%alfa
-      read(inunit,fmt=100,err=666,end=666) Pf%f
-      read(inunit,fmt=100,err=666,end=666) Pf%tau0
-      read(inunit,fmt=100,err=666,end=666) Pf%I
-      read(inunit,fmt=100,err=666,end=666) Pf%R
-      read(inunit,fmt=100,err=666,end=666) Pf%Iwd
-      read(inunit,fmt=100,err=666,end=666) Pf%Rwd
-      read(inunit,fmt=100,err=666,end=666) Pf%Rncg
-      read(inunit,fmt=100,err=666,end=666) Pf%beta1
-      read(inunit,fmt=100,err=666,end=666) Pf%beta2
-      read(inunit,fmt=100,err=666,end=666) Pf%Iwp
-      read(inunit,fmt=100,err=666,end=666) Pf%Rwp
-      read(inunit,fmt=100,err=666,end=666) Pf%Rrev
-      read(inunit,fmt=100,err=666,end=666) Pf%R2
-100   format(F12.5)
-      !
-      ReadPar = KS_OK
-      return
-      !
-666   ReadPar = KS_ErrIO !Error in reading from file
-      !
-      end FUNCTION ReadPar
-
-
-
-      SUBROUTINE GetInitStatVar(SV0,iError)
-      !This procedure returns:
-      ! state variables for an annealed & undeformed substructure for single grain (SV0)
-      ! an error code (iError):
-      !      KS_OK , no error
-      !      KS_ErrUninitialized, in case this module is not correctly initialized
-
-      TYPE(StatVar),INTENT(OUT) :: SV0
-      integer,      INTENT(OUT) :: iError
-
-      if(.NOT.InitOK) then
-            iError = KS_ErrUninitialized
-            return
-      end if
-      iError=KS_OK
-
-      SV0%RHOcb               = P%RHOcbMIN
-      SV0%CBB(:)%RHOwd        = P%RHOwdMIN
-      SV0%CBB(:)%RHOwp        = 0.
-      SV0%CBB(:)%RHOwdHOM     = P%RHOwdMIN
-      SV0%CBB(:)%accGAMMA_new = 0.
-      SV0%CBB(:)%RHOwd_ini    = P%RHOwdMIN
-      SV0%ActiveCBB(:)        = 0
-      SV0%CRSS                = F_CRSS(SV0)
-
-      END SUBROUTINE GetInitStatVar
-
-
-
-      SUBROUTINE MakeInc(SVa,sliprate,deltaT,SVb,iError)
+    SUBROUTINE MakeInc(this, SVa,sliprate,deltaT,SVb,iError)
       !This procedure requires as input:
       ! state variable at beginning of increment (SVa)
       ! the slip rates, assumed constant throughout the increment (sliprate)
@@ -668,6 +513,7 @@ module hardening_model_dsh
       !   *  KS_OK , no error
       !   *  KS_ErrBadValue, if negative deltaT is provided
       !   *  KS_ErrUninitialized, in case this module is not correctly initialized
+        class(HardeningModelDSH), intent(in) :: this
       TYPE(StatVar),INTENT(IN)       :: SVa
       real(dp),INTENT(IN), DIMENSION(24) :: sliprate
       real(dp),INTENT(IN)                      :: deltaT
@@ -724,7 +570,7 @@ module hardening_model_dsh
       do j=1,2 !Loop over 2 currently generated walls
         !RHOwd
         SVb%CBB(r(j))%RHOwd= F_KocksMeck(SVa%CBB(r(j))%RHOwd             &
-                                         ,GAMMA(r(j)),P%Iwd,P%Rwd)
+                                         ,GAMMA(r(j)),this%Iwd,this%Rwd)
         SVb%CBB(r(j))%RHOwdHOM= SVb%CBB(r(j))%RHOwd
         !RHOwp
         call UPD_cur_wp(r(j),SVa%CBB(r(j))%RHOwp,                        & !in
@@ -746,7 +592,7 @@ module hardening_model_dsh
 
       !! Calculate Critical Resolved Shear Stresses
       !!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      SVb%CRSS= F_CRSS(SVb)
+      SVb%CRSS= F_CRSS(this, SVb)
 
 
 
@@ -813,9 +659,9 @@ module hardening_model_dsh
       !
       ! d(RHO)    1
       ! ------ = --- * ( II*sqrt(RHO) - RR*RHO )
-      !  d(g)    P%b
+      !  d(g)    this%b
       !
-      ! The value of 'P%b', the size of burgers vector, is inherited.
+      ! The value of 'this%b', the size of burgers vector, is inherited.
       !
       ! To calc. RHO_b, following inputs are required:
       !   -> RHO_a, the value of RHO at the start of the interval (a,b)
@@ -825,7 +671,7 @@ module hardening_model_dsh
 !     local variable declarations
       real(dp) x
 
-      x=exp(-0.5D0*RR*delta_g/P%b)
+      x=exp(-0.5D0*RR*delta_g/this%b)
       x=II/RR*(1.D0-x)+sqrt(RHO_a)*x
       F_KocksMeck=x*x
 
@@ -840,10 +686,10 @@ module hardening_model_dsh
       real(dp), INTENT(INOUT):: RHObausch
 
       !inherited variables:
-      !P%Iwd, P%Rwd, P%b
+      !this%Iwd, this%Rwd, this%b
       !glidedir, wall
       !effslashb, sliprate
-      !P%RHOwpSAT, P%RHOwpLOW
+      !this%RHOwpSAT, this%RHOwpLOW
       !fl, wd
 
       !local variable declarations:
@@ -851,14 +697,14 @@ module hardening_model_dsh
 
       logical :: FLUXreversal,wpLOW
 
-      wpFLUX=DOT_PRODUCT( effslashb(:,rdr) , sliprate(:) )
+      wpFLUX=DOT_PRODUCT(this%effslashb(:,rdr) , sliprate(:) )
 
       FLUXreversal= wpFLUX*RHOwp_a  <  0.0
-      wpLOW= abs(RHOwp_a)  <=  P%RHOwpLOW
+      wpLOW= abs(RHOwp_a)  <=  this%RHOwpLOW
 
       if ( FLUXreversal .and. .NOT.(wpLOW) ) then
         ! |RHOwp| gets smaller, following analytic time integration
-        RHOwp_b=RHOwp_a*exp(-P%Rrev*abs(wpFLUX)*deltaT) !wpFLUX is a rate!
+        RHOwp_b=RHOwp_a*exp(-this%Rrev*abs(wpFLUX)*deltaT) !wpFLUX is a rate!
         RHObausch=RHObausch+abs(RHOwp_a)
       else
         ! |RHOwp| gets larger, following numeric time integration (4th order Runge-Kutta)
@@ -916,9 +762,9 @@ module hardening_model_dsh
 
       !inherited variables:
       !fl, wd
-      !P%Iwp, P%Rwp
+      !this%Iwp, this%Rwp
 
-      dwp_dt=(sign(1.D0,fl)*P%Iwp*sqrt(wd+abs(wp)) - P%Rwp*wp) * abs(fl)
+      dwp_dt=(sign(1.D0,fl)*this%Iwp*sqrt(wd+abs(wp)) - this%Rwp*wp) * abs(fl)
 
       END FUNCTION dwp_dt
 
@@ -929,15 +775,15 @@ module hardening_model_dsh
       real(dp), INTENT(OUT) :: RHOwp_b
 
       !inherited variables:
-      !P%Rncg, GAMMAdot_new, P%b, P%RHOwpMIN
+      !this%Rncg, GAMMAdot_new, this%b, this%RHOwpMIN
 
-      if (abs(RHOwp_a)  >  P%RHOwpMIN) then
-        RHOwp_b= RHOwp_a*exp(-P%Rncg*GAMMA_new/P%b)
+      if (abs(RHOwp_a)  >  this%RHOwpMIN) then
+        RHOwp_b= RHOwp_a*exp(-this%Rncg*GAMMA_new/this%b)
       else
         if (RHOwp_a  >=  0.0) then
-          RHOwp_b=  P%RHOwpMIN
+          RHOwp_b=  this%RHOwpMIN
         else
-          RHOwp_b= -P%RHOwpMIN
+          RHOwp_b= -this%RHOwpMIN
         end if
       end if
 
@@ -951,7 +797,7 @@ module hardening_model_dsh
       TYPE(StatVar), INTENT(INOUT):: SV_b
 
       !inherited variables:
-      !P%b, P%Rncg, P%beta1, P%beta2, P%RHOwdMIN
+      !this%b, this%Rncg, this%beta1, this%beta2, this%RHOwdMIN
       !SVa%ActiveCBB
       !GAMMAdot_new
 
@@ -964,7 +810,7 @@ module hardening_model_dsh
       accGAMMA_new = SV_a%CBB(rdr)%accGAMMA_new
       RHOwd_ini    = SV_a%CBB(rdr)%RHOwd_ini
 
-      if (RHOwdHOM > P%RHOwdMIN) then
+      if (RHOwdHOM > this%RHOwdMIN) then
        !if the wall was NOT active in prev. inc.
         if (rdr  /=  SVa%ActiveCBB(1) .AND.                              &
             rdr  /=  SVa%ActiveCBB(2)      ) then
@@ -975,14 +821,14 @@ module hardening_model_dsh
           RHOwd_ini=RHOwdHOM
         end if
 
-        RHOwdLOC=-tanh( P%beta1*accGAMMA_new)*                           &
-                   exp(-P%beta1*accGAMMA_new)*RHOwd_ini*P%beta2
-        RHOwdHOM=RHOwdHOM*exp(-P%Rncg*GAMMA_new/P%b)
+        RHOwdLOC=-tanh( this%beta1*accGAMMA_new)*                           &
+                   exp(-this%beta1*accGAMMA_new)*RHOwd_ini*this%beta2
+        RHOwdHOM=RHOwdHOM*exp(-this%Rncg*GAMMA_new/this%b)
         RHOwd=RHOwdHOM+RHOwdLOC
-        if (RHOwd  <  P%RHOwdMIN)  RHOwd=P%RHOwdMIN
+        if (RHOwd  <  this%RHOwdMIN)  RHOwd=this%RHOwdMIN
       else
-        RHOwdHOM=P%RHOwdMIN
-        RHOwd   =P%RHOwdMIN
+        RHOwdHOM=this%RHOwdMIN
+        RHOwd   =this%RHOwdMIN
       end if
 
       SV_b%CBB(rdr)%RHOwd           = RHOwd
@@ -1000,20 +846,20 @@ module hardening_model_dsh
       real(dp), INTENT(OUT) :: RHO_b
 
       !inherited variables:
-      !P%I, P%R, P%R2, P%b, P%RHOwpSAT
+      !this%I, this%R, this%R2, this%b, this%RHOwpSAT
 
 !     local variable declarations
       real(dp) Reffective
 
       if(RHObausch  >  0.0) then
-        Reffective=P%R + P%R2*RHObausch/(2.D0*P%RHOwpSAT)
-        if (P%I*sqrt(RHO_a) - Reffective*RHO_a  <=  0.0) then ! Heaviside bracket
+        Reffective=this%R + this%R2*RHObausch/(2.D0*this%RHOwpSAT)
+        if (this%I*sqrt(RHO_a) - Reffective*RHO_a  <=  0.0) then ! Heaviside bracket
           RHO_b=RHO_a !Keep as is.
         else
-            RHO_b= F_KocksMeck(RHO_a,SUMabsGam,P%I,Reffective)
+            RHO_b= F_KocksMeck(RHO_a,SUMabsGam,this%I,Reffective)
         end if
       else !RHObausch  ==  0.0
-        RHO_b= F_KocksMeck(  RHO_a,SUMabsGam,P%I,P%R       )
+        RHO_b= F_KocksMeck(  RHO_a,SUMabsGam,this%I,this%R       )
       end if
 
       END SUBROUTINE UPD_cb
@@ -1022,11 +868,12 @@ module hardening_model_dsh
 
 
 
-      FUNCTION F_CRSS(SV)
+      FUNCTION F_CRSS(this, SV)
+        class(HardeningModelDSH), intent(in) :: this
       TYPE(StatVar), INTENT(IN) :: SV
       real(dp), DIMENSION(2,24):: F_CRSS !OUT
 
-!     P%tau0,P%f  ->inherited
+!     this%tau0,this%f  ->inherited
 !     alfa_G_b ->inherited
 !     alfa_G_b_eff,alfa_G_b_ABSeff ->inherited
 
@@ -1041,10 +888,10 @@ module hardening_model_dsh
       F_CRSS=-1.D0
 
       !CRSS within cells & CBs
-      tau_CB=alfa_G_b*sqrt(SV%RHOcb)
+      tau_CB=this%alfa_G_b*sqrt(SV%RHOcb)
 
       !contributions from tau_0 and CBs to CRSS
-      CRSS_0_CB=P%tau0 +  (1.D0-P%f)*tau_CB
+      CRSS_0_CB=this%tau0 +  (1.D0-this%f)*tau_CB
 
       !Calc. CRSS for each slip system s, for the sense of slip j
       do j=1,2
@@ -1053,15 +900,15 @@ module hardening_model_dsh
           !wp- and wd-contributions from all CBBs i
           do i=1,6
                   wpcontr(i)=sqrt(abs(SV%CBB(i)%RHOwp)) *             &
-                       signfac * alfa_G_b_eff(s,i) *                    &
+                       signfac * this%alfa_G_b_eff(s,i) *                    &
                        sign(1.D0,SV%CBB(i)%RHOwp) ! sign returns +/-1 depending on the sign of the second argument
             if (wpcontr(i)  <  0.0) wpcontr(i)=0.0 ! Heaviside bracket
-            wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*alfa_G_b_ABSeff(s,i)
+            wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*this%alfa_G_b_ABSeff(s,i)
           end do
           !CRSS within CBB = wp- and wd-contributions for all 6 walls
           tau_CBB(j,s)=sum(wpcontr)+sum(wdcontr)
           !C.R.S.S. for the "two-phase composite"
-          F_CRSS(j,s)= CRSS_0_CB + P%f*tau_CBB(j,s)
+          F_CRSS(j,s)= CRSS_0_CB + this%f*tau_CBB(j,s)
         end do
       end do
 
@@ -1216,10 +1063,10 @@ module hardening_model_dsh
             return
       end if
 
-      SDV%rho_CBs     = SV%RHOcb                        * TENpow6**2 !unit conversion micrometer^(-2) -> m^(-2)
-      SDV%rho_CBBs    = sum(    SV%CBB(:)%RHOwd ) /6.D0 * TENpow6**2 !unit conversion micrometer^(-2) -> m^(-2)
-      SDV%rho_polCBBs = sum(abs(SV%CBB(:)%RHOwp)) /6.D0 * TENpow6**2 !unit conversion micrometer^(-2) -> m^(-2)
-      SDV%rho_avg     = (1.D0-P%f)*SDV%rho_CBs + P%f*(SDV%rho_CBBs+SDV%rho_PolCBBs)
+      SDV%rho_CBs     = SV%RHOcb                        * 1.e12_dp !unit conversion micrometer^(-2) -> m^(-2)
+      SDV%rho_CBBs    = sum(    SV%CBB(:)%RHOwd ) /6.D0 * 1.e12_dp !unit conversion micrometer^(-2) -> m^(-2)
+      SDV%rho_polCBBs = sum(abs(SV%CBB(:)%RHOwp)) /6.D0 * 1.e12_dp !unit conversion micrometer^(-2) -> m^(-2)
+      SDV%rho_avg     = (1.D0-1.0_dp)*SDV%rho_CBs + 1.0_dp*(SDV%rho_CBBs+SDV%rho_PolCBBs)
       !Note: Number of CBBs is 6 (currently hard-coded)
 
       iError=KS_OK

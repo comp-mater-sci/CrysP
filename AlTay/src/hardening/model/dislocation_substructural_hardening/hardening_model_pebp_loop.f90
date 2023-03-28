@@ -1,5 +1,8 @@
 module hardening_model_pebp_loop
+    use altay_definitions
+    use parameters
     use hardening_model_dsh
+    
 
       IMPLICIT NONE
 
@@ -42,27 +45,29 @@ module hardening_model_pebp_loop
 
       CONTAINS
 
-        subroutine pebp_loop_init(this, config)
+        subroutine pebp_loop_init(this, params)
             class(HardeningModelPEBPLoop), intent(inout) :: this
-            type(HardeningData), intent(in) :: config
+            type(Parameter), allocatable, intent(in) :: params(:)
             integer :: s,i
 
-            call dsh_init(this,config)
+            call dsh_init(this, params)
               !Calculate "Wall-effectivity"-matrices
           do s=1,24
             do i=1,6
-              eff(s,i)=DOT_PRODUCT( NormDir(s,:) , CBBnormal(i,:) )
-              if (abs(eff(s,i)) >= 0.99999D0) then !treat as "1" or "-1"
-                  eff(s,i)=0.0D0
+              this%eff(s,i)=DOT_PRODUCT( NormDir(s,:) , CBBnormal(i,:) )
+              if (abs(this%eff(s,i)) >= 0.99999D0) then !treat as "1" or "-1"
+                  this%eff(s,i)=0.0D0
               else
-                  eff(s,i)=sqrt(1.0D0-(eff(s,i))**2)
+                  this%eff(s,i)=sqrt(1.0D0-(this%eff(s,i))**2)
               endif
             end do
           end do
-            effslashb       = eff / P%b
-      alfa_G_b= P%alfa* P%G * P%b
-      alfa_G_b_eff    = alfa_G_b * eff
-      alfa_G_b_ABSeff = ABS(alfa_G_b_eff)
+        this%effslashb       = this%eff / this%b
+        this%alfa_G_b= this%alfa* this%G * this%b
+        this%alfa_G_b_eff    = this%alfa_G_b * this%eff
+        this%alfa_G_b_ABSeff = abs(this%alfa_G_b_eff)
         end subroutine pebp_loop_init
         
       END MODULE hardening_model_pebp_loop
+
+

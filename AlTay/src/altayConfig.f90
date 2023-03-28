@@ -5,45 +5,9 @@ module altayConfig
     use altayTexFormats
     use altay_definitions
     use altayMiscutils
+    use parameters
+
     implicit none
-
-      !> Configuration parameters of SwiftK hardening law.
-      !> Some 'reasonable' defaults are used.
-      type :: SwiftKConfig
-            real(dp)  :: K      = 398.1D0 !-> crss0 = 100.
-            real(dp)  :: gamma0 = 1.D-3
-            real(dp)  :: n      = 0.2D0
-      end type
-
-      !> Configuration parameters of SwiftS hardening law.
-      !> Some 'reasonable' defaults are used.
-      type :: SwiftSConfig
-            real(dp)  :: crss0  = 100.0D0
-            real(dp)  :: gamma0 = 1.D-3
-            real(dp)  :: n      = 0.2D0
-      end type
-
-      !> Configuration parameters of DoubleVoce hardening law.
-      !> Some 'reasonable' defaults are used.
-      type :: VoceConfig
-            real(dp)  :: TIII1  = 1.486
-            real(dp)  :: TIIIS  = 2.476
-            real(dp)  :: TIVS   = 8.357
-            real(dp)  :: THIII1 = 2.75
-            real(dp)  :: THT    = 0.55
-      end type
-
-      TYPE :: PAR
-            !PUBLIC components
-            double precision :: b,G,alfa,f,tau0
-            double precision :: I,R,Iwd,Rwd,Rncg,beta1,beta2
-            double precision :: Iwp,Rwp,Rrev,R2
-            double precision :: RHOcbSAT,RHOwdSAT,RHOwpSAT
-            double precision :: RHOcbMIN,RHOwdMIN,RHOwpMIN
-            double precision :: RHOwpLOW
-      END TYPE PAR
-
-
 
     integer,parameter  :: fname_len = 512 !< Length of filenames
 
@@ -121,29 +85,7 @@ module altayConfig
         logical                                   :: use_cubfile = .false.
     end type
 
-    !> PEBP model parameters (no state variables)
-    type :: PEBPConfig
-        type(PAR)                     :: params                !< contains BP parameters, saturation and lower bounds for dislocation densities (defined in altayHardLawDSH.f90)
-        logical                       :: read_state = .false.  !< Flag that decides if state variables should be read from file.
-        character(len=fname_len)      :: input_fname = ''      !< Name of file that contains state variables
-        integer                       :: block_id = 0          !< Number of blocks to be skipped while reading the input file
-    end type
-
-    !> Parameters of available hardening models.
-    type :: hardeningData
-        !> Selector of the model for hardening of slipsystems.
-        !> Acceptable values depend on availability of CRSS (aka TAUC) hardening models
-        !> that are implemented in the code.
-        !> See module altayHard for details about available hardening laws.
-        integer                 :: HardLawID    
-        type(CRSS)              :: crss_ratios           !< Initial values of CRSS ratios
-        type(VoceConfig)        :: VoceCnf               !< Parameters of Voce hardening law.
-        type(SwiftKConfig)      :: SwiftKCnf             !< Parameters of Swift hardening law ('engineering-type')
-        type(SwiftSConfig)      :: SwiftSCnf             !< Parameters of Swift hardening law ('scientific-type')
-        type(PEBPConfig)        :: PEBPCnf               !< Parameters of Dislocation Substructural Hardening models (PEBP variants)
-    end type
-
-    type :: simulData
+   type :: simulData
         !> Model selection. At the same time it controls number of grains in the cluster.
         !> Possible values are:
         !>   - 1 - FC Taylor
@@ -160,9 +102,9 @@ module altayConfig
         character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
         type(slipSystemData)                      :: slipsystem    !< slip systems file name
         type(outputConfig)                        :: output_config !< output file prefix, incremental output request flag, verbosity level
-        type(hardeningData)                       :: hardening     !< hardening model parameters
         type(textureData)                         :: texture
         type(simulData)                           :: simul_init
+        type(Parameter), allocatable :: hardening_parameters(:)
     end type
 
     type :: altayStateData

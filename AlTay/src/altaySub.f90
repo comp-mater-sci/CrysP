@@ -76,12 +76,7 @@ contains
         ! Initialize altay modules
         !
         ! Set the data for CRSS calculations
-        call InitModuleAltayHard(cnf%hardening, info)
-        if (info /= 0) then
-            if (present(errmsg)) errmsg = 'Cannot initialize hardening law'
-            info = altaySub_Err
-            return
-        endif
+        call hardening_init(cnf%hardening_parameters)
         ! Initialisation of SIMUL
         if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
         info = altaySub_Exception
@@ -99,24 +94,7 @@ contains
         endif
         if (present(errmsg)) errmsg = ''
         ! PEBP model
-        select case(cnf%hardening%HardLawID)
-            case(HARDENING_BP,HARDENING_PEBP_LOOP,HARDENING_PEBP_SCREW)
                 info = KS_initState(size(DFIL))
-                if (info /= 0) return
-                if (acnf%hardening%PEBPCnf%read_state) then
-                    ! Load state variables
-                    info = KS_openStateFile(IPEBPSTAT,acnf%hardening%PEBPCnf%input_fname, mode='r')
-                    if (info /= 0) then
-                        if (present(errmsg)) errmsg = 'Cannot open PEBP state file: '//trim(acnf%hardening%PEBPCnf%input_fname)
-                        return
-                    endif
-                    info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
-                    if ((info /= 0) .and. present(errmsg)) then
-                        errmsg = 'Cannot read from PEBP state file: '// trim(acnf%hardening%PEBPCnf%input_fname)
-                        return
-                    endif
-                endif
-        endselect
         ! No need for the slip system definition anymore.
         close(LEC)
         info = altaySub_OK
@@ -281,11 +259,6 @@ contains
 
         info = altaySub_OK
         if (acnf%output_config%nfile == 1) call CURwriteBlock(IMP1,info)
-        if (info /= 0) return
-        select case(acnf%hardening%HardLawID)
-            case(HARDENING_BP,HARDENING_PEBP_LOOP,HARDENING_PEBP_SCREW)
-                if (acnf%output_config%npebp == 1) info = KS_writeState(IMP4)
-        endselect
         if (info /= 0) return
 
         if ((acnf%output_config%nmss == 1) .and. allocated(astate%simulCalls)) then

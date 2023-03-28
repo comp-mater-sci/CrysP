@@ -104,8 +104,8 @@ module parameters
         end subroutine 
         module subroutine set_val_string(params, name, val)
             type(Parameter), allocatable, intent(inout) :: params(:)
-            character(*), intent(in) :: name, &
-                                        val
+            character(*), intent(in)                    :: name
+            character(:), allocatable, intent(in)       :: val
         end subroutine 
 
         !operator(.find.)
@@ -192,8 +192,9 @@ contains
     subroutine check_type(param, t)
         type(Parameter), intent(in) :: param
         integer, intent(in) :: t
+        
         if (param%type /= t) &
-            call vef_exception(MOD_NAME, 'check_type', VEF_BADVAL, 'Value does not conform with parameter type')
+            call vef_exception(MOD_NAME, 'check_type', VEF_BADVAL, 'Value of parameter ' // param%name // ' does not conform with its type')
     end subroutine check_type
 
     subroutine search_parameter_list(params, name, param, ind)

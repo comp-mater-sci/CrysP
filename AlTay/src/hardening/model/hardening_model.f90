@@ -41,20 +41,28 @@ contains
         n_slip_systems = params .find. 'n_slip_systems'
 
         select case(n_slip_systems)
-            case('FCC12', 'BCC24', 'BCC48') 
+            case('fcc12', 'bcc24', 'bcc48') 
                 continue
             case default
                 call vef_exception('hardening_model', 'validate_parameters', VEF_BADVAL, 'Number of slip systems must be 12, 24 or 48')
         end select    
     end subroutine hardening_model_validate_parameters
 
-    !>Initialize nss using params(1)
-    !>@return the number of parameters used by this class
-    subroutine hardening_model_init(this, config)
-        class(HardeningModel), intent(inout)    ::  this
-        type(HardeningData), intent(in)             ::  config
+    subroutine hardening_model_init(this, params)
+        class(HardeningModel), intent(inout)     ::  this
+        type(Parameter), allocatable, intent(in) :: params(:)
+        character(:), allocatable                :: slip_system
 
-        this%nss = 96
+        slip_system = params .find. 'n_slip_systems'
+        
+        select case(slip_system)
+            case('fcc12')
+                this%nss = 12
+            case('bcc24')
+                this%nss = 24
+            case('bcc48')
+                this%nss = 48
+        end select
     end subroutine hardening_model_init
 
     !>Do nothing

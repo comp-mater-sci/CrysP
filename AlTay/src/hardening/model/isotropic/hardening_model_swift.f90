@@ -30,10 +30,10 @@ contains
         class(HardeningModelSwift), intent(in)  :: this
         type(Parameter), allocatable    :: params(:)
     
-        params = [  parameter_init('n_slip_systems', TYPE_STRING), &
-                    parameter_init('crss0', TYPE_REAL),             &   
-                    parameter_init('gamma0', TYPE_REAL),            &   
-                    parameter_init('n', TYPE_REAL)                  ]   
+        params = [parameter_init('n_slip_systems', TYPE_STRING),  &
+                  parameter_init('crss0', TYPE_REAL),             &   
+                  parameter_init('gamma0', TYPE_REAL),            &   
+                  parameter_init('n', TYPE_REAL)]   
     end function swift_get_parameters
 
     subroutine swift_validate_parameters(this, params)
@@ -51,17 +51,17 @@ contains
             call vef_exception(MODULE_NAME, PROC_NAME, VEF_BADVAL, 'CRSS0 must be greater than 0')
     end subroutine swift_validate_parameters
 
-    subroutine swift_init(this, config)
-        class(HardeningModelSwift),             intent(inout)   :: this
-        type(HardeningData), intent(in) :: config
+    subroutine swift_init(this, params)
+        class(HardeningModelSwift),   intent(inout)   :: this
+        type(Parameter), allocatable, intent(in) :: params(:)
+        real(dp)    :: crss0
 
-        call hardening_model_init(this, config)
+        call hardening_model_init(this, params)
 
-        this%gamma0 = config%swiftScnf%gamma0
-        this%n = config%swiftScnf%n
-        this%k = config%swiftScnf%crss0 / (this%gamma0**this%n)
-
-        if (this%gamma0 <= 0 .or. this%n <= 0 .or. this%k <=0) call vef_exception(MODULE_NAME, 'swift_init', VEF_BADVAL, 'Swift params must be greater than 0')
+        this%gamma0 = params .find. 'gamma0'
+        this%n = params .find. 'n'
+        crss0 = params .find. 'crss0'
+        this%k = crss0 / (this%gamma0**this%n)
     end subroutine swift_init
 
     subroutine swift_update(this, grain, time, strain, slip_rates)
