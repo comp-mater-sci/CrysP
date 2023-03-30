@@ -16,20 +16,16 @@ module altayTaylor
     implicit none
     private
 
-    integer,parameter,private :: N = 5, N1 = N + 1
-
-    integer,private           :: M,   &       ! number of glide systems + number of twin systems
+    integer,private           :: M,   &       ! number of deformation mechanisms
                                  NGL, &       ! number of glide systems
                                  NTW, &       ! number of twin systems
                                  NACTIV
-    real(dp), private :: B1(3,96),B(5,5),B2(6,96),G(96),RHOAsa(3,3),SLIPLP(8),TAURLP(8),BB8(5),A2(10,194)
-    real(dp), private, parameter :: TLXX=5.0e-6_dp
-    integer,private   :: DI1(5)
-    integer,private:: INDACT(8),INDLP(8)
+    real(dp) :: B1(3,96),B(5,5),B2(6,96),G(96),RHOAsa(3,3),SLIPLP(8),TAURLP(8),BB8(5),A2(10,194)
+    real(dp), parameter :: TLXX=5.0e-6_dp
+    integer :: DI1(5), INDACT(8),INDLP(8)
 
     public :: &
         TAYLOR1, &
-        TAYLOR2, &
         TAYLOR3, &
         TAYLOR4
 
@@ -47,75 +43,33 @@ module altayTaylor
         integer :: i,j,l,I1
 
 
-        if(NLIST == 1) write (IMP,216)
- 216    format (/,' SUBROUTINE TAYLOR - READS ITS CRYSTAL DATA',//)
-
         ! Read name of slip system set
         read (LEC,217) TITglij
   217   format(A)
-        if(NLIST == 1) write (IMP,221) TITglij
-  221   format (/,' Slip system set:',A,/)
 
         read (LEC,210) I,NGL,NTW,DI1,X,Y
  210    format (8I4,4X,2F10.0)
-        if(NLIST == 1) write (IMP,211) I,NGL,NTW,DI1
- 211    format (1X,I4,10X,2I5,10X,5I5)
-        if (I /= 0) then
-            RCM_RAISE(1,'TAYLOR','Improper slip system set',RCM_RTN)
-        endif
         M=NGL+NTW
         M111=M
-        if (M111 > MMAX)then
-            RCM_RAISE(1,'TAYLOR','Too large slip system set',RCM_RTN)
-        endif
         ! read glide + twin systems
         do I1=1,M111
             read (LEC,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
-            if(NLIST == 1) write (IMP,213) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
         end do
  212    format (I4,8F20.16)
- 213    format (I3,' A ',5F10.7,' B ',3F10.7)
 
         do I=1,5
             read (LEC,214) J,(B(I,L),L=1,5)
-            if(NLIST == 1) write (IMP,215) J,(B(I,L),L=1,5)
         end do
  214    format (I4,5D23.16)
- 215    format (1X,I4,10X,5D15.8)
 
         if (NTW /= 0) then
             do I=1,NTW
                 read (LEC,212) J,(B2(L,I),L=1,6),G(I)
-                if(NLIST == 1) write (IMP,218) J,(B2(L,I),L=1,6),G(I)
             end do
- 218        format (i4,' B2',6f10.7,' G',f10.7)
         endif
         A2=0.0
         A2(1:5,1:M111)=A1(1:5,1:M111)
         A2(6:10,M111+1:M111*2)=A1(1:5,1:M111)
-
-    end subroutine
-
-    ! Write velocity gradient, strain rate and spin tensor; then check norm of strain rate
-    subroutine TAYLOR2(MacroDefRate)
-
-        type(DeformationRate), intent(in) :: MacroDefRate
-
-        integer :: i,j
-
-
-        if(NLIST == 1) then
-            write (IMP,203)
-            do I=1,3
-                write (IMP,204) (MacroDefRate%VelGrad(I,J),J=1,3),(MacroDefRate%StrainRate(I,J),J=1,3),(MacroDefRate%Spin(I,J),J=1,3)
-            end do
-        end if
- 203    format (' TAYLOR - VELOCITY GRADIENT WHICH WILL BE USED FOR THE SIMULATION', &
-                //T9,'GLOBAL TENSOR',T47,'SYMMETRICAL PART',T85,'ANTISYMMETRICAL PART',/)
- 204    format (1X,3(3F10.5,10X))
-        if (MacroDefRate%NormStrainRate < 1.0D-10) then
-           RCM_RAISE(1,'TAYLOR','Symmetric part of the strain step is too small',RCM_RTN)
-        endif
 
     end subroutine
 
@@ -135,21 +89,8 @@ module altayTaylor
         integer :: i,j
 
 
-        if (laml /= 1.and.laml /= 2) then
-            RCM_RAISE(1,'TAYLOR3','Wrong selection of lamels',RCM_RTN)
-        endif
         call pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,IPR,GEWF,A2,MacroDefRate,MacroDefState,NACTIV, &
                      SLIPLP,TLXX,TAURLP,INDACT,INDLP,IOR,ISTP,NBLOC,TRFb,GMMAb,NGR,NRL,laml,BB8,CC,M11)
-        ! OUT: Scrys,RHOScrys,RHOAcrys
-        !Report Scrys to LST-file
- 100    format(' Bishop-Hill stress (crystal system):')
- 101    format(3d20.7)
-        if(NLIST == 1) then
-            write (IMP,100)
-            do i=1,3
-                write (IMP,101) (Scrys(i,j),j=1,3)
-            end do
-        end if
         !Transform stress from local frame (Scrys) to sample frame (Ssam)
         Ssam = rotateSRTensorTo(Scrys,TRF)
         !Transform relaxation strain rate tensor from local frame (RHOScrys)
@@ -158,18 +99,6 @@ module altayTaylor
         !Transform relaxation spin tensor from local frame (RHOAcrys) to sample frame (RHOAsa)
         RHOAsa = rotateSRTensorTo(RHOAcrys,TRF)
         !Report RHOSsa and RHOAsa to LST-file
- 1701   format(/,' RHOSsa')
- 1706   format(/,' RHOAsa')
-        if(NLIST == 1) then
-            write (IMP,1701)
-            do i=1,3
-                write (IMP,101) (RHOSsa(i,j),j=1,3)
-            end do
-            write (IMP,1706)
-            do i=1,3
-                write (IMP,101) (RHOAsa(i,j),j=1,3)
-            end do
-        end if
         RCM_GUARD
     end subroutine
 
@@ -221,16 +150,10 @@ module altayTaylor
         TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
         WorkRate = sum(merge(CC(1,1:M111)*GAMdot(1:M111),-CC(2,1:M111)*GAMdot(1:M111),GAMdot(1:M111)>0.0))
         Seq=WorkRate / MacroDefRate%vMeqStrainRate
-        if(NLIST == 1) write (IMP,301) WorkRate
- 301    format (//,1X,'SYSTEM - SLIPS    VIRTUAL WORK=',D17.8,//)
 
-        if(NLIST == 1) write (IMP,109) MacroDefRate%vMeqStrainRate,Seq,(GAMdot(I)/MacroDefRate%vMeqStrainRate,I=1,M)
 
- 109    format ('vMeqStrainRate=',D17.8,' RATE OF VIRTUAL WORK=',D17.8,/,'  SLIP RATES',/,(T2,10F10.5))
         ROT = matmul(B1,GAMdot)
 
-        if(NLIST == 1) write (IMP,305) ROT
- 305    format (' ROTATIONS',3F12.6)
         do J=1,3
             C1(J,J)=1.0_dp
         end do
@@ -247,6 +170,8 @@ module altayTaylor
         fi2=Euler%fi2
         C2 = rotmat(Euler)
         ITW=0
+        !Choose at random if the crystal orientation should be considered that of the original or twinned part.
+        !See Van Houtte et. al, 1977
         if (NTW /= 0) then
             X=0.
             do I=1,NTW
