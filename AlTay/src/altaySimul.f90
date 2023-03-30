@@ -125,7 +125,6 @@ module altaySimul
         swrlx(1) = astate%simulCalls(astate%this)%input%rlx1
         swrlx(2) = astate%simulCalls(astate%this)%input%rlx2
         swrlx(3) =.false.
-        call TAYLOR2(MacroDefRate)
         RCM_GUARD
         ! Output the current texture
         if (NFILE == 1) call CURwriteBlock(IMP1,info)
