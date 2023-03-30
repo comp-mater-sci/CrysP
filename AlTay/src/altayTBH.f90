@@ -58,7 +58,7 @@ module altayTBH
             bas(j)=.TRUE.
         enddo
         ! Calculation of slip rates in basis
-        call mtprd(C=Dacc,A=U,B=D,N1=N,N2=N,N3=1,ND1=NDIM,ND2=NDIM)
+        Dacc(1:N) = matmul(U(1:N,1:N),D(1:N))
         ! Calculation of stress, using generalised Schmid law
         do i=1,N
            j=Irp(i)
@@ -77,14 +77,14 @@ module altayTBH
             if (iter > 50) then
                 RCM_RAISE(1,'TBH','Too many iterations.',RCM_RTN)
             endif
-            call mtprd(C=SIG,A=Trp,B=U,N1=1,N2=N,N3=N,ND1=1,ND2=NDIM)
+            SIG(1:N) = matmul(Trp(1:N), U(1:N,:))
             ! Calculation of Taylor factor
             FakM=0.0
             do i=1,N
                 FakM=FakM+SIG(i)*D(i)
             enddo
             ! Calculation of resolved shear stress
-            call mtprd(C=TauR,A=SIG,B=A,N1=1,N2=N,N3=M,ND1=1,ND2=NDIM)
+            TauR(:) = matmul(SIG(1:N), A(1:N,:))
 
 !           Search for most severly overstressed slip system
             DT=0.0d0
@@ -108,7 +108,7 @@ module altayTBH
             ! Search which active slip system must be desactivated (removed from basis)
             X=TauR(jn)
             ! Calculate column Mprime-s*, called Aprime
-            call mtprd(Aprime,U,A(1,jn),N,N,1,NDIM,NDIM)
+            Aprime(1:N) = matmul(U(1:N,:), A(1:N,jn))
             in=0
             do i=1,N
                 Z1=Aprime(i)
@@ -187,25 +187,6 @@ module altayTBH
             do i=1,N
                 C(i,j)=B(in,j)*CUst(i)
                 if (i /= in) C(i,j)=C(i,j)+B(i,j)
-            enddo
-        enddo
-    end subroutine
-
-    subroutine mtprd(C,A,B,N1,N2,N3,ND1,ND2)
-        ! MATRIX C=MATRIX A*MATRIX B
-        integer :: N1,N2,N3,ND1,ND2
-        real(dp) :: A(ND1,N2),B(ND2,N3)
-        real(dp) :: C(ND1,N3)
-        real(dp) :: X
-        integer :: I,J,K
-
-        do I=1,N1
-            do J=1,N3
-                X=0.
-                do K=1,N2
-                    X=X+A(I,K)*B(K,J)
-                enddo
-                C(I,J)=X
             enddo
         enddo
     end subroutine
