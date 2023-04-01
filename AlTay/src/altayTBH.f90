@@ -112,21 +112,15 @@ module altayTBH
                 Z2=Dacc(i)/Z1
                 if (X > 0.0d0) then
                     if (ZR < 0.0d0) cycle
-                    if (in == 0) then
+                    if (in == 0 .or. Z2 < Gmin) then
                         in=i
                         Gmin=Z2
-                    elseif (Z2 < Gmin) then
-                        Gmin=Z2
-                        in=i
                    endif
                 else
                     if (ZR > 0.0d0) cycle
-                    if (in == 0) then
+                    if (in == 0 .or. Z2 > Gmin) then
                         in=i
                         Gmin=Z2
-                    elseif (Z2 > Gmin) then
-                        Gmin=Z2
-                        in=i
                     endif
                 endif
             enddo
