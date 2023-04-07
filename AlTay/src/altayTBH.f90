@@ -41,7 +41,7 @@ module altayTBH
                     DD(NDIM)        !< copy of strain rates in some basis
         real(dp), parameter :: TOL=1.0e-10_dp
 
-        integer :: i,j,k,iter,jn,in
+        integer :: i,k,iter,jn,in
         real(dp) :: x,dt,y,z1,z2,zr,gmin
 
         if (N > NDIM) then
@@ -49,25 +49,18 @@ module altayTBH
         endif
         U=BINV
         Irp=IACT
-        do j=1,M
-            bas(j)=.FALSE.
-            TAuR(j)=0.0
-        enddo
+        bas(1:M)=.FALSE.
+        TAuR(1:M)=0.0
         do i=1,N
-            j=Irp(i)
-            bas(j)=.TRUE.
+            bas(Irp(i))=.TRUE.
         enddo
         ! Calculation of slip rates in basis
         Dacc(1:N) = matmul(U(1:N,1:N),D(1:N))
         ! Calculation of stress, using generalised Schmid law
         do i=1,N
-           j=Irp(i)
            X=Dacc(i)
            if (abs(X) < TOL) then
-                X=0.0
-                do k=1,N
-                    X=X+A(k,j)*D(k)
-                enddo
+               X=sum(A(1:N,Irp(i))*D(1:N))
            endif
            Trp(i) = merge(Tauc(1,Irp(i)),-Tauc(2,Irp(i)),X>=0.0_dp)
         enddo
@@ -79,29 +72,26 @@ module altayTBH
             endif
             SIG(1:N) = matmul(Trp(1:N), U(1:N,:))
             ! Calculation of Taylor factor
-            FakM=0.0
-            do i=1,N
-                FakM=FakM+SIG(i)*D(i)
-            enddo
+            FakM=sum(SIG(1:N)*D(1:N))
             ! Calculation of resolved shear stress
-            TauR(:) = matmul(SIG(1:N), A(1:N,:))
+            TauR = matmul(SIG(1:N), A(1:N,:))
 
 !           Search for most severly overstressed slip system
             DT=0.0d0
             jn=0
-            do j=1,M
-                X=TauR(j)
-                Y=merge(X-Tauc(1,j),-X-Tauc(2,j),X>=0.0_dp)
+            do i=1,M
+                X=TauR(i)
+                Y=merge(X-Tauc(1,i),-X-Tauc(2,i),X>=0.0_dp)
                 if (abs(Y) < TOL) then
                     Y=0.0d0
-                    X=merge(Tauc(1,j),-Tauc(2,j),X>=0.0_dp)
-                    TauR(j)=X
+                    X=merge(Tauc(1,i),-Tauc(2,i),X>=0.0_dp)
+                    TauR(i)=X
                 endif
                 if (abs(Y-DT) < TOL) Y=DT
-                DTAU(j)=Y
-                if (bas(j) .or. (abs(X) < TOL) .or. (Y <= DT)) cycle
+                DTAU(i)=Y
+                if (bas(i) .or. (abs(X) < TOL) .or. (Y <= DT)) cycle
                 DT=Y
-                jn=j
+                jn=i
             enddo
             if (jn == 0) exit ! There is no overstressed slip system
             ! There is an overstressed slip system, which we will activate now
@@ -113,8 +103,7 @@ module altayTBH
             do i=1,N
                 Z1=Aprime(i)
                 if (abs(Z1) < TOL) cycle
-                j=Irp(i)
-                ZR=TauR(j)
+                ZR=TauR(Irp(i))
                 if (abs(ZR) < TOL) then
                     ZR=Dacc(i)
                     if (abs(Zr) < TOL) cycle
@@ -123,25 +112,15 @@ module altayTBH
                 Z2=Dacc(i)/Z1
                 if (X > 0.0d0) then
                     if (ZR < 0.0d0) cycle
-                    if (in == 0) then
+                    if (in == 0 .or. Z2 < Gmin) then
                         in=i
                         Gmin=Z2
-                    else
-                        if (Z2 < Gmin) then
-                           Gmin=Z2
-                           in=i
-                        endif
                    endif
                 else
                     if (ZR > 0.0d0) cycle
-                    if (in == 0) then
+                    if (in == 0 .or. Z2 > Gmin) then
                         in=i
                         Gmin=Z2
-                    else
-                        if (Z2 > Gmin) then
-                            Gmin=Z2
-                            in=i
-                        endif
                     endif
                 endif
             enddo
@@ -149,13 +128,9 @@ module altayTBH
                 RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
             endif
             Z1=Aprime(in)
-            do i=1,N
-                CUst(i)=-Aprime(i)
-            enddo
+            CUst(1:N)=-Aprime(1:N)
             CUst(in)=1.0d0
-            do i=1,N
-                CUst(i)=CUst(i)/Z1
-            enddo
+            CUst(1:N)=CUst(1:N)/Z1
             UU=U
             call Ust(C=U,B=UU,Cust=CUst,in=in,N=N,M3=N,NDIM=NDIM)
             ! Updating of Dacc
@@ -171,8 +146,7 @@ module altayTBH
         ! Solution was found.
         Gdot(1:M)=0.0
         do i=1,N
-            j=Irp(i)
-            Gdot(j)=Dacc(i)
+            Gdot(Irp(i))=Dacc(i)
         enddo
     end subroutine
 
