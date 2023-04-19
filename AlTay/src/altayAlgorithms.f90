@@ -1,5 +1,3 @@
-include 'lapack.f90'
-
 module altayAlgorithms
     use altayMiscutils, only: terminate, stopcode_runtimeerror
     use altay_definitions
