@@ -1,11 +1,10 @@
 module hardening_model_swift
-use altayMiscutils, only: terminate, stopcode_runtimeerror
-use altay_definitions, only: dp
+use definitions, only: dp
 use hardening_types
 use altayConfig
 use hardening_model_isotropic
 use hardening_model
-use altay_log
+use logging
 use parameters
 
     implicit none
@@ -30,10 +29,10 @@ contains
         class(HardeningModelSwift), intent(in)  :: this
         type(Parameter), allocatable    :: params(:)
     
-        params = [  parameter_init('n_slip_systems', TYPE_STRING), &
-                    parameter_init('crss0', TYPE_REAL),             &   
-                    parameter_init('gamma0', TYPE_REAL),            &   
-                    parameter_init('n', TYPE_REAL)                  ]   
+        params = [parameter_init('n_slip_systems', TYPE_STRING), &
+                  parameter_init('crss0', TYPE_REAL),             &   
+                  parameter_init('gamma0', TYPE_REAL),            &   
+                  parameter_init('n', TYPE_REAL)]   
     end function swift_get_parameters
 
     subroutine swift_validate_parameters(this, params)
@@ -44,11 +43,11 @@ contains
         call hardening_model_validate_parameters(this, params)
 
         if ((params .find. 'gamma0') <= 0._dp)  &
-            call vef_exception(MODULE_NAME, PROC_NAME, VEF_BADVAL, 'Initial strain must be greater than 0')
+            call log_error(MODULE_NAME, PROC_NAME, ERR_VAL, 'Initial strain must be greater than 0')
         if ((params .find. 'n') <= 0._dp)       &   
-            call vef_exception(MODULE_NAME, PROC_NAME, VEF_BADVAL, 'N must be greater than 0')
+            call log_error(MODULE_NAME, PROC_NAME, ERR_VAL, 'N must be greater than 0')
         if ((params .find. 'crss0') <= 0._dp)   &   
-            call vef_exception(MODULE_NAME, PROC_NAME, VEF_BADVAL, 'CRSS0 must be greater than 0')
+            call log_error(MODULE_NAME, PROC_NAME, ERR_VAL, 'CRSS0 must be greater than 0')
     end subroutine swift_validate_parameters
 
     subroutine swift_init(this, config)
@@ -61,7 +60,7 @@ contains
         this%n = config%swiftScnf%n
         this%k = config%swiftScnf%crss0 / (this%gamma0**this%n)
 
-        if (this%gamma0 <= 0 .or. this%n <= 0 .or. this%k <=0) call vef_exception(MODULE_NAME, 'swift_init', VEF_BADVAL, 'Swift params must be greater than 0')
+        if (this%gamma0 <= 0 .or. this%n <= 0 .or. this%k <=0) call log_error(MODULE_NAME, 'swift_init', ERR_VAL, 'Swift params must be greater than 0')
     end subroutine swift_init
 
     subroutine swift_update(this, grain, time, strain, slip_rates)

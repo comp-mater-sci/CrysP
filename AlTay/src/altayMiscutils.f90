@@ -1,6 +1,6 @@
 !> Container for miscellaneous utility routines.
 module altayMiscutils
-    use altay_definitions
+    use definitions
     implicit none
     !>@{ \name Exit codes that are returned to the OS on various stop contitions
 
@@ -16,19 +16,6 @@ module altayMiscutils
            0.D0, 0.D0, 1.D0], shape(unitMatrix))
 
     contains
-
-    !> Terminate the analysis and return exit code
-    !>
-    !> STOP statement does not necessarily set exit code.
-    !> Typical use case for premature termination:
-    !> call terminate(stopcode_runtimeerror)
-    subroutine terminate(exit_code)
-        integer,intent(in)        :: exit_code
-
-        if (exit_code /= stopcode_OK) write(*,'(A)') 'AlTay terminated due to an error.'
-        call exit(exit_code)
-
-    end subroutine
 
     subroutine writeMSSHeader(ounit,info)
         integer,intent(in)      :: ounit

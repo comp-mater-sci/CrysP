@@ -1,6 +1,6 @@
 !> Various numerical algorithms
 module criNumerics
-    use altay_definitions
+    use definitions
     use criAlgorithm
     implicit none
 
@@ -58,7 +58,7 @@ contains
     integer,intent(out)                         :: info
     !
     integer :: i
-        info = VEF_BADVAL
+        info = VEF_ERROR
         if (size(xi) /= size(yi)) return
         ! TODO: check if the nodes are in strictly ascending order
 
@@ -85,7 +85,7 @@ contains
         integer,intent(in)  :: npoints
         integer,intent(out) :: info
         !
-            info = VEF_BADVAL
+            info = VEF_ERROR
             if ((order < 1) .or. (npoints <= order)) return
             !
             this%npoints = npoints
@@ -108,7 +108,7 @@ contains
         integer :: j,k, n
         ! double precision,dimension(0:ubound(xi,dim=1)) :: xdiff
         !
-            info = VEF_BADDIMS
+            info = VEF_ERROR
             n = ubound(xi,dim=1)
             if (n /= ubound(wi,dim=1)) return
             !

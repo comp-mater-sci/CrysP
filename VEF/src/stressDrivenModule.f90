@@ -2,7 +2,7 @@
 
 !> Implementation of a altay-based DMC computiational module.
 module dmcStressDrivenModule
-use altay_definitions
+use definitions
 use criAlgorithm, only: optionalDefault
 use criRuntime
 use criUncomment, only: readValue
@@ -14,6 +14,8 @@ use dmcYLPResult
 use dmcAlamEvalCached
 use dmcResultTable
 use dmcBasicModule
+use logging
+
 implicit none
 
     public :: StressDrivenModule
@@ -80,10 +82,8 @@ contains
         !
         ! Read multilevelYLP configuration
         call readYLPConfigSection(cnfunit,this%ylp,info)
-        if (info /= VEF_OK) then
-            write(errmsg,fmt=901) 'check YLP config section'
-            return
-        endif
+        if (info /= VEF_OK) &
+            call log_error('StressDrivenModule', 'readConfig', ERR_VAL, 'Check YLP config section.') 
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
@@ -144,7 +144,7 @@ contains
     type(multilevelYLPConfig)   :: ylp_pretry
     double precision, parameter :: pretry_search_angle = pi_deg * 2.0D0
     !
-        info = VEF_BADVAL
+        info = VEF_ERROR
 
         obj_func%ptr_db => this%ptr_db
         !
@@ -207,7 +207,7 @@ contains
                     if (ylp_result_retry%R < ylp_result%R) ylp_result = ylp_result_retry
                 endif
             endif
-            RETURN_IF_WITH(is_error(info), info = VEF_ERROR)
+            RETURN_IF_WITH(info == VEF_ERROR, info = VEF_ERROR)
             ! Rare case: normal search and re-try cannot improve over pre-try
             if (info /= VEF_OK .and. use_pretry) then
                 if (ylp_result_pretry%R < ylp_result%R) ylp_result = ylp_result_pretry
@@ -251,7 +251,7 @@ contains
                            YLPconfig=ylp_config, &
                            verbose=this%output%verbosity, &
                            objective_function=obj_func)
-        if (is_error(info)) return
+        if (info == VEF_ERROR) return
         if (deriveYLPResult(ylp_result) /= VEF_OK) info = VEF_ERROR
     !
     end function
@@ -266,7 +266,7 @@ contains
     double precision,dimension(2) :: tmp
     logical :: use_default_solver_settings, use_advanced_settings
     !
-        info = VEF_IO
+        info = VEF_ERROR
         use_default_solver_settings = .true.
         use_advanced_settings = .false.
         if (.not. readValue(cnfunit, use_default_solver_settings)) return

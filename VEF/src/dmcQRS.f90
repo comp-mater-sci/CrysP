@@ -73,14 +73,14 @@ contains
         use_default_settings = .false.
         info = this%StressDrivenModule%readConfig(cnfunit)
         if (info /= VEF_OK) return
-        info = VEF_IO
+        info = VEF_ERROR
         ! Read parameters specific for the QRSModule module
         this%ptr_range => rangeFromConfig(cnfunit,info)
         if ( (info /= VEF_OK) .or. (.not. associated(this%ptr_range)) ) return
         !
         if (.not. readValue(cnfunit, use_default_settings)) return
         if (.not. use_default_settings) then
-                info = VEF_IO
+                info = VEF_ERROR
                 if (.not. readValue(cnfunit, this%rho)) return
                 if (.not. readValue(cnfunit, this%calculate_MFactor)) return
                 if (.not. readValue(cnfunit, this%fold_symmetry)) return
@@ -191,7 +191,7 @@ contains
                 cycle
             endif
 
-            if (is_error(info)) exit
+            if (info == VEF_ERROR) exit
             !
             SonA%t = vec5D2tens(ylp_result%vSonA)
             SmIdent%t = vec5D2tens(ylp_result%vSonAn) ! stress mode for found strain mode
@@ -229,7 +229,7 @@ contains
             info = VEF_OK
         enddo
         !
-        if (is_error(info)) return
+        if (info == VEF_ERROR) return
     
         npoints_ok = i-1
         if (npoints /= npoints_ok) then
@@ -278,14 +278,14 @@ contains
         [ character(len=column_width) ::  &
         'angle','rho','q-value','r-value','s-value','sigma_xx','M-factor','residual' ]
     !
-        info = VEF_BADVAL
+        info = VEF_ERROR
         if (optionalDefault(header,.false.)) then
             info = writeStandardHeader(iounit, column_names, [column_width])
             if (info /= VEF_OK) return
         endif
         !
         if (present(data_record)) then
-            info = VEF_IO
+            info = VEF_ERROR
             ! FIXME: flawed assumption, other arrays may have different size
             ALLOCATED_SIZE(npoints, data_record%phis)
             if (present(restrict)) then

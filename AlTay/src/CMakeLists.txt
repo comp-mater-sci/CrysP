@@ -37,8 +37,8 @@ altayTBH.f90
 altayCurAccess.f90 
 altaySmtAccess.f90 
 altayTexFormats.f90 
-altayDefinitions.f90
-altayLog.f90
+definitions.f90
+logging.f90
 altayConfig.f90  
 altayRCM.f90 
 altaySub.f90

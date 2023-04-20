@@ -16,17 +16,11 @@ module altaySub
     use altayMiscutils
     use altayMacroKinematic
     use altayCurAccess
+    use logging
 
     implicit none
-    !> \name Named constants for error codes in altaySub
-    !>@{
-    integer,parameter :: altaySub_OK = 0
-    integer,parameter :: altaySub_Err = -1
-    integer,parameter :: altaySub_Exception = -2
-    integer,parameter :: altaySub_IOErr = -3
-    integer,parameter :: altaySub_BadVal = -10
-    integer,parameter :: altaySub_BadDim = -11
-    !>@}
+    
+    character(*), parameter, private :: MOD_NAME = 'altaySub'
 
 contains
 
@@ -39,6 +33,7 @@ contains
         type(altayConfigData),intent(in)    :: cnf      !< configuration data
         integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
         character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
+        character(*), parameter :: PROC_NAME = 'initAltay'
 
         integer :: ierr
         logical :: is_exception
@@ -50,41 +45,34 @@ contains
         ! Open input files
         ! UNIT LEC = SLIP SYSTEMS; open slip system file
         open (unit=LEC,file=trim(cnf%slipsystem%input_fname),status='old',iostat=ierr)
-        if (ierr /= 0) then
-            if (present(errmsg)) errmsg = 'Cannot open slip system definition file: ' // trim(cnf%slipsystem%input_fname)
-            info = altaySub_IOErr
-            return
-        endif
+        if (ierr /= VEF_OK) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open slip system definition file: ' // trim(cnf%slipsystem%input_fname))
+        
         ! Load microstructure data
         CALL GRFIL(acnf%micros_fname,acnf%simul_init%FMicro,info)
-        if (info /= 0) then
-            if (present(errmsg)) errmsg = 'Cannot process the microstructure file: ' // trim(acnf%micros_fname)
-            info = altaySub_IOErr
-            return
-        endif
+        if (info /= VEF_OK) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot process the microstructure file: ' // trim(acnf%micros_fname))
+        
         ! Get the initial texture
         call loadTexture(cnf%texture%input_type,NDAT1,trim(cnf%texture%input_fname),cnf%texture%block_id,info)
-        if (info /= 0) then
-            if (present(errmsg)) errmsg = 'Cannot process the texture data file: ' // trim(cnf%texture%input_fname)
-            info = altaySub_IOErr
-            return
-        endif
+        if (info /= VEF_OK) & 
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot process the texture data file: ' // trim(cnf%texture%input_fname))
+        
         ! Open output files
         call openOutputFiles(cnf, info, errmsg)
-        if (info /= altaySub_OK) return
-        !
+        if (info /= VEF_OK) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open output files.')
+            
         ! Initialize altay modules
         !
         ! Set the data for CRSS calculations
         call InitModuleAltayHard(cnf%hardening, info)
-        if (info /= 0) then
-            if (present(errmsg)) errmsg = 'Cannot initialize hardening law'
-            info = altaySub_Err
-            return
-        endif
+        if (info /= VEF_OK) &
+            call log_error(MOD_NAME, PROC_NAME, ERR, 'Cannot initialize hardening law')
+        
         ! Initialisation of SIMUL
         if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
-        info = altaySub_Exception
+        info = VEF_ERROR
         call SIMUL0()
         ! Collect more info about the
         if(RCM_signal()) then
@@ -102,24 +90,21 @@ contains
         select case(cnf%hardening%HardLawID)
             case(HARDENING_BP,HARDENING_PEBP_LOOP,HARDENING_PEBP_SCREW)
                 info = KS_initState(size(DFIL))
-                if (info /= 0) return
+                if (info /= VEF_OK) return
                 if (acnf%hardening%PEBPCnf%read_state) then
                     ! Load state variables
                     info = KS_openStateFile(IPEBPSTAT,acnf%hardening%PEBPCnf%input_fname, mode='r')
-                    if (info /= 0) then
-                        if (present(errmsg)) errmsg = 'Cannot open PEBP state file: '//trim(acnf%hardening%PEBPCnf%input_fname)
-                        return
-                    endif
+                    if (info /= VEF_OK) &
+                        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open PEBP state file.')
+                    
                     info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
-                    if ((info /= 0) .and. present(errmsg)) then
-                        errmsg = 'Cannot read from PEBP state file: '// trim(acnf%hardening%PEBPCnf%input_fname)
-                        return
-                    endif
+                    if (info /= VEF_OK) &
+                        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot read from PEBP state file.')
                 endif
         endselect
         ! No need for the slip system definition anymore.
         close(LEC)
-        info = altaySub_OK
+        info = VEF_OK
     end subroutine
 
     !> Finalizes the module and releases the resources.
@@ -158,9 +143,10 @@ contains
         character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
 
         character(len=fname_len) :: fname_prefix, fname
+        character(*), parameter :: PROC_NAME = 'openOutputFiles'
 
         fname_prefix = cnf%output_prefix
-        info = altaySub_IOErr
+        info = VEF_ERROR
 #ifndef NOLSTFILE
         ! UNIT IMP = PRINTER
         if (cnf%output_config%nlist /= 0) then
@@ -203,21 +189,17 @@ contains
             ! UNIT IMP4 = state variables of PEBP
             fname = trim(fname_prefix)//'.BPM'
             info = KS_openStateFile(IMP4,fname=fname,mode='w')
-            if (info /= 0) then
-                if (present(errmsg)) errmsg = 'Cannot create PEBP state file: ' // fname
-                info = altaySub_IOErr
-                return
-            endif
+            if (info /= VEF_OK) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot create PEBP state file.') 
         endif
 #endif
 
-        info = altaySub_OK
+        info = VEF_OK
         return
 
         ! Error handler
         9999 continue
-        info = altaySub_IOErr
-        if (present(errmsg)) errmsg = 'Cannot open file '//trim(fname)
+        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open file '//trim(fname))
     end subroutine
 
     !> Initialization of input and output data for the steps.
@@ -245,7 +227,7 @@ contains
         logical :: input_ok
         type(DeformationRate) :: MacroDefRate
         ! Validate input
-        info = altaySub_BadVal
+        info = VEF_ERROR
         input_ok = .false.
         if (allocated(steps%simulCalls)) input_ok = (size(steps%simulCalls) == steps%nSimulCalls)
         if (.not. input_ok) return
@@ -254,7 +236,7 @@ contains
         ! Clean exception stack from a previous (possibly unsuccessful)
         ! set of calls.
         call RCM_clean()
-        info = altaySub_Exception
+        info = VEF_ERROR
         !
         do i = 1, steps%nSimulCalls
             steps%this = i
@@ -268,7 +250,7 @@ contains
             if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
         enddo
 
-        info = altaySub_OK
+        info = VEF_OK
     end subroutine
 
     !> Write out the current state variables.
@@ -279,7 +261,7 @@ contains
     subroutine outputCurrentState(info)
         integer,intent(out)           :: info
 
-        info = altaySub_OK
+        info = VEF_OK
         if (acnf%output_config%nfile == 1) call CURwriteBlock(IMP1,info)
         if (info /= 0) return
         select case(acnf%hardening%HardLawID)

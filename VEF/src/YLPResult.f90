@@ -3,7 +3,7 @@
 module dmcYLPResult
 use criMathUtils
 use alamYLPConstants, only: alamEval_vSD_dim
-use altay_definitions
+use definitions
 
 implicit none
 
@@ -58,13 +58,13 @@ contains
     !> Derive dependant fields from properly initialized and evaluated YLPResult;
     !>
     !> This requires fields: vS, vA and vS_length.
-    !> \return VEF_BADVAL if input ylp_result contains wrong data.
+    !> \return VEF_ERROR if input ylp_result contains wrong data.
     integer function deriveYLPResult(ylp_result) result(info)
     type(YLPResult),intent(inout)   :: ylp_result
     !
     double precision :: SonA_norm
     !
-        info = VEF_BADVAL
+        info = VEF_ERROR
         SonA_norm = norm2(ylp_result%vSonA)
         if ((ylp_result%vS_length < epsilon(0.D0)) .or. (SonA_norm < epsilon(0.D0))) return
         !

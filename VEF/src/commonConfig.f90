@@ -1,7 +1,7 @@
 !> This module contains subroutines, data structures and common variables
 !> for shared configuration features of all alamDMC modules
 module commonConfig
-use altay_definitions
+use definitions
 implicit none
 
       character(len=20),parameter   :: fmtMsg2Msg   = '(A,T35,A)'
@@ -59,7 +59,7 @@ contains
                                                     (range_name_extensions_map(i),i=1,size(range_name_extensions_map)), &
                                                     (special_range_names_map(i),i=1,size(special_range_names_map))]
       !
-            info = VEF_IO
+            info = VEF_ERROR
             nullify(inst)
             id = -1
             ! Read the keyword
@@ -125,7 +125,7 @@ contains
                   allocate(inst, source=discreteRange(vPoints))
             !
             case default
-                  info = VEF_BADVAL
+                  info = VEF_ERROR
                   return
             !
             end select

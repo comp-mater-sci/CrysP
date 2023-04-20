@@ -13,11 +13,15 @@ use dmcAbstractModule
 use altayConfig, only: altayConfigData
 use commonConfig
 use dmcUtils
-use altay_definitions
+use definitions
 use hardening
 use hardening_model_dsh, only: readpar
+use logging
+use altaySub, only: initAltay, finalizeAltay
 
 implicit none
+private
+
     !> FCC (111)<110>, through altayDeformationMechanismData_preconfigured
     !> objects
     integer,parameter :: DM_fcc12 = 1
@@ -35,10 +39,10 @@ implicit none
     !> Initialization from file of PRE file format
     integer,parameter :: DM_format_pre = 101
 
+    character(*), parameter :: MOD_NAME = 'basicModule'
 
 
     public :: outputConfig, BasicModule, readAlTayConfigSection
-    private
 
       type :: outputConfig
 
@@ -95,7 +99,6 @@ implicit none
 contains
 
       integer function BasicModule_initialize(this) result(info)
-      use altaySub
       use commonUtils
       class(BasicModule),intent(inout)          :: this
       !
@@ -117,9 +120,9 @@ contains
                   end select
             endif
             !
-            call initAltay(this%altay,ierr,errmsg)
+            call initAltay(this%altay,ierr)
             
-            if (ierr /= altaySub_OK) return
+            if (ierr /= VEF_OK) return
 
             30 format('Initializing the multilevel model...')
             31 format(1X,A)
@@ -127,10 +130,8 @@ contains
             ! Output the initial state variables (non only texture but also BPM, MSS) if requested.
             if (this%output%outputRequest) then
                   call outputTexture(ierr) !< \todo Rename with more general name
-                  if (ierr /= altaySub_OK) then
-                        write(errmsg,'(A)') 'Error: cannot write initial state'
-                        return
-                  endif
+                  if (ierr /= VEF_OK) &
+                        call log_error(MOD_NAME, 'initialize', ERR_IO, 'Cannot write initial state.')
             endif
             info = VEF_OK
             !
@@ -141,7 +142,7 @@ contains
       class(BasicModule),intent(inout)          :: this
       integer,intent(in)                        :: cnfunit !< IO input unit
       !
-            info = VEF_IO
+            info = VEF_ERROR
             !
             ! Read output configuration lines
             call readOutputConfigSection(cnfunit,this%output,info) ! top 3 lines after comment header of config file
@@ -186,15 +187,10 @@ contains
 
     !> Finalization of the module
     integer function BasicModule_finalize(this) result(info)
-    use altaySub
-    class(BasicModule),intent(inout) :: this
-    !
-        info = this%finalizeLibAltay()
-        if (info /= VEF_OK) then
-            errmsg = 'Problems have been encountered while finalizing libaltay'
-            info = VEF_ERROR
-        endif
-    !
+        class(BasicModule),intent(inout) :: this
+        
+        if (this%finalizeLibAltay() /= VEF_OK) &
+            call log_error(MOD_NAME, 'finalize', ERR)
     end function
 
 
@@ -217,7 +213,7 @@ contains
         open(newunit=ofunit, file=output_path, status='replace', iostat=ierr)
         if (ierr /= 0) then
             write(display_unit, fmt=952) output_path
-            info = VEF_IO
+            info = VEF_ERROR
             return
         endif
         info = VEF_OK
@@ -231,7 +227,6 @@ contains
 
 
     integer function BasicModule_reinitializeLibAltay(this, output_prefix) result(info)
-    use altaySub
     class(BasicModule),intent(inout)        :: this
     character(len=*),intent(in),optional    :: output_prefix !< File prefix
     !
@@ -244,19 +239,18 @@ contains
         if (present(output_prefix)) this%altay%output_prefix = output_prefix
         !
         call initAltay(this%altay,ierr)
-        CHOOSE(info, ierr == altaySub_OK, VEF_OK, VEF_ERROR)
+        CHOOSE(info, ierr == VEF_OK, VEF_OK, VEF_ERROR)
     !
     end function
 
     !> Finalize libAltay and perform additional actions on finalization.
     integer function BasicModule_finalizeLibAltay(this) result(info)
-    use altaySub
     class(BasicModule),intent(inout)        :: this
     !
     integer :: ierr
     !
         info = VEF_ERROR
-        RETURN_IF(ierr /= altaySub_OK, call finalizeAltay(ierr))
+        RETURN_IF(ierr /= VEF_OK, call finalizeAltay(ierr))
         !
         ! Action on finalize:
         info = VEF_OK
@@ -274,7 +268,7 @@ contains
       type(outputConfig),intent(inout)    :: cnf
       integer,intent(out)                 :: info
       !
-            info = VEF_IO
+            info = VEF_ERROR
             if (.not. readValue(cnfunit, cnf%outputPrefix)) then
                 write(error_unit,fmt=900) 'Check output file prefix.'
                 return
@@ -319,7 +313,7 @@ contains
                                                         MapItem('bcc48', DM_bcc48), &
                                                         MapItem('pre', DM_format_pre)]
       !
-           info = VEF_IO
+           info = VEF_ERROR
            model_id = -1
            dm_id = -1
             ! Read input texture file name
@@ -329,7 +323,7 @@ contains
             call splitExt(cnf%texture%input_fname, root, ext)
             if (ext == '' .or. .not. resolveName(extensions, ext, cnf%texture%input_type)) then
                 write(error_unit,fmt=900) 'Unsupported texture input file format.'
-                info = VEF_BADVAL
+                info = VEF_ERROR
                 return
             endif
             select case(cnf%texture%input_type)
@@ -346,7 +340,7 @@ contains
             !if (.not. readKeyword(cnfunit, model_types, model_id)) return
             if (.not. readKeyword(cnfunit, model_types, model_id)) then
                 write(error_unit,fmt=900) 'Unsupported crystal plasticity model.'
-                info = VEF_BADVAL
+                info = VEF_ERROR
                 return
             endif
             !
@@ -359,7 +353,7 @@ contains
             else ! default slip system definition
                   if (.not. readKeyword(cnfunit, slipsystem_types, dm_id)) then
                       write(error_unit,fmt=900) 'Unsupported slip system family.'
-                      info = VEF_BADVAL
+                      info = VEF_ERROR
                       return
                   endif
                   ! Let's map DM_id to a file
@@ -379,14 +373,14 @@ contains
                   call splitExt(cnf%micros_fname, root, ext)
                   if (ext == '' .or. .not. (ext == '.smt' .or. ext == '.SMT')) then
                         write(error_unit,fmt=900) 'Unsupported microstructure input file format.'
-                        info = VEF_BADVAL
+                        info = VEF_ERROR
                         return
                   endif
                   ! Read user-supplied initial deformation gradient
                   do i=1,3
                         if (.not. readValue(cnfunit, cnf%simul_init%Fmicro(:,i))) then
                             write(error_unit,fmt=900) 'Cannot read deformation gradient.'
-                            info = VEF_BADVAL
+                            info = VEF_ERROR
                             return
                         endif
                   enddo
@@ -491,7 +485,7 @@ contains
       character(len=max_pathlen)          :: tmp_fname ! BP parameter file name
       integer                             :: nparunit  ! IO unit of BP parameter file
       !
-            info = VEF_IO
+            info = VEF_ERROR
             !
             ! Process PEBP parameter file
             if (.not. readValue(cnfunit, tmp_fname)) return ! read BP parameter file name
@@ -554,7 +548,7 @@ contains
       integer :: ierr
       logical :: file_exists
       !
-            info = VEF_BADVAL
+            info = VEF_ERROR
             prefix = getVEFDataDir()
             path = pathjoin(prefix, fname)
             inquire(file=path, exist=file_exists, iostat=ierr)
@@ -571,7 +565,7 @@ contains
       !
       character(len=max_pathlen) :: fname
       !
-            info = VEF_BADVAL
+            info = VEF_ERROR
             select case(dm_id)
             case(DM_fcc12)
                   fname = 'fcc12.pre'

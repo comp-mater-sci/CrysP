@@ -4,7 +4,7 @@
 module dmcStrainDrivenStep
 use criRange
 use criMathUtils
-use altay_definitions
+use definitions
 use dmcUtils, only: display_unit
 use dmcSubsteppingConfig
 implicit none
@@ -122,7 +122,7 @@ contains
     double precision,parameter :: volumetric_strain_fraction_threshold = 0.001
     double precision,parameter :: auto_increment_norm = 0.02
     !
-        info = VEF_BADVAL
+        info = VEF_ERROR
         associate(config => this%config)
             ! Make the step traceless: decompose into volumetric strain rate
             ! and strain rate deviator
@@ -220,8 +220,8 @@ contains
     type(SRTensor) :: increment_strain,  step_strain_total
     !
         ! Precondition
-        RETURN_IF_WITH(.not. associated(this%substepping_config), info = VEF_BADVAL)
-        RETURN_IF_WITH(.not. associated(this%substepping_config%ptr_range), info = VEF_BADVAL)
+        RETURN_IF_WITH(.not. associated(this%substepping_config), info = VEF_ERROR)
+        RETURN_IF_WITH(.not. associated(this%substepping_config%ptr_range), info = VEF_ERROR)
         !
         n_increments = this%substepping_config%getNumberOfIncrements()
 
@@ -231,7 +231,7 @@ contains
         associate(increment_range => this%substepping_config%ptr_range)
             !
             ! Get the lower boundary, it should be zero.
-            RETURN_IF_WITH(.not. increment_range%next(x_prev), info = VEF_BADVAL)
+            RETURN_IF_WITH(.not. increment_range%next(x_prev), info = VEF_ERROR)
 
             increment_size_tot = 0.D0
 
@@ -250,7 +250,7 @@ contains
                 !
                 if (norm2(increment_strain%t) < epsilon(0.D0)) then
                     write(display_unit, 900) 'Norm of the prescribed incremental deformation is too small.'
-                    info = VEF_BADVAL
+                    info = VEF_ERROR
                     return
                 endif
                 !
@@ -266,7 +266,7 @@ contains
                 end associate
             enddo
             ! Check if the loop had at least one iteration
-            RETURN_IF_WITH(i_incr == 0, info = VEF_BADVAL)
+            RETURN_IF_WITH(i_incr == 0, info = VEF_ERROR)
         end associate
         !
         ! Call the AlTay
@@ -303,7 +303,7 @@ contains
     !
         ! Check if the input and the state of libaltay correspond.
         ALLOCATED_SIZE(n_simulcalls, astate%simulCalls)
-        RETURN_IF(n_simulcalls < n_increments .or. n_simulcalls /= astate%nSimulCalls, info = VEF_BADVAL)
+        RETURN_IF(n_simulcalls < n_increments .or. n_simulcalls /= astate%nSimulCalls, info = VEF_ERROR)
         !
         ! Allocate storage for output
         RETURN_ON_WITH(allocate(this%increments(n_increments), stat=ierr), ierr /= 0, info = VEF_ERROR)

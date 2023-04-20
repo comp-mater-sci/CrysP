@@ -1,16 +1,15 @@
 !> Provide shared infrastructure for managing runtime in cri applications.
 module criRuntime
 use criLinearMap
-use altay_definitions
+use definitions
+use logging
 use criPath
 use,intrinsic :: iso_fortran_env, only: error_unit,output_unit
 implicit none
 
-      integer,parameter              :: errmsg_len = 1024 !> Length of error message
-      character(len=errmsg_len),save :: errmsg = '' !> Error message to be emitted on stop.
-
       integer,parameter       :: description_len = 128
       integer,parameter       :: max_command_param_len = max_pathlen
+    character(*), parameter, private :: MOD_NAME = 'criRuntime'
 
       !> Data structure for parsing (and combining) the command line arguments.
       !>
@@ -39,22 +38,6 @@ implicit none
       end type
 
 contains
-
-      !> Terminate execution of the program, returning stop code.
-      !>
-      !> If error message is non-empty and errcode is non-zero,
-      !> the message will be written to standard error output.
-      !> This function should be called instead of the folowing:
-      subroutine finalize(errcode)
-      integer,intent(in)      :: errcode
-
-            if ((errcode /= VEF_OK) .and. (len_trim(errmsg) > 0)) then
-                  write(error_unit,fmt=9000) trim(errmsg)
-                  9000 format(/,'Error:',1X,A)
-            endif
-
-            stop errcode
-      end subroutine
 
       !> Process the arguments provided in the command line.
       subroutine processCommandLine(this,argc_min,argc_max,command_map,command_argpos,info, &
@@ -88,6 +71,8 @@ contains
       !> Subroutine to be called before printing the help message.
       integer :: ierr, i
       !
+        character(*), parameter :: PROC_NAME = 'processCommandLine'
+
             info = VEF_ERROR
             this%is_command_identified = .false.
             !
@@ -98,16 +83,12 @@ contains
                   ! Check if the command appears in the command line
                   this%is_command_identified = resolveName(command_map,this%argv(command_argpos),this%command_id)
                   if (.not. this%is_command_identified) then
-                        errmsg = 'Unknown command: ' // trim(this%argv(command_argpos))
-                        call finishProcessing(this,command_map,info,terminate)
-                        if (info /= VEF_OK) return
+                        call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Unknown command: ' // trim(this%argv(command_argpos)))
                   endif
             endif
             ! Pre-validate command line input
             if ( (this%argc < argc_min) .or. (this%argc > argc_max) ) then
-                  errmsg = 'Insufficient number of parameters.'
-                  ! Either stop or return exit code:
-                  call finishProcessing(this,command_map,info,terminate)
+                call log_error(MOD_NAME, PROC_NAME, ERR_DIMS, 'Insufficient number of parameters.')
                   if (info /= VEF_OK) return
             endif
             !
@@ -127,58 +108,6 @@ contains
             !
       !
       end subroutine
-
-
-      !> Print the help message and (optionally) terminate the program.
-      !>
-      !> See processCommandLine for the description of parameters.
-      !> \sa processCommandLine
-      subroutine finishProcessing(this,command_map,info,terminate)
-      type(commandLine),intent(inout)     :: this
-      type(MapItem),dimension(:),intent(in)                 :: command_map
-      integer,intent(out)                 :: info
-      logical,intent(in),optional         :: terminate
-      logical :: do_terminate
-      !
-            info = VEF_ERROR
-            do_terminate = .false.
-            if (present(terminate)) do_terminate = terminate
-            !
-            call printHelpMessage(this,command_map,info)
-            if (do_terminate) then
-                  call finalize(VEF_BADVAL)
-            else
-                  return
-            endif
-      !
-      end subroutine
-
-
-      !> Print the help message.
-      !>
-      !> See processCommandLine for the description of parameters.
-      !> \sa processCommandLine
-      subroutine printHelpMessage(this,command_map,info)
-      type(commandLine),intent(inout)     :: this
-      type(MapItem),dimension(:),intent(in)                 :: command_map
-      integer,intent(out)                 :: info
-      integer :: i
-      !
-            info = VEF_ERROR
-            if (this%progname /= '') write(error_unit,'(A)') trim(this%progname)
-            write(error_unit,'(A)') trim(basename(trim(this%argv(0))))//' '// trim(this%description)
-            if (size(command_map) > 0) then
-                 write(error_unit,fmt=8000)
-                 do i =1, size(command_map)
-                       write(error_unit,'(A)') trim(command_map(i)%name)
-                 enddo
-            endif
-      !
-            8000 format(/,'Available commands:')
-            9000 format(T3,A,1X,':',1X,A)
-      !
-      end subroutine
-
 
       !> Process the command line using Fortran intrinsic procedures (command_argument_count, get_command_argument)
       ! and put the command line arguments into an allocatable array of strings (argv)
@@ -222,13 +151,10 @@ contains
       !> IO unit to be used in opening the file. Unless it is provided, a new unit will be generated.
       !
       integer :: ierr
-      !
+      
             open(newunit=nunit,file=fpath,status=status,iostat=ierr)
-            if (ierr /= 0) then
-                  errmsg = 'Cannot open file ' // trim(fpath)
-                  call finalize(VEF_IO)
-            endif
-      !
+            if (ierr /= VEF_OK) &  
+                call log_error(MOD_NAME, 'openOrDie', ERR_IO)
+      
       end function
-
 end module

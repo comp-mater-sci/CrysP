@@ -3,7 +3,7 @@
 !
 !> Yield locus calculations
 module dmcYld
-use altay_definitions
+use definitions
 use criAlgorithm
 use criRange
 use criMathUtils
@@ -90,7 +90,7 @@ contains
             ! use the defaults:
             allocate(uniformRange :: this%ptr_w_range)
         else
-            info = VEF_BADVAL
+            info = VEF_ERROR
             this%base_vectors = 0.D0
             if (.not. readValue(cnfunit, normalize)) return
             do i=1,nbase
@@ -161,7 +161,7 @@ contains
         ! Super-class first
         RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
         !
-        info = VEF_BADVAL
+        info = VEF_ERROR
         if (.not. (associated(this%ptr_theta_range) .and. associated(this%ptr_w_range)))  return
         !
         npoints = this%ptr_theta_range%size()
@@ -218,7 +218,7 @@ contains
                 !
                 info = this%findSolution(Sm, D, ylp_result, is_acceptable=acceptable_point)
                 ! Consider what to do with unsuccessful search
-                if (is_error(info) .or. ((info == VEF_FAIL) .and. (.not. acceptable_point))) then
+                if (info == VEF_ERROR .or. ((info == VEF_FAIL) .and. (.not. acceptable_point))) then
                     write(display_unit,fmt=860) 'Cannot find solution, datapoint dropped'
                     cycle
                 endif
@@ -281,7 +281,7 @@ contains
     character(len=column_width),dimension(ncolumns),parameter  :: column_labels = [ character(len=column_width) :: &
         'theta', 'w', 'sigma', 'sigma_scaled', 'S','dotW', 'sigma_x', 'sigma_y', 'dsigma_x', 'dsigma_y', 'beta', 'residual']
     !
-        info = VEF_IO
+        info = VEF_ERROR
         ! Write the header
         if (optionalDefault(write_header,.false.)) then
             write(ounit,fmt=700,iostat=ierr) (centered(i,column_width),  i = 1, ncolumns)

@@ -1,6 +1,6 @@
 #include "altayRCM.fpp"
 module altayTaylor
-    use altay_definitions
+    use definitions
     use altayAlgorithms
     use altayMiscutils
     use altayMacroKinematic
