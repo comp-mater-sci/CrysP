@@ -1,6 +1,6 @@
 !> Helper data type for storing stress evolution outputs
 module xVectorIncrementOutputRecord
-use altay_definitions
+use definitions
 use dmcEvolutionOutputRecord, only: IncrementOutputRecord
 implicit none
 !

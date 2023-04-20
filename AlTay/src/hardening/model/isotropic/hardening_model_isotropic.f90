@@ -1,5 +1,5 @@
 module hardening_model_isotropic
-    use altay_definitions, only: dp
+    use definitions, only: dp
     use hardening_model
 
     implicit none

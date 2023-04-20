@@ -1,8 +1,8 @@
 module hardening_model
-    use altay_definitions, only: dp
+    use definitions, only: dp
     use altayConfig
     use parameters
-    use altay_log
+    use logging
     
     implicit none
     private
@@ -44,7 +44,7 @@ contains
             case('FCC12', 'BCC24', 'BCC48') 
                 continue
             case default
-                call vef_exception('hardening_model', 'validate_parameters', VEF_BADVAL, 'Number of slip systems must be 12, 24 or 48')
+                call log_error('hardening_model', 'validate_parameters', ERR_VAL, 'Number of slip systems must be 12, 24 or 48')
         end select    
     end subroutine hardening_model_validate_parameters
 

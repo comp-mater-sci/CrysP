@@ -1,17 +1,16 @@
 module hardening_model_voce
-    use altayMiscutils, only: terminate, stopcode_runtimeerror
-    use altay_definitions, only: dp
-    use hardening_types
-    use hardening_model
-    use hardening_model_isotropic
-    use altayConfig
-    use altay_log
-    use parameters
-    
-    implicit none
-    private
+use definitions, only: dp
+use hardening_types
+use hardening_model
+use hardening_model_isotropic
+use altayConfig
+use logging
+use parameters
 
-    type :: stage
+implicit none
+private
+
+    type :: Stage
         real(dp) :: TS, &
                     T1, &
                     TH  
@@ -36,12 +35,12 @@ contains
         class(HardeningModelVoce), intent(in)    :: this
         type(Parameter), allocatable    :: params(:)
     
-        params = [  parameter_init('n_slip_systems', TYPE_STRING), &
-                    parameter_init('TIII1', TYPE_REAL),             &   
-                    parameter_init('TIIIS', TYPE_REAL),             &   
-                    parameter_init('TIVS', TYPE_REAL),              &   
-                    parameter_init('THIII1', TYPE_REAL),            &   
-                    parameter_init('THT', TYPE_REAL)]
+        params = [parameter_init('n_slip_systems', TYPE_STRING), &
+                  parameter_init('TIII1', TYPE_REAL),             &   
+                  parameter_init('TIIIS', TYPE_REAL),             &   
+                  parameter_init('TIVS', TYPE_REAL),              &   
+                  parameter_init('THIII1', TYPE_REAL),            &   
+                  parameter_init('THT', TYPE_REAL)]
     end function voce_get_parameters
 
     subroutine voce_validate_parameters(this, params) 
@@ -52,9 +51,9 @@ contains
         call hardening_model_validate_parameters(this, params)    
 
         if ((params .find. 'TIIIS') <= (params .find. 'TIII1')) & 
-            call vef_exception(MODULE_NAME, PROC_NAME, VEF_BADVAL, 'TAU-III-S must be larger than TAU-III-1')
+            call log_error(MODULE_NAME, PROC_NAME, ERR_VAL, 'TAU-III-S must be larger than TAU-III-1')
         if ((params .find. 'THIII1') <= (params .find. 'THT'))  &
-            call vef_exception(MODULE_NAME, PROC_NAME, VEF_BADVAL, 'THETA-III-1 must be larger than THETA-T')
+            call log_error(MODULE_NAME, PROC_NAME, ERR_VAL, 'THETA-III-1 must be larger than THETA-T')
     end subroutine voce_validate_parameters
 
       subroutine readVoceConfig(inunit,c,info)
@@ -102,7 +101,7 @@ contains
         THT             = config%vocecnf%THT
     
         !>Check validity of inputs:
-        if (.not. (this%stage_1%TS > this%stage_1%T1 .and. THIII1 > THT)) call vef_exception(MODULE_NAME, 'voce_init', VEF_BADVAL, 'TAU-III-S must be larger than TAU-III-1 and THETA-III-1 must be larger than THETA-T')
+        if (.not. (this%stage_1%TS > this%stage_1%T1 .and. THIII1 > THT)) call log_error(MODULE_NAME, 'voce_init', ERR_VAL, 'TAU-III-S must be larger than TAU-III-1 and THETA-III-1 must be larger than THETA-T')
 
         this%stage_1%TH = THIII1 / (1.D0 - this%stage_1%T1 / this%stage_1%TS)
         ETA = THT / this%stage_1%TH

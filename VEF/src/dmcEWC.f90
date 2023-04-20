@@ -84,7 +84,7 @@ contains
     !
         info = this%StressDrivenEvolutionModule%ReadConfig(cnfunit)
         if (info /= VEF_OK) return
-        info = VEF_IO
+        info = VEF_ERROR
         ! Read parameters specific for the EWCModule
         !
         ! Check how the work levels are provided
@@ -108,7 +108,7 @@ contains
             end select
         else
             write(display_unit,fmt=900) 'Unknown keyword for work level selection'
-            info = VEF_IO
+            info = VEF_ERROR
             return
         endif
         !
@@ -316,11 +316,11 @@ contains
     character(len=output_column_width),dimension(:),allocatable :: header_columns
     character(len=output_column_width) :: tmp_str, label_str
     !
-        info = VEF_BADVAL
+        info = VEF_ERROR
         n_contours = ubound(results,dim=1)
         if ((size(vLevels) /= n_contours)) return
         !
-        info = VEF_IO
+        info = VEF_ERROR
         open(newunit=iounit, file=trim(this%output%outputPrefix)//'.ewc', status='replace', iostat=ierr)
         if (ierr /= 0) return
         !
@@ -352,13 +352,13 @@ contains
     !
     integer :: iounit, ierr, i
     !
-        info = VEF_BADVAL
+        info = VEF_ERROR
         if (size(vEquivalentStrainLevels) /= size(vPlasticWorkLevels)) return
-        info = VEF_IO
+        info = VEF_ERROR
         open(newunit=iounit, file=trim(this%output%outputPrefix)//'_'//trim(prefix)//'.ewcm', &
              status='replace', iostat=ierr)
         if (ierr /= 0) return
-        info = VEF_IO
+        info = VEF_ERROR
         ! Make format strings for the header and the data
         write(iounit,'(A15,1X,A15)') 'eps_vM', 'W(eps_vM)'
         do i = 1, size(vPlasticWorkLevels)

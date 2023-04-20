@@ -2,7 +2,7 @@
 
 !> In-memory cache/table of the recent results from the multi-level model.
 module dmcResultTable
-use altay_definitions
+use definitions
 use criMathUtils
 use alamYLPConstants
 use dmcResultTableRecord
@@ -100,7 +100,7 @@ contains
         if (size(this%table) > this%saved_session_idx) then
             open(newunit=iounit, file=fpath, position='APPEND', action='WRITE',&
                  status='UNKNOWN', form='UNFORMATTED', iostat=ierr)
-            RETURN_IF_WITH(ierr /= 0, info=VEF_IO)
+            RETURN_IF_WITH(ierr /= 0, info=VEF_ERROR)
             do i = this%saved_session_idx + 1, size(this%table)
                 write(iounit, iostat=ierr) this%table%values(i)
                 if (ierr /= 0) exit
@@ -142,7 +142,7 @@ contains
             enddo
             ! negative ierr on end-of-file or end-of-record; positive on error
             if (ierr > 0 .or. info /= VEF_OK) then
-                info = VEF_IO
+                info = VEF_ERROR
             else
                 this%saved_session_idx = size(this%table)
                 info = VEF_OK

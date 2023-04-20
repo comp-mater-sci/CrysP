@@ -1,5 +1,5 @@
 module parameters
-    use altay_definitions
+    use definitions
 
     implicit none
     public
@@ -168,7 +168,7 @@ module parameters
 end module parameters
 
 submodule (parameters) parameters_imp
-    use altay_log
+    use logging
 
     implicit none
 
@@ -183,7 +183,7 @@ contains
         if (present(param_value)) buffer = param_value
 
         if (param_type /= TYPE_INTEGER .and. param_type /= TYPE_REAL .and. param_type /= TYPE_STRING) &
-            call vef_exception(MOD_NAME, PROC_NAME, VEF_BADVAL, 'Unsupported parameter type.')
+            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Unsupported parameter type.')
        
         param = Parameter(param_name, param_type, buffer)
     end procedure parameter_init
@@ -193,7 +193,7 @@ contains
         type(Parameter), intent(in) :: param
         integer, intent(in) :: t
         if (param%type /= t) &
-            call vef_exception(MOD_NAME, 'check_type', VEF_BADVAL, 'Value does not conform with parameter type')
+            call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Value does not conform with parameter type')
     end subroutine check_type
 
     subroutine search_parameter_list(params, name, param, ind)
@@ -214,7 +214,7 @@ contains
         end do
 
         if (ind == 0) &
-            call vef_exception(MOD_NAME, 'parameter_find_by_name', VEF_BADVAL, 'No parameter with name ' // name)
+            call log_error(MOD_NAME, 'parameter_find_by_name', ERR_VAL, 'No parameter with name ' // name)
     end subroutine search_parameter_list
 
     integer function find_index(params, name) result(ind)
@@ -281,7 +281,7 @@ contains
             case (TYPE_REAL)
                 num = transfer(param%value, 0._dp)
             case default
-                error stop VEF_BADVAL
+                call log_error(ERR_VAL)
         end select
     end function get_numerical_value
 

@@ -1,8 +1,7 @@
 module altayAlgorithms
-    use altayMiscutils, only: terminate, stopcode_runtimeerror
-    use altay_definitions
+    use definitions
     use criMathUtils
-    use altay_log
+    use logging
 
     implicit none
     private
@@ -120,7 +119,7 @@ contains
             call normaliz(e(:,i))
         end do
 
-        call vef_trace(MODULE_NAME, 'eigenv', prval)
+        call log_trace(MODULE_NAME, 'eigenv', prval)
     end subroutine
 
     subroutine normaliz(prdir)
@@ -131,7 +130,7 @@ contains
         x = norm2(prdir)
         if (x > RESOLUTION) then
             prdir = prdir/x
-            call vef_trace(MODULE_NAME, 'normaliz', prdir)
+            call log_trace(MODULE_NAME, 'normaliz', prdir)
         end if
 
     end subroutine
@@ -167,6 +166,6 @@ contains
             RES = RES + (y - B(i))**2
         end do
 
-        call vef_trace(MODULE_NAME, "kleinKwa", BA(1:N2))
+        call log_trace(MODULE_NAME, "kleinKwa", BA(1:N2))
     end subroutine
 end module

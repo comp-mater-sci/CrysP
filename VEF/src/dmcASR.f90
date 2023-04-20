@@ -63,7 +63,7 @@ contains
     !
         info = this%StressDrivenEvolutionModule%readConfig(cnfunit)
         if (info /= VEF_OK) return
-        info = VEF_IO
+        info = VEF_ERROR
         ! Read parameters specific for the ASRModule
         if (.not. readValue(cnfunit, tmp_euler)) return
         this%rotframe = Arr2EulerAngles(tmp_euler)
@@ -222,7 +222,7 @@ contains
         ! Write out header lines
         !
         if (optionalDefault(header, .false.)) then
-            info = VEF_IO
+            info = VEF_ERROR
             ! Column numbers
             write(iounit,701,iostat=ierr) (centered(i,short_column_width), i = 1,2), &
                                           (centered(i,column_width), i = 3, ncolumn_labels)
@@ -237,7 +237,7 @@ contains
         ! Write out data output
         if (present(output)) then
             ierr = 0
-            info = VEF_IO
+            info = VEF_ERROR
             !
             do increment = 1, size(output%evolution_output%values)
                 associate(v => output%evolution_output%values(increment), &

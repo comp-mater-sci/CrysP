@@ -116,7 +116,7 @@ contains
     !
         if (nelem <= 0) then
             ! Expand by 0 is legal, but ignored
-            info = VEF_BADVAL
+            info = VEF_ERROR
             if (nelem == 0) info = VEF_OK
             return
         endif
@@ -128,7 +128,7 @@ contains
                 return
             endif
         else
-            info = VEF_BADVAL
+            info = VEF_ERROR
             idx_last = xVector_size(v)
             new_min_size = idx_last + nelem
             ! Check for integer overflow

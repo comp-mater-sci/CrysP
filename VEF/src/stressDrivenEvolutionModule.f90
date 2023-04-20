@@ -3,7 +3,7 @@
 !> Implementation of a DMC computiational module that allows stress-driven evolution of
 !> material state.
 module dmcStressDrivenEvolutionModule
-use altay_definitions
+use definitions
 use criMathUtils
 use criAlgorithm, only: optionalDefault
 use dmcUtils, only: display_unit
@@ -143,7 +143,7 @@ contains
                 endif
                 CHOOSE(info, acceptable_point .or. acceptable_point_retry, VEF_OK, VEF_FAIL)
             endif
-            if (is_error(info)) exit
+            if (info == VEF_ERROR) exit
             !
             ! Nasty hack: drilling a hole to libaltay to get the Taylor factor
             call getTaylorFactor(1,taylor_factor,info)
@@ -216,7 +216,7 @@ contains
                     control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
                 !
                 case default
-                    info = VEF_BADVAL
+                    info = VEF_ERROR
                     exit
                 end select
                 !

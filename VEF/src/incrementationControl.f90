@@ -1,7 +1,7 @@
 !> Types and procedures that control incrementation in stress-driven
 !> evolution of material state.
 module dmcIncrementationControl
-    use altay_definitions
+    use definitions
 use criLinearMap, only: MapItem
 use alamYLPConstants
 implicit none
@@ -153,12 +153,12 @@ contains
     integer :: id, i
     logical :: is_allowed
     !
-        info = VEF_IO
+        info = VEF_ERROR
         if (.not. readKeyword(cnfunit, scaling_type_names, id)) return
         ! Check for additional constraints on the scaling type
         if (present(allowed)) then
             ! check: if id not in allowed: return
-            info = VEF_BADVAL
+            info = VEF_ERROR
             is_allowed = .false.
             do i = 1, size(allowed)
                 if (id == allowed(i)) then
@@ -170,7 +170,7 @@ contains
         endif
         this%scaling_type = id
         !
-        info = VEF_IO
+        info = VEF_ERROR
         if (.not. readValue(cnfunit, this%step_size)) return
         if (.not. readValue(cnfunit, this%increment_size)) return
         info = VEF_OK

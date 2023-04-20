@@ -1,6 +1,6 @@
 #include "altayRCM.fpp"
 module altayPancake
-    use altay_definitions
+    use definitions
     use altayMiscutils
     use criMathUtils
     use altayRCM

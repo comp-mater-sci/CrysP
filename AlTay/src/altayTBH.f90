@@ -1,7 +1,6 @@
 #include "altayRCM.fpp"
 module altayTBH
-    use altay_definitions
-    use altayMiscutils, only: terminate, stopcode_runtimeerror
+    use definitions
     use altayRCM
 
     implicit none
