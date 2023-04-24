@@ -1,18 +1,15 @@
 module hardening_model_voce
-use definitions, only: dp
-use hardening_types
-use hardening_model
-use hardening_model_isotropic
-use altayConfig
-use logging
-use parameters
+    use definitions, only: dp
+    use hardening_types
+    use hardening_model
+    use hardening_model_isotropic
+    use altayConfig
+    use logging
+    use parameters
+    
+    implicit none
+    private
 
-<<<<<<< HEAD
-=======
-implicit none
-private
-
->>>>>>> master
     type :: Stage
         real(dp) :: TS, &
                     T1, &
@@ -69,27 +66,11 @@ contains
 
         call hardening_model_init(this, params)
 
-<<<<<<< HEAD
         this%stage_1%T1 = params .find. 'TIII1'
         this%stage_1%TS = params .find. 'TIIIS'
         this%stage_2%TS = params .find. 'TIVS'
         THIII1          = params .find. 'THIII1'
         THT             = params .find. 'THT'
-=======
-        call hardening_model_init(this, config)
-        this%crss = 0.0_dp
-
-        
-
-        this%stage_1%T1 = config%vocecnf%TIII1 
-        this%stage_1%TS = config%vocecnf%TIIIS
-        this%stage_2%TS = config%vocecnf%TIVS
-        THIII1          = config%vocecnf%THIII1
-        THT             = config%vocecnf%THT
-    
-        !>Check validity of inputs:
-        if (.not. (this%stage_1%TS > this%stage_1%T1 .and. THIII1 > THT)) call log_error(MODULE_NAME, 'voce_init', ERR_VAL, 'TAU-III-S must be larger than TAU-III-1 and THETA-III-1 must be larger than THETA-T')
->>>>>>> master
 
         this%stage_1%TH = THIII1 / (1.D0 - this%stage_1%T1 / this%stage_1%TS)
         ETA = THT / this%stage_1%TH

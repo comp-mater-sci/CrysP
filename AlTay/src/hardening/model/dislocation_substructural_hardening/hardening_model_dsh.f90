@@ -3,14 +3,9 @@ module hardening_model_dsh
     use definitions
     use hardening_model
     use altayConfig
-<<<<<<< HEAD
-    use altay_log
-    use parameters
-=======
     use parameters
     use logging
 
->>>>>>> master
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST=11 & PRE-file contains 24 (110)+(112)[111] slip systems;
 !     -----------------------------------------------------
@@ -30,12 +25,9 @@ module hardening_model_dsh
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     implicit none
-<<<<<<< HEAD
     private
-=======
 
     character(*), parameter, private :: MOD_NAME = 'hardening_model_dsh'
->>>>>>> master
 
       TYPE :: CBBtype
             !PUBLIC components
@@ -128,8 +120,6 @@ module hardening_model_dsh
             module procedure KS_readState_unit, KS_readState_file
       end interface
 
-        character(*), parameter :: MOD_NAME = 'hardening_model_dsh'
-
     type, public, extends(HardeningModel) :: HardeningModelDSH
         type(StatVar), dimension(:), allocatable    ::  state
         real(dp), dimension(:,:,:), allocatable     ::  crss
@@ -207,13 +197,9 @@ CONTAINS
         character(:), allocatable :: nss
 
         nss = params .find. 'n_slip_systems'
-<<<<<<< HEAD
+
         if (nss /= 'fcc12' .and. nss /= 'bcc24')  &
-            call vef_exception(MOD_NAME, 'validate_parameters', VEF_BADVAL, 'DSH only supports FCC12 and BCC24 slip systems.')
-=======
-        if (nss /= 'FCC12' .and. nss /= 'BCC24')  &
             call log_error(MOD_NAME, 'validate_parameters', ERR_VAL, 'DSH only supports FCC12 and BCC24 slip systems.')
->>>>>>> master
 
         call check_param('b',       0._dp,      1.e-8_dp)   ! [m]
         call check_param('G',       1.e4_dp,    5.e5_dp)    ! [MPa]

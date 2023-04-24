@@ -194,11 +194,7 @@ contains
         integer, intent(in) :: t
         
         if (param%type /= t) &
-<<<<<<< HEAD
-            call vef_exception(MOD_NAME, 'check_type', VEF_BADVAL, 'Value of parameter ' // param%name // ' does not conform with its type')
-=======
             call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Value does not conform with parameter type')
->>>>>>> master
     end subroutine check_type
 
     subroutine search_parameter_list(params, name, param, ind)

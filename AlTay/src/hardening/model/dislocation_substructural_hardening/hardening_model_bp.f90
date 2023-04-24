@@ -1,5 +1,5 @@
 module hardening_model_bp
-    use altay_definitions
+    use definitions
     use hardening_model_dsh
     use parameters
 

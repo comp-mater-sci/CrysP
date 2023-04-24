@@ -16,7 +16,6 @@ use dmcUtils
 use definitions
 use hardening
 use parameters
-use hardening_model_dsh, only: readpar
 use logging
 use altaySub, only: initAltay, finalizeAltay
 
@@ -99,12 +98,12 @@ private
 
 contains
 
-      integer function BasicModule_initialize(this) result(info)
-      use commonUtils
-      class(BasicModule),intent(inout)          :: this
-      !
-      integer :: ierr
-      !
+    integer function BasicModule_initialize(this) result(info)
+        use commonUtils
+        class(BasicModule),intent(inout)          :: this
+        !
+        integer :: ierr
+        !
 
             info = VEF_ERROR
             ! Finish the configuration:
@@ -112,7 +111,7 @@ contains
             this%altay%output_prefix = trim(this%output%outputPrefix)
             this%altay%jobtitle = trim(this%output%outputPrefix)
             
-            call initAltay(this%altay,ierr,errmsg)
+            call initAltay(this%altay,ierr)
             
             if (ierr /= VEF_OK) return
 
@@ -128,6 +127,8 @@ contains
             info = VEF_OK
             !
       end function
+
+
 
       !> read output and AlTay configuration sections
       integer function BasicModule_readConfig(this,cnfunit) result(info)
@@ -302,7 +303,7 @@ contains
 
       type(MapItem),dimension(2) :: model_types = [MapItem('ALAMEL', modelAlamel), &
                                                    MapItem('FCTaylor', modelFCTaylor)]
-           info = VEF_IO
+           info = ERR_IO
            model_id = -1
            dm_id = -1
             ! Read input texture file name
@@ -379,6 +380,7 @@ contains
                 write(error_unit,fmt=900) 'Cannot read the hardening law section.'
                 return
             endif
+
             call parameter_set(cnf%hardening_parameters, 'n_slip_systems', slip_systems)
             ! the keyword is mapped to a proper model_id, we can instantly set it.
             call setModelType(cnf,model_id,info)

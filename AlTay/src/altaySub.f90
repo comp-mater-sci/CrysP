@@ -66,14 +66,7 @@ contains
         ! Initialize altay modules
         !
         ! Set the data for CRSS calculations
-<<<<<<< HEAD
         call hardening_init(cnf%hardening_parameters)
-=======
-        call InitModuleAltayHard(cnf%hardening, info)
-        if (info /= VEF_OK) &
-            call log_error(MOD_NAME, PROC_NAME, ERR, 'Cannot initialize hardening law')
-        
->>>>>>> master
         ! Initialisation of SIMUL
         if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
         info = VEF_ERROR
@@ -92,21 +85,6 @@ contains
         if (present(errmsg)) errmsg = ''
         ! PEBP model
                 info = KS_initState(size(DFIL))
-<<<<<<< HEAD
-=======
-                if (info /= VEF_OK) return
-                if (acnf%hardening%PEBPCnf%read_state) then
-                    ! Load state variables
-                    info = KS_openStateFile(IPEBPSTAT,acnf%hardening%PEBPCnf%input_fname, mode='r')
-                    if (info /= VEF_OK) &
-                        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open PEBP state file.')
-                    
-                    info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
-                    if (info /= VEF_OK) &
-                        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot read from PEBP state file.')
-                endif
-        endselect
->>>>>>> master
         ! No need for the slip system definition anymore.
         close(LEC)
         info = VEF_OK

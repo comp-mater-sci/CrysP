@@ -1,11 +1,11 @@
 module hardening_model_swift
-use definitions, only: dp
-use hardening_types
-use altayConfig
-use hardening_model_isotropic
-use hardening_model
-use logging
-use parameters
+    use definitions, only: dp
+    use hardening_types
+    use altayConfig
+    use hardening_model_isotropic
+    use hardening_model
+    use logging
+    use parameters
 
     implicit none
     private
@@ -29,11 +29,7 @@ contains
         class(HardeningModelSwift), intent(in)  :: this
         type(Parameter), allocatable    :: params(:)
     
-<<<<<<< HEAD
         params = [parameter_init('n_slip_systems', TYPE_STRING),  &
-=======
-        params = [parameter_init('n_slip_systems', TYPE_STRING), &
->>>>>>> master
                   parameter_init('crss0', TYPE_REAL),             &   
                   parameter_init('gamma0', TYPE_REAL),            &   
                   parameter_init('n', TYPE_REAL)]   
@@ -61,18 +57,12 @@ contains
 
         call hardening_model_init(this, params)
 
-<<<<<<< HEAD
         this%gamma0 = params .find. 'gamma0'
         this%n = params .find. 'n'
         crss0 = params .find. 'crss0'
         this%k = crss0 / (this%gamma0**this%n)
-=======
-        this%gamma0 = config%swiftScnf%gamma0
-        this%n = config%swiftScnf%n
-        this%k = config%swiftScnf%crss0 / (this%gamma0**this%n)
 
         if (this%gamma0 <= 0 .or. this%n <= 0 .or. this%k <=0) call log_error(MODULE_NAME, 'swift_init', ERR_VAL, 'Swift params must be greater than 0')
->>>>>>> master
     end subroutine swift_init
 
     subroutine swift_update(this, grain, time, strain, slip_rates)
@@ -84,5 +74,4 @@ contains
 
         this%crss = this%k * (strain + this%gamma0)**(this%n)    
     end subroutine swift_update
-
 end module hardening_model_swift
