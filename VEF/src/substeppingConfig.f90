@@ -1,7 +1,7 @@
 !> Configuration of substepping schemes
 module dmcSubsteppingConfig
 use criRange
-use altay_definitions
+use definitions
 use commonConfig
 implicit none
 
@@ -64,7 +64,7 @@ contains
         !
         ! Check user input, make sure a proper range is constructed
         this%ptr_range => properSubsteppingRange(tmp_range, info)
-        if (.not. associated(this%ptr_range)) info = VEF_BADVAL
+        if (.not. associated(this%ptr_range)) info = VEF_ERROR
         deallocate(tmp_range)
     !
     end function
@@ -130,7 +130,7 @@ contains
     integer :: i, n_points, ierr
     double precision :: value
     !
-        info = VEF_BADVAL
+        info = VEF_ERROR
         n_points = range%size()
         if (n_points < 1) return
         allocate(tmp_points(n_points + 2)) ! + 2 is to make space for leading 0. and trailing 1.

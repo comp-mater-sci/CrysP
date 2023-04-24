@@ -1,6 +1,6 @@
 #include "altayRCM.fpp"
 module altayPancake
-    use altay_definitions
+    use definitions
     use altayMiscutils
     use criMathUtils
     use altayRCM
@@ -135,7 +135,7 @@ module altayPancake
  218        format(/' COST FUNCTION',/,(2x,12F10.4))
  219        format (' right hand side',/,(2x,10F10.4),/)
  400        format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
-            call TBH(IPR,NDIM,N,M2,A1,BB,CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,Taur,bas,DTAU)
+            call TBH(NDIM,N,M2,A1,BB,CCC,UU,UU2,DI,DI2,Dacc,XX,UBUF,FakM,Taur,bas,DTAU)
             RCM_GUARD
 
             if (.not.(IPR < 4)) then
@@ -157,7 +157,7 @@ module altayPancake
                 ! Second call of Simplex (relaxed constraints)
                 if (IPR == 2 .and. NLIST == 1) write(IMP,401)
  401            format (' Second call of TBH')
-                call TBH(IPR,N,N,M12,A1,BB,CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,Taur,bas,DTAU)
+                call TBH(N,N,M12,A1,BB,CCC,UU2,UU,DI2,DI,Dacc,XX,STRSS,FakM,Taur,bas,DTAU)
                 RCM_GUARD
 
                 if (IPR >= 4) then

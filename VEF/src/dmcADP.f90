@@ -2,7 +2,7 @@
 
 !> Arbitrary Deformation Path strain-(rate) driven simulations
 module dmcADP
-use altay_definitions
+use definitions
 use criConfigReader
 use criMathUtils
 use altayMacroKinematic, only: DeformationRate, Set_DeformationRate
@@ -81,12 +81,12 @@ contains
         !
         ! Read generic configuration section (output settings, AlTay (texture, microstructure, hardening), solver settings
         RETURN_IF(info /= VEF_OK, info = this%DeformationDrivenModule%readConfig(cnfunit))
-        info = VEF_IO
+        info = VEF_ERROR
         !
         ! Read the module-specific config
         if (.not. readValue(cnfunit, n_steps)) return
         !
-        RETURN_IF_WITH(n_steps < 1, info = VEF_BADVAL)
+        RETURN_IF_WITH(n_steps < 1, info = VEF_ERROR)
 
         RETURN_ON_WITH(allocate(this%steps(n_steps), stat=ierr), ierr /= 0, info = VEF_ERROR)
         !
@@ -147,7 +147,7 @@ contains
                     if (info /= VEF_OK) return
                 !
                 case default
-                    info = VEF_BADVAL
+                    info = VEF_ERROR
                     return
                 end select
                 !
@@ -181,7 +181,7 @@ contains
         RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.adp',iounit))
         !
         ! Run the simulation
-        info = VEF_BADVAL
+        info = VEF_ERROR
         ALLOCATED_SIZE(n_steps, this%steps)
         if (n_steps < 1) return
         !
@@ -234,7 +234,7 @@ contains
         'eps_vM_begin', 'eps_vM_end', 'D_vM', 'S_vM', 'dW', 'M-factor', 'gamma' & ! 7 fields
         ]
         !
-        info = VEF_BADVAL
+        info = VEF_ERROR
         if (optionalDefault(header,.false.)) then
             ! Write column numbers
             info = writeColumnNumbers(iounit, size(column_names), [column_width] )
@@ -248,9 +248,9 @@ contains
             ALLOCATED_SIZE(n_steps, output%steps)
             first_step = optionalDefault(step_id, 1)
             last_step = optionalDefault(step_id, n_steps)
-            RETURN_IF_WITH(first_step < 1 .or. last_step > n_steps, info = VEF_BADVAL)
+            RETURN_IF_WITH(first_step < 1 .or. last_step > n_steps, info = VEF_ERROR)
             !
-            info = VEF_IO
+            info = VEF_ERROR
             !
             ! Write the data
             do step = first_step, last_step

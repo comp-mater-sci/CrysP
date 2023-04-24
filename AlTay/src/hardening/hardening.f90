@@ -2,7 +2,12 @@
 module hardening
     use hardening_types
     use altayIOConfig, only: LEC
+<<<<<<< HEAD
     use altay_definitions
+=======
+    use altayConfig, only: hardeningData
+    use definitions
+>>>>>>> master
     use parameters
 
     implicit none

@@ -1,6 +1,6 @@
 module altayMacroKinematic
     use altayMiscutils
-    use altay_definitions
+    use definitions
 
     implicit none
     private

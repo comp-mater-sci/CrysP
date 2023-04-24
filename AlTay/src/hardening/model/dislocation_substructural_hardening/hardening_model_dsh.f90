@@ -1,10 +1,16 @@
 module hardening_model_dsh
     use altayIOConfig, only: LEC
-    use altay_definitions
+    use definitions
     use hardening_model
     use altayConfig
+<<<<<<< HEAD
     use altay_log
     use parameters
+=======
+    use parameters
+    use logging
+
+>>>>>>> master
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     KOST=11 & PRE-file contains 24 (110)+(112)[111] slip systems;
 !     -----------------------------------------------------
@@ -24,7 +30,12 @@ module hardening_model_dsh
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     implicit none
+<<<<<<< HEAD
     private
+=======
+
+    character(*), parameter, private :: MOD_NAME = 'hardening_model_dsh'
+>>>>>>> master
 
       TYPE :: CBBtype
             !PUBLIC components
@@ -196,8 +207,13 @@ CONTAINS
         character(:), allocatable :: nss
 
         nss = params .find. 'n_slip_systems'
+<<<<<<< HEAD
         if (nss /= 'fcc12' .and. nss /= 'bcc24')  &
             call vef_exception(MOD_NAME, 'validate_parameters', VEF_BADVAL, 'DSH only supports FCC12 and BCC24 slip systems.')
+=======
+        if (nss /= 'FCC12' .and. nss /= 'BCC24')  &
+            call log_error(MOD_NAME, 'validate_parameters', ERR_VAL, 'DSH only supports FCC12 and BCC24 slip systems.')
+>>>>>>> master
 
         call check_param('b',       0._dp,      1.e-8_dp)   ! [m]
         call check_param('G',       1.e4_dp,    5.e5_dp)    ! [MPa]
@@ -230,7 +246,7 @@ CONTAINS
             if (param_val < min .or. param_val > max) then
                 write (min_str, *), min
                 write (max_str, *), max
-                call vef_exception(MOD_NAME, PROC_NAME, VEF_BADVAL, 'Parameter ' // name // ' must lie between ' // min_str // ' and ' // max_str)
+                call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Parameter ' // name // ' must lie between ' // min_str // ' and ' // max_str)
             end if
         end subroutine check_param
     end subroutine dsh_validate_parameters

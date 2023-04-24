@@ -1,5 +1,5 @@
 module altaySmtAccess
-    use altay_definitions
+    use definitions
     use altayDynfil
 
     implicit none

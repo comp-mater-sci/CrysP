@@ -1,7 +1,7 @@
 module altayCurAccess
     use altayDynfil
     use altayAlgorithms
-    use altay_definitions
+    use definitions
 
     implicit none
 

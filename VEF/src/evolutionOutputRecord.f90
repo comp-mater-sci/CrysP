@@ -1,6 +1,6 @@
 !> Data types for stress evolution outputs
 module dmcEvolutionOutputRecord
-use altay_definitions
+use definitions
 use criMathUtils, only: SRTensor, root23, vec5D2tens
 use dmcIncrementationControl, only: IncrementationControlVariables
 use dmcYLPResult, only: YLPResult

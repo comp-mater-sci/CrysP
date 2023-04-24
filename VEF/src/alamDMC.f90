@@ -1,5 +1,6 @@
 program alamDMC
-    use altay_definitions
+    use definitions
+    use logging
     use criRuntime
     use dmcUtils, only: display_unit
     use dmcBasicModule
@@ -21,6 +22,10 @@ program alamDMC
     character(len=*),parameter    :: prog_desc = 'parameters: command_name configuration_file'
     integer,parameter       :: command_argpos = 1, & ! command (i.e. module identifier) is 1st argument
                                configfile_argpos = 2 ! configuration file is 2nd argument
+    character(*), parameter :: MOD_NAME = 'alamDMC', &
+                               PROC_NAME = 'main'
+
+
     type(commandLine)       :: cmdline ! type commandLine defined in criRuntime.f90
 
     logical                 :: moduleFound = .false.
@@ -41,10 +46,8 @@ program alamDMC
     call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.) ! call processCommandLine with 7 arguments, last one optional
     moduleFound = .false.
     if (info == VEF_OK) moduleFound = resolveId(command_map, cmdline%command_id,moduleName) ! logical function defined in criLinearMap.f90: resolveId(themap,id,name[,index])
-    if ((info /= VEF_OK) .or. (.not. moduleFound)) then
-        errmsg = 'Error in processing the command line'
-        call finalize(VEF_BADVAL)
-    endif
+    if ((info /= VEF_OK) .or. (.not. moduleFound)) &
+        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Error in processing the command line')
     write(display_unit,fmt=300)
     300 format('AlamDMC')
 
@@ -69,24 +72,18 @@ program alamDMC
             allocate(ADPModule :: the_module)
     end select
 
-    if (.not. associated(the_module)) then
-        write(errmsg,'(A)')  'Internal error: cannot instantiate the requested module.'
-        call finalize(VEF_ERROR)
-    endif
+    if (.not. associated(the_module)) &
+        call log_error(MOD_NAME, PROC_NAME, ERR, 'Internal error: cannot instantiate the requested module.')
 
     ! Read the configuration file:
     info = the_module%ReadConfig(cnfunit) ! type-bound subroutine defined in dmc<module>.f90
     close(cnfunit)
-    if (info /= 0) then
-        write(errmsg,'(A)') 'Configuration file contains errors.'
-        call finalize(VEF_ERROR)
-    endif
+    if (info /= 0) &
+        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Configuration file contains errors.')
 
     ! Initialize the module
-    if (the_module%initialize() /= VEF_OK) then
-        if (len(errmsg) == 0) errmsg = 'Cannot initialize the module.'
-        call finalize(VEF_ERROR)
-    endif
+    if (the_module%initialize() /= VEF_OK) &
+        call log_error(MOD_NAME, PROC_NAME, ERR, 'Cannot initialize the module.')
 
     ! Show general configuration of the multilevel model
     info = the_module%printConfig(display_unit)
@@ -99,8 +96,6 @@ program alamDMC
 
     ! Finalize the module
     info = the_module%finalize()
-
-    call finalize(info)
 
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"

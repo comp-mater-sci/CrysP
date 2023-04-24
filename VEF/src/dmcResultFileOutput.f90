@@ -2,7 +2,7 @@
 
 !> Common set of procedures for producing plain text column-based output of numerical data.
 module dmcResultFileOutput
-use altay_definitions
+use definitions
 use criAlgorithm
 implicit none
 
@@ -74,7 +74,7 @@ contains
             fmt_string = '("#",1X,' // trim(tostring(ncolumns,max_int_digits)) // &
                          '(A'// TADJUSTL(tostring(column_width,max_int_digits)) // ',1X))'
             write(iounit,fmt=fmt_string,iostat=ierr) (centered(i,column_width), i = 1, ncolumns)
-            CHOOSE(info, ierr == 0, VEF_OK, VEF_IO)
+            CHOOSE(info, ierr == 0, VEF_OK, VEF_ERROR)
             !
         elseif(size(column_widths) == ncolumns) then
             info = VEF_ERROR ! not yet implemented
@@ -100,13 +100,13 @@ contains
             ! Format: two leading spaces, followed by columns
             fmt_string = '(2X,'// trim(tostring(ncolumns,10)) // '(A,1X))'
             write(iounit,fmt=fmt_string,iostat=ierr) (centered(column_names(i)), i = 1, ncolumns)
-            CHOOSE(info, ierr==0, VEF_OK, VEF_IO)
+            CHOOSE(info, ierr==0, VEF_OK, VEF_ERROR)
             !
         elseif(size(column_widths) == ncolumns) then
 
             info = VEF_ERROR ! Not yet implemented
         else
-            info = VEF_BADVAL
+            info = VEF_ERROR
         endif
     !
     end function
@@ -156,13 +156,13 @@ contains
                 write(iounit,fmt=fmt_string,iostat=ierr) data(:,i)
                 if (ierr /= 0) exit
             enddo
-            CHOOSE(info, ierr==0, VEF_OK, VEF_IO)
+            CHOOSE(info, ierr==0, VEF_OK, VEF_ERROR)
             !
         elseif(size(column_widths) == ncolumns) then
 
             info = VEF_ERROR ! Not yet implemented
         else
-            info = VEF_BADVAL
+            info = VEF_ERROR
         endif
 
 

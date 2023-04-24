@@ -1,6 +1,6 @@
 !> Provides common data types and constants to be used by various hardening laws.
 module hardening_types
-    use altay_definitions
+    use definitions
 
     implicit none
     !> Representation of Critical Resolved Shear Stresses

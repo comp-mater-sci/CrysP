@@ -1,8 +1,8 @@
 #include "altayRCM.fpp"
 
 module altaySliprate
-    use altay_definitions
-    use altay_log
+    use definitions
+    use logging
     use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
     use altayMacroKinematic
     use altayRCM
@@ -245,7 +245,7 @@ module altaySliprate
         enddo
         if (RES > TOL) then
             ineg=-1
-            call vef_trace(MODULE_NAME,'MINSQU', 'RES too large')
+            call log_trace(MODULE_NAME,'MINSQU', 'RES too large')
         end if
     end subroutine
 

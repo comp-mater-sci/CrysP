@@ -1,7 +1,7 @@
 !> Base class for modules implementing strain-(rate) driven simulations (such as ADPModule)
 module dmcDeformationDrivenModule
 use criRange
-use altay_definitions
+use definitions
 use criUncomment, only: readValue
 use dmcUtils, only: display_unit
 use dmcBasicModule
@@ -77,7 +77,7 @@ contains
         ! For the time being, only default solver configuration is accepted for this module.
         if (.not. default_solver_config) then
             write(display_unit, fmt=900) 'This module does not allow non-default solver settings'
-            info = VEF_BADVAL
+            info = VEF_ERROR
         endif
         !
 #define MSG_GROUP_ERRORS

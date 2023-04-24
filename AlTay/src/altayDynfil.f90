@@ -1,6 +1,6 @@
 module altayDynfil
     use altayMiscutils
-    use altay_definitions
+    use definitions
     use criMathUtils
     use altayIOConfig
 

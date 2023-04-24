@@ -3,7 +3,7 @@
 module altayConfig
     use hardening_types
     use altayTexFormats
-    use altay_definitions
+    use definitions
     use altayMiscutils
     use parameters
 

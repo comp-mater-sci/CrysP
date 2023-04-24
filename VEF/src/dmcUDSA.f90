@@ -97,7 +97,7 @@ contains
     !
         info = this%StressDrivenEvolutionModule%readConfig(cnfunit)
         if (info /= VEF_OK) return
-        info = VEF_IO
+        info = VEF_ERROR
         ! Read parameters specific for the UDSAModule program
         if (.not. readKeyword(cnfunit, sample_orientation_types, this%orientation_type_id)) return
         ! Read the sub-options
@@ -165,7 +165,7 @@ contains
     !
     ! Check the preconditions
     !
-    info = VEF_BADVAL
+    info = VEF_ERROR
     if (.not. associated(this%ptr_orientation_range)) return
 
     !
@@ -299,7 +299,7 @@ contains
     character(len=max_pathlen) :: datafile_path
     !
         iounit = 0
-        info = VEF_IO
+        info = VEF_ERROR
         datafile_path = this%outputPrefix(tag_number)
         open(newunit=iounit,file=trim(datafile_path)//'.uds', status='replace', iostat=ierr)
         if (ierr /= 0) return
@@ -325,7 +325,7 @@ contains
         'q-valueA', 'r-valueA','S',& ! qrsdata
         'residual']
     !
-        info = VEF_IO
+        info = VEF_ERROR
         if (optionalDefault(header,.false.)) then
             write(iounit,701,iostat=ierr) centered(1,short_column_width), &
                                           (centered(i,column_width), i = 2, ncolumn_labels)

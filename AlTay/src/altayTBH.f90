@@ -1,14 +1,13 @@
 #include "altayRCM.fpp"
 module altayTBH
-    use altay_definitions
-    use altayMiscutils, only: terminate, stopcode_runtimeerror
+    use definitions
     use altayRCM
 
     implicit none
     contains
 
 !   solve Taylor-Bishop-Hill for one crystallite. Stresses and strain rates are to be represented  by vectors
-    subroutine TBH(IPR,NDIM,N,M,A,D,TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,TauR,bas,DTAU)
+    subroutine TBH(NDIM,N,M,A,D,TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,TauR,bas,DTAU)
 !     input          TauC=critical resolved shear stresses (all Tauc>0 )
 !                     first row:  for positive slip, second row: for negative slip
 !     input          BINV=First guess of inverse of basis, corresp. with IACT
@@ -21,10 +20,8 @@ module altayTBH
 !     output         TauR (resolved shear stress)
 !     workspace      bas (logical TRUE=belongs to basis)
 !     output         DTAU=abs(TAUR)-TAUC
-        use altayIOConfig,IIPR=>IPR!Rename global IPR switch to avoid conflict
 
-        integer, intent(in) :: IPR,&   !< Print parameter: if <2, no printing of  results)
-                               NDIM,&  !< number of rows in arrays, must not < N
+        integer, intent(in) :: NDIM,&  !< number of rows in arrays, must not < N
                                M,&     !< There are M slip systems
                                N,&     !< # of independent Taylor equations,N=5, except for cluster models
                                IACT(NDIM) ! < indices of active slip systems: first guess
@@ -41,10 +38,9 @@ module altayTBH
                     UU(NDIM,N),&    !< copy of inverse of basis
                     CUst(NDIM),&    !< compact storage of U* (only one column)
                     DD(NDIM)        !< copy of strain rates in some basis
-        integer, parameter :: JPR=2
         real(dp), parameter :: TOL=1.0e-10_dp
 
-        integer :: i,j,k,iter,jn,in
+        integer :: i,k,iter,jn,in
         real(dp) :: x,dt,y,z1,z2,zr,gmin
 
         if (N > NDIM) then
@@ -52,25 +48,18 @@ module altayTBH
         endif
         U=BINV
         Irp=IACT
-        do j=1,M
-            bas(j)=.FALSE.
-            TAuR(j)=0.0
-        enddo
+        bas(1:M)=.FALSE.
+        TAuR(1:M)=0.0
         do i=1,N
-            j=Irp(i)
-            bas(j)=.TRUE.
+            bas(Irp(i))=.TRUE.
         enddo
         ! Calculation of slip rates in basis
-        call mtprd(C=Dacc,A=U,B=D,N1=N,N2=N,N3=1,ND1=NDIM,ND2=NDIM)
+        Dacc(1:N) = matmul(U(1:N,1:N),D(1:N))
         ! Calculation of stress, using generalised Schmid law
         do i=1,N
-           j=Irp(i)
            X=Dacc(i)
            if (abs(X) < TOL) then
-                X=0.0
-                do k=1,N
-                    X=X+A(k,j)*D(k)
-                enddo
+               X=sum(A(1:N,Irp(i))*D(1:N))
            endif
            Trp(i) = merge(Tauc(1,Irp(i)),-Tauc(2,Irp(i)),X>=0.0_dp)
         enddo
@@ -80,69 +69,40 @@ module altayTBH
             if (iter > 50) then
                 RCM_RAISE(1,'TBH','Too many iterations.',RCM_RTN)
             endif
-            if (IPR >= JPR .and. NLIST == 1) write (IMP,251) iter
- 251        format (/,'  ITERATION NR. ',I5,/)
-            call mtprd(C=SIG,A=Trp,B=U,N1=1,N2=N,N3=N,ND1=1,ND2=NDIM)
+            SIG(1:N) = matmul(Trp(1:N), U(1:N,:))
             ! Calculation of Taylor factor
-            FakM=0.0
-            do i=1,N
-                FakM=FakM+SIG(i)*D(i)
-            enddo
+            FakM=sum(SIG(1:N)*D(1:N))
             ! Calculation of resolved shear stress
-            call mtprd(C=TauR,A=SIG,B=A,N1=1,N2=N,N3=M,ND1=1,ND2=NDIM)
-            if (IPR >= JPR .and. NLIST == 1) then
-                write (IMP,205)
-                do i=1,N
-                    write (IMP,204) D(i),SIG(i)
-                enddo
-                write (IMP,201) FakM
-                do j=1,M
-                    write (IMP,202) j,TauR(j)
-                enddo
-            endif
-  201       format (' M-Factor:',D20.10,/,' Resolved shear stresses:')
-  202       format (I5,30X,D20.10)
-  204       format (D20.10,5X,D20.10)
-  205       format (//,'***************************************************', /,'   Strain                   Stress')
+            TauR = matmul(SIG(1:N), A(1:N,:))
+
 !           Search for most severly overstressed slip system
             DT=0.0d0
             jn=0
-            do j=1,M
-                X=TauR(j)
-                Y=merge(X-Tauc(1,j),-X-Tauc(2,j),X>=0.0_dp)
-                if (IPR >= JPR .and. NLIST == 1) write (IMP,919) j,jn,X,Y,Y-DT
-  919           format ('j=',I5,'  jn=',I5,'  TauR(=X)',D15.5,' DTAU(=Y)',D20.10,' Y-DT=',D20.10)
+            do i=1,M
+                X=TauR(i)
+                Y=merge(X-Tauc(1,i),-X-Tauc(2,i),X>=0.0_dp)
                 if (abs(Y) < TOL) then
                     Y=0.0d0
-                    X=merge(Tauc(1,j),-Tauc(2,j),X>=0.0_dp)
-                    TauR(j)=X
+                    X=merge(Tauc(1,i),-Tauc(2,i),X>=0.0_dp)
+                    TauR(i)=X
                 endif
                 if (abs(Y-DT) < TOL) Y=DT
-                DTAU(j)=Y
-                if (bas(j) .or. (abs(X) < TOL) .or. (Y <= DT)) cycle
-                if (IPR >= JPR .and. NLIST == 1) write (IMP,920) Y,j
-  920           format (' DT(=Y)',D15.5,'  New jn=',I5)
+                DTAU(i)=Y
+                if (bas(i) .or. (abs(X) < TOL) .or. (Y <= DT)) cycle
                 DT=Y
-                jn=j
+                jn=i
             enddo
-            if (IPR >= JPR.and.jn > 0 .and. NLIST == 1) write (IMP,913) jn,DT,TauR(jn)
-  913       format ('Overstressed:jn DT',I5, D15.5,'   TauR(jn)',D20.10)
             if (jn == 0) exit ! There is no overstressed slip system
             ! There is an overstressed slip system, which we will activate now
             ! Search which active slip system must be desactivated (removed from basis)
             X=TauR(jn)
             ! Calculate column Mprime-s*, called Aprime
-            call mtprd(Aprime,U,A(1,jn),N,N,1,NDIM,NDIM)
+            Aprime(1:N) = matmul(U(1:N,:), A(1:N,jn))
             in=0
-            if (IPR >= JPR .and.  NLIST == 1)write (IMP,203)
-  203       format (' ACTIVE',9x,'Slip rate',11X,'Critical Resolved shear stress',11X,'Aprime')
             do i=1,N
-                if (IPR >= JPR .and. NLIST == 1) write (IMP,200)Irp(i),DACC(i),Trp(i),Aprime(i)
-  200           format (I5,5x,D26.16,5x,D20.10,5x,D20.10)
                 Z1=Aprime(i)
                 if (abs(Z1) < TOL) cycle
-                j=Irp(i)
-                ZR=TauR(j)
+                ZR=TauR(Irp(i))
                 if (abs(ZR) < TOL) then
                     ZR=Dacc(i)
                     if (abs(Zr) < TOL) cycle
@@ -151,48 +111,30 @@ module altayTBH
                 Z2=Dacc(i)/Z1
                 if (X > 0.0d0) then
                     if (ZR < 0.0d0) cycle
-                    if (in == 0) then
+                    if (in == 0 .or. Z2 < Gmin) then
                         in=i
                         Gmin=Z2
-                    else
-                        if (Z2 < Gmin) then
-                           Gmin=Z2
-                           in=i
-                        endif
                    endif
                 else
                     if (ZR > 0.0d0) cycle
-                    if (in == 0) then
+                    if (in == 0 .or. Z2 > Gmin) then
                         in=i
                         Gmin=Z2
-                    else
-                        if (Z2 > Gmin) then
-                            Gmin=Z2
-                            in=i
-                        endif
                     endif
                 endif
             enddo
             if (in == 0) then
                 RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
             endif
-            if (IPR >= JPR .and. NLIST == 1) write (IMP,912) in,jn,Gmin
-  912       format ('in jn Gmin',2I5, D15.5)
             Z1=Aprime(in)
-            do i=1,N
-                CUst(i)=-Aprime(i)
-            enddo
+            CUst(1:N)=-Aprime(1:N)
             CUst(in)=1.0d0
-            do i=1,N
-                CUst(i)=CUst(i)/Z1
-            enddo
+            CUst(1:N)=CUst(1:N)/Z1
             UU=U
             call Ust(C=U,B=UU,Cust=CUst,in=in,N=N,M3=N,NDIM=NDIM)
             ! Updating of Dacc
             DD=Dacc
             call Ust(C=Dacc,B=DD,Cust=CUst,in=in,N=N,M3=1,NDIM=N)
-            if (IPR >= JPR .and. NLIST == 1) write (IMP,929) in,Gmin,Dacc(in)
-  929       format ('updated slip rate in',I5,2D15.5)
             ! Updating of basis: bas and Irp
             bas(Irp(in))=.FALSE.
             bas(jn)=.TRUE.
@@ -202,20 +144,13 @@ module altayTBH
         enddo
         ! Solution was found.
         Gdot(1:M)=0.0
-        if (IPR >= JPR .and. NLIST == 1) write (IMP,212)
         do i=1,N
-            j=Irp(i)
-            Gdot(j)=Dacc(i)
-            if (IPR >= JPR .and. NLIST == 1) write (IMP,211) j,DACC(i)
+            Gdot(Irp(i))=Dacc(i)
         enddo
-  211   format (I5,5x,D20.10)
-  212   format (/,'   SOLUTION ',/)
     end subroutine
-
 
     subroutine Ust(C,B,CUst,in,N,M3,NDIM)
         !  MATRIX C=MATRIX Ustar*MATRIX B
-
         integer :: in,N,M3,NDIM
         real(dp) :: B(NDIM,M3),CUst(N)
         real(dp) :: C(NDIM,M3)
@@ -228,26 +163,4 @@ module altayTBH
             enddo
         enddo
     end subroutine
-
-
-    subroutine mtprd(C,A,B,N1,N2,N3,ND1,ND2)
-        ! MATRIX C=MATRIX A*MATRIX B
-
-        integer :: N1,N2,N3,ND1,ND2
-        real(dp) :: A(ND1,N2),B(ND2,N3)
-        real(dp) :: C(ND1,N3)
-        real(dp) :: X
-        integer :: I,J,K
-
-        do I=1,N1
-            do J=1,N3
-                X=0.
-                do K=1,N2
-                    X=X+A(I,K)*B(K,J)
-                enddo
-                C(I,J)=X
-            enddo
-        enddo
-    end subroutine
-
 end module

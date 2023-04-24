@@ -5,7 +5,7 @@
 
 !> Implementation of YLP function that can directly use the ALAMEL multilevel model instead of a plastic potential function.
 module alamYLP
-use altay_definitions
+use definitions
 implicit none
 
       type multilevelYLPConfig
@@ -37,7 +37,7 @@ implicit none
       !>
       !> The subroutine assumes that multilevel model is already configured and initialized.
       !> Exit code is retured in info: VEF_OK on success; VEF_ERROR if no converged solution can
-      !> be found; VEF_ERROR or VEF_BADVAL if error conditions have been detected.
+      !> be found; VEF_ERROR or VEF_ERROR if error conditions have been detected.
       subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig,outunit,verbose,objective_function)
       use nllsTR
       use alamEval
@@ -97,7 +97,7 @@ implicit none
       if (present(YLPconfig)) config = YLPconfig
       ! Check if the configuration is consistent and allows at least one
       ! search procedure to be started.
-      info  = VEF_BADVAL
+      info  = VEF_ERROR
       if (.not. (config%linearize .or. config%nonlinear)) return
       !
       ! Set the objective function
@@ -113,7 +113,7 @@ implicit none
           info = VEF_ERROR
           return
       endif
-      info  = VEF_BADVAL
+      info  = VEF_ERROR
       !
       !Get normalized stress vector
       norm = norm2(vS)
