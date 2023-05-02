@@ -4,31 +4,42 @@ module altayTBH
     use altayRCM
 
     implicit none
+    private
 
-    real(DP), parameter     ::  TOL = 1.0e-10_DP
+    real(DP), parameter ::  TOL = 1.0e-10_DP
+
+    integer ::  n_slip_systems, &
+                n_taylor_eqs 
+
+    public  ::  tbh_init, &
+                tbh
 
     contains
 
+    subroutine tbh_init(nss, n_eqs)
+        integer, intent(in) ::  nss, &
+                                n_eqs
+        n_slip_systems = nss
+        n_taylor_eqs = n_eqs
+    end subroutine tbh_init
+
     !Solve Taylor-Bishop-Hill for one crystallite. Stresses and strain rates are to be represented  by vectors
-    subroutine TBH(NDIM,N,M,A,D,TauC,U,Irp,Dacc,GDOT,SIG,FakM,TauR,bas,DTAU)
-        integer, intent(in)     ::  NDIM,           &   !<number of rows in arrays, must not < N
-                                    M,              &   !<There are M slip systems
-                                    N                   !<# of independent Taylor equations,N=5, except for cluster models
-        real(dp), intent(in)    ::  A(NDIM,M),      &   !<coefficient matrix of Taylor equations
-                                    D(NDIM),        &   !<right-hand side of Taylor equations=imposed strain rate
-                                    TauC(2,M)           !<critical resolved shear stresses (all Tauc>0)
-        logical                 ::  bas(M)              !<MD: "workspace" from pancake and has the 'save' attribute. Might be the reason for strange behavior
-        real(dp), intent(out)   ::  Dacc(NDIM),     &   !<Final slip rates, for the slip systems indexed in Irp
-                                    GDOT(M),        &   !<Slip rates
-                                    SIG(NDIM),      &   !<Stress
-                                    TauR(M),        &   !<Resolved shear stress
-                                    DTAU(M),        &   !<abs(TAUR) - TAUC
+    subroutine TBH(A,D,TauC,U,Irp,Dacc,GDOT,SIG,FakM,TauR,bas,DTAU)
+        real(dp), intent(in)    ::  A(n_taylor_eqs,n_slip_systems),      &   !<coefficient matrix of Taylor equations
+                                    D(n_taylor_eqs),        &   !<right-hand side of Taylor equations=imposed strain rate
+                                    TauC(2,n_slip_systems)           !<critical resolved shear stresses (all Tauc>0)
+        logical                 ::  bas(n_slip_systems)              !<MD: "workspace" from pancake and has the 'save' attribute. Might be the reason for strange behavior
+        real(dp), intent(out)   ::  Dacc(n_taylor_eqs),     &   !<Final slip rates, for the slip systems indexed in Irp
+                                    GDOT(n_slip_systems),        &   !<Slip rates
+                                    SIG(n_taylor_eqs),      &   !<Stress
+                                    TauR(n_slip_systems),        &   !<Resolved shear stress
+                                    DTAU(n_slip_systems),        &   !<abs(TAUR) - TAUC
                                     FakM                !<plastic work  (stress*imposed strain rate)
-        integer, intent(inout)  ::  Irp(NDIM)           !<Indices of active slip systems
-        real(DP), intent(inout) ::  U(NDIM,N)           !<Inverse of basis, corresponding with IRP
-        real(dp)                ::  Aprime(NDIM),   &   !<column of U * A
-                                    Trp(NDIM),      &   !<resolved shear stress on basis systems
-                                    CUst(NDIM)          !< compact storage of U* (only one column)
+        integer, intent(inout)  ::  Irp(n_taylor_eqs)           !<Indices of active slip systems
+        real(DP), intent(inout) ::  U(n_taylor_eqs,n_taylor_eqs)           !<Inverse of basis, corresponding with IRP
+        real(dp)                ::  Aprime(n_taylor_eqs),   &   !<column of U * A
+                                    Trp(n_taylor_eqs),      &   !<resolved shear stress on basis systems
+                                    CUst(n_taylor_eqs)          !< compact storage of U* (only one column)
         integer                 ::  i,              &
                                     j,              &
                                     k,              &
@@ -42,33 +53,33 @@ module altayTBH
                                     z2,             &
                                     zr,             &
                                     gmin
-        bas(1:M) = .FALSE.
-        TAuR(1:M) = 0.D0
-        do i=1,N
+        bas = .FALSE.
+        TAuR = 0._DP
+        do i=1,n_taylor_eqs
             bas(Irp(i))=.TRUE.
         enddo
         ! Calculation of slip rates in basis
-        Dacc(1:N) = matmul(U(1:N,1:N),D(1:N))
+        Dacc = matmul(U,D)
         ! Calculation of stress, using generalised Schmid law
-        do i=1,N
+        do i=1,n_taylor_eqs
            X = Dacc(i)
            if (abs(X) < TOL) &
-               X = sum(A(1:N,Irp(i))*D(1:N))
+               X = sum(A(:,Irp(i))*D)
            Trp(i) = merge(Tauc(1,Irp(i)),-Tauc(2,Irp(i)),X>=0.0_dp)
         enddo
         iter=0
         do
             iter=iter+1
-            SIG(1:N) = matmul(Trp(1:N), U(1:N,:))
+            SIG = matmul(Trp, U)
             ! Calculation of Taylor factor
-            FakM=sum(SIG(1:N)*D(1:N))
+            FakM=sum(SIG * D)
             ! Calculation of resolved shear stress
-            TauR = matmul(SIG(1:N), A(1:N,:))
+            TauR = matmul(SIG, A)
 
 !           Search for most severly overstressed slip system
             DT=0.0d0
             jn=0
-            do i=1,M
+            do i=1,n_slip_systems
                 X=TauR(i)
                 Y=merge(X-Tauc(1,i),-X-Tauc(2,i),X>=0.0_dp)
                 if (abs(Y) < TOL) then
@@ -87,9 +98,9 @@ module altayTBH
             ! Search which active slip system must be desactivated (removed from basis)
             X=TauR(jn)
             ! Calculate column Mprime-s*, called Aprime
-            Aprime(1:N) = matmul(U(1:N,:), A(1:N,jn))
+            Aprime = matmul(U, A(:,jn))
             in=0
-            do i=1,N
+            do i=1,n_taylor_eqs
                 Z1=Aprime(i)
                 if (abs(Z1) < TOL) cycle
                 ZR=TauR(Irp(i))
@@ -117,9 +128,9 @@ module altayTBH
                 RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
             endif
             Z1=Aprime(in)
-            CUst(1:N)=-Aprime(1:N)
-            CUst(in)=1.0d0
-            CUst(1:N)=CUst(1:N)/Z1
+            CUst = -Aprime
+            CUst(in)=1._DP
+            CUst = CUst/Z1
 
             do j=1,size(U,2)
                 call update_inverse_basis_vector(U(:,j))
@@ -134,9 +145,9 @@ module altayTBH
             ! Go back to stress calculation
         enddo
         ! Solution was found.
-        Gdot(1:M)=0.0
-        do i=1,N
-            Gdot(Irp(i))=Dacc(i)
+        Gdot = 0._DP
+        do i=1,n_taylor_eqs
+            Gdot(Irp(i)) = Dacc(i)
         enddo
     contains
         !>Replace basis vector in single vector of transpose of basis.
