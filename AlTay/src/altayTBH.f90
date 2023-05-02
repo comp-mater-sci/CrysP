@@ -15,7 +15,9 @@ module altayTBH
                 tbh
 
     contains
-
+    
+    !>Initialize dimensions of arrays.
+    !>Dynamic array sizes severely degrade performance.
     subroutine tbh_init(nss, n_eqs)
         integer, intent(in) ::  nss, &
                                 n_eqs
@@ -24,26 +26,19 @@ module altayTBH
     end subroutine tbh_init
 
     !Solve Taylor-Bishop-Hill for one crystallite. Stresses and strain rates are to be represented  by vectors
-    subroutine TBH(A,D,TauC,U,Irp,Dacc,GDOT,SIG,FakM,TauR,bas,DTAU)
+    subroutine TBH(A,D,TauC,U,Irp,GDOT,SIG,FakM,TauR,DTAU)
         real(dp), intent(in)    ::  A(n_taylor_eqs,n_slip_systems),      &   !<coefficient matrix of Taylor equations
                                     D(n_taylor_eqs),        &   !<right-hand side of Taylor equations=imposed strain rate
                                     TauC(2,n_slip_systems)           !<critical resolved shear stresses (all Tauc>0)
-        logical                 ::  bas(n_slip_systems)              !<MD: "workspace" from pancake and has the 'save' attribute. Might be the reason for strange behavior
-        real(dp), intent(out)   ::  Dacc(n_taylor_eqs),     &   !<Final slip rates, for the slip systems indexed in Irp
-                                    GDOT(n_slip_systems),        &   !<Slip rates
+        real(dp), intent(out)   ::  GDOT(n_slip_systems),        &   !<Slip rates
                                     SIG(n_taylor_eqs),      &   !<Stress
                                     TauR(n_slip_systems),        &   !<Resolved shear stress
                                     DTAU(n_slip_systems),        &   !<abs(TAUR) - TAUC
                                     FakM                !<plastic work  (stress*imposed strain rate)
         integer, intent(inout)  ::  Irp(n_taylor_eqs)           !<Indices of active slip systems
         real(DP), intent(inout) ::  U(n_taylor_eqs,n_taylor_eqs)           !<Inverse of basis, corresponding with IRP
-        real(dp)                ::  Aprime(n_taylor_eqs),   &   !<column of U * A
-                                    Trp(n_taylor_eqs),      &   !<resolved shear stress on basis systems
-                                    CUst(n_taylor_eqs)          !< compact storage of U* (only one column)
+        logical                 ::  bas(n_slip_systems)              !<MD: "workspace" from pancake and has the 'save' attribute. Might be the reason for strange behavior
         integer                 ::  i,              &
-                                    j,              &
-                                    k,              &
-                                    iter,           &
                                     jn,             &
                                     in
         real(dp)                ::  x,              &
@@ -52,7 +47,11 @@ module altayTBH
                                     z1,             &
                                     z2,             &
                                     zr,             &
-                                    gmin
+                                    gmin,           &
+                                    Aprime(n_taylor_eqs),   &   !<column of U * A
+                                    Trp(n_taylor_eqs),      &   !<resolved shear stress on basis systems
+                                    Dacc(n_taylor_eqs),     &   !<Final slip rates, for the slip systems indexed in Irp
+                                    CUst(n_taylor_eqs)          !< compact storage of U* (only one column)
         bas = .FALSE.
         TAuR = 0._DP
         do i=1,n_taylor_eqs
@@ -63,13 +62,12 @@ module altayTBH
         ! Calculation of stress, using generalised Schmid law
         do i=1,n_taylor_eqs
            X = Dacc(i)
-           if (abs(X) < TOL) &
+           if (abs(X) < TOL) & !>If scalar product between slip plane normal and imposed strain is positive there is tension, otherwise compression.
                X = sum(A(:,Irp(i))*D)
            Trp(i) = merge(Tauc(1,Irp(i)),-Tauc(2,Irp(i)),X>=0.0_dp)
         enddo
-        iter=0
+        
         do
-            iter=iter+1
             SIG = matmul(Trp, U)
             ! Calculation of Taylor factor
             FakM=sum(SIG * D)
@@ -82,11 +80,6 @@ module altayTBH
             do i=1,n_slip_systems
                 X=TauR(i)
                 Y=merge(X-Tauc(1,i),-X-Tauc(2,i),X>=0.0_dp)
-                if (abs(Y) < TOL) then
-                    Y=0.0d0
-                    X=merge(Tauc(1,i),-Tauc(2,i),X>=0.0_dp)
-                    TauR(i)=X
-                endif
                 if (abs(Y-DT) < TOL) Y=DT
                 DTAU(i)=Y
                 if (bas(i) .or. (abs(X) < TOL) .or. (Y <= DT)) cycle
@@ -132,8 +125,8 @@ module altayTBH
             CUst(in)=1._DP
             CUst = CUst/Z1
 
-            do j=1,size(U,2)
-                call update_inverse_basis_vector(U(:,j))
+            do i=1,n_taylor_eqs
+                call update_inverse_basis_vector(U(:,i))
             end do
             call update_inverse_basis_vector(Dacc)
 

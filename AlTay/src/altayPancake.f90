@@ -36,9 +36,8 @@ module altayPancake
 
         type(CRSS) :: CRSSmatrix
         real(dp),dimension(5):: RHOS, RHOA
-        logical :: bas(194)
         integer ::  DI(10)
-        real(dp) :: C2(3,3),DACC(10),rls(3,3),rla(3,3),C3(3,3),B3(10,3)=0.0_dp,UU(10,10), &
+        real(dp) :: C2(3,3),rls(3,3),rla(3,3),C3(3,3),B3(10,3)=0.0_dp,UU(10,10), &
                     spanv(5),XX(194),STRSS(10),BB(10),CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
                     B8(5,2),UBUF(10),GAMR(2),Tprinc(3,3),TAURL(2)=0.0_dp,XXTOT,COFCOS,COFSIN,fakm
         ! rls and rla are unit relaxation tensors in crystal frame (symmetric and anti-sym. part)
@@ -137,7 +136,7 @@ module altayPancake
  218        format(/' COST FUNCTION',/,(2x,12F10.4))
  219        format (' right hand side',/,(2x,10F10.4),/)
  400        format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
-            call TBH(A1(1:N,:),BB(1:N),CCC,UU(1:N,1:N),DI(1:N),Dacc(1:N),XX,UBUF(1:N),FakM,Taur,bas,DTAU)
+            call TBH(A1(1:N,:),BB(1:N),CCC,UU(1:N,1:N),DI(1:N),XX,UBUF(1:N),FakM,Taur,DTAU)
             RCM_GUARD
 
             if (.not.(IPR < 4)) then
@@ -157,7 +156,7 @@ module altayPancake
                 if (IPR == 2 .and. NLIST == 1) write(IMP,401)
  401            format (' Second call of TBH')
                 call tbh_init(M12, N)
-                call TBH(A1(1:N,:),BB(1:N),CCC,UU(1:N,1:N),DI(1:N),Dacc(1:N),XX,STRSS(1:N),FakM,Taur,bas,DTAU)
+                call TBH(A1(1:N,:),BB(1:N),CCC,UU(1:N,1:N),DI(1:N),XX,STRSS(1:N),FakM,Taur,DTAU)
                 RCM_GUARD
 
                 if (IPR >= 4) then
