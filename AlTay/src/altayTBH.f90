@@ -28,9 +28,7 @@ module altayTBH
         real(DP), intent(inout) ::  U(NDIM,N)           !<Inverse of basis, corresponding with IRP
         real(dp)                ::  Aprime(NDIM),   &   !<column of U * A
                                     Trp(NDIM),      &   !<resolved shear stress on basis systems
-                                    UU(NDIM,N),     &   !<copy of inverse of basis
-                                    CUst(NDIM),     &   !< compact storage of U* (only one column)
-                                    DD(NDIM)            !< copy of strain rates in some basis
+                                    CUst(NDIM)          !< compact storage of U* (only one column)
         integer                 ::  i,              &
                                     k,              &
                                     iter,           &
@@ -122,11 +120,8 @@ module altayTBH
             CUst(1:N)=-Aprime(1:N)
             CUst(in)=1.0d0
             CUst(1:N)=CUst(1:N)/Z1
-            UU=U
-            call Ust(C=U,B=UU,Cust=CUst,in=in,N=N,M3=N,NDIM=NDIM)
-            ! Updating of Dacc
-            DD=Dacc
-            call Ust(C=Dacc,B=DD,Cust=CUst,in=in,N=N,M3=1,NDIM=N)
+            call update_inverse_basis(U, CUst, in)
+            call update_inverse_basis_vector(Dacc, Cust, in)
             ! Updating of basis: bas and Irp
             bas(Irp(in))=.FALSE.
             bas(jn)=.TRUE.
@@ -141,18 +136,38 @@ module altayTBH
         enddo
     end subroutine
 
-    subroutine Ust(C,B,CUst,in,N,M3,NDIM)
-        !  MATRIX C=MATRIX Ustar*MATRIX B
-        integer :: in,N,M3,NDIM
-        real(dp) :: B(NDIM,M3),CUst(N)
-        real(dp) :: C(NDIM,M3)
-        integer :: i,j
+    !>Replace basis vector in transpose of basis.
+    subroutine update_inverse_basis(inv_basis, new_vec, index)
+        real(DP), intent(inout) :: inv_basis(:,:)
+        real(DP), intent(in)    :: new_vec(:)
+        integer, intent(in)     :: index
 
-        do j=1,M3
-            do i=1,N
-                C(i,j)=B(in,j)*CUst(i)
-                if (i /= in) C(i,j)=C(i,j)+B(i,j)
-            enddo
-        enddo
-    end subroutine
+        integer :: i
+
+        do i=1,size(inv_basis,2)
+            call update_inverse_basis_vector(inv_basis(:,i), new_vec, index)
+        end do
+    end subroutine update_inverse_basis
+
+    !>Replace basis vector in single vector of transpose of basis.
+    subroutine update_inverse_basis_vector(inv_basis_vec, new_vec, index)
+        real(DP), intent(inout) :: inv_basis_vec(:)
+        real(DP), intent(in)    :: new_vec(:)
+        integer, intent(in)     :: index
+
+        integer                 :: i
+        real(DP)                :: inv_basis_vec_at_index, &
+                                   prod
+        
+        inv_basis_vec_at_index = inv_basis_vec(index)
+
+        do i=1,size(new_vec)
+            prod = inv_basis_vec_at_index * new_vec(i)
+            if (i == index) then
+                inv_basis_vec(i) = prod
+            else
+                inv_basis_vec(i) = inv_basis_vec(i) + prod
+            end if
+        end do
+    end subroutine update_inverse_basis_vector
 end module
