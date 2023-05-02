@@ -4,33 +4,33 @@ module altayTBH
     use altayRCM
 
     implicit none
+
+    real(DP), parameter     ::  TOL = 1.0e-10_DP
+
     contains
 
     !Solve Taylor-Bishop-Hill for one crystallite. Stresses and strain rates are to be represented  by vectors
-    subroutine TBH(NDIM,N,M,A,D,TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,TauR,bas,DTAU)
+    subroutine TBH(NDIM,N,M,A,D,TauC,U,Irp,Dacc,GDOT,SIG,FakM,TauR,bas,DTAU)
         integer, intent(in)     ::  NDIM,           &   !<number of rows in arrays, must not < N
                                     M,              &   !<There are M slip systems
-                                    N,              &   !<# of independent Taylor equations,N=5, except for cluster models
-                                    IACT(NDIM)          !<indices of active slip systems: first guess
+                                    N                   !<# of independent Taylor equations,N=5, except for cluster models
         real(dp), intent(in)    ::  A(NDIM,M),      &   !<coefficient matrix of Taylor equations
                                     D(NDIM),        &   !<right-hand side of Taylor equations=imposed strain rate
-                                    BINV(NDIM,N),   &   !<First guess of inverse of basis, corresp. with IACT
                                     TauC(2,M)           !<critical resolved shear stresses (all Tauc>0)
-        integer, intent(out)    :: Irp(NDIM)            !< indices of active slip systems
         logical                 ::  bas(M)              !<MD: "workspace" from pancake and has the 'save' attribute. Might be the reason for strange behavior
-        real(dp), intent(out)   ::  U(NDIM,N),      &   !<Inverse of basis, corresponding with IRP
-                                    Dacc(NDIM),     &   !<Final slip rates, for the slip systems indexed in Irp
+        real(dp), intent(out)   ::  Dacc(NDIM),     &   !<Final slip rates, for the slip systems indexed in Irp
                                     GDOT(M),        &   !<Slip rates
                                     SIG(NDIM),      &   !<Stress
                                     TauR(M),        &   !<Resolved shear stress
                                     DTAU(M),        &   !<abs(TAUR) - TAUC
                                     FakM                !<plastic work  (stress*imposed strain rate)
+        integer, intent(inout)  ::  Irp(NDIM)           !<Indices of active slip systems
+        real(DP), intent(inout) ::  U(NDIM,N)           !<Inverse of basis, corresponding with IRP
         real(dp)                ::  Aprime(NDIM),   &   !<column of U * A
                                     Trp(NDIM),      &   !<resolved shear stress on basis systems
                                     UU(NDIM,N),     &   !<copy of inverse of basis
                                     CUst(NDIM),     &   !< compact storage of U* (only one column)
                                     DD(NDIM)            !< copy of strain rates in some basis
-        real(dp), parameter     ::  TOL = 1.0e-10_dp
         integer                 ::  i,              &
                                     k,              &
                                     iter,           &
@@ -44,8 +44,6 @@ module altayTBH
                                     zr,             &
                                     gmin
 
-        U = BINV
-        Irp = IACT
         bas(1:M) = .FALSE.
         TAuR(1:M) = 0.D0
         do i=1,N
