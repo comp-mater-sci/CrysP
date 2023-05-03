@@ -76,23 +76,20 @@ module altayTBH
             DT=0.0d0
             jn=0
             do i=1,M
-                X=TauR(i)
-                Y=merge(X-Tauc(1,i),-X-Tauc(2,i),X>=0.0_dp)
+                Y=merge(TauR(i)-Tauc(1,i),-TauR(i)-Tauc(2,i),TauR(i)>=0.0_dp)
                 if (abs(Y) < TOL) then
                     Y=0.0d0
-                    X=merge(Tauc(1,i),-Tauc(2,i),X>=0.0_dp)
-                    TauR(i)=X
+                    TauR(i)=merge(Tauc(1,i),-Tauc(2,i),TauR(i)>=0.0_dp)
                 endif
                 if (abs(Y-DT) < TOL) Y=DT
                 DTAU(i)=Y
-                if (bas(i) .or. (abs(X) < TOL) .or. (Y <= DT)) cycle
+                if (bas(i) .or. (abs(TauR(i)) < TOL) .or. (Y <= DT)) cycle
                 DT=Y
                 jn=i
             enddo
             if (jn == 0) exit ! There is no overstressed slip system
             ! There is an overstressed slip system, which we will activate now
-            ! Search which active slip system must be desactivated (removed from basis)
-            X=TauR(jn)
+            ! Search which active slip system must be deactivated (removed from basis)
             ! Calculate column Mprime-s*, called Aprime
             Aprime(1:N) = matmul(U(1:N,:), A(1:N,jn))
             in=0
@@ -106,7 +103,7 @@ module altayTBH
                 endif
                 ZR=ZR*Z1
                 Z2=Dacc(i)/Z1
-                if (X > 0.0d0) then
+                if (TauR(jn) > 0.0d0) then
                     if (ZR < 0.0d0) cycle
                     if (in == 0 .or. Z2 < Gmin) then
                         in=i
@@ -136,7 +133,7 @@ module altayTBH
             bas(Irp(in))=.FALSE.
             bas(jn)=.TRUE.
             Irp(in)=jn
-            Trp(in) = merge(Tauc(1,jn),-Tauc(2,jn),(Dacc(in) >= 0.0d0).and.(X > 0.0d0))
+            Trp(in) = merge(Tauc(1,jn),-Tauc(2,jn),(Dacc(in) >= 0.0d0).and.(TauR(jn) > 0.0d0))
             ! Go back to stress calculation
         enddo
         ! Solution was found.
