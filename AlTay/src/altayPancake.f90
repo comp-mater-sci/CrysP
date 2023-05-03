@@ -134,7 +134,18 @@ module altayPancake
  218        format(/' COST FUNCTION',/,(2x,12F10.4))
  219        format (' right hand side',/,(2x,10F10.4),/)
  400        format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
-            call TBH(NDIM,N,A1(1:NDIM,1:M2),BB,CCC,UU,UU2,DI,DI2,XX(1:M2),UBUF,Taur(1:M2),DTAU(1:M2))
+            call TBH(NDIM,N, &
+                    A = A1(1:NDIM,1:M2), &
+                    D = BB, &
+                    TauC = CCC, &
+                    BINV = UU, &
+                    U = UU2, &
+                    IACT = DI, &
+                    Irp = DI2, &
+                    GDOT = XX(1:M2), &
+                    SIG = UBUF, &
+                    TauR = Taur(1:M2), &
+                    DTAU = DTAU(1:M2))
             RCM_GUARD
 
             if (.not.(IPR < 4)) then
@@ -156,7 +167,18 @@ module altayPancake
                 ! Second call of Simplex (relaxed constraints)
                 if (IPR == 2 .and. NLIST == 1) write(IMP,401)
  401            format (' Second call of TBH')
-                call TBH(N,N,A1(1:NDIM,1:M12),BB,CCC,UU2,UU,DI2,DI,XX(1:M12),STRSS,Taur(1:M12),DTAU(1:M12))
+                call TBH(N,N, &
+                         A = A1(1:NDIM,1:M12), &
+                         D = BB, &
+                         TauC = CCC, &
+                         BINV = UU2, &
+                         U = UU, &
+                         IACT = DI2, &
+                         Irp = DI, &
+                         GDOT = XX(1:M12), &
+                         SIG = STRSS, &
+                         TauR = Taur(1:M12), &
+                         DTAU = DTAU(1:M12))
                 RCM_GUARD
 
                 if (IPR >= 4) then
