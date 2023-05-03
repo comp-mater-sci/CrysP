@@ -7,7 +7,7 @@ module altayTBH
     contains
 
 !   solve Taylor-Bishop-Hill for one crystallite. Stresses and strain rates are to be represented  by vectors
-    subroutine TBH(NDIM,N,M,A,D,TauC,BINV,U,IACT,Irp,GDOT,SIG,TauR,DTAU)
+    subroutine TBH(NDIM,N,A,D,TauC,BINV,U,IACT,Irp,GDOT,SIG,TauR,DTAU)
 !     input          TauC=critical resolved shear stresses (all Tauc>0 )
 !                     first row:  for positive slip, second row: for negative slip
 !     input          BINV=First guess of inverse of basis, corresp. with IACT
@@ -19,16 +19,14 @@ module altayTBH
 !     output         DTAU=abs(TAUR)-TAUC
 
         integer, intent(in) :: NDIM,&  !< number of rows in arrays, must not < N
-                               M,&     !< There are M slip systems
                                N,&     !< # of independent Taylor equations,N=5, except for cluster models
                                IACT(NDIM) ! < indices of active slip systems: first guess
-        real(dp), intent(in) :: A(NDIM,M), &  !< coefficient matrix of Taylor equations
+        real(dp), intent(in) :: A(:,:), &  !< coefficient matrix of Taylor equations, second dim is #Nslip
                                 D(NDIM), &    !< right-hand side of Taylor equations=imposed strain rate
                                 BINV(NDIM,N), &
-                                TauC(2,M)
-        logical :: bas(M) !< MD: this is "workspace" from pancake and has the 'save' attribute. Might be the reason for strange behavior
-        !     workspace      bas (logical TRUE=belongs to basis)
-        real(dp), intent(out) :: U(NDIM,N), GDOT(M),SIG(NDIM),TauR(M),DTAU(M)
+                                TauC(2,size(A,2))
+        logical :: bas(size(A,2)) ! bas (logical TRUE=belongs to basis)
+        real(dp), intent(out) :: U(NDIM,N), GDOT(size(A,2)),SIG(NDIM),TauR(size(A,2)),DTAU(size(A,2))
         integer, intent(out) :: Irp(NDIM) !< indices of active slip systems
 
         real(dp) :: Aprime(NDIM), & !< column of U * A
@@ -48,7 +46,7 @@ module altayTBH
         U=BINV
         Irp=IACT
         bas=.FALSE.
-        TAuR(1:M)=0.0
+        TAuR=0.0
         do i=1,N
             bas(Irp(i))=.TRUE.
         enddo
@@ -75,7 +73,7 @@ module altayTBH
 !           Search for most severly overstressed slip system
             DT=0.0d0
             jn=0
-            do i=1,M
+            do i=1,size(A,2)
                 Y=merge(TauR(i)-Tauc(1,i),-TauR(i)-Tauc(2,i),TauR(i)>=0.0_dp)
                 if (abs(Y) < TOL) then
                     Y=0.0d0
@@ -135,7 +133,7 @@ module altayTBH
             ! Go back to stress calculation
         enddo
         ! Solution was found.
-        Gdot(1:M)=0.0
+        Gdot=0.0
         do i=1,N
             Gdot(Irp(i))=Dacc(i)
         enddo
