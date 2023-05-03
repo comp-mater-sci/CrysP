@@ -1,7 +1,6 @@
 !> Provides object factory for range types from the criRange module.
 !>
 !> The module also defines named constants for the known types of ranges.
-!> \remark This module is not available in the builds with old compilers (such as Intel Fortran 11.1)
 module criNamedRange
     use criLinearMap
     use criRange

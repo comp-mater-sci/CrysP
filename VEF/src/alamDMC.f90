@@ -8,8 +8,6 @@ program alamDMC
     use dmcYld
     use dmcEWC
     use dmcADP
-    use criLinearMap
-    use criPath
 
     implicit none
 
