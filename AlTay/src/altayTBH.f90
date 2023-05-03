@@ -29,7 +29,7 @@ module altayTBH
         real(dp), intent(out) :: U(NDIM,N), GDOT(size(A,2)),SIG(N),TauR(size(A,2)),DTAU(size(A,2))
         integer, intent(out) :: Irp(N) !< indices of active slip systems
 
-        real(dp) :: Aprime(NDIM), & !< column of U * A
+        real(dp) :: Aprime(N), & !< column of U * A
                     Trp(N), &    !< resolved shear stress on basis systems
                     UU(NDIM,N),&    !< copy of inverse of basis
                     CUst(NDIM),&    !< compact storage of U* (only one column)
@@ -86,7 +86,7 @@ module altayTBH
             ! There is an overstressed slip system, which we will activate now
             ! Search which active slip system must be deactivated (removed from basis)
             ! Calculate column Mprime-s*, called Aprime
-            Aprime(1:N) = matmul(U(1:N,:), A(1:N,jn))
+            Aprime = matmul(U(1:N,:), A(1:N,jn))
             in=0
             do i=1,N
                 if (abs(Aprime(i)) < TOL) cycle
@@ -111,7 +111,7 @@ module altayTBH
             if (in == 0) then
                 RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
             endif
-            CUst(1:N)=-Aprime(1:N)
+            CUst(1:N)=-Aprime
             CUst(in)=1.0d0
             CUst(1:N)=CUst(1:N)/Aprime(in)
             UU=U
