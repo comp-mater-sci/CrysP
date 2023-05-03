@@ -61,14 +61,13 @@ module altayPancake
                     1.0D0, 1.0D0], shape(PLUMIN)) !first index: # of grain, second index: #of relaxation
         integer, parameter :: NDIM=10 !     NDIM=dimension A
         real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp
-        integer :: info,M12,IGrElm,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II,NU
+        integer :: info,M12,IGrElm,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II
         SAVE
 
 
         if (IOR == 1) IGrElm=0
-        !     N is number of rows of A1;   NU number of rows of UU2
+        ! N is number of rows of A1
         N=5*NGR
-        NU=N
         M2=NGR*M11
         M12=NGR*M11+NRL
         if (laml == 1) then
@@ -78,7 +77,7 @@ module altayPancake
             if (IGrElm > NGrElm) IGrElm=1
             call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,Cofcos,Cofsin)
             CCC(1:2,M2+1:M12)=0.0
-            UU(1:NU,1:NU) = 0.0_dp
+            UU(1:N,1:N) = 0.0_dp
             DI(1:5) = DI1
             DI(6:10) = DI1+M11
             do IL=1,NGR
