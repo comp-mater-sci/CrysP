@@ -104,14 +104,12 @@ module altayTBH
                 ZR=ZR*Z1
                 Z2=Dacc(i)/Z1
                 if (TauR(jn) > 0.0d0) then
-                    if (ZR < 0.0d0) cycle
-                    if (in == 0 .or. Z2 < Gmin) then
+                    if (ZR >= 0.0_DP .and. (in == 0 .or. Z2 < Gmin)) then
                         in=i
                         Gmin=Z2
                    endif
                 else
-                    if (ZR > 0.0d0) cycle
-                    if (in == 0 .or. Z2 > Gmin) then
+                    if (ZR <= 0.0_DP .and. (in == 0 .or. Z2 > Gmin)) then
                         in=i
                         Gmin=Z2
                     endif
