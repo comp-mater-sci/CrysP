@@ -132,7 +132,7 @@ module altayPancake
  218        format(/' COST FUNCTION',/,(2x,12F10.4))
  219        format (' right hand side',/,(2x,10F10.4),/)
  400        format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
-            call TBH(N, &
+            call TBH(&
                     A = A1(1:N,1:M2), &
                     D = BB(1:N), &
                     TauC = CCC(1:2,1:M2), &
@@ -165,7 +165,7 @@ module altayPancake
                 ! Second call of Simplex (relaxed constraints)
                 if (IPR == 2 .and. NLIST == 1) write(IMP,401)
  401            format (' Second call of TBH')
-                call TBH(N, &
+                call TBH(&
                          A = A1(1:N,1:M12), &
                          D = BB(1:N), &
                          TauC = CCC(1:2,1:M2), &
