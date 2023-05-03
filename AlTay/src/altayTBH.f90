@@ -18,7 +18,7 @@ module altayTBH
 !     output         TauR (resolved shear stress)
 !     output         DTAU=abs(TAUR)-TAUC
 
-        real(dp), intent(in) :: A(:,:)  !< coefficient matrix of Taylor equations, second dim is #Nslip
+        real(dp), intent(in) :: A(:,:)  !< coefficient matrix of Taylor equations, first dim is #Nslip
         integer, intent(in) :: IACT(size(A,1)) ! < indices of active slip systems: first guess
         real(dp), intent(in) :: D(size(A,1)), &    !< right-hand side of Taylor equations=imposed strain rate
                                 BINV(size(A,1),size(A,1)), &
