@@ -28,7 +28,6 @@ program alamDMC
                                                                     MapItem('EWC', EWC_id),     &
                                                                     MapItem('ADP',ADP_id)]
 
-    logical                                 ::  moduleFound             = .false.
     integer                                 ::  info,                               &
                                                 cnfunit,                            &
                                                 command_id,                         &

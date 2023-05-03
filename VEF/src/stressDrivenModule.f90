@@ -2,7 +2,7 @@
 
 !> Implementation of a altay-based DMC computiational module.
 module dmcStressDrivenModule
-use,intrinsic :: iso_fortran_env, only: error_unit,output_unit
+use,intrinsic :: iso_fortran_env, only: error_unit
 use definitions
 use criAlgorithm, only: optionalDefault
 use criUncomment, only: readValue
