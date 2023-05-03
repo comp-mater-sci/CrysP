@@ -34,13 +34,12 @@ program alamDMC
                                                 command_id,                         &
                                                 i
     character(32)                           ::  moduleName              = ''
-    character(:), dimension(:), allocatable ::  argv
+    character(256), dimension(0:2)          ::  argv
     class(BasicModule), pointer             ::  the_module              => null()
 
     !> Process the command line and put the command line arguments into an allocatable array of strings (argv)
     !> Strictly 2 arguments of max 256 characters allowed.
     if (command_argument_count() /= 2) call log_error(MODULE_NAME, PROCEDURE_NAME, ERR_IO, '2 arguments required.')
-    allocate(character(256)::argv(0:2))
     do i = 0, 2 
         call get_command_argument(i, length=info)
         if (info > 256) call log_error(MODULE_NAME, PROCEDURE_NAME, ERR_IO, 'Arguments must be no longer than 256 characters.')
