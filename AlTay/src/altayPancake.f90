@@ -136,14 +136,14 @@ module altayPancake
  400        format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
             call TBH(NDIM,N, &
                     A = A1(1:NDIM,1:M2), &
-                    D = BB, &
-                    TauC = CCC, &
-                    BINV = UU, &
-                    U = UU2, &
-                    IACT = DI, &
-                    Irp = DI2, &
+                    D = BB(1:NDIM), &
+                    TauC = CCC(1:2,1:M2), &
+                    BINV = UU(1:NDIM,1:N), &
+                    U = UU2(1:NDIM,1:N), &
+                    IACT = DI(1:NDIM), &
+                    Irp = DI2(1:NDIM), &
                     GDOT = XX(1:M2), &
-                    SIG = UBUF, &
+                    SIG = UBUF(1:NDIM), &
                     TauR = Taur(1:M2), &
                     DTAU = DTAU(1:M2))
             RCM_GUARD
@@ -168,15 +168,15 @@ module altayPancake
                 if (IPR == 2 .and. NLIST == 1) write(IMP,401)
  401            format (' Second call of TBH')
                 call TBH(N,N, &
-                         A = A1(1:NDIM,1:M12), &
-                         D = BB, &
-                         TauC = CCC, &
-                         BINV = UU2, &
-                         U = UU, &
-                         IACT = DI2, &
-                         Irp = DI, &
+                         A = A1(1:N,1:M12), &
+                         D = BB(1:N), &
+                         TauC = CCC(1:2,1:M2), &
+                         BINV = UU2(1:N,1:N), &
+                         U = UU(1:N,1:N), &
+                         IACT = DI2(1:N), &
+                         Irp = DI(1:N), &
                          GDOT = XX(1:M12), &
-                         SIG = STRSS, &
+                         SIG = STRSS(1:N), &
                          TauR = Taur(1:M12), &
                          DTAU = DTAU(1:M12))
                 RCM_GUARD
