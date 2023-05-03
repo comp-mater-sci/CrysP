@@ -7,7 +7,7 @@ module altayTBH
     contains
 
 !   solve Taylor-Bishop-Hill for one crystallite. Stresses and strain rates are to be represented  by vectors
-    subroutine TBH(NDIM,N,A,D,TauC,BINV,U,IACT,Irp,GDOT,SIG,TauR,DTAU)
+    subroutine TBH(N,A,D,TauC,BINV,U,IACT,Irp,GDOT,SIG,TauR,DTAU)
 !     input          TauC=critical resolved shear stresses (all Tauc>0 )
 !                     first row:  for positive slip, second row: for negative slip
 !     input          BINV=First guess of inverse of basis, corresp. with IACT
@@ -18,21 +18,20 @@ module altayTBH
 !     output         TauR (resolved shear stress)
 !     output         DTAU=abs(TAUR)-TAUC
 
-        integer, intent(in) :: NDIM,&  !< number of rows in arrays, must not < N
-                               N,&     !< # of independent Taylor equations,N=5, except for cluster models
+        integer, intent(in) :: N,&     !< # of independent Taylor equations,N=5, except for cluster models
                                IACT(N) ! < indices of active slip systems: first guess
         real(dp), intent(in) :: A(:,:), &  !< coefficient matrix of Taylor equations, second dim is #Nslip
                                 D(N), &    !< right-hand side of Taylor equations=imposed strain rate
-                                BINV(NDIM,N), &
+                                BINV(N,N), &
                                 TauC(2,size(A,2))
         logical :: bas(size(A,2)) ! bas (logical TRUE=belongs to basis)
-        real(dp), intent(out) :: U(NDIM,N), GDOT(size(A,2)),SIG(N),TauR(size(A,2)),DTAU(size(A,2))
+        real(dp), intent(out) :: U(N,N), GDOT(size(A,2)),SIG(N),TauR(size(A,2)),DTAU(size(A,2))
         integer, intent(out) :: Irp(N) !< indices of active slip systems
 
         real(dp) :: Aprime(N), & !< column of U * A
                     Trp(N), &    !< resolved shear stress on basis systems
-                    UU(NDIM,N),&    !< copy of inverse of basis
-                    CUst(NDIM),&    !< compact storage of U* (only one column)
+                    UU(N,N),&    !< copy of inverse of basis
+                    CUst(N),&    !< compact storage of U* (only one column)
                     DD(N), &        !< copy of strain rates in some basis
                     Dacc(N)         !< final slip rates, for the slip systems indexed in Irp
         real(dp), parameter :: TOL=1.0e-10_dp
@@ -40,9 +39,6 @@ module altayTBH
         integer :: i,k,iter,jn,in
         real(dp) :: x,dt,zr,gmin
 
-        if (N > NDIM) then
-            RCM_RAISE(1,'TBH','Bad input: N>NDIM',RCM_RTN)
-        endif
         U=BINV
         Irp=IACT
         bas=.FALSE.
@@ -115,7 +111,7 @@ module altayTBH
             CUst(in)=1.0d0
             CUst(1:N)=CUst(1:N)/Aprime(in)
             UU=U
-            call Ust(C=U,B=UU,Cust=CUst,in=in,N=N,M3=N,NDIM=NDIM)
+            call Ust(C=U,B=UU,Cust=CUst,in=in,N=N,M3=N,NDIM=N)
             ! Updating of Dacc
             DD=Dacc
             call Ust(C=Dacc,B=DD,Cust=CUst,in=in,N=N,M3=1,NDIM=N)

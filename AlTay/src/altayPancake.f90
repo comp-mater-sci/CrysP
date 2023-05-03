@@ -59,7 +59,6 @@ module altayPancake
                     1.0D0,-1.0D0,                                          &
                     1.0D0,-1.0D0,                                          &
                     1.0D0, 1.0D0], shape(PLUMIN)) !first index: # of grain, second index: #of relaxation
-        integer, parameter :: NDIM=10 !     NDIM=dimension A
         real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp
         integer :: info,M12,IGrElm,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II
         SAVE
@@ -133,12 +132,12 @@ module altayPancake
  218        format(/' COST FUNCTION',/,(2x,12F10.4))
  219        format (' right hand side',/,(2x,10F10.4),/)
  400        format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
-            call TBH(NDIM,N, &
-                    A = A1(1:NDIM,1:M2), &
+            call TBH(N, &
+                    A = A1(1:N,1:M2), &
                     D = BB(1:N), &
                     TauC = CCC(1:2,1:M2), &
-                    BINV = UU(1:NDIM,1:N), &
-                    U = UU2(1:NDIM,1:N), &
+                    BINV = UU(1:N,1:N), &
+                    U = UU2(1:N,1:N), &
                     IACT = DI(1:N), &
                     Irp = DI2(1:N), &
                     GDOT = XX(1:M2), &
@@ -166,7 +165,7 @@ module altayPancake
                 ! Second call of Simplex (relaxed constraints)
                 if (IPR == 2 .and. NLIST == 1) write(IMP,401)
  401            format (' Second call of TBH')
-                call TBH(N,N, &
+                call TBH(N, &
                          A = A1(1:N,1:M12), &
                          D = BB(1:N), &
                          TauC = CCC(1:2,1:M2), &
