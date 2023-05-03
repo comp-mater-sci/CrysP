@@ -20,21 +20,21 @@ module altayTBH
 
         integer, intent(in) :: NDIM,&  !< number of rows in arrays, must not < N
                                N,&     !< # of independent Taylor equations,N=5, except for cluster models
-                               IACT(NDIM) ! < indices of active slip systems: first guess
+                               IACT(N) ! < indices of active slip systems: first guess
         real(dp), intent(in) :: A(:,:), &  !< coefficient matrix of Taylor equations, second dim is #Nslip
-                                D(NDIM), &    !< right-hand side of Taylor equations=imposed strain rate
+                                D(N), &    !< right-hand side of Taylor equations=imposed strain rate
                                 BINV(NDIM,N), &
                                 TauC(2,size(A,2))
         logical :: bas(size(A,2)) ! bas (logical TRUE=belongs to basis)
-        real(dp), intent(out) :: U(NDIM,N), GDOT(size(A,2)),SIG(NDIM),TauR(size(A,2)),DTAU(size(A,2))
-        integer, intent(out) :: Irp(NDIM) !< indices of active slip systems
+        real(dp), intent(out) :: U(NDIM,N), GDOT(size(A,2)),SIG(N),TauR(size(A,2)),DTAU(size(A,2))
+        integer, intent(out) :: Irp(N) !< indices of active slip systems
 
         real(dp) :: Aprime(NDIM), & !< column of U * A
-                    Trp(NDIM), &    !< resolved shear stress on basis systems
+                    Trp(N), &    !< resolved shear stress on basis systems
                     UU(NDIM,N),&    !< copy of inverse of basis
                     CUst(NDIM),&    !< compact storage of U* (only one column)
-                    DD(NDIM), &     !< copy of strain rates in some basis
-                    DACC(N)         !< final slip rates, for the slip systems indexed in Irp
+                    DD(N), &        !< copy of strain rates in some basis
+                    Dacc(N)         !< final slip rates, for the slip systems indexed in Irp
         real(dp), parameter :: TOL=1.0e-10_dp
 
         integer :: i,k,iter,jn,in
@@ -47,11 +47,9 @@ module altayTBH
         Irp=IACT
         bas=.FALSE.
         TAuR=0.0
-        do i=1,N
-            bas(Irp(i))=.TRUE.
-        enddo
+        bas(Irp)=.TRUE.
         ! Calculation of slip rates in basis
-        Dacc = matmul(U(1:N,1:N),D(1:N))
+        Dacc = matmul(U(1:N,1:N),D)
         ! Calculation of stress, using generalised Schmid law
         do i=1,N
            X=Dacc(i)
@@ -66,9 +64,9 @@ module altayTBH
             if (iter > 50) then
                 RCM_RAISE(1,'TBH','Too many iterations.',RCM_RTN)
             endif
-            SIG(1:N) = matmul(Trp(1:N), U(1:N,:))
+            SIG = matmul(Trp, U(1:N,:))
             ! Calculation of resolved shear stress
-            TauR = matmul(SIG(1:N), A(1:N,:))
+            TauR = matmul(SIG, A(1:N,:))
 
 !           Search for most severly overstressed slip system
             DT=0.0d0
@@ -134,9 +132,7 @@ module altayTBH
         enddo
         ! Solution was found.
         Gdot=0.0
-        do i=1,N
-            Gdot(Irp(i))=Dacc(i)
-        enddo
+        Gdot(Irp)=Dacc
     end subroutine
 
     subroutine Ust(C,B,CUst,in,N,M3,NDIM)
