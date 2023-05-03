@@ -38,7 +38,7 @@ module altayTBH
         real(dp), parameter :: TOL=1.0e-10_dp
 
         integer :: i,k,iter,jn,in
-        real(dp) :: x,dt,y,z1,z2,zr,gmin
+        real(dp) :: x,dt,zr,gmin
 
         if (N > NDIM) then
             RCM_RAISE(1,'TBH','Bad input: N>NDIM',RCM_RTN)
@@ -72,15 +72,14 @@ module altayTBH
             DT=0.0d0
             jn=0
             do i=1,size(A,2)
-                Y=merge(TauR(i)-Tauc(1,i),-TauR(i)-Tauc(2,i),TauR(i)>=0.0_dp)
-                if (abs(Y) < TOL) then
-                    Y=0.0d0
+                DTAU(i)=merge(TauR(i)-Tauc(1,i),-TauR(i)-Tauc(2,i),TauR(i)>=0.0_dp)
+                if (abs(DTAU(i)) < TOL) then
+                    DTAU(i)=0.0d0
                     TauR(i)=merge(Tauc(1,i),-Tauc(2,i),TauR(i)>=0.0_dp)
                 endif
-                if (abs(Y-DT) < TOL) Y=DT
-                DTAU(i)=Y
-                if (bas(i) .or. (abs(TauR(i)) < TOL) .or. (Y <= DT)) cycle
-                DT=Y
+                if (abs(DTAU(i)-DT) < TOL) DTAU(i)=DT
+                if (bas(i) .or. (abs(TauR(i)) < TOL) .or. (DTAU(i) <= DT)) cycle
+                DT=DTAU(i)
                 jn=i
             enddo
             if (jn == 0) exit ! There is no overstressed slip system
@@ -90,34 +89,31 @@ module altayTBH
             Aprime(1:N) = matmul(U(1:N,:), A(1:N,jn))
             in=0
             do i=1,N
-                Z1=Aprime(i)
-                if (abs(Z1) < TOL) cycle
+                if (abs(Aprime(i)) < TOL) cycle
                 ZR=TauR(Irp(i))
                 if (abs(ZR) < TOL) then
                     ZR=Dacc(i)
                     if (abs(Zr) < TOL) cycle
                 endif
-                ZR=ZR*Z1
-                Z2=Dacc(i)/Z1
+                ZR=ZR*Aprime(i)
                 if (TauR(jn) > 0.0d0) then
-                    if (ZR >= 0.0_DP .and. (in == 0 .or. Z2 < Gmin)) then
+                    if (ZR >= 0.0_DP .and. (in == 0 .or. Dacc(i)/Aprime(i) < Gmin)) then
                         in=i
-                        Gmin=Z2
+                        Gmin=Dacc(i)/Aprime(i)
                    endif
                 else
-                    if (ZR <= 0.0_DP .and. (in == 0 .or. Z2 > Gmin)) then
+                    if (ZR <= 0.0_DP .and. (in == 0 .or. Dacc(i)/Aprime(i) > Gmin)) then
                         in=i
-                        Gmin=Z2
+                        Gmin=Dacc(i)/Aprime(i)
                     endif
                 endif
             enddo
             if (in == 0) then
                 RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
             endif
-            Z1=Aprime(in)
             CUst(1:N)=-Aprime(1:N)
             CUst(in)=1.0d0
-            CUst(1:N)=CUst(1:N)/Z1
+            CUst(1:N)=CUst(1:N)/Aprime(in)
             UU=U
             call Ust(C=U,B=UU,Cust=CUst,in=in,N=N,M3=N,NDIM=NDIM)
             ! Updating of Dacc
