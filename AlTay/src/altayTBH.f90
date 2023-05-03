@@ -7,7 +7,7 @@ module altayTBH
     contains
 
 !   solve Taylor-Bishop-Hill for one crystallite. Stresses and strain rates are to be represented  by vectors
-    subroutine TBH(NDIM,N,M,A,D,TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,FakM,TauR,bas,DTAU)
+    subroutine TBH(NDIM,N,M,A,D,TauC,BINV,U,IACT,Irp,Dacc,GDOT,SIG,TauR,bas,DTAU)
 !     input          TauC=critical resolved shear stresses (all Tauc>0 )
 !                     first row:  for positive slip, second row: for negative slip
 !     input          BINV=First guess of inverse of basis, corresp. with IACT
@@ -16,7 +16,6 @@ module altayTBH
 !     output         Dacc=final slip rates, for the slip systems indexed in Irp
 !     output         GDOT=slip rates
 !     output         SIG=stress
-!     output         FakM=plastic work  (stress*imposed strain rate)
 !     output         TauR (resolved shear stress)
 !     workspace      bas (logical TRUE=belongs to basis)
 !     output         DTAU=abs(TAUR)-TAUC
@@ -30,7 +29,7 @@ module altayTBH
                                 BINV(NDIM,N), &
                                 TauC(2,M)
         logical :: bas(M) !< MD: this is "workspace" from pancake and has the 'save' attribute. Might be the reason for strange behavior
-        real(dp), intent(out) :: U(NDIM,N), Dacc(NDIM),GDOT(M),SIG(NDIM),TauR(M),DTAU(M),FakM
+        real(dp), intent(out) :: U(NDIM,N), Dacc(NDIM),GDOT(M),SIG(NDIM),TauR(M),DTAU(M)
         integer, intent(out) :: Irp(NDIM) !< indices of active slip systems
 
         real(dp) :: Aprime(NDIM), & !< column of U * A
@@ -70,8 +69,6 @@ module altayTBH
                 RCM_RAISE(1,'TBH','Too many iterations.',RCM_RTN)
             endif
             SIG(1:N) = matmul(Trp(1:N), U(1:N,:))
-            ! Calculation of Taylor factor
-            FakM=sum(SIG(1:N)*D(1:N))
             ! Calculation of resolved shear stress
             TauR = matmul(SIG(1:N), A(1:N,:))
 
