@@ -86,7 +86,6 @@ module altaySimul
                    NRL,&         !< number of relaxations
                    laml
         integer :: IOR,ISTP,NBLOC,NPOINT, info, NFILE, NFILE0, NPEBPx,NMSSx,NSTP,i,j,l,LAML1,ifil4,ITW
-        logical :: SWRLX(3)
         real(dp) :: TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),SHsam(3,3),Ssam(3,3),RHOSsa(3,3), &
                     CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2),fi1,PHI,fi2,TRF(3,3),C1(3,3),C2(3,3),GEWF, &
                     GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
@@ -122,9 +121,6 @@ module altaySimul
         NMSSx= NFILE0*NMSS    ! control "MSS" (effective value)
 
         NSTP     = astate%simulCalls(astate%this)%input%nsteps
-        swrlx(1) = astate%simulCalls(astate%this)%input%rlx1
-        swrlx(2) = astate%simulCalls(astate%this)%input%rlx2
-        swrlx(3) =.false.
         RCM_GUARD
         ! Output the current texture
         if (NFILE == 1) call CURwriteBlock(IMP1,info)
@@ -242,7 +238,7 @@ module altaySimul
                 !             - should not perform any computation
                 !             - has to output the result of the second crystal found
                 !               during the previous computation.
-                call TAYLOR3(Ssam,RHOSsa,SWRLX,TRF,GEWF,IOR,ISTP,NBLOC,TRFb,GMMab,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
+                call TAYLOR3(Ssam,RHOSsa,TRF,GEWF,IOR,ISTP,NBLOC,TRFb,GMMab,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
                 RCM_GUARD
 
                 if(laml == 1) then

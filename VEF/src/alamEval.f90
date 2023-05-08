@@ -76,7 +76,6 @@ contains
                   input%full_model = this%full_model
                   input%do_output_init = .false.
                   input%do_output_final = .false.
-                  call setStepType(input,acnf%model_id,info)
             end associate
             ! Call the simulation
             call runSteps(astate,info)

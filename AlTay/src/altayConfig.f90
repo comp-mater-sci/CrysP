@@ -83,7 +83,6 @@ module altayConfig
         !> \remark This flag takes effect if outputConfig::nfile is non-zero. \sa outputConfig::nfile
         logical                 :: do_output_final = .false.
         integer                 :: nsteps = 1                    !< Number of steps per call
-        logical                 :: rlx1 = .true., rlx2 = .true.  !< Selection of relaxations
         real(dp),dimension(3,3) :: dgf  = 0.D0                   !< Deformation gradient tensor to be imposed. (MB: this is rather a velocity gradient.)
     end type
 
@@ -135,7 +134,7 @@ module altayConfig
         !> Acceptable values depend on availability of CRSS (aka TAUC) hardening models
         !> that are implemented in the code.
         !> See module altayHard for details about available hardening laws.
-        integer                 :: HardLawID    
+        integer                 :: HardLawID
         type(CRSS)              :: crss_ratios           !< Initial values of CRSS ratios
         type(VoceConfig)        :: VoceCnf               !< Parameters of Voce hardening law.
         type(SwiftKConfig)      :: SwiftKCnf             !< Parameters of Swift hardening law ('engineering-type')
@@ -178,25 +177,6 @@ module altayConfig
 
 
 contains
-
-    !> Configure the stp object for using selected model type (FCTaylor, ALAMEL).
-    subroutine setStepType(stp,modelId,info)
-        type(simulStepInputData),intent(inout)    :: stp
-        integer,intent(in)                        :: modelId
-        integer,intent(out)                       :: info
-
-        info = 0
-        select case(modelId)
-        case(modelFCTaylor)
-            stp%rlx1 = .false.
-            stp%rlx2 = .false.
-        case(modelAlamel)
-            stp%rlx1 = .true.
-            stp%rlx2 = .true.
-        case default
-            info = -1
-        end select
-    end subroutine
 
     !> Configure the cnf object for using selected model type (FCTaylor, ALAMEL).
     subroutine setModelType(cnf,modelId,info)
