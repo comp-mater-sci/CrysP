@@ -6,7 +6,6 @@ use,intrinsic :: iso_fortran_env, only: error_unit,output_unit
 use criUncomment
 use criConfigReader
 use criMathUtils
-use criAlgorithm, only: optionalDefault
 use criPath, only: max_pathlen, splitExt
 use criLinearMap
 use dmcAbstractModule
@@ -19,6 +18,7 @@ use hardening_model_dsh, only: readpar
 use logging
 use altaySub, only: initAltay, finalizeAltay
 use criPath
+use commonUtils
 
 implicit none
 private
@@ -100,7 +100,6 @@ private
 contains
 
       integer function BasicModule_initialize(this) result(info)
-      use commonUtils
       class(BasicModule),intent(inout)          :: this
       !
       integer :: ierr

@@ -5,7 +5,6 @@ use criPath
 use criMathUtils
 use criRange
 use criNumerics
-use criAlgorithm
 use criLinearMap
 use criConfigReader
 use commonConfig
@@ -13,6 +12,7 @@ use dmcUtils, only: display_unit
 use dmcStressDrivenEvolutionModule
 use dmcIncrementationControl
 use dmcResultFileOutput
+use commonUtils
 implicit none
 
     public :: EWCModule
@@ -329,11 +329,11 @@ contains
         ! Make the headers
         CHOOSE(label_str, optionalDefault(use_work_levels,.false.), 'S|W=', 'S|eps_vM=')
         allocate(header_columns(n_columns))
-        header_columns(1) = centered('theta')
+        header_columns(1) = 'theta'
         do i = 1, n_columns-1
             ! beware: G10 is OK as long as 10 < output_column_width
-            tmp_str = trim(label_str) // trim(adjustl(tostring_double(vLevels(i), output_column_width, fmt='(G10.4)')))
-            header_columns(i+1) = centered(tmp_str)
+            tmp_str = trim(label_str) // trim(adjustl(tostring(vLevels(i))))
+            header_columns(i+1) = tmp_str
         enddo
         !
         info = writeResultFile(iounit, results, header_columns, [output_column_width])

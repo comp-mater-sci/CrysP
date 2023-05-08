@@ -4,7 +4,6 @@
 !> Yield locus calculations
 module dmcYld
 use definitions
-use criAlgorithm
 use criRange
 use criMathUtils
 use criUncomment, only: readValue
@@ -12,6 +11,8 @@ use dmcYLPResult
 use dmcUtils
 use commonConfig
 use dmcStressDrivenModule
+use commonUtils
+
 implicit none
 
     public YldModule
@@ -284,9 +285,9 @@ contains
         info = VEF_ERROR
         ! Write the header
         if (optionalDefault(write_header,.false.)) then
-            write(ounit,fmt=700,iostat=ierr) (centered(i,column_width),  i = 1, ncolumns)
+            write(ounit,fmt=700,iostat=ierr) (toString(i), i = 1, ncolumns)
             if (ierr /= 0) return
-            write(ounit,fmt=701,iostat=ierr) (centered(column_labels(i)),i = 1, ncolumns)
+            write(ounit,fmt=701,iostat=ierr) (column_labels(i), i = 1, ncolumns)
             if (ierr /= 0) return
         endif
         !
