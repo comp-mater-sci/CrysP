@@ -15,59 +15,8 @@ module parameters
         private
         character(:), allocatable :: name
         integer :: type
-        character(:), allocatable :: value
+        character, allocatable :: value(:)
     end type Parameter
-
-    !Getter for value buffer
-    interface assignment(=)
-        module procedure get_val_int,  &
-                         get_val_real, &
-                         get_val_string
-    end interface assignment(=)
-
-    !Setter for value buffer, called with a list of parameters and the name and value of the parameter to be set.
-    interface parameter_set
-        module procedure set_val_int,  &
-                         set_val_real, &
-                         set_val_string
-    end interface parameter_set
-
-    !Find the parameter matching a given name in a list of parameters.
-    interface operator(.find.)
-        module procedure parameter_find_by_name 
-    end interface operator(.find.)
-
-    !Calculate difference between value buffers of 2 parameters or a parameter and a (real) constant
-    !Throws exception if at least 1 of the given parameters is not of numeric type.
-    interface operator(-)
-        module procedure parameter_difference,     &
-                         parameter_difference_real
-    end interface operator(-)
-
-    !Determine if parameter is greater than another parameter or a constant.
-    !Throws exception if at least 1 of the given parameters is not of numeric type.
-    interface operator(>)
-        module procedure parameter_gt,     &
-                         parameter_gt_real
-    end interface operator(>)
-    
-    !Analogous to operator(>)
-    interface operator(<)
-        module procedure parameter_lt,     &
-                         parameter_lt_real
-    end interface operator(<)
-
-    !Analogous to operator(>)
-    interface operator(>=)
-        module procedure parameter_gteq,     &
-                         parameter_gteq_real
-    end interface operator(>=)
-
-    !Analogous to operator(>)
-    interface operator(<=)
-        module procedure parameter_lteq,     &
-                         parameter_lteq_real
-    end interface operator(<=)
 
     interface
         !Initialize parameter
@@ -77,93 +26,79 @@ module parameters
             character(*), intent(in), optional :: param_value
         end function parameter_init
     
-        !assignment(=)
-        module subroutine get_val_int(val, param)
-            integer, intent(out) :: val 
+        !Getter for value buffer
+        module recursive subroutine get_val(val, param)
+            class(*), intent(inout) :: val 
             type(Parameter), intent(in) :: param
         end subroutine 
-        module subroutine get_val_real(val, param)
-            real(dp), intent(out) :: val 
-            type(Parameter), intent(in) :: param
-        end subroutine 
-        module subroutine get_val_string(val, param)
-            character(:), allocatable, intent(out) :: val 
-            type(Parameter), intent(in) :: param
+                
+        !Setter for value buffer, called with a list of parameters and the name and value of the parameter to be set.
+        module subroutine set_val(params, name, val)
+            type(Parameter), allocatable, intent(inout) :: params(:)
+            character(*), intent(in) :: name
+            class(*), intent(in) :: val 
         end subroutine 
         
-        !parameter_set
-        module subroutine set_val_int(params, name, val)
-            type(Parameter), allocatable, intent(inout) :: params(:)
-            character(*), intent(in) :: name
-            integer, intent(in) :: val 
-        end subroutine 
-        module subroutine set_val_real(params, name, val)
-            type(Parameter), allocatable, intent(inout) :: params(:)
-            character(*), intent(in) :: name
-            real(dp), intent(in) :: val 
-        end subroutine 
-        module subroutine set_val_string(params, name, val)
-            type(Parameter), allocatable, intent(inout) :: params(:)
-            character(*), intent(in) :: name, &
-                                        val
-        end subroutine 
-
-        !operator(.find.)
+        !Find the parameter matching a given name in a list of parameters.
         module function parameter_find_by_name(params, name) result(param)
             type(Parameter), allocatable, intent(in) :: params(:)
             character(*), intent(in) :: name
             type(Parameter) :: param
         end function 
 
-        !operator(-)
-        module pure real(dp) function parameter_difference(param1, param2) result(difference)
-            type(Parameter), intent(in) ::  param1, &
-                                            param2
-        end function 
-        module pure real(dp) function parameter_difference_real(param, num) result(difference)
+        !Calculate difference between value buffers of 2 parameters or a parameter and a (real) constant
+        !Throws exception if at least 1 of the given parameters is not of numeric type.
+        module pure real(dp) function parameter_difference(param, arg) result(difference)
             type(Parameter), intent(in) :: param
-            real(dp), intent(in)        :: num
-        end function 
-
-        !operator(>)
-        module pure logical function parameter_gt(param1, param2) result(gt)
-            type(Parameter), intent(in) ::  param1,  &
-                                            param2
-        end function 
-        module pure logical function parameter_gt_real(param, num) result(gt)
-            type(Parameter), intent(in) ::  param
-            real(dp), intent(in)        ::  num
+            class(*), intent(in)        :: arg
         end function 
         
-        !operator(<)
-        module pure logical function parameter_lt(param1, param2) result(lt)
-            type(Parameter), intent(in) ::  param1,  &
-                                            param2
-        end function parameter_lt
-        module pure logical function parameter_lt_real(param, num) result(lt)
-            type(Parameter), intent(in) ::  param
-            real(dp), intent(in)        ::  num
+        !Determine if parameter is greater than another parameter or a constant.
+        !Throws exception if at least 1 of the given parameters is not of numeric type.
+        module pure logical function parameter_gt(param, arg) result(gt)
+            type(Parameter), intent(in) :: param
+            class(*), intent(in)        :: arg
         end function 
-        
-        !operator(>=)
-        module pure logical function parameter_gteq(param1, param2) result(gteq)
-            type(Parameter), intent(in) ::  param1,  &
-                                            param2
+        !Analogous to parameter_gt
+        module pure logical function parameter_gteq(param, arg) result(gteq)
+            type(Parameter), intent(in) :: param
+            class(*), intent(in)        :: arg
         end function 
-        module pure logical function parameter_gteq_real(param, num) result(gteq)
-            type(Parameter), intent(in) ::  param
-            real(dp), intent(in)        ::  num
+        !Analogous to parameter_gt
+        module pure logical function parameter_lt(param, arg) result(lt)
+            type(Parameter), intent(in) :: param
+            class(*), intent(in)        :: arg
         end function 
+        !Analogous to parameter_gt
+        module pure logical function parameter_lteq(param, arg) result(lteq)
+            type(Parameter), intent(in) :: param
+            class(*), intent(in)        :: arg
+        end function 
+    end interface
 
-        !operator(<=)
-        module pure logical function parameter_lteq(param1, param2) result(lteq)
-            type(Parameter), intent(in) ::  param1,  &
-                                            param2
-        end function 
-        module pure logical function parameter_lteq_real(param, num) result(lteq)
-            type(Parameter), intent(in) ::  param
-            real(dp), intent(in)        ::  num
-        end function
+    interface assignment(=)
+        module procedure get_val
+    end interface
+
+    interface operator(.find.)
+        module procedure parameter_find_by_name 
+    end interface
+
+    interface operator(-)
+        module procedure parameter_difference
+    end interface
+
+    interface operator(>)
+        module procedure parameter_gt
+    end interface
+    interface operator(<)
+        module procedure parameter_lt
+    end interface
+    interface operator(>=)
+        module procedure parameter_gteq
+    end interface
+    interface operator(<=)
+        module procedure parameter_lteq
     end interface
 end module parameters
 
@@ -178,7 +113,7 @@ contains
 
     module procedure parameter_init
         character(*), parameter :: PROC_NAME = 'parameter_init'
-        character(:), allocatable :: buffer 
+        character, allocatable :: buffer(:) 
 
         if (present(param_value)) buffer = param_value
 
@@ -188,12 +123,20 @@ contains
         param = Parameter(param_name, param_type, buffer)
     end procedure parameter_init
 
-    !>Throw an exception if someone wants to assign or read a value of the wrong type
-    subroutine check_type(param, t)
+   subroutine check_type(param, val)
         type(Parameter), intent(in) :: param
-        integer, intent(in) :: t
-        if (param%type /= t) &
-            call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Value does not conform with parameter type')
+        class(*), intent(in) :: val
+
+        select type(val)
+            type is (integer)
+                if (param%type == TYPE_INTEGER) return
+            type is (real(DP))
+                if (param%type == TYPE_REAL) return
+            type is (character(*))
+                if (param%type == TYPE_STRING) return
+        end select
+
+        call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Value does not conform with parameter type')
     end subroutine check_type
 
     subroutine search_parameter_list(params, name, param, ind)
@@ -225,49 +168,26 @@ contains
         call search_parameter_list(params, name, param, ind)
     end function find_index 
 
-
     module procedure parameter_find_by_name
         integer :: ind
 
         call search_parameter_list(params, name, param, ind)
     end procedure parameter_find_by_name
 
-
-    module procedure get_val_int
-        call check_type(param, TYPE_INTEGER)
+    module procedure get_val
+        call check_type(param, val)
         val = transfer(param%value, val)
     end procedure 
-    module procedure get_val_real
-        call check_type(param, TYPE_REAL)
-        val = transfer(param%value, val)
-    end procedure 
-    module procedure get_val_string
-        call check_type(param, TYPE_STRING)
-        val = param%value
-    end procedure 
+    
+    module procedure set_val
+        integer :: ind
+        character, allocatable :: buffer(:)
+        
+        ind = find_index(params, name)
+        call check_type(params(ind), val)
 
-    module procedure set_val_int
-        integer :: ind
-        character(4), parameter :: mold = '1234'
-        
-        ind = find_index(params, name)
-        call check_type(params(ind), TYPE_INTEGER)
-        params(ind)%value = transfer(val, mold)
-    end procedure 
-    module procedure set_val_real
-        integer :: ind
-        character(8), parameter :: mold = '12345678'
-        
-        ind = find_index(params, name)
-        call check_type(params(ind), TYPE_REAL)
-        params(ind)%value = transfer(val, mold)
-    end procedure 
-    module procedure set_val_string
-        integer :: ind
-        
-        ind = find_index(params, name)
-        call check_type(params(ind), TYPE_STRING)
-        params(ind)%value = val
+        allocate(buffer(sizeof(val)))
+        params(ind)%value = transfer(val, buffer)
     end procedure 
 
     pure real(dp) function get_numerical_value(param) result(num)
@@ -286,35 +206,30 @@ contains
     end function get_numerical_value
 
     module procedure parameter_difference
-        difference = get_numerical_value(param1) - get_numerical_value(param2)
-    end procedure 
-    module procedure parameter_difference_real
-        difference = get_numerical_value(param) - num
-    end procedure
+        real(DP) real_val
 
+        select type(arg)
+            type is (integer)
+                real_val = real(arg)
+            type is (real)
+                real_val = arg
+            type is (Parameter)
+                real_val = get_numerical_value(arg)
+        end select
+
+        difference = get_numerical_value(param) - real_val
+    end procedure 
+    
     module procedure parameter_gt
-        gt = ((param1 - param2) > 0._dp)
+        gt = ((param - arg) > 0._DP)
     end procedure     
     module procedure parameter_lt
-        lt = ((param1 - param2) < 0._dp)
+        lt = ((param - arg) < 0._DP)
     end procedure     
     module procedure parameter_gteq
-        gteq = ((param1 - param2) >= 0._dp)
+        gteq = ((param - arg) >= 0._DP)
     end procedure     
     module procedure parameter_lteq
-        lteq = ((param1 - param2) <= 0._dp)
-    end procedure    
-    module procedure parameter_gt_real
-        gt = ((param - num) > 0._dp)
-    end procedure    
-    module procedure parameter_lt_real
-        lt = ((param - num) < 0._dp)
-    end procedure    
-    module procedure parameter_gteq_real
-        gteq = ((param - num) >= 0._dp)
-    end procedure    
-    module procedure parameter_lteq_real
-        lteq = ((param - num) <= 0._dp)
-    end procedure    
+        lteq = ((param - arg) <= 0._DP)
+    end procedure     
 end submodule parameters_imp
-
