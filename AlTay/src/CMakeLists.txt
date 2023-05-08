@@ -21,7 +21,6 @@ criNamedRange.f90
 criNumerics.f90
 criPath.f90
 criRange.f90
-criRuntime.f90
 criUncomment.f90
 altaySimul.f90 
 altayTaylor.f90 

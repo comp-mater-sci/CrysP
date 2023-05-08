@@ -2,7 +2,7 @@
 
 !> Implementation of a basic DMC computational module.
 module dmcBasicModule
-use criRuntime
+use,intrinsic :: iso_fortran_env, only: error_unit,output_unit
 use criUncomment
 use criConfigReader
 use criMathUtils
@@ -18,6 +18,7 @@ use hardening
 use parameters
 use logging
 use altaySub, only: initAltay, finalizeAltay
+use criPath
 
 implicit none
 private

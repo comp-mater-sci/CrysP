@@ -1,7 +1,5 @@
 program alamDMC
-    use definitions
     use logging
-    use criRuntime
     use dmcUtils, only: display_unit
     use dmcBasicModule
     use dmcASR
@@ -10,80 +8,58 @@ program alamDMC
     use dmcYld
     use dmcEWC
     use dmcADP
+
     implicit none
 
-    integer,parameter       :: ncommands = 6
-    integer,parameter       :: Q_id = 1, UDSA_id = 2, ASR_id = 3, YLD_id = 4, EWC_id = 5, ADP_id = 6
-    type(MapItem),dimension(ncommands)  :: command_map =  [ MapItem('QRS',Q_id), MapItem('UDSA',UDSA_id), &
-                                                            MapItem('ASR',ASR_id), MapItem('YLD',YLD_id), &
-                                                            MapItem('EWC',EWC_id), MapItem('ADP',ADP_id) ]
-    ! 2 command line parameters
-    integer,parameter       :: argc_min = 2, argc_max=2
-    character(len=*),parameter    :: prog_desc = 'parameters: command_name configuration_file'
-    integer,parameter       :: command_argpos = 1, & ! command (i.e. module identifier) is 1st argument
-                               configfile_argpos = 2 ! configuration file is 2nd argument
-    character(*), parameter :: MOD_NAME = 'alamDMC', &
-                               PROC_NAME = 'main'
+    character(*),                parameter  ::  MODULE_NAME     = 'alamDMC',                    &
+                                                PROCEDURE_NAME  = 'main'
 
+    integer                                 ::  info,                               &
+                                                cnfunit,                            &
+                                                command_id,                         &
+                                                i
+    character(:), allocatable               ::  moduleName
+    character(256), dimension(0:2)          ::  argv
+    class(BasicModule), pointer             ::  the_module              => null()
 
-    type(commandLine)       :: cmdline ! type commandLine defined in criRuntime.f90
+    !> Process the command line and put the command line arguments into an allocatable array of strings (argv)
+    !> Strictly 2 arguments of max 256 characters allowed.
+    if (command_argument_count() /= 2) call log_error(MODULE_NAME, PROCEDURE_NAME, ERR_IO, '2 arguments required.')
+    do i = 0, 2
+        call get_command_argument(i, length=info)
+        if (info > 256) call log_error(MODULE_NAME, PROCEDURE_NAME, ERR_IO, 'Arguments must be no longer than 256 characters.')
+        call get_command_argument(i, argv(i))
+    enddo
 
-    logical                 :: moduleFound = .false.
-    character(len=32)       :: moduleName = ''
+    !> Open file fpath in the mode given by status, or call finalize on failure.
+    open(newunit=cnfunit, file=trim(argv(2)), status='old', iostat=info)
+    if (info /= VEF_OK) call log_error(MODULE_NAME, PROCEDURE_NAME, ERR_IO, 'Can not open config file')
 
-    class(BasicModule),pointer     :: the_module => null()
-
-    integer                 :: info, ioerr, cnfunit
-
-    character(len=128)  :: progname
-
-    info = VEF_ERROR
-    ioerr = 0
-
-    write(progname,fmt=300)
-
-    cmdline = commandLine(progname,description=prog_desc) ! create commandLine type object with progname and description defined and assign to cmdline
-    call processCommandLine(cmdline,argc_min,argc_max,command_map,command_argpos,info,terminate=.true.) ! call processCommandLine with 7 arguments, last one optional
-    moduleFound = .false.
-    if (info == VEF_OK) moduleFound = resolveId(command_map, cmdline%command_id,moduleName) ! logical function defined in criLinearMap.f90: resolveId(themap,id,name[,index])
-    if ((info /= VEF_OK) .or. (.not. moduleFound)) &
-        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Error in processing the command line')
-    write(display_unit,fmt=300)
-    300 format('AlamDMC')
-
-    ! Configure the module
-    write(display_unit,'(/,A,1X,A,/)') 'Processing config file', trim(cmdline%argv(configfile_argpos)) ! display_unit = output_unit defined in dmcutils.f90
-    cnfunit = openOrDie(fpath=trim(cmdline%argv(configfile_argpos)),status='old')
-
-    info = -1
     ! Create a module of appropriate type:
-    select case(cmdline%command_id)
-        case(Q_id)
+    moduleName = trim(argv(1))
+    select case(moduleName)
+        case('QRS')
             allocate(QRSModule :: the_module)
-        case(UDSA_id)
+        case('UDSA')
             allocate(UDSAModule :: the_module)
-        case(ASR_id)
+        case('ASR')
             allocate(ASRModule :: the_module)
-        case(YLD_id)
+        case('YLD')
             allocate(YldModule :: the_module)
-        case(EWC_id)
+        case('EWC')
             allocate(EWCModule :: the_module)
-        case(ADP_id)
+        case('ADP')
             allocate(ADPModule :: the_module)
+        case default
+            call log_error(MODULE_NAME, PROCEDURE_NAME, ERR_VAL, 'Unknown command.')
     end select
 
-    if (.not. associated(the_module)) &
-        call log_error(MOD_NAME, PROC_NAME, ERR, 'Internal error: cannot instantiate the requested module.')
-
     ! Read the configuration file:
-    info = the_module%ReadConfig(cnfunit) ! type-bound subroutine defined in dmc<module>.f90
+    if (the_module%ReadConfig(cnfunit) /= VEF_OK) call log_error(MODULE_NAME, PROCEDURE_NAME, ERR_IO, 'Could not read module config.')
     close(cnfunit)
-    if (info /= 0) &
-        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Configuration file contains errors.')
 
     ! Initialize the module
-    if (the_module%initialize() /= VEF_OK) &
-        call log_error(MOD_NAME, PROC_NAME, ERR, 'Cannot initialize the module.')
+    if (the_module%initialize() /= VEF_OK) call log_error(MODULE_NAME, PROCEDURE_NAME, ERR, 'Cannot initialize module.')
 
     ! Show general configuration of the multilevel model
     info = the_module%printConfig(display_unit)
@@ -94,11 +70,7 @@ program alamDMC
     write(display_unit,'(A,1X,A,1X,A)',advance='no') 'Execution of module', trim(moduleName), 'finished'
     write(display_unit,'(1X,A)') merge('succesfully.','with errors.',info==0)
 
-    ! Finalize the module
-    info = the_module%finalize()
-
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
+    ! Finalize
+    if (the_module%finalize() /= VEF_OK) call log_error(MODULE_NAME, PROCEDURE_NAME, ERR, 'Error finalizing module.')
 
 end program
