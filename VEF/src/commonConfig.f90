@@ -1,21 +1,20 @@
 !> This module contains subroutines, data structures and common variables
 !> for shared configuration features of all alamDMC modules
 module commonConfig
-use definitions
-implicit none
+      use criRange
+      use criLinearMap
+      use criNamedRange
+      use criUncomment
+      use criConfigReader
+      use definitions
+      use dmcUtils
+      implicit none
 
-      character(len=20),parameter   :: fmtMsg2Msg   = '(A,T35,A)'
-      character(len=20),parameter   :: fmtMsg2Int   = '(A,T35,I4)'
-      character(len=20),parameter   :: fmtMsg2Float = '(A,T35,F12.8)'
 
-      character(len=20),parameter   :: fmtMsg2Any   = '(A,T35)'
-      character(len=20),parameter   :: fmtMsg2Other = '(A,T35,'  ! Note: user is responsible for finishing the format string
-
-contains
+      contains
 
       !> Check exit status of IO operation
       logical function ioStatusOK(ioerr)
-      use dmcUtils
       integer,intent(in) :: ioerr
             ! Status
             if (ioerr /= 0) then
@@ -28,11 +27,6 @@ contains
       !> Factory function that returns an instance appropriate range type depending on
       !> the the input read from the  cnfunit IO unit
       function rangeFromConfig(cnfunit,info) result(inst)
-      use criRange
-      use criLinearMap
-      use criNamedRange
-      use criUncomment
-      use criConfigReader
       class(range_type),pointer     :: inst
       integer,intent(in)            :: cnfunit
       integer,intent(out)           :: info

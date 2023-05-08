@@ -74,7 +74,7 @@ module altayTaylor
     end subroutine
 
     ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
-    subroutine TAYLOR3(SSam,RHOSsa,SWRLX,TRF,GEWF,IOR,ISTP,NBLOC,TRFb,GMMAb,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
+    subroutine TAYLOR3(SSam,RHOSsa,TRF,GEWF,IOR,ISTP,NBLOC,TRFb,GMMAb,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
         integer, intent(in) :: NGR,NRL,laml,IOR,ISTP,NBLOC
         real(dp), intent(out) :: Ssam(3,3),RHOSsa(3,3),GEWF
         real(dp), intent(inout) :: CC(2,96)
@@ -82,14 +82,13 @@ module altayTaylor
         type(DeformationState),intent(in) :: MacroDefState
         integer, intent(in) :: M11
         real(dp), intent(in) :: TRFb(3,3,2),TRF(3,3),GMMAb(2)
-        logical,intent(in) :: SWRLX(3)
 
         real(dp), dimension(3,3):: RHOScrys, RHOAcrys, Scrys
         ! Local stress in crystal reference system:
         integer :: i,j
 
 
-        call pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,SWRLX,IPR,GEWF,A2,MacroDefRate,MacroDefState,NACTIV, &
+        call pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,IPR,GEWF,A2,MacroDefRate,MacroDefState,NACTIV, &
                      SLIPLP,TLXX,TAURLP,INDACT,INDLP,IOR,ISTP,NBLOC,TRFb,GMMAb,NGR,NRL,laml,BB8,CC,M11)
         !Transform stress from local frame (Scrys) to sample frame (Ssam)
         Ssam = rotateSRTensorTo(Scrys,TRF)

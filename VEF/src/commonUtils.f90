@@ -58,7 +58,6 @@ contains
                   input%full_model = .true.
                   input%do_output_init = .false.
                   input%do_output_final = output_flag
-                  call setStepType(input,acnf%model_id,info)
             end associate
             call runSteps(astate,info)
             if (info /= 0) return
