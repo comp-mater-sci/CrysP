@@ -27,7 +27,7 @@ module parameters
         end function parameter_init
     
         !Getter for value buffer
-        module recursive subroutine get_val(val, param)
+        module subroutine get_val(val, param)
             class(*), intent(inout) :: val 
             type(Parameter), intent(in) :: param
         end subroutine 
@@ -176,7 +176,16 @@ contains
 
     module procedure get_val
         call check_type(param, val)
-        val = transfer(param%value, val)
+
+        !Overly verbose, but necessary workaround due to bug in gfortran.
+        select type(val)
+            type is (integer)
+                val = transfer(param%value, val)
+            type is (real(DP))
+                val = transfer(param%value, val)
+            type is (character(*))
+                val = transfer(param%value, val)
+        end select
     end procedure 
     
     module procedure set_val
