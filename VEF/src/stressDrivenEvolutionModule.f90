@@ -5,7 +5,6 @@
 module dmcStressDrivenEvolutionModule
 use definitions
 use criMathUtils
-use criAlgorithm, only: optionalDefault
 use dmcUtils, only: display_unit
 use dmcYLPResult
 use dmcStressDrivenModule
@@ -13,6 +12,7 @@ use dmcIncrementationControl
 use dmcEvolutionOutputRecord
 use xVectorIncrementOutputRecord
 use commonUtils
+
 implicit none
 
 

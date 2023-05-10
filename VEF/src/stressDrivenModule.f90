@@ -4,7 +4,6 @@
 module dmcStressDrivenModule
 use,intrinsic :: iso_fortran_env, only: error_unit
 use definitions
-use criAlgorithm, only: optionalDefault
 use criUncomment, only: readValue
 use criMathUtils, only: vec5D2tens,tens2vec5D
 use alamYLP
@@ -15,6 +14,7 @@ use dmcAlamEvalCached
 use dmcResultTable
 use dmcBasicModule
 use logging
+use commonUtils
 
 implicit none
 

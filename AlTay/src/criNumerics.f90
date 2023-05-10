@@ -1,7 +1,6 @@
 !> Various numerical algorithms
 module criNumerics
     use definitions
-    use criAlgorithm
     implicit none
 
     !> Data needed by barycentric interpolation
@@ -200,4 +199,25 @@ contains
         end function
     end function
 
+      integer pure function lower_bound(array,val) result(res)
+          double precision,dimension(:),intent(in)     :: array
+          double precision,intent(in)                  :: val
+
+          integer :: first,dist,cnt,mid
+
+          first = lbound(array,dim=1)
+          dist = ubound(array,dim=1)     ! full range: [first:first+dist-1]
+
+          do while (dist > 0)
+              cnt = dist / 2
+              mid = first + cnt
+              if (array(mid) < val) then
+                  first = mid + 1
+                  dist = dist - (cnt + 1)
+              else
+                  dist = cnt
+              endif
+          enddo
+          res = first
+      end function
 end module
