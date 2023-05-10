@@ -12,15 +12,16 @@ module altayTBH
     public  ::  tbh
 
     contains
-    
+
 !   solve Taylor-Bishop-Hill for one crystallite. Stresses and strain rates are to be represented  by vectors
     subroutine TBH(A,D,TauC,U,Irp,GDOT,SIG,TauR,DTAU)
         real(dp), intent(in) :: A(:,:)  !< coefficient matrix of Taylor equations, first dim is #Nslip
         real(dp), intent(in) :: D(size(A,1)), &    !< right-hand side of Taylor equations=imposed strain rate
                                 TauC(2,size(A,2))
         logical :: bas(size(A,2)) ! bas (logical TRUE=belongs to basis)
-        real(dp), intent(out) :: U(size(A,1),size(A,1)), GDOT(size(A,2)),SIG(size(A,1)),TauR(size(A,2)),DTAU(size(A,2))
-        integer, intent(out) :: Irp(size(A,1)) !< indices of active slip systems
+        real(dp), intent(out) :: GDOT(size(A,2)),SIG(size(A,1)),TauR(size(A,2)),DTAU(size(A,2))
+        integer, intent(inout) :: Irp(size(A,1)) !< indices of active slip systems
+        real(dp), intent(inout) :: U(size(A,1),size(A,1))
 
         real(dp) :: Aprime(size(A,1)), & !< column of U * A
                     Trp(size(A,1)), &    !< resolved shear stress on basis systems
@@ -43,8 +44,8 @@ module altayTBH
            if (abs(X) < TOL) X=dot_product(A(:,Irp(i)),D)
            Trp(i) = merge(Tauc(1,Irp(i)),-Tauc(2,Irp(i)),X>=0.0_dp)
         enddo
-       
-        iter = 0 
+
+        iter = 0
         do
             iter = iter + 1
             if (iter > 50) &
@@ -122,7 +123,7 @@ module altayTBH
         integer                 :: i
         real(DP)                :: inv_basis_vec_at_index, &
                                    prod
-        
+
         inv_basis_vec_at_index = inv_basis_vec(index)
 
         do i=1,size(new_vec)
