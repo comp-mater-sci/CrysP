@@ -110,9 +110,7 @@ module altayTBH
         enddo
         ! Solution was found.
         Gdot = 0._DP
-        do i=1,size(A,1)
-            Gdot(Irp(i)) = Dacc(i)
-        enddo
+        Gdot(Irp) = Dacc
     end subroutine tbh
 
     !>Replace basis vector in single vector of transpose of basis.

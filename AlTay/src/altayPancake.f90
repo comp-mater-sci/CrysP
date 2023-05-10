@@ -119,9 +119,8 @@ module altayPancake
                 UU(L1+1:L1+5,L1+1:L1+5)=B
             enddo
             if (NRL /= 0) CCC(1:2,M2+1:M12)=GETAL
-
-                ! The coefficient of the relaxations is set to a very large number
-                ! in order to suppress the relaxations in a first call of the TBH program
+            ! The coefficient of the relaxations is set to a very large number
+            ! in order to suppress the relaxations in a first call of the TBH program
             ! Full constraints calculation
             ! UITVOEREN VAN DE SIMPLEX-SUBROUTINE
             if (IPR == 2 .and. NLIST == 1) then
