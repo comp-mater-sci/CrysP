@@ -5,7 +5,6 @@
 module dmcQRS
 use criMathUtils
 use criRange
-use criAlgorithm
 use criUncomment, only: readValue
 use dmcYLPResult
 use dmcUtils

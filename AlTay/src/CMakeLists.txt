@@ -13,7 +13,6 @@ list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
 list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
 
 add_library(${libaltay} STATIC
-criAlgorithm.f90
 criConfigReader.f90
 criLinearMap.f90
 criMathUtils.f90
