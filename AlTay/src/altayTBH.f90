@@ -4,7 +4,7 @@ module altayTBH
 
     implicit none
 
-    character(*), parameter :: MOD_NAME = 'TBH'
+    character(*), parameter, private :: MOD_NAME = 'TBH'
 
     contains
 
