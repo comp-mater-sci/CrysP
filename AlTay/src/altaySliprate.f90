@@ -1,16 +1,13 @@
-#include "altayRCM.fpp"
-
 module altaySliprate
     use definitions
     use logging
     use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
     use altayMacroKinematic
-    use altayRCM
     use altayAlgorithms
 
     implicit none
     private
-    character(len=*), parameter :: MODULE_NAME = "altaySliprate"
+    character(len=*), parameter :: MOD_NAME = "altaySliprate"
 
     public :: SLIPRAT
     contains
@@ -49,7 +46,6 @@ module altaySliprate
             call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
             if (ineg==0) then
                  call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-                 RCM_GUARD
                  if (NN <= 5) goto 2
             endif
             if (NN>5) then
@@ -69,7 +65,6 @@ module altaySliprate
                          call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
                          if (ineg==0) then
                             call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-                            RCM_GUARD
                          endif
                          J=N0-I1
                          if (J>0) IND(J)=INDACT(J+1)
@@ -84,7 +79,6 @@ module altaySliprate
                                 call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
                                 if (ineg==0) then
                                     call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-                                    RCM_GUARD
                                 endif
                             enddo
                         enddo
@@ -99,7 +93,6 @@ module altaySliprate
                                       call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
                                       if (ineg==0) then
                                           call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-                                          RCM_GUARD
                                       endif
                                     enddo
                                 enddo
@@ -245,7 +238,7 @@ module altaySliprate
         enddo
         if (RES > TOL) then
             ineg=-1
-            call log_trace(MODULE_NAME,'MINSQU', 'RES too large')
+            call log_trace(MOD_NAME,'MINSQU', 'RES too large')
         end if
     end subroutine
 
@@ -257,9 +250,8 @@ module altaySliprate
         real(dp), intent(in) :: SLPR(8), sumsq
 
         NOPL=NOPL+1
-        if (NOPL>NSTOR) then
-            RCM_RAISE(1,'STORE','Too small dimension NSTOR in SLIPRAT',RCM_RTN)
-        endif
+        if (NOPL>NSTOR) &
+            call log_error(MOD_NAME, 'store', ERR_DIMS, 'Too small dimension NSTOR in SLIPRAT')
  100    format (' STORE - increase dimension NSTOR in SLIPRAT,STORE')
         ISTOR(0,NOPL)=NN
         ISTOR(1:NN,NOPL)=IND(1:NN)

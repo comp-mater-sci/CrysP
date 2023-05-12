@@ -1,9 +1,11 @@
-#include "altayRCM.fpp"
 module altayTBH
     use definitions
-    use altayRCM
+    use logging
 
     implicit none
+
+    character(*), parameter :: MOD_NAME = 'TBH'
+
     contains
 
 !   solve Taylor-Bishop-Hill for one crystallite. Stresses and strain rates are to be represented  by vectors
@@ -38,6 +40,8 @@ module altayTBH
         integer :: i,k,iter,jn,in
         real(dp) :: x,dt,zr,gmin
 
+        character(*), parameter :: PROC_NAME = 'TBH'
+
         U=BINV
         Irp=IACT
         bas=.FALSE.
@@ -54,9 +58,9 @@ module altayTBH
         iter=0
         do
             iter=iter+1
-            if (iter > 50) then
-                RCM_RAISE(1,'TBH','Too many iterations.',RCM_RTN)
-            endif
+            if (iter > 50) &
+                call log_error(MOD_NAME, PROC_NAME, ERR, 'Too many iterations.')
+                
             SIG = matmul(Trp, U)
             ! Calculation of resolved shear stress
             TauR = matmul(SIG, A)
@@ -101,9 +105,8 @@ module altayTBH
                     endif
                 endif
             enddo
-            if (in == 0) then
-                RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
-            endif
+            if (in == 0) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'The solution is unbounded.')
             CUst=-Aprime/Aprime(in)
             CUst(in)=1.0d0/Aprime(in)
             UU=U
