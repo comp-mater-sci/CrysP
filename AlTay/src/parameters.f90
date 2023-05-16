@@ -104,8 +104,8 @@ module parameters
         end subroutine 
         module subroutine set_val_string(params, name, val)
             type(Parameter), allocatable, intent(inout) :: params(:)
-            character(*), intent(in)                    :: name
-            character(:), allocatable, intent(in)       :: val
+            character(*), intent(in) :: name, &
+                                        val
         end subroutine 
 
         !operator(.find.)
