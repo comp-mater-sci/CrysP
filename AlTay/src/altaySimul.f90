@@ -19,7 +19,7 @@ module altaySimul
 
     real(dp), private :: HGAMTOT,& !< homogenized slip accumulated over calls
         XM(5,96)
-    integer, private :: M11,NFILE1,KOST,NFILTW
+    integer, private :: M11,NFILE1,NFILTW
     integer, allocatable :: seed(:)
 
 
@@ -43,7 +43,6 @@ module altaySimul
             call random_seed(put=seed)
         endif
         NGR    = acnf%simul_init%NGR
-        KOST   = acnf%hardening%HardLawID
 
         NLIST  = acnf%output_config%NLIST   ! control "output listing"
         NFILE1 = acnf%output_config%NFILE   ! control "CUR"
@@ -124,12 +123,6 @@ module altaySimul
         RCM_GUARD
         ! Output the current texture
         if (NFILE == 1) call CURwriteBlock(IMP1,info)
-#if !defined(INTERMEDIATEBPM_DISABLED)
-        select case(KOST)
-            case(HARDENING_BP,HARDENING_PEBP_LOOP,HARDENING_PEBP_SCREW)
-                if (NPEBPx == 1) info = KS_writeState(IMP4)
-        endselect
-#endif
         HGAMCALL = 0.D0
         MEPSCALL = 0.D0
         steploop: DO ISTP=1,NSTP
@@ -267,11 +260,6 @@ module altaySimul
                 HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s
                 GMM1 = GMM0 + GMMdot !Step time here implicitly assumed to be 1.0s
                 Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
-                select case(KOST)
-                case(HARDENING_BP,HARDENING_PEBP_LOOP,HARDENING_PEBP_SCREW)
-                        call KS_getSDV(IOR,pebpSDV,info)
-                        pebpSDVavg = pebpSDVavg + pebpSDV * GEWF
-                endselect
                 ! We can choose not to update the texture state
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
                       call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
@@ -297,10 +285,6 @@ module altaySimul
 
             if (NMSSx /= 0) &
                 call writeMSSRecord(IMP5,MEPSCALL,MacroDefState%AccumvMeqStrain_ToStartOfInc, HGAMCALL,HGAMTOT,SHsam,Mavg,srh,info)
-            select case(KOST)
-                case(HARDENING_BP,HARDENING_PEBP_LOOP,HARDENING_PEBP_SCREW)
-                     pebpSDVavg = pebpSDVavg * (1.D0/TOTGEW)
-            endselect
             ! Get the homogenized quantities:
             associate (callout => astate%simulCalls(astate%this)%output)
                 callout%stress_tensor= SHsam

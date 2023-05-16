@@ -1,5 +1,7 @@
 module hardening_model_bp
+    use definitions
     use hardening_model_dsh
+    use parameters
 
     IMPLICIT NONE
 
@@ -27,22 +29,25 @@ module hardening_model_bp
 
 CONTAINS
     
-    subroutine bp_init(this, config)
+    subroutine bp_init(this, params)
         class(HardeningModelBP), intent(inout) :: this
-        type(HardeningData), intent(in) :: config
+        type(Parameter), allocatable, intent(in) :: params(:)
         integer :: s,i
 
-        call dsh_init(this,config)
+        call dsh_init(this, params)
         
         !Calculate "Wall-effectivity"-matrices
         do s=1,24
               do i=1,6
-                eff(s,i)=DOT_PRODUCT(EdgeDir(s,:) , CBBnormal(i,:) )
+                this%eff(s,i) = DOT_PRODUCT(EdgeDir(s,:) , CBBnormal(i,:) )
               end do
             end do
-        effslashb       = eff / P%b
-        alfa_G_b= P%alfa* P%G * P%b
-        alfa_G_b_eff    = alfa_G_b * eff
-        alfa_G_b_ABSeff = ABS(alfa_G_b_eff)
+        this%effslashb       = this%eff / this%b
+        this%alfa_G_b = this%alfa * this%G * this%b
+        this%alfa_G_b_eff    = this%alfa_G_b * this%eff
+        this%alfa_G_b_ABSeff = abs(this%alfa_G_b_eff)
+
     end subroutine bp_init
 END MODULE hardening_model_bp
+
+

@@ -130,13 +130,8 @@ module altayTaylor
 
         call SLIPRAT(M111,96,GAMdot,ior,IPR,SGNN,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
         RCM_GUARD
-        select case(iKOST)
-            case(HARDENING_BP,HARDENING_PEBP_SCREW,HARDENING_PEBP_LOOP)
-                ! Here we explicitly set time increment to the value
-                ! that is implicitly assumed in Pancak2.
-                ddt = 1.D0
-                if (.not. astate%simulCalls(astate%this)%input%keep_state) call KS_updateState(IOR,GAMdot,ddt,info)
-        endselect
+        ddt = 1.D0
+        if (.not. astate%simulCalls(astate%this)%input%keep_state) call KS_updateState(IOR,GAMdot,ddt,info)
         TOTGAMdot=sum(abs(GAMdot(1:M111)))
         if(NLIST == 1) write (IMP,103) ISTP,IOR,fi1,PHI,fi2
 

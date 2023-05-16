@@ -1,8 +1,7 @@
 !> Dispatcher of hardening modelsR
-module Hardening
+module hardening
     use hardening_types
     use altayIOConfig, only: LEC
-    use altayConfig, only: hardeningData
     use definitions
     use parameters
 
@@ -29,10 +28,9 @@ module Hardening
         end function hardening_get_parameters
 
         !> Initialize module from config data object
-        module subroutine  InitModuleAltayHard(config,info)
-            type(hardeningData),intent(in)      :: config
-            integer,intent(out)                 :: info
-        end subroutine 
+        module subroutine hardening_init(params)
+            type(Parameter), allocatable, intent(in)    :: params(:)
+        end subroutine hardening_init
 
         module subroutine hardening_finalize()
         end subroutine hardening_finalize
@@ -50,6 +48,11 @@ module Hardening
             integer, intent(out)                    :: info
         end subroutine getCRSS
         
+        !> Allocate memory to the KS_state array.
+        module integer function KS_initState(norient) result(info)
+            integer,intent(in)  :: norient 
+        end function KS_initState
+
         module subroutine KS_updateState(i,sliprate,deltaT,info)
             integer,intent(in)                  :: i        
             real(dp),intent(in), dimension(24)  :: sliprate 
@@ -57,9 +60,9 @@ module Hardening
             integer,intent(out)                 :: info
         end subroutine KS_updateState
     end interface
-end module Hardening
+end module hardening
 
-submodule(Hardening) Hardening_Imp
+submodule(hardening) hardening_imp
     use hardening_model
     use hardening_model_swift
     use hardening_model_voce
@@ -96,36 +99,10 @@ contains
         params = model%get_parameters()
     end procedure hardening_get_parameters
 
-    !> Initialize module from config data object
-    module procedure InitModuleAltayHard
-        
-        info = 0
-        
-        if (.not. allocated(model)) then
-        select case(config%HardLawID)
-            case(HARDENING_NONE)
-                allocate(HardeningModel::model)
-            case(HARDENING_VOCE)
-                  ! Just for non-hardening and isotropic, Voce-type hardening
-                allocate(HardeningModelVoce::model)
-            case(HARDENING_SWIFT)
-                  ! Swift-K hardening
-                allocate(HardeningModelSwift::model)
-            case(HARDENING_BP)
-                allocate(HardeningModelBP::model)
-            case(HARDENING_PEBP_SCREW)
-                allocate(HardeningModelPEBPScrew::model)
-            case(HARDENING_PEBP_LOOP)
-                allocate(HardeningModelPEBPLoop::model)
-            case default
-                  info = -11
-        end select
-        end if
-
-        call model%init(config)
-
-        HardLawID = config%HardLawID
-    end procedure
+    module procedure hardening_init
+        call model%validate_parameters(params)
+        call model%init(params)
+    end procedure hardening_init
 
     module procedure hardening_finalize
         call model%finalize()
@@ -152,7 +129,7 @@ contains
 
     module procedure getCRSS
         real(dp) :: tau
-        
+       
         select case(HardLawID)
             case(HARDENING_NONE)
                 ! CRSS of all slip systems equal to 1. (& not dependent on crss_ratios)
@@ -167,9 +144,15 @@ contains
         end select
     end procedure getCRSS
 
+    module procedure KS_initState
+        select type(model)
+            class is (HardeningModelDSH)
+                info = dsh_initstate(model, norient)
+        end select 
+    end procedure KS_initState
+
     module procedure KS_updateState
         call model%update(i, deltaT, 0.D0, sliprate)
         info = VEF_OK   
     end procedure KS_updateState
-end submodule Hardening_Imp
-
+end submodule hardening_imp

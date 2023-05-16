@@ -1,4 +1,6 @@
 module hardening_model_pebp_screw
+    use definitions
+    use parameters
     use hardening_model_dsh
     
     IMPLICIT NONE
@@ -44,24 +46,26 @@ module hardening_model_pebp_screw
 
       CONTAINS
 
-        subroutine pebp_screw_init(this, config)
+        subroutine pebp_screw_init(this, params)
             class(HardeningModelPEBPScrew), intent(inout) :: this
-            type(HardeningData), intent(in) :: config
+            type(Parameter), allocatable, intent(in) :: params(:)
             integer :: s,i
 
-            call dsh_init(this,config)
+            call dsh_init(this, params)
             
             !Calculate "Wall-effectivity"-matrices
             do s=1,24
                 do i=1,6
-                    eff(s,i)=DOT_PRODUCT( ScrewDir(s,:) , CBBnormal(i,:) )
+                    this%eff(s,i)=DOT_PRODUCT( ScrewDir(s,:) , CBBnormal(i,:) )
                 end do
             end do
-            effslashb       = eff / P%b
-            alfa_G_b= P%alfa* P%G * P%b
-            alfa_G_b_eff    = alfa_G_b * eff
-            alfa_G_b_ABSeff = ABS(alfa_G_b_eff)
+            this%effslashb  = this%eff / this%b
+            this%alfa_G_b = this%alfa * this%G * this%b
+            this%alfa_G_b_eff = this%alfa_G_b * this%eff
+            this%alfa_G_b_ABSeff = ABS(this%alfa_G_b_eff)
         end subroutine pebp_screw_init
         
         
 END MODULE hardening_model_pebp_screw
+
+

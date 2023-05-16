@@ -66,10 +66,7 @@ contains
         ! Initialize altay modules
         !
         ! Set the data for CRSS calculations
-        call InitModuleAltayHard(cnf%hardening, info)
-        if (info /= VEF_OK) &
-            call log_error(MOD_NAME, PROC_NAME, ERR, 'Cannot initialize hardening law')
-        
+        call hardening_init(cnf%hardening_parameters)
         ! Initialisation of SIMUL
         if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
         info = VEF_ERROR
@@ -87,21 +84,7 @@ contains
         endif
         if (present(errmsg)) errmsg = ''
         ! PEBP model
-        select case(cnf%hardening%HardLawID)
-            case(HARDENING_BP,HARDENING_PEBP_LOOP,HARDENING_PEBP_SCREW)
                 info = KS_initState(size(DFIL))
-                if (info /= VEF_OK) return
-                if (acnf%hardening%PEBPCnf%read_state) then
-                    ! Load state variables
-                    info = KS_openStateFile(IPEBPSTAT,acnf%hardening%PEBPCnf%input_fname, mode='r')
-                    if (info /= VEF_OK) &
-                        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open PEBP state file.')
-                    
-                    info = KS_readState(IPEBPSTAT,acnf%hardening%PEBPCnf%block_id)
-                    if (info /= VEF_OK) &
-                        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot read from PEBP state file.')
-                endif
-        endselect
         ! No need for the slip system definition anymore.
         close(LEC)
         info = VEF_OK
@@ -263,11 +246,6 @@ contains
 
         info = VEF_OK
         if (acnf%output_config%nfile == 1) call CURwriteBlock(IMP1,info)
-        if (info /= 0) return
-        select case(acnf%hardening%HardLawID)
-            case(HARDENING_BP,HARDENING_PEBP_LOOP,HARDENING_PEBP_SCREW)
-                if (acnf%output_config%npebp == 1) info = KS_writeState(IMP4)
-        endselect
         if (info /= 0) return
 
         if ((acnf%output_config%nmss == 1) .and. allocated(astate%simulCalls)) then
