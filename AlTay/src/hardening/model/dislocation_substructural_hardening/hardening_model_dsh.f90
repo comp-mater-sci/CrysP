@@ -116,36 +116,33 @@ module hardening_model_dsh
 
       type(StatVar),allocatable,dimension(:)    :: KS_state ! array of state variables
 
-      interface KS_readState
-            module procedure KS_readState_unit, KS_readState_file
-      end interface
 
     type, public, extends(HardeningModel) :: HardeningModelDSH
         type(StatVar), dimension(:), allocatable    ::  state
         real(dp), dimension(:,:,:), allocatable     ::  crss
-        real(dp)                                    ::  b,                      &   
-                                                        G,                      &   
-                                                        alfa,                   &   
-                                                        f,                      &   
-                                                        tau0,                   &   
-                                                        I,                      &   
-                                                        R,                      &   
-                                                        Iwd,                    &   
-                                                        Rwd,                    &   
-                                                        Rncg,                   &   
-                                                        beta1,                  &   
-                                                        beta2,                  &   
-                                                        Iwp,                    &   
-                                                        Rwp,                    &   
-                                                        Rrev,                   &   
-                                                        R2,                     &   
-                                                        RHOcbSAT,               &   
-                                                        RHOwdSAT,               &   
-                                                        RHOwpSAT,               &   
-                                                        RHOcbMIN,               &   
-                                                        RHOwdMIN,               &   
-                                                        RHOwpMIN,               &   
-                                                        RHOwpLOW,               &   
+        real(dp)                                    ::  b,                      &
+                                                        G,                      &
+                                                        alfa,                   &
+                                                        f,                      &
+                                                        tau0,                   &
+                                                        I,                      &
+                                                        R,                      &
+                                                        Iwd,                    &
+                                                        Rwd,                    &
+                                                        Rncg,                   &
+                                                        beta1,                  &
+                                                        beta2,                  &
+                                                        Iwp,                    &
+                                                        Rwp,                    &
+                                                        Rrev,                   &
+                                                        R2,                     &
+                                                        RHOcbSAT,               &
+                                                        RHOwdSAT,               &
+                                                        RHOwpSAT,               &
+                                                        RHOcbMIN,               &
+                                                        RHOwdMIN,               &
+                                                        RHOwpMIN,               &
+                                                        RHOwpLOW,               &
                                                         alfa_G_b
         real(dp), dimension(24,6)                   ::  eff             = 0.D0, &
                                                         effslashb       = 0.D0, &
@@ -157,7 +154,7 @@ module hardening_model_dsh
         procedure :: init           => dsh_init
         procedure :: update         => dsh_update
         procedure :: get_crss       => dsh_get_crss
-        procedure :: finalize       => dsh_finalize 
+        procedure :: finalize       => dsh_finalize
     end type
 
     public ::   dsh_init, &
@@ -170,7 +167,6 @@ CONTAINS
         class(HardeningModelDSH), intent(in)    :: this
         type(Parameter), allocatable    :: params(:)
 
-        allocate(params(24))
         params = [  parameter_init('n_slip_systems', TYPE_STRING), &
                     parameter_init('b', TYPE_REAL),                 &
                     parameter_init('G', TYPE_REAL),                 &
@@ -190,7 +186,7 @@ CONTAINS
                     parameter_init('R2', TYPE_REAL)]
 
     end function dsh_get_parameters
-        
+
     subroutine dsh_validate_parameters(this, params)
         class(HardeningModelDSH), intent(in)    :: this
         type(Parameter), allocatable, intent(in) :: params(:)
@@ -223,12 +219,12 @@ CONTAINS
             real(dp), intent(in)        ::  min,    &
                                             max
             character(32)               ::  min_str, &
-                                            max_str 
+                                            max_str
             real(dp)                    ::  param_val
             character(*), parameter     ::  PROC_NAME = 'dsh_check_param'
 
             param_val = params .find. name
-            
+
             if (param_val < min .or. param_val > max) then
                 write (min_str, *), min
                 write (max_str, *), max
@@ -244,7 +240,7 @@ CONTAINS
 
         call hardening_model_init(this, params)
         nss = this%nss
-        
+
         InitOK=.TRUE.
 
         this%b          = params .find. 'b'
@@ -263,15 +259,15 @@ CONTAINS
         this%Rwp        = params .find. 'Rwp'
         this%Rrev       = params .find. 'Rrev'
         this%R2         = params .find. 'R2'
-                
-        !change of units if different in params from this (units of this are: MPa; micrometer)      
-        this%b          = this%b    * 1.e6_dp       ![m] -> [um]                                      
-        this%R          = this%R    * 1.e6_dp       ![m] -> [um]                                      
-        this%Rwd        = this%Rwd  * 1.e6_dp       ![m] -> [um]                                      
-        this%Rncg       = this%Rncg * 1.e6_dp       ![m] -> [um]                                                 
-        this%Rwp        = this%Rwp  * 1.e6_dp       ![m] -> [um]                                                 
+
+        !change of units if different in params from this (units of this are: MPa; micrometer)
+        this%b          = this%b    * 1.e6_dp       ![m] -> [um]
+        this%R          = this%R    * 1.e6_dp       ![m] -> [um]
+        this%Rwd        = this%Rwd  * 1.e6_dp       ![m] -> [um]
+        this%Rncg       = this%Rncg * 1.e6_dp       ![m] -> [um]
+        this%Rwp        = this%Rwp  * 1.e6_dp       ![m] -> [um]
         this%Rrev       = this%Rrev * 1.e6_dp       ![m] -> [um]
-        this%R2         = this%R2   * 1.e6_dp       ![m] -> [um]                                      
+        this%R2         = this%R2   * 1.e6_dp       ![m] -> [um]
 
         !Calculate dependent hardening parameters
         this%RHOcbSAT = (this%I)**2 / (this%R)**2
@@ -283,7 +279,7 @@ CONTAINS
         this%RHOwpMIN   = MINfrac   * this%RHOwpSAT
         this%RHOwpLOW   = LOWfrac   * this%RHOwpSAT
     end subroutine dsh_init
-        
+
     subroutine dsh_update(this, grain, time, strain, slip_rates)
         class(HardeningModelDSH), intent(inout)     ::  this
         integer, intent(in)                         ::  grain
@@ -296,7 +292,7 @@ CONTAINS
 
         SVa = this%state(grain)
         call makeinc(this, sva, slip_rates, time, svb, dummy)
-        this%state(grain) = svb 
+        this%state(grain) = svb
     end subroutine dsh_update
 
     function dsh_get_crss(this, grain) result(crss)
@@ -306,7 +302,7 @@ CONTAINS
 
         crss = this%state(grain)%crss
     end function dsh_get_crss
-    
+
     subroutine dsh_finalize(this)
         class(HardeningModelDSH), intent(inout) :: this
         integer :: dummy
@@ -378,17 +374,6 @@ CONTAINS
       !
       end subroutine
 
-      !> Retrieve state-derived variables for the i-th grain.
-      subroutine KS_getSDV(i,SDV,info)
-      integer,intent(in)                              :: i    !< Grain identifier
-      type(StateDerivedVars), intent(out)             :: SDV
-      integer,intent(out)                             :: info !< exit code
-      
-            info = KS_ErrBadDims
-            if (size(KS_state) < i) return
-            call GetStateDerivedVar(KS_state(i),SDV,info)
-      end subroutine
-
       !> Open state file either for reading or writing.
       !>
       !> The function opens the file and, if requested, performs some initialization
@@ -444,65 +429,6 @@ CONTAINS
 200         format(I5)
       !
       end function
-
-      !> Call ReadSVfile and store state variables in ks_state.
-      !> Perform fake reads on the first nblock blocks, where each block corresponds to one snapshot of ks_state.
-    integer function KS_readState_unit(iounit,nblock) result(info)
-      integer,intent(in)                              :: iounit   !< I/O unit number
-      integer,optional,intent(in)                     :: nblock   !< Number of blocks to be skipped
-      !
-      integer :: i, & !< index for loop over ks_state elements
-                 n, & !< number of elements (=grains) in ks_state
-                 nf, & !< number of grains per block in file
-                 tmp, ioerr, &
-                 iblock !< index for loop over blocks (=snapshots)
-      character(len=5) :: tmp_str
-      logical :: is_dummy
-      !
-            info = KS_ErrUninitialized
-            if (.not. allocated(KS_state)) return
-            n = size(KS_state) ! number of grains
-            if (n < 1) return ! stop if ks_state is empty
-            info = KS_ErrIO
-            nf = 0
-            is_dummy = .true. ! set fake read flag to true
-            !
-            do iblock = 0, nblock ! loop over blocks
-                  if (iblock == nblock) is_dummy = .false. ! read number of grains from file and exit if not agree with ks_state
-                  read(iounit,fmt=100,iostat=ioerr) nf
-                  if ((nf /= n) .or. (ioerr /= 0)) return
-                  read(iounit,fmt=110) tmp_str
-                  do i = 1, n ! loop till i=size(ks_state)
-                        read(iounit,fmt=200,iostat=ioerr) tmp
-                        if (ioerr /= 0) return
-                        if (ReadSVfile(iounit,KS_state(i),is_dummy) /= KS_OK) return ! read from iounit into KS_state(i)
-                  enddo
-                  read(iounit,fmt=111,iostat=ioerr) tmp_str
-                  if (.not.is_dummy) exit ! exit do loop if none-fake read took place
-            enddo
-            if ((i > n) .and. (ioerr == 0)) info = KS_OK ! if all went well return success code (ks_ok)
-100         format(I5)
-110         format(A)
-111         format(A)
-200         format(I5)      !
-    end function
-
-    !> Open state file for reading and read state variables of snapshot.
-    !> The snapshot (block) to be read is specified by nblock.
-    integer function KS_readState_file(fname,iounit,nblock,use_header) result(info)
-        character(len=*),intent(in)                     :: fname    !< Filename
-        integer,intent(in)                              :: iounit   !< I/O unit number to be used by the function
-        integer,optional,intent(in)                     :: nblock   !< Number of blocks to be skipped
-        logical,optional,intent(in)                     :: use_header
-      
-        info = KS_openStateFile(iounit,fname,'r',use_header) ! open file for read access ('r')
-        if (info == 0) then
-              info = KS_readState_unit(iounit,nblock)
-        else
-              info = KS_ErrIO
-        endif
-        close(iounit)
-    end function
 
     SUBROUTINE MakeInc(this, SVa,sliprate,deltaT,SVb,iError)
       !This procedure requires as input:
@@ -1047,33 +973,6 @@ CONTAINS
 666   iError = KS_ErrIO !Error in reading from file
       !
       end function ReadHeadSVfile
-
-
-
-      SUBROUTINE GetStateDerivedVar(SV,SDV,iError)
-      TYPE(StatVar),   INTENT(IN)  :: SV
-      !> An object of type StateDerivedVars, which contains state-derived variables calculated from SV
-      TYPE(StateDerivedVars), INTENT(OUT) :: SDV
-      !> Exit code:
-      !> - KS_OK , no error
-      !> - KS_ErrUninitialized, in case this module is not correctly initialized
-      integer,         INTENT(OUT) :: iError
-
-      iError= KS_Error !init
-      if(.NOT.InitOK) then
-            iError = KS_ErrUninitialized
-            return
-      end if
-
-      SDV%rho_CBs     = SV%RHOcb                        * 1.e12_dp !unit conversion micrometer^(-2) -> m^(-2)
-      SDV%rho_CBBs    = sum(    SV%CBB(:)%RHOwd ) /6.D0 * 1.e12_dp !unit conversion micrometer^(-2) -> m^(-2)
-      SDV%rho_polCBBs = sum(abs(SV%CBB(:)%RHOwp)) /6.D0 * 1.e12_dp !unit conversion micrometer^(-2) -> m^(-2)
-      SDV%rho_avg     = (1.D0-1.0_dp)*SDV%rho_CBs + 1.0_dp*(SDV%rho_CBBs+SDV%rho_PolCBBs)
-      !Note: Number of CBBs is 6 (currently hard-coded)
-
-      iError=KS_OK
-
-      END SUBROUTINE GetStateDerivedVar
 
       !> Calculate component-wise sum of two StateDerivedVars objects
       elemental function StateDerivedVar_plus(first,second) result(res)
