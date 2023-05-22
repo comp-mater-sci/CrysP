@@ -192,6 +192,7 @@ contains
     subroutine check_type(param, t)
         type(Parameter), intent(in) :: param
         integer, intent(in) :: t
+        
         if (param%type /= t) &
             call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Value does not conform with parameter type')
     end subroutine check_type

@@ -14,7 +14,7 @@ use commonConfig
 use dmcUtils
 use definitions
 use hardening
-use hardening_model_dsh, only: readpar
+use parameters
 use logging
 use altaySub, only: initAltay, finalizeAltay
 use criPath
@@ -99,27 +99,16 @@ private
 
 contains
 
-      integer function BasicModule_initialize(this) result(info)
+    integer function BasicModule_initialize(this) result(info)
       class(BasicModule),intent(inout)          :: this
-      !
       integer :: ierr
-      !
-
+      
             info = VEF_ERROR
             ! Finish the configuration:
             this%altay%output_config%nfile = merge(1,0,this%output%outputRequest)
             this%altay%output_prefix = trim(this%output%outputPrefix)
             this%altay%jobtitle = trim(this%output%outputPrefix)
-            !
-            if (this%output%outputRequest) then
-                  select case(this%altay%hardening%HardLawID)
-                  case(HARDENING_BP, HARDENING_PEBP_SCREW, HARDENING_PEBP_LOOP)
-                        this%altay%output_config%npebp = 1
-                  case default
-                        this%altay%output_config%npebp = 0
-                  end select
-            endif
-            !
+            
             call initAltay(this%altay,ierr)
             
             if (ierr /= VEF_OK) return
@@ -302,18 +291,15 @@ contains
       logical                       :: use_default_slipsystems
       integer                       :: i
       character(len=max_pathlen) :: root, ext
+      character(:), allocatable :: slip_systems
+      character(5) :: buffer
 
       type(MapItem),dimension(2*2) :: extensions = [MapItem('.smt',TF_SMT), MapItem('.SMT',TF_SMT), &
                                                     MapItem('.cur',TF_CUR), MapItem('.CUR',TF_CUR)]
 
       type(MapItem),dimension(2) :: model_types = [MapItem('ALAMEL', modelAlamel), &
                                                    MapItem('FCTaylor', modelFCTaylor)]
-      type(MapItem),dimension(4) :: slipsystem_types = [MapItem('fcc12', DM_fcc12), &
-                                                        MapItem('bcc24', DM_bcc24), &
-                                                        MapItem('bcc48', DM_bcc48), &
-                                                        MapItem('pre', DM_format_pre)]
-      !
-           info = VEF_ERROR
+           info = ERR_IO
            model_id = -1
            dm_id = -1
             ! Read input texture file name
@@ -351,17 +337,9 @@ contains
                   if (.not. readValue(cnfunit, cnf%slipsystem%input_fname)) return ! read slip system filename
             !
             else ! default slip system definition
-                  if (.not. readKeyword(cnfunit, slipsystem_types, dm_id)) then
-                      write(error_unit,fmt=900) 'Unsupported slip system family.'
-                      info = VEF_ERROR
-                      return
-                  endif
-                  ! Let's map DM_id to a file
-                  call incurSlipsystemFile(dm_id, cnf%slipsystem%input_fname, info)
-                  if (info /= VEF_OK) then
-                        write(error_unit, fmt=930) 'Cannot locate slipsystem file.'
-                        return
-                  endif
+                read(cnfunit, '(A)') buffer
+                slip_systems = buffer 
+                cnf%slipsystem%input_fname = slip_systems // '.pre' 
             endif
             !
             ! Process advanced microstructure characterization
@@ -393,11 +371,13 @@ contains
             endif
             !
             ! Process hardening model section
-            call readHardeningSection(cnfunit, cnf%hardening, info)
+            call readHardeningSection(cnfunit, cnf, info)
             if (info /= VEF_OK) then
                 write(error_unit,fmt=900) 'Cannot read the hardening law section.'
                 return
             endif
+
+            call parameter_set(cnf%hardening_parameters, 'n_slip_systems', slip_systems)
             ! the keyword is mapped to a proper model_id, we can instantly set it.
             call setModelType(cnf,model_id,info)
             if (info /= VEF_OK) return
@@ -409,16 +389,19 @@ contains
       !
       end subroutine
 
-
       !> Read configuration of hardening model from configuration file
-      subroutine readHardeningSection(cnfunit, hardening, info)
-      use altayConfig
+      subroutine readHardeningSection(cnfunit, cnf, info)
       integer,intent(in)                  :: cnfunit
-      type(hardeningData),intent(out)     :: hardening !< structure containing hardening configuration
+        type(AltayConfigData), intent(inout) :: cnf
       integer,intent(out)                 :: info
+        type(Parameter), allocatable :: params(:)
+        integer :: hardening_model_id
+        real(dp) :: tmp(16)
+        character(len=max_pathlen)          :: tmp_fname
+        integer                             :: nparunit, ioerr,i
       !
-      double precision,dimension(5) :: tmp ! Temporary for hardening parameters.
       logical :: use_default_hardening
+        logical :: read_state_dummy
       !
             use_default_hardening = .true.
             if (.not. readValue(cnfunit, use_default_hardening)) then ! read default hardening flag
@@ -426,91 +409,66 @@ contains
                   return
             endif
             if (.not. use_default_hardening) then
-                  ! read hardening law ID
-                  if (.not. readValue(cnfunit, hardening%HardLawID)) return
-                  select case(hardening%HardLawID)
-                  case(HARDENING_NONE)
-                        ! no action needed
-                        info = VEF_OK
+                if (.not. readValue(cnfunit, hardening_model_id)) return
+                params = hardening_get_parameters(hardening_model_id)
+
+                  select case(hardening_model_id)
                   case(HARDENING_VOCE)
-                        ! Read one line
                         if (readValue(cnfunit, tmp(1:5))) then
-                              hardening%VoceCnf = VoceConfig(tmp(1), tmp(2), tmp(3), tmp(4), tmp(5))
+                            call parameter_set(params, 'TIII1', tmp(1))
+                            call parameter_set(params, 'TIIIS', tmp(2))
+                            call parameter_set(params, 'TIVS', tmp(3))
+                            call parameter_set(params, 'THIII1', tmp(4))
+                            call parameter_set(params, 'THT', tmp(5))
                               info = VEF_OK
                         endif
-                  !
                   case(HARDENING_SWIFT)
                         ! Read one line
                         if (readValue(cnfunit, tmp(1:3))) then
-                              hardening%SwiftSCnf = SwiftSConfig(tmp(1),tmp(2), tmp(3))
+                            call parameter_set(params, 'crss0', tmp(1))
+                            call parameter_set(params, 'gamma0', tmp(2))
+                            call parameter_set(params, 'n', tmp(3))
                               info = VEF_OK
                         endif
                   !
-                  case(HARDENING_BP,HARDENING_PEBP_SCREW,HARDENING_PEBP_LOOP)
-#ifdef PEBP_ENABLED
-                        call readPEPBhardening(cnfunit,hardening%HardLawID,hardening%PEBPCnf,info)
-#else
-                        write(error_unit,fmt=900) 'The selected hardening model is not available in your version'
-                        info = VEF_ERROR
-#endif
-                  case default
-                        write(error_unit,fmt=900) 'Unsupported hardening law.'
-                        info = VEF_ERROR
+                  case(HARDENING_BP, HARDENING_PEBP_SCREW, HARDENING_PEBP_LOOP)
+                        if (.not. readValue(cnfunit, tmp_fname)) return ! read BP parameter file name
+                        open(newunit=nparunit,file=tmp_fname,status='old', iostat=ioerr)
+               
+                        if (ioerr /= 0) then
                         return
+                        endif
+
+                        do i=1,16
+                            read(nparunit,fmt=100,err=666,end=666) tmp(i)
+                        end do
+100                     format(F12.5)
+
+                            call parameter_set(params, 'b', tmp(1))
+                            call parameter_set(params, 'G', tmp(2))
+                            call parameter_set(params, 'alfa', tmp(3))
+                            call parameter_set(params, 'f', tmp(4))
+                            call parameter_set(params, 'tau0', tmp(5))
+                            call parameter_set(params, 'I', tmp(6))
+                            call parameter_set(params, 'R', tmp(7))
+                            call parameter_set(params, 'Iwd', tmp(8))
+                            call parameter_set(params, 'Rwd', tmp(9))
+                            call parameter_set(params, 'Rncg', tmp(10))
+                            call parameter_set(params, 'beta1', tmp(11))
+                            call parameter_set(params, 'beta2', tmp(12))
+                            call parameter_set(params, 'Iwp', tmp(13))
+                            call parameter_set(params, 'Rwp', tmp(14))
+                            call parameter_set(params, 'Rrev', tmp(15))
+                            call parameter_set(params, 'R2', tmp(16))
+                        if (.not. readValue(cnfunit, read_state_dummy)) return
                   end select
+                cnf%hardening_parameters = params
             else
-                  info = VEF_OK
+                  cnf%hardening_parameters = hardening_get_parameters(HARDENING_NONE)
             endif
+            
+666         return
 ! message formats
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-      !
-      end subroutine
-
-
-      !> Read configuration of PEBP hardening module.
-      !>
-      !> The current implementation reads the coefficients of the hardening law
-      !> from an external file that is specified in the configuration file. If read_state=True
-      !> the state variables are read for a defined increment (block_id) from a state file specified.
-      subroutine readPEPBhardening(cnfunit,kost,hc,info)
-      use altayConfig
-      integer,intent(in)                  :: cnfunit !< configuration file
-      integer,intent(in)                  :: kost    !< HardLawID
-      type(PEBPConfig),intent(out)        :: hc      !< data type containing the BP model parameters (no state variables); defined in altayConfig.f90
-      integer,intent(out)                 :: info
-      !
-      integer                             :: ioerr
-      character(len=max_pathlen)          :: tmp_fname ! BP parameter file name
-      integer                             :: nparunit  ! IO unit of BP parameter file
-      !
-            info = VEF_ERROR
-            !
-            ! Process PEBP parameter file
-            if (.not. readValue(cnfunit, tmp_fname)) return ! read BP parameter file name
-            ! Open the PEBP parameter file and read its content
-            open(newunit=nparunit,file=tmp_fname,status='old',iostat=ioerr)
-            if (ioerr /= 0) then
-                write(error_unit,fmt=951) trim(tmp_fname)
-                return
-            endif
-            info = ReadPar(nparunit,kost,hc%params) ! read the BP parameter file
-            close(nparunit)
-            if (info /= 0) then
-                write(error_unit,'(A,1X,A,1X,A)') 'Error: Reading of the parameter file',trim(tmp_fname),'failed.'
-                return
-            endif
-            !
-            ! Read PEBP state variable file path and block ID. 3 lines in config file
-            if (.not. readValue(cnfunit, hc%read_state)) return ! read read_state flag; default read_state=.false.
-            if (hc%read_state) then
-                  if (.not. readValue(cnfunit,hc%input_fname)) return ! read state variable file name; default input_fname=''
-                  if (.not. readValue(cnfunit,hc%block_id)) return ! read no. of state blocks to skip in state file; default block_id=0
-            endif
-            !
-            info = VEF_OK
-
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
@@ -555,31 +513,6 @@ contains
             if (ierr == 0 .and. file_exists) info = VEF_OK
       !
       end subroutine
-
-
-      !> Incur the location of default slip system file
-      subroutine incurSlipsystemFile(dm_id, slipsystem_path, info)
-      integer,intent(in)              :: dm_id !< Deformation mechanism ID
-      character(len=*),intent(out)    :: slipsystem_path
-      integer,intent(out)             :: info
-      !
-      character(len=max_pathlen) :: fname
-      !
-            info = VEF_ERROR
-            select case(dm_id)
-            case(DM_fcc12)
-                  fname = 'fcc12.pre'
-            case(DM_bcc24)
-                  fname = 'bcc24.pre'
-            case(DM_bcc48)
-                  fname = 'bcc48.pre'
-            case default
-                  return
-            end select
-            call getDataPath(fname, slipsystem_path, info)
-      !
-      end subroutine
-
 
       !> Incur the location of the default microstructure file
       subroutine incurMicrostructureFile(micros_fname, info)
