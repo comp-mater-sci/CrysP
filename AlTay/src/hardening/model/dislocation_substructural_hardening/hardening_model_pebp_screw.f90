@@ -37,10 +37,7 @@ module hardening_model_pebp_screw
                     this%eff(s,i)=DOT_PRODUCT( ScrewDir(s,:) , CBBnormal(i,:) )
                 end do
             end do
-            this%effslashb  = this%eff / this%b
-            this%alfa_G_b = this%alfa * this%G * this%b
-            this%alfa_G_b_eff = this%alfa_G_b * this%eff
-            this%alfa_G_b_ABSeff = ABS(this%alfa_G_b_eff)
+            call this%initstate()
         end subroutine pebp_screw_init
         
         

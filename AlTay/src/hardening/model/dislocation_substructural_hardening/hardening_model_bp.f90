@@ -24,7 +24,7 @@ contains
     subroutine bp_init(this, params)
         class(HardeningModelBP), intent(inout) :: this
         type(Parameter), allocatable, intent(in) :: params(:)
-        integer :: s,i
+        integer :: s,i, n_grains
 
         call dsh_init(this, params)
         
@@ -35,9 +35,8 @@ contains
             end do
         end do
 
-        this%effslashb       = this%eff / this%b
-        this%alfa_G_b = this%alfa * this%G * this%b
-        this%alfa_G_b_eff    = this%alfa_G_b * this%eff
-        this%alfa_G_b_ABSeff = abs(this%alfa_G_b_eff)
+        call this%initstate()
+
+
     end subroutine bp_init
 end module hardening_model_bp

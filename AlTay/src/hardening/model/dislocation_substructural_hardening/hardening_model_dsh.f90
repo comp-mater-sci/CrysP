@@ -81,6 +81,7 @@ module hardening_model_dsh
         procedure :: update         => dsh_update
         procedure :: get_crss       => dsh_get_crss
         procedure :: finalize       => dsh_finalize
+        procedure :: initstate
         procedure :: f_crss
         procedure :: f_kocksmeck
         procedure :: upd_cur_wp
@@ -89,6 +90,7 @@ module hardening_model_dsh
         procedure :: dwp_dt
         procedure :: upd_ncg_wp
         procedure :: upd_cb
+        
     end type
 
     public  ::  HardeningModelDSH, &
@@ -225,14 +227,29 @@ contains
 
         this%state = SV0
         
-        do i=1, n_grains
-            call this%F_CRSS(i)
-        end do
-
-
-
-
     end subroutine dsh_init
+
+
+    !> Allocate memory to the KS_state array.
+      !>
+      !> The function simply makes allocation. It relies on a default initializer
+      !> of StatVar type.
+    subroutine initState(this)
+        class(HardeningModelDSH) :: this
+        integer :: i
+
+        this%effslashb       = this%eff / this%b
+        this%alfa_G_b = this%alfa * this%G * this%b
+        this%alfa_G_b_eff    = this%alfa_G_b * this%eff
+        this%alfa_G_b_ABSeff = abs(this%alfa_G_b_eff)
+
+        ! All elements (orientations) of the KS_state array must have the same initial state.
+        do i=1, size(this%state)
+            call F_CRSS(this, i)
+        end do
+    end subroutine
+
+
 
     subroutine dsh_update(this, grain, time, strain, slip_rates)
         class(HardeningModelDSH), intent(inout)     ::  this

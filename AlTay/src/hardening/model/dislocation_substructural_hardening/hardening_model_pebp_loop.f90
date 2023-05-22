@@ -39,10 +39,8 @@ module hardening_model_pebp_loop
               endif
             end do
           end do
-        this%effslashb       = this%eff / this%b
-        this%alfa_G_b= this%alfa* this%G * this%b
-        this%alfa_G_b_eff    = this%alfa_G_b * this%eff
-        this%alfa_G_b_ABSeff = abs(this%alfa_G_b_eff)
+        
+            call this%initstate()
         end subroutine pebp_loop_init
         
 END MODULE hardening_model_pebp_loop
