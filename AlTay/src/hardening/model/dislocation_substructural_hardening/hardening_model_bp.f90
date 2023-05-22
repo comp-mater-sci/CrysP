@@ -14,7 +14,7 @@ module hardening_model_bp
 
     type, extends(HardeningModelDSH) :: HardeningModelBP
     contains
-        procedure :: init           => bp_init
+        procedure :: init => bp_init
     end type
 
     public :: HardeningModelBP
@@ -24,19 +24,9 @@ contains
     subroutine bp_init(this, params)
         class(HardeningModelBP), intent(inout) :: this
         type(Parameter), allocatable, intent(in) :: params(:)
-        integer :: s,i, n_grains
 
         call dsh_init(this, params)
-        
-        !Calculate "Wall-effectivity"-matrices
-        do s=1,24
-            do i=1,6
-                this%eff(s,i) = DOT_PRODUCT(EdgeDir(s,:) , CBBnormal(i,:) )
-            end do
-        end do
-
+        this%eff = matmul(EDGEDIR, transpose(CBBNORMAL))
         call this%initstate()
-
-
     end subroutine bp_init
 end module hardening_model_bp

@@ -32,10 +32,10 @@ module hardening_model_pebp_loop
           do s=1,24
             do i=1,6
               this%eff(s,i)=DOT_PRODUCT( NormDir(s,:) , CBBnormal(i,:) )
-              if (abs(this%eff(s,i)) >= 0.99999D0) then !treat as "1" or "-1"
-                  this%eff(s,i)=0.0D0
+              if (abs(this%eff(s,i)) >= 0.99999_DP) then !treat as "1" or "-1"
+                  this%eff(s,i)=0._DP
               else
-                  this%eff(s,i)=sqrt(1.0D0-(this%eff(s,i))**2)
+                  this%eff(s,i)=sqrt(1._DP-(this%eff(s,i))**2)
               endif
             end do
           end do

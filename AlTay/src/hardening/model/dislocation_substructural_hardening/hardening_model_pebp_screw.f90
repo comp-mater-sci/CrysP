@@ -27,18 +27,13 @@ module hardening_model_pebp_screw
         subroutine pebp_screw_init(this, params)
             class(HardeningModelPEBPScrew), intent(inout) :: this
             type(Parameter), allocatable, intent(in) :: params(:)
-            integer :: s,i
 
             call dsh_init(this, params)
-            
-            !Calculate "Wall-effectivity"-matrices
-            do s=1,24
-                do i=1,6
-                    this%eff(s,i)=DOT_PRODUCT( ScrewDir(s,:) , CBBnormal(i,:) )
-                end do
-            end do
+            this%eff = matmul(SCREWDIR, transpose(CBBNORMAL))
             call this%initstate()
         end subroutine pebp_screw_init
+
+
         
         
 END MODULE hardening_model_pebp_screw

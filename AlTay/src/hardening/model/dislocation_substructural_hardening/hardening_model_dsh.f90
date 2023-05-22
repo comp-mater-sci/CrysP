@@ -9,38 +9,36 @@ module hardening_model_dsh
     implicit none
     private
 
-    real(dp), parameter ::  MINfrac = 2.0D-3,   &
-                            LOWfrac = 10.0D-3,  &
-                            TENpow6 = 1.D6
+    real(DP), parameter ::  MINFRAC = 2.0D-3,   &
+                            LOWFRAC = 10.0D-3
     !>Constants for initialization of dirs
-    real(dp), parameter, public ::  p2 = 1.D0/sqrt(2.D0),   &
-                            n2 = -p2,               &
-                            p3 = 1.D0/sqrt(3.D0),   &
-                            n3 = -p3,               &
-                            p6 = 1.D0/sqrt(6.D0),   &
-                            n6 = -p6,               &
-                            pd6 = 2.D0/sqrt(6.D0),  &
-                            nd6 = -pd6
-    real(dp), dimension(6,3), parameter, public ::  CBBNORMAL = reshape([   0.D0,n2,p2,0.D0,p2,n2,  &
-                                                                        p2,0.D0,n2,n2,0.D0,n2,  &
-                                                                        n2,p2,0.D0,n2,p2,0.D0], shape(CBBNORMAL))
+    real(DP), parameter, public ::  P2 = 1._DP / sqrt(2._DP),   &
+                                    N2 = -P2,                   &
+                                    P3 = 1._DP / sqrt(3._DP),   &
+                                    N3 = -P3,                   &
+                                    P6 = 1._DP / sqrt(6._DP),   &
+                                    N6 = -P6,                   &
+                                    PD6 = 2._DP / sqrt(6._DP),  &
+                                    ND6 = -PD6
+    real(DP), dimension(6,3), parameter, public :: CBBNORMAL = reshape([0._DP,N2,P2,0._DP,P2,N2,  &
+                                                                        P2,0._DP,N2,N2,0._DP,N2,  &
+                                                                        N2,P2,0._DP,N2,P2,0._DP], shape(CBBNORMAL))
 
     character(*), parameter :: MOD_NAME = 'hardening_model_dsh'
 
     type :: CBBtype
-          real(DP) :: RHOwd = 0._DP
-          real(DP) :: RHOwp = 0._DP
-          real(DP) :: RHOwdHOM = 0._DP
-          real(DP) :: accGAMMA_new = 0._DP
-          real(DP) :: RHOwd_ini = 0._DP
+        real(DP) :: RHOwd = 0._DP, &
+                    RHOwp = 0._DP, &
+                    RHOwdHOM = 0._DP, &
+                    accGAMMA_new = 0._DP, &
+                    RHOwd_ini = 0._DP
     end type CBBtype
 
     !> State variables for single grain
     type :: StatVar
-    !PUBLIC components
           real(DP)                    :: RHOcb = 0._DP
-          type(CBBtype), DIMENSION(6)         :: CBB
-          integer, DIMENSION(2)               :: ActiveCBB = 0
+          type(CBBtype), dimension(6) :: CBB
+          integer, dimension(2)       :: ActiveCBB = 0
     end type StatVar
 
     type, extends(HardeningModel) :: HardeningModelDSH
@@ -90,7 +88,6 @@ module hardening_model_dsh
         procedure :: dwp_dt
         procedure :: upd_ncg_wp
         procedure :: upd_cb
-        
     end type
 
     public  ::  HardeningModelDSH, &
@@ -102,29 +99,28 @@ contains
         class(HardeningModelDSH), intent(in)    :: this
         type(Parameter), allocatable    :: params(:)
 
-        params = [  parameter_init('n_slip_systems', TYPE_STRING),  &
-                    parameter_init('n_grains', TYPE_INTEGER),       &
-                    parameter_init('b', TYPE_REAL),                 &
-                    parameter_init('G', TYPE_REAL),                 &
-                    parameter_init('alfa', TYPE_REAL),              &
-                    parameter_init('f', TYPE_REAL),                 &
-                    parameter_init('tau0', TYPE_REAL),              &
-                    parameter_init('I', TYPE_REAL),                 &
-                    parameter_init('R', TYPE_REAL),                 &
-                    parameter_init('Iwd', TYPE_REAL),               &
-                    parameter_init('Rwd', TYPE_REAL),               &
-                    parameter_init('Rncg', TYPE_REAL),              &
-                    parameter_init('beta1', TYPE_REAL),             &
-                    parameter_init('beta2', TYPE_REAL),             &
-                    parameter_init('Iwp', TYPE_REAL),               &
-                    parameter_init('Rwp', TYPE_REAL),               &
-                    parameter_init('Rrev', TYPE_REAL),              &
-                    parameter_init('R2', TYPE_REAL)]
-
+        params = [parameter_init('n_slip_systems', TYPE_STRING),  &
+                  parameter_init('n_grains', TYPE_INTEGER),       &
+                  parameter_init('b', TYPE_REAL),                 &
+                  parameter_init('G', TYPE_REAL),                 &
+                  parameter_init('alfa', TYPE_REAL),              &
+                  parameter_init('f', TYPE_REAL),                 &
+                  parameter_init('tau0', TYPE_REAL),              &
+                  parameter_init('I', TYPE_REAL),                 &
+                  parameter_init('R', TYPE_REAL),                 &
+                  parameter_init('Iwd', TYPE_REAL),               &
+                  parameter_init('Rwd', TYPE_REAL),               &
+                  parameter_init('Rncg', TYPE_REAL),              &
+                  parameter_init('beta1', TYPE_REAL),             &
+                  parameter_init('beta2', TYPE_REAL),             &
+                  parameter_init('Iwp', TYPE_REAL),               &
+                  parameter_init('Rwp', TYPE_REAL),               &
+                  parameter_init('Rrev', TYPE_REAL),              &
+                  parameter_init('R2', TYPE_REAL)]
     end function dsh_get_parameters
 
     subroutine dsh_validate_parameters(this, params)
-        class(HardeningModelDSH), intent(in)    :: this
+        class(HardeningModelDSH), intent(in)     :: this
         type(Parameter), allocatable, intent(in) :: params(:)
         character(:), allocatable :: nss
 
@@ -133,22 +129,22 @@ contains
         if (nss /= 'fcc12' .and. nss /= 'bcc24')  &
             call log_error(MOD_NAME, 'validate_parameters', ERR_VAL, 'DSH only supports FCC12 and BCC24 slip systems.')
 
-        call check_param('b',       0._dp,      1.e-8_dp)   ! [m]
-        call check_param('G',       1.e4_dp,    5.e5_dp)    ! [MPa]
-        call check_param('alfa',    0._dp,      5._dp)      ! [/]
-        call check_param('f',       0._dp,      1.0_dp)     ! [/]
-        call check_param('tau0',    0._dp,      1.e4_dp)    ! [MPa]
-        call check_param('I',       0._dp,      10._dp)     ! [/]
-        call check_param('Iwd',     0._dp,      10._dp)     ! [/]
-        call check_param('Iwp',     0._dp,      10._dp)     ! [/]
-        call check_param('R',       0._dp,      1.e-6_dp)   ! [m]
-        call check_param('Rwd',     0._dp,      1.e-6_dp)   ! [m]
-        call check_param('Rncg',    0._dp,      1.e-6_dp)   ! [m]
-        call check_param('Rwp',     0._dp,      1.e-6_dp)   ! [m]
-        call check_param('Rrev',    0._dp,      1.e-6_dp)   ! [m]
-        call check_param('R2',      0._dp,      1.e-6_dp)   ! [m]
-        call check_param('beta1',   0._dp,      100._dp)    ! [/]
-        call check_param('beta2',   0._dp,      100._dp)    ! [/]
+        call check_param('b',     0._dp,   1.e-8_dp)   ! [m]
+        call check_param('G',     1.e4_dp, 5.e5_dp)    ! [MPa]
+        call check_param('alfa',  0._dp,   5._dp)      ! [/]
+        call check_param('f',     0._dp,   1.0_dp)     ! [/]
+        call check_param('tau0',  0._dp,   1.e4_dp)    ! [MPa]
+        call check_param('I',     0._dp,   10._dp)     ! [/]
+        call check_param('Iwd',   0._dp,   10._dp)     ! [/]
+        call check_param('Iwp',   0._dp,   10._dp)     ! [/]
+        call check_param('R',     0._dp,   1.e-6_dp)   ! [m]
+        call check_param('Rwd',   0._dp,   1.e-6_dp)   ! [m]
+        call check_param('Rncg',  0._dp,   1.e-6_dp)   ! [m]
+        call check_param('Rwp',   0._dp,   1.e-6_dp)   ! [m]
+        call check_param('Rrev',  0._dp,   1.e-6_dp)   ! [m]
+        call check_param('R2',    0._dp,   1.e-6_dp)   ! [m]
+        call check_param('beta1', 0._dp,   100._dp)    ! [/]
+        call check_param('beta2', 0._dp,   100._dp)    ! [/]
     contains
         subroutine check_param(name, min, max)
             character(*), intent(in)    ::  name
@@ -169,87 +165,77 @@ contains
         end subroutine check_param
     end subroutine dsh_validate_parameters
 
+    !Main initialization function
     subroutine dsh_init(this, params)
-        class(HardeningModelDSH), intent(inout) :: this
-        type(Parameter), allocatable, intent(in)             :: params(:)
-        integer :: n_grains, &
-                    i
-        type(StatVar) :: SV0
+        class(HardeningModelDSH), intent(inout)  :: this
+        type(Parameter), allocatable, intent(in) :: params(:)
+        integer :: n_grains
 
         call hardening_model_init(this, params)
 
-        this%b          = params .find. 'b'
-        this%G          = params .find. 'G'
-        this%alfa       = params .find. 'alfa'
-        this%f          = params .find. 'f'
-        this%tau0       = params .find. 'tau0'
-        this%I          = params .find. 'I'
-        this%R          = params .find. 'R'
-        this%Iwd        = params .find. 'Iwd'
-        this%Rwd        = params .find. 'Rwd'
-        this%Rncg       = params .find. 'Rncg'
-        this%beta1      = params .find. 'beta1'
-        this%beta2      = params .find. 'beta2'
-        this%Iwp        = params .find. 'Iwp'
-        this%Rwp        = params .find. 'Rwp'
-        this%Rrev       = params .find. 'Rrev'
-        this%R2         = params .find. 'R2'
+        this%b     = params .find. 'b'
+        this%G     = params .find. 'G'
+        this%alfa  = params .find. 'alfa'
+        this%f     = params .find. 'f'
+        this%tau0  = params .find. 'tau0'
+        this%I     = params .find. 'I'
+        this%R     = params .find. 'R'
+        this%Iwd   = params .find. 'Iwd'
+        this%Rwd   = params .find. 'Rwd'
+        this%Rncg  = params .find. 'Rncg'
+        this%beta1 = params .find. 'beta1'
+        this%beta2 = params .find. 'beta2'
+        this%Iwp   = params .find. 'Iwp'
+        this%Rwp   = params .find. 'Rwp'
+        this%Rrev  = params .find. 'Rrev'
+        this%R2    = params .find. 'R2'
 
         !change of units if different in params from this (units of this are: MPa; micrometer)
-        this%b          = this%b    * 1.e6_dp       ![m] -> [um]
-        this%R          = this%R    * 1.e6_dp       ![m] -> [um]
-        this%Rwd        = this%Rwd  * 1.e6_dp       ![m] -> [um]
-        this%Rncg       = this%Rncg * 1.e6_dp       ![m] -> [um]
-        this%Rwp        = this%Rwp  * 1.e6_dp       ![m] -> [um]
-        this%Rrev       = this%Rrev * 1.e6_dp       ![m] -> [um]
-        this%R2         = this%R2   * 1.e6_dp       ![m] -> [um]
+        this%b    = this%b    * 1.e6_dp ![m] -> [um]
+        this%R    = this%R    * 1.e6_dp ![m] -> [um]
+        this%Rwd  = this%Rwd  * 1.e6_dp ![m] -> [um]
+        this%Rncg = this%Rncg * 1.e6_dp ![m] -> [um]
+        this%Rwp  = this%Rwp  * 1.e6_dp ![m] -> [um]
+        this%Rrev = this%Rrev * 1.e6_dp ![m] -> [um]
+        this%R2   = this%R2   * 1.e6_dp ![m] -> [um]
 
         !Calculate dependent hardening parameters
         this%RHOcbSAT = (this%I)**2 / (this%R)**2
         this%RHOwdSAT = (this%Iwd)**2 / (this%Rwd)**2
         this%RHOwpSAT = (sqrt((this%Iwp / this%Rwp)**4 + 4._dp * (this%Iwp * this%Iwd / (this%Rwp * this%Rwd))**2) + (this%Iwp / this%Rwp)**2) / 2._dp
-        this%RHOcbMIN = MINfrac * this%RHOcbSAT
-        this%RHOwpLOW = LOWfrac * this%RHOwpSAT
-        this%RHOwdMIN   = MINfrac   * this%RHOwdSAT
-        this%RHOwpMIN   = MINfrac   * this%RHOwpSAT
-        this%RHOwpLOW   = LOWfrac   * this%RHOwpSAT
+        this%RHOcbMIN = MINFRAC * this%RHOcbSAT
+        this%RHOwpLOW = LOWFRAC * this%RHOwpSAT
+        this%RHOwdMIN = MINFRAC * this%RHOwdSAT
+        this%RHOwpMIN = MINFRAC * this%RHOwpSAT
+        this%RHOwpLOW = LOWFRAC * this%RHOwpSAT
     
         n_grains = params .find. 'n_grains'
         allocate(this%state(n_grains))
         allocate(this%crss(n_grains, 2, this%nss))
-        SV0%RHOcb               = this%RHOcbMIN
-        SV0%CBB(:)%RHOwd        = this%RHOwdMIN
-        SV0%CBB(:)%RHOwp        = 0.D0
-        SV0%CBB(:)%RHOwdHOM     = this%RHOwdMIN
-        SV0%CBB(:)%accGAMMA_new = 0.D0
-        SV0%CBB(:)%RHOwd_ini    = this%RHOwdMIN
-        SV0%ActiveCBB(:)        = 0.D0
-
-        this%state = SV0
-        
+        this%state(1)%RHOcb               = this%RHOcbMIN
+        this%state(1)%CBB%RHOwd        = this%RHOwdMIN
+        this%state(1)%CBB%RHOwp        = 0._DP
+        this%state(1)%CBB%RHOwdHOM     = this%RHOwdMIN
+        this%state(1)%CBB%accGAMMA_new = 0._DP
+        this%state(1)%CBB%RHOwd_ini    = this%RHOwdMIN
+        this%state(1)%ActiveCBB        = 0._DP
+        this%state = this%state(1)
     end subroutine dsh_init
 
-
-    !> Allocate memory to the KS_state array.
-      !>
-      !> The function simply makes allocation. It relies on a default initializer
-      !> of StatVar type.
+    !> Initialize state separately after model-specific initialization.
     subroutine initState(this)
         class(HardeningModelDSH) :: this
         integer :: i
 
         this%effslashb       = this%eff / this%b
-        this%alfa_G_b = this%alfa * this%G * this%b
+        this%alfa_G_b        = this%alfa * this%G * this%b
         this%alfa_G_b_eff    = this%alfa_G_b * this%eff
         this%alfa_G_b_ABSeff = abs(this%alfa_G_b_eff)
 
-        ! All elements (orientations) of the KS_state array must have the same initial state.
         do i=1, size(this%state)
             call F_CRSS(this, i)
         end do
     end subroutine
-
-
 
     subroutine dsh_update(this, grain, time, strain, slip_rates)
         class(HardeningModelDSH), intent(inout)     ::  this
@@ -328,7 +314,6 @@ contains
         end do
 
         do j=3,6 !Loop over 4 non-currently generated walls
-            !>APPEARS TO BE IFORT BUG: When called using this%bp_UPD_ncg_wdt(r(j), sva, svb, gamma_new) sometimes yields different results
             call bp_UPD_ncg_wd(this, r(j), sva, svb, gamma_new)
             call this%UPD_ncg_wp(SVa%CBB(r(j))%RHOwp, SVb%CBB(r(j))%RHOwp, gamma_new)
         end do
@@ -342,8 +327,6 @@ contains
 
     !>Returns RHO_b, the value of RHO at the end of an interval (a,b) for the following differential equation:
     !>d(RHO)/d(g) = 1/this%b * ( II*sqrt(RHO) - RR*RHO )
-    !>@param RHO_a: the value of RHO at the start of the interval (a,b)
-    !>@param delta_g: g_b - g_a, the increment in g during the interval (a,b)
     real(DP) function F_KocksMeck(this, RHO_a, delta_g, II, RR) result(kock)
         class(HardeningModelDSH), intent(in)    ::  this
         real(DP), intent(in)                    ::  RHO_a,      &
@@ -363,7 +346,7 @@ contains
         real(DP), intent(inout)                     ::  RHObausch
         real(DP), dimension(this%nss), intent(in)   ::  slip_rates
         real(DP), intent(in)                        ::  delta_t
-        type(StatVar), intent(inout)                  ::  svb
+        type(StatVar), intent(inout)                ::  svb
         real(DP)                                    ::  wpFLUX,         &
                                                         fl,             &
                                                         wd
@@ -548,7 +531,4 @@ contains
         deallocate(this%crss)
         deallocate(this%state)
     end subroutine
-
-
-
 end module
