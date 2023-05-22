@@ -15,7 +15,7 @@ module parameters
         private
         character(:), allocatable :: name
         integer :: type
-        character, allocatable :: value(:)
+        character(:), allocatable :: value
     end type Parameter
 
     interface
@@ -27,13 +27,21 @@ module parameters
         end function parameter_init
     
         !Getter for value buffer
-        module subroutine get_val(val, param)
-            class(*), intent(inout) :: val 
+        module subroutine get_val_int(val, param)
+            integer, intent(out) :: val 
+            type(Parameter), intent(in) :: param
+        end subroutine 
+        module subroutine get_val_real(val, param)
+            real(DP), intent(out) :: val 
+            type(Parameter), intent(in) :: param
+        end subroutine 
+        module subroutine get_val_string(val, param)
+            character(:), allocatable, intent(out) :: val 
             type(Parameter), intent(in) :: param
         end subroutine 
                 
         !Setter for value buffer, called with a list of parameters and the name and value of the parameter to be set.
-        module subroutine set_val(params, name, val)
+        module subroutine parameter_set(params, name, val)
             type(Parameter), allocatable, intent(inout) :: params(:)
             character(*), intent(in) :: name
             class(*), intent(in) :: val 
@@ -76,8 +84,9 @@ module parameters
         end function 
     end interface
 
+    !Intrinsic assignment can not be made polymorphic using class(*) because this leads to infinite recursion
     interface assignment(=)
-        module procedure get_val
+        module procedure get_val_int, get_val_real, get_val_string
     end interface
 
     interface operator(.find.)
@@ -113,7 +122,7 @@ contains
 
     module procedure parameter_init
         character(*), parameter :: PROC_NAME = 'parameter_init'
-        character, allocatable :: buffer(:) 
+        character(:), allocatable :: buffer 
 
         if (present(param_value)) buffer = param_value
 
@@ -134,6 +143,8 @@ contains
                 if (param%type == TYPE_REAL) return
             type is (character(*))
                 if (param%type == TYPE_STRING) return
+            type is (Parameter)
+                return
         end select
 
         call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Value does not conform with parameter type')
@@ -174,28 +185,27 @@ contains
         call search_parameter_list(params, name, param, ind)
     end procedure parameter_find_by_name
 
-    module procedure get_val
+    module procedure get_val_int
         call check_type(param, val)
-
-        !Overly verbose, but necessary workaround due to bug in gfortran.
-        select type(val)
-            type is (integer)
-                val = transfer(param%value, val)
-            type is (real(DP))
-                val = transfer(param%value, val)
-            type is (character(*))
-                val = transfer(param%value, val)
-        end select
+        val = transfer(param%value, val)
+    end procedure 
+    module procedure get_val_real
+        call check_type(param, val)
+        val = transfer(param%value, val)
+    end procedure 
+    module procedure get_val_string
+        call check_type(param, val)
+        val = param%value
     end procedure 
     
-    module procedure set_val
+    module procedure parameter_set
         integer :: ind
-        character, allocatable :: buffer(:)
+        character(:), allocatable :: buffer
         
         ind = find_index(params, name)
         call check_type(params(ind), val)
 
-        allocate(buffer(sizeof(val)))
+        allocate(character(sizeof(val)) :: buffer)
         params(ind)%value = transfer(val, buffer)
     end procedure 
 

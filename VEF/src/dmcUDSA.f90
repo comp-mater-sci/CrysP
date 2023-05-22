@@ -5,7 +5,6 @@
 module dmcUDSA
 use criMathUtils
 use criPath
-use criAlgorithm
 use criRange
 use criNamedRange
 use criConfigReader
@@ -327,11 +326,11 @@ contains
     !
         info = VEF_ERROR
         if (optionalDefault(header,.false.)) then
-            write(iounit,701,iostat=ierr) centered(1,short_column_width), &
-                                          (centered(i,column_width), i = 2, ncolumn_labels)
+            write(iounit,701,iostat=ierr) toString(1), &
+                                          (toString(i), i = 2, ncolumn_labels)
             if (ierr /= 0) return
             write(iounit,700,iostat=ierr) file_column_labels(1)(1:short_column_width), &
-                                          (centered(file_column_labels(i)), i=2,ncolumn_labels)
+                                          (file_column_labels(i), i=2,ncolumn_labels)
             if (ierr /= 0) return
             info = VEF_OK
         endif
@@ -356,13 +355,16 @@ contains
     double precision,intent(in),optional      :: tag_number
     !
     character(len=max_pathlen) :: datafile_tag
+    integer :: i
     !
         if (present(tag_number)) then
             ! Make a decoration string based on angle.
             ! Substitute '.' with '_'
             write(datafile_tag, '(F10.3)') tag_number
             datafile_tag = '_' // trim(adjustl(datafile_tag))
-            datafile_tag = replaceAll(datafile_tag, '.', '_')
+            do i=1,len(datafile_tag)
+                if (datafile_tag(i:i) == '.') datafile_tag(i:i) = '_'
+            end do
         else
             datafile_tag = ''
         endif

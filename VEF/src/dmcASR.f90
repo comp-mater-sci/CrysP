@@ -3,8 +3,6 @@
 !> DMC Arbitrary Stress Response
 module dmcASR
 use criMathUtils
-use criAlgorithm
-use criMathUtils
 use criUncomment, only: readValue
 use dmcUtils, only: display_unit
 use dmcIncrementationControl
@@ -224,12 +222,12 @@ contains
         if (optionalDefault(header, .false.)) then
             info = VEF_ERROR
             ! Column numbers
-            write(iounit,701,iostat=ierr) (centered(i,short_column_width), i = 1,2), &
-                                          (centered(i,column_width), i = 3, ncolumn_labels)
+            write(iounit,701,iostat=ierr) (toString(i), i = 1,2), &
+                                          (toString(i), i = 3, ncolumn_labels)
             if (ierr /= 0) return
             ! Column labels
             write(iounit,700,iostat=ierr) (column_labels(i)(1:short_column_width), i=1,2), &
-                                          (centered(column_labels(i)), i=3,ncolumn_labels)
+                                          (column_labels(i), i=3,ncolumn_labels)
             if (ierr /= 0) return
             info = VEF_OK
         endif

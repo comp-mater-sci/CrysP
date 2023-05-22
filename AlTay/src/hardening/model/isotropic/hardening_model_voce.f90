@@ -1,14 +1,14 @@
 module hardening_model_voce
-use definitions, only: dp
-use hardening_types
-use hardening_model
-use hardening_model_isotropic
-use altayConfig
-use logging
-use parameters
-
-implicit none
-private
+    use definitions, only: dp
+    use hardening_types
+    use hardening_model
+    use hardening_model_isotropic
+    use altayConfig
+    use logging
+    use parameters
+    
+    implicit none
+    private
 
     type :: Stage
         real(dp) :: TS, &
@@ -56,52 +56,21 @@ contains
             call log_error(MODULE_NAME, PROC_NAME, ERR_VAL, 'THETA-III-1 must be larger than THETA-T')
     end subroutine voce_validate_parameters
 
-      subroutine readVoceConfig(inunit,c,info)
-      use altayIOConfig
-      integer,intent(in)                  :: inunit
-      type(VoceConfig),intent(out)        :: c
-      integer,intent(out)                 :: info
-      !
-            info = -1
-            ! Read the parameters of the work hardening model:
-            read (inunit,99,iostat=info) c%TIII1,c%TIIIS,c%TIVS
-            if (info /= 0) return
-            read (inunit,99,iostat=info) c%THIII1,c%THT
-            if (info /= 0) return
-  99        format (3f10.0)
-            if(NLIST == 1) write (IMP,100) c%TIII1,c%TIIIS,c%TIVS,c%THIII1,c%THT
- 100        format(' Work hardening model = DOUBLE VOCE-model',/, &
-                   ' TAU-III-1=  ',f20.8,/, &
-                   ' TAU-III-S = ',F20.8,/, &
-                   ' TAU-IV-S =  ',f20.8,/, &
-                   ' THETA-III-1=',f20.8,/, &
-                   ' THETA-T=    ',f20.8)
-            info = 0
-      !
-      end subroutine
+    subroutine voce_init(this, params)
+        class(HardeningModelVoce), intent(inout) :: this 
+        type(Parameter), allocatable, intent(in) :: params(:)
+        real(dp)                                 :: THIII1,     &
+                                                    THT,        &   
+                                                    ETA,        &   
+                                                    TAUT
 
-   subroutine voce_init(this, config)
-        class(HardeningModelVoce),            intent(inout)   ::  this 
-        type(HardeningData), intent(in) :: config
-        integer                                                 ::  info
-        real(dp)                                                ::  THIII1, &
-                                                                    THT,    &   
-                                                                    ETA,    &   
-                                                                    TAUT
+        call hardening_model_init(this, params)
 
-        call hardening_model_init(this, config)
-        this%crss = 0.0_dp
-
-        
-
-        this%stage_1%T1 = config%vocecnf%TIII1 
-        this%stage_1%TS = config%vocecnf%TIIIS
-        this%stage_2%TS = config%vocecnf%TIVS
-        THIII1          = config%vocecnf%THIII1
-        THT             = config%vocecnf%THT
-    
-        !>Check validity of inputs:
-        if (.not. (this%stage_1%TS > this%stage_1%T1 .and. THIII1 > THT)) call log_error(MODULE_NAME, 'voce_init', ERR_VAL, 'TAU-III-S must be larger than TAU-III-1 and THETA-III-1 must be larger than THETA-T')
+        this%stage_1%T1 = params .find. 'TIII1'
+        this%stage_1%TS = params .find. 'TIIIS'
+        this%stage_2%TS = params .find. 'TIVS'
+        THIII1          = params .find. 'THIII1'
+        THT             = params .find. 'THT'
 
         this%stage_1%TH = THIII1 / (1.D0 - this%stage_1%T1 / this%stage_1%TS)
         ETA = THT / this%stage_1%TH

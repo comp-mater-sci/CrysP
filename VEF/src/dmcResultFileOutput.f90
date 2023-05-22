@@ -3,7 +3,7 @@
 !> Common set of procedures for producing plain text column-based output of numerical data.
 module dmcResultFileOutput
 use definitions
-use criAlgorithm
+use commonUtils
 implicit none
 
     integer,parameter,private :: fmt_string_length = 128
@@ -52,8 +52,8 @@ contains
             ! \todo replace with data_formats (either generated or provided)
             ! \fixme broken feature: column_widths are ignored!
             ! \fixme broken feature: column width - 7: may produce a broken format!
-            fmt_string = '(' // 'E' // trim(tostring(column_widths(1),max_int_digits)) // &
-                         '.' // trim(tostring(column_widths(1)-7,max_int_digits)) // ',1X)'
+            fmt_string = '(' // 'E' // tostring(column_widths(1)) // &
+                         '.' // tostring(column_widths(1)-7) // ',1X)'
             info = writeData(iounit, data, column_widths, [fmt_string])
         endif
     !
@@ -71,9 +71,9 @@ contains
     !
         if (size(column_widths) == 1) then
             column_width = column_widths(1)
-            fmt_string = '("#",1X,' // trim(tostring(ncolumns,max_int_digits)) // &
-                         '(A'// TADJUSTL(tostring(column_width,max_int_digits)) // ',1X))'
-            write(iounit,fmt=fmt_string,iostat=ierr) (centered(i,column_width), i = 1, ncolumns)
+            fmt_string = '("#",1X,' // tostring(ncolumns) // &
+                         '(A'// TADJUSTL(tostring(column_width)) // ',1X))'
+            write(iounit,fmt=fmt_string,iostat=ierr) (toString(i), i = 1, ncolumns)
             CHOOSE(info, ierr == 0, VEF_OK, VEF_ERROR)
             !
         elseif(size(column_widths) == ncolumns) then
@@ -98,8 +98,8 @@ contains
         ncolumns = size(column_names)
         if (size(column_widths) == 1) then
             ! Format: two leading spaces, followed by columns
-            fmt_string = '(2X,'// trim(tostring(ncolumns,10)) // '(A,1X))'
-            write(iounit,fmt=fmt_string,iostat=ierr) (centered(column_names(i)), i = 1, ncolumns)
+            fmt_string = '(2X,'// tostring(ncolumns) // '(A,1X))'
+            write(iounit,fmt=fmt_string,iostat=ierr) (column_names(i), i = 1, ncolumns)
             CHOOSE(info, ierr==0, VEF_OK, VEF_ERROR)
             !
         elseif(size(column_widths) == ncolumns) then
@@ -150,7 +150,7 @@ contains
         nrows = size(data, dim=2)
         !
         if (size(column_widths) == 1) then
-            fmt_string = '(' // TADJUSTL(tostring(ncolumns,max_int_digits)) // &
+            fmt_string = '(' // TADJUSTL(tostring(ncolumns)) // &
                                 TADJUSTL(data_formats(1)) // ')'
             do i = 1, nrows
                 write(iounit,fmt=fmt_string,iostat=ierr) data(:,i)
