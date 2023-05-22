@@ -92,20 +92,23 @@ module parameters
         end subroutine 
         
         !parameter_set
-        module subroutine set_val_int(params, name, val)
+        module subroutine set_val_int(params, name, val, fail_on_absent)
             type(Parameter), allocatable, intent(inout) :: params(:)
             character(*), intent(in) :: name
             integer, intent(in) :: val 
+            logical, intent(in), optional :: fail_on_absent
         end subroutine 
-        module subroutine set_val_real(params, name, val)
+        module subroutine set_val_real(params, name, val, fail_on_absent)
             type(Parameter), allocatable, intent(inout) :: params(:)
             character(*), intent(in) :: name
             real(dp), intent(in) :: val 
+            logical, intent(in), optional :: fail_on_absent
         end subroutine 
-        module subroutine set_val_string(params, name, val)
+        module subroutine set_val_string(params, name, val, fail_on_absent)
             type(Parameter), allocatable, intent(inout) :: params(:)
             character(*), intent(in) :: name, &
                                         val
+            logical, intent(in), optional :: fail_on_absent
         end subroutine 
 
         !operator(.find.)
@@ -197,15 +200,16 @@ contains
             call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Value does not conform with parameter type')
     end subroutine check_type
 
-    subroutine search_parameter_list(params, name, param, ind)
+    subroutine search_parameter_list(params, name, param, ind, fail_on_absent)
         type(Parameter), allocatable, intent(in) :: params(:)
         character(*), intent(in) :: name
         type(Parameter), intent(out) :: param
         integer, intent(out) :: ind
+        logical, intent(in) :: fail_on_absent
         
         integer :: i
         
-        ind = 0 
+        ind = -1 
         do i=1,size(params)
             if (params(i)%name == name) then
                 param = params(i)
@@ -214,23 +218,30 @@ contains
             end if
         end do
 
-        if (ind == 0) &
+        if (ind == -1 .and. fail_on_absent) &
             call log_error(MOD_NAME, 'parameter_find_by_name', ERR_VAL, 'No parameter with name ' // name)
     end subroutine search_parameter_list
 
-    integer function find_index(params, name) result(ind)
+    integer function find_index(params, name, fail_on_absent) result(ind)
         type(Parameter), allocatable, intent(in) :: params(:)
         character(*), intent(in) :: name
         type(Parameter) :: param
+        logical, intent(in), optional :: fail_on_absent
+        logical :: fail
 
-        call search_parameter_list(params, name, param, ind)
+        if (.not. present(fail_on_absent)) then
+            fail = .true.
+        else
+            fail = fail_on_absent
+        end if
+        call search_parameter_list(params, name, param, ind, fail)
     end function find_index 
 
 
     module procedure parameter_find_by_name
         integer :: ind
 
-        call search_parameter_list(params, name, param, ind)
+        call search_parameter_list(params, name, param, ind, .true.)
     end procedure parameter_find_by_name
 
 
@@ -251,7 +262,8 @@ contains
         integer :: ind
         character(4), parameter :: mold = '1234'
         
-        ind = find_index(params, name)
+        ind = find_index(params, name, fail_on_absent)
+        if (ind < 0) return
         call check_type(params(ind), TYPE_INTEGER)
         params(ind)%value = transfer(val, mold)
     end procedure 
@@ -259,14 +271,16 @@ contains
         integer :: ind
         character(8), parameter :: mold = '12345678'
         
-        ind = find_index(params, name)
+        ind = find_index(params, name, fail_on_absent)
+        if (ind < 0) return
         call check_type(params(ind), TYPE_REAL)
         params(ind)%value = transfer(val, mold)
     end procedure 
     module procedure set_val_string
         integer :: ind
         
-        ind = find_index(params, name)
+        ind = find_index(params, name, fail_on_absent)
+        if (ind < 0) return
         call check_type(params(ind), TYPE_STRING)
         params(ind)%value = val
     end procedure 
