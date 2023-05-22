@@ -17,6 +17,7 @@ module altaySub
     use altayMacroKinematic
     use altayCurAccess
     use logging
+    use parameters
 
     implicit none
     
@@ -30,7 +31,7 @@ contains
     !> module subroutines.
     subroutine initAltay(cnf,info,errmsg)
 
-        type(altayConfigData),intent(in)    :: cnf      !< configuration data
+        type(altayConfigData),intent(inout)    :: cnf      !< configuration data
         integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
         character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
         character(*), parameter :: PROC_NAME = 'initAltay'
@@ -66,6 +67,7 @@ contains
         ! Initialize altay modules
         !
         ! Set the data for CRSS calculations
+        call parameter_set(cnf%hardening_parameters, 'n_grains', size(DFIL))
         call hardening_init(cnf%hardening_parameters)
         ! Initialisation of SIMUL
         if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
@@ -83,8 +85,6 @@ contains
             return
         endif
         if (present(errmsg)) errmsg = ''
-        ! PEBP model
-                info = KS_initState(size(DFIL))
         ! No need for the slip system definition anymore.
         close(LEC)
         info = VEF_OK
@@ -107,7 +107,7 @@ contains
         if (info /= 0) return
         call DYNFIL_finalize(info)
         if (info /= 0) return
-        info = KS_finalize()
+        call hardening_finalize()
         close(IPEBPSTAT)
         close(IPEBPSDV)
         ! Finalize altayConfig
@@ -165,17 +165,6 @@ contains
             open (unit=IMP5,file=fname,status='replace',err=9999)
             call writeMSSHeader(IMP5,info)
         endif
-
-#if !defined(NOBEPFILE)
-        if (cnf%output_config%npebp /= 0) then
-            ! PEBP model
-            ! UNIT IMP4 = state variables of PEBP
-            fname = trim(fname_prefix)//'.BPM'
-            info = KS_openStateFile(IMP4,fname=fname,mode='w')
-            if (info /= VEF_OK) &
-                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot create PEBP state file.') 
-        endif
-#endif
 
         info = VEF_OK
         return
