@@ -204,8 +204,13 @@ contains
         
         ind = find_index(params, name)
         call check_type(params(ind), val)
-
         allocate(character(sizeof(val)) :: buffer)
+        !Messy workaround to get gfortran to work
+        select type(val)
+            type is (character(*))
+                params(ind)%value = val
+                return
+        end select
         params(ind)%value = transfer(val, buffer)
     end procedure 
 
