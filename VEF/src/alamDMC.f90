@@ -61,9 +61,6 @@ program alamDMC
     ! Initialize the module
     if (the_module%initialize() /= VEF_OK) call log_error(MODULE_NAME, PROCEDURE_NAME, ERR, 'Cannot initialize module.')
 
-    ! Show general configuration of the multilevel model
-    info = the_module%printConfig(display_unit)
-
     ! Run the module
     call the_module%run(info)
 

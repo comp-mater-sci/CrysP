@@ -2,59 +2,37 @@
 
 !> Implementation of a basic DMC computational module.
 module dmcBasicModule
-use,intrinsic :: iso_fortran_env, only: error_unit,output_unit
-use criUncomment
-use criConfigReader
-use criMathUtils
-use criPath, only: max_pathlen, splitExt
-use criLinearMap
-use dmcAbstractModule
-use altayConfig, only: altayConfigData
-use commonConfig
-use dmcUtils
-use definitions
-use hardening
-use parameters
-use logging
-use altaySub, only: initAltay, finalizeAltay
-use criPath
-use commonUtils
+    use,intrinsic :: iso_fortran_env, only: error_unit,output_unit
+    use criUncomment
+    use criConfigReader
+    use criMathUtils
+    use criPath, only: max_pathlen, splitExt
+    use dmcAbstractModule
+    use altayConfig, only: altayConfigData
+    use commonConfig
+    use dmcUtils
+    use definitions
+    use hardening
+    use parameters
+    use logging
+    use altaySub, only: initAltay, finalizeAltay
+    use criPath
+    use commonUtils
 
-implicit none
-private
-
-    !> FCC (111)<110>, through altayDeformationMechanismData_preconfigured
-    !> objects
-    integer,parameter :: DM_fcc12 = 1
-
-    !> BCC (110)<111> + (112)<111>, through altayDeformationMechanismData_preconfigured
-    !> objects
-    integer,parameter :: DM_bcc24 =   2
-
-    !> BCC (110)<111> + (112)<111> + (123)<111>, through
-    !> altayDeformationMechanismData_preconfigured objects
-    integer,parameter :: DM_bcc48 = 3
-
-    integer,parameter :: DM_user =99 !< DM_user (currently not exploited).
-
-    !> Initialization from file of PRE file format
-    integer,parameter :: DM_format_pre = 101
+    implicit none
+    private
 
     character(*), parameter :: MOD_NAME = 'basicModule'
 
-
-    public :: outputConfig, BasicModule, readAlTayConfigSection
+    public :: outputConfig, &
+              BasicModule, &
+              readAlTayConfigSection
 
       type :: outputConfig
-
-            character(len=max_pathlen)      :: outputPrefix = '' !< Prefix for the output files.
-
-            logical                       :: outputRequest = .false.
-
-            integer                       :: verbosity = 0  !< Level of verbosity sent to the stdout and to the log file (if any)
-
-            integer                       :: log_unit = 6
-
+            character(max_pathlen)  :: outputPrefix = '' !< Prefix for the output files.
+            logical                 :: outputRequest = .false.
+            integer                 :: verbosity = 0  !< Level of verbosity sent to the stdout and to the log file (if any)
+            integer                 :: log_unit = 6
       end type
 
       !> Class implementing basic subset of operations that are shared by all
@@ -66,36 +44,17 @@ private
       !>       in BasicModule) in the OO-acceptable style:
       !>       `this%ParentClassName%method()`
       type,extends(abstractModule) :: BasicModule
-
             type(outputConfig)            :: output
-
             type(altayConfigData)         :: altay !< Root-level configuration structure of texture and hardening
-
-
-      contains ! type-bound procedures
-
-            procedure,pass(this)     :: initialize =>  BasicModule_initialize
-
-            procedure,pass(this)     :: readConfig => BasicModule_readConfig
-
-            procedure,pass(this)     :: printConfig => BasicModule_printConfig
-
-            procedure,pass(this)     :: run => BasicModule_run
-
-            procedure,pass(this)     :: finalize => BasicModule_finalize
-
-            !>@{ \name Helper procedures
-            procedure,pass(this)      :: openOutputFile => BasicModule_openOutputFile
-
-            procedure,pass(this)      :: reinitializeLibAltay => BasicModule_reinitializeLibAltay
-
-            procedure,pass(this)      :: finalizeLibAltay => BasicModule_finalizeLibAltay
-            !>@}
-
+      contains 
+            procedure :: initialize =>  BasicModule_initialize
+            procedure :: readConfig => BasicModule_readConfig
+            procedure :: run => BasicModule_run
+            procedure :: finalize => BasicModule_finalize
+            procedure :: openOutputFile => BasicModule_openOutputFile
+            procedure :: reinitializeLibAltay => BasicModule_reinitializeLibAltay
+            procedure :: finalizeLibAltay => BasicModule_finalizeLibAltay
       end type
-
-
-
 
 contains
 
@@ -123,47 +82,25 @@ contains
                         call log_error(MOD_NAME, 'initialize', ERR_IO, 'Cannot write initial state.')
             endif
             info = VEF_OK
-            !
       end function
 
-      !> read output and AlTay configuration sections
-      integer function BasicModule_readConfig(this,cnfunit) result(info)
-      class(BasicModule),intent(inout)          :: this
-      integer,intent(in)                        :: cnfunit !< IO input unit
-      !
-            info = VEF_ERROR
-            !
-            ! Read output configuration lines
-            call readOutputConfigSection(cnfunit,this%output,info) ! top 3 lines after comment header of config file
-            if (info /= VEF_OK) then
-                  write(error_unit,fmt=901) 'Check output configuration section.'
-                  return
-            endif
-            !
-            ! Read AlTay configuration lines
-            call readAlTayConfigSection(cnfunit,this%altay,info) ! read configuration of texture, slip systems, microstructure and hardening
-            if (info /= VEF_OK) then
-                  write(error_unit,fmt=901) 'Check libaltay configuration section.'
-                  return
-            endif
-
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-      !
-      end function
-
-
-
-      integer function BasicModule_printConfig(this,outunit) result(info)
-      use altayConfig
-      class(BasicModule),intent(in)       :: this
-      integer,intent(in)                  :: outunit
-                        
-            info = VEF_OK
-      end function
-
-
+    !> read output and AlTay configuration sections
+    integer function BasicModule_readConfig(this,cnfunit) result(info)
+        class(BasicModule),intent(inout) :: this
+        integer,intent(in)               :: cnfunit !< IO input unit
+        
+        character(*), parameter :: PROC_NAME = 'readconfig'
+      
+        ! Read output configuration lines
+        call readOutputConfigSection(cnfunit,this%output,info) ! top 3 lines after comment header of config file
+        if (info /= VEF_OK) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Check output configuration section.')
+        
+        ! Read AlTay configuration lines
+        call readAlTayConfigSection(cnfunit,this%altay,info) !read configuration of texture, slip systems, microstructure and hardening
+        if (info /= VEF_OK) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Check libAltay configuration section.')
+    end function
 
     subroutine BasicModule_run(this,info)
     class(BasicModule),intent(inout) :: this
@@ -189,31 +126,21 @@ contains
     character(len=*),intent(in)             :: ext !< File extension (with leading dot)
     integer,intent(out)                     :: ofunit !< IO unit of the output
     character(len=*),intent(in),optional    :: suffix !< Suffix to the file
-    !
     character(len=max_pathlen) :: output_path
     integer :: ierr
-    !
+    
         if (present(suffix)) then
             output_path = trim(this%output%outputPrefix)// trim(suffix) //trim(ext)
         else
             output_path = trim(this%output%outputPrefix)// trim(ext)
-
         endif
+
         open(newunit=ofunit, file=output_path, status='replace', iostat=ierr)
-        if (ierr /= 0) then
-            write(display_unit, fmt=952) output_path
-            info = VEF_ERROR
-            return
-        endif
+        if (ierr /= 0) &
+            call log_error(MOD_NAME, 'open_output_file', ERR_IO, 'Could not open output file.')
+
         info = VEF_OK
-    !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-      !
     end function
-
-
 
     integer function BasicModule_reinitializeLibAltay(this, output_prefix) result(info)
     class(BasicModule),intent(inout)        :: this
@@ -256,7 +183,7 @@ contains
       integer,intent(in)                  :: cnfunit !< configuration file
       type(outputConfig),intent(inout)    :: cnf
       integer,intent(out)                 :: info
-      !
+      
             info = VEF_ERROR
             if (.not. readValue(cnfunit, cnf%outputPrefix)) then
                 write(error_unit,fmt=900) 'Check output file prefix.'

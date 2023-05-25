@@ -122,6 +122,4 @@ contains
 #undef TMPL_UNCOMMENT_FX
 #undef TMPL_UNCOMMENT_TYPE
 
-      !>@{
-
 end module

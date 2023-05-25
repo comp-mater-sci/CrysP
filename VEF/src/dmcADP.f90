@@ -18,19 +18,9 @@ implicit none
     !> Arbitrary Strain Mode (extends DeformationDrivenModule by 4 procedures)
     type,extends(DeformationDrivenModule) :: ADPModule
     contains ! type-bound procedures; pass(this) passes object itself, through which procedure referenced, as first argument to procedure
-
-        !>@{ \name Interface methods of AbstractModule
-
-        procedure,pass(this) :: printConfig => ADPModule_printConfig
-
         procedure,pass(this) :: readConfig => ADPModule_readConfig
-
         procedure,pass(this) :: run => ADPModule_run
-
-        !>@}
-
         procedure,pass(this) :: fileOutput => ADPModule_fileOutput
-
     end type
 
     !> Outputs collected by the simulation run
@@ -39,16 +29,6 @@ implicit none
     end type
 
 contains
-
-
-    !> Print configuration to IO unit (type-bound function)
-    integer function ADPModule_printConfig(this, outunit) result(info)
-    class(ADPModule),intent(in)      :: this   !< passed implicitly
-    integer,intent(in)              :: outunit !< IO unit for output
-    !
-        info = this%DeformationDrivenModule%printConfig(outunit)
-    end function
-
 
     !> Read configuration from IO unit (type-bound function)
     integer function ADPModule_readConfig(this, cnfunit) result(info) ! call with 1 argument (cnfunit) when referenced through object
