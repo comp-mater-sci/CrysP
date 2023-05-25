@@ -403,6 +403,7 @@ contains
       logical :: use_default_hardening
         logical :: read_state_dummy
       !
+        info = VEF_OK
             use_default_hardening = .true.
             if (.not. readValue(cnfunit, use_default_hardening)) then ! read default hardening flag
                   write(error_unit,fmt=900) 'Reading of the default hardening flag unsuccessful.'
