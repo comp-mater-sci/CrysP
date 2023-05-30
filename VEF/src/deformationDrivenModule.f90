@@ -22,44 +22,18 @@ implicit none
         class(StrainDrivenStep),pointer :: step
     end type
 
-
     !> Base class for strain-(rate) driven simulations modules
     type,extends(BasicModule) :: DeformationDrivenModule
-
         !> Optional solver settings
         class(StrainDrivenSolverConfig),pointer :: solver_config => null()
-
         !> Container for steps
         type(PtrStrainDrivenStep),dimension(:),allocatable :: steps
 
-    contains !MB: type-bound procedures
-        !>@{ \name Interface methods of AbstractModule
-
-        procedure,pass(this) :: printConfig => DeformationDrivenModule_printConfig
-
+    contains 
         procedure,pass(this) :: readConfig => DeformationDrivenModule_readConfig
-
-        !>@}
-
     end type
 
-
 contains
-
-
-    !> Print configuration to IO unit
-    integer function DeformationDrivenModule_printConfig(this,outunit) result(info)
-    class(DeformationDrivenModule),intent(in)      :: this
-    integer,intent(in)              :: outunit !< IO unit for output
-    !
-        info = this%BasicModule%printConfig(outunit)
-        if (associated(this%solver_config)) then
-            ! print solver config
-            continue
-        endif
-    !
-    end function
-
 
     !> Read configuration from IO unit
     integer function DeformationDrivenModule_readConfig(this,cnfunit) result(info)
