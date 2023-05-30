@@ -1,9 +1,7 @@
-#include "altayRCM.fpp"
 module altayPancake
     use definitions
     use altayMiscutils
     use criMathUtils
-    use altayRCM
     use altayMesostructure
     use altayIOConfig
     use altayTBH
@@ -12,9 +10,12 @@ module altayPancake
     use hardening
     use hardening_types
     use hardening_model_dsh
+    use logging
 
     implicit none
     private
+
+    character(*), parameter :: MOD_NAME = 'Pancake'
 
     public :: pancak2
 
@@ -60,6 +61,9 @@ module altayPancake
                     1.0D0, 1.0D0], shape(PLUMIN)) !first index: # of grain, second index: #of relaxation
         real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp
         integer :: info,M12,IGrElm,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II
+        
+        character(*), parameter :: PROC_NAME = 'pancak2'
+
         SAVE
 
 
@@ -140,11 +144,9 @@ module altayPancake
                      SIG = UBUF(1:N), &
                      TauR = Taur(1:M2), &
                      DTAU = DTAU(1:M2))
-            RCM_GUARD
 
-            if (.not.(IPR < 4)) then
-                RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
-            endif
+            if (.not.(IPR < 4)) &
+                call log_error(MOD_NAME, PROC_NAME, ERR)
             DTAU1=DTAU
             TAUR1=TAUR
 
@@ -167,13 +169,12 @@ module altayPancake
                          SIG = STRSS(1:N), &
                          TauR = Taur(1:M12), &
                          DTAU = DTAU(1:M12))
-                RCM_GUARD
 
                 if (IPR >= 4) then
                     if(NLIST == 1) write (IMP,222) IPR,IOR,ISTP,NBLOC
                     write (*,222) IPR,IOR,ISTP,NBLOC
  222                format (' Pancak2 222 - Problem with TBH',/,' IPR IOR, ISTP, NBLOC=',4I5)
-                    RCM_RAISE(1,'Pancak2','Problem with TBH',RCM_RTN)
+                    call log_error(MOD_NAME, PROC_NAME, ERR)
                 endif
                 ! GAMR will contain the relaxed shears:
                 gamr(1:NRL)=XX(M2+1:M2+NRL)
@@ -217,9 +218,9 @@ module altayPancake
         ! of the full constraint solution are used.
         NACTIV=count(abs(DTAU1(jj+1:jj+M11)) <= TOL)
         if (NACTIV > 8) then
-            RCM_RAISE(1,'Pancak2','Too many active slip systems',RCM_RTN)
+            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Too many active slip systems.')
         elseif (NACTIV == 0) then
-            RCM_RAISE(1,'Pancak2','No active slip systems found',RCM_RTN)
+            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'No active slip systems found.')
         else
             j = 0
             do i=1,M11

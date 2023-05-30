@@ -38,7 +38,6 @@ altayTexFormats.f90
 definitions.f90
 logging.f90
 altayConfig.f90  
-altayRCM.f90 
 altaySub.f90
 parameters.f90
 hardening/hardening.f90
@@ -54,7 +53,7 @@ hardening/model/dislocation_substructural_hardening/hardening_model_pebp_loop.f9
 )
 
 
-set_target_properties(${libaltay} PROPERTIES COMPILE_DEFINITIONS "ALTAY_SUBROUTINE;NO_STDOUT;RCM_ENABLED;PEBP_ENABLED;")
+set_target_properties(${libaltay} PROPERTIES COMPILE_DEFINITIONS "ALTAY_SUBROUTINE;NO_STDOUT;PEBP_ENABLED;")
 
 #
 # Installation of the outputs in the build tree

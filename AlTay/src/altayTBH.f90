@@ -1,13 +1,12 @@
-#include "altayRCM.fpp"
 module altayTBH
     use definitions
     use logging
-    use altayRCM
 
     implicit none
     private
 
     real(DP), parameter ::  TOL = 1.0e-10_DP
+    character(*), parameter, private :: MOD_NAME = 'TBH'
 
     public  ::  tbh
 
@@ -33,6 +32,8 @@ module altayTBH
         integer :: i,k,iter,jn,in
         real(dp) :: x,dt,zr,gmin
 
+        character(*), parameter :: PROC_NAME = 'TBH'
+
         bas=.FALSE.
         TAuR=0.0
         bas(Irp)=.TRUE.
@@ -47,10 +48,10 @@ module altayTBH
 
         iter = 0
         do
-            iter = iter + 1
+            iter=iter+1
             if (iter > 50) &
-                call log_error('TBH', 'TBH', ERR, 'Too many iterations')
-
+                call log_error(MOD_NAME, PROC_NAME, ERR, 'Too many iterations.')
+                
             SIG = matmul(Trp, U)
             ! Calculation of resolved shear stress
             TauR = matmul(SIG, A)
@@ -91,9 +92,8 @@ module altayTBH
                     endif
                 endif
             enddo
-            if (in == 0) then
-                RCM_RAISE(1,'TBH','The solution is unbounded',RCM_RTN)
-            endif
+            if (in == 0) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'The solution is unbounded.')
             CUst=-Aprime/Aprime(in)
             CUst(in)=1.0d0/Aprime(in)
 
@@ -135,5 +135,4 @@ module altayTBH
             end if
         end do
     end subroutine update_inverse_basis_vector
-
 end module

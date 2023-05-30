@@ -1,4 +1,3 @@
-#include "altayRCM.fpp"
 module altaySimul
     use definitions
     use hardening_types
@@ -10,9 +9,9 @@ module altaySimul
     use altayTaylor
     use altayAlgorithms
     use altayConfig
-    use altayRCM
     use altayIOConfig
     use altayMiscutils
+    use logging
 
     implicit none
     private
@@ -22,6 +21,7 @@ module altaySimul
     integer, private :: M11,NFILE1,NFILTW
     integer, allocatable :: seed(:)
 
+    character(*), parameter :: MOD_NAME = 'Simul'
 
     public :: SIMUL0, SIMUL1
     contains
@@ -35,6 +35,7 @@ module altaySimul
         character(len=40) :: TITEL
         integer :: info,seedsize
         real(dp), parameter :: rad2deg=0.5729577951308232e+02_dp
+        character(*), parameter :: PROC_NAME = 'SIMUL0'
 
 
         if(.not. allocated(seed)) then
@@ -53,14 +54,13 @@ module altaySimul
         NMSS   = acnf%output_config%NMSS    ! control "MSS"
         HGAMTOT=0.D0
 
-        if (NGR < 1.or.NGR > 2) then
-            RCM_RAISE(1,'SIMUL','Incorrect value of NGR',RCM_RTN)
-        endif
+        if (NGR < 1.or.NGR > 2) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Incorrect value of NGR')
+   
  140    format (' NGR can only take the values 1 or 2 but was',I5)
         ! Check if number of crystals is right for the model
-        if (modulo(size(DFIL), NGR) /= 0) then
-            RCM_RAISE(1,'SIMUL','The number of grains must be an even number',RCM_RTN)
-        endif
+        if (modulo(size(DFIL), NGR) /= 0) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Number of grains must be even.')
 !       Number of relaxations: 0 for Taylor and 2 for ALAMEL:
         NRL=(NGR-1)*2
         TITEL  = acnf%jobtitle
@@ -72,7 +72,6 @@ module altaySimul
   98    format (A)
 !       read the parameters of the work hardening model
         call TAYLOR1(M11,XM) ! read slip system file
-        RCM_GUARD
     end subroutine
 
 
@@ -120,7 +119,6 @@ module altaySimul
         NMSSx= NFILE0*NMSS    ! control "MSS" (effective value)
 
         NSTP     = astate%simulCalls(astate%this)%input%nsteps
-        RCM_GUARD
         ! Output the current texture
         if (NFILE == 1) call CURwriteBlock(IMP1,info)
         HGAMCALL = 0.D0
@@ -169,7 +167,6 @@ module altaySimul
             call Update_DeformationState(MacroDefRate,MacroDefState,info)
             call UPDATC(CIJ,MacroDefState%IncrDefGrad_inverse)
             call GETANG(CIJ,GAXES,GEULR,TG)
-            RCM_GUARD
 
             if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
                   call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
@@ -232,7 +229,6 @@ module altaySimul
                 !             - has to output the result of the second crystal found
                 !               during the previous computation.
                 call TAYLOR3(Ssam,RHOSsa,TRF,GEWF,IOR,ISTP,NBLOC,TRFb,GMMab,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
-                RCM_GUARD
 
                 if(laml == 1) then
                     ssqgx=GEWF
@@ -244,7 +240,6 @@ module altaySimul
                 if (astate%simulCalls(astate%this)%input%full_model) then
                       call TAYLOR4(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate, MacroDefRate,CC,M11,SSam,RHOSsa,fi1,PHI,fi2, &
                                    TRF,C1,C2,ITW,XM)
-                      RCM_GUARD
                 endif
                 if (NFILTW == 1) write (IMP3,398) ITW
  398            format (I3)

@@ -1,13 +1,7 @@
-!>    \file altaySub.f90 ALAMEL as a subroutine
-
-#include "altayRCM.fpp"
-
-!> API for "AlTay as a subroutine"
 module altaySub
     use hardening_model_dsh
     use altayIOConfig
     use altaySimul
-    use altayRCM
     use altayMesostructure
     use altayTexFormats
     use altayConfig
@@ -71,17 +65,7 @@ contains
         if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
         info = VEF_ERROR
         call SIMUL0()
-        ! Collect more info about the
-        if(RCM_signal()) then
-            if (present(errmsg)) then
-                ! Extend the level of detail if the size of errmsg permits that.
-                if (len_trim(errmsg)+2 < len(errmsg)) is_exception = RCM_catch(info, errmsg(len_trim(errmsg)+2:))
-            else
-                info = RCM_topError()
-            endif
-            call RCM_clean()
-            return
-        endif
+
         if (present(errmsg)) errmsg = ''
         ! PEBP model
                 info = KS_initState(size(DFIL))
@@ -115,9 +99,6 @@ contains
               deallocate(astate%simulCalls)
               astate%nSimulCalls = 0
         endif
-        ! Clean the RCM stack
-        call RCM_clean()
-
     end subroutine
 
     subroutine openOutputFiles(cnf, info, errmsg)
@@ -218,7 +199,6 @@ contains
         astate = steps
         ! Clean exception stack from a previous (possibly unsuccessful)
         ! set of calls.
-        call RCM_clean()
         info = VEF_ERROR
         !
         do i = 1, steps%nSimulCalls
@@ -227,9 +207,7 @@ contains
             call Set_DeformationRate(steps%simulCalls(i)%input%dgf,MacroDefRate)
             ! Run simul.
             call SIMUL1(NFILE0,MacroDefRate)
-            if (RCM_signal()) then
-                RCM_RAISE(info,'runSteps','SIMUL has thrown exception',RCM_RTN)
-            endif
+
             if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
         enddo
 

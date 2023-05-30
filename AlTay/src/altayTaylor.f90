@@ -1,4 +1,3 @@
-#include "altayRCM.fpp"
 module altayTaylor
     use definitions
     use altayAlgorithms
@@ -6,12 +5,12 @@ module altayTaylor
     use altayMacroKinematic
     use criMathUtils
     use hardening
-    use altayRCM
     use altayIOConfig
     use altayPancake
     use altaySliprate
     use altayConfig, only: astate
     use hardening_model_dsh
+    use logging
 
     implicit none
     private
@@ -98,7 +97,6 @@ module altayTaylor
         !Transform relaxation spin tensor from local frame (RHOAcrys) to sample frame (RHOAsa)
         RHOAsa = rotateSRTensorTo(RHOAcrys,TRF)
         !Report RHOSsa and RHOAsa to LST-file
-        RCM_GUARD
     end subroutine
 
 
@@ -129,7 +127,6 @@ module altayTaylor
 
 
         call SLIPRAT(M111,96,GAMdot,ior,IPR,SGNN,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
-        RCM_GUARD
         ddt = 1.D0
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call KS_updateState(IOR,GAMdot,ddt,info)
         TOTGAMdot=sum(abs(GAMdot(1:M111)))
@@ -172,9 +169,8 @@ module altayTaylor
                 X=X+GAMdot(I+NGL)/G(I)
                 VOLFR(I)=X
             end do
-            if (X > 1.) then
-                RCM_RAISE(1,'TAYLR1','Total volume fraction of twins exceeds unity',RCM_RTN)
-            endif
+            if (X > 1.) &
+                call log_error('Taylor', 'taylor4', ERR_VAL, 'Total volume fraction of twins exceeds unity')
             call RANDOM_NUMBER(RNDM)
             do I=1,NTW
                 if (RNDM < VOLFR(I)) goto 87
