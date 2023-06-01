@@ -83,8 +83,6 @@ module altayTaylor
         real(dp), intent(in) :: TRFb(3,3,2),TRF(3,3),GMMAb(2)
 
         real(dp), dimension(3,3):: RHOScrys, RHOAcrys, Scrys
-        ! Local stress in crystal reference system:
-        integer :: i,j
 
 
         call pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,IPR,GEWF,A2,MacroDefRate,MacroDefState,NACTIV, &
@@ -117,13 +115,12 @@ module altayTaylor
         real(dp), intent(out) :: WorkRate
         integer, intent(out) :: ITW
 
-        real(dp), dimension(3) :: TRC,ROT
-        real(dp), dimension(3,3) :: RCC,RCcryst,rhossaTot,TDC,RHOAcrys
-        real(dp), dimension(96) :: VOLFR,SGNN,GAMdot
-        integer :: info,i,j
-        real(dp) :: ddt,rndm,Mgrain,ratlon,x
-        type(EulerAngles):: Euler
-        save
+        real(dp), dimension(3), save :: TRC,ROT
+        real(dp), dimension(3,3), save :: RCC,RCcryst,rhossaTot,TDC,RHOAcrys
+        real(dp), dimension(96), save :: VOLFR,SGNN,GAMdot
+        integer, save :: info, i,j
+        real(dp), save :: ddt,rndm,Mgrain,ratlon,x
+        type(EulerAngles), save:: Euler
 
 
         call SLIPRAT(M111,96,GAMdot,ior,IPR,SGNN,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
