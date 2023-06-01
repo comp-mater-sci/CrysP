@@ -1,64 +1,13 @@
-!
 !> Provides named constants and procedures for dealing with filesystem paths.
 module criPath
 implicit none
 
-#if defined(_WIN32) || defined(_WIN64)
-      !> Path separator
-      character,parameter     :: pathsep = '\'
-#else
       !> Path separator
       character,parameter     :: pathsep = '/'
-#endif
-
       !> Maximal length of path acceptable by the filesystem
       integer,parameter       :: max_pathlen = 2048
 
 contains
-
-      !> Return basename of the pathname `path`, which is the name
-      !> of the file or directory `path` with any leading directory
-      !> components removed.
-      !>
-      !> The function is modelled after Unix command `basename` and
-      !> Python os.path.basename()
-      pure function basename(path)
-      character(len=*),intent(in)   :: path
-      character(len=len(path))       :: basename
-      !
-      integer :: lb,l,u
-      !
-            lb = len_trim(path)
-            if (lb > 0) then
-                  l = 1
-                  u = index(path, pathsep, back=.true.)
-                  ! (u == 0)  : basename is the entire path
-                  ! (u == lb) : dir, search for another dirsep if u > 1; otherwise return root path
-                  ! (u > 0) && (u < lb): there is a path separator inside the path
-                  if (u > 0) then
-                        if (u < lb) then
-                              l = u + 1
-                              u = lb
-                        else
-                              ! (u == lb)
-                              if (u > 1) then
-                                    u = u - 1
-                                    l = index(path(1:u), pathsep, back=.true.)! pathsep at the end of path
-                                    l = merge(1,l+1,l == 0)
-                              endif
-                        endif
-                  else
-                        u = lb
-                  endif
-                  ! finally: shift to the left
-                  basename = adjustl(path(l:u))
-            else
-                  basename = ''
-            endif
-      !
-      end function
-
-
       !> Split the pathname path into a pair (root, ext).
       !>
       !> Ext is empty or begins with a period and contains at most one period.
@@ -148,4 +97,3 @@ contains
       end function
 
 end module
-
