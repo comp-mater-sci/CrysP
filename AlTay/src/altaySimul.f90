@@ -84,7 +84,7 @@ module altaySimul
         integer, save :: NGR,&         !< number of grains
                    NRL,&         !< number of relaxations
                    laml
-        integer, save :: IOR,ISTP,NBLOC,NPOINT, info, NFILE, NPEBPx,NMSSx,NSTP,i,j,l,LAML1,ifil4,ITW
+        integer :: IOR,ISTP,NBLOC,NPOINT, info, NFILE, NPEBPx,NMSSx,NSTP,i,j,l,LAML1,ifil4,ITW
         real(dp), save :: TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),SHsam(3,3),Ssam(3,3),RHOSsa(3,3), &
                     CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2),fi1,PHI,fi2,TRF(3,3),C1(3,3),C2(3,3),GEWF, &
                     GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
