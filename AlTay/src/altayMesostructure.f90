@@ -135,21 +135,12 @@ module altayMesostructure
             100  format (//,' CLUSTER1')
         end if
         !     Calculation of volume affected by the surface
-        do i=1,3
-            x=0.0
-            do j=1,3
-                X=X+GRPAR(j,i)**2
-            enddo
-            AL(i)=sqrt(X)
-        enddo
+        AL=norm2(GRPAR,1)
         ! Box product
         vec1(1)=GRPAR(2,2)*GRPAR(3,3)-GRPAR(3,2)*GRPAR(2,3)
         vec1(2)=GRPAR(3,2)*GRPAR(1,3)-GRPAR(1,2)*GRPAR(3,3)
         vec1(3)=GRPAR(1,2)*GRPAR(2,3)-GRPAR(2,2)*GRPAR(1,3)
-        u=0.0D0
-        do i=1,3
-            u=u+GRPAR(i,1)*vec1(i)
-        enddo
+        u=sum(GRPAR(:,1)*vec1)
         ! The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3;
         ! for very flattened grains, it should tend to 1.
         u=abs(u)*0.25D0/(AL(1)*AL(2)*AL(3))
@@ -205,19 +196,13 @@ module altayMesostructure
         AXX(3,2)=AXX(1,3)*AXX(2,1)-AXX(2,3)*AXX(1,1)
         !       Normalisation
         do j=1,3
-            x=0.0d0
-            do i=1,3
-                x=x+AXX(i,j)**2
-            enddo
-            x=sqrt(x)
+            x=norm2(AXX(:,j))
             do i=1,3
                 AXX(i,j)=AXX(i,j)/x
             enddo
         enddo
+        Tprinc = transpose(AXX)
         do i=1,3
-            do j=1,3
-                Tprinc(i,j)=AXX(j,i)
-            enddo
             if (IPR > 0 .and. NLIST == 1) write (IMP,102) (Tprinc(i,j),j=1,3)
         102 format (' TGrb ',3d15.7)
         enddo
@@ -226,16 +211,8 @@ module altayMesostructure
         !     Transform MacroDefRate%StrainModevM to the "Grb" reference frame
         TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
 
-        dot1=0.0
-        dot2=0.0
-        do i=1,3
-            do j=1,3
-                dot1=dot1+relaxI(i,j)*TDCGr(i,j)
-                dot2=dot2+relaxII(i,j)*TDCGr(i,j)
-            enddo
-        enddo
-        dot1=dot1/sqrt(2.0D0)/dlength
-        dot2=dot2/sqrt(2.0D0)/dlength
+        dot1=sum(relaxI*TDCGr)/sqrt(2.0D0)/dlength
+        dot2=sum(relaxII*TDCGr)/sqrt(2.0D0)/dlength
 
         if(abs(dot1) < 0.000001.and.abs(dot2) < 0.000001) then
             ! both relaxations are orthogonal
@@ -277,10 +254,8 @@ module altayMesostructure
             vec1=0.0
             vec2=0.0
             do i=1,3
-                do j=1,3
-                    vec1(i)=vec1(i)+AXX(i,j)*PrDir(1,j)
-                    vec2(i)=vec2(i)+AXX(i,j)*PrDir(2,j)
-                enddo
+                vec1(i)=vec1(i)+sum(AXX(i,:)*PrDir(1,:))
+                vec2(i)=vec2(i)+sum(AXX(i,:)*PrDir(2,:))
             enddo
 
             AXX(1:3,1)=vec1
