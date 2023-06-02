@@ -24,9 +24,8 @@ module altayMesostructure
 
     contains
 
-    !> Reading of "microstructure" (Euler angles defining
-    !> grain boundary segments) in SMT-format, allocation
-    !> and assignment of the module variables.
+    !> Reading of "microstructure" (Euler angles defining grain boundary segments)
+    !> in SMT-format, allocation and assignment of the module variables.
     subroutine GRFIL(fnam,F_mic,ierr)
         use altayIOConfig
 
@@ -140,10 +139,9 @@ module altayMesostructure
         vec1(1)=GRPAR(2,2)*GRPAR(3,3)-GRPAR(3,2)*GRPAR(2,3)
         vec1(2)=GRPAR(3,2)*GRPAR(1,3)-GRPAR(1,2)*GRPAR(3,3)
         vec1(3)=GRPAR(1,2)*GRPAR(2,3)-GRPAR(2,2)*GRPAR(1,3)
-        u=sum(GRPAR(:,1)*vec1)
         ! The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3;
         ! for very flattened grains, it should tend to 1.
-        u=abs(u)*0.25D0/(AL(1)*AL(2)*AL(3))
+        u=abs(sum(GRPAR(:,1)*vec1))*0.25D0/product(AL)
         !     re-order the basisvectors so that AA(1)>=AA(2)>=AA(3)
         !     find out which one of these corresponds to the original AL(3)
         if (AL(2) <= AL(3).and.AL(1) <= AL(3)) then    ! AL(3) is the longest
@@ -197,13 +195,11 @@ module altayMesostructure
         !       Normalisation
         do j=1,3
             x=norm2(AXX(:,j))
-            do i=1,3
-                AXX(i,j)=AXX(i,j)/x
-            enddo
+            AXX(:,j)=AXX(:,j)/x
         enddo
         Tprinc = transpose(AXX)
         do i=1,3
-            if (IPR > 0 .and. NLIST == 1) write (IMP,102) (Tprinc(i,j),j=1,3)
+            if (IPR > 0 .and. NLIST == 1) write (IMP,102) (AXX(j,i),j=1,3)
         102 format (' TGrb ',3d15.7)
         enddo
 
@@ -222,9 +218,7 @@ module altayMesostructure
             AXX(1:3,2)=-AXX(1:3,1)
             AXX(1:3,1)=vec1
             Tprinc = transpose(AXX)
-        elseif(abs(dot2) < 0.000001) then
-            ! Relaxation-2 is already a orthogonal one
-        else
+        elseif(abs(dot2) >= 0.000001) then
             ! need to rotate by a angle < 90 (this angle could be positive or negative)
             tgangle=dot2/dot1
             PrDir=0.0
@@ -233,7 +227,6 @@ module altayMesostructure
             PrDir(2,1)=-PrDir(1,2)
             PrDir(2,2)=PrDir(1,1)
             PrDir(3,3)=1.0D0
-
             !   Prdir(1,) is vector-1 in the GB frame
             !   Prdir(2,) is vector-2 in the GB frame
             !   Transform these two vector in the Sample's frame
@@ -243,7 +236,6 @@ module altayMesostructure
                 vec1(i)=vec1(i)+sum(AXX(i,:)*PrDir(1,:))
                 vec2(i)=vec2(i)+sum(AXX(i,:)*PrDir(2,:))
             enddo
-
             AXX(1:3,1)=vec1
             AXX(1:3,2)=vec2
             Tprinc = transpose(AXX)
