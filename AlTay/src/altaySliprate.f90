@@ -63,9 +63,7 @@ module altaySliprate
                     NN=N1
                     do I1=1,N0
                          call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
-                         if (ineg==0) then
-                            call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-                         endif
+                         if (ineg==0) call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                          J=N0-I1
                          if (J>0) IND(J)=INDACT(J+1)
                     enddo
@@ -77,9 +75,7 @@ module altaySliprate
                             do I2=1,I1-1
                                 call fill(IND,INDACT,[I1,I2],N0)
                                 call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
-                                if (ineg==0) then
-                                    call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-                                endif
+                                if (ineg==0) call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                             enddo
                         enddo
                         ! Level 3
@@ -91,9 +87,7 @@ module altaySliprate
                                     do I3=1,I2-1
                                       call fill(IND,INDACT,[I1,I2,I3],N0)
                                       call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
-                                      if (ineg==0) then
-                                          call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-                                      endif
+                                      if (ineg==0) call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                                     enddo
                                 enddo
                             enddo
@@ -162,9 +156,8 @@ module altaySliprate
              j=IND(i)
              XX(j)=Y*MacroDefRate%vMeqStrainRate
              if (IPR==2 .and. NLIST==1) write (IMP,101) i,IND(i),Y
-             Y=abs(Y)
-             if (x>Y) then
-                 x=Y
+             if (x>abs(Y)) then
+                 x=abs(Y)
                  k=k+1
              endif
         enddo
@@ -211,13 +204,13 @@ module altaySliprate
             A(1:N1,1:N1)=0.0_dp
             do i=1,NN
                A(i,i)=2.0_dp
-               B(i)=0.0
                do j=1,5
                   x=sgnn(IND(i))*A8(j,IND(i))
                   A(i,NN+j)=-x
                   A(NN+j,i)=x
                enddo
             enddo
+            B(1:NN)=0.0
             B(1+NN:5+NN)=BB8
         endif
 
@@ -225,14 +218,12 @@ module altaySliprate
         call Kleinkwa(N1,N2,13,13,A,B,BA,RES)
 
         SLPR(1:NN)=BA(1:NN)
-        sumsq=0.0_dp
+        sumsq=sum(SLPR(1:NN)**2)
         x=0.0_dp
         ineg=0
         do i=1,NN
-           Y=SLPR(i)
-           sumsq=sumsq+Y**2
-           if (x > Y) then
-               x=Y
+           if (x > SLPR(i)) then
+               x=SLPR(i)
                ineg=i
            endif
         enddo
@@ -250,9 +241,7 @@ module altaySliprate
         real(dp), intent(in) :: SLPR(8), sumsq
 
         NOPL=NOPL+1
-        if (NOPL>NSTOR) &
-            call log_error(MOD_NAME, 'store', ERR_DIMS, 'Too small dimension NSTOR in SLIPRAT')
- 100    format (' STORE - increase dimension NSTOR in SLIPRAT,STORE')
+        if (NOPL>NSTOR) call log_error(MOD_NAME, 'store', ERR_DIMS, 'Too small dimension NSTOR in SLIPRAT')
         ISTOR(0,NOPL)=NN
         ISTOR(1:NN,NOPL)=IND(1:NN)
         SLSTOR(0,NOPL)=SUMSQ
