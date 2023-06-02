@@ -217,33 +217,19 @@ module altayMesostructure
         if(abs(dot1) < 0.000001.and.abs(dot2) < 0.000001) then
             ! both relaxations are orthogonal
         elseif(abs(dot1) < 0.000001) then
-            if(abs(dot2-1.D0) < 0.00001) then
-                  !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
-                  !  new axe-1 be old axe-2
-                  !  new axe-2 be minus old axe-1
-                  vec1=AXX(1:3,2)
-                  AXX(1:3,2)=-AXX(1:3,1)
-                  AXX(1:3,1)=vec1
-                  Tprinc = transpose(AXX)
-            else
-                 !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
-                 !  new axe-1 be old axe-2
-                 !  new axe-2 be minus old axe-1
-                 !  The angle is only between relaxation-1 and D0. It is nothing related with relaxation-2.
-                 vec1=AXX(1:3,2)
-                 AXX(1:3,2)=-AXX(1:3,1)
-                 AXX(1:3,1)=vec1
-                 Tprinc = transpose(AXX)
-            endif
-
+            !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
+            vec1=AXX(1:3,2)
+            AXX(1:3,2)=-AXX(1:3,1)
+            AXX(1:3,1)=vec1
+            Tprinc = transpose(AXX)
         elseif(abs(dot2) < 0.000001) then
             ! Relaxation-2 is already a orthogonal one
         else
             ! need to rotate by a angle < 90 (this angle could be positive or negative)
             tgangle=dot2/dot1
             PrDir=0.0
-            PrDir(1,1)=1.D0/sqrt(1.D0+tgangle*tgangle)
-            PrDir(1,2)=tgangle/sqrt(1.D0+tgangle*tgangle)
+            PrDir(1,1)=1.D0/sqrt(1.D0+tgangle**2)
+            PrDir(1,2)=tgangle/sqrt(1.D0+tgangle**2)
             PrDir(2,1)=-PrDir(1,2)
             PrDir(2,2)=PrDir(1,1)
             PrDir(3,3)=1.0D0
