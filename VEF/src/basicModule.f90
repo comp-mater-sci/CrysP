@@ -46,7 +46,7 @@ module dmcBasicModule
       type,extends(abstractModule) :: BasicModule
             type(outputConfig)            :: output
             type(altayConfigData)         :: altay !< Root-level configuration structure of texture and hardening
-      contains 
+      contains
             procedure :: initialize =>  BasicModule_initialize
             procedure :: readConfig => BasicModule_readConfig
             procedure :: run => BasicModule_run
@@ -61,15 +61,15 @@ contains
     integer function BasicModule_initialize(this) result(info)
       class(BasicModule),intent(inout)          :: this
       integer :: ierr
-      
+
             info = VEF_ERROR
             ! Finish the configuration:
             this%altay%output_config%nfile = merge(1,0,this%output%outputRequest)
             this%altay%output_prefix = trim(this%output%outputPrefix)
             this%altay%jobtitle = trim(this%output%outputPrefix)
-            
+
             call initAltay(this%altay,ierr)
-            
+
             if (ierr /= VEF_OK) return
 
             30 format('Initializing the multilevel model...')
@@ -88,14 +88,14 @@ contains
     integer function BasicModule_readConfig(this,cnfunit) result(info)
         class(BasicModule),intent(inout) :: this
         integer,intent(in)               :: cnfunit !< IO input unit
-        
+
         character(*), parameter :: PROC_NAME = 'readconfig'
-      
+
         ! Read output configuration lines
         call readOutputConfigSection(cnfunit,this%output,info) ! top 3 lines after comment header of config file
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Check output configuration section.')
-        
+
         ! Read AlTay configuration lines
         call readAlTayConfigSection(cnfunit,this%altay,info) !read configuration of texture, slip systems, microstructure and hardening
         if (info /= VEF_OK) &
@@ -114,7 +114,7 @@ contains
     !> Finalization of the module
     integer function BasicModule_finalize(this) result(info)
         class(BasicModule),intent(inout) :: this
-        
+
         if (this%finalizeLibAltay() /= VEF_OK) &
             call log_error(MOD_NAME, 'finalize', ERR)
     end function
@@ -128,7 +128,7 @@ contains
     character(len=*),intent(in),optional    :: suffix !< Suffix to the file
     character(len=max_pathlen) :: output_path
     integer :: ierr
-    
+
         if (present(suffix)) then
             output_path = trim(this%output%outputPrefix)// trim(suffix) //trim(ext)
         else
@@ -183,7 +183,7 @@ contains
       integer,intent(in)                  :: cnfunit !< configuration file
       type(outputConfig),intent(inout)    :: cnf
       integer,intent(out)                 :: info
-      
+
             info = VEF_ERROR
             if (.not. readValue(cnfunit, cnf%outputPrefix)) then
                 write(error_unit,fmt=900) 'Check output file prefix.'
@@ -221,8 +221,7 @@ contains
       character(:), allocatable :: slip_systems
       character(5) :: buffer
 
-      type(MapItem),dimension(2*2) :: extensions = [MapItem('.smt',TF_SMT), MapItem('.SMT',TF_SMT), &
-                                                    MapItem('.cur',TF_CUR), MapItem('.CUR',TF_CUR)]
+      type(MapItem),dimension(2) :: extensions = [MapItem('.smt',TF_SMT), MapItem('.SMT',TF_SMT)]
 
       type(MapItem),dimension(2) :: model_types = [MapItem('ALAMEL', modelAlamel), &
                                                    MapItem('FCTaylor', modelFCTaylor)]
@@ -240,14 +239,12 @@ contains
                 return
             endif
             select case(cnf%texture%input_type)
-                  case(TF_SMT)     ! SMT or CUB
-                        continue
-                  case(TF_CUR)       ! CUR file, the only multi-block file now.
-                       if (.not. readValue(cnfunit, cnf%texture%block_id)) return ! read block id for CUR format
-                  case default
-                        write(display_unit, fmt=900) 'Incorrect texture type.'
-                        return
-                  end select
+                case(TF_SMT)
+                    continue
+                case default
+                    write(display_unit, fmt=900) 'Incorrect texture type.'
+                    return
+            end select
             !
             ! Determine crystal plasticity model type
             !if (.not. readKeyword(cnfunit, model_types, model_id)) return
@@ -265,8 +262,8 @@ contains
             !
             else ! default slip system definition
                 read(cnfunit, '(A)') buffer
-                slip_systems = buffer 
-                cnf%slipsystem%input_fname = slip_systems // '.pre' 
+                slip_systems = buffer
+                cnf%slipsystem%input_fname = slip_systems // '.pre'
             endif
             !
             ! Process advanced microstructure characterization
@@ -362,7 +359,7 @@ contains
                   case(HARDENING_BP, HARDENING_PEBP_SCREW, HARDENING_PEBP_LOOP)
                         if (.not. readValue(cnfunit, tmp_fname)) return ! read BP parameter file name
                         open(newunit=nparunit,file=tmp_fname,status='old', iostat=ioerr)
-               
+
                         if (ioerr /= 0) then
                         return
                         endif
@@ -394,7 +391,7 @@ contains
             else
                   cnf%hardening_parameters = hardening_get_parameters(HARDENING_NONE)
             endif
-            
+
 666         return
 ! message formats
 #define MSG_GROUP_ERRORS
