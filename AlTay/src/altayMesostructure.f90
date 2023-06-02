@@ -88,17 +88,17 @@ module altayMesostructure
 
     end subroutine
 
-    subroutine CLUSTER1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
+    subroutine CLUSTER1(IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
     !   TDC is the normalized von-Mises equivalent strain rate
         use altayIOConfig, only: IPR,NLIST,IMP
 
-        integer,intent(in)                     :: NGR,IGrElm
+        integer,intent(in)                     :: IGrElm
         type(DeformationRate),intent(in)       :: MacroDefRate
         type(DeformationState),intent(in)      :: MacroDefState
-        real(dp),intent(inout)                 :: GEWF
+        real(dp),intent(out)                   :: GEWF
         real(dp),intent(out)                   :: Tprinc(3,3)
 
-        real(dp) :: AXX(3,3),GRPAR(3,3), PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
+        real(dp) :: AXX(3,3),GRPAR(3,3), PrDir(2,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
         real(dp) :: x, u, dlength, dot1, dot2, TGANGLE
         integer :: i,j
         real(dp), parameter, dimension(3,3) :: &
@@ -109,11 +109,6 @@ module altayMesostructure
                               0._dp, 0._dp, 1._dp, &
                               0._dp, 1._dp, 0._dp],shape(relaxII))
 
-
-        if (NGR == 1) then      ! let Tprinc be equal to the identity matrix.
-            Tprinc = unitMatrix
-            return
-        end if
 
         GRPAR = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
         if ((IPR > 1) .and.(NLIST == 1)) then
@@ -144,7 +139,7 @@ module altayMesostructure
         u=abs(sum(GRPAR(:,1)*vec1))*0.25D0/product(AL)
         !     re-order the basisvectors so that AA(1)>=AA(2)>=AA(3)
         !     find out which one of these corresponds to the original AL(3)
-        if (AL(2) <= AL(3).and.AL(1) <= AL(3)) then    ! AL(3) is the longest
+        if (AL(2) <= AL(3) .and. AL(1) <= AL(3)) then    ! AL(3) is the longest
             AA(1)=AL(3)
             if(AL(2) >= AL(1))then
                 AA(2)=AL(2)
@@ -154,7 +149,7 @@ module altayMesostructure
                 AA(3)=AL(2)
             endif
             GEWF=u*(2.0D0*(AA(2)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.0D0)
-        elseif (AL(3) <= AL(1).and.AL(3) <= AL(2)) then   ! AL(3) is the shortest
+        elseif (AL(3) <= AL(1) .and. AL(3) <= AL(2)) then   ! AL(3) is the shortest
             AA(3)=AL(3)
             if(AL(1) >= AL(2))then
                   AA(1)=AL(1)
@@ -226,7 +221,6 @@ module altayMesostructure
             PrDir(1,2)=tgangle/sqrt(1.D0+tgangle**2)
             PrDir(2,1)=-PrDir(1,2)
             PrDir(2,2)=PrDir(1,1)
-            PrDir(3,3)=1.0D0
             !   Prdir(1,) is vector-1 in the GB frame
             !   Prdir(2,) is vector-2 in the GB frame
             !   Transform these two vector in the Sample's frame
