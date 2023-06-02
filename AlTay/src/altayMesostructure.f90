@@ -137,9 +137,9 @@ module altayMesostructure
         ! The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3;
         ! for very flattened grains, it should tend to 1.
         u=abs(sum(GRPAR(:,1)*vec1))*0.25D0/product(AL)
-        !     re-order the basisvectors so that AA(1)>=AA(2)>=AA(3)
-        !     find out which one of these corresponds to the original AL(3)
-        if (AL(2) <= AL(3) .and. AL(1) <= AL(3)) then    ! AL(3) is the longest
+
+        ! re-order the basisvectors so that AA(1)>=AA(2)>=AA(3)
+        if (maxloc(AL,1) == 3) then
             AA(1)=AL(3)
             if(AL(2) >= AL(1))then
                 AA(2)=AL(2)
@@ -149,7 +149,7 @@ module altayMesostructure
                 AA(3)=AL(2)
             endif
             GEWF=u*(2.0D0*(AA(2)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.0D0)
-        elseif (AL(3) <= AL(1) .and. AL(3) <= AL(2)) then   ! AL(3) is the shortest
+        elseif (minloc(AL,1) == 3) then
             AA(3)=AL(3)
             if(AL(1) >= AL(2))then
                   AA(1)=AL(1)
@@ -161,7 +161,7 @@ module altayMesostructure
             GEWF=u*(4.D0*(AA(1)-AA(3))*(AA(2)-AA(3))*AA(3)  &
                   +2.0D0*(AA(2)-AA(3))*AA(3)**2+2.0D0*(AA(1)-AA(3))*AA(3)**2 &
                   +4.D0*AA(3)**3/3.D0)
-        else                                          ! AL(3) is neither shortest nor longest
+        else
             AA(2)=AL(3)
             if(AL(1) >= AL(2))then
                 AA(1)=AL(1)
