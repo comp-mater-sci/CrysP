@@ -98,7 +98,7 @@ module altayMesostructure
         real(dp),intent(out)                   :: GEWF
         real(dp),intent(out)                   :: Tprinc(3,3)
 
-        real(dp) :: AXX(3,3),GRPAR(3,3), PrDir(2,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
+        real(dp) :: GRPAR(3,3), PrDir(2,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
         real(dp) :: x, u, dlength, dot1, dot2, TGANGLE
         integer :: i,j
         real(dp), parameter, dimension(3,3) :: &
@@ -177,24 +177,23 @@ module altayMesostructure
 
         ! Construction of orientation matrices for frames associated to the
         ! interfaces
-        AXX(1:3,1)=GRPAR(1:3,1)
+        Tprinc(1,1:3)=GRPAR(1:3,1)
         ! Orientation of interfaces containing axes
         ! Normal axis: (vector product)
-        AXX(1,3)=GRPAR(2,1)*GRPAR(3,2)-GRPAR(3,1)*GRPAR(2,2)
-        AXX(2,3)=GRPAR(3,1)*GRPAR(1,2)-GRPAR(1,1)*GRPAR(3,2)
-        AXX(3,3)=GRPAR(1,1)*GRPAR(2,2)-GRPAR(2,1)*GRPAR(1,2)
+        Tprinc(3,1)=GRPAR(2,1)*GRPAR(3,2)-GRPAR(3,1)*GRPAR(2,2)
+        Tprinc(3,2)=GRPAR(3,1)*GRPAR(1,2)-GRPAR(1,1)*GRPAR(3,2)
+        Tprinc(3,3)=GRPAR(1,1)*GRPAR(2,2)-GRPAR(2,1)*GRPAR(1,2)
         !       Orientation of 2nd axis:(vector product)
-        AXX(1,2)=AXX(2,3)*AXX(3,1)-AXX(3,3)*AXX(2,1)
-        AXX(2,2)=AXX(3,3)*AXX(1,1)-AXX(1,3)*AXX(3,1)
-        AXX(3,2)=AXX(1,3)*AXX(2,1)-AXX(2,3)*AXX(1,1)
+        Tprinc(2,1)=Tprinc(3,2)*Tprinc(1,3)-Tprinc(3,3)*Tprinc(1,2)
+        Tprinc(2,2)=Tprinc(3,3)*Tprinc(1,1)-Tprinc(3,1)*Tprinc(1,3)
+        Tprinc(2,3)=Tprinc(3,1)*Tprinc(1,2)-Tprinc(3,2)*Tprinc(1,1)
         !       Normalisation
         do j=1,3
-            x=norm2(AXX(:,j))
-            AXX(:,j)=AXX(:,j)/x
+            x=norm2(Tprinc(j,:))
+            Tprinc(j,:)=Tprinc(j,:)/x
         enddo
-        Tprinc = transpose(AXX)
         do i=1,3
-            if (IPR > 0 .and. NLIST == 1) write (IMP,102) (AXX(j,i),j=1,3)
+            if (IPR > 0 .and. NLIST == 1) write (IMP,102) (TPrinc(i,j),j=1,3)
         102 format (' TGrb ',3d15.7)
         enddo
 
@@ -209,10 +208,9 @@ module altayMesostructure
             ! both relaxations are orthogonal
         elseif(abs(dot1) < 0.000001) then
             !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
-            vec1=AXX(1:3,2)
-            AXX(1:3,2)=-AXX(1:3,1)
-            AXX(1:3,1)=vec1
-            Tprinc = transpose(AXX)
+            vec1=Tprinc(2,1:3)
+            Tprinc(2,1:3)=-Tprinc(1,1:3)
+            Tprinc(2,1:3)=vec1
         elseif(abs(dot2) >= 0.000001) then
             ! need to rotate by a angle < 90 (this angle could be positive or negative)
             tgangle=dot2/dot1
@@ -227,12 +225,11 @@ module altayMesostructure
             vec1=0.0
             vec2=0.0
             do i=1,3
-                vec1(i)=vec1(i)+sum(AXX(i,:)*PrDir(1,:))
-                vec2(i)=vec2(i)+sum(AXX(i,:)*PrDir(2,:))
+                vec1(i)=vec1(i)+sum(Tprinc(:,i)*PrDir(1,:))
+                vec2(i)=vec2(i)+sum(Tprinc(:,i)*PrDir(2,:))
             enddo
-            AXX(1:3,1)=vec1
-            AXX(1:3,2)=vec2
-            Tprinc = transpose(AXX)
+            Tprinc(1,1:3)=vec1
+            Tprinc(2,1:3)=vec2
         endif
 
     end subroutine
