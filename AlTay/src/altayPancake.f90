@@ -227,11 +227,9 @@ module altayPancake
         elseif (NACTIV == 0) then
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'No active slip systems found.')
         endif
-        do i=1,NACTIV
-            INDLP(i)=INDACT(i)
-            SLIPLP(i)=XX(INDACT(i)+jj)
-            TAURLP(i)=TAUR1(INDACT(i)+jj)
-        enddo
+        INDLP(1:NACTIV)=INDACT(1:NACTIV)
+        SLIPLP(1:NACTIV)=XX(INDACT(1:NACTIV)+jj)
+        TAURLP(1:NACTIV)=TAUR1(INDACT(1:NACTIV)+jj)
     end subroutine
 
 end module
