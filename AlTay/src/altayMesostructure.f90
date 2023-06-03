@@ -128,7 +128,7 @@ module altayMesostructure
             write (IMP,100)
             100  format (//,' CLUSTER1')
         end if
-        !     Calculation of volume affected by the surface
+        ! Calculation of volume affected by the surface
         AL=norm2(GRPAR,1)
         ! Box product
         vec1(1)=GRPAR(2,2)*GRPAR(3,3)-GRPAR(3,2)*GRPAR(2,3)
@@ -138,14 +138,7 @@ module altayMesostructure
         ! for very flattened grains, it should tend to 1.
         u=abs(sum(GRPAR(:,1)*vec1))*0.25D0/product(AL)
 
-        ! re-order the basisvectors so that AA(1)>=AA(2)>=AA(3)
-        if (maxloc(AL,1) == 3) then
-            if(AL(1) >= AL(2))then
-                GEWF=u*(2.0D0*(AL(1)-AL(2))*AL(2)**2+4.D0*AL(2)**3/3.0D0)
-            else
-                GEWF=u*(2.0D0*(AL(2)-AL(1))*AL(1)**2+4.D0*AL(1)**3/3.0D0)
-            endif
-        elseif (minloc(AL,1) == 3) then
+        if (minloc(AL,1) == 3) then
             AA(3)=AL(3)
             if(AL(1) >= AL(2))then
                   AA(1)=AL(1)
@@ -167,8 +160,7 @@ module altayMesostructure
         if ((IPR > 0) .and. (NLIST == 1)) write (IMP,103) GEWF
         103  format (/,' GEWF ',3d15.7,/)
 
-        ! Construction of orientation matrices for frames associated to the
-        ! interfaces
+        ! Construction of orientation matrices for frames associated to the interfaces
         Tprinc(1,1:3)=GRPAR(1:3,1)
         ! Orientation of interfaces containing axes
         ! Normal axis: (vector product)
@@ -183,9 +175,7 @@ module altayMesostructure
         do j=1,3
             x=norm2(Tprinc(j,:))
             Tprinc(j,:)=Tprinc(j,:)/x
-        enddo
-        do i=1,3
-            if (IPR > 0 .and. NLIST == 1) write (IMP,102) (TPrinc(i,j),j=1,3)
+            if (IPR > 0 .and. NLIST == 1) write (IMP,102) (TPrinc(i,j),i=1,3)
         102 format (' TGrb ',3d15.7)
         enddo
 
@@ -209,9 +199,8 @@ module altayMesostructure
             PrDir(1,2)=tgangle/sqrt(1.D0+tgangle**2)
             PrDir(2,1)=-PrDir(1,2)
             PrDir(2,2)=PrDir(1,1)
-            !   Prdir(1,) is vector-1 in the GB frame
-            !   Prdir(2,) is vector-2 in the GB frame
-            !   Transform these two vector in the Sample's frame
+            ! Prdir(n,:) is vector-n in the GB frame
+            ! Transform these two vector in the Sample's frame
             vec1=0.0
             vec2=0.0
             do i=1,3
