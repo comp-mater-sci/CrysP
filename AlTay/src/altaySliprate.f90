@@ -17,7 +17,7 @@ module altaySliprate
         !     To find the slip rates assuming that
         !     - the stress, strain rate and the active slip systems are known,
         !       previously obtained by PANCAK2;
-        !     - (under the above resrtrictions) the sum of the squares of the slip
+        !     - (under the above restrictions) the sum of the squares of the slip
         !       rates must be minimal.
         !
         integer, intent(in) :: M11,IDIMXX,IPR,IOR,NACTIV,INDLP(8)
@@ -33,14 +33,10 @@ module altaySliprate
         XX(1:M11)=0.0
         NN=NACTIV
         NOPL=0
+        sgnn(INDACT(1:NACTIV))=sign(1.0_dp,TAURLP(1:NACTIV))
+
         ! check whether solution is totally zero
-        x=0.0
-        do i=1,NACTIV
-            x=x+abs(SLIPLP(i))
-            j=INDACT(i)
-            sgnn(j)=sign(1.0_dp,TAURLP(i))
-        enddo
-        if (x>=TLXX) then
+        if (sum(abs(SLIPLP(1:NACTIV))) >= TLXX) then
             ! end of check
             IND(1:NN)=INDACT(1:NN)
             call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
@@ -96,19 +92,9 @@ module altaySliprate
    2                if (IPR==2 .and. NLIST==1) write (IMP,100)
  100                format (' Results SLIPRAT')
                     if (NOPL==0) goto 6
-                    IOPL=0
-                    X=1.0d10
-                    do i=1,NOPL
-                        Y=SLSTOR(0,i)
-                        !  Y is de te minimaliseren waarde van oplossing i
-                        !  Uitprinten!
-                        if (Y<X) then
-                            X=Y
-                            IOPL=i
-                        endif
-                    enddo
+                    IOPL=minloc(SLSTOR(0,1:NOPL),1)
                     NN=ISTOR(0,IOPL)
-                    sumsq=X
+                    sumsq=SLSTOR(0,IOPL)
                     do i=1,NN
                         IND(i)=ISTOR(i,IOPL)
                         SLPR(i)=SLSTOR(i,IOPL)
@@ -139,11 +125,8 @@ module altaySliprate
                 endif
             endif
         endif
-  6     continue
-        NN=NACTIV
-        do i=1,NN
-            IND(i)=INDLP(i)
-        enddo
+  6     NN=NACTIV
+        IND(1:NN)=INDLP(1:NN)
         if (IPR==2 .and. NLIST==1) then
             write (IMP,100)
             write (IMP,108) IOR,NN
@@ -151,11 +134,10 @@ module altaySliprate
  108    format (' IOR=',I5,' Linear programming solution retained ',' NN=',i5)
         x=0.0
         k=0
+        XX(IND(1:NN))=SLIPLP(1:NN)*MacroDefRate%vMeqStrainRate
         do i=1,NN
              Y=SLIPLP(i)
-             j=IND(i)
-             XX(j)=Y*MacroDefRate%vMeqStrainRate
-             if (IPR==2 .and. NLIST==1) write (IMP,101) i,IND(i),Y
+             if (IPR==2 .and. NLIST==1) write (IMP,101) i,IND(i),SLIPLP(i)
              if (x>abs(Y)) then
                  x=abs(Y)
                  k=k+1
@@ -205,9 +187,8 @@ module altaySliprate
             do i=1,NN
                A(i,i)=2.0_dp
                do j=1,5
-                  x=sgnn(IND(i))*A8(j,IND(i))
-                  A(i,NN+j)=-x
-                  A(NN+j,i)=x
+                  A(NN+j,i)=sgnn(IND(i))*A8(j,IND(i))
+                  A(i,NN+j)=-A(NN+j,i)
                enddo
             enddo
             B(1:NN)=0.0
