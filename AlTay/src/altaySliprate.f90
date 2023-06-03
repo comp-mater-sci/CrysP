@@ -26,7 +26,7 @@ module altaySliprate
         real(dp), intent(inout) :: SGNN(IDIMXX),XX(IDIMXX)
 
         integer :: IND(8),ISTOR(0:8,48)
-        real(dp) :: SLPR(8),SLSTOR(0:8,48),x,y,yy,sumsq
+        real(dp) :: SLPR(8),SLSTOR(0:8,48),x,y,sumsq
         integer, parameter :: NSTOR=48
         integer :: i,j,k,i1,i2,i3,N0,N1,N2,N3,NN,NOPL,INEG,IOPL
 
@@ -37,7 +37,6 @@ module altaySliprate
 
         ! check whether solution is totally zero
         if (sum(abs(SLIPLP(1:NACTIV))) >= TLXX) then
-            ! end of check
             IND(1:NN)=INDACT(1:NN)
             call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
             if (ineg==0) then
@@ -95,10 +94,8 @@ module altaySliprate
                     IOPL=minloc(SLSTOR(0,1:NOPL),1)
                     NN=ISTOR(0,IOPL)
                     sumsq=SLSTOR(0,IOPL)
-                    do i=1,NN
-                        IND(i)=ISTOR(i,IOPL)
-                        SLPR(i)=SLSTOR(i,IOPL)
-                    enddo
+                    IND(1:NN)=ISTOR(1:NN,IOPL)
+                    SLPR(1:NN)=SLSTOR(1:NN,IOPL)
                     if (IPR==2 .and. NLIST==1) then
                         write (IMP,104) IOR,NACTIV,NN,NOPL
                         write (IMP,106) IOR,sumsq,(IND(i),i=1,NN)
@@ -107,19 +104,15 @@ module altaySliprate
                     endif
                     x=0.0_dp
                     k=0
+                    XX(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))*MacroDefRate%vMeqStrainRate
                     do i=1,NN
-                        j=IND(i)
                         Y=SLPR(i)
-                        YY=Y*sgnn(j)
-                        XX(j)=YY*MacroDefRate%vMeqStrainRate
-                        if (IPR==2 .and. NLIST==1) write (IMP,101) i,IND(i),YY
+                        if (IPR==2 .and. NLIST==1) write (IMP,101) i,IND(i),SLPR(i)*sgnn(IND(i))
                         if (x>Y) then
                             x=Y
                             k=k+1
                         endif
                     enddo
-                    if (X<0.0d0 .and. NLIST==1) write (IMP,102) IOR,k,X
- 102                format (' NEG. SL. RATE DETECTED',2I5,d15.6)
  101                format (2i5,5x,d15.6)
                     return
                 endif
@@ -132,8 +125,6 @@ module altaySliprate
             write (IMP,108) IOR,NN
         end if
  108    format (' IOR=',I5,' Linear programming solution retained ',' NN=',i5)
-        x=0.0
-        k=0
         XX(IND(1:NN))=SLIPLP(1:NN)*MacroDefRate%vMeqStrainRate
         do i=1,NN
              if (IPR==2 .and. NLIST==1) write (IMP,101) i,IND(i),SLIPLP(i)
@@ -162,7 +153,7 @@ module altaySliprate
         integer, intent(out) :: ineg
         real(dp), intent(out) :: SLPR(8),sumsq
 
-        real(dp) :: A(13,13),B(13),RES,x,Y,BA(13)
+        real(dp) :: A(13,13),B(13),RES,x,BA(13)
         real(dp), parameter :: TOL=1.0e-6_dp
         integer :: i,j,N1,N2
 
@@ -194,17 +185,18 @@ module altaySliprate
 
         SLPR(1:NN)=BA(1:NN)
         sumsq=sum(SLPR(1:NN)**2)
-        x=0.0_dp
-        ineg=0
-        do i=1,NN
-           if (x > SLPR(i)) then
-               x=SLPR(i)
-               ineg=i
-           endif
-        enddo
         if (RES > TOL) then
             ineg=-1
             call log_trace(MOD_NAME,'MINSQU', 'RES too large')
+        else
+            x=0.0_dp
+            ineg=0
+            do i=1,NN
+               if (x > SLPR(i)) then
+                   x=SLPR(i)
+                   ineg=i
+               endif
+            enddo
         end if
     end subroutine
 
