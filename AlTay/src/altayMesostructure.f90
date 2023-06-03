@@ -204,14 +204,12 @@ module altayMesostructure
         dot1=sum(relaxI*TDCGr)/sqrt(2.0D0)/dlength
         dot2=sum(relaxII*TDCGr)/sqrt(2.0D0)/dlength
 
-        if(abs(dot1) < 0.000001.and.abs(dot2) < 0.000001) then
-            ! both relaxations are orthogonal
-        elseif(abs(dot1) < 0.000001) then
+        if(abs(dot1) < 0.000001 .and. abs(dot2) >= 0.000001) then
             !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
             vec1=Tprinc(2,1:3)
             Tprinc(2,1:3)=-Tprinc(1,1:3)
             Tprinc(2,1:3)=vec1
-        elseif(abs(dot2) >= 0.000001) then
+        elseif(abs(dot1) >= 0.000001 .and. abs(dot2) >= 0.000001) then
             ! need to rotate by a angle < 90 (this angle could be positive or negative)
             tgangle=dot2/dot1
             PrDir=0.0
