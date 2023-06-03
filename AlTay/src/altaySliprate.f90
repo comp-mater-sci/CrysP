@@ -136,14 +136,8 @@ module altaySliprate
         k=0
         XX(IND(1:NN))=SLIPLP(1:NN)*MacroDefRate%vMeqStrainRate
         do i=1,NN
-             Y=SLIPLP(i)
              if (IPR==2 .and. NLIST==1) write (IMP,101) i,IND(i),SLIPLP(i)
-             if (x>abs(Y)) then
-                 x=abs(Y)
-                 k=k+1
-             endif
         enddo
-        if (X<0.0d0 .and. NLIST==1) write (IMP,102) IOR,k,X
     end subroutine
 
     subroutine fill(IND_,INDACT_,skip,N_max)
