@@ -216,18 +216,16 @@ module altayPancake
   777   format (' spanv . BB          :',d11.4)
         ! note that if one of the grains does not deform at all, the stress and the active slip systems
         ! of the full constraint solution are used.
-        NACTIV=count(abs(DTAU1(jj+1:jj+M11)) <= TOL)
+        NACTIV = 0
+        do i=1,M11
+            if (abs(DTAU1(i+jj)) > TOL) cycle
+            NACTIV=NACTIV+1
+            INDACT(NACTIV)=i
+        enddo
         if (NACTIV > 8) then
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Too many active slip systems.')
         elseif (NACTIV == 0) then
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'No active slip systems found.')
-        else
-            j = 0
-            do i=1,M11
-                if (abs(DTAU1(i+jj)) > TOL) cycle
-                j=j+1
-                INDACT(j)=i
-            enddo
         endif
         do i=1,NACTIV
             INDLP(i)=INDACT(i)
