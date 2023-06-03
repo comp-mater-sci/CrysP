@@ -140,15 +140,11 @@ module altayMesostructure
 
         ! re-order the basisvectors so that AA(1)>=AA(2)>=AA(3)
         if (maxloc(AL,1) == 3) then
-            AA(1)=AL(3)
             if(AL(2) >= AL(1))then
-                AA(2)=AL(2)
-                AA(3)=AL(1)
+                GEWF=u*(2.0D0*(AL(2)-AL(1))*AL(1)**2+4.D0*AL(1)**3/3.0D0)
             else
-                AA(2)=AL(1)
-                AA(3)=AL(2)
+                GEWF=u*(2.0D0*(AL(1)-AL(2))*AL(2)**2+4.D0*AL(2)**3/3.0D0)
             endif
-            GEWF=u*(2.0D0*(AA(2)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.0D0)
         elseif (minloc(AL,1) == 3) then
             AA(3)=AL(3)
             if(AL(1) >= AL(2))then
@@ -162,15 +158,11 @@ module altayMesostructure
                   +2.0D0*(AA(2)-AA(3))*AA(3)**2+2.0D0*(AA(1)-AA(3))*AA(3)**2 &
                   +4.D0*AA(3)**3/3.D0)
         else
-            AA(2)=AL(3)
             if(AL(1) >= AL(2))then
-                AA(1)=AL(1)
-                AA(3)=AL(2)
+                GEWF=u*(2.D0*(AL(1)-AL(2))*AL(2)**2+4.D0*AL(2)**3/3.D0)
             else
-                AA(1)=AL(2)
-                AA(3)=AL(1)
+                GEWF=u*(2.D0*(AL(2)-AL(1))*AL(1)**2+4.D0*AL(1)**3/3.D0)
             endif
-            GEWF=u*(2.D0*(AA(1)-AA(3))*AA(3)**2+4.D0*AA(3)**3/3.D0)
         endif
         if ((IPR > 0) .and. (NLIST == 1)) write (IMP,103) GEWF
         103  format (/,' GEWF ',3d15.7,/)
