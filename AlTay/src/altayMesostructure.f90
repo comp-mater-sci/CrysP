@@ -140,10 +140,10 @@ module altayMesostructure
 
         ! re-order the basisvectors so that AA(1)>=AA(2)>=AA(3)
         if (maxloc(AL,1) == 3) then
-            if(AL(2) >= AL(1))then
-                GEWF=u*(2.0D0*(AL(2)-AL(1))*AL(1)**2+4.D0*AL(1)**3/3.0D0)
-            else
+            if(AL(1) >= AL(2))then
                 GEWF=u*(2.0D0*(AL(1)-AL(2))*AL(2)**2+4.D0*AL(2)**3/3.0D0)
+            else
+                GEWF=u*(2.0D0*(AL(2)-AL(1))*AL(1)**2+4.D0*AL(1)**3/3.0D0)
             endif
         elseif (minloc(AL,1) == 3) then
             AA(3)=AL(3)
