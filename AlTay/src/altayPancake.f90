@@ -33,7 +33,7 @@ module altayPancake
         integer, intent(out) :: NACTIV
         integer, intent(inout) :: INDACT(8),INDLP(8)
         real(dp), intent(in) :: B(5,5),TRFb(3,3,2),TLXX,GMMab(2)
-        real(dp), intent(inout) :: CC(2,96),GEWF,A1(10,194),SLIPLP(8),TAURLP(8)
+        real(dp), intent(inout) :: CC(2,M11),GEWF,A1(10,194),SLIPLP(8),TAURLP(8)
 
         type(CRSS) :: CRSSmatrix
         real(dp),dimension(5):: RHOS, RHOA
@@ -193,7 +193,7 @@ module altayPancake
         endif
         !     From here on, output is produced for grain number "laml"
         jj=M11*(laml-1)
-        CC(1:2,1:M11)=CCC(1:2,jj+1:jj+M11)
+        CC=CCC(1:2,jj+1:jj+M11)
         ii=5*(laml-1)
         do i=1,5
             ! If one grain does not deform, the stress UBUF came from the fullconstraints solution.

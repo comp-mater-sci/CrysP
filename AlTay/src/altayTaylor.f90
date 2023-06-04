@@ -34,10 +34,9 @@ module altayTaylor
     subroutine TAYLOR1(M111,A1)
 
         integer, intent(out) :: M111  ! < total number of systems in slip system file (glide+twin)
-        real(dp), intent(inout) :: A1(5,96)
+        real(dp), intent(out), allocatable :: A1(:,:)
 
         character(len=72) :: TITglij  !< Name of slip system set
-        integer, parameter :: MMAX=96 !< dimension of A1 and other arrays
         real(dp) :: x,y
         integer :: i,j,l,I1
 
@@ -50,6 +49,7 @@ module altayTaylor
  210    format (8I4,4X,2F10.0)
         M=NGL+NTW
         M111=M
+        allocate(A1(5,M111))
         ! read glide + twin systems
         do I1=1,M111
             read (LEC,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
@@ -74,12 +74,11 @@ module altayTaylor
 
     ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
     subroutine TAYLOR3(SSam,RHOSsa,TRF,GEWF,IOR,ISTP,NBLOC,TRFb,GMMAb,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
-        integer, intent(in) :: NGR,NRL,laml,IOR,ISTP,NBLOC
+        integer, intent(in) :: NGR,NRL,laml,IOR,ISTP,NBLOC,M11
         real(dp), intent(out) :: Ssam(3,3),RHOSsa(3,3),GEWF
-        real(dp), intent(inout) :: CC(2,96)
+        real(dp), intent(inout) :: CC(2,M11)
         type(DeformationRate), intent(in) :: MacroDefRate
         type(DeformationState),intent(in) :: MacroDefState
-        integer, intent(in) :: M11
         real(dp), intent(in) :: TRFb(3,3,2),TRF(3,3),GMMAb(2)
 
         real(dp), dimension(3,3):: RHOScrys, RHOAcrys, Scrys
@@ -106,7 +105,7 @@ module altayTaylor
         type(DeformationRate),intent(in) :: MacroDefRate
         integer, intent(in) :: ISTP,IOR,NFILE, &
               M111     !< total number of systems in slip system file (glide+twin),
-        real(dp), intent(in) :: TAU, XM(5,96),TRF(3,3),CC(2,96),RHOSsa(3,3), &
+        real(dp), intent(in) :: TAU, XM(:,:),TRF(3,3),CC(2,M111),RHOSsa(3,3), &
             Ssam(3,3) !< local stress in sample reference system
         real(dp), intent(inout) :: fi1,PHI,fi2
         real(dp), intent(out) :: TOTGAMdot, C2(3,3), C1(3,3), &
@@ -126,7 +125,7 @@ module altayTaylor
         save
 
 
-        call SLIPRAT(M111,96,GAMdot,ior,IPR,SGNN,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
+        call SLIPRAT(M111,M111,GAMdot(1:M111),ior,IPR,SGNN(1:M111),MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
         ddt = 1.D0
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call KS_updateState(IOR,GAMdot,ddt,info)
         TOTGAMdot=sum(abs(GAMdot(1:M111)))

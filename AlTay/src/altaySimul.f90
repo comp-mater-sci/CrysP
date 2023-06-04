@@ -16,8 +16,8 @@ module altaySimul
     implicit none
     private
 
-    real(dp), private :: HGAMTOT,& !< homogenized slip accumulated over calls
-        XM(5,96)
+    real(dp), private, allocatable :: HGAMTOT,& !< homogenized slip accumulated over calls
+        XM(:,:)
     integer, private :: M11,NFILE1,NFILTW
     integer, allocatable :: seed(:)
 
@@ -56,7 +56,7 @@ module altaySimul
 
         if (NGR < 1.or.NGR > 2) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Incorrect value of NGR')
-   
+
  140    format (' NGR can only take the values 1 or 2 but was',I5)
         ! Check if number of crystals is right for the model
         if (modulo(size(DFIL), NGR) /= 0) &
@@ -87,7 +87,7 @@ module altaySimul
         real(dp) :: TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),SHsam(3,3),Ssam(3,3),RHOSsa(3,3), &
                     CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2),fi1,PHI,fi2,TRF(3,3),C1(3,3),C2(3,3),GEWF, &
                     GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
-                    GEULR(3),TG(3,3),CIJ(3,3),STOT(3,3),RHOST(3,3),RHOSm(3,3),FS(3,3)=1.0_dp,SeqAvg,tau,qgx,gmm1,gmm0,ssqgx,CC(2,96)
+                    GEULR(3),TG(3,3),CIJ(3,3),STOT(3,3),RHOST(3,3),RHOSm(3,3),FS(3,3)=1.0_dp,SeqAvg,tau,qgx,gmm1,gmm0,ssqgx,CC(2,M11)
         type(DeformationState) :: MacroDefState
         ! HGAM: homogenized slip per step
         ! HGAMCALL: homogenized slip per call
