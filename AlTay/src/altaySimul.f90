@@ -104,7 +104,6 @@ module altaySimul
         real(dp) :: WorkRate ! Rate of plastic work per unit
                                      ! volume in the crystal
         real(dp) :: Wtot ! Total plastic work per unit volume in crystal
-        type(StateDerivedVars) :: pebpSDV, pebpSDVavg
         real(dp), parameter :: rad2deg=0.5729577951308232e+02_dp
         save
 
@@ -132,7 +131,6 @@ module altaySimul
             Mavg=0.
             srh=0.
             HGAM=0.D0
-            pebpSDVavg = StateDerivedVars()
 
             call dynfil2(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT
