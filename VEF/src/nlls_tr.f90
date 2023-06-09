@@ -801,8 +801,7 @@ contains
             double precision,dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
             integer,intent(out)                       :: info
             !
-                  ! call this%objectiveFx(vX, info)
-                  if (info == 0) call this%track(vX, TOF_Function, info)
+                  call this%track(vX, TOF_Function, info)
             !
             end subroutine
 
@@ -814,8 +813,7 @@ contains
             double precision,dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
             integer,intent(out)                       :: info
             !
-                  ! call this%jacobiMatrixFx(vX, this%state%mJ, info)
-                  if (info == 0) call this%track(vX, TOF_Jacobian, info)
+                  call this%track(vX, TOF_Jacobian, info)
             !
             end subroutine
 
