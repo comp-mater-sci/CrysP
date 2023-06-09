@@ -246,6 +246,9 @@ contains
                 real_val = arg
             type is (Parameter)
                 real_val = get_numerical_value(arg)
+            class default
+                real_val = 0.0_DP
+                !error stop 'invalid'
         end select
 
         difference = get_numerical_value(param) - real_val
