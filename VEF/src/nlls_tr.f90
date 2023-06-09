@@ -557,7 +557,7 @@ contains
       integer,parameter :: firstflag = 2
       logical :: fp_errflags(firstflag:size(IEEE_ALL)-1)
       !
-            do i=firstflag, size(fp_errflags)
+            do i=firstflag, ubound(fp_errflags,1)
                   call IEEE_GET_FLAG(IEEE_ALL(i),fp_errflags(i))
             enddo
             trapFPErrors = any(fp_errflags)
