@@ -109,8 +109,8 @@ contains
     end procedure hardening_finalize
    
     module procedure getTau
-        real(dp) :: slip_rates(48), &
-                    crss_buffer(2,96)
+        real(dp) :: slip_rates(48)
+        real(dp), dimension(:,:), allocatable :: crss_buffer
         
         info = 0 
 
@@ -129,7 +129,7 @@ contains
 
     module procedure getCRSS
         real(dp) :: tau
-       
+        real(dp), allocatable, dimension(:,:) :: tmp
         select case(HardLawID)
             case(HARDENING_NONE)
                 ! CRSS of all slip systems equal to 1. (& not dependent on crss_ratios)
@@ -138,7 +138,8 @@ contains
                 call getTau(gamma, tau, info)
                 if (info == 0) CRSSmatrix%crss = tau
             case(HARDENING_BP, HARDENING_PEBP_SCREW, HARDENING_PEBP_LOOP)
-                CRSSmatrix%crss = model%get_crss(ior)
+                tmp = model%get_crss(ior)
+                CRSSmatrix%crss(1:2,1:size(tmp,2)) = tmp
             case default
                 info = -10
         end select
