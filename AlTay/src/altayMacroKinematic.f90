@@ -90,9 +90,9 @@ module altayMacroKinematic
 
         ![1] Moler, C. and Van Loan, C., "Nineteen Dubious ways to compute the exponential of a matrix", Siam Review, vol 20, No 4, 1978.
 
-        real(dp), dimension(3,3) :: Term= unitMatrix
+        real(dp), dimension(3,3) :: Term
         real(dp), parameter      :: NormTerm_cutoff= 1.0D-10 !Treshold to cut off Taylor Series Expansion
-        integer                          :: k= 0 !The current term in Taylor Series Expansion
+        integer                          :: k !The current term in Taylor Series Expansion
         integer, parameter               :: k_max= 10 !Upper limit of terms in Taylor Series Expansion to be calculated
 
         !Implemented algorithm is reliable on the condition that ||A|| < 1; if not, catastrophic cancellation in floating point arithmetic
