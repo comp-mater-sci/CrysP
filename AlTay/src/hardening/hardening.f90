@@ -144,13 +144,6 @@ contains
         end select
     end procedure getCRSS
 
-    module procedure KS_initState
-        select type(model)
-            class is (HardeningModelDSH)
-                info = dsh_initstate(model, norient)
-        end select 
-    end procedure KS_initState
-
     module procedure KS_updateState
         call model%update(i, deltaT, 0.D0, sliprate)
         info = VEF_OK   

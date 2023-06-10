@@ -41,13 +41,13 @@ module parameters
         end subroutine 
                 
         !Setter for value buffer, called with a list of parameters and the name and value of the parameter to be set.
-        module subroutine parameter_set(params, name, val)
+        module subroutine parameter_set(params, name, val, fail_on_absent)
             type(Parameter), allocatable, intent(inout) :: params(:)
             character(*), intent(in) :: name
             class(*), intent(in) :: val 
+            logical, intent(in), optional :: fail_on_absent
         end subroutine 
         
-        !Find the parameter matching a given name in a list of parameters.
         module function parameter_find_by_name(params, name) result(param)
             type(Parameter), allocatable, intent(in) :: params(:)
             character(*), intent(in) :: name
@@ -150,15 +150,16 @@ contains
         call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Value does not conform with parameter type')
     end subroutine check_type
 
-    subroutine search_parameter_list(params, name, param, ind)
+    subroutine search_parameter_list(params, name, param, ind, fail)
         type(Parameter), allocatable, intent(in) :: params(:)
         character(*), intent(in) :: name
         type(Parameter), intent(out) :: param
         integer, intent(out) :: ind
+        logical, intent(inout) :: fail
         
         integer :: i
         
-        ind = 0 
+        ind = -1 
         do i=1,size(params)
             if (params(i)%name == name) then
                 param = params(i)
@@ -167,22 +168,19 @@ contains
             end if
         end do
 
-        if (ind == 0) &
-            call log_error(MOD_NAME, 'parameter_find_by_name', ERR_VAL, 'No parameter with name ' // name)
+        if (ind == -1) then
+            if (fail) call log_error(MOD_NAME, 'parameter_find_by_name', ERR_VAL, 'No parameter with name ' // name)
+            fail = .true.
+        else
+            fail = .false.
+        end if
     end subroutine search_parameter_list
-
-    integer function find_index(params, name) result(ind)
-        type(Parameter), allocatable, intent(in) :: params(:)
-        character(*), intent(in) :: name
-        type(Parameter) :: param
-
-        call search_parameter_list(params, name, param, ind)
-    end function find_index 
 
     module procedure parameter_find_by_name
         integer :: ind
+        logical :: fail = .true.
 
-        call search_parameter_list(params, name, param, ind)
+        call search_parameter_list(params, name, param, ind, fail)
     end procedure parameter_find_by_name
 
     module procedure get_val_int
@@ -197,21 +195,29 @@ contains
         call check_type(param, val)
         val = param%value
     end procedure 
-    
-    module procedure parameter_set
-        integer :: ind
-        character(:), allocatable :: buffer
         
-        ind = find_index(params, name)
-        call check_type(params(ind), val)
-        allocate(character(sizeof(val)) :: buffer)
+    module procedure parameter_set
+        logical :: fail = .true.
+        type(Parameter) :: param
+        integer :: index
+        character(:), allocatable :: buffer
+
+        if (present(fail_on_absent)) &
+           fail = fail_on_absent 
+        
+        call search_parameter_list(params, name, param, index, fail)
+        if (fail) return
+
+        call check_type(params(index), val)
+
         !Messy workaround to get gfortran to work
+        allocate(character(sizeof(val)) :: buffer)
         select type(val)
             type is (character(*))
-                params(ind)%value = val
+                params(index)%value = val
                 return
         end select
-        params(ind)%value = transfer(val, buffer)
+        params(index)%value = transfer(val, buffer)
     end procedure 
 
     pure real(dp) function get_numerical_value(param) result(num)

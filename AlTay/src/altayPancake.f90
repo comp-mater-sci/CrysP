@@ -61,7 +61,7 @@ module altayPancake
                     1.0D0, 1.0D0], shape(PLUMIN)) !first index: # of grain, second index: #of relaxation
         real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp
         integer :: info,M12,IGrElm,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II
-        
+
         character(*), parameter :: PROC_NAME = 'pancak2'
 
         SAVE
@@ -77,7 +77,7 @@ module altayPancake
             ! Updating of microstructure
             IGrElm=IGrElm+1
             if (IGrElm > NGrElm) IGrElm=1
-            call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,Cofcos,Cofsin)
+            call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
             CCC(1:2,M2+1:M12)=0.0
             UU = 0.0_dp
             DI(1:5) = DI1
