@@ -574,12 +574,13 @@ contains
       double precision,dimension(:),intent(in)        :: vX       !< Dimension must be: [n_X_dim]
       integer,intent(out)                             :: info
 
-      integer     :: res, memstat
+      integer     :: res
       integer(kind=8)   :: handle
       integer     :: RCI_Req
       logical     :: next_solve
       ! Temporary arrays f1 & f2 which contain: f1 = f(x+eps) | f2 = f(x-eps)
-      double precision,allocatable,dimension(:)       :: f0, f1, f2, tmp_vX
+      double precision,dimension(this%state%m_F_dim)  :: f1, f2, f0
+      double precision,dimension(this%state%n_X_dim)  :: tmp_vX
       !
       handle = 0
       info = 1
@@ -588,14 +589,10 @@ contains
             (size(this%state%mJ,dim=2) /= this%state%n_X_dim) .or.      &
             (size(vX) /= this%state%n_X_dim)                      &
          ) return
-      ! Allocate temporary arrays
-      allocate(f0(this%state%m_F_dim), f1(this%state%m_F_dim), f2(this%state%m_F_dim), tmp_vX(this%state%n_X_dim), stat=memstat)
-      if (memstat /= 0) return
       ! Protect the initial value of state%vF
       f0 = this%state%vF
       !
       tmp_vX = vX
-      handle = 0
       res =  djacobi_init(handle, this%state%n_X_dim, this%state%m_F_dim, tmp_vX, this%state%mJ, this%jacobi_eps)
       ! detect error conditions
       if (checkMKLRescode(res,'recalculation of Jacobi matrix', nllsTR_ounit) /= 0) then
@@ -609,9 +606,6 @@ contains
       RCI_Req = 0
       do while (next_solve)
             res = djacobi_solve(handle, f1, f2, RCI_Req)
-            !! TESTING -->>
-            ! write(*,*) 'RCI_Req = ',RCI_Req, ' res = ', res, ' success = ', res == TR_SUCCESS
-            !! TESTING <<--
             if (res /= TR_SUCCESS) exit
             ! RCI status
             select case (RCI_Req)
@@ -638,8 +632,6 @@ contains
       enddo
       ! Restore the initial value of state%vF
       this%state%vF = f0
-      ! Free temporary arrays
-      deallocate(f0,f1,f2,tmp_vX)
       ! Finalize Jacobi solver, release resources
       res = djacobi_delete(handle)
       if ((info /= 0) .or. (checkMKLRescode(res,'recalculation of Jacobi matrix', nllsTR_ounit) /= 0)) then
