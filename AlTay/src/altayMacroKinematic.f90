@@ -56,8 +56,8 @@ module altayMacroKinematic
         integer,                    intent(out) :: info
         real(dp), optional, intent (in) :: deltaTime_in
 
-        real(dp)                :: deltaTime= 1.0D0
-        real(dp), dimension(3,3):: Ldt= 0.0D0
+        real(dp)                :: deltaTime
+        real(dp), dimension(3,3):: Ldt
 
         if(present(deltaTime_in)) then
             deltaTime= deltaTime_in
