@@ -25,63 +25,63 @@ module parameters
             integer, intent(in) :: param_type
             character(*), intent(in), optional :: param_value
         end function parameter_init
-    
+
         !Getter for value buffer
         module subroutine get_val_int(val, param)
-            integer, intent(out) :: val 
+            integer, intent(out) :: val
             type(Parameter), intent(in) :: param
-        end subroutine 
+        end subroutine
         module subroutine get_val_real(val, param)
-            real(DP), intent(out) :: val 
+            real(DP), intent(out) :: val
             type(Parameter), intent(in) :: param
-        end subroutine 
+        end subroutine
         module subroutine get_val_string(val, param)
-            character(:), allocatable, intent(out) :: val 
+            character(:), allocatable, intent(out) :: val
             type(Parameter), intent(in) :: param
-        end subroutine 
-                
+        end subroutine
+
         !Setter for value buffer, called with a list of parameters and the name and value of the parameter to be set.
         module subroutine parameter_set(params, name, val, fail_on_absent)
             type(Parameter), allocatable, intent(inout) :: params(:)
             character(*), intent(in) :: name
-            class(*), intent(in) :: val 
+            class(*), intent(in) :: val
             logical, intent(in), optional :: fail_on_absent
-        end subroutine 
-        
+        end subroutine
+
         module function parameter_find_by_name(params, name) result(param)
             type(Parameter), allocatable, intent(in) :: params(:)
             character(*), intent(in) :: name
             type(Parameter) :: param
-        end function 
+        end function
 
         !Calculate difference between value buffers of 2 parameters or a parameter and a (real) constant
         !Throws exception if at least 1 of the given parameters is not of numeric type.
         module pure real(dp) function parameter_difference(param, arg) result(difference)
             type(Parameter), intent(in) :: param
             class(*), intent(in)        :: arg
-        end function 
-        
+        end function
+
         !Determine if parameter is greater than another parameter or a constant.
         !Throws exception if at least 1 of the given parameters is not of numeric type.
         module pure logical function parameter_gt(param, arg) result(gt)
             type(Parameter), intent(in) :: param
             class(*), intent(in)        :: arg
-        end function 
+        end function
         !Analogous to parameter_gt
         module pure logical function parameter_gteq(param, arg) result(gteq)
             type(Parameter), intent(in) :: param
             class(*), intent(in)        :: arg
-        end function 
+        end function
         !Analogous to parameter_gt
         module pure logical function parameter_lt(param, arg) result(lt)
             type(Parameter), intent(in) :: param
             class(*), intent(in)        :: arg
-        end function 
+        end function
         !Analogous to parameter_gt
         module pure logical function parameter_lteq(param, arg) result(lteq)
             type(Parameter), intent(in) :: param
             class(*), intent(in)        :: arg
-        end function 
+        end function
     end interface
 
     !Intrinsic assignment can not be made polymorphic using class(*) because this leads to infinite recursion
@@ -90,7 +90,7 @@ module parameters
     end interface
 
     interface operator(.find.)
-        module procedure parameter_find_by_name 
+        module procedure parameter_find_by_name
     end interface
 
     interface operator(-)
@@ -122,13 +122,13 @@ contains
 
     module procedure parameter_init
         character(*), parameter :: PROC_NAME = 'parameter_init'
-        character(:), allocatable :: buffer 
+        character(:), allocatable :: buffer
 
         if (present(param_value)) buffer = param_value
 
         if (param_type /= TYPE_INTEGER .and. param_type /= TYPE_REAL .and. param_type /= TYPE_STRING) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Unsupported parameter type.')
-       
+
         param = Parameter(param_name, param_type, buffer)
     end procedure parameter_init
 
@@ -156,10 +156,10 @@ contains
         type(Parameter), intent(out) :: param
         integer, intent(out) :: ind
         logical, intent(inout) :: fail
-        
+
         integer :: i
-        
-        ind = -1 
+
+        ind = -1
         do i=1,size(params)
             if (params(i)%name == name) then
                 param = params(i)
@@ -186,16 +186,17 @@ contains
     module procedure get_val_int
         call check_type(param, val)
         val = transfer(param%value, val)
-    end procedure 
+    end procedure
     module procedure get_val_real
         call check_type(param, val)
         val = transfer(param%value, val)
-    end procedure 
+    end procedure
     module procedure get_val_string
-        call check_type(param, val)
+        if (param%type /= TYPE_STRING) &
+            call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Value does not conform with parameter type')
         val = param%value
-    end procedure 
-        
+    end procedure
+
     module procedure parameter_set
         logical :: fail = .true.
         type(Parameter) :: param
@@ -203,8 +204,8 @@ contains
         character(:), allocatable :: buffer
 
         if (present(fail_on_absent)) &
-           fail = fail_on_absent 
-        
+           fail = fail_on_absent
+
         call search_parameter_list(params, name, param, index, fail)
         if (fail) return
 
@@ -218,7 +219,7 @@ contains
                 return
         end select
         params(index)%value = transfer(val, buffer)
-    end procedure 
+    end procedure
 
     pure real(dp) function get_numerical_value(param) result(num)
         type(Parameter), intent(in) :: param
@@ -245,21 +246,24 @@ contains
                 real_val = arg
             type is (Parameter)
                 real_val = get_numerical_value(arg)
+            class default
+                real_val = 0.0_DP
+                !error stop 'invalid'
         end select
 
         difference = get_numerical_value(param) - real_val
-    end procedure 
-    
+    end procedure
+
     module procedure parameter_gt
         gt = ((param - arg) > 0._DP)
-    end procedure     
+    end procedure
     module procedure parameter_lt
         lt = ((param - arg) < 0._DP)
-    end procedure     
+    end procedure
     module procedure parameter_gteq
         gteq = ((param - arg) >= 0._DP)
-    end procedure     
+    end procedure
     module procedure parameter_lteq
         lteq = ((param - arg) <= 0._DP)
-    end procedure     
+    end procedure
 end submodule parameters_imp

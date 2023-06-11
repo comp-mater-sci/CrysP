@@ -75,8 +75,8 @@ module altayTaylor
     ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
     subroutine TAYLOR3(SSam,RHOSsa,TRF,GEWF,IOR,ISTP,NBLOC,TRFb,GMMAb,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
         integer, intent(in) :: NGR,NRL,laml,IOR,ISTP,NBLOC
-        real(dp), intent(out) :: Ssam(3,3),RHOSsa(3,3),GEWF
-        real(dp), intent(inout) :: CC(2,96)
+        real(dp), intent(out) :: Ssam(3,3),RHOSsa(3,3)
+        real(dp), intent(inout) :: CC(2,96),GEWF
         type(DeformationRate), intent(in) :: MacroDefRate
         type(DeformationState),intent(in) :: MacroDefState
         integer, intent(in) :: M11
