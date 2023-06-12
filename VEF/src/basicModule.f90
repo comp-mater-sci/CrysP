@@ -115,6 +115,7 @@ contains
     integer function BasicModule_finalize(this) result(info)
         class(BasicModule),intent(inout) :: this
 
+        info = 0
         if (this%finalizeLibAltay() /= VEF_OK) &
             call log_error(MOD_NAME, 'finalize', ERR)
     end function
