@@ -14,15 +14,16 @@ module hardening_model_dsh
     !>Constants for initialization of dirs
     real(DP), parameter, public ::  P2 = 1._DP / sqrt(2._DP),   &
                                     N2 = -P2,                   &
-                                    P3 = 1._DP / sqrt(3._DP),   &
-                                    N3 = -P3,                   &
                                     P6 = 1._DP / sqrt(6._DP),   &
                                     N6 = -P6,                   &
                                     PD6 = 2._DP / sqrt(6._DP),  &
                                     ND6 = -PD6
-    real(DP), dimension(6,3), parameter, public :: CBBNORMAL = reshape([0._DP,N2,P2,0._DP,P2,N2,  &
-                                                                        P2,0._DP,N2,N2,0._DP,N2,  &
-                                                                        N2,P2,0._DP,N2,P2,0._DP], shape(CBBNORMAL))
+    real(dp), dimension(6,3), parameter, public :: CBBNORMAL = real(transpose(reshape([ 0,  1, -1, &
+                                                                                       -1,  0,  1, &
+                                                                                        1, -1,  0, &
+                                                                                        0, -1, -1, &
+                                                                                        1,  0,  1, &
+                                                                                       -1, -1,  0], [3,6])),DP)/sqrt(2._DP)
 
     character(*), parameter :: MOD_NAME = 'hardening_model_dsh'
 
@@ -44,10 +45,10 @@ module hardening_model_dsh
     type, extends(HardeningModel) :: HardeningModelDSH
         type(StatVar), dimension(:), allocatable    ::  state
         real(DP), dimension(:,:,:), allocatable     ::  crss
-        real(DP)                                    ::  b,                      &   
-                                                        G,                      &   
-                                                        alfa,                   &   
-                                                        f,                      &   
+        real(DP)                                    ::  b,                      &
+                                                        G,                      &
+                                                        alfa,                   &
+                                                        f,                      &
                                                         tau0,                   &
                                                         I,                      &
                                                         R,                      &
@@ -208,7 +209,7 @@ contains
         this%RHOwdMIN = MINFRAC * this%RHOwdSAT
         this%RHOwpMIN = MINFRAC * this%RHOwpSAT
         this%RHOwpLOW = LOWFRAC * this%RHOwpSAT
-    
+
         n_grains = params .find. 'n_grains'
         allocate(this%state(n_grains))
         allocate(this%crss(n_grains, 2, this%nss))
