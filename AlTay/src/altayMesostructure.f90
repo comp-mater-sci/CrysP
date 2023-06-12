@@ -89,13 +89,7 @@ module altayMesostructure
 
     end subroutine
 
-    subroutine CLUSTER1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,Cofcos,Cofsin)
-    !   IF both relaxations are orthogonal:
-    !      Cofcos=0 and Cofsin=0 is returned
-    !   ELSE:
-    !      Cofcos and Cofsin are the cosine and sine of the angle for relaxation-1
-    !
-    !   relaxation-2 is always the orthogonal one.
+    subroutine CLUSTER1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
     !   TDC is the normalized von-Mises equivalent strain rate
         use altayIOConfig, only: IPR,NLIST,IMP
 
@@ -103,7 +97,7 @@ module altayMesostructure
         type(DeformationRate),intent(in)       :: MacroDefRate
         type(DeformationState),intent(in)      :: MacroDefState
         real(dp),intent(inout)                 :: GEWF
-        real(dp),intent(out)                   :: Cofcos, Cofsin,Tprinc(3,3)
+        real(dp),intent(out)                   :: Tprinc(3,3)
 
         real(dp) :: AXX(3,3),GRPAR(3,3), PrDir(3,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
         real(dp) :: x, u, dlength, dot1, dot2, TGANGLE
@@ -115,8 +109,6 @@ module altayMesostructure
             relaxII= reshape([0._dp, 0._dp, 0._dp, &
                               0._dp, 0._dp, 1._dp, &
                               0._dp, 1._dp, 0._dp],shape(relaxII))
-        Cofcos = 0.D0
-        Cofsin = 0.D0
 
 
         if (NGR == 1) then      ! let Tprinc be equal to the identity matrix.
@@ -247,8 +239,6 @@ module altayMesostructure
 
         if(abs(dot1) < 0.000001.and.abs(dot2) < 0.000001) then
             ! both relaxations are orthogonal
-            Cofcos=0.0
-            Cofsin=0.0
         elseif(abs(dot1) < 0.000001) then
             if(abs(dot2-1.D0) < 0.00001) then
                   !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
@@ -258,8 +248,6 @@ module altayMesostructure
                   AXX(1:3,2)=-AXX(1:3,1)
                   AXX(1:3,1)=vec1
                   Tprinc = transpose(AXX)
-                  Cofcos=1.D0
-                  Cofsin=0.D0
             else
                  !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
                  !  new axe-1 be old axe-2
@@ -269,35 +257,10 @@ module altayMesostructure
                  AXX(1:3,2)=-AXX(1:3,1)
                  AXX(1:3,1)=vec1
                  Tprinc = transpose(AXX)
-                 ! Transform MacroDefRate%StrainModevM to the new "Grb" reference frame
-                 TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
-                 ! make sure relaxation-2 is orthogonal
-                 ! calculate the cosine for relaxation-1
-                 dot2=0.0
-                 dot1=0.0
-                 do i=1,3
-                     do j=1,3
-                         dot2=dot2+relaxII(i,j)*TDCGr(i,j)
-                         dot1=dot1+relaxI(i,j)*TDCGr(i,j)
-                     enddo
-                 enddo
-                 !   normalize
-                 dot1=dot1/sqrt(2.0D0)/dlength
-
-                 Cofcos=dot1
-                 Cofsin=sqrt(1.0D0-dot1*dot1)
             endif
 
         elseif(abs(dot2) < 0.000001) then
             ! Relaxation-2 is already a orthogonal one
-            ! calculate the cosine for relaxation-1
-            if(abs(dot1-1.0D0) < 0.00001) then
-                  Cofcos=1.0D0
-                  Cofsin=0.0D0
-            else
-                  Cofcos=dot1
-                  Cofsin=sqrt(1.0D0-dot1*dot1)
-            endif
         else
             ! need to rotate by a angle < 90 (this angle could be positive or negative)
             tgangle=dot2/dot1
@@ -323,23 +286,6 @@ module altayMesostructure
             AXX(1:3,1)=vec1
             AXX(1:3,2)=vec2
             Tprinc = transpose(AXX)
-
-            ! Transform MacroDefRate%StrainModevM to the new "Grb" reference frame
-            TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
-            !  make sure relaxation-2 is orthogonal
-            dot2=0.0
-            dot1=0.0
-            do i=1,3
-                do j=1,3
-                    dot2=dot2+relaxII(i,j)*TDCGr(i,j)
-                    dot1=dot1+relaxI(i,j)*TDCGr(i,j)
-                enddo
-            enddo
-            ! normalize
-            dot1=dot1/sqrt(2.0D0)/dlength
-
-            Cofcos=dot1
-            Cofsin=sqrt(1.0D0-dot1*dot1)
         endif
 
     end subroutine

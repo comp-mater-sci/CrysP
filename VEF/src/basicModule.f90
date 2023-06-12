@@ -46,7 +46,7 @@ module dmcBasicModule
       type,extends(abstractModule) :: BasicModule
             type(outputConfig)            :: output
             type(altayConfigData)         :: altay !< Root-level configuration structure of texture and hardening
-      contains 
+      contains
             procedure :: initialize =>  BasicModule_initialize
             procedure :: readConfig => BasicModule_readConfig
             procedure :: run => BasicModule_run
@@ -61,15 +61,15 @@ contains
     integer function BasicModule_initialize(this) result(info)
       class(BasicModule),intent(inout)          :: this
       integer :: ierr
-      
+
             info = VEF_ERROR
             ! Finish the configuration:
             this%altay%output_config%nfile = merge(1,0,this%output%outputRequest)
             this%altay%output_prefix = trim(this%output%outputPrefix)
             this%altay%jobtitle = trim(this%output%outputPrefix)
-            
+
             call initAltay(this%altay,ierr)
-            
+
             if (ierr /= VEF_OK) return
 
             30 format('Initializing the multilevel model...')
@@ -88,14 +88,14 @@ contains
     integer function BasicModule_readConfig(this,cnfunit) result(info)
         class(BasicModule),intent(inout) :: this
         integer,intent(in)               :: cnfunit !< IO input unit
-        
+
         character(*), parameter :: PROC_NAME = 'readconfig'
-      
+
         ! Read output configuration lines
         call readOutputConfigSection(cnfunit,this%output,info) ! top 3 lines after comment header of config file
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Check output configuration section.')
-        
+
         ! Read AlTay configuration lines
         call readAlTayConfigSection(cnfunit,this%altay,info) !read configuration of texture, slip systems, microstructure and hardening
         if (info /= VEF_OK) &
@@ -114,7 +114,8 @@ contains
     !> Finalization of the module
     integer function BasicModule_finalize(this) result(info)
         class(BasicModule),intent(inout) :: this
-        
+
+        info = 0
         if (this%finalizeLibAltay() /= VEF_OK) &
             call log_error(MOD_NAME, 'finalize', ERR)
     end function
@@ -128,7 +129,7 @@ contains
     character(len=*),intent(in),optional    :: suffix !< Suffix to the file
     character(len=max_pathlen) :: output_path
     integer :: ierr
-    
+
         if (present(suffix)) then
             output_path = trim(this%output%outputPrefix)// trim(suffix) //trim(ext)
         else
@@ -183,7 +184,7 @@ contains
       integer,intent(in)                  :: cnfunit !< configuration file
       type(outputConfig),intent(inout)    :: cnf
       integer,intent(out)                 :: info
-      
+
             info = VEF_ERROR
             if (.not. readValue(cnfunit, cnf%outputPrefix)) then
                 write(error_unit,fmt=900) 'Check output file prefix.'
@@ -265,8 +266,8 @@ contains
             !
             else ! default slip system definition
                 read(cnfunit, '(A)') buffer
-                slip_systems = buffer 
-                cnf%slipsystem%input_fname = slip_systems // '.pre' 
+                slip_systems = buffer
+                cnf%slipsystem%input_fname = slip_systems // '.pre'
             endif
             !
             ! Process advanced microstructure characterization
@@ -362,7 +363,7 @@ contains
                   case(HARDENING_BP, HARDENING_PEBP_SCREW, HARDENING_PEBP_LOOP)
                         if (.not. readValue(cnfunit, tmp_fname)) return ! read BP parameter file name
                         open(newunit=nparunit,file=tmp_fname,status='old', iostat=ioerr)
-               
+
                         if (ioerr /= 0) then
                         return
                         endif
@@ -394,7 +395,7 @@ contains
             else
                   cnf%hardening_parameters = hardening_get_parameters(HARDENING_NONE)
             endif
-            
+
 666         return
 ! message formats
 #define MSG_GROUP_ERRORS

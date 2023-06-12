@@ -56,7 +56,7 @@ module altaySimul
 
         if (NGR < 1.or.NGR > 2) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Incorrect value of NGR')
-
+   
  140    format (' NGR can only take the values 1 or 2 but was',I5)
         ! Check if number of crystals is right for the model
         if (modulo(size(DFIL), NGR) /= 0) &
@@ -105,7 +105,6 @@ module altaySimul
         real(dp), save :: WorkRate ! Rate of plastic work per unit
                                      ! volume in the crystal
         real(dp), save :: Wtot ! Total plastic work per unit volume in crystal
-        type(StateDerivedVars), save :: pebpSDVavg
         real(dp), parameter :: rad2deg=0.5729577951308232e+02_dp
 
 
@@ -132,7 +131,6 @@ module altaySimul
             Mavg=0.
             srh=0.
             HGAM=0.D0
-            pebpSDVavg = StateDerivedVars()
 
             call dynfil2(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT

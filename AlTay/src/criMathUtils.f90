@@ -160,7 +160,6 @@ contains
       ! Declaration section
       double precision :: cosine
       !
-            vec_angle = 0.D0
             cosine = vec_cosine(u,v)
             ! calculate angle (in radians)
             vec_angle = acos(cosine)
@@ -185,7 +184,7 @@ contains
             udp = dot_product(u,u)
             vdp = dot_product(v,v)
             ! Check the conditions: neither u nor v can be of length zero
-            if ((udp <= epsilon(0.D0)) .or.  (udp <= epsilon(0.D0))) return
+            if ((udp*vdp <= epsilon(0.D0))) return
             vec_cosine = dot_product(u,v) / sqrt(udp*vdp)
             ! Check for detrimental roundoff conditions
             if (vec_cosine >= 1.D0) then

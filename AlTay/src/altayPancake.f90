@@ -41,7 +41,7 @@ module altayPancake
         real(dp) :: UU(5*NGR,5*NGR),TPrinc(3,3)
         real(dp) :: C2(3,3), rls(3,3), rla(3,3), C3(3,3), spanv(5)
         real(dp), save :: B3(10,3)=0.0_dp, XX(194),STRSS(10),BB(10),CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
-                    B8(5,2),UBUF(10),GAMR(2),TAURL(2)=0.0_dp,XXTOT,COFCOS,COFSIN
+                    B8(5,2),UBUF(10),GAMR(2),TAURL(2)=0.0_dp,XXTOT
         ! rls and rla are unit relaxation tensors in crystal frame (symmetric and anti-sym. part)
         !     Definition of the two relaxations, representing a
         !     13-simple shear and a 23-simple shear, respectively:
@@ -62,7 +62,7 @@ module altayPancake
         real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp, SQR2=sqrt(0.5_dp)
         integer :: info,M12,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II
         integer, save :: IGrElm
-
+        
         character(*), parameter :: PROC_NAME = 'pancak2'
 
         if (IOR == 1) IGrElm=0
@@ -75,7 +75,7 @@ module altayPancake
             ! Updating of microstructure
             IGrElm=IGrElm+1
             if (IGrElm > NGrElm) IGrElm=1
-            call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,Cofcos,Cofsin)
+            call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
             CCC(1:2,M2+1:M12)=0.0
             UU = 0.0_dp
             DI(1:5) = DI1

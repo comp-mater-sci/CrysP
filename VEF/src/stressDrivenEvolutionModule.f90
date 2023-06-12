@@ -198,6 +198,7 @@ contains
                                                          (control%increment_size + norm2(icv%vP_step))**2, &
                                                        x=xi)
                     ! Up to two roots; we pick the largest one;
+                    control_variable = -1.0_DP
                     if (n_roots > 0) control_variable = control%increment_size / maxval(xi(1:n_roots))
                     ! If control variable is negative (the only way to satisfy (*) is
                     ! to decrease the strain), fall back to a less accurate scheme.
