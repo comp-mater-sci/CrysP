@@ -53,7 +53,7 @@ implicit none
         !> \f[
         !>    vP_{abs} = \sum | vP_{inc} |
         !> \f]
-        double precision,dimension(alamEval_vSD_dim)    :: vP_abs
+        double precision,dimension(alamEval_vSD_dim)    :: vP_abs = 0.D0
 
     end type
 
