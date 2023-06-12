@@ -30,7 +30,7 @@ module altaySliprate
         integer, parameter :: NSTOR=48
         integer :: i,j,k,i1,i2,i3,N0,N1,N2,N3,NN,NOPL,INEG,IOPL
 
-        XX(1:M11)=0.0
+        XX(1:M11)=0.0_DP
         NN=NACTIV
         NOPL=0
         sgnn(INDACT(1:NACTIV))=sign(1.0_dp,TAURLP(1:NACTIV))
@@ -177,7 +177,7 @@ module altaySliprate
                   A(i,NN+j)=-A(NN+j,i)
                enddo
             enddo
-            B(1:NN)=0.0
+            B(1:NN)=0.0_DP
             B(1+NN:5+NN)=BB8
         endif
 
