@@ -150,6 +150,10 @@ module altayMesostructure
             GEWF=u*(4.D0*(AA(1)-AA(3))*(AA(2)-AA(3))*AA(3)  &
                   +2.0D0*(AA(2)-AA(3))*AA(3)**2+2.0D0*(AA(1)-AA(3))*AA(3)**2 &
                   +4.D0*AA(3)**3/3.D0)
+            ! MD: equivalent except for floating point arithmetic
+            ! GEWF=u*(4.D0*(AL(1)-AL(3))*(AL(2)-AL(3))*AL(3)  &
+            !         +2.0D0*(AL(1)+AL(2)-2.0_dp*AL(3))*AL(3)**2 &
+            !         +4.D0*AL(3)**3/3.D0)
         else
             if(AL(1) >= AL(2))then
                 GEWF=u*(2.D0*(AL(1)-AL(2))*AL(2)**2+4.D0*AL(2)**3/3.D0)
