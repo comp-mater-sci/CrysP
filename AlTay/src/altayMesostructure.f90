@@ -41,14 +41,11 @@ module altayMesostructure
 
 
         open (unit=NDAT2,file=fnam,status='old')
-
-        read (NDAT2,94) NGrElm,TitMic ! read number of GBs and title
-    94  format(I5,5x,A)
+        read (NDAT2,'(I5,5x,A)') NGrElm,TitMic ! read number of GBs and title
 
         allocate(TmatGr(3,3,NGrElm))
-
         do IGrElm=1,NGrElm
-            read (NDAT2,96) EulGB%fi2,EulGB%PHI,EulGB%fi1 ! read Euler angles from microstructure file in order: phi2, PHI, phi1
+            read (NDAT2,'(3f10.0)') EulGB%fi2,EulGB%PHI,EulGB%fi1 ! read Euler angles from microstructure file in order: phi2, PHI, phi1
             !Calc. the transformation matrix T
             T = rotmat(deg2rad(EulGB))
             !TmatGr(1:3,i,IGrElm) for i=1,2 holds two non-parallel vectors
@@ -57,7 +54,6 @@ module altayMesostructure
             !  GB plane (not necessarily perpendicular to the GB plane).
             TmatGr(:,:,IGrElm)=matmul(F_mic,transpose(T))
         enddo
-      96 format(3F10.0)
 
         close(unit=NDAT2)
         ierr = 0
@@ -141,7 +137,7 @@ module altayMesostructure
         Tprinc(2,1)=Tprinc(3,2)*Tprinc(1,3)-Tprinc(3,3)*Tprinc(1,2)
         Tprinc(2,2)=Tprinc(3,3)*Tprinc(1,1)-Tprinc(3,1)*Tprinc(1,3)
         Tprinc(2,3)=Tprinc(3,1)*Tprinc(1,2)-Tprinc(3,2)*Tprinc(1,1)
-        !       Normalisation
+        ! Normalisation
         do j=1,3
             x=norm2(Tprinc(j,:))
             Tprinc(j,:)=Tprinc(j,:)/x
