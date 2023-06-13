@@ -1,7 +1,6 @@
 module altaySliprate
     use definitions
     use logging
-    use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
     use altayMacroKinematic
     use altayAlgorithms
 
@@ -88,32 +87,13 @@ module altaySliprate
                             enddo
                         endif
                     endif
-   2                if (IPR==2 .and. NLIST==1) write (IMP,100)
- 100                format (' Results SLIPRAT')
-                    if (NOPL/=0) then
+   2                if (NOPL/=0) then
                         IOPL=minloc(SLSTOR(0,1:NOPL),1)
                         NN=ISTOR(0,IOPL)
                         sumsq=SLSTOR(0,IOPL)
                         IND(1:NN)=ISTOR(1:NN,IOPL)
                         SLPR(1:NN)=SLSTOR(1:NN,IOPL)
-                        if (IPR==2 .and. NLIST==1) then
-                            write (IMP,104) IOR,NACTIV,NN,NOPL
-                            write (IMP,106) IOR,sumsq,(IND(i),i=1,NN)
- 104                        format (I5,' Reduction of NACTIV from',I5,'   to',i5,' NOPL=',i5)
- 106                        format (I5,d12.3,8i5)
-                        endif
-                        x=0.0_dp
-                        k=0
                         XX(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))*MacroDefRate%vMeqStrainRate
-                        do i=1,NN
-                            Y=SLPR(i)
-                            if (IPR==2 .and. NLIST==1) write (IMP,101) i,IND(i),SLPR(i)*sgnn(IND(i))
-                            if (x>Y) then
-                                x=Y
-                                k=k+1
-                            endif
-                        enddo
- 101                    format (2i5,5x,d15.6)
                         return
                     endif
                 endif
@@ -121,15 +101,7 @@ module altaySliprate
         endif
         NN=NACTIV
         IND(1:NN)=INDLP(1:NN)
-        if (IPR==2 .and. NLIST==1) then
-            write (IMP,100)
-            write (IMP,108) IOR,NN
-        end if
- 108    format (' IOR=',I5,' Linear programming solution retained ',' NN=',i5)
         XX(IND(1:NN))=SLIPLP(1:NN)*MacroDefRate%vMeqStrainRate
-        do i=1,NN
-             if (IPR==2 .and. NLIST==1) write (IMP,101) i,IND(i),SLIPLP(i)
-        enddo
     end subroutine
 
     subroutine fill(IND_,INDACT_,skip,N_max)
