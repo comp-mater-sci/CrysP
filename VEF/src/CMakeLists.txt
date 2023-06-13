@@ -30,7 +30,6 @@ commonConfig.f90
 commonUtils.f90
 deformationDrivenModule.f90
 dmcResultFileOutput.f90
-dmcUtils.f90
 evolutionOutputRecord.f90
 incrementationControl.f90
 qrsTypes.f90

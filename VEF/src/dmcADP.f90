@@ -6,7 +6,6 @@ use definitions
 use criConfigReader
 use criMathUtils
 use altayMacroKinematic, only: DeformationRate, Set_DeformationRate
-use dmcUtils, only: display_unit
 use dmcDeformationDrivenModule
 use dmcResultFileOutput
 use dmcStrainDrivenStep

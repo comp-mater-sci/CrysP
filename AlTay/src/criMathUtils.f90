@@ -584,5 +584,14 @@ contains
       !
       end function
 
+      double precision pure function average(a)
+      double precision,dimension(:),intent(in) :: a
+      integer :: n
+      !
+            n = size(a)
+            if (n >= 1) average = sum(a) / dble(n)
+            ! Undefined for empty array
+      end function
+
 end module
 
