@@ -6,6 +6,7 @@ module altayMesostructure
     use altayMiscutils
     use definitions
     use altayMacroKinematic
+    use altayIOConfig
 
     implicit none
     private
@@ -27,7 +28,6 @@ module altayMesostructure
     !> Reading of "microstructure" (Euler angles defining grain boundary segments)
     !> in SMT-format, allocation and assignment of the module variables.
     subroutine GRFIL(fnam,F_mic,ierr)
-        use altayIOConfig
 
         integer,intent(out)         :: ierr
         character(len=*),intent(in) :: fnam !< Microstructure file name
@@ -39,27 +39,13 @@ module altayMesostructure
         type(EulerAngles) :: EulGB
         real(dp), dimension(3,3) :: T
 
-        ierr = -1
-        if(NLIST == 1) write (IMP,103) fnam
-    103  format (' GRFIL - Input microstructure file:' ,a)
 
-        open (unit=NDAT2,file=fnam,status='old',iostat=ierr)
-        if (ierr /= 0) return
+        open (unit=NDAT2,file=fnam,status='old')
 
         read (NDAT2,94) NGrElm,TitMic ! read number of GBs and title
     94  format(I5,5x,A)
-#ifndef NO_STDOUT
-        write (*,93) NGrElm,TitMic
-#endif
-        if(NLIST == 1) write (IMP,93) NGrElm,TitMic
-      93  format (' Number of orientations in MICROSTRUCTURE file:' ,I5,/,' Title in file: ',A)
 
-        allocate(TmatGr(3,3,NGrElm),STAT=ierr)
-        if (ierr /= 0) then
-            if(NLIST == 1) write(IMP,102)
-            return
-        end if
-      102  format (' GRFIL - Allocation of memory failed')
+        allocate(TmatGr(3,3,NGrElm))
 
         do IGrElm=1,NGrElm
             read (NDAT2,96) EulGB%fi2,EulGB%PHI,EulGB%fi1 ! read Euler angles from microstructure file in order: phi2, PHI, phi1
@@ -90,7 +76,6 @@ module altayMesostructure
 
     subroutine CLUSTER1(IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
     !   TDC is the normalized von-Mises equivalent strain rate
-        use altayIOConfig, only: IPR,NLIST,IMP
 
         integer,intent(in)                     :: IGrElm
         type(DeformationRate),intent(in)       :: MacroDefRate
@@ -111,23 +96,6 @@ module altayMesostructure
 
 
         GRPAR = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
-        if ((IPR > 1) .and.(NLIST == 1)) then
-            write (IMP,409) IGrElm
-            409 format (' IGrElm = ',i5)
-            do i=1,3
-                write (IMP,407) (TmatGr(j,i,IGrElm),j=1,3)
-            enddo
-            407 format (' TmatGr ',3d15.7)
-            do i=1,3
-                write (IMP,408) (GRPAR(j,i),j=1,3)
-            enddo
-            408 format (' GRPAR  ',3d15.7)
-        endif
-
-        if ((IPR > 0) .and. (NLIST == 1) )then
-            write (IMP,100)
-            100  format (//,' CLUSTER1')
-        end if
         ! Calculation of volume affected by the surface
         AL=norm2(GRPAR,1)
         ! Box product
@@ -161,8 +129,6 @@ module altayMesostructure
                 GEWF=u*(2.D0*(AL(2)-AL(1))*AL(1)**2+4.D0*AL(1)**3/3.D0)
             endif
         endif
-        if ((IPR > 0) .and. (NLIST == 1)) write (IMP,103) GEWF
-        103  format (/,' GEWF ',3d15.7,/)
 
         ! Construction of orientation matrices for frames associated to the interfaces
         Tprinc(1,1:3)=GRPAR(1:3,1)
@@ -179,8 +145,6 @@ module altayMesostructure
         do j=1,3
             x=norm2(Tprinc(j,:))
             Tprinc(j,:)=Tprinc(j,:)/x
-            if (IPR > 0 .and. NLIST == 1) write (IMP,102) (TPrinc(i,j),i=1,3)
-        102 format (' TGrb ',3d15.7)
         enddo
 
         dlength=norm2(MacroDefRate%StrainModevM)
