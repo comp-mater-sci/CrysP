@@ -16,7 +16,6 @@ module altayMesostructure
     !> Shape is: [3,3,ngr], where ngr is the number of grains.
     real(dp), dimension(:,:,:),allocatable :: TmatGr
     integer, public, protected :: NGrElm = 0             !< Number of grain boundary orientations
-    character(len=40)  :: TitMic = '' !< Microstructure title
 
     public :: &
         GRFIL, &
@@ -38,6 +37,7 @@ module altayMesostructure
         integer           :: IGrElm !< Counter for loop over GBs
         type(EulerAngles) :: EulGB
         real(dp), dimension(3,3) :: T
+        character(len=40)  :: TitMic !< Microstructure title
 
 
         open (unit=NDAT2,file=fnam,status='old')
@@ -64,8 +64,6 @@ module altayMesostructure
     subroutine MICROSTR_finalize(info)
          integer,intent(out)     :: info
 
-         NGrElm = 0
-         TitMic = ''
          if (allocated(TmatGr)) deallocate(TmatGr,stat=info)
 
     end subroutine
