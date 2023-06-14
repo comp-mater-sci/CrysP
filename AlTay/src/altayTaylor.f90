@@ -85,7 +85,7 @@ module altayTaylor
         real(dp), dimension(3,3):: RHOScrys, RHOAcrys, Scrys
 
 
-        call pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,IPR,GEWF,A2,MacroDefRate,MacroDefState,NACTIV, &
+        call pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,GEWF,A2,MacroDefRate,MacroDefState,NACTIV, &
                      SLIPLP,TLXX,TAURLP,INDACT,INDLP,IOR,ISTP,NBLOC,TRFb,GMMAb,NGR,NRL,laml,BB8,CC,M11)
         !Transform stress from local frame (Scrys) to sample frame (Ssam)
         Ssam = rotateSRTensorTo(Scrys,TRF)
@@ -124,12 +124,9 @@ module altayTaylor
         type(EulerAngles) :: Euler
 
 
-        call SLIPRAT(M111,96,GAMdot,ior,IPR,SGNN,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
+        call SLIPRAT(M111,96,GAMdot,ior,SGNN,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call KS_updateState(IOR,GAMdot,ddt,info)
         TOTGAMdot=sum(abs(GAMdot(1:M111)))
-        if(NLIST == 1) write (IMP,103) ISTP,IOR,fi1,PHI,fi2
-
- 103    format (' ISTP,IOR',2I5,' phi1, PHI, phi2:',3F15.6)
         ! Calculate RCcryst: the rigid body spin in the crystal frame
         RCcryst = rotateSRTensorFrom(MacroDefRate%Spin,TRF)
         RHOAcrys = rotateSRTensorFrom(RHOAsa,TRF)

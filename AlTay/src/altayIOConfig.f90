@@ -17,18 +17,12 @@ module altayIOConfig
     integer :: IMP4 = 110     !< output file for state variables of KOST11
     integer :: IMP5 = 111     !< output of stress-strain or slip-stress
     integer :: IMP6 = 112     !< output of report file
-    integer :: IDISK1 = 12    !< work file
     integer :: NDAT1 = 9      !< input texture file
     integer :: NDAT2 = 10     !< input microstructure file
-    integer :: IPEBPSTAT = 60 !< input file for state variables of KOST11
-    integer :: IPEBPSDV = 61  !< Output file for state-derived variables of KOST11
     !>@}
 
     !>@{ \name Output control switches
-    integer :: NLIST = 0 !< This value controls amount of output sent to the IMP unit.
-    integer :: IPR = 0   !< Printing switch (formerly in TEXTUR common block)
     integer :: NRES = 0  !< This value control amount of output that is sent to IMP2 unit.
-    integer :: NPEBP = 0 !< Control of the state file in PEBP (KOST11 module)
     integer :: NMSS = 0  !< Control of the output with homogenized strain-stress (IMP5)
     !>@}
 

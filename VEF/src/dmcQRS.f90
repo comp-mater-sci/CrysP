@@ -85,7 +85,6 @@ contains
         !
         ! Override the requests for outputs:
         this%altay%output_config%nfile = 0   ! texture
-        this%altay%output_config%npebp = 0   ! KOST1x state
         this%output%outputRequest = .false.       ! idem.
         !
         info = VEF_OK

@@ -73,15 +73,10 @@ module altayConfig
     end type
 
     type :: outputConfig
-        integer                                   :: nlist = 0 !< (SIMUL) NLIST (Make an output listing 0 or 1)
         integer                                   :: nfile = 0 !< (SIMUL) NFILTW (Make output files 0 or 1)
         integer                                   :: nfiltw = 0!< (SIMUL) IPR  0-3 Print switch
-        integer                                   :: ipr = 0   !< (SIMUL) NFILE (Make output files 0 or 1) (CUR output)
         integer                                   :: nres = 0  !< (SIMUL) NRES (Make output for stresses with per-grain resolution)
-        integer                                   :: npebp = 0 !< (SIMUL) NPEBP (Make state variable file for DSH model)
         integer                                   :: nmss = 0  !< (SIMUL) NMSS (output of macroscopic homogenized strain-stress)
-        logical                                   :: use_curfile = .false.
-        logical                                   :: use_cubfile = .false.
     end type
 
    type :: simulData

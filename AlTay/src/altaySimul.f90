@@ -45,12 +45,9 @@ module altaySimul
         endif
         NGR    = acnf%simul_init%NGR
 
-        NLIST  = acnf%output_config%NLIST   ! control "output listing"
         NFILE1 = acnf%output_config%NFILE   ! control "CUR"
         NFILTW = acnf%output_config%NFILTW  ! control "TWN"
-        IPR    = acnf%output_config%IPR     ! control printing level
         NRES   = acnf%output_config%NRES    ! control "RES" and "RPT"
-        NPEBP  = acnf%output_config%NPEBP   ! control "BEP"
         NMSS   = acnf%output_config%NMSS    ! control "MSS"
         HGAMTOT=0.D0
 
@@ -64,7 +61,6 @@ module altaySimul
 !       Number of relaxations: 0 for Taylor and 2 for ALAMEL:
         NRL=(NGR-1)*2
         TITEL  = acnf%jobtitle
-        if(NLIST == 1) write(IMP,97) TITEL
         if (NRES > 0) write (IMP2,98) TITEL
   97    format (' Title of the new simulation: ',A)
         ! Only if CUR file is requested
@@ -84,7 +80,7 @@ module altaySimul
         integer :: NGR,&         !< number of grains
                    NRL,&         !< number of relaxations
                    laml
-        integer :: IOR,ISTP,NBLOC,NPOINT, info, NFILE, NPEBPx,NMSSx,NSTP,i,j,l,LAML1,ifil4,ITW
+        integer :: IOR,ISTP,NBLOC,NPOINT, info, NFILE, NMSSx,NSTP,i,j,l,LAML1,ifil4,ITW
         real(dp), save :: gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),SHsam(3,3),Ssam(3,3),RHOSsa(3,3), &
                     CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1,PHI,fi2,C2(3,3),GEWF, &
                     GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
@@ -115,7 +111,6 @@ module altaySimul
         ! Number of relaxations: 0 for Taylor and 2 for ALAMEL:
         NRL=(NGR-1)*2
         NFILE=NFILE0*NFILE1
-        NPEBPx=NFILE0*NPEBP   ! control "BEP" (effective value)
         NMSSx= NFILE0*NMSS    ! control "MSS" (effective value)
 
         NSTP     = astate%simulCalls(astate%this)%input%nsteps
@@ -137,29 +132,12 @@ module altaySimul
 #ifndef NO_STDOUT
             write (*,96) ISTP,GAXES
 #endif
-            if(NLIST == 1) then
-                write (IMP,96) ISTP,GAXES
-      96        format(' Step nr.',i5,5X,3f12.5)
-                write (IMP,3456) MacroDefRate%VelGrad
- 3456       format ('DG=',3(T10,3d12.3,/))
-            ! Get the 5x5 transformation matrix MACRO to morfol. GRAIN AXES
-                write (IMP,3458) TG
- 3458           format (' TG=',3(T10,3d12.3,/))
-            endif
             if (.not. (nfile == 0.or.ISTP > 1)) then
-                if (NLIST == 1) write (IMP,112) ISTP
- 112                format (//' DEFORMATION STEP ',I5,//)
                 if (NRES > 0) write (IMP2,404) nrstep+1,NPOINT
  404                format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'  &
                  ,T7,'EquivStress',T23,'WorkRate',T37,'tau_ref',T56,'M',T64,       &
                  'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS',/,1x,278('*'))
             endif
-            if (NLIST == 1) then
-                do i=1,3
-                    write (IMP,407) (MacroDefState%TotalDefGrad(j,i),j=1,3)
-                enddo
-            end if
- 407        format (' F ',3d15.7)
 
             nrstep=nrstep+1
 
@@ -182,8 +160,6 @@ module altaySimul
             laml=1
             laml1=NGR
             ifil4=0
-            if (NFILTW == 1) write (IMP3,399)
- 399        format(1x)
             clusterloop: do IOR=1,NPOINT
                 Mgrain=0.0
                 GMMdot=0.0
@@ -296,8 +272,6 @@ module altaySimul
             HGAM = HGAM / TOTGEW
             HGAMCALL = HGAMCALL + HGAM
             if (.not.astate%simulCalls(astate%this)%input%keep_state) HGAMTOT = HGAMTOT + HGAM
-            if(NLIST == 1) write (IMP,105) ISTP,SeqAvg,Mavg,MacroDefState%IncrvMeqStrain
- 105        format (' FOR STEP',I5,'  AVERAGE STRESS=',F15.5,'   AVERAGE M-VALUE=',F10.5,'  EFF. STRAIN EPS USED=',F10.5)
         enddo steploop
     end subroutine
 

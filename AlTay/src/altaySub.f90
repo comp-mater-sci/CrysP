@@ -31,7 +31,6 @@ contains
         character(*), parameter :: PROC_NAME = 'initAltay'
 
         integer :: ierr
-        logical :: is_exception
 
         if (present(errmsg)) errmsg = '' ! clear errmsg
         ierr = 0
@@ -92,9 +91,6 @@ contains
         call DYNFIL_finalize(info)
         if (info /= 0) return
         call hardening_finalize()
-        close(IPEBPSTAT)
-        close(IPEBPSDV)
-        ! Finalize altayConfig
         if (allocated(astate%simulCalls)) then
               deallocate(astate%simulCalls)
               astate%nSimulCalls = 0
@@ -111,11 +107,6 @@ contains
 
         fname_prefix = cnf%output_prefix
         info = VEF_ERROR
-        ! UNIT IMP = PRINTER
-        if (cnf%output_config%nlist /= 0) then
-            fname = trim(fname_prefix)//'.LST'
-            open(unit=IMP,file=fname,status='replace',err=9999)
-        endif
 
         if (cnf%output_config%nres /= 0) then
             fname = trim(fname_prefix)//'.RES'
