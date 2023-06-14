@@ -53,8 +53,6 @@ implicit none
 
         procedure,pass(this)    :: readConfig => UDSAModule_readConfig
 
-        procedure,pass(this)    :: printConfig => UDSAModule_printConfig
-
         procedure,pass(this)    :: run => UDSAModule_run
 
         !>@}
@@ -124,18 +122,6 @@ contains
         if (.not. use_default_settings) then
             if (.not. readValue(cnfunit, this%rho)) return
         endif
-        info = VEF_OK
-    !
-    end function
-
-
-    integer function UDSAModule_printConfig(this,outunit) result (info)
-    implicit none
-    class(UDSAModule),intent(in)         :: this
-    integer,intent(in)                  :: outunit
-    !
-    character(len=32)       :: description, orientation
-    !
         info = VEF_OK
     !
     end function

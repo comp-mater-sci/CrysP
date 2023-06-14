@@ -53,8 +53,6 @@ implicit none
 
         procedure,pass(this)    :: readConfig => EWCModule_readConfig
 
-        procedure,pass(this)    :: printConfig => EWCModule_printConfig
-
         procedure,pass(this)    :: run => EWCModule_run
 
         !>@}
@@ -144,18 +142,6 @@ contains
     !
     end function
 
-
-
-    integer function EWCModule_printConfig(this,outunit) result (info)
-    implicit none
-    class(EWCModule),intent(in)         :: this
-    integer,intent(in)                  :: outunit
-    !
-    !integer :: ioerr
-    !
-        info = VEF_OK
-            !
-    end function
 
 
     subroutine EWCModule_run(this,info)

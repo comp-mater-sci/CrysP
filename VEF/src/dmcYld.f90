@@ -47,8 +47,6 @@ implicit none
 
         procedure,pass(this)    :: readConfig => YldModule_readConfig
 
-        procedure,pass(this)    :: printConfig => YldModule_printConfig
-
         procedure,pass(this)    :: run => YldModule_run
         !>@}
 
@@ -120,20 +118,6 @@ contains
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-    end function
-
-
-    integer function YldModule_printConfig(this, outunit) result (info)
-    implicit none
-    class(YldModule),intent(in)         :: this
-    integer,intent(in)                  :: outunit
-    !
-    character(len=6),dimension(nbase)    :: veclabels = [ character(len=6) :: 'base','base','offset' ]
-    integer :: i
-    !
-        info = this%StressDrivenModule%printConfig(outunit)
-        if (info /= VEF_OK) return
-        info = VEF_OK
     end function
 
 

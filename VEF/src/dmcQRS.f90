@@ -35,8 +35,6 @@ implicit none
 
         procedure,pass(this)    :: readConfig => QRSModule_readConfig
 
-        procedure,pass(this)    :: printConfig => QRSModule_printConfig
-
         procedure,pass(this)    :: run => QRSModule_run
 
         !>@}
@@ -93,19 +91,6 @@ contains
         info = VEF_OK
     !
     end function
-
-
-    integer function QRSModule_printConfig(this,outunit) result (info)
-    implicit none
-    class(QRSModule),intent(in)         :: this
-    integer,intent(in)                  :: outunit
-    !
-    integer :: ioerr
-    !
-        info = VEF_OK
-    !
-    end function
-
 
 
     subroutine QRSModule_run(this,info)

@@ -31,8 +31,6 @@ implicit none
 
         procedure,pass(this)    :: readConfig => ASRModule_readConfig
 
-        procedure,pass(this)    :: printConfig => ASRModule_printConfig
-
         procedure,pass(this)    :: run => ASRModule_run
 
         !>@}
@@ -88,16 +86,6 @@ contains
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-    end function
-
-
-    integer function ASRModule_printConfig(this,outunit) result (info)
-    implicit none
-    class(ASRModule),intent(in)         :: this
-    integer,intent(in)                  :: outunit
-
-        info = VEF_OK
-
     end function
 
 
