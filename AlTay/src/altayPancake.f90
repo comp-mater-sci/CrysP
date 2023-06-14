@@ -36,16 +36,16 @@ module altayPancake
         real(dp), intent(inout) :: CC(2,96),GEWF,A1(10,194),SLIPLP(8),TAURLP(8)
 
         type(CRSS) :: CRSSmatrix
-        real(dp),dimension(5):: RHOS, RHOA
+        real(dp),dimension(5) :: RHOS, RHOA
         integer ::  DI(10)
-        real(dp) :: C2(3,3),rls(3,3),rla(3,3),C3(3,3),B3(10,3)=0.0_dp,UU(5*NGR,5*NGR), &
-                    spanv(5),XX(194),STRSS(10),BB(10),CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
-                    B8(5,2),UBUF(10),GAMR(2),Tprinc(3,3),TAURL(2)=0.0_dp,XXTOT,COFCOS,COFSIN
+        real(dp) :: UU(5*NGR,5*NGR),TPrinc(3,3)
+        real(dp) :: C2(3,3), rls(3,3), rla(3,3), C3(3,3), spanv(5)
+        real(dp), save :: B3(10,3)=0.0_dp, XX(194),STRSS(10),BB(10),CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
+                    B8(5,2),UBUF(10),GAMR(2),TAURL(2)=0.0_dp,XXTOT
         ! rls and rla are unit relaxation tensors in crystal frame (symmetric and anti-sym. part)
-        real(dp), parameter :: SQR2=sqrt(0.5_dp)
         !     Definition of the two relaxations, representing a
         !     13-simple shear and a 23-simple shear, respectively:
-        real(dp), dimension(3,3,3) :: relax = reshape([ &
+        real(dp), dimension(3,3,3), parameter :: relax = reshape([ &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     1.0D0, 0.0D0, 0.0D0,                                   &
@@ -55,17 +55,15 @@ module altayPancake
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0],shape(relax))
-        real(dp), dimension(2,3) ::  PLUMIN = reshape([&
+        real(dp), dimension(2,3), parameter ::  PLUMIN = reshape([&
                     1.0D0,-1.0D0,                                          &
                     1.0D0,-1.0D0,                                          &
                     1.0D0, 1.0D0], shape(PLUMIN)) !first index: # of grain, second index: #of relaxation
-        real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp
-        integer :: info,M12,IGrElm,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II
-
+        real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp, SQR2=sqrt(0.5_dp)
+        integer :: info,M12,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II
+        integer, save :: IGrElm
+        
         character(*), parameter :: PROC_NAME = 'pancak2'
-
-        SAVE
-
 
         if (IOR == 1) IGrElm=0
         ! N is number of rows of A1
@@ -77,7 +75,11 @@ module altayPancake
             ! Updating of microstructure
             IGrElm=IGrElm+1
             if (IGrElm > NGrElm) IGrElm=1
-            call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
+            if (NGR == 1) then
+                Tprinc = unitMatrix
+            else
+                call cluster1(IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
+            endif
             CCC(1:2,M2+1:M12)=0.0
             UU = 0.0_dp
             DI(1:5) = DI1
