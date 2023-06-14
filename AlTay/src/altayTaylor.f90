@@ -99,7 +99,7 @@ module altayTaylor
 
 
     subroutine TAYLOR4(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate,CC,M111,Ssam,RHOSsa,fi1,PHI,fi2, &
-                      TRF,C1,C2,ITW,XM)
+                      TRF,C2,ITW,XM)
 
         type(DeformationRate),intent(in) :: MacroDefRate
         integer, intent(in) :: ISTP,IOR,NFILE, &
@@ -107,7 +107,7 @@ module altayTaylor
         real(dp), intent(in) :: TAU, XM(5,96),TRF(3,3),CC(2,96),RHOSsa(3,3), &
             Ssam(3,3) !< local stress in sample reference system
         real(dp), intent(inout) :: fi1,PHI,fi2
-        real(dp), intent(out) :: TOTGAMdot, C2(3,3), C1(3,3), &
+        real(dp), intent(out) :: TOTGAMdot, C2(3,3), &
                                   Seq ! Equivalent stress in crystal, defined as..
                                       !  plastic work rate in crystal normalized by..
                                       !  (macro) von Mises equivalent strain rate
@@ -116,15 +116,15 @@ module altayTaylor
         integer, intent(out) :: ITW
 
         real(dp), dimension(3) :: TRC,ROT
-        real(dp), dimension(3,3) :: RCC,RCcryst,rhossaTot,TDC,RHOAcrys
-        real(dp), dimension(96), save :: VOLFR,SGNN,GAMdot
+        real(dp), dimension(3,3) :: RCC,RCcryst,rhossaTot,TDC,RHOAcrys,C1
+        real(dp), dimension(96), save :: SGNN,GAMdot
         integer :: info, i,j
-        real(dp), save :: ddt,rndm,Mgrain,ratlon,x
+        real(dp) :: rndm,Mgrain,ratlon,x,VOLFR(96)
+        real(dp), parameter :: ddt=1.0_DP
         type(EulerAngles) :: Euler
 
 
         call SLIPRAT(M111,96,GAMdot,ior,IPR,SGNN,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
-        ddt = 1.D0
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call KS_updateState(IOR,GAMdot,ddt,info)
         TOTGAMdot=sum(abs(GAMdot(1:M111)))
         if(NLIST == 1) write (IMP,103) ISTP,IOR,fi1,PHI,fi2

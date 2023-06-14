@@ -56,7 +56,7 @@ module altaySimul
 
         if (NGR < 1.or.NGR > 2) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Incorrect value of NGR')
-   
+
  140    format (' NGR can only take the values 1 or 2 but was',I5)
         ! Check if number of crystals is right for the model
         if (modulo(size(DFIL), NGR) /= 0) &
@@ -78,17 +78,18 @@ module altaySimul
     subroutine SIMUL1(NFILE0,MacroDefRate)
         ! TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES USING THE ALAMEL MODEL
         type(DeformationRate),intent(in) :: MacroDefRate !inout
-        integer :: NFILE0
+        integer, intent(in) :: NFILE0
 
-        real(dp), save :: TRFb(3,3,2),GMMAb(2)
-        integer, save :: NGR,&         !< number of grains
+        real(dp) :: TRFb(3,3,2),GMMAb(2)
+        integer :: NGR,&         !< number of grains
                    NRL,&         !< number of relaxations
                    laml
         integer :: IOR,ISTP,NBLOC,NPOINT, info, NFILE, NPEBPx,NMSSx,NSTP,i,j,l,LAML1,ifil4,ITW
-        real(dp), save :: TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),SHsam(3,3),Ssam(3,3),RHOSsa(3,3), &
-                    CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2),fi1,PHI,fi2,TRF(3,3),C1(3,3),C2(3,3),GEWF, &
+        real(dp), save :: gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),SHsam(3,3),Ssam(3,3),RHOSsa(3,3), &
+                    CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1,PHI,fi2,C2(3,3),GEWF, &
                     GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
-                    GEULR(3),TG(3,3),CIJ(3,3),STOT(3,3),RHOST(3,3),RHOSm(3,3),FS(3,3)=1.0_dp,SeqAvg,tau,qgx,gmm1,gmm0,ssqgx,CC(2,96)
+                    GEULR(3),TG(3,3),CIJ(3,3),RHOST(3,3),RHOSm(3,3),FS(3,3)=1.0_dp,SeqAvg,tau,qgx,gmm1,gmm0,ssqgx,CC(2,96)
+        real(DP) :: TOTGEW, fi1b(2),phib(2),fi2b(2), TRF(3,3), STOT(3,3)
         type(DeformationState), save :: MacroDefState
         ! HGAM: homogenized slip per step
         ! HGAMCALL: homogenized slip per call
@@ -104,7 +105,7 @@ module altaySimul
                                       !  (macro) von Mises equivalent strain rate
         real(dp), save :: WorkRate ! Rate of plastic work per unit
                                      ! volume in the crystal
-        real(dp), save :: Wtot ! Total plastic work per unit volume in crystal
+        real(dp) :: Wtot ! Total plastic work per unit volume in crystal
         real(dp), parameter :: rad2deg=0.5729577951308232e+02_dp
 
 
@@ -237,7 +238,7 @@ module altaySimul
 
                 if (astate%simulCalls(astate%this)%input%full_model) then
                       call TAYLOR4(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate, MacroDefRate,CC,M11,SSam,RHOSsa,fi1,PHI,fi2, &
-                                   TRF,C1,C2,ITW,XM)
+                                   TRF,C2,ITW,XM)
                 endif
                 if (NFILTW == 1) write (IMP3,398) ITW
  398            format (I3)
