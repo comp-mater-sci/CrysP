@@ -81,20 +81,21 @@ module altaySimul
                    NRL,&         !< number of relaxations
                    laml
         integer :: IOR,ISTP,NPOINT, info, NFILE, NMSSx,NSTP,i,j,l,LAML1,ifil4,ITW
-        real(dp), save :: gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),SHsam(3,3),Ssam(3,3),RHOSsa(3,3), &
-                    CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1,PHI,fi2,C2(3,3),GEWF, &
-                    GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
-                    GEULR(3),TG(3,3),CIJ(3,3),RHOST(3,3),RHOSm(3,3),FS(3,3)=1.0_dp,SeqAvg,tau,qgx,gmm1,gmm0,ssqgx,CC(2,96)
+        real(dp) :: gewfb(2), Fb(3,3,2), GAXESb(3,2), GEULRb(3,2), Ssam(3,3), TG(3,3), CIJ(3,3), &
+                    RHOST(3,3), tau, &
+                    GAXES(3)                                        ! half axes a,b,c, of the grain shape ellipsoid
+        real(dp), save :: SHsam(3,3),RHOSsa(3,3),CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1,PHI,fi2,C2(3,3),GEWF, &
+                    GEULR(3),RHOSm(3,3),SeqAvg,qgx,gmm1,gmm0,ssqgx,CC(2,96)
         real(DP) :: TOTGEW, fi1b(2),phib(2),fi2b(2), TRF(3,3), STOT(3,3)
         type(DeformationState), save :: MacroDefState
         ! HGAM: homogenized slip per step
         ! HGAMCALL: homogenized slip per call
-        real(dp), save :: HGAM=0.D0,HGAMCALL=0.D0
+        real(dp), save :: HGAM = 0._DP
         ! Macroscopically imposed vM equivalent strain per call.
-        real(dp), save :: MEPSCALL=0.D0
+        real(dp) :: MEPSCALL, HGAMCALL
         real(dp), save :: GMMdot !Total slip rate in current grain
-        real(dp), save :: Mgrain !Taylor factor of the current grain
-        real(dp), save :: Mavg   !Volume-averaged Taylor factor
+        real(dp) :: Mgrain !Taylor factor of the current grain
+        real(dp) :: Mavg   !Volume-averaged Taylor factor
         real(dp), save :: srh !Strain Rate Heterogeneity in polycrystal
         real(dp), save :: SeqGrain=0.D0 ! Equivalent stress in crystal, defined as..
                                       !  plastic work rate in crystal normalized by..
@@ -240,9 +241,9 @@ module altaySimul
 
             do i=1,2
                 do j=i+1,3
-                    SHsam(i,j)=SHsam(i,j)*FS(i,j)
+                    SHsam(i,j)=SHsam(i,j)
                     SHsam(j,i)=SHsam(i,j)
-                    RHOSm(i,j)=RHOSm(i,j)*FS(i,j)
+                    RHOSm(i,j)=RHOSm(i,j)
                     RHOSm(j,i)=RHOSm(i,j)
                 end do
             end do
