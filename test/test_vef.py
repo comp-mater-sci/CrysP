@@ -159,7 +159,7 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
         if mode == 'ADP':
             cols = ['S_11','S_22','S_33','S_12','S_23','S_13']
         elif mode == 'ASR':
-            cols = ['eps_tot_xx', 'eps_tot_yy', 'eps_tot_zz', 'eps_tot_xy', 'eps_tot_yz', 'eps_tot_xz']
+            cols = ['eps_xx', 'eps_yy', 'eps_zz', 'eps_xy', 'eps_yz', 'eps_xz']
         elif mode == 'YLD':
             cols = ['theta', 'sigma_x', 'sigma_y']
         elif mode == 'UDSA':
@@ -176,7 +176,7 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
             #None of the components should vary more from the reference than MARGIN times the max. component
             for index, row in res.iterrows():
                 row_ref = ref.iloc[index-1]
-                tolerance = abs(max(row_ref) * sensitivity)            
+                tolerance = max(abs(row_ref)) * sensitivity            
                 for i in range(len(row)):
                     element = row[i]
                     element_ref = row_ref[i]
