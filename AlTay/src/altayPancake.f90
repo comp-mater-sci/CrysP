@@ -75,7 +75,11 @@ module altayPancake
             ! Updating of microstructure
             IGrElm=IGrElm+1
             if (IGrElm > NGrElm) IGrElm=1
-            call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
+            if (NGR == 1) then
+                Tprinc = unitMatrix
+            else
+                call cluster1(IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
+            endif
             CCC(1:2,M2+1:M12)=0.0
             UU = 0.0_dp
             DI(1:5) = DI1
