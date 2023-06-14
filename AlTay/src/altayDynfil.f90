@@ -13,16 +13,16 @@ module altayDynfil
         real(dp)                    :: tGEW     = 1.D0, tGAM    = 0.D0
         real(dp), dimension(3)      :: tAXES    = 1.D0, tEULR   = 0.D0
         real(dp), dimension(3,3)    :: tT       = 0.D0
-        real(dp), dimension(3,3)    :: tF       = unitMatrix
-        real(dp), dimension(3,3)    :: tCIJ     = unitMatrix
-        real(dp), dimension(3,3)    :: tTAX     = unitMatrix
+        real(dp), dimension(3,3)    :: tF       = unit_sr_matrix
+        real(dp), dimension(3,3)    :: tCIJ     = unit_sr_matrix
+        real(dp), dimension(3,3)    :: tTAX     = unit_sr_matrix
         real(dp), dimension(3,3)    :: tZERO    = 0.D0, tRHO    = 0.D0
     end type grain
 
     type :: matFrame
-        real(dp),dimension(3,3)   :: FALG   = unitMatrix
-        real(dp),dimension(3,3)   :: CIJ0   = unitMatrix
-        real(dp),dimension(3,3)   :: TAX0   = unitMatrix
+        real(dp),dimension(3,3)   :: FALG   = unit_sr_matrix
+        real(dp),dimension(3,3)   :: CIJ0   = unit_sr_matrix
+        real(dp),dimension(3,3)   :: TAX0   = unit_sr_matrix
         real(dp),dimension(3)     :: GAXES  = 1.D0, GEULR = 0.D0
     end type
 

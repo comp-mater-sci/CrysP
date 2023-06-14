@@ -1,6 +1,5 @@
 module altayPancake
     use definitions
-    use altayMiscutils
     use criMathUtils
     use altayMesostructure
     use altayIOConfig
@@ -76,7 +75,7 @@ module altayPancake
             IGrElm=IGrElm+1
             if (IGrElm > NGrElm) IGrElm=1
             if (NGR == 1) then
-                Tprinc = unitMatrix
+                Tprinc = unit_sr_Matrix
             else
                 call cluster1(IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
             endif

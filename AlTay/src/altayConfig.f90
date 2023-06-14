@@ -4,7 +4,7 @@ module altayConfig
     use hardening_types
     use altayTexFormats
     use definitions
-    use altayMiscutils
+    use criMathUtils
     use parameters
 
     implicit none
@@ -85,7 +85,7 @@ module altayConfig
         !>   - 1 - FC Taylor
         !>   - 2 - Alamel
         integer                   :: NGR = 2 ! Number of grains in the cluster
-        real(dp), dimension(3,3) :: FMicro = unitMatrix
+        real(dp), dimension(3,3) :: FMicro = unit_sr_Matrix
     end type
 
     !> Root-level configuration structure of Altay

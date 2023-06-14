@@ -10,11 +10,6 @@ module altayMiscutils
     integer,parameter :: stopcode_runtimeerror = 10 !< Run-time error condition occured.
     !>@}
 
-    real(dp),dimension(3,3),parameter :: unitMatrix = reshape( &
-         [ 1.D0, 0.D0, 0.D0,     &
-           0.D0, 1.D0, 0.D0,     &
-           0.D0, 0.D0, 1.D0], shape(unitMatrix))
-
     contains
 
     subroutine writeMSSHeader(ounit,info)

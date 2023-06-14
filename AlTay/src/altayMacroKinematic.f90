@@ -1,5 +1,5 @@
 module altayMacroKinematic
-    use altayMiscutils
+    use criMathUtils
     use definitions
 
     implicit none
@@ -16,9 +16,9 @@ module altayMacroKinematic
     end type DeformationRate
 
     type, public ::  DeformationState
-        real(dp), dimension(3,3) :: TotalDefGrad = unitMatrix            !< Total Deformation Gradient (from undeformed state to the end of current increment)
-        real(dp), dimension(3,3) :: IncrDefGrad = unitMatrix             !< Incremental Deformation Gradient (from start to end of current increment)
-        real(dp), dimension(3,3) :: IncrDefGrad_inverse = unitMatrix     !< Inverse of Incremental Deformation Gradient
+        real(dp), dimension(3,3) :: TotalDefGrad = unit_sr_Matrix            !< Total Deformation Gradient (from undeformed state to the end of current increment)
+        real(dp), dimension(3,3) :: IncrDefGrad = unit_sr_Matrix             !< Incremental Deformation Gradient (from start to end of current increment)
+        real(dp), dimension(3,3) :: IncrDefGrad_inverse = unit_sr_Matrix     !< Inverse of Incremental Deformation Gradient
         real(dp)                 :: IncrvMeqStrain = 0.0D0               !< Incremental von Mises equivalent strain (from start to end of current increment)
         real(dp)                 :: AccumvMeqStrain_ToStartOfInc = 0.0D0 !< Accumulated von Mises equivalent strain, up to the start of current inc.
                                                                          !< (note: reference state might be different than that of TotalDefGrad)
@@ -38,7 +38,7 @@ module altayMacroKinematic
         type(DeformationRate)           , intent(out)   :: this
 
         !Explicitly make the velocity gradient traceless
-        this%VelGrad = VelGrad - UnitMatrix * (VelGrad(1,1)+VelGrad(2,2)+VelGrad(3,3))/3.D0
+        this%VelGrad = VelGrad - Unit_sr_Matrix * (VelGrad(1,1)+VelGrad(2,2)+VelGrad(3,3))/3.D0
 
         this%StrainRate = (this%VelGrad+transpose(this%VelGrad))/2.D0
         this%Spin       = (this%VelGrad-transpose(this%VelGrad))/2.D0
@@ -106,7 +106,7 @@ module altayMacroKinematic
 
         !For the '0-th term in Taylor Series Expansion', the approximation of Taylor Series Expansion is
         k= 0
-        Term= unitMatrix
+        Term= unit_sr_Matrix
         ExpA= Term
         InvExpA= Term
 
