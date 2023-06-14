@@ -1,6 +1,5 @@
 program alamDMC
     use logging
-    use dmcUtils, only: display_unit
     use dmcBasicModule
     use dmcASR
     use dmcQRS

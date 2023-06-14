@@ -4,7 +4,6 @@
 module dmcASR
 use criMathUtils
 use criUncomment, only: readValue
-use dmcUtils, only: display_unit
 use dmcIncrementationControl
 use dmcStressDrivenEvolutionModule
 use commonConfig
@@ -96,9 +95,9 @@ contains
     implicit none
     class(ASRModule),intent(in)         :: this
     integer,intent(in)                  :: outunit
-    
+
         info = VEF_OK
-    
+
     end function
 
 

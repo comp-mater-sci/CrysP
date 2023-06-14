@@ -3,7 +3,6 @@ module dmcDeformationDrivenModule
 use criRange
 use definitions
 use criUncomment, only: readValue
-use dmcUtils, only: display_unit
 use dmcBasicModule
 use dmcStrainDrivenStep
 implicit none
@@ -29,7 +28,7 @@ implicit none
         !> Container for steps
         type(PtrStrainDrivenStep),dimension(:),allocatable :: steps
 
-    contains 
+    contains
         procedure,pass(this) :: readConfig => DeformationDrivenModule_readConfig
     end type
 

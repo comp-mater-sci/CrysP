@@ -5,7 +5,6 @@ module dmcStrainDrivenStep
 use criRange
 use criMathUtils
 use definitions
-use dmcUtils, only: display_unit
 use dmcSubsteppingConfig
 implicit none
 

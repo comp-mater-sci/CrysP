@@ -10,7 +10,6 @@ module dmcBasicModule
     use dmcAbstractModule
     use altayConfig, only: altayConfigData
     use commonConfig
-    use dmcUtils
     use definitions
     use hardening
     use parameters
@@ -222,8 +221,7 @@ contains
       character(:), allocatable :: slip_systems
       character(5) :: buffer
 
-      type(MapItem),dimension(2*2) :: extensions = [MapItem('.smt',TF_SMT), MapItem('.SMT',TF_SMT), &
-                                                    MapItem('.cur',TF_CUR), MapItem('.CUR',TF_CUR)]
+      type(MapItem),dimension(2) :: extensions = [MapItem('.smt',TF_SMT), MapItem('.SMT',TF_SMT)]
 
       type(MapItem),dimension(2) :: model_types = [MapItem('ALAMEL', modelAlamel), &
                                                    MapItem('FCTaylor', modelFCTaylor)]
@@ -241,14 +239,12 @@ contains
                 return
             endif
             select case(cnf%texture%input_type)
-                  case(TF_SMT)     ! SMT or CUB
-                        continue
-                  case(TF_CUR)       ! CUR file, the only multi-block file now.
-                       if (.not. readValue(cnfunit, cnf%texture%block_id)) return ! read block id for CUR format
-                  case default
-                        write(display_unit, fmt=900) 'Incorrect texture type.'
-                        return
-                  end select
+                case(TF_SMT)
+                    continue
+                case default
+                    write(display_unit, fmt=900) 'Incorrect texture type.'
+                    return
+            end select
             !
             ! Determine crystal plasticity model type
             !if (.not. readKeyword(cnfunit, model_types, model_id)) return

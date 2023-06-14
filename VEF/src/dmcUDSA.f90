@@ -8,7 +8,6 @@ use criPath
 use criRange
 use criNamedRange
 use criConfigReader
-use dmcUtils
 use dmcStressDrivenEvolutionModule
 use dmcIncrementationControl
 use commonUtils

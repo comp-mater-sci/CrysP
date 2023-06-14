@@ -8,7 +8,6 @@ use criRange
 use criMathUtils
 use criUncomment, only: readValue
 use dmcYLPResult
-use dmcUtils
 use commonConfig
 use dmcStressDrivenModule
 use commonUtils
@@ -224,7 +223,7 @@ contains
                     cycle
                 endif
                 scal_s_rel = ylp_result%scal_s * iunilen
-                
+
                 yldRes(i) = yldResult(rad2deg(theta), w, ylp_result%scal_s, scal_s_rel, &
                                       norm2(ylp_result%vSonA), ylp_result%dotWonA, &
                                       pair_double(scal_s_rel * cos(theta), scal_s_rel * sin(theta)),&

@@ -56,7 +56,7 @@ module altaySimul
 
         if (NGR < 1.or.NGR > 2) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Incorrect value of NGR')
-
+   
  140    format (' NGR can only take the values 1 or 2 but was',I5)
         ! Check if number of crystals is right for the model
         if (modulo(size(DFIL), NGR) /= 0) &
@@ -78,34 +78,34 @@ module altaySimul
     subroutine SIMUL1(NFILE0,MacroDefRate)
         ! TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES USING THE ALAMEL MODEL
         type(DeformationRate),intent(in) :: MacroDefRate !inout
+        integer, intent(in) :: NFILE0
 
-        real(dp) :: TRFb(3,3,2),GMMAb(2)
-        integer :: NGR,&         !< number of grains
+        real(dp), save :: TRFb(3,3,2),GMMAb(2)
+        integer, save :: NGR,&         !< number of grains
                    NRL,&         !< number of relaxations
                    laml
-        integer :: IOR,ISTP,NBLOC,NPOINT, info, NFILE, NFILE0, NPEBPx,NMSSx,NSTP,i,j,l,LAML1,ifil4,ITW
-        real(dp) :: TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),SHsam(3,3),Ssam(3,3),RHOSsa(3,3), &
+        integer :: IOR,ISTP,NBLOC,NPOINT, info, NFILE, NPEBPx,NMSSx,NSTP,i,j,l,LAML1,ifil4,ITW
+        real(dp), save :: TOTGEW,gewfb(2),Fb(3,3,2),GAXESb(3,2),GEULRb(3,2),SHsam(3,3),Ssam(3,3),RHOSsa(3,3), &
                     CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1b(2),phib(2),fi2b(2),fi1,PHI,fi2,TRF(3,3),C1(3,3),C2(3,3),GEWF, &
                     GAXES(3),                                  &    ! half axes a,b,c, of the grain shape ellipsoid
-                    GEULR(3),TG(3,3),CIJ(3,3),STOT(3,3),RHOST(3,3),RHOSm(3,3),FS(3,3)=1.0_dp,SeqAvg,tau,qgx,gmm1,gmm0,ssqgx,CC(2,M11)
-        type(DeformationState) :: MacroDefState
+                    GEULR(3),TG(3,3),CIJ(3,3),STOT(3,3),RHOST(3,3),RHOSm(3,3),FS(3,3)=1.0_dp,SeqAvg,tau,qgx,gmm1,gmm0,ssqgx,CC(2,96)
+        type(DeformationState), save :: MacroDefState
         ! HGAM: homogenized slip per step
         ! HGAMCALL: homogenized slip per call
-        real(dp) :: HGAM=0.D0,HGAMCALL=0.D0
+        real(dp), save :: HGAM=0.D0,HGAMCALL=0.D0
         ! Macroscopically imposed vM equivalent strain per call.
-        real(dp) :: MEPSCALL=0.D0
-        real(dp) :: GMMdot !Total slip rate in current grain
-        real(dp) :: Mgrain !Taylor factor of the current grain
-        real(dp) :: Mavg   !Volume-averaged Taylor factor
-        real(dp) :: srh !Strain Rate Heterogeneity in polycrystal
-        real(dp) :: SeqGrain=0.D0 ! Equivalent stress in crystal, defined as..
+        real(dp), save :: MEPSCALL=0.D0
+        real(dp), save :: GMMdot !Total slip rate in current grain
+        real(dp), save :: Mgrain !Taylor factor of the current grain
+        real(dp), save :: Mavg   !Volume-averaged Taylor factor
+        real(dp), save :: srh !Strain Rate Heterogeneity in polycrystal
+        real(dp), save :: SeqGrain=0.D0 ! Equivalent stress in crystal, defined as..
                                       !  plastic work rate in crystal normalized by..
                                       !  (macro) von Mises equivalent strain rate
-        real(dp) :: WorkRate ! Rate of plastic work per unit
+        real(dp), save :: WorkRate ! Rate of plastic work per unit
                                      ! volume in the crystal
-        real(dp) :: Wtot ! Total plastic work per unit volume in crystal
+        real(dp), save :: Wtot ! Total plastic work per unit volume in crystal
         real(dp), parameter :: rad2deg=0.5729577951308232e+02_dp
-        save
 
 
         NPOINT = size(DFIL)
