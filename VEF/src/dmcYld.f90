@@ -298,9 +298,10 @@ contains
         if (ierr == 0) info = VEF_OK
         !
         ! Formats for output file
-        700 format('#',12(A15,1X))
-        701 format(1X, 12(A15,1X))
-        710 format(1X, 12(E15.8,1X),4(F15.8,1X))
+        700 format('#',12(A18,1X))
+        701 format(1X, 12(A18,1X))
+        !710 format(1X, 16(ES18.9E3,1X))
+        710 format(1X, 12(ES18.9E3,1X))
         720 format(/) ! Double empty line
     !
     end subroutine

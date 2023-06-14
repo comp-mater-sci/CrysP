@@ -263,7 +263,7 @@ contains
 
         !
         ! Formats for the output file
-        710 format(1X, 2(I18,1X),39(E18.9,1X))
+        710 format(1X, 2(I18,1X),39(ES18.9E3,1X))
     !
     end function
 

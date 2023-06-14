@@ -342,7 +342,7 @@ contains
         ! Formats for the output file
         700 format(1X, 1(A9,1X),15(A18,  1X))
         701 format('#',1(A9,1X),15(A18,  1X))
-        710 format(1X, 1(I9,1X),15(E18.9,1X))
+        710 format(1X, 1(I9,1X),15(ES18.9E3,1X))
     !
     end function
 

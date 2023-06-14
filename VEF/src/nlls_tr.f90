@@ -683,7 +683,7 @@ contains
       l = lbound(A,dim=2)
       u = ubound(A,dim=2)
       do i=lbound(A,dim=1),ubound(A,dim=1)
-            write(ounit,'(E18.9,1X,$)') (A(i,j), j=l,u) ! does not conform f2003, but no temporary needed
+            write(ounit,'(ES18.9E3,1X,$)') (A(i,j), j=l,u) ! does not conform f2003, but no temporary needed
             write(ounit,*)
       end do
       end subroutine
