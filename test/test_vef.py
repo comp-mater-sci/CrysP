@@ -161,7 +161,7 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
         elif mode == 'ASR':
             cols = ['eps_tot_xx', 'eps_tot_yy', 'eps_tot_zz', 'eps_tot_xy', 'eps_tot_yz', 'eps_tot_xz']
         elif mode == 'YLD':
-            cols = ['sigma_x', 'sigma_y']
+            cols = ['theta', 'sigma_x', 'sigma_y']
         elif mode == 'UDSA':
             cols = ['S']
         elif mode == 'QRS':
@@ -181,6 +181,18 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
                     element = row[i]
                     element_ref = row_ref[i]
                     assert element >= element_ref - tolerance and element <= element_ref + tolerance
+
+        elif mode == 'YLD':
+            #None of the components should vary more than MARGIN from the reference
+            index_ref = 0
+            for index, row in res.iterrows():
+                while ref['theta'][index_ref+1] < row['theta']:
+                    index_ref = index_ref + 1
+                row_ref = ref.iloc[index_ref]
+                if not (row[1] == row[2] == 0) and not row_ref[1] == row_ref[2] == 0 and row_ref['theta'] == row['theta']:
+                    for i in range(1,3):
+                        assert abs(row_ref[i] * (1 - sensitivity)) <= abs(row[i]) <= abs(row_ref[i] * (1 + sensitivity))
+
         else:
             #None of the components should vary more than MARGIN from the reference
             for index, row in res.iterrows():
