@@ -115,7 +115,7 @@ contains
     integer function StrainDrivenStep_setUp(this) result(info)
     class(StrainDrivenStep),intent(inout)   :: this
     !
-    double precision :: step_strain_norm, volumetric_strain_norm, volumetric_strain_fraction
+    double precision :: step_strain_norm
     !
     ! Volumetric strain fraction that triggers a warning (0.1%)
     double precision,parameter :: volumetric_strain_fraction_threshold = 0.001

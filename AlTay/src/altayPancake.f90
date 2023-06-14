@@ -25,10 +25,10 @@ module altayPancake
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
     subroutine pancak2(NGL,B,DI1,S33,RHOS33,RHOA33,GEWF,A1,MacroDefRate,MacroDefState,NACTIV,&
-                       SLIPLP,TLXX,TAURLP,INDACT,INDLP,IOR,ISTP,NBLOC,TRFb,GMMab,NGR,NRL,laml,BB8,CC,M11)
+                       SLIPLP,TLXX,TAURLP,INDACT,INDLP,IOR,TRFb,GMMab,NGR,NRL,laml,BB8,CC,M11)
         type(DeformationRate),intent(in) :: MacroDefRate
         type(DeformationState),intent(in):: MacroDefState
-        integer, intent(in) :: NGL,DI1(5),ISTP,NBLOC,NGR,NRL,laml,IOR,M11
+        integer, intent(in) :: NGL,DI1(5),NGR,NRL,laml,IOR,M11
         real(dp),dimension(3,3),intent(out):: S33, RHOS33, RHOA33,BB8(5)
         integer, intent(out) :: NACTIV
         integer, intent(inout) :: INDACT(8),INDLP(8)
@@ -60,7 +60,7 @@ module altayPancake
                     1.0D0,-1.0D0,                                          &
                     1.0D0, 1.0D0], shape(PLUMIN)) !first index: # of grain, second index: #of relaxation
         real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp, SQR2=sqrt(0.5_dp)
-        integer :: info,M12,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II
+        integer :: info,M12,N,M2,IL,L1,IRL,I,K1,IG,JJ,II
         integer, save :: IGrElm
 
         character(*), parameter :: PROC_NAME = 'pancak2'

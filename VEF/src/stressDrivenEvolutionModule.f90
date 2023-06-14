@@ -289,7 +289,6 @@ contains
     type(IncrementOutputRecord),intent(in)              :: output_record
     integer,intent(out)                                 :: info
     !
-    integer :: j
     !
                 info = VEF_OK
     !

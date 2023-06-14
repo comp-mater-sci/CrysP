@@ -102,7 +102,7 @@ contains
     type(IncrementationControl)     :: icv
     double precision,dimension(rot_matrix_dim,rot_matrix_dim)   :: Mrot
     !
-    integer     :: j, istep, nsteps, ofunit
+    integer     :: istep, nsteps, ofunit
     !
         ! Super-class first
         RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))

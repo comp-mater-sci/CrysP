@@ -73,8 +73,8 @@ module altayTaylor
     end subroutine
 
     ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
-    subroutine TAYLOR3(SSam,RHOSsa,TRF,GEWF,IOR,ISTP,NBLOC,TRFb,GMMAb,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
-        integer, intent(in) :: NGR,NRL,laml,IOR,ISTP,NBLOC
+    subroutine TAYLOR3(SSam,RHOSsa,TRF,GEWF,IOR,TRFb,GMMAb,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
+        integer, intent(in) :: NGR,NRL,laml,IOR
         real(dp), intent(out) :: Ssam(3,3),RHOSsa(3,3)
         real(dp), intent(inout) :: CC(2,96),GEWF
         type(DeformationRate), intent(in) :: MacroDefRate
@@ -86,7 +86,7 @@ module altayTaylor
 
 
         call pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,GEWF,A2,MacroDefRate,MacroDefState,NACTIV, &
-                     SLIPLP,TLXX,TAURLP,INDACT,INDLP,IOR,ISTP,NBLOC,TRFb,GMMAb,NGR,NRL,laml,BB8,CC,M11)
+                     SLIPLP,TLXX,TAURLP,INDACT,INDLP,IOR,TRFb,GMMAb,NGR,NRL,laml,BB8,CC,M11)
         !Transform stress from local frame (Scrys) to sample frame (Ssam)
         Ssam = rotateSRTensorTo(Scrys,TRF)
         !Transform relaxation strain rate tensor from local frame (RHOScrys)
@@ -124,7 +124,7 @@ module altayTaylor
         type(EulerAngles) :: Euler
 
 
-        call SLIPRAT(M111,96,GAMdot,ior,SGNN,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
+        call SLIPRAT(M111,96,GAMdot,SGNN,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call KS_updateState(IOR,GAMdot,ddt,info)
         TOTGAMdot=sum(abs(GAMdot(1:M111)))
         ! Calculate RCcryst: the rigid body spin in the crystal frame

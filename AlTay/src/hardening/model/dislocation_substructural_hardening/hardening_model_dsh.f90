@@ -256,8 +256,6 @@ contains
         integer, dimension(6)                       ::  r
         integer                                     ::  i, &
                                                         j
-        real(DP)    :: fl, wd
-
         if (time < 0._DP) return
 
         SVa = this%state(grain)

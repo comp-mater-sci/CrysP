@@ -107,17 +107,13 @@ contains
     type(YLPResult)                           :: ylp_result
     !
     double precision                          :: fi1,phi,fi2, residual_resume
-    integer     :: i,j, k, npoints, npoints_ok, ofunit
+    integer     :: i, npoints, npoints_ok, ofunit
     logical     :: useVMGuess, acceptable_point
     !
     type(QRSOutputData) :: results
     !
     integer,parameter :: column_width = 15
-    ! For display output:
-    integer,parameter :: ncolumn_labels_display = 6, column_width_display = 14
-    character(len=column_width-1),dimension(ncolumn_labels_display) :: display_column_labels = &
-        [ character(len=column_width_display) ::  &
-        'angle','rho','q-value','r-value','sigma_xx','residual' ]
+
     !
         ! Super-class first
         RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
