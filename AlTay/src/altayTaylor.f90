@@ -170,27 +170,28 @@ module altayTaylor
                 call log_error('Taylor', 'taylor4', ERR_VAL, 'Total volume fraction of twins exceeds unity')
             call RANDOM_NUMBER(RNDM)
             do I=1,NTW
-                if (RNDM < VOLFR(I)) goto 87
+                if (RNDM < VOLFR(I)) then
+                    RCC = C2
+                    TDC(1,1)=B2(1,I)
+                    TDC(2,1)=B2(2,I)
+                    TDC(1,2)=B2(2,I)
+                    TDC(3,1)=B2(3,I)
+                    TDC(1,3)=B2(3,I)
+                    TDC(2,2)=B2(4,I)
+                    TDC(3,2)=B2(5,I)
+                    TDC(2,3)=B2(5,I)
+                    TDC(3,3)=B2(6,I)
+                    C2 = matmul(TDC,RCC)
+                    ITW=I
+                    Euler= EuleranglesType(C2)
+                    fi1=Euler%fi1
+                    PHI=Euler%PHI
+                    fi2=Euler%fi2
+                    exit
+                end if
             end do
-            goto 31
-  87        RCC = C2
-            TDC(1,1)=B2(1,I)
-            TDC(2,1)=B2(2,I)
-            TDC(1,2)=B2(2,I)
-            TDC(3,1)=B2(3,I)
-            TDC(1,3)=B2(3,I)
-            TDC(2,2)=B2(4,I)
-            TDC(3,2)=B2(5,I)
-            TDC(2,3)=B2(5,I)
-            TDC(3,3)=B2(6,I)
-            C2 = matmul(TDC,RCC)
-            ITW=I
-            Euler= EuleranglesType(C2)
-            fi1=Euler%fi1
-            PHI=Euler%PHI
-            fi2=Euler%fi2
         endif
-  31    if (.not. (nfile == 0.or.istp > 1)) then
+        if (.not. (nfile == 0.or.istp > 1)) then
 
             ! the ratio of the parallel strain rates
             ! MacroDefRate%StrainMode & rhossa: expressed in same (sample) reference frame
