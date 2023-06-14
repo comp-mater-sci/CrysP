@@ -14,7 +14,7 @@ module altaySub
     use parameters
 
     implicit none
-    
+
     character(*), parameter, private :: MOD_NAME = 'altaySub'
 
 contains
@@ -42,22 +42,22 @@ contains
         open (unit=LEC,file=trim(cnf%slipsystem%input_fname),status='old',iostat=ierr)
         if (ierr /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open slip system definition file: ' // trim(cnf%slipsystem%input_fname))
-        
+
         ! Load microstructure data
         CALL GRFIL(acnf%micros_fname,acnf%simul_init%FMicro,info)
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot process the microstructure file: ' // trim(acnf%micros_fname))
-        
+
         ! Get the initial texture
         call loadTexture(cnf%texture%input_type,NDAT1,trim(cnf%texture%input_fname),cnf%texture%block_id,info)
-        if (info /= VEF_OK) & 
+        if (info /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot process the texture data file: ' // trim(cnf%texture%input_fname))
-        
+
         ! Open output files
         call openOutputFiles(cnf, info, errmsg)
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open output files.')
-            
+
         ! Initialize altay modules
         !
         ! Set the data for CRSS calculations
@@ -111,35 +111,28 @@ contains
 
         fname_prefix = cnf%output_prefix
         info = VEF_ERROR
-#ifndef NOLSTFILE
         ! UNIT IMP = PRINTER
         if (cnf%output_config%nlist /= 0) then
             fname = trim(fname_prefix)//'.LST'
             open(unit=IMP,file=fname,status='replace',err=9999)
         endif
-#endif
 
-#ifndef NORESFILE
         if (cnf%output_config%nres /= 0) then
             fname = trim(fname_prefix)//'.RES'
             open(unit=IMP2,file=fname,status='replace',err=9999)
         endif
-#endif
 
-#ifndef NOTWNFILE
         if (cnf%output_config%nfiltw /= 0) then
             fname = trim(fname_prefix)//'.TWN'
             open (unit=IMP3,file=fname,status='replace',err=9999)
         endif
-#endif
 
-#ifndef NOCURFILE
         if (cnf%output_config%nfile /= 0) then
             fname = trim(fname_prefix)//'.CUR'
             ! IMP1=output file with successive "current situations"
             open (unit=IMP1,file=fname,status='replace',err=9999)
         endif
-#endif
+
         if (cnf%output_config%NMSS /= 0) then
             fname = trim(fname_prefix)//'.MSS'
             ! UNIT IMP5 = homogenized strain-stress

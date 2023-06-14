@@ -10,7 +10,6 @@ module dmcBasicModule
     use dmcAbstractModule
     use altayConfig, only: altayConfigData
     use commonConfig
-    use dmcUtils
     use definitions
     use hardening
     use parameters

@@ -7,7 +7,6 @@ module commonConfig
       use criUncomment
       use criConfigReader
       use definitions
-      use dmcUtils
       implicit none
 
 

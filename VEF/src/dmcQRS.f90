@@ -7,7 +7,6 @@ use criMathUtils
 use criRange
 use criUncomment, only: readValue
 use dmcYLPResult
-use dmcUtils
 use dmcStressDrivenModule
 use commonConfig
 use commonUtils
@@ -229,7 +228,7 @@ contains
         enddo
         !
         if (info == VEF_ERROR) return
-    
+
         npoints_ok = i-1
         if (npoints /= npoints_ok) then
             write(display_unit,fmt=850) 'There were unconverged solutions, so some of datapoints are dropped'

@@ -212,7 +212,7 @@ contains
         call check_type(params(index), val)
 
         !Messy workaround to get gfortran to work
-        allocate(character(sizeof(val)) :: buffer)
+        allocate(character(storage_size(val)/8) :: buffer)
         select type(val)
             type is (character(*))
                 params(index)%value = val

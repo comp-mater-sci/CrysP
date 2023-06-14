@@ -8,7 +8,6 @@ use criNumerics
 use criLinearMap
 use criConfigReader
 use commonConfig
-use dmcUtils, only: display_unit
 use dmcStressDrivenEvolutionModule
 use dmcIncrementationControl
 use dmcResultFileOutput
