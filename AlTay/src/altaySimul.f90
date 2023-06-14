@@ -128,7 +128,7 @@ module altaySimul
             srh=0.
             HGAM=0.D0
 
-            call dynfil2(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
+            call dynfil_getGlobal(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT
             write (*,96) ISTP,GAXES
 #endif
@@ -146,7 +146,7 @@ module altaySimul
             call GETANG(CIJ,GAXES,GEULR,TG)
 
             if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                  call DYNFIL3(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
+                  call DYNFIL_setGlobal(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 !
 !         Added for lamel model:
 !         Organisation reading temporary texture file,
@@ -170,7 +170,7 @@ module altaySimul
                 do L=laml,laml1
                     if (ifil4 == NPOINT) exit
                     ifil4=ifil4+1
-                    call DYNFIL4(ifil4,fi1b(L),PHIb(L),fi2b(L),TRFb(1:3,1:3,L),GEWFb(L),GMMAb(L),Fb(1:3,1:3,L),GAXESb(1:3,L), &
+                    call DYNFIL_getGrain(ifil4,fi1b(L),PHIb(L),fi2b(L),TRFb(1:3,1:3,L),GEWFb(L),GMMAb(L),Fb(1:3,1:3,L),GAXESb(1:3,L), &
                                  GEULRb(1:3,L),CIJb(1:3,1:3,L),TGb(1:3,1:3,L),RHOSSb(1:3,1:3,L))
                     fi1b(L)=fi1b(L)*rad2deg
                     PHIb(L)=PHIb(L)*rad2deg
@@ -232,7 +232,7 @@ module altaySimul
                 Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
                 ! We can choose not to update the texture state
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                      call DYNFIL5(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
+                      call DYNFIL_setGrain(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
             enddo clusterloop
 
             SHsam = STOT / TOTGEW

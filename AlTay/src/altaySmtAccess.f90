@@ -27,7 +27,7 @@ module altaySmtAccess
         if ((ioerr == 0) .and. (nrec > 0)) then
               filetitle = title
               ! Pre-allocate the storage. Chances are that there will be no need to reallocate it.
-              call DYNFIL0(nrec,.false.,info)
+              call dynfil_init(nrec,.false.,info)
         endif
     94  format(I5,5x,A)
 
@@ -88,7 +88,7 @@ module altaySmtAccess
                 ! More than one grain per record. This path is more complex,
                 ! but is very infrequently followed.
                 ngrains = ngrains + NSTAP - 1
-                call DYNFIL0(ngrains,.true.,info)
+                call dynfil_init(ngrains,.true.,info)
                 if (info /= 0) exit
                 i0 = i - 1 ! Store the index of the "parent" grain
                 do k=1,NSTAP-1
