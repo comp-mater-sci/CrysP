@@ -11,6 +11,7 @@ import re
 from pathlib import Path
 import itertools
 import subprocess
+import math
 
 import pytest
 import pandas as pd
@@ -96,7 +97,11 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
             with open('out.uds', 'w') as out:
                 for orientation in [0,45,90]:
                     with open(f'out_{orientation}_000.uds','r') as out_oriented:
-                        out.write(out_oriented.read())
+                        if orientation == 0:
+                            out.write(out_oriented.read())
+                        else:
+                            out.writelines((out_oriented.read().splitlines(True))[2:])
+                            
 
         path = TEST_DATA/f'{mode}_{algorithm}_{slip_system}_{hardening_model}'
         out_path = str(path) + '.out'
@@ -126,6 +131,14 @@ def process_file(path):
     filtered = list(filter(lambda e: not e == 0, res))
     return (sum(filtered) / len(filtered), total)
 
+def format_df(df, cols):
+    df.columns = df.iloc[0]
+    df = (df[1:]).astype(float)
+    if cols != []:
+        return df[cols]
+    else:
+        return df
+
 tests_basic = itertools.product(MODES, ALGORITHMS, SLIP_SYSTEMS, HARDENING_MODELS[0:3])
 tests_bp = itertools.product(MODES, ALGORITHMS, ['bcc24'], HARDENING_MODELS[3:6])
 tests = list(tests_basic) + list(tests_bp)
@@ -133,18 +146,52 @@ tests = list(tests_basic) + list(tests_bp)
 #Generate and execute the different test cases.
 @pytest.mark.integration
 @pytest.mark.parametrize('mode,algorithm,slip_system,hardening_model', tests)
-def test_vef(mode, algorithm, slip_system, hardening_model, update):
+def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
     generate_output(update, mode, algorithm, slip_system, hardening_model)
 
-    filename =  f'{mode}_{algorithm}_{slip_system}_{hardening_model}.out'
-    (ref_avg, ref_total) = process_file(TEST_ROOT/'data/out'/filename)
-    (res_avg, res_total) = process_file(TEST_DATA/filename)
-    assert ref_avg > res_avg * 0.95 and ref_avg < res_avg * 1.05
-    assert ref_total > res_total * 0.95 and ref_total < res_total * 1.05
-    ratio_avg = round(res_avg/ref_avg, 2)
-    ratio_total = round(res_total/ref_total, 2)
-    print(f'{mode}, {algorithm}, {slip_system}, {hardening_model}: avg. significands: {ratio_avg}; sum values: {ratio_total}')
+    if update == 'FALSE' :
+        filename =  f'{mode}_{algorithm}_{slip_system}_{hardening_model}.out'
+        ref = pd.read_csv(TEST_ROOT/'data/out'/filename, delimiter=' +', engine='python')
+        res = pd.read_csv(TEST_DATA/filename, delimiter=' +', engine='python')
+        cols = []
 
+        #Generate formatted dataframe from selected columns of output files based on mode
+        if mode == 'ADP':
+            cols = ['S_11','S_22','S_33','S_12','S_23','S_13']
+        elif mode == 'ASR':
+            cols = ['eps_tot_xx', 'eps_tot_yy', 'eps_tot_zz', 'eps_tot_xy', 'eps_tot_yz', 'eps_tot_xz']
+        elif mode == 'YLD':
+            cols = ['sigma_x', 'sigma_y']
+        elif mode == 'UDSA':
+            cols = ['S']
+        elif mode == 'QRS':
+            cols = ['q-value', 'r-value', 's-value']
+            
+        ref = format_df(ref, cols)
+        res = format_df(res, cols)
+
+        #Compare results to reference
+        sensitivity = float(margin) / 100.0
+        if mode == 'ADP' or mode == 'ASR':
+            #None of the components should vary more from the reference than MARGIN times the max. component
+            for index, row in res.iterrows():
+                row_ref = ref.iloc[index-1]
+                tolerance = abs(max(row_ref) * sensitivity)            
+                for i in range(len(row)):
+                    element = row[i]
+                    element_ref = row_ref[i]
+                    assert element >= element_ref - tolerance and element <= element_ref + tolerance
+        else:
+            #None of the components should vary more than MARGIN from the reference
+            for index, row in res.iterrows():
+                row_ref = ref.iloc[index-1]
+                if not all(x == 0.0 or math.isnan(x) for x in row) and not all(x == 0.0 or math.isnan(x) for x in row_ref):
+                    for i in range(len(row)):
+                        element = row[i]
+                        element_ref = row_ref[i]
+                        if not math.isnan(element_ref):
+                            assert abs(element_ref * (1 - sensitivity)) <= abs(element) <= abs(element_ref * (1 + sensitivity))
+        
 def get_trace_values(path, module, function):
     vals = []
     header = "TRACE " + module + ", " + function
@@ -158,7 +205,8 @@ def get_trace_values(path, module, function):
 @pytest.mark.parametrize('module,function,mode,algorithm,slip_system,hardening_model', [(a,b,c,d,e,f) for ((a,b),(c,d,e,f)) in itertools.product(UNITS, tests)])
 def test_unit(mode, algorithm, slip_system, hardening_model, module, function, update):
     generate_output(update, mode, algorithm, slip_system, hardening_model)
-    reference = get_trace_values(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
-    data = get_trace_values(TEST_DATA/f'{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
-    assert np.allclose(reference,data,rtol=1e-3,atol=1e-8)
+    if update == 'FALSE':
+        reference = get_trace_values(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
+        data = get_trace_values(TEST_DATA/f'{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
+        assert np.allclose(reference,data,rtol=1e-3,atol=1e-8)
 
