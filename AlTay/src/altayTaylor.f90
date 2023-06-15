@@ -106,7 +106,7 @@ module altayTaylor
               M111     !< total number of systems in slip system file (glide+twin),
         real(dp), intent(in) :: TAU, XM(5,96),TRF(3,3),CC(2,96),RHOSsa(3,3), &
             Ssam(3,3) !< local stress in sample reference system
-        real(dp), intent(inout) :: fi1,PHI,fi2
+        real(dp), intent(out) :: fi1,PHI,fi2
         real(dp), intent(out) :: TOTGAMdot, C2(3,3), &
                                   Seq ! Equivalent stress in crystal, defined as..
                                       !  plastic work rate in crystal normalized by..
