@@ -24,12 +24,10 @@ module altayTBH
 
         real(dp) :: Aprime(size(A,1)), & !< column of U * A
                     Trp(size(A,1)), &    !< resolved shear stress on basis systems
-                    UU(size(A,1),size(A,1)),&    !< copy of inverse of basis
                     CUst(size(A,1)),&    !< compact storage of U* (only one column)
-                    DD(size(A,1)), &        !< copy of strain rates in some basis
                     Dacc(size(A,1))         !< final slip rates, for the slip systems indexed in Irp
 
-        integer :: i,k,iter,jn,in
+        integer :: i,iter,jn,in
         real(dp) :: x,dt,zr,gmin
 
         character(*), parameter :: PROC_NAME = 'TBH'
