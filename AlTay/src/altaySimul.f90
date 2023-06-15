@@ -34,7 +34,6 @@ module altaySimul
 
         character(len=40) :: TITEL
         integer :: info,seedsize
-        real(dp), parameter :: rad2deg=0.5729577951308232e+02_dp
         character(*), parameter :: PROC_NAME = 'SIMUL0'
 
 

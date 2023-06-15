@@ -3,8 +3,6 @@
 !>
 module altayIOConfig
     implicit none
-    !> Maximal length of any path (filenames, directrories etc.)
-    integer,parameter :: pathlength = 512
 
     !>@{ \name IO units
     integer :: LEC = 4   !< data set with slip systems
