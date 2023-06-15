@@ -5,7 +5,7 @@ def pytest_addoption(parser):
     #                                                                       'log': Update tracing logs
     #                                                                       'out': Update reference results
     parser.addoption('--update', default='FALSE', help='Update the reference output with the results of this test run.')
-    parser.addoption('--margin', default='5', help='Set maximum deviation of test results from reference.')
+    parser.addoption('--margin', default='1', help='Set maximum deviation of test results from reference.')
 
 @pytest.fixture
 def update(request):

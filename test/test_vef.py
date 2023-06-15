@@ -66,8 +66,10 @@ def setup_benchmark(mode, algorithm, slip_system, hardening_model):
         os.remove(TEST_DATA/'out.rtdb')
         os.remove(TEST_DATA/'out.CUR')
     except: FileNotFoundError
-    if (mode == 'YLD' or mode == 'QRS'):
+    if mode == 'YLD':
         shutil.copy(TEST_ROOT/'data/in/texture_yld.smt', TEST_DATA/'texture.smt')
+    elif mode == 'QRS':
+        shutil.copy(TEST_ROOT/'data/in/sid1687f.smt', TEST_DATA/'texture.smt')
     else:
         shutil.copy(TEST_ROOT/'data/in/sid1687f_short.smt', TEST_DATA/'texture.smt')
     shutil.copy(TEST_ROOT/'../data/equiaxed.smt', TEST_DATA/'equiaxed.smt')
@@ -180,7 +182,7 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
                 for i in range(len(row)):
                     element = row[i]
                     element_ref = row_ref[i]
-                    assert element >= element_ref - tolerance and element <= element_ref + tolerance
+                    assert element_ref - tolerance <= element <= element_ref + tolerance
 
         elif mode == 'YLD':
             #None of the components should vary more than MARGIN from the reference
