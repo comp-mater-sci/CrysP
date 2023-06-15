@@ -82,10 +82,9 @@ module altaySimul
                    laml
         integer :: IOR,ISTP,NPOINT, info, NFILE, NMSSx,NSTP,i,j,l,LAML1,ifil4,ITW
         real(dp) :: gewfb(2), Fb(3,3,2), GAXESb(3,2), GEULRb(3,2), Ssam(3,3), TG(3,3), CIJ(3,3), &
-                    RHOST(3,3), tau, &
+                    RHOST(3,3), tau, fi1, PHI, fi2, GEWF, SeqAvg,RHOSSb(3,3,2),RHOSsa(3,3), &
                     GAXES(3)                                        ! half axes a,b,c, of the grain shape ellipsoid
-        real(dp), save :: SHsam(3,3),RHOSsa(3,3),CIJb(3,3,2),TGb(3,3,2),RHOSSb(3,3,2),fi1,PHI,fi2,C2(3,3),GEWF, &
-                    GEULR(3),RHOSm(3,3),SeqAvg,qgx,gmm1,gmm0,ssqgx,CC(2,96)
+        real(dp), save :: SHsam(3,3),CIJb(3,3,2),TGb(3,3,2),C2(3,3),GEULR(3),RHOSm(3,3),qgx,gmm1,gmm0,ssqgx,CC(2,96)
         real(DP) :: TOTGEW, fi1b(2),phib(2),fi2b(2), TRF(3,3), STOT(3,3)
         type(DeformationState), save :: MacroDefState
         ! HGAM: homogenized slip per step
@@ -97,7 +96,7 @@ module altaySimul
         real(dp) :: Mgrain !Taylor factor of the current grain
         real(dp) :: Mavg   !Volume-averaged Taylor factor
         real(dp), save :: srh !Strain Rate Heterogeneity in polycrystal
-        real(dp), save :: SeqGrain=0.D0 ! Equivalent stress in crystal, defined as..
+        real(dp) :: SeqGrain ! Equivalent stress in crystal, defined as..
                                       !  plastic work rate in crystal normalized by..
                                       !  (macro) von Mises equivalent strain rate
         real(dp), save :: WorkRate ! Rate of plastic work per unit
