@@ -37,7 +37,7 @@ implicit none
         logical                                   :: do_scaling = .true.
 
         double precision,dimension(sr_symm_voigt_dim) :: scaling_vector = &
-                                            [1., 0., 0., 0., 0., 0.]
+                                            real([1, 0, 0, 0, 0, 0],DP)
 
         logical                                   :: normalizeSm = .false.
 

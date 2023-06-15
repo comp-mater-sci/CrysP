@@ -111,8 +111,6 @@ contains
     logical     :: useVMGuess, acceptable_point
     !
     type(QRSOutputData) :: results
-    !
-    integer,parameter :: column_width = 15
 
     !
         ! Super-class first

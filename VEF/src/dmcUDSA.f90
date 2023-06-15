@@ -137,7 +137,7 @@ contains
     !      in the "tensile sample coordinate system".
     !    - All other variables are implicitly expressed in the "material coordinate system"
     type(SRTensor) :: sigma, sigma_t, S_t, D_t, P_t, P_t_end
-    double precision,dimension(rot_matrix_dim,rot_matrix_dim) :: Mrot = 0.0
+    double precision,dimension(rot_matrix_dim,rot_matrix_dim) :: Mrot = 0.0_DP
     type(EvolutionOutput) :: output
     type(EulerAngles) :: sample_orientation
     double precision  :: angle, stress_direction
