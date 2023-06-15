@@ -46,12 +46,13 @@ module altayTBH
            Trp(i) = merge(Tauc(1,Irp(i)),-Tauc(2,Irp(i)),X>=0.0_dp)
         enddo
 
+        gmin = 0.0_DP
         iter = 0
         do
             iter=iter+1
             if (iter > 50) &
                 call log_error(MOD_NAME, PROC_NAME, ERR, 'Too many iterations.')
-                
+
             SIG = matmul(Trp, U)
             ! Calculation of resolved shear stress
             TauR = matmul(SIG, A)

@@ -137,7 +137,7 @@ module altayTaylor
         Seq=WorkRate / MacroDefRate%vMeqStrainRate
 
 
-        ROT = matmul(B1,GAMdot)
+        ROT = matmul(B1(:,1:M111),GAMdot(1:M111))
 
         do J=1,3
             C1(J,J)=1.0_dp
