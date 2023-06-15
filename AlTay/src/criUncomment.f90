@@ -1,10 +1,10 @@
 !
 !> Provides access to config files with bash-style comments
 module criUncomment
-implicit none
-
+      implicit none
+      private
       !> Maximal length of a line
-      integer,parameter       :: max_line_len = 512
+      integer,parameter,public       :: max_line_len = 512
 
       character,parameter     :: comment_sign = '#'
 
@@ -23,7 +23,7 @@ implicit none
                              read_double,    read_vector_double
 
       end interface
-
+      public :: readValue
 contains
       !> \name Various procedures on the theme "removing comment from a string"
       !>@{
