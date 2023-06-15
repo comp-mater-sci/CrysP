@@ -30,10 +30,10 @@ implicit none
 
         double precision,dimension(sr_symm_voigt_dim)   :: reference_stress_mode = 0.D0
 
-        double precision,dimension(sr_symm_voigt_dim,n_base_vectors)   :: base_vectors = reshape( &
-                                                [1., 0., 0., 0., 0., 0., & ! First base vector
-                                                 0., 1., 0., 0., 0., 0.], & ! second base vector
-                                                [sr_symm_voigt_dim, n_base_vectors])
+        double precision,dimension(sr_symm_voigt_dim,n_base_vectors)   :: base_vectors = real(reshape( &
+                                                [1, 0, 0, 0, 0, 0, & ! First base vector
+                                                 0, 1, 0, 0, 0, 0], & ! second base vector
+                                                [sr_symm_voigt_dim, n_base_vectors]),DP)
 
         !> Range of angles that provide stress ratios
         class(range_type),pointer               :: ptr_theta_range => null()

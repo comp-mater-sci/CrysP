@@ -28,11 +28,11 @@ implicit none
 
         class(range_type),pointer                 :: ptr_w_range
 
-        double precision,dimension(sr_symm_voigt_dim,nbase) :: base_vectors = reshape( &
-                                            [1., 0., 0., 0., 0., 0., & ! First base vector
-                                             0., 1., 0., 0., 0., 0., & ! second base vector
-                                             0., 0., 0., 0., 0., 0.], & ! offset vector (zeros)
-                                            [sr_symm_voigt_dim,nbase])
+        double precision,dimension(sr_symm_voigt_dim,nbase) :: base_vectors = real(reshape( &
+                                            [1, 0, 0, 0, 0, 0, & ! First base vector
+                                             0, 1, 0, 0, 0, 0, & ! second base vector
+                                             0, 0, 0, 0, 0, 0], & ! offset vector (zeros)
+                                            [sr_symm_voigt_dim,nbase]),DP)
 
         logical                                   :: do_scaling = .true.
 
