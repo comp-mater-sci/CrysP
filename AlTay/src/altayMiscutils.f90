@@ -2,13 +2,6 @@
 module altayMiscutils
     use definitions
     implicit none
-    !>@{ \name Exit codes that are returned to the OS on various stop contitions
-
-    integer,parameter :: stopcode_OK = 0            !< OK, succsssful termination
-    integer,parameter :: stopcode_inputerror = 1    !< Error, input parameters are wrong
-    integer,parameter :: stopcode_ioerror = 2       !< Error, an IO operation has failed.
-    integer,parameter :: stopcode_runtimeerror = 10 !< Run-time error condition occured.
-    !>@}
 
     contains
 
