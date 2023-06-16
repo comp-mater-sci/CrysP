@@ -120,13 +120,13 @@ module altaySimul
         MEPSCALL = 0.D0
         steploop: DO ISTP=1,NSTP
 
-            TOTGEW=0.0
-            STOT = 0.D0
-            RHOST = 0.D0
-            SeqAvg=0.
-            Mavg=0.
-            srh=0.
-            HGAM=0.D0
+            TOTGEW=0.0_DP
+            STOT = 0._DP
+            RHOST = 0._DP
+            SeqAvg=0._DP
+            Mavg=0._DP
+            srh=0._DP
+            HGAM=0.0_DP
 
             call dynfil_getGlobal(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
 #ifndef NO_STDOUT
@@ -161,11 +161,11 @@ module altaySimul
             laml1=NGR
             ifil4=0
             clusterloop: do IOR=1,NPOINT
-                Mgrain=0.0
-                GMMdot=0.0
-                WorkRate = 0.D0
-                SeqGrain = 0.D0
-                Wtot = 0.0
+                Mgrain=0.0_DP
+                GMMdot=0.0_DP
+                WorkRate = 0.0_DP
+                SeqGrain = 0.0_DP
+                Wtot = 0.0_DP
 
                 do L=laml,laml1
                     if (ifil4 == NPOINT) exit

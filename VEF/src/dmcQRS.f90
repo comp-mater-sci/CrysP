@@ -103,7 +103,7 @@ contains
     !
     type(SRTensor)                            :: D_t, S_t, sigma, sigma_t, SonA, D, Dresume_t, &
                                                  SmIdent    !< obtained stress mode
-    double precision,dimension(3,3)           :: Mrot = 0.0
+    double precision,dimension(3,3)           :: Mrot
     type(YLPResult)                           :: ylp_result
     !
     double precision                          :: fi1,phi,fi2, residual_resume

@@ -113,7 +113,7 @@ module altayMacroKinematic
         !Add terms to Taylor Series Expansion until ||Term|| becomes negligeable or upper limit in number of terms reached
         do while ( (norm2(Term)>NormTerm_cutoff) .AND. (k<k_max) )
             k= k+1
-            Term= matmul(Term,A) / k
+            Term= matmul(Term,A) / real(k,DP)
             ExpA= ExpA + Term
             InvExpA= InvExpA + Term * (-1.D0)**k
         end do

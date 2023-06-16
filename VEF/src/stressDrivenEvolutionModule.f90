@@ -95,7 +95,7 @@ contains
     integer :: i, n_roots
     double precision,dimension(2) :: xi
     logical :: stop_flag, acceptable_point, acceptable_point_retry
-    double precision,parameter :: stretch_ratio = 1e-3
+    double precision,parameter :: stretch_ratio = 1e-3_DP
     !
         ! Prepare non-default incrementation controls if requested
         if (present(incrementation_control)) then

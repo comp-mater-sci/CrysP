@@ -37,7 +37,6 @@ module altayTaylor
         real(dp), intent(inout) :: A1(5,96)
 
         character(len=72) :: TITglij  !< Name of slip system set
-        integer, parameter :: MMAX=96 !< dimension of A1 and other arrays
         real(dp) :: x,y
         integer :: i,j,l,I1
 
@@ -66,7 +65,7 @@ module altayTaylor
                 read (LEC,212) J,(B2(L,I),L=1,6),G(I)
             end do
         endif
-        A2=0.0
+        A2=0.0_DP
         A2(1:5,1:M111)=A1(1:5,1:M111)
         A2(6:10,M111+1:M111*2)=A1(1:5,1:M111)
 
@@ -133,7 +132,7 @@ module altayTaylor
         TRC(1)=RCcryst(3,2)+RHOAcrys(3,2)
         TRC(2)=RCcryst(1,3)+RHOAcrys(1,3)
         TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
-        WorkRate = sum(merge(CC(1,1:M111)*GAMdot(1:M111),-CC(2,1:M111)*GAMdot(1:M111),GAMdot(1:M111)>0.0))
+        WorkRate = sum(merge(CC(1,1:M111)*GAMdot(1:M111),-CC(2,1:M111)*GAMdot(1:M111),GAMdot(1:M111)>0.0_DP))
         Seq=WorkRate / MacroDefRate%vMeqStrainRate
 
 
@@ -158,12 +157,12 @@ module altayTaylor
         !Choose at random if the crystal orientation should be considered that of the original or twinned part.
         !See Van Houtte et. al, 1977
         if (NTW /= 0) then
-            X=0.
+            X=0._DP
             do I=1,NTW
                 X=X+GAMdot(I+NGL)/G(I)
                 VOLFR(I)=X
             end do
-            if (X > 1.) &
+            if (X > 1._DP) &
                 call log_error('Taylor', 'taylor4', ERR_VAL, 'Total volume fraction of twins exceeds unity')
             call RANDOM_NUMBER(RNDM)
             do I=1,NTW

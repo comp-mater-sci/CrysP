@@ -78,7 +78,7 @@ module altayPancake
             else
                 call cluster1(IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
             endif
-            CCC(1:2,M2+1:M12)=0.0
+            CCC(1:2,M2+1:M12)=0.0_DP
             UU = 0.0_dp
             DI(1:5) = DI1
             DI(6:10) = DI1+M11

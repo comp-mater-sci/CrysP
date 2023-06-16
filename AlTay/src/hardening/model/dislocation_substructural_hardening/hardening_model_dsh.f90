@@ -498,7 +498,7 @@ contains
                 !wp- and wd-contributions from all CBBs i
                 do i=1,6
                     wpcontr(i)=sqrt(abs(SV%CBB(i)%RHOwp)) * signfac * this%alfa_G_b_eff(s,i) * sign(1.D0, SV%CBB(i)%RHOwp)
-                    if (wpcontr(i)  <  0.0) wpcontr(i) = 0._DP ! Heaviside bracket
+                    if (wpcontr(i) < 0.0_DP) wpcontr(i) = 0._DP ! Heaviside bracket
                     wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*this%alfa_G_b_ABSeff(s,i)
                 end do
                 !CRSS within CBB = wp- and wd-contributions for all 6 walls
