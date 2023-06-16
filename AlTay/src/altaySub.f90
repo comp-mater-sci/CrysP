@@ -83,9 +83,7 @@ contains
         close(IMP)
         close(IMP2)
         close(IMP3)
-        close(IMP4)
         close(IMP5)
-        close(IMP6)
         call MICROSTR_finalize(info)
         if (info /= 0) return
         call DYNFIL_finalize(info)

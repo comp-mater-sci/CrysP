@@ -12,9 +12,7 @@ module altayIOConfig
     integer :: IMP2 = 8  !< output-file with successive "responses to imposed strain"
     integer :: IMP3 = 11 !< output-file with twinning information
 
-    integer :: IMP4 = 110     !< output file for state variables of KOST11
     integer :: IMP5 = 111     !< output of stress-strain or slip-stress
-    integer :: IMP6 = 112     !< output of report file
     integer :: NDAT1 = 9      !< input texture file
     integer :: NDAT2 = 10     !< input microstructure file
     !>@}
