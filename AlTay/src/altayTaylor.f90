@@ -97,15 +97,13 @@ module altayTaylor
     end subroutine
 
 
-    subroutine TAYLOR4(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate,CC,M111,Ssam,RHOSsa,fi1,PHI,fi2, &
-                      TRF,C2,ITW,XM)
+    subroutine TAYLOR4(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate,CC,M111,Ssam,RHOSsa,TRF,C2,ITW,XM)
 
         type(DeformationRate),intent(in) :: MacroDefRate
         integer, intent(in) :: ISTP,IOR,NFILE, &
               M111     !< total number of systems in slip system file (glide+twin),
         real(dp), intent(in) :: TAU, XM(5,96),TRF(3,3),CC(2,96),RHOSsa(3,3), &
             Ssam(3,3) !< local stress in sample reference system
-        real(dp), intent(out) :: fi1,PHI,fi2
         real(dp), intent(out) :: TOTGAMdot, C2(3,3), &
                                   Seq ! Equivalent stress in crystal, defined as..
                                       !  plastic work rate in crystal normalized by..
@@ -148,11 +146,7 @@ module altayTaylor
         C1(3,1)=-C1(1,3)
         C1(1,2)=-C1(2,1)
         ! KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
-        Euler= EuleranglesType(matmul(C1,TRF)) ! NIEUWE STAND UITWENDIG ASSENSTELSEL.
-        fi1=Euler%fi1
-        PHI=Euler%PHI
-        fi2=Euler%fi2
-        C2 = rotmat(Euler)
+        C2 = rotmat(EuleranglesType(matmul(C1,TRF))) ! MD: conversion to-from Euler angles required to avoid failing tests due to floating point arithmetic
         ITW=0
         !Choose at random if the crystal orientation should be considered that of the original or twinned part.
         !See Van Houtte et. al, 1977
@@ -179,10 +173,6 @@ module altayTaylor
                     TDC(3,3)=B2(6,I)
                     C2 = matmul(TDC,RCC)
                     ITW=I
-                    Euler= EuleranglesType(C2)
-                    fi1=Euler%fi1
-                    PHI=Euler%PHI
-                    fi2=Euler%fi2
                     exit
                 end if
             end do

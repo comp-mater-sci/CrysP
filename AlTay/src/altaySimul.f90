@@ -81,7 +81,7 @@ module altaySimul
                    laml
         integer :: IOR,ISTP,NPOINT, info, NFILE, NMSSx,NSTP,i,j,l,LAML1,ifil4,ITW
         real(dp) :: gewfb(2), Fb(3,3,2), GAXESb(3,2), GEULRb(3,2), Ssam(3,3), TG(3,3), CIJ(3,3), &
-                    RHOST(3,3), tau, fi1, PHI, fi2, GEWF, SeqAvg,RHOSSb(3,3,2),RHOSsa(3,3),CIJb(3,3,2), TGb(3,3,2),gmm1,gmm0, &
+                    RHOST(3,3), tau, GEWF, SeqAvg,RHOSSb(3,3,2),RHOSsa(3,3),CIJb(3,3,2), TGb(3,3,2),gmm1,gmm0, &
                     GEULR(3), &
                     GAXES(3)                                        ! half axes a,b,c, of the grain shape ellipsoid
         real(dp), save :: SHsam(3,3),C2(3,3),RHOSm(3,3),qgx,ssqgx,CC(2,96)
@@ -102,7 +102,6 @@ module altaySimul
         real(dp) :: WorkRate ! Rate of plastic work per unit
                                      ! volume in the crystal
         real(dp) :: Wtot ! Total plastic work per unit volume in crystal
-        real(dp), parameter :: rad2deg=0.5729577951308232e+02_dp
 
 
         NPOINT = size(DFIL)
@@ -170,20 +169,14 @@ module altaySimul
                 do L=laml,laml1
                     if (ifil4 == NPOINT) exit
                     ifil4=ifil4+1
-                    call DYNFIL_getGrain(ifil4,fi1b(L),PHIb(L),fi2b(L),TRFb(1:3,1:3,L),GEWFb(L),GMMAb(L),Fb(1:3,1:3,L),GAXESb(1:3,L), &
+                    call DYNFIL_getGrain(ifil4,TRFb(1:3,1:3,L),GEWFb(L),GMMAb(L),Fb(1:3,1:3,L),GAXESb(1:3,L), &
                                  GEULRb(1:3,L),CIJb(1:3,1:3,L),TGb(1:3,1:3,L),RHOSSb(1:3,1:3,L))
-                    fi1b(L)=fi1b(L)*rad2deg
-                    PHIb(L)=PHIb(L)*rad2deg
-                    fi2b(L)=fi2b(L)*rad2deg
                 end do
                 laml1=laml1+1
                 if (laml1 > NGR) laml1=1
                 laml=laml1
                 GMM0=GMMAb(laml)
                 call getTau(GMM0,TAU,info)
-                fi1=fi1b(laml)
-                PHI=PHIb(laml)
-                fi2=fi2b(laml)
                 !
                 TRF = TRFb(:,:,laml)
                 TG = TGb(:,:,laml)
@@ -213,8 +206,7 @@ module altaySimul
                 TOTGEW=TOTGEW+GEWF
 
                 if (astate%simulCalls(astate%this)%input%full_model) then
-                      call TAYLOR4(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate, MacroDefRate,CC,M11,SSam,RHOSsa,fi1,PHI,fi2, &
-                                   TRF,C2,ITW,XM)
+                      call TAYLOR4(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate,MacroDefRate,CC,M11,SSam,RHOSsa,TRF,C2,ITW,XM)
                 endif
                 if (NFILTW == 1) write (IMP3,398) ITW
  398            format (I3)
@@ -232,7 +224,7 @@ module altaySimul
                 Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
                 ! We can choose not to update the texture state
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                      call DYNFIL_setGrain(IOR,fi1,PHI,fi2,C2,GEWF,GMM1,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
+                      call DYNFIL_setGrain(IOR,C2,GEWF,GMM1,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
             enddo clusterloop
 
             SHsam = STOT / TOTGEW

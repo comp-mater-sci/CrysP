@@ -125,15 +125,12 @@ contains
     end subroutine
 
     !> Get the record data for i-th grain
-    subroutine DYNFIL_getGrain(i, FI1, PHI, FI2, T, GEW, GAM, F, AXES, EULR, CIJ, TAX, ZERO)
+    subroutine DYNFIL_getGrain(i, T, GEW, GAM, F, AXES, EULR, CIJ, TAX, ZERO)
         integer, intent(in)                             :: i
-        real(dp), intent(out)                   :: FI1,PHI,FI2,GEW,GAM
+        real(dp), intent(out)                   :: GEW,GAM
         real(dp), dimension(3), intent(out)     :: AXES, EULR
         real(dp), dimension(3,3), intent(out)   :: CIJ, TAX, F, T, ZERO
 
-        FI1     = DFIL(i)%tFI1
-        PHI     = DFIL(i)%tPHI
-        FI2     = DFIL(i)%tFI2
         GEW     = DFIL(i)%tGEW
         GAM     = DFIL(i)%tGAM
         AXES    = DFIL(i)%tAXES
@@ -146,15 +143,19 @@ contains
     end subroutine
 
     !> Put the record data for i-th grain
-    subroutine DYNFIL_setGrain(i, FI1, PHI, FI2, T, GEW, GAM, F, AXES, EULR, CIJ, TAX, ZERO)
-        integer, intent(in)                             :: i
-        real(dp), intent(in)                    :: FI1,PHI,FI2,GEW,GAM
+    subroutine DYNFIL_setGrain(i, T, GEW, GAM, F, AXES, EULR, CIJ, TAX, ZERO)
+        integer, intent(in)                     :: i
+        real(dp), intent(in)                    :: GEW,GAM
         real(dp), dimension(3), intent(in)      :: AXES, EULR
         real(dp), dimension(3,3), intent(in)    :: CIJ, TAX, F, T, ZERO
 
-        DFIL(i)%tFI1    = FI1
-        DFIL(i)%tPHI    = PHI
-        DFIL(i)%tFI2    = FI2
+        type(EulerAngles) :: eu
+
+        eu = EulerAnglesType(T)
+
+        DFIL(i)%tFI1    = eu%FI1
+        DFIL(i)%tPHI    = eu%PHI
+        DFIL(i)%tFI2    = eu%FI2
         DFIL(i)%tGEW    = GEW
         DFIL(i)%tGAM    = GAM
         DFIL(i)%tAXES   = AXES
