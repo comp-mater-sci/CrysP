@@ -78,8 +78,8 @@ module altaySimul
         real(dp) :: TRFb(3,3,2),GMMAb(2)
         integer :: NGR,&         !< number of grains
                    NRL,&         !< number of relaxations
-                   laml
-        integer :: IOR,ISTP,NPOINT, info, NFILE, NMSSx,NSTP,i,j,l,LAML1,ifil4,ITW
+                   laml,laml1, &
+                   IOR,ISTP,NPOINT, info, NFILE, NMSSx,NSTP,i,j,l,ifil4,ITW
         real(dp) :: gewfb(2), Fb(3,3,2), GAXESb(3,2), GEULRb(3,2), Ssam(3,3), TG(3,3), CIJ(3,3), &
                     RHOST(3,3), tau, GEWF, SeqAvg,RHOSSb(3,3,2),RHOSsa(3,3),CIJb(3,3,2), TGb(3,3,2),gmm1,gmm0, &
                     GEULR(3), &
@@ -154,8 +154,6 @@ module altaySimul
 !         Taylor must therefore have "advance knowledge" of the
 !         orientation to come at the moment that it starts such
 !         computation.
-!         See also the comment before the calling of subroutine TAYLOR.
-!
             laml=1
             laml1=NGR
             ifil4=0
@@ -170,7 +168,7 @@ module altaySimul
                     if (ifil4 == NPOINT) exit
                     ifil4=ifil4+1
                     call DYNFIL_getGrain(ifil4,TRFb(1:3,1:3,L),GEWFb(L),GMMAb(L),Fb(1:3,1:3,L),GAXESb(1:3,L), &
-                                 GEULRb(1:3,L),CIJb(1:3,1:3,L),TGb(1:3,1:3,L),RHOSSb(1:3,1:3,L))
+                                         GEULRb(1:3,L),CIJb(1:3,1:3,L),TGb(1:3,1:3,L),RHOSSb(1:3,1:3,L))
                 end do
                 laml1=laml1+1
                 if (laml1 > NGR) laml1=1
@@ -188,11 +186,11 @@ module altaySimul
                     GEWF=qgx
                 end if
                 !  In case of NGR=2:
-                !     LAML=1: TAYLOR
+                !     LAML=1: TAYLOR3
                 !             - has the present and the next orientation available
                 !             - must perform the computation of a set of 2 crystals
                 !             - has to output the result for the first crystal
-                !     LAML=2: TAYLOR
+                !     LAML=2: TAYLOR3
                 !             - should not perform any computation
                 !             - has to output the result of the second crystal found
                 !               during the previous computation.
@@ -205,9 +203,8 @@ module altaySimul
                 end if
                 TOTGEW=TOTGEW+GEWF
 
-                if (astate%simulCalls(astate%this)%input%full_model) then
+                if (astate%simulCalls(astate%this)%input%full_model) &
                       call TAYLOR4(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate,MacroDefRate,CC,M11,SSam,RHOSsa,TRF,C2,ITW,XM)
-                endif
                 if (NFILTW == 1) write (IMP3,398) ITW
  398            format (I3)
 
