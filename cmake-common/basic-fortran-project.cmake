@@ -6,8 +6,6 @@
 
 macro(basicFortranSetup projectname)
 	include("${COMMON_DIR}/basic.cmake") #MB: sets build type: Debug, Release
-	include("${COMMON_DIR}/utilities.cmake")
-	# Provides lists: Fortran_FLAGS, Fortran_FLAGS_DEBUG, Fortran_FLAGS_RELEASE
 	include("${COMMON_DIR}/fortran-generic.cmake")
 
 	set(${projectname}_ROOT_DIR "${CMAKE_BINARY_DIR}/..")

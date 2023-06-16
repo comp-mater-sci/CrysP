@@ -8,10 +8,6 @@ set(libaltay "altay")
 
 list(APPEND Fortran_FLAGS ${LibAlTay_FLAGS})
 
-list2string(Fortran_FLAGS CMAKE_Fortran_FLAGS) 
-list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
-list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
-
 add_library(${libaltay} STATIC
 criConfigReader.f90
 criLinearMap.f90
