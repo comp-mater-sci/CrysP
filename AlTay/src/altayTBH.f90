@@ -33,14 +33,12 @@ module altayTBH
         character(*), parameter :: PROC_NAME = 'TBH'
 
         bas=.FALSE.
-        TAuR=0.0
         bas(Irp)=.TRUE.
         ! Calculation of slip rates in basis
         Dacc = matmul(U,D)
         ! Calculation of stress, using generalised Schmid law
         do i=1,size(A,1)
-           X=Dacc(i)
-           if (abs(X) < TOL) X=dot_product(A(:,Irp(i)),D)
+           X=merge(dot_product(A(:,Irp(i)),D),Dacc(i), abs(Dacc(i)) < TOL)
            Trp(i) = merge(Tauc(1,Irp(i)),-Tauc(2,Irp(i)),X>=0.0_dp)
         enddo
 
@@ -79,16 +77,10 @@ module altayTBH
                     if (abs(Zr) < TOL) cycle
                 endif
                 ZR=ZR*Aprime(i)
-                if (TauR(jn) > 0.0d0) then
-                    if (ZR >= 0.0_DP .and. (in == 0 .or. Dacc(i)/Aprime(i) < Gmin)) then
-                        in=i
-                        Gmin=Dacc(i)/Aprime(i)
-                   endif
-                else
-                    if (ZR <= 0.0_DP .and. (in == 0 .or. Dacc(i)/Aprime(i) > Gmin)) then
-                        in=i
-                        Gmin=Dacc(i)/Aprime(i)
-                    endif
+                if ((TauR(jn) > 0.0d0  .and. ZR >= 0.0_DP .and. (in == 0 .or. Dacc(i)/Aprime(i) < Gmin)) .or. &
+                    (TauR(jn) <= 0.0d0 .and. ZR <= 0.0_DP .and. (in == 0 .or. Dacc(i)/Aprime(i) > Gmin))) then
+                    in=i
+                    Gmin=Dacc(i)/Aprime(i)
                 endif
             enddo
             if (in == 0) &
@@ -127,11 +119,7 @@ module altayTBH
 
         do i=1,size(new_vec)
             prod = inv_basis_vec_at_index * new_vec(i)
-            if (i == index) then
-                inv_basis_vec(i) = prod
-            else
-                inv_basis_vec(i) = inv_basis_vec(i) + prod
-            end if
+            inv_basis_vec(i) = merge(prod,prod+inv_basis_vec(i),i==index)
         end do
     end subroutine update_inverse_basis_vector
 end module
