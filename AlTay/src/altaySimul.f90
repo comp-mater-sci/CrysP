@@ -29,8 +29,7 @@ module altaySimul
     ! initialization call
     subroutine SIMUL0()
 
-        integer :: NGR,&         !< number of grains
-                   NRL        !< number of relaxations
+        integer :: NGR         !< number of grains
 
         character(len=40) :: TITEL
         integer :: info,seedsize
@@ -53,15 +52,11 @@ module altaySimul
         if (NGR < 1.or.NGR > 2) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Incorrect value of NGR')
 
- 140    format (' NGR can only take the values 1 or 2 but was',I5)
         ! Check if number of crystals is right for the model
         if (modulo(size(DFIL), NGR) /= 0) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Number of grains must be even.')
-!       Number of relaxations: 0 for Taylor and 2 for ALAMEL:
-        NRL=(NGR-1)*2
         TITEL  = acnf%jobtitle
         if (NRES > 0) write (IMP2,98) TITEL
-  97    format (' Title of the new simulation: ',A)
         ! Only if CUR file is requested
         if (NFILE1 == 1) call CURwriteTitle(IMP1,TITEL,info)
   98    format (A)
