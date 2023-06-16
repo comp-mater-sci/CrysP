@@ -273,9 +273,6 @@ contains
     integer,intent(out)                                 :: info
     !
         info = VEF_OK
-#define MSG_GROUP_RULERS
-#include "msgFormats.inc"
-#undef MSG_GROUP_RULERS
     !
     end subroutine
 
@@ -288,7 +285,6 @@ contains
     class(IncrementationControl),intent(inout)          :: icv
     type(IncrementOutputRecord),intent(in)              :: output_record
     integer,intent(out)                                 :: info
-    !
     !
                 info = VEF_OK
     !

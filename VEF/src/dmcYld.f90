@@ -236,18 +236,9 @@ contains
         close(ofunit)
         info = VEF_OK
     !
-    3200 format(28('-'))
-    3201 format('Theta angle =',T20,F8.3)
-    2500 format(1X, A10,    '|',4(A12,'|'))
-    2501 format(1X, F10.3,  1X, 4(E12.5,1X))
-    2510 format('|',10('-'),'|',4(12('-'),'|'))
-    1600 format('Yield locus point at theta:',1X, F0.2, 1X, 'computed, residual error: ', E10.3)
-    !
-#define MSG_GROUP_RULERS
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
     !
     end subroutine
 

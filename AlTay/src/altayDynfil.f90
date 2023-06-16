@@ -82,8 +82,6 @@ contains
             endif
         endif
 
-100     format('dynfil_init: error: requested number of grains is zero.')
-101     format('dynfil_init: error: allocation of memory failed.')
     end subroutine
 
     !>Puts the module variables into initial state and deallocates the storage.

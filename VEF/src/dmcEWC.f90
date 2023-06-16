@@ -275,14 +275,9 @@ contains
             info = this%fileOutput(vPlasticWorkLevels, results, use_work_levels=.true.)
         endif
     !
-    1500 format(/,'Reference sample')
-    1600 format(/,'Sample ', I0, ' out of ',I0, ', sample orientation theta: ',F0.2)
-    !
-#define MSG_GROUP_RULERS
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
     !
     end subroutine
 

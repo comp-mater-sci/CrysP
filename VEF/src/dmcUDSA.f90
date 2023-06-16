@@ -263,12 +263,9 @@ contains
     !
     end do test_run_loop
     !
-    1600 format(/,'Sample ', I0, ' out of ',I0, ', sample orientation: ',F0.2)
-#define MSG_GROUP_RULERS
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
 
     end subroutine
 

@@ -182,10 +182,8 @@ contains
         enddo
     !
 #define MSG_GROUP_ERRORS
-#define MSG_GROUP_RULERS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
     !
     end subroutine
 

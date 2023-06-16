@@ -132,10 +132,8 @@ contains
         info = VEF_OK
     !
 #define MSG_GROUP_ERRORS
-#define MSG_GROUP_RULERS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
     !
     end function
 
@@ -192,10 +190,8 @@ contains
         endif
     !
 #define MSG_GROUP_ERRORS
-#define MSG_GROUP_RULERS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
     !
     end function
 

@@ -155,18 +155,9 @@ contains
             end associate
         enddo
 
-        ! Formats
-        3310 format('Input stress tensor, in the material reference frame:')
-        3400 format(T15,A,T54,A,T85,A)
-        ! 410 format('| SmScaled',T40,'| SmIdent',T80,'|SonA')
-        3411 format(3(E10.3,1X),' | ',3(E10.3,1X),' | ',3(E10.3,1X))
-
-        1600 format(/,'Step ',I0, ' out of ',I0)
-#define MSG_GROUP_RULERS
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
 
     end subroutine
 

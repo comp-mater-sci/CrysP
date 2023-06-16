@@ -219,21 +219,10 @@ contains
         !
         info = this%fileOutput(ofunit, results, header=.true., restrict=npoints_ok)
         close(ofunit)
-        !
-        !
-        3400 format('| sigma',T40,'| SmIdent',T80,'|Dmcoord')
-        3401 format(3(F10.6,1X),T40,3(F10.6,1X),T80,3(F10.6,1X))
-        ! Formats for the display output
-        2600 format(1X, 6(A14,    1X))
-        2601 format('|',6(14('-'),'|'))
-        2610 format(1X, F14.2, 1X, 3(F14.6,1X),2(E14.6,1X)) ! 6 fields in total
-        1600 format(/,'Sample ', I0, ' out of ',I0, ', sample orientation: ',F0.2)
-        !
-#define MSG_GROUP_RULERS
+
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
     !
     end subroutine
 
