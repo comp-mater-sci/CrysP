@@ -39,8 +39,7 @@ module altayPancake
         integer ::  DI(10)
         real(dp) :: UU(5*NGR,5*NGR),TPrinc(3,3)
         real(dp) :: C2(3,3), rls(3,3), rla(3,3), C3(3,3), spanv(5), XXTOT, DTAU(194), STRSS(10), TAUR(194)
-        real(dp), save :: B3(10,3)=0.0_dp, XX(194),BB(10),CCC(2,194),DTAU1(194),TAUR1(194), &
-                    B8(5,2),UBUF(10),GAMR(2)
+        real(dp), save :: B3(10,3)=0.0_dp, XX(194),BB(10),CCC(2,194),DTAU1(194),TAUR1(194),B8(5,2),UBUF(10),GAMR(2)
         ! rls and rla are unit relaxation tensors in crystal frame (symmetric and anti-sym. part)
         !     Definition of the two relaxations, representing a
         !     13-simple shear and a 23-simple shear, respectively:
