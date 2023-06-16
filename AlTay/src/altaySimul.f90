@@ -232,9 +232,7 @@ module altaySimul
 
             do i=1,2
                 do j=i+1,3
-                    SHsam(i,j)=SHsam(i,j)
                     SHsam(j,i)=SHsam(i,j)
-                    RHOSm(i,j)=RHOSm(i,j)
                     RHOSm(j,i)=RHOSm(i,j)
                 end do
             end do
