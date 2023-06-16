@@ -170,8 +170,7 @@ module altaySimul
                     call DYNFIL_getGrain(ifil4,TRFb(1:3,1:3,L),GEWFb(L),GMMAb(L),Fb(1:3,1:3,L),GAXESb(1:3,L), &
                                          GEULRb(1:3,L),CIJb(1:3,1:3,L),TGb(1:3,1:3,L),RHOSSb(1:3,1:3,L))
                 end do
-                laml1=laml1+1
-                if (laml1 > NGR) laml1=1
+                laml1 = mod(laml1,NGR)+1
                 laml=laml1
                 GMM0=GMMAb(laml)
                 call getTau(GMM0,TAU,info)
