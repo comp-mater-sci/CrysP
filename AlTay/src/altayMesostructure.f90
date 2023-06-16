@@ -92,10 +92,7 @@ module altayMesostructure
         GRPAR = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
         ! Calculation of volume affected by the surface
         AL=norm2(GRPAR,1)
-        ! Box product
-        vec1(1)=GRPAR(2,2)*GRPAR(3,3)-GRPAR(3,2)*GRPAR(2,3)
-        vec1(2)=GRPAR(3,2)*GRPAR(1,3)-GRPAR(1,2)*GRPAR(3,3)
-        vec1(3)=GRPAR(1,2)*GRPAR(2,3)-GRPAR(2,2)*GRPAR(1,3)
+        vec1=cross(GRPAR(:,2),GRPAR(:,3))
         ! The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3;
         ! for very flattened grains, it should tend to 1.
         u=abs(sum(GRPAR(:,1)*vec1))*0.25D0/product(AL)
@@ -125,16 +122,10 @@ module altayMesostructure
         endif
 
         ! Construction of orientation matrices for frames associated to the interfaces
-        Tprinc(1,1:3)=GRPAR(1:3,1)
         ! Orientation of interfaces containing axes
-        ! Normal axis: (vector product)
-        Tprinc(3,1)=GRPAR(2,1)*GRPAR(3,2)-GRPAR(3,1)*GRPAR(2,2)
-        Tprinc(3,2)=GRPAR(3,1)*GRPAR(1,2)-GRPAR(1,1)*GRPAR(3,2)
-        Tprinc(3,3)=GRPAR(1,1)*GRPAR(2,2)-GRPAR(2,1)*GRPAR(1,2)
-        !       Orientation of 2nd axis:(vector product)
-        Tprinc(2,1)=Tprinc(3,2)*Tprinc(1,3)-Tprinc(3,3)*Tprinc(1,2)
-        Tprinc(2,2)=Tprinc(3,3)*Tprinc(1,1)-Tprinc(3,1)*Tprinc(1,3)
-        Tprinc(2,3)=Tprinc(3,1)*Tprinc(1,2)-Tprinc(3,2)*Tprinc(1,1)
+        Tprinc(1,1:3)=GRPAR(1:3,1)
+        Tprinc(3,1:3)=cross(GRPAR(:,1),GRPAR(:,2))
+        Tprinc(2,1:3)=cross(Tprinc(3,:),Tprinc(1,:))
         ! Normalisation
         do j=1,3
             x=norm2(Tprinc(j,:))

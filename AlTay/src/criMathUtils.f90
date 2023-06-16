@@ -4,7 +4,7 @@
 !> that are frequently used in various subroutunes in the library.
 !> It also provides some simple functions, e.g. conversions.
 module criMathUtils
-
+      use definitions
       implicit none
 
       !>@{ \name Math constants
@@ -559,6 +559,17 @@ contains
             n = size(a)
             if (n >= 1) average = sum(a) / dble(n)
             ! Undefined for empty array
+      end function
+
+
+      pure function cross(v1,v2)
+      real(DP), intent(in), dimension(3) :: v1, v2
+      real(DP), dimension(3) :: cross
+
+          cross(1)=v1(2)*v2(3)-v1(3)*v2(2)
+          cross(2)=v1(3)*v2(1)-v1(1)*v2(3)
+          cross(3)=v1(1)*v2(2)-v1(2)*v2(1)
+
       end function
 
 end module
