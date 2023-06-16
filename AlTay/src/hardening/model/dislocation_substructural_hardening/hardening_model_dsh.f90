@@ -159,8 +159,8 @@ contains
             param_val = params .find. name
 
             if (param_val < min .or. param_val > max) then
-                write (min_str, *), min
-                write (max_str, *), max
+                write (min_str, *) min
+                write (max_str, *) max
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Parameter ' // name // ' must lie between ' // min_str // ' and ' // max_str)
             end if
         end subroutine check_param
@@ -219,7 +219,7 @@ contains
         this%state(1)%CBB%RHOwdHOM     = this%RHOwdMIN
         this%state(1)%CBB%accGAMMA_new = 0._DP
         this%state(1)%CBB%RHOwd_ini    = this%RHOwdMIN
-        this%state(1)%ActiveCBB        = 0._DP
+        this%state(1)%ActiveCBB        = 0
         this%state = this%state(1)
     end subroutine dsh_init
 
@@ -449,11 +449,7 @@ contains
         if (abs(RHOwp_a)  >  this%RHOwpMIN) then
             RHOwp_b = RHOwp_a * exp(-this%Rncg * GAMMA_new / this%b)
         else
-            if (RHOwp_a  >=  0._DP) then
-                RHOwp_b =  this%RHOwpMIN
-            else
-                RHOwp_b = -this%RHOwpMIN
-            end if
+            RHOwp_b =  merge(this%RHOwpMIN,-this%RHOwpMIN,RHOwp_a >= 0._DP)
         end if
     end subroutine upd_ncg_wp
 
@@ -467,11 +463,9 @@ contains
 
         if(RHObausch > 0._DP) then
             Reffective = this%R + this%R2 * RHObausch / (2.D0 * this%RHOwpSAT)
-            if (this%I * sqrt(RHO_a) - Reffective * RHO_a <= 0._DP) then
-                RHO_b = RHO_a
-            else
-                RHO_b = this%F_KocksMeck(RHO_a, SUMabsGam, this%I, Reffective)
-            end if
+            RHO_b = merge(RHO_a, &
+                          this%F_KocksMeck(RHO_a, SUMabsGam, this%I, Reffective), &
+                          this%I * sqrt(RHO_a) - Reffective * RHO_a <= 0._DP)
         else
             RHO_b = this%F_KocksMeck(RHO_a, SUMabsGam, this%I, this%R)
         end if
