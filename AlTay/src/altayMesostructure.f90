@@ -79,7 +79,7 @@ module altayMesostructure
 
         real(dp) :: GRPAR(3,3), PrDir(2,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
         real(dp) :: x, u, dlength, dot1, dot2, TGANGLE
-        integer :: i,j
+        integer :: i
         real(dp), parameter, dimension(3,3) :: &
             relaxI = reshape([0._dp, 0._dp, 1._dp, &
                               0._dp, 0._dp, 0._dp, &
@@ -114,11 +114,9 @@ module altayMesostructure
             !         +2.0D0*(AL(1)+AL(2)-2.0_dp*AL(3))*AL(3)**2 &
             !         +4.D0*AL(3)**3/3.D0)
         else
-            if(AL(1) >= AL(2))then
-                GEWF=u*(2.D0*(AL(1)-AL(2))*AL(2)**2+4.D0*AL(2)**3/3.D0)
-            else
-                GEWF=u*(2.D0*(AL(2)-AL(1))*AL(1)**2+4.D0*AL(1)**3/3.D0)
-            endif
+            GEWF = u*merge(2.D0*(AL(1)-AL(2))*AL(2)**2+4.D0*AL(2)**3/3.D0, &
+                           2.D0*(AL(2)-AL(1))*AL(1)**2+4.D0*AL(1)**3/3.D0, &
+                           AL(1) >= AL(2))
         endif
 
         ! Construction of orientation matrices for frames associated to the interfaces
@@ -127,9 +125,9 @@ module altayMesostructure
         Tprinc(3,1:3)=cross(GRPAR(:,1),GRPAR(:,2))
         Tprinc(2,1:3)=cross(Tprinc(3,:),Tprinc(1,:))
         ! Normalisation
-        do j=1,3
-            x=norm2(Tprinc(j,:))
-            Tprinc(j,:)=Tprinc(j,:)/x
+        do i=1,3
+            x=norm2(Tprinc(i,:))
+            Tprinc(i,:)=Tprinc(i,:)/x
         enddo
 
         dlength=norm2(MacroDefRate%StrainModevM)
