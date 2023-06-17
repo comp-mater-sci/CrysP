@@ -7,8 +7,6 @@ module altayPancake
     use altayAlgorithms
     use altayMacroKinematic
     use hardening
-    use hardening_types
-    use hardening_model_dsh
     use logging
 
     implicit none
@@ -159,17 +157,14 @@ module altayPancake
                 ! GAMR will contain the relaxed shears:
                 gamr(1:NRL)=XX(M2+1:M2+NRL)
             endif
-            ! Check whether 1 grain does not deform at all.
-            do IG=0,NGR-1
-                XXTOT=sum(abs(xx(1+M11*IG:M11+M11*IG)))
-                if (XXTOT < TLXX) goto 213
-            end do
-            ! If all grains have a non-zero slip, do the following:
-            DTAU1=DTAU
-            TAUR1=TAUR
-            UBUF=STRSS
- 213    endif
-        !     From here on, output is produced for grain number "laml"
+            ! Check whether all grains deform
+            if (all([(sum(abs(xx(1+M11*IG:M11+M11*IG))),IG=0,NGR-1)]>=TLXX)) then
+                DTAU1=DTAU
+                TAUR1=TAUR
+                UBUF=STRSS
+            endif
+        endif
+        ! From here on, output is produced for grain number "laml"
         jj=M11*(laml-1)
         CC(1:2,1:M11)=CCC(1:2,jj+1:jj+M11)
         ii=5*(laml-1)
