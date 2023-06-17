@@ -97,10 +97,10 @@ module altayTaylor
     end subroutine
 
 
-    subroutine TAYLOR4(ISTP,IOR,NFILE,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate,CC,M111,Ssam,RHOSsa,TRF,C2,ITW,XM)
+    subroutine TAYLOR4(ISTP,IOR,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate,CC,M111,Ssam,RHOSsa,TRF,C2,ITW,XM)
 
         type(DeformationRate),intent(in) :: MacroDefRate
-        integer, intent(in) :: ISTP,IOR,NFILE, &
+        integer, intent(in) :: ISTP,IOR, &
               M111     !< total number of systems in slip system file (glide+twin),
         real(dp), intent(in) :: TAU, XM(5,96),TRF(3,3),CC(2,96),RHOSsa(3,3), &
             Ssam(3,3) !< local stress in sample reference system
@@ -176,23 +176,6 @@ module altayTaylor
                     exit
                 end if
             end do
-        endif
-        if (.not. (nfile == 0.or.istp > 1)) then
-
-            ! the ratio of the parallel strain rates
-            ! MacroDefRate%StrainMode & rhossa: expressed in same (sample) reference frame
-            ratlon= sum( (MacroDefRate%StrainMode+sqrt(2.0D0/3.0D0)*rhossa) * MacroDefRate%StrainMode )
-
-            ! TAU: Reference-CRSS.
-            ! Taylor Factor of the grain:
-            Mgrain = TOTGAMdot / MacroDefRate%vMeqStrainRate
-            ! Total, i.e. non-normalized, rhossa:
-            rhossaTot = rhossa * MacroDefRate%vMeqStrainRate
-
-            write (IMP2,150) ior,Seq,WorkRate,TAU,Mgrain,ratlon, &
-             rhossaTot(1,1),rhossaTot(2,2),rhossaTot(3,3),rhossaTot(2,3),rhossaTot(3,1),rhossaTot(1,2), &
-             rhoasa(2,3),rhoasa(3,1),rhoasa(1,2),ssam(1,1),ssam(2,2),ssam(3,3),ssam(2,3),ssam(3,1),ssam(1,2)
-  150       format(i5,5(E12.5,1X),5x,6(E12.5,1X),5x,3(E12.5,1X),5x,6(E12.5,1X))
         endif
     end subroutine
 

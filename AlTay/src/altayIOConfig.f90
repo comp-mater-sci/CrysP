@@ -9,7 +9,6 @@ module altayIOConfig
     integer :: KLEC = 5  !< data set with parameters
     integer :: IMP = 3   !< printer
     integer :: IMP1 = 7  !< output-file with successive "current situations"
-    integer :: IMP2 = 8  !< output-file with successive "responses to imposed strain"
     integer :: IMP3 = 11 !< output-file with twinning information
 
     integer :: IMP5 = 111     !< output of stress-strain or slip-stress
@@ -18,7 +17,6 @@ module altayIOConfig
     !>@}
 
     !>@{ \name Output control switches
-    integer :: NRES = 0  !< This value control amount of output that is sent to IMP2 unit.
     integer :: NMSS = 0  !< Control of the output with homogenized strain-stress (IMP5)
     !>@}
 

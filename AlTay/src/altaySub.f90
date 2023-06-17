@@ -81,7 +81,6 @@ contains
         close(LEC)
         close(KLEC)
         close(IMP)
-        close(IMP2)
         close(IMP3)
         close(IMP5)
         call MICROSTR_finalize(info)
@@ -105,11 +104,6 @@ contains
 
         fname_prefix = cnf%output_prefix
         info = VEF_ERROR
-
-        if (cnf%output_config%nres /= 0) then
-            fname = trim(fname_prefix)//'.RES'
-            open(unit=IMP2,file=fname,status='replace',err=9999)
-        endif
 
         if (cnf%output_config%nfiltw /= 0) then
             fname = trim(fname_prefix)//'.TWN'

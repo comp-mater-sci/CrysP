@@ -45,7 +45,6 @@ module altaySimul
 
         NFILE1 = acnf%output_config%NFILE   ! control "CUR"
         NFILTW = acnf%output_config%NFILTW  ! control "TWN"
-        NRES   = acnf%output_config%NRES    ! control "RES" and "RPT"
         NMSS   = acnf%output_config%NMSS    ! control "MSS"
         HGAMTOT=0.D0
 
@@ -56,7 +55,6 @@ module altaySimul
         if (modulo(size(DFIL), NGR) /= 0) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Number of grains must be even.')
         TITEL  = acnf%jobtitle
-        if (NRES > 0) write (IMP2,98) TITEL
         ! Only if CUR file is requested
         if (NFILE1 == 1) call CURwriteTitle(IMP1,TITEL,info)
   98    format (A)
@@ -126,12 +124,6 @@ module altaySimul
 #ifndef NO_STDOUT
             write (*,96) ISTP,GAXES
 #endif
-            if (.not. (nfile == 0.or.ISTP > 1)) then
-                if (NRES > 0) write (IMP2,404) nrstep+1,NPOINT
- 404                format (' Def. Step ',i5,'  Number of orientations',i5,/,T3,'ior'  &
-                 ,T7,'EquivStress',T23,'WorkRate',T37,'tau_ref',T56,'M',T64,       &
-                 'ratlon',T109,'RHO-SYMMETRIC',T172,'RHO-ROTATIONAL',T239,'STRESS',/,1x,278('*'))
-            endif
 
             nrstep=nrstep+1
 
@@ -198,7 +190,7 @@ module altaySimul
                 TOTGEW=TOTGEW+GEWF
 
                 if (astate%simulCalls(astate%this)%input%full_model) &
-                      call TAYLOR4(ISTP,IOR,NRES,TAU,GMMdot,SeqGrain,WorkRate,MacroDefRate,CC,M11,SSam,RHOSsa,TRF,C2,ITW,XM)
+                      call TAYLOR4(ISTP,IOR,TAU,GMMdot,SeqGrain,WorkRate,MacroDefRate,CC,M11,SSam,RHOSsa,TRF,C2,ITW,XM)
                 if (NFILTW == 1) write (IMP3,398) ITW
  398            format (I3)
 
