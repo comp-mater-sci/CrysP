@@ -83,8 +83,6 @@ contains
         close(IMP)
         close(IMP3)
         close(IMP5)
-        call MICROSTR_finalize(info)
-        if (info /= 0) return
         call DYNFIL_finalize(info)
         if (info /= 0) return
         call hardening_finalize()

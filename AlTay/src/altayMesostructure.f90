@@ -19,7 +19,6 @@ module altayMesostructure
 
     public :: &
         GRFIL, &
-        MICROSTR_finalize, &
         CLUSTER1
 
     contains
@@ -30,8 +29,7 @@ module altayMesostructure
 
         integer,intent(out)         :: ierr
         character(len=*),intent(in) :: fnam !< Microstructure file name
-        !> F_mic is a deformation gradient that conceptually
-        !> 'deforms' a spherical grain into an ellipsoidal shape
+        !> F_mic is a deformation gradient that deforms a spherical grain into an ellipsoidal shape
         real(dp), dimension(3,3), intent(in) :: F_mic
 
         integer           :: IGrElm !< Counter for loop over GBs
@@ -43,6 +41,7 @@ module altayMesostructure
         open (unit=NDAT2,file=fnam,status='old')
         read (NDAT2,'(I5,5x,A)') NGrElm,TitMic ! read number of GBs and title
 
+        if (allocated(TmatGr)) deallocate(TmatGr)
         allocate(TmatGr(3,3,NGrElm))
         do IGrElm=1,NGrElm
             read (NDAT2,'(3f10.0)') EulGB%fi2,EulGB%PHI,EulGB%fi1 ! read Euler angles from microstructure file in order: phi2, PHI, phi1
@@ -59,14 +58,6 @@ module altayMesostructure
         ierr = 0
     end subroutine GRFIL
 
-    !> Finalizes the module. The subroutine puts the module variables
-    !> into initial state and deallocates the storage.
-    subroutine MICROSTR_finalize(info)
-         integer,intent(out)     :: info
-
-         if (allocated(TmatGr)) deallocate(TmatGr,stat=info)
-
-    end subroutine
 
     subroutine CLUSTER1(IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
     !   TDC is the normalized von-Mises equivalent strain rate
