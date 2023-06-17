@@ -41,20 +41,16 @@ module altayPancake
         ! rls and rla are unit relaxation tensors in crystal frame (symmetric and anti-sym. part)
         !     Definition of the two relaxations, representing a
         !     13-simple shear and a 23-simple shear, respectively:
-        real(dp), dimension(3,3,3), parameter :: relax = reshape([ &
+        real(dp), dimension(3,3,2), parameter :: relax = reshape([ &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     1.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0,                                   &
-                    0.0D0, 1.0D0, 0.0D0,                                   &
-                    0.0D0, 0.0D0, 0.0D0,                                   &
-                    0.0D0, 0.0D0, 0.0D0,                                   &
-                    0.0D0, 0.0D0, 0.0D0],shape(relax))
-        real(dp), dimension(2,3), parameter ::  PLUMIN = reshape([&
+                    0.0D0, 1.0D0, 0.0D0],shape(relax))
+        real(dp), dimension(2,2), parameter ::  PLUMIN = reshape([&
                     1.0D0,-1.0D0,                                          &
-                    1.0D0,-1.0D0,                                          &
-                    1.0D0, 1.0D0], shape(PLUMIN)) !first index: # of grain, second index: #of relaxation
+                    1.0D0,-1.0D0], shape(PLUMIN)) !first index: # of grain, second index: #of relaxation
         real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp, SQR2=sqrt(0.5_dp)
         integer :: info,M12,N,M2,IL,L1,IRL,I,K1,IG,JJ,II
         integer, save :: IGrElm
