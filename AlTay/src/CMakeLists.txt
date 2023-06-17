@@ -24,7 +24,6 @@ altayDynfil.f90
 altayMacroKinematic.f90 
 altayMesostructure.f90 
 altayIOConfig.f90 
-altayMiscutils.f90 
 altayPancake.f90 
 altaySliprate.f90 
 altayTBH.f90 

@@ -1,5 +1,4 @@
 module hardening_model_dsh
-    use altayIOConfig, only: LEC
     use definitions
     use hardening_model
     use altayConfig

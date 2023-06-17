@@ -75,7 +75,6 @@ module altayConfig
     type :: outputConfig
         integer                                   :: nfile = 0 !< (SIMUL) NFILTW (Make output files 0 or 1)
         integer                                   :: nfiltw = 0!< (SIMUL) IPR  0-3 Print switch
-        integer                                   :: nmss = 0  !< (SIMUL) NMSS (output of macroscopic homogenized strain-stress)
     end type
 
    type :: simulData

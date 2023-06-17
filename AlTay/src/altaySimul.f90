@@ -10,7 +10,6 @@ module altaySimul
     use altayAlgorithms
     use altayConfig
     use altayIOConfig
-    use altayMiscutils
     use logging
 
     implicit none
@@ -45,7 +44,6 @@ module altaySimul
 
         NFILE1 = acnf%output_config%NFILE   ! control "CUR"
         NFILTW = acnf%output_config%NFILTW  ! control "TWN"
-        NMSS   = acnf%output_config%NMSS    ! control "MSS"
         HGAMTOT=0.D0
 
         if (NGR < 1.or.NGR > 2) &
@@ -72,7 +70,7 @@ module altaySimul
         integer :: NGR,&         !< number of grains
                    NRL,&         !< number of relaxations
                    laml,laml1, &
-                   IOR,ISTP,NPOINT, info, NFILE, NMSSx,NSTP,i,j,l,ifil4,ITW
+                   IOR,ISTP,NPOINT, info, NFILE, NSTP,i,j,l,ifil4,ITW
         real(dp) :: gewfb(2), Fb(3,3,2), GAXESb(3,2), GEULRb(3,2), Ssam(3,3), TG(3,3), CIJ(3,3), &
                     RHOST(3,3), tau, GEWF, SeqAvg,RHOSSb(3,3,2),RHOSsa(3,3),CIJb(3,3,2), TGb(3,3,2),gmm1,gmm0, &
                     GEULR(3), &
@@ -103,7 +101,6 @@ module altaySimul
         ! Number of relaxations: 0 for Taylor and 2 for ALAMEL:
         NRL=(NGR-1)*2
         NFILE=NFILE0*NFILE1
-        NMSSx= NFILE0*NMSS    ! control "MSS" (effective value)
 
         NSTP     = astate%simulCalls(astate%this)%input%nsteps
         ! Output the current texture
@@ -226,8 +223,6 @@ module altaySimul
 
             MEPSCALL= MacroDefState%IncrvMeqStrain * (ISTP-1)
 
-            if (NMSSx /= 0) &
-                call writeMSSRecord(IMP5,MEPSCALL,MacroDefState%AccumvMeqStrain_ToStartOfInc, HGAMCALL,HGAMTOT,SHsam,Mavg,srh,info)
             ! Get the homogenized quantities:
             associate (callout => astate%simulCalls(astate%this)%output)
                 callout%stress_tensor= SHsam

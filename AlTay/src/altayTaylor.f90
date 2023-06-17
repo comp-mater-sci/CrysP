@@ -1,7 +1,6 @@
 module altayTaylor
     use definitions
     use altayAlgorithms
-    use altayMiscutils
     use altayMacroKinematic
     use criMathUtils
     use hardening
