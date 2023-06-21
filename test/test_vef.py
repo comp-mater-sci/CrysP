@@ -21,7 +21,8 @@ import numpy as np
 EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'UDSA':'uds','YLD':'xyld'}
 GENERATED_DATA = []
 TEST_ROOT = Path.cwd()
-TEST_DATA = TEST_ROOT/'run'
+TEST_RUN = TEST_ROOT/'run'
+TEST_DATA = TEST_ROOT/'data'
 
 #Configurations that can be tested
 MODES = ['ADP', 'ASR', 'EWC','QRS','UDSA','YLD']
@@ -41,13 +42,20 @@ UNITS = [('altayAlgorithms','eigenv'),      \
          ('altayAlgorithms','canoni'),      \
          ('altayAlgorithms','kleinKwa')]
 
+
+def prepare_texture_file(length):
+        output_location = TEST_RUN/'texture.smt'
+        os.system('cat ' + str(TEST_DATA) + '/in/texture.smt | head -n ' + str(length + 1) + ' >> ' + str(output_location)) 
+        os.system('sed -i "1s/.*/' + str(length) + '/" ' + str(output_location))
+
+
 #Set up file structure for benchmark execution. May be removed when we get rid of file I/O for the simulations.
 def setup_benchmark(mode, algorithm, slip_system, hardening_model):
 
-    if not os.path.exists(TEST_DATA):
-        os.mkdir(TEST_DATA)
+    if not os.path.exists(TEST_RUN):
+        os.mkdir(TEST_RUN)
 
-    with open(TEST_DATA/'test.cfg', 'w') as conf_file, \
+    with open(TEST_RUN/'test.cfg', 'w') as conf_file, \
          open(TEST_ROOT/f'conf/{mode}.cfg','r') as mode_specific_conf_file:
         conf_file.write('out\n')
         conf_file.write('True\n')
@@ -63,22 +71,27 @@ def setup_benchmark(mode, algorithm, slip_system, hardening_model):
         conf_file.write(mode_specific_conf_file.read())
 
     try:
-        os.remove(TEST_DATA/'out.rtdb')
-        os.remove(TEST_DATA/'out.CUR')
+        os.remove(TEST_RUN/'out.rtdb')
+        os.remove(TEST_RUN/'out.CUR')
     except: FileNotFoundError
-    if mode == 'YLD':
-        shutil.copy(TEST_ROOT/'data/in/texture_yld.smt', TEST_DATA/'texture.smt')
+
+    #Optimize size of texture file: reasonable output with minimal execution time
+    size_texture = 128
+    if mode == 'ASR':
+        size_texture = 512
+    elif mode == 'YLD':
+        size_texture = 1024
     elif mode == 'QRS':
-        shutil.copy(TEST_ROOT/'data/in/sid1687f.smt', TEST_DATA/'texture.smt')
-    else:
-        shutil.copy(TEST_ROOT/'data/in/sid1687f_short.smt', TEST_DATA/'texture.smt')
-    shutil.copy(TEST_ROOT/'../data/equiaxed.smt', TEST_DATA/'equiaxed.smt')
-    shutil.copy(TEST_ROOT/f'../data/{slip_system}.pre', TEST_DATA/f'{slip_system}.pre')
-    shutil.copy(TEST_ROOT/f'data/in/DSHparaset.txt', TEST_DATA/'DSHparaset.txt')
-    if (mode == 'EWC' or mode == 'ASR'):
-        shutil.copyfile(TEST_ROOT/f'data/in/{mode}.rtdb', TEST_DATA/'out.rtdb')
+        size_texture = 4096
+    prepare_texture_file(size_texture)
+
+    shutil.copy(TEST_ROOT/'../data/equiaxed.smt', TEST_RUN/'equiaxed.smt')
+    shutil.copy(TEST_ROOT/f'../data/{slip_system}.pre', TEST_RUN/f'{slip_system}.pre')
+    shutil.copy(TEST_ROOT/f'data/in/DSHparaset.txt', TEST_RUN/'DSHparaset.txt')
+    if (mode == 'EWC'):
+        shutil.copyfile(TEST_ROOT/f'data/in/{mode}.rtdb', TEST_RUN/'out.rtdb')
     elif (mode == 'UDSA' or mode == 'YLD'):
-        shutil.copyfile(TEST_ROOT/f'data/in/UDSA_YLD.rtdb', TEST_DATA/'out.rtdb')
+        shutil.copyfile(TEST_ROOT/f'data/in/UDSA_YLD.rtdb', TEST_RUN/'out.rtdb')
 
 
 
@@ -87,7 +100,7 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
     setup_benchmark(mode, algorithm, slip_system, hardening_model)
 
     if not (mode, algorithm, slip_system, hardening_model) in GENERATED_DATA:
-        os.chdir(TEST_DATA)
+        os.chdir(TEST_RUN)
 
         result = subprocess.run([TEST_ROOT/'../VEF/bin/alamDMC',mode,'test.cfg'],
                                 stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
@@ -105,11 +118,11 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
                             out.writelines((out_oriented.read().splitlines(True))[2:])
                             
 
-        path = TEST_DATA/f'{mode}_{algorithm}_{slip_system}_{hardening_model}'
+        path = TEST_RUN/f'{mode}_{algorithm}_{slip_system}_{hardening_model}'
         out_path = str(path) + '.out'
         log_path = str(path) + '.log'
-        shutil.move(TEST_DATA/f'out.{EXTENSIONS[mode]}', out_path)
-        shutil.move(TEST_DATA/'alamDMC.log', log_path)
+        shutil.move(TEST_RUN/f'out.{EXTENSIONS[mode]}', out_path)
+        shutil.move(TEST_RUN/'alamDMC.log', log_path)
         GENERATED_DATA.append((mode, algorithm, slip_system, hardening_model))
         ref_path = TEST_ROOT/'data/out/'
         ref_path.mkdir(parents=True, exist_ok=True)
@@ -154,7 +167,7 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
     if update == 'FALSE' :
         filename =  f'{mode}_{algorithm}_{slip_system}_{hardening_model}.out'
         ref = pd.read_csv(TEST_ROOT/'data/out'/filename, delimiter=' +', engine='python')
-        res = pd.read_csv(TEST_DATA/filename, delimiter=' +', engine='python')
+        res = pd.read_csv(TEST_RUN/filename, delimiter=' +', engine='python')
         cols = []
 
         #Generate formatted dataframe from selected columns of output files based on mode
@@ -221,6 +234,6 @@ def test_unit(mode, algorithm, slip_system, hardening_model, module, function, u
     generate_output(update, mode, algorithm, slip_system, hardening_model)
     if update == 'FALSE':
         reference = get_trace_values(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
-        data = get_trace_values(TEST_DATA/f'{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
+        data = get_trace_values(TEST_RUN/f'{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
         assert np.allclose(reference,data,rtol=1e-3,atol=1e-8)
 
