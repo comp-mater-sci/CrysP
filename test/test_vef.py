@@ -23,17 +23,24 @@ GENERATED_DATA = []
 TEST_ROOT = Path.cwd()
 TEST_RUN = TEST_ROOT/'run'
 TEST_DATA = TEST_ROOT/'data'
+TEST_CONF = TEST_ROOT/'conf'
 
-#Configurations that can be tested
-MODES = ['ADP', 'ASR', 'EWC','QRS','UDSA','YLD']
-ALGORITHMS = ['ALAMEL', 'FCTaylor']
-SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
+#Configuration options for hardening models
 HARDENING_MODEL_SETTINGS = {'NONE':'0',
                             'VOCE':'1\n12.39 15 20 0.2 0.1',
                             'SWIFT':'3\n12.39 1.e-3 0.24',
                             'BP':'11\nDSHparaset.txt\nFalse',
                             'PEBP_SCREW':'12\nDSHparaset.txt\nFalse',
                             'PEBP_LOOP':'13\nDSHparaset.txt\nFalse'}
+
+#Optimize size of texture file: reasonable output with minimal execution time
+TEXTURE_SIZE = {'ADP':128,'ASR':512,'EWC':1024,'QRS':1024,'UDSA':1024,'YLD':1024}
+
+
+#Configurations that can be tested
+MODES = ['ADP', 'ASR', 'EWC','QRS','UDSA','YLD']
+ALGORITHMS = ['ALAMEL', 'FCTaylor']
+SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
 HARDENING_MODELS = list(HARDENING_MODEL_SETTINGS.keys())
 
 #Unit tests
@@ -42,13 +49,6 @@ UNITS = [('altayAlgorithms','eigenv'),      \
          ('altayAlgorithms','canoni'),      \
          ('altayAlgorithms','kleinKwa')]
 
-
-def prepare_texture_file(length):
-        output_location = TEST_RUN/'texture.smt'
-        os.system('cat ' + str(TEST_DATA) + '/in/texture.smt | head -n ' + str(length + 1) + ' >> ' + str(output_location)) 
-        os.system('sed -i "1s/.*/' + str(length) + '/" ' + str(output_location))
-
-
 #Set up file structure for benchmark execution. May be removed when we get rid of file I/O for the simulations.
 def setup_benchmark(mode, algorithm, slip_system, hardening_model):
 
@@ -56,7 +56,7 @@ def setup_benchmark(mode, algorithm, slip_system, hardening_model):
         os.mkdir(TEST_RUN)
 
     with open(TEST_RUN/'test.cfg', 'w') as conf_file, \
-         open(TEST_ROOT/f'conf/{mode}.cfg','r') as mode_specific_conf_file:
+         open(TEST_CONF/f'{mode}.cfg','r') as mode_specific_conf_file:
         conf_file.write('out\n')
         conf_file.write('True\n')
         conf_file.write('2\n')
@@ -75,23 +75,11 @@ def setup_benchmark(mode, algorithm, slip_system, hardening_model):
         os.remove(TEST_RUN/'out.CUR')
     except: FileNotFoundError
 
-    #Optimize size of texture file: reasonable output with minimal execution time
-    size_texture = 128
-    if mode == 'ASR':
-        size_texture = 512
-    elif mode == 'YLD':
-        size_texture = 1024
-    elif mode == 'QRS':
-        size_texture = 4096
-    prepare_texture_file(size_texture)
-
-    shutil.copy(TEST_ROOT/'../data/equiaxed.smt', TEST_RUN/'equiaxed.smt')
+    os.system('cat ' + str(TEST_DATA) + '/in/texture.smt | sed "1s/.*/' + str(TEXTURE_SIZE[mode]) + '/" > ' + str(TEST_RUN/'texture.smt')) 
     shutil.copy(TEST_ROOT/f'../data/{slip_system}.pre', TEST_RUN/f'{slip_system}.pre')
-    shutil.copy(TEST_ROOT/f'data/in/DSHparaset.txt', TEST_RUN/'DSHparaset.txt')
-    if (mode == 'EWC'):
-        shutil.copyfile(TEST_ROOT/f'data/in/{mode}.rtdb', TEST_RUN/'out.rtdb')
-    elif (mode == 'UDSA' or mode == 'YLD'):
-        shutil.copyfile(TEST_ROOT/f'data/in/UDSA_YLD.rtdb', TEST_RUN/'out.rtdb')
+    shutil.copy(TEST_CONF/'DSHparaset.txt', TEST_RUN/'DSHparaset.txt')
+    if (mode == 'YLD'):
+        shutil.copyfile(TEST_DATA/f'in/UDSA_YLD.rtdb', TEST_RUN/'out.rtdb')
 
 
 
