@@ -34,7 +34,7 @@ HARDENING_MODEL_SETTINGS = {'NONE':'0',
                             'PEBP_LOOP':'13\nDSHparaset.txt\nFalse'}
 
 #Optimize size of texture file: reasonable output with minimal execution time
-TEXTURE_SIZE = {'ADP':128,'ASR':512,'EWC':1024,'QRS':1024,'UDSA':1024,'YLD':1024}
+#TEXTURE_SIZE = {'ADP':128,'ASR':1024,'EWC':1024,'QRS':1024,'UDSA':1024,'YLD':1024}
 
 
 #Configurations that can be tested
@@ -75,11 +75,10 @@ def setup_benchmark(mode, algorithm, slip_system, hardening_model):
         os.remove(TEST_RUN/'out.CUR')
     except: FileNotFoundError
 
-    os.system('cat ' + str(TEST_DATA) + '/in/texture.smt | sed "1s/.*/' + str(TEXTURE_SIZE[mode]) + '/" > ' + str(TEST_RUN/'texture.smt')) 
+    #os.system('cat ' + str(TEST_DATA) + '/in/texture.smt | sed "1s/.*/' + str(TEXTURE_SIZE[mode]) + '/" > ' + str(TEST_RUN/'texture.smt')) 
+    shutil.copy(TEST_DATA/'in/texture.smt', TEST_RUN)
     shutil.copy(TEST_ROOT/f'../data/{slip_system}.pre', TEST_RUN/f'{slip_system}.pre')
     shutil.copy(TEST_CONF/'DSHparaset.txt', TEST_RUN/'DSHparaset.txt')
-    if (mode == 'YLD'):
-        shutil.copyfile(TEST_DATA/f'in/UDSA_YLD.rtdb', TEST_RUN/'out.rtdb')
 
 
 
