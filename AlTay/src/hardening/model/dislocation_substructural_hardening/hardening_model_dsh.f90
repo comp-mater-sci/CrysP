@@ -99,24 +99,24 @@ contains
         class(HardeningModelDSH), intent(in)    :: this
         type(Parameter), allocatable    :: params(:)
 
-        params = [parameter_init('n_slip_systems', TYPE_STRING),  &
-                  parameter_init('n_grains', TYPE_INTEGER),       &
-                  parameter_init('b', TYPE_REAL),                 &
-                  parameter_init('G', TYPE_REAL),                 &
-                  parameter_init('alfa', TYPE_REAL),              &
-                  parameter_init('f', TYPE_REAL),                 &
-                  parameter_init('tau0', TYPE_REAL),              &
-                  parameter_init('I', TYPE_REAL),                 &
-                  parameter_init('R', TYPE_REAL),                 &
-                  parameter_init('Iwd', TYPE_REAL),               &
-                  parameter_init('Rwd', TYPE_REAL),               &
-                  parameter_init('Rncg', TYPE_REAL),              &
-                  parameter_init('beta1', TYPE_REAL),             &
-                  parameter_init('beta2', TYPE_REAL),             &
-                  parameter_init('Iwp', TYPE_REAL),               &
-                  parameter_init('Rwp', TYPE_REAL),               &
-                  parameter_init('Rrev', TYPE_REAL),              &
-                  parameter_init('R2', TYPE_REAL)]
+        params = [parameter_init('n_slip_systems', TYPE_STRING),    &
+                  parameter_init('n_grains', TYPE_INTEGER),         &
+                  parameter_init('b', TYPE_REAL),                   &   ![m]   ]0.;1.E-8]   Magnitude of burgers vector                                
+                  parameter_init('G', TYPE_REAL),                   &   ![MPa] [1.E4 ;5.E5] Shear modulus
+                  parameter_init('alfa', TYPE_REAL),                &   ![/]   ]0.;5.]      Dislocation interaction parameter
+                  parameter_init('f', TYPE_REAL),                   &   ![/]   [0.;1.]      Volume fraction of CBBs (Cell Block Boundaries)
+                  parameter_init('tau0', TYPE_REAL),                &   ![MPa] [0.;1.E4 ]   Initial critical resolved shear stress on all slip systems
+                  parameter_init('I', TYPE_REAL),                   &   ![/]   [0.;1.E1 ]   Immobilization coefficient of CBs (Cell Boundaries)
+                  parameter_init('R', TYPE_REAL),                   &   ![m]   ]0.;1.E-6]   Recovery coefficient of CBs
+                  parameter_init('Iwd', TYPE_REAL),                 &   ![/]   [0.;1.E1 ]   Immobilization coefficient of CBBs
+                  parameter_init('Rwd', TYPE_REAL),                 &   ![m]   ]0.;1.E-6]   Recovery coefficient of CBBs
+                  parameter_init('Rncg', TYPE_REAL),                &   ![m]   ]0.;1.E-6]   Recovery coefficient of old CBBs and polarity of old CBBs
+                  parameter_init('beta1', TYPE_REAL),               &   ![/]   [0.;1.E2 ]   1st coeff. micro shear band cut-through of old CBBs
+                  parameter_init('beta2', TYPE_REAL),               &   ![/]   [0.;1.E2 ]   2nd coeff. micro shear band cut-through of old CBBs
+                  parameter_init('Iwp', TYPE_REAL),                 &   ![/]   [0.;1.E1 ]   Immobilization coefficient of polarity of CBBs
+                  parameter_init('Rwp', TYPE_REAL),                 &   ![m]   ]0.;1.E-6]   Recovery coefficient of polarity of CBBs
+                  parameter_init('Rrev', TYPE_REAL),                &   ![m]   ]0.;1.E-6]   Recovery coefficient of polarity CBBs during bauschinger
+                  parameter_init('R2', TYPE_REAL)]                      ![m]   ]0.;1.E-6]   Recovery coefficient of CBs due to reversal polarity flux
     end function dsh_get_parameters
 
     subroutine dsh_validate_parameters(this, params)

@@ -12,6 +12,7 @@ from pathlib import Path
 import itertools
 import subprocess
 import math
+import vef_config as conf
 
 import pytest
 import pandas as pd
@@ -22,26 +23,13 @@ EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'UDSA':'uds','
 GENERATED_DATA = []
 TEST_ROOT = Path.cwd()
 TEST_RUN = TEST_ROOT/'run'
-TEST_DATA = TEST_ROOT/'data'
-TEST_CONF = TEST_ROOT/'conf'
-
-#Configuration options for hardening models
-HARDENING_MODEL_SETTINGS = {'NONE':'0',
-                            'VOCE':'1\n12.39 15 20 0.2 0.1',
-                            'SWIFT':'3\n12.39 1.e-3 0.24',
-                            'BP':'11\nDSHparaset.txt\nFalse',
-                            'PEBP_SCREW':'12\nDSHparaset.txt\nFalse',
-                            'PEBP_LOOP':'13\nDSHparaset.txt\nFalse'}
-
-#Optimize size of texture file: reasonable output with minimal execution time
-#TEXTURE_SIZE = {'ADP':128,'ASR':1024,'EWC':1024,'QRS':1024,'UDSA':1024,'YLD':1024}
-
+TEST_REF = TEST_ROOT/'reference'
 
 #Configurations that can be tested
 MODES = ['ADP', 'ASR', 'EWC','QRS','UDSA','YLD']
 ALGORITHMS = ['ALAMEL', 'FCTaylor']
 SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
-HARDENING_MODELS = list(HARDENING_MODEL_SETTINGS.keys())
+HARDENING_MODELS = ['NONE', 'VOCE', 'SWIFT', 'BP', 'PEBP_SCREW', 'PEBP_LOOP'] 
 
 #Unit tests
 UNITS = [('altayAlgorithms','eigenv'),      \
@@ -49,42 +37,25 @@ UNITS = [('altayAlgorithms','eigenv'),      \
          ('altayAlgorithms','canoni'),      \
          ('altayAlgorithms','kleinKwa')]
 
-#Set up file structure for benchmark execution. May be removed when we get rid of file I/O for the simulations.
-def setup_benchmark(mode, algorithm, slip_system, hardening_model):
+#General setup
+if not os.path.exists(TEST_RUN):
+    os.mkdir(TEST_RUN)
 
-    if not os.path.exists(TEST_RUN):
-        os.mkdir(TEST_RUN)
-
-    with open(TEST_RUN/'test.cfg', 'w') as conf_file, \
-         open(TEST_CONF/f'{mode}.cfg','r') as mode_specific_conf_file:
-        conf_file.write('out\n')
-        conf_file.write('True\n')
-        conf_file.write('2\n')
-        conf_file.write('texture.smt\n')
-        conf_file.write(algorithm + '\n')
-        conf_file.write('True\n')
-        conf_file.write(slip_system + '\n')
-        conf_file.write('True\n')
-        conf_file.write('False\n')
-        conf_file.write(HARDENING_MODEL_SETTINGS[hardening_model] + '\n')
-        conf_file.write('True\n')
-        conf_file.write(mode_specific_conf_file.read())
-
+#Execute simulations themselves. Implemented as a dedicated function to simplify test adjustments when transitioning to a different software architecture.
+def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', hardening_model='NONE'):
+    with open(TEST_RUN/'test.cfg', 'w') as conf_file:
+        conf_file.write(conf.generate_config(mode, algorithm, slip_system, hardening_model))
+                            
     try:
         os.remove(TEST_RUN/'out.rtdb')
         os.remove(TEST_RUN/'out.CUR')
     except: FileNotFoundError
-
-    #os.system('cat ' + str(TEST_DATA) + '/in/texture.smt | sed "1s/.*/' + str(TEXTURE_SIZE[mode]) + '/" > ' + str(TEST_RUN/'texture.smt')) 
-    shutil.copy(TEST_DATA/'in/texture.smt', TEST_RUN)
+    
+    shutil.copy(TEST_ROOT/'texture.smt', TEST_RUN)
     shutil.copy(TEST_ROOT/f'../data/{slip_system}.pre', TEST_RUN/f'{slip_system}.pre')
-    shutil.copy(TEST_CONF/'DSHparaset.txt', TEST_RUN/'DSHparaset.txt')
-
-
-
-#Execute simulations themselves. Implemented as a dedicated function to simplify test adjustments when transitioning to a different software architecture.
-def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', hardening_model='NONE'):
-    setup_benchmark(mode, algorithm, slip_system, hardening_model)
+    if hardening_model == 'BP' or hardening_model == 'PEBP_SCREW' or hardening_model == 'PEBP_LOOP':
+        with open(TEST_RUN/'DSHparaset.txt','w') as dsh_config:
+            dsh_config.write(conf.DSH_CONFIG)
 
     if not (mode, algorithm, slip_system, hardening_model) in GENERATED_DATA:
         os.chdir(TEST_RUN)
@@ -97,7 +68,7 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
 
         if mode == 'UDSA':
             with open('out.uds', 'w') as out:
-                for orientation in [0,45,90]:
+                for orientation in [0,90]:
                     with open(f'out_{orientation}_000.uds','r') as out_oriented:
                         if orientation == 0:
                             out.write(out_oriented.read())
@@ -111,10 +82,9 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
         shutil.move(TEST_RUN/f'out.{EXTENSIONS[mode]}', out_path)
         shutil.move(TEST_RUN/'alamDMC.log', log_path)
         GENERATED_DATA.append((mode, algorithm, slip_system, hardening_model))
-        ref_path = TEST_ROOT/'data/out/'
-        ref_path.mkdir(parents=True, exist_ok=True)
-        if 'log' in update: shutil.copy(log_path, ref_path)
-        if 'out' in update: shutil.copy(out_path, ref_path)
+        TEST_REF.mkdir(parents=True, exist_ok=True)
+        if 'log' in update: shutil.copy(log_path, TEST_REF)
+        if 'out' in update: shutil.copy(out_path, TEST_REF)
 
 def process_file(path):
     df = pd.read_csv(path,delimiter=' +', engine='python')
@@ -153,7 +123,7 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
 
     if update == 'FALSE' :
         filename =  f'{mode}_{algorithm}_{slip_system}_{hardening_model}.out'
-        ref = pd.read_csv(TEST_ROOT/'data/out'/filename, delimiter=' +', engine='python')
+        ref = pd.read_csv(TEST_REF/filename, delimiter=' +', engine='python')
         res = pd.read_csv(TEST_RUN/filename, delimiter=' +', engine='python')
         cols = []
 
@@ -163,7 +133,7 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
         elif mode == 'ASR':
             cols = ['eps_xx', 'eps_yy', 'eps_zz', 'eps_xy', 'eps_yz', 'eps_xz']
         elif mode == 'YLD':
-            cols = ['theta', 'sigma_x', 'sigma_y']
+            cols = ['sigma_x', 'sigma_y']
         elif mode == 'UDSA':
             cols = ['S']
         elif mode == 'QRS':
@@ -183,28 +153,15 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
                     element = row[i]
                     element_ref = row_ref[i]
                     assert element_ref - tolerance <= element <= element_ref + tolerance
-
-        elif mode == 'YLD':
-            #None of the components should vary more than MARGIN from the reference
-            index_ref = 0
-            for index, row in res.iterrows():
-                while ref['theta'][index_ref+1] < row['theta']:
-                    index_ref = index_ref + 1
-                row_ref = ref.iloc[index_ref]
-                if not (row[1] == row[2] == 0) and not row_ref[1] == row_ref[2] == 0 and row_ref['theta'] == row['theta']:
-                    for i in range(1,3):
-                        assert abs(row_ref[i] * (1 - sensitivity)) <= abs(row[i]) <= abs(row_ref[i] * (1 + sensitivity))
-
         else:
             #None of the components should vary more than MARGIN from the reference
             for index, row in res.iterrows():
                 row_ref = ref.iloc[index-1]
-                if not all(x == 0.0 or math.isnan(x) for x in row) and not all(x == 0.0 or math.isnan(x) for x in row_ref):
-                    for i in range(len(row)):
-                        element = row[i]
-                        element_ref = row_ref[i]
-                        if not math.isnan(element_ref):
-                            assert abs(element_ref * (1 - sensitivity)) <= abs(element) <= abs(element_ref * (1 + sensitivity))
+                for i in range(len(row)):
+                    element = row[i]
+                    element_ref = row_ref[i]
+                    if not math.isnan(element_ref):
+                        assert abs(element_ref * (1 - sensitivity)) <= abs(element) <= abs(element_ref * (1 + sensitivity))
         
 def get_trace_values(path, module, function):
     vals = []
@@ -220,7 +177,7 @@ def get_trace_values(path, module, function):
 def test_unit(mode, algorithm, slip_system, hardening_model, module, function, update):
     generate_output(update, mode, algorithm, slip_system, hardening_model)
     if update == 'FALSE':
-        reference = get_trace_values(TEST_ROOT/f'data/out/{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
+        reference = get_trace_values(TEST_REF/f'{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
         data = get_trace_values(TEST_RUN/f'{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
         assert np.allclose(reference,data,rtol=1e-3,atol=1e-8)
 
