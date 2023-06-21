@@ -15,7 +15,6 @@ program alamDMC
 
     integer                                 ::  info,                               &
                                                 cnfunit,                            &
-                                                command_id,                         &
                                                 i
     character(:), allocatable               ::  moduleName
     character(256), dimension(0:2)          ::  argv

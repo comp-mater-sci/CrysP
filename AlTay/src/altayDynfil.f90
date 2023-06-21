@@ -1,5 +1,4 @@
 module altayDynfil
-    use altayMiscutils
     use definitions
     use criMathUtils
     use altayIOConfig
@@ -13,16 +12,16 @@ module altayDynfil
         real(dp)                    :: tGEW     = 1.D0, tGAM    = 0.D0
         real(dp), dimension(3)      :: tAXES    = 1.D0, tEULR   = 0.D0
         real(dp), dimension(3,3)    :: tT       = 0.D0
-        real(dp), dimension(3,3)    :: tF       = unitMatrix
-        real(dp), dimension(3,3)    :: tCIJ     = unitMatrix
-        real(dp), dimension(3,3)    :: tTAX     = unitMatrix
+        real(dp), dimension(3,3)    :: tF       = unit_sr_matrix
+        real(dp), dimension(3,3)    :: tCIJ     = unit_sr_matrix
+        real(dp), dimension(3,3)    :: tTAX     = unit_sr_matrix
         real(dp), dimension(3,3)    :: tZERO    = 0.D0, tRHO    = 0.D0
     end type grain
 
     type :: matFrame
-        real(dp),dimension(3,3)   :: FALG   = unitMatrix
-        real(dp),dimension(3,3)   :: CIJ0   = unitMatrix
-        real(dp),dimension(3,3)   :: TAX0   = unitMatrix
+        real(dp),dimension(3,3)   :: FALG   = unit_sr_matrix
+        real(dp),dimension(3,3)   :: CIJ0   = unit_sr_matrix
+        real(dp),dimension(3,3)   :: TAX0   = unit_sr_matrix
         real(dp),dimension(3)     :: GAXES  = 1.D0, GEULR = 0.D0
     end type
 
@@ -36,17 +35,17 @@ module altayDynfil
                 nrStep,     &
                 fileTitle,  &
                 initFields, &
-                dynFil0,    &
-                dynFil2,    &
-                dynFil3,    &
-                dynFil4,    &
-                dynFil5,    &
+                dynfil_init,    &
+                dynFil_getGlobal,    &
+                dynFil_setGlobal,    &
+                dynFil_getGrain,    &
+                dynFil_setGrain,    &
                 dynfil_finalize
 
 contains
 
     !> Allocate the memory block for the state variables.
-    subroutine DYNFIL0(npoint,keepstate,istat)
+    subroutine dynfil_init(npoint,keepstate,istat)
 
         integer, intent(in)                     :: npoint       !<Number of elements to be allocated
         logical, intent(in)                     :: keepstate    !<Flag: preserve contenst of DFIL on reallocation.
@@ -57,7 +56,6 @@ contains
         istat = 1
         ! Error handling
         if (npoint <= 0) then
-            if(NLIST == 1) write(IMP,100)
             return
         endif
 
@@ -82,11 +80,7 @@ contains
                 allocate(DFIL(npoint),stat=istat)
             endif
         endif
-        ! Error handling
-        if (istat /= 0 .and. NLIST == 1) write(IMP,101)
 
-100     format('DYNFIL0: error: requested number of grains is zero.')
-101     format('DYNFIL0: error: allocation of memory failed.')
     end subroutine
 
     !>Puts the module variables into initial state and deallocates the storage.
@@ -100,7 +94,7 @@ contains
     end subroutine
 
     !> Extract the global material data
-    subroutine DYNFIL2(n, F, AXES, EULR, CIJ, TAX)
+    subroutine DYNFIL_getGlobal(n, F, AXES, EULR, CIJ, TAX)
         integer, intent(out)                            :: n
         real(dp), dimension(3), intent(out)     :: AXES, EULR
         real(dp), dimension(3,3), intent(out)   :: CIJ, TAX, F
@@ -114,7 +108,7 @@ contains
     end subroutine
 
     !> Write the global material data
-    subroutine DYNFIL3(n, F, axes, eulr, CIJ, tax)
+    subroutine DYNFIL_setGlobal(n, F, axes, eulr, CIJ, tax)
         integer,intent(in)                              :: n
         real(dp), dimension(3), intent(in)      :: axes, eulr
         real(dp), dimension(3,3), intent(in)    :: CIJ, tax, F
@@ -128,15 +122,12 @@ contains
     end subroutine
 
     !> Get the record data for i-th grain
-    subroutine DYNFIL4(i, FI1, PHI, FI2, T, GEW, GAM, F, AXES, EULR, CIJ, TAX, ZERO)
+    subroutine DYNFIL_getGrain(i, T, GEW, GAM, F, AXES, EULR, CIJ, TAX, ZERO)
         integer, intent(in)                             :: i
-        real(dp), intent(out)                   :: FI1,PHI,FI2,GEW,GAM
+        real(dp), intent(out)                   :: GEW,GAM
         real(dp), dimension(3), intent(out)     :: AXES, EULR
         real(dp), dimension(3,3), intent(out)   :: CIJ, TAX, F, T, ZERO
 
-        FI1     = DFIL(i)%tFI1
-        PHI     = DFIL(i)%tPHI
-        FI2     = DFIL(i)%tFI2
         GEW     = DFIL(i)%tGEW
         GAM     = DFIL(i)%tGAM
         AXES    = DFIL(i)%tAXES
@@ -149,15 +140,19 @@ contains
     end subroutine
 
     !> Put the record data for i-th grain
-    subroutine DYNFIL5(i, FI1, PHI, FI2, T, GEW, GAM, F, AXES, EULR, CIJ, TAX, ZERO)
-        integer, intent(in)                             :: i
-        real(dp), intent(in)                    :: FI1,PHI,FI2,GEW,GAM
+    subroutine DYNFIL_setGrain(i, T, GEW, GAM, F, AXES, EULR, CIJ, TAX, ZERO)
+        integer, intent(in)                     :: i
+        real(dp), intent(in)                    :: GEW,GAM
         real(dp), dimension(3), intent(in)      :: AXES, EULR
         real(dp), dimension(3,3), intent(in)    :: CIJ, TAX, F, T, ZERO
 
-        DFIL(i)%tFI1    = FI1
-        DFIL(i)%tPHI    = PHI
-        DFIL(i)%tFI2    = FI2
+        type(EulerAngles) :: eu
+
+        eu = EulerAnglesType(T)
+
+        DFIL(i)%tFI1    = eu%FI1
+        DFIL(i)%tPHI    = eu%PHI
+        DFIL(i)%tFI2    = eu%FI2
         DFIL(i)%tGEW    = GEW
         DFIL(i)%tGAM    = GAM
         DFIL(i)%tAXES   = AXES

@@ -228,7 +228,7 @@ contains
         select case(param%type)
             case (TYPE_INTEGER)
                 buffer = transfer(param%value, 0)
-                num = real(buffer)
+                num = real(buffer,DP)
             case (TYPE_REAL)
                 num = transfer(param%value, 0._dp)
             case default
@@ -241,9 +241,9 @@ contains
 
         select type(arg)
             type is (integer)
-                real_val = real(arg)
+                real_val = real(arg,DP)
             type is (real)
-                real_val = arg
+                real_val = real(arg,DP)
             type is (Parameter)
                 real_val = get_numerical_value(arg)
             class default

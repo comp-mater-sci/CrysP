@@ -35,8 +35,6 @@ implicit none
 
         procedure,pass(this)     :: readConfig => StressDrivenModule_readConfig
 
-        procedure,pass(this)     :: printConfig => StressDrivenModule_printConfig
-
         procedure,pass(this)     :: finalize => StressDrivenModule_finalize
 
         procedure,pass(this)     :: findSolution => StressDrivenModule_findSolution
@@ -87,15 +85,6 @@ contains
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
     !
-    end function
-
-
-    !> Print out configuration of the module
-    integer function StressDrivenModule_printConfig(this,outunit) result(info)
-    use altayConfig
-    class(StressDrivenModule),intent(in):: this
-    integer,intent(in)                  :: outunit
-        info = VEF_OK
     end function
 
 

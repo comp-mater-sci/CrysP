@@ -53,8 +53,6 @@ implicit none
 
         procedure,pass(this)    :: readConfig => UDSAModule_readConfig
 
-        procedure,pass(this)    :: printConfig => UDSAModule_printConfig
-
         procedure,pass(this)    :: run => UDSAModule_run
 
         !>@}
@@ -129,18 +127,6 @@ contains
     end function
 
 
-    integer function UDSAModule_printConfig(this,outunit) result (info)
-    implicit none
-    class(UDSAModule),intent(in)         :: this
-    integer,intent(in)                  :: outunit
-    !
-    character(len=32)       :: description, orientation
-    !
-        info = VEF_OK
-    !
-    end function
-
-
     subroutine UDSAModule_run(this,info)
     implicit none
     class(UDSAModule),intent(inout)            :: this
@@ -151,7 +137,7 @@ contains
     !      in the "tensile sample coordinate system".
     !    - All other variables are implicitly expressed in the "material coordinate system"
     type(SRTensor) :: sigma, sigma_t, S_t, D_t, P_t, P_t_end
-    double precision,dimension(rot_matrix_dim,rot_matrix_dim) :: Mrot = 0.0
+    double precision,dimension(rot_matrix_dim,rot_matrix_dim) :: Mrot = 0.0_DP
     type(EvolutionOutput) :: output
     type(EulerAngles) :: sample_orientation
     double precision  :: angle, stress_direction
@@ -277,12 +263,9 @@ contains
     !
     end do test_run_loop
     !
-    1600 format(/,'Sample ', I0, ' out of ',I0, ', sample orientation: ',F0.2)
-#define MSG_GROUP_RULERS
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
 
     end subroutine
 

@@ -182,10 +182,8 @@ contains
         enddo
     !
 #define MSG_GROUP_ERRORS
-#define MSG_GROUP_RULERS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
     !
     end subroutine
 
@@ -202,7 +200,7 @@ contains
     !
     integer :: step, increment, ierr, n_steps, first_step, last_step, n_increments
     !
-    integer,parameter :: ncolumn_labels = 2+9+3*6+3+7, column_width = 18, short_column_width = 9
+    integer,parameter :: ncolumn_labels = 2+9+3*6+3+7, column_width = 18
     character(len=column_width),dimension(ncolumn_labels) :: column_names = [character(len=column_width) :: &
         'step', 'increment', & ! 2 fields
         'L_11','L_22','L_33','L_12','L_23','L_31','L_21','L_32','L_13',  & ! 9 fields  (I)

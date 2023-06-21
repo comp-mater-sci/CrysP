@@ -113,7 +113,7 @@ contains
             !
             ! Follow (3.2) in [1]
             do j = 0, n
-                wi(j) = 1.0
+                wi(j) = 1.0_DP
                 ! \prod_{k \ne j} (x_j - x_k)
                 do k = 0, n
                     if (j /= k) wi(j) = wi(j) * (xi(j) - xi(k))
