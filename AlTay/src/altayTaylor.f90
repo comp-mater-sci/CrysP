@@ -73,7 +73,7 @@ module altayTaylor
 
     ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
     subroutine TAYLOR3(SSam,RHOSsa,TRF,GEWF,IOR,TRFb,GMMAb,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
-        integer, intent(in) :: NGR,NRL,laml,IOR
+        integer, intent(in) :: NGR,NRL,laml,IOR, M11
         real(dp), intent(out) :: Ssam(3,3),RHOSsa(3,3)
         real(dp), intent(inout) :: CC(2,M11),GEWF
         type(DeformationRate), intent(in) :: MacroDefRate
@@ -120,12 +120,7 @@ module altayTaylor
         type(EulerAngles) :: Euler
 
 
-<<<<<<< HEAD
-        call SLIPRAT(M111,M111,GAMdot(1:M111),ior,IPR,SGNN(1:M111),MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
-        ddt = 1.D0
-=======
-        call SLIPRAT(M111,96,GAMdot,SGNN,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
->>>>>>> master
+        call SLIPRAT(M111,M111,GAMdot(1:M111),SGNN(1:M111),MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call KS_updateState(IOR,GAMdot,ddt,info)
         TOTGAMdot=sum(abs(GAMdot(1:M111)))
         ! Calculate RCcryst: the rigid body spin in the crystal frame

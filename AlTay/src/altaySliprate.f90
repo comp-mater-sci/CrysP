@@ -19,13 +19,8 @@ module altaySliprate
         !     - (under the above restrictions) the sum of the squares of the slip
         !       rates must be minimal.
         !
-<<<<<<< HEAD
-        integer, intent(in) :: M11,IDIMXX,IPR,IOR,NACTIV,INDLP(8)
-        real(dp), intent(in) :: TLXX,A1(:,:),TAURLP(8),BB8(5),SLIPLP(8)
-=======
         integer, intent(in) :: M11,IDIMXX,NACTIV,INDLP(8)
-        real(dp), intent(in) :: TLXX,A1(5,96),TAURLP(8),BB8(5),SLIPLP(8)
->>>>>>> master
+        real(dp), intent(in) :: TLXX,A1(:,:),TAURLP(8),BB8(5),SLIPLP(8)
         integer, intent(inout) :: INDACT(8)
         real(dp), intent(inout) :: SGNN(IDIMXX),XX(IDIMXX)
 
