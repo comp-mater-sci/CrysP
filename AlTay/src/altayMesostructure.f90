@@ -67,8 +67,8 @@ module altayMesostructure
         real(dp),intent(out)                   :: GEWF
         real(dp),intent(out)                   :: Tprinc(3,3)
 
-        real(dp) :: GRPAR(3,3), PrDir(2,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
-        real(dp) :: x, u, dlength, dot1, dot2, TGANGLE
+        real(dp) :: GRPAR(3,3), PrDir(2,3),TDCGr(3,3), vec1(3),vec2(3),AL(3)
+        real(dp) :: u, dlength, dot1, dot2, TGANGLE
         integer :: i
         real(dp), parameter, dimension(3,3) :: &
             relaxI = reshape([0._dp, 0._dp, 1._dp, &
@@ -88,21 +88,9 @@ module altayMesostructure
         u=abs(sum(GRPAR(:,1)*vec1))*0.25D0/product(AL)
 
         if (minloc(AL,1) == 3) then
-            AA(3)=AL(3)
-            if(AL(1) >= AL(2))then
-                  AA(1)=AL(1)
-                  AA(2)=AL(2)
-            else
-                  AA(1)=AL(2)
-                  AA(2)=AL(1)
-            endif
-            GEWF=u*(4.D0*(AA(1)-AA(3))*(AA(2)-AA(3))*AA(3)  &
-                  +2.0D0*(AA(2)-AA(3))*AA(3)**2+2.0D0*(AA(1)-AA(3))*AA(3)**2 &
-                  +4.D0*AA(3)**3/3.D0)
-            ! MD: equivalent except for floating point arithmetic
-            ! GEWF=u*(4.D0*(AL(1)-AL(3))*(AL(2)-AL(3))*AL(3)  &
-            !         +2.0D0*(AL(1)+AL(2)-2.0_dp*AL(3))*AL(3)**2 &
-            !         +4.D0*AL(3)**3/3.D0)
+            GEWF=u*(4.D0*(AL(1)-AL(3))*(AL(2)-AL(3))*AL(3)  &
+                    +2.0D0*(AL(1)+AL(2)-2.0_dp*AL(3))*AL(3)**2 &
+                    +4.D0*AL(3)**3/3.D0)
         else
             GEWF = u*merge(2.D0*(AL(1)-AL(2))*AL(2)**2+4.D0*AL(2)**3/3.D0, &
                            2.D0*(AL(2)-AL(1))*AL(1)**2+4.D0*AL(1)**3/3.D0, &
@@ -116,8 +104,7 @@ module altayMesostructure
         Tprinc(2,1:3)=cross(Tprinc(3,:),Tprinc(1,:))
         ! Normalisation
         do i=1,3
-            x=norm2(Tprinc(i,:))
-            Tprinc(i,:)=Tprinc(i,:)/x
+            Tprinc(i,:)=Tprinc(i,:)/norm2(Tprinc(i,:))
         enddo
 
         dlength=norm2(MacroDefRate%StrainModevM)
