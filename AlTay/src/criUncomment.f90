@@ -1,10 +1,10 @@
 !
 !> Provides access to config files with bash-style comments
 module criUncomment
-implicit none
-
+      implicit none
+      private
       !> Maximal length of a line
-      integer,parameter       :: max_line_len = 512
+      integer,parameter,public       :: max_line_len = 512
 
       character,parameter     :: comment_sign = '#'
 
@@ -23,28 +23,8 @@ implicit none
                              read_double,    read_vector_double
 
       end interface
-
+      public :: readValue
 contains
-      !> \name Various procedures on the theme "removing comment from a string"
-      !>@{
-      !> Removes a comment from the string.
-      pure subroutine stripComment(line,comment_mark)
-      character(len=*),intent(inout)      :: line
-      character,intent(in),optional       :: comment_mark
-      !
-      integer     :: idx
-      character   :: comment_delim
-      !
-            if (len(line) == 0) return  ! nothing to do
-            ! Set default comment sign, override if comment_mark is provided by user
-            comment_delim = comment_sign
-            if (present(comment_mark)) comment_delim = comment_mark
-            !
-            idx = index(line,comment_delim)
-            if (idx /= 0) line(idx:) = ' '
-      end subroutine
-
-
       logical function skipComment(nunit,buffer)
       integer,intent(in)            :: nunit
       character(len=*),intent(out)  :: buffer

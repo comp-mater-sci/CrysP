@@ -7,7 +7,6 @@ module altaySub
     use altayConfig
     use hardening
     use altayDynfil
-    use altayMiscutils
     use altayMacroKinematic
     use altayCurAccess
     use logging
@@ -31,7 +30,6 @@ contains
         character(*), parameter :: PROC_NAME = 'initAltay'
 
         integer :: ierr
-        logical :: is_exception
 
         if (present(errmsg)) errmsg = '' ! clear errmsg
         ierr = 0
@@ -80,21 +78,12 @@ contains
 
         ! Close all units.
         close(LEC)
-        close(KLEC)
         close(IMP)
-        close(IMP2)
         close(IMP3)
-        close(IMP4)
         close(IMP5)
-        close(IMP6)
-        call MICROSTR_finalize(info)
-        if (info /= 0) return
         call DYNFIL_finalize(info)
         if (info /= 0) return
         call hardening_finalize()
-        close(IPEBPSTAT)
-        close(IPEBPSDV)
-        ! Finalize altayConfig
         if (allocated(astate%simulCalls)) then
               deallocate(astate%simulCalls)
               astate%nSimulCalls = 0
@@ -111,16 +100,6 @@ contains
 
         fname_prefix = cnf%output_prefix
         info = VEF_ERROR
-        ! UNIT IMP = PRINTER
-        if (cnf%output_config%nlist /= 0) then
-            fname = trim(fname_prefix)//'.LST'
-            open(unit=IMP,file=fname,status='replace',err=9999)
-        endif
-
-        if (cnf%output_config%nres /= 0) then
-            fname = trim(fname_prefix)//'.RES'
-            open(unit=IMP2,file=fname,status='replace',err=9999)
-        endif
 
         if (cnf%output_config%nfiltw /= 0) then
             fname = trim(fname_prefix)//'.TWN'
@@ -131,13 +110,6 @@ contains
             fname = trim(fname_prefix)//'.CUR'
             ! IMP1=output file with successive "current situations"
             open (unit=IMP1,file=fname,status='replace',err=9999)
-        endif
-
-        if (cnf%output_config%NMSS /= 0) then
-            fname = trim(fname_prefix)//'.MSS'
-            ! UNIT IMP5 = homogenized strain-stress
-            open (unit=IMP5,file=fname,status='replace',err=9999)
-            call writeMSSHeader(IMP5,info)
         endif
 
         info = VEF_OK
@@ -198,7 +170,7 @@ contains
 
     !> Write out the current state variables.
     !>
-    !> The call may involve IO units: IMP1 (CUR file), IMP4 (PEBP state file) and IMP5 (MSS file).
+    !> The call may involve IO units: IMP1 (CUR file)
     !> Appropriate control fields in acnf%output_config are checked to decide if the data have to
     !> be actually written to corresponding IO units.
     subroutine outputCurrentState(info)
@@ -207,17 +179,6 @@ contains
         info = VEF_OK
         if (acnf%output_config%nfile == 1) call CURwriteBlock(IMP1,info)
         if (info /= 0) return
-
-        if ((acnf%output_config%nmss == 1) .and. allocated(astate%simulCalls)) then
-            associate (callout => astate%simulCalls(astate%this)%output)
-                  call writeMSSRecord(IMP5, &
-                                      callout%effective_macro_strain, callout%effective_macro_strain_tot, &
-                                      callout%homogenised_slip,callout%homogenised_slip_tot, &
-                                      callout%stress_tensor, &
-                                      callout%taylor_factor, callout%strain_rate_heterogeneity, &
-                                      info)
-            end associate
-        endif
     end subroutine
 
 end module

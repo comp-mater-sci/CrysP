@@ -3,7 +3,6 @@
 module altayMesostructure
     use criMathUtils
     use altayAlgorithms
-    use altayMiscutils
     use definitions
     use altayMacroKinematic
     use altayIOConfig
@@ -19,7 +18,6 @@ module altayMesostructure
 
     public :: &
         GRFIL, &
-        MICROSTR_finalize, &
         CLUSTER1
 
     contains
@@ -30,8 +28,7 @@ module altayMesostructure
 
         integer,intent(out)         :: ierr
         character(len=*),intent(in) :: fnam !< Microstructure file name
-        !> F_mic is a deformation gradient that conceptually
-        !> 'deforms' a spherical grain into an ellipsoidal shape
+        !> F_mic is a deformation gradient that deforms a spherical grain into an ellipsoidal shape
         real(dp), dimension(3,3), intent(in) :: F_mic
 
         integer           :: IGrElm !< Counter for loop over GBs
@@ -43,6 +40,7 @@ module altayMesostructure
         open (unit=NDAT2,file=fnam,status='old')
         read (NDAT2,'(I5,5x,A)') NGrElm,TitMic ! read number of GBs and title
 
+        if (allocated(TmatGr)) deallocate(TmatGr)
         allocate(TmatGr(3,3,NGrElm))
         do IGrElm=1,NGrElm
             read (NDAT2,'(3f10.0)') EulGB%fi2,EulGB%PHI,EulGB%fi1 ! read Euler angles from microstructure file in order: phi2, PHI, phi1
@@ -59,14 +57,6 @@ module altayMesostructure
         ierr = 0
     end subroutine GRFIL
 
-    !> Finalizes the module. The subroutine puts the module variables
-    !> into initial state and deallocates the storage.
-    subroutine MICROSTR_finalize(info)
-         integer,intent(out)     :: info
-
-         if (allocated(TmatGr)) deallocate(TmatGr,stat=info)
-
-    end subroutine
 
     subroutine CLUSTER1(IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
     !   TDC is the normalized von-Mises equivalent strain rate
@@ -79,7 +69,7 @@ module altayMesostructure
 
         real(dp) :: GRPAR(3,3), PrDir(2,3),TDCGr(3,3), vec1(3),vec2(3),AL(3),AA(3)
         real(dp) :: x, u, dlength, dot1, dot2, TGANGLE
-        integer :: i,j
+        integer :: i
         real(dp), parameter, dimension(3,3) :: &
             relaxI = reshape([0._dp, 0._dp, 1._dp, &
                               0._dp, 0._dp, 0._dp, &
@@ -92,10 +82,7 @@ module altayMesostructure
         GRPAR = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
         ! Calculation of volume affected by the surface
         AL=norm2(GRPAR,1)
-        ! Box product
-        vec1(1)=GRPAR(2,2)*GRPAR(3,3)-GRPAR(3,2)*GRPAR(2,3)
-        vec1(2)=GRPAR(3,2)*GRPAR(1,3)-GRPAR(1,2)*GRPAR(3,3)
-        vec1(3)=GRPAR(1,2)*GRPAR(2,3)-GRPAR(2,2)*GRPAR(1,3)
+        vec1=cross(GRPAR(:,2),GRPAR(:,3))
         ! The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3;
         ! for very flattened grains, it should tend to 1.
         u=abs(sum(GRPAR(:,1)*vec1))*0.25D0/product(AL)
@@ -117,28 +104,20 @@ module altayMesostructure
             !         +2.0D0*(AL(1)+AL(2)-2.0_dp*AL(3))*AL(3)**2 &
             !         +4.D0*AL(3)**3/3.D0)
         else
-            if(AL(1) >= AL(2))then
-                GEWF=u*(2.D0*(AL(1)-AL(2))*AL(2)**2+4.D0*AL(2)**3/3.D0)
-            else
-                GEWF=u*(2.D0*(AL(2)-AL(1))*AL(1)**2+4.D0*AL(1)**3/3.D0)
-            endif
+            GEWF = u*merge(2.D0*(AL(1)-AL(2))*AL(2)**2+4.D0*AL(2)**3/3.D0, &
+                           2.D0*(AL(2)-AL(1))*AL(1)**2+4.D0*AL(1)**3/3.D0, &
+                           AL(1) >= AL(2))
         endif
 
         ! Construction of orientation matrices for frames associated to the interfaces
-        Tprinc(1,1:3)=GRPAR(1:3,1)
         ! Orientation of interfaces containing axes
-        ! Normal axis: (vector product)
-        Tprinc(3,1)=GRPAR(2,1)*GRPAR(3,2)-GRPAR(3,1)*GRPAR(2,2)
-        Tprinc(3,2)=GRPAR(3,1)*GRPAR(1,2)-GRPAR(1,1)*GRPAR(3,2)
-        Tprinc(3,3)=GRPAR(1,1)*GRPAR(2,2)-GRPAR(2,1)*GRPAR(1,2)
-        !       Orientation of 2nd axis:(vector product)
-        Tprinc(2,1)=Tprinc(3,2)*Tprinc(1,3)-Tprinc(3,3)*Tprinc(1,2)
-        Tprinc(2,2)=Tprinc(3,3)*Tprinc(1,1)-Tprinc(3,1)*Tprinc(1,3)
-        Tprinc(2,3)=Tprinc(3,1)*Tprinc(1,2)-Tprinc(3,2)*Tprinc(1,1)
+        Tprinc(1,1:3)=GRPAR(1:3,1)
+        Tprinc(3,1:3)=cross(GRPAR(:,1),GRPAR(:,2))
+        Tprinc(2,1:3)=cross(Tprinc(3,:),Tprinc(1,:))
         ! Normalisation
-        do j=1,3
-            x=norm2(Tprinc(j,:))
-            Tprinc(j,:)=Tprinc(j,:)/x
+        do i=1,3
+            x=norm2(Tprinc(i,:))
+            Tprinc(i,:)=Tprinc(i,:)/x
         enddo
 
         dlength=norm2(MacroDefRate%StrainModevM)

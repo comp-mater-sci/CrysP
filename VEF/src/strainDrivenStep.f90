@@ -115,20 +115,16 @@ contains
     integer function StrainDrivenStep_setUp(this) result(info)
     class(StrainDrivenStep),intent(inout)   :: this
     !
-    double precision :: step_strain_norm, volumetric_strain_norm, volumetric_strain_fraction
-    !
-    ! Volumetric strain fraction that triggers a warning (0.1%)
-    double precision,parameter :: volumetric_strain_fraction_threshold = 0.001
-    double precision,parameter :: auto_increment_norm = 0.02
+    double precision :: step_strain_norm
     !
         info = VEF_ERROR
         associate(config => this%config)
             ! Make the step traceless: decompose into volumetric strain rate
             ! and strain rate deviator
-            this%volumetric_strain%t = trace(config%deformation_rate) / 3.D0 * unit_sr_tensor%t
+            this%volumetric_strain%t = trace(config%deformation_rate) / 3._DP * unit_sr_tensor%t
             this%deviatoric_strain%t = config%deformation_rate%t - this%volumetric_strain%t
             step_strain_norm = norm2(this%deviatoric_strain%t)
-            if (step_strain_norm < epsilon(0.D0)) then
+            if (step_strain_norm < epsilon(0._DP)) then
                 write(display_unit, 900) 'Norm of the deviatoric part of prescribed deformation is too small.'
                 return
             endif
@@ -136,10 +132,8 @@ contains
         info = VEF_OK
     !
 #define MSG_GROUP_ERRORS
-#define MSG_GROUP_RULERS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
     !
     end function
 
@@ -176,8 +170,7 @@ contains
     double precision :: step_strain_norm
     integer :: n_increments
     ! Volumetric strain fraction that triggers a warning (0.1%)
-    double precision,parameter :: volumetric_strain_fraction_threshold = 0.001
-    double precision,parameter :: auto_increment_norm = 0.02
+    double precision,parameter :: auto_increment_norm = 0.02_DP
     !
         info = this%StrainDrivenStep%setUp()
         if (info /= VEF_OK) return
@@ -197,10 +190,8 @@ contains
         endif
     !
 #define MSG_GROUP_ERRORS
-#define MSG_GROUP_RULERS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
     !
     end function
 

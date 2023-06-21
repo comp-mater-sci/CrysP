@@ -31,8 +31,6 @@ implicit none
 
         procedure,pass(this)    :: readConfig => ASRModule_readConfig
 
-        procedure,pass(this)    :: printConfig => ASRModule_printConfig
-
         procedure,pass(this)    :: run => ASRModule_run
 
         !>@}
@@ -91,16 +89,6 @@ contains
     end function
 
 
-    integer function ASRModule_printConfig(this,outunit) result (info)
-    implicit none
-    class(ASRModule),intent(in)         :: this
-    integer,intent(in)                  :: outunit
-
-        info = VEF_OK
-
-    end function
-
-
     subroutine ASRModule_run(this,info)
     implicit none
     class(ASRModule),intent(inout)          :: this
@@ -114,7 +102,7 @@ contains
     type(IncrementationControl)     :: icv
     double precision,dimension(rot_matrix_dim,rot_matrix_dim)   :: Mrot
     !
-    integer     :: j, istep, nsteps, ofunit
+    integer     :: istep, nsteps, ofunit
     !
         ! Super-class first
         RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
@@ -167,18 +155,9 @@ contains
             end associate
         enddo
 
-        ! Formats
-        3310 format('Input stress tensor, in the material reference frame:')
-        3400 format(T15,A,T54,A,T85,A)
-        ! 410 format('| SmScaled',T40,'| SmIdent',T80,'|SonA')
-        3411 format(3(E10.3,1X),' | ',3(E10.3,1X),' | ',3(E10.3,1X))
-
-        1600 format(/,'Step ',I0, ' out of ',I0)
-#define MSG_GROUP_RULERS
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
 
     end subroutine
 

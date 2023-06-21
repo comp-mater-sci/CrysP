@@ -28,16 +28,16 @@ implicit none
 
         class(range_type),pointer                 :: ptr_w_range
 
-        double precision,dimension(sr_symm_voigt_dim,nbase) :: base_vectors = reshape( &
-                                            [1., 0., 0., 0., 0., 0., & ! First base vector
-                                             0., 1., 0., 0., 0., 0., & ! second base vector
-                                             0., 0., 0., 0., 0., 0.], & ! offset vector (zeros)
-                                            [sr_symm_voigt_dim,nbase])
+        double precision,dimension(sr_symm_voigt_dim,nbase) :: base_vectors = real(reshape( &
+                                            [1, 0, 0, 0, 0, 0, & ! First base vector
+                                             0, 1, 0, 0, 0, 0, & ! second base vector
+                                             0, 0, 0, 0, 0, 0], & ! offset vector (zeros)
+                                            [sr_symm_voigt_dim,nbase]),DP)
 
         logical                                   :: do_scaling = .true.
 
         double precision,dimension(sr_symm_voigt_dim) :: scaling_vector = &
-                                            [1., 0., 0., 0., 0., 0.]
+                                            real([1, 0, 0, 0, 0, 0],DP)
 
         logical                                   :: normalizeSm = .false.
 
@@ -46,8 +46,6 @@ implicit none
         !>@{ \name Interface methods of AbstractModule
 
         procedure,pass(this)    :: readConfig => YldModule_readConfig
-
-        procedure,pass(this)    :: printConfig => YldModule_printConfig
 
         procedure,pass(this)    :: run => YldModule_run
         !>@}
@@ -112,7 +110,6 @@ contains
         !
         ! Override the requests for outputs:
         this%altay%output_config%nfile = 0   ! texture
-        this%altay%output_config%npebp = 0   ! KOST1x state
         this%output%outputRequest = .false.       ! idem.
         !
         info = VEF_OK
@@ -120,20 +117,6 @@ contains
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-    end function
-
-
-    integer function YldModule_printConfig(this, outunit) result (info)
-    implicit none
-    class(YldModule),intent(in)         :: this
-    integer,intent(in)                  :: outunit
-    !
-    character(len=6),dimension(nbase)    :: veclabels = [ character(len=6) :: 'base','base','offset' ]
-    integer :: i
-    !
-        info = this%StressDrivenModule%printConfig(outunit)
-        if (info /= VEF_OK) return
-        info = VEF_OK
     end function
 
 
@@ -253,18 +236,9 @@ contains
         close(ofunit)
         info = VEF_OK
     !
-    3200 format(28('-'))
-    3201 format('Theta angle =',T20,F8.3)
-    2500 format(1X, A10,    '|',4(A12,'|'))
-    2501 format(1X, F10.3,  1X, 4(E12.5,1X))
-    2510 format('|',10('-'),'|',4(12('-'),'|'))
-    1600 format('Yield locus point at theta:',1X, F0.2, 1X, 'computed, residual error: ', E10.3)
-    !
-#define MSG_GROUP_RULERS
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
     !
     end subroutine
 

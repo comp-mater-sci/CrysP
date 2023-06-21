@@ -125,7 +125,7 @@ contains
     subroutine normaliz(prdir)
         real(dp), dimension(3), intent(inout)   :: prdir
         real(dp)                                :: x
-        real(dp), parameter     :: RESOLUTION = 0.5e-5
+        real(dp), parameter     :: RESOLUTION = 0.5e-5_DP
 
         x = norm2(prdir)
         if (x > RESOLUTION) then
@@ -160,7 +160,7 @@ contains
 
         call dgelsy(N1, N2, 1, A_COPY, M1, BA, M2, jpvt, 0.01_dp, rank, work, size(work), info)
 
-        res = 0.0
+        res = 0.0_DP
         do i=1,N1
             y = sum(A(i,1:N2)*BA(1:N2))
             RES = RES + (y - B(i))**2

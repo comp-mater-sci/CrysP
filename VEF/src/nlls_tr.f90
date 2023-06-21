@@ -2,6 +2,7 @@
 ! Provide modules: MKL_RCI_TYPE and MKL_RCI
 include 'mkl_rci.f90'
 module nllsTR
+use definitions
 use mkl_rci
 
       !> Solution at given point. It consists of: 1) the point, 2) function value, and 3) Jacobi matrix.
@@ -133,14 +134,14 @@ use mkl_rci
             !> Array of parameters controling stop criteria
             !>
             !> Various convergence criteria are evaluated, see MKL documentation for details
-            double precision,dimension(6)                :: eps = 1.e-10
+            double precision,dimension(6)                :: eps = 1.e-10_DP
             integer                                      :: iter1 = 300 !< Maximum number of iterations
             integer                                      :: iter2 = 50  !< Maximum number of trial steps
-            double precision                             :: init_step = 100.0  !< Initial step bound factor
+            double precision                             :: init_step = 100.0_DP  !< Initial step bound factor
             !> Lower constraints for design vector
-            double precision                             :: lo_limit = 0.D0
+            double precision                             :: lo_limit = 0._DP
             !> Upper constraints for design vector
-            double precision                             :: up_limit = 1.D2
+            double precision                             :: up_limit = 1.e2_DP
 
             !> Helper for problems with invariant Jacobi matrix
             !>

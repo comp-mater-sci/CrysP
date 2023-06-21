@@ -15,6 +15,4 @@ module definitions
     end enum
     integer,parameter       :: display_unit = output_unit
 
-    character,parameter     :: default_comment_sign = '#'
-
 end module definitions

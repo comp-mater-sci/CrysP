@@ -6,7 +6,6 @@ module dmcBasicModule
     use criUncomment
     use criConfigReader
     use criMathUtils
-    use criPath, only: max_pathlen, splitExt
     use dmcAbstractModule
     use altayConfig, only: altayConfigData
     use commonConfig
