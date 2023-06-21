@@ -20,7 +20,7 @@ module altaySliprate
         !       rates must be minimal.
         !
         integer, intent(in) :: M11,IDIMXX,NACTIV,INDLP(8)
-        real(dp), intent(in) :: TLXX,A1(5,96),TAURLP(8),BB8(5),SLIPLP(8)
+        real(dp), intent(in) :: TLXX,A1(:,:),TAURLP(8),BB8(5),SLIPLP(8)
         integer, intent(inout) :: INDACT(8)
         real(dp), intent(inout) :: SGNN(IDIMXX),XX(IDIMXX)
 
@@ -122,7 +122,7 @@ module altaySliprate
     subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A8)
 
         integer, intent(in) :: IND(8), NN,IDIMXX
-        real(dp),intent(in) :: A8(5,96),BB8(5),sgnn(IDIMXX)
+        real(dp),intent(in) :: A8(:,:),BB8(5),sgnn(IDIMXX)
         integer, intent(out) :: ineg
         real(dp), intent(out) :: SLPR(8),sumsq
 

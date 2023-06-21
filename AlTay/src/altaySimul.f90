@@ -15,8 +15,8 @@ module altaySimul
     implicit none
     private
 
-    real(dp), private :: HGAMTOT,& !< homogenized slip accumulated over calls
-        XM(5,96)
+    real(dp), private, allocatable :: HGAMTOT,& !< homogenized slip accumulated over calls
+        XM(:,:)
     integer, private :: M11,NFILE1,NFILTW
     integer, allocatable :: seed(:)
 
