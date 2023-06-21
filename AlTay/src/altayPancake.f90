@@ -1,6 +1,5 @@
 module altayPancake
     use definitions
-    use altayMiscutils
     use criMathUtils
     use altayMesostructure
     use altayIOConfig
@@ -8,8 +7,6 @@ module altayPancake
     use altayAlgorithms
     use altayMacroKinematic
     use hardening
-    use hardening_types
-    use hardening_model_dsh
     use logging
 
     implicit none
@@ -24,11 +21,11 @@ module altayPancake
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-    subroutine pancak2(NGL,B,DI1,S33,RHOS33,RHOA33,IPR,GEWF,A1,MacroDefRate,MacroDefState,NACTIV,&
-                       SLIPLP,TLXX,TAURLP,INDACT,INDLP,IOR,ISTP,NBLOC,TRFb,GMMab,NGR,NRL,laml,BB8,CC,M11)
+    subroutine pancak2(NGL,B,DI1,S33,RHOS33,RHOA33,GEWF,A1,MacroDefRate,MacroDefState,NACTIV,&
+                       SLIPLP,TLXX,TAURLP,INDACT,INDLP,IOR,TRFb,GMMab,NGR,NRL,laml,BB8,CC,M11)
         type(DeformationRate),intent(in) :: MacroDefRate
         type(DeformationState),intent(in):: MacroDefState
-        integer, intent(in) :: NGL,IPR,DI1(5),ISTP,NBLOC,NGR,NRL,laml,IOR,M11
+        integer, intent(in) :: NGL,DI1(5),NGR,NRL,laml,IOR,M11
         real(dp),dimension(3,3),intent(out):: S33, RHOS33, RHOA33,BB8(5)
         integer, intent(out) :: NACTIV
         integer, intent(inout) :: INDACT(8),INDLP(8)
@@ -39,30 +36,25 @@ module altayPancake
         real(dp),dimension(5) :: RHOS, RHOA
         integer ::  DI(10)
         real(dp) :: UU(5*NGR,5*NGR),TPrinc(3,3)
-        real(dp) :: C2(3,3), rls(3,3), rla(3,3), C3(3,3), spanv(5)
-        real(dp), save :: B3(10,3)=0.0_dp, XX(194),STRSS(10),BB(10),CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
-                    B8(5,2),UBUF(10),GAMR(2),TAURL(2)=0.0_dp,XXTOT
+        real(dp) :: C2(3,3), rls(3,3), rla(3,3), C3(3,3), spanv(5), XXTOT, DTAU(194), STRSS(10), TAUR(194)
+        real(dp), save :: B3(10,3)=0.0_dp, XX(194),BB(10),CCC(2,194),DTAU1(194),TAUR1(194),B8(5,2),UBUF(10),GAMR(2)
         ! rls and rla are unit relaxation tensors in crystal frame (symmetric and anti-sym. part)
         !     Definition of the two relaxations, representing a
         !     13-simple shear and a 23-simple shear, respectively:
-        real(dp), dimension(3,3,3), parameter :: relax = reshape([ &
+        real(dp), dimension(3,3,2), parameter :: relax = reshape([ &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     1.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0,                                   &
-                    0.0D0, 1.0D0, 0.0D0,                                   &
-                    0.0D0, 0.0D0, 0.0D0,                                   &
-                    0.0D0, 0.0D0, 0.0D0,                                   &
-                    0.0D0, 0.0D0, 0.0D0],shape(relax))
-        real(dp), dimension(2,3), parameter ::  PLUMIN = reshape([&
+                    0.0D0, 1.0D0, 0.0D0],shape(relax))
+        real(dp), dimension(2,2), parameter ::  PLUMIN = reshape([&
                     1.0D0,-1.0D0,                                          &
-                    1.0D0,-1.0D0,                                          &
-                    1.0D0, 1.0D0], shape(PLUMIN)) !first index: # of grain, second index: #of relaxation
+                    1.0D0,-1.0D0], shape(PLUMIN)) !first index: # of grain, second index: #of relaxation
         real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp, SQR2=sqrt(0.5_dp)
-        integer :: info,M12,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II
+        integer :: info,M12,N,M2,IL,L1,IRL,I,K1,IG,JJ,II
         integer, save :: IGrElm
-        
+
         character(*), parameter :: PROC_NAME = 'pancak2'
 
         if (IOR == 1) IGrElm=0
@@ -76,11 +68,11 @@ module altayPancake
             IGrElm=IGrElm+1
             if (IGrElm > NGrElm) IGrElm=1
             if (NGR == 1) then
-                Tprinc = unitMatrix
+                Tprinc = unit_sr_Matrix
             else
                 call cluster1(IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
             endif
-            CCC(1:2,M2+1:M12)=0.0
+            CCC(1:2,M2+1:M12)=0.0_DP
             UU = 0.0_dp
             DI(1:5) = DI1
             DI(6:10) = DI1+M11
@@ -146,7 +138,7 @@ module altayPancake
                 STRSS=UBUF
             else
                 do IRL=1,NRL
-                    CCC(1:2,M2+IRL)=TAURL(IRL)
+                    CCC(1:2,M2+IRL)=0.0_DP
                 end do
                 call TBH(A = A1(1:N,1:M12), &
                          D = BB(1:N), &
@@ -161,17 +153,14 @@ module altayPancake
                 ! GAMR will contain the relaxed shears:
                 gamr(1:NRL)=XX(M2+1:M2+NRL)
             endif
-            ! Check whether 1 grain does not deform at all.
-            do IG=0,NGR-1
-                XXTOT=sum(abs(xx(1+M11*IG:M11+M11*IG)))
-                if (XXTOT < TLXX) goto 213
-            end do
-            ! If all grains have a non-zero slip, do the following:
-            DTAU1=DTAU
-            TAUR1=TAUR
-            UBUF=STRSS
- 213    endif
-        !     From here on, output is produced for grain number "laml"
+            ! Check whether all grains deform
+            if (all([(sum(abs(xx(1+M11*IG:M11+M11*IG))),IG=0,NGR-1)]>=TLXX)) then
+                DTAU1=DTAU
+                TAUR1=TAUR
+                UBUF=STRSS
+            endif
+        endif
+        ! From here on, output is produced for grain number "laml"
         jj=M11*(laml-1)
         CC(1:2,1:M11)=CCC(1:2,jj+1:jj+M11)
         ii=5*(laml-1)

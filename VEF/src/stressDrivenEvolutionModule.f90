@@ -95,7 +95,7 @@ contains
     integer :: i, n_roots
     double precision,dimension(2) :: xi
     logical :: stop_flag, acceptable_point, acceptable_point_retry
-    double precision,parameter :: stretch_ratio = 1e-3
+    double precision,parameter :: stretch_ratio = 1e-3_DP
     !
         ! Prepare non-default incrementation controls if requested
         if (present(incrementation_control)) then
@@ -273,9 +273,6 @@ contains
     integer,intent(out)                                 :: info
     !
         info = VEF_OK
-#define MSG_GROUP_RULERS
-#include "msgFormats.inc"
-#undef MSG_GROUP_RULERS
     !
     end subroutine
 
@@ -288,8 +285,6 @@ contains
     class(IncrementationControl),intent(inout)          :: icv
     type(IncrementOutputRecord),intent(in)              :: output_record
     integer,intent(out)                                 :: info
-    !
-    integer :: j
     !
                 info = VEF_OK
     !

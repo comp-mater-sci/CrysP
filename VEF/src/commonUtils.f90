@@ -116,11 +116,11 @@ contains
 
         select type(num)
             type is (integer)
-                write (str, '(I0)'), num
+                write (str, '(I0)') num
             type is (real(dp))
-                write (str, '(G10.4)'), num
+                write (str, '(G10.4)') num
         end select
-        
+
         str = trim(str)
     end function
 end module

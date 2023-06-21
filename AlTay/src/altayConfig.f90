@@ -4,7 +4,7 @@ module altayConfig
     use hardening_types
     use altayTexFormats
     use definitions
-    use altayMiscutils
+    use criMathUtils
     use parameters
 
     implicit none
@@ -73,15 +73,8 @@ module altayConfig
     end type
 
     type :: outputConfig
-        integer                                   :: nlist = 0 !< (SIMUL) NLIST (Make an output listing 0 or 1)
         integer                                   :: nfile = 0 !< (SIMUL) NFILTW (Make output files 0 or 1)
         integer                                   :: nfiltw = 0!< (SIMUL) IPR  0-3 Print switch
-        integer                                   :: ipr = 0   !< (SIMUL) NFILE (Make output files 0 or 1) (CUR output)
-        integer                                   :: nres = 0  !< (SIMUL) NRES (Make output for stresses with per-grain resolution)
-        integer                                   :: npebp = 0 !< (SIMUL) NPEBP (Make state variable file for DSH model)
-        integer                                   :: nmss = 0  !< (SIMUL) NMSS (output of macroscopic homogenized strain-stress)
-        logical                                   :: use_curfile = .false.
-        logical                                   :: use_cubfile = .false.
     end type
 
    type :: simulData
@@ -90,7 +83,7 @@ module altayConfig
         !>   - 1 - FC Taylor
         !>   - 2 - Alamel
         integer                   :: NGR = 2 ! Number of grains in the cluster
-        real(dp), dimension(3,3) :: FMicro = unitMatrix
+        real(dp), dimension(3,3) :: FMicro = unit_sr_Matrix
     end type
 
     !> Root-level configuration structure of Altay

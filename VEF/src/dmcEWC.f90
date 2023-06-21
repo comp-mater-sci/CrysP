@@ -30,10 +30,10 @@ implicit none
 
         double precision,dimension(sr_symm_voigt_dim)   :: reference_stress_mode = 0.D0
 
-        double precision,dimension(sr_symm_voigt_dim,n_base_vectors)   :: base_vectors = reshape( &
-                                                [1., 0., 0., 0., 0., 0., & ! First base vector
-                                                 0., 1., 0., 0., 0., 0.], & ! second base vector
-                                                [sr_symm_voigt_dim, n_base_vectors])
+        double precision,dimension(sr_symm_voigt_dim,n_base_vectors)   :: base_vectors = real(reshape( &
+                                                [1, 0, 0, 0, 0, 0, & ! First base vector
+                                                 0, 1, 0, 0, 0, 0], & ! second base vector
+                                                [sr_symm_voigt_dim, n_base_vectors]),DP)
 
         !> Range of angles that provide stress ratios
         class(range_type),pointer               :: ptr_theta_range => null()
@@ -52,8 +52,6 @@ implicit none
         !>@{ \name Interface methods of AbstractModule
 
         procedure,pass(this)    :: readConfig => EWCModule_readConfig
-
-        procedure,pass(this)    :: printConfig => EWCModule_printConfig
 
         procedure,pass(this)    :: run => EWCModule_run
 
@@ -133,7 +131,6 @@ contains
 
         ! Override the requests for outputs:
         this%altay%output_config%nfile = 0   ! texture
-        this%altay%output_config%npebp = 0   ! KOST1x state
         this%output%outputRequest = .false.       ! idem.
 
         info = VEF_OK
@@ -144,18 +141,6 @@ contains
     !
     end function
 
-
-
-    integer function EWCModule_printConfig(this,outunit) result (info)
-    implicit none
-    class(EWCModule),intent(in)         :: this
-    integer,intent(in)                  :: outunit
-    !
-    !integer :: ioerr
-    !
-        info = VEF_OK
-            !
-    end function
 
 
     subroutine EWCModule_run(this,info)
@@ -290,14 +275,9 @@ contains
             info = this%fileOutput(vPlasticWorkLevels, results, use_work_levels=.true.)
         endif
     !
-    1500 format(/,'Reference sample')
-    1600 format(/,'Sample ', I0, ' out of ',I0, ', sample orientation theta: ',F0.2)
-    !
-#define MSG_GROUP_RULERS
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
     !
     end subroutine
 
