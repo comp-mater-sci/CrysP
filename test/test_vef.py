@@ -52,6 +52,7 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
     except: FileNotFoundError
     
     shutil.copy(TEST_ROOT/'texture.smt', TEST_RUN)
+    shutil.copy(TEST_ROOT/'equiaxed.smt', TEST_RUN)
     shutil.copy(TEST_ROOT/f'../data/{slip_system}.pre', TEST_RUN/f'{slip_system}.pre')
     if hardening_model == 'BP' or hardening_model == 'PEBP_SCREW' or hardening_model == 'PEBP_LOOP':
         with open(TEST_RUN/'DSHparaset.txt','w') as dsh_config:
