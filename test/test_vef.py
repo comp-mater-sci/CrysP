@@ -24,6 +24,7 @@ GENERATED_DATA = []
 TEST_ROOT = Path.cwd()
 TEST_RUN = TEST_ROOT/'run'
 TEST_REF = TEST_ROOT/'reference'
+TEST_INPUT = TEST_ROOT/'input'
 
 #Configurations that can be tested
 MODES = ['ADP', 'ASR', 'EWC','QRS','UDSA','YLD']
@@ -51,9 +52,9 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
         os.remove(TEST_RUN/'out.CUR')
     except: FileNotFoundError
     
-    shutil.copy(TEST_ROOT/'texture.smt', TEST_RUN)
-    shutil.copy(TEST_ROOT/'equiaxed.smt', TEST_RUN)
-    shutil.copy(TEST_ROOT/f'../data/{slip_system}.pre', TEST_RUN/f'{slip_system}.pre')
+    shutil.copy(TEST_INPUT/'texture.smt', TEST_RUN)
+    shutil.copy(TEST_INPUT/'equiaxed.smt', TEST_RUN)
+    shutil.copy(TEST_INPUT/f'{slip_system}.pre', TEST_RUN/f'{slip_system}.pre')
     if hardening_model == 'BP' or hardening_model == 'PEBP_SCREW' or hardening_model == 'PEBP_LOOP':
         with open(TEST_RUN/'DSHparaset.txt','w') as dsh_config:
             dsh_config.write(conf.DSH_CONFIG)
