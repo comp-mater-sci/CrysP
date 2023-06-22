@@ -151,7 +151,5 @@ module altayMesostructure
             Tprinc(1,1:3)=vec1
             Tprinc(2,1:3)=vec2
         endif
-
     end subroutine
-
 end module

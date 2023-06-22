@@ -70,7 +70,7 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
 
         if mode == 'UDSA':
             with open('out.uds', 'w') as out:
-                for orientation in [0,90]:
+                for orientation in [0,45,90]:
                     with open(f'out_{orientation}_000.uds','r') as out_oriented:
                         if orientation == 0:
                             out.write(out_oriented.read())

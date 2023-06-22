@@ -7,8 +7,15 @@ ADP_INCREMENT = 'fixed\n'               \
                 + '4\n'                 \
                 + '0.1 0.25 0.5 0.9'    
 
+CUSTOM_SOLVER_SETTINGS =    'False\n'           \
+                            + '0.2\n'           \
+                            + 'True\n'          \
+                            + '0.1       0.25\n' \
+                            + 'False'                                  
+
 MODE_CONFIG =  {'ADP':                                              \
-                    '3\n'                                           \
+                    'True\n'                                        \
+                    + '3\n'                                           \
                     + 'deformation\n'                               \
                     + '0.5 -0.25 -0.25 0.0 0.0 0.0 0.0 0.0 0.0\n'   \
                     + 'True\n'                                      \
@@ -22,8 +29,9 @@ MODE_CONFIG =  {'ADP':                                              \
                     + '0.1 -0.1 0.0 0.0 0.0 0.0\n'                  \
                     + 'True\n'                                      \
                     + ADP_INCREMENT,                                \
-                'ASR':                                              \
-                    '0.0 0.0 0.0\n'                                 \
+                'ASR':
+                    CUSTOM_SOLVER_SETTINGS + '\n'                   \
+                    + '0.0 0.0 0.0\n'                                 \
                     + '2\n'                                         \
                     + '1.0 1.0 0.0 0.0 0.0 0.0\n'                   \
                     + 'True\n'                                      \
@@ -32,7 +40,8 @@ MODE_CONFIG =  {'ADP':                                              \
                     + 'True\n'                                      \
                     + DEFAULT_INCREMENT,                            \
                'EWC':                                               \
-                    'reference\n'                                   \
+                    CUSTOM_SOLVER_SETTINGS + '\n'                   \
+                    + 'reference\n'                                   \
                     + '1.0 0.0 0.0 0.0 0.0 0.0\n'                   \
                     + DEFAULT_INCREMENT + '\n'                      \
                     + 'uniform\n'                                   \
@@ -42,21 +51,24 @@ MODE_CONFIG =  {'ADP':                                              \
                     + '2\n'                                         \
                     + 'True',                                       \
                'QRS':                                               \
-                    'uniform\n'                                     \
+                    CUSTOM_SOLVER_SETTINGS + '\n'                   \
+                    + 'uniform\n'                                     \
                     + '0.0    90.0   5.0\n'                         \
                     + 'True',                                       \
                'UDSA':                                              \
-                    'inplane\n'                                     \
+                    CUSTOM_SOLVER_SETTINGS + '\n'                   \
+                    + 'inplane\n'                                     \
                     + 'discrete\n'                                  \
                     + '2\n'                                         \
-                    + '0.0 90.0\n'                             \
+                    + '0.0 45.0 90.0\n'                             \
                     + 'StrainTensorComponent\n'                              \
                     + '0.4\n'                                       \
                     + '0.05\n'                                      \
                     + 'tension\n'                                   \
                     + 'True',                                       \
                'YLD':                                               \
-                    'uniform\n'                                     \
+                    CUSTOM_SOLVER_SETTINGS + '\n'                   \
+                    + 'uniform\n'                                     \
                     + '0.0 360.0 36.0\n'                            \
                     + 'True'}
 
@@ -109,5 +121,4 @@ def generate_config(mode, algorithm, slip_system, hardening_model):
            + 'True\n'                                   \
            + 'False\n'                                  \
            + HARDENING_CONFIG[hardening_model] + '\n'   \
-           + 'True\n' \
            + MODE_CONFIG[mode]
