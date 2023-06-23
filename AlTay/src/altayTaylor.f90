@@ -112,12 +112,11 @@ module altayTaylor
         integer, intent(out) :: ITW
 
         real(dp), dimension(3) :: TRC,ROT
-        real(dp), dimension(3,3) :: RCC,RCcryst,rhossaTot,TDC,RHOAcrys,C1
+        real(dp), dimension(3,3) :: RCcryst,rhossaTot,TDC,RHOAcrys
         real(dp), dimension(96), save :: SGNN,GAMdot
         integer :: info, i,j
         real(dp) :: rndm,Mgrain,ratlon,x,VOLFR(96)
         real(dp), parameter :: ddt=1.0_DP
-        type(EulerAngles) :: Euler
 
 
         call SLIPRAT(M111,M111,GAMdot(1:M111),SGNN(1:M111),MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
@@ -136,16 +135,16 @@ module altayTaylor
         ROT = matmul(B1(:,1:M111),GAMdot(1:M111))
 
         do J=1,3
-            C1(J,J)=1.0_dp
+            C2(J,J)=1.0_dp
         end do
-        C1(3,2)=ROT(1)-TRC(1)
-        C1(1,3)=ROT(2)-TRC(2)
-        C1(2,1)=ROT(3)-TRC(3)
-        C1(2,3)=-C1(3,2)
-        C1(3,1)=-C1(1,3)
-        C1(1,2)=-C1(2,1)
+        C2(3,2)=ROT(1)-TRC(1)
+        C2(1,3)=ROT(2)-TRC(2)
+        C2(2,1)=ROT(3)-TRC(3)
+        C2(2,3)=-C2(3,2)
+        C2(3,1)=-C2(1,3)
+        C2(1,2)=-C2(2,1)
         ! KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
-        C2 = rotmat(EuleranglesType(matmul(C1,TRF))) ! MD: conversion to-from Euler angles required to avoid failing tests due to floating point arithmetic
+        C2 = rotmat(EuleranglesType(matmul(C2,TRF))) ! MD: conversion to-from Euler angles required to avoid failing tests due to floating point arithmetic
         ITW=0
         !Choose at random if the crystal orientation should be considered that of the original or twinned part.
         !See Van Houtte et. al, 1977
@@ -160,7 +159,6 @@ module altayTaylor
             call RANDOM_NUMBER(RNDM)
             do I=1,NTW
                 if (RNDM < VOLFR(I)) then
-                    RCC = C2
                     TDC(1,1)=B2(1,I)
                     TDC(2,1)=B2(2,I)
                     TDC(1,2)=B2(2,I)
@@ -170,7 +168,7 @@ module altayTaylor
                     TDC(3,2)=B2(5,I)
                     TDC(2,3)=B2(5,I)
                     TDC(3,3)=B2(6,I)
-                    C2 = matmul(TDC,RCC)
+                    C2 = matmul(TDC,C2)
                     ITW=I
                     exit
                 end if
