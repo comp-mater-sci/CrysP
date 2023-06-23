@@ -144,7 +144,7 @@ module altayTaylor
         C2(3,1)=-C2(1,3)
         C2(1,2)=-C2(2,1)
         ! KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
-        C2 = rotmat(EuleranglesType(matmul(C2,TRF))) ! MD: conversion to-from Euler angles required to avoid failing tests due to floating point arithmetic
+        C2 = matmul(C2,TRF)
         ITW=0
         !Choose at random if the crystal orientation should be considered that of the original or twinned part.
         !See Van Houtte et. al, 1977
