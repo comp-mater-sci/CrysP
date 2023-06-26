@@ -9,10 +9,10 @@ def pytest_addoption(parser):
 
 @pytest.fixture
 def update(request):
-    "Store current results as new reference results."
+    """Store current results as new reference results."""
     return request.config.getoption("--update")
 
 @pytest.fixture
 def margin(request):
-    "Set sensitivity level as percentage of max. deviation from reference."
+    """Set sensitivity level as percentage of max. deviation from reference."""
     return request.config.getoption("--margin")
