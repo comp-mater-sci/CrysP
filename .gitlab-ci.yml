@@ -25,7 +25,26 @@ gcc:
     AR=xiar ./build.sh -c gfortran -b debug
     AR=xiar ./build.sh -c gfortran -b release -t
     cd test
-    pytest --update=logout -v
+    pytest --update=logout -v -k fcc12 -k bcc24
+
+gcc48:
+    image: gcc
+    script: |
+        wget -q https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        echo "deb https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+        apt-get update
+        apt-get install -y \
+        intel-oneapi-mkl-devel \
+        cmake \
+        python3-pytest python3-pandas python3-numpy
+        source /opt/intel/oneapi/setvars.sh
+        export PATH=${PATH}:${PWD}/VEF/bin
+        AR=xiar ./build.sh -c gfortran -b debug
+        AR=xiar ./build.sh -c gfortran -b release -t
+        cd test
+        pytest --update=logout -v -k bcc48
 
 intel:
   image: intel/oneapi-hpckit:devel-ubuntu22.04
@@ -38,4 +57,18 @@ intel:
     AR=xiar ./build.sh -c ifort -b debug
     AR=xiar ./build.sh -c ifort -b release -t
     cd test
-    pytest --update=logout -v
+    pytest --update=logout -v -k fcc12 -k bcc24
+
+intel48: 
+  image: intel/oneapi-hpckit:devel-ubuntu22.04
+  script: |
+    apt-get update
+    apt-get install -y \
+    python3-pip
+    pip install pandas pytest numpy
+    export PATH=${PATH}:${PWD}/VEF/bin
+    AR=xiar ./build.sh -c ifort -b debug
+    AR=xiar ./build.sh -c ifort -b release -t
+    cd test
+    pytest --update=logout -v -k bcc48
+
