@@ -33,7 +33,7 @@ module altayTaylor
     subroutine TAYLOR1(M111,A1)
 
         integer, intent(out) :: M111  ! < total number of systems in slip system file (glide+twin)
-        real(dp), intent(inout) :: A1(5,96)
+        real(dp), intent(out), allocatable :: A1(:,:)
 
         character(len=72) :: TITglij  !< Name of slip system set
         real(dp) :: x,y
@@ -48,6 +48,7 @@ module altayTaylor
  210    format (8I4,4X,2F10.0)
         M=NGL+NTW
         M111=M
+        allocate(A1(5,M111))
         ! read glide + twin systems
         do I1=1,M111
             read (LEC,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
@@ -72,12 +73,11 @@ module altayTaylor
 
     ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
     subroutine TAYLOR3(SSam,RHOSsa,TRF,GEWF,IOR,TRFb,GMMAb,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
-        integer, intent(in) :: NGR,NRL,laml,IOR
+        integer, intent(in) :: NGR,NRL,laml,IOR, M11
         real(dp), intent(out) :: Ssam(3,3),RHOSsa(3,3)
-        real(dp), intent(inout) :: CC(2,96),GEWF
+        real(dp), intent(inout) :: CC(2,M11),GEWF
         type(DeformationRate), intent(in) :: MacroDefRate
         type(DeformationState),intent(in) :: MacroDefState
-        integer, intent(in) :: M11
         real(dp), intent(in) :: TRFb(3,3,2),TRF(3,3),GMMAb(2)
 
         real(dp), dimension(3,3):: RHOScrys, RHOAcrys, Scrys
@@ -101,7 +101,7 @@ module altayTaylor
         type(DeformationRate),intent(in) :: MacroDefRate
         integer, intent(in) :: ISTP,IOR, &
               M111     !< total number of systems in slip system file (glide+twin),
-        real(dp), intent(in) :: TAU, XM(5,96),TRF(3,3),CC(2,96),RHOSsa(3,3), &
+        real(dp), intent(in) :: TAU, XM(:,:),TRF(3,3),CC(2,M111),RHOSsa(3,3), &
             Ssam(3,3) !< local stress in sample reference system
         real(dp), intent(out) :: TOTGAMdot, C2(3,3), &
                                   Seq ! Equivalent stress in crystal, defined as..
@@ -112,15 +112,14 @@ module altayTaylor
         integer, intent(out) :: ITW
 
         real(dp), dimension(3) :: TRC,ROT
-        real(dp), dimension(3,3) :: RCC,RCcryst,rhossaTot,TDC,RHOAcrys,C1
+        real(dp), dimension(3,3) :: RCcryst,rhossaTot,TDC,RHOAcrys
         real(dp), dimension(96), save :: SGNN,GAMdot
         integer :: info, i,j
         real(dp) :: rndm,Mgrain,ratlon,x,VOLFR(96)
         real(dp), parameter :: ddt=1.0_DP
-        type(EulerAngles) :: Euler
 
 
-        call SLIPRAT(M111,96,GAMdot,SGNN,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
+        call SLIPRAT(M111,M111,GAMdot(1:M111),SGNN(1:M111),MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call KS_updateState(IOR,GAMdot,ddt,info)
         TOTGAMdot=sum(abs(GAMdot(1:M111)))
         ! Calculate RCcryst: the rigid body spin in the crystal frame
@@ -136,16 +135,16 @@ module altayTaylor
         ROT = matmul(B1(:,1:M111),GAMdot(1:M111))
 
         do J=1,3
-            C1(J,J)=1.0_dp
+            C2(J,J)=1.0_dp
         end do
-        C1(3,2)=ROT(1)-TRC(1)
-        C1(1,3)=ROT(2)-TRC(2)
-        C1(2,1)=ROT(3)-TRC(3)
-        C1(2,3)=-C1(3,2)
-        C1(3,1)=-C1(1,3)
-        C1(1,2)=-C1(2,1)
+        C2(3,2)=ROT(1)-TRC(1)
+        C2(1,3)=ROT(2)-TRC(2)
+        C2(2,1)=ROT(3)-TRC(3)
+        C2(2,3)=-C2(3,2)
+        C2(3,1)=-C2(1,3)
+        C2(1,2)=-C2(2,1)
         ! KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
-        C2 = rotmat(EuleranglesType(matmul(C1,TRF))) ! MD: conversion to-from Euler angles required to avoid failing tests due to floating point arithmetic
+        C2 = matmul(C2,TRF)
         ITW=0
         !Choose at random if the crystal orientation should be considered that of the original or twinned part.
         !See Van Houtte et. al, 1977
@@ -160,7 +159,6 @@ module altayTaylor
             call RANDOM_NUMBER(RNDM)
             do I=1,NTW
                 if (RNDM < VOLFR(I)) then
-                    RCC = C2
                     TDC(1,1)=B2(1,I)
                     TDC(2,1)=B2(2,I)
                     TDC(1,2)=B2(2,I)
@@ -170,7 +168,7 @@ module altayTaylor
                     TDC(3,2)=B2(5,I)
                     TDC(2,3)=B2(5,I)
                     TDC(3,3)=B2(6,I)
-                    C2 = matmul(TDC,RCC)
+                    C2 = matmul(TDC,C2)
                     ITW=I
                     exit
                 end if

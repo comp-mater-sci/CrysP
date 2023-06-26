@@ -15,8 +15,8 @@ module altaySimul
     implicit none
     private
 
-    real(dp), private :: HGAMTOT,& !< homogenized slip accumulated over calls
-        XM(5,96)
+    real(dp), private, allocatable :: HGAMTOT,& !< homogenized slip accumulated over calls
+        XM(:,:)
     integer, private :: M11,NFILE1,NFILTW
     integer, allocatable :: seed(:)
 
@@ -70,7 +70,7 @@ module altaySimul
         integer :: NGR,&         !< number of grains
                    NRL,&         !< number of relaxations
                    laml,laml1, &
-                   IOR,ISTP,NPOINT, info, NFILE, NSTP,i,j,l,ifil4,ITW
+                   IOR,ISTP,NPOINT, info, NFILE, i,j,l,ifil4,ITW
         real(dp) :: gewfb(2), Fb(3,3,2), GAXESb(3,2), GEULRb(3,2), Ssam(3,3), TG(3,3), CIJ(3,3), &
                     RHOST(3,3), tau, GEWF, SeqAvg,RHOSSb(3,3,2),RHOSsa(3,3),CIJb(3,3,2), TGb(3,3,2),gmm1,gmm0, &
                     GEULR(3), &
@@ -102,12 +102,11 @@ module altaySimul
         NRL=(NGR-1)*2
         NFILE=NFILE0*NFILE1
 
-        NSTP     = astate%simulCalls(astate%this)%input%nsteps
         ! Output the current texture
         if (NFILE == 1) call CURwriteBlock(IMP1,info)
         HGAMCALL = 0.D0
         MEPSCALL = 0.D0
-        steploop: DO ISTP=1,NSTP
+        steploop: DO ISTP=1,astate%simulCalls(astate%this)%input%nsteps
 
             TOTGEW=0.0_DP
             STOT = 0._DP
@@ -162,12 +161,8 @@ module altaySimul
                 TRF = TRFb(:,:,laml)
                 TG = TGb(:,:,laml)
                 RHOSSa = RHOSSb(:,:,laml)
-                if(laml == 1) then
-                    qgx=GEWFb(laml)
-                    GEWF=qgx
-                else
-                    GEWF=qgx
-                end if
+                if(laml == 1) qgx=GEWFb(laml)
+                GEWF=qgx
                 !  In case of NGR=2:
                 !     LAML=1: TAYLOR3
                 !             - has the present and the next orientation available
