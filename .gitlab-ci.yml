@@ -25,7 +25,7 @@ gcc:
     AR=xiar ./build.sh -c gfortran -b debug
     AR=xiar ./build.sh -c gfortran -b release -t
     cd test
-    pytest --update=logout -v -k UDSA -m integration
+    pytest --update=logout -v
 
 intel:
   image: intel/oneapi-hpckit:devel-ubuntu22.04
@@ -38,4 +38,4 @@ intel:
     AR=xiar ./build.sh -c ifort -b debug
     AR=xiar ./build.sh -c ifort -b release -t
     cd test
-    pytest --update=logout -v -k UDSA -m integration
+    pytest --update=logout -v
