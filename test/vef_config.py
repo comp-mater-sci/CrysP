@@ -60,7 +60,7 @@ MODE_CONFIG =  {'ADP':                                              \
                     + 'inplane\n'                                     \
                     + 'discrete\n'                                  \
                     + '2\n'                                         \
-                    + '0.0 45.0 90.0\n'                             \
+                    + '0.0 45.0\n'                             \
                     + 'StrainTensorComponent\n'                              \
                     + '0.4\n'                                       \
                     + '0.05\n'                                      \
