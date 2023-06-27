@@ -10,8 +10,6 @@ module altayPancake
     use altayAlgorithms
     use altayMacroKinematic
     use hardening
-    use hardening_types
-    use hardening_model_dsh
 
     implicit none
     private
@@ -34,7 +32,6 @@ module altayPancake
         real(dp), intent(in) :: B(5,5),TRFb(3,3,2),TLXX,GMMab(2)
         real(dp), intent(inout) :: CC(2,96),GEWF,A1(10,194),SLIPLP(8),TAURLP(8)
 
-        type(CRSS) :: CRSSmatrix
         real(dp),dimension(5):: RHOS, RHOA
         integer ::  DI(10)
         real(dp) :: C2(3,3),rls(3,3),rla(3,3),C3(3,3),B3(10,3)=0.0_dp,UU(5*NGR,5*NGR), &
@@ -106,10 +103,9 @@ module altayPancake
                 ! Retrieve the CRSSmatrix
                 !    IOR+IL-1  = sequence number of current grain
                 !    GMMAb(IL) = the GAMMA of current grain
-                call getCRSS(IOR+IL-1,GMMab(IL),CRSSmatrix,info)
 
                 ! Assign CRSSmatrix to proper section of CCC
-                CCC(:,1+K1:M11+K1)=CRSSmatrix%crss(:,1:M11)
+                CCC(:,1+K1:M11+K1) = hardening_get_crss(IOR+IL-1)
 
                 ! Set Tau_crit for antitwinning direction equal to
                 ! GETAL times Tau_crit for twinning direction

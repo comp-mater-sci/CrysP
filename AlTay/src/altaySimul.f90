@@ -215,7 +215,6 @@ module altaySimul
                 if (laml1 > NGR) laml1=1
                 laml=laml1
                 GMM0=GMMAb(laml)
-                call getTau(GMM0,TAU,info)
                 fi1=fi1b(laml)
                 PHI=PHIb(laml)
                 fi2=fi2b(laml)
