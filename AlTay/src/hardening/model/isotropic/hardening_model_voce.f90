@@ -88,11 +88,10 @@ contains
         real(dp), dimension(this%nss), intent(in) ::  slip_rates
         type(stage)                                         :: current_stage    
 
-        if (strain <= this%transition_strain) then
-            current_stage = this%stage_1
-        else
-            current_stage = this%stage_2
-        end if
+        current_stage = merge(this%stage_1, &
+                              this%stage_2, &
+                              strain <= this%transition_strain)
+
         this%crss = current_stage%TS - (current_stage%TS - current_stage%T1) * exp(-current_stage%TH * strain / current_stage%TS)
     end subroutine
 end module hardening_model_voce
