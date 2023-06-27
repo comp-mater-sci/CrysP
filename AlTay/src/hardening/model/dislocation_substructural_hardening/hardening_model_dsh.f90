@@ -76,8 +76,8 @@ module hardening_model_dsh
         procedure :: get_parameters => dsh_get_parameters
         procedure :: validate_parameters => dsh_validate_parameters
         procedure :: init           => dsh_init
-        procedure :: update         => dsh_update
         procedure :: get_crss       => dsh_get_crss
+        procedure :: update_state       => dsh_update_state
         procedure :: finalize       => dsh_finalize
         procedure :: initstate
         procedure :: f_crss
@@ -237,11 +237,10 @@ contains
         end do
     end subroutine
 
-    subroutine dsh_update(this, grain, time, strain, slip_rates)
+    subroutine dsh_update_state(this, grain, time, slip_rates)
         class(HardeningModelDSH), intent(inout)     ::  this
         integer, intent(in)                         ::  grain
-        real(DP), intent(in)                        ::  time,                 &
-                                                        strain
+        real(DP), intent(in)                        ::  time
         real(DP), dimension(this%nss), intent(in)   ::  slip_rates
         type(StatVar)                               ::  SVa,                    &
                                                         SVb
@@ -509,9 +508,10 @@ contains
 
     end subroutine
 
-    function dsh_get_crss(this, grain) result(crss)
+    function dsh_get_crss(this, grain, strain) result(crss)
         class(HardeningModelDSH), intent(in)    :: this
         integer, intent(in)                     :: grain
+        real(DP), intent(in)                    :: strain
         real(DP), dimension(2,this%nss)         :: crss
 
         crss = this%crss(grain,:,:)

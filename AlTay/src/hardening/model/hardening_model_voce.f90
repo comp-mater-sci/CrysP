@@ -1,8 +1,6 @@
 module hardening_model_voce
     use definitions, only: dp
-    use hardening_types
     use hardening_model
-    use hardening_model_isotropic
     use altayConfig
     use logging
     use parameters
@@ -16,7 +14,7 @@ module hardening_model_voce
                     TH  
     end type
 
-    type, public, extends(HardeningModelIsotropic) :: HardeningModelVoce
+    type, public, extends(HardeningModel) :: HardeningModelVoce
         real(dp)    ::  transition_strain = 0.D0
         type(stage) ::  stage_1,    &   
                         stage_2
@@ -24,7 +22,7 @@ module hardening_model_voce
         procedure :: get_parameters      => voce_get_parameters
         procedure :: validate_parameters => voce_validate_parameters
         procedure :: init                => voce_init
-        procedure :: update              => voce_update
+        procedure :: get_crss              => voce_get_crss
     end type
 
     character(*), parameter :: MODULE_NAME = 'altayHardLaw_voce'
@@ -80,18 +78,17 @@ contains
         this%stage_2%T1 = this%stage_2%TS + (TAUT - this%stage_2%TS) * exp(this%stage_2%TH * this%transition_strain / this%stage_2%TS)
     end subroutine
 
-    subroutine voce_update(this, grain, time, strain, slip_rates)
-        class(HardeningModelVoce), intent(inout)            ::  this
+    function voce_get_crss(this, grain, strain) result(crss)
+        class(HardeningModelVoce), intent(in)            ::  this
         integer, intent(in)                                 :: grain
-        real(dp), intent(in)                                ::  time, &
-                                                                strain
-        real(dp), dimension(this%nss), intent(in) ::  slip_rates
+        real(dp), intent(in)                                :: strain
+        real(DP), dimension(2,this%nss) :: crss
         type(stage)                                         :: current_stage    
 
         current_stage = merge(this%stage_1, &
                               this%stage_2, &
                               strain <= this%transition_strain)
 
-        this%crss = current_stage%TS - (current_stage%TS - current_stage%T1) * exp(-current_stage%TH * strain / current_stage%TS)
-    end subroutine
+        crss = current_stage%TS - (current_stage%TS - current_stage%T1) * exp(-current_stage%TH * strain / current_stage%TS)
+    end function
 end module hardening_model_voce

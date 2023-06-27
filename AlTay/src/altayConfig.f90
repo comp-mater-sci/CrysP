@@ -1,7 +1,6 @@
 !> Basic configuration of AlTay in a form of formalized data structures.
 
 module altayConfig
-    use hardening_types
     use altayTexFormats
     use definitions
     use criMathUtils

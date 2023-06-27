@@ -36,9 +36,8 @@ altaySub.f90
 parameters.f90
 hardening/hardening.f90
 hardening/model/hardening_model.f90
-hardening/model/isotropic/hardening_model_isotropic.f90
-hardening/model/isotropic/hardening_model_swift.f90
-hardening/model/isotropic/hardening_model_voce.f90
+hardening/model/hardening_model_swift.f90
+hardening/model/hardening_model_voce.f90
 hardening/model/dislocation_substructural_hardening/hardening_model_dsh.f90
 hardening/model/dislocation_substructural_hardening/hardening_model_bp.f90
 hardening/model/dislocation_substructural_hardening/hardening_model_pebp_screw.f90

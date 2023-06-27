@@ -17,8 +17,8 @@ module hardening_model
         procedure :: validate_parameters => hardening_model_validate_parameters 
         procedure :: init                => hardening_model_init
         procedure :: get_crss            => hardening_model_get_crss
-        procedure :: update              => hardening_model_update
         procedure :: finalize            => hardening_model_finalize
+        procedure :: update_state            => hardening_model_update_state
     end type
 
     public ::   hardening_model_validate_parameters,    &   
@@ -65,23 +65,22 @@ contains
         end select
     end subroutine hardening_model_init
 
-    !>Do nothing
-    subroutine hardening_model_update(this, grain, time, strain, slip_rates)
-        class(HardeningModel), intent(inout)                ::  this
+    function hardening_model_get_crss(this, grain, strain) result(crss)
+        class(HardeningModel), intent(in)                ::  this
         integer, intent(in)                                 ::  grain
-        real(dp), intent(in)                                ::  time, &
-                                                                strain
-        real(dp), dimension(this%nss), intent(in) ::  slip_rates
-    end subroutine
-
-    !>All values 1.0
-    function hardening_model_get_crss(this, grain) result(crss)
-        class(HardeningModel), intent(in)               :: this
-        integer, intent(in)                             :: grain
+        real(DP), intent(in) ::                            strain
         real(dp), dimension(2, this%nss)                :: crss 
 
-        crss = 1.D0
+        crss = 1._DP
     end function
+
+    !>Do nothing
+    subroutine hardening_model_update_state(this, grain, time, slip_rates)
+        class(HardeningModel), intent(inout)    :: this
+        integer, intent(in)                                 ::  grain
+        real(dp), intent(in)                                ::  time
+        real(dp), dimension(this%nss), intent(in) ::  slip_rates
+    end subroutine 
 
     !>Do nothing
     subroutine hardening_model_finalize(this)

@@ -1,8 +1,6 @@
 module hardening_model_swift
     use definitions, only: dp
-    use hardening_types
     use altayConfig
-    use hardening_model_isotropic
     use hardening_model
     use logging
     use parameters
@@ -10,7 +8,7 @@ module hardening_model_swift
     implicit none
     private
       
-    type, public, extends(HardeningModelIsotropic) :: HardeningModelSwift
+    type, public, extends(HardeningModel) :: HardeningModelSwift
         real(dp)    ::  k,      &
                         gamma0, &   
                         n               
@@ -18,7 +16,7 @@ module hardening_model_swift
         procedure :: get_parameters => swift_get_parameters
         procedure :: validate_parameters => swift_validate_parameters
         procedure :: init       => swift_init
-        procedure :: update     => swift_update
+        procedure :: get_crss     => swift_get_crss
     end type
 
     character(*), parameter :: MODULE_NAME = 'altay_hardening_swift'
@@ -61,17 +59,14 @@ contains
         this%n = params .find. 'n'
         crss0 = params .find. 'crss0'
         this%k = crss0 / (this%gamma0**this%n)
-
-        if (this%gamma0 <= 0 .or. this%n <= 0 .or. this%k <=0) call log_error(MODULE_NAME, 'swift_init', ERR_VAL, 'Swift params must be greater than 0')
     end subroutine swift_init
 
-    subroutine swift_update(this, grain, time, strain, slip_rates)
-        class(HardeningModelSwift), intent(inout)           ::  this
+    function swift_get_crss(this, grain, strain) result(crss)
+        class(HardeningModelSwift), intent(in)           ::  this
         integer,                    intent(in)              ::  grain
-        real(dp),                   intent(in)              ::  time, &
-                                                                strain
-        real(dp), dimension(this%nss), intent(in) ::  slip_rates
+        real(dp),                   intent(in)              ::  strain
+        real(DP), dimension(2, this%nss) :: crss
 
-        this%crss = this%k * (strain + this%gamma0)**(this%n)    
-    end subroutine swift_update
+        crss = this%k * (strain + this%gamma0)**(this%n)    
+    end function swift_get_crss
 end module hardening_model_swift

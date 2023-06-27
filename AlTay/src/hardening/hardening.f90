@@ -1,4 +1,4 @@
-!> Dispatcher of hardening modelsR
+!> Dispatcher of hardening models
 module Hardening
     use definitions
     use parameters
@@ -34,16 +34,17 @@ module Hardening
         module subroutine hardening_finalize()
         end subroutine hardening_finalize
         
-        module subroutine hardening_get_crss(grain)
-            integer, intent(in)                     :: grain
-        end subroutine hardening_get_crss
+        module function hardening_get_crss(grain, strain) result(crss)
+            integer,intent(in)      ::  grain        
+            real(DP), intent(in)    ::  strain
+            real(DP), allocatable :: crss(:,:)
+        end function hardening_get_crss
         
-        module subroutine hardening_update(grain, time, strain, slip_rates)
+        module subroutine hardening_update_state(grain, time, slip_rates)
             integer,intent(in)      ::  grain        
             real(DP), intent(in)    ::  time, &
-                                        strain, &
                                         slip_rates(:)
-        end subroutine hardening_update
+        end subroutine hardening_update_state
     end interface
 end module hardening
 
@@ -81,7 +82,6 @@ contains
                 call log_error('hardening', 'get_parameters', ERR_VAL, 'Invalid hardening model ID')
         end select
 
-        HardLawID = model_id
         params = model%get_parameters()
     end procedure hardening_get_parameters
 
@@ -95,10 +95,10 @@ contains
     end procedure hardening_finalize
 
     module procedure hardening_get_crss
-        call model%get_crss(grain)
-    end procedure hardening_get_crss
+        crss = model%get_crss(grain, strain)
+    end procedure 
 
-    module procedure KS_updateState
-        call model%update(grain, time, strain, slip_rates)
-    end procedure KS_updateState
+    module procedure hardening_update_state
+        call model%update_state(grain, time, slip_rates)
+    end procedure
 end submodule Hardening_Imp

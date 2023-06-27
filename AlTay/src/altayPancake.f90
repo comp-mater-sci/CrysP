@@ -105,7 +105,7 @@ module altayPancake
                 !    GMMAb(IL) = the GAMMA of current grain
 
                 ! Assign CRSSmatrix to proper section of CCC
-                CCC(:,1+K1:M11+K1) = hardening_get_crss(IOR+IL-1)
+                CCC(:,1+K1:M11+K1) = hardening_get_crss(IOR+IL-1, GMMab(IL))
 
                 ! Set Tau_crit for antitwinning direction equal to
                 ! GETAL times Tau_crit for twinning direction

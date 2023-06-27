@@ -1,6 +1,5 @@
 module altaySimul
     use definitions
-    use hardening_types
     use altayMacroKinematic
     use hardening_model_dsh
     use altayCurAccess
