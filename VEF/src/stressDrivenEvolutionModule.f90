@@ -5,14 +5,13 @@
 module dmcStressDrivenEvolutionModule
 use definitions
 use criMathUtils
-use criAlgorithm, only: optionalDefault
-use dmcUtils, only: display_unit
 use dmcYLPResult
 use dmcStressDrivenModule
 use dmcIncrementationControl
 use dmcEvolutionOutputRecord
 use xVectorIncrementOutputRecord
 use commonUtils
+
 implicit none
 
 
@@ -96,7 +95,7 @@ contains
     integer :: i, n_roots
     double precision,dimension(2) :: xi
     logical :: stop_flag, acceptable_point, acceptable_point_retry
-    double precision,parameter :: stretch_ratio = 1e-3
+    double precision,parameter :: stretch_ratio = 1e-3_DP
     !
         ! Prepare non-default incrementation controls if requested
         if (present(incrementation_control)) then
@@ -198,6 +197,7 @@ contains
                                                          (control%increment_size + norm2(icv%vP_step))**2, &
                                                        x=xi)
                     ! Up to two roots; we pick the largest one;
+                    control_variable = -1.0_DP
                     if (n_roots > 0) control_variable = control%increment_size / maxval(xi(1:n_roots))
                     ! If control variable is negative (the only way to satisfy (*) is
                     ! to decrease the strain), fall back to a less accurate scheme.
@@ -273,9 +273,6 @@ contains
     integer,intent(out)                                 :: info
     !
         info = VEF_OK
-#define MSG_GROUP_RULERS
-#include "msgFormats.inc"
-#undef MSG_GROUP_RULERS
     !
     end subroutine
 
@@ -288,8 +285,6 @@ contains
     class(IncrementationControl),intent(inout)          :: icv
     type(IncrementOutputRecord),intent(in)              :: output_record
     integer,intent(out)                                 :: info
-    !
-    integer :: j
     !
                 info = VEF_OK
     !

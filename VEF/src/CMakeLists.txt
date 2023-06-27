@@ -14,10 +14,6 @@ endif()
 
 list(APPEND Fortran_FLAGS ${alamDMC_FLAGS})
 
-list2string(Fortran_FLAGS CMAKE_Fortran_FLAGS) 
-list2string(Fortran_FLAGS_DEBUG CMAKE_Fortran_FLAGS_DEBUG)
-list2string(Fortran_FLAGS_RELEASE CMAKE_Fortran_FLAGS_RELEASE)
-
 add_executable(alamDMC
 nlls_tr.f90
 alamYLP.f90 
@@ -30,7 +26,6 @@ commonConfig.f90
 commonUtils.f90
 deformationDrivenModule.f90
 dmcResultFileOutput.f90
-dmcUtils.f90
 evolutionOutputRecord.f90
 incrementationControl.f90
 qrsTypes.f90

@@ -1,55 +1,45 @@
-#include "altayRCM.fpp"
-
 module altaySliprate
     use definitions
     use logging
-    use altayIOConfig,IIPR=>IPR !Rename the global IPR to avoid conflict
     use altayMacroKinematic
-    use altayRCM
     use altayAlgorithms
 
     implicit none
     private
-    character(len=*), parameter :: MODULE_NAME = "altaySliprate"
+    character(len=*), parameter :: MOD_NAME = "altaySliprate"
 
     public :: SLIPRAT
     contains
 
-    subroutine SLIPRAT(M11,IDIMXX,XX,IOR,IPR,sgnn,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,A1)
+    subroutine SLIPRAT(M11,IDIMXX,XX,sgnn,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,A1)
         type(DeformationRate),intent(in) :: MacroDefRate
         !     To find the slip rates assuming that
         !     - the stress, strain rate and the active slip systems are known,
         !       previously obtained by PANCAK2;
-        !     - (under the above resrtrictions) the sum of the squares of the slip
+        !     - (under the above restrictions) the sum of the squares of the slip
         !       rates must be minimal.
         !
-        integer, intent(in) :: M11,IDIMXX,IPR,IOR,NACTIV,INDLP(8)
-        real(dp), intent(in) :: TLXX,A1(5,96),TAURLP(8),BB8(5),SLIPLP(8)
+        integer, intent(in) :: M11,IDIMXX,NACTIV,INDLP(8)
+        real(dp), intent(in) :: TLXX,A1(:,:),TAURLP(8),BB8(5),SLIPLP(8)
         integer, intent(inout) :: INDACT(8)
         real(dp), intent(inout) :: SGNN(IDIMXX),XX(IDIMXX)
 
         integer :: IND(8),ISTOR(0:8,48)
-        real(dp) :: SLPR(8),SLSTOR(0:8,48),x,y,yy,sumsq
+        real(dp) :: SLPR(8),SLSTOR(0:8,48),sumsq
         integer, parameter :: NSTOR=48
-        integer :: i,j,k,i1,i2,i3,N0,N1,N2,N3,NN,NOPL,INEG,IOPL
+        integer :: j,i1,i2,i3,N0,N1,N2,N3,NN,NOPL,INEG,IOPL
 
-        XX(1:M11)=0.0
+        XX(1:M11)=0.0_DP
         NN=NACTIV
         NOPL=0
+        sgnn(INDACT(1:NACTIV))=sign(1.0_dp,TAURLP(1:NACTIV))
+
         ! check whether solution is totally zero
-        x=0.0
-        do i=1,NACTIV
-            x=x+abs(SLIPLP(i))
-            j=INDACT(i)
-            sgnn(j)=sign(1.0_dp,TAURLP(i))
-        enddo
-        if (x>=TLXX) then
-            ! end of check
+        if (sum(abs(SLIPLP(1:NACTIV))) >= TLXX) then
             IND(1:NN)=INDACT(1:NN)
             call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
             if (ineg==0) then
                  call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-                 RCM_GUARD
                  if (NN <= 5) goto 2
             endif
             if (NN>5) then
@@ -67,10 +57,7 @@ module altaySliprate
                     NN=N1
                     do I1=1,N0
                          call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
-                         if (ineg==0) then
-                            call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-                            RCM_GUARD
-                         endif
+                         if (ineg==0) call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                          J=N0-I1
                          if (J>0) IND(J)=INDACT(J+1)
                     enddo
@@ -82,10 +69,7 @@ module altaySliprate
                             do I2=1,I1-1
                                 call fill(IND,INDACT,[I1,I2],N0)
                                 call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
-                                if (ineg==0) then
-                                    call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-                                    RCM_GUARD
-                                endif
+                                if (ineg==0) call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                             enddo
                         enddo
                         ! Level 3
@@ -97,85 +81,27 @@ module altaySliprate
                                     do I3=1,I2-1
                                       call fill(IND,INDACT,[I1,I2,I3],N0)
                                       call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
-                                      if (ineg==0) then
-                                          call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
-                                          RCM_GUARD
-                                      endif
+                                      if (ineg==0) call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                                     enddo
                                 enddo
                             enddo
                         endif
                     endif
-   2                if (IPR==2 .and. NLIST==1) write (IMP,100)
- 100                format (' Results SLIPRAT')
-                    if (NOPL==0) goto 6
-                    IOPL=0
-                    X=1.0d10
-                    do i=1,NOPL
-                        Y=SLSTOR(0,i)
-                        !  Y is de te minimaliseren waarde van oplossing i
-                        !  Uitprinten!
-                        if (Y<X) then
-                            X=Y
-                            IOPL=i
-                        endif
-                    enddo
-                    NN=ISTOR(0,IOPL)
-                    sumsq=X
-                    do i=1,NN
-                        IND(i)=ISTOR(i,IOPL)
-                        SLPR(i)=SLSTOR(i,IOPL)
-                    enddo
-                    if (IPR==2 .and. NLIST==1) then
-                        write (IMP,104) IOR,NACTIV,NN,NOPL
-                        write (IMP,106) IOR,sumsq,(IND(i),i=1,NN)
- 104                    format (I5,' Reduction of NACTIV from',I5,'   to',i5,' NOPL=',i5)
- 106                    format (I5,d12.3,8i5)
+   2                if (NOPL/=0) then
+                        IOPL=minloc(SLSTOR(0,1:NOPL),1)
+                        NN=ISTOR(0,IOPL)
+                        sumsq=SLSTOR(0,IOPL)
+                        IND(1:NN)=ISTOR(1:NN,IOPL)
+                        SLPR(1:NN)=SLSTOR(1:NN,IOPL)
+                        XX(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))*MacroDefRate%vMeqStrainRate
+                        return
                     endif
-                    x=0.0_dp
-                    k=0
-                    do i=1,NN
-                        j=IND(i)
-                        Y=SLPR(i)
-                        YY=Y*sgnn(j)
-                        XX(j)=YY*MacroDefRate%vMeqStrainRate
-                        if (IPR==2 .and. NLIST==1) write (IMP,101) i,IND(i),YY
-                        if (x>Y) then
-                            x=Y
-                            k=k+1
-                        endif
-                    enddo
-                    if (X<0.0d0 .and. NLIST==1) write (IMP,102) IOR,k,X
- 102                format (' NEG. SL. RATE DETECTED',2I5,d15.6)
- 101                format (2i5,5x,d15.6)
-                    return
                 endif
             endif
         endif
-  6     continue
         NN=NACTIV
-        do i=1,NN
-            IND(i)=INDLP(i)
-        enddo
-        if (IPR==2 .and. NLIST==1) then
-            write (IMP,100)
-            write (IMP,108) IOR,NN
-        end if
- 108    format (' IOR=',I5,' Linear programming solution retained ',' NN=',i5)
-        x=0.0
-        k=0
-        do i=1,NN
-             Y=SLIPLP(i)
-             j=IND(i)
-             XX(j)=Y*MacroDefRate%vMeqStrainRate
-             if (IPR==2 .and. NLIST==1) write (IMP,101) i,IND(i),Y
-             Y=abs(Y)
-             if (x>Y) then
-                 x=Y
-                 k=k+1
-             endif
-        enddo
-        if (X<0.0d0 .and. NLIST==1) write (IMP,102) IOR,k,X
+        IND(1:NN)=INDLP(1:NN)
+        XX(IND(1:NN))=SLIPLP(1:NN)*MacroDefRate%vMeqStrainRate
     end subroutine
 
     subroutine fill(IND_,INDACT_,skip,N_max)
@@ -196,11 +122,11 @@ module altaySliprate
     subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A8)
 
         integer, intent(in) :: IND(8), NN,IDIMXX
-        real(dp),intent(in) :: A8(5,96),BB8(5),sgnn(IDIMXX)
+        real(dp),intent(in) :: A8(:,:),BB8(5),sgnn(IDIMXX)
         integer, intent(out) :: ineg
         real(dp), intent(out) :: SLPR(8),sumsq
 
-        real(dp) :: A(13,13),B(13),RES,x,Y,BA(13)
+        real(dp) :: A(13,13),B(13),RES,x,BA(13)
         real(dp), parameter :: TOL=1.0e-6_dp
         integer :: i,j,N1,N2
 
@@ -218,13 +144,12 @@ module altaySliprate
             A(1:N1,1:N1)=0.0_dp
             do i=1,NN
                A(i,i)=2.0_dp
-               B(i)=0.0
                do j=1,5
-                  x=sgnn(IND(i))*A8(j,IND(i))
-                  A(i,NN+j)=-x
-                  A(NN+j,i)=x
+                  A(NN+j,i)=sgnn(IND(i))*A8(j,IND(i))
+                  A(i,NN+j)=-A(NN+j,i)
                enddo
             enddo
+            B(1:NN)=0.0_DP
             B(1+NN:5+NN)=BB8
         endif
 
@@ -232,20 +157,19 @@ module altaySliprate
         call Kleinkwa(N1,N2,13,13,A,B,BA,RES)
 
         SLPR(1:NN)=BA(1:NN)
-        sumsq=0.0_dp
-        x=0.0_dp
-        ineg=0
-        do i=1,NN
-           Y=SLPR(i)
-           sumsq=sumsq+Y**2
-           if (x > Y) then
-               x=Y
-               ineg=i
-           endif
-        enddo
+        sumsq=sum(SLPR(1:NN)**2)
         if (RES > TOL) then
             ineg=-1
-            call log_trace(MODULE_NAME,'MINSQU', 'RES too large')
+            call log_trace(MOD_NAME,'MINSQU', 'RES too large')
+        else
+            x=0.0_dp
+            ineg=0
+            do i=1,NN
+               if (x > SLPR(i)) then
+                   x=SLPR(i)
+                   ineg=i
+               endif
+            enddo
         end if
     end subroutine
 
@@ -257,10 +181,7 @@ module altaySliprate
         real(dp), intent(in) :: SLPR(8), sumsq
 
         NOPL=NOPL+1
-        if (NOPL>NSTOR) then
-            RCM_RAISE(1,'STORE','Too small dimension NSTOR in SLIPRAT',RCM_RTN)
-        endif
- 100    format (' STORE - increase dimension NSTOR in SLIPRAT,STORE')
+        if (NOPL>NSTOR) call log_error(MOD_NAME, 'store', ERR_DIMS, 'Too small dimension NSTOR in SLIPRAT')
         ISTOR(0,NOPL)=NN
         ISTOR(1:NN,NOPL)=IND(1:NN)
         SLSTOR(0,NOPL)=SUMSQ

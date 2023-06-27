@@ -3,10 +3,7 @@
 !> DMC Arbitrary Stress Response
 module dmcASR
 use criMathUtils
-use criAlgorithm
-use criMathUtils
 use criUncomment, only: readValue
-use dmcUtils, only: display_unit
 use dmcIncrementationControl
 use dmcStressDrivenEvolutionModule
 use commonConfig
@@ -33,8 +30,6 @@ implicit none
         !>@{ \name Interface methods of AbstractModule
 
         procedure,pass(this)    :: readConfig => ASRModule_readConfig
-
-        procedure,pass(this)    :: printConfig => ASRModule_printConfig
 
         procedure,pass(this)    :: run => ASRModule_run
 
@@ -94,16 +89,6 @@ contains
     end function
 
 
-    integer function ASRModule_printConfig(this,outunit) result (info)
-    implicit none
-    class(ASRModule),intent(in)         :: this
-    integer,intent(in)                  :: outunit
-    
-        info = VEF_OK
-    
-    end function
-
-
     subroutine ASRModule_run(this,info)
     implicit none
     class(ASRModule),intent(inout)          :: this
@@ -117,7 +102,7 @@ contains
     type(IncrementationControl)     :: icv
     double precision,dimension(rot_matrix_dim,rot_matrix_dim)   :: Mrot
     !
-    integer     :: j, istep, nsteps, ofunit
+    integer     :: istep, nsteps, ofunit
     !
         ! Super-class first
         RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
@@ -170,18 +155,9 @@ contains
             end associate
         enddo
 
-        ! Formats
-        3310 format('Input stress tensor, in the material reference frame:')
-        3400 format(T15,A,T54,A,T85,A)
-        ! 410 format('| SmScaled',T40,'| SmIdent',T80,'|SonA')
-        3411 format(3(E10.3,1X),' | ',3(E10.3,1X),' | ',3(E10.3,1X))
-
-        1600 format(/,'Step ',I0, ' out of ',I0)
-#define MSG_GROUP_RULERS
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
 
     end subroutine
 
@@ -224,12 +200,12 @@ contains
         if (optionalDefault(header, .false.)) then
             info = VEF_ERROR
             ! Column numbers
-            write(iounit,701,iostat=ierr) (centered(i,short_column_width), i = 1,2), &
-                                          (centered(i,column_width), i = 3, ncolumn_labels)
+            write(iounit,701,iostat=ierr) (toString(i), i = 1,2), &
+                                          (toString(i), i = 3, ncolumn_labels)
             if (ierr /= 0) return
             ! Column labels
             write(iounit,700,iostat=ierr) (column_labels(i)(1:short_column_width), i=1,2), &
-                                          (centered(column_labels(i)), i=3,ncolumn_labels)
+                                          (column_labels(i), i=3,ncolumn_labels)
             if (ierr /= 0) return
             info = VEF_OK
         endif
@@ -286,7 +262,7 @@ contains
         ! Formats for output file
         700 format(1X, 2(A9,1X),10(A18,  1X),4(5X,12(A18,1X)))
         701 format('#',2(A9,1X),10(A18,  1X),4(5X,12(A18,1X)))
-        710 format(1X, 2(I9,1X),10(E18.9,1X),4(5X,12(E18.9,1X)))
+        710 format(1X, 2(I9,1X),10(ES18.9E3,1X),4(5X,12(ES18.9E3,1X)))
     !
     end function
 

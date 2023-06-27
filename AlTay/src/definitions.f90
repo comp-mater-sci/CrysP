@@ -1,5 +1,6 @@
 !>Global definitions used in multiple modules within AlTay
 module definitions
+    use,intrinsic :: iso_fortran_env, only: output_unit
     implicit none
     public
 
@@ -7,9 +8,11 @@ module definitions
     integer, parameter :: dp = selected_real_kind(15,307)
 
     !Status codes
-    enum, bind(C)   
+    enum, bind(C)
         enumerator :: VEF_OK, &
                       VEF_FAIL, &
                       VEF_ERROR
     end enum
-end module definitions 
+    integer,parameter       :: display_unit = output_unit
+
+end module definitions

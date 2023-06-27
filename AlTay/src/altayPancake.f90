@@ -1,18 +1,18 @@
-#include "altayRCM.fpp"
 module altayPancake
     use definitions
-    use altayMiscutils
     use criMathUtils
-    use altayRCM
     use altayMesostructure
     use altayIOConfig
     use altayTBH
     use altayAlgorithms
     use altayMacroKinematic
     use hardening
+    use logging
 
     implicit none
     private
+
+    character(*), parameter :: MOD_NAME = 'Pancake'
 
     public :: pancak2
 
@@ -21,44 +21,40 @@ module altayPancake
 ! THE OLD HARWELL-LINEAR PROGRAMMING SUBROUTINE IS REPLACED BY ONE
 ! WRITTEN IN TERMS OF THE TAYLOR BISHOP-HILL THEORY
 !
-    subroutine pancak2(NGL,B,DI1,S33,RHOS33,RHOA33,IPR,GEWF,A1,MacroDefRate,MacroDefState,NACTIV,&
-                       SLIPLP,TLXX,TAURLP,INDACT,INDLP,IOR,ISTP,NBLOC,TRFb,GMMab,NGR,NRL,laml,BB8,CC,M11)
+    subroutine pancak2(NGL,B,DI1,S33,RHOS33,RHOA33,GEWF,A1,MacroDefRate,MacroDefState,NACTIV,&
+                       SLIPLP,TLXX,TAURLP,INDACT,INDLP,IOR,TRFb,GMMab,NGR,NRL,laml,BB8,CC,M11)
         type(DeformationRate),intent(in) :: MacroDefRate
         type(DeformationState),intent(in):: MacroDefState
-        integer, intent(in) :: NGL,IPR,DI1(5),ISTP,NBLOC,NGR,NRL,laml,IOR,M11
+        integer, intent(in) :: NGL,DI1(5),NGR,NRL,laml,IOR,M11
         real(dp),dimension(3,3),intent(out):: S33, RHOS33, RHOA33,BB8(5)
         integer, intent(out) :: NACTIV
         integer, intent(inout) :: INDACT(8),INDLP(8)
         real(dp), intent(in) :: B(5,5),TRFb(3,3,2),TLXX,GMMab(2)
-        real(dp), intent(inout) :: CC(2,96),GEWF,A1(10,194),SLIPLP(8),TAURLP(8)
+        real(dp), intent(inout) :: CC(2,M11),GEWF,A1(10,194),SLIPLP(8),TAURLP(8)
 
         real(dp),dimension(5):: RHOS, RHOA
         integer ::  DI(10)
-        real(dp) :: C2(3,3),rls(3,3),rla(3,3),C3(3,3),B3(10,3)=0.0_dp,UU(5*NGR,5*NGR), &
-                    spanv(5),XX(194),STRSS(10),BB(10),CCC(2,194),DTAU(194),DTAU1(194),TAUR(194),TAUR1(194), &
-                    B8(5,2),UBUF(10),GAMR(2),Tprinc(3,3),TAURL(2)=0.0_dp,XXTOT,COFCOS,COFSIN
+        real(dp) :: UU(5*NGR,5*NGR),TPrinc(3,3)
+        real(dp) :: C2(3,3), rls(3,3), rla(3,3), C3(3,3), spanv(5), XXTOT, DTAU(194), STRSS(10), TAUR(194)
+        real(dp), save :: B3(10,3)=0.0_dp, XX(194),BB(10),CCC(2,194),DTAU1(194),TAUR1(194),B8(5,2),UBUF(10),GAMR(2)
         ! rls and rla are unit relaxation tensors in crystal frame (symmetric and anti-sym. part)
-        real(dp), parameter :: SQR2=sqrt(0.5_dp)
         !     Definition of the two relaxations, representing a
         !     13-simple shear and a 23-simple shear, respectively:
-        real(dp), dimension(3,3,3) :: relax = reshape([ &
+        real(dp), dimension(3,3,2), parameter :: relax = reshape([ &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     1.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0,                                   &
-                    0.0D0, 1.0D0, 0.0D0,                                   &
-                    0.0D0, 0.0D0, 0.0D0,                                   &
-                    0.0D0, 0.0D0, 0.0D0,                                   &
-                    0.0D0, 0.0D0, 0.0D0],shape(relax))
-        real(dp), dimension(2,3) ::  PLUMIN = reshape([&
+                    0.0D0, 1.0D0, 0.0D0],shape(relax))
+        real(dp), dimension(2,2), parameter ::  PLUMIN = reshape([&
                     1.0D0,-1.0D0,                                          &
-                    1.0D0,-1.0D0,                                          &
-                    1.0D0, 1.0D0], shape(PLUMIN)) !first index: # of grain, second index: #of relaxation
-        real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp
-        integer :: info,M12,IGrElm,N,M2,IL,L1,IRL,J,I,K1,IG,JJ,II
-        SAVE
+                    1.0D0,-1.0D0], shape(PLUMIN)) !first index: # of grain, second index: #of relaxation
+        real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp, SQR2=sqrt(0.5_dp)
+        integer :: info,M12,N,M2,IL,L1,IRL,I,K1,IG,JJ,II
+        integer, save :: IGrElm
 
+        character(*), parameter :: PROC_NAME = 'pancak2'
 
         if (IOR == 1) IGrElm=0
         ! N is number of rows of A1
@@ -70,8 +66,12 @@ module altayPancake
             ! Updating of microstructure
             IGrElm=IGrElm+1
             if (IGrElm > NGrElm) IGrElm=1
-            call cluster1(NGR,IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc,Cofcos,Cofsin)
-            CCC(1:2,M2+1:M12)=0.0
+            if (NGR == 1) then
+                Tprinc = unit_sr_Matrix
+            else
+                call cluster1(IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
+            endif
+            CCC(1:2,M2+1:M12)=0.0_DP
             UU = 0.0_dp
             DI(1:5) = DI1
             DI(6:10) = DI1+M11
@@ -119,14 +119,6 @@ module altayPancake
             ! in order to suppress the relaxations in a first call of the TBH program
             ! Full constraints calculation
             ! UITVOEREN VAN DE SIMPLEX-SUBROUTINE
-            if (IPR == 2 .and. NLIST == 1) then
-                write (IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
-                write (IMP,219) (BB(I),I=1,N)
-                write (IMP,400) IOR,ISTP,NBLOC
-            endif
- 218        format(/' COST FUNCTION',/,(2x,12F10.4))
- 219        format (' right hand side',/,(2x,10F10.4),/)
- 400        format (' First call of TBH   IOR,ISTP,NBLOC',3I5)
             call TBH(A = A1(1:N,1:M2), &
                      D = BB(1:N), &
                      TauC = CCC(1:2,1:M2), &
@@ -136,11 +128,7 @@ module altayPancake
                      SIG = UBUF(1:N), &
                      TauR = Taur(1:M2), &
                      DTAU = DTAU(1:M2))
-            RCM_GUARD
 
-            if (.not.(IPR < 4)) then
-                RCM_RAISE(1,'Pancak2','IPR must be < 4',RCM_RTN)
-            endif
             DTAU1=DTAU
             TAUR1=TAUR
 
@@ -148,12 +136,8 @@ module altayPancake
                 STRSS=UBUF
             else
                 do IRL=1,NRL
-                    CCC(1:2,M2+IRL)=TAURL(IRL)
+                    CCC(1:2,M2+IRL)=0.0_DP
                 end do
-                if (IPR == 2 .and. NLIST == 1) write(IMP,218) ((CCC(J,I),I=1,M12),J=1,2)
-                ! Second call of Simplex (relaxed constraints)
-                if (IPR == 2 .and. NLIST == 1) write(IMP,401)
- 401            format (' Second call of TBH')
                 call TBH(A = A1(1:N,1:M12), &
                          D = BB(1:N), &
                          TauC = CCC(1:2,1:M2), &
@@ -163,32 +147,20 @@ module altayPancake
                          SIG = STRSS(1:N), &
                          TauR = Taur(1:M12), &
                          DTAU = DTAU(1:M12))
-                RCM_GUARD
 
-                if (IPR >= 4) then
-                    if(NLIST == 1) write (IMP,222) IPR,IOR,ISTP,NBLOC
-                    write (*,222) IPR,IOR,ISTP,NBLOC
- 222                format (' Pancak2 222 - Problem with TBH',/,' IPR IOR, ISTP, NBLOC=',4I5)
-                    RCM_RAISE(1,'Pancak2','Problem with TBH',RCM_RTN)
-                endif
                 ! GAMR will contain the relaxed shears:
                 gamr(1:NRL)=XX(M2+1:M2+NRL)
             endif
-            ! Check whether 1 grain does not deform at all.
-            do IG=0,NGR-1
-                XXTOT=sum(abs(xx(1+M11*IG:M11+M11*IG)))
-                if (XXTOT < TLXX) goto 213
-            end do
-            ! If all grains have a non-zero slip, do the following:
-            DTAU1=DTAU
-            TAUR1=TAUR
-            UBUF=STRSS
- 213        if(NLIST == 1) write (IMP,780) gamr
- 780        format (' RELAXATIONS:                   ',2d12.4)
+            ! Check whether all grains deform
+            if (all([(sum(abs(xx(1+M11*IG:M11+M11*IG))),IG=0,NGR-1)]>=TLXX)) then
+                DTAU1=DTAU
+                TAUR1=TAUR
+                UBUF=STRSS
+            endif
         endif
-        !     From here on, output is produced for grain number "laml"
+        ! From here on, output is produced for grain number "laml"
         jj=M11*(laml-1)
-        CC(1:2,1:M11)=CCC(1:2,jj+1:jj+M11)
+        CC=CCC(1:2,jj+1:jj+M11)
         ii=5*(laml-1)
         do i=1,5
             ! If one grain does not deform, the stress UBUF came from the fullconstraints solution.
@@ -207,28 +179,22 @@ module altayPancake
         RHOA33(1,3)= -RHOA33(3,1)
         RHOA33(2,1)= -RHOA33(1,2)
 
-        if (IPR == 2 .AND. NLIST == 1) write (IMP,777) sum(spanv(1:5)*BB(ii+1:ii+5))
-  777   format (' spanv . BB          :',d11.4)
         ! note that if one of the grains does not deform at all, the stress and the active slip systems
         ! of the full constraint solution are used.
-        NACTIV=count(abs(DTAU1(jj+1:jj+M11)) <= TOL)
-        if (NACTIV > 8) then
-            RCM_RAISE(1,'Pancak2','Too many active slip systems',RCM_RTN)
-        elseif (NACTIV == 0) then
-            RCM_RAISE(1,'Pancak2','No active slip systems found',RCM_RTN)
-        else
-            j = 0
-            do i=1,M11
-                if (abs(DTAU1(i+jj)) > TOL) cycle
-                j=j+1
-                INDACT(j)=i
-            enddo
-        endif
-        do i=1,NACTIV
-            INDLP(i)=INDACT(i)
-            SLIPLP(i)=XX(INDACT(i)+jj)
-            TAURLP(i)=TAUR1(INDACT(i)+jj)
+        NACTIV = 0
+        do i=1,M11
+            if (abs(DTAU1(i+jj)) > TOL) cycle
+            NACTIV=NACTIV+1
+            INDACT(NACTIV)=i
         enddo
+        if (NACTIV > 8) then
+            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Too many active slip systems.')
+        elseif (NACTIV == 0) then
+            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'No active slip systems found.')
+        endif
+        INDLP(1:NACTIV)=INDACT(1:NACTIV)
+        SLIPLP(1:NACTIV)=XX(INDACT(1:NACTIV)+jj)
+        TAURLP(1:NACTIV)=TAUR1(INDACT(1:NACTIV)+jj)
     end subroutine
 
 end module

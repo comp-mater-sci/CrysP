@@ -4,17 +4,16 @@
 module dmcStressDrivenModule
 use,intrinsic :: iso_fortran_env, only: error_unit
 use definitions
-use criAlgorithm, only: optionalDefault
 use criUncomment, only: readValue
 use criMathUtils, only: vec5D2tens,tens2vec5D
 use alamYLP
 use alamEval, only: NormalizedV5DComp, alamEval_objFx_call_count
-use dmcUtils, only: display_unit
 use dmcYLPResult
 use dmcAlamEvalCached
 use dmcResultTable
 use dmcBasicModule
 use logging
+use commonUtils
 
 implicit none
 
@@ -35,8 +34,6 @@ implicit none
         procedure,pass(this)     :: initialize => StressDrivenModule_initialize
 
         procedure,pass(this)     :: readConfig => StressDrivenModule_readConfig
-
-        procedure,pass(this)     :: printConfig => StressDrivenModule_printConfig
 
         procedure,pass(this)     :: finalize => StressDrivenModule_finalize
 
@@ -83,7 +80,7 @@ contains
         ! Read multilevelYLP configuration
         call readYLPConfigSection(cnfunit,this%ylp,info)
         if (info /= VEF_OK) &
-            call log_error('StressDrivenModule', 'readConfig', ERR_VAL, 'Check YLP config section.') 
+            call log_error('StressDrivenModule', 'readConfig', ERR_VAL, 'Check YLP config section.')
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
@@ -91,20 +88,11 @@ contains
     end function
 
 
-    !> Print out configuration of the module
-    integer function StressDrivenModule_printConfig(this,outunit) result(info)
-    use altayConfig
-    class(StressDrivenModule),intent(in):: this
-    integer,intent(in)                  :: outunit
-        info = VEF_OK
-    end function
-
-
     !> Finalization of the module
     integer function StressDrivenModule_finalize(this) result(info)
     class(StressDrivenModule),intent(inout) :: this
     !
-        
+
         ! Save the result cache and delete the object
         if (associated(this%ptr_db)) then
             info = this%ptr_db%store(trim(this%output%outputPrefix)//'.rtdb')

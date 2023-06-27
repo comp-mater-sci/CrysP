@@ -5,11 +5,9 @@
 module dmcUDSA
 use criMathUtils
 use criPath
-use criAlgorithm
 use criRange
 use criNamedRange
 use criConfigReader
-use dmcUtils
 use dmcStressDrivenEvolutionModule
 use dmcIncrementationControl
 use commonUtils
@@ -54,8 +52,6 @@ implicit none
         !>@{ \name Interface methods of AbstractModule
 
         procedure,pass(this)    :: readConfig => UDSAModule_readConfig
-
-        procedure,pass(this)    :: printConfig => UDSAModule_printConfig
 
         procedure,pass(this)    :: run => UDSAModule_run
 
@@ -131,18 +127,6 @@ contains
     end function
 
 
-    integer function UDSAModule_printConfig(this,outunit) result (info)
-    implicit none
-    class(UDSAModule),intent(in)         :: this
-    integer,intent(in)                  :: outunit
-    !
-    character(len=32)       :: description, orientation
-    !
-        info = VEF_OK
-    !
-    end function
-
-
     subroutine UDSAModule_run(this,info)
     implicit none
     class(UDSAModule),intent(inout)            :: this
@@ -153,7 +137,7 @@ contains
     !      in the "tensile sample coordinate system".
     !    - All other variables are implicitly expressed in the "material coordinate system"
     type(SRTensor) :: sigma, sigma_t, S_t, D_t, P_t, P_t_end
-    double precision,dimension(rot_matrix_dim,rot_matrix_dim) :: Mrot = 0.0
+    double precision,dimension(rot_matrix_dim,rot_matrix_dim) :: Mrot = 0.0_DP
     type(EvolutionOutput) :: output
     type(EulerAngles) :: sample_orientation
     double precision  :: angle, stress_direction
@@ -279,12 +263,9 @@ contains
     !
     end do test_run_loop
     !
-    1600 format(/,'Sample ', I0, ' out of ',I0, ', sample orientation: ',F0.2)
-#define MSG_GROUP_RULERS
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
 
     end subroutine
 
@@ -327,11 +308,11 @@ contains
     !
         info = VEF_ERROR
         if (optionalDefault(header,.false.)) then
-            write(iounit,701,iostat=ierr) centered(1,short_column_width), &
-                                          (centered(i,column_width), i = 2, ncolumn_labels)
+            write(iounit,701,iostat=ierr) toString(1), &
+                                          (toString(i), i = 2, ncolumn_labels)
             if (ierr /= 0) return
             write(iounit,700,iostat=ierr) file_column_labels(1)(1:short_column_width), &
-                                          (centered(file_column_labels(i)), i=2,ncolumn_labels)
+                                          (file_column_labels(i), i=2,ncolumn_labels)
             if (ierr /= 0) return
             info = VEF_OK
         endif
@@ -344,7 +325,7 @@ contains
         ! Formats for the output file
         700 format(1X, 1(A9,1X),15(A18,  1X))
         701 format('#',1(A9,1X),15(A18,  1X))
-        710 format(1X, 1(I9,1X),15(E18.9,1X))
+        710 format(1X, 1(I9,1X),15(ES18.9E3,1X))
     !
     end function
 
@@ -356,13 +337,16 @@ contains
     double precision,intent(in),optional      :: tag_number
     !
     character(len=max_pathlen) :: datafile_tag
+    integer :: i
     !
         if (present(tag_number)) then
             ! Make a decoration string based on angle.
             ! Substitute '.' with '_'
             write(datafile_tag, '(F10.3)') tag_number
             datafile_tag = '_' // trim(adjustl(datafile_tag))
-            datafile_tag = replaceAll(datafile_tag, '.', '_')
+            do i=1,len(datafile_tag)
+                if (datafile_tag(i:i) == '.') datafile_tag(i:i) = '_'
+            end do
         else
             datafile_tag = ''
         endif

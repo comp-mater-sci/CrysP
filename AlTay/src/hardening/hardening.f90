@@ -6,7 +6,7 @@ module Hardening
 
     implicit none
     public
-    
+
     enum, bind(C)
         !> Constants set for backwards compatibility with input file format.
         enumerator  ::  HARDENING_NONE       = 0,  &
@@ -14,7 +14,7 @@ module Hardening
                         HARDENING_SWIFT      = 3,  &
                         HARDENING_BP         = 11, &
                         HARDENING_PEBP_SCREW = 12, &
-                        HARDENING_PEBP_LOOP  = 13     
+                        HARDENING_PEBP_LOOP  = 13
     end enum
 
     interface
@@ -45,9 +45,9 @@ module Hardening
                                         slip_rates(:)
         end subroutine hardening_update
     end interface
-end module Hardening
+end module hardening
 
-submodule(Hardening) Hardening_Imp
+submodule(hardening) hardening_imp
     use hardening_model
     use hardening_model_swift
     use hardening_model_voce
@@ -101,5 +101,4 @@ contains
     module procedure KS_updateState
         call model%update(grain, time, strain, slip_rates)
     end procedure KS_updateState
-nd submodule Hardening_Imp
-
+end submodule Hardening_Imp

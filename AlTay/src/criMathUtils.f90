@@ -4,7 +4,7 @@
 !> that are frequently used in various subroutunes in the library.
 !> It also provides some simple functions, e.g. conversions.
 module criMathUtils
-
+      use definitions
       implicit none
 
       !>@{ \name Math constants
@@ -64,7 +64,7 @@ module criMathUtils
 
       !> Generic function for conversion from radians to degrees
       interface rad2deg
-            module procedure scalarRad2Deg,EulerAnglesRad2Deg
+            module procedure scalarRad2Deg
       end interface
 
       !> Generic function for conversion from degrees to radians
@@ -103,16 +103,6 @@ contains
       double precision,intent(in) :: alpha
       !
             scalarDeg2Rad = alpha *  pi_deg
-      !
-      end function
-
-      !> Conversion from radians to degrees
-      elemental type(EulerAngles) function EulerAnglesRad2Deg(ang)
-      type(EulerAngles), intent(in)       :: ang
-      !
-            EulerAnglesRad2Deg%fi1 = rad2deg(ang%fi1)
-            EulerAnglesRad2Deg%phi = rad2deg(ang%phi)
-            EulerAnglesRad2Deg%fi2 = rad2deg(ang%fi2)
       !
       end function
 
@@ -160,7 +150,6 @@ contains
       ! Declaration section
       double precision :: cosine
       !
-            vec_angle = 0.D0
             cosine = vec_cosine(u,v)
             ! calculate angle (in radians)
             vec_angle = acos(cosine)
@@ -185,7 +174,7 @@ contains
             udp = dot_product(u,u)
             vdp = dot_product(v,v)
             ! Check the conditions: neither u nor v can be of length zero
-            if ((udp <= epsilon(0.D0)) .or.  (udp <= epsilon(0.D0))) return
+            if ((udp*vdp <= epsilon(0.D0))) return
             vec_cosine = dot_product(u,v) / sqrt(udp*vdp)
             ! Check for detrimental roundoff conditions
             if (vec_cosine >= 1.D0) then
@@ -332,8 +321,6 @@ contains
       !> The function converts the antisymmetrical rank-two tensors mat into Voigt-style vector representation.
       !> Ordering of the tensor terms in the vector follows the convention used in Abaqus:
       !> 12, 23, 13
-      !>
-      !> There is a reverse conversion available. \sa Vec3ToMat33
       pure function Mat33ToVec3(mat) result(vec)
       double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
       double precision,dimension(sr_asymm_voigt_dim)                      :: vec
@@ -344,26 +331,6 @@ contains
       !
       end function
 
-      !> The function converts Voigt-style vector vec into antisymmetrical rank-two tensor.
-      !> Ordering of the tensor terms in the vector follows the convention used in Abaqus:
-      !> 12, 23, 13.
-      !>
-      !> There is a reverse conversion available. \sa Mat33ToVec3
-      pure function Vec3ToMat33(vec) result(mat)
-      double precision,dimension(sr_asymm_voigt_dim),intent(in)  :: vec
-      double precision,dimension(sr_tensor_dim,sr_tensor_dim)    :: mat
-      !
-            mat(1,1) = 0.D0
-            mat(2,2) = 0.D0
-            mat(3,3) = 0.D0
-            mat(1,2) = vec(1)
-            mat(2,3) = vec(2)
-            mat(1,3) = vec(3)
-            mat(2,1) = -mat(1,2)
-            mat(3,1) = -mat(1,3)
-            mat(3,2) = -mat(2,3)
-      !
-      end function
 
       !> The function converts Voigt-style vector vec into symmetrical rank-two tensor.
       !> Ordering of the tensor terms in the vector follows the convention used in Abaqus:
@@ -583,6 +550,26 @@ contains
             v(4) =  root2*x(3,1)
             v(5) =  root2*x(1,2)
       !
+      end function
+
+      double precision pure function average(a)
+      double precision,dimension(:),intent(in) :: a
+      integer :: n
+      !
+            n = size(a)
+            if (n >= 1) average = sum(a) / dble(n)
+            ! Undefined for empty array
+      end function
+
+
+      pure function cross(v1,v2)
+      real(DP), intent(in), dimension(3) :: v1, v2
+      real(DP), dimension(3) :: cross
+
+          cross(1)=v1(2)*v2(3)-v1(3)*v2(2)
+          cross(2)=v1(3)*v2(1)-v1(1)*v2(3)
+          cross(3)=v1(1)*v2(2)-v1(2)*v2(1)
+
       end function
 
 end module

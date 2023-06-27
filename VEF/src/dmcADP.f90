@@ -6,7 +6,6 @@ use definitions
 use criConfigReader
 use criMathUtils
 use altayMacroKinematic, only: DeformationRate, Set_DeformationRate
-use dmcUtils, only: display_unit
 use dmcDeformationDrivenModule
 use dmcResultFileOutput
 use dmcStrainDrivenStep
@@ -18,19 +17,9 @@ implicit none
     !> Arbitrary Strain Mode (extends DeformationDrivenModule by 4 procedures)
     type,extends(DeformationDrivenModule) :: ADPModule
     contains ! type-bound procedures; pass(this) passes object itself, through which procedure referenced, as first argument to procedure
-
-        !>@{ \name Interface methods of AbstractModule
-
-        procedure,pass(this) :: printConfig => ADPModule_printConfig
-
         procedure,pass(this) :: readConfig => ADPModule_readConfig
-
         procedure,pass(this) :: run => ADPModule_run
-
-        !>@}
-
         procedure,pass(this) :: fileOutput => ADPModule_fileOutput
-
     end type
 
     !> Outputs collected by the simulation run
@@ -39,16 +28,6 @@ implicit none
     end type
 
 contains
-
-
-    !> Print configuration to IO unit (type-bound function)
-    integer function ADPModule_printConfig(this, outunit) result(info)
-    class(ADPModule),intent(in)      :: this   !< passed implicitly
-    integer,intent(in)              :: outunit !< IO unit for output
-    !
-        info = this%DeformationDrivenModule%printConfig(outunit)
-    end function
-
 
     !> Read configuration from IO unit (type-bound function)
     integer function ADPModule_readConfig(this, cnfunit) result(info) ! call with 1 argument (cnfunit) when referenced through object
@@ -203,10 +182,8 @@ contains
         enddo
     !
 #define MSG_GROUP_ERRORS
-#define MSG_GROUP_RULERS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
     !
     end subroutine
 
@@ -223,7 +200,7 @@ contains
     !
     integer :: step, increment, ierr, n_steps, first_step, last_step, n_increments
     !
-    integer,parameter :: ncolumn_labels = 2+9+3*6+3+7, column_width = 18, short_column_width = 9
+    integer,parameter :: ncolumn_labels = 2+9+3*6+3+7, column_width = 18
     character(len=column_width),dimension(ncolumn_labels) :: column_names = [character(len=column_width) :: &
         'step', 'increment', & ! 2 fields
         'L_11','L_22','L_33','L_12','L_23','L_31','L_21','L_32','L_13',  & ! 9 fields  (I)
@@ -284,7 +261,7 @@ contains
 
         !
         ! Formats for the output file
-        710 format(1X, 2(I18,1X),39(E18.9,1X))
+        710 format(1X, 2(I18,1X),39(ES18.9E3,1X))
     !
     end function
 

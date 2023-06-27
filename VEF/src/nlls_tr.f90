@@ -2,6 +2,7 @@
 ! Provide modules: MKL_RCI_TYPE and MKL_RCI
 include 'mkl_rci.f90'
 module nllsTR
+use definitions
 use mkl_rci
 
       !> Solution at given point. It consists of: 1) the point, 2) function value, and 3) Jacobi matrix.
@@ -133,14 +134,14 @@ use mkl_rci
             !> Array of parameters controling stop criteria
             !>
             !> Various convergence criteria are evaluated, see MKL documentation for details
-            double precision,dimension(6)                :: eps = 1.e-10
+            double precision,dimension(6)                :: eps = 1.e-10_DP
             integer                                      :: iter1 = 300 !< Maximum number of iterations
             integer                                      :: iter2 = 50  !< Maximum number of trial steps
-            double precision                             :: init_step = 100.0  !< Initial step bound factor
+            double precision                             :: init_step = 100.0_DP  !< Initial step bound factor
             !> Lower constraints for design vector
-            double precision                             :: lo_limit = 0.D0
+            double precision                             :: lo_limit = 0._DP
             !> Upper constraints for design vector
-            double precision                             :: up_limit = 1.D2
+            double precision                             :: up_limit = 1.e2_DP
 
             !> Helper for problems with invariant Jacobi matrix
             !>
@@ -557,7 +558,7 @@ contains
       integer,parameter :: firstflag = 2
       logical :: fp_errflags(firstflag:size(IEEE_ALL)-1)
       !
-            do i=firstflag, size(fp_errflags)
+            do i=firstflag, ubound(fp_errflags,1)
                   call IEEE_GET_FLAG(IEEE_ALL(i),fp_errflags(i))
             enddo
             trapFPErrors = any(fp_errflags)
@@ -574,12 +575,13 @@ contains
       double precision,dimension(:),intent(in)        :: vX       !< Dimension must be: [n_X_dim]
       integer,intent(out)                             :: info
 
-      integer     :: res, memstat
+      integer     :: res
       integer(kind=8)   :: handle
       integer     :: RCI_Req
       logical     :: next_solve
       ! Temporary arrays f1 & f2 which contain: f1 = f(x+eps) | f2 = f(x-eps)
-      double precision,allocatable,dimension(:)       :: f0, f1, f2, tmp_vX
+      double precision,dimension(this%state%m_F_dim)  :: f1, f2, f0
+      double precision,dimension(this%state%n_X_dim)  :: tmp_vX
       !
       handle = 0
       info = 1
@@ -588,14 +590,10 @@ contains
             (size(this%state%mJ,dim=2) /= this%state%n_X_dim) .or.      &
             (size(vX) /= this%state%n_X_dim)                      &
          ) return
-      ! Allocate temporary arrays
-      allocate(f0(this%state%m_F_dim), f1(this%state%m_F_dim), f2(this%state%m_F_dim), tmp_vX(this%state%n_X_dim), stat=memstat)
-      if (memstat /= 0) return
       ! Protect the initial value of state%vF
       f0 = this%state%vF
       !
       tmp_vX = vX
-      handle = 0
       res =  djacobi_init(handle, this%state%n_X_dim, this%state%m_F_dim, tmp_vX, this%state%mJ, this%jacobi_eps)
       ! detect error conditions
       if (checkMKLRescode(res,'recalculation of Jacobi matrix', nllsTR_ounit) /= 0) then
@@ -609,9 +607,6 @@ contains
       RCI_Req = 0
       do while (next_solve)
             res = djacobi_solve(handle, f1, f2, RCI_Req)
-            !! TESTING -->>
-            ! write(*,*) 'RCI_Req = ',RCI_Req, ' res = ', res, ' success = ', res == TR_SUCCESS
-            !! TESTING <<--
             if (res /= TR_SUCCESS) exit
             ! RCI status
             select case (RCI_Req)
@@ -638,8 +633,6 @@ contains
       enddo
       ! Restore the initial value of state%vF
       this%state%vF = f0
-      ! Free temporary arrays
-      deallocate(f0,f1,f2,tmp_vX)
       ! Finalize Jacobi solver, release resources
       res = djacobi_delete(handle)
       if ((info /= 0) .or. (checkMKLRescode(res,'recalculation of Jacobi matrix', nllsTR_ounit) /= 0)) then
@@ -691,7 +684,7 @@ contains
       l = lbound(A,dim=2)
       u = ubound(A,dim=2)
       do i=lbound(A,dim=1),ubound(A,dim=1)
-            write(ounit,'(E18.9,1X,$)') (A(i,j), j=l,u) ! does not conform f2003, but no temporary needed
+            write(ounit,'(ES18.9E3,1X,$)') (A(i,j), j=l,u) ! does not conform f2003, but no temporary needed
             write(ounit,*)
       end do
       end subroutine
@@ -801,8 +794,7 @@ contains
             double precision,dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
             integer,intent(out)                       :: info
             !
-                  ! call this%objectiveFx(vX, info)
-                  if (info == 0) call this%track(vX, TOF_Function, info)
+                  call this%track(vX, TOF_Function, info)
             !
             end subroutine
 
@@ -814,8 +806,7 @@ contains
             double precision,dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
             integer,intent(out)                       :: info
             !
-                  ! call this%jacobiMatrixFx(vX, this%state%mJ, info)
-                  if (info == 0) call this%track(vX, TOF_Jacobian, info)
+                  call this%track(vX, TOF_Jacobian, info)
             !
             end subroutine
 

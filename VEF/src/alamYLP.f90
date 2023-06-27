@@ -12,15 +12,15 @@ implicit none
             !> Epsilon used for numerical estimation of Jacobi matrix.
             !>
             !> Note: this is a reasonable value. Lowering it can lead to poor convergence or lack of convergence.
-            double precision        :: jacobi_eps = 5.E-1
+            double precision        :: jacobi_eps = 5.e-1_DP
             !> Request for preliminary solution of linearized problem
             logical                 :: linearize = .true.
             !> Request for solving the non-linear problem
             logical                 :: nonlinear = .true.
             !> Default epsilon to be set for all TR-solver convergence criteria, except ||F||_2
-            double precision        :: default_eps = 1.E-5
+            double precision        :: default_eps = 1.e-5_DP
             !> Epsilon to be set on norm of objective function ||F||_2
-            double precision        :: obj_func_eps = 1.E-3
+            double precision        :: obj_func_eps = 1.e-3_DP
 
             !> Request for usage of full multilevel model in the search phase
             logical                 :: search_full_model = .false.
@@ -127,21 +127,17 @@ implicit none
       ! (note: outunit argument has "optional" modifier in both the caller and callee)
       call nlls_TR_init(outunit,tr_verbose)
       ! Use von Mises guess
-      if (use_vmGuess) then
-            vX = vS
-      else
-            vX = vA
-      endif
+      vX = merge(vS,vA,use_vmGuess)
       !
-      r1 = 0.D0; r2 = 0.D0
+      r1 = 0.0_DP; r2 = 0.0_DP
       !
       !!! call objFunc%jacobiMatrixFx(vX, mJ,info)
       !
       ! TODO: more reliable lower limit, it should lead to tr(d) > 1.e-7
       !
-      tr_config%lo_limit = -10.0
-      tr_config%up_limit = 10.0
-      tr_config%init_step = 100.0
+      tr_config%lo_limit = -10.0_DP
+      tr_config%up_limit = 10.0_DP
+      tr_config%init_step = 100.0_DP
       ! Impose configuration settings
       ! Tr:
       tr_config%eps = config%default_eps   !<< beware!

@@ -5,10 +5,8 @@
 module dmcQRS
 use criMathUtils
 use criRange
-use criAlgorithm
 use criUncomment, only: readValue
 use dmcYLPResult
-use dmcUtils
 use dmcStressDrivenModule
 use commonConfig
 use commonUtils
@@ -36,8 +34,6 @@ implicit none
         !>@{ \name Interface methods of AbstractModule
 
         procedure,pass(this)    :: readConfig => QRSModule_readConfig
-
-        procedure,pass(this)    :: printConfig => QRSModule_printConfig
 
         procedure,pass(this)    :: run => QRSModule_run
 
@@ -89,25 +85,11 @@ contains
         !
         ! Override the requests for outputs:
         this%altay%output_config%nfile = 0   ! texture
-        this%altay%output_config%npebp = 0   ! KOST1x state
         this%output%outputRequest = .false.       ! idem.
         !
         info = VEF_OK
     !
     end function
-
-
-    integer function QRSModule_printConfig(this,outunit) result (info)
-    implicit none
-    class(QRSModule),intent(in)         :: this
-    integer,intent(in)                  :: outunit
-    !
-    integer :: ioerr
-    !
-        info = VEF_OK
-    !
-    end function
-
 
 
     subroutine QRSModule_run(this,info)
@@ -121,21 +103,15 @@ contains
     !
     type(SRTensor)                            :: D_t, S_t, sigma, sigma_t, SonA, D, Dresume_t, &
                                                  SmIdent    !< obtained stress mode
-    double precision,dimension(3,3)           :: Mrot = 0.0
+    double precision,dimension(3,3)           :: Mrot
     type(YLPResult)                           :: ylp_result
     !
     double precision                          :: fi1,phi,fi2, residual_resume
-    integer     :: i,j, k, npoints, npoints_ok, ofunit
+    integer     :: i, npoints, npoints_ok, ofunit
     logical     :: useVMGuess, acceptable_point
     !
     type(QRSOutputData) :: results
-    !
-    integer,parameter :: column_width = 15
-    ! For display output:
-    integer,parameter :: ncolumn_labels_display = 6, column_width_display = 14
-    character(len=column_width-1),dimension(ncolumn_labels_display) :: display_column_labels = &
-        [ character(len=column_width_display) ::  &
-        'angle','rho','q-value','r-value','sigma_xx','residual' ]
+
     !
         ! Super-class first
         RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
@@ -230,7 +206,7 @@ contains
         enddo
         !
         if (info == VEF_ERROR) return
-    
+
         npoints_ok = i-1
         if (npoints /= npoints_ok) then
             write(display_unit,fmt=850) 'There were unconverged solutions, so some of datapoints are dropped'
@@ -243,21 +219,10 @@ contains
         !
         info = this%fileOutput(ofunit, results, header=.true., restrict=npoints_ok)
         close(ofunit)
-        !
-        !
-        3400 format('| sigma',T40,'| SmIdent',T80,'|Dmcoord')
-        3401 format(3(F10.6,1X),T40,3(F10.6,1X),T80,3(F10.6,1X))
-        ! Formats for the display output
-        2600 format(1X, 6(A14,    1X))
-        2601 format('|',6(14('-'),'|'))
-        2610 format(1X, F14.2, 1X, 3(F14.6,1X),2(E14.6,1X)) ! 6 fields in total
-        1600 format(/,'Sample ', I0, ' out of ',I0, ', sample orientation: ',F0.2)
-        !
-#define MSG_GROUP_RULERS
+
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-#undef MSG_GROUP_RULERS
     !
     end subroutine
 
@@ -328,7 +293,7 @@ contains
         info = VEF_OK
         !
         ! Formats for the output file
-        710 format(1X, 8(E18.9,1X))
+        710 format(1X, 8(ES18.9E3,1X))
     end function
 
 
