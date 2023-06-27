@@ -52,9 +52,18 @@ contains
     !>@return the number of parameters used by this class
     subroutine hardening_model_init(this, config)
         class(HardeningModel), intent(inout)    ::  this
-        type(HardeningData), intent(in)             ::  config
+        type(Parameter), intent(in)             ::  params(:)
+        character(:), allocatable :: n_slip_systems
 
-        this%nss = 96
+        n_slip_systems = params .find. 'n_slip_systems'
+        select case(n_slip_systems)
+            case('FCC12')
+                this%nss = 12
+            case('BCC24')
+                this%nss = 24
+            case('BCC48')
+                this%nss = 48
+        end select
     end subroutine hardening_model_init
 
     !>Do nothing

@@ -1,10 +1,8 @@
 !> Dispatcher of hardening modelsR
 module Hardening
-    use hardening_types
-    use altayIOConfig, only: LEC
-    use altayConfig, only: hardeningData
     use definitions
     use parameters
+    use logging
 
     implicit none
     public
@@ -24,38 +22,28 @@ module Hardening
         !> Also allocates the back-end hardening model
         !> Must be called before initialization
         module function hardening_get_parameters(model_id) result(params) 
-            integer, intent(in)                     :: model_id
+            integer, intent(in)             :: model_id
             type(Parameter), allocatable    :: params(:)
         end function hardening_get_parameters
 
         !> Initialize module from config data object
-        module subroutine  InitModuleAltayHard(config,info)
-            type(hardeningData),intent(in)      :: config
-            integer,intent(out)                 :: info
+        module subroutine  hardening_init(params)
+            type(Parameter), allocatable, intent(in)  :: params(:)
         end subroutine 
 
         module subroutine hardening_finalize()
         end subroutine hardening_finalize
         
-        module subroutine getTau(gamma, tau, info)
-            real(dp),intent(in)         :: gamma
-            real(dp),intent(out)        :: tau 
-            integer,intent(out)         :: info
-        end subroutine getTau
+        module subroutine hardening_get_crss(grain)
+            integer, intent(in)                     :: grain
+        end subroutine hardening_get_crss
         
-        module subroutine getCRSS(ior, gamma, CRSSmatrix, info)
-            integer, intent(in)                     :: ior
-            real(dp), intent(in)                    :: gamma
-            type(CRSS), intent(out)                 :: CRSSmatrix
-            integer, intent(out)                    :: info
-        end subroutine getCRSS
-        
-        module subroutine KS_updateState(i,sliprate,deltaT,info)
-            integer,intent(in)                  :: i        
-            real(dp),intent(in), dimension(24)  :: sliprate 
-            real(dp),intent(in)                 :: deltaT   
-            integer,intent(out)                 :: info
-        end subroutine KS_updateState
+        module subroutine hardening_update(grain, time, strain, slip_rates)
+            integer,intent(in)      ::  grain        
+            real(DP), intent(in)    ::  time, &
+                                        strain, &
+                                        slip_rates(:)
+        end subroutine hardening_update
     end interface
 end module Hardening
 
@@ -68,9 +56,8 @@ submodule(Hardening) Hardening_Imp
     use hardening_model_pebp_loop
 
     implicit none
-    
+
     class(HardeningModel), allocatable :: model
-    integer :: HardLawID !<Hardening law identifier of the initialized module
 
 contains
 
@@ -90,6 +77,8 @@ contains
                 allocate(HardeningModelPEBPScrew::model)
             case(HARDENING_PEBP_LOOP)
                 allocate(HardeningModelPEBPLoop::model)
+            case default
+                call log_error('hardening', 'get_parameters', ERR_VAL, 'Invalid hardening model ID')
         end select
 
         HardLawID = model_id
@@ -97,79 +86,20 @@ contains
     end procedure hardening_get_parameters
 
     !> Initialize module from config data object
-    module procedure InitModuleAltayHard
-        
-        info = 0
-        
-        if (.not. allocated(model)) then
-        select case(config%HardLawID)
-            case(HARDENING_NONE)
-                allocate(HardeningModel::model)
-            case(HARDENING_VOCE)
-                  ! Just for non-hardening and isotropic, Voce-type hardening
-                allocate(HardeningModelVoce::model)
-            case(HARDENING_SWIFT)
-                  ! Swift-K hardening
-                allocate(HardeningModelSwift::model)
-            case(HARDENING_BP)
-                allocate(HardeningModelBP::model)
-            case(HARDENING_PEBP_SCREW)
-                allocate(HardeningModelPEBPScrew::model)
-            case(HARDENING_PEBP_LOOP)
-                allocate(HardeningModelPEBPLoop::model)
-            case default
-                  info = -11
-        end select
-        end if
-
-        call model%init(config)
-
-        HardLawID = config%HardLawID
-    end procedure
+    module procedure hardening_init
+        call model%init(params)
+    end procedure hardening_init
 
     module procedure hardening_finalize
         call model%finalize()
     end procedure hardening_finalize
-   
-    module procedure getTau
-        real(dp) :: slip_rates(48), &
-                    crss_buffer(2,96)
-        
-        info = 0 
 
-        select case(HardLawID)
-            case(HARDENING_NONE,HARDENING_BP,HARDENING_PEBP_SCREW,HARDENING_PEBP_LOOP)
-                  tau = 1.D0
-            case(HARDENING_VOCE, HARDENING_SWIFT)
-                    call model%update(1, 0.D0, gamma, slip_rates)
-                    crss_buffer = model%get_crss(1)
-                    tau = crss_buffer(1,1)
-            case default
-                  tau = 1.D0
-                  info = -5
-        end select
-    end procedure getTau
-
-    module procedure getCRSS
-        real(dp) :: tau
-        
-        select case(HardLawID)
-            case(HARDENING_NONE)
-                ! CRSS of all slip systems equal to 1. (& not dependent on crss_ratios)
-                CRSSmatrix%crss = 1.D0 
-            case(HARDENING_VOCE, HARDENING_SWIFT)
-                call getTau(gamma, tau, info)
-                if (info == 0) CRSSmatrix%crss = tau
-            case(HARDENING_BP, HARDENING_PEBP_SCREW, HARDENING_PEBP_LOOP)
-                CRSSmatrix%crss = model%get_crss(ior)
-            case default
-                info = -10
-        end select
-    end procedure getCRSS
+    module procedure hardening_get_crss
+        call model%get_crss(grain)
+    end procedure hardening_get_crss
 
     module procedure KS_updateState
-        call model%update(i, deltaT, 0.D0, sliprate)
-        info = VEF_OK   
+        call model%update(grain, time, strain, slip_rates)
     end procedure KS_updateState
-end submodule Hardening_Imp
+nd submodule Hardening_Imp
 

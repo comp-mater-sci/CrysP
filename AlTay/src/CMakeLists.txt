@@ -43,7 +43,6 @@ altayRCM.f90
 altaySub.f90
 parameters.f90
 hardening/hardening.f90
-hardening/hardening_types.f90
 hardening/model/hardening_model.f90
 hardening/model/isotropic/hardening_model_isotropic.f90
 hardening/model/isotropic/hardening_model_swift.f90
