@@ -1,6 +1,5 @@
 module altaySub
     use hardening_model_dsh
-    use altayIOConfig
     use altaySimul
     use altayMesostructure
     use altayTexFormats
@@ -22,37 +21,35 @@ contains
     !>
     !> This subroutine must be called prior to any call to other
     !> module subroutines.
-    subroutine initAltay(cnf,info,errmsg)
+    subroutine initAltay(cnf,info)
 
         type(altayConfigData),intent(inout)    :: cnf      !< configuration data
         integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
-        character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
         character(*), parameter :: PROC_NAME = 'initAltay'
 
         integer :: ierr
 
-        if (present(errmsg)) errmsg = '' ! clear errmsg
         ierr = 0
         ! Set the singleton object to the cnf
         acnf = cnf
         ! Open input files
         ! UNIT LEC = SLIP SYSTEMS; open slip system file
-        open (unit=LEC,file=trim(cnf%slipsystem%input_fname),status='old',iostat=ierr)
+        open (unit=LEC,file=trim(cnf%slipsystem_input_fname),status='old',iostat=ierr)
         if (ierr /= VEF_OK) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open slip system definition file: ' // trim(cnf%slipsystem%input_fname))
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open slip system definition file: ' // trim(cnf%slipsystem_input_fname))
 
         ! Load microstructure data
-        CALL GRFIL(acnf%micros_fname,acnf%simul_init%FMicro,info)
+        call read_microstructure(acnf%micros_fname,acnf%simul_init%FMicro,info)
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot process the microstructure file: ' // trim(acnf%micros_fname))
 
         ! Get the initial texture
-        call loadTexture(cnf%texture%input_type,NDAT1,trim(cnf%texture%input_fname),cnf%texture%block_id,info)
+        call loadTexture(trim(cnf%texture_input_fname),info)
         if (info /= VEF_OK) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot process the texture data file: ' // trim(cnf%texture%input_fname))
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot process the texture data file: ' // trim(cnf%texture_input_fname))
 
         ! Open output files
-        call openOutputFiles(cnf, info, errmsg)
+        call openOutputFiles(cnf, info)
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open output files.')
 
@@ -62,11 +59,9 @@ contains
         call parameter_set(cnf%hardening_parameters, 'n_grains', size(DFIL), fail_on_absent=.false.)
         call hardening_init(cnf%hardening_parameters)
         ! Initialisation of SIMUL
-        if (present(errmsg)) errmsg = 'Initialization call to the micromechanical model failed.'
         info = VEF_ERROR
         call SIMUL0()
 
-        if (present(errmsg)) errmsg = ''
         ! No need for the slip system definition anymore.
         close(LEC)
         info = VEF_OK
@@ -77,8 +72,6 @@ contains
         integer,intent(out)                 :: info     !< exit code (0 on success)
 
         ! Close all units.
-        close(LEC)
-        close(IMP)
         close(IMP3)
         close(IMP5)
         call DYNFIL_finalize(info)
@@ -90,10 +83,9 @@ contains
         endif
     end subroutine
 
-    subroutine openOutputFiles(cnf, info, errmsg)
+    subroutine openOutputFiles(cnf, info)
         type(altayConfigData),intent(in)    :: cnf      !< configuration data
         integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
-        character(len=*),intent(out),optional :: errmsg !< Error message (set if info /= altaySub_OK)
 
         character(len=fname_len) :: fname_prefix, fname
         character(*), parameter :: PROC_NAME = 'openOutputFiles'

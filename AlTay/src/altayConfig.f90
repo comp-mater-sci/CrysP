@@ -15,18 +15,6 @@ module altayConfig
     integer,parameter :: modelFCTaylor = 1, modelAlamel = 2
     !>@}
 
-    type :: slipSystemData
-        !> Name of the file containing definitions of slipsystems
-        character(len=fname_len)                  :: input_fname = ''
-    end type
-
-    type :: textureData
-        !> Type of texture representation
-        integer                                   :: input_type = TF_SMT
-        character(len=fname_len)                  :: input_fname = ''
-        integer                                   :: block_id = 1
-    end type
-
     type :: simulStepInputData ! no hardening data!
         logical                                   :: keep_texture = .true.  !< Flag that decides if this step leads to modification of the texture.
         !> Flag that decides if this step leads to an update of the state components
@@ -53,14 +41,8 @@ module altayConfig
         !> Macroscopic (homogenized) stress
         real(dp), dimension(3,3)    :: stress_tensor = 0.D0
         real(dp)                    :: taylor_factor = 0.D0             !< Macroscopic (homogenized) Taylor factor
-        real(dp)                    :: strain_rate_heterogeneity = 0.D0 !< Strain Rate Heterogeneity in polycrystal.
-                                                                        ! \f$ \kappa = (||d-D||) / ||D|| \f$
-        real(dp)                    :: equivalent_stress = 0.D0         !< Macroscopic stress, defined as the work conjugate to D_vM:
-                                                                        ! \f$ \sigma_{eq} = (\mathbf{S} \cdot \mathbf{D}) / D_{vM} \f$
         real(dp)                    :: effective_stress = 0.D0          !< Macroscopic (homogenized) effective von Mises stress
-        real(dp)                    :: homogenised_slip = 0.D0          !< Macroscopic (homogenized) plastic slip
         real(dp)                    :: homogenised_slip_tot = 0.D0      !< Macroscopic (homogenized) plastic slip - total over the calls
-        real(dp)                    :: effective_macro_strain = 0.D0    !< Macroscopic (imposed) effective von Mises strain - total over the steps
         real(dp)                    :: effective_macro_strain_tot = 0.D0 !< Macroscopic (imposed) effective von Mises strain - total over the calls
         real(dp)                    :: effective_macro_strain_tot_end = 0.D0 !< Macroscopic (imposed) effective von Mises strain till the end of the current step - total over the calls
     end type
@@ -91,9 +73,9 @@ module altayConfig
         character(len=fname_len)                  :: output_prefix = 'alamel'
         character(len=fname_len)                  :: jobtitle      = 'alamel'
         character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
-        type(slipSystemData)                      :: slipsystem    !< slip systems file name
+        character(len=fname_len)                  :: slipsystem_input_fname = ''
+        character(len=fname_len)                  :: texture_input_fname = ''
         type(outputConfig)                        :: output_config !< output file prefix, incremental output request flag, verbosity level
-        type(textureData)                         :: texture
         type(simulData)                           :: simul_init
         type(Parameter), allocatable :: hardening_parameters(:)
     end type

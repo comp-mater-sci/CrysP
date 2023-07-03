@@ -215,7 +215,7 @@ contains
       integer                       :: model_id, dm_id
       logical                       :: use_default_microstructure
       logical                       :: use_default_slipsystems
-      integer                       :: i
+      integer                       :: i, input_type
       character(len=max_pathlen) :: root, ext
       character(:), allocatable :: slip_systems
       character(5) :: buffer
@@ -228,16 +228,16 @@ contains
            model_id = -1
            dm_id = -1
             ! Read input texture file name
-            if (.not. readValue(cnfunit, cnf%texture%input_fname)) return
+            if (.not. readValue(cnfunit, cnf%texture_input_fname)) return
             !
             ! Deduce the input type from the extension
-            call splitExt(cnf%texture%input_fname, root, ext)
-            if (ext == '' .or. .not. resolveName(extensions, ext, cnf%texture%input_type)) then
+            call splitExt(cnf%texture_input_fname, root, ext)
+            if (ext == '' .or. .not. resolveName(extensions, ext, input_type)) then
                 write(error_unit,fmt=900) 'Unsupported texture input file format.'
                 info = VEF_ERROR
                 return
             endif
-            select case(cnf%texture%input_type)
+            select case(input_type)
                 case(TF_SMT)
                     continue
                 case default
@@ -257,12 +257,12 @@ contains
             use_default_slipsystems = .true.
             if (.not. readValue(cnfunit, use_default_slipsystems)) return
             if (.not. use_default_slipsystems) then ! user-supplied slip system definition
-                  if (.not. readValue(cnfunit, cnf%slipsystem%input_fname)) return ! read slip system filename
+                  if (.not. readValue(cnfunit, cnf%slipsystem_input_fname)) return ! read slip system filename
             !
             else ! default slip system definition
                 read(cnfunit, '(A)') buffer
                 slip_systems = buffer
-                cnf%slipsystem%input_fname = slip_systems // '.pre'
+                cnf%slipsystem_input_fname = slip_systems // '.pre'
             endif
             !
             ! Process advanced microstructure characterization

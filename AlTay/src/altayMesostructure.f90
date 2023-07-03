@@ -5,7 +5,6 @@ module altayMesostructure
     use altayAlgorithms
     use definitions
     use altayMacroKinematic
-    use altayIOConfig
 
     implicit none
     private
@@ -17,14 +16,13 @@ module altayMesostructure
     integer, public, protected :: NGrElm = 0             !< Number of grain boundary orientations
 
     public :: &
-        GRFIL, &
+        read_microstructure, &
         CLUSTER1
 
     contains
 
-    !> Reading of "microstructure" (Euler angles defining grain boundary segments)
     !> in SMT-format, allocation and assignment of the module variables.
-    subroutine GRFIL(fnam,F_mic,ierr)
+    subroutine read_microstructure(fnam,F_mic,ierr)
 
         integer,intent(out)         :: ierr
         character(len=*),intent(in) :: fnam !< Microstructure file name
@@ -32,12 +30,13 @@ module altayMesostructure
         real(dp), dimension(3,3), intent(in) :: F_mic
 
         integer           :: IGrElm !< Counter for loop over GBs
+        integer :: NDAT2
         type(EulerAngles) :: EulGB
         real(dp), dimension(3,3) :: T
         character(len=40)  :: TitMic !< Microstructure title
 
 
-        open (unit=NDAT2,file=fnam,status='old')
+        open (newunit=NDAT2,file=fnam,status='old')
         read (NDAT2,'(I5,5x,A)') NGrElm,TitMic ! read number of GBs and title
 
         if (allocated(TmatGr)) deallocate(TmatGr)
@@ -55,7 +54,7 @@ module altayMesostructure
 
         close(unit=NDAT2)
         ierr = 0
-    end subroutine GRFIL
+    end subroutine read_microstructure
 
 
     subroutine CLUSTER1(IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)

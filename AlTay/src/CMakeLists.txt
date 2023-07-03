@@ -23,7 +23,6 @@ altayAlgorithms.f90
 altayDynfil.f90 
 altayMacroKinematic.f90 
 altayMesostructure.f90 
-altayIOConfig.f90 
 altayPancake.f90 
 altaySliprate.f90 
 altayTBH.f90 
@@ -44,8 +43,6 @@ hardening/model/dislocation_substructural_hardening/hardening_model_pebp_screw.f
 hardening/model/dislocation_substructural_hardening/hardening_model_pebp_loop.f90
 )
 
-
-set_target_properties(${libaltay} PROPERTIES COMPILE_DEFINITIONS "ALTAY_SUBROUTINE;NO_STDOUT;PEBP_ENABLED;")
 
 #
 # Installation of the outputs in the build tree

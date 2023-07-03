@@ -1,14 +1,11 @@
 module altayTaylor
     use definitions
-    use altayAlgorithms
     use altayMacroKinematic
     use criMathUtils
     use hardening
-    use altayIOConfig
     use altayPancake
     use altaySliprate
     use altayConfig, only: astate
-    use hardening_model_dsh
     use logging
 
     implicit none
@@ -23,14 +20,13 @@ module altayTaylor
     integer :: DI1(5), INDACT(8),INDLP(8)
 
     public :: &
-        TAYLOR1, &
+        read_deformationsystems, &
         TAYLOR3, &
         TAYLOR4
 
     contains
 
-    ! Read slip system file
-    subroutine TAYLOR1(M111,A1)
+    subroutine read_deformationsystems(M111,A1)
 
         integer, intent(out) :: M111  ! < total number of systems in slip system file (glide+twin)
         real(dp), intent(out), allocatable :: A1(:,:)
@@ -69,7 +65,7 @@ module altayTaylor
         A2(1:5,1:M111)=A1(1:5,1:M111)
         A2(6:10,M111+1:M111*2)=A1(1:5,1:M111)
 
-    end subroutine
+    end subroutine read_deformationsystems
 
     ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
     subroutine TAYLOR3(SSam,RHOSsa,TRF,GEWF,IOR,TRFb,GMMAb,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
@@ -85,51 +81,41 @@ module altayTaylor
 
         call pancak2(NGL,B,DI1,Scrys,RHOScrys,RHOAcrys,GEWF,A2,MacroDefRate,MacroDefState,NACTIV, &
                      SLIPLP,TLXX,TAURLP,INDACT,INDLP,IOR,TRFb,GMMAb,NGR,NRL,laml,BB8,CC,M11)
-        !Transform stress from local frame (Scrys) to sample frame (Ssam)
+        !Transform stress from local frame to sample frame
         Ssam = rotateSRTensorTo(Scrys,TRF)
-        !Transform relaxation strain rate tensor from local frame (RHOScrys)
-        !                                         to sample frame (RHOSsa)
+        !Transform relaxation strain rate tensor from local frame to sample frame
         RHOSsa = rotateSRTensorTo(RHOScrys,TRF)
-        !Transform relaxation spin tensor from local frame (RHOAcrys) to sample frame (RHOAsa)
+        !Transform relaxation spin tensor from local frame to sample frame
         RHOAsa = rotateSRTensorTo(RHOAcrys,TRF)
-        !Report RHOSsa and RHOAsa to LST-file
     end subroutine
 
 
-    subroutine TAYLOR4(ISTP,IOR,TAU,TOTGAMdot,Seq,WorkRate,MacroDefRate,CC,M111,Ssam,RHOSsa,TRF,C2,ITW,XM)
+    subroutine TAYLOR4(IOR,TOTGAMdot,WorkRate,MacroDefRate,CC,M111,TRF,C2,ITW,XM)
 
         type(DeformationRate),intent(in) :: MacroDefRate
-        integer, intent(in) :: ISTP,IOR, &
+        integer, intent(in) :: IOR, &
               M111     !< total number of systems in slip system file (glide+twin),
-        real(dp), intent(in) :: TAU, XM(:,:),TRF(3,3),CC(2,M111),RHOSsa(3,3), &
-            Ssam(3,3) !< local stress in sample reference system
-        real(dp), intent(out) :: TOTGAMdot, C2(3,3), &
-                                  Seq ! Equivalent stress in crystal, defined as..
-                                      !  plastic work rate in crystal normalized by..
-                                      !  (macro) von Mises equivalent strain rate
+        real(dp), intent(in) :: XM(:,:),TRF(3,3),CC(2,M111)
+        real(dp), intent(out) :: TOTGAMdot, C2(3,3)
         !> Rate of plastic work per unit volume in the crystal
         real(dp), intent(out) :: WorkRate
         integer, intent(out) :: ITW
 
-        real(dp), dimension(3) :: TRC,ROT
-        real(dp), dimension(3,3) :: RCcryst,rhossaTot,TDC,RHOAcrys
+        real(dp), dimension(3) :: ROT
+        real(dp), dimension(3,3) :: RCcryst,TDC,RHOAcrys
         real(dp), dimension(96), save :: SGNN,GAMdot
-        integer :: info, i,j
-        real(dp) :: rndm,Mgrain,ratlon,x,VOLFR(96)
+        integer :: i,j
+        real(dp) :: rndm,x,VOLFR(NTW)
         real(dp), parameter :: ddt=1.0_DP
 
 
-        call SLIPRAT(M111,M111,GAMdot(1:M111),SGNN(1:M111),MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
+        call SLIPRAT(M111,GAMdot(1:M111),SGNN(1:M111),MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call hardening_update_state(IOR, ddt, GAMdot)
         TOTGAMdot=sum(abs(GAMdot(1:M111)))
         ! Calculate RCcryst: the rigid body spin in the crystal frame
         RCcryst = rotateSRTensorFrom(MacroDefRate%Spin,TRF)
         RHOAcrys = rotateSRTensorFrom(RHOAsa,TRF)
-        TRC(1)=RCcryst(3,2)+RHOAcrys(3,2)
-        TRC(2)=RCcryst(1,3)+RHOAcrys(1,3)
-        TRC(3)=RCcryst(2,1)+RHOAcrys(2,1)
-        WorkRate = sum(merge(CC(1,1:M111)*GAMdot(1:M111),-CC(2,1:M111)*GAMdot(1:M111),GAMdot(1:M111)>0.0_DP))
-        Seq=WorkRate / MacroDefRate%vMeqStrainRate
+        WorkRate = sum(merge(CC(1,1:M111),-CC(2,1:M111),GAMdot(1:M111)>0.0_DP)*GAMdot(1:M111))
 
 
         ROT = matmul(B1(:,1:M111),GAMdot(1:M111))
@@ -137,9 +123,9 @@ module altayTaylor
         do J=1,3
             C2(J,J)=1.0_dp
         end do
-        C2(3,2)=ROT(1)-TRC(1)
-        C2(1,3)=ROT(2)-TRC(2)
-        C2(2,1)=ROT(3)-TRC(3)
+        C2(3,2)=ROT(1)-(RCcryst(3,2)+RHOAcrys(3,2))
+        C2(1,3)=ROT(2)-(RCcryst(1,3)+RHOAcrys(1,3))
+        C2(2,1)=ROT(3)-(RCcryst(2,1)+RHOAcrys(2,1))
         C2(2,3)=-C2(3,2)
         C2(3,1)=-C2(1,3)
         C2(1,2)=-C2(2,1)
