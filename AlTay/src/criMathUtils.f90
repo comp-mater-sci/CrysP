@@ -10,7 +10,6 @@ module criMathUtils
       !>@{ \name Math constants
 
       double precision, parameter         :: pi  = acos(-1.D0) !< Pi \f$ \pi \f$
-      double precision, parameter         :: pi2 = acos(0.D0)  !< Pi / 2
       double precision, parameter         :: pi_deg = pi / 180.D0
       double precision, parameter         :: deg_pi = 180.D0 / pi
 

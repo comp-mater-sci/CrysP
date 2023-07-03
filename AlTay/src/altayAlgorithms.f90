@@ -12,7 +12,6 @@ module altayAlgorithms
     public  ::  updatC,             &
                 symMatrix,          &
                 vector5D,           &
-                transf,             &
                 rotmat, &
                 rotateSRTensorFrom, &
                 kleinKwa,           &
@@ -65,45 +64,26 @@ contains
         vec(5) = SQRT_P5 * (mat(1,2) + mat(2,1))
     end function
 
-    !Calculate the CIJ matrix of an ellipsoid with half axes stored in Gaxes. T defines the orientation of the axes.
-    !This version assumes that A is a diagonal matrix
-    subroutine transf(Gaxes, Aprime, T)
-        real(dp), dimension(3), intent(in)    :: Gaxes
-        real(dp), dimension(3,3), intent(out) :: Aprime
-        real(dp), dimension(3,3), intent(in)  :: T
-        integer                               :: i, j
-
-        do i = 1, 3
-            do j = 1, 3
-                Aprime(i, j) = sum(T(1:3,i)*t(1:3,j)/Gaxes**2)
-            end do
-        end do
-    end subroutine
 
     !find half-lengths of ellipsoid axes from CIJ matrix
     !store them in prval
-    !find Euler angles of these axes, store in GEULR
-    subroutine GETANG(CIJ, prval, GEULR, TMAT)
-        real(dp), dimension(3,3), intent(in)    :: CIJ
-        real(dp), dimension(3),   intent(out) :: GEULR, prval
+    subroutine GETANG(CIJ, prval, TMAT)
+        real(dp), dimension(3,3), intent(in)  :: CIJ
+        real(dp), dimension(3),   intent(out) ::  prval
         real(dp), dimension(3,3), intent(out) :: TMAT
         integer                                 :: i
         real(dp)                                :: CIJTR
-        real(dp), dimension(3,3)                :: e
 
         CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3._dp
-        e = CIJ
+        TMAT = CIJ
         do i = 1, 3
-            e(i,i) = e(i,i) - CIJTR
+            TMAT(i,i) = TMAT(i,i) - CIJTR
         end do
 
-        call eigenv(e, prval)
+        call eigenv(TMAT, prval)
 
         prval = prval + CIJTR
-
         prval = 1._dp / sqrt(prval)
-        TMAT = e
-        GEULR = EulerAngles2Arr(EuleranglesType(TMAT))
     end subroutine
 
     subroutine eigenv(e, prval)

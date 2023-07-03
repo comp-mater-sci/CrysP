@@ -1,7 +1,7 @@
 module altayCurAccess
     use altayDynfil
-    use altayAlgorithms
     use definitions
+    use criMathUtils
 
     implicit none
 
@@ -23,19 +23,19 @@ contains
         integer,intent(in)      :: iounit !< IO unit number
         integer,intent(out)     :: info !< exit code: 0 on success
         integer :: npoint, i
-        real(dp),parameter :: rad2deg = 180.D0 / acos(-1.D0)
-        real(dp),dimension(3) :: GLR
+        real(DP) :: eu(3)
 
         npoint = size(DFIL)
+        eu = EulerAngles2Arr(EulerAnglesType(mf%TAX0))*deg_pi
 
-        GLR=mf%GEULR*rad2deg
         write (iounit,402)
-        write (iounit,403) NRSTEP,npoint,mf%FALG,mf%GAXES,GLR
+        write (iounit,403) NRSTEP,npoint,mf%FALG,mf%GAXES,eu
         write (iounit,401)
 
         do i=1,npoint
+            eu = EulerAngles2Arr(EulerAnglesType(DFIL(i)%tT))*deg_pi
             write(iounit,400,iostat=info)&
-               i,DFIL(i)%tGEW,DFIL(i)%tfi1*rad2deg,DFIL(i)%tPHI*rad2deg,DFIL(i)%tfi2*rad2deg,DFIL(i)%tGAM
+               i,DFIL(i)%tGEW,eu(1),eu(2),eu(3),DFIL(i)%tGAM
             if (info /= 0) exit
         enddo
 

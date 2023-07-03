@@ -8,7 +8,6 @@ module altayMacroKinematic
     type, public ::  DeformationRate
         real(dp), dimension(3,3) :: VelGrad = 0.0D0        !< Velocity Gradient
         real(dp), dimension(3,3) :: StrainRate = 0.0D0     !< Strain Rate, i.e. symmetric part of the velocity gradient
-        real(dp)                 :: NormStrainRate = 0.0D0 !< Norm of strain rate
         real(dp), dimension(3,3) :: StrainMode = 0.0D0     !< Strain Mode normalized by the norm of strain rate
         real(dp)                 :: vMeqStrainRate = 0.0D0 !< von Mises equivalent strain rate
         real(dp), dimension(3,3) :: StrainModevM = 0.0D0   !< Strain Mode normalized by von Mises equivalent strain rate
@@ -43,41 +42,32 @@ module altayMacroKinematic
         this%StrainRate = (this%VelGrad+transpose(this%VelGrad))/2.D0
         this%Spin       = (this%VelGrad-transpose(this%VelGrad))/2.D0
 
-        this%NormStrainRate = norm2(this%StrainRate)
-        this%StrainMode     = this%StrainRate / this%NormStrainRate
-        this%vMeqStrainRate = sqrt(2.0D0/3.0D0) * this%NormStrainRate
+        this%StrainMode     = this%StrainRate / norm2(this%StrainRate)
+        this%vMeqStrainRate = sqrt(2.0D0/3.0D0) * norm2(this%StrainRate)
         this%StrainModevM   = this%StrainRate / this%vMeqStrainRate
 
     end subroutine
 
-    subroutine Update_DeformationState(thisRate,thisState,info,deltaTime_in)
+    subroutine Update_DeformationState(thisRate,thisState,info)
         type(DeformationRate), intent(in)    :: thisRate
         type(DeformationState),intent(inout) :: thisState
         integer,                    intent(out) :: info
-        real(dp), optional, intent (in) :: deltaTime_in
 
-        real(dp)                :: deltaTime
         real(dp), dimension(3,3):: Ldt
 
-        if(present(deltaTime_in)) then
-            deltaTime= deltaTime_in
-        else
-            deltaTime= 1.0D0
-        end if
-
-        Ldt= thisRate%VelGrad * deltaTime
+        Ldt= thisRate%VelGrad
         call MatrixExponentSmallNorm(Ldt,thisState%IncrDefGrad,thisState%IncrDefGrad_inverse,info)
-
+        !if (info /=0) error stop ! MD: needs further investigations, should not happen
         thisState%TotalDefGrad = matmul(thisState%IncrDefGrad,thisState%TotalDefGrad)
-        thisState%IncrvMeqStrain = thisRate%vMeqStrainRate * deltaTime
+        thisState%IncrvMeqStrain = thisRate%vMeqStrainRate
         thisState%AccumvMeqStrain_ToStartOfInc = thisState%AccumvMeqStrain_ToEndOfInc
         thisState%AccumvMeqStrain_ToEndOfInc   = thisState%AccumvMeqStrain_ToEndOfInc + thisState%IncrvMeqStrain
     end subroutine
 
     subroutine MatrixExponentSmallNorm(A,expA,InvExpA,info)
         real(dp), dimension(3,3), intent(in)  :: A
-        real(dp), dimension(3,3), intent(out) :: ExpA    !The matrix exponent of A: ExpA = exp(A)
-        real(dp), dimension(3,3), intent(out) :: InvExpA !The inverse of ExpA:      InvExpA = (exp(A))^(-1)
+        real(dp), dimension(3,3), intent(inout) :: ExpA    !The matrix exponent of A: ExpA = exp(A)
+        real(dp), dimension(3,3), intent(inout) :: InvExpA !The inverse of ExpA:      InvExpA = (exp(A))^(-1)
         integer,                          intent(out) :: info
 
         !For a given (3,3)-matrix A with small norm, i.e. ||A|| < 1,

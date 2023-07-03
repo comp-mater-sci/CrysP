@@ -43,30 +43,4 @@ contains
       !
       end function
 
-      !> Resolve an integer identifier into a symbolic name.
-      !>
-      !> \return .true. if the id matches a name provided in the map, then name contains corresponding symbolic identifier
-      !> \return .false. if the id doesn't match any map item, name and index (if present) are left unmodified.
-      logical function resolveId(themap,id,name,index)
-      type(MapItem),dimension(1:),intent(in)    :: themap
-      integer,intent(in)                        :: id
-      character(len=*),intent(inout)            :: name !MB: inout instead of only out since name only modified when name exists
-      integer,intent(inout),optional            :: index !MB: inout instead of only out since index only modified when name exists
-      !
-      integer :: i
-      !
-            resolveId = .false.
-            do i=1,size(themap) !MB: search for id in map
-                  if (id == themap(i)%ID) then
-                        name = themap(i)%Name
-                        resolveId = .true.
-                        exit
-                  endif
-            enddo
-            if (present(index) .and. resolveId) index = i
-      !
-      end function
-
-
-
 end module

@@ -8,7 +8,6 @@ module altaySimul
     use altayTaylor
     use altayAlgorithms
     use altayConfig
-    use altayIOConfig
     use logging
 
     implicit none
@@ -56,7 +55,7 @@ module altaySimul
         if (NFILE1 == 1) call CURwriteTitle(IMP1,TITEL,info)
   98    format (A)
 !       read the parameters of the work hardening model
-        call TAYLOR1(M11,XM) ! read slip system file
+        call read_deformationsystems(M11,XM)
     end subroutine
 
 
@@ -70,25 +69,18 @@ module altaySimul
                    NRL,&         !< number of relaxations
                    laml,laml1, &
                    IOR,ISTP,NPOINT, info, NFILE, i,j,l,ifil4,ITW
-        real(dp) :: gewfb(2), Fb(3,3,2), GAXESb(3,2), GEULRb(3,2), Ssam(3,3), TG(3,3), CIJ(3,3), &
-                    RHOST(3,3), tau, GEWF, SeqAvg,RHOSSb(3,3,2),RHOSsa(3,3),CIJb(3,3,2), TGb(3,3,2),gmm1,gmm0, &
-                    GEULR(3), &
+        real(dp) :: gewfb(2), Ssam(3,3), TG(3,3), CIJ(3,3), &
+                    GEWF, RHOSSb(3,3,2),RHOSsa(3,3),TGb(3,3,2),gmm1, &
                     GAXES(3)                                        ! half axes a,b,c, of the grain shape ellipsoid
-        real(dp), save :: SHsam(3,3),C2(3,3),RHOSm(3,3),qgx,ssqgx,CC(2,96)
-        real(DP) :: TOTGEW, fi1b(2),phib(2),fi2b(2), TRF(3,3), STOT(3,3)
+        real(dp), save :: C2(3,3),qgx,ssqgx,CC(2,96)
+        real(DP) :: TOTGEW, TRF(3,3),SHsam(3,3),RHOSm(3,3)
         type(DeformationState), save :: MacroDefState
         ! HGAM: homogenized slip per step
-        ! HGAMCALL: homogenized slip per call
-        real(dp), save :: HGAM = 0._DP
+        real(dp) :: HGAM
         ! Macroscopically imposed vM equivalent strain per call.
-        real(dp) :: MEPSCALL, HGAMCALL
         real(dp), save :: GMMdot !Total slip rate in current grain
         real(dp) :: Mgrain !Taylor factor of the current grain
         real(dp) :: Mavg   !Volume-averaged Taylor factor
-        real(dp), save :: srh !Strain Rate Heterogeneity in polycrystal
-        real(dp) :: SeqGrain ! Equivalent stress in crystal, defined as..
-                                      !  plastic work rate in crystal normalized by..
-                                      !  (macro) von Mises equivalent strain rate
         real(dp) :: WorkRate ! Rate of plastic work per unit
                                      ! volume in the crystal
         real(dp) :: Wtot ! Total plastic work per unit volume in crystal
@@ -103,31 +95,24 @@ module altaySimul
 
         ! Output the current texture
         if (NFILE == 1) call CURwriteBlock(IMP1,info)
-        HGAMCALL = 0.D0
-        MEPSCALL = 0.D0
         steploop: DO ISTP=1,astate%simulCalls(astate%this)%input%nsteps
 
             TOTGEW=0.0_DP
-            STOT = 0._DP
-            RHOST = 0._DP
-            SeqAvg=0._DP
+            SHsam = 0._DP
+            RHOSm = 0._DP
             Mavg=0._DP
-            srh=0._DP
             HGAM=0.0_DP
 
-            call dynfil_getGlobal(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
-#ifndef NO_STDOUT
-            write (*,96) ISTP,GAXES
-#endif
+            call dynfil_getGlobal(MacroDefState%TotalDefGrad,CIJ)
 
             nrstep=nrstep+1
 
             call Update_DeformationState(MacroDefRate,MacroDefState,info)
             call UPDATC(CIJ,MacroDefState%IncrDefGrad_inverse)
-            call GETANG(CIJ,GAXES,GEULR,TG)
+            call GETANG(CIJ,GAXES,TG)
 
             if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                  call DYNFIL_setGlobal(nrstep,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG)
+                  call DYNFIL_setGlobal(MacroDefState%TotalDefGrad,GAXES,CIJ,TG)
 !
 !         Added for lamel model:
 !         Organisation reading temporary texture file,
@@ -143,18 +128,15 @@ module altaySimul
                 Mgrain=0.0_DP
                 GMMdot=0.0_DP
                 WorkRate = 0.0_DP
-                SeqGrain = 0.0_DP
                 Wtot = 0.0_DP
 
                 do L=laml,laml1
                     if (ifil4 == NPOINT) exit
                     ifil4=ifil4+1
-                    call DYNFIL_getGrain(ifil4,TRFb(1:3,1:3,L),GEWFb(L),GMMAb(L),Fb(1:3,1:3,L),GAXESb(1:3,L), &
-                                         GEULRb(1:3,L),CIJb(1:3,1:3,L),TGb(1:3,1:3,L),RHOSSb(1:3,1:3,L))
+                    call DYNFIL_getGrain(ifil4,TRFb(1:3,1:3,L),GEWFb(L),GMMAb(L),TGb(1:3,1:3,L),RHOSSb(1:3,1:3,L))
                 end do
                 laml1 = mod(laml1,NGR)+1
                 laml=laml1
-                GMM0=GMMAb(laml)
                 !
                 TRF = TRFb(:,:,laml)
                 TG = TGb(:,:,laml)
@@ -180,28 +162,26 @@ module altaySimul
                 TOTGEW=TOTGEW+GEWF
 
                 if (astate%simulCalls(astate%this)%input%full_model) &
-                      call TAYLOR4(ISTP,IOR,TAU,GMMdot,SeqGrain,WorkRate,MacroDefRate,CC,M11,SSam,RHOSsa,TRF,C2,ITW,XM)
+                      call TAYLOR4(IOR,GMMdot,WorkRate,MacroDefRate,CC,M11,TRF,C2,ITW,XM)
                 if (NFILTW == 1) write (IMP3,398) ITW
  398            format (I3)
 
-                STOT = STOT + Ssam*GEWF
-                RHOST = RHOST + RHOSsa*GEWF
+                SHsam = SHsam + Ssam*GEWF
+                RHOSm = RHOSm + RHOSsa*GEWF
                 !
-                SeqAvg = SeqAvg + SeqGrain*GEWF
                 Mgrain = GMMdot /  MacroDefRate%vMeqStrainRate
                 Mavg = Mavg + Mgrain*GEWF
                 ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/MacroDefRate%vMeqStrainRate
-                srh = srh + norm2(RHOSsa)*GEWF
                 HGAM = HGAM + GMMdot*GEWF !Step time here implicitly assumed to be 1.0s
-                GMM1 = GMM0 + GMMdot !Step time here implicitly assumed to be 1.0s
+                GMM1 = GMMab(laml) + GMMdot !Step time here implicitly assumed to be 1.0s
                 Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
                 ! We can choose not to update the texture state
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                      call DYNFIL_setGrain(IOR,C2,GEWF,GMM1,MacroDefState%TotalDefGrad,GAXES,GEULR,CIJ,TG,RHOSsa)
+                      call DYNFIL_setGrain(IOR,C2,GEWF,GMM1,TG,RHOSsa)
             enddo clusterloop
 
-            SHsam = STOT / TOTGEW
-            RHOSm = RHOST / TOTGEW
+            SHsam = SHsam / TOTGEW
+            RHOSm = RHOSm / TOTGEW
 
             do i=1,2
                 do j=i+1,3
@@ -210,28 +190,18 @@ module altaySimul
                 end do
             end do
             Mavg=Mavg/TOTGEW
-            ! DEFINITION: srh = (||d-D||) / ||D||
-            srh=sqrt(2.D0/3.D0)*srh/TOTGEW
-            SeqAvg=SeqAvg/TOTGEW
-
-            MEPSCALL= MacroDefState%IncrvMeqStrain * (ISTP-1)
 
             ! Get the homogenized quantities:
             associate (callout => astate%simulCalls(astate%this)%output)
                 callout%stress_tensor= SHsam
                 callout%taylor_factor= Mavg
-                callout%strain_rate_heterogeneity = srh
-                callout%equivalent_stress= SeqAvg
                 callout%effective_stress = sqrt(3.D0/2.D0)*norm2(SHsam)
-                callout%homogenised_slip = HGAMCALL
                 callout%homogenised_slip_tot = HGAMTOT
-                callout%effective_macro_strain = MEPSCALL
                 callout%effective_macro_strain_tot = MacroDefState%AccumvMeqStrain_ToStartOfInc
                 callout%effective_macro_strain_tot_end = MacroDefState%AccumvMeqStrain_ToEndOfInc
             end associate
 
             HGAM = HGAM / TOTGEW
-            HGAMCALL = HGAMCALL + HGAM
             if (.not.astate%simulCalls(astate%this)%input%keep_state) HGAMTOT = HGAMTOT + HGAM
         enddo steploop
     end subroutine
