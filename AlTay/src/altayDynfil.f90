@@ -7,7 +7,8 @@ module altayDynfil
 
     !>Texture-related state variables for single grain
     type :: grain
-        real(dp)                    :: tGEW     = 1.D0, tGAM    = 0.D0
+        real(dp)                    :: tGEW     = 1.D0, &
+                                        tGAM    = 0.D0
         real(dp), dimension(3,3)    :: tT       = 0.D0
         real(dp), dimension(3,3)    :: tTAX     = unit_sr_matrix
         real(dp), dimension(3,3)    :: tZERO    = 0.D0
@@ -22,12 +23,11 @@ module altayDynfil
 
     type(grain), dimension(:), allocatable     :: DFIL             !<State variable: array of grains/orientations.
     type(matFrame), public, protected          :: mf               !<State variable: material (frame) global geometry
-    character(len=40)                          :: filetitle = ''   !<State variable: title of the input texture file
     integer                                    :: nrStep = 0       !<State variable: step number.
 
     public  ::  DFIL,       &
                 nrStep,     &
-                fileTitle,  &
+                grain,      &
                 dynfil_init,    &
                 dynFil_getGlobal,    &
                 dynFil_setGlobal,    &
@@ -38,42 +38,11 @@ module altayDynfil
 contains
 
     !> Allocate the memory block for the state variables.
-    subroutine dynfil_init(npoint,keepstate,istat)
+    subroutine dynfil_init(grains)
+        type(grain), dimension(:), allocatable, intent(in)  :: grains
+        integer :: i
 
-        integer, intent(in)                     :: npoint       !<Number of elements to be allocated
-        logical, intent(in)                     :: keepstate    !<Flag: preserve contenst of DFIL on reallocation.
-        integer, intent(out)                    :: istat        !<Exit code
-        type(grain), dimension(:), allocatable  :: tmp
-        integer                                 :: ntransf
-
-        istat = 1
-        ! Error handling
-        if (npoint <= 0) then
-            return
-        endif
-
-        if (.not. allocated(DFIL)) then
-            allocate(DFIL(npoint),stat=istat)
-        else
-            ! DFIL is previously allocated
-            if (size(DFIL) == npoint) then
-                istat = 0
-                return
-            endif
-            if (keepstate) then
-                ! Transfer npoints
-                allocate(tmp(npoint),stat=istat)
-                if (istat == 0) then
-                    ntransf = min(npoint,size(DFIL))
-                    tmp(1:ntransf) = DFIL(1:ntransf)
-                    call move_alloc(tmp,DFIL)
-                endif
-            else
-                deallocate(DFIL)
-                allocate(DFIL(npoint),stat=istat)
-            endif
-        endif
-
+        dfil = grains
     end subroutine
 
     !>Puts the module variables into initial state and deallocates the storage.
@@ -81,7 +50,6 @@ contains
         integer, intent(out)    :: info
         info = 0
         mf = matFrame()
-        filetitle = ''
         NRSTEP = 0
         if (allocated(DFIL)) deallocate(DFIL,stat=info)
     end subroutine

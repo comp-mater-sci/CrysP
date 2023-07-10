@@ -2,7 +2,7 @@ module altaySub
     use hardening_model_dsh
     use altaySimul
     use altayMesostructure
-    use altayTexFormats
+    use io
     use altayConfig
     use hardening
     use altayDynfil
@@ -44,9 +44,7 @@ contains
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot process the microstructure file: ' // trim(acnf%micros_fname))
 
         ! Get the initial texture
-        call loadTexture(trim(cnf%texture_input_fname),info)
-        if (info /= VEF_OK) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot process the texture data file: ' // trim(cnf%texture_input_fname))
+        call load_texture(trim(cnf%texture_input_fname))
 
         ! Open output files
         call openOutputFiles(cnf, info)

@@ -220,8 +220,6 @@ contains
       character(:), allocatable :: slip_systems
       character(5) :: buffer
 
-      type(MapItem),dimension(2) :: extensions = [MapItem('.smt',TF_SMT), MapItem('.SMT',TF_SMT)]
-
       type(MapItem),dimension(2) :: model_types = [MapItem('ALAMEL', modelAlamel), &
                                                    MapItem('FCTaylor', modelFCTaylor)]
            info = ERR_IO
@@ -232,19 +230,7 @@ contains
             !
             ! Deduce the input type from the extension
             call splitExt(cnf%texture_input_fname, root, ext)
-            if (ext == '' .or. .not. resolveName(extensions, ext, input_type)) then
-                write(error_unit,fmt=900) 'Unsupported texture input file format.'
-                info = VEF_ERROR
-                return
-            endif
-            select case(input_type)
-                case(TF_SMT)
-                    continue
-                case default
-                    write(display_unit, fmt=900) 'Incorrect texture type.'
-                    return
-            end select
-            !
+                       !
             ! Determine crystal plasticity model type
             !if (.not. readKeyword(cnfunit, model_types, model_id)) return
             if (.not. readKeyword(cnfunit, model_types, model_id)) then

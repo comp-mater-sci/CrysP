@@ -27,7 +27,7 @@ altayPancake.f90
 altaySliprate.f90 
 altayTBH.f90 
 altayCurAccess.f90 
-altayTexFormats.f90 
+io.f90 
 definitions.f90
 logging.f90
 altayConfig.f90  
