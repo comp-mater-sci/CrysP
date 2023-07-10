@@ -2,7 +2,7 @@ module altayPancake
     use definitions
     use criMathUtils
     use altayMesostructure
-    use altayTBH
+    use simplex
     use altayAlgorithms
     use altayMacroKinematic
     use hardening
@@ -118,15 +118,15 @@ module altayPancake
             ! in order to suppress the relaxations in a first call of the TBH program
             ! Full constraints calculation
             ! UITVOEREN VAN DE SIMPLEX-SUBROUTINE
-            call TBH(A = A1(1:N,1:M2), &
-                     D = BB(1:N), &
-                     TauC = CCC(1:2,1:M2), &
-                     U = UU, &
-                     Irp = DI(1:N), &
-                     GDOT = XX(1:M2), &
-                     SIG = UBUF(1:N), &
-                     TauR = Taur(1:M2), &
-                     DTAU = DTAU(1:M2))
+            call simplex_solve(taylor_coeffs = A1(1:N,1:M2), &
+                     strain = BB(1:N), &
+                     crss = CCC(1:2,1:M2), &
+                     inverse_basis = UU, &
+                     basis_systems = DI(1:N), &
+                     slip = XX(1:M2), &
+                     stress = UBUF(1:N), &
+                     rss = Taur(1:M2), &
+                     overstress = DTAU(1:M2))
 
             DTAU1=DTAU
             TAUR1=TAUR
@@ -135,17 +135,17 @@ module altayPancake
                 STRSS=UBUF
             else
                 do IRL=1,NRL
-                    CCC(1:2,M2+IRL)=0.0_DP
+                    CCC(1:2,M2+IRL)=0._DP
                 end do
-                call TBH(A = A1(1:N,1:M12), &
-                         D = BB(1:N), &
-                         TauC = CCC(1:2,1:M2), &
-                         U = UU, &
-                         Irp = DI(1:N), &
-                         GDOT = XX(1:M12), &
-                         SIG = STRSS(1:N), &
-                         TauR = Taur(1:M12), &
-                         DTAU = DTAU(1:M12))
+                call simplex_solve(taylor_coeffs = A1(1:N,1:M12), &
+                         strain = BB(1:N), &
+                         crss = CCC(1:2,1:M2), &
+                         inverse_basis = UU, &
+                         basis_systems = DI(1:N), &
+                         slip = XX(1:M12), &
+                         stress = STRSS(1:N), &
+                         rss = Taur(1:M12), &
+                         overstress = DTAU(1:M12))
 
                 ! GAMR will contain the relaxed shears:
                 gamr(1:NRL)=XX(M2+1:M2+NRL)

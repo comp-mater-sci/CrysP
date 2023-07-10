@@ -4,8 +4,8 @@ module definitions
     implicit none
     public
 
-    !>Standard real(dp)
-    integer, parameter :: dp = selected_real_kind(15,307)
+    integer, parameter :: DP = selected_real_kind(15,307)
+    REAL(DP), parameter :: TOLERANCE = 1.E-9_DP 
 
     !Status codes
     enum, bind(C)
