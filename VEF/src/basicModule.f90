@@ -14,7 +14,6 @@ module dmcBasicModule
     use parameters
     use logging
     use altaySub, only: initAltay, finalizeAltay
-    use criPath
     use commonUtils
 
     implicit none
@@ -229,24 +228,7 @@ contains
            dm_id = -1
             ! Read input texture file name
             if (.not. readValue(cnfunit, cnf%texture_input_fname)) return
-            !
-            ! Deduce the input type from the extension
-            call splitExt(cnf%texture_input_fname, root, ext)
-            if (ext == '' .or. .not. resolveName(extensions, ext, input_type)) then
-                write(error_unit,fmt=900) 'Unsupported texture input file format.'
-                info = VEF_ERROR
-                return
-            endif
-            select case(input_type)
-                case(TF_SMT)
-                    continue
-                case default
-                    write(display_unit, fmt=900) 'Incorrect texture type.'
-                    return
-            end select
-            !
             ! Determine crystal plasticity model type
-            !if (.not. readKeyword(cnfunit, model_types, model_id)) return
             if (.not. readKeyword(cnfunit, model_types, model_id)) then
                 write(error_unit,fmt=900) 'Unsupported crystal plasticity model.'
                 info = VEF_ERROR
@@ -270,13 +252,6 @@ contains
             if (.not. readValue(cnfunit, use_default_microstructure)) return
             if (.not. use_default_microstructure) then
                   if (.not. readValue(cnfunit, cnf%micros_fname)) return ! read <microstructure>.smt filename
-                  ! Deduce the input type from the extension
-                  call splitExt(cnf%micros_fname, root, ext)
-                  if (ext == '' .or. .not. (ext == '.smt' .or. ext == '.SMT')) then
-                        write(error_unit,fmt=900) 'Unsupported microstructure input file format.'
-                        info = VEF_ERROR
-                        return
-                  endif
                   ! Read user-supplied initial deformation gradient
                   do i=1,3
                         if (.not. readValue(cnfunit, cnf%simul_init%Fmicro(:,i))) then
@@ -285,14 +260,7 @@ contains
                             return
                         endif
                   enddo
-            else
-                  call incurMicrostructureFile(cnf%micros_fname, info) ! verify location of default microstructure file
-                  if (info /= VEF_OK) then
-                        write(error_unit, fmt=930) 'Cannot locate default microstructure file.'
-                        return
-                  endif
-            endif
-            !
+            end if
             ! Process hardening model section
             call readHardeningSection(cnfunit, cnf, info)
             if (info /= VEF_OK) then
@@ -396,54 +364,6 @@ contains
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-      !
-      end subroutine
-
-
-      !> Deduce the path to VEF common data files.
-      function getVEFDataDir()
-      character(len=max_pathlen) :: getVEFDataDir
-      !
-      character(len=max_pathlen) :: vef_root_path
-      integer :: ierr
-      !
-            getVEFDataDir = ''
-            call get_environment_variable('VEF_ROOT', vef_root_path, status=ierr)
-            if (ierr == 0 .and. len_trim(vef_root_path) > 0) then
-                  getVEFDataDir = pathjoin(vef_root_path,'data')
-            endif
-      !
-      end function
-
-
-      !> Determines location of data file in VEF distribution and checks its existence.
-      !>
-      !> The places where the procedure looks for the files are:
-      !> 1. $VEF_ROOT/data
-      !> 2. current directory
-      subroutine getDataPath(fname, path, info)
-      character(len=*),intent(in)   :: fname
-      character(len=*),intent(out)  :: path
-      integer,intent(out)           :: info
-      !
-      character(len=max_pathlen) :: prefix
-      integer :: ierr
-      logical :: file_exists
-      !
-            info = VEF_ERROR
-            prefix = getVEFDataDir()
-            path = pathjoin(prefix, fname)
-            inquire(file=path, exist=file_exists, iostat=ierr)
-            if (ierr == 0 .and. file_exists) info = VEF_OK
-      !
-      end subroutine
-
-      !> Incur the location of the default microstructure file
-      subroutine incurMicrostructureFile(micros_fname, info)
-      character(len=*),intent(out)    :: micros_fname
-      integer,intent(out)             :: info
-      !
-            call getDataPath('equiaxed.smt', micros_fname, info)
       !
       end subroutine
 
