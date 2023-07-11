@@ -4,7 +4,6 @@
 !> along deformation due to the uniaxial tension or compression stress.
 module dmcUDSA
 use criMathUtils
-use criPath
 use criRange
 use criNamedRange
 use criConfigReader
@@ -13,6 +12,8 @@ use dmcIncrementationControl
 use commonUtils
 use qrsTypes
 use commonConfig
+use definitions
+
 implicit none
 
     public :: UDSAModule

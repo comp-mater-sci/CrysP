@@ -1,7 +1,6 @@
 #include "criMacros.fpp"
 !> Calculations of Equi-Work Contours
 module dmcEWC
-use criPath
 use criMathUtils
 use criRange
 use criNumerics
@@ -12,6 +11,8 @@ use dmcStressDrivenEvolutionModule
 use dmcIncrementationControl
 use dmcResultFileOutput
 use commonUtils
+use definitions
+
 implicit none
 
     public :: EWCModule
