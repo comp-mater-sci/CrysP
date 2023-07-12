@@ -20,4 +20,8 @@ module definitions
     integer :: IMP3 = 11 !< output-file with twinning information
     integer :: IMP5 = 111     !< output of stress-strain or slip-stress
 
+    !> Maximal length of path acceptable by the filesystem
+    integer,parameter       :: MAX_PATHLEN = 2048
+
+
 end module definitions
