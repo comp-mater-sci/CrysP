@@ -14,7 +14,6 @@ criLinearMap.f90
 criMathUtils.f90
 criNamedRange.f90
 criNumerics.f90
-criPath.f90
 criRange.f90
 criUncomment.f90
 altaySimul.f90 
@@ -27,7 +26,6 @@ altayPancake.f90
 altaySliprate.f90 
 altayTBH.f90 
 altayCurAccess.f90 
-io.f90 
 definitions.f90
 logging.f90
 altayConfig.f90  

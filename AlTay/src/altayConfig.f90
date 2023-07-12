@@ -71,7 +71,7 @@ module altayConfig
         integer                                   :: model_id      = modelAlamel
         character(len=fname_len)                  :: output_prefix = 'alamel'
         character(len=fname_len)                  :: jobtitle      = 'alamel'
-        character(len=fname_len)                  :: micros_fname  = 'micro1.smt'
+        character(len=fname_len)                  :: micros_fname  = 'equiaxed.smt'
         character(len=fname_len)                  :: slipsystem_input_fname = ''
         character(len=fname_len)                  :: texture_input_fname = ''
         type(outputConfig)                        :: output_config !< output file prefix, incremental output request flag, verbosity level

@@ -1,9 +1,12 @@
 module altayDynfil
     use definitions
+    use logging
     use criMathUtils
 
     implicit none
     private
+
+    character(*), parameter :: MOD_NAME = 'dynfil'
 
     !>Texture-related state variables for single grain
     type :: grain
@@ -27,7 +30,6 @@ module altayDynfil
 
     public  ::  DFIL,       &
                 nrStep,     &
-                grain,      &
                 dynfil_init,    &
                 dynFil_getGlobal,    &
                 dynFil_setGlobal,    &
@@ -36,13 +38,31 @@ module altayDynfil
                 dynfil_finalize
 
 contains
+    subroutine dynfil_init(fname)
+        character(*), intent(in)    :: fname
+        integer                     :: nunit, info, nrec, nstap, i
+        character(40) :: title
+        real(DP) :: angles(3), stap, weight, gam
+        character(*), parameter :: PROC_NAME = 'load_texture'
 
-    !> Allocate the memory block for the state variables.
-    subroutine dynfil_init(grains)
-        type(grain), dimension(:), allocatable, intent(in)  :: grains
-        integer :: i
+        open(newunit=nunit,file=trim(fname),status='old',form='formatted',iostat=info)
+        if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to open textrure file')
 
-        dfil = grains
+        nrec = 0 
+        read (nunit, 94, iostat=info) nrec,title 
+94      format(I5,5x,A)
+        if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file header')
+        if (nrec > 0) allocate(dfil(nrec))
+        
+        do i = 1, nrec
+            read(nunit,96,iostat=info) angles(3),angles(2),angles(1),stap,nstap,weight,gam
+96          format(4F10.0,I5,5X,2F10.0)
+            if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read boundary segment')
+            angles = angles * pi_deg
+            dfil(i) = grain(weight, gam, rotmat(angles), mf%tax0, 0._DP)
+        enddo
+    
+        close(nunit)
     end subroutine
 
     !>Puts the module variables into initial state and deallocates the storage.
@@ -98,5 +118,4 @@ contains
         DFIL(i)%tTAX    = TAX
         DFIL(i)%tZERO   = ZERO
     end subroutine
-
 end module
