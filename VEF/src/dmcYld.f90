@@ -60,8 +60,8 @@ implicit none
         double precision :: scal_s_rel = 0.D0
         double precision :: norm_sona = 0.D0
         double precision :: dotWonA = 0.D0
-        type(pair_double) :: scal_s_rel_cart = pair_double(0.D0,0.D0)
-        type(pair_double) :: normal_cart = pair_double(0.D0,0.D0)
+        real(DP), dimension(2) ::   scal_s_rel_cart = 0._DP, &
+                                    normal_cart = 0._DP
         double precision :: beta = 0.D0
         double precision :: residual = 0.D0
     end type
@@ -209,8 +209,8 @@ contains
 
                 yldRes(i) = yldResult(rad2deg(theta), w, ylp_result%scal_s, scal_s_rel, &
                                       norm2(ylp_result%vSonA), ylp_result%dotWonA, &
-                                      pair_double(scal_s_rel * cos(theta), scal_s_rel * sin(theta)),&
-                                      pair_double(0.D0,0.D0), beta, ylp_result%R)
+                                      [scal_s_rel * cos(theta), scal_s_rel * sin(theta)], &
+                                      [0._DP,0._DP], beta, ylp_result%R)
 
                 i = i + 1
             enddo

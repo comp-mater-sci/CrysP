@@ -71,12 +71,6 @@ module criMathUtils
             module procedure scalarDeg2Rad, EulerAnglesDeg2Rad
       end interface
 
-      !> Datatype representing pair of double precision reals
-      type pair_double
-            double precision :: x
-            double precision :: y
-      end type
-
       interface rotmat
             module procedure rotmat_triplet, rotmat_EulerAngles
       end interface
@@ -441,9 +435,8 @@ contains
       !>
       !> v is obtained by a clockwise rotation by 90 degs applied to the AB vector.
       subroutine getNormalVector2D(A,B,length,v,beta)
-      type(pair_double), intent(in) :: A, B    !< Positions of the points: A and B
-      double precision,intent(in)   :: length  !< Length of the vector v
-      type(pair_double),intent(out) :: v       !< Normal vector
+      real(DP), intent(in) :: A(2), B(2), length 
+      real(DP),intent(out) :: v(2)       
       !> Angle between the horizontal axis and the vector u [radians]
       !> The range of the angle is [0:2pi], thus it may vary from acute angle
       ! via obtuse angle to reflex angle.
@@ -453,21 +446,20 @@ contains
       double precision :: u_norm
       !
             ! Build the secant vector
-            u = [B%x, B%y]  - [A%x, A%y]
+            u = b - a
             u_norm = norm2(u)
-            if (u_norm > epsilon(0.D0)) then
+            if (u_norm > epsilon(0._DP)) then
                   ! Build the normal vector. Anticlockwise rotation by 90degs
                   ! gives [-u_y, u_x]. Apply the clockwise rotation by 90degs:
                   u = [u(2), -u(1)]
                   beta = acos(u(1) / u_norm)
                   ! Let the vectors that point "downwards" have beta angle > 180deg
-                  if (u(2) < 0.D0) beta = 2.D0*pi - beta
-                  u = u / u_norm * length
-                  v = pair_double(u(1), u(2))
+                  if (u(2) < 0._DP) beta = 2._DP*pi - beta
+                  v = u / u_norm * length
             else
                   ! ouups, the points C and A overlap!
-                  beta = 0.D0
-                  v = pair_double(0.D0,0.D0)
+                  beta = 0._DP
+                  v = 0._DP 
             endif
       !
       end subroutine
