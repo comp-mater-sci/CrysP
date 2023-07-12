@@ -14,7 +14,7 @@ implicit none
     private
 
     type :: StressDrivenStep
-        double precision,dimension(sr_symm_voigt_dim)   :: stress_mode = 0.D0
+        double precision,dimension(6)   :: stress_mode = 0.D0
         type(IncrementationControlSettings)             :: incrementation_control
         logical                                         :: update_state = .false.
     end type
@@ -43,7 +43,7 @@ implicit none
     type :: ASROutput
         integer                 :: step = 0
         type(EvolutionOutput)   :: evolution_output
-        double precision,dimension(rot_matrix_dim,rot_matrix_dim)   :: rotation_matrix = unit_sr_Matrix
+        double precision,dimension(3,3)   :: rotation_matrix = unit_sr_Matrix
     end type
 
 contains
@@ -95,12 +95,12 @@ contains
     integer,intent(out)                     :: info
     !
     ! Quantities in the global (aka. material = texture) reference frame
-    type(SRTensor)                  :: sigma, S,  Pressure  !< total stress, deviatoric stress, hydrostatic stress
+    real(DP), dimension(3,3)    :: sigma, S,  Pressure  !< total stress, deviatoric stress, hydrostatic stress
     ! Quantities in rotated (aka. sample) reference frame
 !    type(SRTensor)                  :: sigma_rot
     type(ASROutput)                 :: output
     type(IncrementationControl)     :: icv
-    double precision,dimension(rot_matrix_dim,rot_matrix_dim)   :: Mrot
+    double precision,dimension(3,3)   :: Mrot
     !
     integer     :: istep, nsteps, ofunit
     !
@@ -122,9 +122,9 @@ contains
             associate(step => this%steps(istep), control => this%steps(istep)%incrementation_control)
                 !
                 ! Acquire full stress tensor sigma
-                sigma%t = Vec6ToMat33(step%stress_mode)
-                Pressure%t = (trace(sigma) / 3.D0) * unit_sr_tensor%t
-                S%t = sigma%t - Pressure%t
+                sigma = Vec6ToMat33(step%stress_mode)
+                Pressure = (trace(sigma) / 3.D0) * UNIT_SR_MATRIX
+                S = sigma - Pressure
                 !
                 ! Rotate from the original reference frame to the sample reference frame
 !                sigma_rot = rotateSRTensorTo(sigma, Mrot)
@@ -173,8 +173,8 @@ contains
     logical,intent(in),optional         :: header   !< Request for header to be written out
     !
     integer :: i, ierr, increment
-    type(SRTensor)      :: SonA, A, P_step, P_step_rot, P_total_rot, P_total_end, P_total_end_rot
-    double precision,dimension(sr_symm_voigt_dim) :: SonA_voigt, SonA_rot_voigt, &
+    real(DP), dimension(3,3)    :: SonA, A, P_step, P_step_rot, P_total_rot, P_total_end, P_total_end_rot
+    double precision,dimension(6) :: SonA_voigt, SonA_rot_voigt, &
                                                      A_voigt, A_rot_voigt, &
                                                      P_step_voigt, P_step_rot_voigt, &
                                                      P_total_end_voigt, P_total_end_rot_voigt
@@ -220,30 +220,30 @@ contains
                           Mrot => output%rotation_matrix)
                     !
                     ! Step deviatoric strain
-                    P_step_rot%t = vec5D2tens(v%icv%vP_step)
+                    P_step_rot = vec5D2tens(v%icv%vP_step)
                     ! Total deviatoric strain
-                    P_total_rot%t = vec5D2tens(v%icv%vP_total) ! at the beginning of the increment
-                    P_total_end_rot%t = P_total_rot%t + v%P_inc_evol%t ! at the end of the increment
+                    P_total_rot = vec5D2tens(v%icv%vP_total) ! at the beginning of the increment
+                    P_total_end_rot = P_total_rot + v%P_inc_evol ! at the end of the increment
                     !
                     ! Rotate back to the original coordinate system
                     !
                     A = rotateSRTensorFrom(v%A, Mrot)
-                    A_voigt = Mat33ToVec6(A%t)
+                    A_voigt = Mat33ToVec6(A)
                     !
                     SonA = rotateSRTensorFrom(v%SonA, Mrot)
-                    SonA_voigt = Mat33ToVec6(SonA%t)
+                    SonA_voigt = Mat33ToVec6(SonA)
                     !
                     P_step = rotateSRTensorFrom(P_step_rot, Mrot)
-                    P_step_voigt = Mat33ToVec6(P_step%t)
+                    P_step_voigt = Mat33ToVec6(P_step)
                     !
                     P_total_end = rotateSRTensorFrom(P_total_end_rot, Mrot)
-                    P_total_end_voigt = Mat33ToVec6(P_total_end%t)
+                    P_total_end_voigt = Mat33ToVec6(P_total_end)
                     !
                     ! Convert to Voigt (to avoid temporaries in write)
-                    A_rot_voigt = Mat33ToVec6(v%A%t)
-                    SonA_rot_voigt = Mat33ToVec6(v%SonA%t)
-                    P_step_rot_voigt =  Mat33ToVec6(P_step_rot%t)
-                    P_total_end_rot_voigt = Mat33ToVec6(P_total_end%t)
+                    A_rot_voigt = Mat33ToVec6(v%A)
+                    SonA_rot_voigt = Mat33ToVec6(v%SonA)
+                    P_step_rot_voigt =  Mat33ToVec6(P_step_rot)
+                    P_total_end_rot_voigt = Mat33ToVec6(P_total_end)
 
                     write(iounit,fmt=710,iostat=ierr) &
                                 output%step, v%icv%increment, & ! 2 fields

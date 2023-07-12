@@ -6,6 +6,9 @@ use criRange
 use criMathUtils
 use definitions
 use dmcSubsteppingConfig
+use altayConfig
+use altaySub
+
 implicit none
 
 
@@ -17,7 +20,7 @@ implicit none
 
     !> Base class for deformation rate driven steps
     type :: StrainDrivenStepConfig
-        type(SRTensor)  :: deformation_rate
+        real(DP), dimension(3,3)  :: deformation_rate
         logical         :: update_state = .false.
         logical         :: output_state = .false.
     end type
@@ -25,32 +28,21 @@ implicit none
 
     !> A strain-(rate) driven step
     type :: StrainDrivenStep
-
-        type(StrainDrivenStepConfig)        :: config
-
-        !> Volumetric strain
-        type(SRTensor)                      :: volumetric_strain ! FIXME: no need to store SRTensor
-
-        !> Step strain
-        type(SRTensor)                      :: deviatoric_strain
-
+        type(StrainDrivenStepConfig)    ::  config
+        real(DP), dimension(3,3)        ::  volumetric_strain, & 
+                                            deviatoric_strain
     contains
-        procedure,pass(this)    :: setUp => StrainDrivenStep_setUp
-        procedure,pass(this)    :: execute => StrainDrivenStep_execute
-
-        procedure,pass(this)    :: readConfig => StrainDrivenStep_readConfig
-
+        procedure :: setUp => StrainDrivenStep_setUp
+        procedure :: execute => StrainDrivenStep_execute
+        procedure :: readConfig => StrainDrivenStep_readConfig
     end type
-
 
     type,extends(StrainDrivenStep) :: StrainDrivenFixedStep
         class(FixedSubsteppingConfig),pointer    :: substepping_config => null()
     contains
-        procedure,pass(this)    :: setUp => StrainDrivenFixedStep_setUp
-        procedure,pass(this)    :: execute => StrainDrivenFixedStep_execute
-
-        procedure,pass(this)    :: readConfig => StrainDrivenFixedStep_readConfig
-
+        procedure :: setUp => StrainDrivenFixedStep_setUp
+        procedure :: execute => StrainDrivenFixedStep_execute
+        procedure :: readConfig => StrainDrivenFixedStep_readConfig
     end type
 
     !> Constructors of StrainDrivenFixedStep
@@ -58,36 +50,21 @@ implicit none
         module procedure StrainDrivenFixedStep_init_nincrements
     end interface
 
-
     !> Outputs collected per increment
     type :: IncrementOutput
-
-        type(SRTensor)  :: L !< Velocity gradient
-
-        type(SRTensor)  :: D !< Rate of deformation tensor (symmetric part of L) (strain rate)
-
-        type(SRTensor)  :: O !< Spin tensor (antisymmetric part of L)
-
-        type(SRTensor)  :: A !< Strain mode
-
-        type(SRTensor)  :: S !< Deviatoric stress tensor
-
-        double precision :: vm_strain_begin = 0.D0 !< Von Mises strain at the beginning of the increment
-
-        double precision :: vm_strain_end = 0.D0 !< Von Mises strain at the end of the increment
-
-        double precision :: vm_stress = 0.D0 !< Von Mises equivalent stress
-
-        double precision :: plastic_work_inc = 0.D0 !< Plastic work during the increment, i.e. dotW = (D : S)
-
-        double precision :: taylor_factor = 0.D0
-
-        double precision :: plastic_slip_tot = 0.D0 !< total accumulated plastic slip
-
-        double precision :: vMeqStrainRate = 0.D0 !< von Mises equivalent strain rate (= sqrt(2/3)*||D||)
-
+        real(DP), dimension(3,3) :: L, &
+                                    D, &
+                                    O, &
+                                    A, &
+                                    S
+        real(DP) :: vm_strain_begin = 0._DP, &
+                    vm_strain_end = 0._DP, &
+                    vm_stress = 0._DP, &
+                    plastic_work_inc = 0._DP, &
+                    taylor_factor = 0._DP, &
+                    plastic_slip_tot = 0._DP, &
+                    vmeqstrainrate = 0._DP
     end type
-
 
     !> Outputs collected per step
     type :: StepOutput
@@ -96,34 +73,29 @@ implicit none
         procedure,pass(this)        :: collect => StepOutput_collect
     end type
 
-
 contains
 
 
-    !> Constructor of StrainDrivenFixedStep. It takes number of increments
-    !> as argument
+    !> Constructor of StrainDrivenFixedStep. It takes number of increments as argument
     pure function StrainDrivenFixedStep_init_nincrements(n_increments) result(this)
-    type(StrainDrivenFixedStep) :: this
-    integer,intent(in)          :: n_increments !< Number of increments.
-    !
+        type(StrainDrivenFixedStep) :: this
+        integer,intent(in)          :: n_increments !< Number of increments.
+    
         allocate(this%substepping_config, source=FixedSubsteppingConfig(n_increments))
-    !
     end function
-
 
     !> Set up StrainDrivenStep
     integer function StrainDrivenStep_setUp(this) result(info)
-    class(StrainDrivenStep),intent(inout)   :: this
-    !
-    double precision :: step_strain_norm
-    !
+        class(StrainDrivenStep),intent(inout)   :: this
+        double precision :: step_strain_norm
+    
         info = VEF_ERROR
         associate(config => this%config)
             ! Make the step traceless: decompose into volumetric strain rate
             ! and strain rate deviator
-            this%volumetric_strain%t = trace(config%deformation_rate) / 3._DP * unit_sr_tensor%t
-            this%deviatoric_strain%t = config%deformation_rate%t - this%volumetric_strain%t
-            step_strain_norm = norm2(this%deviatoric_strain%t)
+            this%volumetric_strain = trace(config%deformation_rate) / 3._DP * UNIT_SR_MATRIX
+            this%deviatoric_strain = config%deformation_rate - this%volumetric_strain
+            step_strain_norm = norm2(this%deviatoric_strain)
             if (step_strain_norm < epsilon(0._DP)) then
                 write(display_unit, 900) 'Norm of the deviatoric part of prescribed deformation is too small.'
                 return
@@ -139,34 +111,25 @@ contains
 
 
     !> Execute StrainDrivenStep.
-    !>
-    !> It is a placeholder method, it always returns VEF_ERROR.
     integer function StrainDrivenStep_execute(this, step_output) result(info)
     class(StrainDrivenStep),intent(inout)   :: this
     class(StepOutput),intent(out)           :: step_output
-    !
+    
         info = VEF_ERROR
-    !
     end function
 
     !> Read configuration of StrainDrivenStep from config IO unit
-    !>
-    !> It is a placeholder method, it always returns VEF_OK
     integer function StrainDrivenStep_readConfig(this, cnfunit) result(info)
     class(StrainDrivenStep),intent(inout)   :: this
     integer,intent(in)                      :: cnfunit !< IO unit
-    !
+    
         info = VEF_OK
-    !
     end function
 
 
     !> Set up strain driven fixed step.
-    !>
-    !> Returns VEF_OK on success.
     integer function StrainDrivenFixedStep_setUp(this) result(info)
     class(StrainDrivenFixedStep),intent(inout)   :: this
-    !
     double precision :: step_strain_norm
     integer :: n_increments
     ! Volumetric strain fraction that triggers a warning (0.1%)
@@ -179,7 +142,7 @@ contains
         !
         if (.not. associated(this%substepping_config)) then
             ! Automatic incrementation to be used. Set it up:
-            step_strain_norm = norm2(this%deviatoric_strain%t)
+            step_strain_norm = norm2(this%deviatoric_strain)
             if (step_strain_norm >= auto_increment_norm) then
                 n_increments = floor(step_strain_norm / auto_increment_norm)
                 allocate(this%substepping_config, &
@@ -200,15 +163,17 @@ contains
     !>
     !> Returns VEF_OK on success.
     integer function StrainDrivenFixedStep_execute(this, step_output) result(info)
-    use altaySub
-    use altayConfig
-    class(StrainDrivenFixedStep),intent(inout)  :: this
-    class(StepOutput),intent(out)               :: step_output
+        class(StrainDrivenFixedStep),intent(inout)  :: this
+        class(StepOutput),intent(out)               :: step_output
     !
-    integer :: n_increments, i_incr
-    double precision :: increment_size, x, x_prev, increment_size_tot
-    type(SRTensor) :: increment_strain,  step_strain_total
-    !
+        integer :: n_increments, i_incr
+        real(DP) :: increment_size, &
+                    x, &
+                    x_prev, &
+                    increment_size_tot, &
+                    increment_strain(3,3), &
+                    step_strain_total(3,3)
+    
         ! Precondition
         RETURN_IF_WITH(.not. associated(this%substepping_config), info = VEF_ERROR)
         RETURN_IF_WITH(.not. associated(this%substepping_config%ptr_range), info = VEF_ERROR)
@@ -226,19 +191,19 @@ contains
             increment_size_tot = 0.D0
 
             ! Set-up the substeps
-            step_strain_total%t = 0.D0
+            step_strain_total = 0.D0
             i_incr = 0
             do while(increment_range%next(x))
                 i_incr = i_incr + 1
                 increment_size = x - x_prev
-                increment_strain%t = increment_size * this%deviatoric_strain%t
-                step_strain_total%t = step_strain_total%t + increment_strain%t
+                increment_strain = increment_size * this%deviatoric_strain
+                step_strain_total = step_strain_total + increment_strain
                 x_prev = x
                 !
                 ! increment_size_tot = increment_size_tot + increment_size ! FIXME
                 ! write(*,*) increment_size_tot, norm2(increment_strain%t) ! FIXME
                 !
-                if (norm2(increment_strain%t) < epsilon(0.D0)) then
+                if (norm2(increment_strain) < epsilon(0.D0)) then
                     write(display_unit, 900) 'Norm of the prescribed incremental deformation is too small.'
                     info = VEF_ERROR
                     return
@@ -246,7 +211,7 @@ contains
                 !
                 ! Set input data for AlTay
                 associate (input => astate%simulCalls(i_incr)%input)
-                        input%dgf = increment_strain%t
+                        input%dgf = increment_strain
                         input%keep_texture = .not. this%config%update_state
                         input%keep_state = .not. this%config%update_state
                         input%full_model = .true.
@@ -303,18 +268,18 @@ contains
                        altay_state => astate%simulCalls(i), &
                        altay_output => astate%simulCalls(i)%output)   ! HGH: originally altay_output => altay_state%output
                 !
-                increment_output%L%t = altay_state%input%dgf
+                increment_output%L = altay_state%input%dgf
                 ! Let libaltay calculate the strain rates etc. from velocity gradient
-                call Set_DeformationRate(increment_output%L%t, deformation_rate)
-                increment_output%D%t = deformation_rate%StrainRate
-                increment_output%O%t = deformation_rate%Spin
-                increment_output%A%t = deformation_rate%StrainMode
-                increment_output%S%t = altay_output%stress_tensor
+                call Set_DeformationRate(increment_output%L, deformation_rate)
+                increment_output%D = deformation_rate%StrainRate
+                increment_output%O = deformation_rate%Spin
+                increment_output%A = deformation_rate%StrainMode
+                increment_output%S = altay_output%stress_tensor
                 increment_output%vm_strain_begin = altay_output%effective_macro_strain_tot
                 increment_output%vm_strain_end = altay_output%effective_macro_strain_tot_end
                 increment_output%vm_stress = altay_output%effective_stress
                 ! D : S
-                increment_output%plastic_work_inc = sum(increment_output%D%t * increment_output%S%t)
+                increment_output%plastic_work_inc = sum(increment_output%D * increment_output%S)
                 !
                 increment_output%taylor_factor = altay_output%taylor_factor
                 increment_output%plastic_slip_tot = altay_output%homogenised_slip_tot
@@ -323,7 +288,5 @@ contains
             end associate
         enddo
         info = VEF_OK
-    !
     end function
-
 end module

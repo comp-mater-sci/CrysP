@@ -28,15 +28,15 @@ implicit none
 
         class(range_type),pointer                 :: ptr_w_range
 
-        double precision,dimension(sr_symm_voigt_dim,nbase) :: base_vectors = real(reshape( &
+        double precision,dimension(6,nbase) :: base_vectors = real(reshape( &
                                             [1, 0, 0, 0, 0, 0, & ! First base vector
                                              0, 1, 0, 0, 0, 0, & ! second base vector
                                              0, 0, 0, 0, 0, 0], & ! offset vector (zeros)
-                                            [sr_symm_voigt_dim,nbase]),DP)
+                                            [6,nbase]),DP)
 
         logical                                   :: do_scaling = .true.
 
-        double precision,dimension(sr_symm_voigt_dim) :: scaling_vector = &
+        double precision,dimension(6) :: scaling_vector = &
                                             real([1, 0, 0, 0, 0, 0],DP)
 
         logical                                   :: normalizeSm = .false.
@@ -124,15 +124,15 @@ contains
     implicit none
     class(YldModule),intent(inout)            :: this
     integer,intent(out)                       :: info
-    !
-    double precision                          :: theta, w
-    double precision                          :: iunilen ! Inverse of the length of the deviatoric part of uniaxial tensile stress
-
-    type(SRTensor)                            :: Sm, D
+    real(DP) :: theta, &
+                w,  &
+                iunilen, &
+                Sm(3,3), &
+                D(3,3), &
+                scal_s_rel, &
+                sigma_vector(6)
     type(YLPResult)                           :: ylp_result !< Results of the interative search
-    double precision                          :: scal_s_rel
     type(yldResult),dimension(:),allocatable  :: yldRes
-    double precision,dimension(sr_symm_voigt_dim) :: sigma_vector
     class(range_type),allocatable             :: theta_range
     !
     integer                 :: i,npoints, ofunit
@@ -140,7 +140,7 @@ contains
     integer :: posA, posB
     logical :: first_run, acceptable_point
     double precision,parameter :: beta = 0.D0
-    !
+    
         ! Super-class first
         RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
         !
@@ -161,8 +161,8 @@ contains
         !
         iunilen = 1.D0
         if (this%do_scaling) then
-            Sm%t =  Vec6ToMat33(this%scaling_vector)
-            if (norm2(Sm%t) < epsilon(0.D0)) then
+            Sm =  Vec6ToMat33(this%scaling_vector)
+            if (norm2(Sm) < epsilon(0.D0)) then
                 write(display_unit,fmt=900) 'Norm of the input stress for scaling cannot be zero'
                 return
             endif
@@ -197,7 +197,7 @@ contains
                 !       a temporary created in a call to Vec6ToMat33
                 sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) &
                                 + w*this%base_vectors(:,3)
-                Sm%t = Vec6ToMat33(sigma_vector)
+                Sm = Vec6ToMat33(sigma_vector)
                 !
                 info = this%findSolution(Sm, D, ylp_result, is_acceptable=acceptable_point)
                 ! Consider what to do with unsuccessful search

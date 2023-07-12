@@ -1,7 +1,7 @@
 !> Data types for stress evolution outputs
 module dmcEvolutionOutputRecord
 use definitions
-use criMathUtils, only: SRTensor, root23, vec5D2tens
+use criMathUtils, only: root23, vec5D2tens
 use dmcIncrementationControl, only: IncrementationControlVariables
 use dmcYLPResult, only: YLPResult
 implicit none
@@ -11,28 +11,20 @@ implicit none
 
     !> Data outputed per increment of stress driven state evolution
     type :: IncrementOutputRecord
-
         double precision :: vm_strain = 0.D0          !< von Mises equivalent of the strain in current step
         double precision :: vm_strain_total = 0.D0    !< von Mises equivalent of the total strain across all steps
-
         double precision :: norm_P_abs = 0.D0         !< norm of accumulated absolute plastic strain increment tensors
-
         double precision :: dotWonA = 0.D0
         double precision :: taylor_factor = 0.D0
         double precision :: scal_s = 0.D0
         double precision :: norm_SonA = 0.D0
         double precision :: R = 0.D0                  !< residual of search procedure
-
-        type(SRTensor) :: A                           !< plastic strain mode
-        type(SRTensor) :: SonA                        !< norm of deviatoric stress that corresponds to plastic strain mode A
-
-        type(SRTensor)  :: P_inc_evol
-        type(SRTensor)  :: S_evol
-
+        real(DP), dimension(3,3) :: A, &
+                                    sonA, &
+                                    p_inc_evol, &
+                                    s_evol
         type(IncrementationControlVariables) :: icv
-
     end type
-
 
     interface IncrementOutputRecord
         module procedure IncrementOutputRecord_init
@@ -46,8 +38,8 @@ contains
     type(IncrementOutputRecord)                 :: this
     type(IncrementationControlVariables),intent(in) :: icv
     type(YLPResult),intent(in)                  :: ylp
-    type(SRTensor),intent(in)                   :: De
-    type(SRTensor),intent(in)                   :: Se
+    real(DP), dimension(3,3), intent(in)        ::  de, &
+                                                    se
     double precision,intent(in)                 :: taylor_factor
     !
         this%vm_strain = root23 * norm2(icv%vP_step)
@@ -61,8 +53,8 @@ contains
 
         this%taylor_factor = taylor_factor
 
-        this%A%t = vec5D2tens(ylp%vA)
-        this%SonA%t = vec5D2tens(ylp%vSonA)
+        this%A = vec5D2tens(ylp%vA)
+        this%SonA = vec5D2tens(ylp%vSonA)
 
         this%P_inc_evol = De
         this%S_evol = Se

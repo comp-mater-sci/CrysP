@@ -100,13 +100,18 @@ contains
     ! Convention: strain rate and stress tensors in
     ! - "Tensile sample coordinate system" have suffix _t
     ! - "Material coordinate system" have no suffix.
+    real(DP),dimension(3,3)         ::  Mrot, &
+                                        D_t, &
+                                        S_t, &
+                                        sigma, &
+                                        sigma_t, &
+                                        sona, &
+                                        d, &
+                                        dresume_t, &
+                                        smident     
+    type(YLPResult)                 :: ylp_result
     !
-    type(SRTensor)                            :: D_t, S_t, sigma, sigma_t, SonA, D, Dresume_t, &
-                                                 SmIdent    !< obtained stress mode
-    double precision,dimension(3,3)           :: Mrot
-    type(YLPResult)                           :: ylp_result
-    !
-    double precision                          :: fi1,phi,fi2, residual_resume
+    real(DP)                        :: fi1,phi,fi2, residual_resume
     integer     :: i, npoints, npoints_ok, ofunit
     logical     :: useVMGuess, acceptable_point
     !
@@ -133,9 +138,9 @@ contains
         phi = 0.D0
         !
         ! Set sigma_t in such way that deviatoric part is of unit length
-        sigma_t%t = 0.D0
-        sigma_t%t(1,1) = root32/sqrt(this%rho**2-this%rho+1.D0)
-        sigma_t%t(2,2) = this%rho*sigma_t%t(1,1)
+        sigma_t = 0.D0
+        sigma_t(1,1) = root32/sqrt(this%rho**2-this%rho+1.D0)
+        sigma_t(2,2) = this%rho*sigma_t(1,1)
         !
         i = 1
         do while (this%ptr_range%next(fi2))
@@ -169,8 +174,8 @@ contains
 
             if (info == VEF_ERROR) exit
             !
-            SonA%t = vec5D2tens(ylp_result%vSonA)
-            SmIdent%t = vec5D2tens(ylp_result%vSonAn) ! stress mode for found strain mode
+            SonA = vec5D2tens(ylp_result%vSonA)
+            SmIdent = vec5D2tens(ylp_result%vSonAn) ! stress mode for found strain mode
 
             ! Rotate back to the "tensile test" coordinate system
             D_t = rotateSRTensorFrom(D, Mrot)
@@ -187,8 +192,8 @@ contains
             associate(r => results)
                 !
                 r%phis(i) = rad2deg(fi2)
-                r%qrsvalues(i) = calculateQRS(D_t%t,ylp_result%scal_s)
-                r%sigmas_x(i) = S_t%t(1,1) - S_t%t(3,3)
+                r%qrsvalues(i) = calculateQRS(D_t,ylp_result%scal_s)
+                r%sigmas_x(i) = S_t(1,1) - S_t(3,3)
                 r%residuals(i) = ylp_result%R
                 ! Optional: Taylor factor can be retrieved
                 if (this%calculate_MFactor) then
