@@ -24,7 +24,7 @@ altayMacroKinematic.f90
 altayMesostructure.f90 
 altayPancake.f90 
 altaySliprate.f90 
-altayTBH.f90 
+simplex.f90 
 altayCurAccess.f90 
 altayTexFormats.f90 
 definitions.f90
