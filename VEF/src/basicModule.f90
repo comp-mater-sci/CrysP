@@ -213,7 +213,7 @@ contains
       !
       integer                       :: model_id, dm_id
       logical                       :: use_default_microstructure
-      logical                       :: use_default_slipsystems
+      logical                       :: dummy, dummy2
       integer                       :: i, input_type
       character(len=max_pathlen) :: root, ext
       character(:), allocatable :: slip_systems
@@ -234,19 +234,22 @@ contains
                 info = VEF_ERROR
                 return
             endif
-            !
-            ! Determine slip system file
-            use_default_slipsystems = .true.
-            if (.not. readValue(cnfunit, use_default_slipsystems)) return
-            if (.not. use_default_slipsystems) then ! user-supplied slip system definition
-                  if (.not. readValue(cnfunit, cnf%slipsystem_input_fname)) return ! read slip system filename
-            !
-            else ! default slip system definition
-                read(cnfunit, '(A)') buffer
-                slip_systems = buffer
-                cnf%slipsystem_input_fname = slip_systems // '.pre'
-            endif
-            !
+            
+            dummy2 = readValue(cnfunit, dummy)
+            read(cnfunit, '(A)') buffer
+            slip_systems = buffer
+        
+            select case(slip_systems)
+                case('fcc12')
+                    cnf%deformation_mechanism = FCC12
+                case('bcc24')
+                    cnf%deformation_mechanism = BCC24
+                case('bcc48')
+                    cnf%deformation_mechanism = BCC48
+                case default
+                        call log_error(MOD_NAME, 'readAltayConfigSection', ERR_VAL, 'Invalid slip system identifier')
+            end select
+            
             ! Process advanced microstructure characterization
             use_default_microstructure = .true.
             if (.not. readValue(cnfunit, use_default_microstructure)) return
@@ -268,7 +271,7 @@ contains
                 return
             endif
 
-            call parameter_set(cnf%hardening_parameters, 'n_slip_systems', slip_systems)
+            call parameter_set(cnf%hardening_parameters, 'n_slip_systems', cnf%deformation_mechanism%n_systems)
             ! the keyword is mapped to a proper model_id, we can instantly set it.
             call setModelType(cnf,model_id,info)
             if (info /= VEF_OK) return

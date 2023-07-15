@@ -1,4 +1,4 @@
-module SlipSystems
+module slip_systems
     use definitions
 
     implicit none
@@ -8,14 +8,13 @@ module SlipSystems
         real(DP), dimension(3) :: antisymmetric_part
     end type
 
-    type DeformationMechanism(n_systems)
-        integer, len                            :: n_systems
-        type(SlipSystem), dimension(n_systems)  :: slip_systems
+    type DeformationMechanism
+        type(SlipSystem), dimension(:), allocatable :: slip_systems
         integer, dimension(5)                   :: initial_basis_systems
         real(DP), dimension(5,5)                :: initial_inverse_basis
     end type
 
-    type(DeformationMechanism(12)), parameter :: FCC12 = DeformationMechanism(12)( &
+    type(DeformationMechanism), parameter :: FCC12 = DeformationMechanism( &
                                                              [SlipSystem([0.4082482904638631_DP, -0.4082482904638631_DP, 0._DP, -0.2886751345948130_DP, 0.2886751345948130_DP], &
                                                                          [-0.4082482904638631_DP, 0.2041241452319316_DP, 0.2041241452319316_DP]), &
                                                               SlipSystem([0.1494292453613423_DP, 0.5576775358252053_DP, 0.2886751345948130_DP, 0._DP, -0.2886751345948130_DP], &
@@ -47,7 +46,7 @@ module SlipSystems
                                                                       -0.2190088388420719E-16_DP, 0.8033938098117588E-16_DP, 0.1732050807568877E+01_DP, 0.1732050807568877E+01_DP, 0.1732050807568877E+01_DP, &
                                                                       0.7071067811865472_DP, 0.7071067811865475_DP, -0.1732050807568877E+01_DP, 0.4859048780290499E-16_DP, -0.9576896948901857E-17_DP], [5,5]) &
                                                          )
-    type(DeformationMechanism(24)), parameter :: BCC24 = DeformationMechanism(24)( &
+    type(DeformationMechanism), parameter :: BCC24 = DeformationMechanism( &
                                                              [SlipSystem([0.4082482904638631_DP, -0.4082482904638631_DP, 0._DP, -0.2886751345948130_DP, 0.288675134594813_DP], &
                                                                          [0.4082482904638631_DP, -0.2041241452319316_DP, -0.2041241452319316_DP]), &
                                                               SlipSystem([0.1494292453613423_DP, 0.5576775358252053_DP, 0.2886751345948130_DP, 0._DP, -0.288675134594813_DP], &
@@ -103,7 +102,7 @@ module SlipSystems
                                                                        0.7071067811865472_DP, 0.7071067811865475_DP, -0.1732050807568877E+01_DP, -0.4859048780290499E-16_DP, -0.4859048780290499E-16_DP, &
                                                                        0.2588190451025206_DP, -0.9659258262890680_DP, -0.2070974249319058E-16_DP, 0.3679511122872680E-17_DP, -0.1732050807568877E+01_DP], [5,5]) &
                                                          )
-    type(DeformationMechanism(48)), parameter :: BCC48 = DeformationMechanism(48)( &
+    type(DeformationMechanism), parameter :: BCC48 = DeformationMechanism( &
                                                              [BCC24%slip_systems, &
                                                              [SlipSystem([0.2521277539490177_DP, -0.5193889958614422_DP, -0.1091089451179962_DP, -0.2182178902359925_DP, 0.3273268353539886_DP], &
                                                                         [0.3857583749052300_DP, -0.3086066999241840_DP, -0.0771516749810460_DP]), &

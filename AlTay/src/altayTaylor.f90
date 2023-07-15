@@ -7,6 +7,7 @@ module altayTaylor
     use altaySliprate
     use altayConfig, only: astate
     use logging
+    use slip_systems
 
     implicit none
     private
@@ -20,52 +21,37 @@ module altayTaylor
     integer :: DI1(5), INDACT(8),INDLP(8)
 
     public :: &
-        read_deformationsystems, &
+        taylor_init, &
         TAYLOR3, &
         TAYLOR4
 
     contains
 
-    subroutine read_deformationsystems(M111,A1)
+    subroutine taylor_init(deformation_mechanism, M111,A1)
 
         integer, intent(out) :: M111  ! < total number of systems in slip system file (glide+twin)
         real(dp), intent(out), allocatable :: A1(:,:)
+        type(DeformationMechanism), intent(in) :: deformation_mechanism
 
-        character(len=72) :: TITglij  !< Name of slip system set
-        real(dp) :: x,y
         integer :: i,j,l,I1
 
+        NGL = deformation_mechanism%n_systems
+        NTW = 0
+        DI1 = deformation_mechanism%initial_basis_systems
 
-        ! Read name of slip system set
-        read (LEC,217) TITglij
-  217   format(A)
-
-        read (LEC,210) I,NGL,NTW,DI1,X,Y
- 210    format (8I4,4X,2F10.0)
         M=NGL+NTW
         M111=M
         allocate(A1(5,M111))
         ! read glide + twin systems
-        do I1=1,M111
-            read (LEC,212) I,(A1(J,I1),J=1,5),(B1(L,I1),L=1,3)
-        end do
- 212    format (I4,8F20.16)
+        forall (i=1:M) A1(:,i) = deformation_mechanism%slip_systems(i)%symmetric_part
+        forall (i=1:M) B1(:,i) = deformation_mechanism%slip_systems(i)%antisymmetric_part
+        B = deformation_mechanism%initial_inverse_basis
 
-        do I=1,5
-            read (LEC,214) J,(B(I,L),L=1,5)
-        end do
- 214    format (I4,5D23.16)
-
-        if (NTW /= 0) then
-            do I=1,NTW
-                read (LEC,212) J,(B2(L,I),L=1,6),G(I)
-            end do
-        endif
         A2=0.0_DP
         A2(1:5,1:M111)=A1(1:5,1:M111)
         A2(6:10,M111+1:M111*2)=A1(1:5,1:M111)
 
-    end subroutine read_deformationsystems
+    end subroutine
 
     ! OMREKENING/TRANSFORMATION OF DISPLACEMENT GRADIENT.
     subroutine TAYLOR3(SSam,RHOSsa,TRF,GEWF,IOR,TRFb,GMMAb,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
