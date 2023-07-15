@@ -18,9 +18,9 @@ module criMathUtils
       real(DP), parameter         :: root32 = sqrt(3.D0/2.D0) !< Square root of 3/2 \f$ \sqrt{3/2} \f$
 
       !> Matrix form of the unit second rank tensor
-      real(DP), dimension(3,3), parameter :: UNIT_SR_MATRIX = [1._DP, 0._DP, 0._DP, & 
-                                                               0._DP, 1._DP, 0._DP, & 
-                                                               0._DP, 0._DP, 1._DP]   
+      real(DP), dimension(3,3), parameter :: UNIT_SR_MATRIX = reshape([1._DP, 0._DP, 0._DP, & 
+                                                                       0._DP, 1._DP, 0._DP, & 
+                                                                       0._DP, 0._DP, 1._DP], [3,3])   
   
       !> Representation of Euler angles: Bunge notation
       type EulerAngles
