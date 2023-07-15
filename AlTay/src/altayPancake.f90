@@ -106,11 +106,6 @@ module altayPancake
                 ! Assign CRSSmatrix to proper section of CCC
                 CCC(:,1+K1:M11+K1) = hardening_get_crss(IOR+IL-1, GMMab(IL))
 
-                ! Set Tau_crit for antitwinning direction equal to
-                ! GETAL times Tau_crit for twinning direction
-                do I=NGL+1,M11 ! this do-loop will only be executed for NTW>0
-                    CCC(2,I+K1)=CCC(1,I+K1)*GETAL
-                end do
                 UU(L1+1:L1+5,L1+1:L1+5)=B
             enddo
             if (NRL /= 0) CCC(1:2,M2+1:M12)=GETAL

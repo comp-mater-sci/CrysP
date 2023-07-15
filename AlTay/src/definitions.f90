@@ -17,7 +17,6 @@ module definitions
 
     integer :: LEC = 4   !< data set with slip systems
     integer :: IMP1 = 7  !< output-file with successive "current situations"
-    integer :: IMP3 = 11 !< output-file with twinning information
     integer :: IMP5 = 111     !< output of stress-strain or slip-stress
 
     !> Maximal length of path acceptable by the filesystem

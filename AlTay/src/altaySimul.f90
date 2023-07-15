@@ -15,7 +15,7 @@ module altaySimul
 
     real(dp), private, allocatable :: HGAMTOT,& !< homogenized slip accumulated over calls
         XM(:,:)
-    integer, private :: M11,NFILE1,NFILTW
+    integer, private :: M11,NFILE1
     integer, allocatable :: seed(:)
 
     character(*), parameter :: MOD_NAME = 'Simul'
@@ -41,7 +41,6 @@ module altaySimul
         NGR    = acnf%simul_init%NGR
 
         NFILE1 = acnf%output_config%NFILE   ! control "CUR"
-        NFILTW = acnf%output_config%NFILTW  ! control "TWN"
         HGAMTOT=0.D0
 
         if (NGR < 1.or.NGR > 2) &
@@ -68,7 +67,7 @@ module altaySimul
         integer :: NGR,&         !< number of grains
                    NRL,&         !< number of relaxations
                    laml,laml1, &
-                   IOR,ISTP,NPOINT, info, NFILE, i,j,l,ifil4,ITW
+                   IOR,ISTP,NPOINT, info, NFILE, i,j,l,ifil4
         real(dp) :: gewfb(2), Ssam(3,3), TG(3,3), CIJ(3,3), &
                     GEWF, RHOSSb(3,3,2),RHOSsa(3,3),TGb(3,3,2),gmm1, &
                     GAXES(3)                                        ! half axes a,b,c, of the grain shape ellipsoid
@@ -162,9 +161,7 @@ module altaySimul
                 TOTGEW=TOTGEW+GEWF
 
                 if (astate%simulCalls(astate%this)%input%full_model) &
-                      call TAYLOR4(IOR,GMMdot,WorkRate,MacroDefRate,CC,M11,TRF,C2,ITW,XM)
-                if (NFILTW == 1) write (IMP3,398) ITW
- 398            format (I3)
+                      call TAYLOR4(IOR,GMMdot,WorkRate,MacroDefRate,CC,M11,TRF,C2,XM)
 
                 SHsam = SHsam + Ssam*GEWF
                 RHOSm = RHOSm + RHOSsa*GEWF

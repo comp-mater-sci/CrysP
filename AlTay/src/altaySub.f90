@@ -22,7 +22,6 @@ contains
     !> This subroutine must be called prior to any call to other
     !> module subroutines.
     subroutine initAltay(cnf,info)
-
         type(altayConfigData),intent(inout)    :: cnf      !< configuration data
         integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
         character(*), parameter :: PROC_NAME = 'initAltay'
@@ -72,7 +71,6 @@ contains
         integer,intent(out)                 :: info     !< exit code (0 on success)
 
         ! Close all units.
-        close(IMP3)
         close(IMP5)
         call DYNFIL_finalize(info)
         if (info /= 0) return
@@ -92,11 +90,6 @@ contains
 
         fname_prefix = cnf%output_prefix
         info = VEF_ERROR
-
-        if (cnf%output_config%nfiltw /= 0) then
-            fname = trim(fname_prefix)//'.TWN'
-            open (unit=IMP3,file=fname,status='replace',err=9999)
-        endif
 
         if (cnf%output_config%nfile /= 0) then
             fname = trim(fname_prefix)//'.CUR'
@@ -161,7 +154,6 @@ contains
     end subroutine
 
     !> Write out the current state variables.
-    !>
     !> The call may involve IO units: IMP1 (CUR file)
     !> Appropriate control fields in acnf%output_config are checked to decide if the data have to
     !> be actually written to corresponding IO units.

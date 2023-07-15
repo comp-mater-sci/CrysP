@@ -54,8 +54,7 @@ module altayConfig
     end type
 
     type :: outputConfig
-        integer                                   :: nfile = 0 !< (SIMUL) NFILTW (Make output files 0 or 1)
-        integer                                   :: nfiltw = 0!< (SIMUL) IPR  0-3 Print switch
+        integer                                   :: nfile = 0 !< (SIMUL) 
     end type
 
    type :: simulData
