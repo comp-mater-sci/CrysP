@@ -78,7 +78,7 @@ module altayConfig
         type(outputConfig)                        :: output_config !< output file prefix, incremental output request flag, verbosity level
         type(simulData)                           :: simul_init
         type(Parameter), allocatable :: hardening_parameters(:)
-        type(DeformationMechanism(:)), allocatable :: deformation_mechanism
+        type(DeformationMechanism) :: deformation_mechanism
     end type
 
     type :: altayStateData

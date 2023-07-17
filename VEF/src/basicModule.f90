@@ -238,18 +238,9 @@ contains
             dummy2 = readValue(cnfunit, dummy)
             read(cnfunit, '(A)') buffer
             slip_systems = buffer
-        
-            select case(slip_systems)
-                case('fcc12')
-                    cnf%deformation_mechanism = FCC12
-                case('bcc24')
-                    cnf%deformation_mechanism = BCC24
-                case('bcc48')
-                    cnf%deformation_mechanism = BCC48
-                case default
-                        call log_error(MOD_NAME, 'readAltayConfigSection', ERR_VAL, 'Invalid slip system identifier')
-            end select
-            
+
+            cnf%deformation_mechanism = get_deformation_mechanism(slip_systems)
+                   
             ! Process advanced microstructure characterization
             use_default_microstructure = .true.
             if (.not. readValue(cnfunit, use_default_microstructure)) return
@@ -271,7 +262,7 @@ contains
                 return
             endif
 
-            call parameter_set(cnf%hardening_parameters, 'n_slip_systems', cnf%deformation_mechanism%n_systems)
+            call parameter_set(cnf%hardening_parameters, 'n_slip_systems', size(cnf%deformation_mechanism%slip_systems))
             ! the keyword is mapped to a proper model_id, we can instantly set it.
             call setModelType(cnf,model_id,info)
             if (info /= VEF_OK) return
