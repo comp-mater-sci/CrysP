@@ -27,10 +27,10 @@ contains
         class(HardeningModelSwift), intent(in)  :: this
         type(Parameter), allocatable    :: params(:)
     
-        params = [parameter_init('n_slip_systems', TYPE_STRING),  &
-                  parameter_init('crss0', TYPE_REAL),             &   
+        params = [hardening_model_get_parameters(this), &
+                 [parameter_init('crss0', TYPE_REAL),             &   
                   parameter_init('gamma0', TYPE_REAL),            &   
-                  parameter_init('n', TYPE_REAL)]   
+                  parameter_init('n', TYPE_REAL)]]   
     end function swift_get_parameters
 
     subroutine swift_validate_parameters(this, params)

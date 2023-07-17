@@ -31,7 +31,7 @@ module altayTaylor
 
         integer, intent(out) :: M111  ! < total number of systems in slip system file (glide+twin)
         real(dp), intent(out), allocatable :: A1(:,:)
-        type(DeformationMechanism), intent(in) :: deformation_mechanism
+        type(DeformationMechanism(*)), intent(in) :: deformation_mechanism
 
         integer :: i,j,l,I1
 
@@ -41,6 +41,9 @@ module altayTaylor
 
         M=NGL+NTW
         M111=M
+            
+        print *, 'Number of systems: ', M
+
         allocate(A1(5,M111))
         ! read glide + twin systems
         forall (i=1:M) A1(:,i) = deformation_mechanism%slip_systems(i)%symmetric_part

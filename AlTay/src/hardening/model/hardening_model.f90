@@ -21,7 +21,8 @@ module hardening_model
         procedure :: update_state            => hardening_model_update_state
     end type
 
-    public ::   hardening_model_validate_parameters,    &   
+    public ::   hardening_model_get_parameters, &
+                hardening_model_validate_parameters,    &   
                 hardening_model_init
 
 contains
@@ -30,7 +31,7 @@ contains
         class(HardeningModel), intent(in)       :: this
         type(Parameter), allocatable    :: params(:)
     
-        params = [parameter_init('n_slip_systems', TYPE_STRING)]
+        params = [parameter_init('n_slip_systems', TYPE_INTEGER)]
     end function hardening_model_get_parameters
 
     subroutine hardening_model_validate_parameters(this, params)
