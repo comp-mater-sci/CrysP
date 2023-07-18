@@ -12,7 +12,7 @@ module altayMesostructure
     !> Transformation matrix associated to the grain boundary reference frame
     !> in the initial state.
     !> Shape is: [3,3,ngr], where ngr is the number of grains.
-    real(dp), dimension(:,:,:),allocatable :: TmatGr
+    real(DP), dimension(:,:,:),allocatable :: TmatGr
     integer, public, protected :: NGrElm = 0             !< Number of grain boundary orientations
 
     public :: &
@@ -27,12 +27,12 @@ module altayMesostructure
         integer,intent(out)         :: ierr
         character(len=*),intent(in) :: fnam !< Microstructure file name
         !> F_mic is a deformation gradient that deforms a spherical grain into an ellipsoidal shape
-        real(dp), dimension(3,3), intent(in) :: F_mic
+        real(DP), dimension(3,3), intent(in) :: F_mic
 
         integer           :: IGrElm !< Counter for loop over GBs
         integer :: NDAT2
         type(EulerAngles) :: EulGB
-        real(dp), dimension(3,3) :: T
+        real(DP), dimension(3,3) :: T
         character(len=40)  :: TitMic !< Microstructure title
 
 
@@ -63,13 +63,13 @@ module altayMesostructure
         integer,intent(in)                     :: IGrElm
         type(DeformationRate),intent(in)       :: MacroDefRate
         type(DeformationState),intent(in)      :: MacroDefState
-        real(dp),intent(out)                   :: GEWF
-        real(dp),intent(out)                   :: Tprinc(3,3)
+        real(DP),intent(out)                   :: GEWF
+        real(DP),intent(out)                   :: Tprinc(3,3)
 
-        real(dp) :: GRPAR(3,3), PrDir(2,3),TDCGr(3,3), vec1(3),vec2(3),AL(3)
-        real(dp) :: u, dlength, dot1, dot2, TGANGLE
+        real(DP) :: GRPAR(3,3), PrDir(2,3),TDCGr(3,3), vec1(3),vec2(3),AL(3)
+        real(DP) :: u, dlength, dot1, dot2, TGANGLE
         integer :: i
-        real(dp), parameter, dimension(3,3) :: &
+        real(DP), parameter, dimension(3,3) :: &
             relaxI = reshape([0._dp, 0._dp, 1._dp, &
                               0._dp, 0._dp, 0._dp, &
                               1._dp, 0._dp, 0._dp],shape(relaxI)), &

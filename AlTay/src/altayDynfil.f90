@@ -7,17 +7,17 @@ module altayDynfil
 
     !>Texture-related state variables for single grain
     type :: grain
-        real(dp)                    :: tGEW     = 1.D0, tGAM    = 0.D0
-        real(dp), dimension(3,3)    :: tT       = 0.D0
-        real(dp), dimension(3,3)    :: tTAX     = unit_sr_matrix
-        real(dp), dimension(3,3)    :: tZERO    = 0.D0
+        real(DP)                    :: tGEW     = 1.D0, tGAM    = 0.D0
+        real(DP), dimension(3,3)    :: tT       = 0.D0
+        real(DP), dimension(3,3)    :: tTAX     = unit_sr_matrix
+        real(DP), dimension(3,3)    :: tZERO    = 0.D0
     end type grain
 
     type :: matFrame
-        real(dp),dimension(3,3)   :: FALG   = unit_sr_matrix
-        real(dp),dimension(3,3)   :: CIJ0   = unit_sr_matrix
-        real(dp),dimension(3,3)   :: TAX0   = unit_sr_matrix
-        real(dp),dimension(3)     :: GAXES  = 1.D0
+        real(DP),dimension(3,3)   :: FALG   = unit_sr_matrix
+        real(DP),dimension(3,3)   :: CIJ0   = unit_sr_matrix
+        real(DP),dimension(3,3)   :: TAX0   = unit_sr_matrix
+        real(DP),dimension(3)     :: GAXES  = 1.D0
     end type
 
     type(grain), dimension(:), allocatable     :: DFIL             !<State variable: array of grains/orientations.
@@ -88,7 +88,7 @@ contains
 
     !> Extract the global material data
     subroutine DYNFIL_getGlobal(F, CIJ)
-        real(dp), dimension(3,3), intent(out)   :: CIJ, F
+        real(DP), dimension(3,3), intent(out)   :: CIJ, F
 
         F = mf%FALG
         CIJ = mf%CIJ0
@@ -96,8 +96,8 @@ contains
 
     !> Write the global material data
     subroutine DYNFIL_setGlobal(F, axes, CIJ, tax)
-        real(dp), dimension(3), intent(in)      :: axes
-        real(dp), dimension(3,3), intent(in)    :: CIJ, tax, F
+        real(DP), dimension(3), intent(in)      :: axes
+        real(DP), dimension(3,3), intent(in)    :: CIJ, tax, F
 
         mf%FALG = F
         mf%GAXES = AXES
@@ -108,8 +108,8 @@ contains
     !> Get the record data for i-th grain
     subroutine DYNFIL_getGrain(i, T, GEW, GAM, TAX, ZERO)
         integer, intent(in)                             :: i
-        real(dp), intent(out)                   :: GEW,GAM
-        real(dp), dimension(3,3), intent(out)   :: TAX, T, ZERO
+        real(DP), intent(out)                   :: GEW,GAM
+        real(DP), dimension(3,3), intent(out)   :: TAX, T, ZERO
 
         GEW     = DFIL(i)%tGEW
         GAM     = DFIL(i)%tGAM
@@ -121,8 +121,8 @@ contains
     !> Put the record data for i-th grain
     subroutine DYNFIL_setGrain(i, T, GEW, GAM, TAX, ZERO)
         integer, intent(in)                     :: i
-        real(dp), intent(in)                    :: GEW,GAM
-        real(dp), dimension(3,3), intent(in)    :: TAX, T, ZERO
+        real(DP), intent(in)                    :: GEW,GAM
+        real(DP), dimension(3,3), intent(in)    :: TAX, T, ZERO
 
         DFIL(i)%tGEW    = GEW
         DFIL(i)%tGAM    = GAM

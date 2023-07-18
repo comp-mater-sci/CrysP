@@ -31,29 +31,29 @@ implicit none
         integer :: increment = 0
 
         !> Plastic work in the current increment
-        double precision    :: plastic_work_inc = 0.D0
+        real(DP)    :: plastic_work_inc = 0.D0
 
         !> Plastic work in the current step
-        double precision    :: plastic_work_step = 0.D0
+        real(DP)    :: plastic_work_step = 0.D0
 
         !> Total plastic work
-        double precision    :: plastic_work_total = 0.D0
+        real(DP)    :: plastic_work_total = 0.D0
 
         !> Increment of plastic strain
-        double precision,dimension(alamEval_vSD_dim)    :: vP_inc = 0.D0
+        real(DP),dimension(alamEval_vSD_dim)    :: vP_inc = 0.D0
 
         !> Total plastic strain in the current step
-        double precision,dimension(alamEval_vSD_dim)    :: vP_step = 0.D0
+        real(DP),dimension(alamEval_vSD_dim)    :: vP_step = 0.D0
 
         !> Total plastic strain:
-        double precision,dimension(alamEval_vSD_dim)    :: vP_total = 0.D0
+        real(DP),dimension(alamEval_vSD_dim)    :: vP_total = 0.D0
 
 
         !> Sum of absolute plastic strain increments:
         !> \f[
         !>    vP_{abs} = \sum | vP_{inc} |
         !> \f]
-        double precision,dimension(alamEval_vSD_dim)    :: vP_abs = 0.D0
+        real(DP),dimension(alamEval_vSD_dim)    :: vP_abs = 0.D0
 
     end type
 
@@ -82,9 +82,9 @@ implicit none
         !> It is ignored if set to a negative value.
         integer         :: max_increment_count = dmcIC_max_increments
 
-        double precision :: increment_size = 0.D0
+        real(DP) :: increment_size = 0.D0
 
-        double precision :: step_size = 0.D0
+        real(DP) :: step_size = 0.D0
 
         !> If scaling_type StrainTensorComponent is used, this contains
         !> the index of the tensor component of interest in Voigt notation.
@@ -98,7 +98,7 @@ contains
 
     subroutine IncrementationControl_update(this, vDe, vSe, info)
     class(IncrementationControl),intent(inout)      :: this
-    double precision,dimension(alamEval_vSD_dim),intent(in) :: vDe, vSe
+    real(DP),dimension(alamEval_vSD_dim),intent(in) :: vDe, vSe
     integer,intent(out)                             :: info
     !
         ! Plastic work in the current increment

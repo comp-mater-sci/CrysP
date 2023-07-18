@@ -12,7 +12,7 @@ module criUncomment
       !> Arguments:
       !> \param[in] inunit The IO unit (type: integer)
       !> \param[out] val   The value being retrieved (type: one of the supported types
-      !>                   (integer, logical, string, double precision) OR a vector of
+      !>                   (integer, logical, string, real(DP)) OR a vector of
       !>                   elements of supported types)
       !> \param[in] frmt  The format to be used in the read operation (type: character(len=*),optional)
       interface readValue
@@ -91,13 +91,13 @@ contains
 ! Instantization of template for double
 !
 #define TMPL_UNCOMMENT_FX read_double
-#define TMPL_UNCOMMENT_TYPE double precision
+#define TMPL_UNCOMMENT_TYPE real(DP)
 #include "criUncommentTemplates.fpp"
 #undef TMPL_UNCOMMENT_FX
 #undef TMPL_UNCOMMENT_TYPE
 !
 #define TMPL_UNCOMMENT_FX read_vector_double
-#define TMPL_UNCOMMENT_TYPE double precision,dimension(:)
+#define TMPL_UNCOMMENT_TYPE real(DP),dimension(:)
 #include "criUncommentTemplates.fpp"
 #undef TMPL_UNCOMMENT_FX
 #undef TMPL_UNCOMMENT_TYPE

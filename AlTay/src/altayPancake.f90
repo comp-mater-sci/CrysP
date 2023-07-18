@@ -25,31 +25,31 @@ module altayPancake
         type(DeformationRate),intent(in) :: MacroDefRate
         type(DeformationState),intent(in):: MacroDefState
         integer, intent(in) :: NGL,DI1(5),NGR,NRL,laml,IOR,M11
-        real(dp),dimension(3,3),intent(out):: S33, RHOS33, RHOA33,BB8(5)
+        real(DP),dimension(3,3),intent(out):: S33, RHOS33, RHOA33,BB8(5)
         integer, intent(out) :: NACTIV
         integer, intent(inout) :: INDACT(8),INDLP(8)
-        real(dp), intent(in) :: B(5,5),TRFb(3,3,2),TLXX,GMMab(2)
-        real(dp), intent(inout) :: CC(2,M11),GEWF,A1(10,194),SLIPLP(8),TAURLP(8)
+        real(DP), intent(in) :: B(5,5),TRFb(3,3,2),TLXX,GMMab(2)
+        real(DP), intent(inout) :: CC(2,M11),GEWF,A1(10,194),SLIPLP(8),TAURLP(8)
 
-        real(dp),dimension(5):: RHOS, RHOA
+        real(DP),dimension(5):: RHOS, RHOA
         integer ::  DI(10)
-        real(dp) :: UU(5*NGR,5*NGR),TPrinc(3,3)
-        real(dp) :: C2(3,3), rls(3,3), rla(3,3), C3(3,3), spanv(5), DTAU(194), STRSS(10), TAUR(194)
-        real(dp), save :: B3(10,3)=0.0_dp, XX(194),BB(10),CCC(2,194),DTAU1(194),TAUR1(194),B8(5,2),UBUF(10),GAMR(2)
+        real(DP) :: UU(5*NGR,5*NGR),TPrinc(3,3)
+        real(DP) :: C2(3,3), rls(3,3), rla(3,3), C3(3,3), spanv(5), DTAU(194), STRSS(10), TAUR(194)
+        real(DP), save :: B3(10,3)=0.0_dp, XX(194),BB(10),CCC(2,194),DTAU1(194),TAUR1(194),B8(5,2),UBUF(10),GAMR(2)
         ! rls and rla are unit relaxation tensors in crystal frame (symmetric and anti-sym. part)
         !     Definition of the two relaxations, representing a
         !     13-simple shear and a 23-simple shear, respectively:
-        real(dp), dimension(3,3,2), parameter :: relax = reshape([ &
+        real(DP), dimension(3,3,2), parameter :: relax = reshape([ &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     1.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 0.0D0, 0.0D0,                                   &
                     0.0D0, 1.0D0, 0.0D0],shape(relax))
-        real(dp), dimension(2,2), parameter ::  PLUMIN = reshape([&
+        real(DP), dimension(2,2), parameter ::  PLUMIN = reshape([&
                     1.0D0,-1.0D0,                                          &
                     1.0D0,-1.0D0], shape(PLUMIN)) !first index: # of grain, second index: #of relaxation
-        real(dp), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp, SQR2=sqrt(0.5_dp)
+        real(DP), parameter :: GETAL=1.0e6_dp, TOL=1.0e-6_dp, SQR2=sqrt(0.5_dp)
         integer :: M12,N,M2,IL,L1,IRL,I,K1,IG,JJ,II
         integer, save :: IGrElm
 

@@ -22,6 +22,7 @@
 !> *   TMPL_UNCOMMENT_TYPE - real type name
 
       function TMPL_UNCOMMENT_FX(inunit,val,frmt) result(isOK)
+      use definitions
       implicit none
       integer,intent(in)                     :: inunit
       TMPL_UNCOMMENT_TYPE,intent(out)        :: val
