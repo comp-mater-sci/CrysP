@@ -28,10 +28,9 @@ contains
     class(NormalizedV5DCompCached),intent(inout)    :: this
     double precision,dimension(:),intent(in)    :: vX       !< Dimension must be: 5
     integer,intent(out)                         :: info
-    !
     double precision,dimension(size(vX)):: vX_n
     double precision :: vX_norm
-    !
+    
         ! Assert the size and the norm
         RETURN_IF_WITH(size(vX) /= alamEval_vSD_dim, info = -1)
         RETURN_ON_WITH(vX_norm = norm2(vX), vX_norm < epsilon(0.D0), info = -1)

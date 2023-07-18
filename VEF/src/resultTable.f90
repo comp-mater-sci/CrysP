@@ -23,11 +23,6 @@ implicit none
         procedure,pass(this)    :: put
 
         procedure,pass(this)    :: get
-
-        procedure,pass(this)    :: store
-
-        procedure,pass(this)    :: load
-
     end type
 
 
@@ -88,68 +83,5 @@ contains
         endif
     !
     end function
-
-
-    !> Store the values in file fpath
-    integer function store(this, fpath) result(info)
-    class(ResultTable),intent(inout)    :: this
-    character(len=*),intent(in)         :: fpath
-    !
-    integer :: iounit, ierr, i
-
-        if (size(this%table) > this%saved_session_idx) then
-            open(newunit=iounit, file=fpath, position='APPEND', action='WRITE',&
-                 status='UNKNOWN', form='UNFORMATTED', iostat=ierr)
-            RETURN_IF_WITH(ierr /= 0, info=VEF_ERROR)
-            do i = this%saved_session_idx + 1, size(this%table)
-                write(iounit, iostat=ierr) this%table%values(i)
-                if (ierr /= 0) exit
-            enddo
-            if (ierr /= 0) then
-                ! clear the cache
-                close(iounit, status='DELETE', iostat=ierr)
-                this%saved_session_idx = 0
-            else
-                this%saved_session_idx = this%saved_session_idx + i - 1
-                close(iounit, iostat=ierr)
-            endif
-        endif
-        info = VEF_OK
-    !
-    end function
-
-
-    !> Load the values from file fpath. The file may or may not exist.
-    integer function load(this, fpath) result(info)
-    class(ResultTable),intent(inout)    :: this
-    character(len=*),intent(in)         :: fpath
-    !
-    integer :: iounit, ierr
-    type(ResultTableRecord) :: tmp
-    !
-        info = VEF_OK
-        open(newunit=iounit, file=fpath, status='OLD', &
-             form='UNFORMATTED', iostat=ierr)
-        if (ierr == 0) then
-            ! the file exists, load data from it
-            do while ((ierr == 0) .or. (info /= VEF_OK))
-                read(iounit, iostat=ierr) tmp
-                if (ierr == 0) then
-                    info = xVector_push(this%table, tmp)
-                else
-                    exit
-                endif
-            enddo
-            ! negative ierr on end-of-file or end-of-record; positive on error
-            if (ierr > 0 .or. info /= VEF_OK) then
-                info = VEF_ERROR
-            else
-                this%saved_session_idx = size(this%table)
-                info = VEF_OK
-            endif
-            close(iounit)
-        endif
-    end function
-
 
 end module
