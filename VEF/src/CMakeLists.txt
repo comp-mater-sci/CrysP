@@ -34,7 +34,6 @@ strainDrivenStep.f90
 stressDrivenEvolutionModule.f90
 stressDrivenModule.f90
 substeppingConfig.f90
-xVectorEvolutionOutputRecord.f90
 YLPResult.f90
 dmcADP.f90
 dmcASR.f90 

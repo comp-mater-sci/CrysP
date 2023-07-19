@@ -9,6 +9,7 @@ use criConfigReader
 use commonConfig
 use dmcStressDrivenEvolutionModule
 use dmcIncrementationControl
+use dmcEvolutionOutputrecord
 use dmcResultFileOutput
 use commonUtils
 use definitions
@@ -154,7 +155,7 @@ contains
 
     type(SRTensor)  :: sigma
 
-    type(EvolutionOutput) :: ref_output, output
+    type(IncrementOutputRecord), dimension(:), allocatable :: ref_output, output
     ! Shape or `results` is: [0:n_countours,1:n_theta]. Zeroth column
     ! shall include the theta angles
     double precision,dimension(:,:),allocatable,target :: results
@@ -202,8 +203,8 @@ contains
             !
             ! Calculate work levels that correspond to the requested levels of
             ! equivalent plastic strain.
-            vEquivalentStrain_ref = ref_output%values(:)%vm_strain_total
-            vPlasticWork_ref = ref_output%values(:)%icv%plastic_work_total
+            vEquivalentStrain_ref = ref_output%vm_strain_total
+            vPlasticWork_ref = ref_output%icv%plastic_work_total
             call BarycentricInterpolator_init(bi, interpolation_order, vEquivalentStrain_ref, vPlasticWork_ref, info)
             if (info /= VEF_OK) then
                 info = VEF_ERROR
@@ -251,8 +252,8 @@ contains
                 cycle
             endif
             !
-            vPlasticWork = output%values(:)%icv%plastic_work_total
-            vScalS = output%values(:)%scal_s
+            vPlasticWork = output%icv%plastic_work_total
+            vScalS = output%scal_s
             call BarycentricInterpolator_init(bi, interpolation_order, vPlasticWork, vScalS, info)
             if (info == VEF_OK) then
                 do j = 1, size(vPlasticWorkLevels)

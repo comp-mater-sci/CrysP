@@ -9,6 +9,7 @@ use criNamedRange
 use criConfigReader
 use dmcStressDrivenEvolutionModule
 use dmcIncrementationControl
+use dmcEvolutionOutputRecord
 use commonUtils
 use qrsTypes
 use commonConfig
@@ -139,7 +140,7 @@ contains
     !    - All other variables are implicitly expressed in the "material coordinate system"
     type(SRTensor) :: sigma, sigma_t, S_t, D_t, P_t, P_t_end
     double precision,dimension(rot_matrix_dim,rot_matrix_dim) :: Mrot = 0.0_DP
-    type(EvolutionOutput) :: output
+    type(IncrementOutputRecord), dimension(:), allocatable :: output
     type(EulerAngles) :: sample_orientation
     double precision  :: angle, stress_direction
     integer :: test_run, n_test_runs, increment, ofunit
@@ -219,10 +220,10 @@ contains
         !
         ! Process the output evolution path and produce result file
         !
-        do increment = 1, size(output%values)
+        do increment = 1, size(output)
             ! Total plastic strain at the _begining_ of the inrement.
 
-            associate(v => output%values(increment))
+            associate(v => output(increment))
 
                 ! Rotate back to the "tensile test" coordinate system
                 D_t = rotateSRTensorFrom(v%A, Mrot)

@@ -9,20 +9,13 @@ use dmcYLPResult
 use dmcStressDrivenModule
 use dmcIncrementationControl
 use dmcEvolutionOutputRecord
-use xVectorIncrementOutputRecord
 use commonUtils
 
 implicit none
 
 
-    public :: EvolutionOutput, StressDrivenEvolutionModule
+    public :: StressDrivenEvolutionModule
     private
-
-
-    type :: EvolutionOutput
-        type(IncrementOutputRecord),dimension(:),allocatable      :: values
-    end type
-
 
 
     type,extends(StressDrivenModule) :: StressDrivenEvolutionModule
@@ -56,58 +49,66 @@ contains
 
 
     !> Main loop of incremental stress driven state evolution
-    integer function StressDrivenEvolutionModule_calculateStressPath(this, sigma, control, outputs, rotmat, &
+    integer function StressDrivenEvolutionModule_calculateStressPath(this, sigma, control, output, rotmat, &
                                                                      incrementation_control, use_icv_as_is) result(info)
-    class(StressDrivenEvolutionModule),intent(inout):: this
-    type(SRTensor),intent(in)                       :: sigma !< Imposed stress tensor
-    !> Settings that control the incrementation process
-    class(IncrementationControlSettings),intent(inout) :: control
-    !> Results if the incrementation procedure.
-    !>
-    !> On successful exit it will include  n+1 entries, where n is the number of
-    !> increments needed to reach the end of the step.
-    !> The leading n contain complete results (search for strain rate
-    !> AND strain incrementation), while the last one just the result of the search for
-    !> the strain rate. Therefore, the last entry corresponds to the state of
-    !> the material at the end of the step.
-    type(EvolutionOutput),intent(out)   :: outputs
-    !> Rotation matrix. Relevant only if scalingStrainTensorComponent is used
-    double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in),optional  :: rotmat
-    !> Incrementation control variables to override the defaults.
-    !>
-    !> Typical use is to inherit some control variables (the totals) from a previous
-    !> call to this function.
-    !> On exit, the parameter will contain updated control variables.
-    type(IncrementationControl),intent(inout),optional  :: incrementation_control
-    !> Suppress re-initialization of step-wide and increment-wide incrementation control variables
-    !> (default: false)
-    logical,intent(in),optional                         :: use_icv_as_is
-    !
-    type(SRTensor) :: D, X_tmp, D_retry
-    double precision :: scaling_factor, control_variable, stop_control_variable, taylor_factor, stretch
-    type(YLPResult) :: ylp, ylp_retry
-    double precision,dimension(alamEval_vSD_dim) :: vDe, vSe
-    type(IncrementationControl) :: icv
-    double precision,dimension(sr_symm_voigt_dim) :: X_tmp_voigt
-    !
-    type(xVector_IncrementOutputRecord) :: tmp_output
-    type(IncrementOutputRecord)         :: tmp_record
-    integer :: i, n_roots
-    double precision,dimension(2) :: xi
-    logical :: stop_flag, acceptable_point, acceptable_point_retry
-    double precision,parameter :: stretch_ratio = 1e-3_DP
-    !
-        ! Prepare non-default incrementation controls if requested
+        class(StressDrivenEvolutionModule),intent(inout):: this
+        type(SRTensor),intent(in)                       :: sigma !< Imposed stress tensor
+        !> Settings that control the incrementation process
+        class(IncrementationControlSettings),intent(inout) :: control
+                !> Rotation matrix. Relevant only if scalingStrainTensorComponent is used
+        double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in),optional  :: rotmat
+        !> Incrementation control variables to override the defaults.
+        !>
+        !> Typical use is to inherit some control variables (the totals) from a previous
+        !> call to this function.
+        !> On exit, the parameter will contain updated control variables.
+        type(IncrementationControl),intent(inout),optional  :: incrementation_control
+        !> Suppress re-initialization of step-wide and increment-wide incrementation control variables
+        !> (default: false)
+        logical,intent(in),optional                         :: use_icv_as_is
+        type(IncrementOutputRecord), dimension(:), allocatable, intent(out) :: output
+        type(IncrementOutputRecord), dimension(:), allocatable  :: buffer
+        !
+        type(SRTensor) :: D, X_tmp, D_retry
+        double precision :: scaling_factor, control_variable, stop_control_variable, taylor_factor, stretch
+        type(YLPResult) :: ylp, ylp_retry
+        double precision,dimension(alamEval_vSD_dim) :: vDe, vSe
+        type(IncrementationControl) :: icv
+        double precision,dimension(sr_symm_voigt_dim) :: X_tmp_voigt
+
+        !
+        type(IncrementOutputRecord)         :: tmp_record
+        !> Results if the incrementation procedure.
+        !>
+        !> On successful exit it will include  n+1 entries, where n is the number of
+        !> increments needed to reach the end of the step.
+        !> The leading n contain complete results (search for strain rate
+        !> AND strain incrementation), while the last one just the result of the search for
+        !> the strain rate. Therefore, the last entry corresponds to the state of
+        !> the material at the end of the step.
+        integer :: i, n_roots, n_records
+        double precision,dimension(2) :: xi
+        logical :: stop_flag, acceptable_point, acceptable_point_retry
+        double precision,parameter :: stretch_ratio = 1e-3_DP
+
+
+        n_records = 0
+
+    
+        !Prepare non-default incrementation controls if requested
         if (present(incrementation_control)) then
             icv = incrementation_control
             if (.not. optionalDefault(use_icv_as_is, .false.)) call icv%initStep(info)
         endif
-        !
-        ! Trick: allow the increment to "stretch" a bit.
-        ! The trick is used in the stop condition of the loop to prevent starting
-        ! a new increment because stop_control_variable - control%step_size gives some
-        ! small positive value. The trick does not eliminate the main cause of that
-        ! drift, which is the accumulation of increment tensor components of different sign.
+        
+
+
+
+        !Trick: allow the increment to "stretch" a bit.
+        !The trick is used in the stop condition of the loop to prevent starting
+        !a new increment because stop_control_variable - control%step_size gives some
+        !small positive value. The trick does not eliminate the main cause of that
+        !drift, which is the accumulation of increment tensor components of different sign.
         stretch = stretch_ratio * control%increment_size
         !
         ! Follow the evolution line along S
@@ -123,8 +124,8 @@ contains
                 !
                 ! Pick the most recent converged solution
                 do i = icv%increment, 1, -1
-                    if (tmp_output%values(i)%R < this%ylp%obj_func_eps) then
-                        D_retry = tmp_output%values(i)%A
+                    if (output(i)%R < this%ylp%obj_func_eps) then
+                        D_retry = output(i)%A
                         exit
                     endif
                 enddo
@@ -240,26 +241,30 @@ contains
                 vDe = 0.D0
                 vSe = 0.D0
             endif
-            !
+            
             ! Append the output record
-            info = xVector_push(tmp_output, tmp_record)
-            if (info /= VEF_OK) exit
-            !
+            if (.not. allocated(output)) then
+                allocate(output(8))
+            else if (size(output) == n_records) then
+                allocate(buffer(2*size(output)))
+                buffer(1:n_records) = output
+                call move_alloc(buffer, output)
+            end if
+            n_records = n_records + 1
+            output(n_records) = tmp_record
+            
             ! Update icv
-            !
             call icv%update(vDe, vSe, info)
             if (info /= VEF_OK) exit
-            !
             call this%onIncrementEnd(control, icv, tmp_record, info)
             if (stop_flag .or. (info /= VEF_OK)) exit
-        !
         enddo
         if (info /= VEF_OK) return
 
-        outputs%values = tmp_output%values
         ! Report back the incrementation control variables if requested
         if (present(incrementation_control)) incrementation_control = icv
     !
+        output = output(1:n_records)
     end function
 
 
