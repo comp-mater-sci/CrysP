@@ -53,7 +53,7 @@ contains
         class(HardeningModel), intent(in)                ::  this
         integer, intent(in)                                 ::  grain
         real(DP), intent(in) ::                            strain
-        real(dp), dimension(2, this%nss)                :: crss 
+        real(DP), dimension(2, this%nss)                :: crss 
 
         crss = 1._DP
     end function
@@ -62,8 +62,8 @@ contains
     subroutine hardening_model_update_state(this, grain, time, slip_rates)
         class(HardeningModel), intent(inout)    :: this
         integer, intent(in)                                 ::  grain
-        real(dp), intent(in)                                ::  time
-        real(dp), dimension(this%nss), intent(in) ::  slip_rates
+        real(DP), intent(in)                                ::  time
+        real(DP), dimension(this%nss), intent(in) ::  slip_rates
     end subroutine 
 
     !>Do nothing

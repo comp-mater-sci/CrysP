@@ -72,19 +72,19 @@ implicit none
 
         type(SRTensor)  :: S !< Deviatoric stress tensor
 
-        double precision :: vm_strain_begin = 0.D0 !< Von Mises strain at the beginning of the increment
+        real(DP) :: vm_strain_begin = 0.D0 !< Von Mises strain at the beginning of the increment
 
-        double precision :: vm_strain_end = 0.D0 !< Von Mises strain at the end of the increment
+        real(DP) :: vm_strain_end = 0.D0 !< Von Mises strain at the end of the increment
 
-        double precision :: vm_stress = 0.D0 !< Von Mises equivalent stress
+        real(DP) :: vm_stress = 0.D0 !< Von Mises equivalent stress
 
-        double precision :: plastic_work_inc = 0.D0 !< Plastic work during the increment, i.e. dotW = (D : S)
+        real(DP) :: plastic_work_inc = 0.D0 !< Plastic work during the increment, i.e. dotW = (D : S)
 
-        double precision :: taylor_factor = 0.D0
+        real(DP) :: taylor_factor = 0.D0
 
-        double precision :: plastic_slip_tot = 0.D0 !< total accumulated plastic slip
+        real(DP) :: plastic_slip_tot = 0.D0 !< total accumulated plastic slip
 
-        double precision :: vMeqStrainRate = 0.D0 !< von Mises equivalent strain rate (= sqrt(2/3)*||D||)
+        real(DP) :: vMeqStrainRate = 0.D0 !< von Mises equivalent strain rate (= sqrt(2/3)*||D||)
 
     end type
 
@@ -115,7 +115,7 @@ contains
     integer function StrainDrivenStep_setUp(this) result(info)
     class(StrainDrivenStep),intent(inout)   :: this
     !
-    double precision :: step_strain_norm
+    real(DP) :: step_strain_norm
     !
         info = VEF_ERROR
         associate(config => this%config)
@@ -167,10 +167,10 @@ contains
     integer function StrainDrivenFixedStep_setUp(this) result(info)
     class(StrainDrivenFixedStep),intent(inout)   :: this
     !
-    double precision :: step_strain_norm
+    real(DP) :: step_strain_norm
     integer :: n_increments
     ! Volumetric strain fraction that triggers a warning (0.1%)
-    double precision,parameter :: auto_increment_norm = 0.02_DP
+    real(DP),parameter :: auto_increment_norm = 0.02_DP
     !
         info = this%StrainDrivenStep%setUp()
         if (info /= VEF_OK) return
@@ -206,7 +206,7 @@ contains
     class(StepOutput),intent(out)               :: step_output
     !
     integer :: n_increments, i_incr
-    double precision :: increment_size, x, x_prev, increment_size_tot
+    real(DP) :: increment_size, x, x_prev, increment_size_tot
     type(SRTensor) :: increment_strain,  step_strain_total
     !
         ! Precondition

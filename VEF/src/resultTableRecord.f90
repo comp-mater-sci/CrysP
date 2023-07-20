@@ -11,8 +11,8 @@ implicit none
 
     type :: ResultTableRecord
 
-        double precision,dimension(alamEval_vSD_dim) :: vA = 0.D0
-        double precision,dimension(alamEval_vSD_dim) :: vSonA = 0.D0
+        real(DP),dimension(alamEval_vSD_dim) :: vA = 0.D0
+        real(DP),dimension(alamEval_vSD_dim) :: vSonA = 0.D0
 
     end type
 

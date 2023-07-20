@@ -9,7 +9,7 @@ module hardening_model_swift
     private
       
     type, public, extends(HardeningModel) :: HardeningModelSwift
-        real(dp)    ::  k,      &
+        real(DP)    ::  k,      &
                         gamma0, &   
                         n               
     contains
@@ -51,7 +51,7 @@ contains
     subroutine swift_init(this, params)
         class(HardeningModelSwift),   intent(inout)   :: this
         type(Parameter), allocatable, intent(in) :: params(:)
-        real(dp)    :: crss0
+        real(DP)    :: crss0
 
         call hardening_model_init(this, params)
 
@@ -64,7 +64,7 @@ contains
     function swift_get_crss(this, grain, strain) result(crss)
         class(HardeningModelSwift), intent(in)           ::  this
         integer,                    intent(in)              ::  grain
-        real(dp),                   intent(in)              ::  strain
+        real(DP),                   intent(in)              ::  strain
         real(DP), dimension(2, this%nss) :: crss
 
         crss = this%k * (strain + this%gamma0)**(this%n)    

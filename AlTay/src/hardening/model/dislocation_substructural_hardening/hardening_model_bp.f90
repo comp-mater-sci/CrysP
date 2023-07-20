@@ -9,7 +9,7 @@ module hardening_model_bp
     !Normalized movement vector of EDGE disl. on slip system s
     !== normalized burgers vector of slip system s
 
-    real(dp), dimension(24,3), parameter :: EDGEDIR = real(transpose(reshape([ 1,  1,  1, &
+    real(DP), dimension(24,3), parameter :: EDGEDIR = real(transpose(reshape([ 1,  1,  1, &
                                                                                1,  1,  1, &
                                                                                1,  1,  1, &
                                                                              ! ---------

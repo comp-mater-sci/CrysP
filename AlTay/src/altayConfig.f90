@@ -35,17 +35,17 @@ module altayConfig
         !> \remark This flag takes effect if outputConfig::nfile is non-zero. \sa outputConfig::nfile
         logical                 :: do_output_final = .false.
         integer                 :: nsteps = 1                    !< Number of steps per call
-        real(dp),dimension(3,3) :: dgf  = 0.D0                   !< Deformation gradient tensor to be imposed. (MB: this is rather a velocity gradient.)
+        real(DP),dimension(3,3) :: dgf  = 0.D0                   !< Deformation gradient tensor to be imposed. (MB: this is rather a velocity gradient.)
     end type
 
     type :: simulStepOutputData
         !> Macroscopic (homogenized) stress
-        real(dp), dimension(3,3)    :: stress_tensor = 0.D0
-        real(dp)                    :: taylor_factor = 0.D0             !< Macroscopic (homogenized) Taylor factor
-        real(dp)                    :: effective_stress = 0.D0          !< Macroscopic (homogenized) effective von Mises stress
-        real(dp)                    :: homogenised_slip_tot = 0.D0      !< Macroscopic (homogenized) plastic slip - total over the calls
-        real(dp)                    :: effective_macro_strain_tot = 0.D0 !< Macroscopic (imposed) effective von Mises strain - total over the calls
-        real(dp)                    :: effective_macro_strain_tot_end = 0.D0 !< Macroscopic (imposed) effective von Mises strain till the end of the current step - total over the calls
+        real(DP), dimension(3,3)    :: stress_tensor = 0.D0
+        real(DP)                    :: taylor_factor = 0.D0             !< Macroscopic (homogenized) Taylor factor
+        real(DP)                    :: effective_stress = 0.D0          !< Macroscopic (homogenized) effective von Mises stress
+        real(DP)                    :: homogenised_slip_tot = 0.D0      !< Macroscopic (homogenized) plastic slip - total over the calls
+        real(DP)                    :: effective_macro_strain_tot = 0.D0 !< Macroscopic (imposed) effective von Mises strain - total over the calls
+        real(DP)                    :: effective_macro_strain_tot_end = 0.D0 !< Macroscopic (imposed) effective von Mises strain till the end of the current step - total over the calls
     end type
 
     !> type that subsumes step input and output data
@@ -65,7 +65,7 @@ module altayConfig
         !>   - 1 - FC Taylor
         !>   - 2 - Alamel
         integer                   :: NGR = 2 ! Number of grains in the cluster
-        real(dp), dimension(3,3) :: FMicro = unit_sr_Matrix
+        real(DP), dimension(3,3) :: FMicro = unit_sr_Matrix
     end type
 
     !> Root-level configuration structure of Altay
@@ -82,7 +82,7 @@ module altayConfig
     end type
 
     type :: altayStateData
-        real(dp)                                :: eps = 0.D0
+        real(DP)                                :: eps = 0.D0
         integer                                         :: nSimulCalls = 0 !< Corresponds to NBLOC config data
         type(simulStepData),dimension(:),allocatable    :: simulCalls
         integer                                         :: this = 0        !< Iterator over simulCalls

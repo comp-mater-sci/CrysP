@@ -2,8 +2,8 @@
 ! Provide modules: MKL_RCI_TYPE and MKL_RCI
 include 'mkl_rci.f90'
 module nllsTR
-use definitions
-use mkl_rci
+    use definitions
+    use mkl_rci
 
       !> Solution at given point. It consists of: 1) the point, 2) function value, and 3) Jacobi matrix.
       type :: SolutionPoint
@@ -13,9 +13,9 @@ use mkl_rci
             !> Dimensionality of objective function
             integer                                         :: m_F_dim = 0
 
-            double precision,dimension(:),allocatable       :: vX       !< The point
-            double precision,dimension(:),allocatable       :: vF       !< Function at vX
-            double precision,dimension(:,:),allocatable     :: mJ       !< Jacobi matrix at vX, [m_F_dim x n_X_dim]
+            real(DP),dimension(:),allocatable       :: vX       !< The point
+            real(DP),dimension(:),allocatable       :: vF       !< Function at vX
+            real(DP),dimension(:,:),allocatable     :: mJ       !< Jacobi matrix at vX, [m_F_dim x n_X_dim]
 
       contains
             !> Constructor: initialization guided by the dimensions n_X_dim and m_F_dim
@@ -80,7 +80,7 @@ use mkl_rci
 
             integer                                         :: tracking_level = TOF_None
 
-            double precision,dimension(:),allocatable       :: vXofJacobi
+            real(DP),dimension(:),allocatable       :: vXofJacobi
 
       contains
 
@@ -108,9 +108,9 @@ use mkl_rci
             !> \note It is user's responsibility to provide a function that complies with this interface.
             !> \note This function must not modify any component of SolutionPoint except for vX and vF.
             subroutine IF_objectiveFx_stateful(this, vX, info)
-                  import  ::  objectiveFunction
+                  import  ::  objectiveFunction, DP
                   class(objectiveFunction),intent(inout)      :: this   !< Instance of the object.
-                  double precision,dimension(:),intent(in)    :: vX     !< Dimension must be: [n_X_dim]
+                  real(DP),dimension(:),intent(in)    :: vX     !< Dimension must be: [n_X_dim]
                   integer,intent(out)                         :: info   !< Set to 0 on success
             end subroutine
 
@@ -120,9 +120,9 @@ use mkl_rci
             !> \note It is user's responsibility to provide a function that complies with this interface.
             !> \note This function must not modify any component of SolutionPoint except for vX and mJ.
             subroutine IF_JacobiObjFx_stateful(this, vX, info)
-                  import :: objectiveFunction
+                  import :: objectiveFunction, DP
                   class(objectiveFunction),intent(inout)          :: this     !< Instance of the object.
-                  double precision,dimension(:),intent(in)        :: vX       !< Dimension must be: [n_X_dim]
+                  real(DP),dimension(:),intent(in)        :: vX       !< Dimension must be: [n_X_dim]
                   integer,intent(out)                             :: info     !< Set to 0 on success
             end subroutine
 
@@ -134,14 +134,14 @@ use mkl_rci
             !> Array of parameters controling stop criteria
             !>
             !> Various convergence criteria are evaluated, see MKL documentation for details
-            double precision,dimension(6)                :: eps = 1.e-10_DP
+            real(DP),dimension(6)                :: eps = 1.e-10_DP
             integer                                      :: iter1 = 300 !< Maximum number of iterations
             integer                                      :: iter2 = 50  !< Maximum number of trial steps
-            double precision                             :: init_step = 100.0_DP  !< Initial step bound factor
+            real(DP)                             :: init_step = 100.0_DP  !< Initial step bound factor
             !> Lower constraints for design vector
-            double precision                             :: lo_limit = 0._DP
+            real(DP)                             :: lo_limit = 0._DP
             !> Upper constraints for design vector
-            double precision                             :: up_limit = 1.e2_DP
+            real(DP)                             :: up_limit = 1.e2_DP
 
             !> Helper for problems with invariant Jacobi matrix
             !>
@@ -165,7 +165,7 @@ use mkl_rci
 
 
       !> Default step for finite difference evaluation of Jacobi matrix
-      double precision,parameter                        :: nllsTR_jacobi_eps = 1.D-7
+      real(DP),parameter                        :: nllsTR_jacobi_eps = 1.D-7
 
 
       !>@{ \name Other parameters
@@ -187,13 +187,13 @@ use mkl_rci
       type nllsTRRes
             integer                             :: iteration = 0        !< Interation number
             integer                             :: stop_criterion = 0   !< Identifier of stop criterion, see MKL documentation
-            double precision                    :: r1 = 0.D0            !< Initial norm of residual
-            double precision                    :: r2 = 0.D0            !< Final norm of residual
+            real(DP)                    :: r1 = 0.D0            !< Initial norm of residual
+            real(DP)                    :: r2 = 0.D0            !< Final norm of residual
       end type
 
 
       type,abstract,extends(objectiveFunction) :: MKLFDJacobiObjFunction
-            double precision                          ::  jacobi_eps = nllsTR_jacobi_eps
+            real(DP)                          ::  jacobi_eps = nllsTR_jacobi_eps
       contains
             procedure :: jacobiMatrixEval => JacobiObjEval_djacobi
       end type
@@ -228,10 +228,10 @@ contains
       ! Formal parameters
       class(objectiveFunction),intent(inout)          :: objFx    !< objective function
       !> Design vector, dimension of vX must correspond to those in objFX
-      double precision,dimension(:),intent(inout)     :: vX
+      real(DP),dimension(:),intent(inout)     :: vX
       type(nllsTRConf),intent(in)                     :: config   !< Configuration of nllsTR
-      double precision,intent(out)                    :: r1       !< Initial residual of the solution
-      double precision,intent(out)                    :: r2       !< Final residual of the solution
+      real(DP),intent(out)                    :: r1       !< Initial residual of the solution
+      real(DP),intent(out)                    :: r2       !< Final residual of the solution
       !> Exit code: 0 on success, < 0 on error, > 0 on failure/warning
       integer,intent(out)                             :: info
       !> Full termination status of the TR solver
@@ -244,7 +244,7 @@ contains
       type(HANDLE_TR)   :: handle
       integer           :: res, linfo
       !
-      double precision,allocatable,dimension(:)    :: vLW, vUP   ! would be of size
+      real(DP),allocatable,dimension(:)    :: vLW, vUP   ! would be of size
       ! Variables for TR query
       type(nllsTRRes)                :: resultInfo
       ! RCI loop control
@@ -512,8 +512,8 @@ contains
       use, intrinsic :: IEEE_EXCEPTIONS
       use, intrinsic :: IEEE_ARITHMETIC
       implicit none
-      double precision,dimension(:),intent(in),optional     :: vF
-      double precision,dimension(:,:),intent(in),optional   :: mJ
+      real(DP),dimension(:),intent(in),optional     :: vF
+      real(DP),dimension(:,:),intent(in),optional   :: mJ
       integer,intent(out)                                   :: info
       !
             info = 0
@@ -572,7 +572,7 @@ contains
       subroutine JacobiObjEval_djacobi(this,vX, info)
       implicit none
       class(MKLFDJacobiObjFunction),intent(inout)     :: this
-      double precision,dimension(:),intent(in)        :: vX       !< Dimension must be: [n_X_dim]
+      real(DP),dimension(:),intent(in)        :: vX       !< Dimension must be: [n_X_dim]
       integer,intent(out)                             :: info
 
       integer     :: res
@@ -580,8 +580,8 @@ contains
       integer     :: RCI_Req
       logical     :: next_solve
       ! Temporary arrays f1 & f2 which contain: f1 = f(x+eps) | f2 = f(x-eps)
-      double precision,dimension(this%state%m_F_dim)  :: f1, f2, f0
-      double precision,dimension(this%state%n_X_dim)  :: tmp_vX
+      real(DP),dimension(this%state%m_F_dim)  :: f1, f2, f0
+      real(DP),dimension(this%state%n_X_dim)  :: tmp_vX
       !
       handle = 0
       info = 1
@@ -677,7 +677,7 @@ contains
 
       subroutine writeMatrix(A, ounit)
       implicit none
-      double precision,dimension(:,:),intent(in) :: A
+      real(DP),dimension(:,:),intent(in) :: A
       integer,intent(in)                         :: ounit
       !
       integer :: l,u,i,j
@@ -791,7 +791,7 @@ contains
             !> of objectiveEval should call this method at the end of its execution.
             subroutine trackableObjFunc_objectiveEval(this, vX, info)
             class(trackableObjFunc),intent(inout)     :: this
-            double precision,dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
+            real(DP),dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
             integer,intent(out)                       :: info
             !
                   call this%track(vX, TOF_Function, info)
@@ -803,7 +803,7 @@ contains
             !> of jacobiMatrixEval should call this method at the end of its execution.
             subroutine trackableObjFunc_jacobiMatrixEval(this, vX, info)
             class(trackableObjFunc),intent(inout)     :: this
-            double precision,dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
+            real(DP),dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
             integer,intent(out)                       :: info
             !
                   call this%track(vX, TOF_Jacobian, info)
@@ -813,7 +813,7 @@ contains
             !> Tracking of the evaluations
             subroutine trackableObjFunc_track(this, vX, request, info)
             class(trackableObjFunc),intent(inout)     :: this
-            double precision,dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
+            real(DP),dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
             integer,intent(in)                        :: request
             integer,intent(out)                       :: info
             !

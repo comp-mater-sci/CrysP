@@ -12,15 +12,15 @@ implicit none
             !> Epsilon used for numerical estimation of Jacobi matrix.
             !>
             !> Note: this is a reasonable value. Lowering it can lead to poor convergence or lack of convergence.
-            double precision        :: jacobi_eps = 5.e-1_DP
+            real(DP)        :: jacobi_eps = 5.e-1_DP
             !> Request for preliminary solution of linearized problem
             logical                 :: linearize = .true.
             !> Request for solving the non-linear problem
             logical                 :: nonlinear = .true.
             !> Default epsilon to be set for all TR-solver convergence criteria, except ||F||_2
-            double precision        :: default_eps = 1.e-5_DP
+            real(DP)        :: default_eps = 1.e-5_DP
             !> Epsilon to be set on norm of objective function ||F||_2
-            double precision        :: obj_func_eps = 1.e-3_DP
+            real(DP)        :: obj_func_eps = 1.e-3_DP
 
             !> Request for usage of full multilevel model in the search phase
             logical                 :: search_full_model = .false.
@@ -42,10 +42,10 @@ implicit none
       use nllsTR
       use alamEval
       implicit none
-      double precision,intent(in)   :: vS(alamEval_vSD_dim)      !< Imposed stress vector
-      double precision,intent(inout):: vA(alamEval_vSD_dim)      !< Strain rate mode on yield locus
-      double precision,intent(out)  :: vSonA(alamEval_vSD_dim)   !< Stress vector corresponding to A
-      double precision,intent(out)  :: R          !< Square norm of residual error
+      real(DP),intent(in)   :: vS(alamEval_vSD_dim)      !< Imposed stress vector
+      real(DP),intent(inout):: vA(alamEval_vSD_dim)      !< Strain rate mode on yield locus
+      real(DP),intent(out)  :: vSonA(alamEval_vSD_dim)   !< Stress vector corresponding to A
+      real(DP),intent(out)  :: R          !< Square norm of residual error
       integer                       :: info       !< Exit code
       !> Flag: use von Mises initial guess, otherwise assume vA as an initial strain rate (default: .true.)
       logical,optional,intent(in)   :: useVMGuess
@@ -55,7 +55,7 @@ implicit none
       class(NormalizedV5DComp),target,optional,intent(inout) :: objective_function
       !
 
-      double precision, dimension(alamEval_vSD_dim) :: vX, vX_lin
+      real(DP), dimension(alamEval_vSD_dim) :: vX, vX_lin
       type(multilevelYLPConfig) :: config !< Effective configuration parameters (defaults on entry)
       !
       !
@@ -64,16 +64,16 @@ implicit none
       ! deallocated on return.
       type(NormalizedV5DComp),allocatable,target :: objective_function_local
       type(nllsTRConf)        :: tr_config
-      double precision        :: r1,r2
+      real(DP)        :: r1,r2
       logical                 :: use_vmGuess
       logical                 :: attempt_linearized,linearized_successful
-      double precision        :: r1_lin,r2_lin
+      real(DP)        :: r1_lin,r2_lin
       type(nllsTRRes)         :: TR_res
       type(SolutionPoint)     :: initState
       integer                 :: ounit, tr_verbose, ierr
       integer,parameter       :: stdout = 6
       logical                 :: log_info,log_debug
-      double precision        :: norm
+      real(DP)        :: norm
       !
       if (present(useVMGuess)) then
             use_vmGuess = useVMGuess

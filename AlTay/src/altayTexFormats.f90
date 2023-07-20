@@ -77,7 +77,7 @@ contains
         integer,intent(out)     :: info        !< Exit code
 
         integer :: i,j,NSTAP,nrec,ngrains
-        real(dp) :: STAP = 0.D0, eu(3)
+        real(DP) :: STAP = 0.D0, eu(3)
 
         ! Number of records (orientations) in the SMT file
         nrec = size(DFIL)
