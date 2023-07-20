@@ -2,28 +2,28 @@
 
 !> In-memory cache/table of the recent results from the multi-level model.
 module dmcResultTable
-use definitions
-use criMathUtils
-use alamYLPConstants
-use dmcResultTableRecord
-implicit none
+    use definitions
+    use criMathUtils
+    use alamYLPConstants
 
-    public :: ResultTable
+    implicit none
     private
 
+    type :: ResultTableRecord
+        real(DP), dimension(alamEval_vSD_dim) :: vA = 0.D0
+        real(DP), dimension(alamEval_vSD_dim) :: vSonA = 0.D0
+    end type
+
     type :: ResultTable
-
-        integer,private                         :: saved_session_idx = 0
-
-        type(ResultTableRecord), dimension(:), allocatable, private :: table
+        private
+        type(ResultTableRecord), dimension(:), allocatable :: table
         integer :: n_records = 0
-
     contains
         procedure,pass(this)    :: put
-
         procedure,pass(this)    :: get
     end type
 
+    public :: ResultTable
 
 contains
 
@@ -47,7 +47,6 @@ contains
         this%n_records = this%n_records + 1
         this%table(this%n_records) = ResultTableRecord(A,sonA)
     end subroutine
-
 
     !> Find item in the database that has the smallest angle between
     !> S and item%vSonA, optionally restricting the choice to acceptable angles smaller than max_angle.

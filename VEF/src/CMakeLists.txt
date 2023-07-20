@@ -29,7 +29,6 @@ evolutionOutputRecord.f90
 incrementationControl.f90
 qrsTypes.f90
 resultTable.f90
-resultTableRecord.f90
 strainDrivenStep.f90
 stressDrivenEvolutionModule.f90
 stressDrivenModule.f90
