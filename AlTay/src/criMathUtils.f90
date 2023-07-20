@@ -41,7 +41,7 @@ module criMathUtils
       end interface
 
       interface rotmat
-            module procedure rotmat_triplet, rotmat_EulerAngles
+            module procedure rotmat_triplet, rotmat_EulerAngles, rotmat_array
       end interface
 
 contains
@@ -142,6 +142,13 @@ contains
             endif
       !
       end function
+
+    pure function rotmat_array(angles) result(mat)
+        real(DP), dimension(3), intent(in) :: angles
+        real(DP), dimension(3,3) :: mat
+
+        mat = rotmat(angles(1), angles(2), angles(3))
+    end function
 
       !> Rotation matrix from three Euler angles in Bunge convention (phi1,PHI,phi2).
       !>

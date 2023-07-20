@@ -219,8 +219,6 @@ contains
       character(:), allocatable :: slip_systems
       character(5) :: buffer
 
-      type(MapItem),dimension(2) :: extensions = [MapItem('.smt',TF_SMT), MapItem('.SMT',TF_SMT)]
-
       type(MapItem),dimension(2) :: model_types = [MapItem('ALAMEL', modelAlamel), &
                                                    MapItem('FCTaylor', modelFCTaylor)]
            info = ERR_IO
