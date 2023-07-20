@@ -52,11 +52,11 @@ contains
     integer function StressDrivenEvolutionModule_calculateStressPath(this, sigma, control, output, rotmat, &
                                                                      incrementation_control, use_icv_as_is) result(info)
         class(StressDrivenEvolutionModule),intent(inout):: this
-        type(SRTensor),intent(in)                       :: sigma !< Imposed stress tensor
+        real(DP), dimension(3,3), intent(in)              :: sigma !< Imposed stress tensor
         !> Settings that control the incrementation process
         class(IncrementationControlSettings),intent(inout) :: control
                 !> Rotation matrix. Relevant only if scalingStrainTensorComponent is used
-        real(DP),dimension(rot_matrix_dim,rot_matrix_dim),intent(in),optional  :: rotmat
+        real(DP),dimension(3,3),intent(in),optional  :: rotmat
         !> Incrementation control variables to override the defaults.
         !>
         !> Typical use is to inherit some control variables (the totals) from a previous
@@ -69,12 +69,12 @@ contains
         type(IncrementOutputRecord), dimension(:), allocatable, intent(out) :: output
         type(IncrementOutputRecord), dimension(:), allocatable  :: buffer
         !
-        type(SRTensor) :: D, X_tmp, D_retry
-        real(DP) :: scaling_factor, control_variable, stop_control_variable, taylor_factor, stretch
+        real(DP) :: scaling_factor, control_variable, stop_control_variable, taylor_factor, stretch, &
+                D(3,3), X_tmp(3,3), D_retry(3,3)
         type(YLPResult) :: ylp, ylp_retry
         real(DP),dimension(alamEval_vSD_dim) :: vDe, vSe
         type(IncrementationControl) :: icv
-        real(DP),dimension(sr_symm_voigt_dim) :: X_tmp_voigt
+        real(DP),dimension(6) :: X_tmp_voigt
 
         !
         type(IncrementOutputRecord)         :: tmp_record
@@ -90,8 +90,10 @@ contains
         real(DP),dimension(2) :: xi
         logical :: stop_flag, acceptable_point, acceptable_point_retry
         real(DP),parameter :: stretch_ratio = 1e-3_DP
+        real(DP), dimension(3,3) :: zero = 0._DP
 
         n_records = 0
+
         if (present(incrementation_control)) then
             icv = incrementation_control
             if (.not. optionalDefault(use_icv_as_is, .false.)) call icv%initStep(info)
@@ -144,7 +146,7 @@ contains
             ! Make output record and prepare variables for updating icv
             tmp_record = IncrementOutputRecord(icv%IncrementationControlVariables, &
                                                ylp, &
-                                               SRTensor(), SRTensor(), &
+                                               zero, zero, &
                                                taylor_factor)
             !
             ! Check if we start a/another increment
@@ -159,9 +161,9 @@ contains
             case(scalingStrainTensorComponent)
                 ! Get total plastic strain in appropriate reference frame
                 ! and check the tensor component of interest.
-                X_tmp%t = vec5D2tens(icv%vP_step)
+                X_tmp = vec5D2tens(icv%vP_step)
                 if (present(rotmat)) X_tmp = rotateSRTensorFrom(X_tmp ,rotmat)
-                X_tmp_voigt = Mat33ToVec6(X_tmp%t)
+                X_tmp_voigt = Mat33ToVec6(X_tmp)
                 stop_control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
             case default
                 ! Make sure it stops immediately
@@ -206,7 +208,7 @@ contains
                     else
                         X_tmp = D
                     endif
-                    X_tmp_voigt = Mat33ToVec6(X_tmp%t)
+                    X_tmp_voigt = Mat33ToVec6(X_tmp)
                     control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
                 !
                 case default
@@ -222,14 +224,14 @@ contains
                 !
                 ! Calculate strain increment for material state evolution
                 vDe = ylp%vA * scaling_factor
-                tmp_record%P_inc_evol%t = vec5D2tens(vDe)
+                tmp_record%P_inc_evol = vec5D2tens(vDe)
                 ! Update material state
-                call makeTextureUpdateStep(tmp_record%P_inc_evol%t, &
-                                           tmp_record%S_evol%t, &
+                call makeTextureUpdateStep(tmp_record%P_inc_evol, &
+                                           tmp_record%S_evol, &
                                            taylor_factor,&
                                            this%output%outputRequest, info)
                 if (info /= 0) exit !< \fixme Literal constant in makeTextureUpdateStep
-                vSe = tens2vec5D(tmp_record%S_evol%t)
+                vSe = tens2vec5D(tmp_record%S_evol)
             else
                 vDe = 0.D0
                 vSe = 0.D0
@@ -287,6 +289,4 @@ contains
                 info = VEF_OK
     !
     end subroutine
-
-end module
-
+end module 

@@ -109,8 +109,8 @@ contains
     !> \return VEF_OK on success
     integer function StressDrivenModule_findSolution(this,sigma, D, ylp_result, vM_guess, is_acceptable, pretry) result(info)
     class(StressDrivenModule),intent(in)   :: this
-    type(SRTensor),intent(in)       :: sigma !< Total input stress tensor
-    type(SRTEnsor),intent(inout)    :: D     !< Plastic strain rate
+    real(DP), dimension(3,3), intent(in) :: sigma
+    real(DP), dimension(3,3), intent(inout) :: D
     type(YLPResult),intent(out)     :: ylp_result !< Results of the iterative search
     !> Flag: use von Mises inital guess (default: .true.). If false, D will be used as the
     !> starting point for the iterative search.
@@ -139,7 +139,7 @@ contains
         !
         ! Convert input to the 5D space and make the unit vector(s).
         ! This also makes sure it is deviatoric.
-        vS = tens2vec5D(sigma%t)
+        vS = tens2vec5D(sigma)
         ylp_result = YLPResult(vS)
         if (ylp_result%vS_length < epsilon(0.D0)) return
         !
@@ -170,7 +170,7 @@ contains
         if (.not. is_pretry_acceptable) then
             !
             if (.not. use_vM_guess) then
-                ylp_result%vA = tens2vec5D(D%t)
+                ylp_result%vA = tens2vec5D(D)
                 vA_norm = norm2(ylp_result%vA)
                 if (vA_norm < epsilon(0.D0)) return
             endif
@@ -201,7 +201,7 @@ contains
             is_acceptable = checkYLPResult(ylp_result, this%solution_tolerance, this%ylp%obj_func_eps)
         endif
         !
-        D%t = vec5D2tens(ylp_result%vA)
+        D = vec5D2tens(ylp_result%vA)
         ! Return the info from the last call to 'search'
         !
 #define MSG_GROUP_ERRORS
