@@ -32,11 +32,6 @@ contains
         ! Set the singleton object to the cnf
         acnf = cnf
         ! Open input files
-        ! UNIT LEC = SLIP SYSTEMS; open slip system file
-        open (unit=LEC,file=trim(cnf%slipsystem_input_fname),status='old',iostat=ierr)
-        if (ierr /= VEF_OK) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open slip system definition file: ' // trim(cnf%slipsystem_input_fname))
-
         ! Load microstructure data
         call read_microstructure(acnf%micros_fname,acnf%simul_init%FMicro,info)
         if (info /= VEF_OK) &

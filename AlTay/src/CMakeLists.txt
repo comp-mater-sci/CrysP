@@ -30,6 +30,7 @@ logging.f90
 altayConfig.f90  
 altaySub.f90
 parameters.f90
+slip_systems.f90
 hardening/hardening.f90
 hardening/model/hardening_model.f90
 hardening/model/hardening_model_swift.f90
