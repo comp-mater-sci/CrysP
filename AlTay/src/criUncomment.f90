@@ -1,8 +1,10 @@
-!
 !> Provides access to config files with bash-style comments
 module criUncomment
-      implicit none
-      private
+    use definitions
+
+    implicit none
+    private
+
       !> Maximal length of a line
       integer,parameter,public       :: max_line_len = 512
 
@@ -16,13 +18,9 @@ module criUncomment
       !>                   elements of supported types)
       !> \param[in] frmt  The format to be used in the read operation (type: character(len=*),optional)
       interface readValue
-
-            module procedure read_integer,   &
-                             read_logical,   &
-                             read_string,    &
-                             read_double,    read_vector_double
-
+        module procedure read_scalar, read_array
       end interface
+
       public :: readValue
 contains
       logical function skipComment(nunit,buffer)
@@ -60,46 +58,40 @@ contains
             endif
       !
       end function
+    end function
 
+    logical function read_scalar(inunit, val) result(isOK)
+        integer, intent(in) :: inunit
+        class(*), intent(out) :: val
+        character(max_line_len)   :: buffer
+        integer :: ierr
+    
+        isOK = .false.
+        if (skipComment(inunit,buffer)) then
+            select type(val)
+                type is (integer)
+                    read(buffer,fmt=*,iostat=ierr) val 
+                type is (logical)
+                    read(buffer,fmt=*,iostat=ierr) val 
+                type is (character(*))
+                    read(buffer,fmt=*,iostat=ierr) val 
+                type is (real(DP))
+                    read(buffer,fmt=*,iostat=ierr) val 
+            end select
+        endif
+        if (ierr == 0) isOK = .true.
+    end function
 
-      end function
-!
-! Instantization of template for integer
-!
-#define TMPL_UNCOMMENT_FX read_integer
-#define TMPL_UNCOMMENT_TYPE integer
-#include "criUncommentTemplates.fpp"
-#undef TMPL_UNCOMMENT_FX
-#undef TMPL_UNCOMMENT_TYPE
-!
-! Instantization of template for logical
-!
-#define TMPL_UNCOMMENT_FX read_logical
-#define TMPL_UNCOMMENT_TYPE logical
-#include "criUncommentTemplates.fpp"
-#undef TMPL_UNCOMMENT_FX
-#undef TMPL_UNCOMMENT_TYPE
-!
-! Instantization of template for string
-!
-#define TMPL_UNCOMMENT_FX read_string
-#define TMPL_UNCOMMENT_TYPE character(len=*)
-#include "criUncommentTemplates.fpp"
-#undef TMPL_UNCOMMENT_FX
-#undef TMPL_UNCOMMENT_TYPE
-!
-! Instantization of template for double
-!
-#define TMPL_UNCOMMENT_FX read_double
-#define TMPL_UNCOMMENT_TYPE real(DP)
-#include "criUncommentTemplates.fpp"
-#undef TMPL_UNCOMMENT_FX
-#undef TMPL_UNCOMMENT_TYPE
-!
-#define TMPL_UNCOMMENT_FX read_vector_double
-#define TMPL_UNCOMMENT_TYPE real(DP),dimension(:)
-#include "criUncommentTemplates.fpp"
-#undef TMPL_UNCOMMENT_FX
-#undef TMPL_UNCOMMENT_TYPE
-
+    logical function read_array(inunit, val) result(isOK)
+        integer, intent(in) :: inunit
+        real(DP), dimension(:), intent(out) :: val
+        character(max_line_len)   :: buffer
+        integer :: ierr
+    
+        isOK = .false.
+        if (skipComment(inunit,buffer)) read(buffer,fmt=*,iostat=ierr) val 
+        if (ierr == 0) isOK = .true.
+    end function
 end module
+
+  

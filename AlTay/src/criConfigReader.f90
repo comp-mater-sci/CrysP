@@ -22,7 +22,7 @@ contains
             value = 0
             res = .false.
             buffer = ''
-            if (.not. readValue(cnfunit, buffer, '(A)')) return
+            if (.not. readValue(cnfunit, buffer)) return
             res = resolveName(map, buffer, value)
       !
       end function
