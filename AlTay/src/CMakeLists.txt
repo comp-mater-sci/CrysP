@@ -17,7 +17,7 @@ criNumerics.f90
 criRange.f90
 criUncomment.f90
 altaySimul.f90 
-altayTaylor.f90 
+taylor.f90 
 altayAlgorithms.f90 
 altayDynfil.f90 
 altayMacroKinematic.f90 
