@@ -17,7 +17,7 @@ module hardening_model_dsh
                                     N6 = -P6,                   &
                                     PD6 = 2._DP / sqrt(6._DP),  &
                                     ND6 = -PD6
-    real(dp), dimension(6,3), parameter, public :: CBBNORMAL = real(transpose(reshape([ 0,  1, -1, &
+    real(DP), dimension(6,3), parameter, public :: CBBNORMAL = real(transpose(reshape([ 0,  1, -1, &
                                                                                        -1,  0,  1, &
                                                                                         1, -1,  0, &
                                                                                         0, -1, -1, &

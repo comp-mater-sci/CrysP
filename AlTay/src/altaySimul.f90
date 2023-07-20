@@ -5,7 +5,7 @@ module altaySimul
     use altayCurAccess
     use altayDYNFIL
     use hardening
-    use altayTaylor
+    use taylor
     use altayAlgorithms
     use altayConfig
     use logging
@@ -13,7 +13,7 @@ module altaySimul
     implicit none
     private
 
-    real(dp), private, allocatable :: HGAMTOT,& !< homogenized slip accumulated over calls
+    real(DP), private, allocatable :: HGAMTOT,& !< homogenized slip accumulated over calls
         XM(:,:)
     integer, private :: M11,NFILE1
     integer, allocatable :: seed(:)
@@ -54,7 +54,7 @@ module altaySimul
         if (NFILE1 == 1) call CURwriteTitle(IMP1,TITEL,info)
   98    format (A)
 !       read the parameters of the work hardening model
-        call read_deformationsystems(M11,XM)
+        call taylor_init(M11,XM)
     end subroutine
 
 
@@ -63,26 +63,26 @@ module altaySimul
         type(DeformationRate),intent(in) :: MacroDefRate !inout
         integer, intent(in) :: NFILE0
 
-        real(dp) :: TRFb(3,3,2),GMMAb(2)
+        real(DP) :: TRFb(3,3,2),GMMAb(2)
         integer :: NGR,&         !< number of grains
                    NRL,&         !< number of relaxations
                    laml,laml1, &
                    IOR,ISTP,NPOINT, info, NFILE, i,j,l,ifil4
-        real(dp) :: gewfb(2), Ssam(3,3), TG(3,3), CIJ(3,3), &
+        real(DP) :: gewfb(2), Ssam(3,3), TG(3,3), CIJ(3,3), &
                     GEWF, RHOSSb(3,3,2),RHOSsa(3,3),TGb(3,3,2),gmm1, &
                     GAXES(3)                                        ! half axes a,b,c, of the grain shape ellipsoid
-        real(dp), save :: C2(3,3),qgx,ssqgx,CC(2,96)
+        real(DP), save :: C2(3,3),qgx,ssqgx,CC(2,96)
         real(DP) :: TOTGEW, TRF(3,3),SHsam(3,3),RHOSm(3,3)
         type(DeformationState), save :: MacroDefState
         ! HGAM: homogenized slip per step
-        real(dp) :: HGAM
+        real(DP) :: HGAM
         ! Macroscopically imposed vM equivalent strain per call.
-        real(dp), save :: GMMdot !Total slip rate in current grain
-        real(dp) :: Mgrain !Taylor factor of the current grain
-        real(dp) :: Mavg   !Volume-averaged Taylor factor
-        real(dp) :: WorkRate ! Rate of plastic work per unit
+        real(DP), save :: GMMdot !Total slip rate in current grain
+        real(DP) :: Mgrain !Taylor factor of the current grain
+        real(DP) :: Mavg   !Volume-averaged Taylor factor
+        real(DP) :: WorkRate ! Rate of plastic work per unit
                                      ! volume in the crystal
-        real(dp) :: Wtot ! Total plastic work per unit volume in crystal
+        real(DP) :: Wtot ! Total plastic work per unit volume in crystal
 
 
         NPOINT = size(DFIL)
@@ -151,7 +151,7 @@ module altaySimul
                 !             - should not perform any computation
                 !             - has to output the result of the second crystal found
                 !               during the previous computation.
-                call TAYLOR3(Ssam,RHOSsa,TRF,GEWF,IOR,TRFb,GMMab,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
+                call taylor_solve(Ssam,RHOSsa,TRF,GEWF,IOR,TRFb,GMMab,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
 
                 if(laml == 1) then
                     ssqgx=GEWF
@@ -161,7 +161,7 @@ module altaySimul
                 TOTGEW=TOTGEW+GEWF
 
                 if (astate%simulCalls(astate%this)%input%full_model) &
-                      call TAYLOR4(IOR,GMMdot,WorkRate,MacroDefRate,CC,M11,TRF,C2,XM)
+                      call taylor_update_state(IOR,GMMdot,WorkRate,MacroDefRate,CC,M11,TRF,C2,XM)
 
                 SHsam = SHsam + Ssam*GEWF
                 RHOSm = RHOSm + RHOSsa*GEWF

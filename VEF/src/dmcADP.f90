@@ -51,10 +51,10 @@ contains
         MapItem('strainmode', strainmode_id),&
         MapItem('strain', strain_id)]
     !
-    double precision,dimension(sr_voigt_dim) :: tmp_deformation
-    double precision,dimension(sr_symm_voigt_dim) :: tmp_strain
+    real(DP),dimension(sr_voigt_dim) :: tmp_deformation
+    real(DP),dimension(sr_symm_voigt_dim) :: tmp_strain
 
-    double precision :: step_size, tmp
+    real(DP) :: step_size, tmp
     type(StrainDrivenStepConfig) :: tmp_step_config
     type(SRTensor) :: tmp_deformation_rate
         !

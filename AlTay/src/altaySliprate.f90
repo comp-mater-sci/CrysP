@@ -20,12 +20,12 @@ module altaySliprate
         !       rates must be minimal.
         !
         integer, intent(in) :: IDIMXX,NACTIV,INDLP(8)
-        real(dp), intent(in) :: TLXX,A1(:,:),TAURLP(8),BB8(5),SLIPLP(8)
+        real(DP), intent(in) :: TLXX,A1(:,:),TAURLP(8),BB8(5),SLIPLP(8)
         integer, intent(inout) :: INDACT(8)
-        real(dp), intent(inout) :: SGNN(IDIMXX),XX(IDIMXX)
+        real(DP), intent(inout) :: SGNN(IDIMXX),XX(IDIMXX)
 
         integer :: IND(8),ISTOR(0:8,48)
-        real(dp) :: SLPR(8),SLSTOR(0:8,48),sumsq
+        real(DP) :: SLPR(8),SLSTOR(0:8,48),sumsq
         integer, parameter :: NSTOR=48
         integer :: j,i1,i2,i3,N0,N1,N2,N3,NN,NOPL,INEG,IOPL
 
@@ -122,12 +122,12 @@ module altaySliprate
     subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A8)
 
         integer, intent(in) :: IND(8), NN,IDIMXX
-        real(dp),intent(in) :: A8(:,:),BB8(5),sgnn(IDIMXX)
+        real(DP),intent(in) :: A8(:,:),BB8(5),sgnn(IDIMXX)
         integer, intent(out) :: ineg
-        real(dp), intent(out) :: SLPR(8),sumsq
+        real(DP), intent(out) :: SLPR(8),sumsq
 
-        real(dp) :: A(13,13),B(13),RES,x,BA(13)
-        real(dp), parameter :: TOL=1.0e-6_dp
+        real(DP) :: A(13,13),B(13),RES,x,BA(13)
+        real(DP), parameter :: TOL=1.0e-6_dp
         integer :: i,j,N1,N2
 
         if (NN<=5) then
@@ -177,8 +177,8 @@ module altaySliprate
 
         integer, intent(in)::NN, IND(8),NSTOR
         integer, intent(inout)::NOPL,ISTOR(0:8,48)
-        real(dp), intent(inout)::SLSTOR(0:8,48)
-        real(dp), intent(in) :: SLPR(8), sumsq
+        real(DP), intent(inout)::SLSTOR(0:8,48)
+        real(DP), intent(in) :: SLPR(8), sumsq
 
         NOPL=NOPL+1
         if (NOPL>NSTOR) call log_error(MOD_NAME, 'store', ERR_DIMS, 'Too small dimension NSTOR in SLIPRAT')

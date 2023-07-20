@@ -24,7 +24,7 @@ contains
                                      use_column_numbers, data_formats) result(info)
                                     !, colnames_formats, data_formats, )
     integer,intent(in)                              :: iounit
-    double precision,dimension(:,:),intent(in)      :: data !< Shape: [ncolumns x nrows]
+    real(DP),dimension(:,:),intent(in)      :: data !< Shape: [ncolumns x nrows]
     character(len=*),dimension(:),intent(in)        :: column_names
     !> Either: shape is [1] (single-element array) that contains width of every column, or
     !> column widths, shape is [ncolumns]
@@ -126,7 +126,7 @@ contains
 
     integer function writeData(iounit, data, column_widths, data_formats) result(info)
     integer,intent(in)                              :: iounit
-    double precision,dimension(:,:),intent(in)      :: data !< Shape: [ncolumns x nrows]
+    real(DP),dimension(:,:),intent(in)      :: data !< Shape: [ncolumns x nrows]
     !> Specification of column widths
     !>
     !> Shape is either:

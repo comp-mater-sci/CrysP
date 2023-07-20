@@ -21,7 +21,7 @@ implicit none
     type,extends(StressDrivenModule) :: QRSModule
         class(range_type),pointer                 :: ptr_range
 
-        double precision                          :: rho = 0.D0
+        real(DP)                          :: rho = 0.D0
 
         logical                                   :: calculate_Mfactor = .false.
 
@@ -46,7 +46,7 @@ implicit none
 
     !> Container for output datapoints of QRS module
     type :: QRSOutputData
-        double precision,dimension(:),allocatable   :: residuals,mfactors,phis,sigmas_x
+        real(DP),dimension(:),allocatable   :: residuals,mfactors,phis,sigmas_x
         type(qrsData),dimension(:),allocatable      :: qrsvalues
     end type
 
@@ -103,10 +103,10 @@ contains
     !
     type(SRTensor)                            :: D_t, S_t, sigma, sigma_t, SonA, D, Dresume_t, &
                                                  SmIdent    !< obtained stress mode
-    double precision,dimension(3,3)           :: Mrot
+    real(DP),dimension(3,3)           :: Mrot
     type(YLPResult)                           :: ylp_result
     !
-    double precision                          :: fi1,phi,fi2, residual_resume
+    real(DP)                          :: fi1,phi,fi2, residual_resume
     integer     :: i, npoints, npoints_ok, ofunit
     logical     :: useVMGuess, acceptable_point
     !
