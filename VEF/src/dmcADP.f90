@@ -51,13 +51,14 @@ contains
         MapItem('strainmode', strainmode_id),&
         MapItem('strain', strain_id)]
     !
-    real(DP),dimension(sr_voigt_dim) :: tmp_deformation
-    real(DP),dimension(sr_symm_voigt_dim) :: tmp_strain
+    double precision,dimension(9) :: tmp_deformation
+    double precision,dimension(6) :: tmp_strain
 
-    real(DP) :: step_size, tmp
+    real(DP) :: step_size, &
+                tmp, &
+                tmp_deformation_rate(3,3)
     type(StrainDrivenStepConfig) :: tmp_step_config
-    type(SRTensor) :: tmp_deformation_rate
-        !
+        
         ! Read generic configuration section (output settings, AlTay (texture, microstructure, hardening), solver settings
         RETURN_IF(info /= VEF_OK, info = this%DeformationDrivenModule%readConfig(cnfunit))
         info = VEF_ERROR
@@ -80,24 +81,24 @@ contains
                 select case(deformation)
                 case(deformation_id)
                     if (.not. readValue(cnfunit, tmp_deformation)) return
-                    tmp_deformation_rate%t = Vec9ToMat33(tmp_deformation)
+                    tmp_deformation_rate = Vec9ToMat33(tmp_deformation)
                 !
                 case(strainmode_id)
                     if (.not. readValue(cnfunit, tmp_strain)) return
                     if (.not. readValue(cnfunit, step_size)) return
                     !
-                    tmp_deformation_rate%t = Vec6ToMat33(tmp_strain)
+                    tmp_deformation_rate = Vec6ToMat33(tmp_strain)
                     ! Normalize the deformation
-                    tmp = norm2(tmp_deformation_rate%t)
+                    tmp = norm2(tmp_deformation_rate)
                     if (tmp < epsilon(0.D0)) then
                         write(display_unit,fmt=900) 'Norm of the strain mode must not be zero'
                         return
                     endif
-                    tmp_deformation_rate%t = tmp_deformation_rate%t / tmp * step_size
+                    tmp_deformation_rate = tmp_deformation_rate / tmp * step_size
                 !
                 case(strain_id)
                     if (.not. readValue(cnfunit, tmp_strain)) return
-                    tmp_deformation_rate%t = Vec6ToMat33(tmp_strain)
+                    tmp_deformation_rate = Vec6ToMat33(tmp_strain)
                 !
                 case default
                     return
@@ -239,11 +240,11 @@ contains
                           associate(v => step_output%increments(increment))
                               write(iounit,fmt=710,iostat=ierr) &
                                           step, increment, &            ! 2 fields
-                                          Mat33ToVec9(v%L%t), &         ! 9 fields: velocity gradient
-                                          Mat33ToVec6(v%D%t), &         ! 6 fields: rate for deformation tensor (strain rate)
-                                          Mat33ToVec3(v%O%t), &         ! 3 fields: spin tensor
-                                          Mat33ToVec6(v%A%t), &         ! 6 fields: strain mode
-                                          Mat33ToVec6(v%S%t), &         ! 6 fields: deviatoric stress
+                                          Mat33ToVec9(v%L), &         ! 9 fields: velocity gradient
+                                          Mat33ToVec6(v%D), &         ! 6 fields: rate for deformation tensor (strain rate)
+                                          Mat33ToVec3(v%O), &         ! 3 fields: spin tensor
+                                          Mat33ToVec6(v%A), &         ! 6 fields: strain mode
+                                          Mat33ToVec6(v%S), &         ! 6 fields: deviatoric stress
                                           v%vm_strain_begin, &
                                           v%vm_strain_end, &
                                           v%vMeqStrainRate, &

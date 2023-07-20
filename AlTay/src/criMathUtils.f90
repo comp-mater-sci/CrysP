@@ -7,7 +7,6 @@ module criMathUtils
       use definitions
       implicit none
 
-      !>@{ \name Math constants
 
       real(DP), parameter         :: pi  = acos(-1.D0) !< Pi \f$ \pi \f$
       real(DP), parameter         :: pi_deg = pi / 180.D0
@@ -18,41 +17,11 @@ module criMathUtils
       real(DP), parameter         :: root23 = sqrt(2.D0/3.D0) !< Square root of 2/3 \f$ \sqrt{2/3} \f$
       real(DP), parameter         :: root32 = sqrt(3.D0/2.D0) !< Square root of 3/2 \f$ \sqrt{3/2} \f$
 
-      integer,parameter                   :: sr_tensor_dim = 3 !< Array dimension for second-rank tensors (sr_tensor_dim x sr_tensor_dim)
-      integer,parameter                   :: rot_matrix_dim = 3 !< Array dimension for 3D rotation matrix (rot_matrix_dim x rot_matrix_dim)
-
-      !> Array dimension for symmetric 3D second-rank tensors expressed in Voigt
-      !> notation.
-      integer,parameter                   :: sr_asymm_voigt_dim = 3, &
-                                             sr_symm_voigt_dim = 6, &
-                                             sr_voigt_dim = 9
-
       !> Matrix form of the unit second rank tensor
-      real(DP),dimension(sr_tensor_dim,sr_tensor_dim),parameter :: unit_sr_Matrix = reshape( &
-           [ 1.D0, 0.D0, 0.D0,     &
-             0.D0, 1.D0, 0.D0,     &
-             0.D0, 0.D0, 1.D0], [ sr_tensor_dim, sr_tensor_dim ])
-      !>@}
-
-      !> Type for 2nd rank tensors in matrix notation. The matrix is initially filled
-      !> with zeros.
-      type :: SRTensor
-            !> matrix representation of the tensor (t stands for tensor)
-            real(DP),dimension(sr_tensor_dim,sr_tensor_dim) :: t = 0.D0
-      end type
-
-      type(SRTensor),parameter :: unit_sr_tensor = SRTensor(unit_sr_Matrix)
-
-      !> Rotate the 2nd-rank tensor S to the reference frame given by rotation R.
-      interface rotateSRTensorTo
-            module procedure rotateSRTensorTo_matrix, rotateSRTensorTo_SRTensor
-      end interface
-
-      !> Rotate the 2nd-rank tensor S back from the reference frame given by rotation R.
-      interface rotateSRTensorFrom
-            module procedure rotateSRTensorFrom_matrix, rotateSRTensorFrom_SRTensor
-      end interface
-
+      real(DP), dimension(3,3), parameter :: UNIT_SR_MATRIX = reshape([1._DP, 0._DP, 0._DP, & 
+                                                                       0._DP, 1._DP, 0._DP, & 
+                                                                       0._DP, 0._DP, 1._DP], [3,3])   
+  
       !> Representation of Euler angles: Bunge notation
       type EulerAngles
             real(DP)  :: fi1 = 0.D0 !< \f$ \phi_1 \f$
@@ -71,18 +40,8 @@ module criMathUtils
             module procedure scalarDeg2Rad, EulerAnglesDeg2Rad
       end interface
 
-      !> Datatype representing pair of real(DP) reals
-      type pair_double
-            real(DP) :: x
-            real(DP) :: y
-      end type
-
       interface rotmat
             module procedure rotmat_triplet, rotmat_EulerAngles
-      end interface
-
-      interface trace
-            module procedure trace_matrix, trace_SRTensor
       end interface
 
 contains
@@ -193,7 +152,7 @@ contains
       !> \returns [3x3] rotation matrix R.
       pure function rotmat_triplet(phi1, PHI, phi2) result(mat)
       real(DP), intent(in)        :: phi1, PHI, phi2
-      real(DP), dimension(rot_matrix_dim,rot_matrix_dim)    :: mat
+      real(DP), dimension(3,3)    :: mat
       !
       real(DP) :: cosphi1, cosphi2, cosPHI
       real(DP) :: sinphi1, sinphi2, sinPHI
@@ -220,7 +179,7 @@ contains
 
       !> Rotation matrix from three Euler angles in Bunge convention
       pure function rotmat_EulerAngles(ang) result(mat)
-      real(DP), dimension(rot_matrix_dim,rot_matrix_dim)    :: mat
+      real(DP), dimension(3,3)    :: mat
       type(EulerAngles),intent(in) :: ang
       !
             mat = rotmat(ang%fi1, ang%PHI, ang%fi2 )
@@ -234,7 +193,7 @@ contains
       !>    ang%PHI: [0,  pi[
       !>    ang%fi2: [0,2*pi[   note: if PHI=0 then phi2=0
       pure function EulerAnglesType(mat) result(ang)
-      real(DP), dimension(rot_matrix_dim,rot_matrix_dim),intent(in) :: mat
+      real(DP), dimension(3,3),intent(in) :: mat
       type(EulerAngles) :: ang
       !
       real(DP) :: phi1,PHI,phi2,cosPHI
@@ -252,324 +211,233 @@ contains
               phi1 = atan2(mat(3,1),-mat(3,2)) !range: [-pi,pi[
               phi2 = atan2(mat(1,3),mat(2,3)) !range: [-pi,pi[
           end if
-          !
+          
           !If needed, replace Euler angles with equivalent values within proper bounds.
           if (PHI==pi)     PHI  = 0.0D0         ![  0,pi] -> [0,  pi[
           if (phi1<0.0D0) phi1 = phi1+2.D0*pi   ![-pi,pi[ -> [0,2*pi[
           if (phi2<0.0D0) phi2 = phi2+2.D0*pi   ![-pi,pi[ -> [0,2*pi[
-          !
+          
           ang%fi1= phi1
           ang%PHI= PHI
           ang%fi2= phi2
-      !
       end function
 
-      !> Rotates the second-rank tensor S to the reference frame given by rotation R.
-      !> This corresponds to a coordinate transformation of S into the new frame obtained by rotation R.
-      !>
-      !> The result is R^T S R, which is equivalent to (R^T S) R
-      pure function rotateSRTensorTo_matrix(S,R) result(Srot)
-      real(DP),dimension(sr_tensor_dim,sr_tensor_dim)     :: Srot
-      real(DP),dimension(sr_tensor_dim,sr_tensor_dim),intent(in)     :: S
-      real(DP),dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
-      !
-            Srot = matmul(matmul(transpose(R),S),R)
-      !
-      end function
+    !> Rotates the second-rank tensor S to the reference frame given by rotation R.
+    pure function rotateSRTensorTo(S,R) result(Srot)
+        real(DP), dimension(3,3), intent(in)    ::  S, &
+                                                    R
+        real(DP), dimension(3,3)                ::  Srot
 
-      !> Rotates the second-rank tensor S back from the reference frame given by rotation R.
-      !> This corresponds to a coordinate transformation of S into the new frame obtained by rotation R^T.
-      !>
-      !> The result is R S R^T, which is equivalent to (R S) R^T
-      pure function rotateSRTensorFrom_matrix(S,R) result(Srot)
-      real(DP),dimension(sr_tensor_dim,sr_tensor_dim)     :: Srot
-      real(DP),dimension(sr_tensor_dim,sr_tensor_dim),intent(in)     :: S
-      real(DP),dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
-      !
-            Srot = matmul(matmul(R,S),transpose(R))
-      !
-      end function
+        Srot = matmul(matmul(transpose(R),S),R)
+    end function
 
-      !> Rotates the second-rank tensor S to the reference frame given by rotation R.
-      !> This corresponds to a coordinate transformation of S into the new frame obtained by rotation R.
-      !>
-      !> The result is R^T S R, which is equivalent to (R^T S) R
-      pure function rotateSRTensorTo_SRTensor(S,R) result(Srot)
-      type(SRTensor)                :: Srot
-      type(SRTensor),intent(in)     :: S
-      real(DP),dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
-      !
-            Srot%t = rotateSRTensorTo_matrix(S%t, R)
-      !
-      end function
+    !> Rotates the second-rank tensor S back from the reference frame given by rotation R.
+    pure function rotateSRTensorFrom(S,R) result(Srot)
+        real(DP), dimension(3,3), intent(in)    ::  S, &
+                                                    R
+        real(DP), dimension(3,3)                ::  Srot
+      
+        Srot = matmul(matmul(R,S),transpose(R))
+    end function
 
-      !> Rotates the second-rank tensor S back from the reference frame given by rotation R.
-      !> This corresponds to a coordinate transformation of S into the new frame obtained by rotation R^T.
-      !>
-      !> The result is R S R^T, which is equivalent to (R S) R^T
-      pure function rotateSRTensorFrom_SRTensor(S,R) result(Srot)
-      type(SRTensor)                :: Srot
-      type(SRTensor),intent(in)     :: S
-      real(DP),dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
-      !
-            Srot%t = rotateSRTensorFrom_matrix(S%t, R)
-      !
-      end function
+    !> The function converts the antisymmetrical rank-two tensors mat into Voigt-style vector representation.
+    pure function Mat33ToVec3(mat) result(vec)
+        real(DP),dimension(3,3),intent(in)  :: mat
+        real(DP),dimension(3) :: vec
 
+        vec(1) = mat(1,2)
+        vec(2) = mat(2,3)
+        vec(3) = mat(1,3)
+    end function
 
-      !> The function converts the antisymmetrical rank-two tensors mat into Voigt-style vector representation.
-      !> Ordering of the tensor terms in the vector follows the convention used in Abaqus:
-      !> 12, 23, 13
-      pure function Mat33ToVec3(mat) result(vec)
-      real(DP),dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
-      real(DP),dimension(sr_asymm_voigt_dim)                      :: vec
-      !
-            vec(1) = mat(1,2)
-            vec(2) = mat(2,3)
-            vec(3) = mat(1,3)
-      !
-      end function
+    !> The function converts Voigt-style vector vec into symmetrical rank-two tensor.
+    pure function Vec6ToMat33(vec) result(mat)
+        real(DP), dimension(6), intent(in)  :: vec
+        real(DP), dimension(3,3)            :: mat
 
-
-      !> The function converts Voigt-style vector vec into symmetrical rank-two tensor.
-      !> Ordering of the tensor terms in the vector follows the convention used in Abaqus:
-      !> 11, 22, 33, 12, 23, 13.
-      !>
-      !> There is a reverse conversion available. \sa Mat33ToVec6
-      pure function Vec6ToMat33(vec) result(mat)
-      real(DP),dimension(sr_symm_voigt_dim),intent(in)  :: vec
-      real(DP),dimension(sr_tensor_dim,sr_tensor_dim)   :: mat
-      !
-            mat(1,1) = vec(1)
-            mat(2,2) = vec(2)
-            mat(3,3) = vec(3)
-            mat(1,2) = vec(4)
-            mat(2,3) = vec(5)
-            mat(1,3) = vec(6)
-            mat(2,1) = mat(1,2)
-            mat(3,1) = mat(1,3)
-            mat(3,2) = mat(2,3)
-      !
-      end function
+        mat(1,1) = vec(1)
+        mat(2,2) = vec(2)
+        mat(3,3) = vec(3)
+        mat(1,2) = vec(4)
+        mat(2,3) = vec(5)
+        mat(3,1) = vec(6)
+        mat(1,3) = mat(3,1)
+        mat(2,1) = mat(1,2)
+        mat(3,2) = mat(2,3)
+    end function
 
       !> The function converts the symmetrical rank-two tensors mat into Voigt-style vector representation.
-      !> Ordering of the tensor terms in the vector follows the convention used in Abaqus:
-      !> 11, 22, 33, 12, 23, 13
-      !>
-      !> There is a reverse conversion available. \sa Vec6ToMat33
-      pure function Mat33ToVec6(mat) result(vec)
-      real(DP),dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
-      real(DP),dimension(sr_symm_voigt_dim)                       :: vec
-      !
-            vec(1) = mat(1,1)
-            vec(2) = mat(2,2)
-            vec(3) = mat(3,3)
-            vec(4) = mat(1,2)
-            vec(5) = mat(2,3)
-            vec(6) = mat(1,3)
-      !
-      end function
+    pure function Mat33ToVec6(mat) result(vec)
+        real(DP), dimension(3,3), intent(in)    :: mat
+        real(DP), dimension(6)                  :: vec
+      
+        vec(1) = mat(1,1)
+        vec(2) = mat(2,2)
+        vec(3) = mat(3,3)
+        vec(4) = mat(1,2)
+        vec(5) = mat(2,3)
+        vec(6) = mat(1,3)
+    end function
 
       !> The function converts Voigt-style vector vec into rank-two tensor.
-      !> Ordering of the tensor terms in the vector follows the convention used in Abaqus:
-      !> 11, 22, 33, 12, 23, 31, 21, 32, 13.
-      !>
-      !> There is a reverse conversion available. \sa Mat33ToVec9
-      pure function Vec9ToMat33(vec) result(mat)
-      real(DP),dimension(sr_voigt_dim),intent(in)  :: vec
-      real(DP),dimension(sr_tensor_dim,sr_tensor_dim)   :: mat
-      !
-            mat(1,1) = vec(1)
-            mat(2,2) = vec(2)
-            mat(3,3) = vec(3)
-            mat(1,2) = vec(4)
-            mat(2,3) = vec(5)
-            mat(3,1) = vec(6)
-            mat(2,1) = vec(7)
-            mat(3,2) = vec(8)
-            mat(1,3) = vec(9)
-      !
-      end function
+    pure function Vec9ToMat33(vec) result(mat)
+        real(DP),dimension(9),intent(in)  :: vec
+        real(DP),dimension(3,3)   :: mat
+      
+        mat(1,1) = vec(1)
+        mat(2,2) = vec(2)
+        mat(3,3) = vec(3)
+        mat(1,2) = vec(4)
+        mat(2,3) = vec(5)
+        mat(3,1) = vec(6)
+        mat(2,1) = vec(7)
+        mat(3,2) = vec(8)
+        mat(1,3) = vec(9)
+    end function
 
-      !> The function converts the rank-two tensor mat into Voigt-style vector representation.
-      !> Ordering of the tensor terms in the vector follows the convention used in Abaqus:
-      !> 11, 22, 33, 12, 23, 31, 21, 32, 13.
-      !>
-      !> There is a reverse conversion available. \sa Vec9ToMat33
-      pure function Mat33ToVec9(mat) result(vec)
-      real(DP),dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
-      real(DP),dimension(sr_voigt_dim)                            :: vec
-      !
-            vec(1) = mat(1,1)
-            vec(2) = mat(2,2)
-            vec(3) = mat(3,3)
-            vec(4) = mat(1,2)
-            vec(5) = mat(2,3)
-            vec(6) = mat(3,1)
-            vec(7) = mat(2,1)
-            vec(8) = mat(3,2)
-            vec(9) = mat(1,3)
-      !
-      end function
+    !> The function converts the rank-two tensor mat into Voigt-style vector representation.
+    pure function Mat33ToVec9(mat) result(vec)
+        real(DP), dimension(3,3), intent(in)    :: mat
+        real(DP), dimension(9)                  :: vec
+      
+        vec(1) = mat(1,1)
+        vec(2) = mat(2,2)
+        vec(3) = mat(3,3)
+        vec(4) = mat(1,2)
+        vec(5) = mat(2,3)
+        vec(6) = mat(1,3)
+        vec(7) = mat(2,1)
+        vec(8) = mat(3,2)
+        vec(9) = mat(1,3)
+    end function
 
-      !> Calculates trace of the square n x n matrix X
-      pure real(DP) function trace_matrix(X) result(res)
-      real(DP),dimension(:,:),intent(in)    :: X
-      !
-      integer :: i
-            res = 0.D0
-            do i = 1, minval(shape(X))
-                res = res + X(i,i)
-            enddo
-      !
-      end function
+    !> Calculates trace of the square n x n matrix X
+    pure real(DP) function trace(X) result(res)
+        real(DP), dimension(:,:), intent(in)    :: X
+        integer :: i
+         
+        res = 0._DP
+        do i = 1, minval(shape(X))
+            res = res + X(i,i)
+        enddo
+    end function
 
-      !> Calculates trace of second-rank tensor X
-      pure real(DP) function trace_SRTensor(X) result(res)
-      type(SRTensor),intent(in)    :: X
-      !
-           res = trace_matrix(X%t)
-      !
-      end function
+    !> Calculate vector v that is normal to the vector AB (from point A to B).
+    !> Provide the angle between the vector v and the x axis.
+    !> v is obtained by a clockwise rotation by 90 degs applied to the AB vector.
+    subroutine getNormalVector2D(A,B,length,v,beta)
+        real(DP), intent(in) :: A(2), B(2), length 
+        real(DP),intent(out) :: v(2)       
+        !> Angle between the horizontal axis and the vector u [radians]
+        !> The range of the angle is [0:2pi], thus it may vary from acute angle
+        ! via obtuse angle to reflex angle.
+        real(DP),intent(out)  :: beta
+        
+        real(DP),dimension(2) :: u
+        real(DP) :: u_norm
+    
+        ! Build the secant vector
+        u = b - a
+        u_norm = norm2(u)
+        if (u_norm > epsilon(0._DP)) then
+            ! Build the normal vector. Anticlockwise rotation by 90degs
+            ! gives [-u_y, u_x]. Apply the clockwise rotation by 90degs:
+            u = [u(2), -u(1)]
+            beta = acos(u(1) / u_norm)
+            ! Let the vectors that point "downwards" have beta angle > 180deg
+            if (u(2) < 0._DP) beta = 2._DP*pi - beta
+            v = u / u_norm * length
+        else
+            ! ouups, the points C and A overlap!
+            beta = 0._DP
+            v = 0._DP 
+        endif
+    end subroutine
 
-      !
-      ! Some operations on double_pair
-      !
+    !> Calculate the real roots of quadratic polynomial given in form
+    !> a^2 x + b x + c = 0
+    !> Provides x1 and x2. Both x1 and x2 are guaranteed to be set to a defined value,
+    !> even if no real roots exist.
+    integer function solveQuadraticPolynomial(a, b, c, x) result(n_roots)
+        real(DP),intent(in)   :: a, b, c
+        real(DP),dimension(2),intent(out)  :: x
+        real(DP) :: delta
+      
+        ! Satisfy intent(out)
+        x = 0.D0
+        n_roots = 0
+        if (abs(a) > tiny(0.D0)) then
+              delta = b**2 - 4.D0 * a * c
+              if (delta >= 0) then
+                    x(1) = 0.5D0 * (-b - sqrt(delta)) / a
+                    x(2) = 0.5D0 * (-b + sqrt(delta)) / a
+                    n_roots = 2
+              endif
+        else
+              ! Solve linear equation b x = -c
+              if (abs(a) > epsilon(0.D0)) then
+                    x(1) = -c / b
+                    n_roots = 1
+              endif
+        endif
+    end function
 
-      !> Calculate vector v that is normal to the vector AB (from point A to B).
-      !> Provide the angle between the vector v and the x axis.
-      !>
-      !> v is obtained by a clockwise rotation by 90 degs applied to the AB vector.
-      subroutine getNormalVector2D(A,B,length,v,beta)
-      type(pair_double), intent(in) :: A, B    !< Positions of the points: A and B
-      real(DP),intent(in)   :: length  !< Length of the vector v
-      type(pair_double),intent(out) :: v       !< Normal vector
-      !> Angle between the horizontal axis and the vector u [radians]
-      !> The range of the angle is [0:2pi], thus it may vary from acute angle
-      ! via obtuse angle to reflex angle.
-      real(DP),intent(out)  :: beta
-      !
-      real(DP),dimension(2) :: u
-      real(DP) :: u_norm
-      !
-            ! Build the secant vector
-            u = [B%x, B%y]  - [A%x, A%y]
-            u_norm = norm2(u)
-            if (u_norm > epsilon(0.D0)) then
-                  ! Build the normal vector. Anticlockwise rotation by 90degs
-                  ! gives [-u_y, u_x]. Apply the clockwise rotation by 90degs:
-                  u = [u(2), -u(1)]
-                  beta = acos(u(1) / u_norm)
-                  ! Let the vectors that point "downwards" have beta angle > 180deg
-                  if (u(2) < 0.D0) beta = 2.D0*pi - beta
-                  u = u / u_norm * length
-                  v = pair_double(u(1), u(2))
-            else
-                  ! ouups, the points C and A overlap!
-                  beta = 0.D0
-                  v = pair_double(0.D0,0.D0)
-            endif
-      !
-      end subroutine
+    !> Convert 5D vector v into second-rank tensor
+    pure function vec5D2tens(v) result(t)
+        real(DP),dimension(5),intent(in)    :: v
+        real(DP),dimension(3,3)             :: t
+        real(DP),parameter ::  root6i = 1.D0/sqrt(6.D0)
+      
+        t(1,1) =  root2i*v(1) + root6i*v(2)
+        t(2,2) = -root2i*v(1) + root6i*v(2)
+        t(3,3) = -root23*v(2)
+        t(2,3) =  root2i*v(3)
+        t(3,1) =  root2i*v(4)
+        t(1,2) =  root2i*v(5)
+        ! Make tensor symmetric
+        t(3,2) = t(2,3)
+        t(1,3) = t(3,1)
+        t(2,1) = t(1,2)
+    end function
 
-      !> Calculate the real roots of quadratic polynomial given in form
-      !> a^2 x + b x + c = 0
-      !>
-      !>
-      !> Provides x1 and x2. Both x1 and x2 are guaranteed to be set to a defined value,
-      !> even if no real roots exist.
-      integer function solveQuadraticPolynomial(a, b, c, x) result(n_roots)
-      real(DP),intent(in)   :: a, b, c
-      real(DP),dimension(2),intent(out)  :: x
-      !
-      real(DP) :: delta
-      !
-            ! Satisfy intent(out)
-            x = 0.D0
-            n_roots = 0
-            if (abs(a) > tiny(0.D0)) then
-                  delta = b**2 - 4.D0 * a * c
-                  if (delta >= 0) then
-                        x(1) = 0.5D0 * (-b - sqrt(delta)) / a
-                        x(2) = 0.5D0 * (-b + sqrt(delta)) / a
-                        n_roots = 2
-                  endif
-            else
-                  ! Solve linear equation b x = -c
-                  if (abs(a) > epsilon(0.D0)) then
-                        x(1) = -c / b
-                        n_roots = 1
-                  endif
-            endif
-      !
-      end function
+    !> Convert second-rank tensor t into 5D vector.
+    !> \remark If the tensor v is not of deviatoric nature,
+    !> the deviator will be extracted and used in calculations.
+    pure function tens2vec5D(t) result(v)
+        real(DP),dimension(3,3),intent(in)   :: t
+        real(DP),dimension(5)                :: v
+        real(DP),dimension(3,3)   :: x !< Temporary
+        real(DP) :: p ! Pressure
+    
+        x = t ! set temporary
+        p = (t(1,1) + t(2,2) + t(3,3)) / 3.D0
+        ! Make the temporary traceless by substracting the pressure
+        if (abs(p) > epsilon(0.D0)) then
+            x(1,1) = t(1,1) - p
+            x(2,2) = t(2,2) - p
+            x(3,3) = t(3,3) - p
+        endif
+        v(1) =  root2i*(x(1,1) - x(2,2))
+        v(2) = -root32*x(3,3)
+        v(3) =  root2*x(2,3)
+        v(4) =  root2*x(3,1)
+        v(5) =  root2*x(1,2)
+    end function
 
-      !> Convert 5D vector v into second-rank tensor
-      pure function vec5D2tens(v) result(t)
-      real(DP),dimension(5),intent(in)    :: v
-      real(DP),dimension(3,3)             :: t
-      !
-      real(DP),parameter ::  root6i = 1.D0/sqrt(6.D0)
-      !
-            t(1,1) =  root2i*v(1) + root6i*v(2)
-            t(2,2) = -root2i*v(1) + root6i*v(2)
-            t(3,3) = -root23*v(2)
-            t(2,3) =  root2i*v(3)
-            t(3,1) =  root2i*v(4)
-            t(1,2) =  root2i*v(5)
-            ! Make tensor symmetric
-            t(3,2) = t(2,3)
-            t(1,3) = t(3,1)
-            t(2,1) = t(1,2)
-      !
-      end function
+    real(DP) pure function average(a)
+        real(DP),dimension(:),intent(in) :: a
+        integer :: n
+      
+        n = size(a)
+        if (n >= 1) average = sum(a) / dble(n)
+    end function
 
-      !> Convert second-rank tensor t into 5D vector.
-      !>
-      !> \remark If the tensor v is not of deviatoric nature,
-      !> the deviator will be extracted and used in calculations.
-      pure function tens2vec5D(t) result(v)
-      real(DP),dimension(3,3),intent(in)   :: t
-      real(DP),dimension(5)                :: v
-      !
-      real(DP),dimension(3,3)   :: x !< Temporary
-      real(DP) :: p ! Pressure
-      !
-            x = t ! set temporary
-            p = (t(1,1) + t(2,2) + t(3,3)) / 3.D0
-            ! Make the temporary traceless by substracting the pressure
-            if (abs(p) > epsilon(0.D0)) then
-                  x(1,1) = t(1,1) - p
-                  x(2,2) = t(2,2) - p
-                  x(3,3) = t(3,3) - p
-            endif
-            v(1) =  root2i*(x(1,1) - x(2,2))
-            v(2) = -root32*x(3,3)
-            v(3) =  root2*x(2,3)
-            v(4) =  root2*x(3,1)
-            v(5) =  root2*x(1,2)
-      !
-      end function
+    pure function cross(v1,v2)
+        real(DP), intent(in), dimension(3) :: v1, v2
+        real(DP), dimension(3) :: cross
 
-      real(DP) pure function average(a)
-      real(DP),dimension(:),intent(in) :: a
-      integer :: n
-      !
-            n = size(a)
-            if (n >= 1) average = sum(a) / dble(n)
-            ! Undefined for empty array
-      end function
-
-
-      pure function cross(v1,v2)
-      real(DP), intent(in), dimension(3) :: v1, v2
-      real(DP), dimension(3) :: cross
-
-          cross(1)=v1(2)*v2(3)-v1(3)*v2(2)
-          cross(2)=v1(3)*v2(1)-v1(1)*v2(3)
-          cross(3)=v1(1)*v2(2)-v1(2)*v2(1)
-
-      end function
-
+        cross(1)=v1(2)*v2(3)-v1(3)*v2(2)
+        cross(2)=v1(3)*v2(1)-v1(1)*v2(3)
+        cross(3)=v1(1)*v2(2)-v1(2)*v2(1)
+    end function
 end module
-
