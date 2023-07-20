@@ -22,7 +22,6 @@ altayAlgorithms.f90
 altayDynfil.f90 
 altayMacroKinematic.f90 
 altayMesostructure.f90 
-altayPancake.f90 
 altaySliprate.f90 
 simplex.f90 
 altayCurAccess.f90 

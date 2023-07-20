@@ -5,7 +5,7 @@ module altaySimul
     use altayCurAccess
     use altayDYNFIL
     use hardening
-    use altayTaylor
+    use taylor
     use altayAlgorithms
     use altayConfig
     use logging
@@ -55,7 +55,7 @@ module altaySimul
         if (NFILE1 == 1) call CURwriteTitle(IMP1,TITEL,info)
   98    format (A)
 !       read the parameters of the work hardening model
-        call read_deformationsystems(M11,XM)
+        call taylor_init(M11,XM)
     end subroutine
 
 
@@ -152,7 +152,7 @@ module altaySimul
                 !             - should not perform any computation
                 !             - has to output the result of the second crystal found
                 !               during the previous computation.
-                call TAYLOR3(Ssam,RHOSsa,TRF,GEWF,IOR,TRFb,GMMab,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
+                call taylor_solve(Ssam,RHOSsa,TRF,GEWF,IOR,TRFb,GMMab,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
 
                 if(laml == 1) then
                     ssqgx=GEWF
@@ -162,7 +162,7 @@ module altaySimul
                 TOTGEW=TOTGEW+GEWF
 
                 if (astate%simulCalls(astate%this)%input%full_model) &
-                      call TAYLOR4(IOR,GMMdot,WorkRate,MacroDefRate,CC,M11,TRF,C2,ITW,XM)
+                      call taylor_update_state(IOR,GMMdot,WorkRate,MacroDefRate,CC,M11,TRF,C2,ITW,XM)
                 if (NFILTW == 1) write (IMP3,398) ITW
  398            format (I3)
 
