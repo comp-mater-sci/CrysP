@@ -24,7 +24,7 @@ contains
       subroutine  getTaylorFactor(stepid,M,info)
       use altayConfig
       integer,intent(in)            :: stepid
-      double precision,intent(out)  :: M
+      real(DP),intent(out)  :: M
       integer,intent(out)           :: info
       !
             info = -1
@@ -52,9 +52,9 @@ contains
       subroutine makeTextureUpdateStep(D,S,M,output_flag,info)
       use altaySub
       use altayConfig
-      double precision,dimension(3,3),intent(in)      :: D
-      double precision,dimension(3,3),intent(out)     :: S
-      double precision,intent(out)                    :: M
+      real(DP),dimension(3,3),intent(in)      :: D
+      real(DP),dimension(3,3),intent(out)     :: S
+      real(DP),intent(out)                    :: M
       logical,intent(in)                              :: output_flag
       integer,intent(out)                             :: info
       !
@@ -117,10 +117,28 @@ contains
         select type(num)
             type is (integer)
                 write (str, '(I0)') num
-            type is (real(dp))
+            type is (real(DP))
                 write (str, '(G10.4)') num
         end select
 
         str = trim(str)
     end function
+
+    subroutine expand_array(array, pref_size)
+        class(*), dimension(:), allocatable, intent(inout) :: array
+        integer, intent(in), optional :: pref_size
+        class(*), dimension(:), allocatable :: buffer
+        integer :: new_size
+           
+        new_size = merge(pref_size, size(array)*2, present(pref_size))
+        
+        allocate(buffer(new_size), source=array)
+        buffer = transfer(array, array(1), size(array))
+        call move_alloc(buffer, array)
+    end subroutine
+
+
+
+
+
 end module

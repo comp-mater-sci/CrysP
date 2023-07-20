@@ -6,8 +6,10 @@
 !> The module implements the datatype uniformRange that represents an evenly stepped range (or an interval) of real numbers.
 !> \remark This module is not available in the builds with old compilers (such as Intel Fortran 11.1)
 module criRange
-implicit none
-private
+    use definitions
+    
+    implicit none
+    private
 
       type,abstract :: range_type
       contains
@@ -21,8 +23,9 @@ private
       abstract interface
             logical function range_type_next(r,value)
                   import :: range_type
+                  import :: DP
                   class(range_type),intent(inout)    :: r
-                  double precision,intent(inout)      :: value
+                  real(DP),intent(inout)      :: value
             end function
 
             elemental integer function range_type_size(r)
@@ -32,17 +35,17 @@ private
       end interface
 
       !> The type represents range (or interval) of [a,b] or [a,b),
-      !> where a and b are double precision real numbers.
+      !> where a and b are real(DP) real numbers.
       !>
       !> The type provides method "next" that can be used for obtaining subsequent
       ! evenly distributed points belonging to the range.
       type,extends(range_type) :: uniformRange
       private
             !> Current value. Left endpoint on the beginning.
-            double precision  :: value = 0.D0
+            real(DP)  :: value = 0.D0
 
             !> The endpoint (right)
-            double precision  :: endpoint = 0.D0
+            real(DP)  :: endpoint = 0.D0
 
             !> Number of points to be processed.
             !>
@@ -51,7 +54,7 @@ private
             !>     * npoints < 0: no point is returned.
             integer           :: npoints = 0
 
-            double precision  :: step = 0.D0
+            real(DP)  :: step = 0.D0
 
             !> Flag: if .true. the right endpoint will be considered as included in the range.
             logical           :: with_endpoint = .true.
@@ -85,7 +88,7 @@ private
       type,extends(uniformRange) :: biasedRange
       private
             !> Ratio in the geometrical progression: a_{k} = q*a_{k-1}
-            double precision  :: q = 1.D0
+            real(DP)  :: q = 1.D0
       contains
             procedure,pass(r) :: next => biasedRange_next
       end type
@@ -114,10 +117,10 @@ private
       !> Because the beginning of the range is not provided in this type, it is assumed
       !> that the next range starts at the end of the previous one.
       type :: bias_t
-            double precision  :: endpoint = 0.D0      !< Right endpoint of the range
+            real(DP)  :: endpoint = 0.D0      !< Right endpoint of the range
 
             !> Ratio between the largest and the smallest step over the range.
-            double precision  :: ratio = 1.D0
+            real(DP)  :: ratio = 1.D0
 
             integer           :: npoints = 1          !< Number of points inside the range
       end type
@@ -142,7 +145,7 @@ private
       type,extends(range_type) :: discreteRange
       private
             !> Sequence of points
-            double precision,dimension(:),allocatable :: sequence
+            real(DP),dimension(:),allocatable :: sequence
             !> Index of the previously used point inside the sequence. Zero denotes "no point has been used".
             integer           :: lastpoint = 0
       contains
@@ -172,9 +175,9 @@ contains
       !>    * uniformRange(1.D0, 3.D0, npoints=4, endpoint=.true.) consists of {1.D0,1.5D0,2.D0,2.5D0,3.D0}
       elemental function uniformRange_init(rbegin,rend,rstep,npoints,endpoint) result(res)
       type(uniformRange)                         :: res
-      double precision,intent(in)               :: rbegin   !< Begin of the range
-      double precision,intent(in)               :: rend     !< End of the range.
-      double precision,intent(in),optional      :: rstep    !< Size of steps over the range. Default is 0.D0
+      real(DP),intent(in)               :: rbegin   !< Begin of the range
+      real(DP),intent(in)               :: rend     !< End of the range.
+      real(DP),intent(in),optional      :: rstep    !< Size of steps over the range. Default is 0.D0
       !> Number of points inside the range. Default is 0
       !>
       !> This parameter is ignored if rstep is also provided.
@@ -213,7 +216,7 @@ contains
       class(uniformRange),intent(inout)    :: r
       !> The value at the point belonging to the interval. This is meaningful if and only if
       !> the function returns .true.
-      double precision,intent(inout)      :: value
+      real(DP),intent(inout)      :: value
       !
             next = .false.
             ! Terminate if either no points are left.
@@ -249,21 +252,21 @@ contains
 
       elemental function biasedRange_init(rbegin,rend,ratio,npoints,endpoint) result(res)
       type(biasedRange)             :: res
-      double precision,intent(in)   :: rbegin !< Left endpoint of the range
-      double precision,intent(in)   :: rend   !< Right endpoint of the range
+      real(DP),intent(in)   :: rbegin !< Left endpoint of the range
+      real(DP),intent(in)   :: rend   !< Right endpoint of the range
       !> Ratio between the largest and the smallest step over the range.
       !>
       !> It must be:  either  (0.0 < ratio < 1.0)  or (ratio > 1.0). Choosing other value
       !> makes the range use evenly distributed steps.
       !> If (0.0 < ratio < 1.0) then the smallest steps are located at the begining of
       !> the range; otherwise (ratio > 1.0) the refined steps appear an the end of the range.
-      double precision,intent(in)   :: ratio
+      real(DP),intent(in)   :: ratio
       integer,intent(in)            :: npoints !< Number of points inside the range
       !> Flag: if set .true. then the range will include the right endpoint.
       !> Default is .true.
       logical,intent(in),optional   :: endpoint
       !
-      double precision :: length
+      real(DP) :: length
       !
             res%value = rbegin
             res%endpoint = rend
@@ -296,7 +299,7 @@ contains
       class(biasedRange),intent(inout)    :: r
       !> The value at the point belonging to the interval. This is meaningful if and only if
       !> the function returns .true.
-      double precision,intent(inout)      :: value
+      real(DP),intent(inout)      :: value
       !
             next = uniformRange_next(r,value)
             r%step = r%step * r%q
@@ -310,13 +313,13 @@ contains
 
       pure function multiBiasedRange_init(rbegin,biases,endpoint) result(res)
       type(multiBiasedRange)                    :: res
-      double precision,intent(in)               :: rbegin   !< Leftmost endpoint of the range.
+      real(DP),intent(in)               :: rbegin   !< Leftmost endpoint of the range.
       type(bias_t),dimension(1:),intent(in)     :: biases   !< Array of biases.
       !> Flag: if set .true. then the range will include the right endpoint.
       !> Default is .true.
       logical,intent(in),optional               :: endpoint
       !
-      double precision :: start
+      real(DP) :: start
       integer :: i,nranges,ierr
       logical :: with_endpoint
       !
@@ -346,12 +349,12 @@ contains
       !> the first range has progression ratio "ratio", while the second has "1.0/ratio".
       elemental function doubleBiasedRange_init(rbegin,rend,ratio,npoints,endpoint,ratio2) result(res)
       type(multiBiasedRange)        :: res
-      double precision,intent(in)   :: rbegin   !< Left endpoint of the range
-      double precision,intent(in)   :: rend     !< Right endpoint of the range
+      real(DP),intent(in)   :: rbegin   !< Left endpoint of the range
+      real(DP),intent(in)   :: rend     !< Right endpoint of the range
       !> Ratio between the largest and the smallest interval in the first half of the range.
       !>
       !> It must be:  either  0 < ratio < 1.0  or ratio > 1.0
-      double precision,intent(in)   :: ratio
+      real(DP),intent(in)   :: ratio
       integer,intent(in)            :: npoints  !< Number of points in the range
       !> Flag: if set .true., the last call to "next" will return the right
       !> endpoint of the range.
@@ -360,9 +363,9 @@ contains
       !>
       !> The value of ratio2 is subjected to the same limitations as "ratio".
       !> Default value: 1.D0 / ratio
-      double precision,intent(in),optional   :: ratio2
+      real(DP),intent(in),optional   :: ratio2
       !
-      double precision :: midpoint, r1,r2
+      real(DP) :: midpoint, r1,r2
       type(bias_t),dimension(2)  :: biases
       !
             r1 = merge(ratio,1.D0,ratio > 0.D0)
@@ -384,7 +387,7 @@ contains
       class(multiBiasedRange),intent(inout)    :: r
       !> The value at the point belonging to the interval. This is meaningful if and only if
       !> the function returns .true.
-      double precision,intent(inout)      :: value
+      real(DP),intent(inout)      :: value
       !
       integer :: nranges
       !
@@ -416,7 +419,7 @@ contains
 
       pure function discreteRange_init(values) result(res)
       type(discreteRange)                       :: res
-      double precision,dimension(:),intent(in)  :: values   !< Sequence of points
+      real(DP),dimension(:),intent(in)  :: values   !< Sequence of points
       !
       integer :: ierr
       !
@@ -431,7 +434,7 @@ contains
       class(discreteRange),intent(inout)    :: r
       !> The value at the point belonging to the range. This is meaningful if and only if
       !> the function returns .true.
-      double precision,intent(inout)      :: value
+      real(DP),intent(inout)      :: value
       !
             if (discreteRange_size(r) > 0) then
                   r%lastpoint = r%lastpoint + 1

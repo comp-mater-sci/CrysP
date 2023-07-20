@@ -118,14 +118,14 @@ contains
     logical,intent(out),optional    :: is_acceptable
     logical,intent(in),optional     :: pretry
     !
-    double precision :: vA_norm
-    double precision,dimension(alamEval_vSD_dim) :: vS            !< Input stress in 5D deviatoric stress space
+    real(DP) :: vA_norm
+    real(DP),dimension(alamEval_vSD_dim) :: vS            !< Input stress in 5D deviatoric stress space
     logical :: use_vM_guess, use_pretry, is_pretry_acceptable
     type(NormalizedV5DCompCached),target :: obj_func
     !
     type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
     type(multilevelYLPConfig)   :: ylp_pretry
-    double precision, parameter :: pretry_search_angle = pi_deg * 2.0D0
+    real(DP), parameter :: pretry_search_angle = pi_deg * 2.0D0
     !
         info = VEF_ERROR
 
@@ -246,7 +246,7 @@ contains
     type(multilevelYLPConfig),intent(out)     :: cnf
     integer,intent(out)                       :: info
     !
-    double precision,dimension(2) :: tmp
+    real(DP),dimension(2) :: tmp
     logical :: use_default_solver_settings, use_advanced_settings
     !
         info = VEF_ERROR

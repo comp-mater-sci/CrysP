@@ -26,10 +26,10 @@ contains
     subroutine objectiveEval_NormalizedV5DCompCached(this,vX,info)
 
     class(NormalizedV5DCompCached),intent(inout)    :: this
-    double precision,dimension(:),intent(in)    :: vX       !< Dimension must be: 5
-    integer,intent(out)                         :: info
-    double precision,dimension(size(vX)):: vX_n
-    double precision :: vX_norm
+        real(DP),dimension(:),intent(in)    :: vX       !< Dimension must be: 5
+        integer,intent(out)                         :: info
+        real(DP),dimension(size(vX)):: vX_n
+        real(DP) :: vX_norm
     
         ! Assert the size and the norm
         RETURN_IF_WITH(size(vX) /= alamEval_vSD_dim, info = -1)
@@ -41,7 +41,8 @@ contains
             ! Normalize vX before storing it. It is also done by objectiveEval
             ! in the superclass.
             vX_n = vX / vX_norm
-            CHOOSE(info, this%ptr_db%put(vX_n, this%NormalizedV5DComp%vSml) == VEF_OK, 0, 1)
+            call this%ptr_db%put(vX_n, this%NormalizedV5DComp%vSml)
+            info = VEF_OK
         endif
     !
     end subroutine

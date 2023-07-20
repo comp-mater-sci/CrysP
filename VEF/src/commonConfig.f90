@@ -34,9 +34,9 @@ module commonConfig
       type(bias_t),dimension(:),allocatable :: vBiases
 
       integer :: i, ierr, id, nranges, npoints
-      double precision,dimension(:),allocatable :: vPoints
-      double precision :: triplet(3)
-      double precision :: rbegin, rend, ratio, rstep
+      real(DP),dimension(:),allocatable :: vPoints
+      real(DP) :: triplet(3)
+      real(DP) :: rbegin, rend, ratio, rstep
       ! Mapping triplet members to logical view (named fields)
       ! Note: rstep an ratio are aliases for the same memory location.
       equivalence (rbegin,triplet(1)), (rend,triplet(2)), &

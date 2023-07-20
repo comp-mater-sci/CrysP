@@ -56,7 +56,7 @@ module parameters
 
         !Calculate difference between value buffers of 2 parameters or a parameter and a (real) constant
         !Throws exception if at least 1 of the given parameters is not of numeric type.
-        module pure real(dp) function parameter_difference(param, arg) result(difference)
+        module pure real(DP) function parameter_difference(param, arg) result(difference)
             type(Parameter), intent(in) :: param
             class(*), intent(in)        :: arg
         end function
@@ -221,7 +221,7 @@ contains
         params(index)%value = transfer(val, buffer)
     end procedure
 
-    pure real(dp) function get_numerical_value(param) result(num)
+    pure real(DP) function get_numerical_value(param) result(num)
         type(Parameter), intent(in) :: param
         integer :: buffer
 
