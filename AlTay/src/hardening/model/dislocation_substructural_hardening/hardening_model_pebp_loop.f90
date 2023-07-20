@@ -10,7 +10,7 @@ module hardening_model_pebp_loop
       PUBLIC :: HardeningModelPEBPLoop
 
       !NormDir(s,1:3): normalized slip plane normal vector of slip system s
-       real(dp), dimension(24,3), parameter    ::  NORMDIR = reshape([ 0.D0,n2,p2,0.D0,p2,n2,0.D0,p2,n2,0.D0,n2,p2,pd6,n6,n6,nd6,p6,p6,nd6,p6,p6,pd6,n6,n6,    &
+       real(DP), dimension(24,3), parameter    ::  NORMDIR = reshape([ 0.D0,n2,p2,0.D0,p2,n2,0.D0,p2,n2,0.D0,n2,p2,pd6,n6,n6,nd6,p6,p6,nd6,p6,p6,pd6,n6,n6,    &
                                                                     p2,0.D0,n2,n2,0.D0,p2,p2,0.D0,n2,n2,0.D0,p2,n6,pd6,n6,p6,nd6,p6,n6,pd6,n6,p6,nd6,p6,    &
                                                                     n2,p2,0.D0,n2,p2,0.D0,n2,p2,0.D0,n2,p2,0.D0,n6,n6,pd6,n6,n6,pd6,n6,n6,pd6,n6,n6,pd6], shape(NORMDIR))
 

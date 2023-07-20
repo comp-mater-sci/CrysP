@@ -28,7 +28,7 @@ implicit none
 
         class(range_type),pointer                 :: ptr_w_range
 
-        double precision,dimension(sr_symm_voigt_dim,nbase) :: base_vectors = real(reshape( &
+        real(DP),dimension(sr_symm_voigt_dim,nbase) :: base_vectors = real(reshape( &
                                             [1, 0, 0, 0, 0, 0, & ! First base vector
                                              0, 1, 0, 0, 0, 0, & ! second base vector
                                              0, 0, 0, 0, 0, 0], & ! offset vector (zeros)
@@ -36,7 +36,7 @@ implicit none
 
         logical                                   :: do_scaling = .true.
 
-        double precision,dimension(sr_symm_voigt_dim) :: scaling_vector = &
+        real(DP),dimension(sr_symm_voigt_dim) :: scaling_vector = &
                                             real([1, 0, 0, 0, 0, 0],DP)
 
         logical                                   :: normalizeSm = .false.
@@ -54,16 +54,16 @@ implicit none
 
     !> Data that describe a single yield locus point
     type :: yldResult
-        double precision :: theta = 0.D0
-        double precision :: w = 0.D0
-        double precision :: scal_s = 0.D0
-        double precision :: scal_s_rel = 0.D0
-        double precision :: norm_sona = 0.D0
-        double precision :: dotWonA = 0.D0
+        real(DP) :: theta = 0.D0
+        real(DP) :: w = 0.D0
+        real(DP) :: scal_s = 0.D0
+        real(DP) :: scal_s_rel = 0.D0
+        real(DP) :: norm_sona = 0.D0
+        real(DP) :: dotWonA = 0.D0
         type(pair_double) :: scal_s_rel_cart = pair_double(0.D0,0.D0)
         type(pair_double) :: normal_cart = pair_double(0.D0,0.D0)
-        double precision :: beta = 0.D0
-        double precision :: residual = 0.D0
+        real(DP) :: beta = 0.D0
+        real(DP) :: residual = 0.D0
     end type
 
 contains
@@ -75,7 +75,7 @@ contains
     integer,intent(in)                        :: cnfunit
     !
     integer :: i
-    double precision :: norm
+    real(DP) :: norm
     logical :: normalize, use_default_settings
     !
         info = this%StressDrivenModule%ReadConfig(cnfunit)
@@ -125,21 +125,21 @@ contains
     class(YldModule),intent(inout)            :: this
     integer,intent(out)                       :: info
     !
-    double precision                          :: theta, w
-    double precision                          :: iunilen ! Inverse of the length of the deviatoric part of uniaxial tensile stress
+    real(DP)                          :: theta, w
+    real(DP)                          :: iunilen ! Inverse of the length of the deviatoric part of uniaxial tensile stress
 
     type(SRTensor)                            :: Sm, D
     type(YLPResult)                           :: ylp_result !< Results of the interative search
-    double precision                          :: scal_s_rel
+    real(DP)                          :: scal_s_rel
     type(yldResult),dimension(:),allocatable  :: yldRes
-    double precision,dimension(sr_symm_voigt_dim) :: sigma_vector
+    real(DP),dimension(sr_symm_voigt_dim) :: sigma_vector
     class(range_type),allocatable             :: theta_range
     !
     integer                 :: i,npoints, ofunit
     !
     integer :: posA, posB
     logical :: first_run, acceptable_point
-    double precision,parameter :: beta = 0.D0
+    real(DP),parameter :: beta = 0.D0
     !
         ! Super-class first
         RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))

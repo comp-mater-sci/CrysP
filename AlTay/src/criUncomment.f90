@@ -1,4 +1,3 @@
-!
 !> Provides access to config files with bash-style comments
 module criUncomment
     use definitions
@@ -15,7 +14,7 @@ module criUncomment
       !> Arguments:
       !> \param[in] inunit The IO unit (type: integer)
       !> \param[out] val   The value being retrieved (type: one of the supported types
-      !>                   (integer, logical, string, double precision) OR a vector of
+      !>                   (integer, logical, string, real(DP)) OR a vector of
       !>                   elements of supported types)
       !> \param[in] frmt  The format to be used in the read operation (type: character(len=*),optional)
       interface readValue
@@ -93,7 +92,6 @@ contains
         if (skipComment(inunit,buffer)) read(buffer,fmt=*,iostat=ierr) val 
         if (ierr == 0) isOK = .true.
     end function
-
 end module
 
   

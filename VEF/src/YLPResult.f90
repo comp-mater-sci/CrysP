@@ -9,14 +9,14 @@ implicit none
 
     !> Datatype to store results of iterative search
     type :: YLPResult
-        double precision,dimension(alamEval_vSD_dim) :: vA = 0.D0       !< Strain rate mode on yield locus
-        double precision,dimension(alamEval_vSD_dim) :: vS = 0.D0       !< Imposed stress
-        double precision,dimension(alamEval_vSD_dim) :: vSonA = 0.D0    !< Stress corresponding to A
-        double precision,dimension(alamEval_vSD_dim) :: vSonAn = 0.D0   !< Stress mode corresponding to A
-        double precision :: R = 0.D0                  !< Norm of stress residual
-        double precision :: dotWonA = 0.D0            !< Work rate corresponding to vA and vSonA
-        double precision :: scal_s = 0.D0             !< norm2(vSonA) / vS_length
-        double precision :: vS_length = 0.D0          !< norm2(vS)
+        real(DP),dimension(alamEval_vSD_dim) :: vA = 0.D0       !< Strain rate mode on yield locus
+        real(DP),dimension(alamEval_vSD_dim) :: vS = 0.D0       !< Imposed stress
+        real(DP),dimension(alamEval_vSD_dim) :: vSonA = 0.D0    !< Stress corresponding to A
+        real(DP),dimension(alamEval_vSD_dim) :: vSonAn = 0.D0   !< Stress mode corresponding to A
+        real(DP) :: R = 0.D0                  !< Norm of stress residual
+        real(DP) :: dotWonA = 0.D0            !< Work rate corresponding to vA and vSonA
+        real(DP) :: scal_s = 0.D0             !< norm2(vSonA) / vS_length
+        real(DP) :: vS_length = 0.D0          !< norm2(vS)
     end type
 
 
@@ -25,18 +25,18 @@ implicit none
         module procedure YLPResult_init
     end interface
 
-    double precision, parameter,private :: default_residual_tolerance_factor = 5.D0
+    real(DP), parameter,private :: default_residual_tolerance_factor = 5.D0
 
     !> Default angular tolerance (given in degrees)
-    double precision, parameter,private :: default_angular_tolerance = 0.25D0
+    real(DP), parameter,private :: default_angular_tolerance = 0.25D0
 
     !> Datatype for commonly used tolerances that the YLPResult should meet to be
     !> an acceptable solution. The defaults are
     type :: YLPResultTolerance
         !> Tolerance in terms of residual norm
-        double precision    :: residual_tolerance_factor = default_residual_tolerance_factor
+        real(DP)    :: residual_tolerance_factor = default_residual_tolerance_factor
         !> Tolerance in terms of angle between requested stess and identified stress (in degrees)
-        double precision    :: angular_tolerance = default_angular_tolerance
+        real(DP)    :: angular_tolerance = default_angular_tolerance
     end type
 
 contains
@@ -47,7 +47,7 @@ contains
     !> \post A correctly initialized result has non-zero vS_length field.
     pure function YLPResult_init(vS) result(res)
     type(YLPResult) :: res
-    double precision,dimension(alamEval_vSD_dim),intent(in) :: vS
+    real(DP),dimension(alamEval_vSD_dim),intent(in) :: vS
     !
         res%vS_length = norm2(vS)
         if (res%vS_length > 0.D0) res%vS = vS / res%vS_length
@@ -62,7 +62,7 @@ contains
     integer function deriveYLPResult(ylp_result) result(info)
     type(YLPResult),intent(inout)   :: ylp_result
     !
-    double precision :: SonA_norm
+    real(DP) :: SonA_norm
     !
         info = VEF_ERROR
         SonA_norm = norm2(ylp_result%vSonA)
@@ -112,7 +112,7 @@ contains
     pure logical function checkYLPResult(ylp_result, tolerance, target_residual) result(val)
     type(YLPResult),intent(in)          :: ylp_result
     type(YLPResultTolerance),intent(in) :: tolerance
-    double precision,intent(in)         :: target_residual
+    real(DP),intent(in)         :: target_residual
     !
         val = (ylp_result%R < tolerance%residual_tolerance_factor * target_residual) &
               .and. &
