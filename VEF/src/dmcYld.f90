@@ -3,16 +3,16 @@
 !
 !> Yield locus calculations
 module dmcYld
-use definitions
-use criRange
-use criMathUtils
-use criUncomment, only: readValue
-use dmcYLPResult
-use commonConfig
-use dmcStressDrivenModule
-use commonUtils
-
-implicit none
+    use definitions
+    use criRange
+    use criMathUtils
+    use criUncomment, only: readValue
+    use dmcYLPResult
+    use commonConfig
+    use dmcStressDrivenModule
+    use commonUtils
+    
+    implicit none
 
     public YldModule
     private
@@ -28,7 +28,7 @@ implicit none
 
         class(range_type),pointer                 :: ptr_w_range
 
-        double precision,dimension(6,nbase) :: base_vectors = real(reshape( &
+        real(DP),dimension(6,nbase) :: base_vectors = real(reshape( &
                                             [1, 0, 0, 0, 0, 0, & ! First base vector
                                              0, 1, 0, 0, 0, 0, & ! second base vector
                                              0, 0, 0, 0, 0, 0], & ! offset vector (zeros)
@@ -36,8 +36,7 @@ implicit none
 
         logical                                   :: do_scaling = .true.
 
-        double precision,dimension(6) :: scaling_vector = &
-                                            real([1, 0, 0, 0, 0, 0],DP)
+        real(DP),dimension(6) :: scaling_vector = [1._DP, 0._DP, 0._DP, 0._DP, 0._DP, 0._DP]
 
         logical                                   :: normalizeSm = .false.
 
@@ -54,16 +53,16 @@ implicit none
 
     !> Data that describe a single yield locus point
     type :: yldResult
-        double precision :: theta = 0.D0
-        double precision :: w = 0.D0
-        double precision :: scal_s = 0.D0
-        double precision :: scal_s_rel = 0.D0
-        double precision :: norm_sona = 0.D0
-        double precision :: dotWonA = 0.D0
+        real(DP) :: theta = 0.D0
+        real(DP) :: w = 0.D0
+        real(DP) :: scal_s = 0.D0
+        real(DP) :: scal_s_rel = 0.D0
+        real(DP) :: norm_sona = 0.D0
+        real(DP) :: dotWonA = 0.D0
         real(DP), dimension(2) ::   scal_s_rel_cart = 0._DP, &
                                     normal_cart = 0._DP
-        double precision :: beta = 0.D0
-        double precision :: residual = 0.D0
+        real(DP) :: beta = 0.D0
+        real(DP) :: residual = 0.D0
     end type
 
 contains
@@ -75,7 +74,7 @@ contains
     integer,intent(in)                        :: cnfunit
     !
     integer :: i
-    double precision :: norm
+    real(DP) :: norm
     logical :: normalize, use_default_settings
     !
         info = this%StressDrivenModule%ReadConfig(cnfunit)
@@ -121,26 +120,23 @@ contains
 
 
     subroutine YldModule_run(this,info)
-    implicit none
-    class(YldModule),intent(inout)            :: this
-    integer,intent(out)                       :: info
-    real(DP) :: theta, &
-                w,  &
-                iunilen, &
-                Sm(3,3), &
-                D(3,3), &
-                scal_s_rel, &
-                sigma_vector(6)
-    type(YLPResult)                           :: ylp_result !< Results of the interative search
-    type(yldResult),dimension(:),allocatable  :: yldRes
-    class(range_type),allocatable             :: theta_range
-    !
-    integer                 :: i,npoints, ofunit
-    !
-    integer :: posA, posB
-    logical :: first_run, acceptable_point
-    double precision,parameter :: beta = 0.D0
-    
+        class(YldModule),intent(inout)            :: this
+        integer,intent(out)                       :: info
+        real(DP) :: theta, &
+                    w,  &
+                    iunilen, &
+                    Sm(3,3), &
+                    D(3,3), &
+                    scal_s_rel, &
+                    sigma_vector(6)
+        type(YLPResult)                           :: ylp_result !< Results of the interative search
+        type(yldResult),dimension(:),allocatable  :: yldRes
+        class(range_type),allocatable             :: theta_range
+        integer                 :: i,npoints, ofunit
+        integer :: posA, posB
+        logical :: first_run, acceptable_point
+        real(DP),parameter :: beta = 0._DP
+
         ! Super-class first
         RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
         !

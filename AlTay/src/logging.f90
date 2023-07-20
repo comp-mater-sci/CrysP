@@ -34,7 +34,7 @@ module logging
         module subroutine log_trace_tensor(caller_module, caller_routine, tensor)
             character(len=*), intent(in)        :: caller_module, &
                                                    caller_routine
-            real(dp), dimension(..), intent(in) :: tensor
+            real(DP), dimension(..), intent(in) :: tensor
         end subroutine
 
         !log_error
@@ -62,7 +62,7 @@ submodule(logging) log_imp
     end procedure
 
     module procedure log_trace_tensor
-        real(dp) :: buffer
+        real(DP) :: buffer
 
 #ifdef TRACE
         select rank(tensor)

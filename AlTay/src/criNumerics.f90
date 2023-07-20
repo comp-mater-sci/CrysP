@@ -15,20 +15,20 @@ module criNumerics
         !> The interpolation nodes and the barycentric weighting factors
         !> will be constructed from xi.
         !> Size of xi must be at least [order + 1]
-        double precision,dimension(:),allocatable   :: xi
+        real(DP),dimension(:),allocatable   :: xi
 
         !> y coordinates of the known points.
         !>
         !> Size of yi must be identical as the size of xi, so the same
         !> restrictions apply.
-        double precision,dimension(:),allocatable   :: yi
+        real(DP),dimension(:),allocatable   :: yi
 
         !> Barycentric weighting factors of the interpolation polynomials
         !> It is useful to pre-compute the weights for every
         !> polynomial that that is on the nodes from i to i+order+1.
         !> This way the latst order+1 nodes
         !> Shape: [1:order+1, 1:size(xi)-order]
-        double precision,dimension(:,:),allocatable   :: wi
+        real(DP),dimension(:,:),allocatable   :: wi
 
         !> The flag defines how the points outside the range
         !> will be treated. If .true., linear interpolation from the
@@ -52,8 +52,8 @@ contains
     subroutine BarycentricInterpolator_init(this, order, xi, yi, info)
     type(BarycentricInterpolator),intent(out)   :: this
     integer,intent(in)                          :: order
-    double precision,dimension(:),intent(in)    :: xi
-    double precision,dimension(:),intent(in)    :: yi
+    real(DP),dimension(:),intent(in)    :: xi
+    real(DP),dimension(:),intent(in)    :: yi
     integer,intent(out)                         :: info
     !
     integer :: i
@@ -100,12 +100,12 @@ contains
         !> [1] J-P Berrut and L.N. Trefethen, Barycentric Lagrange Interpolation, SIAM Rev.
         !>     46(3), 501\96517. DOI:10.1137/S0036144502417715
         pure subroutine barycentric_weights(xi, wi, info)
-        double precision,dimension(0:),intent(in)   :: xi
-        double precision,dimension(0:),intent(out)  :: wi
+        real(DP),dimension(0:),intent(in)   :: xi
+        real(DP),dimension(0:),intent(out)  :: wi
         integer,intent(out)                         :: info
         !
         integer :: j,k, n
-        ! double precision,dimension(0:ubound(xi,dim=1)) :: xdiff
+        ! real(DP),dimension(0:ubound(xi,dim=1)) :: xdiff
         !
             info = VEF_ERROR
             n = ubound(xi,dim=1)
@@ -144,11 +144,11 @@ contains
     !>
     !> The function requires a properly initialized BarycentricInterpolator object.
     !> Otherwise the result of the function is undefined.
-    double precision pure function BarycentricInterpolator_interpolate(this, x) result(res)
+    real(DP) pure function BarycentricInterpolator_interpolate(this, x) result(res)
     !> Properly initialized object of type BarycentricInterpolator
     type(BarycentricInterpolator),intent(in)    :: this
     !> The point at which the interpolated function is evaluated
-    double precision,intent(in)                 :: x
+    real(DP),intent(in)                 :: x
 
     integer :: i, j
 
@@ -175,13 +175,13 @@ contains
         !>
         !> [1] J-P Berrut and L.N. Trefethen, Barycentric Lagrange Interpolation, SIAM Rev.
         !>     46(3), 501\96517. DOI:10.1137/S0036144502417715
-        double precision pure function barycentric_interpolation(x, xi, yi, wi) result(p)
-        double precision,intent(in)                 :: x  !< interpolation point
-        double precision,dimension(:),intent(in)    :: xi !< interpolation nodes. Shape is [1:n+1]
-        double precision,dimension(:),intent(in)    :: yi !< function values at the interpolation nodes. Shape is [1:n+1]
-        double precision,dimension(:),intent(in)    :: wi !< barycentric weights of the nodes. Shape is [1:n+1]
+        real(DP) pure function barycentric_interpolation(x, xi, yi, wi) result(p)
+        real(DP),intent(in)                 :: x  !< interpolation point
+        real(DP),dimension(:),intent(in)    :: xi !< interpolation nodes. Shape is [1:n+1]
+        real(DP),dimension(:),intent(in)    :: yi !< function values at the interpolation nodes. Shape is [1:n+1]
+        real(DP),dimension(:),intent(in)    :: wi !< barycentric weights of the nodes. Shape is [1:n+1]
         !
-        double precision,dimension(size(xi)) :: xterms
+        real(DP),dimension(size(xi)) :: xterms
         integer :: i
         !
             xterms = x - xi
@@ -200,8 +200,8 @@ contains
     end function
 
       integer pure function lower_bound(array,val) result(res)
-          double precision,dimension(:),intent(in)     :: array
-          double precision,intent(in)                  :: val
+          real(DP),dimension(:),intent(in)     :: array
+          real(DP),intent(in)                  :: val
 
           integer :: first,dist,cnt,mid
 

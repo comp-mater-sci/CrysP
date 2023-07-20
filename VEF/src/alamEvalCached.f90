@@ -26,11 +26,11 @@ contains
     subroutine objectiveEval_NormalizedV5DCompCached(this,vX,info)
 
     class(NormalizedV5DCompCached),intent(inout)    :: this
-    double precision,dimension(:),intent(in)    :: vX       !< Dimension must be: 5
+    real(DP),dimension(:),intent(in)    :: vX       !< Dimension must be: 5
     integer,intent(out)                         :: info
     !
-    double precision,dimension(size(vX)):: vX_n
-    double precision :: vX_norm
+    real(DP),dimension(size(vX)):: vX_n
+    real(DP) :: vX_norm
     !
         ! Assert the size and the norm
         RETURN_IF_WITH(size(vX) /= alamEval_vSD_dim, info = -1)

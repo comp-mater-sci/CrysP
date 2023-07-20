@@ -46,7 +46,7 @@ implicit none
         integer           :: stress_state_id = tension_state
 
         !> Stress ratio
-        double precision  :: rho = 0.D0
+        real(DP)  :: rho = 0.D0
 
     contains
 
@@ -68,17 +68,17 @@ implicit none
 
     type :: UDSAOutputRecord
         integer             :: increment
-        double precision    :: vm_strain = 0.D0
-        double precision    :: norm_P_abs = 0.D0
-        double precision    :: TNorm = 0.D0  ! Tensile strain
-        double precision    :: TSigma = 0.D0 ! Tensile total stress
-        double precision    :: TSNorm = 0.D0 ! Tensile deviatoric stress
-        double precision    :: plastic_work_total = 0.D0
-        double precision    :: dotWonA = 0.D0
-        double precision    :: taylor_factor = 0.D0
+        real(DP)    :: vm_strain = 0.D0
+        real(DP)    :: norm_P_abs = 0.D0
+        real(DP)    :: TNorm = 0.D0  ! Tensile strain
+        real(DP)    :: TSigma = 0.D0 ! Tensile total stress
+        real(DP)    :: TSNorm = 0.D0 ! Tensile deviatoric stress
+        real(DP)    :: plastic_work_total = 0.D0
+        real(DP)    :: dotWonA = 0.D0
+        real(DP)    :: taylor_factor = 0.D0
         type(qrsData)       :: instantaneous_qrsvalue
         type(qrsData)       :: cummulative_qrsvalue
-        double precision    :: residual = 0.D0
+        real(DP)    :: residual = 0.D0
     end type
 
 
@@ -90,7 +90,7 @@ contains
     class(UDSAModule),intent(inout)            :: this
     !
     logical :: use_default_settings
-    double precision,dimension(3) :: arr_euler
+    real(DP),dimension(3) :: arr_euler
     !
         info = this%StressDrivenEvolutionModule%readConfig(cnfunit)
         if (info /= VEF_OK) return
@@ -280,7 +280,7 @@ contains
     implicit none
     class(UDSAModule),intent(in)              :: this
     integer,intent(out)                       :: iounit
-    double precision,intent(in),optional      :: tag_number
+    real(DP),intent(in),optional      :: tag_number
     !
     integer :: ierr
     character(len=max_pathlen) :: datafile_path
@@ -340,7 +340,7 @@ contains
     implicit none
     character(len=max_pathlen)                :: path
     class(UDSAModule),intent(in)              :: this
-    double precision,intent(in),optional      :: tag_number
+    real(DP),intent(in),optional      :: tag_number
     !
     character(len=max_pathlen) :: datafile_tag
     integer :: i

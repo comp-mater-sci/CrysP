@@ -87,7 +87,7 @@ contains
     !> Set up StrainDrivenStep
     integer function StrainDrivenStep_setUp(this) result(info)
         class(StrainDrivenStep),intent(inout)   :: this
-        double precision :: step_strain_norm
+        real(DP) :: step_strain_norm
     
         info = VEF_ERROR
         associate(config => this%config)
@@ -130,10 +130,10 @@ contains
     !> Set up strain driven fixed step.
     integer function StrainDrivenFixedStep_setUp(this) result(info)
     class(StrainDrivenFixedStep),intent(inout)   :: this
-    double precision :: step_strain_norm
+    real(DP) :: step_strain_norm
     integer :: n_increments
     ! Volumetric strain fraction that triggers a warning (0.1%)
-    double precision,parameter :: auto_increment_norm = 0.02_DP
+    real(DP),parameter :: auto_increment_norm = 0.02_DP
     !
         info = this%StrainDrivenStep%setUp()
         if (info /= VEF_OK) return
@@ -165,7 +165,6 @@ contains
     integer function StrainDrivenFixedStep_execute(this, step_output) result(info)
         class(StrainDrivenFixedStep),intent(inout)  :: this
         class(StepOutput),intent(out)               :: step_output
-    !
         integer :: n_increments, i_incr
         real(DP) :: increment_size, &
                     x, &

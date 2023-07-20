@@ -86,16 +86,16 @@ contains
     real(DP) :: scaling_factor, control_variable, stop_control_variable, taylor_factor, stretch, &
                 D(3,3), X_tmp(3,3), D_retry(3,3)
     type(YLPResult) :: ylp, ylp_retry
-    double precision,dimension(alamEval_vSD_dim) :: vDe, vSe
+    real(DP),dimension(alamEval_vSD_dim) :: vDe, vSe
     type(IncrementationControl) :: icv
-    double precision,dimension(6) :: X_tmp_voigt
+    real(DP),dimension(6) :: X_tmp_voigt
     !
     type(xVector_IncrementOutputRecord) :: tmp_output
     type(IncrementOutputRecord)         :: tmp_record
     integer :: i, n_roots
-    double precision,dimension(2) :: xi
+    real(DP),dimension(2) :: xi
     logical :: stop_flag, acceptable_point, acceptable_point_retry
-    double precision,parameter :: stretch_ratio = 1e-3_DP
+    real(DP),parameter :: stretch_ratio = 1e-3_DP
     real(DP), dimension(3,3) :: zero = 0._DP
     !
         ! Prepare non-default incrementation controls if requested
@@ -290,6 +290,4 @@ contains
                 info = VEF_OK
     !
     end subroutine
-
-end module
-
+end module 

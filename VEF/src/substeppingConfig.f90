@@ -84,7 +84,7 @@ contains
     !> Create a FixedSubsteppingConfig from an array of specified increments
     pure function FixedSubsteppingConfig_init_intervals(increments) result(this)
     type(FixedSubsteppingConfig) :: this
-    double precision,dimension(:),intent(in)  :: increments
+    real(DP),dimension(:),intent(in)  :: increments
     !
         allocate(this%ptr_range, source=discreteRange(increments))
     !
@@ -126,9 +126,9 @@ contains
     class(range_type),intent(inout) :: range
     integer,intent(out)             :: info
     !
-    double precision, dimension(:),allocatable :: tmp_points
+    real(DP), dimension(:),allocatable :: tmp_points
     integer :: i, n_points, ierr
-    double precision :: value
+    real(DP) :: value
     !
         info = VEF_ERROR
         n_points = range%size()

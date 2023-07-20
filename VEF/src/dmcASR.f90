@@ -14,7 +14,7 @@ implicit none
     private
 
     type :: StressDrivenStep
-        double precision,dimension(6)   :: stress_mode = 0.D0
+        real(DP),dimension(6)   :: stress_mode = 0.D0
         type(IncrementationControlSettings)             :: incrementation_control
         logical                                         :: update_state = .false.
     end type
@@ -43,7 +43,7 @@ implicit none
     type :: ASROutput
         integer                 :: step = 0
         type(EvolutionOutput)   :: evolution_output
-        double precision,dimension(3,3)   :: rotation_matrix = unit_sr_Matrix
+        real(DP),dimension(3,3)   :: rotation_matrix = unit_sr_Matrix
     end type
 
 contains
@@ -53,7 +53,7 @@ contains
     class(ASRModule),intent(inout)            :: this
     integer,intent(in)                        :: cnfunit
     !
-    double precision,dimension(3) :: tmp_euler
+    real(DP),dimension(3) :: tmp_euler
     integer :: i, n_steps
     !
         info = this%StressDrivenEvolutionModule%readConfig(cnfunit)
@@ -100,7 +100,7 @@ contains
 !    type(SRTensor)                  :: sigma_rot
     type(ASROutput)                 :: output
     type(IncrementationControl)     :: icv
-    double precision,dimension(3,3)   :: Mrot
+    real(DP),dimension(3,3)   :: Mrot
     !
     integer     :: istep, nsteps, ofunit
     !
@@ -174,10 +174,10 @@ contains
     !
     integer :: i, ierr, increment
     real(DP), dimension(3,3)    :: SonA, A, P_step, P_step_rot, P_total_rot, P_total_end, P_total_end_rot
-    double precision,dimension(6) :: SonA_voigt, SonA_rot_voigt, &
-                                                     A_voigt, A_rot_voigt, &
-                                                     P_step_voigt, P_step_rot_voigt, &
-                                                     P_total_end_voigt, P_total_end_rot_voigt
+    real(DP),dimension(6) ::    SonA_voigt, SonA_rot_voigt, &
+                                A_voigt, A_rot_voigt, &
+                                P_step_voigt, P_step_rot_voigt, &
+                                P_total_end_voigt, P_total_end_rot_voigt
     integer,parameter :: ncolumn_labels = 2 + 10 + 4*2*6, column_width = 15, short_column_width = 9
     character(len=column_width),dimension(ncolumn_labels),parameter :: column_labels = &
             [ character(len=column_width) ::  &
