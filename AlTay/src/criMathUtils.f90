@@ -9,14 +9,14 @@ module criMathUtils
 
       !>@{ \name Math constants
 
-      double precision, parameter         :: pi  = acos(-1.D0) !< Pi \f$ \pi \f$
-      double precision, parameter         :: pi_deg = pi / 180.D0
-      double precision, parameter         :: deg_pi = 180.D0 / pi
+      real(DP), parameter         :: pi  = acos(-1.D0) !< Pi \f$ \pi \f$
+      real(DP), parameter         :: pi_deg = pi / 180.D0
+      real(DP), parameter         :: deg_pi = 180.D0 / pi
 
-      double precision, parameter         :: root2 = sqrt(2.D0) !< Square root of 2 \f$ \sqrt{2} \f$
-      double precision, parameter         :: root2i = 0.5D0 * sqrt(2.D0) !< Inverse of square root of 2 \f$ \frac{1}{\sqrt{2}} \f$
-      double precision, parameter         :: root23 = sqrt(2.D0/3.D0) !< Square root of 2/3 \f$ \sqrt{2/3} \f$
-      double precision, parameter         :: root32 = sqrt(3.D0/2.D0) !< Square root of 3/2 \f$ \sqrt{3/2} \f$
+      real(DP), parameter         :: root2 = sqrt(2.D0) !< Square root of 2 \f$ \sqrt{2} \f$
+      real(DP), parameter         :: root2i = 0.5D0 * sqrt(2.D0) !< Inverse of square root of 2 \f$ \frac{1}{\sqrt{2}} \f$
+      real(DP), parameter         :: root23 = sqrt(2.D0/3.D0) !< Square root of 2/3 \f$ \sqrt{2/3} \f$
+      real(DP), parameter         :: root32 = sqrt(3.D0/2.D0) !< Square root of 3/2 \f$ \sqrt{3/2} \f$
 
       integer,parameter                   :: sr_tensor_dim = 3 !< Array dimension for second-rank tensors (sr_tensor_dim x sr_tensor_dim)
       integer,parameter                   :: rot_matrix_dim = 3 !< Array dimension for 3D rotation matrix (rot_matrix_dim x rot_matrix_dim)
@@ -28,7 +28,7 @@ module criMathUtils
                                              sr_voigt_dim = 9
 
       !> Matrix form of the unit second rank tensor
-      double precision,dimension(sr_tensor_dim,sr_tensor_dim),parameter :: unit_sr_Matrix = reshape( &
+      real(DP),dimension(sr_tensor_dim,sr_tensor_dim),parameter :: unit_sr_Matrix = reshape( &
            [ 1.D0, 0.D0, 0.D0,     &
              0.D0, 1.D0, 0.D0,     &
              0.D0, 0.D0, 1.D0], [ sr_tensor_dim, sr_tensor_dim ])
@@ -38,7 +38,7 @@ module criMathUtils
       !> with zeros.
       type :: SRTensor
             !> matrix representation of the tensor (t stands for tensor)
-            double precision,dimension(sr_tensor_dim,sr_tensor_dim) :: t = 0.D0
+            real(DP),dimension(sr_tensor_dim,sr_tensor_dim) :: t = 0.D0
       end type
 
       type(SRTensor),parameter :: unit_sr_tensor = SRTensor(unit_sr_Matrix)
@@ -55,9 +55,9 @@ module criMathUtils
 
       !> Representation of Euler angles: Bunge notation
       type EulerAngles
-            double precision  :: fi1 = 0.D0 !< \f$ \phi_1 \f$
-            double precision  :: phi = 0.D0 !< \f$ \Phi \f$
-            double precision  :: fi2 = 0.D0 !< \f$ \phi_2 \f$
+            real(DP)  :: fi1 = 0.D0 !< \f$ \phi_1 \f$
+            real(DP)  :: phi = 0.D0 !< \f$ \Phi \f$
+            real(DP)  :: fi2 = 0.D0 !< \f$ \phi_2 \f$
       end type
 
 
@@ -71,10 +71,10 @@ module criMathUtils
             module procedure scalarDeg2Rad, EulerAnglesDeg2Rad
       end interface
 
-      !> Datatype representing pair of double precision reals
+      !> Datatype representing pair of real(DP) reals
       type pair_double
-            double precision :: x
-            double precision :: y
+            real(DP) :: x
+            real(DP) :: y
       end type
 
       interface rotmat
@@ -89,8 +89,8 @@ contains
 
       !> Conversion from radians to degrees
       elemental function scalarRad2Deg(alpha)
-      double precision :: scalarRad2Deg  !< Angle in radians
-      double precision,intent(in) :: alpha
+      real(DP) :: scalarRad2Deg  !< Angle in radians
+      real(DP),intent(in) :: alpha
       !
            scalarRad2Deg = alpha * deg_pi
       !
@@ -98,8 +98,8 @@ contains
 
       !> Conversion from degrees to radians
       elemental function scalarDeg2Rad(alpha)
-      double precision :: scalarDeg2Rad !< Angle in degrees
-      double precision,intent(in) :: alpha
+      real(DP) :: scalarDeg2Rad !< Angle in degrees
+      real(DP),intent(in) :: alpha
       !
             scalarDeg2Rad = alpha *  pi_deg
       !
@@ -117,7 +117,7 @@ contains
 
       !> Trivial conversion from EulerAngles to array of rank 1, dimension 3
       pure function EulerAngles2Arr(ang) result(arr)
-      double precision,dimension(3) :: arr
+      real(DP),dimension(3) :: arr
       type(EulerAngles),intent(in)  :: ang
       !
             arr(1) = ang%fi1
@@ -129,7 +129,7 @@ contains
       !> Trivial conversion from  array of rank 1, dimension 3 to EulerAngles
       pure function Arr2EulerAngles(arr) result(ang)
       type(EulerAngles)  :: ang
-      double precision,dimension(3),intent(in) :: arr
+      real(DP),dimension(3),intent(in) :: arr
       !
             ang%fi1 = arr(1)
             ang%phi = arr(2)
@@ -144,10 +144,10 @@ contains
       !>          OR
       !>          *  vectors are of different dimensionality
       !>          *  at least one of the vectors u or v has length 0
-      pure double precision function vec_angle(u,v)
-      double precision,dimension(:),intent(in)   :: u, v
+      pure real(DP) function vec_angle(u,v)
+      real(DP),dimension(:),intent(in)   :: u, v
       ! Declaration section
-      double precision :: cosine
+      real(DP) :: cosine
       !
             cosine = vec_cosine(u,v)
             ! calculate angle (in radians)
@@ -163,10 +163,10 @@ contains
       !>          OR
       !>          *  vectors are of different dimensionality
       !>          *  at least one of the vectors u or v has length 0
-      pure double precision function vec_cosine(u,v)
-      double precision,dimension(:),intent(in)   :: u, v
+      pure real(DP) function vec_cosine(u,v)
+      real(DP),dimension(:),intent(in)   :: u, v
       ! Declaration section
-      double precision :: udp, vdp
+      real(DP) :: udp, vdp
       !
             vec_cosine = 1.D0
             if (size(u) /= size(v)) return
@@ -199,11 +199,11 @@ contains
       !> R = R_{phi2} * R_{PHI} * R_{phi1}
       !> \returns [3x3] rotation matrix R.
       pure function rotmat_triplet(phi1, PHI, phi2) result(mat)
-      double precision, intent(in)        :: phi1, PHI, phi2
-      double precision, dimension(rot_matrix_dim,rot_matrix_dim)    :: mat
+      real(DP), intent(in)        :: phi1, PHI, phi2
+      real(DP), dimension(rot_matrix_dim,rot_matrix_dim)    :: mat
       !
-      double precision :: cosphi1, cosphi2, cosPHI
-      double precision :: sinphi1, sinphi2, sinPHI
+      real(DP) :: cosphi1, cosphi2, cosPHI
+      real(DP) :: sinphi1, sinphi2, sinPHI
       !
             cosphi1 = cos(phi1)
             cosPHI = cos(PHI)
@@ -227,7 +227,7 @@ contains
 
       !> Rotation matrix from three Euler angles in Bunge convention
       pure function rotmat_EulerAngles(ang) result(mat)
-      double precision, dimension(rot_matrix_dim,rot_matrix_dim)    :: mat
+      real(DP), dimension(rot_matrix_dim,rot_matrix_dim)    :: mat
       type(EulerAngles),intent(in) :: ang
       !
             mat = rotmat(ang%fi1, ang%PHI, ang%fi2 )
@@ -241,10 +241,10 @@ contains
       !>    ang%PHI: [0,  pi[
       !>    ang%fi2: [0,2*pi[   note: if PHI=0 then phi2=0
       pure function EulerAnglesType(mat) result(ang)
-      double precision, dimension(rot_matrix_dim,rot_matrix_dim),intent(in) :: mat
+      real(DP), dimension(rot_matrix_dim,rot_matrix_dim),intent(in) :: mat
       type(EulerAngles) :: ang
       !
-      double precision :: phi1,PHI,phi2,cosPHI
+      real(DP) :: phi1,PHI,phi2,cosPHI
       !
           cosPHI = mat(3,3) / sqrt( mat(1,3)**2 + mat(2,3)**2 + mat(3,3)**2 )
           PHI = acos(cosPHI) !range: [0,pi]
@@ -276,9 +276,9 @@ contains
       !>
       !> The result is R^T S R, which is equivalent to (R^T S) R
       pure function rotateSRTensorTo_matrix(S,R) result(Srot)
-      double precision,dimension(sr_tensor_dim,sr_tensor_dim)     :: Srot
-      double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)     :: S
-      double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
+      real(DP),dimension(sr_tensor_dim,sr_tensor_dim)     :: Srot
+      real(DP),dimension(sr_tensor_dim,sr_tensor_dim),intent(in)     :: S
+      real(DP),dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
       !
             Srot = matmul(matmul(transpose(R),S),R)
       !
@@ -289,9 +289,9 @@ contains
       !>
       !> The result is R S R^T, which is equivalent to (R S) R^T
       pure function rotateSRTensorFrom_matrix(S,R) result(Srot)
-      double precision,dimension(sr_tensor_dim,sr_tensor_dim)     :: Srot
-      double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)     :: S
-      double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
+      real(DP),dimension(sr_tensor_dim,sr_tensor_dim)     :: Srot
+      real(DP),dimension(sr_tensor_dim,sr_tensor_dim),intent(in)     :: S
+      real(DP),dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
       !
             Srot = matmul(matmul(R,S),transpose(R))
       !
@@ -304,7 +304,7 @@ contains
       pure function rotateSRTensorTo_SRTensor(S,R) result(Srot)
       type(SRTensor)                :: Srot
       type(SRTensor),intent(in)     :: S
-      double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
+      real(DP),dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
       !
             Srot%t = rotateSRTensorTo_matrix(S%t, R)
       !
@@ -317,7 +317,7 @@ contains
       pure function rotateSRTensorFrom_SRTensor(S,R) result(Srot)
       type(SRTensor)                :: Srot
       type(SRTensor),intent(in)     :: S
-      double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
+      real(DP),dimension(rot_matrix_dim,rot_matrix_dim),intent(in)   :: R
       !
             Srot%t = rotateSRTensorFrom_matrix(S%t, R)
       !
@@ -328,8 +328,8 @@ contains
       !> Ordering of the tensor terms in the vector follows the convention used in Abaqus:
       !> 12, 23, 13
       pure function Mat33ToVec3(mat) result(vec)
-      double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
-      double precision,dimension(sr_asymm_voigt_dim)                      :: vec
+      real(DP),dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
+      real(DP),dimension(sr_asymm_voigt_dim)                      :: vec
       !
             vec(1) = mat(1,2)
             vec(2) = mat(2,3)
@@ -344,8 +344,8 @@ contains
       !>
       !> There is a reverse conversion available. \sa Mat33ToVec6
       pure function Vec6ToMat33(vec) result(mat)
-      double precision,dimension(sr_symm_voigt_dim),intent(in)  :: vec
-      double precision,dimension(sr_tensor_dim,sr_tensor_dim)   :: mat
+      real(DP),dimension(sr_symm_voigt_dim),intent(in)  :: vec
+      real(DP),dimension(sr_tensor_dim,sr_tensor_dim)   :: mat
       !
             mat(1,1) = vec(1)
             mat(2,2) = vec(2)
@@ -365,8 +365,8 @@ contains
       !>
       !> There is a reverse conversion available. \sa Vec6ToMat33
       pure function Mat33ToVec6(mat) result(vec)
-      double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
-      double precision,dimension(sr_symm_voigt_dim)                       :: vec
+      real(DP),dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
+      real(DP),dimension(sr_symm_voigt_dim)                       :: vec
       !
             vec(1) = mat(1,1)
             vec(2) = mat(2,2)
@@ -383,8 +383,8 @@ contains
       !>
       !> There is a reverse conversion available. \sa Mat33ToVec9
       pure function Vec9ToMat33(vec) result(mat)
-      double precision,dimension(sr_voigt_dim),intent(in)  :: vec
-      double precision,dimension(sr_tensor_dim,sr_tensor_dim)   :: mat
+      real(DP),dimension(sr_voigt_dim),intent(in)  :: vec
+      real(DP),dimension(sr_tensor_dim,sr_tensor_dim)   :: mat
       !
             mat(1,1) = vec(1)
             mat(2,2) = vec(2)
@@ -404,8 +404,8 @@ contains
       !>
       !> There is a reverse conversion available. \sa Vec9ToMat33
       pure function Mat33ToVec9(mat) result(vec)
-      double precision,dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
-      double precision,dimension(sr_voigt_dim)                            :: vec
+      real(DP),dimension(sr_tensor_dim,sr_tensor_dim),intent(in)  :: mat
+      real(DP),dimension(sr_voigt_dim)                            :: vec
       !
             vec(1) = mat(1,1)
             vec(2) = mat(2,2)
@@ -420,8 +420,8 @@ contains
       end function
 
       !> Calculates trace of the square n x n matrix X
-      pure double precision function trace_matrix(X) result(res)
-      double precision,dimension(:,:),intent(in)    :: X
+      pure real(DP) function trace_matrix(X) result(res)
+      real(DP),dimension(:,:),intent(in)    :: X
       !
       integer :: i
             res = 0.D0
@@ -432,7 +432,7 @@ contains
       end function
 
       !> Calculates trace of second-rank tensor X
-      pure double precision function trace_SRTensor(X) result(res)
+      pure real(DP) function trace_SRTensor(X) result(res)
       type(SRTensor),intent(in)    :: X
       !
            res = trace_matrix(X%t)
@@ -449,15 +449,15 @@ contains
       !> v is obtained by a clockwise rotation by 90 degs applied to the AB vector.
       subroutine getNormalVector2D(A,B,length,v,beta)
       type(pair_double), intent(in) :: A, B    !< Positions of the points: A and B
-      double precision,intent(in)   :: length  !< Length of the vector v
+      real(DP),intent(in)   :: length  !< Length of the vector v
       type(pair_double),intent(out) :: v       !< Normal vector
       !> Angle between the horizontal axis and the vector u [radians]
       !> The range of the angle is [0:2pi], thus it may vary from acute angle
       ! via obtuse angle to reflex angle.
-      double precision,intent(out)  :: beta
+      real(DP),intent(out)  :: beta
       !
-      double precision,dimension(2) :: u
-      double precision :: u_norm
+      real(DP),dimension(2) :: u
+      real(DP) :: u_norm
       !
             ! Build the secant vector
             u = [B%x, B%y]  - [A%x, A%y]
@@ -486,10 +486,10 @@ contains
       !> Provides x1 and x2. Both x1 and x2 are guaranteed to be set to a defined value,
       !> even if no real roots exist.
       integer function solveQuadraticPolynomial(a, b, c, x) result(n_roots)
-      double precision,intent(in)   :: a, b, c
-      double precision,dimension(2),intent(out)  :: x
+      real(DP),intent(in)   :: a, b, c
+      real(DP),dimension(2),intent(out)  :: x
       !
-      double precision :: delta
+      real(DP) :: delta
       !
             ! Satisfy intent(out)
             x = 0.D0
@@ -513,10 +513,10 @@ contains
 
       !> Convert 5D vector v into second-rank tensor
       pure function vec5D2tens(v) result(t)
-      double precision,dimension(5),intent(in)    :: v
-      double precision,dimension(3,3)             :: t
+      real(DP),dimension(5),intent(in)    :: v
+      real(DP),dimension(3,3)             :: t
       !
-      double precision,parameter ::  root6i = 1.D0/sqrt(6.D0)
+      real(DP),parameter ::  root6i = 1.D0/sqrt(6.D0)
       !
             t(1,1) =  root2i*v(1) + root6i*v(2)
             t(2,2) = -root2i*v(1) + root6i*v(2)
@@ -536,11 +536,11 @@ contains
       !> \remark If the tensor v is not of deviatoric nature,
       !> the deviator will be extracted and used in calculations.
       pure function tens2vec5D(t) result(v)
-      double precision,dimension(3,3),intent(in)   :: t
-      double precision,dimension(5)                :: v
+      real(DP),dimension(3,3),intent(in)   :: t
+      real(DP),dimension(5)                :: v
       !
-      double precision,dimension(3,3)   :: x !< Temporary
-      double precision :: p ! Pressure
+      real(DP),dimension(3,3)   :: x !< Temporary
+      real(DP) :: p ! Pressure
       !
             x = t ! set temporary
             p = (t(1,1) + t(2,2) + t(3,3)) / 3.D0
@@ -558,8 +558,8 @@ contains
       !
       end function
 
-      double precision pure function average(a)
-      double precision,dimension(:),intent(in) :: a
+      real(DP) pure function average(a)
+      real(DP),dimension(:),intent(in) :: a
       integer :: n
       !
             n = size(a)

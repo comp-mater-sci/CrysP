@@ -72,7 +72,7 @@ contains
     !> the material at the end of the step.
     type(EvolutionOutput),intent(out)   :: outputs
     !> Rotation matrix. Relevant only if scalingStrainTensorComponent is used
-    double precision,dimension(rot_matrix_dim,rot_matrix_dim),intent(in),optional  :: rotmat
+    real(DP),dimension(rot_matrix_dim,rot_matrix_dim),intent(in),optional  :: rotmat
     !> Incrementation control variables to override the defaults.
     !>
     !> Typical use is to inherit some control variables (the totals) from a previous
@@ -84,18 +84,18 @@ contains
     logical,intent(in),optional                         :: use_icv_as_is
     !
     type(SRTensor) :: D, X_tmp, D_retry
-    double precision :: scaling_factor, control_variable, stop_control_variable, taylor_factor, stretch
+    real(DP) :: scaling_factor, control_variable, stop_control_variable, taylor_factor, stretch
     type(YLPResult) :: ylp, ylp_retry
-    double precision,dimension(alamEval_vSD_dim) :: vDe, vSe
+    real(DP),dimension(alamEval_vSD_dim) :: vDe, vSe
     type(IncrementationControl) :: icv
-    double precision,dimension(sr_symm_voigt_dim) :: X_tmp_voigt
+    real(DP),dimension(sr_symm_voigt_dim) :: X_tmp_voigt
     !
     type(xVector_IncrementOutputRecord) :: tmp_output
     type(IncrementOutputRecord)         :: tmp_record
     integer :: i, n_roots
-    double precision,dimension(2) :: xi
+    real(DP),dimension(2) :: xi
     logical :: stop_flag, acceptable_point, acceptable_point_retry
-    double precision,parameter :: stretch_ratio = 1e-3_DP
+    real(DP),parameter :: stretch_ratio = 1e-3_DP
     !
         ! Prepare non-default incrementation controls if requested
         if (present(incrementation_control)) then

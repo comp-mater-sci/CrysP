@@ -9,13 +9,13 @@ module hardening_model_voce
     private
 
     type :: Stage
-        real(dp) :: TS, &
+        real(DP) :: TS, &
                     T1, &
                     TH  
     end type
 
     type, public, extends(HardeningModel) :: HardeningModelVoce
-        real(dp)    ::  transition_strain = 0.D0
+        real(DP)    ::  transition_strain = 0.D0
         type(stage) ::  stage_1,    &   
                         stage_2
     contains
@@ -57,7 +57,7 @@ contains
     subroutine voce_init(this, params)
         class(HardeningModelVoce), intent(inout) :: this 
         type(Parameter), allocatable, intent(in) :: params(:)
-        real(dp)                                 :: THIII1,     &
+        real(DP)                                 :: THIII1,     &
                                                     THT,        &   
                                                     ETA,        &   
                                                     TAUT
@@ -81,7 +81,7 @@ contains
     function voce_get_crss(this, grain, strain) result(crss)
         class(HardeningModelVoce), intent(in)            ::  this
         integer, intent(in)                                 :: grain
-        real(dp), intent(in)                                :: strain
+        real(DP), intent(in)                                :: strain
         real(DP), dimension(2,this%nss) :: crss
         type(stage)                                         :: current_stage    
 

@@ -46,8 +46,8 @@ contains
     !> Add result to the database
     integer function put(this, A, SonA) result(info)
     class(ResultTable),intent(inout)   :: this
-    double precision,dimension(alamEval_vSD_dim),intent(in) :: A
-    double precision,dimension(alamEval_vSD_dim),intent(in) :: SonA
+    real(DP),dimension(alamEval_vSD_dim),intent(in) :: A
+    real(DP),dimension(alamEval_vSD_dim),intent(in) :: SonA
     !
         info = xVector_push(this%table, ResultTableRecord(A, SonA))
     !
@@ -63,13 +63,13 @@ contains
     !> requirement
     integer function get(this, S, A, max_angle) result(info)
     class(ResultTable),intent(inout)   :: this
-    double precision,dimension(alamEval_vSD_dim),intent(in) :: S
-    double precision,dimension(alamEval_vSD_dim),intent(out):: A
-    double precision,intent(in),optional                    :: max_angle !< Threshold angle (in radians)
+    real(DP),dimension(alamEval_vSD_dim),intent(in) :: S
+    real(DP),dimension(alamEval_vSD_dim),intent(out):: A
+    real(DP),intent(in),optional                    :: max_angle !< Threshold angle (in radians)
     !
     integer :: npoints, i, min_idx_a(1), min_idx
     equivalence(min_idx_a(1), min_idx)
-    double precision,dimension(:),allocatable :: angles
+    real(DP),dimension(:),allocatable :: angles
     !
         info = VEF_FAIL
         npoints = size(this%table)

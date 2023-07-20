@@ -285,7 +285,7 @@ contains
       integer,intent(out)                 :: info
         type(Parameter), allocatable :: params(:)
         integer :: hardening_model_id
-        real(dp) :: tmp(16)
+        real(DP) :: tmp(16)
         character(len=max_pathlen)          :: tmp_fname
         integer                             :: nparunit, ioerr,i
       !

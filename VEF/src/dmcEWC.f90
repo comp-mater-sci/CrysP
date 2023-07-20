@@ -29,9 +29,9 @@ implicit none
 
         logical                                 :: use_reference_stress_mode = .false.
 
-        double precision,dimension(sr_symm_voigt_dim)   :: reference_stress_mode = 0.D0
+        real(DP),dimension(sr_symm_voigt_dim)   :: reference_stress_mode = 0.D0
 
-        double precision,dimension(sr_symm_voigt_dim,n_base_vectors)   :: base_vectors = real(reshape( &
+        real(DP),dimension(sr_symm_voigt_dim,n_base_vectors)   :: base_vectors = real(reshape( &
                                                 [1, 0, 0, 0, 0, 0, & ! First base vector
                                                  0, 1, 0, 0, 0, 0], & ! second base vector
                                                 [sr_symm_voigt_dim, n_base_vectors]),DP)
@@ -150,26 +150,26 @@ contains
     integer,intent(out)                       :: info
     !
     integer :: i, j, npoints
-    double precision :: theta
+    real(DP) :: theta
 
     type(SRTensor)  :: sigma
 
     type(EvolutionOutput) :: ref_output, output
     ! Shape or `results` is: [0:n_countours,1:n_theta]. Zeroth column
     ! shall include the theta angles
-    double precision,dimension(:,:),allocatable,target :: results
+    real(DP),dimension(:,:),allocatable,target :: results
     type(IncrementationControlSettings) :: evolution_control
 
-    double precision,dimension(sr_symm_voigt_dim) :: sigma_vector
+    real(DP),dimension(sr_symm_voigt_dim) :: sigma_vector
     !
-    double precision,dimension(:),allocatable :: vEquivalentStrainLevels, &
+    real(DP),dimension(:),allocatable :: vEquivalentStrainLevels, &
                                                  vPlasticWorkLevels, &
                                                  vPlasticWork_ref, &
                                                  vEquivalentStrain_ref, &
                                                  vPlasticWork, &
                                                  vScalS
 
-    double precision,dimension(:),pointer :: vTheta
+    real(DP),dimension(:),pointer :: vTheta
 
     type(BarycentricInterpolator) :: bi
     integer,parameter :: interpolation_order = 2
@@ -287,8 +287,8 @@ contains
     integer function EWCModule_fileOutput(this, vLevels, results, use_work_levels) result(info)
     implicit none
     class(EWCModule),intent(inout)              :: this
-    double precision,dimension(:),intent(in)    :: vLevels
-    double precision,dimension(0:,:),intent(in)  :: results
+    real(DP),dimension(:),intent(in)    :: vLevels
+    real(DP),dimension(0:,:),intent(in)  :: results
     logical,optional,intent(in)                 :: use_work_levels
     !
     integer :: iounit, ierr, i, n_contours, n_columns
@@ -328,7 +328,7 @@ contains
     implicit none
     class(EWCModule),intent(inout)              :: this
     character(len=*),intent(in)                 :: prefix
-    double precision,dimension(:),intent(in)    :: vEquivalentStrainLevels, vPlasticWorkLevels
+    real(DP),dimension(:),intent(in)    :: vEquivalentStrainLevels, vPlasticWorkLevels
     !
     integer :: iounit, ierr, i
     !

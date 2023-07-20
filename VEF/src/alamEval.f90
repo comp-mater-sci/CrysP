@@ -15,10 +15,10 @@ implicit none
             !      [m_F_dim] must be 5
 
             !> Normalized stress vector
-            double precision,dimension(alamEval_vSD_dim)        :: vSn = 0.D0
+            real(DP),dimension(alamEval_vSD_dim)        :: vSn = 0.D0
 
             !> Multilevel prediction of stress from the previous call
-            double precision,dimension(alamEval_vSD_dim)        :: vSml = 0.D0
+            real(DP),dimension(alamEval_vSD_dim)        :: vSml = 0.D0
 
             !> Flag: request for simulation outputs other than just deviatoric stress.
             !>
@@ -42,12 +42,12 @@ contains
       use criMathUtils, only: vec5D2tens,tens2vec5D
       implicit none
             class(NormalizedV5DComp),intent(inout)      :: this
-            double precision,dimension(:),intent(in)    :: vX       !< Dimension must be: 5
+            real(DP),dimension(:),intent(in)    :: vX       !< Dimension must be: 5
             integer,intent(out)                         :: info
             !
-            double precision,dimension(alamEval_tSD_dim,alamEval_tSD_dim)     :: Atens
-            double precision,dimension(alamEval_vSD_dim)       :: vS, vXn
-            double precision                    :: norm
+            real(DP),dimension(alamEval_tSD_dim,alamEval_tSD_dim)     :: Atens
+            real(DP),dimension(alamEval_vSD_dim)       :: vS, vXn
+            real(DP)                    :: norm
             integer                             :: i
             !
             integer,parameter :: istp = 1

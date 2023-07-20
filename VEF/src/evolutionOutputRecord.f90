@@ -12,16 +12,16 @@ implicit none
     !> Data outputed per increment of stress driven state evolution
     type :: IncrementOutputRecord
 
-        double precision :: vm_strain = 0.D0          !< von Mises equivalent of the strain in current step
-        double precision :: vm_strain_total = 0.D0    !< von Mises equivalent of the total strain across all steps
+        real(DP) :: vm_strain = 0.D0          !< von Mises equivalent of the strain in current step
+        real(DP) :: vm_strain_total = 0.D0    !< von Mises equivalent of the total strain across all steps
 
-        double precision :: norm_P_abs = 0.D0         !< norm of accumulated absolute plastic strain increment tensors
+        real(DP) :: norm_P_abs = 0.D0         !< norm of accumulated absolute plastic strain increment tensors
 
-        double precision :: dotWonA = 0.D0
-        double precision :: taylor_factor = 0.D0
-        double precision :: scal_s = 0.D0
-        double precision :: norm_SonA = 0.D0
-        double precision :: R = 0.D0                  !< residual of search procedure
+        real(DP) :: dotWonA = 0.D0
+        real(DP) :: taylor_factor = 0.D0
+        real(DP) :: scal_s = 0.D0
+        real(DP) :: norm_SonA = 0.D0
+        real(DP) :: R = 0.D0                  !< residual of search procedure
 
         type(SRTensor) :: A                           !< plastic strain mode
         type(SRTensor) :: SonA                        !< norm of deviatoric stress that corresponds to plastic strain mode A
@@ -48,7 +48,7 @@ contains
     type(YLPResult),intent(in)                  :: ylp
     type(SRTensor),intent(in)                   :: De
     type(SRTensor),intent(in)                   :: Se
-    double precision,intent(in)                 :: taylor_factor
+    real(DP),intent(in)                 :: taylor_factor
     !
         this%vm_strain = root23 * norm2(icv%vP_step)
         this%vm_strain_total = root23 * norm2(icv%vP_total)

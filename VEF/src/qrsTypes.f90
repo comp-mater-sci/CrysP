@@ -1,18 +1,20 @@
 !> Useful data types for calculation of anisotropic characteristics
 module qrsTypes
-implicit none
+    use definitions
+
+    implicit none
 
       type qrsData
-            double precision :: qvalue = 0.D0
-            double precision :: rvalue = 0.D0
-            double precision :: svalue = 0.D0
+            real(DP) :: qvalue = 0.D0
+            real(DP) :: rvalue = 0.D0
+            real(DP) :: svalue = 0.D0
       end type
 
 contains
 
       type(qrsData) pure function avgQRS(qrsvalues)
       type(qrsData),dimension(:),intent(in)     :: qrsvalues
-      double precision :: frc
+      real(DP) :: frc
       integer :: i,n
       !
             avgQRS = qrsData(0.D0, 0.D0, 0.D0)
@@ -33,8 +35,8 @@ contains
 
 
       type(qrsData) pure function calculateQRS(Dt,s) result(qrsvalue)
-      double precision,dimension(3,3),intent(in)      :: Dt
-      double precision,intent(in)                     :: s
+      real(DP),dimension(3,3),intent(in)      :: Dt
+      real(DP),intent(in)                     :: s
             if ( abs(Dt(3,3)) >= epsilon(0.D0) ) then
                   qrsvalue%rvalue = Dt(2,2) / Dt(3,3)
                   qrsvalue%qvalue = qrsvalue%rvalue / (1.D0 + qrsvalue%rvalue)

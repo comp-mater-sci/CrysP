@@ -6,7 +6,7 @@ module altayAlgorithms
     implicit none
     private
 
-    real(dp), parameter     :: SQRT_P5 = sqrt(0.5_dp)
+    real(DP), parameter     :: SQRT_P5 = sqrt(0.5_dp)
     character(*), parameter :: MODULE_NAME = "altayAlgorithms"
 
     public  ::  updatC,             &
@@ -21,8 +21,8 @@ contains
 
     !> Updating of CIJ matrix of ellipsoid
     subroutine updatC(CIJ, Finv)
-        real(dp), dimension(3,3), intent(in)    :: Finv !< Inverse of the F-tensor which describes the strain increment.
-        real(dp), dimension(3,3), intent(inout) :: CIJ
+        real(DP), dimension(3,3), intent(in)    :: Finv !< Inverse of the F-tensor which describes the strain increment.
+        real(DP), dimension(3,3), intent(inout) :: CIJ
 
         CIJ = matmul(matmul(transpose(Finv), CIJ), Finv)
     end subroutine
@@ -30,9 +30,9 @@ contains
     !> Transform a 5D-vector in deviatoric (stress/strain-rate) space to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
     !> Note: The reverse transformation is done by function 'Vector5D'.
     function SymMatrix(vec) result(sym)
-        real(dp), dimension(5), intent(in)  ::  vec
-        real(dp), dimension(3,3)            ::  sym
-        real(dp), parameter                 ::  C1 = (sqrt(3.0_dp) + 3.0_dp) / 6.0_dp, &
+        real(DP), dimension(5), intent(in)  ::  vec
+        real(DP), dimension(3,3)            ::  sym
+        real(DP), parameter                 ::  C1 = (sqrt(3.0_dp) + 3.0_dp) / 6.0_dp, &
                                                 C2 = (3.0_dp - sqrt(3.0_dp)) / 6.0_dp
 
 
@@ -52,9 +52,9 @@ contains
     !>    - Only the symmetric part of 2nd rank tensor is transformed.
     !>    - The reverse transformation is done by function 'SymMatrix'.
     function vector5D(mat) result(vec)
-        real(dp), dimension(3,3), intent(in) :: mat
-        real(dp), dimension(5)               :: vec
-        real(dp), parameter                  :: C1 = 0.5_dp * (sqrt(3.0_dp) + 1.0_dp), &
+        real(DP), dimension(3,3), intent(in) :: mat
+        real(DP), dimension(5)               :: vec
+        real(DP), parameter                  :: C1 = 0.5_dp * (sqrt(3.0_dp) + 1.0_dp), &
                                                 C2 = C1 - 1.0_dp
 
         vec(1) = C1 * mat(2,2) + C2 * mat(3,3)
@@ -68,11 +68,11 @@ contains
     !find half-lengths of ellipsoid axes from CIJ matrix
     !store them in prval
     subroutine GETANG(CIJ, prval, TMAT)
-        real(dp), dimension(3,3), intent(in)  :: CIJ
-        real(dp), dimension(3),   intent(out) ::  prval
-        real(dp), dimension(3,3), intent(out) :: TMAT
+        real(DP), dimension(3,3), intent(in)  :: CIJ
+        real(DP), dimension(3),   intent(out) ::  prval
+        real(DP), dimension(3,3), intent(out) :: TMAT
         integer                                 :: i
-        real(dp)                                :: CIJTR
+        real(DP)                                :: CIJTR
 
         CIJTR = (CIJ(1,1) + CIJ(2,2) + CIJ(3,3)) / 3._dp
         TMAT = CIJ
@@ -87,11 +87,11 @@ contains
     end subroutine
 
     subroutine eigenv(e, prval)
-        real(dp), dimension(3,3), intent(inout) :: e
-        real(dp), dimension(3), intent(out)     :: prval
+        real(DP), dimension(3,3), intent(inout) :: e
+        real(DP), dimension(3), intent(out)     :: prval
         integer                                 :: i, info
         integer, dimension(18)                  :: iwork
-        real(dp), dimension(37)                 :: work
+        real(DP), dimension(37)                 :: work
 
         call dsyevd('V', 'U', 3, e, 3, prval, work, 37, iwork, 18, info)
 
@@ -103,9 +103,9 @@ contains
     end subroutine
 
     subroutine normaliz(prdir)
-        real(dp), dimension(3), intent(inout)   :: prdir
-        real(dp)                                :: x
-        real(dp), parameter     :: RESOLUTION = 0.5e-5_DP
+        real(DP), dimension(3), intent(inout)   :: prdir
+        real(DP)                                :: x
+        real(DP), parameter     :: RESOLUTION = 0.5e-5_DP
 
         x = norm2(prdir)
         if (x > RESOLUTION) then
@@ -124,15 +124,15 @@ contains
     !>M1,M2=dimensions
     subroutine kleinkwa(N1, N2, M1, M2, A, B, BA, res)
         integer,                    intent(in)                                  :: M1, M2, N1, N2
-        real(dp), dimension(M2),    intent(in)                                  :: B
-        real(dp), dimension(M1,M2), intent(in)                                  :: A
-        real(dp), dimension(M2),    intent(out)                                 :: BA
-        real(dp),                   intent(inout)                               :: res
+        real(DP), dimension(M2),    intent(in)                                  :: B
+        real(DP), dimension(M1,M2), intent(in)                                  :: A
+        real(DP), dimension(M2),    intent(out)                                 :: BA
+        real(DP),                   intent(inout)                               :: res
         integer                                                                 :: i, rank, info
         integer, dimension(N2)                                                  :: jpvt
-        real(dp)                                                                :: y
-        real(dp), dimension(max(min(N1,N2) + 3 * N2 + 1, 2 * min(N1,N2) + 1))   :: work
-        real(dp), dimension(M1,M2)                                              :: A_COPY
+        real(DP)                                                                :: y
+        real(DP), dimension(max(min(N1,N2) + 3 * N2 + 1, 2 * min(N1,N2) + 1))   :: work
+        real(DP), dimension(M1,M2)                                              :: A_COPY
 
         A_COPY = A
         BA = B
