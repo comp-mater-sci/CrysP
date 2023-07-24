@@ -147,7 +147,7 @@ contains
                 return
         end select
 
-        call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Value does not conform with parameter type')
+        call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Value of parameter ' // param%name // ' does not conform with its type')
     end subroutine check_type
 
     subroutine search_parameter_list(params, name, param, ind, fail)

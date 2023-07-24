@@ -33,12 +33,12 @@ contains
         class(HardeningModelVoce), intent(in)    :: this
         type(Parameter), allocatable    :: params(:)
     
-        params = [parameter_init('n_slip_systems', TYPE_STRING), &
-                  parameter_init('TIII1', TYPE_REAL),             &   
+        params = [hardening_model_get_parameters(this), &
+                  [parameter_init('TIII1', TYPE_REAL),             &   
                   parameter_init('TIIIS', TYPE_REAL),             &   
                   parameter_init('TIVS', TYPE_REAL),              &   
                   parameter_init('THIII1', TYPE_REAL),            &   
-                  parameter_init('THT', TYPE_REAL)]
+                  parameter_init('THT', TYPE_REAL)]]
     end function voce_get_parameters
 
     subroutine voce_validate_parameters(this, params) 

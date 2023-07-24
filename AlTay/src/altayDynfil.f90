@@ -1,33 +1,35 @@
 module altayDynfil
     use definitions
+    use logging
     use criMathUtils
 
     implicit none
     private
 
+    character(*), parameter :: MOD_NAME = 'dynfil'
+
     !>Texture-related state variables for single grain
     type :: grain
-        real(DP)                    :: tGEW     = 1.D0, tGAM    = 0.D0
-        real(DP), dimension(3,3)    :: tT       = 0.D0
+        real(DP)                    :: tGEW     = 1._DP, &
+                                       tGAM     = 0._DP
+        real(DP), dimension(3,3)    :: tT       = 0._DP
         real(DP), dimension(3,3)    :: tTAX     = unit_sr_matrix
-        real(DP), dimension(3,3)    :: tZERO    = 0.D0
+        real(DP), dimension(3,3)    :: tZERO    = 0._DP
     end type grain
 
     type :: matFrame
         real(DP),dimension(3,3)   :: FALG   = unit_sr_matrix
         real(DP),dimension(3,3)   :: CIJ0   = unit_sr_matrix
         real(DP),dimension(3,3)   :: TAX0   = unit_sr_matrix
-        real(DP),dimension(3)     :: GAXES  = 1.D0
+        real(DP),dimension(3)     :: GAXES  = 1._DP
     end type
 
     type(grain), dimension(:), allocatable     :: DFIL             !<State variable: array of grains/orientations.
     type(matFrame), public, protected          :: mf               !<State variable: material (frame) global geometry
-    character(len=40)                          :: filetitle = ''   !<State variable: title of the input texture file
     integer                                    :: nrStep = 0       !<State variable: step number.
 
     public  ::  DFIL,       &
                 nrStep,     &
-                fileTitle,  &
                 dynfil_init,    &
                 dynFil_getGlobal,    &
                 dynFil_setGlobal,    &
@@ -36,44 +38,31 @@ module altayDynfil
                 dynfil_finalize
 
 contains
+    subroutine dynfil_init(fname)
+        character(*), intent(in)    :: fname
+        integer                     :: nunit, info, nrec, nstap, i
+        character(40) :: title
+        real(DP) :: angles(3), stap, weight, gam
+        character(*), parameter :: PROC_NAME = 'load_texture'
 
-    !> Allocate the memory block for the state variables.
-    subroutine dynfil_init(npoint,keepstate,istat)
+        open(newunit=nunit,file=trim(fname),status='old',form='formatted',iostat=info)
+        if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to open textrure file')
 
-        integer, intent(in)                     :: npoint       !<Number of elements to be allocated
-        logical, intent(in)                     :: keepstate    !<Flag: preserve contenst of DFIL on reallocation.
-        integer, intent(out)                    :: istat        !<Exit code
-        type(grain), dimension(:), allocatable  :: tmp
-        integer                                 :: ntransf
-
-        istat = 1
-        ! Error handling
-        if (npoint <= 0) then
-            return
-        endif
-
-        if (.not. allocated(DFIL)) then
-            allocate(DFIL(npoint),stat=istat)
-        else
-            ! DFIL is previously allocated
-            if (size(DFIL) == npoint) then
-                istat = 0
-                return
-            endif
-            if (keepstate) then
-                ! Transfer npoints
-                allocate(tmp(npoint),stat=istat)
-                if (istat == 0) then
-                    ntransf = min(npoint,size(DFIL))
-                    tmp(1:ntransf) = DFIL(1:ntransf)
-                    call move_alloc(tmp,DFIL)
-                endif
-            else
-                deallocate(DFIL)
-                allocate(DFIL(npoint),stat=istat)
-            endif
-        endif
-
+        nrec = 0 
+        read (nunit, 94, iostat=info) nrec,title 
+94      format(I5,5x,A)
+        if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file header')
+        if (nrec > 0) allocate(dfil(nrec))
+        
+        do i = 1, nrec
+            read(nunit,96,iostat=info) angles(3),angles(2),angles(1),stap,nstap,weight,gam
+96          format(4F10.0,I5,5X,2F10.0)
+            if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read boundary segment')
+            angles = angles * pi_deg
+            dfil(i) = grain(weight, gam, rotmat(angles), mf%tax0, 0._DP)
+        enddo
+    
+        close(nunit)
     end subroutine
 
     !>Puts the module variables into initial state and deallocates the storage.
@@ -81,7 +70,6 @@ contains
         integer, intent(out)    :: info
         info = 0
         mf = matFrame()
-        filetitle = ''
         NRSTEP = 0
         if (allocated(DFIL)) deallocate(DFIL,stat=info)
     end subroutine
@@ -130,5 +118,4 @@ contains
         DFIL(i)%tTAX    = TAX
         DFIL(i)%tZERO   = ZERO
     end subroutine
-
 end module

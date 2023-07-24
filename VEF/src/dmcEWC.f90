@@ -29,12 +29,11 @@ implicit none
 
         logical                                 :: use_reference_stress_mode = .false.
 
-        real(DP),dimension(sr_symm_voigt_dim)   :: reference_stress_mode = 0.D0
-
-        real(DP),dimension(sr_symm_voigt_dim,n_base_vectors)   :: base_vectors = real(reshape( &
+        real(DP),dimension(6)   :: reference_stress_mode = 0.D0
+        real(DP),dimension(6,n_base_vectors)   :: base_vectors = real(reshape( &
                                                 [1, 0, 0, 0, 0, 0, & ! First base vector
                                                  0, 1, 0, 0, 0, 0], & ! second base vector
-                                                [sr_symm_voigt_dim, n_base_vectors]),DP)
+                                                [6, n_base_vectors]),DP)
 
         !> Range of angles that provide stress ratios
         class(range_type),pointer               :: ptr_theta_range => null()
@@ -145,37 +144,29 @@ contains
 
 
     subroutine EWCModule_run(this,info)
-    implicit none
-    class(EWCModule),intent(inout)            :: this
-    integer,intent(out)                       :: info
-    !
-    integer :: i, j, npoints
-    real(DP) :: theta
-
-    type(SRTensor)  :: sigma
-
-    type(EvolutionOutput) :: ref_output, output
-    ! Shape or `results` is: [0:n_countours,1:n_theta]. Zeroth column
-    ! shall include the theta angles
-    real(DP),dimension(:,:),allocatable,target :: results
-    type(IncrementationControlSettings) :: evolution_control
-
-    real(DP),dimension(sr_symm_voigt_dim) :: sigma_vector
-    !
-    real(DP),dimension(:),allocatable :: vEquivalentStrainLevels, &
-                                                 vPlasticWorkLevels, &
-                                                 vPlasticWork_ref, &
-                                                 vEquivalentStrain_ref, &
-                                                 vPlasticWork, &
-                                                 vScalS
-
-    real(DP),dimension(:),pointer :: vTheta
-
-    type(BarycentricInterpolator) :: bi
-    integer,parameter :: interpolation_order = 2
-    integer :: n_theta, n_contours
-    logical :: tmp_flag
-    !
+        class(EWCModule),intent(inout)            :: this
+        integer,intent(out)                       :: info
+        integer :: i, j, npoints
+        real(DP) :: theta, &
+                    sigma(3,3)
+        type(EvolutionOutput) :: ref_output, output
+        ! Shape or `results` is: [0:n_countours,1:n_theta]. Zeroth column
+        ! shall include the theta angles
+        real(DP),dimension(:,:),allocatable,target :: results
+        type(IncrementationControlSettings) :: evolution_control
+        real(DP), dimension(6) :: sigma_vector
+        real(DP),dimension(:),allocatable :: vEquivalentStrainLevels, &
+                                                     vPlasticWorkLevels, &
+                                                     vPlasticWork_ref, &
+                                                     vEquivalentStrain_ref, &
+                                                     vPlasticWork, &
+                                                     vScalS
+        real(DP),dimension(:),pointer :: vTheta
+        type(BarycentricInterpolator) :: bi
+        integer,parameter :: interpolation_order = 2
+        integer :: n_theta, n_contours
+        logical :: tmp_flag
+    
         ! Super-class first
         RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
         !
@@ -196,7 +187,7 @@ contains
             enddo
             !
             ! Evaluate the reference mode
-            sigma%t = Vec6ToMat33(this%reference_stress_mode)
+            sigma = Vec6ToMat33(this%reference_stress_mode)
             info = this%calculateStressPath(sigma, this%control, ref_output)
             if (info /= VEF_OK) return
             !
@@ -239,7 +230,7 @@ contains
             !
             ! Calculate S by combining the base vectors
             sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta)
-            sigma%t = Vec6ToMat33(sigma_vector)
+            sigma = Vec6ToMat33(sigma_vector)
             !
             ! Re-initialize AlTay
             info = this%reinitializeLibAltay()

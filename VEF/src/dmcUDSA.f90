@@ -132,16 +132,21 @@ contains
     implicit none
     class(UDSAModule),intent(inout)            :: this
     integer,intent(out)                        :: info
-    !
+    
     ! Note about naming convention for variables:
     !    - All variables for vectors and tensors suffixed with _t are expressed
     !      in the "tensile sample coordinate system".
     !    - All other variables are implicitly expressed in the "material coordinate system"
-    type(SRTensor) :: sigma, sigma_t, S_t, D_t, P_t, P_t_end
-    real(DP),dimension(rot_matrix_dim,rot_matrix_dim) :: Mrot = 0.0_DP
+    real(DP), dimension(3,3) :: Mrot = 0.0_DP, &
+                                sigma, &
+                                sigma_t, &
+                                s_t, &
+                                d_t, &
+                                p_t, &
+                                p_t_end
     type(EvolutionOutput) :: output
     type(EulerAngles) :: sample_orientation
-    real(DP)  :: angle, stress_direction
+    real(DP)    :: angle, stress_direction
     integer :: test_run, n_test_runs, increment, ofunit
     type(UDSAOutputRecord)  :: outrec
     !
@@ -160,10 +165,10 @@ contains
     !
     !> Uniaxial stress state. Negative value denotes compressive state;
     !> non-negative values are used for tensile state.
-    sigma_t%t = 0.D0
+    sigma_t = 0.D0
     stress_direction = merge(-1.D0,1.D0,(this%stress_state_id == compression_state))
-    sigma_t%t(1,1) = stress_direction * sqrt(3.D0/2.D0)/sqrt(this%rho**2-this%rho+1)
-    sigma_t%t(2,2) = this%rho*sigma_t%t(1,1)
+    sigma_t(1,1) = stress_direction * sqrt(3.D0/2.D0)/sqrt(this%rho**2-this%rho+1)
+    sigma_t(2,2) = this%rho*sigma_t(1,1)
     !
     ! Loop over test set
     !
@@ -229,8 +234,8 @@ contains
                 S_t = rotateSRTensorFrom(v%SonA, Mrot)
 
                 ! Total deviatoric strain (Note: the total, not per-step)
-                P_t%t = vec5D2tens(v%icv%vP_total) ! at the beginning of the increment
-                P_t_end%t = P_t%t + v%P_inc_evol%t ! at the end of the increment
+                P_t = vec5D2tens(v%icv%vP_total) ! at the beginning of the increment
+                P_t_end = P_t + v%P_inc_evol ! at the end of the increment
                 P_t = rotateSRTensorFrom(P_t, Mrot)
                 P_t_end = rotateSRTensorFrom(P_t_end, Mrot)
                 !
@@ -242,14 +247,14 @@ contains
                 outrec = UDSAOutputRecord(increment = increment, &
                                           vm_strain = v%vm_strain, &
                                           norm_P_abs = v%norm_P_abs, &
-                                          TNorm = abs(P_t%t(1,1)), & ! Tensile strain
-                                          TSigma = S_t%t(1,1) - S_t%t(3,3), & ! Tensile total stress
-                                          TSNorm = abs(S_t%t(1,1)), & ! Tensile deviatoric stress
+                                          TNorm = abs(P_t(1,1)), & ! Tensile strain
+                                          TSigma = S_t(1,1) - S_t(3,3), & ! Tensile total stress
+                                          TSNorm = abs(S_t(1,1)), & ! Tensile deviatoric stress
                                           plastic_work_total = v%icv%plastic_work_total, &
                                           dotWonA = v%dotWonA, &
                                           taylor_factor = v%taylor_factor, &
-                                          instantaneous_qrsvalue = calculateQRS(D_t%t,v%scal_s), &
-                                          cummulative_qrsvalue = calculateQRS(P_t_end%t, v%norm_SonA), &
+                                          instantaneous_qrsvalue = calculateQRS(D_t,v%scal_s), &
+                                          cummulative_qrsvalue = calculateQRS(P_t_end, v%norm_SonA), &
                                           residual =  v%R)
                 !
                 info = this%outputFile(iounit=ofunit, data_record=outrec)

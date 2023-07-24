@@ -2,7 +2,6 @@ module altaySub
     use hardening_model_dsh
     use altaySimul
     use altayMesostructure
-    use altayTexFormats
     use altayConfig
     use hardening
     use altayDynfil
@@ -32,20 +31,13 @@ contains
         ! Set the singleton object to the cnf
         acnf = cnf
         ! Open input files
-        ! UNIT LEC = SLIP SYSTEMS; open slip system file
-        open (unit=LEC,file=trim(cnf%slipsystem_input_fname),status='old',iostat=ierr)
-        if (ierr /= VEF_OK) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open slip system definition file: ' // trim(cnf%slipsystem_input_fname))
-
         ! Load microstructure data
         call read_microstructure(acnf%micros_fname,acnf%simul_init%FMicro,info)
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot process the microstructure file: ' // trim(acnf%micros_fname))
 
         ! Get the initial texture
-        call loadTexture(trim(cnf%texture_input_fname),info)
-        if (info /= VEF_OK) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot process the texture data file: ' // trim(cnf%texture_input_fname))
+        call dynfil_init(trim(cnf%texture_input_fname))
 
         ! Open output files
         call openOutputFiles(cnf, info)

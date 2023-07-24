@@ -1,10 +1,10 @@
 !> Basic configuration of AlTay in a form of formalized data structures.
 
 module altayConfig
-    use altayTexFormats
     use definitions
     use criMathUtils
     use parameters
+    use slip_systems
 
     implicit none
 
@@ -72,11 +72,11 @@ module altayConfig
         character(len=fname_len)                  :: output_prefix = 'alamel'
         character(len=fname_len)                  :: jobtitle      = 'alamel'
         character(len=fname_len)                  :: micros_fname  = 'equiaxed.smt'
-        character(len=fname_len)                  :: slipsystem_input_fname = ''
         character(len=fname_len)                  :: texture_input_fname = ''
         type(outputConfig)                        :: output_config !< output file prefix, incremental output request flag, verbosity level
         type(simulData)                           :: simul_init
         type(Parameter), allocatable :: hardening_parameters(:)
+        type(DeformationMechanism) :: deformation_mechanism
     end type
 
     type :: altayStateData

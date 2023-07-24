@@ -21,7 +21,8 @@ module hardening_model
         procedure :: update_state            => hardening_model_update_state
     end type
 
-    public ::   hardening_model_validate_parameters,    &   
+    public ::   hardening_model_get_parameters, &
+                hardening_model_validate_parameters,    &   
                 hardening_model_init
 
 contains
@@ -30,7 +31,7 @@ contains
         class(HardeningModel), intent(in)       :: this
         type(Parameter), allocatable    :: params(:)
     
-        params = [parameter_init('n_slip_systems', TYPE_STRING)]
+        params = [parameter_init('n_slip_systems', TYPE_INTEGER)]
     end function hardening_model_get_parameters
 
     subroutine hardening_model_validate_parameters(this, params)
@@ -38,32 +39,15 @@ contains
         type(Parameter), allocatable, intent(in) :: params(:)
         character(:), allocatable :: n_slip_systems
 
-        n_slip_systems = params .find. 'n_slip_systems'
-
-        select case(n_slip_systems)
-            case('fcc12', 'bcc24', 'bcc48') 
-                continue
-            case default
-                call log_error('hardening_model', 'validate_parameters', ERR_VAL, 'Number of slip systems must be 12, 24 or 48')
-        end select    
     end subroutine hardening_model_validate_parameters
 
     subroutine hardening_model_init(this, params)
         class(HardeningModel), intent(inout)     ::  this
         type(Parameter), allocatable, intent(in) :: params(:)
-        character(:), allocatable                :: slip_system
 
-        slip_system = params .find. 'n_slip_systems'
-        
-        select case(slip_system)
-            case('fcc12')
-                this%nss = 12
-            case('bcc24')
-                this%nss = 24
-            case('bcc48')
-                this%nss = 48
-        end select
-    end subroutine hardening_model_init
+        this%nss = params .find. 'n_slip_systems'
+
+        end subroutine hardening_model_init
 
     function hardening_model_get_crss(this, grain, strain) result(crss)
         class(HardeningModel), intent(in)                ::  this

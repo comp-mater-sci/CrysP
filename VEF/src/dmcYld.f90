@@ -3,16 +3,16 @@
 !
 !> Yield locus calculations
 module dmcYld
-use definitions
-use criRange
-use criMathUtils
-use criUncomment, only: readValue
-use dmcYLPResult
-use commonConfig
-use dmcStressDrivenModule
-use commonUtils
-
-implicit none
+    use definitions
+    use criRange
+    use criMathUtils
+    use criUncomment, only: readValue
+    use dmcYLPResult
+    use commonConfig
+    use dmcStressDrivenModule
+    use commonUtils
+    
+    implicit none
 
     public YldModule
     private
@@ -28,16 +28,15 @@ implicit none
 
         class(range_type),pointer                 :: ptr_w_range
 
-        real(DP),dimension(sr_symm_voigt_dim,nbase) :: base_vectors = real(reshape( &
+        real(DP),dimension(6,nbase) :: base_vectors = real(reshape( &
                                             [1, 0, 0, 0, 0, 0, & ! First base vector
                                              0, 1, 0, 0, 0, 0, & ! second base vector
                                              0, 0, 0, 0, 0, 0], & ! offset vector (zeros)
-                                            [sr_symm_voigt_dim,nbase]),DP)
+                                            [6,nbase]),DP)
 
         logical                                   :: do_scaling = .true.
 
-        real(DP),dimension(sr_symm_voigt_dim) :: scaling_vector = &
-                                            real([1, 0, 0, 0, 0, 0],DP)
+        real(DP),dimension(6) :: scaling_vector = [1._DP, 0._DP, 0._DP, 0._DP, 0._DP, 0._DP]
 
         logical                                   :: normalizeSm = .false.
 
@@ -60,8 +59,8 @@ implicit none
         real(DP) :: scal_s_rel = 0.D0
         real(DP) :: norm_sona = 0.D0
         real(DP) :: dotWonA = 0.D0
-        type(pair_double) :: scal_s_rel_cart = pair_double(0.D0,0.D0)
-        type(pair_double) :: normal_cart = pair_double(0.D0,0.D0)
+        real(DP), dimension(2) ::   scal_s_rel_cart = 0._DP, &
+                                    normal_cart = 0._DP
         real(DP) :: beta = 0.D0
         real(DP) :: residual = 0.D0
     end type
@@ -121,26 +120,23 @@ contains
 
 
     subroutine YldModule_run(this,info)
-    implicit none
-    class(YldModule),intent(inout)            :: this
-    integer,intent(out)                       :: info
-    !
-    real(DP)                          :: theta, w
-    real(DP)                          :: iunilen ! Inverse of the length of the deviatoric part of uniaxial tensile stress
+        class(YldModule),intent(inout)            :: this
+        integer,intent(out)                       :: info
+        real(DP) :: theta, &
+                    w,  &
+                    iunilen, &
+                    Sm(3,3), &
+                    D(3,3), &
+                    scal_s_rel, &
+                    sigma_vector(6)
+        type(YLPResult)                           :: ylp_result !< Results of the interative search
+        type(yldResult),dimension(:),allocatable  :: yldRes
+        class(range_type),allocatable             :: theta_range
+        integer                 :: i,npoints, ofunit
+        integer :: posA, posB
+        logical :: first_run, acceptable_point
+        real(DP),parameter :: beta = 0._DP
 
-    type(SRTensor)                            :: Sm, D
-    type(YLPResult)                           :: ylp_result !< Results of the interative search
-    real(DP)                          :: scal_s_rel
-    type(yldResult),dimension(:),allocatable  :: yldRes
-    real(DP),dimension(sr_symm_voigt_dim) :: sigma_vector
-    class(range_type),allocatable             :: theta_range
-    !
-    integer                 :: i,npoints, ofunit
-    !
-    integer :: posA, posB
-    logical :: first_run, acceptable_point
-    real(DP),parameter :: beta = 0.D0
-    !
         ! Super-class first
         RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
         !
@@ -161,8 +157,8 @@ contains
         !
         iunilen = 1.D0
         if (this%do_scaling) then
-            Sm%t =  Vec6ToMat33(this%scaling_vector)
-            if (norm2(Sm%t) < epsilon(0.D0)) then
+            Sm =  Vec6ToMat33(this%scaling_vector)
+            if (norm2(Sm) < epsilon(0.D0)) then
                 write(display_unit,fmt=900) 'Norm of the input stress for scaling cannot be zero'
                 return
             endif
@@ -197,7 +193,7 @@ contains
                 !       a temporary created in a call to Vec6ToMat33
                 sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) &
                                 + w*this%base_vectors(:,3)
-                Sm%t = Vec6ToMat33(sigma_vector)
+                Sm = Vec6ToMat33(sigma_vector)
                 !
                 info = this%findSolution(Sm, D, ylp_result, is_acceptable=acceptable_point)
                 ! Consider what to do with unsuccessful search
@@ -209,8 +205,8 @@ contains
 
                 yldRes(i) = yldResult(rad2deg(theta), w, ylp_result%scal_s, scal_s_rel, &
                                       norm2(ylp_result%vSonA), ylp_result%dotWonA, &
-                                      pair_double(scal_s_rel * cos(theta), scal_s_rel * sin(theta)),&
-                                      pair_double(0.D0,0.D0), beta, ylp_result%R)
+                                      [scal_s_rel * cos(theta), scal_s_rel * sin(theta)], &
+                                      [0._DP,0._DP], beta, ylp_result%R)
 
                 i = i + 1
             enddo

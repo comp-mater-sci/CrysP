@@ -99,8 +99,8 @@ contains
         class(HardeningModelDSH), intent(in)    :: this
         type(Parameter), allocatable    :: params(:)
 
-        params = [parameter_init('n_slip_systems', TYPE_STRING),    &
-                  parameter_init('n_grains', TYPE_INTEGER),         &
+        params = [hardening_model_get_parameters(this), &
+                 [parameter_init('n_grains', TYPE_INTEGER),         &
                   parameter_init('b', TYPE_REAL),                   &   ![m]   ]0.;1.E-8]   Magnitude of burgers vector                                
                   parameter_init('G', TYPE_REAL),                   &   ![MPa] [1.E4 ;5.E5] Shear modulus
                   parameter_init('alfa', TYPE_REAL),                &   ![/]   ]0.;5.]      Dislocation interaction parameter
@@ -116,7 +116,7 @@ contains
                   parameter_init('Iwp', TYPE_REAL),                 &   ![/]   [0.;1.E1 ]   Immobilization coefficient of polarity of CBBs
                   parameter_init('Rwp', TYPE_REAL),                 &   ![m]   ]0.;1.E-6]   Recovery coefficient of polarity of CBBs
                   parameter_init('Rrev', TYPE_REAL),                &   ![m]   ]0.;1.E-6]   Recovery coefficient of polarity CBBs during bauschinger
-                  parameter_init('R2', TYPE_REAL)]                      ![m]   ]0.;1.E-6]   Recovery coefficient of CBs due to reversal polarity flux
+                  parameter_init('R2', TYPE_REAL)]]                      ![m]   ]0.;1.E-6]   Recovery coefficient of CBs due to reversal polarity flux
     end function dsh_get_parameters
 
     subroutine dsh_validate_parameters(this, params)
