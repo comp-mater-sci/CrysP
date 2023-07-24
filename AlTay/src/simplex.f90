@@ -50,7 +50,7 @@ module simplex
             if (iter > 50) &
                 call log_error(MOD_NAME, PROC_NAME, ERR, 'Too many iterations.')
 
-            call find_most_overstressed_system()
+            call find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system, overstress)
 
             if (most_overstressed_system == 0) exit ! There is no overstressed slip system
             ! There is an overstressed slip system, which we will activate now
@@ -75,8 +75,8 @@ module simplex
             if (system_to_remove == 0) &
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'The solution is unbounded.')
 
-            call update_inverse_basis()
-            call update_vector_in_basis(slip_basis)
+            call update_inverse_basis(inverse_basis, new_basis_vector, system_to_remove, new_inverse_basis_vector)
+            call update_vector_in_basis(slip_basis, system_to_remove, new_inverse_basis_vector)
 
             ! Updating of basis: bas and basis_systems
             bas(basis_systems(system_to_remove))=.false.
@@ -88,44 +88,62 @@ module simplex
         ! Solution was found.
         slip = 0._DP
         slip(basis_systems) = slip_basis
-    contains
-        subroutine find_most_overstressed_system() 
-            stress = matmul(rss_basis, inverse_basis)
-            rss = matmul(stress, taylor_coeffs)
-            tmp = TOLERANCE
-            most_overstressed_system = 0
-            do i=1,size(overstress)
-                overstress(i) = merge(rss(i) - crss(1,i), -rss(i) - crss(2,i), rss(i) >= 0._DP)
-                if ((overstress(i) > tmp) .and. (.not. bas(i))) then
-                    tmp = overstress(i) + TOLERANCE
-                    most_overstressed_system = i
-                end if
-            enddo
-        end subroutine find_most_overstressed_system
-        
-        subroutine update_inverse_basis()
-            integer :: i
-
-            new_inverse_basis_vector = -new_basis_vector / new_basis_vector(system_to_remove)
-            new_inverse_basis_vector(system_to_remove) = 1._DP / new_basis_vector(system_to_remove)
-
-            do i=1,size(new_basis_vector)
-                call update_vector_in_basis(inverse_basis(:,i))
-            end do
-        end subroutine update_inverse_basis
-        
-        subroutine update_vector_in_basis(vec)
-            real(DP), intent(inout) ::  vec(:)
-            integer                 ::  i
-            real(DP)                ::  prod, &
-                                        vec_at_index
-
-            vec_at_index = vec(system_to_remove)
-
-            do i=1,size(vec)
-                prod = vec_at_index * new_inverse_basis_vector(i)
-                vec(i) = merge(prod, vec(i)+prod, i==system_to_remove)
-            end do
-        end subroutine update_vector_in_basis
     end subroutine simplex_solve
+
+    subroutine find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system, overstress)
+        real(DP), intent(in) :: taylor_coeffs(:,:), &
+                                rss_basis(size(taylor_coeffs,1)), &
+                                inverse_basis(size(taylor_coeffs,1), size(taylor_coeffs,1)), &
+                                crss(2,size(taylor_coeffs,2))
+        logical, dimension(size(taylor_coeffs, 2)), intent(in) :: bas
+        real(DP), intent(out) :: stress(size(taylor_coeffs,1)), &
+                                 rss(size(taylor_coeffs,2)), &
+                                 overstress(size(taylor_coeffs,2))
+        integer, intent(out) :: most_overstressed_system
+        real(DP) :: tmp      
+        integer :: i
+
+        stress = matmul(rss_basis, inverse_basis)
+        rss = matmul(stress, taylor_coeffs)
+        tmp = TOLERANCE
+        most_overstressed_system = 0
+        do i=1,size(overstress)
+            overstress(i) = merge(rss(i) - crss(1,i), -rss(i) - crss(2,i), rss(i) >= 0._DP)
+            if ((overstress(i) > tmp) .and. (.not. bas(i))) then
+                tmp = overstress(i) + TOLERANCE
+                most_overstressed_system = i
+            end if
+        enddo
+    end subroutine find_most_overstressed_system
+    
+    subroutine update_inverse_basis(inverse_basis, new_basis_vector, system_to_remove, new_inverse_basis_vector)
+        real(DP), dimension(:,:), intent(inout) :: inverse_basis
+        real(DP), intent(in) :: new_basis_vector(size(inverse_basis,1))
+        integer, intent(in) :: system_to_remove
+        real(DP), intent(out) :: new_inverse_basis_vector(size(inverse_basis,1))
+        integer :: i
+
+        new_inverse_basis_vector = -new_basis_vector / new_basis_vector(system_to_remove)
+        new_inverse_basis_vector(system_to_remove) = 1._DP / new_basis_vector(system_to_remove)
+
+        do i=1,size(new_basis_vector)
+            call update_vector_in_basis(inverse_basis(:,i), system_to_remove, new_inverse_basis_vector)
+        end do
+    end subroutine update_inverse_basis
+    
+    subroutine update_vector_in_basis(inverse_basis_vector, system_to_remove, new_inverse_basis_vector)
+        real(DP), intent(inout) ::  inverse_basis_vector(:)
+        integer, intent(in) :: system_to_remove
+        real(DP), intent(in) :: new_inverse_basis_vector(size(inverse_basis_vector))
+        integer                 ::  i
+        real(DP)                ::  prod, &
+                                    vec_at_index
+
+        vec_at_index = inverse_basis_vector(system_to_remove)
+
+        do i=1,size(inverse_basis_vector)
+            prod = vec_at_index * new_inverse_basis_vector(i)
+            inverse_basis_vector(i) = merge(prod, inverse_basis_vector(i)+prod, i==system_to_remove)
+        end do
+    end subroutine update_vector_in_basis
 end module simplex
