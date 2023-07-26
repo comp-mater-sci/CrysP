@@ -16,6 +16,13 @@ module slip_systems
         real(DP), dimension(5,5)                    :: inverse_basis
     end type
 
+    real(DP), dimension(3,3,2), parameter :: RELAXATIONS = reshape([0._DP, 0._DP, 0._DP, &
+                                                                    0._DP, 0._DP, 0._DP, &
+                                                                    1._DP, 0._DP, 0._DP, &
+                                                                    0._DP, 0._DP, 0._DP, &
+                                                                    0._DP, 0._DP, 0._DP, &
+                                                                    0._DP, 1._DP, 0._DP], shape(RELAXATIONS))
+
     type(SlipSystem), parameter ::  SLIP_SYSTEMS_111(12) = [SlipSystem([0.4082482904638631_DP, -0.4082482904638631_DP, 0._DP, -0.288675134594813_DP, 0.288675134594813_DP], &
                                                                       [-0.4082482904638631_DP, 0.2041241452319316_DP, 0.2041241452319316_DP]), &  
                                                           SlipSystem([0.1494292453613423_DP, 0.5576775358252053_DP,  0.288675134594813_DP,  0._DP, -0.288675134594813_DP], &
@@ -151,7 +158,8 @@ module slip_systems
                                                                        0.2588190451025206_DP, -0.9659258262890680_DP, -0.2070974249319058E-16_DP, 0.3679511122872680E-17_DP, -0.1732050807568877E+01_DP], [5,5]))
 
     public :: DeformationMechanism, &
-              get_deformation_mechanism
+              get_deformation_mechanism, &
+              RELAXATIONS
         
 contains
     
