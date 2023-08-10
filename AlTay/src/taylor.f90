@@ -1,4 +1,3 @@
-
 module taylor
     use definitions
     use altayMacroKinematic
@@ -13,14 +12,17 @@ module taylor
     use slip_systems
 
     implicit none
-    private
 
-    integer           :: M, &         ! number of deformation mechanisms
-                         NRL,   &
-                         NGL, &
-                         NTW, &
-                          NACTIV, &
-                         NGR
+    private
+    public ::   taylor_init, &
+                taylor_solve, &
+                taylor_update_state
+
+    integer  :: M, &         ! number of deformation mechanisms
+                NRL,   &
+                NGL, &
+                NACTIV, &
+                NGR
     real(dp) :: B1(3,96),B(5,5),B2(6,96),G(96),spin_matrix(3,3),SLIPLP(8),TAURLP(8),BB8(5), A2(10,194)
     real(dp), parameter :: TLXX=5.0e-6_dp
     integer :: DI1(5), INDACT(8),INDLP(8)
@@ -31,40 +33,27 @@ module taylor
                                 GETAL = 1.0e6_dp,    &
                                 TOL = 1.0e-6_dp,     &
                                 SQR2 = sqrt(0.5_dp)
-
-    public :: &
-        taylor_init, &
-        taylor_solve, &
-        taylor_update_state
-
-    contains
-
+contains
 
     subroutine taylor_init(deformation_mechanism, M111,A1)
         integer, intent(out) :: M111  ! < total number of systems in slip system file (glide+twin)
         real(dp), intent(out), allocatable :: A1(:,:)
         type(DeformationMechanism), intent(in) :: deformation_mechanism
-    
         integer :: i,j,l,I1
         
-        NGL = size(deformation_mechanism%slip_systems)
-        NTW = 0
+        M = size(deformation_mechanism%slip_systems)
         DI1 = deformation_mechanism%basis_systems
-        
-        M=NGL+NTW
         M111=M
     
-        allocate(A1(5,M111))
-        ! read glide + twin systems
+        allocate(A1(5,M))
         forall (i=1:M) A1(:,i) = deformation_mechanism%slip_systems(i)%symmetric_part
         forall (i=1:M) B1(:,i) = deformation_mechanism%slip_systems(i)%antisymmetric_part
         B = deformation_mechanism%inverse_basis
         
         A2=0.0_DP
-        A2(1:5,1:M111)=A1(1:5,1:M111)
-        A2(6:10,M111+1:M111*2)=A1(1:5,1:M111)
+        A2(1:5,1:M)=A1(1:5,1:M)
+        A2(6:10,M+1:M*2)=A1(1:5,1:M)
     end subroutine   
-
 
     subroutine taylor_solve(stress_matrix,strain_matrix, TRF, GEWF, IOR, TRFb, GMMAb, NGR, NRL, laml, CC, M11, MacroDefRate,MacroDefState)
         type(DeformationRate),intent(in) :: MacroDefRate
@@ -218,12 +207,9 @@ module taylor
         strain_matrix = rotateSRTensorTo(strain_matrix,TRF)
         !Transform relaxation spin tensor from local frame to sample frame
         spin_matrix = rotateSRTensorTo(spin_matrix,TRF)
-        
-
     end subroutine
 
-    subroutine taylor_update_state(IOR,TOTGAMdot,WorkRate,MacroDefRate,CC,M111,TRF,C2,ITW,XM)
-
+    subroutine taylor_update_state(IOR,TOTGAMdot,WorkRate,MacroDefRate,CC,M111,TRF,C2,XM)
         type(DeformationRate),intent(in) :: MacroDefRate
         integer, intent(in) :: IOR, &
               M111     !< total number of systems in slip system file (glide+twin),
@@ -231,7 +217,6 @@ module taylor
         real(dp), intent(out) :: TOTGAMdot, C2(3,3)
         !> Rate of plastic work per unit volume in the crystal
         real(dp), intent(out) :: WorkRate
-        integer, intent(out) :: ITW
 
         real(dp), dimension(3) :: ROT
         real(dp), dimension(3,3) :: RCcryst,TDC,RHOAcrys
@@ -239,7 +224,6 @@ module taylor
         integer :: i,j
         real(dp) :: rndm,x
         real(dp), parameter :: ddt=1.0_DP
-
 
         call SLIPRAT(M111,GAMdot(1:M111),SGNN(1:M111),MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call hardening_update_state(IOR, ddt, GAMdot)
@@ -249,12 +233,10 @@ module taylor
         RHOAcrys = rotateSRTensorFrom(spin_matrix,TRF)
         WorkRate = sum(merge(CC(1,1:M111),-CC(2,1:M111),GAMdot(1:M111)>0.0_DP)*GAMdot(1:M111))
 
-
         ROT = matmul(B1(:,1:M111),GAMdot(1:M111))
 
-        do J=1,3
-            C2(J,J)=1.0_dp
-        end do
+        forall (j=1:3) C2(j,j) = 1._DP
+        
         C2(3,2)=ROT(1)-(RCcryst(3,2)+RHOAcrys(3,2))
         C2(1,3)=ROT(2)-(RCcryst(1,3)+RHOAcrys(1,3))
         C2(2,1)=ROT(3)-(RCcryst(2,1)+RHOAcrys(2,1))
@@ -263,6 +245,5 @@ module taylor
         C2(1,2)=-C2(2,1)
         ! KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
         C2 = matmul(C2,TRF)
-        ITW=0
     end subroutine
 end module
