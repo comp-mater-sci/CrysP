@@ -5,6 +5,7 @@ project(alamDMC Fortran)
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
 if   (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+elseif   (CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
 elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     set(alamDMC_FLAGS "-ffree-line-length-0")
 else()
