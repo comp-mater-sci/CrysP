@@ -7,7 +7,7 @@ set -e
 #   -b: build type (debug/release; default release)
 #   -t: enable tracing
 
-export FC="ifort"
+export FC="ifx"
 BUILD_TYPE="release"
 TRACE="0"
 
