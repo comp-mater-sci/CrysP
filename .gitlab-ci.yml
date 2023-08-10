@@ -77,7 +77,7 @@ ifx:
   script: |
     apt-get update
     apt-get install -y \
-    cmake
+    cmake \
     python3-pip
     pip install pandas pytest numpy
     export PATH=${PATH}:${PWD}/VEF/bin
@@ -91,7 +91,7 @@ ifx48:
   script: |
     apt-get update
     apt-get install -y \
-    cmake
+    cmake \
     python3-pip
     pip install pandas pytest numpy
     export PATH=${PATH}:${PWD}/VEF/bin
