@@ -5,7 +5,7 @@
 
 !> Implementation of YLP function that can directly use the ALAMEL multilevel model instead of a plastic potential function.
 module alamYLP
-use definitions
+use utils
 implicit none
 
       type multilevelYLPConfig

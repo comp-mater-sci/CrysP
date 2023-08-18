@@ -220,9 +220,9 @@ contains
                           Mrot => output%rotation_matrix)
                     !
                     ! Step deviatoric strain
-                    P_step_rot = vec5D2tens(v%icv%vP_step)
+                    P_step_rot = convert_stress_strain_space(v%icv%vP_step)
                     ! Total deviatoric strain
-                    P_total_rot = vec5D2tens(v%icv%vP_total) ! at the beginning of the increment
+                    P_total_rot = convert_stress_strain_space(v%icv%vP_total) ! at the beginning of the increment
                     P_total_end_rot = P_total_rot + v%P_inc_evol ! at the end of the increment
                     !
                     ! Rotate back to the original coordinate system

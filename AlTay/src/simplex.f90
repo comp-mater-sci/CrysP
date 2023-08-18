@@ -1,5 +1,5 @@
 module simplex
-    use definitions
+    use utils
     use logging
 
     implicit none

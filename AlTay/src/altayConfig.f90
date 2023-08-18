@@ -1,10 +1,10 @@
 !> Basic configuration of AlTay in a form of formalized data structures.
 
 module altayConfig
-    use definitions
+    use utils
     use criMathUtils
     use parameters
-    use slip_systems
+    use deformation_mechanisms
 
     implicit none
 

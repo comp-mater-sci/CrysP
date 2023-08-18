@@ -1,5 +1,5 @@
 module hardening_model_pebp_loop
-    use definitions
+    use utils
     use parameters
     use hardening_model_dsh
     
@@ -15,6 +15,7 @@ module hardening_model_pebp_loop
                                                                     n2,p2,0.D0,n2,p2,0.D0,n2,p2,0.D0,n2,p2,0.D0,n6,n6,pd6,n6,n6,pd6,n6,n6,pd6,n6,n6,pd6], shape(NORMDIR))
 
 
+    !DSH model assuming slip is carried by dislocation loops with equal slip realized by edge and screw segments.
     type, extends(HardeningModelDSH) :: HardeningModelPEBPLoop
     contains
         procedure :: init           => pebp_loop_init

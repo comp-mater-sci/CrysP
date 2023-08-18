@@ -6,7 +6,7 @@
 !> The module implements the datatype uniformRange that represents an evenly stepped range (or an interval) of real numbers.
 !> \remark This module is not available in the builds with old compilers (such as Intel Fortran 11.1)
 module criRange
-    use definitions
+    use utils
     
     implicit none
     private

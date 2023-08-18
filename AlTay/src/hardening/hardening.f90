@@ -1,6 +1,6 @@
 !> Dispatcher of hardening models
 module Hardening
-    use definitions
+    use utils
     use parameters
     use logging
 

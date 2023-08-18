@@ -1,6 +1,6 @@
 module altayMacroKinematic
     use criMathUtils
-    use definitions
+    use utils
 
     implicit none
     private

@@ -1,5 +1,5 @@
 module hardening_model_bp
-    use definitions
+    use utils
     use parameters
     use hardening_model_dsh
 
@@ -41,6 +41,7 @@ module hardening_model_bp
                                                                                1, -1,  1, &
                                                                                1, -1,  1], [3,24])),DP)/sqrt(3._DP)
 
+    !DSH model assuming all slip is carried by edge dislocations
     type, extends(HardeningModelDSH) :: HardeningModelBP
     contains
         procedure :: init => bp_init

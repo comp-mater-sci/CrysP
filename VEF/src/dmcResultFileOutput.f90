@@ -2,7 +2,7 @@
 
 !> Common set of procedures for producing plain text column-based output of numerical data.
 module dmcResultFileOutput
-use definitions
+use utils
 use commonUtils
 implicit none
 

@@ -4,7 +4,7 @@
 !> This design emphasizes separation of the algorithms in the driver modules
 !> from the actual implementation of the underlying multilevel model.
 module commonUtils
-    use definitions
+    use utils
 
     implicit none
 

@@ -11,7 +11,7 @@ use dmcStressDrivenEvolutionModule
 use dmcIncrementationControl
 use dmcResultFileOutput
 use commonUtils
-use definitions
+use utils
 
 implicit none
 

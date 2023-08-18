@@ -1,5 +1,5 @@
 module parameters
-    use definitions
+    use utils
 
     implicit none
     public

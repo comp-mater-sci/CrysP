@@ -1,6 +1,6 @@
 !> Useful data types for calculation of anisotropic characteristics
 module qrsTypes
-    use definitions
+    use utils
 
     implicit none
 

@@ -3,7 +3,7 @@
 module altayMesostructure
     use criMathUtils
     use altayAlgorithms
-    use definitions
+    use utils
     use altayMacroKinematic
 
     implicit none

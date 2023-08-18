@@ -1,5 +1,5 @@
 module hardening_model_pebp_screw
-    use definitions
+    use utils
     use parameters
     use hardening_model_dsh
     
@@ -17,6 +17,7 @@ module hardening_model_pebp_screw
 
 
 
+    !DSH model assuming all slip is carried by screw dislocations
     type, extends(HardeningModelDSH) :: HardeningModelPEBPScrew
     contains
         procedure :: init           => pebp_screw_init

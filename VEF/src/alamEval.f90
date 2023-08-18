@@ -3,6 +3,8 @@
 module alamEval
 use alamYLPConstants
 use nllsTR
+use criMathUtils
+
 implicit none
 
 
@@ -39,7 +41,6 @@ contains
       subroutine objectiveEval_NV5DComp(this,vX,info)
       use altaySub
       use altayConfig
-      use criMathUtils, only: vec5D2tens,tens2vec5D
       implicit none
             class(NormalizedV5DComp),intent(inout)      :: this
             real(DP),dimension(:),intent(in)    :: vX       !< Dimension must be: 5
@@ -60,7 +61,7 @@ contains
             norm = norm2(vX)
             if (norm < epsilon(0.D0)) return
             vXn = vX/norm
-            Atens = vec5D2tens(vXn)
+            Atens = convert_stress_strain_space(vXn)
             ! Set Atens as current value for processing
 #ifdef DIAGNOSTIC_OUTPUT
             write(*,'(A,1X,5(F12.8))') 'eval for ', vXn
@@ -82,7 +83,7 @@ contains
             if (info /= 0) return
             !
             ! Retrieve output stress into 5D vector
-            vS = tens2vec5D(astate%simulCalls(istp)%output%stress_tensor)
+            vS = convert_stress_strain_space(astate%simulCalls(istp)%output%stress_tensor)
             ! Transfer vS to vSml
             this%vSml = vS
 #ifdef DIAGNOSTIC_OUTPUT

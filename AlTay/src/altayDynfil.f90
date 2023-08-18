@@ -1,5 +1,5 @@
 module altayDynfil
-    use definitions
+    use utils
     use logging
     use criMathUtils
 

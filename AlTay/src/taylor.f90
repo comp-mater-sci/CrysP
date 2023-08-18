@@ -1,5 +1,5 @@
 module taylor
-    use definitions
+    use utils
     use altayMacroKinematic
     use criMathUtils
     use hardening
@@ -9,7 +9,7 @@ module taylor
     use simplex
     use altayMesostructure
     use altayAlgorithms
-    use slip_systems
+    use deformation_mechanisms
 
     implicit none
     private
@@ -115,13 +115,13 @@ contains
                         B3(L1+2,IRL)=PLUMIN(IL,IRL)*RLA(3,1)/sqr2
                         B3(L1+3,IRL)=PLUMIN(IL,IRL)*RLA(1,2)/sqr2
                         !  Insert the relaxations as columns in A1-matrix
-                        A2(L1+1:L1+5,M2+IRL)=Vector5D(RLS)*PLUMIN(IL,IRL)
+                        A2(L1+1:L1+5,M2+IRL)=convert_stress_strain_space(RLS)*PLUMIN(IL,IRL)
                     end do
                 endif
 
                 ! Calculation of time increment by dividing von Mises equivalent
                 ! strain by von Mises equivalent strain rate
-                B8(1:5,IL)=Vector5D(C2)/MacroDefRate%vMeqStrainRate ! sym.(3,3) -> (5)
+                B8(1:5,IL)=convert_stress_strain_space(C2)/MacroDefRate%vMeqStrainRate ! sym.(3,3) -> (5)
                 BB(L1+1:L1+5)=B8(1:5,IL)
                 K1=M*(IL-1)
 
@@ -182,8 +182,8 @@ contains
             BB8(i)=B8(i,laml)+strain(i)
             spin(i)=-sum(B3(i+ii,1:NRL)*gamr(1:NRL))
         enddo
-        stress_matrix = SymMatrix(spanv) ! (5) -> sym.(3,3)
-        strain_matrix = SymMatrix(strain)  ! (5) -> sym.(3,3)
+        stress_matrix = convert_stress_strain_space(spanv) ! (5) -> sym.(3,3)
+        strain_matrix = convert_stress_strain_space(strain)  ! (5) -> sym.(3,3)
         spin_matrix=0._DP
         spin_matrix(2,3)= spin(1)*sqr2*MacroDefRate%vMeqStrainRate
         spin_matrix(3,1)= spin(2)*sqr2*MacroDefRate%vMeqStrainRate

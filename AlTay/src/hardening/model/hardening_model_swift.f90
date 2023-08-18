@@ -1,5 +1,5 @@
 module hardening_model_swift
-    use definitions, only: dp
+    use utils, only: dp
     use altayConfig
     use hardening_model
     use logging

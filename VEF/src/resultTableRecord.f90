@@ -1,6 +1,6 @@
 !> Datatype for storing essential results from the multi-level model.
 module dmcResultTableRecord
-use definitions
+use utils
 use alamYLPConstants
 implicit none
 

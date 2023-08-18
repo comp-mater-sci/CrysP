@@ -25,12 +25,12 @@ altayMesostructure.f90
 altaySliprate.f90 
 simplex.f90 
 altayCurAccess.f90 
-definitions.f90
+utils.f90
 logging.f90
 altayConfig.f90  
 altaySub.f90
 parameters.f90
-slip_systems.f90
+deformation_mechanisms.f90
 hardening/hardening.f90
 hardening/model/hardening_model.f90
 hardening/model/hardening_model_swift.f90

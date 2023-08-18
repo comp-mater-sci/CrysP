@@ -1,5 +1,5 @@
 module hardening_model_dsh
-    use definitions
+    use utils
     use hardening_model
     use altayConfig
     use parameters

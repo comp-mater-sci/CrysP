@@ -1,5 +1,5 @@
 module logging
-    use definitions
+    use utils
 
     implicit none
     public

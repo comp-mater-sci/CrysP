@@ -1,5 +1,5 @@
 module altayAlgorithms
-    use definitions
+    use utils
     use criMathUtils
     use logging
 
@@ -10,8 +10,6 @@ module altayAlgorithms
     character(*), parameter :: MODULE_NAME = "altayAlgorithms"
 
     public  ::  updatC,             &
-                symMatrix,          &
-                vector5D,           &
                 rotmat, &
                 kleinKwa,           &
                 getang
@@ -25,44 +23,6 @@ contains
 
         CIJ = matmul(matmul(transpose(Finv), CIJ), Finv)
     end subroutine
-
-    !> Transform a 5D-vector in deviatoric (stress/strain-rate) space to a (3,3)-matrix representation of a symmetric and traceless 2nd rank tensor.
-    !> Note: The reverse transformation is done by function 'Vector5D'.
-    function SymMatrix(vec) result(sym)
-        real(DP), dimension(5), intent(in)  ::  vec
-        real(DP), dimension(3,3)            ::  sym
-        real(DP), parameter                 ::  C1 = (sqrt(3.0_dp) + 3.0_dp) / 6.0_dp, &
-                                                C2 = (3.0_dp - sqrt(3.0_dp)) / 6.0_dp
-
-
-        sym(2,2) =  C1 * vec(1) - C2 * vec(2)
-        sym(3,3) = -C2 * vec(1) + C1 * vec(2)
-        sym(1,1) = -sym(2,2) - sym(3,3)
-        sym(2,3) = SQRT_P5 * vec(3)
-        sym(3,1) = SQRT_P5 * vec(4)
-        sym(1,2) = SQRT_P5 * vec(5)
-        sym(3,2) = sym(2,3)
-        sym(1,3) = sym(3,1)
-        sym(2,1) = sym(1,2)
-    end function
-
-    !> Transform a (3,3)-matrix representation of a traceless 2nd rank tensor to 5D-vector representation in deviatoric (stress/strain-rate) space.
-    !> Notes:
-    !>    - Only the symmetric part of 2nd rank tensor is transformed.
-    !>    - The reverse transformation is done by function 'SymMatrix'.
-    function vector5D(mat) result(vec)
-        real(DP), dimension(3,3), intent(in) :: mat
-        real(DP), dimension(5)               :: vec
-        real(DP), parameter                  :: C1 = 0.5_dp * (sqrt(3.0_dp) + 1.0_dp), &
-                                                C2 = C1 - 1.0_dp
-
-        vec(1) = C1 * mat(2,2) + C2 * mat(3,3)
-        vec(2) = C2 * mat(2,2) + C1 * mat(3,3)
-        vec(3) = SQRT_P5 * (mat(2,3) + mat(3,2))
-        vec(4) = SQRT_P5 * (mat(3,1) + mat(1,3))
-        vec(5) = SQRT_P5 * (mat(1,2) + mat(2,1))
-    end function
-
 
     !find half-lengths of ellipsoid axes from CIJ matrix
     !store them in prval

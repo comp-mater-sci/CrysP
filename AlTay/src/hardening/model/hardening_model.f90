@@ -1,5 +1,5 @@
 module hardening_model
-    use definitions, only: dp
+    use utils, only: dp
     use altayConfig
     use parameters
     use logging
