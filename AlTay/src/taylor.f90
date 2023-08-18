@@ -34,8 +34,7 @@ module taylor
                            PLUMIN(2,2) = reshape([1._DP,-1._DP, &
                                                   1._DP,-1._DP], shape(PLUMIN)), & 
                            GETAL = 1.0e6_dp,    &
-                           TOL = 1.0e-6_dp,     &
-                           SQR2 = sqrt(0.5_dp)
+                           TOL = 1.0e-6_dp
 
     public  ::  taylor_init, &
                 taylor_solve, &
