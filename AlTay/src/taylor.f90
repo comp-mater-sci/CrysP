@@ -12,7 +12,11 @@ module taylor
     use slip_systems
 
     implicit none
+
     private
+    public ::   taylor_init, &
+                taylor_solve, &
+                taylor_update_state
 
     integer  :: M, &         ! number of deformation mechanisms
                 NRL,   &
@@ -23,24 +27,12 @@ module taylor
     real(dp), parameter :: TLXX=5.0e-6_dp
     integer :: DI1(5), INDACT(8),INDLP(8)
     
-    character(*), parameter :: MOD_NAME = 'taylor'
-
-    real(DP), parameter :: RELAX(3,3,2) = reshape([0._DP, 0._DP, 0._DP, &
-                                                   0._DP, 0._DP, 0._DP, &
-                                                   1._DP, 0._DP, 0._DP, &
-                                                   0._DP, 0._DP, 0._DP, &
-                                                   0._DP, 0._DP, 0._DP, &
-                                                   0._DP, 1._DP, 0._DP], shape(RELAX)), &
-                           PLUMIN(2,2) = reshape([1._DP,-1._DP, &
-                                                  1._DP,-1._DP], shape(PLUMIN)), & 
-                           GETAL = 1.0e6_dp,    &
-                           TOL = 1.0e-6_dp,     &
-                           SQR2 = sqrt(0.5_dp)
-
-    public  ::  taylor_init, &
-                taylor_solve, &
-                taylor_update_state
-
+    character(*), parameter ::  MOD_NAME = 'taylor'
+    real(DP), parameter     ::  PLUMIN(2,2) = reshape([1._DP,-1._DP, &
+                                                       1._DP,-1._DP], shape(PLUMIN)), & 
+                                GETAL = 1.0e6_dp,    &
+                                TOL = 1.0e-6_dp,     &
+                                SQR2 = sqrt(0.5_dp)
 contains
 
     subroutine taylor_init(deformation_mechanism, M111,A1)
@@ -107,7 +99,7 @@ contains
                     do IRL=1,NRL
                         ! Transform relaxation from grain reference frame to macroscopic frame
                         !   ... and now to crystal frame:
-                        mat_buffer = rotateSRTensorTo(RELAX(:,:,IRL),Tprinc)
+                        mat_buffer = rotateSRTensorTo(RELAXATIONS(:,:,IRL),Tprinc)
                         C3 = rotateSRTensorFrom(mat_buffer,TRFb(:,:,IL))
                         RLS=(C3+transpose(C3))*0.5_dp
                         RLA=(C3-transpose(C3))*0.5_dp
