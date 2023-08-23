@@ -9,7 +9,7 @@ module taylor
     use simplex
     use altayMesostructure
     use altayAlgorithms
-    use deformation_mechanisms
+    use slip_systems
 
     implicit none
     private
@@ -24,6 +24,9 @@ module taylor
     integer :: DI1(5), INDACT(8),INDLP(8)
     
     character(*), parameter :: MOD_NAME = 'taylor'
+
+    integer, dimension(5), parameter ::    INITIAL_BASIS_SYSTEMS_FCC = [2,5,6,7,8], &
+                                           INITIAL_BASIS_SYSTEMS_BCC = [1,2,4,5,7]
 
     real(DP), parameter :: RELAX(3,3,2) = reshape([0._DP, 0._DP, 0._DP, &
                                                    0._DP, 0._DP, 0._DP, &
@@ -45,22 +48,71 @@ contains
     subroutine taylor_init(deformation_mechanism, M111,A1)
         integer, intent(out) :: M111  ! < total number of systems in slip system file (glide+twin)
         real(dp), intent(out), allocatable :: A1(:,:)
-        type(DeformationMechanism), intent(in) :: deformation_mechanism
-        integer :: i,j,l,I1
+        integer, dimension(:,:,:), intent(in) :: deformation_mechanism
+        integer :: i,j,k,l,I1
+        real(DP), dimension(:,:,:), allocatable :: deformation_mechanism_tensor, deformation_mechanism_normalized
+        real(DP) :: basis(5,5), &
+                    antisym(3,3)
         
-        M = size(deformation_mechanism%slip_systems)
-        DI1 = deformation_mechanism%basis_systems
+        M = size(deformation_mechanism,3)
+        DI1 = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, M == 12)
         M111=M
-    
+            
+        allocate(deformation_mechanism_normalized(3,2,M))
+        allocate(deformation_mechanism_tensor(3,3,M))
         allocate(A1(5,M))
-        forall (i=1:M) A1(:,i) = deformation_mechanism%slip_systems(i)%symmetric_part
-        forall (i=1:M) B1(:,i) = deformation_mechanism%slip_systems(i)%antisymmetric_part
-        B = deformation_mechanism%inverse_basis
+        do i=1,M
+            forall (j=1:2) deformation_mechanism_normalized(:,j,i) = real(deformation_mechanism(:,j,i),DP) / norm2(real(deformation_mechanism(:,j,i), DP))
+            forall (j=1:3,k=1:3) deformation_mechanism_tensor(j,k,i) = deformation_mechanism_normalized(j,1,i) * deformation_mechanism_normalized(k,2,i)
+            A1(:,i) = convert_stress_strain_space(deformation_mechanism_tensor(:,:,i)) 
+            antisym = (deformation_mechanism_tensor(:,:,i) - transpose(deformation_mechanism_tensor(:,:,i)))/2._DP
+            B1(:,i) = [-antisym(3,2), -antisym(1,3), -antisym(2,1)] !This conversion can likely be replaced by a more intuitive one
+            print *, A1(:,i)
+            print *, B1(:,i)
+        end do
+        forall (i=1:5) basis(:,i) = A1(:,DI1(i))
+
+        B = inv(basis)
         
         A2=0.0_DP
         A2(1:5,1:M)=A1(1:5,1:M)
         A2(6:10,M+1:M*2)=A1(1:5,1:M)
     end subroutine   
+
+    ! Returns the inverse of a matrix calculated by finding the LU
+    ! decomposition.  Depends on LAPACK.
+    function inv(A) result(Ainv)
+      real(dp), dimension(:,:), intent(in) :: A
+      real(dp), dimension(size(A,1),size(A,2)) :: Ainv
+                                                                          
+      real(dp), dimension(size(A,1)) :: work  ! work array for LAPACK
+      integer, dimension(size(A,1)) :: ipiv   ! pivot indices
+      integer :: n, info
+    
+      ! External procedures defined in LAPACK
+      external DGETRF
+      external DGETRI
+                                                                         
+      ! Store A in Ainv to prevent it from being overwritten by LAPACK
+      Ainv = A 
+      n = size(A,1)
+                                                                         
+      ! DGETRF computes an LU factorization of a general M-by-N matrix A
+      ! using partial pivoting with row interchanges.
+      call DGETRF(n, n, Ainv, n, ipiv, info)
+                                                                         
+      if (info /= 0) then
+         stop 'Matrix is numerically singular!'
+      end if
+                                                                         
+      ! DGETRI computes the inverse of a matrix using the LU factorization
+      ! computed by DGETRF.
+      call DGETRI(n, Ainv, n, ipiv, work, n, info)
+                                                                         
+      if (info /= 0) then
+         stop 'Matrix inversion failed!'
+      end if
+    end function inv 
 
     subroutine taylor_solve(stress_matrix,strain_matrix, TRF, GEWF, IOR, TRFb, GMMAb, NGR, NRL, laml, CC, M11, MacroDefRate,MacroDefState)
         type(DeformationRate),intent(in) :: MacroDefRate

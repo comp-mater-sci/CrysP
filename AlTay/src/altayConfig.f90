@@ -4,7 +4,7 @@ module altayConfig
     use utils
     use criMathUtils
     use parameters
-    use deformation_mechanisms
+    use slip_systems
 
     implicit none
 
@@ -76,7 +76,7 @@ module altayConfig
         type(outputConfig)                        :: output_config !< output file prefix, incremental output request flag, verbosity level
         type(simulData)                           :: simul_init
         type(Parameter), allocatable :: hardening_parameters(:)
-        type(DeformationMechanism) :: deformation_mechanism
+        integer, dimension(:,:,:), allocatable :: deformation_mechanism
     end type
 
     type :: altayStateData

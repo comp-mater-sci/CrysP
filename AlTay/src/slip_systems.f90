@@ -68,16 +68,7 @@ module slip_systems
                                                               [2,-1,-3],[1,-1,1]], [3,2,24])
 
     !Definition of slip sets in terms of slip system families
-    integer, parameter :: FCC12(3,2,12) = SLIP_SYSTEMS_111, &
-                          BCC24(3,2,24) = reshape([SLIP_SYSTEMS_110, SLIP_SYSTEMS_112],[3,2,24]), &
-                          BCC48(3,2,48) = reshape([BCC24, SLIP_SYSTEMS_123],[3,2,48])
-
-    integer, dimension(5), parameter ::    INITIAL_BASIS_SYSTEMS_FCC = [1,2,4,5,8], &
-                                           INITIAL_BASIS_SYSTEMS_BCC = [1,2,4,5,7]
-
-    public :: FCC12, &
-              BCC24, &
-              BCC48
-    
-
+    integer, parameter, public :: FCC12(3,2,12) = SLIP_SYSTEMS_111, &
+                                  BCC24(3,2,24) = reshape([SLIP_SYSTEMS_110, SLIP_SYSTEMS_112],[3,2,24]), &
+                                  BCC48(3,2,48) = reshape([BCC24, SLIP_SYSTEMS_123],[3,2,48])
 end module

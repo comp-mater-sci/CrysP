@@ -39,7 +39,7 @@ module hardening_model_bp
                                                                              ! ---------
                                                                                1, -1,  1, &
                                                                                1, -1,  1, &
-                                                                               1, -1,  1], [3,24]),DP)/sqrt(3._DP)
+                                                                               1, -1,  1], [3,24]))/sqrt(3._DP)
 
     !DSH model assuming all slip is carried by edge dislocations
     type, extends(HardeningModelDSH) :: HardeningModelBP
