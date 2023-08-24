@@ -66,6 +66,14 @@ contains
         t(2,1) = t(1,2)
     end function
 
+    pure function normalize(arr) result(normalized)
+        integer, dimension(:,:), intent(in) :: arr
+        real(DP), dimension(3,size(arr,2)) :: normalized
+        integer :: i
 
+        do i=1, size(arr,2)
+            normalized(:,i) = real(arr(:,i),DP) / norm2(real(arr(:,i),DP))
+        end do
+    end function
 
-    end module 
+end module 
