@@ -31,8 +31,7 @@ module taylor
     real(DP), parameter     ::  PLUMIN(2,2) = reshape([1._DP,-1._DP, &
                                                        1._DP,-1._DP], shape(PLUMIN)), & 
                                 GETAL = 1.0e6_dp,    &
-                                TOL = 1.0e-6_dp,     &
-                                SQR2 = sqrt(0.5_dp)
+                                TOL = 1.0e-6_dp
     integer, dimension(5), parameter ::    INITIAL_BASIS_SYSTEMS_FCC = [2,5,6,7,8], &
                                            INITIAL_BASIS_SYSTEMS_BCC = [1,2,4,5,7]
 contains
