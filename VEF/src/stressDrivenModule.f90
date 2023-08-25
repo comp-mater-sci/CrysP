@@ -62,10 +62,6 @@ contains
         !
         ! Allocate and possibly populate the result cache
         allocate(this%ptr_db, stat = ierr)
-        RETURN_IF_WITH(ierr /= 0, info=VEF_ERROR)
-        ! Try to load data
-        ierr = this%ptr_db%load(trim(this%output%outputPrefix)//'.rtdb')
-    !
     end function
 
 
@@ -95,7 +91,6 @@ contains
 
         ! Save the result cache and delete the object
         if (associated(this%ptr_db)) then
-            info = this%ptr_db%store(trim(this%output%outputPrefix)//'.rtdb')
             deallocate(this%ptr_db)
         endif
         !

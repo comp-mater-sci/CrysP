@@ -6,6 +6,7 @@ use criMathUtils
 use criUncomment, only: readValue
 use dmcIncrementationControl
 use dmcStressDrivenEvolutionModule
+use dmcEvolutionOutputRecord
 use commonConfig
 use commonUtils
 implicit none
@@ -42,7 +43,7 @@ implicit none
 
     type :: ASROutput
         integer                 :: step = 0
-        type(EvolutionOutput)   :: evolution_output
+        type(IncrementOutputRecord), dimension(:), allocatable   :: evolution_output
         real(DP),dimension(3,3)   :: rotation_matrix = unit_sr_Matrix
     end type
 
@@ -215,8 +216,8 @@ contains
             ierr = 0
             info = VEF_ERROR
             !
-            do increment = 1, size(output%evolution_output%values)
-                associate(v => output%evolution_output%values(increment), &
+            do increment = 1, size(output%evolution_output)
+                associate(v => output%evolution_output(increment), &
                           Mrot => output%rotation_matrix)
                     !
                     ! Step deviatoric strain

@@ -66,10 +66,14 @@ module slip_systems
                                                               1,-2,-3,  1,-1,1,   &
                                                               -3,-2,1,  1,-1,1,   &
                                                               1,3,2,    1,-1,1,     &
-                                                              2,-1,-3,  1,-1,1], shape(SLIP_SYSTEMS_123))
-
-    !Definition of deformation mechanisms in terms of slip system families
-    integer, parameter :: FCC12(3,2,12) = SLIP_SYSTEMS_111, &
+                                                              2,-1,-3,  1,-1,1], shape(SLIP_SYSTEMS_123)), &
+                          RELAXATIONS(3,3,2) = reshape([0, 0, 0, &
+                                                        0, 0, 0, &
+                                                        1, 0, 0, &
+                                                        0, 0, 0, &
+                                                        0, 0, 0, &
+                                                        0, 1, 0], shape(RELAXATIONS)), &
+                          FCC12(3,2,12) = SLIP_SYSTEMS_111, &
                           BCC24(3,2,24) = reshape([SLIP_SYSTEMS_110, SLIP_SYSTEMS_112], shape(BCC24)), &
                           BCC48(3,2,48) = reshape([BCC24, SLIP_SYSTEMS_123], shape(BCC48))
 end module

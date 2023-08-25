@@ -5,6 +5,7 @@ module altayMesostructure
     use altayAlgorithms
     use utils
     use altayMacroKinematic
+    use slip_systems
 
     implicit none
     private
@@ -69,15 +70,7 @@ module altayMesostructure
         real(DP) :: GRPAR(3,3), PrDir(2,3),TDCGr(3,3), vec1(3),vec2(3),AL(3)
         real(DP) :: u, dlength, dot1, dot2, TGANGLE
         integer :: i
-        real(DP), parameter, dimension(3,3) :: &
-            relaxI = reshape([0._dp, 0._dp, 1._dp, &
-                              0._dp, 0._dp, 0._dp, &
-                              1._dp, 0._dp, 0._dp],shape(relaxI)), &
-            relaxII= reshape([0._dp, 0._dp, 0._dp, &
-                              0._dp, 0._dp, 1._dp, &
-                              0._dp, 1._dp, 0._dp],shape(relaxII))
-
-
+       
         GRPAR = matmul(MacroDefState%TotalDefGrad,TmatGr(:,:,IGrElm))
         ! Calculation of volume affected by the surface
         AL=norm2(GRPAR,1)
@@ -110,8 +103,8 @@ module altayMesostructure
         !     Transform MacroDefRate%StrainModevM to the "Grb" reference frame
         TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM,Tprinc)
 
-        dot1=sum(relaxI*TDCGr)/sqrt(2.0D0)/dlength
-        dot2=sum(relaxII*TDCGr)/sqrt(2.0D0)/dlength
+        dot1 = sum(RELAXATIONS(:,:,1) * TDCGr) / sqrt(2.0D0) / dlength
+        dot2 = sum(RELAXATIONS(:,:,2) * TDCGr) / sqrt(2.0D0) / dlength
 
         if(abs(dot1) < 0.000001_DP .and. abs(dot2) >= 0.000001_DP) then
             !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
