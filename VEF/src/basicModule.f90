@@ -216,7 +216,7 @@ contains
       logical                       :: dummy, dummy2
       integer                       :: i, input_type
       character(len=max_pathlen) :: root, ext
-      character(:), allocatable :: slip_systems
+      character(:), allocatable :: slip
       character(5) :: buffer
 
       type(MapItem),dimension(2) :: model_types = [MapItem('ALAMEL', modelAlamel), &
@@ -236,9 +236,9 @@ contains
             
             dummy2 = readValue(cnfunit, dummy)
             read(cnfunit, '(A)') buffer
-            slip_systems = buffer
+            slip = buffer
 
-            select case (slip_systems)
+            select case (slip)
                 case ('fcc12')
                     cnf%deformation_mechanism = FCC12
                 case ('bcc24')

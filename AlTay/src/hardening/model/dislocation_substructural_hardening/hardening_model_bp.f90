@@ -2,45 +2,13 @@ module hardening_model_bp
     use utils
     use parameters
     use hardening_model_dsh
+    use slip_systems
 
     implicit none
     private
 
     !Normalized movement vector of EDGE disl. on slip system s
     !== normalized burgers vector of slip system s
-
-    real(DP), dimension(24,3), parameter :: EDGEDIR = real(transpose(reshape([ 1,  1,  1, &
-                                                                               1,  1,  1, &
-                                                                               1,  1,  1, &
-                                                                             ! ---------
-                                                                              -1, -1,  1, &
-                                                                              -1, -1,  1, &
-                                                                              -1, -1,  1, &
-                                                                             ! ---------
-                                                                              -1,  1,  1, &
-                                                                              -1,  1,  1, &
-                                                                              -1,  1,  1, &
-                                                                             ! ---------
-                                                                               1, -1,  1, &
-                                                                               1, -1,  1, &
-                                                                               1, -1,  1, &
-                                                                             ! ---------
-                                                                               1,  1,  1, &
-                                                                               1,  1,  1, &
-                                                                               1,  1,  1, &
-                                                                             ! ---------
-                                                                              -1, -1,  1, &
-                                                                              -1, -1,  1, &
-                                                                              -1, -1,  1, &
-                                                                             ! ---------
-                                                                              -1,  1,  1, &
-                                                                              -1,  1,  1, &
-                                                                              -1,  1,  1, &
-                                                                             ! ---------
-                                                                               1, -1,  1, &
-                                                                               1, -1,  1, &
-                                                                               1, -1,  1], [3,24])),DP)/sqrt(3._DP)
-
     type, extends(HardeningModelDSH) :: HardeningModelBP
     contains
         procedure :: init => bp_init
@@ -55,7 +23,7 @@ contains
         type(Parameter), allocatable, intent(in) :: params(:)
 
         call dsh_init(this, params)
-        this%eff = matmul(EDGEDIR, transpose(CBBNORMAL))
+        this%eff = transpose(matmul(CBBNORMAL, normalize(BCC24(:,2,:))))
         call this%initstate()
     end subroutine bp_init
 end module hardening_model_bp

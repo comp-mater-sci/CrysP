@@ -11,15 +11,7 @@ module hardening_model_dsh
 
     real(DP), parameter ::  MINFRAC = 2.0D-3,   &
                             LOWFRAC = 10.0D-3
-    !real(DP), dimension(6,3), parameter, public :: CBBNORMAL = transpose(BCC24(:,1,1:12:2)/SQR2)
-
-  real(DP), dimension(6,3), parameter, public :: CBBNORMAL = real(transpose(reshape([ 0,  1, -1, &
-                                                                                       -1,  0,  1, &
-                                                                                        1, -1,  0, &
-                                                                                        0, -1, -1, &
-                                                                                        1,  0,  1, &
-                                                                                       -1, -1,  0], [3,6])),DP)/sqrt(2._DP)
-
+    real(DP), dimension(6,3), parameter, public :: CBBNORMAL = transpose(SLIP_SYSTEMS_110(:,1,1:12:2)/SQR2)
 
     character(*), parameter :: MOD_NAME = 'hardening_model_dsh'
 
@@ -260,14 +252,8 @@ contains
 
         if (SUMabsGam < epsilon(0._DP)) return
 
-
-        GAMMAdot(1) = abs(slip_rates(1)) + abs(slip_rates(7))   !(01-1)-plane
-        GAMMAdot(2) = abs(slip_rates(2)) + abs(slip_rates(11))  !(-101)-plane
-        GAMMAdot(3) = abs(slip_rates(3)) + abs(slip_rates(6))   !(1-10)-plane
-        GAMMAdot(4) = abs(slip_rates(4)) + abs(slip_rates(10))  !(0-1-1)-plane
-        GAMMAdot(5) = abs(slip_rates(5)) + abs(slip_rates(8))   !(101)-plane
-        GAMMAdot(6) = abs(slip_rates(9)) + abs(slip_rates(12))  !(-1-10)-plane
-
+        !Sum of slip rates for all 110-planes
+        forall (i=1:6) gammadot(i) = sum(abs(slip_rates(2*i-1:2*i)))
 
         !forall (i=1:6) GAMMAdot(i) = sum(abs(slip_rates(2*i-1:2*i)))   
         gamma = GAMMAdot * time
