@@ -3,9 +3,9 @@
 !> Implementation of a altay-based DMC computiational module.
 module dmcStressDrivenModule
 use,intrinsic :: iso_fortran_env, only: error_unit
-use definitions
+use utils
 use criUncomment, only: readValue
-use criMathUtils, only: vec5D2tens,tens2vec5D
+use criMathUtils, only: convert_stress_strain_space,convert_stress_strain_space
 use alamYLP
 use alamEval, only: NormalizedV5DComp, alamEval_objFx_call_count
 use dmcYLPResult
@@ -139,7 +139,7 @@ contains
         !
         ! Convert input to the 5D space and make the unit vector(s).
         ! This also makes sure it is deviatoric.
-        vS = tens2vec5D(sigma)
+        vS = convert_stress_strain_space(sigma)
         ylp_result = YLPResult(vS)
         if (ylp_result%vS_length < epsilon(0.D0)) return
         !
@@ -170,7 +170,7 @@ contains
         if (.not. is_pretry_acceptable) then
             !
             if (.not. use_vM_guess) then
-                ylp_result%vA = tens2vec5D(D)
+                ylp_result%vA = convert_stress_strain_space(D)
                 vA_norm = norm2(ylp_result%vA)
                 if (vA_norm < epsilon(0.D0)) return
             endif
@@ -201,7 +201,7 @@ contains
             is_acceptable = checkYLPResult(ylp_result, this%solution_tolerance, this%ylp%obj_func_eps)
         endif
         !
-        D = vec5D2tens(ylp_result%vA)
+        D = convert_stress_strain_space(ylp_result%vA)
         ! Return the info from the last call to 'search'
         !
 #define MSG_GROUP_ERRORS

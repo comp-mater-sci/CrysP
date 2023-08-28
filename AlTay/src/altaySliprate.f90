@@ -1,5 +1,5 @@
 module altaySliprate
-    use definitions
+    use utils
     use logging
     use altayMacroKinematic
     use altayAlgorithms

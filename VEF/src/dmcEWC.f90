@@ -12,7 +12,7 @@ use dmcIncrementationControl
 use dmcEvolutionOutputrecord
 use dmcResultFileOutput
 use commonUtils
-use definitions
+use utils
 
 implicit none
 

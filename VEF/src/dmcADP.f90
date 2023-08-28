@@ -2,7 +2,7 @@
 
 !> Arbitrary Deformation Path strain-(rate) driven simulations
 module dmcADP
-use definitions
+use utils
 use criConfigReader
 use criMathUtils
 use altayMacroKinematic, only: DeformationRate, Set_DeformationRate

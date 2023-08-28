@@ -1,7 +1,7 @@
 !> Types and procedures that control incrementation in stress-driven
 !> evolution of material state.
 module dmcIncrementationControl
-    use definitions
+    use utils
 use criLinearMap, only: MapItem
 use alamYLPConstants
 implicit none

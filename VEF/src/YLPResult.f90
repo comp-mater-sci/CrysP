@@ -3,7 +3,7 @@
 module dmcYLPResult
 use criMathUtils
 use alamYLPConstants, only: alamEval_vSD_dim
-use definitions
+use utils
 
 implicit none
 

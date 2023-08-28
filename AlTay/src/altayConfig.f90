@@ -1,7 +1,7 @@
 !> Basic configuration of AlTay in a form of formalized data structures.
 
 module altayConfig
-    use definitions
+    use utils
     use criMathUtils
     use parameters
     use slip_systems
@@ -76,7 +76,7 @@ module altayConfig
         type(outputConfig)                        :: output_config !< output file prefix, incremental output request flag, verbosity level
         type(simulData)                           :: simul_init
         type(Parameter), allocatable :: hardening_parameters(:)
-        type(DeformationMechanism) :: deformation_mechanism
+        integer, dimension(:,:,:), allocatable :: deformation_mechanism
     end type
 
     type :: altayStateData

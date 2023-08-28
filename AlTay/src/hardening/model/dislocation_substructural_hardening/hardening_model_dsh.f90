@@ -1,28 +1,17 @@
 module hardening_model_dsh
-    use definitions
+    use utils
     use hardening_model
     use altayConfig
     use parameters
     use logging
+    use slip_systems
 
     implicit none
     private
 
     real(DP), parameter ::  MINFRAC = 2.0D-3,   &
                             LOWFRAC = 10.0D-3
-    !>Constants for initialization of dirs
-    real(DP), parameter, public ::  P2 = 1._DP / sqrt(2._DP),   &
-                                    N2 = -P2,                   &
-                                    P6 = 1._DP / sqrt(6._DP),   &
-                                    N6 = -P6,                   &
-                                    PD6 = 2._DP / sqrt(6._DP),  &
-                                    ND6 = -PD6
-    real(DP), dimension(6,3), parameter, public :: CBBNORMAL = real(transpose(reshape([ 0,  1, -1, &
-                                                                                       -1,  0,  1, &
-                                                                                        1, -1,  0, &
-                                                                                        0, -1, -1, &
-                                                                                        1,  0,  1, &
-                                                                                       -1, -1,  0], [3,6])),DP)/sqrt(2._DP)
+    real(DP), dimension(6,3), parameter, public :: CBBNORMAL = transpose(SLIP_SYSTEMS_BCC_110(:,1,1:12:2)/SQR2)
 
     character(*), parameter :: MOD_NAME = 'hardening_model_dsh'
 
@@ -254,35 +243,20 @@ contains
         integer, dimension(6)                       ::  r
         integer                                     ::  i, &
                                                         j
-        if (time < 0._DP) return
 
         SVa = this%state(grain)
         !>Calculate quantities of slip rates and slips
         !>Identify currently generated and non-currently generated walls
         SUMabsGamDot = sum(abs(slip_rates))
         SUMabsGam = SUMabsGamDot * time
-
         if (SUMabsGam < epsilon(0._DP)) return
-
-        GAMMAdot(1) = abs(slip_rates(1)) + abs(slip_rates(7))   !(01-1)-plane
-        GAMMAdot(2) = abs(slip_rates(2)) + abs(slip_rates(11))  !(-101)-plane
-        GAMMAdot(3) = abs(slip_rates(3)) + abs(slip_rates(6))   !(1-10)-plane
-        GAMMAdot(4) = abs(slip_rates(4)) + abs(slip_rates(10))  !(0-1-1)-plane
-        GAMMAdot(5) = abs(slip_rates(5)) + abs(slip_rates(8))   !(101)-plane
-        GAMMAdot(6) = abs(slip_rates(9)) + abs(slip_rates(12))  !(-1-10)-plane
+        forall (i=1:6) gammadot(i) = sum(abs(slip_rates(2*i-1:2*i))) !Sum of slip rates for all 110-planes
         gamma = GAMMAdot * time
 
         !r(1) = plane with largest slip
         !r(2) = plane with 2nd largest slip
         !r(3:6) = remaining planes (unordered)
-        if (gammadot(1) >= gammadot(2)) then
-            r(1) = 1
-            r(2) = 2
-        else
-            r(1) = 2
-            r(2) = 1
-        end if
-
+        r(1:2) = merge([1,2],[2,1], gammadot(1) >= gammadot(2))
         do i=3,6
             if (gammadot(i) > gammadot(r(1))) then
                 r(i) = r(2)

@@ -3,7 +3,7 @@
 !
 !> Yield locus calculations
 module dmcYld
-    use definitions
+    use utils
     use criRange
     use criMathUtils
     use criUncomment, only: readValue

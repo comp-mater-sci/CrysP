@@ -2,7 +2,7 @@
 
 !> In-memory cache/table of the recent results from the multi-level model.
 module dmcResultTable
-    use definitions
+    use utils
     use criMathUtils
     use alamYLPConstants
 

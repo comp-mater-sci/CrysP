@@ -1,5 +1,5 @@
 module taylor
-    use definitions
+    use utils
     use altayMacroKinematic
     use criMathUtils
     use hardening
@@ -31,30 +31,40 @@ module taylor
     real(DP), parameter     ::  PLUMIN(2,2) = reshape([1._DP,-1._DP, &
                                                        1._DP,-1._DP], shape(PLUMIN)), & 
                                 GETAL = 1.0e6_dp,    &
-                                TOL = 1.0e-6_dp,     &
-                                SQR2 = sqrt(0.5_dp)
+                                TOL = 1.0e-6_dp
+    integer, dimension(5), parameter ::    INITIAL_BASIS_SYSTEMS_FCC = [2,5,6,7,8], &
+                                           INITIAL_BASIS_SYSTEMS_BCC = [1,2,4,5,7]
 contains
-
     subroutine taylor_init(deformation_mechanism, M111,A1)
         integer, intent(out) :: M111  ! < total number of systems in slip system file (glide+twin)
         real(dp), intent(out), allocatable :: A1(:,:)
-        type(DeformationMechanism), intent(in) :: deformation_mechanism
-        integer :: i,j,l,I1
+        integer, dimension(:,:,:), intent(in) :: deformation_mechanism
+        integer :: i,j,k,l,I1
+        real(DP) :: basis(5,5), &
+                    normalized(3,2), &
+                    tensor(3,3)
         
-        M = size(deformation_mechanism%slip_systems)
-        DI1 = deformation_mechanism%basis_systems
+        M = size(deformation_mechanism,3)
+        DI1 = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, M == 12)
         M111=M
-    
+            
         allocate(A1(5,M))
-        forall (i=1:M) A1(:,i) = deformation_mechanism%slip_systems(i)%symmetric_part
-        forall (i=1:M) B1(:,i) = deformation_mechanism%slip_systems(i)%antisymmetric_part
-        B = deformation_mechanism%inverse_basis
+        
+        do i=1,M
+            normalized = normalize(deformation_mechanism(:,:,i))
+            tensor = outer_product(normalized(:,1), normalized(:,2))
+            A1(:,i) = convert_stress_strain_space(tensor) 
+            B1(:,i) = get_rotation(tensor)  
+        end do
+        forall (i=1:5) basis(:,i) = A1(:,DI1(i))
+
+        B = invert(basis)
         
         A2=0.0_DP
         A2(1:5,1:M)=A1(1:5,1:M)
         A2(6:10,M+1:M*2)=A1(1:5,1:M)
     end subroutine   
-
+    
     subroutine taylor_solve(stress_matrix,strain_matrix, TRF, GEWF, IOR, TRFb, GMMAb, NGR, NRL, laml, CC, M11, MacroDefRate,MacroDefState)
         type(DeformationRate),intent(in) :: MacroDefRate
         type(DeformationState),intent(in) :: MacroDefState
@@ -99,7 +109,7 @@ contains
                     do IRL=1,NRL
                         ! Transform relaxation from grain reference frame to macroscopic frame
                         !   ... and now to crystal frame:
-                        mat_buffer = rotateSRTensorTo(RELAXATIONS(:,:,IRL),Tprinc)
+                        mat_buffer = rotateSRTensorTo(real(RELAXATIONS(:,:,IRL),DP),Tprinc)
                         C3 = rotateSRTensorFrom(mat_buffer,TRFb(:,:,IL))
                         RLS=(C3+transpose(C3))*0.5_dp
                         RLA=(C3-transpose(C3))*0.5_dp
@@ -107,13 +117,13 @@ contains
                         B3(L1+2,IRL)=PLUMIN(IL,IRL)*RLA(3,1)/sqr2
                         B3(L1+3,IRL)=PLUMIN(IL,IRL)*RLA(1,2)/sqr2
                         !  Insert the relaxations as columns in A1-matrix
-                        A2(L1+1:L1+5,M2+IRL)=Vector5D(RLS)*PLUMIN(IL,IRL)
+                        A2(L1+1:L1+5,M2+IRL)=convert_stress_strain_space(RLS)*PLUMIN(IL,IRL)
                     end do
                 endif
 
                 ! Calculation of time increment by dividing von Mises equivalent
                 ! strain by von Mises equivalent strain rate
-                B8(1:5,IL)=Vector5D(C2)/MacroDefRate%vMeqStrainRate ! sym.(3,3) -> (5)
+                B8(1:5,IL)=convert_stress_strain_space(C2)/MacroDefRate%vMeqStrainRate ! sym.(3,3) -> (5)
                 BB(L1+1:L1+5)=B8(1:5,IL)
                 K1=M*(IL-1)
 
@@ -174,8 +184,8 @@ contains
             BB8(i)=B8(i,laml)+strain(i)
             spin(i)=-sum(B3(i+ii,1:NRL)*gamr(1:NRL))
         enddo
-        stress_matrix = SymMatrix(spanv) ! (5) -> sym.(3,3)
-        strain_matrix = SymMatrix(strain)  ! (5) -> sym.(3,3)
+        stress_matrix = convert_stress_strain_space(spanv) ! (5) -> sym.(3,3)
+        strain_matrix = convert_stress_strain_space(strain)  ! (5) -> sym.(3,3)
         spin_matrix=0._DP
         spin_matrix(2,3)= spin(1)*sqr2*MacroDefRate%vMeqStrainRate
         spin_matrix(3,1)= spin(2)*sqr2*MacroDefRate%vMeqStrainRate

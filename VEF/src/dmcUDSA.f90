@@ -13,7 +13,7 @@ use dmcEvolutionOutputRecord
 use commonUtils
 use qrsTypes
 use commonConfig
-use definitions
+use utils
 
 implicit none
 
@@ -235,7 +235,7 @@ contains
                 S_t = rotateSRTensorFrom(v%SonA, Mrot)
 
                 ! Total deviatoric strain (Note: the total, not per-step)
-                P_t = vec5D2tens(v%icv%vP_total) ! at the beginning of the increment
+                P_t = convert_stress_strain_space(v%icv%vP_total) ! at the beginning of the increment
                 P_t_end = P_t + v%P_inc_evol ! at the end of the increment
                 P_t = rotateSRTensorFrom(P_t, Mrot)
                 P_t_end = rotateSRTensorFrom(P_t_end, Mrot)

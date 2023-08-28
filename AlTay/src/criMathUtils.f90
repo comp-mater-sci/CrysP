@@ -4,7 +4,7 @@
 !> that are frequently used in various subroutunes in the library.
 !> It also provides some simple functions, e.g. conversions.
 module criMathUtils
-      use definitions
+      use utils
       implicit none
 
 
@@ -389,48 +389,6 @@ contains
         endif
     end function
 
-    !> Convert 5D vector v into second-rank tensor
-    pure function vec5D2tens(v) result(t)
-        real(DP),dimension(5),intent(in)    :: v
-        real(DP),dimension(3,3)             :: t
-        real(DP),parameter ::  root6i = 1.D0/sqrt(6.D0)
-      
-        t(1,1) =  root2i*v(1) + root6i*v(2)
-        t(2,2) = -root2i*v(1) + root6i*v(2)
-        t(3,3) = -root23*v(2)
-        t(2,3) =  root2i*v(3)
-        t(3,1) =  root2i*v(4)
-        t(1,2) =  root2i*v(5)
-        ! Make tensor symmetric
-        t(3,2) = t(2,3)
-        t(1,3) = t(3,1)
-        t(2,1) = t(1,2)
-    end function
-
-    !> Convert second-rank tensor t into 5D vector.
-    !> \remark If the tensor v is not of deviatoric nature,
-    !> the deviator will be extracted and used in calculations.
-    pure function tens2vec5D(t) result(v)
-        real(DP),dimension(3,3),intent(in)   :: t
-        real(DP),dimension(5)                :: v
-        real(DP),dimension(3,3)   :: x !< Temporary
-        real(DP) :: p ! Pressure
-    
-        x = t ! set temporary
-        p = (t(1,1) + t(2,2) + t(3,3)) / 3.D0
-        ! Make the temporary traceless by substracting the pressure
-        if (abs(p) > epsilon(0.D0)) then
-            x(1,1) = t(1,1) - p
-            x(2,2) = t(2,2) - p
-            x(3,3) = t(3,3) - p
-        endif
-        v(1) =  root2i*(x(1,1) - x(2,2))
-        v(2) = -root32*x(3,3)
-        v(3) =  root2*x(2,3)
-        v(4) =  root2*x(3,1)
-        v(5) =  root2*x(1,2)
-    end function
-
     real(DP) pure function average(a)
         real(DP),dimension(:),intent(in) :: a
         integer :: n
@@ -447,4 +405,6 @@ contains
         cross(2)=v1(3)*v2(1)-v1(1)*v2(3)
         cross(3)=v1(1)*v2(2)-v1(2)*v2(1)
     end function
+
+
 end module

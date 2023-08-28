@@ -1,5 +1,5 @@
 module hardening_model_voce
-    use definitions, only: dp
+    use utils, only: dp
     use hardening_model
     use altayConfig
     use logging

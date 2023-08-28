@@ -2,7 +2,7 @@
 
 !> Subclass of NormalizedV5DComp that stores intermediate points the table of cached results
 module dmcAlamEvalCached
-use definitions
+use utils
 use alamYLPConstants
 use alamEval
 use dmcResultTable

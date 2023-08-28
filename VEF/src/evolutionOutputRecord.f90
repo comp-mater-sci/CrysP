@@ -1,7 +1,7 @@
 !> Data types for stress evolution outputs
 module dmcEvolutionOutputRecord
-use definitions
-use criMathUtils, only: root23, vec5D2tens
+use utils
+use criMathUtils
 use dmcIncrementationControl, only: IncrementationControlVariables
 use dmcYLPResult, only: YLPResult
 implicit none
@@ -53,8 +53,8 @@ contains
 
         this%taylor_factor = taylor_factor
 
-        this%A = vec5D2tens(ylp%vA)
-        this%SonA = vec5D2tens(ylp%vSonA)
+        this%A = convert_stress_strain_space(ylp%vA)
+        this%SonA = convert_stress_strain_space(ylp%vSonA)
 
         this%P_inc_evol = De
         this%S_evol = Se

@@ -173,8 +173,8 @@ contains
 
             if (info == VEF_ERROR) exit
             !
-            SonA = vec5D2tens(ylp_result%vSonA)
-            SmIdent = vec5D2tens(ylp_result%vSonAn) ! stress mode for found strain mode
+            SonA = convert_stress_strain_space(ylp_result%vSonA)
+            SmIdent = convert_stress_strain_space(ylp_result%vSonAn) ! stress mode for found strain mode
 
             ! Rotate back to the "tensile test" coordinate system
             D_t = rotateSRTensorFrom(D, Mrot)

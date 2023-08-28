@@ -1,7 +1,8 @@
 module hardening_model_pebp_loop
-    use definitions
+    use utils
     use parameters
     use hardening_model_dsh
+    use slip_systems
     
 
       IMPLICIT NONE
@@ -9,12 +10,7 @@ module hardening_model_pebp_loop
 
       PUBLIC :: HardeningModelPEBPLoop
 
-      !NormDir(s,1:3): normalized slip plane normal vector of slip system s
-       real(DP), dimension(24,3), parameter    ::  NORMDIR = reshape([ 0.D0,n2,p2,0.D0,p2,n2,0.D0,p2,n2,0.D0,n2,p2,pd6,n6,n6,nd6,p6,p6,nd6,p6,p6,pd6,n6,n6,    &
-                                                                    p2,0.D0,n2,n2,0.D0,p2,p2,0.D0,n2,n2,0.D0,p2,n6,pd6,n6,p6,nd6,p6,n6,pd6,n6,p6,nd6,p6,    &
-                                                                    n2,p2,0.D0,n2,p2,0.D0,n2,p2,0.D0,n2,p2,0.D0,n6,n6,pd6,n6,n6,pd6,n6,n6,pd6,n6,n6,pd6], shape(NORMDIR))
-
-
+    !DSH model assuming slip is carried by dislocation loops with equal slip realized by edge and screw segments.
     type, extends(HardeningModelDSH) :: HardeningModelPEBPLoop
     contains
         procedure :: init           => pebp_loop_init
@@ -26,12 +22,16 @@ module hardening_model_pebp_loop
             class(HardeningModelPEBPLoop), intent(inout) :: this
             type(Parameter), allocatable, intent(in) :: params(:)
             integer :: s,i
+            real(DP) :: normdir(24,3)
+            
+
+            normdir = transpose(normalize(BCC24(:,1,:)))
 
             call dsh_init(this, params)
               !Calculate "Wall-effectivity"-matrices
           do s=1,24
             do i=1,6
-              this%eff(s,i)=DOT_PRODUCT( NormDir(s,:) , CBBnormal(i,:) )
+              this%eff(s,i)=DOT_PRODUCT(NormDir(s,:) , CBBnormal(i,:) )
               if (abs(this%eff(s,i)) >= 0.99999_DP) then !treat as "1" or "-1"
                   this%eff(s,i)=0._DP
               else

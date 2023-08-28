@@ -4,7 +4,7 @@
 module dmcStrainDrivenStep
 use criRange
 use criMathUtils
-use definitions
+use utils
 use dmcSubsteppingConfig
 use altayConfig
 use altaySub

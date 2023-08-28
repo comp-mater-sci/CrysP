@@ -9,7 +9,7 @@ module dmcBasicModule
     use dmcAbstractModule
     use altayConfig, only: altayConfigData
     use commonConfig
-    use definitions
+    use utils
     use hardening
     use parameters
     use logging
@@ -216,12 +216,13 @@ contains
       logical                       :: dummy, dummy2
       integer                       :: i, input_type
       character(len=max_pathlen) :: root, ext
-      character(:), allocatable :: slip_systems
+      character(:), allocatable :: slip
       character(5) :: buffer
 
       type(MapItem),dimension(2) :: model_types = [MapItem('ALAMEL', modelAlamel), &
                                                    MapItem('FCTaylor', modelFCTaylor)]
-           info = ERR_IO
+        character(*), parameter :: PROC_NAME = 'readAltayConfigSection'
+            info = ERR_IO
            model_id = -1
            dm_id = -1
             ! Read input texture file name
@@ -235,10 +236,19 @@ contains
             
             dummy2 = readValue(cnfunit, dummy)
             read(cnfunit, '(A)') buffer
-            slip_systems = buffer
+            slip = buffer
 
-            cnf%deformation_mechanism = get_deformation_mechanism(slip_systems)
-                   
+            select case (slip)
+                case ('fcc12')
+                    cnf%deformation_mechanism = FCC12
+                case ('bcc24')
+                    cnf%deformation_mechanism = BCC24
+                case ('bcc48')
+                    cnf%deformation_mechanism = BCC48
+                case default
+                    call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid slip system identifier')
+            end select
+
             ! Process advanced microstructure characterization
             use_default_microstructure = .true.
             if (.not. readValue(cnfunit, use_default_microstructure)) return
@@ -260,7 +270,7 @@ contains
                 return
             endif
 
-            call parameter_set(cnf%hardening_parameters, 'n_slip_systems', size(cnf%deformation_mechanism%slip_systems))
+            call parameter_set(cnf%hardening_parameters, 'n_slip_systems', size(cnf%deformation_mechanism,3))
             ! the keyword is mapped to a proper model_id, we can instantly set it.
             call setModelType(cnf,model_id,info)
             if (info /= VEF_OK) return

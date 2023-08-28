@@ -2,7 +2,7 @@
 ! Provide modules: MKL_RCI_TYPE and MKL_RCI
 include 'mkl_rci.f90'
 module nllsTR
-    use definitions
+    use utils
     use mkl_rci
 
       !> Solution at given point. It consists of: 1) the point, 2) function value, and 3) Jacobi matrix.

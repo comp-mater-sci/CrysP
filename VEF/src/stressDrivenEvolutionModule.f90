@@ -3,7 +3,7 @@
 !> Implementation of a DMC computiational module that allows stress-driven evolution of
 !> material state.
 module dmcStressDrivenEvolutionModule
-use definitions
+use utils
 use criMathUtils
 use dmcYLPResult
 use dmcStressDrivenModule
@@ -161,7 +161,7 @@ contains
             case(scalingStrainTensorComponent)
                 ! Get total plastic strain in appropriate reference frame
                 ! and check the tensor component of interest.
-                X_tmp = vec5D2tens(icv%vP_step)
+                X_tmp = convert_stress_strain_space(icv%vP_step)
                 if (present(rotmat)) X_tmp = rotateSRTensorFrom(X_tmp ,rotmat)
                 X_tmp_voigt = Mat33ToVec6(X_tmp)
                 stop_control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
@@ -224,14 +224,14 @@ contains
                 !
                 ! Calculate strain increment for material state evolution
                 vDe = ylp%vA * scaling_factor
-                tmp_record%P_inc_evol = vec5D2tens(vDe)
+                tmp_record%P_inc_evol = convert_stress_strain_space(vDe)
                 ! Update material state
                 call makeTextureUpdateStep(tmp_record%P_inc_evol, &
                                            tmp_record%S_evol, &
                                            taylor_factor,&
                                            this%output%outputRequest, info)
                 if (info /= 0) exit !< \fixme Literal constant in makeTextureUpdateStep
-                vSe = tens2vec5D(tmp_record%S_evol)
+                vSe = convert_stress_strain_space(tmp_record%S_evol)
             else
                 vDe = 0.D0
                 vSe = 0.D0
