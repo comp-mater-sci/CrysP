@@ -41,7 +41,6 @@ contains
         integer, dimension(:,:,:), intent(in) :: deformation_mechanism
         integer :: i,j,k,l,I1
         real(DP) :: basis(5,5), &
-                    antisym(3,3), &
                     normalized(3,2), &
                     tensor(3,3)
         
@@ -53,55 +52,19 @@ contains
         
         do i=1,M
             normalized = normalize(deformation_mechanism(:,:,i))
-            forall (j=1:3,k=1:3) tensor(j,k) = normalized(j,1) * normalized(k,2)
+            tensor = outer_product(normalized(:,1), normalized(:,2))
             A1(:,i) = convert_stress_strain_space(tensor) 
-            antisym = (tensor - transpose(tensor)) / 2._DP
-            B1(:,i) = [-antisym(3,2), -antisym(1,3), -antisym(2,1)] !This conversion can likely be replaced by a more intuitive one
+            B1(:,i) = get_rotation(tensor)  
         end do
         forall (i=1:5) basis(:,i) = A1(:,DI1(i))
 
-        B = inv(basis)
+        B = invert(basis)
         
         A2=0.0_DP
         A2(1:5,1:M)=A1(1:5,1:M)
         A2(6:10,M+1:M*2)=A1(1:5,1:M)
     end subroutine   
-
-    ! Returns the inverse of a matrix calculated by finding the LU
-    ! decomposition.  Depends on LAPACK.
-    function inv(A) result(Ainv)
-      real(dp), dimension(:,:), intent(in) :: A
-      real(dp), dimension(size(A,1),size(A,2)) :: Ainv
-                                                                          
-      real(dp), dimension(size(A,1)) :: work  ! work array for LAPACK
-      integer, dimension(size(A,1)) :: ipiv   ! pivot indices
-      integer :: n, info
     
-      ! External procedures defined in LAPACK
-      external DGETRF
-      external DGETRI
-                                                                         
-      ! Store A in Ainv to prevent it from being overwritten by LAPACK
-      Ainv = A 
-      n = size(A,1)
-                                                                         
-      ! DGETRF computes an LU factorization of a general M-by-N matrix A
-      ! using partial pivoting with row interchanges.
-      call DGETRF(n, n, Ainv, n, ipiv, info)
-                                                                         
-      if (info /= 0) then
-         stop 'Matrix is numerically singular!'
-      end if
-                                                                         
-      ! DGETRI computes the inverse of a matrix using the LU factorization
-      ! computed by DGETRF.
-      call DGETRI(n, Ainv, n, ipiv, work, n, info)
-                                                                         
-      if (info /= 0) then
-         stop 'Matrix inversion failed!'
-      end if
-    end function inv 
-
     subroutine taylor_solve(stress_matrix,strain_matrix, TRF, GEWF, IOR, TRFb, GMMAb, NGR, NRL, laml, CC, M11, MacroDefRate,MacroDefState)
         type(DeformationRate),intent(in) :: MacroDefRate
         type(DeformationState),intent(in) :: MacroDefState
