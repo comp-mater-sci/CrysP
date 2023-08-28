@@ -7,7 +7,7 @@ module slip_systems
 
     !Definition of slip system families in terms of miller indices
     !Gfortran does not accept the clean array syntax
-    integer, parameter :: SLIP_SYSTEMS_111(3,2,12) = reshape([1,1,1,    1,-1,0,     &
+    integer, parameter :: SLIP_SYSTEMS_FCC_111(3,2,12) = reshape([1,1,1,    1,-1,0,     &
                                                               1,1,1,    0,1,-1,     &
                                                               1,1,1,    1,0,-1,     &
                                                               -1,1,1,   1,1,0,     &
@@ -18,8 +18,8 @@ module slip_systems
                                                               1,1,-1,   1,0,1,     &
                                                               1,-1,1,   1,1,0,     &
                                                               1,-1,1,   0,1,1,     &
-                                                              1,-1,1,   1,0,-1], shape(SLIP_SYSTEMS_111)),   &
-                          SLIP_SYSTEMS_110(3,2,12) = reshape([0,1,-1,   1,1,1,   &
+                                                              1,-1,1,   1,0,-1], shape(SLIP_SYSTEMS_FCC_111)),   &
+                          SLIP_SYSTEMS_BCC_110(3,2,12) = reshape([0,1,-1,   1,1,1,   &
                                                               0,1,-1,   -1,1,1, &
                                                               -1,0,1,   1,1,1,    &
                                                               -1,0,1,   1,-1,1,    &
@@ -30,8 +30,8 @@ module slip_systems
                                                               1,0,1,    -1,-1,1,     &
                                                               1,0,1,    -1,1,1,    &
                                                               -1,-1,0,  -1,1,1,    &
-                                                              1,1,0,    1,-1,1], shape(SLIP_SYSTEMS_110)),    &
-                          SLIP_SYSTEMS_112(3,2,12) = reshape([2,-1,-1,  1,1,1,     &
+                                                              1,1,0,    1,-1,1], shape(SLIP_SYSTEMS_BCC_110)),    &
+                          SLIP_SYSTEMS_BCC_112(3,2,12) = reshape([2,-1,-1,  1,1,1,     &
                                                               -1,2,-1,  1,1,1,     &
                                                               -1,-1,2,  1,1,1,    &
                                                               -2,1,-1,  -1,-1,1,    &
@@ -42,8 +42,8 @@ module slip_systems
                                                               1,-1,2,   -1,1,1,   &
                                                               2,1,-1,   1,-1,1,    &
                                                               -1,-2,-1, 1,-1,1,     &
-                                                              -1,1,2,   1,-1,1], shape(SLIP_SYSTEMS_112)),    &
-                          SLIP_SYSTEMS_123(3,2,24) = reshape([-3,1,2,   1,1,1,     &
+                                                              -1,1,2,   1,-1,1], shape(SLIP_SYSTEMS_BCC_112)),    &
+                          SLIP_SYSTEMS_BCC_123(3,2,24) = reshape([-3,1,2,   1,1,1,     &
                                                               2,-3,1,   1,1,1,     &
                                                               1,2,-3,   1,1,1,     &
                                                               -3,2,1,   1,1,1,     &
@@ -66,14 +66,14 @@ module slip_systems
                                                               1,-2,-3,  1,-1,1,   &
                                                               -3,-2,1,  1,-1,1,   &
                                                               1,3,2,    1,-1,1,     &
-                                                              2,-1,-3,  1,-1,1], shape(SLIP_SYSTEMS_123)), &
+                                                              2,-1,-3,  1,-1,1], shape(SLIP_SYSTEMS_BCC_123)), &
                           RELAXATIONS(3,3,2) = reshape([0, 0, 0, &
                                                         0, 0, 0, &
                                                         1, 0, 0, &
                                                         0, 0, 0, &
                                                         0, 0, 0, &
                                                         0, 1, 0], shape(RELAXATIONS)), &
-                          FCC12(3,2,12) = SLIP_SYSTEMS_111, &
-                          BCC24(3,2,24) = reshape([SLIP_SYSTEMS_110, SLIP_SYSTEMS_112], shape(BCC24)), &
-                          BCC48(3,2,48) = reshape([BCC24, SLIP_SYSTEMS_123], shape(BCC48))
+                          FCC12(3,2,12) = SLIP_SYSTEMS_FCC_111, &
+                          BCC24(3,2,24) = reshape([SLIP_SYSTEMS_BCC_110, SLIP_SYSTEMS_BCC_112], shape(BCC24)), &
+                          BCC48(3,2,48) = reshape([BCC24, SLIP_SYSTEMS_BCC_123], shape(BCC48))
 end module

@@ -11,7 +11,7 @@ module hardening_model_dsh
 
     real(DP), parameter ::  MINFRAC = 2.0D-3,   &
                             LOWFRAC = 10.0D-3
-    real(DP), dimension(6,3), parameter, public :: CBBNORMAL = transpose(SLIP_SYSTEMS_110(:,1,1:12:2)/SQR2)
+    real(DP), dimension(6,3), parameter, public :: CBBNORMAL = transpose(SLIP_SYSTEMS_BCC_110(:,1,1:12:2)/SQR2)
 
     character(*), parameter :: MOD_NAME = 'hardening_model_dsh'
 
@@ -249,20 +249,14 @@ contains
         !>Identify currently generated and non-currently generated walls
         SUMabsGamDot = sum(abs(slip_rates))
         SUMabsGam = SUMabsGamDot * time
-
         if (SUMabsGam < epsilon(0._DP)) return
-
-        !Sum of slip rates for all 110-planes
-        forall (i=1:6) gammadot(i) = sum(abs(slip_rates(2*i-1:2*i)))
-
-        !forall (i=1:6) GAMMAdot(i) = sum(abs(slip_rates(2*i-1:2*i)))   
+        forall (i=1:6) gammadot(i) = sum(abs(slip_rates(2*i-1:2*i))) !Sum of slip rates for all 110-planes
         gamma = GAMMAdot * time
 
         !r(1) = plane with largest slip
         !r(2) = plane with 2nd largest slip
         !r(3:6) = remaining planes (unordered)
         r(1:2) = merge([1,2],[2,1], gammadot(1) >= gammadot(2))
-
         do i=3,6
             if (gammadot(i) > gammadot(r(1))) then
                 r(i) = r(2)
