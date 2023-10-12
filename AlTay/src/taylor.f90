@@ -65,12 +65,12 @@ contains
         A2(6:10,M+1:M*2)=A1(1:5,1:M)
     end subroutine   
     
-    subroutine taylor_solve(stress_matrix,strain_matrix, TRF, GEWF, IOR, TRFb, GMMAb, NGR, NRL, laml, CC, M11, MacroDefRate,MacroDefState)
+    subroutine taylor_solve(stress_matrix,strain_matrix, GEWF, IOR, TRF, GMMAb, NGR, NRL, laml, CC, M11, MacroDefRate,MacroDefState)
         type(DeformationRate),intent(in) :: MacroDefRate
         type(DeformationState),intent(in) :: MacroDefState
         integer, intent(in) :: laml,IOR, NGR, NRL, M11
         real(dp), intent(out) :: stress_matrix(3,3),strain_matrix(3,3)
-        real(dp), intent(in) :: TRFb(3,3,2),TRF(3,3), GMMab(2)
+        real(dp), intent(in) :: TRF(3,3,2), GMMab(2)
         real(dp), intent(inout) :: CC(2,M11),GEWF
         real(dp),dimension(5):: strain, spin
         real(dp) :: TPrinc(3,3)
@@ -104,13 +104,13 @@ contains
             do IL=1,NGR
                 L1=5*(IL-1)
 
-                C2 = rotateSRTensorFrom(MacroDefRate%VelGrad,TRFb(:,:,IL))
+                C2 = rotateSRTensorFrom(MacroDefRate%VelGrad,TRF(:,:,IL))
                 if (NRL /= 0) then
                     do IRL=1,NRL
                         ! Transform relaxation from grain reference frame to macroscopic frame
                         !   ... and now to crystal frame:
                         mat_buffer = rotateSRTensorTo(real(RELAXATIONS(:,:,IRL),DP),Tprinc)
-                        C3 = rotateSRTensorFrom(mat_buffer,TRFb(:,:,IL))
+                        C3 = rotateSRTensorFrom(mat_buffer,TRF(:,:,IL))
                         RLS=(C3+transpose(C3))*0.5_dp
                         RLA=(C3-transpose(C3))*0.5_dp
                         B3(L1+1,IRL)=PLUMIN(IL,IRL)*RLA(2,3)/sqr2
@@ -212,11 +212,11 @@ contains
         TAURLP(1:NACTIV)=TAUR1(INDACT(1:NACTIV)+jj)
 
         !Transform stress from local frame (Scrys) to sample frame (Ssam)
-        stress_matrix = rotateSRTensorTo(stress_matrix,TRF)
+        stress_matrix = rotateSRTensorTo(stress_matrix,TRF(:,:,laml))
         !Transform relaxation strain rate tensor from local frame to sample frame
-        strain_matrix = rotateSRTensorTo(strain_matrix,TRF)
+        strain_matrix = rotateSRTensorTo(strain_matrix,TRF(:,:,laml))
         !Transform relaxation spin tensor from local frame to sample frame
-        spin_matrix = rotateSRTensorTo(spin_matrix,TRF)
+        spin_matrix = rotateSRTensorTo(spin_matrix,TRF(:,:,laml))
     end subroutine
 
     subroutine taylor_update_state(IOR,TOTGAMdot,WorkRate,MacroDefRate,CC,M111,TRF,C2,XM)
