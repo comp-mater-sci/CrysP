@@ -21,11 +21,11 @@ module taylor
     integer  :: M, &         ! number of deformation mechanisms
                 NRL,   &
                 NGL, &
-                NACTIV, &
+                n_active_slip_systems, &
                 NGR
     real(dp) :: B1(3,96),B(5,5),B2(6,96),G(96),spin_matrix(3,3),SLIPLP(8),TAURLP(8),BB8(5), A2(10,194)
-    real(dp), parameter :: TLXX=5.0e-6_dp
-    integer :: DI1(5), INDACT(8),INDLP(8)
+    real(dp), parameter :: TLslip_rates=5.0e-6_dp
+    integer :: DI1(5), ind_active_slip_systems(8)
     
     character(*), parameter ::  MOD_NAME = 'taylor'
     real(DP), parameter     ::  PLUMIN(2,2) = reshape([1._DP,-1._DP, &
@@ -75,7 +75,7 @@ contains
         real(dp),dimension(5):: strain, spin
         real(dp) :: TPrinc(3,3)
         real(dp) :: C2(3,3), rls(3,3), rla(3,3), C3(3,3), spanv(5), DTAU(194), STRSS(10), TAUR(194)
-        real(dp), save :: B3(10,3)=0.0_dp, XX(194),BB(10),CCC(2,194),DTAU1(194),TAUR1(194),B8(5,2),UBUF(10),GAMR(2)
+        real(dp), save :: B3(10,3)=0.0_dp, slip_rates(194),BB(10),CCC(2,194),DTAU1(194),TAUR1(194),B8(5,2),UBUF(10),GAMR(2)
         real(DP) :: mat_buffer(3,3), UU(5*NGR, 5*NGR)
         integer :: M12,N,M2,IL,L1,IRL,I,K1,IG,JJ,II, DI(10)
         integer, save :: IGrElm
@@ -139,7 +139,7 @@ contains
                      crss = CCC, &
                      inverse_basis = UU(1:N,1:N), &
                      basis_systems = DI(1:N), &
-                     slip = XX, &
+                     slip = slip_rates, &
                      stress = UBUF, &
                      rss = Taur, &
                      overstress = DTAU)
@@ -158,16 +158,16 @@ contains
                          crss = CCC(1:2,1:M12), &
                          inverse_basis = UU(1:N,1:N), &
                          basis_systems = DI(1:N), &
-                         slip = XX(1:M12), &
+                         slip = slip_rates(1:M12), &
                          stress = STRSS(1:N), &
                          rss = Taur(1:M12), &
                          overstress = DTAU(1:M12))
 
                 ! GAMR will contain the relaxed shears:
-                gamr(1:NRL)=XX(M2+1:M2+NRL)
+                gamr(1:NRL)=slip_rates(M2+1:M2+NRL)
             endif
             ! Check whether all grains deform
-            if (all([(sum(abs(xx(1+M*IG:M+M*IG))),IG=0,NGR-1)]>=TOLERANCE)) then
+            if (all([(sum(abs(slip_rates(1+M*IG:M+M*IG))),IG=0,NGR-1)]>=TOLERANCE)) then
                 DTAU1=DTAU
                 TAUR1=TAUR
                 UBUF=STRSS
@@ -196,20 +196,19 @@ contains
 
         ! note that if one of the grains does not deform at all, the stress and the active slip systems
         ! of the full constraint solution are used.
-        NACTIV = 0
+        n_active_slip_systems = 0
         do i=1,M
             if (abs(DTAU1(i+jj)) > TOL) cycle
-            NACTIV=NACTIV+1
-            INDACT(NACTIV)=i
+            n_active_slip_systems=n_active_slip_systems+1
+            ind_active_slip_systems(n_active_slip_systems)=i
         enddo
-        if (NACTIV > 8) then
+        if (n_active_slip_systems > 8) then
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Too many active slip systems.')
-        elseif (NACTIV == 0) then
+        elseif (n_active_slip_systems == 0) then
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'No active slip systems found.')
         endif
-        INDLP(1:NACTIV)=INDACT(1:NACTIV)
-        SLIPLP(1:NACTIV)=XX(INDACT(1:NACTIV)+jj)
-        TAURLP(1:NACTIV)=TAUR1(INDACT(1:NACTIV)+jj)
+        SLIPLP(1:n_active_slip_systems)=slip_rates(ind_active_slip_systems(1:n_active_slip_systems)+jj)
+        TAURLP(1:n_active_slip_systems)=TAUR1(ind_active_slip_systems(1:n_active_slip_systems)+jj)
 
         !Transform stress from local frame (Scrys) to sample frame (Ssam)
         stress_matrix = rotateSRTensorTo(stress_matrix,TRF)
@@ -235,7 +234,7 @@ contains
         real(dp) :: rndm,x
         real(dp), parameter :: ddt=1.0_DP
 
-        call resolve_taylor_ambiguity(M111,GAMdot(1:M111),SGNN(1:M111),MacroDefRate,NACTIV,SLIPLP,TAURLP,INDACT,INDLP,BB8,XM)
+        call resolve_taylor_ambiguity(M111,GAMdot(1:M111),SGNN(1:M111),MacroDefRate,n_active_slip_systems,SLIPLP,TAURLP,ind_active_slip_systems,BB8,XM)
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call hardening_update_state(IOR, ddt, GAMdot)
         TOTGAMdot=sum(abs(GAMdot(1:M111)))
         ! Calculate RCcryst: the rigid body spin in the crystal frame
