@@ -74,11 +74,12 @@ contains
         real(dp), intent(inout) :: CC(2,M11),GEWF
         real(dp),dimension(5):: strain, spin
         real(dp) :: TPrinc(3,3)
-        real(dp) :: C2(3,3), rls(3,3), rla(3,3), C3(3,3), spanv(5), DTAU(194), STRSS(10), TAUR(194)
+        real(dp) :: C2(3,3), rls(3,3), rla(3,3), C3(3,3), spanv(5)
         real(dp), save :: B3(10,3)=0.0_dp, slip_rates(194),BB(10),CCC(2,194),DTAU1(194),TAUR1(194),B8(5,2),UBUF(10),GAMR(2)
         real(DP) :: mat_buffer(3,3), UU(5*NGR, 5*NGR)
         integer :: M12,N,M2,IL,L1,IRL,I,K1,IG,JJ,II, DI(10)
         integer, save :: IGrElm
+        logical :: full_constraints
 
         character(*), parameter :: PROC_NAME = 'pancak2'
 
@@ -86,6 +87,7 @@ contains
         N=5*NGR
         M2=NGR*M
         M12=NGR*M+2
+        full_constraints = (NRL == 0)
         if (laml == 1) then
 
             ! Updating of microstructure
@@ -131,39 +133,35 @@ contains
                 CCC(:,1+K1:M+K1) = hardening_get_crss(IOR+IL-1, GMMab(IL))
                 UU(L1+1:L1+5,L1+1:L1+5)=B
             enddo
-            ! Full constraints calculation
-            call simplex_solve(taylor_coeffs = A2(1:N, 1:M11), &
-                     strain = BB, &
-                     crss = CCC, &
-                     inverse_basis = UU(1:N,1:N), &
-                     basis_systems = DI(1:N), &
-                     slip = slip_rates, &
-                     stress = UBUF, &
-                     rss = Taur, &
-                     overstress = DTAU)
 
-            DTAU1=DTAU
-            TAUR1=TAUR
-
-            if (NRL /= 0) then
+            if (.not. full_constraints) then
                 call simplex_solve(taylor_coeffs = A2(1:N,1:M12), &
                          strain = BB(1:N), &
                          crss = CCC(1:2,1:M12), &
                          inverse_basis = UU(1:N,1:N), &
                          basis_systems = DI(1:N), &
                          slip = slip_rates(1:M12), &
-                         stress = STRSS(1:N), &
-                         rss = Taur(1:M12), &
-                         overstress = DTAU(1:M12))
+                         stress = UBUF(1:N), &
+                         rss = Taur1(1:M12), &
+                         overstress = DTAU1(1:M12))
 
-                ! GAMR will contain the relaxed shears:
+                !GAMR will contain the relaxed shears:
                 gamr(1:NRL)=slip_rates(M2+1:M2+NRL)
-            endif
-            ! Check whether all grains deform
-            if (all([(sum(abs(slip_rates(1+M*IG:M+M*IG))),IG=0,NGR-1)]>=TOLERANCE)) then
-                DTAU1=DTAU
-                TAUR1=TAUR
-                UBUF=STRSS
+
+                !If not all grains deform, we must calculate the full constraints solution
+                full_constraints = (.not. all([(sum(abs(slip_rates(1+M*IG:M+M*IG))),IG=0,1)]>=TOLERANCE))
+            end if
+            if (full_constraints) then
+                ! Full constraints calculation
+                call simplex_solve(taylor_coeffs = A2(1:N, 1:M11), &
+                     strain = BB, &
+                     crss = CCC, &
+                     inverse_basis = UU(1:N,1:N), &
+                     basis_systems = DI(1:N), &
+                     slip = slip_rates, &
+                     stress = UBUF, &
+                     rss = Taur1, &
+                     overstress = DTAU1)
             endif
         endif
         ! From here on, output is produced for grain number "laml"
