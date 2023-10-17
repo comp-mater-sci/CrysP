@@ -145,9 +145,7 @@ contains
             DTAU1=DTAU
             TAUR1=TAUR
 
-            if (NRL == 0) then
-                STRSS=UBUF
-            else
+            if (NRL /= 0) then
                 call simplex_solve(taylor_coeffs = A2(1:N,1:M12), &
                          strain = BB(1:N), &
                          crss = CCC(1:2,1:M12), &
