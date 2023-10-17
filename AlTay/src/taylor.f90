@@ -3,7 +3,7 @@ module taylor
     use altayMacroKinematic
     use criMathUtils
     use hardening
-    use altaySliprate
+    use taylor_ambiguity
     use altayConfig, only: astate
     use logging
     use simplex
@@ -235,7 +235,7 @@ contains
         real(dp) :: rndm,x
         real(dp), parameter :: ddt=1.0_DP
 
-        call SLIPRAT(M111,GAMdot(1:M111),SGNN(1:M111),MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
+        call resolve_taylor_ambiguity(M111,GAMdot(1:M111),SGNN(1:M111),MacroDefRate,NACTIV,SLIPLP,TAURLP,INDACT,INDLP,BB8,XM)
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call hardening_update_state(IOR, ddt, GAMdot)
         TOTGAMdot=sum(abs(GAMdot(1:M111)))
         ! Calculate RCcryst: the rigid body spin in the crystal frame
