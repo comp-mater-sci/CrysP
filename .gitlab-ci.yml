@@ -11,10 +11,11 @@
 gcc:
   image: gcc
   script: |
-    wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
-    echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+    #wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+    #echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+    echo "deb [allow-insecure=yes] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
     apt-get update
-    apt-get install -y \
+    apt-get install --allow-unauthenticated -y \
     intel-oneapi-mkl-devel \
     cmake \
     python3-pytest python3-pandas python3-numpy
@@ -28,10 +29,11 @@ gcc:
 gcc48:
   image: gcc
   script: |
-    wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
-    echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+    #wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+    #echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+    echo "deb [allow-insecure=yes] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
     apt-get update
-    apt-get install -y \
+    apt-get install --allow-unauthenticated -y \
     intel-oneapi-mkl-devel \
     cmake \
     python3-pytest python3-pandas python3-numpy
@@ -43,10 +45,11 @@ gcc48:
     pytest --update=logout -v -k bcc48
 
 ifort:
-  image: intel/oneapi-hpckit:devel-ubuntu22.04
+  image: intel/oneapi-hpckit:latest
   script: |
-    apt-get update
-    apt-get install -y \
+    apt-get update --allow-insecure-repositories
+    apt-get install --allow-unauthenticated -y \
+    cmake \
     python3-pip
     pip install pandas pytest numpy
     export PATH=${PATH}:${PWD}/VEF/bin
@@ -56,10 +59,11 @@ ifort:
     pytest --update=logout -v -k fcc12 -k bcc24
 
 ifort48:
-  image: intel/oneapi-hpckit:devel-ubuntu22.04
+  image: intel/oneapi-hpckit:latest
   script: |
-    apt-get update
-    apt-get install -y \
+    apt-get update --allow-insecure-repositories
+    apt-get install --allow-unauthenticated -y \
+    cmake \
     python3-pip
     pip install pandas pytest numpy
     export PATH=${PATH}:${PWD}/VEF/bin
@@ -71,8 +75,8 @@ ifort48:
 ifx:
   image: intel/oneapi-hpckit:latest
   script: |
-    apt-get update
-    apt-get install -y \
+    apt-get update --allow-insecure-repositories
+    apt-get install --allow-unauthenticated -y \
     cmake \
     python3-pip
     pip install pandas pytest numpy
@@ -85,8 +89,8 @@ ifx:
 ifx48:
   image: intel/oneapi-hpckit:latest
   script: |
-    apt-get update
-    apt-get install -y \
+    apt-get update --allow-insecure-repositories
+    apt-get install --allow-unauthenticated -y \
     cmake \
     python3-pip
     pip install pandas pytest numpy
