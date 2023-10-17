@@ -131,10 +131,8 @@ contains
                 CCC(:,1+K1:M+K1) = hardening_get_crss(IOR+IL-1, GMMab(IL))
                 UU(L1+1:L1+5,L1+1:L1+5)=B
             enddo
-            !Suppress the relaxations in a first call of the TBH program
-            if (NRL /= 0) CCC(1:2,M2+1:M12)=GETAL
             ! Full constraints calculation
-            call simplex_solve(taylor_coeffs = A2(1:N, 1:M12), &
+            call simplex_solve(taylor_coeffs = A2(1:N, 1:M11), &
                      strain = BB, &
                      crss = CCC, &
                      inverse_basis = UU(1:N,1:N), &
@@ -150,9 +148,6 @@ contains
             if (NRL == 0) then
                 STRSS=UBUF
             else
-                do IRL=1,NRL
-                    CCC(1:2,M2+IRL)=0.0_DP
-                end do
                 call simplex_solve(taylor_coeffs = A2(1:N,1:M12), &
                          strain = BB(1:N), &
                          crss = CCC(1:2,1:M12), &
