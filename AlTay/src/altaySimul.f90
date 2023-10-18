@@ -108,10 +108,10 @@ module altaySimul
 
             call Update_DeformationState(MacroDefRate,MacroDefState,info)
             call UPDATC(CIJ,MacroDefState%IncrDefGrad_inverse)
-            call GETANG(CIJ,GAXES,TG)
+            call GETANG(CIJ,GAXES,TG(:,:,1))
 
             if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                  call DYNFIL_setGlobal(MacroDefState%TotalDefGrad,GAXES,CIJ,TG)
+                  call DYNFIL_setGlobal(MacroDefState%TotalDefGrad,GAXES,CIJ,TG(:,:,1))
 !
 !         Added for lamel model:
 !         Organisation reading temporary texture file,
