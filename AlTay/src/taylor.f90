@@ -81,7 +81,7 @@ contains
         integer, save :: IGrElm
         logical :: full_constraints
 
-        character(*), parameter :: PROC_NAME = 'pancak2'
+        character(*), parameter :: PROC_NAME = 'taylor_solve'
 
         if (IOR == 1) IGrElm=0
         N=5*NGR
@@ -89,15 +89,11 @@ contains
         M12=NGR*M+2
         full_constraints = (NRL == 0)
         if (laml == 1) then
-
-            ! Updating of microstructure
-            IGrElm=IGrElm+1
-            if (IGrElm > NGrElm) IGrElm=1
-            if (NGR == 1) then
-                Tprinc = unit_sr_Matrix
-            else
+            !Update microstructure
+            if (.not. full_constraints) then
+                IGrElm = merge(1, IGrElm + 1, IGrElm == NGrElm)
                 call cluster1(IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
-            endif
+            end if 
             CCC(1:2,M2+1:M12)=0.0_DP
             UU = 0.0_dp
             DI(1:5) = DI1
@@ -107,11 +103,11 @@ contains
                 L1=5*(IL-1)
 
                 C2 = rotateSRTensorFrom(MacroDefRate%VelGrad,TRFb(:,:,IL))
-                if (NRL /= 0) then
-                    do IRL=1,NRL
+                if (.not. full_constraints) then
+                    do IRL=1,2
                         ! Transform relaxation from grain reference frame to macroscopic frame
-                        !   ... and now to crystal frame:
                         mat_buffer = rotateSRTensorTo(real(RELAXATIONS(:,:,IRL),DP),Tprinc)
+                        !   ... and now to crystal frame:
                         C3 = rotateSRTensorFrom(mat_buffer,TRFb(:,:,IL))
                         RLS=(C3+transpose(C3))*0.5_dp
                         RLA=(C3-transpose(C3))*0.5_dp
@@ -148,7 +144,7 @@ contains
                 !GAMR will contain the relaxed shears:
                 gamr(1:NRL)=slip_rates(M2+1:M2+NRL)
 
-                !If not all grains deform, we must calculate the full constraints solution
+                !If not all grains deform, we take the full constraints solution
                 full_constraints = (.not. all([(sum(abs(slip_rates(1+M*IG:M+M*IG))),IG=0,1)]>=TOLERANCE))
             end if
             if (full_constraints) then
