@@ -68,8 +68,8 @@ module altaySimul
                    NRL,&         !< number of relaxations
                    laml,laml1, &
                    IOR,ISTP,NPOINT, info, NFILE, i,j,l,ifil4
-        real(DP) :: Ssam(3,3), CIJ(3,3), &
-                    GEWF, RHOSS(3,3,2),TG(3,3,2),gmm1, &
+        real(DP) :: Ssam(3,3), TG(3,3), CIJ(3,3), &
+                    GEWF, RHOSS(3,3,2),TGb(3,3,2),gmm1, &
                     GAXES(3)                                        ! half axes a,b,c, of the grain shape ellipsoid
         real(DP), save :: C2(3,3),ssqgx,CC(2,96)
         real(DP) :: TOTGEW, SHsam(3,3),RHOSm(3,3)
@@ -132,7 +132,7 @@ module altaySimul
                 do L=laml,laml1
                     if (ifil4 == NPOINT) exit
                     ifil4=ifil4+1
-                    call DYNFIL_getGrain(ifil4,TRF(1:3,1:3,L),GEWF,GMMAb(L),TG(1:3,1:3,L),RHOSS(1:3,1:3,L))
+                    call DYNFIL_getGrain(ifil4,TRF(1:3,1:3,L),GEWF,GMMAb(L),TGb(1:3,1:3,L),RHOSS(1:3,1:3,L))
                 end do
                 laml1 = mod(laml1,NGR)+1
                 laml=laml1
@@ -169,7 +169,7 @@ module altaySimul
                 Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
                 ! We can choose not to update the texture state
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                      call DYNFIL_setGrain(IOR,C2,GEWF,GMM1,TG(:,:,laml),RHOSs(:,:,laml))
+                      call DYNFIL_setGrain(IOR,C2,GEWF,GMM1,TGb(:,:,laml),RHOSs(:,:,laml))
             enddo clusterloop
 
             SHsam = SHsam / TOTGEW
