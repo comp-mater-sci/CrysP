@@ -71,8 +71,8 @@ module altaySimul
         real(DP) :: Ssam(3,3), TG(3,3,2), CIJ(3,3), &
                     GEWF, RHOSS(3,3,2),gmm1, &
                     GAXES(3)                                        ! half axes a,b,c, of the grain shape ellipsoid
-        real(DP), save :: C2(3,3),ssqgx,CC(2,96)
-        real(DP) :: TOTGEW, SHsam(3,3),RHOSm(3,3)
+        real(DP), save :: C2(3,3),CC(2,96)
+        real(DP) :: TOTGEW, SHsam(3,3),RHOSm(3,3), ssqgx
         type(DeformationState), save :: MacroDefState
         ! HGAM: homogenized slip per step
         real(DP) :: HGAM
