@@ -214,8 +214,7 @@ contains
       integer                       :: model_id, dm_id
       logical                       :: use_default_microstructure
       logical                       :: dummy, dummy2
-      integer                       :: i, input_type
-      character(len=max_pathlen) :: root, ext
+      integer                       :: i
       character(:), allocatable :: slip
       character(5) :: buffer
 

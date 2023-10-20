@@ -9,9 +9,11 @@ module altayAlgorithms
     real(DP), parameter     :: SQRT_P5 = sqrt(0.5_dp)
     character(*), parameter :: MODULE_NAME = "altayAlgorithms"
 
-    public  ::  updatC,             &
+    external :: dgelsy, &
+                dsyevd
+    public  ::  updatC, &
                 rotmat, &
-                kleinKwa,           &
+                kleinKwa, &
                 getang
 
 contains
