@@ -63,16 +63,16 @@ module altaySimul
         type(DeformationRate),intent(in) :: MacroDefRate !inout
         integer, intent(in) :: NFILE0
 
-        real(DP) :: TRFb(3,3,2),GMMAb(2)
+        real(DP) :: TRF(3,3,2),GMMAb(2)
         integer :: NGR,&         !< number of grains
                    NRL,&         !< number of relaxations
                    laml,laml1, &
                    IOR,ISTP,NPOINT, info, NFILE, i,j,l,ifil4
-        real(DP) :: gewfb(2), Ssam(3,3), TG(3,3), CIJ(3,3), &
-                    GEWF, RHOSSb(3,3,2),RHOSsa(3,3),TGb(3,3,2),gmm1, &
+        real(DP) :: Ssam(3,3), TG(3,3,2), CIJ(3,3), &
+                    GEWF, RHOSS(3,3,2),gmm1, &
                     GAXES(3)                                        ! half axes a,b,c, of the grain shape ellipsoid
-        real(DP), save :: C2(3,3),qgx,ssqgx,CC(2,96)
-        real(DP) :: TOTGEW, TRF(3,3),SHsam(3,3),RHOSm(3,3)
+        real(DP), save :: C2(3,3),CC(2,96)
+        real(DP) :: TOTGEW, SHsam(3,3),RHOSm(3,3), ssqgx
         type(DeformationState), save :: MacroDefState
         ! HGAM: homogenized slip per step
         real(DP) :: HGAM
@@ -108,10 +108,10 @@ module altaySimul
 
             call Update_DeformationState(MacroDefRate,MacroDefState,info)
             call UPDATC(CIJ,MacroDefState%IncrDefGrad_inverse)
-            call GETANG(CIJ,GAXES,TG)
+            call GETANG(CIJ,GAXES,TG(:,:,1))
 
             if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                  call DYNFIL_setGlobal(MacroDefState%TotalDefGrad,GAXES,CIJ,TG)
+                  call DYNFIL_setGlobal(MacroDefState%TotalDefGrad,GAXES,CIJ,TG(:,:,1))
 !
 !         Added for lamel model:
 !         Organisation reading temporary texture file,
@@ -132,16 +132,11 @@ module altaySimul
                 do L=laml,laml1
                     if (ifil4 == NPOINT) exit
                     ifil4=ifil4+1
-                    call DYNFIL_getGrain(ifil4,TRFb(1:3,1:3,L),GEWFb(L),GMMAb(L),TGb(1:3,1:3,L),RHOSSb(1:3,1:3,L))
+                    call DYNFIL_getGrain(ifil4,TRF(1:3,1:3,L),GEWF,GMMAb(L),TG(1:3,1:3,L),RHOSS(1:3,1:3,L))
                 end do
                 laml1 = mod(laml1,NGR)+1
                 laml=laml1
                 !
-                TRF = TRFb(:,:,laml)
-                TG = TGb(:,:,laml)
-                RHOSSa = RHOSSb(:,:,laml)
-                if(laml == 1) qgx=GEWFb(laml)
-                GEWF=qgx
                 !  In case of NGR=2:
                 !     LAML=1: TAYLOR3
                 !             - has the present and the next orientation available
@@ -151,7 +146,7 @@ module altaySimul
                 !             - should not perform any computation
                 !             - has to output the result of the second crystal found
                 !               during the previous computation.
-                call taylor_solve(Ssam,RHOSsa,TRF,GEWF,IOR,TRFb,GMMab,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
+                call taylor_solve(Ssam,RHOSs(:,:,laml),GEWF,IOR,TRF,GMMab,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
 
                 if(laml == 1) then
                     ssqgx=GEWF
@@ -161,10 +156,10 @@ module altaySimul
                 TOTGEW=TOTGEW+GEWF
 
                 if (astate%simulCalls(astate%this)%input%full_model) &
-                      call taylor_update_state(IOR,GMMdot,WorkRate,MacroDefRate,CC,M11,TRF,C2,XM)
+                      call taylor_update_state(IOR,GMMdot,WorkRate,MacroDefRate,CC,M11,TRF(:,:,laml),C2,XM)
 
                 SHsam = SHsam + Ssam*GEWF
-                RHOSm = RHOSm + RHOSsa*GEWF
+                RHOSm = RHOSm + RHOSs(:,:,laml)*GEWF
                 !
                 Mgrain = GMMdot /  MacroDefRate%vMeqStrainRate
                 Mavg = Mavg + Mgrain*GEWF
@@ -174,7 +169,7 @@ module altaySimul
                 Wtot = Wtot + WorkRate !Step time here implicitly assumed to be 1.0s
                 ! We can choose not to update the texture state
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                      call DYNFIL_setGrain(IOR,C2,GEWF,GMM1,TG,RHOSsa)
+                      call DYNFIL_setGrain(IOR,C2,GEWF,GMM1,TG(:,:,laml),RHOSs(:,:,laml))
             enddo clusterloop
 
             SHsam = SHsam / TOTGEW
