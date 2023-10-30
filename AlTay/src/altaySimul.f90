@@ -16,7 +16,6 @@ module altaySimul
     real(DP), private, allocatable :: HGAMTOT,& !< homogenized slip accumulated over calls
         XM(:,:)
     integer, private :: M11,NFILE1
-    integer, allocatable :: seed(:)
 
     character(*), parameter :: MOD_NAME = 'Simul'
 
@@ -29,15 +28,10 @@ module altaySimul
         integer :: NGR         !< number of grains
 
         character(len=40) :: TITEL
-        integer :: info,seedsize
+        integer :: info
         character(*), parameter :: PROC_NAME = 'SIMUL0'
 
 
-        if(.not. allocated(seed)) then
-            call random_seed(size=seedsize)
-            allocate(seed(seedsize),source=20191102) ! low entropy, but at least deterministic
-            call random_seed(put=seed)
-        endif
         NGR    = acnf%simul_init%NGR
 
         NFILE1 = acnf%output_config%NFILE   ! control "CUR"

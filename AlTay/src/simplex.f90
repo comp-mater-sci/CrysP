@@ -9,7 +9,7 @@ module simplex
 
     public :: simplex_solve
 
-    contains
+contains
 
     subroutine simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, overstress)
         real(DP), intent(in)    ::  taylor_coeffs(:,:),                                 &
@@ -27,10 +27,10 @@ module simplex
                                     new_inverse_basis_vector(size(taylor_coeffs,1)),    &
                                     slip_basis(size(taylor_coeffs,1))        
         logical                 ::  bas(size(taylor_coeffs,2))
-        integer                 ::  i, most_overstressed_system, system_to_remove
+        integer                 ::  i, iter, most_overstressed_system, system_to_remove
         real(DP)                ::  tmp, ratio, min_ratio
 
-        character(*), parameter :: PROC_NAME = 'simplex'
+        character(*), parameter :: PROC_NAME = 'simplex_solve'
 
         bas = .false.
         rss = 0._DP
@@ -47,22 +47,26 @@ module simplex
         end do
         call find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system, overstress)
 
-        do while (most_overstressed_system /= 0)
+        iter = 0
+        do while (most_overstressed_system /= 0 .and. iter < size(taylor_coeffs,2))
+            iter = iter + 1
             ! Search which active slip system must be deactivated (removed from basis)
             new_basis_vector = matmul(inverse_basis, taylor_coeffs(:,most_overstressed_system))
             system_to_remove = 0
 
             do i=1,size(taylor_coeffs,1)
-                ratio = slip_basis(i) / new_basis_vector(i)
-                !Tmp is mostly a dummy value used for its sign and to see if the inputs are not too close to 0.
-                tmp = merge(rss(basis_systems(i)), slip_basis(i), abs(rss(basis_systems(i))) >= TOLERANCE) * new_basis_vector(i)
-                if (abs(tmp) > TOLERANCE & 
-                    .and. sign(tmp, rss(most_overstressed_system)) == tmp &
-                    .and. (system_to_remove == 0 .or. sign(tmp, ratio - min_ratio) == -tmp)) &
-                then
-                    system_to_remove = i
-                    min_ratio = ratio 
-                end if
+                if (abs(new_basis_vector(i)) > TOLERANCE) then
+                    ratio = slip_basis(i) / new_basis_vector(i)
+                    !Tmp is mostly a dummy value used for its sign and to see if the inputs are not too close to 0.
+                    tmp = merge(rss(basis_systems(i)), slip_basis(i), abs(rss(basis_systems(i))) >= TOLERANCE) * new_basis_vector(i)
+                    if (abs(tmp) > TOLERANCE & 
+                        .and. sign(tmp, rss(most_overstressed_system)) == tmp &
+                        .and. (system_to_remove == 0 .or. sign(tmp, ratio - min_ratio) == -tmp)) &
+                    then
+                        system_to_remove = i
+                        min_ratio = ratio 
+                    end if
+                end if 
             end do
             if (system_to_remove == 0) &
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'The solution is unbounded.')

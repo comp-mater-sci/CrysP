@@ -19,11 +19,8 @@ module taylor
                 taylor_update_state
 
     integer  :: M, &         ! number of deformation mechanisms
-                NRL,   &
-                NGL, &
-                NACTIV, &
-                NGR
-    real(dp) :: B1(3,96),B(5,5),B2(6,96),G(96),spin_matrix(3,3),SLIPLP(8),TAURLP(8),BB8(5), A2(10,194)
+                NACTIV
+    real(dp) :: B1(3,96),B(5,5),spin_matrix(3,3),SLIPLP(8),TAURLP(8),BB8(5), A2(10,194)
     real(dp), parameter :: TLXX=5.0e-6_dp
     integer :: DI1(5), INDACT(8),INDLP(8)
     
@@ -39,7 +36,7 @@ contains
         integer, intent(out) :: M111  ! < total number of systems in slip system file (glide+twin)
         real(dp), intent(out), allocatable :: A1(:,:)
         integer, dimension(:,:,:), intent(in) :: deformation_mechanism
-        integer :: i,j,k,l,I1
+        integer :: i
         real(DP) :: basis(5,5), &
                     normalized(3,2), &
                     tensor(3,3)
@@ -229,10 +226,10 @@ contains
         real(dp), intent(out) :: WorkRate
 
         real(dp), dimension(3) :: ROT
-        real(dp), dimension(3,3) :: RCcryst,TDC,RHOAcrys
+        real(dp), dimension(3,3) :: RCcryst,RHOAcrys
         real(dp), dimension(96), save :: SGNN,GAMdot
-        integer :: i,j
-        real(dp) :: rndm,x
+        integer :: i
+        real(dp) :: x
         real(dp), parameter :: ddt=1.0_DP
 
         call SLIPRAT(M111,GAMdot(1:M111),SGNN(1:M111),MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,XM)
@@ -245,7 +242,7 @@ contains
 
         ROT = matmul(B1(:,1:M111),GAMdot(1:M111))
 
-        forall (j=1:3) C2(j,j) = 1._DP
+        forall (i=1:3) C2(i,i) = 1._DP
         
         C2(3,2)=ROT(1)-(RCcryst(3,2)+RHOAcrys(3,2))
         C2(1,3)=ROT(2)-(RCcryst(1,3)+RHOAcrys(1,3))
