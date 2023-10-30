@@ -53,17 +53,15 @@ module simplex
             system_to_remove = 0
 
             do i=1,size(taylor_coeffs,1)
-                if (abs(new_basis_vector(i)) > TOLERANCE) then
-                    ratio = slip_basis(i) / new_basis_vector(i)
-                    !Tmp is mostly a dummy value used for its sign and to see if the inputs are not too close to 0.
-                    tmp = merge(rss(basis_systems(i)), slip_basis(i), abs(rss(basis_systems(i))) >= TOLERANCE) * new_basis_vector(i)
-                    if (abs(tmp) > TOLERANCE & 
-                        .and. sign(tmp, rss(most_overstressed_system)) == tmp &
-                        .and. (system_to_remove == 0 .or. sign(tmp, ratio - min_ratio) == -tmp)) &
-                    then
-                        system_to_remove = i
-                        min_ratio = ratio 
-                    end if
+                ratio = slip_basis(i) / new_basis_vector(i)
+                !Tmp is mostly a dummy value used for its sign and to see if the inputs are not too close to 0.
+                tmp = merge(rss(basis_systems(i)), slip_basis(i), abs(rss(basis_systems(i))) >= TOLERANCE) * new_basis_vector(i)
+                if (abs(tmp) > TOLERANCE & 
+                    .and. sign(tmp, rss(most_overstressed_system)) == tmp &
+                    .and. (system_to_remove == 0 .or. sign(tmp, ratio - min_ratio) == -tmp)) &
+                then
+                    system_to_remove = i
+                    min_ratio = ratio 
                 end if
             end do
             if (system_to_remove == 0) &
