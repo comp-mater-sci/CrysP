@@ -11,7 +11,7 @@ module hardening_model_dsh
 
     real(DP), parameter ::  MINFRAC = 2.0D-3,   &
                             LOWFRAC = 10.0D-3
-    real(DP), dimension(6,3), parameter, public :: CBBNORMAL = transpose(SLIP_SYSTEMS_BCC_110(:,1,1:12:2)/SQR2)
+    real(DP), dimension(6,3), parameter, public :: CBBNORMAL = transpose(real(SLIP_SYSTEMS_BCC_110(:,1,1:12:2),DP)/SQR2)
 
     character(*), parameter :: MOD_NAME = 'hardening_model_dsh'
 

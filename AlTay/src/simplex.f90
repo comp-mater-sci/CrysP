@@ -28,7 +28,7 @@ module simplex
                                     slip_basis(size(taylor_coeffs,1))        
         logical                 ::  bas(size(taylor_coeffs,2))
         integer                 ::  i,iter,most_overstressed_system, system_to_remove
-        real(DP)                ::  x,dt,zr,gmin, tmp
+        real(DP)                ::  x,zr,gmin
 
         character(*), parameter :: PROC_NAME = 'simplex'
 
