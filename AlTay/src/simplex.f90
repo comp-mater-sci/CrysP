@@ -27,7 +27,7 @@ contains
                                     new_inverse_basis_vector(size(taylor_coeffs,1)),    &
                                     slip_basis(size(taylor_coeffs,1))        
         logical                 ::  bas(size(taylor_coeffs,2))
-        integer                 ::  i, iter, most_overstressed_system, system_to_remove
+        integer                 ::  i, iter, max_iters, most_overstressed_system, system_to_remove
         real(DP)                ::  tmp, ratio, min_ratio
 
         character(*), parameter :: PROC_NAME = 'simplex_solve'
@@ -48,7 +48,9 @@ contains
         call find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system, overstress)
 
         iter = 0
-        do while (most_overstressed_system /= 0 .and. iter < size(taylor_coeffs,2))
+        max_iters = size(taylor_coeffs,2)**2
+        do while (most_overstressed_system /= 0)
+            if (iter > max_iters) call log_error(MOD_NAME, PROC_NAME, ERR, 'Too many iterations')
             iter = iter + 1
             ! Search which active slip system must be deactivated (removed from basis)
             new_basis_vector = matmul(inverse_basis, taylor_coeffs(:,most_overstressed_system))
