@@ -48,7 +48,7 @@ module altaySimul
         if (NFILE1 == 1) call CURwriteTitle(IMP1,TITEL,info)
   98    format (A)
 !       read the parameters of the work hardening model
-        call taylor_init(acnf%deformation_mechanism, M11,XM)
+        call taylor_init(acnf%deformation_mechanism, M11,XM,NGR)
     end subroutine
 
 
@@ -59,7 +59,6 @@ module altaySimul
 
         real(DP) :: TRF(3,3,2),GMMAb(2)
         integer :: NGR,&         !< number of grains
-                   NRL,&         !< number of relaxations
                    laml,laml1, &
                    IOR,ISTP,NPOINT, info, NFILE, i,j,l,ifil4
         real(DP) :: Ssam(3,3), TG(3,3,2), CIJ(3,3), &
@@ -80,10 +79,9 @@ module altaySimul
 
 
         NPOINT = size(DFIL)
-        ! Per-call selection of the model: NGR & NRL must be set
+        ! Per-call selection of the model: NGR must be set
         NGR = acnf%simul_init%NGR
         ! Number of relaxations: 0 for Taylor and 2 for ALAMEL:
-        NRL=(NGR-1)*2
         NFILE=NFILE0*NFILE1
 
         ! Output the current texture
@@ -140,7 +138,7 @@ module altaySimul
                 !             - should not perform any computation
                 !             - has to output the result of the second crystal found
                 !               during the previous computation.
-                call taylor_solve(Ssam,RHOSs(:,:,laml),GEWF,IOR,TRF,GMMab,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
+                call taylor_solve(Ssam,RHOSs(:,:,laml),GEWF,IOR,TRF,GMMab,NGR,laml,CC,M11,MacroDefRate,MacroDefState)
 
                 if(laml == 1) then
                     ssqgx=GEWF
@@ -150,7 +148,7 @@ module altaySimul
                 TOTGEW=TOTGEW+GEWF
 
                 if (astate%simulCalls(astate%this)%input%full_model) &
-                      call taylor_update_state(IOR,GMMdot,WorkRate,MacroDefRate,CC,M11,TRF(:,:,laml),C2,XM)
+                      call taylor_update_state(IOR,GMMdot,WorkRate,MacroDefRate,CC(1:2,1:M11),TRF(:,:,laml),C2,XM)
 
                 SHsam = SHsam + Ssam*GEWF
                 RHOSm = RHOSm + RHOSs(:,:,laml)*GEWF
