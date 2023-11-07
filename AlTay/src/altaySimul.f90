@@ -54,7 +54,7 @@ module altaySimul
         if (NFILE1 == 1) call CURwriteTitle(IMP1,TITEL,info)
   98    format (A)
 !       read the parameters of the work hardening model
-        call taylor_init(acnf%deformation_mechanism, M11,XM)
+        call taylor_init(acnf%deformation_mechanism, M11,XM, NGR)
     end subroutine
 
 
