@@ -11,7 +11,7 @@ module altaySliprate
     public :: SLIPRAT
     contains
 
-    subroutine SLIPRAT(IDIMXX,XX,sgnn,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,A1)
+    subroutine SLIPRAT(XX,sgnn,MacroDefRate,NACTIV,SLIPLP,TLXX,TAURLP,INDACT,INDLP,BB8,A1)
         type(DeformationRate),intent(in) :: MacroDefRate
         !     To find the slip rates assuming that
         !     - the stress, strain rate and the active slip systems are known,
@@ -19,17 +19,18 @@ module altaySliprate
         !     - (under the above restrictions) the sum of the squares of the slip
         !       rates must be minimal.
         !
-        integer, intent(in) :: IDIMXX,NACTIV,INDLP(8)
+        integer, intent(in) :: NACTIV,INDLP(8)
         real(DP), intent(in) :: TLXX,A1(:,:),TAURLP(8),BB8(5),SLIPLP(8)
         integer, intent(inout) :: INDACT(8)
-        real(DP), intent(inout) :: SGNN(IDIMXX),XX(IDIMXX)
+        real(DP), intent(inout) :: SGNN(:)
+        real(DP), intent(out) :: XX(:)
 
         integer :: IND(8),ISTOR(0:8,48)
         real(DP) :: SLPR(8),SLSTOR(0:8,48),sumsq
         integer, parameter :: NSTOR=48
         integer :: j,i1,i2,i3,N0,N1,N2,N3,NN,NOPL,INEG,IOPL
 
-        XX(1:IDIMXX)=0.0_DP
+        XX=0.0_DP
         NN=NACTIV
         NOPL=0
         sgnn(INDACT(1:NACTIV))=sign(1.0_dp,TAURLP(1:NACTIV))
@@ -37,7 +38,7 @@ module altaySliprate
         ! check whether solution is totally zero
         if (sum(abs(SLIPLP(1:NACTIV))) >= TLXX) then
             IND(1:NN)=INDACT(1:NN)
-            call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
+            call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,BB8,A1)
             if (ineg==0) then
                  call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                  if (NN <= 5) goto 2
@@ -56,7 +57,7 @@ module altaySliprate
                 if (N1>=5) then
                     NN=N1
                     do I1=1,N0
-                         call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
+                         call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,BB8,A1)
                          if (ineg==0) call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                          J=N0-I1
                          if (J>0) IND(J)=INDACT(J+1)
@@ -68,7 +69,7 @@ module altaySliprate
                         do I1=2,N0
                             do I2=1,I1-1
                                 call fill(IND,INDACT,[I1,I2],N0)
-                                call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
+                                call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,BB8,A1)
                                 if (ineg==0) call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                             enddo
                         enddo
@@ -80,7 +81,7 @@ module altaySliprate
                                 do I2=2,I1-1
                                     do I3=1,I2-1
                                       call fill(IND,INDACT,[I1,I2,I3],N0)
-                                      call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A1)
+                                      call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,BB8,A1)
                                       if (ineg==0) call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                                     enddo
                                 enddo
@@ -119,10 +120,10 @@ module altaySliprate
 
     end subroutine
 
-    subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,IDIMXX,BB8,A8)
+    subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,BB8,A8)
 
-        integer, intent(in) :: IND(8), NN,IDIMXX
-        real(DP),intent(in) :: A8(:,:),BB8(5),sgnn(IDIMXX)
+        integer, intent(in) :: IND(8), NN
+        real(DP),intent(in) :: A8(:,:),BB8(5),sgnn(:)
         integer, intent(out) :: ineg
         real(DP), intent(out) :: SLPR(8),sumsq
 
