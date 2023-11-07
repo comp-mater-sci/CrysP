@@ -151,7 +151,7 @@ module altaySimul
                 !             - should not perform any computation
                 !             - has to output the result of the second crystal found
                 !               during the previous computation.
-                call taylor_solve(Ssam,RHOSsa,TRF,GEWF,IOR,TRFb,GMMab,NGR,NRL,laml,CC,M11,MacroDefRate,MacroDefState)
+                call taylor_solve(Ssam,RHOSsa,TRF,GEWF,IOR,TRFb,GMMab,NGR,laml,CC,M11,MacroDefRate,MacroDefState)
 
                 if(laml == 1) then
                     ssqgx=GEWF

@@ -16,12 +16,12 @@ contains
     !Finds the slip rates assuming that
     !- the stress, strain rate and the active slip systems are known,
     !- (under the above restrictions) the sum of the squares of the slip rates must be minimal.
-    subroutine resolve_taylor_ambiguity(n_slip_systems, slip_rates, sgnn, MacroDefRate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, A1)
+    subroutine resolve_taylor_ambiguity(slip_rates, sgnn, MacroDefRate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, A1)
         type(DeformationRate),intent(in) :: MacroDefRate
-        integer, intent(in) :: n_slip_systems, n_active_slip_systems
+        integer, intent(in) :: n_active_slip_systems
         real(DP), intent(in) :: A1(:,:),TAURLP(8),BB8(5),SLIPLP(8)
         integer, intent(inout) :: ind_active_slip_systems(8)
-        real(DP), intent(inout) :: SGNN(n_slip_systems),slip_rates(n_slip_systems)
+        real(DP), intent(inout) :: SGNN(:),slip_rates(:)
 
         integer :: IND(8),ISTOR(0:8,48), ind_active_slip_systems_original(8)
         real(DP) :: SLPR(8),SLSTOR(0:8,48),sumsq
@@ -29,7 +29,7 @@ contains
         integer :: j,i1,i2,i3,N0,N1,N2,N3,NN,NOPL,INEG,IOPL
 
         ind_active_slip_systems_original = ind_active_slip_systems
-        slip_rates(1:n_slip_systems)=0.0_DP
+        slip_rates = 0.0_DP
         NN=n_active_slip_systems
         NOPL=0
         sgnn(ind_active_slip_systems(1:n_active_slip_systems))=sign(1.0_dp,TAURLP(1:n_active_slip_systems))
@@ -37,7 +37,7 @@ contains
         ! check whether solution is totally zero
         if (sum(abs(SLIPLP(1:n_active_slip_systems))) >= TOLERANCE) then
             IND(1:NN)=ind_active_slip_systems(1:NN)
-            call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,n_slip_systems,BB8,A1)
+            call MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,BB8,A1)
             if (ineg==0) then
                  call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                  if (NN <= 5) goto 2
@@ -54,7 +54,7 @@ contains
                 if (N1>=5) then
                     NN=N1
                     do I1=1,N0
-                         call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,n_slip_systems,BB8,A1)
+                         call MINSQU(N1,IND,SLPR,ineg,sumsq,sgnn,BB8,A1)
                          if (ineg==0) call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                          J=N0-I1
                          if (J>0) IND(J)=ind_active_slip_systems(J+1)
@@ -66,7 +66,7 @@ contains
                         do I1=2,N0
                             do I2=1,I1-1
                                 call fill(IND,ind_active_slip_systems,[I1,I2],N0)
-                                call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,n_slip_systems,BB8,A1)
+                                call MINSQU(N2,IND,SLPR,ineg,sumsq,sgnn,BB8,A1)
                                 if (ineg==0) call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                             enddo
                         enddo
@@ -78,7 +78,7 @@ contains
                                 do I2=2,I1-1
                                     do I3=1,I2-1
                                       call fill(IND,ind_active_slip_systems,[I1,I2,I3],N0)
-                                      call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,n_slip_systems,BB8,A1)
+                                      call MINSQU(N3,IND,SLPR,ineg,sumsq,sgnn,BB8,A1)
                                       if (ineg==0) call STORE(NSTOR,NOPL,NN,SLPR,IND,ISTOR,SLSTOR,SUMSQ)
                                     enddo
                                 enddo
@@ -117,10 +117,10 @@ contains
 
     end subroutine
 
-    subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,n_slip_systems,BB8,A8)
+    subroutine MINSQU(NN,IND,SLPR,ineg,sumsq,sgnn,BB8,A8)
 
-        integer, intent(in) :: IND(8), NN,n_slip_systems
-        real(DP),intent(in) :: A8(:,:),BB8(5),sgnn(n_slip_systems)
+        integer, intent(in) :: IND(8), NN
+        real(DP),intent(in) :: A8(:,:),BB8(5),sgnn(:)
         integer, intent(out) :: ineg
         real(DP), intent(out) :: SLPR(8),sumsq
 

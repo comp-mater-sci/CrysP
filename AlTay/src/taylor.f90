@@ -22,7 +22,7 @@ module taylor
                 NRL,   &
                 NGL, &
                 n_active_slip_systems
-    real(dp) :: B1(3,96),B(5,5),B2(6,96),G(96),spin_matrix(3,3),SLIPLP(8),TAURLP(8),BB8(5), A2(10,194)
+    real(dp) :: B1(3,96),B(5,5),B2(6,96),G(96),spin_matrix(3,3),SLIPLP(8),TAURLP(8),BB8(5), B8(5,2), GAMR(2)
     real(dp), parameter :: TLslip_rates=5.0e-6_dp
     integer :: DI1(5), ind_active_slip_systems(8)
     
@@ -33,14 +33,14 @@ module taylor
                                 TOL = 1.0e-6_dp
     integer, dimension(5), parameter ::    INITIAL_BASIS_SYSTEMS_FCC = [2,5,6,7,8], &
                                            INITIAL_BASIS_SYSTEMS_BCC = [1,2,4,5,7]
-    real(DP), allocatable :: B3(:,:), slip_rates(:)
+    real(DP), allocatable :: B3(:,:), slip_rates(:), BB(:), CCC(:,:), DTAU1(:), TAUR1(:), UBUF(:), A2(:,:)
 contains
-    subroutine taylor_init(deformation_mechanism, M111,A1, n_grains)
+    subroutine taylor_init(deformation_mechanism, M111,A1, cluster_size)
         integer, intent(out) :: M111  ! < total number of systems in slip system file (glide+twin)
         real(dp), intent(out), allocatable :: A1(:,:)
-        integer, intent(in) :: n_grains
+        integer, intent(in) :: cluster_size
         integer, dimension(:,:,:), intent(in) :: deformation_mechanism
-        integer :: i,j,k,l,I1, n_slip_systems
+        integer :: i,j,k,l,I1, n_slip_systems, system_size
         real(DP) :: basis(5,5), &
                     normalized(3,2), &
                     tensor(3,3)
@@ -48,12 +48,20 @@ contains
         M = size(deformation_mechanism,3)
         DI1 = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, M == 12)
         M111=M
-        n_slip_systems = n_grains * M + merge(2,0,n_grains==2)    
+        n_slip_systems = cluster_size * M + merge(2,0,cluster_size==2)    
+        system_size = cluster_size * 5
 
         allocate(A1(5,M))
-        allocate(B3(n_grains*5,3), source=0._DP)
-        allocate(slip_rates(n_slip_systems))
-        
+        if (.not. allocated(B3)) then
+            allocate(B3(system_size,3), source=0._DP)
+            allocate(slip_rates(n_slip_systems))
+            allocate(BB(system_size))
+            allocate(CCC(2,n_slip_systems))
+            allocate(DTAU1(n_slip_systems))
+            allocate(TAUR1(n_slip_systems))
+            allocate(UBUF(system_size))
+            allocate(A2(system_size, n_slip_systems))
+        end if
         
         do i=1,M
             normalized = normalize(deformation_mechanism(:,:,i))
@@ -67,36 +75,35 @@ contains
         
         A2=0.0_DP
         A2(1:5,1:M)=A1(1:5,1:M)
-        A2(6:10,M+1:M*2)=A1(1:5,1:M)
+        if (cluster_size == 2) A2(6:10,M+1:M*2)=A1(1:5,1:M)
     end subroutine   
     
-    subroutine taylor_solve(stress_matrix,strain_matrix, TRF, GEWF, IOR, TRFb, GMMAb, NGR, NRL, laml, CC, M11, MacroDefRate,MacroDefState)
+    subroutine taylor_solve(stress_matrix,strain_matrix, TRF, GEWF, IOR, TRFb, GMMAb, NGR, laml, CC, M11, MacroDefRate,MacroDefState)
         type(DeformationRate),intent(in) :: MacroDefRate
         type(DeformationState),intent(in) :: MacroDefState
-        integer, intent(in) :: laml,IOR, NGR, NRL, M11
+        integer, intent(in) :: laml,IOR, NGR, M11
         real(dp), intent(out) :: stress_matrix(3,3),strain_matrix(3,3)
         real(dp), intent(in) :: TRFb(3,3,2),TRF(3,3), GMMab(2)
         real(dp), intent(inout) :: CC(2,M11),GEWF
         real(dp),dimension(5):: strain, spin
         real(dp) :: TPrinc(3,3)
         real(dp) :: C2(3,3), rls(3,3), rla(3,3), C3(3,3), spanv(5)
-        real(dp), save :: slip_rates(194),BB(10),CCC(2,194),DTAU1(194),TAUR1(194),B8(5,2),UBUF(10),GAMR(2)
         real(DP) :: mat_buffer(3,3), UU(5*NGR, 5*NGR)
-        integer :: M12,N,M2,IL,L1,IRL,I,K1,IG,JJ,II, DI(10)
-        integer, save :: IGrElm
+        integer :: M12,N,M2,IL,L1,IRL,I,K1,IG,JJ,II, DI(10), igrelm, NRL
         logical :: full_constraints
 
         character(*), parameter :: PROC_NAME = 'taylor_solve'
 
         if (IOR == 1) IGrElm=0
+        NRL=(NGR-1)*2
         N=5*NGR
         M2=NGR*M
-        M12=NGR*M+2
+        M12=NGR*M+merge(2,0,NGR==2)
         full_constraints = (NRL == 0)
         if (laml == 1) then
             !Update microstructure
             if (.not. full_constraints) then
-                IGrElm = merge(1, IGrElm + 1, IGrElm == NGrElm)
+                IGrElm = mod((IOR-1)/NGR,NGrElm) + 1
                 call cluster1(IGrElm,MacroDefRate,MacroDefState,GEWF,Tprinc)
             end if 
             CCC(1:2,M2+1:M12)=0.0_DP
@@ -226,7 +233,7 @@ contains
         real(dp) :: rndm,x
         real(dp), parameter :: ddt=1.0_DP
 
-        call resolve_taylor_ambiguity(M111,GAMdot(1:M111),SGNN(1:M111),MacroDefRate,n_active_slip_systems,SLIPLP,TAURLP,ind_active_slip_systems,BB8,XM)
+        call resolve_taylor_ambiguity(GAMdot(1:M111),SGNN(1:M111),MacroDefRate,n_active_slip_systems,SLIPLP,TAURLP,ind_active_slip_systems,BB8,XM)
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call hardening_update_state(IOR, ddt, GAMdot)
         TOTGAMdot=sum(abs(GAMdot(1:M111)))
         ! Calculate RCcryst: the rigid body spin in the crystal frame
