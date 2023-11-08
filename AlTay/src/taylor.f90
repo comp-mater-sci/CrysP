@@ -19,15 +19,30 @@ module taylor
                 taylor_update_state
 
     integer  :: n_active_slip_systems
-    real(dp):: B1(3, 96), B(5, 5), B2(6, 96), G(96), spin_matrix(3, 3), SLIPLP(8), TAURLP(8), BB8(5), B8(5, 2), GAMR(2)
+    real(dp):: inverse_basis_grain(5, 5), &
+                spin_matrix(3, 3), &
+                SLIPLP(8), &
+                TAURLP(8), &
+                BB8(5), &
+                B8(5, 2), &
+                GAMR(2)
+    real(DP), allocatable ::  rotation_slip_systems(:,:), &
+                              B3(:,:), &
+                              slip_rates(:), &
+                              BB(:), &
+                              CCC(:,:), &
+                              overstress(:), &
+                              TAUR1(:), &
+                              UBUF(:), &
+                              A2(:,:)
+
     integer:: DI1(5), ind_active_slip_systems(8)
     
     character(*), parameter ::  MOD_NAME = 'taylor'
     real(DP), parameter     ::  PLUMIN(2, 2) = reshape([1._DP, -1._DP, 1._DP, -1._DP], shape(PLUMIN))
     integer, dimension(5), parameter ::    INITIAL_BASIS_SYSTEMS_FCC = [2, 5, 6, 7, 8], &
                                            INITIAL_BASIS_SYSTEMS_BCC = [1, 2, 4, 5, 7]
-    real(DP), allocatable:: B3(:,:), slip_rates(:), BB(:), CCC(:,:), DTAU1(:), TAUR1(:), UBUF(:), A2(:,:)
-contains
+    contains
     subroutine taylor_init(deformation_mechanism, n_slip_systems_grain, A1, cluster_size)
         integer, intent(out):: n_slip_systems_grain  ! < total number of systems in slip system file (glide+twin)
         real(dp), intent(out), allocatable:: A1(:,:)
@@ -45,11 +60,12 @@ contains
 
         allocate(A1(5, n_slip_systems_grain))
         if (.not. allocated(B3)) then
+            allocate(rotation_slip_systems(3, n_slip_systems_grain))
             allocate(B3(system_size, 3), source = 0._DP)
             allocate(slip_rates(n_slip_systems_cluster))
             allocate(BB(system_size))
             allocate(CCC(2, n_slip_systems_cluster))
-            allocate(DTAU1(n_slip_systems_cluster))
+            allocate(overstress(n_slip_systems_cluster))
             allocate(TAUR1(n_slip_systems_cluster))
             allocate(UBUF(system_size))
             allocate(A2(system_size, n_slip_systems_cluster))
@@ -60,11 +76,11 @@ contains
             normalized = normalize(deformation_mechanism(:,:,i))
             tensor = outer_product(normalized(:,1), normalized(:,2))
             A1(:,i) = convert_stress_strain_space(tensor) 
-            B1(:,i) = get_rotation(tensor)  
+            rotation_slip_systems(:,i) = get_rotation(tensor)  
         end do
         forall (i = 1:5) basis(:,i) = A1(:,DI1(i))
 
-        B = invert(basis)
+        inverse_basis_grain = invert(basis)
         
         A2 = 0.0_DP
         A2(1:5, 1:n_slip_systems_grain)=A1
@@ -131,7 +147,7 @@ contains
 
                 ! Retrieve the CRSSmatrix
                 CCC(:,1+K1:n_slip_systems_grain+K1) = hardening_get_crss(IOR+IL-1, GMMab(IL))
-                UU(L1+1:L1+5, L1+1:L1+5)=B
+                UU(L1+1:L1+5, L1+1:L1+5)=inverse_basis_grain
             enddo
 
             if (.not. full_constraints) then
@@ -143,7 +159,7 @@ contains
                          slip = slip_rates, &
                          stress = UBUF, &
                          rss = Taur1, &
-                         overstress = DTAU1)
+                         overstress = overstress)
 
                 !GAMR will contain the relaxed shears:
                 gamr(1:n_relaxations)=slip_rates(n_slip_systems_cluster-n_relaxations+1:n_slip_systems_cluster)
@@ -161,7 +177,7 @@ contains
                      slip = slip_rates, &
                      stress = UBUF, &
                      rss = Taur1, &
-                     overstress = DTAU1)
+                     overstress = overstress)
             endif
         endif
         ! From here on, output is produced for grain number "laml"
@@ -189,9 +205,10 @@ contains
         ! of the full constraint solution are used.
         n_active_slip_systems = 0
         do i = 1, n_slip_systems_grain
-            if (abs(DTAU1(i+jj)) > TOLERANCE) cycle
-            n_active_slip_systems = n_active_slip_systems+1
-            ind_active_slip_systems(n_active_slip_systems)=i
+            if (abs(overstress(i+jj)) < TOLERANCE) then
+                n_active_slip_systems = n_active_slip_systems+1
+                ind_active_slip_systems(n_active_slip_systems) =i
+            end if
         enddo
         if (n_active_slip_systems > 8) then
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Too many active slip systems.')
@@ -231,7 +248,7 @@ contains
         RHOAcrys = rotateSRTensorFrom(spin_matrix, TRF)
         WorkRate = sum(merge(CC(1, :), -CC(2, :), GAMdot > 0.0_DP)*GAMdot)
 
-        ROT = matmul(B1, GAMdot)
+        ROT = matmul(rotation_slip_systems, GAMdot)
 
         forall (j = 1:3) C2(j, j) = 1._DP
  
