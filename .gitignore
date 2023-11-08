@@ -1,6 +1,10 @@
 *.pyc
 *.bak
 *~
+*.mod
+*.smod
+.vscode
+build/
 .DS_Store
 AlTay/release
 AlTay/debug
@@ -13,3 +17,4 @@ test/security/ssh_keys/*
 callgraph/*
 test/run/*
 test/data/out/
+test/reference

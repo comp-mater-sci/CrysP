@@ -94,13 +94,13 @@ contains
     end subroutine
 
     !> Get the record data for i-th grain
-    subroutine DYNFIL_getGrain(i, T, GEW, GAM, TAX, ZERO)
+    subroutine DYNFIL_getGrain(i, T, GEW, gam, TAX, ZERO)
         integer, intent(in)                             :: i
-        real(DP), intent(out)                   :: GEW,GAM
+        real(DP), intent(out)                   :: GEW, gam
         real(DP), dimension(3,3), intent(out)   :: TAX, T, ZERO
 
         GEW     = DFIL(i)%tGEW
-        GAM     = DFIL(i)%tGAM
+        gam = DFIL(i)%tgam
         T       = DFIL(i)%tT
         TAX     = DFIL(i)%tTAX
         ZERO    = DFIL(i)%tZERO
