@@ -34,7 +34,8 @@ module taylor
                               overstress(:), &
                               TAUR1(:), &
                               UBUF(:), &
-                              A2(:,:)
+                              A2(:,:), &
+                              SGNN(:)
 
     integer:: DI1(5), ind_active_slip_systems(8)
     
@@ -69,6 +70,7 @@ module taylor
             allocate(TAUR1(n_slip_systems_cluster))
             allocate(UBUF(system_size))
             allocate(A2(system_size, n_slip_systems_cluster))
+            allocate(SGNN(n_slip_systems_grain))
         end if
         
         DI1 = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, n_slip_systems_grain == 12)
@@ -236,7 +238,7 @@ module taylor
 
         real(dp), dimension(3):: ROT
         real(dp), dimension(3, 3):: RCcryst, RHOAcrys
-        real(dp), dimension(96), save:: SGNN, GAMdot
+        real(dp), dimension(size(CC, 2)):: GAMdot
         integer:: j
         real(dp), parameter:: ddt = 1.0_DP
 
