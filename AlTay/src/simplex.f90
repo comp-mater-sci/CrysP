@@ -9,7 +9,7 @@ module simplex
 
     public :: simplex_solve
 
-    contains
+contains
 
     subroutine simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, overstress)
         real(DP), intent(in)    ::  taylor_coeffs(:,:),                                 &
@@ -27,51 +27,49 @@ module simplex
                                     new_inverse_basis_vector(size(taylor_coeffs,1)),    &
                                     slip_basis(size(taylor_coeffs,1))        
         logical                 ::  bas(size(taylor_coeffs,2))
-        integer                 ::  i,iter,most_overstressed_system, system_to_remove
-        real(DP)                ::  x,zr,gmin
+        integer                 ::  i, iter, max_iters, most_overstressed_system, system_to_remove
+        real(DP)                ::  tmp, ratio, min_ratio
 
-        character(*), parameter :: PROC_NAME = 'simplex'
+        character(*), parameter :: PROC_NAME = 'simplex_solve'
 
         bas = .false.
+        rss = 0._DP
         bas(basis_systems) = .true.
 
-        slip_basis = matmul(inverse_basis, strain)
+        ! Calculation of slip rates in basis
+        slip_basis = matmul(inverse_basis,strain)
 
-        ! Calculation of stress, using generalised Schmid law
+        !Initialization of rss for basis systems
         do i=1,size(taylor_coeffs,1)
-           X=merge(dot_product(taylor_coeffs(:,basis_systems(i)),strain),slip_basis(i), abs(slip_basis(i)) < TOLERANCE)
-           rss_basis(i) = merge(crss(1,basis_systems(i)),-crss(2,basis_systems(i)),X>=0.0_dp)
-        enddo
+            !If slip in basis or dot product between glide direction and imposed strain is positive, use positive CRSS
+            tmp = merge(slip_basis(i), dot_product(taylor_coeffs(:,basis_systems(i)), strain), abs(slip_basis(i)) >= TOLERANCE)
+            rss_basis(i) = merge(crss(1, basis_systems(i)), -crss(2, basis_systems(i)), tmp>=0._dp)
+        end do
+        call find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system, overstress)
 
-        gmin = 0.0_DP
         iter = 0
-        do
-            iter=iter+1
-            if (iter > 50) &
-                call log_error(MOD_NAME, PROC_NAME, ERR, 'Too many iterations.')
-
-            call find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system, overstress)
-
-            if (most_overstressed_system == 0) exit ! There is no overstressed slip system
-            ! There is an overstressed slip system, which we will activate now
+        max_iters = size(taylor_coeffs,2)**2
+        do while (most_overstressed_system /= 0)
+            if (iter > max_iters) call log_error(MOD_NAME, PROC_NAME, ERR, 'Too many iterations')
+            iter = iter + 1
             ! Search which active slip system must be deactivated (removed from basis)
-            ! Calculate column Mprime-s*, called new_basis_vector
             new_basis_vector = matmul(inverse_basis, taylor_coeffs(:,most_overstressed_system))
-            system_to_remove=0
+            system_to_remove = 0
+
             do i=1,size(taylor_coeffs,1)
-                if (abs(new_basis_vector(i)) < TOLERANCE) cycle
-                ZR=rss(basis_systems(i))
-                if (abs(ZR) < TOLERANCE) then
-                    ZR=slip_basis(i)
-                    if (abs(Zr) < TOLERANCE) cycle
-                endif
-                ZR=ZR*new_basis_vector(i)
-                if ((rss(most_overstressed_system) > 0.0d0  .and. ZR >= 0.0_DP .and. (system_to_remove == 0 .or. slip_basis(i)/new_basis_vector(i) < Gmin)) .or. &
-                    (rss(most_overstressed_system) <= 0.0d0 .and. ZR <= 0.0_DP .and. (system_to_remove == 0 .or. slip_basis(i)/new_basis_vector(i) > Gmin))) then
-                    system_to_remove=i
-                    Gmin=slip_basis(i)/new_basis_vector(i)
-                endif
-            enddo
+                if (abs(new_basis_vector(i)) > TOLERANCE) then
+                    ratio = slip_basis(i) / new_basis_vector(i)
+                    !Tmp is mostly a dummy value used for its sign and to see if the inputs are not too close to 0.
+                    tmp = merge(rss(basis_systems(i)), slip_basis(i), abs(rss(basis_systems(i))) >= TOLERANCE) * new_basis_vector(i)
+                    if (abs(tmp) > TOLERANCE & 
+                        .and. sign(tmp, rss(most_overstressed_system)) == tmp &
+                        .and. (system_to_remove == 0 .or. sign(tmp, ratio - min_ratio) == -tmp)) &
+                    then
+                        system_to_remove = i
+                        min_ratio = ratio 
+                    end if
+                end if 
+            end do
             if (system_to_remove == 0) &
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'The solution is unbounded.')
 
@@ -79,13 +77,13 @@ module simplex
             call update_vector_in_basis(slip_basis, system_to_remove, new_inverse_basis_vector)
 
             ! Updating of basis: bas and basis_systems
-            bas(basis_systems(system_to_remove))=.false.
-            bas(most_overstressed_system)=.true.
-            basis_systems(system_to_remove)=most_overstressed_system
-            rss_basis(system_to_remove) = merge(crss(1,most_overstressed_system),-crss(2,most_overstressed_system),(slip_basis(system_to_remove) >= 0.0d0).and.(rss(most_overstressed_system) > 0.0d0))
-            ! Go back to stress calculation
-        enddo
-        ! Solution was found.
+            bas(basis_systems(system_to_remove)) = .false.
+            bas(most_overstressed_system) = .true.
+            basis_systems(system_to_remove) = most_overstressed_system
+            rss_basis(system_to_remove) = merge(crss(1,most_overstressed_system), -crss(2,most_overstressed_system), (slip_basis(system_to_remove) >= 0._DP) .and. (rss(most_overstressed_system) > 0._DP))
+            call find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system, overstress)
+        end do
+
         slip = 0._DP
         slip(basis_systems) = slip_basis
     end subroutine simplex_solve
