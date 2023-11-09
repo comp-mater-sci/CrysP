@@ -1,7 +1,6 @@
 module altaySub
     use hardening_model_dsh
     use altaySimul
-    use altayMesostructure
     use altayConfig
     use hardening
     use altayDynfil
@@ -12,7 +11,7 @@ module altaySub
 
     implicit none
 
-    character(*), parameter, private :: MOD_NAME = 'altaySub'
+    character(*), parameter, private:: MOD_NAME = 'altaySub'
 
 contains
 
@@ -20,25 +19,23 @@ contains
     !>
     !> This subroutine must be called prior to any call to other
     !> module subroutines.
-    subroutine initAltay(cnf,info)
-        type(altayConfigData),intent(inout)    :: cnf      !< configuration data
-        integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
-        character(*), parameter :: PROC_NAME = 'initAltay'
+    subroutine initAltay(cnf, info)
+        type(altayConfigData), intent(inout)    :: cnf      !< configuration data
+        integer, intent(out)                 :: info     !< exit code (altaySub_OK on success)
+        character(*), parameter:: PROC_NAME = 'initAltay'
 
-        integer :: ierr
+        integer:: ierr
 
         ierr = 0
         ! Set the singleton object to the cnf
         acnf = cnf
         ! Open input files
-        ! Load microstructure data
-        call read_microstructure(acnf%micros_fname,acnf%simul_init%FMicro,info)
-        if (info /= VEF_OK) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot process the microstructure file: ' // trim(acnf%micros_fname))
 
         ! Get the initial texture
         call dynfil_init(trim(cnf%texture_input_fname))
 
+        ! Load microstructure data
+        call read_microstructure(acnf%micros_fname, acnf%simul_init%FMicro)
         ! Open output files
         call openOutputFiles(cnf, info)
         if (info /= VEF_OK) &
@@ -60,7 +57,7 @@ contains
 
     !> Finalizes the module and releases the resources.
     subroutine finalizeAltay(info)
-        integer,intent(out)                 :: info     !< exit code (0 on success)
+        integer, intent(out)                 :: info     !< exit code (0 on success)
 
         ! Close all units.
         close(IMP5)
@@ -74,19 +71,19 @@ contains
     end subroutine
 
     subroutine openOutputFiles(cnf, info)
-        type(altayConfigData),intent(in)    :: cnf      !< configuration data
-        integer,intent(out)                 :: info     !< exit code (altaySub_OK on success)
+        type(altayConfigData), intent(in)    :: cnf      !< configuration data
+        integer, intent(out)                 :: info     !< exit code (altaySub_OK on success)
 
-        character(len=fname_len) :: fname_prefix, fname
-        character(*), parameter :: PROC_NAME = 'openOutputFiles'
+        character(len = fname_len):: fname_prefix, fname
+        character(*), parameter:: PROC_NAME = 'openOutputFiles'
 
         fname_prefix = cnf%output_prefix
         info = VEF_ERROR
 
         if (cnf%output_config%nfile /= 0) then
             fname = trim(fname_prefix)//'.CUR'
-            ! IMP1=output file with successive "current situations"
-            open (unit=IMP1,file=fname,status='replace',err=9999)
+            ! IMP1 = output file with successive "current situations"
+            open (unit = IMP1, file = fname, status='replace',err = 9999)
         endif
 
         info = VEF_OK
@@ -98,29 +95,29 @@ contains
     end subroutine
 
     !> Initialization of input and output data for the steps.
-    subroutine initStepData(nsteps,steps,info)
-        integer,intent(in)                  :: nsteps   !< Number of steps to be created
-        type(altayStateData),intent(out)    :: steps    !< Definiton of the steps.
-        integer,intent(out)                 :: info     !< Exit code: 0 on success
-        integer :: ierr
+    subroutine initStepData(nsteps, steps, info)
+        integer, intent(in)                  :: nsteps   !< Number of steps to be created
+        type(altayStateData), intent(out)    :: steps    !< Definiton of the steps.
+        integer, intent(out)                 :: info     !< Exit code: 0 on success
+        integer:: ierr
         info = 1
         if (nsteps <= 0) return
-        allocate(steps%simulCalls(nsteps),stat=ierr)
+        allocate(steps%simulCalls(nsteps), stat = ierr)
         steps%nSimulCalls = nsteps
         steps%this = 0
-        ! No need to specifically initialize other components,
+        ! No need to specifically initialize other components, 
         ! since there are initializers provided in the datatype.
         info = ierr
     end subroutine
 
     !> Run the AlTay for the set of steps
-    subroutine runSteps(steps,info)
-        type(altayStateData),intent(inout)        :: steps !< Definiton of the steps.
-        integer,intent(out)                       :: info  !< Exit code: 0 on success.
-        integer :: NFILE0
-        integer :: i
-        logical :: input_ok
-        type(DeformationRate) :: MacroDefRate
+    subroutine runSteps(steps, info)
+        type(altayStateData), intent(inout)        :: steps !< Definiton of the steps.
+        integer, intent(out)                       :: info  !< Exit code: 0 on success.
+        integer:: NFILE0
+        integer:: i
+        logical:: input_ok
+        type(DeformationRate):: MacroDefRate
         ! Validate input
         info = VEF_ERROR
         input_ok = .false.
@@ -134,10 +131,10 @@ contains
         !
         do i = 1, steps%nSimulCalls
             steps%this = i
-            NFILE0 = merge(1,0,steps%simulCalls(i)%input%do_output_init)
-            call Set_DeformationRate(steps%simulCalls(i)%input%dgf,MacroDefRate)
+            NFILE0 = merge(1, 0, steps%simulCalls(i)%input%do_output_init)
+            call Set_DeformationRate(steps%simulCalls(i)%input%dgf, MacroDefRate)
             ! Run simul.
-            call SIMUL1(NFILE0,MacroDefRate)
+            call SIMUL1(NFILE0, MacroDefRate)
 
             if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
         enddo
@@ -150,10 +147,10 @@ contains
     !> Appropriate control fields in acnf%output_config are checked to decide if the data have to
     !> be actually written to corresponding IO units.
     subroutine outputCurrentState(info)
-        integer,intent(out)           :: info
+        integer, intent(out)           :: info
 
         info = VEF_OK
-        if (acnf%output_config%nfile == 1) call CURwriteBlock(IMP1,info)
+        if (acnf%output_config%nfile == 1) call CURwriteBlock(IMP1, info)
         if (info /= 0) return
     end subroutine
 
