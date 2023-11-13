@@ -43,7 +43,6 @@ module taylor
     real(DP), parameter     ::  PLUMIN(2, 2) = reshape([1._DP, -1._DP, 1._DP, -1._DP], shape(PLUMIN))
     integer, dimension(5), parameter ::    INITIAL_BASIS_SYSTEMS_FCC = [2, 5, 6, 7, 8], &
                                            INITIAL_BASIS_SYSTEMS_BCC = [1, 2, 4, 5, 7]
-
 contains
     subroutine taylor_init(deformation_mechanism, n_slip_systems_grain, A1, cluster_size)
         integer, intent(out):: n_slip_systems_grain  ! < total number of systems in slip system file (glide+twin)
@@ -84,21 +83,19 @@ contains
         forall (i = 1:5) basis(:,i) = A1(:,DI1(i))
 
         inverse_basis_grain = invert(basis)
-        
+       
         A2 = 0.0_DP
         A2(1:5, 1:n_slip_systems_grain)=A1
         if (cluster_size == 2) A2(6:10, n_slip_systems_grain+1:n_slip_systems_grain*2)=A1
     end subroutine   
     
-    subroutine taylor_solve(stress_matrix, strain_matrix, TRF, weight, IOR, GMMAb, cluster_size, laml, CC, n_slip_systems_grain, MacroDefRate, MacroDefState)
-        type(DeformationRate), intent(in):: MacroDefRate
-        type(DeformationState), intent(in):: MacroDefState
+    subroutine taylor_solve(stress_matrix, strain_matrix, TRF, IOR, GMMAb, cluster_size, laml, CC, n_slip_systems_grain, macrodefrate)
+        type(DeformationRate), intent(in):: macrodefrate
         integer, intent(in):: laml, IOR, cluster_size, n_slip_systems_grain
         real(dp), intent(out):: stress_matrix(3, 3), strain_matrix(3, 3)
         real(dp), intent(in):: TRF(3, 3, 2), GMMab(2)
-        real(dp), intent(inout):: CC(2, n_slip_systems_grain), weight
+        real(dp), intent(inout):: CC(2, n_slip_systems_grain)
         real(dp), dimension(5):: strain, spin
-        real(dp):: TPrinc(3, 3)
         real(dp):: C2(3, 3), rls(3, 3), rla(3, 3), C3(3, 3), spanv(5)
         real(DP):: mat_buffer(3, 3), UU(5*cluster_size, 5*cluster_size)
         integer:: n_slip_systems_cluster, size_system, IL, L1, IRL, I, K1, IG, JJ, II, DI(10), igrelm, n_relaxations
@@ -113,7 +110,6 @@ contains
         full_constraints = (n_relaxations == 0)
         if (laml == 1) then
             !Update microstructure
-            if (.not. full_constraints) call cluster1(IOR, MacroDefRate, MacroDefState, weight, Tprinc)
             CCC(1:2, n_slip_systems_cluster-n_relaxations+1:n_slip_systems_cluster)=0.0_DP
             UU = 0.0_dp
             DI(1:5) = DI1
@@ -121,12 +117,11 @@ contains
 
             do IL = 1, cluster_size
                 L1 = 5*(IL-1)
-
                 C2 = rotateSRTensorFrom(MacroDefRate%VelGrad, TRF(:,:,IL))
                 if (.not. full_constraints) then
                     do IRL = 1, 2
                         ! Transform relaxation from grain reference frame to macroscopic frame
-                        mat_buffer = rotateSRTensorTo(real(RELAXATIONS(:,:,IRL), DP), Tprinc)
+                        mat_buffer = rotateSRTensorTo(real(RELAXATIONS(:,:,IRL), DP), DFIL(IOR)%boundary_reference_frame)
                         !   ... and now to crystal frame:
                         C3 = rotateSRTensorFrom(mat_buffer, TRF(:,:,IL))
                         RLS=(C3+transpose(C3))*0.5_dp
@@ -226,9 +221,9 @@ contains
         spin_matrix = rotateSRTensorTo(spin_matrix, TRF(:,:,laml))
     end subroutine
 
-    subroutine taylor_update_state(IOR, TOTGAMdot, WorkRate, MacroDefRate, CC, TRF, C2, XM)
+    subroutine taylor_update_state(IOR, TOTGAMdot, WorkRate, MacroDefRate, CC, TRF, C2, XM, NGR)
         type(DeformationRate), intent(in):: MacroDefRate
-        integer, intent(in):: IOR
+        integer, intent(in):: IOR, NGR
         real(dp), intent(in):: XM(:,:), TRF(3, 3), CC(:,:)
         real(dp), intent(out):: TOTGAMdot, C2(3, 3)
         !> Rate of plastic work per unit volume in the crystal
@@ -260,79 +255,7 @@ contains
         C2(1, 2)=-C2(2, 1)
         ! KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
         C2 = matmul(C2, TRF)
+
     end subroutine
 
-    subroutine CLUSTER1(grain, MacroDefRate, MacroDefState, GEWF, Tprinc)
-    !   TDC is the normalized von-Mises equivalent strain rate
-
-        integer, intent(in)                     :: grain
-        type(DeformationRate), intent(in)       :: MacroDefRate
-        type(DeformationState), intent(in)      :: MacroDefState
-        real(DP), intent(out)                   :: GEWF
-        real(DP), intent(out)                   :: Tprinc(3, 3)
-
-        real(DP):: GRPAR(3, 3), PrDir(2, 3), TDCGr(3, 3), vec1(3), vec2(3), AL(3)
-        real(DP):: u, dlength, dot1, dot2, TGANGLE
-        integer:: i
-       
-        GRPAR = matmul(MacroDefState%TotalDefGrad, DFIL(grain)%boundary)
-        ! Calculation of volume affected by the surface
-        AL = norm2(GRPAR, 1)
-        vec1 = cross(GRPAR(:,2), GRPAR(:,3))
-        ! The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3; 
-        ! for very flattened grains, it should tend to 1.
-        u = abs(sum(GRPAR(:,1)*vec1))*0.25D0/product(AL)
-
-        if (minloc(AL, 1) == 3) then
-            GEWF = u*(4.D0*(AL(1)-AL(3))*(AL(2)-AL(3))*AL(3)  &
-                    +2.0D0*(AL(1)+AL(2)-2.0_dp*AL(3))*AL(3)**2 &
-                    +4.D0*AL(3)**3/3.D0)
-        else
-            GEWF = u*merge(2.D0*(AL(1)-AL(2))*AL(2)**2+4.D0*AL(2)**3/3.D0, &
-                           2.D0*(AL(2)-AL(1))*AL(1)**2+4.D0*AL(1)**3/3.D0, &
-                           AL(1) >= AL(2))
-        endif
-
-        ! Construction of orientation matrices for frames associated to the interfaces
-        ! Orientation of interfaces containing axes
-        Tprinc(1, 1:3)=GRPAR(1:3, 1)
-        Tprinc(3, 1:3)=cross(GRPAR(:,1), GRPAR(:,2))
-        Tprinc(2, 1:3)=cross(Tprinc(3, :), Tprinc(1, :))
-        ! Normalisation
-        do i = 1, 3
-            Tprinc(i, :)=Tprinc(i, :)/norm2(Tprinc(i, :))
-        enddo
-
-        dlength = norm2(MacroDefRate%StrainModevM)
-        !     Transform MacroDefRate%StrainModevM to the "Grb" reference frame
-        TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM, Tprinc)
-
-        dot1 = sum(RELAXATIONS(:,:,1) * TDCGr) / sqrt(2.0D0) / dlength
-        dot2 = sum(RELAXATIONS(:,:,2) * TDCGr) / sqrt(2.0D0) / dlength
-
-        if(abs(dot1) < 0.000001_DP .and. abs(dot2) >= 0.000001_DP) then
-            !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
-            vec1 = Tprinc(2, 1:3)
-            Tprinc(2, 1:3)=-Tprinc(1, 1:3)
-            Tprinc(2, 1:3)=vec1
-        elseif(abs(dot1) >= 0.000001_DP .and. abs(dot2) >= 0.000001_DP) then
-            ! need to rotate by a angle < 90 (this angle could be positive or negative)
-            tgangle = dot2/dot1
-            PrDir = 0.0_DP
-            PrDir(1, 1)=1.D0/sqrt(1.D0+tgangle**2)
-            PrDir(1, 2)=tgangle/sqrt(1.D0+tgangle**2)
-            PrDir(2, 1)=-PrDir(1, 2)
-            PrDir(2, 2)=PrDir(1, 1)
-            ! Prdir(n, :) is vector-n in the GB frame
-            ! Transform these two vector in the Sample's frame
-            vec1 = 0.0_DP
-            vec2 = 0.0_DP
-            do i = 1, 3
-                vec1(i)=vec1(i)+sum(Tprinc(:,i)*PrDir(1, :))
-                vec2(i)=vec2(i)+sum(Tprinc(:,i)*PrDir(2, :))
-            enddo
-            Tprinc(1, 1:3)=vec1
-            Tprinc(2, 1:3)=vec2
-        endif
-    end subroutine
 end module

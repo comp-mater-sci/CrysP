@@ -99,6 +99,12 @@ module altaySimul
             nrstep = nrstep+1
 
             call Update_DeformationState(MacroDefRate, MacroDefState, info)
+            !Update grain weights and cluster reference frame orientations
+            if (NGR == 2) then 
+                do i = 1, size(DFIL), 2
+                    call cluster1(i, macrodefrate, macrodefstate)
+                end do
+            end if
             call UPDATC(CIJ, MacroDefState%IncrDefGrad_inverse)
             call GETANG(CIJ, GAXES, TG(:,:,1))
 
@@ -138,8 +144,12 @@ module altaySimul
                 !             - should not perform any computation
                 !             - has to output the result of the second crystal found
                 !               during the previous computation.
-                call taylor_solve(Ssam, RHOSs(:,:,laml), TRF, GEWF, IOR, GMMab, NGR, laml, CC, M11, MacroDefRate, MacroDefState)
+                call taylor_solve(Ssam, RHOSs(:,:,laml), TRF, IOR, GMMab, NGR, laml, CC, M11, macrodefrate)
 
+                if (astate%simulCalls(astate%this)%input%full_model) &
+                      call taylor_update_state(IOR, GMMdot, WorkRate, MacroDefRate, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM, NGR)
+
+                GEWF = DFIL(IOR)%tgew
                 if(laml == 1) then
                     ssqgx = GEWF
                 else
@@ -147,8 +157,6 @@ module altaySimul
                 end if
                 TOTGEW = TOTGEW+GEWF
 
-                if (astate%simulCalls(astate%this)%input%full_model) &
-                      call taylor_update_state(IOR, GMMdot, WorkRate, MacroDefRate, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM)
 
                 SHsam = SHsam+Ssam*GEWF
                 RHOSm = RHOSm+RHOSs(:,:,laml)*GEWF
@@ -160,8 +168,9 @@ module altaySimul
                 GMM1 = GMMab(laml) + GMMdot  ! Step time here implicitly assumed to be 1.0s
                 Wtot = Wtot+WorkRate  ! Step time here implicitly assumed to be 1.0s
                 ! We can choose not to update the texture state
-                if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                      call DYNFIL_setGrain(IOR, C2, GEWF, GMM1, TG(:,:,laml), RHOSs(:,:,laml))
+                if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
+                      call DYNFIL_setGrain(IOR, C2, GMM1, TG(:,:,laml), RHOSs(:,:,laml))
+                end if
             enddo clusterloop
 
             SHsam = SHsam/TOTGEW
