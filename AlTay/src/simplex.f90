@@ -13,19 +13,19 @@ contains
 
     subroutine simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, overstress)
         real(DP), intent(in)    ::  taylor_coeffs(:,:),                                 &
-                                    strain(size(taylor_coeffs,1)),                      &    
+                                    strain(size(taylor_coeffs,1)),                      &
                                     crss(2,size(taylor_coeffs,2))
         real(DP), intent(out)   ::  slip(size(taylor_coeffs,2)),                        &
                                     stress(size(taylor_coeffs,1)),                      &
                                     rss(size(taylor_coeffs,2)),                         &
                                     overstress(size(taylor_coeffs,2))
-        integer, intent(inout)  ::  basis_systems(size(taylor_coeffs,1)) 
+        integer, intent(inout)  ::  basis_systems(size(taylor_coeffs,1))
         real(DP), intent(inout) ::  inverse_basis(size(taylor_coeffs,1),size(taylor_coeffs,1))
 
-        real(DP)                ::  new_basis_vector(size(taylor_coeffs,1)),            & 
-                                    rss_basis(size(taylor_coeffs,1)),                   & 
+        real(DP)                ::  new_basis_vector(size(taylor_coeffs,1)),            &
+                                    rss_basis(size(taylor_coeffs,1)),                   &
                                     new_inverse_basis_vector(size(taylor_coeffs,1)),    &
-                                    slip_basis(size(taylor_coeffs,1))        
+                                    slip_basis(size(taylor_coeffs,1))
         logical                 ::  bas(size(taylor_coeffs,2))
         integer                 ::  i, iter, max_iters, most_overstressed_system, system_to_remove
         real(DP)                ::  tmp, ratio, min_ratio
@@ -34,6 +34,7 @@ contains
 
         bas = .false.
         rss = 0._DP
+        min_ratio = 0._DP
         bas(basis_systems) = .true.
 
         ! Calculation of slip rates in basis
@@ -61,14 +62,14 @@ contains
                     ratio = slip_basis(i) / new_basis_vector(i)
                     !Tmp is mostly a dummy value used for its sign and to see if the inputs are not too close to 0.
                     tmp = merge(rss(basis_systems(i)), slip_basis(i), abs(rss(basis_systems(i))) >= TOLERANCE) * new_basis_vector(i)
-                    if (abs(tmp) > TOLERANCE & 
+                    if (abs(tmp) > TOLERANCE &
                         .and. sign(tmp, rss(most_overstressed_system)) == tmp &
                         .and. (system_to_remove == 0 .or. sign(tmp, ratio - min_ratio) == -tmp)) &
                     then
                         system_to_remove = i
-                        min_ratio = ratio 
+                        min_ratio = ratio
                     end if
-                end if 
+                end if
             end do
             if (system_to_remove == 0) &
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'The solution is unbounded.')
@@ -98,7 +99,7 @@ contains
                                  rss(size(taylor_coeffs,2)), &
                                  overstress(size(taylor_coeffs,2))
         integer, intent(out) :: most_overstressed_system
-        real(DP) :: tmp      
+        real(DP) :: tmp
         integer :: i
 
         stress = matmul(rss_basis, inverse_basis)
@@ -113,7 +114,7 @@ contains
             end if
         enddo
     end subroutine find_most_overstressed_system
-    
+
     subroutine update_inverse_basis(inverse_basis, new_basis_vector, system_to_remove, new_inverse_basis_vector)
         real(DP), dimension(:,:), intent(inout) :: inverse_basis
         real(DP), intent(in) :: new_basis_vector(size(inverse_basis,1))
@@ -128,7 +129,7 @@ contains
             call update_vector_in_basis(inverse_basis(:,i), system_to_remove, new_inverse_basis_vector)
         end do
     end subroutine update_inverse_basis
-    
+
     subroutine update_vector_in_basis(inverse_basis_vector, system_to_remove, new_inverse_basis_vector)
         real(DP), intent(inout) ::  inverse_basis_vector(:)
         integer, intent(in) :: system_to_remove
