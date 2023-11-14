@@ -19,7 +19,7 @@ module taylor
                 taylor_update_state
 
     integer  :: n_active_slip_systems
-    real(dp):: inverse_basis_grain(5, 5), &
+    real(DP):: inverse_basis_grain(5, 5), &
                 spin_matrix(3, 3), &
                 SLIPLP(8), &
                 TAURLP(8), &
@@ -46,7 +46,7 @@ module taylor
     contains
     subroutine taylor_init(deformation_mechanism, n_slip_systems_grain, A1, cluster_size)
         integer, intent(out):: n_slip_systems_grain  ! < total number of systems in slip system file (glide+twin)
-        real(dp), intent(out), allocatable:: A1(:,:)
+        real(DP), intent(out), allocatable:: A1(:,:)
         integer, intent(in):: cluster_size
         integer, dimension(:,:,:), intent(in):: deformation_mechanism
         integer:: i, n_slip_systems_cluster, system_size, n_relaxations
@@ -93,12 +93,12 @@ module taylor
         type(DeformationRate), intent(in):: MacroDefRate
         type(DeformationState), intent(in):: MacroDefState
         integer, intent(in):: laml, IOR, cluster_size, n_slip_systems_grain
-        real(dp), intent(out):: stress_matrix(3, 3), strain_matrix(3, 3)
-        real(dp), intent(in):: TRF(3, 3, 2), GMMab(2)
-        real(dp), intent(inout):: CC(2, n_slip_systems_grain), weight
-        real(dp), dimension(5):: strain, spin
-        real(dp):: TPrinc(3, 3)
-        real(dp):: C2(3, 3), rls(3, 3), rla(3, 3), C3(3, 3), spanv(5)
+        real(DP), intent(out):: stress_matrix(3, 3), strain_matrix(3, 3)
+        real(DP), intent(in):: TRF(3, 3, 2), GMMab(2)
+        real(DP), intent(inout):: CC(2, n_slip_systems_grain), weight
+        real(DP), dimension(5):: strain, spin
+        real(DP):: TPrinc(3, 3)
+        real(DP):: C2(3, 3), rls(3, 3), rla(3, 3), C3(3, 3), spanv(5)
         real(DP):: mat_buffer(3, 3), UU(5*cluster_size, 5*cluster_size)
         integer:: n_slip_systems_cluster, size_system, IL, L1, IRL, I, K1, IG, JJ, II, DI(10), igrelm, n_relaxations
         logical:: full_constraints
@@ -231,16 +231,16 @@ module taylor
     subroutine taylor_update_state(IOR, TOTGAMdot, WorkRate, MacroDefRate, CC, TRF, C2, XM)
         type(DeformationRate), intent(in):: MacroDefRate
         integer, intent(in):: IOR
-        real(dp), intent(in):: XM(:,:), TRF(3, 3), CC(:,:)
-        real(dp), intent(out):: TOTGAMdot, C2(3, 3)
+        real(DP), intent(in):: XM(:,:), TRF(3, 3), CC(:,:)
+        real(DP), intent(out):: TOTGAMdot, C2(3, 3)
         !> Rate of plastic work per unit volume in the crystal
-        real(dp), intent(out):: WorkRate
+        real(DP), intent(out):: WorkRate
 
-        real(dp), dimension(3):: ROT
-        real(dp), dimension(3, 3):: RCcryst, RHOAcrys
-        real(dp), dimension(size(CC, 2)):: GAMdot
+        real(DP), dimension(3):: ROT
+        real(DP), dimension(3, 3):: RCcryst, RHOAcrys
+        real(DP), dimension(size(CC, 2)):: GAMdot
         integer:: j
-        real(dp), parameter:: ddt = 1.0_DP
+        real(DP), parameter:: ddt = 1.0_DP
 
         call resolve_taylor_ambiguity(GAMdot, SGNN, MacroDefRate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call hardening_update_state(IOR, ddt, GAMdot)
