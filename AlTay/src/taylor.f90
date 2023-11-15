@@ -89,6 +89,7 @@ contains
         if (cluster_size == 2) A2(6:10, n_slip_systems_grain+1:n_slip_systems_grain*2)=A1
     end subroutine   
     
+    !Note that IOR will be replaced by a reference to a grain object in the near future.
     subroutine taylor_solve(stress_matrix, strain_matrix, TRF, IOR, GMMAb, cluster_size, laml, CC, n_slip_systems_grain, macrodefrate)
         type(DeformationRate), intent(in):: macrodefrate
         integer, intent(in):: laml, IOR, cluster_size, n_slip_systems_grain
@@ -98,12 +99,11 @@ contains
         real(dp), dimension(5):: strain, spin
         real(dp):: C2(3, 3), rls(3, 3), rla(3, 3), C3(3, 3), spanv(5)
         real(DP):: mat_buffer(3, 3), UU(5*cluster_size, 5*cluster_size)
-        integer:: n_slip_systems_cluster, size_system, IL, L1, IRL, I, K1, IG, JJ, II, DI(10), igrelm, n_relaxations
+        integer:: n_slip_systems_cluster, size_system, IL, L1, IRL, I, K1, IG, JJ, II, DI(10), n_relaxations
         logical:: full_constraints
 
         character(*), parameter:: PROC_NAME = 'taylor_solve'
 
-        if (IOR == 1) IGrElm = 0
         n_relaxations=(cluster_size-1)*2
         size_system = 5*cluster_size
         n_slip_systems_cluster = cluster_size*n_slip_systems_grain+n_relaxations

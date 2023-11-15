@@ -41,7 +41,7 @@ module altayDynfil
                 dynFil_setGrain,    &
                 dynfil_finalize, &
                 read_microstructure, &
-                cluster1
+                update_cluster_state
 
 contains
     subroutine dynfil_init(fname)
@@ -153,19 +153,18 @@ contains
         DFIL(i)%tZERO   = ZERO
     end subroutine
 
-    subroutine CLUSTER1(grain, MacroDefRate, MacroDefState)
-    !   TDC is the normalized von-Mises equivalent strain rate
-
-        integer, intent(in)                     :: grain
+    !Determine the boundary reference frame and the transformation matrices between boundary frame and crystal frame and the
+    !relative weight of the cluster.
+    subroutine update_cluster_state(grain_, MacroDefRate, MacroDefState)
+        type(Grain), intent(inout):: grain_
         type(DeformationRate), intent(in)       :: MacroDefRate
         type(DeformationState), intent(in)      :: MacroDefState
         real(DP)                   :: Tprinc(3, 3)
-
-        real(DP):: GRPAR(3, 3), PrDir(2, 3), TDCGr(3, 3), vec1(3), vec2(3), AL(3)
+        real(DP):: GRPAR(3, 3), PrDir(2, 3), TDCGr(3, 3), vec1(3), vec2(3), AL(3)  ! TDC is the normalized von-Mises equivalent strain rate
         real(DP):: u, dlength, dot1, dot2, TGANGLE, GEWF
         integer:: i
        
-        GRPAR = matmul(MacroDefState%TotalDefGrad, DFIL(grain)%boundary_transformation_matrix)
+        GRPAR = matmul(MacroDefState%TotalDefGrad, grain_%boundary_transformation_matrix)
         ! Calculation of volume affected by the surface
         AL = norm2(GRPAR, 1)
         vec1 = cross(GRPAR(:,2), GRPAR(:,3))
@@ -226,8 +225,8 @@ contains
             
         endif
 
-        DFIL(grain)%boundary_reference_frame = Tprinc
-        DFIL(grain)%tgew = GEWF        
+        grain_%boundary_reference_frame = Tprinc
+        grain_%tgew = GEWF        
     end subroutine
 
 end module

@@ -24,7 +24,6 @@ module altaySimul
 
     ! initialization call
     subroutine SIMUL0()
-
         integer:: NGR         !< number of grains
 
         character(len = 40):: TITEL
@@ -102,7 +101,7 @@ module altaySimul
             !Update grain weights and cluster reference frame orientations
             if (NGR == 2) then 
                 do i = 1, size(DFIL), 2
-                    call cluster1(i, macrodefrate, macrodefstate)
+                    call update_cluster_state(DFIL(i), macrodefrate, macrodefstate)
                 end do
             end if
             call UPDATC(CIJ, MacroDefState%IncrDefGrad_inverse)
