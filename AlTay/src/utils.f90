@@ -103,10 +103,10 @@ contains
     ! Returns the inverse of a matrix calculated by finding the LU
     ! decomposition.  Depends on LAPACK.
     function invert(A) result(Ainv)
-      real(dp), dimension(:,:), intent(in) :: A
-      real(dp), dimension(size(A,1),size(A,2)) :: Ainv
+      real(DP), dimension(:,:), intent(in) :: A
+      real(DP), dimension(size(A,1),size(A,2)) :: Ainv
                                                                           
-      real(dp), dimension(size(A,1)) :: work  ! work array for LAPACK
+      real(DP), dimension(size(A,1)) :: work  ! work array for LAPACK
       integer, dimension(size(A,1)) :: ipiv   ! pivot indices
       integer :: n, info
     

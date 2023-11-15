@@ -22,7 +22,6 @@ altayAlgorithms.f90
 altayDynfil.f90 
 altayMacroKinematic.f90 
 altayMesostructure.f90 
-altaySliprate.f90 
 simplex.f90 
 altayCurAccess.f90 
 utils.f90
@@ -31,6 +30,7 @@ altayConfig.f90
 altaySub.f90
 parameters.f90
 slip_systems.f90
+taylor_ambiguity.f90
 hardening/hardening.f90
 hardening/model/hardening_model.f90
 hardening/model/hardening_model_swift.f90
