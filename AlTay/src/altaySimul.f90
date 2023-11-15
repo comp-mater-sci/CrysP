@@ -147,7 +147,7 @@ module altaySimul
                 call taylor_solve(Ssam, RHOSs(:,:,laml), TRF, IOR, GMMab, NGR, laml, CC, M11, macrodefrate)
 
                 if (astate%simulCalls(astate%this)%input%full_model) &
-                      call taylor_update_state(IOR, GMMdot, WorkRate, MacroDefRate, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM, NGR)
+                      call taylor_update_state(IOR, GMMdot, WorkRate, MacroDefRate, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM)
 
                 GEWF = DFIL(IOR)%tgew
                 if(laml == 1) then
