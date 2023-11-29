@@ -7,9 +7,9 @@ module taylor
     use altayConfig, only: astate
     use logging
     use simplex
-    use altayMesostructure
     use altayAlgorithms
     use slip_systems
+    use altayDynfil
 
     implicit none
 
@@ -43,7 +43,7 @@ module taylor
     real(DP), parameter     ::  PLUMIN(2, 2) = reshape([1._DP, -1._DP, 1._DP, -1._DP], shape(PLUMIN))
     integer, dimension(5), parameter ::    INITIAL_BASIS_SYSTEMS_FCC = [2, 5, 6, 7, 8], &
                                            INITIAL_BASIS_SYSTEMS_BCC = [1, 2, 4, 5, 7]
-    contains
+contains
     subroutine taylor_init(deformation_mechanism, n_slip_systems_grain, A1, cluster_size)
         integer, intent(out):: n_slip_systems_grain  ! < total number of systems in slip system file (glide+twin)
         real(DP), intent(out), allocatable:: A1(:,:)
@@ -83,39 +83,33 @@ module taylor
         forall (i = 1:5) basis(:,i) = A1(:,DI1(i))
 
         inverse_basis_grain = invert(basis)
-        
+       
         A2 = 0.0_DP
         A2(1:5, 1:n_slip_systems_grain)=A1
         if (cluster_size == 2) A2(6:10, n_slip_systems_grain+1:n_slip_systems_grain*2)=A1
     end subroutine   
     
-    subroutine taylor_solve(stress_matrix, strain_matrix, TRF, weight, IOR, GMMAb, cluster_size, laml, CC, n_slip_systems_grain, MacroDefRate, MacroDefState)
-        type(DeformationRate), intent(in):: MacroDefRate
-        type(DeformationState), intent(in):: MacroDefState
+    !Note that IOR will be replaced by a reference to a grain object in the near future.
+    subroutine taylor_solve(stress_matrix, strain_matrix, TRF, IOR, GMMAb, cluster_size, laml, CC, n_slip_systems_grain, macrodefrate)
+        type(DeformationRate), intent(in):: macrodefrate
         integer, intent(in):: laml, IOR, cluster_size, n_slip_systems_grain
-        real(DP), intent(out):: stress_matrix(3, 3), strain_matrix(3, 3)
-        real(DP), intent(in):: TRF(3, 3, 2), GMMab(2)
-        real(DP), intent(inout):: CC(2, n_slip_systems_grain), weight
-        real(DP), dimension(5):: strain, spin
-        real(DP):: TPrinc(3, 3)
-        real(DP):: C2(3, 3), rls(3, 3), rla(3, 3), C3(3, 3), spanv(5)
+        real(dp), intent(out):: stress_matrix(3, 3), strain_matrix(3, 3)
+        real(dp), intent(in):: TRF(3, 3, 2), GMMab(2)
+        real(dp), intent(inout):: CC(2, n_slip_systems_grain)
+        real(dp), dimension(5):: strain, spin
+        real(dp):: C2(3, 3), rls(3, 3), rla(3, 3), C3(3, 3), spanv(5)
         real(DP):: mat_buffer(3, 3), UU(5*cluster_size, 5*cluster_size)
-        integer:: n_slip_systems_cluster, size_system, IL, L1, IRL, I, K1, IG, JJ, II, DI(10), igrelm, n_relaxations
+        integer:: n_slip_systems_cluster, size_system, IL, L1, IRL, I, K1, IG, JJ, II, DI(10), n_relaxations
         logical:: full_constraints
 
         character(*), parameter:: PROC_NAME = 'taylor_solve'
 
-        if (IOR == 1) IGrElm = 0
         n_relaxations=(cluster_size-1)*2
         size_system = 5*cluster_size
         n_slip_systems_cluster = cluster_size*n_slip_systems_grain+n_relaxations
         full_constraints = (n_relaxations == 0)
         if (laml == 1) then
             !Update microstructure
-            if (.not. full_constraints) then
-                IGrElm = mod((IOR-1)/cluster_size, NGrElm) + 1
-                call cluster1(IGrElm, MacroDefRate, MacroDefState, weight, Tprinc)
-            end if 
             CCC(1:2, n_slip_systems_cluster-n_relaxations+1:n_slip_systems_cluster)=0.0_DP
             UU = 0.0_dp
             DI(1:5) = DI1
@@ -123,12 +117,11 @@ module taylor
 
             do IL = 1, cluster_size
                 L1 = 5*(IL-1)
-
                 C2 = rotateSRTensorFrom(MacroDefRate%VelGrad, TRF(:,:,IL))
                 if (.not. full_constraints) then
                     do IRL = 1, 2
                         ! Transform relaxation from grain reference frame to macroscopic frame
-                        mat_buffer = rotateSRTensorTo(real(RELAXATIONS(:,:,IRL), DP), Tprinc)
+                        mat_buffer = rotateSRTensorTo(real(RELAXATIONS(:,:,IRL), DP), DFIL(IOR)%boundary_reference_frame)
                         !   ... and now to crystal frame:
                         C3 = rotateSRTensorFrom(mat_buffer, TRF(:,:,IL))
                         RLS=(C3+transpose(C3))*0.5_dp
@@ -262,5 +255,7 @@ module taylor
         C2(1, 2)=-C2(2, 1)
         ! KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
         C2 = matmul(C2, TRF)
+
     end subroutine
+
 end module
