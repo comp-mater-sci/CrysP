@@ -118,6 +118,9 @@ contains
         integer:: i
         logical:: input_ok
         type(DeformationRate):: MacroDefRate
+        real(DP):: velocity_gradient(3, 3)
+
+
         ! Validate input
         info = VEF_ERROR
         input_ok = .false.
@@ -129,12 +132,16 @@ contains
         ! set of calls.
         info = VEF_ERROR
         !
+
         do i = 1, steps%nSimulCalls
             steps%this = i
             NFILE0 = merge(1, 0, steps%simulCalls(i)%input%do_output_init)
             call Set_DeformationRate(steps%simulCalls(i)%input%dgf, MacroDefRate)
+            velocity_gradient = steps%simulcalls(i)%input%dgf
+            !Make traceless, should be moved to preprocessing
+            velocity_gradient = velocity_gradient-UNIT_MATRIX_3X3 * (velocity_gradient(1, 1)+velocity_gradient(2, 2)+velocity_gradient(3, 3))/3._DP 
             ! Run simul.
-            call SIMUL1(NFILE0, MacroDefRate)
+            call SIMUL1(NFILE0, MacroDefRate, velocity_gradient)
 
             if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
         enddo

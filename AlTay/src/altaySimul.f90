@@ -51,9 +51,10 @@ module altaySimul
     end subroutine
 
 
-    subroutine SIMUL1(NFILE0, MacroDefRate)
+    subroutine SIMUL1(NFILE0, MacroDefRate, velocity_gradient)
         ! TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES USING THE ALAMEL MODEL
         type(DeformationRate), intent(in):: MacroDefRate  ! inout
+        real(DP), dimension(3, 3), intent(in):: velocity_gradient
         integer, intent(in):: NFILE0
 
         real(DP):: TRF(3, 3, 2), GMMAb(2)
@@ -75,6 +76,9 @@ module altaySimul
         real(DP):: WorkRate  ! Rate of plastic work per unit
                                      ! volume in the crystal
         real(DP):: Wtot  ! Total plastic work per unit volume in crystal
+        real(DP), dimension(3, 3):: deformation_gradient, &
+                                   strain_rate, &
+                                   von_mises_strain_mode 
 
 
         NPOINT = size(DFIL)
@@ -82,6 +86,10 @@ module altaySimul
         NGR = acnf%simul_init%NGR
         ! Number of relaxations: 0 for Taylor and 2 for ALAMEL:
         NFILE = NFILE0*NFILE1
+
+
+        strain_rate = symmetric_part(velocity_gradient)
+        von_mises_strain_mode = strain_rate/(SQR0P67*norm2(strain_rate))
 
         ! Output the current texture
         if (NFILE == 1) call CURwriteBlock(IMP1, info)
@@ -101,7 +109,7 @@ module altaySimul
             !Update grain weights and cluster reference frame orientations
             if (NGR == 2) then 
                 do i = 1, size(DFIL), 2
-                    call update_cluster_state(DFIL(i), macrodefrate, macrodefstate)
+                    call update_cluster_state(DFIL(i), macrodefstate%totaldefgrad, von_mises_strain_mode)
                 end do
             end if
             call UPDATC(CIJ, MacroDefState%IncrDefGrad_inverse)

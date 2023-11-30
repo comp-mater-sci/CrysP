@@ -155,16 +155,16 @@ contains
 
     !Determine the boundary reference frame and the transformation matrices between boundary frame and crystal frame and the
     !relative weight of the cluster.
-    subroutine update_cluster_state(grain_, MacroDefRate, MacroDefState)
+    subroutine update_cluster_state(grain_, deformation_gradient, von_mises_strain_mode)
         type(Grain), intent(inout):: grain_
-        type(DeformationRate), intent(in)       :: MacroDefRate
-        type(DeformationState), intent(in)      :: MacroDefState
-        real(DP)                   :: Tprinc(3, 3)
+        real(DP), intent(in):: deformation_gradient(3, 3), &
+                               von_mises_strain_mode(3, 3)
+        real(DP)::             Tprinc(3, 3)
         real(DP):: GRPAR(3, 3), PrDir(2, 3), TDCGr(3, 3), vec1(3), vec2(3), AL(3)  ! TDC is the normalized von-Mises equivalent strain rate
         real(DP):: u, dlength, dot1, dot2, TGANGLE, GEWF
         integer:: i
        
-        GRPAR = matmul(MacroDefState%TotalDefGrad, grain_%boundary_transformation_matrix)
+        GRPAR = matmul(deformation_gradient, grain_%boundary_transformation_matrix)
         ! Calculation of volume affected by the surface
         AL = norm2(GRPAR, 1)
         vec1 = cross(GRPAR(:,2), GRPAR(:,3))
@@ -192,9 +192,9 @@ contains
             Tprinc(i, :)=Tprinc(i, :)/norm2(Tprinc(i, :))
         enddo
 
-        dlength = norm2(MacroDefRate%StrainModevM)
+        dlength = norm2(von_mises_strain_mode)
         !     Transform MacroDefRate%StrainModevM to the "Grb" reference frame
-        TDCGr = rotateSRTensorFrom(MacroDefRate%StrainModevM, Tprinc)
+        TDCGr = rotateSRTensorFrom(von_mises_strain_mode, Tprinc)
 
         dot1 = sum(RELAXATIONS(:,:,1) * TDCGr) / sqrt(2.0D0) / dlength
         dot2 = sum(RELAXATIONS(:,:,2) * TDCGr) / sqrt(2.0D0) / dlength

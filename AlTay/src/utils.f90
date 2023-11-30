@@ -91,6 +91,14 @@ contains
         forall(i = 1:size(v1), j = 1:size(v2)) prod(i, j) = v1(i) * v2(j)  
     end function
 
+    pure function symmetric_part(mat) result(sym)
+        real(DP), dimension(:,:), intent(in):: mat
+        real(DP), dimension(size(mat, 1), size(mat, 2)):: sym
+
+        sym = (mat+transpose(mat)) / 2._DP
+    end function
+
+
     pure function antisymmetric_part(mat) result(antisym)
         real(DP), dimension(:,:), intent(in):: mat
         real(DP), dimension(size(mat, 1), size(mat, 2)):: antisym
