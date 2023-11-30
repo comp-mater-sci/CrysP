@@ -51,9 +51,8 @@ module altaySimul
     end subroutine
 
 
-    subroutine SIMUL1(NFILE0, MacroDefRate, velocity_gradient)
+    subroutine SIMUL1(NFILE0, velocity_gradient)
         ! TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES USING THE ALAMEL MODEL
-        type(DeformationRate), intent(in):: MacroDefRate  ! inout
         real(DP), dimension(3, 3), intent(in):: velocity_gradient
         integer, intent(in):: NFILE0
 
@@ -109,7 +108,7 @@ module altaySimul
 
             nrstep = nrstep+1
 
-            call Update_DeformationState(MacroDefRate, MacroDefState, info)
+            call Update_DeformationState(velocity_gradient, von_mises_strain_rate, MacroDefState, info)
             !Update grain weights and cluster reference frame orientations
             if (NGR == 2) then 
                 do i = 1, size(DFIL), 2
@@ -155,7 +154,7 @@ module altaySimul
                 !             - should not perform any computation
                 !             - has to output the result of the second crystal found
                 !               during the previous computation.
-                call taylor_solve(Ssam, RHOSs(:,:,laml), TRF, IOR, GMMab, NGR, laml, CC, M11, macrodefrate)
+                call taylor_solve(Ssam, RHOSs(:,:,laml), TRF, IOR, GMMab, NGR, laml, CC, M11, velocity_gradient, von_mises_strain_rate)
 
                 if (astate%simulCalls(astate%this)%input%full_model) &
                       call taylor_update_state(IOR, GMMdot, WorkRate, spin, von_mises_strain_rate, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM)
@@ -172,7 +171,7 @@ module altaySimul
                 SHsam = SHsam+Ssam*GEWF
                 RHOSm = RHOSm+RHOSs(:,:,laml)*GEWF
                 !
-                Mgrain = GMMdot /  MacroDefRate%vMeqStrainRate
+                Mgrain = GMMdot /  von_mises_strain_rate
                 Mavg = Mavg+Mgrain*GEWF
                 ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/MacroDefRate%vMeqStrainRate
                 HGAM = HGAM+GMMdot*GEWF  ! Step time here implicitly assumed to be 1.0s

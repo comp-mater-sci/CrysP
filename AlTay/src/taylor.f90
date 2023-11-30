@@ -90,11 +90,13 @@ contains
     end subroutine   
     
     !Note that IOR will be replaced by a reference to a grain object in the near future.
-    subroutine taylor_solve(stress_matrix, strain_matrix, TRF, IOR, GMMAb, cluster_size, laml, CC, n_slip_systems_grain, macrodefrate)
-        type(DeformationRate), intent(in):: macrodefrate
+    subroutine taylor_solve(stress_matrix, strain_matrix, TRF, IOR, GMMAb, cluster_size, laml, CC, n_slip_systems_grain, velocity_gradient, von_mises_strain_rate)
         integer, intent(in):: laml, IOR, cluster_size, n_slip_systems_grain
-        real(dp), intent(out):: stress_matrix(3, 3), strain_matrix(3, 3)
-        real(dp), intent(in):: TRF(3, 3, 2), GMMab(2)
+        real(DP), intent(out):: stress_matrix(3, 3), strain_matrix(3, 3)
+        real(DP), intent(in):: TRF(3, 3, 2), &
+                                GMMab(2), &
+                                velocity_gradient(3, 3), &
+                                von_mises_strain_rate
         real(dp), intent(inout):: CC(2, n_slip_systems_grain)
         real(dp), dimension(5):: strain, spin
         real(dp):: C2(3, 3), rls(3, 3), rla(3, 3), C3(3, 3), spanv(5)
@@ -117,7 +119,7 @@ contains
 
             do IL = 1, cluster_size
                 L1 = 5*(IL-1)
-                C2 = rotateSRTensorFrom(MacroDefRate%VelGrad, TRF(:,:,IL))
+                C2 = rotateSRTensorFrom(velocity_gradient, TRF(:,:,IL))
                 if (.not. full_constraints) then
                     do IRL = 1, 2
                         ! Transform relaxation from grain reference frame to macroscopic frame
@@ -136,7 +138,7 @@ contains
 
                 ! Calculation of time increment by dividing von Mises equivalent
                 ! strain by von Mises equivalent strain rate
-                B8(1:5, IL)=convert_stress_strain_space(C2)/MacroDefRate%vMeqStrainRate  ! sym.(3, 3) -> (5)
+                B8(1:5, IL)=convert_stress_strain_space(C2)/von_mises_strain_rate  ! sym.(3, 3) -> (5)
                 BB(L1+1:L1+5)=B8(1:5, IL)
                 K1 = n_slip_systems_grain*(IL-1)
 
@@ -189,9 +191,9 @@ contains
         stress_matrix = convert_stress_strain_space(spanv) ! (5) -> sym.(3, 3)
         strain_matrix = convert_stress_strain_space(strain)  ! (5) -> sym.(3, 3)
         spin_matrix = 0._DP
-        spin_matrix(2, 3)= spin(1)*sqr2*MacroDefRate%vMeqStrainRate
-        spin_matrix(3, 1)= spin(2)*sqr2*MacroDefRate%vMeqStrainRate
-        spin_matrix(1, 2)= spin(3)*sqr2*MacroDefRate%vMeqStrainRate
+        spin_matrix(2, 3)= spin(1)*sqr2*von_mises_strain_rate
+        spin_matrix(3, 1)= spin(2)*sqr2*von_mises_strain_rate
+        spin_matrix(1, 2)= spin(3)*sqr2*von_mises_strain_rate
         spin_matrix(3, 2)= -spin_matrix(2, 3)
         spin_matrix(1, 3)= -spin_matrix(3, 1)
         spin_matrix(2, 1)= -spin_matrix(1, 2)

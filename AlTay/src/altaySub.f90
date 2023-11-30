@@ -141,7 +141,7 @@ contains
             !Make traceless, should be moved to preprocessing
             velocity_gradient = velocity_gradient-UNIT_MATRIX_3X3 * (velocity_gradient(1, 1)+velocity_gradient(2, 2)+velocity_gradient(3, 3))/3._DP 
             ! Run simul.
-            call SIMUL1(NFILE0, MacroDefRate, velocity_gradient)
+            call SIMUL1(NFILE0, velocity_gradient)
 
             if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
         enddo

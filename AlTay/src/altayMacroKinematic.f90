@@ -17,7 +17,6 @@ module altayMacroKinematic
         real(DP), dimension(3, 3):: TotalDefGrad = UNIT_MATRIX_3X3            !< Total Deformation Gradient (from undeformed state to the end of current increment)
         real(DP), dimension(3, 3):: IncrDefGrad = UNIT_MATRIX_3X3             !< Incremental Deformation Gradient (from start to end of current increment)
         real(DP), dimension(3, 3):: IncrDefGrad_inverse = UNIT_MATRIX_3X3     !< Inverse of Incremental Deformation Gradient
-        real(DP)                 :: IncrvMeqStrain = 0.0D0               !< Incremental von Mises equivalent strain (from start to end of current increment)
         real(DP)                 :: AccumvMeqStrain_ToStartOfInc = 0.0D0 !< Accumulated von Mises equivalent strain, up to the start of current inc.
                                                                          !< (note: reference state might be different than that of TotalDefGrad)
         real(DP)                 :: AccumvMeqStrain_ToEndOfInc = 0.0D0   !< Accumulated von Mises equivalent strain, up to the end of current inc.
@@ -47,23 +46,18 @@ module altayMacroKinematic
 
     end subroutine
 
-    subroutine Update_DeformationState(thisRate, thisState, info)
-        type(DeformationRate), intent(in)    :: thisRate
+    subroutine Update_DeformationState(velocity_gradient, von_mises_strain_rate, thisState, info)
+        real(DP), intent(in):: velocity_gradient(3, 3), &
+                               von_mises_strain_rate
         type(DeformationState), intent(inout):: thisState
         integer,                    intent(out):: info
-        integer:: i
 
-        real(DP), dimension(3, 3):: Ldt
-
-        Ldt = thisRate%VelGrad
-
-        thisState%IncrDefGrad = matrix_exponential_small_norm(ldt)
+        thisState%IncrDefGrad = matrix_exponential_small_norm(velocity_gradient)
         thisState%incrdefgrad_inverse = invert(thisstate%incrdefgrad)
         !if (info /= 0) error stop  ! MD: needs further investigations, should not happen
         thisState%TotalDefGrad = matmul(thisState%IncrDefGrad, thisState%TotalDefGrad)
-        thisState%IncrvMeqStrain = thisRate%vMeqStrainRate
         thisState%AccumvMeqStrain_ToStartOfInc = thisState%AccumvMeqStrain_ToEndOfInc
-        thisState%AccumvMeqStrain_ToEndOfInc   = thisState%AccumvMeqStrain_ToEndOfInc+thisState%IncrvMeqStrain
+        thisState%AccumvMeqStrain_ToEndOfInc   = thisState%AccumvMeqStrain_ToEndOfInc+von_mises_strain_rate
     end subroutine
 
 end module
