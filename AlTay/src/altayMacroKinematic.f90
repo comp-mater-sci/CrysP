@@ -23,9 +23,7 @@ module altayMacroKinematic
                                                                          !< (note: reference state might be different than that of TotalDefGrad)
     end type DeformationState
 
-    public :: &
-        Set_DeformationRate, &
-        Update_deformationState
+    public:: Set_DeformationRate
 
     contains
 
@@ -45,19 +43,4 @@ module altayMacroKinematic
         this%StrainModevM   = this%StrainRate/this%vMeqStrainRate
 
     end subroutine
-
-    subroutine Update_DeformationState(velocity_gradient, von_mises_strain_rate, thisState, info)
-        real(DP), intent(in):: velocity_gradient(3, 3), &
-                               von_mises_strain_rate
-        type(DeformationState), intent(inout):: thisState
-        integer,                    intent(out):: info
-
-        thisState%IncrDefGrad = matrix_exponential_small_norm(velocity_gradient)
-        thisState%incrdefgrad_inverse = invert(thisstate%incrdefgrad)
-        !if (info /= 0) error stop  ! MD: needs further investigations, should not happen
-        thisState%TotalDefGrad = matmul(thisState%IncrDefGrad, thisState%TotalDefGrad)
-        thisState%AccumvMeqStrain_ToStartOfInc = thisState%AccumvMeqStrain_ToEndOfInc
-        thisState%AccumvMeqStrain_ToEndOfInc   = thisState%AccumvMeqStrain_ToEndOfInc+von_mises_strain_rate
-    end subroutine
-
 end module

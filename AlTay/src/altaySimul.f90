@@ -13,9 +13,12 @@ module altaySimul
     implicit none
     private
 
-    real(DP), private, allocatable:: HGAMTOT, & !< homogenized slip accumulated over calls
+    real(DP), allocatable:: HGAMTOT, & !< homogenized slip accumulated over calls
         XM(:,:)
-    integer, private:: M11, NFILE1
+    integer:: M11, NFILE1
+
+    real(DP):: deformation_gradient(3, 3), &
+               von_mises_strain
 
     character(*), parameter:: MOD_NAME = 'Simul'
 
@@ -48,6 +51,9 @@ module altaySimul
   98    format (A)
 !       read the parameters of the work hardening model
         call taylor_init(acnf%deformation_mechanism, M11, XM, NGR)
+
+        deformation_gradient = UNIT_MATRIX_3X3
+        von_mises_strain = 0._DP
     end subroutine
 
 
@@ -65,7 +71,6 @@ module altaySimul
                     GAXES(3)                                        ! half axes a, b, c, of the grain shape ellipsoid
         real(DP), save:: C2(3, 3), CC(2, 96)
         real(DP):: TOTGEW, SHsam(3, 3), RHOSm(3, 3), ssqgx
-        type(DeformationState), save:: MacroDefState
         ! HGAM: homogenized slip per step
         real(DP):: HGAM
         ! Macroscopically imposed vM equivalent strain per call.
@@ -75,7 +80,7 @@ module altaySimul
         real(DP):: WorkRate  ! Rate of plastic work per unit
                                      ! volume in the crystal
         real(DP):: Wtot  ! Total plastic work per unit volume in crystal
-        real(DP):: deformation_gradient(3, 3), &
+        real(DP):: deformation_gradient_increment(3, 3), &
                    strain_rate(3, 3), &
                    spin(3, 3), &
                    von_mises_strain_mode(3, 3), &
@@ -93,6 +98,7 @@ module altaySimul
         spin = antisymmetric_part(velocity_gradient)
         von_mises_strain_rate = SQR0P67*norm2(strain_rate)
         von_mises_strain_mode = strain_rate/von_mises_strain_rate
+        deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient)
 
         ! Output the current texture
         if (NFILE == 1) call CURwriteBlock(IMP1, info)
@@ -104,22 +110,26 @@ module altaySimul
             Mavg = 0._DP
             HGAM = 0.0_DP
 
-            call dynfil_getGlobal(MacroDefState%TotalDefGrad, CIJ)
+            call dynfil_getGlobal(deformation_gradient, CIJ)
 
             nrstep = nrstep+1
 
-            call Update_DeformationState(velocity_gradient, von_mises_strain_rate, MacroDefState, info)
+            !call Update_DeformationState(velocity_gradient, von_mises_strain_rate, MacroDefState, info)
+            
+            deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient) 
+
+
             !Update grain weights and cluster reference frame orientations
             if (NGR == 2) then 
                 do i = 1, size(DFIL), 2
-                    call update_cluster_state(DFIL(i), macrodefstate%totaldefgrad, von_mises_strain_mode)
+                    call update_cluster_state(DFIL(i), deformation_gradient, von_mises_strain_mode)
                 end do
             end if
-            call UPDATC(CIJ, MacroDefState%IncrDefGrad_inverse)
+            call UPDATC(CIJ, invert(deformation_gradient_increment))
             call GETANG(CIJ, GAXES, TG(:,:,1))
 
             if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                  call DYNFIL_setGlobal(MacroDefState%TotalDefGrad, GAXES, CIJ, TG(:,:,1))
+                  call DYNFIL_setGlobal(deformation_gradient, GAXES, CIJ, TG(:,:,1))
 !
 !         Added for lamel model:
 !         Organisation reading temporary texture file, 
@@ -200,12 +210,14 @@ module altaySimul
                 callout%taylor_factor = Mavg
                 callout%effective_stress = sqrt(3.D0/2.D0)*norm2(SHsam)
                 callout%homogenised_slip_tot = HGAMTOT
-                callout%effective_macro_strain_tot = MacroDefState%AccumvMeqStrain_ToStartOfInc
-                callout%effective_macro_strain_tot_end = MacroDefState%AccumvMeqStrain_ToEndOfInc
+                callout%effective_macro_strain_tot = von_mises_strain
+                callout%effective_macro_strain_tot_end = von_mises_strain+von_mises_strain_rate
             end associate
 
             HGAM = HGAM/TOTGEW
             if (.not.astate%simulCalls(astate%this)%input%keep_state) HGAMTOT = HGAMTOT+HGAM
+
+            von_mises_strain = von_mises_strain+von_mises_strain_rate
         enddo steploop
     end subroutine
 end module

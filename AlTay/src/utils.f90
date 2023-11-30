@@ -137,13 +137,13 @@ contains
         ! using partial pivoting with row interchanges.
         call DGETRF(n, n, Ainv, n, ipiv, info)
                                                                            
-        if (info) error stop 'Matrix is numerically singular!'
+        if (info /= 0) error stop 'Matrix is numerically singular!'
                                                                            
         ! DGETRI computes the inverse of a matrix using the LU factorization
         ! computed by DGETRF.
         call DGETRI(n, Ainv, n, ipiv, work, n, info)
                                                                            
-        if (info) error stop 'Matrix inversion failed!'
+        if (info /= 0) error stop 'Matrix inversion failed!'
     end function
 
     !Compute matrix exponential for a (3, 3)-matrix with small norm, i.e. ||A|| < 1
