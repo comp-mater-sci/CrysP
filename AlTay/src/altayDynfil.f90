@@ -2,7 +2,6 @@ module altayDynfil
     use utils
     use logging
     use criMathUtils
-    use altaymacrokinematic
     use slip_systems
 
     implicit none

@@ -16,10 +16,13 @@ contains
     !Finds the slip rates assuming that
     !- the stress, strain rate and the active slip systems are known, 
     !- (under the above restrictions) the sum of the squares of the slip rates must be minimal.
-    subroutine resolve_taylor_ambiguity(slip_rates, sgnn, MacroDefRate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, A1)
-        type(DeformationRate), intent(in):: MacroDefRate
+    subroutine resolve_taylor_ambiguity(slip_rates, sgnn, von_mises_strain_rate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, A1)
         integer, intent(in):: n_active_slip_systems
-        real(DP), intent(in):: A1(:,:), TAURLP(8), BB8(5), SLIPLP(8)
+        real(DP), intent(in):: von_mises_strain_rate,   &
+                               A1(:,:),                 &
+                               TAURLP(8),               &
+                               BB8(5),                  &
+                               SLIPLP(8)                    
         integer, intent(inout):: ind_active_slip_systems(8)
         real(DP), intent(inout):: SGNN(:), slip_rates(:)
         integer:: IND(8), ISTOR(0:8, 48), ind_active_slip_systems_original(8)
@@ -90,7 +93,7 @@ contains
                         sumsq = SLSTOR(0, IOPL)
                         IND(1:NN)=ISTOR(1:NN, IOPL)
                         SLPR(1:NN)=SLSTOR(1:NN, IOPL)
-                        slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))*MacroDefRate%vMeqStrainRate
+                        slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))*von_mises_strain_rate
                         return
                     endif
                 endif
@@ -98,7 +101,7 @@ contains
         endif
         NN = n_active_slip_systems
         IND(1:NN)=ind_active_slip_systems_original(1:NN)
-        slip_rates(IND(1:NN))=SLIPLP(1:NN)*MacroDefRate%vMeqStrainRate
+        slip_rates(IND(1:NN))=SLIPLP(1:NN)*von_mises_strain_rate
     end subroutine
 
     subroutine fill(IND_, ind_active_slip_systems, skip, N_max)

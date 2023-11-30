@@ -221,8 +221,9 @@ contains
         spin_matrix = rotateSRTensorTo(spin_matrix, TRF(:,:,laml))
     end subroutine
 
-    subroutine taylor_update_state(IOR, TOTGAMdot, WorkRate, MacroDefRate, CC, TRF, C2, XM)
-        type(DeformationRate), intent(in):: MacroDefRate
+    subroutine taylor_update_state(IOR, TOTGAMdot, WorkRate, spin, von_mises_strain_rate, CC, TRF, C2, XM)
+        real(DP), intent(in):: spin(3, 3), &
+                               von_mises_strain_rate
         integer, intent(in):: IOR
         real(DP), intent(in):: XM(:,:), TRF(3, 3), CC(:,:)
         real(DP), intent(out):: TOTGAMdot, C2(3, 3)
@@ -235,11 +236,11 @@ contains
         integer:: j
         real(DP), parameter:: ddt = 1.0_DP
 
-        call resolve_taylor_ambiguity(GAMdot, SGNN, MacroDefRate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
+        call resolve_taylor_ambiguity(GAMdot, SGNN, von_mises_strain_rate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call hardening_update_state(IOR, ddt, GAMdot)
         TOTGAMdot = sum(abs(GAMdot))
         ! Calculate RCcryst: the rigid body spin in the crystal frame
-        RCcryst = rotateSRTensorFrom(MacroDefRate%Spin, TRF)
+        RCcryst = rotateSRTensorFrom(spin, TRF)
         RHOAcrys = rotateSRTensorFrom(spin_matrix, TRF)
         WorkRate = sum(merge(CC(1, :), -CC(2, :), GAMdot > 0.0_DP)*GAMdot)
 

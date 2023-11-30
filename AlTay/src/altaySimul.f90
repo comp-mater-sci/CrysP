@@ -76,9 +76,11 @@ module altaySimul
         real(DP):: WorkRate  ! Rate of plastic work per unit
                                      ! volume in the crystal
         real(DP):: Wtot  ! Total plastic work per unit volume in crystal
-        real(DP), dimension(3, 3):: deformation_gradient, &
-                                   strain_rate, &
-                                   von_mises_strain_mode 
+        real(DP):: deformation_gradient(3, 3), &
+                   strain_rate(3, 3), &
+                   spin(3, 3), &
+                   von_mises_strain_mode(3, 3), &
+                   von_mises_strain_rate 
 
 
         NPOINT = size(DFIL)
@@ -89,7 +91,9 @@ module altaySimul
 
 
         strain_rate = symmetric_part(velocity_gradient)
-        von_mises_strain_mode = strain_rate/(SQR0P67*norm2(strain_rate))
+        spin = antisymmetric_part(velocity_gradient)
+        von_mises_strain_rate = SQR0P67*norm2(strain_rate)
+        von_mises_strain_mode = strain_rate/von_mises_strain_rate
 
         ! Output the current texture
         if (NFILE == 1) call CURwriteBlock(IMP1, info)
@@ -154,7 +158,7 @@ module altaySimul
                 call taylor_solve(Ssam, RHOSs(:,:,laml), TRF, IOR, GMMab, NGR, laml, CC, M11, macrodefrate)
 
                 if (astate%simulCalls(astate%this)%input%full_model) &
-                      call taylor_update_state(IOR, GMMdot, WorkRate, MacroDefRate, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM)
+                      call taylor_update_state(IOR, GMMdot, WorkRate, spin, von_mises_strain_rate, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM)
 
                 GEWF = DFIL(IOR)%tgew
                 if(laml == 1) then
