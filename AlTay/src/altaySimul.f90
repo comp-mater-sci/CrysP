@@ -1,6 +1,5 @@
 module altaySimul
     use utils
-    use altayMacroKinematic
     use hardening_model_dsh
     use altayCurAccess
     use altayDYNFIL
@@ -114,10 +113,7 @@ module altaySimul
 
             nrstep = nrstep+1
 
-            !call Update_DeformationState(velocity_gradient, von_mises_strain_rate, MacroDefState, info)
-            
             deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient) 
-
 
             !Update grain weights and cluster reference frame orientations
             if (NGR == 2) then 
@@ -183,7 +179,6 @@ module altaySimul
                 !
                 Mgrain = GMMdot /  von_mises_strain_rate
                 Mavg = Mavg+Mgrain*GEWF
-                ! norm2(RHOSsa)=||RHOSsa||=(||d-D||)/MacroDefRate%vMeqStrainRate
                 HGAM = HGAM+GMMdot*GEWF  ! Step time here implicitly assumed to be 1.0s
                 GMM1 = GMMab(laml) + GMMdot  ! Step time here implicitly assumed to be 1.0s
                 Wtot = Wtot+WorkRate  ! Step time here implicitly assumed to be 1.0s

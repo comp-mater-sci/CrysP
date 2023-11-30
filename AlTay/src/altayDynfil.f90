@@ -192,7 +192,6 @@ contains
         enddo
 
         dlength = norm2(von_mises_strain_mode)
-        !     Transform MacroDefRate%StrainModevM to the "Grb" reference frame
         TDCGr = rotateSRTensorFrom(von_mises_strain_mode, Tprinc)
 
         dot1 = sum(RELAXATIONS(:,:,1) * TDCGr) / sqrt(2.0D0) / dlength

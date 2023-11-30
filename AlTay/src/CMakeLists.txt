@@ -20,7 +20,6 @@ altaySimul.f90
 taylor.f90 
 altayAlgorithms.f90 
 altayDynfil.f90 
-altayMacroKinematic.f90 
 simplex.f90 
 altayCurAccess.f90 
 utils.f90

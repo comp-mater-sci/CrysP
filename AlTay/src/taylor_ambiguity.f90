@@ -1,7 +1,6 @@
 module taylor_ambiguity
     use utils
     use logging
-    use altayMacroKinematic
     use altayAlgorithms
 
     implicit none

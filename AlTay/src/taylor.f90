@@ -1,6 +1,5 @@
 module taylor
     use utils
-    use altayMacroKinematic
     use criMathUtils
     use hardening
     use taylor_ambiguity
