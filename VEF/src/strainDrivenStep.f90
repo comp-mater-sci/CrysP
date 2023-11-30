@@ -93,7 +93,7 @@ contains
         associate(config => this%config)
             ! Make the step traceless: decompose into volumetric strain rate
             ! and strain rate deviator
-            this%volumetric_strain = trace(config%deformation_rate) / 3._DP * UNIT_SR_MATRIX
+            this%volumetric_strain = trace(config%deformation_rate) / 3._DP * UNIT_MATRIX_3X3
             this%deviatoric_strain = config%deformation_rate - this%volumetric_strain
             step_strain_norm = norm2(this%deviatoric_strain)
             if (step_strain_norm < epsilon(0._DP)) then

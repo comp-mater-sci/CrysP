@@ -15,16 +15,16 @@ module altayDynfil
         real(DP)                    :: tGEW     = 1._DP, &
                                        tGAM     = 0._DP
         real(DP), dimension(3, 3)    :: tT       = 0._DP, &
-                                        tTAX     = unit_sr_matrix, &
+                                        tTAX     = UNIT_MATRIX_3X3, &
                                         tZERO    = 0._DP, &
                                         boundary_transformation_matrix, &
                                         boundary_reference_frame
     end type grain
 
     type:: matFrame
-        real(DP), dimension(3, 3)   :: FALG   = unit_sr_matrix
-        real(DP), dimension(3, 3)   :: CIJ0   = unit_sr_matrix
-        real(DP), dimension(3, 3)   :: TAX0   = unit_sr_matrix
+        real(DP), dimension(3, 3)   :: FALG   = UNIT_MATRIX_3X3
+        real(DP), dimension(3, 3)   :: CIJ0   = UNIT_MATRIX_3X3
+        real(DP), dimension(3, 3)   :: TAX0   = UNIT_MATRIX_3X3
         real(DP), dimension(3)     :: GAXES  = 1._DP
     end type
 
