@@ -63,7 +63,7 @@ module altayConfig
         !>   - 1 - FC Taylor
         !>   - 2 - Alamel
         integer                   :: NGR = 2 ! Number of grains in the cluster
-        real(DP), dimension(3,3) :: FMicro = unit_sr_Matrix
+        real(DP), dimension(3,3) :: FMicro = UNIT_MATRIX_3X3
     end type
 
     !> Root-level configuration structure of Altay

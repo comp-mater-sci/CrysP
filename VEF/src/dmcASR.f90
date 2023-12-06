@@ -44,7 +44,7 @@ implicit none
     type :: ASROutput
         integer                 :: step = 0
         type(IncrementOutputRecord), dimension(:), allocatable   :: evolution_output
-        real(DP),dimension(3,3)   :: rotation_matrix = unit_sr_Matrix
+        real(DP),dimension(3,3)   :: rotation_matrix = UNIT_MATRIX_3X3
     end type
 
 contains
@@ -124,7 +124,7 @@ contains
                 !
                 ! Acquire full stress tensor sigma
                 sigma = Vec6ToMat33(step%stress_mode)
-                Pressure = (trace(sigma) / 3.D0) * UNIT_SR_MATRIX
+                Pressure = (trace(sigma) / 3.D0) * UNIT_MATRIX_3X3
                 S = sigma - Pressure
                 !
                 ! Rotate from the original reference frame to the sample reference frame
