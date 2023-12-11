@@ -64,7 +64,7 @@ contains
 96          format(4F10.0, I5, 5X, 2F10.0)
             if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read boundary segment')
             angles = angles*pi_deg
-            dfil(i) = grain(weight, gam, rotmat(angles), mf%tax0, 0._DP, 0._DP, 0._DP)
+            dfil(i) = grain(weight, gam, convert_rotation(angles), mf%tax0, 0._DP, 0._DP, 0._DP)
         enddo
     
         close(nunit)
@@ -88,7 +88,7 @@ contains
             !Calculate the transformation matrix
             !Cols 1 and 2 hold two non-parallel vectors within the initial GB (grain boundary) plane.
             !Col 3 holds a vector out of the initial GB plane (not necessarily perpendicular to the GB plane).
-            transformation_matrix = matmul(initial_deformation_gradient, transpose(rotmat(deg2rad(angles))))
+            transformation_matrix = matmul(initial_deformation_gradient, transpose(convert_rotation(deg2rad(angles))))
 
             !Assign boundaries to a pair of grains
             do j = 2*i-1, size(DFIL)-1, 2*n_boundaries

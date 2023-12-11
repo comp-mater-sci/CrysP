@@ -4,40 +4,33 @@
 !> that are frequently used in various subroutunes in the library.
 !> It also provides some simple functions, e.g. conversions.
 module criMathUtils
-      use utils
-      implicit none
+    use utils
+    implicit none
 
 
-      real(DP), parameter         :: pi  = acos(-1.D0) !< Pi \f$ \pi \f$
-      real(DP), parameter         :: pi_deg = pi/180.D0
-      real(DP), parameter         :: deg_pi = 180.D0/pi
+    real(DP), parameter         :: pi  = acos(-1.D0) !< Pi \f$ \pi \f$
+    real(DP), parameter         :: pi_deg = pi/180.D0
+    real(DP), parameter         :: deg_pi = 180.D0/pi
 
-      real(DP), parameter         :: root2 = sqrt(2.D0) !< Square root of 2 \f$ \sqrt{2} \f$
-      real(DP), parameter         :: root2i = 0.5D0*sqrt(2.D0) !< Inverse of square root of 2 \f$ \frac{1}{\sqrt{2}} \f$
-      real(DP), parameter         :: root23 = sqrt(2.D0/3.D0) !< Square root of 2/3 \f$ \sqrt{2/3} \f$
-      real(DP), parameter         :: root32 = sqrt(3.D0/2.D0) !< Square root of 3/2 \f$ \sqrt{3/2} \f$
+    real(DP), parameter         :: root2 = sqrt(2.D0) !< Square root of 2 \f$ \sqrt{2} \f$
+    real(DP), parameter         :: root2i = 0.5D0*sqrt(2.D0) !< Inverse of square root of 2 \f$ \frac{1}{\sqrt{2}} \f$
+    real(DP), parameter         :: root23 = sqrt(2.D0/3.D0) !< Square root of 2/3 \f$ \sqrt{2/3} \f$
+    real(DP), parameter         :: root32 = sqrt(3.D0/2.D0) !< Square root of 3/2 \f$ \sqrt{3/2} \f$
 
-      !> Representation of Euler angles: Bunge notation
-      type EulerAngles
-            real(DP)  :: fi1 = 0.D0 !< \f$ \phi_1 \f$
-            real(DP)  :: phi = 0.D0 !< \f$ \Phi \f$
-            real(DP)  :: fi2 = 0.D0 !< \f$ \phi_2 \f$
-      end type
+    !> Generic function for conversion from radians to degrees
+    interface rad2deg
+        module procedure scalarRad2Deg
+    end interface
 
+    !> Generic function for conversion from degrees to radians
+    interface deg2rad
+        module procedure scalarDeg2Rad
+    end interface
 
-      !> Generic function for conversion from radians to degrees
-      interface rad2deg
-            module procedure scalarRad2Deg
-      end interface
-
-      !> Generic function for conversion from degrees to radians
-      interface deg2rad
-            module procedure scalarDeg2Rad, EulerAnglesDeg2Rad
-      end interface
-
-      interface rotmat
-            module procedure rotmat_triplet, rotmat_EulerAngles, rotmat_array
-      end interface
+    !Convert between Euler angles and rotation matrix representation of a rotation
+    interface convert_rotation
+        module procedure rotation_matrix_to_euler_angles, euler_angles_to_rotation_matrix
+    end interface
 
 contains
 
@@ -56,38 +49,6 @@ contains
       real(DP), intent(in):: alpha
       !
             scalarDeg2Rad = alpha *  pi_deg
-      !
-      end function
-
-      !> Conversion from degrees to radians
-      elemental type(EulerAngles) function EulerAnglesDeg2Rad(ang)
-      type(EulerAngles), intent(in)       :: ang
-      !
-            EulerAnglesDeg2Rad%fi1 = deg2rad(ang%fi1)
-            EulerAnglesDeg2Rad%phi = deg2rad(ang%phi)
-            EulerAnglesDeg2Rad%fi2 = deg2rad(ang%fi2)
-      !
-      end function
-
-      !> Trivial conversion from EulerAngles to array of rank 1, dimension 3
-      pure function EulerAngles2Arr(ang) result(arr)
-      real(DP), dimension(3):: arr
-      type(EulerAngles), intent(in)  :: ang
-      !
-            arr(1) = ang%fi1
-            arr(2) = ang%phi
-            arr(3) = ang%fi2
-      !
-      end function
-
-      !> Trivial conversion from  array of rank 1, dimension 3 to EulerAngles
-      pure function Arr2EulerAngles(arr) result(ang)
-      type(EulerAngles)  :: ang
-      real(DP), dimension(3), intent(in):: arr
-      !
-            ang%fi1 = arr(1)
-            ang%phi = arr(2)
-            ang%fi2 = arr(3)
       !
       end function
 
@@ -138,13 +99,6 @@ contains
       !
       end function
 
-    pure function rotmat_array(angles) result(mat)
-        real(DP), dimension(3), intent(in):: angles
-        real(DP), dimension(3, 3):: mat
-
-        mat = rotmat(angles(1), angles(2), angles(3))
-    end function
-
       !> Rotation matrix from three Euler angles in Bunge convention (phi1, PHI, phi2).
       !>
       !> The matrix R is equivalent to superpositions of three individual
@@ -152,21 +106,19 @@ contains
       !> In terms of matrix multiplication, the total rotation matrix R is given by:
       !> R = R_{phi2} * R_{PHI} * R_{phi1}
       !> \returns [3x3] rotation matrix R.
-      pure function rotmat_triplet(phi1, PHI, phi2) result(mat)
-      real(DP), intent(in)        :: phi1, PHI, phi2
+      pure function euler_angles_to_rotation_matrix(angles) result(mat)
+      real(DP), intent(in)        :: angles(3)
       real(DP), dimension(3, 3)    :: mat
-      !
-      real(DP):: cosphi1, cosphi2, cosPHI
-      real(DP):: sinphi1, sinphi2, sinPHI
-      !
-            cosphi1 = cos(phi1)
-            cosPHI = cos(PHI)
-            cosphi2 = cos(phi2)
-            !
-            sinphi1 = sin(phi1)
-            sinPHI = sin(PHI)
-            sinphi2 = sin(phi2)
-            !
+      real(DP):: cosphi1, cosphi2, cosPHI, &
+                 sinphi1, sinphi2, sinPHI
+      
+            cosphi1 = cos(angles(1))
+            cosPHI = cos(angles(2))
+            cosphi2 = cos(angles(3))
+            sinphi1 = sin(angles(1))
+            sinPHI = sin(angles(2))
+            sinphi2 = sin(angles(3))
+            
             mat(1, 1) = cosphi1*cosphi2 - (sinphi1*sinphi2*cosPHI)
             mat(1, 2) = sinphi1*cosphi2 + (cosphi1*sinphi2*cosPHI)
             mat(1, 3) = sinphi2*sinPHI
@@ -176,53 +128,46 @@ contains
             mat(3, 1) = sinphi1*sinPHI
             mat(3, 2) = -cosphi1*sinPHI
             mat(3, 3) = cosPHI
-      !
       end function
 
-      !> Rotation matrix from three Euler angles in Bunge convention
-      pure function rotmat_EulerAngles(ang) result(mat)
-      real(DP), dimension(3, 3)    :: mat
-      type(EulerAngles), intent(in):: ang
-      !
-            mat = rotmat(ang%fi1, ang%PHI, ang%fi2 )
-      !
-      end function
 
-      !> Three Euler angles in Bunge convention (ang) from rotation matrix (mat).
-      !>
-      !> The outputted Euler angles are in radians and lie within these bounds:
-      !>    ang%fi1: [0, 2*pi[
-      !>    ang%PHI: [0,  pi[
-      !>    ang%fi2: [0, 2*pi[   note: if PHI = 0 then phi2 = 0
-      pure function EulerAnglesType(mat) result(ang)
-      real(DP), dimension(3, 3), intent(in):: mat
-      type(EulerAngles):: ang
-      !
-      real(DP):: phi1, PHI, phi2, cosPHI
-      !
-          cosPHI = mat(3, 3) / sqrt( mat(1, 3)**2+mat(2, 3)**2+mat(3, 3)**2 )
-          PHI = acos(cosPHI)  ! range: [0, pi]
-          !
-          if (abs(cosPHI)==1.0D0) then  ! case that PHI = 0\B0 or PHI = 180\B0
-              !Set phi2 to 0.0D0, given that:
-              !  (phi1;   0\B0; phi2) equivalent to (phi1+phi2;    0; 0).
-              !  (phi1; 180\B0; phi2) equivalent to (phi1+phi2; 180\B0; 0).
-              phi2 = 0.0D0
-              phi1 = atan2(-mat(2, 1)/cosPHI, mat(2, 2)/cosPHI)  ! range: [-pi, pi[
-          else
-              phi1 = atan2(mat(3, 1), -mat(3, 2))  ! range: [-pi, pi[
-              phi2 = atan2(mat(1, 3), mat(2, 3))  ! range: [-pi, pi[
-          end if
-          
-          !If needed, replace Euler angles with equivalent values within proper bounds.
-          if (PHI == pi)     PHI  = 0.0D0         ![  0, pi] -> [0,  pi[
-          if (phi1 < 0.0D0) phi1 = phi1+2.D0*pi   ![-pi, pi[ -> [0, 2*pi[
-          if (phi2 < 0.0D0) phi2 = phi2+2.D0*pi   ![-pi, pi[ -> [0, 2*pi[
-          
-          ang%fi1 = phi1
-          ang%PHI = PHI
-          ang%fi2 = phi2
-      end function
+    !> Three Euler angles in Bunge convention (ang) from rotation matrix (mat).
+    !>
+    !> The outputted Euler angles are in radians and lie within these bounds:
+    !>    ang%fi1: [0, 2*pi[
+    !>    ang%PHI: [0,  pi[
+    !>    ang%fi2: [0, 2*pi[   note: if PHI = 0 then phi2 = 0
+    pure function rotation_matrix_to_euler_angles(mat) result(ang)
+        real(DP), intent(in)::  mat(3, 3)
+        real(DP)::              ang(3), &
+                                phi1, &
+                                PHI, &
+                                phi2, &
+                                cosPHI
+      
+        cosPHI = mat(3, 3) / sqrt( mat(1, 3)**2+mat(2, 3)**2+mat(3, 3)**2 )
+        PHI = acos(cosPHI)  ! range: [0, pi]
+        
+        if (abs(cosPHI)==1.0D0) then  ! case that PHI = 0\B0 or PHI = 180\B0
+            !Set phi2 to 0.0D0, given that:
+            !  (phi1;   0\B0; phi2) equivalent to (phi1+phi2;    0; 0).
+            !  (phi1; 180\B0; phi2) equivalent to (phi1+phi2; 180\B0; 0).
+            phi2 = 0.0D0
+            phi1 = atan2(-mat(2, 1)/cosPHI, mat(2, 2)/cosPHI)  ! range: [-pi, pi[
+        else
+            phi1 = atan2(mat(3, 1), -mat(3, 2))  ! range: [-pi, pi[
+            phi2 = atan2(mat(1, 3), mat(2, 3))  ! range: [-pi, pi[
+        end if
+
+        !If needed, replace Euler angles with equivalent values within proper bounds.
+        if (PHI == PI)     PHI  = 0._DP       ![  0, pi] -> [0,  pi[
+        if (phi1 < 0._DP) phi1 = phi1+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
+        if (phi2 < 0._DP) phi2 = phi2+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
+
+        ang(1) = phi1
+        ang(2) = phi
+        ang(3) = phi2
+    end function
 
     !> Rotates the second-rank tensor S to the reference frame given by rotation R.
     pure function rotateSRTensorTo(S, R) result(Srot)
@@ -400,6 +345,4 @@ contains
         cross(2)=v1(3)*v2(1)-v1(1)*v2(3)
         cross(3)=v1(1)*v2(2)-v1(2)*v2(1)
     end function
-
-
 end module

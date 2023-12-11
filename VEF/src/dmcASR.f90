@@ -11,61 +11,48 @@ use commonConfig
 use commonUtils
 implicit none
 
-    public :: ASRModule
+    public:: ASRModule
     private
 
-    type :: StressDrivenStep
-        real(DP),dimension(6)   :: stress_mode = 0.D0
+    type:: StressDrivenStep
+        real(DP), dimension(6)   :: stress_mode = 0.D0
         type(IncrementationControlSettings)             :: incrementation_control
         logical                                         :: update_state = .false.
     end type
 
 
-    type,extends(StressDrivenEvolutionModule) :: ASRModule
-        type(EulerAngles)                         :: rotframe
-
-        type(StressDrivenStep),dimension(:),allocatable :: steps
-
+    type, extends(StressDrivenEvolutionModule):: ASRModule
+        real(DP)::                              rotframe(3)
+        type(StressDrivenStep), allocatable::   steps(:)
     contains
-
-        !>@{ \name Interface methods of AbstractModule
-
-        procedure,pass(this)    :: readConfig => ASRModule_readConfig
-
-        procedure,pass(this)    :: run => ASRModule_run
-
-        !>@}
-
-        procedure,pass(this)    :: outputFile => ASRModule_outputFile
-
+        procedure:: readConfig => ASRModule_readConfig
+        procedure:: run =>        ASRModule_run
+        procedure:: outputFile => ASRModule_outputFile
     end type
 
-
-    type :: ASROutput
+    type:: ASROutput
         integer                 :: step = 0
         type(IncrementOutputRecord), dimension(:), allocatable   :: evolution_output
-        real(DP),dimension(3,3)   :: rotation_matrix = UNIT_MATRIX_3X3
+        real(DP), dimension(3, 3)   :: rotation_matrix = UNIT_MATRIX_3X3
     end type
 
 contains
 
-    integer function ASRModule_readConfig(this,cnfunit) result(info)
+    integer function ASRModule_readConfig(this, cnfunit) result(info)
     implicit none
-    class(ASRModule),intent(inout)            :: this
-    integer,intent(in)                        :: cnfunit
+    class(ASRModule), intent(inout)            :: this
+    integer, intent(in)                        :: cnfunit
     !
-    real(DP),dimension(3) :: tmp_euler
-    integer :: i, n_steps
+    integer:: i, n_steps
     !
         info = this%StressDrivenEvolutionModule%readConfig(cnfunit)
         if (info /= VEF_OK) return
         info = VEF_ERROR
         ! Read parameters specific for the ASRModule
-        if (.not. readValue(cnfunit, tmp_euler)) return
-        this%rotframe = Arr2EulerAngles(tmp_euler)
+        if (.not. readValue(cnfunit, this%rotframe)) return
         if (.not. readValue(cnfunit, n_steps)) return
         if (n_steps <= 0) then
-            write(display_unit, fmt=902) 'ASR module'
+            write(display_unit, fmt = 902) 'ASR module'
             return
         endif
         allocate(this%steps(n_steps))
@@ -90,18 +77,18 @@ contains
     end function
 
 
-    subroutine ASRModule_run(this,info)
+    subroutine ASRModule_run(this, info)
     implicit none
-    class(ASRModule),intent(inout)          :: this
-    integer,intent(out)                     :: info
+    class(ASRModule), intent(inout)          :: this
+    integer, intent(out)                     :: info
     !
     ! Quantities in the global (aka. material = texture) reference frame
-    real(DP), dimension(3,3)    :: sigma, S,  Pressure  !< total stress, deviatoric stress, hydrostatic stress
+    real(DP), dimension(3, 3)    :: sigma, S,  Pressure  !< total stress, deviatoric stress, hydrostatic stress
     ! Quantities in rotated (aka. sample) reference frame
 !    type(SRTensor)                  :: sigma_rot
     type(ASROutput)                 :: output
     type(IncrementationControl)     :: icv
-    real(DP),dimension(3,3)   :: Mrot
+    real(DP), dimension(3, 3)   :: Mrot
     !
     integer     :: istep, nsteps, ofunit
     !
@@ -116,7 +103,7 @@ contains
         nsteps = size(this%steps)
         !
         ! Calculate rotation matrix (active rotation from material (=texture) to sample frame)
-        Mrot = rotmat(deg2rad(this%rotframe))
+        Mrot = convert_rotation(deg2rad(this%rotframe))
         !
         do  istep = 1, nsteps
                         !
@@ -125,7 +112,7 @@ contains
                 ! Acquire full stress tensor sigma
                 sigma = Vec6ToMat33(step%stress_mode)
                 Pressure = (trace(sigma) / 3.D0) * UNIT_MATRIX_3X3
-                S = sigma - Pressure
+                S = sigma-Pressure
                 !
                 ! Rotate from the original reference frame to the sample reference frame
 !                sigma_rot = rotateSRTensorTo(sigma, Mrot)
@@ -135,9 +122,9 @@ contains
                 ! Follow the stress path
                 !
                 info = this%calculateStressPath(sigma, control, output%evolution_output, Mrot, &
-                                                incrementation_control=icv)
+                                                incrementation_control = icv)
                 if (info /= VEF_OK) then
-                    write(display_unit,fmt=960)
+                    write(display_unit, fmt = 960)
                     exit
                 endif
                 !
@@ -150,7 +137,7 @@ contains
                 !
                 info = this%outputFile(ofunit, output)
                 if (info /= VEF_OK) then
-                    write(display_unit,fmt=900) 'Cannot make output for the current step'
+                    write(display_unit, fmt = 900) 'Cannot make output for the current step'
                     exit
                 endif
             end associate
@@ -168,20 +155,20 @@ contains
     !> The procedure writes either header, data or both.
     integer function ASRModule_outputFile(this, iounit, output, header) result(info)
     implicit none
-    class(ASRModule),intent(in)         :: this
-    integer,intent(in)                  :: iounit   !< I/O output unit
-    type(ASROutput),intent(in),optional :: output   !< Data to be written out
-    logical,intent(in),optional         :: header   !< Request for header to be written out
+    class(ASRModule), intent(in)         :: this
+    integer, intent(in)                  :: iounit   !< I/O output unit
+    type(ASROutput), intent(in), optional:: output   !< Data to be written out
+    logical, intent(in), optional         :: header   !< Request for header to be written out
     !
-    integer :: i, ierr, increment
-    real(DP), dimension(3,3)    :: SonA, A, P_step, P_step_rot, P_total_rot, P_total_end, P_total_end_rot
-    real(DP),dimension(6) ::    SonA_voigt, SonA_rot_voigt, &
+    integer:: i, ierr, increment
+    real(DP), dimension(3, 3)    :: SonA, A, P_step, P_step_rot, P_total_rot, P_total_end, P_total_end_rot
+    real(DP), dimension(6) ::    SonA_voigt, SonA_rot_voigt, &
                                 A_voigt, A_rot_voigt, &
                                 P_step_voigt, P_step_rot_voigt, &
                                 P_total_end_voigt, P_total_end_rot_voigt
-    integer,parameter :: ncolumn_labels = 2 + 10 + 4*2*6, column_width = 15, short_column_width = 9
-    character(len=column_width),dimension(ncolumn_labels),parameter :: column_labels = &
-            [ character(len=column_width) ::  &
+    integer, parameter:: ncolumn_labels = 2+10+4*2*6, column_width = 15, short_column_width = 9
+    character(len = column_width), dimension(ncolumn_labels), parameter:: column_labels = &
+            [ character(len = column_width) ::  &
                 'step','increment', & ! 2 fields
                 'eps_vM', 'eps_norm','Pnorm','eps_total_vM','W','dotW','M-factor','scal_s','S','residual', & ! 10 fields
                 'S_11','S_22','S_33','S_12','S_23','S_13', & ! 6 fields  (I)
@@ -201,12 +188,12 @@ contains
         if (optionalDefault(header, .false.)) then
             info = VEF_ERROR
             ! Column numbers
-            write(iounit,701,iostat=ierr) (toString(i), i = 1,2), &
+            write(iounit, 701, iostat = ierr) (toString(i), i = 1, 2), &
                                           (toString(i), i = 3, ncolumn_labels)
             if (ierr /= 0) return
             ! Column labels
-            write(iounit,700,iostat=ierr) (column_labels(i)(1:short_column_width), i=1,2), &
-                                          (column_labels(i), i=3,ncolumn_labels)
+            write(iounit, 700, iostat = ierr) (column_labels(i)(1:short_column_width), i = 1, 2), &
+                                          (column_labels(i), i = 3, ncolumn_labels)
             if (ierr /= 0) return
             info = VEF_OK
         endif
@@ -223,8 +210,8 @@ contains
                     ! Step deviatoric strain
                     P_step_rot = convert_stress_strain_space(v%icv%vP_step)
                     ! Total deviatoric strain
-                    P_total_rot = convert_stress_strain_space(v%icv%vP_total) ! at the beginning of the increment
-                    P_total_end_rot = P_total_rot + v%P_inc_evol ! at the end of the increment
+                    P_total_rot = convert_stress_strain_space(v%icv%vP_total)  ! at the beginning of the increment
+                    P_total_end_rot = P_total_rot+v%P_inc_evol  ! at the end of the increment
                     !
                     ! Rotate back to the original coordinate system
                     !
@@ -246,7 +233,7 @@ contains
                     P_step_rot_voigt =  Mat33ToVec6(P_step_rot)
                     P_total_end_rot_voigt = Mat33ToVec6(P_total_end)
 
-                    write(iounit,fmt=710,iostat=ierr) &
+                    write(iounit, fmt = 710, iostat = ierr) &
                                 output%step, v%icv%increment, & ! 2 fields
                                 v%vm_strain, norm2(v%icv%vP_step), v%norm_P_abs, v%vm_strain_total, &
                                 v%icv%plastic_work_total, v%dotWonA, &
@@ -261,9 +248,9 @@ contains
             if (ierr == 0) info = VEF_OK
         endif
         ! Formats for output file
-        700 format(1X, 2(A9,1X),10(A18,  1X),4(5X,12(A18,1X)))
-        701 format('#',2(A9,1X),10(A18,  1X),4(5X,12(A18,1X)))
-        710 format(1X, 2(I9,1X),10(ES18.9E3,1X),4(5X,12(ES18.9E3,1X)))
+        700 format(1X, 2(A9, 1X), 10(A18,  1X), 4(5X, 12(A18, 1X)))
+        701 format('#',2(A9, 1X), 10(A18,  1X), 4(5X, 12(A18, 1X)))
+        710 format(1X, 2(I9, 1X), 10(ES18.9E3, 1X), 4(5X, 12(ES18.9E3, 1X)))
     !
     end function
 
