@@ -122,23 +122,24 @@ module altaySimul
 
             deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient) 
 
-            !Update grain weights and cluster reference frame orientations
+            !Update grain weights and cluster reference frame orientations for ALAMEL simulations
             if (NGR == 2) then 
                 do i = 1, size(DFIL), 2
                     call update_cluster_state(DFIL(i), deformation_gradient, von_mises_strain_mode)
                 end do
+                
+                !Updating of ellipsoidal representation of grain shape
+                !See Van Houtte et. al., 1999: QUANTITATIVE PREDICTION OF COLD ROLLING TEXTURES IN LOW-CARBON STEEL BY MEANS OF THE LAMEL MODEL
+                !
+                !Update coefficient matrix of ellipsoid representing grain shape
+                grain_shape = matmul(matmul(transpose(deformation_gradient_increment_inverse), grain_shape), deformation_gradient_increment_inverse)
+                !Eigenvalue decomposition of quadratic notation of ellipsoid determines axis orientations and half-lengths
+                grain_axis_orientations = grain_shape
+                call dsyevd('V', 'U', 3, grain_axis_orientations, 3, grain_axis_half_lengths, work, 37, iwork, 18, info)  ! LAPACK: eigenvalue decomposition 
+                grain_axis_half_lengths = 1._dp/sqrt(grain_axis_half_lengths)  ! Eigenvalues are squared inverse of axis half-lengths
             end if
 
-            !Updating of ellipsoidal representation of grain shape
-            !See Van Houtte et. al., 1999: QUANTITATIVE PREDICTION OF COLD ROLLING TEXTURES IN LOW-CARBON STEEL BY MEANS OF THE LAMEL MODEL
-            !
-            !Update coefficient matrix of ellipsoid representing grain shape
-            grain_shape = matmul(matmul(transpose(deformation_gradient_increment_inverse), grain_shape), deformation_gradient_increment_inverse)
-            !Eigenvalue decomposition of quadratic notation of ellipsoid determines axis orientations and half-lengths
-            grain_axis_orientations = grain_shape
-            call dsyevd('V', 'U', 3, grain_axis_orientations, 3, grain_axis_half_lengths, work, 37, iwork, 18, info)  ! LAPACK: eigenvalue decomposition 
-            grain_axis_half_lengths = 1._dp/sqrt(grain_axis_half_lengths)  ! Eigenvalues are squared inverse of axis half-lengths
-
+            
             if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
                   call DYNFIL_setGlobal(deformation_gradient, grain_axis_half_lengths, grain_shape, grain_axis_orientations)
 !
