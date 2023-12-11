@@ -6,7 +6,6 @@ module taylor
     use altayConfig, only: astate
     use logging
     use simplex
-    use altayAlgorithms
     use slip_systems
     use altayDynfil
 

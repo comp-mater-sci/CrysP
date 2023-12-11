@@ -1,7 +1,6 @@
 module taylor_ambiguity
     use utils
     use logging
-    use altayAlgorithms
 
     implicit none
     private

@@ -5,12 +5,14 @@ module altaySimul
     use altayDYNFIL
     use hardening
     use taylor
-    use altayAlgorithms
     use altayConfig
     use logging
 
+
     implicit none
     private
+
+    external:: dsyevd
 
     real(DP), allocatable:: HGAMTOT, & !< homogenized slip accumulated over calls
         XM(:,:)
@@ -64,7 +66,8 @@ module altaySimul
         real(DP):: TRF(3, 3, 2), GMMAb(2)
         integer:: NGR, &         !< number of grains
                    laml, laml1, &
-                   IOR, ISTP, NPOINT, info, NFILE, i, j, l, ifil4
+                   IOR, ISTP, NPOINT, info, NFILE, i, j, l, ifil4, &
+                   iwork(18)  ! Workspace for LAPACK call
         real(DP):: Ssam(3, 3), TG(3, 3, 2), CIJ(3, 3), &
                     GEWF, RHOSS(3, 3, 2), gmm1, &
                     GAXES(3)                                        ! half axes a, b, c, of the grain shape ellipsoid
@@ -80,10 +83,14 @@ module altaySimul
                                      ! volume in the crystal
         real(DP):: Wtot  ! Total plastic work per unit volume in crystal
         real(DP):: deformation_gradient_increment(3, 3), &
+                   deformation_gradient_increment_inverse(3, 3), &
                    strain_rate(3, 3), &
                    spin(3, 3), &
                    von_mises_strain_mode(3, 3), &
-                   von_mises_strain_rate 
+                   von_mises_strain_rate, &
+                   work(37)  ! Workspace for LAPACK call
+
+
 
 
         NPOINT = size(DFIL)
@@ -98,6 +105,7 @@ module altaySimul
         von_mises_strain_rate = SQR0P67*norm2(strain_rate)
         von_mises_strain_mode = strain_rate/von_mises_strain_rate
         deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient)
+        deformation_gradient_increment_inverse = invert(deformation_gradient_increment) 
 
         ! Output the current texture
         if (NFILE == 1) call CURwriteBlock(IMP1, info)
@@ -121,8 +129,12 @@ module altaySimul
                     call update_cluster_state(DFIL(i), deformation_gradient, von_mises_strain_mode)
                 end do
             end if
-            call UPDATC(CIJ, invert(deformation_gradient_increment))
-            call GETANG(CIJ, GAXES, TG(:,:,1))
+            CIJ = matmul(matmul(transpose(deformation_gradient_increment_inverse), CIJ), deformation_gradient_increment_inverse)
+            !Eigenvalue decomposition of quadratic notation of ellipsoid determines half-axes orientations and lengths
+            !See Van Houtte et. al., 1999: QUANTITATIVE PREDICTION OF COLD ROLLING TEXTURES IN LOW-CARBON STEEL BY MEANS OF THE LAMEL MODEL
+            call dsyevd('V', 'U', 3, TG(:,:,1), 3, GAXES, work, 37, iwork, 18, info)  ! LAPACK call to calculate eigenvalues and eigenvectors
+            TG(:,:,1) = normalize(TG(:,:,1))                                              !Eigenvectors give axes orientations
+            GAXES = 1._dp/sqrt(GAXES)                                           !Length of half-axes
 
             if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
                   call DYNFIL_setGlobal(deformation_gradient, GAXES, CIJ, TG(:,:,1))
