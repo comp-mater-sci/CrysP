@@ -29,43 +29,16 @@ contains
     !find half-lengths of ellipsoid axes from CIJ matrix
     !store them in prval
     subroutine GETANG(CIJ, prval, TMAT)
-        real(DP), dimension(3, 3), intent(in)  :: CIJ
-        real(DP), dimension(3),   intent(out) ::  prval
-        real(DP), dimension(3, 3), intent(out):: TMAT
-        integer                                 :: i
-        real(DP)                                :: CIJTR
+        real(DP), intent(in)::  CIJ(3, 3)
+        real(DP), intent(out):: prval(3), &
+                                TMAT(3, 3)
+        integer::               info, &
+                                iwork
+        real(DP)::              work(37)
 
-        call eigenv(TMAT, prval)
+        call dsyevd('V', 'U', 3, TMAT, 3, prval, work, 37, iwork, 18, info)
+        TMAT = normalize(TMAT)
         prval = 1._dp/sqrt(prval)
-    end subroutine
-
-    subroutine eigenv(e, prval)
-        real(DP), dimension(3, 3), intent(inout):: e
-        real(DP), dimension(3), intent(out)     :: prval
-        integer                                 :: i, info
-        integer, dimension(18)                  :: iwork
-        real(DP), dimension(37)                 :: work
-
-        call dsyevd('V', 'U', 3, e, 3, prval, work, 37, iwork, 18, info)
-
-        do i = 1, 3
-            call normaliz(e(:,i))
-        end do
-
-        call log_trace(MODULE_NAME, 'eigenv', prval)
-    end subroutine
-
-    subroutine normaliz(prdir)
-        real(DP), dimension(3), intent(inout)   :: prdir
-        real(DP)                                :: x
-        real(DP), parameter     :: RESOLUTION = 0.5e-5_DP
-
-        x = norm2(prdir)
-        if (x > RESOLUTION) then
-            prdir = prdir/x
-            call log_trace(MODULE_NAME, 'normaliz', prdir)
-        end if
-
     end subroutine
 
     !>N1 = number of equations
