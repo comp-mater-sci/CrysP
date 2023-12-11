@@ -42,12 +42,6 @@ module utils
                          convert_stress_strain_vec_mat
     end interface
    
-    interface normalize
-        module procedure normalize_int, &
-                         normalize_real
-    end interface
-
-
 contains
 
     !> Convert second-rank tensor t into 5D vector following Van Houtte et al., 1992.
@@ -80,22 +74,13 @@ contains
         t(2, 1) = t(1, 2)
     end function
 
-    pure function normalize_int(arr) result(normalized)
+    pure function normalize(arr) result(normalized)
         integer, dimension(:,:), intent(in):: arr
         real(DP), dimension(3, size(arr, 2)):: normalized
         integer:: i
 
         do i = 1, size(arr, 2)
             normalized(:,i) = real(arr(:,i), DP) / norm2(real(arr(:,i), DP))
-        end do
-    end function
-    pure function normalize_real(arr) result(normalized)
-        real(DP), dimension(:,:), intent(in):: arr
-        real(DP), dimension(3, size(arr, 2)):: normalized
-        integer:: i
-
-        do i = 1, size(arr, 2)
-            normalized(:,i) = arr(:,i) / norm2(arr(:,i))
         end do
     end function
 
