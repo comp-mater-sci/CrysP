@@ -68,9 +68,11 @@ module altaySimul
                    laml, laml1, &
                    IOR, ISTP, NPOINT, info, NFILE, i, j, l, ifil4, &
                    iwork(18)  ! Workspace for LAPACK call
-        real(DP):: Ssam(3, 3), TG(3, 3), CIJ(3, 3), &
-                    GEWF, RHOSS(3, 3, 2), gmm1, &
-                    GAXES(3)                                        ! half axes a, b, c, of the grain shape ellipsoid
+        real(DP):: Ssam(3, 3), & 
+                   grain_shape(3, 3), & !Coefficient matrix describing grain shape as ellipsoid in quadratic notation ((X^T)*C*X = 1)
+                   grain_axis_half_lengths(3), &
+                   grain_axis_orientations(3, 3), &
+                   GEWF, RHOSS(3, 3, 2), gmm1
         real(DP), save:: C2(3, 3), CC(2, 96)
         real(DP):: TOTGEW, SHsam(3, 3), RHOSm(3, 3), ssqgx
         ! HGAM: homogenized slip per step
@@ -89,9 +91,6 @@ module altaySimul
                    von_mises_strain_mode(3, 3), &
                    von_mises_strain_rate, &
                    work(37)  ! Workspace for LAPACK call
-
-
-
 
         NPOINT = size(DFIL)
         ! Per-call selection of the model: NGR must be set
@@ -117,7 +116,7 @@ module altaySimul
             Mavg = 0._DP
             HGAM = 0.0_DP
 
-            call dynfil_getGlobal(deformation_gradient, CIJ)
+            call dynfil_getGlobal(deformation_gradient, grain_shape)
 
             nrstep = nrstep+1
 
@@ -129,15 +128,19 @@ module altaySimul
                     call update_cluster_state(DFIL(i), deformation_gradient, von_mises_strain_mode)
                 end do
             end if
-            CIJ = matmul(matmul(transpose(deformation_gradient_increment_inverse), CIJ), deformation_gradient_increment_inverse)
-            !Eigenvalue decomposition of quadratic notation of ellipsoid determines half-axes orientations and lengths
+
+            !Updating of ellipsoidal representation of grain shape
             !See Van Houtte et. al., 1999: QUANTITATIVE PREDICTION OF COLD ROLLING TEXTURES IN LOW-CARBON STEEL BY MEANS OF THE LAMEL MODEL
-            call dsyevd('V', 'U', 3, TG, 3, GAXES, work, 37, iwork, 18, info)  ! LAPACK call to calculate eigenvalues and eigenvectors
-            TG = normalize(TG)                                              !Eigenvectors give axes orientations
-            GAXES = 1._dp/sqrt(GAXES)                                           !Length of half-axes
+            !
+            !Update coefficient matrix of ellipsoid representing grain shape
+            grain_shape = matmul(matmul(transpose(deformation_gradient_increment_inverse), grain_shape), deformation_gradient_increment_inverse)
+            !Eigenvalue decomposition of quadratic notation of ellipsoid determines axis orientations and half-lengths
+            grain_axis_orientations = grain_shape
+            call dsyevd('V', 'U', 3, grain_axis_orientations, 3, grain_axis_half_lengths, work, 37, iwork, 18, info)  ! LAPACK: eigenvalue decomposition 
+            grain_axis_half_lengths = 1._dp/sqrt(grain_axis_half_lengths)  ! Eigenvalues are squared inverse of axis half-lengths
 
             if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                  call DYNFIL_setGlobal(deformation_gradient, GAXES, CIJ, TG)
+                  call DYNFIL_setGlobal(deformation_gradient, grain_axis_half_lengths, grain_shape, grain_axis_orientations)
 !
 !         Added for lamel model:
 !         Organisation reading temporary texture file, 
@@ -158,7 +161,7 @@ module altaySimul
                 do L = laml, laml1
                     if (ifil4 == NPOINT) exit
                     ifil4 = ifil4+1
-                    call DYNFIL_getGrain(ifil4, TRF(1:3, 1:3, L), GEWF, GMMAb(L), TG, RHOSS(1:3, 1:3, L))
+                    call DYNFIL_getGrain(ifil4, TRF(1:3, 1:3, L), GEWF, GMMAb(L), grain_axis_orientations, RHOSS(1:3, 1:3, L))
                 end do
                 laml1 = mod(laml1, NGR)+1
                 laml = laml1
@@ -196,7 +199,7 @@ module altaySimul
                 Wtot = Wtot+WorkRate  ! Step time here implicitly assumed to be 1.0s
                 ! We can choose not to update the texture state
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                      call DYNFIL_setGrain(IOR, C2, GMM1, TG, RHOSs(:,:,laml))
+                      call DYNFIL_setGrain(IOR, C2, GMM1, grain_axis_orientations, RHOSs(:,:,laml))
                 end if
             enddo clusterloop
 
