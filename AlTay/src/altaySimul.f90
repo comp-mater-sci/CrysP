@@ -68,7 +68,7 @@ module altaySimul
                    laml, laml1, &
                    IOR, ISTP, NPOINT, info, NFILE, i, j, l, ifil4, &
                    iwork(18)  ! Workspace for LAPACK call
-        real(DP):: Ssam(3, 3), TG(3, 3, 2), CIJ(3, 3), &
+        real(DP):: Ssam(3, 3), TG(3, 3), CIJ(3, 3), &
                     GEWF, RHOSS(3, 3, 2), gmm1, &
                     GAXES(3)                                        ! half axes a, b, c, of the grain shape ellipsoid
         real(DP), save:: C2(3, 3), CC(2, 96)
@@ -132,12 +132,12 @@ module altaySimul
             CIJ = matmul(matmul(transpose(deformation_gradient_increment_inverse), CIJ), deformation_gradient_increment_inverse)
             !Eigenvalue decomposition of quadratic notation of ellipsoid determines half-axes orientations and lengths
             !See Van Houtte et. al., 1999: QUANTITATIVE PREDICTION OF COLD ROLLING TEXTURES IN LOW-CARBON STEEL BY MEANS OF THE LAMEL MODEL
-            call dsyevd('V', 'U', 3, TG(:,:,1), 3, GAXES, work, 37, iwork, 18, info)  ! LAPACK call to calculate eigenvalues and eigenvectors
-            TG(:,:,1) = normalize(TG(:,:,1))                                              !Eigenvectors give axes orientations
+            call dsyevd('V', 'U', 3, TG, 3, GAXES, work, 37, iwork, 18, info)  ! LAPACK call to calculate eigenvalues and eigenvectors
+            TG = normalize(TG)                                              !Eigenvectors give axes orientations
             GAXES = 1._dp/sqrt(GAXES)                                           !Length of half-axes
 
             if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                  call DYNFIL_setGlobal(deformation_gradient, GAXES, CIJ, TG(:,:,1))
+                  call DYNFIL_setGlobal(deformation_gradient, GAXES, CIJ, TG)
 !
 !         Added for lamel model:
 !         Organisation reading temporary texture file, 
@@ -158,7 +158,7 @@ module altaySimul
                 do L = laml, laml1
                     if (ifil4 == NPOINT) exit
                     ifil4 = ifil4+1
-                    call DYNFIL_getGrain(ifil4, TRF(1:3, 1:3, L), GEWF, GMMAb(L), TG(1:3, 1:3, L), RHOSS(1:3, 1:3, L))
+                    call DYNFIL_getGrain(ifil4, TRF(1:3, 1:3, L), GEWF, GMMAb(L), TG, RHOSS(1:3, 1:3, L))
                 end do
                 laml1 = mod(laml1, NGR)+1
                 laml = laml1
@@ -196,7 +196,7 @@ module altaySimul
                 Wtot = Wtot+WorkRate  ! Step time here implicitly assumed to be 1.0s
                 ! We can choose not to update the texture state
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                      call DYNFIL_setGrain(IOR, C2, GMM1, TG(:,:,laml), RHOSs(:,:,laml))
+                      call DYNFIL_setGrain(IOR, C2, GMM1, TG, RHOSs(:,:,laml))
                 end if
             enddo clusterloop
 
