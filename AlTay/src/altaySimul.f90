@@ -12,8 +12,6 @@ module altaySimul
     implicit none
     private
 
-    external:: dsyevd
-
     real(DP), allocatable:: HGAMTOT, & !< homogenized slip accumulated over calls
         XM(:,:)
     integer:: M11, NFILE1
@@ -66,8 +64,7 @@ module altaySimul
         real(DP):: TRF(3, 3, 2), GMMAb(2)
         integer:: NGR, &         !< number of grains
                    laml, laml1, &
-                   IOR, ISTP, NPOINT, info, NFILE, i, j, l, ifil4, &
-                   iwork(18)  ! Workspace for LAPACK call
+                   IOR, ISTP, NPOINT, info, NFILE, i, j, l, ifil4
         real(DP):: Ssam(3, 3), & 
                    grain_shape(3, 3), & !Coefficient matrix describing grain shape as ellipsoid in quadratic notation ((X^T)*C*X = 1)
                    grain_axis_half_lengths(3), &
@@ -89,8 +86,7 @@ module altaySimul
                    strain_rate(3, 3), &
                    spin(3, 3), &
                    von_mises_strain_mode(3, 3), &
-                   von_mises_strain_rate, &
-                   work(37)  ! Workspace for LAPACK call
+                   von_mises_strain_rate
 
         NPOINT = size(DFIL)
         ! Per-call selection of the model: NGR must be set
@@ -134,8 +130,7 @@ module altaySimul
                 !Update coefficient matrix of ellipsoid representing grain shape
                 grain_shape = matmul(matmul(transpose(deformation_gradient_increment_inverse), grain_shape), deformation_gradient_increment_inverse)
                 !Eigenvalue decomposition of quadratic notation of ellipsoid determines axis orientations and half-lengths
-                grain_axis_orientations = grain_shape
-                call dsyevd('V', 'U', 3, grain_axis_orientations, 3, grain_axis_half_lengths, work, 37, iwork, 18, info)  ! LAPACK: eigenvalue decomposition 
+                call eigenvalue_decomposition_3x3(grain_shape, grain_axis_half_lengths, grain_axis_orientations)
                 grain_axis_half_lengths = 1._dp/sqrt(grain_axis_half_lengths)  ! Eigenvalues are squared inverse of axis half-lengths
             end if
 
