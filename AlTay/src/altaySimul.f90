@@ -5,9 +5,9 @@ module altaySimul
     use altayDYNFIL
     use hardening
     use taylor
-    use altayAlgorithms
     use altayConfig
     use logging
+
 
     implicit none
     private
@@ -65,9 +65,11 @@ module altaySimul
         integer:: NGR, &         !< number of grains
                    laml, laml1, &
                    IOR, ISTP, NPOINT, info, NFILE, i, j, l, ifil4
-        real(DP):: Ssam(3, 3), TG(3, 3, 2), CIJ(3, 3), &
-                    GEWF, RHOSS(3, 3, 2), gmm1, &
-                    GAXES(3)                                        ! half axes a, b, c, of the grain shape ellipsoid
+        real(DP):: Ssam(3, 3), & 
+                   grain_shape(3, 3), & !Coefficient matrix describing grain shape as ellipsoid in quadratic notation ((X^T)*C*X = 1)
+                   grain_axis_half_lengths(3), &
+                   grain_axis_orientations(3, 3), &
+                   GEWF, RHOSS(3, 3, 2), gmm1
         real(DP), save:: C2(3, 3), CC(2, 96)
         real(DP):: TOTGEW, SHsam(3, 3), RHOSm(3, 3), ssqgx
         ! HGAM: homogenized slip per step
@@ -80,11 +82,11 @@ module altaySimul
                                      ! volume in the crystal
         real(DP):: Wtot  ! Total plastic work per unit volume in crystal
         real(DP):: deformation_gradient_increment(3, 3), &
+                   deformation_gradient_increment_inverse(3, 3), &
                    strain_rate(3, 3), &
                    spin(3, 3), &
                    von_mises_strain_mode(3, 3), &
-                   von_mises_strain_rate 
-
+                   von_mises_strain_rate
 
         NPOINT = size(DFIL)
         ! Per-call selection of the model: NGR must be set
@@ -98,6 +100,7 @@ module altaySimul
         von_mises_strain_rate = SQR0P67*norm2(strain_rate)
         von_mises_strain_mode = strain_rate/von_mises_strain_rate
         deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient)
+        deformation_gradient_increment_inverse = invert(deformation_gradient_increment) 
 
         ! Output the current texture
         if (NFILE == 1) call CURwriteBlock(IMP1, info)
@@ -109,23 +112,31 @@ module altaySimul
             Mavg = 0._DP
             HGAM = 0.0_DP
 
-            call dynfil_getGlobal(deformation_gradient, CIJ)
+            call dynfil_getGlobal(deformation_gradient, grain_shape)
 
             nrstep = nrstep+1
 
             deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient) 
 
-            !Update grain weights and cluster reference frame orientations
+            !Update grain weights and cluster reference frame orientations for ALAMEL simulations
             if (NGR == 2) then 
                 do i = 1, size(DFIL), 2
                     call update_cluster_state(DFIL(i), deformation_gradient, von_mises_strain_mode)
                 end do
+                
+                !Updating of ellipsoidal representation of grain shape
+                !See Van Houtte et. al., 1999: QUANTITATIVE PREDICTION OF COLD ROLLING TEXTURES IN LOW-CARBON STEEL BY MEANS OF THE LAMEL MODEL
+                !
+                !Update coefficient matrix of ellipsoid representing grain shape
+                grain_shape = matmul(matmul(transpose(deformation_gradient_increment_inverse), grain_shape), deformation_gradient_increment_inverse)
+                !Eigenvalue decomposition of quadratic notation of ellipsoid determines axis orientations and half-lengths
+                call eigenvalue_decomposition_3x3(grain_shape, grain_axis_half_lengths, grain_axis_orientations)
+                grain_axis_half_lengths = 1._dp/sqrt(grain_axis_half_lengths)  ! Eigenvalues are squared inverse of axis half-lengths
             end if
-            call UPDATC(CIJ, invert(deformation_gradient_increment))
-            call GETANG(CIJ, GAXES, TG(:,:,1))
 
+            
             if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                  call DYNFIL_setGlobal(deformation_gradient, GAXES, CIJ, TG(:,:,1))
+                  call DYNFIL_setGlobal(deformation_gradient, grain_axis_half_lengths, grain_shape, grain_axis_orientations)
 !
 !         Added for lamel model:
 !         Organisation reading temporary texture file, 
@@ -146,7 +157,7 @@ module altaySimul
                 do L = laml, laml1
                     if (ifil4 == NPOINT) exit
                     ifil4 = ifil4+1
-                    call DYNFIL_getGrain(ifil4, TRF(1:3, 1:3, L), GEWF, GMMAb(L), TG(1:3, 1:3, L), RHOSS(1:3, 1:3, L))
+                    call DYNFIL_getGrain(ifil4, TRF(1:3, 1:3, L), GEWF, GMMAb(L), grain_axis_orientations, RHOSS(1:3, 1:3, L))
                 end do
                 laml1 = mod(laml1, NGR)+1
                 laml = laml1
@@ -184,7 +195,7 @@ module altaySimul
                 Wtot = Wtot+WorkRate  ! Step time here implicitly assumed to be 1.0s
                 ! We can choose not to update the texture state
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                      call DYNFIL_setGrain(IOR, C2, GMM1, TG(:,:,laml), RHOSs(:,:,laml))
+                      call DYNFIL_setGrain(IOR, C2, GMM1, grain_axis_orientations, RHOSs(:,:,laml))
                 end if
             enddo clusterloop
 

@@ -5,6 +5,10 @@ module utils
     implicit none
     public
 
+    external:: dgelsy, &
+               dsyevd 
+
+
     integer, parameter:: DP = selected_real_kind(15, 307)
     REAL(DP), parameter:: TOLERANCE = 1.E-9_DP, &
                            SQR0P5 = sqrt(0.5_DP), &
@@ -39,8 +43,7 @@ module utils
         module procedure convert_stress_strain_mat_vec, &
                          convert_stress_strain_vec_mat
     end interface
-
-
+   
 contains
 
     !> Convert second-rank tensor t into 5D vector following Van Houtte et al., 1992.
@@ -168,4 +171,48 @@ contains
             exponential = exponential+term
         end do
     end function
+
+    !>N1 = number of equations
+    !>N2 = number of unknowns
+    !>A = coefficient matrix
+    !>B = right hand sides
+    !>BA = solution on output
+    !>RES = residu (sum of squares)
+    !>M1, M2 = dimensions
+    subroutine kleinkwa(N1, N2, M1, M2, A, B, BA, res)
+        integer,                    intent(in)                                  :: M1, M2, N1, N2
+        real(DP), dimension(M2),    intent(in)                                  :: B
+        real(DP), dimension(M1, M2), intent(in)                                  :: A
+        real(DP), dimension(M2),    intent(out)                                 :: BA
+        real(DP),                   intent(inout)                               :: res
+        integer                                                                 :: i, rank, info
+        integer, dimension(N2)                                                  :: jpvt
+        real(DP)                                                                :: y
+        real(DP), dimension(max(min(N1, N2) + 3*N2+1, 2*min(N1, N2) + 1))   :: work
+        real(DP), dimension(M1, M2)                                              :: A_COPY
+
+        A_COPY = A
+        BA = B
+        jpvt = 0
+
+        call dgelsy(N1, N2, 1, A_COPY, M1, BA, M2, jpvt, 0.01_dp, rank, work, size(work), info)
+
+        res = 0.0_DP
+        do i = 1, N1
+            y = sum(A(i, 1:N2)*BA(1:N2))
+            RES = RES + (y-B(i))**2
+        end do
+    end subroutine
+
+    subroutine eigenvalue_decomposition_3x3(matrix, eigenvalues, eigenvectors)
+        real(DP), intent(in):: matrix(3, 3)
+        real(DP), intent(out)   :: eigenvalues(3), &
+                                   eigenvectors(3, 3)
+        integer                 :: info, &
+                                   iwork(18)
+        real(DP)                :: work(37)
+
+        call dsyevd('V', 'U', 3, matrix, 3, eigenvalues, work, 37, iwork, 18, info)
+        eigenvectors = matrix 
+    end subroutine
 end module 

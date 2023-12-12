@@ -18,7 +18,6 @@ criRange.f90
 criUncomment.f90
 altaySimul.f90 
 taylor.f90 
-altayAlgorithms.f90 
 altayDynfil.f90 
 simplex.f90 
 altayCurAccess.f90 
