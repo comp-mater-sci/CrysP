@@ -103,7 +103,7 @@ contains
         nsteps = size(this%steps)
         !
         ! Calculate rotation matrix (active rotation from material (=texture) to sample frame)
-        Mrot = convert_rotation(deg2rad(this%rotframe))
+        Mrot = euler_angles_to_rotation_matrix(deg2rad(this%rotframe))
         !
         do  istep = 1, nsteps
                         !

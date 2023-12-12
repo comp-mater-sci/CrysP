@@ -27,11 +27,6 @@ module criMathUtils
         module procedure scalarDeg2Rad
     end interface
 
-    !Convert between Euler angles and rotation matrix representation of a rotation
-    interface convert_rotation
-        module procedure rotation_matrix_to_euler_angles, euler_angles_to_rotation_matrix
-    end interface
-
 contains
 
       !> Conversion from radians to degrees

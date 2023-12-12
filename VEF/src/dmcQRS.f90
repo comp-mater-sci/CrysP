@@ -149,7 +149,7 @@ contains
             !
             fi2 = deg2rad(fi2)
             ! Calculate rotation matrix
-            Mrot = convert_rotation([fi1, phi, fi2])
+            Mrot = euler_angles_to_rotation_matrix([fi1, phi, fi2])
 
             ! Rotate from "tensile" to material coordinate system
             sigma = rotateSRTensorTo(sigma_t, Mrot)

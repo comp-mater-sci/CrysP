@@ -199,7 +199,7 @@ contains
         !
         ! Rotate stress from "tensile" to material coordinate system
         ! Calculate rotation matrix
-        Mrot = convert_rotation(sample_orientation)
+        Mrot = euler_angles_to_rotation_matrix(sample_orientation)
         sigma = rotateSRTensorTo(sigma_t, Mrot)
         !
         ! Open and initialize result files
