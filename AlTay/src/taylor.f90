@@ -6,7 +6,6 @@ module taylor
     use altayConfig, only: astate
     use logging
     use simplex
-    use altayAlgorithms
     use slip_systems
     use altayDynfil
 
@@ -15,7 +14,8 @@ module taylor
     private
     public ::   taylor_init, &
                 taylor_solve, &
-                taylor_update_state
+                taylor_update_state, &
+                update_cluster_state
 
     integer  :: n_active_slip_systems
     real(DP):: inverse_basis_grain(5, 5), &
@@ -260,4 +260,76 @@ contains
 
     end subroutine
 
+    subroutine update_cluster_state(grain_, deformation_gradient, von_mises_strain_mode)
+        type(Grain), intent(inout):: grain_
+        real(DP), intent(in):: deformation_gradient(3, 3), &
+                               von_mises_strain_mode(3, 3)
+        real(DP)::             Tprinc(3, 3)
+        real(DP):: GRPAR(3, 3), PrDir(2, 3), TDCGr(3, 3), vec1(3), vec2(3), AL(3)  ! TDC is the normalized von-Mises equivalent strain rate
+        real(DP):: u, dlength, dot1, dot2, TGANGLE, GEWF
+        integer:: i
+       
+        GRPAR = matmul(deformation_gradient, grain_%boundary_transformation_matrix)
+        ! Calculation of volume affected by the surface
+        AL = norm2(GRPAR, 1)
+        vec1 = cross(GRPAR(:,2), GRPAR(:,3))
+        ! The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3; 
+        ! for very flattened grains, it should tend to 1.
+        u = abs(sum(GRPAR(:,1)*vec1))*0.25D0/product(AL)
+
+        if (minloc(AL, 1) == 3) then
+            GEWF = u*(4.D0*(AL(1)-AL(3))*(AL(2)-AL(3))*AL(3)  &
+                    +2.0D0*(AL(1)+AL(2)-2.0_dp*AL(3))*AL(3)**2 &
+                    +4.D0*AL(3)**3/3.D0)
+        else
+            GEWF = u*merge(2.D0*(AL(1)-AL(2))*AL(2)**2+4.D0*AL(2)**3/3.D0, &
+                           2.D0*(AL(2)-AL(1))*AL(1)**2+4.D0*AL(1)**3/3.D0, &
+                           AL(1) >= AL(2))
+        endif
+
+        ! Construction of orientation matrices for frames associated to the interfaces
+        ! Orientation of interfaces containing axes
+        Tprinc(1, 1:3)=GRPAR(1:3, 1)
+        Tprinc(3, 1:3)=cross(GRPAR(:,1), GRPAR(:,2))
+        Tprinc(2, 1:3)=cross(Tprinc(3, :), Tprinc(1, :))
+        ! Normalisation
+        do i = 1, 3
+            Tprinc(i, :)=Tprinc(i, :)/norm2(Tprinc(i, :))
+        enddo
+
+        dlength = norm2(von_mises_strain_mode)
+        TDCGr = rotateSRTensorFrom(von_mises_strain_mode, Tprinc)
+
+        dot1 = sum(RELAXATIONS(:,:,1) * TDCGr) / sqrt(2.0D0) / dlength
+        dot2 = sum(RELAXATIONS(:,:,2) * TDCGr) / sqrt(2.0D0) / dlength
+
+        if(abs(dot1) < 0.000001_DP .and. abs(dot2) >= 0.000001_DP) then
+            !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
+            vec1 = Tprinc(2, 1:3)
+            Tprinc(2, 1:3)=-Tprinc(1, 1:3)
+            Tprinc(2, 1:3)=vec1
+        elseif(abs(dot1) >= 0.000001_DP .and. abs(dot2) >= 0.000001_DP) then
+            ! need to rotate by a angle < 90 (this angle could be positive or negative)
+            tgangle = dot2/dot1
+            PrDir = 0.0_DP
+            PrDir(1, 1)=1.D0/sqrt(1.D0+tgangle**2)
+            PrDir(1, 2)=tgangle/sqrt(1.D0+tgangle**2)
+            PrDir(2, 1)=-PrDir(1, 2)
+            PrDir(2, 2)=PrDir(1, 1)
+            ! Prdir(n, :) is vector-n in the GB frame
+            ! Transform these two vector in the Sample's frame
+            vec1 = 0.0_DP
+            vec2 = 0.0_DP
+            do i = 1, 3
+                vec1(i)=vec1(i)+sum(Tprinc(:,i)*PrDir(1, :))
+                vec2(i)=vec2(i)+sum(Tprinc(:,i)*PrDir(2, :))
+            enddo
+            Tprinc(1, 1:3)=vec1
+            Tprinc(2, 1:3)=vec2
+            
+        endif
+
+        grain_%boundary_reference_frame = Tprinc
+        grain_%tgew = GEWF        
+    end subroutine
 end module
