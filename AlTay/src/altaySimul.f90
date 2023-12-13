@@ -16,8 +16,7 @@ module altaySimul
         XM(:,:)
     integer:: M11, NFILE1
 
-    real(DP):: deformation_gradient(3, 3), &
-               von_mises_strain
+    real(DP):: von_mises_strain
 
     character(*), parameter:: MOD_NAME = 'Simul'
 
@@ -31,6 +30,7 @@ module altaySimul
         character(len = 40):: TITEL
         integer:: info
         character(*), parameter:: PROC_NAME = 'SIMUL0'
+        integer:: i
 
 
         NGR    = acnf%simul_init%NGR
@@ -86,7 +86,8 @@ module altaySimul
                    strain_rate(3, 3), &
                    spin(3, 3), &
                    von_mises_strain_mode(3, 3), &
-                   von_mises_strain_rate
+                   von_mises_strain_rate, &
+                   def_grad(3, 3)
 
         NPOINT = size(DFIL)
         ! Per-call selection of the model: NGR must be set
@@ -106,37 +107,25 @@ module altaySimul
         if (NFILE == 1) call CURwriteBlock(IMP1, info)
         steploop: DO ISTP = 1, astate%simulCalls(astate%this)%input%nsteps
 
-            TOTGEW = 0.0_DP
+            TOTGEW = 0._DP
             SHsam = 0._DP
             RHOSm = 0._DP
             Mavg = 0._DP
-            HGAM = 0.0_DP
-
-            call dynfil_getGlobal(deformation_gradient, grain_shape)
+            HGAM = 0._DP
 
             nrstep = nrstep+1
 
-            deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient) 
+            def_grad = matmul(deformation_gradient_increment, deformation_gradient) 
 
             !Update grain weights and cluster reference frame orientations for ALAMEL simulations
             if (NGR == 2) then 
                 do i = 1, size(DFIL), 2
-                    call update_cluster_state(DFIL(i), deformation_gradient, von_mises_strain_mode)
+                    call update_cluster_state(DFIL(i), def_grad, von_mises_strain_mode)
                 end do
-                
-                !Updating of ellipsoidal representation of grain shape
-                !See Van Houtte et. al., 1999: QUANTITATIVE PREDICTION OF COLD ROLLING TEXTURES IN LOW-CARBON STEEL BY MEANS OF THE LAMEL MODEL
-                !
-                !Update coefficient matrix of ellipsoid representing grain shape
-                grain_shape = matmul(matmul(transpose(deformation_gradient_increment_inverse), grain_shape), deformation_gradient_increment_inverse)
-                !Eigenvalue decomposition of quadratic notation of ellipsoid determines axis orientations and half-lengths
-                call eigenvalue_decomposition_3x3(grain_shape, grain_axis_half_lengths, grain_axis_orientations)
-                grain_axis_half_lengths = 1._dp/sqrt(grain_axis_half_lengths)  ! Eigenvalues are squared inverse of axis half-lengths
             end if
 
-            
-            if (.not.astate%simulCalls(astate%this)%input%keep_texture) &
-                  call DYNFIL_setGlobal(deformation_gradient, grain_axis_half_lengths, grain_shape, grain_axis_orientations)
+            if (.not.astate%simulCalls(astate%this)%input%keep_texture) deformation_gradient = def_grad 
+
 !
 !         Added for lamel model:
 !         Organisation reading temporary texture file, 
@@ -157,7 +146,7 @@ module altaySimul
                 do L = laml, laml1
                     if (ifil4 == NPOINT) exit
                     ifil4 = ifil4+1
-                    call DYNFIL_getGrain(ifil4, TRF(1:3, 1:3, L), GEWF, GMMAb(L), grain_axis_orientations, RHOSS(1:3, 1:3, L))
+                    call DYNFIL_getGrain(ifil4, TRF(1:3, 1:3, L), GEWF, GMMAb(L), RHOSS(1:3, 1:3, L))
                 end do
                 laml1 = mod(laml1, NGR)+1
                 laml = laml1
@@ -195,7 +184,7 @@ module altaySimul
                 Wtot = Wtot+WorkRate  ! Step time here implicitly assumed to be 1.0s
                 ! We can choose not to update the texture state
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                      call DYNFIL_setGrain(IOR, C2, GMM1, grain_axis_orientations, RHOSs(:,:,laml))
+                      call DYNFIL_setGrain(IOR, C2, GMM1, RHOSs(:,:,laml))
                 end if
             enddo clusterloop
 

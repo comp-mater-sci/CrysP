@@ -5,8 +5,7 @@ module utils
     implicit none
     public
 
-    external:: dgelsy, &
-               dsyevd 
+    external:: dgelsy
 
 
     integer, parameter:: DP = selected_real_kind(15, 307)
@@ -202,17 +201,5 @@ contains
             y = sum(A(i, 1:N2)*BA(1:N2))
             RES = RES + (y-B(i))**2
         end do
-    end subroutine
-
-    subroutine eigenvalue_decomposition_3x3(matrix, eigenvalues, eigenvectors)
-        real(DP), intent(in):: matrix(3, 3)
-        real(DP), intent(out)   :: eigenvalues(3), &
-                                   eigenvectors(3, 3)
-        integer                 :: info, &
-                                   iwork(18)
-        real(DP)                :: work(37)
-
-        call dsyevd('V', 'U', 3, matrix, 3, eigenvalues, work, 37, iwork, 18, info)
-        eigenvectors = matrix 
     end subroutine
 end module 

@@ -122,7 +122,7 @@ contains
                 if (.not. full_constraints) then
                     do IRL = 1, 2
                         ! Transform relaxation from grain reference frame to macroscopic frame
-                        mat_buffer = rotateSRTensorTo(real(RELAXATIONS(:,:,IRL), DP), DFIL(IOR)%boundary_reference_frame)
+                        mat_buffer = rotateSRTensorTo(real(RELAXATIONS(:,:,IRL), DP), DFIL(IOR)%cluster_reference_frame)
                         !   ... and now to crystal frame:
                         C3 = rotateSRTensorFrom(mat_buffer, TRF(:,:,IL))
                         RLS=(C3+transpose(C3))*0.5_dp
@@ -262,20 +262,21 @@ contains
 
     subroutine update_cluster_state(grain_, deformation_gradient, von_mises_strain_mode)
         type(Grain), intent(inout):: grain_
-        real(DP), intent(in):: deformation_gradient(3, 3), &
+        real(DP), intent(in):: deformation_gradient(3, 3), & !Deformation gradient to be applied to current boundary reference frame
                                von_mises_strain_mode(3, 3)
-        real(DP)::             Tprinc(3, 3)
-        real(DP):: GRPAR(3, 3), PrDir(2, 3), TDCGr(3, 3), vec1(3), vec2(3), AL(3)  ! TDC is the normalized von-Mises equivalent strain rate
+        real(DP)::             Tprinc(3, 3), boundary_reference_frame(3, 3)
+        real(DP):: PrDir(2, 3), TDCGr(3, 3), vec1(3), vec2(3), AL(3)  ! TDC is the normalized von-Mises equivalent strain rate
         real(DP):: u, dlength, dot1, dot2, TGANGLE, GEWF
         integer:: i
        
-        GRPAR = matmul(deformation_gradient, grain_%boundary_transformation_matrix)
+        boundary_reference_frame = matmul(deformation_gradient, grain_%boundary_reference_frame)
+
         ! Calculation of volume affected by the surface
-        AL = norm2(GRPAR, 1)
-        vec1 = cross(GRPAR(:,2), GRPAR(:,3))
+        AL = norm2(boundary_reference_frame, 1)
+        vec1 = cross(boundary_reference_frame(:,2), boundary_reference_frame(:,3))
         ! The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3; 
         ! for very flattened grains, it should tend to 1.
-        u = abs(sum(GRPAR(:,1)*vec1))*0.25D0/product(AL)
+        u = abs(sum(boundary_reference_frame(:,1)*vec1))*0.25D0/product(AL)
 
         if (minloc(AL, 1) == 3) then
             GEWF = u*(4.D0*(AL(1)-AL(3))*(AL(2)-AL(3))*AL(3)  &
@@ -289,8 +290,8 @@ contains
 
         ! Construction of orientation matrices for frames associated to the interfaces
         ! Orientation of interfaces containing axes
-        Tprinc(1, 1:3)=GRPAR(1:3, 1)
-        Tprinc(3, 1:3)=cross(GRPAR(:,1), GRPAR(:,2))
+        Tprinc(1, 1:3)=boundary_reference_frame(1:3, 1)
+        Tprinc(3, 1:3)=cross(boundary_reference_frame(:,1), boundary_reference_frame(:,2))
         Tprinc(2, 1:3)=cross(Tprinc(3, :), Tprinc(1, :))
         ! Normalisation
         do i = 1, 3
@@ -329,7 +330,7 @@ contains
             
         endif
 
-        grain_%boundary_reference_frame = Tprinc
+        grain_%cluster_reference_frame = Tprinc
         grain_%tgew = GEWF        
     end subroutine
 end module
