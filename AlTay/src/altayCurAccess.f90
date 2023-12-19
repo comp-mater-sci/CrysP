@@ -43,8 +43,7 @@ contains
  402 format (/,' Def. Step    ','Number of orientations',27X,          &
     2X, 'F(1, 1)',4X, 'F(2, 1)',4X, 'F(3, 1)',4X,                           &
     2X, 'F(1, 2)',4X, 'F(2, 2)',4X, 'F(3, 2)',4X,                           &
-    2X, 'F(1, 3)',4X, 'F(2, 3)',4X, 'F(3, 3)',                              &
-    6X, 'a',9X, 'b',9x, 'c',9x, 'G-phi1',4x, 'G-PHI',4x, 'G-phi2')
+    2X, 'F(1, 3)',4X, 'F(2, 3)',4X, 'F(3, 3)')
  403 format(I6, 5X, i8, 41x, 3(2X, 3F10.6))
 
     end subroutine
