@@ -37,12 +37,27 @@ module utils
                                                                        0._DP, 0._DP, 1._DP], [3, 3])   
 
     character(*), private, parameter:: MOD_NAME = 'utils'
-  
+ 
+    interface normalize
+        module procedure normalize_int, normalize_real
+    end interface
+
     interface convert_stress_strain_space
         module procedure convert_stress_strain_mat_vec, &
                          convert_stress_strain_vec_mat
     end interface
-   
+
+    interface operator(.dot.)
+        module procedure dot_product_wrapper, double_dot_product
+    end interface
+
+    interface operator(.cross.)
+        module procedure cross
+    end interface
+
+    interface operator(.tensor.)
+        module procedure outer_product
+    end interface
 contains
 
     !> Convert second-rank tensor t into 5D vector following Van Houtte et al., 1992.
@@ -75,7 +90,32 @@ contains
         t(2, 1) = t(1, 2)
     end function
 
-    pure function normalize(arr) result(normalized)
+    pure real(DP) function dot_product_wrapper(vec1, vec2)
+        real(DP), intent(in):: vec1(:), &
+                                vec2(size(vec1))
+
+        dot_product_wrapper = dot_product(vec1, vec2) 
+    end function
+
+    pure real(DP) function double_dot_product(mat1, mat2)
+        real(DP), intent(in):: mat1(:,:), &
+                               mat2(size(mat1, 1), size(mat1, 2))
+        
+        double_dot_product = sum(mat1*mat2)
+    end function
+
+    pure function cross(v1, v2)
+        real(DP), intent(in), dimension(3):: v1, v2
+        real(DP), dimension(3):: cross
+
+        cross(1)=v1(2)*v2(3)-v1(3)*v2(2)
+        cross(2)=v1(3)*v2(1)-v1(1)*v2(3)
+        cross(3)=v1(1)*v2(2)-v1(2)*v2(1)
+    end function
+
+
+
+    pure function normalize_int(arr) result(normalized)
         integer, dimension(:,:), intent(in):: arr
         real(DP), dimension(3, size(arr, 2)):: normalized
         integer:: i
@@ -84,6 +124,16 @@ contains
             normalized(:,i) = real(arr(:,i), DP) / norm2(real(arr(:,i), DP))
         end do
     end function
+    pure function normalize_real(arr) result(normalized)
+        real(DP), dimension(:,:), intent(in):: arr
+        real(DP), dimension(3, size(arr, 2)):: normalized
+        integer:: i
+
+        do i = 1, size(arr, 2)
+            normalized(:,i) = arr(:,i) / norm2(arr(:,i))
+        end do
+    end function
+
 
     pure function outer_product(v1, v2) result(prod)
         real(DP), dimension(:), intent(in)      :: v1, v2

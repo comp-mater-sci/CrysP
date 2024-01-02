@@ -15,7 +15,8 @@ module taylor
     public ::   taylor_init, &
                 taylor_solve, &
                 taylor_update_state, &
-                update_cluster_state
+                cluster_frame, &
+                cluster_weight
 
     integer  :: n_active_slip_systems
     real(DP):: inverse_basis_grain(5, 5), &
@@ -129,7 +130,7 @@ contains
                 if (.not. full_constraints) then
                     do IRL = 1, 2
                         ! Transform relaxation from grain reference frame to macroscopic frame
-                        mat_buffer = rotateSRTensorTo(real(RELAXATIONS(:,:,IRL), DP), DFIL(IOR)%cluster_reference_frame)
+                        mat_buffer = rotateSRTensorFrom(real(RELAXATIONS(:,:,IRL), DP), DFIL(IOR)%cluster_reference_frame)
                         !   ... and now to crystal frame:
                         C3 = rotateSRTensorFrom(mat_buffer, TRF(:,:,IL))
                         RLS=(C3+transpose(C3))*0.5_dp
@@ -264,63 +265,67 @@ contains
         C2(1, 2)=-C2(2, 1)
         ! KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
         C2 = matmul(C2, TRF)
-
     end subroutine
 
-    subroutine update_cluster_state(grain_, deformation_gradient, von_mises_strain_mode)
-        type(Grain), intent(inout):: grain_
-        real(DP), intent(in):: deformation_gradient(3, 3), & !Deformation gradient to be applied to current boundary reference frame
+    pure real(DP) function cluster_weight(grain_, deformation_gradient) result(weight)
+        type(Grain), intent(in):: grain_
+        real(DP), intent(in):: deformation_gradient(3, 3)
+        real(DP):: grain_axes(3, 3), &
+                   axis_lengths(3), &
+                   alignment_factor
+
+        !Applying deformation gradient to initial grain boundary orientation yields deformed grain axes
+        grain_axes = matmul(deformation_gradient, grain_%boundary_reference_frame)
+        axis_lengths = norm2(grain_axes, 1)
+        !Alignment factor equals sin(axes 2 and 3) * cos(axis 1 and normal to plane defined by axes 2 and 3)
+        !The more the axes are orthogonal, the more alignment factor tends to 1.
+        alignment_factor = abs(grain_axes(:,1) .dot. (grain_axes(:,2) .cross. grain_axes(:,3))) / product(axis_lengths) 
+
+        !See Van Houtte et. al., 2004: Appendix A
+        select case(minloc(axis_lengths, 1))
+            case (3)  
+                weight = alignment_factor * (4._DP*(axis_lengths(1)-axis_lengths(3))*(axis_lengths(2)-axis_lengths(3))*axis_lengths(3) + &
+                2._DP*(axis_lengths(1)+axis_lengths(2) - 2._DP*axis_lengths(3))*axis_lengths(3)**2+4._DP*axis_lengths(3)**3/3._DP)
+            case(2)
+                weight = alignment_factor * (2._DP*(axis_lengths(1)-axis_lengths(2))*axis_lengths(2)**2+4.D0*axis_lengths(2)**3/3._DP)
+            case(1)
+                weight = alignment_factor * (2._DP*(axis_lengths(2)-axis_lengths(1))*axis_lengths(1)**2+4.D0*axis_lengths(1)**3/3._DP)
+        end select
+    end function
+
+    pure function cluster_frame(grain_, deformation_gradient, von_mises_strain_mode) result(frame)
+        type(Grain), intent(in):: grain_ 
+        real(DP), intent(in):: deformation_gradient(3, 3), &
                                von_mises_strain_mode(3, 3)
-        real(DP)::             Tprinc(3, 3), boundary_reference_frame(3, 3)
-        real(DP):: PrDir(2, 3), TDCGr(3, 3), vec1(3), vec2(3), AL(3)  ! TDC is the normalized von-Mises equivalent strain rate
-        real(DP):: u, dlength, dot1, dot2, TGANGLE, GEWF
         integer:: i
-        real(DP), parameter:: RELAXATIONS_DEVIATORIC(3, 3, 2) = [real(RELAXATIONS(:,:,1) + transpose(RELAXATIONS(:,:,1)), DP) / SQR2, & !Normalized deviatoric component of relaxations
+        real(DP):: frame(3, 3), &
+                   rotated_strain_mode(3, 3), &
+                   dot_products(2), &
+                   vec1(3), vec2(3), prdir(3, 3), tgangle
+        !Normalized deviatoric component of relaxations
+        real(DP), parameter:: RELAXATIONS_DEVIATORIC(3, 3, 2) = [real(RELAXATIONS(:,:,1) + transpose(RELAXATIONS(:,:,1)), DP) / SQR2, & 
                                                                  real(RELAXATIONS(:,:,2) + transpose(RELAXATIONS(:,:,2)), DP) / SQR2]
-       
-        boundary_reference_frame = matmul(deformation_gradient, grain_%boundary_reference_frame)
+        
+        frame = matmul(deformation_gradient, grain_%boundary_reference_frame)
+        frame(:,3) = frame(:,1) .cross. frame(:,2)
+        frame(:,2) = frame(:,3) .cross. frame(:,1)
+        frame = normalize(frame)
 
-        ! Calculation of volume affected by the surface
-        AL = norm2(boundary_reference_frame, 1)
-        vec1 = cross(boundary_reference_frame(:,2), boundary_reference_frame(:,3))
-        ! The factor 0.25 is there so that for equiaxed grains, GEWF below becomes 1/3; 
-        ! for very flattened grains, it should tend to 1.
-        u = abs(sum(boundary_reference_frame(:,1)*vec1))*0.25D0/product(AL)
+        rotated_strain_mode = rotateSRTensorTo(von_mises_strain_mode, frame)
 
-        if (minloc(AL, 1) == 3) then
-            GEWF = u*(4.D0*(AL(1)-AL(3))*(AL(2)-AL(3))*AL(3)  &
-                    +2.0D0*(AL(1)+AL(2)-2.0_dp*AL(3))*AL(3)**2 &
-                    +4.D0*AL(3)**3/3.D0)
-        else
-            GEWF = u*merge(2.D0*(AL(1)-AL(2))*AL(2)**2+4.D0*AL(2)**3/3.D0, &
-                           2.D0*(AL(2)-AL(1))*AL(1)**2+4.D0*AL(1)**3/3.D0, &
-                           AL(1) >= AL(2))
-        endif
-
-        ! Construction of orientation matrices for frames associated to the interfaces
-        ! Orientation of interfaces containing axes
-        Tprinc(1, 1:3)=boundary_reference_frame(1:3, 1)
-        Tprinc(3, 1:3)=cross(boundary_reference_frame(:,1), boundary_reference_frame(:,2))
-        Tprinc(2, 1:3)=cross(Tprinc(3, :), Tprinc(1, :))
-        ! Normalisation
-        do i = 1, 3
-            Tprinc(i, :)=Tprinc(i, :)/norm2(Tprinc(i, :))
-        enddo
-
-        dlength = norm2(von_mises_strain_mode)
-        TDCGr = rotateSRTensorFrom(von_mises_strain_mode, Tprinc)
-
-        dot1 = sum(RELAXATIONS_DEVIATORIC(:,:,1) * TDCGr) / dlength
-        dot2 = sum(RELAXATIONS_DEVIATORIC(:,:,2) * TDCGr) / dlength
-
-        if(abs(dot1) < 0.000001_DP .and. abs(dot2) >= 0.000001_DP) then
+        !Take normalized double dot product of relaxations and strain mode to determine if relaxations are orthogonal or parallel
+        do i = 1, 2
+            dot_products(i) = RELAXATIONS_DEVIATORIC(:,:,i) .dot. rotated_strain_mode/SQR1P5  ! Length of von mises strain mode is sqr(3/2)
+        end do
+        
+        if(abs(dot_products(1)) < 0.000001_DP .and. abs(dot_products(2)) >= 0.000001_DP) then
             !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
-            vec1 = Tprinc(2, 1:3)
-            Tprinc(2, 1:3)=-Tprinc(1, 1:3)
-            Tprinc(1, 1:3)=vec1
-        elseif(abs(dot1) >= 0.000001_DP .and. abs(dot2) >= 0.000001_DP) then
+            vec1 = frame(:, 2)
+            frame(:, 2) = -frame(:, 1)
+            frame(:, 1) = vec1
+        elseif(abs(dot_products(1)) >= 0.000001_DP .and. abs(dot_products(2)) >= 0.000001_DP) then
             ! need to rotate by a angle < 90 (this angle could be positive or negative)
-            tgangle = dot2/dot1
+            tgangle = dot_products(2)/dot_products(1)
             PrDir = 0.0_DP
             PrDir(1, 1)=1.D0/sqrt(1.D0+tgangle**2)
             PrDir(1, 2)=tgangle/sqrt(1.D0+tgangle**2)
@@ -331,15 +336,11 @@ contains
             vec1 = 0.0_DP
             vec2 = 0.0_DP
             do i = 1, 3
-                vec1(i)=vec1(i)+sum(Tprinc(:,i)*PrDir(1, :))
-                vec2(i)=vec2(i)+sum(Tprinc(:,i)*PrDir(2, :))
+                vec1(i)=vec1(i)+sum(frame(i, :)*PrDir(1, :))
+                vec2(i)=vec2(i)+sum(frame(i, :)*PrDir(2, :))
             enddo
-            Tprinc(1, 1:3)=vec1
-            Tprinc(2, 1:3)=vec2
-            
+            frame(:, 1)=vec1
+            frame(:, 2)=vec2
         endif
-
-        grain_%cluster_reference_frame = Tprinc
-        grain_%tgew = GEWF        
-    end subroutine
+    end function
 end module

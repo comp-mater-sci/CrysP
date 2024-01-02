@@ -120,7 +120,8 @@ module altaySimul
             !Update grain weights and cluster reference frame orientations for ALAMEL simulations
             if (NGR == 2) then 
                 do i = 1, size(DFIL), 2
-                    call update_cluster_state(DFIL(i), def_grad, von_mises_strain_mode)
+                    DFIL(i)%tgew = cluster_weight(DFIL(i), def_grad)
+                    DFIL(i)%cluster_reference_frame = cluster_frame(DFIL(i), def_grad, von_mises_strain_mode)
                 end do
             end if
 
