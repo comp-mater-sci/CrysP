@@ -268,6 +268,8 @@ contains
         real(DP):: PrDir(2, 3), TDCGr(3, 3), vec1(3), vec2(3), AL(3)  ! TDC is the normalized von-Mises equivalent strain rate
         real(DP):: u, dlength, dot1, dot2, TGANGLE, GEWF
         integer:: i
+        real(DP), parameter:: RELAXATIONS_DEVIATORIC(3, 3, 2) = [(RELAXATIONS(:,:,1) + transpose(RELAXATIONS(:,:,1))) / SQR2, & !Normalized deviatoric component of relaxations
+                                                                 (RELAXATIONS(:,:,2) + transpose(RELAXATIONS(:,:,2))) / SQR2]
        
         boundary_reference_frame = matmul(deformation_gradient, grain_%boundary_reference_frame)
 
@@ -301,14 +303,14 @@ contains
         dlength = norm2(von_mises_strain_mode)
         TDCGr = rotateSRTensorFrom(von_mises_strain_mode, Tprinc)
 
-        dot1 = sum(RELAXATIONS(:,:,1) * TDCGr) / sqrt(2.0D0) / dlength
-        dot2 = sum(RELAXATIONS(:,:,2) * TDCGr) / sqrt(2.0D0) / dlength
+        dot1 = sum(RELAXATIONS_DEVIATORIC(:,:,1) * TDCGr) / dlength
+        dot2 = sum(RELAXATIONS_DEVIATORIC(:,:,2) * TDCGr) / dlength
 
         if(abs(dot1) < 0.000001_DP .and. abs(dot2) >= 0.000001_DP) then
             !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
             vec1 = Tprinc(2, 1:3)
             Tprinc(2, 1:3)=-Tprinc(1, 1:3)
-            Tprinc(2, 1:3)=vec1
+            Tprinc(1, 1:3)=vec1
         elseif(abs(dot1) >= 0.000001_DP .and. abs(dot2) >= 0.000001_DP) then
             ! need to rotate by a angle < 90 (this angle could be positive or negative)
             tgangle = dot2/dot1

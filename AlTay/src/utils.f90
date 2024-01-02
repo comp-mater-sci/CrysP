@@ -9,7 +9,7 @@ module utils
 
 
     integer, parameter:: DP = selected_real_kind(15, 307)
-    REAL(DP), parameter:: TOLERANCE = 1.E-9_DP, &
+    real(DP), parameter:: TOLERANCE = 1.E-9_DP, &
                            SQR0P5 = sqrt(0.5_DP), &
                            SQR0P67 = sqrt(2._DP/3._DP), &
                            SQR1P5 = sqrt(1.5_DP), &
