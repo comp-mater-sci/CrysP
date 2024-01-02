@@ -97,13 +97,16 @@ contains
     end subroutine   
     
     !Note that IOR will be replaced by a reference to a grain object in the near future.
-    subroutine taylor_solve(stress_matrix, strain_matrix, TRF, IOR, GMMAb, cluster_size, laml, CC, n_slip_systems_grain, velocity_gradient, von_mises_strain_rate)
+    subroutine taylor_solve(stress_matrix, strain_matrix, TRF, IOR, GMMAb, cluster_size, laml, CC, n_slip_systems_grain, &
+        velocity_gradient, von_mises_strain_rate, von_mises_strain_mode, deformation_gradient, weight)
         integer, intent(in):: laml, IOR, cluster_size, n_slip_systems_grain
-        real(DP), intent(out):: stress_matrix(3, 3), strain_matrix(3, 3)
+        real(DP), intent(out):: stress_matrix(3, 3), strain_matrix(3, 3), weight
         real(DP), intent(in):: TRF(3, 3, 2), &
                                 GMMab(2), &
                                 velocity_gradient(3, 3), &
-                                von_mises_strain_rate
+                                von_mises_strain_rate, &
+                                von_mises_strain_mode(3, 3), &
+                                deformation_gradient(3, 3)
         real(dp), intent(inout):: CC(2, n_slip_systems_grain)
         real(dp), dimension(5):: strain, spin
         real(dp):: C2(3, 3), rls(3, 3), rla(3, 3), C3(3, 3), spanv(5)
@@ -113,6 +116,7 @@ contains
 
         character(*), parameter:: PROC_NAME = 'taylor_solve'
 
+        weight = merge(cluster_weight(DFIL(IOR), deformation_gradient), 1._DP, cluster_size == 2)
         n_relaxations=(cluster_size-1)*2
         size_system = 5*cluster_size
         n_slip_systems_cluster = cluster_size*n_slip_systems_grain+n_relaxations
@@ -130,7 +134,8 @@ contains
                 if (.not. full_constraints) then
                     do IRL = 1, 2
                         ! Transform relaxation from grain reference frame to macroscopic frame
-                        mat_buffer = rotateSRTensorFrom(real(RELAXATIONS(:,:,IRL), DP), DFIL(IOR)%cluster_reference_frame)
+                        mat_buffer = rotateSRTensorFrom(real(RELAXATIONS(:,:,IRL), DP), cluster_frame(DFIL(IOR), &
+                        deformation_gradient, von_mises_strain_mode))
                         !   ... and now to crystal frame:
                         C3 = rotateSRTensorFrom(mat_buffer, TRF(:,:,IL))
                         RLS=(C3+transpose(C3))*0.5_dp
@@ -302,9 +307,11 @@ contains
                    rotated_strain_mode(3, 3), &
                    dot_products(2), &
                    vec1(3), vec2(3), prdir(3, 3), tgangle
+
         !Normalized deviatoric component of relaxations
-        real(DP), parameter:: RELAXATIONS_DEVIATORIC(3, 3, 2) = [real(RELAXATIONS(:,:,1) + transpose(RELAXATIONS(:,:,1)), DP) / SQR2, & 
-                                                                 real(RELAXATIONS(:,:,2) + transpose(RELAXATIONS(:,:,2)), DP) / SQR2]
+        real(DP), parameter:: RELAXATIONS_DEVIATORIC(3, 3, 2) = reshape([real(RELAXATIONS(:,:,1) + transpose(RELAXATIONS(:,:,1)), DP) / SQR2, & 
+                                                                         real(RELAXATIONS(:,:,2) + transpose(RELAXATIONS(:,:,2)), DP) / SQR2], &
+                                                                shape(RELAXATIONS_DEVIATORIC))
         
         frame = matmul(deformation_gradient, grain_%boundary_reference_frame)
         frame(:,3) = frame(:,1) .cross. frame(:,2)
@@ -315,7 +322,7 @@ contains
 
         !Take normalized double dot product of relaxations and strain mode to determine if relaxations are orthogonal or parallel
         do i = 1, 2
-            dot_products(i) = RELAXATIONS_DEVIATORIC(:,:,i) .dot. rotated_strain_mode/SQR1P5  ! Length of von mises strain mode is sqr(3/2)
+            dot_products(i) = RELAXATIONS_DEVIATORIC(:,:,i) .dot. rotated_strain_mode/SQR1P5  ! Length of von mises strain mode is always sqr(3/2)
         end do
         
         if(abs(dot_products(1)) < 0.000001_DP .and. abs(dot_products(2)) >= 0.000001_DP) then
