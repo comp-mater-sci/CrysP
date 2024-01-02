@@ -38,10 +38,17 @@ module taylor
 
     integer:: DI1(5), ind_active_slip_systems(8)
     
-    character(*), parameter ::  MOD_NAME = 'taylor'
-    real(DP), parameter     ::  PLUMIN(2, 2) = reshape([1._DP, -1._DP, 1._DP, -1._DP], shape(PLUMIN))
-    integer, dimension(5), parameter ::    INITIAL_BASIS_SYSTEMS_FCC = [2, 5, 6, 7, 8], &
-                                           INITIAL_BASIS_SYSTEMS_BCC = [1, 2, 4, 5, 7]
+    character(*), parameter:: MOD_NAME = 'taylor'
+    integer, parameter::   INITIAL_BASIS_SYSTEMS_FCC(5) = [2, 5, 6, 7, 8], &
+                           INITIAL_BASIS_SYSTEMS_BCC(5) = [1, 2, 4, 5, 7], &
+                           RELAXATIONS(3, 3, 2) = reshape([0, 0, 0, &
+                                                           0, 0, 0, &
+                                                           1, 0, 0, &
+                                                           0, 0, 0, &
+                                                           0, 0, 0, &
+                                                           0, 1, 0], shape(RELAXATIONS))
+    real(DP), parameter::  PLUMIN(2, 2) = reshape([1._DP, -1._DP, 1._DP, -1._DP], shape(PLUMIN))
+
 contains
     subroutine taylor_init(deformation_mechanism, n_slip_systems_grain, A1, cluster_size)
         integer, intent(out):: n_slip_systems_grain  ! < total number of systems in slip system file (glide+twin)
@@ -268,8 +275,8 @@ contains
         real(DP):: PrDir(2, 3), TDCGr(3, 3), vec1(3), vec2(3), AL(3)  ! TDC is the normalized von-Mises equivalent strain rate
         real(DP):: u, dlength, dot1, dot2, TGANGLE, GEWF
         integer:: i
-        real(DP), parameter:: RELAXATIONS_DEVIATORIC(3, 3, 2) = [(RELAXATIONS(:,:,1) + transpose(RELAXATIONS(:,:,1))) / SQR2, & !Normalized deviatoric component of relaxations
-                                                                 (RELAXATIONS(:,:,2) + transpose(RELAXATIONS(:,:,2))) / SQR2]
+        real(DP), parameter:: RELAXATIONS_DEVIATORIC(3, 3, 2) = [real(RELAXATIONS(:,:,1) + transpose(RELAXATIONS(:,:,1)), DP) / SQR2, & !Normalized deviatoric component of relaxations
+                                                                 real(RELAXATIONS(:,:,2) + transpose(RELAXATIONS(:,:,2)), DP) / SQR2]
        
         boundary_reference_frame = matmul(deformation_gradient, grain_%boundary_reference_frame)
 
