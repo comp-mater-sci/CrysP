@@ -308,46 +308,9 @@ contains
                    dot_products(2), &
                    vec1(3), vec2(3), prdir(3, 3), tgangle
 
-        !Normalized deviatoric component of relaxations
-        real(DP), parameter:: RELAXATIONS_DEVIATORIC(3, 3, 2) = reshape([real(RELAXATIONS(:,:,1) + transpose(RELAXATIONS(:,:,1)), DP) / SQR2, & 
-                                                                         real(RELAXATIONS(:,:,2) + transpose(RELAXATIONS(:,:,2)), DP) / SQR2], &
-                                                                shape(RELAXATIONS_DEVIATORIC))
-        
         frame = matmul(deformation_gradient, grain_%boundary_reference_frame)
         frame(:,3) = frame(:,1) .cross. frame(:,2)
         frame(:,2) = frame(:,3) .cross. frame(:,1)
         frame = normalize(frame)
-
-        rotated_strain_mode = rotateSRTensorTo(von_mises_strain_mode, frame)
-
-        !Take normalized double dot product of relaxations and strain mode to determine if relaxations are orthogonal or parallel
-        do i = 1, 2
-            dot_products(i) = RELAXATIONS_DEVIATORIC(:,:,i) .dot. rotated_strain_mode/SQR1P5  ! Length of von mises strain mode is always sqr(3/2)
-        end do
-        
-        if(abs(dot_products(1)) < 0.000001_DP .and. abs(dot_products(2)) >= 0.000001_DP) then
-            !  Need to rotate current frame (represented by Tprinc) with 90 degree to let relaxation-2 be the orthogonal one
-            vec1 = frame(:, 2)
-            frame(:, 2) = -frame(:, 1)
-            frame(:, 1) = vec1
-        elseif(abs(dot_products(1)) >= 0.000001_DP .and. abs(dot_products(2)) >= 0.000001_DP) then
-            ! need to rotate by a angle < 90 (this angle could be positive or negative)
-            tgangle = dot_products(2)/dot_products(1)
-            PrDir = 0.0_DP
-            PrDir(1, 1)=1.D0/sqrt(1.D0+tgangle**2)
-            PrDir(1, 2)=tgangle/sqrt(1.D0+tgangle**2)
-            PrDir(2, 1)=-PrDir(1, 2)
-            PrDir(2, 2)=PrDir(1, 1)
-            ! Prdir(n, :) is vector-n in the GB frame
-            ! Transform these two vector in the Sample's frame
-            vec1 = 0.0_DP
-            vec2 = 0.0_DP
-            do i = 1, 3
-                vec1(i)=vec1(i)+sum(frame(i, :)*PrDir(1, :))
-                vec2(i)=vec2(i)+sum(frame(i, :)*PrDir(2, :))
-            enddo
-            frame(:, 1)=vec1
-            frame(:, 2)=vec2
-        endif
     end function
 end module
