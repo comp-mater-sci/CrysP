@@ -47,7 +47,6 @@ module taylor
                                                            0, 0, 0, &
                                                            0, 0, 0, &
                                                            0, 1, 0], shape(RELAXATIONS))
-    real(DP), parameter::  PLUMIN(2, 2) = reshape([1._DP, -1._DP, 1._DP, -1._DP], shape(PLUMIN))
 
 contains
     subroutine taylor_init(deformation_mechanism, n_slip_systems_grain, A1, cluster_size)
@@ -107,8 +106,9 @@ contains
                                 von_mises_strain_mode(3, 3), &
                                 deformation_gradient(3, 3)
         real(dp), intent(inout):: CC(2, n_slip_systems_grain)
-        real(dp), dimension(5):: strain, spin
-        real(dp):: C2(3, 3), rls(3, 3), rla(3, 3), C3(3, 3), spanv(5)
+        real(dp), dimension(5):: strain
+        real(DP):: spin(3)
+        real(dp):: C2(3, 3), C3(3, 3), spanv(5)
         real(DP):: mat_buffer(3, 3), UU(5*cluster_size, 5*cluster_size)
         integer:: n_slip_systems_cluster, size_system, IL, L1, IRL, I, K1, IG, JJ, II, DI(10), n_relaxations
         logical:: full_constraints
@@ -136,14 +136,14 @@ contains
                         mat_buffer = rotateSRTensorFrom(real(RELAXATIONS(:,:,IRL), DP), cluster_frame(DFIL(IOR), deformation_gradient))
                         !   ... and now to crystal frame:
                         C3 = rotateSRTensorFrom(mat_buffer, TRF(:,:,IL))
-                        RLS = symmetric_part(C3)
-                        RLA = antisymmetric_part(C3)
-                        B3(1, IRL, IL)=-PLUMIN(IL, IRL)*RLA(2, 3)/sqr2
-                        B3(2, IRL, IL)=-PLUMIN(IL, IRL)*RLA(3, 1)/sqr2
-                        B3(3, IRL, IL)=-PLUMIN(IL, IRL)*RLA(1, 2)/sqr2
-                        !  Insert the relaxations as columns in A1-matrix
-                        A2(L1+1:L1+5, n_slip_systems_cluster-n_relaxations+IRL)=convert_stress_strain_space(RLS)*PLUMIN(IL, IRL)
+                        !Rotational component of relaxations
+                        B3(:,IRL, IL) = get_rotation(C3) / SQR2
+                        ! Insert the relaxations as columns in A2-matrix
+                        A2(L1+1:L1+5, n_slip_systems_cluster-2+IRL)=convert_stress_strain_space(symmetric_part(C3))
                     end do
+                    !Invert direction of relaxations for second grain
+                    B3(:,:,2) = -B3(:,:,2)
+                    A2(6:10, n_slip_systems_cluster-2:n_slip_systems_cluster) = -A2(6:10, n_slip_systems_cluster-2:n_slip_systems_cluster)
                 endif
 
                 ! Calculation of time increment by dividing von Mises equivalent
@@ -202,13 +202,25 @@ contains
         stress_matrix = convert_stress_strain_space(spanv) ! (5) -> sym.(3, 3)
         strain_matrix = convert_stress_strain_space(strain)  ! (5) -> sym.(3, 3)
         spin_matrix = 0._DP
-        spin_matrix(2, 3)= spin(1)*sqr2*von_mises_strain_rate
-        spin_matrix(3, 1)= spin(2)*sqr2*von_mises_strain_rate
-        spin_matrix(1, 2)= spin(3)*sqr2*von_mises_strain_rate
-        spin_matrix(3, 2)= -spin_matrix(2, 3)
-        spin_matrix(1, 3)= -spin_matrix(3, 1)
-        spin_matrix(2, 1)= -spin_matrix(1, 2)
+        !spin_matrix(2, 3)= spin(1)*sqr2*von_mises_strain_rate
+        !spin_matrix(3, 1)= spin(2)*sqr2*von_mises_strain_rate
+        !spin_matrix(1, 2)= spin(3)*sqr2*von_mises_strain_rate
+        !spin_matrix(3, 2)= -spin_matrix(2, 3)
+        !spin_matrix(1, 3)= -spin_matrix(3, 1)
+        !spin_matrix(2, 1)= -spin_matrix(1, 2)
+        !spin_matrix(1, 2)= spin(1)*sqr2*von_mises_strain_rate
+        !spin_matrix(1, 3)= spin(2)*sqr2*von_mises_strain_rate
+        !spin_matrix(2, 3)= spin(3)*sqr2*von_mises_strain_rate
+        !spin_matrix(2, 1)= -spin_matrix(1, 2)
+        !spin_matrix(3, 1)= -spin_matrix(1, 3)
+        !spin_matrix(3, 2)= -spin_matrix(2, 3)
 
+        spin_matrix(3, 2)= spin(1)*sqr2*von_mises_strain_rate
+        spin_matrix(1, 3)= spin(2)*sqr2*von_mises_strain_rate
+        spin_matrix(2, 1)= spin(3)*sqr2*von_mises_strain_rate
+        spin_matrix(2, 3)= -spin_matrix(3, 2)
+        spin_matrix(3, 1)= -spin_matrix(1, 3)
+        spin_matrix(1, 2)= -spin_matrix(2, 1)
         ! note that if one of the grains does not deform at all, the stress and the active slip systems
         ! of the full constraint solution are used.
         n_active_slip_systems = 0
