@@ -134,8 +134,7 @@ contains
                 if (.not. full_constraints) then
                     do IRL = 1, 2
                         ! Transform relaxation from grain reference frame to macroscopic frame
-                        mat_buffer = rotateSRTensorFrom(real(RELAXATIONS(:,:,IRL), DP), cluster_frame(DFIL(IOR), &
-                        deformation_gradient, von_mises_strain_mode))
+                        mat_buffer = rotateSRTensorFrom(real(RELAXATIONS(:,:,IRL), DP), cluster_frame(DFIL(IOR), deformation_gradient))
                         !   ... and now to crystal frame:
                         C3 = rotateSRTensorFrom(mat_buffer, TRF(:,:,IL))
                         RLS=(C3+transpose(C3))*0.5_dp
@@ -250,7 +249,19 @@ contains
         integer:: j
         real(DP), parameter:: ddt = 1.0_DP
 
+
+
+
+        
         call resolve_taylor_ambiguity(GAMdot, SGNN, von_mises_strain_rate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
+
+
+
+
+
+
+
+
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call hardening_update_state(IOR, ddt, GAMdot)
         TOTGAMdot = sum(abs(GAMdot))
         ! Calculate RCcryst: the rigid body spin in the crystal frame
@@ -298,15 +309,10 @@ contains
         end select
     end function
 
-    pure function cluster_frame(grain_, deformation_gradient, von_mises_strain_mode) result(frame)
+    pure function cluster_frame(grain_, deformation_gradient) result(frame)
         type(Grain), intent(in):: grain_ 
-        real(DP), intent(in):: deformation_gradient(3, 3), &
-                               von_mises_strain_mode(3, 3)
-        integer:: i
-        real(DP):: frame(3, 3), &
-                   rotated_strain_mode(3, 3), &
-                   dot_products(2), &
-                   vec1(3), vec2(3), prdir(3, 3), tgangle
+        real(DP), intent(in):: deformation_gradient(3, 3)
+        real(DP):: frame(3, 3)
 
         frame = matmul(deformation_gradient, grain_%boundary_reference_frame)
         frame(:,3) = frame(:,1) .cross. frame(:,2)
