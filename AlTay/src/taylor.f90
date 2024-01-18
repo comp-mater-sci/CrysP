@@ -296,12 +296,16 @@ contains
         !C2(3, 1) = -C2(3, 1) 
         !C2(3, 2) = -C2(3, 2) 
 
-        C2(3, 2)=ROT(1)-(imposed_spin_crystal_frame(3, 2)+spin_relaxations_crystal_frame(3, 2))
-        C2(1, 3)=ROT(2)-(imposed_spin_crystal_frame(1, 3)+spin_relaxations_crystal_frame(1, 3))
-        C2(2, 1)=ROT(3)-(imposed_spin_crystal_frame(2, 1)+spin_relaxations_crystal_frame(2, 1))
-        C2(2, 3)=-C2(3, 2)
-        C2(3, 1)=-C2(1, 3)
-        C2(1, 2)=-C2(2, 1)
+        C2 = -convert_rotation(ROT)
+        C2 = C2-imposed_spin_crystal_frame-spin_relaxations_crystal_frame
+        forall (j = 1:3) C2(j, j) = 1._DP
+
+        !C2(3, 2)=ROT(1)-(imposed_spin_crystal_frame(3, 2)+spin_relaxations_crystal_frame(3, 2))
+        !C2(1, 3)=ROT(2)-(imposed_spin_crystal_frame(1, 3)+spin_relaxations_crystal_frame(1, 3))
+        !C2(2, 1)=ROT(3)-(imposed_spin_crystal_frame(2, 1)+spin_relaxations_crystal_frame(2, 1))
+        !C2(2, 3)=-C2(3, 2)
+        !C2(3, 1)=-C2(1, 3)
+        !C2(1, 2)=-C2(2, 1)
         ! KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
         C2 = matmul(C2, TRF)
 
