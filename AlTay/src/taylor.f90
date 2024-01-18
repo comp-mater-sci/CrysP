@@ -222,7 +222,7 @@ contains
         !spin_relaxations(3, 1)= -spin_relaxations(1, 3)
         !spin_relaxations(1, 2)= -spin_relaxations(2, 1)
 
-        spin_relaxations = -convert_rotation(spin) * SQR2*von_mises_strain_rate
+        spin_relaxations = convert_rotation(spin) * SQR2*von_mises_strain_rate
         ! note that if one of the grains does not deform at all, the stress and the active slip systems
         ! of the full constraint solution are used.
         n_active_slip_systems = 0
@@ -296,8 +296,8 @@ contains
         !C2(3, 1) = -C2(3, 1) 
         !C2(3, 2) = -C2(3, 2) 
 
-        C2 = -convert_rotation(ROT)
-        C2 = C2-imposed_spin_crystal_frame-spin_relaxations_crystal_frame
+        C2 = convert_rotation(ROT)
+        C2 = -C2-imposed_spin_crystal_frame+spin_relaxations_crystal_frame
         forall (j = 1:3) C2(j, j) = 1._DP
 
         !C2(3, 2)=ROT(1)-(imposed_spin_crystal_frame(3, 2)+spin_relaxations_crystal_frame(3, 2))
