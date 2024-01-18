@@ -11,9 +11,57 @@ module taylor_ambiguity
 
 contains
 
-    !Finds the slip rates assuming that
-    !- the stress, strain rate and the active slip systems are known, 
-    !- (under the above restrictions) the sum of the squares of the slip rates must be minimal.
+    !> @brief Resolves the Taylor ambiguity
+    !!
+    !! @details This subroutine resolves the Taylor ambiguity for the slip rates.
+    !!          After solving the equations using the simplex method, we know
+    !!          the stress, strain rate and the active slip systems.
+    !!          This still leaves us with several options for the slip rates.
+    !!          This subroutine finds the slip rates assuming that the sum
+    !!          of the squares of the slip rates must be minimal*.
+    !!
+    !!          The minimum norm solution may not satisfy the yield conditions.
+    !!          (i.e. the slip rates may be negative). In that case, we try
+    !!          all possible combinations of the slip systems and minimize again.
+    !!              
+    !!          *Note that this may not be completely true. The minimization problem
+    !!           does some weird things. More details in the code.
+    !!
+    !! @param[out]    slip_rates              real vector (n_slip_systems)
+    !!                                        Slip rates for all the slip systems
+    !!                                        Note: this variable is marked as [in,out] in the code,
+    !!                                        but it seems to be overwritten immediately.
+    !!
+    !! @param[in,out] sgnn                    real vector (n_slip_systems)
+    !!                                        Signs of the slip rates
+    !!                                        Note: this variable is marked as [in,out] in the code,
+    !!                                        but it is partially overwritten immediately
+    !!
+    !! @param[in]     von_mises_strain_rate   real
+    !!                                        Von Mises strain rate
+    !!
+    !! @param[in]     n_active_slip_systems   integer
+    !!                                        Number of active slip systems
+    !!                                        n_active_slip_systems <= 8
+    !!
+    !! @param[in]     SLIPLP                  real vector (8)
+    !!                                        Slip rates of the active slip systems
+    !!
+    !! @param[in]     TAURLP                  real vector (8)
+    !!                                        RSS of the active slip systems
+    !!
+    !! @param[in]     ind_active_slip_systems integer vector (8)
+    !!                                        Indices of the active slip systems
+    !!                                        Note: this variable is marked as [in,out] in the code,
+    !!                                        but it is never actually modified.
+    !!
+    !! @param[in]     BB8                     real vector (5)
+    !!                                        The total strain rate (imposed + relaxation)
+    !!
+    !! @param[in]     A1                      real matrix (5, n_slip_systems)
+    !!                                        The symmetric (non-rotational) part of taylor equations matrix for a single grain.
+    !!                                        The matrix is represented in crystal frame.
+    !!                                        This matrix does not contain the relaxation terms.
     subroutine resolve_taylor_ambiguity(slip_rates, sgnn, von_mises_strain_rate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, A1)
         integer, intent(in):: n_active_slip_systems
         real(DP), intent(in):: von_mises_strain_rate,   &
@@ -102,6 +150,22 @@ contains
         slip_rates(IND(1:NN))=SLIPLP(1:NN)*von_mises_strain_rate
     end subroutine
 
+    !> @brief Fills the IND_ array with the active slip systems
+    !!
+    !! @details This subroutine fills the IND_ array with the active slip systems
+    !!          skipping the slip systems with the indices in the skip array.
+    !!
+    !! @param[in,out] IND_                    integer vector (8)
+    !!                                        Indices of the active slip systems
+    !!
+    !! @param[in]     ind_active_slip_systems integer vector (8)
+    !!                                        Indices of the active slip systems
+    !!
+    !! @param[in]     skip                    integer vector
+    !!                                        Indices of the slip systems to skip
+    !!
+    !! @param[in]     N_max                   integer
+    !!                                        Maximum number of slip systems
     subroutine fill(IND_, ind_active_slip_systems, skip, N_max)
         integer, intent(inout):: IND_(8)
         integer, intent(in):: ind_active_slip_systems(8), N_max
@@ -117,6 +181,49 @@ contains
 
     end subroutine
 
+    !> @brief Determine the slip rates given the stress and the active slip systems
+    !!         using the least squares method.
+    !!
+    !! @details This subroutine determines the slip rates given the stress and the active slip systems
+    !!          using the least squares method.
+    !!          The subroutine solves the system of equations:
+    !!          min_{g,s} ||Ag - b||^2 + ||2g - A^Ts||^2,
+    !!          where A is the matrix of the taylor equations, b is the strain, g is the slip rates,
+    !!          s is the Lagrange multiplier
+    !!
+    !!          Note that the old comment used to say that it solved:
+    !!          min_{g} ||g||^2, subject to Ag = b.
+    !!          But that does not seem to be correct. However, the solution of the above problem
+    !!          is a close approximation of the solution of the problem in the old comment.
+    !!
+    !! @param[in]     NN                      integer
+    !!                                        Number of slip systems
+    !!
+    !! @param[in]     IND                     integer vector (8)
+    !!                                        Indices of the active slip systems
+    !!
+    !! @param[out]    SLPR                    real vector (8)
+    !!                                        Slip rates for the active slip systems
+    !!
+    !! @param[out]    ineg                    integer
+    !!                                        Index of the slip system with the most negative slip rate
+    !!                                        If ineg == 0, then all slip rates are positive.
+    !!                                        Note that ineg > 0, means that one of the slip rates is negative,
+    !!                                        so the solution is not valid.
+    !!
+    !! @param[out]    sumsq                   real
+    !!                                        Sum of squares of the slip rates
+    !!
+    !! @param[in]     sgnn                    real vector (n_slip_systems)
+    !!                                        Signs of the slip rates
+    !!
+    !! @param[in]     BB8                     real vector (5)
+    !!                                        The total strain rate (imposed + relaxation)
+    !!
+    !! @param[in]     A8                      real matrix (5, n_slip_systems)
+    !!                                        The symmetric (non-rotational) part of taylor equations matrix for a single grain.
+    !!                                        The matrix is represented in crystal frame.
+    !!                                        This matrix does not contain the relaxation terms.
     subroutine MINSQU(NN, IND, SLPR, ineg, sumsq, sgnn, BB8, A8)
 
         integer, intent(in):: IND(8), NN
@@ -151,7 +258,8 @@ contains
             B(1+NN:5+NN)=BB8
         endif
 
-        ! Solve by least-squares method followed by singular value decomposition
+        ! Solve system of equations in the least square sense
+        ! using the rank-revealing QR decomposition
         call Kleinkwa(N1, N2, 13, 13, A, B, BA, RES)
 
         SLPR(1:NN)=BA(1:NN)
@@ -171,6 +279,7 @@ contains
         end if
     end subroutine
 
+    !> @brief Stores a valid solution for the slip rates
     subroutine STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
 
         integer, intent(in):: NN, IND(8), NSTOR
