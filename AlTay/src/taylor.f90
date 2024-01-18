@@ -138,9 +138,9 @@ contains
                         C3 = rotateSRTensorFrom(mat_buffer, TRF(:,:,IL))
                         RLS = symmetric_part(C3)
                         RLA = antisymmetric_part(C3)
-                        B3(1, IRL, IL)=PLUMIN(IL, IRL)*RLA(2, 3)/sqr2
-                        B3(2, IRL, IL)=PLUMIN(IL, IRL)*RLA(3, 1)/sqr2
-                        B3(3, IRL, IL)=PLUMIN(IL, IRL)*RLA(1, 2)/sqr2
+                        B3(1, IRL, IL)=-PLUMIN(IL, IRL)*RLA(2, 3)/sqr2
+                        B3(2, IRL, IL)=-PLUMIN(IL, IRL)*RLA(3, 1)/sqr2
+                        B3(3, IRL, IL)=-PLUMIN(IL, IRL)*RLA(1, 2)/sqr2
                         !  Insert the relaxations as columns in A1-matrix
                         A2(L1+1:L1+5, n_slip_systems_cluster-n_relaxations+IRL)=convert_stress_strain_space(RLS)*PLUMIN(IL, IRL)
                     end do
@@ -191,16 +191,13 @@ contains
         jj = n_slip_systems_grain*(laml-1)
         CC = CCC(1:2, jj+1:jj+n_slip_systems_grain)
         ii = 5*(laml-1)
+        spin = 0._DP
         do i = 1, 5
             ! If one grain does not deform, the stress UBUF came from the fullconstraints solution.
             spanv(i)=UBUF(i+ii)
             strain(i)=-sum(A2(i+ii, n_slip_systems_cluster-n_relaxations+1:n_slip_systems_cluster)*gamr(1:n_relaxations))
             BB8(i)=B8(i, laml)+strain(i)
-            if (i < 4) then
-                spin(i)=-sum(B3(i, :, laml)*gamr(1:n_relaxations))
-            else
-                spin(i) = 0._DP
-            end if
+            if (i < 4) spin(i)=sum(B3(i, :, laml)*gamr(1:n_relaxations))
         enddo
         stress_matrix = convert_stress_strain_space(spanv) ! (5) -> sym.(3, 3)
         strain_matrix = convert_stress_strain_space(strain)  ! (5) -> sym.(3, 3)
