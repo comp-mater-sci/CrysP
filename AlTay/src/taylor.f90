@@ -20,7 +20,7 @@ module taylor
 
     integer  :: n_active_slip_systems
     real(DP):: inverse_basis_grain(5, 5), &
-                spin_matrix(3, 3), &
+                spin_relaxations(3, 3), &
                 SLIPLP(8), &
                 TAURLP(8), &
                 BB8(5), &
@@ -83,7 +83,7 @@ contains
             normalized = normalize(deformation_mechanism(:,:,i))
             tensor = outer_product(normalized(:,1), normalized(:,2))
             A1(:,i) = convert_stress_strain_space(tensor) 
-            rotation_slip_systems(:,i) = get_rotation(tensor)  
+            rotation_slip_systems(:,i) = convert_rotation(tensor)  
         end do
         forall (i = 1:5) basis(:,i) = A1(:,DI1(i))
 
@@ -137,7 +137,7 @@ contains
                         !   ... and now to crystal frame:
                         C3 = rotateSRTensorFrom(mat_buffer, TRF(:,:,IL))
                         !Rotational component of relaxations
-                        B3(:,IRL, IL) = get_rotation(C3) / SQR2
+                        B3(:,IRL, IL) = convert_rotation(C3) / SQR2
                         ! Insert the relaxations as columns in A2-matrix
                         A2(L1+1:L1+5, n_slip_systems_cluster-2+IRL)=convert_stress_strain_space(symmetric_part(C3))
                     end do
@@ -201,26 +201,28 @@ contains
         enddo
         stress_matrix = convert_stress_strain_space(spanv) ! (5) -> sym.(3, 3)
         strain_matrix = convert_stress_strain_space(strain)  ! (5) -> sym.(3, 3)
-        spin_matrix = 0._DP
-        !spin_matrix(2, 3)= spin(1)*sqr2*von_mises_strain_rate
-        !spin_matrix(3, 1)= spin(2)*sqr2*von_mises_strain_rate
-        !spin_matrix(1, 2)= spin(3)*sqr2*von_mises_strain_rate
-        !spin_matrix(3, 2)= -spin_matrix(2, 3)
-        !spin_matrix(1, 3)= -spin_matrix(3, 1)
-        !spin_matrix(2, 1)= -spin_matrix(1, 2)
-        !spin_matrix(1, 2)= spin(1)*sqr2*von_mises_strain_rate
-        !spin_matrix(1, 3)= spin(2)*sqr2*von_mises_strain_rate
-        !spin_matrix(2, 3)= spin(3)*sqr2*von_mises_strain_rate
-        !spin_matrix(2, 1)= -spin_matrix(1, 2)
-        !spin_matrix(3, 1)= -spin_matrix(1, 3)
-        !spin_matrix(3, 2)= -spin_matrix(2, 3)
+        spin_relaxations = 0._DP
+        !spin_relaxations(2, 3)= spin(1)*sqr2*von_mises_strain_rate
+        !spin_relaxations(3, 1)= spin(2)*sqr2*von_mises_strain_rate
+        !spin_relaxations(1, 2)= spin(3)*sqr2*von_mises_strain_rate
+        !spin_relaxations(3, 2)= -spin_relaxations(2, 3)
+        !spin_relaxations(1, 3)= -spin_relaxations(3, 1)
+        !spin_relaxations(2, 1)= -spin_relaxations(1, 2)
+        !spin_relaxations(1, 2)= spin(1)*sqr2*von_mises_strain_rate
+        !spin_relaxations(1, 3)= spin(2)*sqr2*von_mises_strain_rate
+        !spin_relaxations(2, 3)= spin(3)*sqr2*von_mises_strain_rate
+        !spin_relaxations(2, 1)= -spin_relaxations(1, 2)
+        !spin_relaxations(3, 1)= -spin_relaxations(1, 3)
+        !spin_relaxations(3, 2)= -spin_relaxations(2, 3)
 
-        spin_matrix(3, 2)= spin(1)*sqr2*von_mises_strain_rate
-        spin_matrix(1, 3)= spin(2)*sqr2*von_mises_strain_rate
-        spin_matrix(2, 1)= spin(3)*sqr2*von_mises_strain_rate
-        spin_matrix(2, 3)= -spin_matrix(3, 2)
-        spin_matrix(3, 1)= -spin_matrix(1, 3)
-        spin_matrix(1, 2)= -spin_matrix(2, 1)
+        !spin_relaxations(3, 2)= spin(1)*sqr2*von_mises_strain_rate
+        !spin_relaxations(1, 3)= spin(2)*sqr2*von_mises_strain_rate
+        !spin_relaxations(2, 1)= spin(3)*sqr2*von_mises_strain_rate
+        !spin_relaxations(2, 3)= -spin_relaxations(3, 2)
+        !spin_relaxations(3, 1)= -spin_relaxations(1, 3)
+        !spin_relaxations(1, 2)= -spin_relaxations(2, 1)
+
+        spin_relaxations = -convert_rotation(spin) * SQR2*von_mises_strain_rate
         ! note that if one of the grains does not deform at all, the stress and the active slip systems
         ! of the full constraint solution are used.
         n_active_slip_systems = 0
@@ -243,11 +245,11 @@ contains
         !Transform relaxation strain rate tensor from local frame to sample frame
         strain_matrix = rotateSRTensorTo(strain_matrix, TRF(:,:,laml))
         !Transform relaxation spin tensor from local frame to sample frame
-        spin_matrix = rotateSRTensorTo(spin_matrix, TRF(:,:,laml))
+        spin_relaxations = rotateSRTensorTo(spin_relaxations, TRF(:,:,laml))
     end subroutine
 
-    subroutine taylor_update_state(IOR, TOTGAMdot, WorkRate, spin, von_mises_strain_rate, CC, TRF, C2, XM)
-        real(DP), intent(in):: spin(3, 3), &
+    subroutine taylor_update_state(IOR, TOTGAMdot, WorkRate, imposed_spin, von_mises_strain_rate, CC, TRF, C2, XM)
+        real(DP), intent(in):: imposed_spin(3, 3), &
                                von_mises_strain_rate
         integer, intent(in):: IOR
         real(DP), intent(in):: XM(:,:), TRF(3, 3), CC(:,:)
@@ -256,7 +258,7 @@ contains
         real(DP), intent(out):: WorkRate
 
         real(DP), dimension(3):: ROT
-        real(DP), dimension(3, 3):: RCcryst, RHOAcrys
+        real(DP), dimension(3, 3):: imposed_spin_crystal_frame, spin_relaxations_crystal_frame
         real(DP), dimension(size(CC, 2)):: GAMdot
         integer:: j
         real(DP), parameter:: ddt = 1.0_DP
@@ -279,8 +281,8 @@ contains
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call hardening_update_state(IOR, ddt, GAMdot)
         TOTGAMdot = sum(abs(GAMdot))
         ! Calculate RCcryst: the rigid body spin in the crystal frame
-        RCcryst = rotateSRTensorFrom(spin, TRF)
-        RHOAcrys = rotateSRTensorFrom(spin_matrix, TRF)
+        imposed_spin_crystal_frame = rotateSRTensorFrom(imposed_spin, TRF)
+        spin_relaxations_crystal_frame = rotateSRTensorFrom(spin_relaxations, TRF)
         WorkRate = sum(merge(CC(1, :), -CC(2, :), GAMdot > 0.0_DP)*GAMdot)
 
         ROT = matmul(rotation_slip_systems, GAMdot)
@@ -294,9 +296,9 @@ contains
         !C2(3, 1) = -C2(3, 1) 
         !C2(3, 2) = -C2(3, 2) 
 
-        C2(3, 2)=ROT(1)-(RCcryst(3, 2)+RHOAcrys(3, 2))
-        C2(1, 3)=ROT(2)-(RCcryst(1, 3)+RHOAcrys(1, 3))
-        C2(2, 1)=ROT(3)-(RCcryst(2, 1)+RHOAcrys(2, 1))
+        C2(3, 2)=ROT(1)-(imposed_spin_crystal_frame(3, 2)+spin_relaxations_crystal_frame(3, 2))
+        C2(1, 3)=ROT(2)-(imposed_spin_crystal_frame(1, 3)+spin_relaxations_crystal_frame(1, 3))
+        C2(2, 1)=ROT(3)-(imposed_spin_crystal_frame(2, 1)+spin_relaxations_crystal_frame(2, 1))
         C2(2, 3)=-C2(3, 2)
         C2(3, 1)=-C2(1, 3)
         C2(1, 2)=-C2(2, 1)

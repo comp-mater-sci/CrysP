@@ -47,6 +47,11 @@ module utils
                          convert_stress_strain_vec_mat
     end interface
 
+    interface convert_rotation
+        module procedure convert_rotation_mat_vec, &
+                         convert_rotation_vec_mat
+    end interface
+
     interface operator(.dot.)
         module procedure dot_product_wrapper, double_dot_product
     end interface
@@ -113,8 +118,6 @@ contains
         cross(3)=v1(1)*v2(2)-v1(2)*v2(1)
     end function
 
-
-
     pure function normalize_int(arr) result(normalized)
         integer, dimension(:,:), intent(in):: arr
         real(DP), dimension(3, size(arr, 2)):: normalized
@@ -158,7 +161,19 @@ contains
         antisym = (mat-transpose(mat)) / 2._DP
     end function
 
-    pure function get_rotation(t) result(rot)
+    pure function convert_rotation_vec_mat(v) result(rot)
+        real(DP), intent(in):: v(3)
+        real(DP):: rot(3, 3)
+
+        rot = 0._DP                
+        rot(3, 2) = -v(1)
+        rot(1, 3) = -v(2)
+        rot(2, 1) = -v(3)
+        rot(2, 3) = -rot(3, 2)
+        rot(3, 1) = -rot(1, 3)
+        rot(1, 2) = -rot(2, 1)
+    end function
+    pure function convert_rotation_mat_vec(t) result(rot)
         real(DP), dimension(3, 3), intent(in):: t
         real(DP), dimension(3)               :: rot
         real(DP), dimension(3, 3)             :: antisym
