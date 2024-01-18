@@ -27,15 +27,14 @@ module taylor
                 B8(5, 2), &
                 GAMR(2)
     real(DP), allocatable ::  rotation_slip_systems(:,:), &
-                              B3(:,:), &
+                              B3(:,:,:), &
                               slip_rates(:), &
                               BB(:), &
                               CCC(:,:), &
                               overstress(:), &
                               TAUR1(:), &
                               UBUF(:), &
-                              A2(:,:), &
-                              SGNN(:)
+                              A2(:,:)
 
     integer:: DI1(5), ind_active_slip_systems(8)
     
@@ -67,9 +66,8 @@ contains
         system_size = cluster_size*5
 
         allocate(A1(5, n_slip_systems_grain))
-        if (.not. allocated(B3)) then
+        if (.not. allocated(rotation_slip_systems)) then
             allocate(rotation_slip_systems(3, n_slip_systems_grain))
-            allocate(B3(system_size, 3), source = 0._DP)
             allocate(slip_rates(n_slip_systems_cluster))
             allocate(BB(system_size))
             allocate(CCC(2, n_slip_systems_cluster))
@@ -77,7 +75,8 @@ contains
             allocate(TAUR1(n_slip_systems_cluster))
             allocate(UBUF(system_size))
             allocate(A2(system_size, n_slip_systems_cluster))
-            allocate(SGNN(n_slip_systems_grain))
+            if (cluster_size == 2) &
+                allocate(B3(3, 2, 2), source = 0._DP)
         end if
         
         DI1 = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, n_slip_systems_grain == 12)
@@ -139,9 +138,9 @@ contains
                         C3 = rotateSRTensorFrom(mat_buffer, TRF(:,:,IL))
                         RLS=(C3+transpose(C3))*0.5_dp
                         RLA=(C3-transpose(C3))*0.5_dp
-                        B3(L1+1, IRL)=PLUMIN(IL, IRL)*RLA(2, 3)/sqr2
-                        B3(L1+2, IRL)=PLUMIN(IL, IRL)*RLA(3, 1)/sqr2
-                        B3(L1+3, IRL)=PLUMIN(IL, IRL)*RLA(1, 2)/sqr2
+                        B3(1, IRL, IL)=PLUMIN(IL, IRL)*RLA(2, 3)/sqr2
+                        B3(2, IRL, IL)=PLUMIN(IL, IRL)*RLA(3, 1)/sqr2
+                        B3(3, IRL, IL)=PLUMIN(IL, IRL)*RLA(1, 2)/sqr2
                         !  Insert the relaxations as columns in A1-matrix
                         A2(L1+1:L1+5, n_slip_systems_cluster-n_relaxations+IRL)=convert_stress_strain_space(RLS)*PLUMIN(IL, IRL)
                     end do
@@ -197,7 +196,11 @@ contains
             spanv(i)=UBUF(i+ii)
             strain(i)=-sum(A2(i+ii, n_slip_systems_cluster-n_relaxations+1:n_slip_systems_cluster)*gamr(1:n_relaxations))
             BB8(i)=B8(i, laml)+strain(i)
-            spin(i)=-sum(B3(i+ii, 1:n_relaxations)*gamr(1:n_relaxations))
+            if (i < 4) then
+                spin(i)=-sum(B3(i, :, laml)*gamr(1:n_relaxations))
+            else
+                spin(i) = 0._DP
+            end if
         enddo
         stress_matrix = convert_stress_strain_space(spanv) ! (5) -> sym.(3, 3)
         strain_matrix = convert_stress_strain_space(strain)  ! (5) -> sym.(3, 3)
@@ -253,9 +256,11 @@ contains
 
 
         
-        call resolve_taylor_ambiguity(GAMdot, SGNN, von_mises_strain_rate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
+        call resolve_taylor_ambiguity(GAMdot, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
 
 
+
+        gamdot = gamdot*von_mises_strain_rate
 
 
 
@@ -273,6 +278,13 @@ contains
 
         forall (j = 1:3) C2(j, j) = 1._DP
  
+        !C2(1, 2) = RCcryst(1, 2) - ROT(1) + RHOAcrys(1, 2)
+        !C2(1, 3) = RCcryst(1, 3) - ROT(2) + RHOAcrys(1, 3)
+        !C2(2, 3) = RCcryst(2, 3) - ROT(3) + RHOAcrys(2, 3)
+        !C2(2, 1) = -C2(1, 2) 
+        !C2(3, 1) = -C2(3, 1) 
+        !C2(3, 2) = -C2(3, 2) 
+
         C2(3, 2)=ROT(1)-(RCcryst(3, 2)+RHOAcrys(3, 2))
         C2(1, 3)=ROT(2)-(RCcryst(1, 3)+RHOAcrys(1, 3))
         C2(2, 1)=ROT(3)-(RCcryst(2, 1)+RHOAcrys(2, 1))
@@ -281,6 +293,7 @@ contains
         C2(1, 2)=-C2(2, 1)
         ! KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
         C2 = matmul(C2, TRF)
+
     end subroutine
 
     pure real(DP) function cluster_weight(grain_, deformation_gradient) result(weight)

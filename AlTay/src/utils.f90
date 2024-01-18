@@ -165,6 +165,8 @@ contains
                 
         antisym = antisymmetric_part(t)
         rot = [-antisym(3, 2), -antisym(1, 3), -antisym(2, 1)] !This conversion can likely be replaced by a more intuitive one
+
+        !rot = [antisym(1, 2), antisym(1, 3), antisym(2, 3)]
     end function
 
     ! Returns the inverse of a matrix calculated by finding the LU
