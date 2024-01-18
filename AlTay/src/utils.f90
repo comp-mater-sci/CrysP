@@ -161,17 +161,17 @@ contains
         antisym = (mat-transpose(mat)) / 2._DP
     end function
 
-    pure function convert_rotation_vec_mat(v) result(rot)
-        real(DP), intent(in):: v(3)
-        real(DP):: rot(3, 3)
+    pure function convert_rotation_vec_mat(vec) result(mat)
+        real(DP), intent(in):: vec(3)
+        real(DP):: mat(3, 3)
 
-        rot = 0._DP                
-        rot(3, 2) = -v(1)
-        rot(1, 3) = -v(2)
-        rot(2, 1) = -v(3)
-        rot(2, 3) = -rot(3, 2)
-        rot(3, 1) = -rot(1, 3)
-        rot(1, 2) = -rot(2, 1)
+        mat = 0._DP                
+        mat(1, 2) = vec(1)
+        mat(1, 3) = vec(2)
+        mat(2, 3) = vec(3)
+        mat(2, 1) = -mat(1, 2)
+        mat(3, 1) = -mat(1, 3)
+        mat(3, 2) = -mat(2, 3)
     end function
     pure function convert_rotation_mat_vec(t) result(rot)
         real(DP), dimension(3, 3), intent(in):: t
@@ -179,9 +179,7 @@ contains
         real(DP), dimension(3, 3)             :: antisym
                 
         antisym = antisymmetric_part(t)
-        rot = [-antisym(3, 2), -antisym(1, 3), -antisym(2, 1)] !This conversion can likely be replaced by a more intuitive one
-
-        !rot = [antisym(1, 2), antisym(1, 3), antisym(2, 3)]
+        rot = [antisym(1, 2), antisym(1, 3), antisym(2, 3)]
     end function
 
     ! Returns the inverse of a matrix calculated by finding the LU

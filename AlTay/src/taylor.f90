@@ -202,26 +202,7 @@ contains
         stress_matrix = convert_stress_strain_space(spanv) ! (5) -> sym.(3, 3)
         strain_matrix = convert_stress_strain_space(strain)  ! (5) -> sym.(3, 3)
         spin_relaxations = 0._DP
-        !spin_relaxations(2, 3)= spin(1)*sqr2*von_mises_strain_rate
-        !spin_relaxations(3, 1)= spin(2)*sqr2*von_mises_strain_rate
-        !spin_relaxations(1, 2)= spin(3)*sqr2*von_mises_strain_rate
-        !spin_relaxations(3, 2)= -spin_relaxations(2, 3)
-        !spin_relaxations(1, 3)= -spin_relaxations(3, 1)
-        !spin_relaxations(2, 1)= -spin_relaxations(1, 2)
-        !spin_relaxations(1, 2)= spin(1)*sqr2*von_mises_strain_rate
-        !spin_relaxations(1, 3)= spin(2)*sqr2*von_mises_strain_rate
-        !spin_relaxations(2, 3)= spin(3)*sqr2*von_mises_strain_rate
-        !spin_relaxations(2, 1)= -spin_relaxations(1, 2)
-        !spin_relaxations(3, 1)= -spin_relaxations(1, 3)
-        !spin_relaxations(3, 2)= -spin_relaxations(2, 3)
-
-        !spin_relaxations(3, 2)= spin(1)*sqr2*von_mises_strain_rate
-        !spin_relaxations(1, 3)= spin(2)*sqr2*von_mises_strain_rate
-        !spin_relaxations(2, 1)= spin(3)*sqr2*von_mises_strain_rate
-        !spin_relaxations(2, 3)= -spin_relaxations(3, 2)
-        !spin_relaxations(3, 1)= -spin_relaxations(1, 3)
-        !spin_relaxations(1, 2)= -spin_relaxations(2, 1)
-
+        
         spin_relaxations = convert_rotation(spin) * SQR2*von_mises_strain_rate
         ! note that if one of the grains does not deform at all, the stress and the active slip systems
         ! of the full constraint solution are used.
@@ -260,23 +241,10 @@ contains
         real(DP), dimension(3):: ROT
         real(DP), dimension(3, 3):: imposed_spin_crystal_frame, spin_relaxations_crystal_frame
         real(DP), dimension(size(CC, 2)):: GAMdot
-        integer:: j
         real(DP), parameter:: ddt = 1.0_DP
 
-
-
-
-        
         call resolve_taylor_ambiguity(GAMdot, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
-
-
-
         gamdot = gamdot*von_mises_strain_rate
-
-
-
-
-
 
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call hardening_update_state(IOR, ddt, GAMdot)
         TOTGAMdot = sum(abs(GAMdot))
@@ -286,27 +254,8 @@ contains
         WorkRate = sum(merge(CC(1, :), -CC(2, :), GAMdot > 0.0_DP)*GAMdot)
 
         ROT = matmul(rotation_slip_systems, GAMdot)
-
-        forall (j = 1:3) C2(j, j) = 1._DP
  
-        !C2(1, 2) = RCcryst(1, 2) - ROT(1) + RHOAcrys(1, 2)
-        !C2(1, 3) = RCcryst(1, 3) - ROT(2) + RHOAcrys(1, 3)
-        !C2(2, 3) = RCcryst(2, 3) - ROT(3) + RHOAcrys(2, 3)
-        !C2(2, 1) = -C2(1, 2) 
-        !C2(3, 1) = -C2(3, 1) 
-        !C2(3, 2) = -C2(3, 2) 
-
-        C2 = convert_rotation(ROT)
-        C2 = -C2-imposed_spin_crystal_frame+spin_relaxations_crystal_frame
-        forall (j = 1:3) C2(j, j) = 1._DP
-
-        !C2(3, 2)=ROT(1)-(imposed_spin_crystal_frame(3, 2)+spin_relaxations_crystal_frame(3, 2))
-        !C2(1, 3)=ROT(2)-(imposed_spin_crystal_frame(1, 3)+spin_relaxations_crystal_frame(1, 3))
-        !C2(2, 1)=ROT(3)-(imposed_spin_crystal_frame(2, 1)+spin_relaxations_crystal_frame(2, 1))
-        !C2(2, 3)=-C2(3, 2)
-        !C2(3, 1)=-C2(1, 3)
-        !C2(1, 2)=-C2(2, 1)
-        ! KORRIGEREN VAN DE NIEUWE ROTATIEMATRIX
+        C2 = UNIT_MATRIX_3X3-convert_rotation(ROT)-imposed_spin_crystal_frame+spin_relaxations_crystal_frame
         C2 = matmul(C2, TRF)
 
     end subroutine
