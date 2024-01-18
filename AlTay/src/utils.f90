@@ -163,7 +163,7 @@ contains
 
     pure function convert_rotation_vec_mat(vec) result(mat)
         real(DP), intent(in):: vec(3)
-        real(DP):: mat(3, 3)
+        real(DP)::             mat(3, 3)
 
         mat = 0._DP                
         mat(1, 2) = vec(1)

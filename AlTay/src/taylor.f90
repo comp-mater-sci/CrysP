@@ -255,9 +255,8 @@ contains
 
         ROT = matmul(rotation_slip_systems, GAMdot)
  
-        C2 = UNIT_MATRIX_3X3-convert_rotation(ROT)-imposed_spin_crystal_frame+spin_relaxations_crystal_frame
-        C2 = matmul(C2, TRF)
-
+        C2 = UNIT_MATRIX_3X3+convert_rotation(ROT)+imposed_spin_crystal_frame-spin_relaxations_crystal_frame
+        C2 = transpose(matmul(transpose(TRF), C2))
     end subroutine
 
     pure real(DP) function cluster_weight(grain_, deformation_gradient) result(weight)
