@@ -136,8 +136,8 @@ contains
                         mat_buffer = rotateSRTensorFrom(real(RELAXATIONS(:,:,IRL), DP), cluster_frame(DFIL(IOR), deformation_gradient))
                         !   ... and now to crystal frame:
                         C3 = rotateSRTensorFrom(mat_buffer, TRF(:,:,IL))
-                        RLS=(C3+transpose(C3))*0.5_dp
-                        RLA=(C3-transpose(C3))*0.5_dp
+                        RLS = symmetric_part(C3)
+                        RLA = antisymmetric_part(C3)
                         B3(1, IRL, IL)=PLUMIN(IL, IRL)*RLA(2, 3)/sqr2
                         B3(2, IRL, IL)=PLUMIN(IL, IRL)*RLA(3, 1)/sqr2
                         B3(3, IRL, IL)=PLUMIN(IL, IRL)*RLA(1, 2)/sqr2
