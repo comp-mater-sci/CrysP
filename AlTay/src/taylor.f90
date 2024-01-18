@@ -129,13 +129,13 @@ contains
 
             do IL = 1, cluster_size
                 L1 = 5*(IL-1)
-                C2 = rotateSRTensorFrom(velocity_gradient, TRF(:,:,IL))
+                C2 = rotateSRTensorTo(velocity_gradient, TRF(:,:,IL))
                 if (.not. full_constraints) then
                     do IRL = 1, 2
                         ! Transform relaxation from grain reference frame to macroscopic frame
                         mat_buffer = rotateSRTensorFrom(real(RELAXATIONS(:,:,IRL), DP), cluster_frame(DFIL(IOR), deformation_gradient))
                         !   ... and now to crystal frame:
-                        C3 = rotateSRTensorFrom(mat_buffer, TRF(:,:,IL))
+                        C3 = rotateSRTensorTo(mat_buffer, TRF(:,:,IL))
                         !Rotational component of relaxations
                         B3(:,IRL, IL) = convert_rotation(C3) / SQR2
                         ! Insert the relaxations as columns in A2-matrix
@@ -222,11 +222,11 @@ contains
         TAURLP(1:n_active_slip_systems)=TAUR1(ind_active_slip_systems(1:n_active_slip_systems)+jj)
 
         !Transform stress from local frame (Scrys) to sample frame (Ssam)
-        stress_matrix = rotateSRTensorTo(stress_matrix, TRF(:,:,laml))
+        stress_matrix = rotateSRTensorFrom(stress_matrix, TRF(:,:,laml))
         !Transform relaxation strain rate tensor from local frame to sample frame
-        strain_matrix = rotateSRTensorTo(strain_matrix, TRF(:,:,laml))
+        strain_matrix = rotateSRTensorFrom(strain_matrix, TRF(:,:,laml))
         !Transform relaxation spin tensor from local frame to sample frame
-        spin_relaxations = rotateSRTensorTo(spin_relaxations, TRF(:,:,laml))
+        spin_relaxations = rotateSRTensorFrom(spin_relaxations, TRF(:,:,laml))
     end subroutine
 
     subroutine taylor_update_state(IOR, TOTGAMdot, WorkRate, imposed_spin, von_mises_strain_rate, CC, TRF, C2, XM)
@@ -249,14 +249,14 @@ contains
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call hardening_update_state(IOR, ddt, GAMdot)
         TOTGAMdot = sum(abs(GAMdot))
         ! Calculate RCcryst: the rigid body spin in the crystal frame
-        imposed_spin_crystal_frame = rotateSRTensorFrom(imposed_spin, TRF)
-        spin_relaxations_crystal_frame = rotateSRTensorFrom(spin_relaxations, TRF)
+        imposed_spin_crystal_frame = rotateSRTensorTo(imposed_spin, TRF)
+        spin_relaxations_crystal_frame = rotateSRTensorTo(spin_relaxations, TRF)
         WorkRate = sum(merge(CC(1, :), -CC(2, :), GAMdot > 0.0_DP)*GAMdot)
 
         ROT = matmul(rotation_slip_systems, GAMdot)
  
         C2 = UNIT_MATRIX_3X3+convert_rotation(ROT)+imposed_spin_crystal_frame-spin_relaxations_crystal_frame
-        C2 = transpose(matmul(transpose(TRF), C2))
+        C2 = matmul(TRF, C2)
     end subroutine
 
     pure real(DP) function cluster_weight(grain_, deformation_gradient) result(weight)

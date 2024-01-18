@@ -54,7 +54,7 @@ contains
 96          format(4F10.0, I5, 5X, 2F10.0)
             if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read boundary segment')
             angles = angles*pi_deg
-            dfil(i) = grain(weight, gam, euler_angles_to_rotation_matrix(angles), 0._DP, 0._DP)
+            dfil(i) = grain(weight, gam, transpose(euler_angles_to_rotation_matrix(angles)), 0._DP, 0._DP)
         enddo
     
         close(nunit)
