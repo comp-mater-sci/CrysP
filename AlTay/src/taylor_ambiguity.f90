@@ -218,36 +218,20 @@ contains
         integer, intent(out):: ineg
         real(DP), intent(out):: SLPR(8), sumsq
 
-        real(DP):: A(13, 13), B(13), RES, x, BA(13)
+        real(DP):: A(5, 8), B(8), RES, x, BA(8)
         real(DP), parameter:: TOL = 1.0e-6_dp
         integer:: i, j, N1, N2
 
-        if (NN <= 5) then
-            N1 = 5
-            N2 = NN
-            do i = 1, N2
-                 A(1:5, i)=sgnn(IND(i))*A8(1:5, IND(i))
-            enddo
-            B(1:5)=BB8
-        else
-            N1 = NN+5
-            N2 = N1
-            ! Set up system of equations
-            A(1:N1, 1:N1)=0.0_dp
-            do i = 1, NN
-               A(i, i)=2.0_dp
-               do j = 1, 5
-                  A(NN+j, i)=sgnn(IND(i))*A8(j, IND(i))
-                  A(i, NN+j)=-A(NN+j, i)
-               enddo
-            enddo
-            B(1:NN)=0.0_DP
-            B(1+NN:5+NN)=BB8
-        endif
+        N1 = 5
+        N2 = NN
+        do i = 1, N2
+             A(1:5, i)=sgnn(IND(i))*A8(1:5, IND(i))
+        enddo
+        B(1:5)=BB8
 
         ! Solve system of equations in the least square sense
         ! using the rank-revealing QR decomposition
-        call Kleinkwa(N1, N2, 13, 13, A, B, BA, RES)
+        call Kleinkwa(N1, N2, 5, 8, A, B, BA, RES)
 
         SLPR(1:NN)=BA(1:NN)
         sumsq = sum(SLPR(1:NN)**2)

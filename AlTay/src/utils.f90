@@ -234,15 +234,13 @@ contains
         real(DP), dimension(M1, M2), intent(in)                                  :: A
         real(DP), dimension(M2),    intent(out)                                 :: BA
         real(DP),                   intent(inout)                               :: res
-        integer                                                                 :: i, rank, info
-        integer, dimension(N2)                                                  :: jpvt
+        integer                                                                 :: i, info
         real(DP)                                                                :: y
         real(DP), dimension(max(1, 2*min(N1, N2) + 1))   :: work
         real(DP), dimension(M1, M2)                                              :: A_COPY
 
         A_COPY = A
         BA = B
-        jpvt = 0
 
         call dgels('N',N1, N2, 1, A_COPY, M1, BA, M2, work, size(work), info)
 
