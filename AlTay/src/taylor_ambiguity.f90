@@ -85,7 +85,7 @@ contains
 
         ! First, try the standard minimum norm solution with all active slip systems
         IND(1:NN)=ind_active_slip_systems(1:NN)
-        call MINSQU(NN, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
+        call calc_slip(NN, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
         if (ineg == 0) then
             ! The solution is valid, and thus also mathematically guaranteed
             ! to be the minimum norm solution. We are done.
@@ -108,7 +108,7 @@ contains
             if (N1 >= 5) then
                 NN = N1
                 do I1 = 1, N0
-                    call MINSQU(N1, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
+                    call calc_slip(N1, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
                     if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
                     J = N0-I1
                     if (J > 0) IND(J)=ind_active_slip_systems(J+1)
@@ -120,7 +120,7 @@ contains
                     do I1 = 2, N0
                         do I2 = 1, I1-1
                             call fill(IND, ind_active_slip_systems, [I1, I2],N0)
-                            call MINSQU(N2, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
+                            call calc_slip(N2, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
                             if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
                         enddo
                     enddo
@@ -132,7 +132,7 @@ contains
                             do I2 = 2, I1-1
                                 do I3 = 1, I2-1
                                     call fill(IND, ind_active_slip_systems, [I1, I2, I3],N0)
-                                    call MINSQU(N3, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
+                                    call calc_slip(N3, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
                                     if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
                                 enddo
                             enddo
@@ -195,13 +195,13 @@ contains
     !!          If there are less than 5 active slip systems, then there may not be a solution.
     !!          In that case, we solve the system of equations in the least square sense.
     !!
-    !! @param[in]     NN                      integer
+    !! @param[in]     n_slip                  integer
     !!                                        Number of slip systems
     !!
-    !! @param[in]     IND                     integer vector (8)
+    !! @param[in]     ind                     integer vector (8)
     !!                                        Indices of the active slip systems
     !!
-    !! @param[out]    SLPR                    real vector (8)
+    !! @param[out]    slip_rate               real vector (8)
     !!                                        Slip rates for the active slip systems
     !!
     !! @param[out]    ineg                    integer
@@ -216,46 +216,45 @@ contains
     !! @param[in]     sgnn                    real vector (n_slip_systems)
     !!                                        Signs of the slip rates
     !!
-    !! @param[in]     BB8                     real vector (5)
+    !! @param[in]     strain                  real vector (5)
     !!                                        The total strain rate (imposed + relaxation)
     !!
     !! @param[in]     A8                      real matrix (5, n_slip_systems)
     !!                                        The symmetric (non-rotational) part of taylor equations matrix for a single grain.
     !!                                        The matrix is represented in crystal frame.
     !!                                        This matrix does not contain the relaxation terms.
-    subroutine MINSQU(NN, IND, SLPR, ineg, sumsq, sgnn, BB8, A8)
+    subroutine calc_slip(n_slip, ind, slip_rate, ineg, sumsq, sgnn, strain, A8)
 
-        integer, intent(in):: IND(8), NN
-        real(DP), intent(in):: A8(:,:), BB8(5), sgnn(:)
+        integer, intent(in):: ind(8), n_slip
+        real(DP), intent(in):: A8(:,:), strain(5), sgnn(:)
         integer, intent(out):: ineg
-        real(DP), intent(out):: SLPR(8), sumsq
+        real(DP), intent(out):: slip_rate(8), sumsq
 
         real(DP):: A(5, 8), B(8), RES, x, BA(8)
         real(DP), parameter:: TOL = 1.0e-6_dp
-        integer:: i, j, N1, N2
+        integer:: i, N1, N2
 
         N1 = 5
-        N2 = NN
+        N2 = n_slip
         do i = 1, N2
-            A(1:5, i)=sgnn(IND(i))*A8(1:5, IND(i))
+            A(1:5, i)=sgnn(ind(i))*A8(1:5, ind(i))
         enddo
-        B(1:5)=BB8
+        B(1:5)=strain
 
-        ! Solve system of equations in the least square sense
-        ! using the rank-revealing QR decomposition
+        ! Solve system of equations
         call Kleinkwa(N1, N2, 5, 8, A, B, BA, RES)
 
-        SLPR(1:NN)=BA(1:NN)
-        sumsq = sum(SLPR(1:NN)**2)
+        slip_rate(1:n_slip)=BA(1:n_slip)
+        sumsq = sum(slip_rate(1:n_slip)**2)
         if (RES > TOL) then
             ineg = -1
             call log_trace(MOD_NAME, 'MINSQU', 'RES too large')
         else
             x = 0.0_dp
             ineg = 0
-            do i = 1, NN
-                if (x > SLPR(i)) then
-                    x = SLPR(i)
+            do i = 1, n_slip
+                if (x > slip_rate(i)) then
+                    x = slip_rate(i)
                     ineg = i
                 endif
             enddo
