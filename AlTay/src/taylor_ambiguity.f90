@@ -32,11 +32,6 @@ contains
     !!                                        Note: this variable is marked as [in,out] in the code,
     !!                                        but it seems to be overwritten immediately.
     !!
-    !! @param[in,out] sgnn                    real vector (n_slip_systems)
-    !!                                        Signs of the slip rates
-    !!                                        Note: this variable is marked as [in,out] in the code,
-    !!                                        but it is partially overwritten immediately
-    !!
     !! @param[in]     von_mises_strain_rate   real
     !!                                        Von Mises strain rate
     !!
@@ -62,7 +57,7 @@ contains
     !!                                        The symmetric (non-rotational) part of taylor equations matrix for a single grain.
     !!                                        The matrix is represented in crystal frame.
     !!                                        This matrix does not contain the relaxation terms.
-    subroutine resolve_taylor_ambiguity(slip_rates, sgnn, von_mises_strain_rate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, A1)
+    subroutine resolve_taylor_ambiguity(slip_rates, von_mises_strain_rate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, A1)
         integer, intent(in):: n_active_slip_systems
         real(DP), intent(in):: von_mises_strain_rate,   &
                                A1(:,:),                 &
@@ -70,11 +65,12 @@ contains
                                BB8(5),                  &
                                SLIPLP(8)                    
         integer, intent(inout):: ind_active_slip_systems(8)
-        real(DP), intent(inout):: SGNN(:), slip_rates(:)
+        real(DP), intent(inout):: slip_rates(:)
         integer:: IND(8), ISTOR(0:8, 48), ind_active_slip_systems_original(8)
         real(DP):: SLPR(8), SLSTOR(0:8, 48), sumsq
         integer, parameter:: NSTOR = 48
         integer:: j, i1, i2, i3, N0, N1, N2, N3, NN, NOPL, INEG, IOPL
+        real(DP):: sgnn(size(slip_rates))
 
         ind_active_slip_systems_original = ind_active_slip_systems
         slip_rates = 0.0_DP

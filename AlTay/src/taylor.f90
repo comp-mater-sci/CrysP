@@ -250,7 +250,7 @@ contains
         integer:: j
         real(DP), parameter:: ddt = 1.0_DP
 
-        call resolve_taylor_ambiguity(GAMdot, SGNN, von_mises_strain_rate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
+        call resolve_taylor_ambiguity(GAMdot, von_mises_strain_rate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
         if (.not. astate%simulCalls(astate%this)%input%keep_state) call hardening_update_state(IOR, ddt, GAMdot)
         TOTGAMdot = sum(abs(GAMdot))
         ! Calculate RCcryst: the rigid body spin in the crystal frame
