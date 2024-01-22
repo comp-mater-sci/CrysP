@@ -57,10 +57,10 @@ contains
     subroutine resolve_taylor_ambiguity(slip_rates, von_mises_strain_rate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, A1)
         integer, intent(in):: n_active_slip_systems
         real(DP), intent(in):: von_mises_strain_rate,   &
-                               A1(:,:),                 &
-                               TAURLP(8),               &
-                               BB8(5),                  &
-                               SLIPLP(8)                    
+            A1(:,:),                 &
+            TAURLP(8),               &
+            BB8(5),                  &
+            SLIPLP(8)
         integer, intent(inout):: ind_active_slip_systems(8)
         real(DP), intent(inout):: slip_rates(:)
         integer:: IND(8), ISTOR(0:8, 48), ind_active_slip_systems_original(8)
@@ -75,66 +75,78 @@ contains
         NOPL = 0
         sgnn(ind_active_slip_systems(1:n_active_slip_systems))=sign(1.0_dp, TAURLP(1:n_active_slip_systems))
 
-        ! check whether solution is totally zero
-        if (sum(abs(SLIPLP(1:n_active_slip_systems))) >= TOLERANCE) then
-            IND(1:NN)=ind_active_slip_systems(1:NN)
-            call MINSQU(NN, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
-            if (ineg == 0) then
-                 call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
-                 if (NN <= 5) goto 2
-            endif
-            if (NN > 5) then
-                !     Let us take all combinations of NN out of n_active_slip_systems
-                !
-                !     "Levels" in the combination search:
-                !     (first level:  if n_active_slip_systems = 8, find all combinations of 7 slip systems
-                !      second level: find all combinations of 6-etc.)
-                N0 = n_active_slip_systems
-                ! Level 1
-                N1 = N0-1
-                if (N1 >= 5) then
-                    NN = N1
-                    do I1 = 1, N0
-                         call MINSQU(N1, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
-                         if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
-                         J = N0-I1
-                         if (J > 0) IND(J)=ind_active_slip_systems(J+1)
-                    enddo
-                    ! Level 2
-                    N2 = N1-1
-                    if (N2 >= 5) then
-                        NN = N2
-                        do I1 = 2, N0
-                            do I2 = 1, I1-1
-                                call fill(IND, ind_active_slip_systems, [I1, I2],N0)
-                                call MINSQU(N2, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
-                                if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
-                            enddo
+        ! If solution is totally zero, just return
+        if( sum(abs(SLIPLP(1:n_active_slip_systems))) <= TOLERANCE ) then
+            NN = n_active_slip_systems
+            IND(1:NN)=ind_active_slip_systems_original(1:NN)
+            slip_rates(IND(1:NN))=SLIPLP(1:NN)*von_mises_strain_rate
+            return
+        end if
+
+        ! First, try the standard minimum norm solution with all active slip systems
+        IND(1:NN)=ind_active_slip_systems(1:NN)
+        call MINSQU(NN, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
+        if (ineg == 0) then
+            ! The solution is valid, and thus also mathematically guaranteed
+            ! to be the minimum norm solution. We are done.
+            NN = n_active_slip_systems
+            slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))*von_mises_strain_rate
+            return
+        endif
+
+        ! The solution is not valid, so we need to try all possible combinations
+        ! of the active slip systems and take the one with the smallest sum of squares.
+        if (NN > 5) then
+            !     Let us take all combinations of NN out of n_active_slip_systems
+            !
+            !     "Levels" in the combination search:
+            !     (first level:  if n_active_slip_systems = 8, find all combinations of 7 slip systems
+            !      second level: find all combinations of 6-etc.)
+            N0 = n_active_slip_systems
+            ! Level 1
+            N1 = N0-1
+            if (N1 >= 5) then
+                NN = N1
+                do I1 = 1, N0
+                    call MINSQU(N1, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
+                    if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
+                    J = N0-I1
+                    if (J > 0) IND(J)=ind_active_slip_systems(J+1)
+                enddo
+                ! Level 2
+                N2 = N1-1
+                if (N2 >= 5) then
+                    NN = N2
+                    do I1 = 2, N0
+                        do I2 = 1, I1-1
+                            call fill(IND, ind_active_slip_systems, [I1, I2],N0)
+                            call MINSQU(N2, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
+                            if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
                         enddo
-                        ! Level 3
-                        N3 = N2-1
-                        if (N3 >= 5) then
-                            NN = N3
-                            do I1 = 3, N0
-                                do I2 = 2, I1-1
-                                    do I3 = 1, I2-1
-                                      call fill(IND, ind_active_slip_systems, [I1, I2, I3],N0)
-                                      call MINSQU(N3, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
-                                      if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
-                                    enddo
+                    enddo
+                    ! Level 3
+                    N3 = N2-1
+                    if (N3 >= 5) then
+                        NN = N3
+                        do I1 = 3, N0
+                            do I2 = 2, I1-1
+                                do I3 = 1, I2-1
+                                    call fill(IND, ind_active_slip_systems, [I1, I2, I3],N0)
+                                    call MINSQU(N3, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
+                                    if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
                                 enddo
                             enddo
-                        endif
+                        enddo
                     endif
-   2                if (NOPL /= 0) then
-                        IOPL = minloc(SLSTOR(0, 1:NOPL), 1)
-                        NN = ISTOR(0, IOPL)
-                        sumsq = SLSTOR(0, IOPL)
-                        IND(1:NN)=ISTOR(1:NN, IOPL)
-                        SLPR(1:NN)=SLSTOR(1:NN, IOPL)
-                        slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))*von_mises_strain_rate
-                        return
-                    endif
+                endif
+                if (NOPL /= 0) then
+                    IOPL = minloc(SLSTOR(0, 1:NOPL), 1)
+                    NN = ISTOR(0, IOPL)
+                    sumsq = SLSTOR(0, IOPL)
+                    IND(1:NN)=ISTOR(1:NN, IOPL)
+                    SLPR(1:NN)=SLSTOR(1:NN, IOPL)
+                    slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))*von_mises_strain_rate
+                    return
                 endif
             endif
         endif
@@ -225,7 +237,7 @@ contains
         N1 = 5
         N2 = NN
         do i = 1, N2
-             A(1:5, i)=sgnn(IND(i))*A8(1:5, IND(i))
+            A(1:5, i)=sgnn(IND(i))*A8(1:5, IND(i))
         enddo
         B(1:5)=BB8
 
@@ -242,10 +254,10 @@ contains
             x = 0.0_dp
             ineg = 0
             do i = 1, NN
-               if (x > SLPR(i)) then
-                   x = SLPR(i)
-                   ineg = i
-               endif
+                if (x > SLPR(i)) then
+                    x = SLPR(i)
+                    ineg = i
+                endif
             enddo
         end if
     end subroutine
