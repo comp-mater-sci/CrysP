@@ -18,14 +18,11 @@ contains
     !!          the stress, strain rate and the active slip systems.
     !!          This still leaves us with several options for the slip rates.
     !!          This subroutine finds the slip rates assuming that the sum
-    !!          of the squares of the slip rates must be minimal*.
+    !!          of the squares of the slip rates must be minimal.
     !!
     !!          The minimum norm solution may not satisfy the yield conditions.
     !!          (i.e. the slip rates may be negative). In that case, we try
     !!          all possible combinations of the slip systems and minimize again.
-    !!              
-    !!          *Note that this may not be completely true. The minimization problem
-    !!           does some weird things. More details in the code.
     !!
     !! @param[out]    slip_rates              real vector (n_slip_systems)
     !!                                        Slip rates for all the slip systems
@@ -177,20 +174,14 @@ contains
 
     end subroutine
 
-    !> @brief Determine the slip rates given the stress and the active slip systems
-    !!         using the least squares method.
+    !> @brief Determine the slip rates given the stress and the active slip systems.
     !!
-    !! @details This subroutine determines the slip rates given the stress and the active slip systems
-    !!          using the least squares method.
-    !!          The subroutine solves the system of equations:
-    !!          min_{g,s} ||Ag - b||^2 + ||2g - A^Ts||^2,
-    !!          where A is the matrix of the taylor equations, b is the strain, g is the slip rates,
-    !!          s is the Lagrange multiplier
-    !!
-    !!          Note that the old comment used to say that it solved:
-    !!          min_{g} ||g||^2, subject to Ag = b.
-    !!          But that does not seem to be correct. However, the solution of the above problem
-    !!          is a close approximation of the solution of the problem in the old comment.
+    !! @details This subroutine determines the slip rates given the stress and the active slip systems.
+    !!          If there are more than 5 active slip systems, then there are multiple possible solutions.
+    !!          This subroutine finds the solution with the smallest sum of squares of the slip rates.
+    !!          If there are exactly 5 active slip systems, then there is only one solution.
+    !!          If there are less than 5 active slip systems, then there may not be a solution.
+    !!          In that case, we solve the system of equations in the least square sense.
     !!
     !! @param[in]     NN                      integer
     !!                                        Number of slip systems
