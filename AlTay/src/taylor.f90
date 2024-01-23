@@ -116,12 +116,17 @@ contains
 
         character(*), parameter:: PROC_NAME = 'taylor_solve'
 
-        weight = merge(cluster_weight(DFIL(IOR), deformation_gradient), 1._DP, cluster_size == 2)
         n_relaxations=(cluster_size-1)*2
         size_system = 5*cluster_size
         n_slip_systems_cluster = cluster_size*n_slip_systems_grain+n_relaxations
         full_constraints = (n_relaxations == 0)
         if (laml == 1) then
+            select case (cluster_size)
+                case (1)
+                   weight = 1._DP 
+                case (2)
+                    weight = cluster_weight(DFIL(IOR), deformation_gradient)  
+            end select
             !Update microstructure
             CCC(1:2, n_slip_systems_cluster-n_relaxations+1:n_slip_systems_cluster)=0.0_DP
             UU = 0.0_dp
@@ -284,6 +289,7 @@ contains
         axis_lengths = norm2(grain_axes, 1)
         !Alignment factor equals sin(axes 2 and 3) * cos(axis 1 and normal to plane defined by axes 2 and 3)
         !The more the axes are orthogonal, the more alignment factor tends to 1.
+
         alignment_factor = abs(grain_axes(:,1) .dot. (grain_axes(:,2) .cross. grain_axes(:,3))) / product(axis_lengths) 
 
         !See Van Houtte et. al., 2004: Appendix A
