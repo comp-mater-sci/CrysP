@@ -15,7 +15,7 @@ module altayDynfil
                                        tGAM     = 0._DP
         real(DP), dimension(3, 3)    :: tT       = 0._DP, &
                                         tZERO    = 0._DP, &
-                                        boundary_reference_frame
+                                        boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
     end type grain
 
     type(grain), dimension(:), allocatable     :: DFIL             !<State variable: array of grains/orientations.
@@ -54,7 +54,7 @@ contains
 96          format(4F10.0, I5, 5X, 2F10.0)
             if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read boundary segment')
             angles = angles*pi_deg
-            dfil(i) = grain(weight, gam, transpose(euler_angles_to_rotation_matrix(angles)), 0._DP, 0._DP)
+            dfil(i) = grain(weight, gam, euler_angles_to_rotation_matrix(angles), 0._DP, 0._DP)
         enddo
     
         close(nunit)
