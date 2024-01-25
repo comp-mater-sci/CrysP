@@ -83,7 +83,7 @@ contains
             normalized = normalize(deformation_mechanism(:,:,i))
             tensor = outer_product(normalized(:,1), normalized(:,2))
             A1(:,i) = convert_stress_strain_space(tensor) 
-            rotation_slip_systems(:,i) = convert_rotation(tensor)  
+            rotation_slip_systems(:,i) = convert_spin(tensor)  
         end do
         forall (i = 1:5) basis(:,i) = A1(:,DI1(i))
 
@@ -136,7 +136,7 @@ contains
                         boundary_to_crystal = matmul(TRF(:,:,IL), transpose(cluster_frame(DFIL(IOR), deformation_gradient)))
                         C3 = rotate_to(real(RELAXATIONS(:,:,IRL), DP), boundary_to_crystal)
                         !Rotational component of relaxations
-                        B3(:,IRL, IL) = convert_rotation(C3) / SQR2
+                        B3(:,IRL, IL) = convert_spin(C3) / SQR2
                         !Insert the relaxations as columns in A2-matrix
                         A2(L1+1:L1+5, n_slip_systems_cluster-2+IRL)=convert_stress_strain_space(symmetric_part(C3))
                     end do
@@ -202,7 +202,7 @@ contains
         strain_matrix = convert_stress_strain_space(strain)  ! (5) -> sym.(3, 3)
         spin_relaxations = 0._DP
         
-        spin_relaxations = convert_rotation(spin) * SQR2*von_mises_strain_rate
+        spin_relaxations = convert_spin(spin) * SQR2*von_mises_strain_rate
         ! note that if one of the grains does not deform at all, the stress and the active slip systems
         ! of the full constraint solution are used.
         n_active_slip_systems = 0
@@ -254,7 +254,7 @@ contains
 
         ROT = matmul(rotation_slip_systems, GAMdot)
  
-        C2 = UNIT_MATRIX_3X3-convert_rotation(ROT)-imposed_spin_crystal_frame+spin_relaxations_crystal_frame
+        C2 = UNIT_MATRIX_3X3-convert_spin(ROT)-imposed_spin_crystal_frame+spin_relaxations_crystal_frame
         C2 = matmul(C2, TRF)
     end subroutine
 

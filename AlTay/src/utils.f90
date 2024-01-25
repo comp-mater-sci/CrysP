@@ -47,9 +47,9 @@ module utils
                          convert_stress_strain_vec_mat
     end interface
 
-    interface convert_rotation
-        module procedure convert_rotation_mat_vec, &
-                         convert_rotation_vec_mat
+    interface convert_spin
+        module procedure convert_spin_mat_vec, &
+                         convert_spin_vec_mat
     end interface
 
     interface operator(.dot.)
@@ -161,7 +161,7 @@ contains
         antisym = (mat-transpose(mat)) / 2._DP
     end function
 
-    pure function convert_rotation_vec_mat(vec) result(mat)
+    pure function convert_spin_vec_mat(vec) result(mat)
         real(DP), intent(in):: vec(3)
         real(DP)::             mat(3, 3)
 
@@ -173,7 +173,7 @@ contains
         mat(3, 1) = -mat(1, 3)
         mat(3, 2) = -mat(2, 3)
     end function
-    pure function convert_rotation_mat_vec(t) result(rot)
+    pure function convert_spin_mat_vec(t) result(rot)
         real(DP), dimension(3, 3), intent(in):: t
         real(DP), dimension(3)               :: rot
         real(DP), dimension(3, 3)             :: antisym
