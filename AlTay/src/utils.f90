@@ -267,4 +267,28 @@ contains
             RES = RES + (y-B(i))**2
         end do
     end subroutine
+
+    !> @brief Rotates the second-rank tensor S to the reference frame given by rotation R.
+    !! @return The tensor in the frame defined by R
+    !! @param S the tensor before rotation
+    !! @param R Rotation matrix following Bunge convention. I.e. the basis of the unrotated frame expressed in the rotated frame.
+    pure function rotate_to(S, R) result(Srot)
+        real(DP), dimension(3, 3), intent(in)    ::  S, &
+                                                    R
+        real(DP), dimension(3, 3)                ::  Srot
+      
+        Srot = matmul(matmul(R, S), transpose(R))
+    end function
+
+    !> @brief Rotates the second-rank tensor S from the reference frame given by rotation R.
+    !! @return The rotated tensor
+    !! @param S the tensor expressed in the frame defined by R
+    !! @param R Rotation matrix following Bunge convention. I.e. the basis of the unrotated frame expressed in the rotated frame.
+    pure function rotate_from(S, R) result(Srot)
+        real(DP), dimension(3, 3), intent(in)    ::  S, &
+                                                    R
+        real(DP), dimension(3, 3)                ::  Srot
+
+        Srot = matmul(matmul(transpose(R), S), R)
+    end function
 end module 

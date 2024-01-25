@@ -164,24 +164,6 @@ contains
         ang(3) = phi2
     end function
 
-    !> Rotates the second-rank tensor S to the reference frame given by rotation R.
-    pure function rotateSRTensorTo(S, R) result(Srot)
-        real(DP), dimension(3, 3), intent(in)    ::  S, &
-                                                    R
-        real(DP), dimension(3, 3)                ::  Srot
-
-        Srot = matmul(matmul(transpose(R), S), R)
-    end function
-
-    !> Rotates the second-rank tensor S back from the reference frame given by rotation R.
-    pure function rotateSRTensorFrom(S, R) result(Srot)
-        real(DP), dimension(3, 3), intent(in)    ::  S, &
-                                                    R
-        real(DP), dimension(3, 3)                ::  Srot
-      
-        Srot = matmul(matmul(R, S), transpose(R))
-    end function
-
     !> The function converts the antisymmetrical rank-two tensors mat into Voigt-style vector representation.
     pure function Mat33ToVec3(mat) result(vec)
         real(DP), dimension(3, 3), intent(in)  :: mat
