@@ -195,7 +195,7 @@ contains
         case(sample_orientation_arbitrary_id)
             sample_orientation = this%sample_orientation
         end select
-        sample_orientation = deg2rad(sample_orientation)
+        sample_orientation = sample_orientation/RAD_TO_DEG
         !
         ! Rotate stress from "tensile" to material coordinate system
         ! Calculate rotation matrix
