@@ -11,6 +11,60 @@ module simplex
 
 contains
 
+    !>@brief Solve a linear program whose solution gives the strain in FC taylor or Alamel
+    !!
+    !! This routine solves a nonlinear program of the following form:
+    !!      min_g tau^T * |g|
+    !!        st  A g = A_0
+    !!
+    !! To avoid the nonlinearity of the absolute value and to accomodate different
+    !! values for the critical resolved shear stress in positive and negative directions,
+    !! each g_k is replace by two values g_1k and g_2k, so that
+    !!     if g_k >= 0 then g_1k = g_k  and g_2k = 0
+    !!     if g_k <  0 then g_1k = g_k  and g_2k = 0
+    !!
+    !! The resulting LP looks like
+    !!      min_{g_1, g_2}  tau^T(g_1 + g_2)
+    !!                  st  A g_1 - A g_2 = A_0
+    !!                      g_1, g_2 >= 0
+    !! Implicitly, this also means that g_1k = 0 or g_2k = 0
+    !!
+    !! The LP is solved using the revised simplex method, a variant of simplex which avoids
+    !! forming the full tableau.
+    !!
+    !! @param[in] taylor_coeffs      real matrix (m x n)
+    !!                               Taylor coefficients, this is the matrix A.
+    !!
+    !! @param[in] strain             real vector (m)
+    !!                               The imposed strain, this is the vector A_0.
+    !!
+    !! @param[in] crss               real matrix (2 x n)
+    !!                               The critical resolved shear stresses in positive and negative directions.
+    !!                               The first row contains the CRSS in positive direction.
+    !!                               The second row contains the CRSS in negative direction.
+    !!                               This is the vector tau.
+    !!
+    !! @param[in,out] inverse_basis  real matrix (m x m)
+    !!                               The inverse of the basis matrix (the matrix of the basis vectors).
+    !!
+    !! @param[in] basis_systems      integer vector (m)
+    !!                               The indices of the active slip systems.
+    !!
+    !! @param[out] slip              real vector (n)
+    !!                               The calculated slip rates. This is the solution to the LP and
+    !!                               therefore the most important output! This is the vector g.
+    !!
+    !! @param[out] stress            real vector (m)
+    !!                               The stress in the crystal. This is not directly represented in the above formulation.
+    !!                               In "simplex language" the stress is the vector of simplex multipliers
+    !!
+    !! @param[out] rss               real vector (n)
+    !!                               The resolved shear stresses
+    !!
+    !! @param[out] overstress        real vector (n)
+    !!                               The overstress of each slip system, i.e. the difference between the resolved shear stress
+    !!                               and the critical resolved shear stress.
+    !!
     subroutine simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, overstress)
         real(DP), intent(in)    ::  taylor_coeffs(:,:),                                 &
                                     strain(size(taylor_coeffs,1)),                      &
@@ -89,6 +143,38 @@ contains
         slip(basis_systems) = slip_basis
     end subroutine simplex_solve
 
+    !>@brief Find the most overstressed system
+    !!
+    !! @param[in] taylor_coeffs              real matrix (m x n)
+    !!                                       Taylor coefficients
+    !!
+    !! @param[in] rss_basis                  real vector (m)
+    !!                                       The resolved shear stresses of the systems that are in the basis.
+    !!
+    !! @param[in] inverse_basis              real matrix (m x m)
+    !!                                       The inverse of the basis matrix (the matrix of the basis vectors).
+    !!
+    !! @param[in] crss                       real matrix (2 x n)
+    !!                                       The critical resolved shear stresses in positive and negative directions.
+    !!
+    !! @param[in] bas                        logical vector (n)
+    !!                                       Logical vector indicating which systems are in the basis.
+    !!                                       This contains essentially the same information as basis_systems, but in a different format.
+    !!
+    !! @param[out] stress                    real vector (m)
+    !!                                       The stress in the crystal.
+    !!                                       This is calculated as a byproduct during the calculation of the overstress.
+    !!
+    !! @param[out] rss                       real vector (n)
+    !!                                       The resolved shear stresses.
+    !!                                       This is calculated as a byproduct during the calculation of the overstress.
+    !!
+    !! @param[out] most_overstressed_system  integer
+    !!                                       The index of the most overstressed system.
+    !!                                       If this is 0, then all systems are below their critical resolved shear stress and the solution is found.
+    !!
+    !! @param[out] overstress                real vector (n)
+    !!                                       The overstress of each slip system
     subroutine find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system, overstress)
         real(DP), intent(in) :: taylor_coeffs(:,:), &
                                 rss_basis(size(taylor_coeffs,1)), &
@@ -115,6 +201,25 @@ contains
         enddo
     end subroutine find_most_overstressed_system
 
+    !>@brief Update the inverse of the basis matrix
+    !!
+    !! If the original basis matrix is A = [a_1, a_2, ..., a_m]
+    !! and the new basis vector is a_new, then the new basis matrix is
+    !! A_new = [a_1, a_2, ..., a_{system_to_remove-1}, a_new, a_{system_to_remove+1}, ..., a_m]
+    !! Instead of calculating the inverse of A_new from scratch, this routine calculates the inverse of A_new
+    !! from the inverse of A.
+    !!
+    !! @param[in,out] inverse_basis          real matrix (m x m)
+    !!                                       The inverse of the basis matrix (the matrix of the basis vectors).
+    !!
+    !! @param[in] new_basis_vector           real vector (m)
+    !!                                       The new basis vector.
+    !!
+    !! @param[in] system_to_remove           integer
+    !!                                       The index of the system to remove from the basis.
+    !!
+    !! @param[out] new_inverse_basis_vector  real vector (m)
+    !!                                       
     subroutine update_inverse_basis(inverse_basis, new_basis_vector, system_to_remove, new_inverse_basis_vector)
         real(DP), dimension(:,:), intent(inout) :: inverse_basis
         real(DP), intent(in) :: new_basis_vector(size(inverse_basis,1))
