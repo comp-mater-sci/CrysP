@@ -147,7 +147,7 @@ contains
             ! use von Mises guess as a default
             useVMGuess = .true.
             !
-            fi2 = deg2rad(fi2)
+            fi2 = fi2/RAD_TO_DEG
             ! Calculate rotation matrix
             Mrot = euler_angles_to_rotation_matrix([fi1, phi, fi2])
 
@@ -190,7 +190,7 @@ contains
             !
             associate(r => results)
                 !
-                r%phis(i) = rad2deg(fi2)
+                r%phis(i) = fi2*RAD_TO_DEG 
                 r%qrsvalues(i) = calculateQRS(D_t, ylp_result%scal_s)
                 r%sigmas_x(i) = S_t(1, 1) - S_t(3, 3)
                 r%residuals(i) = ylp_result%R

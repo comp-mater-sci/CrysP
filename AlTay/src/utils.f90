@@ -8,14 +8,15 @@ module utils
     external:: dgelsy
 
 
-    integer, parameter:: DP = selected_real_kind(15, 307)
-    real(DP), parameter:: TOLERANCE = 1.E-9_DP, &
-                           SQR0P5 = sqrt(0.5_DP), &
-                           SQR0P67 = sqrt(2._DP/3._DP), &
-                           SQR1P5 = sqrt(1.5_DP), &
-                           SQR2 = sqrt(2._DP)
+    integer, parameter::  DP = selected_real_kind(15, 307)
+    real(DP), parameter:: TOLERANCE  = 1.E-9_DP, &
+                          PI         = acos(-1.D0), & 
+                          RAD_TO_DEG = 180._DP/PI, &
+                          SQR0P5     = sqrt(0.5_DP), &
+                          SQR0P67    = sqrt(2._DP/3._DP), &
+                          SQR1P5     = sqrt(1.5_DP), &
+                          SQR2       = sqrt(2._DP)
  
-
     !Status codes
     enum, bind(C)
         enumerator:: VEF_OK, &

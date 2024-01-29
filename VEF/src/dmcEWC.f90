@@ -228,7 +228,7 @@ contains
             i = i+1
             !
             vTheta(i) = theta
-            theta = deg2rad(theta)
+            theta = theta/RAD_TO_DEG
             !
             ! Calculate S by combining the base vectors
             sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta)
