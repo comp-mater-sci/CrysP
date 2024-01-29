@@ -32,7 +32,7 @@ contains
         write (iounit, 401)
 
         do i = 1, npoint
-            eu = rotation_matrix_to_euler_angles(DFIL(i)%tT)*DEG_PI
+            eu = rotation_matrix_to_euler_angles(DFIL(i)%tT)*RAD_TO_DEG
             write(iounit, 400, iostat = info)&
                i, DFIL(i)%tGEW, eu(1), eu(2), eu(3), DFIL(i)%tGAM
             if (info /= 0) exit

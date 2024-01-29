@@ -7,45 +7,12 @@ module criMathUtils
     use utils
     implicit none
 
-
-    real(DP), parameter         :: pi  = acos(-1.D0) !< Pi \f$ \pi \f$
-    real(DP), parameter         :: pi_deg = pi/180.D0
-    real(DP), parameter         :: deg_pi = 180.D0/pi
-
     real(DP), parameter         :: root2 = sqrt(2.D0) !< Square root of 2 \f$ \sqrt{2} \f$
     real(DP), parameter         :: root2i = 0.5D0*sqrt(2.D0) !< Inverse of square root of 2 \f$ \frac{1}{\sqrt{2}} \f$
     real(DP), parameter         :: root23 = sqrt(2.D0/3.D0) !< Square root of 2/3 \f$ \sqrt{2/3} \f$
     real(DP), parameter         :: root32 = sqrt(3.D0/2.D0) !< Square root of 3/2 \f$ \sqrt{3/2} \f$
 
-    !> Generic function for conversion from radians to degrees
-    interface rad2deg
-        module procedure scalarRad2Deg
-    end interface
-
-    !> Generic function for conversion from degrees to radians
-    interface deg2rad
-        module procedure scalarDeg2Rad
-    end interface
-
 contains
-
-      !> Conversion from radians to degrees
-      elemental function scalarRad2Deg(alpha)
-      real(DP):: scalarRad2Deg  !< Angle in radians
-      real(DP), intent(in):: alpha
-      !
-           scalarRad2Deg = alpha*deg_pi
-      !
-      end function
-
-      !> Conversion from degrees to radians
-      elemental function scalarDeg2Rad(alpha)
-      real(DP):: scalarDeg2Rad !< Angle in degrees
-      real(DP), intent(in):: alpha
-      !
-            scalarDeg2Rad = alpha *  pi_deg
-      !
-      end function
 
       !> Calculates an angle between two vectors
       !>
