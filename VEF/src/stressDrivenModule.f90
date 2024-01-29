@@ -125,7 +125,7 @@ contains
     !
     type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
     type(multilevelYLPConfig)   :: ylp_pretry
-    real(DP), parameter:: pretry_search_angle = PI/90._DP
+    real(DP), parameter:: pretry_search_angle = 2._DP*RAD_TO_DEG
     !
         info = VEF_ERROR
 
