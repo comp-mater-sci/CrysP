@@ -138,16 +138,16 @@ contains
                 if (.not. full_constraints) then
                     do IRL = 1, 2
                         !Transform relaxation from boundary frame to crystal frame
+                        !Composed of rotation from boundary to global frame and then from global to crystal frame.
                         boundary_to_crystal = matmul(TRF(:,:,IL), transpose(cluster_frame(DFIL(IOR), deformation_gradient)))
                         C3 = rotate_to(real(RELAXATIONS(:,:,IRL), DP), boundary_to_crystal)
+                        !Invert direction of relaxations for second grain
+                        if (IL == 2) C3 = -C3
                         !Rotational component of relaxations
                         B3(:,IRL, IL) = convert_spin(C3) / SQR2
                         !Insert the relaxations as columns in A2-matrix
                         A2(L1+1:L1+5, n_slip_systems_cluster-2+IRL)=convert_stress_strain_space(symmetric_part(C3))
                     end do
-                    !Invert direction of relaxations for second grain
-                    B3(:,:,2) = -B3(:,:,2)
-                    A2(6:10, n_slip_systems_cluster-2:n_slip_systems_cluster) = -A2(6:10, n_slip_systems_cluster-2:n_slip_systems_cluster)
                 endif
 
                 ! Calculation of time increment by dividing von Mises equivalent
