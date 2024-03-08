@@ -200,7 +200,7 @@ contains
         ! Rotate stress from "tensile" to material coordinate system
         ! Calculate rotation matrix
         Mrot = euler_angles_to_rotation_matrix(sample_orientation)
-        sigma = rotateSRTensorTo(sigma_t, Mrot)
+        sigma = rotate_from(sigma_t, Mrot)
         !
         ! Open and initialize result files
         !
@@ -228,14 +228,14 @@ contains
             associate(v => output(increment))
 
                 ! Rotate back to the "tensile test" coordinate system
-                D_t = rotateSRTensorFrom(v%A, Mrot)
-                S_t = rotateSRTensorFrom(v%SonA, Mrot)
+                D_t = rotate_to(v%A, Mrot)
+                S_t = rotate_to(v%SonA, Mrot)
 
                 ! Total deviatoric strain (Note: the total, not per-step)
                 P_t = convert_stress_strain_space(v%icv%vP_total)  ! at the beginning of the increment
                 P_t_end = P_t+v%P_inc_evol  ! at the end of the increment
-                P_t = rotateSRTensorFrom(P_t, Mrot)
-                P_t_end = rotateSRTensorFrom(P_t_end, Mrot)
+                P_t = rotate_to(P_t, Mrot)
+                P_t_end = rotate_to(P_t_end, Mrot)
                 !
                 ! Calculate output variables
                 !

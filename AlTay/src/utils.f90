@@ -48,6 +48,11 @@ module utils
                          convert_stress_strain_vec_mat
     end interface
 
+    interface convert_spin
+        module procedure convert_spin_mat_vec, &
+                         convert_spin_vec_mat
+    end interface
+
     interface operator(.dot.)
         module procedure dot_product_wrapper, double_dot_product
     end interface
@@ -114,8 +119,6 @@ contains
         cross(3)=v1(1)*v2(2)-v1(2)*v2(1)
     end function
 
-
-
     pure function normalize_int(arr) result(normalized)
         integer, dimension(:,:), intent(in):: arr
         real(DP), dimension(3, size(arr, 2)):: normalized
@@ -159,13 +162,25 @@ contains
         antisym = (mat-transpose(mat)) / 2._DP
     end function
 
-    pure function get_rotation(t) result(rot)
+    pure function convert_spin_vec_mat(vec) result(mat)
+        real(DP), intent(in):: vec(3)
+        real(DP)::             mat(3, 3)
+
+        mat = 0._DP                
+        mat(1, 2) = vec(1)
+        mat(1, 3) = vec(2)
+        mat(2, 3) = vec(3)
+        mat(2, 1) = -mat(1, 2)
+        mat(3, 1) = -mat(1, 3)
+        mat(3, 2) = -mat(2, 3)
+    end function
+    pure function convert_spin_mat_vec(t) result(rot)
         real(DP), dimension(3, 3), intent(in):: t
         real(DP), dimension(3)               :: rot
         real(DP), dimension(3, 3)             :: antisym
                 
         antisym = antisymmetric_part(t)
-        rot = [-antisym(3, 2), -antisym(1, 3), -antisym(2, 1)] !This conversion can likely be replaced by a more intuitive one
+        rot = [antisym(1, 2), antisym(1, 3), antisym(2, 3)]
     end function
 
     ! Returns the inverse of a matrix calculated by finding the LU
@@ -253,4 +268,28 @@ contains
             RES = RES + (y-B(i))**2
         end do
     end subroutine
+
+    !> @brief Rotates the second-rank tensor S to the reference frame given by rotation R.
+    !! @return The tensor in the frame defined by R
+    !! @param S the tensor before rotation
+    !! @param R Rotation matrix following Bunge convention. I.e. the basis of the unrotated frame expressed in the rotated frame.
+    pure function rotate_to(S, R) result(Srot)
+        real(DP), dimension(3, 3), intent(in)    ::  S, &
+                                                    R
+        real(DP), dimension(3, 3)                ::  Srot
+      
+        Srot = matmul(matmul(R, S), transpose(R))
+    end function
+
+    !> @brief Rotates the second-rank tensor S from the reference frame given by rotation R.
+    !! @return The rotated tensor
+    !! @param S the tensor expressed in the frame defined by R
+    !! @param R Rotation matrix following Bunge convention. I.e. the basis of the unrotated frame expressed in the rotated frame.
+    pure function rotate_from(S, R) result(Srot)
+        real(DP), dimension(3, 3), intent(in)    ::  S, &
+                                                    R
+        real(DP), dimension(3, 3)                ::  Srot
+
+        Srot = matmul(matmul(transpose(R), S), R)
+    end function
 end module 

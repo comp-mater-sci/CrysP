@@ -14,25 +14,26 @@ contains
     !Finds the slip rates assuming that
     !- the stress, strain rate and the active slip systems are known, 
     !- (under the above restrictions) the sum of the squares of the slip rates must be minimal.
-    subroutine resolve_taylor_ambiguity(slip_rates, sgnn, von_mises_strain_rate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, A1)
+    subroutine resolve_taylor_ambiguity(slip_rates, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, A1)
         integer, intent(in):: n_active_slip_systems
-        real(DP), intent(in):: von_mises_strain_rate,   &
-                               A1(:,:),                 &
+        real(DP), intent(in):: A1(:,:),                 &
                                TAURLP(8),               &
                                BB8(5),                  &
                                SLIPLP(8)                    
         integer, intent(inout):: ind_active_slip_systems(8)
-        real(DP), intent(inout):: SGNN(:), slip_rates(:)
+        real(DP), intent(inout):: slip_rates(:)
         integer:: IND(8), ISTOR(0:8, 48), ind_active_slip_systems_original(8)
         real(DP):: SLPR(8), SLSTOR(0:8, 48), sumsq
         integer, parameter:: NSTOR = 48
         integer:: j, i1, i2, i3, N0, N1, N2, N3, NN, NOPL, INEG, IOPL
+        real(DP):: sgnn(size(slip_rates))
 
         ind_active_slip_systems_original = ind_active_slip_systems
         slip_rates = 0.0_DP
         NN = n_active_slip_systems
         NOPL = 0
-        sgnn(ind_active_slip_systems(1:n_active_slip_systems))=sign(1.0_dp, TAURLP(1:n_active_slip_systems))
+        sgnn = 0._DP
+        sgnn(ind_active_slip_systems(1:n_active_slip_systems))=sign(1._DP, TAURLP(1:n_active_slip_systems))
 
         ! check whether solution is totally zero
         if (sum(abs(SLIPLP(1:n_active_slip_systems))) >= TOLERANCE) then
@@ -91,7 +92,7 @@ contains
                         sumsq = SLSTOR(0, IOPL)
                         IND(1:NN)=ISTOR(1:NN, IOPL)
                         SLPR(1:NN)=SLSTOR(1:NN, IOPL)
-                        slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))*von_mises_strain_rate
+                        slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))
                         return
                     endif
                 endif
@@ -99,7 +100,7 @@ contains
         endif
         NN = n_active_slip_systems
         IND(1:NN)=ind_active_slip_systems_original(1:NN)
-        slip_rates(IND(1:NN))=SLIPLP(1:NN)*von_mises_strain_rate
+        slip_rates(IND(1:NN))=SLIPLP(1:NN)
     end subroutine
 
     subroutine fill(IND_, ind_active_slip_systems, skip, N_max)

@@ -15,7 +15,7 @@ module altayDynfil
                                        tGAM     = 0._DP
         real(DP), dimension(3, 3)    :: tT       = 0._DP, &
                                         tZERO    = 0._DP, &
-                                        boundary_reference_frame
+                                        boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
     end type grain
 
     type(grain), dimension(:), allocatable     :: DFIL             !<State variable: array of grains/orientations.
