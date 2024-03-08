@@ -156,9 +156,15 @@ module altaySimul
                 call taylor_solve(Ssam, RHOSs(:,:,laml), TRF, IOR, GMMab, NGR, laml, CC, M11, velocity_gradient, &
                 von_mises_strain_rate, von_mises_strain_mode, def_grad, GEWF)
 
-                if (astate%simulCalls(astate%this)%input%full_model) &
-                      call taylor_update_state(IOR, GMMdot, WorkRate, spin, von_mises_strain_rate, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM)
+                if (astate%simulCalls(astate%this)%input%full_model) then
+                    call taylor_update_state(IOR, GMMdot, WorkRate, spin, von_mises_strain_rate, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM)
+                end if
                
+                GMM1 = GMMab(laml) + GMMdot  ! Step time here implicitly assumed to be 1.0s
+                ! We can choose not to update the texture state
+                if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
+                      call DYNFIL_setGrain(IOR, C2, GMM1, RHOSs(:,:,laml))
+                end if
                 if(laml == 1) then
                     ssqgx = GEWF
                 else
@@ -173,12 +179,7 @@ module altaySimul
                 Mgrain = GMMdot /  von_mises_strain_rate
                 Mavg = Mavg+Mgrain*GEWF
                 HGAM = HGAM+GMMdot*GEWF  ! Step time here implicitly assumed to be 1.0s
-                GMM1 = GMMab(laml) + GMMdot  ! Step time here implicitly assumed to be 1.0s
                 Wtot = Wtot+WorkRate  ! Step time here implicitly assumed to be 1.0s
-                ! We can choose not to update the texture state
-                if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                      call DYNFIL_setGrain(IOR, C2, GMM1, RHOSs(:,:,laml))
-                end if
             enddo clusterloop
 
             SHsam = SHsam/TOTGEW

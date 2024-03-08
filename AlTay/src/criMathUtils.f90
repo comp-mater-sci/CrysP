@@ -7,45 +7,12 @@ module criMathUtils
     use utils
     implicit none
 
-
-    real(DP), parameter         :: pi  = acos(-1.D0) !< Pi \f$ \pi \f$
-    real(DP), parameter         :: pi_deg = pi/180.D0
-    real(DP), parameter         :: deg_pi = 180.D0/pi
-
     real(DP), parameter         :: root2 = sqrt(2.D0) !< Square root of 2 \f$ \sqrt{2} \f$
     real(DP), parameter         :: root2i = 0.5D0*sqrt(2.D0) !< Inverse of square root of 2 \f$ \frac{1}{\sqrt{2}} \f$
     real(DP), parameter         :: root23 = sqrt(2.D0/3.D0) !< Square root of 2/3 \f$ \sqrt{2/3} \f$
     real(DP), parameter         :: root32 = sqrt(3.D0/2.D0) !< Square root of 3/2 \f$ \sqrt{3/2} \f$
 
-    !> Generic function for conversion from radians to degrees
-    interface rad2deg
-        module procedure scalarRad2Deg
-    end interface
-
-    !> Generic function for conversion from degrees to radians
-    interface deg2rad
-        module procedure scalarDeg2Rad
-    end interface
-
 contains
-
-      !> Conversion from radians to degrees
-      elemental function scalarRad2Deg(alpha)
-      real(DP):: scalarRad2Deg  !< Angle in radians
-      real(DP), intent(in):: alpha
-      !
-           scalarRad2Deg = alpha*deg_pi
-      !
-      end function
-
-      !> Conversion from degrees to radians
-      elemental function scalarDeg2Rad(alpha)
-      real(DP):: scalarDeg2Rad !< Angle in degrees
-      real(DP), intent(in):: alpha
-      !
-            scalarDeg2Rad = alpha *  pi_deg
-      !
-      end function
 
       !> Calculates an angle between two vectors
       !>
@@ -104,25 +71,25 @@ contains
       pure function euler_angles_to_rotation_matrix(angles) result(mat)
       real(DP), intent(in)        :: angles(3)
       real(DP), dimension(3, 3)    :: mat
-      real(DP):: cosphi1, cosphi2, cosPHI, &
-                 sinphi1, sinphi2, sinPHI
+      real(DP):: cos_phi1, cos_phi2, cos_PHI, &
+                 sin_phi1, sin_phi2, sin_PHI
       
-            cosphi1 = cos(angles(1))
-            cosPHI = cos(angles(2))
-            cosphi2 = cos(angles(3))
-            sinphi1 = sin(angles(1))
-            sinPHI = sin(angles(2))
-            sinphi2 = sin(angles(3))
+            cos_phi1 = cos(angles(1))
+            cos_PHI = cos(angles(2))
+            cos_phi2 = cos(angles(3))
+            sin_phi1 = sin(angles(1))
+            sin_PHI = sin(angles(2))
+            sin_phi2 = sin(angles(3))
             
-            mat(1, 1) = cosphi1*cosphi2 - (sinphi1*sinphi2*cosPHI)
-            mat(1, 2) = sinphi1*cosphi2 + (cosphi1*sinphi2*cosPHI)
-            mat(1, 3) = sinphi2*sinPHI
-            mat(2, 1) = -cosphi1*sinphi2 - (sinphi1*cosphi2*cosPHI)
-            mat(2, 2) = -sinphi1*sinphi2 + (cosphi1*cosphi2*cosPHI)
-            mat(2, 3) = cosphi2*sinPHI
-            mat(3, 1) = sinphi1*sinPHI
-            mat(3, 2) = -cosphi1*sinPHI
-            mat(3, 3) = cosPHI
+            mat(1, 1) = cos_phi1*cos_phi2 - (sin_phi1*sin_phi2*cos_PHI)
+            mat(1, 2) = sin_phi1*cos_phi2 + (cos_phi1*sin_phi2*cos_PHI)
+            mat(1, 3) = sin_phi2*sin_PHI
+            mat(2, 1) = -cos_phi1*sin_phi2 - (sin_phi1*cos_phi2*cos_PHI)
+            mat(2, 2) = -sin_phi1*sin_phi2 + (cos_phi1*cos_phi2*cos_PHI)
+            mat(2, 3) = cos_phi2*sin_PHI
+            mat(3, 1) = sin_phi1*sin_PHI
+            mat(3, 2) = -cos_phi1*sin_PHI
+            mat(3, 3) = cos_PHI
       end function
 
 
@@ -138,17 +105,17 @@ contains
                                 phi1, &
                                 PHI, &
                                 phi2, &
-                                cosPHI
+                                cos_PHI
       
-        cosPHI = mat(3, 3) / sqrt( mat(1, 3)**2+mat(2, 3)**2+mat(3, 3)**2 )
-        PHI = acos(cosPHI)  ! range: [0, pi]
+        cos_PHI = mat(3, 3) / sqrt( mat(1, 3)**2+mat(2, 3)**2+mat(3, 3)**2 )
+        PHI = acos(cos_PHI)  ! range: [0, pi]
         
-        if (abs(cosPHI)==1.0D0) then  ! case that PHI = 0\B0 or PHI = 180\B0
+        if (abs(cos_PHI)==1.0D0) then  ! case that PHI = 0\B0 or PHI = 180\B0
             !Set phi2 to 0.0D0, given that:
             !  (phi1;   0\B0; phi2) equivalent to (phi1+phi2;    0; 0).
             !  (phi1; 180\B0; phi2) equivalent to (phi1+phi2; 180\B0; 0).
             phi2 = 0.0D0
-            phi1 = atan2(-mat(2, 1)/cosPHI, mat(2, 2)/cosPHI)  ! range: [-pi, pi[
+            phi1 = atan2(-mat(2, 1)/cos_PHI, mat(2, 2)/cos_PHI)  ! range: [-pi, pi[
         else
             phi1 = atan2(mat(3, 1), -mat(3, 2))  ! range: [-pi, pi[
             phi2 = atan2(mat(1, 3), mat(2, 3))  ! range: [-pi, pi[
@@ -162,24 +129,6 @@ contains
         ang(1) = phi1
         ang(2) = phi
         ang(3) = phi2
-    end function
-
-    !> Rotates the second-rank tensor S to the reference frame given by rotation R.
-    pure function rotateSRTensorTo(S, R) result(Srot)
-        real(DP), dimension(3, 3), intent(in)    ::  S, &
-                                                    R
-        real(DP), dimension(3, 3)                ::  Srot
-
-        Srot = matmul(matmul(transpose(R), S), R)
-    end function
-
-    !> Rotates the second-rank tensor S back from the reference frame given by rotation R.
-    pure function rotateSRTensorFrom(S, R) result(Srot)
-        real(DP), dimension(3, 3), intent(in)    ::  S, &
-                                                    R
-        real(DP), dimension(3, 3)                ::  Srot
-      
-        Srot = matmul(matmul(R, S), transpose(R))
     end function
 
     !> The function converts the antisymmetrical rank-two tensors mat into Voigt-style vector representation.

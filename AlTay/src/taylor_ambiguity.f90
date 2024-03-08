@@ -26,11 +26,8 @@ contains
     !!
     !! @param[out]    slip_rates              real vector (n_slip_systems)
     !!                                        Slip rates for all the slip systems
-    !!                                        Note: this variable is marked as [in,out] in the code,
+    !!                                        Note: this variable is marked as [in, out] in the code, 
     !!                                        but it seems to be overwritten immediately.
-    !!
-    !! @param[in]     von_mises_strain_rate   real
-    !!                                        Von Mises strain rate
     !!
     !! @param[in]     n_active_slip_systems   integer
     !!                                        Number of active slip systems
@@ -44,23 +41,22 @@ contains
     !!
     !! @param[in]     ind_active_slip_systems integer vector (8)
     !!                                        Indices of the active slip systems
-    !!                                        Note: this variable is marked as [in,out] in the code,
+    !!                                        Note: this variable is marked as [in, out] in the code, 
     !!                                        but it is never actually modified.
     !!
     !! @param[in]     BB8                     real vector (5)
-    !!                                        The total strain rate (imposed + relaxation)
+    !!                                        The total strain rate (imposed+relaxation)
     !!
     !! @param[in]     A1                      real matrix (5, n_slip_systems)
     !!                                        The symmetric (non-rotational) part of taylor equations matrix for a single grain.
     !!                                        The matrix is represented in crystal frame.
     !!                                        This matrix does not contain the relaxation terms.
-    subroutine resolve_taylor_ambiguity(slip_rates, von_mises_strain_rate, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, A1)
+    subroutine resolve_taylor_ambiguity(slip_rates, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, A1)
         integer, intent(in):: n_active_slip_systems
-        real(DP), intent(in):: von_mises_strain_rate,   &
-            A1(:,:),                 &
-            TAURLP(8),               &
-            BB8(5),                  &
-            SLIPLP(8)
+        real(DP), intent(in):: A1(:,:),                 &
+                               TAURLP(8),               &
+                               BB8(5),                  &
+                               SLIPLP(8)
         integer, intent(inout):: ind_active_slip_systems(8)
         real(DP), intent(inout):: slip_rates(:)
         integer:: IND(8), ISTOR(0:8, 48), ind_active_slip_systems_original(8)
@@ -73,13 +69,14 @@ contains
         slip_rates = 0.0_DP
         NN = n_active_slip_systems
         NOPL = 0
-        sgnn(ind_active_slip_systems(1:n_active_slip_systems))=sign(1.0_dp, TAURLP(1:n_active_slip_systems))
+        sgnn = 0._DP
+        sgnn(ind_active_slip_systems(1:n_active_slip_systems))=sign(1._DP, TAURLP(1:n_active_slip_systems))
 
         ! If solution is totally zero, just return
         if( sum(abs(SLIPLP(1:n_active_slip_systems))) <= TOLERANCE ) then
             NN = n_active_slip_systems
             IND(1:NN)=ind_active_slip_systems_original(1:NN)
-            slip_rates(IND(1:NN))=SLIPLP(1:NN)*von_mises_strain_rate
+            slip_rates(IND(1:NN))=SLIPLP(1:NN)
             return
         end if
 
@@ -90,7 +87,7 @@ contains
             ! The solution is valid, and thus also mathematically guaranteed
             ! to be the minimum norm solution. We are done.
             NN = n_active_slip_systems
-            slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))*von_mises_strain_rate
+            slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))
             return
         endif
 
@@ -145,14 +142,14 @@ contains
                     sumsq = SLSTOR(0, IOPL)
                     IND(1:NN)=ISTOR(1:NN, IOPL)
                     SLPR(1:NN)=SLSTOR(1:NN, IOPL)
-                    slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))*von_mises_strain_rate
+                    slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))
                     return
                 endif
             endif
         endif
         NN = n_active_slip_systems
         IND(1:NN)=ind_active_slip_systems_original(1:NN)
-        slip_rates(IND(1:NN))=SLIPLP(1:NN)*von_mises_strain_rate
+        slip_rates(IND(1:NN))=SLIPLP(1:NN)
     end subroutine
 
     !> @brief Fills the IND_ array with the active slip systems
@@ -160,7 +157,7 @@ contains
     !! @details This subroutine fills the IND_ array with the active slip systems
     !!          skipping the slip systems with the indices in the skip array.
     !!
-    !! @param[in,out] IND_                    integer vector (8)
+    !! @param[in, out] IND_                    integer vector (8)
     !!                                        Indices of the active slip systems
     !!
     !! @param[in]     ind_active_slip_systems integer vector (8)
@@ -207,7 +204,7 @@ contains
     !! @param[out]    ineg                    integer
     !!                                        Index of the slip system with the most negative slip rate
     !!                                        If ineg == 0, then all slip rates are positive.
-    !!                                        Note that ineg > 0, means that one of the slip rates is negative,
+    !!                                        Note that ineg > 0, means that one of the slip rates is negative, 
     !!                                        so the solution is not valid.
     !!
     !! @param[out]    sumsq                   real
@@ -217,7 +214,7 @@ contains
     !!                                        Signs of the slip rates
     !!
     !! @param[in]     strain                  real vector (5)
-    !!                                        The total strain rate (imposed + relaxation)
+    !!                                        The total strain rate (imposed+relaxation)
     !!
     !! @param[in]     A8                      real matrix (5, n_slip_systems)
     !!                                        The symmetric (non-rotational) part of taylor equations matrix for a single grain.

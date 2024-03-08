@@ -103,7 +103,7 @@ contains
         nsteps = size(this%steps)
         !
         ! Calculate rotation matrix (active rotation from material (=texture) to sample frame)
-        Mrot = euler_angles_to_rotation_matrix(deg2rad(this%rotframe))
+        Mrot = euler_angles_to_rotation_matrix(this%rotframe/RAD_TO_DEG)
         !
         do  istep = 1, nsteps
                         !
@@ -113,14 +113,7 @@ contains
                 sigma = Vec6ToMat33(step%stress_mode)
                 Pressure = (trace(sigma) / 3.D0) * UNIT_MATRIX_3X3
                 S = sigma-Pressure
-                !
-                ! Rotate from the original reference frame to the sample reference frame
-!                sigma_rot = rotateSRTensorTo(sigma, Mrot)
-                !
-                ! Print the input data:
-                                !
                 ! Follow the stress path
-                !
                 info = this%calculateStressPath(sigma, control, output%evolution_output, Mrot, &
                                                 incrementation_control = icv)
                 if (info /= VEF_OK) then
@@ -213,20 +206,10 @@ contains
                     P_total_rot = convert_stress_strain_space(v%icv%vP_total)  ! at the beginning of the increment
                     P_total_end_rot = P_total_rot+v%P_inc_evol  ! at the end of the increment
                     !
-                    ! Rotate back to the original coordinate system
-                    !
-                    A = rotateSRTensorFrom(v%A, Mrot)
                     A_voigt = Mat33ToVec6(A)
-                    !
-                    SonA = rotateSRTensorFrom(v%SonA, Mrot)
                     SonA_voigt = Mat33ToVec6(SonA)
-                    !
-                    P_step = rotateSRTensorFrom(P_step_rot, Mrot)
                     P_step_voigt = Mat33ToVec6(P_step)
-                    !
-                    P_total_end = rotateSRTensorFrom(P_total_end_rot, Mrot)
                     P_total_end_voigt = Mat33ToVec6(P_total_end)
-                    !
                     ! Convert to Voigt (to avoid temporaries in write)
                     A_rot_voigt = Mat33ToVec6(v%A)
                     SonA_rot_voigt = Mat33ToVec6(v%SonA)

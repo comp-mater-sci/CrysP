@@ -147,19 +147,19 @@ contains
             ! use von Mises guess as a default
             useVMGuess = .true.
             !
-            fi2 = deg2rad(fi2)
+            fi2 = -fi2/RAD_TO_DEG
             ! Calculate rotation matrix
             Mrot = euler_angles_to_rotation_matrix([fi1, phi, fi2])
 
             ! Rotate from "tensile" to material coordinate system
-            sigma = rotateSRTensorTo(sigma_t, Mrot)
+            sigma = rotate_to(sigma_t, Mrot)
             !
             if ((this%use_stability_improvements) .AND. (i > 1)) then
                 ! Reuse previously stored result in new coordinate system
                 ! if it represents a converged solution.
                 if (residual_resume <= this%ylp%obj_func_eps) then
                     ! Rotate Dresume_t to new coordinate system
-                    D = rotateSRTensorTo(Dresume_t, Mrot)
+                    D = rotate_to(Dresume_t, Mrot)
                     ! Disable Von Mises guess
                     useVMGuess = .false.
                 endif
@@ -177,8 +177,8 @@ contains
             SmIdent = convert_stress_strain_space(ylp_result%vSonAn)  ! stress mode for found strain mode
 
             ! Rotate back to the "tensile test" coordinate system
-            D_t = rotateSRTensorFrom(D, Mrot)
-            S_t = rotateSRTensorFrom(SonA, Mrot)
+            D_t = rotate_from(D, Mrot)
+            S_t = rotate_from(SonA, Mrot)
             !
             !(***) Prepare next iteration if re-using is requested.
             if (this%use_stability_improvements) then
@@ -190,7 +190,7 @@ contains
             !
             associate(r => results)
                 !
-                r%phis(i) = rad2deg(fi2)
+                r%phis(i) = fi2*RAD_TO_DEG 
                 r%qrsvalues(i) = calculateQRS(D_t, ylp_result%scal_s)
                 r%sigmas_x(i) = S_t(1, 1) - S_t(3, 3)
                 r%residuals(i) = ylp_result%R
