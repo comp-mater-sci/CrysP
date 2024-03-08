@@ -3,6 +3,10 @@
 *~
 *.mod
 *.smod
+include/
+obj/
+bin/
+dependencylist
 .vscode
 build/
 .DS_Store
