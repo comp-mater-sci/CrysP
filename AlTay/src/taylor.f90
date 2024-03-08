@@ -14,9 +14,7 @@ module taylor
     private
     public ::   taylor_init, &
                 taylor_solve, &
-                taylor_update_state, &
-                cluster_frame, &
-                cluster_weight
+                taylor_update_state
 
     integer  :: n_active_slip_systems
     real(DP):: inverse_basis_grain(5, 5), &
@@ -26,7 +24,7 @@ module taylor
                 BB8(5), &
                 B8(5, 2), &
                 GAMR(2)
-    real(DP), allocatable ::  rotation_slip_systems(:,:), &
+    real(DP), allocatable ::  spin_slip_systems(:,:), &
                               B3(:,:,:), &
                               slip_rates(:), &
                               BB(:), &
@@ -65,8 +63,8 @@ contains
         system_size = cluster_size*5
 
         allocate(A1(5, n_slip_systems_grain))
-        if (.not. allocated(rotation_slip_systems)) then
-            allocate(rotation_slip_systems(3, n_slip_systems_grain))
+        if (.not. allocated(spin_slip_systems)) then
+            allocate(spin_slip_systems(3, n_slip_systems_grain))
             allocate(slip_rates(n_slip_systems_cluster))
             allocate(BB(system_size))
             allocate(CCC(2, n_slip_systems_cluster))
@@ -83,7 +81,7 @@ contains
             normalized = normalize(deformation_mechanism(:,:,i))
             tensor = outer_product(normalized(:,1), normalized(:,2))
             A1(:,i) = convert_stress_strain_space(tensor) 
-            rotation_slip_systems(:,i) = convert_spin(tensor)  
+            spin_slip_systems(:,i) = convert_spin(tensor)  
         end do
         forall (i = 1:5) basis(:,i) = A1(:,DI1(i))
 
@@ -242,22 +240,24 @@ contains
         !> Rate of plastic work per unit volume in the crystal
         real(DP), intent(out):: WorkRate
 
-        real(DP), dimension(3):: ROT
-        real(DP), dimension(3, 3):: imposed_spin_crystal_frame, spin_relaxations_crystal_frame
-        real(DP), dimension(size(CC, 2)):: GAMdot
+        real(DP):: ROT(3), &
+                   imposed_spin_crystal_frame(3, 3), &
+                   spin_relaxations_crystal_frame(3, 3), & 
+                   slip_rates(size(CC, 2))
         real(DP), parameter:: ddt = 1.0_DP
 
-        call resolve_taylor_ambiguity(GAMdot, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
-        gamdot = gamdot*von_mises_strain_rate
+        call resolve_taylor_ambiguity(slip_rates, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
+        slip_rates = slip_rates*von_mises_strain_rate
 
-        if (.not. astate%simulCalls(astate%this)%input%keep_state) call hardening_update_state(IOR, ddt, GAMdot)
-        TOTGAMdot = sum(abs(GAMdot))
+        call hardening_update_state(IOR, ddt, slip_rates)
+
+        TOTGAMdot = sum(abs(slip_rates))
         ! Calculate RCcryst: the rigid body spin in the crystal frame
         imposed_spin_crystal_frame = rotate_from(imposed_spin, TRF)
         spin_relaxations_crystal_frame = rotate_to(spin_relaxations, TRF)
-        WorkRate = sum(merge(CC(1, :), -CC(2, :), GAMdot > 0.0_DP)*GAMdot)
+        WorkRate = sum(merge(CC(1, :), -CC(2, :), slip_rates > 0.0_DP)*slip_rates)
 
-        ROT = matmul(rotation_slip_systems, GAMdot)
+        ROT = matmul(spin_slip_systems, slip_rates)
  
         C2 = UNIT_MATRIX_3X3-convert_spin(ROT)-imposed_spin_crystal_frame+spin_relaxations_crystal_frame
         C2 = matmul(C2, TRF)

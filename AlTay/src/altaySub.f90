@@ -132,6 +132,7 @@ contains
         !
 
         do i = 1, steps%nSimulCalls
+            !print *, "Full model: ", steps%simulcalls(i)%input%full_model, "Keep state: ", steps%simulcalls(i)%input%keep_state, "step: ", i
             steps%this = i
             NFILE0 = merge(1, 0, steps%simulCalls(i)%input%do_output_init)
             velocity_gradient = steps%simulcalls(i)%input%dgf
