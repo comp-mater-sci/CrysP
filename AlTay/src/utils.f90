@@ -5,7 +5,7 @@ module utils
     implicit none
     public
 
-    external:: dgelsy
+    external:: dgels
 
 
     integer, parameter::  DP = selected_real_kind(15, 307)
@@ -250,17 +250,15 @@ contains
         real(DP), dimension(M1, M2), intent(in)                                  :: A
         real(DP), dimension(M2),    intent(out)                                 :: BA
         real(DP),                   intent(inout)                               :: res
-        integer                                                                 :: i, rank, info
-        integer, dimension(N2)                                                  :: jpvt
+        integer                                                                 :: i, info
         real(DP)                                                                :: y
-        real(DP), dimension(max(min(N1, N2) + 3*N2+1, 2*min(N1, N2) + 1))   :: work
+        real(DP), dimension(max(1, 2*min(N1, N2) + 1))   :: work
         real(DP), dimension(M1, M2)                                              :: A_COPY
 
         A_COPY = A
         BA = B
-        jpvt = 0
 
-        call dgelsy(N1, N2, 1, A_COPY, M1, BA, M2, jpvt, 0.01_dp, rank, work, size(work), info)
+        call dgels('N',N1, N2, 1, A_COPY, M1, BA, M2, work, size(work), info)
 
         res = 0.0_DP
         do i = 1, N1
