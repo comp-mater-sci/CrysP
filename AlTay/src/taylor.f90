@@ -94,14 +94,12 @@ contains
     
     !Note that IOR will be replaced by a reference to a grain object in the near future.
     subroutine get_stress_state(stress_matrix, strain_matrix, TRF, IOR, GMMAb, cluster_size, laml, CC, n_slip_systems_grain, &
-        velocity_gradient, von_mises_strain_rate, von_mises_strain_mode, deformation_gradient, weight)
+        velocity_gradient, deformation_gradient, weight)
         integer, intent(in):: laml, IOR, cluster_size, n_slip_systems_grain
         real(DP), intent(out):: stress_matrix(3, 3), strain_matrix(3, 3), weight
         real(DP), intent(in):: TRF(3, 3, 2), &
                                 GMMab(2), &
                                 velocity_gradient(3, 3), &
-                                von_mises_strain_rate, &
-                                von_mises_strain_mode(3, 3), &
                                 deformation_gradient(3, 3)
         real(dp), intent(inout):: CC(2, n_slip_systems_grain)
         real(dp), dimension(5):: strain
@@ -148,9 +146,7 @@ contains
                     end do
                 endif
 
-                ! Calculation of time increment by dividing von Mises equivalent
-                ! strain by von Mises equivalent strain rate
-                B8(1:5, IL)=convert_stress_strain_space(C2)  ! sym.(3, 3) -> (5)
+                B8(1:5, IL)=convert_stress_strain_space(C2)
                 BB(L1+1:L1+5)=B8(1:5, IL)
                 K1 = n_slip_systems_grain*(IL-1)
 
@@ -231,9 +227,8 @@ contains
         spin_relaxations = rotate_from(spin_relaxations, TRF(:,:,laml))
     end subroutine
 
-    subroutine apply_deformation_step(IOR, TOTGAMdot, WorkRate, imposed_spin, von_mises_strain_rate, CC, TRF, C2, XM)
-        real(DP), intent(in):: imposed_spin(3, 3), &
-                               von_mises_strain_rate
+    subroutine apply_deformation_step(IOR, TOTGAMdot, WorkRate, imposed_spin, CC, TRF, C2, XM)
+        real(DP), intent(in):: imposed_spin(3, 3)
         integer, intent(in):: IOR
         real(DP), intent(in):: XM(:,:), TRF(3, 3), CC(:,:)
         real(DP), intent(out):: TOTGAMdot, C2(3, 3)
@@ -247,7 +242,6 @@ contains
         real(DP), parameter:: ddt = 1.0_DP
 
         call resolve_taylor_ambiguity(slip_rates, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
-        slip_rates = slip_rates
 
         call hardening_update_state(IOR, ddt, slip_rates)
 
