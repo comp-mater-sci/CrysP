@@ -93,14 +93,14 @@ contains
     end subroutine   
     
     !Note that IOR will be replaced by a reference to a grain object in the near future.
-    subroutine get_stress_state(stress_matrix, strain_matrix, TRF, IOR, GMMAb, cluster_size, laml, CC, n_slip_systems_grain, &
+    subroutine get_stress_state(stress_matrix, strain_matrix, TRF, IOR, strain_ab, cluster_size, laml, CC, n_slip_systems_grain, &
         velocity_gradient, deformation_gradient, weight)
         integer, intent(in):: laml, IOR, cluster_size, n_slip_systems_grain
         real(DP), intent(out):: stress_matrix(3, 3), strain_matrix(3, 3), weight
         real(DP), intent(in):: TRF(3, 3, 2), &
-                                GMMab(2), &
-                                velocity_gradient(3, 3), &
-                                deformation_gradient(3, 3)
+                               strain_ab(2), &
+                               velocity_gradient(3, 3), &
+                               deformation_gradient(3, 3)
         real(dp), intent(inout):: CC(2, n_slip_systems_grain)
         real(dp), dimension(5):: strain
         real(DP):: spin(3), boundary_to_crystal(3, 3)
@@ -151,7 +151,7 @@ contains
                 K1 = n_slip_systems_grain*(IL-1)
 
                 ! Retrieve the CRSSmatrix
-                CCC(:,1+K1:n_slip_systems_grain+K1) = hardening_get_crss(IOR+IL-1, GMMab(IL))
+                CCC(:,1+K1:n_slip_systems_grain+K1) = hardening_get_crss(IOR+IL-1, strain_ab(IL))
                 UU(L1+1:L1+5, L1+1:L1+5)=inverse_basis_grain
             enddo
 
@@ -239,11 +239,10 @@ contains
                    imposed_spin_crystal_frame(3, 3), &
                    spin_relaxations_crystal_frame(3, 3), & 
                    slip_rates(size(CC, 2))
-        real(DP), parameter:: ddt = 1.0_DP
 
         call resolve_taylor_ambiguity(slip_rates, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
 
-        call hardening_update_state(IOR, ddt, slip_rates)
+        call hardening_update_state(IOR, 1._DP, slip_rates)
 
         TOTGAMdot = sum(abs(slip_rates))
         ! Calculate RCcryst: the rigid body spin in the crystal frame

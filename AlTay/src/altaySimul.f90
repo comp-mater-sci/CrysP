@@ -61,15 +61,15 @@ module altaySimul
         real(DP), dimension(3, 3), intent(in):: velocity_gradient
         integer, intent(in):: NFILE0
 
-        real(DP):: TRF(3, 3, 2), GMMAb(2)
+        real(DP):: TRF(3, 3, 2), strain_ab(2)
         integer:: NGR, &         !< number of grains
-                   laml, laml1, &
-                   IOR, ISTP, NPOINT, info, NFILE, i, j, l, ifil4
+                  laml, laml1, &
+                  IOR, ISTP, NPOINT, info, NFILE, i, j, l, ifil4
         real(DP):: Ssam(3, 3), & 
                    grain_shape(3, 3), & !Coefficient matrix describing grain shape as ellipsoid in quadratic notation ((X^T)*C*X = 1)
                    grain_axis_half_lengths(3), &
                    grain_axis_orientations(3, 3), &
-                   GEWF, RHOSS(3, 3, 2), gmm1
+                   GEWF, RHOSS(3, 3, 2), strain
         real(DP), save:: C2(3, 3), CC(2, 96)
         real(DP):: TOTGEW, SHsam(3, 3), RHOSm(3, 3), ssqgx
         ! HGAM: homogenized slip per step
@@ -95,7 +95,6 @@ module altaySimul
         ! Number of relaxations: 0 for Taylor and 2 for ALAMEL:
         NFILE = NFILE0*NFILE1
 
-
         strain_rate = symmetric_part(velocity_gradient)
         spin = antisymmetric_part(velocity_gradient)
         von_mises_strain_rate = SQR0P67*norm2(strain_rate)
@@ -119,14 +118,13 @@ module altaySimul
 
             if (.not.astate%simulCalls(astate%this)%input%keep_texture) deformation_gradient = def_grad 
 
-!
-!         Added for lamel model:
-!         Organisation reading temporary texture file, 
-!         in such way that the program TAYLOR can process the crystals
-!         by sets of 2.
-!         Taylor must therefore have "advance knowledge" of the
-!         orientation to come at the moment that it starts such
-!         computation.
+            !Added for lamel model:
+            !Organisation reading temporary texture file, 
+            !in such way that the program TAYLOR can process the crystals
+            !by sets of 2.
+            !Taylor must therefore have "advance knowledge" of the
+            !orientation to come at the moment that it starts such
+            !computation.
             laml = 1
             laml1 = NGR
             ifil4 = 0
@@ -139,7 +137,7 @@ module altaySimul
                 do L = laml, laml1
                     if (ifil4 == NPOINT) exit
                     ifil4 = ifil4+1
-                    call DYNFIL_getGrain(ifil4, TRF(1:3, 1:3, L), GEWF, GMMAb(L), RHOSS(1:3, 1:3, L))
+                    call DYNFIL_getGrain(ifil4, TRF(1:3, 1:3, L), GEWF, strain_ab(L), RHOSS(1:3, 1:3, L))
                 end do
                 laml1 = mod(laml1, NGR)+1
                 laml = laml1
@@ -153,16 +151,16 @@ module altaySimul
                 !             - should not perform any computation
                 !             - has to output the result of the second crystal found
                 !               during the previous computation.
-                call get_stress_state(Ssam, RHOSs(:,:,laml), TRF, IOR, GMMab, NGR, laml, CC, M11, velocity_gradient, def_grad, GEWF)
+                call get_stress_state(Ssam, RHOSs(:,:,laml), TRF, IOR, strain_ab, NGR, laml, CC, M11, velocity_gradient, def_grad, GEWF)
 
                 if (astate%simulCalls(astate%this)%input%full_model) then
                     call apply_deformation_step(IOR, GMMdot, WorkRate, spin, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM)
                 end if
                
-                GMM1 = GMMab(laml) + GMMdot  ! Step time here implicitly assumed to be 1.0s
+                strain = strain_ab(laml) + GMMdot  ! Step time here implicitly assumed to be 1.0s
                 ! We can choose not to update the texture state
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                      call DYNFIL_setGrain(IOR, C2, GMM1, RHOSs(:,:,laml))
+                      call DYNFIL_setGrain(IOR, C2, strain, RHOSs(:,:,laml))
                 end if
                 if(laml == 1) then
                     ssqgx = GEWF
