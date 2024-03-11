@@ -13,8 +13,8 @@ module taylor
 
     private
     public ::   taylor_init, &
-                taylor_solve, &
-                taylor_update_state
+                get_stress_state, &
+                apply_deformation_step
 
     integer  :: n_active_slip_systems
     real(DP):: inverse_basis_grain(5, 5), &
@@ -93,7 +93,7 @@ contains
     end subroutine   
     
     !Note that IOR will be replaced by a reference to a grain object in the near future.
-    subroutine taylor_solve(stress_matrix, strain_matrix, TRF, IOR, GMMAb, cluster_size, laml, CC, n_slip_systems_grain, &
+    subroutine get_stress_state(stress_matrix, strain_matrix, TRF, IOR, GMMAb, cluster_size, laml, CC, n_slip_systems_grain, &
         velocity_gradient, von_mises_strain_rate, von_mises_strain_mode, deformation_gradient, weight)
         integer, intent(in):: laml, IOR, cluster_size, n_slip_systems_grain
         real(DP), intent(out):: stress_matrix(3, 3), strain_matrix(3, 3), weight
@@ -150,7 +150,7 @@ contains
 
                 ! Calculation of time increment by dividing von Mises equivalent
                 ! strain by von Mises equivalent strain rate
-                B8(1:5, IL)=convert_stress_strain_space(C2)/von_mises_strain_rate  ! sym.(3, 3) -> (5)
+                B8(1:5, IL)=convert_stress_strain_space(C2)  ! sym.(3, 3) -> (5)
                 BB(L1+1:L1+5)=B8(1:5, IL)
                 K1 = n_slip_systems_grain*(IL-1)
 
@@ -205,7 +205,7 @@ contains
         strain_matrix = convert_stress_strain_space(strain)  ! (5) -> sym.(3, 3)
         spin_relaxations = 0._DP
         
-        spin_relaxations = convert_spin(spin) * SQR2*von_mises_strain_rate
+        spin_relaxations = convert_spin(spin) * SQR2
         ! note that if one of the grains does not deform at all, the stress and the active slip systems
         ! of the full constraint solution are used.
         n_active_slip_systems = 0
@@ -231,7 +231,7 @@ contains
         spin_relaxations = rotate_from(spin_relaxations, TRF(:,:,laml))
     end subroutine
 
-    subroutine taylor_update_state(IOR, TOTGAMdot, WorkRate, imposed_spin, von_mises_strain_rate, CC, TRF, C2, XM)
+    subroutine apply_deformation_step(IOR, TOTGAMdot, WorkRate, imposed_spin, von_mises_strain_rate, CC, TRF, C2, XM)
         real(DP), intent(in):: imposed_spin(3, 3), &
                                von_mises_strain_rate
         integer, intent(in):: IOR
@@ -247,7 +247,7 @@ contains
         real(DP), parameter:: ddt = 1.0_DP
 
         call resolve_taylor_ambiguity(slip_rates, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
-        slip_rates = slip_rates*von_mises_strain_rate
+        slip_rates = slip_rates
 
         call hardening_update_state(IOR, ddt, slip_rates)
 

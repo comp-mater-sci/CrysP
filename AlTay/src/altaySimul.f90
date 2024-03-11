@@ -153,11 +153,11 @@ module altaySimul
                 !             - should not perform any computation
                 !             - has to output the result of the second crystal found
                 !               during the previous computation.
-                call taylor_solve(Ssam, RHOSs(:,:,laml), TRF, IOR, GMMab, NGR, laml, CC, M11, velocity_gradient, &
+                call get_stress_state(Ssam, RHOSs(:,:,laml), TRF, IOR, GMMab, NGR, laml, CC, M11, velocity_gradient, &
                 von_mises_strain_rate, von_mises_strain_mode, def_grad, GEWF)
 
                 if (astate%simulCalls(astate%this)%input%full_model) then
-                    call taylor_update_state(IOR, GMMdot, WorkRate, spin, von_mises_strain_rate, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM)
+                    call apply_deformation_step(IOR, GMMdot, WorkRate, spin, von_mises_strain_rate, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM)
                 end if
                
                 GMM1 = GMMab(laml) + GMMdot  ! Step time here implicitly assumed to be 1.0s
