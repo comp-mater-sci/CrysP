@@ -37,8 +37,8 @@ module taylor
     integer:: ind_basis_systems_grain(5), ind_active_slip_systems(8)
     
     character(*), parameter:: MOD_NAME = 'taylor'
-    integer, parameter::   INITIAL_BASIS_SYSTEMS_Fcrss_grain(5) = [2, 5, 6, 7, 8], &
-                           INITIAL_BASIS_SYSTEMS_Bcrss_grain(5) = [1, 2, 4, 5, 7], &
+    integer, parameter::   INITIAL_BASIS_SYSTEMS_FCC(5) = [2, 5, 6, 7, 8], &
+                           INITIAL_BASIS_SYSTEMS_BCC(5) = [1, 2, 4, 5, 7], &
                            RELAXATIONS(3, 3, 2) = reshape([0, 0, 0, &
                                                            0, 0, 0, &
                                                            1, 0, 0, &
@@ -76,7 +76,7 @@ contains
                 allocate(spin_coeffs_relaxations(3, 2, 2), source = 0._DP)
         end if
         
-        ind_basis_systems_grain = merge(INITIAL_BASIS_SYSTEMS_Fcrss_grain, INITIAL_BASIS_SYSTEMS_Bcrss_grain, n_slip_systems_grain == 12)
+        ind_basis_systems_grain = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, n_slip_systems_grain == 12)
         do i = 1, n_slip_systems_grain
             normalized = normalize(deformation_mechanism(:,:,i))
             tensor = outer_product(normalized(:,1), normalized(:,2))
