@@ -73,7 +73,6 @@ module simulation
                    strain_ab(2), &
                    stress(3, 3), & 
                    cluster_weight, &
-                   strain(3, 3, 2), &
                    crss(2, 96), &
                    total_weight, &
                    homogenized_stress(3, 3), &
@@ -142,7 +141,7 @@ module simulation
                 index_in_cluster1 = mod(index_in_cluster1, cluster_size)+1
                 index_in_cluster = index_in_cluster1
                 
-                call get_stress_state(stress, strain(:,:,index_in_cluster), orientation, index_grain, strain_ab, cluster_size, index_in_cluster, crss, n_slip_systems_grain, velocity_gradient, next_deformation_gradient, cluster_weight)
+                call get_stress_state(stress, orientation, index_grain, strain_ab, cluster_size, index_in_cluster, crss, n_slip_systems_grain, velocity_gradient, next_deformation_gradient, cluster_weight)
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                     deformation_gradient = next_deformation_gradient 
