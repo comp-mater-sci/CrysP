@@ -12,7 +12,7 @@ module simulation
     private
 
     real(DP), allocatable:: homogenized_total_slip_rateTOT, & !< homogenized slip accumulated over calls
-        XM(:,:)
+        taylor_coeffs(:,:)
     integer:: n_slip_systems_grain, NFILE1
 
     real(DP):: von_mises_strain
@@ -41,14 +41,14 @@ module simulation
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Incorrect value of cluster_size')
 
         ! Check if number of crystals is right for the model
-        if (modulo(size(DFIL), cluster_size) /= 0) &
+        if (modulo(size(grains), cluster_size) /= 0) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Number of grains must be even.')
         TITEL  = acnf%jobtitle
         ! Only if CUR file is requested
         if (NFILE1 == 1) call CURwriteTitle(IMP1, TITEL, info)
   98    format (A)
 !       read the parameters of the work hardening model
-        call taylor_init(acnf%deformation_mechanism, n_slip_systems_grain, XM, cluster_size)
+        call taylor_init(acnf%deformation_mechanism, n_slip_systems_grain, taylor_coeffs, cluster_size)
 
         deformation_gradient = UNIT_MATRIX_3X3
         von_mises_strain = 0._DP
@@ -92,7 +92,7 @@ module simulation
                    von_mises_strain_rate, &
                    next_deformation_gradient(3, 3)
 
-        n_grains = size(DFIL)
+        n_grains = size(grains)
         ! Per-call selection of the model: cluster_size must be set
         cluster_size = acnf%simul_init%NGR
         NFILE = NFILE0*NFILE1
@@ -146,7 +146,7 @@ module simulation
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                     deformation_gradient = next_deformation_gradient 
-                    call apply_deformation_step(index_grain, total_slip_rate, WorkRate, spin, crss(1:2, 1:n_slip_systems_grain), orientation(:,:,index_in_cluster), XM)
+                    call apply_deformation_step(index_grain, total_slip_rate, WorkRate, spin, crss(1:2, 1:n_slip_systems_grain), orientation(:,:,index_in_cluster), taylor_coeffs)
                     call DYNFIL_setGrain(index_grain, orientation(:,:,index_in_cluster), strain_ab(index_in_cluster) + total_slip_rate)  ! Step time here implicitly assumed to be 1.0s
                 end if
                 if(index_in_cluster == 1) then

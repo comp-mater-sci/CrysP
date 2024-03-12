@@ -43,7 +43,7 @@ contains
         ! Initialize altay modules
         !
         ! Set the data for CRSS calculations
-        call parameter_set(cnf%hardening_parameters, 'n_grains', size(DFIL), fail_on_absent=.false.)
+        call parameter_set(cnf%hardening_parameters, 'n_grains', size(grains), fail_on_absent=.false.)
         call hardening_init(cnf%hardening_parameters)
         ! Initialisation of SIMUL
         info = VEF_ERROR
