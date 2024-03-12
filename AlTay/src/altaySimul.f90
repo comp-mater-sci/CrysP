@@ -65,17 +65,17 @@ module altaySimul
         integer:: NGR, &         !< number of grains
                   laml, laml1, &
                   IOR, ISTP, NPOINT, info, NFILE, i, j, l, ifil4
-        real(DP):: Ssam(3, 3), & 
+        real(DP):: stress_cluster(3, 3), & 
                    grain_shape(3, 3), & !Coefficient matrix describing grain shape as ellipsoid in quadratic notation ((X^T)*C*X = 1)
                    grain_axis_half_lengths(3), &
                    grain_axis_orientations(3, 3), &
-                   GEWF, RHOSS(3, 3, 2), strain
-        real(DP), save:: C2(3, 3), CC(2, 96)
-        real(DP):: TOTGEW, SHsam(3, 3), RHOSm(3, 3), ssqgx
+                   cluster_weight, RHOSS(3, 3, 2), strain
+        real(DP):: C2(3, 3), CC(2, 96)
+        real(DP):: total_weight, homogenized_stress(3, 3), ssqgx
         ! HGAM: homogenized slip per step
         real(DP):: HGAM
         ! Macroscopically imposed vM equivalent strain per call.
-        real(DP), save:: GMMdot  ! Total slip rate in current grain
+        real(DP):: GMMdot  ! Total slip rate in current grain
         real(DP):: Mgrain  ! Taylor factor of the current grain
         real(DP):: Mavg   !Volume-averaged Taylor factor
         real(DP):: WorkRate  ! Rate of plastic work per unit
@@ -106,9 +106,8 @@ module altaySimul
         if (NFILE == 1) call CURwriteBlock(IMP1, info)
         steploop: DO ISTP = 1, astate%simulCalls(astate%this)%input%nsteps
 
-            TOTGEW = 0._DP
-            SHsam = 0._DP
-            RHOSm = 0._DP
+            total_weight = 0._DP
+            homogenized_stress = 0._DP
             Mavg = 0._DP
             HGAM = 0._DP
 
@@ -137,21 +136,13 @@ module altaySimul
                 do L = laml, laml1
                     if (ifil4 == NPOINT) exit
                     ifil4 = ifil4+1
-                    call DYNFIL_getGrain(ifil4, TRF(1:3, 1:3, L), GEWF, strain_ab(L), RHOSS(1:3, 1:3, L))
+                    call DYNFIL_getGrain(ifil4, TRF(1:3, 1:3, L), cluster_weight, strain_ab(L))
                 end do
                 laml1 = mod(laml1, NGR)+1
                 laml = laml1
-                !
-                !  In case of NGR = 2:
-                !     LAML = 1: TAYLOR3
-                !             - has the present and the next orientation available
-                !             - must perform the computation of a set of 2 crystals
-                !             - has to output the result for the first crystal
-                !     LAML = 2: TAYLOR3
-                !             - should not perform any computation
-                !             - has to output the result of the second crystal found
-                !               during the previous computation.
-                call get_stress_state(Ssam, RHOSs(:,:,laml), TRF, IOR, strain_ab, NGR, laml, CC, M11, velocity_gradient, def_grad, GEWF)
+                
+                
+                call get_stress_state(stress_cluster, RHOSs(:,:,laml), TRF, IOR, strain_ab, NGR, laml, CC, M11, velocity_gradient, def_grad, cluster_weight)
 
                 if (astate%simulCalls(astate%this)%input%full_model) then
                     call apply_deformation_step(IOR, GMMdot, WorkRate, spin, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM)
@@ -160,47 +151,44 @@ module altaySimul
                 strain = strain_ab(laml) + GMMdot  ! Step time here implicitly assumed to be 1.0s
                 ! We can choose not to update the texture state
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                      call DYNFIL_setGrain(IOR, C2, strain, RHOSs(:,:,laml))
+                      call DYNFIL_setGrain(IOR, C2, strain)
                 end if
                 if(laml == 1) then
-                    ssqgx = GEWF
+                    ssqgx = cluster_weight
                 else
-                    GEWF = ssqgx
+                    cluster_weight = ssqgx
                 end if
-                TOTGEW = TOTGEW+GEWF
+                total_weight = total_weight+cluster_weight
 
 
-                SHsam = SHsam+Ssam*GEWF
-                RHOSm = RHOSm+RHOSs(:,:,laml)*GEWF
+                homogenized_stress = homogenized_stress+stress_cluster*cluster_weight
                 !
                 Mgrain = GMMdot /  von_mises_strain_rate
-                Mavg = Mavg+Mgrain*GEWF
-                HGAM = HGAM+GMMdot*GEWF  ! Step time here implicitly assumed to be 1.0s
+                Mavg = Mavg+Mgrain*cluster_weight
+                HGAM = HGAM+GMMdot*cluster_weight  ! Step time here implicitly assumed to be 1.0s
                 Wtot = Wtot+WorkRate  ! Step time here implicitly assumed to be 1.0s
             enddo clusterloop
 
-            SHsam = SHsam/TOTGEW
-            RHOSm = RHOSm/TOTGEW
+            homogenized_stress = homogenized_stress/total_weight
 
             do i = 1, 2
                 do j = i+1, 3
-                    SHsam(j, i)=SHsam(i, j)
-                    RHOSm(j, i)=RHOSm(i, j)
+                    homogenized_stress(j, i)=homogenized_stress(i, j)
                 end do
             end do
-            Mavg = Mavg/TOTGEW
+            Mavg = Mavg/total_weight
 
             ! Get the homogenized quantities:
             associate (callout => astate%simulCalls(astate%this)%output)
-                callout%stress_tensor = SHsam
+                callout%stress_tensor = homogenized_stress
                 callout%taylor_factor = Mavg
-                callout%effective_stress = sqrt(3.D0/2.D0)*norm2(SHsam)
+                callout%effective_stress = sqrt(3.D0/2.D0)*norm2(homogenized_stress)
                 callout%homogenised_slip_tot = HGAMTOT
                 callout%effective_macro_strain_tot = von_mises_strain
                 callout%effective_macro_strain_tot_end = von_mises_strain+von_mises_strain_rate
             end associate
 
-            HGAM = HGAM/TOTGEW
+            HGAM = HGAM/total_weight
             if (.not.astate%simulCalls(astate%this)%input%keep_state) HGAMTOT = HGAMTOT+HGAM
 
             von_mises_strain = von_mises_strain+von_mises_strain_rate
