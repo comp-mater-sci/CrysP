@@ -50,7 +50,7 @@ contains
       end subroutine
 
       subroutine makeTextureUpdateStep(D, S, M, output_flag, info)
-      use altaySub
+      use altay
       use altayConfig
       real(DP), dimension(3, 3), intent(in)      :: D
       real(DP), dimension(3, 3), intent(out)     :: S
@@ -86,7 +86,7 @@ contains
       end subroutine
 
       subroutine outputTexture(info)
-      use altaySub
+      use altay
       integer, intent(out)     :: info
       !
             call outputCurrentState(info)

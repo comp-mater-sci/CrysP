@@ -1,4 +1,4 @@
-module altaySimul
+module simulation
     use utils
     use hardening_model_dsh
     use altayCurAccess
@@ -20,17 +20,17 @@ module altaySimul
 
     character(*), parameter:: MOD_NAME = 'Simul'
 
-    public:: SIMUL0, SIMUL1
+    public:: simulation_init, &
+             simulation_run
     contains
 
     ! initialization call
-    subroutine SIMUL0()
+    subroutine simulation_init()
         integer:: NGR         !< number of grains
 
         character(len = 40):: TITEL
         integer:: info
         character(*), parameter:: PROC_NAME = 'SIMUL0'
-        integer:: i
 
 
         NGR    = acnf%simul_init%NGR
@@ -55,33 +55,39 @@ module altaySimul
         von_mises_strain = 0._DP
     end subroutine
 
-
-    subroutine SIMUL1(NFILE0, velocity_gradient)
-        ! TO ORGANIZE SIMULATIONS OF DEFORMATION TEXTURES USING THE ALAMEL MODEL
-        real(DP), dimension(3, 3), intent(in):: velocity_gradient
+    subroutine simulation_run(NFILE0, velocity_gradient)
+        real(DP), intent(in):: velocity_gradient(3, 3)
         integer, intent(in):: NFILE0
-
-        real(DP):: TRF(3, 3, 2), strain_ab(2)
-        integer:: NGR, &         !< number of grains
-                  laml, laml1, &
-                  IOR, ISTP, NPOINT, info, NFILE, i, j, l, ifil4
-        real(DP):: stress_cluster(3, 3), & 
-                   grain_shape(3, 3), & !Coefficient matrix describing grain shape as ellipsoid in quadratic notation ((X^T)*C*X = 1)
-                   grain_axis_half_lengths(3), &
-                   grain_axis_orientations(3, 3), &
-                   cluster_weight, RHOSS(3, 3, 2), strain
-        real(DP):: C2(3, 3), CC(2, 96)
-        real(DP):: total_weight, homogenized_stress(3, 3), ssqgx
-        ! HGAM: homogenized slip per step
-        real(DP):: HGAM
-        ! Macroscopically imposed vM equivalent strain per call.
-        real(DP):: GMMdot  ! Total slip rate in current grain
-        real(DP):: Mgrain  ! Taylor factor of the current grain
-        real(DP):: Mavg   !Volume-averaged Taylor factor
-        real(DP):: WorkRate  ! Rate of plastic work per unit
-                                     ! volume in the crystal
-        real(DP):: Wtot  ! Total plastic work per unit volume in crystal
-        real(DP):: deformation_gradient_increment(3, 3), &
+        integer:: NGR, & 
+                  laml, &
+                  laml1, &
+                  IOR, &
+                  ISTP, &
+                  NPOINT, &
+                  info, &
+                  NFILE, &
+                  i, &
+                  j, &
+                  l, &
+                  ifil4
+        real(DP):: TRF(3, 3, 2), &
+                   strain_ab(2), &
+                   stress_cluster(3, 3), & 
+                   cluster_weight, &
+                   RHOSS(3, 3, 2), &
+                   strain, &
+                   C2(3, 3), &
+                   CC(2, 96), &
+                   total_weight, &
+                   homogenized_stress(3, 3), &
+                   ssqgx, &
+                   HGAM, & ! HGAM: homogenized slip per step
+                   GMMdot, &  ! Total slip rate in current grain
+                   Mgrain, &  ! Taylor factor of the current grain
+                   Mavg, &   !Volume-averaged Taylor factor
+                   WorkRate, &  ! Rate of plastic work per unit volume in the crystal
+                   Wtot, &  ! Total plastic work per unit volume in crystal
+                   deformation_gradient_increment(3, 3), &
                    deformation_gradient_increment_inverse(3, 3), &
                    strain_rate(3, 3), &
                    spin(3, 3), &
@@ -92,7 +98,6 @@ module altaySimul
         NPOINT = size(DFIL)
         ! Per-call selection of the model: NGR must be set
         NGR = acnf%simul_init%NGR
-        ! Number of relaxations: 0 for Taylor and 2 for ALAMEL:
         NFILE = NFILE0*NFILE1
 
         strain_rate = symmetric_part(velocity_gradient)
@@ -144,14 +149,11 @@ module altaySimul
                 
                 call get_stress_state(stress_cluster, RHOSs(:,:,laml), TRF, IOR, strain_ab, NGR, laml, CC, M11, velocity_gradient, def_grad, cluster_weight)
 
-                if (astate%simulCalls(astate%this)%input%full_model) then
-                    call apply_deformation_step(IOR, GMMdot, WorkRate, spin, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM)
-                end if
-               
-                strain = strain_ab(laml) + GMMdot  ! Step time here implicitly assumed to be 1.0s
                 ! We can choose not to update the texture state
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                      call DYNFIL_setGrain(IOR, C2, strain)
+                    call apply_deformation_step(IOR, GMMdot, WorkRate, spin, CC(1:2, 1:M11), TRF(:,:,laml), C2, XM)
+                    strain = strain_ab(laml) + GMMdot  ! Step time here implicitly assumed to be 1.0s
+                    call DYNFIL_setGrain(IOR, C2, strain)
                 end if
                 if(laml == 1) then
                     ssqgx = cluster_weight

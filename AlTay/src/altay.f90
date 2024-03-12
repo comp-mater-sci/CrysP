@@ -1,6 +1,6 @@
-module altaySub
+module altay
     use hardening_model_dsh
-    use altaySimul
+    use simulation
     use altayConfig
     use hardening
     use altayDynfil
@@ -10,7 +10,7 @@ module altaySub
 
     implicit none
 
-    character(*), parameter, private:: MOD_NAME = 'altaySub'
+    character(*), parameter, private:: MOD_NAME = 'altay'
 
 contains
 
@@ -20,7 +20,7 @@ contains
     !> module subroutines.
     subroutine initAltay(cnf, info)
         type(altayConfigData), intent(inout)    :: cnf      !< configuration data
-        integer, intent(out)                 :: info     !< exit code (altaySub_OK on success)
+        integer, intent(out)                 :: info     !< exit code (altay_OK on success)
         character(*), parameter:: PROC_NAME = 'initAltay'
 
         integer:: ierr
@@ -47,7 +47,7 @@ contains
         call hardening_init(cnf%hardening_parameters)
         ! Initialisation of SIMUL
         info = VEF_ERROR
-        call SIMUL0()
+        call simulation_init()
 
         ! No need for the slip system definition anymore.
         close(LEC)
@@ -71,7 +71,7 @@ contains
 
     subroutine openOutputFiles(cnf, info)
         type(altayConfigData), intent(in)    :: cnf      !< configuration data
-        integer, intent(out)                 :: info     !< exit code (altaySub_OK on success)
+        integer, intent(out)                 :: info     !< exit code (altay_OK on success)
 
         character(len = fname_len):: fname_prefix, fname
         character(*), parameter:: PROC_NAME = 'openOutputFiles'
@@ -139,7 +139,7 @@ contains
             !Make traceless, should be moved to preprocessing
             velocity_gradient = velocity_gradient-UNIT_MATRIX_3X3 * (velocity_gradient(1, 1)+velocity_gradient(2, 2)+velocity_gradient(3, 3))/3._DP 
             ! Run simul.
-            call SIMUL1(NFILE0, velocity_gradient)
+            call simulation_run(NFILE0, velocity_gradient)
 
             if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
         enddo

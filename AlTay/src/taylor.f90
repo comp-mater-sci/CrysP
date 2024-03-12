@@ -92,9 +92,7 @@ contains
         if (cluster_size == 2) A2(6:10, n_slip_systems_grain+1:n_slip_systems_grain*2)=A1
     end subroutine   
     
-    !Note that IOR will be replaced by a reference to a grain object in the near future.
-    subroutine get_stress_state(stress_matrix, strain_matrix, TRF, IOR, strain_ab, cluster_size, laml, CC, n_slip_systems_grain, &
-        velocity_gradient, deformation_gradient, weight)
+    subroutine get_stress_state(stress_matrix, strain_matrix, TRF, IOR, strain_ab, cluster_size, laml, CC, n_slip_systems_grain, velocity_gradient, deformation_gradient, weight)
         integer, intent(in):: laml, IOR, cluster_size, n_slip_systems_grain
         real(DP), intent(out):: stress_matrix(3, 3), strain_matrix(3, 3), weight
         real(DP), intent(in):: TRF(3, 3, 2), &

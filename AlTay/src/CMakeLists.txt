@@ -16,7 +16,7 @@ criNamedRange.f90
 criNumerics.f90
 criRange.f90
 criUncomment.f90
-altaySimul.f90 
+simulation.f90
 taylor.f90 
 altayDynfil.f90 
 simplex.f90 
@@ -24,7 +24,7 @@ altayCurAccess.f90
 utils.f90
 logging.f90
 altayConfig.f90  
-altaySub.f90
+altay.f90
 parameters.f90
 slip_systems.f90
 taylor_ambiguity.f90

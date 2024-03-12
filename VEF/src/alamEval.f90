@@ -39,7 +39,7 @@ implicit none
 contains
 
       subroutine objectiveEval_NV5DComp(this,vX,info)
-      use altaySub
+      use altay
       use altayConfig
       implicit none
             class(NormalizedV5DComp),intent(inout)      :: this
