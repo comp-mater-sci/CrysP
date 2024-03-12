@@ -113,12 +113,10 @@ contains
         integer::                   n_slip_systems_cluster, &
                                     size_system, &
                                     start_index_grain, &
+                                    start_index_slip_systems, &
                                     start_index_relaxations, &
                                     i, &
                                     j, &
-                                    start_index_slip_systems, &
-                                    JJ, &
-                                    II, &
                                     ind_basis_systems_cluster(10), &
                                     n_relaxations
         logical::                   full_constraints
@@ -180,14 +178,14 @@ contains
             endif
         endif
         ! From here on, output is produced for grain number "index_in_cluster"
-        jj = n_slip_systems_grain*(index_in_cluster-1)
-        crss_grain = crss_cluster(1:2, jj+1:jj+n_slip_systems_grain)
-        ii = 5*(index_in_cluster-1)
+        start_index_grain = 5*(index_in_cluster-1)
+        start_index_slip_systems = n_slip_systems_grain*(index_in_cluster-1)
+        crss_grain = crss_cluster(1:2, start_index_slip_systems+1:start_index_slip_systems+n_slip_systems_grain)
         spin = 0._DP
         do i = 1, 5
             ! If one grain does not deform, the stress stress_cluster came from the fullconstraints solution.
-            spanv(i)=stress_cluster(i+ii)
-            strain_relaxations(i)=sum(taylor_coeffs_cluster(i+ii, start_index_relaxations:n_slip_systems_cluster)*slip_rates_relaxations(1:n_relaxations))
+            spanv(i)=stress_cluster(i+start_index_grain)
+            strain_relaxations(i)=sum(taylor_coeffs_cluster(i+start_index_grain, start_index_relaxations:n_slip_systems_cluster)*slip_rates_relaxations(1:n_relaxations))
             strain_grain(i)=imposed_strain_grain(i, index_in_cluster)-strain_relaxations(i)
             if (i < 4) spin(i)=sum(spin_coeffs_relaxations(i, :, index_in_cluster)*slip_rates_relaxations(1:n_relaxations))
         enddo
@@ -199,7 +197,7 @@ contains
         ! of the full constraint solution are used.
         n_active_slip_systems = 0
         do i = 1, n_slip_systems_grain
-            if (abs(overstress(i+jj)) < TOLERANCE) then
+            if (abs(overstress(i+start_index_slip_systems)) < TOLERANCE) then
                 n_active_slip_systems = n_active_slip_systems+1
                 ind_active_slip_systems(n_active_slip_systems) =i
             end if
@@ -209,8 +207,8 @@ contains
         elseif (n_active_slip_systems == 0) then
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'No active slip systems found.')
         endif
-        SLIPLP(1:n_active_slip_systems)=slip_rates(ind_active_slip_systems(1:n_active_slip_systems)+jj)
-        TAURLP(1:n_active_slip_systems)=rss_cluster(ind_active_slip_systems(1:n_active_slip_systems)+jj)
+        SLIPLP(1:n_active_slip_systems)=slip_rates(ind_active_slip_systems(1:n_active_slip_systems)+start_index_slip_systems)
+        TAURLP(1:n_active_slip_systems)=rss_cluster(ind_active_slip_systems(1:n_active_slip_systems)+start_index_slip_systems)
 
         !Transform stress from local frame (Scrys) to sample frame (Ssam)
         stress_matrix = stress_matrix .fromframe. orientation_grain(:,:,index_in_cluster)
@@ -254,7 +252,6 @@ contains
         axis_lengths = norm2(grain_axes, 1)
         !Alignment factor equals sin(axes 2 and 3) * cos(axis 1 and normal to plane defined by axes 2 and 3)
         !The more the axes are orthogonal, the more alignment factor tends to 1.
-
         alignment_factor = abs(grain_axes(:,1) .dot. (grain_axes(:,2) .cross. grain_axes(:,3))) / product(axis_lengths) 
 
         !See Van Houtte et. al., 2004: Appendix A
