@@ -225,17 +225,16 @@ contains
         spin_relaxations = rotate_from(spin_relaxations, TRF(:,:,laml))
     end subroutine
 
-    subroutine apply_deformation_step(IOR, TOTGAMdot, WorkRate, imposed_spin, CC, TRF, C2, XM)
+    subroutine apply_deformation_step(IOR, TOTGAMdot, WorkRate, imposed_spin, CC, orientation, XM)
         real(DP), intent(in):: imposed_spin(3, 3)
         integer, intent(in):: IOR
-        real(DP), intent(in):: XM(:,:), TRF(3, 3), CC(:,:)
-        real(DP), intent(out):: TOTGAMdot, C2(3, 3)
+        real(DP), intent(in):: XM(:,:), CC(:,:)
+        real(DP), intent(out):: TOTGAMdot
+        real(DP), intent(inout):: orientation(3, 3)
         !> Rate of plastic work per unit volume in the crystal
         real(DP), intent(out):: WorkRate
 
-        real(DP):: ROT(3), &
-                   imposed_spin_crystal_frame(3, 3), &
-                   spin_relaxations_crystal_frame(3, 3), & 
+        real(DP):: orientation_increment(3, 3), &
                    slip_rates(size(CC, 2))
 
         call resolve_taylor_ambiguity(slip_rates, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, XM)
@@ -243,15 +242,13 @@ contains
         call hardening_update_state(IOR, 1._DP, slip_rates)
 
         TOTGAMdot = sum(abs(slip_rates))
-        ! Calculate RCcryst: the rigid body spin in the crystal frame
-        imposed_spin_crystal_frame = rotate_from(imposed_spin, TRF)
-        spin_relaxations_crystal_frame = rotate_to(spin_relaxations, TRF)
         WorkRate = sum(merge(CC(1, :), -CC(2, :), slip_rates > 0.0_DP)*slip_rates)
 
-        ROT = matmul(spin_slip_systems, slip_rates)
- 
-        C2 = UNIT_MATRIX_3X3-convert_spin(ROT)-imposed_spin_crystal_frame+spin_relaxations_crystal_frame
-        C2 = matmul(C2, TRF)
+        orientation_increment = UNIT_MATRIX_3X3 &
+                                -convert_spin(matmul(spin_slip_systems, slip_rates)) & !Spin induced by activation of slip systems
+                                +rotate_to(imposed_spin, orientation) &                !Change of reference frame
+                                +rotate_to(spin_relaxations, orientation)              !Spin absorbed by relaxations
+        orientation = matmul(orientation_increment, orientation)
     end subroutine
 
     pure real(DP) function cluster_weight(grain_, deformation_gradient) result(weight)

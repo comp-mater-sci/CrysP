@@ -8,7 +8,6 @@ module simulation
     use altayConfig
     use logging
 
-
     implicit none
     private
 
@@ -75,7 +74,6 @@ module simulation
                    stress(3, 3), & 
                    cluster_weight, &
                    strain(3, 3, 2), &
-                   new_orientation(3, 3), &
                    crss(2, 96), &
                    total_weight, &
                    homogenized_stress(3, 3), &
@@ -92,7 +90,7 @@ module simulation
                    spin(3, 3), &
                    von_mises_strain_mode(3, 3), &
                    von_mises_strain_rate, &
-                   def_grad(3, 3)
+                   next_deformation_gradient(3, 3)
 
         n_grains = size(DFIL)
         ! Per-call selection of the model: cluster_size must be set
@@ -117,9 +115,8 @@ module simulation
 
             nrstep = nrstep+1
 
-            def_grad = matmul(deformation_gradient_increment, deformation_gradient) 
+            next_deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient) 
 
-            if (.not.astate%simulCalls(astate%this)%input%keep_texture) deformation_gradient = def_grad 
 
             !Added for lamel model:
             !Organisation reading temporary texture file, 
@@ -145,11 +142,12 @@ module simulation
                 index_in_cluster1 = mod(index_in_cluster1, cluster_size)+1
                 index_in_cluster = index_in_cluster1
                 
-                call get_stress_state(stress, strain(:,:,index_in_cluster), orientation, index_grain, strain_ab, cluster_size, index_in_cluster, crss, n_slip_systems_grain, velocity_gradient, def_grad, cluster_weight)
+                call get_stress_state(stress, strain(:,:,index_in_cluster), orientation, index_grain, strain_ab, cluster_size, index_in_cluster, crss, n_slip_systems_grain, velocity_gradient, next_deformation_gradient, cluster_weight)
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                    call apply_deformation_step(index_grain, total_slip_rate, WorkRate, spin, crss(1:2, 1:n_slip_systems_grain), orientation(:,:,index_in_cluster), new_orientation, XM)
-                    call DYNFIL_setGrain(index_grain, new_orientation, strain_ab(index_in_cluster) + total_slip_rate)  ! Step time here implicitly assumed to be 1.0s
+                    deformation_gradient = next_deformation_gradient 
+                    call apply_deformation_step(index_grain, total_slip_rate, WorkRate, spin, crss(1:2, 1:n_slip_systems_grain), orientation(:,:,index_in_cluster), XM)
+                    call DYNFIL_setGrain(index_grain, orientation(:,:,index_in_cluster), strain_ab(index_in_cluster) + total_slip_rate)  ! Step time here implicitly assumed to be 1.0s
                 end if
                 if(index_in_cluster == 1) then
                     ssqgx = cluster_weight
