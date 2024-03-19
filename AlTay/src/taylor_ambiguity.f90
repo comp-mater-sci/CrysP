@@ -45,7 +45,7 @@ contains
     !!                                        but it is never actually modified.
     !!
     !! @param[in]     BB8                     real vector (5)
-    !!                                        The total strain rate (imposed+relaxation)
+    !!                                        Spin imposed on slip systems of grain (without relaxations)
     !!
     !! @param[in]     A1                      real matrix (5, n_slip_systems)
     !!                                        The symmetric (non-rotational) part of taylor equations matrix for a single grain.
@@ -54,83 +54,71 @@ contains
     subroutine resolve_taylor_ambiguity(slip_rates, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, A1)
         integer, intent(in):: n_active_slip_systems
         real(DP), intent(in):: A1(:,:),                 &
-                               TAURLP(8),               &
+                               TAURLP(n_active_slip_systems),               &
                                BB8(5),                  &
-                               SLIPLP(8)
-        integer, intent(inout):: ind_active_slip_systems(8)
+                               SLIPLP(n_active_slip_systems)
+        integer, intent(inout):: ind_active_slip_systems(n_active_slip_systems)
         real(DP), intent(inout):: slip_rates(:)
-        integer:: IND(8), ISTOR(0:8, 48), ind_active_slip_systems_original(8)
-        real(DP):: SLPR(8), SLSTOR(0:8, 48), sumsq
+        integer:: IND(n_active_slip_systems), ISTOR(0:8, 48)
+        real(DP):: SLPR(n_active_slip_systems), SLSTOR(0:8, 48), sumsq
         integer, parameter:: NSTOR = 48
-        integer:: j, i1, i2, i3, N0, N1, N2, N3, NN, NOPL, INEG, IOPL
+        integer:: j, i1, i2, i3, n_considered_slip_systems, & !Number of slip systems being considered, if not all active slip systems
+                  NOPL, INEG, IOPL
         real(DP):: sgnn(size(slip_rates))
 
-        ind_active_slip_systems_original = ind_active_slip_systems
-        slip_rates = 0.0_DP
-        NN = n_active_slip_systems
         NOPL = 0
         sgnn = 0._DP
         sgnn(ind_active_slip_systems(1:n_active_slip_systems))=sign(1._DP, TAURLP(1:n_active_slip_systems))
 
         ! If solution is totally zero, just return
-        if( sum(abs(SLIPLP(1:n_active_slip_systems))) <= TOLERANCE ) then
-            NN = n_active_slip_systems
-            IND(1:NN)=ind_active_slip_systems_original(1:NN)
-            slip_rates(IND(1:NN))=SLIPLP(1:NN)
-            return
-        end if
+        if(sum(abs(slip_rates)) <= TOLERANCE) return
 
         ! First, try the standard minimum norm solution with all active slip systems
-        IND(1:NN)=ind_active_slip_systems(1:NN)
-        call calc_slip(NN, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
+        call calc_slip(n_active_slip_systems, ind_active_slip_systems, SLPR, ineg, sumsq, sgnn, BB8, A1)
         if (ineg == 0) then
             ! The solution is valid, and thus also mathematically guaranteed
             ! to be the minimum norm solution. We are done.
-            NN = n_active_slip_systems
-            slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))
+            slip_rates(ind_active_slip_systems)=SLPR*sgnn(ind_active_slip_systems)
             return
         endif
 
+        IND = ind_active_slip_systems
         ! The solution is not valid, so we need to try all possible combinations
         ! of the active slip systems and take the one with the smallest sum of squares.
-        if (NN > 5) then
+        if (n_active_slip_systems > 5) then
             !     Let us take all combinations of NN out of n_active_slip_systems
             !
             !     "Levels" in the combination search:
             !     (first level:  if n_active_slip_systems = 8, find all combinations of 7 slip systems
             !      second level: find all combinations of 6-etc.)
-            N0 = n_active_slip_systems
             ! Level 1
-            N1 = N0-1
-            if (N1 >= 5) then
-                NN = N1
-                do I1 = 1, N0
-                    call calc_slip(N1, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
-                    if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
-                    J = N0-I1
+            n_considered_slip_systems = n_active_slip_systems-1
+            if (n_considered_slip_systems >= 5) then
+                do I1 = 1, n_active_slip_systems
+                    call calc_slip(n_considered_slip_systems, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
+                    if (ineg == 0) call STORE(NSTOR, NOPL, n_considered_slip_systems, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
+                    J = n_active_slip_systems-I1
                     if (J > 0) IND(J)=ind_active_slip_systems(J+1)
                 enddo
                 ! Level 2
-                N2 = N1-1
-                if (N2 >= 5) then
-                    NN = N2
-                    do I1 = 2, N0
+                n_considered_slip_systems = n_considered_slip_systems-1
+                if (n_considered_slip_systems >= 5) then
+                    do I1 = 2, n_active_slip_systems
                         do I2 = 1, I1-1
-                            call fill(IND, ind_active_slip_systems, [I1, I2],N0)
-                            call calc_slip(N2, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
-                            if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
+                            call fill(IND, ind_active_slip_systems, [I1, I2],n_active_slip_systems)
+                            call calc_slip(n_considered_slip_systems, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
+                            if (ineg == 0) call STORE(NSTOR, NOPL, n_considered_slip_systems, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
                         enddo
                     enddo
                     ! Level 3
-                    N3 = N2-1
-                    if (N3 >= 5) then
-                        NN = N3
-                        do I1 = 3, N0
+                    n_considered_slip_systems = n_considered_slip_systems-1
+                    if (n_considered_slip_systems >= 5) then
+                        do I1 = 3, n_active_slip_systems
                             do I2 = 2, I1-1
                                 do I3 = 1, I2-1
-                                    call fill(IND, ind_active_slip_systems, [I1, I2, I3],N0)
-                                    call calc_slip(N3, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
-                                    if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
+                                    call fill(IND, ind_active_slip_systems, [I1, I2, I3],n_active_slip_systems)
+                                    call calc_slip(n_considered_slip_systems, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
+                                    if (ineg == 0) call STORE(NSTOR, NOPL, n_considered_slip_systems, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
                                 enddo
                             enddo
                         enddo
@@ -138,18 +126,16 @@ contains
                 endif
                 if (NOPL /= 0) then
                     IOPL = minloc(SLSTOR(0, 1:NOPL), 1)
-                    NN = ISTOR(0, IOPL)
+                    n_considered_slip_systems = ISTOR(0, IOPL)
                     sumsq = SLSTOR(0, IOPL)
-                    IND(1:NN)=ISTOR(1:NN, IOPL)
-                    SLPR(1:NN)=SLSTOR(1:NN, IOPL)
-                    slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))
+                    IND(1:n_considered_slip_systems)=ISTOR(1:n_considered_slip_systems, IOPL)
+                    SLPR(1:n_considered_slip_systems)=SLSTOR(1:n_considered_slip_systems, IOPL)
+                    slip_rates = 0._DP
+                    slip_rates(IND(1:n_considered_slip_systems))=SLPR(1:n_considered_slip_systems)*sgnn(IND(1:n_considered_slip_systems))
                     return
                 endif
             endif
         endif
-        NN = n_active_slip_systems
-        IND(1:NN)=ind_active_slip_systems_original(1:NN)
-        slip_rates(IND(1:NN))=SLIPLP(1:NN)
     end subroutine
 
     !> @brief Fills the IND_ array with the active slip systems

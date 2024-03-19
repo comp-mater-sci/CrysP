@@ -227,6 +227,10 @@ contains
         real(DP)::                  orientation_increment(3, 3), &
                                     slip_rates(size(crss, 2))
 
+
+        slip_rates = 0._DP
+        slip_rates(ind_active_slip_systems(1:n_active_slip_systems)) = SLIPLP(1:n_active_slip_systems)
+
         call resolve_taylor_ambiguity(slip_rates, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, strain_grain, taylor_coeffs)
         call hardening_update_state(index_grain, 1._DP, slip_rates)
 
