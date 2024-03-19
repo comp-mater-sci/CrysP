@@ -21,11 +21,11 @@ module commonUtils
 
 contains
 
-      subroutine  getTaylorFactor(stepid,M,info)
+      subroutine  getTaylorFactor(stepid, M, info)
       use altayConfig
-      integer,intent(in)            :: stepid
-      real(DP),intent(out)  :: M
-      integer,intent(out)           :: info
+      integer, intent(in)            :: stepid
+      real(DP), intent(out)  :: M
+      integer, intent(out)           :: info
       !
             info = -1
             M = 0.D0
@@ -38,7 +38,7 @@ contains
       !> Perform basic checks if the state variables in altayConfig are consistent.
       logical function isStateOK(stepid)
       use altayConfig
-      integer,intent(in)      :: stepid
+      integer, intent(in)      :: stepid
       !
             isStateOK = .false.
             if (allocated(astate%simulCalls)) then
@@ -49,19 +49,20 @@ contains
 
       end subroutine
 
-      subroutine makeTextureUpdateStep(D,S,M,output_flag,info)
-      use altaySub
+      subroutine makeTextureUpdateStep(D, S, M, output_flag, info)
+      use altay
       use altayConfig
-      real(DP),dimension(3,3),intent(in)      :: D
-      real(DP),dimension(3,3),intent(out)     :: S
-      real(DP),intent(out)                    :: M
-      logical,intent(in)                              :: output_flag
-      integer,intent(out)                             :: info
+      real(DP), dimension(3, 3), intent(in)      :: D
+      real(DP), dimension(3, 3), intent(out)     :: S
+      real(DP), intent(out)                    :: M
+      logical, intent(in)                              :: output_flag
+      integer, intent(out)                             :: info
       !
-      integer,parameter :: istp = 1
+      integer, parameter:: istp = 1
             info = -1
+            
             !
-            call initStepData(istp,astate,info)
+            call initStepData(istp, astate, info)
             if (info /= 0) return
             ! Set input data for AlTay
             associate (input => astate%simulCalls(istp)%input)
@@ -72,7 +73,7 @@ contains
                   input%do_output_init = .false.
                   input%do_output_final = output_flag
             end associate
-            call runSteps(astate,info)
+            call runSteps(astate, info)
             if (info /= 0) return
             !
             ! Get the result
@@ -85,8 +86,8 @@ contains
       end subroutine
 
       subroutine outputTexture(info)
-      use altaySub
-      integer,intent(out)     :: info
+      use altay
+      integer, intent(out)     :: info
       !
             call outputCurrentState(info)
       !
@@ -95,24 +96,24 @@ contains
       !> Test the presence of optional logical value, and return a default if the optional
       !> is not present.
       pure logical function optionalDefault_logical(value, default) result(res)
-          logical,intent(in),optional   :: value !< The parameter to be tested for presence. The actual parameter MUST have optional attribute.
-          logical,intent(in)            :: default  !< Default value
+          logical, intent(in), optional   :: value !< The parameter to be tested for presence. The actual parameter MUST have optional attribute.
+          logical, intent(in)            :: default  !< Default value
 
-          if(present(value))then;res=value;else;res=default;endif
+          if(present(value))then; res = value; else; res = default; endif
       end function
 
     !> Test the presence of optional integer value, and return a default if the optional
     !> is not present.
     pure integer function optionalDefault_integer(value, default) result(res)
-          integer,intent(in),optional   :: value !< The parameter to be tested for presence. The actual parameter MUST have optional attribute.
-          integer,intent(in)            :: default  !< Default value
-          if(present(value))then;res=value;else;res=default;endif
+          integer, intent(in), optional   :: value !< The parameter to be tested for presence. The actual parameter MUST have optional attribute.
+          integer, intent(in)            :: default  !< Default value
+          if(present(value))then; res = value; else; res = default; endif
 
     end function
 
     pure function toString(num) result(str)
         class(*), intent(in)    :: num
-        character(12) :: str
+        character(12):: str
 
         select type(num)
             type is (integer)

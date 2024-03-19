@@ -38,41 +38,41 @@ implicit none
       !> The subroutine assumes that multilevel model is already configured and initialized.
       !> Exit code is retured in info: VEF_OK on success; VEF_ERROR if no converged solution can
       !> be found; VEF_ERROR or VEF_ERROR if error conditions have been detected.
-      subroutine multilevelYLP(vS,vA,vSonA,R,info,useVMGuess,YLPconfig,outunit,verbose,objective_function)
+      subroutine multilevelYLP(vS, vA, vSonA, R, info, useVMGuess, YLPconfig, outunit, verbose, objective_function)
       use nllsTR
       use alamEval
       implicit none
-      real(DP),intent(in)   :: vS(alamEval_vSD_dim)      !< Imposed stress vector
-      real(DP),intent(inout):: vA(alamEval_vSD_dim)      !< Strain rate mode on yield locus
-      real(DP),intent(out)  :: vSonA(alamEval_vSD_dim)   !< Stress vector corresponding to A
-      real(DP),intent(out)  :: R          !< Square norm of residual error
+      real(DP), intent(in)   :: vS(alamEval_vSD_dim)      !< Imposed stress vector
+      real(DP), intent(inout):: vA(alamEval_vSD_dim)      !< Strain rate mode on yield locus
+      real(DP), intent(out)  :: vSonA(alamEval_vSD_dim)   !< Stress vector corresponding to A
+      real(DP), intent(out)  :: R          !< Square norm of residual error
       integer                       :: info       !< Exit code
       !> Flag: use von Mises initial guess, otherwise assume vA as an initial strain rate (default: .true.)
-      logical,optional,intent(in)   :: useVMGuess
-      type(multilevelYLPConfig),optional,intent(in) :: YLPconfig !< Configuration parameters to be imposed to the search method
-      integer,intent(in),optional   :: outunit    !< Unit number for messages
-      integer,intent(in),optional   :: verbose
-      class(NormalizedV5DComp),target,optional,intent(inout) :: objective_function
+      logical, optional, intent(in)   :: useVMGuess
+      type(multilevelYLPConfig), optional, intent(in):: YLPconfig !< Configuration parameters to be imposed to the search method
+      integer, intent(in), optional   :: outunit    !< Unit number for messages
+      integer, intent(in), optional   :: verbose
+      class(NormalizedV5DComp), target, optional, intent(inout):: objective_function
       !
 
-      real(DP), dimension(alamEval_vSD_dim) :: vX, vX_lin
-      type(multilevelYLPConfig) :: config !< Effective configuration parameters (defaults on entry)
+      real(DP), dimension(alamEval_vSD_dim):: vX, vX_lin
+      type(multilevelYLPConfig):: config !< Effective configuration parameters (defaults on entry)
       !
       !
-      class(NormalizedV5DComp),pointer :: objFunc
+      class(NormalizedV5DComp), pointer:: objFunc
       ! Default objective function declared as local variable: it will get
       ! deallocated on return.
-      type(NormalizedV5DComp),allocatable,target :: objective_function_local
+      type(NormalizedV5DComp), allocatable, target:: objective_function_local
       type(nllsTRConf)        :: tr_config
-      real(DP)        :: r1,r2
+      real(DP)        :: r1, r2
       logical                 :: use_vmGuess
-      logical                 :: attempt_linearized,linearized_successful
-      real(DP)        :: r1_lin,r2_lin
+      logical                 :: attempt_linearized, linearized_successful
+      real(DP)        :: r1_lin, r2_lin
       type(nllsTRRes)         :: TR_res
       type(SolutionPoint)     :: initState
       integer                 :: ounit, tr_verbose, ierr
-      integer,parameter       :: stdout = 6
-      logical                 :: log_info,log_debug
+      integer, parameter       :: stdout = 6
+      logical                 :: log_info, log_debug
       real(DP)        :: norm
       !
       if (present(useVMGuess)) then
@@ -108,7 +108,7 @@ implicit none
           objFunc => objective_function_local
       endif
       ! Configure objective function
-      call objFunc%initFx(alamEval_vSD_dim,alamEval_vSD_dim,ierr)
+      call objFunc%initFx(alamEval_vSD_dim, alamEval_vSD_dim, ierr)
       if (ierr /= 0) then
           info = VEF_ERROR
           return
@@ -118,20 +118,20 @@ implicit none
       !Get normalized stress vector
       norm = norm2(vS)
       if (norm < epsilon(0.D0)) return
-      objFunc%vSn = vS / norm
+      objFunc%vSn = vS/norm
       objFunc%full_model = config%search_full_model
       !
       ounit = stdout
       if (present(outunit))  ounit = outunit
       ! Initialize TR solver
       ! (note: outunit argument has "optional" modifier in both the caller and callee)
-      call nlls_TR_init(outunit,tr_verbose)
+      call nlls_TR_init(outunit, tr_verbose)
       ! Use von Mises guess
-      vX = merge(vS,vA,use_vmGuess)
+      vX = merge(vS, vA, use_vmGuess)
       !
       r1 = 0.0_DP; r2 = 0.0_DP
       !
-      !!! call objFunc%jacobiMatrixFx(vX, mJ,info)
+      !!! call objFunc%jacobiMatrixFx(vX, mJ, info)
       !
       ! TODO: more reliable lower limit, it should lead to tr(d) > 1.e-7
       !
@@ -154,7 +154,7 @@ implicit none
             vX_lin = vX
             ! Start the TR solver for linearized problem
             ! More thorough exit status is necessary: TR_res
-            call nlls_TR_solve(objFunc,vX_lin,tr_config,r1_lin,r2_lin,ierr,TR_res,SolutionInitOut=initState)
+            call nlls_TR_solve(objFunc, vX_lin, tr_config, r1_lin, r2_lin, ierr, TR_res, SolutionInitOut = initState)
             R = r2_lin
             ! do checks if the solution is OK:
             ! Stop criterion: magic number "3" means: ||F(x)||_2 < eps(2)
@@ -176,7 +176,7 @@ implicit none
                   tr_config%use_init_state = (ierr == 0)
             endif
             ! start TR solver
-            call nlls_TR_solve(objFunc,vX,tr_config,r1,r2,ierr)
+            call nlls_TR_solve(objFunc, vX, tr_config, r1, r2, ierr)
             R = r2
             !TODO: check exit status of the solver
             if (attempt_linearized) then
@@ -193,15 +193,12 @@ implicit none
       info  = VEF_ERROR
       norm = norm2(vX)
       if (norm < epsilon(0.D0)) return
-      vA = vX / norm
-      ! Call objective function again to get corresponding yield stress and other quantities.
-      objFunc%full_model = config%evaluate_full_model
-      call objFunc%objectiveEval(vA,ierr)
+      vA = vX/norm
 
-      if (log_info) write(ounit,'(A,1X,5(E15.8,1X))') 'Final residual vector: ',objFunc%state%vF
+      if (log_info) write(ounit, '(A, 1X, 5(E15.8, 1X))') 'Final residual vector: ',objFunc%state%vF
 
       vSonA = objFunc%vSml
-      info = merge(VEF_FAIL,VEF_OK,R > config%obj_func_eps)
+      info = merge(VEF_FAIL, VEF_OK, R > config%obj_func_eps)
 
       end subroutine
 

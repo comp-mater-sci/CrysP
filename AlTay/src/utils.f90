@@ -64,6 +64,14 @@ module utils
     interface operator(.tensor.)
         module procedure outer_product
     end interface
+
+    interface operator(.toframe.)
+        module procedure rotate_to
+    end interface
+
+    interface operator(.fromframe.)
+        module procedure rotate_from
+    end interface
 contains
 
     !> Convert second-rank tensor t into 5D vector following Van Houtte et al., 1992.

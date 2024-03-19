@@ -13,7 +13,7 @@ module dmcBasicModule
     use hardening
     use parameters
     use logging
-    use altaySub, only: initAltay, finalizeAltay
+    use altay, only: initAltay, finalizeAltay
     use commonUtils
 
     implicit none

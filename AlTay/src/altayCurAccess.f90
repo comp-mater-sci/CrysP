@@ -25,16 +25,16 @@ contains
         integer:: npoint, i
         real(DP):: eu(3)
 
-        npoint = size(DFIL)
+        npoint = size(grains)
 
         write (iounit, 402)
         write (iounit, 403) NRSTEP, npoint, deformation_gradient
         write (iounit, 401)
 
         do i = 1, npoint
-            eu = rotation_matrix_to_euler_angles(DFIL(i)%tT)*RAD_TO_DEG
+            eu = rotation_matrix_to_euler_angles(grains(i)%tT)*RAD_TO_DEG
             write(iounit, 400, iostat = info)&
-               i, DFIL(i)%tGEW, eu(1), eu(2), eu(3), DFIL(i)%tGAM
+               i, grains(i)%tGEW, eu(1), eu(2), eu(3), grains(i)%tGAM
             if (info /= 0) exit
         enddo
 

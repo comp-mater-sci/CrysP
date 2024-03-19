@@ -14,16 +14,15 @@ module altayDynfil
         real(DP)                    :: tGEW     = 1._DP, &
                                        tGAM     = 0._DP
         real(DP), dimension(3, 3)    :: tT       = 0._DP, &
-                                        tZERO    = 0._DP, &
                                         boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
     end type grain
 
-    type(grain), dimension(:), allocatable     :: DFIL             !<State variable: array of grains/orientations.
+    type(grain), dimension(:), allocatable     :: grains             !<State variable: array of grains/orientations.
     integer                                    :: nrStep = 0       !<State variable: step number.
     real(DP):: deformation_gradient(3, 3)
 
     public  ::  grain, &
-                DFIL,       &
+                grains,       &
                 nrStep,     &
                 dynfil_init,    &
                 dynFil_getGrain,    &
@@ -47,14 +46,14 @@ contains
         read (nunit, 94, iostat = info) nrec, title 
 94      format(I5, 5x, A)
         if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file header')
-        if (nrec > 0) allocate(dfil(nrec))
+        if (nrec > 0) allocate(grains(nrec))
         
         do i = 1, nrec
             read(nunit, 96, iostat = info) angles(3), angles(2), angles(1), stap, nstap, weight, gam
 96          format(4F10.0, I5, 5X, 2F10.0)
             if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read boundary segment')
             angles = angles/RAD_TO_DEG
-            dfil(i) = grain(weight, gam, euler_angles_to_rotation_matrix(angles), 0._DP, 0._DP)
+            grains(i) = grain(weight, gam, euler_angles_to_rotation_matrix(angles), 0._DP)
         enddo
     
         close(nunit)
@@ -81,8 +80,8 @@ contains
             transformation_matrix = matmul(initial_deformation_gradient, transpose(euler_angles_to_rotation_matrix(angles/RAD_TO_DEG)))
 
             !Assign boundaries to a pair of grains
-            do j = 2*i-1, size(DFIL)-1, 2*n_boundaries
-                DFIL(j)%boundary_reference_frame = transformation_matrix
+            do j = 2*i-1, size(grains)-1, 2*n_boundaries
+                grains(j)%boundary_reference_frame = transformation_matrix
             end do
         enddo
 
@@ -94,32 +93,27 @@ contains
         integer, intent(out)    :: info
         info = 0
         NRSTEP = 0
-        if (allocated(DFIL)) deallocate(DFIL, stat = info)
+        if (allocated(grains)) deallocate(grains, stat = info)
     end subroutine
 
     !> Get the record data for i-th grain
-    subroutine DYNFIL_getGrain(i, T, GEW, gam, ZERO)
+    subroutine DYNFIL_getGrain(i, T, GEW, gam)
         integer, intent(in)                             :: i
         real(DP), intent(out)                   :: GEW, gam
-        real(DP), dimension(3, 3), intent(out)   :: T, ZERO
+        real(DP), dimension(3, 3), intent(out)   :: T
 
-        GEW     = DFIL(i)%tGEW
-        gam = DFIL(i)%tgam
-        T       = DFIL(i)%tT
-        ZERO    = DFIL(i)%tZERO
+        GEW     = grains(i)%tGEW
+        gam = grains(i)%tgam
+        T       = grains(i)%tT
     end subroutine
 
     !> Put the record data for i-th grain
-    subroutine DYNFIL_setGrain(i, T, GAM, ZERO)
+    subroutine DYNFIL_setGrain(i, T, GAM)
         integer, intent(in)                     :: i
         real(DP), intent(in)                    :: GAM
-        real(DP), dimension(3, 3), intent(in)    :: T, ZERO
+        real(DP), dimension(3, 3), intent(in)    :: T
 
-        DFIL(i)%tGAM    = GAM
-        DFIL(i)%tT      = T
-        DFIL(i)%tZERO   = ZERO
+        grains(i)%tGAM    = GAM
+        grains(i)%tT      = T
     end subroutine
-
-    !Determine the boundary reference frame and the transformation matrices between boundary frame and crystal frame and the
-    !relative weight of the cluster.
 end module

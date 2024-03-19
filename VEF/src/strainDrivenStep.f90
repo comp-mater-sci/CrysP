@@ -7,7 +7,7 @@ use criMathUtils
 use utils
 use dmcSubsteppingConfig
 use altayConfig
-use altaySub
+use altay
 
 implicit none
 
