@@ -86,44 +86,12 @@ contains
         ! The solution is not valid, so we need to try all possible combinations
         ! of the active slip systems and take the one with the smallest sum of squares.
         if (n_active_slip_systems > 5) then
-            !     Let us take all combinations of NN out of n_active_slip_systems
-            !
-            !     "Levels" in the combination search:
-            !     (first level:  if n_active_slip_systems = 8, find all combinations of 7 slip systems
-            !      second level: find all combinations of 6-etc.)
-            ! Level 1
-            n_considered_slip_systems = n_active_slip_systems-1
-            if (n_considered_slip_systems >= 5) then
-                do I1 = 1, n_active_slip_systems
-                    call calc_slip(n_considered_slip_systems, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
-                    if (ineg == 0) call STORE(NSTOR, NOPL, n_considered_slip_systems, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
-                    J = n_active_slip_systems-I1
-                    if (J > 0) IND(J)=ind_active_slip_systems(J+1)
-                enddo
-                ! Level 2
-                n_considered_slip_systems = n_considered_slip_systems-1
-                if (n_considered_slip_systems >= 5) then
-                    do I1 = 2, n_active_slip_systems
-                        do I2 = 1, I1-1
-                            call fill(IND, ind_active_slip_systems, [I1, I2],n_active_slip_systems)
-                            call calc_slip(n_considered_slip_systems, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
-                            if (ineg == 0) call STORE(NSTOR, NOPL, n_considered_slip_systems, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
-                        enddo
-                    enddo
-                    ! Level 3
-                    n_considered_slip_systems = n_considered_slip_systems-1
-                    if (n_considered_slip_systems >= 5) then
-                        do I1 = 3, n_active_slip_systems
-                            do I2 = 2, I1-1
-                                do I3 = 1, I2-1
-                                    call fill(IND, ind_active_slip_systems, [I1, I2, I3],n_active_slip_systems)
-                                    call calc_slip(n_considered_slip_systems, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
-                                    if (ineg == 0) call STORE(NSTOR, NOPL, n_considered_slip_systems, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
-                                enddo
-                            enddo
-                        enddo
-                    endif
-                endif
+            i1 = n_active_slip_systems-1
+                do while (i1 >= 5)
+                    call build_comb(ind_active_slip_systems, i1, IND(1:i1), 1, 1)
+                    i1 = i1-1
+                end do
+
                 if (NOPL /= 0) then
                     IOPL = minloc(SLSTOR(0, 1:NOPL), 1)
                     n_considered_slip_systems = ISTOR(0, IOPL)
@@ -134,40 +102,34 @@ contains
                     slip_rates(IND(1:n_considered_slip_systems))=SLPR(1:n_considered_slip_systems)*sgnn(IND(1:n_considered_slip_systems))
                     return
                 endif
-            endif
+            !endif
         endif
-    end subroutine
 
-    !> @brief Fills the IND_ array with the active slip systems
-    !!
-    !! @details This subroutine fills the IND_ array with the active slip systems
-    !!          skipping the slip systems with the indices in the skip array.
-    !!
-    !! @param[in, out] IND_                    integer vector (8)
-    !!                                        Indices of the active slip systems
-    !!
-    !! @param[in]     ind_active_slip_systems integer vector (8)
-    !!                                        Indices of the active slip systems
-    !!
-    !! @param[in]     skip                    integer vector
-    !!                                        Indices of the slip systems to skip
-    !!
-    !! @param[in]     N_max                   integer
-    !!                                        Maximum number of slip systems
-    subroutine fill(IND_, ind_active_slip_systems, skip, N_max)
-        integer, intent(inout):: IND_(8)
-        integer, intent(in):: ind_active_slip_systems(8), N_max
-        integer, dimension(:), intent(in):: skip
-        integer:: i, j
+    contains
+    recursive subroutine build_comb(ind_active_slip_systems, n, comb, level, j)
+        integer, intent(in):: ind_active_slip_systems(:), &
+                              n
+        integer, intent(in):: level, j
+        integer, intent(inout):: comb(n)
+        integer:: i
 
-        j = 1
-        do i = 1, N_max
-            if (any(i == skip)) cycle
-            IND_(j)=ind_active_slip_systems(i)
-            j = j+1
-        enddo
+
+        do i = j, size(ind_active_slip_systems)
+            comb(level) = ind_active_slip_systems(i)
+            if (level == n) then
+                call calc_slip(n, comb, SLPR, ineg, sumsq, sgnn, BB8, A1)
+                if (ineg == 0) call STORE(NSTOR, NOPL, n, SLPR, comb, ISTOR, SLSTOR, SUMSQ)
+            else
+                call build_comb(ind_active_slip_systems, n, comb, level+1, i+1)
+            end if
+        end do
+
 
     end subroutine
+   
+    end subroutine
+
+
 
     !> @brief Determine the slip rates given the stress and the active slip systems.
     !!
