@@ -182,13 +182,22 @@ contains
         start_index_slip_systems = n_slip_systems_grain*(index_in_cluster-1)
         crss_grain = crss_cluster(1:2, start_index_slip_systems+1:start_index_slip_systems+n_slip_systems_grain)
         spin = 0._DP
-        do i = 1, 5
-            ! If one grain does not deform, the stress stress_cluster came from the fullconstraints solution.
-            spanv(i)=stress_cluster(i+start_index_grain)
-            strain_relaxations(i)=sum(taylor_coeffs_cluster(i+start_index_grain, start_index_relaxations:n_slip_systems_cluster)*slip_rates_relaxations(1:n_relaxations))
-            strain_grain(i)=imposed_strain_grain(i, index_in_cluster)-strain_relaxations(i)
-            if (i < 4) spin(i)=sum(spin_coeffs_relaxations(i, :, index_in_cluster)*slip_rates_relaxations(1:n_relaxations))
-        enddo
+        strain_relaxations = 0._DP
+        if( full_constraints ) then
+            do i = 1, 5
+                ! If one grain does not deform, the stress stress_cluster came from the fullconstraints solution.
+                spanv(i)=stress_cluster(i+start_index_grain)
+                strain_grain(i)=imposed_strain_grain(i, index_in_cluster)
+            enddo
+        else
+            do i = 1, 5
+                ! If one grain does not deform, the stress stress_cluster came from the fullconstraints solution.
+                spanv(i)=stress_cluster(i+start_index_grain)
+                strain_relaxations(i)=sum(taylor_coeffs_cluster(i+start_index_grain, start_index_relaxations:n_slip_systems_cluster)*slip_rates_relaxations(1:n_relaxations))
+                strain_grain(i)=imposed_strain_grain(i, index_in_cluster)-strain_relaxations(i)
+                if (i < 4) spin(i)=sum(spin_coeffs_relaxations(i, :, index_in_cluster)*slip_rates_relaxations(1:n_relaxations))
+            enddo
+        end if
         stress_matrix = convert_stress_strain_space(spanv) ! (5) -> sym.(3, 3)
         spin_relaxations = 0._DP
         
