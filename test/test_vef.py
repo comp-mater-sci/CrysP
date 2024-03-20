@@ -62,10 +62,12 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
         os.chdir(TEST_RUN)
 
         result = subprocess.run([TEST_ROOT/'../VEF/bin/alamDMC',mode,'test.cfg'],
-                                stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-        assert result.returncode == 0
+                                stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         with open('alamDMC.log','w') as f:
             f.write(result.stdout.decode())
+        if result.returncode != 0:
+            print(result.stderr.decode())
+        assert result.returncode == 0
 
         if mode == 'UDSA':
             with open('out.uds', 'w') as out:
