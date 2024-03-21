@@ -10,6 +10,7 @@ module utils
 
     integer, parameter::  DP = selected_real_kind(15, 307)
     real(DP), parameter:: TOLERANCE  = 1.E-9_DP, &
+                          REAL_DP_MAX_VAL = huge(0._DP), &
                           PI         = acos(-1.D0), & 
                           RAD_TO_DEG = 180._DP/PI, &
                           SQR0P5     = sqrt(0.5_DP), &
@@ -245,32 +246,31 @@ contains
         end do
     end function
 
-    !>N1 = number of equations
-    !>N2 = number of unknowns
     !>A = coefficient matrix
     !>B = right hand sides
     !>BA = solution on output
     !>RES = residu (sum of squares)
-    !>M1, M2 = dimensions
-    subroutine kleinkwa(N1, N2, M1, M2, A, B, BA, res)
-        integer,                    intent(in)                                  :: M1, M2, N1, N2
-        real(DP), dimension(M2),    intent(in)                                  :: B
-        real(DP), dimension(M1, M2), intent(in)                                  :: A
-        real(DP), dimension(M2),    intent(out)                                 :: BA
-        real(DP),                   intent(inout)                               :: res
+    subroutine kleinkwa(A, B, BA, res)
+        real(DP), intent(in):: A(:,:), &
+                               B(size(A, 2))
+
+                               
+                            
+        real(DP), intent(out):: BA(size(A, 2))
+        real(DP),                   intent(out)                               :: res
         integer                                                                 :: i, info
         real(DP)                                                                :: y
-        real(DP), dimension(max(1, 2*min(N1, N2) + 1))   :: work
-        real(DP), dimension(M1, M2)                                              :: A_COPY
+        real(DP), dimension(max(1, 2*min(size(A, 1), size(A, 2)) + 1))   :: work
+        real(DP)  :: A_COPY(size(A, 1), size(A, 2))
 
         A_COPY = A
         BA = B
 
-        call dgels('N',N1, N2, 1, A_COPY, M1, BA, M2, work, size(work), info)
+        call dgels('N',size(A, 1), size(A, 2), 1, A_COPY, size(A, 1), BA, size(A, 2), work, size(work), info)
 
-        res = 0.0_DP
-        do i = 1, N1
-            y = sum(A(i, 1:N2)*BA(1:N2))
+        res = 0._DP
+        do i = 1, size(A, 1)
+            y = sum(A(i, :)*BA)
             RES = RES + (y-B(i))**2
         end do
     end subroutine
