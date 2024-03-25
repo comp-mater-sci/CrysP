@@ -156,6 +156,14 @@ implicit none
             ! More thorough exit status is necessary: TR_res
             call nlls_TR_solve(objFunc, vX_lin, tr_config, r1_lin, r2_lin, ierr, TR_res, SolutionInitOut = initState)
             R = r2_lin
+            if(ierr /= 0) then
+                  if(.not. config%nonlinear) then
+                        ! If the linear analysis fails, and the non-linear analysis is not requested,
+                        ! then the whole procedure is considered as failed.
+                        info = VEF_ERROR
+                        return
+                  end if
+            end if
             ! do checks if the solution is OK:
             ! Stop criterion: magic number "3" means: ||F(x)||_2 < eps(2)
             if ( (r2_lin <= r1_lin) .and. (TR_res%stop_criterion == 3) .and. (r2_lin <= tr_config%eps(2)) ) then
@@ -178,6 +186,10 @@ implicit none
             ! start TR solver
             call nlls_TR_solve(objFunc, vX, tr_config, r1, r2, ierr)
             R = r2
+            if(ierr /= 0) then
+                  info = VEF_ERROR
+                  return
+            end if
             !TODO: check exit status of the solver
             if (attempt_linearized) then
                   ! choose better of non-linear and linearized solution
