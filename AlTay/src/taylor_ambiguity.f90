@@ -178,15 +178,19 @@ contains
         ! Solve system of equations
         call Kleinkwa(A, B, slip_rate_buffer, RES)
 
-        if (size(ind) < 5) then 
-            sum_squares = sum(slip_rate_buffer(size(ind)+1:size(B))**2)
-        else 
-            sum_squares = 0._DP
-        end if
+        !if (size(ind) < 5) then 
+        sum_squares = sum(slip_rate_buffer(1:size(ind))**2)
+        sum_squares = 0._DP
+        do i = 1, size(ind)
+           sum_squares = sum_squares+slip_rate_buffer(i)**2 
+        end do
+        !else 
+            !sum_squares = 0._DP
+        !end if
         slip_rate = slip_rate_buffer(1:size(ind))
         negative_slip = .false.
         if (RES > TOL) then
-            print *, 'RES too large', RES, sum_squares, size(ind)
+            !print *, 'RES too large', RES, sum_squares, size(ind)
             negative_slip = .true.
         else
             do i = 1, size(ind)

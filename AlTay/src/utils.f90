@@ -246,34 +246,80 @@ contains
         end do
     end function
 
+!    !>A = coefficient matrix
+!    !>B = right hand sides
+!    !>BA = solution on output
+!    !>RES = residu (sum of squares)
+!    subroutine kleinkwa(A, B, BA, res)
+!        real(DP), intent(in):: A(:,:), &
+!                               B(:)
+!
+!                               
+!                            
+!        real(DP), intent(out):: BA(size(B))
+!        real(DP),                   intent(out)                               :: res
+!        integer                                                                 :: i, info
+!        real(DP)                                                                :: y
+!        real(DP), dimension(1000)   :: work
+!        real(DP)  :: A_COPY(size(A, 1), size(A, 2))
+!        real(DP):: sum_squares
+!
+!        A_COPY = A
+!        BA = B
+!
+!        call dgels('N',size(A, 1), size(A, 2), 1, A_COPY, size(A, 1), BA, size(B), work, size(work), info)
+!
+!        sum_squares = sum(BA(1:size(A, 2))**2)
+!        if (sum_squares > 1000) then
+!            print *, 'coefficient matrix: '
+!            write(*, '(5ES16.6)') transpose(A)
+!            print *, 'imposed strain: '
+!            print *, B
+!            print *, 'uitkomst: '
+!            print *, BA(1:size(A, 2))
+!        end if
+!
+!        res = 0._DP
+!        do i = 1, size(A, 1)
+!            y = A(i, :) .dot. BA(1:size(A, 2))
+!            RES = RES + (y-B(i))**2
+!        end do
+!    end subroutine
+
+    !>N1 = number of equations
+    !>N2 = number of unknowns
     !>A = coefficient matrix
     !>B = right hand sides
     !>BA = solution on output
     !>RES = residu (sum of squares)
-    subroutine kleinkwa(A, B, BA, res)
-        real(DP), intent(in):: A(:,:), &
-                               B(:)
-
-                               
-                            
-        real(DP), intent(out):: BA(size(B))
-        real(DP),                   intent(out)                               :: res
-        integer                                                                 :: i, info
+    !>M1, M2 = dimensions
+    subroutine kleinkwa(N1, N2, M1, M2, A, B, BA, res)
+        integer,                    intent(in)                                  :: M1, M2, N1, N2
+        real(DP), dimension(M2),    intent(in)                                  :: B
+        real(DP), dimension(M1, M2), intent(in)                                  :: A
+        real(DP), dimension(M2),    intent(out)                                 :: BA
+        real(DP),                   intent(inout)                               :: res
+        integer                                                                 :: i, rank, info
+        integer, dimension(N2)                                                  :: jpvt
         real(DP)                                                                :: y
-        real(DP), dimension(1000)   :: work
-        real(DP)  :: A_COPY(size(A, 1), size(A, 2))
+        real(DP), dimension(max(min(N1, N2) + 3*N2+1, 2*min(N1, N2) + 1))       :: work
+        real(DP), dimension(M1, M2)                                              :: A_COPY
 
         A_COPY = A
         BA = B
+        jpvt = 0
 
-        call dgels('N',size(A, 1), size(A, 2), 1, A_COPY, size(A, 1), BA, size(B), work, size(work), info)
+        call dgelsy(N1, N2, 1, A_COPY, M1, BA, M2, jpvt, 0.01_dp, rank, work, size(work), info)
 
-        res = 0._DP
-        do i = 1, size(A, 1)
-            y = sum(A(i, :)*BA(1:size(A, 2)))
+        res = 0.0_DP
+        do i = 1, N1
+            y = sum(A(i, 1:N2)*BA(1:N2))
             RES = RES + (y-B(i))**2
         end do
     end subroutine
+
+
+
 
     !> @brief Rotates the second-rank tensor S to the reference frame given by rotation R.
     !! @return The tensor in the frame defined by R
