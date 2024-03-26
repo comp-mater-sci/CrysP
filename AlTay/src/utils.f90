@@ -252,25 +252,25 @@ contains
     !>RES = residu (sum of squares)
     subroutine kleinkwa(A, B, BA, res)
         real(DP), intent(in):: A(:,:), &
-                               B(size(A, 2))
+                               B(:)
 
                                
                             
-        real(DP), intent(out):: BA(size(A, 2))
+        real(DP), intent(out):: BA(size(B))
         real(DP),                   intent(out)                               :: res
         integer                                                                 :: i, info
         real(DP)                                                                :: y
-        real(DP), dimension(max(1, 2*min(size(A, 1), size(A, 2)) + 1))   :: work
+        real(DP), dimension(1000)   :: work
         real(DP)  :: A_COPY(size(A, 1), size(A, 2))
 
         A_COPY = A
         BA = B
 
-        call dgels('N',size(A, 1), size(A, 2), 1, A_COPY, size(A, 1), BA, size(A, 2), work, size(work), info)
+        call dgels('N',size(A, 1), size(A, 2), 1, A_COPY, size(A, 1), BA, size(B), work, size(work), info)
 
         res = 0._DP
         do i = 1, size(A, 1)
-            y = sum(A(i, :)*BA)
+            y = sum(A(i, :)*BA(1:size(A, 2)))
             RES = RES + (y-B(i))**2
         end do
     end subroutine

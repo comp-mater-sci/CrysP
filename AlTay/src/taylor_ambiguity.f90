@@ -166,7 +166,7 @@ contains
         logical, intent(out):: negative_slip
         real(DP), intent(out):: slip_rate(size(ind)), sum_squares
 
-        real(DP):: A(5, size(ind)), B(size(ind)), RES
+        real(DP):: A(5, size(ind)), B(merge(size(ind), 5, size(ind)>5)), RES, slip_rate_buffer(size(B))        
         integer:: i
         real(DP), parameter:: TOL = 1.0e-6_dp
 
@@ -176,11 +176,17 @@ contains
         B(1:5)=strain
 
         ! Solve system of equations
-        call Kleinkwa(A, B, slip_rate, RES)
+        call Kleinkwa(A, B, slip_rate_buffer, RES)
 
-        sum_squares = sum(slip_rate**2)
+        if (size(ind) < 5) then 
+            sum_squares = sum(slip_rate_buffer(size(ind)+1:size(B))**2)
+        else 
+            sum_squares = 0._DP
+        end if
+        slip_rate = slip_rate_buffer(1:size(ind))
         negative_slip = .false.
         if (RES > TOL) then
+            print *, 'RES too large', RES, sum_squares, size(ind)
             negative_slip = .true.
         else
             do i = 1, size(ind)
