@@ -71,9 +71,6 @@ contains
         sgnn = 0._DP
         sgnn(ind_active_slip_systems(1:n_active_slip_systems))=sign(1._DP, TAURLP(1:n_active_slip_systems))
 
-        ! If solution is totally zero, just return
-        if(sum(abs(slip_rates)) <= TOLERANCE) return
-
         ! First, try the standard minimum norm solution with all active slip systems
         call calc_slip(ind_active_slip_systems, slip_rates_active, negative_slip, sum_squares, sgnn, strain, taylor_coeffs)
         if (.not. negative_slip) then
@@ -168,35 +165,39 @@ contains
 
         real(DP):: A(5, size(ind)), B(merge(size(ind), 5, size(ind)>5)), RES, slip_rate_buffer(size(B))        
         integer:: i
+        real(DP), dimension(1000)   :: work
+        real(DP)  :: A_COPY(size(A, 1), size(A, 2)), BA(size(B))
+        real(DP):: y
         real(DP), parameter:: TOL = 1.0e-6_dp
+        integer:: info
 
         do i = 1, size(ind)
             A(1:5, i)=sgnn(ind(i))*A8(1:5, ind(i))
         enddo
         B(1:5)=strain
 
+        A_COPY = A
+        BA = B
         ! Solve system of equations
-        call Kleinkwa(A, B, slip_rate_buffer, RES)
+        !call Kleinkwa(A, B, slip_rate_buffer, RES)
 
-        !if (size(ind) < 5) then 
-        sum_squares = sum(slip_rate_buffer(1:size(ind))**2)
-        sum_squares = 0._DP
-        do i = 1, size(ind)
-           sum_squares = sum_squares+slip_rate_buffer(i)**2 
-        end do
-        !else 
-            !sum_squares = 0._DP
-        !end if
-        slip_rate = slip_rate_buffer(1:size(ind))
+        call dgels('N',size(A, 1), size(A, 2), 1, A_COPY, size(A, 1), BA, size(B), work, size(work), info)
+
+        slip_rate = BA(1:size(ind))
         negative_slip = .false.
-        if (RES > TOL) then
-            !print *, 'RES too large', RES, sum_squares, size(ind)
+        sum_squares = sum(BA(1:size(ind))**2)
+        if (info > 0) then
             negative_slip = .true.
-        else
-            do i = 1, size(ind)
-                negative_slip = (slip_rate(i) < 0._DP)
-                if (negative_slip) return
-            end do
+            return
+        else if (.not. all(BA >= 0._DP)) then
+            negative_slip = .true.
+            return
+        !else if (sum_squares > 1000) then 
+        !    print *, 'sum squares too large'
+        !else if (res > TOLERANCE) then
+        !    print *, 'res too large'
+        !else
+        !    print *, 'Accept'
         end if
     end subroutine
 end module
