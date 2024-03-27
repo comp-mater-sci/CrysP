@@ -5,8 +5,6 @@ module utils
     implicit none
     public
 
-    external:: dgels
-
 
     integer, parameter::  DP = selected_real_kind(15, 307)
     real(DP), parameter:: TOLERANCE  = 1.E-9_DP, &

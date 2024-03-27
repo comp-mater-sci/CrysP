@@ -56,148 +56,73 @@ contains
                                strain(5)
         integer, intent(inout):: ind_active_slip_systems(n_active_slip_systems)
         real(DP), intent(inout):: slip_rates(:)
-        integer:: IND(n_active_slip_systems), ISTOR(0:8, 48)
-        real(DP):: slip_rates_active(n_active_slip_systems), SLSTOR(0:8, 48), sum_squares
-        integer, parameter:: NSTOR = 48
-        integer:: j, i1, i2, i3, n_considered_slip_systems, & !Number of slip systems being considered, if not all active slip systems
-                  NOPL, IOPL
         real(DP):: sgnn(size(slip_rates))
         real(DP):: sum_squares_optimal, slip_rates_optimal(n_active_slip_systems)
         integer:: ind_optimal(n_active_slip_systems), n_optimal
-        integer:: combination(n_active_slip_systems)
-        logical:: negative_slip
+        integer:: size_workspace, info
+        real(DP):: work(1), coeffs(5, size(taylor_coeffs, 2))
+        integer:: i
 
-        NOPL = 0
+        
+
         sgnn = 0._DP
         sgnn(ind_active_slip_systems(1:n_active_slip_systems))=sign(1._DP, TAURLP(1:n_active_slip_systems))
 
-        ! First, try the standard minimum norm solution with all active slip systems
-        call calc_slip(ind_active_slip_systems, slip_rates_active, negative_slip, sum_squares, sgnn, strain, taylor_coeffs)
-        if (.not. negative_slip) then
-            ! The solution is valid, and thus also mathematically guaranteed
-            ! to be the minimum norm solution. We are done.
-            slip_rates(ind_active_slip_systems)=slip_rates_active*sgnn(ind_active_slip_systems)
-            return
-        endif
+        do i = 1, n_active_slip_systems
+            coeffs(:, ind_active_slip_systems(i)) = taylor_coeffs(:, ind_active_slip_systems(i)) * sgnn(ind_active_slip_systems(i))
+        end do
 
-        IND = ind_active_slip_systems
-        ! The solution is not valid, so we need to try all possible combinations
-        ! of the active slip systems and take the one with the smallest sum of squares.
-        if (n_active_slip_systems > 5) then
-            n_considered_slip_systems = n_active_slip_systems-1
-                sum_squares_optimal = REAL_DP_MAX_VAL
-                do while (n_considered_slip_systems >= 5)
-                    call iterate_combinations(1, 1)
-                    n_considered_slip_systems = n_considered_slip_systems-1
-                end do
+        sum_squares_optimal = REAL_DP_MAX_VAL
 
-                if (sum_squares_optimal < REAL_DP_MAX_VAL) then 
-                    slip_rates = 0._DP
-                    slip_rates(ind_optimal(1:n_optimal))=slip_rates_optimal(1:n_optimal)*sgnn(ind_optimal(1:n_optimal))
-                end if
-            !endif
-        endif
+        
+        !Workspace query. Work(1) contains optimal size for workspace in dgels call in iterate_combinations.
+        !Taylor_coeffs passed in as dummy argument and is ignored.
+        call dgels('N',5, n_active_slip_systems, 1, taylor_coeffs, 5, taylor_coeffs, n_active_slip_systems, work, -1, info)
+        call iterate_combinations(ind_active_slip_systems, 1, int(work(1)))
+
+        if (sum_squares_optimal < REAL_DP_MAX_VAL) then 
+            slip_rates = 0._DP
+            slip_rates(ind_optimal(1:n_optimal))=slip_rates_optimal(1:n_optimal)*sgnn(ind_optimal(1:n_optimal))
+        end if
 
     contains
 
-        recursive subroutine iterate_combinations(index_result, start_index_loop)
-            integer, intent(in):: index_result, &
-                                  start_index_loop
-            integer::             i
+        !Get a list of all the combinations of size r of the elements of a given list
+        recursive subroutine iterate_combinations(ind, start_index, size_workspace)
+            integer, intent(in):: ind(:), &
+                                  start_index, &
+                                  size_workspace
+            integer:: i, &
+                      info, &
+                      n_systems
+            real(DP):: A(5, size(ind)), &
+                       B(size(ind)), &
+                       workspace(size_workspace), &
+                       sum_squares
+            
+            n_systems = size(ind)
 
-            do i = start_index_loop, n_active_slip_systems
-                combination(index_result) = ind_active_slip_systems(i)
-                if (index_result == n_considered_slip_systems) then
-                    call calc_slip(combination(1:n_considered_slip_systems), slip_rates_active, negative_slip, sum_squares, sgnn, strain, taylor_coeffs)
-                    if (.not. negative_slip) then 
-                        if (sum_squares < sum_squares_optimal) then
-                            n_optimal = n_considered_slip_systems
-                            ind_optimal = combination
-                            slip_rates_optimal = slip_rates_active
-                            sum_squares_optimal = sum_squares
-                        end if
-                    end if 
-                else
-                    call iterate_combinations(index_result+1, i+1)
+            A = coeffs(:, ind)
+            B(1:5)=strain
+
+            call dgels('N',5, n_systems, 1, A, 5, B, n_systems, workspace, size_workspace, info)
+
+            if (info == 0 .and. all(B >= 0)) then
+                sum_squares = sum(B**2)
+                if (sum_squares < sum_squares_optimal) then
+                    n_optimal = n_systems
+                    ind_optimal(1:n_systems) = ind
+                    slip_rates_optimal(1:n_systems) = B
+                    sum_squares_optimal = sum_squares
                 end if
-            end do
+            else if (size(ind) > 5) then 
+                !Workspace query. Work(1) contains optimal size for workspace in dgels call in next iteration.
+                !A and B are dummy arguments and are ignored.
+                call dgels('N',5, n_systems-1, 1, A, 5, B, n_systems-1, workspace, -1, info)
+                do i = start_index, n_systems
+                   call iterate_combinations(pack(ind, ind /= ind(i)), i, int(workspace(1))) 
+                end do
+            end if
         end subroutine
-    end subroutine
-
-
-    !> @brief Determine the slip rates given the stress and the active slip systems.
-    !!
-    !! @details This subroutine determines the slip rates given the stress and the active slip systems.
-    !!          If there are more than 5 active slip systems, then there are multiple possible solutions.
-    !!          This subroutine finds the solution with the smallest sum of squares of the slip rates.
-    !!          If there are exactly 5 active slip systems, then there is only one solution.
-    !!          If there are less than 5 active slip systems, then there may not be a solution.
-    !!          In that case, we solve the system of equations in the least square sense.
-    !!
-    !! @param[in]     ind                     integer vector (8)
-    !!                                        Indices of the active slip systems
-    !!
-    !! @param[out]    slip_rate               real vector (8)
-    !!                                        Slip rates for the active slip systems
-    !!
-    !! @param[out]    negative_slip           logical
-    !!                                        True if one of the determined slips is negative.
-    !!                                        If so, the solution is invalid    
-    !!
-    !! @param[out]    sum_squares             real
-    !!                                        Sum of squares of the slip rates
-    !!
-    !! @param[in]     sgnn                    real vector (n_slip_systems)
-    !!                                        Signs of the slip rates
-    !!
-    !! @param[in]     strain                  real vector (5)
-    !!                                        Strain imposed on the grain 
-    !!
-    !! @param[in]     A8                      real matrix (5, n_slip_systems)
-    !!                                        The symmetric (non-rotational) part of taylor equations matrix for a single grain.
-    !!                                        The matrix is represented in crystal frame.
-    !!                                        This matrix does not contain the relaxation terms.
-    subroutine calc_slip(ind, slip_rate, negative_slip, sum_squares, sgnn, strain, A8)
-        integer, intent(in):: ind(:)
-        real(DP), intent(in):: A8(:,:), strain(5), sgnn(:)
-        logical, intent(out):: negative_slip
-        real(DP), intent(out):: slip_rate(size(ind)), sum_squares
-
-        real(DP):: A(5, size(ind)), B(merge(size(ind), 5, size(ind)>5)), RES, slip_rate_buffer(size(B))        
-        integer:: i
-        real(DP), dimension(1000)   :: work
-        real(DP)  :: A_COPY(size(A, 1), size(A, 2)), BA(size(B))
-        real(DP):: y
-        real(DP), parameter:: TOL = 1.0e-6_dp
-        integer:: info
-
-        do i = 1, size(ind)
-            A(1:5, i)=sgnn(ind(i))*A8(1:5, ind(i))
-        enddo
-        B(1:5)=strain
-
-        A_COPY = A
-        BA = B
-        ! Solve system of equations
-        !call Kleinkwa(A, B, slip_rate_buffer, RES)
-
-        call dgels('N',size(A, 1), size(A, 2), 1, A_COPY, size(A, 1), BA, size(B), work, size(work), info)
-
-        slip_rate = BA(1:size(ind))
-        negative_slip = .false.
-        sum_squares = sum(BA(1:size(ind))**2)
-        if (info > 0) then
-            negative_slip = .true.
-            return
-        else if (.not. all(BA >= 0._DP)) then
-            negative_slip = .true.
-            return
-        !else if (sum_squares > 1000) then 
-        !    print *, 'sum squares too large'
-        !else if (res > TOLERANCE) then
-        !    print *, 'res too large'
-        !else
-        !    print *, 'Accept'
-        end if
     end subroutine
 end module
