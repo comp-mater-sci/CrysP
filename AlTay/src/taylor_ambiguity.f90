@@ -60,7 +60,7 @@ contains
         real(DP), allocatable:: slip_rates_optimal(:)
         integer, allocatable:: ind_optimal(:)
         integer:: size_workspace, info
-        real(DP):: work(1), coeffs(5, size(taylor_coeffs, 2))
+        real(DP):: coeffs(5, size(taylor_coeffs, 2))
         integer:: i, &
                   n_active_slip_systems
 
@@ -77,8 +77,7 @@ contains
         
         !Workspace query. Work(1) contains optimal size for workspace in dgels call in iterate_combinations.
         !Taylor_coeffs passed in as dummy argument and is ignored.
-        call dgels('N',5, n_active_slip_systems, 1, taylor_coeffs, 5, taylor_coeffs, n_active_slip_systems, work, -1, info)
-        call iterate_combinations(ind_active_slip_systems, 1, int(work(1)))
+        call iterate_combinations(ind_active_slip_systems, 1)
 
         slip_rates = 0._DP
         if (sum_squares_optimal < REAL_DP_MAX_VAL) then
@@ -91,16 +90,16 @@ contains
     contains
 
         !Get a list of all the combinations of size r of the elements of a given list
-        recursive subroutine iterate_combinations(ind, start_index, size_workspace)
+        recursive subroutine iterate_combinations(ind, start_index)
             integer, intent(in):: ind(:), &
-                                  start_index, &
-                                  size_workspace
+                                  start_index
             integer:: i, &
                       info, &
                       n_systems
+            integer, parameter:: SIZE_WORKSPACE = 10  ! Optimal, refer to LAPACK documentation.
             real(DP):: A(5, size(ind)), &
                        B(size(ind)), &
-                       workspace(size_workspace), &
+                       workspace(SIZE_WORKSPACE), &
                        sum_squares
             
             n_systems = size(ind)
@@ -108,7 +107,7 @@ contains
             A = coeffs(:, ind)
             B(1:5)=strain
 
-            call dgels('N',5, n_systems, 1, A, 5, B, n_systems, workspace, size_workspace, info)
+            call dgels('N',5, n_systems, 1, A, 5, B, n_systems, workspace, SIZE_WORKSPACE, info)
 
             if (info == 0 .and. all(B >= -TOLERANCE)) then
                 sum_squares = sum(B**2)
@@ -120,9 +119,8 @@ contains
             else if (size(ind) > 5) then 
                 !Workspace query. Work(1) contains optimal size for workspace in dgels call in next iteration.
                 !A and B are dummy arguments and are ignored.
-                call dgels('N',5, n_systems-1, 1, A, 5, B, n_systems-1, workspace, -1, info)
                 do i = start_index, n_systems
-                   call iterate_combinations(pack(ind, ind /= ind(i)), i, int(workspace(1))) 
+                   call iterate_combinations(pack(ind, ind /= ind(i)), i) 
                 end do
             end if
         end subroutine
