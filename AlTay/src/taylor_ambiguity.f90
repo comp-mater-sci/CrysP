@@ -34,7 +34,7 @@ contains
     !!                                        n_active_slip_systems <= 8
     !!
     !!
-    !! @param[in]     TAURLP                  real vector (8)
+    !! @param[in]     rss                  real vector (8)
     !!                                        RSS of the active slip systems
     !!
     !! @param[in]     ind_active_slip_systems integer vector (8)
@@ -49,41 +49,40 @@ contains
     !!                                        The symmetric (non-rotational) part of taylor equations matrix for a single grain.
     !!                                        The matrix is represented in crystal frame.
     !!                                        This matrix does not contain the relaxation terms.
-    subroutine resolve_taylor_ambiguity(slip_rates, n_active_slip_systems, TAURLP, ind_active_slip_systems, strain, taylor_coeffs)
-        integer, intent(in):: n_active_slip_systems
+    function resolve_taylor_ambiguity(ind_active_slip_systems, rss, strain, taylor_coeffs) result(slip_rates)
+        integer, intent(in):: ind_active_slip_systems(:)
         real(DP), intent(in):: taylor_coeffs(:,:),                 &
-                               TAURLP(n_active_slip_systems),               &
+                               rss(size(ind_active_slip_systems)),               &
                                strain(5)
-        integer, intent(inout):: ind_active_slip_systems(n_active_slip_systems)
-        real(DP), intent(inout):: slip_rates(:)
-        real(DP):: sgnn(size(slip_rates))
-        real(DP):: sum_squares_optimal, slip_rates_optimal(n_active_slip_systems)
-        integer:: ind_optimal(n_active_slip_systems), n_optimal
+        real(DP):: slip_rates(size(taylor_coeffs, 2))
+        real(DP):: sgnn(size(taylor_coeffs, 2))
+        real(DP):: sum_squares_optimal 
+        real(DP), allocatable:: slip_rates_optimal(:)
+        integer, allocatable:: ind_optimal(:)
         integer:: size_workspace, info
         real(DP):: work(1), coeffs(5, size(taylor_coeffs, 2))
-        integer:: i
+        integer:: i, &
+                  n_active_slip_systems
 
-        
+        n_active_slip_systems = size(ind_active_slip_systems)
 
         sgnn = 0._DP
-        sgnn(ind_active_slip_systems(1:n_active_slip_systems))=sign(1._DP, TAURLP(1:n_active_slip_systems))
+        sgnn(ind_active_slip_systems)=sign(1._DP, rss)
 
         do i = 1, n_active_slip_systems
             coeffs(:, ind_active_slip_systems(i)) = taylor_coeffs(:, ind_active_slip_systems(i)) * sgnn(ind_active_slip_systems(i))
         end do
 
         sum_squares_optimal = REAL_DP_MAX_VAL
-
         
         !Workspace query. Work(1) contains optimal size for workspace in dgels call in iterate_combinations.
         !Taylor_coeffs passed in as dummy argument and is ignored.
         call dgels('N',5, n_active_slip_systems, 1, taylor_coeffs, 5, taylor_coeffs, n_active_slip_systems, work, -1, info)
         call iterate_combinations(ind_active_slip_systems, 1, int(work(1)))
 
-        if (sum_squares_optimal < REAL_DP_MAX_VAL) then 
-            slip_rates = 0._DP
-            slip_rates(ind_optimal(1:n_optimal))=slip_rates_optimal(1:n_optimal)*sgnn(ind_optimal(1:n_optimal))
-        end if
+        slip_rates = 0._DP
+        if (sum_squares_optimal < REAL_DP_MAX_VAL) &
+            slip_rates(ind_optimal) = slip_rates_optimal*sgnn(ind_optimal)
 
     contains
 
@@ -110,9 +109,8 @@ contains
             if (info == 0 .and. all(B >= 0)) then
                 sum_squares = sum(B**2)
                 if (sum_squares < sum_squares_optimal) then
-                    n_optimal = n_systems
-                    ind_optimal(1:n_systems) = ind
-                    slip_rates_optimal(1:n_systems) = B
+                    ind_optimal = ind
+                    slip_rates_optimal = B
                     sum_squares_optimal = sum_squares
                 end if
             else if (size(ind) > 5) then 
@@ -124,5 +122,5 @@ contains
                 end do
             end if
         end subroutine
-    end subroutine
+    end function
 end module

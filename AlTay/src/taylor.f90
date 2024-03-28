@@ -237,11 +237,13 @@ contains
                                     slip_rates(size(crss, 2))
 
 
-        slip_rates = 0._DP
-        slip_rates(ind_active_slip_systems(1:n_active_slip_systems)) = SLIPLP(1:n_active_slip_systems)
-
         if (n_active_slip_systems > 5) then
-            call resolve_taylor_ambiguity(slip_rates, n_active_slip_systems, TAURLP, ind_active_slip_systems, strain_grain, taylor_coeffs)
+            slip_rates = resolve_taylor_ambiguity(ind_active_slip_systems(1:n_active_slip_systems), TAURLP, strain_grain, taylor_coeffs)
+            if (all(slip_rates == 0._DP)) &
+                slip_rates(ind_active_slip_systems(1:n_active_slip_systems)) = SLIPLP(1:n_active_slip_systems)
+        else 
+            slip_rates = 0._DP
+            slip_rates(ind_active_slip_systems(1:n_active_slip_systems)) = SLIPLP(1:n_active_slip_systems)
         end if
         call hardening_update_state(index_grain, 1._DP, slip_rates)
 
