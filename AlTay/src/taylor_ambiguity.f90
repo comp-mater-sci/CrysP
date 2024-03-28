@@ -81,8 +81,12 @@ contains
         call iterate_combinations(ind_active_slip_systems, 1, int(work(1)))
 
         slip_rates = 0._DP
-        if (sum_squares_optimal < REAL_DP_MAX_VAL) &
+        if (sum_squares_optimal < REAL_DP_MAX_VAL) then
             slip_rates(ind_optimal) = slip_rates_optimal*sgnn(ind_optimal)
+        !else
+        !    call log_error('taylor_ambiguity', 'resolve_taylor_ambiguity', ERR, 'Could not find solution')
+        end if 
+
 
     contains
 
@@ -106,7 +110,7 @@ contains
 
             call dgels('N',5, n_systems, 1, A, 5, B, n_systems, workspace, size_workspace, info)
 
-            if (info == 0 .and. all(B >= 0)) then
+            if (info == 0 .and. all(B >= -TOLERANCE)) then
                 sum_squares = sum(B**2)
                 if (sum_squares < sum_squares_optimal) then
                     ind_optimal = ind

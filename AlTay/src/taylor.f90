@@ -239,6 +239,10 @@ contains
 
         if (n_active_slip_systems > 5) then
             slip_rates = resolve_taylor_ambiguity(ind_active_slip_systems(1:n_active_slip_systems), TAURLP, strain_grain, taylor_coeffs)
+            !Should not happen since taylor_ambiguity iterates through all possible combinations.
+            !However, since taylor_coeffs may be ill-conditioned roundoff errors may make solutions that simplex thinks are valid
+            !invalid in taylor_ambiguity.
+            !If this happens, taylor_ambiguity is as unreliable as simplex, so might as well take simplex solution.
             if (all(slip_rates == 0._DP)) &
                 slip_rates(ind_active_slip_systems(1:n_active_slip_systems)) = SLIPLP(1:n_active_slip_systems)
         else 
