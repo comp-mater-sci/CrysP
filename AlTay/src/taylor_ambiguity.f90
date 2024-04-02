@@ -55,37 +55,22 @@ contains
                                rss(size(ind_active_slip_systems)),               &
                                strain(5)
         real(DP):: slip_rates(size(taylor_coeffs, 2))
-        real(DP):: sgnn(size(taylor_coeffs, 2))
+        real(DP):: sign_slip(size(taylor_coeffs, 2))
         real(DP):: sum_squares_optimal 
-        real(DP), allocatable:: slip_rates_optimal(:)
-        integer, allocatable:: ind_optimal(:)
-        integer:: size_workspace, info
         real(DP):: coeffs(5, size(taylor_coeffs, 2))
-        integer:: i, &
-                  n_active_slip_systems
+        integer:: i
 
-        n_active_slip_systems = size(ind_active_slip_systems)
+        sign_slip = 0._DP
+        sign_slip(ind_active_slip_systems)=sign(1._DP, rss)
 
-        sgnn = 0._DP
-        sgnn(ind_active_slip_systems)=sign(1._DP, rss)
-
-        do i = 1, n_active_slip_systems
-            coeffs(:, ind_active_slip_systems(i)) = taylor_coeffs(:, ind_active_slip_systems(i)) * sgnn(ind_active_slip_systems(i))
+        do i = 1, size(ind_active_slip_systems)
+            coeffs(:, ind_active_slip_systems(i)) = taylor_coeffs(:, ind_active_slip_systems(i)) * sign_slip(ind_active_slip_systems(i))
         end do
 
         sum_squares_optimal = REAL_DP_MAX_VAL
         
-        !Workspace query. Work(1) contains optimal size for workspace in dgels call in iterate_combinations.
-        !Taylor_coeffs passed in as dummy argument and is ignored.
-        call iterate_combinations(ind_active_slip_systems, 1)
-
         slip_rates = 0._DP
-        if (sum_squares_optimal < REAL_DP_MAX_VAL) then
-            slip_rates(ind_optimal) = slip_rates_optimal*sgnn(ind_optimal)
-        !else
-        !    call log_error('taylor_ambiguity', 'resolve_taylor_ambiguity', ERR, 'Could not find solution')
-        end if 
-
+        call iterate_combinations(ind_active_slip_systems, 1)
 
     contains
 
@@ -112,13 +97,11 @@ contains
             if (info == 0 .and. all(B >= -TOLERANCE)) then
                 sum_squares = sum(B**2)
                 if (sum_squares < sum_squares_optimal) then
-                    ind_optimal = ind
-                    slip_rates_optimal = B
                     sum_squares_optimal = sum_squares
+                    slip_rates = 0._DP
+                    slip_rates(ind) = B*sign_slip(ind)
                 end if
             else if (size(ind) > 5) then 
-                !Workspace query. Work(1) contains optimal size for workspace in dgels call in next iteration.
-                !A and B are dummy arguments and are ignored.
                 do i = start_index, n_systems
                    call iterate_combinations(pack(ind, ind /= ind(i)), i) 
                 end do
