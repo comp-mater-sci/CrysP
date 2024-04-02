@@ -20,21 +20,7 @@ contains
     !!          This subroutine finds the slip rates assuming that the sum
     !!          of the squares of the slip rates must be minimal.
     !!
-    !!          The minimum norm solution may not satisfy the yield conditions.
-    !!          (i.e. the slip rates may be negative). In that case, we try
-    !!          all possible combinations of the slip systems and minimize again.
-    !!
-    !! @param[out]    slip_rates              real vector (n_slip_systems)
-    !!                                        Slip rates for all the slip systems
-    !!                                        Note: this variable is marked as [in, out] in the code, 
-    !!                                        but it seems to be overwritten immediately.
-    !!
-    !! @param[in]     n_active_slip_systems   integer
-    !!                                        Number of active slip systems
-    !!                                        n_active_slip_systems <= 8
-    !!
-    !!
-    !! @param[in]     rss                  real vector (8)
+    !! @param[in]     rss                     real vector (8)
     !!                                        RSS of the active slip systems
     !!
     !! @param[in]     ind_active_slip_systems integer vector (8)
@@ -42,70 +28,99 @@ contains
     !!                                        Note: this variable is marked as [in, out] in the code, 
     !!                                        but it is never actually modified.
     !!
-    !! @param[in]     strain                     real vector (5)
+    !! @param[in]     strain                  real vector (5)
     !!                                        Strain imposed on slip systems of grain (without relaxations)
     !!
-    !! @param[in]     taylor_coeffs                      real matrix (5, n_slip_systems)
+    !! @param[in]     taylor_coeffs           real matrix (5, n_slip_systems)
     !!                                        The symmetric (non-rotational) part of taylor equations matrix for a single grain.
     !!                                        The matrix is represented in crystal frame.
     !!                                        This matrix does not contain the relaxation terms.
+    !! @return    slip_rates                  real vector (n_slip_systems)
+    !!                                        Slip rates for all the slip systems
+    !!                                        Note: this variable is marked as [in, out] in the code, 
+    !!                                        but it seems to be overwritten immediately.
+
     function resolve_taylor_ambiguity(ind_active_slip_systems, rss, strain, taylor_coeffs) result(slip_rates)
-        integer, intent(in):: ind_active_slip_systems(:)
-        real(DP), intent(in):: taylor_coeffs(:,:),                 &
-                               rss(size(ind_active_slip_systems)),               &
-                               strain(5)
-        real(DP):: slip_rates(size(taylor_coeffs, 2))
-        real(DP):: sign_slip(size(taylor_coeffs, 2))
-        real(DP):: sum_squares_optimal 
-        real(DP):: coeffs(5, size(taylor_coeffs, 2))
-        integer:: i
+        integer, intent(in)::   ind_active_slip_systems(:)
+        real(DP), intent(in)::  taylor_coeffs(:,:),                 &
+                                rss(size(ind_active_slip_systems)),               &
+                                strain(5)
+        real(DP)::              slip_rates(size(taylor_coeffs, 2)), &
+                                coeffs(5, size(taylor_coeffs, 2)), &
+                                sum_squares_optimal 
+        integer::               sign_slip(size(taylor_coeffs, 2)), &
+                                i 
 
         sign_slip = 0._DP
-        sign_slip(ind_active_slip_systems)=sign(1._DP, rss)
+        sign_slip(ind_active_slip_systems)=int(sign(1._DP, rss))
 
         do i = 1, size(ind_active_slip_systems)
             coeffs(:, ind_active_slip_systems(i)) = taylor_coeffs(:, ind_active_slip_systems(i)) * sign_slip(ind_active_slip_systems(i))
         end do
 
         sum_squares_optimal = REAL_DP_MAX_VAL
-        
         slip_rates = 0._DP
-        call iterate_combinations(ind_active_slip_systems, 1)
-
-    contains
-
-        !Get a list of all the combinations of size r of the elements of a given list
-        recursive subroutine iterate_combinations(ind, start_index)
-            integer, intent(in):: ind(:), &
-                                  start_index
-            integer:: i, &
-                      info, &
-                      n_systems
-            integer, parameter:: SIZE_WORKSPACE = 10  ! Optimal, refer to LAPACK documentation.
-            real(DP):: A(5, size(ind)), &
-                       B(size(ind)), &
-                       workspace(SIZE_WORKSPACE), &
-                       sum_squares
-            
-            n_systems = size(ind)
-
-            A = coeffs(:, ind)
-            B(1:5)=strain
-
-            call dgels('N',5, n_systems, 1, A, 5, B, n_systems, workspace, SIZE_WORKSPACE, info)
-
-            if (info == 0 .and. all(B >= -TOLERANCE)) then
-                sum_squares = sum(B**2)
-                if (sum_squares < sum_squares_optimal) then
-                    sum_squares_optimal = sum_squares
-                    slip_rates = 0._DP
-                    slip_rates(ind) = B*sign_slip(ind)
-                end if
-            else if (size(ind) > 5) then 
-                do i = start_index, n_systems
-                   call iterate_combinations(pack(ind, ind /= ind(i)), i) 
-                end do
-            end if
-        end subroutine
+        call iterate_combinations(coeffs, strain, ind_active_slip_systems, 1, sign_slip, slip_rates, sum_squares_optimal)
     end function
+
+
+    !> @brief iterate over all combinations of active slip systems to find the minimum norm solution
+    !!
+    !! @details This routine finds the combination of slip rates among the active slip systems which yields the smalles sum of
+    !!          squared slips. It starts with evaluating the input combination. If this does not yield a valid solution (all slip rates
+    !!          positive), it tries all subsets of the input set with at least 5 slip systems. 
+    !! @param[in]       coeffs              Taylor coefficients of the slip systems with their sign adjusted based on the rss found
+    !                                       in simplex so that all slip rates determined by the minimum norm solution should be possitive.
+    !! @param[in]       strain              Imposed strain on the grain
+    !! @param[in]       ind                 Indices of the currently considered slip systems
+    !! @param[in]       start_index         Index from which to start looping over possible subsets. Needed to avoid duplicting
+    !!                                      combinations (e.g. [1, 2] and [2, 1])
+    !! @param[in]       sign_slip           Sign of the slip rates on each of the candidate slip systems
+    !! @param[inout]    slip_rates          Current optimal solution for the slip rates
+    !! @param[inout]    sum_squares_optimal Optimal sum of squared slip rates found so far
+    recursive subroutine iterate_combinations(coeffs, strain, ind, start_index, sign_slip, slip_rates, sum_squares_optimal)
+        real(DP), intent(in)::      coeffs(:,:), &
+                                    strain(5)
+        integer, intent(in)::       ind(:), &
+                                    start_index, &
+                                    sign_slip(:)
+        real(DP), intent(inout)::   slip_rates(size(sign_slip)), &
+                                    sum_squares_optimal
+        integer, parameter::        SIZE_WORKSPACE = 10  ! Optimal, refer to LAPACK documentation.
+        integer::                   i, &
+                                    info, &
+                                    n_systems
+        real(DP)::                  A(5, size(ind)), &
+                                    B(size(ind)), &
+                                    workspace(SIZE_WORKSPACE), &
+                                    sum_squares
+        
+        n_systems = size(ind)
+
+        !Must copy to local vars because dgels overwrites these internally
+        A = coeffs(:, ind)
+        B(1:5)=strain
+
+        !Lapack routine to find minimum norm solution
+        call dgels('N',5, n_systems, 1, A, 5, B, n_systems, workspace, SIZE_WORKSPACE, info)
+
+        !Dgels expects the input system to be of full rank. If this is not the case, info > 0. We can then safely ignore the
+        !solution because we at least 1 solution of full rank exists, which was the result from simplex. Thus, we just try different
+        !combinations until we find it.
+        !We need to add a tolerance on B because the input system may be ill-conditioned
+        if (info == 0 .and. all(B >= -TOLERANCE)) then
+            sum_squares = sum(B**2)
+            if (sum_squares < sum_squares_optimal) then
+                sum_squares_optimal = sum_squares
+                slip_rates = 0._DP
+                slip_rates(ind) = B*sign_slip(ind)
+            end if
+        !We only need to try subsets when the current solution is not valid because it is not possible for a solution with a smaller
+        !number of slip systems to have a smaller norm than the current one.
+        else if (size(ind) > 5) then 
+            do i = start_index, n_systems
+               call iterate_combinations(coeffs, strain, pack(ind, ind /= ind(i)), i, sign_slip, slip_rates, sum_squares_optimal) 
+            end do
+        end if
+    end subroutine
 end module
