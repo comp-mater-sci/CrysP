@@ -69,15 +69,22 @@ contains
     !! @details This routine finds the combination of slip rates among the active slip systems which yields the smalles sum of
     !!          squared slips. It starts with evaluating the input combination. If this does not yield a valid solution (all slip rates
     !!          positive), it tries all subsets of the input set with at least 5 slip systems. 
-    !! @param[in]       coeffs              Taylor coefficients of the slip systems with their sign adjusted based on the rss found
+    !! @param[in]       coeffs              real matrix(5, n_slip_systems) 
+    !!                                      Taylor coefficients of the slip systems with their sign adjusted based on the rss found
     !                                       in simplex so that all slip rates determined by the minimum norm solution should be possitive.
-    !! @param[in]       strain              Imposed strain on the grain
-    !! @param[in]       ind                 Indices of the currently considered slip systems
-    !! @param[in]       start_index         Index from which to start looping over possible subsets. Needed to avoid duplicting
+    !! @param[in]       strain              real vector(5)
+    !!                                      Imposed strain on the grain
+    !! @param[in]       ind                 real vector(n_active_slip_systems)
+    !!                                      Indices of the currently considered slip systems
+    !! @param[in]       start_index         integer
+    !!                                      Index from which to start looping over possible subsets. Needed to avoid duplicting
     !!                                      combinations (e.g. [1, 2] and [2, 1])
-    !! @param[in]       sign_slip           Sign of the slip rates on each of the candidate slip systems
-    !! @param[inout]    slip_rates          Current optimal solution for the slip rates
-    !! @param[inout]    sum_squares_optimal Optimal sum of squared slip rates found so far
+    !! @param[in]       sign_slip           integer vector(n_slip_systems)
+    !!                                      Sign of the slip rates on each of the candidate slip systems
+    !! @param[inout]    slip_rates          real vector(n_slip_systems)
+    !!                                      Current optimal solution for the slip rates
+    !! @param[inout]    sum_squares_optimal real
+    !!                                      Optimal sum of squared slip rates found so far
     recursive subroutine iterate_combinations(coeffs, strain, ind, start_index, sign_slip, slip_rates, sum_squares_optimal)
         real(DP), intent(in)::      coeffs(:,:), &
                                     strain(5)
@@ -105,22 +112,31 @@ contains
         call dgels('N',5, n_systems, 1, A, 5, B, n_systems, workspace, SIZE_WORKSPACE, info)
 
         !Dgels expects the input system to be of full rank. If this is not the case, info > 0. We can then safely ignore the
-        !solution because we at least 1 solution of full rank exists, which was the result from simplex. Thus, we just try different
+        !solution because we know at least 1 solution of full rank exists, which was the result from simplex. Thus, we just try different
         !combinations until we find it.
-        !We need to add a tolerance on B because the input system may be ill-conditioned
-        if (info == 0 .and. all(B >= -TOLERANCE)) then
+        if (info == 0) then
             sum_squares = sum(B**2)
             if (sum_squares < sum_squares_optimal) then
-                sum_squares_optimal = sum_squares
-                slip_rates = 0._DP
-                slip_rates(ind) = B*sign_slip(ind)
+                !We need to add a tolerance on B because the input system may be ill-conditioned
+                if (all(B >= -TOLERANCE)) then
+                    sum_squares_optimal = sum_squares
+                    slip_rates = 0._DP
+                    slip_rates(ind) = B*sign_slip(ind)
+                    return
+                end if    
+            else 
+                !If the problem is of full rank but the sum of squared slip rates is larger than the currently found optimal, we
+                !give up because taking subsets of this set of systems will only yield larger residuals.
+                return     
             end if
-        !We only need to try subsets when the current solution is not valid because it is not possible for a solution with a smaller
-        !number of slip systems to have a smaller norm than the current one.
-        else if (size(ind) > 5) then 
+        end if
+
+        if (size(ind) > 5) then 
             do i = start_index, n_systems
                call iterate_combinations(coeffs, strain, pack(ind, ind /= ind(i)), i, sign_slip, slip_rates, sum_squares_optimal) 
             end do
         end if
+
+
     end subroutine
 end module
