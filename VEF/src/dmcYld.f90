@@ -276,4 +276,37 @@ contains
     !
     end subroutine
 
+
+
+    !> Calculate vector v that is normal to the vector AB (from point A to B).
+    !> Provide the angle between the vector v and the x axis.
+    !> v is obtained by a clockwise rotation by 90 degs applied to the AB vector.
+    subroutine getNormalVector2D(A, B, length, v, beta)
+        real(DP), intent(in):: A(2), B(2), length 
+        real(DP), intent(out):: v(2)       
+        !> Angle between the horizontal axis and the vector u [radians]
+        !> The range of the angle is [0:2pi], thus it may vary from acute angle
+        ! via obtuse angle to reflex angle.
+        real(DP), intent(out)  :: beta
+        
+        real(DP), dimension(2):: u
+        real(DP):: u_norm
+    
+        ! Build the secant vector
+        u = b-a
+        u_norm = norm2(u)
+        if (u_norm > epsilon(0._DP)) then
+            ! Build the normal vector. Anticlockwise rotation by 90degs
+            ! gives [-u_y, u_x]. Apply the clockwise rotation by 90degs:
+            u = [u(2), -u(1)]
+            beta = acos(u(1) / u_norm)
+            ! Let the vectors that point "downwards" have beta angle > 180deg
+            if (u(2) < 0._DP) beta = 2._DP*pi-beta
+            v = u/u_norm*length
+        else
+            ! ouups, the points C and A overlap!
+            beta = 0._DP
+            v = 0._DP 
+        endif
+    end subroutine
 end module

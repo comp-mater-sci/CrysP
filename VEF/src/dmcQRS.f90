@@ -149,7 +149,7 @@ contains
             !
             fi2 = -fi2/RAD_TO_DEG
             ! Calculate rotation matrix
-            Mrot = euler_angles_to_rotation_matrix([fi1, phi, fi2])
+            Mrot = convert_rotation([fi1, phi, fi2])
 
             ! Rotate from "tensile" to material coordinate system
             sigma = rotate_to(sigma_t, Mrot)
@@ -316,5 +316,16 @@ contains
         allocate(res%phis(npoints), source = 0.D0)
     !
     end function
+
+    real(DP) pure function average(a)
+        real(DP), dimension(:), intent(in):: a
+        integer:: n
+      
+        n = size(a)
+        if (n >= 1) average = sum(a) / dble(n)
+    end function
+
+
+
 
 end module

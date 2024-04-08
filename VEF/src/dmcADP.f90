@@ -241,7 +241,7 @@ contains
                                           step, increment, &            ! 2 fields
                                           Mat33ToVec9(v%L), &         ! 9 fields: velocity gradient
                                           Mat33ToVec6(v%D), &         ! 6 fields: rate for deformation tensor (strain rate)
-                                          Mat33ToVec3(v%O), &         ! 3 fields: spin tensor
+                                          convert_spin(v%O), &         ! 3 fields: spin tensor
                                           Mat33ToVec6(v%A), &         ! 6 fields: strain mode
                                           Mat33ToVec6(v%S), &         ! 6 fields: deviatoric stress
                                           v%vm_strain_begin, &

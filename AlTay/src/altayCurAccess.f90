@@ -32,7 +32,7 @@ contains
         write (iounit, 401)
 
         do i = 1, npoint
-            eu = rotation_matrix_to_euler_angles(grains(i)%tT)*RAD_TO_DEG
+            eu = convert_rotation(grains(i)%tT)*RAD_TO_DEG
             write(iounit, 400, iostat = info)&
                i, grains(i)%tGEW, eu(1), eu(2), eu(3), grains(i)%tGAM
             if (info /= 0) exit

@@ -53,6 +53,11 @@ module utils
                          convert_spin_vec_mat
     end interface
 
+    interface convert_rotation
+        module procedure euler_angles_to_rotation_matrix, &
+                         rotation_matrix_to_euler_angles
+    end interface
+
     interface operator(.dot.)
         module procedure dot_product_wrapper, double_dot_product
     end interface
@@ -297,5 +302,78 @@ contains
         real(DP), dimension(3, 3)                ::  Srot
 
         Srot = matmul(matmul(transpose(R), S), R)
+    end function
+
+
+    !> @brief Calculate the angle between two vectors.
+    !> @details The vectors must both be non-zero and of equal length.
+    !> @return The angle between the input vector in radians.
+    pure real(DP) function vec_angle(u, v)
+        real(DP), dimension(:), intent(in):: u          !< First vector. Must be non-zero.
+        real(DP), dimension(size(u)), intent(in):: v    !< Second vector. Must be non-zero.
+
+        vec_angle = acos((u .dot. v) / sqrt((u .dot. u) * (v .dot. v)))
+    end function
+
+    !> @brief Convert Euler angles to a rotation matrix.
+    !> @details Euler angles are given in Bunge convention
+    !> @return 3x3 rotation matrix corresponding to the given Euler angles.
+    pure function euler_angles_to_rotation_matrix(angles) result(mat)
+    real(DP), dimension(3), intent(in):: angles !< Euler angles in Bunge convention
+    real(DP), dimension(3, 3)    :: mat
+    real(DP):: cos_phi1, cos_phi2, cos_PHI, &
+               sin_phi1, sin_phi2, sin_PHI
+    
+        cos_phi1 = cos(angles(1))
+        cos_PHI = cos(angles(2))
+        cos_phi2 = cos(angles(3))
+        sin_phi1 = sin(angles(1))
+        sin_PHI = sin(angles(2))
+        sin_phi2 = sin(angles(3))
+        
+        mat(1, 1) = cos_phi1*cos_phi2 - (sin_phi1*sin_phi2*cos_PHI)
+        mat(1, 2) = sin_phi1*cos_phi2 + (cos_phi1*sin_phi2*cos_PHI)
+        mat(1, 3) = sin_phi2*sin_PHI
+        mat(2, 1) = -cos_phi1*sin_phi2 - (sin_phi1*cos_phi2*cos_PHI)
+        mat(2, 2) = -sin_phi1*sin_phi2 + (cos_phi1*cos_phi2*cos_PHI)
+        mat(2, 3) = cos_phi2*sin_PHI
+        mat(3, 1) = sin_phi1*sin_PHI
+        mat(3, 2) = -cos_phi1*sin_PHI
+        mat(3, 3) = cos_PHI
+    end function
+
+    !> @brief Converts a rotation matrix to Euler angles.
+    !> @details Returned Euler angles follow Bunge convention.
+    !> @return 3-element vector containing the Euler angles corresponding to the given rotation matrix in Bunge convention.
+    pure function rotation_matrix_to_euler_angles(mat) result(ang)
+        real(DP), dimension(3, 3), intent(in)::  mat !< Rotation matrix.
+        real(DP)::              ang(3), &
+                                phi1, &
+                                PHI, &
+                                phi2, &
+                                cos_PHI
+      
+        cos_PHI = mat(3, 3) / sqrt( mat(1, 3)**2+mat(2, 3)**2+mat(3, 3)**2 )
+        PHI = acos(cos_PHI)  ! range: [0, pi]
+        
+        if (abs(cos_PHI)==1.0D0) then  ! case that PHI = 0\B0 or PHI = 180\B0
+            !Set phi2 to 0.0D0, given that:
+            !  (phi1;   0\B0; phi2) equivalent to (phi1+phi2;    0; 0).
+            !  (phi1; 180\B0; phi2) equivalent to (phi1+phi2; 180\B0; 0).
+            phi2 = 0.0D0
+            phi1 = atan2(-mat(2, 1)/cos_PHI, mat(2, 2)/cos_PHI)  ! range: [-pi, pi[
+        else
+            phi1 = atan2(mat(3, 1), -mat(3, 2))  ! range: [-pi, pi[
+            phi2 = atan2(mat(1, 3), mat(2, 3))  ! range: [-pi, pi[
+        end if
+
+        !If needed, replace Euler angles with equivalent values within proper bounds.
+        if (PHI == PI)     PHI  = 0._DP       ![  0, pi] -> [0,  pi[
+        if (phi1 < 0._DP) phi1 = phi1+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
+        if (phi2 < 0._DP) phi2 = phi2+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
+
+        ang(1) = phi1
+        ang(2) = phi
+        ang(3) = phi2
     end function
 end module 
