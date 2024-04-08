@@ -23,10 +23,10 @@ contains
     !! @return    slip_rates                  real vector (n_slip_systems)
     !!                                        Slip rates for all the slip systems
     function resolve_taylor_ambiguity(ind_active_slip_systems, rss, strain, taylor_coeffs) result(slip_rates)
-        integer, intent(in)::   ind_active_slip_systems(:)              !< Indices of the active slip systems.
-        real(DP), intent(in)::  taylor_coeffs(:,:),                 &   !< Slip systems in stress-strainn space.
-                                rss(size(ind_active_slip_systems)), &   !< Resolved shear stress on the active slip systems.
-                                strain(5)                               !< Imposed strain on the current grain.
+        integer, intent(in)::                                               ind_active_slip_systems(:)  !< Indices of the active slip systems.
+        real(DP), dimension(:,:), intent(in)::  taylor_coeffs                                           !< Slip systems in stress-strain space.
+        real(DP), dimension(size(ind_active_slip_systems)), intent(in)::    rss                         !< Resolved shear stress on the active slip systems.
+        real(DP), dimension(5), intent(in):: strain(5)                                                  !< Imposed strain on the current grain.
                             
         real(DP)::              slip_rates(size(taylor_coeffs, 2)), &
                                 coeffs(5, size(taylor_coeffs, 2)), &
