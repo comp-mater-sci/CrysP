@@ -5,7 +5,6 @@
 module dmcYld
     use utils
     use criRange
-    use criMathUtils
     use criUncomment, only: readValue
     use dmcYLPResult
     use commonConfig
@@ -157,7 +156,7 @@ contains
         !
         iunilen = 1.D0
         if (this%do_scaling) then
-            Sm =  Vec6ToMat33(this%scaling_vector)
+            Sm =  convert_voigt(this%scaling_vector)
             if (norm2(Sm) < epsilon(0.D0)) then
                 write(display_unit, fmt = 900) 'Norm of the input stress for scaling cannot be zero'
                 return
@@ -190,10 +189,10 @@ contains
                 theta = theta/RAD_TO_DEG
                 ! Combine the base vectors
                 ! Note: explicit temporary sigma_vector prevents runtime warning about
-                !       a temporary created in a call to Vec6ToMat33
+                !       a temporary created in a call to convert_voigt
                 sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) &
                                 + w*this%base_vectors(:,3)
-                Sm = Vec6ToMat33(sigma_vector)
+                Sm = convert_voigt(sigma_vector)
                 !
                 info = this%findSolution(Sm, D, ylp_result, is_acceptable = acceptable_point)
                 ! Consider what to do with unsuccessful search

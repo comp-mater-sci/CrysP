@@ -1,7 +1,6 @@
 module altayCurAccess
     use altayDynfil
     use utils
-    use criMathUtils
 
     implicit none
 

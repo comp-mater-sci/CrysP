@@ -2,7 +2,6 @@
 
 !> DMC Arbitrary Stress Response
 module dmcASR
-use criMathUtils
 use criUncomment, only: readValue
 use dmcIncrementationControl
 use dmcStressDrivenEvolutionModule
@@ -110,7 +109,7 @@ contains
             associate(step => this%steps(istep), control => this%steps(istep)%incrementation_control)
                 !
                 ! Acquire full stress tensor sigma
-                sigma = Vec6ToMat33(step%stress_mode)
+                sigma = convert_voigt(step%stress_mode)
                 Pressure = (trace(sigma) / 3.D0) * UNIT_MATRIX_3X3
                 S = sigma-Pressure
                 ! Follow the stress path
@@ -206,15 +205,15 @@ contains
                     P_total_rot = convert_stress_strain_space(v%icv%vP_total)  ! at the beginning of the increment
                     P_total_end_rot = P_total_rot+v%P_inc_evol  ! at the end of the increment
                     !
-                    A_voigt = Mat33ToVec6(A)
-                    SonA_voigt = Mat33ToVec6(SonA)
-                    P_step_voigt = Mat33ToVec6(P_step)
-                    P_total_end_voigt = Mat33ToVec6(P_total_end)
+                    A_voigt             = convert_voigt(A, 6)
+                    SonA_voigt          = convert_voigt(SonA, 6)
+                    P_step_voigt        = convert_voigt(P_step, 6)
+                    P_total_end_voigt   = convert_voigt(P_total_end, 6)
                     ! Convert to Voigt (to avoid temporaries in write)
-                    A_rot_voigt = Mat33ToVec6(v%A)
-                    SonA_rot_voigt = Mat33ToVec6(v%SonA)
-                    P_step_rot_voigt =  Mat33ToVec6(P_step_rot)
-                    P_total_end_rot_voigt = Mat33ToVec6(P_total_end)
+                    A_rot_voigt             = convert_voigt(v%A, 6)
+                    SonA_rot_voigt          = convert_voigt(v%SonA, 6)
+                    P_step_rot_voigt        = convert_voigt(P_step_rot, 6)
+                    P_total_end_rot_voigt   = convert_voigt(P_total_end, 6)
 
                     write(iounit, fmt = 710, iostat = ierr) &
                                 output%step, v%icv%increment, & ! 2 fields

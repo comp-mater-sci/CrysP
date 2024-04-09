@@ -3,7 +3,6 @@
 !> dmcQRS calculates plastic anisotropic properties, expressed in terms of q-values, 
 !> directly from texture data, presented in form of SMT, CUR or CUB files.
 module dmcQRS
-use criMathUtils
 use criRange
 use criUncomment, only: readValue
 use dmcYLPResult
@@ -138,7 +137,7 @@ contains
         !
         ! Set sigma_t in such way that deviatoric part is of unit length
         sigma_t = 0.D0
-        sigma_t(1, 1) = root32/sqrt(this%rho**2-this%rho+1.D0)
+        sigma_t(1, 1) = SQR1P5/sqrt(this%rho**2-this%rho+1.D0)
         sigma_t(2, 2) = this%rho*sigma_t(1, 1)
         !
         i = 1

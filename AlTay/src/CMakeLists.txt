@@ -11,7 +11,6 @@ list(APPEND Fortran_FLAGS ${LibAlTay_FLAGS})
 add_library(${libaltay} STATIC
 criConfigReader.f90
 criLinearMap.f90
-criMathUtils.f90
 criNamedRange.f90
 criNumerics.f90
 criRange.f90

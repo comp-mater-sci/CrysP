@@ -1,7 +1,6 @@
 module altayDynfil
     use utils
     use logging
-    use criMathUtils
     use slip_systems
 
     implicit none

@@ -4,7 +4,6 @@
 module dmcADP
 use utils
 use criConfigReader
-use criMathUtils
 use dmcDeformationDrivenModule
 use dmcResultFileOutput
 use dmcStrainDrivenStep
@@ -80,13 +79,13 @@ contains
                 select case(deformation)
                 case(deformation_id)
                     if (.not. readValue(cnfunit, tmp_deformation)) return
-                    tmp_deformation_rate = Vec9ToMat33(tmp_deformation)
+                    tmp_deformation_rate = convert_voigt(tmp_deformation)
                 !
                 case(strainmode_id)
                     if (.not. readValue(cnfunit, tmp_strain)) return
                     if (.not. readValue(cnfunit, step_size)) return
                     !
-                    tmp_deformation_rate = Vec6ToMat33(tmp_strain)
+                    tmp_deformation_rate = convert_voigt(tmp_strain)
                     ! Normalize the deformation
                     tmp = norm2(tmp_deformation_rate)
                     if (tmp < epsilon(0.D0)) then
@@ -97,7 +96,7 @@ contains
                 !
                 case(strain_id)
                     if (.not. readValue(cnfunit, tmp_strain)) return
-                    tmp_deformation_rate = Vec6ToMat33(tmp_strain)
+                    tmp_deformation_rate = convert_voigt(tmp_strain)
                 !
                 case default
                     return
@@ -239,11 +238,11 @@ contains
                           associate(v => step_output%increments(increment))
                               write(iounit, fmt = 710, iostat = ierr) &
                                           step, increment, &            ! 2 fields
-                                          Mat33ToVec9(v%L), &         ! 9 fields: velocity gradient
-                                          Mat33ToVec6(v%D), &         ! 6 fields: rate for deformation tensor (strain rate)
+                                          convert_voigt(v%L, 9), &         ! 9 fields: velocity gradient
+                                          convert_voigt(v%D, 6), &         ! 6 fields: rate for deformation tensor (strain rate)
                                           convert_spin(v%O), &         ! 3 fields: spin tensor
-                                          Mat33ToVec6(v%A), &         ! 6 fields: strain mode
-                                          Mat33ToVec6(v%S), &         ! 6 fields: deviatoric stress
+                                          convert_voigt(v%A, 6), &         ! 6 fields: strain mode
+                                          convert_voigt(v%S, 6), &         ! 6 fields: deviatoric stress
                                           v%vm_strain_begin, &
                                           v%vm_strain_end, &
                                           v%vMeqStrainRate, &

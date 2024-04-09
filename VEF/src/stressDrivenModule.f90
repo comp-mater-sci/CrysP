@@ -5,7 +5,6 @@ module dmcStressDrivenModule
 use, intrinsic:: iso_fortran_env, only: error_unit
 use utils
 use criUncomment, only: readValue
-use criMathUtils, only: convert_stress_strain_space, convert_stress_strain_space
 use alamYLP
 use alamEval, only: NormalizedV5DComp, alamEval_objFx_call_count
 use dmcYLPResult

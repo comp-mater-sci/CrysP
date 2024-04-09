@@ -4,7 +4,6 @@
 !> material state.
 module dmcStressDrivenEvolutionModule
 use utils
-use criMathUtils
 use dmcYLPResult
 use dmcStressDrivenModule
 use dmcIncrementationControl
@@ -163,7 +162,7 @@ contains
                 ! and check the tensor component of interest.
                 X_tmp = convert_stress_strain_space(icv%vP_step)
                 if (present(rotmat)) X_tmp = rotate_to(X_tmp, rotmat)
-                X_tmp_voigt = Mat33ToVec6(X_tmp)
+                X_tmp_voigt = convert_voigt(X_tmp, 6)
                 stop_control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
             case default
                 ! Make sure it stops immediately
@@ -208,7 +207,7 @@ contains
                     else
                         X_tmp = D
                     endif
-                    X_tmp_voigt = Mat33ToVec6(X_tmp)
+                    X_tmp_voigt = convert_voigt(X_tmp, 6)
                     control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
                 !
                 case default

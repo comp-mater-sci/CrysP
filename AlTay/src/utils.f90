@@ -304,9 +304,7 @@ contains
         Srot = matmul(matmul(transpose(R), S), R)
     end function
 
-
     !> @brief Calculate the angle between two vectors.
-    !> @details The vectors must both be non-zero and of equal length.
     !> @return The angle between the input vector in radians.
     pure real(DP) function vec_angle(u, v)
         real(DP), dimension(:), intent(in):: u          !< First vector. Must be non-zero.
@@ -316,7 +314,6 @@ contains
     end function
 
     !> @brief Convert Euler angles to a rotation matrix.
-    !> @details Euler angles are given in Bunge convention
     !> @return 3x3 rotation matrix corresponding to the given Euler angles.
     pure function euler_angles_to_rotation_matrix(angles) result(mat)
     real(DP), dimension(3), intent(in):: angles !< Euler angles in Bunge convention
@@ -343,7 +340,6 @@ contains
     end function
 
     !> @brief Converts a rotation matrix to Euler angles.
-    !> @details Returned Euler angles follow Bunge convention.
     !> @return 3-element vector containing the Euler angles corresponding to the given rotation matrix in Bunge convention.
     pure function rotation_matrix_to_euler_angles(mat) result(ang)
         real(DP), dimension(3, 3), intent(in)::  mat !< Rotation matrix.
@@ -375,5 +371,17 @@ contains
         ang(1) = phi1
         ang(2) = phi
         ang(3) = phi2
+    end function
+
+    !> @brief Calculate the trace of a matrix.
+    pure real(DP) function trace(x) result(res)
+        real(DP), dimension(:,:), intent(in):: x !< The matrix. Must be square.
+
+        integer:: i
+         
+        res = 0._DP
+        do i = 1, size(x, 1)
+            res = res+x(i, i)
+        enddo
     end function
 end module 

@@ -3,7 +3,6 @@
 !> Strain-(rate) driven step
 module dmcStrainDrivenStep
 use criRange
-use criMathUtils
 use utils
 use dmcSubsteppingConfig
 use altayConfig

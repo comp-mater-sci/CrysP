@@ -1,7 +1,6 @@
 !> Datatypes that simplify work with results of multilevelYLP and procedures
 !> that operate on these datatypes.
 module dmcYLPResult
-use criMathUtils
 use alamYLPConstants, only: alamEval_vSD_dim
 use utils
 
