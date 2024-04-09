@@ -235,10 +235,17 @@ contains
         real(DP), intent(inout)::   orientation(3, 3)
         real(DP)::                  orientation_increment(3, 3), &
                                     slip_rates(size(crss, 2))
+        integer:: i, &
+                    n_active_simplex  
 
+        n_active_simplex = 0
+        do i = 1, n_active_slip_systems
+            if (sliplp(i) > TOLERANCE) n_active_simplex = n_active_simplex+1
+        end do
 
         if (n_active_slip_systems > 5) then
-            slip_rates = resolve_taylor_ambiguity(ind_active_slip_systems(1:n_active_slip_systems), TAURLP, strain_grain, taylor_coeffs)
+            slip_rates = resolve_taylor_ambiguity(ind_active_slip_systems(1:n_active_slip_systems), TAURLP, strain_grain, &
+            taylor_coeffs, n_active_simplex)
             !Should not happen since taylor_ambiguity iterates through all possible combinations.
             !However, since taylor_coeffs may be ill-conditioned roundoff errors may make solutions that simplex thinks are valid
             !invalid in taylor_ambiguity.
