@@ -73,7 +73,8 @@ contains
         integer, parameter::        SIZE_WORKSPACE = 10  ! Optimal, refer to LAPACK documentation.
         integer::                   i, &
                                     info, &
-                                    n_systems
+                                    n_systems, &
+                                    ind_new(size(ind)-1)
         real(DP)::                  A(5, size(ind)), &
                                     B(max(5, size(ind))), &
                                     workspace(SIZE_WORKSPACE), &
@@ -110,7 +111,8 @@ contains
 
         if (size(ind) > n_active_simplex) then 
             do i = start_index, n_systems
-               call iterate_combinations(coeffs, strain, pack(ind, ind /= ind(i)), i, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex) 
+                ind_new = pack(ind, ind /= ind(i))
+                call iterate_combinations(coeffs, strain, ind_new, i, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex) 
             end do
         end if
     end subroutine
