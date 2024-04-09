@@ -47,9 +47,8 @@ contains
         slip_rates = 0._DP
         call iterate_combinations(coeffs, strain, ind_active_slip_systems, 1, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex)
 
-        if (sum_squares_optimal == REAL_DP_MAX_VAL) then
-            error stop
-        end if
+        if (sum_squares_optimal == REAL_DP_MAX_VAL) &
+            call log_error('taylor_ambiguity', 'resolve_taylor_ambiguity', ERR, 'Could not find optimal solution.')
 
     end function
 
