@@ -24,10 +24,10 @@ contains
     !!                                        Slip rates for all the slip systems
     function resolve_taylor_ambiguity(ind_active_slip_systems, rss, strain, taylor_coeffs, n_active_simplex) result(slip_rates)
         integer, intent(in)::                                               ind_active_slip_systems(:)  !< Indices of the active slip systems.
-        real(DP), dimension(:,:), intent(in)::  taylor_coeffs                                           !< Slip systems in stress-strain space.
+        real(DP), dimension(:,:), intent(in)::                              taylor_coeffs               !< Slip systems in stress-strain space.
         real(DP), dimension(size(ind_active_slip_systems)), intent(in)::    rss                         !< Resolved shear stress on the active slip systems.
-        real(DP), dimension(5), intent(in):: strain(5)                                                  !< Imposed strain on the current grain.
-        integer, intent(in):: n_active_simplex
+        real(DP), dimension(5), intent(in)::                                strain(5)                   !< Imposed strain on the current grain.
+        integer, intent(in)::                                               n_active_simplex            !< Number of active slip systems according to the simplex solution.
 
                             
         real(DP)::              slip_rates(size(taylor_coeffs, 2)), &
@@ -66,7 +66,7 @@ contains
         integer, intent(in)::       ind(:), &                       !< Indices of the currently considered slip systems.
                                     start_index, &                  !< Index from which to start looping over possible subsets. Needed to avoid duplicting
                                                                     !  combinations (e.g. [1, 2] and [2, 1]).
-                                    n_active_simplex, &
+                                    n_active_simplex, &             !< Number of active slip systems according to the simplex solution.
                                     sign_slip(:)                    !< Sign of the slip rates on each of the candidate slip systems.
         real(DP), intent(inout)::   slip_rates(size(sign_slip)), &  !< Current optimal solution for the slip rates.
                                     sum_squares_optimal             !< Optimal sum of squared slip rates found so far
@@ -109,7 +109,7 @@ contains
             end if
         end if
 
-        if (size(ind) > 1) then 
+        if (size(ind) > n_active_simplex) then 
             do i = start_index, n_systems
                call iterate_combinations(coeffs, strain, pack(ind, ind /= ind(i)), i, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex) 
             end do

@@ -18,7 +18,7 @@ contains
     !!        st  A g = A_0
     !!
     !! To avoid the nonlinearity of the absolute value and to accomodate different
-    !! values for the critical resolved shear stress in positive and negative directions,
+    !! values for the critical resolved shear stress in positive and negative directions, 
     !! each g_k is replace by two values g_1k and g_2k, so that
     !!     if g_k >= 0 then g_1k = g_k  and g_2k = 0
     !!     if g_k <  0 then g_1k = g_k  and g_2k = 0
@@ -67,19 +67,19 @@ contains
     !!
     subroutine simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, overstress)
         real(DP), intent(in)    ::  taylor_coeffs(:,:),                                 &
-            strain(size(taylor_coeffs, 1)),                      &
-            crss(2, size(taylor_coeffs, 2))
+                                    strain(size(taylor_coeffs, 1)),                      &
+                                    crss(2, size(taylor_coeffs, 2))
         real(DP), intent(out)   ::  slip(size(taylor_coeffs, 2)),                        &
-            stress(size(taylor_coeffs, 1)),                      &
-            rss(size(taylor_coeffs, 2)),                         &
-            overstress(size(taylor_coeffs, 2))
+                                    stress(size(taylor_coeffs, 1)),                      &
+                                    rss(size(taylor_coeffs, 2)),                         &
+                                    overstress(size(taylor_coeffs, 2))
         integer, intent(inout)  ::  basis_systems(size(taylor_coeffs, 1))
         real(DP), intent(inout) ::  inverse_basis(size(taylor_coeffs, 1), size(taylor_coeffs, 1))
 
         real(DP)                ::  new_basis_vector(size(taylor_coeffs, 1)),            &
-            rss_basis(size(taylor_coeffs, 1)),                   &
-            new_inverse_basis_vector(size(taylor_coeffs, 1)),    &
-            slip_basis(size(taylor_coeffs, 1))
+                                    rss_basis(size(taylor_coeffs, 1)),                   &
+                                    new_inverse_basis_vector(size(taylor_coeffs, 1)),    &
+                                    slip_basis(size(taylor_coeffs, 1))
         logical                 ::  bas(size(taylor_coeffs, 2))
         integer                 ::  i, iter, max_iters, most_overstressed_system, system_to_remove
         real(DP)                ::  tmp, ratio, min_ratio
@@ -119,7 +119,7 @@ contains
                     if (abs(tmp) > TOLERANCE &
                         .and. sign(tmp, rss(most_overstressed_system)) == tmp &
                         .and. (system_to_remove == 0 .or. sign(tmp, ratio-min_ratio) == -tmp)) &
-                        then
+                    then
                         system_to_remove = i
                         min_ratio = ratio
                     end if
@@ -139,63 +139,9 @@ contains
             call find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system, overstress)
         end do
 
-        call refine_solution(taylor_coeffs, strain, crss, basis_systems, slip_basis)
-
         slip = 0._DP
         slip(basis_systems) = slip_basis
     end subroutine simplex_solve
-
-    !>@brief Because simplex uses rank-1 updates of the inverse basis matrix, there may be some build-up of numerical error.
-    ! Therefore, we recalculate the slip rates using the final basis matrix with dgels (uses QR factorization).
-    ! We also check whether the solution is still valid, if not, we do some more iterations, but then always using dgels.
-    subroutine refine_solution( taylor_coeffs, strain, crss, basis_systems, slip_basis )
-        real(DP), intent(in) :: taylor_coeffs(:,:) !< real matrix (m x n), containing the Taylor coefficients
-        real(DP), intent(in) :: strain(size(taylor_coeffs, 1)) !< real vector (m), containing the imposed strain
-        real(DP), intent(in) :: crss(2, size(taylor_coeffs, 2)) !< real matrix (2 x n), containing the critical resolved shear stresses
-        integer, intent(in) :: basis_systems(size(taylor_coeffs, 1)) !< integer vector (m), containing the indices of the active slip systems
-        real(DP), intent(inout) :: slip_basis(size(taylor_coeffs, 1)) !< real vector (m), containing the slip rates in the basis
-
-        real(DP) :: basis(size(taylor_coeffs, 1), size(taylor_coeffs, 1)) !< real matrix (m x m), containing the basis vectors
-        real(DP) :: temp_slip(size(taylor_coeffs, 1)) !< real vector (m), containing the slip rates in the basis
-        real(DP) :: work(2*size(taylor_coeffs, 1)*size(taylor_coeffs, 1))
-
-        integer :: i, m, lwork, info
-
-        m = size(taylor_coeffs, 1)
-        lwork = 2*m*m !< Length of the work array (note: this is the minimum workspace, not optimal, but ok for small matrices)
-
-        ! Initialize the basis matrix
-        basis = 0._DP
-        do i = 1, m
-            basis(:,i) = taylor_coeffs(:,basis_systems(i))
-        end do
-        ! Initialize rhs
-        temp_slip = strain
-        ! Use dgels to recalculate the slip rates
-        call dgels('N', m, m, 1, basis, m, temp_slip, m, work, lwork, info)
-
-        ! Check info flag
-        if (info /= 0) then
-            ! Basis matrix is singular, really shouldn't happen.
-            call log_error(MOD_NAME, 'refine_solution', ERR_VAL, 'Basis matrix is singular.')
-            stop
-        end if
-
-        ! Check difference between the recalculated slip rates and the original slip rates
-        if (maxval(abs(temp_slip - slip_basis)) > TOLERANCE) then
-            ! The recalculated slip rates are different from the original slip rates
-            ! This can happen due to numerical errors in the rank-1 updates of the inverse basis matrix
-            ! We will do some more iterations, but always using dgels
-
-            ! Note: in the test suite, this code is never reached, so i did not bother implementing it.
-            ! If this error is ever present in the logs, then it should be quick to implement.
-            call log_error(MOD_NAME, 'refine_solution', ERR_VAL, 'Refinement of the solution is not yet implemented.')
-            stop
-        end if
-
-        slip_basis = temp_slip
-
-    end subroutine refine_solution
 
     !>@brief Find the most overstressed system
     !!
@@ -231,13 +177,13 @@ contains
     !!                                       The overstress of each slip system
     subroutine find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system, overstress)
         real(DP), intent(in):: taylor_coeffs(:,:), &
-            rss_basis(size(taylor_coeffs, 1)), &
-            inverse_basis(size(taylor_coeffs, 1), size(taylor_coeffs, 1)), &
-            crss(2, size(taylor_coeffs, 2))
+                                rss_basis(size(taylor_coeffs, 1)), &
+                                inverse_basis(size(taylor_coeffs, 1), size(taylor_coeffs, 1)), &
+                                crss(2, size(taylor_coeffs, 2))
         logical, dimension(size(taylor_coeffs, 2)), intent(in):: bas
         real(DP), intent(out):: stress(size(taylor_coeffs, 1)), &
-            rss(size(taylor_coeffs, 2)), &
-            overstress(size(taylor_coeffs, 2))
+                                 rss(size(taylor_coeffs, 2)), &
+                                 overstress(size(taylor_coeffs, 2))
         integer, intent(out):: most_overstressed_system
         real(DP):: tmp
         integer:: i
@@ -273,7 +219,7 @@ contains
     !!                                       The index of the system to remove from the basis.
     !!
     !! @param[out] new_inverse_basis_vector  real vector (m)
-    !!
+    !!                                       
     subroutine update_inverse_basis(inverse_basis, new_basis_vector, system_to_remove, new_inverse_basis_vector)
         real(DP), dimension(:,:), intent(inout):: inverse_basis
         real(DP), intent(in):: new_basis_vector(size(inverse_basis, 1))
@@ -295,7 +241,7 @@ contains
         real(DP), intent(in):: new_inverse_basis_vector(size(inverse_basis_vector))
         integer                 ::  i
         real(DP)                ::  prod, &
-            vec_at_index
+                                    vec_at_index
 
         vec_at_index = inverse_basis_vector(system_to_remove)
 
