@@ -48,7 +48,7 @@ contains
         call iterate_combinations(coeffs, strain, ind_active_slip_systems, 1, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex)
 
         if (sum_squares_optimal == REAL_DP_MAX_VAL) &
-            call log_error('taylor_ambiguity', 'resolve_taylor_ambiguity', ERR, 'Could not find optimal solution.')
+            call log_error(MOD_NAME, 'resolve_taylor_ambiguity', ERR, 'Could not find optimal solution.')
 
     end function
 
@@ -78,7 +78,8 @@ contains
         real(DP)::                  A(5, size(ind)), &
                                     B(max(5, size(ind))), &
                                     workspace(SIZE_WORKSPACE), &
-                                    sum_squares
+                                    sum_squares, &
+                                    residual
         
         n_systems = size(ind)
 
@@ -89,26 +90,37 @@ contains
         !Lapack routine to find minimum norm solution
         call dgels('N',5, n_systems, 1, A, 5, B, size(B), workspace, SIZE_WORKSPACE, info)
 
-        !Dgels expects the input system to be of full rank. If this is not the case, info > 0. We can then safely ignore the
-        !solution because we know at least 1 solution of full rank exists, which was the result from simplex. Thus, we just try different
-        !combinations until we find it.
+        ! Dgels expects the input system to be of full rank. If this is not the case, info > 0. We can then safely ignore the
+        ! solution because we know at least 1 solution of full rank exists, which was the result from simplex. Thus, we just try different
+        ! combinations until we find it.
         if (info == 0) then
-            sum_squares = sum(B**2)
+            ! If the system is overdetermined, dgels computes the least squares solution instead of the minimum norm solution. Any
+            ! valid solutions computed in this way should however be exact, since we can only end up with fewer than 5 slip systems
+            ! here if simplex found a degenerate solution (at least one slip rate 0). This means that a valid least squares solution
+            ! must have a negligible residual.
+            if (n_systems < 5) then
+                residual = sum(B(n_systems+1:5)**2)  ! See LAPACK documentation
+                if (residual > TOLERANCE) return  ! Residual can only increase by taking a subset of the current systems.
+            end if
+        
+            sum_squares = sum(B(1:n_systems)**2)
+            
             if (sum_squares < sum_squares_optimal) then
-                !We need to add a tolerance on B because the input system may be ill-conditioned
-                if (all(B >= -TOLERANCE)) then
+                                !We need to add a tolerance on B because the input system may be ill-conditioned
+                if (all(B(1:n_systems) >= -TOLERANCE)) then
                     sum_squares_optimal = sum_squares
                     slip_rates = 0._DP
-                    slip_rates(ind) = B*sign_slip(ind)
+                    slip_rates(ind) = B(1:n_systems)*sign_slip(ind)
                     return
                 end if    
             else 
-                !If the problem is of full rank but the sum of squared slip rates is larger than the currently found optimal, we
-                !give up because taking subsets of this set of systems will only yield larger residuals.
+                ! Taking subsets will only yield larger residuals.
                 return     
             end if
         end if
 
+        ! Only when the maximum number of slip systems in a combination is equal to the number of active slip systems simplex found, 
+        ! we are guaranteed by simplex that the system is nonsingular
         if (size(ind) > n_active_simplex) then 
             do i = start_index, n_systems
                 ind_new = pack(ind, ind /= ind(i))
