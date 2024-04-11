@@ -5,11 +5,10 @@ module utils
     implicit none
     public
 
-    external:: dgels
-
 
     integer, parameter::  DP = selected_real_kind(15, 307)
     real(DP), parameter:: TOLERANCE  = 1.E-9_DP, &
+                          REAL_DP_MAX_VAL = huge(0._DP), &
                           PI         = acos(-1.D0), & 
                           RAD_TO_DEG = 180._DP/PI, &
                           SQR0P5     = sqrt(0.5_DP), &
@@ -244,36 +243,6 @@ contains
             exponential = exponential+term
         end do
     end function
-
-    !>N1 = number of equations
-    !>N2 = number of unknowns
-    !>A = coefficient matrix
-    !>B = right hand sides
-    !>BA = solution on output
-    !>RES = residu (sum of squares)
-    !>M1, M2 = dimensions
-    subroutine kleinkwa(N1, N2, M1, M2, A, B, BA, res)
-        integer,                    intent(in)                                  :: M1, M2, N1, N2
-        real(DP), dimension(M2),    intent(in)                                  :: B
-        real(DP), dimension(M1, M2), intent(in)                                  :: A
-        real(DP), dimension(M2),    intent(out)                                 :: BA
-        real(DP),                   intent(inout)                               :: res
-        integer                                                                 :: i, info
-        real(DP)                                                                :: y
-        real(DP), dimension(max(1, 2*min(N1, N2) + 1))   :: work
-        real(DP), dimension(M1, M2)                                              :: A_COPY
-
-        A_COPY = A
-        BA = B
-
-        call dgels('N',N1, N2, 1, A_COPY, M1, BA, M2, work, size(work), info)
-
-        res = 0.0_DP
-        do i = 1, N1
-            y = sum(A(i, 1:N2)*BA(1:N2))
-            RES = RES + (y-B(i))**2
-        end do
-    end subroutine
 
     !> @brief Rotates the second-rank tensor S to the reference frame given by rotation R.
     !! @return The tensor in the frame defined by R

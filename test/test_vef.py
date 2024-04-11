@@ -35,8 +35,7 @@ HARDENING_MODELS = ['NONE', 'VOCE', 'SWIFT', 'BP', 'PEBP_SCREW', 'PEBP_LOOP']
 #Unit tests
 UNITS = [('altayAlgorithms','eigenv'),      \
          ('altayAlgorithms','normaliz'),    \
-         ('altayAlgorithms','canoni'),      \
-         ('altayAlgorithms','kleinKwa')]
+         ('altayAlgorithms','canoni')]
 
 #General setup
 if not os.path.exists(TEST_RUN):
