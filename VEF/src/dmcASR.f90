@@ -175,6 +175,14 @@ contains
             ]
         !
         info = VEF_OK
+
+        A = 0._DP
+        sonA = 0._DP
+        P_step = 0._DP
+        P_total_end = 0._DP
+        P_step_rot = 0._DP
+        P_total_end_rot = 0._DP
+
         !
         ! Write out header lines
         !
@@ -214,7 +222,7 @@ contains
                     A_rot_voigt = Mat33ToVec6(v%A)
                     SonA_rot_voigt = Mat33ToVec6(v%SonA)
                     P_step_rot_voigt =  Mat33ToVec6(P_step_rot)
-                    P_total_end_rot_voigt = Mat33ToVec6(P_total_end)
+                    P_total_end_rot_voigt = Mat33ToVec6(P_total_end_rot)
 
                     write(iounit, fmt = 710, iostat = ierr) &
                                 output%step, v%icv%increment, & ! 2 fields
