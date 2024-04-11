@@ -4,9 +4,9 @@ endif
 
 ifndef $(FFLAGS)
 	ifeq ($(FC),gfortran)
-	FFLAGS=-g -Wall -ffree-line-length-none -fcheck=all -O3 -march=native -fbacktrace -fimplicit-none -cpp
+	FFLAGS=-g -Wall -ffree-line-length-none -fcheck=all -O2 -fbacktrace -fimplicit-none -cpp
 	else
-	FFLAGS=-g -O3 -fpp
+	FFLAGS=-g -O2 -fpp
 	endif
 endif
 
