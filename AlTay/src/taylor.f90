@@ -35,7 +35,7 @@ module taylor
                               taylor_coeffs_cluster(:,:)
 
     integer:: ind_basis_systems_grain(5), ind_active_slip_systems(8)
-    
+
     character(*), parameter:: MOD_NAME = 'taylor'
     integer, parameter::   INITIAL_BASIS_SYSTEMS_FCC(5) = [2, 5, 6, 7, 8], &
                            INITIAL_BASIS_SYSTEMS_BCC(5) = [1, 2, 4, 5, 7], &
@@ -56,8 +56,8 @@ contains
         real(DP):: basis(5, 5), &
                     normalized(3, 2), &
                     tensor(3, 3)
-        
-        n_relaxations = merge(2, 0, cluster_size == 2)    
+
+        n_relaxations = merge(2, 0, cluster_size == 2)
         n_slip_systems_grain = size(deformation_mechanism, 3)
         n_slip_systems_cluster = cluster_size*n_slip_systems_grain+n_relaxations
         system_size = cluster_size*5
@@ -75,23 +75,23 @@ contains
             if (cluster_size == 2) &
                 allocate(spin_coeffs_relaxations(3, 2, 2), source = 0._DP)
         end if
-        
+
         ind_basis_systems_grain = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, n_slip_systems_grain == 12)
         do i = 1, n_slip_systems_grain
             normalized = normalize(deformation_mechanism(:,:,i))
             tensor = outer_product(normalized(:,1), normalized(:,2))
-            taylor_coeffs_grain(:,i) = convert_stress_strain_space(tensor) 
-            spin_slip_systems(:,i) = convert_spin(tensor)  
+            taylor_coeffs_grain(:,i) = convert_stress_strain_space(tensor)
+            spin_slip_systems(:,i) = convert_spin(tensor)
         end do
         forall (i = 1:5) basis(:,i) = taylor_coeffs_grain(:,ind_basis_systems_grain(i))
 
         inverse_basis_grain = invert(basis)
-       
+
         taylor_coeffs_cluster = 0.0_DP
         taylor_coeffs_cluster(1:5, 1:n_slip_systems_grain)=taylor_coeffs_grain
         if (cluster_size == 2) taylor_coeffs_cluster(6:10, n_slip_systems_grain+1:n_slip_systems_grain*2)=taylor_coeffs_grain
-    end subroutine   
-    
+    end subroutine
+
     subroutine get_stress_state(stress_matrix, orientation_grain, index_grain, strain_ab, cluster_size, index_in_cluster, crss_grain, n_slip_systems_grain, velocity_gradient, deformation_gradient, weight)
         integer, intent(in)::       index_in_cluster, &
                                     index_grain, &
@@ -130,9 +130,9 @@ contains
         if (index_in_cluster == 1) then
             select case (cluster_size)
                 case (1)
-                   weight = 1._DP 
+                   weight = 1._DP
                 case (2)
-                    weight = cluster_weight(grains(index_grain), deformation_gradient)  
+                    weight = cluster_weight(grains(index_grain), deformation_gradient)
             end select
             !Update microstructure
             inverse_basis_cluster = 0._DP
@@ -200,7 +200,7 @@ contains
         end if
         stress_matrix = convert_stress_strain_space(spanv) ! (5) -> sym.(3, 3)
         spin_relaxations = 0._DP
-        
+
         spin_relaxations = convert_spin(spin) * SQR2
         ! note that if one of the grains does not deform at all, the stress and the active slip systems
         ! of the full constraint solution are used.
@@ -235,20 +235,16 @@ contains
         real(DP), intent(inout)::   orientation(3, 3)
         real(DP)::                  orientation_increment(3, 3), &
                                     slip_rates(size(crss, 2))
-        integer:: i, &
-                    n_active_simplex  
+        integer :: n_active_simplex
 
-        n_active_simplex = 0
-        do i = 1, n_active_slip_systems
-            if (sliplp(i) > TOLERANCE) n_active_simplex = n_active_simplex+1
-        end do
+        n_active_simplex = count(sliplp(:n_active_slip_systems) > TOLERANCE)
 
         !If we find that more slip systems are active than the simplex solution would have us believe, we must search for the best
         !possible linear combination of the active systems.
         if (n_active_slip_systems > n_active_simplex) then
             slip_rates = resolve_taylor_ambiguity(ind_active_slip_systems(1:n_active_slip_systems), TAURLP, strain_grain, &
             taylor_coeffs, n_active_simplex)
-        else 
+        else
             slip_rates = 0._DP
             slip_rates(ind_active_slip_systems(1:n_active_slip_systems)) = SLIPLP(1:n_active_slip_systems)
         end if
@@ -276,7 +272,7 @@ contains
         axis_lengths = norm2(grain_axes, 1)
         !Alignment factor equals sin(axes 2 and 3) * cos(axis 1 and normal to plane defined by axes 2 and 3)
         !The more the axes are orthogonal, the more alignment factor tends to 1.
-        alignment_factor = abs(grain_axes(:,1) .dot. (grain_axes(:,2) .cross. grain_axes(:,3))) / product(axis_lengths) 
+        alignment_factor = abs(grain_axes(:,1) .dot. (grain_axes(:,2) .cross. grain_axes(:,3))) / product(axis_lengths)
 
         !See Van Houtte et. al., 2004: Appendix A
         select case(minloc(axis_lengths, 1))
@@ -284,14 +280,14 @@ contains
                 weight = alignment_factor * (2._DP*(axis_lengths(2)-axis_lengths(1))*axis_lengths(1)**2+4.D0*axis_lengths(1)**3/3._DP)
             case(2)
                 weight = alignment_factor * (2._DP*(axis_lengths(1)-axis_lengths(2))*axis_lengths(2)**2+4.D0*axis_lengths(2)**3/3._DP)
-            case (3)  
+            case (3)
                 weight = alignment_factor * (4._DP*(axis_lengths(1)-axis_lengths(3))*(axis_lengths(2)-axis_lengths(3))*axis_lengths(3) + &
                 2._DP*(axis_lengths(1)+axis_lengths(2) - 2._DP*axis_lengths(3))*axis_lengths(3)**2+4._DP*axis_lengths(3)**3/3._DP)
         end select
     end function
 
     pure function cluster_frame(grain_, deformation_gradient) result(frame)
-        type(Grain), intent(in):: grain_ 
+        type(Grain), intent(in):: grain_
         real(DP), intent(in):: deformation_gradient(3, 3)
         real(DP):: frame(3, 3)
 

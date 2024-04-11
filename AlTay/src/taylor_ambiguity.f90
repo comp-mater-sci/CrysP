@@ -29,10 +29,10 @@ contains
         real(DP), dimension(5), intent(in)::                                strain(5)                   !< Imposed strain on the current grain.
         integer, intent(in)::                                               n_active_simplex            !< Number of active slip systems according to the simplex solution.
 
-                            
+
         real(DP)::              slip_rates(size(taylor_coeffs, 2)), &
                                 coeffs(5, size(taylor_coeffs, 2)), &
-                                sum_squares_optimal 
+                                sum_squares_optimal
         integer::               sign_slip(size(taylor_coeffs, 2)), &
                                 i, nlp
 
@@ -57,7 +57,7 @@ contains
     !!
     !! @details This routine finds the combination of slip rates among the active slip systems which yields the smalles sum of
     !!          squared slips. It starts with evaluating the input combination. If this does not yield a valid solution (all slip rates
-    !!          positive), it tries all subsets of the input set with at least 5 slip systems. 
+    !!          positive), it tries all subsets of the input set with at least 5 slip systems.
     recursive subroutine iterate_combinations(coeffs, strain, ind, start_index, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex)
         real(DP), intent(in)::      coeffs(:,:), &                  !< Taylor coefficients of the slip systems with their sign adjusted based on the rss found
                                                                     !  in simplex so that all slip rates determined by the minimum norm solution should be possitive.
@@ -80,7 +80,7 @@ contains
                                     workspace(SIZE_WORKSPACE), &
                                     sum_squares, &
                                     residual
-        
+
         n_systems = size(ind)
 
         !Must copy to local vars because dgels overwrites these internally
@@ -102,9 +102,9 @@ contains
                 residual = sum(B(n_systems+1:5)**2)  ! See LAPACK documentation
                 if (residual > TOLERANCE) return  ! Residual can only increase by taking a subset of the current systems.
             end if
-        
+
             sum_squares = sum(B(1:n_systems)**2)
-            
+
             if (sum_squares < sum_squares_optimal) then
                                 !We need to add a tolerance on B because the input system may be ill-conditioned
                 if (all(B(1:n_systems) >= -TOLERANCE)) then
@@ -112,19 +112,19 @@ contains
                     slip_rates = 0._DP
                     slip_rates(ind) = B(1:n_systems)*sign_slip(ind)
                     return
-                end if    
-            else 
+                end if
+            else
                 ! Taking subsets will only yield larger residuals.
-                return     
+                return
             end if
         end if
 
-        ! Only when the maximum number of slip systems in a combination is equal to the number of active slip systems simplex found, 
+        ! Only when the maximum number of slip systems in a combination is equal to the number of active slip systems simplex found,
         ! we are guaranteed by simplex that the system is nonsingular
-        if (size(ind) > n_active_simplex) then 
+        if (size(ind) > n_active_simplex) then
             do i = start_index, n_systems
                 ind_new = pack(ind, ind /= ind(i))
-                call iterate_combinations(coeffs, strain, ind_new, i, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex) 
+                call iterate_combinations(coeffs, strain, ind_new, i, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex)
             end do
         end if
     end subroutine
