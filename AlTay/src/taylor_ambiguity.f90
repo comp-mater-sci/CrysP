@@ -20,259 +20,112 @@ contains
     !!          This subroutine finds the slip rates assuming that the sum
     !!          of the squares of the slip rates must be minimal.
     !!
-    !!          The minimum norm solution may not satisfy the yield conditions.
-    !!          (i.e. the slip rates may be negative). In that case, we try
-    !!          all possible combinations of the slip systems and minimize again.
-    !!
-    !! @param[out]    slip_rates              real vector (n_slip_systems)
+    !! @return    slip_rates                  real vector (n_slip_systems)
     !!                                        Slip rates for all the slip systems
-    !!                                        Note: this variable is marked as [in, out] in the code, 
-    !!                                        but it seems to be overwritten immediately.
-    !!
-    !! @param[in]     n_active_slip_systems   integer
-    !!                                        Number of active slip systems
-    !!                                        n_active_slip_systems <= 8
-    !!
-    !! @param[in]     SLIPLP                  real vector (8)
-    !!                                        Slip rates of the active slip systems
-    !!
-    !! @param[in]     TAURLP                  real vector (8)
-    !!                                        RSS of the active slip systems
-    !!
-    !! @param[in]     ind_active_slip_systems integer vector (8)
-    !!                                        Indices of the active slip systems
-    !!                                        Note: this variable is marked as [in, out] in the code, 
-    !!                                        but it is never actually modified.
-    !!
-    !! @param[in]     BB8                     real vector (5)
-    !!                                        The total strain rate (imposed+relaxation)
-    !!
-    !! @param[in]     A1                      real matrix (5, n_slip_systems)
-    !!                                        The symmetric (non-rotational) part of taylor equations matrix for a single grain.
-    !!                                        The matrix is represented in crystal frame.
-    !!                                        This matrix does not contain the relaxation terms.
-    subroutine resolve_taylor_ambiguity(slip_rates, n_active_slip_systems, SLIPLP, TAURLP, ind_active_slip_systems, BB8, A1)
-        integer, intent(in):: n_active_slip_systems
-        real(DP), intent(in):: A1(:,:),                 &
-                               TAURLP(8),               &
-                               BB8(5),                  &
-                               SLIPLP(8)
-        integer, intent(inout):: ind_active_slip_systems(8)
-        real(DP), intent(inout):: slip_rates(:)
-        integer:: IND(8), ISTOR(0:8, 48), ind_active_slip_systems_original(8)
-        real(DP):: SLPR(8), SLSTOR(0:8, 48), sumsq
-        integer, parameter:: NSTOR = 48
-        integer:: j, i1, i2, i3, N0, N1, N2, N3, NN, NOPL, INEG, IOPL
-        real(DP):: sgnn(size(slip_rates))
+    function resolve_taylor_ambiguity(ind_active_slip_systems, rss, strain, taylor_coeffs, n_active_simplex) result(slip_rates)
+        integer, intent(in)::                                               ind_active_slip_systems(:)  !< Indices of the active slip systems.
+        real(DP), dimension(:,:), intent(in)::                              taylor_coeffs               !< Slip systems in stress-strain space.
+        real(DP), dimension(size(ind_active_slip_systems)), intent(in)::    rss                         !< Resolved shear stress on the active slip systems.
+        real(DP), dimension(5), intent(in)::                                strain(5)                   !< Imposed strain on the current grain.
+        integer, intent(in)::                                               n_active_simplex            !< Number of active slip systems according to the simplex solution.
 
-        ind_active_slip_systems_original = ind_active_slip_systems
-        slip_rates = 0.0_DP
-        NN = n_active_slip_systems
-        NOPL = 0
-        sgnn = 0._DP
-        sgnn(ind_active_slip_systems(1:n_active_slip_systems))=sign(1._DP, TAURLP(1:n_active_slip_systems))
 
-        ! If solution is totally zero, just return
-        if( sum(abs(SLIPLP(1:n_active_slip_systems))) <= TOLERANCE ) then
-            NN = n_active_slip_systems
-            IND(1:NN)=ind_active_slip_systems_original(1:NN)
-            slip_rates(IND(1:NN))=SLIPLP(1:NN)
-            return
-        end if
+        real(DP)::              slip_rates(size(taylor_coeffs, 2)), &
+                                coeffs(5, size(taylor_coeffs, 2)), &
+                                sum_squares_optimal
+        integer::               sign_slip(size(taylor_coeffs, 2)), &
+                                i, nlp
 
-        ! First, try the standard minimum norm solution with all active slip systems
-        IND(1:NN)=ind_active_slip_systems(1:NN)
-        call calc_slip(NN, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
-        if (ineg == 0) then
-            ! The solution is valid, and thus also mathematically guaranteed
-            ! to be the minimum norm solution. We are done.
-            NN = n_active_slip_systems
-            slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))
-            return
-        endif
+        sign_slip = 0._DP
+        sign_slip(ind_active_slip_systems)=int(sign(1._DP, rss))
 
-        ! The solution is not valid, so we need to try all possible combinations
-        ! of the active slip systems and take the one with the smallest sum of squares.
-        if (NN > 5) then
-            !     Let us take all combinations of NN out of n_active_slip_systems
-            !
-            !     "Levels" in the combination search:
-            !     (first level:  if n_active_slip_systems = 8, find all combinations of 7 slip systems
-            !      second level: find all combinations of 6-etc.)
-            N0 = n_active_slip_systems
-            ! Level 1
-            N1 = N0-1
-            if (N1 >= 5) then
-                NN = N1
-                do I1 = 1, N0
-                    call calc_slip(N1, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
-                    if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
-                    J = N0-I1
-                    if (J > 0) IND(J)=ind_active_slip_systems(J+1)
-                enddo
-                ! Level 2
-                N2 = N1-1
-                if (N2 >= 5) then
-                    NN = N2
-                    do I1 = 2, N0
-                        do I2 = 1, I1-1
-                            call fill(IND, ind_active_slip_systems, [I1, I2],N0)
-                            call calc_slip(N2, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
-                            if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
-                        enddo
-                    enddo
-                    ! Level 3
-                    N3 = N2-1
-                    if (N3 >= 5) then
-                        NN = N3
-                        do I1 = 3, N0
-                            do I2 = 2, I1-1
-                                do I3 = 1, I2-1
-                                    call fill(IND, ind_active_slip_systems, [I1, I2, I3],N0)
-                                    call calc_slip(N3, IND, SLPR, ineg, sumsq, sgnn, BB8, A1)
-                                    if (ineg == 0) call STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
-                                enddo
-                            enddo
-                        enddo
-                    endif
-                endif
-                if (NOPL /= 0) then
-                    IOPL = minloc(SLSTOR(0, 1:NOPL), 1)
-                    NN = ISTOR(0, IOPL)
-                    sumsq = SLSTOR(0, IOPL)
-                    IND(1:NN)=ISTOR(1:NN, IOPL)
-                    SLPR(1:NN)=SLSTOR(1:NN, IOPL)
-                    slip_rates(IND(1:NN))=SLPR(1:NN)*sgnn(IND(1:NN))
-                    return
-                endif
-            endif
-        endif
-        NN = n_active_slip_systems
-        IND(1:NN)=ind_active_slip_systems_original(1:NN)
-        slip_rates(IND(1:NN))=SLIPLP(1:NN)
-    end subroutine
+        do i = 1, size(ind_active_slip_systems)
+            coeffs(:, ind_active_slip_systems(i)) = taylor_coeffs(:, ind_active_slip_systems(i)) * sign_slip(ind_active_slip_systems(i))
+        end do
 
-    !> @brief Fills the IND_ array with the active slip systems
-    !!
-    !! @details This subroutine fills the IND_ array with the active slip systems
-    !!          skipping the slip systems with the indices in the skip array.
-    !!
-    !! @param[in, out] IND_                    integer vector (8)
-    !!                                        Indices of the active slip systems
-    !!
-    !! @param[in]     ind_active_slip_systems integer vector (8)
-    !!                                        Indices of the active slip systems
-    !!
-    !! @param[in]     skip                    integer vector
-    !!                                        Indices of the slip systems to skip
-    !!
-    !! @param[in]     N_max                   integer
-    !!                                        Maximum number of slip systems
-    subroutine fill(IND_, ind_active_slip_systems, skip, N_max)
-        integer, intent(inout):: IND_(8)
-        integer, intent(in):: ind_active_slip_systems(8), N_max
-        integer, dimension(:), intent(in):: skip
-        integer:: i, j
+        sum_squares_optimal = REAL_DP_MAX_VAL
+        slip_rates = 0._DP
+        call iterate_combinations(coeffs, strain, ind_active_slip_systems, 1, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex)
 
-        j = 1
-        do i = 1, N_max
-            if (any(i == skip)) cycle
-            IND_(j)=ind_active_slip_systems(i)
-            j = j+1
-        enddo
+        if (sum_squares_optimal == REAL_DP_MAX_VAL) &
+            call log_error(MOD_NAME, 'resolve_taylor_ambiguity', ERR, 'Could not find optimal solution.')
 
-    end subroutine
+    end function
 
-    !> @brief Determine the slip rates given the stress and the active slip systems.
-    !!
-    !! @details This subroutine determines the slip rates given the stress and the active slip systems.
-    !!          If there are more than 5 active slip systems, then there are multiple possible solutions.
-    !!          This subroutine finds the solution with the smallest sum of squares of the slip rates.
-    !!          If there are exactly 5 active slip systems, then there is only one solution.
-    !!          If there are less than 5 active slip systems, then there may not be a solution.
-    !!          In that case, we solve the system of equations in the least square sense.
-    !!
-    !! @param[in]     n_slip                  integer
-    !!                                        Number of slip systems
-    !!
-    !! @param[in]     ind                     integer vector (8)
-    !!                                        Indices of the active slip systems
-    !!
-    !! @param[out]    slip_rate               real vector (8)
-    !!                                        Slip rates for the active slip systems
-    !!
-    !! @param[out]    ineg                    integer
-    !!                                        Index of the slip system with the most negative slip rate
-    !!                                        If ineg == 0, then all slip rates are positive.
-    !!                                        Note that ineg > 0, means that one of the slip rates is negative, 
-    !!                                        so the solution is not valid.
-    !!
-    !! @param[out]    sumsq                   real
-    !!                                        Sum of squares of the slip rates
-    !!
-    !! @param[in]     sgnn                    real vector (n_slip_systems)
-    !!                                        Signs of the slip rates
-    !!
-    !! @param[in]     strain                  real vector (5)
-    !!                                        The total strain rate (imposed+relaxation)
-    !!
-    !! @param[in]     A8                      real matrix (5, n_slip_systems)
-    !!                                        The symmetric (non-rotational) part of taylor equations matrix for a single grain.
-    !!                                        The matrix is represented in crystal frame.
-    !!                                        This matrix does not contain the relaxation terms.
-    subroutine calc_slip(n_slip, ind, slip_rate, ineg, sumsq, sgnn, strain, A8)
 
-        integer, intent(in):: ind(8), n_slip
-        real(DP), intent(in):: A8(:,:), strain(5), sgnn(:)
-        integer, intent(out):: ineg
-        real(DP), intent(out):: slip_rate(8), sumsq
+    !> @brief iterate over all combinations of active slip systems to find the minimum norm solution
+    !!
+    !! @details This routine finds the combination of slip rates among the active slip systems which yields the smalles sum of
+    !!          squared slips. It starts with evaluating the input combination. If this does not yield a valid solution (all slip rates
+    !!          positive), it tries all subsets of the input set with at least 5 slip systems.
+    recursive subroutine iterate_combinations(coeffs, strain, ind, start_index, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex)
+        real(DP), intent(in)::      coeffs(:,:), &                  !< Taylor coefficients of the slip systems with their sign adjusted based on the rss found
+                                                                    !  in simplex so that all slip rates determined by the minimum norm solution should be possitive.
+                                    strain(5)                       !< Imposed strain on the grain.
+        integer, intent(in)::       ind(:), &                       !< Indices of the currently considered slip systems.
+                                    start_index, &                  !< Index from which to start looping over possible subsets. Needed to avoid duplicting
+                                                                    !  combinations (e.g. [1, 2] and [2, 1]).
+                                    n_active_simplex, &             !< Number of active slip systems according to the simplex solution.
+                                    sign_slip(:)                    !< Sign of the slip rates on each of the candidate slip systems.
+        real(DP), intent(inout)::   slip_rates(size(sign_slip)), &  !< Current optimal solution for the slip rates.
+                                    sum_squares_optimal             !< Optimal sum of squared slip rates found so far
 
-        real(DP):: A(5, 8), B(8), RES, x, BA(8)
-        real(DP), parameter:: TOL = 1.0e-6_dp
-        integer:: i, N1, N2
+        integer, parameter::        SIZE_WORKSPACE = 10  ! Optimal, refer to LAPACK documentation.
+        integer::                   i, &
+                                    info, &
+                                    n_systems, &
+                                    ind_new(size(ind)-1)
+        real(DP)::                  A(5, size(ind)), &
+                                    B(max(5, size(ind))), &
+                                    workspace(SIZE_WORKSPACE), &
+                                    sum_squares, &
+                                    residual
 
-        N1 = 5
-        N2 = n_slip
-        do i = 1, N2
-            A(1:5, i)=sgnn(ind(i))*A8(1:5, ind(i))
-        enddo
+        n_systems = size(ind)
+
+        !Must copy to local vars because dgels overwrites these internally
+        A = coeffs(:, ind)
         B(1:5)=strain
 
-        ! Solve system of equations
-        call Kleinkwa(N1, N2, 5, 8, A, B, BA, RES)
+        !Lapack routine to find minimum norm solution
+        call dgels('N',5, n_systems, 1, A, 5, B, size(B), workspace, SIZE_WORKSPACE, info)
 
-        slip_rate(1:n_slip)=BA(1:n_slip)
-        sumsq = sum(slip_rate(1:n_slip)**2)
-        if (RES > TOL) then
-            ineg = -1
-            call log_trace(MOD_NAME, 'MINSQU', 'RES too large')
-        else
-            x = 0.0_dp
-            ineg = 0
-            do i = 1, n_slip
-                if (x > slip_rate(i)) then
-                    x = slip_rate(i)
-                    ineg = i
-                endif
-            enddo
+        ! Dgels expects the input system to be of full rank. If this is not the case, info > 0. We can then safely ignore the
+        ! solution because we know at least 1 solution of full rank exists, which was the result from simplex. Thus, we just try different
+        ! combinations until we find it.
+        if (info == 0) then
+            ! If the system is overdetermined, dgels computes the least squares solution instead of the minimum norm solution. Any
+            ! valid solutions computed in this way should however be exact, since we can only end up with fewer than 5 slip systems
+            ! here if simplex found a degenerate solution (at least one slip rate 0). This means that a valid least squares solution
+            ! must have a negligible residual.
+            if (n_systems < 5) then
+                residual = sum(B(n_systems+1:5)**2)  ! See LAPACK documentation
+                if (residual > TOLERANCE) return  ! Residual can only increase by taking a subset of the current systems.
+            end if
+
+            sum_squares = sum(B(1:n_systems)**2)
+
+            if (sum_squares < sum_squares_optimal) then
+                                !We need to add a tolerance on B because the input system may be ill-conditioned
+                if (all(B(1:n_systems) >= -TOLERANCE)) then
+                    sum_squares_optimal = sum_squares
+                    slip_rates = 0._DP
+                    slip_rates(ind) = B(1:n_systems)*sign_slip(ind)
+                    return
+                end if
+            else
+                ! Taking subsets will only yield larger residuals.
+                return
+            end if
+        end if
+
+        ! Only when the maximum number of slip systems in a combination is equal to the number of active slip systems simplex found,
+        ! we are guaranteed by simplex that the system is nonsingular
+        if (size(ind) > n_active_simplex) then
+            do i = start_index, n_systems
+                ind_new = pack(ind, ind /= ind(i))
+                call iterate_combinations(coeffs, strain, ind_new, i, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex)
+            end do
         end if
     end subroutine
-
-    !> @brief Stores a valid solution for the slip rates
-    subroutine STORE(NSTOR, NOPL, NN, SLPR, IND, ISTOR, SLSTOR, SUMSQ)
-
-        integer, intent(in):: NN, IND(8), NSTOR
-        integer, intent(inout):: NOPL, ISTOR(0:8, 48)
-        real(DP), intent(inout):: SLSTOR(0:8, 48)
-        real(DP), intent(in):: SLPR(8), sumsq
-
-        NOPL = NOPL+1
-        if (NOPL > NSTOR) call log_error(MOD_NAME, 'store', ERR_DIMS, 'Too small dimension NSTOR in SLIPRAT')
-        ISTOR(0, NOPL)=NN
-        ISTOR(1:NN, NOPL)=IND(1:NN)
-        SLSTOR(0, NOPL)=SUMSQ
-        SLSTOR(1:NN, NOPL)=SLPR(1:NN)
-
-    end subroutine
-
 end module

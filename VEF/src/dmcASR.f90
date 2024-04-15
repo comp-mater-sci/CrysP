@@ -102,14 +102,14 @@ contains
         nsteps = size(this%steps)
         !
         ! Calculate rotation matrix (active rotation from material (=texture) to sample frame)
-        Mrot = convert_rotation(this%rotframe/RAD_TO_DEG)
+        Mrot = from_euler_angles(this%rotframe/RAD_TO_DEG)
         !
         do  istep = 1, nsteps
                         !
             associate(step => this%steps(istep), control => this%steps(istep)%incrementation_control)
                 !
                 ! Acquire full stress tensor sigma
-                sigma = convert_voigt(step%stress_mode)
+                sigma = from_voigt(step%stress_mode)
                 Pressure = (trace(sigma) / 3.D0) * UNIT_MATRIX_3X3
                 S = sigma-Pressure
                 ! Follow the stress path
@@ -154,10 +154,6 @@ contains
     !
     integer:: i, ierr, increment
     real(DP), dimension(3, 3)    :: SonA, A, P_step, P_step_rot, P_total_rot, P_total_end, P_total_end_rot
-    real(DP), dimension(6) ::    SonA_voigt, SonA_rot_voigt, &
-                                A_voigt, A_rot_voigt, &
-                                P_step_voigt, P_step_rot_voigt, &
-                                P_total_end_voigt, P_total_end_rot_voigt
     integer, parameter:: ncolumn_labels = 2+10+4*2*6, column_width = 15, short_column_width = 9
     character(len = column_width), dimension(ncolumn_labels), parameter:: column_labels = &
             [ character(len = column_width) ::  &
@@ -174,6 +170,14 @@ contains
             ]
         !
         info = VEF_OK
+
+        A = 0._DP
+        sonA = 0._DP
+        P_step = 0._DP
+        P_total_end = 0._DP
+        P_step_rot = 0._DP
+        P_total_end_rot = 0._DP
+
         !
         ! Write out header lines
         !
@@ -204,26 +208,16 @@ contains
                     ! Total deviatoric strain
                     P_total_rot = convert_stress_strain_space(v%icv%vP_total)  ! at the beginning of the increment
                     P_total_end_rot = P_total_rot+v%P_inc_evol  ! at the end of the increment
-                    !
-                    A_voigt             = convert_voigt(A, 6)
-                    SonA_voigt          = convert_voigt(SonA, 6)
-                    P_step_voigt        = convert_voigt(P_step, 6)
-                    P_total_end_voigt   = convert_voigt(P_total_end, 6)
-                    ! Convert to Voigt (to avoid temporaries in write)
-                    A_rot_voigt             = convert_voigt(v%A, 6)
-                    SonA_rot_voigt          = convert_voigt(v%SonA, 6)
-                    P_step_rot_voigt        = convert_voigt(P_step_rot, 6)
-                    P_total_end_rot_voigt   = convert_voigt(P_total_end, 6)
 
                     write(iounit, fmt = 710, iostat = ierr) &
                                 output%step, v%icv%increment, & ! 2 fields
                                 v%vm_strain, norm2(v%icv%vP_step), v%norm_P_abs, v%vm_strain_total, &
                                 v%icv%plastic_work_total, v%dotWonA, &
                                 v%taylor_factor, v%scal_s, v%norm_SonA, v%R, & ! 9 fields
-                                SonA_voigt, SonA_rot_voigt, &
-                                A_voigt, A_rot_voigt, &
-                                P_step_voigt, P_step_rot_voigt, &
-                                P_total_end_voigt, P_total_end_rot_voigt
+                                to_voigt(SonA, 6), to_voigt(v%SonA, 6), &
+                                to_voigt(A, 6), to_voigt(v%A, 6), &
+                                to_voigt(P_step, 6), to_voigt(P_step_rot, 6), &
+                                to_voigt(P_total_end, 6), to_voigt(P_total_end_rot, 6)
                 !
                 end associate
             enddo

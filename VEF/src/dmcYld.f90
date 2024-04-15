@@ -156,7 +156,7 @@ contains
         !
         iunilen = 1.D0
         if (this%do_scaling) then
-            Sm =  convert_voigt(this%scaling_vector)
+            Sm =  from_voigt(this%scaling_vector)
             if (norm2(Sm) < epsilon(0.D0)) then
                 write(display_unit, fmt = 900) 'Norm of the input stress for scaling cannot be zero'
                 return
@@ -192,7 +192,7 @@ contains
                 !       a temporary created in a call to convert_voigt
                 sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) &
                                 + w*this%base_vectors(:,3)
-                Sm = convert_voigt(sigma_vector)
+                Sm = from_voigt(sigma_vector)
                 !
                 info = this%findSolution(Sm, D, ylp_result, is_acceptable = acceptable_point)
                 ! Consider what to do with unsuccessful search

@@ -5,11 +5,10 @@ module utils
     implicit none
     public
 
-    external:: dgels
-
 
     integer, parameter::  DP = selected_real_kind(15, 307)
     real(DP), parameter:: TOLERANCE  = 1.E-9_DP, &
+                          REAL_DP_MAX_VAL = huge(0._DP), &
                           PI         = acos(-1.D0), & 
                           RAD_TO_DEG = 180._DP/PI, &
                           SQR0P5     = sqrt(0.5_DP), &
@@ -51,11 +50,6 @@ module utils
     interface convert_spin
         module procedure convert_spin_mat_vec, &
                          convert_spin_vec_mat
-    end interface
-
-    interface convert_rotation
-        module procedure euler_angles_to_rotation_matrix, &
-                         rotation_matrix_to_euler_angles
     end interface
 
     interface operator(.dot.)
@@ -250,36 +244,6 @@ contains
         end do
     end function
 
-    !>N1 = number of equations
-    !>N2 = number of unknowns
-    !>A = coefficient matrix
-    !>B = right hand sides
-    !>BA = solution on output
-    !>RES = residu (sum of squares)
-    !>M1, M2 = dimensions
-    subroutine kleinkwa(N1, N2, M1, M2, A, B, BA, res)
-        integer,                    intent(in)                                  :: M1, M2, N1, N2
-        real(DP), dimension(M2),    intent(in)                                  :: B
-        real(DP), dimension(M1, M2), intent(in)                                  :: A
-        real(DP), dimension(M2),    intent(out)                                 :: BA
-        real(DP),                   intent(inout)                               :: res
-        integer                                                                 :: i, info
-        real(DP)                                                                :: y
-        real(DP), dimension(max(1, 2*min(N1, N2) + 1))   :: work
-        real(DP), dimension(M1, M2)                                              :: A_COPY
-
-        A_COPY = A
-        BA = B
-
-        call dgels('N',N1, N2, 1, A_COPY, M1, BA, M2, work, size(work), info)
-
-        res = 0.0_DP
-        do i = 1, N1
-            y = sum(A(i, 1:N2)*BA(1:N2))
-            RES = RES + (y-B(i))**2
-        end do
-    end subroutine
-
     !> @brief Rotates the second-rank tensor S to the reference frame given by rotation R.
     !! @return The tensor in the frame defined by R
     !! @param S the tensor before rotation
@@ -315,7 +279,7 @@ contains
 
     !> @brief Convert Euler angles to a rotation matrix.
     !> @return 3x3 rotation matrix corresponding to the given Euler angles.
-    pure function euler_angles_to_rotation_matrix(angles) result(mat)
+    pure function from_euler_angles(angles) result(mat)
     real(DP), dimension(3), intent(in):: angles !< Euler angles in Bunge convention
     real(DP), dimension(3, 3)    :: mat
     real(DP):: cos_phi1, cos_phi2, cos_PHI, &
@@ -341,7 +305,7 @@ contains
 
     !> @brief Converts a rotation matrix to Euler angles.
     !> @return 3-element vector containing the Euler angles corresponding to the given rotation matrix in Bunge convention.
-    pure function rotation_matrix_to_euler_angles(mat) result(ang)
+    pure function to_euler_angles(mat) result(ang)
         real(DP), dimension(3, 3), intent(in)::  mat !< Rotation matrix.
         real(DP)::              ang(3), &
                                 phi1, &
