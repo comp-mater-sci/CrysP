@@ -9,12 +9,6 @@ set(libaltay "altay")
 list(APPEND Fortran_FLAGS ${LibAlTay_FLAGS})
 
 add_library(${libaltay} STATIC
-criConfigReader.f90
-criLinearMap.f90
-criNamedRange.f90
-criNumerics.f90
-criRange.f90
-criUncomment.f90
 simulation.f90
 taylor.f90 
 altayDynfil.f90 

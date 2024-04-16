@@ -15,6 +15,12 @@ endif()
 list(APPEND Fortran_FLAGS ${alamDMC_FLAGS})
 
 add_executable(alamDMC
+criConfigReader.f90
+criLinearMap.f90
+criNamedRange.f90
+criNumerics.f90
+criRange.f90
+criUncomment.f90
 nlls_tr.f90
 alamYLP.f90 
 alamEval.f90
