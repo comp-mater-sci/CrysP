@@ -6,7 +6,7 @@ module taylor
     use logging
     use simplex
     use slip_systems
-    use altayDynfil
+    use grain_module
 
     implicit none
 
@@ -234,7 +234,7 @@ contains
         real(DP), intent(inout)::   orientation(3, 3)
         real(DP)::                  orientation_increment(3, 3), &
                                     slip_rates(size(crss, 2))
-        integer :: n_active_simplex
+        integer:: n_active_simplex
 
         n_active_simplex = count(sliplp(:n_active_slip_systems) > TOLERANCE)
 

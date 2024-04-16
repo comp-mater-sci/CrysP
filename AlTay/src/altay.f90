@@ -3,10 +3,10 @@ module altay
     use simulation
     use altayConfig
     use hardening
-    use altayDynfil
     use altayCurAccess
     use logging
     use parameters
+    use grain_module
 
     implicit none
 
@@ -104,7 +104,7 @@ contains
         allocate(steps%simulCalls(nsteps), stat = ierr)
         steps%nSimulCalls = nsteps
         steps%this = 0
-        ! No need to specifically initialize other components, 
+        ! No need to specifically initialize other components,
         ! since there are initializers provided in the datatype.
         info = ierr
     end subroutine
@@ -137,7 +137,7 @@ contains
             NFILE0 = merge(1, 0, steps%simulCalls(i)%input%do_output_init)
             velocity_gradient = steps%simulcalls(i)%input%dgf
             !Make traceless, should be moved to preprocessing
-            velocity_gradient = velocity_gradient-UNIT_MATRIX_3X3 * (velocity_gradient(1, 1)+velocity_gradient(2, 2)+velocity_gradient(3, 3))/3._DP 
+            velocity_gradient = velocity_gradient-UNIT_MATRIX_3X3 * (velocity_gradient(1, 1)+velocity_gradient(2, 2)+velocity_gradient(3, 3))/3._DP
             ! Run simul.
             call simulation_run(NFILE0, velocity_gradient)
 
