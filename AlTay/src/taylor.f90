@@ -1,6 +1,5 @@
 module taylor
     use utils
-    use criMathUtils
     use hardening
     use taylor_ambiguity
     use altayConfig, only: astate

@@ -3,7 +3,6 @@
 module alamEval
 use alamYLPConstants
 use nllsTR
-use criMathUtils
 
 implicit none
 
@@ -11,16 +10,16 @@ implicit none
 
       !> Objective function: difference between the searched-for normalized stress and the normalized
       !> stress given by the multilevel model.
-      type,extends(MKLFDJacobiObjFunction) :: NormalizedV5DComp
+      type, extends(MKLFDJacobiObjFunction):: NormalizedV5DComp
 
             !NOTE: [n_X_dim] must be 5
             !      [m_F_dim] must be 5
 
             !> Normalized stress vector
-            real(DP),dimension(alamEval_vSD_dim)        :: vSn = 0.D0
+            real(DP), dimension(alamEval_vSD_dim)        :: vSn = 0.D0
 
             !> Multilevel prediction of stress from the previous call
-            real(DP),dimension(alamEval_vSD_dim)        :: vSml = 0.D0
+            real(DP), dimension(alamEval_vSD_dim)        :: vSml = 0.D0
 
             !> Flag: request for simulation outputs other than just deviatoric stress.
             !>
@@ -29,7 +28,7 @@ implicit none
 
       contains
             !> Implementation of virtual method defined in ObjectiveFunction
-            procedure,pass(this)           :: objectiveEval => objectiveEval_NV5DComp
+            procedure, pass(this)           :: objectiveEval => objectiveEval_NV5DComp
 
       end type
 
@@ -38,24 +37,24 @@ implicit none
 
 contains
 
-      subroutine objectiveEval_NV5DComp(this,vX,info)
+      subroutine objectiveEval_NV5DComp(this, vX, info)
       use altay
       use altayConfig
       implicit none
-            class(NormalizedV5DComp),intent(inout)      :: this
-            real(DP),dimension(:),intent(in)    :: vX       !< Dimension must be: 5
-            integer,intent(out)                         :: info
+            class(NormalizedV5DComp), intent(inout)      :: this
+            real(DP), dimension(:), intent(in)    :: vX       !< Dimension must be: 5
+            integer, intent(out)                         :: info
             !
-            real(DP),dimension(alamEval_tSD_dim,alamEval_tSD_dim)     :: Atens
-            real(DP),dimension(alamEval_vSD_dim)       :: vS, vXn
+            real(DP), dimension(alamEval_tSD_dim, alamEval_tSD_dim)     :: Atens
+            real(DP), dimension(alamEval_vSD_dim)       :: vS, vXn
             real(DP)                    :: norm
             integer                             :: i
             !
-            integer,parameter :: istp = 1
+            integer, parameter:: istp = 1
             !
             info = -1
             i = 0
-            alamEval_objFx_call_count = alamEval_objFx_call_count + 1
+            alamEval_objFx_call_count = alamEval_objFx_call_count+1
             !
             ! Transfer normalized vX into second rank tensor.
             norm = norm2(vX)
@@ -64,10 +63,10 @@ contains
             Atens = convert_stress_strain_space(vXn)
             ! Set Atens as current value for processing
 #ifdef DIAGNOSTIC_OUTPUT
-            write(*,'(A,1X,5(F12.8))') 'eval for ', vXn
+            write(*,'(A, 1X, 5(F12.8))') 'eval for ', vXn
 #endif
             ! Re-initialize with a request for just one single step
-            call initStepData(istp,astate,info)
+            call initStepData(istp, astate, info)
             if (info /= 0) return
             !
             associate (input => astate%simulCalls(istp)%input)
@@ -79,7 +78,7 @@ contains
                   input%do_output_final = .false.
             end associate
             ! Call the simulation
-            call runSteps(astate,info)
+            call runSteps(astate, info)
             if (info /= 0) return
             !
             ! Retrieve output stress into 5D vector
@@ -87,18 +86,18 @@ contains
             ! Transfer vS to vSml
             this%vSml = vS
 #ifdef DIAGNOSTIC_OUTPUT
-            write(*,'(A,1X,5(F12.8))') 'stress is ', vS
+            write(*,'(A, 1X, 5(F12.8))') 'stress is ', vS
 #endif
             ! Normalize vS
             norm = norm2(vS)
             if (norm > 0.D0) then
-                  vS = vS / norm
-                  this%state%vF = this%vSn - vS
+                  vS = vS/norm
+                  this%state%vF = this%vSn-vS
 #ifdef DIAGNOSTIC_OUTPUT
-                  write(*,'(F12.8,1X)') (vS(i),i=1,alamEval_vSD_dim)
+                  write(*,'(F12.8, 1X)') (vS(i), i = 1, alamEval_vSD_dim)
 #endif
             else
-                 ! norm is zero, so vS=0
+                 ! norm is zero, so vS = 0
                  this%state%vF = this%vSn
             endif
             info = 0

@@ -3,7 +3,6 @@
 !> dmcUDSA (Uniaxially-Dominated Stress Analysis)  allows one to track anisotropic properties
 !> along deformation due to the uniaxial tension or compression stress.
 module dmcUDSA
-use criMathUtils
 use criRange
 use criNamedRange
 use criConfigReader
@@ -199,7 +198,7 @@ contains
         !
         ! Rotate stress from "tensile" to material coordinate system
         ! Calculate rotation matrix
-        Mrot = euler_angles_to_rotation_matrix(sample_orientation)
+        Mrot = from_euler_angles(sample_orientation)
         sigma = rotate_from(sigma_t, Mrot)
         !
         ! Open and initialize result files

@@ -2,10 +2,9 @@
 
 !> Implementation of a basic DMC computational module.
 module dmcBasicModule
-    use,intrinsic :: iso_fortran_env, only: error_unit,output_unit
+    use, intrinsic:: iso_fortran_env, only: error_unit, output_unit
     use criUncomment
     use criConfigReader
-    use criMathUtils
     use dmcAbstractModule
     use altayConfig, only: altayConfigData
     use commonConfig
@@ -19,13 +18,13 @@ module dmcBasicModule
     implicit none
     private
 
-    character(*), parameter :: MOD_NAME = 'basicModule'
+    character(*), parameter:: MOD_NAME = 'basicModule'
 
-    public :: outputConfig, &
+    public:: outputConfig, &
               BasicModule, &
               readAlTayConfigSection
 
-      type :: outputConfig
+      type:: outputConfig
             character(max_pathlen)  :: outputPrefix = '' !< Prefix for the output files.
             logical                 :: outputRequest = .false.
             integer                 :: verbosity = 0  !< Level of verbosity sent to the stdout and to the log file (if any)
@@ -40,37 +39,37 @@ module dmcBasicModule
       !>       method (including the ones that have an actual implementation
       !>       in BasicModule) in the OO-acceptable style:
       !>       `this%ParentClassName%method()`
-      type,extends(abstractModule) :: BasicModule
+      type, extends(abstractModule):: BasicModule
             type(outputConfig)            :: output
             type(altayConfigData)         :: altay !< Root-level configuration structure of texture and hardening
       contains
-            procedure :: initialize =>  BasicModule_initialize
-            procedure :: readConfig => BasicModule_readConfig
-            procedure :: run => BasicModule_run
-            procedure :: finalize => BasicModule_finalize
-            procedure :: openOutputFile => BasicModule_openOutputFile
-            procedure :: reinitializeLibAltay => BasicModule_reinitializeLibAltay
-            procedure :: finalizeLibAltay => BasicModule_finalizeLibAltay
+            procedure:: initialize =>  BasicModule_initialize
+            procedure:: readConfig => BasicModule_readConfig
+            procedure:: run => BasicModule_run
+            procedure:: finalize => BasicModule_finalize
+            procedure:: openOutputFile => BasicModule_openOutputFile
+            procedure:: reinitializeLibAltay => BasicModule_reinitializeLibAltay
+            procedure:: finalizeLibAltay => BasicModule_finalizeLibAltay
       end type
 
 contains
 
     integer function BasicModule_initialize(this) result(info)
-      class(BasicModule),intent(inout)          :: this
-      integer :: ierr
+      class(BasicModule), intent(inout)          :: this
+      integer:: ierr
 
             info = VEF_ERROR
             ! Finish the configuration:
-            this%altay%output_config%nfile = merge(1,0,this%output%outputRequest)
+            this%altay%output_config%nfile = merge(1, 0, this%output%outputRequest)
             this%altay%output_prefix = trim(this%output%outputPrefix)
             this%altay%jobtitle = trim(this%output%outputPrefix)
 
-            call initAltay(this%altay,ierr)
+            call initAltay(this%altay, ierr)
 
             if (ierr /= VEF_OK) return
 
             30 format('Initializing the multilevel model...')
-            31 format(1X,A)
+            31 format(1X, A)
 
             ! Output the initial state variables (non only texture but also BPM, MSS) if requested.
             if (this%output%outputRequest) then
@@ -82,26 +81,26 @@ contains
       end function
 
     !> read output and AlTay configuration sections
-    integer function BasicModule_readConfig(this,cnfunit) result(info)
-        class(BasicModule),intent(inout) :: this
-        integer,intent(in)               :: cnfunit !< IO input unit
+    integer function BasicModule_readConfig(this, cnfunit) result(info)
+        class(BasicModule), intent(inout):: this
+        integer, intent(in)               :: cnfunit !< IO input unit
 
-        character(*), parameter :: PROC_NAME = 'readconfig'
+        character(*), parameter:: PROC_NAME = 'readconfig'
 
         ! Read output configuration lines
-        call readOutputConfigSection(cnfunit,this%output,info) ! top 3 lines after comment header of config file
+        call readOutputConfigSection(cnfunit, this%output, info)  ! top 3 lines after comment header of config file
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Check output configuration section.')
 
         ! Read AlTay configuration lines
-        call readAlTayConfigSection(cnfunit,this%altay,info) !read configuration of texture, slip systems, microstructure and hardening
+        call readAlTayConfigSection(cnfunit, this%altay, info)  ! read configuration of texture, slip systems, microstructure and hardening
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Check libAltay configuration section.')
     end function
 
-    subroutine BasicModule_run(this,info)
-    class(BasicModule),intent(inout) :: this
-    integer,intent(out)                 :: info
+    subroutine BasicModule_run(this, info)
+    class(BasicModule), intent(inout):: this
+    integer, intent(out)                 :: info
     !
         info = VEF_OK
     !
@@ -110,7 +109,7 @@ contains
 
     !> Finalization of the module
     integer function BasicModule_finalize(this) result(info)
-        class(BasicModule),intent(inout) :: this
+        class(BasicModule), intent(inout):: this
 
         info = 0
         if (this%finalizeLibAltay() /= VEF_OK) &
@@ -120,12 +119,12 @@ contains
 
     !> Open output file
     integer function BasicModule_openOutputFile(this, ext, ofunit, suffix) result(info)
-    class(BasicModule),intent(in)           :: this
-    character(len=*),intent(in)             :: ext !< File extension (with leading dot)
-    integer,intent(out)                     :: ofunit !< IO unit of the output
-    character(len=*),intent(in),optional    :: suffix !< Suffix to the file
-    character(len=max_pathlen) :: output_path
-    integer :: ierr
+    class(BasicModule), intent(in)           :: this
+    character(len=*), intent(in)             :: ext !< File extension (with leading dot)
+    integer, intent(out)                     :: ofunit !< IO unit of the output
+    character(len=*), intent(in), optional    :: suffix !< Suffix to the file
+    character(len = max_pathlen):: output_path
+    integer:: ierr
 
         if (present(suffix)) then
             output_path = trim(this%output%outputPrefix)// trim(suffix) //trim(ext)
@@ -133,7 +132,7 @@ contains
             output_path = trim(this%output%outputPrefix)// trim(ext)
         endif
 
-        open(newunit=ofunit, file=output_path, status='replace', iostat=ierr)
+        open(newunit = ofunit, file = output_path, status='replace', iostat = ierr)
         if (ierr /= 0) &
             call log_error(MOD_NAME, 'open_output_file', ERR_IO, 'Could not open output file.')
 
@@ -141,10 +140,10 @@ contains
     end function
 
     integer function BasicModule_reinitializeLibAltay(this, output_prefix) result(info)
-    class(BasicModule),intent(inout)        :: this
-    character(len=*),intent(in),optional    :: output_prefix !< File prefix
+    class(BasicModule), intent(inout)        :: this
+    character(len=*), intent(in), optional    :: output_prefix !< File prefix
     !
-    integer :: ierr
+    integer:: ierr
         ! Re-initialize AlTay
         RETURN_IF(info /= VEF_OK, info = this%finalizeLibAltay())
         !
@@ -152,16 +151,16 @@ contains
         !  - Set new prefix
         if (present(output_prefix)) this%altay%output_prefix = output_prefix
         !
-        call initAltay(this%altay,ierr)
+        call initAltay(this%altay, ierr)
         CHOOSE(info, ierr == VEF_OK, VEF_OK, VEF_ERROR)
     !
     end function
 
     !> Finalize libAltay and perform additional actions on finalization.
     integer function BasicModule_finalizeLibAltay(this) result(info)
-    class(BasicModule),intent(inout)        :: this
+    class(BasicModule), intent(inout)        :: this
     !
-    integer :: ierr
+    integer:: ierr
     !
         info = VEF_ERROR
         RETURN_IF(ierr /= VEF_OK, call finalizeAltay(ierr))
@@ -177,22 +176,22 @@ contains
 
       !> Read output configuration from top 3 lines after comment header in configuration file:
       !> prefix for output files, incremental output request flag, verbosity level
-      subroutine readOutputConfigSection(cnfunit,cnf,info)
-      integer,intent(in)                  :: cnfunit !< configuration file
-      type(outputConfig),intent(inout)    :: cnf
-      integer,intent(out)                 :: info
+      subroutine readOutputConfigSection(cnfunit, cnf, info)
+      integer, intent(in)                  :: cnfunit !< configuration file
+      type(outputConfig), intent(inout)    :: cnf
+      integer, intent(out)                 :: info
 
             info = VEF_ERROR
             if (.not. readValue(cnfunit, cnf%outputPrefix)) then
-                write(error_unit,fmt=900) 'Check output file prefix.'
+                write(error_unit, fmt = 900) 'Check output file prefix.'
                 return
             endif
             if (.not. readValue(cnfunit, cnf%outputRequest)) then
-                write(error_unit,fmt=900) 'Check output request flag.'
+                write(error_unit, fmt = 900) 'Check output request flag.'
                 return
             endif
             if (.not. readValue(cnfunit, cnf%verbosity)) then
-                write(error_unit,fmt=900) 'Check verbosity level.'
+                write(error_unit, fmt = 900) 'Check verbosity level.'
                 return
             endif
             info = VEF_OK
@@ -205,22 +204,22 @@ contains
 
 
       !> Read configuration of libaltay
-      subroutine readAlTayConfigSection(cnfunit,cnf,info)
+      subroutine readAlTayConfigSection(cnfunit, cnf, info)
       use altayConfig
-      integer,intent(in)                  :: cnfunit
-      type(altayConfigData),intent(inout) :: cnf !< Root-level configuration structure of texture, microstructure and hardening
-      integer,intent(out)                 :: info
+      integer, intent(in)                  :: cnfunit
+      type(altayConfigData), intent(inout):: cnf !< Root-level configuration structure of texture, microstructure and hardening
+      integer, intent(out)                 :: info
       !
       integer                       :: model_id, dm_id
       logical                       :: use_default_microstructure
       logical                       :: dummy, dummy2
       integer                       :: i
-      character(:), allocatable :: slip
-      character(5) :: buffer
+      character(:), allocatable:: slip
+      character(5):: buffer
 
-      type(MapItem),dimension(2) :: model_types = [MapItem('ALAMEL', modelAlamel), &
+      type(MapItem), dimension(2):: model_types = [MapItem('ALAMEL', modelAlamel), &
                                                    MapItem('FCTaylor', modelFCTaylor)]
-        character(*), parameter :: PROC_NAME = 'readAltayConfigSection'
+        character(*), parameter:: PROC_NAME = 'readAltayConfigSection'
             info = ERR_IO
            model_id = -1
            dm_id = -1
@@ -228,7 +227,7 @@ contains
             if (.not. readValue(cnfunit, cnf%texture_input_fname)) return
             ! Determine crystal plasticity model type
             if (.not. readKeyword(cnfunit, model_types, model_id)) then
-                write(error_unit,fmt=900) 'Unsupported crystal plasticity model.'
+                write(error_unit, fmt = 900) 'Unsupported crystal plasticity model.'
                 info = VEF_ERROR
                 return
             endif
@@ -252,11 +251,11 @@ contains
             use_default_microstructure = .true.
             if (.not. readValue(cnfunit, use_default_microstructure)) return
             if (.not. use_default_microstructure) then
-                  if (.not. readValue(cnfunit, cnf%micros_fname)) return ! read <microstructure>.smt filename
+                  if (.not. readValue(cnfunit, cnf%micros_fname)) return  ! read < microstructure>.smt filename
                   ! Read user-supplied initial deformation gradient
-                  do i=1,3
+                  do i = 1, 3
                         if (.not. readValue(cnfunit, cnf%simul_init%Fmicro(:,i))) then
-                            write(error_unit,fmt=900) 'Cannot read deformation gradient.'
+                            write(error_unit, fmt = 900) 'Cannot read deformation gradient.'
                             info = VEF_ERROR
                             return
                         endif
@@ -265,13 +264,13 @@ contains
             ! Process hardening model section
             call readHardeningSection(cnfunit, cnf, info)
             if (info /= VEF_OK) then
-                write(error_unit,fmt=900) 'Cannot read the hardening law section.'
+                write(error_unit, fmt = 900) 'Cannot read the hardening law section.'
                 return
             endif
 
-            call parameter_set(cnf%hardening_parameters, 'n_slip_systems', size(cnf%deformation_mechanism,3))
+            call parameter_set(cnf%hardening_parameters, 'n_slip_systems', size(cnf%deformation_mechanism, 3))
             ! the keyword is mapped to a proper model_id, we can instantly set it.
-            call setModelType(cnf,model_id,info)
+            call setModelType(cnf, model_id, info)
             if (info /= VEF_OK) return
             !
             !
@@ -283,22 +282,22 @@ contains
 
       !> Read configuration of hardening model from configuration file
       subroutine readHardeningSection(cnfunit, cnf, info)
-      integer,intent(in)                  :: cnfunit
-        type(AltayConfigData), intent(inout) :: cnf
-      integer,intent(out)                 :: info
-        type(Parameter), allocatable :: params(:)
-        integer :: hardening_model_id
-        real(DP) :: tmp(16)
-        character(len=max_pathlen)          :: tmp_fname
-        integer                             :: nparunit, ioerr,i
+      integer, intent(in)                  :: cnfunit
+        type(AltayConfigData), intent(inout):: cnf
+      integer, intent(out)                 :: info
+        type(Parameter), allocatable:: params(:)
+        integer:: hardening_model_id
+        real(DP):: tmp(16)
+        character(len = max_pathlen)          :: tmp_fname
+        integer                             :: nparunit, ioerr, i
       !
-      logical :: use_default_hardening
-        logical :: read_state_dummy
+      logical:: use_default_hardening
+        logical:: read_state_dummy
       !
         info = VEF_OK
             use_default_hardening = .true.
-            if (.not. readValue(cnfunit, use_default_hardening)) then ! read default hardening flag
-                  write(error_unit,fmt=900) 'Reading of the default hardening flag unsuccessful.'
+            if (.not. readValue(cnfunit, use_default_hardening)) then  ! read default hardening flag
+                  write(error_unit, fmt = 900) 'Reading of the default hardening flag unsuccessful.'
                   return
             endif
             if (.not. use_default_hardening) then
@@ -325,15 +324,15 @@ contains
                         endif
                   !
                   case(HARDENING_BP, HARDENING_PEBP_SCREW, HARDENING_PEBP_LOOP)
-                        if (.not. readValue(cnfunit, tmp_fname)) return ! read BP parameter file name
-                        open(newunit=nparunit,file=tmp_fname,status='old', iostat=ioerr)
+                        if (.not. readValue(cnfunit, tmp_fname)) return  ! read BP parameter file name
+                        open(newunit = nparunit, file = tmp_fname, status='old', iostat = ioerr)
 
                         if (ioerr /= 0) then
                         return
                         endif
 
-                        do i=1,16
-                            read(nparunit,fmt=100,err=666,end=666) tmp(i)
+                        do i = 1, 16
+                            read(nparunit, fmt = 100, err = 666, end = 666) tmp(i)
                         end do
 100                     format(F12.5)
 

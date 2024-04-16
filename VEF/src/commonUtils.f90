@@ -124,4 +124,52 @@ contains
 
         str = trim(str)
     end function
+
+    !> @brief Convert a voigt vector to tensor representation.
+    !> @return Real 3x3 matrix containing the tensor representation of the voigt vector.
+    pure function from_voigt(vec) result(mat)
+        real(DP), dimension(:), intent(in):: vec !< Voigt vector. Must be of size 6 or 9. If size is 6, it is assumed to represent a
+                                                 !! stress or strain and the resulting tensor will be symmetrical. If size is 9, it
+                                                 !! is assumed to be a velocity or deformation radient and the result matrix contains all
+                                                 !! elements of the vector.
+        real(DP), dimension(3, 3):: mat
+
+        mat(1, 1) = vec(1)
+        mat(2, 2) = vec(2)
+        mat(3, 3) = vec(3)
+        mat(1, 2) = vec(4)
+        mat(2, 3) = vec(5)
+        mat(3, 1) = vec(6)
+        if (size(vec) == 6) then
+            mat(1, 3) = mat(3, 1)
+            mat(2, 1) = mat(1, 2)
+            mat(3, 2) = mat(2, 3)
+        else
+            mat(1, 3) = vec(7)
+            mat(2, 1) = vec(8)
+            mat(3, 2) = vec(9)
+        end if 
+    end function
+
+    !> @brief Convert a matrix to voigt notation.
+    !> @return Real vector with the voigt representation of the matrix. Its size equals the input argument [length]. If length is 6, 
+    !! the vector represents a stress or a strain. If length is 9, the vector represents a deformation or velocity gradient.
+    pure function to_voigt(mat, length) result(vec)
+        real(DP), dimension(3, 3), intent(in):: mat !< The input matrix. If length is 6, it is assumed to be symmetrical and its
+                                                    !! elements below the diagonal are ignored.
+        integer, intent(in):: length                !< Length of the resulting vector. Must be 6 or 9.
+        real(DP), dimension(length):: vec
+
+        vec(1) = mat(1, 1)
+        vec(2) = mat(2, 2)
+        vec(3) = mat(3, 3)
+        vec(4) = mat(1, 2)
+        vec(5) = mat(2, 3)
+        vec(6) = mat(1, 3)
+        if (length == 9) then
+            vec(7) = mat(2, 1)
+            vec(8) = mat(3, 2)
+            vec(9) = mat(1, 3)
+        end if
+    end function
 end module

@@ -5,7 +5,6 @@
 module dmcYld
     use utils
     use criRange
-    use criMathUtils
     use criUncomment, only: readValue
     use dmcYLPResult
     use commonConfig
@@ -157,7 +156,7 @@ contains
         !
         iunilen = 1.D0
         if (this%do_scaling) then
-            Sm =  Vec6ToMat33(this%scaling_vector)
+            Sm =  from_voigt(this%scaling_vector)
             if (norm2(Sm) < epsilon(0.D0)) then
                 write(display_unit, fmt = 900) 'Norm of the input stress for scaling cannot be zero'
                 return
@@ -190,10 +189,10 @@ contains
                 theta = theta/RAD_TO_DEG
                 ! Combine the base vectors
                 ! Note: explicit temporary sigma_vector prevents runtime warning about
-                !       a temporary created in a call to Vec6ToMat33
+                !       a temporary created in a call to convert_voigt
                 sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) &
                                 + w*this%base_vectors(:,3)
-                Sm = Vec6ToMat33(sigma_vector)
+                Sm = from_voigt(sigma_vector)
                 !
                 info = this%findSolution(Sm, D, ylp_result, is_acceptable = acceptable_point)
                 ! Consider what to do with unsuccessful search
@@ -276,4 +275,37 @@ contains
     !
     end subroutine
 
+
+
+    !> Calculate vector v that is normal to the vector AB (from point A to B).
+    !> Provide the angle between the vector v and the x axis.
+    !> v is obtained by a clockwise rotation by 90 degs applied to the AB vector.
+    subroutine getNormalVector2D(A, B, length, v, beta)
+        real(DP), intent(in):: A(2), B(2), length 
+        real(DP), intent(out):: v(2)       
+        !> Angle between the horizontal axis and the vector u [radians]
+        !> The range of the angle is [0:2pi], thus it may vary from acute angle
+        ! via obtuse angle to reflex angle.
+        real(DP), intent(out)  :: beta
+        
+        real(DP), dimension(2):: u
+        real(DP):: u_norm
+    
+        ! Build the secant vector
+        u = b-a
+        u_norm = norm2(u)
+        if (u_norm > epsilon(0._DP)) then
+            ! Build the normal vector. Anticlockwise rotation by 90degs
+            ! gives [-u_y, u_x]. Apply the clockwise rotation by 90degs:
+            u = [u(2), -u(1)]
+            beta = acos(u(1) / u_norm)
+            ! Let the vectors that point "downwards" have beta angle > 180deg
+            if (u(2) < 0._DP) beta = 2._DP*pi-beta
+            v = u/u_norm*length
+        else
+            ! ouups, the points C and A overlap!
+            beta = 0._DP
+            v = 0._DP 
+        endif
+    end subroutine
 end module

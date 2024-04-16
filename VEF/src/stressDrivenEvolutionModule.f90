@@ -4,7 +4,6 @@
 !> material state.
 module dmcStressDrivenEvolutionModule
 use utils
-use criMathUtils
 use dmcYLPResult
 use dmcStressDrivenModule
 use dmcIncrementationControl
@@ -163,7 +162,7 @@ contains
                 ! and check the tensor component of interest.
                 X_tmp = convert_stress_strain_space(icv%vP_step)
                 if (present(rotmat)) X_tmp = rotate_to(X_tmp, rotmat)
-                X_tmp_voigt = Mat33ToVec6(X_tmp)
+                X_tmp_voigt = to_voigt(X_tmp, 6)
                 stop_control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
             case default
                 ! Make sure it stops immediately
@@ -208,7 +207,7 @@ contains
                     else
                         X_tmp = D
                     endif
-                    X_tmp_voigt = Mat33ToVec6(X_tmp)
+                    X_tmp_voigt = to_voigt(X_tmp, 6)
                     control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
                 !
                 case default
@@ -289,4 +288,34 @@ contains
                 info = VEF_OK
     !
     end subroutine
+
+    !> Calculate the real roots of quadratic polynomial given in form
+    !> a^2 x+b x+c = 0
+    !> Provides x1 and x2. Both x1 and x2 are guaranteed to be set to a defined value, 
+    !> even if no real roots exist.
+    integer function solveQuadraticPolynomial(a, b, c, x) result(n_roots)
+        real(DP), intent(in)   :: a, b, c
+        real(DP), dimension(2), intent(out)  :: x
+        real(DP):: delta
+      
+        ! Satisfy intent(out)
+        x = 0.D0
+        n_roots = 0
+        if (abs(a) > tiny(0.D0)) then
+              delta = b**2 - 4.D0*a * c
+              if (delta >= 0) then
+                    x(1) = 0.5D0 * (-b-sqrt(delta)) / a
+                    x(2) = 0.5D0 * (-b+sqrt(delta)) / a
+                    n_roots = 2
+              endif
+        else
+              ! Solve linear equation b x = -c
+              if (abs(a) > epsilon(0.D0)) then
+                    x(1) = -c/b
+                    n_roots = 1
+              endif
+        endif
+    end function
+
+
 end module 
