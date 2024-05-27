@@ -1,6 +1,6 @@
 module altayCurAccess
-    use altayDynfil
     use utils
+    use grain_module
 
     implicit none
 

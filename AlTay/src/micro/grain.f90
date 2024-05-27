@@ -1,4 +1,4 @@
-module altayDynfil
+module grain_module
     use utils
     use logging
     use slip_systems
@@ -41,12 +41,12 @@ contains
         open(newunit = nunit, file = trim(fname), status='old',form='formatted',iostat = info)
         if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to open textrure file')
 
-        nrec = 0 
-        read (nunit, 94, iostat = info) nrec, title 
+        nrec = 0
+        read (nunit, 94, iostat = info) nrec, title
 94      format(I5, 5x, A)
         if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file header')
         if (nrec > 0) allocate(grains(nrec))
-        
+
         do i = 1, nrec
             read(nunit, 96, iostat = info) angles(3), angles(2), angles(1), stap, nstap, weight, gam
 96          format(4F10.0, I5, 5X, 2F10.0)
@@ -54,13 +54,13 @@ contains
             angles = angles/RAD_TO_DEG
             grains(i) = grain(weight, gam, from_euler_angles(angles), 0._DP)
         enddo
-    
+
         close(nunit)
     end subroutine
 
     subroutine read_microstructure(file_name, initial_deformation_gradient)
         character(len=*), intent(in):: file_name
-        real(DP), dimension(3, 3), intent(in):: initial_deformation_gradient 
+        real(DP), dimension(3, 3), intent(in):: initial_deformation_gradient
         integer           :: file_handle, &
                              n_boundaries, &
                              i, j

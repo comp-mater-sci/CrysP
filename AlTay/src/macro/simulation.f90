@@ -2,7 +2,7 @@ module simulation
     use utils
     use hardening_model_dsh
     use altayCurAccess
-    use altayDYNFIL
+    use grain_module
     use hardening
     use taylor
     use altayConfig
@@ -57,7 +57,7 @@ module simulation
     subroutine simulation_run(NFILE0, velocity_gradient)
         real(DP), intent(in):: velocity_gradient(3, 3)
         integer, intent(in):: NFILE0
-        integer:: cluster_size, & 
+        integer:: cluster_size, &
                   index_in_cluster, &
                   index_in_cluster1, &
                   index_grain, &
@@ -71,7 +71,7 @@ module simulation
                   ifil4
         real(DP):: orientation(3, 3, 2), &
                    strain_ab(2), &
-                   stress(3, 3), & 
+                   stress(3, 3), &
                    cluster_weight, &
                    crss(2, 96), &
                    total_weight, &
@@ -101,7 +101,7 @@ module simulation
         von_mises_strain_rate = SQR0P67*norm2(strain_rate)
         von_mises_strain_mode = strain_rate/von_mises_strain_rate
         deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient)
-        deformation_gradient_increment_inverse = invert(deformation_gradient_increment) 
+        deformation_gradient_increment_inverse = invert(deformation_gradient_increment)
 
         ! Output the current texture
         if (NFILE == 1) call CURwriteBlock(IMP1, info)
@@ -114,11 +114,11 @@ module simulation
 
             nrstep = nrstep+1
 
-            next_deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient) 
+            next_deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
 
 
             !Added for lamel model:
-            !Organisation reading temporary texture file, 
+            !Organisation reading temporary texture file,
             !in such way that the program TAYLOR can process the crystals
             !by sets of 2.
             !Taylor must therefore have "advance knowledge" of the
@@ -140,11 +140,11 @@ module simulation
                 end do
                 index_in_cluster1 = mod(index_in_cluster1, cluster_size)+1
                 index_in_cluster = index_in_cluster1
-                
+
                 call get_stress_state(stress, orientation, index_grain, strain_ab, cluster_size, index_in_cluster, crss, n_slip_systems_grain, velocity_gradient, next_deformation_gradient, cluster_weight)
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                    deformation_gradient = next_deformation_gradient 
+                    deformation_gradient = next_deformation_gradient
                     call apply_deformation_step(index_grain, total_slip_rate, WorkRate, spin, crss(1:2, 1:n_slip_systems_grain), orientation(:,:,index_in_cluster), taylor_coeffs)
                     call DYNFIL_setGrain(index_grain, orientation(:,:,index_in_cluster), strain_ab(index_in_cluster) + total_slip_rate)  ! Step time here implicitly assumed to be 1.0s
                 end if

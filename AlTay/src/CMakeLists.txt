@@ -9,32 +9,26 @@ set(libaltay "altay")
 list(APPEND Fortran_FLAGS ${LibAlTay_FLAGS})
 
 add_library(${libaltay} STATIC
-criConfigReader.f90
-criLinearMap.f90
-criNamedRange.f90
-criNumerics.f90
-criRange.f90
-criUncomment.f90
-simulation.f90
-taylor.f90 
-altayDynfil.f90 
-simplex.f90 
 altayCurAccess.f90 
 utils.f90
 logging.f90
 altayConfig.f90  
 altay.f90
 parameters.f90
-slip_systems.f90
-taylor_ambiguity.f90
-hardening/hardening.f90
-hardening/model/hardening_model.f90
-hardening/model/hardening_model_swift.f90
-hardening/model/hardening_model_voce.f90
-hardening/model/dislocation_substructural_hardening/hardening_model_dsh.f90
-hardening/model/dislocation_substructural_hardening/hardening_model_bp.f90
-hardening/model/dislocation_substructural_hardening/hardening_model_pebp_screw.f90
-hardening/model/dislocation_substructural_hardening/hardening_model_pebp_loop.f90
+macro/simulation.f90
+meso/taylor_ambiguity.f90
+meso/simplex.f90 
+meso/taylor.f90 
+micro/grain.f90 
+micro/slip_systems.f90
+micro/hardening.f90
+micro/hardening_model.f90
+micro/hardening_model_swift.f90
+micro/hardening_model_voce.f90
+micro/hardening_model_dsh.f90
+micro/hardening_model_bp.f90
+micro/hardening_model_pebp_screw.f90
+micro/hardening_model_pebp_loop.f90
 )
 
 
