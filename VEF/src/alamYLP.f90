@@ -158,18 +158,19 @@ implicit none
             R = r2_lin
             if(ierr /= 0) then
                   if(.not. config%nonlinear) then
-                        ! If the linear analysis fails, and the non-linear analysis is not requested,
+                        ! If the linear analysis fails, and the non-linear analysis is not requested, 
                         ! then the whole procedure is considered as failed.
                         info = VEF_ERROR
                         return
                   end if
+            else
+                ! do checks if the solution is OK:
+                ! Stop criterion: magic number "3" means: ||F(x)||_2 < eps(2)
+                if ( (r2_lin <= r1_lin) .and. (TR_res%stop_criterion == 3) .and. (r2_lin <= tr_config%eps(2)) ) then
+                      vX = vX_lin
+                      linearized_successful = .true.
+                endif
             end if
-            ! do checks if the solution is OK:
-            ! Stop criterion: magic number "3" means: ||F(x)||_2 < eps(2)
-            if ( (r2_lin <= r1_lin) .and. (TR_res%stop_criterion == 3) .and. (r2_lin <= tr_config%eps(2)) ) then
-                  vX = vX_lin
-                  linearized_successful = .true.
-            endif
       endif
       ! The linearized analysis is either not done or failed.
       if (.not. linearized_successful .and. config%nonlinear) then
@@ -190,14 +191,6 @@ implicit none
                   info = VEF_ERROR
                   return
             end if
-            !TODO: check exit status of the solver
-            if (attempt_linearized) then
-                  ! choose better of non-linear and linearized solution
-                  if (r2 > r2_lin) then
-                        vX = vX_lin
-                        R = r2_lin
-                  endif
-            endif
       endif
       call initState%finalize()
       !
