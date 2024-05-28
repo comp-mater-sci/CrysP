@@ -145,7 +145,7 @@ module simulation
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                     deformation_gradient = next_deformation_gradient
-                    call apply_deformation_step(index_grain, total_slip_rate, WorkRate, spin, crss(1:2, 1:n_slip_systems_grain), orientation(:,:,index_in_cluster), taylor_coeffs)
+                    call apply_deformation_step(index_grain, total_slip_rate, WorkRate, spin, crss(1:2, 1:n_slip_systems_grain), orientation(:,:,index_in_cluster), taylor_coeffs, n_slip_systems_grain, index_in_cluster)
                     call DYNFIL_setGrain(index_grain, orientation(:,:,index_in_cluster), strain_ab(index_in_cluster) + total_slip_rate)  ! Step time here implicitly assumed to be 1.0s
                 end if
                 if(index_in_cluster == 1) then
