@@ -141,11 +141,11 @@ module simulation
                 index_in_cluster1 = mod(index_in_cluster1, cluster_size)+1
                 index_in_cluster = index_in_cluster1
 
-                call get_stress_state(stress, orientation, index_grain, strain_ab, cluster_size, index_in_cluster, crss, n_slip_systems_grain, velocity_gradient, next_deformation_gradient, cluster_weight)
+                call get_stress_state(stress, orientation, index_grain, strain_ab, cluster_size, index_in_cluster, n_slip_systems_grain, velocity_gradient, next_deformation_gradient, cluster_weight)
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                     deformation_gradient = next_deformation_gradient
-                    call apply_deformation_step(index_grain, total_slip_rate, WorkRate, spin, crss(1:2, 1:n_slip_systems_grain), orientation(:,:,index_in_cluster), taylor_coeffs)
+                    call apply_deformation_step(index_grain, total_slip_rate, WorkRate, spin, crss(1:2, 1:n_slip_systems_grain), orientation(:,:,index_in_cluster), taylor_coeffs, n_slip_systems_grain, index_in_cluster)
                     call DYNFIL_setGrain(index_grain, orientation(:,:,index_in_cluster), strain_ab(index_in_cluster) + total_slip_rate)  ! Step time here implicitly assumed to be 1.0s
                 end if
                 if(index_in_cluster == 1) then
