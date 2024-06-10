@@ -86,11 +86,10 @@ contains
         if (cluster_size == 2) taylor_coeffs_cluster(6:10, n_slip_systems_grain+1:n_slip_systems_grain*2)=taylor_coeffs_grain
     end subroutine
 
-    subroutine get_stress_state(cluster, stress_matrix, index_grain, cluster_size, index_in_cluster, n_slip_systems_grain, velocity_gradient, deformation_gradient)
+    subroutine get_stress_state(cluster, stress_matrix, index_grain, index_in_cluster, n_slip_systems_grain, velocity_gradient, deformation_gradient)
         type(Grain(*)), dimension(:), pointer, intent(in):: cluster
         integer, intent(in)::       index_in_cluster, &
                                     index_grain, &
-                                    cluster_size, &
                                     n_slip_systems_grain
         real(DP), intent(out)::     stress_matrix(3, 3)
         real(DP), intent(in)::      velocity_gradient(3, 3), &
@@ -99,8 +98,9 @@ contains
                                     boundary_to_crystal(3, 3), &
                                     relaxations_crystal_frame(3, 3), &
                                     stress_grain(5), &
-                                    inverse_basis_cluster(5*cluster_size, 5*cluster_size)
+                                    inverse_basis_cluster(5*size(cluster), 5*size(cluster))
         integer::                   n_slip_systems_cluster, &
+                                    cluster_size, &
                                     size_system, &
                                     start_index_grain, &
                                     start_index_slip_systems, &
@@ -112,6 +112,7 @@ contains
         logical::                   full_constraints
         character(*), parameter::   PROC_NAME = 'get_stress_state'
 
+        cluster_size = size(cluster)
         n_relaxations=(cluster_size-1)*2
         size_system = 5*cluster_size
         n_slip_systems_cluster = cluster_size*n_slip_systems_grain+n_relaxations
@@ -135,7 +136,7 @@ contains
                     do j = 1, 2
                         !Transform relaxation from boundary frame to crystal frame
                         !Composed of rotation from boundary to global frame and then from global to crystal frame.
-                        boundary_to_crystal = matmul(cluster(i)%orientation, transpose(cluster_frame(grains(index_grain), deformation_gradient)))
+                        boundary_to_crystal = matmul(cluster(i)%orientation, transpose(cluster_frame(cluster(1)%boundary_reference_frame, deformation_gradient)))
                         relaxations_crystal_frame = rotate_to(real(RELAXATIONS(:,:,j), DP), boundary_to_crystal)
                         !Invert direction of relaxations for second grain
                         if (i == 2) relaxations_crystal_frame = -relaxations_crystal_frame
@@ -242,7 +243,7 @@ contains
 
         !Increment grain strain
         total_slip_rate = sum(abs(slip_rates_final))
-        grain%strain = grain%strain+total_slip_rate
+        grain_%strain = grain_%strain+total_slip_rate
 
         !Calculate work rate
         work_rate = sum(merge(crss(1, :), -crss(2, :), slip_rates_final > 0._DP)*slip_rates_final)
@@ -262,7 +263,7 @@ contains
     end subroutine
 
     pure real(DP) function cluster_weight(grain_, deformation_gradient) result(weight)
-        type(Grain(*)), intent(in):: grain_
+        type(Grain(*)), pointer, intent(in):: grain_
         real(DP), intent(in):: deformation_gradient(3, 3)
         real(DP):: grain_axes(3, 3), &
                    axis_lengths(3), &
@@ -287,12 +288,12 @@ contains
         end select
     end function
 
-    pure function cluster_frame(grain_, deformation_gradient) result(frame)
-        type(Grain(*)), intent(in):: grain_
-        real(DP), intent(in):: deformation_gradient(3, 3)
+    pure function cluster_frame(boundary_frame, deformation_gradient) result(frame)
+        real(DP), dimension(3, 3), intent(in):: boundary_frame, &
+                                               deformation_gradient
         real(DP):: frame(3, 3)
 
-        frame = matmul(deformation_gradient, grain_%boundary_reference_frame)
+        frame = matmul(deformation_gradient, boundary_frame)
         frame(:,3) = frame(:,1) .cross. frame(:,2)
         frame(:,2) = frame(:,3) .cross. frame(:,1)
         frame = transpose(normalize(frame))

@@ -11,7 +11,7 @@ module simulation
     implicit none
     private
 
-    real(DP), allocatable:: homogenized_total_slip_rateTOT, & !< homogenized slip accumulated over calls
+    real(DP), allocatable:: homogenized_total_slipTOT, & !< homogenized slip accumulated over calls
         taylor_coeffs(:,:)
     integer:: n_slip_systems_grain, NFILE1
 
@@ -35,7 +35,7 @@ module simulation
         cluster_size    = acnf%simul_init%NGR
 
         NFILE1 = acnf%output_config%NFILE   ! control "CUR"
-        homogenized_total_slip_rateTOT = 0.D0
+        homogenized_total_slipTOT = 0.D0
 
         if (cluster_size < 1 .or. cluster_size > 2) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Incorrect value of cluster_size')
@@ -72,12 +72,12 @@ module simulation
                    total_weight, &
                    homogenized_stress(3, 3), &
                    ssqgx, &
-                   homogenized_total_slip_rate, & ! homogenized_total_slip_rate: homogenized slip per step
+                   homogenized_total_slip, & ! homogenized_total_slip: homogenized slip per step
                    total_slip_rate, &  ! Total slip rate in current grain
                    taylor_factor, &  ! Taylor factor of the current grain
                    homogenized_taylor_factor, &   !Volume-averaged Taylor factor
                    WorkRate, &  ! Rate of plastic work per unit volume in the crystal
-                   homogenized_work_rate, &  ! Total plastic work per unit volume in crystal
+                   homogenized_work, &  ! Total plastic work per unit volume in crystal
                    deformation_gradient_increment(3, 3), &
                    deformation_gradient_increment_inverse(3, 3), &
                    strain_rate(3, 3), &
@@ -106,7 +106,7 @@ module simulation
             total_weight = 0._DP
             homogenized_stress = 0._DP
             homogenized_taylor_factor = 0._DP
-            homogenized_total_slip_rate = 0._DP
+            homogenized_total_slip = 0._DP
 
             nrstep = nrstep+1
 
@@ -125,12 +125,12 @@ module simulation
                 taylor_factor = 0.0_DP
                 total_slip_rate = 0.0_DP
                 WorkRate = 0.0_DP
-                homogenized_work_rate = 0.0_DP
+                homogenized_work = 0.0_DP
 
                 index_in_cluster = mod(index_in_cluster, cluster_size)+1
 
-                if (index_in_cluster == 1) cluster => grains(index_grain:index_grain+cluster_size)
-                call get_stress_state(cluster, stress, index_grain, cluster_size, index_in_cluster, n_slip_systems_grain, velocity_gradient, next_deformation_gradient)
+                if (index_in_cluster == 1) cluster => grains(index_grain:index_grain+cluster_size-1)
+                call get_stress_state(cluster, stress, index_grain, index_in_cluster, n_slip_systems_grain, velocity_gradient, next_deformation_gradient)
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                     deformation_gradient = next_deformation_gradient
@@ -142,8 +142,8 @@ module simulation
 
                 homogenized_stress          = homogenized_stress+stress*cluster(1)%weight
                 homogenized_taylor_factor   = homogenized_taylor_factor+taylor_factor*cluster(1)%weight
-                homogenized_total_slip_rate = homogenized_total_slip_rate+total_slip_rate*cluster(1)%weight  !Step time here implicitly assumed to be 1.0s
-                homogenized_work_rate       = homogenized_work_rate+WorkRate                              !Step time here implicitly assumed to be 1.0s
+                homogenized_total_slip = homogenized_total_slip+total_slip_rate*cluster(1)%weight  !Step time here implicitly assumed to be 1.0s
+                homogenized_work       = homogenized_work+WorkRate                              !Step time here implicitly assumed to be 1.0s
             enddo clusterloop
 
             homogenized_stress = homogenized_stress/total_weight
@@ -160,13 +160,13 @@ module simulation
                 callout%stress_tensor = homogenized_stress
                 callout%taylor_factor = homogenized_taylor_factor
                 callout%effective_stress = sqrt(3.D0/2.D0)*norm2(homogenized_stress)
-                callout%homogenised_slip_tot = homogenized_total_slip_rateTOT
+                callout%homogenised_slip_tot = homogenized_total_slipTOT
                 callout%effective_macro_strain_tot = von_mises_strain
                 callout%effective_macro_strain_tot_end = von_mises_strain+von_mises_strain_rate
             end associate
 
-            homogenized_total_slip_rate = homogenized_total_slip_rate/total_weight
-            if (.not.astate%simulCalls(astate%this)%input%keep_state) homogenized_total_slip_rateTOT = homogenized_total_slip_rateTOT+homogenized_total_slip_rate
+            homogenized_total_slip = homogenized_total_slip/total_weight
+            if (.not.astate%simulCalls(astate%this)%input%keep_state) homogenized_total_slipTOT = homogenized_total_slipTOT+homogenized_total_slip
 
             von_mises_strain = von_mises_strain+von_mises_strain_rate
         enddo steploop
