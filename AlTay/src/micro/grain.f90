@@ -11,10 +11,8 @@ module grain_module
     !>Texture-related state variables for single grain
     type:: grain(n_slip_systems)
         integer, len::             n_slip_systems  ! Number of slip systems
-        real(DP)                    :: tGEW     = 1._DP, &
-                                       tGAM     = 0._DP
-
-        real(DP):: strain
+        real(DP)                    :: weight     = 1._DP, &
+                                       strain = 0._DP
         real(DP), dimension(3, 3)::  stress, &
                                     orientation, &
                                     boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
@@ -24,7 +22,7 @@ module grain_module
                                               overstress
     end type grain
 
-    type(grain(:)), dimension(:), allocatable     :: grains             !<State variable: array of grains/orientations.
+    type(grain(:)), dimension(:), allocatable, target     :: grains             !<State variable: array of grains/orientations.
     integer                                    :: nrStep = 0       !<State variable: step number.
     real(DP):: deformation_gradient(3, 3)
 
@@ -32,8 +30,6 @@ module grain_module
                 grains,       &
                 nrStep,     &
                 dynfil_init,    &
-                dynFil_getGrain,    &
-                dynFil_setGrain,    &
                 dynfil_finalize, &
                 read_microstructure, &
                 deformation_gradient
@@ -62,8 +58,8 @@ contains
             if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read boundary segment')
             angles = angles/RAD_TO_DEG
 
-            grains(i)%tgew = weight
-            grains(i)%tgam = gam
+            grains(i)%weight = weight
+            grains(i)%strain = gam
             grains(i)%orientation = from_euler_angles(angles)
 
         enddo
@@ -108,24 +104,4 @@ contains
         if (allocated(grains)) deallocate(grains, stat = info)
     end subroutine
 
-    !> Get the record data for i-th grain
-    subroutine DYNFIL_getGrain(i, T, GEW, gam)
-        integer, intent(in)                             :: i
-        real(DP), intent(out)                   :: GEW, gam
-        real(DP), dimension(3, 3), intent(out)   :: T
-
-        GEW     = grains(i)%tGEW
-        gam = grains(i)%tgam
-        T       = grains(i)%orientation
-    end subroutine
-
-    !> Put the record data for i-th grain
-    subroutine DYNFIL_setGrain(i, T, GAM)
-        integer, intent(in)                     :: i
-        real(DP), intent(in)                    :: GAM
-        real(DP), dimension(3, 3), intent(in)    :: T
-
-        grains(i)%tGAM    = GAM
-        grains(i)%orientation      = T
-    end subroutine
 end module

@@ -59,7 +59,6 @@ module simulation
         integer, intent(in):: NFILE0
         integer:: cluster_size, &
                   index_in_cluster, &
-                  index_in_cluster1, &
                   index_grain, &
                   step, &
                   n_grains, &
@@ -67,12 +66,8 @@ module simulation
                   NFILE, &
                   i, &
                   j, &
-                  l, &
-                  ifil4
-        real(DP):: orientation(3, 3, 2), &
-                   strain_ab(2), &
-                   stress(3, 3), &
-                   cluster_weight, &
+                  l
+        real(DP):: stress(3, 3), &
                    crss(2, 96), &
                    total_weight, &
                    homogenized_stress(3, 3), &
@@ -90,6 +85,7 @@ module simulation
                    von_mises_strain_mode(3, 3), &
                    von_mises_strain_rate, &
                    next_deformation_gradient(3, 3)
+        type(Grain(:)), dimension(:), pointer:: cluster
 
         n_grains = size(grains)
         ! Per-call selection of the model: cluster_size must be set
@@ -124,42 +120,29 @@ module simulation
             !Taylor must therefore have "advance knowledge" of the
             !orientation to come at the moment that it starts such
             !computation.
-            index_in_cluster = 1
-            index_in_cluster1 = cluster_size
-            ifil4 = 0
+            index_in_cluster = 0
             clusterloop: do index_grain = 1, n_grains
                 taylor_factor = 0.0_DP
                 total_slip_rate = 0.0_DP
                 WorkRate = 0.0_DP
                 homogenized_work_rate = 0.0_DP
 
-                do L = index_in_cluster, index_in_cluster1
-                    if (ifil4 == n_grains) exit
-                    ifil4 = ifil4+1
-                    call DYNFIL_getGrain(ifil4, orientation(1:3, 1:3, L), cluster_weight, strain_ab(L))
-                end do
-                index_in_cluster1 = mod(index_in_cluster1, cluster_size)+1
-                index_in_cluster = index_in_cluster1
+                index_in_cluster = mod(index_in_cluster, cluster_size)+1
 
-                call get_stress_state(stress, orientation, index_grain, strain_ab, cluster_size, index_in_cluster, n_slip_systems_grain, velocity_gradient, next_deformation_gradient, cluster_weight)
+                if (index_in_cluster == 1) cluster => grains(index_grain:index_grain+cluster_size)
+                call get_stress_state(cluster, stress, index_grain, cluster_size, index_in_cluster, n_slip_systems_grain, velocity_gradient, next_deformation_gradient)
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                     deformation_gradient = next_deformation_gradient
-                    call apply_deformation_step(index_grain, total_slip_rate, WorkRate, spin, crss(1:2, 1:n_slip_systems_grain), orientation(:,:,index_in_cluster), taylor_coeffs, n_slip_systems_grain, index_in_cluster)
-                    call DYNFIL_setGrain(index_grain, orientation(:,:,index_in_cluster), strain_ab(index_in_cluster) + total_slip_rate)  ! Step time here implicitly assumed to be 1.0s
-                end if
-                if(index_in_cluster == 1) then
-                    ssqgx = cluster_weight
-                else
-                    cluster_weight = ssqgx
+                    call apply_deformation_step(cluster(index_in_cluster), index_grain, total_slip_rate, WorkRate, spin, crss(1:2, 1:n_slip_systems_grain), taylor_coeffs, n_slip_systems_grain, index_in_cluster)
                 end if
 
-                total_weight = total_weight+cluster_weight
+                total_weight = total_weight+cluster(1)%weight
                 taylor_factor = total_slip_rate /  von_mises_strain_rate
 
-                homogenized_stress          = homogenized_stress+stress*cluster_weight
-                homogenized_taylor_factor   = homogenized_taylor_factor+taylor_factor*cluster_weight
-                homogenized_total_slip_rate = homogenized_total_slip_rate+total_slip_rate*cluster_weight  !Step time here implicitly assumed to be 1.0s
+                homogenized_stress          = homogenized_stress+stress*cluster(1)%weight
+                homogenized_taylor_factor   = homogenized_taylor_factor+taylor_factor*cluster(1)%weight
+                homogenized_total_slip_rate = homogenized_total_slip_rate+total_slip_rate*cluster(1)%weight  !Step time here implicitly assumed to be 1.0s
                 homogenized_work_rate       = homogenized_work_rate+WorkRate                              !Step time here implicitly assumed to be 1.0s
             enddo clusterloop
 
