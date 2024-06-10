@@ -9,14 +9,22 @@ module grain_module
     character(*), parameter:: MOD_NAME = 'dynfil'
 
     !>Texture-related state variables for single grain
-    type:: grain
+    type:: grain(n_slip_systems)
+        integer, len::             n_slip_systems  ! Number of slip systems
         real(DP)                    :: tGEW     = 1._DP, &
                                        tGAM     = 0._DP
-        real(DP), dimension(3, 3)    :: tT       = 0._DP, &
-                                        boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
+
+        real(DP):: strain
+        real(DP), dimension(3, 3)::  stress, &
+                                    orientation, &
+                                    boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
+        real(DP), dimension(n_slip_systems):: rss, &
+                                              crss, &
+                                              slip_rates, &
+                                              overstress
     end type grain
 
-    type(grain), dimension(:), allocatable     :: grains             !<State variable: array of grains/orientations.
+    type(grain(:)), dimension(:), allocatable     :: grains             !<State variable: array of grains/orientations.
     integer                                    :: nrStep = 0       !<State variable: step number.
     real(DP):: deformation_gradient(3, 3)
 
@@ -31,8 +39,9 @@ module grain_module
                 deformation_gradient
 
 contains
-    subroutine dynfil_init(fname)
+    subroutine dynfil_init(fname, n_slip_systems)
         character(*), intent(in)    :: fname
+        integer, intent(in):: n_slip_systems
         integer                     :: nunit, info, nrec, nstap, i
         character(40):: title
         real(DP):: angles(3), stap, weight, gam
@@ -45,14 +54,18 @@ contains
         read (nunit, 94, iostat = info) nrec, title
 94      format(I5, 5x, A)
         if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file header')
-        if (nrec > 0) allocate(grains(nrec))
+        if (nrec > 0) allocate(grain(n_slip_systems):: grains(nrec))
 
         do i = 1, nrec
             read(nunit, 96, iostat = info) angles(3), angles(2), angles(1), stap, nstap, weight, gam
 96          format(4F10.0, I5, 5X, 2F10.0)
             if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read boundary segment')
             angles = angles/RAD_TO_DEG
-            grains(i) = grain(weight, gam, from_euler_angles(angles), 0._DP)
+
+            grains(i)%tgew = weight
+            grains(i)%tgam = gam
+            grains(i)%orientation = from_euler_angles(angles)
+
         enddo
 
         close(nunit)
@@ -103,7 +116,7 @@ contains
 
         GEW     = grains(i)%tGEW
         gam = grains(i)%tgam
-        T       = grains(i)%tT
+        T       = grains(i)%orientation
     end subroutine
 
     !> Put the record data for i-th grain
@@ -113,6 +126,6 @@ contains
         real(DP), dimension(3, 3), intent(in)    :: T
 
         grains(i)%tGAM    = GAM
-        grains(i)%tT      = T
+        grains(i)%orientation      = T
     end subroutine
 end module

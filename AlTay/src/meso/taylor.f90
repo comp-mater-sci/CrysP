@@ -261,7 +261,7 @@ contains
     end subroutine
 
     pure real(DP) function cluster_weight(grain_, deformation_gradient) result(weight)
-        type(Grain), intent(in):: grain_
+        type(Grain(*)), intent(in):: grain_
         real(DP), intent(in):: deformation_gradient(3, 3)
         real(DP):: grain_axes(3, 3), &
                    axis_lengths(3), &
@@ -287,7 +287,7 @@ contains
     end function
 
     pure function cluster_frame(grain_, deformation_gradient) result(frame)
-        type(Grain), intent(in):: grain_
+        type(Grain(*)), intent(in):: grain_
         real(DP), intent(in):: deformation_gradient(3, 3)
         real(DP):: frame(3, 3)
 

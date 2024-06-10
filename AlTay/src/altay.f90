@@ -31,7 +31,7 @@ contains
         ! Open input files
 
         ! Get the initial texture
-        call dynfil_init(trim(cnf%texture_input_fname))
+        call dynfil_init(trim(cnf%texture_input_fname), size(acnf%deformation_mechanism, 3))
 
         ! Load microstructure data
         call read_microstructure(acnf%micros_fname, acnf%simul_init%FMicro)
