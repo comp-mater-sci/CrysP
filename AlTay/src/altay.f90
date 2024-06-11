@@ -60,8 +60,6 @@ contains
 
         ! Close all units.
         close(IMP5)
-        call DYNFIL_finalize(info)
-        if (info /= 0) return
         call hardening_finalize()
         if (allocated(astate%simulCalls)) then
               deallocate(astate%simulCalls)

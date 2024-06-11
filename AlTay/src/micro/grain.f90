@@ -30,7 +30,6 @@ module grain_module
                 grains,       &
                 nrStep,     &
                 dynfil_init,    &
-                dynfil_finalize, &
                 read_microstructure, &
                 deformation_gradient
 
@@ -95,13 +94,4 @@ contains
 
         close(unit = file_handle)
     end subroutine read_microstructure
-
-    !>Puts the module variables into initial state and deallocates the storage.
-    subroutine DYNFIL_finalize(info)
-        integer, intent(out)    :: info
-        info = 0
-        NRSTEP = 0
-        if (allocated(grains)) deallocate(grains, stat = info)
-    end subroutine
-
 end module
