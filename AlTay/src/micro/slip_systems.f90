@@ -3,7 +3,7 @@ module slip_systems
     use logging
 
     implicit none
-    public 
+    public
 
     !Definition of slip system families in terms of miller indices
     !Gfortran does not accept the clean array syntax
@@ -70,4 +70,11 @@ module slip_systems
                           FCC12(3, 2, 12) = SLIP_SYSTEMS_FCC_111, &
                           BCC24(3, 2, 24) = reshape([SLIP_SYSTEMS_BCC_110, SLIP_SYSTEMS_BCC_112], shape(BCC24)), &
                           BCC48(3, 2, 48) = reshape([BCC24, SLIP_SYSTEMS_BCC_123], shape(BCC48))
+
+    type SlipSystem
+        real(DP):: crss(2), &
+                   rss, &
+                   overstress, &
+                   slip_rate
+    end type
 end module

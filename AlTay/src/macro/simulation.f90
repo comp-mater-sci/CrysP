@@ -68,7 +68,6 @@ module simulation
                   j, &
                   l
         real(DP):: stress(3, 3), &
-                   crss(2, 96), &
                    total_weight, &
                    homogenized_stress(3, 3), &
                    ssqgx, &
@@ -134,7 +133,7 @@ module simulation
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                     deformation_gradient = next_deformation_gradient
-                    call apply_deformation_step(cluster(index_in_cluster), index_grain, total_slip_rate, WorkRate, spin, crss(1:2, 1:n_slip_systems_grain), taylor_coeffs, n_slip_systems_grain, index_in_cluster)
+                    call apply_deformation_step(cluster(index_in_cluster), index_grain, total_slip_rate, WorkRate, spin, taylor_coeffs, n_slip_systems_grain, index_in_cluster)
                 end if
 
                 total_weight = total_weight+cluster(1)%weight

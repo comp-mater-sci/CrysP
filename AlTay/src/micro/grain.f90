@@ -11,15 +11,12 @@ module grain_module
     !>Texture-related state variables for single grain
     type:: grain(n_slip_systems)
         integer, len::             n_slip_systems  ! Number of slip systems
-        real(DP)                    :: weight     = 1._DP, &
-                                       strain = 0._DP
-        real(DP), dimension(3, 3)::  stress, &
+        real(DP)    :: weight     = 1._DP, &
+                                    strain = 0._DP
+        real(DP), dimension(3, 3):: stress, &
                                     orientation, &
                                     boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
-        real(DP), dimension(n_slip_systems):: rss, &
-                                              crss, &
-                                              slip_rates, &
-                                              overstress
+        type(SlipSystem), dimension(n_slip_systems):: slip_systems
     end type grain
 
     type(grain(:)), dimension(:), allocatable, target     :: grains             !<State variable: array of grains/orientations.
