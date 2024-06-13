@@ -76,12 +76,11 @@ contains
         if (cluster_size == 2) taylor_coeffs_cluster(6:10, n_slip_systems_grain+1:n_slip_systems_grain*2)=taylor_coeffs_grain
     end subroutine
 
-    subroutine get_stress_state(cluster, stress_matrix, index_grain, index_in_cluster, n_slip_systems_grain, velocity_gradient, deformation_gradient)
-        type(Grain(*)), dimension(:), pointer, intent(in):: cluster
+    subroutine get_stress_state(cluster, index_grain, index_in_cluster, n_slip_systems_grain, velocity_gradient, deformation_gradient)
+        type(Grain), dimension(:), pointer, intent(in):: cluster
         integer, intent(in)::       index_in_cluster, &
                                     index_grain, &
                                     n_slip_systems_grain
-        real(DP), intent(out)::     stress_matrix(3, 3)
         real(DP), intent(in)::      velocity_gradient(3, 3), &
                                     deformation_gradient(3, 3)
         real(DP)::                  strain_relaxations(5), &
@@ -130,7 +129,7 @@ contains
                 case (1)
                    cluster(1)%weight = 1._DP
                 case (2)
-                   cluster(1)%weight = cluster_weight(grains(index_grain), deformation_gradient)
+                   cluster(1)%weight = cluster_weight(cluster, deformation_gradient)
             end select
             !Update microstructure
             inverse_basis_cluster = 0._DP
@@ -186,23 +185,24 @@ contains
 
                 if (cluster_size == 2) slip_rates_relaxations(i) = slip_rates(2*n_slip_systems_grain+i)
             end do
+
         endif
 
                 ! From here on, output is produced for grain number "index_in_cluster"
         start_index_grain = 5*(index_in_cluster-1)
         stress_grain = stress_cluster(start_index_grain+1:start_index_grain+5)
-        stress_matrix = (convert_stress_strain_space(stress_grain)) .fromframe. cluster(index_in_cluster)%orientation
+        cluster(index_in_cluster)%stress = (convert_stress_strain_space(stress_grain)) .fromframe. cluster(index_in_cluster)%orientation
     end subroutine
 
     subroutine apply_deformation_step(grain_, index_grain, total_slip_rate, work_rate, imposed_spin, taylor_coeffs, n_slip_systems_grain, index_in_cluster)
-        type(Grain(*)), pointer, intent(in):: grain_
+        type(Grain), pointer, intent(in):: grain_
         integer, intent(in)::       index_grain, n_slip_systems_grain, index_in_cluster
         real(DP), intent(in)::      imposed_spin(3, 3), &
                                     taylor_coeffs(:,:)
         real(DP), intent(out)::     total_slip_rate, &
                                     work_rate
         real(DP)::                  orientation_increment(3, 3), &
-                                    slip_rates_final(grain_%n_slip_systems), &
+                                    slip_rates_final(size(grain_%slip_systems)), &
                                     spin_relaxations(3), &
                                     strain_grain(5), &
                                     strain_relaxations(5), &
@@ -285,15 +285,15 @@ contains
         grain_%orientation = matmul(orientation_increment, grain_%orientation)
     end subroutine
 
-    pure real(DP) function cluster_weight(grain_, deformation_gradient) result(weight)
-        type(Grain(*)), pointer, intent(in):: grain_
+    real(DP) function cluster_weight(cluster, deformation_gradient) result(weight)
+        type(Grain), dimension(:), pointer, intent(in):: cluster
         real(DP), intent(in):: deformation_gradient(3, 3)
         real(DP):: grain_axes(3, 3), &
                    axis_lengths(3), &
                    alignment_factor
 
         !Applying deformation gradient to initial grain boundary orientation yields deformed grain axes
-        grain_axes = matmul(deformation_gradient, grain_%boundary_reference_frame)
+        grain_axes = matmul(deformation_gradient, cluster(1)%boundary_reference_frame)
         axis_lengths = norm2(grain_axes, 1)
         !Alignment factor equals sin(axes 2 and 3) * cos(axis 1 and normal to plane defined by axes 2 and 3)
         !The more the axes are orthogonal, the more alignment factor tends to 1.

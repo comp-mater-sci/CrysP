@@ -25,7 +25,7 @@ contains
     function resolve_taylor_ambiguity(ind_active_slip_systems, rss, strain, taylor_coeffs, n_active_simplex) result(slip_rates)
         integer, intent(in)::                                               ind_active_slip_systems(:)  !< Indices of the active slip systems.
         real(DP), dimension(:,:), intent(in)::                              taylor_coeffs               !< Slip systems in stress-strain space.
-        real(DP), dimension(:), pointer, intent(in)::    rss                         !< Resolved shear stress on the active slip systems.
+        real(DP), dimension(:), intent(in)::    rss                         !< Resolved shear stress on the active slip systems.
         real(DP), dimension(5), intent(in)::                                strain(5)                   !< Imposed strain on the current grain.
         integer, intent(in)::                                               n_active_simplex            !< Number of active slip systems according to the simplex solution.
 

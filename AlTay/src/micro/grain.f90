@@ -9,17 +9,16 @@ module grain_module
     character(*), parameter:: MOD_NAME = 'dynfil'
 
     !>Texture-related state variables for single grain
-    type:: grain(n_slip_systems)
-        integer, len::             n_slip_systems  ! Number of slip systems
+    type:: grain
         real(DP)    :: weight     = 1._DP, &
                                     strain = 0._DP
         real(DP), dimension(3, 3):: stress, &
                                     orientation, &
                                     boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
-        type(SlipSystem), dimension(n_slip_systems):: slip_systems
+        type(SlipSystem), dimension(:), allocatable:: slip_systems
     end type grain
 
-    type(grain(:)), dimension(:), allocatable, target     :: grains             !<State variable: array of grains/orientations.
+    type(Grain), dimension(:), allocatable, target:: grains             !<State variable: array of grains/orientations.
     integer                                    :: nrStep = 0       !<State variable: step number.
     real(DP):: deformation_gradient(3, 3)
 
@@ -28,6 +27,7 @@ module grain_module
                 nrStep,     &
                 dynfil_init,    &
                 read_microstructure, &
+                dynfil_finalize, &
                 deformation_gradient
 
 contains
@@ -46,7 +46,7 @@ contains
         read (nunit, 94, iostat = info) nrec, title
 94      format(I5, 5x, A)
         if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file header')
-        if (nrec > 0) allocate(grain(n_slip_systems):: grains(nrec))
+        if (nrec > 0) allocate(grains(nrec))
 
         do i = 1, nrec
             read(nunit, 96, iostat = info) angles(3), angles(2), angles(1), stap, nstap, weight, gam
@@ -57,7 +57,7 @@ contains
             grains(i)%weight = weight
             grains(i)%strain = gam
             grains(i)%orientation = from_euler_angles(angles)
-
+            allocate(grains(i)%slip_systems(n_slip_systems))
         enddo
 
         close(nunit)
@@ -91,4 +91,13 @@ contains
 
         close(unit = file_handle)
     end subroutine read_microstructure
+
+        !>Puts the module variables into initial state and deallocates the storage.
+    subroutine DYNFIL_finalize(info)
+        integer, intent(out)    :: info
+        info = 0
+        NRSTEP = 0
+        if (allocated(grains)) deallocate(grains, stat = info)
+    end subroutine
+
 end module

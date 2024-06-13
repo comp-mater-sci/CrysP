@@ -67,8 +67,7 @@ module simulation
                   i, &
                   j, &
                   l
-        real(DP):: stress(3, 3), &
-                   total_weight, &
+        real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
                    ssqgx, &
                    homogenized_total_slip, & ! homogenized_total_slip: homogenized slip per step
@@ -84,7 +83,8 @@ module simulation
                    von_mises_strain_mode(3, 3), &
                    von_mises_strain_rate, &
                    next_deformation_gradient(3, 3)
-        type(Grain(:)), dimension(:), pointer:: cluster
+        type(Grain), dimension(:), pointer:: cluster
+        type(Grain), pointer:: grain_ptr
 
         n_grains = size(grains)
         ! Per-call selection of the model: cluster_size must be set
@@ -113,7 +113,7 @@ module simulation
 
 
             !Added for lamel model:
-            !Organisation reading temporary texture file,
+            !Oranisation reading temporary texture file,
             !in such way that the program TAYLOR can process the crystals
             !by sets of 2.
             !Taylor must therefore have "advance knowledge" of the
@@ -129,17 +129,19 @@ module simulation
                 index_in_cluster = mod(index_in_cluster, cluster_size)+1
 
                 if (index_in_cluster == 1) cluster => grains(index_grain:index_grain+cluster_size-1)
-                call get_stress_state(cluster, stress, index_grain, index_in_cluster, n_slip_systems_grain, velocity_gradient, next_deformation_gradient)
+
+                call get_stress_state(cluster, index_grain, index_in_cluster, n_slip_systems_grain, velocity_gradient, next_deformation_gradient)
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                     deformation_gradient = next_deformation_gradient
-                    call apply_deformation_step(cluster(index_in_cluster), index_grain, total_slip_rate, WorkRate, spin, taylor_coeffs, n_slip_systems_grain, index_in_cluster)
+                    grain_ptr => cluster(index_in_cluster)
+                    call apply_deformation_step(grain_ptr, index_grain, total_slip_rate, WorkRate, spin, taylor_coeffs, n_slip_systems_grain, index_in_cluster)
                 end if
 
                 total_weight = total_weight+cluster(1)%weight
                 taylor_factor = total_slip_rate /  von_mises_strain_rate
 
-                homogenized_stress          = homogenized_stress+stress*cluster(1)%weight
+                homogenized_stress          = homogenized_stress+cluster(index_in_cluster)%stress*cluster(1)%weight
                 homogenized_taylor_factor   = homogenized_taylor_factor+taylor_factor*cluster(1)%weight
                 homogenized_total_slip = homogenized_total_slip+total_slip_rate*cluster(1)%weight  !Step time here implicitly assumed to be 1.0s
                 homogenized_work       = homogenized_work+WorkRate                              !Step time here implicitly assumed to be 1.0s
