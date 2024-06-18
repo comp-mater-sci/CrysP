@@ -36,7 +36,7 @@ contains
         integer, intent(in):: n_slip_systems
         integer                     :: nunit, info, nrec, nstap, i
         character(40):: title
-        real(DP):: angles(3), stap, weight, gam
+        real(DP):: angles(3), stap, weight, initial_sum_slip
         character(*), parameter:: PROC_NAME = 'load_texture'
 
         open(newunit = nunit, file = trim(fname), status='old',form='formatted',iostat = info)
@@ -49,13 +49,13 @@ contains
         if (nrec > 0) allocate(grains(nrec))
 
         do i = 1, nrec
-            read(nunit, 96, iostat = info) angles(3), angles(2), angles(1), stap, nstap, weight, gam
+            read(nunit, 96, iostat = info) angles(3), angles(2), angles(1), stap, nstap, weight, initial_sum_slip
 96          format(4F10.0, I5, 5X, 2F10.0)
             if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read boundary segment')
             angles = angles/RAD_TO_DEG
 
             grains(i)%weight = weight
-            grains(i)%strain = gam
+            grains(i)%strain = initial_sum_slip
             grains(i)%orientation = from_euler_angles(angles)
             allocate(grains(i)%slip_systems(n_slip_systems))
         enddo

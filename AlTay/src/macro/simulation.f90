@@ -113,7 +113,7 @@ module simulation
 
 
             !Added for lamel model:
-            !Oranisation reading temporary texture file,
+            !Organisation reading temporary texture file,
             !in such way that the program TAYLOR can process the crystals
             !by sets of 2.
             !Taylor must therefore have "advance knowledge" of the
