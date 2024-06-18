@@ -11,7 +11,7 @@ module grain_module
     !>Texture-related state variables for single grain
     type:: grain
         real(DP)    :: weight     = 1._DP, &
-                                    strain = 0._DP
+                                    sum_slip = 0._DP
         real(DP), dimension(3, 3):: stress, &
                                     orientation, &
                                     boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
@@ -55,7 +55,7 @@ contains
             angles = angles/RAD_TO_DEG
 
             grains(i)%weight = weight
-            grains(i)%strain = initial_sum_slip
+            grains(i)%sum_slip = initial_sum_slip
             grains(i)%orientation = from_euler_angles(angles)
             allocate(grains(i)%slip_systems(n_slip_systems))
         enddo

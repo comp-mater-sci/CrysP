@@ -34,9 +34,9 @@ module Hardening
         module subroutine hardening_finalize()
         end subroutine hardening_finalize
 
-        module function hardening_get_crss(grain, strain) result(crss)
+        module function hardening_get_crss(grain, sum_slip) result(crss)
             integer, intent(in):: grain
-            real(DP), intent(in):: strain
+            real(DP), intent(in):: sum_slip
             real(DP), allocatable:: crss(:,:)
         end function hardening_get_crss
 
@@ -95,7 +95,7 @@ contains
     end procedure hardening_finalize
 
     module procedure hardening_get_crss
-        crss = model%get_crss(grain, strain)
+        crss = model%get_crss(grain, sum_slip)
     end procedure
 
     module procedure hardening_update_state

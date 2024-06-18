@@ -157,7 +157,7 @@ contains
                 imposed_strain_cluster(start_index_grain:start_index_grain+4)=imposed_strain_grain(1:5, i)
                 ! Retrieve the CRSSmatrix
                 start_index_slip_systems = n_slip_systems_grain*(i-1)+1
-                crss_cluster(:,start_index_slip_systems:start_index_slip_systems+n_slip_systems_grain-1) = hardening_get_crss(index_grain+i-1, cluster(i)%strain)
+                crss_cluster(:,start_index_slip_systems:start_index_slip_systems+n_slip_systems_grain-1) = hardening_get_crss(index_grain+i-1, cluster(i)%sum_slip)
                 inverse_basis_cluster(start_index_grain:start_index_grain+4, start_index_grain:start_index_grain+4)=inverse_basis_grain
             enddo
 
@@ -194,12 +194,12 @@ contains
         cluster(index_in_cluster)%stress = (convert_stress_strain_space(stress_grain)) .fromframe. cluster(index_in_cluster)%orientation
     end subroutine
 
-    subroutine apply_deformation_step(grain_, index_grain, total_slip_rate, work_rate, imposed_spin, taylor_coeffs, n_slip_systems_grain, index_in_cluster)
+    subroutine apply_deformation_step(grain_, index_grain, sum_slip_current, work_rate, imposed_spin, taylor_coeffs, n_slip_systems_grain, index_in_cluster)
         type(Grain), pointer, intent(in):: grain_
         integer, intent(in)::       index_grain, n_slip_systems_grain, index_in_cluster
         real(DP), intent(in)::      imposed_spin(3, 3), &
                                     taylor_coeffs(:,:)
-        real(DP), intent(out)::     total_slip_rate, &
+        real(DP), intent(out)::     sum_slip_current, &
                                     work_rate
         real(DP)::                  orientation_increment(3, 3), &
                                     slip_rates_final(size(grain_%slip_systems)), &
@@ -265,8 +265,8 @@ contains
         call hardening_update_state(index_grain, 1._DP, slip_rates_final)
 
         !Increment grain strain
-        total_slip_rate = sum(abs(slip_rates_final))
-        grain_%strain = grain_%strain+total_slip_rate
+        sum_slip_current = sum(abs(slip_rates_final))
+        grain_%sum_slip = grain_%sum_slip+sum_slip_current
 
         !Calculate work rate
         work_rate = sum(merge(grain_%slip_systems%crss(1), -grain_%slip_systems%crss(2), slip_rates_final > 0._DP)*slip_rates_final)
