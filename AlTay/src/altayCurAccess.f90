@@ -31,9 +31,9 @@ contains
         write (iounit, 401)
 
         do i = 1, npoint
-            eu = to_euler_angles(grains(i)%tT)*RAD_TO_DEG
+            eu = to_euler_angles(grains(i)%orientation)*RAD_TO_DEG
             write(iounit, 400, iostat = info)&
-               i, grains(i)%tGEW, eu(1), eu(2), eu(3), grains(i)%tGAM
+               i, grains(i)%weight, eu(1), eu(2), eu(3), grains(i)%sum_slip
             if (info /= 0) exit
         enddo
 
