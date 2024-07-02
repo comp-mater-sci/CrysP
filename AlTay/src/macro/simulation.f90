@@ -69,7 +69,6 @@ module simulation
                   l
         real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
-                   ssqgx, &
                    homogenized_total_slip, & ! homogenized_total_slip: homogenized slip per step
                    total_slip_rate, &  ! Total slip rate in current grain
                    taylor_factor, &  ! Taylor factor of the current grain

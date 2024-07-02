@@ -215,7 +215,7 @@ contains
                                     start_index_slip_systems, &
                                     start_index_relaxations, &
                                     ind_overstressed_slip_systems(8)  ! Theoretical maximum of overstressed systems is 8
-        type(SlipSystem), dimension(:), pointer:: active_slip_systems
+        type(SlipSystem), dimension(:), allocatable:: active_slip_systems
         character(*), parameter::   PROC_NAME = 'apply_deformation_step'
 
         start_index_grain = 5*(index_in_cluster-1)
