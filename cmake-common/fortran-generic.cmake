@@ -1,11 +1,11 @@
 # Generic sets of Fortran compiler and linker flag
 
 if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
-    set(CMAKE_Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -extend-source 132 -Warn declarations,general,usage,interfaces,unused -stand f18")
+    set(CMAKE_Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -Warn all -stand f18")
     set(CMAKE_Fortran_FLAGS_DEBUG "-g -O0 -check all,noarg_temp_created -ftrapuv -debug-parameters all -traceback -fp-stack-check -debug all -fpe0")
 elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
-    set(CMAKE_Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -extend-source 132 -Warn declarations,general,usage,interfaces,unused -stand f18")
-    set(CMAKE_Fortran_FLAGS_DEBUG "-g -O0 -check bounds,pointers,shape,stack -ftrapuv -debug all -debug-parameters all -traceback -fp-stack-check -fpe0")
+    set(CMAKE_Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -Warn all -stand f18")
+    set(CMAKE_Fortran_FLAGS_DEBUG "-g -O0 -check all,noarg_temp_created,nouninit -ftrapuv -debug all -debug-parameters all -traceback -fpe0")
 elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     set(CMAKE_Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -ffree-line-length-none -Wall -Wno-unused-label -ffpe-summary=all -Wunused-parameter -Wconversion-extra -Wimplicit-procedure")
     set(CMAKE_Fortran_FLAGS_DEBUG "-g -Og -fbacktrace -fcheck=all -fsanitize=undefined -ffpe-trap=invalid,zero,overflow -finit-real=snan -finit-integer=-9999999999")
