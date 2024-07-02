@@ -2,7 +2,7 @@
 
 if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
     set(CMAKE_Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -extend-source 132 -Warn declarations,general,usage,interfaces,unused -stand f18")
-    set(CMAKE_Fortran_FLAGS_DEBUG "-g -O0 -check bounds,pointers,shape,stack,uninit -ftrapuv -debug-parameters all -traceback -fp-stack-check -debug all -fpe0")
+    set(CMAKE_Fortran_FLAGS_DEBUG "-g -O0 -check all,noarg_temp_created -ftrapuv -debug-parameters all -traceback -fp-stack-check -debug all -fpe0")
 elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
     set(CMAKE_Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -extend-source 132 -Warn declarations,general,usage,interfaces,unused -stand f18")
     set(CMAKE_Fortran_FLAGS_DEBUG "-g -O0 -check bounds,pointers,shape,stack -ftrapuv -debug all -debug-parameters all -traceback -fp-stack-check -fpe0")
