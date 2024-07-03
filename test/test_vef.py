@@ -30,7 +30,7 @@ TEST_INPUT = TEST_ROOT/'input'
 MODES = ['ADP', 'ASR', 'EWC','QRS','UDSA','YLD']
 ALGORITHMS = ['ALAMEL', 'FCTaylor']
 SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
-HARDENING_MODELS = ['NONE', 'VOCE', 'SWIFT', 'BP', 'PEBP_SCREW', 'PEBP_LOOP'] 
+HARDENING_MODELS = ['NONE', 'VOCE', 'SWIFT', 'BP', 'PEBP_SCREW', 'PEBP_LOOP']
 
 #Unit tests
 UNITS = [('altayAlgorithms','eigenv'),      \
@@ -45,12 +45,12 @@ if not os.path.exists(TEST_RUN):
 def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', hardening_model='NONE'):
     with open(TEST_RUN/'test.cfg', 'w') as conf_file:
         conf_file.write(conf.generate_config(mode, algorithm, slip_system, hardening_model))
-                            
+
     try:
         os.remove(TEST_RUN/'out.rtdb')
         os.remove(TEST_RUN/'out.CUR')
     except: FileNotFoundError
-    
+
     shutil.copy(TEST_INPUT/'texture.smt', TEST_RUN)
     shutil.copy(TEST_INPUT/'equiaxed.smt', TEST_RUN)
     if hardening_model == 'BP' or hardening_model == 'PEBP_SCREW' or hardening_model == 'PEBP_LOOP':
@@ -58,12 +58,16 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
             dsh_config.write(conf.DSH_CONFIG)
 
     if not (mode, algorithm, slip_system, hardening_model) in GENERATED_DATA:
-        os.chdir(TEST_RUN)
+        path = TEST_RUN/f'{mode}_{algorithm}_{slip_system}_{hardening_model}'
+        out_path = str(path) + '.out'
+        log_path = str(path) + '.log'
 
+        os.chdir(TEST_RUN)
         result = subprocess.run([TEST_ROOT/'../VEF/bin/alamDMC',mode,'test.cfg'],
                                 stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        with open('alamDMC.log','w') as f:
+        with open(log_path,'w') as f:
             f.write(result.stdout.decode())
+            f.write(result.stderr.decode())
         if result.returncode != 0:
             print(result.stderr.decode())
         assert result.returncode == 0
@@ -76,13 +80,9 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
                             out.write(out_oriented.read())
                         else:
                             out.writelines((out_oriented.read().splitlines(True))[2:])
-                            
 
-        path = TEST_RUN/f'{mode}_{algorithm}_{slip_system}_{hardening_model}'
-        out_path = str(path) + '.out'
-        log_path = str(path) + '.log'
+
         shutil.move(TEST_RUN/f'out.{EXTENSIONS[mode]}', out_path)
-        shutil.move(TEST_RUN/'alamDMC.log', log_path)
         GENERATED_DATA.append((mode, algorithm, slip_system, hardening_model))
         TEST_REF.mkdir(parents=True, exist_ok=True)
         if 'log' in update: shutil.copy(log_path, TEST_REF)
@@ -100,7 +100,7 @@ def process_file(path):
                 exp = int(formatted[1])
                 if exp > -9:
                     significand = int(formatted[0].replace('-','')[2:4])
-                    total = total + significand * pow(10,exp)        
+                    total = total + significand * pow(10,exp)
                     res.append(significand)
     filtered = list(filter(lambda e: not e == 0, res))
     return (sum(filtered) / len(filtered), total)
@@ -140,7 +140,7 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
             cols = ['S']
         elif mode == 'QRS':
             cols = ['q-value', 'r-value', 's-value']
-            
+
         ref = format_df(ref, cols)
         res = format_df(res, cols)
 
@@ -150,7 +150,7 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
             #None of the components should vary more from the reference than MARGIN times the max. component
             for index, row in res.iterrows():
                 row_ref = ref.iloc[index-1]
-                tolerance = max(abs(row_ref)) * sensitivity            
+                tolerance = max(abs(row_ref)) * sensitivity
                 for i in range(len(row)):
                     element = row[i]
                     element_ref = row_ref[i]
@@ -164,7 +164,7 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
                     element_ref = row_ref[i]
                     if not math.isnan(element_ref):
                         assert abs(element_ref * (1 - sensitivity)) <= abs(element) <= abs(element_ref * (1 + sensitivity))
-        
+
 def get_trace_values(path, module, function):
     vals = []
     header = "TRACE " + module + ", " + function
