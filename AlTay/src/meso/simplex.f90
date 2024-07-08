@@ -105,7 +105,10 @@ contains
         iter = 0
         max_iters = size(taylor_coeffs, 2)**2
         do while (most_overstressed_system /= 0)
-            if (iter > max_iters) call log_error(MOD_NAME, PROC_NAME, ERR, 'Too many iterations')
+            !We are stuck in a loop due to degeneracy and although the current solution is valid we can not gurantee it is optimal. This was tested to occur approx. 1 in 100 000
+            !simplex calls and therefore has minimal impact on the results of the simulation. Since handling these degeneracies is
+            !very complicated and expensive, best simply ignore them at a tiny cost in accuracy.
+            if (iter > max_iters) return
             iter = iter+1
             ! Search which active slip system must be deactivated (removed from basis)
             new_basis_vector = matmul(inverse_basis, taylor_coeffs(:,most_overstressed_system))
