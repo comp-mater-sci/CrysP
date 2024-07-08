@@ -18,7 +18,7 @@ contains
     !!        st  A g = A_0
     !!
     !! To avoid the nonlinearity of the absolute value and to accomodate different
-    !! values for the critical resolved shear stress in positive and negative directions, 
+    !! values for the critical resolved shear stress in positive and negative directions,
     !! each g_k is replace by two values g_1k and g_2k, so that
     !!     if g_k >= 0 then g_1k = g_k  and g_2k = 0
     !!     if g_k <  0 then g_1k = g_k  and g_2k = 0
@@ -195,7 +195,7 @@ contains
         do i = 1, size(overstress)
             overstress(i) = merge(rss(i) - crss(1, i), -rss(i) - crss(2, i), rss(i) >= 0._DP)
             if ((overstress(i) > tmp) .and. (.not. bas(i))) then
-                tmp = overstress(i) + TOLERANCE
+                tmp = overstress(i)
                 most_overstressed_system = i
             end if
         enddo
@@ -219,7 +219,7 @@ contains
     !!                                       The index of the system to remove from the basis.
     !!
     !! @param[out] new_inverse_basis_vector  real vector (m)
-    !!                                       
+    !!
     subroutine update_inverse_basis(inverse_basis, new_basis_vector, system_to_remove, new_inverse_basis_vector)
         real(DP), dimension(:,:), intent(inout):: inverse_basis
         real(DP), intent(in):: new_basis_vector(size(inverse_basis, 1))
