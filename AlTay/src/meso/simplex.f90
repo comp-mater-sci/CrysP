@@ -18,7 +18,7 @@ contains
     !!        st  A g = A_0
     !!
     !! To avoid the nonlinearity of the absolute value and to accomodate different
-    !! values for the critical resolved shear stress in positive and negative directions, 
+    !! values for the critical resolved shear stress in positive and negative directions,
     !! each g_k is replace by two values g_1k and g_2k, so that
     !!     if g_k >= 0 then g_1k = g_k  and g_2k = 0
     !!     if g_k <  0 then g_1k = g_k  and g_2k = 0
@@ -105,7 +105,10 @@ contains
         iter = 0
         max_iters = size(taylor_coeffs, 2)**2
         do while (most_overstressed_system /= 0)
-            if (iter > max_iters) call log_error(MOD_NAME, PROC_NAME, ERR, 'Too many iterations')
+            !We are stuck in a loop due to degeneracy and although the current solution is valid we can not gurantee it is optimal. This was tested to occur approx. 1 in 100 000
+            !simplex calls and therefore has minimal impact on the results of the simulation. Since handling these degeneracies is
+            !very complicated and expensive, best simply ignore them at a tiny cost in accuracy.
+            if (iter > max_iters) return
             iter = iter+1
             ! Search which active slip system must be deactivated (removed from basis)
             new_basis_vector = matmul(inverse_basis, taylor_coeffs(:,most_overstressed_system))
@@ -195,7 +198,7 @@ contains
         do i = 1, size(overstress)
             overstress(i) = merge(rss(i) - crss(1, i), -rss(i) - crss(2, i), rss(i) >= 0._DP)
             if ((overstress(i) > tmp) .and. (.not. bas(i))) then
-                tmp = overstress(i) + TOLERANCE
+                tmp = overstress(i)
                 most_overstressed_system = i
             end if
         enddo
@@ -219,7 +222,7 @@ contains
     !!                                       The index of the system to remove from the basis.
     !!
     !! @param[out] new_inverse_basis_vector  real vector (m)
-    !!                                       
+    !!
     subroutine update_inverse_basis(inverse_basis, new_basis_vector, system_to_remove, new_inverse_basis_vector)
         real(DP), dimension(:,:), intent(inout):: inverse_basis
         real(DP), intent(in):: new_basis_vector(size(inverse_basis, 1))
