@@ -170,9 +170,6 @@ module simulation
             if (.not.astate%simulCalls(astate%this)%input%keep_state) homogenized_total_slipTOT = homogenized_total_slipTOT+homogenized_total_slip
 
             von_mises_strain = von_mises_strain+von_mises_strain_rate
-
-            print *, 'Stress: ', norm2(homogenized_stress)
-            print *, 'Slip: ', homogenized_total_slip
         enddo steploop
     end subroutine
 end module

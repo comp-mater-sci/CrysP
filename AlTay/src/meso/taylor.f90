@@ -227,6 +227,8 @@ contains
             stress_grain = stress_cluster(start_index_grain+1:start_index_grain+5)
             stress_state = stress_state + ((convert_stress_strain_space(stress_grain)) .fromframe. cluster_ptr%grains(i)%orientation)
         end do
+        !Homogenize quantity over cluster
+        stress_state = stress_state/cluster_size
     end subroutine
 
     subroutine apply_deformation_step(cluster_ptr, sum_slip, work_rate, imposed_spin, taylor_coeffs, n_slip_systems_grain, index_cluster)
@@ -330,6 +332,8 @@ contains
 
             deallocate(active_slip_systems)
         end do
+        !Homogenize quantity over cluster
+        sum_slip = sum_slip/cluster_size
     end subroutine
 
     real(DP) function cluster_weight(cluster_ptr, deformation_gradient) result(weight)
