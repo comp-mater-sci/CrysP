@@ -33,7 +33,7 @@ contains
         do i = 1, npoint
             eu = to_euler_angles(grains(i)%orientation)*RAD_TO_DEG
             write(iounit, 400, iostat = info)&
-               i, grains(i)%weight, eu(1), eu(2), eu(3), grains(i)%sum_slip
+               i, 0._DP, eu(1), eu(2), eu(3), grains(i)%sum_slip
             if (info /= 0) exit
         enddo
 

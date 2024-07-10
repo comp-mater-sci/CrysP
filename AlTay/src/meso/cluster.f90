@@ -6,11 +6,7 @@ module cluster_module
 
     type Cluster
         type(Grain), dimension(:), pointer:: grains
-        real(DP):: weight
-        real(DP), dimension(:,:), allocatable:: inverse_basis, &
-                                                taylor_coeffs, &
-                                                spin_coeffs
-        real(DP), dimension(:,:,:), allocatable:: spin_coeffs_relaxations
-        integer, dimension(:), allocatable:: ind_basis_systems
+        real(DP):: weight                                    !> Measure of importance of the cluster with respect to the whole microstructure
+        real(DP), dimension(3, 3):: boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
     end type
 end module
