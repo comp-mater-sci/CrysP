@@ -233,15 +233,15 @@ contains
         cluster_ptr%grains(index_in_cluster)%stress = (convert_stress_strain_space(stress_grain)) .fromframe. cluster_ptr%grains(index_in_cluster)%orientation
     end subroutine
 
-    subroutine apply_deformation_step(grain_, index_grain, sum_slip_current, work_rate, imposed_spin, taylor_coeffs, n_slip_systems_grain, index_in_cluster)
-        type(Grain), pointer, intent(in):: grain_
+    subroutine apply_deformation_step(cluster_ptr, index_grain, sum_slip_current, work_rate, imposed_spin, taylor_coeffs, n_slip_systems_grain, index_in_cluster)
+        type(Cluster), pointer, intent(in):: cluster_ptr
         integer, intent(in)::       index_grain, n_slip_systems_grain, index_in_cluster
         real(DP), intent(in)::      imposed_spin(3, 3), &
                                     taylor_coeffs(:,:)
         real(DP), intent(out)::     sum_slip_current, &
                                     work_rate
         real(DP)::                  orientation_increment(3, 3), &
-                                    slip_rates_final(size(grain_%slip_systems)), &
+                                    slip_rates_final(size(cluster_ptr%grains(1)%slip_systems)), &
                                     spin_relaxations(3), &
                                     strain_grain(5), &
                                     strain_relaxations(5), &
@@ -255,8 +255,10 @@ contains
                                     start_index_relaxations, &
                                     ind_overstressed_slip_systems(8)  ! Theoretical maximum of overstressed systems is 8
         type(SlipSystem), dimension(:), allocatable:: active_slip_systems
+        type(Grain), pointer:: grain_
         character(*), parameter::   PROC_NAME = 'apply_deformation_step'
 
+        grain_ => cluster_ptr%grains(index_in_cluster)
         start_index_grain = 5*(index_in_cluster-1)
         start_index_slip_systems = n_slip_systems_grain*(index_in_cluster-1)
         n_relaxations = merge(2, 0, size(taylor_coeffs_cluster, 1) > 5)

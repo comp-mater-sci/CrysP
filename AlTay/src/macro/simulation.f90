@@ -143,8 +143,7 @@ module simulation
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                     deformation_gradient = next_deformation_gradient
-                    grain_ptr => cluster_ptr%grains(index_in_cluster)
-                    call apply_deformation_step(grain_ptr, index_grain, total_slip_rate, WorkRate, spin, taylor_coeffs, n_slip_systems_grain, index_in_cluster)
+                    call apply_deformation_step(cluster_ptr, index_grain, total_slip_rate, WorkRate, spin, taylor_coeffs, n_slip_systems_grain, index_in_cluster)
                 end if
 
                 total_weight = total_weight+cluster_ptr%weight
