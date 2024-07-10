@@ -61,8 +61,7 @@ module simulation
         real(DP), intent(in):: velocity_gradient(3, 3)
         integer, intent(in):: NFILE0
         integer:: cluster_size, &
-                  index_in_cluster, &
-                  index_grain, &
+                  index_cluster, &
                   step, &
                   n_grains, &
                   info, &
@@ -86,7 +85,8 @@ module simulation
                    von_mises_strain_mode(3, 3), &
                    von_mises_strain_rate, &
                    next_deformation_gradient(3, 3), &
-                   deformation_gradient_during_time_step(3, 3)
+                   deformation_gradient_during_time_step(3, 3), &
+                   stress_cluster(3, 3)
         type(Grain), pointer:: grain_ptr
         type(Cluster), pointer:: cluster_ptr
 
@@ -111,6 +111,7 @@ module simulation
             homogenized_stress = 0._DP
             homogenized_taylor_factor = 0._DP
             homogenized_total_slip = 0._DP
+            homogenized_work = 0.0_DP
 
             nrstep = nrstep+1
 
@@ -124,33 +125,24 @@ module simulation
             !Taylor must therefore have "advance knowledge" of the
             !orientation to come at the moment that it starts such
             !computation.
-            index_in_cluster = 0
-            clusterloop: do index_grain = 1, n_grains
+            clusterloop: do index_cluster = 1, size(clusters)
+                cluster_ptr => clusters(index_cluster)
                 taylor_factor = 0.0_DP
                 total_slip_rate = 0.0_DP
                 WorkRate = 0.0_DP
-                homogenized_work = 0.0_DP
 
-                if (cluster_size == 1) then
-                    cluster_ptr => clusters(index_grain)
-                else
-                    cluster_ptr => clusters(index_grain/2 + mod(index_grain, 2))
-                end if
-                index_in_cluster = mod(index_in_cluster, cluster_size)+1
-
-                call get_stress_state(cluster_ptr, index_grain, index_in_cluster, n_slip_systems_grain, velocity_gradient, &
-                deformation_gradient_during_time_step)
+                call get_stress_state(cluster_ptr, index_cluster, n_slip_systems_grain, velocity_gradient, deformation_gradient_during_time_step, stress_cluster)
+                homogenized_stress = homogenized_stress+stress_cluster*cluster_ptr%weight
+                total_weight = total_weight+cluster_ptr%weight
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                     deformation_gradient = next_deformation_gradient
-                    call apply_deformation_step(cluster_ptr, index_grain, total_slip_rate, WorkRate, spin, taylor_coeffs, n_slip_systems_grain, index_in_cluster)
+                    call apply_deformation_step(cluster_ptr, total_slip_rate, WorkRate, spin, taylor_coeffs, n_slip_systems_grain, index_cluster)
                 end if
 
-                total_weight = total_weight+cluster_ptr%weight
                 taylor_factor = total_slip_rate /  von_mises_strain_rate
 
-                homogenized_stress          = homogenized_stress+cluster_ptr%grains(index_in_cluster)%stress*cluster_ptr%weight
-                homogenized_taylor_factor   = homogenized_taylor_factor+taylor_factor*cluster_ptr%weight
+                homogenized_taylor_factor  = homogenized_taylor_factor+taylor_factor*cluster_ptr%weight
                 homogenized_total_slip = homogenized_total_slip+total_slip_rate*cluster_ptr%weight  !Step time here implicitly assumed to be 1.0s
                 homogenized_work       = homogenized_work+WorkRate                              !Step time here implicitly assumed to be 1.0s
             enddo clusterloop
@@ -178,6 +170,9 @@ module simulation
             if (.not.astate%simulCalls(astate%this)%input%keep_state) homogenized_total_slipTOT = homogenized_total_slipTOT+homogenized_total_slip
 
             von_mises_strain = von_mises_strain+von_mises_strain_rate
+
+            print *, 'Stress: ', norm2(homogenized_stress)
+            print *, 'Slip: ', homogenized_total_slip
         enddo steploop
     end subroutine
 end module

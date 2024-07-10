@@ -11,8 +11,7 @@ module grain_module
     !>Texture-related state variables for single grain
     type:: grain
         real(DP)::                  sum_slip = 0._DP
-        real(DP), dimension(3, 3):: stress, &
-                                    orientation
+        real(DP), dimension(3, 3):: orientation
         type(SlipSystem), dimension(:), allocatable:: slip_systems
     end type grain
 
