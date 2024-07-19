@@ -100,7 +100,6 @@ contains
                                     ind_end, &
                                     ind_basis_systems_cluster(10), &
                                     n_relaxations
-        logical::                   full_constraints
         character(*), parameter::   PROC_NAME = 'get_stress_state'
         real(DP), allocatable:: overstress(:), &
                                 stress_cluster(:), &
@@ -114,7 +113,6 @@ contains
         size_system = 5*cluster_size
         n_slip_systems_cluster = cluster_size*n_slip_systems_grain+n_relaxations
         start_index_relaxations = n_slip_systems_cluster-n_relaxations+1
-        full_constraints = (n_relaxations == 0)
 
         allocate(overstress(n_slip_systems_cluster))
         allocate(stress_cluster(size_system))
@@ -138,20 +136,18 @@ contains
 
             do i = 1, cluster_size
                 start_index_grain = 5*(i-1)+1
-                if (.not. full_constraints) then
-                    do j = 1, 2
-                        !Transform relaxation from boundary frame to crystal frame
-                        !Composed of rotation from boundary to global frame and then from global to crystal frame.
-                        boundary_to_crystal = matmul(cluster(i)%orientation, transpose(cluster_frame(cluster(1)%boundary_reference_frame, deformation_gradient)))
-                        relaxations_crystal_frame = rotate_to(real(RELAXATIONS(:,:,j), DP), boundary_to_crystal)
-                        !Invert direction of relaxations for second grain
-                        if (i == 2) relaxations_crystal_frame = -relaxations_crystal_frame
-                        !Rotational component of relaxations
-                        spin_coeffs_relaxations(:,j, i) = convert_spin(relaxations_crystal_frame) / SQR2
-                        !Insert the relaxations as columns in taylor_coeffs_cluster-matrix
-                        taylor_coeffs_cluster(start_index_grain:start_index_grain+4, start_index_relaxations-1+j)=convert_stress_strain_space(symmetric_part(relaxations_crystal_frame))
-                    end do
-                endif
+                do j = 1, n_relaxations
+                    !Transform relaxation from boundary frame to crystal frame
+                    !Composed of rotation from boundary to global frame and then from global to crystal frame.
+                    boundary_to_crystal = matmul(cluster(i)%orientation, transpose(cluster_frame(cluster(1)%boundary_reference_frame, deformation_gradient)))
+                    relaxations_crystal_frame = rotate_to(real(RELAXATIONS(:,:,j), DP), boundary_to_crystal)
+                    !Invert direction of relaxations for second grain
+                    if (i == 2) relaxations_crystal_frame = -relaxations_crystal_frame
+                    !Rotational component of relaxations
+                    spin_coeffs_relaxations(:,j, i) = convert_spin(relaxations_crystal_frame) / SQR2
+                    !Insert the relaxations as columns in taylor_coeffs_cluster-matrix
+                    taylor_coeffs_cluster(start_index_grain:start_index_grain+4, start_index_relaxations-1+j)=convert_stress_strain_space(symmetric_part(relaxations_crystal_frame))
+                end do
 
                 imposed_strain_grain(1:5, i)=convert_stress_strain_space(velocity_gradient .toframe. cluster(i)%orientation)
                 imposed_strain_cluster(start_index_grain:start_index_grain+4)=imposed_strain_grain(1:5, i)
@@ -161,17 +157,7 @@ contains
                 inverse_basis_cluster(start_index_grain:start_index_grain+4, start_index_grain:start_index_grain+4)=inverse_basis_grain
             enddo
 
-            !Relaxed constriants calculation. Called for ALAMEL.
-            if (.not. full_constraints) then
-                call simplex_solve(taylor_coeffs_cluster, imposed_strain_cluster, crss_cluster, inverse_basis_cluster, ind_basis_systems_cluster, slip_rates, stress_cluster, rss_cluster, overstress)
-                !If not all grains deform, we take the full constraints solution
-                full_constraints = (.not. all([(sum(abs(slip_rates(1+i*n_slip_systems_grain:(i+1)*n_slip_systems_grain))), i = 0, 1)]>=TOLERANCE))
-            end if
-            !Full constraints calculation. Called for FCTaylor and if only 1 grain deforms for ALAMEL
-            if (full_constraints) then
-                call simplex_solve(taylor_coeffs_cluster(1:size_system, 1:start_index_relaxations-1), imposed_strain_cluster, crss_cluster, inverse_basis_cluster, ind_basis_systems_cluster, slip_rates, stress_cluster, rss_cluster, overstress)
-                slip_rates(start_index_relaxations:n_slip_systems_cluster) = 0._DP
-            endif
+            call simplex_solve(taylor_coeffs_cluster, imposed_strain_cluster, crss_cluster, inverse_basis_cluster, ind_basis_systems_cluster, slip_rates, stress_cluster, rss_cluster, overstress)
 
             do i = 1, cluster_size
                 ind_start = 1 + (i-1) * n_slip_systems_grain
@@ -188,7 +174,7 @@ contains
 
         endif
 
-                ! From here on, output is produced for grain number "index_in_cluster"
+        ! From here on, output is produced for grain number "index_in_cluster"
         start_index_grain = 5*(index_in_cluster-1)
         stress_grain = stress_cluster(start_index_grain+1:start_index_grain+5)
         cluster(index_in_cluster)%stress = (convert_stress_strain_space(stress_grain)) .fromframe. cluster(index_in_cluster)%orientation
