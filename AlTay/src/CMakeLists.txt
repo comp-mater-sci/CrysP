@@ -19,6 +19,7 @@ macro/simulation.f90
 meso/taylor_ambiguity.f90
 meso/simplex.f90 
 meso/taylor.f90 
+meso/cluster.f90
 micro/grain.f90 
 micro/slip_systems.f90
 micro/hardening.f90

@@ -33,12 +33,12 @@ contains
         do i = 1, npoint
             eu = to_euler_angles(grains(i)%orientation)*RAD_TO_DEG
             write(iounit, 400, iostat = info)&
-               i, grains(i)%weight, eu(1), eu(2), eu(3), grains(i)%sum_slip
+               i, eu(1), eu(2), eu(3), grains(i)%sum_slip
             if (info /= 0) exit
         enddo
 
- 400 format (I6, f10.5, 2X, 3f10.5, 2X, f10.5)
- 401 format (' CRYSTAL WEIGHT ',5X, 'phi1',6X, 'PHI',7X, 'phi2',6X, '  GAMMA')
+ 400 format (I6, 2X, 3f10.5, 2X, f10.5)
+ 401 format (8X, 'phi1',6X, 'PHI',7X, 'phi2',6X, '  GAMMA')
  402 format (/,' Def. Step    ','Number of orientations',27X,          &
     2X, 'F(1, 1)',4X, 'F(2, 1)',4X, 'F(3, 1)',4X,                           &
     2X, 'F(1, 2)',4X, 'F(2, 2)',4X, 'F(3, 2)',4X,                           &
