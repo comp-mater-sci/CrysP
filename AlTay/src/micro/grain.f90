@@ -10,11 +10,8 @@ module grain_module
 
     !>Texture-related state variables for single grain
     type:: grain
-        real(DP)    :: weight     = 1._DP, &
-                                    sum_slip = 0._DP
-        real(DP), dimension(3, 3):: stress, &
-                                    orientation, &
-                                    boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
+        real(DP)::                  sum_slip = 0._DP
+        real(DP), dimension(3, 3):: orientation
         type(SlipSystem), dimension(:), allocatable:: slip_systems
     end type grain
 
@@ -26,7 +23,6 @@ module grain_module
                 grains,       &
                 nrStep,     &
                 dynfil_init,    &
-                read_microstructure, &
                 dynfil_finalize, &
                 deformation_gradient
 
@@ -54,7 +50,6 @@ contains
             if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read boundary segment')
             angles = angles/RAD_TO_DEG
 
-            grains(i)%weight = weight
             grains(i)%sum_slip = initial_sum_slip
             grains(i)%orientation = from_euler_angles(angles)
             allocate(grains(i)%slip_systems(n_slip_systems))
@@ -62,35 +57,6 @@ contains
 
         close(nunit)
     end subroutine
-
-    subroutine read_microstructure(file_name, initial_deformation_gradient)
-        character(len=*), intent(in):: file_name
-        real(DP), dimension(3, 3), intent(in):: initial_deformation_gradient
-        integer           :: file_handle, &
-                             n_boundaries, &
-                             i, j
-        real(DP):: transformation_matrix(3, 3), &
-                   angles(3)
-        character(len = 40)  :: TitMic !<Microstructure title
-
-        open (newunit = file_handle, file = file_name, status='old')
-        read (file_handle, '(I5, 5x, A)') n_boundaries, TitMic  ! read number of grain boundaries and file title
-
-        do i = 1, n_boundaries
-            read (file_handle, '(3f10.0)') angles(3), angles(2), angles(1)  !read Euler angles from microstructure file in order: phi2, PHI, phi1
-            !Calculate the transformation matrix
-            !Cols 1 and 2 hold two non-parallel vectors within the initial GB (grain boundary) plane.
-            !Col 3 holds a vector out of the initial GB plane (not necessarily perpendicular to the GB plane).
-            transformation_matrix = matmul(initial_deformation_gradient, transpose(from_euler_angles(angles/RAD_TO_DEG)))
-
-            !Assign boundaries to a pair of grains
-            do j = 2*i-1, size(grains)-1, 2*n_boundaries
-                grains(j)%boundary_reference_frame = transformation_matrix
-            end do
-        enddo
-
-        close(unit = file_handle)
-    end subroutine read_microstructure
 
         !>Puts the module variables into initial state and deallocates the storage.
     subroutine DYNFIL_finalize(info)
