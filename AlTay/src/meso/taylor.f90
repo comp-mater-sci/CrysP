@@ -177,7 +177,7 @@ contains
                 !Transform relaxation from boundary frame to crystal frame
                 !Composed of rotation from boundary to global frame and then from global to crystal frame.
                 boundary_to_crystal = matmul(cluster_ptr%grains(i)%orientation, cluster_frame(cluster_ptr%boundary_reference_frame, deformation_gradient))
-                relaxations_crystal_frame = real(RELAXATIONS(:,:,j), DP) .toframe. boundary_to_crystal
+                relaxations_crystal_frame = rotate_to(real(RELAXATIONS(:,:,j), DP), boundary_to_crystal)
                 !Invert direction of relaxations for second grain
                 if (i == 2) relaxations_crystal_frame = -relaxations_crystal_frame
                 !Rotational component of relaxations
