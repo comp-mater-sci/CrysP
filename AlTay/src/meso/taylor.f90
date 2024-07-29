@@ -19,8 +19,7 @@ module taylor
     real(DP):: inverse_basis_grain(5, 5), &
                slip_rates_relaxations(2)
     real(DP), allocatable ::  spin_slip_systems(:,:), &
-                              spin_coeffs_relaxations(:,:,:), &
-                              taylor_coeffs_cluster(:,:)
+                              spin_coeffs_relaxations(:,:,:)
 
     integer:: ind_basis_systems_grain(5)
 
@@ -62,7 +61,6 @@ contains
         allocate(taylor_coeffs_grain(5, n_slip_systems_grain))
         if (.not. allocated(spin_slip_systems)) then
             allocate(spin_slip_systems(3, n_slip_systems_grain))
-            allocate(taylor_coeffs_cluster(system_size, n_slip_systems_cluster))
             if (cluster_size == 2) &
                 allocate(spin_coeffs_relaxations(3, 2, 2), source = 0._DP)
         end if
@@ -78,9 +76,6 @@ contains
 
         inverse_basis_grain = invert(basis)
 
-        taylor_coeffs_cluster = 0.0_DP
-        taylor_coeffs_cluster(1:5, 1:n_slip_systems_grain)=taylor_coeffs_grain
-        if (cluster_size == 2) taylor_coeffs_cluster(6:10, n_slip_systems_grain+1:n_slip_systems_grain*2)=taylor_coeffs_grain
 
         !Temporary hack. Should move to FCTaylor and ALAMEL modules, respectively once they are available.
         if (cluster_size == 1) then
@@ -88,13 +83,19 @@ contains
             do i = 1, size(clusters)
                 clusters(i)%grains => grains(i:i)
                 clusters(i)%weight = 1._DP
-                allocate(clusters(i)%imposed_strain(5))
+                allocate(clusters(i)%imposed_strain(5)) !> Imposed strain in grain crystal frame
+                allocate(clusters(i)%taylor_coeffs(5, n_slip_systems_grain)) !> Slip systems for 1 grain
+                clusters(i)%taylor_coeffs = taylor_coeffs_grain
             end do
         else
             allocate(clusters(size(grains)/2))
             do i = 1, size(clusters)
                 clusters(i)%grains => grains(2*i-1:2*i)
-                allocate(clusters(i)%imposed_strain(10))
+                allocate(clusters(i)%imposed_strain(10)) !> Imposed strain in crystal frame of both grains
+                allocate(clusters(i)%taylor_coeffs(10, 2*n_slip_systems_grain+2)) !>Slip systems for 2 grains and 2 relaxations
+                clusters(i)%taylor_coeffs = 0.0_DP
+                clusters(i)%taylor_coeffs(1:5, 1:n_slip_systems_grain)=taylor_coeffs_grain
+                clusters(i)%taylor_coeffs(6:10, n_slip_systems_grain+1:n_slip_systems_grain*2)=taylor_coeffs_grain
             end do
 
             !Read boundary orientations from file
@@ -182,7 +183,7 @@ contains
                 !Rotational component of relaxations
                 spin_coeffs_relaxations(:,j, i) = convert_spin(relaxations_crystal_frame) / SQR2
                 !Insert the relaxations as columns in taylor_coeffs_cluster-matrix
-                taylor_coeffs_cluster(start_index_grain:start_index_grain+4, start_index_relaxations-1+j)=convert_stress_strain_space(symmetric_part(relaxations_crystal_frame))
+                cluster_ptr%taylor_coeffs(start_index_grain:start_index_grain+4, start_index_relaxations-1+j)=convert_stress_strain_space(symmetric_part(relaxations_crystal_frame))
             end do
 
             cluster_ptr%imposed_strain(start_index_grain:start_index_grain+4) = convert_stress_strain_space(velocity_gradient .toframe. cluster_ptr%grains(i)%orientation)
@@ -192,7 +193,7 @@ contains
             inverse_basis_cluster(start_index_grain:start_index_grain+4, start_index_grain:start_index_grain+4)=inverse_basis_grain
         enddo
 
-        call simplex_solve(taylor_coeffs_cluster, cluster_ptr%imposed_strain, crss_cluster, inverse_basis_cluster, ind_basis_systems_cluster, slip_rates, stress_cluster, rss_cluster, overstress)
+        call simplex_solve(cluster_ptr%taylor_coeffs, cluster_ptr%imposed_strain, crss_cluster, inverse_basis_cluster, ind_basis_systems_cluster, slip_rates, stress_cluster, rss_cluster, overstress)
 
         stress_state = 0._DP
         do i = 1, cluster_size
@@ -249,7 +250,7 @@ contains
             grain_ => cluster_ptr%grains(j)
             start_index_grain = 5*(j-1)
             start_index_slip_systems = n_slip_systems_grain*(j-1)
-            n_relaxations = merge(2, 0, size(taylor_coeffs_cluster, 1) > 5)
+            n_relaxations = merge(2, 0, size(cluster_ptr%taylor_coeffs, 1) > 5)
             if (n_relaxations > 0) start_index_relaxations = 2*n_slip_systems_grain+1
 
             !Determine if taylor ambiguity may be occuring. While we are iterating over the slip systems, might as well prepare for
@@ -280,7 +281,7 @@ contains
                 !Determine strain absorbed by slip systems (imposed strain-relaxations)
                 strain_relaxations = 0._DP
                 do i = 1, n_relaxations
-                    strain_relaxations = strain_relaxations+taylor_coeffs_cluster(start_index_grain+1:start_index_grain+5, start_index_relaxations-1+i) * slip_rates_relaxations(i)
+                    strain_relaxations = strain_relaxations+cluster_ptr%taylor_coeffs(start_index_grain+1:start_index_grain+5, start_index_relaxations-1+i) * slip_rates_relaxations(i)
                 end do
                 strain_grain = cluster_ptr%imposed_strain(start_index_grain+1:start_index_grain+5) - strain_relaxations
 
