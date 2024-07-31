@@ -302,9 +302,9 @@ contains
             work_rate = work_rate+sum(merge(grain_%slip_systems%crss(1), -grain_%slip_systems%crss(2), slip_rates_final > 0._DP)*slip_rates_final)
 
             orientation_increment = UNIT_MATRIX_3X3 &
-                                    +(imposed_spin .toframe. grain_%orientation) &                         !Change of reference frame
-                                    -convert_spin(matmul(spin_slip_systems, slip_rates_final))    !Spin induced by activation of slip systems
-            ! Spin induced by relaxations. Note+instead of-because relaxations are defined using PASSIVE angles while slip systems use ACTIVE angles.
+                                    +(imposed_spin .toframe. grain_%orientation) &                !>Change of reference frame
+                                    -convert_spin(matmul(spin_slip_systems, slip_rates_final))    !>Spin induced by activation of slip systems
+            !Spin induced by relaxations. Note addition instead of subtraction because relaxations are defined using PASSIVE angles while slip systems use ACTIVE angles.
             if (cluster_size == 2) orientation_increment = orientation_increment+convert_spin(matmul(spin_coeffs_relaxations(:,:,j), slip_rates_relaxations))
 
             grain_%orientation = matmul(orientation_increment, grain_%orientation)
