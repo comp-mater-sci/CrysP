@@ -12,8 +12,7 @@ module simulation
     implicit none
     private
 
-    real(DP), allocatable:: homogenized_total_slipTOT, & !< homogenized slip accumulated over calls
-        taylor_coeffs(:,:)
+    real(DP), allocatable:: homogenized_total_slipTOT !< homogenized slip accumulated over calls
     integer:: n_slip_systems_grain, NFILE1
 
     real(DP):: von_mises_strain
@@ -51,7 +50,7 @@ module simulation
         if (NFILE1 == 1) call CURwriteTitle(IMP1, TITEL, info)
   98    format (A)
 !       read the parameters of the work hardening model
-        clusters = taylor_init(acnf%deformation_mechanism, n_slip_systems_grain, taylor_coeffs, cluster_size, acnf%micros_fname, acnf%simul_init%FMicro)
+        clusters = taylor_init(acnf%deformation_mechanism, n_slip_systems_grain, cluster_size, acnf%micros_fname, acnf%simul_init%FMicro)
 
         deformation_gradient = UNIT_MATRIX_3X3
         von_mises_strain = 0._DP
@@ -137,7 +136,7 @@ module simulation
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                     deformation_gradient = next_deformation_gradient
-                    call apply_deformation_step(cluster_ptr, total_slip_rate, WorkRate, spin, taylor_coeffs, n_slip_systems_grain, index_cluster)
+                    call apply_deformation_step(cluster_ptr, total_slip_rate, WorkRate, spin, n_slip_systems_grain, index_cluster)
                 end if
 
                 taylor_factor = total_slip_rate /  von_mises_strain_rate
