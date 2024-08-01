@@ -228,12 +228,10 @@ contains
                                     n_overstressed_slip_systems, &
                                     n_relaxations, &
                                     n_active_simplex, &
-                                    start_index_grain, &
-                                    start_index_slip_systems, &
-                                    start_index_relaxations, &
                                     ind_overstressed_slip_systems(8)  ! Theoretical maximum of overstressed systems is 8
         type(SlipSystem), dimension(:), allocatable:: active_slip_systems
         real(DP), dimension(:), pointer, contiguous:: slip_rates_grain, &
+                                                      imposed_strain_grain, &
                                                       slip_rates_relaxations
         real(DP), dimension(:,:), pointer, contiguous:: spin_coeffs_grain, &
                                                         spin_coeffs_relaxations
@@ -253,15 +251,13 @@ contains
         do j = 1, size(cluster_ptr%grains)
             grain_ => cluster_ptr%grains(j)
             slip_rates_grain => cluster_ptr%slip_rates((j-1)*n_slip_systems_grain+1:j*n_slip_systems_grain)
+            imposed_strain_grain => cluster_ptr%imposed_strain((j-1)*5+1:j*5)
             taylor_coeffs_grain => cluster_ptr%taylor_coeffs(5*(j-1)+1:5*j, (j-1)*n_slip_systems_grain+1:j*n_slip_systems_grain)
             spin_coeffs_grain => cluster_ptr%spin_coeffs(:, (j-1)*(n_slip_systems_grain+n_relaxations)+1:j*n_slip_systems_grain+(j-1)*n_relaxations)
             if (n_relaxations > 0) then
                 taylor_coeffs_relaxations => cluster_ptr%taylor_coeffs(5*(j-1)+1:5*j, size(cluster_ptr%taylor_coeffs, 2)-1:)
                 spin_coeffs_relaxations => cluster_ptr%spin_coeffs(:,j*(n_slip_systems_grain+2)-1:j*(n_slip_systems_grain+2))
             end if
-            start_index_grain = 5*(j-1)
-            start_index_slip_systems = n_slip_systems_grain*(j-1)
-            if (n_relaxations > 0) start_index_relaxations = 2*n_slip_systems_grain+1
 
             !Determine if taylor ambiguity may be occuring. While we are iterating over the slip systems, might as well prepare for
             !resolving it
@@ -291,7 +287,7 @@ contains
                 !Determine strain absorbed by slip systems (imposed strain-relaxations)
                 strain_relaxations = 0._DP
                 if (n_relaxations > 0) strain_relaxations = matmul(taylor_coeffs_relaxations, slip_rates_relaxations)
-                strain_grain = cluster_ptr%imposed_strain(start_index_grain+1:start_index_grain+5) - strain_relaxations
+                strain_grain = imposed_strain_grain-strain_relaxations
 
                 slip_rates_grain = resolve_taylor_ambiguity(ind_overstressed_slip_systems(1:n_overstressed_slip_systems), &
                 active_slip_systems%rss, strain_grain, taylor_coeffs_grain, n_active_simplex)
