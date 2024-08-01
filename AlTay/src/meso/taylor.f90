@@ -18,8 +18,6 @@ module taylor
 
     real(DP):: inverse_basis_grain(5, 5), &
                slip_rates_relaxations(2)
-    real(DP), allocatable ::  spin_slip_systems(:,:), &
-                              spin_coeffs_relaxations(:,:,:)
 
     integer:: ind_basis_systems_grain(5)
 
@@ -50,6 +48,7 @@ contains
                              n_boundaries
         real(DP):: transformation_matrix(3, 3), &
                    angles(3)
+        real(DP), dimension(3, n_slip_systems_grain):: spin_coeffs
         character(len = 40)  :: TitMic !<Microstructure title
 
 
@@ -59,18 +58,13 @@ contains
         system_size = cluster_size*5
 
         allocate(taylor_coeffs_grain(5, n_slip_systems_grain))
-        if (.not. allocated(spin_slip_systems)) then
-            allocate(spin_slip_systems(3, n_slip_systems_grain))
-            if (cluster_size == 2) &
-                allocate(spin_coeffs_relaxations(3, 2, 2), source = 0._DP)
-        end if
 
         ind_basis_systems_grain = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, n_slip_systems_grain == 12)
         do i = 1, n_slip_systems_grain
             normalized = normalize(deformation_mechanism(:,:,i))
             tensor = outer_product(normalized(:,1), normalized(:,2))
             taylor_coeffs_grain(:,i) = convert_stress_strain_space(tensor)
-            spin_slip_systems(:,i) = convert_spin(tensor)
+            spin_coeffs(:,i) = convert_spin(tensor)
         end do
         forall (i = 1:5) basis(:,i) = taylor_coeffs_grain(:,ind_basis_systems_grain(i))
 
@@ -86,6 +80,8 @@ contains
                 allocate(clusters(i)%imposed_strain(5)) !> Imposed strain in grain crystal frame
                 allocate(clusters(i)%taylor_coeffs(5, n_slip_systems_grain)) !> Slip systems for 1 grain
                 clusters(i)%taylor_coeffs = taylor_coeffs_grain
+                allocate(clusters(i)%spin_coeffs(3, n_slip_systems_grain)) !> Slip systems for 1 grain
+                clusters(i)%spin_coeffs = spin_coeffs_grain
             end do
         else
             allocate(clusters(size(grains)/2))
@@ -96,6 +92,9 @@ contains
                 clusters(i)%taylor_coeffs = 0.0_DP
                 clusters(i)%taylor_coeffs(1:5, 1:n_slip_systems_grain)=taylor_coeffs_grain
                 clusters(i)%taylor_coeffs(6:10, n_slip_systems_grain+1:n_slip_systems_grain*2)=taylor_coeffs_grain
+                allocate(clusters(i)%spin_coeffs(3, 2*(n_slip_systems_grain+2)))
+                clusters(i)%spin_coeffs(:,1:n_slip_systems_grain) = spin_coeffs_grain
+                clusters(i)%spin_coeffs(:,n_slip_systems_grain+3:2*n_slip_systems_grain+2) = spin_coeffs_grain
             end do
 
             !Read boundary orientations from file
@@ -302,7 +301,7 @@ contains
 
             orientation_increment = UNIT_MATRIX_3X3 &
                                     +(imposed_spin .toframe. grain_%orientation) &                !>Change of reference frame
-                                    -convert_spin(matmul(spin_slip_systems, slip_rates_final))    !>Spin induced by activation of slip systems
+                                    -convert_spin(matmul(spin_coeffs, slip_rates_final))    !>Spin induced by activation of slip systems
             !Spin induced by relaxations. Note addition instead of subtraction because relaxations are defined using PASSIVE angles while slip systems use ACTIVE angles.
             if (cluster_size == 2) orientation_increment = orientation_increment+convert_spin(matmul(spin_coeffs_relaxations(:,:,j), slip_rates_relaxations))
 
