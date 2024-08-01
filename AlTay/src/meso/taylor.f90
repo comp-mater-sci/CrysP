@@ -176,12 +176,12 @@ contains
             do j = 1, n_relaxations
                 !Transform relaxation from boundary frame to crystal frame
                 !Composed of rotation from boundary to global frame and then from global to crystal frame.
-                boundary_to_crystal = matmul(cluster_ptr%grains(i)%orientation, transpose(cluster_frame(cluster_ptr%boundary_reference_frame, deformation_gradient)))
+                boundary_to_crystal = matmul(cluster_ptr%grains(i)%orientation, cluster_frame(cluster_ptr%boundary_reference_frame, deformation_gradient))
                 relaxations_crystal_frame = rotate_to(real(RELAXATIONS(:,:,j), DP), boundary_to_crystal)
                 !Invert direction of relaxations for second grain
                 if (i == 2) relaxations_crystal_frame = -relaxations_crystal_frame
                 !Rotational component of relaxations
-                spin_coeffs_relaxations(:,j, i) = convert_spin(relaxations_crystal_frame) / SQR2
+                spin_coeffs_relaxations(:,j, i) = convert_spin(relaxations_crystal_frame)
                 !Insert the relaxations as columns in taylor_coeffs_cluster-matrix
                 cluster_ptr%taylor_coeffs(start_index_grain:start_index_grain+4, start_index_relaxations-1+j)=convert_stress_strain_space(symmetric_part(relaxations_crystal_frame))
             end do
@@ -225,10 +225,8 @@ contains
                                     work_rate
         real(DP)::                  orientation_increment(3, 3), &
                                     slip_rates_final(size(cluster_ptr%grains(1)%slip_systems)), &
-                                    spin_relaxations(3), &
                                     strain_grain(5), &
                                     strain_relaxations(5), &
-                                    spin_relaxations_matrix(3, 3), &
                                     sum_slip_current
         integer::                   i, j, cluster_size, &
                                     n_overstressed_slip_systems, &
@@ -302,17 +300,12 @@ contains
             !Calculate work rate
             work_rate = work_rate+sum(merge(grain_%slip_systems%crss(1), -grain_%slip_systems%crss(2), slip_rates_final > 0._DP)*slip_rates_final)
 
-            !Update grain orientation
-            spin_relaxations = 0._DP
-            do i = 1, n_relaxations
-                spin_relaxations = spin_relaxations+spin_coeffs_relaxations(:,i, j) * slip_rates_relaxations(i)
-            end do
-            spin_relaxations_matrix = (convert_spin(spin_relaxations) * SQR2) .fromframe. grain_%orientation
-
             orientation_increment = UNIT_MATRIX_3X3 &
-                                    -convert_spin(matmul(spin_slip_systems, slip_rates_final)) &    !Spin induced by activation of slip systems
-                                    +(imposed_spin .toframe. grain_%orientation) &                         !Change of reference frame
-                                    +(spin_relaxations_matrix .toframe. grain_%orientation)                !Spin absorbed by relaxations
+                                    +(imposed_spin .toframe. grain_%orientation) &                !>Change of reference frame
+                                    -convert_spin(matmul(spin_slip_systems, slip_rates_final))    !>Spin induced by activation of slip systems
+            !Spin induced by relaxations. Note addition instead of subtraction because relaxations are defined using PASSIVE angles while slip systems use ACTIVE angles.
+            if (cluster_size == 2) orientation_increment = orientation_increment+convert_spin(matmul(spin_coeffs_relaxations(:,:,j), slip_rates_relaxations))
+
             grain_%orientation = matmul(orientation_increment, grain_%orientation)
 
             deallocate(active_slip_systems)
@@ -355,6 +348,6 @@ contains
         frame = matmul(deformation_gradient, boundary_frame)
         frame(:,3) = frame(:,1) .cross. frame(:,2)
         frame(:,2) = frame(:,3) .cross. frame(:,1)
-        frame = transpose(normalize(frame))
+        frame = normalize(frame)
     end function
 end module

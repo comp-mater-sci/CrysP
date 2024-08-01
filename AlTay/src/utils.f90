@@ -9,13 +9,13 @@ module utils
     integer, parameter::  DP = selected_real_kind(15, 307)
     real(DP), parameter:: TOLERANCE  = 1.E-9_DP, &
                           REAL_DP_MAX_VAL = huge(0._DP), &
-                          PI         = acos(-1.D0), & 
+                          PI         = acos(-1.D0), &
                           RAD_TO_DEG = 180._DP/PI, &
                           SQR0P5     = sqrt(0.5_DP), &
                           SQR0P67    = sqrt(2._DP/3._DP), &
                           SQR1P5     = sqrt(1.5_DP), &
                           SQR2       = sqrt(2._DP)
- 
+
     !Status codes
     enum, bind(C)
         enumerator:: VEF_OK, &
@@ -32,12 +32,12 @@ module utils
     integer, parameter       :: MAX_PATHLEN = 2048
 
     !> Matrix form of the unit second rank tensor
-    real(DP), dimension(3, 3), parameter:: UNIT_MATRIX_3X3 = reshape([1._DP, 0._DP, 0._DP, & 
-                                                                       0._DP, 1._DP, 0._DP, & 
-                                                                       0._DP, 0._DP, 1._DP], [3, 3])   
+    real(DP), dimension(3, 3), parameter:: UNIT_MATRIX_3X3 = reshape([1._DP, 0._DP, 0._DP, &
+                                                                       0._DP, 1._DP, 0._DP, &
+                                                                       0._DP, 0._DP, 1._DP], [3, 3])
 
     character(*), private, parameter:: MOD_NAME = 'utils'
- 
+
     interface normalize
         module procedure normalize_int, normalize_real
     end interface
@@ -78,20 +78,20 @@ contains
     pure function convert_stress_strain_mat_vec(t) result(v)
         real(DP), dimension(3, 3), intent(in)   :: t
         real(DP), dimension(5)                :: v
-    
+
         v(1) =  SQR0P5*(t(1, 1) - t(2, 2))
         v(2) = -SQR1P5*(t(3, 3) - (t(1, 1) + t(2, 2) + t(3, 3)) / 3._DP)
         v(3) =  SQR0P5*(t(2, 3) + t(3, 2))
         v(4) =  SQR0P5*(t(3, 1) + t(1, 3))
         v(5) =  SQR0P5*(t(1, 2) + t(2, 1))
     end function
-    
+
     !> Convert 5D vector v into second-rank tensor
     pure function convert_stress_strain_vec_mat(v) result(t)
         real(DP), dimension(5), intent(in)    :: v
         real(DP), dimension(3, 3)             :: t
         real(DP), parameter ::  root6i = 1.D0/sqrt(6.D0)
-      
+
         t(1, 1) =  SQR0P5*v(1) + root6i*v(2)
         t(2, 2) = -SQR0P5*v(1) + root6i*v(2)
         t(3, 3) = -SQR0P67*v(2)
@@ -107,13 +107,13 @@ contains
         real(DP), intent(in):: vec1(:), &
                                 vec2(size(vec1))
 
-        dot_product_wrapper = dot_product(vec1, vec2) 
+        dot_product_wrapper = dot_product(vec1, vec2)
     end function
 
     pure real(DP) function double_dot_product(mat1, mat2)
         real(DP), intent(in):: mat1(:,:), &
                                mat2(size(mat1, 1), size(mat1, 2))
-        
+
         double_dot_product = sum(mat1*mat2)
     end function
 
@@ -151,7 +151,7 @@ contains
         real(DP), dimension(size(v1), size(v2)):: prod
         integer                                 :: i, j
 
-        forall(i = 1:size(v1), j = 1:size(v2)) prod(i, j) = v1(i) * v2(j)  
+        forall(i = 1:size(v1), j = 1:size(v2)) prod(i, j) = v1(i) * v2(j)
     end function
 
     pure function symmetric_part(mat) result(sym)
@@ -173,7 +173,7 @@ contains
         real(DP), intent(in):: vec(3)
         real(DP)::             mat(3, 3)
 
-        mat = 0._DP                
+        mat = 0._DP
         mat(1, 2) = vec(1)
         mat(1, 3) = vec(2)
         mat(2, 3) = vec(3)
@@ -185,7 +185,7 @@ contains
         real(DP), dimension(3, 3), intent(in):: t
         real(DP), dimension(3)               :: rot
         real(DP), dimension(3, 3)             :: antisym
-                
+
         antisym = antisymmetric_part(t)
         rot = [antisym(1, 2), antisym(1, 3), antisym(2, 3)]
     end function
@@ -195,29 +195,29 @@ contains
     function invert(A) result(Ainv)
         real(DP), dimension(:,:), intent(in):: A
         real(DP), dimension(size(A, 1), size(A, 2)):: Ainv
-                                                                            
+
         real(DP), dimension(size(A, 1)):: work  ! work array for LAPACK
         integer, dimension(size(A, 1)):: ipiv   ! pivot indices
         integer:: n, info
-    
+
         ! External procedures defined in LAPACK
         external DGETRF
         external DGETRI
-                                                                           
+
         ! Store A in Ainv to prevent it from being overwritten by LAPACK
-        Ainv = A 
+        Ainv = A
         n = size(A, 1)
-                                                                           
+
         ! DGETRF computes an LU factorization of a general M-by-N matrix A
         ! using partial pivoting with row interchanges.
         call DGETRF(n, n, Ainv, n, ipiv, info)
-                                                                           
+
         if (info /= 0) error stop 'Matrix is numerically singular!'
-                                                                           
+
         ! DGETRI computes the inverse of a matrix using the LU factorization
         ! computed by DGETRF.
         call DGETRI(n, Ainv, n, ipiv, work, n, info)
-                                                                           
+
         if (info /= 0) error stop 'Matrix inversion failed!'
     end function
 
@@ -225,8 +225,8 @@ contains
     !If ||A|| > 1, catastrophic cancellation in floating point arithmetic can occur
     !Uses the Taylor Series Expansion:
     !exp(A) == I+A + A^2/(2!) + A^3/(3!) + ... + A^n/(n!) + ...
-    pure function matrix_exponential_small_norm(A) result(exponential)   
-        real(DP), dimension(3, 3), intent(in):: A 
+    pure function matrix_exponential_small_norm(A) result(exponential)
+        real(DP), dimension(3, 3), intent(in):: A
         real(DP), dimension(3, 3)            :: exponential, &
                                                 term                   !Term in taylor series expansion
         integer                              :: k                      !Index of current term
@@ -252,7 +252,7 @@ contains
         real(DP), dimension(3, 3), intent(in)    ::  S, &
                                                     R
         real(DP), dimension(3, 3)                ::  Srot
-      
+
         Srot = matmul(matmul(R, S), transpose(R))
     end function
 
@@ -284,14 +284,14 @@ contains
     real(DP), dimension(3, 3)    :: mat
     real(DP):: cos_phi1, cos_phi2, cos_PHI, &
                sin_phi1, sin_phi2, sin_PHI
-    
+
         cos_phi1 = cos(angles(1))
         cos_PHI = cos(angles(2))
         cos_phi2 = cos(angles(3))
         sin_phi1 = sin(angles(1))
         sin_PHI = sin(angles(2))
         sin_phi2 = sin(angles(3))
-        
+
         mat(1, 1) = cos_phi1*cos_phi2 - (sin_phi1*sin_phi2*cos_PHI)
         mat(1, 2) = sin_phi1*cos_phi2 + (cos_phi1*sin_phi2*cos_PHI)
         mat(1, 3) = sin_phi2*sin_PHI
@@ -312,10 +312,10 @@ contains
                                 PHI, &
                                 phi2, &
                                 cos_PHI
-      
+
         cos_PHI = mat(3, 3) / sqrt( mat(1, 3)**2+mat(2, 3)**2+mat(3, 3)**2 )
         PHI = acos(cos_PHI)  ! range: [0, pi]
-        
+
         if (abs(cos_PHI)==1.0D0) then  ! case that PHI = 0\B0 or PHI = 180\B0
             !Set phi2 to 0.0D0, given that:
             !  (phi1;   0\B0; phi2) equivalent to (phi1+phi2;    0; 0).
@@ -342,10 +342,10 @@ contains
         real(DP), dimension(:,:), intent(in):: x !< The matrix. Must be square.
 
         integer:: i
-         
+
         res = 0._DP
         do i = 1, size(x, 1)
             res = res+x(i, i)
         enddo
     end function
-end module 
+end module
