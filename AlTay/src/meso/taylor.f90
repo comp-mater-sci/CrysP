@@ -16,9 +16,8 @@ module taylor
                 get_stress_state, &
                 apply_deformation_step
 
-    real(DP):: inverse_basis_grain(5, 5), &
-               slip_rates_relaxations(2)
-
+    !Initial values for the inverse basis and basis systems.
+    real(DP):: inverse_basis_grain(5, 5)
     integer:: ind_basis_systems_grain(5)
 
     character(*), parameter:: MOD_NAME = 'taylor'
