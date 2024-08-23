@@ -82,6 +82,7 @@ contains
                 clusters(i)%taylor_coeffs = taylor_coeffs_grain
                 clusters(i)%spin_coeffs = spin_coeffs
                 allocate(clusters(i)%slip_rates(n_slip_systems_grain))
+                allocate(clusters(i)%crss(2, n_slip_systems_grain))
             end do
         else
             allocate(clusters(size(grains)/2))
@@ -95,6 +96,7 @@ contains
                 clusters(i)%spin_coeffs(:,1:n_slip_systems_grain) = spin_coeffs
                 clusters(i)%spin_coeffs(:,n_slip_systems_grain+3:2*n_slip_systems_grain+2) = spin_coeffs
                 allocate(clusters(i)%slip_rates(2*n_slip_systems_grain+2))
+                allocate(clusters(i)%crss(2, 2*n_slip_systems_grain+2), source = 0._DP)
             end do
 
             !Read boundary orientations from file
@@ -148,8 +150,7 @@ contains
         character(*), parameter::   PROC_NAME = 'get_stress_state'
         real(DP), allocatable:: overstress(:), &
                                 stress_cluster(:), &
-                                rss_cluster(:), &
-                                crss_cluster(:,:)
+                                rss_cluster(:)
 
 
         cluster_size = size(cluster_ptr%grains)
@@ -161,8 +162,6 @@ contains
         allocate(overstress(n_slip_systems_cluster))
         allocate(stress_cluster(size_system))
         allocate(rss_cluster(n_slip_systems_cluster))
-        allocate(crss_cluster(2, n_slip_systems_cluster))
-        crss_cluster = 0._DP
 
         !Update microstructure
         inverse_basis_cluster = 0._DP
@@ -173,11 +172,11 @@ contains
             start_index_grain = 5*(i-1)+1
             ! Retrieve the CRSSmatrix
             start_index_slip_systems = n_slip_systems_grain*(i-1)+1
-            crss_cluster(:,start_index_slip_systems:start_index_slip_systems+n_slip_systems_grain-1) = hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip)
+            cluster_ptr%crss(:,start_index_slip_systems:start_index_slip_systems+n_slip_systems_grain-1) = hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip)
             inverse_basis_cluster(start_index_grain:start_index_grain+4, start_index_grain:start_index_grain+4)=inverse_basis_grain
         enddo
 
-        call simplex_solve(cluster_ptr%taylor_coeffs, cluster_ptr%imposed_strain, crss_cluster, inverse_basis_cluster, &
+        call simplex_solve(cluster_ptr%taylor_coeffs, cluster_ptr%imposed_strain, cluster_ptr%crss, inverse_basis_cluster, &
         ind_basis_systems_cluster, cluster_ptr%slip_rates, stress_cluster, rss_cluster, overstress)
 
         stress_state = 0._DP
@@ -187,8 +186,8 @@ contains
 
             cluster_ptr%grains(i)%slip_systems%overstress = overstress(ind_start:ind_end)
             cluster_ptr%grains(i)%slip_systems%rss = rss_cluster(ind_start:ind_end)
-            cluster_ptr%grains(i)%slip_systems%crss(1) = crss_cluster(1, ind_start:ind_end)
-            cluster_ptr%grains(i)%slip_systems%crss(2) = crss_cluster(2, ind_start:ind_end)
+            cluster_ptr%grains(i)%slip_systems%crss(1) = cluster_ptr%crss(1, ind_start:ind_end)
+            cluster_ptr%grains(i)%slip_systems%crss(2) = cluster_ptr%crss(2, ind_start:ind_end)
 
             start_index_grain = 5*(i-1)
             stress_grain = stress_cluster(start_index_grain+1:start_index_grain+5)
