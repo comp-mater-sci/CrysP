@@ -100,12 +100,10 @@ module simulation
 
         deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
 
-        if (size(clusters(1)%grains) == 2) then
-            do i = 1, size(clusters)
-                cluster_ptr => clusters(i)
-                call update_cluster_state(cluster_ptr, deformation_gradient_during_time_step)
-            end do
-        end if
+        do i = 1, size(clusters)
+            cluster_ptr => clusters(i)
+            call update_cluster_state(cluster_ptr, deformation_gradient_during_time_step, velocity_gradient)
+        end do
 
         ! Output the current texture
         steploop: DO step = 1, astate%simulCalls(astate%this)%input%nsteps
@@ -137,11 +135,11 @@ module simulation
                 total_slip_rate = 0.0_DP
                 WorkRate = 0.0_DP
 
-                call get_stress_state(cluster_ptr, index_cluster, n_slip_systems_grain, velocity_gradient, stress_cluster)
+                call get_stress_state(cluster_ptr, index_cluster, n_slip_systems_grain, stress_cluster)
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                     call apply_deformation_step(cluster_ptr, total_slip_rate, WorkRate, spin, n_slip_systems_grain, index_cluster, &
-                    deformation_gradient_during_time_step)
+                    deformation_gradient_during_time_step, velocity_gradient)
                 end if
 
                 total_weight = total_weight+cluster_ptr%weight

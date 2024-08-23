@@ -124,10 +124,9 @@ contains
         end if
     end function
 
-    subroutine get_stress_state(cluster_ptr, index_cluster, n_slip_systems_grain, velocity_gradient, stress_state)
+    subroutine get_stress_state(cluster_ptr, index_cluster, n_slip_systems_grain, stress_state)
         type(Cluster), pointer, intent(in):: cluster_ptr
         integer, intent(in)::       n_slip_systems_grain, index_cluster
-        real(DP), intent(in)::      velocity_gradient(3, 3)
         real(DP), intent(out)::     stress_state(3, 3)
         real(DP)::                  strain_relaxations(5), &
                                     boundary_to_crystal(3, 3), &
@@ -172,7 +171,6 @@ contains
 
         do i = 1, cluster_size
             start_index_grain = 5*(i-1)+1
-            cluster_ptr%imposed_strain(start_index_grain:start_index_grain+4) = convert_stress_strain_space(velocity_gradient .toframe. cluster_ptr%grains(i)%orientation)
             ! Retrieve the CRSSmatrix
             start_index_slip_systems = n_slip_systems_grain*(i-1)+1
             crss_cluster(:,start_index_slip_systems:start_index_slip_systems+n_slip_systems_grain-1) = hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip)
@@ -201,11 +199,12 @@ contains
     end subroutine
 
     subroutine apply_deformation_step(cluster_ptr, sum_slip, work_rate, imposed_spin, n_slip_systems_grain, index_cluster, &
-        deformation_gradient)
+        deformation_gradient, velocity_gradient)
         type(Cluster), pointer, intent(in):: cluster_ptr
         integer, intent(in)::       n_slip_systems_grain, index_cluster
-        real(DP), intent(in)::      imposed_spin(3, 3), &
-                                    deformation_gradient(3, 3)
+        real(DP), dimension(3, 3), intent(in)::  imposed_spin, &
+                                                deformation_gradient, &
+                                                velocity_gradient
         real(DP), intent(out)::     sum_slip, &
                                     work_rate
         real(DP)::                  orientation_increment(3, 3), &
@@ -291,44 +290,48 @@ contains
             end do
         end associate
 
-        if (size(cluster_ptr%grains) == 2) &
-            call update_cluster_state(cluster_ptr, deformation_gradient)
+        call update_cluster_state(cluster_ptr, deformation_gradient, velocity_gradient)
 
         !Homogenize quantity over cluster
         sum_slip = sum_slip/cluster_size
     end subroutine
 
-    subroutine update_cluster_state(cluster_ptr, deformation_gradient)
+    subroutine update_cluster_state(cluster_ptr, deformation_gradient, velocity_gradient)
         type(Cluster), pointer, intent(in):: cluster_ptr
-        real(DP), dimension(3, 3), intent(in):: deformation_gradient
+        real(DP), dimension(3, 3), intent(in):: deformation_gradient, &
+                                                velocity_gradient
         integer:: i, &
                   j, &
                   start_index_grain, &
                   start_index_relaxations, &
-                  n_slip_systems_grain
+                  n_slip_systems_grain, &
+                  cluster_size
         real(DP):: boundary_to_crystal(3, 3), &
                    relaxations_crystal_frame(3, 3)
 
+        cluster_size = size(cluster_ptr%grains)
         n_slip_systems_grain = size(cluster_ptr%grains(1)%slip_systems)
         start_index_relaxations = 2*n_slip_systems_grain+1
 
-        cluster_ptr%weight = cluster_weight(cluster_ptr, deformation_gradient)
-
+        if (cluster_size == 2) cluster_ptr%weight = cluster_weight(cluster_ptr, deformation_gradient)
         !Update microstructure
-        do i = 1, 2
+        do i = 1, cluster_size
             start_index_grain = 5*(i-1)+1
-            do j = 1, 2
-                !Transform relaxation from boundary frame to crystal frame
-                !Composed of rotation from boundary to global frame and then from global to crystal frame.
-                boundary_to_crystal = matmul(cluster_ptr%grains(i)%orientation, cluster_frame(cluster_ptr%boundary_reference_frame, deformation_gradient))
-                relaxations_crystal_frame = rotate_to(real(RELAXATIONS(:,:,j), DP), boundary_to_crystal)
-                !Invert direction of relaxations for second grain
-                if (i == 2) relaxations_crystal_frame = -relaxations_crystal_frame
-                !Rotational component of relaxations
-                cluster_ptr%spin_coeffs(:,i*(n_slip_systems_grain+2)-2+j) = -convert_spin(relaxations_crystal_frame)
-                !Insert the relaxations as columns in taylor_coeffs_cluster-matrix
-                cluster_ptr%taylor_coeffs(start_index_grain:start_index_grain+4, start_index_relaxations-1+j)=convert_stress_strain_space(symmetric_part(relaxations_crystal_frame))
-            end do
+            cluster_ptr%imposed_strain(start_index_grain:start_index_grain+4) = convert_stress_strain_space(velocity_gradient .toframe. cluster_ptr%grains(i)%orientation)
+            if (cluster_size == 2) then
+                do j = 1, 2
+                    !Transform relaxation from boundary frame to crystal frame
+                    !Composed of rotation from boundary to global frame and then from global to crystal frame.
+                    boundary_to_crystal = matmul(cluster_ptr%grains(i)%orientation, cluster_frame(cluster_ptr%boundary_reference_frame, deformation_gradient))
+                    relaxations_crystal_frame = rotate_to(real(RELAXATIONS(:,:,j), DP), boundary_to_crystal)
+                    !Invert direction of relaxations for second grain
+                    if (i == 2) relaxations_crystal_frame = -relaxations_crystal_frame
+                    !Rotational component of relaxations
+                    cluster_ptr%spin_coeffs(:,i*(n_slip_systems_grain+2)-2+j) = -convert_spin(relaxations_crystal_frame)
+                    !Insert the relaxations as columns in taylor_coeffs_cluster-matrix
+                    cluster_ptr%taylor_coeffs(start_index_grain:start_index_grain+4, start_index_relaxations-1+j)=convert_stress_strain_space(symmetric_part(relaxations_crystal_frame))
+                end do
+            end if
         enddo
     end subroutine
 
