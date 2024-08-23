@@ -72,8 +72,7 @@ module slip_systems
                           BCC48(3, 2, 48) = reshape([BCC24, SLIP_SYSTEMS_BCC_123], shape(BCC48))
 
     type SlipSystem
-        real(DP):: crss(2), &
-                   rss, &
+        real(DP):: rss, &
                    overstress
     end type
 end module

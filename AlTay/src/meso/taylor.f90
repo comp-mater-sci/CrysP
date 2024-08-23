@@ -171,8 +171,6 @@ contains
         do i = 1, cluster_size
             start_index_grain = 5*(i-1)+1
             ! Retrieve the CRSSmatrix
-            start_index_slip_systems = n_slip_systems_grain*(i-1)+1
-            cluster_ptr%crss(:,start_index_slip_systems:start_index_slip_systems+n_slip_systems_grain-1) = hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip)
             inverse_basis_cluster(start_index_grain:start_index_grain+4, start_index_grain:start_index_grain+4)=inverse_basis_grain
         enddo
 
@@ -186,8 +184,6 @@ contains
 
             cluster_ptr%grains(i)%slip_systems%overstress = overstress(ind_start:ind_end)
             cluster_ptr%grains(i)%slip_systems%rss = rss_cluster(ind_start:ind_end)
-            cluster_ptr%grains(i)%slip_systems%crss(1) = cluster_ptr%crss(1, ind_start:ind_end)
-            cluster_ptr%grains(i)%slip_systems%crss(2) = cluster_ptr%crss(2, ind_start:ind_end)
 
             start_index_grain = 5*(i-1)
             stress_grain = stress_cluster(start_index_grain+1:start_index_grain+5)
@@ -232,6 +228,7 @@ contains
                 associate(spin_coeffs_grain => cluster_ptr%spin_coeffs(:,(j-1)*(n_slip_systems_grain+n_relaxations)+1:j*n_slip_systems_grain+(j-1)*n_relaxations))
                 associate(taylor_coeffs_relaxations => cluster_ptr%taylor_coeffs(5*(j-1)+1:5*j, size(cluster_ptr%taylor_coeffs, 2)-1:))
                 associate(spin_coeffs_relaxations => cluster_ptr%spin_coeffs(:,j*(n_slip_systems_grain+2)-1:j*(n_slip_systems_grain+2)))
+                associate(crss_grain => cluster_ptr%crss(:,(j-1)*n_slip_systems_grain+1:j*n_slip_systems_grain))
 
                     !Determine if taylor ambiguity may be occuring. While we are iterating over the slip systems, might as well prepare for
                     !resolving it
@@ -276,7 +273,9 @@ contains
                     sum_slip = sum_slip+sum_slip_current
 
                     !Calculate work rate
-                    work_rate = work_rate+sum(merge(grain_%slip_systems%crss(1), -grain_%slip_systems%crss(2), slip_rates_grain > 0._DP)*slip_rates_grain)
+                    do i = 1, n_slip_systems_grain
+                        work_rate = work_rate+merge(crss_grain(1, i), crss_grain(2, i), slip_rates_grain(i)>0._DP) * slip_rates_grain(i)
+                    end do
 
                     orientation_increment = UNIT_MATRIX_3X3 &
                                             +(imposed_spin .toframe. grain_%orientation) &                !>Change of reference frame
@@ -285,23 +284,25 @@ contains
                     grain_%orientation = matmul(orientation_increment, grain_%orientation)
 
                     deallocate(active_slip_systems)
-                end associate; end associate; end associate; end associate; end associate; end associate; end associate
+                end associate; end associate; end associate; end associate; end associate; end associate; end associate; end associate
             end do
         end associate
 
-        call update_cluster_state(cluster_ptr, deformation_gradient, velocity_gradient)
+        call update_cluster_state(cluster_ptr, deformation_gradient, velocity_gradient, index_cluster)
 
         !Homogenize quantity over cluster
         sum_slip = sum_slip/cluster_size
     end subroutine
 
-    subroutine update_cluster_state(cluster_ptr, deformation_gradient, velocity_gradient)
+    subroutine update_cluster_state(cluster_ptr, deformation_gradient, velocity_gradient, index_cluster)
         type(Cluster), pointer, intent(in):: cluster_ptr
         real(DP), dimension(3, 3), intent(in):: deformation_gradient, &
                                                 velocity_gradient
+        integer, intent(in):: index_cluster
         integer:: i, &
                   j, &
                   start_index_grain, &
+                  start_index_slip_systems, &
                   start_index_relaxations, &
                   n_slip_systems_grain, &
                   cluster_size
@@ -316,7 +317,9 @@ contains
         !Update microstructure
         do i = 1, cluster_size
             start_index_grain = 5*(i-1)+1
+            start_index_slip_systems = n_slip_systems_grain*(i-1)+1
             cluster_ptr%imposed_strain(start_index_grain:start_index_grain+4) = convert_stress_strain_space(velocity_gradient .toframe. cluster_ptr%grains(i)%orientation)
+            cluster_ptr%crss(:,start_index_slip_systems:start_index_slip_systems+n_slip_systems_grain-1) = hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip)
             if (cluster_size == 2) then
                 do j = 1, 2
                     !Transform relaxation from boundary frame to crystal frame

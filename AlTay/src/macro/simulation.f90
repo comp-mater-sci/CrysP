@@ -102,7 +102,7 @@ module simulation
 
         do i = 1, size(clusters)
             cluster_ptr => clusters(i)
-            call update_cluster_state(cluster_ptr, deformation_gradient_during_time_step, velocity_gradient)
+            call update_cluster_state(cluster_ptr, deformation_gradient_during_time_step, velocity_gradient, i)
         end do
 
         ! Output the current texture
