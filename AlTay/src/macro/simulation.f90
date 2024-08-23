@@ -1,7 +1,6 @@
 module simulation
     use utils
     use hardening_model_dsh
-    use altayCurAccess
     use grain_module
     use hardening
     use taylor
@@ -16,13 +15,15 @@ module simulation
     integer:: n_slip_systems_grain, NFILE1
 
     real(DP):: von_mises_strain
+    real(DP), dimension(3, 3):: deformation_gradient
     type(Cluster), dimension(:), allocatable, target:: clusters
 
     character(*), parameter:: MOD_NAME = 'Simul'
 
 
     public:: simulation_init, &
-             simulation_run
+             simulation_run, &
+             deformation_gradient
     contains
 
     ! initialization call
@@ -36,7 +37,6 @@ module simulation
 
         cluster_size    = acnf%simul_init%NGR
 
-        NFILE1 = acnf%output_config%NFILE   ! control "CUR"
         homogenized_total_slipTOT = 0.D0
 
         if (cluster_size < 1 .or. cluster_size > 2) &
@@ -45,10 +45,6 @@ module simulation
         ! Check if number of crystals is right for the model
         if (modulo(size(grains), cluster_size) /= 0) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Number of grains must be even.')
-        TITEL  = acnf%jobtitle
-        ! Only if CUR file is requested
-        if (NFILE1 == 1) call CURwriteTitle(IMP1, TITEL, info)
-  98    format (A)
 !       read the parameters of the work hardening model
         clusters = taylor_init(acnf%deformation_mechanism, n_slip_systems_grain, cluster_size, acnf%micros_fname, acnf%simul_init%FMicro)
 
@@ -83,7 +79,6 @@ module simulation
                    spin(3, 3), &
                    von_mises_strain_mode(3, 3), &
                    von_mises_strain_rate, &
-                   next_deformation_gradient(3, 3), &
                    deformation_gradient_during_time_step(3, 3), &
                    stress_cluster(3, 3)
         type(Grain), pointer:: grain_ptr
@@ -102,8 +97,17 @@ module simulation
         deformation_gradient_half_increment = matrix_exponential_small_norm(velocity_gradient/2._DP)
         deformation_gradient_increment_inverse = invert(deformation_gradient_increment)
 
+
+        deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
+
+        if (size(clusters(1)%grains) == 2) then
+            do i = 1, size(clusters)
+                cluster_ptr => clusters(i)
+                call update_cluster_state(cluster_ptr, deformation_gradient_during_time_step)
+            end do
+        end if
+
         ! Output the current texture
-        if (NFILE == 1) call CURwriteBlock(IMP1, info)
         steploop: DO step = 1, astate%simulCalls(astate%this)%input%nsteps
 
             total_weight = 0._DP
@@ -114,8 +118,6 @@ module simulation
 
             nrstep = nrstep+1
 
-            next_deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
-            deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
 
             !Added for lamel model:
             !Organisation reading temporary texture file,
@@ -124,23 +126,28 @@ module simulation
             !Taylor must therefore have "advance knowledge" of the
             !orientation to come at the moment that it starts such
             !computation.
+
+            if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
+                !Deformation gradient exactly in the middle of the time step.
+                deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
+            end if
             clusterloop: do index_cluster = 1, size(clusters)
                 cluster_ptr => clusters(index_cluster)
                 taylor_factor = 0.0_DP
                 total_slip_rate = 0.0_DP
                 WorkRate = 0.0_DP
 
-                call get_stress_state(cluster_ptr, index_cluster, n_slip_systems_grain, velocity_gradient, deformation_gradient_during_time_step, stress_cluster)
-                homogenized_stress = homogenized_stress+stress_cluster*cluster_ptr%weight
-                total_weight = total_weight+cluster_ptr%weight
+                call get_stress_state(cluster_ptr, index_cluster, n_slip_systems_grain, velocity_gradient, stress_cluster)
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                    deformation_gradient = next_deformation_gradient
-                    call apply_deformation_step(cluster_ptr, total_slip_rate, WorkRate, spin, n_slip_systems_grain, index_cluster)
+                    call apply_deformation_step(cluster_ptr, total_slip_rate, WorkRate, spin, n_slip_systems_grain, index_cluster, &
+                    deformation_gradient_during_time_step)
                 end if
 
+                total_weight = total_weight+cluster_ptr%weight
                 taylor_factor = total_slip_rate /  von_mises_strain_rate
 
+                homogenized_stress = homogenized_stress+stress_cluster*cluster_ptr%weight
                 homogenized_taylor_factor  = homogenized_taylor_factor+taylor_factor*cluster_ptr%weight
                 homogenized_total_slip = homogenized_total_slip+total_slip_rate*cluster_ptr%weight  !Step time here implicitly assumed to be 1.0s
                 homogenized_work       = homogenized_work+WorkRate                              !Step time here implicitly assumed to be 1.0s
@@ -169,6 +176,10 @@ module simulation
             if (.not.astate%simulCalls(astate%this)%input%keep_state) homogenized_total_slipTOT = homogenized_total_slipTOT+homogenized_total_slip
 
             von_mises_strain = von_mises_strain+von_mises_strain_rate
+
+            if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
+                deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
+            end if
         enddo steploop
     end subroutine
 end module

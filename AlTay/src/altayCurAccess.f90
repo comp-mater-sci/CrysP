@@ -1,6 +1,7 @@
 module altayCurAccess
     use utils
     use grain_module
+    use simulation
 
     implicit none
 

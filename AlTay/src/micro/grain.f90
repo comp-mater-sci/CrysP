@@ -17,14 +17,12 @@ module grain_module
 
     type(Grain), dimension(:), allocatable, target:: grains             !<State variable: array of grains/orientations.
     integer                                    :: nrStep = 0       !<State variable: step number.
-    real(DP):: deformation_gradient(3, 3)
 
     public  ::  grain, &
                 grains,       &
                 nrStep,     &
                 dynfil_init,    &
-                dynfil_finalize, &
-                deformation_gradient
+                dynfil_finalize
 
 contains
     subroutine dynfil_init(fname, n_slip_systems)
