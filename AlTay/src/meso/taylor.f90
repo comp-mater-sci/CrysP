@@ -178,7 +178,7 @@ contains
                 !Invert direction of relaxations for second grain
                 if (i == 2) relaxations_crystal_frame = -relaxations_crystal_frame
                 !Rotational component of relaxations
-                !Note we must ivert spin coeffs for relaxations because relaxations are defined using passive angles while slip
+                !Note we must invert spin coeffs for relaxations because relaxations are defined using passive angles while slip
                 !systems use active angles.
                 cluster_ptr%spin_coeffs(:,i*(n_slip_systems_grain+2)-2+j) = -convert_spin(relaxations_crystal_frame)
                 !Insert the relaxations as columns in taylor_coeffs_cluster-matrix
