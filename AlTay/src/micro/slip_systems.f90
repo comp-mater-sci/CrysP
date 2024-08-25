@@ -74,7 +74,6 @@ module slip_systems
     type SlipSystem
         real(DP):: crss(2), &
                    rss, &
-                   overstress, &
-                   slip_rate
+                   overstress
     end type
 end module
