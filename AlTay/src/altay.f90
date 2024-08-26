@@ -154,7 +154,7 @@ contains
         integer, intent(out)           :: info
 
         info = VEF_OK
-        if (acnf%output_config%nfile == 1) call CURwriteBlock(IMP1, info)
+        if (acnf%output_config%nfile == 1) call CURwriteBlock(IMP1, info, deformation_gradient)
         if (info /= 0) return
     end subroutine
 

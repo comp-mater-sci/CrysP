@@ -7,6 +7,7 @@ module simulation
     use altayConfig
     use logging
     use cluster_module
+    use altayCurAccess
 
     implicit none
     private
@@ -45,6 +46,11 @@ module simulation
         ! Check if number of crystals is right for the model
         if (modulo(size(grains), cluster_size) /= 0) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Number of grains must be even.')
+        TITEL  = acnf%jobtitle
+        ! Only if CUR file is requested
+        if (NFILE1 == 1) call CURwriteTitle(IMP1, TITEL, info)
+  98    format (A)
+
 !       read the parameters of the work hardening model
         clusters = taylor_init(acnf%deformation_mechanism, n_slip_systems_grain, cluster_size, acnf%micros_fname, acnf%simul_init%FMicro)
 
@@ -106,6 +112,8 @@ module simulation
         end do
 
         ! Output the current texture
+        if (NFILE == 1) call CURwriteBlock(IMP1, info, deformation_gradient)
+
         steploop: DO step = 1, astate%simulCalls(astate%this)%input%nsteps
 
             total_weight = 0._DP
