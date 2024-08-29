@@ -65,7 +65,7 @@ contains
     !!                               The overstress of each slip system, i.e. the difference between the resolved shear stress
     !!                               and the critical resolved shear stress.
     !!
-    subroutine simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, overstress)
+    recursive subroutine simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, overstress, n_retries)
         real(DP), intent(in)    ::  taylor_coeffs(:,:),                                 &
                                     strain(size(taylor_coeffs, 1)),                      &
                                     crss(2, size(taylor_coeffs, 2))
@@ -75,17 +75,29 @@ contains
                                     overstress(size(taylor_coeffs, 2))
         integer, intent(inout)  ::  basis_systems(size(taylor_coeffs, 1))
         real(DP), intent(inout) ::  inverse_basis(size(taylor_coeffs, 1), size(taylor_coeffs, 1))
+        integer, intent(inout), optional:: n_retries
 
         real(DP)                ::  new_basis_vector(size(taylor_coeffs, 1)),            &
                                     rss_basis(size(taylor_coeffs, 1)),                   &
                                     new_inverse_basis_vector(size(taylor_coeffs, 1)),    &
                                     slip_basis(size(taylor_coeffs, 1))
         logical                 ::  bas(size(taylor_coeffs, 2))
-        integer                 ::  i, iter, max_iters, most_overstressed_system, system_to_remove
+        integer                 ::  i, iter, max_iters, most_overstressed_system, system_to_remove, retries
         real(DP)                ::  tmp, ratio, min_ratio
+        logical:: rank_update
 
         character(*), parameter:: PROC_NAME = 'simplex_solve'
 
+
+        if (.not. present(n_retries)) then
+            retries = 0
+        else if (n_retries > 50) then
+            call log_error(MOD_NAME, PROC_NAME, ERR, "Maximum number of recursive simplex calls exceeded.")
+        else
+            retries = n_retries
+        end if
+
+        rank_update = .false.
         bas = .false.
         rss = 0._DP
         min_ratio = 0._DP
@@ -131,19 +143,32 @@ contains
             if (system_to_remove == 0) &
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'The solution is unbounded.')
 
-            call update_inverse_basis(inverse_basis, new_basis_vector, system_to_remove, new_inverse_basis_vector)
-            call update_vector_in_basis(slip_basis, system_to_remove, new_inverse_basis_vector)
-
-            ! Updating of basis: bas and basis_systems
             bas(basis_systems(system_to_remove)) = .false.
             bas(most_overstressed_system) = .true.
             basis_systems(system_to_remove) = most_overstressed_system
+            if (retries < 2) then
+                call update_inverse_basis(inverse_basis, new_basis_vector, system_to_remove, new_inverse_basis_vector)
+                call update_vector_in_basis(slip_basis, system_to_remove, new_inverse_basis_vector)
+                rank_update = .true.
+            else
+                inverse_basis = invert(taylor_coeffs(:,basis_systems))
+                slip_basis = matmul(inverse_basis, strain)
+            end if
             rss_basis(system_to_remove) = merge(crss(1, most_overstressed_system), -crss(2, most_overstressed_system), (slip_basis(system_to_remove) >= 0._DP) .and. (rss(most_overstressed_system) > 0._DP))
             call find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system, overstress)
         end do
 
-        slip = 0._DP
-        slip(basis_systems) = slip_basis
+        if (rank_update) then
+            !If at least 1 of the slip systems or relaxations align well with the imposed strain, the system is ill-conditioned. In
+            !this case, rank updates may be inaccurate. Therefore, if rank updates were performed, recalculate the inverse basis
+            !entirely and call simplex again.
+            inverse_basis = invert(taylor_coeffs(:,basis_systems))
+            retries = retries+1
+            call simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, overstress, retries)
+        else
+            slip = 0._DP
+            slip(basis_systems) = slip_basis
+        end if
     end subroutine simplex_solve
 
     !>@brief Find the most overstressed system

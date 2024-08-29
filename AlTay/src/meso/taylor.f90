@@ -18,8 +18,6 @@ module taylor
                 update_cluster_state
 
     !Initial values for the inverse basis and basis systems.
-    real(DP):: inverse_basis_grain(5, 5)
-    integer:: ind_basis_systems_grain(5)
 
     character(*), parameter:: MOD_NAME = 'taylor'
     integer, parameter::   INITIAL_BASIS_SYSTEMS_FCC(5) = [2, 5, 6, 7, 8], &
@@ -50,6 +48,11 @@ contains
                    angles(3)
         real(DP), dimension(3, size(deformation_mechanism, 3)):: spin_coeffs
         real(DP), allocatable:: taylor_coeffs_grain(:,:)
+
+        real(DP):: inverse_basis_grain(5, 5)
+        integer:: ind_basis_systems_grain(5)
+
+
         character(len = 40)  :: TitMic !<Microstructure title
 
 
@@ -68,9 +71,7 @@ contains
             spin_coeffs(:,i) = convert_spin(tensor)
         end do
         forall (i = 1:5) basis(:,i) = taylor_coeffs_grain(:,ind_basis_systems_grain(i))
-
         inverse_basis_grain = invert(basis)
-
 
         !Temporary hack. Should move to FCTaylor and ALAMEL modules, respectively once they are available.
         if (cluster_size == 1) then
@@ -85,6 +86,8 @@ contains
                 allocate(clusters(i)%crss(2, n_slip_systems_grain))
                 allocate(clusters(i)%overstress(n_slip_systems_grain))
                 allocate(clusters(i)%rss(n_slip_systems_grain))
+                clusters(i)%ind_basis_systems = ind_basis_systems_grain
+                clusters(i)%inverse_basis = inverse_basis_grain
             end do
         else
             allocate(clusters(size(grains)/2))
@@ -101,6 +104,12 @@ contains
                 allocate(clusters(i)%crss(2, 2*n_slip_systems_grain+2), source = 0._DP)
                 allocate(clusters(i)%overstress(2*n_slip_systems_grain+2))
                 allocate(clusters(i)%rss(2*n_slip_systems_grain+2))
+                allocate(clusters(i)%ind_basis_systems(10))
+                clusters(i)%ind_basis_systems(1:5) = ind_basis_systems_grain
+                clusters(i)%ind_basis_systems(6:10) = ind_basis_systems_grain+n_slip_systems_grain
+                allocate(clusters(i)%inverse_basis(10, 10), source = 0._DP)
+                clusters(i)%inverse_basis(1:5, 1:5) = inverse_basis_grain
+                clusters(i)%inverse_basis(6:10, 6:10) = inverse_basis_grain
             end do
 
             !Read boundary orientations from file
@@ -132,8 +141,7 @@ contains
         real(DP)::                  strain_relaxations(5), &
                                     boundary_to_crystal(3, 3), &
                                     relaxations_crystal_frame(3, 3), &
-                                    stress_grain(5), &
-                                    inverse_basis_cluster(5*size(cluster_ptr%grains), 5*size(cluster_ptr%grains))
+                                    stress_grain(5)
         integer::                   n_slip_systems_cluster, &
                                     cluster_size, &
                                     size_system, &
@@ -144,7 +152,6 @@ contains
                                     j, &
                                     ind_start, &
                                     ind_end, &
-                                    ind_basis_systems_cluster(10), &
                                     n_relaxations
         character(*), parameter::   PROC_NAME = 'get_stress_state'
         real(DP), dimension(5*size(cluster_ptr%grains)):: stress_cluster
@@ -156,19 +163,8 @@ contains
         n_slip_systems_cluster = cluster_size*n_slip_systems_grain+n_relaxations
         start_index_relaxations = n_slip_systems_cluster-n_relaxations+1
 
-        !Update microstructure
-        inverse_basis_cluster = 0._DP
-        ind_basis_systems_cluster(1:5) = ind_basis_systems_grain
-        ind_basis_systems_cluster(6:10) = ind_basis_systems_grain+n_slip_systems_grain
-
-        do i = 1, cluster_size
-            start_index_grain = 5*(i-1)+1
-            ! Retrieve the CRSSmatrix
-            inverse_basis_cluster(start_index_grain:start_index_grain+4, start_index_grain:start_index_grain+4)=inverse_basis_grain
-        enddo
-
-        call simplex_solve(cluster_ptr%taylor_coeffs, cluster_ptr%imposed_strain, cluster_ptr%crss, inverse_basis_cluster, &
-        ind_basis_systems_cluster, cluster_ptr%slip_rates, stress_cluster, cluster_ptr%rss, cluster_ptr%overstress)
+        call simplex_solve(cluster_ptr%taylor_coeffs, cluster_ptr%imposed_strain, cluster_ptr%crss, cluster_ptr%inverse_basis, &
+        cluster_ptr%ind_basis_systems, cluster_ptr%slip_rates, stress_cluster, cluster_ptr%rss, cluster_ptr%overstress)
 
         stress_state = 0._DP
         do i = 1, cluster_size
@@ -321,6 +317,13 @@ contains
                 end do
             end if
         enddo
+
+        !For ALAMEL we may assume that the relaxations are part of the basis and they change with every time step. Therefore we
+        !must always recalculate the inverse basis.
+        if (cluster_size == 2) then
+            cluster_ptr%inverse_basis = cluster_ptr%taylor_coeffs(:,cluster_ptr%ind_basis_systems)
+            cluster_ptr%inverse_basis = invert(cluster_ptr%inverse_basis)
+        end if
     end subroutine
 
     real(DP) function cluster_weight(cluster_ptr, deformation_gradient) result(weight)
