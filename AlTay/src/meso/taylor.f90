@@ -289,7 +289,8 @@ contains
                   n_slip_systems_grain, &
                   cluster_size
         real(DP):: boundary_to_crystal(3, 3), &
-                   relaxations_crystal_frame(3, 3)
+                   relaxations_crystal_frame(3, 3), &
+                   dummy(10), new_vec(10)
 
         cluster_size = size(cluster_ptr%grains)
         n_slip_systems_grain = size(cluster_ptr%grains(1)%slip_systems)
@@ -321,8 +322,12 @@ contains
         !For ALAMEL we may assume that the relaxations are part of the basis and they change with every time step. Therefore we
         !must always recalculate the inverse basis.
         if (cluster_size == 2) then
-            cluster_ptr%inverse_basis = cluster_ptr%taylor_coeffs(:,cluster_ptr%ind_basis_systems)
-            cluster_ptr%inverse_basis = invert(cluster_ptr%inverse_basis)
+            do i = 1, 10
+                if (cluster_ptr%ind_basis_systems(i)> 2*n_slip_systems_grain) then
+                    new_vec = matmul(cluster_ptr%inverse_basis, cluster_ptr%taylor_coeffs(:,cluster_ptr%ind_basis_systems(i)))
+                    call update_inverse_basis(cluster_ptr%inverse_basis, new_vec, i, dummy)
+                end if
+            end do
         end if
     end subroutine
 

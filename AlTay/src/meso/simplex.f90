@@ -7,7 +7,7 @@ module simplex
 
     character(*), parameter, private:: MOD_NAME = 'simplex'
 
-    public:: simplex_solve
+    public:: simplex_solve, update_inverse_basis
 
 contains
 
@@ -146,7 +146,7 @@ contains
             bas(basis_systems(system_to_remove)) = .false.
             bas(most_overstressed_system) = .true.
             basis_systems(system_to_remove) = most_overstressed_system
-            if (retries < 2) then
+            if (retries == 0) then
                 call update_inverse_basis(inverse_basis, new_basis_vector, system_to_remove, new_inverse_basis_vector)
                 call update_vector_in_basis(slip_basis, system_to_remove, new_inverse_basis_vector)
                 rank_update = .true.
