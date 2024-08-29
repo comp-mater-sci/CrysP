@@ -18,8 +18,9 @@ contains
 
 
     ! Write the current contents of the dynfil
-    subroutine CURwriteBlock(iounit, info)
+    subroutine CURwriteBlock(iounit, info, deformation_gradient)
         integer, intent(in)      :: iounit !< IO unit number
+        real(DP), dimension(3, 3), intent(in):: deformation_gradient
         integer, intent(out)     :: info !< exit code: 0 on success
         integer:: npoint, i
         real(DP):: eu(3)

@@ -14,7 +14,8 @@ module taylor
     private
     public ::   taylor_init, &
                 get_stress_state, &
-                apply_deformation_step
+                apply_deformation_step, &
+                update_cluster_state
 
     !Initial values for the inverse basis and basis systems.
     real(DP):: inverse_basis_grain(5, 5)
@@ -39,6 +40,7 @@ contains
         character(len=*), intent(in):: file_name
         real(DP), dimension(3, 3), intent(in):: initial_deformation_gradient
         integer:: i, j, n_slip_systems_cluster, system_size, n_relaxations
+        type(Cluster), pointer:: cluster_ptr
         real(DP):: basis(5, 5), &
                     normalized(3, 2), &
                     tensor(3, 3)
@@ -80,6 +82,9 @@ contains
                 clusters(i)%taylor_coeffs = taylor_coeffs_grain
                 clusters(i)%spin_coeffs = spin_coeffs
                 allocate(clusters(i)%slip_rates(n_slip_systems_grain))
+                allocate(clusters(i)%crss(2, n_slip_systems_grain))
+                allocate(clusters(i)%overstress(n_slip_systems_grain))
+                allocate(clusters(i)%rss(n_slip_systems_grain))
             end do
         else
             allocate(clusters(size(grains)/2))
@@ -93,6 +98,9 @@ contains
                 clusters(i)%spin_coeffs(:,1:n_slip_systems_grain) = spin_coeffs
                 clusters(i)%spin_coeffs(:,n_slip_systems_grain+3:2*n_slip_systems_grain+2) = spin_coeffs
                 allocate(clusters(i)%slip_rates(2*n_slip_systems_grain+2))
+                allocate(clusters(i)%crss(2, 2*n_slip_systems_grain+2), source = 0._DP)
+                allocate(clusters(i)%overstress(2*n_slip_systems_grain+2))
+                allocate(clusters(i)%rss(2*n_slip_systems_grain+2))
             end do
 
             !Read boundary orientations from file
@@ -117,11 +125,9 @@ contains
         end if
     end function
 
-    subroutine get_stress_state(cluster_ptr, index_cluster, n_slip_systems_grain, velocity_gradient, deformation_gradient, stress_state)
+    subroutine get_stress_state(cluster_ptr, index_cluster, n_slip_systems_grain, stress_state)
         type(Cluster), pointer, intent(in):: cluster_ptr
         integer, intent(in)::       n_slip_systems_grain, index_cluster
-        real(DP), intent(in)::      velocity_gradient(3, 3), &
-                                    deformation_gradient(3, 3)
         real(DP), intent(out)::     stress_state(3, 3)
         real(DP)::                  strain_relaxations(5), &
                                     boundary_to_crystal(3, 3), &
@@ -141,10 +147,7 @@ contains
                                     ind_basis_systems_cluster(10), &
                                     n_relaxations
         character(*), parameter::   PROC_NAME = 'get_stress_state'
-        real(DP), allocatable:: overstress(:), &
-                                stress_cluster(:), &
-                                rss_cluster(:), &
-                                crss_cluster(:,:)
+        real(DP), dimension(5*size(cluster_ptr%grains)):: stress_cluster
 
 
         cluster_size = size(cluster_ptr%grains)
@@ -153,13 +156,6 @@ contains
         n_slip_systems_cluster = cluster_size*n_slip_systems_grain+n_relaxations
         start_index_relaxations = n_slip_systems_cluster-n_relaxations+1
 
-        allocate(overstress(n_slip_systems_cluster))
-        allocate(stress_cluster(size_system))
-        allocate(rss_cluster(n_slip_systems_cluster))
-        allocate(crss_cluster(2, n_slip_systems_cluster))
-        crss_cluster = 0._DP
-
-        if (cluster_size == 2) cluster_ptr%weight = cluster_weight(cluster_ptr, deformation_gradient)
         !Update microstructure
         inverse_basis_cluster = 0._DP
         ind_basis_systems_cluster(1:5) = ind_basis_systems_grain
@@ -167,41 +163,15 @@ contains
 
         do i = 1, cluster_size
             start_index_grain = 5*(i-1)+1
-            do j = 1, n_relaxations
-                !Transform relaxation from boundary frame to crystal frame
-                !Composed of rotation from boundary to global frame and then from global to crystal frame.
-                boundary_to_crystal = matmul(cluster_ptr%grains(i)%orientation, cluster_frame(cluster_ptr%boundary_reference_frame, deformation_gradient))
-                relaxations_crystal_frame = rotate_to(real(RELAXATIONS(:,:,j), DP), boundary_to_crystal)
-                !Invert direction of relaxations for second grain
-                if (i == 2) relaxations_crystal_frame = -relaxations_crystal_frame
-                !Rotational component of relaxations
-                !Note we must invert spin coeffs for relaxations because relaxations are defined using passive angles while slip
-                !systems use active angles.
-                cluster_ptr%spin_coeffs(:,i*(n_slip_systems_grain+2)-2+j) = -convert_spin(relaxations_crystal_frame)
-                !Insert the relaxations as columns in taylor_coeffs_cluster-matrix
-                cluster_ptr%taylor_coeffs(start_index_grain:start_index_grain+4, start_index_relaxations-1+j)=convert_stress_strain_space(symmetric_part(relaxations_crystal_frame))
-            end do
-
-            cluster_ptr%imposed_strain(start_index_grain:start_index_grain+4) = convert_stress_strain_space(velocity_gradient .toframe. cluster_ptr%grains(i)%orientation)
             ! Retrieve the CRSSmatrix
-            start_index_slip_systems = n_slip_systems_grain*(i-1)+1
-            crss_cluster(:,start_index_slip_systems:start_index_slip_systems+n_slip_systems_grain-1) = hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip)
             inverse_basis_cluster(start_index_grain:start_index_grain+4, start_index_grain:start_index_grain+4)=inverse_basis_grain
         enddo
 
-        call simplex_solve(cluster_ptr%taylor_coeffs, cluster_ptr%imposed_strain, crss_cluster, inverse_basis_cluster, &
-        ind_basis_systems_cluster, cluster_ptr%slip_rates, stress_cluster, rss_cluster, overstress)
+        call simplex_solve(cluster_ptr%taylor_coeffs, cluster_ptr%imposed_strain, cluster_ptr%crss, inverse_basis_cluster, &
+        ind_basis_systems_cluster, cluster_ptr%slip_rates, stress_cluster, cluster_ptr%rss, cluster_ptr%overstress)
 
         stress_state = 0._DP
         do i = 1, cluster_size
-            ind_start = 1 + (i-1) * n_slip_systems_grain
-            ind_end = i*n_slip_systems_grain
-
-            cluster_ptr%grains(i)%slip_systems%overstress = overstress(ind_start:ind_end)
-            cluster_ptr%grains(i)%slip_systems%rss = rss_cluster(ind_start:ind_end)
-            cluster_ptr%grains(i)%slip_systems%crss(1) = crss_cluster(1, ind_start:ind_end)
-            cluster_ptr%grains(i)%slip_systems%crss(2) = crss_cluster(2, ind_start:ind_end)
-
             start_index_grain = 5*(i-1)
             stress_grain = stress_cluster(start_index_grain+1:start_index_grain+5)
             stress_state = stress_state + ((convert_stress_strain_space(stress_grain)) .fromframe. cluster_ptr%grains(i)%orientation)
@@ -210,22 +180,26 @@ contains
         stress_state = stress_state/cluster_size
     end subroutine
 
-    subroutine apply_deformation_step(cluster_ptr, sum_slip, work_rate, imposed_spin, n_slip_systems_grain, index_cluster)
+    subroutine apply_deformation_step(cluster_ptr, sum_slip, work_rate, imposed_spin, n_slip_systems_grain, index_cluster, &
+        deformation_gradient, velocity_gradient)
         type(Cluster), pointer, intent(in):: cluster_ptr
         integer, intent(in)::       n_slip_systems_grain, index_cluster
-        real(DP), intent(in)::      imposed_spin(3, 3)
+        real(DP), dimension(3, 3), intent(in)::  imposed_spin, &
+                                                deformation_gradient, &
+                                                velocity_gradient
         real(DP), intent(out)::     sum_slip, &
                                     work_rate
         real(DP)::                  orientation_increment(3, 3), &
                                     strain_grain(5), &
                                     strain_relaxations(5), &
-                                    sum_slip_current
+                                    sum_slip_current, &
+                                    overstress_grain(n_slip_systems_grain), &
+                                    rss_grain(n_slip_systems_grain)
         integer::                   i, j, cluster_size, &
                                     n_overstressed_slip_systems, &
                                     n_relaxations, &
                                     n_active_simplex, &
                                     ind_overstressed_slip_systems(8)  ! Theoretical maximum of overstressed systems is 8
-        type(SlipSystem), dimension(:), allocatable:: active_slip_systems
         character(*), parameter::   PROC_NAME = 'apply_deformation_step'
 
         n_relaxations = merge(2, 0, size(cluster_ptr%grains) > 1)
@@ -242,13 +216,17 @@ contains
                 associate(spin_coeffs_grain => cluster_ptr%spin_coeffs(:,(j-1)*(n_slip_systems_grain+n_relaxations)+1:j*n_slip_systems_grain+(j-1)*n_relaxations))
                 associate(taylor_coeffs_relaxations => cluster_ptr%taylor_coeffs(5*(j-1)+1:5*j, size(cluster_ptr%taylor_coeffs, 2)-1:))
                 associate(spin_coeffs_relaxations => cluster_ptr%spin_coeffs(:,j*(n_slip_systems_grain+2)-1:j*(n_slip_systems_grain+2)))
+                associate(crss_grain => cluster_ptr%crss(:,(j-1)*n_slip_systems_grain+1:j*n_slip_systems_grain))
+
+                    rss_grain = cluster_ptr%rss((j-1)*n_slip_systems_grain+1:j*n_slip_systems_grain)
+                    overstress_grain = cluster_ptr%overstress((j-1)*n_slip_systems_grain+1:j*n_slip_systems_grain)
 
                     !Determine if taylor ambiguity may be occuring. While we are iterating over the slip systems, might as well prepare for
                     !resolving it
                     n_overstressed_slip_systems = 0
                     n_active_simplex = 0
                     do i = 1, n_slip_systems_grain
-                        if (abs(grain_%slip_systems(i)%overstress) < TOLERANCE) then
+                        if (abs(overstress_grain(i)) < TOLERANCE) then
                             n_overstressed_slip_systems = n_overstressed_slip_systems+1
                             ind_overstressed_slip_systems(n_overstressed_slip_systems) =i
                             if (slip_rates_grain(i) > TOLERANCE) &
@@ -263,9 +241,6 @@ contains
                         call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'No active slip systems found.')
                     endif
 
-                    allocate(active_slip_systems(n_overstressed_slip_systems))
-                    active_slip_systems = grain_%slip_systems(ind_overstressed_slip_systems(1:n_overstressed_slip_systems))
-
                     !If any of the overstressed slip systems has 0 slip, taylor ambiguity may be occuring.
                     if (n_overstressed_slip_systems > n_active_simplex) then
                         !Determine strain absorbed by slip systems (imposed strain-relaxations)
@@ -274,7 +249,7 @@ contains
                         strain_grain = imposed_strain_grain-strain_relaxations
 
                         slip_rates_grain = resolve_taylor_ambiguity(ind_overstressed_slip_systems(1:n_overstressed_slip_systems), &
-                        active_slip_systems%rss, strain_grain, taylor_coeffs_grain, n_active_simplex)
+                        rss_grain(ind_overstressed_slip_systems(1:n_overstressed_slip_systems)), strain_grain, taylor_coeffs_grain, n_active_simplex)
                     end if
 
                     !Update hardening model state
@@ -286,20 +261,66 @@ contains
                     sum_slip = sum_slip+sum_slip_current
 
                     !Calculate work rate
-                    work_rate = work_rate+sum(merge(grain_%slip_systems%crss(1), -grain_%slip_systems%crss(2), slip_rates_grain > 0._DP)*slip_rates_grain)
+                    do i = 1, n_slip_systems_grain
+                        work_rate = work_rate+merge(crss_grain(1, i), crss_grain(2, i), slip_rates_grain(i)>0._DP) * slip_rates_grain(i)
+                    end do
 
                     orientation_increment = UNIT_MATRIX_3X3 &
                                             +(imposed_spin .toframe. grain_%orientation) &                !>Change of reference frame
                                             -convert_spin(matmul(spin_coeffs_grain, slip_rates_grain))    !>Spin induced by activation of slip systems
                     if (n_relaxations > 0) orientation_increment = orientation_increment-convert_spin(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
                     grain_%orientation = matmul(orientation_increment, grain_%orientation)
-
-                    deallocate(active_slip_systems)
-                end associate; end associate; end associate; end associate; end associate; end associate; end associate
+                end associate; end associate; end associate; end associate; end associate; end associate; end associate; end associate
             end do
         end associate
+
+        call update_cluster_state(cluster_ptr, deformation_gradient, velocity_gradient, index_cluster)
+
         !Homogenize quantity over cluster
         sum_slip = sum_slip/cluster_size
+    end subroutine
+
+    subroutine update_cluster_state(cluster_ptr, deformation_gradient, velocity_gradient, index_cluster)
+        type(Cluster), pointer, intent(in):: cluster_ptr
+        real(DP), dimension(3, 3), intent(in):: deformation_gradient, &
+                                                velocity_gradient
+        integer, intent(in):: index_cluster
+        integer:: i, &
+                  j, &
+                  start_index_grain, &
+                  start_index_slip_systems, &
+                  start_index_relaxations, &
+                  n_slip_systems_grain, &
+                  cluster_size
+        real(DP):: boundary_to_crystal(3, 3), &
+                   relaxations_crystal_frame(3, 3)
+
+        cluster_size = size(cluster_ptr%grains)
+        n_slip_systems_grain = size(cluster_ptr%grains(1)%slip_systems)
+        start_index_relaxations = 2*n_slip_systems_grain+1
+
+        if (cluster_size == 2) cluster_ptr%weight = cluster_weight(cluster_ptr, deformation_gradient)
+        !Update microstructure
+        do i = 1, cluster_size
+            start_index_grain = 5*(i-1)+1
+            start_index_slip_systems = n_slip_systems_grain*(i-1)+1
+            cluster_ptr%imposed_strain(start_index_grain:start_index_grain+4) = convert_stress_strain_space(velocity_gradient .toframe. cluster_ptr%grains(i)%orientation)
+            cluster_ptr%crss(:,start_index_slip_systems:start_index_slip_systems+n_slip_systems_grain-1) = hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip)
+            if (cluster_size == 2) then
+                do j = 1, 2
+                    !Transform relaxation from boundary frame to crystal frame
+                    !Composed of rotation from boundary to global frame and then from global to crystal frame.
+                    boundary_to_crystal = matmul(cluster_ptr%grains(i)%orientation, cluster_frame(cluster_ptr%boundary_reference_frame, deformation_gradient))
+                    relaxations_crystal_frame = rotate_to(real(RELAXATIONS(:,:,j), DP), boundary_to_crystal)
+                    !Invert direction of relaxations for second grain
+                    if (i == 2) relaxations_crystal_frame = -relaxations_crystal_frame
+                    !Rotational component of relaxations
+                    cluster_ptr%spin_coeffs(:,i*(n_slip_systems_grain+2)-2+j) = -convert_spin(relaxations_crystal_frame)
+                    !Insert the relaxations as columns in taylor_coeffs_cluster-matrix
+                    cluster_ptr%taylor_coeffs(start_index_grain:start_index_grain+4, start_index_relaxations-1+j)=convert_stress_strain_space(symmetric_part(relaxations_crystal_frame))
+                end do
+            end if
+        enddo
     end subroutine
 
     real(DP) function cluster_weight(cluster_ptr, deformation_gradient) result(weight)
