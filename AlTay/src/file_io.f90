@@ -43,10 +43,9 @@ contains
         if (nrec > 0) allocate(orientations(3, nrec))
 
         do i = 1, nrec
-            read(nunit, 96, iostat = info) orientations(1, i), orientations(2, i), orientations(3, i), stap, nstap, weight, initial_sum_slip
+            read(nunit, 96, iostat = info) orientations(3, i), orientations(2, i), orientations(1, i), stap, nstap, weight, initial_sum_slip
 96          format(4F10.0, I5, 5X, 2F10.0)
             if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read boundary segment')
-            print *, initial_sum_slip
         enddo
         orientations = orientations/RAD_TO_DEG
 
