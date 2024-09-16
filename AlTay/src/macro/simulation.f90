@@ -88,7 +88,6 @@ module simulation
                    von_mises_strain_rate, &
                    deformation_gradient_during_time_step(3, 3), &
                    stress_cluster(3, 3)
-        type(Grain), pointer:: grain_ptr
         type(Cluster), pointer:: cluster_ptr
 
         ! Per-call selection of the model: cluster_size must be set

@@ -134,7 +134,6 @@ contains
                 clusters(i)%grains(j)%orientation = from_euler_angles(orientations(:,(i-1)*cluster_size+j))
                 allocate(clusters(i)%grains(j)%slip_systems(n_slip_systems_grain))
 
-
                 print *, clusters(i)%grains(j)%orientation
             end do
         end do
