@@ -30,20 +30,20 @@ module taylor
                                                            0, 1, 0], shape(RELAXATIONS))
 
 contains
-    function taylor_init(deformation_mechanism, n_slip_systems_grain, cluster_size, file_name, initial_deformation_gradient) result(clusters)
-        integer, intent(out):: n_slip_systems_grain  ! < total number of systems in slip system file (glide+twin)
+
+
+    function taylor_init(deformation_mechanism, cluster_size, initial_deformation_gradient, orientations, boundaries) result(clusters)
         integer, intent(in):: cluster_size
-        type(Cluster), dimension(:), allocatable, target:: clusters
+        type(Cluster), dimension(:), pointer, contiguous:: clusters
         integer, dimension(:,:,:), intent(in):: deformation_mechanism
-        character(len=*), intent(in):: file_name
         real(DP), dimension(3, 3), intent(in):: initial_deformation_gradient
-        integer:: i, j, n_slip_systems_cluster, system_size, n_relaxations
+        real(DP), dimension(:,:), allocatable:: orientations, boundaries
+
+        integer:: i, j, n_slip_systems_cluster, system_size, n_relaxations, n_slip_systems_grain, n_boundaries
         type(Cluster), pointer:: cluster_ptr
         real(DP):: basis(5, 5), &
                     normalized(3, 2), &
                     tensor(3, 3)
-        integer           :: file_handle, &
-                             n_boundaries
         real(DP):: transformation_matrix(3, 3), &
                    angles(3)
         real(DP), dimension(3, size(deformation_mechanism, 3)):: spin_coeffs
@@ -52,8 +52,6 @@ contains
         real(DP):: inverse_basis_grain(5, 5)
         integer:: ind_basis_systems_grain(5)
 
-
-        character(len = 40)  :: TitMic !<Microstructure title
 
 
         n_relaxations = merge(2, 0, cluster_size == 2)
@@ -75,9 +73,11 @@ contains
 
         !Temporary hack. Should move to FCTaylor and ALAMEL modules, respectively once they are available.
         if (cluster_size == 1) then
-            allocate(clusters(size(grains)))
+            allocate(clusters(size(orientations, 2)))
             do i = 1, size(clusters)
-                clusters(i)%grains => grains(i:i)
+                allocate(clusters(i)%grains(1))
+
+
                 clusters(i)%weight = 1._DP
                 allocate(clusters(i)%imposed_strain(5)) !> Imposed strain in grain crystal frame
                 clusters(i)%taylor_coeffs = taylor_coeffs_grain
@@ -90,9 +90,9 @@ contains
                 clusters(i)%inverse_basis = inverse_basis_grain
             end do
         else
-            allocate(clusters(size(grains)/2))
+            allocate(clusters(size(orientations, 2)/2))
             do i = 1, size(clusters)
-                clusters(i)%grains => grains(2*i-1:2*i)
+                allocate(clusters(i)%grains(2))
                 allocate(clusters(i)%imposed_strain(10)) !> Imposed strain in crystal frame of both grains
                 allocate(clusters(i)%taylor_coeffs(10, 2*n_slip_systems_grain+2), source = 0._DP) !>Slip systems for 2 grains and 2 relaxations
                 clusters(i)%taylor_coeffs(1:5, 1:n_slip_systems_grain)=taylor_coeffs_grain
@@ -112,26 +112,32 @@ contains
                 clusters(i)%inverse_basis(6:10, 6:10) = inverse_basis_grain
             end do
 
-            !Read boundary orientations from file
-            open (newunit = file_handle, file = file_name, status='old')
-            read (file_handle, '(I5, 5x, A)') n_boundaries, TitMic  ! read number of grain boundaries and file title
+            n_boundaries = size(boundaries, 2)
 
             do i = 1, n_boundaries
-                read (file_handle, '(3f10.0)') angles(3), angles(2), angles(1)  !read Euler angles from microstructure file in order: phi2, PHI, phi1
                 !Calculate the transformation matrix
                 !Cols 1 and 2 hold two non-parallel vectors within the initial GB (grain boundary) plane.
                 !Col 3 holds a vector out of the initial GB plane (not necessarily perpendicular to the GB plane).
-                transformation_matrix = matmul(initial_deformation_gradient, transpose(from_euler_angles(angles/RAD_TO_DEG)))
+                transformation_matrix = matmul(initial_deformation_gradient, transpose(from_euler_angles(boundaries(:,i))))
 
                 !Assign boundaries to clusters
                 !Because the number of boundaries is not necessary equal to the number of clusters, multiple clusters may have the
                 !same boundary orientation.
-                do j = i, size(clusters), 2*n_boundaries
+                do j = i, size(clusters), n_boundaries
                     clusters(j)%boundary_reference_frame = transformation_matrix
                 end do
             enddo
-            close(unit = file_handle)
         end if
+
+        do i = 1, size(clusters)
+            do j = 1, cluster_size
+                clusters(i)%grains(j)%orientation = from_euler_angles(orientations(:,(i-1)*cluster_size+j))
+                allocate(clusters(i)%grains(j)%slip_systems(n_slip_systems_grain))
+
+
+                print *, clusters(i)%grains(j)%orientation
+            end do
+        end do
     end function
 
     subroutine get_stress_state(cluster_ptr, index_cluster, n_slip_systems_grain, stress_state)

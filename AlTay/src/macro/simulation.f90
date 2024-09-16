@@ -7,7 +7,7 @@ module simulation
     use altayConfig
     use logging
     use cluster_module
-    use altayCurAccess
+    use file_io
 
     implicit none
     private
@@ -17,22 +17,26 @@ module simulation
 
     real(DP):: von_mises_strain
     real(DP), dimension(3, 3):: deformation_gradient
-    type(Cluster), dimension(:), allocatable, target:: clusters
+    type(Cluster), dimension(:), pointer, contiguous:: clusters
 
     character(*), parameter:: MOD_NAME = 'Simul'
 
 
     public:: simulation_init, &
              simulation_run, &
-             deformation_gradient
+             deformation_gradient, &
+             output_current_state
     contains
 
     ! initialization call
-    subroutine simulation_init()
+    subroutine simulation_init(orientations, boundaries)
         integer:: cluster_size         !< number of grains
 
         character(len = 40):: TITEL
         integer:: info
+        real(DP), dimension(:,:), allocatable, intent(in):: orientations, &
+                                                            boundaries
+
         character(*), parameter:: PROC_NAME = 'SIMUL0'
 
 
@@ -43,16 +47,13 @@ module simulation
         if (cluster_size < 1 .or. cluster_size > 2) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Incorrect value of cluster_size')
 
-        ! Check if number of crystals is right for the model
-        if (modulo(size(grains), cluster_size) /= 0) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Number of grains must be even.')
         TITEL  = acnf%jobtitle
         ! Only if CUR file is requested
-        if (NFILE1 == 1) call CURwriteTitle(IMP1, TITEL, info)
+        if (NFILE1 == 1) call cur_write_title(IMP1, TITEL, info)
   98    format (A)
 
 !       read the parameters of the work hardening model
-        clusters = taylor_init(acnf%deformation_mechanism, n_slip_systems_grain, cluster_size, acnf%micros_fname, acnf%simul_init%FMicro)
+        clusters => taylor_init(acnf%deformation_mechanism, cluster_size, acnf%simul_init%FMicro, orientations, boundaries)
 
         deformation_gradient = UNIT_MATRIX_3X3
         von_mises_strain = 0._DP
@@ -90,9 +91,9 @@ module simulation
         type(Grain), pointer:: grain_ptr
         type(Cluster), pointer:: cluster_ptr
 
-        n_grains = size(grains)
         ! Per-call selection of the model: cluster_size must be set
         cluster_size = acnf%simul_init%NGR
+        n_grains = size(clusters) * cluster_size
         NFILE = NFILE0*NFILE1
 
         strain_rate = symmetric_part(velocity_gradient)
@@ -112,7 +113,7 @@ module simulation
         end do
 
         ! Output the current texture
-        if (NFILE == 1) call CURwriteBlock(IMP1, info, deformation_gradient)
+        if (NFILE == 1) call cur_write_block(IMP1, clusters, deformation_gradient)
 
         steploop: DO step = 1, astate%simulCalls(astate%this)%input%nsteps
 
@@ -188,4 +189,12 @@ module simulation
             end if
         enddo steploop
     end subroutine
+
+    subroutine output_current_state(file_handle)
+        integer, intent(in):: file_handle
+
+        call cur_write_block(file_handle, clusters, deformation_gradient)
+    end subroutine
+
+
 end module
