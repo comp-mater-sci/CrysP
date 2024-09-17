@@ -79,10 +79,10 @@ module slip_systems
         real(DP), dimension(:), pointer, contiguous:: taylor_coeffs, &
                                                       spin_coeffs, &
                                                       crss
-        real(DP), pointer:: overstress, &
-                            resolved_shear_stress, &
+        real(DP), pointer:: resolved_shear_stress, &
                             rss
-        real(DP):: slip_rate
+        real(DP):: slip_rate, &
+                   overstress
     contains
         procedure:: init => slip_system_init
         procedure:: get_crss => slip_system_get_crss
@@ -92,12 +92,11 @@ module slip_systems
 contains
 
     !Initialize a slip system
-    subroutine slip_system_init(this, miller_indices, taylor_coeffs, spin_coeffs, overstress, rss, crss)
+    subroutine slip_system_init(this, miller_indices, taylor_coeffs, spin_coeffs, rss, crss)
         class(SlipSystem), intent(inout):: this
         integer, dimension(3, 2), intent(in):: miller_indices
         real(DP), dimension(5), target, intent(inout):: taylor_coeffs
         real(DP), dimension(3), target, intent(inout):: spin_coeffs
-        real(DP), target, intent(in):: overstress
         real(DP), target, intent(in):: rss
         real(DP), dimension(2), target, intent(in):: crss
 
@@ -106,7 +105,6 @@ contains
 
         !Assign pointers
         this%taylor_coeffs => taylor_coeffs
-        this%overstress => overstress
         this%rss => rss
         this%crss =>crss
 

@@ -80,8 +80,9 @@ contains
         type(Cluster), pointer, intent(in):: cluster_ptr
         real(DP), intent(out)::     stress_state(3, 3)
 
-        real(DP)::                  stress_grain(5), &
-                                    slip_rates(cluster_ptr%n_systems)
+        real(DP)::                  stress_grain(5)
+        real(DP), dimension(cluster_ptr%n_systems):: slip_rates, &
+                                                     overstress
         integer::                   cluster_size, &
                                     start_index_grain, &
                                     i
@@ -90,9 +91,10 @@ contains
         cluster_size = size(cluster_ptr%grains)
 
         call simplex_solve(cluster_ptr%taylor_coeffs, cluster_ptr%get_imposed_strain(), cluster_ptr%crss, cluster_ptr%inverse_basis, &
-        cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, cluster_ptr%rss, cluster_ptr%overstress)
+        cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, cluster_ptr%rss, overstress)
 
         call cluster_ptr%set_slip_rates(slip_rates)
+        call cluster_ptr%set_overstress(overstress)
 
         stress_state = 0._DP
         do i = 1, cluster_size
@@ -117,7 +119,6 @@ contains
                                     strain_grain(5), &
                                     strain_relaxations(5), &
                                     sum_slip_current, &
-                                    overstress_grain(size(cluster_ptr%grains(1)%slip_systems)), &
                                     rss_grain(size(cluster_ptr%grains(1)%slip_systems))
         integer::                   i, j, cluster_size, &
                                     n_overstressed_slip_systems, &
@@ -136,14 +137,13 @@ contains
 
         do j = 1, size(cluster_ptr%grains)
             rss_grain = cluster_ptr%rss((j-1)*n_slip_systems_grain+1:j*n_slip_systems_grain)
-            overstress_grain = cluster_ptr%overstress((j-1)*n_slip_systems_grain+1:j*n_slip_systems_grain)
 
             !Determine if taylor ambiguity may be occuring. While we are iterating over the slip systems, might as well prepare for
             !resolving it
             n_overstressed_slip_systems = 0
             n_active_simplex = 0
             do i = 1, n_slip_systems_grain
-                if (abs(overstress_grain(i)) < TOLERANCE) then
+                if (abs(cluster_ptr%grains(j)%slip_systems(i)%overstress) < TOLERANCE) then
                     n_overstressed_slip_systems = n_overstressed_slip_systems+1
                     ind_overstressed_slip_systems(n_overstressed_slip_systems) =i
                     if (cluster_ptr%grains(j)%slip_systems(i)%slip_rate > TOLERANCE) &

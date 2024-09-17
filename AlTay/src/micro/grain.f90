@@ -41,11 +41,10 @@ contains
 
 
     !Initialize grain.
-    subroutine grain_init(this, deformation_mechanism, orientation, overstress, rss, crss, taylor_coeffs)
+    subroutine grain_init(this, deformation_mechanism, orientation, rss, crss, taylor_coeffs)
         class(Grain), target, intent(inout)::                                           this
         integer, dimension(:,:,:), intent(in)::                                         deformation_mechanism
         real(DP), dimension(:), intent(in)::                                            orientation
-        real(DP), dimension(:), target, intent(in)::       overstress
         real(DP), dimension(:), target, intent(in)::       rss
         real(DP), dimension(:,:), target, intent(in)::    crss
         real(DP), dimension(:,:), target, intent(inout)::    taylor_coeffs
@@ -56,7 +55,6 @@ contains
         n_slip_systems = size(deformation_mechanism, 3)
 
         !Assign pointers
-        this%overstress     => overstress
         this%rss            => rss
         this%crss           => crss
         this%taylor_coeffs  => taylor_coeffs
@@ -74,7 +72,6 @@ contains
             call this%slip_systems(i)%init(deformation_mechanism(:,:,i), &
                                            taylor_coeffs(:,i),           &
                                            this%spin_coeffs(:,i),        &
-                                           overstress(i),                &
                                            rss(i),                       &
                                            crss(:,i))
         end do

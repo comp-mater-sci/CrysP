@@ -10,8 +10,7 @@ module cluster_module
         integer, dimension(:), allocatable:: ind_basis_systems
         real(DP):: weight                                    !> Measure of importance of the cluster with respect to the whole microstructure
         real(DP), dimension(3, 3):: boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
-        real(DP), dimension(:), allocatable:: overstress, &
-                                              rss
+        real(DP), dimension(:), allocatable:: rss
         real(DP), dimension(:,:), allocatable:: taylor_coeffs, &
                                                 spin_coeffs, &
                                                 crss, &
@@ -25,6 +24,7 @@ module cluster_module
         procedure:: get_imposed_strain => cluster_get_imposed_strain
         procedure:: get_spin_coeffs_relaxations => cluster_get_spin_coeffs_relaxations
         procedure:: set_slip_rates => cluster_set_slip_rates
+        procedure:: set_overstress => cluster_set_overstress
     end type
 
 contains
@@ -57,7 +57,6 @@ contains
             allocate(this%grains(2))
             allocate(this%taylor_coeffs(10, this%n_systems), source = 0._DP) !>Slip systems for 2 grains and 2 relaxations
             allocate(this%crss(2, this%n_systems), source = 0._DP)
-            allocate(this%overstress(this%n_systems))
             allocate(this%rss(this%n_systems))
             allocate(this%ind_basis_systems(10))
             allocate(this%inverse_basis(10, 10), source = 0._DP)
@@ -72,7 +71,6 @@ contains
             allocate(this%grains(1))
             this%weight = 1._DP
             allocate(this%crss(2, n_slip_systems_grain))
-            allocate(this%overstress(n_slip_systems_grain))
             allocate(this%rss(n_slip_systems_grain))
             allocate(this%taylor_coeffs(5, n_slip_systems_grain)) !>Slip systems for 2 grains and 2 relaxations
         end if
@@ -84,7 +82,6 @@ contains
 
             call this%grains(i)%init(deformation_mechanism, &
                                      orientations(:,i), &
-                                     this%overstress(start_systems+1:start_systems+n_slip_systems_grain), &
                                      this%rss(start_systems+1:start_systems+n_slip_systems_grain), &
                                      this%crss(:,start_systems+1:start_systems+n_slip_systems_grain), &
                                      this%taylor_coeffs(start_grain+1:start_grain+5, start_systems+1:start_systems+n_slip_systems_grain))
@@ -124,7 +121,7 @@ contains
 
     subroutine cluster_set_slip_rates(this, slip_rates)
         class(Cluster), intent(inout):: this
-        real(DP), dimension(:), intent(in):: slip_rates
+        real(DP), dimension(this%n_systems), intent(in):: slip_rates
 
         integer::   i, &
                     n_systems_grain
@@ -139,6 +136,17 @@ contains
         end do
     end subroutine
 
+    subroutine cluster_set_overstress(this, overstress)
+        class(Cluster), intent(inout):: this
+        real(DP), dimension(this%n_systems), intent(in):: overstress
 
+        integer:: i, &
+                  n_systems_grain
+
+        do i = 1, size(this%grains)
+            n_systems_grain = size(this%grains(i)%slip_systems)
+            this%grains(i)%slip_systems%overstress = overstress((i-1)*n_systems_grain+1:i*n_systems_grain)
+        end do
+    end subroutine
 
 end module
