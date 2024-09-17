@@ -65,12 +65,14 @@ contains
 
         ! Close all units.
         close(IMP5)
-        if (info /= 0) return
+        nrstep = 0
         call hardening_finalize()
+        call simulation_finalize()
         if (allocated(astate%simulCalls)) then
               deallocate(astate%simulCalls)
               astate%nSimulCalls = 0
         endif
+        info = 0
 
     end subroutine
 

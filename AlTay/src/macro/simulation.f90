@@ -13,7 +13,7 @@ module simulation
     private
 
     real(DP), allocatable:: homogenized_total_slipTOT !< homogenized slip accumulated over calls
-    integer:: n_slip_systems_grain, NFILE1
+    integer:: NFILE1
 
     real(DP):: von_mises_strain
     real(DP), dimension(3, 3):: deformation_gradient
@@ -24,6 +24,7 @@ module simulation
 
     public:: simulation_init, &
              simulation_run, &
+             simulation_finalize, &
              deformation_gradient, &
              output_current_state
     contains
@@ -143,10 +144,10 @@ module simulation
                 total_slip_rate = 0.0_DP
                 WorkRate = 0.0_DP
 
-                call get_stress_state(cluster_ptr, index_cluster, n_slip_systems_grain, stress_cluster)
+                call get_stress_state(cluster_ptr, stress_cluster)
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                    call apply_deformation_step(cluster_ptr, total_slip_rate, WorkRate, spin, n_slip_systems_grain, index_cluster, &
+                    call apply_deformation_step(cluster_ptr, total_slip_rate, WorkRate, spin, index_cluster, &
                     deformation_gradient_during_time_step, velocity_gradient)
                 end if
 
@@ -195,5 +196,8 @@ module simulation
         call cur_write_block(file_handle, clusters, deformation_gradient)
     end subroutine
 
+    subroutine simulation_finalize()
+        deallocate(clusters)
+    end subroutine
 
 end module
