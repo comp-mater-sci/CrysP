@@ -19,12 +19,14 @@ module grain_module
         !Pointers to useful quantities
         !These are allocated at the cluster level for efficiency.
         !Technically these pointers are superfluous but they convenient for many calculations and also improve performance.
-        real(DP), dimension(:), pointer, contiguous:: imposed_strain, &
-                                                      slip_rates, &
+        real(DP), dimension(:), pointer, contiguous:: slip_rates, &
                                                       overstress, &
                                                       rss
         real(DP), dimension(:,:), pointer:: crss, &
                                             taylor_coeffs
+
+
+        real(DP), dimension(5):: imposed_strain
 
     contains
         procedure:: init => grain_init
@@ -41,11 +43,10 @@ contains
 
 
     !Initialize grain.
-    subroutine grain_init(this, deformation_mechanism, orientation, imposed_strain, slip_rates, overstress, rss, crss, taylor_coeffs)
+    subroutine grain_init(this, deformation_mechanism, orientation, slip_rates, overstress, rss, crss, taylor_coeffs)
         class(Grain), target, intent(inout)::                                           this
         integer, dimension(:,:,:), intent(in)::                                         deformation_mechanism
         real(DP), dimension(:), intent(in)::                                            orientation
-        real(DP), dimension(:), target, intent(in)::                                    imposed_strain
         real(DP), dimension(:), target, intent(in)::       slip_rates
         real(DP), dimension(:), target, intent(in)::       overstress
         real(DP), dimension(:), target, intent(in)::       rss
@@ -58,7 +59,6 @@ contains
         n_slip_systems = size(deformation_mechanism, 3)
 
         !Assign pointers
-        this%imposed_strain => imposed_strain
         this%slip_rates     => slip_rates
         this%overstress     => overstress
         this%rss            => rss

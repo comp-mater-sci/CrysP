@@ -87,7 +87,7 @@ contains
 
         cluster_size = size(cluster_ptr%grains)
 
-        call simplex_solve(cluster_ptr%taylor_coeffs, cluster_ptr%imposed_strain, cluster_ptr%crss, cluster_ptr%inverse_basis, &
+        call simplex_solve(cluster_ptr%taylor_coeffs, cluster_ptr%get_imposed_strain(), cluster_ptr%crss, cluster_ptr%inverse_basis, &
         cluster_ptr%ind_basis_systems, cluster_ptr%slip_rates, stress_cluster, cluster_ptr%rss, cluster_ptr%overstress)
 
         stress_state = 0._DP
@@ -220,7 +220,7 @@ contains
         do i = 1, cluster_size
             start_index_grain = 5*(i-1)+1
             start_index_slip_systems = n_slip_systems_grain*(i-1)+1
-            cluster_ptr%imposed_strain(start_index_grain:start_index_grain+4) = convert_stress_strain_space(velocity_gradient .toframe. cluster_ptr%grains(i)%orientation)
+            cluster_ptr%grains(i)%imposed_strain = convert_stress_strain_space(velocity_gradient .toframe. cluster_ptr%grains(i)%orientation)
             cluster_ptr%crss(:,start_index_slip_systems:start_index_slip_systems+n_slip_systems_grain-1) = hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip)
             if (cluster_size == 2) then
                 do j = 1, 2

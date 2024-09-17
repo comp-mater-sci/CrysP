@@ -9,8 +9,7 @@ module cluster_module
         integer, dimension(:), allocatable:: ind_basis_systems
         real(DP):: weight                                    !> Measure of importance of the cluster with respect to the whole microstructure
         real(DP), dimension(3, 3):: boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
-        real(DP), dimension(:), allocatable:: imposed_strain, &
-                                              slip_rates, &
+        real(DP), dimension(:), allocatable:: slip_rates, &
                                               overstress, &
                                               rss
         real(DP), dimension(:,:), allocatable:: taylor_coeffs, &
@@ -22,6 +21,7 @@ module cluster_module
 
     contains
         procedure:: init => cluster_init
+        procedure:: get_imposed_strain => cluster_get_imposed_strain
     end type
 
 contains
@@ -51,7 +51,6 @@ contains
         if (present(boundary)) then  ! ALAMEL
             cluster_size = 2
             allocate(this%grains(2))
-            allocate(this%imposed_strain(10)) !> Imposed strain in crystal frame of both grains
             allocate(this%taylor_coeffs(10, 2*n_slip_systems_grain+2), source = 0._DP) !>Slip systems for 2 grains and 2 relaxations
             allocate(this%slip_rates(2*n_slip_systems_grain+2))
             allocate(this%crss(2, 2*n_slip_systems_grain+2), source = 0._DP)
@@ -65,7 +64,6 @@ contains
             cluster_size = 1
             allocate(this%grains(1))
             this%weight = 1._DP
-            allocate(this%imposed_strain(5)) !> Imposed strain in grain crystal frame
             allocate(this%slip_rates(n_slip_systems_grain))
             allocate(this%crss(2, n_slip_systems_grain))
             allocate(this%overstress(n_slip_systems_grain))
@@ -80,7 +78,6 @@ contains
 
             call this%grains(i)%init(deformation_mechanism, &
                                      orientations(:,i), &
-                                     this%imposed_strain(start_grain+1:start_grain+5), &
                                      this%slip_rates(start_systems+1:start_systems+n_slip_systems_grain), &
                                      this%overstress(start_systems+1:start_systems+n_slip_systems_grain), &
                                      this%rss(start_systems+1:start_systems+n_slip_systems_grain), &
@@ -96,44 +93,19 @@ contains
 
         end do
 
-!        this%crss(:,1:12) = 1._DP
-!        this%crss(:,13:24) = 2._DP
-!
-!        print *, "Cluster: "
-!        print "(26f6.2)", this%crss
-!
-!    !    do j = 1, 10
-!    !        print "(26f6.2)", this%taylor_coeffs(j, :)
-!    !    end do
-!
-!        print *, "Grain 1: "
-!        print "(12f6.2)", this%grains(1)%crss
-!    !    do j = 1, 5
-!    !        print "(12f6.2)", this%grains(1)%taylor_coeffs(j, :)
-!    !    end do
-!
-!    !    do k = 1, 12
-!    !        print *, "Slip system ", k, " "
-!    !        print "(5f6.2)", this%grains(1)%slip_systems(k)%taylor_coeffs
-!    !    end do
-!
-!        print *, "Grain 2: "
-!        print "(12f6.2)", this%grains(2)%crss
-!    !    do j = 1, 5
-!    !        print "(12f6.2)", this%grains(2)%taylor_coeffs(j, :)
-!    !    end do
-!
-!    !    do k = 1, 12
-!    !        print *, "Slip system ", k, " "
-!    !        print "(5f6.2)", this%grains(1)%slip_systems(k)%taylor_coeffs
-!    !    end do
-!
-!        stop
-
-
-
     end subroutine
 
+    function cluster_get_imposed_strain(this) result(imposed_strain)
+        class(Cluster), intent(in):: this
+
+        real(DP), dimension(5*size(this%grains)):: imposed_strain
+
+        integer:: i
+
+        do i = 1, size(this%grains)
+            imposed_strain(5*(i-1)+1:5*i) = this%grains(i)%imposed_strain
+        end do
+    end function
 
 
 end module
