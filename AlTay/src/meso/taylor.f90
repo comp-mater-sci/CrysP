@@ -21,13 +21,7 @@ module taylor
 
     character(*), parameter:: MOD_NAME = 'taylor'
     integer, parameter::   INITIAL_BASIS_SYSTEMS_FCC(5) = [2, 5, 6, 7, 8], &
-                           INITIAL_BASIS_SYSTEMS_BCC(5) = [1, 2, 4, 5, 7], &
-                           RELAXATIONS(3, 3, 2) = reshape([0, 0, 0, &
-                                                           0, 0, 0, &
-                                                           1, 0, 0, &
-                                                           0, 0, 0, &
-                                                           0, 0, 0, &
-                                                           0, 1, 0], shape(RELAXATIONS))
+                           INITIAL_BASIS_SYSTEMS_BCC(5) = [1, 2, 4, 5, 7]
 
 contains
 
@@ -82,7 +76,8 @@ contains
 
         real(DP)::                  stress_grain(5)
         real(DP), dimension(cluster_ptr%n_systems):: slip_rates, &
-                                                     overstress
+                                                     overstress, &
+                                                     rss
         integer::                   cluster_size, &
                                     start_index_grain, &
                                     i
@@ -91,10 +86,11 @@ contains
         cluster_size = size(cluster_ptr%grains)
 
         call simplex_solve(cluster_ptr%taylor_coeffs, cluster_ptr%get_imposed_strain(), cluster_ptr%crss, cluster_ptr%inverse_basis, &
-        cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, cluster_ptr%rss, overstress)
+        cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
 
         call cluster_ptr%set_slip_rates(slip_rates)
         call cluster_ptr%set_overstress(overstress)
+        call cluster_ptr%set_rss(rss)
 
         stress_state = 0._DP
         do i = 1, cluster_size
@@ -118,8 +114,7 @@ contains
         real(DP)::                  orientation_increment(3, 3), &
                                     strain_grain(5), &
                                     strain_relaxations(5), &
-                                    sum_slip_current, &
-                                    rss_grain(size(cluster_ptr%grains(1)%slip_systems))
+                                    sum_slip_current
         integer::                   i, j, cluster_size, &
                                     n_overstressed_slip_systems, &
                                     n_relaxations, &
@@ -136,8 +131,6 @@ contains
         sum_slip = 0._DP
 
         do j = 1, size(cluster_ptr%grains)
-            rss_grain = cluster_ptr%rss((j-1)*n_slip_systems_grain+1:j*n_slip_systems_grain)
-
             !Determine if taylor ambiguity may be occuring. While we are iterating over the slip systems, might as well prepare for
             !resolving it
             n_overstressed_slip_systems = 0
@@ -166,7 +159,7 @@ contains
                 strain_grain = cluster_ptr%grains(j)%imposed_strain-strain_relaxations
 
                 cluster_ptr%grains(j)%slip_systems%slip_rate = resolve_taylor_ambiguity(ind_overstressed_slip_systems(1:n_overstressed_slip_systems), &
-                    cluster_ptr%grains(j)%rss(ind_overstressed_slip_systems(1:n_overstressed_slip_systems)), &
+                    cluster_ptr%grains(j)%slip_systems(ind_overstressed_slip_systems(1:n_overstressed_slip_systems))%rss, &
                     strain_grain, &
                     cluster_ptr%grains(j)%taylor_coeffs, &
                     n_active_simplex)
