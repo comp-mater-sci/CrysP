@@ -238,6 +238,14 @@ contains
             end if
         enddo
 
+
+        print *, "Boundary reference frame: "
+        print "(3f8.4)", cluster_ptr%boundary_reference_frame
+        print *, "Spin coeffs relaxations: "
+        print "(3f8.4)", cluster_ptr%spin_coeffs_relaxations
+        print *, "Taylor coeffs relaxations: "
+        print "(10f8.4)", cluster_ptr%taylor_coeffs(:,2*n_slip_systems_grain+1:)
+
         !For ALAMEL we may assume that the relaxations are part of the basis and they change with every time step. Therefore we
         !must always recalculate the inverse basis.
         if (cluster_size == 2) then
