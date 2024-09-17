@@ -37,103 +37,43 @@ contains
         type(Cluster), dimension(:), pointer, contiguous:: clusters
         integer, dimension(:,:,:), intent(in):: deformation_mechanism
         real(DP), dimension(3, 3), intent(in):: initial_deformation_gradient
-        real(DP), dimension(:,:), allocatable:: orientations, boundaries
+        real(DP), dimension(:,:), allocatable, intent(in):: orientations, &
+                                                            boundaries
+        integer:: i, j, &
+                  n_slip_systems_grain, &
+                  ind_basis_systems_grain(5)
 
-        integer:: i, j, n_slip_systems_cluster, system_size, n_relaxations, n_slip_systems_grain, n_boundaries
-        type(Cluster), pointer:: cluster_ptr
-        real(DP):: basis(5, 5), &
-                    normalized(3, 2), &
-                    tensor(3, 3)
-        real(DP):: transformation_matrix(3, 3), &
-                   angles(3)
-        real(DP), dimension(3, size(deformation_mechanism, 3)):: spin_coeffs
-        real(DP), allocatable:: taylor_coeffs_grain(:,:)
-
-        real(DP):: inverse_basis_grain(5, 5)
-        integer:: ind_basis_systems_grain(5)
-
-
-        n_relaxations = merge(2, 0, cluster_size == 2)
         n_slip_systems_grain = size(deformation_mechanism, 3)
-        n_slip_systems_cluster = cluster_size*n_slip_systems_grain+n_relaxations
-        system_size = cluster_size*5
 
-        allocate(taylor_coeffs_grain(5, n_slip_systems_grain))
-
-        ind_basis_systems_grain = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, n_slip_systems_grain == 12)
-        do i = 1, n_slip_systems_grain
-            normalized = normalize(deformation_mechanism(:,:,i))
-            tensor = outer_product(normalized(:,1), normalized(:,2))
-            taylor_coeffs_grain(:,i) = convert_stress_strain_space(tensor)
-            spin_coeffs(:,i) = convert_spin(tensor)
-        end do
-        forall (i = 1:5) basis(:,i) = taylor_coeffs_grain(:,ind_basis_systems_grain(i))
-        inverse_basis_grain = invert(basis)
-
-        !Temporary hack. Should move to FCTaylor and ALAMEL modules, respectively once they are available.
         if (cluster_size == 1) then
             allocate(clusters(size(orientations, 2)))
             do i = 1, size(clusters)
-                allocate(clusters(i)%grains(1))
-
-
-                clusters(i)%weight = 1._DP
-                allocate(clusters(i)%imposed_strain(5)) !> Imposed strain in grain crystal frame
-                clusters(i)%taylor_coeffs = taylor_coeffs_grain
-                clusters(i)%spin_coeffs = spin_coeffs
-                allocate(clusters(i)%slip_rates(n_slip_systems_grain))
-                allocate(clusters(i)%crss(2, n_slip_systems_grain))
-                allocate(clusters(i)%overstress(n_slip_systems_grain))
-                allocate(clusters(i)%rss(n_slip_systems_grain))
-                clusters(i)%ind_basis_systems = ind_basis_systems_grain
-                clusters(i)%inverse_basis = inverse_basis_grain
+                call clusters(i)%init(orientations(:,i:i), deformation_mechanism)
             end do
         else
             allocate(clusters(size(orientations, 2)/2))
+            j = 1
             do i = 1, size(clusters)
-                allocate(clusters(i)%grains(2))
-                allocate(clusters(i)%imposed_strain(10)) !> Imposed strain in crystal frame of both grains
-                allocate(clusters(i)%taylor_coeffs(10, 2*n_slip_systems_grain+2), source = 0._DP) !>Slip systems for 2 grains and 2 relaxations
-                clusters(i)%taylor_coeffs(1:5, 1:n_slip_systems_grain)=taylor_coeffs_grain
-                clusters(i)%taylor_coeffs(6:10, n_slip_systems_grain+1:n_slip_systems_grain*2)=taylor_coeffs_grain
-                allocate(clusters(i)%spin_coeffs(3, 2*(n_slip_systems_grain+2)))
-                clusters(i)%spin_coeffs(:,1:n_slip_systems_grain) = spin_coeffs
-                clusters(i)%spin_coeffs(:,n_slip_systems_grain+3:2*n_slip_systems_grain+2) = spin_coeffs
-                allocate(clusters(i)%slip_rates(2*n_slip_systems_grain+2))
-                allocate(clusters(i)%crss(2, 2*n_slip_systems_grain+2), source = 0._DP)
-                allocate(clusters(i)%overstress(2*n_slip_systems_grain+2))
-                allocate(clusters(i)%rss(2*n_slip_systems_grain+2))
-                allocate(clusters(i)%ind_basis_systems(10))
-                clusters(i)%ind_basis_systems(1:5) = ind_basis_systems_grain
-                clusters(i)%ind_basis_systems(6:10) = ind_basis_systems_grain+n_slip_systems_grain
-                allocate(clusters(i)%inverse_basis(10, 10), source = 0._DP)
-                clusters(i)%inverse_basis(1:5, 1:5) = inverse_basis_grain
-                clusters(i)%inverse_basis(6:10, 6:10) = inverse_basis_grain
+                call clusters(i)%init(orientations(:,2*i-1:2*i), deformation_mechanism, boundaries(:,j), initial_deformation_gradient)
+                j = merge(j+1, 1, j == size(boundaries, 2))
             end do
-
-            n_boundaries = size(boundaries, 2)
-
-            do i = 1, n_boundaries
-                !Calculate the transformation matrix
-                !Cols 1 and 2 hold two non-parallel vectors within the initial GB (grain boundary) plane.
-                !Col 3 holds a vector out of the initial GB plane (not necessarily perpendicular to the GB plane).
-                transformation_matrix = matmul(initial_deformation_gradient, transpose(from_euler_angles(boundaries(:,i))))
-
-                !Assign boundaries to clusters
-                !Because the number of boundaries is not necessary equal to the number of clusters, multiple clusters may have the
-                !same boundary orientation.
-                do j = i, size(clusters), n_boundaries
-                    clusters(j)%boundary_reference_frame = transformation_matrix
-                end do
-            enddo
         end if
 
-        do i = 1, size(clusters)
-            do j = 1, cluster_size
-                clusters(i)%grains(j)%orientation = from_euler_angles(orientations(:,(i-1)*cluster_size+j))
-                allocate(clusters(i)%grains(j)%slip_systems(n_slip_systems_grain))
+        ind_basis_systems_grain = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, n_slip_systems_grain == 12)
+
+        !Temporary hack. Should move to FCTaylor and ALAMEL modules, respectively once they are available.
+        if (cluster_size == 1) then
+            do i = 1, size(clusters)
+                clusters(i)%ind_basis_systems = ind_basis_systems_grain
+                clusters(i)%inverse_basis = invert(clusters(i)%taylor_coeffs(:,clusters(i)%ind_basis_systems))
             end do
-        end do
+        else
+            do i = 1, size(clusters)
+                clusters(i)%ind_basis_systems(1:5) = ind_basis_systems_grain
+                clusters(i)%ind_basis_systems(6:10) = ind_basis_systems_grain+n_slip_systems_grain
+                clusters(i)%inverse_basis = invert(clusters(i)%taylor_coeffs(:,clusters(i)%ind_basis_systems))
+            end do
+        end if
     end function
 
     subroutine get_stress_state(cluster_ptr, stress_state)
@@ -194,9 +134,7 @@ contains
                 associate(slip_rates_grain => cluster_ptr%slip_rates((j-1)*n_slip_systems_grain+1:j*n_slip_systems_grain))
                 associate(imposed_strain_grain => cluster_ptr%imposed_strain((j-1)*5+1:j*5))
                 associate(taylor_coeffs_grain => cluster_ptr%taylor_coeffs(5*(j-1)+1:5*j, (j-1)*n_slip_systems_grain+1:j*n_slip_systems_grain))
-                associate(spin_coeffs_grain => cluster_ptr%spin_coeffs(:,(j-1)*(n_slip_systems_grain+n_relaxations)+1:j*n_slip_systems_grain+(j-1)*n_relaxations))
                 associate(taylor_coeffs_relaxations => cluster_ptr%taylor_coeffs(5*(j-1)+1:5*j, size(cluster_ptr%taylor_coeffs, 2)-1:))
-                associate(spin_coeffs_relaxations => cluster_ptr%spin_coeffs(:,j*(n_slip_systems_grain+2)-1:j*(n_slip_systems_grain+2)))
                 associate(crss_grain => cluster_ptr%crss(:,(j-1)*n_slip_systems_grain+1:j*n_slip_systems_grain))
 
                     rss_grain = cluster_ptr%rss((j-1)*n_slip_systems_grain+1:j*n_slip_systems_grain)
@@ -248,10 +186,10 @@ contains
 
                     orientation_increment = UNIT_MATRIX_3X3 &
                                             +(imposed_spin .toframe. cluster_ptr%grains(j)%orientation) &                !>Change of reference frame
-                                            -convert_spin(matmul(spin_coeffs_grain, slip_rates_grain))    !>Spin induced by activation of slip systems
-                    if (n_relaxations > 0) orientation_increment = orientation_increment-convert_spin(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
+                                            -convert_spin(matmul(cluster_ptr%grains(j)%spin_coeffs, slip_rates_grain))    !>Spin induced by activation of slip systems
+                    if (n_relaxations > 0) orientation_increment = orientation_increment-convert_spin(matmul(cluster_ptr%spin_coeffs_relaxations(:,:,j), slip_rates_relaxations))
                     cluster_ptr%grains(j)%orientation = matmul(orientation_increment, cluster_ptr%grains(j)%orientation)
-                end associate; end associate; end associate; end associate; end associate; end associate; end associate
+                end associate; end associate; end associate; end associate; end associate
             end do
         end associate
 
@@ -297,12 +235,23 @@ contains
                     !Invert direction of relaxations for second grain
                     if (i == 2) relaxations_crystal_frame = -relaxations_crystal_frame
                     !Rotational component of relaxations
-                    cluster_ptr%spin_coeffs(:,i*(n_slip_systems_grain+2)-2+j) = -convert_spin(relaxations_crystal_frame)
+                    cluster_ptr%spin_coeffs_relaxations(:,j, i) = -convert_spin(relaxations_crystal_frame)
                     !Insert the relaxations as columns in taylor_coeffs_cluster-matrix
                     cluster_ptr%taylor_coeffs(start_index_grain:start_index_grain+4, start_index_relaxations-1+j)=convert_stress_strain_space(symmetric_part(relaxations_crystal_frame))
                 end do
             end if
         enddo
+
+
+        print *, "Boundary reference frame: "
+        print "(3f6.2)", cluster_ptr%boundary_reference_frame
+        print *, "Spin coeffs relaxations: "
+        print "(3f6.2)", cluster_ptr%spin_coeffs_relaxations
+        print *, "Taylor coeffs relaxations: "
+        print "(10f6.2)", cluster_ptr%taylor_coeffs(:,2*n_slip_systems_grain+1:)
+
+        stop
+
 
         !For ALAMEL we may assume that the relaxations are part of the basis and they change with every time step. Therefore we
         !must always recalculate the inverse basis.
