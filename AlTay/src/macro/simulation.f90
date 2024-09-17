@@ -162,13 +162,6 @@ module simulation
 
             homogenized_stress = homogenized_stress/total_weight
 
-            !print *, "Total weight: ", total_weight
-            !print *, "Stress: "
-            !print "(3f6.2)", homogenized_stress
-
-            stop
-
-
             do i = 1, 2
                 do j = i+1, 3
                     homogenized_stress(j, i)=homogenized_stress(i, j)

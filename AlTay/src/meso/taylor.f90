@@ -55,7 +55,7 @@ contains
             j = 1
             do i = 1, size(clusters)
                 call clusters(i)%init(orientations(:,2*i-1:2*i), deformation_mechanism, boundaries(:,j), initial_deformation_gradient)
-                j = merge(j+1, 1, j == size(boundaries, 2))
+                j = merge(1, j+1, j == size(boundaries, 2))
             end do
         end if
 
@@ -237,14 +237,6 @@ contains
                 end do
             end if
         enddo
-
-
-        print *, "Boundary reference frame: "
-        print "(3f8.4)", cluster_ptr%boundary_reference_frame
-        print *, "Spin coeffs relaxations: "
-        print "(3f8.4)", cluster_ptr%spin_coeffs_relaxations
-        print *, "Taylor coeffs relaxations: "
-        print "(10f8.4)", cluster_ptr%taylor_coeffs(:,2*n_slip_systems_grain+1:)
 
         !For ALAMEL we may assume that the relaxations are part of the basis and they change with every time step. Therefore we
         !must always recalculate the inverse basis.
