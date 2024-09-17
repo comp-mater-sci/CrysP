@@ -1,6 +1,7 @@
 module cluster_module
     use utils
     use grain_module
+    use relaxation_module
 
     implicit none
 
@@ -16,12 +17,13 @@ module cluster_module
                                                 spin_coeffs, &
                                                 crss, &
                                                 inverse_basis
-        real(DP), dimension(:,:,:), allocatable:: spin_coeffs_relaxations
+        type(Relaxation), dimension(:), allocatable:: relaxations
 
 
     contains
         procedure:: init => cluster_init
         procedure:: get_imposed_strain => cluster_get_imposed_strain
+        procedure:: get_spin_coeffs_relaxations => cluster_get_spin_coeffs_relaxations
     end type
 
 contains
@@ -59,7 +61,10 @@ contains
             allocate(this%ind_basis_systems(10))
             allocate(this%inverse_basis(10, 10), source = 0._DP)
             this%boundary_reference_frame = matmul(initial_deformation_gradient, transpose(from_euler_angles(boundary)))
-            allocate(this%spin_coeffs_relaxations(3, 2, 2))
+            allocate(this%relaxations(2))
+            do i = 1, 2
+                 call this%relaxations(i)%init(i)
+            end do
         else  ! FCTaylor
             cluster_size = 1
             allocate(this%grains(1))
@@ -89,8 +94,6 @@ contains
             do j = 1, n_slip_systems_grain
                 this%grains(i)%slip_systems(j)%taylor_coeffs=>this%taylor_coeffs(start_grain+1:start_grain+5, start_systems+j)
             end do
-
-
         end do
 
     end subroutine
@@ -107,5 +110,16 @@ contains
         end do
     end function
 
+    function cluster_get_spin_coeffs_relaxations(this, ind_grain) result(spin_coeffs_relaxations)
+        class(Cluster), intent(in):: this
+        integer, intent(in):: ind_grain
+        real(DP), dimension(3, 2):: spin_coeffs_relaxations
+
+        integer:: i
+
+        do i = 1, 2
+            spin_coeffs_relaxations(:,i) = this%relaxations(i)%spin_coeffs((ind_grain-1)*3+1:ind_grain*3)
+        end do
+    end function
 
 end module
