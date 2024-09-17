@@ -19,8 +19,7 @@ module grain_module
         !Pointers to useful quantities
         !These are allocated at the cluster level for efficiency.
         !Technically these pointers are superfluous but they convenient for many calculations and also improve performance.
-        real(DP), dimension(:), pointer, contiguous:: slip_rates, &
-                                                      overstress, &
+        real(DP), dimension(:), pointer, contiguous:: overstress, &
                                                       rss
         real(DP), dimension(:,:), pointer:: crss, &
                                             taylor_coeffs
@@ -31,7 +30,6 @@ module grain_module
     contains
         procedure:: init => grain_init
         procedure:: get_work_rate => grain_get_work_rate
-
     end type grain
 
     integer                                    :: nrStep = 0       !<State variable: step number.
@@ -43,11 +41,10 @@ contains
 
 
     !Initialize grain.
-    subroutine grain_init(this, deformation_mechanism, orientation, slip_rates, overstress, rss, crss, taylor_coeffs)
+    subroutine grain_init(this, deformation_mechanism, orientation, overstress, rss, crss, taylor_coeffs)
         class(Grain), target, intent(inout)::                                           this
         integer, dimension(:,:,:), intent(in)::                                         deformation_mechanism
         real(DP), dimension(:), intent(in)::                                            orientation
-        real(DP), dimension(:), target, intent(in)::       slip_rates
         real(DP), dimension(:), target, intent(in)::       overstress
         real(DP), dimension(:), target, intent(in)::       rss
         real(DP), dimension(:,:), target, intent(in)::    crss
@@ -59,7 +56,6 @@ contains
         n_slip_systems = size(deformation_mechanism, 3)
 
         !Assign pointers
-        this%slip_rates     => slip_rates
         this%overstress     => overstress
         this%rss            => rss
         this%crss           => crss
@@ -79,7 +75,6 @@ contains
                                            taylor_coeffs(:,i),           &
                                            this%spin_coeffs(:,i),        &
                                            overstress(i),                &
-                                           slip_rates(i),                &
                                            rss(i),                       &
                                            crss(:,i))
         end do

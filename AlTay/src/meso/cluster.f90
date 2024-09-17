@@ -10,20 +10,21 @@ module cluster_module
         integer, dimension(:), allocatable:: ind_basis_systems
         real(DP):: weight                                    !> Measure of importance of the cluster with respect to the whole microstructure
         real(DP), dimension(3, 3):: boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
-        real(DP), dimension(:), allocatable:: slip_rates, &
-                                              overstress, &
+        real(DP), dimension(:), allocatable:: overstress, &
                                               rss
         real(DP), dimension(:,:), allocatable:: taylor_coeffs, &
                                                 spin_coeffs, &
                                                 crss, &
                                                 inverse_basis
         type(Relaxation), dimension(:), allocatable:: relaxations
+        integer:: n_systems
 
 
     contains
         procedure:: init => cluster_init
         procedure:: get_imposed_strain => cluster_get_imposed_strain
         procedure:: get_spin_coeffs_relaxations => cluster_get_spin_coeffs_relaxations
+        procedure:: set_slip_rates => cluster_set_slip_rates
     end type
 
 contains
@@ -52,12 +53,12 @@ contains
         !Temporary hack. Should move to FCTaylor and ALAMEL modules, respectively once they are available.
         if (present(boundary)) then  ! ALAMEL
             cluster_size = 2
+            this%n_systems = 2*n_slip_systems_grain+2
             allocate(this%grains(2))
-            allocate(this%taylor_coeffs(10, 2*n_slip_systems_grain+2), source = 0._DP) !>Slip systems for 2 grains and 2 relaxations
-            allocate(this%slip_rates(2*n_slip_systems_grain+2))
-            allocate(this%crss(2, 2*n_slip_systems_grain+2), source = 0._DP)
-            allocate(this%overstress(2*n_slip_systems_grain+2))
-            allocate(this%rss(2*n_slip_systems_grain+2))
+            allocate(this%taylor_coeffs(10, this%n_systems), source = 0._DP) !>Slip systems for 2 grains and 2 relaxations
+            allocate(this%crss(2, this%n_systems), source = 0._DP)
+            allocate(this%overstress(this%n_systems))
+            allocate(this%rss(this%n_systems))
             allocate(this%ind_basis_systems(10))
             allocate(this%inverse_basis(10, 10), source = 0._DP)
             this%boundary_reference_frame = matmul(initial_deformation_gradient, transpose(from_euler_angles(boundary)))
@@ -67,9 +68,9 @@ contains
             end do
         else  ! FCTaylor
             cluster_size = 1
+            this%n_systems = n_slip_systems_grain
             allocate(this%grains(1))
             this%weight = 1._DP
-            allocate(this%slip_rates(n_slip_systems_grain))
             allocate(this%crss(2, n_slip_systems_grain))
             allocate(this%overstress(n_slip_systems_grain))
             allocate(this%rss(n_slip_systems_grain))
@@ -83,7 +84,6 @@ contains
 
             call this%grains(i)%init(deformation_mechanism, &
                                      orientations(:,i), &
-                                     this%slip_rates(start_systems+1:start_systems+n_slip_systems_grain), &
                                      this%overstress(start_systems+1:start_systems+n_slip_systems_grain), &
                                      this%rss(start_systems+1:start_systems+n_slip_systems_grain), &
                                      this%crss(:,start_systems+1:start_systems+n_slip_systems_grain), &
@@ -121,5 +121,24 @@ contains
             spin_coeffs_relaxations(:,i) = this%relaxations(i)%spin_coeffs((ind_grain-1)*3+1:ind_grain*3)
         end do
     end function
+
+    subroutine cluster_set_slip_rates(this, slip_rates)
+        class(Cluster), intent(inout):: this
+        real(DP), dimension(:), intent(in):: slip_rates
+
+        integer::   i, &
+                    n_systems_grain
+
+
+        do i = 1, size(this%grains)
+            n_systems_grain = size(this%grains(i)%slip_systems)
+            this%grains(i)%slip_systems%slip_rate = slip_rates((i-1)*n_systems_grain+1:i*n_systems_grain)
+
+            if (size(this%grains) == 2) &
+                this%relaxations(i)%slip_rate = slip_rates(size(slip_rates)-2+i)
+        end do
+    end subroutine
+
+
 
 end module
