@@ -14,8 +14,7 @@ module cluster_module
         integer, dimension(:), allocatable:: ind_basis_systems
         real(DP):: weight                                    !> Measure of importance of the cluster with respect to the whole microstructure
         real(DP), dimension(3, 3):: boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
-        real(DP), dimension(:,:), allocatable:: spin_coeffs, &
-                                                crss, &
+        real(DP), dimension(:,:), allocatable:: crss, &
                                                 inverse_basis
         type(Relaxation), dimension(:), allocatable:: relaxations
         integer:: n_systems

@@ -14,7 +14,6 @@ module grain_module
         real(DP), dimension(3, 3):: orientation, &
                                     stress_state
         type(SlipSystem), dimension(:), allocatable:: slip_systems
-        real(DP), dimension(:,:), allocatable:: spin_coeffs
 
         !Pointers to useful quantities
         !These are allocated at the cluster level for efficiency.
@@ -28,6 +27,7 @@ module grain_module
         procedure:: init => grain_init
         procedure:: get_work_rate => grain_get_work_rate
         procedure:: get_taylor_coeffs => grain_get_taylor_coeffs
+        procedure:: get_spin_coeffs => grain_get_spin_coeffs
     end type grain
 
     integer                                    :: nrStep = 0       !<State variable: step number.
@@ -59,12 +59,10 @@ contains
 
         !Allocate slip systems and spin coefficients
         allocate(this%slip_systems(n_slip_systems))
-        allocate(this%spin_coeffs(3, n_slip_systems))
 
         !Initialize each of the slip systems
         do i = 1, n_slip_systems
             call this%slip_systems(i)%init(deformation_mechanism(:,:,i), &
-                                           this%spin_coeffs(:,i),        &
                                            crss(:,i))
         end do
     end subroutine
@@ -90,4 +88,16 @@ contains
             coeffs(:,i) = this%slip_systems(i)%taylor_coeffs
         end do
     end function
+
+    function grain_get_spin_coeffs(this) result(coeffs)
+        class(Grain), intent(in):: this
+        real(DP), dimension(3, size(this%slip_systems)):: coeffs
+
+        integer:: i
+
+        do i = 1, size(this%slip_systems)
+            coeffs(:,i) = this%slip_systems(i)%spin_coeffs
+        end do
+    end function
+
 end module

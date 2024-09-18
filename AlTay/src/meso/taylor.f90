@@ -160,7 +160,7 @@ contains
 
             orientation_increment = UNIT_MATRIX_3X3 &
                                     +(imposed_spin .toframe. cluster_ptr%grains(j)%orientation) &                !>Change of reference frame
-                                    -convert_spin(matmul(cluster_ptr%grains(j)%spin_coeffs, cluster_ptr%grains(j)%slip_systems%slip_rate))    !>Spin induced by activation of slip systems
+                                    -convert_spin(matmul(cluster_ptr%grains(j)%get_spin_coeffs(), cluster_ptr%grains(j)%slip_systems%slip_rate))    !>Spin induced by activation of slip systems
             if (n_relaxations > 0) orientation_increment = orientation_increment-convert_spin(matmul(cluster_ptr%get_spin_coeffs_relaxations(j), cluster_ptr%relaxations%slip_rate))
             cluster_ptr%grains(j)%orientation = matmul(orientation_increment, cluster_ptr%grains(j)%orientation)
         end do
