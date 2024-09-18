@@ -20,11 +20,8 @@ module taylor
     !Initial values for the inverse basis and basis systems.
 
     character(*), parameter:: MOD_NAME = 'taylor'
-    integer, parameter::   INITIAL_BASIS_SYSTEMS_FCC(5) = [2, 5, 6, 7, 8], &
-                           INITIAL_BASIS_SYSTEMS_BCC(5) = [1, 2, 4, 5, 7]
 
 contains
-
 
     function taylor_init(deformation_mechanism, cluster_size, initial_deformation_gradient, orientations, boundaries) result(clusters)
         integer, intent(in):: cluster_size
@@ -34,8 +31,7 @@ contains
         real(DP), dimension(:,:), allocatable, intent(in):: orientations, &
                                                             boundaries
         integer:: i, j, &
-                  n_slip_systems_grain, &
-                  ind_basis_systems_grain(5)
+                  n_slip_systems_grain
 
         n_slip_systems_grain = size(deformation_mechanism, 3)
 
@@ -50,22 +46,6 @@ contains
             do i = 1, size(clusters)
                 call clusters(i)%init(orientations(:,2*i-1:2*i), deformation_mechanism, boundaries(:,j), initial_deformation_gradient)
                 j = merge(1, j+1, j == size(boundaries, 2))
-            end do
-        end if
-
-        ind_basis_systems_grain = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, n_slip_systems_grain == 12)
-
-        !Temporary hack. Should move to FCTaylor and ALAMEL modules, respectively once they are available.
-        if (cluster_size == 1) then
-            do i = 1, size(clusters)
-                clusters(i)%ind_basis_systems = ind_basis_systems_grain
-                clusters(i)%inverse_basis = invert(clusters(i)%taylor_coeffs(:,clusters(i)%ind_basis_systems))
-            end do
-        else
-            do i = 1, size(clusters)
-                clusters(i)%ind_basis_systems(1:5) = ind_basis_systems_grain
-                clusters(i)%ind_basis_systems(6:10) = ind_basis_systems_grain+n_slip_systems_grain
-                clusters(i)%inverse_basis = invert(clusters(i)%taylor_coeffs(:,clusters(i)%ind_basis_systems))
             end do
         end if
     end function
@@ -85,7 +65,7 @@ contains
 
         cluster_size = size(cluster_ptr%grains)
 
-        call simplex_solve(cluster_ptr%taylor_coeffs, cluster_ptr%get_imposed_strain(), cluster_ptr%crss, cluster_ptr%inverse_basis, &
+        call simplex_solve(cluster_ptr%get_taylor_coeffs(), cluster_ptr%get_imposed_strain(), cluster_ptr%crss, cluster_ptr%inverse_basis, &
         cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
 
         call cluster_ptr%set_slip_rates(slip_rates)
@@ -155,13 +135,13 @@ contains
             if (n_overstressed_slip_systems > n_active_simplex) then
                 !Determine strain absorbed by slip systems (imposed strain-relaxations)
                 strain_relaxations = 0._DP
-                if (n_relaxations > 0) strain_relaxations = matmul(cluster_ptr%taylor_coeffs(5*(j-1)+1:5*j, size(cluster_ptr%taylor_coeffs, 2)-1:), cluster_ptr%relaxations%slip_rate)
+                if (n_relaxations > 0) strain_relaxations = matmul(cluster_ptr%get_taylor_coeffs_relaxations(j), cluster_ptr%relaxations%slip_rate)
                 strain_grain = cluster_ptr%grains(j)%imposed_strain-strain_relaxations
 
                 cluster_ptr%grains(j)%slip_systems%slip_rate = resolve_taylor_ambiguity(ind_overstressed_slip_systems(1:n_overstressed_slip_systems), &
                     cluster_ptr%grains(j)%slip_systems(ind_overstressed_slip_systems(1:n_overstressed_slip_systems))%rss, &
                     strain_grain, &
-                    cluster_ptr%grains(j)%taylor_coeffs, &
+                    cluster_ptr%grains(j)%get_taylor_coeffs(), &
                     n_active_simplex)
             end if
 
@@ -203,8 +183,7 @@ contains
                   start_index_relaxations, &
                   n_slip_systems_grain, &
                   cluster_size
-        real(DP):: boundary_to_crystal(3, 3, 2), &
-                   relaxations_crystal_frame(3, 3), &
+        real(DP):: relaxations_crystal_frame(3, 3), &
                    dummy(10), new_vec(10)
 
         cluster_size = size(cluster_ptr%grains)
@@ -218,28 +197,10 @@ contains
             start_index_slip_systems = n_slip_systems_grain*(i-1)+1
             cluster_ptr%grains(i)%imposed_strain = convert_stress_strain_space(velocity_gradient .toframe. cluster_ptr%grains(i)%orientation)
             cluster_ptr%crss(:,start_index_slip_systems:start_index_slip_systems+n_slip_systems_grain-1) = hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip)
-            if (cluster_size == 2) then
-                    !Transform relaxation from boundary frame to crystal frame
-                    !Composed of rotation from boundary to global frame and then from global to crystal frame.
-                    boundary_to_crystal(:,:,i) = matmul(cluster_ptr%grains(i)%orientation, cluster_frame(cluster_ptr%boundary_reference_frame, deformation_gradient))
-            end if
         enddo
 
-        !For ALAMEL we may assume that the relaxations are part of the basis and they change with every time step. Therefore we
-        !must always recalculate the inverse basis.
-        if (cluster_size == 2) then
-            do i = 1, 2
-                call cluster_ptr%relaxations(i)%update(boundary_to_crystal)
-                cluster_ptr%taylor_coeffs(:,size(cluster_ptr%taylor_coeffs, 2)-2+i) = cluster_ptr%relaxations(i)%taylor_coeffs
-            end do
-
-            do i = 1, 10
-                if (cluster_ptr%ind_basis_systems(i)> 2*n_slip_systems_grain) then
-                    new_vec = matmul(cluster_ptr%inverse_basis, cluster_ptr%taylor_coeffs(:,cluster_ptr%ind_basis_systems(i)))
-                    call update_inverse_basis(cluster_ptr%inverse_basis, new_vec, i, dummy)
-                end if
-            end do
-        end if
+        if (cluster_size == 2 ) &
+            call cluster_ptr%update_relaxations(deformation_gradient)
     end subroutine
 
     real(DP) function cluster_weight(cluster_ptr, deformation_gradient) result(weight)
@@ -266,16 +227,5 @@ contains
                 weight = alignment_factor * (4._DP*(axis_lengths(1)-axis_lengths(3))*(axis_lengths(2)-axis_lengths(3))*axis_lengths(3) + &
                 2._DP*(axis_lengths(1)+axis_lengths(2) - 2._DP*axis_lengths(3))*axis_lengths(3)**2+4._DP*axis_lengths(3)**3/3._DP)
         end select
-    end function
-
-    pure function cluster_frame(boundary_frame, deformation_gradient) result(frame)
-        real(DP), dimension(3, 3), intent(in):: boundary_frame, &
-                                               deformation_gradient
-        real(DP):: frame(3, 3)
-
-        frame = matmul(deformation_gradient, boundary_frame)
-        frame(:,3) = frame(:,1) .cross. frame(:,2)
-        frame(:,2) = frame(:,3) .cross. frame(:,1)
-        frame = normalize(frame)
     end function
 end module

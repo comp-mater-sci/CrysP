@@ -76,12 +76,12 @@ module slip_systems
     !elsewhere it is useful because it makes many high-level expressions more clear and concise and reduces chances for mistakes
     !when multiple variables associated to a single slip system must be updated.
     type SlipSystem
-        real(DP), dimension(:), pointer, contiguous:: taylor_coeffs, &
-                                                      spin_coeffs, &
+        real(DP), dimension(:), pointer, contiguous:: spin_coeffs, &
                                                       crss
         real(DP):: slip_rate, &
                    overstress, &
                    rss
+        real(DP), dimension(5):: taylor_coeffs
     contains
         procedure:: init => slip_system_init
         procedure:: get_crss => slip_system_get_crss
@@ -91,10 +91,9 @@ module slip_systems
 contains
 
     !Initialize a slip system
-    subroutine slip_system_init(this, miller_indices, taylor_coeffs, spin_coeffs, crss)
+    subroutine slip_system_init(this, miller_indices, spin_coeffs, crss)
         class(SlipSystem), intent(inout):: this
         integer, dimension(3, 2), intent(in):: miller_indices
-        real(DP), dimension(5), target, intent(inout):: taylor_coeffs
         real(DP), dimension(3), target, intent(inout):: spin_coeffs
         real(DP), dimension(2), target, intent(in):: crss
 
@@ -102,13 +101,12 @@ contains
                    tensor(3, 3)
 
         !Assign pointers
-        this%taylor_coeffs => taylor_coeffs
         this%crss =>crss
 
         !Initialize taylor and spin coefficients of the slip system
         normalized = normalize(miller_indices)
         tensor = normalized(:,1) .tensor. normalized(:,2)
-        taylor_coeffs = convert_stress_strain_space(tensor)
+        this%taylor_coeffs = convert_stress_strain_space(tensor)
         spin_coeffs = convert_spin(tensor)
     end subroutine
 

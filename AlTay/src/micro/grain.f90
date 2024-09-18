@@ -19,8 +19,7 @@ module grain_module
         !Pointers to useful quantities
         !These are allocated at the cluster level for efficiency.
         !Technically these pointers are superfluous but they convenient for many calculations and also improve performance.
-        real(DP), dimension(:,:), pointer:: crss, &
-                                            taylor_coeffs
+        real(DP), dimension(:,:), pointer:: crss
 
 
         real(DP), dimension(5):: imposed_strain
@@ -28,6 +27,7 @@ module grain_module
     contains
         procedure:: init => grain_init
         procedure:: get_work_rate => grain_get_work_rate
+        procedure:: get_taylor_coeffs => grain_get_taylor_coeffs
     end type grain
 
     integer                                    :: nrStep = 0       !<State variable: step number.
@@ -39,12 +39,11 @@ contains
 
 
     !Initialize grain.
-    subroutine grain_init(this, deformation_mechanism, orientation, crss, taylor_coeffs)
+    subroutine grain_init(this, deformation_mechanism, orientation, crss)
         class(Grain), target, intent(inout)::                                           this
         integer, dimension(:,:,:), intent(in)::                                         deformation_mechanism
         real(DP), dimension(:), intent(in)::                                            orientation
         real(DP), dimension(:,:), target, intent(in)::    crss
-        real(DP), dimension(:,:), target, intent(inout)::    taylor_coeffs
 
         integer:: i, &
                   n_slip_systems
@@ -53,7 +52,6 @@ contains
 
         !Assign pointers
         this%crss           => crss
-        this%taylor_coeffs  => taylor_coeffs
 
         !Initialize grain orientation matrix
         this%orientation = from_euler_angles(orientation)
@@ -66,7 +64,6 @@ contains
         !Initialize each of the slip systems
         do i = 1, n_slip_systems
             call this%slip_systems(i)%init(deformation_mechanism(:,:,i), &
-                                           taylor_coeffs(:,i),           &
                                            this%spin_coeffs(:,i),        &
                                            crss(:,i))
         end do
@@ -83,4 +80,14 @@ contains
         end do
     end function
 
+    function grain_get_taylor_coeffs(this) result(coeffs)
+        class(Grain), intent(in):: this
+        real(DP), dimension(5, size(this%slip_systems)):: coeffs
+
+        integer:: i
+
+        do i = 1, size(this%slip_systems)
+            coeffs(:,i) = this%slip_systems(i)%taylor_coeffs
+        end do
+    end function
 end module
