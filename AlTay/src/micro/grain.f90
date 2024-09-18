@@ -32,7 +32,6 @@ module grain_module
 
 contains
 
-
     !Initialize grain.
     subroutine grain_init(this, deformation_mechanism, orientation)
         class(Grain), target, intent(inout)::                                           this
@@ -110,7 +109,5 @@ contains
         do i = 1, size(this%slip_systems)
             this%slip_systems(i)%crss = crss(:,i)
         end do
-
     end subroutine
-
 end module
