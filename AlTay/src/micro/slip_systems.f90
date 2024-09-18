@@ -76,31 +76,26 @@ module slip_systems
     !elsewhere it is useful because it makes many high-level expressions more clear and concise and reduces chances for mistakes
     !when multiple variables associated to a single slip system must be updated.
     type SlipSystem
-        real(DP), dimension(:), pointer, contiguous:: crss
         real(DP):: slip_rate, &
                    overstress, &
                    rss
         real(DP), dimension(5):: taylor_coeffs
         real(DP), dimension(3):: spin_coeffs
+        real(DP), dimension(2):: crss
     contains
         procedure:: init => slip_system_init
-        procedure:: get_crss => slip_system_get_crss
         procedure:: get_work_rate => slip_system_get_work_rate
     end type
 
 contains
 
     !Initialize a slip system
-    subroutine slip_system_init(this, miller_indices, crss)
+    subroutine slip_system_init(this, miller_indices)
         class(SlipSystem), intent(inout):: this
         integer, dimension(3, 2), intent(in):: miller_indices
-        real(DP), dimension(2), target, intent(in):: crss
 
         real(DP):: normalized(3, 2), &
                    tensor(3, 3)
-
-        !Assign pointers
-        this%crss =>crss
 
         !Initialize taylor and spin coefficients of the slip system
         normalized = normalize(miller_indices)
@@ -109,15 +104,9 @@ contains
         this%spin_coeffs = convert_spin(tensor)
     end subroutine
 
-    pure real(DP) function slip_system_get_crss(this) result(crss)
-        class(SlipSystem), intent(in):: this
-
-        crss = merge(this%crss(1), -this%crss(2), this%slip_rate > 0._DP)
-    end function
-
     pure real(DP) function slip_system_get_work_rate(this) result(work_rate)
         class(SlipSystem), intent(in):: this
 
-        work_rate = this%get_crss() * this%slip_rate
+        work_rate = abs(merge(this%crss(1), this%crss(2), this%slip_rate > 0._DP) * this%slip_rate)
     end function
 end module

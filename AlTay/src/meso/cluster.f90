@@ -14,8 +14,7 @@ module cluster_module
         integer, dimension(:), allocatable:: ind_basis_systems
         real(DP):: weight                                    !> Measure of importance of the cluster with respect to the whole microstructure
         real(DP), dimension(3, 3):: boundary_reference_frame !> Rotation matrix for boundary frame in ACTIVE notation (for performance)
-        real(DP), dimension(:,:), allocatable:: crss, &
-                                                inverse_basis
+        real(DP), dimension(:,:), allocatable:: inverse_basis
         type(Relaxation), dimension(:), allocatable:: relaxations
         integer:: n_systems
 
@@ -30,6 +29,7 @@ module cluster_module
         procedure:: get_taylor_coeffs_relaxations   => cluster_get_taylor_coeffs_relaxations
         procedure:: update_relaxations              => cluster_update_relaxations
         procedure:: get_basis                       => cluster_get_basis
+        procedure:: get_crss                        => cluster_get_crss
     end type
 
 contains
@@ -62,7 +62,6 @@ contains
             cluster_size = 2
             this%n_systems = 2*n_slip_systems_grain+2
             allocate(this%grains(2))
-            allocate(this%crss(2, this%n_systems), source = 0._DP)
             allocate(this%ind_basis_systems(10))
             allocate(this%inverse_basis(10, 10), source = 0._DP)
             this%boundary_reference_frame = matmul(initial_deformation_gradient, transpose(from_euler_angles(boundary)))
@@ -77,19 +76,13 @@ contains
             this%n_systems = n_slip_systems_grain
             allocate(this%grains(1))
             this%weight = 1._DP
-            allocate(this%crss(2, n_slip_systems_grain))
             this%ind_basis_systems = ind_basis_systems_grain
         end if
 
 
         !Initialize each grain of the cluster.
         do i = 1, cluster_size
-            start_grain = 5*(i-1)
-            start_systems = n_slip_systems_grain*(i-1)
-
-            call this%grains(i)%init(deformation_mechanism, &
-                                     orientations(:,i), &
-                                     this%crss(:,start_systems+1:start_systems+n_slip_systems_grain))
+            call this%grains(i)%init(deformation_mechanism, orientations(:,i))
         end do
 
         this%inverse_basis = invert(this%get_basis())
@@ -172,6 +165,22 @@ contains
             else
                 basis(:,i) = this%relaxations(ind_basis_system-2*n_systems_grain)%taylor_coeffs
             end if
+        end do
+    end function
+
+    function cluster_get_crss(this) result(crss)
+        class(Cluster), intent(in):: this
+        real(DP), dimension(2, this%n_systems):: crss
+
+        integer:: i, &
+                  n_systems_grain
+
+
+        n_systems_grain = size(this%grains(1)%slip_systems)
+
+        crss = 0._DP
+        do i = 1, size(this%grains)
+            crss(:,n_systems_grain*(i-1)+1:n_systems_grain*i) = this%grains(i)%get_crss()
         end do
     end function
 

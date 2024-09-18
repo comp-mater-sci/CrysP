@@ -65,7 +65,7 @@ contains
 
         cluster_size = size(cluster_ptr%grains)
 
-        call simplex_solve(cluster_ptr%get_taylor_coeffs(), cluster_ptr%get_imposed_strain(), cluster_ptr%crss, cluster_ptr%inverse_basis, &
+        call simplex_solve(cluster_ptr%get_taylor_coeffs(), cluster_ptr%get_imposed_strain(), cluster_ptr%get_crss(), cluster_ptr%inverse_basis, &
         cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
 
         call cluster_ptr%set_slip_rates(slip_rates)
@@ -153,10 +153,8 @@ contains
             cluster_ptr%grains(j)%sum_slip = cluster_ptr%grains(j)%sum_slip+sum_slip_current
             sum_slip = sum_slip+sum_slip_current
 
-            !Calculate work rate
-            do i = 1, n_slip_systems_grain
-                work_rate = work_rate+merge(cluster_ptr%grains(j)%crss(1, i), cluster_ptr%grains(j)%crss(2, i), cluster_ptr%grains(j)%slip_systems(i)%slip_rate > 0._DP) * cluster_ptr%grains(j)%slip_systems(i)%slip_rate
-            end do
+
+            work_rate = cluster_ptr%grains(j)%get_work_rate()
 
             orientation_increment = UNIT_MATRIX_3X3 &
                                     +(imposed_spin .toframe. cluster_ptr%grains(j)%orientation) &                !>Change of reference frame
@@ -196,7 +194,7 @@ contains
             start_index_grain = 5*(i-1)+1
             start_index_slip_systems = n_slip_systems_grain*(i-1)+1
             cluster_ptr%grains(i)%imposed_strain = convert_stress_strain_space(velocity_gradient .toframe. cluster_ptr%grains(i)%orientation)
-            cluster_ptr%crss(:,start_index_slip_systems:start_index_slip_systems+n_slip_systems_grain-1) = hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip)
+            call cluster_ptr%grains(i)%set_crss(hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip))
         enddo
 
         if (cluster_size == 2 ) &
