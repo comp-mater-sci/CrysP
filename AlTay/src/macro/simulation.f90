@@ -140,10 +140,6 @@ module simulation
             end if
             clusterloop: do index_cluster = 1, size(clusters)
                 cluster_ptr => clusters(index_cluster)
-                taylor_factor = 0.0_DP
-                total_slip_rate = 0.0_DP
-                WorkRate = 0.0_DP
-
                 call get_stress_state(cluster_ptr, stress_cluster)
 
                 if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
