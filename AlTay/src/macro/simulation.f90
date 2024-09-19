@@ -92,9 +92,6 @@ module simulation
                    stress_cluster(3, 3)
         type(Cluster), pointer:: cluster_ptr
 
-        real(DP):: start, end
-
-
         ! Per-call selection of the model: cluster_size must be set
         cluster_size = acnf%simul_init%NGR
         n_grains = size(clusters) * cluster_size
@@ -111,10 +108,14 @@ module simulation
 
         deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
 
-        do i = 1, size(clusters)
-            cluster_ptr => clusters(i)
-            call update_cluster_state(cluster_ptr, deformation_gradient_during_time_step, velocity_gradient, i)
-        end do
+        !$OMP PARALLEL SHARED(clusters, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(i, cluster_ptr)
+            !$OMP DO SCHEDULE(static, 1)
+                do i = 1, size(clusters)
+                    cluster_ptr => clusters(i)
+                    call update_cluster_state(cluster_ptr, deformation_gradient_during_time_step, velocity_gradient, i)
+                end do
+            !$OMP END DO
+        !$OMP END PARALLEL
 
         ! Output the current texture
         if (NFILE == 1) call cur_write_block(IMP1, clusters, deformation_gradient)
@@ -134,23 +135,15 @@ module simulation
                 deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
             end if
 
-            print *, "===================================================================="
-
-            !$OMP PARALLEL SHARED(step, clusters, astate, spin, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(start, end, index_cluster, cluster_ptr)
+            !$OMP PARALLEL SHARED(step, clusters, astate, spin, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(index_cluster, cluster_ptr)
                 !$OMP DO SCHEDULE(DYNAMIC, 1)
                     clusterloop: do index_cluster = 1, size(clusters)
-                        !call date_and_time(values = start)
-                        call cpu_time(start)
                         cluster_ptr => clusters(index_cluster)
                         call get_stress_state(cluster_ptr)
 
                         if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                             call apply_deformation_step(cluster_ptr, spin, index_cluster, deformation_gradient_during_time_step, velocity_gradient)
                         end if
-                        !call date_and_time(values = end)
-                        call cpu_time(end)
-
-                        print *, OMP_GET_THREAD_NUM(), int(end*1000000), int((end-start) * 1000000)
                     enddo clusterloop
                 !$OMP END DO
             !$OMP END PARALLEL
