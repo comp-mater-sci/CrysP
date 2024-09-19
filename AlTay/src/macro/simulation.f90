@@ -131,16 +131,18 @@ module simulation
                 deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
             end if
 
-            !$OMP PARALLEL DO SHARED(clusters, astate, spin, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(index_cluster, cluster_ptr) SCHEDULE(DYNAMIC) NUM_THREADS(16)
-                clusterloop: do index_cluster = 1, size(clusters)
-                    cluster_ptr => clusters(index_cluster)
-                    call get_stress_state(cluster_ptr)
+            !$OMP PARALLEL SHARED(clusters, astate, spin, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(index_cluster, cluster_ptr)
+                !$OMP DO SCHEDULE(DYNAMIC)
+                    clusterloop: do index_cluster = 1, size(clusters)
+                        cluster_ptr => clusters(index_cluster)
+                        call get_stress_state(cluster_ptr)
 
-                    if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                        call apply_deformation_step(cluster_ptr, spin, index_cluster, deformation_gradient_during_time_step, velocity_gradient)
-                    end if
-                enddo clusterloop
-            !$OMP END PARALLEL DO
+                        if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
+                            call apply_deformation_step(cluster_ptr, spin, index_cluster, deformation_gradient_during_time_step, velocity_gradient)
+                        end if
+                    enddo clusterloop
+                !$OMP END DO
+            !$OMP END PARALLEL
 
             do i = 1, size(clusters)
                 do j = 1, size(clusters(i)%grains)
