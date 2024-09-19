@@ -13,73 +13,73 @@ module parameters
 
     type Parameter
         private
-        character(:), allocatable :: name
-        integer :: type
-        character(:), allocatable :: value
+        character(:), allocatable:: name
+        integer:: type
+        character(:), allocatable:: value
     end type Parameter
 
     interface
         !Initialize parameter
         module type(Parameter) function parameter_init(param_name, param_type, param_value) result(param)
-            character(*), intent(in) :: param_name
-            integer, intent(in) :: param_type
-            character(*), intent(in), optional :: param_value
+            character(*), intent(in):: param_name
+            integer, intent(in):: param_type
+            character(*), intent(in), optional:: param_value
         end function parameter_init
 
         !Getter for value buffer
         module subroutine get_val_int(val, param)
-            integer, intent(out) :: val
-            type(Parameter), intent(in) :: param
+            integer, intent(out):: val
+            type(Parameter), intent(in):: param
         end subroutine
         module subroutine get_val_real(val, param)
-            real(DP), intent(out) :: val
-            type(Parameter), intent(in) :: param
+            real(DP), intent(out):: val
+            type(Parameter), intent(in):: param
         end subroutine
         module subroutine get_val_string(val, param)
-            character(:), allocatable, intent(out) :: val
-            type(Parameter), intent(in) :: param
+            character(:), allocatable, intent(out):: val
+            type(Parameter), intent(in):: param
         end subroutine
 
         !Setter for value buffer, called with a list of parameters and the name and value of the parameter to be set.
         module subroutine parameter_set(params, name, val, fail_on_absent)
-            type(Parameter), allocatable, intent(inout) :: params(:)
-            character(*), intent(in) :: name
-            class(*), intent(in) :: val
-            logical, intent(in), optional :: fail_on_absent
+            type(Parameter), allocatable, intent(inout):: params(:)
+            character(*), intent(in):: name
+            class(*), intent(in):: val
+            logical, intent(in), optional:: fail_on_absent
         end subroutine
 
         module function parameter_find_by_name(params, name) result(param)
-            type(Parameter), allocatable, intent(in) :: params(:)
-            character(*), intent(in) :: name
-            type(Parameter) :: param
+            type(Parameter), allocatable, intent(in):: params(:)
+            character(*), intent(in):: name
+            type(Parameter):: param
         end function
 
         !Calculate difference between value buffers of 2 parameters or a parameter and a (real) constant
         !Throws exception if at least 1 of the given parameters is not of numeric type.
         module pure real(DP) function parameter_difference(param, arg) result(difference)
-            type(Parameter), intent(in) :: param
+            type(Parameter), intent(in):: param
             class(*), intent(in)        :: arg
         end function
 
         !Determine if parameter is greater than another parameter or a constant.
         !Throws exception if at least 1 of the given parameters is not of numeric type.
         module pure logical function parameter_gt(param, arg) result(gt)
-            type(Parameter), intent(in) :: param
+            type(Parameter), intent(in):: param
             class(*), intent(in)        :: arg
         end function
         !Analogous to parameter_gt
         module pure logical function parameter_gteq(param, arg) result(gteq)
-            type(Parameter), intent(in) :: param
+            type(Parameter), intent(in):: param
             class(*), intent(in)        :: arg
         end function
         !Analogous to parameter_gt
         module pure logical function parameter_lt(param, arg) result(lt)
-            type(Parameter), intent(in) :: param
+            type(Parameter), intent(in):: param
             class(*), intent(in)        :: arg
         end function
         !Analogous to parameter_gt
         module pure logical function parameter_lteq(param, arg) result(lteq)
-            type(Parameter), intent(in) :: param
+            type(Parameter), intent(in):: param
             class(*), intent(in)        :: arg
         end function
     end interface
@@ -116,25 +116,26 @@ submodule (parameters) parameters_imp
 
     implicit none
 
-    character(*), parameter :: MOD_NAME = 'parameter'
+    character(*), parameter:: MOD_NAME = 'parameter'
 
 contains
 
     module procedure parameter_init
-        character(*), parameter :: PROC_NAME = 'parameter_init'
-        character(:), allocatable :: buffer
+        character(*), parameter:: PROC_NAME = 'parameter_init'
+        character(:), allocatable:: buffer
 
         if (present(param_value)) buffer = param_value
 
         if (param_type /= TYPE_INTEGER .and. param_type /= TYPE_REAL .and. param_type /= TYPE_STRING) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Unsupported parameter type.')
 
-        param = Parameter(param_name, param_type, buffer)
+        param%name = param_name
+        param%type = param_type
     end procedure parameter_init
 
    subroutine check_type(param, val)
-        type(Parameter), intent(in) :: param
-        class(*), intent(in) :: val
+        type(Parameter), intent(in):: param
+        class(*), intent(in):: val
 
         select type(val)
             type is (integer)
@@ -151,16 +152,16 @@ contains
     end subroutine check_type
 
     subroutine search_parameter_list(params, name, param, ind, fail)
-        type(Parameter), allocatable, intent(in) :: params(:)
-        character(*), intent(in) :: name
-        type(Parameter), intent(out) :: param
-        integer, intent(out) :: ind
-        logical, intent(inout) :: fail
+        type(Parameter), allocatable, intent(in):: params(:)
+        character(*), intent(in):: name
+        type(Parameter), intent(out):: param
+        integer, intent(out):: ind
+        logical, intent(inout):: fail
 
-        integer :: i
+        integer:: i
 
         ind = -1
-        do i=1,size(params)
+        do i = 1, size(params)
             if (params(i)%name == name) then
                 param = params(i)
                 ind = i
@@ -177,8 +178,8 @@ contains
     end subroutine search_parameter_list
 
     module procedure parameter_find_by_name
-        integer :: ind
-        logical :: fail = .true.
+        integer:: ind
+        logical:: fail = .true.
 
         call search_parameter_list(params, name, param, ind, fail)
     end procedure parameter_find_by_name
@@ -198,10 +199,10 @@ contains
     end procedure
 
     module procedure parameter_set
-        logical :: fail = .true.
-        type(Parameter) :: param
-        integer :: index
-        character(:), allocatable :: buffer
+        logical:: fail = .true.
+        type(Parameter):: param
+        integer:: index
+        character(:), allocatable:: buffer
 
         if (present(fail_on_absent)) &
            fail = fail_on_absent
@@ -212,7 +213,7 @@ contains
         call check_type(params(index), val)
 
         !Messy workaround to get gfortran to work
-        allocate(character(storage_size(val)/8) :: buffer)
+        allocate(character(storage_size(val)/8):: buffer)
         select type(val)
             type is (character(*))
                 params(index)%value = val
@@ -222,13 +223,13 @@ contains
     end procedure
 
     pure real(DP) function get_numerical_value(param) result(num)
-        type(Parameter), intent(in) :: param
-        integer :: buffer
+        type(Parameter), intent(in):: param
+        integer:: buffer
 
         select case(param%type)
             case (TYPE_INTEGER)
                 buffer = transfer(param%value, 0)
-                num = real(buffer,DP)
+                num = real(buffer, DP)
             case (TYPE_REAL)
                 num = transfer(param%value, 0._dp)
             case default
@@ -241,9 +242,9 @@ contains
 
         select type(arg)
             type is (integer)
-                real_val = real(arg,DP)
+                real_val = real(arg, DP)
             type is (real)
-                real_val = real(arg,DP)
+                real_val = real(arg, DP)
             type is (Parameter)
                 real_val = get_numerical_value(arg)
             class default
@@ -255,15 +256,15 @@ contains
     end procedure
 
     module procedure parameter_gt
-        gt = ((param - arg) > 0._DP)
+        gt = ((param-arg) > 0._DP)
     end procedure
     module procedure parameter_lt
-        lt = ((param - arg) < 0._DP)
+        lt = ((param-arg) < 0._DP)
     end procedure
     module procedure parameter_gteq
-        gteq = ((param - arg) >= 0._DP)
+        gteq = ((param-arg) >= 0._DP)
     end procedure
     module procedure parameter_lteq
-        lteq = ((param - arg) <= 0._DP)
+        lteq = ((param-arg) <= 0._DP)
     end procedure
 end submodule parameters_imp

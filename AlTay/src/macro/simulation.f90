@@ -143,30 +143,29 @@ module simulation
 
 
 
-            !$OMP PARALLEL SHARED(clusters, astate, spin, deformation_gradient_during_time_step, velocity_gradient, total_weight, von_mises_strain_rate, homogenized_stress, homogenized_taylor_factor, homogenized_total_slip, homogenized_work) PRIVATE(index_cluster, cluster_ptr, stress_cluster, total_slip_rate, workrate, taylor_factor)
+            !$OMP PARALLEL SHARED(clusters, astate, spin, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(index_cluster, cluster_ptr)
                 !$OMP DO
                     clusterloop: do index_cluster = 1, size(clusters)
                         cluster_ptr => clusters(index_cluster)
-                        call get_stress_state(cluster_ptr, stress_cluster)
+                        call get_stress_state(cluster_ptr)
 
                         if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                            call apply_deformation_step(cluster_ptr, total_slip_rate, WorkRate, spin, index_cluster, &
-                            deformation_gradient_during_time_step, velocity_gradient)
+                            call apply_deformation_step(cluster_ptr, spin, index_cluster, deformation_gradient_during_time_step, velocity_gradient)
                         end if
-
-                        taylor_factor = total_slip_rate /  von_mises_strain_rate
-
-                        !$OMP CRITICAL
-                            total_weight = total_weight+cluster_ptr%weight
-
-                            homogenized_stress = homogenized_stress+stress_cluster*cluster_ptr%weight
-                            homogenized_taylor_factor  = homogenized_taylor_factor+taylor_factor*cluster_ptr%weight
-                            homogenized_total_slip = homogenized_total_slip+total_slip_rate*cluster_ptr%weight  !Step time here implicitly assumed to be 1.0s
-                            homogenized_work       = homogenized_work+WorkRate                              !Step time here implicitly assumed to be 1.0s
-                        !$OMP END CRITICAL
                     enddo clusterloop
                 !$OMP END DO
             !$OMP END PARALLEL
+
+            do i = 1, size(clusters)
+                do j = 1, size(clusters(i)%grains)
+                    total_weight = total_weight+clusters(i)%weight
+                    taylor_factor = clusters(i)%grains(j)%sum_slip_current/von_mises_strain_rate
+                    homogenized_taylor_factor = homogenized_taylor_factor+taylor_factor*clusters(i)%weight
+                    homogenized_total_slip = homogenized_total_slip+clusters(i)%grains(j)%sum_slip_current*clusters(i)%weight
+                    homogenized_stress = homogenized_stress+clusters(i)%grains(j)%stress*clusters(i)%weight
+                    homogenized_work = homogenized_work+clusters(i)%grains(j)%get_work_rate()
+                end do
+            end do
 
 
             homogenized_stress = homogenized_stress/total_weight
