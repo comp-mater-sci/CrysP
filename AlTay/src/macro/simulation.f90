@@ -126,44 +126,32 @@ module simulation
 
             nrstep = nrstep+1
 
-
-            !Added for lamel model:
-            !Organisation reading temporary texture file,
-            !in such way that the program TAYLOR can process the crystals
-            !by sets of 2.
-            !Taylor must therefore have "advance knowledge" of the
-            !orientation to come at the moment that it starts such
-            !computation.
-
             if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                 !Deformation gradient exactly in the middle of the time step.
                 deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
             end if
 
+            !$OMP PARALLEL DO SHARED(clusters, astate, spin, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(index_cluster, cluster_ptr) SCHEDULE(DYNAMIC) NUM_THREADS(16)
+                clusterloop: do index_cluster = 1, size(clusters)
+                    cluster_ptr => clusters(index_cluster)
+                    call get_stress_state(cluster_ptr)
 
-
-
-            !$OMP PARALLEL SHARED(clusters, astate, spin, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(index_cluster, cluster_ptr)
-                !$OMP DO
-                    clusterloop: do index_cluster = 1, size(clusters)
-                        cluster_ptr => clusters(index_cluster)
-                        call get_stress_state(cluster_ptr)
-
-                        if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                            call apply_deformation_step(cluster_ptr, spin, index_cluster, deformation_gradient_during_time_step, velocity_gradient)
-                        end if
-                    enddo clusterloop
-                !$OMP END DO
-            !$OMP END PARALLEL
+                    if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
+                        call apply_deformation_step(cluster_ptr, spin, index_cluster, deformation_gradient_during_time_step, velocity_gradient)
+                    end if
+                enddo clusterloop
+            !$OMP END PARALLEL DO
 
             do i = 1, size(clusters)
                 do j = 1, size(clusters(i)%grains)
                     total_weight = total_weight+clusters(i)%weight
-                    taylor_factor = clusters(i)%grains(j)%sum_slip_current/von_mises_strain_rate
-                    homogenized_taylor_factor = homogenized_taylor_factor+taylor_factor*clusters(i)%weight
-                    homogenized_total_slip = homogenized_total_slip+clusters(i)%grains(j)%sum_slip_current*clusters(i)%weight
                     homogenized_stress = homogenized_stress+clusters(i)%grains(j)%stress*clusters(i)%weight
-                    homogenized_work = homogenized_work+clusters(i)%grains(j)%get_work_rate()
+                    if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
+                        taylor_factor = clusters(i)%grains(j)%sum_slip_current/von_mises_strain_rate
+                        homogenized_taylor_factor = homogenized_taylor_factor+taylor_factor*clusters(i)%weight
+                        homogenized_total_slip = homogenized_total_slip+clusters(i)%grains(j)%sum_slip_current*clusters(i)%weight
+                        homogenized_work = homogenized_work+clusters(i)%grains(j)%get_work_rate()
+                    end if
                 end do
             end do
 
