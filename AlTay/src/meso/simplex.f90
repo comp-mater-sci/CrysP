@@ -222,7 +222,7 @@ contains
         most_overstressed_system = 0
         do i = 1, size(overstress)
             overstress(i) = merge(rss(i) - crss(1, i), -rss(i) - crss(2, i), rss(i) >= 0._DP)
-            if ((overstress(i) > tmp) .and. (.not. bas(i))) then
+            if (overstress(i) > tmp) then
                 tmp = overstress(i)
                 most_overstressed_system = i
             end if
