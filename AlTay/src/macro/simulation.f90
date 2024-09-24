@@ -149,19 +149,13 @@ module simulation
 
             nrstep = nrstep+1
 
-            if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                !Deformation gradient exactly in the middle of the time step.
-                deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
-            end if
+           deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
 
             !$OMP PARALLEL SHARED(step, clusters, astate, spin, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(i)
                 !$OMP DO SCHEDULE(DYNAMIC, 1)
                     clusterloop: do i = 1, size(clusters)
                         call get_stress_state(clusters(i))
-
-                        if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                            call apply_deformation_step(clusters(i), spin, i, deformation_gradient_during_time_step, velocity_gradient)
-                        end if
+                        call apply_deformation_step(clusters(i), spin, i, deformation_gradient_during_time_step, velocity_gradient)
                     enddo clusterloop
                 !$OMP END DO
             !$OMP END PARALLEL
@@ -170,12 +164,10 @@ module simulation
                 do j = 1, size(clusters(i)%grains)
                     total_weight = total_weight+clusters(i)%weight
                     homogenized_stress = homogenized_stress+clusters(i)%grains(j)%stress*clusters(i)%weight
-                    if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                        taylor_factor = clusters(i)%grains(j)%sum_slip_current/von_mises_strain_rate
-                        homogenized_taylor_factor = homogenized_taylor_factor+taylor_factor*clusters(i)%weight
-                        homogenized_total_slip = homogenized_total_slip+clusters(i)%grains(j)%sum_slip_current*clusters(i)%weight
-                        homogenized_work = homogenized_work+clusters(i)%grains(j)%get_work_rate()
-                    end if
+                    taylor_factor = clusters(i)%grains(j)%sum_slip_current/von_mises_strain_rate
+                    homogenized_taylor_factor = homogenized_taylor_factor+taylor_factor*clusters(i)%weight
+                    homogenized_total_slip = homogenized_total_slip+clusters(i)%grains(j)%sum_slip_current*clusters(i)%weight
+                    homogenized_work = homogenized_work+clusters(i)%grains(j)%get_work_rate()
                 end do
             end do
 
@@ -193,13 +185,11 @@ module simulation
             end associate
 
             homogenized_total_slip = homogenized_total_slip/total_weight
-            if (.not.astate%simulCalls(astate%this)%input%keep_state) homogenized_total_slipTOT = homogenized_total_slipTOT+homogenized_total_slip
+            homogenized_total_slipTOT = homogenized_total_slipTOT+homogenized_total_slip
 
             von_mises_strain = von_mises_strain+von_mises_strain_rate
 
-            if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
-            end if
+            deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
         enddo steploop
     end subroutine
 
