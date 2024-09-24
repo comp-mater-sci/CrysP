@@ -97,18 +97,13 @@ module simulation
         real(DP), intent(in):: velocity_gradient(3, 3)
         integer, intent(in):: NFILE0
         integer:: cluster_size, &
-                  index_cluster, &
                   step, &
-                  n_grains, &
                   info, &
                   NFILE, &
-                  i, &
-                  j, &
-                  l
+                  i, j, l               !> Iteration variables
         real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
                    homogenized_total_slip, & ! homogenized_total_slip: homogenized slip per step
-                   total_slip_rate, &  ! Total slip rate in current grain
                    taylor_factor, &  ! Taylor factor of the current grain
                    homogenized_taylor_factor, &   !Volume-averaged Taylor factor
                    WorkRate, &  ! Rate of plastic work per unit volume in the crystal
@@ -117,32 +112,26 @@ module simulation
                    deformation_gradient_half_increment(3, 3), &
                    strain_rate(3, 3), &
                    spin(3, 3), &
-                   von_mises_strain_mode(3, 3), &
                    von_mises_strain_rate, &
-                   deformation_gradient_during_time_step(3, 3), &
-                   stress_cluster(3, 3)
-        type(Cluster), pointer:: cluster_ptr
+                   deformation_gradient_during_time_step(3, 3)
 
         ! Per-call selection of the model: cluster_size must be set
         cluster_size = acnf%simul_init%NGR
-        n_grains = size(clusters) * cluster_size
         NFILE = NFILE0*NFILE1
 
         strain_rate = symmetric_part(velocity_gradient)
         spin = antisymmetric_part(velocity_gradient)
         von_mises_strain_rate = SQR0P67*norm2(strain_rate)
-        von_mises_strain_mode = strain_rate/von_mises_strain_rate
         deformation_gradient_half_increment = matrix_exponential_small_norm(velocity_gradient/2._DP)
         deformation_gradient_increment = matmul(deformation_gradient_half_increment, deformation_gradient_half_increment)
 
         deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
 
         !Update cluster state tot the state half way through the first time increment
-        !$OMP PARALLEL SHARED(clusters, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(i, cluster_ptr)
+        !$OMP PARALLEL SHARED(clusters, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(i)
             !$OMP DO SCHEDULE(static, 1)
                 do i = 1, size(clusters)
-                    cluster_ptr => clusters(i)
-                    call update_cluster_state(cluster_ptr, deformation_gradient_during_time_step, velocity_gradient, i)
+                    call update_cluster_state(clusters(i), deformation_gradient_during_time_step, velocity_gradient, i)
                 end do
             !$OMP END DO
         !$OMP END PARALLEL
@@ -165,14 +154,13 @@ module simulation
                 deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
             end if
 
-            !$OMP PARALLEL SHARED(step, clusters, astate, spin, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(index_cluster, cluster_ptr)
+            !$OMP PARALLEL SHARED(step, clusters, astate, spin, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(i)
                 !$OMP DO SCHEDULE(DYNAMIC, 1)
-                    clusterloop: do index_cluster = 1, size(clusters)
-                        cluster_ptr => clusters(index_cluster)
-                        call get_stress_state(cluster_ptr)
+                    clusterloop: do i = 1, size(clusters)
+                        call get_stress_state(clusters(i))
 
                         if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                            call apply_deformation_step(cluster_ptr, spin, index_cluster, deformation_gradient_during_time_step, velocity_gradient)
+                            call apply_deformation_step(clusters(i), spin, i, deformation_gradient_during_time_step, velocity_gradient)
                         end if
                     enddo clusterloop
                 !$OMP END DO
