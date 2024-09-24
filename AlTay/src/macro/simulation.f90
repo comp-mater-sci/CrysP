@@ -115,7 +115,6 @@ module simulation
                    homogenized_work, &  ! Total plastic work per unit volume in crystal
                    deformation_gradient_increment(3, 3), &
                    deformation_gradient_half_increment(3, 3), &
-                   deformation_gradient_increment_inverse(3, 3), &
                    strain_rate(3, 3), &
                    spin(3, 3), &
                    von_mises_strain_mode(3, 3), &
@@ -133,12 +132,12 @@ module simulation
         spin = antisymmetric_part(velocity_gradient)
         von_mises_strain_rate = SQR0P67*norm2(strain_rate)
         von_mises_strain_mode = strain_rate/von_mises_strain_rate
-        deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient)
         deformation_gradient_half_increment = matrix_exponential_small_norm(velocity_gradient/2._DP)
-        deformation_gradient_increment_inverse = invert(deformation_gradient_increment)
+        deformation_gradient_increment = matmul(deformation_gradient_half_increment, deformation_gradient_half_increment)
 
         deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
 
+        !Update cluster state tot the state half way through the first time increment
         !$OMP PARALLEL SHARED(clusters, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(i, cluster_ptr)
             !$OMP DO SCHEDULE(static, 1)
                 do i = 1, size(clusters)
