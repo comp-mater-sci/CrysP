@@ -69,33 +69,17 @@ module simulation
                   n_clusters, &
                   cluster_size
         real(DP):: total_weight
-        type(Cluster), pointer:: cluster_ptr
-        real(DP), dimension(3, 3):: deformation_gradient_half_increment, &
-                                   deformation_gradient_during_time_step
 
         n_clusters = size(clusters)
         cluster_size = size(clusters(1)%grains)
 
-        deformation_gradient_half_increment = matrix_exponential_small_norm(velocity_gradient/2._DP)
-        deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
-
-        !$OMP PARALLEL SHARED(clusters, deformation_gradient, velocity_gradient) PRIVATE(i, cluster_ptr)
-            !$OMP DO SCHEDULE(static, 1)
-                do i = 1, size(clusters)
-                    cluster_ptr => clusters(i)
-                    call update_cluster_state(cluster_ptr, deformation_gradient_during_time_step, velocity_gradient, i)
+        !$OMP PARALLEL SHARED(clusters, velocity_gradient, n_clusters) PRIVATE(i)
+            !$OMP DO SCHEDULE(DYNAMIC, 1)
+                do i = 1, n_clusters
+                    call clusters(i)%set_imposed_strain_rate(velocity_gradient)
+                    call get_stress_state(clusters(i))
                 end do
             !$OMP END DO
-        !$OMP END PARALLEL
-
-
-        !$OMP PARALLEL SHARED(clusters, velocity_gradient, n_clusters) PRIVATE(i)
-        !$OMP DO SCHEDULE(DYNAMIC, 1)
-        do i = 1, n_clusters
-            call clusters(i)%set_imposed_strain_rate(velocity_gradient)
-            call get_stress_state(clusters(i))
-        end do
-        !$OMP END DO
         !$OMP END PARALLEL
 
         total_weight = 0._DP
