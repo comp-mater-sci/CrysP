@@ -27,18 +27,19 @@ module simulation
              simulation_run, &
              simulation_finalize, &
              deformation_gradient, &
-             output_current_state
+             output_current_state, &
+             get_stress
     contains
+
 
     ! initialization call
     subroutine simulation_init(orientations, boundaries)
-        integer:: cluster_size         !< number of grains
-
-        character(len = 40):: TITEL
-        integer:: info
         real(DP), dimension(:,:), allocatable, intent(in):: orientations, &
                                                             boundaries
 
+        character(len = 40):: TITEL
+        integer:: info, &
+                  cluster_size
         character(*), parameter:: PROC_NAME = 'SIMUL0'
 
 
@@ -55,11 +56,37 @@ module simulation
   98    format (A)
 
 !       read the parameters of the work hardening model
-        clusters => taylor_init(acnf%deformation_mechanism, cluster_size, acnf%simul_init%FMicro, orientations, boundaries)
-
         deformation_gradient = UNIT_MATRIX_3X3
+        clusters => taylor_init(acnf%deformation_mechanism, cluster_size, deformation_gradient, orientations, boundaries)
         von_mises_strain = 0._DP
     end subroutine
+
+    function get_stress(velocity_gradient) result(stress_state)
+        real(DP), dimension(3, 3), intent(in):: velocity_gradient
+        real(DP), dimension(3, 3):: stress_state
+
+        integer:: i, j, &
+                  n_clusters
+        real(DP):: homogenized_stress(3, 3), &
+                   total_weight
+
+        n_clusters = size(clusters)
+
+        do i = 1, n_clusters
+            call clusters(i)%set_imposed_strain_rate(velocity_gradient)
+            call get_stress_state(clusters(i))
+        end do
+
+        total_weight = 0._DP
+        homogenized_stress = 0._DP
+        do i = 1, n_clusters
+            do j = 1, size(clusters(i)%grains)
+                total_weight = total_weight+clusters(i)%weight
+                homogenized_stress = homogenized_stress+clusters(i)%grains(j)%stress*clusters(i)%weight
+            end do
+        end do
+        homogenized_stress = homogenized_stress/total_weight
+    end function
 
     subroutine simulation_run(NFILE0, velocity_gradient)
         real(DP), intent(in):: velocity_gradient(3, 3)
@@ -104,7 +131,6 @@ module simulation
         deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient)
         deformation_gradient_half_increment = matrix_exponential_small_norm(velocity_gradient/2._DP)
         deformation_gradient_increment_inverse = invert(deformation_gradient_increment)
-
 
         deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
 
@@ -161,14 +187,7 @@ module simulation
                 end do
             end do
 
-
             homogenized_stress = homogenized_stress/total_weight
-
-            do i = 1, 2
-                do j = i+1, 3
-                    homogenized_stress(j, i)=homogenized_stress(i, j)
-                end do
-            end do
             homogenized_taylor_factor = homogenized_taylor_factor/total_weight
 
             ! Get the homogenized quantities:

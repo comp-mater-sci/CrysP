@@ -29,6 +29,7 @@ module cluster_module
         procedure:: update_relaxations              => cluster_update_relaxations
         procedure:: get_basis                       => cluster_get_basis
         procedure:: get_crss                        => cluster_get_crss
+        procedure:: set_imposed_strain_rate         => cluster_set_imposed_strain_rate
     end type
 
 contains
@@ -265,6 +266,17 @@ contains
                 new_vec = matmul(this%inverse_basis, basis(:,i))
                 call update_inverse_basis(this%inverse_basis, new_vec, i, dummy)
             end if
+        end do
+    end subroutine
+
+    subroutine cluster_set_imposed_strain_rate(this, velocity_gradient)
+        class(Cluster), intent(inout):: this
+        real(DP), dimension(3, 3), intent(in):: velocity_gradient
+
+        integer:: i
+
+        do i = 1, size(this%grains)
+            this%grains(i)%imposed_strain = convert_stress_strain_space(velocity_gradient .toframe. this%grains(i)%orientation)
         end do
     end subroutine
 end module

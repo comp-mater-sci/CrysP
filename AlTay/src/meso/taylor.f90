@@ -30,7 +30,7 @@ contains
         real(DP), dimension(3, 3), intent(in):: initial_deformation_gradient
         real(DP), dimension(:,:), allocatable, intent(in):: orientations, &
                                                             boundaries
-        integer:: i, j, &
+        integer:: i, j, k, &
                   n_slip_systems_grain
 
         n_slip_systems_grain = size(deformation_mechanism, 3)
@@ -39,6 +39,10 @@ contains
             allocate(clusters(size(orientations, 2)))
             do i = 1, size(clusters)
                 call clusters(i)%init(orientations(:,i:i), deformation_mechanism)
+
+                do j = 1, cluster_size
+                    call clusters(i)%grains(j)%set_crss(hardening_get_crss((i-1)*cluster_size+j, clusters(i)%grains(j)%sum_slip))
+                enddo
             end do
         else
             allocate(clusters(size(orientations, 2)/2))
@@ -46,6 +50,13 @@ contains
             do i = 1, size(clusters)
                 call clusters(i)%init(orientations(:,2*i-1:2*i), deformation_mechanism, boundaries(:,j), initial_deformation_gradient)
                 j = merge(1, j+1, j == size(boundaries, 2))
+
+                do k = 1, cluster_size
+                    call clusters(i)%grains(k)%set_crss(hardening_get_crss((i-1)*cluster_size+k, clusters(i)%grains(k)%sum_slip))
+                enddo
+
+                call clusters(i)%update_relaxations(initial_deformation_gradient)
+                clusters(i)%weight = cluster_weight(clusters(i), initial_deformation_gradient)
             end do
         end if
     end function
@@ -159,29 +170,21 @@ contains
         integer, intent(in):: index_cluster
         integer:: i, &
                   j, &
-                  start_index_grain, &
-                  start_index_slip_systems, &
-                  start_index_relaxations, &
-                  n_slip_systems_grain, &
                   cluster_size
-        real(DP):: relaxations_crystal_frame(3, 3), &
-                   dummy(10), new_vec(10)
 
         cluster_size = size(cluster_ptr%grains)
-        n_slip_systems_grain = size(cluster_ptr%grains(1)%slip_systems)
-        start_index_relaxations = 2*n_slip_systems_grain+1
 
-        if (cluster_size == 2) cluster_ptr%weight = cluster_weight(cluster_ptr, deformation_gradient)
+        call cluster_ptr%set_imposed_strain_rate(velocity_gradient)
+
         !Update microstructure
         do i = 1, cluster_size
-            start_index_grain = 5*(i-1)+1
-            start_index_slip_systems = n_slip_systems_grain*(i-1)+1
-            cluster_ptr%grains(i)%imposed_strain = convert_stress_strain_space(velocity_gradient .toframe. cluster_ptr%grains(i)%orientation)
             call cluster_ptr%grains(i)%set_crss(hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip))
         enddo
 
-        if (cluster_size == 2 ) &
+        if (cluster_size == 2 ) then
             call cluster_ptr%update_relaxations(deformation_gradient)
+            cluster_ptr%weight = cluster_weight(cluster_ptr, deformation_gradient)
+        end if
     end subroutine
 
     real(DP) function cluster_weight(cluster_ptr, deformation_gradient) result(weight)
