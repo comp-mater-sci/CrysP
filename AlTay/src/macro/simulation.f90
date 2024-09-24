@@ -73,8 +73,6 @@ module simulation
 
         n_clusters = size(clusters)
 
-        print *, "In get_stress"
-
         deformation_gradient_half_increment = matrix_exponential_small_norm(velocity_gradient/2._DP)
         deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
 
@@ -88,21 +86,27 @@ module simulation
         !$OMP END PARALLEL
 
 
+        !$OMP PARALLEL SHARED(clusters, velocity_gradient, n_clusters) PRIVATE(i)
+        !$OMP DO SCHEDULE(DYNAMIC, 1)
         do i = 1, n_clusters
             call clusters(i)%set_imposed_strain_rate(velocity_gradient)
             call get_stress_state(clusters(i))
         end do
+        !$OMP END DO
+        !$OMP END PARALLEL
+
         total_weight = 0._DP
         homogenized_stress = 0._DP
         do i = 1, n_clusters
             do j = 1, size(clusters(i)%grains)
                 total_weight = total_weight+clusters(i)%weight
                 homogenized_stress = homogenized_stress+clusters(i)%grains(j)%stress*clusters(i)%weight
-                !print *, "Weight: ", clusters(i)%weight
-
             end do
         end do
         homogenized_stress = homogenized_stress/total_weight
+
+        print "(3f6.2)", homogenized_stress
+
     end function
 
     subroutine simulation_run(NFILE0, velocity_gradient)
@@ -135,9 +139,6 @@ module simulation
                    deformation_gradient_during_time_step(3, 3), &
                    stress_cluster(3, 3)
         type(Cluster), pointer:: cluster_ptr
-
-        print *, "In simulation_run"
-
 
         ! Per-call selection of the model: cluster_size must be set
         cluster_size = acnf%simul_init%NGR
@@ -209,6 +210,8 @@ module simulation
 
             homogenized_stress = homogenized_stress/total_weight
             homogenized_taylor_factor = homogenized_taylor_factor/total_weight
+
+            print "(3f6.2)", homogenized_stress
 
             ! Get the homogenized quantities:
             associate (callout => astate%simulCalls(astate%this)%output)
