@@ -62,8 +62,9 @@ contains
         end if
     end function
 
-    subroutine get_stress_state(cluster_ptr)
+    subroutine get_stress_state(cluster_ptr, velocity_gradient)
         type(Cluster), pointer, intent(in):: cluster_ptr
+        real(DP), dimension(3, 3), intent(in):: velocity_gradient
         real(DP), dimension(cluster_ptr%n_systems):: slip_rates, &
                                                      overstress, &
                                                      rss
@@ -72,6 +73,8 @@ contains
         real(DP), dimension(5*size(cluster_ptr%grains)):: stress_cluster
 
         cluster_size = size(cluster_ptr%grains)
+
+        call cluster_ptr%set_imposed_strain_rate(velocity_gradient)
 
         call simplex_solve(cluster_ptr%get_taylor_coeffs(), cluster_ptr%get_imposed_strain(), cluster_ptr%get_crss(), cluster_ptr%inverse_basis, &
         cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
@@ -85,12 +88,10 @@ contains
         end do
     end subroutine
 
-    subroutine apply_deformation_step(cluster_ptr, imposed_spin, index_cluster, deformation_gradient, velocity_gradient)
+    subroutine apply_deformation_step(cluster_ptr, imposed_spin, index_cluster)
         type(Cluster), pointer, intent(in):: cluster_ptr
         integer, intent(in)::       index_cluster
-        real(DP), dimension(3, 3), intent(in)::  imposed_spin, &
-                                                deformation_gradient, &
-                                                velocity_gradient
+        real(DP), dimension(3, 3), intent(in)::  imposed_spin
         real(DP)::                  orientation_increment(3, 3), &
                                     strain_grain(5), &
                                     strain_relaxations(5), &
@@ -160,22 +161,17 @@ contains
             if (n_relaxations > 0) orientation_increment = orientation_increment-convert_spin(matmul(cluster_ptr%get_spin_coeffs_relaxations(j), cluster_ptr%relaxations%slip_rate))
             grain_ptr%orientation = matmul(orientation_increment, grain_ptr%orientation)
         end do
-
-        call update_cluster_state(cluster_ptr, deformation_gradient, velocity_gradient, index_cluster)
     end subroutine
 
-    subroutine update_cluster_state(cluster_ptr, deformation_gradient, velocity_gradient, index_cluster)
+    subroutine update_cluster_state(cluster_ptr, deformation_gradient, index_cluster)
         type(Cluster), pointer, intent(in):: cluster_ptr
-        real(DP), dimension(3, 3), intent(in):: deformation_gradient, &
-                                                velocity_gradient
+        real(DP), dimension(3, 3), intent(in):: deformation_gradient
         integer, intent(in):: index_cluster
         integer:: i, &
                   j, &
                   cluster_size
 
         cluster_size = size(cluster_ptr%grains)
-
-        call cluster_ptr%set_imposed_strain_rate(velocity_gradient)
 
         !Update microstructure
         do i = 1, cluster_size

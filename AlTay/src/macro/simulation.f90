@@ -76,8 +76,7 @@ module simulation
         !$OMP PARALLEL SHARED(clusters, velocity_gradient, n_clusters) PRIVATE(i)
             !$OMP DO SCHEDULE(DYNAMIC, 1)
                 do i = 1, n_clusters
-                    call clusters(i)%set_imposed_strain_rate(velocity_gradient)
-                    call get_stress_state(clusters(i))
+                    call get_stress_state(clusters(i), velocity_gradient)
                 end do
             !$OMP END DO
         !$OMP END PARALLEL
@@ -97,6 +96,7 @@ module simulation
         real(DP), intent(in):: velocity_gradient(3, 3)
         integer, intent(in):: NFILE0
         integer:: cluster_size, &
+                  n_clusters, &
                   step, &
                   info, &
                   NFILE, &
@@ -115,7 +115,7 @@ module simulation
                    von_mises_strain_rate, &
                    deformation_gradient_during_time_step(3, 3)
 
-        ! Per-call selection of the model: cluster_size must be set
+        n_clusters = size(clusters)
         cluster_size = acnf%simul_init%NGR
         NFILE = NFILE0*NFILE1
 
@@ -124,23 +124,12 @@ module simulation
         von_mises_strain_rate = SQR0P67*norm2(strain_rate)
         deformation_gradient_half_increment = matrix_exponential_small_norm(velocity_gradient/2._DP)
         deformation_gradient_increment = matmul(deformation_gradient_half_increment, deformation_gradient_half_increment)
-
         deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
-
-        !Update cluster state tot the state half way through the first time increment
-        !$OMP PARALLEL SHARED(clusters, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(i)
-            !$OMP DO SCHEDULE(static, 1)
-                do i = 1, size(clusters)
-                    call update_cluster_state(clusters(i), deformation_gradient_during_time_step, velocity_gradient, i)
-                end do
-            !$OMP END DO
-        !$OMP END PARALLEL
 
         ! Output the current texture
         if (NFILE == 1) call cur_write_block(IMP1, clusters, deformation_gradient)
 
         steploop: DO step = 1, astate%simulCalls(astate%this)%input%nsteps
-
             total_weight = 0._DP
             homogenized_stress = 0._DP
             homogenized_taylor_factor = 0._DP
@@ -149,19 +138,18 @@ module simulation
 
             nrstep = nrstep+1
 
-           deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
-
-            !$OMP PARALLEL SHARED(step, clusters, astate, spin, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(i)
+            !$OMP PARALLEL SHARED(clusters, n_clusters, spin, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(i)
                 !$OMP DO SCHEDULE(DYNAMIC, 1)
-                    clusterloop: do i = 1, size(clusters)
-                        call get_stress_state(clusters(i))
-                        call apply_deformation_step(clusters(i), spin, i, deformation_gradient_during_time_step, velocity_gradient)
-                    enddo clusterloop
+                    do i = 1, n_clusters
+                        call update_cluster_state(clusters(i), deformation_gradient_during_time_step, i)
+                        call get_stress_state(clusters(i), velocity_gradient)
+                        call apply_deformation_step(clusters(i), spin, i)
+                    enddo
                 !$OMP END DO
             !$OMP END PARALLEL
 
-            do i = 1, size(clusters)
-                do j = 1, size(clusters(i)%grains)
+            do i = 1, n_clusters
+                do j = 1, cluster_size
                     total_weight = total_weight+clusters(i)%weight
                     homogenized_stress = homogenized_stress+clusters(i)%grains(j)%stress*clusters(i)%weight
                     taylor_factor = clusters(i)%grains(j)%sum_slip_current/von_mises_strain_rate
@@ -190,6 +178,7 @@ module simulation
             von_mises_strain = von_mises_strain+von_mises_strain_rate
 
             deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
+            deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
         enddo steploop
     end subroutine
 
@@ -202,5 +191,4 @@ module simulation
     subroutine simulation_finalize()
         deallocate(clusters)
     end subroutine
-
 end module
