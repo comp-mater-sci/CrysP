@@ -55,9 +55,10 @@ module simulation
         if (NFILE1 == 1) call cur_write_title(IMP1, TITEL, info)
   98    format (A)
 
-        clusters => taylor_init(acnf%deformation_mechanism, cluster_size, deformation_gradient, orientations, boundaries)
         deformation_gradient = UNIT_MATRIX_3X3
+        clusters => taylor_init(acnf%deformation_mechanism, cluster_size, acnf%simul_init%FMicro, orientations, boundaries)
         von_mises_strain = 0._DP
+
     end subroutine
 
     function get_stress(velocity_gradient) result(homogenized_stress)
@@ -65,13 +66,15 @@ module simulation
         real(DP), dimension(3, 3):: homogenized_stress
 
         integer:: i, j, &
-                  n_clusters
+                  n_clusters, &
+                  cluster_size
         real(DP):: total_weight
         type(Cluster), pointer:: cluster_ptr
         real(DP), dimension(3, 3):: deformation_gradient_half_increment, &
                                    deformation_gradient_during_time_step
 
         n_clusters = size(clusters)
+        cluster_size = size(clusters(1)%grains)
 
         deformation_gradient_half_increment = matrix_exponential_small_norm(velocity_gradient/2._DP)
         deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
@@ -98,15 +101,12 @@ module simulation
         total_weight = 0._DP
         homogenized_stress = 0._DP
         do i = 1, n_clusters
+            total_weight = total_weight+clusters(i)%weight
             do j = 1, size(clusters(i)%grains)
-                total_weight = total_weight+clusters(i)%weight
                 homogenized_stress = homogenized_stress+clusters(i)%grains(j)%stress*clusters(i)%weight
             end do
         end do
-        homogenized_stress = homogenized_stress/total_weight
-
-        print "(3f6.2)", homogenized_stress
-
+        homogenized_stress = homogenized_stress/total_weight/cluster_size
     end function
 
     subroutine simulation_run(NFILE0, velocity_gradient)
@@ -210,8 +210,6 @@ module simulation
 
             homogenized_stress = homogenized_stress/total_weight
             homogenized_taylor_factor = homogenized_taylor_factor/total_weight
-
-            print "(3f6.2)", homogenized_stress
 
             ! Get the homogenized quantities:
             associate (callout => astate%simulCalls(astate%this)%output)
