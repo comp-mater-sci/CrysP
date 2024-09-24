@@ -75,7 +75,7 @@ contains
 
     !> Convert second-rank tensor t into 5D vector following Van Houtte et al., 1992.
     !> Hydrostatic component is subtracted and tensor is symmetrized
-    pure function convert_stress_strain_mat_vec(t) result(v)
+    function convert_stress_strain_mat_vec(t) result(v)
         real(DP), dimension(3, 3), intent(in)   :: t
         real(DP), dimension(5)                :: v
 

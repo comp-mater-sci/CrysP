@@ -15,7 +15,8 @@ module taylor
     public ::   taylor_init, &
                 get_stress_state, &
                 apply_deformation_step, &
-                update_cluster_state
+                update_cluster_state, &
+                cluster_weight
 
     !Initial values for the inverse basis and basis systems.
 

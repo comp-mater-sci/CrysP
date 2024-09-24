@@ -17,7 +17,7 @@ module simulation
     integer:: NFILE1
 
     real(DP):: von_mises_strain
-    real(DP), dimension(3, 3):: deformation_gradient
+    real(DP), dimension(3, 3):: deformation_gradient = UNIT_MATRIX_3X3
     type(Cluster), dimension(:), pointer, contiguous:: clusters
 
     character(*), parameter:: MOD_NAME = 'Simul'
@@ -39,7 +39,7 @@ module simulation
 
         character(len = 40):: TITEL
         integer:: info, &
-                  cluster_size
+                  cluster_size, i, j
         character(*), parameter:: PROC_NAME = 'SIMUL0'
 
 
@@ -55,34 +55,51 @@ module simulation
         if (NFILE1 == 1) call cur_write_title(IMP1, TITEL, info)
   98    format (A)
 
-!       read the parameters of the work hardening model
-        deformation_gradient = UNIT_MATRIX_3X3
         clusters => taylor_init(acnf%deformation_mechanism, cluster_size, deformation_gradient, orientations, boundaries)
+        deformation_gradient = UNIT_MATRIX_3X3
         von_mises_strain = 0._DP
     end subroutine
 
-    function get_stress(velocity_gradient) result(stress_state)
+    function get_stress(velocity_gradient) result(homogenized_stress)
         real(DP), dimension(3, 3), intent(in):: velocity_gradient
-        real(DP), dimension(3, 3):: stress_state
+        real(DP), dimension(3, 3):: homogenized_stress
 
         integer:: i, j, &
                   n_clusters
-        real(DP):: homogenized_stress(3, 3), &
-                   total_weight
+        real(DP):: total_weight
+        type(Cluster), pointer:: cluster_ptr
+        real(DP), dimension(3, 3):: deformation_gradient_half_increment, &
+                                   deformation_gradient_during_time_step
 
         n_clusters = size(clusters)
+
+        print *, "In get_stress"
+
+        deformation_gradient_half_increment = matrix_exponential_small_norm(velocity_gradient/2._DP)
+        deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
+
+        !$OMP PARALLEL SHARED(clusters, deformation_gradient, velocity_gradient) PRIVATE(i, cluster_ptr)
+            !$OMP DO SCHEDULE(static, 1)
+                do i = 1, size(clusters)
+                    cluster_ptr => clusters(i)
+                    call update_cluster_state(cluster_ptr, deformation_gradient_during_time_step, velocity_gradient, i)
+                end do
+            !$OMP END DO
+        !$OMP END PARALLEL
+
 
         do i = 1, n_clusters
             call clusters(i)%set_imposed_strain_rate(velocity_gradient)
             call get_stress_state(clusters(i))
         end do
-
         total_weight = 0._DP
         homogenized_stress = 0._DP
         do i = 1, n_clusters
             do j = 1, size(clusters(i)%grains)
                 total_weight = total_weight+clusters(i)%weight
                 homogenized_stress = homogenized_stress+clusters(i)%grains(j)%stress*clusters(i)%weight
+                !print *, "Weight: ", clusters(i)%weight
+
             end do
         end do
         homogenized_stress = homogenized_stress/total_weight
@@ -118,6 +135,9 @@ module simulation
                    deformation_gradient_during_time_step(3, 3), &
                    stress_cluster(3, 3)
         type(Cluster), pointer:: cluster_ptr
+
+        print *, "In simulation_run"
+
 
         ! Per-call selection of the model: cluster_size must be set
         cluster_size = acnf%simul_init%NGR
