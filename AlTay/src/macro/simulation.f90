@@ -113,7 +113,8 @@ module simulation
                    strain_rate(3, 3), &
                    spin(3, 3), &
                    von_mises_strain_rate, &
-                   deformation_gradient_during_time_step(3, 3)
+                   deformation_gradient_during_time_step(3, 3), &
+                   deformation_gradient_after_time_step(3, 3)
 
         n_clusters = size(clusters)
         cluster_size = acnf%simul_init%NGR
@@ -125,9 +126,7 @@ module simulation
         deformation_gradient_half_increment = matrix_exponential_small_norm(velocity_gradient/2._DP)
         deformation_gradient_increment = matmul(deformation_gradient_half_increment, deformation_gradient_half_increment)
         deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
-
-        ! Output the current texture
-        if (NFILE == 1) call cur_write_block(IMP1, clusters, deformation_gradient)
+        deformation_gradient_after_time_step = matmul(deformation_gradient_increment, deformation_gradient)
 
         steploop: DO step = 1, astate%simulCalls(astate%this)%input%nsteps
             total_weight = 0._DP
@@ -138,10 +137,11 @@ module simulation
 
             nrstep = nrstep+1
 
-            !$OMP PARALLEL SHARED(clusters, n_clusters, spin, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(i)
+            !$OMP PARALLEL SHARED(clusters, n_clusters, spin, deformation_gradient_during_time_step, deformation_gradient_after_time_step, velocity_gradient) PRIVATE(i)
                 !$OMP DO SCHEDULE(DYNAMIC, 1)
                     do i = 1, n_clusters
-                        call apply_deformation_step(clusters(i), spin, i, deformation_gradient_during_time_step, velocity_gradient)
+                        call apply_deformation_step(clusters(i), spin, i, deformation_gradient_during_time_step, &
+                        deformation_gradient_after_time_step, velocity_gradient)
                     enddo
                 !$OMP END DO
             !$OMP END PARALLEL
@@ -174,9 +174,9 @@ module simulation
             homogenized_total_slipTOT = homogenized_total_slipTOT+homogenized_total_slip
 
             von_mises_strain = von_mises_strain+von_mises_strain_rate
-
-            deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
             deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
+            deformation_gradient = deformation_gradient_after_time_step
+            deformation_gradient_after_time_step = matmul(deformation_gradient_increment, deformation_gradient_after_time_step)
         enddo steploop
     end subroutine
 

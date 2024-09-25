@@ -84,11 +84,12 @@ contains
         end do
     end subroutine
 
-    subroutine apply_deformation_step(cluster_ptr, imposed_spin, index_cluster, deformation_gradient, velocity_gradient)
+    subroutine apply_deformation_step(cluster_ptr, imposed_spin, index_cluster, deformation_gradient, deformation_gradient_final, velocity_gradient)
         type(Cluster), pointer, intent(in):: cluster_ptr
         integer, intent(in)::       index_cluster
         real(DP), dimension(3, 3), intent(in)::  imposed_spin
         real(DP), dimension(3, 3), intent(in)::  deformation_gradient
+        real(DP), dimension(3, 3), intent(in)::  deformation_gradient_final
         real(DP), dimension(3, 3), intent(in)::  velocity_gradient
         real(DP)::                  orientation_increment(3, 3), &
                                     strain_grain(5), &
@@ -121,7 +122,6 @@ contains
 
         if (cluster_size == 2 ) then
             call cluster_ptr%update_relaxations(deformation_gradient)
-            cluster_ptr%weight = cluster_weight(cluster_ptr, deformation_gradient)
         end if
 
         call cluster_ptr%set_imposed_strain_rate(velocity_gradient)
@@ -187,6 +187,9 @@ contains
             if (n_relaxations > 0) orientation_increment = orientation_increment-convert_spin(matmul(cluster_ptr%get_spin_coeffs_relaxations(j), cluster_ptr%relaxations%slip_rate))
             grain_ptr%orientation = matmul(orientation_increment, grain_ptr%orientation)
         end do
+
+        if (cluster_size == 2) &
+            cluster_ptr%weight = cluster_weight(cluster_ptr, deformation_gradient_final)
     end subroutine
 
     real(DP) function cluster_weight(cluster_ptr, deformation_gradient) result(weight)
@@ -196,8 +199,17 @@ contains
                    axis_lengths(3), &
                    alignment_factor
 
+
+        print *, "Boundary reference frame: "
+        print "(3f6.2)", cluster_ptr%boundary_reference_frame
+
+
         !Applying deformation gradient to initial grain boundary orientation yields deformed grain axes
         grain_axes = matmul(deformation_gradient, cluster_ptr%boundary_reference_frame)
+
+        print *, "Grain_axes: "
+        print "(3f6.2)", grain_axes
+
         axis_lengths = norm2(grain_axes, 1)
         !Alignment factor equals sin(axes 2 and 3) * cos(axis 1 and normal to plane defined by axes 2 and 3)
         !The more the axes are orthogonal, the more alignment factor tends to 1.
