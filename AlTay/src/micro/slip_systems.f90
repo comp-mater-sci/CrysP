@@ -77,7 +77,6 @@ module slip_systems
     !when multiple variables associated to a single slip system must be updated.
     type SlipSystem
         real(DP):: slip_rate, &
-                   overstress, &
                    rss
         real(DP), dimension(5):: taylor_coeffs
         real(DP), dimension(3):: spin_coeffs
