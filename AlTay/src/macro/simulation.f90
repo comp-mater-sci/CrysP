@@ -141,9 +141,7 @@ module simulation
             !$OMP PARALLEL SHARED(clusters, n_clusters, spin, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(i)
                 !$OMP DO SCHEDULE(DYNAMIC, 1)
                     do i = 1, n_clusters
-                        call update_cluster_state(clusters(i), deformation_gradient_during_time_step, i)
-                        call get_stress_state(clusters(i), velocity_gradient)
-                        call apply_deformation_step(clusters(i), spin, i)
+                        call apply_deformation_step(clusters(i), spin, i, deformation_gradient_during_time_step, velocity_gradient)
                     enddo
                 !$OMP END DO
             !$OMP END PARALLEL

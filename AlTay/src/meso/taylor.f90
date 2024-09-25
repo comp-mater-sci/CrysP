@@ -88,10 +88,12 @@ contains
         end do
     end subroutine
 
-    subroutine apply_deformation_step(cluster_ptr, imposed_spin, index_cluster)
+    subroutine apply_deformation_step(cluster_ptr, imposed_spin, index_cluster, deformation_gradient, velocity_gradient)
         type(Cluster), pointer, intent(in):: cluster_ptr
         integer, intent(in)::       index_cluster
         real(DP), dimension(3, 3), intent(in)::  imposed_spin
+        real(DP), dimension(3, 3), intent(in)::  deformation_gradient
+        real(DP), dimension(3, 3), intent(in)::  velocity_gradient
         real(DP)::                  orientation_increment(3, 3), &
                                     strain_grain(5), &
                                     strain_relaxations(5), &
@@ -102,6 +104,10 @@ contains
                                     n_slip_systems_grain, &
                                     n_active_simplex, &
                                     ind_overstressed_slip_systems(8)  ! Theoretical maximum of overstressed systems is 8
+        real(DP), dimension(cluster_ptr%n_systems):: slip_rates, &
+                                                     overstress, &
+                                                     rss
+        real(DP), dimension(5*size(cluster_ptr%grains)):: stress_cluster
 
         type(Grain), pointer::      grain_ptr
         character(*), parameter::   PROC_NAME = 'apply_deformation_step'
@@ -110,6 +116,21 @@ contains
         n_slip_systems_grain = size(cluster_ptr%grains(1)%slip_systems)
         n_relaxations = merge(2, 0, size(cluster_ptr%grains) > 1)
         cluster_size = size(cluster_ptr%grains)
+
+        call update_cluster_state(cluster_ptr, deformation_gradient, index_cluster)
+
+        call cluster_ptr%set_imposed_strain_rate(velocity_gradient)
+
+        call simplex_solve(cluster_ptr%get_taylor_coeffs(), cluster_ptr%get_imposed_strain(), cluster_ptr%get_crss(), cluster_ptr%inverse_basis, &
+        cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
+
+        call cluster_ptr%set_slip_rates(slip_rates)
+        call cluster_ptr%set_overstress(overstress)
+        call cluster_ptr%set_rss(rss)
+
+        do i = 1, cluster_size
+            cluster_ptr%grains(i)%stress = convert_stress_strain_space(stress_cluster(5*(i-1)+1:5*i)) .fromframe. cluster_ptr%grains(i)%orientation
+        end do
 
         do j = 1, size(cluster_ptr%grains)
             grain_ptr => cluster_ptr%grains(j)
