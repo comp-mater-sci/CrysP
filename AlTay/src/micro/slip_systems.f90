@@ -76,8 +76,7 @@ module slip_systems
     !elsewhere it is useful because it makes many high-level expressions more clear and concise and reduces chances for mistakes
     !when multiple variables associated to a single slip system must be updated.
     type SlipSystem
-        real(DP):: slip_rate, &
-                   rss
+        real(DP):: slip_rate
         real(DP), dimension(5):: taylor_coeffs
         real(DP), dimension(3):: spin_coeffs
         real(DP), dimension(2):: crss

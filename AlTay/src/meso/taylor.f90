@@ -14,9 +14,7 @@ module taylor
     private
     public ::   taylor_init, &
                 get_stress_state, &
-                apply_deformation_step, &
-                update_cluster_state, &
-                cluster_weight
+                apply_deformation_step
 
     !Initial values for the inverse basis and basis systems.
 
@@ -80,7 +78,6 @@ contains
         cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
 
         call cluster_ptr%set_slip_rates(slip_rates)
-        call cluster_ptr%set_rss(rss)
 
         do i = 1, cluster_size
             cluster_ptr%grains(i)%stress = convert_stress_strain_space(stress_cluster(5*(i-1)+1:5*i)) .fromframe. cluster_ptr%grains(i)%orientation
@@ -117,7 +114,15 @@ contains
         n_relaxations = merge(2, 0, size(cluster_ptr%grains) > 1)
         cluster_size = size(cluster_ptr%grains)
 
-        call update_cluster_state(cluster_ptr, deformation_gradient, index_cluster)
+        !Update microstructure
+        do i = 1, cluster_size
+            call cluster_ptr%grains(i)%set_crss(hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip))
+        enddo
+
+        if (cluster_size == 2 ) then
+            call cluster_ptr%update_relaxations(deformation_gradient)
+            cluster_ptr%weight = cluster_weight(cluster_ptr, deformation_gradient)
+        end if
 
         call cluster_ptr%set_imposed_strain_rate(velocity_gradient)
 
@@ -125,7 +130,6 @@ contains
         cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
 
         call cluster_ptr%set_slip_rates(slip_rates)
-        call cluster_ptr%set_rss(rss)
 
         do i = 1, cluster_size
             cluster_ptr%grains(i)%stress = convert_stress_strain_space(stress_cluster(5*(i-1)+1:5*i)) .fromframe. cluster_ptr%grains(i)%orientation
@@ -164,7 +168,7 @@ contains
                 strain_grain = grain_ptr%imposed_strain-strain_relaxations
 
                 grain_ptr%slip_systems%slip_rate = resolve_taylor_ambiguity(ind_overstressed_slip_systems(1:n_overstressed_slip_systems), &
-                    grain_ptr%slip_systems(ind_overstressed_slip_systems(1:n_overstressed_slip_systems))%rss, &
+                    rss(ind_overstressed_slip_systems(1:n_overstressed_slip_systems)+(j-1)*n_slip_systems_grain), &
                     strain_grain, &
                     grain_ptr%get_taylor_coeffs(), &
                     n_active_simplex)
@@ -183,27 +187,6 @@ contains
             if (n_relaxations > 0) orientation_increment = orientation_increment-convert_spin(matmul(cluster_ptr%get_spin_coeffs_relaxations(j), cluster_ptr%relaxations%slip_rate))
             grain_ptr%orientation = matmul(orientation_increment, grain_ptr%orientation)
         end do
-    end subroutine
-
-    subroutine update_cluster_state(cluster_ptr, deformation_gradient, index_cluster)
-        type(Cluster), pointer, intent(in):: cluster_ptr
-        real(DP), dimension(3, 3), intent(in):: deformation_gradient
-        integer, intent(in):: index_cluster
-        integer:: i, &
-                  j, &
-                  cluster_size
-
-        cluster_size = size(cluster_ptr%grains)
-
-        !Update microstructure
-        do i = 1, cluster_size
-            call cluster_ptr%grains(i)%set_crss(hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip))
-        enddo
-
-        if (cluster_size == 2 ) then
-            call cluster_ptr%update_relaxations(deformation_gradient)
-            cluster_ptr%weight = cluster_weight(cluster_ptr, deformation_gradient)
-        end if
     end subroutine
 
     real(DP) function cluster_weight(cluster_ptr, deformation_gradient) result(weight)
