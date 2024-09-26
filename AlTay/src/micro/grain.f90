@@ -15,8 +15,6 @@ module grain_module
         real(DP), dimension(3, 3):: orientation, &
                                     stress
         type(SlipSystem), dimension(:), allocatable:: slip_systems
-        real(DP), dimension(5):: imposed_strain
-
     contains
         procedure:: init => grain_init
         procedure:: get_work_rate => grain_get_work_rate

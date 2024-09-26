@@ -151,10 +151,7 @@ contains
         real(DP), dimension(3, 3), intent(in):: velocity_gradient
         real(DP), dimension(3, 3):: stress_state
 
-
         stress_state = get_stress(velocity_gradient)
-
-        !print *, convert_stress_strain_space(stress_state)
     end function
 
     !> Write out the current state variables.

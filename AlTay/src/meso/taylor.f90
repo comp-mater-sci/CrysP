@@ -72,10 +72,12 @@ contains
 
         cluster_size = size(cluster_ptr%grains)
 
-        call cluster_ptr%set_imposed_strain_rate(velocity_gradient)
 
-        call simplex_solve(cluster_ptr%get_taylor_coeffs(), cluster_ptr%get_imposed_strain(), cluster_ptr%get_crss(), cluster_ptr%inverse_basis, &
-        cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
+        call simplex_solve(cluster_ptr%get_taylor_coeffs(), &
+                           cluster_ptr%get_imposed_strain_rate(velocity_gradient), &
+                           cluster_ptr%get_crss(), &
+                           cluster_ptr%inverse_basis, &
+                           cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
 
         call cluster_ptr%set_slip_rates(slip_rates)
 
@@ -105,7 +107,8 @@ contains
         real(DP), dimension(cluster_ptr%n_systems):: slip_rates, &
                                                      overstress, &
                                                      rss
-        real(DP), dimension(5*size(cluster_ptr%grains)):: stress_cluster
+        real(DP), dimension(5*size(cluster_ptr%grains)):: stress_cluster, &
+                                                          imposed_strain_rate
 
         type(Grain), pointer::      grain_ptr
         character(*), parameter::   PROC_NAME = 'apply_deformation_step'
@@ -124,9 +127,9 @@ contains
             call cluster_ptr%update_relaxations(deformation_gradient)
         end if
 
-        call cluster_ptr%set_imposed_strain_rate(velocity_gradient)
+        imposed_strain_rate = cluster_ptr%get_imposed_strain_rate(velocity_gradient)
 
-        call simplex_solve(cluster_ptr%get_taylor_coeffs(), cluster_ptr%get_imposed_strain(), cluster_ptr%get_crss(), cluster_ptr%inverse_basis, &
+        call simplex_solve(cluster_ptr%get_taylor_coeffs(), imposed_strain_rate, cluster_ptr%get_crss(), cluster_ptr%inverse_basis, &
         cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
 
         call cluster_ptr%set_slip_rates(slip_rates)
@@ -165,7 +168,7 @@ contains
                 !Determine strain absorbed by slip systems (imposed strain-relaxations)
                 strain_relaxations = 0._DP
                 if (n_relaxations > 0) strain_relaxations = matmul(cluster_ptr%get_taylor_coeffs_relaxations(j), cluster_ptr%relaxations%slip_rate)
-                strain_grain = grain_ptr%imposed_strain-strain_relaxations
+                strain_grain = imposed_strain_rate((j-1)*5+1:j*5)-strain_relaxations
 
                 grain_ptr%slip_systems%slip_rate = resolve_taylor_ambiguity(ind_overstressed_slip_systems(1:n_overstressed_slip_systems), &
                     rss(ind_overstressed_slip_systems(1:n_overstressed_slip_systems)+(j-1)*n_slip_systems_grain), &
@@ -199,16 +202,8 @@ contains
                    axis_lengths(3), &
                    alignment_factor
 
-
-        print *, "Boundary reference frame: "
-        print "(3f6.2)", cluster_ptr%boundary_reference_frame
-
-
         !Applying deformation gradient to initial grain boundary orientation yields deformed grain axes
         grain_axes = matmul(deformation_gradient, cluster_ptr%boundary_reference_frame)
-
-        print *, "Grain_axes: "
-        print "(3f6.2)", grain_axes
 
         axis_lengths = norm2(grain_axes, 1)
         !Alignment factor equals sin(axes 2 and 3) * cos(axis 1 and normal to plane defined by axes 2 and 3)

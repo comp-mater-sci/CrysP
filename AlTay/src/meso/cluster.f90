@@ -19,7 +19,7 @@ module cluster_module
         integer:: n_systems
     contains
         procedure:: init                            => cluster_init
-        procedure:: get_imposed_strain              => cluster_get_imposed_strain
+        procedure:: get_imposed_strain_rate         => cluster_get_imposed_strain_rate
         procedure:: get_spin_coeffs_relaxations     => cluster_get_spin_coeffs_relaxations
         procedure:: set_slip_rates                  => cluster_set_slip_rates
         procedure:: get_taylor_coeffs               => cluster_get_taylor_coeffs
@@ -27,7 +27,6 @@ module cluster_module
         procedure:: update_relaxations              => cluster_update_relaxations
         procedure:: get_basis                       => cluster_get_basis
         procedure:: get_crss                        => cluster_get_crss
-        procedure:: set_imposed_strain_rate         => cluster_set_imposed_strain_rate
     end type
 
 contains
@@ -86,15 +85,15 @@ contains
         this%inverse_basis = invert(this%get_basis())
     end subroutine
 
-    function cluster_get_imposed_strain(this) result(imposed_strain)
+    pure function cluster_get_imposed_strain_rate(this, velocity_gradient) result(imposed_strain_rate)
         class(Cluster), intent(in):: this
-
-        real(DP), dimension(5*size(this%grains)):: imposed_strain
+        real(DP), dimension(3, 3), intent(in):: velocity_gradient
+        real(DP), dimension(size(this%grains)*5):: imposed_strain_rate
 
         integer:: i
 
         do i = 1, size(this%grains)
-            imposed_strain(5*(i-1)+1:5*i) = this%grains(i)%imposed_strain
+            imposed_strain_rate((i-1)*5+1:i*5) = convert_stress_strain_space(velocity_gradient .toframe. this%grains(i)%orientation)
         end do
     end function
 
@@ -238,17 +237,6 @@ contains
                 new_vec = matmul(this%inverse_basis, basis(:,i))
                 call update_inverse_basis(this%inverse_basis, new_vec, i, dummy)
             end if
-        end do
-    end subroutine
-
-    subroutine cluster_set_imposed_strain_rate(this, velocity_gradient)
-        class(Cluster), intent(inout):: this
-        real(DP), dimension(3, 3), intent(in):: velocity_gradient
-
-        integer:: i
-
-        do i = 1, size(this%grains)
-            this%grains(i)%imposed_strain = convert_stress_strain_space(velocity_gradient .toframe. this%grains(i)%orientation)
         end do
     end subroutine
 end module

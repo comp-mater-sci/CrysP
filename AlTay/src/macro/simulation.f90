@@ -31,7 +31,6 @@ module simulation
              get_stress
     contains
 
-
     ! initialization call
     subroutine simulation_init(orientations, boundaries)
         real(DP), dimension(:,:), allocatable, intent(in):: orientations, &
@@ -91,6 +90,7 @@ module simulation
         end do
         homogenized_stress = homogenized_stress/total_weight/cluster_size
     end function
+
 
     subroutine simulation_run(NFILE0, velocity_gradient)
         real(DP), intent(in):: velocity_gradient(3, 3)
