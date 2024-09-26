@@ -26,7 +26,6 @@ module simulation
     public:: simulation_init, &
              simulation_run, &
              simulation_finalize, &
-             deformation_gradient, &
              output_current_state, &
              get_stress
     contains
@@ -109,12 +108,9 @@ module simulation
                    WorkRate, &  ! Rate of plastic work per unit volume in the crystal
                    homogenized_work, &  ! Total plastic work per unit volume in crystal
                    deformation_gradient_increment(3, 3), &
-                   deformation_gradient_half_increment(3, 3), &
                    strain_rate(3, 3), &
                    spin(3, 3), &
-                   von_mises_strain_rate, &
-                   deformation_gradient_during_time_step(3, 3), &
-                   deformation_gradient_after_time_step(3, 3)
+                   von_mises_strain_rate
 
         n_clusters = size(clusters)
         cluster_size = acnf%simul_init%NGR
@@ -123,10 +119,8 @@ module simulation
         strain_rate = symmetric_part(velocity_gradient)
         spin = antisymmetric_part(velocity_gradient)
         von_mises_strain_rate = SQR0P67*norm2(strain_rate)
-        deformation_gradient_half_increment = matrix_exponential_small_norm(velocity_gradient/2._DP)
-        deformation_gradient_increment = matmul(deformation_gradient_half_increment, deformation_gradient_half_increment)
-        deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
-        deformation_gradient_after_time_step = matmul(deformation_gradient_increment, deformation_gradient)
+        deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient)
+        call meso_update_model(velocity_gradient)
 
         steploop: DO step = 1, astate%simulCalls(astate%this)%input%nsteps
             total_weight = 0._DP
@@ -137,11 +131,10 @@ module simulation
 
             nrstep = nrstep+1
 
-            !$OMP PARALLEL SHARED(clusters, n_clusters, spin, deformation_gradient_during_time_step, deformation_gradient_after_time_step, velocity_gradient) PRIVATE(i)
+            !$OMP PARALLEL SHARED(clusters, n_clusters, spin, velocity_gradient) PRIVATE(i)
                 !$OMP DO SCHEDULE(DYNAMIC, 1)
                     do i = 1, n_clusters
-                        call apply_deformation_step(clusters(i), spin, i, deformation_gradient_during_time_step, &
-                        deformation_gradient_after_time_step, velocity_gradient)
+                        call apply_deformation_step(clusters(i), spin, i, velocity_gradient)
                     enddo
                 !$OMP END DO
             !$OMP END PARALLEL
@@ -174,9 +167,8 @@ module simulation
             homogenized_total_slipTOT = homogenized_total_slipTOT+homogenized_total_slip
 
             von_mises_strain = von_mises_strain+von_mises_strain_rate
-            deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
-            deformation_gradient = deformation_gradient_after_time_step
-            deformation_gradient_after_time_step = matmul(deformation_gradient_increment, deformation_gradient_after_time_step)
+            deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
+            call meso_update_model()
         enddo steploop
     end subroutine
 

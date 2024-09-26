@@ -14,9 +14,14 @@ module taylor
     private
     public ::   taylor_init, &
                 get_stress_state, &
-                apply_deformation_step
+                apply_deformation_step, &
+                meso_update_model
 
-    !Initial values for the inverse basis and basis systems.
+
+    real(DP), dimension(3, 3):: deformation_gradient, &
+                               deformation_gradient_during_time_step, &
+                               next_deformation_gradient, &
+                               deformation_gradient_increment
 
     character(*), parameter:: MOD_NAME = 'taylor'
 
@@ -24,15 +29,16 @@ contains
 
     function taylor_init(deformation_mechanism, cluster_size, initial_deformation_gradient, orientations, boundaries) result(clusters)
         integer, intent(in):: cluster_size
+        real(DP), dimension(3, 3), intent(in):: initial_deformation_gradient
         type(Cluster), dimension(:), pointer, contiguous:: clusters
         integer, dimension(:,:,:), intent(in):: deformation_mechanism
-        real(DP), dimension(3, 3), intent(in):: initial_deformation_gradient
         real(DP), dimension(:,:), allocatable, intent(in):: orientations, &
                                                             boundaries
         integer:: i, j, k, &
                   n_slip_systems_grain
 
         n_slip_systems_grain = size(deformation_mechanism, 3)
+        deformation_gradient = UNIT_MATRIX_3X3
 
         if (cluster_size == 1) then
             allocate(clusters(size(orientations, 2)))
@@ -55,10 +61,27 @@ contains
                 enddo
 
                 call clusters(i)%update_relaxations(initial_deformation_gradient)
-                clusters(i)%weight = cluster_weight(clusters(i), initial_deformation_gradient)
+                clusters(i)%weight = cluster_weight(clusters(i), deformation_gradient)
             end do
         end if
     end function
+
+    subroutine meso_update_model(velocity_gradient)
+        real(DP), dimension(3, 3), intent(in), optional:: velocity_gradient
+
+        if (present(velocity_gradient)) then
+            deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient/2._DP)
+        else
+            deformation_gradient = next_deformation_gradient
+        end if
+
+        deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient)
+        next_deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
+
+        print *, "Deformation_gradient: "
+        print "(3f6.2)", deformation_gradient
+
+    end subroutine
 
     subroutine get_stress_state(cluster_ptr, velocity_gradient)
         type(Cluster), pointer, intent(in):: cluster_ptr
@@ -86,12 +109,10 @@ contains
         end do
     end subroutine
 
-    subroutine apply_deformation_step(cluster_ptr, imposed_spin, index_cluster, deformation_gradient, deformation_gradient_final, velocity_gradient)
+    subroutine apply_deformation_step(cluster_ptr, imposed_spin, index_cluster, velocity_gradient)
         type(Cluster), pointer, intent(in):: cluster_ptr
         integer, intent(in)::       index_cluster
         real(DP), dimension(3, 3), intent(in)::  imposed_spin
-        real(DP), dimension(3, 3), intent(in)::  deformation_gradient
-        real(DP), dimension(3, 3), intent(in)::  deformation_gradient_final
         real(DP), dimension(3, 3), intent(in)::  velocity_gradient
         real(DP)::                  orientation_increment(3, 3), &
                                     strain_grain(5), &
@@ -192,18 +213,18 @@ contains
         end do
 
         if (cluster_size == 2) &
-            cluster_ptr%weight = cluster_weight(cluster_ptr, deformation_gradient_final)
+            cluster_ptr%weight = cluster_weight(cluster_ptr, next_deformation_gradient)
     end subroutine
 
-    real(DP) function cluster_weight(cluster_ptr, deformation_gradient) result(weight)
+    real(DP) function cluster_weight(cluster_ptr, def_grad) result(weight)
         type(Cluster), pointer, intent(in):: cluster_ptr
-        real(DP), intent(in):: deformation_gradient(3, 3)
+        real(DP), intent(in):: def_grad(3, 3)
         real(DP):: grain_axes(3, 3), &
                    axis_lengths(3), &
                    alignment_factor
 
         !Applying deformation gradient to initial grain boundary orientation yields deformed grain axes
-        grain_axes = matmul(deformation_gradient, cluster_ptr%boundary_reference_frame)
+        grain_axes = matmul(def_grad, cluster_ptr%boundary_reference_frame)
 
         axis_lengths = norm2(grain_axes, 1)
         !Alignment factor equals sin(axes 2 and 3) * cos(axis 1 and normal to plane defined by axes 2 and 3)
