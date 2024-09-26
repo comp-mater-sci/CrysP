@@ -145,7 +145,7 @@ contains
         enddo
 
         if (cluster_size == 2 ) then
-            call cluster_ptr%update_relaxations(deformation_gradient)
+            call cluster_ptr%update_relaxations(deformation_gradient_during_time_step)
         end if
 
         imposed_strain_rate = cluster_ptr%get_imposed_strain_rate(velocity_gradient)
