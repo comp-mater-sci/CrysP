@@ -206,8 +206,10 @@ contains
             grain_ptr%orientation = matmul(orientation_increment, grain_ptr%orientation)
         end do
 
-        if (cluster_size == 2) &
+        if (cluster_size == 2) then
+            call cluster_ptr%update_relaxations(next_deformation_gradient)
             cluster_ptr%weight = cluster_weight(cluster_ptr, next_deformation_gradient)
+        end if
     end subroutine
 
     real(DP) function cluster_weight(cluster_ptr, def_grad) result(weight)
