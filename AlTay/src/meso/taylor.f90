@@ -44,10 +44,7 @@ contains
             allocate(clusters(size(orientations, 2)))
             do i = 1, size(clusters)
                 call clusters(i)%init(orientations(:,i:i), deformation_mechanism)
-
-                do j = 1, cluster_size
-                    call clusters(i)%grains(j)%set_crss(hardening_get_crss((i-1)*cluster_size+j, clusters(i)%grains(j)%sum_slip))
-                enddo
+                call clusters(i)%grains(1)%set_crss(hardening_get_crss(i, 0._DP))
             end do
         else
             allocate(clusters(size(orientations, 2)/2))
@@ -57,7 +54,7 @@ contains
                 j = merge(1, j+1, j == size(boundaries, 2))
 
                 do k = 1, cluster_size
-                    call clusters(i)%grains(k)%set_crss(hardening_get_crss((i-1)*cluster_size+k, clusters(i)%grains(k)%sum_slip))
+                    call clusters(i)%grains(k)%set_crss(hardening_get_crss((i-1)*cluster_size+k, 0._DP))
                 enddo
 
                 call clusters(i)%update_relaxations(initial_deformation_gradient)
@@ -66,6 +63,9 @@ contains
         end if
     end function
 
+    !Update the model after a time step has elapsed.
+    !Note in the future the scope of an AlTay call should be limited to 1 velocity gradient. As such, the optional argument
+    !velocity_gradient should move from this function to initialization.
     subroutine meso_update_model(velocity_gradient)
         real(DP), dimension(3, 3), intent(in), optional:: velocity_gradient
 
@@ -77,10 +77,6 @@ contains
 
         deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient)
         next_deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
-
-        print *, "Deformation_gradient: "
-        print "(3f6.2)", deformation_gradient
-
     end subroutine
 
     subroutine get_stress_state(cluster_ptr, velocity_gradient)
@@ -139,16 +135,13 @@ contains
         n_relaxations = merge(2, 0, size(cluster_ptr%grains) > 1)
         cluster_size = size(cluster_ptr%grains)
 
-        !Update microstructure
-        do i = 1, cluster_size
-            call cluster_ptr%grains(i)%set_crss(hardening_get_crss((index_cluster-1)*cluster_size+i, cluster_ptr%grains(i)%sum_slip))
-        enddo
 
         if (cluster_size == 2 ) then
             call cluster_ptr%update_relaxations(deformation_gradient_during_time_step)
         end if
 
         imposed_strain_rate = cluster_ptr%get_imposed_strain_rate(velocity_gradient)
+
 
         call simplex_solve(cluster_ptr%get_taylor_coeffs(), imposed_strain_rate, cluster_ptr%get_crss(), cluster_ptr%inverse_basis, &
         cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
@@ -204,6 +197,7 @@ contains
 
             !Update hardening model state
             call hardening_update_state((index_cluster-1)*cluster_size+j, 1._DP, cluster_ptr%grains(j)%slip_systems%slip_rate)
+            call grain_ptr%set_crss(hardening_get_crss((index_cluster-1)*cluster_size+j, grain_ptr%sum_slip))
 
             orientation_increment = UNIT_MATRIX_3X3 &
                                     +(imposed_spin .toframe. grain_ptr%orientation) &                !>Change of reference frame
