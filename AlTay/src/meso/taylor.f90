@@ -91,14 +91,11 @@ contains
 
         cluster_size = size(cluster_ptr%grains)
 
-
         call simplex_solve(cluster_ptr%get_taylor_coeffs(), &
                            cluster_ptr%get_imposed_strain_rate(velocity_gradient), &
                            cluster_ptr%get_crss(), &
                            cluster_ptr%inverse_basis, &
                            cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
-
-        call cluster_ptr%set_slip_rates(slip_rates)
 
         do i = 1, cluster_size
             cluster_ptr%grains(i)%stress = convert_stress_strain_space(stress_cluster(5*(i-1)+1:5*i)) .fromframe. cluster_ptr%grains(i)%orientation
