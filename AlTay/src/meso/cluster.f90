@@ -20,7 +20,6 @@ module cluster_module
     contains
         procedure:: init                            => cluster_init
         procedure:: get_spin_coeffs_relaxations     => cluster_get_spin_coeffs_relaxations
-        procedure:: set_slip_rates                  => cluster_set_slip_rates
         procedure:: get_taylor_coeffs               => cluster_get_taylor_coeffs
         procedure:: get_taylor_coeffs_relaxations   => cluster_get_taylor_coeffs_relaxations
         procedure:: update_relaxations              => cluster_update_relaxations
@@ -167,23 +166,6 @@ contains
             crss(:,n_systems_grain*(i-1)+1:n_systems_grain*i) = this%grains(i)%get_crss()
         end do
     end function
-
-    subroutine cluster_set_slip_rates(this, slip_rates)
-        class(Cluster), intent(inout):: this
-        real(DP), dimension(this%n_systems), intent(in):: slip_rates
-
-        integer::   i, &
-                    n_systems_grain
-
-        do i = 1, size(this%grains)
-            n_systems_grain = size(this%grains(i)%slip_systems)
-
-            this%grains(i)%slip_systems%slip_rate = slip_rates((i-1)*n_systems_grain+1:i*n_systems_grain)
-
-            if (size(this%grains) == 2) &
-                this%relaxations(i)%slip_rate = slip_rates(size(slip_rates)-2+i)
-        end do
-    end subroutine
 
     subroutine cluster_update_relaxations(this, deformation_gradient)
         class(Cluster), intent(inout):: this
