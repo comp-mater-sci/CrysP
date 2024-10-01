@@ -79,6 +79,20 @@ contains
         next_deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
     end subroutine
 
+    !>@Brief Calculate the imposed strain rate vector corresponding to a certain velocity gradient for a cluster
+    !>@Details Projects the velocity gradient onto the crystal frames of the grains comprising the cluster.
+    pure function calc_imposed_strain_rate(cluster_ptr, velocity_gradient) result(imposed_strain_rate)
+        type(Cluster), pointer, intent(in):: cluster_ptr
+        real(DP), dimension(3, 3), intent(in):: velocity_gradient
+        real(DP), dimension(size(cluster_ptr%grains)*5):: imposed_strain_rate
+
+        integer:: i
+
+        do i = 1, size(cluster_ptr%grains)
+            imposed_strain_rate((i-1)*5+1:i*5) = convert_stress_strain_space(velocity_gradient .toframe. cluster_ptr%grains(i)%orientation)
+        end do
+    end function
+
     subroutine get_stress_state(cluster_ptr, velocity_gradient)
         type(Cluster), pointer, intent(in):: cluster_ptr
         real(DP), dimension(3, 3), intent(in):: velocity_gradient
@@ -92,7 +106,7 @@ contains
         cluster_size = size(cluster_ptr%grains)
 
         call simplex_solve(cluster_ptr%get_taylor_coeffs(), &
-                           cluster_ptr%get_imposed_strain_rate(velocity_gradient), &
+                           calc_imposed_strain_rate(cluster_ptr, velocity_gradient), &
                            cluster_ptr%get_crss(), &
                            cluster_ptr%inverse_basis, &
                            cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
@@ -137,8 +151,7 @@ contains
             call cluster_ptr%update_relaxations(deformation_gradient_during_time_step)
         end if
 
-        imposed_strain_rate = cluster_ptr%get_imposed_strain_rate(velocity_gradient)
-
+        imposed_strain_rate = calc_imposed_strain_rate(cluster_ptr, velocity_gradient)
 
         call simplex_solve(cluster_ptr%get_taylor_coeffs(), imposed_strain_rate, cluster_ptr%get_crss(), cluster_ptr%inverse_basis, &
         cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
