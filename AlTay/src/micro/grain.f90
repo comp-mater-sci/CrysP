@@ -11,7 +11,6 @@ module grain_module
     !>Texture-related state variables for single grain
     type:: grain
         real(DP)::                  sum_slip = 0._DP
-        real(DP)::                  sum_slip_current
         real(DP), dimension(3, 3):: orientation
         type(SlipSystem), dimension(:), allocatable:: slip_systems
     contains
@@ -32,9 +31,9 @@ contains
 
     !Initialize grain.
     subroutine grain_init(this, deformation_mechanism, orientation)
-        class(Grain), target, intent(inout)::                                           this
-        integer, dimension(:,:,:), intent(in)::                                         deformation_mechanism
-        real(DP), dimension(:), intent(in)::                                            orientation
+        class(Grain), target, intent(inout)::    this
+        integer, dimension(:,:,:), intent(in)::  deformation_mechanism
+        real(DP), dimension(:), intent(in)::     orientation
 
         integer:: i, &
                   n_slip_systems

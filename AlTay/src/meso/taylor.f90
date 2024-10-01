@@ -139,16 +139,17 @@ contains
         stress = homogenize_stress_state(cluster_ptr, stress_cluster)
     end function
 
-    subroutine apply_deformation_step(cluster_ptr, imposed_spin, index_cluster, velocity_gradient, stress)
+    subroutine apply_deformation_step(cluster_ptr, imposed_spin, index_cluster, velocity_gradient, stress, slip)
         type(Cluster), pointer, intent(in):: cluster_ptr
         integer, intent(in)::       index_cluster
         real(DP), dimension(3, 3), intent(in)::  imposed_spin
-        real(DP), dimension(3, 3), intent(in)::  velocity_gradient
-        real(DP), dimension(3, 3), intent(out):: stress
+        real(DP), dimension(3, 3), intent(in)::  velocity_gradient      !> Imposed velocity gradient for this time step
+        real(DP), dimension(3, 3), intent(out):: stress                 !> Homogenized stress over the cluster
+        real(DP), intent(out):: slip                                    !> Total slip in the cluster for this time step
         real(DP)::                  orientation_increment(3, 3), &
                                     strain_grain(5), &
                                     strain_relaxations(5), &
-                                    sum_slip
+                                    slip_grain
         integer::                   i, j, cluster_size, &
                                     n_overstressed_slip_systems, &
                                     n_relaxations, &
@@ -164,7 +165,6 @@ contains
 
         type(Grain), pointer::      grain_ptr
         character(*), parameter::   PROC_NAME = 'apply_deformation_step'
-
 
         n_slip_systems_grain = size(cluster_ptr%grains(1)%slip_systems)
         n_relaxations = merge(2, 0, size(cluster_ptr%grains) > 1)
@@ -183,6 +183,8 @@ contains
 
         stress = homogenize_stress_state(cluster_ptr, stress_cluster)
 
+
+        slip = 0._DP
         do j = 1, size(cluster_ptr%grains)
             grain_ptr => cluster_ptr%grains(j)
             ind_system = (j-1)*n_slip_systems_grain
@@ -222,9 +224,9 @@ contains
                     n_active_simplex)
             end if
 
-            sum_slip = sum(abs(grain_ptr%slip_systems%slip_rate))
-            grain_ptr%sum_slip = grain_ptr%sum_slip+sum_slip
-            grain_ptr%sum_slip_current = sum_slip
+            slip_grain = sum(abs(grain_ptr%slip_systems%slip_rate))
+            grain_ptr%sum_slip = grain_ptr%sum_slip+slip_grain
+            slip = slip+slip_grain
 
             !Update hardening model state
             call hardening_update_state((index_cluster-1)*cluster_size+j, 1._DP, cluster_ptr%grains(j)%slip_systems%slip_rate)

@@ -102,7 +102,6 @@ module simulation
         real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
                    homogenized_total_slip, & ! homogenized_total_slip: homogenized slip per step
-                   taylor_factor, &  ! Taylor factor of the current grain
                    homogenized_taylor_factor, &   !Volume-averaged Taylor factor
                    WorkRate, &  ! Rate of plastic work per unit volume in the crystal
                    homogenized_work, &  ! Total plastic work per unit volume in crystal
@@ -110,7 +109,9 @@ module simulation
                    strain_rate(3, 3), &
                    spin(3, 3), &
                    von_mises_strain_rate, &
-                   stress_cluster(3, 3)
+                   stress_cluster(3, 3), &
+                   slip_cluster, &
+                   weight_cluster
 
         n_clusters = size(clusters)
         cluster_size = acnf%simul_init%NGR
@@ -131,13 +132,16 @@ module simulation
 
             nrstep = nrstep+1
 
-            !$OMP PARALLEL SHARED(clusters, n_clusters, spin, velocity_gradient, homogenized_stress, total_weight) PRIVATE(i, stress_cluster)
+            !$OMP PARALLEL SHARED(clusters, n_clusters, spin, velocity_gradient, homogenized_stress, homogenized_total_slip, homogenized_taylor_factor, total_weight, von_mises_strain_rate) PRIVATE(i, stress_cluster, slip_cluster, weight_cluster)
                 !$OMP DO SCHEDULE(DYNAMIC, 1)
                     do i = 1, n_clusters
-                        call apply_deformation_step(clusters(i), spin, i, velocity_gradient, stress_cluster)
+                        call apply_deformation_step(clusters(i), spin, i, velocity_gradient, stress_cluster, slip_cluster)
+                        weight_cluster = clusters(i)%weight
                         !$OMP CRITICAL
-                            homogenized_stress = homogenized_stress+stress_cluster*clusters(i)%weight
-                            total_weight = total_weight+clusters(i)%weight
+                            total_weight = total_weight+weight_cluster
+                            homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
+                            homogenized_total_slip = homogenized_total_slip+slip_cluster*weight_cluster
+                            homogenized_taylor_factor = homogenized_taylor_factor+slip_cluster/von_mises_strain_rate*weight_cluster
                         !$OMP END CRITICAL
                     end do
                 !$OMP END DO
@@ -145,9 +149,6 @@ module simulation
 
             do i = 1, n_clusters
                 do j = 1, cluster_size
-                    taylor_factor = clusters(i)%grains(j)%sum_slip_current/von_mises_strain_rate
-                    homogenized_taylor_factor = homogenized_taylor_factor+taylor_factor*clusters(i)%weight
-                    homogenized_total_slip = homogenized_total_slip+clusters(i)%grains(j)%sum_slip_current*clusters(i)%weight
                     homogenized_work = homogenized_work+clusters(i)%grains(j)%get_work_rate()
                 end do
             end do
