@@ -66,28 +66,30 @@ module simulation
         integer:: i, j, &
                   n_clusters, &
                   cluster_size
-        real(DP):: total_weight
+        real(DP):: total_weight, &
+                   stress_cluster(3, 3)
 
         n_clusters = size(clusters)
         cluster_size = size(clusters(1)%grains)
+        homogenized_stress = 0._DP
 
-        !$OMP PARALLEL SHARED(clusters, velocity_gradient, n_clusters) PRIVATE(i)
+        !$OMP PARALLEL SHARED(clusters, velocity_gradient, n_clusters, homogenized_stress) PRIVATE(i, stress_cluster)
             !$OMP DO SCHEDULE(DYNAMIC, 1)
                 do i = 1, n_clusters
-                    call get_stress_state(clusters(i), velocity_gradient)
+                    stress_cluster = get_stress_state(clusters(i), velocity_gradient) * clusters(i)%weight
+                    !$OMP CRITICAL
+                        print "(9f6.2)", stress_cluster
+                        homogenized_stress = homogenized_stress+stress_cluster
+                    !$OMP END CRITICAL
                 end do
             !$OMP END DO
         !$OMP END PARALLEL
 
         total_weight = 0._DP
-        homogenized_stress = 0._DP
         do i = 1, n_clusters
             total_weight = total_weight+clusters(i)%weight
-            do j = 1, size(clusters(i)%grains)
-                homogenized_stress = homogenized_stress+clusters(i)%grains(j)%stress*clusters(i)%weight
-            end do
         end do
-        homogenized_stress = homogenized_stress/total_weight/cluster_size
+        homogenized_stress = homogenized_stress/total_weight
     end function
 
 

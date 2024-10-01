@@ -93,9 +93,11 @@ contains
         end do
     end function
 
-    subroutine get_stress_state(cluster_ptr, velocity_gradient)
+    function get_stress_state(cluster_ptr, velocity_gradient) result(stress_state)
         type(Cluster), pointer, intent(in):: cluster_ptr
         real(DP), dimension(3, 3), intent(in):: velocity_gradient
+        real(DP), dimension(3, 3):: stress_state
+
         real(DP), dimension(cluster_ptr%n_systems):: slip_rates, &
                                                      overstress, &
                                                      rss
@@ -109,12 +111,18 @@ contains
                            calc_imposed_strain_rate(cluster_ptr, velocity_gradient), &
                            cluster_ptr%get_crss(), &
                            cluster_ptr%inverse_basis, &
-                           cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
+                           cluster_ptr%ind_basis_systems, &
+                           slip_rates, &
+                           stress_cluster, &
+                           rss, &
+                           overstress)
 
+        stress_state = 0._DP
         do i = 1, cluster_size
-            cluster_ptr%grains(i)%stress = convert_stress_strain_space(stress_cluster(5*(i-1)+1:5*i)) .fromframe. cluster_ptr%grains(i)%orientation
+            stress_state = stress_state+convert_stress_strain_space(stress_cluster(5*(i-1)+1:5*i)) .fromframe. cluster_ptr%grains(i)%orientation
         end do
-    end subroutine
+        stress_state = stress_state/cluster_size
+    end function
 
     subroutine apply_deformation_step(cluster_ptr, imposed_spin, index_cluster, velocity_gradient)
         type(Cluster), pointer, intent(in):: cluster_ptr
