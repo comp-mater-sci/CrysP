@@ -20,12 +20,9 @@ module relaxation_module
         real(DP), dimension(10):: taylor_coeffs  ! Defined in this way due to the structure of taylor_coeffs in
                                                                     !cluster type
         real(DP), dimension(6):: spin_coeffs  ! Defined in this way to be consistent with taylor_coeffs
-        real(DP):: slip_rate = 0._DP
     contains
         procedure:: init => relaxation_init
         procedure:: update => relaxation_update
-        procedure:: get_strain => relaxation_get_strain
-        procedure:: get_spin => relaxation_get_spin
     end type
 
     public:: Relaxation
@@ -57,23 +54,6 @@ contains
             this%taylor_coeffs(5*(i-1)+1:5*i) = convert_stress_strain_space(symmetric_part(relaxation_crystal_frame))
         end do
     end subroutine
-
-    function relaxation_get_strain(this, ind_grain) result(strain)
-        class(Relaxation), intent(in):: this
-        integer, intent(in):: ind_grain !> Index of the grain in the cluster for which the strain must be calculated.
-        real(DP), dimension(5):: strain
-
-        strain = this%slip_rate*this%taylor_coeffs(5*(ind_grain-1)+1:5*ind_grain)
-    end function
-
-    function relaxation_get_spin(this, ind_grain) result(spin)
-        class(Relaxation), intent(in):: this
-        integer, intent(in):: ind_grain !> Index of the grain in the cluster for which the strain must be calculated.
-        real(DP), dimension(3):: spin
-
-        spin = this%slip_rate*this%spin_coeffs(3*(ind_grain-1)+1:3*ind_grain)
-    end function
-
 end module relaxation_module
 
 
