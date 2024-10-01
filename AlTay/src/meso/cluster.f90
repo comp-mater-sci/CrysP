@@ -21,7 +21,6 @@ module cluster_module
         procedure:: init                            => cluster_init
         procedure:: get_spin_coeffs_relaxations     => cluster_get_spin_coeffs_relaxations
         procedure:: get_taylor_coeffs               => cluster_get_taylor_coeffs
-        procedure:: get_taylor_coeffs_relaxations   => cluster_get_taylor_coeffs_relaxations
         procedure:: update_relaxations              => cluster_update_relaxations
         procedure:: get_basis                       => cluster_get_basis
         procedure:: get_crss                        => cluster_get_crss
@@ -116,18 +115,6 @@ contains
         end if
     end function
 
-    function cluster_get_taylor_coeffs_relaxations(this, ind_grain) result(taylor_coeffs_relaxations)
-        class(Cluster), intent(in):: this
-        integer, intent(in):: ind_grain
-        real(DP), dimension(5, 2):: taylor_coeffs_relaxations
-
-        integer:: i
-
-        do i = 1, 2
-            taylor_coeffs_relaxations(:,i) = this%relaxations(i)%taylor_coeffs(5*(ind_grain-1)+1:5*ind_grain)
-        end do
-    end function
-
     function cluster_get_basis(this) result(basis)
         class(Cluster), intent(in):: this
         real(DP), dimension(size(this%ind_basis_systems), size(this%ind_basis_systems)):: basis
@@ -157,7 +144,6 @@ contains
 
         integer:: i, &
                   n_systems_grain
-
 
         n_systems_grain = size(this%grains(1)%slip_systems)
 

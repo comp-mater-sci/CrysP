@@ -149,12 +149,14 @@ contains
         real(DP)::                  orientation_increment(3, 3), &
                                     strain_grain(5), &
                                     strain_relaxations(5), &
-                                    slip_grain
+                                    slip_grain, &
+                                    taylor_coeffs(5*size(cluster_ptr%grains), cluster_ptr%n_systems)
         integer::                   i, j, cluster_size, &
                                     n_overstressed_slip_systems, &
                                     n_relaxations, &
                                     n_systems_grain, &
                                     n_active_simplex, &
+                                    offset_grain, &
                                     offset_systems, &
                                     offset_relaxations, &
                                     ind_overstressed_slip_systems(8)  ! Theoretical maximum of overstressed systems is 8
@@ -177,19 +179,29 @@ contains
         end if
 
         imposed_strain_rate = calc_imposed_strain_rate(cluster_ptr, velocity_gradient)
+        taylor_coeffs = cluster_ptr%get_taylor_coeffs()
 
-        call simplex_solve(cluster_ptr%get_taylor_coeffs(), imposed_strain_rate, cluster_ptr%get_crss(), cluster_ptr%inverse_basis, &
-        cluster_ptr%ind_basis_systems, slip_rates, stress_cluster, rss, overstress)
+        call simplex_solve(taylor_coeffs, &
+                           imposed_strain_rate, &
+                           cluster_ptr%get_crss(), &
+                           cluster_ptr%inverse_basis, &
+                           cluster_ptr%ind_basis_systems, &
+                           slip_rates, &
+                           stress_cluster, &
+                           rss, &
+                           overstress)
 
         stress = homogenize_stress_state(cluster_ptr, stress_cluster)
 
         slip = 0._DP
         do j = 1, size(cluster_ptr%grains)
             grain_ptr => cluster_ptr%grains(j)
+            offset_grain = (j-1)*5
             offset_systems = (j-1)*n_systems_grain
 
             associate (slip_rates_grain=>slip_rates(offset_systems+1:offset_systems+n_systems_grain), &
-                       slip_rates_relaxations=>slip_rates(offset_relaxations+1:))
+                       slip_rates_relaxations=>slip_rates(offset_relaxations+1:), &
+                       taylor_coeffs_relaxations=>taylor_coeffs(offset_grain+1:offset_grain+5, offset_relaxations+1:))
 
                 !Determine if taylor ambiguity may be occuring. While we are iterating over the slip systems, might as well prepare for
                 !resolving it
@@ -216,7 +228,7 @@ contains
                     !Determine strain absorbed by slip systems (imposed strain-relaxations)
                     strain_relaxations = 0._DP
                     if (n_relaxations > 0) &
-                        strain_relaxations = matmul(cluster_ptr%get_taylor_coeffs_relaxations(j), slip_rates_relaxations)
+                        strain_relaxations = matmul(taylor_coeffs_relaxations, slip_rates_relaxations)
                     strain_grain = imposed_strain_rate((j-1)*5+1:j*5)-strain_relaxations
 
                     slip_rates_grain = resolve_taylor_ambiguity(ind_overstressed_slip_systems(1:n_overstressed_slip_systems), &
