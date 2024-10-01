@@ -15,7 +15,6 @@ module grain_module
         type(SlipSystem), dimension(:), allocatable:: slip_systems
     contains
         procedure:: init => grain_init
-        procedure:: get_work_rate => grain_get_work_rate
         procedure:: get_taylor_coeffs => grain_get_taylor_coeffs
         procedure:: get_spin_coeffs => grain_get_spin_coeffs
         procedure:: get_crss => grain_get_crss
@@ -52,17 +51,6 @@ contains
             call this%slip_systems(i)%init(deformation_mechanism(:,:,i))
         end do
     end subroutine
-
-    real(DP) function grain_get_work_rate(this) result(work_rate)
-        class(Grain), intent(in):: this
-
-        integer:: i
-
-        work_rate = 0._DP
-        do i = 1, size(this%slip_systems)
-            work_rate = work_rate+this%slip_systems(i)%get_work_rate()
-        end do
-    end function
 
     function grain_get_taylor_coeffs(this) result(coeffs)
         class(Grain), intent(in):: this

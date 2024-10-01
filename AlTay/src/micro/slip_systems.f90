@@ -82,7 +82,6 @@ module slip_systems
         real(DP), dimension(2):: crss
     contains
         procedure:: init => slip_system_init
-        procedure:: get_work_rate => slip_system_get_work_rate
     end type
 
 contains
@@ -101,10 +100,4 @@ contains
         this%taylor_coeffs = convert_stress_strain_space(tensor)
         this%spin_coeffs = convert_spin(tensor)
     end subroutine
-
-    pure real(DP) function slip_system_get_work_rate(this) result(work_rate)
-        class(SlipSystem), intent(in):: this
-
-        work_rate = abs(merge(this%crss(1), this%crss(2), this%slip_rate > 0._DP) * this%slip_rate)
-    end function
 end module

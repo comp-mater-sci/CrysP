@@ -103,8 +103,6 @@ module simulation
                    homogenized_stress(3, 3), &
                    homogenized_total_slip, & ! homogenized_total_slip: homogenized slip per step
                    homogenized_taylor_factor, &   !Volume-averaged Taylor factor
-                   WorkRate, &  ! Rate of plastic work per unit volume in the crystal
-                   homogenized_work, &  ! Total plastic work per unit volume in crystal
                    deformation_gradient_increment(3, 3), &
                    strain_rate(3, 3), &
                    spin(3, 3), &
@@ -128,7 +126,6 @@ module simulation
             homogenized_stress = 0._DP
             homogenized_taylor_factor = 0._DP
             homogenized_total_slip = 0._DP
-            homogenized_work = 0.0_DP
 
             nrstep = nrstep+1
 
@@ -146,12 +143,6 @@ module simulation
                     end do
                 !$OMP END DO
             !$OMP END PARALLEL
-
-            do i = 1, n_clusters
-                do j = 1, cluster_size
-                    homogenized_work = homogenized_work+clusters(i)%grains(j)%get_work_rate()
-                end do
-            end do
 
             homogenized_stress = homogenized_stress/total_weight
             homogenized_taylor_factor = homogenized_taylor_factor/total_weight
