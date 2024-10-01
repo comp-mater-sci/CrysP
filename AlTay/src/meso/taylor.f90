@@ -83,7 +83,7 @@ contains
     !>@Details Projects the velocity gradient onto the crystal frames of the grains comprising the cluster.
     pure function calc_imposed_strain_rate(cluster_ptr, velocity_gradient) result(imposed_strain_rate)
         type(Cluster), pointer, intent(in):: cluster_ptr
-        real(DP), dimension(3, 3), intent(in):: velocity_gradient
+            real(DP), dimension(3, 3), intent(in):: velocity_gradient
         real(DP), dimension(size(cluster_ptr%grains)*5):: imposed_strain_rate
 
         integer:: i
@@ -93,10 +93,29 @@ contains
         end do
     end function
 
-    function get_stress_state(cluster_ptr, velocity_gradient) result(stress_state)
+    pure function homogenize_stress_state(cluster_ptr, stress_cluster) result(homogenized_stress)
+        type(Cluster), pointer, intent(in):: cluster_ptr
+        real(DP), dimension(5*size(cluster_ptr%grains)), intent(in):: stress_cluster
+        real(DP), dimension(3, 3):: homogenized_stress
+
+        integer:: i, &
+                  cluster_size
+
+        cluster_size = size(cluster_ptr%grains)
+
+        homogenized_stress = 0._DP
+        do i = 1, cluster_size
+            homogenized_stress = homogenized_stress + (convert_stress_strain_space(stress_cluster(5*(i-1)+1:5*i)) .fromframe. cluster_ptr%grains(i)%orientation)
+        end do
+        homogenized_stress = homogenized_stress/cluster_size
+    end function
+
+    !>@Brief Get stress state for a cluster
+    !>@details Calculate the homogenized stress over the cluster in the global frame
+    function get_stress_state(cluster_ptr, velocity_gradient) result(stress)
         type(Cluster), pointer, intent(in):: cluster_ptr
         real(DP), dimension(3, 3), intent(in):: velocity_gradient
-        real(DP), dimension(3, 3):: stress_state
+        real(DP), dimension(3, 3):: stress
 
         real(DP), dimension(cluster_ptr%n_systems):: slip_rates, &
                                                      overstress, &
@@ -117,18 +136,15 @@ contains
                            rss, &
                            overstress)
 
-        stress_state = 0._DP
-        do i = 1, cluster_size
-            stress_state = stress_state+convert_stress_strain_space(stress_cluster(5*(i-1)+1:5*i)) .fromframe. cluster_ptr%grains(i)%orientation
-        end do
-        stress_state = stress_state/cluster_size
+        stress = homogenize_stress_state(cluster_ptr, stress_cluster)
     end function
 
-    subroutine apply_deformation_step(cluster_ptr, imposed_spin, index_cluster, velocity_gradient)
+    subroutine apply_deformation_step(cluster_ptr, imposed_spin, index_cluster, velocity_gradient, stress)
         type(Cluster), pointer, intent(in):: cluster_ptr
         integer, intent(in)::       index_cluster
         real(DP), dimension(3, 3), intent(in)::  imposed_spin
         real(DP), dimension(3, 3), intent(in)::  velocity_gradient
+        real(DP), dimension(3, 3), intent(out):: stress
         real(DP)::                  orientation_increment(3, 3), &
                                     strain_grain(5), &
                                     strain_relaxations(5), &
@@ -154,7 +170,6 @@ contains
         n_relaxations = merge(2, 0, size(cluster_ptr%grains) > 1)
         cluster_size = size(cluster_ptr%grains)
 
-
         if (cluster_size == 2 ) then
             call cluster_ptr%update_relaxations(deformation_gradient_during_time_step)
         end if
@@ -166,9 +181,7 @@ contains
 
         call cluster_ptr%set_slip_rates(slip_rates)
 
-        do i = 1, cluster_size
-            cluster_ptr%grains(i)%stress = convert_stress_strain_space(stress_cluster(5*(i-1)+1:5*i)) .fromframe. cluster_ptr%grains(i)%orientation
-        end do
+        stress = homogenize_stress_state(cluster_ptr, stress_cluster)
 
         do j = 1, size(cluster_ptr%grains)
             grain_ptr => cluster_ptr%grains(j)

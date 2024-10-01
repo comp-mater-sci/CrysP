@@ -12,8 +12,7 @@ module grain_module
     type:: grain
         real(DP)::                  sum_slip = 0._DP
         real(DP)::                  sum_slip_current
-        real(DP), dimension(3, 3):: orientation, &
-                                    stress
+        real(DP), dimension(3, 3):: orientation
         type(SlipSystem), dimension(:), allocatable:: slip_systems
     contains
         procedure:: init => grain_init
