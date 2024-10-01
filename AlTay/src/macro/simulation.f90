@@ -78,7 +78,6 @@ module simulation
                 do i = 1, n_clusters
                     stress_cluster = get_stress_state(clusters(i), velocity_gradient) * clusters(i)%weight
                     !$OMP CRITICAL
-                        print "(9f6.2)", stress_cluster
                         homogenized_stress = homogenized_stress+stress_cluster
                     !$OMP END CRITICAL
                 end do
@@ -90,6 +89,7 @@ module simulation
             total_weight = total_weight+clusters(i)%weight
         end do
         homogenized_stress = homogenized_stress/total_weight
+        print *, homogenized_stress
     end function
 
 
