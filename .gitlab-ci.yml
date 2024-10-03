@@ -11,8 +11,6 @@
 gcc:
   image: gcc
   script: |
-    #wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
-    #echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
     echo "deb [allow-insecure=yes] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
     apt-get update
     apt-get install --allow-unauthenticated -y \
@@ -22,27 +20,10 @@ gcc:
     source /opt/intel/oneapi/setvars.sh
     export PATH=${PATH}:${PWD}/VEF/bin
     AR=xiar ./build.sh -c gfortran -b debug
-    AR=xiar ./build.sh -c gfortran -b release -t
+    AR=xiar ./build.sh -c gfortran -b release
     cd test
-    pytest --update=logout -v -k fcc12 -k bcc24
-
-gcc48:
-  image: gcc
-  script: |
-    #wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
-    #echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
-    echo "deb [allow-insecure=yes] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
-    apt-get update
-    apt-get install --allow-unauthenticated -y \
-    intel-oneapi-mkl-devel \
-    cmake \
-    python3-pytest python3-pandas python3-numpy
-    source /opt/intel/oneapi/setvars.sh
-    export PATH=${PATH}:${PWD}/VEF/bin
-    AR=xiar ./build.sh -c gfortran -b debug
-    AR=xiar ./build.sh -c gfortran -b release -t
-    cd test
-    pytest --update=logout -v -k bcc48
+    export OMP_NUM_THREADS=3
+    pytest --update=logout -v
 
 ifort:
   image: intel/oneapi-hpckit:latest
@@ -54,23 +35,10 @@ ifort:
     pip install pandas pytest numpy
     export PATH=${PATH}:${PWD}/VEF/bin
     AR=xiar ./build.sh -c ifort -b debug
-    AR=xiar ./build.sh -c ifort -b release -t
+    AR=xiar ./build.sh -c ifort -b release
     cd test
-    pytest --update=logout -v -k fcc12 -k bcc24
-
-ifort48:
-  image: intel/oneapi-hpckit:latest
-  script: |
-    apt-get update --allow-insecure-repositories
-    apt-get install --allow-unauthenticated -y \
-    cmake \
-    python3-pip
-    pip install pandas pytest numpy
-    export PATH=${PATH}:${PWD}/VEF/bin
-    AR=xiar ./build.sh -c ifort -b debug
-    AR=xiar ./build.sh -c ifort -b release -t
-    cd test
-    pytest --update=logout -v -k bcc48
+    export OMP_NUM_THREADS=3
+    pytest --update=logout -v
 
 ifx:
   image: intel/oneapi-hpckit:latest
@@ -82,21 +50,7 @@ ifx:
     pip install pandas pytest numpy
     export PATH=${PATH}:${PWD}/VEF/bin
     AR=xiar ./build.sh -c ifx -b debug
-    AR=xiar ./build.sh -c ifx -b release -t
+    AR=xiar ./build.sh -c ifx -b release
     cd test
-    pytest --update=logout -v -k fcc12 -k bcc24
-
-ifx48:
-  image: intel/oneapi-hpckit:latest
-  script: |
-    apt-get update --allow-insecure-repositories
-    apt-get install --allow-unauthenticated -y \
-    cmake \
-    python3-pip
-    pip install pandas pytest numpy
-    export PATH=${PATH}:${PWD}/VEF/bin
-    AR=xiar ./build.sh -c ifx -b debug
-    AR=xiar ./build.sh -c ifx -b release -t
-    cd test
-    pytest --update=logout -v -k bcc48
-
+    export OMP_NUM_THREADS=3
+    pytest --update=logout -v
