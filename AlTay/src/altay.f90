@@ -3,10 +3,10 @@ module altay
     use simulation
     use altayConfig
     use hardening
-    use altayCurAccess
     use logging
     use parameters
     use grain_module
+    use file_io
 
     implicit none
 
@@ -22,16 +22,23 @@ contains
         type(altayConfigData), intent(inout)    :: cnf      !< configuration data
         integer, intent(out)                 :: info     !< exit code (altay_OK on success)
         character(*), parameter:: PROC_NAME = 'initAltay'
+        real(DP), dimension(:,:), allocatable:: orientations, &
+                                                boundaries
 
-        integer:: ierr
+        integer:: ierr, cluster_size
 
         ierr = 0
         ! Set the singleton object to the cnf
         acnf = cnf
+
+        cluster_size    = cnf%simul_init%NGR
         ! Open input files
 
         ! Get the initial texture
-        call dynfil_init(trim(cnf%texture_input_fname), size(acnf%deformation_mechanism, 3))
+        orientations = read_texture(trim(cnf%texture_input_fname))
+
+        if (cluster_size == 2) &
+            boundaries = read_boundaries(cnf%micros_fname)
 
         ! Open output files
         call openOutputFiles(cnf, info)
@@ -41,11 +48,11 @@ contains
         ! Initialize altay modules
         !
         ! Set the data for CRSS calculations
-        call parameter_set(cnf%hardening_parameters, 'n_grains', size(grains), fail_on_absent=.false.)
+        call parameter_set(cnf%hardening_parameters, 'n_grains', size(orientations, 2), fail_on_absent=.false.)
         call hardening_init(cnf%hardening_parameters)
         ! Initialisation of SIMUL
         info = VEF_ERROR
-        call simulation_init()
+        call simulation_init(orientations, boundaries)
 
         ! No need for the slip system definition anymore.
         close(LEC)
@@ -58,13 +65,14 @@ contains
 
         ! Close all units.
         close(IMP5)
-        call DYNFIL_finalize(info)
-        if (info /= 0) return
+        nrstep = 0
         call hardening_finalize()
+        call simulation_finalize()
         if (allocated(astate%simulCalls)) then
               deallocate(astate%simulCalls)
               astate%nSimulCalls = 0
         endif
+        info = 0
 
     end subroutine
 
@@ -154,8 +162,10 @@ contains
         integer, intent(out)           :: info
 
         info = VEF_OK
-        if (acnf%output_config%nfile == 1) call CURwriteBlock(IMP1, info, deformation_gradient)
+        if (acnf%output_config%nfile == 1) call output_current_state(IMP1)
         if (info /= 0) return
     end subroutine
+
+
 
 end module

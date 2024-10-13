@@ -9,7 +9,7 @@ set(libaltay "altay")
 list(APPEND Fortran_FLAGS ${LibAlTay_FLAGS})
 
 add_library(${libaltay} STATIC
-altayCurAccess.f90 
+file_io.f90
 utils.f90
 logging.f90
 altayConfig.f90  
