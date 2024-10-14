@@ -60,7 +60,7 @@ module utils
         module procedure cross
     end interface
 
-    interface operator(.tensor.)
+    interface operator(.outer.)
         module procedure outer_product
     end interface
 
