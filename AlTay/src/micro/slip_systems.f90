@@ -95,13 +95,13 @@ contains
         integer, dimension(3, 2), intent(in):: miller_indices
 
         real(DP):: normalized(3, 2), &
-                   tensor(3, 3)
+                   schmid_matrix(3, 3)
 
         !Initialize taylor and spin coefficients of the slip system
         normalized = normalize(miller_indices)
-        tensor = normalized(:,1) .tensor. normalized(:,2)
-        this%taylor_coeffs = convert_stress_strain_space(tensor)
-        this%spin_coeffs = convert_spin(tensor)
+        schmid_matrix = normalized(:,1) .outer. normalized(:,2)
+        this%taylor_coeffs = convert_stress_strain_space(schmid_matrix)
+        this%spin_coeffs = convert_spin(schmid_matrix)
     end subroutine
 
     pure real(DP) function slip_system_get_work_rate(this) result(work_rate)
