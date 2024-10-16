@@ -109,7 +109,7 @@ module simulation
         deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
 
         !$OMP PARALLEL SHARED(clusters, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(i, cluster_ptr)
-            !$OMP DO SCHEDULE(static, 1)
+            !$OMP DO SCHEDULE(static)
                 do i = 1, size(clusters)
                     cluster_ptr => clusters(i)
                     call update_cluster_state(cluster_ptr, deformation_gradient_during_time_step, velocity_gradient, i)
