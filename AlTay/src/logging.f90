@@ -7,11 +7,12 @@ module logging
     !Supported error codes
     !Explicitly numbered for easy reference
     enum, bind(C)
-        enumerator :: ERR      = 1, & !< General error
+        enumerator:: ERR      = 1, & !< General error
                       ERR_DIMS = 2, & !< Out of bounds
                       ERR_VAL  = 3, & !< Unacceptable value
                       ERR_IO   = 4, & !< Error during an IO operation
-                      ERR_INIT = 5   !< Procedure call without proper initialization
+                      ERR_INIT = 5, & !< Procedure call without proper initialization
+                      ERR_TYPE = 6    !< Erroneous type provided.
     end enum
 
     !Print trace message when preprocessor flag TRACE is set
@@ -27,14 +28,14 @@ module logging
     interface
         !log_trace
         module subroutine log_trace_str(caller_module, caller_routine, message)
-        character(len=*), intent(in) :: caller_module,  &
-                                        caller_routine, & 
+        character(len=*), intent(in):: caller_module,  &
+                                        caller_routine, &
                                         message
         end subroutine
         module subroutine log_trace_tensor(caller_module, caller_routine, tensor)
             character(len=*), intent(in)        :: caller_module, &
                                                    caller_routine
-            real(DP), dimension(..), intent(in) :: tensor
+            real(DP), dimension(..), intent(in):: tensor
         end subroutine
 
         !log_error
@@ -42,12 +43,12 @@ module logging
             character(*),   intent(in)           :: caller_module, &
                                                     caller_routine
             integer,        intent(in)           :: code
-            character(*),   intent(in), optional :: message
+            character(*),   intent(in), optional:: message
         end subroutine
         module pure subroutine log_error_pure(code)
-            integer, intent(in) :: code
+            integer, intent(in):: code
         end subroutine
-    end interface 
+    end interface
 end module logging
 
 submodule(logging) log_imp
@@ -62,7 +63,7 @@ submodule(logging) log_imp
     end procedure
 
     module procedure log_trace_tensor
-        real(DP) :: buffer
+        real(DP):: buffer
 
 #ifdef TRACE
         select rank(tensor)
@@ -75,7 +76,7 @@ submodule(logging) log_imp
             rank(3)
                 buffer = sum(tensor)
             rank default
-                call log_error('log', 'trace_tensor', ERR_DIMS, 'Maximum supported rank is 3.') 
+                call log_error('log', 'trace_tensor', ERR_DIMS, 'Maximum supported rank is 3.')
         end select
         print *, 'TRACE ', caller_module, ', ', caller_routine, ': ', buffer
 #endif

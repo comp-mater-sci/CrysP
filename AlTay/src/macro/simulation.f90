@@ -18,7 +18,7 @@ module simulation
 
     real(DP):: von_mises_strain
     real(DP), dimension(3, 3):: deformation_gradient = UNIT_MATRIX_3X3
-    type(Cluster), dimension(:), pointer, contiguous:: clusters
+    class(Cluster), dimension(:), allocatable, target:: clusters
 
     character(*), parameter:: MOD_NAME = 'Simul'
 
@@ -54,9 +54,8 @@ module simulation
   98    format (A)
 
         deformation_gradient = UNIT_MATRIX_3X3
-        clusters => taylor_init(acnf%deformation_mechanism, cluster_size, acnf%simul_init%FMicro, orientations, boundaries)
+        clusters = taylor_init(acnf%deformation_mechanism, cluster_size, acnf%simul_init%FMicro, orientations, boundaries)
         von_mises_strain = 0._DP
-
     end subroutine
 
     function get_stress(velocity_gradient) result(homogenized_stress)
@@ -119,7 +118,7 @@ module simulation
         spin = antisymmetric_part(velocity_gradient)
         von_mises_strain_rate = SQR0P67*norm2(strain_rate)
         deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient)
-        call meso_update_model(velocity_gradient)
+        call meso_prepare_deformation(velocity_gradient, cluster_size)
 
         steploop: DO step = 1, astate%simulCalls(astate%this)%input%nsteps
             total_weight = 0._DP
@@ -129,10 +128,10 @@ module simulation
 
             nrstep = nrstep+1
 
-            !$OMP PARALLEL SHARED(clusters, n_clusters, spin, velocity_gradient, homogenized_stress, homogenized_total_slip, homogenized_taylor_factor, total_weight, von_mises_strain_rate) PRIVATE(i, stress_cluster, slip_cluster, weight_cluster)
+            !$OMP PARALLEL SHARED(clusters, n_clusters, homogenized_stress, homogenized_total_slip, homogenized_taylor_factor, total_weight, von_mises_strain_rate) PRIVATE(i, stress_cluster, slip_cluster, weight_cluster)
                 !$OMP DO SCHEDULE(DYNAMIC, 1)
                     do i = 1, n_clusters
-                        call apply_deformation_step(clusters(i), spin, i, velocity_gradient, stress_cluster, slip_cluster)
+                        call apply_deformation_step(clusters(i), i, stress_cluster, slip_cluster)
                         weight_cluster = clusters(i)%weight
                         !$OMP CRITICAL
                             total_weight = total_weight+weight_cluster
@@ -162,12 +161,22 @@ module simulation
 
             von_mises_strain = von_mises_strain+von_mises_strain_rate
             deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
-            call meso_update_model()
+            call meso_update_model(cluster_size)
         enddo steploop
     end subroutine
 
     subroutine output_current_state(file_handle)
         integer, intent(in):: file_handle
+
+        print *, loc(clusters(1))
+
+
+
+        if (allocated(clusters(1)%grains)) then
+                print *, "Allocated"
+        else
+                print *, "Not allocated"
+        end if
 
         call cur_write_block(file_handle, clusters, deformation_gradient)
     end subroutine
