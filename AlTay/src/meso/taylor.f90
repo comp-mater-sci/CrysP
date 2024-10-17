@@ -30,13 +30,13 @@ module taylor
 
 contains
 
-    function taylor_init(deformation_mechanism, cluster_size, initial_deformation_gradient, orientations, boundaries) result(clusters)
+    function taylor_init(deformation_mechanism, cluster_size, orientations, boundaries) result(clusters)
         integer, intent(in):: cluster_size
-        real(DP), dimension(3, 3), intent(in):: initial_deformation_gradient
         class(Cluster), dimension(:), allocatable, target:: clusters
         integer, dimension(:,:,:), intent(in):: deformation_mechanism
         real(DP), dimension(:,:), allocatable, intent(in):: orientations, &
                                                             boundaries
+        integer:: i
 
         if (cluster_size == 2) then
             clusters = alamel_init(orientations, deformation_mechanism, boundaries)

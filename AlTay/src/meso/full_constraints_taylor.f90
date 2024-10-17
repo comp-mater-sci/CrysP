@@ -31,13 +31,13 @@ contains
     !>@Brief Attempt to convert a generic cluster to a taylor cluster
     !>@Details If the provided cluster pointer is of type TaylorCluster, an equivalent pointer of type taylor_cluster is reterned.
     !If not, the program crashes. As such, this procedure acts as a safe type cast.
-    function to_taylor_cluster(cluster_) result(taylor_cluster_ptr)
-       class(Cluster), target, intent(in):: cluster_
+    function to_taylor_cluster(cluster_ptr) result(taylor_cluster_ptr)
+       class(Cluster), target, intent(in):: cluster_ptr
        type(TaylorCluster), pointer:: taylor_cluster_ptr !> Pointer to the input cluster but with type TaylorCluster
                                                          !Note that we must use a pointer to make sure we are referencing the exact
                                                          !same cluster struct as the input.
 
-       select type (cluster_)
+       select type (cluster_ptr)
             type is (TaylorCluster)
                 taylor_cluster_ptr = cluster_ptr
             class default
@@ -60,7 +60,7 @@ contains
             type is (TaylorCluster)
                 do i = 1, size(clusters)
                     allocate(clusters(i)%grains(1))
-                                clusters(i)%weight = 1._DP
+                    clusters(i)%weight = 1._DP
                     clusters(i)%ind_basis_systems = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, size(deformation_mechanism, 3) == 12)
                     call clusters(i)%grains(1)%init(deformation_mechanism, orientations(:,i))
                     taylor_coeffs = clusters(i)%grains(1)%get_taylor_coeffs()
@@ -94,11 +94,11 @@ contains
 
     !>@Brief See 'meso_model_get_stress'.
     function full_constraints_taylor_get_stress(cluster_, velocity_gradient) result(stress)
-        class(Cluster), intent(in):: cluster_
+        class(Cluster), intent(inout):: cluster_                    !> Intent(inout) because simplex modifies inverse basis
         real(DP), dimension(3, 3), intent(in):: velocity_gradient
         real(DP), dimension(3, 3):: stress
 
-        real(DP), dimension(size(cluster_ptr%grains(1)%slip_systems)):: slip_rates, &
+        real(DP), dimension(size(cluster_%grains(1)%slip_systems)):: slip_rates, &
                                                                         overstress, &
                                                                         rss
         real(DP), dimension(5):: stress_cluster
@@ -127,7 +127,7 @@ contains
 
     !>@Brief See 'meso_model_apply_step'.
     subroutine full_constraints_taylor_deform(cluster_, index_cluster, stress, slip)
-        class(Cluster), intent(inout):: cluster_
+        class(Cluster), target, intent(inout):: cluster_
         integer, intent(in):: index_cluster
         real(DP), dimension(3, 3), intent(out):: stress
         real(DP), intent(out):: slip
@@ -150,17 +150,17 @@ contains
 
         select type (cluster_)
             type is (TaylorCluster)
-                grain_ptr => cluster_ptr%grains(1)
+                grain_ptr => cluster_%grains(1)
                 n_systems = size(grain_ptr%slip_systems)
 
                 imposed_strain_rate = convert_stress_strain_space(velocity_gradient .toframe. grain_ptr%orientation)
-                taylor_coeffs = get_taylor_coeffs(taylor_cluster_ptr)
+                taylor_coeffs = get_taylor_coeffs(cluster_)
 
                 call simplex_solve(taylor_coeffs, &
                                    imposed_strain_rate, &
-                                   get_crss(taylor_cluster_ptr), &
-                                   taylor_cluster_ptr%inverse_basis, &
-                                   taylor_cluster_ptr%ind_basis_systems, &
+                                   get_crss(cluster_), &
+                                   cluster_%inverse_basis, &
+                                   cluster_%ind_basis_systems, &
                                    slip_rates, &
                                    stress_cluster, &
                                    rss, &

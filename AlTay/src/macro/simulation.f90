@@ -54,7 +54,7 @@ module simulation
   98    format (A)
 
         deformation_gradient = UNIT_MATRIX_3X3
-        clusters = taylor_init(acnf%deformation_mechanism, cluster_size, acnf%simul_init%FMicro, orientations, boundaries)
+        clusters = taylor_init(acnf%deformation_mechanism, cluster_size, orientations, boundaries)
         von_mises_strain = 0._DP
     end subroutine
 
