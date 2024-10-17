@@ -5,6 +5,7 @@ module hardening_model_dsh
     use parameters
     use logging
     use slip_systems
+    use omp_lib
 
     implicit none
     private
@@ -233,16 +234,17 @@ contains
         real(DP), dimension(this%nss), intent(in)   ::  slip_rates
         type(StatVar)                               ::  SVa,                    &
                                                         SVb
-        real(DP)                                    ::  SUMabsGamDot    = 0._DP, &
-                                                        GAMMAdot_new    = 0._DP, &
-                                                        RHObausch       = 0._DP, &
-                                                        SUMabsGam       = 0._DP, &
-                                                        GAMMA_new       = 0._DP
-        real(DP), dimension(6)                      ::  GAMMAdot        = 0._DP, &
-                                                        GAMMA           = 0._DP
+        real(DP)                                    ::  SUMabsGamDot, &
+                                                        GAMMAdot_new, &
+                                                        RHObausch   , &
+                                                        SUMabsGam   , &
+                                                        GAMMA_new
+        real(DP), dimension(6)                      ::  GAMMAdot    , &
+                                                        GAMMA
         integer, dimension(6)                       ::  r
         integer                                     ::  i, &
                                                         j
+
 
         SVa = this%state(grain)
         !>Calculate quantities of slip rates and slips
@@ -276,24 +278,24 @@ contains
         GAMMAdot_new = GAMMAdot(r(1)) + GAMMAdot(r(2))
         GAMMA_new = GAMMAdot_new*time
 
-       !Update dislocation densities
-        RHObausch = 0._DP
-        do j = 1, 2  ! Loop over 2 currently generated walls
-            SVb%CBB(r(j))%RHOwd = this%F_KocksMeck(SVa%CBB(r(j))%RHOwd, gamma(r(j)), this%Iwd, this%Rwd)
-            SVb%CBB(r(j))%RHOwdHOM = SVb%CBB(r(j))%RHOwd
-            call this%upd_cur_wp(r(j), SVa%CBB(r(j))%RHOwp, SVb%CBB(r(j))%RHOwp, RHObausch, slip_rates, svb, time)
-        end do
+           !Update dislocation densities
+           RHObausch = 0._DP
+           do j = 1, 2  ! Loop over 2 currently generated walls
+               SVb%CBB(r(j))%RHOwd = this%F_KocksMeck(SVa%CBB(r(j))%RHOwd, gamma(r(j)), this%Iwd, this%Rwd)
+               SVb%CBB(r(j))%RHOwdHOM = SVb%CBB(r(j))%RHOwd
+               call this%upd_cur_wp(r(j), SVa%CBB(r(j))%RHOwp, SVb%CBB(r(j))%RHOwp, RHObausch, slip_rates, svb, time)
+           end do
 
-        do j = 3, 6  ! Loop over 4 non-currently generated walls
-            call bp_UPD_ncg_wd(this, r(j), sva, svb, gamma_new)
-            call this%UPD_ncg_wp(SVa%CBB(r(j))%RHOwp, SVb%CBB(r(j))%RHOwp, gamma_new)
-        end do
+           do j = 3, 6  ! Loop over 4 non-currently generated walls
+               call bp_UPD_ncg_wd(this, r(j), sva, svb, gamma_new)
+               call this%UPD_ncg_wp(SVa%CBB(r(j))%RHOwp, SVb%CBB(r(j))%RHOwp, gamma_new)
+           end do
 
-        call this%upd_cb(RHObausch, SUMabsGam, SVa%RHOcb, SVb%RHOcb)
+           call this%upd_cb(RHObausch, SUMabsGam, SVa%RHOcb, SVb%RHOcb)
 
-        !Calculate Critical Resolved Shear Stresses
-        this%state(grain) = SVb
-        call this%F_CRSS(grain)
+           !Calculate Critical Resolved Shear Stresses
+           this%state(grain) = SVb
+           call this%F_CRSS(grain)
     end subroutine
 
     !>Returns RHO_b, the value of RHO at the end of an interval (a, b) for the following differential equation:

@@ -17,7 +17,6 @@ module cluster_module
         real(DP), dimension(:,:), allocatable:: inverse_basis
         type(Relaxation), dimension(:), allocatable:: relaxations
         integer:: n_systems
-
     contains
         procedure:: init                            => cluster_init
         procedure:: get_imposed_strain              => cluster_get_imposed_strain
@@ -191,9 +190,9 @@ contains
         integer::   i, &
                     n_systems_grain
 
-
         do i = 1, size(this%grains)
             n_systems_grain = size(this%grains(i)%slip_systems)
+
             this%grains(i)%slip_systems%slip_rate = slip_rates((i-1)*n_systems_grain+1:i*n_systems_grain)
 
             if (size(this%grains) == 2) &

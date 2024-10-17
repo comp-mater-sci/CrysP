@@ -8,6 +8,7 @@ module simulation
     use logging
     use cluster_module
     use file_io
+    use omp_lib
 
     implicit none
     private
@@ -107,10 +108,14 @@ module simulation
 
         deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
 
-        do i = 1, size(clusters)
-            cluster_ptr => clusters(i)
-            call update_cluster_state(cluster_ptr, deformation_gradient_during_time_step, velocity_gradient, i)
-        end do
+        !$OMP PARALLEL SHARED(clusters, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(i, cluster_ptr)
+            !$OMP DO SCHEDULE(static)
+                do i = 1, size(clusters)
+                    cluster_ptr => clusters(i)
+                    call update_cluster_state(cluster_ptr, deformation_gradient_during_time_step, velocity_gradient, i)
+                end do
+            !$OMP END DO
+        !$OMP END PARALLEL
 
         ! Output the current texture
         if (NFILE == 1) call cur_write_block(IMP1, clusters, deformation_gradient)
@@ -125,48 +130,35 @@ module simulation
 
             nrstep = nrstep+1
 
-
-            !Added for lamel model:
-            !Organisation reading temporary texture file,
-            !in such way that the program TAYLOR can process the crystals
-            !by sets of 2.
-            !Taylor must therefore have "advance knowledge" of the
-            !orientation to come at the moment that it starts such
-            !computation.
-
             if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
                 !Deformation gradient exactly in the middle of the time step.
                 deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
             end if
-            clusterloop: do index_cluster = 1, size(clusters)
-                cluster_ptr => clusters(index_cluster)
-                taylor_factor = 0.0_DP
-                total_slip_rate = 0.0_DP
-                WorkRate = 0.0_DP
 
-                call get_stress_state(cluster_ptr, stress_cluster)
+            !$OMP PARALLEL SHARED(step, clusters, astate, spin, deformation_gradient_during_time_step, velocity_gradient, von_mises_strain_rate) PRIVATE(index_cluster, cluster_ptr, taylor_factor, j)
+                !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, homogenized_taylor_factor, homogenized_total_slip, homogenized_work)
+                    clusterloop: do index_cluster = 1, size(clusters)
+                        cluster_ptr => clusters(index_cluster)
+                        call get_stress_state(cluster_ptr)
 
-                if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                    call apply_deformation_step(cluster_ptr, total_slip_rate, WorkRate, spin, index_cluster, &
-                    deformation_gradient_during_time_step, velocity_gradient)
-                end if
-
-                total_weight = total_weight+cluster_ptr%weight
-                taylor_factor = total_slip_rate /  von_mises_strain_rate
-
-                homogenized_stress = homogenized_stress+stress_cluster*cluster_ptr%weight
-                homogenized_taylor_factor  = homogenized_taylor_factor+taylor_factor*cluster_ptr%weight
-                homogenized_total_slip = homogenized_total_slip+total_slip_rate*cluster_ptr%weight  !Step time here implicitly assumed to be 1.0s
-                homogenized_work       = homogenized_work+WorkRate                              !Step time here implicitly assumed to be 1.0s
-            enddo clusterloop
+                        do j = 1, size(clusters(index_cluster)%grains)
+                            total_weight = total_weight+clusters(index_cluster)%weight
+                            homogenized_stress = homogenized_stress+clusters(index_cluster)%grains(j)%stress*clusters(index_cluster)%weight
+                        end do
+                        if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
+                            call apply_deformation_step(cluster_ptr, spin, index_cluster, deformation_gradient_during_time_step, velocity_gradient)
+                            do j = 1, size(clusters(index_cluster)%grains)
+                                taylor_factor = clusters(index_cluster)%grains(j)%sum_slip_current/von_mises_strain_rate
+                                homogenized_taylor_factor = homogenized_taylor_factor+taylor_factor*clusters(index_cluster)%weight
+                                homogenized_total_slip = homogenized_total_slip+clusters(index_cluster)%grains(j)%sum_slip_current*clusters(index_cluster)%weight
+                                homogenized_work = homogenized_work+clusters(index_cluster)%grains(j)%get_work_rate()
+                            end do
+                        end if
+                    enddo clusterloop
+                !$OMP END DO
+            !$OMP END PARALLEL
 
             homogenized_stress = homogenized_stress/total_weight
-
-            do i = 1, 2
-                do j = i+1, 3
-                    homogenized_stress(j, i)=homogenized_stress(i, j)
-                end do
-            end do
             homogenized_taylor_factor = homogenized_taylor_factor/total_weight
 
             ! Get the homogenized quantities:
