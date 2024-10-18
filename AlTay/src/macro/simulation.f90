@@ -119,6 +119,7 @@ module simulation
         spin = antisymmetric_part(velocity_gradient)
         von_mises_strain_rate = SQR0P67*norm2(strain_rate)
         deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient)
+
         call meso_update_model(velocity_gradient)
 
         steploop: DO step = 1, astate%simulCalls(astate%this)%input%nsteps
@@ -129,17 +130,15 @@ module simulation
 
             nrstep = nrstep+1
 
-            !$OMP PARALLEL SHARED(clusters, n_clusters, spin, velocity_gradient, homogenized_stress, homogenized_total_slip, homogenized_taylor_factor, total_weight, von_mises_strain_rate) PRIVATE(i, stress_cluster, slip_cluster, weight_cluster)
-                !$OMP DO SCHEDULE(DYNAMIC, 1)
+            !$OMP PARALLEL SHARED(step, clusters, spin, velocity_gradient, von_mises_strain_rate) PRIVATE(i, weight_cluster)
+                !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, homogenized_taylor_factor, homogenized_total_slip)
                     do i = 1, n_clusters
                         call apply_deformation_step(clusters(i), spin, i, velocity_gradient, stress_cluster, slip_cluster)
                         weight_cluster = clusters(i)%weight
-                        !$OMP CRITICAL
-                            total_weight = total_weight+weight_cluster
-                            homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
-                            homogenized_total_slip = homogenized_total_slip+slip_cluster*weight_cluster
-                            homogenized_taylor_factor = homogenized_taylor_factor+slip_cluster/von_mises_strain_rate*weight_cluster
-                        !$OMP END CRITICAL
+                        total_weight = total_weight+weight_cluster
+                        homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
+                        homogenized_total_slip = homogenized_total_slip+slip_cluster*weight_cluster
+                        homogenized_taylor_factor = homogenized_taylor_factor+slip_cluster/von_mises_strain_rate*weight_cluster
                     end do
                 !$OMP END DO
             !$OMP END PARALLEL

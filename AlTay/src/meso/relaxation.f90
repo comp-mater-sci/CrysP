@@ -12,7 +12,7 @@ module relaxation_module
                                                                             0, 0, 0, &
                                                                             0, 1, 0], shape(RELAXATIONS))
 
-    !Relaxation is only defined at cluster level even though its components are associated to inndividual grains because defining it
+    !Relaxation is only defined at cluster level even though its components are associated to individual grains because defining it
     !at grain level would require extending the grain type for different mesoscopic models, which would clash with possible
     !extensions of the grain type for microscopic models.
     type:: Relaxation
