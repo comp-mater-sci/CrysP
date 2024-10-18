@@ -167,17 +167,6 @@ module simulation
 
     subroutine output_current_state(file_handle)
         integer, intent(in):: file_handle
-
-        print *, loc(clusters(1))
-
-
-
-        if (allocated(clusters(1)%grains)) then
-                print *, "Allocated"
-        else
-                print *, "Not allocated"
-        end if
-
         call cur_write_block(file_handle, clusters, deformation_gradient)
     end subroutine
 

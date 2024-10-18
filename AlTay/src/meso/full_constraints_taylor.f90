@@ -93,9 +93,9 @@ contains
     end function
 
     !>@Brief See 'meso_model_get_stress'.
-    function full_constraints_taylor_get_stress(cluster_, velocity_gradient) result(stress)
+    function full_constraints_taylor_get_stress(cluster_, v_grad) result(stress)
         class(Cluster), intent(inout):: cluster_                    !> Intent(inout) because simplex modifies inverse basis
-        real(DP), dimension(3, 3), intent(in):: velocity_gradient
+        real(DP), dimension(3, 3), intent(in):: v_grad
         real(DP), dimension(3, 3):: stress
 
         real(DP), dimension(size(cluster_%grains(1)%slip_systems)):: slip_rates, &
@@ -106,7 +106,7 @@ contains
         select type(cluster_)
             type is (TaylorCluster)
                 call simplex_solve(get_taylor_coeffs(cluster_), &
-                                   convert_stress_strain_space(velocity_gradient .toframe. cluster_%grains(1)%orientation), &
+                                   convert_stress_strain_space(v_grad .toframe. cluster_%grains(1)%orientation), &
                                    get_crss(cluster_), &
                                    cluster_%inverse_basis, &
                                    cluster_%ind_basis_systems, &
@@ -118,10 +118,10 @@ contains
         end select
     end function
 
-    subroutine full_constraints_taylor_prepare_deformation(vel_grad)
-        real(DP), dimension(3, 3), intent(in):: vel_grad !> Velocity gradient used for the next deformation step(s)
+    subroutine full_constraints_taylor_prepare_deformation(v_grad)
+        real(DP), dimension(3, 3), intent(in):: v_grad !> Velocity gradient used for the next deformation step(s)
 
-        velocity_gradient = vel_grad
+        velocity_gradient = v_grad
         imposed_spin_rate = antisymmetric_part(velocity_gradient)
     end subroutine
 
@@ -195,7 +195,7 @@ contains
                     slip_rates = resolve_taylor_ambiguity(ind_overstressed_slip_systems(1:n_overstressed_slip_systems), &
                         rss(ind_overstressed_slip_systems(1:n_overstressed_slip_systems)), &
                         imposed_strain_rate, &
-                        grain_ptr%get_taylor_coeffs(), &
+                        taylor_coeffs, &
                         n_active_simplex)
                 end if
 
