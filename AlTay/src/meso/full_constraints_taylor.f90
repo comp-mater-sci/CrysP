@@ -114,7 +114,7 @@ contains
                                    stress_cluster, &
                                    rss, &
                                    overstress)
-                stress = convert_stress_strain_space(stress_cluster)
+                stress = convert_stress_strain_space(stress_cluster) .fromframe. cluster_%grains(1)%orientation
         end select
     end function
 
@@ -156,6 +156,13 @@ contains
                 imposed_strain_rate = convert_stress_strain_space(velocity_gradient .toframe. grain_ptr%orientation)
                 taylor_coeffs = get_taylor_coeffs(cluster_)
 
+                !print *, "Taylor coeffs: "
+                !print '(5f6.2)', taylor_coeffs
+                !print *, "Imposed strain rate: "
+                !print '(5f6.2)', imposed_strain_rate
+                !print *, "CRSS: "
+                !print '(2f6.2)', get_crss(cluster_)
+
                 call simplex_solve(taylor_coeffs, &
                                    imposed_strain_rate, &
                                    get_crss(cluster_), &
@@ -166,7 +173,7 @@ contains
                                    rss, &
                                    overstress)
 
-                stress = convert_stress_strain_space(stress_cluster)
+                stress = convert_stress_strain_space(stress_cluster) .fromframe. grain_ptr%orientation
 
                 !Determine if taylor ambiguity may be occuring. While we are iterating over the slip systems, might as well prepare for
                 !resolving it
