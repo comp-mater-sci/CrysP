@@ -42,11 +42,11 @@ module alamel
 contains
 
     !>@Brief See meso_model_init
-    function alamel_init(orientations, deformation_mechanism, boundaries) result(clusters)
+    subroutine alamel_init(orientations, deformation_mechanism, boundaries, clusters)
         real(DP), dimension(:,:), intent(in):: orientations
         integer, dimension(:,:,:), intent(in):: deformation_mechanism
         real(DP), dimension(:,:), intent(in):: boundaries
-        class(Cluster), dimension(:), allocatable, target:: clusters
+        class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
         integer:: i, j, k, &
                   ind_basis_systems_grain(5), &
@@ -78,7 +78,7 @@ contains
                 j = merge(1, j+1, j == size(boundaries, 2))
             end do
         end select
-    end function
+    end subroutine
 
     !>@Brief Update the model after a time step has elapsed.
     !>@Details See meso_update_model

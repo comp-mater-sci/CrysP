@@ -54,7 +54,7 @@ module simulation
   98    format (A)
 
         deformation_gradient = UNIT_MATRIX_3X3
-        clusters = taylor_init(acnf%deformation_mechanism, cluster_size, orientations, boundaries)
+        call taylor_init(acnf%deformation_mechanism, cluster_size, orientations, boundaries, clusters)
         von_mises_strain = 0._DP
     end subroutine
 
@@ -87,7 +87,6 @@ module simulation
 
         homogenized_stress = homogenized_stress/total_weight
     end function
-
 
     subroutine simulation_run(NFILE0, velocity_gradient)
         real(DP), intent(in):: velocity_gradient(3, 3)

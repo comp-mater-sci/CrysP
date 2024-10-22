@@ -46,10 +46,10 @@ contains
     end function
 
     !>@Brief See 'meso_model_init'.
-    function full_constraints_taylor_init(orientations, deformation_mechanism) result(clusters)
+    subroutine full_constraints_taylor_init(orientations, deformation_mechanism, clusters)
         real(DP), dimension(:,:), intent(in):: orientations
         integer, dimension(:,:,:), intent(in):: deformation_mechanism
-        class(Cluster), dimension(:), allocatable, target:: clusters
+        class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
         type(TaylorCluster), pointer:: taylor_cluster_ptr
         real(DP), dimension(5, size(deformation_mechanism, 3)):: taylor_coeffs
@@ -68,7 +68,7 @@ contains
                     call clusters(i)%grains(1)%set_crss(hardening_get_crss(i, 0._DP))
                 end do
         end select
-    end function
+    end subroutine
 
     pure function get_taylor_coeffs(taylor_cluster) result(coeffs)
         type(TaylorCluster), intent(in):: taylor_cluster
