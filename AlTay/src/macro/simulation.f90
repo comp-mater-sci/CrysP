@@ -123,15 +123,13 @@ module simulation
             nrstep = nrstep+1
 
             !$OMP PARALLEL SHARED(clusters, n_clusters, homogenized_stress, homogenized_taylor_factor, total_weight, von_mises_strain_rate) PRIVATE(i, stress_cluster, slip_cluster, weight_cluster)
-                !$OMP DO SCHEDULE(DYNAMIC, 1)
+                !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, homogenized_taylor_factor)
                     do i = 1, n_clusters
                         call apply_deformation_step(clusters(i), i, stress_cluster, slip_cluster)
                         weight_cluster = clusters(i)%weight
-                        !$OMP CRITICAL
-                            total_weight = total_weight+weight_cluster
-                            homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
-                            homogenized_taylor_factor = homogenized_taylor_factor+slip_cluster/von_mises_strain_rate*weight_cluster
-                        !$OMP END CRITICAL
+                        total_weight = total_weight+weight_cluster
+                        homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
+                        homogenized_taylor_factor = homogenized_taylor_factor+slip_cluster/von_mises_strain_rate*weight_cluster
                     end do
                 !$OMP END DO
             !$OMP END PARALLEL
