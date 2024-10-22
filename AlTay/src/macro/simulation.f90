@@ -13,7 +13,6 @@ module simulation
     implicit none
     private
 
-    real(DP), allocatable:: homogenized_total_slipTOT !< homogenized slip accumulated over calls
     integer:: NFILE1
 
     real(DP):: von_mises_strain
@@ -42,8 +41,6 @@ module simulation
 
 
         cluster_size    = acnf%simul_init%NGR
-
-        homogenized_total_slipTOT = 0.D0
 
         if (cluster_size < 1 .or. cluster_size > 2) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Incorrect value of cluster_size')
@@ -99,7 +96,6 @@ module simulation
                   i, j, l               !> Iteration variables
         real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
-                   homogenized_total_slip, & ! homogenized_total_slip: homogenized slip per step
                    homogenized_taylor_factor, &   !Volume-averaged Taylor factor
                    deformation_gradient_increment(3, 3), &
                    strain_rate(3, 3), &
@@ -123,11 +119,10 @@ module simulation
             total_weight = 0._DP
             homogenized_stress = 0._DP
             homogenized_taylor_factor = 0._DP
-            homogenized_total_slip = 0._DP
 
             nrstep = nrstep+1
 
-            !$OMP PARALLEL SHARED(clusters, n_clusters, homogenized_stress, homogenized_total_slip, homogenized_taylor_factor, total_weight, von_mises_strain_rate) PRIVATE(i, stress_cluster, slip_cluster, weight_cluster)
+            !$OMP PARALLEL SHARED(clusters, n_clusters, homogenized_stress, homogenized_taylor_factor, total_weight, von_mises_strain_rate) PRIVATE(i, stress_cluster, slip_cluster, weight_cluster)
                 !$OMP DO SCHEDULE(DYNAMIC, 1)
                     do i = 1, n_clusters
                         call apply_deformation_step(clusters(i), i, stress_cluster, slip_cluster)
@@ -135,7 +130,6 @@ module simulation
                         !$OMP CRITICAL
                             total_weight = total_weight+weight_cluster
                             homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
-                            homogenized_total_slip = homogenized_total_slip+slip_cluster*weight_cluster
                             homogenized_taylor_factor = homogenized_taylor_factor+slip_cluster/von_mises_strain_rate*weight_cluster
                         !$OMP END CRITICAL
                     end do
@@ -150,13 +144,10 @@ module simulation
                 callout%stress_tensor = homogenized_stress
                 callout%taylor_factor = homogenized_taylor_factor
                 callout%effective_stress = sqrt(3.D0/2.D0)*norm2(homogenized_stress)
-                callout%homogenised_slip_tot = homogenized_total_slipTOT
                 callout%effective_macro_strain_tot = von_mises_strain
                 callout%effective_macro_strain_tot_end = von_mises_strain+von_mises_strain_rate
             end associate
 
-            homogenized_total_slip = homogenized_total_slip/total_weight
-            homogenized_total_slipTOT = homogenized_total_slipTOT+homogenized_total_slip
 
             von_mises_strain = von_mises_strain+von_mises_strain_rate
             deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
