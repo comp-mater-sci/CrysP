@@ -156,13 +156,6 @@ contains
                 imposed_strain_rate = convert_stress_strain_space(velocity_gradient .toframe. grain_ptr%orientation)
                 taylor_coeffs = get_taylor_coeffs(cluster_)
 
-                !print *, "Taylor coeffs: "
-                !print '(5f6.2)', taylor_coeffs
-                !print *, "Imposed strain rate: "
-                !print '(5f6.2)', imposed_strain_rate
-                !print *, "CRSS: "
-                !print '(2f6.2)', get_crss(cluster_)
-
                 call simplex_solve(taylor_coeffs, &
                                    imposed_strain_rate, &
                                    get_crss(cluster_), &
@@ -183,7 +176,7 @@ contains
                     if (abs(overstress(i)) < TOLERANCE) then
                         n_overstressed_slip_systems = n_overstressed_slip_systems+1
                         ind_overstressed_slip_systems(n_overstressed_slip_systems) =i
-                        if (slip_rates(i) > TOLERANCE) &
+                        if (abs(slip_rates(i)) > TOLERANCE) &
                             n_active_simplex = n_active_simplex+1
                     end if
                 enddo

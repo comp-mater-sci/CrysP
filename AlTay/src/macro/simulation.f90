@@ -83,6 +83,7 @@ module simulation
         !$OMP END PARALLEL
 
         homogenized_stress = homogenized_stress/total_weight
+
     end function
 
     subroutine simulation_run(NFILE0, velocity_gradient)
@@ -122,7 +123,7 @@ module simulation
 
             nrstep = nrstep+1
 
-            !$OMP PARALLEL SHARED(clusters, n_clusters, homogenized_stress, homogenized_taylor_factor, total_weight, von_mises_strain_rate) PRIVATE(i, stress_cluster, slip_cluster, weight_cluster)
+            !$OMP PARALLEL SHARED(clusters, n_clusters, von_mises_strain_rate) PRIVATE(i, stress_cluster, slip_cluster, weight_cluster)
                 !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, homogenized_taylor_factor)
                     do i = 1, n_clusters
                         call apply_deformation_step(clusters(i), i, stress_cluster, slip_cluster)
@@ -145,7 +146,6 @@ module simulation
                 callout%effective_macro_strain_tot = von_mises_strain
                 callout%effective_macro_strain_tot_end = von_mises_strain+von_mises_strain_rate
             end associate
-
 
             von_mises_strain = von_mises_strain+von_mises_strain_rate
             deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)

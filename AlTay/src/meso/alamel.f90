@@ -31,7 +31,6 @@ module alamel
                                                                     !> systems with 0 critical resolved shear stress.
     end type
 
-
     real(DP), dimension(3, 3):: imposed_spin_rate
     real(DP), dimension(3, 3):: velocity_gradient
     real(DP), dimension(3, 3):: deformation_gradient
@@ -51,7 +50,6 @@ contains
         integer:: i, j, k, &
                   ind_basis_systems_grain(5), &
                   n_systems_grain
-
 
         n_systems_grain = size(deformation_mechanism, 3)
         ind_basis_systems_grain = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, n_systems_grain == 12)
@@ -99,7 +97,6 @@ contains
         do i = 1, 2
             imposed_strain_rate(5*(i-1)+1:5*i) = convert_stress_strain_space(v_grad .toframe. alamel_cluster%grains(i)%orientation)
         end do
-
     end function
 
     pure function homogenize_stress_state(alamel_cluster, stress_cluster) result(homogenized_stress)
@@ -151,18 +148,6 @@ contains
         crss(:,size(crss, 2)) = 0._DP
     end function
 
-    function to_alamel_cluster(cluster_ptr) result(alamel_cluster_ptr)
-       class(Cluster), pointer, intent(in):: cluster_ptr
-       type(AlamelCluster), pointer:: alamel_cluster_ptr
-
-       select type (cluster_ptr)
-            type is (AlamelCluster)
-                alamel_cluster_ptr = cluster_ptr
-            class default
-                call log_error(MOD_NAME, 'to_alamel_cluster', ERR_TYPE, "Cluster is not an AlamelCluster!")
-       end select
-    end function
-
     !>@Brief Get stress state for a cluster
     !>@details Calculate the homogenized stress over the cluster in the global frame
     function alamel_get_stress(cluster_, v_grad) result(stress)
@@ -174,11 +159,12 @@ contains
                                                                                                                    overstress, &
                                                                                                                    rss
         real(DP), dimension(10):: stress_cluster
+        integer:: i
 
 
         select type (cluster_)
             type is (AlamelCluster)
-                call simplex_solve(get_taylor_coeffs(cluster_), &
+                                call simplex_solve(get_taylor_coeffs(cluster_), &
                                    calc_imposed_strain_rate(cluster_, v_grad), &
                                    get_crss(cluster_), &
                                    cluster_%inverse_basis, &
@@ -202,7 +188,6 @@ contains
         deformation_gradient_increment =  matrix_exponential_small_norm(velocity_gradient/2._DP)
         deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient)
         next_deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
-
     end subroutine
 
     subroutine alamel_deform(cluster_, index_cluster, stress, slip)
@@ -265,6 +250,9 @@ contains
                                slip_rates_relaxations=>slip_rates(offset_relaxations+1:), &
                                taylor_coeffs_relaxations=>taylor_coeffs(offset_grain+1:offset_grain+5, offset_relaxations+1:))
 
+
+
+
                         !Determine if taylor ambiguity may be occuring. While we are iterating over the slip systems, might as well prepare for
                         !resolving it
                         n_overstressed_slip_systems = 0
@@ -273,7 +261,7 @@ contains
                             if (abs(overstress(offset_systems+i)) < TOLERANCE) then
                                 n_overstressed_slip_systems = n_overstressed_slip_systems+1
                                 ind_overstressed_slip_systems(n_overstressed_slip_systems) =i
-                                if (slip_rates_grain(i) > TOLERANCE) &
+                                if (abs(slip_rates_grain(i)) > TOLERANCE) &
                                     n_active_simplex = n_active_simplex+1
                             end if
                         enddo
@@ -289,10 +277,11 @@ contains
                         if (n_overstressed_slip_systems > n_active_simplex) then
                             !Determine strain absorbed by slip systems (imposed strain-relaxations)
                             strain_relaxations = matmul(taylor_coeffs_relaxations, slip_rates_relaxations)
-                            strain_grain = imposed_strain_rate((j-1)*5+1:j*5)-strain_relaxations
+                            strain_grain = imposed_strain_rate(offset_grain+1:offset_grain+5)-strain_relaxations
+
 
                             slip_rates_grain = resolve_taylor_ambiguity(ind_overstressed_slip_systems(1:n_overstressed_slip_systems), &
-                                rss(ind_overstressed_slip_systems(1:n_overstressed_slip_systems)+(j-1)*n_systems_grain), &
+                                rss(ind_overstressed_slip_systems(1:n_overstressed_slip_systems)+offset_systems), &
                                 strain_grain, &
                                 grain_ptr%get_taylor_coeffs(), &
                                 n_active_simplex)
@@ -316,6 +305,8 @@ contains
                                                 -convert_spin(matmul(grain_ptr%get_spin_coeffs(), slip_rates_grain)) &   !>Spin induced by activation of slip systems
                                                 -convert_spin(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
                         grain_ptr%orientation = matmul(orientation_increment, grain_ptr%orientation)
+
+
                     end associate
                 end do
 
@@ -376,9 +367,9 @@ contains
         end do
     end function
 
-    subroutine update_relaxations(alamel_cluster, deformation_gradient)
+    subroutine update_relaxations(alamel_cluster, def_grad)
         type(AlamelCluster), intent(inout):: alamel_cluster
-        real(DP), dimension(3, 3), intent(in):: deformation_gradient
+        real(DP), dimension(3, 3), intent(in):: def_grad
 
         real(DP):: boundary_to_crystal(3, 3, 2), &
                    new_vec(10), &
@@ -389,7 +380,7 @@ contains
                   n_systems_grains
 
         !Calculate current boundary reference frame
-        new_boundary_frame = matmul(deformation_gradient, alamel_cluster%initial_boundary_orientation)
+        new_boundary_frame = matmul(def_grad, alamel_cluster%initial_boundary_orientation)
         new_boundary_frame(:,3) = new_boundary_frame(:,1) .cross. new_boundary_frame(:,2)
         new_boundary_frame(:,2) = new_boundary_frame(:,3) .cross. new_boundary_frame(:,1)
         new_boundary_frame = normalize(new_boundary_frame)

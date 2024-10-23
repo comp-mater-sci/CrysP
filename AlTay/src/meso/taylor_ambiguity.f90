@@ -49,7 +49,6 @@ contains
 
         if (sum_squares_optimal == REAL_DP_MAX_VAL) &
             call log_error(MOD_NAME, 'resolve_taylor_ambiguity', ERR, 'Could not find optimal solution.')
-
     end function
 
 
