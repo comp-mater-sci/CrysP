@@ -156,7 +156,6 @@ contains
         real(DP), dimension(3, 3):: stress
 
         real(DP), dimension(size(cluster_%grains(1)%slip_systems)+size(cluster_%grains(2)%slip_systems)+2):: slip_rates, &
-                                                                                                                   overstress, &
                                                                                                                    rss
         real(DP), dimension(10):: stress_cluster
         integer:: i
@@ -171,8 +170,7 @@ contains
                                    cluster_%ind_basis_systems, &
                                    slip_rates, &
                                    stress_cluster, &
-                                   rss, &
-                                   overstress)
+                                   rss)
 
                 stress = homogenize_stress_state(cluster_, stress_cluster)
             end select
@@ -207,11 +205,10 @@ contains
                                     n_active_simplex, &
                                     offset_grain, &
                                     offset_systems, &
-                                    offset_relaxations, &
-                                    ind_overstressed_slip_systems(8)  ! Theoretical maximum of overstressed systems is 8
+                                    offset_relaxations
+        integer, dimension(:), allocatable:: ind_overstressed_slip_systems
         real(DP), dimension(size(cluster_%grains(1)%slip_systems)+size(cluster_%grains(2)%slip_systems)+2):: slip_rates, &
-                                                                                                                         overstress, &
-                                                                                                                         rss
+                                                                                                             rss
         real(DP), dimension(10):: stress_cluster, &
                                   imposed_strain_rate
 
@@ -235,8 +232,7 @@ contains
                                    cluster_%ind_basis_systems, &
                                    slip_rates, &
                                    stress_cluster, &
-                                   rss, &
-                                   overstress)
+                                   rss)
 
                 stress = homogenize_stress_state(cluster_, stress_cluster)
 
@@ -250,38 +246,19 @@ contains
                                slip_rates_relaxations=>slip_rates(offset_relaxations+1:), &
                                taylor_coeffs_relaxations=>taylor_coeffs(offset_grain+1:offset_grain+5, offset_relaxations+1:))
 
+                        call  assess_slip_system_activity(cluster_%grains(j), &
+                                                          rss(offset_systems+1:offset_systems+n_systems_grain), &
+                                                          slip_rates_grain, &
+                                                          n_active_simplex, &
+                                                          ind_overstressed_slip_systems)
 
-
-
-                        !Determine if taylor ambiguity may be occuring. While we are iterating over the slip systems, might as well prepare for
-                        !resolving it
-                        n_overstressed_slip_systems = 0
-                        n_active_simplex = 0
-                        do i = 1, n_systems_grain
-                            if (abs(overstress(offset_systems+i)) < TOLERANCE) then
-                                n_overstressed_slip_systems = n_overstressed_slip_systems+1
-                                ind_overstressed_slip_systems(n_overstressed_slip_systems) =i
-                                if (abs(slip_rates_grain(i)) > TOLERANCE) &
-                                    n_active_simplex = n_active_simplex+1
-                            end if
-                        enddo
-
-                        !Check if the number of overstressed slip systems is within theoretical bounds.
-                        if (n_overstressed_slip_systems > 8) then
-                            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Too many active slip systems.')
-                        elseif (n_overstressed_slip_systems == 0) then
-                            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'No active slip systems found.')
-                        endif
-
-                        !If any of the overstressed slip systems has 0 slip, taylor ambiguity may be occuring.
-                        if (n_overstressed_slip_systems > n_active_simplex) then
+                        if (allocated(ind_overstressed_slip_systems)) then
                             !Determine strain absorbed by slip systems (imposed strain-relaxations)
                             strain_relaxations = matmul(taylor_coeffs_relaxations, slip_rates_relaxations)
                             strain_grain = imposed_strain_rate(offset_grain+1:offset_grain+5)-strain_relaxations
 
-
-                            slip_rates_grain = resolve_taylor_ambiguity(ind_overstressed_slip_systems(1:n_overstressed_slip_systems), &
-                                rss(ind_overstressed_slip_systems(1:n_overstressed_slip_systems)+offset_systems), &
+                            slip_rates_grain = resolve_taylor_ambiguity(ind_overstressed_slip_systems, &
+                                rss(ind_overstressed_slip_systems+offset_systems), &
                                 strain_grain, &
                                 grain_ptr%get_taylor_coeffs(), &
                                 n_active_simplex)

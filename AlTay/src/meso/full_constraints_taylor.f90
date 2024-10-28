@@ -99,7 +99,6 @@ contains
         real(DP), dimension(3, 3):: stress
 
         real(DP), dimension(size(cluster_%grains(1)%slip_systems)):: slip_rates, &
-                                                                        overstress, &
                                                                         rss
         real(DP), dimension(5):: stress_cluster
 
@@ -112,8 +111,7 @@ contains
                                    cluster_%ind_basis_systems, &
                                    slip_rates, &
                                    stress_cluster, &
-                                   rss, &
-                                   overstress)
+                                   rss)
                 stress = convert_stress_strain_space(stress_cluster) .fromframe. cluster_%grains(1)%orientation
         end select
     end function
@@ -137,13 +135,12 @@ contains
         integer::                   i, &
                                     n_systems, &
                                     n_overstressed_slip_systems, &
-                                    n_active_simplex, &
-                                    ind_overstressed_slip_systems(8)  ! Theoretical maximum of overstressed systems is 8
+                                    n_active_simplex
         real(DP), dimension(size(cluster_%grains(1)%slip_systems)):: slip_rates, &
-                                                     overstress, &
                                                      rss
         real(DP), dimension(5):: stress_cluster, &
                                  imposed_strain_rate
+        integer, dimension(:), allocatable:: ind_active_slip_systems
 
         type(Grain), pointer::      grain_ptr
         character(*), parameter::   PROC_NAME = 'full_constraints_taylor_apply_step'
@@ -163,37 +160,17 @@ contains
                                    cluster_%ind_basis_systems, &
                                    slip_rates, &
                                    stress_cluster, &
-                                   rss, &
-                                   overstress)
+                                   rss)
 
                 stress = convert_stress_strain_space(stress_cluster) .fromframe. grain_ptr%orientation
 
-                !Determine if taylor ambiguity may be occuring. While we are iterating over the slip systems, might as well prepare for
-                !resolving it
-                n_overstressed_slip_systems = 0
-                n_active_simplex = 0
-                do i = 1, n_systems
-                    if (abs(overstress(i)) < TOLERANCE) then
-                        n_overstressed_slip_systems = n_overstressed_slip_systems+1
-                        ind_overstressed_slip_systems(n_overstressed_slip_systems) =i
-                        if (abs(slip_rates(i)) > TOLERANCE) &
-                            n_active_simplex = n_active_simplex+1
-                    end if
-                enddo
 
-                !Check if the number of overstressed slip systems is within theoretical bounds.
-                if (n_overstressed_slip_systems > 8) then
-                    call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Too many active slip systems.')
-                elseif (n_overstressed_slip_systems == 0) then
-                    call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'No active slip systems found.')
-                endif
 
-                !If any of the overstressed slip systems has 0 slip, taylor ambiguity may be occuring.
-                if (n_overstressed_slip_systems > n_active_simplex) then
-                    !Determine strain absorbed by slip systems (imposed strain-relaxations)
+                call  assess_slip_system_activity(cluster_%grains(1), rss, slip_rates, n_active_simplex, ind_active_slip_systems)
 
-                    slip_rates = resolve_taylor_ambiguity(ind_overstressed_slip_systems(1:n_overstressed_slip_systems), &
-                        rss(ind_overstressed_slip_systems(1:n_overstressed_slip_systems)), &
+                if (allocated(ind_active_slip_systems)) then
+                    slip_rates = resolve_taylor_ambiguity(ind_active_slip_systems, &
+                        rss(ind_active_slip_systems), &
                         imposed_strain_rate, &
                         taylor_coeffs, &
                         n_active_simplex)

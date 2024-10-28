@@ -60,19 +60,13 @@ contains
     !!
     !! @param[out] rss               real vector (n)
     !!                               The resolved shear stresses
-    !!
-    !! @param[out] overstress        real vector (n)
-    !!                               The overstress of each slip system, i.e. the difference between the resolved shear stress
-    !!                               and the critical resolved shear stress.
-    !!
-    recursive subroutine simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, overstress, n_retries)
+    recursive subroutine simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, n_retries)
         real(DP), intent(in)    ::  taylor_coeffs(:,:),                                 &
                                     strain(size(taylor_coeffs, 1)),                      &
                                     crss(2, size(taylor_coeffs, 2))
         real(DP), intent(out)   ::  slip(size(taylor_coeffs, 2)),                        &
                                     stress(size(taylor_coeffs, 1)),                      &
-                                    rss(size(taylor_coeffs, 2)),                         &
-                                    overstress(size(taylor_coeffs, 2))
+                                    rss(size(taylor_coeffs, 2))
         integer, intent(inout)  ::  basis_systems(size(taylor_coeffs, 1))
         real(DP), intent(inout) ::  inverse_basis(size(taylor_coeffs, 1), size(taylor_coeffs, 1))
         integer, intent(inout), optional:: n_retries
@@ -112,7 +106,7 @@ contains
             tmp = merge(slip_basis(i), dot_product(taylor_coeffs(:,basis_systems(i)), strain), abs(slip_basis(i)) >= TOLERANCE)
             rss_basis(i) = merge(crss(1, basis_systems(i)), -crss(2, basis_systems(i)), tmp >= 0._dp)
         end do
-        call find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system, overstress)
+        call find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system)
 
         iter = 0
         max_iters = size(taylor_coeffs, 2)**2
@@ -155,7 +149,7 @@ contains
                 slip_basis = matmul(inverse_basis, strain)
             end if
             rss_basis(system_to_remove) = merge(crss(1, most_overstressed_system), -crss(2, most_overstressed_system), (slip_basis(system_to_remove) >= 0._DP) .and. (rss(most_overstressed_system) > 0._DP))
-            call find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system, overstress)
+            call find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system)
         end do
 
         if (rank_update) then
@@ -164,7 +158,7 @@ contains
             !entirely and call simplex again.
             inverse_basis = invert(taylor_coeffs(:,basis_systems))
             retries = retries+1
-            call simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, overstress, retries)
+            call simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, retries)
         else
             slip = 0._DP
             slip(basis_systems) = slip_basis
@@ -201,29 +195,28 @@ contains
     !!                                       The index of the most overstressed system.
     !!                                       If this is 0, then all systems are below their critical resolved shear stress and the solution is found.
     !!
-    !! @param[out] overstress                real vector (n)
-    !!                                       The overstress of each slip system
-    subroutine find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system, overstress)
+    subroutine find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system)
         real(DP), intent(in):: taylor_coeffs(:,:), &
                                 rss_basis(size(taylor_coeffs, 1)), &
                                 inverse_basis(size(taylor_coeffs, 1), size(taylor_coeffs, 1)), &
                                 crss(2, size(taylor_coeffs, 2))
         logical, dimension(size(taylor_coeffs, 2)), intent(in):: bas
         real(DP), intent(out):: stress(size(taylor_coeffs, 1)), &
-                                 rss(size(taylor_coeffs, 2)), &
-                                 overstress(size(taylor_coeffs, 2))
+                                 rss(size(taylor_coeffs, 2))
         integer, intent(out):: most_overstressed_system
-        real(DP):: tmp
+
+        real(DP):: overstress, &
+                   max_overstress
         integer:: i
 
         stress = matmul(rss_basis, inverse_basis)
         rss = matmul(stress, taylor_coeffs)
-        tmp = TOLERANCE
+        max_overstress = TOLERANCE
         most_overstressed_system = 0
-        do i = 1, size(overstress)
-            overstress(i) = merge(rss(i) - crss(1, i), -rss(i) - crss(2, i), rss(i) >= 0._DP)
-            if (overstress(i) > tmp) then
-                tmp = overstress(i)
+        do i = 1, size(taylor_coeffs, 2)
+            overstress = merge(rss(i) - crss(1, i), -rss(i) - crss(2, i), rss(i) >= 0._DP)
+            if (overstress > max_overstress) then
+                max_overstress = overstress
                 most_overstressed_system = i
             end if
         enddo
