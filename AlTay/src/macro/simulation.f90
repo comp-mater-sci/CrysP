@@ -36,7 +36,7 @@ module simulation
 
         character(len = 40):: TITEL
         integer:: info, &
-                  cluster_size, i, j
+                  cluster_size
         character(*), parameter:: PROC_NAME = 'SIMUL0'
 
 
@@ -59,7 +59,7 @@ module simulation
         real(DP), dimension(3, 3), intent(in):: velocity_gradient
         real(DP), dimension(3, 3):: homogenized_stress
 
-        integer:: i, j, &
+        integer:: i, &
                   n_clusters, &
                   cluster_size
         real(DP):: total_weight
@@ -88,9 +88,8 @@ module simulation
         integer:: cluster_size, &
                   n_clusters, &
                   step, &
-                  info, &
                   NFILE, &
-                  i, j, l               !> Iteration variables
+                  i               !> Iteration variables
         real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
                    homogenized_taylor_factor, &   !Volume-averaged Taylor factor

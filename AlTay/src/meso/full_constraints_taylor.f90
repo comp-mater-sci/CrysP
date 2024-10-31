@@ -28,30 +28,12 @@ module full_constraints_taylor
 
 contains
 
-    !>@Brief Attempt to convert a generic cluster to a taylor cluster
-    !>@Details If the provided cluster pointer is of type TaylorCluster, an equivalent pointer of type taylor_cluster is reterned.
-    !If not, the program crashes. As such, this procedure acts as a safe type cast.
-    function to_taylor_cluster(cluster_ptr) result(taylor_cluster_ptr)
-       class(Cluster), target, intent(in):: cluster_ptr
-       type(TaylorCluster), pointer:: taylor_cluster_ptr !> Pointer to the input cluster but with type TaylorCluster
-                                                         !Note that we must use a pointer to make sure we are referencing the exact
-                                                         !same cluster struct as the input.
-
-       select type (cluster_ptr)
-            type is (TaylorCluster)
-                taylor_cluster_ptr = cluster_ptr
-            class default
-                call log_error(MOD_NAME, 'to_taylor_cluster', ERR_TYPE, "Cluster is not a TaylorCluster!")
-       end select
-    end function
-
     !>@Brief See 'meso_model_init'.
     subroutine full_constraints_taylor_init(orientations, deformation_mechanism, clusters)
         real(DP), dimension(:,:), intent(in):: orientations
         integer, dimension(:,:,:), intent(in):: deformation_mechanism
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
-        type(TaylorCluster), pointer:: taylor_cluster_ptr
         real(DP), dimension(5, size(deformation_mechanism, 3)):: taylor_coeffs
         integer:: i
 
@@ -132,9 +114,7 @@ contains
 
         real(DP)::                  orientation_increment(3, 3), &
                                     taylor_coeffs(5, size(cluster_%grains(1)%slip_systems))
-        integer::                   i, &
-                                    n_systems, &
-                                    n_overstressed_slip_systems, &
+        integer::                   n_systems, &
                                     n_active_simplex
         real(DP), dimension(size(cluster_%grains(1)%slip_systems)):: slip_rates, &
                                                      rss
@@ -143,7 +123,6 @@ contains
         integer, dimension(:), allocatable:: ind_active_slip_systems
 
         type(Grain), pointer::      grain_ptr
-        character(*), parameter::   PROC_NAME = 'full_constraints_taylor_apply_step'
 
         select type (cluster_)
             type is (TaylorCluster)

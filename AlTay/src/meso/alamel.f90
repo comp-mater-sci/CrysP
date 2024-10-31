@@ -158,8 +158,6 @@ contains
         real(DP), dimension(size(cluster_%grains(1)%slip_systems)+size(cluster_%grains(2)%slip_systems)+2):: slip_rates, &
                                                                                                                    rss
         real(DP), dimension(10):: stress_cluster
-        integer:: i
-
 
         select type (cluster_)
             type is (AlamelCluster)
@@ -200,7 +198,6 @@ contains
                                     spin_coeffs_relaxations(3, 2), &
                                     taylor_coeffs(10, size(cluster_%grains(1)%slip_systems)+size(cluster_%grains(2)%slip_systems)+2)
         integer::                   i, j, &
-                                    n_overstressed_slip_systems, &
                                     n_systems_grain, &
                                     n_active_simplex, &
                                     offset_grain, &
@@ -213,7 +210,6 @@ contains
                                   imposed_strain_rate
 
         type(Grain), pointer::      grain_ptr
-        character(*), parameter::   PROC_NAME = 'apply_deformation_step'
 
         select type (cluster_)
             type is (AlamelCluster)

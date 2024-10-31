@@ -20,14 +20,6 @@ module taylor
                 meso_update_model, &
                 meso_prepare_deformation
 
-
-    real(DP), dimension(3, 3):: deformation_gradient, &
-                               deformation_gradient_during_time_step, &
-                               next_deformation_gradient, &
-                               deformation_gradient_increment
-
-    character(*), parameter:: MOD_NAME = 'taylor'
-
 contains
 
     !Have to use a subroutine here because IFX always copies the polymorphic function results to the stack when assigning them to a
