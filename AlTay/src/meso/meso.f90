@@ -11,8 +11,8 @@ module meso
     !Supported mesoscopic models
     !Constants set to correspond to the number of grains in a cluster
     enum, bind(C)
-        enumerator  ::  FCTAYLOR       = 1,  &
-                        ALAMEL         = 2
+        enumerator  ::  MESO_MODEL_FCTAYLOR       = 1,  &
+                        MESO_MODEL_ALAMEL         = 2
     end enum
 
     interface
@@ -96,7 +96,7 @@ contains
     pure function get_model_ids() result(ids)
         integer, dimension(:), allocatable:: ids
 
-        ids = [FCTAYLOR, ALAMEL]
+        ids = [MESO_MODEL_FCTAYLOR, MESO_MODEL_ALAMEL]
     end function
 
     !>@Brief returns an instance of a mesoscopic model with the provided ID.
@@ -106,9 +106,9 @@ contains
         class(MesoModel), allocatable:: m   !> The model instance
 
         select case (id)
-            case (FCTaylor)
+            case (MESO_MODEL_FCTaylor)
                 allocate(TaylorModel:: m)
-            case (ALAMEL)
+            case (MESO_MODEL_ALAMEL)
                 allocate(AlamelModel:: m)
             case default
                 call log_error(MOD_NAME, "get_model_instance", ERR_VAL, "Invalid model ID")

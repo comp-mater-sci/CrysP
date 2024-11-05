@@ -61,7 +61,7 @@ module parameters
         end subroutine
 
         module function parameter_find_by_name(params, name) result(param)
-            type(Parameter), intent(in):: params(:)
+            type(Parameter), dimension(:), intent(in):: params
             character(*), intent(in):: name
             type(Parameter):: param
         end function
@@ -70,29 +70,29 @@ module parameters
         !Throws exception if at least 1 of the given parameters is not of numeric type.
         module pure real(DP) function parameter_difference(param, arg) result(difference)
             type(Parameter), intent(in):: param
-            class(*), dimension(..), intent(in)        :: arg
+            class(*), intent(in)        :: arg
         end function
 
         !Determine if parameter is greater than another parameter or a constant.
         !Throws exception if at least 1 of the given parameters is not of numeric type.
         module pure logical function parameter_gt(param, arg) result(gt)
             type(Parameter), intent(in):: param
-            class(*), dimension(..), intent(in)        :: arg
+            class(*), intent(in)        :: arg
         end function
         !Analogous to parameter_gt
         module pure logical function parameter_gteq(param, arg) result(gteq)
             type(Parameter), intent(in):: param
-            class(*), dimension(..), intent(in)        :: arg
+            class(*), intent(in)        :: arg
         end function
         !Analogous to parameter_gt
         module pure logical function parameter_lt(param, arg) result(lt)
             type(Parameter), intent(in):: param
-            class(*), dimension(..), intent(in)        :: arg
+            class(*), intent(in)        :: arg
         end function
         !Analogous to parameter_gt
         module pure logical function parameter_lteq(param, arg) result(lteq)
             type(Parameter), intent(in):: param
-            class(*), dimension(..), intent(in)        :: arg
+            class(*), intent(in)        :: arg
         end function
     end interface
 
@@ -294,19 +294,14 @@ contains
 
         real_val = 0.0_DP
 
-        select rank(arg)
-            rank (0)
-                select type(arg)
-                    type is (integer)
-                        real_val = real(arg, DP)
-                    type is (real)
-                        real_val = real(arg, DP)
-                    type is (Parameter)
-                        real_val = get_numerical_value(arg)
-                    class default
-                        call log_error(ERR_VAL)
-                end select
-            rank default
+        select type(arg)
+            type is (integer)
+                real_val = real(arg, DP)
+            type is (real)
+                real_val = real(arg, DP)
+            type is (Parameter)
+                real_val = get_numerical_value(arg)
+            class default
                 call log_error(ERR_VAL)
         end select
 
