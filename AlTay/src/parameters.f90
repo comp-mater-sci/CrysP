@@ -253,15 +253,9 @@ contains
 
         call check_type(params(index), val)
 
-        !Messy workaround to get gfortran to work
         select rank (val)
             rank (0)
                 allocate(character(storage_size(val)/8):: buffer)
-                select type(val)
-                    type is (character(*))
-                        params(index)%value = val
-                        return
-                end select
                 params(index)%value = transfer(val, buffer)
             rank (2)
                 select type (val)
