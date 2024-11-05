@@ -7,15 +7,16 @@ module alamel
     use taylor_ambiguity
     use hardening
     use simplex
+    use meso_model
 
     implicit none
 
     private
-    public:: alamel_init, &
-             alamel_update, &
-             alamel_prepare_deformation, &
-             alamel_get_stress, &
-             alamel_deform
+    public:: AlamelModel
+
+
+
+
 
     character(*), parameter:: MOD_NAME = 'alamel'
     integer, dimension(5), parameter::   INITIAL_BASIS_SYSTEMS_FCC = [2, 5, 6, 7, 8], &
@@ -31,38 +32,57 @@ module alamel
                                                                     !> systems with 0 critical resolved shear stress.
     end type
 
-    real(DP), dimension(3, 3):: imposed_spin_rate
-    real(DP), dimension(3, 3):: velocity_gradient
-    real(DP), dimension(3, 3):: deformation_gradient
-    real(DP), dimension(3, 3):: deformation_gradient_during_time_step
-    real(DP), dimension(3, 3):: next_deformation_gradient
-    real(DP), dimension(3, 3):: deformation_gradient_increment
+    type, extends(MesoModel):: AlamelModel
+        real(DP), dimension(3, 3):: deformation_gradient
+        real(DP), dimension(3, 3):: deformation_gradient_during_time_step
+        real(DP), dimension(3, 3):: next_deformation_gradient
+        real(DP), dimension(3, 3):: deformation_gradient_increment
+    contains
+        procedure, nopass:: get_parameters => alamel_get_parameters
+        procedure:: init                   => alamel_init
+        procedure:: get_stress             => alamel_get_stress
+        procedure:: apply_step             => alamel_deform
+        procedure:: update                 => alamel_update
+        procedure:: prepare_deformation    => alamel_prepare_deformation
+    end type
 
 contains
 
+    function alamel_get_parameters() result(params)
+        type(Parameter), dimension(:), allocatable:: params
+
+        params = [parameter_init("Boundaries", TYPE_ANGLES_LIST)]
+    end function
+
     !>@Brief See meso_model_init
-    subroutine alamel_init(orientations, deformation_mechanism, boundaries, clusters)
+    subroutine alamel_init(this, orientations, deformation_mechanism, params, clusters)
+        class(AlamelModel), intent(inout):: this
         real(DP), dimension(:,:), intent(in):: orientations
         integer, dimension(:,:,:), intent(in):: deformation_mechanism
-        real(DP), dimension(:,:), intent(in):: boundaries
+        type(Parameter), dimension(:), intent(in):: params
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
         integer:: i, j, k, &
                   ind_basis_systems_grain(5), &
                   n_systems_grain
+        real(DP), dimension(:,:), allocatable:: boundaries
 
         n_systems_grain = size(deformation_mechanism, 3)
         ind_basis_systems_grain = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, n_systems_grain == 12)
 
-        deformation_gradient = UNIT_MATRIX_3X3
+        allocate(boundaries(3, parameter_size(params(1))))
+        boundaries = params(1)
+
+        this%deformation_gradient = UNIT_MATRIX_3X3
 
         allocate(AlamelCluster:: clusters(size(orientations, 2)/2))
+
         select type(clusters)
         type is (AlamelCluster)
             j = 1
             do i = 1, size(clusters)
                 allocate(clusters(i)%grains(2))  ! ALAMEL clusters always have 2 grains
-                clusters(i)%initial_boundary_orientation = matmul(deformation_gradient, transpose(from_euler_angles(boundaries(:,j))))
+                clusters(i)%initial_boundary_orientation = matmul(this%deformation_gradient, transpose(from_euler_angles(boundaries(:,j))))
                 clusters(i)%ind_basis_systems(1:5) = ind_basis_systems_grain
                 clusters(i)%ind_basis_systems(6:10) = ind_basis_systems_grain+n_systems_grain
                 do k = 1, 2
@@ -71,8 +91,8 @@ contains
                     call clusters(i)%relaxations(k)%init(k)
                 end do
                 clusters(i)%inverse_basis = invert(get_basis(clusters(i)))
-                call update_relaxations(clusters(i), deformation_gradient)
-                clusters(i)%weight = cluster_weight(clusters(i), deformation_gradient)
+                call update_relaxations(clusters(i), this%deformation_gradient)
+                clusters(i)%weight = cluster_weight(clusters(i), this%deformation_gradient)
                 j = merge(1, j+1, j == size(boundaries, 2))
             end do
         end select
@@ -80,10 +100,12 @@ contains
 
     !>@Brief Update the model after a time step has elapsed.
     !>@Details See meso_update_model
-    subroutine alamel_update()
-        deformation_gradient = next_deformation_gradient
-        deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient)
-        next_deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
+    subroutine alamel_update(this)
+        class(AlamelModel), intent(inout):: this
+
+        this%deformation_gradient = this%next_deformation_gradient
+        this%deformation_gradient_during_time_step = matmul(this%deformation_gradient_increment, this%deformation_gradient)
+        this%next_deformation_gradient = matmul(this%deformation_gradient_increment, this%deformation_gradient_during_time_step)
     end subroutine
 
     !>@Brief Calculate the imposed strain rate vector corresponding to a certain velocity gradient for a cluster
@@ -150,7 +172,8 @@ contains
 
     !>@Brief Get stress state for a cluster
     !>@details Calculate the homogenized stress over the cluster in the global frame
-    function alamel_get_stress(cluster_, v_grad) result(stress)
+    function alamel_get_stress(this, cluster_, v_grad) result(stress)
+        class(AlamelModel), intent(in):: this
         class(Cluster), intent(inout):: cluster_ !> Intent(inout) because simplex modifies inverse basis
         real(DP), dimension(3, 3), intent(in):: v_grad !> Imposed velocity gradient
         real(DP), dimension(3, 3):: stress
@@ -176,18 +199,20 @@ contains
 
     !>@Brief Prepares the ALAMEL model for a deformation.
     !>@Details see meso_prepare_deformation
-    subroutine alamel_prepare_deformation(v_grad)
+    subroutine alamel_prepare_deformation(this, v_grad)
+        class(AlamelModel), intent(inout):: this
         real(DP), dimension(3, 3), intent(in):: v_grad
 
-        velocity_gradient = v_grad
-        imposed_spin_rate = antisymmetric_part(velocity_gradient)
-        deformation_gradient_increment =  matrix_exponential_small_norm(velocity_gradient/2._DP)
-        deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient)
-        next_deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
+        this%velocity_gradient = v_grad
+        this%imposed_spin_rate = antisymmetric_part(this%velocity_gradient)
+        this%deformation_gradient_increment =  matrix_exponential_small_norm(this%velocity_gradient/2._DP)
+        this%deformation_gradient_during_time_step = matmul(this%deformation_gradient_increment, this%deformation_gradient)
+        this%next_deformation_gradient = matmul(this%deformation_gradient_increment, this%deformation_gradient_during_time_step)
     end subroutine
 
-    subroutine alamel_deform(cluster_, index_cluster, stress, slip)
-        class(Cluster), target, intent(inout):: cluster_
+    subroutine alamel_deform(this, cluster_, index_cluster, stress, slip)
+        class(AlamelModel), intent(in):: this
+        class(Cluster), intent(inout):: cluster_
         integer, intent(in)::       index_cluster
         real(DP), dimension(3, 3), intent(out):: stress                 !> Homogenized stress over the cluster
         real(DP), intent(out):: slip                                    !> Total slip in the cluster for this time step
@@ -209,15 +234,13 @@ contains
         real(DP), dimension(10):: stress_cluster, &
                                   imposed_strain_rate
 
-        type(Grain), pointer::      grain_ptr
-
         select type (cluster_)
             type is (AlamelCluster)
                 n_systems_grain = size(cluster_%grains(1)%slip_systems)
                 offset_relaxations = 2*n_systems_grain
 
-                call update_relaxations(cluster_, deformation_gradient_during_time_step)
-                imposed_strain_rate = calc_imposed_strain_rate(cluster_, velocity_gradient)
+                call update_relaxations(cluster_, this%deformation_gradient_during_time_step)
+                imposed_strain_rate = calc_imposed_strain_rate(cluster_, this%velocity_gradient)
 
                 taylor_coeffs = get_taylor_coeffs(cluster_)
 
@@ -234,11 +257,11 @@ contains
 
                 slip = 0._DP
                 do j = 1, 2
-                    grain_ptr => cluster_%grains(j)
                     offset_grain = (j-1)*5
                     offset_systems = (j-1)*n_systems_grain
 
-                    associate (slip_rates_grain=>slip_rates(offset_systems+1:offset_systems+n_systems_grain), &
+                    associate (grain_ => cluster_%grains(j), &
+                               slip_rates_grain=>slip_rates(offset_systems+1:offset_systems+n_systems_grain), &
                                slip_rates_relaxations=>slip_rates(offset_relaxations+1:), &
                                taylor_coeffs_relaxations=>taylor_coeffs(offset_grain+1:offset_grain+5, offset_relaxations+1:))
 
@@ -256,17 +279,17 @@ contains
                             slip_rates_grain = resolve_taylor_ambiguity(ind_overstressed_slip_systems, &
                                 rss(ind_overstressed_slip_systems+offset_systems), &
                                 strain_grain, &
-                                grain_ptr%get_taylor_coeffs(), &
+                                grain_%get_taylor_coeffs(), &
                                 n_active_simplex)
                         end if
 
                         slip_grain = sum(abs(slip_rates_grain))
-                        grain_ptr%sum_slip = grain_ptr%sum_slip+slip_grain
+                        grain_%sum_slip = grain_%sum_slip+slip_grain
                         slip = slip+slip_grain
 
                         !Update hardening model state
                         call hardening_update_state((index_cluster-1)*2+j, 1._DP, slip_rates_grain)
-                        call grain_ptr%set_crss(hardening_get_crss((index_cluster-1)*2+j, grain_ptr%sum_slip))
+                        call grain_%set_crss(hardening_get_crss((index_cluster-1)*2+j, grain_%sum_slip))
 
                         !Get spin coefficients of the relaxations corresponding to the current grain
                         do i = 1, 2
@@ -274,18 +297,18 @@ contains
                         end do
 
                         orientation_increment = UNIT_MATRIX_3X3 &
-                                                +(imposed_spin_rate .toframe. grain_ptr%orientation) &                !>Change of reference frame
-                                                -convert_spin(matmul(grain_ptr%get_spin_coeffs(), slip_rates_grain)) &   !>Spin induced by activation of slip systems
+                                                +(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame
+                                                -convert_spin(matmul(grain_%get_spin_coeffs(), slip_rates_grain)) &   !>Spin induced by activation of slip systems
                                                 -convert_spin(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
-                        grain_ptr%orientation = matmul(orientation_increment, grain_ptr%orientation)
+                        grain_%orientation = matmul(orientation_increment, grain_%orientation)
 
 
                     end associate
                 end do
 
                 !Update cluster state to be consistent with the end of the time step.
-                call update_relaxations(cluster_, next_deformation_gradient)
-                cluster_%weight = cluster_weight(cluster_, next_deformation_gradient)
+                call update_relaxations(cluster_, this%next_deformation_gradient)
+                cluster_%weight = cluster_weight(cluster_, this%next_deformation_gradient)
         end select
     end subroutine
 
