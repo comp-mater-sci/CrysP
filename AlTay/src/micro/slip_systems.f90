@@ -76,15 +76,11 @@ module slip_systems
     !elsewhere it is useful because it makes many high-level expressions more clear and concise and reduces chances for mistakes
     !when multiple variables associated to a single slip system must be updated.
     type SlipSystem
-        real(DP):: slip_rate, &
-                   overstress, &
-                   rss
         real(DP), dimension(5):: taylor_coeffs
         real(DP), dimension(3):: spin_coeffs
         real(DP), dimension(2):: crss
     contains
         procedure:: init => slip_system_init
-        procedure:: get_work_rate => slip_system_get_work_rate
     end type
 
 contains
@@ -103,10 +99,4 @@ contains
         this%taylor_coeffs = convert_stress_strain_space(schmid_matrix)
         this%spin_coeffs = convert_spin(schmid_matrix)
     end subroutine
-
-    pure real(DP) function slip_system_get_work_rate(this) result(work_rate)
-        class(SlipSystem), intent(in):: this
-
-        work_rate = abs(merge(this%crss(1), this%crss(2), this%slip_rate > 0._DP) * this%slip_rate)
-    end function
 end module

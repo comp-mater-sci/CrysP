@@ -17,7 +17,7 @@ module simulation
     integer:: NFILE1
 
     real(DP):: von_mises_strain
-    real(DP), dimension(3, 3):: deformation_gradient
+    real(DP), dimension(3, 3):: deformation_gradient = UNIT_MATRIX_3X3
     type(Cluster), dimension(:), pointer, contiguous:: clusters
 
     character(*), parameter:: MOD_NAME = 'Simul'
@@ -26,19 +26,18 @@ module simulation
     public:: simulation_init, &
              simulation_run, &
              simulation_finalize, &
-             deformation_gradient, &
-             output_current_state
+             output_current_state, &
+             get_stress
     contains
 
     ! initialization call
     subroutine simulation_init(orientations, boundaries)
-        integer:: cluster_size         !< number of grains
-
-        character(len = 40):: TITEL
-        integer:: info
         real(DP), dimension(:,:), allocatable, intent(in):: orientations, &
                                                             boundaries
 
+        character(len = 40):: TITEL
+        integer:: info, &
+                  cluster_size, i, j
         character(*), parameter:: PROC_NAME = 'SIMUL0'
 
 
@@ -54,107 +53,87 @@ module simulation
         if (NFILE1 == 1) call cur_write_title(IMP1, TITEL, info)
   98    format (A)
 
-!       read the parameters of the work hardening model
-        clusters => taylor_init(acnf%deformation_mechanism, cluster_size, acnf%simul_init%FMicro, orientations, boundaries)
-
         deformation_gradient = UNIT_MATRIX_3X3
+        clusters => taylor_init(acnf%deformation_mechanism, cluster_size, acnf%simul_init%FMicro, orientations, boundaries)
         von_mises_strain = 0._DP
+
     end subroutine
+
+    function get_stress(velocity_gradient) result(homogenized_stress)
+        real(DP), dimension(3, 3), intent(in):: velocity_gradient
+        real(DP), dimension(3, 3):: homogenized_stress
+
+        integer:: i, j, &
+                  n_clusters, &
+                  cluster_size
+        real(DP):: total_weight
+
+        n_clusters = size(clusters)
+        cluster_size = size(clusters(1)%grains)
+        homogenized_stress = 0._DP
+        total_weight = 0._DP
+
+        !$OMP PARALLEL SHARED(clusters, velocity_gradient, n_clusters)
+            !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION (+:total_weight, homogenized_stress)
+                do i = 1, n_clusters
+                    homogenized_stress = homogenized_stress+get_stress_state(clusters(i), velocity_gradient) * clusters(i)%weight
+                    total_weight = total_weight+clusters(i)%weight
+                end do
+            !$OMP END DO
+        !$OMP END PARALLEL
+
+        homogenized_stress = homogenized_stress/total_weight
+    end function
+
 
     subroutine simulation_run(NFILE0, velocity_gradient)
         real(DP), intent(in):: velocity_gradient(3, 3)
         integer, intent(in):: NFILE0
         integer:: cluster_size, &
-                  index_cluster, &
+                  n_clusters, &
                   step, &
-                  n_grains, &
                   info, &
                   NFILE, &
-                  i, &
-                  j, &
-                  l
+                  i, j, l               !> Iteration variables
         real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
                    homogenized_total_slip, & ! homogenized_total_slip: homogenized slip per step
-                   total_slip_rate, &  ! Total slip rate in current grain
-                   taylor_factor, &  ! Taylor factor of the current grain
                    homogenized_taylor_factor, &   !Volume-averaged Taylor factor
-                   WorkRate, &  ! Rate of plastic work per unit volume in the crystal
-                   homogenized_work, &  ! Total plastic work per unit volume in crystal
                    deformation_gradient_increment(3, 3), &
-                   deformation_gradient_half_increment(3, 3), &
-                   deformation_gradient_increment_inverse(3, 3), &
                    strain_rate(3, 3), &
                    spin(3, 3), &
-                   von_mises_strain_mode(3, 3), &
                    von_mises_strain_rate, &
-                   deformation_gradient_during_time_step(3, 3), &
-                   stress_cluster(3, 3)
-        type(Cluster), pointer:: cluster_ptr
+                   stress_cluster(3, 3), &
+                   slip_cluster
 
-        ! Per-call selection of the model: cluster_size must be set
+        n_clusters = size(clusters)
         cluster_size = acnf%simul_init%NGR
-        n_grains = size(clusters) * cluster_size
         NFILE = NFILE0*NFILE1
 
         strain_rate = symmetric_part(velocity_gradient)
         spin = antisymmetric_part(velocity_gradient)
         von_mises_strain_rate = SQR0P67*norm2(strain_rate)
-        von_mises_strain_mode = strain_rate/von_mises_strain_rate
         deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient)
-        deformation_gradient_half_increment = matrix_exponential_small_norm(velocity_gradient/2._DP)
-        deformation_gradient_increment_inverse = invert(deformation_gradient_increment)
 
-
-        deformation_gradient_during_time_step = matmul(deformation_gradient_half_increment, deformation_gradient)
-
-        !$OMP PARALLEL SHARED(clusters, deformation_gradient_during_time_step, velocity_gradient) PRIVATE(i, cluster_ptr)
-            !$OMP DO SCHEDULE(static)
-                do i = 1, size(clusters)
-                    cluster_ptr => clusters(i)
-                    call update_cluster_state(cluster_ptr, deformation_gradient_during_time_step, velocity_gradient, i)
-                end do
-            !$OMP END DO
-        !$OMP END PARALLEL
-
-        ! Output the current texture
-        if (NFILE == 1) call cur_write_block(IMP1, clusters, deformation_gradient)
+        call meso_update_model(velocity_gradient)
 
         steploop: DO step = 1, astate%simulCalls(astate%this)%input%nsteps
-
             total_weight = 0._DP
             homogenized_stress = 0._DP
             homogenized_taylor_factor = 0._DP
             homogenized_total_slip = 0._DP
-            homogenized_work = 0.0_DP
 
             nrstep = nrstep+1
 
-            if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                !Deformation gradient exactly in the middle of the time step.
-                deformation_gradient_during_time_step = matmul(deformation_gradient_increment, deformation_gradient_during_time_step)
-            end if
-
-            !$OMP PARALLEL SHARED(step, clusters, astate, spin, deformation_gradient_during_time_step, velocity_gradient, von_mises_strain_rate) PRIVATE(index_cluster, cluster_ptr, taylor_factor, j)
-                !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, homogenized_taylor_factor, homogenized_total_slip, homogenized_work)
-                    clusterloop: do index_cluster = 1, size(clusters)
-                        cluster_ptr => clusters(index_cluster)
-                        call get_stress_state(cluster_ptr)
-
-                        do j = 1, size(clusters(index_cluster)%grains)
-                            total_weight = total_weight+clusters(index_cluster)%weight
-                            homogenized_stress = homogenized_stress+clusters(index_cluster)%grains(j)%stress*clusters(index_cluster)%weight
-                        end do
-                        if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                            call apply_deformation_step(cluster_ptr, spin, index_cluster, deformation_gradient_during_time_step, velocity_gradient)
-                            do j = 1, size(clusters(index_cluster)%grains)
-                                taylor_factor = clusters(index_cluster)%grains(j)%sum_slip_current/von_mises_strain_rate
-                                homogenized_taylor_factor = homogenized_taylor_factor+taylor_factor*clusters(index_cluster)%weight
-                                homogenized_total_slip = homogenized_total_slip+clusters(index_cluster)%grains(j)%sum_slip_current*clusters(index_cluster)%weight
-                                homogenized_work = homogenized_work+clusters(index_cluster)%grains(j)%get_work_rate()
-                            end do
-                        end if
-                    enddo clusterloop
+            !$OMP PARALLEL SHARED(step, clusters, spin, velocity_gradient, von_mises_strain_rate) PRIVATE(stress_cluster, slip_cluster)
+                !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, homogenized_taylor_factor, homogenized_total_slip)
+                    do i = 1, n_clusters
+                        call apply_deformation_step(clusters(i), spin, i, velocity_gradient, stress_cluster, slip_cluster)
+                        total_weight = total_weight+clusters(i)%weight
+                        homogenized_stress = homogenized_stress+stress_cluster*clusters(i)%weight
+                        homogenized_total_slip = homogenized_total_slip+slip_cluster*clusters(i)%weight
+                        homogenized_taylor_factor = homogenized_taylor_factor+slip_cluster/von_mises_strain_rate*clusters(i)%weight
+                    end do
                 !$OMP END DO
             !$OMP END PARALLEL
 
@@ -172,13 +151,11 @@ module simulation
             end associate
 
             homogenized_total_slip = homogenized_total_slip/total_weight
-            if (.not.astate%simulCalls(astate%this)%input%keep_state) homogenized_total_slipTOT = homogenized_total_slipTOT+homogenized_total_slip
+            homogenized_total_slipTOT = homogenized_total_slipTOT+homogenized_total_slip
 
             von_mises_strain = von_mises_strain+von_mises_strain_rate
-
-            if (.not.astate%simulCalls(astate%this)%input%keep_texture) then
-                deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
-            end if
+            deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
+            call meso_update_model()
         enddo steploop
     end subroutine
 
@@ -191,5 +168,4 @@ module simulation
     subroutine simulation_finalize()
         deallocate(clusters)
     end subroutine
-
 end module

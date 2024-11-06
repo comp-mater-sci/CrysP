@@ -24,22 +24,6 @@ gcc:
     cd test
     export OMP_NUM_THREADS=3
     pytest --update=logout -v
-
-ifort:
-  image: intel/oneapi-hpckit:latest
-  script: |
-    apt-get update --allow-insecure-repositories
-    apt-get install --allow-unauthenticated -y \
-    cmake \
-    python3-pip
-    pip install pandas pytest numpy
-    export PATH=${PATH}:${PWD}/VEF/bin
-    AR=xiar ./build.sh -c ifort -b debug
-    AR=xiar ./build.sh -c ifort -b release
-    cd test
-    export OMP_NUM_THREADS=3
-    pytest --update=logout -v
-
 ifx:
   image: intel/oneapi-hpckit:latest
   script: |

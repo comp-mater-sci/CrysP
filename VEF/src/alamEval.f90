@@ -78,11 +78,11 @@ contains
                   input%do_output_final = .false.
             end associate
             ! Call the simulation
-            call runSteps(astate, info)
+            vs = convert_stress_strain_space(altay_get_stress_state(atens))
             if (info /= 0) return
             !
             ! Retrieve output stress into 5D vector
-            vS = convert_stress_strain_space(astate%simulCalls(istp)%output%stress_tensor)
+            !vS = convert_stress_strain_space(astate%simulCalls(istp)%output%stress_tensor)
             ! Transfer vS to vSml
             this%vSml = vS
 #ifdef DIAGNOSTIC_OUTPUT

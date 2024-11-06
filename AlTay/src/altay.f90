@@ -133,19 +133,12 @@ contains
         if (.not. input_ok) return
         ! Assign steps with astate
         astate = steps
-        ! Clean exception stack from a previous (possibly unsuccessful)
-        ! set of calls.
-        info = VEF_ERROR
-        !
 
         do i = 1, steps%nSimulCalls
-            !print *, "Full model: ", steps%simulcalls(i)%input%full_model, "Keep state: ", steps%simulcalls(i)%input%keep_state, "step: ", i
             steps%this = i
             NFILE0 = merge(1, 0, steps%simulCalls(i)%input%do_output_init)
             velocity_gradient = steps%simulcalls(i)%input%dgf
-            !Make traceless, should be moved to preprocessing
-            velocity_gradient = velocity_gradient-UNIT_MATRIX_3X3 * (velocity_gradient(1, 1)+velocity_gradient(2, 2)+velocity_gradient(3, 3))/3._DP
-            ! Run simul.
+
             call simulation_run(NFILE0, velocity_gradient)
 
             if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
@@ -153,6 +146,13 @@ contains
 
         info = VEF_OK
     end subroutine
+
+    function altay_get_stress_state(velocity_gradient) result(stress_state)
+        real(DP), dimension(3, 3), intent(in):: velocity_gradient
+        real(DP), dimension(3, 3):: stress_state
+
+        stress_state = get_stress(velocity_gradient)
+    end function
 
     !> Write out the current state variables.
     !> The call may involve IO units: IMP1 (CUR file)
@@ -165,7 +165,4 @@ contains
         if (acnf%output_config%nfile == 1) call output_current_state(IMP1)
         if (info /= 0) return
     end subroutine
-
-
-
 end module

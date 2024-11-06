@@ -19,13 +19,8 @@ module cluster_module
         integer:: n_systems
     contains
         procedure:: init                            => cluster_init
-        procedure:: get_imposed_strain              => cluster_get_imposed_strain
         procedure:: get_spin_coeffs_relaxations     => cluster_get_spin_coeffs_relaxations
-        procedure:: set_slip_rates                  => cluster_set_slip_rates
-        procedure:: set_overstress                  => cluster_set_overstress
-        procedure:: set_rss                         => cluster_set_rss
         procedure:: get_taylor_coeffs               => cluster_get_taylor_coeffs
-        procedure:: get_taylor_coeffs_relaxations   => cluster_get_taylor_coeffs_relaxations
         procedure:: update_relaxations              => cluster_update_relaxations
         procedure:: get_basis                       => cluster_get_basis
         procedure:: get_crss                        => cluster_get_crss
@@ -87,18 +82,6 @@ contains
         this%inverse_basis = invert(this%get_basis())
     end subroutine
 
-    function cluster_get_imposed_strain(this) result(imposed_strain)
-        class(Cluster), intent(in):: this
-
-        real(DP), dimension(5*size(this%grains)):: imposed_strain
-
-        integer:: i
-
-        do i = 1, size(this%grains)
-            imposed_strain(5*(i-1)+1:5*i) = this%grains(i)%imposed_strain
-        end do
-    end function
-
     function cluster_get_spin_coeffs_relaxations(this, ind_grain) result(spin_coeffs_relaxations)
         class(Cluster), intent(in):: this
         integer, intent(in):: ind_grain
@@ -132,18 +115,6 @@ contains
         end if
     end function
 
-    function cluster_get_taylor_coeffs_relaxations(this, ind_grain) result(taylor_coeffs_relaxations)
-        class(Cluster), intent(in):: this
-        integer, intent(in):: ind_grain
-        real(DP), dimension(5, 2):: taylor_coeffs_relaxations
-
-        integer:: i
-
-        do i = 1, 2
-            taylor_coeffs_relaxations(:,i) = this%relaxations(i)%taylor_coeffs(5*(ind_grain-1)+1:5*ind_grain)
-        end do
-    end function
-
     function cluster_get_basis(this) result(basis)
         class(Cluster), intent(in):: this
         real(DP), dimension(size(this%ind_basis_systems), size(this%ind_basis_systems)):: basis
@@ -174,7 +145,6 @@ contains
         integer:: i, &
                   n_systems_grain
 
-
         n_systems_grain = size(this%grains(1)%slip_systems)
 
         crss = 0._DP
@@ -182,49 +152,6 @@ contains
             crss(:,n_systems_grain*(i-1)+1:n_systems_grain*i) = this%grains(i)%get_crss()
         end do
     end function
-
-    subroutine cluster_set_slip_rates(this, slip_rates)
-        class(Cluster), intent(inout):: this
-        real(DP), dimension(this%n_systems), intent(in):: slip_rates
-
-        integer::   i, &
-                    n_systems_grain
-
-        do i = 1, size(this%grains)
-            n_systems_grain = size(this%grains(i)%slip_systems)
-
-            this%grains(i)%slip_systems%slip_rate = slip_rates((i-1)*n_systems_grain+1:i*n_systems_grain)
-
-            if (size(this%grains) == 2) &
-                this%relaxations(i)%slip_rate = slip_rates(size(slip_rates)-2+i)
-        end do
-    end subroutine
-
-    subroutine cluster_set_overstress(this, overstress)
-        class(Cluster), intent(inout):: this
-        real(DP), dimension(this%n_systems), intent(in):: overstress
-
-        integer:: i, &
-                  n_systems_grain
-
-        do i = 1, size(this%grains)
-            n_systems_grain = size(this%grains(i)%slip_systems)
-            this%grains(i)%slip_systems%overstress = overstress((i-1)*n_systems_grain+1:i*n_systems_grain)
-        end do
-    end subroutine
-
-    subroutine cluster_set_rss(this, rss)
-        class(Cluster), intent(inout):: this
-        real(DP), dimension(this%n_systems), intent(in):: rss
-
-        integer:: i, &
-                  n_systems_grain
-
-        do i = 1, size(this%grains)
-            n_systems_grain = size(this%grains(i)%slip_systems)
-            this%grains(i)%slip_systems%rss = rss((i-1)*n_systems_grain+1:i*n_systems_grain)
-        end do
-    end subroutine
 
     subroutine cluster_update_relaxations(this, deformation_gradient)
         class(Cluster), intent(inout):: this

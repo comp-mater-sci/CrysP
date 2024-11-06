@@ -106,7 +106,7 @@ contains
             sum_squares = sum(B(1:n_systems)**2)
 
             if (sum_squares < sum_squares_optimal) then
-                                !We need to add a tolerance on B because the input system may be ill-conditioned
+                !We need to add a tolerance on B because the input system may be ill-conditioned
                 if (all(B(1:n_systems) >= -TOLERANCE)) then
                     sum_squares_optimal = sum_squares
                     slip_rates = 0._DP
