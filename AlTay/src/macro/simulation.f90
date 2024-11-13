@@ -84,7 +84,6 @@ module simulation
         integer, intent(in):: NFILE0
         integer:: cluster_size, &
                   n_clusters, &
-                  step, &
                   NFILE, &
                   i               !> Iteration variables
         real(DP):: total_weight, &
@@ -108,41 +107,39 @@ module simulation
         deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient)
         call meso_prepare_deformation(velocity_gradient)
 
-        steploop: DO step = 1, astate%simulCalls(astate%this)%input%nsteps
-            total_weight = 0._DP
-            homogenized_stress = 0._DP
-            homogenized_taylor_factor = 0._DP
+        total_weight = 0._DP
+        homogenized_stress = 0._DP
+        homogenized_taylor_factor = 0._DP
 
-            nrstep = nrstep+1
+        nrstep = nrstep+1
 
-            !$OMP PARALLEL SHARED(clusters, n_clusters, von_mises_strain_rate) PRIVATE(stress_cluster, slip_cluster, weight_cluster)
-                !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, homogenized_taylor_factor)
-                    do i = 1, n_clusters
-                        call meso_apply_deformation_step(clusters(i), i, stress_cluster, slip_cluster)
-                        weight_cluster = clusters(i)%weight
-                        total_weight = total_weight+weight_cluster
-                        homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
-                        homogenized_taylor_factor = homogenized_taylor_factor+slip_cluster/von_mises_strain_rate*weight_cluster
-                    end do
-                !$OMP END DO
-            !$OMP END PARALLEL
+        !$OMP PARALLEL SHARED(clusters, n_clusters, von_mises_strain_rate) PRIVATE(stress_cluster, slip_cluster, weight_cluster)
+            !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, homogenized_taylor_factor)
+                do i = 1, n_clusters
+                    call meso_apply_deformation_step(clusters(i), i, stress_cluster, slip_cluster)
+                    weight_cluster = clusters(i)%weight
+                    total_weight = total_weight+weight_cluster
+                    homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
+                    homogenized_taylor_factor = homogenized_taylor_factor+slip_cluster/von_mises_strain_rate*weight_cluster
+                end do
+            !$OMP END DO
+        !$OMP END PARALLEL
 
-            homogenized_stress = homogenized_stress/total_weight
-            homogenized_taylor_factor = homogenized_taylor_factor/total_weight
+        homogenized_stress = homogenized_stress/total_weight
+        homogenized_taylor_factor = homogenized_taylor_factor/total_weight
 
-            ! Get the homogenized quantities:
-            associate (callout => astate%simulCalls(astate%this)%output)
-                callout%stress_tensor = homogenized_stress
-                callout%taylor_factor = homogenized_taylor_factor
-                callout%effective_stress = sqrt(3.D0/2.D0)*norm2(homogenized_stress)
-                callout%effective_macro_strain_tot = von_mises_strain
-                callout%effective_macro_strain_tot_end = von_mises_strain+von_mises_strain_rate
-            end associate
+        ! Get the homogenized quantities:
+        associate (callout => astate%simulCalls(astate%this)%output)
+            callout%stress_tensor = homogenized_stress
+            callout%taylor_factor = homogenized_taylor_factor
+            callout%effective_stress = sqrt(3.D0/2.D0)*norm2(homogenized_stress)
+            callout%effective_macro_strain_tot = von_mises_strain
+            callout%effective_macro_strain_tot_end = von_mises_strain+von_mises_strain_rate
+        end associate
 
-            von_mises_strain = von_mises_strain+von_mises_strain_rate
-            deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
-            call meso_update_model()
-        enddo steploop
+        von_mises_strain = von_mises_strain+von_mises_strain_rate
+        deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
+        call meso_update_model()
     end subroutine
 
     subroutine output_current_state(file_handle)
