@@ -19,6 +19,8 @@ macro/simulation.f90
 meso/taylor_ambiguity.f90
 meso/simplex.f90 
 meso/taylor.f90 
+meso/alamel.f90
+meso/full_constraints_taylor.f90
 meso/cluster.f90
 meso/relaxation.f90
 micro/grain.f90 

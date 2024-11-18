@@ -1,15 +1,66 @@
 module taylor_ambiguity
     use utils
     use logging
+    use grain_module
 
     implicit none
     private
 
     character(len=*), parameter:: MOD_NAME = "taylor_ambiguity"
 
-    public:: resolve_taylor_ambiguity
+    public:: assess_slip_system_activity, &
+             resolve_taylor_ambiguity
 
 contains
+
+    !> @Brief Find the number of active and indices of overstressed slip systems.
+    !> @Details Active slip systems have a nonzero slip rate, while overstressed slip systems are systems where the resolved shear
+    !           stress exceeds the critical resolved shear stress. From this we can determine if Taylor ambiguity is occuring.
+    subroutine assess_slip_system_activity(grain_, rss, slip_rates, n_active, ind_overstressed)
+        class(Grain), intent(in):: grain_    !> The grain
+        real(DP), dimension(size(grain_%slip_systems)), intent(in):: rss !> The resolved shear stress on each of the slip systems of
+                                                                         !> the grain (as calculated by simplex)
+        real(DP), dimension(size(grain_%slip_systems)), intent(in):: slip_rates  !> Slip rates for each slip system
+                                                                                 !> according to simplex. Max. 5 nonzero
+                                                                                 !> components
+        integer, intent(out):: n_active !> The number of active systems (systems with nonzero slip rate)
+        integer, dimension(:), allocatable, intent(out):: ind_overstressed    !> If taylor ambiguity is occurring, contains the
+                                                                              !> indices of the overstressed slip systems (rss >= crss). Otherwise it is returned unallocated.
+
+        integer:: i, &             !Iterator
+                  n_overstressed, &      !Number of active slip systems in the grain
+                  ind_overstressed_buffer(8)      !Buffer for the indices of the overstressed slip systems.
+                                   !Note that 8 is the theoretical maximum of active slip systems
+        real(DP):: overstress            !Extent to which a particular slip system is overstressed and thus active
+
+        character(*), parameter:: PROC_NAME = 'detect_taylor_ambiguity'
+
+        !Determine if taylor ambiguity may be occuring. While we are iterating over the slip systems, might as well prepare for
+        !resolving it
+        n_overstressed = 0
+        n_active = 0
+        do i = 1, size(grain_%slip_systems)
+            !Overstress is the difference between the resolved shear stress and critical resolved shear stress on a system.
+            overstress = merge(rss(i)-grain_%slip_systems(i)%crss(1), -rss(i)-grain_%slip_systems(i)%crss(2), rss(i)>0._DP)
+            !Overstress should never exceed 0 because then the solution found by simplex is not optimal.
+            if (abs(overstress) < TOLERANCE) then
+                n_overstressed = n_overstressed+1
+                ind_overstressed_buffer(n_overstressed) =i
+                if (abs(slip_rates(i)) > TOLERANCE) &
+                    n_active = n_active+1
+            end if
+        end do
+
+        !Check if the number of overstressed slip systems is within theoretical bounds.
+        if (n_overstressed > 8) then
+            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Too many active slip systems.')
+        elseif (n_overstressed == 0) then
+            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'No active slip systems found.')
+        endif
+
+        if (n_overstressed > n_active) &
+            ind_overstressed = ind_overstressed_buffer(:n_overstressed)
+    end subroutine
 
     !> @brief Resolves the Taylor ambiguity
     !!
@@ -29,29 +80,24 @@ contains
         real(DP), dimension(5), intent(in)::                                strain(5)                   !< Imposed strain on the current grain.
         integer, intent(in)::                                               n_active_simplex            !< Number of active slip systems according to the simplex solution.
 
-
         real(DP)::              slip_rates(size(taylor_coeffs, 2)), &
-                                coeffs(5, size(taylor_coeffs, 2)), &
+                                coeffs(5, size(ind_active_slip_systems)), &
                                 sum_squares_optimal
-        integer::               sign_slip(size(taylor_coeffs, 2)), &
-                                i, nlp
+        integer::               sign_slip(size(ind_active_slip_systems)), &
+                                i
 
-        sign_slip = 0._DP
-        sign_slip(ind_active_slip_systems)=int(sign(1._DP, rss))
+        sign_slip = int(sign(1._DP, rss))
 
         do i = 1, size(ind_active_slip_systems)
-            coeffs(:, ind_active_slip_systems(i)) = taylor_coeffs(:, ind_active_slip_systems(i)) * sign_slip(ind_active_slip_systems(i))
+            coeffs(:, i) = taylor_coeffs(:, ind_active_slip_systems(i)) * sign_slip(i)
         end do
 
         sum_squares_optimal = REAL_DP_MAX_VAL
-        slip_rates = 0._DP
         call iterate_combinations(coeffs, strain, ind_active_slip_systems, 1, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex)
 
         if (sum_squares_optimal == REAL_DP_MAX_VAL) &
             call log_error(MOD_NAME, 'resolve_taylor_ambiguity', ERR, 'Could not find optimal solution.')
-
     end function
-
 
     !> @brief iterate over all combinations of active slip systems to find the minimum norm solution
     !!
@@ -66,15 +112,15 @@ contains
                                     start_index, &                  !< Index from which to start looping over possible subsets. Needed to avoid duplicting
                                                                     !  combinations (e.g. [1, 2] and [2, 1]).
                                     n_active_simplex, &             !< Number of active slip systems according to the simplex solution.
-                                    sign_slip(:)                    !< Sign of the slip rates on each of the candidate slip systems.
-        real(DP), intent(inout)::   slip_rates(size(sign_slip)), &  !< Current optimal solution for the slip rates.
+                                    sign_slip(size(ind))                    !< Sign of the slip rates on each of the candidate slip systems.
+        real(DP), intent(inout)::   slip_rates(:), &  !< Current optimal solution for the slip rates.
                                     sum_squares_optimal             !< Optimal sum of squared slip rates found so far
 
         integer, parameter::        SIZE_WORKSPACE = 10  ! Optimal, refer to LAPACK documentation.
-        integer::                   i, &
+        integer::                   i, j, &
                                     info, &
                                     n_systems, &
-                                    ind_new(size(ind)-1)
+                                    subset(size(ind)-1)
         real(DP)::                  A(5, size(ind)), &
                                     B(max(5, size(ind))), &
                                     workspace(SIZE_WORKSPACE), &
@@ -84,7 +130,7 @@ contains
         n_systems = size(ind)
 
         !Must copy to local vars because dgels overwrites these internally
-        A = coeffs(:, ind)
+        A = coeffs
         B(1:5)=strain
 
         !Lapack routine to find minimum norm solution
@@ -103,14 +149,14 @@ contains
                 if (residual > TOLERANCE) return  ! Residual can only increase by taking a subset of the current systems.
             end if
 
-            sum_squares = sum(B(1:n_systems)**2)
+            sum_squares = sum(B(:n_systems)**2)
 
             if (sum_squares < sum_squares_optimal) then
                 !We need to add a tolerance on B because the input system may be ill-conditioned
-                if (all(B(1:n_systems) >= -TOLERANCE)) then
+                if (all(B(:n_systems) >= -TOLERANCE)) then
                     sum_squares_optimal = sum_squares
                     slip_rates = 0._DP
-                    slip_rates(ind) = B(1:n_systems)*sign_slip(ind)
+                    slip_rates(ind) = B(:n_systems)*sign_slip
                     return
                 end if
             else
@@ -119,12 +165,17 @@ contains
             end if
         end if
 
-        ! Only when the maximum number of slip systems in a combination is equal to the number of active slip systems simplex found,
-        ! we are guaranteed by simplex that the system is nonsingular
+        ! Only when the number of slip systems in a combination is larger than the number of active slip systems simplex found,
+        ! we are guaranteed by simplex that a subset of this combination exists that is nonsinngular.
         if (size(ind) > n_active_simplex) then
             do i = start_index, n_systems
-                ind_new = pack(ind, ind /= ind(i))
-                call iterate_combinations(coeffs, strain, ind_new, i, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex)
+                do j = 1, i-1
+                    subset(j) = j
+                end do
+                do j = i+1, n_systems
+                    subset(j-1) = j
+                end do
+                call iterate_combinations(coeffs(:,subset), strain, ind(subset), i, sign_slip(subset), slip_rates, sum_squares_optimal, n_active_simplex)
             end do
         end if
     end subroutine
