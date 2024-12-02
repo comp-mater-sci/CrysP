@@ -1,5 +1,4 @@
 module altay
-    use hardening_model_dsh
     use simulation
     use altayConfig
     use hardening

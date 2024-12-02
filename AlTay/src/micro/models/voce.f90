@@ -1,4 +1,4 @@
-module hardening_model_voce
+module voce
     use utils, only: dp
     use hardening_model
     use altayConfig
@@ -91,4 +91,4 @@ contains
 
         crss = current_stage%TS - (current_stage%TS-current_stage%T1) * exp(-current_stage%TH*sum_slip/current_stage%TS)
     end function
-end module hardening_model_voce
+end module voce

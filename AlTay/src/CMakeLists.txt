@@ -18,22 +18,22 @@ parameters.f90
 macro/simulation.f90
 meso/meso.f90
 meso/meso_model.f90
-meso/taylor_ambiguity.f90
-meso/simplex.f90 
-meso/alamel.f90
-meso/full_constraints_taylor.f90
+meso/models/taylor_ambiguity.f90
+meso/models/simplex.f90 
+meso/models/alamel.f90
+meso/models/full_constraints_taylor.f90
 meso/cluster.f90
-meso/relaxation.f90
+meso/models/relaxation.f90
 micro/grain.f90 
 micro/slip_systems.f90
 micro/hardening.f90
 micro/hardening_model.f90
-micro/hardening_model_swift.f90
-micro/hardening_model_voce.f90
-micro/hardening_model_dsh.f90
-micro/hardening_model_bp.f90
-micro/hardening_model_pebp_screw.f90
-micro/hardening_model_pebp_loop.f90
+micro/models/swift.f90
+micro/models/voce.f90
+micro/models/dsh.f90
+micro/models/dsh_edge.f90
+micro/models/dsh_screw.f90
+micro/models/dsh_loop.f90
 )
 
 

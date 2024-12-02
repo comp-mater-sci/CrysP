@@ -14,10 +14,6 @@ module alamel
     private
     public:: AlamelModel
 
-
-
-
-
     character(*), parameter:: MOD_NAME = 'alamel'
     integer, dimension(5), parameter::   INITIAL_BASIS_SYSTEMS_FCC = [2, 5, 6, 7, 8], &
                                          INITIAL_BASIS_SYSTEMS_BCC = [1, 2, 4, 5, 7]

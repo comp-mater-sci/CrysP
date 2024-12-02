@@ -1,6 +1,5 @@
 module simulation
     use utils
-    use hardening_model_dsh
     use grain_module
     use hardening
     use altayConfig
