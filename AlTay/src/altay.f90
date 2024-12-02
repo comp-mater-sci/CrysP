@@ -7,6 +7,8 @@ module altay
     use parameters
     use grain_module
     use file_io
+    use parameters
+    use meso
 
     implicit none
 
@@ -22,8 +24,8 @@ contains
         type(altayConfigData), intent(inout)    :: cnf      !< configuration data
         integer, intent(out)                 :: info     !< exit code (altay_OK on success)
         character(*), parameter:: PROC_NAME = 'initAltay'
-        real(DP), dimension(:,:), allocatable:: orientations, &
-                                                boundaries
+        real(DP), dimension(:,:), allocatable:: orientations
+        type(Parameter), dimension(:), allocatable:: params
 
         integer:: ierr, cluster_size
 
@@ -37,8 +39,10 @@ contains
         ! Get the initial texture
         orientations = read_texture(trim(cnf%texture_input_fname))
 
-        if (cluster_size == 2) &
-            boundaries = read_boundaries(cnf%micros_fname)
+        params = meso_get_parameters(cluster_size)
+        if (cluster_size == 2) then
+            call parameter_set(params, "Boundaries", read_boundaries(cnf%micros_fname))
+        end if
 
         ! Open output files
         call openOutputFiles(cnf, info)
@@ -52,7 +56,7 @@ contains
         call hardening_init(cnf%hardening_parameters)
         ! Initialisation of SIMUL
         info = VEF_ERROR
-        call simulation_init(orientations, boundaries)
+        call simulation_init(orientations, params)
 
         ! No need for the slip system definition anymore.
         close(LEC)

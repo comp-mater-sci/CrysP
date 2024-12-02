@@ -111,7 +111,7 @@ contains
 
     subroutine dsh_validate_parameters(this, params)
         class(HardeningModelDSH), intent(in)     :: this
-        type(Parameter), allocatable, intent(in):: params(:)
+        type(Parameter), dimension(:), intent(in):: params
         character(:), allocatable:: nss
 
         nss = params .find. 'n_slip_systems'

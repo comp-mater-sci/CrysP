@@ -16,9 +16,10 @@ altayConfig.f90
 altay.f90
 parameters.f90
 macro/simulation.f90
+meso/meso.f90
+meso/meso_model.f90
 meso/taylor_ambiguity.f90
 meso/simplex.f90 
-meso/taylor.f90 
 meso/alamel.f90
 meso/full_constraints_taylor.f90
 meso/cluster.f90

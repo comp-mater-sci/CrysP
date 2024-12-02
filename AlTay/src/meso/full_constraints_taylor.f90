@@ -5,14 +5,13 @@ module full_constraints_taylor
     use taylor_ambiguity
     use hardening
     use simplex
+    use parameters
+    use meso_model
 
     implicit none
 
     private
-    public:: full_constraints_taylor_init, &
-             full_constraints_taylor_prepare_deformation, &
-             full_constraints_taylor_get_stress, &
-             full_constraints_taylor_deform
+    public:: TaylorModel
 
     character(*), parameter:: MOD_NAME = "full_constraints_taylor"
     integer, dimension(5), parameter::   INITIAL_BASIS_SYSTEMS_FCC(5) = [2, 5, 6, 7, 8], &
@@ -23,15 +22,21 @@ module full_constraints_taylor
         real(DP), dimension(5, 5):: inverse_basis
     end type
 
-    real(DP), dimension(3, 3):: imposed_spin_rate
-    real(DP), dimension(3, 3):: velocity_gradient
+    type, extends(MesoModel):: TaylorModel
+    contains
+        procedure:: init => full_constraints_taylor_init
+        procedure:: get_stress => full_constraints_taylor_get_stress
+        procedure:: apply_step => full_constraints_taylor_deform
+    end type
 
 contains
 
     !>@Brief See 'meso_model_init'.
-    subroutine full_constraints_taylor_init(orientations, deformation_mechanism, clusters)
+    subroutine full_constraints_taylor_init(this, orientations, deformation_mechanism, params, clusters)
+        class(TaylorModel), intent(inout):: this
         real(DP), dimension(:,:), intent(in):: orientations
         integer, dimension(:,:,:), intent(in):: deformation_mechanism
+        type(Parameter), dimension(:), intent(in):: params
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
         real(DP), dimension(5, size(deformation_mechanism, 3)):: taylor_coeffs
@@ -75,7 +80,8 @@ contains
     end function
 
     !>@Brief See 'meso_model_get_stress'.
-    function full_constraints_taylor_get_stress(cluster_, v_grad) result(stress)
+    function full_constraints_taylor_get_stress(this, cluster_, v_grad) result(stress)
+        class(TaylorModel), intent(in):: this
         class(Cluster), intent(inout):: cluster_                    !> Intent(inout) because simplex modifies inverse basis
         real(DP), dimension(3, 3), intent(in):: v_grad
         real(DP), dimension(3, 3):: stress
@@ -98,16 +104,18 @@ contains
         end select
     end function
 
-    subroutine full_constraints_taylor_prepare_deformation(v_grad)
+    subroutine full_constraints_taylor_prepare_deformation(this, v_grad)
+        class(TaylorModel), intent(inout):: this
         real(DP), dimension(3, 3), intent(in):: v_grad !> Velocity gradient used for the next deformation step(s)
 
-        velocity_gradient = v_grad
-        imposed_spin_rate = antisymmetric_part(velocity_gradient)
+        this%velocity_gradient = v_grad
+        this%imposed_spin_rate = antisymmetric_part(this%velocity_gradient)
     end subroutine
 
     !>@Brief See 'meso_model_apply_step'.
-    subroutine full_constraints_taylor_deform(cluster_, index_cluster, stress, slip)
-        class(Cluster), target, intent(inout):: cluster_
+    subroutine full_constraints_taylor_deform(this, cluster_, index_cluster, stress, slip)
+        class(TaylorModel), intent(in):: this
+        class(Cluster), intent(inout):: cluster_
         integer, intent(in):: index_cluster
         real(DP), dimension(3, 3), intent(out):: stress
         real(DP), intent(out):: slip
@@ -122,50 +130,49 @@ contains
                                  imposed_strain_rate
         integer, dimension(:), allocatable:: ind_active_slip_systems
 
-        type(Grain), pointer::      grain_ptr
-
         select type (cluster_)
             type is (TaylorCluster)
-                grain_ptr => cluster_%grains(1)
-                n_systems = size(grain_ptr%slip_systems)
+                associate(grain_=>cluster_%grains(1))
+                    n_systems = size(grain_%slip_systems)
 
-                imposed_strain_rate = convert_stress_strain_space(velocity_gradient .toframe. grain_ptr%orientation)
-                taylor_coeffs = get_taylor_coeffs(cluster_)
+                    imposed_strain_rate = convert_stress_strain_space(this%velocity_gradient .toframe. grain_%orientation)
+                    taylor_coeffs = get_taylor_coeffs(cluster_)
 
-                call simplex_solve(taylor_coeffs, &
-                                   imposed_strain_rate, &
-                                   get_crss(cluster_), &
-                                   cluster_%inverse_basis, &
-                                   cluster_%ind_basis_systems, &
-                                   slip_rates, &
-                                   stress_cluster, &
-                                   rss)
+                    call simplex_solve(taylor_coeffs, &
+                                       imposed_strain_rate, &
+                                       get_crss(cluster_), &
+                                       cluster_%inverse_basis, &
+                                       cluster_%ind_basis_systems, &
+                                       slip_rates, &
+                                       stress_cluster, &
+                                       rss)
 
-                stress = convert_stress_strain_space(stress_cluster) .fromframe. grain_ptr%orientation
+                    stress = convert_stress_strain_space(stress_cluster) .fromframe. grain_%orientation
 
 
 
-                call  assess_slip_system_activity(cluster_%grains(1), rss, slip_rates, n_active_simplex, ind_active_slip_systems)
+                    call  assess_slip_system_activity(cluster_%grains(1), rss, slip_rates, n_active_simplex, ind_active_slip_systems)
 
-                if (allocated(ind_active_slip_systems)) then
-                    slip_rates = resolve_taylor_ambiguity(ind_active_slip_systems, &
-                        rss(ind_active_slip_systems), &
-                        imposed_strain_rate, &
-                        taylor_coeffs, &
-                        n_active_simplex)
-                end if
+                    if (allocated(ind_active_slip_systems)) then
+                        slip_rates = resolve_taylor_ambiguity(ind_active_slip_systems, &
+                            rss(ind_active_slip_systems), &
+                            imposed_strain_rate, &
+                            taylor_coeffs, &
+                            n_active_simplex)
+                    end if
 
-                slip = sum(abs(slip_rates))
-                grain_ptr%sum_slip = grain_ptr%sum_slip+slip
+                    slip = sum(abs(slip_rates))
+                    grain_%sum_slip = grain_%sum_slip+slip
 
-                !Update hardening model state
-                call hardening_update_state(index_cluster, 1._DP, slip_rates)
-                call grain_ptr%set_crss(hardening_get_crss(index_cluster, grain_ptr%sum_slip))
+                    !Update hardening model state
+                    call hardening_update_state(index_cluster, 1._DP, slip_rates)
+                    call grain_%set_crss(hardening_get_crss(index_cluster, grain_%sum_slip))
 
-                orientation_increment = UNIT_MATRIX_3X3 &
-                                        +(imposed_spin_rate .toframe. grain_ptr%orientation) &                !>Change of reference frame
-                                        -convert_spin(matmul(grain_ptr%get_spin_coeffs(), slip_rates))    !>Spin induced by activation of slip systems
-                grain_ptr%orientation = matmul(orientation_increment, grain_ptr%orientation)
+                    orientation_increment = UNIT_MATRIX_3X3 &
+                                            +(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame
+                                            -convert_spin(matmul(grain_%get_spin_coeffs(), slip_rates))    !>Spin induced by activation of slip systems
+                    grain_%orientation = matmul(orientation_increment, grain_%orientation)
+                end associate
         end select
     end subroutine
 end module

@@ -3,12 +3,13 @@ module simulation
     use hardening_model_dsh
     use grain_module
     use hardening
-    use taylor
     use altayConfig
     use logging
     use cluster_module
     use file_io
     use omp_lib
+    use meso
+    use parameters
 
     implicit none
     private
@@ -17,7 +18,7 @@ module simulation
 
     real(DP):: von_mises_strain
     real(DP), dimension(3, 3):: deformation_gradient = UNIT_MATRIX_3X3
-    class(Cluster), dimension(:), allocatable, target:: clusters
+    class(Cluster), dimension(:), allocatable:: clusters
 
     character(*), parameter:: MOD_NAME = 'Simul'
 
@@ -30,9 +31,9 @@ module simulation
     contains
 
     ! initialization call
-    subroutine simulation_init(orientations, boundaries)
-        real(DP), dimension(:,:), allocatable, intent(in):: orientations, &
-                                                            boundaries
+    subroutine simulation_init(orientations, parameters)
+        real(DP), dimension(:,:), allocatable, intent(in):: orientations
+        type(Parameter), dimension(:), allocatable, intent(in):: parameters
 
         character(len = 40):: TITEL
         integer:: info, &
@@ -42,16 +43,13 @@ module simulation
 
         cluster_size    = acnf%simul_init%NGR
 
-        if (cluster_size < 1 .or. cluster_size > 2) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Incorrect value of cluster_size')
-
         TITEL  = acnf%jobtitle
         ! Only if CUR file is requested
         if (NFILE1 == 1) call cur_write_title(IMP1, TITEL, info)
   98    format (A)
 
         deformation_gradient = UNIT_MATRIX_3X3
-        call taylor_init(acnf%deformation_mechanism, cluster_size, orientations, boundaries, clusters)
+        call meso_init(cluster_size, orientations, acnf%deformation_mechanism, parameters, clusters)
         von_mises_strain = 0._DP
     end subroutine
 
@@ -72,14 +70,13 @@ module simulation
         !$OMP PARALLEL SHARED(clusters, velocity_gradient, n_clusters)
             !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION (+:total_weight, homogenized_stress)
                 do i = 1, n_clusters
-                    homogenized_stress = homogenized_stress+get_stress_state(clusters(i), velocity_gradient) * clusters(i)%weight
+                    homogenized_stress = homogenized_stress+meso_get_stress(clusters(i), velocity_gradient) * clusters(i)%weight
                     total_weight = total_weight+clusters(i)%weight
                 end do
             !$OMP END DO
         !$OMP END PARALLEL
 
         homogenized_stress = homogenized_stress/total_weight
-
     end function
 
     subroutine simulation_run(NFILE0, velocity_gradient)
@@ -87,7 +84,6 @@ module simulation
         integer, intent(in):: NFILE0
         integer:: cluster_size, &
                   n_clusters, &
-                  step, &
                   NFILE, &
                   i               !> Iteration variables
         real(DP):: total_weight, &
@@ -109,43 +105,41 @@ module simulation
         spin = antisymmetric_part(velocity_gradient)
         von_mises_strain_rate = SQR0P67*norm2(strain_rate)
         deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient)
-        call meso_prepare_deformation(velocity_gradient, cluster_size)
+        call meso_prepare_deformation(velocity_gradient)
 
-        steploop: DO step = 1, astate%simulCalls(astate%this)%input%nsteps
-            total_weight = 0._DP
-            homogenized_stress = 0._DP
-            homogenized_taylor_factor = 0._DP
+        total_weight = 0._DP
+        homogenized_stress = 0._DP
+        homogenized_taylor_factor = 0._DP
 
-            nrstep = nrstep+1
+        nrstep = nrstep+1
 
-            !$OMP PARALLEL SHARED(clusters, n_clusters, von_mises_strain_rate) PRIVATE(stress_cluster, slip_cluster, weight_cluster)
-                !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, homogenized_taylor_factor)
-                    do i = 1, n_clusters
-                        call apply_deformation_step(clusters(i), i, stress_cluster, slip_cluster)
-                        weight_cluster = clusters(i)%weight
-                        total_weight = total_weight+weight_cluster
-                        homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
-                        homogenized_taylor_factor = homogenized_taylor_factor+slip_cluster/von_mises_strain_rate*weight_cluster
-                    end do
-                !$OMP END DO
-            !$OMP END PARALLEL
+        !$OMP PARALLEL SHARED(clusters, n_clusters, von_mises_strain_rate) PRIVATE(stress_cluster, slip_cluster, weight_cluster)
+            !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, homogenized_taylor_factor)
+                do i = 1, n_clusters
+                    call meso_apply_deformation_step(clusters(i), i, stress_cluster, slip_cluster)
+                    weight_cluster = clusters(i)%weight
+                    total_weight = total_weight+weight_cluster
+                    homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
+                    homogenized_taylor_factor = homogenized_taylor_factor+slip_cluster/von_mises_strain_rate*weight_cluster
+                end do
+            !$OMP END DO
+        !$OMP END PARALLEL
 
-            homogenized_stress = homogenized_stress/total_weight
-            homogenized_taylor_factor = homogenized_taylor_factor/total_weight
+        homogenized_stress = homogenized_stress/total_weight
+        homogenized_taylor_factor = homogenized_taylor_factor/total_weight
 
-            ! Get the homogenized quantities:
-            associate (callout => astate%simulCalls(astate%this)%output)
-                callout%stress_tensor = homogenized_stress
-                callout%taylor_factor = homogenized_taylor_factor
-                callout%effective_stress = sqrt(3.D0/2.D0)*norm2(homogenized_stress)
-                callout%effective_macro_strain_tot = von_mises_strain
-                callout%effective_macro_strain_tot_end = von_mises_strain+von_mises_strain_rate
-            end associate
+        ! Get the homogenized quantities:
+        associate (callout => astate%simulCalls(astate%this)%output)
+            callout%stress_tensor = homogenized_stress
+            callout%taylor_factor = homogenized_taylor_factor
+            callout%effective_stress = sqrt(3.D0/2.D0)*norm2(homogenized_stress)
+            callout%effective_macro_strain_tot = von_mises_strain
+            callout%effective_macro_strain_tot_end = von_mises_strain+von_mises_strain_rate
+        end associate
 
-            von_mises_strain = von_mises_strain+von_mises_strain_rate
-            deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
-            call meso_update_model(cluster_size)
-        enddo steploop
+        von_mises_strain = von_mises_strain+von_mises_strain_rate
+        deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
+        call meso_update_model()
     end subroutine
 
     subroutine output_current_state(file_handle)
@@ -154,6 +148,7 @@ module simulation
     end subroutine
 
     subroutine simulation_finalize()
+        call meso_finalize()
         deallocate(clusters)
     end subroutine
 end module

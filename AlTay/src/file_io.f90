@@ -90,7 +90,7 @@ contains
     !Write the current state of all grains to file.
     subroutine cur_write_block(iounit, clusters, deformation_gradient)
         integer, intent(in)::                                           iounit !< IO unit number
-        class(Cluster), dimension(:), pointer, contiguous, intent(in)::  clusters !< Pointer to list of all clusters which contains
+        class(Cluster), dimension(:), intent(in)::  clusters !< Pointer to list of all clusters which contains
                                                                                  !  state of all grains
         real(DP), dimension(3, 3), intent(in)::                         deformation_gradient
 

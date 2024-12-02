@@ -1,3 +1,4 @@
 FROM intel/oneapi-hpckit:latest
+ADD .  /app
 WORKDIR /app
-CMD ./build.sh debug
+CMD ./build.sh

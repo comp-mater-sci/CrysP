@@ -36,7 +36,7 @@ contains
 
     subroutine hardening_model_validate_parameters(this, params)
         class(HardeningModel), intent(in)   :: this
-        type(Parameter), allocatable, intent(in):: params(:)
+        type(Parameter), dimension(:), intent(in):: params
         character(:), allocatable:: n_slip_systems
 
     end subroutine hardening_model_validate_parameters
