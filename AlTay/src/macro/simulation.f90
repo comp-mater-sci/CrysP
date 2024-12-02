@@ -1,7 +1,6 @@
 module simulation
     use utils
     use grain_module
-    use hardening
     use altayConfig
     use logging
     use cluster_module

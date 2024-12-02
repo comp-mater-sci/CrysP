@@ -3,7 +3,7 @@ module full_constraints_taylor
     use cluster_module
     use logging
     use taylor_ambiguity
-    use hardening
+    use micro
     use simplex
     use parameters
     use meso_model
@@ -52,7 +52,7 @@ contains
                     call clusters(i)%grains(1)%init(deformation_mechanism, orientations(:,i))
                     taylor_coeffs = clusters(i)%grains(1)%get_taylor_coeffs()
                     clusters(i)%inverse_basis = invert(taylor_coeffs(:,clusters(i)%ind_basis_systems))
-                    call clusters(i)%grains(1)%set_crss(hardening_get_crss(i, 0._DP))
+                    call clusters(i)%grains(1)%set_crss(micro_get_crss(i, 0._DP))
                 end do
         end select
     end subroutine
@@ -165,8 +165,8 @@ contains
                     grain_%sum_slip = grain_%sum_slip+slip
 
                     !Update hardening model state
-                    call hardening_update_state(index_cluster, 1._DP, slip_rates)
-                    call grain_%set_crss(hardening_get_crss(index_cluster, grain_%sum_slip))
+                    call micro_update_state(index_cluster, 1._DP, slip_rates)
+                    call grain_%set_crss(micro_get_crss(index_cluster, grain_%sum_slip))
 
                     orientation_increment = UNIT_MATRIX_3X3 &
                                             +(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame

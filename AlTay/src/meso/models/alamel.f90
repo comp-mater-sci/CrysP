@@ -5,7 +5,7 @@ module alamel
     use cluster_module
     use logging
     use taylor_ambiguity
-    use hardening
+    use micro
     use simplex
     use meso_model
 
@@ -83,7 +83,7 @@ contains
                 clusters(i)%ind_basis_systems(6:10) = ind_basis_systems_grain+n_systems_grain
                 do k = 1, 2
                     call clusters(i)%grains(k)%init(deformation_mechanism, orientations(:,2*(i-1)+k))
-                    call clusters(i)%grains(k)%set_crss(hardening_get_crss((i-1)*2+k, 0._DP))
+                    call clusters(i)%grains(k)%set_crss(micro_get_crss((i-1)*2+k, 0._DP))
                     call clusters(i)%relaxations(k)%init(k)
                 end do
                 clusters(i)%inverse_basis = invert(get_basis(clusters(i)))
@@ -284,8 +284,8 @@ contains
                         slip = slip+slip_grain
 
                         !Update hardening model state
-                        call hardening_update_state((index_cluster-1)*2+j, 1._DP, slip_rates_grain)
-                        call grain_%set_crss(hardening_get_crss((index_cluster-1)*2+j, grain_%sum_slip))
+                        call micro_update_state((index_cluster-1)*2+j, 1._DP, slip_rates_grain)
+                        call grain_%set_crss(micro_get_crss((index_cluster-1)*2+j, grain_%sum_slip))
 
                         !Get spin coefficients of the relaxations corresponding to the current grain
                         do i = 1, 2

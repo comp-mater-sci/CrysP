@@ -1,5 +1,5 @@
 !> Dispatcher of hardening models
-module Hardening
+module micro
     use utils
     use parameters
     use logging
@@ -21,34 +21,34 @@ module Hardening
         !> Returns the parameter list for a particular hardening model
         !> Also allocates the back-end hardening model
         !> Must be called before initialization
-        module function hardening_get_parameters(model_id) result(params)
+        module function micro_get_parameters(model_id) result(params)
             integer, intent(in)             :: model_id
             type(Parameter), allocatable    :: params(:)
-        end function hardening_get_parameters
+        end function
 
         !> Initialize module from config data object
-        module subroutine  hardening_init(params)
+        module subroutine  micro_init(params)
             type(Parameter), allocatable, intent(in)  :: params(:)
         end subroutine
 
-        module subroutine hardening_finalize()
-        end subroutine hardening_finalize
+        module subroutine micro_finalize()
+        end subroutine
 
-        module function hardening_get_crss(grain, sum_slip) result(crss)
+        module function micro_get_crss(grain, sum_slip) result(crss)
             integer, intent(in):: grain
             real(DP), intent(in):: sum_slip
             real(DP), allocatable:: crss(:,:)
-        end function hardening_get_crss
+        end function
 
-        module subroutine hardening_update_state(grain, time, slip_rates)
+        module subroutine micro_update_state(grain, time, slip_rates)
             integer, intent(in)      ::  grain
             real(DP), intent(in)    ::  time, &
                                         slip_rates(:)
-        end subroutine hardening_update_state
+        end subroutine
     end interface
-end module hardening
+end module
 
-submodule(hardening) hardening_imp
+submodule(micro) micro_imp
     use hardening_model
     use swift
     use voce
@@ -62,7 +62,7 @@ submodule(hardening) hardening_imp
 
 contains
 
-    module procedure hardening_get_parameters
+    module procedure micro_get_parameters
         if (allocated(model)) deallocate(model)
 
         select case(model_id)
@@ -83,22 +83,22 @@ contains
         end select
 
         params = model%get_parameters()
-    end procedure hardening_get_parameters
+    end procedure
 
     !> Initialize module from config data object
-    module procedure hardening_init
+    module procedure micro_init
         call model%init(params)
-    end procedure hardening_init
+    end procedure
 
-    module procedure hardening_finalize
+    module procedure micro_finalize
         call model%finalize()
-    end procedure hardening_finalize
+    end procedure
 
-    module procedure hardening_get_crss
+    module procedure micro_get_crss
         crss = model%get_crss(grain, sum_slip)
     end procedure
 
-    module procedure hardening_update_state
+    module procedure micro_update_state
         call model%update_state(grain, time, slip_rates)
     end procedure
-end submodule Hardening_Imp
+end submodule
