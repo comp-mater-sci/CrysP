@@ -31,6 +31,24 @@ module full_constraints_taylor
 
 contains
 
+    !>@Brief Convert the type of a provided generic cluster to TaylorCluster
+    !>@Details This is the closest Fortran can get to proper type casting.
+    !>         Useful for accessing TaylorCluster-specific fields without the boilerplate of type selection and error handling in
+    !>         each calling procedure.
+    !>         If the input cluster is not a TaylorCluster, the routine crashes the program.
+    !>@Return  If the input cluster is indeed a TaylorCluster, a pointer to this cluster of type TaylorCluster is returned.
+    function to_taylor_cluster(cluster_) result(ptr)
+        class(Cluster), target, intent(in):: cluster_   !> Generic input cluster
+        type(TaylorCluster), pointer:: ptr              !> Pointer to input cluster of type TaylorCluster
+
+        select type (cluster_)
+            type is (TaylorCluster)
+                ptr => cluster_
+            class default
+                call log_error(MOD_NAME, 'to_taylor_cluster', ERR_TYPE)
+        end select
+    end function
+
     !>@Brief See 'meso_model_init'.
     subroutine full_constraints_taylor_init(this, orientations, deformation_mechanism, params, clusters)
         class(TaylorModel), intent(inout):: this
@@ -43,7 +61,9 @@ contains
         integer:: i
 
         allocate(TaylorCluster:: clusters(size(orientations, 2)))
-        select type (clusters)  ! Unfortunately Fortran does not allow a cleaner notation
+
+        !Must check type even though we just allocated due to Fortran semantics.
+        select type (clusters)
             type is (TaylorCluster)
                 do i = 1, size(clusters)
                     allocate(clusters(i)%grains(1))
@@ -87,21 +107,21 @@ contains
         real(DP), dimension(3, 3):: stress
 
         real(DP), dimension(size(cluster_%grains(1)%slip_systems)):: slip_rates, &
-                                                                        rss
+                                                                     rss
         real(DP), dimension(5):: stress_cluster
+        type(TaylorCluster), pointer:: cluster_ptr
 
-        select type(cluster_)
-            type is (TaylorCluster)
-                call simplex_solve(get_taylor_coeffs(cluster_), &
-                                   convert_stress_strain_space(v_grad .toframe. cluster_%grains(1)%orientation), &
-                                   get_crss(cluster_), &
-                                   cluster_%inverse_basis, &
-                                   cluster_%ind_basis_systems, &
-                                   slip_rates, &
-                                   stress_cluster, &
-                                   rss)
-                stress = convert_stress_strain_space(stress_cluster) .fromframe. cluster_%grains(1)%orientation
-        end select
+        cluster_ptr => to_taylor_cluster(cluster_)
+
+        call simplex_solve(get_taylor_coeffs(cluster_ptr), &
+                           convert_stress_strain_space(v_grad .toframe. cluster_ptr%grains(1)%orientation), &
+                           get_crss(cluster_ptr), &
+                           cluster_ptr%inverse_basis, &
+                           cluster_ptr%ind_basis_systems, &
+                           slip_rates, &
+                           stress_cluster, &
+                           rss)
+        stress = convert_stress_strain_space(stress_cluster) .fromframe. cluster_%grains(1)%orientation
     end function
 
     subroutine full_constraints_taylor_prepare_deformation(this, v_grad)
@@ -129,50 +149,50 @@ contains
         real(DP), dimension(5):: stress_cluster, &
                                  imposed_strain_rate
         integer, dimension(:), allocatable:: ind_active_slip_systems
+        type(TaylorCluster), pointer:: cluster_ptr
 
-        select type (cluster_)
-            type is (TaylorCluster)
-                associate(grain_=>cluster_%grains(1))
-                    n_systems = size(grain_%slip_systems)
+        cluster_ptr => to_taylor_cluster(cluster_)
 
-                    imposed_strain_rate = convert_stress_strain_space(this%velocity_gradient .toframe. grain_%orientation)
-                    taylor_coeffs = get_taylor_coeffs(cluster_)
+        associate(grain_=>cluster_ptr%grains(1))
+            n_systems = size(grain_%slip_systems)
 
-                    call simplex_solve(taylor_coeffs, &
-                                       imposed_strain_rate, &
-                                       get_crss(cluster_), &
-                                       cluster_%inverse_basis, &
-                                       cluster_%ind_basis_systems, &
-                                       slip_rates, &
-                                       stress_cluster, &
-                                       rss)
+            imposed_strain_rate = convert_stress_strain_space(this%velocity_gradient .toframe. grain_%orientation)
+            taylor_coeffs = get_taylor_coeffs(cluster_ptr)
 
-                    stress = convert_stress_strain_space(stress_cluster) .fromframe. grain_%orientation
+            call simplex_solve(taylor_coeffs, &
+                               imposed_strain_rate, &
+                               get_crss(cluster_ptr), &
+                               cluster_ptr%inverse_basis, &
+                               cluster_ptr%ind_basis_systems, &
+                               slip_rates, &
+                               stress_cluster, &
+                               rss)
+
+            stress = convert_stress_strain_space(stress_cluster) .fromframe. grain_%orientation
 
 
 
-                    call  assess_slip_system_activity(cluster_%grains(1), rss, slip_rates, n_active_simplex, ind_active_slip_systems)
+            call  assess_slip_system_activity(grain_, rss, slip_rates, n_active_simplex, ind_active_slip_systems)
 
-                    if (allocated(ind_active_slip_systems)) then
-                        slip_rates = resolve_taylor_ambiguity(ind_active_slip_systems, &
-                            rss(ind_active_slip_systems), &
-                            imposed_strain_rate, &
-                            taylor_coeffs, &
-                            n_active_simplex)
-                    end if
+            if (allocated(ind_active_slip_systems)) then
+                slip_rates = resolve_taylor_ambiguity(ind_active_slip_systems, &
+                    rss(ind_active_slip_systems), &
+                    imposed_strain_rate, &
+                    taylor_coeffs, &
+                    n_active_simplex)
+            end if
 
-                    slip = sum(abs(slip_rates))
-                    grain_%sum_slip = grain_%sum_slip+slip
+            slip = sum(abs(slip_rates))
+            grain_%sum_slip = grain_%sum_slip+slip
 
-                    !Update hardening model state
-                    call micro_update_state(index_cluster, 1._DP, slip_rates)
-                    call grain_%set_crss(micro_get_crss(index_cluster, grain_%sum_slip))
+            !Update hardening model state
+            call micro_update_state(index_cluster, 1._DP, slip_rates)
+            call grain_%set_crss(micro_get_crss(index_cluster, grain_%sum_slip))
 
-                    orientation_increment = UNIT_MATRIX_3X3 &
-                                            +(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame
-                                            -convert_spin(matmul(grain_%get_spin_coeffs(), slip_rates))    !>Spin induced by activation of slip systems
-                    grain_%orientation = matmul(orientation_increment, grain_%orientation)
-                end associate
-        end select
+            orientation_increment = UNIT_MATRIX_3X3 &
+                                    +(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame
+                                    -convert_spin(matmul(grain_%get_spin_coeffs(), slip_rates))    !>Spin induced by activation of slip systems
+            grain_%orientation = matmul(orientation_increment, grain_%orientation)
+        end associate
     end subroutine
 end module

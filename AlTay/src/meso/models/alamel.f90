@@ -44,6 +44,24 @@ module alamel
 
 contains
 
+    !>@Brief Convert the type of a provided generic cluster to AlamelCluster
+    !>@Details This is the closest Fortran can get to proper type casting.
+    !>         Useful for accessing AlamelCluster-specific fields without the boilerplate of type selection and error handling in
+    !>         each calling procedure.
+    !>         If the input cluster is not an AlamelCluster, the routine crashes the program.
+    !>@Return  If the input cluster is indeed an AlamelCluster, a pointer to this cluster of type AlamelCluster is returned.
+    function to_alamel_cluster(cluster_) result(ptr)
+        class(Cluster), target, intent(in):: cluster_   !> Generic input cluster
+        type(AlamelCluster), pointer:: ptr              !> Pointer to input cluster of type AlamelCluster
+
+        select type (cluster_)
+            type is (AlamelCluster)
+                ptr => cluster_
+            class default
+                call log_error(MOD_NAME, 'to_alamel_cluster', ERR_TYPE)
+        end select
+    end function
+
     function alamel_get_parameters() result(params)
         type(Parameter), dimension(:), allocatable:: params
 
@@ -73,6 +91,7 @@ contains
 
         allocate(AlamelCluster:: clusters(size(orientations, 2)/2))
 
+        !Must check type even though we just allocated due to Fortran semantics.
         select type(clusters)
         type is (AlamelCluster)
             j = 1
@@ -177,20 +196,21 @@ contains
         real(DP), dimension(size(cluster_%grains(1)%slip_systems)+size(cluster_%grains(2)%slip_systems)+2):: slip_rates, &
                                                                                                                    rss
         real(DP), dimension(10):: stress_cluster
+        type(AlamelCluster), pointer:: cluster_ptr
 
-        select type (cluster_)
-            type is (AlamelCluster)
-                                call simplex_solve(get_taylor_coeffs(cluster_), &
-                                   calc_imposed_strain_rate(cluster_, v_grad), &
-                                   get_crss(cluster_), &
-                                   cluster_%inverse_basis, &
-                                   cluster_%ind_basis_systems, &
-                                   slip_rates, &
-                                   stress_cluster, &
-                                   rss)
+        !Convert to type AlamelCluster to gain access to model-specific fields
+        cluster_ptr => to_alamel_cluster(cluster_)
 
-                stress = homogenize_stress_state(cluster_, stress_cluster)
-            end select
+        call simplex_solve(get_taylor_coeffs(cluster_ptr), &
+                           calc_imposed_strain_rate(cluster_ptr, v_grad), &
+                           get_crss(cluster_ptr), &
+                           cluster_ptr%inverse_basis, &
+                           cluster_ptr%ind_basis_systems, &
+                           slip_rates, &
+                           stress_cluster, &
+                           rss)
+
+        stress = homogenize_stress_state(cluster_ptr, stress_cluster)
     end function
 
     !>@Brief Prepares the ALAMEL model for a deformation.
@@ -229,83 +249,83 @@ contains
                                                                                                              rss
         real(DP), dimension(10):: stress_cluster, &
                                   imposed_strain_rate
+        type(AlamelCluster), pointer:: cluster_ptr
 
-        select type (cluster_)
-            type is (AlamelCluster)
-                n_systems_grain = size(cluster_%grains(1)%slip_systems)
-                offset_relaxations = 2*n_systems_grain
+        cluster_ptr => to_alamel_cluster(cluster_)
 
-                call update_relaxations(cluster_, this%deformation_gradient_during_time_step)
-                imposed_strain_rate = calc_imposed_strain_rate(cluster_, this%velocity_gradient)
+        n_systems_grain = size(cluster_%grains(1)%slip_systems)
+        offset_relaxations = 2*n_systems_grain
 
-                taylor_coeffs = get_taylor_coeffs(cluster_)
+        call update_relaxations(cluster_ptr, this%deformation_gradient_during_time_step)
+        imposed_strain_rate = calc_imposed_strain_rate(cluster_ptr, this%velocity_gradient)
 
-                call simplex_solve(taylor_coeffs, &
-                                   imposed_strain_rate, &
-                                   get_crss(cluster_), &
-                                   cluster_%inverse_basis, &
-                                   cluster_%ind_basis_systems, &
-                                   slip_rates, &
-                                   stress_cluster, &
-                                   rss)
+        taylor_coeffs = get_taylor_coeffs(cluster_ptr)
 
-                stress = homogenize_stress_state(cluster_, stress_cluster)
+        call simplex_solve(taylor_coeffs, &
+                           imposed_strain_rate, &
+                           get_crss(cluster_ptr), &
+                           cluster_ptr%inverse_basis, &
+                           cluster_ptr%ind_basis_systems, &
+                           slip_rates, &
+                           stress_cluster, &
+                           rss)
 
-                slip = 0._DP
-                do j = 1, 2
-                    offset_grain = (j-1)*5
-                    offset_systems = (j-1)*n_systems_grain
+        stress = homogenize_stress_state(cluster_ptr, stress_cluster)
 
-                    associate (grain_ => cluster_%grains(j), &
-                               slip_rates_grain=>slip_rates(offset_systems+1:offset_systems+n_systems_grain), &
-                               slip_rates_relaxations=>slip_rates(offset_relaxations+1:), &
-                               taylor_coeffs_relaxations=>taylor_coeffs(offset_grain+1:offset_grain+5, offset_relaxations+1:))
+        slip = 0._DP
+        do j = 1, 2
+            offset_grain = (j-1)*5
+            offset_systems = (j-1)*n_systems_grain
 
-                        call  assess_slip_system_activity(cluster_%grains(j), &
-                                                          rss(offset_systems+1:offset_systems+n_systems_grain), &
-                                                          slip_rates_grain, &
-                                                          n_active_simplex, &
-                                                          ind_overstressed_slip_systems)
+            associate (grain_ => cluster_ptr%grains(j), &
+                       slip_rates_grain=>slip_rates(offset_systems+1:offset_systems+n_systems_grain), &
+                       slip_rates_relaxations=>slip_rates(offset_relaxations+1:), &
+                       taylor_coeffs_relaxations=>taylor_coeffs(offset_grain+1:offset_grain+5, offset_relaxations+1:))
 
-                        if (allocated(ind_overstressed_slip_systems)) then
-                            !Determine strain absorbed by slip systems (imposed strain-relaxations)
-                            strain_relaxations = matmul(taylor_coeffs_relaxations, slip_rates_relaxations)
-                            strain_grain = imposed_strain_rate(offset_grain+1:offset_grain+5)-strain_relaxations
+                call  assess_slip_system_activity(cluster_ptr%grains(j), &
+                                                  rss(offset_systems+1:offset_systems+n_systems_grain), &
+                                                  slip_rates_grain, &
+                                                  n_active_simplex, &
+                                                  ind_overstressed_slip_systems)
 
-                            slip_rates_grain = resolve_taylor_ambiguity(ind_overstressed_slip_systems, &
-                                rss(ind_overstressed_slip_systems+offset_systems), &
-                                strain_grain, &
-                                grain_%get_taylor_coeffs(), &
-                                n_active_simplex)
-                        end if
+                if (allocated(ind_overstressed_slip_systems)) then
+                    !Determine strain absorbed by slip systems (imposed strain-relaxations)
+                    strain_relaxations = matmul(taylor_coeffs_relaxations, slip_rates_relaxations)
+                    strain_grain = imposed_strain_rate(offset_grain+1:offset_grain+5)-strain_relaxations
 
-                        slip_grain = sum(abs(slip_rates_grain))
-                        grain_%sum_slip = grain_%sum_slip+slip_grain
-                        slip = slip+slip_grain
+                    slip_rates_grain = resolve_taylor_ambiguity(ind_overstressed_slip_systems, &
+                        rss(ind_overstressed_slip_systems+offset_systems), &
+                        strain_grain, &
+                        grain_%get_taylor_coeffs(), &
+                        n_active_simplex)
+                end if
 
-                        !Update hardening model state
-                        call micro_update_state((index_cluster-1)*2+j, 1._DP, slip_rates_grain)
-                        call grain_%set_crss(micro_get_crss((index_cluster-1)*2+j, grain_%sum_slip))
+                slip_grain = sum(abs(slip_rates_grain))
+                grain_%sum_slip = grain_%sum_slip+slip_grain
+                slip = slip+slip_grain
 
-                        !Get spin coefficients of the relaxations corresponding to the current grain
-                        do i = 1, 2
-                            spin_coeffs_relaxations(:,i) = cluster_%relaxations(i)%spin_coeffs((j-1)*3+1:j*3)
-                        end do
+                !Update hardening model state
+                call micro_update_state((index_cluster-1)*2+j, 1._DP, slip_rates_grain)
+                call grain_%set_crss(micro_get_crss((index_cluster-1)*2+j, grain_%sum_slip))
 
-                        orientation_increment = UNIT_MATRIX_3X3 &
-                                                +(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame
-                                                -convert_spin(matmul(grain_%get_spin_coeffs(), slip_rates_grain)) &   !>Spin induced by activation of slip systems
-                                                -convert_spin(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
-                        grain_%orientation = matmul(orientation_increment, grain_%orientation)
-
-
-                    end associate
+                !Get spin coefficients of the relaxations corresponding to the current grain
+                do i = 1, 2
+                    spin_coeffs_relaxations(:,i) = cluster_ptr%relaxations(i)%spin_coeffs((j-1)*3+1:j*3)
                 end do
 
-                !Update cluster state to be consistent with the end of the time step.
-                call update_relaxations(cluster_, this%next_deformation_gradient)
-                cluster_%weight = cluster_weight(cluster_, this%next_deformation_gradient)
-        end select
+                orientation_increment = UNIT_MATRIX_3X3 &
+                                        +(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame
+                                        -convert_spin(matmul(grain_%get_spin_coeffs(), slip_rates_grain)) &   !>Spin induced by activation of slip systems
+                                        -convert_spin(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
+                grain_%orientation = matmul(orientation_increment, grain_%orientation)
+
+
+            end associate
+        end do
+
+        !Update cluster state to be consistent with the end of the time step.
+        call update_relaxations(cluster_ptr, this%next_deformation_gradient)
+        cluster_ptr%weight = cluster_weight(cluster_ptr, this%next_deformation_gradient)
     end subroutine
 
     real(DP) function cluster_weight(alamel_cluster, def_grad) result(weight)
