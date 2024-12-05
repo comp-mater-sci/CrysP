@@ -189,7 +189,7 @@ contains
     !>@details Calculate the homogenized stress over the cluster in the global frame
     function alamel_get_stress(this, cluster_, v_grad) result(stress)
         class(AlamelModel), intent(in):: this
-        class(Cluster), intent(inout):: cluster_ !> Intent(inout) because simplex modifies inverse basis
+        class(Cluster), target, intent(inout):: cluster_ !> Intent(inout) because simplex modifies inverse basis
         real(DP), dimension(3, 3), intent(in):: v_grad !> Imposed velocity gradient
         real(DP), dimension(3, 3):: stress
 
@@ -228,7 +228,7 @@ contains
 
     subroutine alamel_deform(this, cluster_, index_cluster, stress, slip)
         class(AlamelModel), intent(in):: this
-        class(Cluster), intent(inout):: cluster_
+        class(Cluster), target, intent(inout):: cluster_
         integer, intent(in)::       index_cluster
         real(DP), dimension(3, 3), intent(out):: stress                 !> Homogenized stress over the cluster
         real(DP), intent(out):: slip                                    !> Total slip in the cluster for this time step

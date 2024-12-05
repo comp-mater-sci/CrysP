@@ -102,7 +102,7 @@ contains
     !>@Brief See 'meso_model_get_stress'.
     function full_constraints_taylor_get_stress(this, cluster_, v_grad) result(stress)
         class(TaylorModel), intent(in):: this
-        class(Cluster), intent(inout):: cluster_                    !> Intent(inout) because simplex modifies inverse basis
+        class(Cluster), target, intent(inout):: cluster_                    !> Intent(inout) because simplex modifies inverse basis
         real(DP), dimension(3, 3), intent(in):: v_grad
         real(DP), dimension(3, 3):: stress
 
@@ -135,7 +135,7 @@ contains
     !>@Brief See 'meso_model_apply_step'.
     subroutine full_constraints_taylor_deform(this, cluster_, index_cluster, stress, slip)
         class(TaylorModel), intent(in):: this
-        class(Cluster), intent(inout):: cluster_
+        class(Cluster), target, intent(inout):: cluster_
         integer, intent(in):: index_cluster
         real(DP), dimension(3, 3), intent(out):: stress
         real(DP), intent(out):: slip

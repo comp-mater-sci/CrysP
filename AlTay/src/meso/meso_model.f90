@@ -52,7 +52,7 @@ module meso_model
             import DP
 
             class(MesoModel), intent(in):: this                     !> The mesoscopic model
-            class(Cluster), intent(inout):: cluster_   !> Pointer to the cluster
+            class(Cluster), target, intent(inout):: cluster_   !> Pointer to the cluster
             real(DP), dimension(3, 3), intent(in):: v_grad !> Velocity gradient for which to calculate the stress.
             real(DP), dimension(3, 3):: stress   !> Homogenized stress response of the cluster
         end function
@@ -66,7 +66,7 @@ module meso_model
             import DP
 
             class(MesoModel), intent(in):: this !> The mesoscopic model
-            class(Cluster), intent(inout):: cluster_ !> The cluster to apply the deformation step to. Upon entry, the
+            class(Cluster), target, intent(inout):: cluster_ !> The cluster to apply the deformation step to. Upon entry, the
                                                                  !> cluster state must be consistent with the beginning of the time step. Upon exit, the cluster state corresponds to the
                                                                  !> end of the time step.
             integer, intent(in):: index_cluster                  !> Index of the cluster in the cluster list. To be removed.
