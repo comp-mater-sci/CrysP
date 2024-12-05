@@ -30,7 +30,7 @@ TEST_INPUT = TEST_ROOT/'input'
 MODES = ['ADP', 'ASR', 'EWC','QRS','UDSA','YLD']
 ALGORITHMS = ['ALAMEL', 'FCTaylor']
 SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
-HARDENING_MODELS = ['NONE', 'VOCE', 'SWIFT', 'BP', 'PEBP_SCREW', 'PEBP_LOOP']
+HARDENING_MODELS = ['NONE', 'VOCE', 'SWIFT', 'DSH_EDGE', 'DSH_SCREW', 'DSH_LOOP']
 
 #Unit tests
 UNITS = [('altayAlgorithms','eigenv'),      \
@@ -53,7 +53,7 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
 
     shutil.copy(TEST_INPUT/'texture.smt', TEST_RUN)
     shutil.copy(TEST_INPUT/'equiaxed.smt', TEST_RUN)
-    if hardening_model == 'BP' or hardening_model == 'PEBP_SCREW' or hardening_model == 'PEBP_LOOP':
+    if hardening_model == 'DSH_EDGE' or hardening_model == 'DSH_SCREW' or hardening_model == 'DSH_LOOP':
         with open(TEST_RUN/'DSHparaset.txt','w') as dsh_config:
             dsh_config.write(conf.DSH_CONFIG)
 
