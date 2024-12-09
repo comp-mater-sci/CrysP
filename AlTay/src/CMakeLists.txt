@@ -18,12 +18,12 @@ parameters.f90
 macro/simulation.f90
 meso/meso.f90
 meso/meso_model.f90
-meso/models/taylor_ambiguity.f90
-meso/models/simplex.f90 
+meso/taylor_ambiguity.f90
+meso/simplex.f90 
 meso/models/alamel.f90
 meso/models/full_constraints_taylor.f90
 meso/cluster.f90
-meso/models/relaxation.f90
+meso/relaxation.f90
 micro/grain.f90 
 micro/slip_systems.f90
 micro/hardening.f90
