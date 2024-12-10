@@ -1,7 +1,7 @@
 module altay
     use simulation
     use altayConfig
-    use hardening
+    use micro
     use logging
     use parameters
     use grain_module
@@ -52,7 +52,7 @@ contains
         !
         ! Set the data for CRSS calculations
         call parameter_set(cnf%hardening_parameters, 'n_grains', size(orientations, 2), fail_on_absent=.false.)
-        call hardening_init(cnf%hardening_parameters)
+        call micro_init(cnf%hardening_parameters)
         ! Initialisation of SIMUL
         info = VEF_ERROR
         call simulation_init(orientations, params)
@@ -69,7 +69,7 @@ contains
         ! Close all units.
         close(IMP5)
         nrstep = 0
-        call hardening_finalize()
+        call micro_finalize()
         call simulation_finalize()
         if (allocated(astate%simulCalls)) then
               deallocate(astate%simulCalls)

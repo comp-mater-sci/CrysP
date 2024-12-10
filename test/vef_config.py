@@ -1,17 +1,17 @@
 DEFAULT_INCREMENT = 'StrainTensor\n'    \
                     + '0.25\n'          \
-                    + '0.05'  
+                    + '0.05'
 
 ADP_INCREMENT = 'fixed\n'               \
                 + 'discrete\n'          \
                 + '4\n'                 \
-                + '0.1 0.25 0.5 0.9'    
+                + '0.1 0.25 0.5 0.9'
 
 CUSTOM_SOLVER_SETTINGS =    'False\n'           \
                             + '0.2\n'           \
                             + 'True\n'          \
                             + '0.1       0.25\n' \
-                            + 'False'                                  
+                            + 'False'
 
 MODE_CONFIG =  {'ADP':                                              \
                     'True\n'                                        \
@@ -80,15 +80,15 @@ HARDENING_CONFIG = {'NONE':                         \
                     'SWIFT':                        \
                         '3\n'                       \
                         + '12.39 1.e-3 0.24',       \
-                    'BP':                           \
+                    'DSH_EDGE':                           \
                         '11\n'                      \
                         + 'DSHparaset.txt\n'        \
                         + 'False',                  \
-                    'PEBP_SCREW':                   \
+                    'DSH_SCREW':                   \
                         '12\n'                      \
                         + 'DSHparaset.txt\n'        \
                         + 'False',                  \
-                    'PEBP_LOOP':                    \
+                    'DSH_LOOP':                    \
                         '13\n'                      \
                         + 'DSHparaset.txt\n'        \
                         + 'False'}
@@ -108,7 +108,7 @@ DSH_CONFIG = '2.48E-10\n'   \
              + '5.45E-2\n'  \
              + '1.44E-9\n'  \
              + '4.12E-9\n'  \
-             + '8.70E-9'  
+             + '8.70E-9'
 
 def generate_config(mode, algorithm, slip_system, hardening_model):
     return 'out\n'                                      \
