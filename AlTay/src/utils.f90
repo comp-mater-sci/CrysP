@@ -24,7 +24,6 @@ module utils
     end enum
     integer, parameter       :: display_unit = output_unit
 
-    integer:: LEC = 4   !< data set with slip systems
     integer:: IMP1 = 7  !< output-file with successive "current situations"
     integer:: IMP5 = 111     !< output of stress-strain or slip-stress
 

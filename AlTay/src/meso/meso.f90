@@ -3,6 +3,7 @@ module meso
     use parameters
     use cluster_module
     use meso_model
+    use grain_module
 
     implicit none
 
@@ -27,15 +28,12 @@ module meso
         !> @details Set the mesoscopic model to an instance of the hardening model defined by model_id and initialize it using a
         !list of parameters.
         !Note that we must make this a subroutine to avoid creations of temporaries passed through the stack by IFX.
-        module subroutine meso_init(model_id, orientations, deformation_mechanism, params, clusters)
+        module subroutine meso_init(model_id, grains, params, clusters)
             integer, intent(in):: model_id          !> ID of the model to be initialized
-            real(DP), dimension(:,:), intent(in):: orientations             !> List of Euler angle triplets representing grain
-                                                                            !> orientations
-            integer, dimension(:,:,:), intent(in):: deformation_mechanism  !> List of miller indices comporising the deformation
-                                                                            !> mechanism (for all grains)
+            type(Grain), dimension(:), intent(in):: grains  !> Initialized grains to be distributed among the clusters
             type(Parameter), dimension(:), allocatable, intent(in):: params   !> List of parameters with which to initialize the model. Must correspond
                                                                  ! to the parameter list obtained by calling meso_get_parameters(model_id)
-            class(Cluster), dimension(:), allocatable, intent(out):: clusters
+            class(Cluster), dimension(:), allocatable, intent(out):: clusters !> Innitialized clusters
         end subroutine
 
         !> @Brief prepares the model for a deformation according to a given velocity gradient
@@ -125,7 +123,7 @@ contains
 
     module procedure meso_init
         model = get_model_instance(model_id)
-        call model%init(orientations, deformation_mechanism, params, clusters)
+        call model%init(grains, params, clusters)
     end procedure
 
     module procedure meso_get_stress

@@ -3,6 +3,7 @@ module file_io
     use logging
     use cluster_module
     use grain_module
+    use altayConfig
 
     implicit none
     private
@@ -12,7 +13,8 @@ module file_io
     public::    read_texture, &
                 read_boundaries, &
                 cur_write_title, &
-                cur_write_block
+                cur_write_block, &
+                open_output_files
 
 contains
 
@@ -126,5 +128,27 @@ contains
             2X, 'F(1, 2)',4X, 'F(2, 2)',4X, 'F(3, 2)',4X,                           &
             2X, 'F(1, 3)',4X, 'F(2, 3)',4X, 'F(3, 3)')
          403 format(I6, 5X, i8, 41x, 3(2X, 3F10.6))
+    end subroutine
+
+    subroutine open_output_files(cnf, info)
+        type(altayConfigData), intent(in)    :: cnf      !< configuration data
+        integer, intent(out)                 :: info     !< exit code (altay_OK on success)
+
+        character(len = fname_len):: fname_prefix, fname
+        character(*), parameter:: PROC_NAME = 'openOutputFiles'
+
+        fname_prefix = cnf%output_prefix
+        info = VEF_ERROR
+
+        if (cnf%output_config%nfile /= 0) then
+            fname = trim(fname_prefix)//'.CUR'
+            ! IMP1 = output file with successive "current situations"
+            open (unit = IMP1, file = fname, status='replace',err = 9999)
+        endif
+
+        info = VEF_OK
+        return
+
+        9999 call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open file '//trim(fname))
     end subroutine
 end module
