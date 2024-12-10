@@ -1,4 +1,4 @@
-module hardening_model_dsh
+module dsh
     use utils
     use hardening_model
     use altayConfig
@@ -31,6 +31,11 @@ module hardening_model_dsh
           integer, dimension(2)       :: ActiveCBB = 0
     end type StatVar
 
+    !Family of physics-based hardening models mapping the movement of (clusters of) dislocations.
+    !First formulated and documented in Bart Peeters's PhD thesis ('Multiscale modelling of the induced plastic anisotropy in IF
+    !steel during sheet forming'). Several variants of this model have been formulated, each of which considers different types of
+    !dislocations.
+    !Note that only the BCC24 slip system set is supported.
     type, extends(HardeningModel):: HardeningModelDSH
         type(StatVar), dimension(:), allocatable    ::  state
         real(DP), dimension(:,:,:), allocatable     ::  crss

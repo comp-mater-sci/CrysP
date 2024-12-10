@@ -9,12 +9,12 @@ module Hardening
 
     enum, bind(C)
         !> Constants set for backwards compatibility with input file format.
-        enumerator  ::  HARDENING_NONE       = 0,  &
-                        HARDENING_VOCE       = 1,  &
-                        HARDENING_SWIFT      = 3,  &
-                        HARDENING_BP         = 11, &
-                        HARDENING_PEBP_SCREW = 12, &
-                        HARDENING_PEBP_LOOP  = 13
+        enumerator  ::  HARDENING_NONE      = 0,  &
+                        HARDENING_VOCE      = 1,  &
+                        HARDENING_SWIFT     = 3,  &
+                        HARDENING_DSH_EDGE  = 11, &
+                        HARDENING_DSH_SCREW = 12, &
+                        HARDENING_DSH_LOOP  = 13
     end enum
 
     interface
@@ -50,11 +50,11 @@ end module hardening
 
 submodule(hardening) hardening_imp
     use hardening_model
-    use hardening_model_swift
-    use hardening_model_voce
-    use hardening_model_bp
-    use hardening_model_pebp_screw
-    use hardening_model_pebp_loop
+    use swift
+    use voce
+    use dsh_edge
+    use dsh_screw
+    use dsh_loop
 
     implicit none
 
@@ -72,12 +72,12 @@ contains
                 allocate(HardeningModelVoce:: model)
             case(HARDENING_SWIFT)
                 allocate(HardeningModelSwift:: model)
-            case(HARDENING_BP)
-                allocate(HardeningModelBP:: model)
-            case(HARDENING_PEBP_SCREW)
-                allocate(HardeningModelPEBPScrew:: model)
-            case(HARDENING_PEBP_LOOP)
-                allocate(HardeningModelPEBPLoop:: model)
+            case(HARDENING_DSH_EDGE)
+                allocate(HardeningModelDSHEdge:: model)
+            case(HARDENING_DSH_SCREW)
+                allocate(HardeningModelDSHScrew:: model)
+            case(HARDENING_DSH_LOOP)
+                allocate(HardeningModelDSHLoop:: model)
             case default
                 call log_error('hardening', 'get_parameters', ERR_VAL, 'Invalid hardening model ID')
         end select

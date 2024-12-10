@@ -39,7 +39,7 @@ module utils
     character(*), private, parameter:: MOD_NAME = 'utils'
 
     interface normalize
-        module procedure normalize_int, normalize_real
+        module procedure normalize_int, normalize_real, normalize_vec_int
     end interface
 
     interface convert_stress_strain_space
@@ -57,7 +57,7 @@ module utils
     end interface
 
     interface operator(.cross.)
-        module procedure cross
+        module procedure cross_int, cross_real
     end interface
 
     interface operator(.outer.)
@@ -117,7 +117,16 @@ contains
         double_dot_product = sum(mat1*mat2)
     end function
 
-    pure function cross(v1, v2)
+    pure function cross_int(v1, v2) result(cross)
+        integer, intent(in), dimension(3):: v1, v2
+        integer, dimension(3):: cross
+
+        cross(1)=v1(2)*v2(3)-v1(3)*v2(2)
+        cross(2)=v1(3)*v2(1)-v1(1)*v2(3)
+        cross(3)=v1(1)*v2(2)-v1(2)*v2(1)
+    end function
+
+    pure function cross_real(v1, v2) result(cross)
         real(DP), intent(in), dimension(3):: v1, v2
         real(DP), dimension(3):: cross
 
@@ -135,6 +144,14 @@ contains
             normalized(:,i) = real(arr(:,i), DP) / norm2(real(arr(:,i), DP))
         end do
     end function
+     pure function normalize_vec_int(vec) result(normalized)
+        integer, dimension(:), intent(in):: vec
+        real(DP), dimension(size(vec)):: normalized
+        integer:: i
+
+        normalized = real(vec, DP) / norm2(real(vec, DP))
+    end function
+
     pure function normalize_real(arr) result(normalized)
         real(DP), dimension(:,:), intent(in):: arr
         real(DP), dimension(3, size(arr, 2)):: normalized

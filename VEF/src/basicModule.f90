@@ -231,7 +231,7 @@ contains
                 info = VEF_ERROR
                 return
             endif
-            
+
             dummy2 = readValue(cnfunit, dummy)
             read(cnfunit, '(A)') buffer
             slip = buffer
@@ -323,7 +323,7 @@ contains
                               info = VEF_OK
                         endif
                   !
-                  case(HARDENING_BP, HARDENING_PEBP_SCREW, HARDENING_PEBP_LOOP)
+                  case(HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP)
                         if (.not. readValue(cnfunit, tmp_fname)) return  ! read BP parameter file name
                         open(newunit = nparunit, file = tmp_fname, status='old', iostat = ioerr)
 

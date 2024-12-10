@@ -1,4 +1,4 @@
-module hardening_model_swift
+module swift
     use utils, only: dp
     use altayConfig
     use hardening_model
@@ -69,4 +69,4 @@ contains
 
         crss = this%k * (sum_slip+this%gamma0)**(this%n)
     end function swift_get_crss
-end module hardening_model_swift
+end module swift
