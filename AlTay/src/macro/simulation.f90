@@ -123,31 +123,9 @@ module simulation
 
     subroutine output_current_state(file_handle)
         integer, intent(in):: file_handle
-        integer:: i, j
-
-        !print *, "Size clusters: ", size(clusters), allocated(clusters)
-
-        !do i = 1, size(clusters)
-        !    do j = 1, size(clusters(i)%grains)
-        !        !print *, i, j, allocated(clusters(i)%grains)
-        !        !call allocate_grains(clusters(i)%grains)
-        !        clusters(i)%grains(j)%orientation = 0._DP
-        !        !print '(3F6.2)', clusters(i)%grains(j)%orientation
-        !    end do
-        !end do
-
 
         call cur_write_block(file_handle, clusters, deformation_gradient)
     end subroutine
-
-    subroutine allocate_grains(grains)
-        type(Grain), dimension(:), allocatable, intent(inout):: grains
-
-        deallocate(grains)
-        allocate(grains(2))
-    end subroutine
-
-
 
     subroutine simulation_finalize()
         call meso_finalize()
