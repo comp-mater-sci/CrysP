@@ -35,7 +35,7 @@ module meso_model
             import Grain
 
             class(MesoModel), intent(inout):: this                          !> The mesoscopic model
-            type(Grain), dimension(:), intent(in):: grains          !>List of initialized grains to be arranged into clusters
+            type(Grain), dimension(:), allocatable, intent(in):: grains          !>List of initialized grains to be arranged into clusters. Must be declared allocatable to ensure deep copy of allocatable components.
             type(Parameter), dimension(:), intent(in):: params !> List of parameters to initialize the model. These are
                                                                             !> defined by the model itself and can be retrieved by calling get_parameters on the model instance.
             class(Cluster), dimension(:), allocatable, intent(out):: clusters                !> List of initialized clusters with each a

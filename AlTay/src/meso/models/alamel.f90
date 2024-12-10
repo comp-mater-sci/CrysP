@@ -71,7 +71,7 @@ contains
     !>@Brief See meso_model_init
     subroutine alamel_init(this, grains, params, clusters)
         class(AlamelModel), intent(inout):: this
-        type(Grain), dimension(:), intent(in):: grains
+        type(Grain), dimension(:), allocatable, intent(in):: grains
         type(Parameter), dimension(:), intent(in):: params
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 

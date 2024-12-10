@@ -30,7 +30,7 @@ module meso
         !Note that we must make this a subroutine to avoid creations of temporaries passed through the stack by IFX.
         module subroutine meso_init(model_id, grains, params, clusters)
             integer, intent(in):: model_id          !> ID of the model to be initialized
-            type(Grain), dimension(:), intent(in):: grains  !> Initialized grains to be distributed among the clusters
+            type(Grain), dimension(:), allocatable, intent(in):: grains  !> Initialized grains to be distributed among the clusters. Must be declared allocatable to ensure deep copy of allocatable components.
             type(Parameter), dimension(:), allocatable, intent(in):: params   !> List of parameters with which to initialize the model. Must correspond
                                                                  ! to the parameter list obtained by calling meso_get_parameters(model_id)
             class(Cluster), dimension(:), allocatable, intent(out):: clusters !> Innitialized clusters
