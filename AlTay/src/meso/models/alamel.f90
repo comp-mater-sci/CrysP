@@ -95,12 +95,11 @@ contains
         type is (AlamelCluster)
             j = 1
             do i = 1, size(clusters)
-                allocate(clusters(i)%grains(2))  ! ALAMEL clusters always have 2 grains
+                clusters(i)%grains = grains(2*(i-1)+1:2*i)
                 clusters(i)%initial_boundary_orientation = matmul(this%deformation_gradient, transpose(from_euler_angles(boundaries(:,j))))
                 clusters(i)%ind_basis_systems(1:5) = ind_basis_systems_grain
                 clusters(i)%ind_basis_systems(6:10) = ind_basis_systems_grain+n_systems_grain
                 do k = 1, 2
-                    clusters(i)%grains(k) = grains(2*(i-1)+k)
                     call clusters(i)%relaxations(k)%init(k)
                 end do
                 clusters(i)%inverse_basis = invert(get_basis(clusters(i)))

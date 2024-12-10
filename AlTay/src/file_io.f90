@@ -92,7 +92,7 @@ contains
     !Write the current state of all grains to file.
     subroutine cur_write_block(iounit, clusters, deformation_gradient)
         integer, intent(in)::                                           iounit !< IO unit number
-        class(Cluster), dimension(:), intent(in)::  clusters !< Pointer to list of all clusters which contains
+        class(Cluster), dimension(:), intent(in)::  clusters !< List of all clusters which contains
                                                                                  !  state of all grains
         real(DP), dimension(3, 3), intent(in)::                         deformation_gradient
 
@@ -128,6 +128,7 @@ contains
             2X, 'F(1, 2)',4X, 'F(2, 2)',4X, 'F(3, 2)',4X,                           &
             2X, 'F(1, 3)',4X, 'F(2, 3)',4X, 'F(3, 3)')
          403 format(I6, 5X, i8, 41x, 3(2X, 3F10.6))
+
     end subroutine
 
     subroutine open_output_files(cnf, info)
