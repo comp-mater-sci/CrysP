@@ -65,7 +65,8 @@ contains
     function alamel_get_parameters() result(params)
         type(Parameter), dimension(:), allocatable:: params
 
-        params = [parameter_init("Boundaries", TYPE_ANGLES_LIST)]
+        allocate(params(1))
+        params(1) = parameter_init("Boundaries", TYPE_ANGLES_LIST)
     end function
 
     !>@Brief See meso_model_init

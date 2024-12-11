@@ -28,10 +28,11 @@ module hardening_model
 contains
 
     function hardening_model_get_parameters(this) result(params)
-        class(HardeningModel), intent(in)       :: this
-        type(Parameter), allocatable    :: params(:)
+        class(HardeningModel), intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
 
-        params = [parameter_init('n_slip_systems', TYPE_INTEGER)]
+        allocate(params(1))
+        params(1) = parameter_init('n_slip_systems', TYPE_INTEGER)
     end function hardening_model_get_parameters
 
     subroutine hardening_model_validate_parameters(this, params)

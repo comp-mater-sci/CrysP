@@ -24,7 +24,7 @@ module micro
         !> Must be called before initialization
         module function micro_get_parameters(model_id) result(params)
             integer, intent(in)             :: model_id
-            type(Parameter), allocatable    :: params(:)
+            type(Parameter), dimension(:), allocatable:: params
         end function
 
         !Must be subroutine to avoid problems with IFX copying too much to the stack.
