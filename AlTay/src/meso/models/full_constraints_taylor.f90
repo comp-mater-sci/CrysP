@@ -65,10 +65,9 @@ contains
         select type (clusters)
             type is (TaylorCluster)
                 do i = 1, size(clusters)
-                    allocate(clusters(i)%grains(1))
+                    clusters(i)%grains = [grains(i)]
                     clusters(i)%weight = 1._DP
                     clusters(i)%ind_basis_systems = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, size(grains(1)%slip_systems) == 12)
-                    clusters(i)%grains(1) = grains(i)
                     taylor_coeffs = clusters(i)%grains(1)%get_taylor_coeffs()
                     clusters(i)%inverse_basis = invert(taylor_coeffs(:,clusters(i)%ind_basis_systems))
                 end do

@@ -28,9 +28,9 @@ module simulation
 
     ! initialization call
     subroutine macro_init(clstrs)
-        class(Cluster), dimension(:), allocatable, intent(in):: clstrs !> Must be declared allocatable because only then deep copy of allocatable components is mandated by the standard.
+        class(Cluster), dimension(:), allocatable, intent(inout):: clstrs !> Must be declared allocatable because only then deep copy of allocatable components is mandated by the standard.
 
-        clusters = clstrs
+        call move_alloc(clstrs, clusters)
         deformation_gradient = UNIT_MATRIX_3X3
         von_mises_strain = 0._DP
     end subroutine
