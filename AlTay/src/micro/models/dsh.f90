@@ -156,7 +156,8 @@ contains
     subroutine dsh_init(this, params, eff)
         class(HardeningModelDSH), intent(inout)  :: this
         type(Parameter), allocatable, intent(in):: params(:)
-        real(DP), dimension(24, 6), intent(in):: eff
+        real(DP), dimension(24, 6), intent(in):: eff          !> Interaction coefficients between dislocation directions and cell
+                                                              !> block boundary normals.
 
         integer:: n_grains, &
                   i

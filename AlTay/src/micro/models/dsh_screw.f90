@@ -20,8 +20,7 @@ contains
     subroutine dsh_screw_init(this, params)
         class(HardeningModelDSHScrew), intent(inout):: this
         type(Parameter), allocatable, intent(in):: params(:)
-        real(DP):: screwdir(24, 3), &
-                   eff(24, 6)
+        real(DP):: screwdir(24, 3)
         integer:: i
 
         !The screw direction is the cross product of the edge direction and the slip plane normal.
@@ -29,7 +28,9 @@ contains
             screwdir(i, :) = normalize(BCC24(:,2, i) .cross. BCC24(:,1, i))
         end do
 
-        eff = matmul(screwdir, transpose(cbbnormal))
-        call dsh_init(this, params, eff)
+        call dsh_init(this, &
+                      params, &
+                      matmul(screwdir, transpose(CBBNORMAL)))  ! Interaction coefficients are in essence cosines of the angle between
+                                                              !the dislocation movementvectors and the cell block boundary normals.
     end subroutine
 end module

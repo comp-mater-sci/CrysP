@@ -22,13 +22,10 @@ contains
         class(HardeningModelDSHEdge), intent(inout):: this
         type(Parameter), allocatable, intent(in):: params(:)
 
-        real(DP), dimension(24, 6):: eff
+        call dsh_init(this, &
+                      params, &
+                      transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :)))))  ! Interaction coefficients are cosines of the angle between
+                                                                              !dislocation movement vectors and the cell block boundary normals.
 
-
-        !Normalized movement vector of EDGE dislocation on slip system s
-        ! == normalized burgers vector of slip system s
-        eff = transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :))))
-
-        call dsh_init(this, params, eff)
     end subroutine
 end module

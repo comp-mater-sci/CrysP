@@ -22,21 +22,20 @@ contains
         type(Parameter), allocatable, intent(in):: params(:)
         integer:: s, i
         real(DP):: normdir(24, 3), &
-                   eff(24, 6)
+                   eff(24, 6), &
+                   coeff
 
         normdir = transpose(normalize(BCC24(:,1, :)))
-
 
         !Calculate "Wall-effectivity"-matrices
         do s = 1, 24
             do i = 1, 6
-                eff(s, i) = NormDir(s, :) .dot. CBBnormal(i, :)
-                !treat as "1" or "-1"
-                if (abs(eff(s, i)) >= 0.99999_DP) then
-                    eff(s, i)=0._DP
-                else
-                    eff(s, i)=sqrt(1._DP-(eff(s, i))**2)
-                endif
+                coeff = NormDir(s, :) .dot. CBBnormal(i, :)
+
+                !If coeff is almost +/-1, treat it as 1.
+                eff(s, i) = merge(sqrt(1._DP-coeff**2), &
+                                  0._DP, &
+                                  abs(coeff) < 1-TOLERANCE)
             end do
         end do
 
