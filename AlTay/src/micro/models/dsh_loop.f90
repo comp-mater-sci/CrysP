@@ -27,7 +27,7 @@ contains
 
         normdir = transpose(normalize(BCC24(:,1, :)))
 
-        !Calculate "Wall-effectivity"-matrices
+        !Calculate "Wall-effectivity"-matrix
         do s = 1, 24
             do i = 1, 6
                 coeff = NormDir(s, :) .dot. CBBnormal(i, :)

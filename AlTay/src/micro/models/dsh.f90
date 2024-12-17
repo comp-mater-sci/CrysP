@@ -221,39 +221,31 @@ contains
         integer, intent(in)                         ::  grain
         real(DP), intent(in)                        ::  time
         real(DP), dimension(this%nss), intent(in)   ::  slip_rates
-        type(StatVar)                               ::  SVa,                    &
-                                                        SVb
-        real(DP)                                    ::  SUMabsGamDot, &
-                                                        GAMMAdot_new, &
-                                                        RHObausch   , &
-                                                        SUMabsGam   , &
-                                                        GAMMA_new
-        real(DP), dimension(6)                      ::  GAMMAdot    , &
-                                                        GAMMA
+        type(StatVar)                               ::  SVa
+        real(DP)                                    ::  RHObausch   , &
+                                                        sum_slip_active_cbb
+        real(DP), dimension(6)                      ::  sum_slip_rates_110
         integer, dimension(6)                       ::  r
-        integer                                     ::  i, &
-                                                        j
-
+        integer                                     ::  i
 
         SVa = this%state(grain)
+
         !>Calculate quantities of slip rates and slips
         !>Identify currently generated and non-currently generated walls
-        SUMabsGamDot = sum(abs(slip_rates))
-        SUMabsGam = SUMabsGamDot*time
-        if (SUMabsGam < epsilon(0._DP)) return
-        forall (i = 1:6) gammadot(i) = sum(abs(slip_rates(2*i-1:2*i)))  ! Sum of slip rates for all 110-planes
-        gamma = GAMMAdot*time
+        do i = 1, 6
+            sum_slip_rates_110(i) = sum(abs(slip_rates(2*i-1:2*i)))  ! Sum of slip rates for the systems corresponding to each 110-plane
+        end do
 
         !r(1) = plane with largest slip
         !r(2) = plane with 2nd largest slip
         !r(3:6) = remaining planes (unordered)
-        r(1:2) = merge([1, 2],[2, 1], gammadot(1) >= gammadot(2))
+        r(1:2) = merge([1, 2],[2, 1], sum_slip_rates_110(1) >= sum_slip_rates_110(2))
         do i = 3, 6
-            if (gammadot(i) > gammadot(r(1))) then
+            if (sum_slip_rates_110(i) > sum_slip_rates_110(r(1))) then
                 r(i) = r(2)
                 r(2) = r(1)
                 r(1) = i
-            else if (gammadot(i) > gammadot(r(2))) then
+            else if (sum_slip_rates_110(i) > sum_slip_rates_110(r(2))) then
                 r(i) = r(2)
                 r(2) = i
             else
@@ -261,30 +253,33 @@ contains
             end if
         end do
 
-        SVb%ActiveCBB(1) = r(1)
-        SVb%ActiveCBB(2) = r(2)
+        this%state(grain)%activecbb = r(:2)
 
-        GAMMAdot_new = GAMMAdot(r(1)) + GAMMAdot(r(2))
-        GAMMA_new = GAMMAdot_new*time
+        !Update dislocation densities
+        RHObausch = 0._DP
+        do i = 1, 2  ! Loop over 2 currently generated walls
+            this%state(grain)%CBB(r(i))%RHOwd = this%F_KocksMeck(SVa%CBB(r(i))%RHOwd, sum_slip_rates_110(r(i))*time, this%Iwd, this%Rwd)
+            this%state(grain)%CBB(r(i))%RHOwdHOM = this%state(grain)%CBB(r(i))%RHOwd
+            call this%upd_cur_wp(r(i), SVa%CBB(r(i))%RHOwp, this%state(grain)%CBB(r(i))%RHOwp, RHObausch, slip_rates, this%state(grain), time)
 
-           !Update dislocation densities
-           RHObausch = 0._DP
-           do j = 1, 2  ! Loop over 2 currently generated walls
-               SVb%CBB(r(j))%RHOwd = this%F_KocksMeck(SVa%CBB(r(j))%RHOwd, gamma(r(j)), this%Iwd, this%Rwd)
-               SVb%CBB(r(j))%RHOwdHOM = SVb%CBB(r(j))%RHOwd
-               call this%upd_cur_wp(r(j), SVa%CBB(r(j))%RHOwp, SVb%CBB(r(j))%RHOwp, RHObausch, slip_rates, svb, time)
-           end do
 
-           do j = 3, 6  ! Loop over 4 non-currently generated walls
-               call bp_UPD_ncg_wd(this, r(j), sva, svb, gamma_new)
-               call this%UPD_ncg_wp(SVa%CBB(r(j))%RHOwp, SVb%CBB(r(j))%RHOwp, gamma_new)
-           end do
 
-           call this%upd_cb(RHObausch, SUMabsGam, SVa%RHOcb, SVb%RHOcb)
 
-           !Calculate Critical Resolved Shear Stresses
-           this%state(grain) = SVb
-           call this%F_CRSS(grain)
+
+
+
+        end do
+
+        sum_slip_active_cbb = sum(sum_slip_rates_110(r(:2)))*time
+        do i = 3, 6  ! Loop over 4 non-currently generated walls
+            call bp_UPD_ncg_wd(this, r(i), sva, this%state(grain), sum_slip_active_cbb)
+            call this%UPD_ncg_wp(SVa%CBB(r(i))%RHOwp, this%state(grain)%CBB(r(i))%RHOwp, sum_slip_active_cbb)
+        end do
+
+        call this%upd_cb(RHObausch, sum(abs(slip_rates))*time, SVa%RHOcb, this%state(grain)%RHOcb)
+
+        !Calculate Critical Resolved Shear Stresses
+        call this%F_CRSS(grain)
     end subroutine
 
     !>Returns RHO_b, the value of RHO at the end of an interval (a, b) for the following differential equation:
@@ -311,16 +306,15 @@ contains
         type(StatVar), intent(inout)                ::  svb
         real(DP)                                    ::  wpFLUX,         &
                                                         fl,             &
-                                                        wd
-        logical                                     ::  FLUXreversal,   &
-                                                        wpLOW
+                                                        wd, &
+                                                        signed_rho_wp_a
+        logical                                     ::  FLUXreversal
 
-        wpFLUX = dot_product(this%effslashb(:,rdr), slip_rates)
+        wpFLUX = this%effslashb(:,rdr) .dot. slip_rates
 
         FLUXreversal = wpFLUX*RHOwp_a  <  0._DP
-        wpLOW = abs(RHOwp_a) <= this%RHOwpLOW
 
-        if (FLUXreversal .and. .not. (wpLOW)) then
+        if (FLUXreversal .and. abs(RHOwp_a) > this%RHOwpLOW) then
             !|RHOwp| gets smaller, following analytic time integration
             RHOwp_b = RHOwp_a*exp(-this%Rrev*abs(wpFLUX) * delta_t)
             RHObausch = RHObausch+abs(RHOwp_a)
@@ -328,12 +322,9 @@ contains
             !|RHOwp| gets larger, following numeric time integration (4th order Runge-Kutta)
             fl = wpFLUX
             wd = SVb%CBB(rdr)%RHOwdHOM
-            if (FLUXreversal) then
-                !AFTER change of its sign, RHOwp will build up again.
-                RHOwp_b = this%rungeKutta(-RHOwp_a, delta_t, fl, wd)
-            else
-                RHOwp_b = this%rungeKutta(RHOwp_a, delta_t, fl, wd)
-            end if
+            signed_rho_wp_a = merge(-rhowp_a, rhowp_a, fluxreversal)
+
+            RHOwp_b = this%rungeKutta(signed_rho_wp_a, delta_t, fl, wd)
         end if
     end subroutine
 

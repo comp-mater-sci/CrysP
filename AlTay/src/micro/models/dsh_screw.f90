@@ -30,7 +30,7 @@ contains
 
         call dsh_init(this, &
                       params, &
-                      matmul(screwdir, transpose(CBBNORMAL)))  ! Interaction coefficients are in essence cosines of the angle between
-                                                              !the dislocation movementvectors and the cell block boundary normals.
+                      matmul(screwdir, transpose(CBBNORMAL)))  ! 'Wall-effectivity' matrix == cosines of the angle between
+                                                              !the dislocation movement vectors and the cell block boundary normals.
     end subroutine
 end module

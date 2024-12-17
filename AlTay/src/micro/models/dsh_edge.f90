@@ -24,7 +24,7 @@ contains
 
         call dsh_init(this, &
                       params, &
-                      transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :)))))  ! Interaction coefficients are cosines of the angle between
+                      transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :)))))  ! 'Wall-effectivity' matrix == cosines of the angle between
                                                                               !dislocation movement vectors and the cell block boundary normals.
 
     end subroutine
