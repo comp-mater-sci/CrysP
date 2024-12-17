@@ -69,7 +69,6 @@ module dsh
         procedure:: finalize       => dsh_finalize
         procedure:: f_crss
         procedure:: f_kocksmeck
-        procedure:: upd_cur_wp
         procedure:: bp_upd_ncg_wd
         procedure:: rungeKutta
         procedure:: dwp_dt
@@ -205,10 +204,13 @@ contains
         real(DP), dimension(this%nss), intent(in)   ::  slip_rates
         type(StatVar)                               ::  SVa
         real(DP)                                    ::  RHObausch   , &
-                                                        sum_slip_active_cbb
+                                                        sum_slip_active_cbb, &
+                                                        rho_wp_a, &
+                                                        wpflux
         real(DP), dimension(6)                      ::  sum_slip_rates_110
         integer, dimension(6)                       ::  r
         integer                                     ::  i
+        logical:: flux_reversal
 
         SVa = this%state(grain)
 
@@ -242,14 +244,22 @@ contains
         do i = 1, 2  ! Loop over 2 currently generated walls
             this%state(grain)%CBB(r(i))%RHOwd = this%F_KocksMeck(SVa%CBB(r(i))%RHOwd, sum_slip_rates_110(r(i))*time, this%Iwd, this%Rwd)
             this%state(grain)%CBB(r(i))%RHOwdHOM = this%state(grain)%CBB(r(i))%RHOwd
-            call this%upd_cur_wp(r(i), SVa%CBB(r(i))%RHOwp, this%state(grain)%CBB(r(i))%RHOwp, RHObausch, slip_rates, this%state(grain), time)
 
+            rho_wp_a = SVa%CBB(r(i))%RHOwp
+            wpFLUX = this%effslashb(:,r(i)) .dot. slip_rates
+            flux_reversal = wpFLUX*rho_wp_a  <  0._DP
 
-
-
-
-
-
+            if (flux_reversal .and. abs(rho_wp_a) > this%RHOwpLOW) then
+                !|RHOwp| gets smaller, following analytic time integration
+                this%state(grain)%CBB(r(i))%RHOwp = rho_wp_a*exp(-this%Rrev*abs(wpFLUX) * time)
+                RHObausch = RHObausch+abs(rho_wp_a)
+            else
+                !|RHOwp| gets larger, following numeric time integration (4th order Runge-Kutta)
+               this%state(grain)%CBB(r(i))%RHOwp = this%rungeKutta(merge(-rho_wp_a, rho_wp_a, flux_reversal), &
+                                                                   time, &
+                                                                   wpFLUX, &
+                                                                   this%state(grain)%CBB(r(i))%RHOwdHOM)
+            end if
         end do
 
         sum_slip_active_cbb = sum(sum_slip_rates_110(r(:2)))*time
@@ -276,39 +286,6 @@ contains
       kock = exp(-0.5D0*RR*delta_g/this%b)
       kock = (II/RR * (1.D0-kock) + sqrt(RHO_a) * kock)**2
     end function
-
-    subroutine upd_cur_wp(this, rdr, RHOwp_a, RHOwp_b, RHObausch, slip_rates, svb, delta_t)
-        class(HardeningModelDSH), intent(in)        ::  this
-        integer, intent(in)                         ::  rdr
-        real(DP), intent(in)                        ::  RHOwp_a
-        real(DP), intent(out)                       ::  RHOwp_b
-        real(DP), intent(inout)                     ::  RHObausch
-        real(DP), dimension(this%nss), intent(in)   ::  slip_rates
-        real(DP), intent(in)                        ::  delta_t
-        type(StatVar), intent(inout)                ::  svb
-        real(DP)                                    ::  wpFLUX,         &
-                                                        fl,             &
-                                                        wd, &
-                                                        signed_rho_wp_a
-        logical                                     ::  FLUXreversal
-
-        wpFLUX = this%effslashb(:,rdr) .dot. slip_rates
-
-        FLUXreversal = wpFLUX*RHOwp_a  <  0._DP
-
-        if (FLUXreversal .and. abs(RHOwp_a) > this%RHOwpLOW) then
-            !|RHOwp| gets smaller, following analytic time integration
-            RHOwp_b = RHOwp_a*exp(-this%Rrev*abs(wpFLUX) * delta_t)
-            RHObausch = RHObausch+abs(RHOwp_a)
-        else
-            !|RHOwp| gets larger, following numeric time integration (4th order Runge-Kutta)
-            fl = wpFLUX
-            wd = SVb%CBB(rdr)%RHOwdHOM
-            signed_rho_wp_a = merge(-rhowp_a, rhowp_a, fluxreversal)
-
-            RHOwp_b = this%rungeKutta(signed_rho_wp_a, delta_t, fl, wd)
-        end if
-    end subroutine
 
     !>4th order Runge-Kutta approximation of the differential equation given by d(wp)/dt = F(wp)
     real(DP) function rungeKutta(this, wpini, deltaT, fl, wd) result(rk)
