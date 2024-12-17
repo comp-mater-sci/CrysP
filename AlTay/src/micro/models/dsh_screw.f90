@@ -21,7 +21,7 @@ contains
         class(HardeningModelDSHScrew), intent(inout):: this
         type(Parameter), allocatable, intent(in):: params(:)
         real(DP):: screwdir(24, 3), &
-                   prod(3)
+                   eff(24, 6)
         integer:: i
 
         !The screw direction is the cross product of the edge direction and the slip plane normal.
@@ -29,8 +29,7 @@ contains
             screwdir(i, :) = normalize(BCC24(:,2, i) .cross. BCC24(:,1, i))
         end do
 
-        call dsh_init(this, params)
-        this%eff = matmul(screwdir, transpose(cbbnormal))
-        call this%initstate()
+        eff = matmul(screwdir, transpose(cbbnormal))
+        call dsh_init(this, params, eff)
     end subroutine
 end module

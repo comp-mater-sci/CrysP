@@ -22,11 +22,13 @@ contains
         class(HardeningModelDSHEdge), intent(inout):: this
         type(Parameter), allocatable, intent(in):: params(:)
 
-        call dsh_init(this, params)
+        real(DP), dimension(24, 6):: eff
+
 
         !Normalized movement vector of EDGE dislocation on slip system s
         ! == normalized burgers vector of slip system s
-        this%eff = transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :))))
-        call this%initstate()
+        eff = transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :))))
+
+        call dsh_init(this, params, eff)
     end subroutine
 end module

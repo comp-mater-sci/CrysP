@@ -36,7 +36,7 @@ module dsh
     !steel during sheet forming'). Several variants of this model have been formulated, each of which considers different types of
     !dislocations.
     !Note that only the BCC24 slip system set is supported.
-    type, extends(HardeningModel):: HardeningModelDSH
+    type, extends(HardeningModel), abstract:: HardeningModelDSH
         type(StatVar), dimension(:), allocatable    ::  state
         real(DP), dimension(:,:,:), allocatable     ::  crss
         real(DP)                                    ::  b,                      &
@@ -55,26 +55,18 @@ module dsh
                                                         Rwp,                    &
                                                         Rrev,                   &
                                                         R2,                     &
-                                                        RHOcbSAT,               &
-                                                        RHOwdSAT,               &
                                                         RHOwpSAT,               &
-                                                        RHOcbMIN,               &
                                                         RHOwdMIN,               &
                                                         RHOwpMIN,               &
-                                                        RHOwpLOW,               &
-                                                        alfa_G_b
-        real(DP), dimension(24, 6)                   ::  eff             = 0._DP, &
-                                                        effslashb       = 0._DP, &
-                                                        alfa_G_b_eff    = 0._DP, &
-                                                        alfa_G_b_ABSeff = 0._DP
+                                                        RHOwpLOW
+        real(DP), dimension(24, 6)                   :: effslashb       = 0._DP, &
+                                                        alfa_G_b_eff    = 0._DP
     contains
         procedure:: get_parameters => dsh_get_parameters
         procedure:: validate_parameters => dsh_validate_parameters
-        procedure:: init           => dsh_init
         procedure:: get_crss       => dsh_get_crss
         procedure:: update_state       => dsh_update_state
         procedure:: finalize       => dsh_finalize
-        procedure:: initstate
         procedure:: f_crss
         procedure:: f_kocksmeck
         procedure:: upd_cur_wp
@@ -161,10 +153,13 @@ contains
     end subroutine dsh_validate_parameters
 
     !Main initialization function
-    subroutine dsh_init(this, params)
+    subroutine dsh_init(this, params, eff)
         class(HardeningModelDSH), intent(inout)  :: this
         type(Parameter), allocatable, intent(in):: params(:)
-        integer:: n_grains
+        real(DP), dimension(24, 6), intent(in):: eff
+
+        integer:: n_grains, &
+                  i
 
         call hardening_model_init(this, params)
 
@@ -185,7 +180,7 @@ contains
         this%Rrev  = params .find. 'Rrev'
         this%R2    = params .find. 'R2'
 
-        !change of units if different in params from this (units of this are: MPa; micrometer)
+        !change of units if different in params from DSHModel (units of this are: MPa; micrometer)
         this%b    = this%b    * 1.e6_dp ![m] -> [um]
         this%R    = this%R    * 1.e6_dp ![m] -> [um]
         this%Rwd  = this%Rwd  * 1.e6_dp ![m] -> [um]
@@ -195,19 +190,15 @@ contains
         this%R2   = this%R2   * 1.e6_dp ![m] -> [um]
 
         !Calculate dependent hardening parameters
-        this%RHOcbSAT = (this%I)**2 / (this%R)**2
-        this%RHOwdSAT = (this%Iwd)**2 / (this%Rwd)**2
+        this%RHOwdMIN = MINFRAC* (this%Iwd)**2 / (this%Rwd)**2  ! Minfrac*rho_wd_sat
         this%RHOwpSAT = (sqrt((this%Iwp/this%Rwp)**4+4._dp * (this%Iwp*this%Iwd / (this%Rwp*this%Rwd))**2) + (this%Iwp/this%Rwp)**2) / 2._dp
-        this%RHOcbMIN = MINFRAC*this%RHOcbSAT
         this%RHOwpLOW = LOWFRAC*this%RHOwpSAT
-        this%RHOwdMIN = MINFRAC*this%RHOwdSAT
         this%RHOwpMIN = MINFRAC*this%RHOwpSAT
-        this%RHOwpLOW = LOWFRAC*this%RHOwpSAT
 
         n_grains = params .find. 'n_grains'
         allocate(this%state(n_grains))
         allocate(this%crss(n_grains, 2, this%nss))
-        this%state(1)%RHOcb               = this%RHOcbMIN
+        this%state(1)%RHOcb            = MINFRAC * (this%I)**2 / (this%R)**2  ! Minfrac*rho_cb_sat
         this%state(1)%CBB%RHOwd        = this%RHOwdMIN
         this%state(1)%CBB%RHOwp        = 0._DP
         this%state(1)%CBB%RHOwdHOM     = this%RHOwdMIN
@@ -215,22 +206,14 @@ contains
         this%state(1)%CBB%RHOwd_ini    = this%RHOwdMIN
         this%state(1)%ActiveCBB        = 0
         this%state = this%state(1)
-    end subroutine dsh_init
 
-    !> Initialize state separately after model-specific initialization.
-    subroutine initState(this)
-        class(HardeningModelDSH):: this
-        integer:: i
-
-        this%effslashb       = this%eff/this%b
-        this%alfa_G_b        = this%alfa*this%G*this%b
-        this%alfa_G_b_eff    = this%alfa_G_b*this%eff
-        this%alfa_G_b_ABSeff = abs(this%alfa_G_b_eff)
+        this%effslashb       = eff/this%b
+        this%alfa_G_b_eff    = this%alfa*this%G*this%b*eff
 
         do i = 1, size(this%state)
             call F_CRSS(this, i)
         end do
-    end subroutine
+    end subroutine dsh_init
 
     subroutine dsh_update_state(this, grain, time, slip_rates)
         class(HardeningModelDSH), intent(inout)     ::  this
@@ -465,7 +448,7 @@ contains
         this%crss(grain, :,:) = -1.D0
 
         !CRSS within cells & CBs
-        tau_CB = this%alfa_G_b*sqrt(SV%RHOcb)
+        tau_CB = this%alfa*this%G*this%b*sqrt(SV%RHOcb)
 
         !contributions from tau_0 and CBs to CRSS
         CRSS_0_CB = this%tau0 + (1.D0-this%f) * tau_CB
@@ -478,7 +461,7 @@ contains
                 do i = 1, 6
                     wpcontr(i)=sqrt(abs(SV%CBB(i)%RHOwp)) * signfac*this%alfa_G_b_eff(s, i) * sign(1.D0, SV%CBB(i)%RHOwp)
                     if (wpcontr(i) < 0.0_DP) wpcontr(i) = 0._DP  ! Heaviside bracket
-                    wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*this%alfa_G_b_ABSeff(s, i)
+                    wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*abs(this%alfa_G_b_eff(s, i))
                 end do
                 !CRSS within CBB = wp-and wd-contributions for all 6 walls
                 tau_CBB(j, s)=sum(wpcontr)+sum(wdcontr)
