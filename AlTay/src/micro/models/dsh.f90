@@ -113,44 +113,26 @@ contains
 
         nss = params .find. 'n_slip_systems'
 
-        if (nss /= 'fcc12' .and. nss /= 'bcc24')  &
-            call log_error(MOD_NAME, 'validate_parameters', ERR_VAL, 'DSH only supports FCC12 and BCC24 slip systems.')
+        if (nss /= 'bcc24')  &
+            call log_error(MOD_NAME, 'validate_parameters', ERR_VAL, 'DSH only supports BCC24 slip systems.')
 
-        call check_param('b',     0._dp,   1.e-8_dp)   ! [m]
-        call check_param('G',     1.e4_dp, 5.e5_dp)    ! [MPa]
-        call check_param('alfa',  0._dp,   5._dp)      ! [/]
-        call check_param('f',     0._dp,   1.0_dp)     ! [/]
-        call check_param('tau0',  0._dp,   1.e4_dp)    ! [MPa]
-        call check_param('I',     0._dp,   10._dp)     ! [/]
-        call check_param('Iwd',   0._dp,   10._dp)     ! [/]
-        call check_param('Iwp',   0._dp,   10._dp)     ! [/]
-        call check_param('R',     0._dp,   1.e-6_dp)   ! [m]
-        call check_param('Rwd',   0._dp,   1.e-6_dp)   ! [m]
-        call check_param('Rncg',  0._dp,   1.e-6_dp)   ! [m]
-        call check_param('Rwp',   0._dp,   1.e-6_dp)   ! [m]
-        call check_param('Rrev',  0._dp,   1.e-6_dp)   ! [m]
-        call check_param('R2',    0._dp,   1.e-6_dp)   ! [m]
-        call check_param('beta1', 0._dp,   100._dp)    ! [/]
-        call check_param('beta2', 0._dp,   100._dp)    ! [/]
-    contains
-        subroutine check_param(name, min, max)
-            character(*), intent(in)    ::  name
-            real(DP), intent(in)        ::  min,    &
-                                            max
-            character(32)               ::  min_str, &
-                                            max_str
-            real(DP)                    ::  param_val
-            character(*), parameter     ::  PROC_NAME = 'dsh_check_param'
-
-            param_val = params .find. name
-
-            if (param_val < min .or. param_val > max) then
-                write (min_str, *) min
-                write (max_str, *) max
-                call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Parameter ' // name // ' must lie between ' // min_str // ' and ' // max_str)
-            end if
-        end subroutine check_param
-    end subroutine dsh_validate_parameters
+        call parameter_check_bounds(params .find. 'b',     0._dp,   1.e-8_dp)   ! [m]
+        call parameter_check_bounds(params .find. 'G',     1.e4_dp, 5.e5_dp)    ! [MPa]
+        call parameter_check_bounds(params .find. 'alfa',  0._dp,   5._dp)      ! [/]
+        call parameter_check_bounds(params .find. 'f',     0._dp,   1.0_dp)     ! [/]
+        call parameter_check_bounds(params .find. 'tau0',  0._dp,   1.e4_dp)    ! [MPa]
+        call parameter_check_bounds(params .find. 'I',     0._dp,   10._dp)     ! [/]
+        call parameter_check_bounds(params .find. 'Iwd',   0._dp,   10._dp)     ! [/]
+        call parameter_check_bounds(params .find. 'Iwp',   0._dp,   10._dp)     ! [/]
+        call parameter_check_bounds(params .find. 'R',     0._dp,   1.e-6_dp)   ! [m]
+        call parameter_check_bounds(params .find. 'Rwd',   0._dp,   1.e-6_dp)   ! [m]
+        call parameter_check_bounds(params .find. 'Rncg',  0._dp,   1.e-6_dp)   ! [m]
+        call parameter_check_bounds(params .find. 'Rwp',   0._dp,   1.e-6_dp)   ! [m]
+        call parameter_check_bounds(params .find. 'Rrev',  0._dp,   1.e-6_dp)   ! [m]
+        call parameter_check_bounds(params .find. 'R2',    0._dp,   1.e-6_dp)   ! [m]
+        call parameter_check_bounds(params .find. 'beta1', 0._dp,   100._dp)    ! [/]
+        call parameter_check_bounds(params .find. 'beta2', 0._dp,   100._dp)    ! [/]
+    end subroutine
 
     !Main initialization function
     subroutine dsh_init(this, params, eff)

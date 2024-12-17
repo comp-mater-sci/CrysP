@@ -66,6 +66,16 @@ module parameters
             type(Parameter):: param
         end function
 
+        !>@Brief Check if the value of a parameter lies within certain bounds.
+        !>@Details Crashes the program if the parameter values do not lie within the specified bounds.
+        !>Note that currently, only parameters of TYPE_INTEGER and TYPE_REAL are supported with specified bounds of type real(DP). This could be made
+        !much more generic in the future, as the need arises.
+        module subroutine parameter_check_bounds(param, lower, upper)
+            type(Parameter), intent(in):: param !> Parameter for which the bounds must be checked. Must be of TYPE_INTEGER or TYPE_REAL. Otherwise, the program crashes.
+            real(DP), intent(in):: lower !> Lower bound for the value of param, inclusive.
+            real(DP), intent(in):: upper !> Upper bound for the value of param, inclusive.
+        end subroutine
+
         !Calculate difference between value buffers of 2 parameters or a parameter and a (real) constant
         !Throws exception if at least 1 of the given parameters is not of numeric type.
         module pure real(DP) function parameter_difference(param, arg) result(difference)
@@ -267,6 +277,13 @@ contains
                 call log_error(MOD_NAME, 'parameter_set', ERR_DIMS, "Unsupported rank")
         end select
     end procedure
+
+    module procedure parameter_check_bounds
+            if (param < lower .or. param > upper) then
+                call log_error(MOD_NAME, 'parameter_check_bounds', ERR_VAL, 'Parameter ' // param%name // ' has an illegal value.')
+            end if
+    end procedure
+
 
     pure real(DP) function get_numerical_value(param) result(num)
         type(Parameter), intent(in):: param
