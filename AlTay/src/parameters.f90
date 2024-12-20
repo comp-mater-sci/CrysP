@@ -27,7 +27,6 @@ module parameters
             character(*), intent(in), optional:: param_value
         end function parameter_init
 
-
         !Measure of the number of elements stored in the parameter. The exact interpretation of an 'element' is defined for each
         !parameter type individually. See implementation.
         module function parameter_size(param) result(size)
@@ -91,6 +90,13 @@ module parameters
         end function
     end interface
 
+    interface operator(*)
+        module pure real(DP) function parameter_mult(param, arg) result(prod)
+            type(Parameter), intent(in):: param
+            real(DP), intent(in):: arg
+        end function
+    end interface
+
     interface operator(>)
         !Determine if parameter is greater than another parameter or a constant.
         !Throws exception if at least 1 of the given parameters is not of numeric type.
@@ -120,9 +126,6 @@ module parameters
             class(*), intent(in)        :: arg
         end function
     end interface
-
-
-
 end module parameters
 
 submodule (parameters) parameters_imp
@@ -229,50 +232,46 @@ contains
         call log_error(MOD_NAME, 'parameter_find_by_name', ERR_VAL, 'No parameter with name ' // name)
     end procedure parameter_find_by_name
 
-        pure real(DP) function get_numerical_value(param) result(num)
-        type(Parameter), intent(in):: param
-        integer:: buffer
+    pure real(DP) function get_numerical_value(val) result(num)
+        class(*), intent(in):: val
 
-        select case(param%type)
-            case (TYPE_INTEGER)
-                buffer = transfer(param%value, 0)
-                num = real(buffer, DP)
-            case (TYPE_REAL)
-                num = transfer(param%value, 0._dp)
-            case default
+        select type (val)
+            type is (integer)
+                num = real(val, DP)
+            type is (real(DP))
+                num = val
+            type is (Parameter)
+                select case(val%type)
+                    case (TYPE_INTEGER)
+                        num = real(transfer(val%value, 0), DP)
+                    case (TYPE_REAL)
+                        num = transfer(val%value, 0._dp)
+                    case default
+                        call log_error(ERR_VAL)
+                end select
+            class default
                 call log_error(ERR_VAL)
         end select
     end function get_numerical_value
 
     module procedure parameter_difference
-        real(DP) real_val
+        difference = get_numerical_value(param) - get_numerical_value(arg)
+    end procedure
 
-        real_val = 0.0_DP
-
-        select type(arg)
-            type is (integer)
-                real_val = real(arg, DP)
-            type is (real)
-                real_val = real(arg, DP)
-            type is (Parameter)
-                real_val = get_numerical_value(arg)
-            class default
-                call log_error(ERR_VAL)
-        end select
-
-        difference = get_numerical_value(param) - real_val
+    module procedure parameter_mult
+        prod = get_numerical_value(param) * get_numerical_value(arg)
     end procedure
 
     module procedure parameter_gt
-        gt = (parameter_difference(param, arg) > 0._DP)
+        gt = param-arg > 0._DP
     end procedure
     module procedure parameter_lt
-        lt = (parameter_difference(param, arg) < 0._DP)
+        lt = param-arg < 0._DP
     end procedure
     module procedure parameter_gteq
-        gteq = (parameter_difference(param, arg) >= 0._DP)
+        gteq = param-arg >= 0._DP
     end procedure
     module procedure parameter_lteq
-        lteq = (parameter_difference(param, arg) <= 0._DP)
+        lteq = param-arg <= 0._DP
     end procedure
 end submodule parameters_imp
