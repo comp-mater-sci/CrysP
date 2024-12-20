@@ -27,6 +27,17 @@ module parameters
             character(*), intent(in), optional:: param_value
         end function parameter_init
 
+
+        !Measure of the number of elements stored in the parameter. The exact interpretation of an 'element' is defined for each
+        !parameter type individually. See implementation.
+        module function parameter_size(param) result(size)
+            type(Parameter):: param
+            integer:: size
+        end function
+    end interface
+
+    !Intrinsic assignment can not be made polymorphic using class(*) because this leads to infinite recursion
+    interface assignment(=)
         !Getter for value buffer
         module subroutine get_val_int(val, param)
             integer, intent(out):: val
@@ -45,50 +56,64 @@ module parameters
             type(Parameter), intent(in):: param
         end subroutine
 
-        !Measure of the number of elements stored in the parameter. The exact interpretation of an 'element' is defined for each
-        !parameter type individually. See implementation.
-        module function parameter_size(param) result(size)
-            type(Parameter):: param
-            integer:: size
-        end function
-
-        !Setter for value buffer, called with a list of parameters and the name and value of the parameter to be set.
-        module subroutine parameter_set(params, name, val, fail_on_absent)
-            type(Parameter), intent(inout):: params(:)
-            character(*), intent(in):: name
-            class(*), dimension(..), intent(in):: val
-            logical, intent(in), optional:: fail_on_absent
+        module subroutine set_val_int(param, val)
+            type(Parameter), intent(inout):: param
+            integer:: val
         end subroutine
+        module subroutine set_val_real(param, val)
+            type(Parameter), intent(inout):: param
+            real(DP):: val
+        end subroutine
+        module subroutine set_val_string(param, val)
+            type(Parameter), intent(inout):: param
+            character(*):: val
+        end subroutine
+        module subroutine set_val_angles_list(param, val)
+            type(Parameter), intent(inout):: param
+            real(DP), dimension(:,:), intent(in):: val
+        end subroutine
+    end interface
 
+    interface operator(.find.)
         module function parameter_find_by_name(params, name) result(param)
-            type(Parameter), dimension(:), intent(in):: params
+            type(Parameter), dimension(:), target, intent(in):: params
             character(*), intent(in):: name
-            type(Parameter):: param
+            type(Parameter), pointer:: param
         end function
+    end interface
 
+    interface operator(-)
         !Calculate difference between value buffers of 2 parameters or a parameter and a (real) constant
         !Throws exception if at least 1 of the given parameters is not of numeric type.
         module pure real(DP) function parameter_difference(param, arg) result(difference)
             type(Parameter), intent(in):: param
             class(*), intent(in)        :: arg
         end function
+    end interface
 
+    interface operator(>)
         !Determine if parameter is greater than another parameter or a constant.
         !Throws exception if at least 1 of the given parameters is not of numeric type.
         module pure logical function parameter_gt(param, arg) result(gt)
             type(Parameter), intent(in):: param
             class(*), intent(in)        :: arg
         end function
-        !Analogous to parameter_gt
-        module pure logical function parameter_gteq(param, arg) result(gteq)
-            type(Parameter), intent(in):: param
-            class(*), intent(in)        :: arg
-        end function
+    end interface
+    interface operator(<)
         !Analogous to parameter_gt
         module pure logical function parameter_lt(param, arg) result(lt)
             type(Parameter), intent(in):: param
             class(*), intent(in)        :: arg
         end function
+    end interface
+    interface operator(>=)
+        !Analogous to parameter_gt
+        module pure logical function parameter_gteq(param, arg) result(gteq)
+            type(Parameter), intent(in):: param
+            class(*), intent(in)        :: arg
+        end function
+    end interface
+    interface operator(<=)
         !Analogous to parameter_gt
         module pure logical function parameter_lteq(param, arg) result(lteq)
             type(Parameter), intent(in):: param
@@ -96,31 +121,8 @@ module parameters
         end function
     end interface
 
-    !Intrinsic assignment can not be made polymorphic using class(*) because this leads to infinite recursion
-    interface assignment(=)
-        module procedure get_val_int, get_val_real, get_val_string, get_val_angles_list
-    end interface
 
-    interface operator(.find.)
-        module procedure parameter_find_by_name
-    end interface
 
-    interface operator(-)
-        module procedure parameter_difference
-    end interface
-
-    interface operator(>)
-        module procedure parameter_gt
-    end interface
-    interface operator(<)
-        module procedure parameter_lt
-    end interface
-    interface operator(>=)
-        module procedure parameter_gteq
-    end interface
-    interface operator(<=)
-        module procedure parameter_lteq
-    end interface
 end module parameters
 
 submodule (parameters) parameters_imp
@@ -131,6 +133,60 @@ submodule (parameters) parameters_imp
     character(*), parameter:: MOD_NAME = 'parameter'
 
 contains
+
+    subroutine check_type(param, type)
+        type(Parameter), intent(in):: param
+        integer:: type
+
+        if (param%type /= type) &
+            call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Incorrect parameter type.')
+    endsubroutine
+
+    module procedure get_val_int
+        call check_type(param, TYPE_INTEGER)
+        val = transfer(param%value, val)
+    end procedure
+    module procedure get_val_real
+        call check_type(param, TYPE_REAL)
+        val = transfer(param%value, val)
+    end procedure
+    module procedure get_val_string
+        call check_type(param, TYPE_STRING)
+        val = param%value
+    end procedure
+    module procedure get_val_angles_list
+        call check_type(param, TYPE_ANGLES_LIST)
+
+        if (.not. allocated(val)) &
+            allocate(val(3, parameter_size(param)))
+        val = reshape(transfer(param%value, val), [3, parameter_size(param)])
+    end procedure
+
+    module procedure set_val_int
+        character(:), allocatable:: buffer
+
+        call check_type(param, TYPE_INTEGER)
+        allocate(character(storage_size(val)/8):: buffer)
+        param%value = transfer(val, buffer)
+    end procedure
+    module procedure set_val_real
+        character(:), allocatable:: buffer
+
+        call check_type(param, TYPE_REAL)
+        allocate(character(storage_size(val)/8):: buffer)
+        param%value = transfer(val, buffer)
+    end procedure
+    module procedure set_val_string
+        call check_type(param, TYPE_STRING)
+        param%value = val
+    end procedure
+    module procedure set_val_angles_list
+        character(:), allocatable:: buffer
+
+        call check_type(param, TYPE_ANGLES_LIST)
+        allocate(character(storage_size(val)/8*3*size(val, 2)):: buffer)
+        param%value = transfer(val, buffer)
+    end procedure
 
     module procedure parameter_init
         character(*), parameter:: PROC_NAME = 'parameter_init'
@@ -147,58 +203,6 @@ contains
         !param%value = buffer
     end procedure parameter_init
 
-   subroutine check_type(param, val)
-        type(Parameter), intent(in):: param
-        class(*), dimension(..), intent(in):: val
-
-        select rank(val)
-            rank (0)
-                select type(val)
-                    type is (integer)
-                        if (param%type == TYPE_INTEGER) return
-                    type is (real(DP))
-                        if (param%type == TYPE_REAL) return
-                    type is (character(*))
-                        if (param%type == TYPE_STRING) return
-                    type is (Parameter)
-                        return
-                end select
-            rank (2)
-                select type(val)
-                    type is (real(DP))
-                        if (param%type == TYPE_ANGLES_LIST) return
-                end select
-        end select
-        call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Value of parameter ' // param%name // ' does not conform with its type')
-    end subroutine check_type
-
-
-    subroutine search_parameter_list(params, name, param, ind, fail)
-        type(Parameter), intent(in):: params(:)
-        character(*), intent(in):: name
-        type(Parameter), intent(out):: param
-        integer, intent(out):: ind
-        logical, intent(inout):: fail
-
-        integer:: i
-
-        ind = -1
-        do i = 1, size(params)
-            if (params(i)%name == name) then
-                param = params(i)
-                ind = i
-                exit
-            end if
-        end do
-
-        if (ind == -1) then
-            if (fail) call log_error(MOD_NAME, 'parameter_find_by_name', ERR_VAL, 'No parameter with name ' // name)
-            fail = .true.
-        else
-            fail = .false.
-        end if
-    end subroutine search_parameter_list
-
     module procedure parameter_size
         select case(param%type)
         case (TYPE_INTEGER)
@@ -213,62 +217,19 @@ contains
     end procedure
 
     module procedure parameter_find_by_name
-        integer:: ind
-        logical:: fail = .true.
+        integer:: i
 
-        call search_parameter_list(params, name, param, ind, fail)
+        do i = 1, size(params)
+            if (params(i)%name == name) then
+                param => params(i)
+                return
+            end if
+        end do
+
+        call log_error(MOD_NAME, 'parameter_find_by_name', ERR_VAL, 'No parameter with name ' // name)
     end procedure parameter_find_by_name
 
-    module procedure get_val_int
-        call check_type(param, val)
-        val = transfer(param%value, val)
-    end procedure
-    module procedure get_val_real
-        call check_type(param, val)
-        val = transfer(param%value, val)
-    end procedure
-    module procedure get_val_string
-        if (param%type /= TYPE_STRING) &
-            call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Value does not conform with parameter type')
-        val = param%value
-    end procedure
-    module procedure get_val_angles_list
-        if (.not. allocated(val)) &
-            allocate(val(3, parameter_size(param)))
-        call check_type(param, val)
-        val = reshape(transfer(param%value, val), [3, parameter_size(param)])
-    end procedure
-
-    module procedure parameter_set
-        logical:: fail = .true.
-        type(Parameter):: param
-        integer:: index
-        character(:), allocatable:: buffer
-
-        if (present(fail_on_absent)) &
-           fail = fail_on_absent
-
-        call search_parameter_list(params, name, param, index, fail)
-        if (fail) return
-
-        call check_type(params(index), val)
-
-        select rank (val)
-            rank (0)
-                allocate(character(storage_size(val)/8):: buffer)
-                params(index)%value = transfer(val, buffer)
-            rank (2)
-                select type (val)
-                type is (real(DP))
-                    allocate(character(storage_size(0._DP)/8*3*size(val, 2)):: buffer)
-                    params(index)%value = transfer(val, buffer)
-                end select
-            rank default
-                call log_error(MOD_NAME, 'parameter_set', ERR_DIMS, "Unsupported rank")
-        end select
-    end procedure
-
-    pure real(DP) function get_numerical_value(param) result(num)
+        pure real(DP) function get_numerical_value(param) result(num)
         type(Parameter), intent(in):: param
         integer:: buffer
 

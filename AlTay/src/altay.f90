@@ -22,9 +22,10 @@ contains
         integer, intent(out)                 :: info     !< exit code (altay_OK on success)
         character(*), parameter:: PROC_NAME = 'initAltay'
         real(DP), dimension(:,:), allocatable:: orientations
-        type(Parameter), dimension(:), allocatable:: params
+        type(Parameter), dimension(:), allocatable, target:: params
         type(Grain), dimension(:), allocatable:: grains
         class(Cluster), dimension(:), allocatable:: clusters
+        type(Parameter), pointer:: param_ptr
 
         integer:: ierr, cluster_size
 
@@ -39,7 +40,8 @@ contains
 
         params = meso_get_parameters(cluster_size)
         if (cluster_size == 2) then
-            call parameter_set(params, "Boundaries", read_boundaries(cnf%micros_fname))
+            param_ptr  => params .find. "Boundaries"
+            param_ptr = read_boundaries(cnf%micros_fname)
         end if
 
         ! Open output files
@@ -47,9 +49,13 @@ contains
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open output files.')
 
+        !Temporary hack to set n_grains only for DSH hardening models. Very soon this is no longer needed.
+        if (size(cnf%hardening_parameters) > 7) then
+            param_ptr => cnf%hardening_parameters .find. 'n_grains'
+            param_ptr = size(orientations, 2)
+        end if
+
         !Initialize altay modules
-        !Set the data for CRSS calculations
-        call parameter_set(cnf%hardening_parameters, 'n_grains', size(orientations, 2), fail_on_absent=.false.)
         call micro_init(orientations, cnf%deformation_mechanism, cnf%hardening_parameters, grains)
         call meso_init(cnf%simul_init%ngr, grains, params, clusters)
         call macro_init(clusters)
