@@ -222,11 +222,29 @@ contains
         param%type = param_type
 
         if (present(default_value)) then
+            !Select rank needed because both IFX and gfortran pretend that defined assignment is not the same as a procedure call
+            !and therefore forbid me to say 'param = default_value' because 'default_value' is assumed-rank.
             select rank (default_value)
                 rank (0)
-                    param = default_value
+                    !Select type needed because gfortran sucks
+                    select type (default_value)
+                        type is (integer)
+                            param = default_value
+                        type is (real(DP))
+                            param = default_value
+                        type is (character(*))
+                            param = default_value
+                        class default
+                            call log_error(ERR_TYPE)
+                    end select
                 rank (2)
-                    param = default_value
+                    !Select type needed because gfortran sucks
+                    select type (default_value)
+                        type is (real(DP))
+                            param = default_value
+                        class default
+                            call log_error(ERR_TYPE)
+                    end select
                 rank default
                     call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Unsupported rank for default value')
             end select
