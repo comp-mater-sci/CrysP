@@ -21,10 +21,10 @@ module parameters
 
     interface
         !Initialize parameter
-        module type(Parameter) function parameter_init(param_name, param_type, param_value) result(param)
+        module type(Parameter) function parameter_init(param_name, param_type, default_value) result(param)
             character(*), intent(in):: param_name
             integer, intent(in):: param_type
-            character(*), intent(in), optional:: param_value
+            class(*), dimension(..), intent(in), optional:: default_value
         end function parameter_init
 
         !Measure of the number of elements stored in the parameter. The exact interpretation of an 'element' is defined for each
@@ -33,6 +33,15 @@ module parameters
             type(Parameter):: param
             integer:: size
         end function
+
+        !>@Brief Validate if a parameter does not lie outside the specified range.
+        !>@Details May be called with only lower bound, only upper bound, or both. Both bounds are inclusive.
+        !>         Crashes the program if the parameter is not of numerical type or its value lies outside the given bounds.
+        module subroutine parameter_validate_bounds(param, lower, upper)
+            type(Parameter), intent(in):: param    !> Parameter of numerical type
+            real(DP), intent(in), optional:: lower !> Lower bound, inclusive.
+            real(DP), intent(in), optional:: upper !> Upper bound, inclusive.
+        end subroutine
     end interface
 
     !Intrinsic assignment can not be made polymorphic using class(*) because this leads to infinite recursion
@@ -126,6 +135,7 @@ module parameters
             class(*), intent(in)        :: arg
         end function
     end interface
+
 end module parameters
 
 submodule (parameters) parameters_imp
@@ -136,6 +146,17 @@ submodule (parameters) parameters_imp
     character(*), parameter:: MOD_NAME = 'parameter'
 
 contains
+
+    module procedure parameter_validate_bounds
+        if (present(lower)) then
+            if (param < lower) &
+                call log_error(MOD_NAME, 'check_bounds', ERR_VAL, 'Value of parameter ' // param%name // ' is too low.')
+        end if
+        if (present(upper)) then
+            if (param > upper) &
+                call log_error(MOD_NAME, 'check_bounds', ERR_VAL, 'Value of parameter ' // param%name // ' is too high.')
+        end if
+    end procedure
 
     subroutine check_type(param, type)
         type(Parameter), intent(in):: param
@@ -193,9 +214,6 @@ contains
 
     module procedure parameter_init
         character(*), parameter:: PROC_NAME = 'parameter_init'
-        character(:), allocatable:: buffer
-
-        if (present(param_value)) buffer = param_value
 
         if (param_type /= TYPE_INTEGER .and. param_type /= TYPE_REAL .and. param_type /= TYPE_STRING .and. param_type /= TYPE_ANGLES_LIST) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Unsupported parameter type.')
@@ -203,7 +221,16 @@ contains
         param%name = param_name
         param%type = param_type
 
-        !param%value = buffer
+        if (present(default_value)) then
+            select rank (default_value)
+                rank (0)
+                    param = default_value
+                rank (2)
+                    param = default_value
+                rank default
+                    call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Unsupported rank for default value')
+            end select
+        end if
     end procedure parameter_init
 
     module procedure parameter_size
@@ -274,4 +301,5 @@ contains
     module procedure parameter_lteq
         lteq = param-arg <= 0._DP
     end procedure
+
 end submodule parameters_imp
