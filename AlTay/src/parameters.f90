@@ -37,16 +37,16 @@ module parameters
         !>@Brief Validate if a parameter does not lie outside the specified range.
         !>@Details May be called with only lower bound, only upper bound, or both. Both bounds are inclusive.
         !>         Crashes the program if the parameter is not of numerical type or its value lies outside the given bounds.
-        module subroutine parameter_validate_bounds(param, lower, upper)
+        module subroutine parameter_check_bounds(param, lower, upper, lower_incl, upper_incl)
             type(Parameter), intent(in):: param    !> Parameter of numerical type
             real(DP), intent(in), optional:: lower !> Lower bound, inclusive.
             real(DP), intent(in), optional:: upper !> Upper bound, inclusive.
+            logical, intent(in), optional:: lower_incl
+            logical, intent(in), optional:: upper_incl
         end subroutine
     end interface
 
-    !Intrinsic assignment can not be made polymorphic using class(*) because this leads to infinite recursion
     interface assignment(=)
-        !Getter for value buffer
         module subroutine get_val_int(val, param)
             integer, intent(out):: val
             type(Parameter), intent(in):: param
@@ -106,6 +106,14 @@ module parameters
         end function
     end interface
 
+    interface operator(==)
+        module pure logical function parameter_equals(param, arg) result(eq)
+            type(Parameter), intent(in):: param
+            class(*), intent(in)        :: arg
+        end function
+    end interface
+
+
     interface operator(>)
         !Determine if parameter is greater than another parameter or a constant.
         !Throws exception if at least 1 of the given parameters is not of numeric type.
@@ -147,15 +155,30 @@ submodule (parameters) parameters_imp
 
 contains
 
-    module procedure parameter_validate_bounds
+    module procedure parameter_check_bounds
+        logical:: invalid
+
+        invalid = .false.
+
         if (present(lower)) then
             if (param < lower) &
-                call log_error(MOD_NAME, 'check_bounds', ERR_VAL, 'Value of parameter ' // param%name // ' is too low.')
+                invalid = .true.
+            if (present(lower_incl)) then
+                if ((.not. lower_incl) .and. (param == lower)) &
+                    invalid = .true.            
+            end if
         end if
         if (present(upper)) then
             if (param > upper) &
-                call log_error(MOD_NAME, 'check_bounds', ERR_VAL, 'Value of parameter ' // param%name // ' is too high.')
+                invalid = .true.
+            if (present(upper_incl)) then
+                if ((.not. upper_incl) .and. (param == upper)) &
+                    invalid = .true.
+            end if
         end if
+
+        if (invalid) &
+            call log_error(MOD_NAME, 'check_bounds', ERR_VAL, 'Value of parameter ' // param%name // ' is out of bounds.')
     end procedure
 
     subroutine check_type(param, type)
@@ -212,6 +235,7 @@ contains
         param%value = transfer(val, buffer)
     end procedure
 
+    !Must be implemented using infinite polymorphism because the argument that may vary in type is optional.
     module procedure parameter_init
         character(*), parameter:: PROC_NAME = 'parameter_init'
 
@@ -222,8 +246,6 @@ contains
         param%type = param_type
 
         if (present(default_value)) then
-            !Select rank needed because both IFX and gfortran pretend that defined assignment is not the same as a procedure call
-            !and therefore forbid me to say 'param = default_value' because 'default_value' is assumed-rank.
             select rank (default_value)
                 rank (0)
                     !Select type needed because gfortran sucks
@@ -307,6 +329,9 @@ contains
         prod = get_numerical_value(param) * get_numerical_value(arg)
     end procedure
 
+    module procedure parameter_equals
+        eq = param-arg == 0._DP
+    end procedure
     module procedure parameter_gt
         gt = param-arg > 0._DP
     end procedure
