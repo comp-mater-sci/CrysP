@@ -18,7 +18,7 @@ contains
     !>@Brief Initialize AlTay.
     !>@Details This subroutine must be called prior to any call to other module subroutines.
     subroutine initAltay(cnf, info)
-        type(altayConfigData), intent(inout)    :: cnf      !< configuration data
+        type(altayConfigData), target, intent(inout)    :: cnf      !< configuration data
         integer, intent(out)                 :: info     !< exit code (altay_OK on success)
         character(*), parameter:: PROC_NAME = 'initAltay'
         real(DP), dimension(:,:), allocatable:: orientations

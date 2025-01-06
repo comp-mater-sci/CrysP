@@ -44,12 +44,16 @@ contains
     subroutine voce_validate_parameters(this, params)
         class(HardeningModelVoce), intent(in):: this
         type(Parameter), dimension(:), target, intent(in):: params
-        character(*), parameter:: PROC_NAME = 'validate_parameters'
+
+        type(Parameter), pointer:: buffer
 
         call hardening_model_validate_parameters(this, params)
 
-        call parameter_check_bounds(params .find. 'TIIIS', lower=(params .find. 'TIII1'), lower_inclusive=.false.)
-        call parameter_check_bounds(params .find. 'THIII1', lower=(params .find. 'THT'),  lower_inclusive=.false.)
+        !Due to yet another bug in gfortran we must assign the lower bound explicitly before calling check_bounds
+        buffer => params .find. 'TIII1'
+        call parameter_check_bounds(params .find. 'TIIIS', lower=buffer, lower_inclusive=.false.)
+        buffer => params .find. 'THT'
+        call parameter_check_bounds(params .find. 'THIII1', lower=buffer,  lower_inclusive=.false.)
     end subroutine voce_validate_parameters
 
     subroutine voce_init(this, params)

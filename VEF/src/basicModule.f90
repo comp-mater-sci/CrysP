@@ -207,7 +207,7 @@ contains
       subroutine readAlTayConfigSection(cnfunit, cnf, info)
       use altayConfig
       integer, intent(in)                  :: cnfunit
-      type(altayConfigData), intent(inout):: cnf !< Root-level configuration structure of texture, microstructure and hardening
+      type(altayConfigData), target, intent(inout):: cnf !< Root-level configuration structure of texture, microstructure and hardening
       integer, intent(out)                 :: info
       !
       integer                       :: model_id, dm_id
