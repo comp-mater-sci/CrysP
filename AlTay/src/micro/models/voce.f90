@@ -43,7 +43,7 @@ contains
 
     subroutine voce_validate_parameters(this, params)
         class(HardeningModelVoce), intent(in):: this
-        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), target, intent(in):: params
         character(*), parameter:: PROC_NAME = 'validate_parameters'
 
         call hardening_model_validate_parameters(this, params)
@@ -54,7 +54,7 @@ contains
 
     subroutine voce_init(this, params)
         class(HardeningModelVoce), intent(inout):: this
-        type(Parameter), allocatable, intent(in):: params(:)
+        type(Parameter), allocatable, target, intent(in):: params(:)
         real(DP)                                 :: THT,        &
                                                     ETA,        &
                                                     TAUT

@@ -116,12 +116,9 @@ contains
 
     subroutine dsh_validate_parameters(this, params)
         class(HardeningModelDSH), intent(in)     :: this
-        type(Parameter), dimension(:), intent(in):: params
-        character(:), allocatable:: nss
+        type(Parameter), dimension(:), target, intent(in):: params
 
-        nss = params .find. 'n_slip_systems'
-
-        if (nss /= 'bcc24')  &
+        if ((params .find. 'n_slip_systems') /= 24)  &
             call log_error(MOD_NAME, 'validate_parameters', ERR_VAL, 'DSH only supports BCC24 slip systems.')
 
         call parameter_check_bounds(params .find. 'b',     0._dp,   1.e-8_dp)   ! [m]
@@ -145,7 +142,7 @@ contains
     !Main initialization function
     subroutine dsh_init(this, params)
         class(HardeningModelDSH), intent(inout)  :: this
-        type(Parameter), allocatable, intent(in):: params(:)
+        type(Parameter), allocatable, target, intent(in):: params(:)
         integer:: n_grains
 
         call hardening_model_init(this, params)

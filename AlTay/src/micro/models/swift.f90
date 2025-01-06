@@ -35,7 +35,7 @@ contains
 
     subroutine swift_validate_parameters(this, params)
         class(HardeningModelSwift), intent(in)  :: this
-        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), target, intent(in):: params
 
         call hardening_model_validate_parameters(this, params)
 
@@ -46,7 +46,7 @@ contains
 
     subroutine swift_init(this, params)
         class(HardeningModelSwift),   intent(inout)   :: this
-        type(Parameter), allocatable, intent(in):: params(:)
+        type(Parameter), allocatable, target, intent(in):: params(:)
 
         call hardening_model_init(this, params)
 

@@ -20,7 +20,7 @@ contains
 
     subroutine dsh_edge_init(this, params)
         class(HardeningModelDSHEdge), intent(inout):: this
-        type(Parameter), allocatable, intent(in):: params(:)
+        type(Parameter), allocatable, target, intent(in):: params(:)
 
         call dsh_init(this, params)
 

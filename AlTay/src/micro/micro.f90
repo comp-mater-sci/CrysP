@@ -96,6 +96,7 @@ contains
 
         n_grains = size(orientations, 2)
 
+        call model%validate_parameters(params)
         call model%init(params)
 
         allocate(grains(n_grains))

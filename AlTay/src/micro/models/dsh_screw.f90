@@ -19,7 +19,7 @@ contains
 
     subroutine dsh_screw_init(this, params)
         class(HardeningModelDSHScrew), intent(inout):: this
-        type(Parameter), allocatable, intent(in):: params(:)
+        type(Parameter), allocatable, target, intent(in):: params(:)
         real(DP):: screwdir(24, 3), &
                    prod(3)
         integer:: i
