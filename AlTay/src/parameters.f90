@@ -37,12 +37,12 @@ module parameters
         !>@Brief Validate if a parameter does not lie outside the specified range.
         !>@Details May be called with only lower bound, only upper bound, or both. Both bounds are inclusive.
         !>         Crashes the program if the parameter is not of numerical type or its value lies outside the given bounds.
-        module subroutine parameter_check_bounds(param, lower, upper, lower_incl, upper_incl)
+        module subroutine parameter_check_bounds(param, lower, upper, lower_inclusive, upper_inclusive)
             type(Parameter), intent(in):: param    !> Parameter of numerical type
-            real(DP), intent(in), optional:: lower !> Lower bound, inclusive.
-            real(DP), intent(in), optional:: upper !> Upper bound, inclusive.
-            logical, intent(in), optional:: lower_incl
-            logical, intent(in), optional:: upper_incl
+            class(*), intent(in), optional:: lower !> Lower bound
+            class(*), intent(in), optional:: upper !> Upper bound
+            logical, intent(in), optional:: lower_inclusive
+            logical, intent(in), optional:: upper_inclusive
         end subroutine
     end interface
 
@@ -105,6 +105,13 @@ module parameters
             real(DP), intent(in):: arg
         end function
     end interface
+    
+    interface operator(/)
+        module pure real(DP) function parameter_div(param, arg) result(quot)
+            type(Parameter), intent(in):: param
+            real(DP), intent(in):: arg
+        end function
+    end interface
 
     interface operator(==)
         module pure logical function parameter_equals(param, arg) result(eq)
@@ -163,16 +170,16 @@ contains
         if (present(lower)) then
             if (param < lower) &
                 invalid = .true.
-            if (present(lower_incl)) then
-                if ((.not. lower_incl) .and. (param == lower)) &
+            if (present(lower_inclusive)) then
+                if ((.not. lower_inclusive) .and. (param == lower)) &
                     invalid = .true.            
             end if
         end if
         if (present(upper)) then
             if (param > upper) &
                 invalid = .true.
-            if (present(upper_incl)) then
-                if ((.not. upper_incl) .and. (param == upper)) &
+            if (present(upper_inclusive)) then
+                if ((.not. upper_inclusive) .and. (param == upper)) &
                     invalid = .true.
             end if
         end if
@@ -327,6 +334,9 @@ contains
 
     module procedure parameter_mult
         prod = get_numerical_value(param) * get_numerical_value(arg)
+    end procedure
+    module procedure parameter_div
+        quot = get_numerical_value(param) / get_numerical_value(arg)
     end procedure
 
     module procedure parameter_equals

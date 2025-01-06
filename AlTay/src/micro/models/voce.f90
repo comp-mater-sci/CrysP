@@ -48,17 +48,14 @@ contains
 
         call hardening_model_validate_parameters(this, params)
 
-        if ((params .find. 'TIIIS') <= (params .find. 'TIII1')) &
-            call log_error(MODULE_NAME, PROC_NAME, ERR_VAL, 'TAU-III-S must be larger than TAU-III-1')
-        if ((params .find. 'THIII1') <= (params .find. 'THT'))  &
-            call log_error(MODULE_NAME, PROC_NAME, ERR_VAL, 'THETA-III-1 must be larger than THETA-T')
+        call parameter_check_bounds(params .find. 'TIIIS', lower=(params .find. 'TIII1'), lower_inclusive=.false.)
+        call parameter_check_bounds(params .find. 'THIII1', lower=(params .find. 'THT'),  lower_inclusive=.false.)
     end subroutine voce_validate_parameters
 
     subroutine voce_init(this, params)
         class(HardeningModelVoce), intent(inout):: this
         type(Parameter), allocatable, intent(in):: params(:)
-        real(DP)                                 :: THIII1,     &
-                                                    THT,        &
+        real(DP)                                 :: THT,        &
                                                     ETA,        &
                                                     TAUT
 
@@ -67,10 +64,9 @@ contains
         this%stage_1%T1 = params .find. 'TIII1'
         this%stage_1%TS = params .find. 'TIIIS'
         this%stage_2%TS = params .find. 'TIVS'
-        THIII1          = params .find. 'THIII1'
         THT             = params .find. 'THT'
 
-        this%stage_1%TH = THIII1 / (1.D0-this%stage_1%T1/this%stage_1%TS)
+        this%stage_1%TH = (params .find. 'THIII1') / (1.D0-this%stage_1%T1/this%stage_1%TS)
         ETA = THT/this%stage_1%TH
         this%transition_slip = -this%stage_1%TS*log(ETA*this%stage_1%TS / (this%stage_1%TS-this%stage_1%T1)) / this%stage_1%TH
         TAUT = this%stage_1%TS - (this%stage_1%TS-this%stage_1%T1) * exp(-this%stage_1%TH*this%transition_slip/this%stage_1%TS)
