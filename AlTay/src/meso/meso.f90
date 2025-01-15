@@ -33,7 +33,7 @@ module meso
             type(Grain), dimension(:), allocatable, intent(in):: grains  !> Initialized grains to be distributed among the clusters. Must be declared allocatable to ensure deep copy of allocatable components.
             type(Parameter), dimension(:), allocatable, intent(in):: params   !> List of parameters with which to initialize the model. Must correspond
                                                                  ! to the parameter list obtained by calling meso_get_parameters(model_id)
-            class(Cluster), dimension(:), allocatable, intent(out):: clusters !> Innitialized clusters
+            class(Cluster), dimension(:), allocatable, intent(out):: clusters !> Initialized clusters
         end subroutine
 
         !> @Brief prepares the model for a deformation according to a given velocity gradient
