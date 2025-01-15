@@ -130,7 +130,7 @@ module parameters
             real(DP), intent(in):: arg
         end function
     end interface
-    
+
     interface operator(/)
         !> @Brief Analogous to parameter_difference
         module pure real(DP) function parameter_div(param, arg) result(quot)
@@ -142,7 +142,7 @@ module parameters
     interface operator(==)
         !> @Brief Check if a parameter holds a value equivalent to some provided value.
         !> @Details What exactly it means to be equivalent depends on the type of the parameter/value. See implementation for
-        !details.
+        !details. Note as of 15/1/2025, only works on scalars due to a bug in IFX.
         !> @Return .true. if the parameter holds a value equivalent to the provided value, .false. ortherwise.
         module pure logical function parameter_equals(param, arg) result(eq)
             type(Parameter), intent(in):: param !> The parameter holding the value to be tested
@@ -208,7 +208,7 @@ contains
                 invalid = .true.
             if (present(lower_inclusive)) then
                 if ((.not. lower_inclusive) .and. (param == lower)) &
-                    invalid = .true.            
+                    invalid = .true.
             end if
         end if
         if (present(upper)) then
@@ -227,12 +227,12 @@ contains
     !> @Brief Check if a parameter has the correct type.
     !> @Details If the parameter type does not correspond to the provided value, the routine crashes the program.
     !           Convenience method to avoid having to write the long call to log_error every time we need to check a parameter type.
-    subroutine check_type(param, type)
+    pure subroutine check_type(param, type)
         type(Parameter), intent(in):: param !> The parameter for which the type must be checked.
-        integer:: type                      !> Expected type of the parameter. Must exist in the enum provided at the top of this module file.
+        integer, intent(in):: type                      !> Expected type of the parameter. Must exist in the enum provided at the top of this module file.
 
         if (param%type /= type) &
-            call log_error(MOD_NAME, 'check_type', ERR_VAL, 'Incorrect parameter type.')
+            call log_error(ERR_TYPE)
     endsubroutine
 
     module procedure get_val_int
@@ -383,12 +383,20 @@ contains
 
     module procedure parameter_equals
         select type (arg)
+            type is (integer)
+                call check_type(param, TYPE_INTEGER)
+                eq = param%value == transfer(arg, param%value)
+            type is (real(DP))
+                call check_type(param, TYPE_REAL)
+                eq = param%value == transfer(arg, param%value)
+            type is (character(*))
+                call check_type(param, TYPE_STRING)
+                eq = param%value == transfer(arg, param%value)
             type is (Parameter)
-                !Parameters are equivalent if their values are identical.
+                call check_type(param, arg%type)
                 eq = param%value == arg%value
             class default
-                !To compare any type to a parameter, we first convert it to the exact shape of the parameter value buffer.
-                eq = param%value == transfer(arg, param%value)
+                call log_error(ERR_TYPE)
         end select
     end procedure
     module procedure parameter_nequals
