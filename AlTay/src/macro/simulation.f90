@@ -12,8 +12,6 @@ module simulation
     implicit none
     private
 
-    integer:: NFILE1
-
     real(DP):: von_mises_strain
     real(DP), dimension(3, 3):: deformation_gradient = UNIT_MATRIX_3X3
     class(Cluster), dimension(:), allocatable:: clusters
@@ -21,7 +19,7 @@ module simulation
     character(*), parameter:: MOD_NAME = 'Simul'
 
 
-    public:: simulation_init, &
+    public:: macro_init, &
              simulation_run, &
              simulation_finalize, &
              output_current_state, &
@@ -29,25 +27,11 @@ module simulation
     contains
 
     ! initialization call
-    subroutine simulation_init(orientations, parameters)
-        real(DP), dimension(:,:), allocatable, intent(in):: orientations
-        type(Parameter), dimension(:), allocatable, intent(in):: parameters
+    subroutine macro_init(clstrs)
+        class(Cluster), dimension(:), allocatable, intent(inout):: clstrs !> Must be declared allocatable because only then deep copy of allocatable components is mandated by the standard.
 
-        character(len = 40):: TITEL
-        integer:: info, &
-                  cluster_size
-        character(*), parameter:: PROC_NAME = 'SIMUL0'
-
-
-        cluster_size    = acnf%simul_init%NGR
-
-        TITEL  = acnf%jobtitle
-        ! Only if CUR file is requested
-        if (NFILE1 == 1) call cur_write_title(IMP1, TITEL, info)
-  98    format (A)
-
+        call move_alloc(clstrs, clusters)
         deformation_gradient = UNIT_MATRIX_3X3
-        call meso_init(cluster_size, orientations, acnf%deformation_mechanism, parameters, clusters)
         von_mises_strain = 0._DP
     end subroutine
 
@@ -77,12 +61,10 @@ module simulation
         homogenized_stress = homogenized_stress/total_weight
     end function
 
-    subroutine simulation_run(NFILE0, velocity_gradient)
+    subroutine simulation_run(velocity_gradient)
         real(DP), intent(in):: velocity_gradient(3, 3)
-        integer, intent(in):: NFILE0
         integer:: cluster_size, &
                   n_clusters, &
-                  NFILE, &
                   i               !> Iteration variables
         real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
@@ -97,7 +79,6 @@ module simulation
 
         n_clusters = size(clusters)
         cluster_size = acnf%simul_init%NGR
-        NFILE = NFILE0*NFILE1
 
         strain_rate = symmetric_part(velocity_gradient)
         spin = antisymmetric_part(velocity_gradient)
@@ -142,6 +123,7 @@ module simulation
 
     subroutine output_current_state(file_handle)
         integer, intent(in):: file_handle
+
         call cur_write_block(file_handle, clusters, deformation_gradient)
     end subroutine
 

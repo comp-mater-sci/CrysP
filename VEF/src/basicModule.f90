@@ -285,7 +285,7 @@ contains
       integer, intent(in)                  :: cnfunit
         type(AltayConfigData), intent(inout):: cnf
       integer, intent(out)                 :: info
-        type(Parameter), allocatable:: params(:)
+        type(Parameter), dimension(:), allocatable:: params
         integer:: hardening_model_id
         real(DP):: tmp(16)
         character(len = max_pathlen)          :: tmp_fname

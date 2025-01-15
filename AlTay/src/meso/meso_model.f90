@@ -24,24 +24,21 @@ module meso_model
 
     interface
         !>@Brief initialize the mesoscopic model.
-        !>@Details Initializes the mesoscopic model based on a list of Euler angles in the macroscopic frame representing
-        !orientations of individual grains and a list of parameters. Initializes the grains and arranges them in clusters (which also get initialized).
+        !>@Details Initializes the mesoscopic model based on a list of initialized grains. These grains are arranged into clusters,
+        !which also get initialized.
         !Note that we must make this a subroutine to avoid IFX copying the cluster list through the stack.
-        subroutine meso_model_init(this, orientations, deformation_mechanism, params, clusters)
+        subroutine meso_model_init(this, grains, params, clusters)
             import MesoModel
             import Parameter
             import Cluster
             import DP
+            import Grain
 
             class(MesoModel), intent(inout):: this                          !> The mesoscopic model
-            real(DP), dimension(:,:), intent(in):: orientations             !> A list of Euler angles in the macroscopic frame
-                                                                            !> representing the grain orientations.
-            integer, dimension(:,:,:), intent(in):: deformation_mechanism              !> The deformation mechanism for all grains, defined as
-                                                                            !> A list of slip plane normals and slip directions in 3D.
+            type(Grain), dimension(:), allocatable, intent(in):: grains          !>List of initialized grains to be arranged into clusters. Must be declared allocatable to ensure deep copy of allocatable components.
             type(Parameter), dimension(:), intent(in):: params !> List of parameters to initialize the model. These are
                                                                             !> defined by the model itself and can be retrieved by calling get_parameters on the model instance.
-            class(Cluster), dimension(:), allocatable, intent(out):: clusters                !> Pointer to list of initialized clusters with each a
-                                                                            !> list of pointers to initialized grains.
+            class(Cluster), dimension(:), allocatable, intent(out):: clusters                !> List of initialized clusters with each a
         end subroutine
 
         !> @Brief Get the stress state for a cluster given some velocity gradient.

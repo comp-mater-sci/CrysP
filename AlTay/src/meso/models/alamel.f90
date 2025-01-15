@@ -65,14 +65,14 @@ contains
     function alamel_get_parameters() result(params)
         type(Parameter), dimension(:), allocatable:: params
 
-        params = [parameter_init("Boundaries", TYPE_ANGLES_LIST)]
+        allocate(params(1))
+        params(1) = parameter_init("Boundaries", TYPE_ANGLES_LIST)
     end function
 
     !>@Brief See meso_model_init
-    subroutine alamel_init(this, orientations, deformation_mechanism, params, clusters)
+    subroutine alamel_init(this, grains, params, clusters)
         class(AlamelModel), intent(inout):: this
-        real(DP), dimension(:,:), intent(in):: orientations
-        integer, dimension(:,:,:), intent(in):: deformation_mechanism
+        type(Grain), dimension(:), allocatable, intent(in):: grains
         type(Parameter), dimension(:), intent(in):: params
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
@@ -81,7 +81,7 @@ contains
                   n_systems_grain
         real(DP), dimension(:,:), allocatable:: boundaries
 
-        n_systems_grain = size(deformation_mechanism, 3)
+        n_systems_grain = size(grains(1)%slip_systems)
         ind_basis_systems_grain = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, n_systems_grain == 12)
 
         allocate(boundaries(3, parameter_size(params(1))))
@@ -89,20 +89,18 @@ contains
 
         this%deformation_gradient = UNIT_MATRIX_3X3
 
-        allocate(AlamelCluster:: clusters(size(orientations, 2)/2))
+        allocate(AlamelCluster:: clusters(size(grains)/2))
 
         !Must check type even though we just allocated due to Fortran semantics.
         select type(clusters)
         type is (AlamelCluster)
             j = 1
             do i = 1, size(clusters)
-                allocate(clusters(i)%grains(2))  ! ALAMEL clusters always have 2 grains
+                clusters(i)%grains = grains(2*(i-1)+1:2*i)
                 clusters(i)%initial_boundary_orientation = matmul(this%deformation_gradient, transpose(from_euler_angles(boundaries(:,j))))
                 clusters(i)%ind_basis_systems(1:5) = ind_basis_systems_grain
                 clusters(i)%ind_basis_systems(6:10) = ind_basis_systems_grain+n_systems_grain
                 do k = 1, 2
-                    call clusters(i)%grains(k)%init(deformation_mechanism, orientations(:,2*(i-1)+k))
-                    call clusters(i)%grains(k)%set_crss(micro_get_crss((i-1)*2+k, 0._DP))
                     call clusters(i)%relaxations(k)%init(k)
                 end do
                 clusters(i)%inverse_basis = invert(get_basis(clusters(i)))

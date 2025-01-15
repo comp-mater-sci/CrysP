@@ -3,6 +3,7 @@ module micro
     use utils
     use parameters
     use logging
+    use grain_module
 
     implicit none
     public
@@ -23,12 +24,16 @@ module micro
         !> Must be called before initialization
         module function micro_get_parameters(model_id) result(params)
             integer, intent(in)             :: model_id
-            type(Parameter), allocatable    :: params(:)
+            type(Parameter), dimension(:), allocatable:: params
         end function
 
-        !> Initialize module from config data object
-        module subroutine  micro_init(params)
-            type(Parameter), allocatable, intent(in)  :: params(:)
+        !Must be subroutine to avoid problems with IFX copying too much to the stack.
+        module subroutine  micro_init(orientations, deformation_mechanism, params, grains)
+            real(DP), dimension(:,:), intent(in):: orientations                 !> List of Euler angle triplets in Bunge convention
+                                                                                !> in the macroscopic frame representing grain orientations.
+            integer, dimension(:,:,:), intent(in):: deformation_mechanism       !> Deformation mechanism to be employed for all grains.
+            type(Parameter), allocatable, intent(in):: params(:)                !> Parameters used to initialize the hardening model.
+            type(Grain), dimension(:), allocatable, intent(out):: grains        !> List of initialized grain objects.
         end subroutine
 
         module subroutine micro_finalize()
@@ -85,9 +90,20 @@ contains
         params = model%get_parameters()
     end procedure
 
-    !> Initialize module from config data object
     module procedure micro_init
+        integer:: i, &
+                  n_grains
+
+        n_grains = size(orientations, 2)
+
         call model%init(params)
+
+        allocate(grains(n_grains))
+
+        do i = 1, n_grains
+            call grains(i)%init(deformation_mechanism, orientations(:,i))
+            call grains(i)%set_crss(micro_get_crss(i, 0._DP))
+        end do
     end procedure
 
     module procedure micro_finalize

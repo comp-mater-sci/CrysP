@@ -15,27 +15,26 @@ module altay
 
 contains
 
-    !> Initialize the module.
-    !>
-    !> This subroutine must be called prior to any call to other
-    !> module subroutines.
+    !>@Brief Initialize AlTay.
+    !>@Details This subroutine must be called prior to any call to other module subroutines.
     subroutine initAltay(cnf, info)
         type(altayConfigData), intent(inout)    :: cnf      !< configuration data
         integer, intent(out)                 :: info     !< exit code (altay_OK on success)
         character(*), parameter:: PROC_NAME = 'initAltay'
         real(DP), dimension(:,:), allocatable:: orientations
         type(Parameter), dimension(:), allocatable:: params
+        type(Grain), dimension(:), allocatable:: grains
+        class(Cluster), dimension(:), allocatable:: clusters
 
         integer:: ierr, cluster_size
 
         ierr = 0
-        ! Set the singleton object to the cnf
+        !Set the singleton object to the cnf
         acnf = cnf
 
         cluster_size    = cnf%simul_init%NGR
-        ! Open input files
 
-        ! Get the initial texture
+        !Get the initial texture
         orientations = read_texture(trim(cnf%texture_input_fname))
 
         params = meso_get_parameters(cluster_size)
@@ -44,21 +43,17 @@ contains
         end if
 
         ! Open output files
-        call openOutputFiles(cnf, info)
+        call open_output_files(cnf, info)
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open output files.')
 
-        ! Initialize altay modules
-        !
-        ! Set the data for CRSS calculations
+        !Initialize altay modules
+        !Set the data for CRSS calculations
         call parameter_set(cnf%hardening_parameters, 'n_grains', size(orientations, 2), fail_on_absent=.false.)
-        call micro_init(cnf%hardening_parameters)
-        ! Initialisation of SIMUL
-        info = VEF_ERROR
-        call simulation_init(orientations, params)
+        call micro_init(orientations, cnf%deformation_mechanism, cnf%hardening_parameters, grains)
+        call meso_init(cnf%simul_init%ngr, grains, params, clusters)
+        call macro_init(clusters)
 
-        ! No need for the slip system definition anymore.
-        close(LEC)
         info = VEF_OK
     end subroutine
 
@@ -76,31 +71,6 @@ contains
               astate%nSimulCalls = 0
         endif
         info = 0
-
-    end subroutine
-
-    subroutine openOutputFiles(cnf, info)
-        type(altayConfigData), intent(in)    :: cnf      !< configuration data
-        integer, intent(out)                 :: info     !< exit code (altay_OK on success)
-
-        character(len = fname_len):: fname_prefix, fname
-        character(*), parameter:: PROC_NAME = 'openOutputFiles'
-
-        fname_prefix = cnf%output_prefix
-        info = VEF_ERROR
-
-        if (cnf%output_config%nfile /= 0) then
-            fname = trim(fname_prefix)//'.CUR'
-            ! IMP1 = output file with successive "current situations"
-            open (unit = IMP1, file = fname, status='replace',err = 9999)
-        endif
-
-        info = VEF_OK
-        return
-
-        ! Error handler
-        9999 continue
-        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open file '//trim(fname))
     end subroutine
 
     !> Initialization of input and output data for the steps.
@@ -109,6 +79,7 @@ contains
         type(altayStateData), intent(out)    :: steps    !< Definiton of the steps.
         integer, intent(out)                 :: info     !< Exit code: 0 on success
         integer:: ierr
+
         info = 1
         if (nsteps <= 0) return
         allocate(steps%simulCalls(nsteps), stat = ierr)
@@ -123,11 +94,9 @@ contains
     subroutine runSteps(steps, info)
         type(altayStateData), intent(inout)        :: steps !< Definiton of the steps.
         integer, intent(out)                       :: info  !< Exit code: 0 on success.
-        integer:: NFILE0
         integer:: i
         logical:: input_ok
         real(DP):: velocity_gradient(3, 3)
-
 
         ! Validate input
         info = VEF_ERROR
@@ -139,10 +108,9 @@ contains
 
         do i = 1, steps%nSimulCalls
             steps%this = i
-            NFILE0 = merge(1, 0, steps%simulCalls(i)%input%do_output_init)
             velocity_gradient = steps%simulcalls(i)%input%dgf
 
-            call simulation_run(NFILE0, velocity_gradient)
+            call simulation_run(velocity_gradient)
 
             if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
         enddo

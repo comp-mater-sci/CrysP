@@ -50,29 +50,26 @@ contains
     end function
 
     !>@Brief See 'meso_model_init'.
-    subroutine full_constraints_taylor_init(this, orientations, deformation_mechanism, params, clusters)
+    subroutine full_constraints_taylor_init(this, grains, params, clusters)
         class(TaylorModel), intent(inout):: this
-        real(DP), dimension(:,:), intent(in):: orientations
-        integer, dimension(:,:,:), intent(in):: deformation_mechanism
+        type(Grain), dimension(:), allocatable, intent(in):: grains
         type(Parameter), dimension(:), intent(in):: params
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
-        real(DP), dimension(5, size(deformation_mechanism, 3)):: taylor_coeffs
+        real(DP), dimension(5, size(grains(1)%slip_systems)):: taylor_coeffs
         integer:: i
 
-        allocate(TaylorCluster:: clusters(size(orientations, 2)))
+        allocate(TaylorCluster:: clusters(size(grains)))
 
         !Must check type even though we just allocated due to Fortran semantics.
         select type (clusters)
             type is (TaylorCluster)
                 do i = 1, size(clusters)
-                    allocate(clusters(i)%grains(1))
+                    clusters(i)%grains = [grains(i)]
                     clusters(i)%weight = 1._DP
-                    clusters(i)%ind_basis_systems = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, size(deformation_mechanism, 3) == 12)
-                    call clusters(i)%grains(1)%init(deformation_mechanism, orientations(:,i))
+                    clusters(i)%ind_basis_systems = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, size(grains(1)%slip_systems) == 12)
                     taylor_coeffs = clusters(i)%grains(1)%get_taylor_coeffs()
                     clusters(i)%inverse_basis = invert(taylor_coeffs(:,clusters(i)%ind_basis_systems))
-                    call clusters(i)%grains(1)%set_crss(micro_get_crss(i, 0._DP))
                 end do
         end select
     end subroutine
