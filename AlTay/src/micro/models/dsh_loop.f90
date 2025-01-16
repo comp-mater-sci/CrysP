@@ -19,7 +19,7 @@ contains
 
     subroutine dsh_loop_init(this, params)
         class(HardeningModelDSHLoop), intent(inout):: this
-        type(Parameter), allocatable, intent(in):: params(:)
+        type(Parameter), allocatable, target, intent(in):: params(:)
         integer:: s, i
         real(DP):: normdir(24, 3), &
                    eff(24, 6), &

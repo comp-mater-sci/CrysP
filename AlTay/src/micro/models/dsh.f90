@@ -107,12 +107,9 @@ contains
 
     subroutine dsh_validate_parameters(this, params)
         class(HardeningModelDSH), intent(in)     :: this
-        type(Parameter), dimension(:), intent(in):: params
-        character(:), allocatable:: nss
+        type(Parameter), dimension(:), target, intent(in):: params
 
-        nss = params .find. 'n_slip_systems'
-
-        if (nss /= 'bcc24')  &
+        if ((params .find. 'n_slip_systems') /= 24)  &
             call log_error(MOD_NAME, 'validate_parameters', ERR_VAL, 'DSH only supports BCC24 slip systems.')
 
         call parameter_check_bounds(params .find. 'b',     0._dp,   1.e-8_dp)   ! [m]
@@ -136,40 +133,31 @@ contains
     !Main initialization function
     subroutine dsh_init(this, params, eff)
         class(HardeningModelDSH), intent(inout)  :: this
-        type(Parameter), allocatable, intent(in):: params(:)
+        type(Parameter), allocatable, target, intent(in):: params(:)
         real(DP), dimension(24, 6), intent(in):: eff          !> Interaction coefficients between dislocation directions and cell
                                                               !> block boundary normals.
 
-        integer:: n_grains, &
-                  i
+        integer:: i, &
+                  n_grains
 
         call hardening_model_init(this, params)
 
-        this%b     = params .find. 'b'
-        this%G     = params .find. 'G'
-        this%alfa  = params .find. 'alfa'
-        this%f     = params .find. 'f'
-        this%tau0  = params .find. 'tau0'
-        this%I     = params .find. 'I'
-        this%R     = params .find. 'R'
-        this%Iwd   = params .find. 'Iwd'
-        this%Rwd   = params .find. 'Rwd'
-        this%Rncg  = params .find. 'Rncg'
-        this%beta1 = params .find. 'beta1'
-        this%beta2 = params .find. 'beta2'
-        this%Iwp   = params .find. 'Iwp'
-        this%Rwp   = params .find. 'Rwp'
-        this%Rrev  = params .find. 'Rrev'
-        this%R2    = params .find. 'R2'
-
-        !change of units if different in params from DSHModel (units of this are: MPa; micrometer)
-        this%b    = this%b    * 1.e6_dp ![m] -> [um]
-        this%R    = this%R    * 1.e6_dp ![m] -> [um]
-        this%Rwd  = this%Rwd  * 1.e6_dp ![m] -> [um]
-        this%Rncg = this%Rncg*1.e6_dp ![m] -> [um]
-        this%Rwp  = this%Rwp  * 1.e6_dp ![m] -> [um]
-        this%Rrev = this%Rrev*1.e6_dp ![m] -> [um]
-        this%R2   = this%R2   * 1.e6_dp ![m] -> [um]
+        this%b     = (params .find. 'b')    * 1.e6_DP ![m] -> [um]
+        this%G     =  params .find. 'G'
+        this%alfa  =  params .find. 'alfa'
+        this%f     =  params .find. 'f'
+        this%tau0  =  params .find. 'tau0'
+        this%I     =  params .find. 'I'
+        this%R     = (params .find. 'R')    * 1.e6_dp ![m] -> [um]
+        this%Iwd   =  params .find. 'Iwd'
+        this%Rwd   = (params .find. 'Rwd')  * 1.e6_dp ![m] -> [um]
+        this%Rncg  = (params .find. 'Rncg') * 1.e6_dp ![m] -> [um]
+        this%beta1 =  params .find. 'beta1'
+        this%beta2 =  params .find. 'beta2'
+        this%Iwp   =  params .find. 'Iwp'
+        this%Rwp   = (params .find. 'Rwp')  * 1.e6_dp ![m] -> [um]
+        this%Rrev  = (params .find. 'Rrev') * 1.e6_dp ![m] -> [um]
+        this%R2    = (params .find. 'R2')   * 1.e6_dp ![m] -> [um]
 
         !Calculate dependent hardening parameters
         this%RHOwdMIN = MINFRAC* (this%Iwd)**2 / (this%Rwd)**2  ! Minfrac*rho_wd_sat

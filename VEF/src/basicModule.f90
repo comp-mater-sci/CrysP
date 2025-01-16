@@ -207,7 +207,7 @@ contains
       subroutine readAlTayConfigSection(cnfunit, cnf, info)
       use altayConfig
       integer, intent(in)                  :: cnfunit
-      type(altayConfigData), intent(inout):: cnf !< Root-level configuration structure of texture, microstructure and hardening
+      type(altayConfigData), target, intent(inout):: cnf !< Root-level configuration structure of texture, microstructure and hardening
       integer, intent(out)                 :: info
       !
       integer                       :: model_id, dm_id
@@ -216,6 +216,7 @@ contains
       integer                       :: i
       character(:), allocatable:: slip
       character(5):: buffer
+      type(Parameter), pointer:: param_ptr
 
       type(MapItem), dimension(2):: model_types = [MapItem('ALAMEL', modelAlamel), &
                                                    MapItem('FCTaylor', modelFCTaylor)]
@@ -268,7 +269,10 @@ contains
                 return
             endif
 
-            call parameter_set(cnf%hardening_parameters, 'n_slip_systems', size(cnf%deformation_mechanism, 3))
+
+            param_ptr => cnf%hardening_parameters .find. 'n_slip_systems'
+            param_ptr = size(cnf%deformation_mechanism, 3)
+
             ! the keyword is mapped to a proper model_id, we can instantly set it.
             call setModelType(cnf, model_id, info)
             if (info /= VEF_OK) return
@@ -285,14 +289,15 @@ contains
       integer, intent(in)                  :: cnfunit
         type(AltayConfigData), intent(inout):: cnf
       integer, intent(out)                 :: info
-        type(Parameter), dimension(:), allocatable:: params
+        type(Parameter), dimension(:), allocatable, target:: params
         integer:: hardening_model_id
         real(DP):: tmp(16)
         character(len = max_pathlen)          :: tmp_fname
         integer                             :: nparunit, ioerr, i
       !
       logical:: use_default_hardening
-        logical:: read_state_dummy
+      logical:: read_state_dummy
+      type(Parameter), pointer:: param_ptr
       !
         info = VEF_OK
             use_default_hardening = .true.
@@ -307,20 +312,28 @@ contains
                   select case(hardening_model_id)
                   case(HARDENING_VOCE)
                         if (readValue(cnfunit, tmp(1:5))) then
-                            call parameter_set(params, 'TIII1', tmp(1))
-                            call parameter_set(params, 'TIIIS', tmp(2))
-                            call parameter_set(params, 'TIVS', tmp(3))
-                            call parameter_set(params, 'THIII1', tmp(4))
-                            call parameter_set(params, 'THT', tmp(5))
-                              info = VEF_OK
+                            param_ptr => params .find. 'TIII1'
+                            param_ptr = tmp(1)
+                            param_ptr => params .find. 'TIIIS'
+                            param_ptr = tmp(2)
+                            param_ptr => params .find. 'TIVS'
+                            param_ptr = tmp(3)
+                            param_ptr => params .find. 'THIII1'
+                            param_ptr = tmp(4)
+                            param_ptr => params .find. 'THT'
+                            param_ptr = tmp(5)
+                            info = VEF_OK
                         endif
                   case(HARDENING_SWIFT)
                         ! Read one line
                         if (readValue(cnfunit, tmp(1:3))) then
-                            call parameter_set(params, 'crss0', tmp(1))
-                            call parameter_set(params, 'gamma0', tmp(2))
-                            call parameter_set(params, 'n', tmp(3))
-                              info = VEF_OK
+                            param_ptr => params .find. 'crss0'
+                            param_ptr = tmp(1)
+                            param_ptr => params .find. 'gamma0'
+                            param_ptr = tmp(2)
+                            param_ptr => params .find. 'n'
+                            param_ptr = tmp(3)
+                            info = VEF_OK
                         endif
                   !
                   case(HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP)
@@ -335,23 +348,38 @@ contains
                             read(nparunit, fmt = 100, err = 666, end = 666) tmp(i)
                         end do
 100                     format(F12.5)
-
-                            call parameter_set(params, 'b', tmp(1))
-                            call parameter_set(params, 'G', tmp(2))
-                            call parameter_set(params, 'alfa', tmp(3))
-                            call parameter_set(params, 'f', tmp(4))
-                            call parameter_set(params, 'tau0', tmp(5))
-                            call parameter_set(params, 'I', tmp(6))
-                            call parameter_set(params, 'R', tmp(7))
-                            call parameter_set(params, 'Iwd', tmp(8))
-                            call parameter_set(params, 'Rwd', tmp(9))
-                            call parameter_set(params, 'Rncg', tmp(10))
-                            call parameter_set(params, 'beta1', tmp(11))
-                            call parameter_set(params, 'beta2', tmp(12))
-                            call parameter_set(params, 'Iwp', tmp(13))
-                            call parameter_set(params, 'Rwp', tmp(14))
-                            call parameter_set(params, 'Rrev', tmp(15))
-                            call parameter_set(params, 'R2', tmp(16))
+                            param_ptr => params .find. 'b'
+                            param_ptr = tmp(1)
+                            param_ptr => params .find. 'G'
+                            param_ptr = tmp(2)
+                            param_ptr => params .find. 'alfa'
+                            param_ptr = tmp(3)
+                            param_ptr => params .find. 'f'
+                            param_ptr = tmp(4)
+                            param_ptr => params .find. 'tau0'
+                            param_ptr = tmp(5)
+                            param_ptr => params .find. 'I'
+                            param_ptr = tmp(6)
+                            param_ptr => params .find. 'R'
+                            param_ptr = tmp(7)
+                            param_ptr => params .find. 'Iwd'
+                            param_ptr = tmp(8)
+                            param_ptr => params .find. 'Rwd'
+                            param_ptr = tmp(9)
+                            param_ptr => params .find. 'Rncg'
+                            param_ptr = tmp(10)
+                            param_ptr => params .find. 'beta1'
+                            param_ptr = tmp(11)
+                            param_ptr => params .find. 'beta2'
+                            param_ptr = tmp(12)
+                            param_ptr => params .find. 'Iwp'
+                            param_ptr = tmp(13)
+                            param_ptr => params .find. 'Rwp'
+                            param_ptr = tmp(14)
+                            param_ptr => params .find. 'Rrev'
+                            param_ptr = tmp(15)
+                            param_ptr => params .find. 'R2'
+                            param_ptr = tmp(16)
                         if (.not. readValue(cnfunit, read_state_dummy)) return
                   end select
                 cnf%hardening_parameters = params

@@ -35,30 +35,24 @@ contains
 
     subroutine swift_validate_parameters(this, params)
         class(HardeningModelSwift), intent(in)  :: this
-        type(Parameter), dimension(:), intent(in):: params
-        character(*), parameter:: PROC_NAME = 'validate_parameters'
+        type(Parameter), dimension(:), target, intent(in):: params
 
         call hardening_model_validate_parameters(this, params)
 
-        if ((params .find. 'gamma0') <= 0._dp)  &
-            call log_error(MODULE_NAME, PROC_NAME, ERR_VAL, 'Initial strain must be greater than 0')
-        if ((params .find. 'n') <= 0._dp)       &
-            call log_error(MODULE_NAME, PROC_NAME, ERR_VAL, 'N must be greater than 0')
-        if ((params .find. 'crss0') <= 0._dp)   &
-            call log_error(MODULE_NAME, PROC_NAME, ERR_VAL, 'CRSS0 must be greater than 0')
+        call parameter_check_bounds(params .find. 'gamma0', lower=0._DP, lower_inclusive=.false.)
+        call parameter_check_bounds(params .find. 'n',      lower=0._DP, lower_inclusive=.false.)
+        call parameter_check_bounds(params .find. 'crss0',  lower=0._DP, lower_inclusive=.false.)
     end subroutine swift_validate_parameters
 
     subroutine swift_init(this, params)
         class(HardeningModelSwift),   intent(inout)   :: this
-        type(Parameter), allocatable, intent(in):: params(:)
-        real(DP)    :: crss0
+        type(Parameter), allocatable, target, intent(in):: params(:)
 
         call hardening_model_init(this, params)
 
         this%gamma0 = params .find. 'gamma0'
         this%n = params .find. 'n'
-        crss0 = params .find. 'crss0'
-        this%k = crss0 / (this%gamma0**this%n)
+        this%k = (params .find. 'crss0') / (this%gamma0**this%n)
     end subroutine swift_init
 
     function swift_get_crss(this, grain, sum_slip) result(crss)

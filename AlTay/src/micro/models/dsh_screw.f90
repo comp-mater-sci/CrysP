@@ -19,8 +19,8 @@ contains
 
     subroutine dsh_screw_init(this, params)
         class(HardeningModelDSHScrew), intent(inout):: this
-        type(Parameter), allocatable, intent(in):: params(:)
         real(DP):: screwdir(24, 3)
+        type(Parameter), allocatable, target, intent(in):: params(:)
         integer:: i
 
         !The screw direction is the cross product of the edge direction and the slip plane normal.
