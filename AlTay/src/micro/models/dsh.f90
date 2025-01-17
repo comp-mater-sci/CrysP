@@ -70,8 +70,6 @@ module dsh
         procedure:: f_crss
         procedure:: f_kocksmeck
         procedure:: bp_upd_ncg_wd
-        procedure:: rungeKutta
-        procedure:: dwp_dt
         procedure:: upd_ncg_wp
         procedure:: upd_cb
     end type
@@ -243,10 +241,11 @@ contains
                 RHObausch = RHObausch+abs(rho_wp_a)
             else
                 !|RHOwp| gets larger, following numeric time integration (4th order Runge-Kutta)
-               this%state(grain)%CBB(r(i))%RHOwp = this%rungeKutta(merge(-rho_wp_a, rho_wp_a, flux_reversal), &
-                                                                   time, &
-                                                                   wpFLUX, &
-                                                                   this%state(grain)%CBB(r(i))%RHOwdHOM)
+               this%state(grain)%CBB(r(i))%RHOwp = runge_kutta(merge(-rho_wp_a, rho_wp_a, flux_reversal), &
+                                                               time, &
+                                                               dwp_dt, &
+                                                               [this%iwp, this%rwp, wpflux, this%state(grain)%CBB(r(i))%RHOwdHOM])
+
             end if
         end do
 
@@ -260,6 +259,15 @@ contains
 
         !Calculate Critical Resolved Shear Stresses
         call this%F_CRSS(grain)
+
+    contains
+        real(DP) function dwp_dt(wp, args) result(res)
+            real(DP), intent(in):: wp
+            real(DP), dimension(:), intent(in):: args ![iwp, rwp, fl, wd]
+
+
+            res = (sign(1._DP, args(3)) * args(1)*sqrt(args(4)+abs(wp)) - args(2)*wp) * abs(args(3))
+        end function
     end subroutine
 
     !>Returns RHO_b, the value of RHO at the end of an interval (a, b) for the following differential equation:
@@ -274,32 +282,6 @@ contains
       kock = exp(-0.5D0*RR*delta_g/this%b)
       kock = (II/RR * (1.D0-kock) + sqrt(RHO_a) * kock)**2
     end function
-
-    !>4th order Runge-Kutta approximation of the differential equation given by d(wp)/dt = F(wp)
-    real(DP) function rungeKutta(this, wpini, deltaT, fl, wd) result(rk)
-        class(HardeningModelDSH), intent(in)    ::  this
-        real(DP), intent(in)                    ::  wpini,  &
-                                                    deltaT, &
-                                                    fl,     &
-                                                    wd
-        real(DP), dimension(4)                  ::  K
-
-        K(1) = deltaT*this%dwp_dt(wpini, fl, wd)
-        K(2) = deltaT*this%dwp_dt(wpini+K(1) / 2.D0, fl, wd)
-        K(3) = deltaT*this%dwp_dt(wpini+K(2) / 2.D0, fl, wd)
-        K(4) = deltaT*this%dwp_dt(wpini+K(3), fl, wd)
-
-        rk = wpini + (K(1) + 2.D0*K(2) + 2.D0*K(3) + K(4)) / 6.D0
-    end function rungeKutta
-
-    real(DP) function dwp_dt(this, wp, fl, wd) result(res)
-        class(HardeningModelDSH), intent(in)    ::  this
-        real(DP), intent(in)                    ::  wp,     &
-                                                    fl,     &
-                                                    wd
-
-        res = (sign(1.D0, fl) * this%Iwp*sqrt(wd+abs(wp)) - this%Rwp*wp) * abs(fl)
-    end function dwp_dt
 
     subroutine bp_UPD_ncg_wd(this, rdr, SV_a, SV_b, gamma_new)
         class(HardeningModelDSH), intent(in)    ::  this
