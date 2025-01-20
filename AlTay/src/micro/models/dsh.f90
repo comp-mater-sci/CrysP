@@ -277,36 +277,36 @@ contains
         real(DP), intent(in)                    ::  gamma_new
 
         real(DP)                                ::  RHOwdLOC,       &
-                                                    RHOwdHOM,       &
                                                     accGAMMA_new,   &
                                                     RHOwd_ini,      &
                                                     RHOwd
 
-        RHOwdHOM     = SV_a%CBB(rdr)%RHOwdHOM
         accGAMMA_new = SV_a%CBB(rdr)%accGAMMA_new
         RHOwd_ini    = SV_a%CBB(rdr)%RHOwd_ini
 
-        if (RHOwdHOM > this%RHOwdMIN) then
-            if (rdr  /=  SV_a%ActiveCBB(1) .and. rdr  /=  SV_a%ActiveCBB(2)) then  ! if the wall was NOT active in prev. inc.
-                accGAMMA_new = accGAMMA_new+GAMMA_new
+        associate (rhowdhom => SV_a%CBB(rdr)%RHOwdHOM)
+            if (RHOwdHOM > this%RHOwdMIN) then
+                if (rdr  /=  SV_a%ActiveCBB(1) .and. rdr  /=  SV_a%ActiveCBB(2)) then  ! if the wall was NOT active in prev. inc.
+                    accGAMMA_new = accGAMMA_new+GAMMA_new
+                else
+                    accGAMMA_new = GAMMA_new
+                    RHOwd_ini = RHOwdHOM
+                end if
+
+                RHOwdLOC = -tanh(this%beta1*accGAMMA_new) * exp(-this%beta1*accGAMMA_new) * RHOwd_ini*this%beta2
+                RHOwdHOM = RHOwdHOM*exp(-this%Rncg*GAMMA_new/this%b)
+                RHOwd = RHOwdHOM+RHOwdLOC
+                if (RHOwd  <  this%RHOwdMIN) RHOwd = this%RHOwdMIN
             else
-                accGAMMA_new = GAMMA_new
-                RHOwd_ini = RHOwdHOM
+                RHOwdHOM = this%RHOwdMIN
+                RHOwd = this%RHOwdMIN
             end if
 
-            RHOwdLOC = -tanh(this%beta1*accGAMMA_new) * exp(-this%beta1*accGAMMA_new) * RHOwd_ini*this%beta2
-            RHOwdHOM = RHOwdHOM*exp(-this%Rncg*GAMMA_new/this%b)
-            RHOwd = RHOwdHOM+RHOwdLOC
-            if (RHOwd  <  this%RHOwdMIN) RHOwd = this%RHOwdMIN
-        else
-            RHOwdHOM = this%RHOwdMIN
-            RHOwd = this%RHOwdMIN
-        end if
-
-        SV_b%CBB(rdr)%RHOwd         = RHOwd
-        SV_b%CBB(rdr)%RHOwdHOM      = RHOwdHOM
-        SV_b%CBB(rdr)%accGAMMA_new  = accGAMMA_new
-        SV_b%CBB(rdr)%RHOwd_ini     = RHOwd_ini
+            SV_b%CBB(rdr)%RHOwd         = RHOwd
+            SV_b%CBB(rdr)%RHOwdHOM      = RHOwdHOM
+            SV_b%CBB(rdr)%accGAMMA_new  = accGAMMA_new
+            SV_b%CBB(rdr)%RHOwd_ini     = RHOwd_ini
+        end associate
     end subroutine
 
     subroutine upd_ncg_wp(this, RHOwp_a, RHOwp_b, gamma_new)
