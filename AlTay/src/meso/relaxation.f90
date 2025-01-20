@@ -6,11 +6,11 @@ module relaxation_module
 
     !Definition of relaxations in boundary frame
     integer, dimension(3, 3, 2), parameter:: RELAXATIONS = reshape([0, 0, 0, &
-                                                                            0, 0, 0, &
-                                                                            1, 0, 0, &
-                                                                            0, 0, 0, &
-                                                                            0, 0, 0, &
-                                                                            0, 1, 0], shape(RELAXATIONS))
+                                                                    0, 0, 0, &
+                                                                    1, 0, 0, &
+                                                                    0, 0, 0, &
+                                                                    0, 0, 0, &
+                                                                    0, 1, 0], shape(RELAXATIONS))
 
     !Relaxation is only defined at cluster level even though its components are associated to individual grains because defining it
     !at grain level would require extending the grain type for different mesoscopic models, which would clash with possible
@@ -49,7 +49,7 @@ contains
             !Invert direction of relaxations for second grain
             if (i == 2) relaxation_crystal_frame = -relaxation_crystal_frame
             !Rotational component of relaxation
-            this%spin_coeffs(3*(i-1)+1:3*i) = -convert_spin(relaxation_crystal_frame)
+            this%spin_coeffs(3*(i-1)+1:3*i) = convert_spin(relaxation_crystal_frame)
             !Deviatoric component of relaxation
             this%taylor_coeffs(5*(i-1)+1:5*i) = convert_stress_strain_space(symmetric_part(relaxation_crystal_frame))
         end do

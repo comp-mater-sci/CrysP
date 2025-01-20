@@ -187,8 +187,8 @@ contains
             call grain_%set_crss(micro_get_crss(index_cluster, grain_%sum_slip))
 
             orientation_increment = UNIT_MATRIX_3X3 &
-                                    +(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame
-                                    -convert_spin(matmul(grain_%get_spin_coeffs(), slip_rates))    !>Spin induced by activation of slip systems
+                                    -(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame
+                                    +convert_spin(matmul(grain_%get_spin_coeffs(), slip_rates))    !>Spin induced by activation of slip systems
             grain_%orientation = matmul(orientation_increment, grain_%orientation)
         end associate
     end subroutine
