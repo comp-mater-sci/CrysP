@@ -227,7 +227,7 @@ contains
         !Update dislocation densities
         RHObausch = 0._DP
         do i = 1, 2  ! Loop over 2 currently generated walls
-            this%state(grain)%CBB(r(i))%RHOwd = F_KocksMeck(this%b, SVa%CBB(r(i))%RHOwd, sum_slip_rates_110(r(i))*time, this%Iwd, this%Rwd)
+            this%state(grain)%CBB(r(i))%RHOwd = kocks_mecking(this%b, SVa%CBB(r(i))%RHOwd, sum_slip_rates_110(r(i))*time, this%Iwd, this%Rwd)
             this%state(grain)%CBB(r(i))%RHOwdHOM = this%state(grain)%CBB(r(i))%RHOwd
 
             rho_wp_a = SVa%CBB(r(i))%RHOwp
@@ -268,19 +268,6 @@ contains
             res = (sign(1._DP, args(3)) * args(1)*sqrt(args(4)+abs(wp)) - args(2)*wp) * abs(args(3))
         end function
     end subroutine
-
-    !>Returns RHO_b, the value of RHO at the end of an interval (a, b) for the following differential equation:
-    !>d(RHO)/d(g) = 1/this%b * ( II*sqrt(RHO) - RR*RHO )
-    real(DP) function F_KocksMeck(b, RHO_a, delta_g, II, RR) result(kock)
-        real(DP), intent(in)                    ::  b, &
-                                                    RHO_a,      &
-                                                    delta_g,    &
-                                                    II,         &
-                                                    RR
-
-      kock = exp(-0.5D0*RR*delta_g/b)
-      kock = (II/RR * (1.D0-kock) + sqrt(RHO_a) * kock)**2
-    end function
 
     subroutine bp_UPD_ncg_wd(this, rdr, SV_a, SV_b, gamma_new)
         class(HardeningModelDSH), intent(in)    ::  this
@@ -346,10 +333,10 @@ contains
         if(RHObausch > 0._DP) then
             Reffective = this%R+this%R2*RHObausch / (2.D0*this%RHOwpSAT)
             RHO_b = merge(RHO_a, &
-                          F_KocksMeck(this%b, RHO_a, SUMabsGam, this%I, Reffective), &
+                          kocks_mecking(this%b, RHO_a, SUMabsGam, this%I, Reffective), &
                           this%I*sqrt(RHO_a) - Reffective*RHO_a <= 0._DP)
         else
-            RHO_b = F_KocksMeck(this%b, RHO_a, SUMabsGam, this%I, this%R)
+            RHO_b = kocks_mecking(this%b, RHO_a, SUMabsGam, this%I, this%R)
         end if
     end subroutine upd_cb
 
