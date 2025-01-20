@@ -278,8 +278,7 @@ contains
                                                     II,         &
                                                     RR
 
-      kock = exp(-0.5D0*RR*delta_g/b)
-      kock = (II/RR * (1.D0-kock) + sqrt(RHO_a) * kock)**2
+      kock = (II/RR * (1.D0-kock) + sqrt(RHO_a) * exp(-0.5D0*RR*delta_g/b))**2
     end function
 
     subroutine bp_UPD_ncg_wd(this, rdr, SV_a, SV_b, gamma_new)
