@@ -38,7 +38,6 @@ module dsh
     !Note that only the BCC24 slip system set is supported.
     type, extends(HardeningModel), abstract:: HardeningModelDSH
         type(StatVar), dimension(:), allocatable    ::  state
-        real(DP), dimension(:,:,:), allocatable     ::  crss
         real(DP)                                    ::  b,                      &
                                                         G,                      &
                                                         alfa,                   &
@@ -67,7 +66,6 @@ module dsh
         procedure:: get_crss       => dsh_get_crss
         procedure:: update_state       => dsh_update_state
         procedure:: finalize       => dsh_finalize
-        procedure:: f_crss
     end type
 
     public  ::  HardeningModelDSH, &
@@ -161,7 +159,6 @@ contains
 
         n_grains = params .find. 'n_grains'
         allocate(this%state(n_grains))
-        allocate(this%crss(n_grains, 2, this%nss))
         this%state(1)%RHOcb            = MINFRAC * (this%I)**2 / (this%R)**2  ! Minfrac*rho_cb_sat
         this%state(1)%CBB%RHOwd        = this%RHOwdMIN
         this%state(1)%CBB%RHOwp        = 0._DP
@@ -173,12 +170,6 @@ contains
 
         this%effslashb       = eff/this%b
         this%alfa_G_b_eff    = this%alfa*this%G*this%b*eff
-
-        !Call F_crss on first grain and copy result to other grains
-        call F_crss(this, 1)
-        do i = 2, size(this%state)
-            this%crss(i, :,:) = this%crss(1, :,:)
-        end do
     end subroutine dsh_init
 
     subroutine dsh_update_state(this, grain, time, slip_rates)
@@ -286,9 +277,6 @@ contains
 
         !Update indices of active CBBs
         this%state(grain)%activecbb = r(:2)
-        !Calculate Critical Resolved Shear Stresses
-        call this%F_CRSS(grain)
-
     contains
         !Unfortunately, this is the only way to formulate 'partial function application' that IFX can handle.
         real(DP) function dwp_dt(wp, args) result(res)
@@ -301,42 +289,8 @@ contains
 
     subroutine F_CRSS(this, grain)
         class(HardeningModelDSH), intent(inout)    :: this
-        type(StatVar):: SV
         integer, intent(in):: grain
-        real(DP):: tau_CB, CRSS_0_CB
-        real(DP), dimension(2, this%nss):: tau_CBB
-        integer:: j, s, i
-        real(DP):: signfac
-        real(DP), dimension(6):: wpcontr, wdcontr
-
-        SV = this%state(grain)
-        !Slip systems not allowed to become active retain initialization value of-1.0
-        this%crss(grain, :,:) = -1.D0
-
-        !CRSS within cells & CBs
-        tau_CB = this%alfa*this%G*this%b*sqrt(SV%RHOcb)
-
-        !contributions from tau_0 and CBs to CRSS
-        CRSS_0_CB = this%tau0 + (1.D0-this%f) * tau_CB
-
-        !Calc. CRSS for each slip system s, for the sense of slip j
-        do j = 1, 2
-            signfac = 3.D0-2.D0*dble(j)  ! 1 for j = 1; -1 for j = 2
-            do s = 1, this%nss
-                !wp-and wd-contributions from all CBBs i
-                do i = 1, 6
-                    wpcontr(i)=sqrt(abs(SV%CBB(i)%RHOwp)) * signfac*this%alfa_G_b_eff(s, i) * sign(1.D0, SV%CBB(i)%RHOwp)
-                    if (wpcontr(i) < 0.0_DP) wpcontr(i) = 0._DP  ! Heaviside bracket
-                    wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*abs(this%alfa_G_b_eff(s, i))
-                end do
-                !CRSS within CBB = wp-and wd-contributions for all 6 walls
-                tau_CBB(j, s)=sum(wpcontr)+sum(wdcontr)
-                !C.R.S.S. for the "two-phase composite"
-                this%crss(grain, j, s)= CRSS_0_CB+this%f*tau_CBB(j, s)
-            end do
-        end do
-
-    end subroutine
+            end subroutine
 
     function dsh_get_crss(this, grain, sum_slip) result(crss)
         class(HardeningModelDSH), intent(in)    :: this
@@ -344,13 +298,48 @@ contains
         real(DP), intent(in)                    :: sum_slip
         real(DP), dimension(2, this%nss)         :: crss
 
-        crss = this%crss(grain, :,:)
+        integer:: j, s, i
+        real(DP):: tau_CB, &
+                   CRSS_0_CB, &
+                   tau_CBB(2, this%nss), &
+                   wpcontr(6), &
+                   wdcontr(6)
+
+        !Some systems are not allowed to become active
+        crss = REAL_DP_MAX_VAL
+
+        associate (sv => this%state(grain))
+            !CRSS within cells & CBs
+            tau_CB = this%alfa*this%G*this%b*sqrt(SV%RHOcb)
+
+            !contributions from tau_0 and CBs to CRSS
+            CRSS_0_CB = this%tau0 + (1.D0-this%f) * tau_CB
+
+            !Calc. CRSS for each slip system s, for the sense of slip j
+            do j = 1, 2
+                do s = 1, this%nss
+                    !wp-and wd-contributions from all CBBs i
+                    do i = 1, 6
+                        wpcontr(i)= sqrt(abs(SV%CBB(i)%RHOwp)) &
+                                    * (-1)**(j-1) &
+                                    * this%alfa_G_b_eff(s, i) &
+                                    * sign(1.D0, SV%CBB(i)%RHOwp)
+                        if (wpcontr(i) < 0.0_DP) &
+                            wpcontr(i) = 0._DP  ! Heaviside bracket
+                        wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*abs(this%alfa_G_b_eff(s, i))
+                    end do
+                    !CRSS within CBB = wp-and wd-contributions for all 6 walls
+                    tau_CBB(j, s)=sum(wpcontr)+sum(wdcontr)
+                    !C.R.S.S. for the "two-phase composite"
+                    crss(j, s)= CRSS_0_CB+this%f*tau_CBB(j, s)
+                end do
+            end do
+        end associate
     end function
 
     subroutine dsh_finalize(this)
         class(HardeningModelDSH), intent(inout)    :: this
 
-        deallocate(this%crss)
         deallocate(this%state)
     end subroutine
 end module
