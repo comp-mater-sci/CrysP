@@ -174,8 +174,10 @@ contains
         this%effslashb       = eff/this%b
         this%alfa_G_b_eff    = this%alfa*this%G*this%b*eff
 
-        do i = 1, size(this%state)
-            call F_CRSS(this, i)
+        !Call F_crss on first grain and copy result to other grains
+        call F_crss(this, 1)
+        do i = 2, size(this%state)
+            this%crss(i, :,:) = this%crss(1, :,:)
         end do
     end subroutine dsh_init
 
@@ -184,16 +186,15 @@ contains
         integer, intent(in)                         ::  grain
         real(DP), intent(in)                        ::  time
         real(DP), dimension(this%nss), intent(in)   ::  slip_rates
-        type(StatVar)                               ::  SVa
         real(DP)                                    ::  RHObausch   , &
                                                         rho_wp_a, &
-                                                        wpflux
+                                                        wpflux, &
+                                                        r_effective, &
+                                                        sum_slip_active_cbb
         real(DP), dimension(6)                      ::  sum_slip_rates_110
         integer, dimension(6)                       ::  r
         integer                                     ::  i
         logical:: flux_reversal
-
-        SVa = this%state(grain)
 
         !>Calculate quantities of slip rates and slips
         !>Identify currently generated and non-currently generated walls
@@ -220,80 +221,71 @@ contains
             end if
         end do
 
-
         !Update dislocation densities
-        RHObausch = 0._DP
-        do i = 1, 2  ! Loop over 2 currently generated walls
-            this%state(grain)%CBB(r(i))%RHOwd = kocks_mecking(this%b, SVa%CBB(r(i))%RHOwd, sum_slip_rates_110(r(i))*time, this%Iwd, this%Rwd)
-            this%state(grain)%CBB(r(i))%RHOwdHOM = this%state(grain)%CBB(r(i))%RHOwd
+        associate (sv => this%state(grain))
+            RHObausch = 0._DP
+            !Loop over 2 currently generated walls
+            do i = 1, 2
+                associate(cur_cbb => sv%cbb(r(i)))
+                    cur_cbb%RHOwd = kocks_mecking(this%b, cur_cbb%RHOwd, sum_slip_rates_110(r(i))*time, this%Iwd, this%Rwd)
+                    cur_cbb%RHOwdHOM = cur_cbb%RHOwd
 
-            rho_wp_a = SVa%CBB(r(i))%RHOwp
-            wpFLUX = this%effslashb(:,r(i)) .dot. slip_rates
-            flux_reversal = wpFLUX*rho_wp_a  <  0._DP
+                    rho_wp_a = cur_cbb%RHOwp
+                    wpFLUX = this%effslashb(:,r(i)) .dot. slip_rates
+                    flux_reversal = wpFLUX*rho_wp_a  <  0._DP
 
-            if (flux_reversal .and. abs(rho_wp_a) > this%RHOwpLOW) then
-                !|RHOwp| gets smaller, following analytic time integration
-                this%state(grain)%CBB(r(i))%RHOwp = rho_wp_a*exp(-this%Rrev*abs(wpFLUX) * time)
-                RHObausch = RHObausch+abs(rho_wp_a)
-            else
-                !|RHOwp| gets larger, following numeric time integration (4th order Runge-Kutta)
-               this%state(grain)%CBB(r(i))%RHOwp = runge_kutta(merge(-rho_wp_a, rho_wp_a, flux_reversal), &
-                                                               time, &
-                                                               dwp_dt, &
-                                                               [this%iwp, this%rwp, wpflux, this%state(grain)%CBB(r(i))%RHOwdHOM])
-
-            end if
-        end do
-
-        associate (sum_slip_active_cbb => sum(sum_slip_rates_110(r(:2)))*time, &
-                   total_slip          => sum(abs(slip_rates))*time, &
-                   sv                  => this%state(grain), &
-                   rho                 => this%state(grain)%rhocb)
-
-            do i = 3, 6  ! Loop over 4 non-currently generated walls
-                associate (rhowp => this%state(grain)%CBB(r(i))%RHOwp, &
-                           rhowdhom => SV%CBB(r(i))%RHOwdHOM, &
-                           rhowd_ini => SV%CBB(r(i))%RHOwd_ini, &
-                           accGAMMA_new => SV%CBB(r(i))%accGAMMA_new, &
-                           rhowd => sv%cbb(r(i))%rhowd)
-
-                    if (RHOwdHOM > this%RHOwdMIN) then
-                        if (all(sv%activecbb /= r(i))) then  ! if the wall was NOT active in prev. inc.
-                            accGAMMA_new = accGAMMA_new+sum_slip_active_cbb
-                        else
-                            accGAMMA_new = sum_slip_active_cbb
-                            RHOwd_ini = RHOwdHOM
-                        end if
-
-                        RHOwdHOM = RHOwdHOM*exp(-this%Rncg*sum_slip_active_cbb/this%b)
-                        RHOwd = RHOwdHOM-tanh(this%beta1*accGAMMA_new) * exp(-this%beta1*accGAMMA_new) * RHOwd_ini*this%beta2
-                        if (RHOwd < this%RHOwdMIN) &
-                            RHOwd = this%RHOwdMIN
+                    if (flux_reversal .and. abs(rho_wp_a) > this%RHOwpLOW) then
+                        !|RHOwp| gets smaller, following analytic time integration
+                        cur_cbb%RHOwp = rho_wp_a*exp(-this%Rrev*abs(wpFLUX) * time)
+                        RHObausch = RHObausch+abs(rho_wp_a)
                     else
-                        RHOwdHOM = this%RHOwdMIN
-                        RHOwd = this%RHOwdMIN
+                        !|RHOwp| gets larger, following numeric time integration (4th order Runge-Kutta)
+                       cur_cbb%RHOwp = runge_kutta(merge(-rho_wp_a, rho_wp_a, flux_reversal), &
+                                                   time, &
+                                                   dwp_dt, & !See definition of dwp_dt for the meaning of the list of variables below
+                                                   [this%iwp, this%rwp, wpflux, this%state(grain)%CBB(r(i))%RHOwdHOM])
                     end if
-
-                    rhowp = merge(RHOwp*exp(-this%Rncg*sum_slip_active_cbb/this%b), &
-                              this%RHOwpMIN*merge(1, -1, rhowp >= 0._DP), &
-                              abs(RHOwp) > this%RHOwpMIN)
                 end associate
             end do
 
+            !Loop over 4 non-currently generated walls
+            sum_slip_active_cbb = sum(sum_slip_rates_110(r(:2)))*time
+            do i = 3, 6
+                associate (cur_cbb => sv%cbb(r(i)))
+                    if (cur_cbb%RHOwdHOM > this%RHOwdMIN) then
+                        if (all(sv%activecbb /= r(i))) then  ! if the wall was NOT active in prev. inc.
+                            cur_cbb%accGAMMA_new = cur_cbb%accGAMMA_new+sum_slip_active_cbb
+                        else
+                            cur_cbb%accGAMMA_new = sum_slip_active_cbb
+                            cur_cbb%RHOwd_ini = cur_cbb%RHOwdHOM
+                        end if
 
-            !Update CB
-            if(RHObausch > 0._DP) then
-                associate (r_effective => this%R+this%R2*RHObausch / (2.D0*this%RHOwpSAT))
-                    if (this%I*sqrt(RHO) - r_effective*rho > 0._DP) &
-                        rho = kocks_mecking(this%b, rho, total_slip, this%I, r_effective)
+                        cur_cbb%RHOwdHOM = cur_cbb%RHOwdHOM*exp(-this%Rncg*sum_slip_active_cbb/this%b)
+                        cur_cbb%RHOwd = cur_cbb%RHOwdHOM-tanh(this%beta1*cur_cbb%accGAMMA_new)*exp(-this%beta1*cur_cbb%accGAMMA_new)*cur_cbb%RHOwd_ini*this%beta2
+                        if (cur_cbb%RHOwd < this%RHOwdMIN) &
+                            cur_cbb%RHOwd = this%RHOwdMIN
+                    else
+                        cur_cbb%RHOwdHOM = this%RHOwdMIN
+                        cur_cbb%RHOwd = this%RHOwdMIN
+                    end if
+
+                    cur_cbb%rhowp = merge(cur_cbb%RHOwp*exp(-this%Rncg*sum_slip_active_cbb/this%b), &
+                                          this%RHOwpMIN*merge(1, -1, cur_cbb%rhowp >= 0._DP), &
+                                          abs(cur_cbb%RHOwp) > this%RHOwpMIN)
                 end associate
+            end do
+
+            if(RHObausch > 0._DP) then
+                r_effective = this%R+this%R2*RHObausch / (2.D0*this%RHOwpSAT)
+                if (this%I*sqrt(sv%rhocb) - r_effective*sv%rhocb > 0._DP) &
+                    sv%rhocb = kocks_mecking(this%b, sv%rhocb, sum(abs(slip_rates))*time, this%I, r_effective)
             else
-                RHO = kocks_mecking(this%b, RHO, total_slip, this%I, this%R)
+                sv%rhocb = kocks_mecking(this%b, sv%rhocb, sum(abs(slip_rates))*time, this%I, this%R)
             end if
         end associate
 
+        !Update indices of active CBBs
         this%state(grain)%activecbb = r(:2)
-
         !Calculate Critical Resolved Shear Stresses
         call this%F_CRSS(grain)
 
