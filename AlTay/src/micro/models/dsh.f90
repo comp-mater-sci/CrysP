@@ -68,7 +68,6 @@ module dsh
         procedure:: update_state       => dsh_update_state
         procedure:: finalize       => dsh_finalize
         procedure:: f_crss
-        procedure:: f_kocksmeck
         procedure:: bp_upd_ncg_wd
         procedure:: upd_ncg_wp
         procedure:: upd_cb
@@ -203,7 +202,7 @@ contains
         !>Calculate quantities of slip rates and slips
         !>Identify currently generated and non-currently generated walls
         do i = 1, 6
-            sum_slip_rates_110(i) = sum(abs(slip_rates(2*i-1:2*i)))  ! Sum of slip rates for the systems corresponding to each 110-plane
+            sum_slip_rates_110(i) = sum(abs(slip_rates(2*i-1:2*i)))  !Sum of slip rates for the systems of each 110-plane
         end do
 
         !r(1) = plane with largest slip
@@ -228,7 +227,7 @@ contains
         !Update dislocation densities
         RHObausch = 0._DP
         do i = 1, 2  ! Loop over 2 currently generated walls
-            this%state(grain)%CBB(r(i))%RHOwd = this%F_KocksMeck(SVa%CBB(r(i))%RHOwd, sum_slip_rates_110(r(i))*time, this%Iwd, this%Rwd)
+            this%state(grain)%CBB(r(i))%RHOwd = F_KocksMeck(this%b, SVa%CBB(r(i))%RHOwd, sum_slip_rates_110(r(i))*time, this%Iwd, this%Rwd)
             this%state(grain)%CBB(r(i))%RHOwdHOM = this%state(grain)%CBB(r(i))%RHOwd
 
             rho_wp_a = SVa%CBB(r(i))%RHOwp
@@ -261,10 +260,10 @@ contains
         call this%F_CRSS(grain)
 
     contains
+        !Unfortunately, this is the only way to formulate 'partial function application' that IFX can handle.
         real(DP) function dwp_dt(wp, args) result(res)
             real(DP), intent(in):: wp
             real(DP), dimension(:), intent(in):: args ![iwp, rwp, fl, wd]
-
 
             res = (sign(1._DP, args(3)) * args(1)*sqrt(args(4)+abs(wp)) - args(2)*wp) * abs(args(3))
         end function
@@ -272,14 +271,14 @@ contains
 
     !>Returns RHO_b, the value of RHO at the end of an interval (a, b) for the following differential equation:
     !>d(RHO)/d(g) = 1/this%b * ( II*sqrt(RHO) - RR*RHO )
-    real(DP) function F_KocksMeck(this, RHO_a, delta_g, II, RR) result(kock)
-        class(HardeningModelDSH), intent(in)    ::  this
-        real(DP), intent(in)                    ::  RHO_a,      &
+    real(DP) function F_KocksMeck(b, RHO_a, delta_g, II, RR) result(kock)
+        real(DP), intent(in)                    ::  b, &
+                                                    RHO_a,      &
                                                     delta_g,    &
                                                     II,         &
                                                     RR
 
-      kock = exp(-0.5D0*RR*delta_g/this%b)
+      kock = exp(-0.5D0*RR*delta_g/b)
       kock = (II/RR * (1.D0-kock) + sqrt(RHO_a) * kock)**2
     end function
 
@@ -347,10 +346,10 @@ contains
         if(RHObausch > 0._DP) then
             Reffective = this%R+this%R2*RHObausch / (2.D0*this%RHOwpSAT)
             RHO_b = merge(RHO_a, &
-                          this%F_KocksMeck(RHO_a, SUMabsGam, this%I, Reffective), &
+                          F_KocksMeck(this%b, RHO_a, SUMabsGam, this%I, Reffective), &
                           this%I*sqrt(RHO_a) - Reffective*RHO_a <= 0._DP)
         else
-            RHO_b = this%F_KocksMeck(RHO_a, SUMabsGam, this%I, this%R)
+            RHO_b = F_KocksMeck(this%b, RHO_a, SUMabsGam, this%I, this%R)
         end if
     end subroutine upd_cb
 
