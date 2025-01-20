@@ -68,9 +68,6 @@ module dsh
         procedure:: update_state       => dsh_update_state
         procedure:: finalize       => dsh_finalize
         procedure:: f_crss
-        procedure:: bp_upd_ncg_wd
-        procedure:: upd_ncg_wp
-        procedure:: upd_cb
     end type
 
     public  ::  HardeningModelDSH, &
@@ -189,7 +186,6 @@ contains
         real(DP), dimension(this%nss), intent(in)   ::  slip_rates
         type(StatVar)                               ::  SVa
         real(DP)                                    ::  RHObausch   , &
-                                                        sum_slip_active_cbb, &
                                                         rho_wp_a, &
                                                         wpflux
         real(DP), dimension(6)                      ::  sum_slip_rates_110
@@ -208,7 +204,9 @@ contains
         !r(1) = plane with largest slip
         !r(2) = plane with 2nd largest slip
         !r(3:6) = remaining planes (unordered)
-        r(1:2) = merge([1, 2],[2, 1], sum_slip_rates_110(1) >= sum_slip_rates_110(2))
+        r(1:2) = merge([1, 2], &
+                       [2, 1], &
+                       sum_slip_rates_110(1) >= sum_slip_rates_110(2))
         do i = 3, 6
             if (sum_slip_rates_110(i) > sum_slip_rates_110(r(1))) then
                 r(i) = r(2)
@@ -222,7 +220,6 @@ contains
             end if
         end do
 
-        this%state(grain)%activecbb = r(:2)
 
         !Update dislocation densities
         RHObausch = 0._DP
@@ -248,13 +245,54 @@ contains
             end if
         end do
 
-        sum_slip_active_cbb = sum(sum_slip_rates_110(r(:2)))*time
-        do i = 3, 6  ! Loop over 4 non-currently generated walls
-            call bp_UPD_ncg_wd(this, r(i), sva, this%state(grain), sum_slip_active_cbb)
-            call this%UPD_ncg_wp(SVa%CBB(r(i))%RHOwp, this%state(grain)%CBB(r(i))%RHOwp, sum_slip_active_cbb)
-        end do
+        associate (sum_slip_active_cbb => sum(sum_slip_rates_110(r(:2)))*time, &
+                   total_slip          => sum(abs(slip_rates))*time, &
+                   sv                  => this%state(grain), &
+                   rho                 => this%state(grain)%rhocb)
 
-        call this%upd_cb(RHObausch, sum(abs(slip_rates))*time, SVa%RHOcb, this%state(grain)%RHOcb)
+            do i = 3, 6  ! Loop over 4 non-currently generated walls
+                associate (rhowp => this%state(grain)%CBB(r(i))%RHOwp, &
+                           rhowdhom => SV%CBB(r(i))%RHOwdHOM, &
+                           rhowd_ini => SV%CBB(r(i))%RHOwd_ini, &
+                           accGAMMA_new => SV%CBB(r(i))%accGAMMA_new, &
+                           rhowd => sv%cbb(r(i))%rhowd)
+
+                    if (RHOwdHOM > this%RHOwdMIN) then
+                        if (all(sv%activecbb /= r(i))) then  ! if the wall was NOT active in prev. inc.
+                            accGAMMA_new = accGAMMA_new+sum_slip_active_cbb
+                        else
+                            accGAMMA_new = sum_slip_active_cbb
+                            RHOwd_ini = RHOwdHOM
+                        end if
+
+                        RHOwdHOM = RHOwdHOM*exp(-this%Rncg*sum_slip_active_cbb/this%b)
+                        RHOwd = RHOwdHOM-tanh(this%beta1*accGAMMA_new) * exp(-this%beta1*accGAMMA_new) * RHOwd_ini*this%beta2
+                        if (RHOwd < this%RHOwdMIN) &
+                            RHOwd = this%RHOwdMIN
+                    else
+                        RHOwdHOM = this%RHOwdMIN
+                        RHOwd = this%RHOwdMIN
+                    end if
+
+                    rhowp = merge(RHOwp*exp(-this%Rncg*sum_slip_active_cbb/this%b), &
+                              this%RHOwpMIN*merge(1, -1, rhowp >= 0._DP), &
+                              abs(RHOwp) > this%RHOwpMIN)
+                end associate
+            end do
+
+
+            !Update CB
+            if(RHObausch > 0._DP) then
+                associate (r_effective => this%R+this%R2*RHObausch / (2.D0*this%RHOwpSAT))
+                    if (this%I*sqrt(RHO) - r_effective*rho > 0._DP) &
+                        rho = kocks_mecking(this%b, rho, total_slip, this%I, r_effective)
+                end associate
+            else
+                RHO = kocks_mecking(this%b, RHO, total_slip, this%I, this%R)
+            end if
+        end associate
+
+        this%state(grain)%activecbb = r(:2)
 
         !Calculate Critical Resolved Shear Stresses
         call this%F_CRSS(grain)
@@ -268,77 +306,6 @@ contains
             res = (sign(1._DP, args(3)) * args(1)*sqrt(args(4)+abs(wp)) - args(2)*wp) * abs(args(3))
         end function
     end subroutine
-
-    subroutine bp_UPD_ncg_wd(this, rdr, SV_a, SV_b, gamma_new)
-        class(HardeningModelDSH), intent(in)    ::  this
-        integer, intent(in)                     ::  rdr
-        type(StatVar), intent(in)               ::  SV_a
-        type(StatVar), intent(inout)            ::  SV_b
-        real(DP), intent(in)                    ::  gamma_new
-
-        real(DP)                                ::  RHOwdLOC,       &
-                                                    accGAMMA_new,   &
-                                                    RHOwd_ini,      &
-                                                    RHOwd
-
-        accGAMMA_new = SV_a%CBB(rdr)%accGAMMA_new
-        RHOwd_ini    = SV_a%CBB(rdr)%RHOwd_ini
-
-        associate (rhowdhom => SV_a%CBB(rdr)%RHOwdHOM)
-            if (RHOwdHOM > this%RHOwdMIN) then
-                if (rdr  /=  SV_a%ActiveCBB(1) .and. rdr  /=  SV_a%ActiveCBB(2)) then  ! if the wall was NOT active in prev. inc.
-                    accGAMMA_new = accGAMMA_new+GAMMA_new
-                else
-                    accGAMMA_new = GAMMA_new
-                    RHOwd_ini = RHOwdHOM
-                end if
-
-                RHOwdLOC = -tanh(this%beta1*accGAMMA_new) * exp(-this%beta1*accGAMMA_new) * RHOwd_ini*this%beta2
-                RHOwdHOM = RHOwdHOM*exp(-this%Rncg*GAMMA_new/this%b)
-                RHOwd = RHOwdHOM+RHOwdLOC
-                if (RHOwd  <  this%RHOwdMIN) RHOwd = this%RHOwdMIN
-            else
-                RHOwdHOM = this%RHOwdMIN
-                RHOwd = this%RHOwdMIN
-            end if
-
-            SV_b%CBB(rdr)%RHOwd         = RHOwd
-            SV_b%CBB(rdr)%RHOwdHOM      = RHOwdHOM
-            SV_b%CBB(rdr)%accGAMMA_new  = accGAMMA_new
-            SV_b%CBB(rdr)%RHOwd_ini     = RHOwd_ini
-        end associate
-    end subroutine
-
-    subroutine upd_ncg_wp(this, RHOwp_a, RHOwp_b, gamma_new)
-        class(HardeningModelDSH), intent(in)    ::  this
-        real(DP), intent(in)                    ::  RHOwp_a,    &
-                                                    gamma_new
-        real(DP), intent(out)                   ::  RHOwp_b
-
-        if (abs(RHOwp_a)  >  this%RHOwpMIN) then
-            RHOwp_b = RHOwp_a*exp(-this%Rncg*GAMMA_new/this%b)
-        else
-            RHOwp_b =  merge(this%RHOwpMIN, -this%RHOwpMIN, RHOwp_a >= 0._DP)
-        end if
-    end subroutine upd_ncg_wp
-
-    subroutine upd_cb(this, RHObausch, SUMabsGam, RHO_a, RHO_b)
-        class(HardeningModelDSH), intent(in)    ::  this
-        real(DP), intent(in)                    ::  RHObausch,   &
-                                                    SUMabsGam
-        real(DP), intent(in)                    ::  RHO_a
-        real(DP), intent(out)                   ::  RHO_b
-        real(DP)                                ::  Reffective
-
-        if(RHObausch > 0._DP) then
-            Reffective = this%R+this%R2*RHObausch / (2.D0*this%RHOwpSAT)
-            RHO_b = merge(RHO_a, &
-                          kocks_mecking(this%b, RHO_a, SUMabsGam, this%I, Reffective), &
-                          this%I*sqrt(RHO_a) - Reffective*RHO_a <= 0._DP)
-        else
-            RHO_b = kocks_mecking(this%b, RHO_a, SUMabsGam, this%I, this%R)
-        end if
-    end subroutine upd_cb
 
     subroutine F_CRSS(this, grain)
         class(HardeningModelDSH), intent(inout)    :: this
