@@ -6,6 +6,7 @@ module slip_systems
     public
 
     !Definition of slip system families in terms of miller indices
+    !First triplet represents slip plane normal, second slip direction.
     !Gfortran does not accept the clean array syntax
     integer, parameter:: SLIP_SYSTEMS_FCC_111(3, 2, 12) = reshape([1, 1, 1,    1, -1, 0,     &
                                                               1, 1, 1,    0, 1, -1,     &
@@ -95,7 +96,7 @@ contains
 
         !Initialize taylor and spin coefficients of the slip system
         normalized = normalize(miller_indices)
-        schmid_matrix = normalized(:,1) .outer. normalized(:,2)
+        schmid_matrix = normalized(:,2) .outer. normalized(:,1)  !Direction x normal
         this%taylor_coeffs = convert_stress_strain_space(schmid_matrix)
         this%spin_coeffs = convert_spin(schmid_matrix)
     end subroutine
