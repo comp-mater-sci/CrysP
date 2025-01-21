@@ -32,7 +32,7 @@ module micro
             real(DP), dimension(:,:), intent(in):: orientations                 !> List of Euler angle triplets in Bunge convention
                                                                                 !> in the macroscopic frame representing grain orientations.
             integer, dimension(:,:,:), intent(in):: deformation_mechanism       !> Deformation mechanism to be employed for all grains.
-            type(Parameter), allocatable, intent(in):: params(:)                !> Parameters used to initialize the hardening model.
+            type(Parameter), allocatable, target, intent(in):: params(:)                !> Parameters used to initialize the hardening model.
             type(Grain), dimension(:), allocatable, intent(out):: grains        !> List of initialized grain objects.
         end subroutine
 
@@ -96,6 +96,7 @@ contains
 
         n_grains = size(orientations, 2)
 
+        call model%validate_parameters(params)
         call model%init(params)
 
         allocate(grains(n_grains))
