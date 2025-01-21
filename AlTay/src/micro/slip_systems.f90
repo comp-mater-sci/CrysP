@@ -96,7 +96,7 @@ contains
 
         !Initialize taylor and spin coefficients of the slip system
         normalized = normalize(miller_indices)
-        schmid_matrix = normalized(:,2) .outer. normalized(:,1)  ! Bunge convention (direction x normal)
+        schmid_matrix = normalized(:,2) .outer. normalized(:,1)  !Direction x normal
         this%taylor_coeffs = convert_stress_strain_space(schmid_matrix)
         this%spin_coeffs = convert_spin(schmid_matrix)
     end subroutine
