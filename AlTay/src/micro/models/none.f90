@@ -1,6 +1,7 @@
 module hardening_model_none
     use utils
     use hardening_model
+    use grain_module
 
     implicit none
 
@@ -13,8 +14,7 @@ module hardening_model_none
         get_parameters      => none_get_parameters
         validate_parameters => none_validate_parameters
         init                => none_init
-        finalize            => none_finalize
-        update_crss         => none_update_crss
+        deform              => none_deform
     end type
 
 contains
@@ -32,17 +32,12 @@ contains
     end subroutine
 
     !> @Brief See hardening_model_init
-    subroutine none_init(this, params)
-        class(HardeningModelNone), intent(inout)::     this
-        type(Parameter), allocatable, intent(in):: params(:)
-    end subroutine
-
-    !> @Brief See hardening_model_update_crss
-    subroutine none_update_crss(this, grain_, time, slip_rates)
+    !> @Details All slip systems get a CRSS of 1 in both directions to make all slip systems equally hard. Note that this
+    !! yields an unrealistic value for the amount of plastic work and that this trick only works if all phases have no hardening.
+    subroutine none_init(this, grains, params)
         class(HardeningModelNone), intent(inout):: this
-        type(Grain), intent(in)             :: grain_
-        real(DP), intent(in)                :: time
-        real(DP), dimension(size(grain_%slip_systems)), intent(in):: slip_rates
+        type(Grain), dimension(:), intent(inout):: grains
+        type(Parameter), allocatable, intent(in):: params(:)
 
         integer:: i
 
@@ -51,8 +46,11 @@ contains
         end do
     end subroutine
 
-    !> @Brief See hardening_model_finalize
-    subroutine none_finalize(this)
-        class(HardeningModelNone), intent(inout):: this !> The hardening model.
+    !> @Brief See hardening_model_deform
+    subroutine none_deform(this, grain_, time, slip_rates)
+        class(HardeningModelNone), intent(inout):: this
+        type(Grain), intent(in)             :: grain_
+        real(DP), intent(in)                :: time
+        real(DP), dimension(size(grain_%slip_systems)), intent(in):: slip_rates
     end subroutine
 end module
