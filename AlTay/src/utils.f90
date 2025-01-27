@@ -388,17 +388,4 @@ contains
 
         rk = x0 + (k(1) + 2.D0*k(2) + 2.D0*k(3) + k(4)) / 6.D0
     end function
-
-    !>Returns RHO_b, the value of RHO at the end of an interval (a, b) for the following differential equation:
-    !>d(RHO)/d(g) = 1/b * (II*sqrt(RHO) - RR*RHO)
-    real(DP) function kocks_mecking(b, RHO_a, delta_g, II, RR) result(kock)
-        real(DP), intent(in):: b
-        real(DP), intent(in):: RHO_a
-        real(DP), intent(in):: delta_g
-        real(DP), intent(in):: II
-        real(DP), intent(in):: RR
-
-      kock = exp(-0.5D0*RR*delta_g/b)
-      kock = (II/RR * (1.D0-kock) + sqrt(RHO_a) * kock)**2
-    end function
 end module

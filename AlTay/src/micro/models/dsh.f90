@@ -279,6 +279,7 @@ contains
         this%state(grain)%activecbb = r(:2)
     contains
         !Unfortunately, this is the only way to formulate 'partial function application' that IFX can handle.
+        !Refer to PhD thesis by Bart Peters for the meaning of this function.
         real(DP) function dwp_dt(wp, args) result(res)
             real(DP), intent(in):: wp
             real(DP), dimension(:), intent(in):: args ![iwp, rwp, fl, wd]
@@ -287,10 +288,18 @@ contains
         end function
     end subroutine
 
-    subroutine F_CRSS(this, grain)
-        class(HardeningModelDSH), intent(inout)    :: this
-        integer, intent(in):: grain
-            end subroutine
+    !>Returns RHO_b, the value of RHO at the end of an interval (a, b) for the following differential equation:
+    !>d(RHO)/d(g) = 1/b * (II*sqrt(RHO) - RR*RHO)
+    real(DP) function kocks_mecking(b, RHO_a, delta_g, II, RR) result(kock)
+        real(DP), intent(in):: b
+        real(DP), intent(in):: RHO_a
+        real(DP), intent(in):: delta_g
+        real(DP), intent(in):: II
+        real(DP), intent(in):: RR
+
+      kock = exp(-0.5D0*RR*delta_g/b)
+      kock = (II/RR * (1.D0-kock) + sqrt(RHO_a) * kock)**2
+    end function
 
     function dsh_get_crss(this, grain, sum_slip) result(crss)
         class(HardeningModelDSH), intent(in)    :: this
