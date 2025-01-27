@@ -11,8 +11,9 @@ module swift
     public:: HardeningModelSwift
 
 
+    !> Grain-specific hardening state data needed by the SWIFT hardening law.
     type, extends(HardeningState):: SwiftState
-        real(DP):: total_slip = 0._DP
+        real(DP):: total_slip = 0._DP !> Sum of all the slip on all the slip systems of the grain.
     end type
 
     !> Classic isotropic SWIFT hardening model.
@@ -73,7 +74,7 @@ contains
         type(Grain), dimension(:), intent(inout)::    grains
         type(Parameter), dimension(:), target, intent(in):: params
 
-        integer:: i
+        integer:: i, j !> Iterators
 
         this%gamma0 = params .find. 'gamma0'
         this%n = params .find. 'n'
@@ -82,7 +83,9 @@ contains
         !Initialize grain-specific state
         do i = 1, size(grains)
             allocate(SwiftState:: grains(i)%state)
-            call grains(i)%set_crss(this%calc_crss(0._DP))
+            do j = 1, size(grains(i)%slip_systems)
+                grains(i)%slip_systems(j)%crss = this%calc_crss(0._DP)
+            end do
         end do
     end subroutine swift_init
 
@@ -102,14 +105,16 @@ contains
         real(DP), dimension(size(grain_%slip_systems)), intent(in):: slip_rates
 
         integer:: i
+        real(DP):: crss
         type(SwiftState), pointer:: state_ptr
 
         state_ptr => to_swift_state(grain_%hardening_state)
 
-        state_ptr%total_slip = state_ptr%total_slip+sum(abs(slip_rates))
+        state_ptr%total_slip = state_ptr%total_slip+sum(abs(slip_rates)) * time
+        crss = this%calc_crss(state_ptr%total_slip)
 
         do i = 1, size(grain_%slip_systems)
-            grain_%slip_systems(i)%crss = this%calc_crss(state_ptr%total_slip)
+            grain_%slip_systems(i)%crss = crss
         end do
     end subroutine
 end module swift
