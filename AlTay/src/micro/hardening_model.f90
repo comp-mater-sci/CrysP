@@ -18,7 +18,7 @@ module hardening_model
         procedure(hardening_model_get_parameters), deferred, nopass::      get_parameters
         procedure(hardening_model_validate_parameters), deferred, nopass:: validate_parameters
         procedure(hardening_model_init), deferred::                        init
-        procedure(hardening_model_update_crss), deferred::                 update_crss
+        procedure(hardening_model_deform), deferred::                      deform
     end type
 
     abstract interface
@@ -35,18 +35,20 @@ module hardening_model
             type(Parameter), dimension(:), target, intent(in):: params !> The parameter list with user-provided values.
         end subroutine
 
-        !>@Brief Initialize the hardening model.
-        !>@Details Should be called only after hardening_model_validate_parameters.
-        subroutine hardening_model_init(this, params)
-            class(HardeningModel), intent(inout)::     this      !> The hardening model
-            type(Parameter), dimension(:), target, intent(in):: params !> The validated set of parameters for this model.
+        !>@Brief Initialize the hardening model and the model-specific state data of the grains using this model.
+        !>@Details If the parameters do not meet the constraints provided below, this routine crashes the program.
+        subroutine hardening_model_init(this, grains, params)
+            class(HardeningModel), intent(inout)::     this      !> Instance of the hardening model to be initialized
+            type(Grain), dimension(:), intent(inout):: grains  !> The list of grains making use of this model.
+            type(Parameter), dimension(:), target, intent(in):: params !> List of parameters to initialize the model with.
+                                                                       !! Must pass this%validate_parameters(params)
         end subroutine
 
         !>@Brief Update the critical resolved shear stresses (CRSS) of a grain.
         !>@Details Updates CRSS based on the slip rates provided by the caller, assuming these slip rates remain constant over the time
         !!         interval provided by the caller. May update internal grain state accordingly. The default implementation returns 1 for all of
         !!         the CRSS values.
-        subroutine hardening_model_update_crss(this, grain_, time, slip_rates)
+        subroutine hardening_model_deform(this, grain_, time, slip_rates)
             class(HardeningModel), intent(inout):: this     !> The hardening model
             type(Grain), intent(in)             :: grain_   !> The grain for which to update the CRSS.
             real(DP), intent(in)                :: time     !> Elapsed time since the last update of the CRSS of this grain.

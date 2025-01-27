@@ -60,7 +60,7 @@ module micro
         !>@Brief Update the critical resolved shear stresses (CRSS) of the grain.
         !>@Details Calculates the evolution of the CRSS on each slip system given the slip rate on each slip system and the elapsed
         !time since the last update of the CRSS. The slip rates are assumed constant during the time interval.
-        module subroutine micro_update_crss(grain_, time, slip_rates)
+        module subroutine micro_deform(grain_, time, slip_rates)
             type(Grain), intent(in)::  grain_        !> Grain for which to update the CRSS.
             real(DP), intent(in)::     time, &       !> Elapsed time since last update of the CRSS for this grain.
                                        slip_rates(:) !> Slip rate for each slip system of the grain. Size(slip_rates) must equal
@@ -144,13 +144,9 @@ contains
         end do
 
         call model%init(grains, params)
-
-        do i = 1, n_grains
-            call grains(i)%set_crss(micro_get_crss(i, 0._DP))
-        end do
     end procedure
 
-    module procedure micro_update_crss
-        call model%update_crss(grain, time, slip_rates)
+    module procedure micro_deform
+        call model%deform(grain, time, slip_rates)
     end procedure
 end submodule

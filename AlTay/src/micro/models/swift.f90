@@ -10,19 +10,44 @@ module swift
     private
     public:: HardeningModelSwift
 
+
+    type, extends(HardeningState):: SwiftState
+        real(DP):: total_slip = 0._DP
+    end type
+
     !> Classic isotropic SWIFT hardening model.
     type, extends(HardeningModel):: HardeningModelSwift
+        !Model parameters
         real(DP)    ::  k,      &
                         gamma0, &
                         n
     contains
+        !Inherited procedures
         procedure:: get_parameters      => swift_get_parameters
         procedure:: validate_parameters => swift_validate_parameters
         procedure:: init                => swift_init
         procedure:: update_crss         => swift_update_crss
+
+        !Internally defined procedures
+        procedure:: calc_crss
     end type
 
 contains
+
+    !> @Brief Convert a generic HardeningState to a pointer to a SwiftState object
+    !> @Details Closest Fortran comes to type casting
+    !!          If the provided state is not of type swift_state, the program crashes.
+    pure function to_swift_state(state) result(swift_state_ptr)
+        class(HardeningState), target, intent(in):: state   !> HardeningState to be converted. Must be of type SwiftState
+        type(SwiftState), pointer:: swift_state_ptr         !> Pointer of type SwiftState to the HardeningState
+
+        select type (state)
+            type is (SwiftState)
+                swift_state_ptr => state
+            class default
+                call log_error(ERR_TYPE)
+        end select
+    end function
 
     !> @Brief See hardening_model_get_parameters
     function swift_get_parameters() result(params)
@@ -43,29 +68,48 @@ contains
     end subroutine swift_validate_parameters
 
     !> @Brief See hardening_model_init
-    subroutine swift_init(this, params)
-        class(HardeningModelSwift),   intent(inout)   :: this
-        type(Parameter), allocatable, target, intent(in):: params(:)
+    subroutine swift_init(this, grains, params)
+        class(HardeningModelSwift),   intent(inout):: this
+        type(Grain), dimension(:), intent(inout)::    grains
+        type(Parameter), dimension(:), target, intent(in):: params
+
+        integer:: i
 
         this%gamma0 = params .find. 'gamma0'
         this%n = params .find. 'n'
         this%k = (params .find. 'crss0') / (this%gamma0**this%n)
+
+        !Initialize grain-specific state
+        do i = 1, size(grains)
+            allocate(SwiftState:: grains(i)%state)
+            call grains(i)%set_crss(this%calc_crss(0._DP))
+        end do
     end subroutine swift_init
 
+    !> @Brief Calculate the CRSS value given the current model parameters and a total slip.
+    pure real(DP) function calc_crss(this, sum_slip) result(crss)
+        class(HardeningModelSwift), intent(in):: this   !> The initialized SWIFT hardening model
+        real(DP), intent(in):: sum_slip                 !> Total slip
+
+        crss = this%k * (sum_slip+this%gamma0)**(this%n)
+    end function
+
     !> @Brief See hardening_model_update_crss
-    subroutine swift_update_crss(this, grain_, time, slip_rates)
+    subroutine swift_deform(this, grain_, time, slip_rates)
         class(HardeningModelSwift), intent(in)::                     this
-        class(Grain),               intent(inout)::                  grain_
+        class(Grain), target,       intent(inout)::                  grain_
         real(DP), intent(in)::                                       time
         real(DP), dimension(size(grain_%slip_systems)), intent(in):: slip_rates
 
         integer:: i
-        real(DP):: crss
+        type(SwiftState), pointer:: state_ptr
 
-        crss = this%k * (sum(abs(slip_rates))+this%gamma0)**(this%n)
+        state_ptr => to_swift_state(grain_%hardening_state)
+
+        state_ptr%total_slip = state_ptr%total_slip+sum(abs(slip_rates))
 
         do i = 1, size(grain_%slip_systems)
-            grain_%slip_systems(i)%crss = crss
+            grain_%slip_systems(i)%crss = this%calc_crss(state_ptr%total_slip)
         end do
     end subroutine
 end module swift
