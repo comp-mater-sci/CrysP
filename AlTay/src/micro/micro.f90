@@ -126,16 +126,13 @@ contains
     end procedure
 
     module procedure micro_init
-        integer:: i, &
-                  n_grains
+        integer:: i
 
         model = get_model_instance(model_id)
 
-        n_grains = size(orientations, 2)
+        allocate(grains(size(orientations, 2)))
 
-        allocate(grains(n_grains))
-
-        do i = 1, n_grains
+        do i = 1, size(grains)
             call grains(i)%init(deformation_mechanism, orientations(:,i))
         end do
 

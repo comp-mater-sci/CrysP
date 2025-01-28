@@ -71,21 +71,23 @@ contains
         type(Grain), dimension(:), intent(inout)::    grains
         type(Parameter), dimension(:), target, intent(in):: params
 
-        integer:: i, j   !> Iterators
-        real(DP):: crss0 !> Initial CRSS
+        integer:: i, j  !> Iterators
+        real(DP):: crss !> Buffer for crss so that we do not have to recalculate it for every slip system of every grain.
 
         this%gamma0 = params .find. 'gamma0'
         this%n = params .find. 'n'
-        crss0 = params .find. 'crss0'
-        this%k = crss0 / (this%gamma0**this%n)
+        this%k = (params .find. 'crss0') / (this%gamma0**this%n)
+
+        crss = this%k*this%gamma0**this%n
 
         !Initialize grain-specific state
         do i = 1, size(grains)
             allocate(SwiftState:: grains(i)%hardening_state)
             do j = 1, size(grains(i)%slip_systems)
-                grains(i)%slip_systems(j)%crss = crss0
+                grains(i)%slip_systems(j)%crss = crss
             end do
         end do
+        print *, 'crss: ', crss
     end subroutine swift_init
 
     !> @Brief See hardening_model_update_crss
@@ -107,5 +109,9 @@ contains
         do i = 1, size(grain_%slip_systems)
             grain_%slip_systems(i)%crss = crss
         end do
+
+        print *, 'Total slip: ', state_ptr%total_slip
+        print *, 'Current slip: ', sum(abs(slip_rates)) * time
+        print *, 'crss: ', crss
     end subroutine
 end module swift
