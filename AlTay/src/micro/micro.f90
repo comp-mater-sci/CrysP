@@ -126,14 +126,10 @@ contains
     end procedure
 
     module procedure micro_init
-        model = get_model_instance(model_id)
-        call model%init(params)
-    end procedure
-
-
-    module procedure micro_init
         integer:: i, &
                   n_grains
+
+        model = get_model_instance(model_id)
 
         n_grains = size(orientations, 2)
 

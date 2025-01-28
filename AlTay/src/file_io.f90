@@ -108,7 +108,7 @@ contains
 
         !Write general information
         write (iounit, 402)
-        write (iounit, 403) NRSTEP, n_grains, deformation_gradient
+        write (iounit, 403) n_grains, deformation_gradient
         write (iounit, 401)
 
         !Write state of each grain
@@ -127,7 +127,7 @@ contains
             2X, 'F(1, 1)',4X, 'F(2, 1)',4X, 'F(3, 1)',4X,                           &
             2X, 'F(1, 2)',4X, 'F(2, 2)',4X, 'F(3, 2)',4X,                           &
             2X, 'F(1, 3)',4X, 'F(2, 3)',4X, 'F(3, 3)')
-         403 format(I6, 5X, i8, 41x, 3(2X, 3F10.6))
+         403 format(5X, i8, 41x, 3(2X, 3F10.6))
 
     end subroutine
 

@@ -29,14 +29,10 @@ module voce
         type(stage) ::  stage_1,    &           !> Parameters to use for small strain.
                         stage_2                 !> Parameters to use for large strain.
     contains
-        !Inherited procedures
         procedure:: get_parameters      => voce_get_parameters
         procedure:: validate_parameters => voce_validate_parameters
         procedure:: init                => voce_init
         procedure:: deform              => voce_deform
-
-        !Internal procedures
-        procedure:: calc_crss
     end type
 
 contains
@@ -44,7 +40,7 @@ contains
     !> @Brief Convert a generic HardeningState to a pointer to a VoceState object
     !> @Details Closest Fortran comes to type casting
     !!          If the provided state is not of type voce_state, the program crashes.
-    pure function to_swift_state(state) result(swift_state_ptr)
+    pure function to_voce_state(state) result(voce_state_ptr)
         class(HardeningState), target, intent(in):: state   !> HardeningState to be converted. Must have dynamic type VoceState.
         type(VoceState), pointer:: voce_state_ptr         !> Pointer of type VoceState to the HardeningState
 
@@ -60,28 +56,27 @@ contains
         class(HardeningModelVoce), intent(in)    :: this
         type(Parameter), allocatable    :: params(:)
 
-        params = [hardening_model_get_parameters(this), &
-                  [parameter_init('TIII1', TYPE_REAL),             &
-                  parameter_init('TIIIS', TYPE_REAL),             &
-                  parameter_init('TIVS', TYPE_REAL),              &
-                  parameter_init('THIII1', TYPE_REAL),            &
-                  parameter_init('THT', TYPE_REAL)]]
-    end function voce_get_parameters
+        params = [parameter_init('TIII1',  TYPE_REAL), &
+                  parameter_init('TIIIS',  TYPE_REAL), &
+                  parameter_init('TIVS',   TYPE_REAL), &
+                  parameter_init('THIII1', TYPE_REAL), &
+                  parameter_init('THT',    TYPE_REAL)]
+    end function
 
+    !> @Brief See hardening_model_validate_parameters
     subroutine voce_validate_parameters(this, params)
         class(HardeningModelVoce), intent(in):: this
         type(Parameter), dimension(:), target, intent(in):: params
 
-        type(Parameter), pointer:: buffer
+        type(Parameter), pointer:: buffer !> Buffer for bounds in calls to parameter_check_bounds. Needed due to a bug in gfortran.
 
-        call hardening_model_validate_parameters(this, params)
-
-        !Due to yet another bug in gfortran we must assign the lower bound explicitly before calling check_bounds
-        buffer => params .find. 'TIII1'
-        call parameter_check_bounds(params .find. 'TIIIS', lower = buffer, lower_inclusive=.false.)
-        buffer => params .find. 'THT'
-        call parameter_check_bounds(params .find. 'THIII1', lower = buffer,  lower_inclusive=.false.)
-    end subroutine voce_validate_parameters
+        buffer => params .find. 'TIIIS'
+        call parameter_check_bounds(params .find. 'TIII1', 0._DP, buffer, .false., .false.)
+        buffer => params .find. 'TIVS'
+        call parameter_check_bounds(params .find. 'TIIIS', upper = buffer)
+        buffer => params .find. 'THIII1'
+        call parameter_check_bounds(params .find. 'THT', 0._DP, buffer, .false., .false.)
+    end subroutine
 
     !> @Brief See hardening_model_init
     subroutine voce_init(this, grains, params)
@@ -110,26 +105,10 @@ contains
         do i = 1, size(grains)
             allocate(VoceState:: grains(i)%hardening_state)
             do j = 1, size(grains(i)%slip_systems)
-                grains(i)%slip_systems(j)%crss = this%calc_crss(0._DP)
+                grains(i)%slip_systems(j)%crss = this%stage_1%T1
             end do
         end do
-
-
     end subroutine
-
-    pure function calc_crss(this, total_slip) result(crss)
-        class(HardeningModelVoce), intent(in):: this
-        real(DP), intent(in):: total_slip
-        real(DP):: crss
-
-        type(Stage):: current_stage
-
-        current_stage = merge(this%stage_1, &
-                              this%stage_2, &
-                              total_slip <= this%transition_slip)
-
-        crss = current_stage%TS - (current_stage%TS-current_stage%T1) * exp(-current_stage%TH*total_slip/current_stage%TS)
-    end function
 
     subroutine voce_deform(this, grain_, time, slip_rates)
         class(HardeningModelVoce), intent(in)::                      this
@@ -139,12 +118,18 @@ contains
 
         integer:: i                          !> Iterator
         real(DP):: crss                      !> Buffer for CRSS so that it needs to be calculated only once.
+        type(Stage):: current_stage          !> Current stage in the Voce hardening process
         type(VoceState), pointer:: state_ptr !> Pointer to hardening_state of type VoceState for easy access to model-specific fields
 
         state_ptr => to_voce_state(grain_%hardening_state)
 
         state_ptr%total_slip = state_ptr%total_slip+sum(abs(slip_rates)) * time
-        crss = this%calc_crss(state_ptr%total_slip)
+
+        current_stage = merge(this%stage_1, &
+                              this%stage_2, &
+                              state_ptr%total_slip <= this%transition_slip)
+
+        crss = current_stage%TS - (current_stage%TS-current_stage%T1) * exp(-current_stage%TH*state_ptr%total_slip/current_stage%TS)
 
         do i = 1, size(grain_%slip_systems)
             grain_%slip_systems(i)%crss = crss

@@ -183,8 +183,7 @@ contains
             grain_%sum_slip = grain_%sum_slip+slip
 
             !Update hardening model state
-            call micro_update_state(index_cluster, 1._DP, slip_rates)
-            call grain_%set_crss(micro_get_crss(index_cluster, grain_%sum_slip))
+            call micro_deform(grain_, 1._DP, slip_rates)
 
             orientation_increment = UNIT_MATRIX_3X3 &
                                     +(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame

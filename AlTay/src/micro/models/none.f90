@@ -2,6 +2,7 @@ module hardening_model_none
     use utils
     use hardening_model
     use grain_module
+    use parameters
 
     implicit none
 
@@ -11,19 +12,19 @@ module hardening_model_none
     !> @Brief Hardening model representing no hardening.
     type, extends(HardeningModel):: HardeningModelNone
     contains
-        get_parameters      => none_get_parameters
-        validate_parameters => none_validate_parameters
-        init                => none_init
-        deform              => none_deform
+        procedure:: get_parameters      => none_get_parameters
+        procedure:: validate_parameters => none_validate_parameters
+        procedure:: init                => none_init
+        procedure:: deform              => none_deform
     end type
 
 contains
 
     !> @Brief See hardening_model_get_parameters
     function none_get_parameters() result(params)
-        type(Parameter), allocatable:: params(:)
+        type(Parameter), dimension(:), allocatable:: params
 
-        return []
+        allocate(params(0))
     end function
 
     !> @Brief See hardening_model_validate_parameters
@@ -39,10 +40,12 @@ contains
         type(Grain), dimension(:), intent(inout):: grains
         type(Parameter), allocatable, intent(in):: params(:)
 
-        integer:: i
+        integer:: i, j
 
-        do i = 1, size(grain_%slip_systems)
-            grain_%slip_systems(i)%crss = 1._DP
+        do i = 1, size(grains)
+            do j = 1, size(grains(i)%slip_systems)
+                grains(i)%slip_systems(j)%crss = 1._DP
+            end do
         end do
     end subroutine
 

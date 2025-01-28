@@ -23,14 +23,10 @@ module swift
                         gamma0, &
                         n
     contains
-        !Inherited procedures
         procedure:: get_parameters      => swift_get_parameters
         procedure:: validate_parameters => swift_validate_parameters
         procedure:: init                => swift_init
         procedure:: update_crss         => swift_update_crss
-
-        !Internally defined procedures
-        procedure:: calc_crss
     end type
 
 contains
@@ -74,28 +70,22 @@ contains
         type(Grain), dimension(:), intent(inout)::    grains
         type(Parameter), dimension(:), target, intent(in):: params
 
-        integer:: i, j !> Iterators
+        integer:: i, j   !> Iterators
+        real(DP):: crss0 !> Initial CRSS
 
         this%gamma0 = params .find. 'gamma0'
         this%n = params .find. 'n'
-        this%k = (params .find. 'crss0') / (this%gamma0**this%n)
+        crss0 = params .find. 'crss0'
+        this%k = crss0 / (this%gamma0**this%n)
 
         !Initialize grain-specific state
         do i = 1, size(grains)
             allocate(SwiftState:: grains(i)%state)
             do j = 1, size(grains(i)%slip_systems)
-                grains(i)%slip_systems(j)%crss = this%calc_crss(0._DP)
+                grains(i)%slip_systems(j)%crss = crss0
             end do
         end do
     end subroutine swift_init
-
-    !> @Brief Calculate the CRSS value given the current model parameters and a total slip.
-    pure real(DP) function calc_crss(this, sum_slip) result(crss)
-        class(HardeningModelSwift), intent(in):: this   !> The initialized SWIFT hardening model
-        real(DP), intent(in):: sum_slip                 !> Total slip
-
-        crss = this%k * (sum_slip+this%gamma0)**(this%n)
-    end function
 
     !> @Brief See hardening_model_update_crss
     subroutine swift_deform(this, grain_, time, slip_rates)
@@ -109,9 +99,9 @@ contains
         type(SwiftState), pointer:: state_ptr
 
         state_ptr => to_swift_state(grain_%hardening_state)
-
         state_ptr%total_slip = state_ptr%total_slip+sum(abs(slip_rates)) * time
-        crss = this%calc_crss(state_ptr%total_slip)
+
+        crss = this%k * (state_ptr%total_slip+this%gamma0)**(this%n)
 
         do i = 1, size(grain_%slip_systems)
             grain_%slip_systems(i)%crss = crss
