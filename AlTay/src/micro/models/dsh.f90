@@ -300,6 +300,9 @@ contains
 
         !Update indices of active CBBs
         state_ptr%activecbb = r(:2)
+
+        !Update CRSS of grain based on new dislocation densities
+        call this%update_crss(grain_)
     contains
         !Unfortunately, this is the only way to formulate 'partial function application' that IFX can handle.
         !Refer to PhD thesis by Bart Peters for the meaning of this function.

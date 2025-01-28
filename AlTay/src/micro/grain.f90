@@ -18,7 +18,6 @@ module grain_module
 
     !>Texture-related state variables for single grain
     type:: Grain
-        real(DP)::                  sum_slip = 0._DP
         real(DP), dimension(3, 3):: orientation
         type(SlipSystem), dimension(:), allocatable:: slip_systems
         class(HardeningState), allocatable:: hardening_state
@@ -44,7 +43,6 @@ contains
 
         !Initialize grain orientation matrix
         this%orientation = from_euler_angles(orientation)
-        this%sum_slip = 0._DP
 
         !Allocate slip systems and spin coefficients
         allocate(this%slip_systems(n_slip_systems))

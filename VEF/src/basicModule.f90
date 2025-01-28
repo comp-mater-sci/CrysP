@@ -270,9 +270,6 @@ contains
             endif
 
 
-            param_ptr => cnf%hardening_parameters .find. 'n_slip_systems'
-            param_ptr = size(cnf%deformation_mechanism, 3)
-
             ! the keyword is mapped to a proper model_id, we can instantly set it.
             call setModelType(cnf, model_id, info)
             if (info /= VEF_OK) return

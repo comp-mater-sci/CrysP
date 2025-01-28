@@ -180,7 +180,6 @@ contains
             end if
 
             slip = sum(abs(slip_rates))
-            grain_%sum_slip = grain_%sum_slip+slip
 
             !Update hardening model state
             call micro_deform(grain_, 1._DP, slip_rates)

@@ -116,12 +116,12 @@ contains
             do j = 1, cluster_size
                 euler_angles = to_euler_angles(clusters(i)%grains(j)%orientation)*RAD_TO_DEG
                 write(iounit, 400, iostat = info)&
-                    i*cluster_size+j, euler_angles(1), euler_angles(2), euler_angles(3), clusters(i)%grains(j)%sum_slip
+                    i*cluster_size+j, euler_angles(1), euler_angles(2), euler_angles(3)
                 if (info /= 0) exit
             end do
         end do
 
-         400 format (I6, 2X, 3f10.5, 2X, f10.5)
+         400 format (I6, 2X, 3f10.5)
          401 format (8X, 'phi1',6X, 'PHI',7X, 'phi2',6X, '  GAMMA')
          402 format (/,' Def. Step    ','Number of orientations',27X,          &
             2X, 'F(1, 1)',4X, 'F(2, 1)',4X, 'F(3, 1)',4X,                           &

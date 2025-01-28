@@ -299,7 +299,6 @@ contains
                 end if
 
                 slip_grain = sum(abs(slip_rates_grain))
-                grain_%sum_slip = grain_%sum_slip+slip_grain
                 slip = slip+slip_grain
 
                 !Update hardening model state
