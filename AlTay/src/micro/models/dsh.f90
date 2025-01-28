@@ -12,12 +12,11 @@ module dsh
 
     private
     public:: CBBNORMAL, &           !Different DSH models use the CBB normal vectors to derive the dislocation movement vectors
-             HardeningModelDSH, &   !Each DSH model extends this base model.
-             dsh_init               !Must be public so that the DSH variants can call it.
+             HardeningModelDSH      !Each DSH model extends this base model.
 
     real(DP), parameter:: MINFRAC = 2.0D-3,   &
                           LOWFRAC = 10.0D-3
-    real(DP), dimension(6, 3), parameter, public:: CBBNORMAL = transpose(real(SLIP_SYSTEMS_BCC_110(:,1, 1:12:2), DP)/SQR2)
+    real(DP), dimension(6, 3), parameter:: CBBNORMAL = transpose(real(SLIP_SYSTEMS_BCC_110(:,1, 1:12:2), DP)/SQR2)
 
     type:: CBBtype
         real(DP):: RHOwd = 0._DP, &
@@ -63,11 +62,12 @@ module dsh
         real(DP), dimension(24, 6):: effslashb       = 0._DP, &
                                      alfa_G_b_eff    = 0._DP
     contains
-        procedure:: get_parameters      => dsh_get_parameters
-        procedure:: validate_parameters => dsh_validate_parameters
-        procedure:: deform              => dsh_deform
+        procedure, nopass:: get_parameters      => dsh_get_parameters
+        procedure, nopass:: validate_parameters => dsh_validate_parameters
+        procedure:: deform                      => dsh_deform
 
-        procedure:: update_crss
+        procedure:: init_common, &
+                    update_crss
     end type
 
 contains
@@ -75,7 +75,7 @@ contains
     !> @Brief Convert a generic HardeningState to a pointer to a DSHState object
     !> @Details Closest Fortran comes to type casting
     !!          If the provided state is not of type dsh_state, the program crashes.
-    pure function to_dsh_state(state) result(dsh_state_ptr)
+    function to_dsh_state(state) result(dsh_state_ptr)
         class(HardeningState), target, intent(in):: state   !> HardeningState to be converted. Must have dynamic type DSHState.
         type(DSHState), pointer:: dsh_state_ptr             !> Pointer of type DSHState to the HardeningState
 
@@ -137,11 +137,11 @@ contains
     !>@Brief Main model initialization procedure common to all variants of the DSH model family.
     !>@Details The only difference between the variants of DSH is the interaction coefficients between dislocations and cell block
     !!         boundaries. Thus, each model defines its own coefficients and calls this common initialization procedure with them.
-    subroutine dsh_init(this, grains, params, eff)
+    subroutine init_common(this, grains, params, eff)
         class(HardeningModelDSH), intent(inout):: this             !> DSH model variant to be initialized.
         type(Grain), dimension(:), intent(inout):: grains          !> List of grains using this hardening model.
         type(Parameter), dimension(:), target, intent(in):: params !> Model parameters. Must pass dsh_validate_parameters(params)
-        real(DP), dimension(24, 6), intent(in):: eff               !> Interaction coefficients between dislocations and cell block boundary normals.
+        real(DP), dimension(24, 6), intent(in):: eff               !> 'Wall-effectivity' matrix == cosines of the angle between dislocation movement vectors and the cell block boundary normals.
 
         integer:: i
 
@@ -174,8 +174,8 @@ contains
 
         !Initialize grain-specific state variables
         do i = 1, size(grains)
+            allocate(DSHState:: grains(i)%hardening_state)
             associate (grain_state => grains(i)%hardening_state)
-                allocate(DSHState:: grain_state)
                 !Fortran semantics dictate the use of 'select type' here even though the type is obvious
                 select type (grain_state)
                     type is (DSHState)
@@ -188,12 +188,14 @@ contains
                         grain_state%ActiveCBB        = 0
                 end select
             end associate
+
+            call this%update_crss(grains(i))
         end do
-    end subroutine dsh_init
+    end subroutine
 
     subroutine dsh_deform(this, grain_, time, slip_rates)
         class(HardeningModelDSH), intent(inout)                   :: this
-        type(Grain), target, intent(in)                           :: grain_
+        type(Grain), target, intent(inout)                           :: grain_
         real(DP), intent(in)                                      :: time
         real(DP), dimension(size(grain_%slip_systems)), intent(in):: slip_rates
 
@@ -256,7 +258,7 @@ contains
                    cur_cbb%RHOwp = runge_kutta(merge(-rho_wp_a, rho_wp_a, flux_reversal), &
                                                time, &
                                                dwp_dt, & !See definition of dwp_dt for the meaning of the list of variables below
-                                               [this%iwp, this%rwp, wpflux, this%state(grain)%CBB(r(i))%RHOwdHOM])
+                                               [this%iwp, this%rwp, wpflux, state_ptr%CBB(r(i))%RHOwdHOM])
                 end if
             end associate
         end do
@@ -325,7 +327,7 @@ contains
     !>@Brief update the CRSS of a given grain.
     subroutine update_crss(this, grain_)
         class(HardeningModelDSH), intent(in):: this !> Hardening model
-        type(Grain), target, intent(in):: grain_    !> Grain for which to update CRSS.
+        type(Grain), target, intent(inout):: grain_    !> Grain for which to update CRSS.
 
         integer:: j, s, i                           !> Iterators
         real(DP):: tau_CB, &
@@ -338,7 +340,9 @@ contains
         state_ptr => to_dsh_state(grain_%hardening_state)
 
         !Some systems are not allowed to become active
-        crss = REAL_DP_MAX_VAL
+        do i = 1, size(grain_%slip_systems)
+            grain_%slip_systems(i)%crss = REAL_DP_MAX_VAL
+        end do
 
         !CRSS within cells & CBs
         tau_CB = this%alfa*this%G*this%b*sqrt(state_ptr%RHOcb)
@@ -362,7 +366,7 @@ contains
                 !CRSS within CBB = wp-and wd-contributions for all 6 walls
                 tau_CBB(j, s)=sum(wpcontr)+sum(wdcontr)
                 !C.R.S.S. for the "two-phase composite"
-                crss(j, s)= CRSS_0_CB+this%f*tau_CBB(j, s)
+                grain_%slip_systems(s)%crss(j)= CRSS_0_CB+this%f*tau_CBB(j, s)
             end do
         end do
     end subroutine

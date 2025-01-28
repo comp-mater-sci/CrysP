@@ -53,7 +53,7 @@ module altayConfig
     end type
 
     type:: outputConfig
-        integer                                   :: nfile = 0 !< (SIMUL) 
+        integer                                   :: nfile = 0 !< (SIMUL)
     end type
 
    type:: simulData
@@ -74,6 +74,7 @@ module altayConfig
         character(len = fname_len)                  :: texture_input_fname = ''
         type(outputConfig)                        :: output_config !< output file prefix, incremental output request flag, verbosity level
         type(simulData)                           :: simul_init
+        integer:: hardening_model_id
         type(Parameter), allocatable:: hardening_parameters(:)
         integer, dimension(:,:,:), allocatable:: deformation_mechanism
     end type

@@ -3,6 +3,7 @@ module dsh_edge
     use parameters
     use dsh
     use slip_systems
+    use grain_module
 
     implicit none
     private
@@ -18,14 +19,11 @@ module dsh_edge
 
 contains
 
-    subroutine dsh_edge_init(this, params)
+    subroutine dsh_edge_init(this, grains, params)
         class(HardeningModelDSHEdge), intent(inout):: this
-        type(Parameter), allocatable, target, intent(in):: params(:)
+        type(Grain), dimension(:), intent(inout):: grains
+        type(Parameter), dimension(:), target, intent(in):: params
 
-        call dsh_init(this, &
-                      params, &
-                      transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :)))))  ! 'Wall-effectivity' matrix == cosines of the angle between
-                                                                              !dislocation movement vectors and the cell block boundary normals.
-
+        call this%init_common(grains, params, transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :)))))
     end subroutine
 end module

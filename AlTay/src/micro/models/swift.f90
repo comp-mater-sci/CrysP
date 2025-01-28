@@ -4,6 +4,7 @@ module swift
     use hardening_model
     use logging
     use parameters
+    use grain_module
 
     implicit none
 
@@ -23,10 +24,10 @@ module swift
                         gamma0, &
                         n
     contains
-        procedure:: get_parameters      => swift_get_parameters
-        procedure:: validate_parameters => swift_validate_parameters
+        procedure, nopass:: get_parameters      => swift_get_parameters
+        procedure, nopass:: validate_parameters => swift_validate_parameters
         procedure:: init                => swift_init
-        procedure:: update_crss         => swift_update_crss
+        procedure:: deform              => swift_deform
     end type
 
 contains
@@ -34,7 +35,7 @@ contains
     !> @Brief Convert a generic HardeningState to a pointer to a SwiftState object
     !> @Details Closest Fortran comes to type casting
     !!          If the provided state is not of type swift_state, the program crashes.
-    pure function to_swift_state(state) result(swift_state_ptr)
+    function to_swift_state(state) result(swift_state_ptr)
         class(HardeningState), target, intent(in):: state   !> HardeningState to be converted. Must be of type SwiftState
         type(SwiftState), pointer:: swift_state_ptr         !> Pointer of type SwiftState to the HardeningState
 
@@ -80,7 +81,7 @@ contains
 
         !Initialize grain-specific state
         do i = 1, size(grains)
-            allocate(SwiftState:: grains(i)%state)
+            allocate(SwiftState:: grains(i)%hardening_state)
             do j = 1, size(grains(i)%slip_systems)
                 grains(i)%slip_systems(j)%crss = crss0
             end do
@@ -89,8 +90,8 @@ contains
 
     !> @Brief See hardening_model_update_crss
     subroutine swift_deform(this, grain_, time, slip_rates)
-        class(HardeningModelSwift), intent(in)::                     this
-        class(Grain), target,       intent(inout)::                  grain_
+        class(HardeningModelSwift), intent(inout)::                  this
+        type(Grain), target, intent(inout)::                        grain_
         real(DP), intent(in)::                                       time
         real(DP), dimension(size(grain_%slip_systems)), intent(in):: slip_rates
 

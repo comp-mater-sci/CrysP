@@ -25,7 +25,7 @@ module hardening_model
         !>@Brief Get the parameters associated with the hardening model.
         !>@Details The default implementation returns an empty list.
         !>@Return The list of initialized parameters.
-        function hardening_model_get_parameters(this) result(params)
+        function hardening_model_get_parameters() result(params)
             import Parameter
 
             type(Parameter), dimension(:), allocatable:: params !> List of parameters
@@ -33,7 +33,7 @@ module hardening_model
 
         !>@Brief Validate a parameter set for the current hardening model.
         !>@Details Check if the parameter values provided by the caller lie within acceptable bounds. Crashes the program if not.
-        subroutine hardening_model_validate_parameters(this, params)
+        subroutine hardening_model_validate_parameters(params)
             import Parameter
 
             type(Parameter), dimension(:), target, intent(in):: params !> The parameter list with user-provided values.
@@ -62,7 +62,7 @@ module hardening_model
                    DP
 
             class(HardeningModel), intent(inout):: this     !> The hardening model
-            type(Grain), intent(in)             :: grain_   !> The grain for which to update the CRSS.
+            type(Grain), target, intent(inout)             :: grain_   !> The grain for which to update the CRSS.
             real(DP), intent(in)                :: time     !> Elapsed time since the last update of the CRSS of this grain.
             real(DP), dimension(size(grain_%slip_systems)), intent(in):: slip_rates  !> Slip rates on each of the slip systems of the grain in the time
                                                                                      !! interval since the last CRSS update for this grain. Size must equal

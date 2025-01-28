@@ -56,7 +56,7 @@ contains
         end if
 
         !Initialize altay modules
-        call micro_init(orientations, cnf%deformation_mechanism, cnf%hardening_parameters, grains)
+        call micro_init(cnf%hardening_model_id, orientations, cnf%deformation_mechanism, cnf%hardening_parameters, grains)
         call meso_init(cnf%simul_init%ngr, grains, params, clusters)
         call macro_init(clusters)
 
@@ -69,8 +69,6 @@ contains
 
         ! Close all units.
         close(IMP5)
-        nrstep = 0
-        call micro_finalize()
         call simulation_finalize()
         if (allocated(astate%simulCalls)) then
               deallocate(astate%simulCalls)

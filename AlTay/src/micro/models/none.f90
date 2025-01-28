@@ -1,4 +1,4 @@
-module hardening_model_none
+module none
     use utils
     use hardening_model
     use grain_module
@@ -12,10 +12,10 @@ module hardening_model_none
     !> @Brief Hardening model representing no hardening.
     type, extends(HardeningModel):: HardeningModelNone
     contains
-        procedure:: get_parameters      => none_get_parameters
-        procedure:: validate_parameters => none_validate_parameters
-        procedure:: init                => none_init
-        procedure:: deform              => none_deform
+        procedure, nopass:: get_parameters      => none_get_parameters
+        procedure, nopass:: validate_parameters => none_validate_parameters
+        procedure:: init                        => none_init
+        procedure:: deform                      => none_deform
     end type
 
 contains
@@ -29,7 +29,7 @@ contains
 
     !> @Brief See hardening_model_validate_parameters
     subroutine none_validate_parameters(params)
-        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), target, intent(in):: params
     end subroutine
 
     !> @Brief See hardening_model_init
@@ -38,7 +38,7 @@ contains
     subroutine none_init(this, grains, params)
         class(HardeningModelNone), intent(inout):: this
         type(Grain), dimension(:), intent(inout):: grains
-        type(Parameter), allocatable, intent(in):: params(:)
+        type(Parameter), dimension(:), target, intent(in):: params
 
         integer:: i, j
 
@@ -52,8 +52,8 @@ contains
     !> @Brief See hardening_model_deform
     subroutine none_deform(this, grain_, time, slip_rates)
         class(HardeningModelNone), intent(inout):: this
-        type(Grain), intent(in)             :: grain_
-        real(DP), intent(in)                :: time
+        type(Grain), target, intent(inout)      :: grain_
+        real(DP), intent(in)                    :: time
         real(DP), dimension(size(grain_%slip_systems)), intent(in):: slip_rates
     end subroutine
 end module

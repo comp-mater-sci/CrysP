@@ -14,9 +14,9 @@ module micro
         enumerator:: HARDENING_NONE       = 0,  &
                      HARDENING_VOCE       = 1,  &
                      HARDENING_SWIFT      = 3,  &
-                     HARDENING_BP         = 11, &
-                     HARDENING_PEBP_SCREW = 12, &
-                     HARDENING_PEBP_LOOP  = 13
+                     HARDENING_DSH_EDGE   = 11, &
+                     HARDENING_DSH_SCREW  = 12, &
+                     HARDENING_DSH_LOOP   = 13
     end enum
 
     interface
@@ -61,7 +61,7 @@ module micro
         !>@Details Calculates the evolution of the CRSS on each slip system given the slip rate on each slip system and the elapsed
         !time since the last update of the CRSS. The slip rates are assumed constant during the time interval.
         module subroutine micro_deform(grain_, time, slip_rates)
-            type(Grain), intent(in)::  grain_        !> Grain for which to update the CRSS.
+            type(Grain), intent(inout)::  grain_        !> Grain for which to update the CRSS.
             real(DP), intent(in)::     time, &       !> Elapsed time since last update of the CRSS for this grain.
                                        slip_rates(:) !> Slip rate for each slip system of the grain. Size(slip_rates) must equal
                                                      !> the number of slip systems in the grain.
@@ -82,12 +82,12 @@ contains
     !>@Details Workaround to be able to call type-bound overriden procedures.
     !>@return Uninitialized instance of the requested hardening model.
     function get_model_instance(model_id) result(instance)
-        use hardening_model_none
-        use hardening_model_swift
-        use hardening_model_voce
-        use hardening_model_bp
-        use hardening_model_pebp_screw
-        use hardening_model_pebp_loop
+        use none
+        use swift
+        use voce
+        use dsh_edge
+        use dsh_screw
+        use dsh_loop
 
         integer, intent(in):: model_id                              !> ID of the hardening model. Must be contained in the list provided in this
                                                                     !!  module. If not, this routine crashes the program.
@@ -100,12 +100,12 @@ contains
                 allocate(HardeningModelVoce:: instance)
             case(HARDENING_SWIFT)
                 allocate(HardeningModelSwift:: instance)
-            case(HARDENING_BP)
-                allocate(HardeningModelBP:: instance)
-            case(HARDENING_PEBP_SCREW)
-                allocate(HardeningModelPEBPScrew:: instance)
-            case(HARDENING_PEBP_LOOP)
-                allocate(HardeningModelPEBPLoop:: instance)
+            case(HARDENING_DSH_EDGE)
+                allocate(HardeningModelDSHEdge:: instance)
+            case(HARDENING_DSH_SCREW)
+                allocate(HardeningModelDSHScrew:: instance)
+            case(HARDENING_DSH_LOOP)
+                allocate(HardeningModelDSHLoop:: instance)
             case default
                 call log_error('micro', 'micro_get_parameters', ERR_VAL, 'Invalid hardening model ID')
         end select
@@ -122,7 +122,7 @@ contains
         class(HardeningModel), allocatable:: dummy_instance
 
         dummy_instance = get_model_instance(model_id)
-        params = dummy_instance%validate_parameters()
+        call dummy_instance%validate_parameters(params)
     end procedure
 
     module procedure micro_init
@@ -143,6 +143,6 @@ contains
     end procedure
 
     module procedure micro_deform
-        call model%deform(grain, time, slip_rates)
+        call model%deform(grain_, time, slip_rates)
     end procedure
 end submodule

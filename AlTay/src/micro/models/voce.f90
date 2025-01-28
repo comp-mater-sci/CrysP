@@ -29,8 +29,8 @@ module voce
         type(stage) ::  stage_1,    &           !> Parameters to use for small strain.
                         stage_2                 !> Parameters to use for large strain.
     contains
-        procedure:: get_parameters      => voce_get_parameters
-        procedure:: validate_parameters => voce_validate_parameters
+        procedure, nopass:: get_parameters      => voce_get_parameters
+        procedure, nopass:: validate_parameters => voce_validate_parameters
         procedure:: init                => voce_init
         procedure:: deform              => voce_deform
     end type
@@ -40,7 +40,7 @@ contains
     !> @Brief Convert a generic HardeningState to a pointer to a VoceState object
     !> @Details Closest Fortran comes to type casting
     !!          If the provided state is not of type voce_state, the program crashes.
-    pure function to_voce_state(state) result(voce_state_ptr)
+    function to_voce_state(state) result(voce_state_ptr)
         class(HardeningState), target, intent(in):: state   !> HardeningState to be converted. Must have dynamic type VoceState.
         type(VoceState), pointer:: voce_state_ptr         !> Pointer of type VoceState to the HardeningState
 
@@ -52,9 +52,8 @@ contains
         end select
     end function
 
-    function voce_get_parameters(this) result(params)
-        class(HardeningModelVoce), intent(in)    :: this
-        type(Parameter), allocatable    :: params(:)
+    function voce_get_parameters() result(params)
+        type(Parameter), dimension(:), allocatable:: params
 
         params = [parameter_init('TIII1',  TYPE_REAL), &
                   parameter_init('TIIIS',  TYPE_REAL), &
@@ -64,8 +63,7 @@ contains
     end function
 
     !> @Brief See hardening_model_validate_parameters
-    subroutine voce_validate_parameters(this, params)
-        class(HardeningModelVoce), intent(in):: this
+    subroutine voce_validate_parameters(params)
         type(Parameter), dimension(:), target, intent(in):: params
 
         type(Parameter), pointer:: buffer !> Buffer for bounds in calls to parameter_check_bounds. Needed due to a bug in gfortran.
@@ -111,10 +109,10 @@ contains
     end subroutine
 
     subroutine voce_deform(this, grain_, time, slip_rates)
-        class(HardeningModelVoce), intent(in)::                      this
-        type(Grain), target, intent(in)      ::                      grain_
-        real(DP)::                                                   time
-        real(DP), dimension(size(grain_%slip_systems)), intent(in):: slip_rates
+        class(HardeningModelVoce),                      intent(inout):: this
+        type(Grain), target,                            intent(inout):: grain_
+        real(DP),                                       intent(in)::    time
+        real(DP), dimension(size(grain_%slip_systems)), intent(in)::    slip_rates
 
         integer:: i                          !> Iterator
         real(DP):: crss                      !> Buffer for CRSS so that it needs to be calculated only once.
