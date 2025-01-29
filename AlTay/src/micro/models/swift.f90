@@ -87,7 +87,6 @@ contains
                 grains(i)%slip_systems(j)%crss = crss
             end do
         end do
-        print *, 'crss: ', crss
     end subroutine swift_init
 
     !> @Brief See hardening_model_update_crss
@@ -109,9 +108,5 @@ contains
         do i = 1, size(grain_%slip_systems)
             grain_%slip_systems(i)%crss = crss
         end do
-
-        print *, 'Total slip: ', state_ptr%total_slip
-        print *, 'Current slip: ', sum(abs(slip_rates)) * time
-        print *, 'crss: ', crss
     end subroutine
 end module swift
