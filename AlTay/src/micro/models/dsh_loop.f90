@@ -21,25 +21,24 @@ contains
         class(HardeningModelDSHLoop), intent(inout):: this
         type(Parameter), allocatable, target, intent(in):: params(:)
         integer:: s, i
-        real(DP):: normdir(24, 3)
+        real(DP):: normdir(24, 3), &
+                   eff(24, 6), &
+                   coeff
 
         normdir = transpose(normalize(BCC24(:,1, :)))
 
-        call dsh_init(this, params)
-
-        !Calculate "Wall-effectivity"-matrices
+        !Calculate "Wall-effectivity"-matrix
         do s = 1, 24
             do i = 1, 6
-                this%eff(s, i) = NormDir(s, :) .dot. CBBnormal(i, :)
-                !treat as "1" or "-1"
-                if (abs(this%eff(s, i)) >= 0.99999_DP) then
-                    this%eff(s, i)=0._DP
-                else
-                    this%eff(s, i)=sqrt(1._DP-(this%eff(s, i))**2)
-                endif
+                coeff = NormDir(s, :) .dot. CBBnormal(i, :)
+
+                !If coeff is almost +/-1, treat it as 1.
+                eff(s, i) = merge(sqrt(1._DP-coeff**2), &
+                                  0._DP, &
+                                  abs(coeff) < 1-TOLERANCE)
             end do
         end do
 
-        call this%initstate()
+        call dsh_init(this, params, eff)
     end subroutine
 end module

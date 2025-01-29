@@ -36,9 +36,8 @@ module dsh
     !steel during sheet forming'). Several variants of this model have been formulated, each of which considers different types of
     !dislocations.
     !Note that only the BCC24 slip system set is supported.
-    type, extends(HardeningModel):: HardeningModelDSH
+    type, extends(HardeningModel), abstract:: HardeningModelDSH
         type(StatVar), dimension(:), allocatable    ::  state
-        real(DP), dimension(:,:,:), allocatable     ::  crss
         real(DP)                                    ::  b,                      &
                                                         G,                      &
                                                         alfa,                   &
@@ -55,34 +54,18 @@ module dsh
                                                         Rwp,                    &
                                                         Rrev,                   &
                                                         R2,                     &
-                                                        RHOcbSAT,               &
-                                                        RHOwdSAT,               &
                                                         RHOwpSAT,               &
-                                                        RHOcbMIN,               &
                                                         RHOwdMIN,               &
                                                         RHOwpMIN,               &
-                                                        RHOwpLOW,               &
-                                                        alfa_G_b
-        real(DP), dimension(24, 6)                   ::  eff             = 0._DP, &
-                                                        effslashb       = 0._DP, &
-                                                        alfa_G_b_eff    = 0._DP, &
-                                                        alfa_G_b_ABSeff = 0._DP
+                                                        RHOwpLOW
+        real(DP), dimension(24, 6)                   :: effslashb       = 0._DP, &
+                                                        alfa_G_b_eff    = 0._DP
     contains
         procedure:: get_parameters => dsh_get_parameters
         procedure:: validate_parameters => dsh_validate_parameters
-        procedure:: init           => dsh_init
         procedure:: get_crss       => dsh_get_crss
         procedure:: update_state       => dsh_update_state
         procedure:: finalize       => dsh_finalize
-        procedure:: initstate
-        procedure:: f_crss
-        procedure:: f_kocksmeck
-        procedure:: upd_cur_wp
-        procedure:: bp_upd_ncg_wd
-        procedure:: rungeKutta
-        procedure:: dwp_dt
-        procedure:: upd_ncg_wp
-        procedure:: upd_cb
     end type
 
     public  ::  HardeningModelDSH, &
@@ -137,13 +120,17 @@ contains
         call parameter_check_bounds(params .find. 'R2',    0._dp,   1.e-6_dp)   ! [m]
         call parameter_check_bounds(params .find. 'beta1', 0._dp,   100._dp)    ! [/]
         call parameter_check_bounds(params .find. 'beta2', 0._dp,   100._dp)    ! [/]
-    end subroutine dsh_validate_parameters
+    end subroutine
 
     !Main initialization function
-    subroutine dsh_init(this, params)
+    subroutine dsh_init(this, params, eff)
         class(HardeningModelDSH), intent(inout)  :: this
         type(Parameter), allocatable, target, intent(in):: params(:)
-        integer:: n_grains
+        real(DP), dimension(24, 6), intent(in):: eff          !> Interaction coefficients between dislocation directions and cell
+                                                              !> block boundary normals.
+
+        integer:: i, &
+                  n_grains
 
         call hardening_model_init(this, params)
 
@@ -165,19 +152,14 @@ contains
         this%R2    = (params .find. 'R2')   * 1.e6_dp ![m] -> [um]
 
         !Calculate dependent hardening parameters
-        this%RHOcbSAT = (this%I)**2 / (this%R)**2
-        this%RHOwdSAT = (this%Iwd)**2 / (this%Rwd)**2
+        this%RHOwdMIN = MINFRAC* (this%Iwd)**2 / (this%Rwd)**2  ! Minfrac*rho_wd_sat
         this%RHOwpSAT = (sqrt((this%Iwp/this%Rwp)**4+4._dp * (this%Iwp*this%Iwd / (this%Rwp*this%Rwd))**2) + (this%Iwp/this%Rwp)**2) / 2._dp
-        this%RHOcbMIN = MINFRAC*this%RHOcbSAT
         this%RHOwpLOW = LOWFRAC*this%RHOwpSAT
-        this%RHOwdMIN = MINFRAC*this%RHOwdSAT
         this%RHOwpMIN = MINFRAC*this%RHOwpSAT
-        this%RHOwpLOW = LOWFRAC*this%RHOwpSAT
 
         n_grains = params .find. 'n_grains'
         allocate(this%state(n_grains))
-        allocate(this%crss(n_grains, 2, this%nss))
-        this%state(1)%RHOcb               = this%RHOcbMIN
+        this%state(1)%RHOcb            = MINFRAC * (this%I)**2 / (this%R)**2  ! Minfrac*rho_cb_sat
         this%state(1)%CBB%RHOwd        = this%RHOwdMIN
         this%state(1)%CBB%RHOwp        = 0._DP
         this%state(1)%CBB%RHOwdHOM     = this%RHOwdMIN
@@ -185,61 +167,44 @@ contains
         this%state(1)%CBB%RHOwd_ini    = this%RHOwdMIN
         this%state(1)%ActiveCBB        = 0
         this%state = this%state(1)
+
+        this%effslashb       = eff/this%b
+        this%alfa_G_b_eff    = this%alfa*this%G*this%b*eff
     end subroutine dsh_init
-
-    !> Initialize state separately after model-specific initialization.
-    subroutine initState(this)
-        class(HardeningModelDSH):: this
-        integer:: i
-
-        this%effslashb       = this%eff/this%b
-        this%alfa_G_b        = this%alfa*this%G*this%b
-        this%alfa_G_b_eff    = this%alfa_G_b*this%eff
-        this%alfa_G_b_ABSeff = abs(this%alfa_G_b_eff)
-
-        do i = 1, size(this%state)
-            call F_CRSS(this, i)
-        end do
-    end subroutine
 
     subroutine dsh_update_state(this, grain, time, slip_rates)
         class(HardeningModelDSH), intent(inout)     ::  this
         integer, intent(in)                         ::  grain
         real(DP), intent(in)                        ::  time
         real(DP), dimension(this%nss), intent(in)   ::  slip_rates
-        type(StatVar)                               ::  SVa,                    &
-                                                        SVb
-        real(DP)                                    ::  SUMabsGamDot, &
-                                                        GAMMAdot_new, &
-                                                        RHObausch   , &
-                                                        SUMabsGam   , &
-                                                        GAMMA_new
-        real(DP), dimension(6)                      ::  GAMMAdot    , &
-                                                        GAMMA
+        real(DP)                                    ::  RHObausch   , &
+                                                        rho_wp_a, &
+                                                        wpflux, &
+                                                        r_effective, &
+                                                        sum_slip_active_cbb
+        real(DP), dimension(6)                      ::  sum_slip_rates_110
         integer, dimension(6)                       ::  r
-        integer                                     ::  i, &
-                                                        j
+        integer                                     ::  i
+        logical:: flux_reversal
 
-
-        SVa = this%state(grain)
         !>Calculate quantities of slip rates and slips
         !>Identify currently generated and non-currently generated walls
-        SUMabsGamDot = sum(abs(slip_rates))
-        SUMabsGam = SUMabsGamDot*time
-        if (SUMabsGam < epsilon(0._DP)) return
-        forall (i = 1:6) gammadot(i) = sum(abs(slip_rates(2*i-1:2*i)))  ! Sum of slip rates for all 110-planes
-        gamma = GAMMAdot*time
+        do i = 1, 6
+            sum_slip_rates_110(i) = sum(abs(slip_rates(2*i-1:2*i)))  !Sum of slip rates for the systems of each 110-plane
+        end do
 
         !r(1) = plane with largest slip
         !r(2) = plane with 2nd largest slip
         !r(3:6) = remaining planes (unordered)
-        r(1:2) = merge([1, 2],[2, 1], gammadot(1) >= gammadot(2))
+        r(1:2) = merge([1, 2], &
+                       [2, 1], &
+                       sum_slip_rates_110(1) >= sum_slip_rates_110(2))
         do i = 3, 6
-            if (gammadot(i) > gammadot(r(1))) then
+            if (sum_slip_rates_110(i) > sum_slip_rates_110(r(1))) then
                 r(i) = r(2)
                 r(2) = r(1)
                 r(1) = i
-            else if (gammadot(i) > gammadot(r(2))) then
+            else if (sum_slip_rates_110(i) > sum_slip_rates_110(r(2))) then
                 r(i) = r(2)
                 r(2) = i
             else
@@ -247,217 +212,94 @@ contains
             end if
         end do
 
-        SVb%ActiveCBB(1) = r(1)
-        SVb%ActiveCBB(2) = r(2)
+        !Update dislocation densities
+        associate (sv => this%state(grain))
+            RHObausch = 0._DP
+            !Loop over 2 currently generated walls
+            do i = 1, 2
+                associate(cur_cbb => sv%cbb(r(i)))
+                    cur_cbb%RHOwd = kocks_mecking(this%b, cur_cbb%RHOwd, sum_slip_rates_110(r(i))*time, this%Iwd, this%Rwd)
+                    cur_cbb%RHOwdHOM = cur_cbb%RHOwd
 
-        GAMMAdot_new = GAMMAdot(r(1)) + GAMMAdot(r(2))
-        GAMMA_new = GAMMAdot_new*time
+                    rho_wp_a = cur_cbb%RHOwp
+                    wpFLUX = this%effslashb(:,r(i)) .dot. slip_rates
+                    flux_reversal = wpFLUX*rho_wp_a  <  0._DP
 
-           !Update dislocation densities
-           RHObausch = 0._DP
-           do j = 1, 2  ! Loop over 2 currently generated walls
-               SVb%CBB(r(j))%RHOwd = this%F_KocksMeck(SVa%CBB(r(j))%RHOwd, gamma(r(j)), this%Iwd, this%Rwd)
-               SVb%CBB(r(j))%RHOwdHOM = SVb%CBB(r(j))%RHOwd
-               call this%upd_cur_wp(r(j), SVa%CBB(r(j))%RHOwp, SVb%CBB(r(j))%RHOwp, RHObausch, slip_rates, svb, time)
-           end do
+                    if (flux_reversal .and. abs(rho_wp_a) > this%RHOwpLOW) then
+                        !|RHOwp| gets smaller, following analytic time integration
+                        cur_cbb%RHOwp = rho_wp_a*exp(-this%Rrev*abs(wpFLUX) * time)
+                        RHObausch = RHObausch+abs(rho_wp_a)
+                    else
+                        !|RHOwp| gets larger, following numeric time integration (4th order Runge-Kutta)
+                       cur_cbb%RHOwp = runge_kutta(merge(-rho_wp_a, rho_wp_a, flux_reversal), &
+                                                   time, &
+                                                   dwp_dt, & !See definition of dwp_dt for the meaning of the list of variables below
+                                                   [this%iwp, this%rwp, wpflux, this%state(grain)%CBB(r(i))%RHOwdHOM])
+                    end if
+                end associate
+            end do
 
-           do j = 3, 6  ! Loop over 4 non-currently generated walls
-               call bp_UPD_ncg_wd(this, r(j), sva, svb, gamma_new)
-               call this%UPD_ncg_wp(SVa%CBB(r(j))%RHOwp, SVb%CBB(r(j))%RHOwp, gamma_new)
-           end do
+            !Loop over 4 non-currently generated walls
+            sum_slip_active_cbb = sum(sum_slip_rates_110(r(:2)))*time
+            do i = 3, 6
+                associate (cur_cbb => sv%cbb(r(i)))
+                    if (cur_cbb%RHOwdHOM > this%RHOwdMIN) then
+                        if (all(sv%activecbb /= r(i))) then  ! if the wall was NOT active in prev. inc.
+                            cur_cbb%accGAMMA_new = cur_cbb%accGAMMA_new+sum_slip_active_cbb
+                        else
+                            cur_cbb%accGAMMA_new = sum_slip_active_cbb
+                            cur_cbb%RHOwd_ini = cur_cbb%RHOwdHOM
+                        end if
 
-           call this%upd_cb(RHObausch, SUMabsGam, SVa%RHOcb, SVb%RHOcb)
+                        cur_cbb%RHOwdHOM = cur_cbb%RHOwdHOM*exp(-this%Rncg*sum_slip_active_cbb/this%b)
+                        cur_cbb%RHOwd = cur_cbb%RHOwdHOM-tanh(this%beta1*cur_cbb%accGAMMA_new)*exp(-this%beta1*cur_cbb%accGAMMA_new)*cur_cbb%RHOwd_ini*this%beta2
+                        if (cur_cbb%RHOwd < this%RHOwdMIN) &
+                            cur_cbb%RHOwd = this%RHOwdMIN
+                    else
+                        cur_cbb%RHOwdHOM = this%RHOwdMIN
+                        cur_cbb%RHOwd = this%RHOwdMIN
+                    end if
 
-           !Calculate Critical Resolved Shear Stresses
-           this%state(grain) = SVb
-           call this%F_CRSS(grain)
+                    cur_cbb%rhowp = merge(cur_cbb%RHOwp*exp(-this%Rncg*sum_slip_active_cbb/this%b), &
+                                          this%RHOwpMIN*merge(1, -1, cur_cbb%rhowp >= 0._DP), &
+                                          abs(cur_cbb%RHOwp) > this%RHOwpMIN)
+                end associate
+            end do
+
+            if(RHObausch > 0._DP) then
+                r_effective = this%R+this%R2*RHObausch / (2.D0*this%RHOwpSAT)
+                if (this%I*sqrt(sv%rhocb) - r_effective*sv%rhocb > 0._DP) &
+                    sv%rhocb = kocks_mecking(this%b, sv%rhocb, sum(abs(slip_rates))*time, this%I, r_effective)
+            else
+                sv%rhocb = kocks_mecking(this%b, sv%rhocb, sum(abs(slip_rates))*time, this%I, this%R)
+            end if
+        end associate
+
+        !Update indices of active CBBs
+        this%state(grain)%activecbb = r(:2)
+    contains
+        !Unfortunately, this is the only way to formulate 'partial function application' that IFX can handle.
+        !Refer to PhD thesis by Bart Peters for the meaning of this function.
+        real(DP) function dwp_dt(wp, args) result(res)
+            real(DP), intent(in):: wp
+            real(DP), dimension(:), intent(in):: args ![iwp, rwp, fl, wd]
+
+            res = (sign(1._DP, args(3)) * args(1)*sqrt(args(4)+abs(wp)) - args(2)*wp) * abs(args(3))
+        end function
     end subroutine
 
     !>Returns RHO_b, the value of RHO at the end of an interval (a, b) for the following differential equation:
-    !>d(RHO)/d(g) = 1/this%b * ( II*sqrt(RHO) - RR*RHO )
-    real(DP) function F_KocksMeck(this, RHO_a, delta_g, II, RR) result(kock)
-        class(HardeningModelDSH), intent(in)    ::  this
-        real(DP), intent(in)                    ::  RHO_a,      &
-                                                    delta_g,    &
-                                                    II,         &
-                                                    RR
+    !>d(RHO)/d(g) = 1/b * (II*sqrt(RHO) - RR*RHO)
+    real(DP) function kocks_mecking(b, RHO_a, delta_g, II, RR) result(kock)
+        real(DP), intent(in):: b
+        real(DP), intent(in):: RHO_a
+        real(DP), intent(in):: delta_g
+        real(DP), intent(in):: II
+        real(DP), intent(in):: RR
 
-      kock = exp(-0.5D0*RR*delta_g/this%b)
+      kock = exp(-0.5D0*RR*delta_g/b)
       kock = (II/RR * (1.D0-kock) + sqrt(RHO_a) * kock)**2
     end function
-
-    subroutine upd_cur_wp(this, rdr, RHOwp_a, RHOwp_b, RHObausch, slip_rates, svb, delta_t)
-        class(HardeningModelDSH), intent(in)        ::  this
-        integer, intent(in)                         ::  rdr
-        real(DP), intent(in)                        ::  RHOwp_a
-        real(DP), intent(out)                       ::  RHOwp_b
-        real(DP), intent(inout)                     ::  RHObausch
-        real(DP), dimension(this%nss), intent(in)   ::  slip_rates
-        real(DP), intent(in)                        ::  delta_t
-        type(StatVar), intent(inout)                ::  svb
-        real(DP)                                    ::  wpFLUX,         &
-                                                        fl,             &
-                                                        wd
-        logical                                     ::  FLUXreversal,   &
-                                                        wpLOW
-
-        wpFLUX = dot_product(this%effslashb(:,rdr), slip_rates)
-
-        FLUXreversal = wpFLUX*RHOwp_a  <  0._DP
-        wpLOW = abs(RHOwp_a) <= this%RHOwpLOW
-
-        if (FLUXreversal .and. .not. (wpLOW)) then
-            !|RHOwp| gets smaller, following analytic time integration
-            RHOwp_b = RHOwp_a*exp(-this%Rrev*abs(wpFLUX) * delta_t)
-            RHObausch = RHObausch+abs(RHOwp_a)
-        else
-            !|RHOwp| gets larger, following numeric time integration (4th order Runge-Kutta)
-            fl = wpFLUX
-            wd = SVb%CBB(rdr)%RHOwdHOM
-            if (FLUXreversal) then
-                !AFTER change of its sign, RHOwp will build up again.
-                RHOwp_b = this%rungeKutta(-RHOwp_a, delta_t, fl, wd)
-            else
-                RHOwp_b = this%rungeKutta(RHOwp_a, delta_t, fl, wd)
-            end if
-        end if
-    end subroutine
-
-    !>4th order Runge-Kutta approximation of the differential equation given by d(wp)/dt = F(wp)
-    real(DP) function rungeKutta(this, wpini, deltaT, fl, wd) result(rk)
-        class(HardeningModelDSH), intent(in)    ::  this
-        real(DP), intent(in)                    ::  wpini,  &
-                                                    deltaT, &
-                                                    fl,     &
-                                                    wd
-        real(DP), dimension(4)                  ::  K
-
-        K(1) = deltaT*this%dwp_dt(wpini, fl, wd)
-        K(2) = deltaT*this%dwp_dt(wpini+K(1) / 2.D0, fl, wd)
-        K(3) = deltaT*this%dwp_dt(wpini+K(2) / 2.D0, fl, wd)
-        K(4) = deltaT*this%dwp_dt(wpini+K(3), fl, wd)
-
-        rk = wpini + (K(1) + 2.D0*K(2) + 2.D0*K(3) + K(4)) / 6.D0
-    end function rungeKutta
-
-    real(DP) function dwp_dt(this, wp, fl, wd) result(res)
-        class(HardeningModelDSH), intent(in)    ::  this
-        real(DP), intent(in)                    ::  wp,     &
-                                                    fl,     &
-                                                    wd
-
-        res = (sign(1.D0, fl) * this%Iwp*sqrt(wd+abs(wp)) - this%Rwp*wp) * abs(fl)
-    end function dwp_dt
-
-    subroutine bp_UPD_ncg_wd(this, rdr, SV_a, SV_b, gamma_new)
-        class(HardeningModelDSH), intent(in)    ::  this
-        integer, intent(in)                     ::  rdr
-        type(StatVar), intent(in)               ::  SV_a
-        type(StatVar), intent(inout)            ::  SV_b
-        real(DP), intent(in)                    ::  gamma_new
-
-        real(DP)                                ::  RHOwdLOC,       &
-                                                    RHOwdHOM,       &
-                                                    accGAMMA_new,   &
-                                                    RHOwd_ini,      &
-                                                    RHOwd
-
-        RHOwdHOM     = SV_a%CBB(rdr)%RHOwdHOM
-        accGAMMA_new = SV_a%CBB(rdr)%accGAMMA_new
-        RHOwd_ini    = SV_a%CBB(rdr)%RHOwd_ini
-
-        if (RHOwdHOM > this%RHOwdMIN) then
-            if (rdr  /=  SV_a%ActiveCBB(1) .and. rdr  /=  SV_a%ActiveCBB(2)) then  ! if the wall was NOT active in prev. inc.
-                accGAMMA_new = accGAMMA_new+GAMMA_new
-            else
-                accGAMMA_new = GAMMA_new
-                RHOwd_ini = RHOwdHOM
-            end if
-
-            RHOwdLOC = -tanh(this%beta1*accGAMMA_new) * exp(-this%beta1*accGAMMA_new) * RHOwd_ini*this%beta2
-            RHOwdHOM = RHOwdHOM*exp(-this%Rncg*GAMMA_new/this%b)
-            RHOwd = RHOwdHOM+RHOwdLOC
-            if (RHOwd  <  this%RHOwdMIN) RHOwd = this%RHOwdMIN
-        else
-            RHOwdHOM = this%RHOwdMIN
-            RHOwd = this%RHOwdMIN
-        end if
-
-        SV_b%CBB(rdr)%RHOwd         = RHOwd
-        SV_b%CBB(rdr)%RHOwdHOM      = RHOwdHOM
-        SV_b%CBB(rdr)%accGAMMA_new  = accGAMMA_new
-        SV_b%CBB(rdr)%RHOwd_ini     = RHOwd_ini
-    end subroutine
-
-    subroutine upd_ncg_wp(this, RHOwp_a, RHOwp_b, gamma_new)
-        class(HardeningModelDSH), intent(in)    ::  this
-        real(DP), intent(in)                    ::  RHOwp_a,    &
-                                                    gamma_new
-        real(DP), intent(out)                   ::  RHOwp_b
-
-        if (abs(RHOwp_a)  >  this%RHOwpMIN) then
-            RHOwp_b = RHOwp_a*exp(-this%Rncg*GAMMA_new/this%b)
-        else
-            RHOwp_b =  merge(this%RHOwpMIN, -this%RHOwpMIN, RHOwp_a >= 0._DP)
-        end if
-    end subroutine upd_ncg_wp
-
-    subroutine upd_cb(this, RHObausch, SUMabsGam, RHO_a, RHO_b)
-        class(HardeningModelDSH), intent(in)    ::  this
-        real(DP), intent(in)                    ::  RHObausch,   &
-                                                    SUMabsGam
-        real(DP), intent(in)                    ::  RHO_a
-        real(DP), intent(out)                   ::  RHO_b
-        real(DP)                                ::  Reffective
-
-        if(RHObausch > 0._DP) then
-            Reffective = this%R+this%R2*RHObausch / (2.D0*this%RHOwpSAT)
-            RHO_b = merge(RHO_a, &
-                          this%F_KocksMeck(RHO_a, SUMabsGam, this%I, Reffective), &
-                          this%I*sqrt(RHO_a) - Reffective*RHO_a <= 0._DP)
-        else
-            RHO_b = this%F_KocksMeck(RHO_a, SUMabsGam, this%I, this%R)
-        end if
-    end subroutine upd_cb
-
-    subroutine F_CRSS(this, grain)
-        class(HardeningModelDSH), intent(inout)    :: this
-        type(StatVar):: SV
-        integer, intent(in):: grain
-        real(DP):: tau_CB, CRSS_0_CB
-        real(DP), dimension(2, this%nss):: tau_CBB
-        integer:: j, s, i
-        real(DP):: signfac
-        real(DP), dimension(6):: wpcontr, wdcontr
-
-        SV = this%state(grain)
-        !Slip systems not allowed to become active retain initialization value of-1.0
-        this%crss(grain, :,:) = -1.D0
-
-        !CRSS within cells & CBs
-        tau_CB = this%alfa_G_b*sqrt(SV%RHOcb)
-
-        !contributions from tau_0 and CBs to CRSS
-        CRSS_0_CB = this%tau0 + (1.D0-this%f) * tau_CB
-
-        !Calc. CRSS for each slip system s, for the sense of slip j
-        do j = 1, 2
-            signfac = 3.D0-2.D0*dble(j)  ! 1 for j = 1; -1 for j = 2
-            do s = 1, this%nss
-                !wp-and wd-contributions from all CBBs i
-                do i = 1, 6
-                    wpcontr(i)=sqrt(abs(SV%CBB(i)%RHOwp)) * signfac*this%alfa_G_b_eff(s, i) * sign(1.D0, SV%CBB(i)%RHOwp)
-                    if (wpcontr(i) < 0.0_DP) wpcontr(i) = 0._DP  ! Heaviside bracket
-                    wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*this%alfa_G_b_ABSeff(s, i)
-                end do
-                !CRSS within CBB = wp-and wd-contributions for all 6 walls
-                tau_CBB(j, s)=sum(wpcontr)+sum(wdcontr)
-                !C.R.S.S. for the "two-phase composite"
-                this%crss(grain, j, s)= CRSS_0_CB+this%f*tau_CBB(j, s)
-            end do
-        end do
-
-    end subroutine
 
     function dsh_get_crss(this, grain, sum_slip) result(crss)
         class(HardeningModelDSH), intent(in)    :: this
@@ -465,13 +307,48 @@ contains
         real(DP), intent(in)                    :: sum_slip
         real(DP), dimension(2, this%nss)         :: crss
 
-        crss = this%crss(grain, :,:)
+        integer:: j, s, i
+        real(DP):: tau_CB, &
+                   CRSS_0_CB, &
+                   tau_CBB(2, this%nss), &
+                   wpcontr(6), &
+                   wdcontr(6)
+
+        !Some systems are not allowed to become active
+        crss = REAL_DP_MAX_VAL
+
+        associate (sv => this%state(grain))
+            !CRSS within cells & CBs
+            tau_CB = this%alfa*this%G*this%b*sqrt(SV%RHOcb)
+
+            !contributions from tau_0 and CBs to CRSS
+            CRSS_0_CB = this%tau0 + (1.D0-this%f) * tau_CB
+
+            !Calc. CRSS for each slip system s, for the sense of slip j
+            do j = 1, 2
+                do s = 1, this%nss
+                    !wp-and wd-contributions from all CBBs i
+                    do i = 1, 6
+                        wpcontr(i)= sqrt(abs(SV%CBB(i)%RHOwp)) &
+                                    * (-1)**(j-1) &
+                                    * this%alfa_G_b_eff(s, i) &
+                                    * sign(1.D0, SV%CBB(i)%RHOwp)
+                        if (wpcontr(i) < 0.0_DP) &
+                            wpcontr(i) = 0._DP  ! Heaviside bracket
+                        wdcontr(i)=sqrt(SV%CBB(i)%RHOwd)*abs(this%alfa_G_b_eff(s, i))
+                    end do
+                    !CRSS within CBB = wp-and wd-contributions for all 6 walls
+                    tau_CBB(j, s)=sum(wpcontr)+sum(wdcontr)
+                    !C.R.S.S. for the "two-phase composite"
+                    crss(j, s)= CRSS_0_CB+this%f*tau_CBB(j, s)
+                end do
+            end do
+        end associate
     end function
 
     subroutine dsh_finalize(this)
         class(HardeningModelDSH), intent(inout)    :: this
 
-        deallocate(this%crss)
         deallocate(this%state)
     end subroutine
 end module

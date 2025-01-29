@@ -364,4 +364,28 @@ contains
             res = res+x(i, i)
         enddo
     end function
+
+    !>4th order Runge-Kutta approximation of the differential equation given by d(x)/dt = F(x)
+    real(DP) function runge_kutta(x0, dt, fun, args) result(rk)
+        real(DP), intent(in)::  x0
+        real(DP), intent(in)::  dt
+        interface
+            function fun(x, args) result(res)
+            import DP
+                real(DP), intent(in):: x
+                real(DP), dimension(:), intent(in):: args
+                real(DP):: res
+            end function
+        end interface
+        real(DP), dimension(:), intent(in):: args
+
+        real(DP), dimension(4)::  k
+
+        k(1) = dt*fun(x0, args)
+        k(2) = dt*fun(x0+k(1) / 2.D0, args)
+        k(3) = dt*fun(x0+k(2) / 2.D0, args)
+        k(4) = dt*fun(x0+k(3), args)
+
+        rk = x0 + (k(1) + 2.D0*k(2) + 2.D0*k(3) + k(4)) / 6.D0
+    end function
 end module

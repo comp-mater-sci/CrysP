@@ -22,11 +22,10 @@ contains
         class(HardeningModelDSHEdge), intent(inout):: this
         type(Parameter), allocatable, target, intent(in):: params(:)
 
-        call dsh_init(this, params)
+        call dsh_init(this, &
+                      params, &
+                      transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :)))))  ! 'Wall-effectivity' matrix == cosines of the angle between
+                                                                              !dislocation movement vectors and the cell block boundary normals.
 
-        !Normalized movement vector of EDGE dislocation on slip system s
-        ! == normalized burgers vector of slip system s
-        this%eff = transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :))))
-        call this%initstate()
     end subroutine
 end module

@@ -348,7 +348,7 @@ contains
     !           routine crashes the program.
     !> @Return the floating point representation of the provided value..
     pure real(DP) function get_numerical_value(val) result(num)
-        class(*), intent(in):: val      !> The value to convert to a floating point. Must be integer, real or Parameter of type TYPE_INTEGER or TYPE_REAL
+        class(*), intent(in):: val !> The value to convert to a floating point. Must be integer, real or Parameter of type TYPE_INTEGER or TYPE_REAL
 
         select type (val)
             type is (integer)
