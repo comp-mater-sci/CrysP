@@ -211,11 +211,11 @@ contains
 
         stress = matmul(rss_basis, inverse_basis)
         rss = matmul(stress, taylor_coeffs)
-        max_overstress = TOLERANCE
+        max_overstress = 0._DP
         most_overstressed_system = 0
         do i = 1, size(taylor_coeffs, 2)
             overstress = merge(rss(i) - crss(1, i), -rss(i) - crss(2, i), rss(i) >= 0._DP)
-            if (overstress > max_overstress) then
+            if (overstress > max_overstress+TOLERANCE) then
                 max_overstress = overstress
                 most_overstressed_system = i
             end if
