@@ -4,12 +4,11 @@ module voce
     use altayConfig
     use logging
     use parameters
-    use grain_module
 
     implicit none
 
     private
-    public:: HardeningModelVoce
+    public:: ConstitutiveModelVoce
 
     !> Grain-specific hardening state data needed by the Voce hardening law.
     type, extends(HardeningState):: VoceState
@@ -24,7 +23,7 @@ module voce
     end type
 
     !> Voce hardening model
-    type, extends(HardeningModel):: HardeningModelVoce
+    type, extends(ConstitutiveModel):: ConstitutiveModelVoce
         real(DP)    ::  transition_slip = 0._DP !> Value for total slip at which to transition from stage 1 to stage 2.
         type(stage) ::  stage_1,    &           !> Parameters to use for small strain.
                         stage_2                 !> Parameters to use for large strain.
@@ -77,16 +76,19 @@ contains
     end subroutine
 
     !> @Brief See hardening_model_init
-    subroutine voce_init(this, grains, params)
+    function voce_init(this, miller_indices, params) result(initial_state)
         class(HardeningModelVoce), intent(inout):: this
-        type(Grain), dimension(:), intent(inout):: grains
+        integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), target, intent(in):: params(:)
+        class(HardeningState), allocatable:: initial_state
 
         !Local variables
-        integer::  i, j     !> Iterators
         real(DP):: THT, &
                    ETA, &
                    TAUT
+
+        allocate(VoceState:: initial_state)
+        call this%base_init(miller_indices, initial_state)
 
         this%stage_1%T1 = params .find. 'TIII1'
         this%stage_1%TS = params .find. 'TIIIS'
@@ -100,26 +102,19 @@ contains
         this%stage_2%TH = THT / (1.D0-TAUT/this%stage_2%TS)
         this%stage_2%T1 = this%stage_2%TS + (TAUT-this%stage_2%TS) * exp(this%stage_2%TH*this%transition_slip/this%stage_2%TS)
 
-        do i = 1, size(grains)
-            allocate(VoceState:: grains(i)%hardening_state)
-            do j = 1, size(grains(i)%slip_systems)
-                grains(i)%slip_systems(j)%crss = this%stage_1%T1
-            end do
-        end do
+        initial_state%crss = this%stage_1%T1
     end subroutine
 
-    subroutine voce_deform(this, grain_, time, slip_rates)
+    subroutine voce_deform(this, state, time, slip_rates)
         class(HardeningModelVoce),                      intent(inout):: this
-        type(Grain), target,                            intent(inout):: grain_
+        class(HardeningState), target,                  intent(inout):: state
         real(DP),                                       intent(in)::    time
         real(DP), dimension(size(grain_%slip_systems)), intent(in)::    slip_rates
 
-        integer:: i                          !> Iterator
-        real(DP):: crss                      !> Buffer for CRSS so that it needs to be calculated only once.
         type(Stage):: current_stage          !> Current stage in the Voce hardening process
         type(VoceState), pointer:: state_ptr !> Pointer to hardening_state of type VoceState for easy access to model-specific fields
 
-        state_ptr => to_voce_state(grain_%hardening_state)
+        state_ptr => to_voce_state(state)
 
         state_ptr%total_slip = state_ptr%total_slip+sum(abs(slip_rates)) * time
 
@@ -127,10 +122,6 @@ contains
                               this%stage_2, &
                               state_ptr%total_slip <= this%transition_slip)
 
-        crss = current_stage%TS - (current_stage%TS-current_stage%T1) * exp(-current_stage%TH*state_ptr%total_slip/current_stage%TS)
-
-        do i = 1, size(grain_%slip_systems)
-            grain_%slip_systems(i)%crss = crss
-        end do
+        state_ptr%crss = current_stage%TS - (current_stage%TS-current_stage%T1) * exp(-current_stage%TH*state_ptr%total_slip/current_stage%TS)
     end subroutine
 end module voce

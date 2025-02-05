@@ -3,25 +3,25 @@ module dsh_screw
     use parameters
     use dsh
     use slip_systems
-    use grain_module
 
     implicit none
 
     private
-    public:: HardeningModelDSHScrew
+    public:: ConstitutiveModelDSHScrew
 
     !Dislocation substructural hardening (DSH) model assuming all slip is carried by screw dislocations.
-    type, extends(HardeningModelDSH):: HardeningModelDSHScrew
+    type, extends(ConstitutiveModelDSH):: ConstitutiveModelDSHScrew
     contains
         procedure:: init => dsh_screw_init
     end type
 
 contains
 
-    subroutine dsh_screw_init(this, grains, params)
-        class(HardeningModelDSHScrew), intent(inout):: this
-        type(Grain), dimension(:), intent(inout):: grains
+    function dsh_screw_init(this, miller_indices, params) result(initial_state)
+        class(ConstitutiveModelDSHScrew), intent(inout):: this
+        integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), target, intent(in):: params
+        class(HardeningState), allocatable:: initial_state
 
         integer:: i
         real(DP):: screwdir(24, 3)
@@ -31,7 +31,7 @@ contains
             screwdir(i, :) = normalize(BCC24(:,2, i) .cross. BCC24(:,1, i))
         end do
 
-        call this%init_common(grains, params, matmul(screwdir, transpose(CBBNORMAL)))  ! 'Wall-effectivity' matrix == cosines of the angle between
+        initial_state = this%init_common(miller_indices, params, matmul(screwdir, transpose(CBBNORMAL)))  ! 'Wall-effectivity' matrix == cosines of the angle between
                                                               !the dislocation movement vectors and the cell block boundary normals.
     end subroutine
 end module

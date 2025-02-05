@@ -3,25 +3,26 @@ module dsh_loop
     use parameters
     use dsh
     use slip_systems
-    use grain_module
 
     implicit none
 
     private
-    public:: HardeningModelDSHLoop
+    public:: ConstitutiveModelDSHLoop
 
     !Dislocation substructural hardening (DSH) model assuming slip is carried by dislocation loops with equal slip realized by edge and screw segments.
-    type, extends(HardeningModelDSH):: HardeningModelDSHLoop
+    type, extends(ConstitutiveModelDSH):: ConstitutiveModelDSHLoop
     contains
         procedure:: init => dsh_loop_init
     end type
 
 contains
 
-    subroutine dsh_loop_init(this, grains, params)
-        class(HardeningModelDSHLoop), intent(inout):: this
-        type(Grain), dimension(:), intent(inout):: grains
+    function dsh_loop_init(this, miller_indices, params) result(initial_state)
+        class(ConstitutiveModelDSHLoop), intent(inout):: this
+        integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), target, intent(in):: params
+        class(HardeningState), allocatable:: initial_state
+
         integer:: s, i
         real(DP):: normdir(24, 3), &
                    eff(24, 6), &
@@ -41,6 +42,6 @@ contains
             end do
         end do
 
-        call this%init_common(grains, params, eff)
-    end subroutine
+        initial_state = this%init_common(miller_indices, params, eff)
+    end function
 end module

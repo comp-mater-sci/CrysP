@@ -19,11 +19,12 @@ module dsh_edge
 
 contains
 
-    subroutine dsh_edge_init(this, grains, params)
+    function dsh_edge_init(this, miller_indices, params) result(initial_state)
         class(HardeningModelDSHEdge), intent(inout):: this
-        type(Grain), dimension(:), intent(inout):: grains
+        integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), target, intent(in):: params
+        class(HardeningState), allocatable:: initial_state
 
-        call this%init_common(grains, params, transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :)))))
-    end subroutine
+        initial_state = this%init_common(miller_indices, params, transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :)))))
+    end function
 end module

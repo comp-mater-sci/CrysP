@@ -27,7 +27,7 @@ meso/relaxation.f90
 micro/grain.f90 
 micro/slip_systems.f90
 micro/micro.f90
-micro/hardening_model.f90
+micro/constitutive_model.f90
 micro/models/none.f90
 micro/models/swift.f90
 micro/models/voce.f90
