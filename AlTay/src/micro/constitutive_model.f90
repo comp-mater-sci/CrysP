@@ -93,7 +93,7 @@ contains
 
         do i = 1, n_systems
             normalized = normalize(miller_indices(:,:,i))
-            schmid_matrix = normalized(:,1) .outer. normalized(:,2)
+            schmid_matrix = normalized(:,2) .outer. normalized(:,1)
             this%taylor_coeffs(:,i) = convert_stress_strain_space(schmid_matrix)
             this%spin_coeffs(:,i) = convert_spin(schmid_matrix)
         end do

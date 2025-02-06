@@ -164,8 +164,8 @@ contains
             call micro_deform(grain_, 1._DP, slip_rates)
 
             orientation_increment = UNIT_MATRIX_3X3 &
-                                    +(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame
-                                    -convert_spin(matmul(grain_%model%spin_coeffs, slip_rates))    !>Spin induced by activation of slip systems
+                                    -(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame
+                                    +convert_spin(matmul(grain_%model%spin_coeffs, slip_rates))    !>Spin induced by activation of slip systems
             grain_%orientation = matmul(orientation_increment, grain_%orientation)
         end associate
     end subroutine

@@ -6,6 +6,7 @@ module slip_systems
     public
 
     !Definition of slip system families in terms of miller indices
+    !First triplet represents slip plane normal, second slip direction.
     !Gfortran does not accept the clean array syntax
     integer, parameter:: SLIP_SYSTEMS_FCC_111(3, 2, 12) = reshape([  1, 1, 1,   1, -1, 0,  &
                                                                      1, 1, 1,   0, 1, -1,  &
