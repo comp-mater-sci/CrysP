@@ -78,7 +78,7 @@ contains
     subroutine base_init(this, miller_indices, initial_state)
         class(ConstitutiveModel), intent(out):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        class(HardeningState), allocatable, intent(out):: initial_state
+        class(HardeningState), allocatable, intent(inout):: initial_state
 
         integer:: i, &
                   n_systems
