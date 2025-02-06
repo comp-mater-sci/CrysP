@@ -56,7 +56,7 @@ contains
         type(Parameter), dimension(:), intent(in):: params
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
-        real(DP), dimension(5, size(grains(1)%slip_systems)):: taylor_coeffs
+        real(DP), dimension(5, size(grains(1)%model%taylor_coeffs, 2)):: taylor_coeffs
         integer:: i
 
         allocate(TaylorCluster:: clusters(size(grains)))
@@ -67,34 +67,12 @@ contains
                 do i = 1, size(clusters)
                     clusters(i)%grains = [grains(i)]
                     clusters(i)%weight = 1._DP
-                    clusters(i)%ind_basis_systems = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, size(grains(1)%slip_systems) == 12)
-                    taylor_coeffs = clusters(i)%grains(1)%get_taylor_coeffs()
+                    clusters(i)%ind_basis_systems = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, size(grains(1)%model%taylor_coeffs, 2) == 12)
+                    taylor_coeffs = clusters(i)%grains(1)%model%taylor_coeffs
                     clusters(i)%inverse_basis = invert(taylor_coeffs(:,clusters(i)%ind_basis_systems))
                 end do
         end select
     end subroutine
-
-    pure function get_taylor_coeffs(taylor_cluster) result(coeffs)
-        type(TaylorCluster), intent(in):: taylor_cluster
-        real(DP), dimension(5, size(taylor_cluster%grains(1)%slip_systems)):: coeffs
-
-        integer:: i
-
-        do i = 1, size(taylor_cluster%grains(1)%slip_systems)
-            coeffs(:,i) = taylor_cluster%grains(1)%slip_systems(i)%taylor_coeffs
-        end do
-    end function
-
-    pure function get_crss(taylor_cluster) result(crss)
-        type(TaylorCluster), intent(in):: taylor_cluster
-        real(DP), dimension(2, size(taylor_cluster%grains(1)%slip_systems)):: crss
-
-        integer:: i
-
-        do i = 1, size(taylor_cluster%grains(1)%slip_systems)
-            crss(:,i) = taylor_cluster%grains(1)%slip_systems(i)%crss
-        end do
-    end function
 
     !>@Brief See 'meso_model_get_stress'.
     function full_constraints_taylor_get_stress(this, cluster_, v_grad) result(stress)
@@ -103,22 +81,24 @@ contains
         real(DP), dimension(3, 3), intent(in):: v_grad
         real(DP), dimension(3, 3):: stress
 
-        real(DP), dimension(size(cluster_%grains(1)%slip_systems)):: slip_rates, &
+        real(DP), dimension(size(cluster_%grains(1)%model%taylor_coeffs, 2)):: slip_rates, &
                                                                      rss
         real(DP), dimension(5):: stress_cluster
         type(TaylorCluster), pointer:: cluster_ptr
 
         cluster_ptr => to_taylor_cluster(cluster_)
 
-        call simplex_solve(get_taylor_coeffs(cluster_ptr), &
-                           convert_stress_strain_space(v_grad .toframe. cluster_ptr%grains(1)%orientation), &
-                           get_crss(cluster_ptr), &
-                           cluster_ptr%inverse_basis, &
-                           cluster_ptr%ind_basis_systems, &
-                           slip_rates, &
-                           stress_cluster, &
-                           rss)
-        stress = convert_stress_strain_space(stress_cluster) .fromframe. cluster_%grains(1)%orientation
+        associate (grain_ => cluster_ptr%grains(1))
+            call simplex_solve(grain_%model%taylor_coeffs, &
+                               convert_stress_strain_space(v_grad .toframe. grain_%orientation), &
+                               grain_%state%crss, &
+                               cluster_ptr%inverse_basis, &
+                               cluster_ptr%ind_basis_systems, &
+                               slip_rates, &
+                               stress_cluster, &
+                               rss)
+            stress = convert_stress_strain_space(stress_cluster) .fromframe. grain_%orientation
+        end associate
     end function
 
     subroutine full_constraints_taylor_prepare_deformation(this, v_grad)
@@ -137,11 +117,10 @@ contains
         real(DP), dimension(3, 3), intent(out):: stress
         real(DP), intent(out):: slip
 
-        real(DP)::                  orientation_increment(3, 3), &
-                                    taylor_coeffs(5, size(cluster_%grains(1)%slip_systems))
+        real(DP)::                  orientation_increment(3, 3)
         integer::                   n_systems, &
                                     n_active_simplex
-        real(DP), dimension(size(cluster_%grains(1)%slip_systems)):: slip_rates, &
+        real(DP), dimension(size(cluster_%grains(1)%model%taylor_coeffs, 2)):: slip_rates, &
                                                      rss
         real(DP), dimension(5):: stress_cluster, &
                                  imposed_strain_rate
@@ -151,14 +130,14 @@ contains
         cluster_ptr => to_taylor_cluster(cluster_)
 
         associate(grain_=>cluster_ptr%grains(1))
-            n_systems = size(grain_%slip_systems)
+
+            n_systems = size(grain_%model%taylor_coeffs, 2)
 
             imposed_strain_rate = convert_stress_strain_space(this%velocity_gradient .toframe. grain_%orientation)
-            taylor_coeffs = get_taylor_coeffs(cluster_ptr)
 
-            call simplex_solve(taylor_coeffs, &
+            call simplex_solve(grain_%model%taylor_coeffs, &
                                imposed_strain_rate, &
-                               get_crss(cluster_ptr), &
+                               grain_%state%crss, &
                                cluster_ptr%inverse_basis, &
                                cluster_ptr%ind_basis_systems, &
                                slip_rates, &
@@ -175,7 +154,7 @@ contains
                 slip_rates = resolve_taylor_ambiguity(ind_active_slip_systems, &
                     rss(ind_active_slip_systems), &
                     imposed_strain_rate, &
-                    taylor_coeffs, &
+                    grain_%model%taylor_coeffs, &
                     n_active_simplex)
             end if
 
@@ -186,7 +165,7 @@ contains
 
             orientation_increment = UNIT_MATRIX_3X3 &
                                     +(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame
-                                    -convert_spin(matmul(grain_%get_spin_coeffs(), slip_rates))    !>Spin induced by activation of slip systems
+                                    -convert_spin(matmul(grain_%model%spin_coeffs, slip_rates))    !>Spin induced by activation of slip systems
             grain_%orientation = matmul(orientation_increment, grain_%orientation)
         end associate
     end subroutine

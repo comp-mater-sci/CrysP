@@ -3,6 +3,7 @@ module dsh_screw
     use parameters
     use dsh
     use slip_systems
+    use constitutive_model
 
     implicit none
 
@@ -33,5 +34,5 @@ contains
 
         initial_state = this%init_common(miller_indices, params, matmul(screwdir, transpose(CBBNORMAL)))  ! 'Wall-effectivity' matrix == cosines of the angle between
                                                               !the dislocation movement vectors and the cell block boundary normals.
-    end subroutine
+    end function
 end module

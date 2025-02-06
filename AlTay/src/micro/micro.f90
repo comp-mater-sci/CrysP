@@ -70,11 +70,11 @@ module micro
 end module
 
 submodule(micro) micro_imp
-    use hardening_model
+    use constitutive_model
 
     implicit none
 
-    class(HardeningModel), allocatable:: model
+    class(ConstitutiveModel), allocatable:: model
 
 contains
 
@@ -91,35 +91,35 @@ contains
 
         integer, intent(in):: model_id                              !> ID of the hardening model. Must be contained in the list provided in this
                                                                     !!  module. If not, this routine crashes the program.
-        class(HardeningModel), allocatable:: instance               !> Uninitialized instance of the requested hardening model.
+        class(ConstitutiveModel), allocatable, target:: instance               !> Uninitialized instance of the requested hardening model.
 
         select case(model_id)
             case(HARDENING_NONE)
-                allocate(HardeningModelNone:: instance)
+                allocate(ConstitutiveModelNone:: instance)
             case(HARDENING_VOCE)
-                allocate(HardeningModelVoce:: instance)
+                allocate(ConstitutiveModelVoce:: instance)
             case(HARDENING_SWIFT)
-                allocate(HardeningModelSwift:: instance)
+                allocate(ConstitutiveModelSwift:: instance)
             case(HARDENING_DSH_EDGE)
-                allocate(HardeningModelDSHEdge:: instance)
+                allocate(ConstitutiveModelDSHEdge:: instance)
             case(HARDENING_DSH_SCREW)
-                allocate(HardeningModelDSHScrew:: instance)
+                allocate(ConstitutiveModelDSHScrew:: instance)
             case(HARDENING_DSH_LOOP)
-                allocate(HardeningModelDSHLoop:: instance)
+                allocate(ConstitutiveModelDSHLoop:: instance)
             case default
                 call log_error('micro', 'micro_get_parameters', ERR_VAL, 'Invalid hardening model ID')
         end select
     end function
 
     module procedure micro_get_parameters
-        class(HardeningModel), allocatable:: dummy_instance
+        class(ConstitutiveModel), allocatable:: dummy_instance
 
         dummy_instance = get_model_instance(model_id)
         params = dummy_instance%get_parameters()
     end procedure
 
     module procedure micro_validate_parameters
-        class(HardeningModel), allocatable:: dummy_instance
+        class(ConstitutiveModel), allocatable:: dummy_instance
 
         dummy_instance = get_model_instance(model_id)
         call dummy_instance%validate_parameters(params)
@@ -127,19 +127,18 @@ contains
 
     module procedure micro_init
         integer:: i
+        class(HardeningState), allocatable:: initial_state
 
         model = get_model_instance(model_id)
+        initial_state = model%init(deformation_mechanism, params)
 
         allocate(grains(size(orientations, 2)))
-
         do i = 1, size(grains)
-            call grains(i)%init(deformation_mechanism, orientations(:,i))
+            call grains(i)%init(orientations(:,i), model, initial_state)
         end do
-
-        call model%init(grains, params)
     end procedure
 
     module procedure micro_deform
-        call model%deform(grain_, time, slip_rates)
+        call model%deform(grain_%state, time, slip_rates)
     end procedure
 end submodule

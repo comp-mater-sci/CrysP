@@ -3,6 +3,7 @@ module dsh_loop
     use parameters
     use dsh
     use slip_systems
+    use constitutive_model
 
     implicit none
 

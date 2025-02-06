@@ -1,6 +1,6 @@
 module voce
     use utils, only: dp
-    use hardening_model
+    use constitutive_model
     use altayConfig
     use logging
     use parameters
@@ -77,7 +77,7 @@ contains
 
     !> @Brief See hardening_model_init
     function voce_init(this, miller_indices, params) result(initial_state)
-        class(HardeningModelVoce), intent(inout):: this
+        class(ConstitutiveModelVoce), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), target, intent(in):: params(:)
         class(HardeningState), allocatable:: initial_state
@@ -103,13 +103,13 @@ contains
         this%stage_2%T1 = this%stage_2%TS + (TAUT-this%stage_2%TS) * exp(this%stage_2%TH*this%transition_slip/this%stage_2%TS)
 
         initial_state%crss = this%stage_1%T1
-    end subroutine
+    end function
 
     subroutine voce_deform(this, state, time, slip_rates)
-        class(HardeningModelVoce),                      intent(inout):: this
+        class(ConstitutiveModelVoce),                      intent(inout):: this
         class(HardeningState), target,                  intent(inout):: state
         real(DP),                                       intent(in)::    time
-        real(DP), dimension(size(grain_%slip_systems)), intent(in)::    slip_rates
+        real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in)::    slip_rates
 
         type(Stage):: current_stage          !> Current stage in the Voce hardening process
         type(VoceState), pointer:: state_ptr !> Pointer to hardening_state of type VoceState for easy access to model-specific fields

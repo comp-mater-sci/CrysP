@@ -4,23 +4,24 @@ module dsh_edge
     use dsh
     use slip_systems
     use grain_module
+    use constitutive_model
 
     implicit none
     private
 
     !Implementation of the 'Dislocation Substructural Hardening (DSH)' model considering only edge dislocations.
     !This is the original implementation of the DSH hardening model family as formulated by Bart Peeters in his PhD thesis.
-    type, extends(HardeningModelDSH):: HardeningModelDSHEdge
+    type, extends(ConstitutiveModelDSH):: ConstitutiveModelDSHEdge
     contains
         procedure:: init => dsh_edge_init
     end type
 
-    public:: HardeningModelDSHEdge
+    public:: ConstitutiveModelDSHEdge
 
 contains
 
     function dsh_edge_init(this, miller_indices, params) result(initial_state)
-        class(HardeningModelDSHEdge), intent(inout):: this
+        class(ConstitutiveModelDSHEdge), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), target, intent(in):: params
         class(HardeningState), allocatable:: initial_state

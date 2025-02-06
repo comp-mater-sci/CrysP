@@ -1,11 +1,9 @@
 module dsh
     use utils
     use constitutive_model
-    use altayConfig
     use parameters
     use logging
     use slip_systems
-    use omp_lib
 
     implicit none
 
@@ -137,13 +135,13 @@ contains
     !>@Details The only difference between the variants of DSH is the interaction coefficients between dislocations and cell block
     !!         boundaries. Thus, each model defines its own coefficients and calls this common initialization procedure with them.
     function init_common(this, miller_indices, params, eff) result(initial_state)
-        class(HardeningModelDSH), intent(inout):: this             !> DSH model variant to be initialized.
+        class(ConstitutiveModelDSH), intent(inout):: this             !> DSH model variant to be initialized.
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), target, intent(in):: params !> Model parameters. Must pass dsh_validate_parameters(params)
         real(DP), dimension(24, 6), intent(in):: eff               !> 'Wall-effectivity' matrix == cosines of the angle between dislocation movement vectors and the cell block boundary normals.
-        type(DSHState), allocatable:: initial_state
+        class(HardeningState), allocatable:: initial_state
 
-        allocate(initial_state)
+        allocate(DSHState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
         this%b     = (params .find. 'b')    * 1.e6_DP ![m] -> [um]
@@ -173,22 +171,26 @@ contains
         this%effslashb       = eff/this%b
         this%alfa_G_b_eff    = this%alfa*this%G*this%b*eff
 
-        initial_state%RHOcb            = MINFRAC * (this%I)**2 / (this%R)**2  ! Minfrac*rho_cb_sat
-        initial_state%CBB%RHOwd        = this%RHOwdMIN
-        initial_state%CBB%RHOwp        = 0._DP
-        initial_state%CBB%RHOwdHOM     = this%RHOwdMIN
-        initial_state%CBB%accGAMMA_new = 0._DP
-        initial_state%CBB%RHOwd_ini    = this%RHOwdMIN
-        initial_state%ActiveCBB        = 0
+        !Select type is required here due to Fortran semantics even though the type is obvious
+        select type (initial_state)
+            type is (DSHState)
+                initial_state%RHOcb            = MINFRAC * (this%I)**2 / (this%R)**2  ! Minfrac*rho_cb_sat
+                initial_state%CBB%RHOwd        = this%RHOwdMIN
+                initial_state%CBB%RHOwp        = 0._DP
+                initial_state%CBB%RHOwdHOM     = this%RHOwdMIN
+                initial_state%CBB%accGAMMA_new = 0._DP
+                initial_state%CBB%RHOwd_ini    = this%RHOwdMIN
+                initial_state%ActiveCBB        = 0
 
-        call this%update_crss(initial_state)
-    end subroutine
+                call this%update_crss(initial_state)
+        end select
+    end function
 
     subroutine dsh_deform(this, state, time, slip_rates)
-        class(HardeningModelDSH), intent(inout)                   :: this
+        class(ConstitutiveModelDSH), intent(inout)                   :: this
         class(HardeningState), target, intent(inout)              :: state
         real(DP), intent(in)                                      :: time
-        real(DP), dimension(size(grain_%slip_systems)), intent(in):: slip_rates
+        real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
 
         logical::  flux_reversal
         integer::  i, &
@@ -320,20 +322,18 @@ contains
 
     !>@Brief update the CRSS of a given grain.
     subroutine update_crss(this, state)
-        class(HardeningModelDSH), intent(in):: this !> Hardening model
+        class(ConstitutiveModelDSH), intent(in):: this !> Hardening model
         type(DSHState), intent(inout):: state
 
         integer:: j, s, i                           !> Iterators
         real(DP):: tau_CB, &
                    CRSS_0_CB, &
-                   tau_CBB(2, size(grain_%slip_systems)), &
+                   tau_CBB(2, size(this%taylor_coeffs, 2)), &
                    wpcontr(6), &
                    wdcontr(6)
 
         !Some systems are not allowed to become active
-        do i = 1, size(grain_%slip_systems)
-            grain_%slip_systems(i)%crss = REAL_DP_MAX_VAL
-        end do
+        state%crss = REAL_DP_MAX_VAL
 
         !CRSS within cells & CBs
         tau_CB = this%alfa*this%G*this%b*sqrt(state%RHOcb)
@@ -343,7 +343,7 @@ contains
 
         !Calc. CRSS for each slip system s, for the sense of slip j
         do j = 1, 2
-            do s = 1, size(grain_%slip_systems)
+            do s = 1, size(state%crss, 2)
                 !wp-and wd-contributions from all CBBs i
                 do i = 1, 6
                     wpcontr(i)= sqrt(abs(state%CBB(i)%RHOwp)) &
@@ -357,7 +357,7 @@ contains
                 !CRSS within CBB = wp-and wd-contributions for all 6 walls
                 tau_CBB(j, s)=sum(wpcontr)+sum(wdcontr)
                 !C.R.S.S. for the "two-phase composite"
-                grain_%slip_systems(s)%crss(j)= CRSS_0_CB+this%f*tau_CBB(j, s)
+                state%crss(j, s)= CRSS_0_CB+this%f*tau_CBB(j, s)
             end do
         end do
     end subroutine

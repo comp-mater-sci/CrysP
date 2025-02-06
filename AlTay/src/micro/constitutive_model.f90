@@ -1,10 +1,12 @@
 module constitutive_model
     use utils
+    use parameters
 
     implicit none
 
     private
-    public:: ConstitutiveModel
+    public:: ConstitutiveModel, &
+             HardeningState
 
     type, abstract:: HardeningState
         real(DP), dimension(:,:), allocatable:: crss
@@ -47,6 +49,7 @@ module constitutive_model
                    HardeningState
 
             class(ConstitutiveModel), intent(inout)::     this      !> Instance of the hardening model to be initialized
+            integer, dimension(:,:,:), intent(in):: miller_indices
             type(Parameter), dimension(:), target, intent(in):: params !> List of parameters to initialize the model with.
                                                                        !! Must pass this%validate_parameters(params)
             class(HardeningState), allocatable:: initial_state
@@ -58,11 +61,11 @@ module constitutive_model
         !!         the CRSS values.
         subroutine cm_deform(this, state, time, slip_rates)
             import ConstitutiveModel, &
-                   HardeningState
+                   HardeningState, &
                    DP
 
             class(ConstitutiveModel), intent(inout):: this     !> The hardening model
-            class(HardeningState), target, intent(inout)             :: grain_   !> The grain for which to update the CRSS.
+            class(HardeningState), target, intent(inout)             :: state   !> The grain for which to update the CRSS.
             real(DP), intent(in)                :: time     !> Elapsed time since the last update of the CRSS of this grain.
             real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates  !> Slip rates on each of the slip systems of the grain in the time
                                                                                      !! interval since the last CRSS update for this grain. Size must equal
@@ -82,7 +85,7 @@ contains
         real(DP):: normalized(3, 2), &
                    schmid_matrix(3, 3)
 
-        n_systems = size(deformation_mechanism, 3)
+        n_systems = size(miller_indices, 3)
 
         allocate(this%taylor_coeffs(5, n_systems))
         allocate(this%spin_coeffs(3, n_systems))

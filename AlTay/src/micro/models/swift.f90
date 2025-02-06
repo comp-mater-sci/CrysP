@@ -1,7 +1,7 @@
 module swift
     use utils, only: dp
     use altayConfig
-    use hardening_model
+    use constitutive_model
     use logging
     use parameters
     use grain_module
@@ -67,9 +67,10 @@ contains
 
     !> @Brief See hardening_model_init
     function swift_init(this, miller_indices, params) result(initial_state)
-        class(HardeningModelSwift),   intent(inout):: this
-        type(Grain), dimension(:), intent(inout)::    grains
+        class(ConstitutiveModelSwift),   intent(inout):: this
+        integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), target, intent(in):: params
+        class(HardeningState), allocatable:: initial_state
 
         allocate(SwiftState:: initial_state)
         call this%base_init(miller_indices, initial_state)
@@ -79,7 +80,7 @@ contains
         this%k = (params .find. 'crss0') / (this%gamma0**this%n)
 
         initial_state%crss = this%k*this%gamma0**this%n
-    end subroutine swift_init
+    end function
 
     !> @Brief See hardening_model_update_crss
     subroutine swift_deform(this, state, time, slip_rates)
