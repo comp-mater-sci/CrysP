@@ -22,7 +22,7 @@ module meso_model
         procedure:: finalize => meso_model_finalize
     end type
 
-    interface
+    abstract interface
         !>@Brief initialize the mesoscopic model.
         !>@Details Initializes the mesoscopic model based on a list of initialized grains. These grains are arranged into clusters,
         !which also get initialized.

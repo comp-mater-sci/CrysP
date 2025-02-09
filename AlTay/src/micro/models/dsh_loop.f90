@@ -3,6 +3,7 @@ module dsh_loop
     use parameters
     use dsh
     use slip_systems
+    use grain_module
 
     implicit none
 
@@ -17,9 +18,10 @@ module dsh_loop
 
 contains
 
-    subroutine dsh_loop_init(this, params)
+    subroutine dsh_loop_init(this, grains, params)
         class(HardeningModelDSHLoop), intent(inout):: this
-        type(Parameter), allocatable, target, intent(in):: params(:)
+        type(Grain), dimension(:), intent(inout):: grains
+        type(Parameter), dimension(:), target, intent(in):: params
         integer:: s, i
         real(DP):: normdir(24, 3), &
                    eff(24, 6), &
@@ -39,6 +41,6 @@ contains
             end do
         end do
 
-        call dsh_init(this, params, eff)
+        call this%init_common(grains, params, eff)
     end subroutine
 end module

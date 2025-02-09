@@ -90,8 +90,6 @@ module simulation
         homogenized_stress = 0._DP
         homogenized_taylor_factor = 0._DP
 
-        nrstep = nrstep+1
-
         !$OMP PARALLEL SHARED(clusters, n_clusters, von_mises_strain_rate) PRIVATE(stress_cluster, slip_cluster, weight_cluster)
             !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, homogenized_taylor_factor)
                 do i = 1, n_clusters

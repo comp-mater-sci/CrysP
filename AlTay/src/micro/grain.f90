@@ -4,27 +4,29 @@ module grain_module
     use slip_systems
 
     implicit none
-    private
 
-    character(*), parameter:: MOD_NAME = 'dynfil'
+    private
+    public  ::  Grain, &
+                HardeningState
+
+    !>Abstract container for hardening state data.
+    !>Each hardening model may extend this type to implement the grain-specific state it wants to track.
+    !>Must be implemented this way because at the higher levels we want to mix grains of different phases (and thus types of state)
+    !and Fortran does not allow list of heterogeneous type.
+    type, abstract:: HardeningState
+    end type
 
     !>Texture-related state variables for single grain
-    type:: grain
-        real(DP)::                  sum_slip = 0._DP
+    type:: Grain
         real(DP), dimension(3, 3):: orientation
         type(SlipSystem), dimension(:), allocatable:: slip_systems
+        class(HardeningState), allocatable:: hardening_state
     contains
-        procedure:: init => grain_init
+        procedure:: init              => grain_init
         procedure:: get_taylor_coeffs => grain_get_taylor_coeffs
-        procedure:: get_spin_coeffs => grain_get_spin_coeffs
-        procedure:: get_crss => grain_get_crss
-        procedure:: set_crss => grain_set_crss
+        procedure:: get_spin_coeffs   => grain_get_spin_coeffs
+        procedure:: get_crss          => grain_get_crss
     end type grain
-
-    integer                                    :: nrStep = 0       !<State variable: step number.
-
-    public  ::  grain, &
-                nrStep
 
 contains
 
@@ -41,7 +43,6 @@ contains
 
         !Initialize grain orientation matrix
         this%orientation = from_euler_angles(orientation)
-        this%sum_slip = 0._DP
 
         !Allocate slip systems and spin coefficients
         allocate(this%slip_systems(n_slip_systems))
@@ -84,15 +85,4 @@ contains
             crss(:,i) = this%slip_systems(i)%crss
         end do
     end function
-
-    subroutine grain_set_crss(this, crss)
-        class(Grain), intent(inout):: this
-        real(DP), dimension(2, size(this%slip_systems)):: crss
-
-        integer:: i
-
-        do i = 1, size(this%slip_systems)
-            this%slip_systems(i)%crss = crss(:,i)
-        end do
-    end subroutine
 end module

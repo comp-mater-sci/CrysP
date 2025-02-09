@@ -299,12 +299,10 @@ contains
                 end if
 
                 slip_grain = sum(abs(slip_rates_grain))
-                grain_%sum_slip = grain_%sum_slip+slip_grain
                 slip = slip+slip_grain
 
                 !Update hardening model state
-                call micro_update_state((index_cluster-1)*2+j, 1._DP, slip_rates_grain)
-                call grain_%set_crss(micro_get_crss((index_cluster-1)*2+j, grain_%sum_slip))
+                call micro_deform(grain_, 1._DP, slip_rates_grain)
 
                 !Get spin coefficients of the relaxations corresponding to the current grain
                 do i = 1, 2

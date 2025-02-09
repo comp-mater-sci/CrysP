@@ -49,14 +49,8 @@ contains
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open output files.')
 
-        !Temporary hack to set n_grains only for DSH hardening models. Very soon this is no longer needed.
-        if (size(cnf%hardening_parameters) > 7) then
-            param_ptr => cnf%hardening_parameters .find. 'n_grains'
-            param_ptr = size(orientations, 2)
-        end if
-
         !Initialize altay modules
-        call micro_init(orientations, cnf%deformation_mechanism, cnf%hardening_parameters, grains)
+        call micro_init(cnf%hardening_model_id, orientations, cnf%deformation_mechanism, cnf%hardening_parameters, grains)
         call meso_init(cnf%simul_init%ngr, grains, params, clusters)
         call macro_init(clusters)
 
@@ -69,8 +63,6 @@ contains
 
         ! Close all units.
         close(IMP5)
-        nrstep = 0
-        call micro_finalize()
         call simulation_finalize()
         if (allocated(astate%simulCalls)) then
               deallocate(astate%simulCalls)

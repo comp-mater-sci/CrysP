@@ -270,9 +270,6 @@ contains
             endif
 
 
-            param_ptr => cnf%hardening_parameters .find. 'n_slip_systems'
-            param_ptr = size(cnf%deformation_mechanism, 3)
-
             ! the keyword is mapped to a proper model_id, we can instantly set it.
             call setModelType(cnf, model_id, info)
             if (info /= VEF_OK) return
@@ -307,6 +304,7 @@ contains
             endif
             if (.not. use_default_hardening) then
                 if (.not. readValue(cnfunit, hardening_model_id)) return
+                cnf%hardening_model_id = hardening_model_id
                 params = micro_get_parameters(hardening_model_id)
 
                   select case(hardening_model_id)
@@ -384,6 +382,7 @@ contains
                   end select
                 cnf%hardening_parameters = params
             else
+                  cnf%hardening_model_id = HARDENING_NONE
                   cnf%hardening_parameters = micro_get_parameters(HARDENING_NONE)
             endif
 
