@@ -19,7 +19,7 @@ module slip_systems
                                                                     1, 1,-1,  1, 0, 1, &
                                                                     1,-1, 1,  1, 1, 0, &
                                                                     1,-1, 1,  0, 1, 1, &
-                                                                    1,-1, 1,  1, 0 -1], shape(SLIP_SYSTEMS_FCC_111)),   &
+                                                                    1,-1, 1,  1, 0,-1], shape(SLIP_SYSTEMS_FCC_111)),   &
                          SLIP_SYSTEMS_BCC_110(3, 2, 12) = reshape([ 0, 1,-1,  1, 1, 1, &
                                                                     0, 1,-1, -1, 1, 1, &
                                                                    -1, 0, 1,  1, 1, 1, &
