@@ -26,6 +26,7 @@ contains
         type(Grain), dimension(:), allocatable:: grains
         class(Cluster), dimension(:), allocatable:: clusters
         type(Parameter), pointer:: param_ptr
+        type(PhaseDescriptor):: phase_
 
         integer:: ierr, cluster_size
 
@@ -50,7 +51,12 @@ contains
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open output files.')
 
         !Initialize altay modules
-        call micro_init(cnf%hardening_model_id, orientations, cnf%deformation_mechanism, cnf%hardening_parameters, grains)
+        phase_%model_id = cnf%hardening_model_id
+        phase_%deformation_mechanism = cnf%deformation_mechanism
+        phase_%parameters = cnf%hardening_parameters
+        phase_%orientations = orientations
+
+        call micro_init([phase_], grains)
         call meso_init(cnf%simul_init%ngr, grains, params, clusters)
         call macro_init(clusters)
 

@@ -3,6 +3,7 @@ module micro
     use utils
     use parameters
     use logging
+    use constitutive_model
     use grain_module
 
     implicit none
@@ -18,6 +19,23 @@ module micro
                      HARDENING_DSH_SCREW  = 12, &
                      HARDENING_DSH_LOOP   = 13
     end enum
+
+    enum, bind(C)
+        enumerator:: SLIP_SYSTEMS_FCC   = 12, &
+                     SLIP_SYSTEMS_BCC24 = 24, &
+                     SLIP_SYSTEMS_BCC48 = 48
+    end enum
+
+    type:: Phase
+        class(ConstitutiveModel), allocatable:: model
+    end type
+
+    type:: PhaseDescriptor
+        integer:: model_id                                      !> ID of the hardening model to be initialized. Must exist in the enum list provided in this module.
+        integer:: deformation_mechanism                         !> Deformation mechanism to be employed for all grains.
+        type(Parameter), dimension(:), allocatable:: parameters !> Parameters used to initialize the hardening model. Must correspond to the parameter list obtained by calling micro_get_parameters(model_id) and must pass micro_validate_parameters(model_id).
+        real(DP), dimension(:,:), allocatable:: orientations    !> List of Euler angle triplets in Bunge convention in the macroscopic frame representing grain orientations.
+    end type
 
     interface
         !>@Brief Returns the parameter list for a particular hardening model.
@@ -42,20 +60,10 @@ module micro
         !>@Brief Initialize the micro-level entities of the simulation: The hardening model and the grains.
         !>@Details If the parameters do not meet the specified constraints, this procedure crashes the program.
         !!         Must be subroutine to avoid problems with IFX copying too much to the stack.
-        module subroutine  micro_init(model_id, orientations, deformation_mechanism, params, grains)
-            integer, intent(in):: model_id                                      !> ID of the hardening model to be initialized. Must
-                                                                                !! exist in the enum list provided in this module.
-            real(DP), dimension(:,:), intent(in):: orientations                 !> List of Euler angle triplets in Bunge convention
-                                                                                !> in the macroscopic frame representing grain orientations.
-            integer, dimension(:,:,:), intent(in):: deformation_mechanism       !> Deformation mechanism to be employed for all grains.
-            type(Parameter), dimension(:), target, intent(in):: params          !> Parameters used to initialize the hardening
-                                                                                !! model. Must correspond to the parameter list
-                                                                                !! obtained by calling micro_get_parameters(model_id)
-                                                                                !! and must pass
-                                                                                !! micro_validate_parameters(model_id).
+        module subroutine  micro_init(phases_, grains)
+            type(PhaseDescriptor), dimension(:), intent(in):: phases_
             type(Grain), dimension(:), allocatable, intent(out):: grains        !> List of initialized grain objects.
         end subroutine
-
 
         !>@Brief Update the critical resolved shear stresses (CRSS) of the grain.
         !>@Details Calculates the evolution of the CRSS on each slip system given the slip rate on each slip system and the elapsed
@@ -70,11 +78,11 @@ module micro
 end module
 
 submodule(micro) micro_imp
-    use constitutive_model
-
     implicit none
 
-    class(ConstitutiveModel), allocatable:: model
+    character(*), parameter:: MOD_NAME = 'micro'
+
+    class(Phase), dimension(:), allocatable, target:: phases
 
 contains
 
@@ -107,7 +115,25 @@ contains
             case(HARDENING_DSH_LOOP)
                 allocate(ConstitutiveModelDSHLoop:: instance)
             case default
-                call log_error('micro', 'micro_get_parameters', ERR_VAL, 'Invalid hardening model ID')
+                call log_error(MOD_NAME, 'get_model_instance', ERR_VAL, 'Invalid hardening model ID')
+        end select
+    end function
+
+    function  get_miller_indices(deformation_mechanism) result(miller_indices)
+        use slip_systems
+
+        integer, intent(in):: deformation_mechanism
+        integer, dimension(:,:,:), allocatable:: miller_indices
+
+        select case(deformation_mechanism)
+            case (SLIP_SYSTEMS_FCC)
+                miller_indices = FCC12
+            case (SLIP_SYSTEMS_BCC24)
+                miller_indices = BCC24
+            case (SLIP_SYSTEMS_BCC48)
+                miller_indices = BCC48
+            case default
+                call log_error(MOD_NAME, 'get_miller_indices', ERR_VAL, 'Invalid slip system set')
         end select
     end function
 
@@ -126,19 +152,46 @@ contains
     end procedure
 
     module procedure micro_init
-        integer:: i
+        integer:: i, j, &
+                  offset, &
+                  n_phases, &
+                  n_grains, &
+                  n_grains_phase
+        integer, allocatable:: miller_indices(:,:,:)
         class(HardeningState), allocatable:: initial_state
+        class(ConstitutiveModel), allocatable:: cm
+        type(Phase), pointer:: phase_ptr
 
-        model = get_model_instance(model_id)
-        initial_state = model%init(deformation_mechanism, params)
 
-        allocate(grains(size(orientations, 2)))
-        do i = 1, size(grains)
-            call grains(i)%init(orientations(:,i), model, initial_state)
+        n_phases = size(phases_)
+
+
+        n_grains = 0
+        do i = 1, n_phases
+            n_grains = n_grains+size(phases_(i)%orientations, 2)
+        end do
+
+
+        if (.not. allocated(phases)) &
+            allocate(phases(n_phases))
+        allocate(grains(n_grains))
+
+        j = 1
+        do i = 1, n_phases
+            phase_ptr => phases(i)
+            cm = get_model_instance(phases_(i)%model_id)
+            phase_ptr%model = cm
+            miller_indices = get_miller_indices(phases_(i)%deformation_mechanism)
+            initial_state = phases(i)%model%init(miller_indices, phases_(i)%parameters)
+            n_grains_phase = size(phases_(i)%orientations, 2)
+            offset = j-1
+            do j = j, j+n_grains_phase-1
+                call grains(j)%init(phases_(i)%orientations(:,j-offset), phases(i)%model, initial_state)
+            end do
         end do
     end procedure
 
     module procedure micro_deform
-        call model%deform(grain_%state, time, slip_rates)
+        call grain_%model%deform(grain_%state, time, slip_rates)
     end procedure
 end submodule

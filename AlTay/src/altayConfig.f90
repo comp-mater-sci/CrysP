@@ -76,7 +76,7 @@ module altayConfig
         type(simulData)                           :: simul_init
         integer:: hardening_model_id
         type(Parameter), allocatable:: hardening_parameters(:)
-        integer, dimension(:,:,:), allocatable:: deformation_mechanism
+        integer:: deformation_mechanism
     end type
 
     type:: altayStateData

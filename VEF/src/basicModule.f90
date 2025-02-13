@@ -239,11 +239,11 @@ contains
 
             select case (slip)
                 case ('fcc12')
-                    cnf%deformation_mechanism = FCC12
+                    cnf%deformation_mechanism = SLIP_SYSTEMS_FCC
                 case ('bcc24')
-                    cnf%deformation_mechanism = BCC24
+                    cnf%deformation_mechanism = SLIP_SYSTEMS_BCC24
                 case ('bcc48')
-                    cnf%deformation_mechanism = BCC48
+                    cnf%deformation_mechanism = SLIP_SYSTEMS_BCC48
                 case default
                     call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid slip system identifier')
             end select
