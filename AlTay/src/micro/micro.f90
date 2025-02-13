@@ -20,16 +20,21 @@ module micro
                      HARDENING_DSH_LOOP   = 13
     end enum
 
+    !> Supported deformation mechanisms
     enum, bind(C)
-        enumerator:: SLIP_SYSTEMS_FCC   = 12, &
-                     SLIP_SYSTEMS_BCC24 = 24, &
-                     SLIP_SYSTEMS_BCC48 = 48
+        enumerator:: SLIP_SYSTEMS_FCC  , &
+                     SLIP_SYSTEMS_BCC24, &
+                     SLIP_SYSTEMS_BCC48
     end enum
 
+    !> Wrapper type for constitutive model. Needed because different phases may be backed by different subtypes of ConstitutiveModel
+    !and Fortran semantics require lists to be of homogeneous type.
     type:: Phase
-        class(ConstitutiveModel), allocatable:: model
+        class(ConstitutiveModel), allocatable:: model !> The constitutive model backing the phase
     end type
 
+    !> High-level description of a phase. Used for passing phase information to and from higher-level program units. Necessary
+    !because much of the phase description may vary in size between phases so using regular arrays is inconvenient/inefficient/unsafe.
     type:: PhaseDescriptor
         integer:: model_id                                      !> ID of the hardening model to be initialized. Must exist in the enum list provided in this module.
         integer:: deformation_mechanism                         !> Deformation mechanism to be employed for all grains.
@@ -61,15 +66,15 @@ module micro
         !>@Details If the parameters do not meet the specified constraints, this procedure crashes the program.
         !!         Must be subroutine to avoid problems with IFX copying too much to the stack.
         module subroutine  micro_init(phases_, grains)
-            type(PhaseDescriptor), dimension(:), intent(in):: phases_
-            type(Grain), dimension(:), allocatable, intent(out):: grains        !> List of initialized grain objects.
+            type(PhaseDescriptor), dimension(:), intent(in):: phases_    !> Phase descriptors for each phase.
+            type(Grain), dimension(:), allocatable, intent(out):: grains !> List of initialized grain objects.
         end subroutine
 
         !>@Brief Update the critical resolved shear stresses (CRSS) of the grain.
         !>@Details Calculates the evolution of the CRSS on each slip system given the slip rate on each slip system and the elapsed
         !time since the last update of the CRSS. The slip rates are assumed constant during the time interval.
         module subroutine micro_deform(grain_, time, slip_rates)
-            type(Grain), intent(inout)::  grain_        !> Grain for which to update the CRSS.
+            type(Grain), intent(inout)::  grain_     !> Grain for which to update the CRSS.
             real(DP), intent(in)::     time, &       !> Elapsed time since last update of the CRSS for this grain.
                                        slip_rates(:) !> Slip rate for each slip system of the grain. Size(slip_rates) must equal
                                                      !> the number of slip systems in the grain.
@@ -119,11 +124,15 @@ contains
         end select
     end function
 
+    !> @Brief Get the list of miller indices associated to ta given deformation mechanism.
+    !> @Details On invalid input, this routine crashes the program.
     function  get_miller_indices(deformation_mechanism) result(miller_indices)
         use slip_systems
 
-        integer, intent(in):: deformation_mechanism
-        integer, dimension(:,:,:), allocatable:: miller_indices
+        integer, intent(in):: deformation_mechanism             !> ID of the deformation mechanism. Must exist in the list provided
+                                                                !! in this module.
+        integer, dimension(:,:,:), allocatable:: miller_indices !> Miller indices for the deformation ordered as  [slip plane
+                                                                !! normal, slip direction] for each slip system
 
         select case(deformation_mechanism)
             case (SLIP_SYSTEMS_FCC)
@@ -159,13 +168,11 @@ contains
                   n_grains_phase
         integer, allocatable:: miller_indices(:,:,:)
         class(HardeningState), allocatable:: initial_state
-        class(ConstitutiveModel), allocatable:: cm
         type(Phase), pointer:: phase_ptr
-
 
         n_phases = size(phases_)
 
-
+        !First determine the total number of grains so we  can allocate the return array.
         n_grains = 0
         do i = 1, n_phases
             n_grains = n_grains+size(phases_(i)%orientations, 2)
@@ -178,9 +185,8 @@ contains
 
         j = 1
         do i = 1, n_phases
-            phase_ptr => phases(i)
-            cm = get_model_instance(phases_(i)%model_id)
-            phase_ptr%model = cm
+            phase_ptr => phases(i)  ! Gfortran crashes when directly assigning into phases array
+            phase_ptr%model = get_model_instance(phases_(i)%model_id)
             miller_indices = get_miller_indices(phases_(i)%deformation_mechanism)
             initial_state = phases(i)%model%init(miller_indices, phases_(i)%parameters)
             n_grains_phase = size(phases_(i)%orientations, 2)
