@@ -3,14 +3,13 @@
 !> In-memory cache/table of the recent results from the multi-level model.
 module dmcResultTable
     use utils
-    use alamYLPConstants
 
     implicit none
     private
 
     type:: ResultTableRecord
-        real(DP), dimension(alamEval_vSD_dim):: vA = 0.D0
-        real(DP), dimension(alamEval_vSD_dim):: vSonA = 0.D0
+        real(DP), dimension(5):: vA = 0.D0
+        real(DP), dimension(5):: vSonA = 0.D0
     end type
 
     type:: ResultTable
@@ -29,9 +28,9 @@ contains
     !> Add result to the database
     subroutine put(this, A, SonA)
         class(ResultTable), intent(inout)   :: this
-        real(DP), dimension(alamEval_vSD_dim), intent(in):: A
-        real(DP), dimension(alamEval_vSD_dim), intent(in):: SonA
-        type(ResultTableRecord), dimension(:), allocatable:: buffer    
+        real(DP), dimension(5), intent(in):: A
+        real(DP), dimension(5), intent(in):: SonA
+        type(ResultTableRecord), dimension(:), allocatable:: buffer
 
         if (allocated(this%table)) then
             if (this%n_records == size(this%table)) then
@@ -53,13 +52,13 @@ contains
     !> \return VEF_OK on success, VEF_FAIL if no item satisfies the requirement
     integer function get(this, S, A, max_angle) result(info)
         class(ResultTable), intent(inout)                 :: this
-        real(DP), dimension(alamEval_vSD_dim), intent(in)  :: S
-        real(DP), dimension(alamEval_vSD_dim), intent(out):: A
+        real(DP), dimension(5), intent(in)  :: S
+        real(DP), dimension(5), intent(out):: A
         real(DP), intent(in), optional                     :: max_angle !< Threshold angle (in radians)
         integer:: i, min_idx_a(1), min_idx
         equivalence(min_idx_a(1), min_idx)
         real(DP), dimension(:), allocatable:: angles
-    
+
         info = VEF_FAIL
         if (this%n_records > 0) then
             allocate(angles(this%n_records))

@@ -71,7 +71,7 @@ contains
         real(DP):: scaling_factor, control_variable, stop_control_variable, taylor_factor, stretch, &
                 D(3, 3), X_tmp(3, 3), D_retry(3, 3)
         type(YLPResult):: ylp, ylp_retry
-        real(DP), dimension(alamEval_vSD_dim):: vDe, vSe
+        real(DP), dimension(5):: vDe, vSe
         type(IncrementationControl):: icv
         real(DP), dimension(6):: X_tmp_voigt
 
@@ -191,7 +191,7 @@ contains
                                                        c = dot_product(icv%vP_step, icv%vP_step) - &
                                                          (control%increment_size+norm2(icv%vP_step))**2, &
                                                        x = xi)
-                    ! Up to two roots; we pick the largest one; 
+                    ! Up to two roots; we pick the largest one;
                     control_variable = -1.0_DP
                     if (n_roots > 0) control_variable = control%increment_size/maxval(xi(1:n_roots))
                     ! If control variable is negative (the only way to satisfy (*) is
@@ -235,7 +235,7 @@ contains
                 vDe = 0.D0
                 vSe = 0.D0
             endif
-            
+
             ! Append the output record
             if (.not. allocated(output)) then
                 allocate(output(8))
@@ -246,7 +246,7 @@ contains
             end if
             n_records = n_records+1
             output(n_records) = tmp_record
-            
+
             ! Update icv
             call icv%update(vDe, vSe, info)
             if (info /= VEF_OK) exit
@@ -291,13 +291,13 @@ contains
 
     !> Calculate the real roots of quadratic polynomial given in form
     !> a^2 x+b x+c = 0
-    !> Provides x1 and x2. Both x1 and x2 are guaranteed to be set to a defined value, 
+    !> Provides x1 and x2. Both x1 and x2 are guaranteed to be set to a defined value,
     !> even if no real roots exist.
     integer function solveQuadraticPolynomial(a, b, c, x) result(n_roots)
         real(DP), intent(in)   :: a, b, c
         real(DP), dimension(2), intent(out)  :: x
         real(DP):: delta
-      
+
         ! Satisfy intent(out)
         x = 0.D0
         n_roots = 0
@@ -318,4 +318,4 @@ contains
     end function
 
 
-end module 
+end module

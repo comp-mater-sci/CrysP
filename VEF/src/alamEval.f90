@@ -1,7 +1,6 @@
 !> Objective function for minimization of difference between requested stress tensor
 !> and stresses obtained from the ALAMEL
 module alamEval
-use alamYLPConstants
 use nllsTR
 
 implicit none
@@ -16,10 +15,10 @@ implicit none
             !      [m_F_dim] must be 5
 
             !> Normalized stress vector
-            real(DP), dimension(alamEval_vSD_dim)        :: vSn = 0.D0
+            real(DP), dimension(5)        :: vSn = 0.D0
 
             !> Multilevel prediction of stress from the previous call
-            real(DP), dimension(alamEval_vSD_dim)        :: vSml = 0.D0
+            real(DP), dimension(5)        :: vSml = 0.D0
 
             !> Flag: request for simulation outputs other than just deviatoric stress.
             !>
@@ -45,8 +44,8 @@ contains
             real(DP), dimension(:), intent(in)    :: vX       !< Dimension must be: 5
             integer, intent(out)                         :: info
             !
-            real(DP), dimension(alamEval_tSD_dim, alamEval_tSD_dim)     :: Atens
-            real(DP), dimension(alamEval_vSD_dim)       :: vS, vXn
+            real(DP), dimension(3, 3)     :: Atens
+            real(DP), dimension(5)       :: vS, vXn
             real(DP)                    :: norm
             integer                             :: i
             !
@@ -94,7 +93,7 @@ contains
                   vS = vS/norm
                   this%state%vF = this%vSn-vS
 #ifdef DIAGNOSTIC_OUTPUT
-                  write(*,'(F12.8, 1X)') (vS(i), i = 1, alamEval_vSD_dim)
+                  write(*,'(F12.8, 1X)') (vS(i), i = 1, 5)
 #endif
             else
                  ! norm is zero, so vS = 0
